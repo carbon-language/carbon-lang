@@ -22,7 +22,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
 #include "llvm/iMemory.h"
-
+using std::vector;
 
 //*************************** Local Functions ******************************/
 

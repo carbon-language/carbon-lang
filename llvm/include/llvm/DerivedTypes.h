@@ -18,7 +18,7 @@ class DerivedType : public Type {
   // if I am a type, and I get resolved into a more concrete type.
   //
   ///// FIXME: kill mutable nonsense when Type's are not const
-  mutable vector<AbstractTypeUser *> AbstractTypeUsers;
+  mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
 
   char isRefining;                                   // Used for recursive types
 
@@ -94,7 +94,7 @@ public:
 
 class MethodType : public DerivedType {
 public:
-  typedef vector<PATypeHandle<Type> > ParamTypes;
+  typedef std::vector<PATypeHandle<Type> > ParamTypes;
 private:
   PATypeHandle<Type> ResultType;
   ParamTypes ParamTys;
@@ -108,7 +108,7 @@ protected:
   // defines private constructors and has no friends
 
   // Private ctor - Only can be created by a static member...
-  MethodType(const Type *Result, const vector<const Type*> &Params, 
+  MethodType(const Type *Result, const std::vector<const Type*> &Params, 
              bool IsVarArgs);
 
 public:
@@ -130,7 +130,8 @@ public:
   //
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 
-  static MethodType *get(const Type *Result, const vector<const Type*> &Params,
+  static MethodType *get(const Type *Result,
+                         const std::vector<const Type*> &Params,
 			 bool isVarArg);
 
 
@@ -180,7 +181,7 @@ public:
 
 class StructType : public CompositeType {
 public:
-  typedef vector<PATypeHandle<Type> > ElementTypes;
+  typedef std::vector<PATypeHandle<Type> > ElementTypes;
 
 private:
   ElementTypes ETypes;                              // Element types of struct
@@ -194,7 +195,7 @@ protected:
   // defines private constructors and has no friends
 
   // Private ctor - Only can be created by a static member...
-  StructType(const vector<const Type*> &Types);
+  StructType(const std::vector<const Type*> &Types);
   
 public:
   inline const ElementTypes &getElementTypes() const { return ETypes; }
@@ -221,7 +222,7 @@ public:
   //
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 
-  static StructType *get(const vector<const Type*> &Params);
+  static StructType *get(const std::vector<const Type*> &Params);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const StructType *T) { return true; }

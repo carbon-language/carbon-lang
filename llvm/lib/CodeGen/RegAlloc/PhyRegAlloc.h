@@ -1,4 +1,4 @@
-/* Title:   PhyRegAlloc.h
+/* Title:   PhyRegAlloc.h   -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    Aug 20, 01
    Purpose: This is the main entry point for register allocation.
@@ -54,13 +54,11 @@
 class AddedInstrns
 {
  public:
-  deque<MachineInstr *> InstrnsBefore;  // Added insts BEFORE an existing inst
-  deque<MachineInstr *> InstrnsAfter;   // Added insts AFTER an existing inst
-
-  AddedInstrns() : InstrnsBefore(), InstrnsAfter() { }
+  std::deque<MachineInstr*> InstrnsBefore;// Added insts BEFORE an existing inst
+  std::deque<MachineInstr*> InstrnsAfter; // Added insts AFTER an existing inst
 };
 
-typedef hash_map<const MachineInstr *, AddedInstrns *> AddedInstrMapType;
+typedef std::hash_map<const MachineInstr *, AddedInstrns *> AddedInstrMapType;
 
 
 
@@ -74,7 +72,7 @@ typedef hash_map<const MachineInstr *, AddedInstrns *> AddedInstrMapType;
 class PhyRegAlloc: public NonCopyable
 {
 
-  vector<RegClass *> RegClassList  ;    // vector of register classes
+  std::vector<RegClass *> RegClassList; // vector of register classes
   const TargetMachine &TM;              // target machine
   const Method* Meth;                   // name of the method we work on
   MachineCodeForMethod& mcInfo;         // descriptor for method's native code
@@ -115,8 +113,7 @@ class PhyRegAlloc: public NonCopyable
                                  const BasicBlock *BB,
                                  const unsigned OpNum);
 
-  inline void constructLiveRanges() 
-    { LRI.constructLiveRanges(); }      
+  inline void constructLiveRanges() { LRI.constructLiveRanges(); }      
 
   void colorIncomingArgs();
   void colorCallRetArgs();
@@ -141,12 +138,9 @@ class PhyRegAlloc: public NonCopyable
 
   void addInterf4PseudoInstr(const MachineInstr *MInst);
 
-
  public:
-
   PhyRegAlloc(Method *const M, const TargetMachine& TM, 
 	      MethodLiveVarInfo *const Lvi);
-
   ~PhyRegAlloc(); 
 
   // main method called for allocating registers

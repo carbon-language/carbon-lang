@@ -78,7 +78,7 @@ protected:
   virtual bool processInstruction(const Instruction *I) { return false; }
 
 private:
-  bool handleType(set<const Type *> &TypeSet, const Type *T);
+  bool handleType(std::set<const Type *> &TypeSet, const Type *T);
 };
 
 #endif

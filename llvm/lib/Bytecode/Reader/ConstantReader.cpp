@@ -14,8 +14,9 @@
 #include "llvm/ConstantVals.h"
 #include "llvm/GlobalVariable.h"
 #include <algorithm>
-
-
+#include <iostream>
+using std::make_pair;
+using std::cerr;
 
 const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
 					      const uchar *EndBuf) {
@@ -36,7 +37,7 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
     unsigned NumParams;
     if (read_vbr(Buf, EndBuf, NumParams)) return failure(Val);
 
-    vector<const Type*> Params;
+    std::vector<const Type*> Params;
     while (NumParams--) {
       if (read_vbr(Buf, EndBuf, Typ)) return failure(Val);
       const Type *Ty = getType(Typ);
@@ -59,12 +60,12 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
     if (read_vbr(Buf, EndBuf, NumElements)) return failure(Val);
 
     BCR_TRACE(5, "Array Type Constant #" << ElTyp << " size=" 
-              << NumElements << endl);
+              << NumElements << "\n");
     return ArrayType::get(ElementType, NumElements);
   }
   case Type::StructTyID: {
     unsigned Typ;
-    vector<const Type*> Elements;
+    std::vector<const Type*> Elements;
 
     if (read_vbr(Buf, EndBuf, Typ)) return failure(Val);
     while (Typ) {         // List is terminated by void/0 typeid
@@ -80,7 +81,7 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
   case Type::PointerTyID: {
     unsigned ElTyp;
     if (read_vbr(Buf, EndBuf, ElTyp)) return failure(Val);
-    BCR_TRACE(5, "Pointer Type Constant #" << (ElTyp-14) << endl);
+    BCR_TRACE(5, "Pointer Type Constant #" << (ElTyp-14) << "\n");
     const Type *ElementType = getType(ElTyp);
     if (ElementType == 0) return failure(Val);
     return PointerType::get(ElementType);
@@ -241,7 +242,7 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
     const ArrayType *AT = cast<const ArrayType>(Ty);
     unsigned NumElements = AT->getNumElements();
 
-    vector<Constant*> Elements;
+    std::vector<Constant*> Elements;
     while (NumElements--) {   // Read all of the elements of the constant.
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) return failure(true);
@@ -257,7 +258,7 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
     const StructType *ST = cast<StructType>(Ty);
     const StructType::ElementTypes &ET = ST->getElementTypes();
 
-    vector<Constant *> Elements;
+    std::vector<Constant *> Elements;
     for (unsigned i = 0; i < ET.size(); ++i) {
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) return failure(true);

@@ -1,4 +1,4 @@
-/* Title:   ValueSet.h
+/* Title:   ValueSet.h   -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    Jun 30, 01
    Purpose: Contains a mathematical set of Values. LiveVarSet is derived from
@@ -8,24 +8,9 @@
 #ifndef VALUE_SET_H
 #define VALUE_SET_H
 
-#include <stdlib.h>
-
-#include <hash_set>
-#include <algorithm>
-//#include <fstream>
-#include <iostream>
-
-#include "llvm/Value.h"
-
-
-//------------------------ Support functions ---------------------------------
-
-struct hashFuncValue {                  // sturcture containing the hash func
-  inline size_t operator () (const Value *const val) const 
-  { return (size_t) val;  }
-};
-
-
+class Value;
+#include "Support/HashExtras.h"
+#include <ext/hash_set>
 
 //------------------- Class Definition for ValueSet --------------------------
 
@@ -33,12 +18,8 @@ void printValue( const Value *const v);  // func to print a Value
 
 
 
-class ValueSet : public hash_set<const Value *,  hashFuncValue > 
-{
- 
+class ValueSet : public std::hash_set<const Value *> {
  public:
-  ValueSet();                           // constructor
-
   inline void add(const Value *const  val) 
     { assert( val ); insert(val);}      // for adding a live variable to set
 

@@ -78,15 +78,15 @@ bool FindUsedTypes::doPerMethodWork(Method *m) {
 // passed in, then the types are printed symbolically if possible, using the
 // symbol table from the module.
 //
-void FindUsedTypes::printTypes(ostream &o, const Module *M = 0) const {
+void FindUsedTypes::printTypes(std::ostream &o, const Module *M = 0) const {
   o << "Types in use by this module:\n";
   if (M) {
     CachedWriter CW(M, o);
-    for (set<const Type *>::const_iterator I = UsedTypes.begin(),
+    for (std::set<const Type *>::const_iterator I = UsedTypes.begin(),
            E = UsedTypes.end(); I != E; ++I)
-      CW << "  " << *I << endl;
+      CW << "  " << *I << "\n";
   } else
-    for (set<const Type *>::const_iterator I = UsedTypes.begin(),
+    for (std::set<const Type *>::const_iterator I = UsedTypes.begin(),
            E = UsedTypes.end(); I != E; ++I)
-      o << "  " << *I << endl;
+      o << "  " << *I << "\n";
 }

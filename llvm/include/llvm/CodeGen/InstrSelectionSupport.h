@@ -24,8 +24,6 @@ class TmpInstruction;
 class Constant;
 class TargetMachine;
 
-//************************ Exported Functions ******************************/
-
 
 //---------------------------------------------------------------------------
 // Function GetConstantValueAsSignedInt
@@ -54,7 +52,7 @@ int64_t         GetConstantValueAsSignedInt     (const Value *V,
 //---------------------------------------------------------------------------
 
 Value*		FoldGetElemChain    (const InstructionNode* getElemInstrNode,
-				     vector<Value*>& chainIdxVec);
+				     std::vector<Value*>& chainIdxVec);
 
 
 //------------------------------------------------------------------------ 
@@ -130,11 +128,8 @@ MachineOperand::MachineOperandType
 // fall under case 3; these must be inserted before `minstr'.
 //---------------------------------------------------------------------------
 
-vector<MachineInstr*> FixConstantOperandsForInstr (Instruction* vmInstr,
-                                                   MachineInstr* minstr,
-                                                   TargetMachine& target);
-
-
-//**************************************************************************/
+std::vector<MachineInstr*> FixConstantOperandsForInstr (Instruction* vmInstr,
+                                                        MachineInstr* minstr,
+                                                        TargetMachine& target);
 
 #endif

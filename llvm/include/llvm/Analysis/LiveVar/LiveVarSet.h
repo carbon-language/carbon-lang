@@ -8,7 +8,7 @@
 #ifndef LIVE_VAR_SET_H
 #define LIVE_VAR_SET_H
 
-#include "ValueSet.h"
+#include "llvm/Analysis/LiveVar/ValueSet.h"
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
 

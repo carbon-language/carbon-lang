@@ -25,8 +25,8 @@ namespace cfg {
 //
 class Loop {
   Loop *ParentLoop;
-  vector<const BasicBlock *> Blocks; // First entry is the header node
-  vector<Loop*> SubLoops;            // Loops contained entirely within this one
+  std::vector<const BasicBlock *> Blocks; // First entry is the header node
+  std::vector<Loop*> SubLoops;       // Loops contained entirely within this one
   unsigned LoopDepth;                // Nesting depth of this loop
 
   Loop(const Loop &);                  // DO NOT IMPLEMENT
@@ -40,8 +40,10 @@ public:
   bool contains(const BasicBlock *BB) const;
 
   // getSubLoops - Return the loops contained entirely within this loop
-  inline const vector<Loop*> &getSubLoops() const { return SubLoops; }
-  inline const vector<const BasicBlock*> &getBlocks() const { return Blocks; }
+  inline const std::vector<Loop*> &getSubLoops() const { return SubLoops; }
+  inline const std::vector<const BasicBlock*> &getBlocks() const {
+    return Blocks;
+  }
 
 private:
   friend class LoopInfo;
@@ -62,19 +64,19 @@ private:
 //
 class LoopInfo {
   // BBMap - Mapping of basic blocks to the inner most loop they occur in
-  map<const BasicBlock *, Loop*> BBMap;
-  vector<Loop*> TopLevelLoops;
+  std::map<const BasicBlock *, Loop*> BBMap;
+  std::vector<Loop*> TopLevelLoops;
 public:
   // LoopInfo ctor - Calculate the natural loop information for a CFG
   LoopInfo(const DominatorSet &DS);
 
-  const vector<Loop*> &getTopLevelLoops() const { return TopLevelLoops; }
+  const std::vector<Loop*> &getTopLevelLoops() const { return TopLevelLoops; }
 
   // getLoopFor - Return the inner most loop that BB lives in.  If a basic block
   // is in no loop (for example the entry node), null is returned.
   //
   const Loop *getLoopFor(const BasicBlock *BB) const {
-    map<const BasicBlock *, Loop*>::const_iterator I = BBMap.find(BB);
+    std::map<const BasicBlock *, Loop*>::const_iterator I = BBMap.find(BB);
     return I != BBMap.end() ? I->second : 0;
   }
   inline const Loop *operator[](const BasicBlock *BB) const {

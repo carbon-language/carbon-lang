@@ -10,14 +10,15 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
+#include <iostream>
 
 class PrintModulePass : public Pass {
-  string Banner;          // String to print before each method
-  ostream *Out;           // ostream to print on
+  std::string Banner;     // String to print before each method
+  std::ostream *Out;      // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
   bool PrintPerMethod;    // Print one method at a time rather than the whole?
 public:
-  inline PrintModulePass(const string &B, ostream *o = &cout,
+  inline PrintModulePass(const std::string &B, std::ostream *o = &std::cout,
                          bool DS = false,
                          bool printPerMethod = true)
     : Banner(B), Out(o), DeleteStream(DS), PrintPerMethod(printPerMethod) {

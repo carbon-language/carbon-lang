@@ -100,7 +100,7 @@ class Option {
   // an argument.  Should return true if there was an error processing the
   // argument and the program should exit.
   //
-  virtual bool handleOccurance(const char *ArgName, const string &Arg) = 0;
+  virtual bool handleOccurance(const char *ArgName, const std::string &Arg) = 0;
 
   virtual enum NumOccurances getNumOccurancesFlagDefault() const { 
     return Optional;
@@ -146,10 +146,10 @@ public:
 
   // addOccurance - Wrapper around handleOccurance that enforces Flags
   //
-  bool addOccurance(const char *ArgName, const string &Value);
+  bool addOccurance(const char *ArgName, const std::string &Value);
 
   // Prints option name followed by message.  Always returns true.
-  bool error(string Message, const char *ArgName = 0);
+  bool error(std::string Message, const char *ArgName = 0);
 
 public:
   inline int getNumOccurances() const { return NumOccurances; }
@@ -162,7 +162,7 @@ public:
 //
 class Alias : public Option {
   Option &AliasFor;
-  virtual bool handleOccurance(const char *ArgName, const string &Arg) {
+  virtual bool handleOccurance(const char *ArgName, const std::string &Arg) {
     return AliasFor.handleOccurance(AliasFor.ArgStr, Arg);
   }
   virtual enum OptionHidden getOptionHiddenFlagDefault() const {return Hidden;}
@@ -177,7 +177,7 @@ public:
 //
 class Flag : public Option {
   bool Value;
-  virtual bool handleOccurance(const char *ArgName, const string &Arg);
+  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
 public:
   inline Flag(const char *ArgStr, const char *Message, int Flags = 0, 
 	      bool DefaultVal = 0) : Option(ArgStr, Message, Flags), 
@@ -193,7 +193,7 @@ public:
 //
 class Int : public Option {
   int Value;
-  virtual bool handleOccurance(const char *ArgName, const string &Arg);
+  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueRequired; 
   }
@@ -209,18 +209,18 @@ public:
 //===----------------------------------------------------------------------===//
 // String valued command line option
 //
-class String : public Option, public string {
-  virtual bool handleOccurance(const char *ArgName, const string &Arg);
+class String : public Option, public std::string {
+  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueRequired; 
   }
 public:
   inline String(const char *ArgStr, const char *Help, int Flags = 0, 
 		const char *DefaultVal = "") 
-    : Option(ArgStr, Help, Flags), string(DefaultVal) {}
+    : Option(ArgStr, Help, Flags), std::string(DefaultVal) {}
 
-  inline const string &operator=(const string &Val) { 
-    return string::operator=(Val);
+  inline const std::string &operator=(const std::string &Val) { 
+    return std::string::operator=(Val);
   }
 };
 
@@ -228,7 +228,7 @@ public:
 //===----------------------------------------------------------------------===//
 // String list command line option
 //
-class StringList : public Option, public vector<string> {
+class StringList : public Option, public std::vector<std::string> {
 
   virtual enum NumOccurances getNumOccurancesFlagDefault() const { 
     return ZeroOrMore;
@@ -236,7 +236,7 @@ class StringList : public Option, public vector<string> {
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueRequired;
   }
-  virtual bool handleOccurance(const char *ArgName, const string &Arg);
+  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
 
 public:
   inline StringList(const char *ArgStr, const char *Help, int Flags = 0)
@@ -256,7 +256,7 @@ protected:
   // Use a vector instead of a map, because the lists should be short,
   // the overhead is less, and most importantly, it keeps them in the order
   // inserted so we can print our option out nicely.
-  vector<pair<const char *, pair<int, const char *> > > ValueMap;
+  std::vector<std::pair<const char *, std::pair<int, const char *> > > ValueMap;
 
   inline EnumBase(const char *ArgStr, const char *Help, int Flags)
     : Option(ArgStr, Help, Flags) {}
@@ -284,7 +284,7 @@ protected:
   inline EnumValueBase(int Flags) : EnumBase(Flags) {}
 
   // handleOccurance - Set Value to the enum value specified by Arg
-  virtual bool handleOccurance(const char *ArgName, const string &Arg);
+  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
 
   // Return the width of the option tag for printing...
   virtual unsigned getOptionWidth() const;
@@ -323,7 +323,7 @@ class EnumFlagsBase : public EnumValueBase {
     return ValueDisallowed;
   }
 protected:
-  virtual bool handleOccurance(const char *ArgName, const string &Arg);
+  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
   inline EnumFlagsBase(int Flags) : EnumValueBase(Flags) {}
 
   // Return the width of the option tag for printing...
@@ -363,11 +363,11 @@ class EnumListBase : public EnumBase {
     return ValueDisallowed;
   }
 protected:
-  vector<int> Values;  // The options specified so far.
+  std::vector<int> Values;  // The options specified so far.
 
   inline EnumListBase(int Flags) 
     : EnumBase(Flags) {}
-  virtual bool handleOccurance(const char *ArgName, const string &Arg);
+  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
 
   // Return the width of the option tag for printing...
   virtual unsigned getOptionWidth() const;

@@ -1,4 +1,4 @@
-/* Title:   InterferenceGraph.h
+/* Title:   InterferenceGraph.h   -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    July 20, 01
    Purpose: Interference Graph used for register coloring.
@@ -24,7 +24,7 @@
 
 #include "llvm/CodeGen/IGNode.h"
 
-typedef vector <IGNode *> IGNodeListType;
+typedef std::vector <IGNode *> IGNodeListType;
 
 
 class InterferenceGraph
@@ -47,6 +47,8 @@ class InterferenceGraph
   // to create it after adding all IGNodes to the IGNodeList
 
   InterferenceGraph(RegClass *const RC);
+  ~InterferenceGraph();
+
   void createGraph();
 
   void addLRToIG(LiveRange *const LR);
@@ -65,12 +67,6 @@ class InterferenceGraph
 
   void printIG() const;
   void printIGNodeList() const;
-
-  ~InterferenceGraph();
-  
-
 };
 
-
 #endif
-

@@ -116,12 +116,12 @@ static inline bool align32(const unsigned char *&Buf,
 }
 
 static inline bool read(const unsigned char *&Buf, const unsigned char *EndBuf, 
-			string &Result, bool Aligned = true) {
+			std::string &Result, bool Aligned = true) {
   unsigned Size;
   if (read_vbr(Buf, EndBuf, Size)) return true;   // Failure reading size?
   if (Buf+Size > EndBuf) return true;             // Size invalid?
 
-  Result = string((char*)Buf, Size);
+  Result = std::string((char*)Buf, Size);
   Buf += Size;
 
   if (Aligned)        // If we should stay aligned do so...
@@ -157,7 +157,8 @@ static inline bool input_data(const unsigned char *&Buf,
 // string... note that this should be inlined always so only the relevant IF 
 // body should be included...
 //
-static inline void output(unsigned i, deque<unsigned char> &Out, int pos = -1){
+static inline void output(unsigned i, std::deque<unsigned char> &Out,
+                          int pos = -1) {
 #ifdef LITTLE_ENDIAN
   if (pos == -1) 
     Out.insert(Out.end(), (unsigned char*)&i, (unsigned char*)&i+4);
@@ -178,7 +179,7 @@ static inline void output(unsigned i, deque<unsigned char> &Out, int pos = -1){
 #endif
 }
 
-static inline void output(int i, deque<unsigned char> &Out) {
+static inline void output(int i, std::deque<unsigned char> &Out) {
   output((unsigned)i, Out);
 }
 
@@ -191,7 +192,7 @@ static inline void output(int i, deque<unsigned char> &Out) {
 //
 // Note that using this may cause the output buffer to become unaligned...
 //
-static inline void output_vbr(uint64_t i, deque<unsigned char> &out) {
+static inline void output_vbr(uint64_t i, std::deque<unsigned char> &out) {
   while (1) {
     if (i < 0x80) { // done?
       out.push_back((unsigned char)i);   // We know the high bit is clear...
@@ -205,7 +206,7 @@ static inline void output_vbr(uint64_t i, deque<unsigned char> &out) {
   }
 }
 
-static inline void output_vbr(unsigned i, deque<unsigned char> &out) {
+static inline void output_vbr(unsigned i, std::deque<unsigned char> &out) {
   while (1) {
     if (i < 0x80) { // done?
       out.push_back((unsigned char)i);   // We know the high bit is clear...
@@ -219,7 +220,7 @@ static inline void output_vbr(unsigned i, deque<unsigned char> &out) {
   }
 }
 
-static inline void output_vbr(int64_t i, deque<unsigned char> &out) {
+static inline void output_vbr(int64_t i, std::deque<unsigned char> &out) {
   if (i < 0) 
     output_vbr(((uint64_t)(-i) << 1) | 1, out); // Set low order sign bit...
   else
@@ -227,7 +228,7 @@ static inline void output_vbr(int64_t i, deque<unsigned char> &out) {
 }
 
 
-static inline void output_vbr(int i, deque<unsigned char> &out) {
+static inline void output_vbr(int i, std::deque<unsigned char> &out) {
   if (i < 0) 
     output_vbr(((unsigned)(-i) << 1) | 1, out); // Set low order sign bit...
   else
@@ -237,12 +238,12 @@ static inline void output_vbr(int i, deque<unsigned char> &out) {
 // align32 - emit the minimal number of bytes that will bring us to 32 bit 
 // alignment...
 //
-static inline void align32(deque<unsigned char> &Out) {
+static inline void align32(std::deque<unsigned char> &Out) {
   int NumPads = (4-(Out.size() & 3)) & 3; // Bytes to get padding to 32 bits
   while (NumPads--) Out.push_back((unsigned char)0xAB);
 }
 
-static inline void output(const string &s, deque<unsigned char> &Out, 
+static inline void output(const std::string &s, std::deque<unsigned char> &Out, 
 			  bool Aligned = true) {
   unsigned Len = s.length();
   output_vbr(Len, Out);             // Strings may have an arbitrary length...
@@ -253,7 +254,8 @@ static inline void output(const string &s, deque<unsigned char> &Out,
 }
 
 static inline void output_data(void *Ptr, void *End,
-			       deque<unsigned char> &Out, bool Align = false) {
+			       std::deque<unsigned char> &Out,
+                               bool Align = false) {
 #ifdef LITTLE_ENDIAN
   Out.insert(Out.end(), (unsigned char*)Ptr, (unsigned char*)End);
 #else

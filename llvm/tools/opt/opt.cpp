@@ -122,10 +122,16 @@ int main(int argc, char **argv) {
   for (unsigned i = 0; i < OptimizationList.size(); ++i)
     RunOptimization(M.get(), OptimizationList[i]);
 
-  ostream *Out = &cout;  // Default to printing to stdout...
+  std::ostream *Out = &std::cout;  // Default to printing to stdout...
   if (OutputFilename != "") {
-    Out = new ofstream(OutputFilename.c_str(), 
-                       (Force ? 0 : ios::noreplace)|ios::out);
+    if (!Force && !std::ifstream(OutputFilename.c_str())) {
+      // If force is not specified, make sure not to overwrite a file!
+      cerr << "Error opening '" << OutputFilename << "': File exists!\n"
+           << "Use -f command line argument to force output\n";
+      return 1;
+    }
+    Out = new std::ofstream(OutputFilename.c_str());
+
     if (!Out->good()) {
       cerr << "Error opening " << OutputFilename << "!\n";
       return 1;

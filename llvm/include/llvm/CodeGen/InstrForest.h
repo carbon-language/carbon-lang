@@ -27,8 +27,7 @@
 #include "llvm/Instruction.h"
 #include "Support/NonCopyable.h"
 #include "Support/HashExtras.h"
-#include <hash_map>
-#include <hash_set>
+#include <ext/hash_set>
 
 class Constant;
 class BasicBlock;
@@ -239,9 +238,9 @@ protected:
 // 
 //------------------------------------------------------------------------ 
 
-class InstrForest : private hash_map<const Instruction *, InstructionNode*> {
+class InstrForest : private std::hash_map<const Instruction *, InstructionNode*> {
 private:
-  hash_set<InstructionNode*> treeRoots;
+  std::hash_set<InstructionNode*> treeRoots;
   
 public:
   /*ctor*/	InstrForest	(Method *M);
@@ -251,7 +250,7 @@ public:
     return (*this)[instr];
   }
   
-  inline const hash_set<InstructionNode*> &getRootSet() const {
+  inline const std::hash_set<InstructionNode*> &getRootSet() const {
     return treeRoots;
   }
   

@@ -79,8 +79,8 @@ inline void addNodeToInterval(Interval *Int, Interval *I) {
 
 template<class NodeTy, class OrigContainer_t>
 class IntervalIterator {
-  stack<pair<Interval*, typename Interval::succ_iterator> > IntStack;
-  set<BasicBlock*> Visited;
+  std::stack<std::pair<Interval*, typename Interval::succ_iterator> > IntStack;
+  std::set<BasicBlock*> Visited;
   OrigContainer_t *OrigContainer;
   bool IOwnMem;     // If True, delete intervals when done with them
                     // See file header for conditions of use
@@ -88,7 +88,7 @@ public:
   typedef BasicBlock* _BB;
 
   typedef IntervalIterator<NodeTy, OrigContainer_t> _Self;
-  typedef forward_iterator_tag iterator_category;
+  typedef std::forward_iterator_tag iterator_category;
  
   IntervalIterator() {} // End iterator, empty stack
   IntervalIterator(Method *M, bool OwnMemory) : IOwnMem(OwnMemory) {

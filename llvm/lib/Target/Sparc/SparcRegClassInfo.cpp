@@ -1,7 +1,8 @@
-#include "llvm/CodeGen/IGNode.h"
 #include "SparcInternals.h"
-
+#include "llvm/CodeGen/IGNode.h"
 #include "llvm/Target/Sparc.h"
+#include <iostream>
+using std::cerr;
 
 //-----------------------------------------------------------------------------
 // Int Register Class - method for coloring a node in the interference graph.
@@ -37,7 +38,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const
   }
 
   if( DEBUG_RA ) {
-    cout << "\nColoring LR [CallInt=" << LR->isCallInterference() <<"]:"; 
+    cerr << "\nColoring LR [CallInt=" << LR->isCallInterference() <<"]:"; 
     LR->printSet();
   }
 
@@ -53,18 +54,18 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const
 	// there are no call interferences. Otherwise, it will get spilled.
 
 	if (DEBUG_RA)
-	  cout << "\n  -Coloring with sug color: " << SugCol;
+	  cerr << "\n  -Coloring with sug color: " << SugCol;
 
 	LR->setColor(  LR->getSuggestedColor() );
 	return;
       }
        else if(DEBUG_RA)
-	 cout << "\n Couldn't alloc Sug col - LR voloatile & calls interf";
+	 cerr << "\n Couldn't alloc Sug col - LR voloatile & calls interf";
 
     }
     else if ( DEBUG_RA ) {                // can't allocate the suggested col
       cerr << "  \n  Could NOT allocate the suggested color (already used) ";
-      LR->printSet(); cerr << endl;
+      LR->printSet(); cerr << "\n";
     }
   }
 
@@ -91,7 +92,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const
 
   if( ColorFound) {
     LR->setColor(c);                  // first color found in preffered order
-    if (DEBUG_RA) cout << "\n  Colored after first search with col " << c ; 
+    if (DEBUG_RA) cerr << "\n  Colored after first search with col " << c ; 
   }
 
   // if color is not found because of call interference
@@ -113,7 +114,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const
        // since LR span across calls, must save across calls 
        //
        LR->markForSaveAcrossCalls();       
-       if(DEBUG_RA) cout << "\n  Colored after SECOND search with col " << c ;
+       if(DEBUG_RA) cerr << "\n  Colored after SECOND search with col " << c ;
     }
   }
 
@@ -193,7 +194,7 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
     }
     else if (DEBUG_RA)  {                 // can't allocate the suggested col
       cerr << " Could NOT allocate the suggested color for LR ";
-      LR->printSet(); cerr << endl;
+      LR->printSet(); cerr << "\n";
     }
   }
 

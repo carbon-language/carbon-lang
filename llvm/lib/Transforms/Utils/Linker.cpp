@@ -17,6 +17,10 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
 #include "llvm/ConstantVals.h"
+#include <iostream>
+using std::cerr;
+using std::string;
+using std::map;
 
 // Error - Simple wrapper function to conditionally assign to E and return true.
 // This just makes error return conditions a little bit simpler...
@@ -70,7 +74,7 @@ static void PrintMap(const map<const Value*, Value*> &M) {
   for (map<const Value*, Value*>::const_iterator I = M.begin(), E = M.end();
        I != E; ++I) {
     cerr << " Fr: " << (void*)I->first << " " << I->first 
-         << " To: " << (void*)I->second << " " << I->second << endl;
+         << " To: " << (void*)I->second << " " << I->second << "\n";
   }
 }
 
@@ -97,15 +101,15 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
     Constant *Result = 0;
 
     if (ConstantArray *CPA = dyn_cast<ConstantArray>(CPV)) {
-      const vector<Use> &Ops = CPA->getValues();
-      vector<Constant*> Operands(Ops.size());
+      const std::vector<Use> &Ops = CPA->getValues();
+      std::vector<Constant*> Operands(Ops.size());
       for (unsigned i = 0; i < Ops.size(); ++i)
         Operands[i] = 
           cast<Constant>(RemapOperand(Ops[i], LocalMap, GlobalMap));
       Result = ConstantArray::get(cast<ArrayType>(CPA->getType()), Operands);
     } else if (ConstantStruct *CPS = dyn_cast<ConstantStruct>(CPV)) {
-      const vector<Use> &Ops = CPS->getValues();
-      vector<Constant*> Operands(Ops.size());
+      const std::vector<Use> &Ops = CPS->getValues();
+      std::vector<Constant*> Operands(Ops.size());
       for (unsigned i = 0; i < Ops.size(); ++i)
         Operands[i] = 
           cast<Constant>(RemapOperand(Ops[i], LocalMap, GlobalMap));
@@ -120,7 +124,7 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
     }
 
     // Cache the mapping in our local map structure...
-    LocalMap.insert(make_pair(In, CPV));
+    LocalMap.insert(std::make_pair(In, CPV));
     return Result;
   }
 
@@ -132,7 +136,7 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
     PrintMap(*GlobalMap);
   }
 
-  cerr << "Couldn't remap value: " << (void*)In << " " << In << endl;
+  cerr << "Couldn't remap value: " << (void*)In << " " << In << "\n";
   assert(0 && "Couldn't remap value!");
   return 0;
 }
@@ -172,7 +176,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
                      " - Global variables differ in const'ness");
 
       // Okay, everything is cool, remember the mapping...
-      ValueMap.insert(make_pair(SGV, DGV));
+      ValueMap.insert(std::make_pair(SGV, DGV));
     } else {
       // No linking to be performed, simply create an identical version of the
       // symbol over in the dest module... the initializer will be filled in
@@ -186,7 +190,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       Dest->getGlobalList().push_back(DGV);
 
       // Make sure to remember this mapping...
-      ValueMap.insert(make_pair(SGV, DGV));
+      ValueMap.insert(std::make_pair(SGV, DGV));
     }
   }
   return false;
@@ -262,7 +266,7 @@ static bool LinkMethodProtos(Module *Dest, const Module *Src,
                      SM->getName() + "\" - Method is already defined!");
 
       // Otherwise, just remember this mapping...
-      ValueMap.insert(make_pair(SM, DM));
+      ValueMap.insert(std::make_pair(SM, DM));
     } else {
       // Method does not already exist, simply insert an external method
       // signature identical to SM into the dest module...
@@ -273,7 +277,7 @@ static bool LinkMethodProtos(Module *Dest, const Module *Src,
       Dest->getMethodList().push_back(DM);
 
       // ... and remember this mapping...
-      ValueMap.insert(make_pair(SM, DM));
+      ValueMap.insert(std::make_pair(SM, DM));
     }
   }
   return false;
@@ -300,7 +304,7 @@ static bool LinkMethodBody(Method *Dest, const Method *Src,
     Dest->getArgumentList().push_back(DMA);
 
     // Add a mapping to our local map
-    LocalMap.insert(make_pair(SMA, DMA));
+    LocalMap.insert(std::make_pair(SMA, DMA));
   }
 
   // Loop over all of the basic blocks, copying the instructions over...
@@ -310,7 +314,7 @@ static bool LinkMethodBody(Method *Dest, const Method *Src,
 
     // Create new basic block and add to mapping and the Dest method...
     BasicBlock *DBB = new BasicBlock(SBB->getName(), Dest);
-    LocalMap.insert(make_pair(SBB, DBB));
+    LocalMap.insert(std::make_pair(SBB, DBB));
 
     // Loop over all of the instructions in the src basic block, copying them
     // over.  Note that this is broken in a strict sense because the cloned
@@ -324,7 +328,7 @@ static bool LinkMethodBody(Method *Dest, const Method *Src,
       Instruction *DI = SI->clone();
       DI->setName(SI->getName());
       DBB->getInstList().push_back(DI);
-      LocalMap.insert(make_pair(SI, DI));
+      LocalMap.insert(std::make_pair(SI, DI));
     }
   }
 

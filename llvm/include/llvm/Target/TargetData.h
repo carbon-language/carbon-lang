@@ -31,7 +31,7 @@ class TargetData {
  
   static Annotation *TypeAnFactory(AnnotationID, const Annotable *, void *);
 public:
-  TargetData(const string &TargetName, unsigned char PtrSize = 8,
+  TargetData(const std::string &TargetName, unsigned char PtrSize = 8,
 	     unsigned char PtrAl = 8, unsigned char DoubleAl = 8,
 	     unsigned char FloatAl = 4, unsigned char LongAl = 8, 
 	     unsigned char IntAl = 4, unsigned char ShortAl = 2,
@@ -61,7 +61,7 @@ public:
   // stores that include the implicit form of getelementptr.
   //
   unsigned      getIndexedOffset(const Type *Ty, 
-				 const vector<Value*> &Indices) const;
+				 const std::vector<Value*> &Indices) const;
 
   inline const StructLayout *getStructLayout(const StructType *Ty) const {
     return (const StructLayout*)((const Type*)Ty)->getOrCreateAnnotation(AID);
@@ -73,7 +73,7 @@ public:
 // TargetData structure.
 //
 struct StructLayout : public Annotation {
-  vector<unsigned> MemberOffsets;
+  std::vector<unsigned> MemberOffsets;
   unsigned StructSize;
   unsigned StructAlignment;
 private:

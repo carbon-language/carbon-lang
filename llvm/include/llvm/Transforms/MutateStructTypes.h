@@ -28,19 +28,19 @@ class MutateStructTypes : public Pass {
   // incoming slot [or negative if the specified incoming slot should be
   // removed].
   //
-  typedef pair<const StructType*, vector<int> > TransformType;
+  typedef std::pair<const StructType*, std::vector<int> > TransformType;
 
   // Transforms to do for each structure type...
-  map<const StructType*, TransformType> Transforms;
+  std::map<const StructType*, TransformType> Transforms;
 
   // Mapping of old type to new types...
-  map<const Type *, PATypeHolder<Type> > TypeMap;
+  std::map<const Type *, PATypeHolder<Type> > TypeMap;
 
   // Mapping from global value of old type, to a global value of the new type...
-  map<const GlobalValue*, GlobalValue*> GlobalMap;
+  std::map<const GlobalValue*, GlobalValue*> GlobalMap;
 
   // Mapping from intra method value to intra method value
-  map<const Value*, Value*> LocalValueMap;
+  std::map<const Value*, Value*> LocalValueMap;
 
 public:
   // Ctor - Take a map that specifies what transformation to do for each field
@@ -49,7 +49,7 @@ public:
   // the destination structure the field should end up in.  A negative value 
   // indicates that the field should be deleted entirely.
   //
-  typedef map<const StructType*, vector<int> > TransformsType;
+  typedef std::map<const StructType*, std::vector<int> > TransformsType;
 
   MutateStructTypes(const TransformsType &Transforms);
 
@@ -83,7 +83,7 @@ private:
   // AdjustIndices - Convert the indexes specifed by Idx to the new changed form
   // using the specified OldTy as the base type being indexed into.
   //
-  void AdjustIndices(const CompositeType *OldTy, vector<Value*> &Idx,
+  void AdjustIndices(const CompositeType *OldTy, std::vector<Value*> &Idx,
                      unsigned idx = 0);
 };
 

@@ -36,7 +36,7 @@
 // arguments to get a boolean result.
 //
 template<class Ty>
-struct bitwise_or : public binary_function<Ty, Ty, bool> {
+struct bitwise_or : public std::binary_function<Ty, Ty, bool> {
   bool operator()(const Ty& left, const Ty& right) const {
     return left | right;
   }
@@ -70,9 +70,9 @@ class mapped_iterator {
   RootIt current;
   UnaryFunc Fn;
 public:
-  typedef typename iterator_traits<RootIt>::iterator_category
+  typedef typename std::iterator_traits<RootIt>::iterator_category
           iterator_category;
-  typedef typename iterator_traits<RootIt>::difference_type
+  typedef typename std::iterator_traits<RootIt>::difference_type
           difference_type;
   typedef typename UnaryFunc::result_type value_type;
   typedef typename UnaryFunc::result_type *pointer;
@@ -102,6 +102,7 @@ public:
   _Self& operator-=   (difference_type n) { current -= n; return *this; }
   reference operator[](difference_type n) const { return *(*this + n); }  
 
+  inline bool operator!=(const _Self &X) const { return !operator==(X); }
   inline bool operator==(const _Self &X) const { return current == X.current; }
   inline bool operator< (const _Self &X) const { return current <  X.current; }
 

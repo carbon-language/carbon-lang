@@ -45,7 +45,7 @@ struct Pass {
   //
 
   // runAllPasses - Run a bunch of passes on the specified module, efficiently.
-  static bool runAllPasses(Module *M, vector<Pass*> &Passes) {
+  static bool runAllPasses(Module *M, std::vector<Pass*> &Passes) {
     bool MadeChanges = false;
     // Run all of the pass initializers
     for (unsigned i = 0; i < Passes.size(); ++i)
@@ -65,7 +65,7 @@ struct Pass {
   // runAllPassesAndFree - Run a bunch of passes on the specified module,
   // efficiently.  When done, delete all of the passes.
   //
-  static bool runAllPassesAndFree(Module *M, vector<Pass*> &Passes) {
+  static bool runAllPassesAndFree(Module *M, std::vector<Pass*> &Passes) {
     // First run all of the passes
     bool MadeChanges = runAllPasses(M, Passes);
 

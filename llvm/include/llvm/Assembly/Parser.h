@@ -16,7 +16,7 @@ class ParseException;
 // The useful interface defined by this file... Parse an ascii file, and return
 // the internal representation in a nice slice'n'dice'able representation.
 //
-Module *ParseAssemblyFile(const string &Filename);// throw (ParseException);
+Module *ParseAssemblyFile(const std::string &Filename);// throw (ParseException)
 
 //===------------------------------------------------------------------------===
 //                              Helper Classes
@@ -27,7 +27,7 @@ Module *ParseAssemblyFile(const string &Filename);// throw (ParseException);
 //
 class ParseException {
 public:
-  ParseException(const string &filename, const string &message, 
+  ParseException(const std::string &filename, const std::string &message, 
 		 int LineNo = -1, int ColNo = -1);
 
   ParseException(const ParseException &E);
@@ -35,13 +35,13 @@ public:
   // getMessage - Return the message passed in at construction time plus extra 
   // information extracted from the options used to parse with...
   //
-  const string getMessage() const;
+  const std::string getMessage() const;
 
-  inline const string getRawMessage() const {    // Just the raw message...
+  inline const std::string &getRawMessage() const {   // Just the raw message...
     return Message;
   }
 
-  inline const string &getFilename() const {
+  inline const std::string &getFilename() const {
     return Filename;
   }
 
@@ -55,8 +55,8 @@ public:
   }
 
 private :
-  string Filename;
-  string Message;
+  std::string Filename;
+  std::string Message;
   int LineNo, ColumnNo;                               // -1 if not relevant
 
   ParseException &operator=(const ParseException &E); // objects by reference

@@ -27,12 +27,12 @@ namespace cfg {
 class CallGraph;
 class CallGraphNode {
   Method *Meth;
-  vector<CallGraphNode*> CalledMethods;
+  std::vector<CallGraphNode*> CalledMethods;
 
   CallGraphNode(const CallGraphNode &);           // Do not implement
 public:
-  typedef vector<CallGraphNode*>::iterator iterator;
-  typedef vector<CallGraphNode*>::const_iterator const_iterator;
+  typedef std::vector<CallGraphNode*>::iterator iterator;
+  typedef std::vector<CallGraphNode*>::const_iterator const_iterator;
 
   // getMethod - Return the method that this call graph node represents...
   Method *getMethod() const { return Meth; }
@@ -65,7 +65,7 @@ private:                    // Stuff to construct the node, used by CallGraph
 class CallGraph {
   Module *Mod;              // The module this call graph represents
 
-  typedef map<const Method *, CallGraphNode *> MethodMapTy;
+  typedef std::map<const Method *, CallGraphNode *> MethodMapTy;
   MethodMapTy MethodMap;    // Map from a method to its node
 
   CallGraphNode *Root;

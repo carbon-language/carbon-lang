@@ -27,10 +27,11 @@
 class Type;
 
 class SymbolTable : public AbstractTypeUser,
-		    public map<const Type *, map<const string, Value *> > {
+		    public std::map<const Type *, 
+                                    std::map<const std::string, Value *> > {
 public:
-  typedef map<const string, Value *> VarMap;
-  typedef map<const Type *, VarMap> super;
+  typedef std::map<const std::string, Value *> VarMap;
+  typedef std::map<const Type *, VarMap> super;
 private:
 
   SymbolTable *ParentSymTab;
@@ -51,7 +52,7 @@ public:
   SymbolTable *getParentSymTab() { return ParentSymTab; }
 
   // lookup - Returns null on failure...
-  Value *lookup(const Type *Ty, const string &name);
+  Value *lookup(const Type *Ty, const std::string &name);
 
   // insert - Add named definition to the symbol table...
   inline void insert(Value *N) {
@@ -63,7 +64,7 @@ public:
   // name...  There can be a many to one mapping between names and
   // (constant/type)s.
   //
-  inline void insert(const string &Name, Value *V) {
+  inline void insert(const std::string &Name, Value *V) {
     assert((isa<Type>(V) || isa<Constant>(V)) &&
 	   "Can only insert types and constants here!");
     insertEntry(Name, V->getType(), V);
@@ -78,7 +79,7 @@ public:
   // it (or derived from it) that does not already occur in the symbol table for
   // the specified type.
   //
-  string getUniqueName(const Type *Ty, const string &BaseName);
+  std::string getUniqueName(const Type *Ty, const std::string &BaseName);
 
   inline unsigned type_size(const Type *TypeID) const {
     return find(TypeID)->second.size();
@@ -121,7 +122,7 @@ private:
   // insertEntry - Insert a value into the symbol table with the specified
   // name...
   //
-  void insertEntry(const string &Name, const Type *Ty, Value *V);
+  void insertEntry(const std::string &Name, const Type *Ty, Value *V);
 
   // removeEntry - Remove a value from the symbol table...
   //

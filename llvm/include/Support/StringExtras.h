@@ -11,7 +11,7 @@
 #include <string>
 #include <stdio.h>
 
-static inline string utostr(uint64_t X, bool isNeg = false) {
+static inline std::string utostr(uint64_t X, bool isNeg = false) {
   char Buffer[40];
   char *BufPtr = Buffer+39;
 
@@ -25,10 +25,10 @@ static inline string utostr(uint64_t X, bool isNeg = false) {
 
   if (isNeg) *--BufPtr = '-';   // Add negative sign...
 
-  return string(BufPtr);
+  return std::string(BufPtr);
 }
 
-static inline string itostr(int64_t X) {
+static inline std::string itostr(int64_t X) {
   if (X < 0) 
     return utostr((uint64_t)-X, true);
   else
@@ -36,7 +36,7 @@ static inline string itostr(int64_t X) {
 }
 
 
-static inline string utostr(unsigned X, bool isNeg = false) {
+static inline std::string utostr(unsigned X, bool isNeg = false) {
   char Buffer[20];
   char *BufPtr = Buffer+19;
 
@@ -50,17 +50,17 @@ static inline string utostr(unsigned X, bool isNeg = false) {
 
   if (isNeg) *--BufPtr = '-';   // Add negative sign...
 
-  return string(BufPtr);
+  return std::string(BufPtr);
 }
 
-static inline string itostr(int X) {
+static inline std::string itostr(int X) {
   if (X < 0) 
     return utostr((unsigned)-X, true);
   else
     return utostr((unsigned)X);
 }
 
-static inline string ftostr(double V) {
+static inline std::string ftostr(double V) {
   char Buffer[200];
   snprintf(Buffer, 200, "%e", V);
   return Buffer;

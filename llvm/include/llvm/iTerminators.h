@@ -198,7 +198,7 @@ class InvokeInst : public TerminatorInst {
   InvokeInst(const InvokeInst &BI);
 public:
   InvokeInst(Value *Meth, BasicBlock *IfNormal, BasicBlock *IfException,
-	     const vector<Value*> &Params, const  string &Name = "");
+	     const std::vector<Value*> &Params, const std::string &Name = "");
 
   virtual Instruction *clone() const { return new InvokeInst(*this); }
 

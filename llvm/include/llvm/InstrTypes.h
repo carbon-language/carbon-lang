@@ -25,7 +25,7 @@ class TerminatorInst : public Instruction {
 public:
   TerminatorInst(Instruction::TermOps iType);
   TerminatorInst(const Type *Ty, Instruction::TermOps iType,
-		 const string &Name = "");
+		 const std::string &Name = "");
   inline ~TerminatorInst() {}
 
   // Terminators must implement the methods required by Instruction...
@@ -66,7 +66,7 @@ public:
   //
   static UnaryOperator *create(UnaryOps Op, Value *Source);
 
-  UnaryOperator(Value *S, UnaryOps iType, const string &Name = "")
+  UnaryOperator(Value *S, UnaryOps iType, const std::string &Name = "")
       : Instruction(S->getType(), iType, Name) {
     Operands.reserve(1);
     Operands.push_back(Use(S, this));
@@ -105,10 +105,10 @@ public:
   // and the two operands.
   //
   static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
-				const string &Name = "");
+				const std::string &Name = "");
 
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, 
-                 const string &Name = "") 
+                 const std::string &Name = "") 
     : Instruction(S1->getType(), iType, Name) {
     Operands.reserve(2);
     Operands.push_back(Use(S1, this));

@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <fstream>
+using std::string;
 
 cl::String InputFilename ("", "Input filename", cl::NoFlags, "-");
 cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
@@ -78,10 +79,10 @@ public:
 
 class EmitAssembly : public Pass {
   const TargetMachine &Target;   // Target to compile for
-  ostream *Out;                  // Stream to print on
+  std::ostream *Out;             // Stream to print on
   bool DeleteStream;             // Delete stream in dtor?
 public:
-  inline EmitAssembly(const TargetMachine &T, ostream *O, bool D)
+  inline EmitAssembly(const TargetMachine &T, std::ostream *O, bool D)
     : Target(T), Out(O), DeleteStream(D) {}
 
 
@@ -105,20 +106,20 @@ int main(int argc, char **argv) {
   
   // Allocate a target... in the future this will be controllable on the
   // command line.
-  auto_ptr<TargetMachine> target(allocateSparcTargetMachine());
+  std::auto_ptr<TargetMachine> target(allocateSparcTargetMachine());
   assert(target.get() && "Could not allocate target machine!");
 
   TargetMachine &Target = *target.get();
   
   // Load the module to be compiled...
-  auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
+  std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
   if (M.get() == 0) {
     cerr << "bytecode didn't read correctly.\n";
     return 1;
   }
 
   // Build up all of the passes that we want to do to the module...
-  vector<Pass*> Passes;
+  std::vector<Pass*> Passes;
 
   // Hoist constants out of PHI nodes into predecessor BB's
   Passes.push_back(new HoistPHIConstants());
@@ -135,8 +136,15 @@ int main(int argc, char **argv) {
     assert(InputFilename != "-" &&
            "files on stdin not supported with tracing");
     string traceFileName = GetFileNameRoot(InputFilename) + ".trace.bc";
-    ostream *os = new ofstream(traceFileName.c_str(), 
-                               (Force ? 0 : ios::noreplace)|ios::out);
+
+    if (!Force && !std::ifstream(OutputFilename.c_str())) {
+      // If force is not specified, make sure not to overwrite a file!
+      cerr << "Error opening '" << OutputFilename << "': File exists!\n"
+           << "Use -f command line argument to force output\n";
+      return 1;
+    }
+
+    std::ostream *os = new std::ofstream(traceFileName.c_str());
     if (!os->good()) {
       cerr << "Error opening " << traceFileName
            << "! SKIPPING OUTPUT OF TRACE CODE\n";
@@ -161,19 +169,31 @@ int main(int argc, char **argv) {
 
   if (!DoNotEmitAssembly) {                // If asm output is enabled...
     // Figure out where we are going to send the output...
-    ostream *Out = 0;
+    std::ostream *Out = 0;
     if (OutputFilename != "") {   // Specified an output filename?
-      Out = new ofstream(OutputFilename.c_str(), 
-                         (Force ? 0 : ios::noreplace)|ios::out);
+      if (!Force && !std::ifstream(OutputFilename.c_str())) {
+        // If force is not specified, make sure not to overwrite a file!
+        cerr << "Error opening '" << OutputFilename << "': File exists!\n"
+             << "Use -f command line argument to force output\n";
+        return 1;
+      }
+      Out = new std::ofstream(OutputFilename.c_str());
     } else {
       if (InputFilename == "-") {
         OutputFilename = "-";
-        Out = &cout;
+        Out = &std::cout;
       } else {
         string OutputFilename = GetFileNameRoot(InputFilename); 
         OutputFilename += ".s";
-        Out = new ofstream(OutputFilename.c_str(), 
-                           (Force ? 0 : ios::noreplace)|ios::out);
+
+        if (!Force && !std::ifstream(OutputFilename.c_str())) {
+          // If force is not specified, make sure not to overwrite a file!
+          cerr << "Error opening '" << OutputFilename << "': File exists!\n"
+               << "Use -f command line argument to force output\n";
+          return 1;
+        }
+
+        Out = new std::ofstream(OutputFilename.c_str());
         if (!Out->good()) {
           cerr << "Error opening " << OutputFilename << "!\n";
           delete Out;
@@ -183,7 +203,7 @@ int main(int argc, char **argv) {
     }
     
     // Output assembly language to the .s file
-    Passes.push_back(new EmitAssembly(Target, Out, Out != &cout));
+    Passes.push_back(new EmitAssembly(Target, Out, Out != &std::cout));
   }
   
   // Run our queue of passes all at once now, efficiently.  This form of

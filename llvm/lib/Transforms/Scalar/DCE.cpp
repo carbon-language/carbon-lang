@@ -117,7 +117,7 @@ static bool PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   // If there is more than one predecessor, and there are PHI nodes in
   // the successor, then we need to add incoming edges for the PHI nodes
   //
-  const vector<BasicBlock*> BBPreds(BB->pred_begin(), BB->pred_end());
+  const std::vector<BasicBlock*> BBPreds(BB->pred_begin(), BB->pred_end());
 
   // Check to see if one of the predecessors of BB is already a predecessor of
   // Succ.  If so, we cannot do the transformation!
@@ -134,7 +134,7 @@ static bool PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
     Value *OldVal = PN->removeIncomingValue(BB);
     assert(OldVal && "No entry in PHI for Pred BB!");
 
-    for (vector<BasicBlock*>::const_iterator PredI = BBPreds.begin(), 
+    for (std::vector<BasicBlock*>::const_iterator PredI = BBPreds.begin(), 
 	   End = BBPreds.end(); PredI != End; ++PredI) {
       // Add an incoming value for each of the new incoming values...
       PN->addIncoming(OldVal, *PredI);

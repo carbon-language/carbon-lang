@@ -49,8 +49,8 @@ public:
   };
 
 private:
-  vector<User *> Uses;
-  string Name;
+  std::vector<User *> Uses;
+  std::string Name;
   PATypeHandle<Type> Ty;
   ValueTy VTy;
 
@@ -58,7 +58,7 @@ private:
 protected:
   inline void setType(const Type *ty) { Ty = ty; }
 public:
-  Value(const Type *Ty, ValueTy vty, const string &name = "");
+  Value(const Type *Ty, ValueTy vty, const std::string &name = "");
   virtual ~Value();
   
   // Support for debugging 
@@ -68,10 +68,10 @@ public:
   inline const Type *getType() const { return Ty; }
   
   // All values can potentially be named...
-  inline bool          hasName() const { return Name != ""; }
-  inline const string &getName() const { return Name; }
+  inline bool               hasName() const { return Name != ""; }
+  inline const std::string &getName() const { return Name; }
 
-  virtual void setName(const string &name, SymbolTable * = 0) {
+  virtual void setName(const std::string &name, SymbolTable * = 0) {
     Name = name;
   }
   
@@ -101,8 +101,8 @@ public:
   //----------------------------------------------------------------------
   // Methods for handling the vector of uses of this Value.
   //
-  typedef vector<User*>::iterator       use_iterator;
-  typedef vector<User*>::const_iterator use_const_iterator;
+  typedef std::vector<User*>::iterator       use_iterator;
+  typedef std::vector<User*>::const_iterator use_const_iterator;
 
   inline unsigned           use_size()  const { return Uses.size();  }
   inline bool               use_empty() const { return Uses.empty(); }

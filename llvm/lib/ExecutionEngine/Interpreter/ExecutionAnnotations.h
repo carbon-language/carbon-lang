@@ -23,7 +23,7 @@ static AnnotationID MethodInfoAID(
 
 struct MethodInfo : public Annotation {
   MethodInfo(Method *M);
-  vector<unsigned> NumPlaneElements;
+  std::vector<unsigned> NumPlaneElements;
 
 
   // Create - Factory function to allow MethodInfo annotations to be

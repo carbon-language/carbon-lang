@@ -17,7 +17,7 @@
 
 // Int register names in same order as enum in class SparcIntRegOrder
 
-static string const IntRegNames[] = 
+static const std::string IntRegNames[] = 
   {  
     "o0", "o1", "o2", "o3", "o4", "o5",       "o7",
     "l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7",
@@ -75,7 +75,7 @@ class SparcIntRegOrder{
   static unsigned int const NumOfAllRegs = o6 + 1; 
 
 
-  static const string  getRegName(const unsigned reg) {
+  static const std::string getRegName(const unsigned reg) {
     assert( reg < NumOfAllRegs );
     return IntRegNames[reg];
   }
@@ -119,7 +119,7 @@ class SparcIntRegClass : public MachineRegClassInfo
 // Float Register Class
 //-----------------------------------------------------------------------------
 
-static string const FloatRegNames[] = 
+static const std::string FloatRegNames[] = 
   {    
     "f0",  "f1",  "f2",  "f3",  "f4",  "f5",  "f6",  "f7",  "f8",  "f9", 
     "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17", "f18", "f19",
@@ -157,7 +157,7 @@ class SparcFloatRegOrder{
   static unsigned int const StartOfAllRegs = f0;
 
 
-  static const string  getRegName(const unsigned reg) {
+  static const std::string getRegName(const unsigned reg) {
     assert( reg < NumOfAllRegs );
     return FloatRegNames[reg];
   }
@@ -203,7 +203,7 @@ class SparcFloatRegClass : public MachineRegClassInfo
 //-----------------------------------------------------------------------------
 
 
-static string const IntCCRegNames[] = 
+static const std::string IntCCRegNames[] = 
   {    
     "xcc",  "ccr"
   };
@@ -218,7 +218,7 @@ class SparcIntCCRegOrder{
     xcc, ccr   // only one is available - see the note above
   };
 
-  static const string  getRegName(const unsigned reg) {
+  static const std::string getRegName(const unsigned reg) {
     assert( reg < 2 );
     return IntCCRegNames[reg];
   }
@@ -253,7 +253,7 @@ public:
 //-----------------------------------------------------------------------------
 
 
-static string const FloatCCRegNames[] = 
+static const std::string FloatCCRegNames[] = 
   {    
     "fcc0",  "fcc1",  "fcc2",  "fcc3"
   };
@@ -268,7 +268,7 @@ class SparcFloatCCRegOrder{
     fcc0, fcc1, fcc2, fcc3
   };
 
-  static const string  getRegName(const unsigned reg) {
+  static const std::string getRegName(const unsigned reg) {
     assert( reg < 4 );
     return FloatCCRegNames[reg];
   }

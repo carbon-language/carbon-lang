@@ -28,6 +28,10 @@
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "Support/CommandLine.h"
 #include <algorithm>
+#include <iostream>
+using std::cout;
+using std::cerr;
+using std::pair;
 
 static void PrintMethod(Method *M) {
   cout << M;
@@ -38,7 +42,7 @@ static void PrintIntervalPartition(Method *M) {
 }
 
 static void PrintClassifiedExprs(Method *M) {
-  cout << "Classified expressions for: " << M->getName() << endl;
+  cout << "Classified expressions for: " << M->getName() << "\n";
   Method::inst_iterator I = M->inst_begin(), E = M->inst_end();
   for (; I != E; ++I) {
     cout << *I;
@@ -61,7 +65,7 @@ static void PrintClassifiedExprs(Method *M) {
       if (R.Offset) WriteAsOperand(cout, (Value*)R.Offset); else cout << " 0";
       break;
     }
-    cout << endl << endl;
+    cout << "\n\n";
   }
 }
 

@@ -21,7 +21,7 @@
 class AllocationInst : public Instruction {
 public:
   AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
-		 const string &Name = "")
+		 const std::string &Name = "")
     : Instruction(Ty, iTy, Name) {
     assert(Ty->isPointerType() && "Can't allocate a non pointer type!");
 
@@ -67,7 +67,7 @@ public:
 
 class MallocInst : public AllocationInst {
 public:
-  MallocInst(const Type *Ty, Value *ArraySize = 0, const string &Name = "") 
+  MallocInst(const Type *Ty, Value *ArraySize = 0, const std::string &Name = "")
     : AllocationInst(Ty, ArraySize, Malloc, Name) {}
 
   virtual Instruction *clone() const { 
@@ -94,7 +94,7 @@ public:
 
 class AllocaInst : public AllocationInst {
 public:
-  AllocaInst(const Type *Ty, Value *ArraySize = 0, const string &Name = "") 
+  AllocaInst(const Type *Ty, Value *ArraySize = 0, const std::string &Name = "")
     : AllocationInst(Ty, ArraySize, Alloca, Name) {}
 
   virtual Instruction *clone() const { 
@@ -154,7 +154,7 @@ public:
 class MemAccessInst : public Instruction {
 protected:
   inline MemAccessInst(const Type *Ty, unsigned Opcode,
-		       const string &Nam = "")
+		       const std::string &Nam = "")
     : Instruction(Ty, Opcode, Nam) {}
 public:
   // getIndexedType - Returns the type of the element that would be loaded with
@@ -164,7 +164,7 @@ public:
   // pointer type.
   //
   static const Type *getIndexedType(const Type *Ptr, 
-				    const vector<Value*> &Indices,
+				    const std::vector<Value*> &Indices,
 				    bool AllowStructLeaf = false);
 
   inline op_iterator       idx_begin()       {
@@ -177,8 +177,8 @@ public:
   inline const_op_iterator idx_end()   const { return op_end(); }
 
 
-  vector<Value*> copyIndices() const {
-    return vector<Value*>(idx_begin(), idx_end());
+  std::vector<Value*> copyIndices() const {
+    return std::vector<Value*>(idx_begin(), idx_end());
   }
 
   Value *getPointerOperand() {
@@ -217,8 +217,8 @@ class LoadInst : public MemAccessInst {
       Operands.push_back(Use(LI.Operands[i], this));
   }
 public:
-  LoadInst(Value *Ptr, const vector<Value*> &Idx, const string &Name = "");
-  LoadInst(Value *Ptr, const string &Name = "");
+  LoadInst(Value *Ptr, const std::vector<Value*> &Ix, const std::string & = "");
+  LoadInst(Value *Ptr, const std::string &Name = "");
 
   virtual Instruction *clone() const { return new LoadInst(*this); }
   virtual const char *getOpcodeName() const { return "load"; }  
@@ -247,9 +247,9 @@ class StoreInst : public MemAccessInst {
       Operands.push_back(Use(SI.Operands[i], this));
   }
 public:
-  StoreInst(Value *Val, Value *Ptr, const vector<Value*> &Idx,
-	    const string &Name = "");
-  StoreInst(Value *Val, Value *Ptr, const string &Name = "");
+  StoreInst(Value *Val, Value *Ptr, const std::vector<Value*> &Idx,
+	    const std::string &Name = "");
+  StoreInst(Value *Val, Value *Ptr, const std::string &Name = "");
   virtual Instruction *clone() const { return new StoreInst(*this); }
 
   virtual const char *getOpcodeName() const { return "store"; }  
@@ -280,8 +280,8 @@ class GetElementPtrInst : public MemAccessInst {
       Operands.push_back(Use(EPI.Operands[i], this));
   }
 public:
-  GetElementPtrInst(Value *Ptr, const vector<Value*> &Idx,
-		    const string &Name = "");
+  GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
+		    const std::string &Name = "");
   virtual Instruction *clone() const { return new GetElementPtrInst(*this); }
   virtual const char *getOpcodeName() const { return "getelementptr"; }  
   virtual unsigned getFirstIndexOperandNumber() const { return 1; }

@@ -8,10 +8,10 @@
 #define LLVM_TARGET_MACHINESCHEDINFO_H
 
 #include "llvm/Target/MachineInstrInfo.h"
-#include <hash_map>
+#include <ext/hash_map>
 
 typedef long long cycles_t; 
-const cycles_t HUGE_LATENCY = ~((unsigned long long) 1 << sizeof(cycles_t)-1);
+const cycles_t HUGE_LATENCY = ~((unsigned long long) 1 << sizeof(cycles_t)-2);
 const cycles_t INVALID_LATENCY = -HUGE_LATENCY; 
 static const unsigned MAX_OPCODE_SIZE = 16;
 
@@ -28,13 +28,13 @@ private:
   OpCodePair();			// disable for now
 };
 
-
+namespace std {
 template <> struct hash<OpCodePair> {
   size_t operator()(const OpCodePair& pair) const {
     return hash<long>()(pair.val);
   }
 };
-
+}
 
 //---------------------------------------------------------------------------
 // class MachineResource 
@@ -50,10 +50,10 @@ typedef unsigned int resourceId_t;
 
 class MachineResource {
 public:
-  const string rname;
+  const std::string rname;
   resourceId_t rid;
   
-  /*ctor*/	MachineResource(const string& resourceName)
+  /*ctor*/	MachineResource(const std::string& resourceName)
 			: rname(resourceName), rid(nextId++) {}
   
 private:
@@ -66,7 +66,7 @@ class CPUResource : public MachineResource {
 public:
   int		maxNumUsers;		// MAXINT if no restriction
   
-  /*ctor*/	CPUResource(const string& rname, int maxUsers)
+  /*ctor*/	CPUResource(const std::string& rname, int maxUsers)
 			: MachineResource(rname), maxNumUsers(maxUsers) {}
 };
 
@@ -147,11 +147,11 @@ struct InstrRUsage {
   cycles_t	numBubbles;
   
   // Feasible slots to use for this instruction.
-  vector<bool>	feasibleSlots;
+  std::vector<bool> feasibleSlots;
   
   // Resource usages for this instruction, with one resource vector per cycle.
   cycles_t	numCycles;
-  vector<vector<resourceId_t> > resourcesByCycle;
+  std::vector<std::vector<resourceId_t> > resourcesByCycle;
   
 private:
   // Conveniences for initializing this structure
@@ -243,7 +243,7 @@ InstrRUsage::addUsageDelta(const InstrRUsageDelta& delta)
   
   // resize the resources vector if more cycles are specified
   unsigned maxCycles = this->numCycles;
-  maxCycles = max(maxCycles, delta.startCycle + abs(NC) - 1);
+  maxCycles = std::max(maxCycles, delta.startCycle + abs(NC) - 1);
   if (maxCycles > this->numCycles)
     {
       this->resourcesByCycle.resize(maxCycles);
@@ -259,7 +259,7 @@ InstrRUsage::addUsageDelta(const InstrRUsageDelta& delta)
       {
 	// Look for the resource backwards so we remove the last entry
 	// for that resource in each cycle.
-	vector<resourceId_t>& rvec = this->resourcesByCycle[c];
+	std::vector<resourceId_t>& rvec = this->resourcesByCycle[c];
 	int r;
 	for (r = (int) rvec.size(); r >= 0; r--)
 	  if (rvec[r] == delta.resourceId)
@@ -349,14 +349,14 @@ public:
   
   inline  int 	getMinIssueGap		(MachineOpCode fromOp,
 					 MachineOpCode toOp)   const {
-    hash_map<OpCodePair,int>::const_iterator
+    std::hash_map<OpCodePair,int>::const_iterator
       I = issueGaps.find(OpCodePair(fromOp, toOp));
     return (I == issueGaps.end())? 0 : (*I).second;
   }
   
-  inline const vector<MachineOpCode>*
+  inline const std::vector<MachineOpCode>*
 		getConflictList(MachineOpCode opCode) const {
-    hash_map<MachineOpCode,vector<MachineOpCode> >::const_iterator
+    std::hash_map<MachineOpCode, std::vector<MachineOpCode> >::const_iterator
       I = conflictLists.find(opCode);
     return (I == conflictLists.end())? NULL : & (*I).second;
   }
@@ -377,22 +377,22 @@ protected:
   virtual void	initializeResources	();
   
 private:
-  void computeInstrResources(const vector<InstrRUsage>& instrRUForClasses);
-  void computeIssueGaps(const vector<InstrRUsage>& instrRUForClasses);
+  void computeInstrResources(const std::vector<InstrRUsage>& instrRUForClasses);
+  void computeIssueGaps(const std::vector<InstrRUsage>& instrRUForClasses);
   
 protected:
   int		           numSchedClasses;
   const MachineInstrInfo*  mii;
-  const	InstrClassRUsage*  classRUsages;	// raw array by sclass
-  const	InstrRUsageDelta*  usageDeltas;		// raw array [1:numUsageDeltas]
-  const InstrIssueDelta*   issueDeltas;		// raw array [1:numIssueDeltas]
+  const	InstrClassRUsage*  classRUsages;        // raw array by sclass
+  const	InstrRUsageDelta*  usageDeltas;	        // raw array [1:numUsageDeltas]
+  const InstrIssueDelta*   issueDeltas;	        // raw array [1:numIssueDeltas]
   unsigned int		   numUsageDeltas;
   unsigned int		   numIssueDeltas;
   
-  vector<InstrRUsage>      instrRUsages;	// indexed by opcode
-  hash_map<OpCodePair,int> issueGaps;		// indexed by opcode pair
-  hash_map<MachineOpCode,vector<MachineOpCode> >
-			   conflictLists;	// indexed by opcode
+  std::vector<InstrRUsage>      instrRUsages;   // indexed by opcode
+  std::hash_map<OpCodePair,int> issueGaps;      // indexed by opcode pair
+  std::hash_map<MachineOpCode, std::vector<MachineOpCode> >
+			   conflictLists;       // indexed by opcode
 };
 
 #endif

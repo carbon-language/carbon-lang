@@ -22,8 +22,6 @@
 #include "llvm/Annotation.h"
 #include "llvm/Method.h"
 #include <iterator>
-#include <hash_map>
-#include <hash_set>
 #include <values.h>
 
 template<class _MI, class _V> class ValOpIterator;
@@ -131,7 +129,7 @@ public:
   }
   
 public:
-  friend ostream& operator<<(ostream& os, const MachineOperand& mop);
+  friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
 
   
 private:
@@ -262,9 +260,9 @@ class MachineInstr : public NonCopyable {
 private:
   MachineOpCode         opCode;
   OpCodeMask            opCodeMask;	// extra bits for variants of an opcode
-  vector<MachineOperand> operands;
-  vector<Value*>	implicitRefs;   // values implicitly referenced by this
-  vector<bool>          implicitIsDef;  // machine instruction (eg, call args)
+  std::vector<MachineOperand> operands;
+  std::vector<Value*>   implicitRefs;   // values implicitly referenced by this
+  std::vector<bool>     implicitIsDef;  // machine instruction (eg, call args)
   
 public:
   typedef ValOpIterator<const MachineInstr, const Value> val_const_op_iterator;
@@ -306,9 +304,9 @@ public:
 
   
 public:
-  friend ostream& operator<<(ostream& os, const MachineInstr& minstr);
-  friend val_const_op_iterator;
-  friend val_op_iterator;
+  friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
+  friend class val_const_op_iterator;
+  friend class val_op_iterator;
 
 public:
   // Access to set the operands when building the machine instruction
@@ -449,17 +447,17 @@ public:
 // 
 //---------------------------------------------------------------------------
 
-class MachineCodeForVMInstr: public vector<MachineInstr*>
+class MachineCodeForVMInstr: public std::vector<MachineInstr*>
 {
 private:
-  vector<Value*> tempVec;         // used by m/c instr but not VM instr
+  std::vector<Value*> tempVec;         // used by m/c instr but not VM instr
   
 public:
   /*ctor*/	MachineCodeForVMInstr	()	{}
   /*ctor*/	~MachineCodeForVMInstr	();
   
-  const vector<Value*>& getTempValues  () const { return tempVec; }
-        vector<Value*>& getTempValues  ()       { return tempVec; }
+  const std::vector<Value*>& getTempValues  () const { return tempVec; }
+        std::vector<Value*>& getTempValues  ()       { return tempVec; }
   
   void    addTempValue  (Value* val)            { tempVec.push_back(val); }
   
@@ -499,10 +497,10 @@ MachineCodeForVMInstr::~MachineCodeForVMInstr()
 //---------------------------------------------------------------------------
 
 
-class MachineCodeForBasicBlock: public vector<MachineInstr*> {
+class MachineCodeForBasicBlock: public std::vector<MachineInstr*> {
 public:
-  typedef vector<MachineInstr*>::iterator iterator;
-  typedef vector<const MachineInstr*>::const_iterator const_iterator;
+  typedef std::vector<MachineInstr*>::iterator iterator;
+  typedef std::vector<MachineInstr*>::const_iterator const_iterator;
 };
 
 
@@ -529,8 +527,8 @@ private:
   unsigned	currentOptionalArgsSize;
   unsigned	maxOptionalArgsSize;
   unsigned	currentTmpValuesSize;
-  hash_set<const Constant*> constantsForConstPool;
-  hash_map<const Value*, int> offsets;
+  std::hash_set<const Constant*> constantsForConstPool;
+  std::hash_map<const Value*, int> offsets;
   // hash_map<const Value*, int> offsetsFromSP;
   
 public:
@@ -572,7 +570,7 @@ public:
   inline unsigned getMaxOptionalArgsSize() const { return maxOptionalArgsSize;}
   inline unsigned getCurrentOptionalArgsSize() const
                                              { return currentOptionalArgsSize;}
-  inline const hash_set<const Constant*>&
+  inline const std::hash_set<const Constant*>&
                   getConstantPoolValues() const {return constantsForConstPool;}
   
   //
@@ -628,10 +626,10 @@ private:
 //---------------------------------------------------------------------------
 
 
-ostream& operator<<             (ostream& os, const MachineInstr& minstr);
+std::ostream& operator<<    (std::ostream& os, const MachineInstr& minstr);
 
 
-ostream& operator<<             (ostream& os, const MachineOperand& mop);
+std::ostream& operator<<    (std::ostream& os, const MachineOperand& mop);
 					 
 
 void	PrintMachineInstructions(const Method *method);

@@ -22,7 +22,7 @@ class Method;
 // error messages corresponding to the problem are added to the errorMsgs 
 // vectors, and a value of true is returned. 
 //
-bool verify(const Module *M, vector<string> &ErrorMsgs);
-bool verify(const Method *M, vector<string> &ErrorMsgs);
+bool verify(const Module *M, std::vector<std::string> &ErrorMsgs);
+bool verify(const Method *M, std::vector<std::string> &ErrorMsgs);
 
 #endif

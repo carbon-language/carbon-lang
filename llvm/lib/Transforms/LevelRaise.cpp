@@ -75,7 +75,7 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
     }
   }
 
-  vector<Value*> Indices;
+  std::vector<Value*> Indices;
   Value *Src = CI->getOperand(0);
   const Type *Result = ConvertableToGEP(DestPTy, Src, Indices, &BI);
   if (Result == 0) return false;  // Not convertable...
@@ -137,7 +137,7 @@ static bool PeepholeOptimizeAddCast(BasicBlock *BB, BasicBlock::iterator &BI,
   if (!CompTy || !SrcPtr || !OffsetVal->getType()->isIntegral())
     return false;
 
-  vector<Value*> Indices;
+  std::vector<Value*> Indices;
   if (!ConvertableToGEP(SrcPtr->getType(), OffsetVal, Indices, &BI))
     return false;  // Not convertable... perhaps next time
 
@@ -174,7 +174,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       PRINT_PEEPHOLE1("cast-of-self-ty", CI);
       CI->replaceAllUsesWith(Src);
       if (!Src->hasName() && CI->hasName()) {
-        string Name = CI->getName();
+        std::string Name = CI->getName();
         CI->setName("");
         Src->setName(Name, BB->getParent()->getSymbolTable());
       }
@@ -299,7 +299,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
           const Type *ElTy = 0;
 
           // Build the index vector, full of all zeros
-          vector<Value*> Indices;
+          std::vector<Value*> Indices;
           Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
           while (CurCTy && !isa<PointerType>(CurCTy)) {
             if (const StructType *CurSTy = dyn_cast<StructType>(CurCTy)) {

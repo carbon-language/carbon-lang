@@ -25,11 +25,11 @@ class GlobalVariable : public GlobalValue {
   bool isConstantGlobal;               // Is this a global constant?
 public:
   GlobalVariable(const Type *Ty, bool isConstant, bool isInternal,
-		 Constant *Initializer = 0, const string &Name = "");
+		 Constant *Initializer = 0, const std::string &Name = "");
   ~GlobalVariable() {}
 
   // Specialize setName to handle symbol table majik...
-  virtual void setName(const string &name, SymbolTable *ST = 0);
+  virtual void setName(const std::string &name, SymbolTable *ST = 0);
 
   // The initializer for the global variable/constant is held by Operands[0] if
   // an initializer is specified.

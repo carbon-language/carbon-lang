@@ -20,20 +20,17 @@
 
 #include "SchedPriorities.h"
 #include "Support/PostOrderIterator.h"
-
+#include <iostream>
+using std::cerr;
 
 SchedPriorities::SchedPriorities(const Method* method,
 				 const SchedGraph* _graph)
   : curTime(0),
     graph(_graph),
-    methodLiveVarInfo(method),				 // expensive!
-    lastUseMap(),
-    nodeDelayVec(_graph->getNumNodes(),INVALID_LATENCY), //make errors obvious
+    methodLiveVarInfo(method),	                          // expensive!
+    nodeDelayVec(_graph->getNumNodes(), INVALID_LATENCY), // make errors obvious
     earliestForNode(_graph->getNumNodes(), 0),
     earliestReadyTime(0),
-    candsAsHeap(),
-    candsAsSet(),
-    mcands(),
     nextToTry(candsAsHeap.begin())
 {
   methodLiveVarInfo.analyze();
@@ -66,7 +63,7 @@ SchedPriorities::computeDelays(const SchedGraph* graph)
 	       E != node->endOutEdges(); ++E)
 	    {
 	      cycles_t sinkDelay = getNodeDelayRef((*E)->getSink());
-	      nodeDelay = max(nodeDelay, sinkDelay + (*E)->getMinDelay());
+	      nodeDelay = std::max(nodeDelay, sinkDelay + (*E)->getMinDelay());
 	    }
 	}
       getNodeDelayRef(node) = nodeDelay;
@@ -87,20 +84,37 @@ SchedPriorities::initializeReadyHeap(const SchedGraph* graph)
   
 #undef TEST_HEAP_CONVERSION
 #ifdef TEST_HEAP_CONVERSION
-  cout << "Before heap conversion:" << endl;
+  cerr << "Before heap conversion:\n";
   copy(candsAsHeap.begin(), candsAsHeap.end(),
-       ostream_iterator<NodeDelayPair*>(cout,"\n"));
+       ostream_iterator<NodeDelayPair*>(cerr,"\n"));
 #endif
   
   candsAsHeap.makeHeap();
   
 #ifdef TEST_HEAP_CONVERSION
-  cout << "After heap conversion:" << endl;
+  cerr << "After heap conversion:\n";
   copy(candsAsHeap.begin(), candsAsHeap.end(),
-       ostream_iterator<NodeDelayPair*>(cout,"\n"));
+       ostream_iterator<NodeDelayPair*>(cerr,"\n"));
 #endif
 }
 
+void
+SchedPriorities::insertReady(const SchedGraphNode* node)
+{
+  candsAsHeap.insert(node, nodeDelayVec[node->getNodeId()]);
+  candsAsSet.insert(node);
+  mcands.clear(); // ensure reset choices is called before any more choices
+  earliestReadyTime = std::min(earliestReadyTime,
+                               earliestForNode[node->getNodeId()]);
+  
+  if (SchedDebugLevel >= Sched_PrintSchedTrace)
+    {
+      cerr << "    Cycle " << (long)getTime() << ": "
+	   << " Node " << node->getNodeId() << " is ready; "
+	   << " Delay = " << (long)getNodeDelayRef(node) << "; Instruction: \n";
+      cerr << "        " << *node->getMachineInstr() << "\n";
+    }
+}
 
 void
 SchedPriorities::issuedReadyNodeAt(cycles_t curTime,
@@ -116,7 +130,7 @@ SchedPriorities::issuedReadyNodeAt(cycles_t curTime,
       for (NodeHeap::const_iterator I=candsAsHeap.begin();
 	   I != candsAsHeap.end(); ++I)
 	if (candsAsHeap.getNode(I))
-	  earliestReadyTime = min(earliestReadyTime, 
+	  earliestReadyTime = std::min(earliestReadyTime, 
 				getEarliestForNodeRef(candsAsHeap.getNode(I)));
     }
   
@@ -125,7 +139,7 @@ SchedPriorities::issuedReadyNodeAt(cycles_t curTime,
        E != node->endOutEdges(); ++E)
     {
       cycles_t& etime = getEarliestForNodeRef((*E)->getSink());
-      etime = max(etime, curTime + (*E)->getMinDelay());
+      etime = std::max(etime, curTime + (*E)->getMinDelay());
     }    
 }
 
@@ -140,14 +154,14 @@ SchedPriorities::issuedReadyNodeAt(cycles_t curTime,
 //----------------------------------------------------------------------
 
 inline int
-SchedPriorities::chooseByRule1(vector<candIndex>& mcands)
+SchedPriorities::chooseByRule1(std::vector<candIndex>& mcands)
 {
   return (mcands.size() == 1)? 0	// only one choice exists so take it
 			     : -1;	// -1 indicates multiple choices
 }
 
 inline int
-SchedPriorities::chooseByRule2(vector<candIndex>& mcands)
+SchedPriorities::chooseByRule2(std::vector<candIndex>& mcands)
 {
   assert(mcands.size() >= 1 && "Should have at least one candidate here.");
   for (unsigned i=0, N = mcands.size(); i < N; i++)
@@ -158,7 +172,7 @@ SchedPriorities::chooseByRule2(vector<candIndex>& mcands)
 }
 
 inline int
-SchedPriorities::chooseByRule3(vector<candIndex>& mcands)
+SchedPriorities::chooseByRule3(std::vector<candIndex>& mcands)
 {
   assert(mcands.size() >= 1 && "Should have at least one candidate here.");
   int maxUses = candsAsHeap.getNode(mcands[0])->getNumOutEdges();	
@@ -224,7 +238,7 @@ SchedPriorities::getNextHighest(const SchedulingManager& S,
 
 
 void
-SchedPriorities::findSetWithMaxDelay(vector<candIndex>& mcands,
+SchedPriorities::findSetWithMaxDelay(std::vector<candIndex>& mcands,
 				     const SchedulingManager& S)
 {
   if (mcands.size() == 0 && nextToTry != candsAsHeap.end())
@@ -240,12 +254,12 @@ SchedPriorities::findSetWithMaxDelay(vector<candIndex>& mcands,
       
       if (SchedDebugLevel >= Sched_PrintSchedTrace)
 	{
-	  cout << "    Cycle " << this->getTime() << ": "
-	       << "Next highest delay = " << maxDelay << " : "
+	  cerr << "    Cycle " << (long)getTime() << ": "
+	       << "Next highest delay = " << (long)maxDelay << " : "
 	       << mcands.size() << " Nodes with this delay: ";
 	  for (unsigned i=0; i < mcands.size(); i++)
-	    cout << candsAsHeap.getNode(mcands[i])->getNodeId() << ", ";
-	  cout << endl;
+	    cerr << candsAsHeap.getNode(mcands[i])->getNodeId() << ", ";
+	  cerr << "\n";
 	}
     }
 }
@@ -257,10 +271,10 @@ SchedPriorities::instructionHasLastUse(MethodLiveVarInfo& methodLiveVarInfo,
 {
   const MachineInstr* minstr = graphNode->getMachineInstr();
   
-  hash_map<const MachineInstr*, bool>::const_iterator
+  std::hash_map<const MachineInstr*, bool>::const_iterator
     ui = lastUseMap.find(minstr);
   if (ui != lastUseMap.end())
-    return (*ui).second;
+    return ui->second;
   
   // else check if instruction is a last use and save it in the hash_map
   bool hasLastUse = false;

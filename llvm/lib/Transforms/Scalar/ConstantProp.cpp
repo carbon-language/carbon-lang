@@ -159,7 +159,7 @@ bool opt::ConstantFoldTerminator(TerminatorInst *T) {
 bool opt::ConstantPropogation::doConstantPropogation(BasicBlock *BB,
 						     BasicBlock::iterator &II) {
   Instruction *Inst = *II;
-  if (BinaryOperator *BInst = dyn_cast<BinaryOperator>(Inst)) {
+  if (isa<BinaryOperator>(Inst)) {
     Constant *D1 = dyn_cast<Constant>(Inst->getOperand(0));
     Constant *D2 = dyn_cast<Constant>(Inst->getOperand(1));
 

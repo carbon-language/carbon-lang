@@ -14,14 +14,14 @@ class Method;
 namespace cfg {class Interval; }
 
 class LoopDepthCalculator {
-  map<const BasicBlock*, unsigned> LoopDepth;
+  std::map<const BasicBlock*, unsigned> LoopDepth;
   inline void AddBB(const BasicBlock *BB);    // Increment count for this block
   inline void ProcessInterval(cfg::Interval *I);
 public:
   LoopDepthCalculator(Method *M);
 
   inline unsigned getLoopDepth(const BasicBlock *BB) const { 
-    map<const BasicBlock*, unsigned>::const_iterator I = LoopDepth.find(BB);
+    std::map<const BasicBlock*,unsigned>::const_iterator I = LoopDepth.find(BB);
     return I != LoopDepth.end() ? I->second : 0;
   }
 };

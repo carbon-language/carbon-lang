@@ -31,9 +31,9 @@ class Interval {
   //
   BasicBlock *HeaderNode;
 public:
-  typedef vector<BasicBlock*>::iterator succ_iterator;
-  typedef vector<BasicBlock*>::iterator pred_iterator;
-  typedef vector<BasicBlock*>::iterator node_iterator;
+  typedef std::vector<BasicBlock*>::iterator succ_iterator;
+  typedef std::vector<BasicBlock*>::iterator pred_iterator;
+  typedef std::vector<BasicBlock*>::iterator node_iterator;
 
   inline Interval(BasicBlock *Header) : HeaderNode(Header) {
     Nodes.push_back(Header);
@@ -46,18 +46,18 @@ public:
 
   // Nodes - The basic blocks in this interval.
   //
-  vector<BasicBlock*> Nodes;
+  std::vector<BasicBlock*> Nodes;
 
   // Successors - List of BasicBlocks that are reachable directly from nodes in
   // this interval, but are not in the interval themselves.
   // These nodes neccesarily must be header nodes for other intervals.
   //
-  vector<BasicBlock*> Successors;
+  std::vector<BasicBlock*> Successors;
 
   // Predecessors - List of BasicBlocks that have this Interval's header block
   // as one of their successors.
   //
-  vector<BasicBlock*> Predecessors;
+  std::vector<BasicBlock*> Predecessors;
 
   // contains - Find out if a basic block is in this interval
   inline bool contains(BasicBlock *BB) const {

@@ -18,7 +18,8 @@
 #include "llvm/Assembly/Writer.h"
 #include "Support/StringExtras.h"
 #include <sstream>
-
+using std::vector;
+using std::string;
 
 // Add a prototype for printf if it is not already in the program.
 //
@@ -110,8 +111,6 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, BasicBlock::iterator &BBI,
   // Escape Message by replacing all % characters with %% chars.
   unsigned Offset = 0;
   while ((Offset = Message.find('%', Offset)) != string::npos) {
-    string::iterator Offs = Message.begin()+Offset;
-    //Message.replace(Offs, Offs+1, "%%");
     Message.replace(Offset, 2, "%%");
     Offset += 2;  // Skip over the new %'s
   }
@@ -140,7 +139,7 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, BasicBlock::iterator &BBI,
 static void InsertVerbosePrintInst(Value *V, BasicBlock *BB,
                                    BasicBlock::iterator &BBI,
                                    const string &Message, Method *Printf) {
-  ostringstream OutStr;
+  std::ostringstream OutStr;
   if (V) WriteAsOperand(OutStr, V);
   InsertPrintInst(V, BB, BBI, Message+OutStr.str()+" = ", Printf);
 }
@@ -184,7 +183,7 @@ static void TraceValuesAtBBExit(BasicBlock *BB, Method *Printf,
   // Copy all of the instructions into a vector to avoid problems with Setcc
   const vector<Instruction*> Insts(BB->begin(), InsertPos);
 
-  ostringstream OutStr;
+  std::ostringstream OutStr;
   WriteAsOperand(OutStr, BB, false);
   InsertPrintInst(0, BB, InsertPos, "LEAVING BB:" + OutStr.str(), Printf);
 
@@ -211,7 +210,7 @@ static inline void InsertCodeToShowMethodEntry(Method *M, Method *Printf) {
   BasicBlock *BB = M->getEntryNode();
   BasicBlock::iterator BBI = BB->begin();
 
-  ostringstream OutStr;
+  std::ostringstream OutStr;
   WriteAsOperand(OutStr, M, true);
   InsertPrintInst(0, BB, BBI, "ENTERING METHOD: " + OutStr.str(), Printf);
 
@@ -231,7 +230,7 @@ static inline void InsertCodeToShowMethodExit(BasicBlock *BB, Method *Printf) {
   BasicBlock::iterator BBI = BB->end()-1;
   ReturnInst *Ret = cast<ReturnInst>(*BBI);
   
-  ostringstream OutStr;
+  std::ostringstream OutStr;
   WriteAsOperand(OutStr, BB->getParent(), true);
   InsertPrintInst(0, BB, BBI, "LEAVING  METHOD: " + OutStr.str(), Printf);
   
@@ -249,8 +248,6 @@ bool InsertTraceCode::doit(Method *M, bool traceBasicBlockExits,
   vector<Instruction*> valuesStoredInMethod;
   vector<BasicBlock*>  exitBlocks;
 
-  Module *module = M->getParent();
- 
   if (traceMethodEvents)
     InsertCodeToShowMethodEntry(M, Printf);
   

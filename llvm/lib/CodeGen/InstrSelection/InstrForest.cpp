@@ -31,6 +31,9 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/STLExtras.h"
+#include <iostream>
+using std::cerr;
+using std::vector;
 
 //------------------------------------------------------------------------ 
 // class InstrTreeNode
@@ -119,21 +122,21 @@ void
 InstructionNode::dumpNode(int indent) const
 {
   for (int i=0; i < indent; i++)
-    cout << "    ";
+    cerr << "    ";
   
-  cout << getInstruction()->getOpcodeName();
+  cerr << getInstruction()->getOpcodeName();
   
   const vector<MachineInstr*> &mvec = getInstruction()->getMachineInstrVec();
   if (mvec.size() > 0)
-    cout << "\tMachine Instructions:  ";
+    cerr << "\tMachine Instructions:  ";
   for (unsigned int i=0; i < mvec.size(); i++)
     {
       mvec[i]->dump(0);
       if (i < mvec.size() - 1)
-	cout << ";  ";
+	cerr << ";  ";
     }
   
-  cout << endl;
+  cerr << "\n";
 }
 
 
@@ -141,9 +144,9 @@ void
 VRegListNode::dumpNode(int indent) const
 {
   for (int i=0; i < indent; i++)
-    cout << "    ";
+    cerr << "    ";
   
-  cout << "List" << endl;
+  cerr << "List" << "\n";
 }
 
 
@@ -151,29 +154,29 @@ void
 VRegNode::dumpNode(int indent) const
 {
   for (int i=0; i < indent; i++)
-    cout << "    ";
+    cerr << "    ";
   
-  cout << "VReg " << getValue() << "\t(type "
-       << (int) getValue()->getValueType() << ")" << endl;
+  cerr << "VReg " << getValue() << "\t(type "
+       << (int) getValue()->getValueType() << ")" << "\n";
 }
 
 void
 ConstantNode::dumpNode(int indent) const
 {
   for (int i=0; i < indent; i++)
-    cout << "    ";
+    cerr << "    ";
   
-  cout << "Constant " << getValue() << "\t(type "
-       << (int) getValue()->getValueType() << ")" << endl;
+  cerr << "Constant " << getValue() << "\t(type "
+       << (int) getValue()->getValueType() << ")" << "\n";
 }
 
 void
 LabelNode::dumpNode(int indent) const
 {
   for (int i=0; i < indent; i++)
-    cout << "    ";
+    cerr << "    ";
   
-  cout << "Label " << getValue() << endl;
+  cerr << "Label " << getValue() << "\n";
 }
 
 //------------------------------------------------------------------------
@@ -190,7 +193,7 @@ InstrForest::InstrForest(Method *M)
 
 InstrForest::~InstrForest()
 {
-  for (hash_map<const Instruction*, InstructionNode*>:: iterator I = begin();
+  for (std::hash_map<const Instruction*,InstructionNode*>::iterator I = begin();
        I != end(); ++I)
       delete (*I).second;
 }
@@ -198,7 +201,7 @@ InstrForest::~InstrForest()
 void
 InstrForest::dump() const
 {
-  for (hash_set<InstructionNode*>::const_iterator I = treeRoots.begin();
+  for (std::hash_set<InstructionNode*>::const_iterator I = treeRoots.begin();
        I != treeRoots.end(); ++I)
     (*I)->dump(/*dumpChildren*/ 1, /*indent*/ 0);
 }

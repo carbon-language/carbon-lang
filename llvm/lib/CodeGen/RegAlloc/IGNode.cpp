@@ -1,12 +1,13 @@
 #include "llvm/CodeGen/IGNode.h"
-
+#include <algorithm>
+#include <iostream>
+using std::cerr;
 
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-IGNode::IGNode(LiveRange *const PLR, unsigned int Ind): Index(Ind),
-							AdjList(),
-                                                        ParentLR(PLR)
+IGNode::IGNode(LiveRange *const PLR, unsigned int Ind) : Index(Ind),
+                                                         ParentLR(PLR)
 {
   OnStack = false;
   CurDegree = -1 ;
@@ -23,11 +24,12 @@ void IGNode::pushOnStack()
   int neighs = AdjList.size();
 
   if( neighs < 0) {
-    cout << "\nAdj List size = " << neighs;
+    cerr << "\nAdj List size = " << neighs;
     assert(0 && "Invalid adj list size");
   }
 
-  for(int i=0; i < neighs; i++)  (AdjList[i])->decCurDegree();
+  for(int i=0; i < neighs; i++)
+    AdjList[i]->decCurDegree();
 }
  
 //-----------------------------------------------------------------------------
@@ -35,11 +37,9 @@ void IGNode::pushOnStack()
 // two IGNodes together.
 //-----------------------------------------------------------------------------
 void IGNode::delAdjIGNode(const IGNode *const Node) {
-  vector <IGNode *>::iterator It = AdjList.begin();
-    
-  // find Node
-  for( ; It != AdjList.end() && (*It != Node); It++ ) ;
+  std::vector<IGNode *>::iterator It = 
+    find(AdjList.begin(), AdjList.end(), Node);
   assert( It != AdjList.end() );      // the node must be there
-  
-  AdjList.erase( It );
+    
+  AdjList.erase(It);
 }

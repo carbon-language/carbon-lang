@@ -26,6 +26,7 @@
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/Target/MachineSchedInfo.h"
 #include <list>
+#include <ostream>
 
 class Method;
 class MachineInstr;
@@ -36,22 +37,22 @@ struct NodeDelayPair {
   const SchedGraphNode* node;
   cycles_t delay;
   NodeDelayPair(const SchedGraphNode* n, cycles_t d) :  node(n), delay(d) {}
-  inline bool operator< (const NodeDelayPair& np) { return delay < np.delay; }
+  inline bool operator<(const NodeDelayPair& np) { return delay < np.delay; }
 };
 
 inline bool
 NDPLessThan(const NodeDelayPair* np1, const NodeDelayPair* np2)
 {
-  return (np1->delay < np2->delay);
+  return np1->delay < np2->delay;
 }
 
-class NodeHeap: public list<NodeDelayPair*>, public NonCopyable {
+class NodeHeap: public std::list<NodeDelayPair*>, public NonCopyable {
 public:
-  typedef list<NodeDelayPair*>::iterator iterator;
-  typedef list<NodeDelayPair*>::const_iterator const_iterator;
+  typedef std::list<NodeDelayPair*>::iterator iterator;
+  typedef std::list<NodeDelayPair*>::const_iterator const_iterator;
   
 public:
-  /*ctor*/	  NodeHeap	() : list<NodeDelayPair*>(), _size(0) {}
+  /*ctor*/	  NodeHeap	() : std::list<NodeDelayPair*>(), _size(0) {}
   /*dtor*/	  ~NodeHeap	() {}
   
   inline unsigned int	size	() const { return _size; }
@@ -89,7 +90,7 @@ public:
 	iterator I=begin();
 	for ( ; I != end() && getDelay(I) >= delay; ++I)
 	  ;
-	list<NodeDelayPair*>::insert(I, ndp);
+	std::list<NodeDelayPair*>::insert(I, ndp);
       }
     _size++;
   }
@@ -131,22 +132,22 @@ private:
   cycles_t curTime;
   const SchedGraph* graph;
   MethodLiveVarInfo methodLiveVarInfo;
-  hash_map<const MachineInstr*, bool> lastUseMap;
-  vector<cycles_t> nodeDelayVec;
-  vector<cycles_t> earliestForNode;
+  std::hash_map<const MachineInstr*, bool> lastUseMap;
+  std::vector<cycles_t> nodeDelayVec;
+  std::vector<cycles_t> earliestForNode;
   cycles_t earliestReadyTime;
   NodeHeap candsAsHeap;				// candidate nodes, ready to go
-  hash_set<const SchedGraphNode*> candsAsSet;	// same entries as candsAsHeap,
+  std::hash_set<const SchedGraphNode*> candsAsSet;//same entries as candsAsHeap,
 						//   but as set for fast lookup
-  vector<candIndex> mcands;			// holds pointers into cands
+  std::vector<candIndex> mcands;                // holds pointers into cands
   candIndex nextToTry;				// next cand after the last
 						//   one tried in this cycle
   
-  int		chooseByRule1		(vector<candIndex>& mcands);
-  int		chooseByRule2		(vector<candIndex>& mcands);
-  int		chooseByRule3		(vector<candIndex>& mcands);
+  int		chooseByRule1		(std::vector<candIndex>& mcands);
+  int		chooseByRule2		(std::vector<candIndex>& mcands);
+  int		chooseByRule3		(std::vector<candIndex>& mcands);
   
-  void		findSetWithMaxDelay	(vector<candIndex>& mcands,
+  void		findSetWithMaxDelay	(std::vector<candIndex>& mcands,
 					 const SchedulingManager& S);
   
   void		computeDelays		(const SchedGraph* graph);
@@ -169,36 +170,15 @@ private:
 };
 
 
-inline void
-SchedPriorities::insertReady(const SchedGraphNode* node)
-{
-  candsAsHeap.insert(node, nodeDelayVec[node->getNodeId()]);
-  candsAsSet.insert(node);
-  mcands.clear(); // ensure reset choices is called before any more choices
-  earliestReadyTime = min(earliestReadyTime,
-			  earliestForNode[node->getNodeId()]);
-  
-  if (SchedDebugLevel >= Sched_PrintSchedTrace)
-    {
-      cout << "    Cycle " << this->getTime() << ": "
-	   << " Node " << node->getNodeId() << " is ready; "
-	   << " Delay = " << this->getNodeDelayRef(node) << "; Instruction: "
-	   << endl;
-      cout << "        " << *node->getMachineInstr() << endl;
-    }
-}
-
 inline void SchedPriorities::updateTime(cycles_t c) {
   curTime = c;
   nextToTry = candsAsHeap.begin();
   mcands.clear();
 }
 
-inline ostream& operator<< (ostream& os, const NodeDelayPair* nd) {
+inline std::ostream &operator<<(std::ostream &os, const NodeDelayPair* nd) {
   return os << "Delay for node " << nd->node->getNodeId()
-	    << " = " << nd->delay << endl;
+	    << " = " << (long)nd->delay << "\n";
 }
-
-/***************************************************************************/
 
 #endif

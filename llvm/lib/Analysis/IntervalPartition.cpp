@@ -9,6 +9,7 @@
 #include "Support/STLExtras.h"
 
 using namespace cfg;
+using std::make_pair;
 
 //===----------------------------------------------------------------------===//
 // IntervalPartition Implementation

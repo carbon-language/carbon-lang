@@ -22,16 +22,17 @@
 #include "Support/StringExtras.h"
 #include "Support/HashExtras.h"
 #include <locale.h>
+using std::string;
 
 namespace {
 
 
 class SparcAsmPrinter {
-  typedef hash_map<const Value*, int> ValIdMap;
+  typedef std::hash_map<const Value*, int> ValIdMap;
   typedef ValIdMap::      iterator ValIdMapIterator;
   typedef ValIdMap::const_iterator ValIdMapConstIterator;
   
-  ostream &toAsm;
+  std::ostream &toAsm;
   SlotCalculator Table;   // map anonymous values to unique integer IDs
   ValIdMap valToIdMap;    // used for values not handled by SlotCalculator 
   const UltraSparc &Target;
@@ -45,7 +46,7 @@ class SparcAsmPrinter {
   } CurSection;
   
 public:
-  inline SparcAsmPrinter(ostream &o, const Module *M, const UltraSparc &t)
+  inline SparcAsmPrinter(std::ostream &o, const Module *M, const UltraSparc &t)
     : toAsm(o), Table(SlotCalculator(M, true)), Target(t), CurSection(Unknown) {
     emitModule(M);
   }
@@ -61,7 +62,7 @@ private :
   void printGlobalVariable(   const GlobalVariable* GV);
   void printSingleConstant(   const Constant* CV);
   void printConstantValueOnly(const Constant* CV);
-  void printConstant(         const Constant* CV, string valID=string(""));
+  void printConstant(         const Constant* CV, std::string valID = "");
   
   unsigned int printOperands(const MachineInstr *MI, unsigned int opNum);
   void printOneOperand(const MachineOperand &Op);
@@ -88,7 +89,7 @@ private :
     toAsm << "\n";
   }
 
-  string getValidSymbolName(const string &S) {
+  std::string getValidSymbolName(const string &S) {
     string Result;
     
     // Symbol names in Sparc assembly language have these rules:
@@ -318,7 +319,7 @@ SparcAsmPrinter::printOneOperand(const MachineOperand &op)
     
     case MachineOperand::MO_SignExtendedImmed:
     case MachineOperand::MO_UnextendedImmed:
-      toAsm << op.getImmedValue();
+      toAsm << (long)op.getImmedValue();
       break;
     
     default:
@@ -351,7 +352,7 @@ SparcAsmPrinter::emitMachineInst(const MachineInstr *MI)
   else
     N = 1;
   
-  toAsm << endl;
+  toAsm << "\n";
 }
 
 void
@@ -393,7 +394,7 @@ SparcAsmPrinter::emitMethod(const Method *M)
   // Output a .size directive so the debugger knows the extents of the function
   toAsm << ".EndOf_" << methName << ":\n\t.size "
         << methName << ", .EndOf_"
-        << methName << "-" << methName << endl;
+        << methName << "-" << methName << "\n";
 
   // Put some spaces between the methods
   toAsm << "\n\n";
@@ -487,7 +488,6 @@ TypeToAlignment(const Type* type, const TargetMachine& target)
 inline unsigned int
 ConstantToAlignment(const Constant* CV, const TargetMachine& target)
 {
-  unsigned int constantSize;
   if (ConstantArray* CPA = dyn_cast<ConstantArray>(CV))
     if (ArrayTypeIsString(cast<ArrayType>(CPA->getType())))
       return SizeToAlignment(1 + CPA->getNumOperands(), target);
@@ -515,16 +515,15 @@ SparcAsmPrinter::printSingleConstant(const Constant* CV)
     {
       if (CV->getType() == Type::FloatTy || CV->getType() == Type::DoubleTy)
         toAsm << "0r";                  // FP constants must have this prefix
-      toAsm << CV->getStrValue() << endl;
+      toAsm << CV->getStrValue() << "\n";
     }
   else if (ConstantPointer* CPP = dyn_cast<ConstantPointer>(CV))
     {
-      if (! CPP->isNullValue())
-        assert(0 && "Cannot yet print non-null pointer constants to assembly");
-      else
-        toAsm << (void*) NULL << endl;
+      assert(CPP->isNullValue() &&
+             "Cannot yet print non-null pointer constants to assembly");
+      toAsm << "0\n";
     }
-  else if (ConstantPointerRef* CPRef = dyn_cast<ConstantPointerRef>(CV))
+  else if (isa<ConstantPointerRef>(CV))
     {
       assert(0 && "Cannot yet initialize pointer refs in assembly");
     }
@@ -543,17 +542,17 @@ SparcAsmPrinter::printConstantValueOnly(const Constant* CV)
   
   if (CPA && isStringCompatible(CPA))
     { // print the string alone and return
-      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CPA) << endl;
+      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CPA) << "\n";
     }
   else if (CPA)
     { // Not a string.  Print the values in successive locations
-      const vector<Use>& constValues = CPA->getValues();
+      const std::vector<Use> &constValues = CPA->getValues();
       for (unsigned i=1; i < constValues.size(); i++)
         this->printConstantValueOnly(cast<Constant>(constValues[i].get()));
     }
   else if (ConstantStruct *CPS = dyn_cast<ConstantStruct>(CV))
     { // Print the fields in successive locations
-      const vector<Use>& constValues = CPS->getValues();
+      const std::vector<Use>& constValues = CPS->getValues();
       for (unsigned i=1; i < constValues.size(); i++)
         this->printConstantValueOnly(cast<Constant>(constValues[i].get()));
     }
@@ -571,25 +570,25 @@ SparcAsmPrinter::printConstant(const Constant* CV, string valID)
     valID = getID(CV);
   
   toAsm << "\t.align\t" << ConstantToAlignment(CV, Target)
-        << endl;
+        << "\n";
   
   // Print .size and .type only if it is not a string.
   ConstantArray *CPA = dyn_cast<ConstantArray>(CV);
   if (CPA && isStringCompatible(CPA))
     { // print it as a string and return
-      toAsm << valID << ":" << endl;
-      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CPA) << endl;
+      toAsm << valID << ":\n";
+      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CPA) << "\n";
       return;
     }
   
-  toAsm << "\t.type" << "\t" << valID << ",#object" << endl;
+  toAsm << "\t.type" << "\t" << valID << ",#object\n";
 
   unsigned int constSize = ConstantToSize(CV, Target);
   if (constSize)
     toAsm << "\t.size" << "\t" << valID << ","
-          << constSize << endl;
+          << constSize << "\n";
   
-  toAsm << valID << ":" << endl;
+  toAsm << valID << ":\n";
   
   this->printConstantValueOnly(CV);
 }
@@ -598,29 +597,29 @@ SparcAsmPrinter::printConstant(const Constant* CV, string valID)
 void
 SparcAsmPrinter::printGlobalVariable(const GlobalVariable* GV)
 {
-  toAsm << "\t.global\t" << getID(GV) << endl;
+  toAsm << "\t.global\t" << getID(GV) << "\n";
   
   if (GV->hasInitializer())
     printConstant(GV->getInitializer(), getID(GV));
   else {
     toAsm << "\t.align\t"
-          << TypeToAlignment(GV->getType()->getElementType(), Target) << endl;
-    toAsm << "\t.type\t" << getID(GV) << ",#object" << endl;
+          << TypeToAlignment(GV->getType()->getElementType(), Target) << "\n";
+    toAsm << "\t.type\t" << getID(GV) << ",#object\n";
     toAsm << "\t.reserve\t" << getID(GV) << ","
           << TypeToSize(GV->getType()->getElementType(), Target)
-          << endl;
+          << "\n";
   }
 }
 
 
 static void
 FoldConstants(const Module *M,
-               hash_set<const Constant*>& moduleConstants)
+              std::hash_set<const Constant*>& moduleConstants)
 {
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (! (*I)->isExternal())
       {
-        const hash_set<const Constant*>& pool =
+        const std::hash_set<const Constant*>& pool =
           MachineCodeForMethod::get(*I).getConstantPoolValues();
         moduleConstants.insert(pool.begin(), pool.end());
       }
@@ -636,7 +635,7 @@ SparcAsmPrinter::emitGlobalsAndConstants(const Module *M)
   // lets force these constants into the slot table so that we can get
   // unique names for unnamed constants also.
   // 
-  hash_set<const Constant*> moduleConstants;
+  std::hash_set<const Constant*> moduleConstants;
   FoldConstants(M, moduleConstants);
   
   // Now, emit the three data sections separately; the cost of I/O should
@@ -654,7 +653,8 @@ SparcAsmPrinter::emitGlobalsAndConstants(const Module *M)
         }
   }
   
-  for (hash_set<const Constant*>::const_iterator I = moduleConstants.begin(),
+  for (std::hash_set<const Constant*>::const_iterator
+         I = moduleConstants.begin(),
          E = moduleConstants.end();  I != E; ++I)
     printConstant(*I);
   
@@ -682,7 +682,7 @@ SparcAsmPrinter::emitGlobalsAndConstants(const Module *M)
         }
   }
 
-  toAsm << endl;
+  toAsm << "\n";
 }
 
 
@@ -705,7 +705,7 @@ SparcAsmPrinter::emitModule(const Module *M)
 // used.
 //
 void
-UltraSparc::emitAssembly(const Module *M, ostream &toAsm) const
+UltraSparc::emitAssembly(const Module *M, std::ostream &toAsm) const
 {
   SparcAsmPrinter Print(toAsm, M, *this);
 }

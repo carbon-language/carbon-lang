@@ -11,6 +11,8 @@
 #include "llvm/Type.h"
 #ifndef NDEBUG      // Only in -g mode...
 #include "llvm/Assembly/Writer.h"
+#include <iostream>
+using std::cerr;
 #endif
 #include <algorithm>
 
@@ -23,7 +25,7 @@ static inline const Type *checkType(const Type *Ty) {
   return Ty;
 }
 
-Value::Value(const Type *ty, ValueTy vty, const string &name = "")
+Value::Value(const Type *ty, ValueTy vty, const std::string &name = "")
   : Name(name), Ty(checkType(ty), this) {
   VTy = vty;
 }
@@ -39,7 +41,7 @@ Value::~Value() {
   if (Uses.begin() != Uses.end()) {
     cerr << "While deleting: " << this;
     for (use_const_iterator I = Uses.begin(); I != Uses.end(); ++I)
-      cerr << "Use still stuck around after Def is destroyed:" << *I << endl;
+      cerr << "Use still stuck around after Def is destroyed:" << *I << "\n";
   }
 #endif
   assert(Uses.begin() == Uses.end());
@@ -98,7 +100,7 @@ void Value::dump() const {
 //                                 User Class
 //===----------------------------------------------------------------------===//
 
-User::User(const Type *Ty, ValueTy vty, const string &name) 
+User::User(const Type *Ty, ValueTy vty, const std::string &name) 
   : Value(Ty, vty, name) {
 }
 

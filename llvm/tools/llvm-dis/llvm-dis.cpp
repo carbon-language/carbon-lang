@@ -24,6 +24,8 @@
 #include "Support/PostOrderIterator.h"
 #include "Support/CommandLine.h"
 #include <fstream>
+#include <iostream>
+using std::cerr;
 
 // OutputMode - The different orderings to print basic blocks in...
 enum OutputMode {
@@ -47,7 +49,7 @@ cl::EnumFlags<enum OutputMode> WriteMode(cl::NoFlags,
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
-  ostream *Out = &cout;  // Default to printing to stdout...
+  std::ostream *Out = &std::cout;  // Default to printing to stdout...
 
   Module *C = ParseBytecodeFile(InputFilename);
   if (C == 0) {
@@ -56,31 +58,41 @@ int main(int argc, char **argv) {
   }
   
   if (OutputFilename != "") {   // Specified an output filename?
-    Out = new ofstream(OutputFilename.c_str(), 
-		       (Force ? 0 : ios::noreplace)|ios::out);
+    if (!Force && !std::ifstream(OutputFilename.c_str())) {
+      // If force is not specified, make sure not to overwrite a file!
+      cerr << "Error opening '" << OutputFilename
+           << "': File exists! Sending to standard output.\n";
+    } else {
+      Out = new std::ofstream(OutputFilename.c_str());
+    }
   } else {
     if (InputFilename == "-") {
       OutputFilename = "-";
-      Out = &cout;
     } else {
-      string IFN = InputFilename;
+      std::string IFN = InputFilename;
       int Len = IFN.length();
       if (IFN[Len-3] == '.' && IFN[Len-2] == 'b' && IFN[Len-1] == 'c') {
 	// Source ends in .bc
-	OutputFilename = string(IFN.begin(), IFN.end()-3);
+	OutputFilename = std::string(IFN.begin(), IFN.end()-3);
       } else {
 	OutputFilename = IFN;   // Append a .ll to it
       }
       OutputFilename += ".ll";
-      Out = new ofstream(OutputFilename.c_str(), 
-			 (Force ? 0 : ios::noreplace)|ios::out);
+
+      if (!Force && !std::ifstream(OutputFilename.c_str())) {
+        // If force is not specified, make sure not to overwrite a file!
+        cerr << "Error opening '" << OutputFilename
+             << "': File exists! Sending to standard output.\n";
+      } else {
+        Out = new std::ofstream(OutputFilename.c_str());
+      }
     }
   }
 
   if (!Out->good()) {
     cerr << "Error opening " << OutputFilename
 	 << ": sending to stdout instead!\n";
-    Out = &cout;
+    Out = &std::cout;
   }
 
   // All that dis does is write the assembly out to a file... which is exactly
@@ -100,20 +112,20 @@ int main(int argc, char **argv) {
       switch (WriteMode) {
       case dfo:                   // Depth First ordering
 	copy(df_begin(M), df_end(M),
-	     ostream_iterator<BasicBlock*>(*Out, "\n"));
+	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
 	break;
       case rdfo:            // Reverse Depth First ordering
 	copy(df_begin(M, true), df_end(M),
-	     ostream_iterator<BasicBlock*>(*Out, "\n"));
+	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
 	break;
       case po:                    // Post Order
 	copy(po_begin(M), po_end(M),
-	     ostream_iterator<BasicBlock*>(*Out, "\n"));
+	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
 	break;
       case rpo: {           // Reverse Post Order
 	ReversePostOrderTraversal RPOT(M);
 	copy(RPOT.begin(), RPOT.end(),
-	     ostream_iterator<BasicBlock*>(*Out, "\n"));
+	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
 	break;
       }
       default:
@@ -124,6 +136,6 @@ int main(int argc, char **argv) {
   }
   delete C;
 
-  if (Out != &cout) delete Out;
+  if (Out != &std::cout) delete Out;
   return 0;
 }

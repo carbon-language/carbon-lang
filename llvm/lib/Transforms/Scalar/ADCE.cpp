@@ -17,6 +17,8 @@
 #include "Support/DepthFirstIterator.h"
 #include <set>
 #include <algorithm>
+#include <iostream>
+using std::cerr;
 
 #define DEBUG_ADCE 1
 
@@ -28,8 +30,8 @@
 //
 class ADCE {
   Method *M;                            // The method that we are working on...
-  vector<Instruction*>   WorkList;      // Instructions that just became live
-  set<Instruction*>      LiveSet;       // The set of live instructions
+  std::vector<Instruction*> WorkList;   // Instructions that just became live
+  std::set<Instruction*>    LiveSet;    // The set of live instructions
   bool MadeChanges;
 
   //===--------------------------------------------------------------------===//
@@ -66,8 +68,8 @@ private:
   // fixupCFG - Walk the CFG in depth first order, eliminating references to 
   // dead blocks.
   //
-  BasicBlock *fixupCFG(BasicBlock *Head, set<BasicBlock*> &VisitedBlocks,
-		       const set<BasicBlock*> &AliveBlocks);
+  BasicBlock *fixupCFG(BasicBlock *Head, std::set<BasicBlock*> &VisitedBlocks,
+		       const std::set<BasicBlock*> &AliveBlocks);
 };
 
 
@@ -121,7 +123,7 @@ bool ADCE::doADCE() {
   // AliveBlocks - Set of basic blocks that we know have instructions that are
   // alive in them...
   //
-  set<BasicBlock*> AliveBlocks;
+  std::set<BasicBlock*> AliveBlocks;
 
   // Process the work list of instructions that just became live... if they
   // became live, then that means that all of their operands are neccesary as
@@ -169,7 +171,7 @@ bool ADCE::doADCE() {
   // After the worklist is processed, recursively walk the CFG in depth first
   // order, patching up references to dead blocks...
   //
-  set<BasicBlock*> VisitedBlocks;
+  std::set<BasicBlock*> VisitedBlocks;
   BasicBlock *EntryBlock = fixupCFG(M->front(), VisitedBlocks, AliveBlocks);
   if (EntryBlock && EntryBlock != M->front()) {
     if (isa<PHINode>(EntryBlock->front())) {
@@ -194,7 +196,7 @@ bool ADCE::doADCE() {
     } else {
       // We need to move the new entry block to be the first bb of the method.
       Method::iterator EBI = find(M->begin(), M->end(), EntryBlock);
-      swap(*EBI, *M->begin());  // Exchange old location with start of method
+      std::swap(*EBI, *M->begin());// Exchange old location with start of method
       MadeChanges = true;
     }
   }
@@ -242,8 +244,8 @@ bool ADCE::doADCE() {
 //        been in the alive set).
 //   3. Return the nonnull child, or 0 if no non-null children.
 //
-BasicBlock *ADCE::fixupCFG(BasicBlock *BB, set<BasicBlock*> &VisitedBlocks,
-			   const set<BasicBlock*> &AliveBlocks) {
+BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
+			   const std::set<BasicBlock*> &AliveBlocks) {
   if (VisitedBlocks.count(BB)) return 0;   // Revisiting a node? No update.
   VisitedBlocks.insert(BB);                // We have now visited this node!
 

@@ -35,7 +35,7 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
   // Transform all subloops before this loop...
   bool Changed = reduce_apply_bool(Loop->getSubLoops().begin(),
                                    Loop->getSubLoops().end(),
-                                   std::bind1st(ptr_fun(TransformLoop), Loops));
+                              std::bind1st(std::ptr_fun(TransformLoop), Loops));
   // Get the header node for this loop.  All of the phi nodes that could be
   // induction variables must live in this basic block.
   BasicBlock *Header = (BasicBlock*)Loop->getBlocks().front();
@@ -44,7 +44,7 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
   // induction variables that they represent... stuffing the induction variable
   // info into a vector...
   //
-  vector<InductionVariable> IndVars;    // Induction variables for block
+  std::vector<InductionVariable> IndVars;    // Induction variables for block
   for (BasicBlock::iterator I = Header->begin(); 
        PHINode *PN = dyn_cast<PHINode>(*I); ++I)
     IndVars.push_back(InductionVariable(PN, Loops));
@@ -133,7 +133,7 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
       Instruction *Val = IterCount;
       if (!isa<ConstantInt>(IV->Step) ||   // If the step != 1
           !cast<ConstantInt>(IV->Step)->equalsInt(1)) {
-        string Name;   // Create a scale by the step value...
+        std::string Name;   // Create a scale by the step value...
         if (IV->Phi->hasName()) Name = IV->Phi->getName()+"-scale";
 
         // If the types are not compatible, insert a cast now...
@@ -148,7 +148,7 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
 
       if (!isa<Constant>(IV->Start) ||   // If the start != 0
           !cast<Constant>(IV->Start)->isNullValue()) {
-        string Name;   // Create a offset by the start value...
+        std::string Name;   // Create a offset by the start value...
         if (IV->Phi->hasName()) Name = IV->Phi->getName()+"-offset";
 
         // If the types are not compatible, insert a cast now...
@@ -170,7 +170,7 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
       IV->Phi->replaceAllUsesWith(Val);
 
       // Move the PHI name to it's new equivalent value...
-      string OldName = IV->Phi->getName();
+      std::string OldName = IV->Phi->getName();
       IV->Phi->setName("");
       Val->setName(OldName);
 

@@ -8,6 +8,7 @@
 #include "llvm/Module.h"
 #include "ParserInternals.h"
 #include <stdio.h>  // for sprintf
+using std::string;
 
 // The useful interface defined by this file... Parse an ascii file, and return
 // the internal representation in a nice slice'n'dice'able representation.
@@ -30,7 +31,7 @@ Module *ParseAssemblyFile(const string &Filename) { // throw (ParseException)
     fclose(F);
 
   if (Result) {  // Check to see that it is valid...
-    vector<string> Errors;
+    std::vector<string> Errors;
     if (verify(Result, Errors)) {
       delete Result; Result = 0;
       string Message;

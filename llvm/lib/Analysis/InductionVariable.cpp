@@ -88,7 +88,7 @@ InductionVariable::InductionVariable(PHINode *P, cfg::LoopInfo *LoopInfo) {
     ExprType E2 = analysis::ClassifyExpression(V2);
 
     if (E1.ExprTy > E2.ExprTy)        // Make E1 be the simpler expression
-      swap(E1, E2);
+      std::swap(E1, E2);
     
     // E1 must be a constant incoming value, and E2 must be a linear expression
     // with respect to the PHI node.
@@ -109,7 +109,7 @@ InductionVariable::InductionVariable(PHINode *P, cfg::LoopInfo *LoopInfo) {
     // Make sure that V1 is the incoming value, and V2 is from the backedge of
     // the loop.
     if (L->contains(Phi->getIncomingBlock(0)))     // Wrong order.  Swap now.
-      swap(V1, V2);
+      std::swap(V1, V2);
     
     Start = V1;     // We know that Start has to be loop invariant...
     Step = 0;

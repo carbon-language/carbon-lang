@@ -1,4 +1,4 @@
-/* Title:   LiveRange.h
+/* Title:   LiveRange.h   -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    July 25, 01
    Purpose: To keep info about a live range. 
@@ -13,6 +13,7 @@
 
 #include "llvm/Analysis/LiveVar/ValueSet.h"
 #include "llvm/Type.h"
+#include <iostream>
 
 class RegClass;
 class IGNode;
@@ -176,7 +177,7 @@ class LiveRange : public ValueSet
     if(SuggestedColor == -1 )
       SuggestedColor = Col;
     else if (DEBUG_RA) 
-      cerr << "Already has a suggested color " << Col << endl;
+      std::cerr << "Already has a suggested color " << Col << "\n";
   }
 
   inline unsigned getSuggestedColor() const {

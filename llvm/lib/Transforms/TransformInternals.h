@@ -24,7 +24,7 @@
 //
 extern const TargetData TD;
 
-static int getConstantValue(const ConstantInt *CPI) {
+static inline int getConstantValue(const ConstantInt *CPI) {
   if (const ConstantSInt *CSI = dyn_cast<ConstantSInt>(CPI))
     return CSI->getValue();
   return cast<ConstantUInt>(CPI)->getValue();
@@ -65,25 +65,26 @@ void ReplaceInstWithInst(Instruction *From, Instruction *To);
 // If BI is nonnull, cast instructions are inserted as appropriate for the
 // arguments of the getelementptr.
 //
-const Type *ConvertableToGEP(const Type *Ty, Value *V, vector<Value*> &Indices,
+const Type *ConvertableToGEP(const Type *Ty, Value *V,
+                             std::vector<Value*> &Indices,
                              BasicBlock::iterator *BI = 0);
 
 
 // ------------- Expression Conversion ---------------------
 
-typedef map<const Value*, const Type*>         ValueTypeCache;
+typedef std::map<const Value*, const Type*>         ValueTypeCache;
 
 struct ValueMapCache {
   // Operands mapped - Contains an entry if the first value (the user) has had
   // the second value (the operand) mapped already.
   //
-  set<const User*> OperandsMapped;
+  std::set<const User*> OperandsMapped;
 
   // Expression Map - Contains an entry from the old value to the new value of
   // an expression that has been converted over.
   //
-  map<const Value *, Value *> ExprMap;
-  typedef map<const Value *, Value *> ExprMapTy;
+  std::map<const Value *, Value *> ExprMap;
+  typedef std::map<const Value *, Value *> ExprMapTy;
 };
 
 
@@ -137,7 +138,7 @@ public:
 // false if you want a leaf
 //
 const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
-                                vector<Value*> &Offsets,
+                                std::vector<Value*> &Offsets,
                                 bool StopEarly = true);
 
 #endif

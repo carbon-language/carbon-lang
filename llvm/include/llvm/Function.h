@@ -29,8 +29,8 @@ public:
   // BasicBlock iterators...
   typedef BasicBlocksType::iterator iterator;
   typedef BasicBlocksType::const_iterator const_iterator;
-  typedef reverse_iterator<const_iterator> const_reverse_iterator;
-  typedef reverse_iterator<iterator>             reverse_iterator;
+  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef std::reverse_iterator<iterator>             reverse_iterator;
 
 private:
 
@@ -42,11 +42,11 @@ private:
   void setParent(Module *parent);
 
 public:
-  Method(const MethodType *Ty, bool isInternal, const string &Name = "");
+  Method(const MethodType *Ty, bool isInternal, const std::string &Name = "");
   ~Method();
 
   // Specialize setName to handle symbol table majik...
-  virtual void setName(const string &name, SymbolTable *ST = 0);
+  virtual void setName(const std::string &name, SymbolTable *ST = 0);
 
   const Type *getReturnType() const;        // Return the return type of method
   const MethodType *getMethodType() const;  // Return the MethodType for me
@@ -129,11 +129,11 @@ public:
     _BB_i_t BB;       // BasicBlocksType::iterator
     _BI_t   BI;       // BasicBlock::iterator
   public:
-    typedef bidirectional_iterator_tag iterator_category;
-    typedef IIty                       value_type;
-    typedef unsigned                   difference_type;
-    typedef BIty                       pointer;
-    typedef IIty                       reference;
+    typedef std::bidirectional_iterator_tag iterator_category;
+    typedef IIty                            value_type;
+    typedef unsigned                        difference_type;
+    typedef BIty                            pointer;
+    typedef IIty                            reference;
     
     template<class M> InstIterator(M &m) 
       : BBs(m.getBasicBlocks()), BB(BBs.begin()) {    // begin ctor

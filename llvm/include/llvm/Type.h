@@ -71,23 +71,23 @@ public:
 private:
   PrimitiveID ID;        // The current base type of this type...
   unsigned    UID;       // The unique ID number for this class
-  string      Desc;      // The printed name of the string...
+  std::string Desc;      // The printed name of the string...
   bool        Abstract;  // True if type contains an OpaqueType
   bool        Recursive; // True if the type is recursive
 
 protected:
   // ctor is protected, so only subclasses can create Type objects...
-  Type(const string &Name, PrimitiveID id);
+  Type(const std::string &Name, PrimitiveID id);
   virtual ~Type() {}
 
   // When types are refined, they update their description to be more concrete.
   //
-  inline void setDescription(const string &D) { Desc = D; }
+  inline void setDescription(const std::string &D) { Desc = D; }
   
   // setName - Associate the name with this type in the symbol table, but don't
   // set the local name to be equal specified name.
   //
-  virtual void setName(const string &Name, SymbolTable *ST = 0);
+  virtual void setName(const std::string &Name, SymbolTable *ST = 0);
 
   // Types can become nonabstract later, if they are refined.
   //
@@ -116,7 +116,7 @@ public:
   inline unsigned getUniqueID() const { return UID; }
 
   // getDescription - Return the string representation of the type...
-  inline const string &getDescription() const { return Desc; }
+  inline const std::string &getDescription() const { return Desc; }
 
   // isSigned - Return whether a numeric type is signed.
   virtual bool isSigned() const { return 0; }

@@ -52,7 +52,7 @@ RunBurg  = $(BURG) $(BURG_OPTS)
 #Prof = -pg
 
 # TODO: Get rid of exceptions! : -fno-exceptions -fno-rtti
-CompileCommonOpts = $(Prof) -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
+CompileCommonOpts = $(Prof) -Wall -W  -Wwrite-strings -Wno-unused-parameter -Wno-missing-braces -I$(LEVEL)/include
 
 # Compile a file, don't link...
 Compile  = $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts)

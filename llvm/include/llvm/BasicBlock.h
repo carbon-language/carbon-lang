@@ -49,8 +49,8 @@ public:
   // Instruction iterators...
   typedef InstListType::iterator iterator;
   typedef InstListType::const_iterator const_iterator;
-  typedef reverse_iterator<const_iterator> const_reverse_iterator;
-  typedef reverse_iterator<iterator>             reverse_iterator;
+  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef std::reverse_iterator<iterator>             reverse_iterator;
 
   // Predecessor and successor iterators...
   typedef PredIterator<BasicBlock, Value::use_iterator> pred_iterator;
@@ -61,11 +61,11 @@ public:
                        const BasicBlock> succ_const_iterator;
 
   // Ctor, dtor
-  BasicBlock(const string &Name = "", Method *Parent = 0);
+  BasicBlock(const std::string &Name = "", Method *Parent = 0);
   ~BasicBlock();
 
   // Specialize setName to take care of symbol table majik
-  virtual void setName(const string &name, SymbolTable *ST = 0);
+  virtual void setName(const std::string &name, SymbolTable *ST = 0);
 
   // getParent - Return the enclosing method, or null if none
   const Method *getParent() const { return InstList.getParent(); }

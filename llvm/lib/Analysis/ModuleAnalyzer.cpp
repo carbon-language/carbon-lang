@@ -13,6 +13,8 @@
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
 #include <map>
+#include <iostream>
+using std::set;
 
 // processModule - Driver function to call all of my subclasses virtual methods.
 //
@@ -59,8 +61,8 @@ inline bool ModuleAnalyzer::handleType(set<const Type *> &TypeSet,
     break;
 
   default:
-    cerr << "ModuleAnalyzer::handleType, type unknown: '" 
-	 << T->getName() << "'\n";
+    std::cerr << "ModuleAnalyzer::handleType, type unknown: '" 
+              << T->getName() << "'\n";
     break;
   }
 

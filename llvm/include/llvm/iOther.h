@@ -24,7 +24,7 @@ class CastInst : public Instruction {
     Operands.push_back(Use(CI.Operands[0], this));
   }
 public:
-  CastInst(Value *S, const Type *Ty, const string &Name = "")
+  CastInst(Value *S, const Type *Ty, const std::string &Name = "")
     : Instruction(Ty, Cast, Name) {
     Operands.reserve(1);
     Operands.push_back(Use(S, this));
@@ -55,13 +55,13 @@ class MethodArgument : public Value {  // Defined in the InstrType.cpp file
   inline void setParent(Method *parent) { Parent = parent; }
 
 public:
-  MethodArgument(const Type *Ty, const string &Name = "") 
+  MethodArgument(const Type *Ty, const std::string &Name = "") 
     : Value(Ty, Value::MethodArgumentVal, Name) {
     Parent = 0;
   }
 
   // Specialize setName to handle symbol table majik...
-  virtual void setName(const string &name, SymbolTable *ST = 0);
+  virtual void setName(const std::string &name, SymbolTable *ST = 0);
 
   inline const Method *getParent() const { return Parent; }
   inline       Method *getParent()       { return Parent; }
@@ -81,7 +81,7 @@ public:
 class CallInst : public Instruction {
   CallInst(const CallInst &CI);
 public:
-  CallInst(Value *Meth, const vector<Value*> &params, const string &Name = "");
+  CallInst(Value *M, const std::vector<Value*> &Par, const std::string & = "");
 
   virtual const char *getOpcodeName() const { return "call"; }
 
@@ -123,7 +123,7 @@ class ShiftInst : public Instruction {
     Operands.push_back(Use(SI.Operands[1], this));
   }
 public:
-  ShiftInst(OtherOps Opcode, Value *S, Value *SA, const string &Name = "")
+  ShiftInst(OtherOps Opcode, Value *S, Value *SA, const std::string &Name = "")
     : Instruction(S->getType(), Opcode, Name) {
     assert((Opcode == Shl || Opcode == Shr) && "ShiftInst Opcode invalid!");
     Operands.reserve(2);

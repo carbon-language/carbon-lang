@@ -23,14 +23,14 @@ class SlotCalculator {
   const Module *TheModule;
   bool IgnoreNamedNodes;     // Shall we not count named nodes?
 
-  typedef vector<const Value*> TypePlane;
-  vector<TypePlane> Table;
-  map<const Value *, unsigned> NodeMap;
+  typedef std::vector<const Value*> TypePlane;
+  std::vector<TypePlane> Table;
+  std::map<const Value *, unsigned> NodeMap;
 
   // ModuleLevel - Used to keep track of which values belong to the module,
   // and which values belong to the currently incorporated method.
   //
-  vector<unsigned> ModuleLevel;
+  std::vector<unsigned> ModuleLevel;
 
 public:
   SlotCalculator(const Module *M, bool IgnoreNamed);

@@ -13,6 +13,8 @@
 #include "llvm/ConstantVals.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
+#include <iostream>
+using std::cerr;
 
 void BytecodeWriter::outputType(const Type *T) {
   output_vbr((unsigned)T->getPrimitiveID(), Out);
@@ -134,7 +136,7 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
 
   case Type::StructTyID: {
     const ConstantStruct *CPS = cast<const ConstantStruct>(CPV);
-    const vector<Use> &Vals = CPS->getValues();
+    const std::vector<Use> &Vals = CPS->getValues();
 
     for (unsigned i = 0; i < Vals.size(); ++i) {
       int Slot = Table.getValSlot(Vals[i]);

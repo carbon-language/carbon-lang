@@ -15,7 +15,13 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <iostream>
 using namespace cl;
+using std::map;
+using std::pair;
+using std::vector;
+using std::string;
+using std::cerr;
 
 // Return the global command line option vector.  Making it a function scoped
 // static ensures that it will be initialized correctly before its first use.
@@ -31,7 +37,7 @@ static void AddArgument(const string &ArgName, Option *Opt) {
 	 << "' specified more than once!\n";
   } else {
     // Add argument to the argument map!
-    getOpts().insert(make_pair(ArgName, Opt));
+    getOpts().insert(std::make_pair(ArgName, Opt));
   }
 }
 
@@ -59,7 +65,7 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
     break;
   case ValueOptional: break;
   default: cerr << "Bad ValueMask flag! CommandLine usage error:" 
-                << Handler->getValueExpectedFlag() << endl; abort();
+                << Handler->getValueExpectedFlag() << "\n"; abort();
   }
 
   // Run the handler now!
@@ -210,7 +216,7 @@ Option::Option(const char *argStr, const char *helpStr, int flags)
 
 bool Option::error(string Message, const char *ArgName = 0) {
   if (ArgName == 0) ArgName = ArgStr;
-  cerr << "-" << ArgName << " option" << Message << endl;
+  cerr << "-" << ArgName << " option" << Message << "\n";
   return true;
 }
 
@@ -244,7 +250,7 @@ void Option::printOptionInfo(unsigned GlobalWidth) const {
   unsigned L = std::strlen(ArgStr);
   if (L == 0) return;  // Don't print the empty arg like this!
   cerr << "  -" << ArgStr << string(GlobalWidth-L-6, ' ') << " - "
-       << HelpStr << endl;
+       << HelpStr << "\n";
 }
 
 
@@ -301,8 +307,8 @@ void EnumBase::processValues(va_list Vals) {
   while (const char *EnumName = va_arg(Vals, const char *)) {
     int EnumVal = va_arg(Vals, int);
     const char *EnumDesc = va_arg(Vals, const char *);
-    ValueMap.push_back(make_pair(EnumName,           // Add value to value map
-				 make_pair(EnumVal, EnumDesc)));
+    ValueMap.push_back(std::make_pair(EnumName,      // Add value to value map
+                                      std::make_pair(EnumVal, EnumDesc)));
   }
 }
 
@@ -339,7 +345,7 @@ bool EnumValueBase::handleOccurance(const char *ArgName, const string &Arg) {
 unsigned EnumValueBase::getOptionWidth() const {
   unsigned BaseSize = Option::getOptionWidth();
   for (unsigned i = 0; i < ValueMap.size(); ++i)
-    BaseSize = max(BaseSize, std::strlen(ValueMap[i].first)+8);
+    BaseSize = std::max(BaseSize, std::strlen(ValueMap[i].first)+8);
   return BaseSize;
 }
 
@@ -354,7 +360,7 @@ void EnumValueBase::printOptionInfo(unsigned GlobalWidth) const {
 	 << ValueMap[i].second.second;
 
     if (i == 0) cerr << " (default)";
-    cerr << endl;
+    cerr << "\n";
   }
 }
 
@@ -369,7 +375,7 @@ bool EnumFlagsBase::handleOccurance(const char *ArgName, const string &Arg) {
 unsigned EnumFlagsBase::getOptionWidth() const {
   unsigned BaseSize = 0;
   for (unsigned i = 0; i < ValueMap.size(); ++i)
-    BaseSize = max(BaseSize, std::strlen(ValueMap[i].first)+6);
+    BaseSize = std::max(BaseSize, std::strlen(ValueMap[i].first)+6);
   return BaseSize;
 }
 
@@ -379,7 +385,7 @@ void EnumFlagsBase::printOptionInfo(unsigned GlobalWidth) const {
     cerr << "  -" << ValueMap[i].first << string(GlobalWidth-L-6, ' ') << " - "
 	 << ValueMap[i].second.second;
     if (i == 0) cerr << " (default)";
-    cerr << endl;
+    cerr << "\n";
   }
 }
 
@@ -402,7 +408,7 @@ bool EnumListBase::handleOccurance(const char *ArgName, const string &Arg) {
 unsigned EnumListBase::getOptionWidth() const {
   unsigned BaseSize = 0;
   for (unsigned i = 0; i < ValueMap.size(); ++i)
-    BaseSize = max(BaseSize, std::strlen(ValueMap[i].first)+6);
+    BaseSize = std::max(BaseSize, std::strlen(ValueMap[i].first)+6);
   return BaseSize;
 }
 
@@ -414,7 +420,7 @@ void EnumListBase::printOptionInfo(unsigned GlobalWidth) const {
   for (unsigned i = 0; i < ValueMap.size(); ++i) {
     unsigned L = std::strlen(ValueMap[i].first);
     cerr << "  -" << ValueMap[i].first << string(GlobalWidth-L-6, ' ') << " - "
-	 << ValueMap[i].second.second << endl;
+	 << ValueMap[i].second.second << "\n";
   }
 }
 
@@ -440,15 +446,15 @@ class Help : public Option {
   virtual bool handleOccurance(const char *ArgName, const string &Arg) {
     // Copy Options into a vector so we can sort them as we like...
     vector<pair<string, Option*> > Options;
-    copy(getOpts().begin(), getOpts().end(), back_inserter(Options));
+    copy(getOpts().begin(), getOpts().end(), std::back_inserter(Options));
 
     // Eliminate Hidden or ReallyHidden arguments, depending on ShowHidden
     Options.erase(remove_if(Options.begin(), Options.end(), 
-			    ptr_fun(ShowHidden ? isReallyHidden : isHidden)),
+			  std::ptr_fun(ShowHidden ? isReallyHidden : isHidden)),
 		  Options.end());
 
     // Eliminate duplicate entries in table (from enum flags options, f.e.)
-    set<Option*> OptionSet;
+    std::set<Option*> OptionSet;
     for (unsigned i = 0; i < Options.size(); )
       if (OptionSet.count(Options[i].second) == 0)
 	OptionSet.insert(Options[i++].second); // Add to set
@@ -457,7 +463,7 @@ class Help : public Option {
 
 
     if (ProgramOverview)
-      cerr << "OVERVIEW:" << ProgramOverview << endl;
+      cerr << "OVERVIEW:" << ProgramOverview << "\n";
     // TODO: Sort options by some criteria
 
     cerr << "USAGE: " << ProgramName << " [options]\n\n";
@@ -478,7 +484,7 @@ class Help : public Option {
   void getMaxArgLen(pair<string, Option *> OptPair) {
     const Option *Opt = OptPair.second;
     if (Opt->ArgStr[0] == 0) EmptyArg = Opt; // Capture the empty arg if exists
-    MaxArgLen = max(MaxArgLen, Opt->getOptionWidth());
+    MaxArgLen = std::max(MaxArgLen, Opt->getOptionWidth());
   }
 
   void printOption(pair<string, Option *> OptPair) {

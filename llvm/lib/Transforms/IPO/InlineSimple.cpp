@@ -27,6 +27,8 @@
 #include "llvm/iOther.h"
 #include <algorithm>
 #include <map>
+#include <iostream>
+using std::cerr;
 
 #include "llvm/Assembly/Writer.h"
 
@@ -36,7 +38,7 @@ using namespace opt;
 // current values into those specified by ValueMap.
 //
 static inline void RemapInstruction(Instruction *I, 
-				    map<const Value *, Value*> &ValueMap) {
+				    std::map<const Value *, Value*> &ValueMap) {
 
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     const Value *Op = I->getOperand(op);
@@ -45,8 +47,8 @@ static inline void RemapInstruction(Instruction *I,
       continue;  // Globals and constants don't get relocated
 
     if (!V) {
-      cerr << "Val = " << endl << Op << "Addr = " << (void*)Op << endl;
-      cerr << "Inst = " << I;
+      cerr << "Val = \n" << Op << "Addr = " << (void*)Op;
+      cerr << "\nInst = " << I;
     }
     assert(V && "Referenced value not in value map!");
     I->setOperand(op, V);
@@ -72,10 +74,9 @@ bool opt::InlineMethod(BasicBlock::iterator CIIt) {
   const Method *CalledMeth = CI->getCalledMethod();
   if (CalledMeth == 0 ||   // Can't inline external method or indirect call!
       CalledMeth->isExternal()) return false;
-  Method *CurrentMeth = CI->getParent()->getParent();
 
   //cerr << "Inlining " << CalledMeth->getName() << " into " 
-  //     << CurrentMeth->getName() << endl;
+  //     << CurrentMeth->getName() << "\n";
 
   BasicBlock *OrigBB = CI->getParent();
 
@@ -111,7 +112,7 @@ bool opt::InlineMethod(BasicBlock::iterator CIIt) {
   // code's values.  This includes all of: Method arguments, instruction values,
   // constant pool entries, and basic blocks.
   //
-  map<const Value *, Value*> ValueMap;
+  std::map<const Value *, Value*> ValueMap;
 
   // Add the method arguments to the mapping: (start counting at 1 to skip the
   // method reference itself)

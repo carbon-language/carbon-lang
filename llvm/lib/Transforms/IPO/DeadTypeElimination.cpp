@@ -23,6 +23,10 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include <algorithm>
+#include <iostream>
+using std::vector;
+using std::string;
+using std::cerr;
 
 static const Type *PtrSByte = 0;    // 'sbyte*' type
 
@@ -78,7 +82,7 @@ bool CleanupGCCOutput::PatchUpMethodReferences(Module *M) {
   SymbolTable *ST = M->getSymbolTable();
   if (!ST) return false;
 
-  map<string, vector<Method*> > Methods;
+  std::map<string, vector<Method*> > Methods;
 
   // Loop over the entries in the symbol table. If an entry is a method pointer,
   // then add it to the Methods map.  We do a two pass algorithm here to avoid
@@ -86,7 +90,7 @@ bool CleanupGCCOutput::PatchUpMethodReferences(Module *M) {
   //
   for (SymbolTable::iterator I = ST->begin(), E = ST->end(); I != E; ++I)
     if (const PointerType *PT = dyn_cast<PointerType>(I->first))
-      if (const MethodType *MT = dyn_cast<MethodType>(PT->getElementType())) {
+      if (isa<MethodType>(PT->getElementType())) {
         SymbolTable::VarMap &Plane = I->second;
         for (SymbolTable::type_iterator PI = Plane.begin(), PE = Plane.end();
              PI != PE; ++PI) {
@@ -101,7 +105,7 @@ bool CleanupGCCOutput::PatchUpMethodReferences(Module *M) {
   // Now we have a list of all methods with a particular name.  If there is more
   // than one entry in a list, merge the methods together.
   //
-  for (map<string, vector<Method*> >::iterator I = Methods.begin(), 
+  for (std::map<string, vector<Method*> >::iterator I = Methods.begin(), 
          E = Methods.end(); I != E; ++I) {
     vector<Method*> &Methods = I->second;
     Method *Implementation = 0;     // Find the implementation
@@ -145,7 +149,7 @@ bool CleanupGCCOutput::PatchUpMethodReferences(Module *M) {
         cerr << "Warning: Found methods types that are not compatible:\n";
         for (unsigned i = 0; i < Methods.size(); ++i) {
           cerr << "\t" << Methods[i]->getType()->getDescription() << " %"
-               << Methods[i]->getName() << endl;
+               << Methods[i]->getName() << "\n";
         }
         cerr << "  No linkage of methods named '" << Methods[0]->getName()
              << "' performed!\n";
@@ -185,7 +189,7 @@ bool CleanupGCCOutput::PatchUpMethodReferences(Module *M) {
                   ++i;
                 }
               } else {
-                cerr << "Cannot convert use of method: " << U << endl;
+                cerr << "Cannot convert use of method: " << U << "\n";
                 ++i;
               }
             }
@@ -201,7 +205,7 @@ bool CleanupGCCOutput::PatchUpMethodReferences(Module *M) {
 // ShouldNukSymtabEntry - Return true if this module level symbol table entry
 // should be eliminated.
 //
-static inline bool ShouldNukeSymtabEntry(const pair<string, Value*> &E) {
+static inline bool ShouldNukeSymtabEntry(const std::pair<string, Value*> &E) {
   // Nuke all names for primitive types!
   if (cast<Type>(E.second)->isPrimitiveType()) return true;
 
@@ -357,8 +361,8 @@ static inline bool FixCastsAndPHIs(BasicBlock *BB) {
       Value *Src = CI->getOperand(0);
 
       // Move the cast instruction to the current insert position...
-      --InsertPos;            // New position for cast to go...
-      swap(*InsertPos, *I);   // Cast goes down, PHI goes up
+      --InsertPos;                 // New position for cast to go...
+      std::swap(*InsertPos, *I);   // Cast goes down, PHI goes up
 
       if (isa<PHINode>(Src) &&                                // Handle case #1
           cast<PHINode>(Src)->getParent() == BB) {
@@ -561,7 +565,7 @@ bool CleanupGCCOutput::doPassFinalization(Module *M) {
 
   if (M->hasSymbolTable()) {
     SymbolTable *ST = M->getSymbolTable();
-    const set<const Type *> &UsedTypes = FUT.getTypes();
+    const std::set<const Type *> &UsedTypes = FUT.getTypes();
 
     // Check the symbol table for superfluous type entries that aren't used in
     // the program

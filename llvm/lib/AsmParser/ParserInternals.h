@@ -23,12 +23,12 @@
 class Module;
 
 // Global variables exported from the lexer...
-extern FILE *llvmAsmin;
+extern std::FILE *llvmAsmin;
 extern int llvmAsmlineno;
 
 // Globals exported by the parser...
-extern string CurFilename;
-Module *RunVMAsmParser(const string &Filename, FILE *F);
+extern std::string CurFilename;
+Module *RunVMAsmParser(const std::string &Filename, FILE *F);
 
 
 // UnEscapeLexed - Run through the specified buffer and change \xx codes to the
@@ -47,7 +47,7 @@ char *UnEscapeLexed(char *Buffer, bool AllowNull = false);
 // This also helps me because I keep typing 'throw new ParseException' instead 
 // of just 'throw ParseException'... sigh...
 //
-static inline void ThrowException(const string &message,
+static inline void ThrowException(const std::string &message,
 				  int LineNo = -1) {
   if (LineNo == -1) LineNo = llvmAsmlineno;
   // TODO: column number in exception
@@ -116,18 +116,19 @@ struct ValID {
     return Result;
   }
 
-  inline string getName() const {
+  inline std::string getName() const {
     switch (Type) {
-    case NumberVal     : return string("#") + itostr(Num);
+    case NumberVal     : return std::string("#") + itostr(Num);
     case NameVal       : return Name;
-    case ConstStringVal: return string("\"") + Name + string("\"");
+    case ConstStringVal: return std::string("\"") + Name + std::string("\"");
     case ConstFPVal    : return ftostr(ConstPoolFP);
     case ConstNullVal  : return "null";
     case ConstUIntVal  :
-    case ConstSIntVal  : return string("%") + itostr(ConstPool64);
+    case ConstSIntVal  : return std::string("%") + itostr(ConstPool64);
     default:
       assert(0 && "Unknown value!");
       abort();
+      return "";
     }
   }
 
@@ -163,7 +164,7 @@ public:
 struct InstPlaceHolderHelper : public Instruction {
   InstPlaceHolderHelper(const Type *Ty) : Instruction(Ty, UserOp1, "") {}
 
-  virtual Instruction *clone() const { abort(); }
+  virtual Instruction *clone() const { abort(); return 0; }
   virtual const char *getOpcodeName() const { return "placeholder"; }
 };
 

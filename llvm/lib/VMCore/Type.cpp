@@ -8,6 +8,14 @@
 #include "llvm/SymbolTable.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
+#include <iostream>
+
+using std::vector;
+using std::string;
+using std::map;
+using std::swap;
+using std::make_pair;
+using std::cerr;
 
 // DEBUG_MERGE_TYPES - Enable this #define to see how and when derived types are
 // created and later destroyed, all in an effort to make sure that there is only

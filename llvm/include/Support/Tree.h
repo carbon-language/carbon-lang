@@ -12,21 +12,21 @@
 
 template<class ConcreteTreeNode, class Payload>
 class Tree {
-  vector<ConcreteTreeNode*>    Children;        // This nodes children, if any
-  ConcreteTreeNode            *Parent;          // Parent of this node...
-  Payload                      Data;            // Data held in this node...
+  std::vector<ConcreteTreeNode*> Children;        // This nodes children, if any
+  ConcreteTreeNode              *Parent;          // Parent of this node...
+  Payload                        Data;            // Data held in this node...
 
 protected:
-  void setChildren(const vector<ConcreteTreeNode*> &children) {
+  void setChildren(const std::vector<ConcreteTreeNode*> &children) {
     Children = children;
   }
 public:
   inline Tree(ConcreteTreeNode *parent) : Parent(parent) {}
-  inline Tree(const vector<ConcreteTreeNode*> &children, ConcreteTreeNode *par)
-    : Children(children), Parent(par) {}
+  inline Tree(const std::vector<ConcreteTreeNode*> &children,
+              ConcreteTreeNode *par) : Children(children), Parent(par) {}
 
-  inline Tree(const vector<ConcreteTreeNode*> &children, ConcreteTreeNode *par,
-	      const Payload &data) 
+  inline Tree(const std::vector<ConcreteTreeNode*> &children,
+              ConcreteTreeNode *par, const Payload &data) 
     : Children(children), Parent(parent), Data(data) {}
 
   // Tree dtor - Free all children

@@ -14,8 +14,8 @@
 #include <map>
 #include <vector>
 
-typedef pair<BasicBlock *, Value*> BBConstTy;
-typedef map<BBConstTy, CastInst *> CachedCopyMap;
+typedef std::pair<BasicBlock *, Value*> BBConstTy;
+typedef std::map<BBConstTy, CastInst *> CachedCopyMap;
 
 static Value *NormalizePhiOperand(PHINode *PN, Value *CPV,
                                   BasicBlock *Pred, CachedCopyMap &CopyCache) {
@@ -33,7 +33,7 @@ static Value *NormalizePhiOperand(PHINode *PN, Value *CPV,
   
   // Create a copy instruction and add it to the cache...
   CastInst *Inst = new CastInst(CPV, CPV->getType());
-  CopyCache.insert(make_pair(BBConstTy(Pred, CPV), Inst));
+  CopyCache.insert(std::make_pair(BBConstTy(Pred, CPV), Inst));
     
   // Insert the copy just before the terminator inst of the predecessor BB
   assert(Pred->getTerminator() && "Degenerate BB encountered!");
@@ -52,7 +52,7 @@ bool HoistPHIConstants::doHoistPHIConstants(Method *M) {
   bool Changed = false;
   
   for (Method::iterator BI = M->begin(), BE = M->end(); BI != BE; ++BI) {
-    vector<PHINode*> phis;            // normalizing invalidates BB iterator
+    std::vector<PHINode*> phis;          // normalizing invalidates BB iterator
       
     for (BasicBlock::iterator II = (*BI)->begin(); II != (*BI)->end(); ++II) {
       if (PHINode *PN = dyn_cast<PHINode>(*II))
@@ -61,7 +61,7 @@ bool HoistPHIConstants::doHoistPHIConstants(Method *M) {
         break;                      // All PHIs occur at top of BB!
     }
       
-    for (vector<PHINode*>::iterator PI=phis.begin(); PI != phis.end(); ++PI)
+    for (std::vector<PHINode*>::iterator PI=phis.begin(); PI != phis.end();++PI)
       for (unsigned i = 0; i < (*PI)->getNumIncomingValues(); ++i) {
         Value *Op = (*PI)->getIncomingValue(i);
         

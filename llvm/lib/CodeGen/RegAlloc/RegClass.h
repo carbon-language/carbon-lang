@@ -13,8 +13,9 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include <stack>
+#include <iostream>
 
-typedef vector<unsigned int> ReservedColorListType;
+typedef std::vector<unsigned int> ReservedColorListType;
 
 
 //-----------------------------------------------------------------------------
@@ -46,7 +47,7 @@ class RegClass
 
   InterferenceGraph IG;                 // Interference graph - constructed by
                                         // buildInterferenceGraph
-  stack <IGNode *> IGNodeStack;         // the stack used for coloring
+  std::stack<IGNode *> IGNodeStack;     // the stack used for coloring
 
   const ReservedColorListType *const ReservedColorList;
   //
@@ -117,21 +118,14 @@ class RegClass
 
 
   inline void printIGNodeList() const {
-    cerr << "IG Nodes for Register Class " << RegClassID << ":" << endl;
+    std::cerr << "IG Nodes for Register Class " << RegClassID << ":" << "\n";
     IG.printIGNodeList(); 
   }
 
   inline void printIG() {  
-    cerr << "IG for Register Class " << RegClassID << ":" << endl;
+    std::cerr << "IG for Register Class " << RegClassID << ":" << "\n";
     IG.printIG(); 
   }
-
 };
-
-
-
-
-
-
 
 #endif

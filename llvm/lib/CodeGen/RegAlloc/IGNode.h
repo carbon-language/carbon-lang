@@ -29,8 +29,6 @@
 #include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/CodeGen/LiveRange.h"
 
-
-
 //----------------------------------------------------------------------------
 // Class IGNode
 //
@@ -39,13 +37,11 @@
 
 class IGNode
 {
- private:
-
   const int Index;            // index within IGNodeList 
 
   bool OnStack;               // this has been pushed on to stack for coloring
 
-  vector<IGNode *> AdjList;   // adjacency list for this live range
+  std::vector<IGNode *> AdjList;   // adjacency list for this live range
 
   int CurDegree;     
   //
@@ -53,7 +49,6 @@ class IGNode
   // all adjacency lists.
   // Decremented when a neighbor is pushed on to the stack. 
   // After that, never incremented/set again nor used.
-
 
   LiveRange *const ParentLR;  // parent LR (cannot be a const)
 
@@ -151,11 +146,5 @@ class IGNode
 
 
 };
-
-
-
-
-
-
 
 #endif

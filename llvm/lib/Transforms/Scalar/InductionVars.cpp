@@ -27,6 +27,8 @@
 #include "llvm/iPHINode.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+#include <iostream>
+using std::cerr;
 
 #include "llvm/Analysis/LoopDepth.h"
 
@@ -176,7 +178,7 @@ static inline bool isSimpleInductionVar(PHINode *PN) {
 // present induction variables (instead of always using uint)
 //
 static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
-  string PHIName, AddName;
+  std::string PHIName, AddName;
 
   BasicBlock *Header = Int->getHeaderNode();
   Method *M = Header->getParent();
@@ -205,7 +207,7 @@ static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
   assert(++PI == Header->pred_end() && "Header node should have 2 preds!");
 
   // Make Pred1 be the loop entrance predecessor, Pred2 be the Loop predecessor
-  if (Int->contains(Pred1)) swap(Pred1, Pred2);
+  if (Int->contains(Pred1)) std::swap(Pred1, Pred2);
 
   assert(!Int->contains(Pred1) && "Pred1 should be loop entrance!");
   assert( Int->contains(Pred2) && "Pred2 should be looping edge!");
@@ -250,7 +252,7 @@ static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
 static bool ProcessInterval(cfg::Interval *Int) {
   if (!Int->isLoop()) return false;  // Not a loop?  Ignore it!
 
-  vector<PHINode *> InductionVars;
+  std::vector<PHINode *> InductionVars;
 
   BasicBlock *Header = Int->getHeaderNode();
   // Loop over all of the PHI nodes in the interval header...
@@ -278,7 +280,7 @@ static bool ProcessInterval(cfg::Interval *Int) {
       if (isLoopInvariant(Int, V2)) {
 	// They *are* loop invariant.  Exchange BB1/BB2 and V1/V2 so that
 	// V1 is always the loop invariant computation.
-	swap(V1, V2); swap(BB1, BB2);
+	std::swap(V1, V2); std::swap(BB1, BB2);
       } else {
 	// Neither value is loop invariant.  Must not be an induction variable.
 	// This case can happen if there is an unreachable loop in the CFG that
@@ -292,7 +294,7 @@ static bool ProcessInterval(cfg::Interval *Int) {
     // anything about BB2/V2.  Check now to see if V2 is a linear induction
     // variable.
     //
-    cerr << "Found loop invariant computation: " << V1 << endl;
+    cerr << "Found loop invariant computation: " << V1 << "\n";
     
     if (!isLinearInductionVariable(Int, V2, PN))
       continue;         // No, it is not a linear ind var, ignore the PHI node.
@@ -308,7 +310,7 @@ static bool ProcessInterval(cfg::Interval *Int) {
   if (InductionVars.empty()) return false;
 
   // Search to see if there is already a "simple" induction variable.
-  vector<PHINode*>::iterator It = 
+  std::vector<PHINode*>::iterator It = 
     find_if(InductionVars.begin(), InductionVars.end(), isSimpleInductionVar);
   
   PHINode *PrimaryIndVar;
@@ -329,7 +331,7 @@ static bool ProcessInterval(cfg::Interval *Int) {
 	   "How could Primary IndVar not be in the header!?!!?");
 
     if (i != Header->begin())
-      iter_swap(i, Header->begin());
+      std::iter_swap(i, Header->begin());
   }
 
   // Now we know that there is a simple induction variable PrimaryIndVar.
@@ -364,7 +366,7 @@ static bool ProcessIntervalPartition(cfg::IntervalPartition &IP) {
   // variables in intervals that represent loops.
   //
   return reduce_apply(IP.begin(), IP.end(), bitwise_or<bool>(), false,
-		      ptr_fun(ProcessInterval));
+		      std::ptr_fun(ProcessInterval));
 }
 
 // DoInductionVariableCannonicalize - Simplify induction variables in loops.

@@ -18,7 +18,7 @@
 //
 template class ValueHolder<Instruction, BasicBlock, Method>;
 
-BasicBlock::BasicBlock(const string &name, Method *Parent)
+BasicBlock::BasicBlock(const std::string &name, Method *Parent)
   : Value(Type::LabelTy, Value::BasicBlockVal, name), InstList(this, 0),
     machineInstrVec(new MachineCodeForBasicBlock) {
   if (Parent)
@@ -32,7 +32,7 @@ BasicBlock::~BasicBlock() {
 }
 
 // Specialize setName to take care of symbol table majik
-void BasicBlock::setName(const string &name, SymbolTable *ST) {
+void BasicBlock::setName(const std::string &name, SymbolTable *ST) {
   Method *P;
   assert((ST == 0 || (!getParent() || ST == getParent()->getSymbolTable())) &&
 	 "Invalid symtab argument!");

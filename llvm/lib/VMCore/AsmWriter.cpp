@@ -26,6 +26,10 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <map>
+using std::string;
+using std::map;
+using std::vector;
+using std::ostream;
 
 static const Module *getModuleFromVal(const Value *V) {
   if (const MethodArgument *MA =dyn_cast<const MethodArgument>(V))
@@ -112,7 +116,7 @@ static void fillTypeNameTable(const Module *M,
         const Type *Ty = cast<const Type>(I->second);
         if (!isa<PointerType>(Ty) ||
             !cast<PointerType>(Ty)->getElementType()->isPrimitiveType())
-          TypeNames.insert(make_pair(Ty, "%"+I->first));
+          TypeNames.insert(std::make_pair(Ty, "%"+I->first));
       }
     }
   }
@@ -215,7 +219,7 @@ static ostream &printTypeInt(ostream &Out, const Type *Ty,
   //
   vector<const Type *> TypeStack;
   string TypeName = calcTypeName(Ty, TypeStack, TypeNames);
-  TypeNames.insert(make_pair(Ty, TypeName));   // Cache type name for later use
+  TypeNames.insert(std::make_pair(Ty, TypeName));//Cache type name for later use
   return Out << TypeName;
 }
 
@@ -331,7 +335,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     writeOperand(GV->getInitializer(), false, false);
 
   printInfoComment(GV);
-  Out << endl;
+  Out << "\n";
 }
 
 
@@ -348,7 +352,7 @@ void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
       if (const Constant *CPV = dyn_cast<const Constant>(V)) {
 	printConstant(CPV);
       } else if (const Type *Ty = dyn_cast<const Type>(V)) {
-	Out << "\t%" << I->first << " = type " << Ty->getDescription() << endl;
+	Out << "\t%" << I->first << " = type " << Ty->getDescription() << "\n";
       }
     }
   }
@@ -378,7 +382,7 @@ void AssemblyWriter::printConstant(const Constant *CPV) {
     else Out << "<badref>";
   } 
 
-  Out << endl;
+  Out << "\n";
 }
 
 // printMethod - Print all aspects of a method.
@@ -614,7 +618,7 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
   }
 
   printInfoComment(I);
-  Out << endl;
+  Out << "\n";
 }
 
 

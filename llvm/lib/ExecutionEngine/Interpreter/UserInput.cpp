@@ -10,6 +10,9 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Transforms/Linker.h"
 #include <algorithm>
+using std::string;
+using std::cout;
+using std::cin;
 
 enum CommandID {
   Quit, Help,                                 // Basics
@@ -69,14 +72,14 @@ void Interpreter::handleUserInput() {
   bool UserQuit = false;
 
   // Sort the table...
-  sort(CommandTable, CommandTableEnd);
+  std::sort(CommandTable, CommandTableEnd);
 
   // Print the instruction that we are stopped at...
   printCurrentInstruction();
 
   do {
     string Command;
-    cout << "lli> " << flush;
+    cout << "lli> " << std::flush;
     cin >> Command;
 
     CommandTableElement *E = find(CommandTable, CommandTableEnd, Command);
@@ -164,11 +167,11 @@ void Interpreter::loadModule(const string &Filename) {
 
   if (Module *SupportLib = ParseBytecodeFile(RuntimeLib, &ErrorMsg)) {
     if (LinkModules(CurMod, SupportLib, &ErrorMsg))
-      cerr << "Error Linking runtime library into current module: "
-           << ErrorMsg << endl;
+      std::cerr << "Error Linking runtime library into current module: "
+                << ErrorMsg << "\n";
   } else {
-    cerr << "Error loading runtime library '"+RuntimeLib+"': "
-         << ErrorMsg << "\n";
+    std::cerr << "Error loading runtime library '"+RuntimeLib+"': "
+              << ErrorMsg << "\n";
   }
 }
 
@@ -208,7 +211,7 @@ void Interpreter::setBreakpoint(const string &Name) {
 // callMethod - Enter the specified method...
 //
 bool Interpreter::callMethod(const string &Name) {
-  vector<Value*> Options = LookupMatchingNames(Name);
+  std::vector<Value*> Options = LookupMatchingNames(Name);
 
   for (unsigned i = 0; i < Options.size(); ++i) { // Remove nonmethod matches...
     if (!isa<Method>(Options[i])) {
@@ -223,7 +226,7 @@ bool Interpreter::callMethod(const string &Name) {
 
   Method *M = cast<Method>(PickedMeth);
 
-  vector<GenericValue> Args;
+  std::vector<GenericValue> Args;
   // TODO, get args from user...
 
   callMethod(M, Args);  // Start executing it...
@@ -234,7 +237,7 @@ bool Interpreter::callMethod(const string &Name) {
   return false;
 }
 
-static void *CreateArgv(const vector<string> &InputArgv) {
+static void *CreateArgv(const std::vector<string> &InputArgv) {
   // Pointers are 64 bits...
   uint64_t *Result = new PointerTy[InputArgv.size()+1];
 
@@ -255,8 +258,8 @@ static void *CreateArgv(const vector<string> &InputArgv) {
 // callMethod can parse command line options and stuff for us.
 //
 bool Interpreter::callMainMethod(const string &Name,
-                                 const vector<string> &InputArgv) {
-  vector<Value*> Options = LookupMatchingNames(Name);
+                                 const std::vector<string> &InputArgv) {
+  std::vector<Value*> Options = LookupMatchingNames(Name);
 
   for (unsigned i = 0; i < Options.size(); ++i) { // Remove nonmethod matches...
     if (!isa<Method>(Options[i])) {
@@ -272,7 +275,7 @@ bool Interpreter::callMainMethod(const string &Name,
   Method *M = cast<Method>(PickedMeth);
   const MethodType *MT = M->getMethodType();
 
-  vector<GenericValue> Args;
+  std::vector<GenericValue> Args;
   switch (MT->getParamTypes().size()) {
   default:
     cout << "Unknown number of arguments to synthesize for '" << Name << "'!\n";

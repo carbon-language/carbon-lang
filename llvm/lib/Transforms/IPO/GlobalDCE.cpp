@@ -18,14 +18,14 @@ static bool RemoveUnreachableMethods(Module *M, cfg::CallGraph *CG) {
   // Calculate which methods are reachable from the external methods in the call
   // graph.
   //
-  set<cfg::CallGraphNode*> ReachableNodes(df_begin(&CallGraph),
-					  df_end(&CallGraph));
+  std::set<cfg::CallGraphNode*> ReachableNodes(df_begin(&CallGraph),
+                                               df_end(&CallGraph));
 
   // Loop over the methods in the module twice.  The first time is used to drop
   // references that methods have to each other before they are deleted.  The
   // second pass removes the methods that need to be removed.
   //
-  vector<cfg::CallGraphNode*> MethodsToDelete;   // Track unused methods
+  std::vector<cfg::CallGraphNode*> MethodsToDelete;   // Track unused methods
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
     cfg::CallGraphNode *N = CallGraph[*I];
     if (!ReachableNodes.count(N)) {              // Not reachable??
@@ -45,7 +45,7 @@ static bool RemoveUnreachableMethods(Module *M, cfg::CallGraph *CG) {
   // Unreachables methods have been found and should have no references to them,
   // delete them now.
   //
-  for (vector<cfg::CallGraphNode*>::iterator I = MethodsToDelete.begin(),
+  for (std::vector<cfg::CallGraphNode*>::iterator I = MethodsToDelete.begin(),
 	 E = MethodsToDelete.end(); I != E; ++I)
     delete CallGraph.removeMethodFromModule(*I);
 

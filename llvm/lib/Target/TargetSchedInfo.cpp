@@ -21,8 +21,8 @@ resourceId_t MachineResource::nextId = 0;
 // (stl_algo.h).
 //
 inline static bool
-RUConflict(const vector<resourceId_t>& fromRVec,
-	   const vector<resourceId_t>& toRVec)
+RUConflict(const std::vector<resourceId_t>& fromRVec,
+	   const std::vector<resourceId_t>& toRVec)
 {
   
   unsigned fN = fromRVec.size(), tN = toRVec.size(); 
@@ -57,7 +57,7 @@ ComputeMinGap(const InstrRUsage &fromRU,
 	{
 	  // check if instr. #2 can start executing `gap' cycles after #1
 	  // by checking for resource conflicts in each overlapping cycle
-	  cycles_t numOverlap = min(fromRU.numCycles - gap, toRU.numCycles);
+	  cycles_t numOverlap =std::min(fromRU.numCycles - gap, toRU.numCycles);
 	  for (cycles_t c = 0; c <= numOverlap-1; c++)
 	    if (RUConflict(fromRU.resourcesByCycle[gap + c],
 			   toRU.resourcesByCycle[c]))
@@ -102,7 +102,7 @@ MachineSchedInfo::initializeResources()
   // most instructions will probably behave the same as their class.
   // Cannot allocate a vector of InstrRUsage so new each one.
   // 
-  vector<InstrRUsage> instrRUForClasses;
+  std::vector<InstrRUsage> instrRUForClasses;
   instrRUForClasses.resize(numSchedClasses);
   for (InstrSchedClass sc = 0; sc < numSchedClasses; sc++) {
     // instrRUForClasses.push_back(new InstrRUsage);
@@ -116,7 +116,7 @@ MachineSchedInfo::initializeResources()
 
 
 void
-MachineSchedInfo::computeInstrResources(const vector<InstrRUsage>&
+MachineSchedInfo::computeInstrResources(const std::vector<InstrRUsage>&
 					instrRUForClasses)
 {
   int numOpCodes =  mii->getNumRealOpCodes();
@@ -146,7 +146,7 @@ MachineSchedInfo::computeInstrResources(const vector<InstrRUsage>&
 
 
 void
-MachineSchedInfo::computeIssueGaps(const vector<InstrRUsage>&
+MachineSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
 				   instrRUForClasses)
 {
   int numOpCodes =  mii->getNumRealOpCodes();
@@ -186,7 +186,7 @@ MachineSchedInfo::computeIssueGaps(const vector<InstrRUsage>&
 	  {
 	    issueGaps[OpCodePair(fromOp,toOp)] = instrPairGap;
 	    conflictLists[fromOp].push_back(toOp);
-	    longestIssueConflict = max(longestIssueConflict, instrPairGap);
+	    longestIssueConflict = std::max(longestIssueConflict, instrPairGap);
 	  }
       }
 }

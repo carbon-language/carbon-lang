@@ -128,8 +128,8 @@ public:
   // 
   virtual void  CreateCodeToLoadConst(Value* val,
                                       Instruction* dest,
-                                      vector<MachineInstr*>& minstrVec,
-                                      vector<TmpInstruction*>& tempVec) const;
+                                      std::vector<MachineInstr*>& minstrVec,
+                                      std::vector<TmpInstruction*>& tmp) const;
 
   
   // Create an instruction sequence to copy an integer value `val'
@@ -141,8 +141,8 @@ public:
   virtual void  CreateCodeToCopyIntToFloat(Method* method,
                                            Value* val,
                                            Instruction* dest,
-                                           vector<MachineInstr*>& minstrVec,
-                                           vector<TmpInstruction*>& tempVec,
+                                           std::vector<MachineInstr*>& minstr,
+                                           std::vector<TmpInstruction*>& temp,
                                            TargetMachine& target) const;
 
   // Similarly, create an instruction sequence to copy an FP value
@@ -152,8 +152,8 @@ public:
   virtual void  CreateCodeToCopyFloatToInt(Method* method,
                                            Value* val,
                                            Instruction* dest,
-                                           vector<MachineInstr*>& minstrVec,
-                                           vector<TmpInstruction*>& tempVec,
+                                           std::vector<MachineInstr*>& minstr,
+                                           std::vector<TmpInstruction*>& temp,
                                            TargetMachine& target) const;
 
  // create copy instruction(s)
@@ -161,7 +161,7 @@ public:
   CreateCopyInstructionsByType(const TargetMachine& target,
                              Value* src,
                              Instruction* dest,
-                             vector<MachineInstr*>& minstrVec) const;
+                             std::vector<MachineInstr*>& minstr) const;
 
 
 };
@@ -245,7 +245,7 @@ class UltraSparcRegInfo : public MachineRegInfo
 			  LiveRangeInfo& LRI) const;
 
   void suggestReg4CallAddr(const MachineInstr * CallMI, LiveRangeInfo& LRI,
-			   vector<RegClass *> RCList) const;
+			   std::vector<RegClass *> RCList) const;
 
 
 
@@ -348,12 +348,13 @@ class UltraSparcRegInfo : public MachineRegInfo
   // the register allocator in association with method calling. See
   // SparcRegInfo.cpp for more details
   //
-  void moveInst2OrdVec(vector<MachineInstr *> &OrdVec, MachineInstr *UnordInst,
-		       PhyRegAlloc &PRA ) const;
+  void moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
+                       MachineInstr *UnordInst,
+		       PhyRegAlloc &PRA) const;
 
-  void OrderAddedInstrns( vector<MachineInstr *> &UnordVec, 
-			  vector<MachineInstr *> &OrdVec,
-			  PhyRegAlloc &PRA) const;
+  void OrderAddedInstrns(std::vector<MachineInstr *> &UnordVec, 
+                         std::vector<MachineInstr *> &OrdVec,
+                         PhyRegAlloc &PRA) const;
 
 
   // To find whether a particular call is to a var arg method
@@ -410,7 +411,7 @@ class UltraSparcRegInfo : public MachineRegInfo
     else if( ty <= Type::DoubleTyID)
       res = FloatRegClassID;           // sparc float reg class
     else { 
-      cerr << "TypeID: " << ty << endl;
+      std::cerr << "TypeID: " << ty << "\n";
       assert(0 && "Cannot resolve register class for type");
       return 0;
     }
@@ -449,10 +450,11 @@ class UltraSparcRegInfo : public MachineRegInfo
 			      LiveRangeInfo& LRI) const;
 
   void suggestRegs4CallArgs(const MachineInstr *const CallMI, 
-			    LiveRangeInfo& LRI, vector<RegClass *> RCL) const; 
+			    LiveRangeInfo& LRI,
+                            std::vector<RegClass *> RCL) const; 
 
   void suggestReg4RetValue(const MachineInstr *const RetMI, 
-			    LiveRangeInfo& LRI ) const;
+                           LiveRangeInfo& LRI) const;
 
 
   void colorMethodArgs(const Method *const Meth,  LiveRangeInfo& LRI,
@@ -493,7 +495,7 @@ class UltraSparcRegInfo : public MachineRegInfo
   // given the unified register number, this gives the name
   // for generating assembly code or debugging.
   //
-  inline const string getUnifiedRegName(int reg) const {
+  inline const std::string getUnifiedRegName(int reg) const {
     if( reg < 32 ) 
       return SparcIntRegOrder::getRegName(reg);
     else if ( reg < (64 + 32) )
@@ -513,7 +515,7 @@ class UltraSparcRegInfo : public MachineRegInfo
 
   // The fllowing methods are used by instruction selection
   //
-  inline unsigned int getRegNumInCallersWindow(int reg) {
+  inline unsigned getRegNumInCallersWindow(int reg) {
     if (reg == InvalidRegNum || reg >= 32)
       return reg;
     return SparcIntRegOrder::getRegNumInCallersWindow(reg);
@@ -1433,7 +1435,7 @@ public:
   // module. The specified module must have been compiled before this may be
   // used.
   //
-  virtual void emitAssembly(const Module *M, ostream &OutStr) const;
+  virtual void emitAssembly(const Module *M, std::ostream &OutStr) const;
 };
 
 

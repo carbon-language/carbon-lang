@@ -23,7 +23,7 @@
 //
 static inline 
 bool mergeDuplicateConstants(Module *M, unsigned &ConstantNo,
-                             map<Constant*, GlobalVariable*> &CMap) {
+                             std::map<Constant*, GlobalVariable*> &CMap) {
   Module::GlobalListType &GList = M->getGlobalList();
   if (GList.size() <= ConstantNo) return false;   // No new constants
   bool MadeChanges = false;
@@ -35,10 +35,10 @@ bool mergeDuplicateConstants(Module *M, unsigned &ConstantNo,
       Constant *Init = GV->getInitializer();
 
       // Check to see if the initializer is already known...
-      map<Constant*, GlobalVariable*>::iterator I = CMap.find(Init);
+      std::map<Constant*, GlobalVariable*>::iterator I = CMap.find(Init);
 
       if (I == CMap.end()) {    // Nope, add it to the map
-        CMap.insert(make_pair(Init, GV));
+        CMap.insert(std::make_pair(Init, GV));
       } else {                  // Yup, this is a duplicate!
         // Make all uses of the duplicate constant use the cannonical version...
         GV->replaceAllUsesWith(I->second);
@@ -59,7 +59,7 @@ bool mergeDuplicateConstants(Module *M, unsigned &ConstantNo,
 // deal with passes.
 //
 bool ConstantMerge::mergeDuplicateConstants(Module *M) {
-  map<Constant*, GlobalVariable*> Constants;
+  std::map<Constant*, GlobalVariable*> Constants;
   unsigned LastConstantSeen = 0;
   return ::mergeDuplicateConstants(M, LastConstantSeen, Constants);
 }

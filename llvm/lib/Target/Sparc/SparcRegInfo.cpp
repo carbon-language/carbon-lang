@@ -8,6 +8,8 @@
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/DerivedTypes.h"
+#include <iostream>
+using std::cerr;
 
 //---------------------------------------------------------------------------
 // Purpose: 
@@ -21,11 +23,10 @@
 //---------------------------------------------------------------------------
 const Value * 
 UltraSparcRegInfo::getCallInstRetVal(const MachineInstr *CallMI) const {
-
   unsigned OpCode = CallMI->getOpCode();
-  unsigned NumOfImpRefs =  CallMI->getNumImplicitRefs();
+  unsigned NumOfImpRefs = CallMI->getNumImplicitRefs();
 
-  if( OpCode == CALL ) {
+  if (OpCode == CALL) {
 
     // The one before the last implicit operand is the return value of 
     // a CALL instr
@@ -34,14 +35,13 @@ UltraSparcRegInfo::getCallInstRetVal(const MachineInstr *CallMI) const {
       if(  CallMI->implicitRefIsDefined(NumOfImpRefs-2) ) 
 	return  CallMI->getImplicitRef(NumOfImpRefs-2); 
 
-  }
-  else if( OpCode == JMPLCALL) {
+  } else if (OpCode == JMPLCALL) {
 
     // The last implicit operand is the return value of a JMPL
     // 
-    if( NumOfImpRefs > 0 )
-      if(  CallMI->implicitRefIsDefined(NumOfImpRefs-1) ) 
-	return  CallMI->getImplicitRef(NumOfImpRefs-1); 
+    if(NumOfImpRefs > 0)
+      if (CallMI->implicitRefIsDefined(NumOfImpRefs-1))
+	return CallMI->getImplicitRef(NumOfImpRefs-1); 
   }
   else
     assert(0 && "OpCode must be CALL/JMPL for a call instr");
@@ -189,7 +189,7 @@ void UltraSparcRegInfo::suggestReg4RetAddr(const MachineInstr * RetMI,
 //---------------------------------------------------------------------------
 void UltraSparcRegInfo::suggestReg4CallAddr(const MachineInstr * CallMI,
 					    LiveRangeInfo& LRI,
-					    vector<RegClass *> RCList) const {
+					 std::vector<RegClass *> RCList) const {
 
 
   const Value *RetAddrVal = getCallInstRetAddr( CallMI );
@@ -361,10 +361,8 @@ void UltraSparcRegInfo::colorMethodArgs(const Method *const Meth,
       // that on to the stack pos of LR
 
       if( isArgInReg ) {
-
-	MachineInstr *AdIBef = 
-	  cpReg2MemMI(UniArgReg, getFramePointer(), 
-		      LR->getSpillOffFromFP(), RegType );
+        cpReg2MemMI(UniArgReg, getFramePointer(), 
+                    LR->getSpillOffFromFP(), RegType );
 
 	FirstAI->InstrnsBefore.push_back( AdMI );   
       }
@@ -404,7 +402,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Method *const Meth,
 //---------------------------------------------------------------------------
 void UltraSparcRegInfo::suggestRegs4CallArgs(const MachineInstr *const CallMI, 
 					     LiveRangeInfo& LRI,
-					     vector<RegClass *> RCList) const {
+					 std::vector<RegClass *> RCList) const {
 
   assert ( (UltraSparcInfo->getInstrInfo()).isCall(CallMI->getOpCode()) );
 
@@ -469,7 +467,7 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(const MachineInstr *const CallMI,
     if( !LR ) {          
       if( DEBUG_RA) {
 	cerr << " ERROR: In call instr, no LR for arg:  " ;
-	printValue(CallArg); cerr << endl;
+	printValue(CallArg); cerr << "\n";
       }
       assert(0 && "NO LR for call arg");  
       // continue;
@@ -485,7 +483,7 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(const MachineInstr *const CallMI,
 
       else if (DEBUG_RA) 
 	// Do NOTHING as this will be colored as a normal value.
-	cerr << " Regr not suggested for int call arg" << endl;
+	cerr << " Regr not suggested for int call arg\n";
       
     }
     else if( RegType == FPSingleRegType &&  (argNo*2 +1)< NumOfFloatArgRegs) 
@@ -535,7 +533,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
     if( !RetValLR ) {
       cerr << "\nNo LR for:";
       printValue( RetVal );
-      cerr << endl;
+      cerr << "\n";
       assert( RetValLR && "ERR:No LR for non-void return value");
       //return;
     }
@@ -601,7 +599,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
   // Now color all args of the call instruction
   //-------------------------------------------
 
-  vector <MachineInstr *> AddedInstrnsBefore;
+  std::vector<MachineInstr *> AddedInstrnsBefore;
 
   unsigned NumOfCallArgs =  getCallInstNumArgs( CallMI );
 
@@ -662,7 +660,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
     if( !LR ) {          
       if( DEBUG_RA) {
 	cerr << " ERROR: In call instr, no LR for arg:  " ;
-	printValue(CallArg); cerr << endl;
+	printValue(CallArg); cerr << "\n";
       }
       assert(0 && "NO LR for call arg");  
       // continue;
@@ -812,7 +810,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	cerr  << *(AddedInstrnsBefore[i]);
     }
 
-    vector <MachineInstr *> TmpVec;
+    std::vector<MachineInstr *> TmpVec;
     OrderAddedInstrns(AddedInstrnsBefore, TmpVec, PRA);
 
     if( DEBUG_RA   ) {
@@ -855,13 +853,12 @@ void UltraSparcRegInfo::suggestReg4RetValue(const MachineInstr *const RetMI,
     // The first implicit operand is the return value of a return instr
     const Value *RetVal =  RetMI->getImplicitRef(0);
 
-    MachineInstr *AdMI;
     LiveRange *const LR = LRI.getLiveRangeForValue( RetVal ); 
 
     if( !LR ) {
      cerr << "\nNo LR for:";
      printValue( RetVal );
-     cerr << endl;
+     cerr << "\n";
      assert( LR && "No LR for return value of non-void method");
      //return;
    }
@@ -898,13 +895,12 @@ void UltraSparcRegInfo::colorRetValue(const  MachineInstr *const RetMI,
     // The first implicit operand is the return value of a return instr
     const Value *RetVal =  RetMI->getImplicitRef(0);
 
-    MachineInstr *AdMI;
     LiveRange *const LR = LRI.getLiveRangeForValue( RetVal ); 
 
     if( ! LR ) {
 	cerr << "\nNo LR for:";
 	printValue( RetVal );
-	cerr << endl;
+	cerr << "\n";
 	// assert( LR && "No LR for return value of non-void method");
 	return;
     }
@@ -941,16 +937,14 @@ void UltraSparcRegInfo::colorRetValue(const  MachineInstr *const RetMI,
 
       // the LR received  UniLRReg but must be colored with UniRetReg
       // to pass as the return value
-
-      AdMI = cpReg2RegMI( UniLRReg, UniRetReg, RegType); 
-      RetAI->InstrnsBefore.push_back( AdMI );
+      RetAI->InstrnsBefore.push_back(cpReg2RegMI(UniLRReg, UniRetReg, RegType));
     }
     else {                              // if the LR is spilled
-
-      AdMI = cpMem2RegMI(getFramePointer(), LR->getSpillOffFromFP(), 
-			 UniRetReg, RegType); 
-      RetAI->InstrnsBefore.push_back( AdMI );
-      cout << "\nCopied the return value from stack";
+      MachineInstr *AdMI = cpMem2RegMI(getFramePointer(),
+                                       LR->getSpillOffFromFP(), 
+                                       UniRetReg, RegType); 
+      RetAI->InstrnsBefore.push_back(AdMI);
+      cerr << "\nCopied the return value from stack\n";
     }
   
   } // if there is a return value
@@ -1179,9 +1173,7 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 
   // has set to record which registers were saved/restored
   //
-  hash_set<unsigned> PushedRegSet;
-
-
+  std::hash_set<unsigned> PushedRegSet;
 
   // Now find the LR of the return value of the call
   // The last *implicit operand* is the return value of a call
@@ -1394,7 +1386,7 @@ void UltraSparcRegInfo::printReg(const LiveRange *const LR) {
   cerr << " *Node " << (LR->getUserIGNode())->getIndex();
 
   if( ! LR->hasColor() ) {
-    cerr << " - could not find a color" << endl;
+    cerr << " - could not find a color\n";
     return;
   }
   
@@ -1403,15 +1395,13 @@ void UltraSparcRegInfo::printReg(const LiveRange *const LR) {
   cerr << " colored with color "<< LR->getColor();
 
   if( RegClassID == IntRegClassID ) {
+    cerr<< " [" << SparcIntRegOrder::getRegName(LR->getColor()) << "]\n";
 
-    cerr<< " [" << SparcIntRegOrder::getRegName(LR->getColor()) ;
-    cerr << "]" << endl;
-  }
-  else if ( RegClassID == FloatRegClassID) {
+  } else if ( RegClassID == FloatRegClassID) {
     cerr << "[" << SparcFloatRegOrder::getRegName(LR->getColor());
     if( LR->getTypeID() == Type::DoubleTyID )
       cerr << "+" << SparcFloatRegOrder::getRegName(LR->getColor()+1);
-    cerr << "]" << endl;
+    cerr << "]\n";
   }
 }
 
@@ -1436,9 +1426,9 @@ void UltraSparcRegInfo::printReg(const LiveRange *const LR) {
 
 
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::OrderAddedInstrns( vector<MachineInstr *> &UnordVec, 
-					   vector<MachineInstr *> &OrdVec,
-					   PhyRegAlloc &PRA) const{
+void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr *> &UnordVec,
+					  std::vector<MachineInstr *> &OrdVec,
+                                          PhyRegAlloc &PRA) const{
 
   /*
     Problem: We can have instructions inserted by RegAlloc like
@@ -1476,7 +1466,7 @@ void UltraSparcRegInfo::OrderAddedInstrns( vector<MachineInstr *> &UnordVec,
 
     CouldMoveAll = true;
 
-    vector<MachineInstr *>::iterator DefIt = UnordVec.begin();
+    std::vector<MachineInstr *>::iterator DefIt = UnordVec.begin();
 
     for( ; DefIt !=  UnordVec.end(); ++DefIt ) {
 
@@ -1498,7 +1488,7 @@ void UltraSparcRegInfo::OrderAddedInstrns( vector<MachineInstr *> &UnordVec,
 	
 	bool DefEqUse = false;
 	
-	vector<MachineInstr *>::iterator UseIt = DefIt;
+	std::vector<MachineInstr *>::iterator UseIt = DefIt;
 	UseIt++;
 	
 	for( ; UseIt !=  UnordVec.end(); ++UseIt ) {
@@ -1572,7 +1562,7 @@ void UltraSparcRegInfo::OrderAddedInstrns( vector<MachineInstr *> &UnordVec,
 
 
 
-void UltraSparcRegInfo::moveInst2OrdVec(vector<MachineInstr *> &OrdVec,
+void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
 					MachineInstr *UnordInst,
 					PhyRegAlloc &PRA ) const {
 
@@ -1585,7 +1575,7 @@ void UltraSparcRegInfo::moveInst2OrdVec(vector<MachineInstr *> &OrdVec,
     // before in the OrdVec
     bool DefEqUse = false;
 
-    vector<MachineInstr *>::iterator OrdIt = OrdVec.begin();
+    std::vector<MachineInstr *>::iterator OrdIt = OrdVec.begin();
   
     for( ; OrdIt !=  OrdVec.end(); ++OrdIt ) {
 

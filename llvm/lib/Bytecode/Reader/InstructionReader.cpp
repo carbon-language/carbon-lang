@@ -16,6 +16,9 @@
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
+#include <iostream>
+using std::vector;
+using std::cerr;
 
 bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf, 
 				  RawInst &Result) {
@@ -107,7 +110,7 @@ bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf,
 #if 0
   cerr << "NO: "  << Result.NumOperands   << " opcode: " << Result.Opcode 
        << " Ty: " << Result.Ty->getDescription() << " arg1: "   << Result.Arg1 
-       << " arg2: "   << Result.Arg2 << " arg3: "   << Result.Arg3 << endl;
+       << " arg2: "   << Result.Arg2 << " arg3: "   << Result.Arg3 << "\n";
 #endif
   return false;
 }
@@ -441,6 +444,6 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
   }  // end switch(Raw.Opcode) 
 
   cerr << "Unrecognized instruction! " << Raw.Opcode 
-       << " ADDR = 0x" << (void*)Buf << endl;
+       << " ADDR = 0x" << (void*)Buf << "\n";
   return failure(true);
 }

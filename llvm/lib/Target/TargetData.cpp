@@ -40,7 +40,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD)
       StructSize = (StructSize/TyAlign + 1) * TyAlign;   // Add padding...
 
     // Keep track of maximum alignment constraint
-    StructAlignment = max(TyAlign, StructAlignment);
+    StructAlignment = std::max(TyAlign, StructAlignment);
 
     MemberOffsets.push_back(StructSize);
     StructSize += TySize;                 // Consume space for this data item...
@@ -71,7 +71,7 @@ Annotation *TargetData::TypeAnFactory(AnnotationID AID, const Annotable *T,
 //                       TargetData Class Implementation
 //===----------------------------------------------------------------------===//
 
-TargetData::TargetData(const string &TargetName, unsigned char PtrSize = 8,
+TargetData::TargetData(const std::string &TargetName, unsigned char PtrSize = 8,
 	     unsigned char PtrAl = 8, unsigned char DoubleAl = 8,
 	     unsigned char FloatAl = 4, unsigned char LongAl = 8, 
 	     unsigned char IntAl = 4, unsigned char ShortAl = 2,
@@ -146,7 +146,7 @@ unsigned char TargetData::getTypeAlignment(const Type *Ty) const {
 }
 
 unsigned TargetData::getIndexedOffset(const Type *ptrTy,
-				      const vector<Value*> &Idx) const {
+				      const std::vector<Value*> &Idx) const {
   const PointerType *PtrTy = cast<const PointerType>(ptrTy);
   unsigned Result = 0;
 

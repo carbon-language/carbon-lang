@@ -6,6 +6,8 @@
 
 #include "llvm/iOperators.h"
 #include "llvm/Type.h"
+#include <iostream>
+using std::cerr;
 
 //===----------------------------------------------------------------------===//
 //                              UnaryOperator Class
@@ -15,7 +17,7 @@ UnaryOperator *UnaryOperator::create(UnaryOps Op, Value *Source) {
   switch (Op) {
   case Not:  return new GenericUnaryInst(Op, Source);
   default:
-    cerr << "Don't know how to Create UnaryOperator " << Op << endl;
+    cerr << "Don't know how to Create UnaryOperator " << Op << "\n";
     return 0;
   }
 }
@@ -30,9 +32,10 @@ const char *GenericUnaryInst::getOpcodeName() const {
   case Not: return "not";
   case Cast: return "cast";
   default:
-    cerr << "Invalid unary operator type!" << getOpcode() << endl;
+    cerr << "Invalid unary operator type!" << getOpcode() << "\n";
     abort();
   }
+  return 0;
 }
 
 
@@ -41,7 +44,7 @@ const char *GenericUnaryInst::getOpcodeName() const {
 //===----------------------------------------------------------------------===//
 
 BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
-				       const string &Name) {
+				       const std::string &Name) {
   switch (Op) {
   // Binary comparison operators...
   case SetLT: case SetGT: case SetLE:
@@ -75,7 +78,7 @@ bool BinaryOperator::swapOperands() {
   default:
     return true;
   }
-  swap(Operands[0], Operands[1]);
+  std::swap(Operands[0], Operands[1]);
   return false;
 }
 
@@ -98,9 +101,10 @@ const char *GenericBinaryInst::getOpcodeName() const {
   case Or : return "or";
   case Xor: return "xor";
   default:
-    cerr << "Invalid binary operator type!" << getOpcode() << endl;
+    cerr << "Invalid binary operator type!" << getOpcode() << "\n";
     abort();
   }
+  return 0;
 }
 
 
@@ -109,7 +113,7 @@ const char *GenericBinaryInst::getOpcodeName() const {
 //===----------------------------------------------------------------------===//
 
 SetCondInst::SetCondInst(BinaryOps opType, Value *S1, Value *S2, 
-                         const string &Name) 
+                         const std::string &Name) 
   : BinaryOperator(opType, S1, S2, Name) {
 
   OpType = opType;

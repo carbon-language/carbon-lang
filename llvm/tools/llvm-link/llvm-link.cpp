@@ -19,6 +19,7 @@
 #include <fstream>
 #include <memory>
 #include <sys/types.h>     // For FileExists
+typedef int blksize_t;   // SYS/TYPES is broken!!!
 #include <sys/stat.h>
 
 
@@ -32,7 +33,7 @@ cl::StringList LibPaths  ("L", "Specify a library search path", cl::ZeroOrMore);
 
 
 // FileExists - Return true if the specified string is an openable file...
-static inline bool FileExists(const string &FN) {
+static inline bool FileExists(const std::string &FN) {
   struct stat StatBuf;
   return stat(FN.c_str(), &StatBuf) != -1;
 }
@@ -40,9 +41,9 @@ static inline bool FileExists(const string &FN) {
 // LoadFile - Read the specified bytecode file in and return it.  This routine
 // searches the link path for the specified file to try to find it...
 //
-static inline std::auto_ptr<Module> LoadFile(const string &FN) {
-  string Filename = FN;
-  string ErrorMessage;
+static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
+  std::string Filename = FN;
+  std::string ErrorMessage;
 
   unsigned NextLibPathIdx = 0;
   bool FoundAFile = false;
@@ -81,7 +82,7 @@ int main(int argc, char **argv) {
   assert(InputFilenames.size() > 0 && "OneOrMore is not working");
 
   unsigned BaseArg = 0;
-  string ErrorMessage;
+  std::string ErrorMessage;
 
   // TODO: TEST argv[0] for llvm-ar forms... for now, this is a huge hack.
   if (InputFilenames.size() >= 3 && InputFilenames[0] == "rc" &&
@@ -94,7 +95,7 @@ int main(int argc, char **argv) {
   if (Composite.get() == 0) return 1;
 
   for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
-    auto_ptr<Module> M(LoadFile(InputFilenames[i]));
+    std::auto_ptr<Module> M(LoadFile(InputFilenames[i]));
     if (M.get() == 0) return 1;
 
     if (Verbose) cerr << "Linking in '" << InputFilenames[i] << "'\n";
@@ -111,8 +112,13 @@ int main(int argc, char **argv) {
 
   ostream *Out = &cout;  // Default to printing to stdout...
   if (OutputFilename != "-") {
-    Out = new ofstream(OutputFilename.c_str(), 
-		       (Force ? 0 : ios::noreplace)|ios::out);
+    if (!Force && !std::ifstream(OutputFilename.c_str())) {
+      // If force is not specified, make sure not to overwrite a file!
+      cerr << "Error opening '" << OutputFilename << "': File exists!\n"
+           << "Use -f command line argument to force output\n";
+      return 1;
+    }
+    Out = new std::ofstream(OutputFilename.c_str());
     if (!Out->good()) {
       cerr << "Error opening '" << OutputFilename << "'!\n";
       return 1;
@@ -122,6 +128,6 @@ int main(int argc, char **argv) {
   if (Verbose) cerr << "Writing bytecode...\n";
   WriteBytecodeToFile(Composite.get(), *Out);
 
-  if (Out != &cout) delete Out;
+  if (Out != &std::cout) delete Out;
   return 0;
 }

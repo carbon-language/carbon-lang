@@ -18,6 +18,8 @@
 #include "Support/STLExtras.h"
 #include <map>
 #include <algorithm>
+#include <iostream>
+using std::cerr;
 
 #include "llvm/Assembly/Writer.h"
 
@@ -96,7 +98,8 @@ static bool MallocConvertableToType(MallocInst *MI, const Type *Ty,
 }
 
 static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
-                                        const string &Name, ValueMapCache &VMC){
+                                        const std::string &Name,
+                                        ValueMapCache &VMC){
   BasicBlock *BB = MI->getParent();
   BasicBlock::iterator It = BB->end();
 
@@ -270,7 +273,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     // index array.  If there are, check to see if removing them causes us to
     // get to the right type...
     //
-    vector<Value*> Indices = GEP->copyIndices();
+    std::vector<Value*> Indices = GEP->copyIndices();
     const Type *BaseType = GEP->getPointerOperand()->getType();
     const Type *ElTy = 0;
 
@@ -302,7 +305,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
       // Check to see if 'N' is an expression that can be converted to
       // the appropriate size... if so, allow it.
       //
-      vector<Value*> Indices;
+      std::vector<Value*> Indices;
       const Type *ElTy = ConvertableToGEP(PTy, I->getOperand(1), Indices);
       if (ElTy) {
         assert(ElTy == PVTy && "Internal error, setup wrong!");
@@ -378,7 +381,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
   BasicBlock *BB = I->getParent();
   BasicBlock::InstListType &BIL = BB->getInstList();
-  string Name = I->getName();  if (!Name.empty()) I->setName("");
+  std::string Name = I->getName();  if (!Name.empty()) I->setName("");
   Instruction *Res;     // Result of conversion
 
   ValueHandle IHandle(VMC, I);  // Prevent I from being removed!
@@ -460,7 +463,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     // index array.  If there are, check to see if removing them causes us to
     // get to the right type...
     //
-    vector<Value*> Indices = GEP->copyIndices();
+    std::vector<Value*> Indices = GEP->copyIndices();
     const Type *BaseType = GEP->getPointerOperand()->getType();
     const Type *PVTy = cast<PointerType>(Ty)->getElementType();
     Res = 0;
@@ -491,7 +494,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
       // Check to see if 'N' is an expression that can be converted to
       // the appropriate size... if so, allow it.
       //
-      vector<Value*> Indices;
+      std::vector<Value*> Indices;
       const Type *ElTy = ConvertableToGEP(NewSrcTy, I->getOperand(1),
                                           Indices, &It);
       if (ElTy) {        
@@ -634,7 +637,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
   case Instruction::Add:
     if (isa<PointerType>(Ty)) {
       Value *IndexVal = I->getOperand(V == I->getOperand(0) ? 1 : 0);
-      vector<Value*> Indices;
+      std::vector<Value*> Indices;
       if (const Type *ETy = ConvertableToGEP(Ty, IndexVal, Indices)) {
         const Type *RetTy = PointerType::get(ETy);
 
@@ -685,7 +688,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       // They could be loading the first element of a composite type...
       if (const CompositeType *CT = dyn_cast<CompositeType>(LoadedTy)) {
         unsigned Offset = 0;     // No offset, get first leaf.
-        vector<Value*> Indices;  // Discarded...
+        std::vector<Value*> Indices;  // Discarded...
         LoadedTy = getStructOffsetType(CT, Offset, Indices, false);
         assert(Offset == 0 && "Offset changed from zero???");
       }
@@ -751,7 +754,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       // Check to see if the second argument is an expression that can
       // be converted to the appropriate size... if so, allow it.
       //
-      vector<Value*> Indices;
+      std::vector<Value*> Indices;
       const Type *ElTy = ConvertableToGEP(Ty, Index, Indices);
       delete TempScale;   // Free our temporary multiply if we made it
 
@@ -823,7 +826,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
   BasicBlock *BB = I->getParent();
   BasicBlock::InstListType &BIL = BB->getInstList();
-  string Name = I->getName();  if (!Name.empty()) I->setName("");
+  std::string Name = I->getName();  if (!Name.empty()) I->setName("");
   Instruction *Res;     // Result of conversion
 
   //cerr << endl << endl << "Type:\t" << Ty << "\nInst: " << I << "BB Before: " << BB << endl;
@@ -844,12 +847,12 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   case Instruction::Add:
     if (isa<PointerType>(NewTy)) {
       Value *IndexVal = I->getOperand(OldVal == I->getOperand(0) ? 1 : 0);
-      vector<Value*> Indices;
+      std::vector<Value*> Indices;
       BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
 
       if (const Type *ETy = ConvertableToGEP(NewTy, IndexVal, Indices, &It)) {
         // If successful, convert the add to a GEP
-        const Type *RetTy = PointerType::get(ETy);
+        //const Type *RetTy = PointerType::get(ETy);
         // First operand is actually the given pointer...
         Res = new GetElementPtrInst(NewVal, Indices, Name);
         assert(cast<PointerType>(Res->getType())->getElementType() == ETy &&
@@ -892,7 +895,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     const Type *LoadedTy =
       cast<PointerType>(NewVal->getType())->getElementType();
 
-    vector<Value*> Indices;
+    std::vector<Value*> Indices;
     Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
 
     if (const CompositeType *CT = dyn_cast<CompositeType>(LoadedTy)) {
@@ -914,7 +917,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       Res->setOperand(1, ConvertExpressionToType(I->getOperand(1), NewPT, VMC));
     } else {                           // Replace the source pointer
       const Type *ValTy = cast<PointerType>(NewTy)->getElementType();
-      vector<Value*> Indices;
+      std::vector<Value*> Indices;
 #if 0
       Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
       while (ArrayType *AT = dyn_cast<ArrayType>(ValTy)) {
@@ -948,7 +951,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
     // Perform the conversion now...
     //
-    vector<Value*> Indices;
+    std::vector<Value*> Indices;
     const Type *ElTy = ConvertableToGEP(NewVal->getType(), Index, Indices, &It);
     assert(ElTy != 0 && "GEP Conversion Failure!");
     Res = new GetElementPtrInst(NewVal, Indices, Name);
@@ -965,7 +968,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       // Check to see if the second argument is an expression that can
       // be converted to the appropriate size... if so, allow it.
       //
-      vector<Value*> Indices;
+      std::vector<Value*> Indices;
       const Type *ElTy = ConvertableToGEP(NewVal->getType(), I->getOperand(1),
                                           Indices, &It);
       assert(ElTy != 0 && "GEP Conversion Failure!");
@@ -1001,9 +1004,10 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
   case Instruction::Call: {
     Value *Meth = I->getOperand(0);
-    vector<Value*> Params(I->op_begin()+1, I->op_end());
+    std::vector<Value*> Params(I->op_begin()+1, I->op_end());
 
-    vector<Value*>::iterator OI = find(Params.begin(), Params.end(), OldVal);
+    std::vector<Value*>::iterator OI =
+      find(Params.begin(), Params.end(), OldVal);
     assert (OI != Params.end() && "Not using value!");
 
     *OI = NewVal;

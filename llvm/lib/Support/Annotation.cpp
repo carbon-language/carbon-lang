@@ -6,6 +6,10 @@
 
 #include <map>
 #include "llvm/Annotation.h"
+using std::string;
+using std::map;
+using std::pair;
+using std::make_pair;
 
 typedef map<const string, unsigned> IDMapType;
 static unsigned IDCounter = 0;  // Unique ID counter

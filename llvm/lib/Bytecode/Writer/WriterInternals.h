@@ -20,10 +20,10 @@
 #include <deque>
 
 class BytecodeWriter {
-  deque<unsigned char> &Out;
+  std::deque<unsigned char> &Out;
   SlotCalculator Table;
 public:
-  BytecodeWriter(deque<unsigned char> &o, const Module *M);
+  BytecodeWriter(std::deque<unsigned char> &o, const Module *M);
 
 protected:
   void outputConstants(bool isMethod);
@@ -51,12 +51,12 @@ private :
 //
 class BytecodeBlock {
   unsigned Loc;
-  deque<unsigned char> &Out;
+  std::deque<unsigned char> &Out;
 
   BytecodeBlock(const BytecodeBlock &);   // do not implement
   void operator=(const BytecodeBlock &);  // do not implement
 public:
-  inline BytecodeBlock(unsigned ID, deque<unsigned char> &o) : Out(o) {
+  inline BytecodeBlock(unsigned ID, std::deque<unsigned char> &o) : Out(o) {
     output(ID, Out);
     output((unsigned)0, Out);         // Reserve the space for the block size...
     Loc = Out.size();

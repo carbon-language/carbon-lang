@@ -10,6 +10,8 @@
 #include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+using std::set;
+
 
 //===----------------------------------------------------------------------===//
 //  Helper Template

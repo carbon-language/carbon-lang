@@ -12,7 +12,7 @@
 #ifndef LIVE_VAR_MAP_H
 #define LIVE_VAR_MAP_H
 
-#include <hash_map>
+#include <ext/hash_map>
 
 class BasicBlock;
 class BBLiveVar;
@@ -34,11 +34,11 @@ struct hashFuncBB {          // sturcture containing the hash function for BB
 
 
 
-typedef hash_map<const BasicBlock *,  
-		 BBLiveVar *, hashFuncBB > BBToBBLiveVarMapType;
+typedef std::hash_map<const BasicBlock *,  
+                      BBLiveVar *, hashFuncBB > BBToBBLiveVarMapType;
 
-typedef hash_map<const MachineInstr *,  const LiveVarSet *, 
-		 hashFuncMInst> MInstToLiveVarSetMapType;
+typedef std::hash_map<const MachineInstr *,  const LiveVarSet *, 
+                      hashFuncMInst> MInstToLiveVarSetMapType;
 
 
 #endif

@@ -21,7 +21,7 @@
 
 #if TRACE_LEVEL    // ByteCodeReading_TRACEer
 #include "llvm/Assembly/Writer.h"
-#define BCR_TRACE(n, X) if (n < TRACE_LEVEL) cerr << string(n*2, ' ') << X
+#define BCR_TRACE(n, X) if (n < TRACE_LEVEL) cerr << std::string(n*2, ' ') << X
 #else
 #define BCR_TRACE(n, X)
 #endif
@@ -41,12 +41,12 @@ struct RawInst {       // The raw fields out of the bytecode stream...
   unsigned Arg1, Arg2;
   union {
     unsigned Arg3;
-    vector<unsigned> *VarArgs;   // Contains arg #3,4,5... if NumOperands > 3
+    std::vector<unsigned> *VarArgs; // Contains arg #3,4,5... if NumOperands > 3
   };
 };
 
 class BytecodeParser : public AbstractTypeUser {
-  string Error;     // Error message string goes here...
+  std::string Error;     // Error message string goes here...
 public:
   BytecodeParser() {
     // Define this in case we don't see a ModuleGlobalInfo block.
@@ -55,13 +55,13 @@ public:
 
   Module *ParseBytecode(const uchar *Buf, const uchar *EndBuf);
 
-  string getError() const { return Error; }
+  std::string getError() const { return Error; }
 
 private:          // All of this data is transient across calls to ParseBytecode
   Module *TheModule;   // Current Module being read into...
   
-  typedef vector<Value *> ValueList;
-  typedef vector<ValueList> ValueTable;
+  typedef std::vector<Value *> ValueList;
+  typedef std::vector<ValueList> ValueTable;
   ValueTable Values, LateResolveValues;
   ValueTable ModuleValues, LateResolveModuleValues;
 
@@ -70,14 +70,14 @@ private:          // All of this data is transient across calls to ParseBytecode
   // are defined, and if so, the temporary object that they represent is held
   // here.
   //
-  typedef map<pair<const PointerType *, unsigned>, GlobalVariable*>
-                                                               GlobalRefsType;
+  typedef std::map<std::pair<const PointerType *, unsigned>,
+                   GlobalVariable*>  GlobalRefsType;
   GlobalRefsType GlobalRefs;
 
   // TypesLoaded - This vector mirrors the Values[TypeTyID] plane.  It is used
   // to deal with forward references to types.
   //
-  typedef vector<PATypeHandle<Type> > TypeValuesListTy;
+  typedef std::vector<PATypeHandle<Type> > TypeValuesListTy;
   TypeValuesListTy ModuleTypeValues;
   TypeValuesListTy MethodTypeValues;
 
@@ -89,11 +89,11 @@ private:          // All of this data is transient across calls to ParseBytecode
   // into its slot to reserve it.  When the method is loaded, this placeholder
   // is replaced.
   //
-  list<pair<const PointerType *, unsigned> > MethodSignatureList;
+  std::list<std::pair<const PointerType *, unsigned> > MethodSignatureList;
 
 private:
-  bool ParseModule            (const uchar * Buf, const uchar *End, Module *&);
-  bool ParseModuleGlobalInfo  (const uchar *&Buf, const uchar *End, Module *);
+  bool ParseModule          (const uchar * Buf, const uchar *End, Module *&);
+  bool ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End, Module *);
   bool ParseSymbolTable   (const uchar *&Buf, const uchar *End, SymbolTable *);
   bool ParseMethod        (const uchar *&Buf, const uchar *End, Module *);
   bool ParseBasicBlock    (const uchar *&Buf, const uchar *End, BasicBlock *&);
@@ -111,7 +111,7 @@ private:
   Value      *getValue(const Type *Ty, unsigned num, bool Create = true);
   const Type *getType(unsigned ID);
 
-  int insertValue(Value *D, vector<ValueList> &D);  // -1 = Failure
+  int insertValue(Value *D, std::vector<ValueList> &D);  // -1 = Failure
   bool postResolveValues(ValueTable &ValTab);
 
   bool getTypeSlot(const Type *Ty, unsigned &Slot);

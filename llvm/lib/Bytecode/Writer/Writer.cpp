@@ -34,7 +34,7 @@
 #include <string.h>
 #include <algorithm>
 
-BytecodeWriter::BytecodeWriter(deque<unsigned char> &o, const Module *M) 
+BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M) 
   : Out(o), Table(M, false) {
 
   outputSignature();
@@ -66,7 +66,7 @@ void BytecodeWriter::outputConstants(bool isMethod) {
 
   unsigned NumPlanes = Table.getNumPlanes();
   for (unsigned pno = 0; pno < NumPlanes; pno++) {
-    const vector<const Value*> &Plane = Table.getPlane(pno);
+    const std::vector<const Value*> &Plane = Table.getPlane(pno);
     if (Plane.empty()) continue;      // Skip empty type planes...
 
     unsigned ValNo = 0;
@@ -95,8 +95,8 @@ void BytecodeWriter::outputConstants(bool isMethod) {
     assert (Slot != -1 && "Type in constant pool but not in method!!");
     output_vbr((unsigned)Slot, Out);
 
-    //cout << "Emitting " << NC << " constants of type '" 
-    //	 << Plane.front()->getType()->getName() << "' = Slot #" << Slot << endl;
+    //cerr << "Emitting " << NC << " constants of type '" 
+    //	 << Plane.front()->getType()->getName() << "' = Slot #" << Slot << "\n";
 
     for (unsigned i = ValNo; i < ValNo+NC; ++i) {
       const Value *V = Plane[i];
@@ -211,7 +211,7 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
 void WriteBytecodeToFile(const Module *C, ostream &Out) {
   assert(C && "You can't write a null module!!");
 
-  deque<unsigned char> Buffer;
+  std::deque<unsigned char> Buffer;
 
   // This object populates buffer for us...
   BytecodeWriter BCW(Buffer, C);
@@ -220,7 +220,7 @@ void WriteBytecodeToFile(const Module *C, ostream &Out) {
   // sequential in memory, however, so write out as much as possible in big
   // chunks, until we're done.
   //
-  deque<unsigned char>::const_iterator I = Buffer.begin(), E = Buffer.end();
+  std::deque<unsigned char>::const_iterator I = Buffer.begin(),E = Buffer.end();
   while (I != E) {                           // Loop until it's all written
     // Scan to see how big this chunk is...
     const unsigned char *ChunkPtr = &*I;
@@ -235,7 +235,7 @@ void WriteBytecodeToFile(const Module *C, ostream &Out) {
     }
     
     // Write out the chunk...
-    Out.write(ChunkPtr, LastPtr-ChunkPtr);
+    Out.write((char*)ChunkPtr, LastPtr-ChunkPtr);
   }
 
   Out.flush();

@@ -25,7 +25,7 @@
 //
 template<class ValueSubclass, class ItemParentType, class SymTabType> 
 class ValueHolder {
-  vector<ValueSubclass*> ValueList;
+  std::vector<ValueSubclass*> ValueList;
 
   ItemParentType *ItemParent;
   SymTabType *Parent;
@@ -66,10 +66,10 @@ public:
   // sub-Definition iterator code
   //===--------------------------------------------------------------------===//
   // 
-  typedef vector<ValueSubclass*>::iterator               iterator;
-  typedef vector<ValueSubclass*>::const_iterator   const_iterator;
-  typedef reverse_iterator<const_iterator> const_reverse_iterator;
-  typedef reverse_iterator<iterator>             reverse_iterator;
+  typedef std::vector<ValueSubclass*>::iterator               iterator;
+  typedef std::vector<ValueSubclass*>::const_iterator   const_iterator;
+  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef std::reverse_iterator<iterator>             reverse_iterator;
 
   inline iterator                begin()       { return ValueList.begin(); }
   inline const_iterator          begin() const { return ValueList.begin(); }

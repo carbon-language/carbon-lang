@@ -28,9 +28,9 @@ public:
   
 protected:
   unsigned int           numLevels;
-  vector<unsigned short> cacheLineSizes;
-  vector<unsigned int>   cacheSizes;
-  vector<unsigned short> cacheAssoc;
+  std::vector<unsigned short> cacheLineSizes;
+  std::vector<unsigned int>   cacheSizes;
+  std::vector<unsigned short> cacheAssoc;
   
 public:
   /*ctor*/          MachineCacheInfo    (const TargetMachine& tgt);

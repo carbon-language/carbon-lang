@@ -44,17 +44,17 @@ int main(int argc, char **argv) {
   }
   
   if (OutputFilename == "") {   // Didn't specify an output filename?
-    string IFN = InputFilename;
+    std::string IFN = InputFilename;
     int Len = IFN.length();
     if (IFN[Len-2] == '.' && IFN[Len-1] == 's') {   // Source ends in .s?
-      OutputFilename = string(IFN.begin(), IFN.end()-2);
+      OutputFilename = std::string(IFN.begin(), IFN.end()-2);
     } else {
       OutputFilename = IFN;   // Append a .o to it
     }
     OutputFilename += ".o";
   }
 
-  Out = new ofstream(OutputFilename.c_str(), ios::out);
+  Out = new std::ofstream(OutputFilename.c_str(), ios::out);
   if (!Out->good()) {
     cerr << "Error opening " << OutputFilename << "!\n";
     return 1;
@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
   // In addition to just parsing the input from GCC, we also want to spiff it up
   // a little bit.  Do this now.
   //
-  vector<Pass*> Passes;
+  std::vector<Pass*> Passes;
   Passes.push_back(new opt::DeadCodeElimination());  // Remove Dead code/vars
   Passes.push_back(new CleanupGCCOutput());          // Fix gccisms
   Passes.push_back(new InductionVariableSimplify()); // Simplify indvars

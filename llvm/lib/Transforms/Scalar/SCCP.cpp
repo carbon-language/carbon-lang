@@ -30,6 +30,8 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <iostream>
+using std::cerr;
 
 // InstVal class - This class represents the different lattice values that an 
 // instruction may occupy.  It is a simple class with value semantics.  The
@@ -84,13 +86,13 @@ public:
 // It's public interface consists of a constructor and a doSCCP() method.
 //
 class SCCP {
-  Method *M;                            // The method that we are working on...
+  Method *M;                             // The method that we are working on...
 
-  set<BasicBlock*>       BBExecutable;  // The basic blocks that are executable
-  map<Value*, InstVal>   ValueState;    // The state each value is in...
+  std::set<BasicBlock*>     BBExecutable;// The basic blocks that are executable
+  std::map<Value*, InstVal> ValueState;  // The state each value is in...
 
-  vector<Instruction*>   InstWorkList;  // The instruction work list
-  vector<BasicBlock*>    BBWorkList;    // The BasicBlock work list
+  std::vector<Instruction*> InstWorkList;// The instruction work list
+  std::vector<BasicBlock*>  BBWorkList;  // The BasicBlock work list
 
   //===--------------------------------------------------------------------===//
   // The public interface for this class
@@ -144,7 +146,7 @@ private:
   // Instruction object, then use this accessor to get its value from the map.
   //
   inline InstVal &getValueState(Value *V) {
-    map<Value*, InstVal>::iterator I = ValueState.find(V);
+    std::map<Value*, InstVal>::iterator I = ValueState.find(V);
     if (I != ValueState.end()) return I->second;  // Common case, in the map
       
     if (Constant *CPV = dyn_cast<Constant>(V)) {  // Constants are constant

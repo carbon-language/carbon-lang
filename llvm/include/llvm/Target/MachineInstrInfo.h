@@ -59,11 +59,11 @@ const unsigned int      M_PSEUDO_FLAG           = 1 << 14;
 
 
 struct MachineInstrDescriptor {
-  string	  opCodeString;  // Assembly language mnemonic for the opcode.
-  int		  numOperands;   // Number of args; -1 if variable #args
-  int		  resultPos;     // Position of the result; -1 if no result
+  std::string     opCodeString;  // Assembly language mnemonic for the opcode.
+  int	          numOperands;   // Number of args; -1 if variable #args
+  int	          resultPos;     // Position of the result; -1 if no result
   unsigned int	  maxImmedConst; // Largest +ve constant in IMMMED field or 0.
-  bool		  immedIsSignExtended; // Is IMMED field sign-extended? If so,
+  bool	          immedIsSignExtended; // Is IMMED field sign-extended? If so,
 				 //   smallest -ve value is -(maxImmedConst+1).
   unsigned int    numDelaySlots; // Number of delay slots after instruction
   unsigned int    latency;	 // Latency in machine cycles
@@ -246,8 +246,8 @@ public:
   // 
   virtual void  CreateCodeToLoadConst(Value* val,
                                       Instruction* dest,
-                                      vector<MachineInstr*>& minstrVec,
-                                      vector<TmpInstruction*>& temps) const =0;
+                                      std::vector<MachineInstr*>& minstrVec,
+                                      std::vector<TmpInstruction*> &) const = 0;
 
   // Create an instruction sequence to copy an integer value `val'
   // to a floating point value `dest' by copying to memory and back.
@@ -258,8 +258,8 @@ public:
   virtual void  CreateCodeToCopyIntToFloat(Method* method,
                                            Value* val,
                                            Instruction* dest,
-                                           vector<MachineInstr*>& minstrVec,
-                                           vector<TmpInstruction*>& tempVec,
+                                           std::vector<MachineInstr*>& minstVec,
+                                           std::vector<TmpInstruction*>& tmpVec,
                                            TargetMachine& target) const = 0;
 
   // Similarly, create an instruction sequence to copy an FP value
@@ -269,8 +269,8 @@ public:
   virtual void  CreateCodeToCopyFloatToInt(Method* method,
                                            Value* val,
                                            Instruction* dest,
-                                           vector<MachineInstr*>& minstrVec,
-                                           vector<TmpInstruction*>& tempVec,
+                                           std::vector<MachineInstr*>& minstVec,
+                                           std::vector<TmpInstruction*>& tmpVec,
                                            TargetMachine& target) const = 0;
 
 
@@ -279,10 +279,7 @@ public:
   CreateCopyInstructionsByType(const TargetMachine& target,
 			       Value* src,
 			       Instruction* dest,
-			       vector<MachineInstr*>& minstrVec) const = 0;
-
-
-
+			       std::vector<MachineInstr*>& minstrVec) const = 0;
 };
 
 #endif

@@ -29,7 +29,7 @@ cfg::CallGraphNode *cfg::CallGraph::getNodeFor(Method *M) {
   assert(M->getParent() == Mod && "Method not in current module!");
   CallGraphNode *New = new CallGraphNode(M);
 
-  MethodMap.insert(pair<const Method*, CallGraphNode*>(M, New));
+  MethodMap.insert(std::make_pair(M, New));
   return New;
 }
 
@@ -71,7 +71,7 @@ cfg::CallGraph::~CallGraph() {
 }
 
 
-void cfg::WriteToOutput(const CallGraphNode *CGN, ostream &o) {
+void cfg::WriteToOutput(const CallGraphNode *CGN, std::ostream &o) {
   if (CGN->getMethod())
     o << "Call graph node for method: '" << CGN->getMethod()->getName() <<"'\n";
   else
@@ -79,10 +79,10 @@ void cfg::WriteToOutput(const CallGraphNode *CGN, ostream &o) {
 
   for (unsigned i = 0; i < CGN->size(); ++i)
     o << "  Calls method '" << (*CGN)[i]->getMethod()->getName() << "'\n";
-  o << endl;
+  o << "\n";
 }
 
-void cfg::WriteToOutput(const CallGraph &CG, ostream &o) {
+void cfg::WriteToOutput(const CallGraph &CG, std::ostream &o) {
   WriteToOutput(CG.getRoot(), o);
   for (CallGraph::const_iterator I = CG.begin(), E = CG.end(); I != E; ++I)
     o << I->second;

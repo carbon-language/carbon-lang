@@ -24,7 +24,7 @@ static bool StripSymbolTable(SymbolTable *SymTab) {
   bool RemovedSymbol = false;
 
   for (SymbolTable::iterator I = SymTab->begin(); I != SymTab->end(); ++I) {
-    map<const string, Value *> &Plane = I->second;
+    std::map<const std::string, Value *> &Plane = I->second;
     
     SymbolTable::type_iterator B;
     while ((B = Plane.begin()) != Plane.end()) {   // Found nonempty type plane!

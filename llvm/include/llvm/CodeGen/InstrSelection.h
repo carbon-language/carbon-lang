@@ -84,7 +84,8 @@ class TmpInstruction : public Instruction {
 public:
   // Constructor that uses the type of S1 as the type of the temporary.
   // s1 must be a valid value.  s2 may be NULL.
-  TmpInstruction(OtherOps opcode, Value *s1, Value* s2, const string &name="")
+  TmpInstruction(OtherOps opcode, Value *s1, Value* s2,
+                 const std::string &name = "")
     : Instruction(s1->getType(), opcode, name)
   {
     assert(s1 != NULL && "Use different constructor if both operands are 0");
@@ -94,7 +95,7 @@ public:
   // Constructor that allows the type of the temporary to be specified.
   // Both S1 and S2 may be NULL.
   TmpInstruction(OtherOps opcode, const Type* tmpType,
-                 Value *s1, Value* s2, const string &name = "")
+                 Value *s1, Value* s2, const std::string &name = "")
     : Instruction(tmpType, opcode, name)
   {
     Initialize(opcode, s1, s2);

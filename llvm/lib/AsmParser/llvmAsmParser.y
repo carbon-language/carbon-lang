@@ -22,6 +22,15 @@
 #include <utility>            // Get definition of pair class
 #include <algorithm>
 #include <stdio.h>            // This embarasment is due to our flex lexer...
+#include <iostream>
+using std::list;
+using std::vector;
+using std::pair;
+using std::map;
+using std::pair;
+using std::make_pair;
+using std::cerr;
+using std::string;
 
 int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit
 int yylex();                       // declaration" of xxx warnings.
@@ -46,7 +55,6 @@ string CurFilename;
 typedef vector<Value *> ValueList;           // Numbered defs
 static void ResolveDefinitions(vector<ValueList> &LateResolvers,
                                vector<ValueList> *FutureLateResolvers = 0);
-static void ResolveTypes      (vector<PATypeHolder<Type> > &LateResolveTypes);
 
 static struct PerModuleInfo {
   Module *CurrentModule;
@@ -425,22 +433,6 @@ static void ResolveDefinitions(vector<ValueList> &LateResolvers,
   LateResolvers.clear();
 }
 
-// ResolveType - Take a specified unresolved type and resolve it.  If there is
-// nothing to resolve it to yet, return true.  Otherwise resolve it and return
-// false.
-//
-static bool ResolveType(PATypeHolder<Type> &T) {
-  const Type *Ty = T;
-  ValID &DID = getValIDFromPlaceHolder(Ty);
-
-  const Type *TheRealType = getTypeVal(DID, true);
-  if (TheRealType == 0 || TheRealType == Ty) return true;
-
-  // Refine the opaque type we had to the new type we are getting.
-  cast<DerivedType>(Ty)->refineAbstractTypeTo(TheRealType);
-  return false;
-}
-
 // ResolveTypeTo - A brand new type was just declared.  This means that (if
 // name is not null) things referencing Name can be resolved.  Otherwise, things
 // refering to the number can be resolved.  Do this now.
@@ -641,12 +633,13 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   PATypeHolder<Type>               *TypeVal;
   Value                            *ValueVal;
 
-  list<MethodArgument*>            *MethodArgList;
-  vector<Value*>                   *ValueList;
-  list<PATypeHolder<Type> >        *TypeList;
-  list<pair<Value*, BasicBlock*> > *PHIList;   // Represent the RHS of PHI node
-  list<pair<Constant*, BasicBlock*> > *JumpTable;
-  vector<Constant*>                *ConstVector;
+  std::list<MethodArgument*>       *MethodArgList;
+  std::vector<Value*>              *ValueList;
+  std::list<PATypeHolder<Type> >   *TypeList;
+  std::list<std::pair<Value*,
+                      BasicBlock*> > *PHIList; // Represent the RHS of PHI node
+  std::list<std::pair<Constant*, BasicBlock*> > *JumpTable;
+  std::vector<Constant*>           *ConstVector;
 
   int64_t                           SInt64Val;
   uint64_t                          UInt64Val;
@@ -812,8 +805,8 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
   }
   | UpRTypesV '(' ArgTypeListI ')' {           // Method derived type?
     vector<const Type*> Params;
-    mapto($3->begin(), $3->end(), back_inserter(Params), 
-	  mem_fun_ref(&PATypeHandle<Type>::get));
+    mapto($3->begin(), $3->end(), std::back_inserter(Params), 
+	  std::mem_fun_ref(&PATypeHandle<Type>::get));
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
@@ -827,8 +820,8 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
   }
   | '{' TypeListI '}' {                        // Structure type?
     vector<const Type*> Elements;
-    mapto($2->begin(), $2->end(), back_inserter(Elements), 
-	mem_fun_ref(&PATypeHandle<Type>::get));
+    mapto($2->begin(), $2->end(), std::back_inserter(Elements), 
+	std::mem_fun_ref(&PATypeHandle<Type>::get));
 
     $$ = newTH<Type>(HandleUpRefs(StructType::get(Elements)));
     delete $2;

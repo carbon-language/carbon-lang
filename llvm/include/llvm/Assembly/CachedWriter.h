@@ -11,6 +11,7 @@
 #define LLVM_ASSEMBLY_CACHED_WRITER_H
 
 #include "llvm/Assembly/Writer.h"
+#include <iostream>
 
 class AssemblyWriter;  // Internal private class
 class SlotCalculator;
@@ -19,10 +20,11 @@ class CachedWriter {
   AssemblyWriter *AW;
   SlotCalculator *SC;
 public:
-  ostream &Out;
+  std::ostream &Out;
 public:
-  CachedWriter(ostream &O = cout) : AW(0), SC(0), Out(O) { }
-  CachedWriter(const Module *M, ostream &O = cout) : AW(0), SC(0), Out(O) {
+  CachedWriter(std::ostream &O = std::cout) : AW(0), SC(0), Out(O) { }
+  CachedWriter(const Module *M, std::ostream &O = std::cout)
+    : AW(0), SC(0), Out(O) {
     setModule(M);
   }
   ~CachedWriter();
@@ -63,7 +65,7 @@ public:
     return *this << (const Value*)X; 
   }
 
-  inline CachedWriter &operator<<(ostream &(&Manip)(ostream &)) {
+  inline CachedWriter &operator<<(std::ostream &(&Manip)(std::ostream &)) {
     Out << Manip; return *this;
   }
 

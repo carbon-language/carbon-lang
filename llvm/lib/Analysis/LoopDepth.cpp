@@ -22,8 +22,6 @@ inline void LoopDepthCalculator::ProcessInterval(cfg::Interval *I) {
 }
 
 LoopDepthCalculator::LoopDepthCalculator(Method *M) {
-  //map<const BasicBlock*, unsigned> LoopDepth;
-
   cfg::IntervalPartition *IP = new cfg::IntervalPartition(M);
   while (!IP->isDegeneratePartition()) {
     for_each(IP->begin(), IP->end(), 
@@ -34,7 +32,7 @@ LoopDepthCalculator::LoopDepthCalculator(Method *M) {
     //
     cfg::IntervalPartition *NewIP = new cfg::IntervalPartition(*IP, true);
     if (NewIP->size() == IP->size()) {
-      cerr << "IRREDUCIBLE GRAPH FOUND!!!\n";
+      assert(0 && "IRREDUCIBLE GRAPH FOUND!!!\n");
       // TODO: fix irreducible graph
       return;
     }

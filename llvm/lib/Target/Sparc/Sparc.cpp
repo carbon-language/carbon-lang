@@ -17,7 +17,8 @@
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/Method.h"
-
+#include <iostream>
+using std::cerr;
 
 // Build the MachineInstruction Description Array...
 const MachineInstrDescriptor SparcMachineInstrDesc[] = {
@@ -47,10 +48,9 @@ void AllocateRegisters(Method *M, TargetMachine &target)
   if ( (M)->isExternal() )     // don't process prototypes
     return;
     
-  if( DEBUG_RA ) {
-    cerr << endl << "******************** Method "<< (M)->getName();
-    cerr <<        " ********************" <<endl;
-  }
+  if( DEBUG_RA )
+    cerr << "\n******************** Method "<< M->getName()
+         << " ********************\n";
     
   MethodLiveVarInfo LVI(M );   // Analyze live varaibles
   LVI.analyze();
@@ -60,7 +60,7 @@ void AllocateRegisters(Method *M, TargetMachine &target)
   PRA.allocateRegisters();
     
 
-  if( DEBUG_RA )  cerr << endl << "Register allocation complete!" << endl;
+  if( DEBUG_RA )  cerr << "\nRegister allocation complete!\n";
 
 }
 

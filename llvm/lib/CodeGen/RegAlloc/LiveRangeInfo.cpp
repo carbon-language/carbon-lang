@@ -1,15 +1,15 @@
 #include "llvm/CodeGen/LiveRangeInfo.h"
+#include <iostream>
+using std::cerr;
 
 //---------------------------------------------------------------------------
 // Constructor
 //---------------------------------------------------------------------------
 LiveRangeInfo::LiveRangeInfo(const Method *const M, 
 			     const TargetMachine& tm,
-			     vector<RegClass *> &RCL) 
-                             : Meth(M), LiveRangeMap(), 
-			       TM(tm), RegClassList(RCL),
-			       MRI( tm.getRegInfo()),
-			       CallRetInstrList()
+			     std::vector<RegClass *> &RCL)
+                             : Meth(M), LiveRangeMap(), TM(tm),
+                               RegClassList(RCL), MRI(tm.getRegInfo())
 { }
 
 
@@ -17,33 +17,25 @@ LiveRangeInfo::LiveRangeInfo(const Method *const M,
 // Destructor: Deletes all LiveRanges in the LiveRangeMap
 //---------------------------------------------------------------------------
 LiveRangeInfo::~LiveRangeInfo() {
-
   LiveRangeMapType::iterator MI =  LiveRangeMap.begin(); 
 
   for( ; MI != LiveRangeMap.end() ; ++MI) {  
-    if( (*MI).first ) {
+    if (MI->first && MI->second) {
+      LiveRange *LR = MI->second;
+
+      // we need to be careful in deleting LiveRanges in LiveRangeMap
+      // since two/more Values in the live range map can point to the same
+      // live range. We have to make the other entries NULL when we delete
+      // a live range.
+
+      LiveRange::iterator LI = LR->begin();
       
-      LiveRange *LR = (*MI).second;
-       
-      if( LR ) {
-
-	// we need to be careful in deleting LiveRanges in LiveRangeMap
-	// since two/more Values in the live range map can point to the same
-	// live range. We have to make the other entries NULL when we delete
-	// a live range.
-
-	LiveRange::iterator LI = LR->begin();
-	
-	for( ; LI != LR->end() ; ++LI) { 
-	  LiveRangeMap[*LI] = NULL;
-	}
-
-	delete LR;
-
-      }
+      for( ; LI != LR->end() ; ++LI)
+        LiveRangeMap[*LI] = 0;
+      
+      delete LR;
     }
   }
-
 }
 
 
@@ -82,7 +74,7 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *const L1, LiveRange *L2)
  
   L1->addSpillCost( L2->getSpillCost() ); // add the spill costs
 
-  delete ( L2 );                        // delete L2 as it is no longer needed
+  delete L2;                        // delete L2 as it is no longer needed
 }
 
 
@@ -96,7 +88,7 @@ void LiveRangeInfo::constructLiveRanges()
 {  
 
   if( DEBUG_RA) 
-    cout << "Consturcting Live Ranges ..." << endl;
+    cerr << "Consturcting Live Ranges ...\n";
 
   // first find the live ranges for all incoming args of the method since
   // those LRs start from the start of the method
@@ -108,14 +100,13 @@ void LiveRangeInfo::constructLiveRanges()
 
              
   for( ; ArgIt != ArgList.end() ; ++ArgIt) {     // for each argument
-
     LiveRange * ArgRange = new LiveRange();      // creates a new LR and 
     const Value *const Val = (const Value *) *ArgIt;
 
     assert( Val);
 
-    ArgRange->add( Val );     // add the arg (def) to it
-    LiveRangeMap[ Val ] = ArgRange;
+    ArgRange->add(Val);     // add the arg (def) to it
+    LiveRangeMap[Val] = ArgRange;
 
     // create a temp machine op to find the register class of value
     //const MachineOperand Op(MachineOperand::MO_VirtualRegister);
@@ -125,8 +116,8 @@ void LiveRangeInfo::constructLiveRanges()
 
     			   
     if( DEBUG_RA > 1) {     
-      cout << " adding LiveRange for argument ";    
-      printValue( (const Value *) *ArgIt); cout  << endl;
+      cerr << " adding LiveRange for argument ";    
+      printValue((const Value *) *ArgIt); cerr << "\n";
     }
   }
 
@@ -140,7 +131,6 @@ void LiveRangeInfo::constructLiveRanges()
 
 
   Method::const_iterator BBI = Meth->begin();    // random iterator for BBs   
-
   for( ; BBI != Meth->end(); ++BBI) {            // go thru BBs in random order
 
     // Now find all LRs for machine the instructions. A new LR will be created 
@@ -150,8 +140,7 @@ void LiveRangeInfo::constructLiveRanges()
 
     // get the iterator for machine instructions
     const MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
-    MachineCodeForBasicBlock::const_iterator 
-      MInstIterator = MIVec.begin();
+    MachineCodeForBasicBlock::const_iterator MInstIterator = MIVec.begin();
 
     // iterate over all the machine instructions in BB
     for( ; MInstIterator != MIVec.end(); MInstIterator++) {  
@@ -161,53 +150,46 @@ void LiveRangeInfo::constructLiveRanges()
       // Now if the machine instruction is a  call/return instruction,
       // add it to CallRetInstrList for processing its implicit operands
 
-      if( (TM.getInstrInfo()).isReturn( MInst->getOpCode()) ||
-	  (TM.getInstrInfo()).isCall( MInst->getOpCode()) )
+      if(TM.getInstrInfo().isReturn(MInst->getOpCode()) ||
+	 TM.getInstrInfo().isCall(MInst->getOpCode()))
 	CallRetInstrList.push_back( MInst ); 
  
              
       // iterate over  MI operands to find defs
-      for( MachineInstr::val_const_op_iterator OpI(MInst);!OpI.done(); ++OpI) {
-	
-	if( DEBUG_RA) {
+      for (MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done(); ++OpI) {
+	if(DEBUG_RA) {
 	  MachineOperand::MachineOperandType OpTyp = 
 	    OpI.getMachineOperand().getOperandType();
 
-	  if ( OpTyp == MachineOperand::MO_CCRegister) {
-	    cout << "\n**CC reg found. Is Def=" << OpI.isDef() << " Val:";
+	  if (OpTyp == MachineOperand::MO_CCRegister) {
+	    cerr << "\n**CC reg found. Is Def=" << OpI.isDef() << " Val:";
 	    printValue( OpI.getMachineOperand().getVRegValue() );
-	    cout << endl;
+	    cerr << "\n";
 	  }
 	}
 
 	// create a new LR iff this operand is a def
 	if( OpI.isDef() ) {     
-	  
 	  const Value *const Def = *OpI;
 
-
 	  // Only instruction values are accepted for live ranges here
-
 	  if( Def->getValueType() != Value::InstructionVal ) {
-	    cout << "\n**%%Error: Def is not an instruction val. Def=";
-	    printValue( Def ); cout << endl;
+	    cerr << "\n**%%Error: Def is not an instruction val. Def=";
+	    printValue( Def ); cerr << "\n";
 	    continue;
 	  }
-
 
 	  LiveRange *DefRange = LiveRangeMap[Def]; 
 
 	  // see LR already there (because of multiple defs)
-	  
 	  if( !DefRange) {                  // if it is not in LiveRangeMap
-	    
 	    DefRange = new LiveRange();     // creates a new live range and 
 	    DefRange->add( Def );           // add the instruction (def) to it
 	    LiveRangeMap[ Def ] = DefRange; // update the map
 
 	    if( DEBUG_RA > 1) { 	    
-	      cout << "  creating a LR for def: ";    
-	      printValue(Def); cout  << endl;
+	      cerr << "  creating a LR for def: ";    
+	      printValue(Def); cerr  << "\n";
 	    }
 
 	    // set the register class of the new live range
@@ -221,7 +203,7 @@ void LiveRangeInfo::constructLiveRanges()
 
 
 	    if(isCC && DEBUG_RA) {
-	      cout  << "\a**created a LR for a CC reg:";
+	      cerr  << "\a**created a LR for a CC reg:";
 	      printValue( OpI.getMachineOperand().getVRegValue() );
 	    }
 
@@ -235,8 +217,8 @@ void LiveRangeInfo::constructLiveRanges()
 	    LiveRangeMap[ Def ] = DefRange; 
 
 	    if( DEBUG_RA > 1) { 
-	      cout << "   added to an existing LR for def: ";  
-	      printValue( Def ); cout  << endl;
+	      cerr << "   added to an existing LR for def: ";  
+	      printValue( Def ); cerr  << "\n";
 	    }
 	  }
 
@@ -256,7 +238,7 @@ void LiveRangeInfo::constructLiveRanges()
   suggestRegs4CallRets();
 
   if( DEBUG_RA) 
-    cout << "Initial Live Ranges constructed!" << endl;
+    cerr << "Initial Live Ranges constructed!\n";
 
 }
 
@@ -312,11 +294,8 @@ void LiveRangeInfo::suggestRegs4CallRets()
 //---------------------------------------------------------------------------
 void LiveRangeInfo::coalesceLRs()  
 {
-
-
-
   if( DEBUG_RA) 
-    cout << endl << "Coalscing LRs ..." << endl;
+    cerr << "\nCoalscing LRs ...\n";
 
   Method::const_iterator BBI = Meth->begin();  // random iterator for BBs   
 
@@ -324,8 +303,7 @@ void LiveRangeInfo::coalesceLRs()
 
     // get the iterator for machine instructions
     const MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
-    MachineCodeForBasicBlock::const_iterator 
-      MInstIterator = MIVec.begin();
+    MachineCodeForBasicBlock::const_iterator MInstIterator = MIVec.begin();
 
     // iterate over all the machine instructions in BB
     for( ; MInstIterator != MIVec.end(); ++MInstIterator) {  
@@ -333,9 +311,9 @@ void LiveRangeInfo::coalesceLRs()
       const MachineInstr * MInst = *MInstIterator; 
 
       if( DEBUG_RA > 1) {
-	cout << " *Iterating over machine instr ";
+	cerr << " *Iterating over machine instr ";
 	MInst->dump();
-	cout << endl;
+	cerr << "\n";
       }
 
 
@@ -357,8 +335,8 @@ void LiveRangeInfo::coalesceLRs()
 
 	      //don't warn about labels
 	      if (!((*UseI)->getType())->isLabelType() && DEBUG_RA) {
-		cout<<" !! Warning: No LR for use "; printValue(*UseI);
-		cout << endl;
+		cerr<<" !! Warning: No LR for use "; printValue(*UseI);
+		cerr << "\n";
 	      }
 	      continue;                 // ignore and continue
 	    }
@@ -407,7 +385,7 @@ void LiveRangeInfo::coalesceLRs()
   } // for all BBs
 
   if( DEBUG_RA) 
-    cout << endl << "Coalscing Done!" << endl;
+    cerr << "\nCoalscing Done!\n";
 
 }
 
@@ -421,11 +399,11 @@ void LiveRangeInfo::coalesceLRs()
 void LiveRangeInfo::printLiveRanges()
 {
   LiveRangeMapType::iterator HMI = LiveRangeMap.begin();   // hash map iterator
-  cout << endl << "Printing Live Ranges from Hash Map:" << endl;
-  for( ; HMI != LiveRangeMap.end() ; HMI ++ ) {
-    if( (*HMI).first && (*HMI).second ) {
-      cout <<" "; printValue((*HMI).first);  cout  << "\t: "; 
-      ((*HMI).second)->printSet(); cout << endl;
+  cerr << "\nPrinting Live Ranges from Hash Map:\n";
+  for( ; HMI != LiveRangeMap.end() ; ++HMI) {
+    if( HMI->first && HMI->second ) {
+      cerr <<" "; printValue((*HMI).first);  cerr << "\t: "; 
+      HMI->second->printSet(); cerr << "\n";
     }
   }
 }

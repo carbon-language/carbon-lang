@@ -24,7 +24,7 @@ template class ValueHolder<Method, Module, Module>;
 // Define the GlobalValueRefMap as a struct that wraps a map so that we don't
 // have Module.h depend on <map>
 //
-struct GlobalValueRefMap : public map<GlobalValue*, ConstantPointerRef*>{
+struct GlobalValueRefMap : public std::map<GlobalValue*, ConstantPointerRef*>{
 };
 
 
@@ -97,7 +97,7 @@ ConstantPointerRef *Module::getConstantPointerRef(GlobalValue *V){
   if (I != GVRefMap->end()) return I->second;
 
   ConstantPointerRef *Ref = new ConstantPointerRef(V);
-  GVRefMap->insert(make_pair(V, Ref));
+  GVRefMap->insert(std::make_pair(V, Ref));
 
   return Ref;
 }
@@ -112,5 +112,5 @@ void Module::mutateConstantPointerRef(GlobalValue *OldGV, GlobalValue *NewGV) {
   GVRefMap->erase(I);
 
   // Insert the new entry...
-  GVRefMap->insert(make_pair(NewGV, Ref));
+  GVRefMap->insert(std::make_pair(NewGV, Ref));
 }

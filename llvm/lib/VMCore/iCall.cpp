@@ -13,8 +13,8 @@
 //                        CallInst Implementation
 //===----------------------------------------------------------------------===//
 
-CallInst::CallInst(Value *Meth, const vector<Value*> &params, 
-                   const string &Name) 
+CallInst::CallInst(Value *Meth, const std::vector<Value*> &params, 
+                   const std::string &Name) 
   : Instruction(cast<MethodType>(cast<PointerType>(Meth->getType())
 				 ->getElementType())->getReturnType(),
 		Instruction::Call, Name) {
@@ -44,8 +44,9 @@ CallInst::CallInst(const CallInst &CI)
 //===----------------------------------------------------------------------===//
 
 InvokeInst::InvokeInst(Value *Meth, BasicBlock *IfNormal, \
-		       BasicBlock *IfException, const vector<Value*>&params,
-		       const string &Name)
+		       BasicBlock *IfException,
+                       const std::vector<Value*> &params,
+		       const std::string &Name)
   : TerminatorInst(cast<MethodType>(cast<PointerType>(Meth->getType())
 				    ->getElementType())->getReturnType(),
 		   Instruction::Invoke, Name) {

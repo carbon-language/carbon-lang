@@ -82,7 +82,7 @@ void ReplaceInstWithInst(Instruction *From, Instruction *To) {
 // false if you want a leaf
 //
 const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
-                                vector<Value*> &Offsets,
+                                std::vector<Value*> &Offsets,
                                 bool StopEarly = true) {
   if (Offset == 0 && StopEarly && !Offsets.empty())
     return Ty;    // Return the leaf type
@@ -130,7 +130,7 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
 // instruction.  The type returned is the root type that the GEP would point to
 //
 const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
-                             vector<Value*> &Indices,
+                             std::vector<Value*> &Indices,
                              BasicBlock::iterator *BI = 0) {
   const CompositeType *CompTy = dyn_cast<CompositeType>(Ty);
   if (CompTy == 0) return 0;

@@ -15,6 +15,10 @@
 #include <algorithm>
 #include <assert.h>
 
+using std::map;
+using std::pair;
+using std::make_pair;
+
 ConstantBool *ConstantBool::True  = new ConstantBool(true);
 ConstantBool *ConstantBool::False = new ConstantBool(false);
 
@@ -24,7 +28,7 @@ ConstantBool *ConstantBool::False = new ConstantBool(false);
 //===----------------------------------------------------------------------===//
 
 // Specialize setName to take care of symbol table majik
-void Constant::setName(const string &Name, SymbolTable *ST) {
+void Constant::setName(const std::string &Name, SymbolTable *ST) {
   assert(ST && "Type::setName - Must provide symbol table argument!");
 
   if (Name.size()) ST->insert(Name, this);
@@ -56,6 +60,7 @@ Constant *Constant::getNullConstant(const Type *Ty) {
 
 #ifndef NDEBUG
 #include "llvm/Assembly/Writer.h"
+using std::cerr;
 #endif
 
 void Constant::destroyConstantImpl() {
@@ -70,8 +75,8 @@ void Constant::destroyConstantImpl() {
     Value *V = use_back();
 #ifndef NDEBUG      // Only in -g mode...
     if (!isa<Constant>(V)) {
-      cerr << "While deleting: " << this << endl;
-      cerr << "Use still stuck around after Def is destroyed: " << V << endl;
+      cerr << "While deleting: " << this << "\n";
+      cerr << "Use still stuck around after Def is destroyed: " << V << "\n";
     }
 #endif
     assert(isa<Constant>(V) && "References remain to ConstantPointerRef!");
@@ -115,7 +120,7 @@ ConstantFP::ConstantFP(const Type *Ty, double V) : Constant(Ty) {
 }
 
 ConstantArray::ConstantArray(const ArrayType *T,
-                             const vector<Constant*> &V) : Constant(T) {
+                             const std::vector<Constant*> &V) : Constant(T) {
   for (unsigned i = 0; i < V.size(); i++) {
     assert(V[i]->getType() == T->getElementType());
     Operands.push_back(Use(V[i], this));
@@ -123,7 +128,7 @@ ConstantArray::ConstantArray(const ArrayType *T,
 }
 
 ConstantStruct::ConstantStruct(const StructType *T,
-                               const vector<Constant*> &V) : Constant(T) {
+                               const std::vector<Constant*> &V) : Constant(T) {
   const StructType::ElementTypes &ETypes = T->getElementTypes();
   
   for (unsigned i = 0; i < V.size(); i++) {
@@ -142,24 +147,24 @@ ConstantPointerRef::ConstantPointerRef(GlobalValue *GV)
 //===----------------------------------------------------------------------===//
 //                          getStrValue implementations
 
-string ConstantBool::getStrValue() const {
+std::string ConstantBool::getStrValue() const {
   return Val ? "true" : "false";
 }
 
-string ConstantSInt::getStrValue() const {
+std::string ConstantSInt::getStrValue() const {
   return itostr(Val.Signed);
 }
 
-string ConstantUInt::getStrValue() const {
+std::string ConstantUInt::getStrValue() const {
   return utostr(Val.Unsigned);
 }
 
-string ConstantFP::getStrValue() const {
+std::string ConstantFP::getStrValue() const {
   return ftostr(Val);
 }
 
-string ConstantArray::getStrValue() const {
-  string Result;
+std::string ConstantArray::getStrValue() const {
+  std::string Result;
   
   // As a special case, print the array as a string if it is an array of
   // ubytes or an array of sbytes with positive values.
@@ -208,8 +213,8 @@ string ConstantArray::getStrValue() const {
   return Result;
 }
 
-string ConstantStruct::getStrValue() const {
-  string Result = "{";
+std::string ConstantStruct::getStrValue() const {
+  std::string Result = "{";
   if (Operands.size()) {
     Result += " " + Operands[0]->getType()->getDescription() + 
 	      " " + cast<Constant>(Operands[0])->getStrValue();
@@ -221,11 +226,11 @@ string ConstantStruct::getStrValue() const {
   return Result + " }";
 }
 
-string ConstantPointerNull::getStrValue() const {
+std::string ConstantPointerNull::getStrValue() const {
   return "null";
 }
 
-string ConstantPointerRef::getStrValue() const {
+std::string ConstantPointerRef::getStrValue() const {
   const GlobalValue *V = getValue();
   if (V->hasName()) return "%" + V->getName();
 
@@ -233,7 +238,7 @@ string ConstantPointerRef::getStrValue() const {
   int Slot = Table->getValSlot(V);
   delete Table;
 
-  if (Slot >= 0) return string(" %") + itostr(Slot);
+  if (Slot >= 0) return std::string(" %") + itostr(Slot);
   else return "<pointer reference badref>";
 }
 
@@ -337,7 +342,7 @@ unsigned ConstantFP::hash(const Type *Ty, double V) {
 }
 
 unsigned ConstantArray::hash(const ArrayType *Ty,
-                             const vector<Constant*> &V) {
+                             const std::vector<Constant*> &V) {
   unsigned Result = (Ty->getUniqueID() << 5) ^ (Ty->getUniqueID() * 7);
   for (unsigned i = 0; i < V.size(); ++i)
     Result ^= V[i]->getHash() << (i & 7);
@@ -345,7 +350,7 @@ unsigned ConstantArray::hash(const ArrayType *Ty,
 }
 
 unsigned ConstantStruct::hash(const StructType *Ty,
-                              const vector<Constant*> &V) {
+                              const std::vector<Constant*> &V) {
   unsigned Result = (Ty->getUniqueID() << 5) ^ (Ty->getUniqueID() * 7);
   for (unsigned i = 0; i < V.size(); ++i)
     Result ^= V[i]->getHash() << (i & 7);
@@ -418,10 +423,10 @@ ConstantFP *ConstantFP::get(const Type *Ty, double V) {
 
 //---- ConstantArray::get() implementation...
 //
-static ValueMap<vector<Constant*>, ConstantArray> ArrayConstants;
+static ValueMap<std::vector<Constant*>, ConstantArray> ArrayConstants;
 
 ConstantArray *ConstantArray::get(const ArrayType *Ty,
-                                  const vector<Constant*> &V) {
+                                  const std::vector<Constant*> &V) {
   ConstantArray *Result = ArrayConstants.get(Ty, V);
   if (!Result)   // If no preexisting value, create one now...
     ArrayConstants.add(Ty, V, Result = new ConstantArray(Ty, V));
@@ -432,8 +437,8 @@ ConstantArray *ConstantArray::get(const ArrayType *Ty,
 // contain the specified string.  A null terminator is added to the specified
 // string so that it may be used in a natural way...
 //
-ConstantArray *ConstantArray::get(const string &Str) {
-  vector<Constant*> ElementVals;
+ConstantArray *ConstantArray::get(const std::string &Str) {
+  std::vector<Constant*> ElementVals;
 
   for (unsigned i = 0; i < Str.length(); ++i)
     ElementVals.push_back(ConstantSInt::get(Type::SByteTy, Str[i]));
@@ -455,10 +460,10 @@ void ConstantArray::destroyConstant() {
 
 //---- ConstantStruct::get() implementation...
 //
-static ValueMap<vector<Constant*>, ConstantStruct> StructConstants;
+static ValueMap<std::vector<Constant*>, ConstantStruct> StructConstants;
 
 ConstantStruct *ConstantStruct::get(const StructType *Ty,
-                                    const vector<Constant*> &V) {
+                                    const std::vector<Constant*> &V) {
   ConstantStruct *Result = StructConstants.get(Ty, V);
   if (!Result)   // If no preexisting value, create one now...
     StructConstants.add(Ty, V, Result = new ConstantStruct(Ty, V));

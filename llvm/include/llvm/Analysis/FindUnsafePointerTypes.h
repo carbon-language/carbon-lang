@@ -24,11 +24,11 @@ class PointerType;
 
 struct FindUnsafePointerTypes : public Pass {
   // UnsafeTypes - Set of types that are not safe to transform.
-  set<PointerType*> UnsafeTypes;
+  std::set<PointerType*> UnsafeTypes;
 public:
 
   // Accessor for underlying type set...
-  inline const set<PointerType*> &getUnsafeTypes() const {
+  inline const std::set<PointerType*> &getUnsafeTypes() const {
     return UnsafeTypes;
   }
 
@@ -41,7 +41,7 @@ public:
   // printResults - Loop over the results of the analysis, printing out unsafe
   // types.
   //
-  void printResults(const Module *Mod, ostream &o);
+  void printResults(const Module *Mod, std::ostream &o);
 };
 
 #endif

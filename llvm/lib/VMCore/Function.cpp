@@ -25,7 +25,7 @@
 template class ValueHolder<MethodArgument, Method, Method>;
 template class ValueHolder<BasicBlock    , Method, Method>;
 
-Method::Method(const MethodType *Ty, bool isInternal, const string &name) 
+Method::Method(const MethodType *Ty, bool isInternal, const std::string &name) 
   : GlobalValue(PointerType::get(Ty), Value::MethodVal, isInternal, name),
     SymTabValue(this), BasicBlocks(this), ArgumentList(this, this) {
   assert(::isa<MethodType>(Ty) && "Method signature must be of method type!");
@@ -45,7 +45,7 @@ Method::~Method() {
 }
 
 // Specialize setName to take care of symbol table majik
-void Method::setName(const string &name, SymbolTable *ST) {
+void Method::setName(const std::string &name, SymbolTable *ST) {
   Module *P;
   assert((ST == 0 || (!getParent() || ST == getParent()->getSymbolTable())) &&
 	 "Invalid symtab argument!");
@@ -87,14 +87,14 @@ void Method::dropAllReferences() {
 
 GlobalVariable::GlobalVariable(const Type *Ty, bool constant, bool isIntern,
 			       Constant *Initializer = 0,
-			       const string &Name = "")
+			       const std::string &Name = "")
   : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal, isIntern, Name),
     isConstantGlobal(constant) {
   if (Initializer) Operands.push_back(Use((Value*)Initializer, this));
 }
 
 // Specialize setName to take care of symbol table majik
-void GlobalVariable::setName(const string &name, SymbolTable *ST) {
+void GlobalVariable::setName(const std::string &name, SymbolTable *ST) {
   Module *P;
   assert((ST == 0 || (!getParent() || ST == getParent()->getSymbolTable())) &&
 	 "Invalid symtab argument!");

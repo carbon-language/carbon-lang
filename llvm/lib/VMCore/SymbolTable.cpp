@@ -10,6 +10,14 @@
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "Support/StringExtras.h"
+#include <iostream>
+
+using std::string;
+using std::pair;
+using std::make_pair;
+using std::map;
+using std::cerr;
+using std::cout;
 
 #define DEBUG_SYMBOL_TABLE 0
 #define DEBUG_ABSTYPE 0
@@ -35,7 +43,8 @@ SymbolTable::~SymbolTable() {
     for (type_iterator I = i->second.begin(); I != i->second.end(); ++I)
       if (!isa<Constant>(I->second) && !isa<Type>(I->second)) {
 	cerr << "Value still in symbol table! Type = '"
-	     << i->first->getDescription() << "' Name = '" << I->first << "'\n";
+             << i->first->getDescription() << "' Name = '"
+             << I->first << "'\n";
 	LeftoverValues = false;
       }
   }
@@ -305,11 +314,11 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
 #include <algorithm>
 
 static void DumpVal(const pair<const string, Value *> &V) {
-  cout << "  '" << V.first << "' = " << V.second << endl;
+  cout << "  '" << V.first << "' = " << V.second << "\n";
 }
 
 static void DumpPlane(const pair<const Type *, map<const string, Value *> >&P) {
-  cout << "  Plane: " << P.first << endl;
+  cout << "  Plane: " << P.first << "\n";
   for_each(P.second.begin(), P.second.end(), DumpVal);
 }
 

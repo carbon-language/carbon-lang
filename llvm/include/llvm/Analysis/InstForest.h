@@ -35,10 +35,12 @@ template<class Payload> class InstForest;
 //
 template<class Payload>
 class InstTreeNode : 
-    public Tree<InstTreeNode<Payload>, pair<pair<Value*, char>, Payload> > {
+    public Tree<InstTreeNode<Payload>, 
+                std::pair<std::pair<Value*, char>, Payload> > {
 
   friend class InstForest<Payload>;
-  typedef Tree<InstTreeNode<Payload>, pair<pair<Value*, char>, Payload> > super;
+  typedef Tree<InstTreeNode<Payload>,
+               std::pair<std::pair<Value*, char>, Payload> > super;
 
   // Constants used for the node type value
   enum NodeTypeTy {
@@ -104,15 +106,15 @@ public:
 
 public:
   // print - Called by operator<< below...
-  void print(ostream &o, unsigned Indent) const {
-    o << string(Indent*2, ' ');
+  void print(std::ostream &o, unsigned Indent) const {
+    o << std::string(Indent*2, ' ');
     switch (getNodeType()) {
     case ConstNode      : o << "Constant   : "; break;
-    case BasicBlockNode : o << "BasicBlock : " << getValue()->getName() << endl;
+    case BasicBlockNode : o << "BasicBlock : " << getValue()->getName() << "\n";
       return;
     case InstructionNode: o << "Instruction: "; break;
     case TemporaryNode  : o << "Temporary  : "; break;
-    default: o << "UNKNOWN NODE TYPE: " << getNodeType() << endl; abort();
+    default: o << "UNKNOWN NODE TYPE: " << getNodeType() << "\n"; abort();
     }
 
     o << getValue();
@@ -124,7 +126,8 @@ public:
 };
 
 template<class Payload>
-inline ostream &operator<<(ostream &o, const InstTreeNode<Payload> *N) {
+inline std::ostream &operator<<(std::ostream &o,
+                                const InstTreeNode<Payload> *N) {
   N->print(o, 0); return o;
 }
 
@@ -137,16 +140,16 @@ inline ostream &operator<<(ostream &o, const InstTreeNode<Payload> *N) {
 // guaranteed to be an instruction node.  The constructor builds the forest.
 //
 template<class Payload>
-class InstForest : public vector<InstTreeNode<Payload> *> {
+class InstForest : public std::vector<InstTreeNode<Payload> *> {
   friend class InstTreeNode<Payload>;
 
   // InstMap - Map contains entries for ALL instructions in the method and the
   // InstTreeNode that they correspond to.
   //
-  map<Instruction*, InstTreeNode<Payload> *> InstMap;
+  std::map<Instruction*, InstTreeNode<Payload> *> InstMap;
 
   void addInstMapping(Instruction *I, InstTreeNode<Payload> *IN) {
-    InstMap.insert(make_pair(I, IN));
+    InstMap.insert(std::make_pair(I, IN));
   }
 
   void removeInstFromRootList(Instruction *I) {
@@ -180,26 +183,27 @@ public:
   // the parent pointer can be used to find the root of the tree.
   //
   inline InstTreeNode<Payload> *getInstNode(Instruction *Inst) {
-    map<Instruction*, InstTreeNode<Payload> *>::iterator I = InstMap.find(Inst);
+    std::map<Instruction*, InstTreeNode<Payload> *>::iterator I =
+      InstMap.find(Inst);
     if (I != InstMap.end()) return I->second;
     return 0;
   }
   inline const InstTreeNode<Payload> *getInstNode(const Instruction *Inst)const{
-    map<Instruction*, InstTreeNode<Payload>*>::const_iterator I = 
+    std::map<Instruction*, InstTreeNode<Payload>*>::const_iterator I = 
       InstMap.find(Inst);
     if (I != InstMap.end()) return I->second;
     return 0;
   }
 
   // print - Called by operator<< below...
-  void print(ostream &out) const {
+  void print(std::ostream &out) const {
     for (const_iterator I = begin(), E = end(); I != E; ++I)
       out << *I;
   }
 };
 
 template<class Payload>
-inline ostream &operator<<(ostream &o, const InstForest<Payload> &IF) {
+inline std::ostream &operator<<(std::ostream &o, const InstForest<Payload> &IF){
   IF.print(o); return o;
 }
 
@@ -254,7 +258,7 @@ InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
   // Otherwise, we are an internal instruction node.  We must process our
   // uses and add them as children of this node.
   //
-  vector<InstTreeNode*> Children;
+  std::vector<InstTreeNode*> Children;
 
   // Make sure that the forest knows about us!
   IF.addInstMapping(I, this);

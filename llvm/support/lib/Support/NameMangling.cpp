@@ -7,6 +7,7 @@
 #include "llvm/Support/NameMangling.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalValue.h"
+using std::string;
 
 // MangleTypeName - Implement a consistent name-mangling scheme for
 //                  a given type.

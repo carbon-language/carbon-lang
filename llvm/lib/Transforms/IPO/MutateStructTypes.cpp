@@ -21,6 +21,9 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include <algorithm>
+using std::map;
+using std::make_pair;
+using std::vector;
 
 // To enable debugging, uncomment this...
 //#define DEBUG_MST(x) x
@@ -37,7 +40,7 @@
 struct ValuePlaceHolder : public Instruction {
   ValuePlaceHolder(const Type *Ty) : Instruction(Ty, UserOp1, "") {}
 
-  virtual Instruction *clone() const { abort(); }
+  virtual Instruction *clone() const { abort(); return 0; }
   virtual const char *getOpcodeName() const { return "placeholder"; }
 };
 
@@ -291,8 +294,8 @@ bool MutateStructTypes::doPassInitialization(Module *M) {
 // of the methods and global variables that we no longer need.
 bool MutateStructTypes::doPassFinalization(Module *M) {
   // The first half of the methods in the module have to go.
-  unsigned NumMethods = M->size();
-  unsigned NumGVars   = M->gsize();
+  //unsigned NumMethods = M->size();
+  //unsigned NumGVars   = M->gsize();
 
   // Prepare for deletion of globals by dropping their interdependencies...
   for(Module::iterator I = M->begin(); I != M->end(); ++I) {
@@ -436,12 +439,11 @@ bool MutateStructTypes::doPerMethodWork(Method *m) {
           AdjustIndices(cast<CompositeType>(PTy), Indices);
         }
 
-        if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
+        if (isa<LoadInst>(I)) {
           NewI = new LoadInst(NewPtr, Indices);
-        } else if (const StoreInst *SI = dyn_cast<StoreInst>(I)) {
+        } else if (isa<StoreInst>(I)) {
           NewI = new StoreInst(ConvertValue(I->getOperand(0)), NewPtr, Indices);
-        } else if (const GetElementPtrInst *GEP =
-                   dyn_cast<GetElementPtrInst>(I)) {
+        } else if (isa<GetElementPtrInst>(I)) {
           NewI = new GetElementPtrInst(NewPtr, Indices);
         } else {
           assert(0 && "Unknown memory access inst!!!");

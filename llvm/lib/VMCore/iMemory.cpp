@@ -22,7 +22,7 @@ static inline const Type *checkType(const Type *Ty) {
 // pointer type.
 //
 const Type* MemAccessInst::getIndexedType(const Type *Ptr, 
-					  const vector<Value*> &Idx,
+					  const std::vector<Value*> &Idx,
 					  bool AllowCompositeLeaf = false) {
   if (!Ptr->isPointerType()) return 0;   // Type isn't a pointer type!
 
@@ -48,8 +48,8 @@ const Type* MemAccessInst::getIndexedType(const Type *Ptr,
 //                           LoadInst Implementation
 //===----------------------------------------------------------------------===//
 
-LoadInst::LoadInst(Value *Ptr, const vector<Value*> &Idx,
-		   const string &Name = "")
+LoadInst::LoadInst(Value *Ptr, const std::vector<Value*> &Idx,
+		   const std::string &Name = "")
   : MemAccessInst(checkType(getIndexedType(Ptr->getType(), Idx)), Load, Name) {
   assert(getIndexedType(Ptr->getType(), Idx) && "Load operands invalid!");
   Operands.reserve(1+Idx.size());
@@ -60,7 +60,7 @@ LoadInst::LoadInst(Value *Ptr, const vector<Value*> &Idx,
   
 }
 
-LoadInst::LoadInst(Value *Ptr, const string &Name = "")
+LoadInst::LoadInst(Value *Ptr, const std::string &Name = "")
   : MemAccessInst(cast<PointerType>(Ptr->getType())->getElementType(),
                   Load, Name) {
   Operands.reserve(1);
@@ -72,8 +72,8 @@ LoadInst::LoadInst(Value *Ptr, const string &Name = "")
 //                           StoreInst Implementation
 //===----------------------------------------------------------------------===//
 
-StoreInst::StoreInst(Value *Val, Value *Ptr, const vector<Value*> &Idx,
-		     const string &Name = "")
+StoreInst::StoreInst(Value *Val, Value *Ptr, const std::vector<Value*> &Idx,
+		     const std::string &Name = "")
   : MemAccessInst(Type::VoidTy, Store, Name) {
   assert(getIndexedType(Ptr->getType(), Idx) && "Store operands invalid!");
   
@@ -85,7 +85,7 @@ StoreInst::StoreInst(Value *Val, Value *Ptr, const vector<Value*> &Idx,
     Operands.push_back(Use(Idx[i], this));
 }
 
-StoreInst::StoreInst(Value *Val, Value *Ptr, const string &Name = "")
+StoreInst::StoreInst(Value *Val, Value *Ptr, const std::string &Name = "")
   : MemAccessInst(Type::VoidTy, Store, Name) {
   
   Operands.reserve(2);
@@ -98,8 +98,8 @@ StoreInst::StoreInst(Value *Val, Value *Ptr, const string &Name = "")
 //                       GetElementPtrInst Implementation
 //===----------------------------------------------------------------------===//
 
-GetElementPtrInst::GetElementPtrInst(Value *Ptr, const vector<Value*> &Idx,
-				     const string &Name = "")
+GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
+				     const std::string &Name = "")
   : MemAccessInst(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                             Idx, true))),
 		  GetElementPtr, Name) {

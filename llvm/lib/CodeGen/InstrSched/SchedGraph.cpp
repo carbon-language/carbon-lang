@@ -23,10 +23,16 @@
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/iOther.h"
 #include "Support/StringExtras.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
-#include <hash_map>
 #include <vector>
+#include <iostream>
+#include <ext/hash_map>
 
+using std::vector;
+using std::pair;
+using std::hash_map;
+using std::cerr;
 
 //*********************** Internal Data Structures *************************/
 
@@ -132,7 +138,7 @@ SchedGraphEdge::~SchedGraphEdge()
 }
 
 void SchedGraphEdge::dump(int indent=0) const {
-  cout << string(indent*2, ' ') << *this; 
+  cerr << std::string(indent*2, ' ') << *this; 
 }
 
 
@@ -168,7 +174,7 @@ SchedGraphNode::~SchedGraphNode()
 }
 
 void SchedGraphNode::dump(int indent=0) const {
-  cout << string(indent*2, ' ') << *this; 
+  cerr << std::string(indent*2, ' ') << *this; 
 }
 
 
@@ -222,21 +228,20 @@ SchedGraph::SchedGraph(const BasicBlock* bb,
 		       const TargetMachine& target)
 {
   bbVec.push_back(bb);
-  this->buildGraph(target);
+  buildGraph(target);
 }
 
 
 /*dtor*/
 SchedGraph::~SchedGraph()
 {
-  for (iterator I=begin(); I != end(); ++I)
+  for (const_iterator I = begin(); I != end(); ++I)
     {
-      SchedGraphNode* node = (*I).second;
+      SchedGraphNode *node = I->second;
       
       // for each node, delete its out-edges
-      for (SchedGraphNode::iterator I = node->beginOutEdges();
-	   I != node->endOutEdges(); ++I)
-	delete *I;
+      std::for_each(node->beginOutEdges(), node->endOutEdges(),
+                    deleter<SchedGraphEdge>);
       
       // then delete the node itself.
       delete node;
@@ -247,24 +252,24 @@ SchedGraph::~SchedGraph()
 void
 SchedGraph::dump() const
 {
-  cout << "  Sched Graph for Basic Blocks: ";
+  cerr << "  Sched Graph for Basic Blocks: ";
   for (unsigned i=0, N=bbVec.size(); i < N; i++)
     {
-      cout << (bbVec[i]->hasName()? bbVec[i]->getName() : "block")
+      cerr << (bbVec[i]->hasName()? bbVec[i]->getName() : "block")
 	   << " (" << bbVec[i] << ")"
 	   << ((i == N-1)? "" : ", ");
     }
   
-  cout << endl << endl << "    Actual Root nodes : ";
+  cerr << "\n\n    Actual Root nodes : ";
   for (unsigned i=0, N=graphRoot->outEdges.size(); i < N; i++)
-    cout << graphRoot->outEdges[i]->getSink()->getNodeId()
+    cerr << graphRoot->outEdges[i]->getSink()->getNodeId()
 	 << ((i == N-1)? "" : ", ");
   
-  cout << endl << "    Graph Nodes:" << endl;
+  cerr << "\n    Graph Nodes:\n";
   for (const_iterator I=begin(); I != end(); ++I)
-    cout << endl << * (*I).second;
+    cerr << "\n" << *I->second;
   
-  cout << endl;
+  cerr << "\n";
 }
 
 
@@ -690,7 +695,7 @@ SchedGraph::addNonSSAEdgesForValue(const Instruction* instr,
 	    // this operand is a definition or use of value `instr'
 	    SchedGraphNode* node = this->getGraphNodeForInstr(mvec[i]);
             assert(node && "No node for machine instruction in this BB?");
-            refVec.push_back(make_pair(node, o));
+            refVec.push_back(std::make_pair(node, o));
           }
       }
   
@@ -747,8 +752,8 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
         {
           int regNum = mop.getMachineRegNum();
 	  if (regNum != target.getRegInfo().getZeroRegNum())
-            regToRefVecMap[mop.getMachineRegNum()].push_back(make_pair(node,
-                                                                       i));
+            regToRefVecMap[mop.getMachineRegNum()].push_back(
+                                                  std::make_pair(node, i));
           continue;                     // nothing more to do
 	}
       
@@ -762,7 +767,7 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
              && "Do not expect any other kind of operand to be defined!");
       
       const Instruction* defInstr = cast<Instruction>(mop.getVRegValue());
-      valueToDefVecMap[defInstr].push_back(make_pair(node, i)); 
+      valueToDefVecMap[defInstr].push_back(std::make_pair(node, i)); 
     }
   
   // 
@@ -774,7 +779,7 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
       if (const Instruction* defInstr =
           dyn_cast_or_null<Instruction>(minstr.getImplicitRef(i)))
         {
-          valueToDefVecMap[defInstr].push_back(make_pair(node, -i)); 
+          valueToDefVecMap[defInstr].push_back(std::make_pair(node, -i)); 
         }
 }
 
@@ -860,7 +865,6 @@ SchedGraph::buildNodesforBB(const TargetMachine& target,
 void
 SchedGraph::buildGraph(const TargetMachine& target)
 {
-  const MachineInstrInfo& mii = target.getInstrInfo();
   const BasicBlock* bb = bbVec[0];
   
   assert(bbVec.size() == 1 && "Only handling a single basic block here");
@@ -966,24 +970,22 @@ SchedGraphSet::SchedGraphSet(const Method* _method,
 SchedGraphSet::~SchedGraphSet()
 {
   // delete all the graphs
-  for (iterator I=begin(); I != end(); ++I)
-    delete (*I).second;
+  for (const_iterator I = begin(); I != end(); ++I)
+    delete I->second;
 }
 
 
 void
 SchedGraphSet::dump() const
 {
-  cout << "======== Sched graphs for method `"
-       << (method->hasName()? method->getName() : "???")
-       << "' ========" << endl << endl;
+  cerr << "======== Sched graphs for method `" << method->getName()
+       << "' ========\n\n";
   
   for (const_iterator I=begin(); I != end(); ++I)
-    (*I).second->dump();
+    I->second->dump();
   
-  cout << endl << "====== End graphs for method `"
-       << (method->hasName()? method->getName() : "")
-       << "' ========" << endl << endl;
+  cerr << "\n====== End graphs for method `" << method->getName()
+       << "' ========\n\n";
 }
 
 
@@ -1000,8 +1002,7 @@ SchedGraphSet::buildGraphsForMethod(const Method *method,
 
 
 
-ostream&
-operator<<(ostream& os, const SchedGraphEdge& edge)
+std::ostream &operator<<(std::ostream &os, const SchedGraphEdge& edge)
 {
   os << "edge [" << edge.src->getNodeId() << "] -> ["
      << edge.sink->getNodeId() << "] : ";
@@ -1015,33 +1016,30 @@ operator<<(ostream& os, const SchedGraphEdge& edge)
   default: assert(0); break;
   }
   
-  os << " : delay = " << edge.minDelay << endl;
+  os << " : delay = " << edge.minDelay << "\n";
   
   return os;
 }
 
-ostream&
-operator<<(ostream& os, const SchedGraphNode& node)
+std::ostream &operator<<(std::ostream &os, const SchedGraphNode& node)
 {
-  os << string(8, ' ')
+  os << std::string(8, ' ')
      << "Node " << node.nodeId << " : "
-     << "latency = " << node.latency << endl << string(12, ' ');
+     << "latency = " << node.latency << "\n" << std::string(12, ' ');
   
   if (node.getMachineInstr() == NULL)
-    os << "(Dummy node)" << endl;
+    os << "(Dummy node)\n";
   else
     {
-      os << *node.getMachineInstr() << endl << string(12, ' ');
-      os << node.inEdges.size() << " Incoming Edges:" << endl;
+      os << *node.getMachineInstr() << "\n" << std::string(12, ' ');
+      os << node.inEdges.size() << " Incoming Edges:\n";
       for (unsigned i=0, N=node.inEdges.size(); i < N; i++)
-	  os << string(16, ' ') << *node.inEdges[i];
+	  os << std::string(16, ' ') << *node.inEdges[i];
   
-      os << string(12, ' ') << node.outEdges.size()
-         << " Outgoing Edges:" << endl;
+      os << std::string(12, ' ') << node.outEdges.size()
+         << " Outgoing Edges:\n";
       for (unsigned i=0, N=node.outEdges.size(); i < N; i++)
-	{
-	  os << string(16, ' ') << * node.outEdges[i];
-	}
+        os << std::string(16, ' ') << *node.outEdges[i];
     }
   
   return os;

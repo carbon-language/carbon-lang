@@ -17,9 +17,9 @@
 class User : public Value {
   User(const User &);             // Do not implement
 protected:
-  vector<Use> Operands;
+  std::vector<Use> Operands;
 public:
-  User(const Type *Ty, ValueTy vty, const string &name = "");
+  User(const Type *Ty, ValueTy vty, const std::string &name = "");
   virtual ~User() { dropAllReferences(); }
 
   inline Value *getOperand(unsigned i) { 
@@ -39,8 +39,8 @@ public:
   // ---------------------------------------------------------------------------
   // Operand Iterator interface...
   //
-  typedef vector<Use>::iterator       op_iterator;
-  typedef vector<Use>::const_iterator const_op_iterator;
+  typedef std::vector<Use>::iterator       op_iterator;
+  typedef std::vector<Use>::const_iterator const_op_iterator;
 
   inline op_iterator       op_begin()       { return Operands.begin(); }
   inline const_op_iterator op_begin() const { return Operands.begin(); }

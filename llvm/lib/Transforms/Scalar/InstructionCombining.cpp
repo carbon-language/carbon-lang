@@ -76,7 +76,7 @@ static Instruction *CombineIndicies(MemAccessInst *MAI) {
     dyn_cast<GetElementPtrInst>(MAI->getPointerOperand());
   if (!Src) return 0;
 
-  vector<Value *> Indices;
+  std::vector<Value *> Indices;
   
   // Only special case we have to watch out for is pointer arithmetic on the
   // 0th index of MAI. 
@@ -128,7 +128,7 @@ bool InstructionCombining::CombineInstruction(Instruction *I) {
 
 bool InstructionCombining::doit(Method *M) {
   // Start the worklist out with all of the instructions in the method in it.
-  vector<Instruction*> WorkList(M->inst_begin(), M->inst_end());
+  std::vector<Instruction*> WorkList(M->inst_begin(), M->inst_end());
 
   while (!WorkList.empty()) {
     Instruction *I = WorkList.back();  // Get an instruction from the worklist

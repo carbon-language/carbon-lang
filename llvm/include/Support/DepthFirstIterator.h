@@ -20,21 +20,21 @@ class df_iterator : public std::forward_iterator<typename GT::NodeType,
   typedef typename GT::NodeType          NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
 
-  set<NodeType *>   Visited;    // All of the blocks visited so far...
+  std::set<NodeType *> Visited;    // All of the blocks visited so far...
   // VisitStack - Used to maintain the ordering.  Top = current block
   // First element is node pointer, second is the 'next child' to visit
-  stack<pair<NodeType *, ChildItTy> > VisitStack;
+  std::stack<std::pair<NodeType *, ChildItTy> > VisitStack;
   const bool Reverse;         // Iterate over children before self?
 private:
   void reverseEnterNode() {
-    pair<NodeType *, ChildItTy> &Top = VisitStack.top();
+    std::pair<NodeType *, ChildItTy> &Top = VisitStack.top();
     NodeType *Node = Top.first;
     ChildItTy &It  = Top.second;
     for (; It != GT::child_end(Node); ++It) {
       NodeType *Child = *It;
       if (!Visited.count(Child)) {
 	Visited.insert(Child);
-	VisitStack.push(make_pair(Child, GT::child_begin(Child)));
+	VisitStack.push(std::make_pair(Child, GT::child_begin(Child)));
 	reverseEnterNode();
 	return;
       }
@@ -43,7 +43,7 @@ private:
 
   inline df_iterator(NodeType *Node, bool reverse) : Reverse(reverse) {
     Visited.insert(Node);
-    VisitStack.push(make_pair(Node, GT::child_begin(Node)));
+    VisitStack.push(std::make_pair(Node, GT::child_begin(Node)));
     if (Reverse) reverseEnterNode();
   }
   inline df_iterator() { /* End is when stack is empty */ }
@@ -81,7 +81,7 @@ public:
 	reverseEnterNode();
     } else {                     // Normal Depth First Iterator
       do {
-	pair<NodeType *, ChildItTy> &Top = VisitStack.top();
+	std::pair<NodeType *, ChildItTy> &Top = VisitStack.top();
 	NodeType *Node = Top.first;
 	ChildItTy &It  = Top.second;
 
@@ -90,7 +90,7 @@ public:
 	  if (!Visited.count(Next)) {  // Has our next sibling been visited?
 	    // No, do it now.
 	    Visited.insert(Next);
-	    VisitStack.push(make_pair(Next, GT::child_begin(Next)));
+	    VisitStack.push(std::make_pair(Next, GT::child_begin(Next)));
 	    return *this;
 	  }
 	}

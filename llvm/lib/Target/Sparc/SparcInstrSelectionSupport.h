@@ -58,4 +58,4 @@ ChooseStoreInstruction(const Type *DestTy)
   return 0;
 }
 
-#endif SPARC_INSTR_SELECTION_SUPPORT_h
+#endif

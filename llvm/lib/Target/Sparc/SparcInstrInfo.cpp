@@ -27,7 +27,7 @@
 
 static inline MachineInstr*
 CreateIntSetInstruction(int64_t C, Value* dest,
-                        vector<TmpInstruction*>& tempVec)
+                        std::vector<TmpInstruction*>& tempVec)
 {
   MachineInstr* minstr;
   uint64_t absC = (C >= 0)? C : -C;
@@ -55,7 +55,7 @@ CreateIntSetInstruction(int64_t C, Value* dest,
 
 static inline MachineInstr*
 CreateUIntSetInstruction(uint64_t C, Value* dest,
-                         vector<TmpInstruction*>& tempVec)
+                         std::vector<TmpInstruction*>& tempVec)
 {
   MachineInstr* minstr;
   if (C > (unsigned int) ~0)
@@ -109,9 +109,9 @@ UltraSparcInstrInfo::UltraSparcInstrInfo(const TargetMachine& tgt)
 // 
 void
 UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
-                                       Instruction* dest,
-                                       vector<MachineInstr*>& minstrVec,
-                                       vector<TmpInstruction*>& tempVec) const
+                                   Instruction* dest,
+                                   std::vector<MachineInstr*>& minstrVec,
+                                   std::vector<TmpInstruction*>& tempVec) const
 {
   MachineInstr* minstr;
   
@@ -200,18 +200,16 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
 // 
 void
 UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Method* method,
-                                              Value* val,
-                                              Instruction* dest,
-                                              vector<MachineInstr*>& minstrVec,
-                                              vector<TmpInstruction*>& tempVec,
-                                              TargetMachine& target) const
+                                         Value* val,
+                                         Instruction* dest,
+                                         std::vector<MachineInstr*>& minstrVec,
+                                         std::vector<TmpInstruction*>& tempVec,
+                                         TargetMachine& target) const
 {
   assert((val->getType()->isIntegral() || val->getType()->isPointerType())
          && "Source type must be integral");
   assert((dest->getType() ==Type::FloatTy || dest->getType() ==Type::DoubleTy)
          && "Dest type must be float/double");
-  
-  const MachineFrameInfo& frameInfo = ((UltraSparc&) target).getFrameInfo();
   
   MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(method);
   int offset = mcinfo.allocateLocalVar(target, val); 
@@ -246,18 +244,16 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Method* method,
 // 
 void
 UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(Method* method,
-                                              Value* val,
-                                              Instruction* dest,
-                                              vector<MachineInstr*>& minstrVec,
-                                              vector<TmpInstruction*>& tempVec,
-                                              TargetMachine& target) const
+                                        Value* val,
+                                        Instruction* dest,
+                                        std::vector<MachineInstr*>& minstrVec,
+                                        std::vector<TmpInstruction*>& tempVec,
+                                        TargetMachine& target) const
 {
   assert((val->getType() ==Type::FloatTy || val->getType() ==Type::DoubleTy)
          && "Source type must be float/double");
   assert((dest->getType()->isIntegral() || dest->getType()->isPointerType())
          && "Dest type must be integral");
-  
-  const MachineFrameInfo& frameInfo = ((UltraSparc&) target).getFrameInfo();
   
   MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(method);
   int offset = mcinfo.allocateLocalVar(target, val); 

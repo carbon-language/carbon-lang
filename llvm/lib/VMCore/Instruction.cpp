@@ -10,7 +10,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/CodeGen/MachineInstr.h"
 
-Instruction::Instruction(const Type *ty, unsigned it, const string &Name) 
+Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name) 
   : User(ty, Value::InstructionVal, Name), 
     machineInstrVec(new MachineCodeForVMInstr) {
   Parent = 0;
@@ -23,7 +23,7 @@ Instruction::~Instruction() {
 }
 
 // Specialize setName to take care of symbol table majik
-void Instruction::setName(const string &name, SymbolTable *ST) {
+void Instruction::setName(const std::string &name, SymbolTable *ST) {
   BasicBlock *P = 0; Method *PP = 0;
   assert((ST == 0 || !getParent() || !getParent()->getParent() || 
 	  ST == getParent()->getParent()->getSymbolTable()) &&
@@ -44,7 +44,7 @@ void Instruction::addMachineInstruction(MachineInstr* minstr) {
 // sequence of forward declarations.  Trying to fix that will
 // cause a serious circularity in link order.
 // 
-const vector<Value*> &Instruction::getTempValuesForMachineCode() const {
+const std::vector<Value*> &Instruction::getTempValuesForMachineCode() const {
   return machineInstrVec->getTempValues();
 }
 #endif

@@ -28,7 +28,7 @@ typedef unsigned char uchar;
 //
 static void outputInstructionFormat0(const Instruction *I,
 				     const SlotCalculator &Table,
-				     unsigned Type, deque<uchar> &Out) {
+				     unsigned Type, std::deque<uchar> &Out) {
   // Opcode must have top two bits clear...
   output_vbr(I->getOpcode() << 2, Out);          // Instruction Opcode ID
   output_vbr(Type, Out);                         // Result type
@@ -63,7 +63,7 @@ static void outputInstructionFormat0(const Instruction *I,
 //
 static void outputInstrVarArgsCall(const Instruction *I,
 				   const SlotCalculator &Table, unsigned Type,
-				   deque<uchar> &Out) {
+				   std::deque<uchar> &Out) {
   assert(isa<CallInst>(I) || isa<InvokeInst>(I));
   // Opcode must have top two bits clear...
   output_vbr(I->getOpcode() << 2, Out);          // Instruction Opcode ID
@@ -106,7 +106,7 @@ static void outputInstrVarArgsCall(const Instruction *I,
 //
 static void outputInstructionFormat1(const Instruction *I, 
 				     const SlotCalculator &Table, int *Slots,
-				     unsigned Type, deque<uchar> &Out) {
+				     unsigned Type, std::deque<uchar> &Out) {
   unsigned Opcode = I->getOpcode();      // Instruction Opcode ID
   
   // bits   Instruction format:
@@ -127,7 +127,7 @@ static void outputInstructionFormat1(const Instruction *I,
 //
 static void outputInstructionFormat2(const Instruction *I, 
 				     const SlotCalculator &Table, int *Slots,
-				     unsigned Type, deque<uchar> &Out) {
+				     unsigned Type, std::deque<uchar> &Out) {
   unsigned Opcode = I->getOpcode();      // Instruction Opcode ID
 
   // bits   Instruction format:
@@ -151,7 +151,7 @@ static void outputInstructionFormat2(const Instruction *I,
 //
 static void outputInstructionFormat3(const Instruction *I, 
 				     const SlotCalculator &Table, int *Slots,
-				     unsigned Type, deque<uchar> &Out) {
+				     unsigned Type, std::deque<uchar> &Out) {
   unsigned Opcode = I->getOpcode();      // Instruction Opcode ID
 
   // bits   Instruction format:

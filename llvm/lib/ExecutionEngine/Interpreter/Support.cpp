@@ -7,13 +7,15 @@
 #include "Interpreter.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Assembly/Writer.h"
+#include <iostream>
+using std::cout;
 
 //===----------------------------------------------------------------------===//
 //
 // LookupMatchingNames helper - Search a symbol table for values matching Name.
 //
-static inline void LookupMatchingNames(const string &Name, SymTabValue &STV,
-				       vector<Value*> &Results) {
+static inline void LookupMatchingNames(const std::string &Name,SymTabValue &STV,
+				       std::vector<Value*> &Results) {
   SymbolTable *SymTab = STV.getSymbolTable();
   if (SymTab == 0) return;                         // No symbolic values :(
 
@@ -34,8 +36,8 @@ static inline void LookupMatchingNames(const string &Name, SymTabValue &STV,
 // matches to that name.  This is obviously slow, and should only be used for
 // user interaction.
 //
-vector<Value*> Interpreter::LookupMatchingNames(const string &Name) {
-  vector<Value*> Results;
+std::vector<Value*> Interpreter::LookupMatchingNames(const std::string &Name) {
+  std::vector<Value*> Results;
   Method *CurMeth = getCurrentMethod();
   
   if (CurMeth) ::LookupMatchingNames(Name, *CurMeth, Results);
@@ -47,8 +49,8 @@ vector<Value*> Interpreter::LookupMatchingNames(const string &Name) {
 // pick one value.  If no options are provided, emit an error.  If a single 
 // option is provided, just return that option.
 //
-Value *Interpreter::ChooseOneOption(const string &Name,
-				    const vector<Value*> &Opts) {
+Value *Interpreter::ChooseOneOption(const std::string &Name,
+				    const std::vector<Value*> &Opts) {
   switch (Opts.size()) {
   case 1: return Opts[0];
   case 0: 
@@ -61,16 +63,16 @@ Value *Interpreter::ChooseOneOption(const string &Name,
   cout << "  0. Cancel operation\n";
   for (unsigned i = 0; i < Opts.size(); ++i) {
     cout << "  " << (i+1) << ".";
-    WriteAsOperand(cout, Opts[i]) << endl;
+    WriteAsOperand(cout, Opts[i]) << "\n";
   }
 
   unsigned Option;
   do {
-    cout << "lli> " << flush;
-    cin >> Option;
+    cout << "lli> " << std::flush;
+    std::cin >> Option;
     if (Option > Opts.size())
       cout << "Invalid selection: Please choose from 0 to " << Opts.size()
-	   << endl;
+	   << "\n";
   } while (Option > Opts.size());
 
   if (Option == 0) return 0;

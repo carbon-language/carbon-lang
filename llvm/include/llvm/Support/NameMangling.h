@@ -14,14 +14,14 @@ class Value;
 // MangleTypeName - Implement a consistent name-mangling scheme for
 //                  a given type.
 // 
-string MangleTypeName(const Type *type);
+std::string MangleTypeName(const Type *type);
 
 // MangleName - implement a consistent name-mangling scheme for all
 // externally visible (i.e., global) objects.
 //
 // privateName should be unique within the module.
 // 
-string MangleName(const string &privateName, const Value *V);
+std::string MangleName(const std::string &privateName, const Value *V);
 
 #endif
 

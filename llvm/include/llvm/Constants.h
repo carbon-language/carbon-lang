@@ -36,9 +36,9 @@ protected:
   void destroyConstantImpl();
 public:
   // Specialize setName to handle symbol table majik...
-  virtual void setName(const string &name, SymbolTable *ST = 0);
+  virtual void setName(const std::string &name, SymbolTable *ST = 0);
 
-  virtual string getStrValue() const = 0;
+  virtual std::string getStrValue() const = 0;
 
   // Static constructor to get a '0' constant of arbitrary type...
   static Constant *getNullConstant(const Type *Ty);
@@ -78,7 +78,7 @@ public:
   // inverted - Return the opposite value of the current value.
   inline ConstantBool *inverted() const { return (this==True) ? False : True; }
 
-  virtual string getStrValue() const;
+  virtual std::string getStrValue() const;
   inline bool getValue() const { return Val; }
 
   // isNullValue - Return true if this is the value that would be returned by
@@ -149,7 +149,7 @@ protected:
 public:
   static ConstantSInt *get(const Type *Ty, int64_t V);
 
-  virtual string getStrValue() const;
+  virtual std::string getStrValue() const;
 
   static bool isValueValidForType(const Type *Ty, int64_t V);
   inline int64_t getValue() const { return Val.Signed; }
@@ -173,7 +173,7 @@ protected:
 public:
   static ConstantUInt *get(const Type *Ty, uint64_t V);
 
-  virtual string getStrValue() const;
+  virtual std::string getStrValue() const;
 
   static bool isValueValidForType(const Type *Ty, uint64_t V);
   inline uint64_t getValue() const { return Val.Unsigned; }
@@ -199,7 +199,7 @@ protected:
 public:
   static ConstantFP *get(const Type *Ty, double V);
 
-  virtual string getStrValue() const;
+  virtual std::string getStrValue() const;
 
   static bool isValueValidForType(const Type *Ty, double V);
   inline double getValue() const { return Val; }
@@ -223,20 +223,20 @@ public:
 class ConstantArray : public Constant {
   ConstantArray(const ConstantArray &);      // DO NOT IMPLEMENT
 protected:
-  ConstantArray(const ArrayType *T, const vector<Constant*> &Val);
+  ConstantArray(const ArrayType *T, const std::vector<Constant*> &Val);
   ~ConstantArray() {}
 
   virtual void destroyConstant();
 public:
-  static ConstantArray *get(const ArrayType *T, const vector<Constant*> &);
-  static ConstantArray *get(const string &Initializer);
+  static ConstantArray *get(const ArrayType *T, const std::vector<Constant*> &);
+  static ConstantArray *get(const std::string &Initializer);
   
-  virtual string getStrValue() const;
+  virtual std::string getStrValue() const;
   inline const ArrayType *getType() const {
     return (ArrayType*)Value::getType();
   }
 
-  inline const vector<Use> &getValues() const { return Operands; }
+  inline const std::vector<Use> &getValues() const { return Operands; }
 
   // isNullValue - Return true if this is the value that would be returned by
   // getNullConstant.
@@ -257,20 +257,20 @@ public:
 class ConstantStruct : public Constant {
   ConstantStruct(const ConstantStruct &);      // DO NOT IMPLEMENT
 protected:
-  ConstantStruct(const StructType *T, const vector<Constant*> &Val);
+  ConstantStruct(const StructType *T, const std::vector<Constant*> &Val);
   ~ConstantStruct() {}
 
   virtual void destroyConstant();
 public:
   static ConstantStruct *get(const StructType *T,
-			      const vector<Constant*> &V);
+                             const std::vector<Constant*> &V);
 
-  virtual string getStrValue() const;
+  virtual std::string getStrValue() const;
   inline const StructType *getType() const {
     return (StructType*)Value::getType();
   }
 
-  inline const vector<Use> &getValues() const { return Operands; }
+  inline const std::vector<Use> &getValues() const { return Operands; }
 
   // isNullValue - Return true if this is the value that would be returned by
   // getNullConstant.
@@ -297,7 +297,7 @@ protected:
   inline ConstantPointer(const PointerType *T) : Constant((const Type*)T){}
   ~ConstantPointer() {}
 public:
-  virtual string getStrValue() const = 0;
+  virtual std::string getStrValue() const = 0;
   inline const PointerType *getType() const {
     return (PointerType*)Value::getType();
   }
@@ -322,7 +322,7 @@ protected:
   inline ConstantPointerNull(const PointerType *T) : ConstantPointer(T) {}
   inline ~ConstantPointerNull() {}
 public:
-  virtual string getStrValue() const;
+  virtual std::string getStrValue() const;
 
   static ConstantPointerNull *get(const PointerType *T);
 
@@ -359,7 +359,7 @@ protected:
 public:
   static ConstantPointerRef *get(GlobalValue *GV);
 
-  virtual string getStrValue() const;
+  virtual std::string getStrValue() const;
 
   const GlobalValue *getValue() const { 
     return cast<GlobalValue>(Operands[0].get());

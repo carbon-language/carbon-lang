@@ -31,11 +31,11 @@ namespace cfg {
 // BasicBlock is a (possibly nonexistent) loop with a "tail" of non looping
 // nodes following it.
 //
-class IntervalPartition : public vector<Interval*> {
-  typedef map<BasicBlock*, Interval*> IntervalMapTy;
+class IntervalPartition : public std::vector<Interval*> {
+  typedef std::map<BasicBlock*, Interval*> IntervalMapTy;
   IntervalMapTy IntervalMap;
 
-  typedef vector<Interval*> IntervalListTy;
+  typedef std::vector<Interval*> IntervalListTy;
   Interval *RootInterval;
 
 public:

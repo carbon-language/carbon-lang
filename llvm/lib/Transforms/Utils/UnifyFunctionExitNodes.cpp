@@ -11,6 +11,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Type.h"
+using std::vector;
 
 // UnifyAllExitNodes - Unify all exit nodes of the CFG by creating a new
 // BasicBlock, and converting all returns to unconditional branches to this

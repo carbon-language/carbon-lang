@@ -18,10 +18,12 @@
 #include "llvm/Instruction.h"
 #include "Support/CommandLine.h"
 #include "SchedPriorities.h"
-#include <hash_set>
 #include <algorithm>
 #include <iterator>
-
+#include <ext/hash_set>
+#include <iostream>
+using std::cerr;
+using std::vector;
 
 //************************* External Data Types *****************************/
 
@@ -353,11 +355,11 @@ private:
   unsigned int totalInstrCount;
   cycles_t curTime;
   cycles_t nextEarliestIssueTime;		// next cycle we can issue
-  vector<hash_set<const SchedGraphNode*> > choicesForSlot; // indexed by slot#
+  vector<std::hash_set<const SchedGraphNode*> > choicesForSlot; // indexed by slot#
   vector<const SchedGraphNode*> choiceVec;	// indexed by node ptr
   vector<int> numInClass;			// indexed by sched class
   vector<cycles_t> nextEarliestStartTime;	// indexed by opCode
-  hash_map<const SchedGraphNode*, DelaySlotInfo*> delaySlotInfoForBranches;
+  std::hash_map<const SchedGraphNode*, DelaySlotInfo*> delaySlotInfoForBranches;
 						// indexed by branch node ptr 
   
 public:
@@ -419,7 +421,7 @@ public:
     return choiceVec[i];
   }
   
-  inline hash_set<const SchedGraphNode*>& getChoicesForSlot(unsigned slotNum) {
+  inline std::hash_set<const SchedGraphNode*>& getChoicesForSlot(unsigned slotNum) {
     assert(slotNum < nslots);
     return choicesForSlot[slotNum];
   }
@@ -495,7 +497,7 @@ public:
 						 bool createIfMissing=false)
   {
     DelaySlotInfo* dinfo;
-    hash_map<const SchedGraphNode*, DelaySlotInfo* >::const_iterator
+    std::hash_map<const SchedGraphNode*, DelaySlotInfo* >::const_iterator
       I = delaySlotInfoForBranches.find(bn);
     if (I == delaySlotInfoForBranches.end())
       {
@@ -552,7 +554,7 @@ SchedulingManager::updateEarliestStartTimes(const SchedGraphNode* node,
 {
   if (schedInfo.numBubblesAfter(node->getOpCode()) > 0)
     { // Update next earliest time before which *nothing* can issue.
-      nextEarliestIssueTime = max(nextEarliestIssueTime,
+      nextEarliestIssueTime = std::max(nextEarliestIssueTime,
 		  curTime + 1 + schedInfo.numBubblesAfter(node->getOpCode()));
     }
   
@@ -603,7 +605,7 @@ AssignInstructionsToSlots(class SchedulingManager& S, unsigned maxIssue)
   unsigned numIssued;
   for (numIssued = 0; numIssued < maxIssue; numIssued++)
     {
-      int chosenSlot = -1, chosenNodeIndex = -1;
+      int chosenSlot = -1;
       for (unsigned s=startSlot; s < S.nslots; s++)
 	if ((*igroup)[s] == NULL && S.getChoicesForSlot(s).size() == 1)
 	  {
@@ -877,7 +879,7 @@ FindSlotChoices(SchedulingManager& S,
 	  
 	  assert(s < S.nslots && "No feasible slot for instruction?");
 	  
-	  highestSlotUsed = max(highestSlotUsed, (int) s);
+	  highestSlotUsed = std::max(highestSlotUsed, (int) s);
 	}
       
       assert(highestSlotUsed <= (int) S.nslots-1 && "Invalid slot used?");
@@ -961,7 +963,6 @@ FindSlotChoices(SchedulingManager& S,
       // Otherwise, just ignore the instruction.
       for (unsigned i=indexForBreakingNode+1; i < S.getNumChoices(); i++)
 	{
-	  bool foundLowerSlot = false;
 	  MachineOpCode opCode = S.getChoice(i)->getOpCode();
 	  for (unsigned int s=startSlot; s < nslotsToUse; s++)
 	    if (S.schedInfo.instrCanUseSlot(opCode, s))
@@ -1001,15 +1002,15 @@ ChooseOneGroup(SchedulingManager& S)
     {
       for (cycles_t c = firstCycle; c <= S.getTime(); c++)
         {
-          cout << "    Cycle " << c << " : Scheduled instructions:\n";
+          cerr << "    Cycle " << (long)c << " : Scheduled instructions:\n";
           const InstrGroup* igroup = S.isched.getIGroup(c);
           for (unsigned int s=0; s < S.nslots; s++)
             {
-              cout << "        ";
+              cerr << "        ";
               if ((*igroup)[s] != NULL)
-                cout << * ((*igroup)[s])->getMachineInstr() << endl;
+                cerr << * ((*igroup)[s])->getMachineInstr() << "\n";
               else
-                cout << "<none>" << endl;
+                cerr << "<none>\n";
             }
         }
     }
@@ -1056,9 +1057,9 @@ ForwardListSchedule(SchedulingManager& S)
       // an instruction can be issued, or the next earliest in which
       // one will be ready, or to the next cycle, whichever is latest.
       // 
-      S.updateTime(max(S.getTime() + 1,
-		       max(S.getEarliestIssueTime(),
-			   S.schedPrio.getEarliestReadyTime())));
+      S.updateTime(std::max(S.getTime() + 1,
+                            std::max(S.getEarliestIssueTime(),
+                                     S.schedPrio.getEarliestReadyTime())));
     }
 }
 
@@ -1499,8 +1500,7 @@ ScheduleInstructionsWithSSA(Method* method,
   
   if (SchedDebugLevel >= Sched_PrintSchedGraphs)
     {
-      cout << endl << "*** SCHEDULING GRAPHS FOR INSTRUCTION SCHEDULING"
-	   << endl;
+      cerr << "\n*** SCHEDULING GRAPHS FOR INSTRUCTION SCHEDULING\n";
       graphSet.dump();
     }
   
@@ -1513,7 +1513,7 @@ ScheduleInstructionsWithSSA(Method* method,
       const BasicBlock* bb = bbvec[0];
       
       if (SchedDebugLevel >= Sched_PrintSchedTrace)
-	cout << endl << "*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
+	cerr << "\n*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
       
       SchedPriorities schedPrio(method, graph);	     // expensive!
       SchedulingManager S(target, graph, schedPrio);
@@ -1527,8 +1527,7 @@ ScheduleInstructionsWithSSA(Method* method,
   
   if (SchedDebugLevel >= Sched_PrintMachineCode)
     {
-      cout << endl
-	   << "*** Machine instructions after INSTRUCTION SCHEDULING" << endl;
+      cerr << "\n*** Machine instructions after INSTRUCTION SCHEDULING\n";
       MachineCodeForMethod::get(method).dump();
     }
   

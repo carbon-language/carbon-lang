@@ -28,7 +28,7 @@ class BBLiveVar
 
                                 // map that contains phi args->BB they came
                                 // set by calcDefUseSets & used by setPropagate
-  hash_map<const Value *, const BasicBlock *, hashFuncValue> PhiArgMap;  
+  std::hash_map<const Value *, const BasicBlock *> PhiArgMap;  
 
   // method to propogate an InSet to OutSet of a predecessor
   bool setPropagate( LiveVarSet *const OutSetOfPred, 

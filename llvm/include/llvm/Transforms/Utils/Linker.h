@@ -16,7 +16,7 @@ class Module;
 // error occurs, true is returned and ErrorMsg (if not null) is set to indicate
 // the problem.
 //
-bool LinkModules(Module *Dest, const Module *Src, string *ErrorMsg = 0);
+bool LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg = 0);
 
 #endif
 

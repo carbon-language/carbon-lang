@@ -24,7 +24,7 @@
 #include "Support/NonCopyable.h"
 #include "Support/HashExtras.h"
 #include "Support/GraphTraits.h"
-#include <hash_map>
+#include <ext/hash_map>
 
 class Value;
 class Instruction;
@@ -128,7 +128,7 @@ public:
   // 
   // Debugging support
   // 
-  friend ostream& operator<<(ostream& os, const SchedGraphEdge& edge);
+  friend std::ostream& operator<<(std::ostream& os, const SchedGraphEdge& edge);
   
   void		dump	(int indent=0) const;
     
@@ -144,16 +144,16 @@ private:
   unsigned int nodeId;
   const BasicBlock* bb;
   const MachineInstr* minstr;
-  vector<SchedGraphEdge*> inEdges;
-  vector<SchedGraphEdge*> outEdges;
+  std::vector<SchedGraphEdge*> inEdges;
+  std::vector<SchedGraphEdge*> outEdges;
   int origIndexInBB;            // original position of machine instr in BB
   int latency;
   
 public:
-  typedef vector<SchedGraphEdge*>::      iterator	        iterator;
-  typedef vector<SchedGraphEdge*>::const_iterator         const_iterator;
-  typedef vector<SchedGraphEdge*>::      reverse_iterator reverse_iterator;
-  typedef vector<SchedGraphEdge*>::const_reverse_iterator const_reverse_iterator;
+  typedef std::vector<SchedGraphEdge*>::      iterator	       iterator;
+  typedef std::vector<SchedGraphEdge*>::const_iterator         const_iterator;
+  typedef std::vector<SchedGraphEdge*>::      reverse_iterator reverse_iterator;
+  typedef std::vector<SchedGraphEdge*>::const_reverse_iterator const_reverse_iterator;
   
 public:
   //
@@ -186,7 +186,7 @@ public:
   //
   // Debugging support
   // 
-  friend ostream& operator<<(ostream& os, const SchedGraphNode& node);
+  friend std::ostream& operator<<(std::ostream& os, const SchedGraphNode& node);
   
   void		dump	(int indent=0) const;
   
@@ -214,22 +214,23 @@ private:
 
 class SchedGraph :
   public NonCopyable,
-  private hash_map<const MachineInstr*, SchedGraphNode*>
+  private std::hash_map<const MachineInstr*, SchedGraphNode*>
 {
 private:
-  vector<const BasicBlock*> bbVec;	// basic blocks included in the graph
+  std::vector<const BasicBlock*> bbVec; // basic blocks included in the graph
   SchedGraphNode* graphRoot;		// the root and leaf are not inserted
   SchedGraphNode* graphLeaf;		//  in the hash_map (see getNumNodes())
   
+  typedef std::hash_map<const MachineInstr*, SchedGraphNode*> map_base;
 public:
-  typedef hash_map<const MachineInstr*, SchedGraphNode*>::iterator iterator;
-  typedef hash_map<const MachineInstr*, SchedGraphNode*>::const_iterator const_iterator;
+  using map_base::iterator;
+  using map_base::const_iterator;
   
 public:
   //
   // Accessor methods
   //
-  const vector<const BasicBlock*>& getBasicBlocks() const { return bbVec; }
+  const std::vector<const BasicBlock*>& getBasicBlocks() const { return bbVec; }
   const unsigned int		   getNumNodes()    const { return size()+2; }
   SchedGraphNode*		   getRoot()	    const { return graphRoot; }
   SchedGraphNode*		   getLeaf()	    const { return graphLeaf; }
@@ -257,19 +258,9 @@ public:
   // Unordered iterators.
   // Return values is pair<const MachineIntr*,SchedGraphNode*>.
   //
-  iterator	begin()	{
-    return hash_map<const MachineInstr*, SchedGraphNode*>::begin();
-  }
-  iterator	end() {
-    return hash_map<const MachineInstr*, SchedGraphNode*>::end();
-  }
-  const_iterator begin() const {
-    return hash_map<const MachineInstr*, SchedGraphNode*>::begin();
-  }
-  const_iterator end()	const {
-    return hash_map<const MachineInstr*, SchedGraphNode*>::end();
-  }
-  
+  using map_base::begin;
+  using map_base::end;
+
   //
   // Ordered iterators.
   // Return values is pair<const MachineIntr*,SchedGraphNode*>.
@@ -308,13 +299,13 @@ private:
   
   void          buildNodesforBB         (const TargetMachine& target,
                                          const BasicBlock* bb,
-                                         vector<SchedGraphNode*>& memNodeVec,
+                                         std::vector<SchedGraphNode*>& memNod,
                                          RegToRefVecMap& regToRefVecMap,
                                          ValueToDefVecMap& valueToDefVecMap);
   
   void          findDefUseInfoAtInstr   (const TargetMachine& target,
                                          SchedGraphNode* node,
-                                         vector<SchedGraphNode*>& memNodeVec,
+                                         std::vector<SchedGraphNode*>& memNode,
                                          RegToRefVecMap& regToRefVecMap,
                                          ValueToDefVecMap& valueToDefVecMap);
                                          
@@ -325,10 +316,10 @@ private:
   void		addCDEdges		(const TerminatorInst* term,
 					 const TargetMachine& target);
   
-  void		addMemEdges         (const vector<SchedGraphNode*>& memNodeVec,
+  void		addMemEdges         (const std::vector<SchedGraphNode*>& memNod,
                                      const TargetMachine& target);
   
-  void          addCallCCEdges      (const vector<SchedGraphNode*>& memNodeVec,
+  void          addCallCCEdges      (const std::vector<SchedGraphNode*>& memNod,
                                      MachineCodeForBasicBlock& bbMvec,
                                      const TargetMachine& target);
     
@@ -347,14 +338,15 @@ private:
 
 class SchedGraphSet :  
   public NonCopyable,
-  private hash_map<const BasicBlock*, SchedGraph*>
+  private std::hash_map<const BasicBlock*, SchedGraph*>
 {
 private:
   const Method* method;
   
 public:
-  typedef hash_map<const BasicBlock*, SchedGraph*>::iterator iterator;
-  typedef hash_map<const BasicBlock*, SchedGraph*>::const_iterator const_iterator;
+  typedef std::hash_map<const BasicBlock*, SchedGraph*> map_base;
+  using map_base::iterator;
+  using map_base::const_iterator;
   
 public:
   /*ctor*/	SchedGraphSet		(const Method* _method,
@@ -372,18 +364,8 @@ public:
   //
   // Iterators
   //
-  iterator	begin()	{
-    return hash_map<const BasicBlock*, SchedGraph*>::begin();
-  }
-  iterator	end() {
-    return hash_map<const BasicBlock*, SchedGraph*>::end();
-  }
-  const_iterator begin() const {
-    return hash_map<const BasicBlock*, SchedGraph*>::begin();
-  }
-  const_iterator end()	const {
-    return hash_map<const BasicBlock*, SchedGraph*>::end();
-  }
+  using map_base::begin;
+  using map_base::end;
   
   //
   // Debugging support
@@ -544,14 +526,7 @@ template <> struct GraphTraits<const SchedGraph*> {
 };
 
 
-//************************ External Functions *****************************/
-
-
-ostream& operator<<(ostream& os, const SchedGraphEdge& edge);
-
-ostream& operator<<(ostream& os, const SchedGraphNode& node);
-
-
-/***************************************************************************/
+std::ostream &operator<<(std::ostream& os, const SchedGraphEdge& edge);
+std::ostream &operator<<(std::ostream &os, const SchedGraphNode& node);
 
 #endif

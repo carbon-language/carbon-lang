@@ -16,6 +16,7 @@
 #include "Support/CommandLine.h"
 #include <fstream>
 #include <string>
+#include <memory>
 
 cl::String InputFilename ("", "Parse <arg> file, compile to bytecode", 0, "-");
 cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");
@@ -28,46 +29,55 @@ int main(int argc, char **argv) {
   ostream *Out = 0;
   try {
     // Parse the file now...
-    Module *C = ParseAssemblyFile(InputFilename);
-    if (C == 0) {
+    std::auto_ptr<Module> C(ParseAssemblyFile(InputFilename));
+    if (C.get() == 0) {
       cerr << "assembly didn't read correctly.\n";
       return 1;
     }
   
     if (DumpAsm)
-      cerr << "Here's the assembly:\n" << C;
+      cerr << "Here's the assembly:\n" << C.get();
 
     if (OutputFilename != "") {   // Specified an output filename?
-      Out = new ofstream(OutputFilename.c_str(), 
-			 (Force ? 0 : ios::noreplace)|ios::out);
+      if (!Force && !std::ifstream(OutputFilename.c_str())) {
+        // If force is not specified, make sure not to overwrite a file!
+        cerr << "Error opening '" << OutputFilename << "': File exists!\n"
+             << "Use -f command line argument to force output\n";
+        return 1;
+      }
+      Out = new std::ofstream(OutputFilename.c_str());
     } else {
       if (InputFilename == "-") {
 	OutputFilename = "-";
 	Out = &cout;
       } else {
-	string IFN = InputFilename;
+	std::string IFN = InputFilename;
 	int Len = IFN.length();
 	if (IFN[Len-3] == '.' && IFN[Len-2] == 'l' && IFN[Len-1] == 'l') {
 	  // Source ends in .ll
-	  OutputFilename = string(IFN.begin(), IFN.end()-3);
+	  OutputFilename = std::string(IFN.begin(), IFN.end()-3);
         } else {
 	  OutputFilename = IFN;   // Append a .bc to it
 	}
 	OutputFilename += ".bc";
-	Out = new ofstream(OutputFilename.c_str(), 
-			   (Force ? 0 : ios::noreplace)|ios::out);
-      }
-  
-      if (!Out->good()) {
-        cerr << "Error opening " << OutputFilename << "!\n";
-	delete C;
-	return 1;
+
+        if (!Force && !std::ifstream(OutputFilename.c_str())) {
+          // If force is not specified, make sure not to overwrite a file!
+          cerr << "Error opening '" << OutputFilename << "': File exists!\n"
+               << "Use -f command line argument to force output\n";
+          return 1;
+        }
+
+	Out = new std::ofstream(OutputFilename.c_str());
       }
     }
+  
+    if (!Out->good()) {
+      cerr << "Error opening " << OutputFilename << "!\n";
+      return 1;
+    }
    
-    WriteBytecodeToFile(C, *Out);
-
-    delete C;
+    WriteBytecodeToFile(C.get(), *Out);
   } catch (const ParseException &E) {
     cerr << E.getMessage() << endl;
     return 1;

@@ -9,7 +9,7 @@
 #define LLVM_TARGET_MACHINEREGINFO_H
 
 #include "Support/NonCopyable.h"
-#include <hash_map>
+#include <ext/hash_map>
 #include <string>
 
 class TargetMachine;
@@ -76,11 +76,11 @@ public:
 
 
 
-typedef hash_map<const MachineInstr *, AddedInstrns *> AddedInstrMapType;
+typedef std::hash_map<const MachineInstr *, AddedInstrns *> AddedInstrMapType;
 
 // A vector of all machine register classes
 //
-typedef vector<const MachineRegClassInfo *> MachineRegClassArrayType;
+typedef std::vector<const MachineRegClassInfo *> MachineRegClassArrayType;
 
 
 class MachineRegInfo : public NonCopyableV {
@@ -128,7 +128,7 @@ public:
 			 LiveRangeInfo & LRI) const = 0;
 
   virtual void suggestRegs4CallArgs(const MachineInstr *const CallI, 
-			LiveRangeInfo& LRI, vector<RegClass *> RCL) const = 0;
+			LiveRangeInfo& LRI, std::vector<RegClass *> RCL) const = 0;
 
   virtual void suggestReg4RetValue(const MachineInstr *const RetI, 
 				   LiveRangeInfo& LRI) const = 0;
@@ -186,7 +186,7 @@ public:
   //
   virtual int getUnifiedRegNum(int RegClassID, int reg) const = 0;
 
-  virtual const string getUnifiedRegName(int UnifiedRegNum) const = 0;
+  virtual const std::string getUnifiedRegName(int UnifiedRegNum) const = 0;
 
 
   // Gives the type of a register based on the type of the LR

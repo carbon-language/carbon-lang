@@ -60,7 +60,7 @@ bool FindUnsafePointerTypes::doPerMethodWork(Method *Meth) {
         UnsafeTypes.insert((PointerType*)ITy);
 
         if (PrintFailures) {
-          CachedWriter CW(M->getParent(), cerr);
+          CachedWriter CW(M->getParent(), std::cerr);
           CW << "FindUnsafePointerTypes: Type '" << ITy
              << "' marked unsafe in '" << Meth->getName() << "' by:\n" << Inst;
         }
@@ -74,7 +74,7 @@ bool FindUnsafePointerTypes::doPerMethodWork(Method *Meth) {
 // printResults - Loop over the results of the analysis, printing out unsafe
 // types.
 //
-void FindUnsafePointerTypes::printResults(const Module *M, ostream &o) {
+void FindUnsafePointerTypes::printResults(const Module *M, std::ostream &o) {
   if (UnsafeTypes.empty()) {
     o << "SafePointerAccess Analysis: No unsafe types found!\n";
     return;
@@ -84,9 +84,9 @@ void FindUnsafePointerTypes::printResults(const Module *M, ostream &o) {
 
   CW << "SafePointerAccess Analysis: Found these unsafe types:\n";
   unsigned Counter = 1;
-  for (set<PointerType*>::const_iterator I = getUnsafeTypes().begin(), 
+  for (std::set<PointerType*>::const_iterator I = getUnsafeTypes().begin(), 
          E = getUnsafeTypes().end(); I != E; ++I, ++Counter) {
     
-    CW << " #" << Counter << ". " << (Value*)*I << endl;
+    CW << " #" << Counter << ". " << (Value*)*I << "\n";
   }
 }

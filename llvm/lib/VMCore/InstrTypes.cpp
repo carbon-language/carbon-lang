@@ -21,7 +21,7 @@ TerminatorInst::TerminatorInst(Instruction::TermOps iType)
 }
 
 TerminatorInst::TerminatorInst(const Type *Ty, Instruction::TermOps iType,
-			       const string &Name = "")
+			       const std::string &Name = "")
   : Instruction(Ty, iType, Name) {
 }
 
@@ -31,7 +31,7 @@ TerminatorInst::TerminatorInst(const Type *Ty, Instruction::TermOps iType,
 //===----------------------------------------------------------------------===//
 
 // Specialize setName to take care of symbol table majik
-void MethodArgument::setName(const string &name, SymbolTable *ST) {
+void MethodArgument::setName(const std::string &name, SymbolTable *ST) {
   Method *P;
   assert((ST == 0 || (!getParent() || ST == getParent()->getSymbolTable())) &&
 	 "Invalid symtab argument!");
@@ -45,7 +45,7 @@ void MethodArgument::setName(const string &name, SymbolTable *ST) {
 //                               PHINode Class
 //===----------------------------------------------------------------------===//
 
-PHINode::PHINode(const Type *Ty, const string &name) 
+PHINode::PHINode(const Type *Ty, const std::string &name) 
   : Instruction(Ty, Instruction::PHINode, name) {
 }
 

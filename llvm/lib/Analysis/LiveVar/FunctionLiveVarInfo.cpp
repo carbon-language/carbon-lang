@@ -12,15 +12,15 @@
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/PostOrderIterator.h"
-
+#include <iostream>
+using std::cout;
+using std::endl;
 
 //************************** Constructor/Destructor ***************************
 
 
-MethodLiveVarInfo::MethodLiveVarInfo(const Method *const M) : Meth(M),  
-							      BB2BBLVMap()
-{ 
-  assert(! M->isExternal() );           // cannot be a prototype decleration
+MethodLiveVarInfo::MethodLiveVarInfo(const Method *const M) : Meth(M) {
+  assert(!M->isExternal() && "Cannot be a prototype declaration");
   HasAnalyzed = false;                  // still we haven't called analyze()
 }
 
@@ -55,8 +55,6 @@ MethodLiveVarInfo:: ~MethodLiveVarInfo()
     if( (*MI).first )              // delete all LiveVarSets in  MInst2LVSetBI
       delete (*MI).second;
    }
-
-
 }
 
 

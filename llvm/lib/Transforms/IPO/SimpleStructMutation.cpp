@@ -12,8 +12,13 @@
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
 #include "TransformInternals.h"
 #include <algorithm>
+#include <iostream>
+using std::vector;
+using std::set;
+using std::pair;
 
 #include "llvm/Assembly/Writer.h"
+
 
 // PruneTypes - Given a type Ty, make sure that neither it, or one of its
 // subtypes, occur in TypesToModify.
@@ -26,7 +31,7 @@ static void PruneTypes(const Type *Ty, set<const StructType*> &TypesToModify,
   // If the element is in TypesToModify, remove it now...
   if (const StructType *ST = dyn_cast<StructType>(Ty)) {
     TypesToModify.erase(ST);  // This doesn't fail if the element isn't present
-    cerr << "Unable to swap type: " << ST << endl;
+    std::cerr << "Unable to swap type: " << ST << "\n";
   }
 
   // Remove all types that this type contains as well... do not remove types
@@ -69,7 +74,8 @@ static inline void GetTransformation(const StructType *ST,
 
     // Build mapping from index to size
     for (unsigned i = 0; i < NumElements; ++i)
-      ElList.push_back(make_pair(i, TD.getTypeSize(ST->getElementTypes()[i])));
+      ElList.push_back(
+              std::make_pair(i, TD.getTypeSize(ST->getElementTypes()[i])));
 
     sort(ElList.begin(), ElList.end(), ptr_fun(FirstLess));
 
@@ -118,14 +124,14 @@ PrebuiltStructMutation::TransformsType
   set<const Type*> ProcessedTypes;
   for (set<PointerType*>::const_iterator I = UnsafePTys.begin(),
          E = UnsafePTys.end(); I != E; ++I) {
-    //cerr << "Pruning type: " << *I << endl;
+    //cerr << "Pruning type: " << *I << "\n";
     PruneTypes(*I, TypesToModify, ProcessedTypes);
   }
 
 
   // Build up a set of structure types that we are going to modify, and
   // information describing how to modify them.
-  map<const StructType*, vector<int> > Transforms;
+  std::map<const StructType*, vector<int> > Transforms;
 
   for (set<const StructType*>::iterator I = TypesToModify.begin(),
          E = TypesToModify.end(); I != E; ++I) {

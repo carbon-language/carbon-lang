@@ -26,16 +26,16 @@ public:
   typedef ValueHolder<Method, Module, Module> MethodListType;
 
   // Global Variable iterators...
-  typedef GlobalListType::iterator                        giterator;
-  typedef GlobalListType::const_iterator            const_giterator;
-  typedef reverse_iterator<giterator>             reverse_giterator;
-  typedef reverse_iterator<const_giterator> const_reverse_giterator;
+  typedef GlobalListType::iterator                             giterator;
+  typedef GlobalListType::const_iterator                 const_giterator;
+  typedef std::reverse_iterator<giterator>             reverse_giterator;
+  typedef std::reverse_iterator<const_giterator> const_reverse_giterator;
 
   // Method iterators...
-  typedef MethodListType::iterator                       iterator;
-  typedef MethodListType::const_iterator           const_iterator;
-  typedef reverse_iterator<const_iterator> const_reverse_iterator;
-  typedef reverse_iterator<iterator>             reverse_iterator;
+  typedef MethodListType::iterator                            iterator;
+  typedef MethodListType::const_iterator                const_iterator;
+  typedef std::reverse_iterator<iterator>             reverse_iterator;
+  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
 private:
   GlobalListType GlobalList;     // The Global Variables

@@ -20,6 +20,8 @@
 #include "llvm/Method.h"
 #include "llvm/iOther.h"
 #include "llvm/Instruction.h"
+#include <iostream>
+using std::cerr;
 
 AnnotationID MachineCodeForMethod::AID(
                  AnnotationManager::getID("MachineCodeForMethodAnnotation"));
@@ -83,13 +85,12 @@ void
 MachineInstr::dump(unsigned int indent) const 
 {
   for (unsigned i=0; i < indent; i++)
-    cout << "    ";
+    cerr << "    ";
   
-  cout << *this;
+  cerr << *this;
 }
 
-ostream&
-operator<< (ostream& os, const MachineInstr& minstr)
+std::ostream &operator<<(std::ostream& os, const MachineInstr& minstr)
 {
   os << TargetInstrDescriptors[minstr.opCode].opCodeString;
   
@@ -101,7 +102,7 @@ operator<< (ostream& os, const MachineInstr& minstr)
   
 #undef DEBUG_VAL_OP_ITERATOR
 #ifdef DEBUG_VAL_OP_ITERATOR
-  os << endl << "\tValue operands are: ";
+  os << "\n\tValue operands are: ";
   for (MachineInstr::val_const_op_iterator vo(&minstr); ! vo.done(); ++vo)
     {
       const Value* val = *vo;
@@ -127,15 +128,11 @@ operator<< (ostream& os, const MachineInstr& minstr)
   }
 
 #endif
-
-
-  os << endl;
-  
-  return os;
+  return os << "\n";
 }
 
-static inline ostream&
-OutputOperand(ostream &os, const MachineOperand &mop)
+static inline std::ostream &OutputOperand(std::ostream &os,
+                                          const MachineOperand &mop)
 {
   Value* val;
   switch (mop.getOperandType())
@@ -145,7 +142,7 @@ OutputOperand(ostream &os, const MachineOperand &mop)
       val = mop.getVRegValue();
       os << "(val ";
       if (val && val->hasName())
-        os << val->getName().c_str();
+        os << val->getName();
       else
         os << val;
       return os << ")";
@@ -158,8 +155,7 @@ OutputOperand(ostream &os, const MachineOperand &mop)
 }
 
 
-ostream&
-operator<<(ostream &os, const MachineOperand &mop)
+std::ostream &operator<<(std::ostream &os, const MachineOperand &mop)
 {
   switch(mop.opType)
     {
@@ -171,16 +167,16 @@ operator<<(ostream &os, const MachineOperand &mop)
       os << "%ccreg";
       return OutputOperand(os, mop);
     case MachineOperand::MO_SignExtendedImmed:
-      return os << mop.immedVal;
+      return os << (long)mop.immedVal;
     case MachineOperand::MO_UnextendedImmed:
-      return os << mop.immedVal;
+      return os << (long)mop.immedVal;
     case MachineOperand::MO_PCRelativeDisp:
       {
         const Value* opVal = mop.getVRegValue();
         bool isLabel = isa<Method>(opVal) || isa<BasicBlock>(opVal);
         os << "%disp(" << (isLabel? "label " : "addr-of-val ");
         if (opVal->hasName())
-          os << opVal->getName().c_str();
+          os << opVal->getName();
         else
           os << opVal;
         return os << ")";
@@ -403,8 +399,7 @@ MachineCodeForMethod::pushTempValue(const TargetMachine& target,
       size   += align - mod;
     }
   
-  offset = growUp? firstTmpOffset + offset
-                 : firstTmpOffset - offset;
+  offset = growUp ? firstTmpOffset + offset : firstTmpOffset - offset;
   
   currentTmpValuesSize += size;
   return offset;
@@ -419,28 +414,26 @@ MachineCodeForMethod::popAllTempValues(const TargetMachine& target)
 int
 MachineCodeForMethod::getOffset(const Value* val) const
 {
-  hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
-  return (pair == offsets.end())? INVALID_FRAME_OFFSET : (*pair).second;
+  std::hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
+  return (pair == offsets.end())? INVALID_FRAME_OFFSET : pair->second;
 }
 
 void
 MachineCodeForMethod::dump() const
 {
-  cout << "\n" << method->getReturnType()
-       << " \"" << method->getName() << "\"" << endl;
+  cerr << "\n" << method->getReturnType()
+       << " \"" << method->getName() << "\"\n";
   
   for (Method::const_iterator BI = method->begin(); BI != method->end(); ++BI)
     {
       BasicBlock* bb = *BI;
-      cout << "\n"
+      cerr << "\n"
 	   << (bb->hasName()? bb->getName() : "Label")
-	   << " (" << bb << ")" << ":"
-	   << endl;
+	   << " (" << bb << ")" << ":\n";
       
       MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
       for (unsigned i=0; i < mvec.size(); i++)
-	cout << "\t" << *mvec[i];
+	cerr << "\t" << *mvec[i];
     } 
-  cout << endl << "End method \"" << method->getName() << "\""
-       << endl << endl;
+  cerr << "\nEnd method \"" << method->getName() << "\"\n\n";
 }

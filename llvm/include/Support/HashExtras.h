@@ -11,7 +11,10 @@
 #define LLVM_SUPPORT_HASHEXTRAS_H
 
 #include <string>
-#include <hash_map>
+#include <ext/hash_map>
+
+// Cannot specialize hash template from outside of the std namespace.
+namespace std {
 
 template <> struct hash<string> {
   size_t operator()(string const &str) const {
@@ -23,5 +26,7 @@ template <> struct hash<string> {
 template <class T> struct hash<T *> {
   inline size_t operator()(const T *Val) const { return (size_t)Val; }
 };
+
+}  // End namespace std
 
 #endif

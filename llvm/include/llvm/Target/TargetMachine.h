@@ -38,14 +38,14 @@ typedef int OpCodeMask;
 
 class TargetMachine : public NonCopyableV {
 public:
-  const string     TargetName;
+  const std::string TargetName;
   const TargetData DataLayout;		// Calculates type size & alignment
   int              optSizeForSubWordData;
   int	           minMemOpWordSize;
   int	           maxAtomicMemOpWordSize;
   
 protected:
-  TargetMachine(const string &targetname, // Can only create subclasses...
+  TargetMachine(const std::string &targetname, // Can only create subclasses...
 		unsigned char PtrSize = 8, unsigned char PtrAl = 8,
 		unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
 		unsigned char LongAl = 8, unsigned char IntAl = 4,
@@ -86,7 +86,7 @@ public:
   // method. The specified method must have been compiled before this may be
   // used.
   //
-  virtual void emitAssembly(const Module *M, ostream &OutStr) const = 0;
+  virtual void emitAssembly(const Module *M, std::ostream &OutStr) const = 0;
 };
 
 #endif

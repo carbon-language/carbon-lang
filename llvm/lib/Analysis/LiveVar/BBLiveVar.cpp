@@ -1,8 +1,13 @@
 #include "llvm/Analysis/LiveVar/BBLiveVar.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
+
+/// BROKEN: Should not include sparc stuff directly into here
 #include "../../Target/Sparc/SparcInternals.h"  //  Only for PHI defn
 
+using std::cerr;
+using std::endl;
+using std::pair;
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -39,7 +44,7 @@ void BBLiveVar::calcDefUseSets()
     if( DEBUG_LV > 1) {                            // debug msg
       cerr << " *Iterating over machine instr ";
       MInst->dump();
-      cerr << endl;
+      cerr << "\n";
     }
 
     // iterate over  MI operands to find defs
@@ -85,9 +90,9 @@ void BBLiveVar::calcDefUseSets()
 	  if( DEBUG_LV > 1) {   // debug msg of level 2
 	    cerr << "   - phi operand "; 
 	    printValue( ArgVal ); 
-	    cerr  << " came from BB "; 
+	    cerr << " came from BB "; 
 	    printValue( PhiArgMap[ ArgVal ]); 
-	    cerr<<endl;
+	    cerr << "\n";
 	  }
 
 	} // if( IsPhi )
@@ -123,7 +128,7 @@ void  BBLiveVar::addDef(const Value *Op)
   InSetChanged = true; 
 
   if( DEBUG_LV > 1) {   
-    cerr << "  +Def: "; printValue( Op ); cerr << endl;
+    cerr << "  +Def: "; printValue( Op ); cerr << "\n";
   }
 }
 

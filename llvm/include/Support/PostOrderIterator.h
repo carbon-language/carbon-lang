@@ -20,10 +20,10 @@ class po_iterator : public std::forward_iterator<typename GT::NodeType,
   typedef typename GT::NodeType          NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
 
-  set<NodeType *>   Visited;    // All of the blocks visited so far...
+  std::set<NodeType *> Visited;    // All of the blocks visited so far...
   // VisitStack - Used to maintain the ordering.  Top = current block
   // First element is basic block pointer, second is the 'next child' to visit
-  stack<pair<NodeType *, ChildItTy> > VisitStack;
+  std::stack<std::pair<NodeType *, ChildItTy> > VisitStack;
 
   void traverseChild() {
     while (VisitStack.top().second != GT::child_end(VisitStack.top().first)) {
@@ -122,10 +122,10 @@ ipo_iterator<T> ipo_end(T G){
 // }
 //
 
-typedef reverse_iterator<vector<BasicBlock*>::iterator> rpo_iterator;
+typedef std::vector<BasicBlock*>::reverse_iterator rpo_iterator;
 // TODO: FIXME: ReversePostOrderTraversal is not generic!
 class ReversePostOrderTraversal {
-  vector<BasicBlock*> Blocks;       // Block list in normal PO order
+  std::vector<BasicBlock*> Blocks;       // Block list in normal PO order
   inline void Initialize(BasicBlock *BB) {
     copy(po_begin(BB), po_end(BB), back_inserter(Blocks));
   }

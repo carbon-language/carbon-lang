@@ -25,7 +25,7 @@
 #include "llvm/ConstantVals.h"
 #include "Support/MathExtras.h"
 #include <math.h>
-
+using std::vector;
 
 //************************* Forward Declarations ***************************/
 
@@ -34,7 +34,7 @@ static void SetMemOperands_Internal     (MachineInstr* minstr,
                                          const InstructionNode* vmInstrNode,
                                          Value* ptrVal,
                                          Value* arrayOffsetVal,
-                                         const vector<Value*>& idxVec,
+                                         const std::vector<Value*>& idxVec,
                                          const TargetMachine& target);
 
 
@@ -143,7 +143,7 @@ ChooseBFpccInstruction(const InstructionNode* instrNode,
 static TmpInstruction*
 GetTmpForCC(Value* boolVal, const Method* method, const Type* ccType)
 {
-  typedef  hash_map<const Value*, TmpInstruction*> BoolTmpCache;
+  typedef std::hash_map<const Value*, TmpInstruction*> BoolTmpCache;
   static BoolTmpCache boolToTmpCache;     // Map boolVal -> TmpInstruction*
   static const Method* lastMethod = NULL; // Use to flush cache between methods
   
@@ -519,7 +519,6 @@ CreateMulConstInstruction(TargetMachine &target,
 {
   MachineInstr* minstr = NULL; // return NULL if we cannot exploit constant
   getMinstr2 = NULL;           // to create a cheaper instruction
-  bool needNeg = false;
 
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
   assert(isa<Constant>(constOp));
@@ -1011,8 +1010,6 @@ GetInstructionsForProlog(BasicBlock* entryBB,
                          TargetMachine &target,
                          MachineInstr** mvec)
 {
-  int64_t s0=0;                // used to avoid overloading ambiguity below
-  
   const MachineFrameInfo& frameInfo = target.getFrameInfo();
   
   // The second operand is the stack size. If it does not fit in the
@@ -1048,11 +1045,10 @@ GetInstructionsForEpilog(BasicBlock* anExitBB,
                          TargetMachine &target,
                          MachineInstr** mvec)
 {
-  int64_t s0=0;                // used to avoid overloading ambiguity below
-  
   mvec[0] = new MachineInstr(RESTORE);
   mvec[0]->SetMachineOperand(0, target.getRegInfo().getZeroRegNum());
-  mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed, s0);
+  mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,
+                             (int64_t)0);
   mvec[0]->SetMachineOperand(2, target.getRegInfo().getZeroRegNum());
   
   return 1;
@@ -1118,8 +1114,6 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   bool checkCast = false;		// initialize here to use fall-through
   int nextRule;
   int forwardOperandNum = -1;
-  int64_t s0=0, s8=8;			// variables holding constants to avoid
-  uint64_t u0=0;			// overloading ambiguities below
   
   for (unsigned i=0; i < MAX_INSTR_PER_VMINSTR; i++)
     mvec[i] = NULL;
@@ -1162,7 +1156,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec[0] = new MachineInstr(JMPLRET);
         mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
                                       returnReg);
-        mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,s8);
+        mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,
+                                   (int64_t)8);
         mvec[0]->SetMachineOperand(2, target.getRegInfo().getZeroRegNum());
         
         if (returnInstr->getReturnValue() != NULL)
@@ -1775,7 +1770,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                int n = numInstr++;
                mvec[n] = new MachineInstr(SETHI);
                mvec[n]->SetMachineOperand(0,MachineOperand::MO_UnextendedImmed,
-                                            s0);
+                                            (int64_t)0);
                mvec[n]->SetMachineOperand(1,MachineOperand::MO_VirtualRegister,
                                             setCCInstr);
               }
@@ -2021,7 +2016,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                           phi->getOperand(i));
         break;
       }  
-#endif NEED_PHI_MACHINE_INSTRS
+#endif // NEED_PHI_MACHINE_INSTRS
       
       case 71:	// reg:     VReg
       case 72:	// reg:     Constant

@@ -21,7 +21,7 @@ class BasicBlock;
 class PHINode : public Instruction {
   PHINode(const PHINode &PN);
 public:
-  PHINode(const Type *Ty, const string &Name = "");
+  PHINode(const Type *Ty, const std::string &Name = "");
 
   virtual Instruction *clone() const { return new PHINode(*this); }
   virtual const char *getOpcodeName() const { return "phi"; }

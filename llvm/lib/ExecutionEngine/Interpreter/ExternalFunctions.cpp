@@ -13,26 +13,29 @@
 #include "llvm/DerivedTypes.h"
 #include <map>
 #include <dlfcn.h>
+#include <iostream>
 #include <link.h>
 #include <math.h>
 #include <stdio.h>
+using std::vector;
+using std::cout;
 
 typedef GenericValue (*ExFunc)(MethodType *, const vector<GenericValue> &);
-static map<const Method *, ExFunc> Functions;
-static map<string, ExFunc> FuncNames;
+static std::map<const Method *, ExFunc> Functions;
+static std::map<std::string, ExFunc> FuncNames;
 
 static Interpreter *TheInterpreter;
 
 // getCurrentExecutablePath() - Return the directory that the lli executable
 // lives in.
 //
-string Interpreter::getCurrentExecutablePath() const {
+std::string Interpreter::getCurrentExecutablePath() const {
   Dl_info Info;
   if (dladdr(&TheInterpreter, &Info) == 0) return "";
   
-  string LinkAddr(Info.dli_fname);
+  std::string LinkAddr(Info.dli_fname);
   unsigned SlashPos = LinkAddr.rfind('/');
-  if (SlashPos != string::npos)
+  if (SlashPos != std::string::npos)
     LinkAddr.resize(SlashPos);    // Trim the executable name off...
 
   return LinkAddr;
@@ -65,7 +68,7 @@ static char getTypeID(const Type *Ty) {
 static ExFunc lookupMethod(const Method *M) {
   // Function not found, look it up... start by figuring out what the
   // composite function name should be.
-  string ExtName = "lle_";
+  std::string ExtName = "lle_";
   const MethodType *MT = M->getMethodType();
   for (unsigned i = 0; const Type *Ty = MT->getContainedType(i); ++i)
     ExtName += getTypeID(Ty);
@@ -80,7 +83,7 @@ static ExFunc lookupMethod(const Method *M) {
   if (FnPtr == 0)  // Try calling a generic function... if it exists...
     FnPtr = (ExFunc)dlsym(RTLD_DEFAULT, ("lle_X_"+M->getName()).c_str());
   if (FnPtr != 0)
-    Functions.insert(make_pair(M, FnPtr));  // Cache for later
+    Functions.insert(std::make_pair(M, FnPtr));  // Cache for later
   return FnPtr;
 }
 
@@ -90,11 +93,11 @@ GenericValue Interpreter::callExternalMethod(Method *M,
 
   // Do a lookup to see if the method is in our cache... this should just be a
   // defered annotation!
-  map<const Method *, ExFunc>::iterator FI = Functions.find(M);
+  std::map<const Method *, ExFunc>::iterator FI = Functions.find(M);
   ExFunc Fn = (FI == Functions.end()) ? lookupMethod(M) : FI->second;
   if (Fn == 0) {
     cout << "Tried to execute an unknown external method: "
-	 << M->getType()->getDescription() << " " << M->getName() << endl;
+	 << M->getType()->getDescription() << " " << M->getName() << "\n";
     return GenericValue();
   }
 
@@ -177,13 +180,13 @@ GenericValue lle_Vb_putchar(MethodType *M, const vector<GenericValue> &Args) {
 
 // int "putchar"(int)
 GenericValue lle_ii_putchar(MethodType *M, const vector<GenericValue> &Args) {
-  cout << ((char)Args[0].IntVal) << flush;
+  cout << ((char)Args[0].IntVal) << std::flush;
   return Args[0];
 }
 
 // void "putchar"(ubyte)
 GenericValue lle_VB_putchar(MethodType *M, const vector<GenericValue> &Args) {
-  cout << Args[0].SByteVal << flush;
+  cout << Args[0].SByteVal << std::flush;
   return Args[0];
 }
 

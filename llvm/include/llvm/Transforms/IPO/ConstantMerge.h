@@ -24,7 +24,7 @@ class GlobalVariable;
 
 class ConstantMerge : public Pass {
 protected:
-  map<Constant*, GlobalVariable*> Constants;
+  std::map<Constant*, GlobalVariable*> Constants;
   unsigned LastConstantSeen;
 public:
   inline ConstantMerge() : LastConstantSeen(0) {}

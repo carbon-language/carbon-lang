@@ -196,7 +196,8 @@ void SlotCalculator::purgeMethod() {
 	     
     while (CurPlane.size() != ModuleSize) {
       //SC_DEBUG("  Removing [" << i << "] Value=" << CurPlane.back() << "\n");
-      map<const Value *, unsigned>::iterator NI = NodeMap.find(CurPlane.back());
+      std::map<const Value *, unsigned>::iterator NI =
+        NodeMap.find(CurPlane.back());
       assert(NI != NodeMap.end() && "Node not in nodemap?");
       NodeMap.erase(NI);   // Erase from nodemap
       CurPlane.pop_back();                            // Shrink plane
@@ -223,7 +224,7 @@ void SlotCalculator::purgeMethod() {
 }
 
 int SlotCalculator::getValSlot(const Value *D) const {
-  map<const Value*, unsigned>::const_iterator I = NodeMap.find(D);
+  std::map<const Value*, unsigned>::const_iterator I = NodeMap.find(D);
   if (I == NodeMap.end()) return -1;
  
   return (int)I->second;

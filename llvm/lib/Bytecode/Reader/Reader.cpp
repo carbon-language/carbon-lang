@@ -20,11 +20,15 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include <sys/types.h>
-#include <sys/mman.h>
+typedef int blksize_t;
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <algorithm>
+#include <iostream>
+using std::cerr;
+using std::make_pair;
 
 bool BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {
   if (Ty->isPrimitiveType()) {
@@ -42,7 +46,7 @@ bool BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {
       Slot = FirstDerivedTyID + (&*I - &ModuleTypeValues[0]);
     }
   }
-  //cerr << "getTypeSlot '" << Ty->getName() << "' = " << Slot << endl;
+  //cerr << "getTypeSlot '" << Ty->getName() << "' = " << Slot << "\n";
   return false;
 }
 
@@ -50,7 +54,7 @@ const Type *BytecodeParser::getType(unsigned ID) {
   const Type *T = Type::getPrimitiveType((Type::PrimitiveID)ID);
   if (T) return T;
   
-  //cerr << "Looking up Type ID: " << ID << endl;
+  //cerr << "Looking up Type ID: " << ID << "\n";
 
   const Value *D = getValue(Type::TypeTy, ID, false);
   if (D == 0) return failure<const Type*>(0);
@@ -58,7 +62,7 @@ const Type *BytecodeParser::getType(unsigned ID) {
   return cast<Type>(D);
 }
 
-int BytecodeParser::insertValue(Value *Val, vector<ValueList> &ValueTab) {
+int BytecodeParser::insertValue(Value *Val, std::vector<ValueList> &ValueTab) {
   unsigned type;
   if (getTypeSlot(Val->getType(), type)) return failure<int>(-1);
   assert(type != Type::TypeTyID && "Types should never be insertValue'd!");
@@ -67,7 +71,7 @@ int BytecodeParser::insertValue(Value *Val, vector<ValueList> &ValueTab) {
     ValueTab.resize(type+1, ValueList());
 
   //cerr << "insertValue Values[" << type << "][" << ValueTab[type].size() 
-  //     << "] = " << Val << endl;
+  //     << "] = " << Val << "\n";
   ValueTab[type].push_back(Val);
 
   return ValueTab[type].size()-1;
@@ -115,7 +119,7 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
   case Type::LabelTyID: d = new    BBPHolder(Ty, oNum); break;
   case Type::MethodTyID:
     cerr << "Creating method pholder! : " << type << ":" << oNum << " " 
-	 << Ty->getName() << endl;
+	 << Ty->getName() << "\n";
     d = new MethPHolder(Ty, oNum);
     if (insertValue(d, LateResolveModuleValues) ==-1) return failure<Value*>(0);
     return d;
@@ -196,17 +200,17 @@ bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf,
       // Symtab entry: [def slot #][name]
       unsigned slot;
       if (read_vbr(Buf, EndBuf, slot)) return failure(true);
-      string Name;
+      std::string Name;
       if (read(Buf, EndBuf, Name, false))  // Not aligned...
 	return failure(true);
 
       Value *D = getValue(Ty, slot, false); // Find mapping...
       if (D == 0) {
-	BCR_TRACE(3, "FAILED LOOKUP: Slot #" << slot << endl);
+	BCR_TRACE(3, "FAILED LOOKUP: Slot #" << slot << "\n");
 	return failure(true);
       }
       BCR_TRACE(4, "Map: '" << Name << "' to #" << slot << ":" << D;
-		if (!isa<Instruction>(D)) cerr << endl);
+		if (!isa<Instruction>(D)) cerr << "\n");
 
       D->setName(Name, ST);
     }
@@ -272,7 +276,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   MethodSignatureList.pop_front();
   Method *M = new Method(MTy, isInternal != 0);
 
-  BCR_TRACE(2, "METHOD TYPE: " << MTy << endl);
+  BCR_TRACE(2, "METHOD TYPE: " << MTy << "\n");
 
   const MethodType::ParamTypes &Params = MTy->getParamTypes();
   for (MethodType::ParamTypes::const_iterator It = Params.begin();
@@ -418,7 +422,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     DeclareNewGlobalValue(GV, unsigned(DestSlot));
 
     BCR_TRACE(2, "Global Variable of type: " << PTy->getDescription() 
-	      << " into slot #" << DestSlot << endl);
+	      << " into slot #" << DestSlot << "\n");
 
     if (read_vbr(Buf, End, VarType)) return failure(true);
   }
@@ -459,7 +463,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     MethodSignatureList.push_back(
            make_pair(cast<const PointerType>(Val->getType()), SlotNo));
     if (read_vbr(Buf, End, MethSignature)) return failure(true);
-    BCR_TRACE(2, "Method of type: " << Ty << endl);
+    BCR_TRACE(2, "Method of type: " << Ty << "\n");
   }
 
   if (align32(Buf, End)) return failure(true);
@@ -566,11 +570,11 @@ Module *ParseBytecodeBuffer(const uchar *Buffer, unsigned Length) {
 
 // Parse and return a class file...
 //
-Module *ParseBytecodeFile(const string &Filename, string *ErrorStr) {
+Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
   struct stat StatBuf;
   Module *Result = 0;
 
-  if (Filename != string("-")) {        // Read from a file...
+  if (Filename != std::string("-")) {        // Read from a file...
     int FD = open(Filename.c_str(), O_RDONLY);
     if (FD == -1) {
       if (ErrorStr) *ErrorStr = "Error opening file!";

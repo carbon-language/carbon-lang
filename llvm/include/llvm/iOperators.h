@@ -15,7 +15,7 @@
 //
 class GenericUnaryInst : public UnaryOperator {
 public:
-  GenericUnaryInst(UnaryOps Opcode, Value *S1, const string &Name = "")
+  GenericUnaryInst(UnaryOps Opcode, Value *S1, const std::string &Name = "")
     : UnaryOperator(S1, Opcode, Name) {
   }
 
@@ -32,7 +32,7 @@ public:
 class GenericBinaryInst : public BinaryOperator {
 public:
   GenericBinaryInst(BinaryOps Opcode, Value *S1, Value *S2, 
-		    const string &Name = "")
+		    const std::string &Name = "")
     : BinaryOperator(Opcode, S1, S2, Name) {
   }
 
@@ -43,7 +43,7 @@ class SetCondInst : public BinaryOperator {
   BinaryOps OpType;
 public:
   SetCondInst(BinaryOps opType, Value *S1, Value *S2, 
-	      const string &Name = "");
+	      const std::string &Name = "");
 
   virtual const char *getOpcodeName() const;
 };

@@ -23,8 +23,8 @@
 #include "llvm/iPHINode.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "Support/CommandLine.h"
-#include <string.h>
-
+#include <iostream>
+using std::cerr;
 
 //******************** Internal Data Declarations ************************/
 
@@ -84,17 +84,17 @@ SelectInstructionsForMethod(Method* method, TargetMachine &target)
   
   if (SelectDebugLevel >= Select_DebugInstTrees)
     {
-      cout << "\n\n*** Instruction trees for method "
+      cerr << "\n\n*** Instruction trees for method "
 	   << (method->hasName()? method->getName() : "")
-	   << endl << endl;
+	   << "\n\n";
       instrForest.dump();
     }
   
   //
   // Invoke BURG instruction selection for each tree
   // 
-  const hash_set<InstructionNode*> &treeRoots = instrForest.getRootSet();
-  for (hash_set<InstructionNode*>::const_iterator
+  const std::hash_set<InstructionNode*> &treeRoots = instrForest.getRootSet();
+  for (std::hash_set<InstructionNode*>::const_iterator
 	 treeRootIter = treeRoots.begin(); treeRootIter != treeRoots.end();
        ++treeRootIter)
     {
@@ -138,8 +138,7 @@ SelectInstructionsForMethod(Method* method, TargetMachine &target)
   
   if (SelectDebugLevel >= Select_PrintMachineCode)
     {
-      cout << endl
-           << "*** Machine instructions after INSTRUCTION SELECTION" << endl;
+      cerr << "\n*** Machine instructions after INSTRUCTION SELECTION\n";
       MachineCodeForMethod::get(method).dump();
     }
   
@@ -210,7 +209,7 @@ void InsertCode4AllPhisInMeth(Method *method, TargetMachine &target) {
 
 	  // insert the copy instruction to the predecessor BB
 
-	  vector<MachineInstr*> CopyInstVec;
+	  std::vector<MachineInstr*> CopyInstVec;
 
 	  MachineInstr *CpMI =
 	    target.getRegInfo().cpValue2Value(PN->getIncomingValue(i), PN);
@@ -250,25 +249,18 @@ void InsertCode4AllPhisInMeth(Method *method, TargetMachine &target) {
 
 	PHINode *PN = (PHINode *) (*IIt);
 
-	Value *PhiCpRes = new Value(PN->getType(), PN->getValueType());
-
-	string *Name = new string("PhiCp:");
-	(*Name) += (int) PhiCpRes;
-	PhiCpRes->setName( *Name );
-  
+	Value *PhiCpRes = new Value(PN->getType(), PN->getValueType(),"PhiCp:");
 
 	// for each incoming value of the phi, insert phi elimination
 	//
         for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
 
 	  // insert the copy instruction to the predecessor BB
-
 	  MachineInstr *CpMI =
 	    target.getRegInfo().cpValue2Value(PN->getIncomingValue(i),
 					      PhiCpRes);
 
 	  InsertPhiElimInst(PN->getIncomingBlock(i), CpMI);
-
 	}
 
 	
@@ -279,8 +271,6 @@ void InsertCode4AllPhisInMeth(Method *method, TargetMachine &target) {
 	MachineCodeForBasicBlock& bbMvec = BB->getMachineInstrVec();
 
 	bbMvec.insert( bbMvec.begin(),  CpMI2);
-	
-
       }
       else break;   // since PHI nodes can only be at the top
       
@@ -338,7 +328,7 @@ PostprocessMachineCodeForTree(InstructionNode* instrNode,
   MachineCodeForVMInstr& mvec = vmInstr->getMachineInstrVec();
   for (int i = (int) mvec.size()-1; i >= 0; i--)
     {
-      vector<MachineInstr*> loadConstVec =
+      std::vector<MachineInstr*> loadConstVec =
         FixConstantOperandsForInstr(vmInstr, mvec[i], target);
       
       if (loadConstVec.size() > 0)
@@ -372,7 +362,7 @@ SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
   
   if (ruleForNode == 0)
     {
-      cerr << "Could not match instruction tree for instr selection" << endl;
+      cerr << "Could not match instruction tree for instr selection\n";
       assert(0);
       return true;
     }

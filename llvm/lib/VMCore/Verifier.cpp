@@ -34,6 +34,9 @@
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Type.h"
+using std::string;
+using std::vector;
+
 
 // Error - Define a macro to do the common task of pushing a message onto the
 // end of the error list and setting Bad to true.

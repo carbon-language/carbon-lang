@@ -33,7 +33,7 @@ cfg::Loop *cfg::LoopInfo::ConsiderForLoop(const BasicBlock *BB,
 					  const DominatorSet &DS) {
   if (BBMap.find(BB) != BBMap.end()) return 0;   // Havn't processed this node?
 
-  vector<const BasicBlock *> TodoStack;
+  std::vector<const BasicBlock *> TodoStack;
 
   // Scan the predecessors of BB, checking to see if BB dominates any of
   // them.
@@ -64,7 +64,7 @@ cfg::Loop *cfg::LoopInfo::ConsiderForLoop(const BasicBlock *BB,
   // loop can be found for them.  Also check subsidary basic blocks to see if
   // they start subloops of their own.
   //
-  for (vector<const BasicBlock*>::reverse_iterator I = L->Blocks.rbegin(),
+  for (std::vector<const BasicBlock*>::reverse_iterator I = L->Blocks.rbegin(),
 	 E = L->Blocks.rend(); I != E; ++I) {
 
     // Check to see if this block starts a new loop
@@ -74,7 +74,7 @@ cfg::Loop *cfg::LoopInfo::ConsiderForLoop(const BasicBlock *BB,
     }
   
     if (BBMap.find(*I) == BBMap.end())
-      BBMap.insert(make_pair(*I, L));
+      BBMap.insert(std::make_pair(*I, L));
   }
 
   return L;

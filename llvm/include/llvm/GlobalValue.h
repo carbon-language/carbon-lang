@@ -17,7 +17,7 @@ class GlobalValue : public User {
   GlobalValue(const GlobalValue &);             // do not implement
 protected:
   GlobalValue(const Type *Ty, ValueTy vty, bool hasInternalLinkage,
-	      const string &name = "")
+	      const std::string &name = "")
     : User(Ty, vty, name), HasInternalLinkage(hasInternalLinkage), Parent(0) {}
 
   bool HasInternalLinkage;    // Is this value accessable externally?

@@ -12,6 +12,10 @@
 #include "llvm/Analysis/InductionVariable.h"
 #include <iterator>
 #include <algorithm>
+using std::ostream;
+using std::set;
+using std::vector;
+using std::string;
 
 //===----------------------------------------------------------------------===//
 //  Interval Printing Routines
@@ -23,19 +27,19 @@ void cfg::WriteToOutput(const Interval *I, ostream &o) {
   
   // Print out all of the basic blocks in the interval...
   copy(I->Nodes.begin(), I->Nodes.end(), 
-       ostream_iterator<BasicBlock*>(o, "\n"));
+       std::ostream_iterator<BasicBlock*>(o, "\n"));
 
   o << "Interval Predecessors:\n";
   copy(I->Predecessors.begin(), I->Predecessors.end(), 
-       ostream_iterator<BasicBlock*>(o, "\n"));
+       std::ostream_iterator<BasicBlock*>(o, "\n"));
   
   o << "Interval Successors:\n";
   copy(I->Successors.begin(), I->Successors.end(), 
-       ostream_iterator<BasicBlock*>(o, "\n"));
+       std::ostream_iterator<BasicBlock*>(o, "\n"));
 }
 
 void cfg::WriteToOutput(const IntervalPartition &IP, ostream &o) {
-  copy(IP.begin(), IP.end(), ostream_iterator<const Interval *>(o, "\n"));
+  copy(IP.begin(), IP.end(), std::ostream_iterator<const Interval *>(o, "\n"));
 }
 
 
@@ -45,7 +49,7 @@ void cfg::WriteToOutput(const IntervalPartition &IP, ostream &o) {
 //===----------------------------------------------------------------------===//
 
 ostream &operator<<(ostream &o, const set<const BasicBlock*> &BBs) {
-  copy(BBs.begin(), BBs.end(), ostream_iterator<const BasicBlock*>(o, "\n"));
+  copy(BBs.begin(),BBs.end(), std::ostream_iterator<const BasicBlock*>(o,"\n"));
   return o;
 }
 
@@ -53,7 +57,7 @@ void cfg::WriteToOutput(const DominatorSet &DS, ostream &o) {
   for (DominatorSet::const_iterator I = DS.begin(), E = DS.end(); I != E; ++I) {
     o << "=============================--------------------------------\n"
       << "\nDominator Set For Basic Block\n" << I->first
-      << "-------------------------------\n" << I->second << endl;
+      << "-------------------------------\n" << I->second << "\n";
   }
 }
 
@@ -63,7 +67,7 @@ void cfg::WriteToOutput(const ImmediateDominators &ID, ostream &o) {
        I != E; ++I) {
     o << "=============================--------------------------------\n"
       << "\nImmediate Dominator For Basic Block\n" << I->first
-      << "is: \n" << I->second << endl;
+      << "is: \n" << I->second << "\n";
   }
 }
 
@@ -93,7 +97,7 @@ void cfg::WriteToOutput(const DominanceFrontier &DF, ostream &o) {
        I != E; ++I) {
     o << "=============================--------------------------------\n"
       << "\nDominance Frontier For Basic Block\n" << I->first
-      << "is: \n" << I->second << endl;
+      << "is: \n" << I->second << "\n";
   }
 }
 
@@ -109,15 +113,15 @@ void cfg::WriteToOutput(const Loop *L, ostream &o) {
     if (i) o << ",";
     WriteAsOperand(o, (const Value*)L->getBlocks()[i]);
   }
-  o << endl;
+  o << "\n";
 
   copy(L->getSubLoops().begin(), L->getSubLoops().end(),
-       ostream_iterator<const Loop*>(o, "\n"));
+       std::ostream_iterator<const Loop*>(o, "\n"));
 }
 
 void cfg::WriteToOutput(const LoopInfo &LI, ostream &o) {
   copy(LI.getTopLevelLoops().begin(), LI.getTopLevelLoops().end(),
-       ostream_iterator<const Loop*>(o, "\n"));
+       std::ostream_iterator<const Loop*>(o, "\n"));
 }
 
 
@@ -138,11 +142,11 @@ void WriteToOutput(const InductionVariable &IV, ostream &o) {
     WriteAsOperand(o, (const Value*)IV.Phi);
     o << ":\n" << (const Value*)IV.Phi;
   } else {
-    o << endl;
+    o << "\n";
   }
   if (IV.InductionType == InductionVariable::Unknown) return;
 
   o << "  Start ="; WriteAsOperand(o, IV.Start);
   o << "  Step =" ; WriteAsOperand(o, IV.Step);
-  o << endl;
+  o << "\n";
 }

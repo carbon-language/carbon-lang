@@ -47,8 +47,9 @@ public:
 //
 class DominatorSet : public DominatorBase {
 public:
-  typedef set<const BasicBlock*>              DomSetType;    // Dom set for a bb
-  typedef map<const BasicBlock *, DomSetType> DomSetMapType; // Map of dom sets
+  typedef std::set<const BasicBlock*>         DomSetType;    // Dom set for a bb
+  // Map of dom sets
+  typedef std::map<const BasicBlock*, DomSetType> DomSetMapType;
 private:
   DomSetMapType Doms;
 
@@ -91,7 +92,7 @@ public:
 // method.
 //
 class ImmediateDominators : public DominatorBase {
-  map<const BasicBlock*, const BasicBlock*> IDoms;
+  std::map<const BasicBlock*, const BasicBlock*> IDoms;
   void calcIDoms(const DominatorSet &DS);
 public:
 
@@ -104,7 +105,7 @@ public:
   }
 
   // Accessor interface:
-  typedef map<const BasicBlock*, const BasicBlock*> IDomMapType;
+  typedef std::map<const BasicBlock*, const BasicBlock*> IDomMapType;
   typedef IDomMapType::const_iterator const_iterator;
   inline const_iterator begin() const { return IDoms.begin(); }
   inline const_iterator end()   const { return IDoms.end(); }
@@ -114,7 +115,7 @@ public:
   // node returns null, because it does not have an immediate dominator.
   //
   inline const BasicBlock *operator[](const BasicBlock *BB) const {
-    map<const BasicBlock*, const BasicBlock*>::const_iterator I = 
+    std::map<const BasicBlock*, const BasicBlock*>::const_iterator I = 
       IDoms.find(BB);
     return I != IDoms.end() ? I->second : 0;
   }
@@ -130,18 +131,18 @@ class DominatorTree : public DominatorBase {
 public:
   typedef Node2 Node;
 private:
-  map<const BasicBlock*, Node*> Nodes;
+  std::map<const BasicBlock*, Node*> Nodes;
   void calculate(const DominatorSet &DS);
-  typedef map<const BasicBlock*, Node*> NodeMapType;
+  typedef std::map<const BasicBlock*, Node*> NodeMapType;
 public:
-  class Node2 : public vector<Node*> {
+  class Node2 : public std::vector<Node*> {
     friend class DominatorTree;
     const BasicBlock *TheNode;
     Node2 * const IDom;
   public:
     inline const BasicBlock *getNode() const { return TheNode; }
     inline Node2 *getIDom() const { return IDom; }
-    inline const vector<Node*> &getChildren() const { return *this; }
+    inline const std::vector<Node*> &getChildren() const { return *this; }
 
     // dominates - Returns true iff this dominates N.  Note that this is not a 
     // constant time operation!
@@ -181,8 +182,8 @@ public:
 //
 class DominanceFrontier : public DominatorBase {
 public:
-  typedef set<const BasicBlock*>              DomSetType;    // Dom set for a bb
-  typedef map<const BasicBlock *, DomSetType> DomSetMapType; // Map of dom sets
+  typedef std::set<const BasicBlock*>         DomSetType;    // Dom set for a bb
+  typedef std::map<const BasicBlock*, DomSetType> DomSetMapType; // Dom set map
 private:
   DomSetMapType Frontiers;
   const DomSetType &calcDomFrontier(const DominatorTree &DT,

@@ -1,4 +1,4 @@
-/* Title:   LiveRangeInfo.h
+/* Title:   LiveRangeInfo.h  -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    Jun 30, 01
    Purpose: 
@@ -34,8 +34,8 @@
 #include "llvm/CodeGen/RegClass.h"
 
 
-typedef hash_map <const Value *,  LiveRange *, hashFuncValue> LiveRangeMapType;
-typedef vector <const MachineInstr *> CallRetInstrListType;
+typedef std::hash_map<const Value*, LiveRange*> LiveRangeMapType;
+typedef std::vector<const MachineInstr*> CallRetInstrListType;
 
 
 
@@ -59,7 +59,7 @@ private:
   
   const TargetMachine& TM;          // target machine description
 
-  vector<RegClass *> & RegClassList;// a vector containing register classess
+  std::vector<RegClass *> & RegClassList;// vector containing register classess
 
   const MachineRegInfo& MRI;        // machine reg info
 
@@ -82,7 +82,7 @@ public:
   
   LiveRangeInfo(const Method *const M, 
 		const TargetMachine& tm,
-		vector<RegClass *> & RCList);
+		std::vector<RegClass *> & RCList);
 
 
   // Destructor to destroy all LiveRanges in the LiveRange Map

@@ -11,6 +11,7 @@
 #include "llvm/Optimizations/ConstantHandling.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
+#include <iostream>
 
 using namespace opt;  // Get all the constant handling stuff
 using namespace analysis;
@@ -178,7 +179,7 @@ inline const ConstantInt *operator*(const DefZero &L, const DefOne &R) {
 static ExprType handleAddition(ExprType Left, ExprType Right, Value *V) {
   const Type *Ty = V->getType();
   if (Left.ExprTy > Right.ExprTy)
-    swap(Left, Right);   // Make left be simpler than right
+    std::swap(Left, Right);   // Make left be simpler than right
 
   switch (Left.ExprTy) {
   case ExprType::Constant:
@@ -229,7 +230,7 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
   case Value::TypeVal:   case Value::BasicBlockVal:
   case Value::MethodVal: case Value::ModuleVal: default:
     //assert(0 && "Unexpected expression type to classify!");
-    cerr << "Bizarre thing to expr classify: " << Expr << endl;
+    std::cerr << "Bizarre thing to expr classify: " << Expr << "\n";
     return Expr;
   case Value::GlobalVariableVal:        // Global Variable & Method argument:
   case Value::MethodArgumentVal:        // nothing known, return variable itself
@@ -280,7 +281,7 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
     ExprType Left (ClassifyExpression(I->getOperand(0)));
     ExprType Right(ClassifyExpression(I->getOperand(1)));
     if (Left.ExprTy > Right.ExprTy)
-      swap(Left, Right);   // Make left be simpler than right
+      std::swap(Left, Right);   // Make left be simpler than right
 
     if (Left.ExprTy != ExprType::Constant)  // RHS must be > constant
       return I;         // Quadratic eqn! :(
