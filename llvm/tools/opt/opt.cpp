@@ -29,7 +29,7 @@
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
 #include "llvm/Transforms/Scalar/PromoteMemoryToRegister.h"
 #include "llvm/Transforms/Scalar/SymbolStripping.h"
-#include "llvm/Transforms/Scalar/UnifyFunctionExitNodes.h"
+#include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Transforms/Instrumentation/ProfilePaths.h"
 #include "Support/CommandLine.h"
