@@ -55,6 +55,7 @@ W: http://www.students.uiuc.edu/~gaeke/
 D: Portions of X86 static and JIT compilers. 
 D: Dynamic trace optimizer 
 D: FreeBSD/X86 compatibility fixes, the llvm-nm tool
+D: SparcV8 backend
 
 N: Louis Gerbarg
 D: Portions of the PowerPC backend
