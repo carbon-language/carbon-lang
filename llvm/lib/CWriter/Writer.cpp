@@ -73,7 +73,6 @@ namespace {
     void printModule(Module *M);
     void printSymbolTable(const SymbolTable &ST);
     void printContainedStructs(const Type *Ty, std::set<const StructType *> &);
-    void printGlobal(const GlobalVariable *GV);
     void printFunctionSignature(const Function *F, bool Prototype);
 
     void printFunction(Function *);
@@ -619,9 +618,10 @@ void CWriter::printModule(Module *M) {
         if (I->hasInternalLinkage())
           Out << "static ";
         printType(Out, I->getType()->getElementType(), getValueName(I));
-      
-        Out << " = " ;
-        writeOperand(I->getInitializer());
+        if (!I->getInitializer()->isNullValue()) {
+          Out << " = " ;
+          writeOperand(I->getInitializer());
+        }
         Out << ";\n";
       }
   }
