@@ -9,6 +9,7 @@
 
 #include "llvm/Analysis/DSSupport.h"
 #include "llvm/Pass.h"
+#include <set>
 
 class Type;
 class DSGraph;
@@ -66,7 +67,6 @@ public:
 class BUDataStructures : public Pass {
   // DSInfo, one graph for each function
   std::map<const Function*, DSGraph*> DSInfo;
-  std::map<const Function*, std::vector<DSCallSite> > CallSites;
 public:
   ~BUDataStructures() { releaseMemory(); }
 
@@ -79,21 +79,12 @@ public:
     return *I->second;
   }
 
-  /// getCallSites - Return all of the call sites for the specified function
-  ///
-  const std::vector<DSCallSite> *getCallSites(const Function &F) const {
-    std::map<const Function*, std::vector<DSCallSite> >::const_iterator I
-      = CallSites.find(&F);
-    return I != CallSites.end() ? &I->second : 0;
-  }
-
-  // print - Print out the analysis results...
+   // print - Print out the analysis results...
   void print(std::ostream &O, const Module *M) const;
 
   // If the pass pipeline is done with this pass, we can release our memory...
   virtual void releaseMemory();
 
-  // getAnalysisUsage - This obviously provides a data structure graph.
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
     AU.addRequired<LocalDataStructures>();
@@ -109,24 +100,7 @@ private:
 class TDDataStructures : public Pass {
   // DSInfo, one graph for each function
   std::map<const Function*, DSGraph*> DSInfo;
-
-  // Each graph in DSInfo is based on a graph in the BUDS object.  The BUMaps
-  // member keeps the mappings from the BU graphs to the TD graphs as they are
-  // calculated by calculateGraph.  This information is used to properly
-  // implement resolving of call sites, where the call sites in the BUGraph are
-  // in terms of the caller function's graph in the BUGraph.
-  //
-  typedef std::map<const DSNode*, DSNodeHandle> BUNodeMapTy;
-  std::map<const Function*, BUNodeMapTy> BUMaps;
-
-  // CallSitesForFunction - This is a temporary map that is only kept around
-  // when building the top-down closures for a program.  It traverses all of the
-  // call sites in the BU graph and holds all of the call sites that each
-  // function is the "resolving caller" for.
-  //
-  std::map<const Function*,
-           std::vector<const DSCallSite*> > CallSitesForFunction;
-
+  std::set<const Function*> GraphDone;
 public:
   ~TDDataStructures() { releaseMemory(); }
 
@@ -151,7 +125,8 @@ public:
     AU.addRequired<BUDataStructures>();
   }
 private:
-  DSGraph &calculateGraph(Function &F);
+  void calculateGraph(Function &F);
+  DSGraph &getOrCreateDSGraph(Function &F);
 
   void ResolveCallSite(DSGraph &Graph, const DSCallSite &CallSite);
 };

@@ -98,6 +98,10 @@ public:
   ///
   const std::vector<DSNodeHandle*> &getReferrers() const { return Referrers; }
 
+  /// hasNoReferrers - Return true if nothing is pointing to this node at all.
+  ///
+  bool hasNoReferrers() const { return Referrers.empty(); }
+
   /// isModified - Return true if this node may be modified in this context
   ///
   bool isModified() const { return (NodeType & Modified) != 0; }

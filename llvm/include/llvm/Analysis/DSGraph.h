@@ -26,13 +26,18 @@ class DSGraph {
 #endif
 
   // FunctionCalls - This vector maintains a single entry for each call
-  // instruction in the current graph.  Each call entry contains DSNodeHandles
-  // that refer to the arguments that are passed into the function call.  The
-  // first entry in the vector is the scalar that holds the return value for the
-  // call, the second is the function scalar being invoked, and the rest are
-  // pointer arguments to the function.
+  // instruction in the current graph.  The first entry in the vector is the
+  // scalar that holds the return value for the call, the second is the function
+  // scalar being invoked, and the rest are pointer arguments to the function.
+  // This vector is built by the Local graph and is never modified after that.
   //
   std::vector<DSCallSite> FunctionCalls;
+
+  // AuxFunctionCalls - This vector contains call sites that have been processed
+  // by some mechanism.  In pratice, the BU Analysis uses this vector to hold
+  // the _unresolved_ call sites, because it cannot modify FunctionCalls.
+  //
+  std::vector<DSCallSite> AuxFunctionCalls;
 
   void operator=(const DSGraph &); // DO NOT IMPLEMENT
 public:
@@ -64,11 +69,18 @@ public:
   std::map<Value*, DSNodeHandle> &getScalarMap() { return ScalarMap; }
   const std::map<Value*, DSNodeHandle> &getScalarMap() const {return ScalarMap;}
 
-  std::vector<DSCallSite> &getFunctionCalls() {
-    return FunctionCalls;
-  }
+  /// getFunctionCalls - Return the list of call sites in the original local
+  /// graph...
+  ///
   const std::vector<DSCallSite> &getFunctionCalls() const {
     return FunctionCalls;
+  }
+
+  /// getAuxFunctionCalls - Get the call sites as modified by whatever passes
+  /// have been run.
+  ///
+  std::vector<DSCallSite> &getAuxFunctionCalls() {
+    return AuxFunctionCalls;
   }
 
   /// getNodeForValue - Given a value that is used or defined in the body of the
@@ -125,9 +137,11 @@ public:
   //
   void removeDeadNodes(bool KeepAllGlobals = false, bool KeepCalls = true);
 
-  enum AllocaBit {
-    StripAllocaBit,
-    KeepAllocaBit
+  // CloneFlags enum - Bits that may be passed into the cloneInto method to
+  // specify how to clone the function graph.
+  enum CloneFlags {
+    StripAllocaBit     = 1 << 0, KeepAllocaBit  = 0 << 0,
+    DontCloneCallNodes = 2 << 0, CloneCallNodes = 0 << 0,
   };
 
   // cloneInto - Clone the specified DSGraph into the current graph, returning
@@ -139,7 +153,7 @@ public:
   DSNodeHandle cloneInto(const DSGraph &G,
                          std::map<Value*, DSNodeHandle> &OldValMap,
                          std::map<const DSNode*, DSNodeHandle> &OldNodeMap,
-                         AllocaBit StripAllocas = KeepAllocaBit);
+                         unsigned CloneFlags = 0);
 
   /// mergeInGraph - The method is used for merging graphs together.  If the
   /// argument graph is not *this, it makes a clone of the specified graph, then
@@ -147,8 +161,7 @@ public:
   /// the graph.  If the StripAlloca's argument is 'StripAllocaBit' then Alloca
   /// markers are removed from nodes.
   ///
-  void mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
-                    AllocaBit StripAllocas);
+  void mergeInGraph(DSCallSite &CS, const DSGraph &Graph, unsigned CloneFlags);
 
 #if 0
   // cloneGlobalInto - Clone the given global node (or the node for the given
