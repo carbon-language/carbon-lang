@@ -17,7 +17,9 @@
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/LevelChange.h"
 #include "llvm/Transforms/SwapStructContents.h"
+#include "llvm/Transforms/IPO/GlobalDCE.h"
 #include <fstream>
+#include <memory>
 
 using namespace opt;
 
@@ -26,10 +28,13 @@ enum Opts {
   dce, constprop, inlining, mergecons, strip, mstrip,
 
   // Miscellaneous Transformations
-  trace, tracem, print, cleangcc, swapstructs,
+  trace, tracem, print, cleangcc,
 
   // More powerful optimizations
   indvars, sccp, adce, raise,
+
+  // Interprocedural optimizations...
+  globaldce, swapstructs,
 };
 
 struct {
@@ -69,45 +74,51 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(sccp     , "Sparse Conditional Constant Propogation"),
   clEnumVal(adce     , "Agressive DCE"),
 
+  clEnumVal(globaldce, "Remove unreachable globals"),
+  clEnumVal(swapstructs, "Swap structure types around"),
+
   clEnumVal(cleangcc , "Cleanup GCC Output"),
   clEnumVal(raise    , "Raise to Higher Level"),
   clEnumVal(trace    , "Insert BB & Method trace code"),
   clEnumVal(tracem   , "Insert Method trace code only"),
-  clEnumVal(swapstructs, "Swap structure types around"),
   clEnumVal(print    , "Print working method to stderr"),
 0);
 
+static void RunOptimization(Module *M, enum Opts Opt) {
+  for (unsigned j = 0; j < sizeof(OptTable)/sizeof(OptTable[0]); ++j)
+    if (Opt == OptTable[j].OptID) {
+      if (OptTable[j].ThePass->run(M) && !Quiet)
+	cerr << OptimizationList.getArgName(Opt)
+	     << " pass made modifications!\n";
+      return;
+    }
+  
+  // Special cases that haven't been fit into a consistent framework yet...
+  switch (Opt) {
+  case globaldce: {
+    GlobalDCE GDCE; GDCE.run(M); return;
+  }
+  case swapstructs: {
+    PrebuiltStructMutation SM(M, PrebuiltStructMutation::SortElements);
+    SM.run(M); return;
+  }
+  default:
+    cerr << "Optimization tables inconsistent!!\n";
+  }
+}
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv,
 			      " llvm .bc -> .bc modular optimizer\n");
-
-  // FIXME: Use smartptr
-  Module *M = ParseBytecodeFile(InputFilename);
-  if (M == 0) {
+  std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
+  if (M.get() == 0) {
     cerr << "bytecode didn't read correctly.\n";
     return 1;
   }
 
-  // FIXME: Absurdly nasty hack.
-  OptTable[0].ThePass = new PrebuiltStructMutation(M, PrebuiltStructMutation::SortElements);
-
-  for (unsigned i = 0; i < OptimizationList.size(); ++i) {
-    enum Opts Opt = OptimizationList[i];
-
-    unsigned j;
-    for (j = 0; j < sizeof(OptTable)/sizeof(OptTable[0]); ++j) {
-      if (Opt == OptTable[j].OptID) {
-        if (OptTable[j].ThePass->run(M) && !Quiet)
-          cerr << OptimizationList.getArgName(Opt)
-	       << " pass made modifications!\n";
-        break;
-      }
-    }
-
-    if (j == sizeof(OptTable)/sizeof(OptTable[0])) 
-      cerr << "Optimization tables inconsistent!!\n";
-  }
+  // Run all of the optimizations specified on the command line
+  for (unsigned i = 0; i < OptimizationList.size(); ++i)
+    RunOptimization(M.get(), OptimizationList[i]);
 
   ostream *Out = &cout;  // Default to printing to stdout...
   if (OutputFilename != "") {
@@ -115,14 +126,12 @@ int main(int argc, char **argv) {
                        (Force ? 0 : ios::noreplace)|ios::out);
     if (!Out->good()) {
       cerr << "Error opening " << OutputFilename << "!\n";
-      delete M;
       return 1;
     }
   }
 
   // Okay, we're done now... write out result...
-  WriteBytecodeToFile(M, *Out);
-  delete M;
+  WriteBytecodeToFile(M.get(), *Out);
 
   if (Out != &cout) delete Out;
   return 0;
