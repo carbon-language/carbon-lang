@@ -19,7 +19,6 @@
 #include "llvm/iOther.h"
 #include "llvm/Constant.h"
 #include "Support/StatisticReporter.h"
-#include <iostream>
 #include <algorithm>
 
 using std::vector;
