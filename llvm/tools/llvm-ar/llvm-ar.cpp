@@ -16,7 +16,6 @@
 #include "llvm/Bytecode/Archive.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compressor.h"
-#include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 #include <algorithm>

@@ -14,7 +14,6 @@
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Archive.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 #include <iomanip>
