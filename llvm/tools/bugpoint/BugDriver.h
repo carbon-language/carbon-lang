@@ -57,6 +57,9 @@ public:
   bool addSources(const std::vector<std::string> &FileNames);
   template<class It>
   void addPasses(It I, It E) { PassesToRun.insert(PassesToRun.end(), I, E); }
+  void setPassesToRun(const std::vector<const PassInfo*> &PTR) {
+    PassesToRun = PTR;
+  }
 
   /// run - The top level method that is invoked after all of the instance
   /// variables are set up from command line arguments.

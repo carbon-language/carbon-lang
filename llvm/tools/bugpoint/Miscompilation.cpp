@@ -57,8 +57,10 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // prefix passes, then discard the prefix passes.
   //
   if (BD.runPasses(Prefix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
-    std::cerr << BD.getToolName() << ": Error running this sequence of passes"
+    std::cerr << ": Error running this sequence of passes" 
               << " on the input program!\n";
+    BD.setPassesToRun(Prefix);
+    BD.EmitProgressBytecode("pass-error",  false);
     exit(1);
   }
 
@@ -88,8 +90,10 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   Module *OriginalInput = BD.Program;
   BD.Program = PrefixOutput;
   if (BD.runPasses(Suffix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
-    std::cerr << BD.getToolName() << ": Error running this sequence of passes"
+    std::cerr << ": Error running this sequence of passes" 
               << " on the input program!\n";
+    BD.setPassesToRun(Prefix);
+    BD.EmitProgressBytecode("pass-error",  false);
     exit(1);
   }
 
