@@ -252,8 +252,8 @@ class DSForm_2<string name, bits<6> opcode, bits<2> xo, bit ppc64, bit vmx>
   : DSForm_1<name, opcode, xo, ppc64, vmx>;
 
 // 1.7.6 X-Form
-class XForm_base_r3xo<string name, bits<6> opcode, bits<10> xo, bit rc, 
-                      bit ppc64, bit vmx> : I<name, opcode, ppc64, vmx> {
+class XForm_base_r3xo<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
+                      dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
   field bits<5> RST;
   field bits<5> A;
   field bits<5> B;
@@ -270,14 +270,18 @@ class XForm_base_r3xo<string name, bits<6> opcode, bits<10> xo, bit rc,
   let Inst{16-20} = B;
   let Inst{21-30} = xo;
   let Inst{31}    = rc;
+  let OperandList = OL;
+  let AsmString = asmstr;
 }
 
 
-class XForm_1<string name, bits<6> opcode, bits<10> xo, bit ppc64, 
-              bit vmx> : XForm_base_r3xo<name, opcode, xo, 0, ppc64, vmx>;
+class XForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
+              dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, 0, ppc64, vmx, OL, asmstr>;
 
-class XForm_5<string name, bits<6> opcode, bits<10> xo, bit ppc64, 
-              bit vmx> : XForm_base_r3xo<name, opcode, xo, 0, ppc64, vmx> {
+class XForm_5<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
+              dag OL, string asmstr>
+  : XForm_base_r3xo<opcode, xo, 0, ppc64, vmx, OL, asmstr> {
   let ArgCount = 1;
   let Arg1Type = 0;
   let Arg2Type = 0;
@@ -285,22 +289,23 @@ class XForm_5<string name, bits<6> opcode, bits<10> xo, bit ppc64,
   let B = 0;
 }
 
-class XForm_6<string name, bits<6> opcode, bits<10> xo, bit rc, bit ppc64, 
-              bit vmx> : XForm_base_r3xo<name, opcode, xo, rc, ppc64, vmx>;
+class XForm_6<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
+              dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, rc, ppc64, vmx, OL, asmstr>;
 
-class XForm_7<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx> 
-  : XForm_base_r3xo<name, opcode, xo, 1, ppc64, vmx>;
+class XForm_8<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
+              dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, 0, ppc64, vmx, OL, asmstr>;
 
-class XForm_8<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx>
-  : XForm_base_r3xo<name, opcode, xo, 0, ppc64, vmx>;
-
-class XForm_10<string name, bits<6> opcode, bits<10> xo, bit rc, bit ppc64, 
-               bit vmx> : XForm_base_r3xo<name, opcode, xo, rc, ppc64, vmx> {
+class XForm_10<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
+               dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
   let Arg2Type = Imm5.Value;
 }
 
-class XForm_11<string name, bits<6> opcode, bits<10> xo, bit rc, bit ppc64,
-               bit vmx> : XForm_base_r3xo<name, opcode, xo, rc, ppc64, vmx> {
+class XForm_11<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
+               dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
   let ArgCount = 2;
   let Arg2Type = 0;
   let B = 0;
@@ -355,14 +360,16 @@ class XForm_17<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx>
   let Inst{31}    = 0;
 }
 
-class XForm_25<string name, bits<6> opcode, bits<10> xo, bit ppc64,
-               bit vmx> : XForm_base_r3xo<name, opcode, xo, 0, ppc64, vmx> {
+class XForm_25<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
+               dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, 0, ppc64, vmx, OL, asmstr> {
   let Arg0Type = Fpr.Value;
   let Arg1Type = Gpr0.Value;
 }
 
-class XForm_26<string name, bits<6> opcode, bits<10> xo, bit rc, bit ppc64,
-               bit vmx> : XForm_base_r3xo<name, opcode, xo, rc, ppc64, vmx> {
+class XForm_26<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
+               dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
   let ArgCount = 2;
   let Arg0Type = Fpr.Value;
   let Arg1Type = Fpr.Value;
@@ -370,15 +377,17 @@ class XForm_26<string name, bits<6> opcode, bits<10> xo, bit rc, bit ppc64,
   let A = 0;
 }
 
-class XForm_28<string name, bits<6> opcode, bits<10> xo, bit ppc64,
-               bit vmx> : XForm_base_r3xo<name, opcode, xo, 0, ppc64, vmx> {
+class XForm_28<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
+               dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, 0, ppc64, vmx, OL, asmstr> {
   let Arg0Type = Fpr.Value;
   let Arg1Type = Gpr0.Value;
 }
 
 // 1.7.7 XL-Form
-class XLForm_1<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx> 
-  : XForm_base_r3xo<name, opcode, xo, 0, ppc64, vmx> {
+class XLForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
+               dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, 0, ppc64, vmx, OL, asmstr> {
   let Arg0Type = Imm5.Value;
   let Arg1Type = Imm5.Value;
   let Arg2Type = Imm5.Value;
