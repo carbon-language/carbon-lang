@@ -95,9 +95,12 @@ Process::GetTimeUsage(
 // their operation. To prevent the disk from filling up, this configuration item
 // does what's necessary to prevent their generation.
 void Process::PreventCoreFiles() {
-  // Windows doesn't do core files, so nothing to do.
-  // Although...  it might be nice to prevent the do-you-want-to-debug
-  // dialog box from coming up.  Or maybe not...
+  // Windows doesn't do core files, but it does do modal pop-up message
+  // boxes.  As this method is used by bugpoint, preventing these pop-ups
+  // is the moral equivalent of suppressing core files.
+  SetErrorMode(SEM_FAILCRITICALERRORS |
+               SEM_NOGPFAULTERRORBOX |
+               SEM_NOOPENFILEERRORBOX);
 }
 
 bool Process::StandardInIsUserInput() {
