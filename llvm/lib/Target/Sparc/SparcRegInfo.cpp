@@ -621,6 +621,8 @@ MachineInstr * UltraSparcRegInfo::cpReg2RegMI(const unsigned SrcReg,
   switch( RegType ) {
     
   case IntRegType:
+  case IntCCRegType:
+  case FloatCCRegType: 
     MI = new MachineInstr(ADD, 3);
     MI->SetMachineOperand(0, SrcReg, false);
     MI->SetMachineOperand(1, SparcIntRegOrder::g0, false);
@@ -664,6 +666,8 @@ MachineInstr * UltraSparcRegInfo::cpReg2MemMI(const unsigned SrcReg,
   switch( RegType ) {
     
   case IntRegType:
+  case IntCCRegType:
+  case FloatCCRegType: 
     MI = new MachineInstr(STX, 3);
     MI->SetMachineOperand(0, DestPtrReg, false);
     MI->SetMachineOperand(1, SrcReg, false);
@@ -711,6 +715,8 @@ MachineInstr * UltraSparcRegInfo::cpMem2RegMI(const unsigned SrcPtrReg,
   switch( RegType ) {
     
   case IntRegType:
+  case IntCCRegType:
+  case FloatCCRegType: 
     MI = new MachineInstr(LDX, 3);
     MI->SetMachineOperand(0, SrcPtrReg, false);
     MI->SetMachineOperand(1, MachineOperand:: MO_SignExtendedImmed, 
