@@ -194,11 +194,40 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
     if (!HasExternal && NumInstancesWithExternalLinkage <= 1)
       return false;  // Nothing to do?  Must have multiple internal definitions.
 
+    // There are a couple of special cases we don't want to print the warning
+    // for, check them now.
+    bool DontPrintWarning = false;
+    if (Concrete && Globals.size() == 2) {
+      GlobalValue *Other = Globals[Globals[0] == Concrete];
+      // If the non-concrete global is a function which takes (...) arguments,
+      // and the return values match, do not warn.
+      if (Function *ConcreteF = dyn_cast<Function>(Concrete))
+        if (Function *OtherF = dyn_cast<Function>(Other))
+          if (ConcreteF->getReturnType() == OtherF->getReturnType() &&
+              OtherF->getFunctionType()->isVarArg() &&
+              OtherF->getFunctionType()->getParamTypes().empty())
+            DontPrintWarning = true;
+      
+      // Otherwise, if the non-concrete global is a global array variable with a
+      // size of 0, and the concrete global is an array with a real size, don't
+      // warn.  This occurs due to declaring 'extern int A[];'.
+      if (GlobalVariable *ConcreteGV = dyn_cast<GlobalVariable>(Concrete))
+        if (GlobalVariable *OtherGV = dyn_cast<GlobalVariable>(Other))
+          if (const ArrayType *OtherAT =
+              dyn_cast<ArrayType>(OtherGV->getType()->getElementType()))
+            if (const ArrayType *ConcreteAT =
+                dyn_cast<ArrayType>(ConcreteGV->getType()->getElementType()))
+              if (OtherAT->getElementType() == ConcreteAT->getElementType() &&
+                  OtherAT->getNumElements() == 0)
+                DontPrintWarning = true;
+    }
 
-    std::cerr << "WARNING: Found global types that are not compatible:\n";
-    for (unsigned i = 0; i < Globals.size(); ++i) {
-      std::cerr << "\t" << *Globals[i]->getType() << " %"
-                << Globals[i]->getName() << "\n";
+    if (!DontPrintWarning) {
+      std::cerr << "WARNING: Found global types that are not compatible:\n";
+      for (unsigned i = 0; i < Globals.size(); ++i) {
+        std::cerr << "\t" << *Globals[i]->getType() << " %"
+                  << Globals[i]->getName() << "\n";
+      }
     }
 
     if (!Concrete)
