@@ -297,7 +297,7 @@ void PhyRegAlloc::updateMachineCode()
 
 	    //TM.getInstrInfo().isReturn(MInst->getOpCode())
 	    else if(TM.getInstrInfo().isReturn(MInst->getOpCode()) ) {
-	      cout << endl << "RETURN found" << endl;
+	      // cout << endl << "RETURN found" << endl;
  	      Op.setRegForValue( MRI.getReturnAddressReg() );
 
 	    }
