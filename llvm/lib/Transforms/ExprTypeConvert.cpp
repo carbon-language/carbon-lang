@@ -57,8 +57,7 @@ static bool AllIndicesZero(const MemAccessInst *MAI) {
 //
 static bool MallocConvertableToType(MallocInst *MI, const Type *Ty,
                                     ValueTypeCache &CTMap) {
-  if (!MI->isArrayAllocation() ||            // No array allocation?
-      !isa<PointerType>(Ty)) return false;   // Malloc always returns pointers
+  if (!isa<PointerType>(Ty)) return false;   // Malloc always returns pointers
 
   // Deal with the type to allocate, not the pointer type...
   Ty = cast<PointerType>(Ty)->getElementType();
