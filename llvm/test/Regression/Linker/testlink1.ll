@@ -1,6 +1,6 @@
-; RUN: as < %s > %t.bc
-; RUN: as < `dirname %s`/testlink2.ll > %t2.bc
-; RUN: link %t.bc %t2.bc
+; RUN: llvm-as < %s > %t.bc
+; RUN: llvm-as < `dirname %s`/testlink2.ll > %t2.bc
+; RUN: llvm-link %t.bc %t2.bc
 
 %MyVar     = external global int
 %MyIntList = global { \2 *, int } { { \2, int }* null, int 17 }
