@@ -186,7 +186,11 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
 
       // If the PHI _HAD_ two uses, replace PHI node with its now *single* value
       if (max_idx == 2) {
-	PN->replaceAllUsesWith(PN->getOperand(0));
+        if (PN->getOperand(0) != PN)
+          PN->replaceAllUsesWith(PN->getOperand(0));
+        else
+          // We are left with an infinite loop with no entries: kill the PHI.
+          PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
         getInstList().pop_front();    // Remove the PHI node
       }
 
