@@ -128,37 +128,29 @@ uint64_t JITResolver::insertFarJumpAtAddr(int64_t Target, uint64_t Addr) {
 
   static const unsigned i1 = SparcIntRegClass::i1, i2 = SparcIntRegClass::i2,
     i7 = SparcIntRegClass::i7,
-    o6 = SparcIntRegClass::o6, g0 = SparcIntRegClass::g0;
+    o6 = SparcIntRegClass::o6, g0 = SparcIntRegClass::g0,
+    g1 = SparcIntRegClass::g1, g5 = SparcIntRegClass::g5;
 
   MachineInstr* BinaryCode[] = {
     //
-    // Save %i1, %i2 to the stack so we can form a 64-bit constant in %i2
+    // Get address to branch into %g1, using %g5 as a temporary
     //
-    // stx %i1, [%sp + 2119]       ;; save %i1 to the stack, used as temp
-    BuildMI(V9::STXi, 3).addReg(i1).addReg(o6).addSImm(2119),
-    // stx %i2, [%sp + 2127]       ;; save %i2 to the stack
-    BuildMI(V9::STXi, 3).addReg(i2).addReg(o6).addSImm(2127),
-    //
-    // Get address to branch into %i2, using %i1 as a temporary
-    //
-    // sethi %uhi(Target), %i1     ;; get upper 22 bits of Target into %i1
-    BuildMI(V9::SETHI, 2).addSImm(Target >> 42).addReg(i1),
-    // or %i1, %ulo(Target), %i1   ;; get 10 lower bits of upper word into %1
-    BuildMI(V9::ORi, 3).addReg(i1).addSImm((Target >> 32) & 0x03ff).addReg(i1),
-    // sllx %i1, 32, %i1           ;; shift those 10 bits to the upper word
-    BuildMI(V9::SLLXi6, 3).addReg(i1).addSImm(32).addReg(i1),
-    // sethi %hi(Target), %i2      ;; extract bits 10-31 into the dest reg
-    BuildMI(V9::SETHI, 2).addSImm((Target >> 10) & 0x03fffff).addReg(i2),
-    // or %i1, %i2, %i2            ;; get upper word (in %i1) into %i2
-    BuildMI(V9::ORr, 3).addReg(i1).addReg(i2).addReg(i2),
-    // or %i2, %lo(Target), %i2    ;; get lowest 10 bits of Target into %i2
-    BuildMI(V9::ORi, 3).addReg(i2).addSImm(Target & 0x03ff).addReg(i2),
-    // ldx [%sp + 2119], %i1       ;; restore %i1 -> 2119 = BIAS(2047) + 72
-    BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2119).addReg(i1),
-    // jmpl %i2, %g0, %g0          ;; indirect branch on %i2
-    BuildMI(V9::JMPLRETr, 3).addReg(i2).addReg(g0).addReg(g0),
-    // ldx [%sp + 2127], %i2       ;; restore %i2 -> 2127 = BIAS(2047) + 80
-    BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2127).addReg(i2)
+    // sethi %uhi(Target), %g5     ;; get upper 22 bits of Target into %g5
+    BuildMI(V9::SETHI, 2).addSImm(Target >> 42).addReg(g5),
+    // or %g5, %ulo(Target), %g5   ;; get 10 lower bits of upper word into %g5
+    BuildMI(V9::ORi, 3).addReg(g5).addSImm((Target >> 32) & 0x03ff).addReg(g5),
+    // sllx %g5, 32, %g5           ;; shift those 10 bits to the upper word
+    BuildMI(V9::SLLXi6, 3).addReg(g5).addSImm(32).addReg(g5),
+    // sethi %hi(Target), %g1      ;; extract bits 10-31 into the dest reg
+    BuildMI(V9::SETHI, 2).addSImm((Target >> 10) & 0x03fffff).addReg(g1),
+    // or %g5, %g1, %g1            ;; get upper word (in %i1) into %g1
+    BuildMI(V9::ORr, 3).addReg(g5).addReg(g1).addReg(g1),
+    // or %g1, %lo(Target), %g1    ;; get lowest 10 bits of Target into %g1
+    BuildMI(V9::ORi, 3).addReg(g1).addSImm(Target & 0x03ff).addReg(g1),
+    // jmpl %g1, %g0, %g0          ;; indirect branch on %g1
+    BuildMI(V9::JMPLRETr, 3).addReg(g1).addReg(g0).addReg(g0),
+    // nop                         ;; delay slot
+    BuildMI(V9::NOP, 0)
   };
 
   for (unsigned i=0, e=sizeof(BinaryCode)/sizeof(BinaryCode[0]); i!=e; ++i) {
@@ -188,9 +180,9 @@ void JITResolver::CompilationCallback() {
   static const unsigned o6 = SparcIntRegClass::o6;
 
   // Subtract enough to overwrite up to the 'save' instruction
-  // This depends on whether we made a short call (1 instruction) to the
-  // farCall (10 instructions)
-  uint64_t Offset = (LazyCallFlavor[CameFrom] == ShortCall) ? 4 : 40;
+  // This depends on whether we made a short call (1 instruction) or the
+  // farCall (long form: 10 instructions, short form: 7 instructions)
+  uint64_t Offset = (LazyCallFlavor[CameFrom] == ShortCall) ? 4 : 28;
   uint64_t CodeBegin = CameFrom - Offset;
   
   // Make sure that what we're about to overwrite is indeed "save"
@@ -257,12 +249,12 @@ uint64_t JITResolver::emitStubForFunction(Function *F) {
   int64_t Addr = (int64_t)addFunctionReference(CurrPC, F);
   int64_t CallTarget = (Addr-CurrPC) >> 2;
   //if (CallTarget >= (1 << 29) || CallTarget <= -(1 << 29)) {
-    // Since this is a far call, the actual address of the call is shifted
-    // by the number of instructions it takes to calculate the exact address
+  // Since this is a far call, the actual address of the call is shifted
+  // by the number of instructions it takes to calculate the exact address
     deleteFunctionReference(CurrPC);
     SparcV9.emitFarCall(Addr, F);
 #if 0
-  } else {
+  else {
     // call CallTarget              ;; invoke the callback
     MachineInstr *Call = BuildMI(V9::CALL, 1).addSImm(CallTarget);
     SparcV9.emitWord(SparcV9.getBinaryCodeForInstr(*Call));
@@ -368,43 +360,35 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
 // being accounted for, and the behavior will be incorrect!!
 inline void SparcV9CodeEmitter::emitFarCall(uint64_t Target, Function *F) {
   static const unsigned i1 = SparcIntRegClass::i1, i2 = SparcIntRegClass::i2,
-    i7 = SparcIntRegClass::i7, o6 = SparcIntRegClass::o6,
-    o7 = SparcIntRegClass::o7, g0 = SparcIntRegClass::g0;
+      i7 = SparcIntRegClass::i7, o6 = SparcIntRegClass::o6,
+      o7 = SparcIntRegClass::o7, g0 = SparcIntRegClass::g0,
+      g1 = SparcIntRegClass::g1, g5 = SparcIntRegClass::g5;
 
   MachineInstr* BinaryCode[] = {
-    // 
-    // Save %i1, %i2 to the stack so we can form a 64-bit constant in %i2
-    // 
-    // stx %i1, [%sp + 2119]       ;; save %i1 to the stack, used as temp
-    BuildMI(V9::STXi, 3).addReg(i1).addReg(o6).addSImm(2119),
-    // stx %i2, [%sp + 2127]       ;; save %i2 to the stack
-    BuildMI(V9::STXi, 3).addReg(i2).addReg(o6).addSImm(2127),
     //
-    // Get address to branch into %i2, using %i1 as a temporary
+    // Get address to branch into %g1, using %g5 as a temporary
     //
-    // sethi %uhi(Target), %i1   ;; get upper 22 bits of Target into %i1
-    BuildMI(V9::SETHI, 2).addSImm(Target >> 42).addReg(i1),
-    // or %i1, %ulo(Target), %i1 ;; get 10 lower bits of upper word into %1
-    BuildMI(V9::ORi, 3).addReg(i1).addSImm((Target >> 32) & 0x03ff).addReg(i1),
-    // sllx %i1, 32, %i1            ;; shift those 10 bits to the upper word
-    BuildMI(V9::SLLXi6, 3).addReg(i1).addSImm(32).addReg(i1),
-    // sethi %hi(Target), %i2    ;; extract bits 10-31 into the dest reg
-    BuildMI(V9::SETHI, 2).addSImm((Target >> 10) & 0x03fffff).addReg(i2),
-    // or %i1, %i2, %i2             ;; get upper word (in %i1) into %i2
-    BuildMI(V9::ORr, 3).addReg(i1).addReg(i2).addReg(i2),
-    // or %i2, %lo(Target), %i2  ;; get lowest 10 bits of Target into %i2
-    BuildMI(V9::ORi, 3).addReg(i2).addSImm(Target & 0x03ff).addReg(i2),
-    // ldx [%sp + 2119], %i1       ;; restore %i1 -> 2119 = BIAS(2047) + 72
-    BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2119).addReg(i1),
-    // jmpl %i2, %g0, %o7          ;; indirect call on %i2
-    BuildMI(V9::JMPLRETr, 3).addReg(i2).addReg(g0).addReg(o7),
-    // ldx [%sp + 2127], %i2       ;; restore %i2 -> 2127 = BIAS(2047) + 80
-    BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2127).addReg(i2)
+    // sethi %uhi(Target), %g5   ;; get upper 22 bits of Target into %g5
+    BuildMI(V9::SETHI, 2).addSImm(Target >> 42).addReg(g5),
+    // or %g5, %ulo(Target), %g5 ;; get 10 lower bits of upper word into %1
+    BuildMI(V9::ORi, 3).addReg(g5).addSImm((Target >> 32) & 0x03ff).addReg(g5),
+    // sllx %g5, 32, %g5            ;; shift those 10 bits to the upper word
+    BuildMI(V9::SLLXi6, 3).addReg(g5).addSImm(32).addReg(g5),
+    // sethi %hi(Target), %g1    ;; extract bits 10-31 into the dest reg
+    BuildMI(V9::SETHI, 2).addSImm((Target >> 10) & 0x03fffff).addReg(g1),
+    // or %g5, %g1, %g1             ;; get upper word (in %g5) into %g1
+    BuildMI(V9::ORr, 3).addReg(g5).addReg(g1).addReg(g1),
+    // or %g1, %lo(Target), %g1  ;; get lowest 10 bits of Target into %g1
+    BuildMI(V9::ORi, 3).addReg(g1).addSImm(Target & 0x03ff).addReg(g1),
+    // jmpl %g1, %g0, %o7          ;; indirect call on %g1
+    BuildMI(V9::JMPLRETr, 3).addReg(g1).addReg(g0).addReg(o7),
+    // nop                         ;; delay slot
+    BuildMI(V9::NOP, 0)
   };
 
   for (unsigned i=0, e=sizeof(BinaryCode)/sizeof(BinaryCode[0]); i!=e; ++i) {
     // This is where we save the return address in the LazyResolverMap!!
-    if (i == 9 && F != 0) { // Do this right before the JMPL
+    if (i == 6 && F != 0) { // Do this right before the JMPL
       uint64_t CurrPC = MCE.getCurrentPCValue();
       TheJITResolver->addFunctionReference(CurrPC, F);
       // Remember that this is a far call, to subtract appropriate offset later
@@ -474,14 +458,14 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
             }
           }
         }
-        DEBUG(std::cerr << "Global addr: " << rv << "\n");
+        DEBUG(std::cerr << "Global addr: 0x" << std::hex << rv << "\n");
       }
       // The real target of the call is Addr = PC + (rv * 4)
       // So undo that: give the instruction (Addr - PC) / 4
       if (MI.getOpcode() == V9::CALL) {
         int64_t CurrPC = MCE.getCurrentPCValue();
         DEBUG(std::cerr << "rv addr: 0x" << std::hex << rv << "\n"
-                        << "curr PC: 0x" << CurrPC << "\n");
+                        << "curr PC: 0x" << std::hex << CurrPC << "\n");
         int64_t CallInstTarget = (rv - CurrPC) >> 2;
         if (CallInstTarget >= (1<<29) || CallInstTarget <= -(1<<29)) {
           DEBUG(std::cerr << "Making far call!\n");
