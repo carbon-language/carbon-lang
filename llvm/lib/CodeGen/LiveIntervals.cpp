@@ -54,7 +54,7 @@ namespace {
     ("liveintervals", "Number of identity moves eliminated after coalescing");
 
     Statistic<> numFolded
-    ("liveintervals", "Number of register operands folded");
+    ("liveintervals", "Number of loads/stores folded into instructions");
 
     cl::opt<bool>
     join("join-liveintervals",

@@ -30,7 +30,8 @@ using namespace llvm;
 namespace {
   Statistic<> NumStores("ra-local", "Number of stores added");
   Statistic<> NumLoads ("ra-local", "Number of loads added");
-  Statistic<> NumFused ("ra-local", "Number of reloads fused into instructions");
+  Statistic<> NumFolded("ra-local", "Number of loads/stores folded into "
+                        "instructions");
   class RA : public MachineFunctionPass {
     const TargetMachine *TM;
     MachineFunction *MF;
@@ -495,7 +496,7 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
     // If we can fold this spill into this instruction, do so now.
     MachineBasicBlock::iterator MII = MI;
     if (RegInfo->foldMemoryOperand(MII, OpNum, FrameIndex)) {
-      ++NumFused;
+      ++NumFolded;
       // Since we changed the address of MI, make sure to update live variables
       // to know that the new instruction has the properties of the old one.
       LV->instructionChanged(MI, MII);
