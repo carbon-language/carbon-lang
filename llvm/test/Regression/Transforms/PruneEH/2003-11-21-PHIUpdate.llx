@@ -1,0 +1,15 @@
+; RUN: llvm-as < %s | opt -prune-eh -disable-output
+
+implementation
+
+internal void %callee() {  ; does not throw
+  ret void
+}
+
+int %caller() {
+  invoke void %callee() to label %E except label %E
+
+E:
+	%X = phi int [0, %0], [0, %0]
+	ret int %X
+}
