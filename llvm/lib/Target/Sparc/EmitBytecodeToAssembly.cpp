@@ -8,6 +8,7 @@
 
 #include "SparcInternals.h"
 #include "llvm/Bytecode/Writer.h"
+#include <ostream>
 
 namespace {
 
@@ -17,10 +18,10 @@ namespace {
   class sparcasmbuf : public streambuf {
     std::ostream &BaseStr;
   public:
-    typedef char        char_type;
-    typedef int         int_type;
-    typedef streampos   pos_type;
-    typedef streamoff   off_type;
+    typedef char           char_type;
+    typedef int            int_type;
+    typedef std::streampos pos_type;
+    typedef std::streamoff off_type;
     
     sparcasmbuf(std::ostream &On) : BaseStr(On) {}
 
@@ -39,10 +40,10 @@ namespace {
   class osparcasmstream : public ostream {
     sparcasmbuf sb;
   public:
-    typedef char      char_type;
-    typedef int       int_type;
-    typedef streampos pos_type;
-    typedef streamoff off_type;
+    typedef char           char_type;
+    typedef int            int_type;
+    typedef std::streampos pos_type;
+    typedef std::streamoff off_type;
 
     explicit osparcasmstream(ostream &On) : ostream(&sb), sb(On) { }
 

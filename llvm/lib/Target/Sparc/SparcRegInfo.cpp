@@ -192,6 +192,7 @@ int UltraSparcRegInfo::getRegType(int reg) const {
     return IntCCRegType;             
   else 
     assert(0 && "Invalid register number in getRegType");
+  return 0;
 }
 
 

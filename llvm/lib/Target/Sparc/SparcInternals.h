@@ -310,7 +310,7 @@ public:
     else if (ty <= Type::DoubleTyID)
       res = FloatRegClassID;           // sparc float reg class
     else { 
-      std::cerr << "TypeID: " << ty << "\n";
+      //std::cerr << "TypeID: " << ty << "\n";
       assert(0 && "Cannot resolve register class for type");
       return 0;
     }

@@ -23,6 +23,7 @@
 #include "llvm/Module.h"
 #include "Support/StringExtras.h"
 #include "Support/HashExtras.h"
+#include <ostream>
 using std::string;
 
 namespace {
@@ -392,7 +393,8 @@ namespace {
 
 class SparcModuleAsmPrinter : public Pass, public AsmPrinter {
 public:
-  SparcModuleAsmPrinter(ostream &os, TargetMachine &t) : AsmPrinter(os, t) {}
+  SparcModuleAsmPrinter(std::ostream &os, TargetMachine &t)
+    : AsmPrinter(os, t) {}
 
   virtual bool run(Module *M) {
     startModule(M);
