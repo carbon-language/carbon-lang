@@ -149,7 +149,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
                                              MachineBasicBlock::iterator mi,
                                              unsigned reg)
 {
-    DEBUG(std::cerr << "\t\t\tregister: ";printRegName(reg); std::cerr << '\n');
+    DEBUG(std::cerr << "\t\tregister: ";printRegName(reg); std::cerr << '\n');
 
     unsigned instrIndex = getInstructionIndex(*mi);
 
@@ -206,9 +206,9 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                                               MachineBasicBlock::iterator mi,
                                               unsigned reg)
 {
-    DEBUG(std::cerr << "\t\t\tregister: ";printRegName(reg); std::cerr << '\n');
+    DEBUG(std::cerr << "\t\tregister: ";printRegName(reg); std::cerr << '\n');
     if (!lv_->getAllocatablePhysicalRegisters()[reg]) {
-        DEBUG(std::cerr << "\t\t\t\tnon allocatable register: ignoring\n");
+        DEBUG(std::cerr << "\t\t\tnon allocatable register: ignoring\n");
         return;
     }
 
@@ -297,8 +297,7 @@ void LiveIntervals::computeIntervals()
             MachineInstr* instr = *mi;
             const TargetInstrDescriptor& tid =
                 tm_->getInstrInfo().get(instr->getOpcode());
-            DEBUG(std::cerr << "\t\tinstruction["
-                  << getInstructionIndex(instr) << "]: ";
+            DEBUG(std::cerr << "\t[" << getInstructionIndex(instr) << "] ";
                   instr->print(std::cerr, *tm_););
 
             // handle implicit defs
@@ -334,18 +333,16 @@ LiveIntervals::Interval::Interval(unsigned r)
 
 void LiveIntervals::Interval::addRange(unsigned start, unsigned end)
 {
-    DEBUG(std::cerr << "\t\t\t\tadding range: [" << start <<','<< end << "]\n");
+    DEBUG(std::cerr << "\t\t\tadding range: [" << start <<','<< end << ") -> ");
     //assert(start < end && "invalid range?");
     Range range = std::make_pair(start, end);
     Ranges::iterator it =
         ranges.insert(std::upper_bound(ranges.begin(), ranges.end(), range),
                       range);
 
-    DEBUG(std::cerr << "\t\t\t\tbefore merge forward: " << *this << '\n');
     mergeRangesForward(it);
-    DEBUG(std::cerr << "\t\t\t\tbefore merge backward: " << *this << '\n');
     mergeRangesBackward(it);
-    DEBUG(std::cerr << "\t\t\t\tafter merging: " << *this << '\n');
+    DEBUG(std::cerr << *this << '\n');
 }
 
 void LiveIntervals::Interval::mergeRangesForward(Ranges::iterator it)
