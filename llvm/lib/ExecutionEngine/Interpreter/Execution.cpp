@@ -14,12 +14,10 @@
 #include "llvm/Constants.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/GlobalVariable.h"
 #include "Support/CommandLine.h"
 #include <math.h>  // For fmod
 #include <signal.h>
 #include <setjmp.h>
-#include <iostream>
 using std::vector;
 using std::cout;
 using std::cerr;
@@ -87,8 +85,33 @@ static unsigned getOperandSlot(Value *V) {
 #define GET_CONST_VAL(TY, CLASS) \
   case Type::TY##TyID: Result.TY##Val = cast<CLASS>(CPV)->getValue(); break
 
+// Operations used by constant expr implementations...
+static GenericValue executeCastOperation(Value *Src, const Type *DestTy,
+                                         ExecutionContext &SF);
+static GenericValue executeGEPOperation(Value *Src, User::op_iterator IdxBegin,
+                                        User::op_iterator IdxEnd,
+                                        ExecutionContext &SF);
+static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty, ExecutionContext &SF);
+
 static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
-  if (Constant *CPV = dyn_cast<Constant>(V)) {
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    switch (CE->getOpcode()) {
+    case Instruction::Cast:
+      return executeCastOperation(CE->getOperand(0), CE->getType(), SF);
+    case Instruction::GetElementPtr:
+      return executeGEPOperation(CE->getOperand(0), CE->op_begin()+1,
+                                 CE->op_end(), SF);
+    case Instruction::Add:
+      return executeAddInst(getOperandValue(CE->getOperand(0), SF),
+                            getOperandValue(CE->getOperand(1), SF),
+                            CE->getType(), SF);
+    default:
+      cerr << "Unhandled ConstantExpr: " << CE << "\n";
+      abort();
+      { GenericValue V; return V; }
+    }
+  } else if (Constant *CPV = dyn_cast<Constant>(V)) {
     GenericValue Result;
     switch (CPV->getType()->getPrimitiveID()) {
       GET_CONST_VAL(Bool   , ConstantBool);
@@ -105,8 +128,8 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
     case Type::PointerTyID:
       if (isa<ConstantPointerNull>(CPV)) {
         Result.PointerVal = 0;
-      } else if (isa<ConstantPointerRef>(CPV)) {
-        assert(0 && "Not implemented!");
+      } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CPV)) {
+        return getOperandValue(CPR->getValue(), SF);
       } else {
         assert(0 && "Unknown constant pointer type!");
       }
@@ -765,24 +788,23 @@ static void executeFreeInst(FreeInst &I, ExecutionContext &SF) {
 }
 
 
-// getElementOffset - The workhorse for getelementptr.  This function returns
-// the offset that arguments ArgOff+1 -> NumArgs specify for the pointer type
-// specified by argument Arg.
+// getElementOffset - The workhorse for getelementptr.
 //
-static PointerTy getElementOffset(GetElementPtrInst &I, ExecutionContext &SF) {
-  assert(isa<PointerType>(I.getPointerOperand()->getType()) &&
+static GenericValue executeGEPOperation(Value *Ptr, User::op_iterator I,
+                                        User::op_iterator E,
+                                        ExecutionContext &SF) {
+  assert(isa<PointerType>(Ptr->getType()) &&
          "Cannot getElementOffset of a nonpointer type!");
 
   PointerTy Total = 0;
-  const Type *Ty = I.getPointerOperand()->getType();
-  
-  unsigned ArgOff = 1;
-  while (ArgOff < I.getNumOperands()) {
+  const Type *Ty = Ptr->getType();
+
+  for (; I != E; ++I) {
     if (const StructType *STy = dyn_cast<StructType>(Ty)) {
       const StructLayout *SLO = TD.getStructLayout(STy);
       
       // Indicies must be ubyte constants...
-      const ConstantUInt *CPU = cast<ConstantUInt>(I.getOperand(ArgOff++));
+      const ConstantUInt *CPU = cast<ConstantUInt>(*I);
       assert(CPU->getType() == Type::UByteTy);
       unsigned Index = CPU->getValue();
       
@@ -800,13 +822,13 @@ static PointerTy getElementOffset(GetElementPtrInst &I, ExecutionContext &SF) {
     } else if (const SequentialType *ST = cast<SequentialType>(Ty)) {
 
       // Get the index number for the array... which must be uint type...
-      assert(I.getOperand(ArgOff)->getType() == Type::UIntTy);
-      unsigned Idx = getOperandValue(I.getOperand(ArgOff++), SF).UIntVal;
+      assert((*I)->getType() == Type::UIntTy);
+      unsigned Idx = getOperandValue(*I, SF).UIntVal;
       if (const ArrayType *AT = dyn_cast<ArrayType>(ST))
         if (Idx >= AT->getNumElements() && ArrayChecksEnabled) {
           cerr << "Out of range memory access to element #" << Idx
                << " of a " << AT->getNumElements() << " element array."
-               << " Subscript #" << (ArgOff-1) << "\n";
+               << " Subscript #" << *I << "\n";
           // Get outta here!!!
           siglongjmp(SignalRecoverBuffer, SIGTRAP);
         }
@@ -817,16 +839,14 @@ static PointerTy getElementOffset(GetElementPtrInst &I, ExecutionContext &SF) {
     }  
   }
 
-  return Total;
+  GenericValue Result;
+  Result.PointerVal = getOperandValue(Ptr, SF).PointerVal + Total;
+  return Result;
 }
 
 static void executeGEPInst(GetElementPtrInst &I, ExecutionContext &SF) {
-  GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
-  PointerTy SrcPtr = SRC.PointerVal;
-
-  GenericValue Result;
-  Result.PointerVal = SrcPtr + getElementOffset(I, SF);
-  SetValue(&I, Result, SF);
+  SetValue(&I, executeGEPOperation(I.getPointerOperand(),
+                                   I.idx_begin(), I.idx_end(), SF), SF);
 }
 
 static void executeLoadInst(LoadInst &I, ExecutionContext &SF) {
@@ -992,11 +1012,10 @@ static void executeShrInst(ShiftInst &I, ExecutionContext &SF) {
    IMPLEMENT_CAST_CASE_FP_IMP(DESTTY, DESTCTY); \
    IMPLEMENT_CAST_CASE_END()
 
-static void executeCastInst(CastInst &I, ExecutionContext &SF) {
-  const Type *Ty    = I.getType();
-  const Type *SrcTy = I.getOperand(0)->getType();
-  GenericValue Src  = getOperandValue(I.getOperand(0), SF);
-  GenericValue Dest;
+static GenericValue executeCastOperation(Value *SrcVal, const Type *Ty,
+                                         ExecutionContext &SF) {
+  const Type *SrcTy = SrcVal->getType();
+  GenericValue Dest, Src = getOperandValue(SrcVal, SF);
 
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_CAST_CASE(UByte  , (unsigned char));
@@ -1013,10 +1032,14 @@ static void executeCastInst(CastInst &I, ExecutionContext &SF) {
   default:
     cout << "Unhandled dest type for cast instruction: " << Ty << "\n";
   }
-  SetValue(&I, Dest, SF);
+
+  return Dest;
 }
 
 
+static void executeCastInst(CastInst &I, ExecutionContext &SF) {
+  SetValue(&I, executeCastOperation(I.getOperand(0), I.getType(), SF), SF);
+}
 
 
 //===----------------------------------------------------------------------===//
