@@ -13,12 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcInternals.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
 
@@ -62,7 +62,7 @@ DeleteInstruction(MachineBasicBlock& mvec,
 
 static bool IsUselessCopy(const TargetMachine &target, const MachineInstr* MI) {
   if (MI->getOpCode() == V9::FMOVS || MI->getOpCode() == V9::FMOVD) {
-    return (/* both operands are allocated to the same register */
+    return (// both operands are allocated to the same register
             MI->getOperand(0).getAllocatedRegNum() == 
             MI->getOperand(1).getAllocatedRegNum());
   } else if (MI->getOpCode() == V9::ADDr || MI->getOpCode() == V9::ORr ||
@@ -78,14 +78,14 @@ static bool IsUselessCopy(const TargetMachine &target, const MachineInstr* MI) {
     if (srcWithDestReg == 2)
       return false;
     else {
-      /* else source and dest are allocated to the same register */
+      // else source and dest are allocated to the same register
       unsigned otherOp = 1 - srcWithDestReg;
-      return (/* either operand otherOp is register %g0 */
+      return (// either operand otherOp is register %g0
               (MI->getOperand(otherOp).hasAllocatedReg() &&
                MI->getOperand(otherOp).getAllocatedRegNum() ==
                target.getRegInfo().getZeroRegNum()) ||
               
-              /* or operand otherOp == 0 */
+              // or operand otherOp == 0
               (MI->getOperand(otherOp).getType()
                == MachineOperand::MO_SignExtendedImmed &&
                MI->getOperand(otherOp).getImmedValue() == 0));
@@ -117,6 +117,11 @@ public:
   PeepholeOpts(const TargetMachine &TM): target(TM) { }
   bool runOnBasicBlock(BasicBlock &BB); // apply this pass to each BB
   virtual const char *getPassName() const { return "Peephole Optimization"; }
+
+  // getAnalysisUsage - this pass preserves the CFG
+  void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesCFG();
+  }
 };
 
 // Apply a list of peephole optimizations to this machine instruction
@@ -125,7 +130,7 @@ public:
 //
 bool PeepholeOpts::visit(MachineBasicBlock& mvec,
                          MachineBasicBlock::iterator BBI) const {
-  /* Remove redundant copy instructions */
+  // Remove redundant copy instructions
   return RemoveUselessCopies(mvec, BBI, target);
 }
 
@@ -157,11 +162,8 @@ bool PeepholeOpts::runOnBasicBlock(BasicBlock &BB) {
   return true;
 }
 
-
-//===----------------------------------------------------------------------===//
-// createPeepholeOptsPass - Public entrypoint for peephole optimization
-// and this file as a whole...
-//
+/// createPeepholeOptsPass - Public entry point for peephole optimization
+///
 FunctionPass* createPeepholeOptsPass(const TargetMachine &TM) {
   return new PeepholeOpts(TM);
 }
