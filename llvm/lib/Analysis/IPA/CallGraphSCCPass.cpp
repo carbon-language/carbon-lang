@@ -18,8 +18,7 @@
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "Support/SCCIterator.h"
-
-namespace llvm {
+using namespace llvm;
 
 /// getAnalysisUsage - For this class, we declare that we require and preserve
 /// the call graph.  If the derived class implements this method, it should
@@ -31,11 +30,9 @@ void CallGraphSCCPass::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool CallGraphSCCPass::run(Module &M) {
   CallGraph &CG = getAnalysis<CallGraph>();
-  bool Changed = false;
+  bool Changed = doInitialization(M);
   for (scc_iterator<CallGraph*> I = scc_begin(&CG), E = scc_end(&CG);
        I != E; ++I)
     Changed = runOnSCC(*I);
-  return Changed;
+  return Changed | doFinalization(M);
 }
-
-} // End llvm namespace

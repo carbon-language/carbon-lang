@@ -26,8 +26,15 @@
 namespace llvm {
 
 class CallGraphNode;
+class Module;
 
 struct CallGraphSCCPass : public Pass {
+
+  /// doInitialization - This method is called before the SCC's of the program
+  /// has been processed, allowing the pass to do initialization as necessary.
+  virtual bool doInitialization(Module &M) {
+    return false;
+  }
 
   /// runOnSCC - This method should be implemented by the subclass to perform
   /// whatever action is necessary for the specified SCC.  Note that
@@ -35,6 +42,12 @@ struct CallGraphSCCPass : public Pass {
   /// 1, where recursive portions of the call graph will have SCC size > 1.
   ///
   virtual bool runOnSCC(const std::vector<CallGraphNode *> &SCC) = 0;
+
+  /// doFinalization - This method is called after the SCC's of the program has
+  /// been processed, allowing the pass to do final cleanup as necessary.
+  virtual bool doFinalization(Module &M) {
+    return false;
+  }
 
   /// run - Run this pass, returning true if a modification was made to the
   /// module argument.  This is implemented in terms of the runOnSCC method.
