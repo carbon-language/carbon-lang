@@ -81,9 +81,9 @@ namespace llvm {
       /// language.
       struct Action {
         Action() : flags(0) {}
-        sys::Path program;     ///< The program to execve
-        StringVector args;     ///< Arguments to the program
-        unsigned flags;        ///< Action specific flags
+        sys::Path program; ///< The program to execve
+        StringVector args; ///< Arguments to the program
+        unsigned flags;    ///< Action specific flags
         void set(unsigned fl ) { flags |= fl; }
         void clear(unsigned fl) { flags &= (FLAGS_MASK ^ fl); }
         bool isSet(unsigned fl) { return (flags&fl) != 0; }

@@ -28,9 +28,9 @@ namespace {
 
 void WriteAction(CompilerDriver::Action* action ) {
   std::cerr << action->program.c_str();
-  std::vector<std::string>::iterator I = action->args.begin();
+  std::vector<std::string>::const_iterator I = action->args.begin();
   while (I != action->args.end()) {
-    std::cerr << " " + *I;
+    std::cerr << " " << *I;
     ++I;
   }
   std::cerr << "\n";
@@ -38,9 +38,9 @@ void WriteAction(CompilerDriver::Action* action ) {
 
 void DumpAction(CompilerDriver::Action* action) {
   std::cerr << "command = " << action->program.c_str();
-  std::vector<std::string>::iterator I = action->args.begin();
+  std::vector<std::string>::const_iterator I = action->args.begin();
   while (I != action->args.end()) {
-    std::cerr << " " + *I;
+    std::cerr << " " << *I;
     ++I;
   }
   std::cerr << "\n";
@@ -392,18 +392,23 @@ private:
                           "' is not executable.");
 
       // Invoke the program
+      const char** Args = (const char**) 
+        alloca(sizeof(const char*)*action->args.size());
+      for (unsigned i = 0; i != action->args.size(); ++i) {
+        Args[i] = action->args[i].c_str();
+      }
       if (isSet(TIME_ACTIONS_FLAG)) {
         Timer timer(action->program.toString());
         timer.startTimer();
         int resultCode = 
-          sys::Program::ExecuteAndWait(action->program,action->args);
+          sys::Program::ExecuteAndWait(action->program,Args);
         timer.stopTimer();
         timer.print(timer,std::cerr);
         return resultCode == 0;
       }
       else
         return 0 == 
-          sys::Program::ExecuteAndWait(action->program, action->args);
+          sys::Program::ExecuteAndWait(action->program, Args);
     }
     return true;
   }
@@ -560,7 +565,7 @@ public:
       /// PRE-PROCESSING / TRANSLATION / OPTIMIZATION / ASSEMBLY phases
       // for each input item
       SetVector<sys::Path> LinkageItems;
-      std::vector<std::string> LibFiles;
+      StringVector LibFiles;
       InputList::const_iterator I = InpList.begin();
       for (InputList::const_iterator I = InpList.begin(), E = InpList.end();
            I != E; ++I ) {
@@ -817,7 +822,7 @@ public:
           link->args.push_back(I->toString());
 
         // Add in all the libraries we found.
-        for (std::vector<std::string>::const_iterator I=LibFiles.begin(),
+        for (StringVector::const_iterator I=LibFiles.begin(),
              E=LibFiles.end(); I != E; ++I )
           link->args.push_back(std::string("-l")+*I);
 

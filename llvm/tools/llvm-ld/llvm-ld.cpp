@@ -218,13 +218,13 @@ static int GenerateAssembly(const std::string &OutputFilename,
                             const std::string &InputFilename,
                             const sys::Path &llc) {
   // Run LLC to convert the bytecode file into assembly code.
-  std::vector<std::string> args;
+  std::vector<const char*> args;
   args.push_back( "-f");
   args.push_back( "-o");
-  args.push_back( OutputFilename);
-  args.push_back( InputFilename);
+  args.push_back( OutputFilename.c_str() );
+  args.push_back( InputFilename.c_str() );
 
-  return sys::Program::ExecuteAndWait(llc,args);
+  return sys::Program::ExecuteAndWait(llc,&args[0]);
 }
 
 /// GenerateAssembly - generates a native assembly language source file from the
@@ -233,13 +233,13 @@ static int GenerateCFile(const std::string &OutputFile,
                          const std::string &InputFile,
                          const sys::Path &llc) {
   // Run LLC to convert the bytecode file into C.
-  std::vector<std::string> args;
+  std::vector<const char*> args;
   args.push_back( "-march=c");
   args.push_back( "-f");
   args.push_back( "-o");
-  args.push_back( OutputFile);
-  args.push_back( InputFile);
-  return sys::Program::ExecuteAndWait(llc, args);
+  args.push_back( OutputFile.c_str() );
+  args.push_back( InputFile.c_str() );
+  return sys::Program::ExecuteAndWait(llc, &args[0]);
 }
 
 /// GenerateNative - generates a native assembly language source file from the
@@ -285,20 +285,22 @@ static int GenerateNative(const std::string &OutputFilename,
   //  We can't just assemble and link the file with the system assembler
   //  and linker because we don't know where to put the _start symbol.
   //  GCC mysteriously knows how to do it.
-  std::vector<std::string> args;
+  std::vector<const char*> args;
   args.push_back("-fno-strict-aliasing");
   args.push_back("-O3");
   args.push_back("-o");
-  args.push_back(OutputFilename);
-  args.push_back(InputFilename);
+  args.push_back(OutputFilename.c_str());
+  args.push_back(InputFilename.c_str());
 
   // Add in the libraries to link.
   for (unsigned index = 0; index < Libraries.size(); index++)
-    if (Libraries[index] != "crtend")
-      args.push_back("-l" + Libraries[index]);
+    if (Libraries[index] != "crtend") {
+      args.push_back("-l");
+      args.push_back(Libraries[index].c_str());
+    }
 
   // Run the compiler to assembly and link together the program.
-  return sys::Program::ExecuteAndWait(gcc, args, (const char**)clean_env);
+  return sys::Program::ExecuteAndWait(gcc, &args[0], (const char**)clean_env);
 }
 
 /// EmitShellScript - Output the wrapper file that invokes the JIT on the LLVM
