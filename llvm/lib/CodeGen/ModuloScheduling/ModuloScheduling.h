@@ -13,6 +13,8 @@
 #include <iostream>
 #include <vector>
 
+#define DEBUG_PRINT(x) x
+
 // for debug information selecton
 enum ModuloSchedDebugLevel_t { 
   ModuloSchedDebugLevel_NoDebugInfo,

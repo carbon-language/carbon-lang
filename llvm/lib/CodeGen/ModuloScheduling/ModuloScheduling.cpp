@@ -25,7 +25,8 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-//#include <swig.h>
+
+using std::endl;
 
 //************************************************************
 // printing Debug information
@@ -53,8 +54,11 @@ SDL_opt("modsched", cl::Hidden, cl::location(ModuloSchedDebugLevel),
 //
 void ModuloScheduling::instrScheduling()
 {
+
+  printf(" instrScheduling \n");
+
   if (ModuloScheduling::printScheduleProcess())
-    DEBUG(std::cerr << "************ computing modulo schedule ***********\n");
+    DEBUG_PRINT(std::cerr << "************ computing modulo schedule ***********\n");
 
   const TargetSchedInfo & msi = target.getSchedInfo();
 
@@ -73,7 +77,7 @@ void ModuloScheduling::instrScheduling()
     if (!success) {
       II++;
       if (ModuloScheduling::printScheduleProcess())
-        DEBUG(std::cerr << "increase II  to " << II << "\n");
+        DEBUG_PRINT(std::cerr << "increase II  to " << II << "\n");
     }
   }
 
@@ -89,7 +93,7 @@ void ModuloScheduling::instrScheduling()
 
   //print the original BasicBlock if necessary
   if (ModuloScheduling::printSchedule()) {
-    DEBUG(std::cerr << "dumping the orginal block\n");
+    DEBUG_PRINT(std::cerr << "dumping the orginal block\n");
     graph.dump(bb);
   }
   //construction of prologue, kernel and epilogue
@@ -108,11 +112,11 @@ void ModuloScheduling::instrScheduling()
 
   //print the BasicBlocks if necessary
   if (ModuloScheduling::printSchedule()) {
-    DEBUG(std::cerr << "dumping the prologue block:\n");
+    DEBUG_PRINT(std::cerr << "dumping the prologue block:\n");
     graph.dump(prologue);
-    DEBUG(std::cerr << "dumping the kernel block\n");
+    DEBUG_PRINT(std::cerr << "dumping the kernel block\n");
     graph.dump(kernel);
-    DEBUG(std::cerr << "dumping the epilogue block\n");
+    DEBUG_PRINT(std::cerr << "dumping the epilogue block\n");
     graph.dump(epilogue);
   }
 }
@@ -124,8 +128,8 @@ void ModuloScheduling::clearInitMem(const TargetSchedInfo & msi)
   unsigned numIssueSlots = msi.maxNumIssueTotal;
   // clear nodeScheduled from the last round
   if (ModuloScheduling::printScheduleProcess()) {
-    DEBUG(std::cerr << "***** new round  with II= " << II << " ***********\n");
-    DEBUG(std::cerr <<
+    DEBUG_PRINT(std::cerr << "***** new round  with II= " << II << " ***********\n");
+    DEBUG_PRINT(std::cerr <<
         " ************clear the vector nodeScheduled*************\n");
   }
   nodeScheduled.clear();
@@ -156,7 +160,7 @@ bool ModuloScheduling::computeSchedule()
 {
 
   if (ModuloScheduling::printScheduleProcess())
-    DEBUG(std::cerr << "start to compute schedule\n");
+    DEBUG_PRINT(std::cerr << "start to compute schedule\n");
 
   // Loop over the ordered nodes
   for (NodeVec::const_iterator I = oNodes.begin(); I != oNodes.end(); ++I) {
@@ -253,7 +257,7 @@ bool ModuloScheduling::computeSchedule()
     }
     //try to schedule this node based on the startTime and endTime
     if (ModuloScheduling::printScheduleProcess())
-      DEBUG(std::cerr << "scheduling the node " << (*I)->getNodeId() << "\n");
+      DEBUG_PRINT(std::cerr << "scheduling the node " << (*I)->getNodeId() << "\n");
 
     bool success =
         this->ScheduleNode(node, startTime, endTime, nodeScheduled);
@@ -622,16 +626,16 @@ bool ModuloScheduling::ScheduleNode(ModuloSchedGraphNode * node,
   unsigned int numIssueSlots = msi.maxNumIssueTotal;
 
   if (ModuloScheduling::printScheduleProcess())
-    DEBUG(std::cerr << "startTime= " << start << " endTime= " << end << "\n");
+    DEBUG_PRINT(std::cerr << "startTime= " << start << " endTime= " << end << "\n");
   bool isScheduled = false;
   for (unsigned i = start; i <= end; i++) {
     if (ModuloScheduling::printScheduleProcess())
-      DEBUG(std::cerr << " now try cycle " << i << ":" << "\n");
+      DEBUG_PRINT(std::cerr << " now try cycle " << i << ":" << "\n");
     for (unsigned j = 0; j < numIssueSlots; j++) {
       unsigned int core_i = i % II;
       unsigned int core_j = j;
       if (ModuloScheduling::printScheduleProcess())
-        DEBUG(std::cerr << "\t Trying slot " << j << "...........");
+        DEBUG_PRINT(std::cerr << "\t Trying slot " << j << "...........");
       //check the resouce table, make sure there is no resource conflicts
       const Instruction *instr = node->getInst();
       MachineCodeForInstruction & tempMvec =
@@ -671,8 +675,8 @@ bool ModuloScheduling::ScheduleNode(ModuloSchedGraphNode * node,
       }
       if (!resourceConflict && !coreSchedule[core_i][core_j]) {
         if (ModuloScheduling::printScheduleProcess()) {
-          DEBUG(std::cerr << " OK!" << "\n");
-          DEBUG(std::cerr << "Node " << node->getNodeId() << " scheduled.\n");
+          DEBUG_PRINT(std::cerr << " OK!" << "\n");
+          DEBUG_PRINT(std::cerr << "Node " << node->getNodeId() << " scheduled.\n");
         }
         //schedule[i][j]=node;
         while (schedule.size() <= i) {
@@ -710,10 +714,10 @@ bool ModuloScheduling::ScheduleNode(ModuloSchedGraphNode * node,
         break;
       } else if (coreSchedule[core_i][core_j]) {
         if (ModuloScheduling::printScheduleProcess())
-          DEBUG(std::cerr << " Slot not available\n");
+          DEBUG_PRINT(std::cerr << " Slot not available\n");
       } else {
         if (ModuloScheduling::printScheduleProcess())
-          DEBUG(std::cerr << " Resource conflicts\n");
+          DEBUG_PRINT(std::cerr << " Resource conflicts\n");
       }
     }
     if (isScheduled)
@@ -798,12 +802,12 @@ bool ModuloScheduling::resourceTableNegative()
 
 void ModuloScheduling::dumpResourceUsageTable()
 {
-  DEBUG(std::cerr << "dumping resource usage table\n");
+  DEBUG_PRINT(std::cerr << "dumping resource usage table\n");
   for (unsigned i = 0; i < resourceTable.size(); i++) {
     for (unsigned j = 0; j < resourceTable[i].size(); j++)
-      DEBUG(std::cerr << resourceTable[i][j].first 
+      DEBUG_PRINT(std::cerr << resourceTable[i][j].first 
             << ":" << resourceTable[i][j].second << " ");
-    DEBUG(std::cerr << "\n");
+    DEBUG_PRINT(std::cerr << "\n");
   }
 
 }
@@ -819,16 +823,16 @@ void ModuloScheduling::dumpSchedule(vvNodeType thisSchedule)
   const TargetSchedInfo & msi = target.getSchedInfo();
   unsigned numIssueSlots = msi.maxNumIssueTotal;
   for (unsigned i = 0; i < numIssueSlots; i++)
-    DEBUG(std::cerr << "\t#");
-  DEBUG(std::cerr << "\n");
+    DEBUG_PRINT(std::cerr << "\t#");
+  DEBUG_PRINT(std::cerr << "\n");
   for (unsigned i = 0; i < thisSchedule.size(); i++) {
-    DEBUG(std::cerr << "cycle" << i << ": ");
+    DEBUG_PRINT(std::cerr << "cycle" << i << ": ");
     for (unsigned j = 0; j < thisSchedule[i].size(); j++)
       if (thisSchedule[i][j] != NULL)
-        DEBUG(std::cerr << thisSchedule[i][j]->getNodeId() << "\t");
+        DEBUG_PRINT(std::cerr << thisSchedule[i][j]->getNodeId() << "\t");
       else
-        DEBUG(std::cerr << "\t");
-    DEBUG(std::cerr << "\n");
+        DEBUG_PRINT(std::cerr << "\t");
+    DEBUG_PRINT(std::cerr << "\n");
   }
 }
 
@@ -842,34 +846,34 @@ void ModuloScheduling::dumpSchedule(vvNodeType thisSchedule)
 
 void ModuloScheduling::dumpScheduling()
 {
-  DEBUG(std::cerr << "dump schedule:" << "\n");
+  DEBUG_PRINT(std::cerr << "dump schedule:" << "\n");
   const TargetSchedInfo & msi = target.getSchedInfo();
   unsigned numIssueSlots = msi.maxNumIssueTotal;
   for (unsigned i = 0; i < numIssueSlots; i++)
-    DEBUG(std::cerr << "\t#");
-  DEBUG(std::cerr << "\n");
+    DEBUG_PRINT(std::cerr << "\t#");
+  DEBUG_PRINT(std::cerr << "\n");
   for (unsigned i = 0; i < schedule.size(); i++) {
-    DEBUG(std::cerr << "cycle" << i << ": ");
+    DEBUG_PRINT(std::cerr << "cycle" << i << ": ");
     for (unsigned j = 0; j < schedule[i].size(); j++)
       if (schedule[i][j] != NULL)
-        DEBUG(std::cerr << schedule[i][j]->getNodeId() << "\t");
+        DEBUG_PRINT(std::cerr << schedule[i][j]->getNodeId() << "\t");
       else
-        DEBUG(std::cerr << "\t");
-    DEBUG(std::cerr << "\n");
+        DEBUG_PRINT(std::cerr << "\t");
+    DEBUG_PRINT(std::cerr << "\n");
   }
 
-  DEBUG(std::cerr << "dump coreSchedule:" << "\n");
+  DEBUG_PRINT(std::cerr << "dump coreSchedule:" << "\n");
   for (unsigned i = 0; i < numIssueSlots; i++)
-    DEBUG(std::cerr << "\t#");
-  DEBUG(std::cerr << "\n");
+    DEBUG_PRINT(std::cerr << "\t#");
+  DEBUG_PRINT(std::cerr << "\n");
   for (unsigned i = 0; i < coreSchedule.size(); i++) {
-    DEBUG(std::cerr << "cycle" << i << ": ");
+    DEBUG_PRINT(std::cerr << "cycle" << i << ": ");
     for (unsigned j = 0; j < coreSchedule[i].size(); j++)
       if (coreSchedule[i][j] != NULL)
-        DEBUG(std::cerr << coreSchedule[i][j]->getNodeId() << "\t");
+        DEBUG_PRINT(std::cerr << coreSchedule[i][j]->getNodeId() << "\t");
       else
-        DEBUG(std::cerr << "\t");
-    DEBUG(std::cerr << "\n");
+        DEBUG_PRINT(std::cerr << "\t");
+    DEBUG_PRINT(std::cerr << "\n");
   }
 }
 
