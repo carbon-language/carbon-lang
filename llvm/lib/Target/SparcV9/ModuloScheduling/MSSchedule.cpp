@@ -54,6 +54,9 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
   int currentCycle = cycle;
   bool success = true;
 
+  //map for easy backtracking, resource num at a certain cycle
+  //std::map<int, int> backtrackMap;
+
     //Get resource usage for this instruction
     InstrRUsage rUsage = msi->getInstrRUsage(node->getInst()->getOpcode());
     std::vector<std::vector<resourceId_t> > resources = rUsage.resourcesByCycle;
@@ -74,8 +77,11 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
 	  std::map<int, int>::iterator resourceUse = resourcesForCycle->second.find(resourceNum);
 	  if(resourceUse != resourcesForCycle->second.end()) {
 	    //Check if there are enough of this resource and if so, increase count and move on
-	    if(resourceUse->second < CPUResource::getCPUResource(resourceNum)->maxNumUsers)
+	    if(resourceUse->second < CPUResource::getCPUResource(resourceNum)->maxNumUsers) {
 	      ++resourceUse->second;
+	      //Document that we increased the usage count for this resource at this cycle
+	    
+	    }
 	    else {
 	      success = false;
 	    }
@@ -89,7 +95,8 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
 	  //Create a new map and put in our resource
 	  std::map<int, int> resourceMap;
 	  resourceMap[resourceNum] = 1;
-	  resourceNumPerCycle[cycle] = resourceMap;
+	  resourceNumPerCycle[currentCycle] = resourceMap;
+	  
 	}
 	if(!success)
 	  break;

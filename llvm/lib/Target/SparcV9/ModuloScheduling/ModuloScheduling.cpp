@@ -1,4 +1,3 @@
-
 //===-- ModuloScheduling.cpp - ModuloScheduling  ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -25,6 +24,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Statistic.h"
 #include <cmath>
 #include <algorithm>
 #include <fstream>
@@ -62,6 +62,9 @@ static void WriteGraphToFile(std::ostream &O, const std::string &GraphName,
 
 //Graph Traits for printing out the dependence graph
 namespace llvm {
+  Statistic<> ValidLoops("modulosched-validLoops", "Number of candidate loops modulo-scheduled");
+  Statistic<> MSLoops("modulosched-schedLoops", "Number of loops successfully modulo-scheduled");
+  Statistic<> IncreasedII("modulosched-increasedII", "Number of times we had to increase II");
 
   template<>
   struct DOTGraphTraits<MSchedGraph*> : public DefaultDOTGraphTraits {
@@ -136,8 +139,10 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
   
   //Iterate over BasicBlocks and put them into our worklist if they are valid
   for (MachineFunction::iterator BI = MF.begin(); BI != MF.end(); ++BI)
-    if(MachineBBisValid(BI)) 
+    if(MachineBBisValid(BI)) { 
       Worklist.push_back(&*BI);
+      ++ValidLoops;
+    }
   
   defaultInst = 0;
 
@@ -217,7 +222,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     //stage > 0
     if(schedule.getMaxStage() != 0) {
       reconstructLoop(*BI);
-      numMS++;
+      ++MSLoops;
       Changed = true;
     }
     else
@@ -241,9 +246,6 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     //delete(*BI);
   }
   
- 
-  DEBUG(std::cerr << "Number of Loop Candidates: " << Worklist.size() << "\n Number ModuloScheduled: " << numMS << "\n");
-
   return Changed;
 }
 
@@ -254,6 +256,10 @@ void ModuloSchedulingPass::CreateDefMap(MachineBasicBlock *BI) {
     for(unsigned opNum = 0; opNum < I->getNumOperands(); ++opNum) {
       const MachineOperand &mOp = I->getOperand(opNum);
       if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isDef()) {
+	//assert if this is the second def we have seen
+	DEBUG(std::cerr << "Putting " << *(mOp.getVRegValue()) << " into map\n"); 
+	assert(!defMap.count(mOp.getVRegValue()) && "Def already in the map");
+
 	defMap[mOp.getVRegValue()] = &*I;
       }
       
@@ -265,6 +271,7 @@ void ModuloSchedulingPass::CreateDefMap(MachineBasicBlock *BI) {
       }
     }
   }
+  
   assert(defaultInst && "We must have a default instruction to use as our main point to add to machine code for instruction\n");
   
 }
@@ -286,6 +293,10 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
   if(!isLoop)
     return false;
     
+  //Check size of our basic block.. make sure we have more then just the terminator in it
+  if(BI->getBasicBlock()->size() == 1)
+    return false;
+
   //Get Target machine instruction info
   const TargetInstrInfo *TMI = target.getInstrInfo();
     
@@ -705,7 +716,7 @@ void ModuloSchedulingPass::findAllReccurrences(MSchedGraphNode *node,
       
     //Get final distance calc
     distance += node->getInEdge(last).getIteDiff();
-   
+    DEBUG(std::cerr << "Reccurrence Distance: " << distance << "\n");
 
     //Adjust II until we get close to the inequality delay - II*distance <= 0
     
@@ -1187,6 +1198,7 @@ void ModuloSchedulingPass::computeSchedule() {
 	success = scheduleNode(*I, EarlyStart, EarlyStart + II - 1);
       
       if(!success) {
+	++IncreasedII;
 	++II; 
 	schedule.clear();
 	break;
@@ -1199,6 +1211,7 @@ void ModuloSchedulingPass::computeSchedule() {
       success = schedule.constructKernel(II);
       DEBUG(std::cerr << "Done Constructing Schedule Kernel\n");
       if(!success) {
+	++IncreasedII;
 	++II;
 	schedule.clear();
       }
@@ -1266,6 +1279,8 @@ void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prol
 
   MSchedGraphNode *branch = 0;
   MSchedGraphNode *BAbranch = 0;
+
+  schedule.print(std::cerr);
 
   for(MSSchedule::kernel_iterator I = schedule.kernel_begin(), E = schedule.kernel_end(); I != E; ++I) {
     maxStageCount = std::max(maxStageCount, I->second);

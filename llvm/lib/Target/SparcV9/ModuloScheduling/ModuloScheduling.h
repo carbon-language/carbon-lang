@@ -113,6 +113,7 @@ namespace llvm {
   public:
     ModuloSchedulingPass(TargetMachine &targ) : target(targ) {}
     virtual bool runOnFunction(Function &F);
+    virtual const char* getPassName() const { return "ModuloScheduling"; }
   };
 
 }
