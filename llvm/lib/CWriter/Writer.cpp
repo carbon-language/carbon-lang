@@ -210,7 +210,8 @@ ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
 
   case Type::PointerTyID: {
     const PointerType *PTy = cast<PointerType>(Ty);
-    return printType(PTy->getElementType(), "(*" + NameSoFar + ")");
+    std::string ptrName = NameSoFar.length()? "(*"+NameSoFar+")" : string("*");
+    return printType(PTy->getElementType(), ptrName);
   }
 
   case Type::ArrayTyID: {
@@ -844,16 +845,20 @@ void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
       Out << (HasImplicitAddress ? "." : "->");
       Out << "field" << cast<ConstantUInt>(*(I+1))->getValue();
       I += 2;
-    } else {  // Performing array indexing. Just skip the 0
+    } else {  // First array index of 0: Just skip it
       ++I;
     }
   }
 
   for (; I != E; ++I)
     if ((*I)->getType() == Type::UIntTy) {
-      Out << "[";
+      Out << "[((int) (";                 // sign-extend from 32 (to 64) bits
       writeOperand(*I);
-      Out << "]";
+      Out << " * sizeof(";
+      printType(cast<PointerType>(Ptr->getType())->getElementType());
+      Out << "))) / sizeof(";
+      printType(cast<PointerType>(Ptr->getType())->getElementType());
+      Out << ")]";
     } else {
       Out << ".field" << cast<ConstantUInt>(*I)->getValue();
     }
