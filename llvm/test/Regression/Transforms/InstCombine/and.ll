@@ -113,3 +113,9 @@ sbyte %test17(sbyte %X, sbyte %Y) { ;; ~(~X & Y) --> (X | ~Y)
 	ret sbyte %D
 }
 
+bool %test18(int %A) {
+	%B = and int %A, -128
+	%C = setne int %B, 0   ;; C >= 128
+	ret bool %C
+}
+
