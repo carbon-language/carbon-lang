@@ -143,7 +143,7 @@ bool SimplifyCFG(BasicBlock *BB) {
   // pred, and if there is only one distinct successor of the predecessor, and
   // if there are no PHI nodes.
   //
-  if (!isa<PHINode>(BB->front()) && !BB->hasConstantReferences()) {
+  if (!BB->hasConstantReferences()) {
     pred_iterator PI(pred_begin(BB)), PE(pred_end(BB));
     BasicBlock *OnlyPred = *PI++;
     for (; PI != PE; ++PI)  // Search all predecessors, see if they are all same
@@ -167,6 +167,16 @@ bool SimplifyCFG(BasicBlock *BB) {
     if (OnlySucc) {
       //cerr << "Merging: " << BB << "into: " << OnlyPred;
       TerminatorInst *Term = OnlyPred->getTerminator();
+
+      // Resolve any PHI nodes at the start of the block.  They are all
+      // guaranteed to have exactly one entry if they exist.
+      //
+      while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
+        assert(PN->getNumIncomingValues() == 1 && "Only one pred!");
+        PN->replaceAllUsesWith(PN->getIncomingValue(0));
+        BB->getInstList().pop_front();  // Delete the phi node...
+      }
+
 
       // Delete the unconditional branch from the predecessor...
       OnlyPred->getInstList().pop_back();
