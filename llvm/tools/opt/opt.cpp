@@ -11,6 +11,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Assembly/PrintModulePass.h"
+#include "llvm/Transforms/UnifyMethodExitNodes.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/LevelChange.h"
@@ -31,7 +32,7 @@
 // Opts enum - All of the transformations we can do...
 enum Opts {
   // Basic optimizations
-  dce, constprop, inlining, constmerge, strip, mstrip,
+  dce, constprop, inlining, constmerge, strip, mstrip, mergereturn,
 
   // Miscellaneous Transformations
   trace, tracem, print, raiseallocs, cleangcc,
@@ -79,6 +80,8 @@ struct {
   { constmerge , New<ConstantMerge> },
   { strip      , New<SymbolStripping> },
   { mstrip     , New<FullSymbolStripping> },
+  { mergereturn, New<UnifyMethodExitNodes> },
+
   { indvars    , New<InductionVariableSimplify> },
   { instcombine, New<InstructionCombining> },
   { sccp       , New<SCCPPass> },
@@ -106,11 +109,13 @@ cl::Flag   Quiet         ("q", "Don't print modifying pass names", 0, false);
 cl::Alias  QuietA        ("quiet", "Alias for -q", cl::NoFlags, Quiet);
 cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(dce        , "Dead Code Elimination"),
-  clEnumVal(constprop  , "Simple Constant Propogation"),
- clEnumValN(inlining   , "inline", "Method Integration"),
+  clEnumVal(constprop  , "Simple constant propogation"),
+ clEnumValN(inlining   , "inline", "Method integration"),
   clEnumVal(constmerge , "Merge identical global constants"),
-  clEnumVal(strip      , "Strip Symbols"),
-  clEnumVal(mstrip     , "Strip Module Symbols"),
+  clEnumVal(strip      , "Strip symbols"),
+  clEnumVal(mstrip     , "Strip module symbols"),
+  clEnumVal(mergereturn, "Unify method exit nodes"),
+
   clEnumVal(indvars    , "Simplify Induction Variables"),
   clEnumVal(instcombine, "Combine redundant instructions"),
   clEnumVal(sccp       , "Sparse Conditional Constant Propogation"),
