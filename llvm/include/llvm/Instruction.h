@@ -90,13 +90,6 @@ public:
 #include "llvm/Instruction.def"
   };
 
-  enum UnaryOps {
-#define  FIRST_UNARY_INST(N)             FirstUnaryOp = N,
-#define HANDLE_UNARY_INST(N, OPC, CLASS) OPC = N,
-#define   LAST_UNARY_INST(N)             NumUnaryOps = N+1,
-#include "llvm/Instruction.def"
-  };
-
   enum BinaryOps {
 #define  FIRST_BINARY_INST(N)             FirstBinaryOp = N,
 #define HANDLE_BINARY_INST(N, OPC, CLASS) OPC = N,

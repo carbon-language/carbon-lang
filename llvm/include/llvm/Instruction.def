@@ -25,20 +25,6 @@
 #define LAST_TERM_INST(num)
 #endif
 
-#ifndef FIRST_UNARY_INST
-#define FIRST_UNARY_INST(num)
-#endif
-#ifndef HANDLE_UNARY_INST
-#ifndef HANDLE_INST
-#define HANDLE_UNARY_INST(num, opcode, Class)
-#else
-#define HANDLE_UNARY_INST(num, opcode, Class) HANDLE_INST(num, opcode, Class)
-#endif
-#endif
-#ifndef LAST_UNARY_INST
-#define LAST_UNARY_INST(num)
-#endif
-
 #ifndef FIRST_BINARY_INST
 #define FIRST_BINARY_INST(num)
 #endif
@@ -93,11 +79,6 @@ HANDLE_TERM_INST  ( 3, Switch, SwitchInst)
 HANDLE_TERM_INST  ( 4, Invoke, InvokeInst)
   LAST_TERM_INST  ( 4)
 
-// The single unary instruction... a binary inverse.
- FIRST_UNARY_INST ( 5)
-HANDLE_UNARY_INST ( 5, Not   , GenericBinaryInst)  // THIS IS WRONG.  *REMOVEME*
-  LAST_UNARY_INST ( 5)
-
 // Standard binary operators...
  FIRST_BINARY_INST( 6)
 HANDLE_BINARY_INST( 6, Add   , GenericBinaryInst)
@@ -146,10 +127,6 @@ HANDLE_OTHER_INST(32, UserOp2, Instruction)
 #undef  FIRST_TERM_INST
 #undef HANDLE_TERM_INST
 #undef   LAST_TERM_INST
-
-#undef  FIRST_UNARY_INST
-#undef HANDLE_UNARY_INST
-#undef   LAST_UNARY_INST
 
 #undef  FIRST_BINARY_INST
 #undef HANDLE_BINARY_INST
