@@ -1579,18 +1579,20 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     // See if we can codegen this as an LEA to fold operations together.
     if (N.getValueType() == MVT::i32) {
+      ExprMap.erase(N);
       X86ISelAddressMode AM;
-      if (!MatchAddress(Op0, AM) && !MatchAddress(Op1, AM)) {
-	// If this is not just an add, emit the LEA.  For a simple add (like
-	// reg+reg or reg+imm), we just emit an add.  It might be a good idea to
-	// leave this as LEA, then peephole it to 'ADD' after two address elim
-	// happens.
-        if (AM.Scale != 1 || AM.BaseType == X86ISelAddressMode::FrameIndexBase||
-            AM.GV || (AM.Base.Reg.Val && AM.IndexReg.Val && AM.Disp)) {
-          X86AddressMode XAM = SelectAddrExprs(AM);
-          addFullAddress(BuildMI(BB, X86::LEA32r, 4, Result), XAM);
-          return Result;
-        }
+      MatchAddress(N, AM);
+      ExprMap[N] = Result;
+
+      // If this is not just an add, emit the LEA.  For a simple add (like
+      // reg+reg or reg+imm), we just emit an add.  It might be a good idea to
+      // leave this as LEA, then peephole it to 'ADD' after two address elim
+      // happens.
+      if (AM.Scale != 1 || AM.BaseType == X86ISelAddressMode::FrameIndexBase||
+          AM.GV || (AM.Base.Reg.Val && AM.IndexReg.Val && AM.Disp)) {
+        X86AddressMode XAM = SelectAddrExprs(AM);
+        addFullAddress(BuildMI(BB, X86::LEA32r, 4, Result), XAM);
+        return Result;
       }
     }
 
