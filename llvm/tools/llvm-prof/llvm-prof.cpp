@@ -14,12 +14,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "ProfileInfo.h"
-#include "llvm/Function.h"
+#include "llvm/Module.h"
+#include "llvm/Assembly/AsmAnnotationWriter.h"
 #include "llvm/Bytecode/Reader.h"
 #include "Support/CommandLine.h"
 #include <iostream>
 #include <cstdio>
 #include <map>
+#include <set>
 
 namespace {
   cl::opt<std::string> 
@@ -29,6 +31,12 @@ namespace {
   cl::opt<std::string> 
   ProfileDataFile(cl::Positional, cl::desc("<llvmprof.out file>"),
                   cl::Optional, cl::init("llvmprof.out"));
+
+  cl::opt<bool>
+  PrintAnnotatedLLVM("annotated-llvm",
+                     cl::desc("Print LLVM code with frequency annotations"));
+  cl::alias PrintAnnotated2("A", cl::desc("Alias for --annotated-llvm"),
+                            cl::aliasopt(PrintAnnotatedLLVM));
 }
 
 // PairSecondSort - A sorting predicate to sort by the second element of a pair.
@@ -41,6 +49,28 @@ struct PairSecondSortReverse
     return LHS.second > RHS.second;
   }
 };
+
+namespace {
+  class ProfileAnnotator : public AssemblyAnnotationWriter {
+    std::map<const Function  *, unsigned> &FuncFreqs;
+    std::map<const BasicBlock*, unsigned> &BlockFreqs;
+  public:
+    ProfileAnnotator(std::map<const Function  *, unsigned> &FF,
+                     std::map<const BasicBlock*, unsigned> &BF)
+      : FuncFreqs(FF), BlockFreqs(BF) {}
+
+    virtual void emitFunctionAnnot(const Function *F, std::ostream &OS) {
+      OS << ";;; %" << F->getName() << " called " << FuncFreqs[F]
+         << " times.\n;;;\n";
+    }
+    virtual void emitBasicBlockAnnot(const BasicBlock *BB, std::ostream &OS) {
+      if (unsigned Count = BlockFreqs[BB])
+        OS << ";;; Executed " << Count << " times.\n";
+      else
+        OS << ";;; Never executed!\n";
+    }
+  };
+}
 
 
 int main(int argc, char **argv) {
@@ -58,12 +88,16 @@ int main(int argc, char **argv) {
   // Read the profiling information
   ProfileInfo PI(argv[0], ProfileDataFile, *M);
 
+  std::map<const Function  *, unsigned> FuncFreqs;
+  std::map<const BasicBlock*, unsigned> BlockFreqs;
+
   // Output a report.  Eventually, there will be multiple reports selectable on
   // the command line, for now, just keep things simple.
 
   // Emit the most frequent function table...
   std::vector<std::pair<Function*, unsigned> > FunctionCounts;
   PI.getFunctionCounts(FunctionCounts);
+  FuncFreqs.insert(FunctionCounts.begin(), FunctionCounts.end());
 
   // Sort by the frequency, backwards.
   std::sort(FunctionCounts.begin(), FunctionCounts.end(),
@@ -100,6 +134,7 @@ int main(int argc, char **argv) {
            FunctionCounts[i].first->getName().c_str());
   }
 
+  std::set<Function*> FunctionsToPrint;
 
   // If we have block count information, print out the LLVM module with
   // frequency annotations.
@@ -122,13 +157,29 @@ int main(int argc, char **argv) {
     printf(" ##   Frequency\n");
     unsigned BlocksToPrint = Counts.size();
     if (BlocksToPrint > 20) BlocksToPrint = 20;
-    for (unsigned i = 0; i != BlocksToPrint; ++i)
+    for (unsigned i = 0; i != BlocksToPrint; ++i) {
+      Function *F = Counts[i].first->getParent();
       printf("%3d. %5d/%d %s() - %s\n", i+1, Counts[i].second, TotalExecutions,
-             Counts[i].first->getParent()->getName().c_str(),
-             Counts[i].first->getName().c_str());
+             F->getName().c_str(), Counts[i].first->getName().c_str());
+      FunctionsToPrint.insert(F);
+    }
 
-    std::map<BasicBlock*, unsigned> BlockFreqs(Counts.begin(), Counts.end());
+    BlockFreqs.insert(Counts.begin(), Counts.end());
+  }
+  
+  if (PrintAnnotatedLLVM) {
+    std::cout << "\n===" << std::string(73, '-') << "===\n";
+    std::cout << "Annotated LLVM code for the module:\n\n";
     
+    if (FunctionsToPrint.empty())
+      for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+        FunctionsToPrint.insert(I);
+    
+    ProfileAnnotator PA(FuncFreqs, BlockFreqs);
+
+    for (std::set<Function*>::iterator I = FunctionsToPrint.begin(),
+           E = FunctionsToPrint.end(); I != E; ++I)
+      (*I)->print(std::cout, &PA);
   }
 
   return 0;
