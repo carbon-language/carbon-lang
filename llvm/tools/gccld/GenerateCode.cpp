@@ -6,15 +6,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Utils/Linker.h"
-#include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Target/TargetData.h"
+#include "gccld.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/Linker.h"
 #include "Support/SystemUtils.h"
-#include "gccld.h"
 
 //
 // Function: GenerateBytecode ()
@@ -36,11 +36,7 @@
 //  1 - Error.
 //
 int
-GenerateBytecode (Module * M,
-                  bool Strip,
-                  bool Internalize,
-                  std::ostream * Out)
-{
+GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
   // In addition to just linking the input from GCC, we also want to spiff it up
   // a little bit.  Do this now.
   PassManager Passes;
@@ -50,13 +46,11 @@ GenerateBytecode (Module * M,
 
   // Linking modules together can lead to duplicated global constants, only keep
   // one copy of each constant...
-  //
   Passes.add(createConstantMergePass());
 
   // If the -s command line option was specified, strip the symbols out of the
   // resulting program to make it smaller.  -s is a GCC option that we are
   // supporting.
-  //
   if (Strip)
     Passes.add(createSymbolStrippingPass());
 
@@ -64,32 +58,26 @@ GenerateBytecode (Module * M,
   // functions they are calling, they end up calling a vararg version of the
   // function that does not get a body filled in (the real function has typed
   // arguments).  This pass merges the two functions.
-  //
   Passes.add(createFunctionResolvingPass());
 
   if (Internalize) {
     // Now that composite has been compiled, scan through the module, looking
     // for a main function.  If main is defined, mark all other functions
     // internal.
-    //
     Passes.add(createInternalizePass());
   }
 
   // Remove unused arguments from functions...
-  //
   Passes.add(createDeadArgEliminationPass());
 
   // The FuncResolve pass may leave cruft around if functions were prototyped
   // differently than they were defined.  Remove this cruft.
-  //
   Passes.add(createInstructionCombiningPass());
 
   // Delete basic blocks, which optimization passes may have killed...
-  //
   Passes.add(createCFGSimplificationPass());
 
   // Now that we have optimized the program, discard unreachable functions...
-  //
   Passes.add(createGlobalDCEPass());
 
   // Add the pass that writes bytecode to the output file...
@@ -122,15 +110,13 @@ GenerateBytecode (Module * M,
 //  1 - Failure
 //
 int
-GenerateAssembly (const std::string & OutputFilename,
-                  const std::string & InputFilename,
-                  const std::string & llc,
-                  char ** const envp)
+GenerateAssembly(const std::string &OutputFilename,
+                 const std::string &InputFilename,
+                 const std::string &llc,
+                 char ** const envp)
 {
-  //
   // Run LLC to convert the bytecode file into assembly code.
-  //
-  const char * cmd[8];
+  const char *cmd[8];
 
   cmd[0] =  llc.c_str();
   cmd[1] =  "-f";
@@ -139,7 +125,7 @@ GenerateAssembly (const std::string & OutputFilename,
   cmd[4] =  InputFilename.c_str();
   cmd[5] =  NULL;
 
-  return (ExecWait (cmd, envp));
+  return ExecWait(cmd, envp);
 }
 
 //
@@ -165,49 +151,41 @@ GenerateAssembly (const std::string & OutputFilename,
 //  1 - Failure
 //
 int
-GenerateNative (const std::string & OutputFilename,
-                const std::string & InputFilename,
-                const std::vector<std::string> & Libraries,
-                const std::vector<std::string> & LibPaths,
-                const std::string & gcc,
-                char ** const envp)
-{
-  //
+GenerateNative(const std::string &OutputFilename,
+               const std::string &InputFilename,
+               const std::vector<std::string> &Libraries,
+               const std::vector<std::string> &LibPaths,
+               const std::string &gcc,
+               char ** const envp) {
   // Remove these environment variables from the environment of the
   // programs that we will execute.  It appears that GCC sets these
   // environment variables so that the programs it uses can configure
   // themselves identically.
   //
-  // However, when we invoke GCC below, we want it to use its  normal
-  // configuration.  Hence, we must sanitize it's environment.
-  //
-  char ** clean_env = CopyEnv (envp);
+  // However, when we invoke GCC below, we want it to use its normal
+  // configuration.  Hence, we must sanitize its environment.
+  char ** clean_env = CopyEnv(envp);
   if (clean_env == NULL)
-  {
     return 1;
-  }
-  RemoveEnv ("LIBRARY_PATH", clean_env);
-  RemoveEnv ("COLLECT_GCC_OPTIONS", clean_env);
-  RemoveEnv ("GCC_EXEC_PREFIX", clean_env);
-  RemoveEnv ("COMPILER_PATH", clean_env);
-  RemoveEnv ("COLLECT_GCC", clean_env);
+  RemoveEnv("LIBRARY_PATH", clean_env);
+  RemoveEnv("COLLECT_GCC_OPTIONS", clean_env);
+  RemoveEnv("GCC_EXEC_PREFIX", clean_env);
+  RemoveEnv("COMPILER_PATH", clean_env);
+  RemoveEnv("COLLECT_GCC", clean_env);
 
   std::vector<const char *> cmd;
 
-  //
   // Run GCC to assemble and link the program into native code.
   //
   // Note:
   //  We can't just assemble and link the file with the system assembler
   //  and linker because we don't know where to put the _start symbol.
   //  GCC mysteriously knows how to do it.
-  //
-  cmd.push_back (gcc.c_str());
-  cmd.push_back ("-o");
-  cmd.push_back (OutputFilename.c_str());
-  cmd.push_back (InputFilename.c_str());
+  cmd.push_back(gcc.c_str());
+  cmd.push_back("-o");
+  cmd.push_back(OutputFilename.c_str());
+  cmd.push_back(InputFilename.c_str());
 
-  //
   // JTC:
   //  Adding the library paths creates a problem for native generation.  If we
   //  include the search paths from llvmgcc, then we'll be telling normal gcc
@@ -215,31 +193,22 @@ GenerateNative (const std::string & OutputFilename,
   //  bad because those libraries hold only bytecode files (not native object
   //  files).  In the end, we attempt to link the bytecode libgcc into a native
   //  program.
-  //
 #ifdef ndef
-  //
   // Add in the library path options.
-  //
-  for (unsigned index=0; index < LibPaths.size(); index++)
-  {
-    cmd.push_back ("-L");
-    cmd.push_back (LibPaths[index].c_str());
+  for (unsigned index=0; index < LibPaths.size(); index++) {
+    cmd.push_back("-L");
+    cmd.push_back(LibPaths[index].c_str());
   }
 #endif
 
-  //
   // Add in the libraries to link.
-  //
-  std::vector<std::string> Libs (Libraries);
-  for (unsigned index = 0; index < Libs.size(); index++)
-  {
+  std::vector<std::string> Libs(Libraries);
+  for (unsigned index = 0; index < Libs.size(); index++) {
     Libs[index] = "-l" + Libs[index];
-    cmd.push_back (Libs[index].c_str());
+    cmd.push_back(Libs[index].c_str());
   }
-  cmd.push_back (NULL);
+  cmd.push_back(NULL);
 
-  //
   // Run the compiler to assembly and link together the program.
-  //
-  return (ExecWait (&(cmd[0]), clean_env));
+  return ExecWait(&(cmd[0]), clean_env);
 }
