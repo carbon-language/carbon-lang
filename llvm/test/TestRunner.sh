@@ -8,12 +8,14 @@
 #     %s   -  Replaced with the input name of the program
 #
 
-PROGRAM=`grep 'RUN:' $1 | sed "s/^.*RUN:\(.*\)$/\1/g;s/%s/$1/g" | head -n 1`
+grep 'RUN:' $1 | sed "s/^.*RUN:\(.*\)$/\1/g;s/%s/$1/g" > Output/$1.script
 OUTPUT=Output/$1.out
 
-($PROGRAM) > $OUTPUT 2>&1 || (
+
+/bin/sh Output/$1.script > $OUTPUT 2>&1 || (
   echo "******************** TEST '$1' FAILED! ********************"
-  echo "Command: " $PROGRAM
+  echo "Command: "
+  cat Output/$1.script
   echo "Output:"
   cat $OUTPUT
   rm $OUTPUT
