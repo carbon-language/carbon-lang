@@ -9,6 +9,8 @@
 #include "CodeGenWrappers.h"
 #include "Record.h"
 #include "Support/Debug.h"
+#include "Support/StringExtras.h"
+#include <set>
 
 NodeType::ArgResultTypes NodeType::Translate(Record *R) {
   const std::string &Name = R->getName();
@@ -23,6 +25,15 @@ NodeType::ArgResultTypes NodeType::Translate(Record *R) {
 //===----------------------------------------------------------------------===//
 // TreePatternNode implementation
 //
+
+/// getValueRecord - Returns the value of this tree node as a record.  For now
+/// we only allow DefInit's as our leaf values, so this is used.
+Record *TreePatternNode::getValueRecord() const {
+  DefInit *DI = dynamic_cast<DefInit*>(getValue());
+  assert(DI && "Instruction Selector does not yet support non-def leaves!");
+  return DI->getDef();
+}
+
 
 // updateNodeType - Set the node type of N to VT if VT contains information.  If
 // N already contains a conflicting type, then throw an exception
@@ -50,17 +61,17 @@ void TreePatternNode::InstantiateNonterminals(InstrSelectorEmitter &ISE) {
   }
   
   // If this is a leaf, it might be a reference to a nonterminal!  Check now.
-  if (DefInit *DI = dynamic_cast<DefInit*>(getValue()))
-    if (DI->getDef()->isSubClassOf("Nonterminal")) {
-      Pattern *NT = ISE.getPattern(DI->getDef());
-      if (!NT->isResolved()) {
-        // We found an unresolved nonterminal reference.  Ask the ISE to clone
-        // it for us, then update our reference to the fresh, new, resolved,
-        // nonterminal.
-        
-        Value = new DefInit(ISE.InstantiateNonterminal(NT, getType()));
-      }
+  Record *R = getValueRecord();
+  if (R->isSubClassOf("Nonterminal")) {
+    Pattern *NT = ISE.getPattern(R);
+    if (!NT->isResolved()) {
+      // We found an unresolved nonterminal reference.  Ask the ISE to clone
+      // it for us, then update our reference to the fresh, new, resolved,
+      // nonterminal.
+      
+      Value = new DefInit(ISE.InstantiateNonterminal(NT, getType()));
     }
+  }
 }
 
 
@@ -79,7 +90,6 @@ TreePatternNode *TreePatternNode::clone() const {
   New->setType(Type);
   return New;
 }
-
 
 std::ostream &operator<<(std::ostream &OS, const TreePatternNode &N) {
   if (N.isLeaf())
@@ -126,11 +136,7 @@ Pattern::Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
       assert(Tree->getChildren().size() == 2 && "Set with != 2 arguments?");
       if (!Tree->getChild(0)->isLeaf())
         error("Arg #0 of set should be a register or register class!");
-      DefInit *RegInit = dynamic_cast<DefInit*>(Tree->getChild(0)->getValue());
-      if (RegInit == 0)
-        error("LHS of 'set' expected to be a register or register class!");
-
-      Result = RegInit->getDef();
+      Result = Tree->getChild(0)->getValueRecord();
       Tree = Tree->getChild(1);
     }
   }
@@ -232,8 +238,7 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
 
   bool AnyUnset = false;
   Record *Operator = N->getOperator();
-  assert(ISE.getNodeTypes().count(Operator) && "No node info for node!");
-  const NodeType &NT = ISE.getNodeTypes()[Operator];
+  const NodeType &NT = ISE.getNodeType(Operator);
 
   // Check to see if we can infer anything about the argument types from the
   // return types...
@@ -317,6 +322,38 @@ std::ostream &operator<<(std::ostream &OS, const Pattern &P) {
 }
 
 
+/// getSlotName - If this is a leaf node, return the slot name that the operand
+/// will update.
+std::string Pattern::getSlotName() const {
+  if (getPatternType() == Pattern::Nonterminal) {
+    // Just use the nonterminal name, which will already include the type if
+    // it has been cloned.
+    return getRecord()->getName();
+  } else {
+    std::string SlotName;
+    if (getResult())
+      SlotName = getResult()->getName()+"_";
+    else
+      SlotName = "Void_";
+    return SlotName + getName(getTree()->getType());
+  }
+}
+
+/// getSlotName - If this is a leaf node, return the slot name that the
+/// operand will update.
+std::string Pattern::getSlotName(Record *R) {
+  if (R->isSubClassOf("Nonterminal")) {
+    // Just use the nonterminal name, which will already include the type if
+    // it has been cloned.
+    return R->getName();
+  } else if (R->isSubClassOf("RegisterClass")) {
+    MVT::ValueType Ty = getValueType(R->getValueAsDef("RegType"));
+    return R->getName() + "_" + getName(Ty);
+  } else {
+    assert(0 && "Don't know how to get a slot name for this!");
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // PatternOrganizer implementation
 //
@@ -324,29 +361,12 @@ std::ostream &operator<<(std::ostream &OS, const Pattern &P) {
 /// addPattern - Add the specified pattern to the appropriate location in the
 /// collection.
 void PatternOrganizer::addPattern(Pattern *P) {
-  std::string ValueName;
-  if (P->getPatternType() == Pattern::Nonterminal) {
-    // Just use the nonterminal name, which will already include the type if
-    // it has been cloned.
-    ValueName = P->getRecord()->getName();
-  } else {
-    if (P->getResult())
-      ValueName += P->getResult()->getName()+"_";
-    else
-      ValueName += "Void_";
-    ValueName += getName(P->getTree()->getType());
-  }
-
-  NodesForSlot &Nodes = AllPatterns[ValueName];
+  NodesForSlot &Nodes = AllPatterns[P->getSlotName()];
   if (!P->getTree()->isLeaf())
     Nodes[P->getTree()->getOperator()].push_back(P);
   else {
     // Right now we only support DefInit's with node types...
-    DefInit *Val = dynamic_cast<DefInit*>(P->getTree()->getValue());
-    if (!Val)
-      throw std::string("We only support def inits in PatternOrganizer"
-                        "::addPattern so far!");
-    Nodes[Val->getDef()].push_back(P);
+    Nodes[P->getTree()->getValueRecord()].push_back(P);
   }
 }
 
@@ -469,6 +489,11 @@ Record *InstrSelectorEmitter::InstantiateNonterminal(Pattern *NT,
   
   Record *New = new Record(NT->getRecord()->getName()+"_"+getName(ResultTy));
 
+  // Copy over the superclasses...
+  const std::vector<Record*> &SCs = NT->getRecord()->getSuperClasses();
+  for (unsigned i = 0, e = SCs.size(); i != e; ++i)
+    New->addSuperClass(SCs[i]);
+
   DEBUG(std::cerr << "  Nonterminal '" << NT->getRecord()->getName()
                   << "' for type '" << getName(ResultTy) << "', producing '"
                   << New->getName() << "'\n");
@@ -502,6 +527,242 @@ void InstrSelectorEmitter::CalculateComputableValues() {
     if (I->second->isResolved())
       ComputableValues.addPattern(I->second);
 }
+
+#if 0
+// MoveIdenticalPatterns - Given a tree pattern 'P', move all of the tree
+// patterns which have the same top-level structure as P from the 'From' list to
+// the 'To' list.
+static void MoveIdenticalPatterns(TreePatternNode *P,
+                    std::vector<std::pair<Pattern*, TreePatternNode*> > &From,
+                    std::vector<std::pair<Pattern*, TreePatternNode*> > &To) {
+  assert(!P->isLeaf() && "All leaves are identical!");
+
+  const std::vector<TreePatternNode*> &PChildren = P->getChildren();
+  for (unsigned i = 0; i != From.size(); ++i) {
+    TreePatternNode *N = From[i].second;
+    assert(P->getOperator() == N->getOperator() &&"Differing operators?");
+    assert(PChildren.size() == N->getChildren().size() &&
+           "Nodes with different arity??");
+    bool isDifferent = false;
+    for (unsigned c = 0, e = PChildren.size(); c != e; ++c) {
+      TreePatternNode *PC = PChildren[c];
+      TreePatternNode *NC = N->getChild(c);
+      if (PC->isLeaf() != NC->isLeaf()) {
+        isDifferent = true;
+        break;
+      }
+
+      if (!PC->isLeaf()) {
+        if (PC->getOperator() != NC->getOperator()) {
+          isDifferent = true;
+          break;
+        }
+      } else {  // It's a leaf!
+        if (PC->getValueRecord() != NC->getValueRecord()) {
+          isDifferent = true;
+          break;
+        }
+      }
+    }
+    // If it's the same as the reference one, move it over now...
+    if (!isDifferent) {
+      To.push_back(std::make_pair(From[i].first, N));
+      From.erase(From.begin()+i);
+      --i;   // Don't skip an entry...
+    }
+  }
+}
+#endif
+
+static void EmitPatternPredicates(TreePatternNode *Tree,
+                                  const std::string &VarName, std::ostream &OS){
+  OS << " && " << VarName << "->getNodeType() == ISD::"
+     << Tree->getOperator()->getName();
+
+  for (unsigned c = 0, e = Tree->getNumChildren(); c != e; ++c)
+    if (!Tree->getChild(c)->isLeaf())
+      EmitPatternPredicates(Tree->getChild(c),
+                            VarName + "->getUse(" + utostr(c)+")", OS);
+}
+
+static void EmitPatternCosts(TreePatternNode *Tree, const std::string &VarName,
+                             std::ostream &OS) {
+  for (unsigned c = 0, e = Tree->getNumChildren(); c != e; ++c)
+    if (Tree->getChild(c)->isLeaf()) {
+      OS << " + Match_"
+         << Pattern::getSlotName(Tree->getChild(c)->getValueRecord()) << "("
+         << VarName << "->getUse(" << c << "))";
+    } else {
+      EmitPatternCosts(Tree->getChild(c),
+                       VarName + "->getUse(" + utostr(c) + ")", OS);
+    }
+}
+
+
+// EmitMatchCosters - Given a list of patterns, which all have the same root
+// pattern operator, emit an efficient decision tree to decide which one to
+// pick.  This is structured this way to avoid reevaluations of non-obvious
+// subexpressions.
+void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
+           const std::vector<std::pair<Pattern*, TreePatternNode*> > &Patterns,
+                                            const std::string &VarPrefix,
+                                            unsigned IndentAmt) {
+  assert(!Patterns.empty() && "No patterns to emit matchers for!");
+  std::string Indent(IndentAmt, ' ');
+  
+  // Load all of the operands of the root node into scalars for fast access
+  const NodeType &ONT = getNodeType(Patterns[0].second->getOperator());
+  for (unsigned i = 0, e = ONT.ArgTypes.size(); i != e; ++i)
+    OS << Indent << "SelectionDAGNode *" << VarPrefix << "_Op" << i
+       << " = N->getUse(" << i << ");\n";
+
+  // Compute the costs of computing the various nonterminals/registers, which
+  // are directly used at this level.
+  OS << "\n" << Indent << "// Operand matching costs...\n";
+  std::set<std::string> ComputedValues;   // Avoid duplicate computations...
+  for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
+    const std::vector<TreePatternNode*> &Children =
+      Patterns[i].second->getChildren();
+    for (unsigned c = 0, e = Children.size(); c != e; ++c) {
+      TreePatternNode *N = Children[c];
+      if (N->isLeaf()) {
+        Record *VR = N->getValueRecord();
+        const std::string &LeafName = VR->getName();
+        std::string OpName  = VarPrefix + "_Op" + utostr(c);
+        std::string ValName = OpName + "_" + LeafName + "_Cost";
+        if (!ComputedValues.count(ValName)) {
+          OS << Indent << "unsigned " << ValName << " = Match_"
+             << Pattern::getSlotName(VR) << "(" << OpName << ");\n";
+          ComputedValues.insert(ValName);
+        }
+      }
+    }
+  }
+  OS << "\n";
+
+
+  std::string LocCostName = VarPrefix + "_Cost";
+  OS << Indent << "unsigned " << LocCostName << "Min = ~0U >> 1;\n"
+     << Indent << "unsigned " << VarPrefix << "_PatternMin = NoMatch;\n";
+  
+#if 0
+  // Separate out all of the patterns into groups based on what their top-level
+  // signature looks like...
+  std::vector<std::pair<Pattern*, TreePatternNode*> > PatternsLeft(Patterns);
+  while (!PatternsLeft.empty()) {
+    // Process all of the patterns that have the same signature as the last
+    // element...
+    std::vector<std::pair<Pattern*, TreePatternNode*> > Group;
+    MoveIdenticalPatterns(PatternsLeft.back().second, PatternsLeft, Group);
+    assert(!Group.empty() && "Didn't at least pick the source pattern?");
+
+#if 0
+    OS << "PROCESSING GROUP:\n";
+    for (unsigned i = 0, e = Group.size(); i != e; ++i)
+      OS << "  " << *Group[i].first << "\n";
+    OS << "\n\n";
+#endif
+
+    OS << Indent << "{ // ";
+
+    if (Group.size() != 1) {
+      OS << Group.size() << " size group...\n";
+      OS << Indent << "  unsigned " << VarPrefix << "_Pattern = NoMatch;\n";
+    } else {
+      OS << *Group[0].first << "\n";
+      OS << Indent << "  unsigned " << VarPrefix << "_Pattern = "
+         << Group[0].first->getRecord()->getName() << "_Pattern;\n";
+    }
+
+    OS << Indent << "  unsigned " << LocCostName << " = ";
+    if (Group.size() == 1)
+      OS << "1;\n";    // Add inst cost if at individual rec
+    else
+      OS << "0;\n";
+
+    // Loop over all of the operands, adding in their costs...
+    TreePatternNode *N = Group[0].second;
+    const std::vector<TreePatternNode*> &Children = N->getChildren();
+
+    // If necessary, emit conditionals to check for the appropriate tree
+    // structure here...
+    for (unsigned i = 0, e = Children.size(); i != e; ++i) {
+      TreePatternNode *C = Children[i];
+      if (C->isLeaf()) {
+        // We already calculated the cost for this leaf, add it in now...
+        OS << Indent << "  " << LocCostName << " += "
+           << VarPrefix << "_Op" << utostr(i) << "_"
+           << C->getValueRecord()->getName() << "_Cost;\n";
+      } else {
+        // If it's not a leaf, we have to check to make sure that the current
+        // node has the appropriate structure, then recurse into it...
+        OS << Indent << "  if (" << VarPrefix << "_Op" << i
+           << "->getNodeType() == ISD::" << C->getOperator()->getName()
+           << ") {\n";
+        std::vector<std::pair<Pattern*, TreePatternNode*> > SubPatterns;
+        for (unsigned n = 0, e = Group.size(); n != e; ++n)
+          SubPatterns.push_back(std::make_pair(Group[n].first,
+                                               Group[n].second->getChild(i)));
+        EmitMatchCosters(OS, SubPatterns, VarPrefix+"_Op"+utostr(i),
+                         IndentAmt + 4);
+        OS << Indent << "  }\n";
+      }
+    }
+
+    // If the cost for this match is less than the minimum computed cost so far,
+    // update the minimum cost and selected pattern.
+    OS << Indent << "  if (" << LocCostName << " < " << LocCostName << "Min) { "
+       << LocCostName << "Min = " << LocCostName << "; " << VarPrefix
+       << "_PatternMin = " << VarPrefix << "_Pattern; }\n";
+    
+    OS << Indent << "}\n";
+  }
+#endif
+
+  for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
+    Pattern *P = Patterns[i].first;
+    TreePatternNode *PTree = P->getTree();
+    unsigned PatternCost = 1;
+
+    // Check to see if there are any non-leaf elements in the pattern.  If so,
+    // we need to emit a predicate for this match.
+    bool AnyNonLeaf = false;
+    for (unsigned c = 0, e = PTree->getNumChildren(); c != e; ++c)
+      if (!PTree->getChild(c)->isLeaf()) {
+        AnyNonLeaf = true;
+        break;
+      }
+
+    if (!AnyNonLeaf) {   // No predicate necessary, just output a scope...
+      OS << "  {// " << *P << "\n";
+    } else {
+      // We need to emit a predicate to make sure the tree pattern matches, do
+      // so now...
+      OS << "  if (1";
+      for (unsigned c = 0, e = PTree->getNumChildren(); c != e; ++c)
+        if (!PTree->getChild(c)->isLeaf())
+          EmitPatternPredicates(PTree->getChild(c),
+                                VarPrefix + "_Op" + utostr(c), OS);
+
+      OS << ") {\n    // " << *P << "\n";
+    }
+
+    OS << "    unsigned PatCost = " << PatternCost;
+
+    for (unsigned c = 0, e = PTree->getNumChildren(); c != e; ++c)
+      if (PTree->getChild(c)->isLeaf()) {
+        OS << " + " << VarPrefix << "_Op" << c << "_"
+           << PTree->getChild(c)->getValueRecord()->getName() << "_Cost";
+      } else {
+        EmitPatternCosts(PTree->getChild(c), VarPrefix + "_Op" + utostr(c), OS);
+      }
+    OS << ";\n";
+    OS << "    if (PatCost < MinCost) { MinCost = PatCost; Pattern = "
+       << P->getRecord()->getName() << "_Pattern; }\n"
+       << "  }\n";
+  }
+}
+
 
 void InstrSelectorEmitter::run(std::ostream &OS) {
   // Type-check all of the node types to ensure we "understand" them.
@@ -570,30 +831,30 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
      << "    }\n\n"
      << "    // DAG matching methods for classes... all of these methods"
                                        " return the cost\n"
-     <<"    // of producing a value of the specified class and type, which"
+     << "    // of producing a value of the specified class and type, which"
                                        " also gets\n"
      << "    // added to the DAG node.\n";
 
   // Output all of the matching prototypes for slots...
   for (PatternOrganizer::iterator I = ComputableValues.begin(),
          E = ComputableValues.end(); I != E; ++I)
-    OS << "  unsigned Match_" << I->first << "(SelectionDAGNode *N);\n";
-  OS << "\n  // DAG matching methods for DAG nodes...\n";
+    OS << "    unsigned Match_" << I->first << "(SelectionDAGNode *N);\n";
+  OS << "\n    // DAG matching methods for DAG nodes...\n";
 
   // Output all of the matching prototypes for slot/node pairs
   for (PatternOrganizer::iterator I = ComputableValues.begin(),
          E = ComputableValues.end(); I != E; ++I)
     for (PatternOrganizer::NodesForSlot::iterator J = I->second.begin(),
            E = I->second.end(); J != E; ++J)
-      OS << "  unsigned Match_" << I->first << "_" << J->first->getName()
+      OS << "    unsigned Match_" << I->first << "_" << J->first->getName()
          << "(SelectionDAGNode *N);\n";
 
   // Output all of the dag reduction methods prototypes...
-  OS << "\n  // DAG reduction methods...\n";
+  OS << "\n    // DAG reduction methods...\n";
   for (PatternOrganizer::iterator I = ComputableValues.begin(),
          E = ComputableValues.end(); I != E; ++I)
-    OS << "  ReducedValue_" << I->first << " *Reduce_" << I->first
-       << "(SelectionDAGNode *N,\n" << std::string(25+2*I->first.size(), ' ')
+    OS << "    ReducedValue_" << I->first << " *Reduce_" << I->first
+       << "(SelectionDAGNode *N,\n" << std::string(27+2*I->first.size(), ' ')
        << "MachineBasicBlock *MBB);\n";
   OS << "  };\n}\n\n";
 
@@ -613,6 +874,52 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
      << "}\n\n"
      << "//===" << std::string(70, '-') << "===//\n"
      << "//  Matching methods...\n"
-     << "//\n";
+     << "//\n\n";
+
+  for (PatternOrganizer::iterator I = ComputableValues.begin(),
+         E = ComputableValues.end(); I != E; ++I) {
+    const std::string &SlotName = I->first;
+    OS << "unsigned " << Target.getName() << "ISel::Match_" << SlotName
+       << "(SelectionDAGNode *N) {\n"
+       << "  assert(N->getValueType() == ISD::"
+       << getName((*I->second.begin()).second[0]->getTree()->getType())<< ");\n"
+       << "  // If we already have a cost available for " << SlotName
+       << " use it!\n"
+       << "  if (N->getPatternFor(" << SlotName << "_Slot))\n"
+       << "    return N->getCostFor(" << SlotName << "_Slot);\n\n"
+       << "  unsigned Cost;\n"
+       << "  switch (N->getNodeType()) {\n"
+       << "  default: assert(0 && \"Unhandled node type for " << SlotName
+       << "!\");\n";
+
+    for (PatternOrganizer::NodesForSlot::iterator J = I->second.begin(),
+           E = I->second.end(); J != E; ++J)
+      OS << "  case ISD::" << J->first->getName() << ":\tCost = Match_"
+         << SlotName << "_" << J->first->getName() << "(N); break;\n";
+
+    OS << "  }\n  return Cost;\n}\n\n";
+
+    for (PatternOrganizer::NodesForSlot::iterator J = I->second.begin(),
+           E = I->second.end(); J != E; ++J) {
+      Record *Operator = J->first;
+      OS << "unsigned " << Target.getName() << "ISel::Match_" << SlotName << "_"
+         << Operator->getName() << "(SelectionDAGNode *N) {\n"
+         << "  unsigned Pattern = NoMatchPattern;\n"
+         << "  unsigned MinCost = ~0U >> 1;\n";
+
+      std::vector<std::pair<Pattern*, TreePatternNode*> > Patterns;
+      for (unsigned i = 0, e = J->second.size(); i != e; ++i)
+        Patterns.push_back(std::make_pair(J->second[i],
+                                          J->second[i]->getTree()));
+      EmitMatchCosters(OS, Patterns, "N", 2);
+
+      OS << "\n  N->setPatternCostFor(" << SlotName
+         << "_Slot, Pattern, MinCost, NumSlots);\n"
+         << "  return MinCost;\n"
+         << "}\n";
+    }
+
+    break; // FIXME: REMOVE
+  }
 }
 

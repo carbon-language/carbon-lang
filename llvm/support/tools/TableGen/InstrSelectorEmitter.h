@@ -80,6 +80,7 @@ public:
     assert(Operator != 0 && "This is a leaf node!");
     return Children;
   }
+  unsigned getNumChildren() const { return Children.size(); }
   TreePatternNode *getChild(unsigned c) const {
     assert(c < Children.size() && "Child access out of range!");
     return getChildren()[c];
@@ -89,6 +90,10 @@ public:
     assert(Operator == 0 && "This is not a leaf node!");
     return Value;
   }
+
+  /// getValueRecord - Returns the value of this tree node as a record.  For now
+  /// we only allow DefInit's as our leaf values, so this is used.
+  Record *getValueRecord() const;
 
   /// clone - Make a copy of this tree and all of its children.
   ///
@@ -101,10 +106,10 @@ public:
   /// it with the using context we provide.
   void InstantiateNonterminals(InstrSelectorEmitter &ISE);
 
-  // UpdateNodeType - Set the node type of N to VT if VT contains information.
-  // If N already contains a conflicting type, then throw an exception.  This
-  // returns true if any information was updated.
-  //
+  /// UpdateNodeType - Set the node type of N to VT if VT contains information.
+  /// If N already contains a conflicting type, then throw an exception.  This
+  /// returns true if any information was updated.
+  ///
   bool updateNodeType(MVT::ValueType VT, const std::string &RecName);
 };
 
@@ -198,6 +203,11 @@ public:
   /// pattern.
   void error(const std::string &Msg) const;
 
+  /// getSlotName - If this is a leaf node, return the slot name that the
+  /// operand will update.
+  std::string getSlotName() const;
+  static std::string getSlotName(Record *R);
+
 private:
   MVT::ValueType getIntrinsicType(Record *R) const;
   TreePatternNode *ParseTreePattern(DagInit *DI);
@@ -270,6 +280,11 @@ public:
 
   const CodeGenTarget &getTarget() const { return Target; }
   std::map<Record*, NodeType> &getNodeTypes() { return NodeTypes; }
+  const NodeType &getNodeType(Record *R) const {
+    std::map<Record*, NodeType>::const_iterator I = NodeTypes.find(R);
+    assert(I != NodeTypes.end() && "Unknown node type!");
+    return I->second;
+  }
 
   /// getPattern - return the pattern corresponding to the specified record, or
   /// null if there is none.
@@ -313,6 +328,14 @@ private:
   // CalculateComputableValues - Fill in the ComputableValues map through
   // analysis of the patterns we are playing with.
   void CalculateComputableValues();
+
+  // EmitMatchCosters - Given a list of patterns, which all have the same root
+  // pattern operator, emit an efficient decision tree to decide which one to
+  // pick.  This is structured this way to avoid reevaluations of non-obvious
+  // subexpressions.
+  void EmitMatchCosters(std::ostream &OS,
+            const std::vector<std::pair<Pattern*, TreePatternNode*> > &Patterns,
+                        const std::string &VarPrefix, unsigned Indent);
 };
 
 #endif
