@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
+#include "Support/LeakDetector.h"
 
 namespace llvm {
 
@@ -38,6 +39,8 @@ MachineInstr::MachineInstr(short opcode, unsigned numOperands)
     numImplicitRefs(0),
     operands(numOperands, MachineOperand()),
     parent(0) {
+  // Make sure that we get added to a machine basicblock
+  LeakDetector::addGarbageObject(this);
 }
 
 /// MachineInstr ctor - This constructor only does a _reserve_ of the operands,
@@ -48,6 +51,8 @@ MachineInstr::MachineInstr(short opcode, unsigned numOperands)
 MachineInstr::MachineInstr(short opcode, unsigned numOperands, bool XX, bool YY)
   : Opcode(opcode), numImplicitRefs(0), parent(0) {
   operands.reserve(numOperands);
+  // Make sure that we get added to a machine basicblock
+  LeakDetector::addGarbageObject(this);
 }
 
 /// MachineInstr ctor - Work exactly the same as the ctor above, except that the
@@ -58,7 +63,14 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, short opcode,
   : Opcode(opcode), numImplicitRefs(0), parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   operands.reserve(numOperands);
+  // Make sure that we get added to a machine basicblock
+  LeakDetector::addGarbageObject(this);
   MBB->push_back(this);  // Add instruction to end of basic block!
+}
+
+MachineInstr::~MachineInstr()
+{
+  LeakDetector::removeGarbageObject(this);
 }
 
 /// OperandComplete - Return true if it's illegal to add a new operand

@@ -120,17 +120,6 @@ void MachineFunction::print(std::ostream &OS) const {
   OS << "\nEnd function \"" << Fn->getName() << "\"\n\n";
 }
 
-void MachineBasicBlock::dump() const { print(std::cerr); }
-
-void MachineBasicBlock::print(std::ostream &OS) const {
-  const BasicBlock *LBB = getBasicBlock();
-  OS << "\n" << LBB->getName() << " (" << (const void*)LBB << "):\n";
-  for (const_iterator I = begin(); I != end(); ++I) {
-    OS << "\t";
-    I->print(OS, MachineFunction::get(LBB->getParent()).getTarget());
-  }
-}
-
 // The next two methods are used to construct and to retrieve
 // the MachineCodeForFunction object for the given function.
 // construct() -- Allocates and initializes for a given function and target

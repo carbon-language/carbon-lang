@@ -24,8 +24,6 @@ namespace llvm {
 template <>
 class ilist_traits<MachineInstr>
 {
-  typedef ilist_traits<MachineInstr> self;
-
   // this is only set by the MachineBasicBlock owning the ilist
   friend class MachineBasicBlock;
   MachineBasicBlock* parent;
@@ -45,25 +43,13 @@ public:
   static void setPrev(MachineInstr* N, MachineInstr* prev) { N->prev = prev; }
   static void setNext(MachineInstr* N, MachineInstr* next) { N->next = next; }
 
-  static MachineInstr* createNode() { return new MachineInstr(0, 0); }
-
-  void addNodeToList(MachineInstr* N) {
-    assert(N->parent == 0 && "machine instruction already in a basic block");
-    N->parent = parent;
-  }
-
-  void removeNodeFromList(MachineInstr* N) {
-    assert(N->parent != 0 && "machine instruction not in a basic block");
-    N->parent = 0;
-  }
-
-  void transferNodesFromList(iplist<MachineInstr, self>& toList,
-                             ilist_iterator<MachineInstr> first,
-                             ilist_iterator<MachineInstr> last) {
-    if (parent != toList.parent)
-      for (; first != last; ++first)
-          first->parent = toList.parent;
-  }
+  static MachineInstr* createNode();
+  void addNodeToList(MachineInstr* N);
+  void removeNodeFromList(MachineInstr* N);
+  void transferNodesFromList(
+      iplist<MachineInstr, ilist_traits<MachineInstr> >& toList,
+      ilist_iterator<MachineInstr> first,
+      ilist_iterator<MachineInstr> last);
 };
 
 class BasicBlock;

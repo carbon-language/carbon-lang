@@ -345,7 +345,6 @@ private:
   // Intrusive list support
   //
   friend class ilist_traits<MachineInstr>;
-  MachineInstr() : Opcode(0), numImplicitRefs(0) { /* used only by ilist */ }
 
 public:
   MachineInstr(short Opcode, unsigned numOperands);
@@ -363,6 +362,8 @@ public:
   ///
   MachineInstr(MachineBasicBlock *MBB, short Opcode, unsigned numOps);
   
+  ~MachineInstr();
+
   const MachineBasicBlock* getParent() const { return parent; }
   MachineBasicBlock* getParent() { return parent; }
 
