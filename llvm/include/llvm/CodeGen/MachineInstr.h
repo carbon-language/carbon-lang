@@ -449,9 +449,8 @@ public:
   bool isRegUsed(int regNum) const {
     return regsUsed.find(regNum) != regsUsed.end();
   }
-  
-  // insertusedreg - Add a register to the Used registers set...
   void insertUsedReg(unsigned Reg) {
+    assert(((int) Reg) >= 0 && "Invalid register being marked as used");
     regsUsed.insert((int) Reg);
   }
 
