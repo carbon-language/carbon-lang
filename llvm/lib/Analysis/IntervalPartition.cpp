@@ -13,10 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/IntervalIterator.h"
-#include "llvm/ADT/STLExtras.h"
-#include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 static RegisterAnalysis<IntervalPartition>
 X("intervals", "Interval Partition Construction", true);
@@ -27,7 +24,8 @@ X("intervals", "Interval Partition Construction", true);
 
 // destroy - Reset state back to before function was analyzed
 void IntervalPartition::destroy() {
-  std::for_each(Intervals.begin(), Intervals.end(), deleter<Interval>);
+  for (unsigned i = 0, e = Intervals.size(); i != e; ++i)
+    delete Intervals[i];
   IntervalMap.clear();
   RootInterval = 0;
 }
@@ -74,14 +72,14 @@ bool IntervalPartition::runOnFunction(Function &F) {
 
   ++I;  // After the first one...
 
-  // Add the rest of the intervals to the partition...
-  for_each(I, intervals_end(&F),
-	   bind_obj(this, &IntervalPartition::addIntervalToPartition));
+  // Add the rest of the intervals to the partition.
+  for (function_interval_iterator E = intervals_end(&F); I != E; ++I)
+    addIntervalToPartition(*I);
 
   // Now that we know all of the successor information, propagate this to the
-  // predecessors for each block...
-  for_each(Intervals.begin(), Intervals.end(), 
-	   bind_obj(this, &IntervalPartition::updatePredecessors));
+  // predecessors for each block.
+  for (unsigned i = 0, e = Intervals.size(); i != e; ++i)
+    updatePredecessors(Intervals[i]);
   return false;
 }
 
@@ -102,14 +100,13 @@ IntervalPartition::IntervalPartition(IntervalPartition &IP, bool) {
 
   ++I;  // After the first one...
 
-  // Add the rest of the intervals to the partition...
-  for_each(I, intervals_end(IP),
-	   bind_obj(this, &IntervalPartition::addIntervalToPartition));
+  // Add the rest of the intervals to the partition.
+  for (interval_part_interval_iterator E = intervals_end(IP); I != E; ++I)
+    addIntervalToPartition(*I);
 
   // Now that we know all of the successor information, propagate this to the
-  // predecessors for each block...
-  for_each(Intervals.begin(), Intervals.end(), 
-	   bind_obj(this, &IntervalPartition::updatePredecessors));
+  // predecessors for each block.
+  for (unsigned i = 0, e = Intervals.size(); i != e; ++i)
+    updatePredecessors(Intervals[i]);
 }
 
-} // End llvm namespace
