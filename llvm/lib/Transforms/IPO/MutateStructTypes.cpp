@@ -413,26 +413,28 @@ void MutateStructTypes::transformFunction(Function *m) {
         break;
 
       case Instruction::Load:
+        assert(cast<MemAccessInst>(I).idx_begin() ==
+               cast<MemAccessInst>(I).idx_end() &&
+               "Indexing loads not supported!");
+        NewI = new LoadInst(ConvertValue(I.getOperand(0)));
+        break;
       case Instruction::Store:
+        assert(cast<MemAccessInst>(I).idx_begin() ==
+               cast<MemAccessInst>(I).idx_end() &&
+               "Indexing loads not supported!");
+        NewI = new StoreInst(ConvertValue(I.getOperand(0)),
+                             ConvertValue(I.getOperand(1)));
+        break;
       case Instruction::GetElementPtr: {
-        const MemAccessInst &MAI = cast<MemAccessInst>(I);
-        vector<Value*> Indices(MAI.idx_begin(), MAI.idx_end());
-        const Value *Ptr = MAI.getPointerOperand();
-        Value *NewPtr = ConvertValue(Ptr);
+        const GetElementPtrInst &GEP = cast<GetElementPtrInst>(I);
+        vector<Value*> Indices(GEP.idx_begin(), GEP.idx_end());
         if (!Indices.empty()) {
-          const Type *PTy = cast<PointerType>(Ptr->getType())->getElementType();
+          const Type *PTy =
+            cast<PointerType>(GEP.getOperand(0)->getType())->getElementType();
           AdjustIndices(cast<CompositeType>(PTy), Indices);
         }
 
-        if (isa<LoadInst>(I)) {
-          NewI = new LoadInst(NewPtr, Indices);
-        } else if (isa<StoreInst>(I)) {
-          NewI = new StoreInst(ConvertValue(I.getOperand(0)), NewPtr, Indices);
-        } else if (isa<GetElementPtrInst>(I)) {
-          NewI = new GetElementPtrInst(NewPtr, Indices);
-        } else {
-          assert(0 && "Unknown memory access inst!!!");
-        }
+        NewI = new GetElementPtrInst(ConvertValue(GEP.getOperand(0)), Indices);
         break;
       }
 
