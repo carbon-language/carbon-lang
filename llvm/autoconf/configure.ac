@@ -455,6 +455,9 @@ AC_CHECK_TYPES([uint64_t],,AC_MSG_ERROR([Type uint64_t required but not found]))
 AC_HEADER_TIME
 AC_STRUCT_TM
 
+dnl Check for various C features
+AC_C_PRINTF_A
+
 dnl Check for C++ extensions
 AC_CXX_HAVE_EXT_HASH_MAP
 AC_CXX_HAVE_EXT_HASH_SET

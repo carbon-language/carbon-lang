@@ -226,3 +226,6 @@
 
 /* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
+
+/* Define to have the %a format string in printf() */
+#undef HAVE_PRINTF_A

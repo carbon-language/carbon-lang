@@ -20702,6 +20702,87 @@ _ACEOF
 fi
 
 
+
+
+
+	ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+	if test "$cross_compiling" = yes; then
+  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&5
+echo "$as_me: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <stdio.h>
+		                 #include <stdlib.h>
+int
+main ()
+{
+
+		                 volatile double A, B;
+		                 char Buffer[100];
+		                 A = 1;
+		                 A /= 10.0;
+		                 sprintf(Buffer, "%a", A);
+		                 B = atof(Buffer);
+		                 if (A != B)
+							 return (1);
+		                 if (A != 0x1.999999999999ap-4)
+							 return (1);
+		                 return (0);
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_c_printf_a=yes
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+ac_c_printf_a=no
+fi
+rm -f core core.* *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+	ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+	if test "$ac_c_printf_a" = "yes"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_PRINTF_A 1
+_ACEOF
+
+	fi
+
+
 echo "$as_me:$LINENO: checking whether the compiler implements namespaces" >&5
 echo $ECHO_N "checking whether the compiler implements namespaces... $ECHO_C" >&6
 if test "${ac_cv_cxx_namespaces+set}" = set; then
@@ -22420,8 +22501,7 @@ _ACEOF
 
 
 
-
-for ac_func in getcwd gettimeofday strcspn strdup strerror strspn strstr strtod strtol strtoq strtoll strsignal
+for ac_func in getcwd gettimeofday strcspn strdup strerror strspn strstr strtod strtol strtoq strtoll
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -22503,73 +22583,6 @@ _ACEOF
 
 fi
 done
-
-echo "$as_me:$LINENO: checking whether sys_siglist is declared" >&5
-echo $ECHO_N "checking whether sys_siglist is declared... $ECHO_C" >&6
-if test "${ac_cv_have_decl_sys_siglist+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-#if HAVE_SIGNAL_H
-#include <signal.h>
-#endif
-
-int
-main ()
-{
-#ifndef sys_siglist
-  char *p = (char *) sys_siglist;
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_have_decl_sys_siglist=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_have_decl_sys_siglist=no
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_have_decl_sys_siglist" >&5
-echo "${ECHO_T}$ac_cv_have_decl_sys_siglist" >&6
-if test $ac_cv_have_decl_sys_siglist = yes; then
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_SYS_SIGLIST 1
-_ACEOF
-
-
-else
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_SYS_SIGLIST 0
-_ACEOF
-
-
-fi
-
 
 
 
