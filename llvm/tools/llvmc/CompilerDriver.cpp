@@ -16,6 +16,7 @@
 #include "ConfigLexer.h"
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/System/Signals.h"
 #include "Support/FileUtilities.h"
 #include "Support/SetVector.h"
 #include "Support/StringExtras.h"
