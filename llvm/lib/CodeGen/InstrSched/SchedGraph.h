@@ -17,7 +17,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/HashExtras.h"
 #include "Support/GraphTraits.h"
-#include "Support/NonCopyable.h"
 
 class Value;
 class Instruction;
@@ -46,7 +45,9 @@ const ResourceId MachineFPRegsRID  = -4; // use +ve numbers for actual regs
 
 //*********************** Public Class Declarations ************************/
 
-class SchedGraphEdge: public NonCopyable {
+class SchedGraphEdge {
+  SchedGraphEdge(const SchedGraphEdge &);  // DO NOT IMPLEMENT
+  void operator=(const SchedGraphEdge &);  // DO NOT IMPLEMENT
 public:
   enum SchedGraphEdgeDepType {
     CtrlDep, MemoryDep, ValueDep, MachineRegister, MachineResource
@@ -55,7 +56,7 @@ public:
     TrueDep = 0x1, AntiDep=0x2, OutputDep=0x4, NonDataDep=0x8
   };
   
-protected:
+private:
   SchedGraphNode*	src;
   SchedGraphNode*	sink;
   SchedGraphEdgeDepType depType;
@@ -132,7 +133,7 @@ private:
 
 
 
-class SchedGraphNode: public NonCopyable {
+class SchedGraphNode {
   unsigned nodeId;
   MachineBasicBlock *MBB;
   const MachineInstr* minstr;
@@ -140,7 +141,9 @@ class SchedGraphNode: public NonCopyable {
   std::vector<SchedGraphEdge*> outEdges;
   int origIndexInBB;            // original position of machine instr in BB
   int latency;
-  
+
+  SchedGraphNode(const SchedGraphNode &);  // DO NOT IMPLEMENT
+  void operator=(const SchedGraphNode &);  // DO NOT IMPLEMENT
 public:
   typedef std::vector<SchedGraphEdge*>::      iterator	       iterator;
   typedef std::vector<SchedGraphEdge*>::const_iterator         const_iterator;
@@ -203,15 +206,14 @@ private:
 
 
 
-class SchedGraph :
-  public NonCopyable,
-  private hash_map<const MachineInstr*, SchedGraphNode*>
-{
+class SchedGraph : private hash_map<const MachineInstr*, SchedGraphNode*> {
   MachineBasicBlock &MBB;               // basic blocks for this graph
   SchedGraphNode* graphRoot;		// the root and leaf are not inserted
   SchedGraphNode* graphLeaf;		//  in the hash_map (see getNumNodes())
   
   typedef hash_map<const MachineInstr*, SchedGraphNode*> map_base;
+  SchedGraph(const SchedGraph &);       // DO NOT IMPLEMENT
+  void operator=(const SchedGraph &);   // DO NOT IMPLEMENT
 public:
   using map_base::iterator;
   using map_base::const_iterator;
@@ -327,29 +329,27 @@ private:
 };
 
 
-class SchedGraphSet :  
-  public NonCopyable,
-  private std::vector<SchedGraph*>
-{
+class SchedGraphSet : private std::vector<SchedGraph*> {
 private:
   const Function* method;
-  
+
+  SchedGraphSet(const SchedGraphSet&);    // DO NOT IMPLEMENT
+  void operator=(const SchedGraphSet&);   // DO NOT IMPLEMENT
 public:
   typedef std::vector<SchedGraph*> baseVector;
   using baseVector::iterator;
   using baseVector::const_iterator;
   
 public:
-  /*ctor*/	SchedGraphSet		(const Function * function,
-					 const TargetMachine& target);
-  /*dtor*/	~SchedGraphSet		();
+  SchedGraphSet(const Function *F, const TargetMachine &TM);
+  ~SchedGraphSet();
   
   // Iterators
   using baseVector::begin;
   using baseVector::end;
   
   // Debugging support
-  void		dump	() const;
+  void dump() const;
   
 private:
   inline void	addGraph(SchedGraph* graph) {
@@ -358,8 +358,7 @@ private:
   }
   
   // Graph builder
-  void		buildGraphsForMethod	(const Function *F,
-					 const TargetMachine& target);
+  void buildGraphsForMethod(const Function *F, const TargetMachine &TM);
 };
 
 

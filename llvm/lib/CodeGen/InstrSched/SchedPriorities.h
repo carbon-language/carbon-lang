@@ -63,7 +63,9 @@ NDPLessThan(const NodeDelayPair* np1, const NodeDelayPair* np2)
   return np1->delay < np2->delay;
 }
 
-class NodeHeap: public std::list<NodeDelayPair*>, public NonCopyable {
+class NodeHeap : public std::list<NodeDelayPair*> {
+  NodeHeap(const NodeHeap&);          // DO NOT IMPLEMENT
+  void operator=(const NodeHeap&);    // DO NOT IMPLEMENT
 public:
   typedef std::list<NodeDelayPair*>::iterator iterator;
   typedef std::list<NodeDelayPair*>::const_iterator const_iterator;
@@ -115,7 +117,9 @@ private:
 };
 
 
-class SchedPriorities: public NonCopyable {
+class SchedPriorities {
+  SchedPriorities(const SchedPriorities&); // DO NOT IMPLEMENT
+  void operator=(const SchedPriorities &); // DO NOT IMPLEMENT
 public:
   SchedPriorities(const Function *F, const SchedGraph *G,
                   FunctionLiveVarInfo &LVI);
