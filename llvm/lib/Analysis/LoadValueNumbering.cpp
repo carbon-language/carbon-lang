@@ -50,17 +50,6 @@ namespace {
     ///
     virtual void getEqualNumberNodes(Value *V1,
                                      std::vector<Value*> &RetVals) const;
-  private:
-    /// haveEqualValueNumber - Given two load instructions, determine if they
-    /// both produce the same value on every execution of the program, assuming
-    /// that their source operands always give the same value.  This uses the
-    /// AliasAnalysis implementation to invalidate loads when stores or function
-    /// calls occur that could modify the value produced by the load.
-    ///
-    bool haveEqualValueNumber(LoadInst *LI, LoadInst *LI2, AliasAnalysis &AA,
-                              DominatorSet &DomSetInfo) const;
-    bool haveEqualValueNumber(LoadInst *LI, StoreInst *SI, AliasAnalysis &AA,
-                              DominatorSet &DomSetInfo) const;
   };
 
   // Register this pass...
@@ -83,6 +72,43 @@ void LoadVN::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DominatorSet>();
   AU.addRequired<TargetData>();
 }
+
+static bool isPathTransparentTo(BasicBlock *CurBlock, BasicBlock *Dom,
+                                Value *Ptr, unsigned Size, AliasAnalysis &AA,
+                                std::set<BasicBlock*> &Visited,
+                                std::map<BasicBlock*, bool> &TransparentBlocks){
+  // If we have already checked out this path, or if we reached our destination,
+  // stop searching, returning success.
+  if (CurBlock == Dom || !Visited.insert(CurBlock).second)
+    return true;
+  
+  // Check whether this block is known transparent or not.
+  std::map<BasicBlock*, bool>::iterator TBI =
+    TransparentBlocks.lower_bound(CurBlock);
+
+  if (TBI == TransparentBlocks.end() || TBI->first != CurBlock) {
+    // If this basic block can modify the memory location, then the path is not
+    // transparent!
+    if (AA.canBasicBlockModify(*CurBlock, Ptr, Size)) {
+      TransparentBlocks.insert(TBI, std::make_pair(CurBlock, false));
+      return false;
+    }
+      TransparentBlocks.insert(TBI, std::make_pair(CurBlock, true));
+  } else if (!TBI->second)
+    // This block is known non-transparent, so that path can't be either.
+    return false;
+  
+  // The current block is known to be transparent.  The entire path is
+  // transparent if all of the predecessors paths to the parent is also
+  // transparent to the memory location.
+  for (pred_iterator PI = pred_begin(CurBlock), E = pred_end(CurBlock);
+       PI != E; ++PI)
+    if (!isPathTransparentTo(*PI, Dom, Ptr, Size, AA, Visited,
+                             TransparentBlocks))
+      return false;
+  return true;
+}
+
 
 // getEqualNumberNodes - Return nodes with the same value number as the
 // specified Value.  This fills in the argument vector with any equal values.
@@ -120,14 +146,15 @@ void LoadVN::getEqualNumberNodes(Value *V,
   getEqualNumberNodes(LI->getOperand(0), PointerSources);
   PointerSources.push_back(LI->getOperand(0));
   
-  Function *F = LI->getParent()->getParent();
+  BasicBlock *LoadBB = LI->getParent();
+  Function *F = LoadBB->getParent();
   
   // Now that we know the set of equivalent source pointers for the load
   // instruction, look to see if there are any load or store candidates that are
   // identical.
   //
-  std::vector<LoadInst*> CandidateLoads;
-  std::vector<StoreInst*> CandidateStores;
+  std::map<BasicBlock*, std::vector<LoadInst*> >  CandidateLoads;
+  std::map<BasicBlock*, std::vector<StoreInst*> > CandidateStores;
   
   while (!PointerSources.empty()) {
     Value *Source = PointerSources.back();
@@ -138,239 +165,215 @@ void LoadVN::getEqualNumberNodes(Value *V,
       if (LoadInst *Cand = dyn_cast<LoadInst>(*UI)) {// Is a load of source?
         if (Cand->getParent()->getParent() == F &&   // In the same function?
             Cand != LI && !Cand->isVolatile())       // Not LI itself?
-          CandidateLoads.push_back(Cand);     // Got one...
+          CandidateLoads[Cand->getParent()].push_back(Cand);     // Got one...
       } else if (StoreInst *Cand = dyn_cast<StoreInst>(*UI)) {
         if (Cand->getParent()->getParent() == F && !Cand->isVolatile() &&
             Cand->getOperand(1) == Source)  // It's a store THROUGH the ptr...
-          CandidateStores.push_back(Cand);
+          CandidateStores[Cand->getParent()].push_back(Cand);
       }
   }
   
-  // Get Alias Analysis...
+  // Get alias analysis & dominators.
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   DominatorSet &DomSetInfo = getAnalysis<DominatorSet>();
-  
-  // Loop over all of the candidate loads.  If they are not invalidated by
-  // stores or calls between execution of them and LI, then add them to RetVals.
-  for (unsigned i = 0, e = CandidateLoads.size(); i != e; ++i)
-    if (haveEqualValueNumber(LI, CandidateLoads[i], AA, DomSetInfo))
-      RetVals.push_back(CandidateLoads[i]);
-  for (unsigned i = 0, e = CandidateStores.size(); i != e; ++i)
-    if (haveEqualValueNumber(LI, CandidateStores[i], AA, DomSetInfo))
-      RetVals.push_back(CandidateStores[i]->getOperand(0));
-  
-}
-
-// CheckForInvalidatingInst - Return true if BB or any of the predecessors of BB
-// (until DestBB) contain an instruction that might invalidate Ptr.
-//
-static bool CheckForInvalidatingInst(BasicBlock *BB, BasicBlock *DestBB,
-                                     Value *Ptr, unsigned Size,
-                                     AliasAnalysis &AA,
-                                     std::set<BasicBlock*> &VisitedSet) {
-  // Found the termination point!
-  if (BB == DestBB || VisitedSet.count(BB)) return false;
-
-  // Avoid infinite recursion!
-  VisitedSet.insert(BB);
-
-  // Can this basic block modify Ptr?
-  if (AA.canBasicBlockModify(*BB, Ptr, Size))
-    return true;
-
-  // Check all of our predecessor blocks...
-  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
-    if (CheckForInvalidatingInst(*PI, DestBB, Ptr, Size, AA, VisitedSet))
-      return true;
-
-  // None of our predecessor blocks contain an invalidating instruction, and we
-  // don't either!
-  return false;
-}
-
-
-/// haveEqualValueNumber - Given two load instructions, determine if they both
-/// produce the same value on every execution of the program, assuming that
-/// their source operands always give the same value.  This uses the
-/// AliasAnalysis implementation to invalidate loads when stores or function
-/// calls occur that could modify the value produced by the load.
-///
-bool LoadVN::haveEqualValueNumber(LoadInst *L1, LoadInst *L2,
-                                  AliasAnalysis &AA,
-                                  DominatorSet &DomSetInfo) const {
-  assert(L1 != L2 && "haveEqualValueNumber assumes differing loads!");
-  assert(L1->getType() == L2->getType() &&
-         "How could the same source pointer return different types?");
-  Value *LoadAddress = L1->getOperand(0);
-
+  Value *LoadPtr = LI->getOperand(0);
   // Find out how many bytes of memory are loaded by the load instruction...
-  unsigned LoadSize = getAnalysis<TargetData>().getTypeSize(L1->getType());
+  unsigned LoadSize = getAnalysis<TargetData>().getTypeSize(LI->getType());
 
-  // If the two loads are in the same basic block, just do a local analysis.
-  if (L1->getParent() == L2->getParent()) {
-    // It can be _very_ expensive to determine which instruction occurs first in
-    // the basic block if the block is large (see PR209).  For this reason,
-    // instead of figuring out which block is first, then scanning all of the
-    // instructions, we scan the instructions both ways from L1 until we find
-    // L2.  Along the way if we find a potentially modifying instruction, we
-    // kill the search.  This helps in cases where we have large blocks the have
-    // potentially modifying instructions in them which stop the search.
+  // Find all of the candidate loads and stores that are in the same block as
+  // the defining instruction.
+  std::set<Instruction*> Instrs;
+  Instrs.insert(CandidateLoads[LoadBB].begin(), CandidateLoads[LoadBB].end());
+  CandidateLoads.erase(LoadBB);
+  Instrs.insert(CandidateStores[LoadBB].begin(), CandidateStores[LoadBB].end());
+  CandidateStores.erase(LoadBB);
 
-    BasicBlock *BB = L1->getParent();
-    BasicBlock::iterator UpIt = L1, DownIt = L1; ++DownIt;
-    bool NoModifiesUp = true, NoModifiesDown = true;
-
-    // Scan up and down looking for L2, a modifying instruction, or the end of a
-    // basic block.
-    while (UpIt != BB->begin() && DownIt != BB->end()) {
-      // Scan up...
-      --UpIt;
-      if (&*UpIt == L2)
-        return NoModifiesUp;  // No instructions invalidate the loads!
-      if (NoModifiesUp)
-        NoModifiesUp &=
-          !(AA.getModRefInfo(UpIt, LoadAddress, LoadSize) & AliasAnalysis::Mod);
-
-      if (&*DownIt == L2)
-        return NoModifiesDown;
-      if (NoModifiesDown)
-        NoModifiesDown &=
-          !(AA.getModRefInfo(DownIt, LoadAddress, LoadSize)
-            & AliasAnalysis::Mod);
-      ++DownIt;
+  // Figure out if the load is invalidated from the entry of the block it is in
+  // until the actual instruction.  This scans the block backwards from LI.  If
+  // we see any candidate load or store instructions, then we know that the
+  // candidates have the same value # as LI.
+  bool LoadInvalidatedInBBBefore = false;
+  for (BasicBlock::iterator I = LI; I != LoadBB->begin(); ) {
+    --I;
+    // If this instruction is a candidate load before LI, we know there are no
+    // invalidating instructions between it and LI, so they have the same value
+    // number.
+    if (isa<LoadInst>(I) && Instrs.count(I)) {
+      RetVals.push_back(I);
+      Instrs.erase(I);
     }
 
-    // If we got here, we ran into one end of the basic block or the other.
-    if (UpIt != BB->begin()) {
-      // If we know that the upward scan found a modifier, return false.
-      if (!NoModifiesUp) return false;
-
-      // Otherwise, continue the scan looking for a modifier or L2.
-      for (--UpIt; &*UpIt != L2; --UpIt)
-        if (AA.getModRefInfo(UpIt, LoadAddress, LoadSize) & AliasAnalysis::Mod)
-          return false;
-      return true;
-    } else {
-      // If we know that the downward scan found a modifier, return false.
-      assert(DownIt != BB->end() && "Didn't find instructions??");
-      if (!NoModifiesDown) return false;
-      
-      // Otherwise, continue the scan looking for a modifier or L2.
-      for (; &*DownIt != L2; ++DownIt) {
-        if (AA.getModRefInfo(DownIt, LoadAddress, LoadSize) &AliasAnalysis::Mod)
-          return false;
+    if (AA.getModRefInfo(I, LoadPtr, LoadSize) & AliasAnalysis::Mod) {
+      // If the invalidating instruction is a store, and its in our candidate
+      // set, then we can do store-load forwarding: the load has the same value
+      // # as the stored value.
+      if (isa<StoreInst>(I) && Instrs.count(I)) {
+        Instrs.erase(I);
+        RetVals.push_back(I->getOperand(0));
       }
-      return true;
+
+      LoadInvalidatedInBBBefore = true;
+      break;
     }
-  } else {
-    // Figure out which load dominates the other one.  If neither dominates the
-    // other we cannot eliminate them.
-    //
-    // FIXME: This could be enhanced greatly!
-    //
-    if (DomSetInfo.dominates(L2, L1)) 
-      std::swap(L1, L2);   // Make L1 dominate L2
-    else if (!DomSetInfo.dominates(L1, L2))
-      return false;  // Neither instruction dominates the other one...
-
-    BasicBlock *BB1 = L1->getParent(), *BB2 = L2->getParent();
-    
-    // L1 now dominates L2.  Check to see if the intervening instructions
-    // between the two loads might modify the loaded location.
-
-    // Make sure that there are no modifying instructions between L1 and the end
-    // of its basic block.
-    //
-    if (AA.canInstructionRangeModify(*L1, *BB1->getTerminator(), LoadAddress,
-                                     LoadSize))
-      return false;   // Cannot eliminate load
-
-    // Make sure that there are no modifying instructions between the start of
-    // BB2 and the second load instruction.
-    //
-    if (AA.canInstructionRangeModify(BB2->front(), *L2, LoadAddress, LoadSize))
-      return false;   // Cannot eliminate load
-
-    // Do a depth first traversal of the inverse CFG starting at L2's block,
-    // looking for L1's block.  The inverse CFG is made up of the predecessor
-    // nodes of a block... so all of the edges in the graph are "backward".
-    //
-    std::set<BasicBlock*> VisitedSet;
-    for (pred_iterator PI = pred_begin(BB2), PE = pred_end(BB2); PI != PE; ++PI)
-      if (CheckForInvalidatingInst(*PI, BB1, LoadAddress, LoadSize, AA,
-                                   VisitedSet))
-        return false;
-    
-    // If we passed all of these checks then we are sure that the two loads
-    // produce the same value.
-    return true;
   }
-}
 
-
-/// haveEqualValueNumber - Given a load instruction and a store instruction,
-/// determine if the stored value reaches the loaded value unambiguously on
-/// every execution of the program.  This uses the AliasAnalysis implementation
-/// to invalidate the stored value when stores or function calls occur that
-/// could modify the value produced by the load.
-///
-bool LoadVN::haveEqualValueNumber(LoadInst *Load, StoreInst *Store,
-                                  AliasAnalysis &AA,
-                                  DominatorSet &DomSetInfo) const {
-  // If the store does not dominate the load, we cannot do anything...
-  if (!DomSetInfo.dominates(Store, Load)) 
-    return false;
-
-  BasicBlock *BB1 = Store->getParent(), *BB2 = Load->getParent();
-  Value *LoadAddress = Load->getOperand(0);
-
-  assert(LoadAddress->getType() == Store->getOperand(1)->getType() &&
-         "How could the same source pointer return different types?");
-
-  // Find out how many bytes of memory are loaded by the load instruction...
-  unsigned LoadSize = getAnalysis<TargetData>().getTypeSize(Load->getType());
-
-  // Compute a basic block iterator pointing to the instruction after the store.
-  BasicBlock::iterator StoreIt = Store; ++StoreIt;
-
-  // Check to see if the intervening instructions between the two store and load
-  // include a store or call...
+  // Figure out if the load is invalidated between the load and the exit of the
+  // block it is defined in.  While we are scanning the current basic block, if
+  // we see any candidate loads, then we know they have the same value # as LI.
   //
-  if (BB1 == BB2) {  // In same basic block?
-    // In this degenerate case, no checking of global basic blocks has to occur
-    // just check the instructions BETWEEN Store & Load...
-    //
-    if (AA.canInstructionRangeModify(*StoreIt, *Load, LoadAddress, LoadSize))
-      return false;   // Cannot eliminate load
+  bool LoadInvalidatedInBBAfter = false;
+  for (BasicBlock::iterator I = LI->getNext(); I != LoadBB->end(); ++I) {
+    // If this instruction is a load, then this instruction returns the same
+    // value as LI.
+    if (isa<LoadInst>(I) && Instrs.count(I)) {
+      RetVals.push_back(I);
+      Instrs.erase(I);
+    }
 
-    // No instructions invalidate the stored value, they produce the same value!
-    return true;
-  } else {
-    // Make sure that there are no store instructions between the Store and the
-    // end of its basic block...
-    //
-    if (AA.canInstructionRangeModify(*StoreIt, *BB1->getTerminator(),
-                                     LoadAddress, LoadSize))
-      return false;   // Cannot eliminate load
-
-    // Make sure that there are no store instructions between the start of BB2
-    // and the second load instruction...
-    //
-    if (AA.canInstructionRangeModify(BB2->front(), *Load, LoadAddress,LoadSize))
-      return false;   // Cannot eliminate load
-
-    // Do a depth first traversal of the inverse CFG starting at L2's block,
-    // looking for L1's block.  The inverse CFG is made up of the predecessor
-    // nodes of a block... so all of the edges in the graph are "backward".
-    //
-    std::set<BasicBlock*> VisitedSet;
-    for (pred_iterator PI = pred_begin(BB2), PE = pred_end(BB2); PI != PE; ++PI)
-      if (CheckForInvalidatingInst(*PI, BB1, LoadAddress, LoadSize, AA,
-                                   VisitedSet))
-        return false;
-
-    // If we passed all of these checks then we are sure that the two loads
-    // produce the same value.
-    return true;
+    if (AA.getModRefInfo(I, LoadPtr, LoadSize) & AliasAnalysis::Mod) {
+      LoadInvalidatedInBBAfter = true;
+      break;
+    }
   }
+
+  // If there is anything left in the Instrs set, it could not possibly equal
+  // LI.
+  Instrs.clear();
+
+  // TransparentBlocks - For each basic block the load/store is alive across,
+  // figure out if the pointer is invalidated or not.  If it is invalidated, the
+  // boolean is set to false, if it's not it is set to true.  If we don't know
+  // yet, the entry is not in the map.
+  std::map<BasicBlock*, bool> TransparentBlocks;
+
+  // Loop over all of the basic blocks that also load the value.  If the value
+  // is live across the CFG from the source to destination blocks, and if the
+  // value is not invalidated in either the source or destination blocks, add it
+  // to the equivalence sets.
+  for (std::map<BasicBlock*, std::vector<LoadInst*> >::iterator
+         I = CandidateLoads.begin(), E = CandidateLoads.end(); I != E; ++I) {
+    bool CantEqual = false;
+
+    // Right now we only can handle cases where one load dominates the other.
+    // FIXME: generalize this!
+    BasicBlock *BB1 = I->first, *BB2 = LoadBB;
+    if (DomSetInfo.dominates(BB1, BB2)) {
+      // The other load dominates LI.  If the loaded value is killed entering
+      // the LoadBB block, we know the load is not live.
+      if (LoadInvalidatedInBBBefore)
+        CantEqual = true;
+    } else if (DomSetInfo.dominates(BB2, BB1)) {
+      std::swap(BB1, BB2);          // Canonicalize
+      // LI dominates the other load.  If the loaded value is killed exiting
+      // the LoadBB block, we know the load is not live.
+      if (LoadInvalidatedInBBAfter)
+        CantEqual = true;
+    } else {
+      // None of these loads can VN the same.
+      CantEqual = true;
+    }
+
+    if (!CantEqual) {
+      // Ok, at this point, we know that BB1 dominates BB2, and that there is
+      // nothing in the LI block that kills the loaded value.  Check to see if
+      // the value is live across the CFG.
+      std::set<BasicBlock*> Visited;
+      for (pred_iterator PI = pred_begin(BB2), E = pred_end(BB2); PI!=E; ++PI)
+        if (!isPathTransparentTo(*PI, BB1, LoadPtr, LoadSize, AA,
+                                 Visited, TransparentBlocks)) {
+          // None of these loads can VN the same.
+          CantEqual = true;
+          break;
+        }
+    }
+
+    // If the loads can equal so far, scan the basic block that contains the
+    // loads under consideration to see if they are invalidated in the block.
+    // For any loads that are not invalidated, add them to the equivalence
+    // set!
+    if (!CantEqual) {
+      Instrs.insert(I->second.begin(), I->second.end());
+      if (BB1 == LoadBB) {
+        // If LI dominates the block in question, check to see if any of the
+        // loads in this block are invalidated before they are reached.
+        for (BasicBlock::iterator BBI = I->first->begin(); ; ++BBI) {
+          if (isa<LoadInst>(BBI) && Instrs.count(BBI)) {
+            // The load is in the set!
+            RetVals.push_back(BBI);
+            Instrs.erase(BBI);
+            if (Instrs.empty()) break;
+          } else if (AA.getModRefInfo(BBI, LoadPtr, LoadSize)
+                             & AliasAnalysis::Mod) {
+            // If there is a modifying instruction, nothing below it will value
+            // # the same.
+            break;
+          }
+        }
+      } else {
+        // If the block dominates LI, make sure that the loads in the block are
+        // not invalidated before the block ends.
+        BasicBlock::iterator BBI = I->first->end();
+        while (1) {
+          --BBI;
+          if (isa<LoadInst>(BBI) && Instrs.count(BBI)) {
+            // The load is in the set!
+            RetVals.push_back(BBI);
+            Instrs.erase(BBI);
+            if (Instrs.empty()) break;
+          } else if (AA.getModRefInfo(BBI, LoadPtr, LoadSize)
+                             & AliasAnalysis::Mod) {
+            // If there is a modifying instruction, nothing above it will value
+            // # the same.
+            break;
+          }
+        }
+      }
+
+      Instrs.clear();
+    }
+  }
+
+  // Handle candidate stores.  If the loaded location is clobbered on entrance
+  // to the LoadBB, no store outside of the LoadBB can value number equal, so
+  // quick exit.
+  if (LoadInvalidatedInBBBefore)
+    return;
+
+  for (std::map<BasicBlock*, std::vector<StoreInst*> >::iterator
+         I = CandidateStores.begin(), E = CandidateStores.end(); I != E; ++I)
+    if (DomSetInfo.dominates(I->first, LoadBB)) {
+      // Check to see if the path from the store to the load is transparent
+      // w.r.t. the memory location.
+      bool CantEqual = false;
+      std::set<BasicBlock*> Visited;
+      for (pred_iterator PI = pred_begin(LoadBB), E = pred_end(LoadBB);
+           PI != E; ++PI)
+        if (!isPathTransparentTo(*PI, I->first, LoadPtr, LoadSize, AA,
+                                 Visited, TransparentBlocks)) {
+          // None of these stores can VN the same.
+          CantEqual = true;
+          break;
+        }
+      Visited.clear();
+      if (!CantEqual) {
+        // Okay, the path from the store block to the load block is clear, and
+        // we know that there are no invalidating instructions from the start
+        // of the load block to the load itself.  Now we just scan the store
+        // block.
+
+        BasicBlock::iterator BBI = I->first->end();
+        while (1) {
+          --BBI;
+          if (AA.getModRefInfo(BBI, LoadPtr, LoadSize)& AliasAnalysis::Mod){
+            // If the invalidating instruction is one of the candidates,
+            // then it provides the value the load loads.
+            if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
+              if (std::find(I->second.begin(), I->second.end(), SI) !=
+                  I->second.end())
+                RetVals.push_back(SI->getOperand(0));
+            break;
+          }
+        }
+      }
+    }
 }
