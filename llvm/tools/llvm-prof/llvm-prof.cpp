@@ -155,12 +155,13 @@ int main(int argc, char **argv) {
     std::cout << "Top 20 most frequently executed basic blocks:\n\n";
 
     // Print out the function frequencies...
-    printf(" ##  \tFrequency\n");
+    printf(" ##      %%%% \tFrequency\n");
     unsigned BlocksToPrint = Counts.size();
     if (BlocksToPrint > 20) BlocksToPrint = 20;
     for (unsigned i = 0; i != BlocksToPrint; ++i) {
       Function *F = Counts[i].first->getParent();
-      printf("%3d. %5u/%llu\t%s() - %s\n", i+1,
+      printf("%3d. %5.2f%% %5u/%llu\t%s() - %s\n", i+1,
+             Counts[i].second/(double)TotalExecutions*100,
              Counts[i].second, TotalExecutions,
              F->getName().c_str(), Counts[i].first->getName().c_str());
       FunctionsToPrint.insert(F);
