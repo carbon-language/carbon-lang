@@ -91,14 +91,14 @@ void Steens::ResolveFunctionCall(Function *F,
     RetVal.mergeWith(Call.getReturnValueNode());
 
   // Loop over all pointer arguments, resolving them to their provided pointers
-  unsigned ArgIdx = 2; // Skip retval and function to call...
+  unsigned PtrArgIdx = 0;
   for (Function::aiterator AI = F->abegin(), AE = F->aend(); AI != AE; ++AI) {
     std::map<Value*, DSNodeHandle>::iterator I = ValMap.find(AI);
     if (I != ValMap.end())    // If its a pointer argument...
-      I->second.addEdgeTo(Call[ArgIdx++]);
+      I->second.addEdgeTo(Call.getPtrArgNode(PtrArgIdx++));
   }
 
-  assert(ArgIdx == Call.size() && "Argument resolution mismatch!");
+  assert(PtrArgIdx == Call.getNumPtrArgs() && "Argument resolution mismatch!");
 }
 
 

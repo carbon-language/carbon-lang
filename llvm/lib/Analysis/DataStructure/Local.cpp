@@ -356,7 +356,7 @@ void GraphBuilder::visitReturnInst(ReturnInst &RI) {
 
 void GraphBuilder::visitCallInst(CallInst &CI) {
   // Add a new function call entry...
-  FunctionCalls.push_back(DSCallSite(G.getFunction(), CI));
+  FunctionCalls.push_back(DSCallSite(CI));
   DSCallSite &Args = FunctionCalls.back();
 
   // Set up the return value...

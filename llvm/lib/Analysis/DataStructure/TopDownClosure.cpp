@@ -53,20 +53,27 @@ void TDDataStructures::ResolveCallSite(DSGraph &Graph,
   Function &F = Graph.getFunction();
   Function::aiterator AI = F.abegin();
 
-  for (unsigned i = 2, e = CallSite.size(); i != e; ++i, ++AI) {
+  for (unsigned i = 0, e = CallSite.getNumPtrArgs(); i != e; ++i, ++AI) {
     // Advance the argument iterator to the first pointer argument...
     while (!DataStructureAnalysis::isPointerType(AI->getType())) ++AI;
     
     // TD ...Merge the formal arg scalar with the actual arg node
     DSNodeHandle &NodeForFormal = Graph.getNodeForValue(AI);
     if (NodeForFormal.getNode())
-      NodeForFormal.mergeWith(CallSite[i]);
+      NodeForFormal.mergeWith(CallSite.getPtrArgNode(i));
   }
   
   // Merge returned node in the caller with the "return" node in callee
   if (CallSite.getReturnValueNode().getNode() && Graph.getRetNode().getNode())
     Graph.getRetNode().mergeWith(CallSite.getReturnValueNode());
 }
+
+
+static DSNodeHandle copyHelper(const DSNodeHandle* fromNode,
+                               std::map<const DSNode*, DSNode*> *NodeMap) {
+  return DSNodeHandle((*NodeMap)[fromNode->getNode()], fromNode->getOffset());
+}
+
 
 DSGraph &TDDataStructures::calculateGraph(Function &F) {
   // Make sure this graph has not already been calculated, or that we don't get
@@ -128,12 +135,8 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
 
       // Make a temporary copy of the call site, and transform the argument node
       // pointers.
-      DSCallSite TmpCallSite = CallSite;
-      for (unsigned i = 0, e = CallSite.size(); i != e; ++i) {
-        const DSNode *OldNode = TmpCallSite[i].getNode();
-        TmpCallSite[i].setNode(OldNodeMap[OldNode]);
-      }
-
+      DSCallSite TmpCallSite(CallSite, std::bind2nd(std::ptr_fun(&copyHelper),
+                                                    &OldNodeMap));
       ResolveCallSite(*Graph, CallSite);
     }
   }

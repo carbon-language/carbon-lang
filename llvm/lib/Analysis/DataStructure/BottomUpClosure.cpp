@@ -60,13 +60,13 @@ static void ResolveArguments(DSCallSite &Call, Function &F,
                              map<Value*, DSNodeHandle> &ValueMap) {
   // Resolve all of the function arguments...
   Function::aiterator AI = F.abegin();
-  for (unsigned i = 2, e = Call.size(); i != e; ++i) {
+  for (unsigned i = 0, e = Call.getNumPtrArgs(); i != e; ++i) {
     // Advance the argument iterator to the first pointer argument...
     while (!isPointerType(AI->getType())) ++AI;
     
     // Add the link from the argument scalar to the provided value
     DSNodeHandle &NN = ValueMap[AI];
-    NN.addEdgeTo(Call[i]);
+    NN.addEdgeTo(Call.getPtrArgNode(i));
     ++AI;
   }
 }
@@ -111,10 +111,6 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
           // Must be a function type, so this cast MUST succeed.
           Function &FI = cast<Function>(*Callees[c]);
 
-          // Record that this is a call site of FI.
-          assert(&Call.getCaller() == &F && "Invalid caller in DSCallSite?");
-          CallSites[&FI].push_back(Call);
-
           if (&FI == &F) {
             // Self recursion... simply link up the formal arguments with the
             // actual arguments...
@@ -142,6 +138,11 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 
             DEBUG(std::cerr << "\t\t[BU] Got graph for " << FI.getName()
                   << " in: " << F.getName() << "\n");
+
+            // Record that the original DSCallSite was a call site of FI.
+            // This may or may not have been known when the DSCallSite was
+            // originally created.
+            CallSites[&FI].push_back(Call);
 
             // Clone the callee's graph into the current graph, keeping
             // track of where scalars in the old graph _used_ to point,

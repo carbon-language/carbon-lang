@@ -6,6 +6,8 @@
 
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Function.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/iOther.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/STLExtras.h"
@@ -351,12 +353,15 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   }
 }
 
+// Define here to avoid including iOther.h and BasicBlock.h in DSGraph.h
+Function& DSCallSite::getCaller() const {
+  return * callInst->getParent()->getParent();
+}
 
 template<typename _CopierFunction>
 DSCallSite::DSCallSite(const DSCallSite& FromCall,
                        _CopierFunction nodeCopier)
   : std::vector<DSNodeHandle>(),
-    caller(&FromCall.getCaller()),
     callInst(&FromCall.getCallInst()) {
 
   reserve(FromCall.size());
@@ -547,15 +552,15 @@ void DSGraph::markIncompleteNodes(bool markFormalArgs) {
 
   // Mark stuff passed into functions calls as being incomplete...
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
-    DSCallSite &Args = FunctionCalls[i];
+    DSCallSite &Call = FunctionCalls[i];
     // Then the return value is certainly incomplete!
-    markIncompleteNode(Args.getReturnValueNode().getNode());
+    markIncompleteNode(Call.getReturnValueNode().getNode());
 
     // The call does not make the function argument incomplete...
  
     // All arguments to the function call are incomplete though!
-    for (unsigned i = 2, e = Args.size(); i != e; ++i)
-      markIncompleteNode(Args[i].getNode());
+    for (unsigned i = 0, e = Call.getNumPtrArgs(); i != e; ++i)
+      markIncompleteNode(Call.getPtrArgNode(i).getNode());
   }
 
   // Mark all of the nodes pointed to by global or cast nodes as incomplete...

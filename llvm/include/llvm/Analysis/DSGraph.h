@@ -362,26 +362,27 @@ inline void DSNodeHandle::mergeWith(const DSNodeHandle &Node) {
 /// the DSNode handles for the function arguments.
 /// 
 class DSCallSite: public std::vector<DSNodeHandle> {
-  Function* caller;
   CallInst* callInst;
   DSCallSite();                         // do not implement
 
 public:
-  DSCallSite(Function& _caller, CallInst& _callInst)
-    : caller(&_caller), callInst(&_callInst) { }
+  DSCallSite(CallInst& _callInst) : callInst(&_callInst) { }
 
   // Copy constructor with helper for cloning nodes.  The helper should be a
   // model of unary_function<const DSNodeHandle*, DSNodeHandle>, i.e., it
   // should take a pointer to DSNodeHandle and return a fresh DSNodeHandle.
   // If no helper is specified, this defaults to a simple copy constructor.
   template<typename _CopierFunction>
-  DSCallSite::DSCallSite(const DSCallSite& FromCall,
-                         _CopierFunction nodeCopier = *(_CopierFunction*) 0);
+  DSCallSite(const DSCallSite& FromCall,
+             _CopierFunction nodeCopier = *(_CopierFunction*) 0);
 
-  Function&     getCaller() const           { return *caller; }
-  CallInst&     getCallInst() const         { return *callInst; }
-  DSNodeHandle  getReturnValueNode() const  { return (*this)[0]; }
-  DSNodeHandle  getCalleeNode() const       { return (*this)[1]; }
+  Function&     getCaller()                const;
+  CallInst&     getCallInst()              const { return *callInst; }
+  DSNodeHandle  getReturnValueNode()       const { return (*this)[0]; }
+  DSNodeHandle  getCalleeNode()            const { return (*this)[1]; }
+  unsigned      getNumPtrArgs()            const { return (size() - 2); }
+  DSNodeHandle  getPtrArgNode(unsigned i)  const { assert(i < getNumPtrArgs());
+                                                   return (*this)[i+2]; }
 };
 
 
