@@ -167,14 +167,14 @@ public:
 //                                LoadInst Class
 //===----------------------------------------------------------------------===//
 
-/// LoadInst - an instruction for reading from memory 
+/// LoadInst - an instruction for reading from memory.  This uses the
+/// SubclassData field in Value to store whether or not the load is volatile.
 ///
 class LoadInst : public UnaryInstruction {
-  bool Volatile;   // True if this is a volatile load
-
   LoadInst(const LoadInst &LI)
-    : UnaryInstruction(LI.getType(), Load, LI.getOperand(0)),
-      Volatile(LI.isVolatile()) {
+    : UnaryInstruction(LI.getType(), Load, LI.getOperand(0)) {
+    setVolatile(LI.isVolatile());
+    
 #ifndef NDEBUG
     AssertOK();
 #endif
@@ -191,11 +191,11 @@ public:
   /// isVolatile - Return true if this is a load from a volatile memory
   /// location.
   ///
-  bool isVolatile() const { return Volatile; }
+  bool isVolatile() const { return SubclassData; }
 
   /// setVolatile - Specify whether this is a volatile load or not.
   ///
-  void setVolatile(bool V) { Volatile = V; }
+  void setVolatile(bool V) { SubclassData = V; }
 
   virtual LoadInst *clone() const;
 
@@ -224,11 +224,10 @@ public:
 ///
 class StoreInst : public Instruction {
   Use Ops[2];
-  bool Volatile;   // True if this is a volatile store
-  StoreInst(const StoreInst &SI) : Instruction(SI.getType(), Store, Ops, 2),
-                                   Volatile(SI.isVolatile()) {
+  StoreInst(const StoreInst &SI) : Instruction(SI.getType(), Store, Ops, 2) {
     Ops[0].init(SI.Ops[0], this);
     Ops[1].init(SI.Ops[1], this);
+    setVolatile(SI.isVolatile());
 #ifndef NDEBUG
     AssertOK();
 #endif
@@ -245,11 +244,11 @@ public:
   /// isVolatile - Return true if this is a load from a volatile memory
   /// location.
   ///
-  bool isVolatile() const { return Volatile; }
+  bool isVolatile() const { return SubclassData; }
 
   /// setVolatile - Specify whether this is a volatile load or not.
   ///
-  void setVolatile(bool V) { Volatile = V; }
+  void setVolatile(bool V) { SubclassData = V; }
 
   /// Transparently provide more efficient getOperand methods.
   Value *getOperand(unsigned i) const { 
