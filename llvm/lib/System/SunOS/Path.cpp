@@ -33,6 +33,20 @@ Path::is_valid() const {
   return true;
 }
 
+Path
+Path::GetTemporaryDirectory() {
+  char* pathname = tempnam(0,"llvm_");
+  if (0 == pathname)
+    ThrowErrno(std::string("Can't create temporary directory name"));
+  Path result;
+  result.set_directory(pathname);
+  free(pathname);
+  assert(result.is_valid() && "tempnam didn't create a valid pathname!");
+  if (0 != mkdir(result.c_str(), S_IRWXU))
+    ThrowErrno(result.get() + ": Can't create temporary directory");
+  return result;
+}
+
 }
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

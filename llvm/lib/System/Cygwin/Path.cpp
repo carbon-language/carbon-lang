@@ -1,4 +1,4 @@
-//===- llvm/System/Darwin/Path.cpp - Linux Path Implementation --*- C++ -*-===//
+//===- Cygwin/Path.cpp - Cygwin Path Implementation -------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,16 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file provides the Darwin specific implementation of the Path class.
+// This file provides the Cygwin specific implementation of the Path class.
 //
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-//=== WARNING: Implementation here must contain only Darwin specific code 
+//=== WARNING: Implementation here must contain only Cygwin specific code 
 //===          and must not be generic UNIX code (see ../Unix/Path.cpp)
 //===----------------------------------------------------------------------===//
 
-// Include the generic unix implementation
+// Include the generic Unix implementation
 #include "../Unix/Path.cpp"
 
 namespace llvm {
@@ -26,8 +26,10 @@ bool
 Path::is_valid() const {
   if (path.empty()) 
     return false;
-  if (path.length() >= MAXPATHLEN)
-    return false;
+  char pathname[MAXPATHLEN];
+  if (0 == realpath(path.c_str(), pathname))
+    if (errno != EACCES && errno != EIO && errno != ENOENT && errno != ENOTDIR)
+      return false;
   return true;
 }
 
