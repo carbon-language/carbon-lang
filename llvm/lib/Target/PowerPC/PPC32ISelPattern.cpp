@@ -40,16 +40,19 @@ namespace {
     int ReturnAddrIndex;              // FrameIndex for return slot.
   public:
     PPC32TargetLowering(TargetMachine &TM) : TargetLowering(TM) {
-      // Set up the TargetLowering object.
-
       // Set up the register classes.
       addRegisterClass(MVT::i32, PPC32::GPRCRegisterClass);
       addRegisterClass(MVT::f32, PPC32::FPRCRegisterClass);
       addRegisterClass(MVT::f64, PPC32::FPRCRegisterClass);
       
+      // PowerPC has no intrinsics for these particular operations
       setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
       setOperationAction(ISD::MEMSET, MVT::Other, Expand);
       setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
+
+      // PowerPC has an i16 but no i8 (or i1) SEXTLOAD
+      setOperationAction(ISD::SEXTLOAD, MVT::i1, Expand);
+      setOperationAction(ISD::SEXTLOAD, MVT::i8, Expand);
 
       computeRegisterProperties();
     }
@@ -244,7 +247,17 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
     unsigned ArgOffset = 24;
     unsigned GPR_remaining = 8;
     unsigned FPR_remaining = 13;
-    std::vector<SDOperand> Stores;
+    unsigned GPR_idx = 0, FPR_idx = 0;
+    static const unsigned GPR[] = { 
+      PPC::R3, PPC::R4, PPC::R5, PPC::R6,
+      PPC::R7, PPC::R8, PPC::R9, PPC::R10,
+    };
+    static const unsigned FPR[] = {
+      PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
+      PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
+    };
+    
+    std::vector<SDOperand> MemOps;
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
       // PtrOff will be used to store the current argument to the stack if a
       // register cannot be found for it.
@@ -266,11 +279,13 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
         // FALL THROUGH
       case MVT::i32:
         if (GPR_remaining > 0) {
-          args_to_use.push_back(Args[i].first);
+          args_to_use.push_back(DAG.getCopyToReg(Chain, Args[i].first, 
+                                               GPR[GPR_idx]));
           --GPR_remaining;
+          ++GPR_idx;
         } else {
-          Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       Args[i].first, PtrOff));
+          MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                          Args[i].first, PtrOff));
         }
         ArgOffset += 4;
         break;
@@ -283,20 +298,22 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
             Args[i].first, DAG.getConstant(1, MVT::i32));
           SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
             Args[i].first, DAG.getConstant(0, MVT::i32));
-          args_to_use.push_back(Hi);
-          if (GPR_remaining > 1) {
-            args_to_use.push_back(Lo);
-            GPR_remaining -= 2;
+          args_to_use.push_back(DAG.getCopyToReg(Chain, Hi, GPR[GPR_idx]));
+          --GPR_remaining;
+          ++GPR_idx;
+          if (GPR_remaining > 0) {
+            args_to_use.push_back(DAG.getCopyToReg(Chain, Lo, GPR[GPR_idx]));
+            --GPR_remaining;
+            ++GPR_idx;
           } else {
             SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
             PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
-            Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                         Lo, PtrOff));
-            --GPR_remaining;
+            MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                            Lo, PtrOff));
           }
         } else {
-          Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       Args[i].first, PtrOff));
+          MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                          Args[i].first, PtrOff));
         }
         ArgOffset += 8;
         break;
@@ -304,31 +321,49 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
       case MVT::f64:
         if (FPR_remaining > 0) {
           if (isVarArg) {
-            // FIXME: Need FunctionType information so we can conditionally
-            // store only the non-fixed arguments in a vararg function.
-            Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                         Args[i].first, PtrOff));
-            // FIXME: Need a way to communicate to the ISD::CALL select code
-            // that a particular argument is non-fixed so that we can load them
-            // into the correct GPR to shadow the FPR
+            MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                            Args[i].first, PtrOff));
+            // Float varargs are always shadowed in available integer registers
+            if (GPR_remaining > 0) {
+              SDOperand Load = DAG.getLoad(MVT::i32, Chain, PtrOff);
+              MemOps.push_back(Load);
+              args_to_use.push_back(DAG.getCopyToReg(Chain, Load, 
+                                                     GPR[GPR_idx]));
+            }
+            if (GPR_remaining > 1 && MVT::f64 == ArgVT) {
+              SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
+              PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
+              SDOperand Load = DAG.getLoad(MVT::i32, Chain, PtrOff);
+              MemOps.push_back(Load);
+              args_to_use.push_back(DAG.getCopyToReg(Chain, Load, 
+                                                     GPR[GPR_idx+1]));
+            }
           }
-          args_to_use.push_back(Args[i].first);
+          args_to_use.push_back(DAG.getCopyToReg(Chain, Args[i].first, 
+                                                 FPR[FPR_idx]));
           --FPR_remaining;
+          ++FPR_idx;
           // If we have any FPRs remaining, we may also have GPRs remaining.
           // Args passed in FPRs consume either 1 (f32) or 2 (f64) available
           // GPRs.
-          if (GPR_remaining > 0) --GPR_remaining;
-          if (GPR_remaining > 0 && MVT::f64 == ArgVT) --GPR_remaining;
+          if (GPR_remaining > 0) {
+            --GPR_remaining;
+            ++GPR_idx;
+          }
+          if (GPR_remaining > 0 && MVT::f64 == ArgVT) {
+            --GPR_remaining;
+            ++GPR_idx;
+          }
         } else {
-          Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       Args[i].first, PtrOff));
+          MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                          Args[i].first, PtrOff));
         }
         ArgOffset += (ArgVT == MVT::f32) ? 4 : 8;
         break;
       }
     }
-    if (!Stores.empty())
-      Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
+    if (!MemOps.empty())
+      Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps);
   }
   
   std::vector<MVT::ValueType> RetVals;
@@ -591,38 +626,6 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     BuildMI(BB, PPC::FMR, 1, Result).addReg(Tmp1);
     return Result;
     
-  case ISD::LOAD:
-  case ISD::EXTLOAD: {
-    MVT::ValueType TypeBeingLoaded = (ISD::LOAD == opcode) ?
-      Node->getValueType(0) : cast<MVTSDNode>(Node)->getExtraValueType();
-
-    // Make sure we generate both values.
-    if (Result != 1)
-      ExprMap[N.getValue(1)] = 1;   // Generate the token
-    else
-      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-
-    SDOperand Chain   = N.getOperand(0);
-    SDOperand Address = N.getOperand(1);
-    Select(Chain);
-
-    switch (TypeBeingLoaded) {
-    default: assert(0 && "Cannot fp load this type!");
-    case MVT::f32:  Opc = PPC::LFS; break;
-    case MVT::f64:  Opc = PPC::LFD; break;
-    }
-    
-    if(Address.getOpcode() == ISD::FrameIndex) {
-      Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
-      addFrameReference(BuildMI(BB, Opc, 2, Result), (int)Tmp1);
-    } else {
-      int offset;
-      SelectAddr(Address, Tmp1, offset);
-      BuildMI(BB, Opc, 2, Result).addSImm(offset).addReg(Tmp1);
-    }
-    return Result;
-  }
-    
   case ISD::ConstantFP:
     assert(0 && "ISD::ConstantFP Unimplemented");
     abort();
@@ -735,7 +738,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
   }
 
   if (DestType == MVT::f64 || DestType == MVT::f32)
-    return SelectExprFP(N, Result);
+    if (ISD::LOAD != opcode && ISD::EXTLOAD != opcode)
+      return SelectExprFP(N, Result);
 
   switch (opcode) {
   default:
@@ -796,11 +800,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::EXTLOAD:
   case ISD::ZEXTLOAD:
   case ISD::SEXTLOAD: {
-    bool sext = (ISD::SEXTLOAD == opcode);
-    bool byte = (MVT::i8 == Node->getValueType(0));
     MVT::ValueType TypeBeingLoaded = (ISD::LOAD == opcode) ?
       Node->getValueType(0) : cast<MVTSDNode>(Node)->getExtraValueType();
-      
+    bool sext = (ISD::SEXTLOAD == opcode);
+    bool byte = (MVT::i8 == TypeBeingLoaded);
+    
     // Make sure we generate both values.
     if (Result != 1)
       ExprMap[N.getValue(1)] = 1;   // Generate the token
@@ -812,32 +816,29 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Select(Chain);
 
     switch (TypeBeingLoaded) {
-    default: assert(0 && "Cannot load this type!");
+    default: Node->dump(); assert(0 && "Cannot load this type!");
     case MVT::i1:  Opc = PPC::LBZ; break;
     case MVT::i8:  Opc = PPC::LBZ; break;
     case MVT::i16: Opc = sext ? PPC::LHA : PPC::LHZ; break;
     case MVT::i32: Opc = PPC::LWZ; break;
+    case MVT::f32: Opc = PPC::LFS; break;
+    case MVT::f64: Opc = PPC::LFD; break;
     }
     
-    // Since there's no load byte & sign extend instruction we have to split
-    // byte SEXTLOADs into lbz + extsb.  This requires we make a temp register.
-    if (sext && byte) {
-      Tmp3 = Result;
-      Result = MakeReg(MVT::i32);
-    } else {
-      Tmp3 = 0;  // Silence GCC warning.
+    if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
+      Tmp1 = MakeReg(MVT::i32);
+      int CPI = CP->getIndex();
+      BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(getGlobalBaseReg())
+        .addConstantPoolIndex(CPI);
+      BuildMI(BB, Opc, 2, Result).addConstantPoolIndex(CPI).addReg(Tmp1);
     }
-    if(Address.getOpcode() == ISD::FrameIndex) {
+    else if(Address.getOpcode() == ISD::FrameIndex) {
       Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
       addFrameReference(BuildMI(BB, Opc, 2, Result), (int)Tmp1);
     } else {
       int offset;
       SelectAddr(Address, Tmp1, offset);
       BuildMI(BB, Opc, 2, Result).addSImm(offset).addReg(Tmp1);
-    }
-    if (sext && byte) {
-      BuildMI(BB, PPC::EXTSB, 1, Tmp3).addReg(Result);
-      Result = Tmp3;
     }
     return Result;
   }
@@ -846,64 +847,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
     // Lower the chain for this call.
     Select(N.getOperand(0));
     ExprMap[N.getValue(Node->getNumValues()-1)] = 1;
-      
-    // get the virtual reg for each argument
-    std::vector<unsigned> VRegs;
+
     for(int i = 2, e = Node->getNumOperands(); i < e; ++i)
-      VRegs.push_back(SelectExpr(N.getOperand(i)));
-    
-    // The ABI specifies that the first 32 bytes of args may be passed in GPRs,
-    // and that 13 FPRs may also be used for passing any floating point args.
-    int GPR_remaining = 8, FPR_remaining = 13;
-    unsigned GPR_idx = 0, FPR_idx = 0;
-    static const unsigned GPR[] = { 
-      PPC::R3, PPC::R4, PPC::R5, PPC::R6,
-      PPC::R7, PPC::R8, PPC::R9, PPC::R10,
-    };
-    static const unsigned FPR[] = {
-      PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, 
-      PPC::F7, PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, 
-      PPC::F13
-    };
-
-    // move the vregs into the appropriate architected register or stack slot
-    for(int i = 0, e = VRegs.size(); i < e; ++i) {
-        unsigned OperandType = N.getOperand(i+2).getValueType();
-        switch(OperandType) {
-        default: 
-          Node->dump(); 
-          N.getOperand(i).Val->dump();
-          std::cerr << "Type for " << i << " is: " << 
-            N.getOperand(i+2).getValueType() << "\n";
-          assert(0 && "Unknown value type for call");
-        case MVT::i1:
-        case MVT::i8:
-        case MVT::i16:
-        case MVT::i32:
-          if (GPR_remaining > 0)
-            BuildMI(BB, PPC::OR, 2, GPR[GPR_idx]).addReg(VRegs[i])
-              .addReg(VRegs[i]);
-          break;
-        case MVT::f32:
-        case MVT::f64:
-          if (FPR_remaining > 0) {
-            BuildMI(BB, PPC::FMR, 1, FPR[FPR_idx]).addReg(VRegs[i]);
-            ++FPR_idx;
-            --FPR_remaining;
-          }
-          break;
-        }
-        // All arguments consume GPRs available for argument passing
-        if (GPR_remaining > 0) { 
-          ++GPR_idx; 
-          --GPR_remaining;
-        }
-        if (MVT::f64 == OperandType && GPR_remaining > 0) {
-          ++GPR_idx;
-          --GPR_remaining;
-        }
-    }
-
+      Select(N.getOperand(i));
+      
     // Emit the correct call instruction based on the type of symbol called.
     if (GlobalAddressSDNode *GASD = 
         dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) {
