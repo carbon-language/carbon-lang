@@ -1,0 +1,285 @@
+//===- llvm/Analysis/InstForest.h - Partition Method into forest -*- C++ -*--=//
+//
+// This interface is used to partition a method into a forest of instruction
+// trees, where the following invariants hold:
+//
+// 1. The instructions in a tree are all related to each other through use
+//    relationships.
+// 2. All instructions in a tree are members of the same basic block
+// 3. All instructions in a tree (with the exception of the root), may have only
+//    a single user.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef LLVM_ANALYSIS_INSTFOREST_H
+#define LLVM_ANALYSIS_INSTFOREST_H
+
+#include "llvm/Support/Tree.h"
+#include "llvm/Instruction.h"
+#include <map>
+
+namespace analysis {
+
+template <class Payload> class InstTreeNode;
+template<class Payload>  class InstForest;
+
+
+//===----------------------------------------------------------------------===//
+//  Class InstTreeNode
+//===----------------------------------------------------------------------===//
+//
+// There is an instance of this class for each node in the instruction forest.
+// There should be a node for every instruction in the tree, as well as
+// Temporary nodes that correspond to other trees in the forest and to variables
+// and global variables.  Constants have their own special node.
+//
+template<class Payload>
+class InstTreeNode : 
+    public Tree<InstTreeNode<Payload>, pair<pair<Value*, char>, Payload> > {
+
+  friend class InstForest<Payload>;
+  typedef Tree<InstTreeNode<Payload>, pair<pair<Value*, char>, Payload> > super;
+
+  // Constants used for the node type value
+  enum NodeTypeTy {
+    ConstNode        = Value::ConstantVal,
+    BasicBlockNode   = Value::BasicBlockVal,
+    InstructionNode  = Value::InstructionVal,
+    TemporaryNode    = -1
+  };
+
+  // Helper functions to make accessing our data nicer...
+  const Value *getValue() const { return getTreeData().first.first; }
+        Value *getValue()       { return getTreeData().first.first; }
+  enum NodeTypeTy getNodeType() const {
+    return (enum NodeTypeTy)getTreeData().first.second;
+  }
+
+  InstTreeNode(const InstTreeNode &);     // Do not implement
+  void operator=(const InstTreeNode &);   // Do not implement
+
+  // Only creatable by InstForest
+  InstTreeNode(InstForest<Payload> &IF, Value *V, InstTreeNode *Parent);
+  bool CanMergeInstIntoTree(Instruction *Inst);
+public:
+  // Accessor functions...
+  inline       Payload &getData()       { return getTreeData().second; }
+  inline const Payload &getData() const { return getTreeData().second; }
+
+  // Type checking functions...
+  inline bool isConstant()    const { return getNodeType() == ConstNode; }
+  inline bool isBasicBlock()  const { return getNodeType() == BasicBlockNode; }
+  inline bool isInstruction() const { return getNodeType() == InstructionNode; }
+  inline bool isTemporary()   const { return getNodeType() == TemporaryNode; }
+
+  // Accessors for different node types...
+  inline ConstPoolVal *getConstant() {
+    return getValue()->castConstantAsserting();
+  }
+  inline const ConstPoolVal *getConstant() const {
+    return getValue()->castConstantAsserting();
+  }
+  inline BasicBlock *getBasicBlock() {
+    return getValue()->castBasicBlockAsserting();
+  }
+  inline const BasicBlock *getBasicBlock() const {
+    return getValue()->castBasicBlockAsserting();
+  }
+  inline Instruction *getInstruction() {
+    assert(isInstruction() && "getInstruction() on non instruction node!");
+    return getValue()->castInstructionAsserting();
+  }
+  inline const Instruction *getInstruction() const {
+    assert(isInstruction() && "getInstruction() on non instruction node!");
+    return getValue()->castInstructionAsserting();
+  }
+  inline Instruction *getTemporary() {
+    assert(isTemporary() && "getTemporary() on non temporary node!");
+    return getValue()->castInstructionAsserting();
+  }
+  inline const Instruction *getTemporary() const {
+    assert(isTemporary() && "getTemporary() on non temporary node!");
+    return getValue()->castInstructionAsserting();
+  }
+
+public:
+  // print - Called by operator<< below...
+  void print(ostream &o, unsigned Indent) const {
+    o << string(Indent*2, ' ');
+    switch (getNodeType()) {
+    case ConstNode      : o << "Constant   : "; break;
+    case BasicBlockNode : o << "BasicBlock : " << getValue()->getName() << endl;
+      return;
+    case InstructionNode: o << "Instruction: "; break;
+    case TemporaryNode  : o << "Temporary  : "; break;
+    default: o << "UNKNOWN NODE TYPE: " << getNodeType() << endl; abort();
+    }
+
+    o << getValue();
+    if (!getValue()->isInstruction()) o << "\n";
+
+    for (unsigned i = 0; i < getNumChildren(); ++i)
+      getChild(i)->print(o, Indent+1);
+  }
+};
+
+template<class Payload>
+inline ostream &operator<<(ostream &o, const InstTreeNode<Payload> *N) {
+  N->print(o, 0); return o;
+}
+
+//===----------------------------------------------------------------------===//
+//  Class InstForest
+//===----------------------------------------------------------------------===//
+//
+// This class represents the instruction forest itself.  It exposes iterators
+// to an underlying vector of Instruction Trees.  Each root of the tree is 
+// guaranteed to be an instruction node.  The constructor builds the forest.
+//
+template<class Payload>
+class InstForest : public vector<InstTreeNode<Payload> *> {
+  friend class InstTreeNode<Payload>;
+
+  // InstMap - Map contains entries for ALL instructions in the method and the
+  // InstTreeNode that they correspond to.
+  //
+  map<Instruction*, InstTreeNode<Payload> *> InstMap;
+
+  void addInstMapping(Instruction *I, InstTreeNode<Payload> *IN) {
+    InstMap.insert(make_pair(I, IN));
+  }
+
+  void removeInstFromRootList(Instruction *I) {
+    for (unsigned i = size(); i > 0; --i)
+      if (operator[](i-1)->getValue() == I) {
+	erase(begin()+i-1);
+	return;
+      }
+  }
+
+public:
+  // ctor - Create an instruction forest for the specified method...
+  InstForest(Method *M) {
+    for (Method::inst_iterator I = M->inst_begin(), E = M->inst_end();
+	 I != E; ++I) {
+      Instruction *Inst = *I;
+      if (!getInstNode(Inst))   // Do we already have a tree for this inst?
+	push_back(new InstTreeNode<Payload>(*this, Inst, 0));  // No create one!
+      // InstTreeNode ctor automatically adds the created node into our InstMap
+    }
+  }
+
+  // dtor - Free the trees...
+  ~InstForest() {
+    for (unsigned i = size(); i > 0; --i)
+      delete operator[](i-1);
+  }
+
+  // getInstNode - Return the instruction node that corresponds to the specified
+  // instruction...  This node may be embeded in a larger tree, in which case
+  // the parent pointer can be used to find the root of the tree.
+  //
+  inline InstTreeNode<Payload> *getInstNode(Instruction *Inst) {
+    map<Instruction*, InstTreeNode<Payload> *>::iterator I = InstMap.find(Inst);
+    if (I != InstMap.end()) return I->second;
+    return 0;
+  }
+  inline const InstTreeNode<Payload> *getInstNode(const Instruction *Inst)const{
+    map<Instruction*, InstTreeNode<Payload>*>::const_iterator I = 
+      InstMap.find(Inst);
+    if (I != InstMap.end()) return I->second;
+    return 0;
+  }
+
+  // print - Called by operator<< below...
+  void print(ostream &out) const {
+    for (const_iterator I = begin(), E = end(); I != E; ++I)
+      out << *I;
+  }
+};
+
+template<class Payload>
+inline ostream &operator<<(ostream &o, const InstForest<Payload> &IF) {
+  IF.print(o); return o;
+}
+
+
+//===----------------------------------------------------------------------===//
+//  Method Implementations
+//===----------------------------------------------------------------------===//
+
+// CanMergeInstIntoTree - Return true if it is allowed to merge the specified
+// instruction into 'this' instruction tree.  This is allowed iff:
+//   1. The instruction is in the same basic block as the current one
+//   2. The instruction has only one use
+//
+template <class Payload>
+bool InstTreeNode<Payload>::CanMergeInstIntoTree(Instruction *I) {
+  if (I->use_size() > 1) return false;
+  return I->getParent() == getValue()->castInstructionAsserting()->getParent();
+}
+
+
+// InstTreeNode ctor - This constructor creates the instruction tree for the
+// specified value.  If the value is an instruction, it recursively creates the 
+// internal/child nodes and adds them to the instruction forest.
+//
+template <class Payload>
+InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
+				    InstTreeNode *Parent) : super(Parent) {
+  getTreeData().first.first = V;   // Save tree node
+ 
+  if (!V->isInstruction()) {
+    assert((V->isConstant() || V->isBasicBlock() ||
+	    V->isMethodArgument() || V->isGlobal()) &&
+	   "Unrecognized value type for InstForest Partition!");
+    if (V->isConstant())
+      getTreeData().first.second = ConstNode;
+    else if (V->isBasicBlock())
+      getTreeData().first.second = BasicBlockNode;
+    else 
+      getTreeData().first.second = TemporaryNode;
+      
+    return;
+  }
+
+  // Must be an instruction then... see if we can include it in this tree!
+  Instruction *I = V->castInstructionAsserting();
+  if (Parent && !Parent->CanMergeInstIntoTree(I)) {
+    // Not root node of tree, but mult uses?
+    getTreeData().first.second = TemporaryNode;   // Must be a temporary!
+    return;
+  }
+
+  // Otherwise, we are an internal instruction node.  We must process our
+  // uses and add them as children of this node.
+  //
+  vector<InstTreeNode*> Children;
+
+  // Make sure that the forest knows about us!
+  IF.addInstMapping(I, this);
+    
+  // Walk the operands of the instruction adding children for all of the uses
+  // of the instruction...
+  // 
+  for (Instruction::op_iterator OI = I->op_begin(); OI != I->op_end(); ++OI) {
+    Value *Operand = *OI;
+    InstTreeNode<Payload> *IN = IF.getInstNode(Operand->castInstruction());
+    if (IN && CanMergeInstIntoTree(Operand->castInstructionAsserting())) {
+      Children.push_back(IN);
+      IF.removeInstFromRootList(Operand->castInstructionAsserting());
+    } else {
+      // No node for this child yet... create one now!
+      Children.push_back(new InstTreeNode(IF, *OI, this));
+    }
+  }
+
+  setChildren(Children);
+  getTreeData().first.second = InstructionNode;
+}
+
+}  // End namespace analysis
+
+
+#endif
+
