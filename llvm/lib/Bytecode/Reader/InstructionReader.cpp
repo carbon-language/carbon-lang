@@ -21,8 +21,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/Module.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   struct RawInst {       // The raw fields out of the bytecode stream...
@@ -234,7 +233,7 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
 
       for (unsigned i = 1, e = Args.size(); i != e; ++i) {
         if (It == PL.end()) throw std::string("Invalid call instruction!");
-        Params.push_back(getValue(*It++, Args[i]));
+        Params.push_back(getValue(getTypeSlot(*It++), Args[i]));
       }
       if (It != PL.end()) throw std::string("Invalid call instruction!");
     } else {
@@ -247,7 +246,7 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
 
         // Read all of the fixed arguments
         for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
-          Params.push_back(getValue(FTy->getParamType(i), Args[i]));
+          Params.push_back(getValue(getTypeSlot(FTy->getParamType(i)),Args[i]));
 
         FirstVariableOperand = FTy->getNumParams();
       } else {
@@ -286,7 +285,7 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       FunctionType::ParamTypes::const_iterator It = PL.begin();
       for (unsigned i = 3, e = Args.size(); i != e; ++i) {
         if (It == PL.end()) throw std::string("Invalid invoke instruction!");
-        Params.push_back(getValue(*It++, Args[i]));
+        Params.push_back(getValue(getTypeSlot(*It++), Args[i]));
       }
       if (It != PL.end()) throw std::string("Invalid invoke instruction!");
     } else {
@@ -299,7 +298,8 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
 
         FirstVariableArgument = FTy->getNumParams()+2;
         for (unsigned i = 2; i != FirstVariableArgument; ++i)
-          Params.push_back(getValue(FTy->getParamType(i-2), Args[i]));
+          Params.push_back(getValue(getTypeSlot(FTy->getParamType(i-2)),
+                                    Args[i]));
           
       } else {
         if (Args.size() < 4) throw std::string("Invalid invoke instruction!");
@@ -354,7 +354,7 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     for (unsigned i = 1, e = Args.size(); i != e; ++i) {
       const CompositeType *TopTy = dyn_cast_or_null<CompositeType>(NextTy);
       if (!TopTy) throw std::string("Invalid getelementptr instruction!"); 
-      Idx.push_back(getValue(TopTy->getIndexType(), Args[i]));
+      Idx.push_back(getValue(TopTy->getIndexType()->getPrimitiveID(), Args[i]));
       NextTy = GetElementPtrInst::getIndexedType(InstTy, Idx, true);
     }
 
@@ -376,7 +376,8 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
 
     Value *Ptr = getValue(RI.Type, Args[1]);
     const Type *ValTy = cast<PointerType>(Ptr->getType())->getElementType();
-    Result = new StoreInst(getValue(ValTy, Args[0]), Ptr, RI.Opcode == 63);
+    Result = new StoreInst(getValue(getTypeSlot(ValTy), Args[0]), Ptr,
+                           RI.Opcode == 63);
     break;
   }
   case Instruction::Unwind:
@@ -385,9 +386,13 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     break;
   }  // end switch(RI.Opcode) 
 
-  insertValue(Result, Values);
+  unsigned TypeSlot;
+  if (Result->getType() == InstTy)
+    TypeSlot = RI.Type;
+  else
+    TypeSlot = getTypeSlot(Result->getType());
+
+  insertValue(Result, TypeSlot, Values);
   BB->getInstList().push_back(Result);
   BCR_TRACE(4, *Result);
 }
-
-} // End llvm namespace
