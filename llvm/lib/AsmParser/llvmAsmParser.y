@@ -919,8 +919,15 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     if (STy == 0)
       ThrowException("Cannot make struct constant with type: '" + 
                      (*$1)->getDescription() + "'!");
-    // FIXME: TODO: Check to see that the constants are compatible with the type
-    // initializer!
+
+    // Check to ensure that constants are compatible with the type initializer!
+    for (unsigned i = 0, e = $3->size(); i != e; ++i)
+      if ((*$3)[i]->getType() != STy->getElementTypes()[i])
+        ThrowException("Expected type '" +
+                       STy->getElementTypes()[i]->getDescription() +
+                       "' for element #" + utostr(i) +
+                       " of structure initializer!");
+
     $$ = ConstantStruct::get(STy, *$3);
     delete $1; delete $3;
   }
