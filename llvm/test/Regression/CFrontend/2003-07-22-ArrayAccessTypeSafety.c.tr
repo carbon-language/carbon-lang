@@ -2,6 +2,6 @@
  */
 
 void test(int* array, long long N) {
-    array[N] = 33;
+    array[N] = N[array] = 33;
 }
 
