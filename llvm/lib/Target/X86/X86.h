@@ -3,8 +3,6 @@
 // This file contains the entry points for global functions defined in the x86
 // target library, as used by the LLVM JIT.
 //
-// FIXME: This file will be dramatically changed in the future
-//
 //===----------------------------------------------------------------------===//
 
 #ifndef TARGET_X86_H
@@ -20,17 +18,16 @@ class Pass;
 ///
 Pass *createSimpleX86InstructionSelector(TargetMachine &TM);
 
-/// createSimpleRegisterAllocation - This function returns a pass that converts
-/// the specified machine code function from SSA form to use explicit registers
-/// by spilling every register.  Wow, great policy huh?
+/// createX86PeepholeOptimizer - Create a pass to perform X86 specific peephole
+/// optimizations.
 ///
-Pass *createSimpleRegisterAllocator();
-Pass *createLocalRegisterAllocator();
+Pass *createX86PeepholeOptimizerPass();
 
-/// createPrologEpilogCodeInserter - This function returns a pass that inserts
-/// prolog and epilog code, and eliminates abstract frame references.
+/// createX86FloatingPointStackifierPass - This function returns a pass which
+/// converts floating point register references and pseudo instructions into
+/// floating point stack references and physical instructions.
 ///
-Pass *createPrologEpilogCodeInserter();
+Pass *createX86FloatingPointStackifierPass();
 
 /// createX86CodePrinterPass - Print out the specified machine code function to
 /// the specified stream.  This function should work regardless of whether or
