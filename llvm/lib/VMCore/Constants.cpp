@@ -440,8 +440,9 @@ bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
   default:
     return false;         // These can't be represented as floating point!
 
-    // TODO: Figure out how to test if a double can be cast to a float!
   case Type::FloatTyID:
+    // Since we're passed a double but the ConstantFP is of type float, make
+    // sure that the double value is in the range of a float
     return isinf(Val) || isnan(Val) || (Val >= -HUGE_VALF && Val <= HUGE_VALF);
     
   case Type::DoubleTyID:
