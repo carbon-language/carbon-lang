@@ -351,6 +351,21 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   }
 }
 
+
+template<typename _CopierFunction>
+DSCallSite::DSCallSite(const DSCallSite& FromCall,
+                       _CopierFunction nodeCopier)
+  : std::vector<DSNodeHandle>(),
+    caller(&FromCall.getCaller()),
+    callInst(&FromCall.getCallInst()) {
+
+  reserve(FromCall.size());
+  for (unsigned j = 0, ej = FromCall.size(); j != ej; ++j)
+    push_back((&nodeCopier == (_CopierFunction*) 0)? DSNodeHandle(FromCall[j])
+                                                   : nodeCopier(&FromCall[j]));
+}
+
+
 //===----------------------------------------------------------------------===//
 // DSGraph Implementation
 //===----------------------------------------------------------------------===//
@@ -378,23 +393,22 @@ DSGraph::~DSGraph() {
 // dump - Allow inspection of graph in a debugger.
 void DSGraph::dump() const { print(std::cerr); }
 
-// Helper function used to clone a function list.
-//
-static void CopyFunctionCallsList(const vector<vector<DSNodeHandle> >&fromCalls,
-                                  vector<vector<DSNodeHandle> > &toCalls,
-                                  std::map<const DSNode*, DSNode*> &NodeMap) {
 
+DSNodeHandle copyHelper(const DSNodeHandle* fromNode,
+                        std::map<const DSNode*, DSNode*> *NodeMap) {
+  return DSNodeHandle((*NodeMap)[fromNode->getNode()], fromNode->getOffset());
+}
+
+// Helper function used to clone a function list.
+// 
+static void CopyFunctionCallsList(const vector<DSCallSite>& fromCalls,
+                                  vector<DSCallSite> &toCalls,
+                                  std::map<const DSNode*, DSNode*> &NodeMap) {
   unsigned FC = toCalls.size();  // FirstCall
   toCalls.reserve(FC+fromCalls.size());
-  for (unsigned i = 0, ei = fromCalls.size(); i != ei; ++i) {
-    toCalls.push_back(vector<DSNodeHandle>());
-    
-    const vector<DSNodeHandle> &CurCall = fromCalls[i];
-    toCalls.back().reserve(CurCall.size());
-    for (unsigned j = 0, ej = fromCalls[i].size(); j != ej; ++j)
-      toCalls[FC+i].push_back(DSNodeHandle(NodeMap[CurCall[j].getNode()],
-                                           CurCall[j].getOffset()));
-  }
+  for (unsigned i = 0, ei = fromCalls.size(); i != ei; ++i)
+    toCalls.push_back(DSCallSite(fromCalls[i], 
+                         std::bind2nd(std::ptr_fun(&copyHelper), &NodeMap)));
 }
 
 /// remapLinks - Change all of the Links in the current node according to the
@@ -403,6 +417,7 @@ void DSNode::remapLinks(std::map<const DSNode*, DSNode*> &OldNodeMap) {
   for (unsigned i = 0, e = Links.size(); i != e; ++i) 
     Links[i].setNode(OldNodeMap[Links[i].getNode()]);
 }
+
 
 // cloneInto - Clone the specified DSGraph into the current graph, returning the
 // Return node of the graph.  The translated ValueMap for the old function is
@@ -532,9 +547,9 @@ void DSGraph::markIncompleteNodes(bool markFormalArgs) {
 
   // Mark stuff passed into functions calls as being incomplete...
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
-    vector<DSNodeHandle> &Args = FunctionCalls[i];
+    DSCallSite &Args = FunctionCalls[i];
     // Then the return value is certainly incomplete!
-    markIncompleteNode(Args[0].getNode());
+    markIncompleteNode(Args.getReturnValueNode().getNode());
 
     // The call does not make the function argument incomplete...
  
@@ -590,7 +605,7 @@ bool DSGraph::isNodeDead(DSNode *N) {
   return false;
 }
 
-static void removeIdenticalCalls(vector<vector<DSNodeHandle> > &Calls,
+static void removeIdenticalCalls(vector<DSCallSite> &Calls,
                                  const std::string &where) {
   // Remove trivially identical function calls
   unsigned NumFns = Calls.size();
@@ -665,7 +680,7 @@ static bool checkGlobalAlive(DSNode *N, std::set<DSNode*> &Alive,
 // the simple iterative loop in the first few lines below suffice.
 // 
 static void markGlobalsIteration(std::set<DSNode*>& GlobalNodes,
-                                 vector<vector<DSNodeHandle> > &Calls,
+                                 vector<DSCallSite> &Calls,
                                  std::set<DSNode*> &Alive,
                                  bool FilterCalls) {
 
@@ -723,7 +738,7 @@ static void markGlobalsAlive(DSGraph &G, std::set<DSNode*> &Alive,
       GlobalNodes.insert(G.getNodes()[i]);
 
   // Add all call nodes to the same set
-  vector<vector<DSNodeHandle> > &Calls = G.getFunctionCalls();
+  vector<DSCallSite> &Calls = G.getFunctionCalls();
   if (FilterCalls) {
     for (unsigned i = 0, e = Calls.size(); i != e; ++i)
       for (unsigned j = 0, e = Calls[i].size(); j != e; ++j)
@@ -963,15 +978,15 @@ void GlobalDSGraph::cloneGlobals(DSGraph& Graph, bool CloneCalls) {
 // 
 void GlobalDSGraph::cloneCalls(DSGraph& Graph) {
   std::map<const DSNode*, DSNode*> NodeCache;
-  vector<vector<DSNodeHandle> >& FromCalls =Graph.FunctionCalls;
+  vector<DSCallSite >& FromCalls =Graph.FunctionCalls;
 
   FunctionCalls.reserve(FunctionCalls.size() + FromCalls.size());
 
   for (int i = 0, ei = FromCalls.size(); i < ei; ++i) {
-    FunctionCalls.push_back(vector<DSNodeHandle>());
-    FunctionCalls.back().reserve(FromCalls[i].size());
+    DSCallSite& callCopy = FunctionCalls.back();
+    callCopy.reserve(FromCalls[i].size());
     for (unsigned j = 0, ej = FromCalls[i].size(); j != ej; ++j)
-      FunctionCalls.back().push_back
+      callCopy.push_back
         ((FromCalls[i][j] && (FromCalls[i][j]->NodeType & ExternalTypeBits))
          ? cloneNodeInto(FromCalls[i][j], NodeCache, true)
          : 0);

@@ -63,7 +63,7 @@ namespace {
     }
 
   private:
-    void ResolveFunctionCall(Function *F, const std::vector<DSNodeHandle> &Call,
+    void ResolveFunctionCall(Function *F, const DSCallSite &Call,
                              DSNodeHandle &RetVal);
   };
 
@@ -81,14 +81,14 @@ namespace {
 /// and the return value for the call site context-insensitively.
 ///
 void Steens::ResolveFunctionCall(Function *F,
-                                 const std::vector<DSNodeHandle> &Call,
+                                 const DSCallSite &Call,
                                  DSNodeHandle &RetVal) {
   assert(ResultGraph != 0 && "Result graph not allocated!");
   std::map<Value*, DSNodeHandle> &ValMap = ResultGraph->getValueMap();
 
-  // Handle the return value of the function... which is Call[0]
-  if (Call[0].getNode() && RetVal.getNode())
-    RetVal.mergeWith(Call[0]);
+  // Handle the return value of the function...
+  if (Call.getReturnValueNode().getNode() && RetVal.getNode())
+    RetVal.mergeWith(Call.getReturnValueNode());
 
   // Loop over all pointer arguments, resolving them to their provided pointers
   unsigned ArgIdx = 2; // Skip retval and function to call...
@@ -154,13 +154,13 @@ bool Steens::run(Module &M) {
   // Now that we have all of the graphs inlined, we can go about eliminating
   // call nodes...
   //
-  std::vector<std::vector<DSNodeHandle> > &Calls =
+  std::vector<DSCallSite> &Calls =
     ResultGraph->getFunctionCalls();
   for (unsigned i = 0; i != Calls.size(); ) {
-    std::vector<DSNodeHandle> &CurCall = Calls[i];
+    DSCallSite &CurCall = Calls[i];
     
     // Loop over the called functions, eliminating as many as possible...
-    std::vector<GlobalValue*> CallTargets = CurCall[1].getNode()->getGlobals();
+    std::vector<GlobalValue*> CallTargets = CurCall.getCalleeNode().getNode()->getGlobals();
     for (unsigned c = 0; c != CallTargets.size(); ) {
       // If we can eliminate this function call, do so!
       bool Eliminated = false;

@@ -105,9 +105,9 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
     }
 
     // Output all of the call nodes...
-    const std::vector<std::vector<DSNodeHandle> > &FCs = G->getFunctionCalls();
+    const std::vector<DSCallSite> &FCs = G->getFunctionCalls();
     for (unsigned i = 0, e = FCs.size(); i != e; ++i) {
-      const std::vector<DSNodeHandle> &Call = FCs[i];
+      const DSCallSite &Call = FCs[i];
       GW.emitSimpleNode(&Call, "shape=record", "call", Call.size());
 
       for (unsigned j = 0, e = Call.size(); j != e; ++j)

@@ -61,12 +61,12 @@ namespace {
     vector<DSNode*> &Nodes;
     DSNodeHandle &RetNode;               // Node that gets returned...
     map<Value*, DSNodeHandle> &ValueMap;
-    vector<vector<DSNodeHandle> > &FunctionCalls;
+    vector<DSCallSite> &FunctionCalls;
 
   public:
     GraphBuilder(DSGraph &g, vector<DSNode*> &nodes, DSNodeHandle &retNode,
                  map<Value*, DSNodeHandle> &vm,
-                 vector<vector<DSNodeHandle> > &fc)
+                 vector<DSCallSite> &fc)
       : G(g), Nodes(nodes), RetNode(retNode), ValueMap(vm), FunctionCalls(fc) {
 
       // Create scalar nodes for all pointer arguments...
@@ -356,8 +356,8 @@ void GraphBuilder::visitReturnInst(ReturnInst &RI) {
 
 void GraphBuilder::visitCallInst(CallInst &CI) {
   // Add a new function call entry...
-  FunctionCalls.push_back(vector<DSNodeHandle>());
-  vector<DSNodeHandle> &Args = FunctionCalls.back();
+  FunctionCalls.push_back(DSCallSite(G.getFunction(), CI));
+  DSCallSite &Args = FunctionCalls.back();
 
   // Set up the return value...
   if (isPointerType(CI.getType()))

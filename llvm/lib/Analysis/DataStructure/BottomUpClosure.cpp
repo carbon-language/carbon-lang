@@ -56,7 +56,7 @@ bool BUDataStructures::run(Module &M) {
 // ResolveArguments - Resolve the formal and actual arguments for a function
 // call.
 //
-static void ResolveArguments(std::vector<DSNodeHandle> &Call, Function &F,
+static void ResolveArguments(DSCallSite &Call, Function &F,
                              map<Value*, DSNodeHandle> &ValueMap) {
   // Resolve all of the function arguments...
   Function::aiterator AI = F.abegin();
@@ -87,7 +87,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 #endif
 
   // Start resolving calls...
-  std::vector<std::vector<DSNodeHandle> > &FCs = Graph->getFunctionCalls();
+  std::vector<DSCallSite> &FCs = Graph->getFunctionCalls();
 
   DEBUG(std::cerr << "  [BU] Inlining: " << F.getName() << "\n");
 
@@ -97,14 +97,14 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 
     for (unsigned i = 0; i != FCs.size(); ++i) {
       // Copy the call, because inlining graphs may invalidate the FCs vector.
-      std::vector<DSNodeHandle> Call = FCs[i];
+      DSCallSite Call = FCs[i];
 
       // If the function list is complete...
-      if ((Call[1].getNode()->NodeType & DSNode::Incomplete) == 0) {
+      if ((Call.getCalleeNode().getNode()->NodeType & DSNode::Incomplete)==0) {
         // Start inlining all of the functions we can... some may not be
         // inlinable if they are external...
         //
-        std::vector<GlobalValue*> Callees(Call[1].getNode()->getGlobals());
+        std::vector<GlobalValue*> Callees(Call.getCalleeNode().getNode()->getGlobals());
 
         // Loop over the functions, inlining whatever we can...
         for (unsigned c = 0; c != Callees.size(); ++c) {
@@ -112,7 +112,8 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
           Function &FI = cast<Function>(*Callees[c]);
 
           // Record that this is a call site of FI.
-          CallSites[&FI].push_back(CallSite(F, Call));
+          assert(&Call.getCaller() == &F && "Invalid caller in DSCallSite?");
+          CallSites[&FI].push_back(DSCallSite(Call));
 
           if (&FI == &F) {
             // Self recursion... simply link up the formal arguments with the
@@ -120,8 +121,8 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 
             DEBUG(std::cerr << "\t[BU] Self Inlining: " << F.getName() << "\n");
 
-            if (Call[0].getNode()) // Handle the return value if present...
-              Graph->getRetNode().mergeWith(Call[0]);
+            if (Call.getReturnValueNode().getNode()) // Handle the return value if present...
+              Graph->getRetNode().mergeWith(Call.getReturnValueNode());
 
             // Resolve the arguments in the call to the actual values...
             ResolveArguments(Call, F, Graph->getValueMap());
@@ -159,8 +160,8 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             // Resolve the arguments in the call to the actual values...
             ResolveArguments(Call, FI, OldValMap);
 
-            if (Call[0].getNode())  // Handle the return value if present
-              RetVal.mergeWith(Call[0]);
+            if (Call.getReturnValueNode().getNode())  // Handle the return value if present
+              RetVal.mergeWith(Call.getReturnValueNode());
 
             // Erase the entry in the Callees vector
             Callees.erase(Callees.begin()+c--);
@@ -178,7 +179,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
           // Erase the call if it is resolvable...
           FCs.erase(FCs.begin()+i--);  // Don't skip a the next call...
           Inlined = true;
-        } else if (Callees.size() != Call[1].getNode()->getGlobals().size()) {
+        } else if (Callees.size() != Call.getCalleeNode().getNode()->getGlobals().size()) {
           // Was able to inline SOME, but not all of the functions.  Construct a
           // new global node here.
           //

@@ -48,24 +48,24 @@ bool TDDataStructures::run(Module &M) {
 /// local to the specified graph.
 ///
 void TDDataStructures::ResolveCallSite(DSGraph &Graph,
-                                   const BUDataStructures::CallSite &CallSite) {
+                                       const DSCallSite &CallSite) {
   // Resolve all of the function formal arguments...
   Function &F = Graph.getFunction();
   Function::aiterator AI = F.abegin();
 
-  for (unsigned i = 2, e = CallSite.Context.size(); i != e; ++i, ++AI) {
+  for (unsigned i = 2, e = CallSite.size(); i != e; ++i, ++AI) {
     // Advance the argument iterator to the first pointer argument...
     while (!DataStructureAnalysis::isPointerType(AI->getType())) ++AI;
     
     // TD ...Merge the formal arg scalar with the actual arg node
     DSNodeHandle &NodeForFormal = Graph.getNodeForValue(AI);
     if (NodeForFormal.getNode())
-      NodeForFormal.mergeWith(CallSite.Context[i]);
+      NodeForFormal.mergeWith(CallSite[i]);
   }
   
   // Merge returned node in the caller with the "return" node in callee
-  if (CallSite.Context[0].getNode() && Graph.getRetNode().getNode())
-    Graph.getRetNode().mergeWith(CallSite.Context[0]);
+  if (CallSite.getReturnValueNode().getNode() && Graph.getRetNode().getNode())
+    Graph.getRetNode().mergeWith(CallSite.getReturnValueNode());
 }
 
 DSGraph &TDDataStructures::calculateGraph(Function &F) {
@@ -79,7 +79,7 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   DSGraph &BUGraph = BU.getDSGraph(F);
   Graph = new DSGraph(BUGraph);
 
-  const vector<BUDataStructures::CallSite> *CallSitesP = BU.getCallSites(F);
+  const vector<DSCallSite> *CallSitesP = BU.getCallSites(F);
   if (CallSitesP == 0) {
     DEBUG(std::cerr << "  [TD] No callers for: " << F.getName() << "\n");
     return *Graph;  // If no call sites, the graph is the same as the BU graph!
@@ -89,10 +89,10 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   // graph.
   //
   DEBUG(std::cerr << "  [TD] Inlining callers for: " << F.getName() << "\n");
-  const vector<BUDataStructures::CallSite> &CallSites = *CallSitesP;
+  const vector<DSCallSite> &CallSites = *CallSitesP;
   for (unsigned c = 0, ce = CallSites.size(); c != ce; ++c) {
-    const BUDataStructures::CallSite &CallSite = CallSites[c];  // Copy
-    Function &Caller = *CallSite.Caller;
+    const DSCallSite &CallSite = CallSites[c];  // Copy
+    Function &Caller = CallSite.getCaller();
     assert(!Caller.isExternal() && "Externals function cannot 'call'!");
     
     DEBUG(std::cerr << "\t [TD] Inlining caller #" << c << " '"
@@ -128,10 +128,10 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
 
       // Make a temporary copy of the call site, and transform the argument node
       // pointers.
-      BUDataStructures::CallSite TmpCallSite = CallSite;
-      for (unsigned i = 0, e = CallSite.Context.size(); i != e; ++i) {
-        const DSNode *OldNode = TmpCallSite.Context[i].getNode();
-        TmpCallSite.Context[i].setNode(OldNodeMap[OldNode]);
+      DSCallSite TmpCallSite = CallSite;
+      for (unsigned i = 0, e = CallSite.size(); i != e; ++i) {
+        const DSNode *OldNode = TmpCallSite[i].getNode();
+        TmpCallSite[i].setNode(OldNodeMap[OldNode]);
       }
 
       ResolveCallSite(*Graph, CallSite);
