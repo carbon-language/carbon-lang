@@ -1543,6 +1543,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       BMI(BB, IP, X86::MOVrr32, 1, DestReg).addReg(SrcReg);
       BMI(BB, IP, X86::MOVrr32, 1, DestReg+1).addReg(SrcReg+1);
     } else {
+      assert(0 && "Cannot handle this type of cast instruction!");
       abort();
     }
     return;
@@ -1593,8 +1594,10 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   if (DestClass == cFP) {
     // unsigned int -> load as 64 bit int.
     // unsigned long long -> more complex
-    if (SrcTy->isUnsigned() && SrcTy != Type::UByteTy)
+    if (SrcTy->isUnsigned() && SrcTy != Type::UByteTy) {
+      assert(0 && "Cannot handle this type of cast!");
       abort();  // don't handle unsigned src yet!
+    }
 
     // We don't have the facilities for directly loading byte sized data from
     // memory.  Promote it to 16 bits.
@@ -1612,7 +1615,10 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       F->getFrameInfo()->CreateStackObject(SrcTy, TM.getTargetData());
 
     if (SrcClass == cLong) {
-      if (SrcTy == Type::ULongTy) abort();  // FIXME: Handle ulong -> FP
+      if (SrcTy == Type::ULongTy) {
+        assert(0 && "FIXME: Handle cast ulong to FP");
+        abort();
+      }
       addFrameReference(BMI(BB, IP, X86::MOVrm32, 5), FrameIdx).addReg(SrcReg);
       addFrameReference(BMI(BB, IP, X86::MOVrm32, 5),
 			FrameIdx, 4).addReg(SrcReg+1);
@@ -1685,6 +1691,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   }
 
   // Anything we haven't handled already, we can't (yet) handle at all.
+  assert(0 && "Unhandled cast instruction!");
   abort();
 }
 
