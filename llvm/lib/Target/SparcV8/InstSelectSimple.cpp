@@ -125,10 +125,10 @@ namespace {
         RegMap.erase(V);  // Assign a new name to this constant if ref'd again
       } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
         // Move the address of the global into the register
-        //  X86 does:
-        // BuildMI(*MBB, IPt, V8::ORrr, 2, Reg).addReg(G0).addGlobalAddress(GV);
-        //  We need to use SETHI and OR.
-        assert (0 && "Can't move address of global yet");
+        unsigned TmpReg = makeAnotherReg(V->getType());
+        BuildMI (*MBB, IPt, V8::SETHIi, 1, TmpReg).addGlobalAddress (GV);
+        BuildMI (*MBB, IPt, V8::ORri, 2, Reg).addReg (TmpReg)
+          .addGlobalAddress (GV);
         RegMap.erase(V);  // Assign a new name to this address if ref'd again
       }
 
