@@ -19,6 +19,7 @@
 #include "Support/DataTypes.h"
 #include <map>
 #include <vector>
+#include <cassert>
 class Value;
 class Type;
 class Instruction;
