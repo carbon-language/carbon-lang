@@ -6,11 +6,11 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-LEVEL = ../../..
+LEVEL = ../../../..
 LIBRARYNAME = sparcv8
 include $(LEVEL)/Makefile.common
 
-TDFILES := $(wildcard $(SourceDir)/*.td) $(SourceDir)/../Target.td
+TDFILES := $(wildcard $(SourceDir)/*.td) $(SourceDir)/../../Target.td
 TDFILE  := $(SourceDir)/SparcV8.td
 
 # Make sure that tblgen is run, first thing.
