@@ -473,6 +473,14 @@ public:
                                       UTy, isPCRelative));
   }
 
+  void addCCRegOperand(Value *V, MOTy::UseType UTy = MOTy::Use) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(V, MachineOperand::MO_CCRegister, UTy,
+                                      false));
+  }
+
+
   /// addRegOperand - Add a symbolic virtual register reference...
   ///
   void addRegOperand(int reg, bool isDef) {
