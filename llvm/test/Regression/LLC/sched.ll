@@ -4,6 +4,7 @@ declare int "printf"(sbyte*, int, float)
 
 int "testissue"(int %i, float %x, float %y)
 begin
+	br label %bb1
 bb1:
 	%x1 = mul float %x, %y			;; x1
 	%y1 = mul float %y, 0.75		;; y1
