@@ -38,6 +38,10 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 // ExpressionConvertableToType - Return true if it is possible
 static bool ExpressionConvertableToType(Value *V, const Type *Ty,
                                         ValueTypeCache &CTMap) {
+  // Expression type must be holdable in a register.
+  if (!isFirstClassType(Ty))
+    return false;
+  
   ValueTypeCache::iterator CTMI = CTMap.find(V);
   if (CTMI != CTMap.end()) return CTMI->second == Ty;
   CTMap[V] = Ty;
@@ -56,8 +60,10 @@ static bool ExpressionConvertableToType(Value *V, const Type *Ty,
     // can be converted to an equivalent value (except pointers, they can't be
     // const prop'd in general).
     //
-    if (isa<ConstPoolVal>(V) &&
-        !isa<PointerType>(V->getType()) && !isa<PointerType>(Ty)) return true;
+    if (isa<ConstPoolVal>(V))
+      if (!isa<PointerType>(V->getType()) && !isa<PointerType>(Ty) &&
+          !isa<StructType>(Ty) && !isa<ArrayType>(Ty))
+        return true;
 
     return false;              // Otherwise, we can't convert!
   }
@@ -85,6 +91,14 @@ static bool ExpressionConvertableToType(Value *V, const Type *Ty,
     return ExpressionConvertableToType(LI->getPtrOperand(),
                                        PointerType::get(Ty), CTMap);
   }
+  case Instruction::PHINode: {
+    PHINode *PN = cast<PHINode>(I);
+    for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
+      if (!ExpressionConvertableToType(PN->getIncomingValue(i), Ty, CTMap))
+        return false;
+    return true;
+  }
+
   case Instruction::GetElementPtr: {
     // GetElementPtr's are directly convertable to a pointer type if they have
     // a number of zeros at the end.  Because removing these values does not
@@ -129,6 +143,10 @@ static Value *ConvertExpressionToType(Value *V, const Type *Ty,
   if (VMCI != VMC.ExprMap.end())
     return VMCI->second;
 
+#ifdef DEBUG_EXPR_CONVERT
+  cerr << "CETT: " << (void*)V << " " << V;
+#endif
+
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0)
     if (ConstPoolVal *CPV = cast<ConstPoolVal>(V)) {
@@ -149,6 +167,10 @@ static Value *ConvertExpressionToType(Value *V, const Type *Ty,
   string Name = I->getName();  if (!Name.empty()) I->setName("");
   Instruction *Res;     // Result of conversion
 
+  ValueHandle IHandle(I);  // Prevent I from being removed!
+  
+  ConstPoolVal *Dummy = ConstPoolVal::getNullConstant(Ty);
+
   //cerr << endl << endl << "Type:\t" << Ty << "\nInst: " << I << "BB Before: " << BB << endl;
 
   switch (I->getOpcode()) {
@@ -159,9 +181,11 @@ static Value *ConvertExpressionToType(Value *V, const Type *Ty,
   case Instruction::Add:
   case Instruction::Sub:
     Res = BinaryOperator::create(cast<BinaryOperator>(I)->getOpcode(),
-                             ConvertExpressionToType(I->getOperand(0), Ty, VMC),
-                             ConvertExpressionToType(I->getOperand(1), Ty, VMC),
-                                 Name);
+                                 Dummy, Dummy, Name);
+    VMC.ExprMap[I] = Res;   // Add node to expression eagerly
+
+    Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), Ty, VMC));
+    Res->setOperand(1, ConvertExpressionToType(I->getOperand(1), Ty, VMC));
     break;
 
   case Instruction::Shl:
@@ -174,9 +198,28 @@ static Value *ConvertExpressionToType(Value *V, const Type *Ty,
   case Instruction::Load: {
     LoadInst *LI = cast<LoadInst>(I);
     assert(!LI->hasIndices());
-    Res = new LoadInst(ConvertExpressionToType(LI->getPtrOperand(),
-                                               PointerType::get(Ty), VMC),
+    Res = new LoadInst(ConstPoolVal::getNullConstant(PointerType::get(Ty)), 
                        Name);
+    VMC.ExprMap[I] = Res;
+    Res->setOperand(0, ConvertExpressionToType(LI->getPtrOperand(),
+                                               PointerType::get(Ty), VMC));
+    break;
+  }
+
+  case Instruction::PHINode: {
+    PHINode *OldPN = cast<PHINode>(I);
+    PHINode *NewPN = new PHINode(Ty, Name);
+
+    VMC.ExprMap[I] = NewPN;   // Add node to expression eagerly
+    while (OldPN->getNumOperands()) {
+      BasicBlock *BB = OldPN->getIncomingBlock(0);
+      Value *OldVal = OldPN->getIncomingValue(0);
+      ValueHandle OldValHandle(OldVal);
+      OldPN->removeIncomingValue(BB);
+      Value *V = ConvertExpressionToType(OldVal, Ty, VMC);
+      NewPN->addIncoming(V, BB);
+    }
+    Res = NewPN;
     break;
   }
 
@@ -241,8 +284,18 @@ static Value *ConvertExpressionToType(Value *V, const Type *Ty,
   }
 
 #ifdef DEBUG_EXPR_CONVERT
-  cerr << "ExpIn: " << I << "ExpOut: " << Res;
+  cerr << "ExpIn: " << (void*)I << " " << I
+       << "ExpOut: " << (void*)Res << " " << Res;
+  cerr << "ExpCREATED: " << (void*)Res << " " << Res;
 #endif
+
+  if (I->use_empty()) {
+#ifdef DEBUG_EXPR_CONVERT
+    cerr << "EXPR DELETING: " << (void*)I << " " << I;
+#endif
+    BIL.remove(I);
+    delete I;
+  }
 
   return Res;
 }
@@ -314,8 +367,9 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     assert(I->getOperand(0) == V);
     if (const PointerType *PT = dyn_cast<PointerType>(Ty)) {
       LoadInst *LI = cast<LoadInst>(I);
-      if (LI->hasIndices() || 
-          TD.getTypeSize(PT->getValueType()) != TD.getTypeSize(LI->getType()))
+      const Type *PVTy = PT->getValueType();
+      if (LI->hasIndices() || isa<ArrayType>(PVTy) || 
+          TD.getTypeSize(PVTy) != TD.getTypeSize(LI->getType()))
         return false;
 
       return RetValConvertableToType(LI, PT->getValueType(), CTMap);
@@ -347,6 +401,13 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     return false;
   }
 
+  case Instruction::PHINode: {
+    PHINode *PN = cast<PHINode>(I);
+    for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
+      if (!ExpressionConvertableToType(PN->getIncomingValue(i), Ty, CTMap))
+        return false;
+    return true;
+  }
 
 #if 0
   case Instruction::GetElementPtr: {
@@ -387,6 +448,8 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
 
 
 void ConvertUsersType(Value *V, Value *NewVal, ValueMapCache &VMC) {
+  ValueHandle VH(V);
+
   unsigned NumUses = V->use_size();
   for (unsigned It = 0; It < NumUses; ) {
     unsigned OldSize = NumUses;
@@ -394,21 +457,6 @@ void ConvertUsersType(Value *V, Value *NewVal, ValueMapCache &VMC) {
     NumUses = V->use_size();
     if (NumUses == OldSize) ++It;
   }
-
-  if (NumUses == 0)
-    if (Instruction *I = dyn_cast<Instruction>(V)) {
-      BasicBlock *BB = I->getParent();
-
-      // Now we just need to remove the old instruction so we don't get infinite
-      // loops.  Note that we cannot use DCE because DCE won't remove a store
-      // instruction, for example.
-      //
-#ifdef DEBUG_EXPR_CONVERT
-      cerr << "DELETING: " << (void*)I << " " << I;
-#endif
-      BB->getInstList().remove(I);
-      delete I;
-    }
 }
 
 
@@ -417,9 +465,13 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
                                  ValueMapCache &VMC) {
   if (isa<ValueHandle>(U)) return;  // Valuehandles don't let go of operands...
 
-  if (VMC.OperandsMapped.count(make_pair(U, OldVal))) return;
+  if (VMC.OperandsMapped.count(U)) return;
+  VMC.OperandsMapped.insert(U);
 
-  VMC.OperandsMapped.insert(make_pair(U, OldVal));
+  ValueMapCache::ExprMapTy::iterator VMCI = VMC.ExprMap.find(U);
+  if (VMCI != VMC.ExprMap.end())
+    return;
+
 
   Instruction *I = cast<Instruction>(U);  // Only Instructions convertable
 
@@ -432,9 +484,10 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
   // Prevent I from being removed...
   ValueHandle IHandle(I);
-#ifdef DEBUG_EXPR_CONVERT
-  cerr << "VH AQUIRING: " << I;
-#endif
+
+  const Type *NewTy = NewVal->getType();
+  ConstPoolVal *Dummy = (NewTy != Type::VoidTy) ? 
+                  ConstPoolVal::getNullConstant(NewTy) : 0;
 
   switch (I->getOpcode()) {
   case Instruction::Cast:
@@ -446,14 +499,16 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   case Instruction::Sub:
   case Instruction::SetEQ:
   case Instruction::SetNE: {
+    Res = BinaryOperator::create(cast<BinaryOperator>(I)->getOpcode(),
+                                 Dummy, Dummy, Name);
+    VMC.ExprMap[I] = Res;   // Add node to expression eagerly
+
     unsigned OtherIdx = (OldVal == I->getOperand(0)) ? 1 : 0;
     Value *OtherOp    = I->getOperand(OtherIdx);
-    Value *NewOther   = ConvertExpressionToType(OtherOp, NewVal->getType(),VMC);
+    Value *NewOther   = ConvertExpressionToType(OtherOp, NewTy, VMC);
 
-    Res = BinaryOperator::create(cast<BinaryOperator>(I)->getOpcode(),
-                                 OtherIdx == 0 ? NewOther : NewVal,
-                                 OtherIdx == 1 ? NewOther : NewVal,
-                                 Name);
+    Res->setOperand(OtherIdx, NewOther);
+    Res->setOperand(!OtherIdx, NewVal);
     break;
   }
   case Instruction::Shl:
@@ -470,15 +525,32 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
   case Instruction::Store: {
     if (I->getOperand(0) == OldVal) {  // Replace the source value
-      Value *NewPtr =
-        ConvertExpressionToType(I->getOperand(1),
-                                PointerType::get(NewVal->getType()), VMC);
-      Res = new StoreInst(NewVal, NewPtr);
+      const PointerType *NewPT = PointerType::get(NewTy);
+      Res = new StoreInst(NewVal, ConstPoolVal::getNullConstant(NewPT));
+      VMC.ExprMap[I] = Res;
+      Res->setOperand(1, ConvertExpressionToType(I->getOperand(1), NewPT, VMC));
     } else {                           // Replace the source pointer
-      const Type *ValType =cast<PointerType>(NewVal->getType())->getValueType();
-      Value *NewV = ConvertExpressionToType(I->getOperand(0), ValType, VMC);
-      Res = new StoreInst(NewV, NewVal);
+      const Type *ValTy = cast<PointerType>(NewTy)->getValueType();
+      Res = new StoreInst(ConstPoolVal::getNullConstant(ValTy), NewVal);
+      VMC.ExprMap[I] = Res;
+      Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), ValTy, VMC));
     }
+    break;
+  }
+
+  case Instruction::PHINode: {
+    PHINode *OldPN = cast<PHINode>(I);
+    PHINode *NewPN = new PHINode(NewTy, Name);
+    VMC.ExprMap[I] = NewPN;
+
+    while (OldPN->getNumOperands()) {
+      BasicBlock *BB = OldPN->getIncomingBlock(0);
+      Value *OldVal = OldPN->getIncomingValue(0);
+      OldPN->removeIncomingValue(BB);
+      Value *V = ConvertExpressionToType(OldVal, NewTy, VMC);
+      NewPN->addIncoming(V, BB);
+    }
+    Res = NewPN;
     break;
   }
 
@@ -530,8 +602,12 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   BIL.insert(It, Res);   // Keep It pointing to old instruction
 
 #ifdef DEBUG_EXPR_CONVERT
-  cerr << "In: " << I << "Out: " << Res;
+  cerr << "COT CREATED: "  << (void*)Res << " " << Res;
+  cerr << "In: " << (void*)I << " " << I << "Out: " << (void*)Res << " " << Res;
 #endif
+
+  // Add the instruction to the expression map
+  VMC.ExprMap[I] = Res;
 
   if (I->getType() != Res->getType())
     ConvertUsersType(I, Res, VMC);
@@ -544,7 +620,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
         Use->replaceUsesOfWith(I, Res);
     }
 
-    if (I->use_size() == 0) {
+    if (I->use_empty()) {
       // Now we just need to remove the old instruction so we don't get infinite
       // loops.  Note that we cannot use DCE because DCE won't remove a store
       // instruction, for example.
@@ -562,27 +638,49 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   }
 }
 
+ValueHandle::ValueHandle(Value *V) : Instruction(Type::VoidTy, UserOp1, "") {
+#ifdef DEBUG_EXPR_CONVERT
+  cerr << "VH AQUIRING: " << (void*)V << " " << V;
+#endif
+  Operands.push_back(Use(V, this));
+}
+
+static void RecursiveDelete(Instruction *I) {
+  if (!I || !I->use_empty()) return;
+
+  assert(I->getParent() && "Inst not in basic block!");
+
+#ifdef DEBUG_EXPR_CONVERT
+  cerr << "VH DELETING: " << (void*)I << " " << I;
+#endif
+
+  for (User::op_iterator OI = I->op_begin(), OE = I->op_end(); 
+       OI != OE; ++OI) {
+    Instruction *U = dyn_cast<Instruction>(*OI);
+    if (U) {
+      *OI = 0;
+      RecursiveDelete(dyn_cast<Instruction>(U));
+    }
+  }
+
+  I->getParent()->getInstList().remove(I);
+  delete I;
+}
+
 
 ValueHandle::~ValueHandle() {
   if (Operands[0]->use_size() == 1) {
     Value *V = Operands[0];
-    Operands.clear();   // Drop use!
+    Operands[0] = 0;   // Drop use!
 
     // Now we just need to remove the old instruction so we don't get infinite
     // loops.  Note that we cannot use DCE because DCE won't remove a store
     // instruction, for example.
     //
-    Instruction *I = cast<Instruction>(V);
-    assert(I->getParent() && "Inst not in basic block!");
-
-#ifdef DEBUG_EXPR_CONVERT
-    cerr << "VH DELETING: " << (void*)I << " " << I;
-#endif
-    I->getParent()->getInstList().remove(I);
-    delete I;
+    RecursiveDelete(cast<Instruction>(V));
   } else {
 #ifdef DEBUG_EXPR_CONVERT
-    cerr << "VH RELEASING: " << Operands[0];
+    cerr << "VH RELEASING: " << (void*)Operands[0].get() << " " << Operands[0]->use_size() << " " << Operands[0];
 #endif
   }
 }
