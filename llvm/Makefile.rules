@@ -422,7 +422,7 @@ install-bytecode :: $(addsuffix /.makeinstall-bytecode, $(PARALLEL_DIRS))
 		$(MKDIR) $(@D); \
 		cp $(SourceDir)/$(@D)/Makefile $(@D)/Makefile; \
 	fi; \
-	$(MAKE) -C $(@D) $(subst $(@D)/.make,,$@)
+	$(MAKE) -C $(@D) $(subst $(@D)/.make,,$@) $(MFLAGS)
 endif
 
 # Handle directories that may or may not exist
@@ -436,7 +436,7 @@ all install clean test bytecode stripped-bytecode install-bytecode::
 				$(MKDIR) $$dir; \
 				cp $(SourceDir)/$$dir/Makefile $$dir/Makefile; \
 			fi; \
-			($(MAKE) -C$$dir $@) || exit 1; \
+			($(MAKE) -C$$dir $@ $(MFLAGS)) || exit 1; \
 		fi \
 	done
 endif
