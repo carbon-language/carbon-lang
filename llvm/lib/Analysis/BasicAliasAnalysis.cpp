@@ -47,6 +47,8 @@ namespace {
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
 
+    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
+
     /// pointsToConstantMemory - Chase pointers until we find a (constant
     /// global) or not.
     bool pointsToConstantMemory(const Value *P);
@@ -137,6 +139,56 @@ bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
     if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
       return GV->isConstant();
   return false;
+}
+
+static bool AddressMightEscape(const Value *V) {
+  for (Value::use_const_iterator UI = V->use_begin(), E = V->use_end();
+       UI != E; ++UI) {
+    const Instruction *I = cast<Instruction>(*UI);
+    switch (I->getOpcode()) {
+    case Instruction::Load: break;
+    case Instruction::Store:
+      if (I->getOperand(0) == V)
+        return true; // Escapes if the pointer is stored.
+      break;
+    case Instruction::GetElementPtr:
+      if (AddressMightEscape(I)) return true;
+      break;
+    case Instruction::Cast:
+      if (!isa<PointerType>(I->getType()))
+        return true;
+      if (AddressMightEscape(I)) return true;
+      break;
+    case Instruction::PHI:
+      if (AddressMightEscape(I)) return true;
+      break;
+    default:
+      return true;
+    }
+  }
+  return false;
+}
+
+// getModRefInfo - Check to see if the specified callsite can clobber the
+// specified memory object.  Since we only look at local properties of this
+// function, we really can't say much about this query.  We do, however, use
+// simple "address taken" analysis on local objects.
+//
+AliasAnalysis::ModRefResult
+BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+  if (!isa<Constant>(P) && !isa<GlobalValue>(P))
+    if (const AllocationInst *AI =
+                  dyn_cast<AllocationInst>(getUnderlyingObject(P))) {
+      // Okay, the pointer is to a stack allocated object.  If we can prove that
+      // the pointer never "escapes", then we know the call cannot clobber it,
+      // because it simply can't get its address.
+      if (!AddressMightEscape(AI))
+        return NoModRef;
+    }
+
+  // If P points to a constant memory location, the call definitely could not
+  // modify the memory location.
+  return pointsToConstantMemory(P) ? Ref : ModRef;
 }
 
 // alias - Provide a bunch of ad-hoc rules to disambiguate in common cases, such
