@@ -29,7 +29,7 @@
 #include "llvm/Value.h"
 #include <set>
 
-namespace llvm {
+using namespace llvm;
 
 namespace {
   enum DSPass { local, bu, td };
@@ -195,5 +195,3 @@ void DSGC::verify(const DSGraph &G) {
       }
   }
 }
-
-} // End llvm namespace

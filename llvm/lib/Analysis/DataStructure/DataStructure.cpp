@@ -22,8 +22,7 @@
 #include "Support/Statistic.h"
 #include "Support/Timer.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumFolds          ("dsnode", "Number of nodes completely folded");
@@ -1672,5 +1671,3 @@ void DSGraph::computeNodeMapping(const DSNodeHandle &NH1,
     if (unsigned(N2Idx)+i < N2Size)
       computeNodeMapping(N1->getLink(i), N2->getLink(N2Idx+i), NodeMap);
 }
-
-} // End llvm namespace

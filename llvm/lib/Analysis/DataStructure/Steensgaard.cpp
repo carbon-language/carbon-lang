@@ -19,8 +19,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Module.h"
 #include "Support/Debug.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   class Steens : public Pass, public AliasAnalysis {
@@ -236,5 +235,3 @@ AliasAnalysis::AliasResult Steens::alias(const Value *V1, unsigned V1Size,
   //
   return getAnalysis<AliasAnalysis>().alias(V1, V1Size, V2, V2Size);
 }
-
-} // End llvm namespace

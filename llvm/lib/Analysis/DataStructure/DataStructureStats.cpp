@@ -18,8 +18,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "Support/Statistic.h"
 #include <vector>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> TotalNumCallees("totalcallees",
@@ -141,5 +140,3 @@ bool DSGraphStats::runOnFunction(Function& F) {
   visit(F);
   return true;
 }
-
-} // End llvm namespace

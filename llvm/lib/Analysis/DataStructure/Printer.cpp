@@ -22,8 +22,7 @@
 #include "Support/Statistic.h"
 #include <fstream>
 #include <sstream>
-
-namespace llvm {
+using namespace llvm;
 
 // OnlyPrintMain - The DataStructure printer exposes this option to allow
 // printing of only the graph for "main".
@@ -73,6 +72,7 @@ static std::string getCaption(const DSNode *N, const DSGraph *G) {
   return OS.str();
 }
 
+namespace llvm {
 template<>
 struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
   static std::string getGraphName(const DSGraph *G) {
@@ -179,6 +179,7 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
     }
   }
 };
+}   // end namespace llvm
 
 void DSNode::print(std::ostream &O, const DSGraph *G) const {
   GraphWriter<const DSGraph *> W(O, G);
@@ -282,4 +283,3 @@ void TDDataStructures::print(std::ostream &O, const Module *M) const {
   printCollection(*this, O, M, "td.");
 }
 
-} // End llvm namespace

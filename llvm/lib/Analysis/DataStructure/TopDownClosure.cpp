@@ -20,8 +20,7 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   RegisterAnalysis<TDDataStructures>   // Register the pass
@@ -311,5 +310,3 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
         << Graph.getFunctionNames() << " [" << Graph.getGraphSize() << "+"
         << Graph.getFunctionCalls().size() << "]\n");
 }
-
-} // End llvm namespace

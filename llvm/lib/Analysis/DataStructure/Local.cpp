@@ -28,11 +28,12 @@
 //
 #include "llvm/Module.h"
 
-namespace llvm {
+using namespace llvm;
 
 static RegisterAnalysis<LocalDataStructures>
 X("datastructure", "Local Data Structure Analysis");
 
+namespace llvm {
 namespace DS {
   // isPointerType - Return true if this type is big enough to hold a pointer.
   bool isPointerType(const Type *Ty) {
@@ -42,7 +43,7 @@ namespace DS {
       return Ty->getPrimitiveSize() >= PointerSize;
     return false;
   }
-}
+}}
 
 using namespace DS;
 
@@ -622,4 +623,3 @@ void LocalDataStructures::releaseMemory() {
   GlobalsGraph = 0;
 }
 
-} // End llvm namespace

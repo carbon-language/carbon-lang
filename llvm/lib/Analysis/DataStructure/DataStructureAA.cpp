@@ -16,8 +16,7 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Module.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   class DSAA : public Pass, public AliasAnalysis {
@@ -179,4 +178,3 @@ void DSAA::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
   return getAnalysis<AliasAnalysis>().getMustAliases(P, RetVals);
 }
 
-} // End llvm namespace

@@ -17,8 +17,7 @@
 #include "llvm/Module.h"
 #include "llvm/Constant.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<>
@@ -97,5 +96,3 @@ bool DSOpt::OptimizeGlobals(Module &M) {
     }
   return Changed;
 }
-
-} // End llvm namespace

@@ -19,8 +19,7 @@
 #include "Support/Statistic.h"
 #include "Support/Debug.h"
 #include "DSCallSiteIterator.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> MaxSCC("budatastructure", "Maximum SCC Size in Call Graph");
@@ -317,5 +316,3 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
 
   //Graph.writeGraphToFile(std::cerr, "bu_" + F.getName());
 }
-
-} // End llvm namespace
