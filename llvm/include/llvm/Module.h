@@ -33,8 +33,7 @@ template<> struct ilist_traits<GlobalVariable>
   static iplist<GlobalVariable> &getList(Module *M);
 };
 
-class Module : public Annotable {
-public:
+struct Module : public Annotable {
   typedef iplist<GlobalVariable> GlobalListType;
   typedef iplist<Function> FunctionListType;
 
@@ -50,8 +49,8 @@ public:
   typedef std::reverse_iterator<iterator>             reverse_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-  enum Endianness  { LittleEndian, BigEndian };
-  enum PointerSize { Pointer32, Pointer64 };
+  enum Endianness  { AnyEndianness, LittleEndian, BigEndian };
+  enum PointerSize { AnyPointerSize, Pointer32, Pointer64 };
 
 private:
   GlobalListType GlobalList;     // The Global Variables in the module
@@ -79,14 +78,10 @@ public:
   const std::string &getModuleIdentifier() const { return ModuleID; }
 
   /// Target endian information...
-  bool isLittleEndian() const { return Endian == LittleEndian; }
-  bool isBigEndian() const { return Endian == BigEndian; }
   Endianness getEndianness() const { return Endian; }
   void setEndianness(Endianness E) { Endian = E; }
 
   /// Target Pointer Size information...
-  bool has32BitPointers() const { return PtrSize == Pointer32; }
-  bool has64BitPointers() const { return PtrSize == Pointer64; }
   PointerSize getPointerSize() const { return PtrSize; }
   void setPointerSize(PointerSize PS) { PtrSize = PS; }
 
