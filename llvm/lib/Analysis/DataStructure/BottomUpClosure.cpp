@@ -112,7 +112,8 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
                   << " in: " << F.getName() << "\n");
 
             // Handle self recursion by resolving the arguments and return value
-            Graph->mergeInGraph(Call, GI, DSGraph::StripAllocaBit);
+            Graph->mergeInGraph(Call, GI, DSGraph::StripAllocaBit |
+                                DSGraph::DontCloneCallNodes);
 
             // Erase the entry in the Callees vector
             Callees.erase(Callees.begin()+c--);
