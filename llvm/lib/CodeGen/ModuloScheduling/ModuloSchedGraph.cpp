@@ -71,8 +71,8 @@ void ModuloSchedGraph::addDepEdges() {
 	    //Create edge and set delay equal to node latency
 	    //FIXME: Is it safe to do this?
 	    ModuloSchedGraph::iterator Src = find(I);
-	    SchedGraphEdge *trueDep = new SchedGraphEdge(&*Src->second ,&*Sink->second, &*I,
-							 SchedGraphEdge::TrueDep,
+	    SchedGraphEdge *trueDep = new SchedGraphEdge(&*Src->second ,&*Sink->second,
+							 &*I, SchedGraphEdge::TrueDep,
 							 Src->second->getLatency());
 	    //Determine the iteration difference
 	    //FIXME: Will this ever happen?
