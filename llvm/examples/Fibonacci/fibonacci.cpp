@@ -47,7 +47,7 @@ static Function *CreateFibFunction(Module *M) {
   Value *Two = ConstantSInt::get(Type::IntTy, 2);
 
   // Get pointer to the integer argument of the add1 function...
-  Argument *ArgX = FibF->abegin();   // Get the arg.
+  Argument *ArgX = FibF->arg_begin();   // Get the arg.
   ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
 
   // Create the true_block.
