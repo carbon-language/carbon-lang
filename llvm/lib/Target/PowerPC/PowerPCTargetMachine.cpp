@@ -38,9 +38,9 @@ namespace {
   
   // Register the targets
   RegisterTarget<PPC32TargetMachine> 
-  X("ppc32", "  PowerPC 32bit (experimental)");
+  X("ppc32", "  PowerPC 32-bit (experimental)");
   RegisterTarget<PPC64TargetMachine> 
-  Y("ppc64", "  PowerPC 64bit (unimplemented)");
+  Y("ppc64", "  PowerPC 64-bit (unimplemented)");
 }
 
 PowerPCTargetMachine::PowerPCTargetMachine(const std::string &name,
@@ -92,8 +92,8 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
-  // I want a PowerPC specific prolog/epilog code inserter so I can put the 
-  // fills/spills in the right spots.
+  // PowerPC-specific prolog/epilog code inserter to put the fills/spills in the
+  // right spots.
   PM.add(createPowerPCPEI());
   
   // Must run branch selection immediately preceding the printer
