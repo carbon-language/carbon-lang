@@ -267,7 +267,7 @@ void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
     int FrameIndex = getStackSpaceFor(VirtReg, RC);
     DEBUG(std::cerr << " to stack slot #" << FrameIndex);
-    RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIndex, RC);
+    RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIndex);
     ++NumStores;   // Update statistics
   }
 
@@ -506,7 +506,7 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
                   << RegInfo->getName(PhysReg) << "\n");
 
   // Add move instruction(s)
-  RegInfo->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex, RC);
+  RegInfo->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex);
   ++NumLoads;    // Update statistics
 
   MI->SetMachineOperandReg(OpNum, PhysReg);  // Assign the input register

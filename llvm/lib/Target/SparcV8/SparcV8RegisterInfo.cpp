@@ -25,12 +25,11 @@ SparcV8RegisterInfo::SparcV8RegisterInfo()
   : SparcV8GenRegisterInfo(V8::ADJCALLSTACKDOWN,
                            V8::ADJCALLSTACKUP) {}
 
-int SparcV8RegisterInfo::storeRegToStackSlot(
-  MachineBasicBlock &MBB,
-  MachineBasicBlock::iterator I,
-  unsigned SrcReg, int FrameIdx,
-  const TargetRegisterClass *RC) const
-{
+int SparcV8RegisterInfo::
+storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                    unsigned SrcReg, int FrameIdx) const {
+  const TargetRegisterClass *RC = getRegClass(SrcReg);
+
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
   if (RC == SparcV8::IntRegsRegisterClass) 
     BuildMI (MBB, I, V8::ST, 3).addFrameIndex (FrameIdx).addSImm (0)
@@ -46,12 +45,10 @@ int SparcV8RegisterInfo::storeRegToStackSlot(
   return 1;
 }
 
-int SparcV8RegisterInfo::loadRegFromStackSlot(
-  MachineBasicBlock &MBB,
-  MachineBasicBlock::iterator I,
-  unsigned DestReg, int FrameIdx,
-  const TargetRegisterClass *RC) const
-{
+int SparcV8RegisterInfo::
+loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                     unsigned DestReg, int FrameIdx) const {
+  const TargetRegisterClass *RC = getRegClass(DestReg);
   if (RC == SparcV8::IntRegsRegisterClass) 
     BuildMI (MBB, I, V8::LD, 2, DestReg).addFrameIndex (FrameIdx).addSImm (0);
   else if (RC == SparcV8::FPRegsRegisterClass)

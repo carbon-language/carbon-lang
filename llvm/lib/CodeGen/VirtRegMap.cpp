@@ -144,8 +144,7 @@ namespace {
                                     *mbbi,
                                     mii,
                                     physReg,
-                                    vrm.getStackSlot(virtReg),
-                                    mf.getSSARegMap()->getRegClass(virtReg));
+                                    vrm.getStackSlot(virtReg));
                                 loaded[virtReg] = true;
                                 DEBUG(std::cerr << '\t';
                                       prior(mii)->print(std::cerr, &tm));
@@ -157,8 +156,7 @@ namespace {
                                     *mbbi,
                                     next(mii),
                                     physReg,
-                                    vrm.getStackSlot(virtReg),
-                                    mf.getSSARegMap()->getRegClass(virtReg));
+                                    vrm.getStackSlot(virtReg));
                                 ++numStores;
                             }
                             mii->SetMachineOperandReg(i, physReg);
@@ -226,8 +224,7 @@ namespace {
                 mri_->storeRegToStackSlot(*lastDef->getParent(),
                                           nextLastRef,
                                           physReg,
-                                          vrm_->getStackSlot(virtReg),
-                                          mri_->getRegClass(physReg));
+                                          vrm_->getStackSlot(virtReg));
                 ++numStores;
                 DEBUG(std::cerr << "added: ";
                       prior(nextLastRef)->print(std::cerr, tm_);
@@ -258,8 +255,7 @@ namespace {
                 // load if necessary
                 if (vrm_->hasStackSlot(virtReg)) {
                     mri_->loadRegFromStackSlot(mbb, mii, physReg,
-                                               vrm_->getStackSlot(virtReg),
-                                               mri_->getRegClass(physReg));
+                                               vrm_->getStackSlot(virtReg));
                     ++numLoads;
                     DEBUG(std::cerr << "added: ";
                           prior(mii)->print(std::cerr, tm_));

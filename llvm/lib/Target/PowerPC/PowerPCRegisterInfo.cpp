@@ -71,11 +71,12 @@ static unsigned getIdx(const TargetRegisterClass *RC) {
 int 
 PowerPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator MI,
-                                         unsigned SrcReg, int FrameIdx,
-                                         const TargetRegisterClass *RC) const {
+                                         unsigned SrcReg, int FrameIdx) const {
+  const TargetRegisterClass *RC = getRegClass(SrcReg);
   static const unsigned Opcode[] = { 
     PPC::STB, PPC::STH, PPC::STW, PPC::STD, PPC::STFS, PPC::STFD 
   };
+
   unsigned OC = Opcode[getIdx(RC)];
   if (SrcReg == PPC::LR) {
     MBB.insert(MI, BuildMI(PPC::MFLR, 0, PPC::R0));
@@ -91,11 +92,11 @@ PowerPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 int 
 PowerPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
-                                          unsigned DestReg, int FrameIdx,
-                                          const TargetRegisterClass *RC) const {
+                                          unsigned DestReg, int FrameIdx) const{
   static const unsigned Opcode[] = { 
     PPC::LBZ, PPC::LHZ, PPC::LWZ, PPC::LD, PPC::LFS, PPC::LFD 
   };
+  const TargetRegisterClass *RC = getRegClass(DestReg);
   unsigned OC = Opcode[getIdx(RC)];
   if (DestReg == PPC::LR) {
     MBB.insert(MI, addFrameReference(BuildMI(OC, 2, PPC::R0), FrameIdx));

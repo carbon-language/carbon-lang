@@ -20,18 +20,16 @@ SkeletonRegisterInfo::SkeletonRegisterInfo()
   : SkeletonGenRegisterInfo(Skeleton::ADJCALLSTACKDOWN,
                            Skeleton::ADJCALLSTACKUP) {}
 
-int SkeletonRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
-                                              MachineBasicBlock::iterator MBBI,
-                                              unsigned SrcReg, int FrameIdx,
-                                          const TargetRegisterClass *RC) const {
+int SkeletonRegisterInfo::
+storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+                    unsigned SrcReg, int FrameIdx) const {
   abort();
   return -1;
 }
 
-int SkeletonRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                               MachineBasicBlock::iterator MBBI,
-                                               unsigned DestReg, int FrameIdx,
-                                          const TargetRegisterClass *RC) const {
+int SkeletonRegisterInfo::
+loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+                     unsigned DestReg, int FrameIdx) const {
   abort();
   return -1;
 }

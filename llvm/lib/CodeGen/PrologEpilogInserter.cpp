@@ -206,10 +206,8 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   MachineBasicBlock *MBB = Fn.begin();
   MachineBasicBlock::iterator I = MBB->begin();
   for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
-    const TargetRegisterClass *RC = RegInfo->getRegClass(RegsToSave[i]);
-
-    // Insert the spill to the stack frame...
-    RegInfo->storeRegToStackSlot(*MBB, I, RegsToSave[i], StackSlots[i], RC);
+    // Insert the spill to the stack frame.
+    RegInfo->storeRegToStackSlot(*MBB, I, RegsToSave[i], StackSlots[i]);
   }
 
   // Add code to restore the callee-save registers in each exiting block.
@@ -221,8 +219,7 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
       I = MBB->end(); --I;
 
       for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
-        const TargetRegisterClass *RC = RegInfo->getRegClass(RegsToSave[i]);
-        RegInfo->loadRegFromStackSlot(*MBB, I, RegsToSave[i],StackSlots[i], RC);
+        RegInfo->loadRegFromStackSlot(*MBB, I, RegsToSave[i],StackSlots[i]);
         --I;  // Insert in reverse order
       }
     }
