@@ -20,6 +20,7 @@
 #include "llvm/Constants.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetMachine.h"
@@ -77,6 +78,7 @@ namespace {
     void visitStoreInst(StoreInst &I);
     void visitPHINode(PHINode &I) {}      // PHI nodes handled by second pass
     void visitGetElementPtrInst(GetElementPtrInst &I);
+    void visitAllocaInst(AllocaInst &I);
 
 
 
@@ -269,6 +271,15 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
         assert (0 && "Can't copy this kind of constant into register yet");
         return;
     }
+  } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
+    // We need to spill the constant to memory...
+    MachineConstantPool *CP = F->getConstantPool();
+    unsigned CPI = CP->getConstantPoolIndex(CFP);
+    const Type *Ty = CFP->getType();
+
+    assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
+    unsigned LoadOpcode = Ty == Type::FloatTy ? V8::LDFmr : V8::LDDFmr;
+    BuildMI (*MBB, IP, LoadOpcode, 2, R).addConstantPoolIndex (CPI).addSImm (0);
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
     BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addImm (0);
@@ -555,6 +566,7 @@ void V8ISel::visitCallInst(CallInst &I) {
         .addReg (ArgReg);
     }
 
+  assert (I.getCalledFunction() && "don't know what to do with NULL function!");
   BuildMI (BB, V8::CALL, 1).addGlobalAddress(I.getCalledFunction (), true);
   if (I.getType () == Type::VoidTy)
     return;
@@ -865,7 +877,27 @@ void V8ISel::visitSetCondInst(Instruction &I) {
     .addMBB (copy0MBB).addReg (TrueValue).addMBB (copy1MBB);
 }
 
+void V8ISel::visitAllocaInst(AllocaInst &I) {
+  // Find the data size of the alloca inst's getAllocatedType.
+  const Type *Ty = I.getAllocatedType();
+  unsigned TySize = TM.getTargetData().getTypeSize(Ty);
 
+  unsigned ArraySizeReg = getReg (I.getArraySize ());
+  unsigned TySizeReg = getReg (ConstantUInt::get (Type::UIntTy, TySize));
+  unsigned TmpReg1 = makeAnotherReg (Type::UIntTy);
+  unsigned TmpReg2 = makeAnotherReg (Type::UIntTy);
+  unsigned StackAdjReg = makeAnotherReg (Type::UIntTy);
+  unsigned DestReg = getReg (I);
+
+  // StackAdjReg = (ArraySize * TySize) rounded up to nearest doubleword boundary
+  BuildMI (BB, V8::UMULrr, 2, TmpReg1).addReg (ArraySizeReg).addReg (TySizeReg);
+  // Round up TmpReg1 to nearest doubleword boundary:
+  BuildMI (BB, V8::ADDri, 2, TmpReg2).addReg (TmpReg1).addSImm (7);
+  BuildMI (BB, V8::ANDri, 2, StackAdjReg).addReg (TmpReg2).addSImm (-8);
+  // Adjust stack, push pointer past trap frame space, put result in DestReg
+  BuildMI (BB, V8::SUBrr, 2, V8::SP).addReg (V8::SP).addReg (StackAdjReg);
+  BuildMI (BB, V8::ADDri, 2, DestReg).addReg (V8::SP).addSImm (96);
+}
 
 /// LowerUnknownIntrinsicFunctionCalls - This performs a prepass over the
 /// function, lowering any calls to unknown intrinsic functions into the
