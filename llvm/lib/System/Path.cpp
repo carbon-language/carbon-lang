@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/Path.h"
+#include "llvm/Config/config.h"
 #include <cassert>
 
 namespace llvm {
@@ -78,6 +79,11 @@ Path::FindLibrary(std::string& name) {
       return FullPath;
   }
   return sys::Path();
+}
+
+std::string
+Path::GetDLLSuffix() {
+  return LTDL_SHLIB_EXT;
 }
 
 }

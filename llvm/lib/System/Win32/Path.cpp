@@ -118,11 +118,6 @@ Path::GetRootDirectory() {
   return result;
 }
 
-std::string
-Path::GetDLLSuffix() {
-  return "dll";
-}
-
 static void getPathList(const char*path, std::vector<sys::Path>& Paths) {
   const char* at = path;
   const char* delim = strchr(at, ';');
