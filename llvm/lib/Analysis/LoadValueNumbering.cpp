@@ -22,7 +22,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LoadValueNumbering.h"
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
@@ -357,11 +357,10 @@ void LoadVN::getEqualNumberNodes(Value *V,
       Instrs.erase(I);
     } else if (AllocationInst *AI = dyn_cast<AllocationInst>(I)) {
       // If we run into an allocation of the value being loaded, then the
-      // contenxt are not initialized.  We can return any value, so we will
-      // return a zero.
+      // contents are not initialized.
       if (Allocations.count(AI)) {
         LoadInvalidatedInBBBefore = true;
-        RetVals.push_back(Constant::getNullValue(LI->getType()));
+        RetVals.push_back(UndefValue::get(LI->getType()));
         break;
       }
     }
