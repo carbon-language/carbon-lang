@@ -404,7 +404,7 @@ $(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(BUILD_ROOT_TOP)/tools/Debug/
 
 $(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(BUILD_ROOT_TOP)/tools/Release/.dir
 	@echo ======= Linking $(TOOLNAME) release executable =======
-	$(VERB) $(LinkO) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_O) $(TOOLLINKOPTS)
+	$(VERB) $(LinkO) -o $@ $(ObjectsO) $(USED_LIBS_OPTIONS_O) $(TOOLLINKOPTS)
 
 $(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(BUILD_ROOT_TOP)/tools/Profile/.dir
 	@echo ======= Linking $(TOOLNAME) profile executable =======
