@@ -631,6 +631,7 @@ void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
       if (const Constant *CPV = dyn_cast<Constant>(V)) {
 	printConstant(CPV);
       } else if (const Type *Ty = dyn_cast<Type>(V)) {
+        assert(Ty->getType() == Type::TypeTy && TI->first == Type::TypeTy);
 	Out << "\t" << getLLVMName(I->first) << " = type ";
 
         // Make sure we print out at least one level of the type structure, so
