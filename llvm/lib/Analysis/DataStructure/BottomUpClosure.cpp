@@ -48,6 +48,11 @@ bool BUDataStructures::run(Module &M) {
     }
 
   NumCallEdges += ActualCallees.size();
+
+  // At the end of the bottom-up pass, the globals graph becomes complete.
+  // FIXME: This is not the right way to do this, but it is sorta better than
+  // nothing!
+  GlobalsGraph->maskIncompleteMarkers();
   return false;
 }
 
