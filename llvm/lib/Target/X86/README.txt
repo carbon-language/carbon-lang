@@ -81,9 +81,41 @@ operand, they simply have #operands = #uses.  To create them, simply do not
 specify a destination register to the BuildMI call.
 
 
-=======================
-III. Source Code Layout
-=======================
+======================================
+III. Lazy Function Resolution in Jello
+======================================
+
+Jello is a designed to be a JIT compiler for LLVM code.  This implies that call
+instructions may be emitted before the function they call is compiled.  In order
+to support this, Jello currently emits unresolved call instructions to call to a
+null pointer.  When the call instruction is executed, a segmentation fault will
+be generated.
+
+Jello installs a trap handler for SIGSEGV, in order to trap these events.  When
+a SIGSEGV occurs, first we check to see if it's due to lazy function resolution,
+if so, we look up the return address of the function call (which was pushed onto
+the stack by the call instruction).  Given the return address of the call, we
+consult a map to figure out which function was supposed to be called from that
+location.
+
+If the function has not been code generated yet, it is at this time.  Finally,
+the EIP of the process is modified to point to the real function address, the
+original call instruction is updated, and the SIGSEGV handler returns, causing
+execution to start in the called function.  Because we update the original call
+instruction, we should only get at most one signal for each call site.
+
+Note that this approach does not work for indirect calls.  The problem with
+indirect calls is that taking the address of a function would not cause a fault
+(it would simply copy null into a register), so we would only find out about the
+problem when the indirect call itself was made.  At this point we would have no
+way of knowing what the intended function destination was.  Because of this, we
+immediately code generate functions whenever they have their address taken,
+side-stepping the problem completely.
+
+
+======================
+IV. Source Code Layout
+======================
 
 The LLVM-JIT is composed of source files primarily in the following locations:
 
@@ -128,9 +160,9 @@ This directory contains regression tests for the JIT.  Initially it contains a
 bunch of really trivial testcases that we should build up to supporting.
 
 
-===================================================
-IV. Strange Things, or, Things That Should Be Known
-===================================================
+==================================================
+V. Strange Things, or, Things That Should Be Known
+==================================================
 
 Representing memory in MachineInstrs
 ------------------------------------
@@ -154,7 +186,7 @@ way, in the same order.
 
 
 ==========================
-V. TODO / Future Projects
+VI. TODO / Future Projects
 ==========================
 
 There are a large number of things remaining to do.  Here is a partial list:
@@ -162,13 +194,7 @@ There are a large number of things remaining to do.  Here is a partial list:
 Critical path:
 -------------
 
-0. Finish providing SSA form.  This involves keeping track of some information
-   when instructions are added to the function, but should not affect that API
-   for creating new MInstructions or adding them to the program.
 1. Finish dumb instruction selector
-2. Write dumb register allocator
-3. Write assembly language emitter
-4. Write machine code emitter
 
 Next Phase:
 -----------
@@ -179,7 +205,7 @@ After this project:
 -------------------
 1. Implement lots of nifty runtime optimizations
 2. Implement a static compiler backend for x86 (might come almost for free...)
-3. Implement new spiffy targets: IA64? X86-64? M68k?  Who knows...
+3. Implement new targets: IA64? X86-64? M68k?  Who knows...
 
 Infrastructure Improvements:
 ----------------------------
