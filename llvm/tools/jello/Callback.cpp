@@ -15,6 +15,7 @@ static VM *TheVM = 0;
 static void TrapHandler(int TN, siginfo_t *SI, ucontext_t *ucp) {
   assert(TN == SIGSEGV && "Should be SIGSEGV!");
 
+#ifdef REG_EIP   /* this code does not compile on Sparc! */
   if (SI->si_code != SEGV_MAPERR || SI->si_addr != 0 ||
       ucp->uc_mcontext.gregs[REG_EIP] != 0) {
     std::cerr << "Bad SEGV encountered!\n";
@@ -41,6 +42,8 @@ static void TrapHandler(int TN, siginfo_t *SI, ucontext_t *ucp) {
 
   // Change the instruction pointer to be the real target of the call...
   ucp->uc_mcontext.gregs[REG_EIP] = NewVal;
+
+#endif
 }
 
 
