@@ -111,6 +111,9 @@ namespace {
     Instruction *visitOr (BinaryOperator &I);
     Instruction *visitXor(BinaryOperator &I);
     Instruction *visitSetCondInst(BinaryOperator &I);
+    Instruction *visitSetCondInstWithCastAndConstant(BinaryOperator&I,
+                                                     CastInst*LHSI,
+                                                     ConstantInt* CI);
     Instruction *visitShiftInst(ShiftInst &I);
     Instruction *visitCastInst(CastInst &CI);
     Instruction *visitSelectInst(SelectInst &CI);
@@ -2034,49 +2037,15 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         }
         break;
 
-      case Instruction::Cast: {       // (setcc (cast X to larger), CI)
-        const Type *SrcTy = LHSI->getOperand(0)->getType();
-        if (SrcTy->isIntegral() && LHSI->getType()->isIntegral()) {
-          unsigned SrcBits = SrcTy->getPrimitiveSize()*8;
-          if (SrcTy == Type::BoolTy) SrcBits = 1;
-          unsigned DestBits = LHSI->getType()->getPrimitiveSize()*8;
-          if (LHSI->getType() == Type::BoolTy) DestBits = 1;
-          if (SrcBits < DestBits &&
-              // FIXME: Reenable the code below for < and >.  However, we have
-              // to handle the cases when the source of the cast and the dest of
-              // the cast have different signs.  e.g:
-              //        (cast sbyte %X to uint) >u 255U   -> X <s (sbyte)0
-              (I.getOpcode() == Instruction::SetEQ ||
-               I.getOpcode() == Instruction::SetNE)) {
-            // Check to see if the comparison is always true or false.
-            Constant *NewCst = ConstantExpr::getCast(CI, SrcTy);
-            if (ConstantExpr::getCast(NewCst, LHSI->getType()) != CI) {
-              switch (I.getOpcode()) {
-              default: assert(0 && "unknown integer comparison");
-#if 0
-              case Instruction::SetLT: {
-                Constant *Max = ConstantIntegral::getMaxValue(SrcTy);
-                Max = ConstantExpr::getCast(Max, LHSI->getType());
-                return ReplaceInstUsesWith(I, ConstantExpr::getSetLT(Max, CI));
-              }
-              case Instruction::SetGT: {
-                Constant *Min = ConstantIntegral::getMinValue(SrcTy);
-                Min = ConstantExpr::getCast(Min, LHSI->getType());
-                return ReplaceInstUsesWith(I, ConstantExpr::getSetGT(Min, CI));
-              }
-#endif
-              case Instruction::SetEQ:
-                return ReplaceInstUsesWith(I, ConstantBool::False);
-              case Instruction::SetNE:
-                return ReplaceInstUsesWith(I, ConstantBool::True);
-              }
-            }
-
-            return new SetCondInst(I.getOpcode(), LHSI->getOperand(0), NewCst);
-          }
-        }
+      // (setcc (cast X to larger), CI)
+      case Instruction::Cast: {        
+        Instruction* replacement = 
+          visitSetCondInstWithCastAndConstant(I,cast<CastInst>(LHSI),CI);
+        if (replacement)
+          return replacement;
         break;
       }
+
       case Instruction::Shl:         // (setcc (shl X, ShAmt), CI)
         if (ConstantUInt *ShAmt = dyn_cast<ConstantUInt>(LHSI->getOperand(1))) {
           switch (I.getOpcode()) {
@@ -2530,6 +2499,76 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
+// visitSetCondInstWithCastAndConstant - this method is part of the 
+// visitSetCondInst method. It handles the situation where we have:
+//   (setcc (cast X to larger), CI)
+// It tries to remove the cast and even the setcc if the CI value 
+// and range of the cast allow it.
+Instruction *
+InstCombiner::visitSetCondInstWithCastAndConstant(BinaryOperator&I,
+                                                  CastInst* LHSI,
+                                                  ConstantInt* CI) {
+  const Type *SrcTy = LHSI->getOperand(0)->getType();
+  const Type *DestTy = LHSI->getType();
+  if (SrcTy->isIntegral() && DestTy->isIntegral()) {
+    unsigned SrcBits = SrcTy->getPrimitiveSize()*8;
+    unsigned DestBits = DestTy->getPrimitiveSize()*8;
+    if (SrcTy == Type::BoolTy) 
+      SrcBits = 1;
+    if (DestTy == Type::BoolTy) 
+      DestBits = 1;
+    if (SrcBits < DestBits) {
+      // There are fewer bits in the source of the cast than in the result
+      // of the cast. Any other case doesn't matter because the constant
+      // value won't have changed due to sign extension.
+      Constant *NewCst = ConstantExpr::getCast(CI, SrcTy);
+      if (ConstantExpr::getCast(NewCst, DestTy) == CI) {
+        // The constant value operand of the setCC before and after a 
+        // cast to the source type of the cast instruction is the same 
+        // value, so we just replace with the same setcc opcode, but 
+        // using the source value compared to the constant casted to the 
+        // source type. 
+        if (SrcTy->isSigned() && DestTy->isUnsigned()) {
+          CastInst* Cst = new CastInst(LHSI->getOperand(0),
+            SrcTy->getUnsignedVersion(), LHSI->getName());
+          InsertNewInstBefore(Cst,I);
+          return new SetCondInst(I.getOpcode(), Cst, 
+              ConstantExpr::getCast(CI, SrcTy->getUnsignedVersion()));
+        }
+        return new SetCondInst(I.getOpcode(), LHSI->getOperand(0),NewCst);
+      }
+      // The constant value before and after a cast to the source type 
+      // is different, so various cases are possible depending on the 
+      // opcode and the signs of the types involved in the cast.
+      switch (I.getOpcode()) {
+        case Instruction::SetLT: {
+          Constant* Max = ConstantIntegral::getMaxValue(SrcTy);
+          Max = ConstantExpr::getCast(Max, DestTy);
+          return ReplaceInstUsesWith(I, ConstantExpr::getSetLT(Max, CI));
+        }
+        case Instruction::SetGT: {
+          Constant* Min = ConstantIntegral::getMinValue(SrcTy);
+          Min = ConstantExpr::getCast(Min, DestTy);
+          return ReplaceInstUsesWith(I, ConstantExpr::getSetGT(Min, CI));
+        }
+        case Instruction::SetEQ:
+          // We're looking for equality, and we know the values are not
+          // equal so replace with constant False.
+          return ReplaceInstUsesWith(I, ConstantBool::False);
+        case Instruction::SetNE: 
+          // We're testing for inequality, and we know the values are not
+          // equal so replace with constant True.
+          return ReplaceInstUsesWith(I, ConstantBool::True);
+        case Instruction::SetLE: 
+        case Instruction::SetGE: 
+          assert(!"SetLE and SetGE should be handled elsewhere");
+        default: 
+          assert(!"unknown integer comparison");
+      }
+    }
+  }
+  return 0;
+}
 
 
 Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
