@@ -437,10 +437,7 @@ void ISel::visitSetCCInst(SetCondInst &I, unsigned OpNum) {
     {X86::SETEr, X86::SETNEr, X86::SETLr, X86::SETGr, X86::SETLEr, X86::SETGEr},
   };
 
-  BuildMI(BB, OpcodeTab[CompTy->isSigned()][OpNum], 0, X86::AL);
-  
-  // Put it in the result using a move.
-  BuildMI (BB, X86::MOVrr8, 1, getReg(I)).addReg(X86::AL);
+  BuildMI(BB, OpcodeTab[CompTy->isSigned()][OpNum], 0, getReg(I));
 }
 
 /// promote32 - Emit instructions to turn a narrow operand into a 32-bit-wide
