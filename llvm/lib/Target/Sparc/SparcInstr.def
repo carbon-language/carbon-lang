@@ -426,11 +426,12 @@ I(STD,    "std",	3, -1, B12, true , 0, 0,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLA
 I(STFSR,  "st",         3, -1, B12, true , 0, 0,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
 I(STXFSR, "stx",	3, -1, B12, true , 0, 0,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
 
-// Call, Return and "Jump and link".
+// Call, Return and "Jump and link".  Operand (2) for JMPL is marked as
+// a "result" because JMPL stores the return address for the call in it.
 // Latency includes the delay slot.
 I(CALL  , "call",	1, -1, B29, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_CALL_FLAG)
-I(JMPLCALL, "jmpl",	3, -1, B12, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_CALL_FLAG )
-I(JMPLRET, "jmpl",	3, -1, B12, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_RET_FLAG)
+I(JMPLCALL, "jmpl",	3,  2, B12, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_CALL_FLAG )
+I(JMPLRET, "jmpl",	3,  2, B12, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_RET_FLAG)
 I(RETURN, "return",	2, -1,   0, false, 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_RET_FLAG)
 
 // SAVE and restore instructions
