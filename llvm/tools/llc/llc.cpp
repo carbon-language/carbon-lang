@@ -9,7 +9,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Transforms/ChangeAllocations.h"
-#include "llvm/Transforms/HoistPHIConstants.h"
 #include "llvm/Transforms/Scalar/DecomposeMultiDimRefs.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
@@ -78,9 +77,6 @@ int main(int argc, char **argv) {
 
   // Build up all of the passes that we want to do to the module...
   PassManager Passes;
-
-  // Hoist constants out of PHI nodes into predecessor BB's
-  Passes.add(createHoistPHIConstantsPass());
 
   if (TraceValues != TraceOff) {   // If tracing enabled...
     // Insert trace code in all functions in the module
