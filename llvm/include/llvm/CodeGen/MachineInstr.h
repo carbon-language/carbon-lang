@@ -15,6 +15,7 @@
 #include <vector>
 class Value;
 class Function;
+class MachineBasicBlock;
 
 typedef int MachineOpCode;
 
@@ -239,19 +240,26 @@ public:
   /// MachineInstr ctor - This constructor only does a _reserve_ of the
   /// operands, not a resize for them.  It is expected that if you use this that
   /// you call add* methods below to fill up the operands, instead of the Set
-  /// methods.
+  /// methods.  Eventually, the "resizing" ctors will be phased out.
   ///
   MachineInstr(MachineOpCode Opcode, unsigned numOperands, bool XX, bool YY);
 
-  // 
-  // Support to rewrite a machine instruction in place: for now, simply
-  // replace() and then set new operands with Set.*Operand methods below.
-  // 
+  /// MachineInstr ctor - Work exactly the same as the ctor above, except that
+  /// the MachineInstr is created and added to the end of the specified basic
+  /// block.
+  ///
+  MachineInstr(MachineBasicBlock *MBB, MachineOpCode Opcode, unsigned numOps);
+  
+
+  /// replace - Support to rewrite a machine instruction in place: for now,
+  /// simply replace() and then set new operands with Set.*Operand methods
+  /// below.
+  /// 
   void replace(MachineOpCode Opcode, unsigned numOperands);
   
-  //
   // The opcode.
   // 
+  const MachineOpCode getOpcode() const { return opCode; }
   const MachineOpCode getOpCode() const { return opCode; }
 
   //

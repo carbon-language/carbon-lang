@@ -78,11 +78,9 @@ inline MachineInstrBuilder BuildMI(MachineOpCode Opcode, unsigned NumOperands) {
   return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands, true, true));
 }
 
-#if 0
-inline MachineInstrBuilder BuildMI(MBasicBlock *BB, MachineOpCode Opcode,
-                                   unsigned DestReg = 0) {
-  return MachineInstrBuilder(new MachineInstr(BB, Opcode, DestReg));
+inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, MachineOpCode Opcode,
+                                   unsigned NumOperands) {
+  return MachineInstrBuilder(new MachineInstr(BB, Opcode, NumOperands));
 }
-#endif
-                                
+
 #endif
