@@ -25,6 +25,7 @@ namespace llvm {
   FunctionPass *createSparcV8SimpleInstructionSelector(TargetMachine &TM);
   FunctionPass *createSparcV8CodePrinterPass(std::ostream &OS,
                                              TargetMachine &TM);
+  FunctionPass *createSparcV8DelaySlotFillerPass(TargetMachine &TM);
 
 } // end namespace llvm;
 

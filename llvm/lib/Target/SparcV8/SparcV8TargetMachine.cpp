@@ -54,6 +54,12 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
+  PM.add(createSparcV8DelaySlotFillerPass(*this));
+
+  // Print machine instructions after filling delay slots.
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
+
   // Output assembly language.
   PM.add(createSparcV8CodePrinterPass(Out, *this));
 
@@ -66,7 +72,23 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 /// implement a fast dynamic compiler for this target.
 ///
 void SparcV8JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
-  // <insert instruction selector passes here>
+  PM.add(createSparcV8SimpleInstructionSelector(TM));
+
+  // Print machine instructions as they were initially generated.
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
+
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());
+
+  // Print machine instructions after register allocation and prolog/epilog
+  // insertion.
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
+
+  PM.add(createSparcV8DelaySlotFillerPass(TM));
+
+  // Print machine instructions after filling delay slots.
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
 }
