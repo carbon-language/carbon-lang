@@ -11,6 +11,7 @@
 #define LLVM_SUPPORT_STL_EXTRAS_H
 
 #include <functional>
+#include "Support/iterator"
 
 //===----------------------------------------------------------------------===//
 //     Extra additions to <functional>
