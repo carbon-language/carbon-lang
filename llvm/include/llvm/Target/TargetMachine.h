@@ -111,11 +111,20 @@ public:
 
   /// replaceMachineCodeForFunction - Make it so that calling the
   /// function whose machine code is at OLD turns into a call to NEW,
-  /// perhaps by overwriting OLD with a branch to NEW. FIXME: this is
-  /// JIT-specific.
+  /// perhaps by overwriting OLD with a branch to NEW.
+  ///
+  /// FIXME: this is JIT-specific.
   ///
   virtual void replaceMachineCodeForFunction (void *Old, void *New) {
     assert (0 && "Current target cannot replace machine code for functions");
+  }
+
+  /// getJITStubForFunction - Create or return a stub for the specified
+  /// function.  This stub acts just like the specified function, except that it
+  /// allows the "address" of the function to be taken without having to
+  /// generate code for it.
+  virtual void *getJITStubForFunction(Function *F, MachineCodeEmitter &MCE) {
+    return 0;
   }
 };
 
