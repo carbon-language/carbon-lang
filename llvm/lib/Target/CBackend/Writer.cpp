@@ -858,7 +858,10 @@ bool CWriter::doInitialization(Module &M) {
     Out << "\n\n/* Global Variable Declarations */\n";
     for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
       if (!I->isExternal()) {
-        Out << "extern ";
+        if (I->hasInternalLinkage())
+          Out << "static ";
+        else
+          Out << "extern ";
         printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
 
         if (I->hasLinkOnceLinkage())
