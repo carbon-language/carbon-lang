@@ -164,7 +164,7 @@ no_glob_subst='s/\*/\\\*/g'
 rm="rm -f"
 
 # Global variables:
-default_ofile=libtool
+default_ofile=mklib
 can_build_shared=yes
 
 # All known linkers require a `.a' archive for static linking (except M$VC,
