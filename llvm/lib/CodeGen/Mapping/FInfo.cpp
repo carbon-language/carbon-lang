@@ -2,19 +2,17 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 
-
 namespace {
   class FunctionInfo : public Pass {
     std::ostream &Out;
   public:
     FunctionInfo(std::ostream &out) : Out(out){}
-    const char* getPassName() const{return "Sparc FunctionInfo";}
+    const char* getPassName() const{ return "Sparc FunctionInfo"; }
     bool run(Module &M);
   private:
-    void FunctionInfo::writePrologue(const char *area,
-					const char *label);
-    void FunctionInfo::writeEpilogue(const char *area,
-					const char *label);
+    void writePrologue(const char *area, const char *label);
+    void writeEpilogue(const char *area, const char *label);
+                       
   };
 }
 
