@@ -271,13 +271,11 @@ void MemoryDepAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 ///     }
 ///         
 ///
-void MemoryDepAnalysis::ProcessSCC(SCC<Function*>& S,
-                                   ModRefTable& ModRefAfter) {
+void MemoryDepAnalysis::ProcessSCC(std::vector<BasicBlock*> &S,
+                                   ModRefTable& ModRefAfter, bool hasLoop) {
   ModRefTable ModRefCurrent;
   ModRefTable::ModRefMap& mapCurrent = ModRefCurrent.modRefMap;
   ModRefTable::ModRefMap& mapAfter   = ModRefAfter.modRefMap;
-
-  bool hasLoop = S.HasLoop();
 
   // Builder class fills out a ModRefTable one instruction at a time.
   // To use it, we just invoke it's visit function for each basic block:
@@ -290,7 +288,8 @@ void MemoryDepAnalysis::ProcessSCC(SCC<Function*>& S,
   //           : Add I  to ModRefCurrent.users    if it uses any node
   // 
   ModRefInfoBuilder builder(*funcGraph, *funcModRef, ModRefCurrent);
-  for (SCC<Function*>::iterator BI=S.begin(), BE=S.end(); BI != BE; ++BI)
+  for (std::vector<BasicBlock*>::iterator BI = S.begin(), BE = S.end();
+       BI != BE; ++BI)
     // Note: BBs in the SCC<> created by TarjanSCCIterator are in postorder.
     for (BasicBlock::reverse_iterator II=(*BI)->rbegin(), IE=(*BI)->rend();
          II != IE; ++II)
@@ -442,7 +441,7 @@ bool MemoryDepAnalysis::runOnFunction(Function &F) {
   SCC<Function*>* nextSCC;
   for (TarjanSCC_iterator<Function*> I = tarj_begin(&F), E = tarj_end(&F);
        I != E; ++I)
-    ProcessSCC(*I, ModRefAfter);
+    ProcessSCC(*I, ModRefAfter, (*I).HasLoop());
 
   return true;
 }

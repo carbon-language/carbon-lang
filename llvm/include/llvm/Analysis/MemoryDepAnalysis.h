@@ -15,7 +15,6 @@
 
 #include "llvm/Analysis/DependenceGraph.h"
 #include "llvm/Pass.h"
-#include "Support/TarjanSCCIterator.h"
 #include "Support/hash_map"
 
 class ModRefTable;
@@ -43,7 +42,8 @@ class MemoryDepAnalysis : public Pass {
   const FunctionModRefInfo* funcModRef;
 
   /// Internal routine that processes each SCC of the CFG.
-  void ProcessSCC(SCC<Function*>& S, ModRefTable& ModRefAfter);
+  void ProcessSCC(std::vector<BasicBlock*> &SCC, ModRefTable& ModRefAfter,
+                  bool HasLoop);
 
   friend class PgmDependenceGraph;
 
