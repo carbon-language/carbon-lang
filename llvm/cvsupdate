@@ -35,14 +35,17 @@ else
     echo ""; echo "Not updating files."; echo ""
 endif
 
-echo ""; echo "	UPDATE CONFLICTS OCCURRED FOR THE FOLLOWING FILES (OR NONE):"
+echo ""; echo "	FILES UPDATED:"
+grep '^U' cvs.out
+
+echo ""; echo "	UPDATE CONFLICTS OCCURRED FOR THE FOLLOWING FILES:"
 grep '^C' cvs.out
 
-echo ""; echo "	FILES SUCCESSFULLY MERGED:"
+echo ""; echo "	FILES SUCCESSFULLY MERGED (or locally modified):"
 grep '^M' cvs.out | grep -v Merging
 
 echo ""; echo "	NEW FILES AND DIRECTORIES:"
-grep '^\?' cvs.out | & grep -v '/De[bp]' | grep -v '\.bc' | grep -v /Release | grep -v Updating | grep -v cvsup | grep -v 'cvs.out' | grep -v gnumake.out | grep -v tools/as/as | grep -v tools/dis/dis | grep -v tools/opt/opt | grep -v tools/analyze/analyze
+grep '^\?' cvs.out | & grep -v '\.bc' | grep -v Updating | grep -v cvsup | grep -v 'cvs.out' | grep -v gnumake.out | grep -v '\.mc$' | grep -v '\.s$' | grep -v '\.native'
 
 echo ""
 
