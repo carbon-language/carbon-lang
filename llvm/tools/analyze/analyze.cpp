@@ -242,7 +242,8 @@ static cl::alias    QuietA("quiet", cl::desc("Alias for -q"),
                            cl::aliasopt(Quiet));
 
 static cl::list<enum Ans>
-AnalysesList(cl::values(
+AnalysesList(cl::desc("Analyses available:"),
+             cl::values(
   clEnumVal(print          , "Print each function"),
   clEnumVal(intervals      , "Print Interval Partitions"),
   clEnumVal(exprs          , "Classify Expressions"),
