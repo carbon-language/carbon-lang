@@ -9,7 +9,8 @@
 #define LLVM_TRANSFORMS_SIMPLESTRUCTMUTATION_H
 
 class Pass;
-Pass *createSwapElementsPass();
-Pass *createSortElementsPass();
+class TargetData;
+Pass *createSwapElementsPass(const TargetData &);
+Pass *createSortElementsPass(const TargetData &);
 
 #endif
