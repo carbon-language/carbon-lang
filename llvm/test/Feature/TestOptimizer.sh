@@ -1,5 +1,16 @@
 #!/bin/sh
-LD_LIBRARY_PATH=$3
+
+#
+# Split the current LD_LIBRARY_PATH into two separate components.
+#
+FirstLDP=`echo $LD_LIBRARY_PATH | cut -d\; -f1`
+SecondLDP=`echo $LD_LIBRARY_PATH | cut -d\; -f2`
+
+#
+# Now create a new LD_LIBRARY_PATH with our command line options as
+# the first section.
+#
+LD_LIBRARY_PATH="$3:${FirstLDP}\;${SecondLDP}"
 export LD_LIBRARY_PATH
 
 AS=$2/as
