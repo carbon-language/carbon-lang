@@ -8,14 +8,14 @@
 I. Overview
 ===========
 
-This directory contains a machine description for the X86 processor.  Currently
-this machine description is used for a high performance code generator used by a
-LLVM JIT.  One of the main objectives that we would like to support with this
-project is to build a nice clean code generator that may be extended in the
-future in a variety of ways: new targets, new optimizations, new
-transformations, etc.
+This directory contains a machine description for the X86 processor family.
+Currently this machine description is used for a high performance code generator
+used by the LLVM JIT and static code generators.  One of the main objectives
+that we would like to support with this project is to build a nice clean code
+generator that may be extended in the future in a variety of ways: new targets,
+new optimizations, new transformations, etc.
 
-This document describes the current state of the LLVM JIT, along with
+This document describes the current state of the X86 code generator, along with
 implementation notes, design decisions, and other stuff.
 
 
@@ -33,10 +33,9 @@ JIT and static compiler backends are largely shared.
 At the high-level, LLVM code is translated to a machine specific representation
 formed out of MachineFunction, MachineBasicBlock, and MachineInstr instances
 (defined in include/llvm/CodeGen).  This representation is completely target
-agnostic, representing instructions in their most abstract form: an opcode, a
-destination, and a series of operands.  This representation is designed to
-support both SSA representation for machine code, as well as a register
-allocated, non-SSA form.
+agnostic, representing instructions in their most abstract form: an opcode and a
+series of operands.  This representation is designed to support both SSA
+representation for machine code, as well as a register allocated, non-SSA form.
 
 Because the Machine* representation must work regardless of the target machine,
 it contains very little semantic information about the program.  To get semantic
@@ -52,16 +51,16 @@ SSA Instruction Representation
 ------------------------------
 Target machine instructions are represented as instances of MachineInstr, and
 all specific machine instruction types should have an entry in the
-InstructionInfo table defined through X86InstrInfo.def.  In the X86 backend,
-there are two particularly interesting forms of machine instruction: those that
-produce a value (such as add), and those that do not (such as a store).
+X86InstrInfo.td file.  In the X86 backend, there are two particularly
+interesting forms of machine instruction: those that produce a value (such as
+add), and those that do not (such as a store).
 
 Instructions that produce a value use Operand #0 as the "destination" register.
 When printing the assembly code with the built-in machine instruction printer,
 these destination registers will be printed to the left side of an '=' sign, as
-in: %reg1027 = addl %reg1026, %reg1025
+in: %reg1027 = add %reg1026, %reg1025
 
-This 'addl' MachineInstruction contains three "operands": the first is the
+This `add' MachineInstruction contains three "operands": the first is the
 destination register (#1027), the second is the first source register (#1026)
 and the third is the second source register (#1025).  Never forget the
 destination register will show up in the MachineInstr operands vector.  The code
@@ -83,7 +82,8 @@ specify a destination register to the BuildMI call.
 IV. Source Code Layout
 ======================
 
-The LLVM-JIT is composed of source files primarily in the following locations:
+The LLVM code generator is composed of source files primarily in the following
+locations:
 
 include/llvm/CodeGen
 --------------------
@@ -113,16 +113,15 @@ This directory contains the machine description for X86 that is required to the
 rest of the compiler working.  It contains any code that is truly specific to
 the X86 backend, for example the instruction selector and machine code emitter.
 
-tools/lli/JIT
--------------
+lib/ExecutionEngine/JIT
+-----------------------
 This directory contains the top-level code for the JIT compiler.  This code
-basically boils down to a call to TargetMachine::addPassesToJITCompile.  As we
-progress with the project, this will also contain the compile-dispatch-recompile
-loop.
+basically boils down to a call to TargetMachine::addPassesToJITCompile, and
+handles the compile-dispatch-recompile cycle.
 
-test/Regression/Jello
----------------------
-This directory contains regression tests for the JIT.
+test/Regression/CodeGen/X86
+---------------------------
+This directory contains regression tests for the X86 code generator.
 
 
 ==================================================
@@ -154,26 +153,16 @@ way, in the same order.
 VI. TODO / Future Projects
 ==========================
 
-There are a large number of things remaining to do.  Here is a partial list:
-
-Next Phase:
------------
-1. Implement linear time optimal instruction selector
-2. Implement smarter (linear scan?) register allocator
-
-After this project:
--------------------
-1. Implement lots of nifty runtime optimizations
-2. Implement new targets: IA64? X86-64? M68k? MMIX?  Who knows...
+Ideas for Improvements:
+-----------------------
+1. Implement an *optimal* linear time instruction selector
+2. Implement lots of nifty runtime optimizations
+3. Implement new targets: IA64? X86-64? M68k? MMIX?  Who knows...
 
 Infrastructure Improvements:
 ----------------------------
 
-1. Bytecode is designed to be able to read particular functions from the
-   bytecode without having to read the whole program.  Bytecode reader should be
-   extended to allow on-demand loading of functions.
-
-2. X86/Printer.cpp and Sparc/EmitAssembly.cpp both have copies of what is
+1. X86/Printer.cpp and Sparc/EmitAssembly.cpp both have copies of what is
    roughly the same code, used to output constants in a form the assembler
    can understand. These functions should be shared at some point. They
    should be rewritten to pass around iostreams instead of strings. The
