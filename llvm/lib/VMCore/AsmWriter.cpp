@@ -21,6 +21,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/Support/CFG.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -661,8 +662,7 @@ void AssemblyWriter::printArgument(const Argument *Arg) {
 //
 void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
-    Out << "\n" << BB->getName() << ":\t\t\t\t\t;[#uses="
-        << BB->use_size() << "]";  // Output # uses
+    Out << "\n" << BB->getName() << ":";
   } else if (!BB->use_empty()) {      // Don't print block # of no uses...
     int Slot = Table.getValSlot(BB);
     Out << "\n; <label>:";
@@ -670,7 +670,21 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
       Out << Slot;         // Extra newline seperates out label's
     else 
       Out << "<badref>"; 
-    Out << "\t\t\t\t\t;[#uses=" << BB->use_size() << "]";  // Output # uses
+  }
+  
+  // Output predecessors for the block...
+  Out << "\t\t;";
+  pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
+
+  if (PI == PE) {
+    Out << " No predecessors!";
+  } else {
+    Out << " preds =";
+    writeOperand(*PI, false, true);
+    for (++PI; PI != PE; ++PI) {
+      Out << ",";
+      writeOperand(*PI, false, true);
+    }
   }
   
   Out << "\n";
