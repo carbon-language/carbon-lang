@@ -44,10 +44,10 @@ static void PrintClassifiedExprs(Method *M) {
     cout << "\t\tExpr =";
     switch (R.ExprTy) {
     case analysis::ExprType::ScaledLinear:
-      WriteAsOperand(cout, (Value*)R.Scale) << " *";
+      WriteAsOperand(cout << "(", (Value*)R.Scale) << " ) *";
       // fall through
     case analysis::ExprType::Linear:
-      WriteAsOperand(cout, R.Var);
+      WriteAsOperand(cout << "(", R.Var) << " )";
       if (R.Offset == 0) break;
       else cout << " +";
       // fall through
