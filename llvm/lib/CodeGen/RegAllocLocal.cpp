@@ -232,28 +232,25 @@ void RA::removePhysReg(unsigned PhysReg) {
 ///
 void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                       unsigned VirtReg, unsigned PhysReg) {
+  assert((VirtReg || DisableKill) && "Spilling a physical register is illegal!"
+         " Must not have appropriate kill for the register or use exists beyond"
+         " the intended one.");
+  DEBUG(std::cerr << "  Spilling register " << RegInfo->getName(PhysReg);
+        std::cerr << " containing %reg" << VirtReg;
+        if (!isVirtRegModified(VirtReg))
+        std::cerr << " which has not been modified, so no store necessary!");
 
-  DEBUG(std::cerr << "  Spilling register " << RegInfo->getName(PhysReg));
-  if (VirtReg == 0) {
-    DEBUG(std::cerr << " which corresponds to no vreg, "
-                    << "must be spurious physreg: ignoring (WARNING)\n");
-  } else {
-    DEBUG(std::cerr << " containing %reg" << VirtReg;
-          if (!isVirtRegModified(VirtReg))
-           std::cerr << " which has not been modified, so no store necessary!");
-
-    // Otherwise, there is a virtual register corresponding to this physical
-    // register.  We only need to spill it into its stack slot if it has been
-    // modified.
-    if (isVirtRegModified(VirtReg)) {
-      const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
-      int FrameIndex = getStackSpaceFor(VirtReg, RC);
-      DEBUG(std::cerr << " to stack slot #" << FrameIndex);
-      RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIndex, RC);
-      ++NumSpilled;   // Update statistics
-    }
-    Virt2PhysRegMap.erase(VirtReg);   // VirtReg no longer available
+  // Otherwise, there is a virtual register corresponding to this physical
+  // register.  We only need to spill it into its stack slot if it has been
+  // modified.
+  if (isVirtRegModified(VirtReg)) {
+    const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
+    int FrameIndex = getStackSpaceFor(VirtReg, RC);
+    DEBUG(std::cerr << " to stack slot #" << FrameIndex);
+    RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIndex, RC);
+    ++NumSpilled;   // Update statistics
   }
+  Virt2PhysRegMap.erase(VirtReg);   // VirtReg no longer available
 
   DEBUG(std::cerr << "\n");
   removePhysReg(PhysReg);
@@ -510,12 +507,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         if (PhysReg) {
           DEBUG(std::cerr << "  Last use of " << RegInfo->getName(PhysReg)
                       << "[%reg" << VirtReg <<"], removing it from live set\n");
-          // If the physical register was used, but there was no definition of
-          // the physical register (we are reading garbage), Live Variables will
-          // tell us that this is the last use of the register even though we
-          // don't know of anything in the register.  No need to remove it.
-          if (VirtReg != PhysReg || PhysRegsUsed.count(PhysReg))
-            removePhysReg(PhysReg);
+          removePhysReg(PhysReg);
         }
       }
     }
