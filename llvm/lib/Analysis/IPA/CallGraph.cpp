@@ -150,6 +150,8 @@ void WriteToOutput(const CallGraphNode *CGN, std::ostream &o) {
 }
 
 void WriteToOutput(const CallGraph &CG, std::ostream &o) {
+  o << "CallGraph Root is:\n" << CG.getRoot();
+
   for (CallGraph::const_iterator I = CG.begin(), E = CG.end(); I != E; ++I)
     o << I->second;
 }
