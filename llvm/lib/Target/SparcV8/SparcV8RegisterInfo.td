@@ -24,6 +24,15 @@ class Rf<bits<5> num> : Register {
 class Rd<bits<5> num> : Register {
   field bits<5> Num = num;
 }
+// Rs - Special "ancillary state registers"
+class Rs<bits<5> num> : Register {
+  field bits<5> Num = num;
+}
+
+// Special register used for multiplies and divides
+let Namespace = "V8" in {
+  def Y : Rs<0>;
+}
 
 let Namespace = "V8" in {
   def G0 : Ri< 0>;    def G1 : Ri< 1>;    def G2 : Ri< 2>;    def G3 : Ri< 3>;
