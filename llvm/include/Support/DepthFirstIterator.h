@@ -9,6 +9,18 @@
 // idf_begin/idf_end/idf_iterator
 //   * Depth-first iteration on the 'inverse' graph.
 //
+// df_ext_begin/df_ext_end/df_ext_iterator
+//   * Normal depth-first iteration - visit a node and then all of its children.
+//     This iterator stores the 'visited' set in an external set, which allows
+//     it to be more efficient, and allows external clients to use the set for
+//     other purposes.
+//
+// idf_ext_begin/idf_ext_end/idf_ext_iterator
+//   * Depth-first iteration on the 'inverse' graph.
+//     This iterator stores the 'visited' set in an external set, which allows
+//     it to be more efficient, and allows external clients to use the set for
+//     other purposes.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef SUPPORT_DEPTHFIRSTITERATOR_H
@@ -19,28 +31,59 @@
 #include <vector>
 #include <set>
 
+// df_iterator_storage - A private class which is used to figure out where to
+// store the visited set.
+template<class SetType, bool External>   // Non-external set
+class df_iterator_storage {
+public:
+  SetType Visited;
+};
+
+template<class SetType>
+class df_iterator_storage<SetType, true> {
+public:
+  df_iterator_storage(SetType &VSet) : Visited(VSet) {}
+  df_iterator_storage(const df_iterator_storage &S) : Visited(S.Visited) {}
+  SetType &Visited;
+};
+
+
 // Generic Depth First Iterator
-template<class GraphT, class GT = GraphTraits<GraphT> >
-class df_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t> {
+template<class GraphT, class SetType = 
+                            std::set<typename GraphTraits<GraphT>::NodeType*>,
+         bool ExtStorage = false, class GT = GraphTraits<GraphT> >
+class df_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t>,
+                    public df_iterator_storage<SetType, ExtStorage> {
   typedef forward_iterator<typename GT::NodeType, ptrdiff_t> super;
 
   typedef typename GT::NodeType          NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
 
-  std::set<NodeType *> Visited;    // All of the blocks visited so far...
   // VisitStack - Used to maintain the ordering.  Top = current block
   // First element is node pointer, second is the 'next child' to visit
   std::vector<std::pair<NodeType *, ChildItTy> > VisitStack;
 private:
   inline df_iterator(NodeType *Node) {
-    Visited.insert(Node);
+    this->Visited.insert(Node);
     VisitStack.push_back(std::make_pair(Node, GT::child_begin(Node)));
   }
   inline df_iterator() { /* End is when stack is empty */ }
 
+  inline df_iterator(NodeType *Node, SetType &S)
+    : df_iterator_storage<SetType, ExtStorage>(S) {
+    if (!S.count(Node)) {
+      this->Visited.insert(Node);
+      VisitStack.push_back(std::make_pair(Node, GT::child_begin(Node)));
+    }
+  }
+  inline df_iterator(SetType &S) 
+    : df_iterator_storage<SetType, ExtStorage>(S) {
+    // End is when stack is empty
+  }
+
 public:
   typedef typename super::pointer pointer;
-  typedef df_iterator<GraphT, GT> _Self;
+  typedef df_iterator<GraphT, SetType, ExtStorage, GT> _Self;
 
   // Provide static begin and end methods as our public "constructors"
   static inline _Self begin(GraphT G) {
@@ -48,6 +91,11 @@ public:
   }
   static inline _Self end(GraphT G) { return _Self(); }
 
+  // Static begin and end methods as our public ctors for external iterators
+  static inline _Self begin(GraphT G, SetType &S) {
+    return _Self(GT::getEntryNode(G), S);
+  }
+  static inline _Self end(GraphT G, SetType &S) { return _Self(S); }
 
   inline bool operator==(const _Self& x) const { 
     return VisitStack.size() == x.VisitStack.size() &&
@@ -73,9 +121,9 @@ public:
       
       while (It != GT::child_end(Node)) {
         NodeType *Next = *It++;
-        if (!Visited.count(Next)) {  // Has our next sibling been visited?
+        if (!this->Visited.count(Next)) {  // Has our next sibling been visited?
           // No, do it now.
-          Visited.insert(Next);
+          this->Visited.insert(Next);
           VisitStack.push_back(std::make_pair(Next, GT::child_begin(Next)));
           return *this;
         }
@@ -96,7 +144,7 @@ public:
   // nodes that a depth first iteration did not find: ie unreachable nodes.
   //
   inline bool nodeVisited(NodeType *Node) const { 
-    return Visited.count(Node) != 0;
+    return this->Visited.count(Node) != 0;
   }
 };
 
@@ -113,10 +161,30 @@ df_iterator<T> df_end(T G) {
   return df_iterator<T>::end(G);
 }
 
+// Provide global definitions of external depth first iterators...
+template <class T, class SetTy>
+struct df_ext_iterator : public df_iterator<T, SetTy, true> {
+  df_ext_iterator(const df_iterator<T, SetTy, true> &V)
+    : df_iterator<T, SetTy, true>(V) {}
+};
+
+template <class T, class SetTy>
+df_ext_iterator<T, SetTy> df_ext_begin(T G, SetTy &S) {
+  return df_ext_iterator<T, SetTy>::begin(G, S);
+}
+
+template <class T, class SetTy>
+df_ext_iterator<T, SetTy> df_ext_end(T G, SetTy &S) {
+  return df_ext_iterator<T, SetTy>::end(G, S);
+}
+
+
 // Provide global definitions of inverse depth first iterators...
-template <class T>
-struct idf_iterator : public df_iterator<Inverse<T> > {
-  idf_iterator(const df_iterator<Inverse<T> > &V) :df_iterator<Inverse<T> >(V){}
+template <class T, class SetTy = std::set<typename GraphTraits<T>::NodeType*>,
+          bool External = false>
+struct idf_iterator : public df_iterator<Inverse<T>, SetTy, External> {
+  idf_iterator(const df_iterator<Inverse<T>, SetTy, External> &V)
+    : df_iterator<Inverse<T>, SetTy, External>(V) {}
 };
 
 template <class T>
@@ -128,5 +196,25 @@ template <class T>
 idf_iterator<T> idf_end(T G){
   return idf_iterator<T>::end(G);
 }
+
+// Provide global definitions of external inverse depth first iterators...
+template <class T, class SetTy = std::set<typename GraphTraits<T>::NodeType*> >
+struct idf_ext_iterator : public idf_iterator<T, SetTy, true> {
+  idf_ext_iterator(const idf_iterator<T, SetTy, true> &V)
+    : idf_iterator<T, SetTy, true>(V) {}
+  idf_ext_iterator(const df_iterator<Inverse<T>, SetTy, true> &V)
+    : idf_iterator<T, SetTy, true>(V) {}
+};
+
+template <class T, class SetTy>
+idf_ext_iterator<T, SetTy> idf_ext_begin(T G, SetTy &S) {
+  return idf_ext_iterator<T, SetTy>::begin(G, S);
+}
+
+template <class T, class SetTy>
+idf_ext_iterator<T, SetTy> idf_ext_end(T G, SetTy &S) {
+  return idf_ext_iterator<T, SetTy>::end(G, S);
+}
+
 
 #endif
