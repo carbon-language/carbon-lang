@@ -25,9 +25,15 @@
 #include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/DerivedTypes.h"
+#include "Support/Statistic.h"
 
 // Register the AliasAnalysis interface, providing a nice name to refer to.
-static RegisterAnalysisGroup<AliasAnalysis> X("Alias Analysis");
+namespace {
+  RegisterAnalysisGroup<AliasAnalysis> Z("Alias Analysis");
+  Statistic<> NumNoAlias  ("basic-aa", "Number of 'no alias' replies");
+  Statistic<> NumMayAlias ("basic-aa", "Number of 'may alias' replies");
+  Statistic<> NumMustAlias("basic-aa", "Number of 'must alias' replies");
+}
 
 // CanModify - Define a little visitor class that is used to check to see if
 // arbitrary chunks of code can modify a specified pointer.
@@ -139,6 +145,21 @@ static const Value *getUnderlyingObject(const Value *V) {
   return 0;
 }
 
+static inline AliasAnalysis::Result MustAlias() {
+  ++NumMustAlias;
+  return AliasAnalysis::MustAlias;
+}
+
+static inline AliasAnalysis::Result MayAlias() {
+  ++NumMayAlias;
+  return AliasAnalysis::MayAlias;
+}
+
+static inline AliasAnalysis::Result NoAlias() {
+  ++NumNoAlias;
+  return AliasAnalysis::NoAlias;
+}
+
 // alias - Provide a bunch of ad-hoc rules to disambiguate in common cases, such
 // as array references.  Note that this function is heavily tail recursive.
 // Hopefully we have a smart C++ compiler.  :)
@@ -152,11 +173,11 @@ AliasAnalysis::Result BasicAliasAnalysis::alias(const Value *V1,
     V2 = CPR->getValue();
 
   // Are we checking for alias of the same value?
-  if (V1 == V2) return MustAlias;
+  if (V1 == V2) return ::MustAlias();
 
   if ((!isa<PointerType>(V1->getType()) || !isa<PointerType>(V2->getType())) &&
       V1->getType() != Type::LongTy && V2->getType() != Type::LongTy)
-    return NoAlias;  // Scalars cannot alias each other
+    return ::NoAlias();  // Scalars cannot alias each other
 
   // Strip off cast instructions...
   if (const Instruction *I = dyn_cast<CastInst>(V1))
@@ -195,7 +216,7 @@ AliasAnalysis::Result BasicAliasAnalysis::alias(const Value *V1,
         //
         if (AllConstant &&
             alias(GEP1->getOperand(0), GEP2->getOperand(1)) != MayAlias)
-            return NoAlias;
+            return ::NoAlias();
       }
 
   // Figure out what objects these things are pointing to if we can...
@@ -205,16 +226,16 @@ AliasAnalysis::Result BasicAliasAnalysis::alias(const Value *V1,
   // Pointing at a discernable object?
   if (O1 && O2) {
     // If they are two different objects, we know that we have no alias...
-    if (O1 != O2) return NoAlias;
+    if (O1 != O2) return ::NoAlias();
 
     // If they are the same object, they we can look at the indexes.  If they
     // index off of the object is the same for both pointers, they must alias.
     // If they are provably different, they must not alias.  Otherwise, we can't
     // tell anything.
   } else if (O1 && isa<ConstantPointerNull>(V2)) {
-    return NoAlias;                    // Unique values don't alias null
+    return ::NoAlias();                    // Unique values don't alias null
   } else if (O2 && isa<ConstantPointerNull>(V1)) {
-    return NoAlias;                    // Unique values don't alias null
+    return ::NoAlias();                    // Unique values don't alias null
   }
 
   return MayAlias;
