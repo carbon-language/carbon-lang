@@ -14,6 +14,7 @@ DIRS  = ADCE \
 	InstCombine \
 	LevelRaise \
 	LICM \
+	LowerSwitch \
 	Mem2Reg \
 	PiNodeInserter \
 	PRE \
