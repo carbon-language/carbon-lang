@@ -1,4 +1,4 @@
-//===- FunctionRepBuilder.cpp - Build the datastructure graph for a method --===//
+//===- FunctionRepBuilder.cpp - Build the local datastructure graph -------===//
 //
 // Build the local datastructure graph for a single method.
 //
@@ -47,6 +47,9 @@ void InitVisitor::visitOperand(Value *V) {
       Rep->Nodes.push_back(N);
       Rep->ValueMap[V].add(N);
       Rep->addAllUsesToWorkList(GV);
+
+      // FIXME: If the global variable has fields, we should add critical
+      // shadow nodes to represent them!
     }
 }
 
@@ -61,9 +64,9 @@ void InitVisitor::visitCallInst(CallInst *CI) {
   Rep->CallMap[CI] = C;
       
   if (isa<PointerType>(CI->getType())) {
-    // Create a shadow node to represent the memory object that the return
-    // value points to...
-    ShadowDSNode *Shad = new ShadowDSNode(C, Func->getParent());
+    // Create a critical shadow node to represent the memory object that the
+    // return value points to...
+    ShadowDSNode *Shad = new ShadowDSNode(C, Func->getParent(), true);
     Rep->ShadowNodes.push_back(Shad);
     
     // The return value of the function is a pointer to the shadow value
@@ -143,9 +146,9 @@ void FunctionRepBuilder::initializeWorkList(Function *Func) {
       ArgDSNode *Arg = new ArgDSNode(*I);
       Nodes.push_back(Arg);
       
-      // Add a shadow value for it to represent what it is pointing
+      // Add a critical shadow value for it to represent what it is pointing
       // to and add this to the value map...
-      ShadowDSNode *Shad = new ShadowDSNode(Arg, Func->getParent());
+      ShadowDSNode *Shad = new ShadowDSNode(Arg, Func->getParent(), true);
       ShadowNodes.push_back(Shad);
       ValueMap[*I].add(PointerVal(Shad), *I);
       
@@ -327,5 +330,16 @@ FunctionDSGraph::FunctionDSGraph(Function *F) : Func(F) {
   ShadowNodes = Builder.getShadowNodes();
   RetNode = Builder.getRetNode();
   ValueMap = Builder.getValueMap();
+
+  bool Changed = true;
+  while (Changed) {
+    // Eliminate shadow nodes that are not distinguishable from some other
+    // node in the graph...
+    //
+    Changed = UnlinkUndistinguishableShadowNodes();
+
+    // Eliminate shadow nodes that are now extraneous due to linking...
+    Changed |= RemoveUnreachableShadowNodes();
+  }
 }
 
