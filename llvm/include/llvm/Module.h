@@ -47,6 +47,7 @@ class Module {
 public:
   typedef iplist<GlobalVariable> GlobalListType;
   typedef iplist<Function> FunctionListType;
+  typedef std::vector<std::string> LibraryListType;
 
   // Global Variable iterators...
   typedef GlobalListType::iterator                             giterator;
@@ -60,18 +61,24 @@ public:
   typedef std::reverse_iterator<iterator>             reverse_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
+  // Library list iterators
+  typedef LibraryListType::iterator literator;
+  typedef LibraryListType::const_iterator const_literator;
+
   enum Endianness  { AnyEndianness, LittleEndian, BigEndian };
   enum PointerSize { AnyPointerSize, Pointer32, Pointer64 };
 
 private:
   GlobalListType GlobalList;     // The Global Variables in the module
   FunctionListType FunctionList; // The Functions in the module
+  LibraryListType LibraryList;   // The Libraries needed by the module
   SymbolTable *SymTab;           // Symbol Table for the module
-  std::string ModuleID;    // Human readable identifier for the module
+  std::string ModuleID;          // Human readable identifier for the module
+  std::string TargetTriple;      // Platform target triple Module compiled on
 
   // These flags are probably not the right long-term way to handle this kind of
   // target information, but it is sufficient for now.
-  Endianness  Endian;       // True if target is little endian
+  Endianness  Endian;     // True if target is little endian
   PointerSize PtrSize;    // True if target has 32-bit pointers (false = 64-bit)
 
   // Accessor for the underlying GVRefMap... only through the Constant class...
@@ -84,7 +91,9 @@ public:
   Module(const std::string &ModuleID);
   ~Module();
 
-  const std::string &getModuleIdentifier() const { return ModuleID; }
+  const std::string& getModuleIdentifier() const { return ModuleID; }
+  const std::string& getTargetTriple() const { return TargetTriple; }
+  void setTargetTriple(std::string& T) { TargetTriple = T; }
 
   /// Target endian information...
   Endianness getEndianness() const { return Endian; }
@@ -181,6 +190,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Module iterator forwarding functions
   //
+  // Globals list interface
   inline giterator                gbegin()       { return GlobalList.begin(); }
   inline const_giterator          gbegin() const { return GlobalList.begin(); }
   inline giterator                gend  ()       { return GlobalList.end();   }
@@ -198,8 +208,7 @@ public:
   inline const GlobalVariable     &gback() const { return GlobalList.back(); }
   inline       GlobalVariable     &gback()       { return GlobalList.back(); }
 
-
-
+  // FunctionList interface
   inline iterator                begin()       { return FunctionList.begin(); }
   inline const_iterator          begin() const { return FunctionList.begin(); }
   inline iterator                end  ()       { return FunctionList.end();   }
@@ -216,6 +225,22 @@ public:
   inline       Function         &front()       { return FunctionList.front(); }
   inline const Function          &back() const { return FunctionList.back(); }
   inline       Function          &back()       { return FunctionList.back(); }
+
+  // LibraryList interface
+  inline literator           lbegin()       { return LibraryList.begin(); }
+  inline const_literator     lbegin() const { return LibraryList.begin(); }
+  inline literator           lend  ()       { return LibraryList.end();   }
+  inline const_literator     lend  () const { return LibraryList.end();   }
+
+  inline unsigned             lsize() const { return LibraryList.size(); }
+  inline bool                lempty() const { return LibraryList.empty(); }
+  inline const std::string&  lfront() const { return LibraryList.front(); }
+  inline       std::string&  lfront()       { return LibraryList.front(); }
+  inline const std::string&   lback() const { return LibraryList.back(); }
+  inline       std::string&   lback()       { return LibraryList.back(); }
+
+  inline void linsert(std::string& Lib){ LibraryList.push_back(Lib); }
+  inline void lremove(std::string& Lib);
 
   void print(std::ostream &OS) const { print(OS, 0); }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
