@@ -11,7 +11,6 @@
 #include "llvm/Constant.h"
 #include "llvm/iPHINode.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "SymbolTableListTraitsImpl.h"
 #include <algorithm>
 
@@ -47,8 +46,7 @@ template SymbolTableListTraits<Instruction, BasicBlock, Function>;
 
 
 BasicBlock::BasicBlock(const std::string &name, Function *Parent)
-  : Value(Type::LabelTy, Value::BasicBlockVal, name),
-    machineInstrVec(new MachineCodeForBasicBlock) {
+  : Value(Type::LabelTy, Value::BasicBlockVal, name) {
   // Initialize the instlist...
   InstList.setItemParent(this);
 
@@ -59,7 +57,6 @@ BasicBlock::BasicBlock(const std::string &name, Function *Parent)
 BasicBlock::~BasicBlock() {
   dropAllReferences();
   InstList.clear();
-  delete machineInstrVec;
 }
 
 // Specialize setName to take care of symbol table majik

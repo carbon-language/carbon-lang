@@ -25,7 +25,6 @@
 #include "Support/ilist"
 
 class TerminatorInst;
-class MachineCodeForBasicBlock;
 template <class _Term, class _BB> class SuccIterator;  // Successor Iterator
 template <class _Ptr, class _USE_iterator> class PredIterator;
 
@@ -41,7 +40,6 @@ public:
   typedef iplist<Instruction> InstListType;
 private :
   InstListType InstList;
-  MachineCodeForBasicBlock* machineInstrVec;
   BasicBlock *Prev, *Next; // Next and Prev links for our intrusive linked list
 
   void setParent(Function *parent) { InstList.setParent(parent); }
@@ -83,11 +81,6 @@ public:
   TerminatorInst *getTerminator();
   const TerminatorInst *const getTerminator() const;
   
-  // Machine code accessor...
-  inline MachineCodeForBasicBlock& getMachineInstrVec() const {
-    return *machineInstrVec; 
-  }
-
   // Provide a scoped predecessor and successor iterator
   typedef PredIterator<BasicBlock, Value::use_iterator> pred_iterator;
   typedef PredIterator<const BasicBlock, 
