@@ -39,9 +39,4 @@
 
 #include "llvm/Optimizations/InductionVars.h"
 
-//===----------------------------------------------------------------------===//
-// LevelChange - Code lowering and raising
-//
-#include "llvm/Optimizations/LevelChange.h"
-
 #endif
