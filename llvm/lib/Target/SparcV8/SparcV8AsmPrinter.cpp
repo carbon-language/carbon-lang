@@ -68,7 +68,7 @@ namespace {
     void emitConstantValueOnly(const Constant *CV);
     void emitGlobalConstant(const Constant *CV);
     void printConstantPool(MachineConstantPool *MCP);
-    void printOperand(const MachineOperand &MI);
+    void printOperand(const MachineInstr *MI, int opNum);
     void printBaseOffsetPair (const MachineInstr *MI, int i);
     void printMachineInstruction(const MachineInstr *MI);
     bool runOnMachineFunction(MachineFunction &F);    
@@ -376,13 +376,22 @@ std::string LowercaseString (const std::string &S) {
   return result;
 }
 
-void V8Printer::printOperand(const MachineOperand &MO) {
+void V8Printer::printOperand(const MachineInstr *MI, int opNum) {
+  const MachineOperand &MO = MI->getOperand (opNum);
   const MRegisterInfo &RI = *TM.getRegisterInfo();
+  bool CloseParen = false;
+  if (MI->getOpcode() == V8::SETHIi && !MO.isRegister() && !MO.isImmediate()) {
+    O << "%hi(";
+    CloseParen = true;
+  } else if (MI->getOpcode() ==V8::ORri &&!MO.isRegister() &&!MO.isImmediate()) {
+    O << "%lo(";
+    CloseParen = true;
+  }
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
     if (Value *V = MO.getVRegValueOrNull()) {
       O << "<" << V->getName() << ">";
-      return;
+      break;
     }
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
@@ -390,16 +399,16 @@ void V8Printer::printOperand(const MachineOperand &MO) {
       O << "%" << LowercaseString (RI.get(MO.getReg()).Name);
     else
       O << "%reg" << MO.getReg();
-    return;
+    break;
 
   case MachineOperand::MO_SignExtendedImmed:
   case MachineOperand::MO_UnextendedImmed:
     O << (int)MO.getImmedValue();
-    return;
+    break;
   case MachineOperand::MO_PCRelativeDisp: {
     if (isa<GlobalValue> (MO.getVRegValue ())) {
       O << Mang->getValueName (MO.getVRegValue ());
-      return;
+      break;
     }
     assert (isa<BasicBlock> (MO.getVRegValue ())
       && "Trying to look up something which is not a BB in the NumberForBB map");
@@ -407,17 +416,18 @@ void V8Printer::printOperand(const MachineOperand &MO) {
     assert (i != NumberForBB.end()
             && "Could not find a BB in the NumberForBB map!");
     O << ".LBB" << i->second << " ! PC rel: " << MO.getVRegValue()->getName();
-    return;
+    break;
   }
   case MachineOperand::MO_GlobalAddress:
     O << Mang->getValueName(MO.getGlobal());
-    return;
+    break;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
-    return;
+    break;
   default:
-    O << "<unknown operand type>"; return;    
+    O << "<unknown operand type>"; break;    
   }
+  if (CloseParen) O << ")";
 }
 
 static bool isLoadInstruction (const MachineInstr *MI) {
@@ -448,7 +458,7 @@ static bool isStoreInstruction (const MachineInstr *MI) {
 
 void V8Printer::printBaseOffsetPair (const MachineInstr *MI, int i) {
   O << "[";
-  printOperand (MI->getOperand (i));
+  printOperand (MI, i);
   assert (MI->getOperand (i + 1).isImmediate()
     && "2nd half of base-offset pair must be immediate-value machine operand");
   int Val = (int) MI->getOperand (i + 1).getImmedValue ();
@@ -474,11 +484,11 @@ void V8Printer::printMachineInstruction(const MachineInstr *MI) {
   if (isLoadInstruction (MI)) {
     printBaseOffsetPair (MI, 1);
     O << ", ";
-    printOperand (MI->getOperand (0));
+    printOperand (MI, 0);
     O << "\n";
     return;
   } else if (isStoreInstruction (MI)) {
-    printOperand (MI->getOperand (0));
+    printOperand (MI, 0);
     O << ", ";
     printBaseOffsetPair (MI, 1);
     O << "\n";
@@ -488,20 +498,20 @@ void V8Printer::printMachineInstruction(const MachineInstr *MI) {
   // print non-immediate, non-register-def operands
   // then print immediate operands
   // then print register-def operands.
-  std::vector<MachineOperand> print_order;
+  std::vector<int> print_order;
   for (unsigned i = 0; i < MI->getNumOperands (); ++i)
     if (!(MI->getOperand (i).isImmediate ()
           || (MI->getOperand (i).isRegister ()
               && MI->getOperand (i).isDef ())))
-      print_order.push_back (MI->getOperand (i));
+      print_order.push_back (i);
   for (unsigned i = 0; i < MI->getNumOperands (); ++i)
     if (MI->getOperand (i).isImmediate ())
-      print_order.push_back (MI->getOperand (i));
+      print_order.push_back (i);
   for (unsigned i = 0; i < MI->getNumOperands (); ++i)
     if (MI->getOperand (i).isRegister () && MI->getOperand (i).isDef ())
-      print_order.push_back (MI->getOperand (i));
+      print_order.push_back (i);
   for (unsigned i = 0, e = print_order.size (); i != e; ++i) { 
-    printOperand (print_order[i]);
+    printOperand (MI, print_order[i]);
     if (i != (print_order.size () - 1))
       O << ", ";
   }
