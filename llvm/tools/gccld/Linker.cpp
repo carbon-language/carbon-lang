@@ -21,6 +21,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Linker.h"
+#include "Config/config.h"
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
 #include "Support/Signals.h"
