@@ -1,6 +1,6 @@
 LEVEL = ../..
 TOOLNAME = lli
 USEDLIBS = bcreader vmcore analysis support target transforms
-TOOLLINKOPTS = -L$(LEVEL)/test/Libraries/Output -linstr32 -ldl
+TOOLLINKOPTS = -ldl
 
 include $(LEVEL)/Makefile.common
