@@ -356,7 +356,7 @@ void CWriter::writeOperand(const Value *Operand) {
 void CWriter::printModule(Module *M) {
   // Calculate which global values have names that will collide when we throw
   // away type information.
-  {  // Scope to declare the FoundNames set when we are done with it...
+  {  // Scope to delete the FoundNames set when we are done with it...
     std::set<string> FoundNames;
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
       if ((*I)->hasName())                      // If the global has a name...
@@ -379,6 +379,7 @@ void CWriter::printModule(Module *M) {
 
   // get declaration for alloca
   Out << "/* Provide Declarations */\n"
+      << "#include <malloc.h>\n"
       << "#include <alloca.h>\n\n"
 
     // Provide a definition for null if one does not already exist.
