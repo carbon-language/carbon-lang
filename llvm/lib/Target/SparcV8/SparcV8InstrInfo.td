@@ -209,7 +209,7 @@ def WRri : F3_2<2, 0b110000, "wr">;                    // wr rs1, imm, rd
 
 // Convert Integer to Floating-point Instructions, p. 141
 def FITOS : F3_3<2, 0b110100, 0b011000100, "fitos">;
-def FITOD : F3_3<2, 0b110100, 0b011001000, "fitos">;
+def FITOD : F3_3<2, 0b110100, 0b011001000, "fitod">;
 
 // Convert between Floating-point Formats Instructions, p. 143
 def FSTOD : F3_3<2, 0b110100, 0b011001001, "fstod">;
