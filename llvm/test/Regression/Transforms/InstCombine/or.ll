@@ -69,3 +69,9 @@ int %test12(int %A) {    ; A | ~A == -1
         %B = or int %A, %NotA
         ret int %B
 }
+
+uint %test13(uint %A) { ; (A|B)^B == A & (~B)
+	%t1 = or uint %A, 123
+	%r  = xor uint %t1, 123
+	ret uint %r
+}
