@@ -97,6 +97,7 @@ Module *BugDriver::performFinalCleanups() const {
   CleanupPasses.add(createFunctionResolvingPass());
   CleanupPasses.add(createGlobalDCEPass());
   CleanupPasses.add(createDeadTypeEliminationPass());
+  CleanupPasses.add(createDeadArgEliminationPass(true));
   CleanupPasses.add(createVerifierPass());
   CleanupPasses.run(*M);
   return M;
