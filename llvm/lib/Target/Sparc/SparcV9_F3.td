@@ -131,13 +131,12 @@ class F3_3<bits<2> opVal, bits<6> op3val, string name> : F3_rs1rs2 {
 }
 
 class F3_4<bits<2> opVal, bits<6> op3Val, string name> : F3_rs1simm13 {
-  bits<13> simm;
   set op   = opVal;
   set op3  = op3Val;
   set Name = name;
   set Inst{29-25} = 0; // don't care
   set Inst{13} = 1;    // i field = 1
-  set Inst{12-0} = simm;
+  set Inst{12-0} = simm13;
 }
 
 class F3_5<bits<2> opVal, bits<6> op3Val, bits<3> rcondVal,
