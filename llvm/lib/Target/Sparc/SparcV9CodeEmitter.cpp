@@ -75,7 +75,8 @@ namespace {
 
   private:
     uint64_t emitStubForFunction(Function *F);
-    static void CompilationCallback();
+    static void SaveRestoreRegisters();
+    static uint64_t CompilationCallback();
     uint64_t resolveFunctionReference(uint64_t RetAddr);
 
   };
@@ -91,7 +92,7 @@ namespace {
 ///
 uint64_t JITResolver::addFunctionReference(uint64_t Address, Function *F) {
   LazyCodeGenMap[Address] = F;
-  return (intptr_t)&JITResolver::CompilationCallback;
+  return (intptr_t)&JITResolver::SaveRestoreRegisters;
 }
 
 /// deleteFunctionReference - If we are emitting a far call, we already added a
@@ -126,8 +127,7 @@ uint64_t JITResolver::getLazyResolver(Function *F) {
 
 uint64_t JITResolver::insertFarJumpAtAddr(int64_t Target, uint64_t Addr) {
 
-  static const unsigned i1 = SparcIntRegClass::i1, i2 = SparcIntRegClass::i2,
-    i7 = SparcIntRegClass::i7,
+  static const unsigned 
     o6 = SparcIntRegClass::o6, g0 = SparcIntRegClass::g0,
     g1 = SparcIntRegClass::g1, g5 = SparcIntRegClass::g5;
 
@@ -143,7 +143,7 @@ uint64_t JITResolver::insertFarJumpAtAddr(int64_t Target, uint64_t Addr) {
     BuildMI(V9::SLLXi6, 3).addReg(g5).addSImm(32).addReg(g5),
     // sethi %hi(Target), %g1      ;; extract bits 10-31 into the dest reg
     BuildMI(V9::SETHI, 2).addSImm((Target >> 10) & 0x03fffff).addReg(g1),
-    // or %g5, %g1, %g1            ;; get upper word (in %i1) into %g1
+    // or %g5, %g1, %g1            ;; get upper word (in %g5) into %g1
     BuildMI(V9::ORr, 3).addReg(g5).addReg(g1).addReg(g1),
     // or %g1, %lo(Target), %g1    ;; get lowest 10 bits of Target into %g1
     BuildMI(V9::ORi, 3).addReg(g1).addSImm(Target & 0x03ff).addReg(g1),
@@ -162,12 +162,159 @@ uint64_t JITResolver::insertFarJumpAtAddr(int64_t Target, uint64_t Addr) {
   return Addr;
 }
 
-void JITResolver::CompilationCallback() {
-  uint64_t CameFrom = (uint64_t)(intptr_t)__builtin_return_address(0);
+void JITResolver::SaveRestoreRegisters() {
+  uint32_t SingleFP[32];
+  uint64_t DoubleFP[16];
+  // FIXME: uint128_t QuadFloatRegs[..];
+  uint64_t CCR, FSR, FPRS, g1, g5;
+
+#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+  __asm__ __volatile__ (// Save g1 and g5
+                        "stx %%g1, %0;\n\t" "stx %%g5, %1;\n\t"
+                        : "=m"(g1), "=m"(g5));
+
+  __asm__ __volatile__ (// Save condition-code registers
+                        "stx %%fsr, %0;\n\t" 
+                        "rd %%fprs, %1;\n\t" 
+                        "rd %%ccr,  %2;\n\t"
+                        : "=m"(FSR), "=r"(FPRS), "=r"(CCR));
+
+  // GCC says: `asm' only allows up to thirty parameters!
+  __asm__ __volatile__ (// Save Single FP registers, part 1
+                        "st  %%f0,  %0;\n\t"  "st  %%f1,  %1;\n\t"
+                        "st  %%f2,  %2;\n\t"  "st  %%f3,  %3;\n\t"
+                        "st  %%f4,  %4;\n\t"  "st  %%f5,  %5;\n\t"
+                        "st  %%f6,  %6;\n\t"  "st  %%f7,  %7;\n\t"
+                        "st  %%f8,  %8;\n\t"  "st  %%f9,  %9;\n\t"
+                        "st  %%f10, %10;\n\t" "st  %%f11, %11;\n\t"
+                        "st  %%f12, %12;\n\t" "st  %%f13, %13;\n\t"
+                        "st  %%f14, %14;\n\t" "st  %%f15, %15;\n\t"
+                        : "=m"(SingleFP[ 0]), "=m"(SingleFP[ 1]),
+                          "=m"(SingleFP[ 2]), "=m"(SingleFP[ 3]),
+                          "=m"(SingleFP[ 4]), "=m"(SingleFP[ 5]),
+                          "=m"(SingleFP[ 6]), "=m"(SingleFP[ 7]),
+                          "=m"(SingleFP[ 8]), "=m"(SingleFP[ 9]),
+                          "=m"(SingleFP[10]), "=m"(SingleFP[11]),
+                          "=m"(SingleFP[12]), "=m"(SingleFP[13]),
+                          "=m"(SingleFP[14]), "=m"(SingleFP[15]));
+                        
+  __asm__ __volatile__ (// Save Single FP registers, part 2
+                        "st  %%f16, %0;\n\t"  "st  %%f17, %1;\n\t"
+                        "st  %%f18, %2;\n\t"  "st  %%f19, %3;\n\t"
+                        "st  %%f20, %4;\n\t"  "st  %%f21, %5;\n\t"
+                        "st  %%f22, %6;\n\t"  "st  %%f23, %7;\n\t"
+                        "st  %%f24, %8;\n\t"  "st  %%f25, %9;\n\t"
+                        "st  %%f26, %10;\n\t" "st  %%f27, %11;\n\t"
+                        "st  %%f28, %12;\n\t" "st  %%f29, %13;\n\t"
+                        "st  %%f30, %14;\n\t" "st  %%f31, %15;\n\t"
+                        : "=m"(SingleFP[16]), "=m"(SingleFP[17]),
+                          "=m"(SingleFP[18]), "=m"(SingleFP[19]),
+                          "=m"(SingleFP[20]), "=m"(SingleFP[21]),
+                          "=m"(SingleFP[22]), "=m"(SingleFP[23]),
+                          "=m"(SingleFP[24]), "=m"(SingleFP[25]),
+                          "=m"(SingleFP[26]), "=m"(SingleFP[27]),
+                          "=m"(SingleFP[28]), "=m"(SingleFP[29]),
+                          "=m"(SingleFP[30]), "=m"(SingleFP[31]));
+
+  __asm__ __volatile__ (// Save Double FP registers
+                        "std %%f32, %0;\n\t"  "std %%f34, %1;\n\t"
+                        "std %%f32, %0;\n\t"  "std %%f34, %1;\n\t"
+                        "std %%f40, %4;\n\t"  "std %%f42, %5;\n\t"
+                        "std %%f44, %6;\n\t"  "std %%f46, %7;\n\t"
+                        "std %%f48, %8;\n\t"  "std %%f50, %9;\n\t"
+                        "std %%f52, %10;\n\t" "std %%f54, %11;\n\t"
+                        "std %%f56, %12;\n\t" "std %%f58, %13;\n\t"
+                        "std %%f60, %14;\n\t" "std %%f62, %15;\n\t"
+                        : "=m"(DoubleFP[32/2-16]), "=m"(DoubleFP[34/2-16]),
+                          "=m"(DoubleFP[36/2-16]), "=m"(DoubleFP[38/2-16]),
+                          "=m"(DoubleFP[40/2-16]), "=m"(DoubleFP[42/2-16]),
+                          "=m"(DoubleFP[44/2-16]), "=m"(DoubleFP[46/2-16]),
+                          "=m"(DoubleFP[48/2-16]), "=m"(DoubleFP[50/2-16]),
+                          "=m"(DoubleFP[52/2-16]), "=m"(DoubleFP[54/2-16]),
+                          "=m"(DoubleFP[56/2-16]), "=m"(DoubleFP[58/2-16]),
+                          "=m"(DoubleFP[60/2-16]), "=m"(DoubleFP[62/2-16]));
+#endif
+
+  // Resolve the function call
+  register uint64_t restoreAddr = CompilationCallback();
+
+#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+  // Set the return address to re-execute the `restore' instruction
+  __asm__ __volatile__ ("or %%o0, %%g0, %%i7;\n\t"
+
+                        // Restore g1 and g5
+                        "ldx %0, %%g1;\n\t" "ldx %1, %%g5;\n\t"
+                        :: "m"(g1), "m"(g5));
+
+  __asm__ __volatile__ (// Restore condition-code registers
+                        "ldx %0,    %%fsr;\n\t" 
+                        "wr  %1, 0, %%fprs;\n\t"
+                        "wr  %2, 0, %%ccr;\n\t" 
+                        :: "m"(FSR), "r"(FPRS), "r"(CCR));
+
+  // GCC says: `asm' only allows up to thirty parameters!
+  __asm__ __volatile__ (// Restore Single FP registers, part 1
+                        "ld  %0, %%f0;\n\t"   "ld  %1, %%f1;\n\t" 
+                        "ld  %2, %%f2;\n\t"   "ld  %3, %%f3;\n\t" 
+                        "ld  %4, %%f4;\n\t"   "ld  %5, %%f5;\n\t" 
+                        "ld  %6, %%f6;\n\t"   "ld  %7, %%f7;\n\t" 
+                        "ld  %8, %%f8;\n\t"   "ld  %9, %%f9;\n\t" 
+                        "ld  %10, %%f10;\n\t" "ld  %11, %%f11;\n\t"
+                        "ld  %12, %%f12;\n\t" "ld  %13, %%f13;\n\t"
+                        "ld  %14, %%f14;\n\t" "ld  %15, %%f15;\n\t"
+                        :: "m"(SingleFP[0]), "m"(SingleFP[1]),
+                           "m"(SingleFP[2]), "m"(SingleFP[3]),
+                           "m"(SingleFP[4]), "m"(SingleFP[5]),
+                           "m"(SingleFP[6]), "m"(SingleFP[7]),
+                           "m"(SingleFP[8]), "m"(SingleFP[9]),
+                           "m"(SingleFP[10]), "m"(SingleFP[11]),
+                           "m"(SingleFP[12]), "m"(SingleFP[13]),
+                           "m"(SingleFP[14]), "m"(SingleFP[15]));
+
+  __asm__ __volatile__ (// Restore Single FP registers, part 2
+                        "ld  %0, %%f16;\n\t"  "ld  %1, %%f17;\n\t"
+                        "ld  %2, %%f18;\n\t"  "ld  %3, %%f19;\n\t"
+                        "ld  %4, %%f20;\n\t"  "ld  %5, %%f21;\n\t"
+                        "ld  %6, %%f22;\n\t"  "ld  %7, %%f23;\n\t"
+                        "ld  %8, %%f24;\n\t"  "ld  %9, %%f25;\n\t"
+                        "ld  %10, %%f26;\n\t" "ld  %11, %%f27;\n\t"
+                        "ld  %12, %%f28;\n\t" "ld  %13, %%f29;\n\t"
+                        "ld  %14, %%f30;\n\t" "ld  %15, %%f31;\n\t"
+                        :: "m"(SingleFP[16]), "m"(SingleFP[17]),
+                           "m"(SingleFP[18]), "m"(SingleFP[19]),
+                           "m"(SingleFP[20]), "m"(SingleFP[21]),
+                           "m"(SingleFP[22]), "m"(SingleFP[23]),
+                           "m"(SingleFP[24]), "m"(SingleFP[25]),
+                           "m"(SingleFP[26]), "m"(SingleFP[27]),
+                           "m"(SingleFP[28]), "m"(SingleFP[29]),
+                           "m"(SingleFP[30]), "m"(SingleFP[31]));
+
+  __asm__ __volatile__ (// Restore Double FP registers
+                        "ldd %0, %%f32;\n\t"  "ldd %1, %%f34;\n\t"
+                        "ldd %2, %%f36;\n\t"  "ldd %3, %%f38;\n\t"
+                        "ldd %4, %%f40;\n\t"  "ldd %5, %%f42;\n\t"
+                        "ldd %6, %%f44;\n\t"  "ldd %7, %%f46;\n\t"
+                        "ldd %8, %%f48;\n\t"  "ldd %9, %%f50;\n\t"
+                        "ldd %10, %%f52;\n\t" "ldd %11, %%f54;\n\t"
+                        "ldd %12, %%f56;\n\t" "ldd %13, %%f58;\n\t"
+                        "ldd %14, %%f60;\n\t" "ldd %15, %%f62;\n\t"
+                        :: "m"(DoubleFP[32/2-16]), "m"(DoubleFP[34/2-16]),
+                           "m"(DoubleFP[36/2-16]), "m"(DoubleFP[38/2-16]),
+                           "m"(DoubleFP[40/2-16]), "m"(DoubleFP[42/2-16]),
+                           "m"(DoubleFP[44/2-16]), "m"(DoubleFP[46/2-16]),
+                           "m"(DoubleFP[48/2-16]), "m"(DoubleFP[50/2-16]),
+                           "m"(DoubleFP[52/2-16]), "m"(DoubleFP[54/2-16]),
+                           "m"(DoubleFP[56/2-16]), "m"(DoubleFP[58/2-16]),
+                           "m"(DoubleFP[60/2-16]), "m"(DoubleFP[62/2-16]));
+#endif
+}
+
+uint64_t JITResolver::CompilationCallback() {
+  uint64_t CameFrom = (uint64_t)(intptr_t)__builtin_return_address(1);
   int64_t Target = (int64_t)TheJITResolver->resolveFunctionReference(CameFrom);
   DEBUG(std::cerr << "In callback! Addr=0x" << std::hex << CameFrom << "\n");
+  register int64_t returnAddr = 0;
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-  register int64_t returnAddr;
   __asm__ __volatile__ ("add %%i7, %%g0, %0" : "=r" (returnAddr) : );
   DEBUG(std::cerr << "Read i7 (return addr) = "
                   << std::hex << returnAddr << ", value: "
@@ -181,7 +328,7 @@ void JITResolver::CompilationCallback() {
 
   // Subtract enough to overwrite up to the 'save' instruction
   // This depends on whether we made a short call (1 instruction) or the
-  // farCall (long form: 10 instructions, short form: 7 instructions)
+  // farCall (7 instructions)
   uint64_t Offset = (LazyCallFlavor[CameFrom] == ShortCall) ? 4 : 28;
   uint64_t CodeBegin = CameFrom - Offset;
   
@@ -210,14 +357,13 @@ void JITResolver::CompilationCallback() {
   delete MI;
 #endif
 
-  // Change the return address to reexecute the restore, then the jump
-  // The return address is really %o7, but will disappear after this function
-  // returns, and the register windows are rotated away.
-#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-  __asm__ __volatile__ ("sub %%i7, %0, %%i7" : : "r" (Offset+12));
-  DEBUG(std::cerr << "Callback setting return addr to "
+  // Change the return address to reexecute the restore, then the jump However,
+  // we can't just modify %i7 here, because we return to the function that will
+  // restore the floating-point registers for us. Thus, we just return the value
+  // we want it to be, and the parent will take care of setting %i7 correctly.
+  DEBUG(std::cerr << "Callback returning the addr of restore inst: "
                   << std::hex << (CameFrom-Offset-12) << "\n");
-#endif
+  return CameFrom - Offset - 12; // 8 because of call+delay, 4 more to restore
 }
 
 /// emitStubForFunction - This method is used by the JIT when it needs to emit
@@ -295,7 +441,7 @@ void SparcV9CodeEmitter::emitWord(unsigned Val) {
 
 unsigned 
 SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
-                                         MachineInstr &MI) {
+                                  MachineInstr &MI) {
   const TargetRegInfo &RI = TM.getRegInfo();
   unsigned regClass, regType = RI.getRegType(fakeReg);
   // At least map fakeReg into its class
@@ -359,8 +505,7 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
 // WARNING: if the call used the delay slot to do meaningful work, that's not
 // being accounted for, and the behavior will be incorrect!!
 inline void SparcV9CodeEmitter::emitFarCall(uint64_t Target, Function *F) {
-  static const unsigned i1 = SparcIntRegClass::i1, i2 = SparcIntRegClass::i2,
-      i7 = SparcIntRegClass::i7, o6 = SparcIntRegClass::o6,
+  static const unsigned o6 = SparcIntRegClass::o6,
       o7 = SparcIntRegClass::o7, g0 = SparcIntRegClass::g0,
       g1 = SparcIntRegClass::g1, g5 = SparcIntRegClass::g5;
 
@@ -372,17 +517,17 @@ inline void SparcV9CodeEmitter::emitFarCall(uint64_t Target, Function *F) {
     BuildMI(V9::SETHI, 2).addSImm(Target >> 42).addReg(g5),
     // or %g5, %ulo(Target), %g5 ;; get 10 lower bits of upper word into %1
     BuildMI(V9::ORi, 3).addReg(g5).addSImm((Target >> 32) & 0x03ff).addReg(g5),
-    // sllx %g5, 32, %g5            ;; shift those 10 bits to the upper word
+    // sllx %g5, 32, %g5         ;; shift those 10 bits to the upper word
     BuildMI(V9::SLLXi6, 3).addReg(g5).addSImm(32).addReg(g5),
     // sethi %hi(Target), %g1    ;; extract bits 10-31 into the dest reg
     BuildMI(V9::SETHI, 2).addSImm((Target >> 10) & 0x03fffff).addReg(g1),
-    // or %g5, %g1, %g1             ;; get upper word (in %g5) into %g1
+    // or %g5, %g1, %g1          ;; get upper word (in %g5) into %g1
     BuildMI(V9::ORr, 3).addReg(g5).addReg(g1).addReg(g1),
     // or %g1, %lo(Target), %g1  ;; get lowest 10 bits of Target into %g1
     BuildMI(V9::ORi, 3).addReg(g1).addSImm(Target & 0x03ff).addReg(g1),
-    // jmpl %g1, %g0, %o7          ;; indirect call on %g1
+    // jmpl %g1, %g0, %o7        ;; indirect call on %g1
     BuildMI(V9::JMPLRETr, 3).addReg(g1).addReg(g0).addReg(o7),
-    // nop                         ;; delay slot
+    // nop                       ;; delay slot
     BuildMI(V9::NOP, 0)
   };
 
@@ -672,6 +817,5 @@ void* SparcV9CodeEmitter::getGlobalAddress(GlobalValue *V, MachineInstr &MI,
     return (void*)(intptr_t)MCE.getGlobalValueAddress(V);
   }
 }
-
 
 #include "SparcV9CodeEmitter.inc"
