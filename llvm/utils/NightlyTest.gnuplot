@@ -33,7 +33,7 @@ set nolabel
 
 set size .75,.75
 set output "running_Olden_cbe_time.png"
-set ylabel "CBE compiled execution time"
+set ylabel "CBE compiled execution time (s)"
 plot "running_Olden_cbe_time.txt" u 1:2 t '' with lines, \
      "running_Olden_cbe_time.txt" u 1:2 t "bh" with lines, \
      "running_Olden_cbe_time.txt" u 1:3 t "bisort" with lines, \
@@ -66,7 +66,7 @@ plot "running_Olden_cbe_time.txt" u 1:2 t '' with lines, \
 
 set size .75,.75
 set output "running_Olden_jit_time.png"
-set ylabel "JIT execution time"
+set ylabel "JIT execution time (s)"
 plot "running_Olden_jit_time.txt" u 1:2 t '' with lines, \
      "running_Olden_jit_time.txt" u 1:2 t "bh" with lines, \
      "running_Olden_jit_time.txt" u 1:3 t "bisort" with lines, \
@@ -99,7 +99,7 @@ plot "running_Olden_jit_time.txt" u 1:2 t '' with lines, \
 
 set size .75,.75
 set output "running_Olden_llc_time.png"
-set ylabel "LLC compiled execution time"
+set ylabel "LLC compiled execution time (s)"
 plot "running_Olden_llc_time.txt" u 1:2 t '' with lines, \
      "running_Olden_llc_time.txt" u 1:2 t "bh" with lines, \
      "running_Olden_llc_time.txt" u 1:3 t "bisort" with lines, \
@@ -133,7 +133,7 @@ plot "running_Olden_llc_time.txt" u 1:2 t '' with lines, \
 
 set size .75,.75
 set output "running_Olden_opt_time.png"
-set ylabel "Time to run the optimizer"
+set ylabel "Time to run the optimizer (s)"
 plot "running_Olden_opt_time.txt" u 1:2 t '' with lines, \
      "running_Olden_opt_time.txt" u 1:2 t "bh" with lines, \
      "running_Olden_opt_time.txt" u 1:3 t "bisort" with lines, \
@@ -167,7 +167,7 @@ plot "running_Olden_opt_time.txt" u 1:2 t '' with lines, \
 
 set size .75,.75
 set output "running_Olden_machcode.png"
-set ylabel "Program machine code size"
+set ylabel "Program machine code size (bytes)"
 plot "running_Olden_machcode.txt" u 1:2 t '' with lines, \
      "running_Olden_machcode.txt" u 1:2 t "bh" with lines, \
      "running_Olden_machcode.txt" u 1:3 t "bisort" with lines, \
@@ -201,7 +201,7 @@ plot "running_Olden_machcode.txt" u 1:2 t '' with lines, \
 
 set size .75,.75
 set output "running_Olden_bytecode.png"
-set ylabel "Program bytecode size"
+set ylabel "Program bytecode size (bytes)"
 plot "running_Olden_bytecode.txt" u 1:2 t '' with lines, \
      "running_Olden_bytecode.txt" u 1:2 t "bh" with lines, \
      "running_Olden_bytecode.txt" u 1:3 t "bisort" with lines, \
