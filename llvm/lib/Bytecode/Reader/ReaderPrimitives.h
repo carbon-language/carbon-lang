@@ -20,6 +20,7 @@
 
 namespace llvm {
 
+  /// @brief Read an unsigned integer
   static inline unsigned read(const unsigned char *&Buf,
                               const unsigned char *EndBuf) {
     if (Buf+4 > EndBuf) throw std::string("Ran out of data!");
@@ -28,8 +29,7 @@ namespace llvm {
   }
 
 
-  // read_vbr - Read an unsigned integer encoded in variable bitrate format.
-  //
+  /// @brief Read an unsigned integer encoded in variable bitrate format.
   static inline unsigned read_vbr_uint(const unsigned char *&Buf, 
                                        const unsigned char *EndBuf) {
     unsigned Shift = 0;
