@@ -23,6 +23,17 @@ X86RegisterInfo::X86RegisterInfo()
   : MRegisterInfo(X86Regs, sizeof(X86Regs)/sizeof(X86Regs[0])) {
 }
 
+unsigned getIdx(unsigned dataSize) {
+  switch (dataSize) {
+  case 1: return 0;
+  case 2: return 1;
+  case 4: return 2;
+    // FIXME: longs handled as ints
+  case 8: return 2;
+  default: assert(0 && "Invalid data size!");
+  }
+}
+
 MachineBasicBlock::iterator
 X86RegisterInfo::storeReg2RegOffset(MachineBasicBlock *MBB,
                                     MachineBasicBlock::iterator MBBI,
@@ -30,15 +41,8 @@ X86RegisterInfo::storeReg2RegOffset(MachineBasicBlock *MBB,
                                     unsigned ImmOffset, unsigned dataSize)
   const
 {
-  unsigned opcode;
-  switch (dataSize) {
-  case 1: opcode = X86::MOVrm8; break;
-  case 2: opcode = X86::MOVrm16; break;
-  case 4: opcode = X86::MOVrm32; break;
-  default: assert(0 && "Invalid data size!");
-  }
-
-  MachineInstr *MI = addRegOffset(BuildMI(opcode, 5),
+  static const unsigned Opcode[] = { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32 };
+  MachineInstr *MI = addRegOffset(BuildMI(Opcode[getIdx(dataSize)], 5),
                                   DestReg, ImmOffset).addReg(SrcReg);
   return ++(MBB->insert(MBBI, MI));
 }
@@ -50,18 +54,9 @@ X86RegisterInfo::loadRegOffset2Reg(MachineBasicBlock *MBB,
                                    unsigned ImmOffset, unsigned dataSize)
   const
 {
-  unsigned opcode;
-  switch (dataSize) {
-  case 1: opcode = X86::MOVmr8; break;
-  case 2: opcode = X86::MOVmr16; break;
-  case 4: opcode = X86::MOVmr32; break;
-    // FIXME: longs handled as ints
-  case 8: opcode = X86::MOVmr32; break;
-  default: assert(0 && "Invalid data size!");
-  }
-
-  MachineInstr *MI = addRegOffset(BuildMI(opcode, 5).addReg(DestReg),
-                                  SrcReg, ImmOffset);
+  static const unsigned Opcode[] = { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32 };
+  MachineInstr *MI = addRegOffset(BuildMI(Opcode[getIdx(dataSize)], 5)
+                                  .addReg(DestReg), SrcReg, ImmOffset);
   return ++(MBB->insert(MBBI, MI));
 }
 
@@ -71,17 +66,9 @@ X86RegisterInfo::moveReg2Reg(MachineBasicBlock *MBB,
                              unsigned DestReg, unsigned SrcReg,
                              unsigned dataSize) const
 {
-  unsigned opcode;
-  switch (dataSize) {
-  case 1: opcode = X86::MOVrr8; break;
-  case 2: opcode = X86::MOVrr16; break;
-  case 4: opcode = X86::MOVrr32; break;
-    // FIXME: longs handled as ints
-  case 8: opcode = X86::MOVrr32; break;
-  default: assert(0 && "Invalid data size!");
-  }
-  
-  MachineInstr *MI = BuildMI(opcode, 2).addReg(DestReg).addReg(SrcReg);
+  static const unsigned Opcode[] = { X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
+  MachineInstr *MI = 
+    BuildMI(Opcode[getIdx(dataSize)], 2).addReg(DestReg).addReg(SrcReg);
   return ++(MBB->insert(MBBI, MI));
 }
 
@@ -91,17 +78,9 @@ X86RegisterInfo::moveImm2Reg(MachineBasicBlock *MBB,
                              unsigned DestReg, unsigned Imm, unsigned dataSize)
   const
 {
-  unsigned opcode;
-  switch (dataSize) {
-  case 1: opcode = X86::MOVir8; break;
-  case 2: opcode = X86::MOVir16; break;
-  case 4: opcode = X86::MOVir32; break;
-    // FIXME: longs handled as ints
-  case 8: opcode = X86::MOVir32; break;
-  default: assert(0 && "Invalid data size!");
-  }
-  
-  MachineInstr *MI = BuildMI(opcode, 2).addReg(DestReg).addReg(Imm);
+  static const unsigned Opcode[] = { X86::MOVir8, X86::MOVir16, X86::MOVir32 };
+  MachineInstr *MI = 
+    BuildMI(Opcode[getIdx(dataSize)], 2).addReg(DestReg).addReg(Imm);
   return ++(MBB->insert(MBBI, MI));
 }
 
