@@ -61,3 +61,21 @@ int %test11(int %a) {
         ret int %R
 }
 
+int %test12(bool %cond, int %a) {
+	%b = or int %a, 1
+	%c = select bool %cond, int %b, int %a
+	ret int %c
+}
+
+int %test12a(bool %cond, int %a) {
+	%b = shr int %a, ubyte 1
+	%c = select bool %cond, int %b, int %a
+	ret int %c
+}
+
+int %test12b(bool %cond, int %a) {
+	%b = shr int %a, ubyte 1
+	%c = select bool %cond, int %a, int %b
+	ret int %c
+}
+
