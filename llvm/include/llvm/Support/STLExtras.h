@@ -68,6 +68,7 @@ static inline void deleter(T *Ptr) {
 template <class RootIt, class UnaryFunc>
 class mapped_iterator {
   RootIt current;
+  UnaryFunc Fn;
 public:
   typedef typename iterator_traits<RootIt>::iterator_category
           iterator_category;
@@ -82,11 +83,13 @@ public:
 
   inline RootIt &getCurrent() const { return current; }
 
-  inline explicit mapped_iterator(const RootIt &I) : current(I) {}
-  inline mapped_iterator(const mapped_iterator &It) : current(It.current) {}
+  inline explicit mapped_iterator(const RootIt &I, UnaryFunc F)
+    : current(I), Fn(F) {}
+  inline mapped_iterator(const mapped_iterator &It)
+    : current(It.current), Fn(It.Fn) {}
 
   inline value_type operator*() const {   // All this work to do this 
-    return UnaryFunc()(*current);         // little change
+    return Fn(*current);         // little change
   }
 
   _Self& operator++() { ++current; return *this; }
@@ -120,6 +123,7 @@ operator+(typename mapped_iterator<_Iterator, Func>::difference_type N,
 // vector iterators are commonly value_type **'s
 template <class RootIt, class UnaryFunc>
 class mapped_iterator : public RootIt {
+  UnaryFunc Fn;
 public:
   typedef typename UnaryFunc::result_type value_type;
   typedef typename UnaryFunc::result_type *pointer;
@@ -131,7 +135,7 @@ public:
   inline mapped_iterator(const super &It) : super(It) {}
 
   inline value_type operator*() const {     // All this work to do 
-    return UnaryFunc(super::operator*());   // this little thing
+    return Fn(super::operator*());   // this little thing
   }
 };
 #endif
@@ -141,7 +145,7 @@ public:
 //
 template <class ItTy, class FuncTy>
 inline mapped_iterator<ItTy, FuncTy> map_iterator(const ItTy &I, FuncTy F) {
-  return mapped_iterator<ItTy, FuncTy>(I);
+  return mapped_iterator<ItTy, FuncTy>(I, F);
 }
 
 
@@ -207,4 +211,12 @@ inline bool reduce_apply_bool(InputIt First, InputIt Last, Function Func) {
   return reduce_apply(First, Last, bitwise_or<bool>(), false, Func);
 }
 
+
+// map - This function maps the specified input sequence into the specified
+// output iterator, applying a unary function in between.
+//
+template <class InIt, class OutIt, class Functor>
+inline OutIt mapto(InIt Begin, InIt End, OutIt Dest, Functor F) {
+  return copy(map_iterator(Begin, F), map_iterator(End, F), Dest);
+}
 #endif
