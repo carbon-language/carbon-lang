@@ -151,6 +151,13 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
             // if the move is now an identity move delete it
             unsigned srcReg, dstReg;
             if (tii.isMoveInstr(*mii, srcReg, dstReg) && srcReg == dstReg) {
+                // remove from def list
+                Interval& interval = getOrCreateInterval(dstReg);
+                unsigned defIndex = getInstructionIndex(mii);
+                Interval::Defs::iterator d = std::lower_bound(
+                    interval.defs.begin(), interval.defs.end(), defIndex);
+                assert(*d == defIndex && "Def index not found in def list!");
+                interval.defs.erase(d);
                 // remove index -> MachineInstr and
                 // MachineInstr -> index mappings
                 Mi2IndexMap::iterator mi2i = mi2iMap_.find(mii);
@@ -261,39 +268,29 @@ void LiveIntervals::printRegName(unsigned reg) const
 
 void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
                                              MachineBasicBlock::iterator mi,
-                                             unsigned reg)
+                                             Interval& interval)
 {
-    DEBUG(std::cerr << "\t\tregister: "; printRegName(reg));
-    LiveVariables::VarInfo& vi = lv_->getVarInfo(reg);
+    DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
+    LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
 
-    Interval* interval = 0;
-    Reg2IntervalMap::iterator r2iit = r2iMap_.lower_bound(reg);
-    if (r2iit == r2iMap_.end() || r2iit->first != reg) {
-        // add new interval
-        intervals_.push_back(Interval(reg));
-        // update interval index for this register
-        r2iMap_.insert(r2iit, std::make_pair(reg, --intervals_.end()));
-        interval = &intervals_.back();
-
-        // iterate over all of the blocks that the variable is
-        // completely live in, adding them to the live
-        // interval. obviously we only need to do this once.
+    // iterate over all of the blocks that the variable is completely
+    // live in, adding them to the live interval. obviously we only
+    // need to do this once.
+    if (interval.empty()) {
         for (unsigned i = 0, e = vi.AliveBlocks.size(); i != e; ++i) {
             if (vi.AliveBlocks[i]) {
                 MachineBasicBlock* mbb = lv_->getIndexMachineBasicBlock(i);
                 if (!mbb->empty()) {
-                    interval->addRange(
+                    interval.addRange(
                         getInstructionIndex(&mbb->front()),
                         getInstructionIndex(&mbb->back()) + InstrSlots::NUM);
                 }
             }
         }
     }
-    else {
-        interval = &*r2iit->second;
-    }
 
     unsigned baseIndex = getInstructionIndex(mi);
+    interval.defs.push_back(baseIndex);
 
     bool killedInDefiningBasicBlock = false;
     for (int i = 0, e = vi.Kills.size(); i != e; ++i) {
@@ -313,33 +310,34 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
         // PHI elimination)
         if (start < end) {
             killedInDefiningBasicBlock |= mbb == killerBlock;
-            interval->addRange(start, end);
+            interval.addRange(start, end);
         }
     }
 
     if (!killedInDefiningBasicBlock) {
         unsigned end = getInstructionIndex(&mbb->back()) + InstrSlots::NUM;
-        interval->addRange(getDefIndex(baseIndex), end);
+        interval.addRange(getDefIndex(baseIndex), end);
     }
     DEBUG(std::cerr << '\n');
 }
 
 void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                                               MachineBasicBlock::iterator mi,
-                                              unsigned reg)
+                                              Interval& interval)
 {
-    DEBUG(std::cerr << "\t\tregister: "; printRegName(reg));
+    DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
     typedef LiveVariables::killed_iterator KillIter;
 
     MachineBasicBlock::iterator e = mbb->end();
     unsigned baseIndex = getInstructionIndex(mi);
+    interval.defs.push_back(baseIndex);
     unsigned start = getDefIndex(baseIndex);
     unsigned end = start;
 
     // a variable can be dead by the instruction defining it
     for (KillIter ki = lv_->dead_begin(mi), ke = lv_->dead_end(mi);
          ki != ke; ++ki) {
-        if (reg == ki->second) {
+        if (interval.reg == ki->second) {
             DEBUG(std::cerr << " dead");
             end = getDefIndex(start) + 1;
             goto exit;
@@ -352,7 +350,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
         baseIndex += InstrSlots::NUM;
         for (KillIter ki = lv_->killed_begin(mi), ke = lv_->killed_end(mi);
              ki != ke; ++ki) {
-            if (reg == ki->second) {
+            if (interval.reg == ki->second) {
                 DEBUG(std::cerr << " killed");
                 end = getUseIndex(baseIndex) + 1;
                 goto exit;
@@ -362,17 +360,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
 
 exit:
     assert(start < end && "did not find end of interval?");
-
-    Reg2IntervalMap::iterator r2iit = r2iMap_.lower_bound(reg);
-    if (r2iit != r2iMap_.end() && r2iit->first == reg) {
-        r2iit->second->addRange(start, end);
-    }
-    else {
-        intervals_.push_back(Interval(reg));
-        // update interval index for this register
-        r2iMap_.insert(r2iit, std::make_pair(reg, --intervals_.end()));
-        intervals_.back().addRange(start, end);
-    }
+    interval.addRange(start, end);
     DEBUG(std::cerr << '\n');
 }
 
@@ -382,14 +370,13 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock* mbb,
 {
     if (MRegisterInfo::isPhysicalRegister(reg)) {
         if (lv_->getAllocatablePhysicalRegisters()[reg]) {
-            handlePhysicalRegisterDef(mbb, mi, reg);
+            handlePhysicalRegisterDef(mbb, mi, getOrCreateInterval(reg));
             for (const unsigned* as = mri_->getAliasSet(reg); *as; ++as)
-                handlePhysicalRegisterDef(mbb, mi, *as);
+                handlePhysicalRegisterDef(mbb, mi, getOrCreateInterval(*as));
         }
     }
-    else {
-        handleVirtualRegisterDef(mbb, mi, reg);
-    }
+    else
+        handleVirtualRegisterDef(mbb, mi, getOrCreateInterval(reg));
 }
 
 unsigned LiveIntervals::getInstructionIndex(MachineInstr* instr) const
@@ -528,7 +515,7 @@ void LiveIntervals::joinIntervals()
                            "A must be physical and B must be virtual");
 
                     if (!intA->overlaps(*intB) &&
-                         !overlapsAliases(*intA, *intB)) {
+                        !overlapsAliases(*intA, *intB)) {
                         intA->join(*intB);
                         r2iB->second = r2iA->second;
                         r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
@@ -554,6 +541,17 @@ bool LiveIntervals::overlapsAliases(const Interval& lhs,
     }
 
     return false;
+}
+
+LiveIntervals::Interval& LiveIntervals::getOrCreateInterval(unsigned reg)
+{
+    Reg2IntervalMap::iterator r2iit = r2iMap_.lower_bound(reg);
+    if (r2iit == r2iMap_.end() || r2iit->first != reg) {
+        intervals_.push_back(Interval(reg));
+        r2iit = r2iMap_.insert(r2iit, std::make_pair(reg, --intervals_.end()));
+    }
+
+    return *r2iit->second;
 }
 
 LiveIntervals::Interval::Interval(unsigned r)
@@ -668,6 +666,11 @@ void LiveIntervals::Interval::join(const LiveIntervals::Interval& other)
         cur = mergeRangesBackward(cur);
     }
     weight += other.weight;
+    Defs u;
+    std::set_union(defs.begin(), defs.end(),
+                   other.defs.begin(), other.defs.end(),
+                   std::back_inserter(u));
+    defs = u;
     ++numJoins;
 }
 
@@ -703,9 +706,17 @@ LiveIntervals::Interval::mergeRangesBackward(Ranges::iterator it)
 std::ostream& llvm::operator<<(std::ostream& os,
                                const LiveIntervals::Interval& li)
 {
-    os << "%reg" << li.reg << ',' << li.weight << " = ";
+    os << "%reg" << li.reg << ',' << li.weight;
     if (li.empty())
         return os << "EMPTY";
+
+    os << " {" << li.defs.front();
+    for (LiveIntervals::Interval::Defs::const_iterator
+             i = next(li.defs.begin()), e = li.defs.end(); i != e; ++i)
+        os << ", " << *i;
+    os << "}";
+
+    os << " = ";
     for (LiveIntervals::Interval::Ranges::const_iterator
              i = li.ranges.begin(), e = li.ranges.end(); i != e; ++i) {
         os << "[" << i->first << "," << i->second << ")";

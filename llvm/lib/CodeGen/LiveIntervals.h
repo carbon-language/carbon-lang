@@ -36,11 +36,12 @@ namespace llvm {
         struct Interval {
             typedef std::pair<unsigned, unsigned> Range;
             typedef std::vector<Range> Ranges;
+            typedef std::vector<unsigned> Defs;
             unsigned reg;   // the register of this interval
             float weight;   // weight of this interval (number of uses
                             // * 10^loopDepth)
             Ranges ranges;  // the ranges in which this register is live
-
+            Defs defs;
             Interval(unsigned r);
 
             bool empty() const { return ranges.empty(); }
@@ -185,15 +186,18 @@ namespace llvm {
         /// register def
         void handleVirtualRegisterDef(MachineBasicBlock* mbb,
                                       MachineBasicBlock::iterator mi,
-                                      unsigned reg);
+                                      Interval& interval);
 
         /// handlePhysicalRegisterDef - update intervals for a
         /// physical register def
         void handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                                        MachineBasicBlock::iterator mi,
-                                       unsigned reg);
+                                       Interval& interval);
 
         bool overlapsAliases(const Interval& lhs, const Interval& rhs) const;
+
+
+        Interval& getOrCreateInterval(unsigned reg);
 
         /// rep - returns the representative of this register
         unsigned rep(unsigned reg);
