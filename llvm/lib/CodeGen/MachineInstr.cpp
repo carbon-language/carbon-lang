@@ -13,17 +13,11 @@
 //**************************************************************************/
 
 
-//************************** System Include Files ***************************/
-
-#include <strstream>
-
-
-//*************************** User Include Files ***************************/
-
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Method.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Instruction.h"
-#include "llvm/CodeGen/MachineInstr.h"
+#include <strstream>
 
 
 //************************ Class Implementations **************************/
