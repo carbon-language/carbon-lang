@@ -572,17 +572,16 @@ void CWriter::printModule(Module *M) {
   // Output the global variable definitions and contents...
   if (!M->gempty()) {
     Out << "\n\n/* Global Variable Definitions and Initialization */\n";
-    for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
-      if (I->hasInternalLinkage())
-        Out << "static ";
-      printType(I->getType()->getElementType(), getValueName(I));
+    for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+      if (!I->isExternal()) {
+        if (I->hasInternalLinkage())
+          Out << "static ";
+        printType(I->getType()->getElementType(), getValueName(I));
       
-      if (I->hasInitializer()) {
         Out << " = " ;
         writeOperand(I->getInitializer());
+        Out << ";\n";
       }
-      Out << ";\n";
-    }
   }
 
   // Output all of the functions...
