@@ -741,11 +741,11 @@ endif
 
 $(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir
 	$(Echo) "Compiling $*.cpp (bytecode)"
-	$(BCCompileCPP) $< -o $@ 
+	$(BCCompile.CXX) $< -o $@ 
 
 $(ObjDir)/%.bc: %.c $(ObjDir)/.dir
 	$(Echo) "Compiling $*.c (bytecode)"
-	$(BCCompileC) $< -o $@
+	$(BCCompile.C) $< -o $@
 
 endif
 
