@@ -20,7 +20,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
-#include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "Support/Statistic.h"
 #include <algorithm>
 
@@ -42,8 +42,9 @@ bool InlineFunction(CallInst *CI) {
   assert(CI->getParent()->getParent() && "Instruction not in function!");
 
   const Function *CalledFunc = CI->getCalledFunction();
-  if (CalledFunc == 0 ||   // Can't inline external function or indirect call!
-      CalledFunc->isExternal()) return false;
+  if (CalledFunc == 0 ||          // Can't inline external function or indirect
+      CalledFunc->isExternal() || // call, or call to a vararg function!
+      CalledFunc->getFunctionType()->isVarArg()) return false;
 
   //std::cerr << "Inlining " << CalledFunc->getName() << " into " 
   //     << CurrentMeth->getName() << "\n";
