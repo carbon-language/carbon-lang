@@ -23,11 +23,13 @@
 //  2.95.x       ::        hash_map
 //  3.0.4       std      ext/hash_map
 //  3.1      __gnu_cxx   ext/hash_map
+//  HP aCC6     std      stdex/rw/hashm*ap.h
 //
 
 #undef HAVE_GNU_EXT_HASH_MAP
 #undef HAVE_STD_EXT_HASH_MAP
 #undef HAVE_GLOBAL_HASH_MAP
+#undef HAVE_RW_STDEX_HASH_MAP_H
 
 #if HAVE_GNU_EXT_HASH_MAP
 // This is for GCC-3.1+ which puts hash in ext/hash_map
@@ -51,10 +53,49 @@
 #  define HASH_NAMESPACE std
 # endif
 
+// HP aCC doesn't include an SGI-like hash_map. For this platform (or
+// any others using Rogue Wave Software's Tools.h++ library), we wrap
+// around them in std::
+#elif HAVE_RW_STDEX_HASH_MAP_H
+# include <rw/stdex/hashmap.h>
+# include <rw/stdex/hashmmap.h>
+# ifndef HASH_NAMESPACE
+#  define HASH_NAMESPACE std
+# endif
+
 // Give a warning if we couldn't find it, instead of (or in addition to)
 // randomly doing something dumb.
 #else
 # warning "Autoconfiguration failed to find the hash_map header file."
+#endif
+
+// we wrap Rogue Wave Tools.h++ rw_hashmap into something SGI-looking, here:
+#ifdef HAVE_RW_STDEX_HASH_MAP_H
+namespace HASH_NAMESPACE {
+
+template <class DataType> struct hash {
+	unsigned int operator()(const unsigned int& x) const {
+	    return x;
+	}
+};
+
+template <typename KeyType,
+	  typename ValueType,
+	  class _HashFcn = hash<KeyType>,
+	  class _EqualKey = equal_to<KeyType>,
+	  class _A = allocator <ValueType> >
+class hash_map : public rw_hashmap<KeyType, ValueType, class _HashFcn, class _EqualKey, class _A> {
+};
+
+template <typename KeyType,
+	  typename ValueType,
+	  class _HashFcn = hash<KeyType>,
+	  class _EqualKey = equal_to<KeyType>,
+	  class _A = allocator <ValueType> >
+class hash_multimap : public rw_hashmultimap<KeyType, ValueType, class _HashFcn, class _EqualKey, class _A> {
+};
+
+} // end HASH_NAMESPACE;
 #endif
 
 using HASH_NAMESPACE::hash_map;

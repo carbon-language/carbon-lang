@@ -231,6 +231,12 @@
 /* Define to 1 if you have the `rindex' function. */
 #undef HAVE_RINDEX
 
+/* Define to 1 if you have the <rw/stdex/hash_map.h> header file. */
+#undef HAVE_RW_STDEX_HASH_MAP_H
+
+/* Define to 1 if you have the <rw/stdex/hash_set.h> header file. */
+#undef HAVE_RW_STDEX_HASH_SET_H
+
 /* Define to 1 if you have the `sbrk' function. */
 #undef HAVE_SBRK
 

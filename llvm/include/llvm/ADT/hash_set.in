@@ -24,11 +24,13 @@
 //  2.95.x       ::        hash_set
 //  3.0.4       std      ext/hash_set
 //  3.1      __gnu_cxx   ext/hash_set
+//  HP aCC6     std      stdex/rw/hashset.h
 //
 
 #undef HAVE_GNU_EXT_HASH_SET
 #undef HAVE_STD_EXT_HASH_SET
 #undef HAVE_GLOBAL_HASH_SET
+#undef HAVE_RW_STDEX_HASH_SET_H
 
 // GCC versions 3.1 and later put hash_set in <ext/hash_set> and in
 // the __gnu_cxx namespace.
@@ -53,10 +55,41 @@
 #  define HASH_NAMESPACE std
 # endif
 
+// HP aCC doesn't include an SGI-like hash_set. For this platform (or
+// any others using Rogue Wave Software's Tools.h++ library), we wrap
+// around them in std::
+#elif HAVE_RW_STDEX_HASH_SET_H
+# include <rw/stdex/hashset.h>
+# ifndef HASH_NAMESPACE
+#  define HASH_NAMESPACE std
+# endif
+
 // Give a warning if we couldn't find it, instead of (or in addition to)
 // randomly doing something dumb.
 #else
 # warning "Autoconfiguration failed to find the hash_set header file."
+#endif
+
+// we wrap Rogue Wave Tools.h++ rw_hashset into something SGI-looking, here:
+#ifdef HAVE_RW_STDEX_HASH_SET_H
+namespace HASH_NAMESPACE {
+
+/*
+template <class DataType> struct hash {
+    unsigned int operator()(const unsigned int& x) const {
+	return x;
+    }
+};
+*/
+
+template <typename ValueType,
+	  class _HashFcn = hash<ValueType>,
+	  class _EqualKey = equal_to<ValueType>,
+	  class _A = allocator <ValueType> >
+class hash_set : public rw_hashset<ValueType, class _HashFcn, class _EqualKey, class _A> {
+};
+
+} // end HASH_NAMESPACE;
 #endif
 
 using HASH_NAMESPACE::hash_set;
