@@ -27,7 +27,7 @@ crash, and reduce the file down to a small example which triggers the crash.<p>
 <a name="designphilosophy">
 <h4>Design Philosophy</h4>
 
-<tt>bugpoint</tt> has been designed to be a useful tool without requiring any
+<tt>bugpoint</tt> is designed to be a useful tool without requiring any
 hooks into the LLVM infrastructure at all.  It works with any and all LLVM
 passes and code generators, and does not need to "know" how they work.  Because
 of this, it may appear to do a lot of stupid things or miss obvious
@@ -70,7 +70,7 @@ If an optimizer crashes, <tt>bugpoint</tt> will try as hard as it can to
 reduce the list of passes and the size of the test program.  First,
 <tt>bugpoint</tt> figures out which combination of passes triggers the bug. This
 is useful when debugging a problem exposed by <tt>gccas</tt>, for example,
-because it runs over 30 optimizations.<p>
+because it runs over 25 optimizations.<p>
 
 Next, <tt>bugpoint</tt> tries removing functions from the module, to reduce the
 size of the test program.  Usually it is able to reduce a test program
