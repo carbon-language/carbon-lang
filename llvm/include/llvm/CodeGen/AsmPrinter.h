@@ -74,7 +74,7 @@ namespace llvm {
         AsciiDirective("\t.ascii\t"),
         Data8bitsDirective("\t.byte\t"),
         Data16bitsDirective("\t.short\t"),
-        Data32bitsDirective(".long\t"),
+        Data32bitsDirective("\t.long\t"),
         Data64bitsDirective("\t.quad\t") { }
 
     /// doInitialization - Set up the AsmPrinter when we are working on a new
