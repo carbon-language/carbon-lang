@@ -286,6 +286,7 @@ static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2,
 				   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
+    IMPLEMENT_BINARY_OPERATOR(&, Bool);
     IMPLEMENT_BINARY_OPERATOR(&, UByte);
     IMPLEMENT_BINARY_OPERATOR(&, SByte);
     IMPLEMENT_BINARY_OPERATOR(&, UShort);
@@ -306,6 +307,7 @@ static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2,
                                   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
+    IMPLEMENT_BINARY_OPERATOR(|, Bool);
     IMPLEMENT_BINARY_OPERATOR(|, UByte);
     IMPLEMENT_BINARY_OPERATOR(|, SByte);
     IMPLEMENT_BINARY_OPERATOR(|, UShort);
@@ -326,6 +328,7 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
+    IMPLEMENT_BINARY_OPERATOR(^, Bool);
     IMPLEMENT_BINARY_OPERATOR(^, UByte);
     IMPLEMENT_BINARY_OPERATOR(^, SByte);
     IMPLEMENT_BINARY_OPERATOR(^, UShort);
