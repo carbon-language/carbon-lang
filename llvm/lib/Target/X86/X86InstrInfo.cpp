@@ -67,7 +67,5 @@ X86InstrInfo::reverseBranchCondition(MachineBasicBlock::iterator MI) const {
   }
   MachineBasicBlock* MBB = MI->getParent();
   MachineBasicBlock* TMBB = MI->getOperand(0).getMachineBasicBlock();
-  MachineInstrBuilder IB = BuildMI(*MBB, MBB->erase(MI), ROpcode, 1);
-  IB.addMBB(TMBB);
-  return IB;
+  return BuildMI(*MBB, MBB->erase(MI), ROpcode, 1).addMBB(TMBB);
 }
