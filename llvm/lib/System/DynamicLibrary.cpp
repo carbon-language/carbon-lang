@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/DynamicLibrary.h"
-#include "llvm/Config/dlfcn.h"
+#include "ltdl.h"
 #include <cassert>
 
 //===----------------------------------------------------------------------===//
@@ -20,13 +20,9 @@
 //===          independent code. 
 //===----------------------------------------------------------------------===//
 
-#ifdef HAVE_LTDL_H
-
 namespace llvm {
 
 using namespace sys;
-
-#ifdef HAVE_LT_DLOPEN
 
 DynamicLibrary::DynamicLibrary() : handle(0) {
   if (0 != lt_dlinit())
@@ -63,7 +59,7 @@ void *DynamicLibrary::GetAddressOfSymbol(const char *symbolName) {
   return lt_dlsym((lt_dlhandle) handle,symbolName);
 }
 
-#else
+#if 0 
 DynamicLibrary::DynamicLibrary(const char*filename) : handle(0) {
   assert(!"Have ltdl.h but not libltdl.a!");
 }
@@ -77,12 +73,6 @@ void *DynamicLibrary::GetAddressOfSymbol(const char *symbolName) {
   return 0;
 }
 
-#endif // HAVE_DLOPEN
+#endif
 
 } // namespace llvm
-
-#else // HAVE_LTDL_H
-
-#include "platform/DynamicLibrary.cpp"
-
-#endif
