@@ -87,6 +87,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   tm_ = &fn.getTarget();
   mri_ = tm_->getRegisterInfo();
   lv_ = &getAnalysis<LiveVariables>();
+  allocatableRegs_ = mri_->getAllocatableSet(fn);
 
   // number MachineInstrs
   unsigned miIndex = 0;
@@ -484,7 +485,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
                                       unsigned reg) {
   if (MRegisterInfo::isVirtualRegister(reg))
     handleVirtualRegisterDef(MBB, MI, getOrCreateInterval(reg));
-  else if (lv_->getAllocatablePhysicalRegisters()[reg]) {
+  else if (allocatableRegs_[reg]) {
     handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(reg));
     for (const unsigned* AS = mri_->getAliasSet(reg); *AS; ++AS)
       handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(*AS));
@@ -541,10 +542,8 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
     // on not allocatable physical registers
     unsigned regA, regB;
     if (TII.isMoveInstr(*mi, regA, regB) &&
-        (MRegisterInfo::isVirtualRegister(regA) ||
-         lv_->getAllocatablePhysicalRegisters()[regA]) &&
-        (MRegisterInfo::isVirtualRegister(regB) ||
-         lv_->getAllocatablePhysicalRegisters()[regB])) {
+        (MRegisterInfo::isVirtualRegister(regA) || allocatableRegs_[regA]) &&
+        (MRegisterInfo::isVirtualRegister(regB) || allocatableRegs_[regB])) {
 
       // Get representative registers.
       regA = rep(regA);

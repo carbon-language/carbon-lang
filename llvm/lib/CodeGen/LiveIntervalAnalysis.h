@@ -47,6 +47,8 @@ namespace llvm {
     typedef std::map<unsigned, unsigned> Reg2RegMap;
     Reg2RegMap r2rMap_;
 
+    std::vector<bool> allocatableRegs_;
+
   public:
     struct InstrSlots
     {
