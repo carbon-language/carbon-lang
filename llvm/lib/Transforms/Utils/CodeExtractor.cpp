@@ -49,7 +49,7 @@ namespace {
     const Type *RetTy;
   public:
     CodeExtractor(DominatorSet *ds = 0, bool AggArgs = false)
-      : DS(ds), AggregateArgs(AggregateArgsOpt), NumExitBlocks(~0U) {}
+      : DS(ds), AggregateArgs(AggArgs||AggregateArgsOpt), NumExitBlocks(~0U) {}
 
     Function *ExtractCodeRegion(const std::vector<BasicBlock*> &code);
 
@@ -403,7 +403,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
   // Emit the call to the function
   CallInst *call = new CallInst(newFunction, params,
-                                NumExitBlocks > 1 ? "targetBlock": "");
+                                NumExitBlocks > 1 ? "targetBlock" : "");
   codeReplacer->getInstList().push_back(call);
 
   Function::aiterator OutputArgBegin = newFunction->abegin();
