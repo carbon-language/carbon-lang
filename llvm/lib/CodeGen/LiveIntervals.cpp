@@ -401,7 +401,7 @@ void LiveIntervals::joinIntervals()
                     assert(MRegisterInfo::isPhysicalRegister(intA->reg) &&
                            MRegisterInfo::isVirtualRegister(intB->reg) &&
                            "A must be physical and B must be virtual");
-                    assert(intA->reg != intB->reg);
+
                     if (!intA->overlaps(*intB) &&
                          !overlapsAliases(*intA, *intB)) {
                         intA->join(*intB);
