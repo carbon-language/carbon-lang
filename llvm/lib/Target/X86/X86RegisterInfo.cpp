@@ -47,37 +47,35 @@ static unsigned getIdx(const TargetRegisterClass *RC) {
 }
 
 int X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
-                                         MachineBasicBlock::iterator &MBBI,
+                                         MachineInstr* MI,
                                          unsigned SrcReg, int FrameIdx,
                                          const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] =
     { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32, X86::FSTPr80 };
-  MachineInstr *MI = addFrameReference(BuildMI(Opcode[getIdx(RC)], 5),
+  MachineInstr *I = addFrameReference(BuildMI(Opcode[getIdx(RC)], 5),
 				       FrameIdx).addReg(SrcReg);
-  MBBI = MBB.insert(MBBI, MI)+1;
+  MBB.insert(MI, I);
   return 1;
 }
 
 int X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                          MachineBasicBlock::iterator &MBBI,
+                                          MachineInstr* MI,
                                           unsigned DestReg, int FrameIdx,
                                           const TargetRegisterClass *RC) const{
   static const unsigned Opcode[] =
     { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FLDr80 };
-  MachineInstr *MI = addFrameReference(BuildMI(Opcode[getIdx(RC)], 4, DestReg),
-				       FrameIdx);
-  MBBI = MBB.insert(MBBI, MI)+1;
+  unsigned OC = Opcode[getIdx(RC)];
+  MBB.insert(MI, addFrameReference(BuildMI(OC, 4, DestReg), FrameIdx));
   return 1;
 }
 
 int X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator &MBBI,
+                                  MachineInstr* MI,
                                   unsigned DestReg, unsigned SrcReg,
                                   const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] =
     { X86::MOVrr8, X86::MOVrr16, X86::MOVrr32, X86::FpMOV };
-  MachineInstr *MI = BuildMI(Opcode[getIdx(RC)],1,DestReg).addReg(SrcReg);
-  MBBI = MBB.insert(MBBI, MI)+1;
+  MBB.insert(MI, BuildMI(Opcode[getIdx(RC)],1,DestReg).addReg(SrcReg));
   return 1;
 }
 
@@ -95,8 +93,8 @@ static bool hasFP(MachineFunction &MF) {
 
 int X86RegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
                                                    MachineBasicBlock &MBB,
-	                                 MachineBasicBlock::iterator &I) const {
-  MachineInstr *New = 0, *Old = *I;;
+                                                   MachineInstr* I) const {
+  MachineInstr *New = 0, *Old = I;
   if (hasFP(MF)) {
     // If we have a frame pointer, turn the adjcallstackup instruction into a
     // 'sub ESP, <amt>' and the adjcallstackdown instruction into 'add ESP,
@@ -119,20 +117,19 @@ int X86RegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
   }
 
   if (New) {
-    *I = New;        // Replace the pseudo instruction with a new instruction...
-    delete Old;
+    // Replace the pseudo instruction with a new instruction...
+    MBB.insert(MBB.erase(I), New);
     return 0;
   } else {
-    I = MBB.erase(I);// Just delete the pseudo instruction...
-    delete Old;
+    MBB.erase(I);
     return -1;
   }
 }
 
 int X86RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
-                                        MachineBasicBlock::iterator &II) const {
+                                         MachineInstr* II) const {
   unsigned i = 0;
-  MachineInstr &MI = **II;
+  MachineInstr &MI = *II;
   while (!MI.getOperand(i).isFrameIndex()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
@@ -182,13 +179,13 @@ int X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
       MI= BuildMI(X86::SUBri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(NumBytes);
-      MBBI = MBB.insert(MBBI, MI)+1;
+      MBB.insert(MBBI, MI);
     }
 
     // Save EBP into the appropriate stack slot...
     MI = addRegOffset(BuildMI(X86::MOVrm32, 5),    // mov [ESP-<offset>], EBP
 		      X86::ESP, EBPOffset+NumBytes).addReg(X86::EBP);
-    MBBI = MBB.insert(MBBI, MI)+1;
+    MBB.insert(MBBI, MI);
 
     // Update EBP with the new base value...
     if (NumBytes == 0)    // mov EBP, ESP
@@ -196,7 +193,7 @@ int X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     else                  // lea EBP, [ESP+StackSize]
       MI = addRegOffset(BuildMI(X86::LEAr32, 5, X86::EBP), X86::ESP, NumBytes);
 
-    MBBI = MBB.insert(MBBI, MI)+1;
+    MBB.insert(MBBI, MI);
 
   } else {
     // When we have no frame pointer, we reserve argument space for call sites
@@ -226,9 +223,9 @@ int X86RegisterInfo::emitEpilogue(MachineFunction &MF,
                                   MachineBasicBlock &MBB) const {
   unsigned oldSize = MBB.size();
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineBasicBlock::iterator MBBI = MBB.end()-1;
+  MachineBasicBlock::iterator MBBI = MBB.end(); --MBBI;
   MachineInstr *MI;
-  assert((*MBBI)->getOpcode() == X86::RET &&
+  assert(MBBI->getOpcode() == X86::RET &&
          "Can only insert epilog into returning blocks");
 
   if (hasFP(MF)) {
@@ -238,18 +235,18 @@ int X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     
     // mov ESP, EBP
     MI = BuildMI(X86::MOVrr32, 1,X86::ESP).addReg(X86::EBP);
-    MBBI = 1+MBB.insert(MBBI, MI);
+    MBB.insert(MBBI, MI);
 
     // mov EBP, [ESP-<offset>]
     MI = addRegOffset(BuildMI(X86::MOVmr32, 5, X86::EBP), X86::ESP, EBPOffset);
-    MBBI = 1+MBB.insert(MBBI, MI);
+    MBB.insert(MBBI, MI);
   } else {
     // Get the number of bytes allocated from the FrameInfo...
     unsigned NumBytes = MFI->getStackSize();
 
     if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
       MI =BuildMI(X86::ADDri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(NumBytes);
-      MBBI = 1+MBB.insert(MBBI, MI);
+      MBB.insert(MBBI, MI);
     }
   }
   return MBB.size() - oldSize;

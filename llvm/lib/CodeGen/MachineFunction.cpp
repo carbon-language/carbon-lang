@@ -62,34 +62,6 @@ FunctionPass *llvm::createMachineFunctionPrinterPass(std::ostream *OS,
   return new Printer(OS, Banner);
 }
 
-namespace {
-  struct Deleter : public MachineFunctionPass {
-    const char *getPassName() const { return "Machine Code Deleter"; }
-
-    bool runOnMachineFunction(MachineFunction &MF) {
-      // Delete all of the MachineInstrs out of the function.  When the sparc
-      // backend gets fixed, this can be dramatically simpler, but actually
-      // putting this stuff into the MachineBasicBlock destructor!
-      for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E;
-           ++BB)
-        while (!BB->empty())
-          delete BB->pop_back();
-
-      // Delete the annotation from the function now.
-      MachineFunction::destruct(MF.getFunction());
-      return true;
-    }
-  };
-}
-
-/// MachineCodeDeletion Pass - This pass deletes all of the machine code for
-/// the current function, which should happen after the function has been
-/// emitted to a .s file or to memory.
-FunctionPass *llvm::createMachineCodeDeleter() {
-  return new Deleter();
-}
-
-
 //===---------------------------------------------------------------------===//
 // MachineFunction implementation
 //===---------------------------------------------------------------------===//
@@ -127,7 +99,7 @@ void MachineFunction::print(std::ostream &OS) const {
     OS << "\n" << LBB->getName() << " (" << (const void*)LBB << "):\n";
     for (MachineBasicBlock::const_iterator I = BB->begin(); I != BB->end();++I){
       OS << "\t";
-      (*I)->print(OS, Target);
+      I->print(OS, Target);
     }
   }
   OS << "\nEnd function \"" << Fn->getName() << "\"\n\n";

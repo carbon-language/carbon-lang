@@ -105,17 +105,17 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
 
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); )
-      if ((*I)->getOpcode() == FrameSetupOpcode ||
-	  (*I)->getOpcode() == FrameDestroyOpcode) {
-	assert((*I)->getNumOperands() == 1 && "Call Frame Setup/Destroy Pseudo"
+      if (I->getOpcode() == FrameSetupOpcode ||
+	  I->getOpcode() == FrameDestroyOpcode) {
+	assert(I->getNumOperands() == 1 && "Call Frame Setup/Destroy Pseudo"
 	       " instructions should have a single immediate argument!");
-	unsigned Size = (*I)->getOperand(0).getImmedValue();
+	unsigned Size = I->getOperand(0).getImmedValue();
 	if (Size > MaxCallFrameSize) MaxCallFrameSize = Size;
 	HasCalls = true;
-	RegInfo->eliminateCallFramePseudoInstr(Fn, *BB, I);
+	RegInfo->eliminateCallFramePseudoInstr(Fn, *BB, I++);
       } else {
-	for (unsigned i = 0, e = (*I)->getNumOperands(); i != e; ++i) {
-	  MachineOperand &MO = (*I)->getOperand(i);
+	for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+	  MachineOperand &MO = I->getOperand(i);
 	  if (MO.isRegister() && MO.isDef()) {
             assert(MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
                    "Register allocation must be performed!");
@@ -174,8 +174,9 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   const TargetInstrInfo &TII = Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator FI = Fn.begin(), E = Fn.end(); FI != E; ++FI) {
     // If last instruction is a return instruction, add an epilogue
-    if (!FI->empty() && TII.isReturn(FI->back()->getOpcode())) {
-      MBB = FI; I = MBB->end()-1;
+    if (!FI->empty() && TII.isReturn(FI->back().getOpcode())) {
+      MBB = FI;
+      I = MBB->end(); --I;
 
       for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
 	const TargetRegisterClass *RC = RegInfo->getRegClass(RegsToSave[i]);
@@ -235,7 +236,7 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
   const TargetInstrInfo &TII = Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     // If last instruction is a return instruction, add an epilogue
-    if (!I->empty() && TII.isReturn(I->back()->getOpcode()))
+    if (!I->empty() && TII.isReturn(I->back().getOpcode()))
       Fn.getTarget().getRegisterInfo()->emitEpilogue(Fn, *I);
   }
 }
@@ -253,8 +254,8 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I)
-      for (unsigned i = 0, e = (*I)->getNumOperands(); i != e; ++i)
-	if ((*I)->getOperand(i).isFrameIndex()) {
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+	if (I->getOperand(i).isFrameIndex()) {
 	  // If this instruction has a FrameIndex operand, we need to use that
 	  // target machine register info object to eliminate it.
 	  MRI.eliminateFrameIndex(Fn, I);

@@ -630,8 +630,8 @@ RecordSchedule(MachineBasicBlock &MBB, const SchedulingManager& S)
   // some NOPs from delay slots.  Also, PHIs are not included in the schedule.
   unsigned numInstr = 0;
   for (MachineBasicBlock::iterator I=MBB.begin(); I != MBB.end(); ++I)
-    if (! mii.isNop((*I)->getOpcode()) &&
-	! mii.isDummyPhiInstr((*I)->getOpcode()))
+    if (! mii.isNop(I->getOpcode()) &&
+	! mii.isDummyPhiInstr(I->getOpcode()))
       ++numInstr;
   assert(S.isched.getNumInstructions() >= numInstr &&
 	 "Lost some non-NOP instructions during scheduling!");
@@ -643,12 +643,12 @@ RecordSchedule(MachineBasicBlock &MBB, const SchedulingManager& S)
   // First find the dummy instructions at the start of the basic block
   MachineBasicBlock::iterator I = MBB.begin();
   for ( ; I != MBB.end(); ++I)
-    if (! mii.isDummyPhiInstr((*I)->getOpcode()))
+    if (! mii.isDummyPhiInstr(I->getOpcode()))
       break;
   
-  // Erase all except the dummy PHI instructions from MBB, and
+  // Remove all except the dummy PHI instructions from MBB, and
   // pre-allocate create space for the ones we will put back in.
-  MBB.erase(I, MBB.end());
+  while (I != MBB.end()) MBB.remove(I);
   
   InstrSchedule::const_iterator NIend = S.isched.end();
   for (InstrSchedule::const_iterator NI = S.isched.begin(); NI != NIend; ++NI)
@@ -1175,25 +1175,25 @@ static void ReplaceNopsWithUsefulInstr(SchedulingManager& S,
   //  
   unsigned int firstDelaySlotIdx = node->getOrigIndexInBB() + 1;
   MachineBasicBlock& MBB = node->getMachineBasicBlock();
-  assert(MBB[firstDelaySlotIdx - 1] == brInstr &&
+  assert(&MBB[firstDelaySlotIdx - 1] == brInstr &&
          "Incorrect instr. index in basic block for brInstr");
   
   // First find all useful instructions already in the delay slots
   // and USE THEM.  We'll throw away the unused alternatives below
   // 
   for (unsigned i=firstDelaySlotIdx; i < firstDelaySlotIdx + ndelays; ++i)
-    if (! mii.isNop(MBB[i]->getOpcode()))
+    if (! mii.isNop(MBB[i].getOpcode()))
       sdelayNodeVec.insert(sdelayNodeVec.begin(),
-                           graph->getGraphNodeForInstr(MBB[i]));
+                           graph->getGraphNodeForInstr(&MBB[i]));
   
   // Then find the NOPs and keep only as many as are needed.
   // Put the rest in nopNodeVec to be deleted.
   for (unsigned i=firstDelaySlotIdx; i < firstDelaySlotIdx + ndelays; ++i)
-    if (mii.isNop(MBB[i]->getOpcode()))
+    if (mii.isNop(MBB[i].getOpcode()))
       if (sdelayNodeVec.size() < ndelays)
-        sdelayNodeVec.push_back(graph->getGraphNodeForInstr(MBB[i]));
+        sdelayNodeVec.push_back(graph->getGraphNodeForInstr(&MBB[i]));
       else {
-        nopNodeVec.push_back(graph->getGraphNodeForInstr(MBB[i]));
+        nopNodeVec.push_back(graph->getGraphNodeForInstr(&MBB[i]));
 	  
         //remove the MI from the Machine Code For Instruction
         const TerminatorInst *TI = MBB.getBasicBlock()->getTerminator();
@@ -1202,7 +1202,7 @@ static void ReplaceNopsWithUsefulInstr(SchedulingManager& S,
           
         for(MachineCodeForInstruction::iterator mciI=llvmMvec.begin(), 
               mciE=llvmMvec.end(); mciI!=mciE; ++mciI){
-          if (*mciI==MBB[i])
+          if (*mciI == &MBB[i])
             llvmMvec.erase(mciI);
         }
       }
@@ -1282,10 +1282,10 @@ ChooseInstructionsForDelaySlots(SchedulingManager& S, MachineBasicBlock &MBB,
   // 
   delayNodeVec.clear();
   for (unsigned i=0; i < MBB.size(); ++i)
-    if (MBB[i] != brInstr &&
-        mii.getNumDelaySlots(MBB[i]->getOpcode()) > 0)
+    if (&MBB[i] != brInstr &&
+        mii.getNumDelaySlots(MBB[i].getOpcode()) > 0)
     {
-      SchedGraphNode* node = graph->getGraphNodeForInstr(MBB[i]);
+      SchedGraphNode* node = graph->getGraphNodeForInstr(&MBB[i]);
       ReplaceNopsWithUsefulInstr(S, node, delayNodeVec, graph);
     }
 }

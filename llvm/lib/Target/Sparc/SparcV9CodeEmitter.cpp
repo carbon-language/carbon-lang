@@ -778,7 +778,7 @@ void SparcV9CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   currBB = MBB.getBasicBlock();
   BBLocations[currBB] = MCE.getCurrentPCValue();
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
-    unsigned binCode = getBinaryCodeForInstr(**I);
+    unsigned binCode = getBinaryCodeForInstr(*I);
     if (binCode == (1 << 30)) {
       // this is an invalid call: the addr is out of bounds. that means a code
       // sequence has already been emitted, and this is a no-op

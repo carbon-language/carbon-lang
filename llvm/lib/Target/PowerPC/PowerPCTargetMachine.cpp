@@ -45,7 +45,6 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());
   // <insert assembly code output passes here>
-  PM.add(createMachineCodeDeleter());
   return true; // change to `return false' when this actually works.
 }
 

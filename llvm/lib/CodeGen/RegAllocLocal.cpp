@@ -496,9 +496,8 @@ unsigned RA::reloadVirtReg(MachineBasicBlock &MBB,
 
 void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
-  MachineBasicBlock::iterator I = MBB.begin();
-  for (; I != MBB.end(); ++I) {
-    MachineInstr *MI = *I;
+  MachineBasicBlock::iterator MI = MBB.begin();
+  for (; MI != MBB.end(); ++MI) {
     const TargetInstrDescriptor &TID = TM->getInstrInfo().get(MI->getOpcode());
     DEBUG(std::cerr << "\nStarting RegAlloc of: " << *MI;
           std::cerr << "  Regs have values: ";
@@ -525,7 +524,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
           !MI->getOperand(i).isDef() && MI->getOperand(i).isRegister() &&
           MRegisterInfo::isVirtualRegister(MI->getOperand(i).getReg())) {
         unsigned VirtSrcReg = MI->getOperand(i).getAllocatedRegNum();
-        unsigned PhysSrcReg = reloadVirtReg(MBB, I, VirtSrcReg);
+        unsigned PhysSrcReg = reloadVirtReg(MBB, MI, VirtSrcReg);
         MI->SetMachineOperandReg(i, PhysSrcReg);  // Assign the input register
       }
     
@@ -559,7 +558,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       if (MI->getOperand(i).isDef() && MI->getOperand(i).isRegister() &&
           MRegisterInfo::isPhysicalRegister(MI->getOperand(i).getReg())) {
         unsigned Reg = MI->getOperand(i).getAllocatedRegNum();
-        spillPhysReg(MBB, I, Reg, true);  // Spill any existing value in the reg
+        spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in the reg
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         PhysRegsUseOrder.push_back(Reg);
         for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
@@ -573,7 +572,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (const unsigned *ImplicitDefs = TID.ImplicitDefs;
          *ImplicitDefs; ++ImplicitDefs) {
       unsigned Reg = *ImplicitDefs;
-      spillPhysReg(MBB, I, Reg);
+      spillPhysReg(MBB, MI, Reg);
       PhysRegsUseOrder.push_back(Reg);
       PhysRegsUsed[Reg] = 0;            // It is free and reserved now
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
@@ -596,7 +595,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
         // If DestVirtReg already has a value, use it.
         if (!(DestPhysReg = getOrInsertVirt2PhysRegMapSlot(DestVirtReg)))
-          DestPhysReg = getReg(MBB, I, DestVirtReg);
+          DestPhysReg = getReg(MBB, MI, DestVirtReg);
         markVirtRegModified(DestVirtReg);
         MI->SetMachineOperandReg(i, DestPhysReg);  // Assign the output register
       }
@@ -628,15 +627,15 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
   // Rewind the iterator to point to the first flow control instruction...
   const TargetInstrInfo &TII = TM->getInstrInfo();
-  I = MBB.end();
-  while (I != MBB.begin() && TII.isTerminatorInstr((*(I-1))->getOpcode()))
-    --I;
+  MI = MBB.end();
+  while (MI != MBB.begin() && TII.isTerminatorInstr((--MI)->getOpcode()));
+  ++MI;
 
   // Spill all physical registers holding virtual registers now.
   for (unsigned i = 0, e = RegInfo->getNumRegs(); i != e; ++i)
     if (PhysRegsUsed[i] != -1)
       if (unsigned VirtReg = PhysRegsUsed[i])
-        spillVirtReg(MBB, I, VirtReg, i);
+        spillVirtReg(MBB, MI, VirtReg, i);
       else
         removePhysReg(i);
 

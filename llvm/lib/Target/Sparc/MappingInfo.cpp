@@ -153,7 +153,7 @@ void MappingInfoAsmPrinter::create_BB_to_MInumber_Key(Function &FI,
   for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();
        BI != BE; ++BI) {
     MachineBasicBlock &miBB = *BI;
-    key[miBB[0]] = i;
+    key[&miBB.front()] = i;
     i = i+(miBB.size());
   }
 }
@@ -174,7 +174,7 @@ void MappingInfoAsmPrinter::create_MI_to_number_Key(Function &FI,
     unsigned j = 0;
     for(MachineBasicBlock::iterator miI = miBB.begin(), miE = miBB.end();
         miI != miE; ++miI, ++j) {
-      key[*miI] = j;
+      key[miI] = j;
     }
   }
 }
@@ -195,7 +195,7 @@ void MappingInfoAsmPrinter::buildBBMIMap(Function &FI, MappingInfo &Map) {
        BI != BE; ++BI, ++bb) {
     MachineBasicBlock &miBB = *BI;
     writeNumber(bb);
-    writeNumber(BBkey[miBB[0]]);
+    writeNumber(BBkey[&miBB.front()]);
     writeNumber(miBB.size());
   }
 }

@@ -157,12 +157,12 @@ void InsertPrologEpilogCode::InsertEpilogCode(MachineFunction &MF)
       unsigned numNOPs = 0;
       while (termMvec.back()->getOpcode() == V9::NOP)
       {
-        assert( termMvec.back() == MBB.back());
-        delete MBB.pop_back();
+        assert( termMvec.back() == &MBB.back());
         termMvec.pop_back();
+        MBB.erase(&MBB.back());
         ++numNOPs;
       }
-      assert(termMvec.back() == MBB.back());
+      assert(termMvec.back() == &MBB.back());
         
       // Check that we found the right number of NOPs and have the right
       // number of instructions to replace them.

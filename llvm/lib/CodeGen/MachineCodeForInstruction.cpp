@@ -60,9 +60,8 @@ MachineCodeForInstruction::~MachineCodeForInstruction() {
   for (unsigned i=0, N=tempVec.size(); i < N; i++)
     delete tempVec[i];
   
-  // Free the MachineInstr objects allocated, if any.
-  for (unsigned i=0, N = size(); i < N; i++)
-    delete (*this)[i];
+  // do not free the MachineInstr objects allocated. they are managed
+  // by the ilist in MachineBasicBlock
 
   // Free the CallArgsDescriptor if it exists.
   delete callArgsDesc;

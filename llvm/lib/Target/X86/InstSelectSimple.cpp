@@ -37,23 +37,21 @@ using namespace llvm;
 /// instruction at as well as a basic block.  This is the version for when you
 /// have a destination register in mind.
 inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
-                                      MachineBasicBlock::iterator &I,
+                                      MachineBasicBlock::iterator I,
                                       int Opcode, unsigned NumOperands,
                                       unsigned DestReg) {
-  assert(I >= MBB->begin() && I <= MBB->end() && "Bad iterator!");
   MachineInstr *MI = new MachineInstr(Opcode, NumOperands+1, true, true);
-  I = MBB->insert(I, MI)+1;
+  MBB->insert(I, MI);
   return MachineInstrBuilder(MI).addReg(DestReg, MOTy::Def);
 }
 
 /// BMI - A special BuildMI variant that takes an iterator to insert the
 /// instruction at as well as a basic block.
 inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
-                                      MachineBasicBlock::iterator &I,
+                                      MachineBasicBlock::iterator I,
                                       int Opcode, unsigned NumOperands) {
-  assert(I >= MBB->begin() && I <= MBB->end() && "Bad iterator!");
   MachineInstr *MI = new MachineInstr(Opcode, NumOperands, true, true);
-  I = MBB->insert(I, MI)+1;
+  MBB->insert(I, MI);
   return MachineInstrBuilder(MI);
 }
 
@@ -541,19 +539,19 @@ void ISel::SelectPHINodes() {
     MachineBasicBlock *MBB = MBBMap[I];
 
     // Loop over all of the PHI nodes in the LLVM basic block...
-    unsigned NumPHIs = 0;
+    MachineInstr* instr = MBB->begin();
     for (BasicBlock::const_iterator I = BB->begin();
          PHINode *PN = const_cast<PHINode*>(dyn_cast<PHINode>(I)); ++I) {
 
       // Create a new machine instr PHI node, and insert it.
       unsigned PHIReg = getReg(*PN);
       MachineInstr *PhiMI = BuildMI(X86::PHI, PN->getNumOperands(), PHIReg);
-      MBB->insert(MBB->begin()+NumPHIs++, PhiMI);
+      MBB->insert(instr, PhiMI);
 
       MachineInstr *LongPhiMI = 0;
       if (PN->getType() == Type::LongTy || PN->getType() == Type::ULongTy) {
         LongPhiMI = BuildMI(X86::PHI, PN->getNumOperands(), PHIReg+1);
-        MBB->insert(MBB->begin()+NumPHIs++, LongPhiMI);
+        MBB->insert(instr, LongPhiMI);
       }
 
       // PHIValues - Map of blocks to incoming virtual registers.  We use this
@@ -588,7 +586,7 @@ void ISel::SelectPHINodes() {
             MachineBasicBlock::iterator PI = PredMBB->begin();
 
             // Skip over any PHI nodes though!
-            while (PI != PredMBB->end() && (*PI)->getOpcode() == X86::PHI)
+            while (PI != PredMBB->end() && PI->getOpcode() == X86::PHI)
               ++PI;
 
             ValReg = getReg(Val, PredMBB, PI);

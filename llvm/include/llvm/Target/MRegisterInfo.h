@@ -16,13 +16,14 @@
 #ifndef LLVM_TARGET_MREGISTERINFO_H
 #define LLVM_TARGET_MREGISTERINFO_H
 
-#include "llvm/CodeGen/MachineBasicBlock.h"
 #include <cassert>
 
 namespace llvm {
 
 class Type;
+class MachineBasicBlock;
 class MachineFunction;
+class MachineInstr;
 
 /// MRegisterDesc - This record contains all of the information known about a
 /// particular register.  The AliasSet field (if not null) contains a pointer to
@@ -226,17 +227,17 @@ public:
   //
 
   virtual int storeRegToStackSlot(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator &MBBI,
+                                  MachineInstr* MI,
                                   unsigned SrcReg, int FrameIndex,
                                   const TargetRegisterClass *RC) const = 0;
 
   virtual int loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator &MBBI,
+                                   MachineInstr* MI,
                                    unsigned DestReg, int FrameIndex,
                                    const TargetRegisterClass *RC) const = 0;
 
   virtual int copyRegToReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator &MBBI,
+                           MachineInstr* MI,
                            unsigned DestReg, unsigned SrcReg,
                            const TargetRegisterClass *RC) const = 0;
 
@@ -260,8 +261,8 @@ public:
   /// instructions added to (negative if removed from) the basic block.
   ///
   virtual int eliminateCallFramePseudoInstr(MachineFunction &MF,
-					     MachineBasicBlock &MBB,
-                                         MachineBasicBlock::iterator &I) const {
+                                            MachineBasicBlock &MBB,
+                                            MachineInstr* MI) const {
     assert(getCallFrameSetupOpcode()== -1 && getCallFrameDestroyOpcode()== -1 &&
 	   "eliminateCallFramePseudoInstr must be implemented if using"
 	   " call frame setup/destroy pseudo instructions!");
@@ -289,7 +290,7 @@ public:
   /// added to (negative if removed from) the basic block.
   ///
   virtual int eliminateFrameIndex(MachineFunction &MF,
-                                  MachineBasicBlock::iterator &II) const = 0;
+                                  MachineInstr* MI) const = 0;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function. The return value is the number of instructions

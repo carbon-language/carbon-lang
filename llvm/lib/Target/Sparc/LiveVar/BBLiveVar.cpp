@@ -41,7 +41,7 @@ void BBLiveVar::calcDefUseSets() {
   // iterate over all the machine instructions in BB
   for (MachineBasicBlock::const_reverse_iterator MII = MBB.rbegin(),
          MIE = MBB.rend(); MII != MIE; ++MII) {
-    const MachineInstr *MI = *MII;
+    const MachineInstr *MI = &*MII;
     
     if (DEBUG_LV >= LV_DEBUG_Verbose) {
       std::cerr << " *Iterating over machine instr ";

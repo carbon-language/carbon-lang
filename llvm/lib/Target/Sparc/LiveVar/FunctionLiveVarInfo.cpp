@@ -283,7 +283,7 @@ void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
   for (MachineBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
          MIE = MIVec.rend(); MII != MIE; ++MII) {  
     // MI is cur machine inst
-    const MachineInstr *MI = *MII;  
+    const MachineInstr *MI = &*MII;  
 
     MInst2LVSetAI[MI] = SetAI;                 // record in After Inst map
 
@@ -299,7 +299,7 @@ void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
       MachineBasicBlock::const_iterator fwdMII = MII.base(); // ptr to *next* MI
       for (unsigned i = 0; i < DS; ++i, ++fwdMII) {
         assert(fwdMII != MIVec.end() && "Missing instruction in delay slot?");
-        MachineInstr* DelaySlotMI = *fwdMII;
+        const MachineInstr* DelaySlotMI = fwdMII;
         if (! TM.getInstrInfo().isNop(DelaySlotMI->getOpcode())) {
           set_union(*MInst2LVSetBI[DelaySlotMI], *NewSet);
           if (i+1 == DS)

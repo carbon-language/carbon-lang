@@ -28,6 +28,8 @@ class MachineBasicBlock;
 class TargetMachine;
 class GlobalValue;
 
+template <typename T> class ilist_traits;
+
 typedef int MachineOpCode;
 
 //===----------------------------------------------------------------------===//
@@ -353,12 +355,24 @@ class MachineInstr {
   unsigned         opCodeFlags;         // flags modifying instrn behavior
   std::vector<MachineOperand> operands; // the operands
   unsigned numImplicitRefs;             // number of implicit operands
-
+  MachineInstr* prev, *next;            // links for our intrusive list
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
 
   MachineInstr(const MachineInstr &);  // DO NOT IMPLEMENT
   void operator=(const MachineInstr&); // DO NOT IMPLEMENT
+
+private:
+  // Intrusive list support
+  //
+  friend class ilist_traits<MachineInstr>;
+  MachineInstr() { /* this is for ilist use only to create the sentinel */ }
+  MachineInstr* getPrev() const { return prev; }
+  MachineInstr* getNext() const { return next; }
+
+  void setPrev(MachineInstr* mi) { prev = mi; }
+  void setNext(MachineInstr* mi) { next = mi; }
+
 public:
   MachineInstr(int Opcode, unsigned numOperands);
 

@@ -150,11 +150,9 @@ void RegAllocSimple::spillVirtReg(MachineBasicBlock &MBB,
 
 void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
-  for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I) {
+  for (MachineBasicBlock::iterator MI = MBB.begin(); MI != MBB.end(); ++MI) {
     // Made to combat the incorrect allocation of r2 = add r1, r1
     std::map<unsigned, unsigned> Virt2PhysRegMap;
-
-    MachineInstr *MI = *I;
 
     RegsUsed.resize(MRegisterInfo::FirstVirtualRegister);
     
@@ -197,11 +195,11 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
             } else {
               physReg = getFreeReg(virtualReg);
             }
-            ++I;
-            spillVirtReg(MBB, I, virtualReg, physReg);
-            --I;
+            ++MI;
+            spillVirtReg(MBB, MI, virtualReg, physReg);
+            --MI;
           } else {
-            physReg = reloadVirtReg(MBB, I, virtualReg);
+            physReg = reloadVirtReg(MBB, MI, virtualReg);
             Virt2PhysRegMap[virtualReg] = physReg;
           }
         }

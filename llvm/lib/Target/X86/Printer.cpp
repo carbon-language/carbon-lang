@@ -365,7 +365,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
 	 II != E; ++II) {
       // Print the assembly for the instruction.
       O << "\t";
-      printMachineInstruction(*II);
+      printMachineInstruction(II);
     }
   }
 

@@ -84,9 +84,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
     for (MachineFunction::iterator mbbi = MF.begin(), mbbe = MF.end();
          mbbi != mbbe; ++mbbi) {
-        for (MachineBasicBlock::iterator mii = mbbi->begin();
-             mii != mbbi->end(); ++mii) {
-            MachineInstr* mi = *mii;
+        for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
+             mi != me; ++mi) {
             unsigned opcode = mi->getOpcode();
 
             // ignore if it is not a two-address instruction
@@ -132,10 +131,11 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
                 const TargetRegisterClass* rc =
                     MF.getSSARegMap()->getRegClass(regA);
-                unsigned Added = MRI.copyRegToReg(*mbbi, mii, regA, regB, rc);
+                unsigned Added = MRI.copyRegToReg(*mbbi, mi, regA, regB, rc);
                 numInstrsAdded += Added;
 
-                MachineInstr* prevMi = *(mii - 1);
+                MachineBasicBlock::iterator prevMi = mi;
+                --prevMi;
                 DEBUG(std::cerr << "\t\tadded instruction: ";
                       prevMi->print(std::cerr, TM));
 

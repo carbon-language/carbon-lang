@@ -212,8 +212,6 @@ namespace {
 bool X86TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
                                                   MachineCodeEmitter &MCE) {
   PM.add(new Emitter(MCE));
-  // Delete machine code for this function
-  PM.add(createMachineCodeDeleter());
   return false;
 }
 
@@ -242,7 +240,7 @@ void Emitter::emitBasicBlock(MachineBasicBlock &MBB) {
     BasicBlockAddrs[MBB.getBasicBlock()] = Addr;
 
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I)
-    emitInstruction(**I);
+    emitInstruction(*I);
 }
 
 

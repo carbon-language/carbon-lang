@@ -31,14 +31,14 @@ DeleteInstruction(MachineBasicBlock& mvec,
   // Check if this instruction is in a delay slot of its predecessor.
   if (BBI != mvec.begin()) {
       const TargetInstrInfo& mii = target.getInstrInfo();
-      MachineInstr* predMI = *(BBI-1);
+      MachineBasicBlock::iterator predMI = BBI; --predMI;
       if (unsigned ndelay = mii.getNumDelaySlots(predMI->getOpcode())) {
         // This instruction is in a delay slot of its predecessor, so
         // replace it with a nop. By replacing in place, we save having
         // to update the I-I maps.
         // 
         assert(ndelay == 1 && "Not yet handling multiple-delay-slot targets");
-        (*BBI)->replace(mii.getNOPOpCode(), 0);
+        BBI->replace(mii.getNOPOpCode(), 0);
         return;
       }
   }
@@ -99,7 +99,7 @@ inline bool
 RemoveUselessCopies(MachineBasicBlock& mvec,
                     MachineBasicBlock::iterator& BBI,
                     const TargetMachine& target) {
-  if (IsUselessCopy(target, *BBI)) {
+  if (IsUselessCopy(target, BBI)) {
     DeleteInstruction(mvec, BBI, target);
     return true;
   }
@@ -148,16 +148,8 @@ bool PeepholeOpts::runOnBasicBlock(BasicBlock &BB) {
   assert(MBB && "MachineBasicBlock object not found for specified block!");
   MachineBasicBlock &mvec = *MBB;
 
-  // Iterate over all machine instructions in the BB
-  // Use a reverse iterator to allow deletion of MI or any instruction after it.
-  // Insertions or deletions *before* MI are not safe.
-  // 
-  for (MachineBasicBlock::reverse_iterator RI=mvec.rbegin(),
-         RE=mvec.rend(); RI != RE; ) {
-    MachineBasicBlock::iterator BBI = RI.base()-1; // save before incr
-    ++RI;             // pre-increment to delete MI or after it
-    visit(mvec, BBI);
-  }
+  for (MachineBasicBlock::iterator I = mvec.begin(), E = mvec.end(); I != E; )
+    visit(mvec, I++);
 
   return true;
 }

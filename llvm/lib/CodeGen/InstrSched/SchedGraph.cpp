@@ -53,7 +53,8 @@ struct ValueToDefVecMap: public hash_map<const Value*, RefVec> {
 
 SchedGraphNode::SchedGraphNode(unsigned NID, MachineBasicBlock *mbb,
                                int   indexInBB, const TargetMachine& Target)
-  : SchedGraphNodeCommon(NID,indexInBB), MBB(mbb), MI(mbb ? (*mbb)[indexInBB] : 0) {
+  : SchedGraphNodeCommon(NID,indexInBB), MBB(mbb),
+    MI(mbb ? &(*mbb)[indexInBB] : (MachineInstr*)0) {
   if (MI) {
     MachineOpCode mopCode = MI->getOpcode();
     latency = Target.getInstrInfo().hasResultInterlock(mopCode)
@@ -183,10 +184,10 @@ void SchedGraph::addCDEdges(const TerminatorInst* term,
   // all preceding instructions in the basic block.  Use 0 latency again.
   // 
   for (unsigned i=0, N=MBB.size(); i < N; i++)  {
-    if (MBB[i] == termMvec[first])   // reached the first branch
+    if (&MBB[i] == termMvec[first])   // reached the first branch
       break;
     
-    SchedGraphNode* fromNode = this->getGraphNodeForInstr(MBB[i]);
+    SchedGraphNode* fromNode = this->getGraphNodeForInstr(&MBB[i]);
     if (fromNode == NULL)
       continue;			// dummy instruction, e.g., PHI
     
@@ -198,11 +199,11 @@ void SchedGraph::addCDEdges(const TerminatorInst* term,
     // the terminator) that also have delay slots, add an outgoing edge
     // from the instruction to the instructions in the delay slots.
     // 
-    unsigned d = mii.getNumDelaySlots(MBB[i]->getOpcode());
+    unsigned d = mii.getNumDelaySlots(MBB[i].getOpcode());
     assert(i+d < N && "Insufficient delay slots for instruction?");
       
     for (unsigned j=1; j <= d; j++) {
-      SchedGraphNode* toNode = this->getGraphNodeForInstr(MBB[i+j]);
+      SchedGraphNode* toNode = this->getGraphNodeForInstr(&MBB[i+j]);
       assert(toNode && "No node for machine instr in delay slot?");
       (void) new SchedGraphEdge(fromNode, toNode,
                                 SchedGraphEdge::CtrlDep,
@@ -554,9 +555,9 @@ void SchedGraph::buildNodesForBB(const TargetMachine& target,
   // Build graph nodes for each VM instruction and gather def/use info.
   // Do both those together in a single pass over all machine instructions.
   for (unsigned i=0; i < MBB.size(); i++)
-    if (!mii.isDummyPhiInstr(MBB[i]->getOpcode())) {
+    if (!mii.isDummyPhiInstr(MBB[i].getOpcode())) {
       SchedGraphNode* node = new SchedGraphNode(getNumNodes(), &MBB, i, target);
-      noteGraphNodeForInstr(MBB[i], node);
+      noteGraphNodeForInstr(&MBB[i], node);
       
       // Remember all register references and value defs
       findDefUseInfoAtInstr(target, node, memNodeVec, callDepNodeVec,
@@ -632,7 +633,7 @@ void SchedGraph::buildGraph(const TargetMachine& target) {
   
   // Then add incoming def-use (SSA) edges for each machine instruction.
   for (unsigned i=0, N=MBB.size(); i < N; i++)
-    addEdgesForInstruction(*MBB[i], valueToDefVecMap, target);
+    addEdgesForInstruction(MBB[i], valueToDefVecMap, target);
 
   // Then add edges for dependences on machine registers
   this->addMachineRegEdges(regToRefVecMap, target);

@@ -28,25 +28,26 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
 
   /// Code Generation virtual methods...
   int storeRegToStackSlot(MachineBasicBlock &MBB,
-                          MachineBasicBlock::iterator &MBBI,
+                          MachineInstr* MI,
                           unsigned SrcReg, int FrameIndex,
                           const TargetRegisterClass *RC) const;
 
   int loadRegFromStackSlot(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator &MBBI,
+                           MachineInstr* MI,
                            unsigned DestReg, int FrameIndex,
                            const TargetRegisterClass *RC) const;
   
-  int copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
+  int copyRegToReg(MachineBasicBlock &MBB,
+                   MachineInstr* MI,
 		   unsigned DestReg, unsigned SrcReg,
 		   const TargetRegisterClass *RC) const;
 
   int eliminateCallFramePseudoInstr(MachineFunction &MF,
                                     MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator &I) const;
+                                    MachineInstr* MI) const;
 
   int eliminateFrameIndex(MachineFunction &MF,
-                          MachineBasicBlock::iterator &II) const;
+                          MachineInstr* MI) const;
 
   int processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 

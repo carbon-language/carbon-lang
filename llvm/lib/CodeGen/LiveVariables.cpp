@@ -213,7 +213,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
     // Loop over all of the instructions, processing them.
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
 	 I != E; ++I) {
-      MachineInstr *MI = *I;
+      MachineInstr *MI = I;
       const TargetInstrDescriptor &MID = TII.get(MI->getOpcode());
 
       // Process all of the operands of the instruction...
@@ -275,9 +275,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       MachineBasicBlock *Succ = BBMap.find(*SI)->second.first;
       
       // PHI nodes are guaranteed to be at the top of the block...
-      for (MachineBasicBlock::iterator I = Succ->begin(), E = Succ->end();
-	   I != E && (*I)->getOpcode() == TargetInstrInfo::PHI; ++I) {
-        MachineInstr *MI = *I;
+      for (MachineBasicBlock::iterator MI = Succ->begin(), ME = Succ->end();
+	   MI != ME && MI->getOpcode() == TargetInstrInfo::PHI; ++MI) {
 	for (unsigned i = 1; ; i += 2)
 	  if (MI->getOperand(i+1).getMachineBasicBlock() == MBB) {
 	    MachineOperand &MO = MI->getOperand(i);

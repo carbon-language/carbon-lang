@@ -14,16 +14,17 @@
 #ifndef LLVM_CODEGEN_MACHINEBASICBLOCK_H
 #define LLVM_CODEGEN_MACHINEBASICBLOCK_H
 
-#include <vector>
+#include "llvm/CodeGen/MachineInstr.h"
+#include "Support/ilist"
 
 namespace llvm {
 
 class BasicBlock;
-class MachineInstr;
-template <typename T> struct ilist_traits;
 
 class MachineBasicBlock {
-  std::vector<MachineInstr*> Insts;
+public:
+  typedef ilist<MachineInstr> Instructions;
+  Instructions Insts;
   MachineBasicBlock *Prev, *Next;
   const BasicBlock *BB;
 public:
@@ -35,19 +36,27 @@ public:
   ///
   const BasicBlock *getBasicBlock() const { return BB; }
   
-  typedef std::vector<MachineInstr*>::iterator                iterator;
-  typedef std::vector<MachineInstr*>::const_iterator    const_iterator;
+  typedef ilist<MachineInstr>::iterator                       iterator;
+  typedef ilist<MachineInstr>::const_iterator           const_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef std::reverse_iterator<iterator>             reverse_iterator;
 
   unsigned size() const { return Insts.size(); }
   bool empty() const { return Insts.empty(); }
 
-  MachineInstr * operator[](unsigned i) const { return Insts[i]; }
-  MachineInstr *&operator[](unsigned i)       { return Insts[i]; }
+  const MachineInstr& operator[](unsigned i) const {
+      const_iterator it = Insts.begin();
+      std::advance(it, i);
+      return *it;
+  }
+  MachineInstr& operator[](unsigned i) {
+      iterator it = Insts.begin();
+      std::advance(it, i);
+      return *it;
+  }
 
-  MachineInstr *front() const { return Insts.front(); }
-  MachineInstr *back()  const { return Insts.back(); }
+  MachineInstr& front() { return Insts.front(); }
+  MachineInstr& back()  { return Insts.back(); }
 
   iterator                begin()       { return Insts.begin();  }
   const_iterator          begin() const { return Insts.begin();  }
@@ -64,16 +73,11 @@ public:
   iterator insert(iterator I, MachineInstr *M) { return Insts.insert(I, M); }
 
   // erase - Remove the specified element or range from the instruction list.
-  // These functions do not delete any instructions removed.
+  // These functions delete any instructions removed.
   //
   iterator erase(iterator I)             { return Insts.erase(I); }
   iterator erase(iterator I, iterator E) { return Insts.erase(I, E); }
-
-  MachineInstr *pop_back() {
-    MachineInstr *R = back();
-    Insts.pop_back();
-    return R;
-  }
+  MachineInstr* remove(iterator &I)      { return Insts.remove(I); }
 
 private:   // Methods used to maintain doubly linked list of blocks...
   friend class ilist_traits<MachineBasicBlock>;

@@ -233,7 +233,7 @@ void PhyRegAlloc::buildInterferenceGraphs() {
 
     // iterate over all the machine instructions in BB
     for ( ; MII != MBB.end(); ++MII) {
-      const MachineInstr *MInst = *MII;
+      const MachineInstr *MInst = MII;
 
       // get the LV set after the instruction
       const ValueSet &LVSetAI = LVI->getLiveVarSetAfterMInst(MInst, BB);
@@ -355,25 +355,13 @@ inline void InsertAfter(MachineInstr* newMI, MachineBasicBlock& MBB,
   MII = MBB.insert(MII, newMI);
 }
 
-// used by: updateMachineCode (1 time)
-inline void DeleteInstruction(MachineBasicBlock& MBB,
-                              MachineBasicBlock::iterator& MII) {
-  MII = MBB.erase(MII);
-}
-
-// used by: updateMachineCode (1 time)
-inline void SubstituteInPlace(MachineInstr* newMI, MachineBasicBlock& MBB,
-                              MachineBasicBlock::iterator MII) {
-  *MII = newMI;
-}
-
 // used by: updateMachineCode (2 times)
 inline void PrependInstructions(std::vector<MachineInstr *> &IBef,
                                 MachineBasicBlock& MBB,
                                 MachineBasicBlock::iterator& MII,
                                 const std::string& msg) {
   if (!IBef.empty()) {
-      MachineInstr* OrigMI = *MII;
+      MachineInstr* OrigMI = MII;
       std::vector<MachineInstr *>::iterator AdIt; 
       for (AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt) {
           if (DEBUG_RA) {
@@ -391,7 +379,7 @@ inline void AppendInstructions(std::vector<MachineInstr *> &IAft,
                                MachineBasicBlock::iterator& MII,
                                const std::string& msg) {
   if (!IAft.empty()) {
-      MachineInstr* OrigMI = *MII;
+      MachineInstr* OrigMI = MII;
       std::vector<MachineInstr *>::iterator AdIt; 
       for ( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt ) {
           if (DEBUG_RA) {
@@ -442,14 +430,14 @@ bool PhyRegAlloc::markAllocatedRegs(MachineInstr* MInst)
 ///
 void PhyRegAlloc::updateInstruction(MachineBasicBlock::iterator& MII,
                                     MachineBasicBlock &MBB) {
-  MachineInstr* MInst = *MII;
+  MachineInstr* MInst = MII;
   unsigned Opcode = MInst->getOpcode();
 
   // Reset tmp stack positions so they can be reused for each machine instr.
   MF->getInfo()->popAllTempValues();  
 
   // Mark the operands for which regs have been allocated.
-  bool instrNeedsSpills = markAllocatedRegs(*MII);
+  bool instrNeedsSpills = markAllocatedRegs(MII);
 
 #ifndef NDEBUG
   // Mark that the operands have been updated.  Later,
@@ -506,7 +494,7 @@ void PhyRegAlloc::updateMachineCode()
     // their assigned registers or insert spill code, as appropriate. 
     // Also, fix operands of call/return instructions.
     for (MachineBasicBlock::iterator MII = MBB.begin(); MII != MBB.end(); ++MII)
-      if (! TM.getInstrInfo().isDummyPhiInstr((*MII)->getOpcode()))
+      if (! TM.getInstrInfo().isDummyPhiInstr(MII->getOpcode()))
         updateInstruction(MII, MBB);
 
     // Now, move code out of delay slots of branches and returns if needed.
@@ -523,56 +511,58 @@ void PhyRegAlloc::updateMachineCode()
     // 
     // If the annul bit of the branch is set, neither of these is legal!
     // If so, we need to handle spill differently but annulling is not yet used.
-    for (MachineBasicBlock::iterator MII = MBB.begin();
-         MII != MBB.end(); ++MII)
+    for (MachineBasicBlock::iterator MII = MBB.begin(); MII != MBB.end(); ++MII)
       if (unsigned delaySlots =
-          TM.getInstrInfo().getNumDelaySlots((*MII)->getOpcode())) { 
-          MachineInstr *MInst = *MII, *DelaySlotMI = *(MII+1);
+          TM.getInstrInfo().getNumDelaySlots(MII->getOpcode())) { 
+          MachineBasicBlock::iterator DelaySlotMI = MII; ++DelaySlotMI;
+          assert(DelaySlotMI != MBB.end() && "no instruction for delay slot");
           
           // Check the 2 conditions above:
           // (1) Does a branch need instructions added after it?
           // (2) O/w does delay slot instr. need instrns before or after?
-          bool isBranch = (TM.getInstrInfo().isBranch(MInst->getOpcode()) ||
-                           TM.getInstrInfo().isReturn(MInst->getOpcode()));
+          bool isBranch = (TM.getInstrInfo().isBranch(MII->getOpcode()) ||
+                           TM.getInstrInfo().isReturn(MII->getOpcode()));
           bool cond1 = (isBranch &&
-                        AddedInstrMap.count(MInst) &&
-                        AddedInstrMap[MInst].InstrnsAfter.size() > 0);
+                        AddedInstrMap.count(MII) &&
+                        AddedInstrMap[MII].InstrnsAfter.size() > 0);
           bool cond2 = (AddedInstrMap.count(DelaySlotMI) &&
                         (AddedInstrMap[DelaySlotMI].InstrnsBefore.size() > 0 ||
                          AddedInstrMap[DelaySlotMI].InstrnsAfter.size()  > 0));
 
           if (cond1 || cond2) {
-              assert((MInst->getOpCodeFlags() & AnnulFlag) == 0 &&
+              assert((MII->getOpCodeFlags() & AnnulFlag) == 0 &&
                      "FIXME: Moving an annulled delay slot instruction!"); 
               assert(delaySlots==1 &&
                      "InsertBefore does not yet handle >1 delay slots!");
-              InsertBefore(DelaySlotMI, MBB, MII); // MII pts back to branch
-
-              // In case (1), delete it and don't replace with anything!
-              // Otherwise (i.e., case (2) only) replace it with a NOP.
-              if (cond1) {
-                DeleteInstruction(MBB, ++MII); // MII now points to next inst.
-                --MII;                         // reset MII for ++MII of loop
-              }
-              else
-                SubstituteInPlace(BuildMI(TM.getInstrInfo().getNOPOpCode(),1),
-                                  MBB, MII+1);        // replace with NOP
 
               if (DEBUG_RA) {
                 std::cerr << "\nRegAlloc: Moved instr. with added code: "
                      << *DelaySlotMI
-                     << "           out of delay slots of instr: " << *MInst;
+                     << "           out of delay slots of instr: " << *MII;
+              }
+
+              // move instruction before branch
+              MBB.insert(MII, MBB.remove(DelaySlotMI));
+
+              // On cond1 we are done (we already moved the
+              // instruction out of the delay slot). On cond2 we need
+              // to insert a nop in place of the moved instruction
+              if (cond2) {
+                MBB.insert(MII, BuildMI(TM.getInstrInfo().getNOPOpCode(),1));
               }
             }
-          else
+          else {
             // For non-branch instr with delay slots (probably a call), move
             // InstrAfter to the instr. in the last delay slot.
-            move2DelayedInstr(*MII, *(MII+delaySlots));
-        }
+            MachineBasicBlock::iterator tmp = MII;
+            std::advance(tmp, delaySlots);
+            move2DelayedInstr(MII, tmp);
+          }
+      }
 
     // Finally iterate over all instructions in BB and insert before/after
     for (MachineBasicBlock::iterator MII=MBB.begin(); MII != MBB.end(); ++MII) {
-      MachineInstr *MInst = *MII; 
+      MachineInstr *MInst = MII; 
 
       // do not process Phis
       if (TM.getInstrInfo().isDummyPhiInstr(MInst->getOpcode()))
@@ -635,7 +625,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
                                        MachineBasicBlock::iterator& MII,
                                        MachineBasicBlock &MBB,
 				       const unsigned OpNum) {
-  MachineInstr *MInst = *MII;
+  MachineInstr *MInst = MII;
   const BasicBlock *BB = MBB.getBasicBlock();
 
   assert((! TM.getInstrInfo().isCall(MInst->getOpcode()) || OpNum == 0) &&
@@ -658,7 +648,8 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   // include all live variables before that branch or return -- we don't want to
   // trample those!  Verify that the set is included in the LV set before MInst.
   if (MII != MBB.begin()) {
-    MachineInstr *PredMI = *(MII-1);
+    MachineBasicBlock::iterator PredMI = MII;
+    --PredMI;
     if (unsigned DS = TM.getInstrInfo().getNumDelaySlots(PredMI->getOpcode()))
       assert(set_difference(LVI->getLiveVarSetBeforeMInst(PredMI), LVSetBef)
              .empty() && "Live-var set before branch should be included in "

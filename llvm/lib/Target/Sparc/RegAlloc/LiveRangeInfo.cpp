@@ -171,7 +171,7 @@ void LiveRangeInfo::constructLiveRanges() {
     // iterate over all the machine instructions in BB
     for(MachineBasicBlock::iterator MInstIterator = MBB.begin();
         MInstIterator != MBB.end(); ++MInstIterator) {  
-      MachineInstr *MInst = *MInstIterator; 
+      MachineInstr *MInst = MInstIterator; 
 
       // If the machine instruction is a  call/return instruction, add it to
       // CallRetInstrList for processing its args, ret value, and ret addr.
@@ -330,7 +330,7 @@ void LiveRangeInfo::coalesceLRs()
 
     // iterate over all the machine instructions in BB
     for(MachineBasicBlock::iterator MII = MBB.begin(); MII != MBB.end(); ++MII){
-      const MachineInstr *MI = *MII;
+      const MachineInstr *MI = MII;
 
       if( DEBUG_RA >= RA_DEBUG_LiveRanges) {
 	std::cerr << " *Iterating over machine instr ";

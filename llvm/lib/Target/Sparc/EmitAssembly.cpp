@@ -721,7 +721,7 @@ void SparcAsmPrinter::emitBasicBlock(const MachineBasicBlock &MBB) {
   // Loop over all of the instructions in the basic block...
   for (MachineBasicBlock::const_iterator MII = MBB.begin(), MIE = MBB.end();
        MII != MIE; ++MII)
-    emitMachineInst(*MII);
+    emitMachineInst(MII);
   toAsm << "\n";  // Separate BB's with newlines
 }
 

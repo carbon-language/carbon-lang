@@ -118,7 +118,7 @@ namespace {
 
 	// Emit an fxch to update the runtime processors version of the state
 	MachineInstr *MI = BuildMI(X86::FXCH, 1).addReg(STReg);
-	I = 1+MBB->insert(I, MI);
+	MBB->insert(I, MI);
 	NumFXCH++;
       }
     }
@@ -129,7 +129,7 @@ namespace {
       pushReg(AsReg);   // New register on top of stack
 
       MachineInstr *MI = BuildMI(X86::FLDrr, 1).addReg(STReg);
-      I = 1+MBB->insert(I, MI);
+      MBB->insert(I, MI);
     }
 
     // popStackAfter - Pop the current value off of the top of the FP stack
@@ -193,12 +193,17 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
   MBB = &BB;
   
   for (MachineBasicBlock::iterator I = BB.begin(); I != BB.end(); ++I) {
-    MachineInstr *MI = *I;
+    MachineInstr *MI = I;
     unsigned Flags = TII.get(MI->getOpcode()).TSFlags;
     if ((Flags & X86II::FPTypeMask) == X86II::NotFP)
       continue;  // Efficiently ignore non-fp insts!
 
-    MachineInstr *PrevMI = I == BB.begin() ? 0 : *(I-1);
+    MachineInstr *PrevMI = 0;
+    if (I != BB.begin()) {
+        MachineBasicBlock::iterator tmp = I;
+        --tmp;
+        PrevMI = tmp;
+    }
 
     ++NumFP;  // Keep track of # of pseudo instrs
     DEBUG(std::cerr << "\nFPInst:\t";
@@ -242,15 +247,17 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     }
     
     // Print out all of the instructions expanded to if -debug
-    DEBUG(if (*I == PrevMI) {
+    DEBUG(if (&*I == PrevMI) {
             std::cerr<< "Just deleted pseudo instruction\n";
           } else {
 	    MachineBasicBlock::iterator Start = I;
 	    // Rewind to first instruction newly inserted.
-	    while (Start != BB.begin() && *(Start-1) != PrevMI) --Start;
+	    while (Start != BB.begin() &&
+                   --Start != MachineBasicBlock::iterator(PrevMI));
+            ++Start;
 	    std::cerr << "Inserted instructions:\n\t";
-	    (*Start)->print(std::cerr, MF.getTarget());
-	    while (++Start != I+1);
+	    Start->print(std::cerr, MF.getTarget());
+	    while (++Start != I); ++Start;
 	  }
 	  dumpStack();
 	  );
@@ -344,15 +351,15 @@ void FPS::popStackAfter(MachineBasicBlock::iterator &I) {
   RegMap[Stack[--StackTop]] = ~0;     // Update state
 
   // Check to see if there is a popping version of this instruction...
-  int Opcode = Lookup(PopTable, ARRAY_SIZE(PopTable), (*I)->getOpcode());
+  int Opcode = Lookup(PopTable, ARRAY_SIZE(PopTable), I->getOpcode());
   if (Opcode != -1) {
-    (*I)->setOpcode(Opcode);
+    I->setOpcode(Opcode);
     if (Opcode == X86::FUCOMPPr)
-      (*I)->RemoveOperand(0);
+      I->RemoveOperand(0);
 
   } else {    // Insert an explicit pop
     MachineInstr *MI = BuildMI(X86::FSTPrr, 1).addReg(X86::ST0);
-    I = MBB->insert(I+1, MI);
+    I = MBB->insert(++I, MI);
   }
 }
 
@@ -371,7 +378,7 @@ static unsigned getFPReg(const MachineOperand &MO) {
 /// handleZeroArgFP - ST(0) = fld0    ST(0) = flds <mem>
 ///
 void FPS::handleZeroArgFP(MachineBasicBlock::iterator &I) {
-  MachineInstr *MI = *I;
+  MachineInstr *MI = I;
   unsigned DestReg = getFPReg(MI->getOperand(0));
   MI->RemoveOperand(0);   // Remove the explicit ST(0) operand
 
@@ -382,7 +389,7 @@ void FPS::handleZeroArgFP(MachineBasicBlock::iterator &I) {
 /// handleOneArgFP - fst <mem>, ST(0)
 ///
 void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
-  MachineInstr *MI = *I;
+  MachineInstr *MI = I;
   assert((MI->getNumOperands() == 5 || MI->getNumOperands() == 1) &&
          "Can only handle fst* & ftst instructions!");
 
@@ -418,7 +425,7 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
 /// handleOneArgFPRW - fchs - ST(0) = -ST(0)
 ///
 void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
-  MachineInstr *MI = *I;
+  MachineInstr *MI = I;
   assert(MI->getNumOperands() == 2 && "Can only handle fst* instructions!");
 
   // Is this the last use of the source register?
@@ -503,7 +510,7 @@ static const TableEntry ReverseSTiTable[] = {
 void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   ASSERT_SORTED(ForwardST0Table); ASSERT_SORTED(ReverseST0Table);
   ASSERT_SORTED(ForwardSTiTable); ASSERT_SORTED(ReverseSTiTable);
-  MachineInstr *MI = *I;
+  MachineInstr *MI = I;
 
   unsigned NumOperands = MI->getNumOperands();
   assert(NumOperands == 3 ||
@@ -588,7 +595,8 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   unsigned NotTOS = (TOS == Op0) ? Op1 : Op0;
 
   // Replace the old instruction with a new instruction
-  *I = BuildMI(Opcode, 1).addReg(getSTReg(NotTOS));
+  MBB->remove(I);
+  I = MBB->insert(I, BuildMI(Opcode, 1).addReg(getSTReg(NotTOS)));
 
   // If both operands are killed, pop one off of the stack in addition to
   // overwriting the other one.
@@ -617,7 +625,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
 	Stack[--StackTop] = ~0;
 	
 	MachineInstr *MI = BuildMI(X86::FSTPrr, 1).addReg(STReg);
-	I = MBB->insert(I+1, MI);
+	I = MBB->insert(++I, MI);
       }
     }
   }
@@ -639,7 +647,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
 /// instructions.
 ///
 void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
-  MachineInstr *MI = *I;
+  MachineInstr *MI = I;
   switch (MI->getOpcode()) {
   default: assert(0 && "Unknown SpecialFP instruction!");
   case X86::FpGETRESULT:  // Appears immediately after a call returning FP type!
@@ -675,6 +683,6 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
   }
   }
 
-  I = MBB->erase(I)-1;  // Remove the pseudo instruction
-  delete MI;
+  I = MBB->erase(I);  // Remove the pseudo instruction
+  --I;
 }

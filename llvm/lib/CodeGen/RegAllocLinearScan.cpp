@@ -396,15 +396,15 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         for (currentInstr_ = currentMbb_->begin();
              currentInstr_ != currentMbb_->end(); ) {
             DEBUG(std::cerr << "\tinstruction: ";
-                  (*currentInstr_)->print(std::cerr, *tm_););
+                  currentInstr_->print(std::cerr, *tm_););
 
             // use our current mapping and actually replace and
             // virtual register with its allocated physical registers
             DEBUG(std::cerr << "\t\treplacing virtual registers with mapped "
                   "physical registers:\n");
-            for (unsigned i = 0, e = (*currentInstr_)->getNumOperands();
+            for (unsigned i = 0, e = currentInstr_->getNumOperands();
                  i != e; ++i) {
-                MachineOperand& op = (*currentInstr_)->getOperand(i);
+                MachineOperand& op = currentInstr_->getOperand(i);
                 if (op.isRegister() &&
                     MRegisterInfo::isVirtualRegister(op.getReg())) {
                     unsigned virtReg = op.getReg();
@@ -412,20 +412,19 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                     if (it != v2pMap_.end()) {
                         DEBUG(std::cerr << "\t\t\t%reg" << it->first
                               << " -> " << mri_->getName(it->second) << '\n');
-                        (*currentInstr_)->SetMachineOperandReg(i, it->second);
+                        currentInstr_->SetMachineOperandReg(i, it->second);
                     }
                 }
             }
 
             unsigned srcReg, dstReg;
-            if (tii.isMoveInstr(**currentInstr_, srcReg, dstReg) &&
+            if (tii.isMoveInstr(*currentInstr_, srcReg, dstReg) &&
                 ((MRegisterInfo::isPhysicalRegister(srcReg) &&
                   MRegisterInfo::isPhysicalRegister(dstReg) &&
                   srcReg == dstReg) ||
                  (MRegisterInfo::isVirtualRegister(srcReg) &&
                   MRegisterInfo::isVirtualRegister(dstReg) &&
                   v2ssMap_[srcReg] == v2ssMap_[dstReg]))) {
-                delete *currentInstr_;
                 currentInstr_ = currentMbb_->erase(currentInstr_);
                 ++numPeep;
                 DEBUG(std::cerr << "\t\tdeleting instruction\n");
@@ -436,12 +435,12 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             Regs toClear;
             Regs toSpill;
 
-            const unsigned numOperands = (*currentInstr_)->getNumOperands();
+            const unsigned numOperands = currentInstr_->getNumOperands();
 
             DEBUG(std::cerr << "\t\tloading temporarily used operands to "
                   "registers:\n");
             for (unsigned i = 0; i != numOperands; ++i) {
-                MachineOperand& op = (*currentInstr_)->getOperand(i);
+                MachineOperand& op = currentInstr_->getOperand(i);
                 if (op.isRegister() && op.isUse() &&
                     MRegisterInfo::isVirtualRegister(op.getReg())) {
                     unsigned virtReg = op.getAllocatedRegNum();
@@ -460,7 +459,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                         else
                             toClear.push_back(it);
                     }
-                    (*currentInstr_)->SetMachineOperandReg(i, physReg);
+                    currentInstr_->SetMachineOperandReg(i, physReg);
                 }
             }
 
@@ -472,7 +471,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             DEBUG(std::cerr << "\t\tassigning temporarily defined operands to "
                   "registers:\n");
             for (unsigned i = 0; i != numOperands; ++i) {
-                MachineOperand& op = (*currentInstr_)->getOperand(i);
+                MachineOperand& op = currentInstr_->getOperand(i);
                 if (op.isRegister() &&
                     MRegisterInfo::isVirtualRegister(op.getReg())) {
                     assert(!op.isUse() && "we should not have uses here!");
@@ -489,7 +488,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                         // this instruction
                         toSpill.push_back(it);
                     }
-                    (*currentInstr_)->SetMachineOperandReg(i, physReg);
+                    currentInstr_->SetMachineOperandReg(i, physReg);
                 }
             }
             ++currentInstr_; // spills will go after this instruction

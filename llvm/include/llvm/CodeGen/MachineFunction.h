@@ -20,7 +20,6 @@
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "Support/Annotation.h"
-#include "Support/ilist"
 
 namespace llvm {
 

@@ -92,7 +92,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
         for (MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
              mi != miEnd; ++mi) {
-            inserted = mi2iMap_.insert(std::make_pair(*mi, miIndex)).second;
+            inserted = mi2iMap_.insert(std::make_pair(mi, miIndex)).second;
             assert(inserted && "multiple MachineInstr -> index mappings");
             miIndex += 2;
         }
@@ -109,12 +109,10 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
         const MachineBasicBlock* mbb = mbbi;
         unsigned loopDepth = loopInfo.getLoopDepth(mbb->getBasicBlock());
 
-        for (MachineBasicBlock::const_iterator mii = mbb->begin(),
-                 mie = mbb->end(); mii != mie; ++mii) {
-            MachineInstr* mi = *mii;
-
+        for (MachineBasicBlock::const_iterator mi = mbb->begin(),
+                 mie = mbb->end(); mi != mie; ++mi) {
             for (int i = mi->getNumOperands() - 1; i >= 0; --i) {
-                MachineOperand& mop = mi->getOperand(i);
+                const MachineOperand& mop = mi->getOperand(i);
                 if (mop.isRegister() &&
                     MRegisterInfo::isVirtualRegister(mop.getReg())) {
                     unsigned reg = mop.getAllocatedRegNum();
@@ -169,8 +167,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
             if (vi.AliveBlocks[i]) {
                 MachineBasicBlock* mbb = lv_->getIndexMachineBasicBlock(i);
                 if (!mbb->empty()) {
-                    interval->addRange(getInstructionIndex(mbb->front()),
-                                       getInstructionIndex(mbb->back()) + 1);
+                    interval->addRange(getInstructionIndex(&mbb->front()),
+                                       getInstructionIndex(&mbb->back()) + 1);
                 }
             }
         }
@@ -181,7 +179,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
 
     // we consider defs to happen at the second time slot of the
     // instruction
-    unsigned instrIndex = getInstructionIndex(*mi) + 1;
+    unsigned instrIndex = getInstructionIndex(mi) + 1;
 
     bool killedInDefiningBasicBlock = false;
     for (int i = 0, e = vi.Kills.size(); i != e; ++i) {
@@ -189,8 +187,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
         MachineInstr* killerInstr = vi.Kills[i].second;
         unsigned start = (mbb == killerBlock ?
                           instrIndex :
-                          getInstructionIndex(killerBlock->front()));
-        unsigned end = (killerInstr == *mi ?
+                          getInstructionIndex(&killerBlock->front()));
+        unsigned end = (killerInstr == mi ?
                         instrIndex + 1 : // dead
                         getInstructionIndex(killerInstr) + 1); // killed
         // we do not want to add invalid ranges. these can happen when
@@ -204,7 +202,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
     }
 
     if (!killedInDefiningBasicBlock) {
-        unsigned end = getInstructionIndex(mbb->back()) + 1;
+        unsigned end = getInstructionIndex(&mbb->back()) + 1;
         interval->addRange(instrIndex, end);
     }
 }
@@ -221,10 +219,10 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
     // we consider defs to happen at the second time slot of the
     // instruction
     unsigned start, end;
-    start = end = getInstructionIndex(*mi) + 1;
+    start = end = getInstructionIndex(mi) + 1;
 
     // a variable can be dead by the instruction defining it
-    for (KillIter ki = lv_->dead_begin(*mi), ke = lv_->dead_end(*mi);
+    for (KillIter ki = lv_->dead_begin(mi), ke = lv_->dead_end(mi);
          ki != ke; ++ki) {
         if (reg == ki->second) {
             DEBUG(std::cerr << " dead\n");
@@ -237,7 +235,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
     do {
         ++mi;
         end += 2;
-        for (KillIter ki = lv_->killed_begin(*mi), ke = lv_->killed_end(*mi);
+        for (KillIter ki = lv_->killed_begin(mi), ke = lv_->killed_end(mi);
              ki != ke; ++ki) {
             if (reg == ki->second) {
                 DEBUG(std::cerr << " killed\n");
@@ -301,19 +299,18 @@ void LiveIntervals::computeIntervals()
 
         for (MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
              mi != miEnd; ++mi) {
-            MachineInstr* instr = *mi;
             const TargetInstrDescriptor& tid =
-                tm_->getInstrInfo().get(instr->getOpcode());
-            DEBUG(std::cerr << "\t[" << getInstructionIndex(instr) << "] ";
-                  instr->print(std::cerr, *tm_););
+                tm_->getInstrInfo().get(mi->getOpcode());
+            DEBUG(std::cerr << "\t[" << getInstructionIndex(mi) << "] ";
+                  mi->print(std::cerr, *tm_););
 
             // handle implicit defs
             for (const unsigned* id = tid.ImplicitDefs; *id; ++id)
                 handleRegisterDef(mbb, mi, *id);
 
             // handle explicit defs
-            for (int i = instr->getNumOperands() - 1; i >= 0; --i) {
-                MachineOperand& mop = instr->getOperand(i);
+            for (int i = mi->getNumOperands() - 1; i >= 0; --i) {
+                MachineOperand& mop = mi->getOperand(i);
                 // handle register defs - build intervals
                 if (mop.isRegister() && mop.isDef())
                     handleRegisterDef(mbb, mi, mop.getAllocatedRegNum());
@@ -336,15 +333,14 @@ void LiveIntervals::joinIntervals()
 
     const TargetInstrInfo& tii = tm_->getInstrInfo();
 
-    for (MachineFunction::const_iterator mbbi = mf_->begin(),
-             mbbe = mf_->end(); mbbi != mbbe; ++mbbi) {
-        const MachineBasicBlock* mbb = mbbi;
+    for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
+         mbbi != mbbe; ++mbbi) {
+        MachineBasicBlock* mbb = mbbi;
         DEBUG(std::cerr << "machine basic block: "
               << mbb->getBasicBlock()->getName() << "\n");
 
-        for (MachineBasicBlock::const_iterator mii = mbb->begin(),
-                 mie = mbb->end(); mii != mie; ++mii) {
-            MachineInstr* mi = *mii;
+        for (MachineBasicBlock::iterator mi = mbb->begin(), mie = mbb->end();
+             mi != mie; ++mi) {
             const TargetInstrDescriptor& tid =
                 tm_->getInstrInfo().get(mi->getOpcode());
             DEBUG(std::cerr << "\t\tinstruction["

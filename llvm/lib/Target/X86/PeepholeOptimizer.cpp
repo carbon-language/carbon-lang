@@ -50,8 +50,11 @@ bool PH::runOnMachineFunction(MachineFunction &MF) {
 
 bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
 			  MachineBasicBlock::iterator &I) {
-  MachineInstr *MI = *I;
-  MachineInstr *Next = (I+1 != MBB.end()) ? *(I+1) : 0;
+  assert(I != MBB.end());
+  MachineBasicBlock::iterator NextI = I; ++NextI;
+
+  MachineInstr *MI = I;
+  MachineInstr *Next = (NextI != MBB.end()) ? &*NextI : (MachineInstr*)0;
   unsigned Size = 0;
   switch (MI->getOpcode()) {
   case X86::MOVrr8:
@@ -59,7 +62,6 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
   case X86::MOVrr32:   // Destroy X = X copies...
     if (MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) {
       I = MBB.erase(I);
-      delete MI;
       return true;
     }
     return false;
@@ -82,8 +84,8 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         }
         unsigned R0 = MI->getOperand(0).getReg();
         unsigned R1 = MI->getOperand(1).getReg();
-        *I = BuildMI(Opcode, 2, R0).addReg(R1).addZImm((char)Val);
-        delete MI;
+        I = MBB.insert(MBB.erase(I),
+                       BuildMI(Opcode, 2, R0).addReg(R1).addZImm((char)Val));
         return true;
       }
     }
@@ -114,8 +116,8 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         case X86::XORri32:  Opcode = X86::XORri32b; break;
         }
         unsigned R0 = MI->getOperand(0).getReg();
-        *I = BuildMI(Opcode, 1, R0, MOTy::UseAndDef).addZImm((char)Val);
-        delete MI;
+        I = MBB.insert(MBB.erase(I),
+                    BuildMI(Opcode, 1, R0, MOTy::UseAndDef).addZImm((char)Val));
         return true;
       }
     }
@@ -132,8 +134,8 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
       if (Val == 0) {                              // mov EAX, 0 -> xor EAX, EAX
 	static const unsigned Opcode[] ={X86::XORrr8,X86::XORrr16,X86::XORrr32};
 	unsigned Reg = MI->getOperand(0).getReg();
-	*I = BuildMI(Opcode[Size], 2, Reg).addReg(Reg).addReg(Reg);
-	delete MI;
+	I = MBB.insert(MBB.erase(I),
+                       BuildMI(Opcode[Size], 2, Reg).addReg(Reg).addReg(Reg));
 	return true;
       } else if (Val == -1) {                     // mov EAX, -1 -> or EAX, -1
 	// TODO: 'or Reg, -1' has a smaller encoding than 'mov Reg, -1'
@@ -145,8 +147,6 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     if (Next->getOpcode() == X86::BSWAPr32 &&
 	MI->getOperand(0).getReg() == Next->getOperand(0).getReg()) {
       I = MBB.erase(MBB.erase(I));
-      delete MI;
-      delete Next;
       return true;
     }
     return false;
@@ -189,12 +189,11 @@ namespace {
     virtual bool runOnMachineFunction(MachineFunction &MF) {
       for (MachineFunction::iterator BI = MF.begin(), E = MF.end(); BI!=E; ++BI)
         for (MachineBasicBlock::iterator I = BI->begin(); I != BI->end(); ++I) {
-          MachineInstr *MI = *I;
-          for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-            MachineOperand &MO = MI->getOperand(i);
+          for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+            MachineOperand &MO = I->getOperand(i);
             if (MO.isRegister() && MO.isDef() && !MO.isUse() &&
                 MRegisterInfo::isVirtualRegister(MO.getReg()))
-              setDefinition(MO.getReg(), MI);
+              setDefinition(MO.getReg(), I);
           }
         }
       return false;
@@ -377,8 +376,10 @@ bool SSAPH::OptimizeAddress(MachineInstr *MI, unsigned OpNo) {
 
 bool SSAPH::PeepholeOptimize(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator &I) {
-  MachineInstr *MI = *I;
-  MachineInstr *Next = (I+1 != MBB.end()) ? *(I+1) : 0;
+  MachineBasicBlock::iterator NextI = I; ++NextI;
+
+  MachineInstr *MI = I;
+  MachineInstr *Next = (NextI != MBB.end()) ? &*NextI : (MachineInstr*)0;
 
   bool Changed = false;
 
