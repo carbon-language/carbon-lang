@@ -264,22 +264,12 @@ bool ADCE::doADCE() {
       }
   }
 
-  // Loop over all of the basic blocks in the function, removing dead
-  // instructions from alive blocks, and dropping references of the dead blocks
+  // Loop over all of the basic blocks in the function, dropping references of
+  // the dead basic blocks
   //
   for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I) {
     BasicBlock *BB = *I;
-    if (AliveBlocks.count(BB)) {
-      for (BasicBlock::iterator II = BB->begin(); II != BB->end()-1; )
-        if (!LiveSet.count(*II)) {             // Is this instruction alive?
-          // Nope... remove the instruction from it's basic block...
-          delete BB->getInstList().remove(II);
-          ++NumInstRemoved;
-          MadeChanges = true;
-        } else {
-          ++II;
-        }
-    } else {
+    if (!AliveBlocks.count(BB)) {
       // Remove all outgoing edges from this basic block and convert the
       // terminator into a return instruction.
       vector<BasicBlock*> Succs(succ_begin(BB), succ_end(BB));
@@ -306,15 +296,28 @@ bool ADCE::doADCE() {
     }
   }
 
-  // Now loop through all of the blocks and delete them.  We can safely do this
-  // now because we know that there are no references to dead blocks (because
-  // they have dropped all of their references...
+  // Now loop through all of the blocks and delete the dead ones.  We can safely
+  // do this now because we know that there are no references to dead blocks
+  // (because they have dropped all of their references...  we also remove dead
+  // instructions from alive blocks.
   //
   for (Function::iterator BI = Func->begin(); BI != Func->end(); )
     if (!AliveBlocks.count(*BI))
       delete Func->getBasicBlocks().remove(BI);
-    else
+    else {
+      BasicBlock *BB = *BI;
+      for (BasicBlock::iterator II = BB->begin(); II != BB->end()-1; )
+        if (!LiveSet.count(*II)) {             // Is this instruction alive?
+          // Nope... remove the instruction from it's basic block...
+          delete BB->getInstList().remove(II);
+          ++NumInstRemoved;
+          MadeChanges = true;
+        } else {
+          ++II;
+        }
+
       ++BI;                                           // Increment iterator...
+    }
 
   return MadeChanges;
 }
