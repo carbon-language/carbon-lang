@@ -22,7 +22,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/SlotCalculator.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -32,27 +31,20 @@
 #include "Support/Statistic.h"
 #include "SparcInternals.h"
 #include <string>
-
 using namespace llvm;
 
-namespace llvm {
-
 namespace {
-
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
   class GlobalIdTable: public Annotation {
     static AnnotationID AnnotId;
     friend class AsmPrinter;              // give access to AnnotId
-  
-    typedef hash_map<const Value*, int> ValIdMap;
-    typedef ValIdMap::const_iterator ValIdMapConstIterator;
-    typedef ValIdMap::      iterator ValIdMapIterator;
   public:
-    SlotCalculator Table;    // map anonymous values to unique integer IDs
-    ValIdMap valToIdMap;     // used for values not handled by SlotCalculator 
+    // AnonymousObjectMap - map anonymous values to unique integer IDs
+    std::map<const Value*, unsigned> AnonymousObjectMap;
+    unsigned LastAnonIDUsed;
     
-    GlobalIdTable(Module* M) : Annotation(AnnotId), Table(M, true) {}
+    GlobalIdTable() : Annotation(AnnotId), LastAnonIDUsed(0) {}
   };
 
   AnnotationID GlobalIdTable::AnnotId = 
@@ -186,18 +178,13 @@ namespace {
 
 } // End anonymous namespace
 
-} // End namespace llvm
-
 
 
 //===---------------------------------------------------------------------===//
 //   Code abstracted away from the AsmPrinter
 //===---------------------------------------------------------------------===//
 
-namespace llvm {
-
 namespace {
-
   class AsmPrinter {
     GlobalIdTable* idTable;
   public:
@@ -220,7 +207,7 @@ namespace {
       // Create the global id table if it does not already exist
       idTable = (GlobalIdTable*)M.getAnnotation(GlobalIdTable::AnnotId);
       if (idTable == NULL) {
-        idTable = new GlobalIdTable(&M);
+        idTable = new GlobalIdTable();
         M.addAnnotation(idTable);
       }
     }
@@ -276,20 +263,6 @@ namespace {
       printConstantValueOnly(CV);
     }
 
-    void startFunction(Function &F) {
-      // Make sure the slot table has information about this function...
-      idTable->Table.incorporateFunction(&F);
-    }
-    void endFunction(Function &) {
-      idTable->Table.purgeFunction();  // Forget all about F
-    }
-
-    // Check if a value is external or accessible from external code.
-    bool isExternal(const Value* V) {
-      const GlobalValue *GV = dyn_cast<GlobalValue>(V);
-      return GV && GV->hasExternalLinkage();
-    }
-  
     // enterSection - Use this method to enter a different section of the output
     // executable.  This is used to only output necessary section transitions.
     //
@@ -338,23 +311,19 @@ namespace {
     // FPrefix is always prepended to the output identifier.
     //
     std::string getID(const Value *V, const char *Prefix,
-                      const char *FPrefix = 0)
+                      const char *FPrefix = "")
     {
-      std::string Result = FPrefix ? FPrefix : "";  // "Forced prefix"
+      std::string Result = FPrefix;  // "Forced prefix"
 
       Result += V->hasName() ? V->getName() : std::string(Prefix);
 
       // Qualify all internal names with a unique id.
-      if (!isExternal(V)) {
-        int valId = idTable->Table.getSlot(V);
-        if (valId == -1) {
-          GlobalIdTable::ValIdMapConstIterator I = idTable->valToIdMap.find(V);
-          if (I == idTable->valToIdMap.end())
-            valId = idTable->valToIdMap[V] = idTable->valToIdMap.size();
-          else
-            valId = I->second;
-        }
-        Result = Result + "_" + itostr(valId);
+      if (!isa<GlobalValue>(V) || !cast<GlobalValue>(V)->hasExternalLinkage()) {
+        unsigned &ValID = idTable->AnonymousObjectMap[V];
+        if (ValID == 0)
+          ValID = ++idTable->LastAnonIDUsed;
+
+        Result += "_" + utostr(ValID);
 
         // Replace or prefix problem characters in the name
         Result = getValidSymbolName(Result);
@@ -404,10 +373,8 @@ namespace {
     /// 
     std::string valToExprString(const Value* V, const TargetMachine& target);
   };
-
 } // End anonymous namespace
 
-} // End namespace llvm
 
 /// Print a single constant value.
 ///
@@ -617,8 +584,6 @@ std::string AsmPrinter::valToExprString(const Value* V,
 //   SparcAsmPrinter Code
 //===----------------------------------------------------------------------===//
 
-namespace llvm {
-
 namespace {
 
   struct SparcAsmPrinter : public FunctionPass, public AsmPrinter {
@@ -638,9 +603,7 @@ namespace {
 
     virtual bool runOnFunction(Function &F) {
       currFunction = &F;
-      startFunction(F);
       emitFunction(F);
-      endFunction(F);
       return false;
     }
 
@@ -908,8 +871,7 @@ void SparcAsmPrinter::emitGlobals(const Module &M) {
   toAsm << "\n";
 }
 
-FunctionPass *createAsmPrinterPass(std::ostream &Out, const TargetMachine &TM) {
+FunctionPass *llvm::createAsmPrinterPass(std::ostream &Out,
+                                         const TargetMachine &TM) {
   return new SparcAsmPrinter(Out, TM);
 }
-
-} // End llvm namespace
