@@ -17,7 +17,6 @@
 using std::vector;
 
 
-
 // MappingInfo - This method collects mapping info 
 // for the mapping from LLVM to machine code.
 //
@@ -148,7 +147,8 @@ void getMappingInfoForFunction::createFunctionKey(Module &M){
   int j = 0;
   for (Module::iterator FI = M.begin(), FE = M.end();
        FI != FE; ++FI){
-    if(FI->size() <=1) continue;
+    //dont count F with 0 BBs
+    if(FI->isExternal()) continue;
     Fkey[FI] = i;
     ++i;
   }
@@ -156,11 +156,11 @@ void getMappingInfoForFunction::createFunctionKey(Module &M){
      
 //Assign a Number to each BB
 void getMappingInfoForFunction::createBasicBlockKey(Module &M){
-  int i = 0;
+  //int i = 0;
   for (Module::iterator FI = M.begin(), FE = M.end(); 
        FI != FE; ++FI){
-    //	int i = 0;
-    //if(FI->size() <= 1) continue;
+    int i = 0;
+    if(FI->isExternal()) continue;
     for (Function::iterator BI = FI->begin(), BE = FI->end(); 
 	 BI != BE; ++BI){
       MachineCodeForBasicBlock &miBB = MachineCodeForBasicBlock::get(BI);
@@ -170,10 +170,11 @@ void getMappingInfoForFunction::createBasicBlockKey(Module &M){
   }
 }
 
+//Assign a number to each MI wrt beginning of the BB
 void getMappingInfoForFunction::createMachineInstructionKey(Module &M){
   for (Module::iterator FI = M.begin(), FE = M.end(); 
        FI != FE; ++FI){
-    //if(FI->size() <= 1) continue;
+    if(FI->isExternal()) continue;
     for (Function::iterator BI=FI->begin(), BE=FI->end(); 
 	 BI != BE; ++BI){
       MachineCodeForBasicBlock &miBB = MachineCodeForBasicBlock::get(BI);
@@ -186,29 +187,29 @@ void getMappingInfoForFunction::createMachineInstructionKey(Module &M){
   }
 }
 
+//BBtoMImap: contains F#, BB#, 
+//              MI#[wrt beginning of F], #MI in BB
 void getMappingInfoForFunction::createBBToMImap(Module &M){
-  //go thro each function in the module
+
   for (Module::iterator FI = M.begin(), FE = M.end();
        FI != FE; ++FI){	
-    //if(FI->size() <= 1)continue;
-    //go thro each basic block in that function 
+    if(FI->isExternal())continue;
     int i = 0;
     for (Function::iterator BI = FI->begin(), 
 	   BE = FI->end(); BI != BE; ++BI){
-      //create a Map record
-      //get the corresponding machine instruction 
       MachineCodeForBasicBlock &miBB = MachineCodeForBasicBlock::get(BI);
-      //add record into the map
+     //add record into the map
       BBmap.push_back(vector<int>());
       vector<int> &oneBB = BBmap.back();
       oneBB.reserve(4);
 
-      //add the function number
+      //add F#
       oneBB.push_back(Fkey[FI]);
-      //add the machine instruction number
+      //add BB#
       oneBB.push_back( i );
+      //add the MI#[wrt the beginning of F]
       oneBB.push_back( BBkey[ miBB[0] ]);
-      //add the number of instructions
+      //add the # of MI
       oneBB.push_back(miBB.size());
       ++i;
 
@@ -216,11 +217,13 @@ void getMappingInfoForFunction::createBBToMImap(Module &M){
   }
 }
 
+//LLVMtoMImap: contains F#, BB#, LLVM#, 
+//                           MIs[wrt to beginning of BB] 
 void getMappingInfoForFunction::createLLVMToMImap(Module &M){
   
   for (Module::iterator FI = M.begin(), FE = M.end();
        FI != FE; ++FI){
-    //if(FI->size() <= 1) continue;
+    if(FI->isExternal()) continue;
     int i =0;
     for (Function::iterator BI = FI->begin(),  BE = FI->end(); 
 	 BI != BE; ++BI, ++i){
@@ -229,15 +232,22 @@ void getMappingInfoForFunction::createLLVMToMImap(Module &M){
 	     IE = BI->end(); II != IE; ++II, ++j){
 	MachineCodeForInstruction& miI = 
 	  MachineCodeForInstruction::get(II);
+	//do for each corr. MI
 	for (MachineCodeForInstruction::iterator miII = miI.begin(), 
 	       miIE = miI.end(); miII != miIE; ++miII){
+
+	  MImap.push_back(vector<int>());
+	  vector<int> &oneMI = MImap.back();
+	  oneMI.reserve(4);
 	  
-	  vector<int> oneMI;
+	  //add F#
 	  oneMI.push_back(Fkey[FI]);
+	  //add BB#
 	  oneMI.push_back(i);
+	  //add LLVM Instr#
 	  oneMI.push_back(j);
+	  //add MI#[wrt to beginning of BB]
 	  oneMI.push_back(MIkey[*miII]);
-	  MImap.push_back(oneMI);
 	}
       }
     } 
