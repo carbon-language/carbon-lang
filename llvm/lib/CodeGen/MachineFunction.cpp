@@ -332,22 +332,7 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
           if (numExtra <= 0)
             continue;
           
-          unsigned sizeForThisCall;
-          if (frameInfo.argsOnStackHaveFixedSize())
-            {
-              int argSize = frameInfo.getSizeOfEachArgOnStack(); 
-              sizeForThisCall = numExtra * (unsigned) argSize;
-            }
-          else
-            {
-              assert(0 && "UNTESTED CODE: Size per stack argument is not "
-                     "fixed on this architecture: use actual arg sizes to "
-                     "compute MaxOptionalArgsSize");
-              sizeForThisCall = 0;
-              for (unsigned i = 0; i < numOperands; ++i)
-                sizeForThisCall += target.getTargetData().getTypeSize(callInst->
-                                              getOperand(i)->getType());
-            }
+          unsigned sizeForThisCall = numExtra * 8;
           
           if (maxSize < sizeForThisCall)
             maxSize = sizeForThisCall;
