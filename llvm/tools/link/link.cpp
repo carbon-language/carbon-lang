@@ -19,7 +19,6 @@
 #include <memory>
 #include <sys/types.h>     // For FileExists
 #include <sys/stat.h>
-#include <iostream>
 
 using std::cerr;
 

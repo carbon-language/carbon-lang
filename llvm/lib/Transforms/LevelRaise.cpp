@@ -18,7 +18,6 @@
 #include "Support/STLExtras.h"
 #include "Support/StatisticReporter.h"
 #include <algorithm>
-#include <iostream>
 using std::cerr;
 
 static Statistic<> NumLoadStorePeepholes("raise\t\t- Number of load/store peepholes");
