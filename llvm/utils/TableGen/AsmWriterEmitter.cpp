@@ -53,8 +53,9 @@ namespace {
 
   struct AsmWriterInst {
     std::vector<AsmWriterOperand> Operands;
+    const CodeGenInstruction *CGI;
     
-    void ParseAsmString(const CodeGenInstruction &CGI, unsigned Variant);
+    AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant);
     void EmitCode(std::ostream &OS) const {
       for (unsigned i = 0, e = Operands.size(); i != e; ++i)
         Operands[i].EmitCode(OS);
@@ -84,8 +85,8 @@ void AsmWriterOperand::EmitCode(std::ostream &OS) const {
 /// ParseAsmString - Parse the specified Instruction's AsmString into this
 /// AsmWriterInst.
 ///
-void AsmWriterInst::ParseAsmString(const CodeGenInstruction &CGI,
-                                   unsigned Variant) {
+AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
+  this->CGI = &CGI;
   bool inVariant = false;  // True if we are inside a {.|.|.} region.
 
   const std::string &AsmString = CGI.AsmString;
@@ -152,10 +153,11 @@ void AsmWriterInst::ParseAsmString(const CodeGenInstruction &CGI,
         throw "Stray '$' in '" + CGI.Name + "' asm string, maybe you want $$?";
 
       unsigned OpNo = CGI.getOperandNamed(VarName);
+      CodeGenInstruction::OperandInfo OpInfo = CGI.OperandList[OpNo];
 
       // If this is a two-address instruction and we are not accessing the
       // 0th operand, remove an operand.
-      unsigned MIOp = CGI.OperandList[OpNo].MIOperandNo;
+      unsigned MIOp = OpInfo.MIOperandNo;
       if (CGI.isTwoAddress && MIOp != 0) {
         if (MIOp == 1)
           throw "Should refer to operand #0 instead of #1 for two-address"
@@ -163,8 +165,8 @@ void AsmWriterInst::ParseAsmString(const CodeGenInstruction &CGI,
         --MIOp;
       }
 
-      Operands.push_back(AsmWriterOperand(CGI.OperandList[OpNo].PrinterMethodName,
-                                          MIOp, CGI.OperandList[OpNo].Ty));
+      Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName,
+                                          MIOp, OpInfo.Ty));
       LastEmitted = VarEnd;
     }
   }
@@ -193,17 +195,20 @@ void AsmWriterEmitter::run(std::ostream &O) {
 
   std::string Namespace = Target.inst_begin()->second.Namespace;
 
+  std::vector<AsmWriterInst> Instructions;
+
   for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
          E = Target.inst_end(); I != E; ++I)
-    if (!I->second.AsmString.empty()) {
-      O << "  case " << Namespace << "::" << I->first << ": ";
+    if (!I->second.AsmString.empty())
+      Instructions.push_back(AsmWriterInst(I->second, Variant));
 
-      AsmWriterInst AWI;
-      AWI.ParseAsmString(I->second, Variant);
-      AWI.EmitCode(O);
-      O << " break;\n";
-    }
-
+  for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
+    O << "  case " << Namespace << "::"
+      << Instructions[i].CGI->Name << ": ";
+    Instructions[i].EmitCode(O);
+    O << " break;\n";
+  }
+  
   O << "  }\n"
        "  return true;\n"
        "}\n";
