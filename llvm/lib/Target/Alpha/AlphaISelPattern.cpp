@@ -38,31 +38,29 @@ namespace {
   public:
     AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM) {
       // Set up the TargetLowering object.
+      //I am having problems with shr n ubyte 1
+      setShiftAmountType(MVT::i64); //are these needed?
+      setSetCCResultType(MVT::i64); //are these needed?
+      
       addRegisterClass(MVT::i64, Alpha::GPRCRegisterClass);
       addRegisterClass(MVT::f64, Alpha::FPRCRegisterClass);
+      addRegisterClass(MVT::f32, Alpha::FPRCRegisterClass);
 
-      setOperationAction(ISD::EXTLOAD          , MVT::i1   , Expand);
+      setOperationAction(ISD::EXTLOAD          , MVT::i1   , Expand); //Should this be Promote?  Chris?
 
-      setOperationAction(ISD::ZEXTLOAD         , MVT::i1   , Expand);
+      setOperationAction(ISD::ZEXTLOAD         , MVT::i1   , Expand); //Should this be Promote?  Chris?
       setOperationAction(ISD::ZEXTLOAD         , MVT::i32  , Expand);
 
-      setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
+      setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand); //Should this be Promote?  Chris?
       setOperationAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
 
-      setOperationAction(ISD::ZERO_EXTEND_INREG, MVT::i1, Expand);
-      setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+      setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand); //what is the sign expansion of 1? 1 or -1?
 
-      //      setOperationAction(ISD::UINT_TO_FP       , MVT::i64  , Expand);
-      //      setOperationAction(ISD::UINT_TO_FP       , MVT::i64  , Expand);
-      setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
-      setOperationAction(ISD::SINT_TO_FP       , MVT::i8   , Promote);
-      setOperationAction(ISD::SINT_TO_FP       , MVT::i16  , Promote);
-      setOperationAction(ISD::SINT_TO_FP       , MVT::i32  , Promote);
+      setOperationAction(ISD::SREM, MVT::f32, Expand);
+      setOperationAction(ISD::SREM, MVT::f64, Expand);
 
-      setOperationAction(ISD::FP_TO_SINT       , MVT::f32  , Promote);
-
-      computeRegisterProperties();
+     computeRegisterProperties();
       
       //      addLegalFPImmediate(+0.0); // FLD0
       //      addLegalFPImmediate(+1.0); // FLD1
@@ -366,7 +364,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
 	BuildMI(BB, Alpha::LDWU, 2, Result).addImm(0).addReg(Tmp1);
         break;
       case MVT::i8:
-      case MVT::i1: //FIXME: DAG does not expand i8??
 	BuildMI(BB, Alpha::LDBU, 2, Result).addImm(0).addReg(Tmp1);
         break;
       }
@@ -393,12 +390,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i32:
 	BuildMI(BB, Alpha::LDL, 2, Result).addImm(0).addReg(Tmp1);
         break;
-//       case MVT::i16:
-// 	BuildMI(BB, Alpha::LDW, 2, Result).addImm(0).addReg(Tmp1);
-//         break;
-//       case MVT::i8:
-// 	BuildMI(BB, Alpha::LDB, 2, Result).addImm(0).addReg(Tmp1);
-//         break;
       }
       break;
     }
@@ -520,29 +511,31 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }    
     
   case ISD::SIGN_EXTEND:
+    abort();
+    
   case ISD::SIGN_EXTEND_INREG:
     {
       Tmp1 = SelectExpr(N.getOperand(0));
       MVTSDNode* MVN = dyn_cast<MVTSDNode>(Node);
       //std::cerr << "SrcT: " << MVN->getExtraValueType() << "\n";
       switch(MVN->getExtraValueType())
-	{
-	default:
-	  Node->dump();
- 	  assert(0 && "Sign Extend InReg not there yet");
-	  break;
-	case MVT::i32:
-	  {
-	    BuildMI(BB, Alpha::ADDLi, 2, Result).addReg(Tmp1).addImm(0);
-	    break;
-	  }
-	case MVT::i16:
-	  BuildMI(BB, Alpha::SEXTW, 1, Result).addReg(Tmp1);
-	  break;
-	case MVT::i8:
-	  BuildMI(BB, Alpha::SEXTB, 1, Result).addReg(Tmp1);
-	  break;
-	}
+        {
+        default:
+          Node->dump();
+          assert(0 && "Sign Extend InReg not there yet");
+          break;
+        case MVT::i32:
+          {
+            BuildMI(BB, Alpha::ADDLi, 2, Result).addReg(Tmp1).addImm(0);
+            break;
+          }
+        case MVT::i16:
+          BuildMI(BB, Alpha::SEXTW, 1, Result).addReg(Tmp1);
+          break;
+        case MVT::i8:
+          BuildMI(BB, Alpha::SEXTB, 1, Result).addReg(Tmp1);
+          break;
+        }
       return Result;
     }
   case ISD::ZERO_EXTEND_INREG:
@@ -551,75 +544,103 @@ unsigned ISel::SelectExpr(SDOperand N) {
       MVTSDNode* MVN = dyn_cast<MVTSDNode>(Node);
       //std::cerr << "SrcT: " << MVN->getExtraValueType() << "\n";
       switch(MVN->getExtraValueType())
-	{
-	default:
-	  Node->dump();
- 	  assert(0 && "Zero Extend InReg not there yet");
-	  break;
-	case MVT::i32: Tmp2 = 0xf0; break;
-	case MVT::i16: Tmp2 = 0xfc; break;
-	case MVT::i8: Tmp2 = 0xfe; break;
-	}
+        {
+        default:
+          Node->dump();
+          assert(0 && "Zero Extend InReg not there yet");
+          break;
+        case MVT::i32: Tmp2 = 0xf0; break;
+        case MVT::i16: Tmp2 = 0xfc; break;
+        case MVT::i8: Tmp2 = 0xfe; break;
+        case MVT::i1: //handle this one special
+          BuildMI(BB, Alpha::ANDi, 2, Result).addReg(Tmp1).addImm(1);
+          return Result;
+        }
       BuildMI(BB, Alpha::ZAPi, 2, Result).addReg(Tmp1).addImm(Tmp2);
-     return Result;
+      return Result;
     }
     
   case ISD::SETCC:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node)) {
-      if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
-	switch (SetCC->getCondition()) {
-	default: Node->dump(); assert(0 && "Unknown integer comparison!");
-	case ISD::SETEQ:
-	  BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Tmp1).addReg(Tmp2);
-	  break;
-	case ISD::SETGT:
-	  BuildMI(BB, Alpha::CMPLT, 2, Result).addReg(Tmp2).addReg(Tmp1);
-	  break;
-	case ISD::SETGE:
-	  BuildMI(BB, Alpha::CMPLE, 2, Result).addReg(Tmp2).addReg(Tmp1);
-	  break;
-	case ISD::SETLT:
-	  BuildMI(BB, Alpha::CMPLT, 2, Result).addReg(Tmp1).addReg(Tmp2);
-	  break;
-	case ISD::SETLE:
-	  BuildMI(BB, Alpha::CMPLE, 2, Result).addReg(Tmp1).addReg(Tmp2);
-	  break;
-	case ISD::SETNE:
-	  {
-	    unsigned Tmp3 = MakeReg(MVT::i64);
-	    BuildMI(BB, Alpha::CMPEQ, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-	    BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Tmp3).addReg(Alpha::R31);
-	    break;
-	  }
-	case ISD::SETULT:
-	  BuildMI(BB, Alpha::CMPULT, 2, Result).addReg(Tmp1).addReg(Tmp2);
-	  break;
-	case ISD::SETUGT:
-	  BuildMI(BB, Alpha::CMPULT, 2, Result).addReg(Tmp2).addReg(Tmp1);
-	  break;
-	case ISD::SETULE:
-	  BuildMI(BB, Alpha::CMPULE, 2, Result).addReg(Tmp1).addReg(Tmp2);
-	  break;
-	case ISD::SETUGE:
-	  BuildMI(BB, Alpha::CMPULE, 2, Result).addReg(Tmp2).addReg(Tmp1);
-	  break;
-	}
+    {
+      if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node)) {
+        if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
+          bool isConst1 = false;
+          bool isConst2 = false;
+          int dir;
+
+          //Tmp1 = SelectExpr(N.getOperand(0));
+          if(N.getOperand(0).getOpcode() == ISD::Constant &&
+             cast<ConstantSDNode>(N.getOperand(0))->getValue() >= 0 &&
+             cast<ConstantSDNode>(N.getOperand(0))->getValue() <= 255)
+            isConst1 = true;
+          if(N.getOperand(1).getOpcode() == ISD::Constant &&
+             cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
+             cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
+            isConst2 = true;
+
+          switch (SetCC->getCondition()) {
+          default: Node->dump(); assert(0 && "Unknown integer comparison!");
+          case ISD::SETEQ: Opc = Alpha::CMPEQ; dir=0; break;
+          case ISD::SETLT: Opc = isConst2 ? Alpha::CMPLTi : Alpha::CMPLT; dir = 1; break;
+          case ISD::SETLE: Opc = isConst2 ? Alpha::CMPLEi : Alpha::CMPLE; dir = 1; break;
+          case ISD::SETGT: Opc = isConst1 ? Alpha::CMPLTi : Alpha::CMPLT; dir = 2; break;
+          case ISD::SETGE: Opc = isConst1 ? Alpha::CMPLEi : Alpha::CMPLE; dir = 2; break;
+          case ISD::SETULT: Opc = isConst2 ? Alpha::CMPULTi : Alpha::CMPULT; dir = 1; break;
+          case ISD::SETUGT: Opc = isConst1 ? Alpha::CMPULTi : Alpha::CMPULT; dir = 2; break;
+          case ISD::SETULE: Opc = isConst2 ? Alpha::CMPULEi : Alpha::CMPULE; dir = 1; break;
+          case ISD::SETUGE: Opc = isConst1 ? Alpha::CMPULEi : Alpha::CMPULE; dir = 2; break;
+          case ISD::SETNE:
+            std::cerr << "Alpha does not have a setne.\n";
+            abort();
+           }
+          if (dir == 1) {
+            Tmp1 = SelectExpr(N.getOperand(0));
+            if (isConst2) {
+              Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+              BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+            } else {
+              Tmp2 = SelectExpr(N.getOperand(1));
+              BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+            }
+          } else if (dir == 2) {
+            Tmp1 = SelectExpr(N.getOperand(1));
+            if (isConst2) {
+              Tmp2 = cast<ConstantSDNode>(N.getOperand(0))->getValue();
+              BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+            } else {
+              Tmp2 = SelectExpr(N.getOperand(0));
+              BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+            }
+          } else { //dir == 0
+            if (isConst1) {
+              Tmp1 = cast<ConstantSDNode>(N.getOperand(0))->getValue();
+              Tmp2 = SelectExpr(N.getOperand(1));
+              BuildMI(BB, Alpha::CMPEQi, 2, Result).addReg(Tmp2).addImm(Tmp1);
+            } else if (isConst2) {
+              Tmp1 = SelectExpr(N.getOperand(0));
+              Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+              BuildMI(BB, Alpha::CMPEQi, 2, Result).addReg(Tmp1).addImm(Tmp2);
+            } else {
+              Tmp1 = SelectExpr(N.getOperand(0));
+              Tmp2 = SelectExpr(N.getOperand(1));
+              BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Tmp1).addReg(Tmp2);
+            }
+          }
+        }
+        else
+          {
+            Node->dump();
+            assert(0 && "only integer");
+          }
       }
       else
-	{
-	  Node->dump();
-	  assert(0 && "only integer");
-	}
+        {
+          Node->dump();
+          assert(0 && "Not a setcc in setcc");
+        }
+      return Result;
     }
-    else
-      {
-	Node->dump();
- 	assert(0 && "Not a setcc in setcc");
-      }
-    return Result;
-
+    
   case ISD::CopyFromReg:
     {
       if (Result == 1)
