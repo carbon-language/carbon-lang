@@ -202,7 +202,8 @@ public:
 };
 
 struct ConstantPlaceHolderHelper : public ConstantExpr {
-  ConstantPlaceHolderHelper(const Type *Ty) : ConstantExpr(Instruction::UserOp1, Constant::getNullValue(Ty), Ty) {}
+  ConstantPlaceHolderHelper(const Type *Ty)
+    : ConstantExpr(Instruction::UserOp1, Constant::getNullValue(Ty), Ty) {}
 };
 
 typedef PlaceholderDef<ConstantPlaceHolderHelper>  ConstPHolder;
