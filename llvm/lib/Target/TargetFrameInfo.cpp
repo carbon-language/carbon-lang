@@ -24,7 +24,10 @@ using namespace llvm;
 // This method adjusts a stack offset to meet alignment rules of target.
 int 
 TargetFrameInfo::adjustAlignment(int unalignedOffset, bool growUp,
-                                 unsigned align) const { abort(); }
+                                 unsigned align) const {
+  abort();
+  return 0;
+}
 
 // These methods compute offsets using the frame contents for a particular
 // function.  The frame contents are obtained from the MachineFunction object
@@ -33,25 +36,42 @@ TargetFrameInfo::adjustAlignment(int unalignedOffset, bool growUp,
 // 
 int
 TargetFrameInfo::getIncomingArgOffset(MachineFunction& mcInfo, unsigned argNum)
-  const{ abort(); }
+  const {
+  abort();
+  return 0;
+}
 
 int
 TargetFrameInfo::getOutgoingArgOffset(MachineFunction& mcInfo,
-                                      unsigned argNum) const { abort(); }
+                                      unsigned argNum) const {
+  abort();
+  return 0;
+}
 
 int
 TargetFrameInfo::getFirstAutomaticVarOffset(MachineFunction& mcInfo,
-                                            bool& growUp) const { abort(); }
+                                            bool& growUp) const {
+  abort();
+  return 0;
+}
 
 int 
 TargetFrameInfo::getRegSpillAreaOffset(MachineFunction& mcInfo, bool& growUp)
-  const { abort(); }
+  const {
+  abort();
+  return 0;
+}
 
 int
-TargetFrameInfo::getTmpAreaOffset(MachineFunction& mcInfo, bool& growUp) const
-{ abort(); }
+TargetFrameInfo::getTmpAreaOffset(MachineFunction& mcInfo, bool& growUp) const {
+  abort();
+  return 0;
+}
 
 int 
 TargetFrameInfo::getDynamicAreaOffset(MachineFunction& mcInfo, bool& growUp)
-  const { abort(); }
+  const {
+  abort();
+  return 0;
+}
 
