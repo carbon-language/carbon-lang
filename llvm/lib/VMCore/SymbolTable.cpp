@@ -8,6 +8,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/Support/StringExtras.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
 #include "llvm/Method.h"
 
 #define DEBUG_SYMBOL_TABLE 0
@@ -229,6 +230,11 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
           // Remove newM from the symtab
           NewM->setName("");
           InternallyInconsistent = false;
+
+          // Now we can remove this method from the module entirely...
+          NewM->getParent()->getMethodList().remove(NewM);
+          delete NewM;
+
         } else {
           assert(0 && "Two ploanes folded together with overlapping "
                  "value names!");
