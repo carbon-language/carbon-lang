@@ -19,27 +19,6 @@
 
 #include <iosfwd>
 
-// DebugFlag - This boolean is set to true if the '-debug' command line option
-// is specified.  This should probably not be referenced directly, instead, use
-// the DEBUG macro below.
-//
-extern bool DebugFlag;
-
-// DEBUG macro - This macro should be used by passes to emit debug information.
-// In the '-debug' option is specified on the commandline, and if this is a
-// debug build, then the code specified as the option to the macro will be
-// executed.  Otherwise it will not be.  Example:
-//
-// DEBUG(cerr << "Bitset contains: " << Bitset << "\n");
-//
-#ifdef NDEBUG
-#define DEBUG(X)
-#else
-#define DEBUG(X) \
-  do { if (DebugFlag) { X; } } while (0)
-#endif
-
-
 // StatisticBase - Nontemplated base class for Statistic<> class...
 class StatisticBase {
   const char *Name;
