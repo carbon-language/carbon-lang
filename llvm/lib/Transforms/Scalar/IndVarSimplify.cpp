@@ -140,6 +140,8 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
 
     DEBUG(IV->print(std::cerr));
 
+    while (isa<PHINode>(AfterPHIIt)) ++AfterPHIIt;
+
     // Don't do math with pointers...
     const Type *IVTy = IV->Phi->getType();
     if (isa<PointerType>(IVTy)) IVTy = Type::ULongTy;
@@ -204,6 +206,9 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
           PHIOps.insert(PHIOps.end(), MaybeDead->op_begin(),
                         MaybeDead->op_end());
           MaybeDead->getParent()->getInstList().erase(MaybeDead);
+
+          // Erasing the instruction could invalidate the AfterPHI iterator!
+          AfterPHIIt = Header->begin();
         }
       }
 
