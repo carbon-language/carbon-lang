@@ -120,7 +120,7 @@ static inline void output_data(const void *Ptr, const void *End,
 }
 
 static inline void output_float(float& FloatVal, 
-	                        std::deque<unsigned char>& Out) {
+                                std::deque<unsigned char>& Out) {
   /// FIXME: This is a broken implementation! It writes
   /// it in a platform-specific endianess. Need to make
   /// it little endian always.
@@ -128,7 +128,7 @@ static inline void output_float(float& FloatVal,
 }
 
 static inline void output_double(double& DoubleVal, 
-	                        std::deque<unsigned char>& Out) {
+                                std::deque<unsigned char>& Out) {
   /// FIXME: This is a broken implementation! It writes
   /// it in a platform-specific endianess. Need to make
   /// it little endian always.
