@@ -30,6 +30,7 @@ using namespace llvm;
 namespace {
   Statistic<> NumSpilled ("ra-local", "Number of registers spilled");
   Statistic<> NumReloaded("ra-local", "Number of registers reloaded");
+  Statistic<> NumFused   ("ra-local", "Number of reloads fused into instructions");
   cl::opt<bool> DisableKill("disable-kill", cl::Hidden,
                             cl::desc("Disable register kill in local-ra"));
 
@@ -491,14 +492,16 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   // If we have registers available to hold the value, use them.
   const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
   unsigned PhysReg = getFreeReg(RC);
+  int FrameIndex = getStackSpaceFor(VirtReg, RC);
 
-  if (PhysReg) {  // PhysReg available!
-    PhysReg = getReg(MBB, MI, VirtReg);
-  } else {  // No registers available...
-    /// If we can fold this spill into this instruction, do so now.
-    if (0) {
-      // TODO
-      return MI;
+  if (PhysReg) {   // Register is available, allocate it!
+    assignVirtToPhysReg(VirtReg, PhysReg);
+  } else {         // No registers available.
+    // If we can fold this spill into this instruction, do so now.
+    MachineBasicBlock::iterator MII = MI;
+    if (RegInfo->foldMemoryOperand(MII, OpNum, FrameIndex)) {
+      ++NumFused;
+      return MII;
     }
 
     // It looks like we can't fold this virtual register load into this
@@ -506,8 +509,6 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
     // make room for the new register, and reload it.
     PhysReg = getReg(MBB, MI, VirtReg);
   }
-
-  int FrameIndex = getStackSpaceFor(VirtReg, RC);
 
   markVirtRegModified(VirtReg, false);   // Note that this reg was just reloaded
 
@@ -565,9 +566,10 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned VirtReg = KI->second;
         unsigned PhysReg = VirtReg;
         if (MRegisterInfo::isVirtualRegister(VirtReg)) {
+          // If the virtual register was never materialized into a register, it
+          // might not be in the map, but it won't hurt to zero it out anyway.
           unsigned &PhysRegSlot = getVirt2PhysRegMapSlot(VirtReg);
           PhysReg = PhysRegSlot;
-          assert(PhysReg != 0);
           PhysRegSlot = 0;
         }
 
@@ -599,7 +601,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (const unsigned *ImplicitDefs = TID.ImplicitDefs;
          *ImplicitDefs; ++ImplicitDefs) {
       unsigned Reg = *ImplicitDefs;
-      spillPhysReg(MBB, MI, Reg);
+      spillPhysReg(MBB, MI, Reg, true);
       PhysRegsUseOrder.push_back(Reg);
       PhysRegsUsed[Reg] = 0;            // It is free and reserved now
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
