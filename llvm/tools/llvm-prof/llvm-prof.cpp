@@ -33,12 +33,12 @@ namespace {
 
 // PairSecondSort - A sorting predicate to sort by the second element of a pair.
 template<class T>
-struct PairSecondSort
+struct PairSecondSortReverse
   : public std::binary_function<std::pair<T, unsigned>,
                                 std::pair<T, unsigned>, bool> {
   bool operator()(const std::pair<T, unsigned> &LHS,
                   const std::pair<T, unsigned> &RHS) const {
-    return LHS.second < RHS.second;
+    return LHS.second > RHS.second;
   }
 };
 
@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
 
   // Sort by the frequency, backwards.
   std::sort(FunctionCounts.begin(), FunctionCounts.end(),
-            std::not2(PairSecondSort<Function*>()));
+            PairSecondSortReverse<Function*>());
 
   unsigned TotalExecutions = 0;
   for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
   
   for (unsigned i = 0, e = PI.getNumExecutions(); i != e; ++i) {
     std::cout << "  ";
-    if (e != 1) std::cout << i << ". ";
+    if (e != 1) std::cout << i+1 << ". ";
     std::cout << PI.getExecution(i) << "\n";
   }
   
@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
       break;
     }
 
-    printf("%3d. %5d/%d %s\n", i, FunctionCounts[i].second, TotalExecutions,
+    printf("%3d. %5d/%d %s\n", i+1, FunctionCounts[i].second, TotalExecutions,
            FunctionCounts[i].first->getName().c_str());
   }
 
@@ -106,8 +106,29 @@ int main(int argc, char **argv) {
   if (PI.hasAccurateBlockCounts()) {
     std::vector<std::pair<BasicBlock*, unsigned> > Counts;
     PI.getBlockCounts(Counts);
+
+    TotalExecutions = 0;
+    for (unsigned i = 0, e = Counts.size(); i != e; ++i)
+      TotalExecutions += Counts[i].second;
+
+    // Sort by the frequency, backwards.
+    std::sort(Counts.begin(), Counts.end(),
+              PairSecondSortReverse<BasicBlock*>());
+    
+    std::cout << "\n===" << std::string(73, '-') << "===\n";
+    std::cout << "Top 20 most frequently executed basic blocks:\n\n";
+
+    // Print out the function frequencies...
+    printf(" ##   Frequency\n");
+    unsigned BlocksToPrint = Counts.size();
+    if (BlocksToPrint > 20) BlocksToPrint = 20;
+    for (unsigned i = 0; i != BlocksToPrint; ++i)
+      printf("%3d. %5d/%d %s - %s\n", i+1, Counts[i].second, TotalExecutions,
+             Counts[i].first->getParent()->getName().c_str(),
+             Counts[i].first->getName().c_str());
+
     std::map<BasicBlock*, unsigned> BlockFreqs(Counts.begin(), Counts.end());
-                   
+    
   }
 
   return 0;
