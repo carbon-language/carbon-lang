@@ -33,13 +33,18 @@ using namespace llvm;
 static RegisterAnalysis<LocalDataStructures>
 X("datastructure", "Local Data Structure Analysis");
 
+static cl::opt<bool>
+TrackIntegersAsPointers("dsa-track-integers",
+         cl::desc("If this is set, track integers as potential pointers"));
+                        
+
 namespace llvm {
 namespace DS {
   // isPointerType - Return true if this type is big enough to hold a pointer.
   bool isPointerType(const Type *Ty) {
     if (isa<PointerType>(Ty))
       return true;
-    else if (Ty->isPrimitiveType() && Ty->isInteger())
+    else if (TrackIntegersAsPointers && Ty->isPrimitiveType() &&Ty->isInteger())
       return Ty->getPrimitiveSize() >= PointerSize;
     return false;
   }
