@@ -12,7 +12,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Optimizations/AllOpts.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
-#include "llvm/Transforms/PrintModulePass.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include <fstream>
 
