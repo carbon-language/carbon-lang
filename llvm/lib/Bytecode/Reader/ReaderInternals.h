@@ -57,6 +57,12 @@ public:
 private:          // All of this data is transient across calls to ParseBytecode
   Module *TheModule;   // Current Module being read into...
   
+  // Information about the module, extracted from the bytecode revision number.
+  unsigned char RevisionNum;        // The rev # itself
+  unsigned char FirstDerivedTyID;   // First variable index to use for type
+  bool HasImplicitZeroInitializer;  // Is entry 0 of every slot implicity zeros?
+  bool isBigEndian, hasLongPointers;// Information about the target compiled for
+
   typedef std::vector<Value *> ValueList;
   typedef std::vector<ValueList> ValueTable;
   ValueTable Values, LateResolveValues;
@@ -78,9 +84,6 @@ private:          // All of this data is transient across calls to ParseBytecode
   TypeValuesListTy ModuleTypeValues;
   TypeValuesListTy FunctionTypeValues;
 
-  // Information read from the ModuleGlobalInfo section of the file...
-  unsigned FirstDerivedTyID;
-
   // When the ModuleGlobalInfo section is read, we load the type of each
   // function and the 'ModuleValues' slot that it lands in.  We then load a
   // placeholder into its slot to reserve it.  When the function is loaded, this
@@ -90,6 +93,7 @@ private:          // All of this data is transient across calls to ParseBytecode
 
 private:
   bool ParseModule          (const uchar * Buf, const uchar *End);
+  bool ParseVersionInfo     (const uchar *&Buf, const uchar *End);
   bool ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End);
   bool ParseSymbolTable   (const uchar *&Buf, const uchar *End, SymbolTable *);
   bool ParseFunction      (const uchar *&Buf, const uchar *End);

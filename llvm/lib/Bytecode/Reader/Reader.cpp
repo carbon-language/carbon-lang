@@ -60,8 +60,12 @@ int BytecodeParser::insertValue(Value *Val, std::vector<ValueList> &ValueTab) {
   if (getTypeSlot(Val->getType(), type)) return -1;
   assert(type != Type::TypeTyID && "Types should never be insertValue'd!");
  
-  if (ValueTab.size() <= type)
-    ValueTab.resize(type+1, ValueList());
+  while (ValueTab.size() <= type) {
+    ValueTab.push_back(ValueList());
+    if (HasImplicitZeroInitializer)   // add a zero initializer if appropriate
+      ValueTab.back().push_back(
+                 Constant::getNullValue(getType(ValueTab.size()-1)));
+  }
 
   //cerr << "insertValue Values[" << type << "][" << ValueTab[type].size() 
   //     << "] = " << Val << "\n";
@@ -194,8 +198,7 @@ bool BytecodeParser::ParseBasicBlock(const uchar *&Buf, const uchar *EndBuf,
 
   while (Buf < EndBuf) {
     Instruction *Inst;
-    if (ParseInstruction(Buf, EndBuf, Inst,
-                         /*HACK*/BB)) {
+    if (ParseInstruction(Buf, EndBuf, Inst, /*HACK*/BB)) {
       delete BB;
       return true;
     }
@@ -490,6 +493,38 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End){
   return false;
 }
 
+bool BytecodeParser::ParseVersionInfo(const uchar *&Buf, const uchar *EndBuf) {
+  unsigned Version;
+  if (read_vbr(Buf, EndBuf, Version)) return true;
+
+  // Unpack version number: low four bits are for flags, top bits = version
+  isBigEndian     = Version & 1;
+  hasLongPointers = Version & 2;
+  RevisionNum     = Version >> 4;
+  HasImplicitZeroInitializer = true;
+
+  switch (RevisionNum) {
+  case 0:                  // Initial revision
+    if (Version != 14) return true;  // Unknown revision 0 flags?
+    FirstDerivedTyID = 14;
+    HasImplicitZeroInitializer = false;
+    isBigEndian = hasLongPointers = true;
+    break;
+  case 1:
+    FirstDerivedTyID = 14;
+    break;
+  default:
+    Error = "Unknown bytecode version number!";
+    return true;
+  }
+
+  BCR_TRACE(1, "Bytecode Rev = " << (unsigned)RevisionNum << "\n");
+  BCR_TRACE(1, "BigEndian/LongPointers = " << isBigEndian << ","
+               << hasLongPointers << "\n");
+  BCR_TRACE(1, "HasImplicitZeroInit = " << HasImplicitZeroInitializer << "\n");
+  return false;
+}
+
 bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf) {
   unsigned Type, Size;
   if (readBlock(Buf, EndBuf, Type, Size)) return true;
@@ -502,9 +537,8 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf) {
   FunctionSignatureList.clear();                 // Just in case...
 
   // Read into instance variables...
-  if (read_vbr(Buf, EndBuf, FirstDerivedTyID)) return true;
+  if (ParseVersionInfo(Buf, EndBuf)) return true;
   if (align32(Buf, EndBuf)) return true;
-  BCR_TRACE(1, "FirstDerivedTyID = " << FirstDerivedTyID << "\n");
 
   while (Buf < EndBuf) {
     const unsigned char *OldBuf = Buf;
