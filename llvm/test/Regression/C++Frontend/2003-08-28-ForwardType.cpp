@@ -1,6 +1,5 @@
 // RUN: %llvmgxx -S %s -o - | llvm-as -f -o /dev/null
 
-// XFAIL: darwin,sun
 // Default placement versions of operator new.
 inline void* operator new(unsigned, void* __p) throw();
 
