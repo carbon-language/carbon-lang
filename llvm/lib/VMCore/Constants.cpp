@@ -758,7 +758,7 @@ ConstantArray *ConstantArray::get(const std::string &Str) {
 /// ubyte, and if the elements of the array are all ConstantInt's.
 bool ConstantArray::isString() const {
   // Check the element type for sbyte or ubyte...
-  if (getType()->getElementType() != Type::UByteTy ||
+  if (getType()->getElementType() != Type::UByteTy &&
       getType()->getElementType() != Type::SByteTy)
     return false;
   // Check the elements to make sure they are all integers, not constant
