@@ -104,7 +104,7 @@ static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
                                           Instruction& insertBefore)
 {
   Value *getArg1, *getArg2;
-
+  
   switch(CE->getOpcode())
     {
     case Instruction::Cast:
@@ -124,11 +124,25 @@ static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
       return new GetElementPtrInst(getArg1,
                           std::vector<Value*>(CE->op_begin()+1, CE->op_end()),
                           "constantGEP", &insertBefore);
-
+                          
+    case Instruction::Select: {
+      Value *C, *S1, *S2;
+      C = CE->getOperand (0);
+      if (ConstantExpr* CEarg = dyn_cast<ConstantExpr> (C))
+        C = DecomposeConstantExpr (CEarg, insertBefore);
+      S1 = CE->getOperand (1);
+      if (ConstantExpr* CEarg = dyn_cast<ConstantExpr> (S1))
+        S1 = DecomposeConstantExpr (CEarg, insertBefore);
+      S2 = CE->getOperand (2);
+      if (ConstantExpr* CEarg = dyn_cast<ConstantExpr> (S2))
+        S2 = DecomposeConstantExpr (CEarg, insertBefore);
+      return new SelectInst (C, S1, S2);
+    }
+    
     default:                            // must be a binary operator
       assert(CE->getOpcode() >= Instruction::BinaryOpsBegin &&
              CE->getOpcode() <  Instruction::BinaryOpsEnd &&
-             "Unrecognized opcode in ConstantExpr");
+             "Unhandled opcode in ConstantExpr");
       getArg1 = CE->getOperand(0);
       if (ConstantExpr* CEarg = dyn_cast<ConstantExpr>(getArg1))
         getArg1 = DecomposeConstantExpr(CEarg, insertBefore);
