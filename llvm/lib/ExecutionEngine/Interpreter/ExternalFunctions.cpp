@@ -151,11 +151,10 @@ GenericValue lle_X_printString(MethodType *M, const vector<GenericValue> &ArgVal
 
 // Implement 'void print<TYPE>(X)' for each primitive type or pointer type
 #define PRINT_TYPE_FUNC(TYPENAME,TYPEID) \
-  GenericValue lle_X_print##TYPENAME##(MethodType *M,\
-                                       const vector<GenericValue> &ArgVal) {\
+  GenericValue lle_X_print##TYPENAME(MethodType *M,\
+                                     const vector<GenericValue> &ArgVal) {\
     assert(ArgVal.size() == 1 && "generic print only takes one argument!");\
-    assert(M->getParamTypes()[0].get()->getPrimitiveID()\
-           == Type::##TYPEID##);\
+    assert(M->getParamTypes()[0].get()->getPrimitiveID() == Type::##TYPEID);\
     Interpreter::printValue(M->getParamTypes()[0], ArgVal[0]);\
     return GenericValue();\
   }
