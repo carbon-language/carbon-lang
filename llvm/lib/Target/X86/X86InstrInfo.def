@@ -263,7 +263,9 @@ I(CMOVNErr32  , "cmovne", 0x45, M_2_ADDR_FLAG, X86II::TB |                 X86II
 I(CMPrr8      , "cmpb",  0x38,             0, X86II::Void | X86II::MRMDestReg                , NoIR, NoIR) // compare R8,R8
 I(CMPrr16     , "cmpw",  0x39,             0, X86II::Void | X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // compare R16,R16
 I(CMPrr32     , "cmpl",  0x39,             0, X86II::Void | X86II::MRMDestReg                , NoIR, NoIR) // compare R32,R32
-I(CMPri8      , "cmp",   0x80,             0, X86II::Void | X86II::MRMS7r     | X86II::Arg8  , NoIR, NoIR) // compare R8, imm8
+I(CMPri8      , "cmpb",  0x80,             0, X86II::Void | X86II::MRMS7r     | X86II::Arg8  , NoIR, NoIR) // compare R8, imm8
+I(CMPri16     , "cmpw",  0x81,             0, X86II::Void | X86II::MRMS7r     | X86II::Arg16 | X86II::OpSize, NoIR, NoIR) // compare R8, imm8
+I(CMPri32     , "cmpl",  0x81,             0, X86II::Void | X86II::MRMS7r     | X86II::Arg32 , NoIR, NoIR) // compare R8, imm8
 
 // Sign extenders (first 3 are good for DIV/IDIV; the others are more general)
 I(CBW         , "cbw",   0x98,             0, X86II::Void | X86II::RawFrm | X86II::OpSize, O_AL, O_AH)     // AX = signext(AL)

@@ -579,26 +579,47 @@ bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1) {
   // The arguments are already supposed to be of the same type.
   const Type *CompTy = Op0->getType();
   bool isSigned = CompTy->isSigned();
-  unsigned reg1 = getReg(Op0);
-  unsigned reg2 = getReg(Op1);
-
   unsigned Class = getClassB(CompTy);
+  unsigned Op0r = getReg(Op0);
+
+  // Special case handling of: cmp R, i
+  if (Class == cByte || Class == cShort || Class == cInt)
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+      uint64_t Op1v;
+      if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(CI))
+        Op1v = CSI->getValue();
+      else
+        Op1v = cast<ConstantUInt>(CI)->getValue();
+      // Mask off any upper bits of the constant, if there are any...
+      Op1v &= (1ULL << (8 << Class)) - 1;
+
+      switch (Class) {
+      case cByte:  BuildMI(BB, X86::CMPri8, 2).addReg(Op0r).addZImm(Op1v);break;
+      case cShort: BuildMI(BB, X86::CMPri16,2).addReg(Op0r).addZImm(Op1v);break;
+      case cInt:   BuildMI(BB, X86::CMPri32,2).addReg(Op0r).addZImm(Op1v);break;
+      default:
+        assert(0 && "Invalid class!");
+      }
+      return isSigned;
+    }
+
+  unsigned Op1r = getReg(Op1);
   switch (Class) {
   default: assert(0 && "Unknown type class!");
     // Emit: cmp <var1>, <var2> (do the comparison).  We can
     // compare 8-bit with 8-bit, 16-bit with 16-bit, 32-bit with
     // 32-bit.
   case cByte:
-    BuildMI(BB, X86::CMPrr8, 2).addReg(reg1).addReg(reg2);
+    BuildMI(BB, X86::CMPrr8, 2).addReg(Op0r).addReg(Op1r);
     break;
   case cShort:
-    BuildMI(BB, X86::CMPrr16, 2).addReg(reg1).addReg(reg2);
+    BuildMI(BB, X86::CMPrr16, 2).addReg(Op0r).addReg(Op1r);
     break;
   case cInt:
-    BuildMI(BB, X86::CMPrr32, 2).addReg(reg1).addReg(reg2);
+    BuildMI(BB, X86::CMPrr32, 2).addReg(Op0r).addReg(Op1r);
     break;
   case cFP:
-    BuildMI(BB, X86::FpUCOM, 2).addReg(reg1).addReg(reg2);
+    BuildMI(BB, X86::FpUCOM, 2).addReg(Op0r).addReg(Op1r);
     BuildMI(BB, X86::FNSTSWr8, 0);
     BuildMI(BB, X86::SAHF, 1);
     isSigned = false;   // Compare with unsigned operators
@@ -609,8 +630,8 @@ bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1) {
       unsigned LoTmp = makeAnotherReg(Type::IntTy);
       unsigned HiTmp = makeAnotherReg(Type::IntTy);
       unsigned FinalTmp = makeAnotherReg(Type::IntTy);
-      BuildMI(BB, X86::XORrr32, 2, LoTmp).addReg(reg1).addReg(reg2);
-      BuildMI(BB, X86::XORrr32, 2, HiTmp).addReg(reg1+1).addReg(reg2+1);
+      BuildMI(BB, X86::XORrr32, 2, LoTmp).addReg(Op0r).addReg(Op1r);
+      BuildMI(BB, X86::XORrr32, 2, HiTmp).addReg(Op0r+1).addReg(Op1r+1);
       BuildMI(BB, X86::ORrr32,  2, FinalTmp).addReg(LoTmp).addReg(HiTmp);
       break;  // Allow the sete or setne to be generated from flags set by OR
     } else {
@@ -627,9 +648,9 @@ bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1) {
       // classes!  Until then, hardcode registers so that we can deal with their
       // aliases (because we don't have conditional byte moves).
       //
-      BuildMI(BB, X86::CMPrr32, 2).addReg(reg1).addReg(reg2);
+      BuildMI(BB, X86::CMPrr32, 2).addReg(Op0r).addReg(Op1r);
       BuildMI(BB, SetCCOpcodeTab[0][OpNum], 0, X86::AL);
-      BuildMI(BB, X86::CMPrr32, 2).addReg(reg1+1).addReg(reg2+1);
+      BuildMI(BB, X86::CMPrr32, 2).addReg(Op0r+1).addReg(Op1r+1);
       BuildMI(BB, SetCCOpcodeTab[isSigned][OpNum], 0, X86::BL);
       BuildMI(BB, X86::CMOVErr16, 2, X86::BX).addReg(X86::BX).addReg(X86::AX);
       // NOTE: visitSetCondInst knows that the value is dumped into the BL
