@@ -7,6 +7,7 @@ dnl Place all of the extra autoconf files into the config subdirectory
 AC_CONFIG_AUX_DIR([autoconf])
 
 dnl Configure a header file
+AC_CONFIG_FILES([Makefile.common])
 
 dnl Configure Makefiles
 dnl List every Makefile that ecists within your source tree
@@ -61,4 +62,4 @@ AC_ARG_WITH(llvmobj,AC_HELP_STRING([--with-llvmobj],[Location of LLVM Object Cod
 dnl **************************************************************************
 dnl * Create the output files
 dnl **************************************************************************
-AC_OUTPUT(Makefile.common)
+AC_OUTPUT
