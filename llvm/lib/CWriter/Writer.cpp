@@ -42,7 +42,7 @@ namespace {
     inline void write(Module *M) { printModule(M); }
 
     ostream &printType(const Type *Ty, const string &VariableName = "",
-                       bool IgnoreName = false);
+                       bool IgnoreName = false, bool namedContext = true);
 
     void writeOperand(Value *Operand);
     void writeOperandInternal(Value *Operand);
@@ -142,11 +142,16 @@ string CWriter::getValueName(const Value *V) {
   return "ltmp_" + itostr(Slot) + "_" + utostr(V->getType()->getUniqueID());
 }
 
+// A pointer type should not use parens around *'s alone, e.g., (**)
+inline bool ptrTypeNameNeedsParens(const string &NameSoFar) {
+  return (NameSoFar.find_last_not_of('*') != std::string::npos);
+}
+
 // Pass the Type* and the variable name and this prints out the variable
 // declaration.
 //
 ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
-                            bool IgnoreName) {
+                            bool IgnoreName, bool namedContext) {
   if (Ty->isPrimitiveType())
     switch (Ty->getPrimitiveID()) {
     case Type::VoidTyID:   return Out << "void "               << NameSoFar;
@@ -210,7 +215,14 @@ ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
 
   case Type::PointerTyID: {
     const PointerType *PTy = cast<PointerType>(Ty);
-    std::string ptrName = NameSoFar.length()? "(*"+NameSoFar+")" : string("*");
+    std::string ptrName = "*" + NameSoFar;
+
+    // Do not need parens around "* NameSoFar" if NameSoFar consists only
+    // of zero or more '*' chars *and* this is not an unnamed pointer type
+    // such as the result type in a cast statement.  Otherwise, enclose in ( ).
+    if (ptrTypeNameNeedsParens(NameSoFar) || !namedContext)
+      ptrName = "(" + ptrName + ")";    // 
+
     return printType(PTy->getElementType(), ptrName);
   }
 
@@ -439,9 +451,10 @@ void CWriter::printModule(Module *M) {
       << "#include <malloc.h>\n"
       << "#include <alloca.h>\n\n"
 
-    // Provide a definition for null if one does not already exist.
+    // Provide a definition for null if one does not already exist,
+    // and for `bool' if not compiling with a C++ compiler.
       << "#ifndef NULL\n#define NULL 0\n#endif\n\n"
-      << "typedef unsigned char bool;\n"
+      << "#ifndef __cplusplus\ntypedef unsigned char bool;\n#endif\n"
 
       << "\n\n/* Global Declarations */\n";
 
@@ -755,7 +768,7 @@ void CWriter::visitBinaryOperator(Instruction &I) {
 
 void CWriter::visitCastInst(CastInst &I) {
   Out << "(";
-  printType(I.getType());
+  printType(I.getType(), string(""),/*ignoreName*/false, /*namedContext*/false);
   Out << ")";
   writeOperand(I.getOperand(0));
 }
