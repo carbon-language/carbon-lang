@@ -136,6 +136,12 @@ public:
     return I->second;
   }
 
+  const DSNodeHandle &getReturnNodeFor(Function &F) const {
+    ReturnNodesTy::const_iterator I = ReturnNodes.find(&F);
+    assert(I != ReturnNodes.end() && "F not in this DSGraph!");
+    return I->second;
+  }
+
   /// getGraphSize - Return the number of nodes in this graph.
   ///
   unsigned getGraphSize() const {
@@ -217,6 +223,12 @@ public:
   ///
   void mergeInGraph(const DSCallSite &CS, Function &F, const DSGraph &Graph,
                     unsigned CloneFlags);
+
+
+  /// getCallSiteForArguments - Get the arguments and return value bindings for
+  /// the specified function in the current graph.
+  ///
+  DSCallSite getCallSiteForArguments(Function &F) const;
 
   // Methods for checking to make sure graphs are well formed...
   void AssertNodeInGraph(const DSNode *N) const {
