@@ -1,4 +1,4 @@
-//===- InstrSelection.cpp - Machine Independant Inst Selection Driver -----===//
+//===- InstrSelection.cpp - Machine Independent Inst Selection Driver -----===//
 //
 // Machine-independent driver file for instruction selection.  This file
 // constructs a forest of BURG instruction trees and then uses the

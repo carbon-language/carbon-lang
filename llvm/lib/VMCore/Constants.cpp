@@ -31,7 +31,7 @@ void Constant::setName(const std::string &Name, SymbolTable *ST) {
 void Constant::destroyConstantImpl() {
   // When a Constant is destroyed, there may be lingering
   // references to the constant by other constants in the constant pool.  These
-  // constants are implicitly dependant on the module that is being deleted,
+  // constants are implicitly dependent on the module that is being deleted,
   // but they don't know that.  Because we only find out when the CPV is
   // deleted, we must now notify all of our users (that should only be
   // Constants) that they are, in fact, invalid now and should be deleted.

@@ -96,13 +96,13 @@ Pass *createAggressiveDCEPass() { return new ADCE(); }
 
 void ADCE::markBlockAlive(BasicBlock *BB) {
   // Mark the basic block as being newly ALIVE... and mark all branches that
-  // this block is control dependant on as being alive also...
+  // this block is control dependent on as being alive also...
   //
   PostDominanceFrontier &CDG = getAnalysis<PostDominanceFrontier>();
 
   PostDominanceFrontier::const_iterator It = CDG.find(BB);
   if (It != CDG.end()) {
-    // Get the blocks that this node is control dependant on...
+    // Get the blocks that this node is control dependent on...
     const PostDominanceFrontier::DomSetType &CDB = It->second;
     for_each(CDB.begin(), CDB.end(),   // Mark all their terminators as live
              bind_obj(this, &ADCE::markTerminatorLive));

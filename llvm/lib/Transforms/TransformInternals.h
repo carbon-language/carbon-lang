@@ -94,7 +94,7 @@ struct ValueMapCache {
   typedef std::map<const Value *, Value *> ExprMapTy;
 
   // Cast Map - Cast instructions can have their source and destination values
-  // changed independantly for each part.  Because of this, our old naive
+  // changed independently for each part.  Because of this, our old naive
   // implementation would create a TWO new cast instructions, which would cause
   // all kinds of problems.  Here we keep track of the newly allocated casts, so
   // that we only create one for a particular instruction.

@@ -383,7 +383,7 @@ public:
 
 
 // Define some inline methods for the AbstractTypeUser.h:PATypeHandle class.
-// These are defined here because they MUST be inlined, yet are dependant on 
+// These are defined here because they MUST be inlined, yet are dependent on 
 // the definition of the Type class.  Of course Type derives from Value, which
 // contains an AbstractTypeUser instance, so there is no good way to factor out
 // the code.  Hence this bit of uglyness.

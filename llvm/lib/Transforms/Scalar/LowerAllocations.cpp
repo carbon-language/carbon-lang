@@ -1,6 +1,6 @@
 //===- LowerAllocations.cpp - Reduce malloc & free insts to calls ---------===//
 //
-// The LowerAllocations transformation is a target dependant tranformation
+// The LowerAllocations transformation is a target dependent tranformation
 // because it depends on the size of data types and alignment constraints.
 //
 //===----------------------------------------------------------------------===//

@@ -109,7 +109,7 @@ protected:
   virtual ~MRegisterInfo();
 public:
 
-  enum {                        // Define some target independant constants
+  enum {                        // Define some target independent constants
     /// NoRegister - This 'hard' register is a 'noop' register for all backends.
     /// This is used as the destination register for instructions that do not
     /// produce a value.  Some frontends may use this as an operand register to

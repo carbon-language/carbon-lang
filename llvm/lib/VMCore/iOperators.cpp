@@ -130,7 +130,7 @@ const Value *BinaryOperator::getNotArgument(const BinaryOperator *Bop) {
 // swapOperands - Exchange the two operands to this instruction.  This
 // instruction is safe to use on any binary instruction and does not
 // modify the semantics of the instruction.  If the instruction is
-// order dependant (SetLT f.e.) the opcode is changed.
+// order dependent (SetLT f.e.) the opcode is changed.
 //
 bool BinaryOperator::swapOperands() {
   if (isCommutative())

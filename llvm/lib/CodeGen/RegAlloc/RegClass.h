@@ -17,7 +17,7 @@ class TargetRegClassInfo;
 //-----------------------------------------------------------------------------
 // Class RegClass
 //
-//   Implements a machine independant register class. 
+//   Implements a machine independent register class. 
 //
 //   This is the class that contains all data structures and common algos
 //   for coloring a particular register class (e.g., int class, fp class).  

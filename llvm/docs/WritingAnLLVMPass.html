@@ -436,7 +436,7 @@ In contrast to direct <tt>Pass</tt> subclasses, direct <tt><a
 href="http://llvm.cs.uiuc.edu/doxygen/classPass.html">FunctionPass</a></tt>
 subclasses do have a predictable, local behavior that can be expected by the
 system.  All <tt>FunctionPass</tt> execute on each function in the program
-independant of all of the other functions in the program.
+independent of all of the other functions in the program.
 <tt>FunctionPass</tt>'s do not require that they are executed in a particular
 order, and <tt>FunctionPass</tt>'s do not modify external functions.<p>
 
@@ -474,7 +474,7 @@ fast).<p>
 A good example of how this method should be used is the <a
 href="http://llvm.cs.uiuc.edu/doxygen/LowerAllocations_8cpp-source.html">LowerAllocations</a>
 pass.  This pass converts <tt>malloc</tt> and <tt>free</tt> instructions into
-platform dependant <tt>malloc()</tt> and <tt>free()</tt> function calls.  It
+platform dependent <tt>malloc()</tt> and <tt>free()</tt> function calls.  It
 uses the <tt>doInitialization</tt> method to get a reference to the malloc and
 free functions that it needs, adding prototypes to the module if necessary.<p>
 

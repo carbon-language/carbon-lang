@@ -1,7 +1,7 @@
 //===-- llvm/CodeGen/MachineInstr.h - MachineInstr class ---------*- C++ -*--=//
 //
 // This file contains the declaration of the MachineInstr class, which is the
-// basic representation for all target dependant machine instructions used by
+// basic representation for all target dependent machine instructions used by
 // the back end.
 //
 //===----------------------------------------------------------------------===//

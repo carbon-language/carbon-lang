@@ -40,7 +40,7 @@ extern bool	ThisIsAChainRule	(int eruleno);
 // 
 // Purpose:
 //   Entry point for instruction selection using BURG.
-//   Return a pass that performs machine dependant instruction selection.
+//   Return a pass that performs machine dependent instruction selection.
 //---------------------------------------------------------------------------
 
 FunctionPass *createInstructionSelectionPass(TargetMachine &Target);

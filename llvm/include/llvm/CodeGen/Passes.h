@@ -1,6 +1,6 @@
-//===-- Passes.h - Target independant code generation passes ----*- C++ -*-===//
+//===-- Passes.h - Target independent code generation passes ----*- C++ -*-===//
 //
-// This file defines interfaces to access the target independant code generation
+// This file defines interfaces to access the target independent code generation
 // passes provided by the LLVM backend.
 //
 //===----------------------------------------------------------------------===//
