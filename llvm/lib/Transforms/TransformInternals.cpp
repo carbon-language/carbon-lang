@@ -141,7 +141,12 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
   analysis::ExprType Expr = analysis::ClassifyExpression(OffsetVal);
 
   // Get the offset and scale now...
-  unsigned Offset = 0, Scale = Expr.Var != 0;
+  // A scale of zero with Expr.Var != 0 means a scale of 1.
+  //
+  // TODO: Handle negative offsets for C code like this:
+  //   for (unsigned i = 12; i < 14; ++i) x[j*i-12] = ...
+  unsigned Offset = 0;
+  int Scale = 0;
 
   // Get the offset value if it exists...
   if (Expr.Offset) {
@@ -151,13 +156,9 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
   }
 
   // Get the scale value if it exists...
-  if (Expr.Scale) {
-    int Val = getConstantValue(Expr.Scale);
-    if (Val < 0) return false;  // Don't mess with negative scales
-    Scale = (unsigned)Val;
-    if (Scale == 1) Scale = 0;  // No interesting scale if *1
-  }
-  
+  if (Expr.Scale) Scale = getConstantValue(Expr.Scale);
+  if (Expr.Var && Scale == 0) Scale = 1;   // Scale != 0 if Expr.Var != 0
+ 
   // Loop over the Scale and Offset values, filling in the Indices vector for
   // our final getelementptr instruction.
   //
@@ -170,21 +171,24 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
     if (const StructType *StructTy = dyn_cast<StructType>(CompTy)) {
       unsigned ActualOffset = Offset;
       NextTy = getStructOffsetType(StructTy, ActualOffset, Indices);
-      if (StructTy == NextTy && ActualOffset == 0) return 0; // No progress.  :(
+      if (StructTy == NextTy && ActualOffset == 0)
+        return 0; // No progress.  :(
       Offset -= ActualOffset;
     } else {
       const Type *ElTy = cast<SequentialType>(CompTy)->getElementType();
-      if (!ElTy->isSized()) return 0; // Type is unreasonable... escape!
+      if (!ElTy->isSized())
+        return 0; // Type is unreasonable... escape!
       unsigned ElSize = TD.getTypeSize(ElTy);
+      int ElSizeS = (int)ElSize;
 
       // See if the user is indexing into a different cell of this array...
-      if (Scale && Scale >= ElSize) {
+      if (Scale && (Scale >= ElSizeS || -Scale >= ElSizeS)) {
         // A scale n*ElSize might occur if we are not stepping through
         // array by one.  In this case, we will have to insert math to munge
         // the index.
         //
-        unsigned ScaleAmt = Scale/ElSize;
-        if (Scale-ScaleAmt*ElSize)
+        int ScaleAmt = Scale/ElSizeS;
+        if (Scale-ScaleAmt*ElSizeS)
           return 0;  // Didn't scale by a multiple of element size, bail out
         Scale = 0;   // Scale is consumed
 
@@ -203,9 +207,10 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
 
           if (ScaleAmt && ScaleAmt != 1) {
             // If we have to scale up our index, do so now
-            Value *ScaleAmtVal = ConstantUInt::get(Type::UIntTy, ScaleAmt);
+            Value *ScaleAmtVal = ConstantUInt::get(Type::UIntTy,
+                                                   (unsigned)ScaleAmt);
             Instruction *Scaler = BinaryOperator::create(Instruction::Mul,
-                                                         Expr.Var,ScaleAmtVal);
+                                                         Expr.Var, ScaleAmtVal);
             if (Expr.Var->hasName())
               Scaler->setName(Expr.Var->getName()+"-scale");
 
@@ -225,6 +230,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
         }
 
         Indices.push_back(Expr.Var);
+        Expr.Var = 0;
       } else if (Offset >= ElSize) {
         // Calculate the index that we are entering into the array cell with
         unsigned Index = Offset/ElSize;
