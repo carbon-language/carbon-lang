@@ -1525,8 +1525,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 208:	// stmt:   BrCond(boolconst)
         {
         // boolconst => boolean is a constant; use BA to first or second label
-        ConstPoolVal* constVal =
-          subtreeRoot->leftChild()->getValue()->castConstantAsserting();
+        ConstPoolVal* constVal = 
+          cast<ConstPoolVal>(subtreeRoot->leftChild()->getValue());
         unsigned dest = ((ConstPoolBool*) constVal)->getValue()? 0 : 1;
         
         mvec[0] = new MachineInstr(BA);

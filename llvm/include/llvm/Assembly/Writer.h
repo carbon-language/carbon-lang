@@ -91,7 +91,7 @@ inline ostream &operator<<(ostream &o, const Type *T) {
 
 inline ostream &operator<<(ostream &o, const Value *I) {
   switch (I->getValueType()) {
-  case Value::TypeVal:       return o << I->castTypeAsserting();
+  case Value::TypeVal:       return o << cast<const Type>(I);
   case Value::ConstantVal:   WriteToAssembly((const ConstPoolVal*)I,o);break;
   case Value::MethodArgumentVal: return o << I->getType() << " "<< I->getName();
   case Value::InstructionVal:WriteToAssembly((const Instruction *)I, o);break;

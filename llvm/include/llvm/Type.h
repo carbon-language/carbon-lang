@@ -187,13 +187,6 @@ public:
   inline bool isPrimitiveType() const { return ID < FirstDerivedTyID;  }
 
   inline bool isDerivedType()   const { return ID >= FirstDerivedTyID; }
-  inline const DerivedType *castDerivedType() const {
-    return isDerivedType() ? (const DerivedType*)this : 0;
-  }
-  inline const DerivedType *castDerivedTypeAsserting() const {
-    assert(isDerivedType());
-    return (const DerivedType*)this;
-  }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool isa(const Type *T) { return true; }

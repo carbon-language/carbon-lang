@@ -84,7 +84,8 @@ void BytecodeWriter::outputConstants(bool isMethod) {
 
     unsigned NC = ValNo;              // Number of constants
     for (; NC < Plane.size() && 
-	   (Plane[NC]->isConstant() || Plane[NC]->isType()); NC++) /*empty*/;
+	   (isa<ConstPoolVal>(Plane[NC]) || 
+            isa<Type>(Plane[NC])); NC++) /*empty*/;
     NC -= ValNo;                      // Convert from index into count
     if (NC == 0) continue;            // Skip empty type planes...
 

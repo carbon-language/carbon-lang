@@ -149,8 +149,7 @@ bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
     // abstract type to use the newty.  This also will cause the opaque type
     // to be deleted...
     //
-    // FIXME when types are not const
-    const_cast<DerivedType*>(Tab[i+BaseLevel]->castDerivedTypeAsserting())->refineAbstractTypeTo(NewTy);
+    cast<DerivedType>(Tab[i+BaseLevel].get())->refineAbstractTypeTo(NewTy);
 
     // This should have replace the old opaque type with the new type in the
     // value table...
@@ -159,7 +158,7 @@ bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
 
   BCR_TRACE(5, "Resulting types:\n");
   for (unsigned i = 0; i < NumEntries; i++) {
-    BCR_TRACE(5, Tab[i+BaseLevel]->castTypeAsserting() << "\n");
+    BCR_TRACE(5, cast<Type>(Tab[i+BaseLevel]) << "\n");
   }
   return false;
 }

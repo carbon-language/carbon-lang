@@ -154,11 +154,11 @@ public:
   // successor. WARNING: This does not gracefully accept idx's out of range!
   inline const ConstPoolVal *getSuccessorValue(unsigned idx) const {
     assert(idx < getNumSuccessors() && "Successor # out of range!");
-    return Operands[idx*2]->castConstantAsserting();
+    return cast<const ConstPoolVal>(Operands[idx*2]);
   }
   inline ConstPoolVal *getSuccessorValue(unsigned idx) {
     assert(idx < getNumSuccessors() && "Successor # out of range!");
-    return Operands[idx*2]->castConstantAsserting();
+    return cast<ConstPoolVal>(Operands[idx*2]);
   }
   virtual unsigned getNumSuccessors() const { return Operands.size()/2; }
 };

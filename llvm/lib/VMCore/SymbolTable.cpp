@@ -8,10 +8,6 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/Support/StringExtras.h"
 #include "llvm/DerivedTypes.h"
-#ifndef NDEBUG
-#include "llvm/BasicBlock.h"   // Required for assertions to work.
-#include "llvm/Type.h"
-#endif
 
 SymbolTable::~SymbolTable() {
   // Drop all abstract type references in the type plane...
@@ -19,16 +15,16 @@ SymbolTable::~SymbolTable() {
   if (TyPlane != end()) {
     VarMap &TyP = TyPlane->second;
     for (VarMap::iterator I = TyP.begin(), E = TyP.end(); I != E; ++I) {
-      const Type *Ty = I->second->castTypeAsserting();
+      const Type *Ty = cast<const Type>(I->second);
       if (Ty->isAbstract())   // If abstract, drop the reference...
-	Ty->castDerivedTypeAsserting()->removeAbstractTypeUser(this);
+	cast<DerivedType>(Ty)->removeAbstractTypeUser(this);
     }
   }
 #ifndef NDEBUG   // Only do this in -g mode...
   bool LeftoverValues = true;
   for (iterator i = begin(); i != end(); ++i) {
     for (type_iterator I = i->second.begin(); I != i->second.end(); ++I)
-      if (!I->second->isConstant() && !I->second->isType()) {
+      if (!isa<ConstPoolVal>(I->second) && !isa<Type>(I->second)) {
 	cerr << "Value still in symbol table! Type = '"
 	     << i->first->getDescription() << "' Name = '" << I->first << "'\n";
 	LeftoverValues = false;
@@ -112,9 +108,9 @@ Value *SymbolTable::type_remove(const type_iterator &It) {
   // If we are removing an abstract type, remove the symbol table from it's use
   // list...
   if (Ty == Type::TypeTy) {
-    const Type *T = Result->castTypeAsserting();
+    const Type *T = cast<const Type>(Result);
     if (T->isAbstract())
-      T->castDerivedTypeAsserting()->removeAbstractTypeUser(this);
+      cast<DerivedType>(T)->removeAbstractTypeUser(this);
   }
 
   return Result;
@@ -149,9 +145,9 @@ void SymbolTable::insertEntry(const string &Name, Value *V) {
 
   // If we are adding an abstract type, add the symbol table to it's use list.
   if (VTy == Type::TypeTy) {
-    const Type *T = V->castTypeAsserting();
+    const Type *T = cast<const Type>(V);
     if (T->isAbstract())
-      T->castDerivedTypeAsserting()->addAbstractTypeUser(this);
+      cast<DerivedType>(T)->addAbstractTypeUser(this);
   }
 }
 
@@ -174,6 +170,6 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
       OldType->removeAbstractTypeUser(this);
       I->second = (Value*)NewType;  // TODO FIXME when types aren't const
       if (NewType->isAbstract())
-	NewType->castDerivedTypeAsserting()->addAbstractTypeUser(this);
+	cast<const DerivedType>(NewType)->addAbstractTypeUser(this);
     }
 }

@@ -143,9 +143,9 @@ void AssemblyWriter::processSymbolTable(const SymbolTable &ST) {
     
     for (; I != End; ++I) {
       const Value *V = I->second;
-      if (const ConstPoolVal *CPV = V->castConstant()) {
+      if (const ConstPoolVal *CPV = cast<const ConstPoolVal>(V)) {
 	processConstant(CPV);
-      } else if (const Type *Ty = V->castType()) {
+      } else if (const Type *Ty = cast<const Type>(V)) {
 	Out << "\t%" << I->first << " = type " << Ty->getDescription() << endl;
       }
     }

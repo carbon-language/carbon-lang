@@ -45,7 +45,7 @@ public:
 
   inline pointer operator*() const {
     assert(isAtConstant() && "Dereferenced an iterator at the end!");
-    return InstI->getOperand(OpIdx)->castConstantAsserting();
+    return cast<ConstPoolVal>(InstI->getOperand(OpIdx));
   }
   inline pointer operator->() const { return operator*(); }
 

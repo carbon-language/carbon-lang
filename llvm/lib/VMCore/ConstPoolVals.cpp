@@ -127,10 +127,10 @@ string ConstPoolArray::getStrValue() const {
   string Result = "[";
   if (Operands.size()) {
     Result += " " + Operands[0]->getType()->getDescription() + 
-	      " " + Operands[0]->castConstantAsserting()->getStrValue();
+	      " " + cast<ConstPoolVal>(Operands[0])->getStrValue();
     for (unsigned i = 1; i < Operands.size(); i++)
       Result += ", " + Operands[i]->getType()->getDescription() + 
-	         " " + Operands[i]->castConstantAsserting()->getStrValue();
+	         " " + cast<ConstPoolVal>(Operands[i])->getStrValue();
   }
 
   return Result + " ]";
@@ -140,10 +140,10 @@ string ConstPoolStruct::getStrValue() const {
   string Result = "{";
   if (Operands.size()) {
     Result += " " + Operands[0]->getType()->getDescription() + 
-	      " " + Operands[0]->castConstantAsserting()->getStrValue();
+	      " " + cast<ConstPoolVal>(Operands[0])->getStrValue();
     for (unsigned i = 1; i < Operands.size(); i++)
       Result += ", " + Operands[i]->getType()->getDescription() + 
-	         " " + Operands[i]->castConstantAsserting()->getStrValue();
+	         " " + cast<ConstPoolVal>(Operands[i])->getStrValue();
   }
 
   return Result + " }";

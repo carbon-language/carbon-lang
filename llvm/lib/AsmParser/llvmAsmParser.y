@@ -155,7 +155,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
     }
 
     D.destroy();  // Free old strdup'd memory...
-    return N->castTypeAsserting();
+    return cast<const Type>(N);
   }
   default:
     ThrowException("Invalid symbol type reference!");
@@ -267,7 +267,7 @@ static Value *getVal(const Type *Ty, const ValID &D,
     case ValID::ConstNullVal:
       if (!Ty->isPointerType())
         ThrowException("Cannot create a a non pointer null!");
-      CPV = ConstPoolPointer::getNullPointer(Ty->castPointerType());
+      CPV = ConstPoolPointer::getNullPointer(cast<PointerType>(Ty));
       break;
     default:
       assert(0 && "Unhandled case!");
@@ -341,7 +341,7 @@ static void ResolveDefinitions(vector<ValueList> &LateResolvers) {
 			 getLineNumFromPlaceHolder(V));
       }
 
-      assert(!V->isType() && "Types should be in LateResolveTypes!");
+      assert(!isa<Type>(V) && "Types should be in LateResolveTypes!");
 
       V->replaceAllUsesWith(TheRealValue);
       delete V;
@@ -371,11 +371,8 @@ static void ResolveTypes(vector<PATypeHolder<Type> > &LateResolveTypes) {
 		       getLineNumFromPlaceHolder(Ty));
     }
 
-    // FIXME: When types are not const
-    DerivedType *DTy = const_cast<DerivedType*>(Ty->castDerivedTypeAsserting());
-    
     // Refine the opaque type we had to the new type we are getting.
-    DTy->refineAbstractTypeTo(TheRealType);
+    cast<DerivedType>(Ty)->refineAbstractTypeTo(TheRealType);
 
     // No need to delete type, refine does that for us.
     LateResolveTypes.pop_back();
@@ -399,12 +396,11 @@ static void setValueName(Value *V, char *NameStr) {
   if (Existing) {    // Inserting a name that is already defined???
     // There is only one case where this is allowed: when we are refining an
     // opaque type.  In this case, Existing will be an opaque type.
-    if (const Type *Ty = Existing->castType())
+    if (const Type *Ty = cast<const Type>(Existing))
       if (Ty->isOpaqueType()) {
 	// We ARE replacing an opaque type!
 
-	// TODO: FIXME when types are not const!
-	const_cast<DerivedType*>(Ty->castDerivedTypeAsserting())->refineAbstractTypeTo(V->castTypeAsserting());
+	cast<DerivedType>(Ty)->refineAbstractTypeTo(cast<Type>(V));
 	return;
       }
 
@@ -899,7 +895,7 @@ ConstPool : ConstPool OptAssign ConstVal {
   | ConstPool OptAssign GlobalType ResolvedVal {
     const Type *Ty = $4->getType();
     // Global declarations appear in Constant Pool
-    ConstPoolVal *Initializer = $4->castConstant();
+    ConstPoolVal *Initializer = cast<ConstPoolVal>($4);
     if (Initializer == 0)
       ThrowException("Global value initializer is not a constant!");
 	 
@@ -913,7 +909,7 @@ ConstPool : ConstPool OptAssign ConstVal {
   | ConstPool OptAssign UNINIT GlobalType Types {
     const Type *Ty = *$5;
     // Global declarations appear in Constant Pool
-    if (Ty->isArrayType() && Ty->castArrayType()->isUnsized()) {
+    if (isa<ArrayType>(Ty) && cast<ArrayType>(Ty)->isUnsized()) {
       ThrowException("Type '" + Ty->getDescription() +
 		     "' is not a sized type!");
     }
@@ -1162,7 +1158,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
 
 JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     $$ = $1;
-    ConstPoolVal *V = getVal($2, $3, true)->castConstantAsserting();
+    ConstPoolVal *V = cast<ConstPoolVal>(getVal($2, $3, true));
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");
 
@@ -1170,7 +1166,7 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
   }
   | IntType ConstValueRef ',' LABEL ValueRef {
     $$ = new list<pair<ConstPoolVal*, BasicBlock*> >();
-    ConstPoolVal *V = getVal($1, $2, true)->castConstantAsserting();
+    ConstPoolVal *V = cast<ConstPoolVal>(getVal($1, $2, true));
 
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");

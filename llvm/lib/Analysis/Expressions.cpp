@@ -225,7 +225,7 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
   case Value::MethodArgumentVal:        // nothing known, return variable itself
     return Expr;
   case Value::ConstantVal:              // Constant value, just return constant
-    ConstPoolVal *CPV = Expr->castConstantAsserting();
+    ConstPoolVal *CPV = cast<ConstPoolVal>(Expr);
     if (CPV->getType()->isIntegral()) { // It's an integral constant!
       ConstPoolInt *CPI = (ConstPoolInt*)Expr;
       return ExprType(CPI->equalsInt(0) ? 0 : CPI);

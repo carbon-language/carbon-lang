@@ -98,14 +98,6 @@ public:
   inline CLASS *cast##NAME() {         /* nonconst version */             \
     return is##NAME() ? (CLASS*)this : 0;                                 \
   }                                                                       \
-  inline const CLASS *cast##NAME##Asserting() const { /*const version */  \
-    assert(is##NAME() && "Expected Value Type: " #NAME);                  \
-    return (const CLASS*)this;                                            \
-  }                                                                       \
-  inline CLASS *cast##NAME##Asserting() {         /* nonconst version */  \
-    assert(is##NAME() && "Expected Value Type: " #NAME);                  \
-    return (CLASS*)this;                                                  \
-  }                                                                       \
 
   CAST_FN(Constant      ,       ConstPoolVal  )
   CAST_FN(MethodArgument,       MethodArgument)
@@ -113,18 +105,7 @@ public:
   CAST_FN(BasicBlock    ,       BasicBlock    )
   CAST_FN(Method        ,       Method        )
   CAST_FN(Global        ,       GlobalVariable)
-  CAST_FN(Module        ,       Module        )
 #undef CAST_FN
-
-  // Type value is special, because there is no nonconst version of functions!
-  inline bool isType() const { return VTy == TypeVal; }
-  inline const Type *castType() const {
-    return (VTy == TypeVal) ? (const Type*)this : 0;
-  }
-  inline const Type *castTypeAsserting() const {
-    assert(isType() && "Expected Value Type: Type");
-    return (const Type*)this;
-  }
 
   // replaceAllUsesWith - Go through the uses list for this definition and make
   // each use point to "D" instead of "this".  After this completes, 'this's 
@@ -254,6 +235,35 @@ X *cast(Y Val) {
 template <class X, class Y>
 X *dyn_cast(Y Val) {
   return isa<X>(Val) ? cast<X>(Val) : 0;
+}
+
+
+// isa - Provide some specializations of isa so that we have to include the
+// subtype header files to test to see if the value is a subclass...
+//
+template <> bool isa<Type, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::TypeVal;
+}
+template <> bool isa<ConstPoolVal, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::ConstantVal; 
+}
+template <> bool isa<MethodArgument, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::MethodArgumentVal;
+}
+template <> bool isa<Instruction, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::InstructionVal;
+}
+template <> bool isa<BasicBlock, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::BasicBlockVal;
+}
+template <> bool isa<Method, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::MethodVal;
+}
+template <> bool isa<GlobalVariable, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::GlobalVal;
+}
+template <> bool isa<Module, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::ModuleVal;
 }
 
 #endif

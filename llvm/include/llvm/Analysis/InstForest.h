@@ -20,8 +20,8 @@
 
 namespace analysis {
 
-template <class Payload> class InstTreeNode;
-template<class Payload>  class InstForest;
+template<class Payload> class InstTreeNode;
+template<class Payload> class InstForest;
 
 
 //===----------------------------------------------------------------------===//
@@ -74,10 +74,10 @@ public:
 
   // Accessors for different node types...
   inline ConstPoolVal *getConstant() {
-    return getValue()->castConstantAsserting();
+    return cast<ConstPoolVal>(getValue());
   }
   inline const ConstPoolVal *getConstant() const {
-    return getValue()->castConstantAsserting();
+    return cast<const ConstPoolVal>(getValue());
   }
   inline BasicBlock *getBasicBlock() {
     return cast<BasicBlock>(getValue());
@@ -230,12 +230,12 @@ InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
   getTreeData().first.first = V;   // Save tree node
  
   if (!V->isInstruction()) {
-    assert((V->isConstant() || V->isBasicBlock() ||
-	    V->isMethodArgument() || V->isGlobal()) &&
+    assert((isa<ConstPoolVal>(V) || isa<BasicBlock>(V) ||
+	    isa<MethodArgument>(V) || isa<GlobalVariable>(V)) &&
 	   "Unrecognized value type for InstForest Partition!");
-    if (V->isConstant())
+    if (isa<ConstPoolVal>(V))
       getTreeData().first.second = ConstNode;
-    else if (V->isBasicBlock())
+    else if (isa<BasicBlock>(V))
       getTreeData().first.second = BasicBlockNode;
     else 
       getTreeData().first.second = TemporaryNode;

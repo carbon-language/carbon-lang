@@ -55,7 +55,7 @@ const Type *BytecodeParser::getType(unsigned ID) {
   const Value *D = getValue(Type::TypeTy, ID, false);
   if (D == 0) return failure<const Type*>(0);
 
-  return D->castTypeAsserting();
+  return cast<Type>(D);
 }
 
 bool BytecodeParser::insertValue(Value *Val, vector<ValueList> &ValueTab) {
@@ -341,7 +341,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
       Value *V = getValue(Ty->castPointerType()->getValueType(),
 			  InitSlot, false);
       if (V == 0) return failure(true);
-      Initializer = V->castConstantAsserting();
+      Initializer = cast<ConstPoolVal>(V);
     }
 
     // Create the global variable...

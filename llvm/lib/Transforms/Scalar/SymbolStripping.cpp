@@ -29,7 +29,7 @@ static bool StripSymbolTable(SymbolTable *SymTab) {
     SymbolTable::type_iterator B;
     while ((B = Plane.begin()) != Plane.end()) {   // Found nonempty type plane!
       Value *V = B->second;
-      if (V->isConstant() || V->isType())
+      if (isa<ConstPoolVal>(V) || isa<Type>(V))
 	SymTab->type_remove(B);
       else 
 	V->setName("", SymTab);   // Set name to "", removing from symbol table!

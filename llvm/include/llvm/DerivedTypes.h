@@ -78,6 +78,15 @@ public:
   // type NewType and for 'this' to be deleted.
   //
   void refineAbstractTypeTo(const Type *NewType);
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const DerivedType *T) { return true; }
+  static inline bool isa(const Type *T) {
+    return T->isDerivedType();
+  }
+  static inline bool isa(const Value *V) {
+    return ::isa<Type>(V) && isa(cast<const Type>(V));
+  }
 };
 
 
@@ -129,7 +138,7 @@ public:
     return T->getPrimitiveID() == MethodTyID;
   }
   static inline bool isa(const Value *V) {
-    return ::isa<Type>(V) && MethodType::isa(cast<const Type>(V));
+    return ::isa<Type>(V) && isa(cast<const Type>(V));
   }
 };
 
@@ -170,6 +179,15 @@ public:
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 
   static ArrayType *get(const Type *ElementType, int NumElements = -1);
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const ArrayType *T) { return true; }
+  static inline bool isa(const Type *T) {
+    return T->getPrimitiveID() == ArrayTyID;
+  }
+  static inline bool isa(const Value *V) {
+    return ::isa<Type>(V) && isa(cast<const Type>(V));
+  }
 };
 
 
@@ -206,6 +224,15 @@ public:
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 
   static StructType *get(const vector<const Type*> &Params);
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const StructType *T) { return true; }
+  static inline bool isa(const Type *T) {
+    return T->getPrimitiveID() == StructTyID;
+  }
+  static inline bool isa(const Value *V) {
+    return ::isa<Type>(V) && isa(cast<const Type>(V));
+  }
 };
 
 
@@ -240,6 +267,15 @@ public:
   // concrete type.
   //
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const PointerType *T) { return true; }
+  static inline bool isa(const Type *T) {
+    return T->getPrimitiveID() == PointerTyID;
+  }
+  static inline bool isa(const Value *V) {
+    return ::isa<Type>(V) && isa(cast<const Type>(V));
+  }
 };
 
 
@@ -261,6 +297,15 @@ public:
   static OpaqueType *get() {
     return new OpaqueType();           // All opaque types are distinct
   }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const OpaqueType *T) { return true; }
+  static inline bool isa(const Type *T) {
+    return T->getPrimitiveID() == OpaqueTyID;
+  }
+  static inline bool isa(const Value *V) {
+    return ::isa<Type>(V) && isa(cast<const Type>(V));
+  }
 };
 
 
@@ -272,11 +317,11 @@ public:
 //
 template <class TypeSubClass> void PATypeHandle<TypeSubClass>::addUser() {
   if (Ty->isAbstract())
-    Ty->castDerivedTypeAsserting()->addAbstractTypeUser(User);
+    cast<DerivedType>(Ty)->addAbstractTypeUser(User);
 }
 template <class TypeSubClass> void PATypeHandle<TypeSubClass>::removeUser() {
   if (Ty->isAbstract())
-    Ty->castDerivedTypeAsserting()->removeAbstractTypeUser(User);
+    cast<DerivedType>(Ty)->removeAbstractTypeUser(User);
 }
 
 #endif

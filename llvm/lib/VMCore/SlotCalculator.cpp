@@ -250,13 +250,13 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore = false) {
   if (!dontIgnore)                               // Don't ignore nonignorables!
     if (D->getType() == Type::VoidTy ||          // Ignore void type nodes
 	(IgnoreNamedNodes &&                     // Ignore named and constants
-	 (D->hasName() || D->isConstant()) && !D->isType())) {
+	 (D->hasName() || isa<ConstPoolVal>(D)) && !isa<Type>(D))) {
       SC_DEBUG("ignored value " << D << endl);
       return -1;                  // We do need types unconditionally though
     }
 
   // If it's a type, make sure that all subtypes of the type are included...
-  if (const Type *TheTy = D->castType()) {
+  if (const Type *TheTy = dyn_cast<const Type>(D)) {
     SC_DEBUG("  Inserted type: " << TheTy->getDescription() << endl);
 
     // Loop over any contained types in the definition... in reverse depth first
@@ -289,7 +289,7 @@ int SlotCalculator::doInsertVal(const Value *D) {
 
   // Used for debugging DefSlot=-1 assertion...
   //if (Typ == Type::TypeTy)
-  //  cerr << "Inserting type '" << D->castTypeAsserting()->getDescription() << "'!\n";
+  //  cerr << "Inserting type '" << cast<Type>(D)->getDescription() << "'!\n";
 
   if (Typ->isDerivedType()) {
     int DefSlot = getValSlot(Typ);

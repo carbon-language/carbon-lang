@@ -238,7 +238,7 @@ struct DirectRules
 //
 Annotation *ConstRules::find(AnnotationID AID, const Annotable *TyA, void *) {
   assert(AID == ConstRules::AID && "Bad annotation for factory!");
-  const Type *Ty = ((const Value*)TyA)->castTypeAsserting();
+  const Type *Ty = cast<Type>((const Value*)TyA);
   
   switch (Ty->getPrimitiveID()) {
   case Type::BoolTyID: return new BoolRules();

@@ -19,6 +19,11 @@
 #include "llvm/Value.h"
 #include <map>
 
+#ifndef NDEBUG             // Only for assertions
+#include "llvm/Type.h"
+#include "llvm/ConstPoolVals.h"
+#endif
+
 class Value;
 class Type;
 
@@ -63,7 +68,7 @@ public:
   // (constant/type)s.
   //
   inline void insert(const string &Name, Value *V) {
-    assert((V->isType() || V->isConstant()) &&
+    assert((isa<Type>(V) || isa<ConstPoolVal>(V)) &&
 	   "Can only insert types and constants here!");
     insertEntry(Name, V);
   }
