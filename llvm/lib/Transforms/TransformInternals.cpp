@@ -161,15 +161,12 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
   //
   analysis::ExprType Expr = analysis::ClassifyExpression(OffsetVal);
 
-  // Get the offset and scale now...
+  // Get the offset and scale values if they exists...
   // A scale of zero with Expr.Var != 0 means a scale of 1.
   //
-  int Offset = 0;
-  int Scale = 0;
+  int Offset = Expr.Offset ? getConstantValue(Expr.Offset) : 0;
+  int Scale  = Expr.Scale  ? getConstantValue(Expr.Scale)  : 0;
 
-  // Get the offset and scale values if they exists...
-  if (Expr.Offset) Offset = getConstantValue(Expr.Offset);
-  if (Expr.Scale) Scale = getConstantValue(Expr.Scale);
   if (Expr.Var && Scale == 0) Scale = 1;   // Scale != 0 if Expr.Var != 0
  
   // Loop over the Scale and Offset values, filling in the Indices vector for
@@ -182,9 +179,8 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
     CompTy = cast<CompositeType>(NextTy);
 
     if (const StructType *StructTy = dyn_cast<StructType>(CompTy)) {
-      if (Offset < 0) return 0;  // Can't index negatively into structure
       // Step into the appropriate element of the structure...
-      unsigned ActualOffset = (unsigned)Offset;
+      unsigned ActualOffset = (Offset < 0) ? 0 : (unsigned)Offset;
       NextTy = getStructOffsetStep(StructTy, ActualOffset, Indices);
       Offset -= ActualOffset;
     } else {
