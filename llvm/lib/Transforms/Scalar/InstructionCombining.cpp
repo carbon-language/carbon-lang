@@ -630,8 +630,6 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   // If the PHI node only has one incoming value, eliminate the PHI node...
-  if (PN.getNumIncomingValues() == 0)
-    return ReplaceInstUsesWith(PN, Constant::getNullValue(PN.getType()));
   if (PN.getNumIncomingValues() == 1)
     return ReplaceInstUsesWith(PN, PN.getIncomingValue(0));
   
