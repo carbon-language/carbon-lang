@@ -72,7 +72,7 @@ public:
   /// globals section.
   /// @brief A list of values as a User of those Values.
   struct ValueList : public User {
-    ValueList() : User(Type::VoidTy, Value::FunctionVal) {}
+    ValueList() : User(Type::VoidTy, Value::ValueListVal) {}
 
     // vector compatibility methods
     unsigned size() const { return getNumOperands(); }
