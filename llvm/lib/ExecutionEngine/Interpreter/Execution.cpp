@@ -486,7 +486,8 @@ static GenericValue executeSetGTInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static void executeBinaryInst(BinaryOperator &I, ExecutionContext &SF) {
+void Interpreter::visitBinaryOperator(BinaryOperator &I) {
+  ExecutionContext &SF = ECStack.back();
   const Type *Ty    = I.getOperand(0)->getType();
   GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
   GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
@@ -577,7 +578,8 @@ void Interpreter::exitCalled(GenericValue GV) {
   PerformExitStuff();
 }
 
-void Interpreter::executeRetInst(ReturnInst &I, ExecutionContext &SF) {
+void Interpreter::visitReturnInst(ReturnInst &I) {
+  ExecutionContext &SF = ECStack.back();
   const Type *RetTy = 0;
   GenericValue Result;
 
@@ -631,7 +633,8 @@ void Interpreter::executeRetInst(ReturnInst &I, ExecutionContext &SF) {
   }
 }
 
-void Interpreter::executeBrInst(BranchInst &I, ExecutionContext &SF) {
+void Interpreter::visitBranchInst(BranchInst &I) {
+  ExecutionContext &SF = ECStack.back();
   BasicBlock *Dest;
 
   Dest = I.getSuccessor(0);          // Uncond branches have a fixed dest...
@@ -643,7 +646,8 @@ void Interpreter::executeBrInst(BranchInst &I, ExecutionContext &SF) {
   SwitchToNewBasicBlock(Dest, SF);
 }
 
-void Interpreter::executeSwitchInst(SwitchInst &I, ExecutionContext &SF) {
+void Interpreter::visitSwitchInst(SwitchInst &I) {
+  ExecutionContext &SF = ECStack.back();
   GenericValue CondVal = getOperandValue(I.getOperand(0), SF);
   const Type *ElTy = I.getOperand(0)->getType();
 
@@ -681,6 +685,8 @@ void Interpreter::SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF){
   std::vector<GenericValue> ResultValues;
 
   for (; PHINode *PN = dyn_cast<PHINode>(SF.CurInst); ++SF.CurInst) {
+    if (Trace) CW << "Run:" << PN;
+
     // Search for the value corresponding to this previous bb...
     int i = PN->getBasicBlockIndex(PrevBB);
     assert(i != -1 && "PHINode doesn't contain entry for predecessor??");
@@ -702,7 +708,9 @@ void Interpreter::SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF){
 //                     Memory Instruction Implementations
 //===----------------------------------------------------------------------===//
 
-void Interpreter::executeAllocInst(AllocationInst &I, ExecutionContext &SF) {
+void Interpreter::visitAllocationInst(AllocationInst &I) {
+  ExecutionContext &SF = ECStack.back();
+
   const Type *Ty = I.getType()->getElementType();  // Type to be allocated
 
   // Get the number of elements being allocated by the array...
@@ -720,7 +728,8 @@ void Interpreter::executeAllocInst(AllocationInst &I, ExecutionContext &SF) {
     ECStack.back().Allocas.add(Memory);
 }
 
-static void executeFreeInst(FreeInst &I, ExecutionContext &SF) {
+void Interpreter::visitFreeInst(FreeInst &I) {
+  ExecutionContext &SF = ECStack.back();
   assert(isa<PointerType>(I.getOperand(0)->getType()) && "Freeing nonptr?");
   GenericValue Value = getOperandValue(I.getOperand(0), SF);
   // TODO: Check to make sure memory is allocated
@@ -784,19 +793,22 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, User::op_iterator I,
   return Result;
 }
 
-static void executeGEPInst(GetElementPtrInst &I, ExecutionContext &SF) {
+void Interpreter::visitGetElementPtrInst(GetElementPtrInst &I) {
+  ExecutionContext &SF = ECStack.back();
   SetValue(&I, TheEE->executeGEPOperation(I.getPointerOperand(),
                                    I.idx_begin(), I.idx_end(), SF), SF);
 }
 
-void Interpreter::executeLoadInst(LoadInst &I, ExecutionContext &SF) {
+void Interpreter::visitLoadInst(LoadInst &I) {
+  ExecutionContext &SF = ECStack.back();
   GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
   GenericValue *Ptr = (GenericValue*)GVTOP(SRC);
   GenericValue Result = LoadValueFromMemory(Ptr, I.getType());
   SetValue(&I, Result, SF);
 }
 
-void Interpreter::executeStoreInst(StoreInst &I, ExecutionContext &SF) {
+void Interpreter::visitStoreInst(StoreInst &I) {
+  ExecutionContext &SF = ECStack.back();
   GenericValue Val = getOperandValue(I.getOperand(0), SF);
   GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
   StoreValueToMemory(Val, (GenericValue *)GVTOP(SRC),
@@ -809,8 +821,9 @@ void Interpreter::executeStoreInst(StoreInst &I, ExecutionContext &SF) {
 //                 Miscellaneous Instruction Implementations
 //===----------------------------------------------------------------------===//
 
-void Interpreter::executeCallInst(CallInst &I, ExecutionContext &SF) {
-  ECStack.back().Caller = &I;
+void Interpreter::visitCallInst(CallInst &I) {
+  ExecutionContext &SF = ECStack.back();
+  SF.Caller = &I;
   std::vector<GenericValue> ArgVals;
   ArgVals.reserve(I.getNumOperands()-1);
   for (unsigned i = 1; i < I.getNumOperands(); ++i) {
@@ -838,15 +851,15 @@ void Interpreter::executeCallInst(CallInst &I, ExecutionContext &SF) {
 
   // To handle indirect calls, we must get the pointer value from the argument 
   // and treat it as a function pointer.
-  GenericValue SRC = getOperandValue(I.getCalledValue(), SF);
-  
+  GenericValue SRC = getOperandValue(I.getCalledValue(), SF);  
   callFunction((Function*)GVTOP(SRC), ArgVals);
 }
 
 #define IMPLEMENT_SHIFT(OP, TY) \
    case Type::TY##TyID: Dest.TY##Val = Src1.TY##Val OP Src2.UByteVal; break
 
-static void executeShlInst(ShiftInst &I, ExecutionContext &SF) {
+void Interpreter::visitShl(ShiftInst &I) {
+  ExecutionContext &SF = ECStack.back();
   const Type *Ty    = I.getOperand(0)->getType();
   GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
   GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
@@ -867,7 +880,8 @@ static void executeShlInst(ShiftInst &I, ExecutionContext &SF) {
   SetValue(&I, Dest, SF);
 }
 
-static void executeShrInst(ShiftInst &I, ExecutionContext &SF) {
+void Interpreter::visitShr(ShiftInst &I) {
+  ExecutionContext &SF = ECStack.back();
   const Type *Ty    = I.getOperand(0)->getType();
   GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
   GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
@@ -948,11 +962,14 @@ static GenericValue executeCastOperation(Value *SrcVal, const Type *Ty,
 }
 
 
-static void executeCastInst(CastInst &I, ExecutionContext &SF) {
+void Interpreter::visitCastInst(CastInst &I) {
+  ExecutionContext &SF = ECStack.back();
   SetValue(&I, executeCastOperation(I.getOperand(0), I.getType(), SF), SF);
 }
 
-static void executeVarArgInst(VarArgInst &I, ExecutionContext &SF) {
+void Interpreter::visitVarArgInst(VarArgInst &I) {
+  ExecutionContext &SF = ECStack.back();
+
   // Get the pointer to the valist element.  LLI treats the valist in memory as
   // an integer.
   GenericValue VAListPtr = getOperandValue(I.getOperand(0), SF);
@@ -1081,8 +1098,7 @@ bool Interpreter::executeInstruction() {
   ExecutionContext &SF = ECStack.back();  // Current stack frame
   Instruction &I = *SF.CurInst++;         // Increment before execute
 
-  if (Trace)
-    CW << "Run:" << I;
+  if (Trace) CW << "Run:" << I;
 
   // Track the number of dynamic instructions executed.
   ++NumDynamicInsts;
@@ -1107,37 +1123,7 @@ bool Interpreter::executeInstruction() {
   }
 
   InInstruction = true;
-  if (I.isBinaryOp()) {
-    executeBinaryInst(cast<BinaryOperator>(I), SF);
-  } else {
-    switch (I.getOpcode()) {
-      // Terminators
-    case Instruction::Ret:     executeRetInst  (cast<ReturnInst>(I), SF); break;
-    case Instruction::Br:      executeBrInst   (cast<BranchInst>(I), SF); break;
-    case Instruction::Switch:  executeSwitchInst(cast<SwitchInst>(I), SF);break;
-      // Invoke not handled!
-
-      // Memory Instructions
-    case Instruction::Alloca:
-    case Instruction::Malloc:  executeAllocInst((AllocationInst&)I, SF); break;
-    case Instruction::Free:    executeFreeInst (cast<FreeInst> (I), SF); break;
-    case Instruction::Load:    executeLoadInst (cast<LoadInst> (I), SF); break;
-    case Instruction::Store:   executeStoreInst(cast<StoreInst>(I), SF); break;
-    case Instruction::GetElementPtr:
-                          executeGEPInst(cast<GetElementPtrInst>(I), SF); break;
-
-      // Miscellaneous Instructions
-    case Instruction::Call:    executeCallInst (cast<CallInst> (I), SF); break;
-    case Instruction::PHINode: assert(0 && "PHI nodes already handled!");
-    case Instruction::Cast:    executeCastInst (cast<CastInst> (I), SF); break;
-    case Instruction::Shl:     executeShlInst  (cast<ShiftInst>(I), SF); break;
-    case Instruction::Shr:     executeShrInst  (cast<ShiftInst>(I), SF); break;
-    case Instruction::VarArg:  executeVarArgInst(cast<VarArgInst>(I),SF); break;
-    default:
-      std::cout << "Don't know how to execute this instruction!\n-->" << I;
-      abort();
-    }
-  }
+  visit(I);   // Dispatch to one of the visit* methods...
   InInstruction = false;
   
   // Reset the current frame location to the top of stack

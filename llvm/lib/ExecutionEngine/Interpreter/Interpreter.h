@@ -11,22 +11,16 @@
 //#define PROFILE_STRUCTURE_FIELDS 1
 
 #include "../ExecutionEngine.h"
+#include "../GenericValue.h"
 #include "Support/DataTypes.h"
 #include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/BasicBlock.h"
-#include "../GenericValue.h"
+#include "llvm/Support/InstVisitor.h"
 
 extern CachedWriter CW;     // Object to accelerate printing of LLVM
 
 struct FunctionInfo;        // Defined in ExecutionAnnotations.h
-class CallInst;
-class ReturnInst;
-class BranchInst;
-class SwitchInst;
-class LoadInst;
-class StoreInst;
-class AllocationInst;
 
 // AllocaHolder - Object to track all of the blocks of memory allocated by
 // alloca.  When the function returns, this object is poped off the execution
@@ -78,7 +72,7 @@ struct ExecutionContext {
 
 // Interpreter - This class represents the entirety of the interpreter.
 //
-class Interpreter : public ExecutionEngine {
+class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   int ExitCode;                // The exit code to be returned by the lli util
   bool Debug;                  // Debug mode enabled?
   bool Profile;                // Profiling enabled?
@@ -134,11 +128,28 @@ public:
   void finish();           // Do the 'finish' command
 
   // Opcode Implementations
-  void executeCallInst(CallInst &I, ExecutionContext &SF);
-  void executeRetInst(ReturnInst &I, ExecutionContext &SF);
-  void executeBrInst(BranchInst &I, ExecutionContext &SF);
-  void executeSwitchInst(SwitchInst &I, ExecutionContext &SF);
-  void executeAllocInst(AllocationInst &I, ExecutionContext &SF);
+  void visitReturnInst(ReturnInst &I);
+  void visitBranchInst(BranchInst &I);
+  void visitSwitchInst(SwitchInst &I);
+
+  void visitBinaryOperator(BinaryOperator &I);
+  void visitAllocationInst(AllocationInst &I);
+  void visitFreeInst(FreeInst &I);
+  void visitLoadInst(LoadInst &I);
+  void visitStoreInst(StoreInst &I);
+  void visitGetElementPtrInst(GetElementPtrInst &I);
+
+  void visitPHINode(PHINode &PN) { assert(0 && "PHI nodes already handled!"); }
+  void visitCastInst(CastInst &I);
+  void visitCallInst(CallInst &I);
+  void visitShl(ShiftInst &I);
+  void visitShr(ShiftInst &I);
+  void visitVarArgInst(VarArgInst &I);
+  void visitInstruction(Instruction &I) {
+    std::cerr << I;
+    assert(0 && "Instruction not interpretable yet!");
+  }
+
   GenericValue callExternalFunction(Function *F, 
                                     const std::vector<GenericValue> &ArgVals);
   void exitCalled(GenericValue GV);
@@ -157,9 +168,6 @@ public:
 public:
   GenericValue executeGEPOperation(Value *Ptr, User::op_iterator I,
 				   User::op_iterator E, ExecutionContext &SF);
-  void executeLoadInst(LoadInst &I, ExecutionContext &SF);
-  void executeStoreInst(StoreInst &I, ExecutionContext &SF);
-
 
 private:  // Helper functions
   // SwitchToNewBasicBlock - Start execution in a new basic block and run any
