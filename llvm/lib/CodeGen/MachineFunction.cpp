@@ -1,13 +1,13 @@
-//===-- MachineCodeForMethod.cpp -------------------------------------------=//
+//===-- MachineFunction.cpp -----------------------------------------------===//
 // 
-// Purpose:
-//   Collect native machine code information for a function.
-//   This allows target-specific information about the generated code
-//   to be stored with each function.
-//===---------------------------------------------------------------------===//
+// Collect native machine code information for a function.  This allows
+// target-specific information about the generated code to be stored with each
+// function.
+//
+//===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"  // For debug output
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/Target/TargetMachine.h"
@@ -228,8 +228,7 @@ MachineFunction::allocateLocalVar(const TargetMachine& target,
   if (offset == INVALID_FRAME_OFFSET)
     {
       unsigned int getPaddedSize;
-      offset = this->computeOffsetforLocalVar(target, val, getPaddedSize,
-                                              sizeToUse);
+      offset = computeOffsetforLocalVar(target, val, getPaddedSize, sizeToUse);
       offsets[val] = offset;
       incrementAutomaticVarsSize(getPaddedSize);
     }
@@ -291,7 +290,7 @@ int
 MachineFunction::getOffset(const Value* val) const
 {
   hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
-  return (pair == offsets.end())? INVALID_FRAME_OFFSET : pair->second;
+  return (pair == offsets.end()) ? INVALID_FRAME_OFFSET : pair->second;
 }
 
 void
@@ -302,7 +301,8 @@ MachineFunction::dump() const
   
   for (Function::const_iterator BB = method->begin(); BB != method->end(); ++BB)
     {
-      std::cerr << std::endl << (*BB).getName() << " (" << (const void*) BB << ")" << ":" << std::endl;
+      std::cerr << "\n" << BB->getName() << " (" << (const void*)BB
+                << ")" << ":" << "\n";
       MachineCodeForBasicBlock& mvec = MachineCodeForBasicBlock::get(BB);
       for (unsigned i=0; i < mvec.size(); i++)
 	std::cerr << "\t" << *mvec[i];
