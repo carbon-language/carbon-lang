@@ -4216,9 +4216,11 @@ bool InstCombiner::runOnFunction(Function &F) {
 
     // Instruction isn't dead, see if we can constant propagate it...
     if (Constant *C = ConstantFoldInstruction(I)) {
+      Value* Ptr = I->getOperand(0);
       if (isa<GetElementPtrInst>(I) &&
-          cast<Constant>(I->getOperand(0))->isNullValue() &&
-          !isa<ConstantPointerNull>(C)) {
+          cast<Constant>(Ptr)->isNullValue() &&
+          !isa<ConstantPointerNull>(C) &&
+          cast<PointerType>(Ptr->getType())->getElementType()->isSized()) {
         // If this is a constant expr gep that is effectively computing an
         // "offsetof", fold it into 'cast int X to T*' instead of 'gep 0, 0, 12'
         bool isFoldableGEP = true;
@@ -4226,7 +4228,7 @@ bool InstCombiner::runOnFunction(Function &F) {
           if (!isa<ConstantInt>(I->getOperand(i)))
             isFoldableGEP = false;
         if (isFoldableGEP) {
-          uint64_t Offset = TD->getIndexedOffset(I->getOperand(0)->getType(),
+          uint64_t Offset = TD->getIndexedOffset(Ptr->getType(),
                              std::vector<Value*>(I->op_begin()+1, I->op_end()));
           C = ConstantUInt::get(Type::ULongTy, Offset);
           C = ConstantExpr::getCast(C, TD->getIntPtrType());
