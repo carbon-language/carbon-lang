@@ -35,11 +35,11 @@ class ExecutionEngine {
   Module &CurMod;
   const TargetData *TD;
 
-protected:
-  ModuleProvider *MP;
   // GlobalAddress - A mapping between LLVM global values and their actualized
   // version...
   std::map<const GlobalValue*, void *> GlobalAddress;
+protected:
+  ModuleProvider *MP;
 
   void setTargetData(const TargetData &td) {
     TD = &td;
@@ -63,7 +63,7 @@ public:
 
   void addGlobalMapping(const GlobalValue *GV, void *Addr) {
     void *&CurVal = GlobalAddress[GV];
-    assert(CurVal == 0 && "GlobalMapping already established!");
+    assert((CurVal == 0 || Addr == 0) && "GlobalMapping already established!");
     CurVal = Addr;
   }
 
@@ -106,13 +106,20 @@ public:
   ///
   virtual void *recompileAndRelinkFunction(Function *F) = 0;
 
+  /// getOrEmitGlobalVariable - Return the address of the specified global
+  /// variable, possibly emitting it to memory if needed.  This is used by the
+  /// Emitter.
+  virtual void *getOrEmitGlobalVariable(const GlobalVariable *GV) {
+    return getPointerToGlobal((GlobalValue*)GV);
+  }
+
 protected:
   void emitGlobals();
 
   // EmitGlobalVariable - This method emits the specified global variable to the
   // address specified in GlobalAddresses, or allocates new memory if it's not
   // already in the map.
-  void EmitGlobalVariable(GlobalVariable *GV);
+  void EmitGlobalVariable(const GlobalVariable *GV);
 
   GenericValue getConstantValue(const Constant *C);
   GenericValue LoadValueFromMemory(GenericValue *Ptr, const Type *Ty);
