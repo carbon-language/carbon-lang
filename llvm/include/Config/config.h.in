@@ -185,6 +185,8 @@
 
 /* Indicates whether we have STL iterators */
 #undef HAVE_STD_ITERATOR
+#undef HAVE_BI_ITERATOR
+#undef HAVE_FWD_ITERATOR
 
 /* Indicates which slist we should use */
 #undef HAVE_EXT_SLIST

@@ -1035,7 +1035,7 @@ Optional Features:
   --enable-precompiled_bytecode
                           Use pre-compiled bytecode (default is NO)
   --enable-llc_diffs      Enable LLC Diffs when testing (default is YES)
-  --enable-jit            Enable Just In Time Compiling (default is NO)
+  --enable-jit            Enable Just In Time Compiling (default is YES)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1049,9 +1049,9 @@ Optional Packages:
   --with-llvmgccdir       Location of LLVM GCC front-end
   --with-bcrepos          Location of Bytecode Repository
   --with-papi             Location of PAPI
+  --with-purify           Location of purify program
   --with-objroot          Location where object files should be placed
                           (default is .)
-  --with-purify           Location of purify program
 
 Some influential environment variables:
   CXX         C++ compiler command
@@ -20476,7 +20476,7 @@ using namespace std;
 int
 main ()
 {
-bidirectional_iterator<int,int,int> t; return 0;
+bidirectional_iterator<int,int> t; return 0;
   ;
   return 0;
 }
@@ -20547,7 +20547,7 @@ using namespace std;
 int
 main ()
 {
-forward_iterator<int,int,int> t; return 0;
+forward_iterator<int,int> t; return 0;
   ;
   return 0;
 }
@@ -22005,7 +22005,7 @@ if test "${enable_jit+set}" = set; then
   enableval="$enable_jit"
 
 else
-  enableval=no
+  enableval=default
 fi;
 
 if test ${enableval} = "no"
@@ -22013,9 +22013,22 @@ then
 	JIT=
 
 else
-	JIT=TARGET_HAS_JIT=1
+	case $target in
+		*i*86*)
+			JIT=TARGET_HAS_JIT=1
 
+			;;
+		*sparc*)
+			JIT=TARGET_HAS_JIT=1
+
+			;;
+		*)
+			JIT=
+
+			;;
+	esac
 fi
+
 
 
 # Check whether --with-spec or --without-spec was given.
@@ -22028,12 +22041,14 @@ else
 
 fi;
 
+
 # Check whether --with-llvmgccdir or --without-llvmgccdir was given.
 if test "${with_llvmgccdir+set}" = set; then
   withval="$with_llvmgccdir"
   LLVMGCCDIR=$withval
 
 fi;
+
 
 # Check whether --with-bcrepos or --without-bcrepos was given.
 if test "${with_bcrepos+set}" = set; then
@@ -22045,6 +22060,7 @@ else
 
 fi;
 
+
 # Check whether --with-papi or --without-papi was given.
 if test "${with_papi+set}" = set; then
   withval="$with_papi"
@@ -22055,20 +22071,28 @@ else
 
 fi;
 
-# Check whether --with-objroot or --without-objroot was given.
-if test "${with_objroot+set}" = set; then
-  withval="$with_objroot"
-  OBJROOT=$withval
-
-else
-  OBJROOT=.
-
-fi;
 
 # Check whether --with-purify or --without-purify was given.
 if test "${with_purify+set}" = set; then
   withval="$with_purify"
   PURIFY=$withval
+
+fi;
+
+if test -d /localhome
+then
+	OBJROOT=/localhome/$USER
+
+else
+	OBJROOT=.
+
+fi
+
+
+# Check whether --with-objroot or --without-objroot was given.
+if test "${with_objroot+set}" = set; then
+  withval="$with_objroot"
+  OBJROOT=$withval
 
 fi;
 

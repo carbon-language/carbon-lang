@@ -23,6 +23,11 @@
 
 #include <iterator>
 
+//////////////////////////////////////////////////////////////////////////////
+// If the bidirectional iterator is not defined, attempt to define it using
+// the C++ standard iterator.
+//////////////////////////////////////////////////////////////////////////////
+#ifndef HAVE_BI_ITERATOR
 #ifdef HAVE_STD_ITERATOR
 
 // Define stupid wrappers around std::iterator...
@@ -31,16 +36,34 @@ struct bidirectional_iterator
   : public std::iterator<std::bidirectional_iterator_tag, Ty, PtrDiffTy> {
 };
 
-template<class Ty, class PtrDiffTy>
-struct forward_iterator
-  : public std::iterator<std::forward_iterator_tag, Ty, PtrDiffTy> {
-};
+#else
+#error "Need to have standard iterator to define bidirectional iterator!"
+#endif
 
 #else
 
 // Just use bidirectional_iterator directly.
 using std::bidirectional_iterator;
+
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// If the forward iterator is not defined, attempt to define it using the
+// C++ standard iterator.
+//////////////////////////////////////////////////////////////////////////////
+#ifndef HAVE_FWD_ITERATOR
+#ifdef HAVE_STD_ITERATOR
+template<class Ty, class PtrDiffTy>
+struct forward_iterator
+  : public std::iterator<std::forward_iterator_tag, Ty, PtrDiffTy> {
+};
+#else
+#error "Need to have standard iterator to define forward iterator!"
+#endif
+#else
+// Just use forward iterator directly.
 using std::forward_iterator;
 #endif
+
 
 #endif

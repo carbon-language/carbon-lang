@@ -272,23 +272,55 @@ else
 fi
 
 dnl JIT Option
-AC_ARG_ENABLE(jit,AC_HELP_STRING([--enable-jit],[Enable Just In Time Compiling (default is NO)]),,enableval=no)
+AC_ARG_ENABLE(jit,AC_HELP_STRING([--enable-jit],[Enable Just In Time Compiling (default is YES)]),,enableval=default)
 
 if test ${enableval} = "no"
 then
 	AC_SUBST(JIT,[[]])
 else
-	AC_SUBST(JIT,[[TARGET_HAS_JIT=1]])
+	case $target in
+		*i*86*)
+			AC_SUBST(JIT,[[TARGET_HAS_JIT=1]])
+			;;
+		*sparc*)
+			AC_SUBST(JIT,[[TARGET_HAS_JIT=1]])
+			;;
+		*)
+			AC_SUBST(JIT,[[]])
+			;;
+	esac
 fi
 
 dnl **************************************************************************
 dnl * Set the location of various third-party software packages
 dnl **************************************************************************
+
+dnl Location of SPEC benchmarks
 AC_ARG_WITH(spec,AC_HELP_STRING([--with-spec],[Location of SPEC benchmarks]),AC_SUBST(SPEC_ROOT,[$withval]),AC_SUBST(SPEC_ROOT,[/home/vadve/shared/benchmarks/speccpu2000/benchspec]))
+
+dnl Location of the LLVM C front end
 AC_ARG_WITH(llvmgccdir,AC_HELP_STRING([--with-llvmgccdir],[Location of LLVM GCC front-end]),AC_SUBST(LLVMGCCDIR,[$withval]))
+
+dnl Location of the bytecode repository
 AC_ARG_WITH(bcrepos,AC_HELP_STRING([--with-bcrepos],[Location of Bytecode Repository]),AC_SUBST(BCR,[$withval]),AC_SUBST(BCR,[/home/vadve/lattner/LLVMPrograms]))
+
+dnl Location of PAPI
 AC_ARG_WITH(papi,AC_HELP_STRING([--with-papi],[Location of PAPI]),AC_SUBST(PAPIDIR,[$withval]),AC_SUBST(PAPIDIR,[/home/vadve/shared/papi-2.3.4.1]))
-AC_ARG_WITH(objroot,AC_HELP_STRING([--with-objroot],[Location where object files should be placed (default is .)]),AC_SUBST(OBJROOT,[$withval]),AC_SUBST(OBJROOT,[.]))
+
+dnl Location of the purify program
 AC_ARG_WITH(purify,AC_HELP_STRING([--with-purify],[Location of purify program]),AC_SUBST(PURIFY,[$withval]))
 
+dnl Location for placing object files and built programs, libraries, etc
+if test -d /localhome
+then
+	AC_SUBST(OBJROOT,[/localhome/$USER])
+else
+	AC_SUBST(OBJROOT,[.])
+fi
+
+AC_ARG_WITH(objroot,AC_HELP_STRING([--with-objroot],[Location where object files should be placed (default is .)]),AC_SUBST(OBJROOT,[$withval]))
+
+dnl **************************************************************************
+dnl * Create the output files
+dnl **************************************************************************
 AC_OUTPUT(Makefile.config)

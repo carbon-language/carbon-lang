@@ -5983,7 +5983,7 @@ ac_cv_cxx_have_bi_iterator,
   AC_TRY_COMPILE([#include <iterator>
 #ifdef HAVE_NAMESPACES
 using namespace std;
-#endif],[bidirectional_iterator<int,int,int> t; return 0;],
+#endif],[bidirectional_iterator<int,int> t; return 0;],
   ac_cv_cxx_have_bi_iterator=yes, ac_cv_cxx_have_bi_iterator=no)
   AC_LANG_RESTORE
 ])
@@ -5993,7 +5993,7 @@ fi
 ])
 
 #
-# Check for standard iterator extension.  This is modified from
+# Check for forward iterator extension.  This is modified from
 # http://www.gnu.org/software/ac-archive/htmldoc/ac_cxx_have_ext_hash_set.html
 #
 AC_DEFUN([AC_CXX_HAVE_FWD_ITERATOR],
@@ -6005,7 +6005,7 @@ ac_cv_cxx_have_fwd_iterator,
   AC_TRY_COMPILE([#include <iterator>
 #ifdef HAVE_NAMESPACES
 using namespace std;
-#endif],[forward_iterator<int,int,int> t; return 0;],
+#endif],[forward_iterator<int,int> t; return 0;],
   ac_cv_cxx_have_fwd_iterator=yes, ac_cv_cxx_have_fwd_iterator=no)
   AC_LANG_RESTORE
 ])
