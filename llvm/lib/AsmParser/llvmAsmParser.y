@@ -1318,6 +1318,8 @@ ConstVal : SIntType EINT64VAL {      // integral constants
     $$ = ConstantBool::False;
   }
   | FPType FPVAL {                   // Float & Double constants
+    if (!ConstantFP::isValueValidForType($1, $2))
+      ThrowException("Floating point constant invalid for type!!");
     $$ = ConstantFP::get($1, $2);
   };
 
