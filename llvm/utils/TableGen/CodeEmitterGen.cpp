@@ -23,8 +23,9 @@ void CodeEmitterGen::run(std::ostream &o) {
 
   EmitSourceFileHeader("Machine Code Emitter", o);
 
-  std::string Namespace = "V9::";
-  std::string ClassName = "SparcV9CodeEmitter::";
+  std::string Namespace = Insts[0]->getValueAsString("Namespace") + "::";
+  std::string ClassName = Insts[0]->getValueAsString("ClassPrefix") + 
+    "CodeEmitter::";
 
   //const std::string &Namespace = Inst->getValue("Namespace")->getName();
   o << "unsigned " << ClassName
@@ -177,14 +178,12 @@ void CodeEmitterGen::run(std::ostream &o) {
         // Scan through the field looking for bit initializers of the current
         // variable...
         for (int i = FieldInitializer->getNumBits()-1; i >= 0; --i) {
-          if (BitInit *BI = dynamic_cast<BitInit*>(FieldInitializer->getBit(i)))
-          {
+          Init *I = FieldInitializer->getBit(i);
+          if (BitInit *BI = dynamic_cast<BitInit*>(I)) {
             DEBUG(o << "      // bit init: f: " << f << ", i: " << i << "\n");
-          } else if (UnsetInit *UI =
-                     dynamic_cast<UnsetInit*>(FieldInitializer->getBit(i))) {
+          } else if (UnsetInit *UI = dynamic_cast<UnsetInit*>(I)) {
             DEBUG(o << "      // unset init: f: " << f << ", i: " << i << "\n");
-          } else if (VarBitInit *VBI =
-                     dynamic_cast<VarBitInit*>(FieldInitializer->getBit(i))) {
+          } else if (VarBitInit *VBI = dynamic_cast<VarBitInit*>(I)) {
             TypedInit *TI = VBI->getVariable();
             if (VarInit *VI = dynamic_cast<VarInit*>(TI)) {
               // If the bits of the field are laid out consecutively in the
