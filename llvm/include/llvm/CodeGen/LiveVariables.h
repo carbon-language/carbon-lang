@@ -57,15 +57,18 @@ public:
 
     VarInfo() : DefBlock(0), DefInst(0) {}
 
-    /// removeKill - Delete a kill corresponding to the specified machine instr
-    void removeKill(MachineInstr *MI) {
-      for (unsigned i = 0; ; ++i) {
-        assert(i < Kills.size() && "Machine instr is not a kill!");
-        if (Kills[i].second == MI) {
-          Kills.erase(Kills.begin()+i);
-          return;
+    /// removeKill - Delete a kill corresponding to the specified
+    /// machine instruction. Returns true if there was a kill
+    /// corresponding to this instruction, false otherwise.
+    bool removeKill(MachineInstr *MI) {
+      for (std::vector<std::pair<MachineBasicBlock*, MachineInstr*> >::iterator
+             i = Kills.begin(); i != Kills.end(); ++i) {
+        if (i->second == MI) {
+          Kills.erase(i);
+          return true;
         }
       }
+      return false;
     }
   };
 
@@ -156,30 +159,71 @@ public:
   /// specified register is killed after being used by the specified
   /// instruction.
   ///
-  void addVirtualRegisterKilled(unsigned IncomingReg, MachineBasicBlock *MBB,
+  void addVirtualRegisterKilled(unsigned IncomingReg,
+                                MachineBasicBlock *MBB,
                                 MachineInstr *MI) {
     RegistersKilled.insert(std::make_pair(MI, IncomingReg));
     getVarInfo(IncomingReg).Kills.push_back(std::make_pair(MBB, MI));
   }
 
+  /// removeVirtualRegisterKilled - Remove the specified virtual
+  /// register from the live variable information. Returns true if the
+  /// variable was marked as killed by the specified instruction,
+  /// false otherwise.
+  bool removeVirtualRegisterKilled(unsigned reg,
+                                   MachineBasicBlock *MBB,
+                                   MachineInstr *MI) {
+    if (!getVarInfo(reg).removeKill(MI))
+      return false;
+    for (killed_iterator i = killed_begin(MI), e = killed_end(MI); i != e; ) {
+      if (i->second == reg)
+        RegistersKilled.erase(i++);
+      else
+        ++i;
+    }
+    return true;
+  }
+
   /// removeVirtualRegistersKilled - Remove all of the specified killed
   /// registers from the live variable information.
   void removeVirtualRegistersKilled(killed_iterator B, killed_iterator E) {
-    for (killed_iterator I = B; I != E; ++I)  // Remove VarInfo entries...
-      getVarInfo(I->second).removeKill(I->first);
+    for (killed_iterator I = B; I != E; ++I) { // Remove VarInfo entries...
+      bool removed = getVarInfo(I->second).removeKill(I->first);
+      assert(removed && "kill not in register's VarInfo?");
+    }
     RegistersKilled.erase(B, E);
   }
 
   /// addVirtualRegisterDead - Add information about the fact that the specified
   /// register is dead after being used by the specified instruction.
   ///
-  void addVirtualRegisterDead(unsigned IncomingReg, MachineBasicBlock *MBB,
+  void addVirtualRegisterDead(unsigned IncomingReg,
+                              MachineBasicBlock *MBB,
                               MachineInstr *MI) {
     RegistersDead.insert(std::make_pair(MI, IncomingReg));
     getVarInfo(IncomingReg).Kills.push_back(std::make_pair(MBB, MI));
   }
 
-  /// removeVirtualRegistersKilled - Remove all of the specified killed
+  /// removeVirtualRegisterDead - Remove the specified virtual
+  /// register from the live variable information. Returns true if the
+  /// variable was marked dead at the specified instruction, false
+  /// otherwise.
+  bool removeVirtualRegisterDead(unsigned reg,
+                                 MachineBasicBlock *MBB,
+                                 MachineInstr *MI) {
+    if (!getVarInfo(reg).removeKill(MI))
+      return false;
+
+    for (killed_iterator i = killed_begin(MI), e = killed_end(MI); i != e; ) {
+      if (i->second == reg)
+        RegistersKilled.erase(i++);
+      else
+        ++i;
+    }
+    return true;
+  }
+
+  /// removeVirtualRegistersDead - Remove all of the specified dead
   /// registers from the live variable information.
   void removeVirtualRegistersDead(killed_iterator B, killed_iterator E) {
     for (killed_iterator I = B; I != E; ++I)  // Remove VarInfo entries...
