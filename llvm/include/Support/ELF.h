@@ -31,7 +31,7 @@ typedef int32_t  Elf32_Sword;
 typedef uint32_t Elf32_Word;
 
 // Object file magic string.
-static const char *ElfMagic = "\x7fELF";
+static const char ElfMagic[] = { 0x7f, 'E', 'L', 'F', '\0' };
 
 struct Elf32_Ehdr {
   unsigned char e_ident[16]; // ELF Identification bytes
@@ -49,7 +49,7 @@ struct Elf32_Ehdr {
   Elf32_Half    e_shnum;     // Number of entries in the section header table
   Elf32_Half    e_shstrndx;  // Sect hdr table index of sect name string table
   bool checkMagic () const {
-    return (memcmp (e_ident, ElfMagic, strlen (ElfMagic)) == 0;
+    return (memcmp (e_ident, ElfMagic, strlen (ElfMagic))) == 0;
   }
   unsigned char getFileClass () const { return e_ident[4]; }
   unsigned char getDataEncoding () { return e_ident[5]; }
@@ -192,8 +192,8 @@ struct Elf32_Rel {
   // and ELF32_R_INFO macros defined in the ELF specification:
   Elf32_Word getSymbol () const { return (r_info >> 8); }
   unsigned char getType () const { return (unsigned char) (r_info & 0x0ff); }
-  void setSymbol (Elf32_Word s) const { setSymbolAndType (s, getType ()); }
-  void setType (unsigned char t) const { setSymbolAndType (getSymbol(), t); }
+  void setSymbol (Elf32_Word s) { setSymbolAndType (s, getType ()); }
+  void setType (unsigned char t) { setSymbolAndType (getSymbol(), t); }
   void setSymbolAndType (Elf32_Word s, unsigned char t) {
     r_info = (s << 8) + t;
   };
@@ -209,8 +209,8 @@ struct Elf32_Rela {
   // and ELF32_R_INFO macros defined in the ELF specification:
   Elf32_Word getSymbol () const { return (r_info >> 8); }
   unsigned char getType () const { return (unsigned char) (r_info & 0x0ff); }
-  void setSymbol (Elf32_Word s) const { setSymbolAndType (s, getType ()); }
-  void setType (unsigned char t) const { setSymbolAndType (getSymbol(), t); }
+  void setSymbol (Elf32_Word s) { setSymbolAndType (s, getType ()); }
+  void setType (unsigned char t) { setSymbolAndType (getSymbol(), t); }
   void setSymbolAndType (Elf32_Word s, unsigned char t) {
     r_info = (s << 8) + t;
   };
