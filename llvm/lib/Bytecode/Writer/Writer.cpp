@@ -162,10 +162,10 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
   switch (GV->getLinkage()) {
   default: assert(0 && "Invalid linkage!");
   case GlobalValue::ExternalLinkage:  return 0;
-  case GlobalValue::LinkOnceLinkage:  return 1;
   case GlobalValue::WeakLinkage:      return 1;
   case GlobalValue::AppendingLinkage: return 2;
   case GlobalValue::InternalLinkage:  return 3;
+  case GlobalValue::LinkOnceLinkage:  return 4;
   }
 }
 
@@ -177,9 +177,9 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     int Slot = Table.getSlot(I->getType());
     assert(Slot != -1 && "Module global vars is broken!");
 
-    // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2,3=Linkage,
-    // bit4+ = Slot # for type
-    unsigned oSlot = ((unsigned)Slot << 4) | (getEncodedLinkage(I) << 2) |
+    // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2-4=Linkage,
+    // bit5+ = Slot # for type
+    unsigned oSlot = ((unsigned)Slot << 5) | (getEncodedLinkage(I) << 2) |
                      (I->hasInitializer() << 1) | I->isConstant();
     output_vbr(oSlot, Out);
 

@@ -434,14 +434,24 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     GlobalValue::LinkageTypes Linkage;
 
     if (!hasInternalMarkerOnly) {
-      // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
-      // bit2,3 = Linkage, bit4+ = slot#
-      SlotNo = VarType >> 4;
-      switch ((VarType >> 2) & 3) {
+      unsigned LinkageID;
+      if (hasExtendedLinkageSpecs) {
+        // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
+        // bit2,3,4 = Linkage, bit4+ = slot#
+        SlotNo = VarType >> 5;
+        LinkageID = (VarType >> 2) & 7;
+      } else {
+        // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
+        // bit2,3 = Linkage, bit4+ = slot#
+        SlotNo = VarType >> 4;
+        LinkageID = (VarType >> 2) & 3;
+      }
+      switch (LinkageID) {
       case 0: Linkage = GlobalValue::ExternalLinkage;  break;
       case 1: Linkage = GlobalValue::WeakLinkage;      break;
       case 2: Linkage = GlobalValue::AppendingLinkage; break;
       case 3: Linkage = GlobalValue::InternalLinkage;  break;
+      case 4: Linkage = GlobalValue::LinkOnceLinkage;  break;
       }
     } else {
       // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
