@@ -94,8 +94,7 @@ private:
 
   const Type *getForwardedTypeInternal() const;
 protected:
-  /// ctor is protected, so only subclasses can create Type objects...
-  Type(const std::string& Name, TypeID id );
+  Type(const std::string& Name, TypeID id);
   virtual ~Type() {}
 
 
@@ -158,19 +157,24 @@ public:
   /// true for SByteTy, ShortTy, IntTy, LongTy.  Note that this is not true for
   /// Float and Double.
   ///
-  virtual bool isSigned() const { return 0; }
+  bool isSigned() const {
+    return ID == SByteTyID || ID == ShortTyID || 
+           ID == IntTyID || ID == LongTyID; 
+  }
   
   /// isUnsigned - Return whether a numeric type is unsigned.  This is not quite
   /// the complement of isSigned... nonnumeric types return false as they do
   /// with isSigned.  This returns true for UByteTy, UShortTy, UIntTy, and
   /// ULongTy
   /// 
-  virtual bool isUnsigned() const { return 0; }
+  bool isUnsigned() const {
+    return ID == UByteTyID || ID == UShortTyID || 
+           ID == UIntTyID || ID == ULongTyID; 
+  }
 
-  /// isInteger - Equilivent to isSigned() || isUnsigned(), but with only a
-  /// single virtual function invocation.
+  /// isInteger - Equilivant to isSigned() || isUnsigned()
   ///
-  virtual bool isInteger() const { return 0; }
+  bool isInteger() const { return ID >= UByteTyID && ID <= LongTyID; }
 
   /// isIntegral - Returns true if this is an integral type, which is either
   /// BoolTy or one of the Integer types.
