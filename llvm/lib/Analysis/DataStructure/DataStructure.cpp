@@ -20,11 +20,6 @@ namespace {
   Statistic<> NumFolds("dsnode", "Number of nodes completely folded");
 };
 
-namespace DS {
-  const unsigned PointerShift = 3;  // 64bit ptrs = 3, 32 bit ptrs = 2
-  const unsigned PointerSize = 1 << PointerShift;
-};
-
 namespace DataStructureAnalysis {   // TODO: FIXME
   // isPointerType - Return true if this first class type is big enough to hold
   // a pointer.
@@ -392,7 +387,7 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   }
   N = NH.getNode();
 
-  if (this == N) return;
+  if (this == N || N == 0) return;
 
   // If both nodes are not at offset 0, make sure that we are merging the node
   // at an later offset into the node with the zero offset.
