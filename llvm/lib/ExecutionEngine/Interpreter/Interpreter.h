@@ -10,6 +10,9 @@
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Assembly/CachedWriter.h"
+
+extern CachedWriter CW;     // Object to accellerate printing of LLVM
 
 struct MethodInfo;          // Defined in ExecutionAnnotations.h
 class CallInst;
@@ -65,7 +68,7 @@ class Interpreter {
 
 public:
   Interpreter();
-  inline ~Interpreter() { delete CurMod; }
+  inline ~Interpreter() { CW.setModule(0); delete CurMod; }
 
   // getExitCode - return the code that should be the exit code for the lli
   // utility.

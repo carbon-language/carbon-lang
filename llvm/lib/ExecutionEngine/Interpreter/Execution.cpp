@@ -16,11 +16,34 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/GlobalVariable.h"
 #include <math.h>  // For fmod
+#include <signal.h>
+#include <setjmp.h>
 
 // Create a TargetData structure to handle memory addressing and size/alignment
 // computations
 //
 static TargetData TD("lli Interpreter");
+CachedWriter CW;     // Object to accellerate printing of LLVM
+
+
+sigjmp_buf SignalRecoverBuffer;
+
+extern "C" {
+static void SigHandler(int Signal) {
+  siglongjmp(SignalRecoverBuffer, Signal);
+}
+}
+
+static void initializeSignalHandlers() {
+  struct sigaction Action;
+  Action.sa_handler = SigHandler;
+  Action.sa_flags   = SA_SIGINFO;
+  sigemptyset(&Action.sa_mask);
+  sigaction(SIGSEGV, &Action, 0);
+  sigaction(SIGBUS, &Action, 0);
+  //sigaction(SIGFP, &Action, 0);
+}
+
 
 //===----------------------------------------------------------------------===//
 //                     Value Manipulation code
@@ -87,7 +110,7 @@ static void printOperandInfo(Value *V, ExecutionContext &SF) {
     unsigned TyP  = V->getType()->getUniqueID();   // TypePlane for value
     unsigned Slot = getOperandSlot(V);
     cout << "Value=" << (void*)V << " TypeID=" << TyP << " Slot=" << Slot
-	 << " Addr=" << &SF.Values[TyP][Slot] << " SF=" << &SF << endl;
+         << " Addr=" << &SF.Values[TyP][Slot] << " SF=" << &SF << endl;
   }
 }
 
@@ -110,6 +133,7 @@ void Interpreter::initializeExecutionEngine() {
                                                &MethodInfo::Create);
   AnnotationManager::registerAnnotationFactory(GlobalAddressAID, 
                                                &GlobalAddress::Create);
+  initializeSignalHandlers();
 }
 
 // InitializeMemory - Recursive function to apply a ConstPool value into the
@@ -539,8 +563,8 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
 
   if (ECStack.empty()) {  // Finished main.  Put result into exit code...
     if (RetTy) {          // Nonvoid return type?
-      cout << "Method " << M->getType() << " \"" << M->getName()
-	   << "\" returned ";
+      CW << "Method " << M->getType() << " \"" << M->getName()
+         << "\" returned ";
       print(RetTy, Result);
       cout << endl;
 
@@ -564,8 +588,8 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
   } else {
     // This must be a function that is executing because of a user 'call'
     // instruction.
-    cout << "Method " << M->getType() << " \"" << M->getName()
-	 << "\" returned ";
+    CW << "Method " << M->getType() << " \"" << M->getName()
+       << "\" returned ";
     print(RetTy, Result);
     cout << endl;
   }
@@ -898,8 +922,8 @@ void Interpreter::callMethod(Method *M, const vector<GenericValue> &ArgVals) {
         SF.Caller = 0;          // We returned from the call...
       } else {
         // print it.
-        cout << "Method " << M->getType() << " \"" << M->getName()
-             << "\" returned ";
+        CW << "Method " << M->getType() << " \"" << M->getName()
+           << "\" returned ";
         print(RetTy, Result); 
         cout << endl;
         
@@ -951,7 +975,17 @@ bool Interpreter::executeInstruction() {
   Instruction *I = *SF.CurInst++;         // Increment before execute
 
   if (Trace)
-    cout << "Run:" << I;
+    CW << "Run:" << I;
+
+  // Set a sigsetjmp buffer so that we can recover if an error happens during
+  // instruction execution...
+  //
+  if (int SigNo = sigsetjmp(SignalRecoverBuffer, 1)) {
+    --SF.CurInst;   // Back up to erroring instruction
+    cout << "EXCEPTION OCCURRED [Signal " << _sys_siglistp[SigNo] << "]:\n";
+    printStackTrace();
+    return true;
+  }
 
   if (I->isBinaryOp()) {
     executeBinaryInst(cast<BinaryOperator>(I), SF);
@@ -1112,7 +1146,7 @@ void Interpreter::printValue(const Type *Ty, GenericValue V) {
 }
 
 void Interpreter::print(const Type *Ty, GenericValue V) {
-  cout << Ty << " ";
+  CW << Ty << " ";
   printValue(Ty, V);
 }
 
@@ -1121,7 +1155,7 @@ void Interpreter::print(const string &Name) {
   if (!PickedVal) return;
 
   if (const Method *M = dyn_cast<const Method>(PickedVal)) {
-    cout << M;  // Print the method
+    CW << M;  // Print the method
   } else {      // Otherwise there should be an annotation for the slot#
     print(PickedVal->getType(), 
           getOperandValue(PickedVal, ECStack[CurFrame]));
@@ -1145,7 +1179,7 @@ void Interpreter::list() {
   if (ECStack.empty())
     cout << "Error: No program executing!\n";
   else
-    cout << ECStack[CurFrame].CurMethod;   // Just print the method out...
+    CW << ECStack[CurFrame].CurMethod;   // Just print the method out...
 }
 
 void Interpreter::printStackTrace() {
@@ -1153,10 +1187,10 @@ void Interpreter::printStackTrace() {
 
   for (unsigned i = 0; i < ECStack.size(); ++i) {
     cout << (((int)i == CurFrame) ? '>' : '-');
-    cout << "#" << i << ". " << ECStack[i].CurMethod->getType() << " \""
-	 << ECStack[i].CurMethod->getName() << "\"(";
+    CW << "#" << i << ". " << ECStack[i].CurMethod->getType() << " \""
+       << ECStack[i].CurMethod->getName() << "\"(";
     // TODO: Print Args
     cout << ")" << endl;
-    cout << *ECStack[i].CurInst;
+    CW << *ECStack[i].CurInst;
   }
 }

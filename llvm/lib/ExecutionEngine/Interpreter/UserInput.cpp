@@ -153,6 +153,7 @@ void Interpreter::loadModule(const string &Filename) {
          << ErrorMsg << "\n";
     return;
   }
+  CW.setModule(CurMod);  // Update Writer
 
   string RuntimeLib = getCurrentExecutablePath();
   if (!RuntimeLib.empty()) RuntimeLib += "/";
@@ -185,6 +186,7 @@ bool Interpreter::flushModule() {
     CurFrame = -1;
   }
 
+  CW.setModule(0);
   delete CurMod;
   CurMod = 0;
   ExitCode = 0;
