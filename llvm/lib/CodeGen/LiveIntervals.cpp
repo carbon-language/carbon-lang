@@ -227,6 +227,7 @@ void LiveIntervals::updateSpilledInterval(Interval& li, int slot)
     // the new spill weight is now infinity as it cannot be spilled again
     li.weight = std::numeric_limits<float>::infinity();
     DEBUG(std::cerr << '\n');
+    DEBUG(std::cerr << "\t\t\t\tupdated interval: " << li << '\n');
 }
 
 void LiveIntervals::printRegName(unsigned reg) const
@@ -652,8 +653,10 @@ void LiveIntervals::Interval::join(const LiveIntervals::Interval& other)
 LiveIntervals::Interval::Ranges::iterator
 LiveIntervals::Interval::mergeRangesForward(Ranges::iterator it)
 {
-    for (Ranges::iterator n = next(it);
-         n != ranges.end() && ((it->second & 1) + it->second) >= n->first; ) {
+    Ranges::iterator n;
+    while ((n = next(it)) != ranges.end()) {
+        if (n->first > it->second)
+            break;
         it->second = std::max(it->second, n->second);
         n = ranges.erase(n);
     }
@@ -665,7 +668,8 @@ LiveIntervals::Interval::mergeRangesBackward(Ranges::iterator it)
 {
     while (it != ranges.begin()) {
         Ranges::iterator p = prior(it);
-        if (it->first > ((p->second & 1) + p->second)) break;
+        if (it->first > p->second)
+            break;
 
         it->first = std::min(it->first, p->first);
         it->second = std::max(it->second, p->second);

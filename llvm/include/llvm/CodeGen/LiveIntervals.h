@@ -126,7 +126,10 @@ namespace llvm {
         };
 
         static unsigned getBaseIndex(unsigned index) {
-            return index - (index % 4);
+            return index - (index % InstrSlots::NUM);
+        }
+        static unsigned getBoundaryIndex(unsigned index) {
+            return getBaseIndex(index + InstrSlots::NUM - 1);
         }
         static unsigned getLoadIndex(unsigned index) {
             return getBaseIndex(index) + InstrSlots::LOAD;
