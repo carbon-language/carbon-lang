@@ -8,7 +8,7 @@
 #include "llvm/Target/Sparc.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
-#include "llvm/Transforms/LowerAllocations.h"
+#include "llvm/Transforms/ChangeAllocations.h"
 #include "llvm/Transforms/HoistPHIConstants.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"

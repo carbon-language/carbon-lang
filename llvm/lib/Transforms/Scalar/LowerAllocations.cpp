@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/LowerAllocations.h"
+#include "llvm/Transforms/ChangeAllocations.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"

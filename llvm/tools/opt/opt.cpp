@@ -15,7 +15,7 @@
 #include "llvm/Transforms/LevelChange.h"
 #include "llvm/Transforms/MethodInlining.h"
 #include "llvm/Transforms/SymbolStripping.h"
-#include "llvm/Transforms/LowerAllocations.h"
+#include "llvm/Transforms/ChangeAllocations.h"
 #include "llvm/Transforms/IPO/SimpleStructMutation.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/Transforms/Scalar/DCE.h"

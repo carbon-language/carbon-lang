@@ -12,7 +12,7 @@
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/LevelChange.h"
 #include "llvm/Transforms/ConstantMerge.h"
-#include "llvm/Transforms/LowerAllocations.h"
+#include "llvm/Transforms/ChangeAllocations.h"
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
