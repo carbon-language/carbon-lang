@@ -132,8 +132,6 @@ invalid code.  Instead, use the system assembler and linker.
  % cd build
  % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls \
    --disable-shared --enable-languages=c,c++
- % gmake
- % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
  % gmake all; gmake install
 </pre>
 
@@ -143,8 +141,6 @@ invalid code.  Instead, use the system assembler and linker.
  % cd build
  % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls \
    --disable-shared --enable-languages=c,c++ --disable-c-mbchar
- % gmake
- % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
  % gmake all; gmake install
 </pre>
 
@@ -163,8 +159,6 @@ functions from C as referenced from C++, so we typically configure with
  % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls \
    --disable-shared --enable-languages=c,c++ --host=sparcv9-sun-solaris2.8 \
    --disable-c-mbchar
- % gmake
- % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
  % gmake all; gmake install
 </pre>
 
@@ -233,7 +227,6 @@ libgcc.a library, which you can find by running
  % gmake
  % mkdir $CFEINSTALL/lib
  % gmake -C runtime install-bytecode
- % setenv LLVM_LIB_SEARCH_PATH $CFEINSTALL/lib
 </pre></li>
 
 <li><p>Optionally, build a symbol table for the newly installed runtime 

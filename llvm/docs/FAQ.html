@@ -347,31 +347,6 @@ build.</p>
 </div>
 
 <div class="question">
-<p>
-When I use the test suite, all of the C Backend tests fail.  What is
-wrong?
-</p>
-</div>
-
-<div class="answer">
-<p>
-If you build LLVM and the C Backend tests fail in <tt>llvm/test/Programs</tt>,
-then chances are good that the directory pointed to by the LLVM_LIB_SEARCH_PATH
-environment variable does not contain the libcrtend.a library.
-</p>
-
-<p>
-To fix it, verify that LLVM_LIB_SEARCH_PATH points to the correct directory
-and that libcrtend.a is inside.  For pre-built LLVM GCC front ends, this
-should be the absolute path to
-<tt>cfrontend/&lt;<i>platform</i>&gt;/llvm-gcc/lib</tt>.  If you've
-built your own LLVM GCC front end, then ensure that you've built and installed
-the libraries in <tt>llvm/runtime</tt> and have LLVM_LIB_SEARCH_PATH pointing
-to the <tt>$LLVMGCCDIR/lib</tt> subdirectory.
-</p>
-</div>
-
-<div class="question">
 <p>After CVS update, rebuilding gives the error "No rule to make target".</p>
 </div>
 
@@ -458,11 +433,12 @@ find libcrtend.a.
 
 <div class="answer">
 <p>
-In order to find libcrtend.a, you must have the directory in which it lives in
-your LLVM_LIB_SEARCH_PATH environment variable.  For the binary distribution of
-the LLVM GCC front end, this will be the full path of the <tt>lib</tt>
-directory inside of the LLVM GCC distribution.
-</p>
+The only way this can happen is if you haven't installed the runtime library. To
+correct this, do:</p>
+<pre>
+  % cd llvm/runtime
+  % make clean ; make install-bytecode
+</pre>
 </div>
 
 

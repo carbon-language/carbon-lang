@@ -185,7 +185,6 @@ and performance.
 
   <li>Build the LLVM Suite:
   <ol>
-      <li>Set your LLVM_LIB_SEARCH_PATH environment variable.</li>
       <li><tt>gmake -k |&amp; tee gnumake.out
       &nbsp;&nbsp;&nbsp;# this is csh or tcsh syntax</tt></li>
       <li>If you get an "internal compiler error (ICE)" see <a href="#brokengcc">below</a>.</li>
@@ -548,17 +547,16 @@ You can set these on the command line, or better yet, set them in your
 <tt>.cshrc</tt> or <tt>.profile</tt>.
 
 <dl>
-    <dt><tt>LLVM_LIB_SEARCH_PATH</tt>=<tt><i>LLVMGCCDIR</i>/lib</tt>
-    <dd>
-    This environment variable helps the LLVM GCC front end find bytecode
-    libraries that it will need for compilation.
-    <p>
+  <dt><tt>LLVM_LIB_SEARCH_PATH</tt>=<tt>/path/to/your/bytecode/libs</tt></dt>
+  <dd>This environment variable helps LLVM linking tools find the locations 
+  of your bytecode libraries. It is optional and provided only a convenience 
+  since you can specify the paths using the -L options of the tools.</dd>
 
-    <dt>alias llvmgcc <i>LLVMGCCDIR</i><tt>/bin/gcc</tt>
-    <dt>alias llvmg++ <i>LLVMGCCDIR</i><tt>/bin/g++</tt>
-    <dd>
-    These aliases allow you to use the LLVM C and C++ front ends without putting
-    them in your <tt>PATH</tt> or typing in their complete pathnames.
+  <dt>alias llvmgcc <i>LLVMGCCDIR</i><tt>/bin/gcc</tt></dt>
+  <dt>alias llvmg++ <i>LLVMGCCDIR</i><tt>/bin/g++</tt></dt>
+  <dd></dt>These aliases allow you to use the LLVM C and C++ front ends 
+  without putting them in your <tt>PATH</tt> or typing in their complete 
+  pathnames.</dd>
 </dl>
 
 </div>
@@ -801,16 +799,6 @@ script to configure the build system:</p>
     <tt><i>SRC_ROOT</i>/configure --prefix=/install/path [other options]</tt>
     <p>
 </ol>
-
-<p>In addition to running <tt>configure</tt>, you must set the
-<tt>LLVM_LIB_SEARCH_PATH</tt> environment variable in your startup shell 
-scripts.  This environment variable is used to locate "system" libraries like
-"<tt>-lc</tt>" and "<tt>-lm</tt>" when linking.  This variable should be set to
-the absolute path of the <tt>lib</tt> subdirectory of the GCC front
-end, or <i>LLVMGCCDIR</i>/<tt>lib</tt>.  For example, one might set
-<tt>LLVM_LIB_SEARCH_PATH</tt> to
-<tt>/home/vadve/lattner/local/x86/llvm-gcc/lib</tt> for the x86
-version of the GCC front end on our research machines.</p>
 
 </div>
 

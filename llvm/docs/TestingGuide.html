@@ -474,7 +474,7 @@ file.  We usually run it from a crontab entry that looks ilke this:
 </p>
 
 <pre>
-5 3 * * *       LLVM_LIB_SEARCH_PATH=.../llvm-gcc/lib $HOME/llvm/utils/NightlyTest.pl -parallel -enable-linscan ...CVSREPOSTRING... $HOME/buildtest-X86 $HOME/cvs/testresults-X86
+5 3 * * *  $HOME/llvm/utils/NightlyTest.pl -parallel -enable-linscan ...CVSREPOSTORY... $HOME/buildtest-X86 $HOME/cvs/testresults-X86
 </pre>
 
 <p>Or, you can create a shell script to encapsulate the running of the script.
@@ -488,7 +488,6 @@ export WEBDIR=$BASE/testresults
 export LLVMGCCDIR=/proj/work/llvm/cfrontend/install
 export PATH=/proj/install/bin:$LLVMGCCDIR/bin:$PATH
 export LD_LIBRARY_PATH=/proj/install/lib
-export LLVM_LIB_SEARCH_PATH=/proj/work/llvm/cfrontend/install/lib
 cd $BASE
 cp /proj/work/llvm/llvm/utils/NightlyTest.pl .
 nice ./NightlyTest.pl -nice -release -verbose -parallel -enable-linscan -noexternals
