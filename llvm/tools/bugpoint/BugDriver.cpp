@@ -37,7 +37,7 @@ void DeleteFunctionBody(Function *F) {
 
   // Next, delete all of the basic blocks.
   F->getBasicBlockList().clear();
-
+  F->setLinkage(GlobalValue::ExternalLinkage);
   assert(F->isExternal() && "This didn't make the function external!");
 }
 
