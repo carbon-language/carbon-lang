@@ -87,3 +87,16 @@ bool %test17(ubyte %A) {
 	ret bool %C
 }
 
+bool %test18(bool %C, int %a) {
+entry:
+        br bool %C, label %endif, label %else
+
+else:
+        br label %endif
+
+endif:
+        %b.0 = phi int [ 0, %entry ], [ 1, %else ]
+        %tmp.4 = setlt int %b.0, 123
+        ret bool %tmp.4
+}
+

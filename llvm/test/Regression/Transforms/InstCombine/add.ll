@@ -149,3 +149,17 @@ Lab1:
 Lab2:
 	ret int 1231231
 }
+
+int %test23(bool %C, int %a) {
+entry:
+        br bool %C, label %endif, label %else
+
+else:
+        br label %endif
+
+endif:
+        %b.0 = phi int [ 0, %entry ], [ 1, %else ]
+        %tmp.4 = add int %b.0, 1
+        ret int %tmp.4
+}
+
