@@ -272,6 +272,10 @@ endif
 ifndef LOPT
 LOPT     := $(LLVMToolDir)/opt$(EXEEXT)
 endif
+ifndef LBUGPOINT
+LBUGPOINT := $(LLVMToolDir)/bugpoint$(EXEEXT)
+endif
+
 LLVMGCCWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGCC)
 LLVMGXXWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGXX)
 
