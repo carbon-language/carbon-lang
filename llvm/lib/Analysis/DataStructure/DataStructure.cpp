@@ -1136,11 +1136,12 @@ std::string DSGraph::getFunctionNames() const {
 }
 
 
-DSGraph::DSGraph(const DSGraph &G, EquivalenceClasses<GlobalValue*> &ECs)
+DSGraph::DSGraph(const DSGraph &G, EquivalenceClasses<GlobalValue*> &ECs,
+                 unsigned CloneFlags)
   : GlobalsGraph(0), ScalarMap(ECs), TD(G.TD) {
   PrintAuxCalls = false;
   NodeMapTy NodeMap;
-  cloneInto(G, ScalarMap, ReturnNodes, NodeMap);
+  cloneInto(G, ScalarMap, ReturnNodes, NodeMap, CloneFlags);
 }
 
 DSGraph::DSGraph(const DSGraph &G, NodeMapTy &NodeMap,
