@@ -14,11 +14,11 @@
 #ifndef READER_INTERNALS_H
 #define READER_INTERNALS_H
 
+#include "ReaderPrimitives.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/ModuleProvider.h"
-#include "llvm/Bytecode/Primitives.h"
 #include <utility>
 #include <map>
 

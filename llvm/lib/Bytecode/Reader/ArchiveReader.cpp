@@ -22,8 +22,7 @@
 #include "Config/sys/mman.h"
 #include "Config/fcntl.h"
 #include <cstdlib>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   struct ar_hdr {
@@ -162,8 +161,8 @@ static bool ReadArchiveBuffer(const std::string &ArchiveName,
 // true on error, or false on success.  This does not support reading files from
 // standard input.
 //
-bool ReadArchiveFile(const std::string &Filename, std::vector<Module*> &Objects,
-                     std::string *ErrorStr) {
+bool llvm::ReadArchiveFile(const std::string &Filename,
+                           std::vector<Module*> &Objects,std::string *ErrorStr){
   int Length = getFileSize(Filename);
   if (Length == -1)
     return Error(ErrorStr, "Error getting file length!");
@@ -192,5 +191,3 @@ bool ReadArchiveFile(const std::string &Filename, std::vector<Module*> &Objects,
   
   return Result;
 }
-
-} // End llvm namespace
