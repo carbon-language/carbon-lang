@@ -27,123 +27,46 @@
 #include "llvm/iOther.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Pass.h"
-#include "Support/CommandLine.h"
 #include <algorithm>
 
 namespace {
-  //===--------------------------------------------------------------------===//
-  // SelectDebugLevel - Allow command line control over debugging.
-  //
-  enum PreSelectDebugLevel_t {
-    PreSelect_NoDebugInfo,
-    PreSelect_PrintOutput, 
-  };
-
-  // Enable Debug Options to be specified on the command line
-  cl::opt<PreSelectDebugLevel_t>
-  PreSelectDebugLevel("dpreselect", cl::Hidden,
-     cl::desc("debug information for target-dependent pre-selection"),
-     cl::values(
-       clEnumValN(PreSelect_NoDebugInfo, "n", "disable debug output (default)"),
-       clEnumValN(PreSelect_PrintOutput, "y", "print generated machine code"),
-       /* default level = */ PreSelect_NoDebugInfo));
-
-
-  //===--------------------------------------------------------------------===//
-  // class ConstantPoolForModule:
-  // 
-  // The pool of constants that must be emitted for a module.
-  // This is a single pool for the entire module and is shared by
-  // all invocations of the PreSelection pass for this module by putting
-  // this as an annotation on the Module object.
-  // A single GlobalVariable is created for each constant in the pool
-  // representing the memory for that constant.  
-  // 
-  AnnotationID CPFM_AID(
-                 AnnotationManager::getID("CodeGen::ConstantPoolForModule"));
-
-  class ConstantPoolForModule : private Annotation {
-    Module* myModule;
-    std::map<const Constant*, GlobalVariable*> gvars;
-    std::map<const Constant*, GlobalVariable*> origGVars;
-    ConstantPoolForModule(Module* M);   // called only by annotation builder
-    ConstantPoolForModule();                      // DO NOT IMPLEMENT
-    void operator=(const ConstantPoolForModule&); // DO NOT IMPLEMENT
-  public:
-    static ConstantPoolForModule& get(Module* M) {
-      ConstantPoolForModule* cpool =
-        (ConstantPoolForModule*) M->getAnnotation(CPFM_AID);
-      if (cpool == NULL) // create a new annotation and add it to the Module
-        M->addAnnotation(cpool = new ConstantPoolForModule(M));
-      return *cpool;
-    }
-
-    GlobalVariable* getGlobalForConstant(Constant* CV) {
-      std::map<const Constant*, GlobalVariable*>::iterator I = gvars.find(CV);
-      if (I != gvars.end())
-        return I->second;               // global exists so return it
-      return addToConstantPool(CV);     // create a new global and return it
-    }
-
-    GlobalVariable*  addToConstantPool(Constant* CV) {
-      GlobalVariable*& GV = gvars[CV];  // handle to global var entry in map
-      if (GV == NULL)
-        { // check if a global constant already existed; otherwise create one
-          std::map<const Constant*, GlobalVariable*>::iterator PI =
-            origGVars.find(CV);
-          if (PI != origGVars.end())
-            GV = PI->second;            // put in map
-          else
-            {
-              GV = new GlobalVariable(CV->getType(), true, //put in map
-                                      GlobalValue::InternalLinkage, CV);
-              myModule->getGlobalList().push_back(GV); // GV owned by module now
-            }
-        }
-      return GV;
-    }
-  };
-
-  /* ctor */
-  ConstantPoolForModule::ConstantPoolForModule(Module* M)
-    : Annotation(CPFM_AID), myModule(M)
-  {
-    // Build reverse map for pre-existing global constants so we can find them
-    for (Module::giterator GI = M->gbegin(), GE = M->gend(); GI != GE; ++GI)
-      if (GI->hasInitializer() && GI->isConstant())
-        origGVars[GI->getInitializer()] = GI;
-  }
 
   //===--------------------------------------------------------------------===//
   // PreSelection Pass - Specialize LLVM code for the current target machine.
   // 
-  class PreSelection : public BasicBlockPass, public InstVisitor<PreSelection>
-  {
-    const TargetMachine &target;
+  class PreSelection : public Pass, public InstVisitor<PreSelection> {
     const TargetInstrInfo &instrInfo;
-    Function* function;
+    Module *TheModule;
+
+    std::map<const Constant*, GlobalVariable*> gvars;
 
     GlobalVariable* getGlobalForConstant(Constant* CV) {
-      Module* M = function->getParent();
-      return ConstantPoolForModule::get(M).getGlobalForConstant(CV);
+      std::map<const Constant*, GlobalVariable*>::iterator I = gvars.find(CV);
+      if (I != gvars.end()) return I->second;    // global exists so return it
+
+      return I->second = new GlobalVariable(CV->getType(), true,
+                                            GlobalValue::InternalLinkage, CV,
+                                            "immcst", TheModule);
     }
 
   public:
-    PreSelection (const TargetMachine &T):
-      target(T), instrInfo(T.getInstrInfo()), function(NULL) {}
+    PreSelection(const TargetMachine &T)
+      : instrInfo(T.getInstrInfo()), TheModule(0) {}
 
     // runOnBasicBlock - apply this pass to each BB
-    bool runOnBasicBlock(BasicBlock &BB) {
-      function = BB.getParent();
-      this->visit(BB);
-      return true;
-    }
+    bool run(Module &M) {
+      TheModule = &M;
 
-    bool doFinalization(Function &F) {
-      if (PreSelectDebugLevel >= PreSelect_PrintOutput)
-        std::cerr << "\n\n*** LLVM code after pre-selection for function "
-                  << F.getName() << ":\n\n" << F;
-      return false;
+      // Build reverse map for pre-existing global constants so we can find them
+      for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+        if (I->hasInitializer() && I->isConstant())
+          gvars[I->getInitializer()] = I;
+
+      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+        visit(*I);
+
+      gvars.clear();
+      return true;
     }
 
     // These methods do the actual work of specializing code
@@ -357,9 +280,7 @@ PreSelection::visitCallInst(CallInst &I)
 // createPreSelectionPass - Public entrypoint for pre-selection pass
 // and this file as a whole...
 //
-Pass*
-createPreSelectionPass(TargetMachine &T)
-{
+Pass* createPreSelectionPass(TargetMachine &T) {
   return new PreSelection(T);
 }
 
