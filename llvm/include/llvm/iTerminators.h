@@ -233,6 +233,14 @@ public:
     return cast<BasicBlock>(Operands[2].get());
   }
 
+  inline void setNormalDest(BasicBlock *B){
+    Operands[1] = (Value*)B;
+  }
+
+  inline void setExceptionalDest(BasicBlock *B){
+    Operands[2] = (Value*)B;
+  }
+
   virtual const char *getOpcodeName() const { return "invoke"; }
 
   virtual const BasicBlock *getSuccessor(unsigned i) const {

@@ -35,7 +35,9 @@ public:
   //
   virtual const BasicBlock *getSuccessor(unsigned idx) const = 0;
   virtual unsigned getNumSuccessors() const = 0;
-  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) = 0;
+  
+  //set a successor at a given index
+  virtual void setSuccessor(unsigned idx, BasicBlock *B) = 0;
 
   inline BasicBlock *getSuccessor(unsigned idx) {
     return (BasicBlock*)((const TerminatorInst *)this)->getSuccessor(idx);
