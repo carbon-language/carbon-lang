@@ -22,16 +22,21 @@ namespace {
   // external.
   cl::opt<std::string>
   APIFile("internalize-public-api-file", cl::value_desc("filename"),
-          cl::desc("A file containing list of globals to not internalize"));
-  
+          cl::desc("A file containing list of symbol names to preserve"));
+
+  // APIList - A list of symbols that should not be marked internal.
+  cl::list<std::string>
+  APIList("internalize-public-api-list", cl::value_desc("list"),
+          cl::desc("A list of symbol names to preserve"));
+ 
   class InternalizePass : public Pass {
     std::set<std::string> ExternalNames;
   public:
     InternalizePass() {
-      if (!APIFile.empty())
+      if (!APIFile.empty())           // If a filename is specified, use it
         LoadFile(APIFile.c_str());
-      else
-        ExternalNames.insert("main");
+      else                            // Else, if a list is specified, use it.
+        ExternalNames.insert(APIList.begin(), APIList.end());
     }
 
     void LoadFile(const char *Filename) {
@@ -39,7 +44,7 @@ namespace {
       std::ifstream In(Filename);
       if (!In.good()) {
         std::cerr << "WARNING: Internalize couldn't load file '" << Filename
-                  << "'!: Not internalizing.\n";
+                  << "'!\n";
         return;   // Do not internalize anything...
       }
       while (In) {
@@ -51,7 +56,19 @@ namespace {
     }
 
     virtual bool run(Module &M) {
-      if (ExternalNames.empty()) return false;  // Error loading file...
+      // If no list or file of symbols was specified, check to see if there is a
+      // "main" symbol defined in the module.  If so, use it, otherwise do not
+      // internalize the module, it must be a library or something.
+      //
+      if (ExternalNames.empty()) {
+        Function *MainFunc = M.getMainFunction();
+        if (MainFunc == 0 || MainFunc->isExternal())
+          return false;  // No main found, must be a library...
+
+        // Preserve main, internalize all else.
+        ExternalNames.insert(MainFunc->getName());
+      }
+
       bool Changed = false;
       
       // Found a main function, mark all functions not named main as internal.
