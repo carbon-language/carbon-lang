@@ -1970,10 +1970,12 @@ void DSGraph::computeNodeMapping(const DSNodeHandle &NH1,
   DSNodeHandle &Entry = NodeMap[N1];
   if (Entry.getNode()) {
     // Termination of recursion!
-    assert(!StrictChecking ||
-           (Entry.getNode() == N2 &&
-            Entry.getOffset() == (NH2.getOffset()-NH1.getOffset())) &&
-           "Inconsistent mapping detected!");
+    if (StrictChecking) {
+      assert(Entry.getNode() == N2 && "Inconsistent mapping detected!");
+      assert((Entry.getOffset() == (NH2.getOffset()-NH1.getOffset()) ||
+              Entry.getNode()->isNodeCompletelyFolded()) &&
+             "Inconsistent mapping detected!");
+    }
     return;
   }
   
