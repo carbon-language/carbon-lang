@@ -101,7 +101,7 @@ public:
 
   inline void markForSpill() { mustSpill = true; }
 
-  inline bool isMarkedForSpill() { return mustSpill; }
+  inline bool isMarkedForSpill() const { return mustSpill; }
 
   inline void setSpillOffFromFP(int StackOffset) {
     assert(mustSpill && "This LR is not spilled");
