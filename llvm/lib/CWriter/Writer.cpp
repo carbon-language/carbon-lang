@@ -36,7 +36,6 @@ namespace {
     const Module *TheModule;
     map<const Type *, string> TypeNames;
     std::set<const Value*> MangledGlobals;
-    std::set<const StructType *> StructPrinted;
 
   public:
     CWriter(ostream &o) : Out(o) {}
@@ -74,9 +73,9 @@ namespace {
 
   private :
     bool nameAllUsedStructureTypes(Module &M);
-    void parseStruct(const Type *Ty);
     void printModule(Module *M);
     void printSymbolTable(const SymbolTable &ST);
+    void printContainedStructs(const Type *Ty, std::set<const StructType *> &);
     void printGlobal(const GlobalVariable *GV);
     void printFunctionSignature(const Function *F, bool Prototype);
 
@@ -594,6 +593,9 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
 
   Out << "\n";
 
+  // Keep track of which structures have been printed so far...
+  std::set<const StructType *> StructPrinted;
+
   // Loop over all structures then push them into the stack so they are
   // printed in the correct order.
   for (SymbolTable::const_iterator TI = ST.begin(); TI != ST.end(); ++TI) {
@@ -602,37 +604,38 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
     
     for (; I != End; ++I)
       if (const StructType *STy = dyn_cast<StructType>(I->second))
-        parseStruct(STy);
+        printContainedStructs(STy, StructPrinted);
   }
 }
 
 // Push the struct onto the stack and recursively push all structs
 // this one depends on.
-void CWriter::parseStruct(const Type *Ty) {
+void CWriter::printContainedStructs(const Type *Ty,
+                                    std::set<const StructType*> &StructPrinted){
   if (const StructType *STy = dyn_cast<StructType>(Ty)){
     //Check to see if we have already printed this struct
-    if (StructPrinted.find(STy) == StructPrinted.end()){   
+    if (StructPrinted.count(STy) == 0) {
+      // Print all contained types first...
       for (StructType::ElementTypes::const_iterator
              I = STy->getElementTypes().begin(),
              E = STy->getElementTypes().end(); I != E; ++I) {
-        const Type *Ty1 = dyn_cast<Type>(I->get());
+        const Type *Ty1 = I->get();
         if (isa<StructType>(Ty1) || isa<ArrayType>(Ty1))
-          parseStruct(Ty1);
+          printContainedStructs(Ty1, StructPrinted);
       }
       
-      //Print struct
+      //Print structure type out..
       StructPrinted.insert(STy);
       string Name = TypeNames[STy];  
       printType(STy, Name, true);
       Out << ";\n";
     }
-  }
 
-  // If it is an array, check it's type and continue
-  else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)){
+    // If it is an array, check contained types and continue
+  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)){
     const Type *Ty1 = ATy->getElementType();
     if (isa<StructType>(Ty1) || isa<ArrayType>(Ty1))
-      parseStruct(Ty1);
+      printContainedStructs(Ty1, StructPrinted);
   }
 }
 
