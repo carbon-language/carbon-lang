@@ -455,6 +455,22 @@ all install clean test bytecode stripped-bytecode install-bytecode::
 	done
 endif
 
+#---------------------------------------------------------
+# Handle the CONFIG_FILES options
+#---------------------------------------------------------
+ifdef CONFIG_FILES
+install:: $(sysconfdir) install-config-files
+
+$(sysconfdir):
+	$(MKDIR) $(sysconfdir)
+
+install-config-files: $(CONFIG_FILES)
+	$(VERB) echo Installing Configuration Files To $(sysconfdir)
+	$(VERB) for file in $(CONFIG_FILES); do \
+		$(INSTALL) $(SourceDir)/$${file} $(sysconfdir) ; \
+	done
+endif
+
 ###########################################################################
 # Library Build Rules:
 #
