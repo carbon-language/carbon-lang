@@ -27,6 +27,7 @@ Interpreter::Interpreter(Module *M, unsigned Config,
     CurFrame(-1), TD("lli", (Config & TM::EndianMask) == TM::LittleEndian,
 		     1, 4,
 		     (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
+		     (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
 		     (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4) {
 
   setTargetData(TD);
