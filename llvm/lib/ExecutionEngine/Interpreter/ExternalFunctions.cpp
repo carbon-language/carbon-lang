@@ -636,6 +636,14 @@ GenericValue lle_X_ungetc(FunctionType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+// int ferror (FILE *stream);
+GenericValue lle_X_ferror(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+  GV.IntVal = ferror (getFILE(GVTOP(Args[0])));
+  return GV;
+}
+
 // int fprintf(FILE *,sbyte *, ...) - a very rough implementation to make output
 // useful.
 GenericValue lle_X_fprintf(FunctionType *M, const vector<GenericValue> &Args) {
