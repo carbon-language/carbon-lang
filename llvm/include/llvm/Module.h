@@ -21,6 +21,7 @@
 
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/ADT/SetVector.h"
 
 namespace llvm {
 
@@ -47,7 +48,7 @@ class Module {
 public:
   typedef iplist<GlobalVariable> GlobalListType;
   typedef iplist<Function> FunctionListType;
-  typedef std::vector<std::string> LibraryListType;
+  typedef SetVector<std::string> LibraryListType;
 
   // Global Variable iterators...
   typedef GlobalListType::iterator                             giterator;
@@ -238,10 +239,10 @@ public:
   inline unsigned lib_size() const { return LibraryList.size(); }
 
   /// @brief Add a library to the list of dependent libraries
-  inline void addLibrary(const std::string& Lib){ LibraryList.push_back(Lib); }
+  inline void addLibrary(const std::string& Lib){ LibraryList.insert(Lib); }
 
   /// @brief Remove a library from the list of dependent libraries
-  inline void removeLibrary(const std::string& Lib);
+  inline void removeLibrary(const std::string& Lib) { LibraryList.remove(Lib); }
 
   /// @brief Get all the libraries 
   inline const LibraryListType& getLibraries() const { return LibraryList; }
