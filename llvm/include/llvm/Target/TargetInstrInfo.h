@@ -180,9 +180,6 @@ public:
   //
   //-------------------------------------------------------------------------
 
-  int getResultPos(MachineOpCode Opcode) const {
-    return get(Opcode).resultPos;
-  }
   unsigned getNumDelaySlots(MachineOpCode Opcode) const {
     return get(Opcode).numDelaySlots;
   }
