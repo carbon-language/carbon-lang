@@ -33,8 +33,22 @@ class ReturnInst : public TerminatorInst {
     }
   }
 public:
+  // ReturnInst constructors:
+  // ReturnInst()                  - 'ret void' instruction
+  // ReturnInst(Value* X)          - 'ret X'    instruction
+  // ReturnInst(    null, Inst *)  - 'ret void' instruction, insert before I
+  // ReturnInst(Value* X, Inst *I) - 'ret X'    instruction, insert before I
+  // ReturnInst(    null, BB *B)   - 'ret void' instruction, insert @ end of BB
+  // ReturnInst(Value* X, BB *B)   - 'ret X'    instruction, insert @ end of BB
   ReturnInst(Value *RetVal = 0, Instruction *InsertBefore = 0)
     : TerminatorInst(Instruction::Ret, InsertBefore) {
+    if (RetVal) {
+      Operands.reserve(1);
+      Operands.push_back(Use(RetVal, this));
+    }
+  }
+  ReturnInst(Value *RetVal, BasicBlock *InsertAtEnd)
+    : TerminatorInst(Instruction::Ret, InsertAtEnd) {
     if (RetVal) {
       Operands.reserve(1);
       Operands.push_back(Use(RetVal, this));
@@ -55,9 +69,7 @@ public:
     abort();
     return 0;
   }
-  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
-    assert(0 && "ReturnInst has no successors!");
-  }
+  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc);
   virtual unsigned getNumSuccessors() const { return 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -76,10 +88,19 @@ public:
 class BranchInst : public TerminatorInst {
   BranchInst(const BranchInst &BI);
 public:
-  // If cond = null, then is an unconditional br...
-  BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *cond = 0,
-             Instruction *InsertBefore = 0);
+  // BranchInst constructors (where {B, T, F} are blocks, and C is a condition):
+  // BranchInst(BB *B)                           - 'br B'
+  // BranchInst(BB* T, BB *F, Value *C)          - 'br C, T, F'
+  // BranchInst(BB* B, Inst *I)                  - 'br B'        insert before I
+  // BranchInst(BB* T, BB *F, Value *C, Inst *I) - 'br C, T, F', insert before I
+  // BranchInst(BB* B, BB *I)                    - 'br B'        insert at end
+  // BranchInst(BB* T, BB *F, Value *C, BB *I)   - 'br C, T, F', insert at end
   BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore = 0);
+  BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *cond,
+             Instruction *InsertBefore = 0);
+  BranchInst(BasicBlock *IfTrue, BasicBlock *InsertAtEnd);
+  BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *cond,
+             BasicBlock *InsertAtEnd);
 
   virtual Instruction *clone() const { return new BranchInst(*this); }
 
@@ -142,6 +163,7 @@ class SwitchInst : public TerminatorInst {
   SwitchInst(const SwitchInst &RI);
 public:
   SwitchInst(Value *Value, BasicBlock *Default, Instruction *InsertBefore = 0);
+  SwitchInst(Value *Value, BasicBlock *Default, BasicBlock  *InsertAtEnd);
 
   virtual Instruction *clone() const { return new SwitchInst(*this); }
 
@@ -212,6 +234,9 @@ public:
   InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
 	     const std::vector<Value*> &Params, const std::string &Name = "",
              Instruction *InsertBefore = 0);
+  InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
+	     const std::vector<Value*> &Params, const std::string &Name,
+             BasicBlock *InsertAtEnd);
 
   virtual Instruction *clone() const { return new InvokeInst(*this); }
 

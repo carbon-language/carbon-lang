@@ -34,6 +34,7 @@ protected:
                  const std::string &Name = "", Instruction *InsertBefore = 0)
     : Instruction(Ty, iType, Name, InsertBefore) {
   }
+  TerminatorInst(Instruction::TermOps iType, BasicBlock *InsertAtEnd);
 public:
 
   /// Terminators must implement the methods required by Instruction...
