@@ -95,7 +95,7 @@ public:
   //
   enum TermOps {       // These terminate basic blocks
     FirstTermOp = 1,
-    Ret = 1, Br, Switch, 
+    Ret = 1, Br, Switch, Invoke,
     NumTermOps         // Must remain at end of enum
   };
 
