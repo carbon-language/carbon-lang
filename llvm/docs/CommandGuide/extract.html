@@ -1,0 +1,74 @@
+<html>
+<title>
+extract
+</title>
+
+<body>
+
+<center>
+<h1>Low Level Virtual Machine</h1>
+</center>
+<HR>
+
+<h3>
+NAME
+</h3>
+
+extract
+
+<h3>
+SYNOPSIS
+</h3>
+
+extract [options] &lt;filename&gt; [filename ...]
+<h3>
+DESCRIPTION
+</h3>
+
+The extract command takes the name of a function and extracts it from the
+specified LLVM bytecode file.  It is primarily used as a debugging tool to
+reduce test cases from larger programs that are triggering a bug.
+
+<h3>
+OPTIONS
+</h3>
+
+<ul>
+	<li>-func &lt;function&gt;
+	<br>
+	Extract function from the LLVM bytecode.
+	<p>
+
+	<li> -help
+	<br>
+	Print a summary of command line options.
+	<p>
+
+	<li> -stats
+	<br>
+	Print statistics.
+	<p>
+
+	<li> -time-passes
+	<br>
+	Record the amount of time needed for each pass and print it to standard
+	error.
+</ul>
+
+<h3>
+EXIT STATUS
+</h3>
+
+If extract succeeds, it will exit with 0.  Otherwise, if an error occurs, it
+will exit with a non-zero value.
+
+<h3>
+SEE ALSO
+</h3>
+bugpoint
+
+<HR>
+<a href="http://llvm.cs.uiuc.edu">LLVM Team</a>
+</body>
+</html>
+

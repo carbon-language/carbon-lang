@@ -1,0 +1,91 @@
+<html>
+<title>
+llvm-link
+</title>
+
+<body>
+
+<center>
+<h1>Low Level Virtual Machine</h1>
+</center>
+<HR>
+
+<h3>
+NAME
+</h3>
+
+llvm-link
+
+<h3>
+SYNOPSIS
+</h3>
+
+llvm-link [options] &lt;filename&gt; [filename ...]
+<h3>
+DESCRIPTION
+</h3>
+
+The llvm-link command takes several LLVM bytecode files and links them together into a single LLVM bytecode file.
+
+<h3>
+OPTIONS
+</h3>
+
+<ul>
+	<li>-L &lt;pathname&gt;
+	<br>
+	Specify a library search path.  When looking for libraries, llvm-link
+	will look in pathname for libraries.  This option can be specified
+	multiple times; llvm-link will search inside these directories in the
+	order in which they were specified on the command line.
+	<p>
+
+	<li>-f
+	<br>
+	Overwrite output files.  By default, llvm-link will not overwrite an
+	output file if it alreadys exists.
+	<p>
+
+	<li>-o &lt;filename&gt;
+	<br>
+	Output filename.
+	<p>
+
+	<li> -help
+	<br>
+	Print a summary of command line options.
+	<p>
+
+	<li> -stats
+	<br>
+	Print statistics.
+	<p>
+
+	<li> -time-passes
+	<br>
+	Record the amount of time needed for each pass and print it to standard
+	error.
+	<p>
+
+	<li> -v
+	<br>
+	Verbose mode.  Print information about what llvm-link is doing.
+</ul>
+
+<h3>
+EXIT STATUS
+</h3>
+
+If llvm-link succeeds, it will exit with 0.  Otherwise, if an error occurs, it
+will exit with a non-zero value.
+
+<h3>
+SEE ALSO
+</h3>
+llvm-dis, lli
+
+<HR>
+<a href="http://llvm.cs.uiuc.edu">LLVM Team</a>
+</body>
+</html>
+
