@@ -493,64 +493,66 @@ ChooseMovpregiForSetCC(const InstructionNode* instrNode)
 
 
 static inline MachineOpCode
-ChooseConvertToFloatInstr(OpLabel vopCode, const Type* opType)
+ChooseConvertToFloatInstr(const TargetMachine& target,
+                          OpLabel vopCode, const Type* opType)
 {
   assert((vopCode == ToFloatTy || vopCode == ToDoubleTy) &&
          "Unrecognized convert-to-float opcode!");
+  assert((opType->isIntegral() || opType->isFloatingPoint() ||
+          isa<PointerType>(opType))
+         && "Trying to convert a non-scalar type to FLOAT/DOUBLE?");
 
   MachineOpCode opCode = V9::INVALID_OPCODE;
-  
-  if (opType == Type::SByteTy || opType == Type::UByteTy ||
-      opType == Type::ShortTy || opType == Type::UShortTy ||
-      opType == Type::IntTy   || opType == Type::UIntTy)
-      opCode = (vopCode == ToFloatTy? V9::FITOS : V9::FITOD);
-  else if (opType == Type::LongTy || opType == Type::ULongTy ||
-           isa<PointerType>(opType))
-      opCode = (vopCode == ToFloatTy? V9::FXTOS : V9::FXTOD);
-  else if (opType == Type::FloatTy)
-      opCode = (vopCode == ToFloatTy? V9::INVALID_OPCODE : V9::FSTOD);
+
+  unsigned opSize = target.getTargetData().getTypeSize(opType);
+
+  if (opType == Type::FloatTy)
+    opCode = (vopCode == ToFloatTy? V9::NOP : V9::FSTOD);
   else if (opType == Type::DoubleTy)
-      opCode = (vopCode == ToFloatTy? V9::FDTOS : V9::INVALID_OPCODE);
-  else
-    assert(0 && "Trying to convert a non-scalar type to DOUBLE?");
+    opCode = (vopCode == ToFloatTy? V9::FDTOS : V9::NOP);
+  else if (opSize <= 4)
+    opCode = (vopCode == ToFloatTy? V9::FITOS : V9::FITOD);
+  else {
+    assert(opSize == 8 && "Unrecognized type size > 4 and < 8!");
+    opCode = (vopCode == ToFloatTy? V9::FXTOS : V9::FXTOD);
+  }
   
   return opCode;
 }
 
 static inline MachineOpCode 
-ChooseConvertFPToIntInstr(Type::PrimitiveID tid, const Type* opType)
+ChooseConvertFPToIntInstr(const TargetMachine& target,
+                          const Type* destType, const Type* opType)
 {
-  MachineOpCode opCode = V9::INVALID_OPCODE;;
-
   assert((opType == Type::FloatTy || opType == Type::DoubleTy)
          && "This function should only be called for FLOAT or DOUBLE");
+  assert((destType->isIntegral() || isa<PointerType>(destType))
+         && "Trying to convert FLOAT/DOUBLE to a non-scalar type?");
 
-  // SPARC does not have a float-to-uint conversion, only a float-to-int.
-  // For converting an FP value to uint32_t, we first need to convert to
-  // uint64_t and then to uint32_t, or we may overflow the signed int
-  // representation even for legal uint32_t values.  This expansion is
-  // done by the Preselection pass.
-  // 
-  if (tid == Type::UIntTyID) {
-    assert(tid != Type::UIntTyID && "FP-to-uint conversions must be expanded"
-           " into FP->long->uint for SPARC v9:  SO RUN PRESELECTION PASS!");
-  } else if (tid == Type::SByteTyID || tid == Type::ShortTyID || 
-             tid == Type::IntTyID   || tid == Type::UByteTyID ||
-             tid == Type::UShortTyID) {
+  MachineOpCode opCode = V9::INVALID_OPCODE;
+
+  unsigned destSize = target.getTargetData().getTypeSize(destType);
+
+  if (destType == Type::UIntTy)
+    assert(destType != Type::UIntTy && "Expand FP-to-uint beforehand.");
+  else if (destSize <= 4)
     opCode = (opType == Type::FloatTy)? V9::FSTOI : V9::FDTOI;
-  } else if (tid == Type::LongTyID || tid == Type::ULongTyID) {
-      opCode = (opType == Type::FloatTy)? V9::FSTOX : V9::FDTOX;
-  } else
-    assert(0 && "Should not get here, Mo!");
+  else {
+    assert(destSize == 8 && "Unrecognized type size > 4 and < 8!");
+    opCode = (opType == Type::FloatTy)? V9::FSTOX : V9::FDTOX;
+  }
 
   return opCode;
 }
 
-MachineInstr*
-CreateConvertFPToIntInstr(Type::PrimitiveID destTID,
-                          Value* srcVal, Value* destVal)
+static MachineInstr*
+CreateConvertFPToIntInstr(const TargetMachine& target,
+                          Value* srcVal,
+                          Value* destVal,
+                          const Type* destType)
 {
-  MachineOpCode opCode = ChooseConvertFPToIntInstr(destTID, srcVal->getType());
+  MachineOpCode opCode = ChooseConvertFPToIntInstr(target, destType,
+                                                   srcVal->getType());
   assert(opCode != V9::INVALID_OPCODE && "Expected to need conversion!");
   return BuildMI(opCode, 2).addReg(srcVal).addRegDef(destVal);
 }
@@ -558,19 +560,11 @@ CreateConvertFPToIntInstr(Type::PrimitiveID destTID,
 // CreateCodeToConvertFloatToInt: Convert FP value to signed or unsigned integer
 // The FP value must be converted to the dest type in an FP register,
 // and the result is then copied from FP to int register via memory.
-//
+// SPARC does not have a float-to-uint conversion, only a float-to-int (fdtoi).
 // Since fdtoi converts to signed integers, any FP value V between MAXINT+1
-// and MAXUNSIGNED (i.e., 2^31 <= V <= 2^32-1) would be converted incorrectly
-// *only* when converting to an unsigned.  (Unsigned byte, short or long
-// don't have this problem.)
-// For unsigned int, we therefore have to generate the code sequence:
-// 
-//      if (V > (float) MAXINT) {
-//        unsigned result = (unsigned) (V  - (float) MAXINT);
-//        result = result + (unsigned) MAXINT;
-//      }
-//      else
-//        result = (unsigned) V;
+// and MAXUNSIGNED (i.e., 2^31 <= V <= 2^32-1) would be converted incorrectly.
+// Therefore, for converting an FP value to uint32_t, we first need to convert
+// to uint64_t and then to uint32_t.
 // 
 static void
 CreateCodeToConvertFloatToInt(const TargetMachine& target,
@@ -579,24 +573,46 @@ CreateCodeToConvertFloatToInt(const TargetMachine& target,
                               std::vector<MachineInstr*>& mvec,
                               MachineCodeForInstruction& mcfi)
 {
+  Function* F = destI->getParent()->getParent();
+
   // Create a temporary to represent the FP register into which the
   // int value will placed after conversion.  The type of this temporary
   // depends on the type of FP register to use: single-prec for a 32-bit
   // int or smaller; double-prec for a 64-bit int.
   // 
   size_t destSize = target.getTargetData().getTypeSize(destI->getType());
-  const Type* destTypeToUse = (destSize > 4)? Type::DoubleTy : Type::FloatTy;
-  TmpInstruction* destForCast = new TmpInstruction(mcfi, destTypeToUse, opVal);
 
-  // Create the fp-to-int conversion code
-  MachineInstr* M =CreateConvertFPToIntInstr(destI->getType()->getPrimitiveID(),
-                                             opVal, destForCast);
-  mvec.push_back(M);
+  const Type* castDestType = destI->getType(); // type for the cast instr result
+  const Type* castDestRegType;          // type for cast instruction result reg
+  TmpInstruction* destForCast;          // dest for cast instruction
+  Instruction* fpToIntCopyDest = destI; // dest for fp-reg-to-int-reg copy instr
+
+  // For converting an FP value to uint32_t, we first need to convert to
+  // uint64_t and then to uint32_t, as explained above.
+  if (destI->getType() == Type::UIntTy) {
+    castDestType    = Type::ULongTy;       // use this instead of type of destI
+    castDestRegType = Type::DoubleTy;      // uint64_t needs 64-bit FP register.
+    destForCast     = new TmpInstruction(mcfi, castDestRegType, opVal);
+    fpToIntCopyDest = new TmpInstruction(mcfi, castDestType, destForCast);
+  }
+  else {
+    castDestRegType = (destSize > 4)? Type::DoubleTy : Type::FloatTy;
+    destForCast = new TmpInstruction(mcfi, castDestRegType, opVal);
+  }
+
+  // Create the fp-to-int conversion instruction (src and dest regs are FP regs)
+  mvec.push_back(CreateConvertFPToIntInstr(target, opVal, destForCast,
+                                           castDestType));
 
   // Create the fpreg-to-intreg copy code
-  target.getInstrInfo().
-    CreateCodeToCopyFloatToInt(target, destI->getParent()->getParent(),
-                               destForCast, destI, mvec, mcfi);
+  target.getInstrInfo().CreateCodeToCopyFloatToInt(target, F, destForCast,
+                                                   fpToIntCopyDest, mvec, mcfi);
+
+  // Create the uint64_t to uint32_t conversion, if needed
+  if (destI->getType() == Type::UIntTy)
+    target.getInstrInfo().
+      CreateZeroExtensionInstructions(target, F, fpToIntCopyDest, destI,
+                                      /*numLowBits*/ 32, mvec, mcfi);
 }
 
 
@@ -992,6 +1008,7 @@ CreateDivConstInstruction(TargetMachine &target,
       } else if (isPowerOf2(C, pow)) {
         unsigned opCode;
         Value* shiftOperand;
+        unsigned opSize = target.getTargetData().getTypeSize(resultType);
 
         if (resultType->isSigned()) {
           // For N / 2^k, if the operand N is negative,
@@ -1020,15 +1037,13 @@ CreateDivConstInstruction(TargetMachine &target,
           addTmp = new TmpInstruction(mcfi, resultType, LHS, srlTmp,"incIfNeg");
 
           // Create the SRA or SRAX instruction to get the sign bit
-          mvec.push_back(BuildMI((resultType==Type::LongTy) ?
-                                 V9::SRAXi6 : V9::SRAi5, 3)
+          mvec.push_back(BuildMI((opSize > 4)? V9::SRAXi6 : V9::SRAi5, 3)
                          .addReg(LHS)
                          .addSImm((resultType==Type::LongTy)? pow-1 : 31)
                          .addRegDef(sraTmp));
 
           // Create the SRL or SRLX instruction to get the sign bit
-          mvec.push_back(BuildMI((resultType==Type::LongTy) ?
-                                 V9::SRLXi6 : V9::SRLi5, 3)
+          mvec.push_back(BuildMI((opSize > 4)? V9::SRLXi6 : V9::SRLi5, 3)
                          .addReg(sraTmp)
                          .addSImm((resultType==Type::LongTy)? 64-pow : 32-pow)
                          .addRegDef(srlTmp));
@@ -1039,11 +1054,11 @@ CreateDivConstInstruction(TargetMachine &target,
 
           // Get the shift operand and "right-shift" opcode to do the divide
           shiftOperand = addTmp;
-          opCode = (resultType==Type::LongTy) ? V9::SRAXi6 : V9::SRAi5;
+          opCode = (opSize > 4)? V9::SRAXi6 : V9::SRAi5;
         } else {
           // Get the shift operand and "right-shift" opcode to do the divide
           shiftOperand = LHS;
-          opCode = (resultType==Type::LongTy) ? V9::SRLXi6 : V9::SRLi5;
+          opCode = (opSize > 4)? V9::SRLXi6 : V9::SRLi5;
         }
 
         // Now do the actual shift!
@@ -1860,7 +1875,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         } else if (opType->isFloatingPoint()) {
 
           CreateCodeToConvertFloatToInt(target, opVal, destI, mvec, mcfi);
-          if (destI->getType()->isUnsigned())
+          if (destI->getType()->isUnsigned() && destI->getType() !=Type::UIntTy)
             maskUnsignedResult = true; // not handled by fp->int code
 
         } else if (isIntegral) {
@@ -1928,9 +1943,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         if (forwardOperandNum != 0) {    // we do need the cast
           Value* leftVal = subtreeRoot->leftChild()->getValue();
           const Type* opType = leftVal->getType();
-          MachineOpCode opCode=ChooseConvertToFloatInstr(
+          MachineOpCode opCode=ChooseConvertToFloatInstr(target,
                                        subtreeRoot->getOpLabel(), opType);
-          if (opCode == V9::INVALID_OPCODE) {  // no conversion needed
+          if (opCode == V9::NOP) {      // no conversion needed
             forwardOperandNum = 0;      // forward first operand to user
           } else {
             // If the source operand is a non-FP type it must be
@@ -2753,9 +2768,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         const Type* opType = argVal1->getType();
         assert((opType->isInteger() || isa<PointerType>(opType)) &&
                "Shl unsupported for other types");
+        unsigned opSize = target.getTargetData().getTypeSize(opType);
         
         CreateShiftInstructions(target, shlInstr->getParent()->getParent(),
-                                (opType == Type::LongTy)? V9::SLLXr6:V9::SLLr5,
+                                (opSize > 4)? V9::SLLXr6:V9::SLLr5,
                                 argVal1, argVal2, 0, shlInstr, mvec,
                                 MachineCodeForInstruction::get(shlInstr));
         break;
@@ -2766,9 +2782,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
         assert((opType->isInteger() || isa<PointerType>(opType)) &&
                "Shr unsupported for other types");
+        unsigned opSize = target.getTargetData().getTypeSize(opType);
         Add3OperandInstr(opType->isSigned()
-                         ? (opType == Type::LongTy ? V9::SRAXr6 : V9::SRAr5)
-                         : (opType == Type::ULongTy ? V9::SRLXr6 : V9::SRLr5),
+                         ? (opSize > 4? V9::SRAXr6 : V9::SRAr5)
+                         : (opSize > 4? V9::SRLXr6 : V9::SRLr5),
                          subtreeRoot, mvec);
         break;
       }
