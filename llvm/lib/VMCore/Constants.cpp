@@ -21,6 +21,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <iostream>
+#include "math.h"
 using namespace llvm;
 
 ConstantBool *ConstantBool::True  = new ConstantBool(true);
