@@ -204,6 +204,8 @@ namespace {
     }
 
     bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To);
+    void printPHICopiesForSuccessor(BasicBlock *CurBlock,
+                                    BasicBlock *Successor, unsigned Indent);
     void printPHICopiesForSuccessors(BasicBlock *CurBlock, 
                                      unsigned Indent);
     void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
@@ -1230,6 +1232,23 @@ bool CWriter::isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
   return false;
 }
 
+void CWriter::printPHICopiesForSuccessor (BasicBlock *CurBlock,
+                                          BasicBlock *Successor, 
+                                          unsigned Indent) {
+  for (BasicBlock::iterator I = Successor->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
+    // Now we have to do the printing.
+    Value *IV = PN->getIncomingValueForBlock(CurBlock);
+    if (!isa<UndefValue>(IV)) {
+      Out << std::string(Indent, ' ');
+      Out << "  " << Mang->getValueName(I) << "__PHI_TEMPORARY = ";
+      writeOperand(IV);
+      Out << ";   /* for PHI node */\n";
+    }
+  }
+}
+
+
 void CWriter::printPHICopiesForSuccessors(BasicBlock *CurBlock, 
                                           unsigned Indent) {
   for (succ_iterator SI = succ_begin(CurBlock), E = succ_end(CurBlock);
@@ -1261,7 +1280,6 @@ void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
 // that immediately succeeds the current one.
 //
 void CWriter::visitBranchInst(BranchInst &I) {
-  printPHICopiesForSuccessors(I.getParent(), 0);
 
   if (I.isConditional()) {
     if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(0))) {
@@ -1269,10 +1287,12 @@ void CWriter::visitBranchInst(BranchInst &I) {
       writeOperand(I.getCondition());
       Out << ") {\n";
       
+      printPHICopiesForSuccessor (I.getParent(), I.getSuccessor(0), 2);
       printBranchToBlock(I.getParent(), I.getSuccessor(0), 2);
       
       if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(1))) {
         Out << "  } else {\n";
+        printPHICopiesForSuccessor (I.getParent(), I.getSuccessor(1), 2);
         printBranchToBlock(I.getParent(), I.getSuccessor(1), 2);
       }
     } else {
@@ -1281,11 +1301,13 @@ void CWriter::visitBranchInst(BranchInst &I) {
       writeOperand(I.getCondition());
       Out << ") {\n";
 
+      printPHICopiesForSuccessor (I.getParent(), I.getSuccessor(1), 2);
       printBranchToBlock(I.getParent(), I.getSuccessor(1), 2);
     }
 
     Out << "  }\n";
   } else {
+    printPHICopiesForSuccessor (I.getParent(), I.getSuccessor(0), 0);
     printBranchToBlock(I.getParent(), I.getSuccessor(0), 0);
   }
   Out << "\n";
