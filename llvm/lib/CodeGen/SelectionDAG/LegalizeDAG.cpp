@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Constants.h"
 #include <iostream>
 using namespace llvm;
@@ -221,13 +222,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
   }
 
-  // If there is more than one use of this, see if we already legalized it.
-  // There is no use remembering values that only have a single use, as the map
-  // entries will never be reused.
-  if (!Op.Val->hasOneUse()) {
-    std::map<SDOperand, SDOperand>::iterator I = LegalizedNodes.find(Op);
-    if (I != LegalizedNodes.end()) return I->second;
-  }
+  std::map<SDOperand, SDOperand>::iterator I = LegalizedNodes.find(Op);
+  if (I != LegalizedNodes.end()) return I->second;
 
   SDOperand Tmp1, Tmp2, Tmp3;
 
@@ -581,6 +577,55 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
+  case ISD::MEMSET:
+  case ISD::MEMCPY:
+  case ISD::MEMMOVE: {
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    Tmp2 = LegalizeOp(Node->getOperand(1));
+    Tmp3 = LegalizeOp(Node->getOperand(2));
+    SDOperand Tmp4 = LegalizeOp(Node->getOperand(3));
+    SDOperand Tmp5 = LegalizeOp(Node->getOperand(4));
+    if (TLI.isOperationSupported(Node->getOpcode(), MVT::Other)) {
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
+          Tmp3 != Node->getOperand(2) || Tmp4 != Node->getOperand(3) ||
+          Tmp5 != Node->getOperand(4)) {
+        std::vector<SDOperand> Ops;
+        Ops.push_back(Tmp1); Ops.push_back(Tmp2); Ops.push_back(Tmp3);
+        Ops.push_back(Tmp4); Ops.push_back(Tmp5);
+        Result = DAG.getNode(Node->getOpcode(), MVT::Other, Ops);
+      }
+    } else {
+      // Otherwise, the target does not support this operation.  Lower the
+      // operation to an explicit libcall as appropriate.
+      MVT::ValueType IntPtr = TLI.getPointerTy();
+      const Type *IntPtrTy = TLI.getTargetData().getIntPtrType();
+      std::vector<std::pair<SDOperand, const Type*> > Args;
+
+      const char *FnName;
+      if (Node->getOpcode() == ISD::MEMSET) {
+        Args.push_back(std::make_pair(Tmp2, IntPtrTy));
+        // Extend the ubyte argument to be an int value for the call.
+        Tmp3 = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Tmp3);
+        Args.push_back(std::make_pair(Tmp3, Type::IntTy));
+        Args.push_back(std::make_pair(Tmp4, IntPtrTy));
+
+        FnName = "memset";
+      } else if (Node->getOpcode() == ISD::MEMCPY ||
+                 Node->getOpcode() == ISD::MEMMOVE) {
+        Args.push_back(std::make_pair(Tmp2, IntPtrTy));
+        Args.push_back(std::make_pair(Tmp3, IntPtrTy));
+        Args.push_back(std::make_pair(Tmp4, IntPtrTy));
+        FnName = Node->getOpcode() == ISD::MEMMOVE ? "memmove" : "memcpy";
+      } else {
+        assert(0 && "Unknown op!");
+      }
+      std::pair<SDOperand,SDOperand> CallResult =
+        TLI.LowerCallTo(Tmp1, Type::VoidTy,
+                        DAG.getExternalSymbol(FnName, IntPtr), Args, DAG);
+      Result = LegalizeOp(CallResult.second);
+    }
+    break;
+  }
   case ISD::ADD:
   case ISD::SUB:
   case ISD::MUL:
