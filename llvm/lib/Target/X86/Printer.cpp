@@ -28,8 +28,7 @@
 #include "Support/Statistic.h"
 #include "Support/StringExtras.h"
 #include "Support/CommandLine.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
@@ -91,7 +90,7 @@ namespace {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *createX86CodePrinterPass(std::ostream &o,TargetMachine &tm){
+FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,TargetMachine &tm){
   return new Printer(o, tm);
 }
 
@@ -946,5 +945,3 @@ bool Printer::doFinalization(Module &M) {
   delete Mang;
   return false; // success
 }
-
-} // End llvm namespace

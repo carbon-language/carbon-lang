@@ -1257,7 +1257,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
       switch (Align & 3) {
       case 2:   // WORD aligned
         if (ConstantInt *I = dyn_cast<ConstantInt>(CI.getOperand(3))) {
-          CountReg = getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/2));
+          CountReg =getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/2));
         } else {
           CountReg = makeAnotherReg(Type::IntTy);
           BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(1);
@@ -1267,7 +1267,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
         break;
       case 0:   // DWORD aligned
         if (ConstantInt *I = dyn_cast<ConstantInt>(CI.getOperand(3))) {
-          CountReg = getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/4));
+          CountReg =getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/4));
         } else {
           CountReg = makeAnotherReg(Type::IntTy);
           BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(2);

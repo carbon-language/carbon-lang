@@ -26,7 +26,7 @@
 #include "Support/CommandLine.h"
 #include "Support/STLExtras.h"
 
-namespace llvm {
+using namespace llvm;
 
 namespace {
   cl::opt<bool>
@@ -253,11 +253,7 @@ int X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   return MBB.size() - oldSize;
 }
 
-} // End llvm namespace
-
 #include "X86GenRegisterInfo.inc"
-
-namespace llvm {
 
 const TargetRegisterClass*
 X86RegisterInfo::getRegClassForType(const Type* Ty) const {
@@ -278,5 +274,3 @@ X86RegisterInfo::getRegClassForType(const Type* Ty) const {
   case Type::DoubleTyID: return &RFPInstance;
   }
 }
-
-} // End llvm namespace
