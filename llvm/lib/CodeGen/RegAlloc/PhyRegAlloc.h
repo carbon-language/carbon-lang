@@ -143,13 +143,14 @@ private:
   friend class UltraSparcRegInfo;
 
 
-  int getUsableUniRegAtMI(RegClass *RC, int RegType, 
-			  const MachineInstr *MInst,
-			  const ValueSet *LVSetBef, MachineInstr *&MIBef, 
-			  MachineInstr *&MIAft );
-
+  int getUsableUniRegAtMI(int RegType, 
+			  const ValueSet *LVSetBef,
+			  MachineInstr *MInst,
+                          std::vector<MachineInstr*>& MIBef,
+                          std::vector<MachineInstr*>& MIAft);
+  
   int getUnusedUniRegAtMI(RegClass *RC,  const MachineInstr *MInst, 
-		       const ValueSet *LVSetBef);
+                          const ValueSet *LVSetBef);
 
   void setRelRegsUsedByThisInst(RegClass *RC, const MachineInstr *MInst );
   int getUniRegNotUsedByThisInst(RegClass *RC, const MachineInstr *MInst);
