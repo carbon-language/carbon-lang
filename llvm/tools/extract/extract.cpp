@@ -38,7 +38,13 @@ struct FunctionExtractorPass : public Pass {
     // functions that are not the named function.
     for (Module::iterator I = M.begin(), E = M.end(); I != E;)
       // Check to see if this is the named function!
-      if (!Named && I->getName() == ExtractFunc) {
+      if (I->getName() == ExtractFunc && !I->isExternal()) {
+        if (Named) {                            // Two functions, same name?
+          std::cerr << "extract ERROR: Two functions named: '" << ExtractFunc
+                    << "' found!\n";
+          exit(1);
+        }
+
         // Yes, it is.  Keep track of it...
         Named = I;
 
