@@ -82,7 +82,7 @@ TargetData::TargetData(const std::string &TargetName,
                        unsigned char ByteAl) {
 
   // If this assert triggers, a pass "required" TargetData information, but the
-  // top level tool did not provide once for it.  We do not want to default
+  // top level tool did not provide one for it.  We do not want to default
   // construct, or else we might end up using a bad endianness or pointer size!
   //
   assert(!TargetName.empty() &&
