@@ -80,22 +80,37 @@ std::string Mangler::getValueName(const Value *V) {
   return name;
 }
 
+void Mangler::InsertName(GlobalValue *GV,
+                         std::map<std::string, GlobalValue*> &Names) {
+  if (!GV->hasName()) {   // We must mangle unnamed globals.
+    MangledGlobals.insert(GV);
+    return;
+  }
+
+  // Figure out if this is already used.
+  GlobalValue *&ExistingValue = Names[GV->getName()];
+  if (!ExistingValue) {
+    ExistingValue = GV;
+  } else {
+    // If GV is external but the existing one is static, mangle the existing one
+    if (GV->hasExternalLinkage() && !ExistingValue->hasExternalLinkage()) {
+      MangledGlobals.insert(ExistingValue);
+      ExistingValue = GV;
+    } else {
+      // Otherwise, mangle GV
+      MangledGlobals.insert(GV);
+    }
+  }
+}
+
+
 Mangler::Mangler(Module &m, bool addUnderscorePrefix)
   : M(m), AddUnderscorePrefix(addUnderscorePrefix), Count(0) {
   // Calculate which global values have names that will collide when we throw
   // away type information.
-  std::set<std::string> FoundNames;
+  std::map<std::string, GlobalValue*> Names;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (I->hasName())                      // If the global has a name...
-      if (FoundNames.count(I->getName()))  // And the name is already used
-        MangledGlobals.insert(I);          // Mangle the name
-      else
-        FoundNames.insert(I->getName());   // Otherwise, keep track of name
-
+    InsertName(I, Names);
   for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
-    if (I->hasName())                      // If the global has a name...
-      if (FoundNames.count(I->getName()))  // And the name is already used
-        MangledGlobals.insert(I);          // Mangle the name
-      else
-        FoundNames.insert(I->getName());   // Otherwise, keep track of name
+    InsertName(I, Names);
 }
