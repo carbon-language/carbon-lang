@@ -72,7 +72,7 @@ do
       "llvm-test")    AC_CONFIG_SUBDIRS([projects/llvm-test]) ;;
       "llvm-reopt")   AC_CONFIG_SUBDIRS([projects/llvm-reopt]);;
       "llvm-gcc")     AC_CONFIG_SUBDIRS([projects/llvm-gcc])  ;;
-      "Java")         AC_CONFIG_SUBDIRS([projects/Java])      ;;
+      "Java")         AC_CONFIG_SUBDIRS([projects/llvm-java]) ;;
       "llvm-tv")      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
       "llvm-fefw")    AC_CONFIG_SUBDIRS([projects/llvm-fefw]) ;;
       "poolalloc")    AC_CONFIG_SUBDIRS([projects/poolalloc]) ;;
