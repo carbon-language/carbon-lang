@@ -25,7 +25,7 @@ bool PH::runOnMachineFunction(MachineFunction &MF) {
   bool Changed = false;
 
   for (MachineFunction::iterator BI = MF.begin(), E = MF.end(); BI != E; ++BI)
-    for (MachineBasicBlock::iterator I = BI->begin(), E = BI->end(); I != E; )
+    for (MachineBasicBlock::iterator I = BI->begin(); I != BI->end(); )
       if (PeepholeOptimize(*BI, I))
 	Changed = true;
       else
