@@ -22980,6 +22980,56 @@ fi
 
 
 
+
+
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+  oldcflags=${CFLAGS}
+  CFLAGS="${CFLAGS} -Wl,-R."
+  cat >conftest.$ac_ext <<_ACEOF
+int main() { return 0;}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_link_use_r=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_link_se_r=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+  CFLAGS=${oldcflags}
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+  if test "$ac_cv_link_use_r = yes"
+  then
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_LINK_R 1
+_ACEOF
+
+  fi
+
+
+
 # Check whether --enable-purify or --disable-purify was given.
 if test "${enable_purify+set}" = set; then
   enableval="$enable_purify"

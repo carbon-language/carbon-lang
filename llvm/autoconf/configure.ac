@@ -523,6 +523,9 @@ dnl these checks should go away.
 AC_CHECK_FUNC(mmap,,AC_MSG_ERROR([Function mmap() required but not found]))
 AC_CHECK_FUNC(mprotect,,AC_MSG_ERROR([Function mprotect() required but not found]))
 
+dnl Determine if the linker supports the -R option.
+AC_LINK_USE_R()
+
 dnl **************************************************************************
 dnl * Enable various compile-time options
 dnl **************************************************************************

@@ -6244,4 +6244,20 @@ AC_DEFUN([AC_C_PRINTF_A],
 	fi
 ])
 
-
+#
+# Determine if the system can handle the -R option being passed to the linker.
+#
+AC_DEFUN([AC_LINK_USE_R],
+[
+  AC_LANG_SAVE
+  AC_LANG_C
+  oldcflags=${CFLAGS}
+  CFLAGS="${CFLAGS} -Wl,-R."
+  AC_LINK_IFELSE([int main() { return 0;}],[ac_cv_link_use_r=yes],[ac_cv_link_se_r=no])
+  CFLAGS=${oldcflags}
+  AC_LANG_RESTORE
+  if test "$ac_cv_link_use_r = yes"
+  then
+    AC_DEFINE([HAVE_LINK_R],[1])
+  fi
+])
