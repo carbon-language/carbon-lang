@@ -210,6 +210,22 @@ void RegClass::colorIGNode(IGNode *const Node)
       IsColorUsedArr[ (*ReservedColorList)[i] ] = true;
     }
 
+    // initialize all colors used by neighbors of this node to true
+    LiveRange *LR = Node->getParentLR();
+    unsigned NumNeighbors =  Node->getNumOfNeighbors();
+    for (unsigned n=0; n < NumNeighbors; n++) {
+      IGNode *NeighIGNode = Node->getAdjIGNode(n);
+      LiveRange *NeighLR = NeighIGNode->getParentLR();
+      
+      if (NeighLR->hasColor()) {                        // if has a color
+        IsColorUsedArr[NeighLR->getColor()] = true;  // mark color as used
+      } else if (NeighLR->hasSuggestedColor() &&
+                 NeighLR->isSuggestedColorUsable()) {
+        // this color is suggested for the neighbour, so don't use it
+        IsColorUsedArr[NeighLR->getSuggestedColor()] = true; 
+      }
+    }
+    
     // call the target specific code for coloring
     //
     MRC->colorIGNode(Node, IsColorUsedArr);

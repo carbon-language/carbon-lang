@@ -13,6 +13,7 @@
 #include "llvm/CodeGen/RegisterAllocation.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -21,6 +22,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/Type.h"
+#include "llvm/iOther.h"
 #include "llvm/CodeGen/RegAllocCommon.h"
 #include <iostream>
 #include <math.h>
@@ -248,7 +250,9 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
   // of the call is live in this set - but it does not interfere with call
   // (i.e., we can allocate a volatile register to the return value)
   //
-  if( const Value *RetVal = MRI.getCallInstRetVal( MInst )) {
+  CallArgsDescriptor* argDesc = CallArgsDescriptor::get(MInst);
+  
+  if (const Value *RetVal = argDesc->getReturnValue()) {
     LiveRange *RetValLR = LRI.getLiveRangeForValue( RetVal );
     assert( RetValLR && "No LR for RetValue of call");
     RetValLR->clearCallInterference();
@@ -256,7 +260,7 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
 
   // If the CALL is an indirect call, find the LR of the function pointer.
   // That has a call interference because it conflicts with outgoing args.
-  if( const Value *AddrVal = MRI.getCallInstIndirectAddrVal( MInst )) {
+  if( const Value *AddrVal = argDesc->getIndirectFuncPtr()) {
     LiveRange *AddrValLR = LRI.getLiveRangeForValue( AddrVal );
     assert( AddrValLR && "No LR for indirect addr val of call");
     AddrValLR->setCallInterference();
@@ -438,7 +442,7 @@ void PhyRegAlloc::addInterferencesForArgs() {
 // Utility functions used below
 //-----------------------------
 inline void
-PrependInstructions(std::deque<MachineInstr *> &IBef,
+PrependInstructions(vector<MachineInstr *> &IBef,
                     MachineCodeForBasicBlock& MIVec,
                     MachineCodeForBasicBlock::iterator& MII,
                     const std::string& msg)
@@ -446,7 +450,7 @@ PrependInstructions(std::deque<MachineInstr *> &IBef,
   if (!IBef.empty())
     {
       MachineInstr* OrigMI = *MII;
-      std::deque<MachineInstr *>::iterator AdIt; 
+      std::vector<MachineInstr *>::iterator AdIt; 
       for (AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt)
         {
           if (DEBUG_RA) {
@@ -460,7 +464,7 @@ PrependInstructions(std::deque<MachineInstr *> &IBef,
 }
 
 inline void
-AppendInstructions(std::deque<MachineInstr *> &IAft,
+AppendInstructions(std::vector<MachineInstr *> &IAft,
                    MachineCodeForBasicBlock& MIVec,
                    MachineCodeForBasicBlock::iterator& MII,
                    const std::string& msg)
@@ -468,7 +472,7 @@ AppendInstructions(std::deque<MachineInstr *> &IAft,
   if (!IAft.empty())
     {
       MachineInstr* OrigMI = *MII;
-      std::deque<MachineInstr *>::iterator AdIt; 
+      std::vector<MachineInstr *>::iterator AdIt; 
       for( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt )
         {
           if(DEBUG_RA) {
@@ -678,7 +682,8 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
 
   mcInfo.pushTempValue(TM, MRI.getSpilledRegSize(RegType) );
   
-  MachineInstr *MIBef=NULL,  *AdIMid=NULL, *MIAft=NULL;
+  MachineInstr *MIBef=NULL, *MIAft=NULL;
+  vector<MachineInstr*> AdIMid;
   
   int TmpRegU = getUsableUniRegAtMI(RC, RegType, MInst,&LVSetBef, MIBef, MIAft);
   
@@ -690,38 +695,41 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     // and use the TmpReg as one operand of instruction
 
     // actual loading instruction
-    AdIMid = MRI.cpMem2RegMI(MRI.getFramePointer(), SpillOff, TmpRegU,RegType);
-
+    MRI.cpMem2RegMI(MRI.getFramePointer(), SpillOff, TmpRegU,RegType, AdIMid);
+    AI.InstrnsBefore.insert(AI.InstrnsBefore.end(),
+                            AdIMid.begin(), AdIMid.end());
+    
     if(MIBef)
       AI.InstrnsBefore.push_back(MIBef);
 
-    AI.InstrnsBefore.push_back(AdIMid);
-
     if(MIAft)
-      AI.InstrnsAfter.push_front(MIAft);
+      AI.InstrnsAfter.insert(AI.InstrnsAfter.begin(), MIAft);
     
   } else {   // if this is a Def
     // for a DEF, we have to store the value produced by this instruction
     // on the stack position allocated for this LR
 
     // actual storing instruction
-    AdIMid = MRI.cpReg2MemMI(TmpRegU, MRI.getFramePointer(), SpillOff,RegType);
-
+    MRI.cpReg2MemMI(TmpRegU, MRI.getFramePointer(), SpillOff,RegType, AdIMid);
+    
     if (MIBef)
       AI.InstrnsBefore.push_back(MIBef);
-
-    AI.InstrnsAfter.push_front(AdIMid);
-
+    
+    AI.InstrnsAfter.insert(AI.InstrnsAfter.begin(),
+                           AdIMid.begin(), AdIMid.end());
+    
     if (MIAft)
-      AI.InstrnsAfter.push_front(MIAft);
+      AI.InstrnsAfter.insert(AI.InstrnsAfter.begin(), MIAft);
 
   }  // if !DEF
-
+  
   cerr << "\nFor Inst " << *MInst;
   cerr << " - SPILLED LR: "; printSet(*LR);
   cerr << "\n - Added Instructions:";
   if (MIBef) cerr <<  *MIBef;
-  cerr <<  *AdIMid;
+  for (vector<MachineInstr*>::const_iterator II=AdIMid.begin();
+       II != AdIMid.end(); ++II)
+    cerr <<  **II;
   if (MIAft) cerr <<  *MIAft;
 
   Op.setRegForValue(TmpRegU);    // set the opearnd
@@ -759,8 +767,16 @@ int PhyRegAlloc::getUsableUniRegAtMI(RegClass *RC,
     int TmpOff = mcInfo.pushTempValue(TM,  MRI.getSpilledRegSize(RegType) );
     
     RegU = getUniRegNotUsedByThisInst(RC, MInst);
-    MIBef = MRI.cpReg2MemMI(RegU, MRI.getFramePointer(), TmpOff, RegType );
-    MIAft = MRI.cpMem2RegMI(MRI.getFramePointer(), TmpOff, RegU, RegType );
+
+    vector<MachineInstr*> mvec;
+    
+    MRI.cpReg2MemMI(RegU, MRI.getFramePointer(), TmpOff, RegType, mvec);
+    assert(mvec.size() == 1 && "Need to return a vector here too");
+    MIBef = * mvec.begin();
+    
+    MRI.cpMem2RegMI(MRI.getFramePointer(), TmpOff, RegU, RegType, mvec);
+    assert(mvec.size() == 1 && "Need to return a vector here too");
+    MIAft = * mvec.begin();
   }
 
   return RegU;
@@ -797,9 +813,8 @@ int PhyRegAlloc::getUnusedUniRegAtMI(RegClass *RC,
 
     // LR can be null if it is a const since a const 
     // doesn't have a dominating def - see Assumptions above
-    if( LRofLV )     
-      if( LRofLV->hasColor() ) 
-	IsColorUsedArr[ LRofLV->getColor() ] = true;
+    if( LRofLV && LRofLV->getRegClass() == RC && LRofLV->hasColor() ) 
+      IsColorUsedArr[ LRofLV->getColor() ] = true;
   }
 
   // It is possible that one operand of this MInst was already spilled
@@ -921,13 +936,13 @@ void PhyRegAlloc::move2DelayedInstr(const MachineInstr *OrigMI,
                                     const MachineInstr *DelayedMI) {
 
   // "added after" instructions of the original instr
-  std::deque<MachineInstr *> &OrigAft = AddedInstrMap[OrigMI].InstrnsAfter;
+  std::vector<MachineInstr *> &OrigAft = AddedInstrMap[OrigMI].InstrnsAfter;
 
   // "added instructions" of the delayed instr
   AddedInstrns &DelayAdI = AddedInstrMap[DelayedMI];
 
   // "added after" instructions of the delayed instr
-  std::deque<MachineInstr *> &DelayedAft = DelayAdI.InstrnsAfter;
+  std::vector<MachineInstr *> &DelayedAft = DelayAdI.InstrnsAfter;
 
   // go thru all the "added after instructions" of the original instruction
   // and append them to the "addded after instructions" of the delayed
