@@ -25,6 +25,8 @@
 
 namespace llvm {
 
+class Function;
+
 /// This structure is used to contain the output of the Bytecode Analysis 
 /// library. It simply contains fields to hold each item of the analysis 
 /// results.
@@ -69,14 +71,18 @@ struct BytecodeAnalysis {
     unsigned byteSize;        ///< The size of the function in bytecode bytes
     unsigned numInstructions; ///< The number of instructions in the function
     unsigned numBasicBlocks;  ///< The number of basic blocks in the function
+    unsigned numPhis;         ///< Number of Phi Nodes in Instructions
     unsigned numOperands;     ///< The number of operands in the function
-    double density;           ///< Density of function
-    double vbrEffectiveness;  ///< Effectiveness of variable bit rate encoding.
+    double   density;         ///< Density of function
+    unsigned vbrCount32;      ///< Number of 32-bit vbr values
+    unsigned vbrCount64;      ///< Number of 64-bit vbr values
+    unsigned vbrCompBytes;    ///< Number of vbr bytes (compressed)
+    unsigned vbrExpdBytes;    ///< Number of vbr bytes (expanded)
   };
 
   /// A mapping of function slot numbers to the collected information about 
   /// the function.
-  std::map<unsigned,BytecodeFunctionInfo> FunctionInfo; 
+  std::map<const Function*,BytecodeFunctionInfo> FunctionInfo; 
 
   /// The content of the bytecode dump
   std::string BytecodeDump;
