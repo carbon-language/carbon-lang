@@ -313,7 +313,8 @@ sub TestDirectory {
 if ($BuildError eq "") {
   $SingleSourceProgramsTable = TestDirectory("SingleSource");
   $MultiSourceProgramsTable = TestDirectory("MultiSource");
-  system "cat $Prefix-SingleSource-Tests.txt $Prefix-MultiSource-Tests.txt > $Prefix-Tests.txt";
+  system "cat $Prefix-SingleSource-Tests.txt $Prefix-MultiSource-Tests.txt ".
+         " | sort > $Prefix-Tests.txt";
 }
 
 my ($TestsAdded, $TestsRemoved, $TestsFixed, $TestsBroken) = ("","","","");
