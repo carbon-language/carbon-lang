@@ -253,7 +253,7 @@ class XForm_8<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
 
 class XForm_10<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
                dag OL, string asmstr> 
-  : XForm_base_r3xo<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
+  : XForm_base_r3xo_swapped<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
 }
 
 class XForm_11<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
