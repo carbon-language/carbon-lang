@@ -36,8 +36,8 @@ namespace llvm {
 namespace PatternMatch { 
 
 template<typename Val, typename Pattern>
-bool match(Val *V, Pattern P) {
-  return P.match(V);
+bool match(Val *V, const Pattern &P) {
+  return const_cast<Pattern&>(P).match(V);
 }
 
 template<typename Class>
@@ -52,7 +52,7 @@ inline leaf_ty<ConstantInt> m_ConstantInt() { return leaf_ty<ConstantInt>(); }
 template<typename Class>
 struct bind_ty {
   Class *&VR;
-  bind_ty(Class*& V) :VR(V) {}
+  bind_ty(Class *&V) : VR(V) {}
 
   template<typename ITy>
   bool match(ITy *V) {
