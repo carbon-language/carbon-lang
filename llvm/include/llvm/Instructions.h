@@ -982,6 +982,8 @@ public:
   //
   inline const Value *getCondition() const { return Operands[0]; }
   inline       Value *getCondition()       { return Operands[0]; }
+  void setCondition(Value *V) { Operands[0] = V; }
+
   inline const BasicBlock *getDefaultDest() const {
     return cast<BasicBlock>(Operands[1].get());
   }
