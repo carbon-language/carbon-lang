@@ -272,7 +272,7 @@ Another common example is:<p>
 <pre>
   <i>// Loop over all of the phi nodes in a basic block</i>
   BasicBlock::iterator BBI = BB->begin();
-  for (; <a href="#PhiNode">PHINode</a> *PN = dyn_cast&lt;<a href="#PHINode">PHINode</a>&gt;(&amp;*BBI); ++BBI)
+  for (; <a href="#PhiNode">PHINode</a> *PN = dyn_cast&lt;<a href="#PHINode">PHINode</a>&gt;(BBI); ++BBI)
     cerr &lt;&lt; *PN;
 </pre><p>
 
@@ -616,16 +616,6 @@ last example,
 is semantically equivalent to
 
 <pre>Instruction* pinst = i;</pre>
-
-<b>Caveat emptor</b>: The above syntax works <i>only</i> when you're <i>not</i>
-working with <tt>dyn_cast</tt>.  The template definition of <tt><a
-href="#isa">dyn_cast</a></tt> isn't implemented to handle this yet, so you'll
-still need the following in order for things to work properly:
-
-<pre>
-BasicBlock::iterator bbi = ...;
-<a href="#BranchInst">BranchInst</a>* b = <a href="#isa">dyn_cast</a>&lt;<a href="#BranchInst">BranchInst</a>&gt;(&amp;*bbi);
-</pre>
 
 It's also possible to turn a class pointer into the corresponding
 iterator.  Usually, this conversion is quite inexpensive.  The
@@ -1745,6 +1735,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Mon Feb 24 14:45:19 CST 2003
+Last modified: Wed Apr 23 11:21:57 CDT 2003
 <!-- hhmts end -->
 </font></body></html>
