@@ -191,7 +191,22 @@ getOptionalUnsignedIntegerOption(const char *Msg, unsigned Default,
   // And parse normally.
   return getUnsignedIntegerOption(Msg, Val, isOnlyOption);
 }
-                                                 
+
+
+/// parseProgramOptions - This method parses the Options string and loads it
+/// as options to be passed to the program.  This is used by the run command
+/// and by 'set args'.
+void CLIDebugger::parseProgramOptions(std::string &Options) {
+  // FIXME: tokenizing by whitespace is clearly incorrect.  Instead we should
+  // honor quotes and other things that a shell would.  Also in the future we
+  // should support redirection of standard IO.
+ 
+  std::vector<std::string> Arguments;
+  for (std::string A = getToken(Options); !A.empty(); A = getToken(Options))
+    Arguments.push_back(A);
+  Dbg.setProgramArguments(Arguments.begin(), Arguments.end());
+}
+                                                
 
 //===----------------------------------------------------------------------===//
 //                   Program startup and shutdown options
@@ -227,7 +242,7 @@ void CLIDebugger::fileCommand(std::string &Options) {
     assert(Dbg.isProgramLoaded() &&
            "loadProgram succeeded, but not program loaded!");
     TheProgramInfo = new ProgramInfo(Dbg.getProgram());
-    std::cout << "success loading '" << Dbg.getProgramPath() << "'!\n";
+    std::cout << "successfully loaded '" << Dbg.getProgramPath() << "'!\n";
   }
 }
 
@@ -276,11 +291,14 @@ void CLIDebugger::quitCommand(std::string &Options) {
 //===----------------------------------------------------------------------===//
 
 void CLIDebugger::runCommand(std::string &Options) {
-  if (!getToken(Options).empty()) throw "run arguments not supported yet.";
   if (!Dbg.isProgramLoaded()) throw "No program loaded.";
   if (Dbg.isProgramRunning() &&
       !askYesNo("The program is already running.  Restart from the beginning?"))
     return;
+
+  // Parse all of the options to the run command, which specify program
+  // arguments to run with.
+  parseProgramOptions(Options);
 
   eliminateRunInfo();
 
@@ -455,6 +473,24 @@ void CLIDebugger::frameCommand(std::string &Options) {
 //===----------------------------------------------------------------------===//
 
 void CLIDebugger::breakCommand(std::string &Options) {
+  // Figure out where the user wants a breakpoint.
+  const SourceFile *File;
+  unsigned LineNo;
+  
+  // Check to see if the user specified a line specifier.
+  std::string Option = getToken(Options);  // strip whitespace
+  if (!Option.empty()) {
+    Options = Option + Options;  // reconstruct string
+
+    // Parse the line specifier.
+    parseLineSpec(FirstLineSpec, File, LineNo);
+  } else {
+    // Build a line specifier for the current stack frame.
+    throw "FIXME: breaking at the current location is not implemented yet!";
+  }
+  
+  
+  
   throw "breakpoints not implemented yet!";
 }
 
@@ -628,7 +664,7 @@ void CLIDebugger::listCommand(std::string &Options) {
         assert(Tok == "-");
         StartLine = LineListedStart-ListSize;
         EndLine = LineListedStart;
-        if ((int)StartLine < 0) StartLine = 1;
+        if ((int)StartLine <= 0) StartLine = 1;
       }
     } else {
       // Must be a normal line specifier.
@@ -640,7 +676,7 @@ void CLIDebugger::listCommand(std::string &Options) {
       // ListSize lines centered at the specified line.
       if (File != 0) CurrentFile = File;
       StartLine = LineNo - (ListSize+1)/2;
-      if ((int)StartLine < 0) StartLine = 1;
+      if ((int)StartLine <= 0) StartLine = 1;
       EndLine = StartLine + ListSize;
     }
 
@@ -705,7 +741,9 @@ void CLIDebugger::setCommand(std::string &Options) {
 
   if (What.empty())
     throw "set command expects at least two arguments.";
-  if (What == "language") {
+  if (What == "args") {
+    parseProgramOptions(Options);
+  } else if (What == "language") {
     std::string Lang = getToken(Options);
     if (!getToken(Options).empty())
       throw "set language expects one argument at most.";
@@ -746,7 +784,17 @@ void CLIDebugger::showCommand(std::string &Options) {
   if (What.empty() || !getToken(Options).empty())
     throw "show command expects one argument.";
 
-  if (What == "language") {
+  if (What == "args") {
+    std::cout << "Argument list to give program when started is \"";
+    // FIXME: This doesn't print stuff correctly if the arguments have spaces in
+    // them, but currently the only way to get that is to use the --args command
+    // line argument.  This should really handle escaping all hard characters as
+    // needed.
+    for (unsigned i = 0, e = Dbg.getNumProgramArguments(); i != e; ++i)
+      std::cout << (i ? " " : "") << Dbg.getProgramArgument(i);
+    std::cout << "\"\n";
+
+  } else if (What == "language") {
     std::cout << "The current source language is '";
     if (CurrentLanguage)
       std::cout << CurrentLanguage->getSourceLanguageName();

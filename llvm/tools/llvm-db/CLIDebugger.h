@@ -184,16 +184,21 @@ namespace llvm {
     /// start executing the program.
     void startProgramRunning();
 
+    /// printSourceLine - Print the specified line of the current source file.
+    /// If the specified line is invalid (the source file could not be loaded or
+    /// the line number is out of range), don't print anything, but return true.
+    bool printSourceLine(unsigned LineNo);
+
     /// parseLineSpec - Parses a line specifier, for use by the 'list' command.
     /// If SourceFile is returned as a void pointer, then it was not specified.
     /// If the line specifier is invalid, an exception is thrown.
     void parseLineSpec(std::string &LineSpec, const SourceFile *&SourceFile,
                        unsigned &LineNo);
 
-    /// printSourceLine - Print the specified line of the current source file.
-    /// If the specified line is invalid (the source file could not be loaded or
-    /// the line number is out of range), don't print anything, but return true.
-    bool printSourceLine(unsigned LineNo);
+    /// parseProgramOptions - This method parses the Options string and loads it
+    /// as options to be passed to the program.  This is used by the run command
+    /// and by 'set args'.
+    void parseProgramOptions(std::string &Options);
   };
 }
 
