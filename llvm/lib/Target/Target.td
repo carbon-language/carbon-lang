@@ -130,6 +130,8 @@ class Instruction {
   bit isBranch     = 0;     // Is this instruction a branch instruction?
   bit isBarrier    = 0;     // Can control flow fall through this instruction?
   bit isCall       = 0;     // Is this instruction a call instruction?
+  bit isLoad       = 0;     // Is this instruction a load instruction?
+  bit isStore      = 0;     // Is this instruction a store instruction?
   bit isTwoAddress = 0;     // Is this a two address instruction?
   bit isTerminator = 0;     // Is this part of the terminator for a basic block?
   bit hasDelaySlot = 0;     // Does this instruction have an delay slot?
