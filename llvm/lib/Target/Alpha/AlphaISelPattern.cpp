@@ -68,6 +68,7 @@ namespace {
      computeRegisterProperties();
       
      addLegalFPImmediate(+0.0); //F31
+     addLegalFPImmediate(-0.0); //-F31
     }
 
     /// LowerArguments - This hook must be implemented to indicate how we should
@@ -347,7 +348,9 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
 	ExprMap[N.getValue(1)] = notIn;   // Generate the token
       else
 	Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-      
+
+      //DestType = N.getValue(0).getValueType();
+
       SDOperand Chain   = N.getOperand(0);
       SDOperand Address = N.getOperand(1);
       
@@ -355,7 +358,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
 	{
 	  Select(Chain);
 	  AlphaLowering.restoreGP(BB);
-	  Opc = DestType == MVT::f64 ? Alpha::LDS_SYM : Alpha::LDT_SYM;
+	  Opc = DestType == MVT::f64 ? Alpha::LDT_SYM : Alpha::LDS_SYM;
 	  BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
 	}
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
@@ -370,7 +373,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
 	{
 	  Select(Chain);
 	  Tmp2 = SelectExpr(Address);
-	  Opc = DestType == MVT::f64 ? Alpha::LDS : Alpha::LDT;
+	  Opc = DestType == MVT::f64 ? Alpha::LDT : Alpha::LDS;
 	  BuildMI(BB, Opc, 2, Result).addImm(0).addReg(Tmp2);
 	}
       return Result;
@@ -379,6 +382,8 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N)) {
       if (CN->isExactlyValue(+0.0)) {
         BuildMI(BB, Alpha::CPYS, 2, Result).addReg(Alpha::F31).addReg(Alpha::F31);
+      } else if ( CN->isExactlyValue(-0.0)) {
+        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Alpha::F31).addReg(Alpha::F31);
       } else {
         abort();
       }
@@ -409,15 +414,15 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     
     Tmp2 = MakeReg(MVT::f32);
 
-    if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(1)))
-      if (Node->getValueType(0) == MVT::f64) {
-        assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::f32 &&
-               "Bad EXTLOAD!");
-	AlphaLowering.restoreGP(BB);
-        BuildMI(BB, Alpha::LDS_SYM, 1, Tmp2).addConstantPoolIndex(CP->getIndex());
-        BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp2);
-        return Result;
-      }
+    assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::f32 && "EXTLOAD not from f32");
+    assert(Node->getValueType(0) == MVT::f64 && "EXTLOAD not to f64");
+
+    if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(1))) {
+      AlphaLowering.restoreGP(BB);
+      BuildMI(BB, Alpha::LDS_SYM, 1, Tmp2).addConstantPoolIndex(CP->getIndex());
+      BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp2);
+      return Result;
+    }
     Select(Node->getOperand(0)); // chain
     Tmp1 = SelectExpr(Node->getOperand(1));
     BuildMI(BB, Alpha::LDS, 1, Tmp2).addReg(Tmp1);
