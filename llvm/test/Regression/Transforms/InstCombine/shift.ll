@@ -96,3 +96,16 @@ uint %test14a(uint %A) {
 	%D = shr uint %C, ubyte 4   ;; D = ((B | 1234) << 4) === ((B << 4)|(1234 << 4)
 	ret uint %D
 }
+
+int %test15(bool %C) {
+        %A = select bool %C, int 3, int 1
+        %V = shl int %A, ubyte 2
+        ret int %V
+}
+
+int %test15a(bool %C) {
+        %A = select bool %C, ubyte 3, ubyte 1
+        %V = shl int 64, ubyte %A
+        ret int %V
+}
+
