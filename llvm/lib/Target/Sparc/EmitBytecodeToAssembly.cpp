@@ -112,7 +112,7 @@ namespace {
   };
 }  // end anonymous namespace
 
-Pass *UltraSparc::getBytecodeAsmPrinterPass(std::ostream &Out) {
+Pass *createBytecodeAsmPrinterPass(std::ostream &Out) {
   return new SparcBytecodeWriter(Out);
 }
 
