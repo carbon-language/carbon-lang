@@ -1059,8 +1059,18 @@ void V8ISel::emitGEPOperation (MachineBasicBlock *MBB,
       unsigned memberOffset =
         TD.getStructLayout (StTy)->MemberOffsets[fieldIndex];
       // Emit an ADD to add memberOffset to the basePtr.
-      BuildMI (*MBB, IP, V8::ADDri, 2,
-               nextBasePtrReg).addReg (basePtrReg).addZImm (memberOffset);
+      // We might have to copy memberOffset into a register first, if it's
+      // big.
+      if (memberOffset + 4096 < 8191) {
+        BuildMI (*MBB, IP, V8::ADDri, 2,
+                 nextBasePtrReg).addReg (basePtrReg).addSImm (memberOffset);
+      } else {
+        unsigned offsetReg = makeAnotherReg (Type::IntTy);
+        copyConstantToRegister (MBB, IP,
+          ConstantInt::get(Type::IntTy, memberOffset), offsetReg);
+        BuildMI (*MBB, IP, V8::ADDrr, 2,
+                 nextBasePtrReg).addReg (basePtrReg).addReg (offsetReg);
+      }
       // The next type is the member of the structure selected by the
       // index.
       Ty = StTy->getElementType (fieldIndex);
