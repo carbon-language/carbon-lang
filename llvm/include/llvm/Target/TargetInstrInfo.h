@@ -1,4 +1,4 @@
-//===-- llvm/Target/MachineInstrInstrInfo.h - Instruction Infor ---*-C++-*-===//
+//===-- llvm/Target/TargetInstrInfo.h - Instruction Info --------*- C++ -*-===//
 //
 // This file describes the target machine instructions to the code generator.
 //
@@ -10,7 +10,6 @@
 #include "Support/DataTypes.h"
 #include <vector>
 
-class MachineInstrDescriptor;
 class MachineInstr;
 class TargetMachine;
 class Value;
@@ -39,25 +38,31 @@ const MachineOpCode INVALID_MACHINE_OPCODE = -1;
 // 
 //---------------------------------------------------------------------------
 
-const unsigned	M_NOP_FLAG		= 1 << 0;
-const unsigned	M_BRANCH_FLAG		= 1 << 1;
-const unsigned	M_CALL_FLAG		= 1 << 2;
-const unsigned	M_RET_FLAG		= 1 << 3;
-const unsigned	M_ARITH_FLAG		= 1 << 4;
-const unsigned	M_CC_FLAG		= 1 << 6;
-const unsigned	M_LOGICAL_FLAG		= 1 << 6;
-const unsigned	M_INT_FLAG		= 1 << 7;
-const unsigned	M_FLOAT_FLAG		= 1 << 8;
-const unsigned	M_CONDL_FLAG		= 1 << 9;
-const unsigned	M_LOAD_FLAG		= 1 << 10;
-const unsigned	M_PREFETCH_FLAG		= 1 << 11;
-const unsigned	M_STORE_FLAG		= 1 << 12;
-const unsigned	M_DUMMY_PHI_FLAG	= 1 << 13;
-const unsigned  M_PSEUDO_FLAG           = 1 << 14;       // Pseudo instruction
+const unsigned M_NOP_FLAG		= 1 << 0;
+const unsigned M_BRANCH_FLAG		= 1 << 1;
+const unsigned M_CALL_FLAG		= 1 << 2;
+const unsigned M_RET_FLAG		= 1 << 3;
+const unsigned M_ARITH_FLAG		= 1 << 4;
+const unsigned M_CC_FLAG		= 1 << 6;
+const unsigned M_LOGICAL_FLAG		= 1 << 6;
+const unsigned M_INT_FLAG		= 1 << 7;
+const unsigned M_FLOAT_FLAG		= 1 << 8;
+const unsigned M_CONDL_FLAG		= 1 << 9;
+const unsigned M_LOAD_FLAG		= 1 << 10;
+const unsigned M_PREFETCH_FLAG		= 1 << 11;
+const unsigned M_STORE_FLAG		= 1 << 12;
+const unsigned M_DUMMY_PHI_FLAG	= 1 << 13;
+const unsigned M_PSEUDO_FLAG           = 1 << 14;       // Pseudo instruction
 // 3-addr instructions which really work like 2-addr ones, eg. X86 add/sub
-const unsigned  M_2_ADDR_FLAG           = 1 << 15;
+const unsigned M_2_ADDR_FLAG           = 1 << 15;
 
-struct MachineInstrDescriptor {
+// M_TERMINATOR_FLAG - Is this instruction part of the terminator for a basic
+// block?  Typically this is things like return and branch instructions.
+// Various passes use this to insert code into the bottom of a basic block, but
+// before control flow occurs.
+const unsigned M_TERMINATOR_FLAG       = 1 << 16;
+
+struct TargetInstrDescriptor {
   const char *    Name;          // Assembly language mnemonic for the opcode.
   int             numOperands;   // Number of args; -1 if variable #args
   int             resultPos;     // Position of the result; -1 if no result
@@ -73,18 +78,19 @@ struct MachineInstrDescriptor {
   const unsigned *ImplicitDefs;  // Registers implicitly defined by this instr
 };
 
+typedef TargetInstrDescriptor MachineInstrDescriptor;
 
-class MachineInstrInfo {
-  const MachineInstrDescriptor* desc;	// raw array to allow static init'n
-  unsigned descSize;		// number of entries in the desc array
-  unsigned numRealOpCodes;		// number of non-dummy op codes
+class TargetInstrInfo {
+  const TargetInstrDescriptor* desc;    // raw array to allow static init'n
+  unsigned descSize;                    // number of entries in the desc array
+  unsigned numRealOpCodes;              // number of non-dummy op codes
   
-  MachineInstrInfo(const MachineInstrInfo &); // DO NOT IMPLEMENT
-  void operator=(const MachineInstrInfo &);   // DO NOT IMPLEMENT
+  TargetInstrInfo(const TargetInstrInfo &);  // DO NOT IMPLEMENT
+  void operator=(const TargetInstrInfo &);   // DO NOT IMPLEMENT
 public:
-  MachineInstrInfo(const MachineInstrDescriptor *desc, unsigned descSize,
-		   unsigned numRealOpCodes);
-  virtual ~MachineInstrInfo();
+  TargetInstrInfo(const TargetInstrDescriptor *desc, unsigned descSize,
+		  unsigned numRealOpCodes);
+  virtual ~TargetInstrInfo();
 
   // Invariant: All instruction sets use opcode #0 as the PHI instruction and
   // opcode #1 as the noop instruction.
@@ -98,7 +104,7 @@ public:
   /// get - Return the machine instruction descriptor that corresponds to the
   /// specified instruction opcode.
   ///
-  const MachineInstrDescriptor& get(MachineOpCode opCode) const {
+  const TargetInstrDescriptor& get(MachineOpCode opCode) const {
     assert(opCode >= 0 && opCode < (int)descSize);
     return desc[opCode];
   }
@@ -187,14 +193,17 @@ public:
         || get(opCode).Flags & M_PREFETCH_FLAG
         || get(opCode).Flags & M_STORE_FLAG;
   }
-  bool isDummyPhiInstr(const MachineOpCode opCode) const {
+  bool isDummyPhiInstr(MachineOpCode opCode) const {
     return get(opCode).Flags & M_DUMMY_PHI_FLAG;
   }
-  bool isPseudoInstr(const MachineOpCode opCode) const {
+  bool isPseudoInstr(MachineOpCode opCode) const {
     return get(opCode).Flags & M_PSEUDO_FLAG;
   }
-  bool isTwoAddrInstr(const MachineOpCode opCode) const {
+  bool isTwoAddrInstr(MachineOpCode opCode) const {
     return get(opCode).Flags & M_2_ADDR_FLAG;
+  }
+  bool isTerminatorInstr(unsigned Opcode) const {
+    return get(Opcode).Flags & M_TERMINATOR_FLAG;
   }
 
   // Check if an instruction can be issued before its operands are ready,
@@ -371,5 +380,7 @@ public:
     abort();
   }
 };
+
+typedef TargetInstrInfo MachineInstrInfo;
 
 #endif
