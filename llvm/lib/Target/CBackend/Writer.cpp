@@ -236,10 +236,12 @@ bool CBackendNameAllUsedStructs::run(Module &M) {
   // structure types.
   //
   bool Changed = false;
+  unsigned RenameCounter = 0;
   for (std::set<const Type *>::const_iterator I = UT.begin(), E = UT.end();
        I != E; ++I)
     if (const StructType *ST = dyn_cast<StructType>(*I)) {
-      const_cast<StructType*>(ST)->setName("unnamed", &MST);
+      while (M.addTypeName("unnamed"+utostr(RenameCounter), ST))
+        ++RenameCounter;
       Changed = true;
     }
   return Changed;
