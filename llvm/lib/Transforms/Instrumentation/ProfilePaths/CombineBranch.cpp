@@ -7,57 +7,48 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// Pass to instrument loops
-//
-// At every backedge, insert a counter for that backedge and a call function
+// Combine branches
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Constants.h"
-#include "llvm/iMemory.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/iOther.h"
-#include "llvm/iOperators.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
-#include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 
 namespace llvm {
 
-//this is used to color vertices
-//during DFS
-
-enum Color{
-  WHITE,
-  GREY,
-  BLACK
-};
-
 namespace {
   struct CombineBranches : public FunctionPass {
   private:
-    //DominatorSet *DS;
+    /// Possible colors that a vertex can have during depth-first search for
+    /// back-edges.
+    ///
+    enum Color { WHITE, GREY, BLACK };
+
     void getBackEdgesVisit(BasicBlock *u,
 			   std::map<BasicBlock *, Color > &color,
 			   std::map<BasicBlock *, int > &d, 
 			   int &time,
 			   std::map<BasicBlock *, BasicBlock *> &be);
     void removeRedundant(std::map<BasicBlock *, BasicBlock *> &be);
-    void getBackEdges(Function &F);
   public:
     bool runOnFunction(Function &F);
   };
   
-  RegisterOpt<CombineBranches> X("branch-combine", "Multiple backedges going to same target are merged");
+  RegisterOpt<CombineBranches>
+  X("branch-combine", "Multiple backedges going to same target are merged");
 }
 
-//helper function to get back edges: it is called by 
-//the "getBackEdges" function below
+/// getBackEdgesVisit - Get the back-edges of the control-flow graph for this
+/// function.  We proceed recursively using depth-first search.  We get
+/// back-edges by associating a time and a color with each vertex.  The time of a
+/// vertex is the time when it was first visited.  The color of a vertex is
+/// initially WHITE, changes to GREY when it is first visited, and changes to
+/// BLACK when ALL its neighbors have been visited.  So we have a back edge when
+/// we meet a successor of a node with smaller time, and GREY color.
+///
 void CombineBranches::getBackEdgesVisit(BasicBlock *u,
                        std::map<BasicBlock *, Color > &color,
                        std::map<BasicBlock *, int > &d, 
@@ -69,27 +60,24 @@ void CombineBranches::getBackEdgesVisit(BasicBlock *u,
   d[u]=time;
 
   for (succ_iterator vl = succ_begin(u), ve = succ_end(u); vl != ve; ++vl){
-    
     BasicBlock *BB = *vl;
 
-    if(color[BB]!=GREY && color[BB]!=BLACK){
+    if(color[BB]!=GREY && color[BB]!=BLACK)
       getBackEdgesVisit(BB, color, d, time, be);
-    }
     
     //now checking for d and f vals
     else if(color[BB]==GREY){
       //so v is ancestor of u if time of u > time of v
-      if(d[u] >= d[BB]){
-	//u->BB is a backedge
+      if(d[u] >= d[BB]) // u->BB is a backedge
 	be[u] = BB;
-      }
     }
   }
   color[u]=BLACK;//done with visiting the node and its neighbors
 }
 
-//look at all BEs, and remove all BEs that are dominated by other BE's in the
-//set
+/// removeRedundant - Remove all back-edges that are dominated by other
+/// back-edges in the set.
+///
 void CombineBranches::removeRedundant(std::map<BasicBlock *, BasicBlock *> &be){
   std::vector<BasicBlock *> toDelete;
   std::map<BasicBlock *, int> seenBB;
@@ -126,17 +114,13 @@ void CombineBranches::removeRedundant(std::map<BasicBlock *, BasicBlock *> &be){
 
       std::map<PHINode *, std::vector<unsigned int> > phiMap;
 
-      
       for(std::vector<BasicBlock *>::iterator VBI = sameTarget.begin(),
 	    VBE = sameTarget.end(); VBI != VBE; ++VBI){
 
-	//std::cerr<<(*VBI)->getName()<<"\n";
-
 	BranchInst *ti = cast<BranchInst>((*VBI)->getTerminator());
 	unsigned char index = 1;
-	if(ti->getSuccessor(0) == MI->second){
+	if(ti->getSuccessor(0) == MI->second)
 	  index = 0;
-	}
 
 	ti->setSuccessor(index, newBB);
 
@@ -146,10 +130,8 @@ void CombineBranches::removeRedundant(std::map<BasicBlock *, BasicBlock *> &be){
 	  if (PHINode *phiInst = dyn_cast<PHINode>(BB2Inst)){
 	    int bbIndex;
 	    bbIndex = phiInst->getBasicBlockIndex(*VBI);
-	    if(bbIndex>=0){
+	    if(bbIndex>=0)
 	      phiMap[phiInst].push_back(bbIndex);
-	      //phiInst->setIncomingBlock(bbIndex, newBB); 
-	    }
 	  }
 	}
       }
@@ -177,53 +159,25 @@ void CombineBranches::removeRedundant(std::map<BasicBlock *, BasicBlock *> &be){
 
 	PI->first->addIncoming(phiNode, newBB);
       }
-      //std::cerr<<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
-      //std::cerr<<MI->second;
-      //std::cerr<<"-----------------------------------\n";
-      //std::cerr<<newBB;
-      //std::cerr<<"END%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
-      
     }
   }
 }
 
-//getting the backedges in a graph
-//Its a variation of DFS to get the backedges in the graph
-//We get back edges by associating a time
-//and a color with each vertex.
-//The time of a vertex is the time when it was first visited
-//The color of a vertex is initially WHITE,
-//Changes to GREY when it is first visited,
-//and changes to BLACK when ALL its neighbors
-//have been visited
-//So we have a back edge when we meet a successor of
-//a node with smaller time, and GREY color
-void CombineBranches::getBackEdges(Function &F){
-  std::map<BasicBlock *, Color > color;
+/// runOnFunction - Per function pass for combining branches.
+///
+bool CombineBranches::runOnFunction(Function &F){
+  if (F.isExternal ())
+    return false;
+
+  // Find and remove "redundant" back-edges.
+  std::map<BasicBlock *, Color> color;
   std::map<BasicBlock *, int> d;
   std::map<BasicBlock *, BasicBlock *> be;
-  int time=0;
-  getBackEdgesVisit(F.begin(), color, d, time, be);
-
-  removeRedundant(be);
-}
-
-//Per function pass for inserting counters and call function
-bool CombineBranches::runOnFunction(Function &F){
+  int time = 0;
+  getBackEdgesVisit (F.begin (), color, d, time, be);
+  removeRedundant (be);
   
-  if(F.isExternal()) {
-    return false;
-  }
-
-  //if(F.getName() == "main"){
-   // F.setName("llvm_gprof_main");
-  //}
-  
-  //std::cerr<<F;
-  //std::cerr<<"///////////////////////////////////////////////\n";
-  getBackEdges(F);
-  
-  return true;
+  return true; // FIXME: assumes a modification was always made.
 }
 
 } // End llvm namespace
