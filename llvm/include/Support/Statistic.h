@@ -76,6 +76,8 @@ public:
   const Statistic &operator=(DataType Val) { Value = Val; return *this; }
   const Statistic &operator++() { ++Value; return *this; }
   DataType operator++(int) { return Value++; }
+  const Statistic &operator--() { --Value; return *this; }
+  DataType operator--(int) { return Value--; }
   const Statistic &operator+=(const DataType &V) { Value += V; return *this; }
   const Statistic &operator-=(const DataType &V) { Value -= V; return *this; }
 };
