@@ -146,10 +146,6 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
     output_vbr(cast<ConstantSInt>(CPV)->getValue(), Out);
     break;
 
-  case Type::TypeTyID:     // Serialize type type
-    assert(0 && "Types should not be in the Constant!");
-    break;
-
   case Type::ArrayTyID: {
     const ConstantArray *CPA = cast<ConstantArray>(CPV);
     assert(!CPA->isString() && "Constant strings should be handled specially!");
@@ -193,7 +189,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
   case Type::LabelTyID:
   default:
     std::cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
-              << " type '" << CPV->getType()->getName() << "'\n";
+              << " type '" << CPV->getType() << "'\n";
     break;
   }
   return;
