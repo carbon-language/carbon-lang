@@ -55,10 +55,6 @@ public:
   // lookup - Returns null on failure...
   Value *lookup(const Type *Ty, const string &name);
 
-  // find - returns end(Ty->getIDNumber()) on failure...
-  type_iterator type_find(const Type *Ty, const string &name);
-  type_iterator type_find(const Value *D);
-
   // insert - Add named definition to the symbol table...
   inline void insert(Value *N) {
     assert(N->hasName() && "Value must be named to go into symbol table!");
@@ -76,7 +72,9 @@ public:
   }
 
   void remove(Value *N);
-  Value *type_remove(const type_iterator &It);
+  Value *type_remove(const type_iterator &It) {
+    return removeEntry(find(It->second->getType()), It);
+  }
 
   // getUniqueName - Given a base name, return a string that is either equal to
   // it (or derived from it) that does not already occur in the symbol table for
@@ -108,10 +106,19 @@ public:
   void dump() const;  // Debug method, print out symbol table
 
 private:
+  inline super::value_type operator[](const Type *Ty) {
+    assert(0 && "Should not use this operator to access symbol table!");
+    return super::value_type();
+  }
+
   // insertEntry - Insert a value into the symbol table with the specified
   // name...
   //
   void insertEntry(const string &Name, const Type *Ty, Value *V);
+
+  // removeEntry - Remove a value from the symbol table...
+  //
+  Value *removeEntry(iterator Plane, type_iterator Entry);
 
   // This function is called when one of the types in the type plane are refined
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);

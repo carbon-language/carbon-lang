@@ -87,6 +87,11 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
     break;
   }
 
+  case Type::OpaqueTyID: {
+    Val = OpaqueType::get();
+    break;
+  }
+
   default:
     cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to deserialize"
 	 << " primitive Type " << PrimType << "\n";
