@@ -22,15 +22,29 @@ namespace llvm {
       // reloc_pcrel_bx - PC relative relocation, for the b or bl instructions.
       reloc_pcrel_bx,
 
-      // reloc_absolute_loadhi - Absolute relocation, for the loadhi instruction
+      // reloc_absolute_high - Absolute relocation, for the loadhi instruction
       // (which is really addis).  Add the high 16-bits of the specified global
-      // address into the immediate field of the addis.
-      reloc_absolute_loadhi,
+      // address into the low 16-bits of the instruction.
+      reloc_absolute_high,
 
-      // reloc_absolute_la - Absolute relocation, for the la instruction (which
+      // reloc_absolute_low - Absolute relocation, for the la instruction (which
       // is really an addi).  Add the low 16-bits of teh specified global
-      // address into the immediate field of the addi.
-      reloc_absolute_la,
+      // address into the low 16-bits of the instruction.
+      reloc_absolute_low,
+
+      // reloc_absolute_ptr_high - Absolute relocation for references to lazy
+      // pointer stubs.  In this case, the relocated instruction should be
+      // relocated to point to a POINTER to the indicated global.  The low-16
+      // bits of the instruction are rewritten with the high 16-bits of the
+      // address of the pointer.
+      reloc_absolute_ptr_high,
+
+      // reloc_absolute_ptr_low - Absolute relocation for references to lazy
+      // pointer stubs.  In this case, the relocated instruction should be
+      // relocated to point to a POINTER to the indicated global.  The low-16
+      // bits of the instruction are rewritten with the low 16-bits of the
+      // address of the pointer.
+      reloc_absolute_ptr_low,
     };
   }
 }

@@ -189,21 +189,36 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
   } else if (MO.isGlobalAddress()) {
+    GlobalValue *GV = MO.getGlobal();
     unsigned Reloc = 0;
     int Offset = 0;
     if (MI.getOpcode() == PPC::CALLpcrel)
       Reloc = PPC::reloc_pcrel_bx;
-    else if (MI.getOpcode() == PPC::LOADHiAddr) {
+    else {
       assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
-      Reloc = PPC::reloc_absolute_loadhi;
       Offset = -((intptr_t)MovePCtoLROffset+4);
-    } else if (MI.getOpcode() == PPC::LA || MI.getOpcode() == PPC::LWZ ||
-               MI.getOpcode() == PPC::LFS || MI.getOpcode() == PPC::LFD) {
-      assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
-      Reloc = PPC::reloc_absolute_la;
-      Offset = -((intptr_t)MovePCtoLROffset+4);
-    } else {
-      assert(0 && "Unknown instruction for relocation!");
+
+      if (MI.getOpcode() == PPC::LOADHiAddr) {
+        if (GV->hasWeakLinkage() || GV->isExternal() || isa<Function>(GV))
+          Reloc = PPC::reloc_absolute_ptr_high;   // Pointer to stub
+        else
+          Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
+
+      } else if (MI.getOpcode() == PPC::LA) {
+        assert(!(GV->hasWeakLinkage() || GV->isExternal() || isa<Function>(GV))
+               && "Something in the ISEL changed\n");
+
+        Reloc = PPC::reloc_absolute_low;
+      } else if (MI.getOpcode() == PPC::LWZ) {
+        Reloc = PPC::reloc_absolute_ptr_low;
+
+        assert((GV->hasWeakLinkage() || GV->isExternal() || isa<Function>(GV))&&
+               "Something in the ISEL changed\n");
+      } else {
+        // These don't show up for global value references AFAIK, only for
+        // constant pool refs: PPC::LFS, PPC::LFD
+        assert(0 && "Unknown instruction for relocation!");
+      }
     }
     MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
                                         Reloc, MO.getGlobal(), Offset));

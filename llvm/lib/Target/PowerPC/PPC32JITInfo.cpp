@@ -16,6 +16,7 @@
 #include "PPC32Relocations.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
+#include <map>
 using namespace llvm;
 
 static TargetJITInfo::JITCompilerFn JITCompilerFunction;
@@ -195,11 +196,28 @@ void PPC32JITInfo::relocate(void *Function, MachineRelocation *MR,
              "Relocation out of range!");
       *RelocPos |= (ResultPtr & ((1 << 24)-1))  << 2;
       break;
-    case PPC::reloc_absolute_loadhi:   // Relocate high bits into addis
-    case PPC::reloc_absolute_la:       // Relocate low bits into addi
+
+    case PPC::reloc_absolute_ptr_high: // Pointer relocations.
+    case PPC::reloc_absolute_ptr_low: {
+      // Pointer relocations are used for the PPC external stubs and lazy
+      // resolver pointers that the Darwin ABI likes to use.  Basically, the
+      // address of the global is actually stored in memory, and the address of
+      // the pointer is relocated into instructions instead of the pointer
+      // itself.  Because we have to keep the mapping anyway, we just return
+      // pointers to the values in the map as our new location.
+      static std::map<void*,void*> Pointers;
+      void *&Ptr = Pointers[(void*)ResultPtr];
+      Ptr = (void*)ResultPtr;
+      ResultPtr = (intptr_t)&Ptr;
+    }
+      // FALL THROUGH
+    case PPC::reloc_absolute_high:     // high bits of ref -> low 16 of instr
+    case PPC::reloc_absolute_low:      // low bits of ref  -> low 16 of instr
       ResultPtr += MR->getConstantVal();
 
-      if (MR->getRelocationType() == PPC::reloc_absolute_loadhi) {
+      // If this is a high-part access, get the high-part.
+      if (MR->getRelocationType() == PPC::reloc_absolute_high ||
+          MR->getRelocationType() == PPC::reloc_absolute_ptr_high) {
         // If the low part will have a carry (really a borrow) from the low
         // 16-bits into the high 16, add a bit to borrow from.
         if (((int)ResultPtr << 16) < 0)
