@@ -110,7 +110,7 @@ void BBLiveVar::calcDefUseSets() {
 
     // do for implicit operands as well
     for (unsigned i = 0; i < MI->getNumImplicitRefs(); ++i) {
-      assert(MI->getOpCode() != V9::PHI && "Phi cannot have implicit opeands");
+      assert(MI->getOpCode() != V9::PHI && "Phi cannot have implicit operands");
       const Value *Op = MI->getImplicitRef(i);
 
       if (Op->getType() == Type::LabelTy)             // don't process labels
