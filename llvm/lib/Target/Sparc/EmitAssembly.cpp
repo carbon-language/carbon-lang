@@ -53,31 +53,14 @@ namespace {
   //===--------------------------------------------------------------------===//
   // Utility functions
 
-  /// Can we treat the specified array as a string?  Only if it is an array of
-  /// ubytes or non-negative sbytes.
-  ///
-  bool isStringCompatible(const ConstantArray *CVA) {
-    const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
-    if (ETy == Type::UByteTy) return true;
-    if (ETy != Type::SByteTy) return false;
-
-    for (unsigned i = 0; i < CVA->getNumOperands(); ++i)
-      if (cast<ConstantSInt>(CVA->getOperand(i))->getValue() < 0)
-        return false;
-
-    return true;
-  }
-
   /// getAsCString - Return the specified array as a C compatible string, only
-  /// if the predicate isStringCompatible is true.
+  /// if the predicate isString() is true.
   ///
   std::string getAsCString(const ConstantArray *CVA) {
-    assert(isStringCompatible(CVA) && "Array is not string compatible!");
+    assert(CVA->isString() && "Array is not string compatible!");
 
-    std::string Result;
-    const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
-    Result = "\"";
-    for (unsigned i = 0; i < CVA->getNumOperands(); ++i) {
+    std::string Result = "\"";
+    for (unsigned i = 0; i != CVA->getNumOperands(); ++i) {
       unsigned char C = cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
 
       if (C == '"') {
@@ -244,13 +227,13 @@ namespace {
       toAsm << "\t.align\t" << ConstantToAlignment(CV, Target) << "\n";
   
       // Print .size and .type only if it is not a string.
-      const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
-      if (CVA && isStringCompatible(CVA)) {
-        // print it as a string and return
-        toAsm << valID << ":\n";
-        toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
-        return;
-      }
+      if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV))
+        if (CVA->isString()) {
+          // print it as a string and return
+          toAsm << valID << ":\n";
+          toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
+          return;
+        }
   
       toAsm << "\t.type" << "\t" << valID << ",#object\n";
 
@@ -431,18 +414,17 @@ void AsmPrinter::printSingleConstantValue(const Constant* CV) {
 /// Uses printSingleConstantValue() to print each individual value.
 ///
 void AsmPrinter::printConstantValueOnly(const Constant* CV,
-                                        int numPadBytesAfter)
-{
-  const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
-
-  if (CVA && isStringCompatible(CVA)) {
-    // print the string alone and return
-    toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
-  } else if (CVA) { 
-    // Not a string.  Print the values in successive locations
-    const std::vector<Use> &constValues = CVA->getValues();
-    for (unsigned i=0; i < constValues.size(); i++)
-      printConstantValueOnly(cast<Constant>(constValues[i].get()));
+                                        int numPadBytesAfter) {
+  if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
+    if (CVA->isString()) {
+      // print the string alone and return
+      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
+    } else {
+      // Not a string.  Print the values in successive locations
+      const std::vector<Use> &constValues = CVA->getValues();
+      for (unsigned i=0; i < constValues.size(); i++)
+        printConstantValueOnly(cast<Constant>(constValues[i].get()));
+    }
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
     // Print the fields in successive locations. Pad to align if needed!
     const StructLayout *cvsLayout =
