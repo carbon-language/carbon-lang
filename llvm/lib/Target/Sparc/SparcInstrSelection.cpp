@@ -37,7 +37,7 @@ static void SetMemOperands_Internal     (vector<MachineInstr*>& mvec,
                                          vector<MachineInstr*>::iterator mvecI,
                                          const InstructionNode* vmInstrNode,
                                          Value* ptrVal,
-                                         const std::vector<Value*>& idxVec,
+                                         std::vector<Value*>& idxVec,
                                          const TargetMachine& target);
 
 
@@ -263,9 +263,11 @@ ChooseConvertToFloatInstr(const InstructionNode* instrNode,
       // This is usually used in conjunction with CreateCodeToCopyIntToFloat().
       // Both functions should treat the integer as a 32-bit value for types
       // of 4 bytes or less, and as a 64-bit value otherwise.
-      if (opType == Type::SByteTy || opType == Type::ShortTy || opType == Type::IntTy)
+      if (opType == Type::SByteTy || opType == Type::UByteTy ||
+          opType == Type::ShortTy || opType == Type::UShortTy ||
+          opType == Type::IntTy   || opType == Type::UIntTy)
         opCode = FITOD;
-      else if (opType == Type::LongTy)
+      else if (opType == Type::LongTy || opType == Type::ULongTy)
         opCode = FXTOD;
       else if (opType == Type::FloatTy)
         opCode = FSTOD;
@@ -505,18 +507,22 @@ CreateIntNegInstruction(const TargetMachine& target,
 
 
 // Does not create any instructions if we cannot exploit constant to
-// create a cheaper instruction
-static inline void
+// create a cheaper instruction.
+// This returns the approximate cost of the instructions generated,
+// which is used to pick the cheapest when both operands are constant.
+static inline unsigned int
 CreateMulConstInstruction(const TargetMachine &target,
                           Value* lval, Value* rval, Value* destVal,
                           vector<MachineInstr*>& mvec)
 {
+  /* An integer multiply is generally more costly than FP multiply */ 
+  unsigned int cost = target.getInstrInfo().minLatency(MULX);
   MachineInstr* minstr1 = NULL;
   MachineInstr* minstr2 = NULL;
   
   Value* constOp = rval;
   if (! isa<Constant>(constOp))
-    return;
+    return cost;
   
   // Cases worth optimizing are:
   // (1) Multiply by 0 or 1 for any type: replace with copy (ADD or FMOV)
@@ -540,29 +546,31 @@ CreateMulConstInstruction(const TargetMachine &target,
           
           if (C == 0 || C == 1)
             {
+              cost = target.getInstrInfo().minLatency(ADD);
               minstr1 = new MachineInstr(ADD);
-              
               if (C == 0)
                 minstr1->SetMachineOperandReg(0,
-                                          target.getRegInfo().getZeroRegNum());
+                              target.getRegInfo().getZeroRegNum());
               else
-                minstr1->SetMachineOperandVal(0,MachineOperand::MO_VirtualRegister,
-                                          lval);
-              minstr1->SetMachineOperandReg(1,target.getRegInfo().getZeroRegNum());
+                minstr1->SetMachineOperandVal(0,
+                              MachineOperand::MO_VirtualRegister, lval);
+              minstr1->SetMachineOperandReg(1,
+                                        target.getRegInfo().getZeroRegNum());
             }
           else if (IsPowerOf2(C, pow))
             {
               minstr1 = new MachineInstr((resultType == Type::LongTy)
-                                        ? SLLX : SLL);
-              minstr1->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                                           lval);
-              minstr1->SetMachineOperandConst(1, MachineOperand::MO_UnextendedImmed,
-                                              pow);
+                                         ? SLLX : SLL);
+              minstr1->SetMachineOperandVal(0,
+                                MachineOperand::MO_VirtualRegister, lval);
+              minstr1->SetMachineOperandConst(1,
+                                MachineOperand::MO_UnextendedImmed, pow);
             }
           
           if (minstr1 && needNeg)
             { // insert <reg = SUB 0, reg> after the instr to flip the sign
               minstr2 = CreateIntNegInstruction(target, destVal);
+              cost += target.getInstrInfo().minLatency(minstr2->getOpCode());
             }
         }
     }
@@ -593,11 +601,52 @@ CreateMulConstInstruction(const TargetMachine &target,
                                   destVal);   
   
   if (minstr1)
-    mvec.push_back(minstr1);
+    {
+      mvec.push_back(minstr1);
+      cost = target.getInstrInfo().minLatency(minstr1->getOpCode());
+    }
   if (minstr2)
-    mvec.push_back(minstr2);
+    {
+      assert(minstr1 && "Otherwise cost needs to be initialized to 0");
+      cost += target.getInstrInfo().minLatency(minstr2->getOpCode());
+      mvec.push_back(minstr2);
+    }
+  
+  return cost;
 }
 
+
+// Does not create any instructions if we cannot exploit constant to
+// create a cheaper instruction.
+// 
+static inline void
+CreateCheapestMulConstInstruction(const TargetMachine &target,
+                                  Value* lval, Value* rval, Value* destVal,
+                                  vector<MachineInstr*>& mvec)
+{
+  Value* constOp;
+  if (isa<Constant>(lval) && isa<Constant>(rval))
+    { // both operands are constant: try both orders!
+      vector<MachineInstr*> mvec1, mvec2;
+      unsigned int lcost = CreateMulConstInstruction(target, lval, rval,
+                                                     destVal, mvec1);
+      unsigned int rcost = CreateMulConstInstruction(target, rval, lval,
+                                                     destVal, mvec2);
+      vector<MachineInstr*>& mincostMvec =  (lcost <= rcost)? mvec1 : mvec2;
+      vector<MachineInstr*>& maxcostMvec =  (lcost <= rcost)? mvec2 : mvec1;
+      mvec.insert(mvec.end(), mincostMvec.begin(), mincostMvec.end()); 
+
+      for (unsigned int i=0; i < maxcostMvec.size(); ++i)
+        delete maxcostMvec[i];
+    }
+  else if (isa<Constant>(rval))         // rval is constant, but not lval
+    CreateMulConstInstruction(target, lval, rval, destVal, mvec);
+  else if (isa<Constant>(lval))         // lval is constant, but not rval
+    CreateMulConstInstruction(target, lval, rval, destVal, mvec);
+  
+  // else neither is constant
+  return;
+}
 
 // Return NULL if we cannot exploit constant to create a cheaper instruction
 static inline void
@@ -607,7 +656,7 @@ CreateMulInstruction(const TargetMachine &target,
                      MachineOpCode forceMulOp = INVALID_MACHINE_OPCODE)
 {
   unsigned int L = mvec.size();
-  CreateMulConstInstruction(target, lval, rval, destVal, mvec);
+  CreateCheapestMulConstInstruction(target, lval, rval, destVal, mvec);
   if (mvec.size() == L)
     { // no instructions were added so create MUL reg, reg, reg.
       // Use FSMULD if both operands are actually floats cast to doubles.
@@ -686,9 +735,11 @@ CreateDivConstInstruction(TargetMachine &target,
           if (C == 1)
             {
               minstr1 = new MachineInstr(ADD);
-              minstr1->SetMachineOperandVal(0,MachineOperand::MO_VirtualRegister,
-                                          instrNode->leftChild()->getValue());
-              minstr1->SetMachineOperandReg(1,target.getRegInfo().getZeroRegNum());
+              minstr1->SetMachineOperandVal(0,
+                                           MachineOperand::MO_VirtualRegister,
+                                           instrNode->leftChild()->getValue());
+              minstr1->SetMachineOperandReg(1,
+                                        target.getRegInfo().getZeroRegNum());
             }
           else if (IsPowerOf2(C, pow))
             {
@@ -696,10 +747,12 @@ CreateDivConstInstruction(TargetMachine &target,
                                      ? (resultType==Type::LongTy)? SRAX : SRA
                                      : (resultType==Type::LongTy)? SRLX : SRL);
               minstr1 = new MachineInstr(opCode);
-              minstr1->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
+              minstr1->SetMachineOperandVal(0,
+                                           MachineOperand::MO_VirtualRegister,
                                            instrNode->leftChild()->getValue());
-              minstr1->SetMachineOperandConst(1, MachineOperand::MO_UnextendedImmed,
-                                           pow);
+              minstr1->SetMachineOperandConst(1,
+                                          MachineOperand::MO_UnextendedImmed,
+                                          pow);
             }
           
           if (minstr1 && needNeg)
@@ -724,7 +777,8 @@ CreateDivConstInstruction(TargetMachine &target,
                 : (resultType == Type::FloatTy? FMOVS : FMOVD);
               
               minstr1 = new MachineInstr(opCode);
-              minstr1->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
+              minstr1->SetMachineOperandVal(0,
+                                           MachineOperand::MO_VirtualRegister,
                                            instrNode->leftChild()->getValue());
             } 
         }
@@ -798,14 +852,17 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
                              unsigned int numElements,
                              vector<MachineInstr*>& getMvec)
 {
-  assert(result && result->getParent() && "Result value is not part of a method?");
+  assert(result && result->getParent() &&
+         "Result value is not part of a method?");
   Method* method = result->getParent()->getParent();
   MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(method);
 
   // Check if the offset would small enough to use as an immediate in load/stores
   // (check LDX because all load/stores have the same-size immediate field).
   // If not, put the variable in the dynamically sized area of the frame.
+  unsigned int paddedSizeIgnored;
   int offsetFromFP = mcInfo.computeOffsetforLocalVar(target, result,
+                                                     paddedSizeIgnored,
                                                      tsize * numElements);
   if (! target.getInstrInfo().constantFitsInImmedField(LDX, offsetFromFP))
     {
@@ -872,21 +929,15 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
                              ? vmInstrNode->rightChild()
                              : vmInstrNode->leftChild()); 
   
-  // We can only fold a chain of GetElemPtr instructions for structure references
+  // Fold chains of GetElemPtr instructions for structure references.
   // 
   if (isa<StructType>(cast<PointerType>(ptrVal->getType())->getElementType())
       && (ptrChild->getOpLabel() == Instruction::GetElementPtr ||
           ptrChild->getOpLabel() == GetElemPtrIdx))
     {
-      // There is a GetElemPtr instruction and there may be a chain of
-      // more than one.  Use the pointer value of the last one in the chain.
-      // Fold the index vectors from the entire chain and from the mem
-      // instruction into one single index vector.
-      // 
-      ptrVal = FoldGetElemChain((InstructionNode*) ptrChild, idxVec);
-
-      assert (! cast<PointerType>(ptrVal->getType())->getElementType()->isArrayType()
-              && "GetElemPtr cannot be folded into array refs in selection");
+      Value* newPtr = FoldGetElemChain((InstructionNode*) ptrChild, idxVec);
+      if (newPtr)
+        ptrVal = newPtr;
     }
   
   // Append the index vector of this instruction (may be none) to the indexes
@@ -905,7 +956,7 @@ SetMemOperands_Internal(vector<MachineInstr*>& mvec,
                         vector<MachineInstr*>::iterator mvecI,
                         const InstructionNode* vmInstrNode,
                         Value* ptrVal,
-                        const vector<Value*>& idxVec,
+                        vector<Value*>& idxVec,
                         const TargetMachine& target)
 {
   MemAccessInst* memInst = (MemAccessInst*) vmInstrNode->getInstruction();
@@ -924,61 +975,67 @@ SetMemOperands_Internal(vector<MachineInstr*>& mvec,
       
       const PointerType* ptrType = cast<PointerType>(ptrVal->getType());
       
-      if (ptrType->getElementType()->isStructType())
+      // Handle special common case of leading [0] index.
+      bool firstIndexIsZero =
+        bool(isa<ConstantUInt>(idxVec.front()) &&
+             cast<ConstantUInt>(idxVec.front())->getValue() == 0);
+      
+      // This is a real structure reference if the ptr target is a
+      // structure type, and the first offset is [0] (eliminate that offset).
+      if (firstIndexIsZero && ptrType->getElementType()->isStructType())
         {
-          // Compute the offset value using the index vector,
-          // and create a virtual register for it.
+          // Compute the offset value using the index vector. Create a
+          // virtual reg. for it since it may not fit in the immed field.
+          assert(idxVec.size() >= 2);
+          idxVec.erase(idxVec.begin());
           unsigned offset = target.DataLayout.getIndexedOffset(ptrType,idxVec);
           valueForRegOffset = ConstantSInt::get(Type::IntTy, offset);
         }
       else
         {
-          // It must be an array ref.  Check that the indexing has been
-          // lowered to a single offset.
+          // It is an array ref, and must have been lowered to a single offset.
           assert((memInst->getNumOperands()
                   == (unsigned) 1 + memInst->getFirstIndexOperandNumber())
                  && "Array refs must be lowered before Instruction Selection");
           
           Value* arrayOffsetVal =  * memInst->idx_begin();
           
-          // Generate a MUL instruction to compute address from index
-          // The call to getTypeSize() will fail if size is not constant
-          vector<MachineInstr*> mulVec;
-          Instruction* addr = new TmpInstruction(Type::UIntTy, memInst);
-          MachineCodeForInstruction::get(memInst).addTemp(addr);
-          unsigned int eltSize =
-            target.DataLayout.getTypeSize(ptrType->getElementType());
-          assert(eltSize > 0 && "Invalid or non-constant array element size");
-          ConstantUInt* eltVal = ConstantUInt::get(Type::UIntTy, eltSize);
-          
-          CreateMulInstruction(target,
-                               arrayOffsetVal, /* lval, not likely constant */
-                               eltVal,         /* rval, likely constant */
-                               addr,           /* result*/
-                               mulVec, INVALID_MACHINE_OPCODE);
-          assert(mulVec.size() > 0 && "No multiply instruction created?");
-          for (vector<MachineInstr*>::const_iterator I = mulVec.begin();
-               I != mulVec.end(); ++I)
+          // If index is 0, the offset value is just 0.  Otherwise, 
+          // generate a MUL instruction to compute address from index.
+          // The call to getTypeSize() will fail if size is not constant.
+          // CreateMulInstruction() folds constants intelligently enough.
+          // 
+          if (firstIndexIsZero)
             {
-              mvecI = mvec.insert(mvecI, *I);	// get ptr to inserted value
-              ++mvecI;                          // get ptr to mem. instr.
+              offsetOpType = MachineOperand::MO_SignExtendedImmed;
+              smallConstOffset = 0;
             }
-          
-          valueForRegOffset = addr;
-          
-          // Check if the offset is a constant,
-          // if (Constant *CPV = dyn_cast<Constant>(arrayOffsetVal))
-          //   {
-          //     isConstantOffset = true;  // always constant for structs
-          //     assert(arrayOffsetVal->getType()->isIntegral());
-          //     offset = (CPV->getType()->isSigned()
-          //               ? cast<ConstantSInt>(CPV)->getValue()
-          //               : (int64_t) cast<ConstantUInt>(CPV)->getValue());
-          //   }
-          // else
-          //  {
-          //    valueForRegOffset = arrayOffsetVal;
-          //  }
+          else
+            {
+              vector<MachineInstr*> mulVec;
+              Instruction* addr = new TmpInstruction(Type::UIntTy, memInst);
+              MachineCodeForInstruction::get(memInst).addTemp(addr);
+              
+              unsigned int eltSize =
+                target.DataLayout.getTypeSize(ptrType->getElementType());
+              assert(eltSize > 0 && "Invalid or non-const array element size");
+              ConstantUInt* eltVal = ConstantUInt::get(Type::UIntTy, eltSize);
+              
+              CreateMulInstruction(target,
+                                   arrayOffsetVal, /* lval, not likely const */
+                                   eltVal,         /* rval, likely constant */
+                                   addr,           /* result*/
+                                   mulVec, INVALID_MACHINE_OPCODE);
+              assert(mulVec.size() > 0 && "No multiply instruction created?");
+              for (vector<MachineInstr*>::const_iterator I = mulVec.begin();
+                   I != mulVec.end(); ++I)
+                {
+                  mvecI = mvec.insert(mvecI, *I);   // ptr to inserted value
+                  ++mvecI;                          // ptr to mem. instr.
+                }
+              
+              valueForRegOffset = addr;
+            }
         }
     }
   else
@@ -1125,7 +1182,8 @@ CreateCopyInstructionsByType(const TargetMachine& target,
     { // `src' is constant and cannot fit in immed field for the ADD
       // Insert instructions to "load" the constant into a register
       vector<TmpInstruction*> tempVec;
-      target.getInstrInfo().CreateCodeToLoadConst(method, src, dest,minstrVec,tempVec);
+      target.getInstrInfo().CreateCodeToLoadConst(method, src, dest,
+                                                  minstrVec,tempVec);
       for (unsigned i=0; i < tempVec.size(); i++)
         MachineCodeForInstruction::get(dest).addTemp(tempVec[i]);
     }
@@ -1196,8 +1254,8 @@ GetInstructionsForProlog(BasicBlock* entryBB,
   else
     {
       M = new MachineInstr(SETSW);
-      M->SetMachineOperandReg(0, MachineOperand::MO_SignExtendedImmed,
-                                 - staticStackSize);
+      M->SetMachineOperandConst(0, MachineOperand::MO_SignExtendedImmed,
+                                - (int) staticStackSize);
       M->SetMachineOperandReg(1, MachineOperand::MO_MachineRegister,
                                  target.getRegInfo().getUnifiedRegNum(
                                   target.getRegInfo().getRegClassIDOfType(Type::IntTy),
@@ -1297,6 +1355,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
   mvec.clear(); 
   
+  // If the code for this instruction was folded into the parent (user),
+  // then do nothing!
+  if (subtreeRoot->isFoldedIntoParent())
+    return;
+  
   // 
   // Let's check for chain rules outside the switch so that we don't have
   // to duplicate the list of chain rule production numbers here again
@@ -1377,23 +1440,29 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                constNode->getNodeType() ==InstrTreeNode::NTConstNode);
         Constant *constVal = cast<Constant>(constNode->getValue());
         bool isValidConst;
-
+        
         if ((constVal->getType()->isIntegral()
              || constVal->getType()->isPointerType())
             && GetConstantValueAsSignedInt(constVal, isValidConst) == 0
             && isValidConst)
           {
-            BranchInst* brInst=cast<BranchInst>(subtreeRoot->getInstruction());
-            
             // That constant is a zero after all...
             // Use the left child of setCC as the first argument!
+            // Mark the setCC node so that no code is generated for it.
+            InstructionNode* setCCNode = (InstructionNode*)
+                                         subtreeRoot->leftChild();
+            assert(setCCNode->getOpLabel() == SetCCOp);
+            setCCNode->markFoldedIntoParent();
+            
+            BranchInst* brInst=cast<BranchInst>(subtreeRoot->getInstruction());
+            
             M = new MachineInstr(ChooseBprInstruction(subtreeRoot));
             M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                          subtreeRoot->leftChild()->leftChild()->getValue());
+                                    setCCNode->leftChild()->getValue());
             M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
                                     brInst->getSuccessor(0));
             mvec.push_back(M);
-
+            
             // delay slot
             mvec.push_back(new MachineInstr(NOP));
 
@@ -1402,7 +1471,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
                                     (Value*) NULL);
             M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
-                                          brInst->getSuccessor(1));
+                                    brInst->getSuccessor(1));
             mvec.push_back(M);
             
             // delay slot
@@ -1832,34 +1901,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
 
       case 41:	// boolconst:   SetCC(reg, Constant)
-        // Check if this is an integer comparison, and
-        // there is a parent, and the parent decided to use
-        // a branch-on-integer-register instead of branch-on-condition-code.
-        // If so, the SUBcc instruction is not required.
-        // (However, we must still check for constants to be loaded from
-        // the constant pool so that such a load can be associated with
-        // this instruction.)
         // 
-        // Otherwise this is just the same as case 42, so just fall through.
+        // If the SetCC was folded into the user (parent), it will be
+        // caught above.  All other cases are the same as case 42,
+        // so just fall through.
         // 
-        if ((subtreeRoot->leftChild()->getValue()->getType()->isIntegral() ||
-             subtreeRoot->leftChild()->getValue()->getType()->isPointerType())
-            && subtreeRoot->parent() != NULL)
-          {
-            InstructionNode* parent = (InstructionNode*) subtreeRoot->parent();
-            assert(parent->getNodeType() == InstrTreeNode::NTInstructionNode);
-            const MachineCodeForInstruction &minstrVec =
-              MachineCodeForInstruction::get(parent->getInstruction());
-            MachineOpCode parentOpCode;
-            if (parent->getInstruction()->getOpcode() == Instruction::Br &&
-                (parentOpCode = minstrVec[0]->getOpCode()) >= BRZ &&
-                parentOpCode <= BRGEZ)
-              {
-                break;                  // don't forward the operand!
-              }
-          }
-        // ELSE FALL THROUGH
-
       case 42:	// bool:   SetCC(reg, reg):
       {
         // This generates a SUBCC instruction, putting the difference in
@@ -1987,38 +2033,18 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
       case 55:	// reg:   GetElemPtr(reg)
       case 56:	// reg:   GetElemPtrIdx(reg,reg)
-        if (subtreeRoot->parent() != NULL)
-          {
-            // If the parent was a memory operation and not an array access,
-            // the parent will fold this instruction in so generate nothing.
-            // 
-            Instruction* parent =
-              cast<Instruction>(subtreeRoot->parent()->getValue());
-            if (parent->getOpcode() == Instruction::Load ||
-                parent->getOpcode() == Instruction::Store ||
-                parent->getOpcode() == Instruction::GetElementPtr)
-              {
-                // Check if the parent is an array access,
-                // If so, we still need to generate this instruction.
-                GetElementPtrInst* getElemInst =
-                  cast<GetElementPtrInst>(subtreeRoot->getInstruction());
-                const PointerType* ptrType =
-                  cast<PointerType>(getElemInst->getPointerOperand()->getType());
-                if (! ptrType->getElementType()->isArrayType())
-                  {// we don't need a separate instr
-                    break;      		// don't forward operand!
-                  }
-              }
-          }
-        // else in all other cases we need to a separate ADD instruction
+        // If the GetElemPtr was folded into the user (parent), it will be
+        // caught above.  For other cases, we have to compute the address.
         mvec.push_back(new MachineInstr(ADD));
         SetOperandsForMemInstr(mvec, mvec.end()-1, subtreeRoot, target);
         break;
-
+        
       case 57:	// reg:  Alloca: Implement as 1 instruction:
       {         //	    add %fp, offsetFromFP -> result
-        AllocationInst* instr = cast<AllocationInst>(subtreeRoot->getInstruction());
-        unsigned int tsize =target.findOptimalStorageSize(instr->getAllocatedType());
+        AllocationInst* instr =
+          cast<AllocationInst>(subtreeRoot->getInstruction());
+        unsigned int tsize =
+          target.findOptimalStorageSize(instr->getAllocatedType());
         assert(tsize != 0);
         CreateCodeForFixedSizeAlloca(target, instr, tsize, 1, mvec);
         break;
@@ -2028,18 +2054,26 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 //	mul num, typeSz -> tmp
                 //	sub %sp, tmp    -> %sp
       {         //	add %sp, frameSizeBelowDynamicArea -> result
-        AllocationInst* instr = cast<AllocationInst>(subtreeRoot->getInstruction());
+        AllocationInst* instr =
+          cast<AllocationInst>(subtreeRoot->getInstruction());
         const Type* eltType = instr->getAllocatedType();
         
-        // If the #elements is a constant, use simpler code for fixed-size allocas
+        // If #elements is constant, use simpler code for fixed-size allocas
         int tsize = (int) target.findOptimalStorageSize(eltType);
-        if (isa<Constant>(instr->getArraySize()))
-          // total size is constant: generate code for fixed-size alloca
-          CreateCodeForFixedSizeAlloca(target, instr, tsize,
-                         cast<ConstantUInt>(instr->getArraySize())->getValue(), mvec);
+        Value* numElementsVal = NULL;
+        bool isArray = instr->isArrayAllocation();
+        
+        if (!isArray ||
+            isa<Constant>(numElementsVal = instr->getArraySize()))
+          { // total size is constant: generate code for fixed-size alloca
+            unsigned int numElements = isArray? 
+              cast<ConstantUInt>(numElementsVal)->getValue() : 1;
+            CreateCodeForFixedSizeAlloca(target, instr, tsize,
+                                         numElements, mvec);
+          }
         else // total size is not constant.
           CreateCodeForVariableSizeAlloca(target, instr, tsize,
-                                          instr->getArraySize(), mvec);
+                                          numElementsVal, mvec);
         break;
       }
       
