@@ -22,6 +22,9 @@ Output/%.out: %.ll $(LANALYZE) Output/.dir
 
 all:: $(addprefix Output/, $(FTESTS:%.llx=%.llx.out))
 
+clean::
+	rm -f *.ps *.dot
+
 Output/%.llx.out: %.llx Output/.dir $(LAS)
 	-$(TESTRUNR) $<
 
