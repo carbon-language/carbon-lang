@@ -154,6 +154,7 @@ bits           { return BITS; }
 string         { return STRING; }
 list           { return LIST; }
 code           { return CODE; }
+dag            { return DAG; }
 
 class          { return CLASS; }
 def            { return DEF; }

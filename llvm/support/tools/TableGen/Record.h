@@ -21,6 +21,7 @@ class IntRecTy;
 class StringRecTy;
 class ListRecTy;
 class CodeRecTy;
+class DagRecTy;
 class RecordRecTy;
 
 // Init subclasses...
@@ -82,6 +83,7 @@ public:   // These methods should only be called by subclasses of RecTy.
   virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
   virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
   virtual bool baseClassOf(const CodeRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
   virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
 };
 
@@ -212,6 +214,21 @@ struct CodeRecTy : public RecTy {
     return RHS->baseClassOf(this);
   }
   virtual bool baseClassOf(const CodeRecTy *RHS) const { return true; }
+};
+
+/// DagRecTy - 'dag' - Represent a dag fragment
+///
+struct DagRecTy : public RecTy {
+  Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
+  //Init *convertValue( DagInit *CI) { return (Init*)CI; }
+  Init *convertValue(TypedInit *TI);
+
+  void print(std::ostream &OS) const { OS << "dag"; }
+
+  bool typeIsConvertibleTo(const RecTy *RHS) const {
+    return RHS->baseClassOf(this);
+  }
+  virtual bool baseClassOf(const DagRecTy *RHS) const { return true; }
 };
 
 
