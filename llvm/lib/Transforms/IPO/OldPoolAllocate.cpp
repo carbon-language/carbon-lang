@@ -443,9 +443,6 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
     cerr << "Scalar Mapping from:"; I->first->dump();
     cerr << "\nScalar Mapping to: "; PVS.print(cerr);
 
-    assert(PVS.size() == 1 &&
-           "Only handle scalars that point to one thing so far!");
-
     // Check to see if the scalar points to a data structure node...
     for (unsigned i = 0, e = PVS.size(); i != e; ++i) {
       assert(PVS[i].Index == 0 && "Nonzero not handled yet!");
@@ -576,8 +573,6 @@ static void addNodeMapping(DSNode *SrcNode, const PointerValSet &PVS,
       for (unsigned l = 0, le = DestNode->getNumOutgoingLinks(); l != le; ++l) {
         PointerValSet &SrcSet = SrcNode->getOutgoingLink(l);
         const PointerValSet &DestSet = DestNode->getOutgoingLink(l);
-        assert((!SrcSet.empty() || DestSet.empty()) &&
-               "Dest graph should be a proper subset of the src graph!");
 
         // Add all of the node mappings now!
         for (unsigned si = 0, se = SrcSet.size(); si != se; ++si) {
