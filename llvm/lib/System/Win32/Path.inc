@@ -55,17 +55,29 @@ Path::isValid() const {
       != std::string::npos)
     return false;
 
-  // A file or directory name may not end in a period.
-  if (path[len-1] == '.')
-    return false;
-  if (len >= 2 && path[len-2] == '.' && path[len-1] == '/')
-    return false;
+  // Check each component for legality.
+  for (pos = 0; pos < len; ++pos) {
+    // A component may not end in a space.
+    if (path[pos] == ' ') {
+      if (path[pos+1] == '/' || path[pos+1] == '\0')
+        return false;
+    }
 
-  // A file or directory name may not end in a space.
-  if (path[len-1] == ' ')
-    return false;
-  if (len >= 2 && path[len-2] == ' ' && path[len-1] == '/')
-    return false;
+    // A component may not end in a period.
+    if (path[pos] == '.') {
+      if (path[pos+1] == '/' || path[pos+1] == '\0') {
+        // Unless it is the pseudo-directory "."...
+        if (pos == 0 || path[pos-1] == '/' || path[pos-1] == ':')
+          return true;
+        // or "..".
+        if (pos > 0 && path[pos-1] == '.') {
+          if (pos == 1 || path[pos-2] == '/' || path[pos-2] == ':')
+            return true;
+        }
+        return false;
+      }
+    }
+  }
 
   return true;
 }
