@@ -8,6 +8,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/unistd.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <iostream>
 #include <algorithm>
