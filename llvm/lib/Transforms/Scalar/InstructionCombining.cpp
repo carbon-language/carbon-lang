@@ -441,7 +441,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
   // X + 0 --> X
-  if (RHS == Constant::getNullValue(I.getType()))
+  if (!I.getType()->isFloatingPoint() &&    // -0 + +0 = +0, so it's not a noop
+      RHS == Constant::getNullValue(I.getType()))
     return ReplaceInstUsesWith(I, LHS);
 
   // X + X --> X << 1
