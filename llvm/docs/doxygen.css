@@ -77,8 +77,9 @@ span.charliteral   { color: #008080 }
         vertical-align: middle;
 }
 .title {
-  color: black; background: url("img/lines.gif");
-  font-family: "Georgia,Palatino,Times,Roman"; font-weight: bold;
+  font-size: 25pt; 
+  color: black; background: url("../img/lines.gif");
+  font-weight: bold;
   border-width: 1px;
   border-style: solid none solid none;
   text-align: center;
@@ -86,10 +87,4 @@ span.charliteral   { color: #008080 }
   padding-left: 8pt;
   padding-top: 1px;
   padding-bottom: 2px
-/*
-  font-size: 105%
-  font-weight: bold;
-  text-decoration: underline;
-  text-align: center;
-*/
 }
