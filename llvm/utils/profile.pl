@@ -23,7 +23,16 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   last if /^--$/;  # Stop processing arguments on --
 
   # List command line options here...
-  if (/^-block$/) { $ProfilePass = "-insert-block-profiling"; next; }
+  if (/^-?-block$/) { $ProfilePass = "-insert-block-profiling"; next; }
+  if (/^-?-help$/) {
+    print "OVERVIEW: profile.pl - Instrumentation and profile printer.\n\n";
+    print "USAGE: profile.pl [options] program.bc <program args>\n\n";
+    print "OPTIONS:\n";
+    print "  -block - Enable basic block level profiling\n";
+    print "  -help  - Print this usage information\n";
+    print "\nAll other options are passed into llvm-prof.\n";
+    exit 1;
+  }
 
   # Otherwise, pass the option on to llvm-prof
   $LLVMProfOpts .= " " . $_;
@@ -41,7 +50,7 @@ chomp $LLIPath;
 
 my $LibProfPath = $LLIPath . "/../../lib/Debug/libprofile_rt.so";
 
-system "opt $ProfilePass < $BytecodeFile | lli -fake-argv0 '$BytecodeFile'" .
+system "opt -q $ProfilePass < $BytecodeFile | lli -fake-argv0 '$BytecodeFile'" .
        " -load $LibProfPath - " . (join ' ', @ARGV);
 
 system "llvm-prof $LLVMProfOpts $BytecodeFile";
