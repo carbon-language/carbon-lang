@@ -99,7 +99,7 @@ void SparcV8RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Get the number of bytes to allocate from the FrameInfo
-  int NumBytes = (int) MFI->getStackSize() + 4;
+  int NumBytes = (int) MFI->getStackSize();
 
   // Emit the correct save instruction based on the number of bytes in the frame.
   // Minimum stack frame size according to V8 ABI is:
