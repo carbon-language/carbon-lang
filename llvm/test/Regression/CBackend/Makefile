@@ -10,9 +10,9 @@ include $(LEVEL)/test/Makefile.tests
 .PRECIOUS: Output/%.c
 
 TESTS := $(wildcard *.ll)
+FTESTS := $(wildcard *.llx)   # Freeform tests
 
-all:: $(addprefix Output/, $(TESTS:%.ll=%.to))
-
+all:: $(addprefix Output/, $(TESTS:%.ll=%.to)) $(addprefix Output/, $(FTESTS:%.llx=%.llx.out))
 
 Output/%.to: Output/%.c
 	$(CC) -c -Werror $< -o $@ || \
@@ -21,3 +21,7 @@ Output/%.to: Output/%.c
 Output/%.c: %.ll Output/.dir $(LAS) $(LDIS)
 	$(LAS) < $< | $(LDIS) -c > $@ || \
 		(rm -f $@; $(FAILURE) $@ )
+
+Output/%.llx.out: %.llx Output/.dir $(LAS) $(LDIS)
+	-$(TESTRUNR) $<
+
