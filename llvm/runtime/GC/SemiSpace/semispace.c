@@ -86,7 +86,7 @@ static void* llvm_gc_alloc_slow(unsigned Size) {
 
 
 static void process_root(void **Root, void *Meta) {
-  printf("process_root[0x%X] = 0x%X\n", Root, *Root);
+  printf("process_root[0x%X] = 0x%X\n", (unsigned) Root, (unsigned) *Root);
 }
 
 void llvm_gc_collect() {
