@@ -3,7 +3,7 @@
 
 implementation
 
-int "test function"(int %i0, int %j0)
+int %testfunction(int %i0, int %j0)
 begin
     alloca ubyte, uint 5
     %ptr = alloca int                       ; yields {int*}:ptr

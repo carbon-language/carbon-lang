@@ -4,18 +4,18 @@
 
 implementation
  
-[2 x int]* "test function"(int %i0, int %j0)
+[2 x int]* %testfunction(int %i0, int %j0)
 begin
 	ret [2x int]* %array
 end
 
-sbyte* "other func"(int, double)
+sbyte* %otherfunc(int, double)
 begin
 	%somestr = getelementptr [11x sbyte]* %somestr, uint 0, uint 0
 	ret sbyte* %somestr
 end
 
-sbyte* "yet another func"(int, double)
+sbyte* %yetanotherfunc(int, double)
 begin
 	ret sbyte* null            ; Test null
 end
