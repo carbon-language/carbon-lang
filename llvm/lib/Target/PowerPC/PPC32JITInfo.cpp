@@ -61,7 +61,7 @@ static void CompilationCallback() {
   "stfd f4, 24(%1)\n" "stfd f5, 32(%1)\n" "stfd f6, 40(%1)\n" 
   "stfd f7, 48(%1)\n" "stfd f8, 56(%1)\n" "stfd f9, 64(%1)\n" 
   "stfd f10, 72(%1)\n" "stfd f11, 80(%1)\n" "stfd f12, 88(%1)\n"
-  "stfd f13, 96(%1)\n" :: "r" (IntRegs), "r" (FPRegs) );
+  "stfd f13, 96(%1)\n" :: "b" (IntRegs), "b" (FPRegs) );
 #endif
 
   unsigned *CameFromStub = (unsigned*)__builtin_return_address(0);
@@ -121,7 +121,7 @@ static void CompilationCallback() {
   "mtctr r0\n"       // Put it into the CTR register
   "lwz r1,0(r1)\n"   // Pop two frames off
   "bctr\n" ::        // Return to stub!
-  "r" (FPRegs), "r" (IntRegs)); 
+  "b" (FPRegs), "b" (IntRegs)); 
 #endif
 }
 
