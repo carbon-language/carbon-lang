@@ -308,7 +308,7 @@ static bool DoDCEPass(Method *M) {
 	// You ARE the weakest link... goodbye
 	delete BB;
 
-	WriteToVCG(M, "MergedInto");
+	//WriteToVCG(M, "MergedInto");
       }
     }
   }
