@@ -18,7 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/iOther.h"
 #include "llvm/Constants.h"
-#include "llvm/Assembly/Writer.h"  // FIXME: remove when varargs implemented
+#include "llvm/Assembly/Writer.h"
 #include "Support/Statistic.h"
 #include <algorithm>
 
