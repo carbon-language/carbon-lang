@@ -17,6 +17,7 @@
 
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/InstrSelection.h"
 
 AnnotationID MCFI_AID(
@@ -55,4 +56,8 @@ MachineCodeForInstruction::~MachineCodeForInstruction()
   // Free the MachineInstr objects allocated, if any.
   for (unsigned i=0, N = size(); i < N; i++)
     delete (*this)[i];
+
+  // Free the CallArgsDescriptor if it exists.
+  if (callArgsDesc)
+    delete callArgsDesc;
 }

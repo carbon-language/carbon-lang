@@ -23,12 +23,14 @@
 class MachineInstr;
 class Instruction;
 class Value;
+class CallArgsDescriptor;
 
 extern AnnotationID MCFI_AID;
 
 class MachineCodeForInstruction : public Annotation {
-  std::vector<Value*> tempVec;         // used by m/c instr but not VM instr
-  std::vector<MachineInstr*> Contents;
+  std::vector<Value*> tempVec;          // used by m/c instr but not VM instr
+  std::vector<MachineInstr*> Contents;  // the machine instr for this VM instr
+  CallArgsDescriptor* callArgsDesc;     // only used for CALL instructions
 public:
   MachineCodeForInstruction() : Annotation(MCFI_AID) {}
   ~MachineCodeForInstruction();
@@ -81,6 +83,9 @@ public:
     tempVec.push_back(tmp);
     return *this;
   }
+
+  void setCallArgsDescriptor(CallArgsDescriptor* desc) { callArgsDesc = desc; }
+  CallArgsDescriptor* getCallArgsDescriptor() const    { return callArgsDesc; }
 };
 
 #endif
