@@ -16,8 +16,11 @@ class InvokeInst;
 class CallSite {
   Instruction *I;
 public:
+  CallSite() : I(0) {}
   CallSite(CallInst *CI) : I((Instruction*)CI) {}
   CallSite(InvokeInst *II) : I((Instruction*)II) {}
+  CallSite(const CallSite &CS) : I(CS.I) {}
+  CallSite &operator=(const CallSite &CS) { I = CS.I; return *this; }
 
   /// getCalledValue - Return the pointer to function that is being called...
   ///
