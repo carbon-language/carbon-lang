@@ -69,14 +69,15 @@ void Emitter::finishFunction(MachineFunction &F) {
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
     unsigned Location = BBLocations[BBRefs[i].first];
     unsigned *Ref = BBRefs[i].second;
-    *Ref = Location-(unsigned)Ref-4;
+    *Ref = Location-(unsigned)(intptr_t)Ref-4;
   }
   BBRefs.clear();
   BBLocations.clear();
 
   NumBytes += CurByte-CurBlock;
 
-  DEBUG(std::cerr << "Finished CodeGen of [0x" << std::hex << (unsigned)CurBlock
+  DEBUG(std::cerr << "Finished CodeGen of [0x" << std::hex
+                  << (unsigned)(intptr_t)CurBlock
                   << std::dec << "] Function: " << F.getFunction()->getName()
                   << ": " << CurByte-CurBlock << " bytes of text\n");
 }
@@ -95,7 +96,7 @@ void Emitter::emitConstantPool(MachineConstantPool *MCP) {
 
 
 void Emitter::startBasicBlock(MachineBasicBlock &BB) {
-  BBLocations[BB.getBasicBlock()] = (unsigned)CurByte;
+  BBLocations[BB.getBasicBlock()] = (unsigned)(intptr_t)CurByte;
 }
 
 
@@ -121,7 +122,7 @@ void Emitter::emitPCRelativeDisp(Value *V) {
 //
 void Emitter::emitAddress(void *Addr, bool isPCRelative) {
   if (isPCRelative) {
-    *(unsigned*)CurByte = (unsigned)Addr - (unsigned)CurByte-4;
+    *(intptr_t*)CurByte = (intptr_t)Addr - (intptr_t)CurByte-4;
   } else {
     *(void**)CurByte = Addr;
   }
