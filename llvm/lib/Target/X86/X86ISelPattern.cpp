@@ -64,8 +64,9 @@ namespace {
 
     /// LowerCallTo - This hook lowers an abstract call to a function into an
     /// actual call.
-    virtual SDNode *LowerCallTo(const Type *RetTy, SDOperand Callee,
-                                ArgListTy &Args, SelectionDAG &DAG);
+    virtual std::pair<SDOperand, SDOperand>
+    LowerCallTo(SDOperand Chain, const Type *RetTy, SDOperand Callee,
+                ArgListTy &Args, SelectionDAG &DAG);
   };
 }
 
@@ -130,15 +131,17 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   return ArgValues;
 }
 
-SDNode *X86TargetLowering::LowerCallTo(const Type *RetTy, SDOperand Callee,
-                                       ArgListTy &Args, SelectionDAG &DAG) {
+std::pair<SDOperand, SDOperand>
+X86TargetLowering::LowerCallTo(SDOperand Chain,
+                               const Type *RetTy, SDOperand Callee,
+                               ArgListTy &Args, SelectionDAG &DAG) {
   // Count how many bytes are to be pushed on the stack.
   unsigned NumBytes = 0;
 
   if (Args.empty()) {
     // Save zero bytes.
-    DAG.setRoot(DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, DAG.getRoot(),
-                            DAG.getConstant(0, getPointerTy())));
+    Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
+                        DAG.getConstant(0, getPointerTy()));
   } else {
     for (unsigned i = 0, e = Args.size(); i != e; ++i)
       switch (getValueType(Args[i].second)) {
@@ -156,8 +159,8 @@ SDNode *X86TargetLowering::LowerCallTo(const Type *RetTy, SDOperand Callee,
         break;
       }
 
-    DAG.setRoot(DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, DAG.getRoot(), 
-                            DAG.getConstant(NumBytes, getPointerTy())));
+    Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
+                        DAG.getConstant(NumBytes, getPointerTy()));
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
     unsigned ArgOffset = 0;
@@ -183,15 +186,15 @@ SDNode *X86TargetLowering::LowerCallTo(const Type *RetTy, SDOperand Callee,
       case MVT::i32:
       case MVT::f32:
         // FIXME: Note that all of these stores are independent of each other.
-        DAG.setRoot(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(),
-                                Args[i].first, PtrOff));
+        Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                            Args[i].first, PtrOff);
         ArgOffset += 4;
         break;
       case MVT::i64:
       case MVT::f64:
         // FIXME: Note that all of these stores are independent of each other.
-        DAG.setRoot(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(),
-                                Args[i].first, PtrOff));
+        Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                            Args[i].first, PtrOff);
         ArgOffset += 8;
         break;
       }
@@ -204,11 +207,11 @@ SDNode *X86TargetLowering::LowerCallTo(const Type *RetTy, SDOperand Callee,
     RetVals.push_back(RetTyVT);
   RetVals.push_back(MVT::Other);
 
-  SDNode *TheCall = DAG.getCall(RetVals, DAG.getRoot(), Callee);
-  DAG.setRoot(SDOperand(TheCall, TheCall->getNumValues()-1));
-  DAG.setRoot(DAG.getNode(ISD::ADJCALLSTACKUP, MVT::Other, DAG.getRoot(),
-              DAG.getConstant(NumBytes, getPointerTy())));
-  return TheCall;
+  SDOperand TheCall = SDOperand(DAG.getCall(RetVals, Chain, Callee), 0);
+  Chain = TheCall.getValue(RetVals.size()-1);
+  Chain = DAG.getNode(ISD::ADJCALLSTACKUP, MVT::Other, Chain,
+                      DAG.getConstant(NumBytes, getPointerTy()));
+  return std::make_pair(TheCall, Chain);
 }
 
 
@@ -587,6 +590,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
   unsigned Tmp1, Tmp2, Tmp3;
   unsigned Opc = 0;
 
+  SDNode *Node = N.Val;
+
   if (N.getOpcode() == ISD::CopyFromReg)
     // Just use the specified register as our input.
     return dyn_cast<CopyRegSDNode>(N)->getReg();
@@ -595,7 +600,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   // register it is code generated in, instead of emitting it multiple
   // times.
   // FIXME: Disabled for our current selection model.
-  if (1 || !N.Val->hasOneUse()) {
+  if (1 || !Node->hasOneUse()) {
     unsigned &Reg = ExprMap[N];
     if (Reg) return Reg;
 
@@ -605,14 +610,14 @@ unsigned ISel::SelectExpr(SDOperand N) {
     else {
       // If this is a call instruction, make sure to prepare ALL of the result
       // values as well as the chain.
-      if (N.Val->getNumValues() == 1)
+      if (Node->getNumValues() == 1)
         Reg = Result = 1;  // Void call, just a chain.
       else {
-        Result = MakeReg(N.Val->getValueType(0));
-        ExprMap[SDOperand(N.Val,0)] = Result;
+        Result = MakeReg(Node->getValueType(0));
+        ExprMap[N.getValue(0)] = Result;
         for (unsigned i = 1, e = N.Val->getNumValues()-1; i != e; ++i)
-          ExprMap[SDOperand(N.Val, i)] = MakeReg(N.Val->getValueType(i));
-        ExprMap[SDOperand(N.Val, N.Val->getNumValues()-1)] = 1;
+          ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
+        ExprMap[SDOperand(Node, Node->getNumValues()-1)] = 1;
       }
     }
   } else {
@@ -621,7 +626,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   switch (N.getOpcode()) {
   default:
-    N.Val->dump();
+    Node->dump();
     assert(0 && "Node not handled!\n");
   case ISD::FrameIndex:
     Tmp1 = cast<FrameIndexSDNode>(N)->getIndex();
@@ -733,7 +738,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     addFrameReference(BuildMI(BB, X86::FLD32m, 5, Result), Tmp2);
     ContainsFPCode = true;
     return Result;
-
   case ISD::ADD:
     // See if we can codegen this as an LEA to fold operations together.
     if (N.getValueType() == MVT::i32) {
@@ -1162,6 +1166,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
               MVT::isFloatingPoint(N.getOperand(1).getValueType()));
     return Result;
   case ISD::LOAD: {
+    // The chain for this load is now lowered.
+    LoweredTokens.insert(SDOperand(Node, 1));
     Select(N.getOperand(0));
 
     // Make sure we generate both values.
@@ -1170,7 +1176,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     else
       Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
 
-    switch (N.Val->getValueType(0)) {
+    switch (Node->getValueType(0)) {
     default: assert(0 && "Cannot load this type!");
     case MVT::i1:
     case MVT::i8:  Opc = X86::MOV8rm; break;
@@ -1224,6 +1230,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::CALL:
+    // The chain for this call is now lowered.
+    LoweredTokens.insert(N.getValue(Node->getNumValues()-1));
+
     Select(N.getOperand(0));
     if (GlobalAddressSDNode *GASD =
                dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) {
@@ -1236,7 +1245,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       Tmp1 = SelectExpr(N.getOperand(1));
       BuildMI(BB, X86::CALL32r, 1).addReg(Tmp1);
     }
-    switch (N.Val->getValueType(0)) {
+    switch (Node->getValueType(0)) {
     default: assert(0 && "Unknown value type for call result!");
     case MVT::Other: return 1;
     case MVT::i1:
@@ -1248,7 +1257,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       break;
     case MVT::i32:
       BuildMI(BB, X86::MOV32rr, 1, Result).addReg(X86::EAX);
-      if (N.Val->getValueType(1) == MVT::i32)
+      if (Node->getValueType(1) == MVT::i32)
         BuildMI(BB, X86::MOV32rr, 1, Result+1).addReg(X86::EDX);
       break;
     case MVT::f32:
@@ -1299,11 +1308,11 @@ void ISel::Select(SDOperand N) {
     default:
       assert(0 && "Unknown return instruction!");
     case 3:
-      Tmp1 = SelectExpr(N.getOperand(1));
-      Tmp2 = SelectExpr(N.getOperand(2));
       assert(N.getOperand(1).getValueType() == MVT::i32 &&
 	     N.getOperand(2).getValueType() == MVT::i32 &&
 	     "Unknown two-register value!");
+      Tmp1 = SelectExpr(N.getOperand(1));
+      Tmp2 = SelectExpr(N.getOperand(2));
       BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Tmp1);
       BuildMI(BB, X86::MOV32rr, 1, X86::EDX).addReg(Tmp2);
       // Declare that EAX & EDX are live on exit.
