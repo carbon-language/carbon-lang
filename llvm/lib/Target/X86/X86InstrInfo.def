@@ -166,22 +166,24 @@ I(SBBrr32     , "sbb",  0x19, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::Arg32, N
 
 I(MULr8       , "mul",  0xF6,             0, X86II::MRMS4r | X86II::Void, O_AL, O_AX)       // AX   = AL*R8
 I(MULr16      , "mul",  0xF7,             0, X86II::MRMS4r | X86II::Void |                  // DX:AX= AX*R16
-                                              X86II::OpSize, O_AX, T_AXDX)
+                                             X86II::OpSize, O_AX, T_AXDX)
 I(MULr32      , "mul",  0xF7,             0, X86II::MRMS4r | X86II::Void, O_EAX, T_EAXEDX)  // ED:EA= EA*R32
+
+I(IMULr16     , "imul", 0xAF, M_2_ADDR_FLAG, X86II::MRMSrcReg | X86II::TB |                 // R16 *= R16
+                                             X86II::OpSize, NoIR, NoIR)
+I(IMULr32     , "imul", 0xAF, M_2_ADDR_FLAG, X86II::MRMSrcReg | X86II::TB, NoIR, NoIR)      // R32 *= R32
 
 // unsigned division/remainder
 I(DIVr8       , "div",  0xF6,             0, X86II::MRMS6r | X86II::Void, O_AX, O_AX)       // AX/r8= AL&AH
 I(DIVr16      , "div",  0xF7,             0, X86II::MRMS6r | X86II::Void |                  // ED:EA/r16=AX&DX
-                                              X86II::OpSize, T_AXDX, T_AXDX)
-I(DIVr32      , "div",  0xF7,             0, X86II::MRMS6r | X86II::Void, T_EAXEDX,
-                                                                           T_EAXEDX)         // ED:EA/r32=EA&ED
+                                             X86II::OpSize, T_AXDX, T_AXDX)
+I(DIVr32      , "div",  0xF7,             0, X86II::MRMS6r | X86II::Void, T_EAXEDX,T_EAXEDX)// ED:EA/r32=EA&ED
 
 // signed division/remainder
 I(IDIVr8      , "idiv", 0xF6,             0, X86II::MRMS7r | X86II::Void, O_AX, O_AX)       // AX/r8= AL&AH
 I(IDIVr16     , "idiv", 0xF7,             0, X86II::MRMS7r | X86II::Void |                  // DA/r16=AX&DX
-                                              X86II::OpSize, T_AXDX, T_AXDX)
-I(IDIVr32     , "idiv", 0xF7,             0, X86II::MRMS7r | X86II::Void, T_EAXEDX,
-                                                                           T_EAXEDX)         // DA/r32=EAX&DX
+                                             X86II::OpSize, T_AXDX, T_AXDX)
+I(IDIVr32     , "idiv", 0xF7,             0, X86II::MRMS7r | X86II::Void, T_EAXEDX,T_EAXEDX)// DA/r32=EAX&DX
 
 // Logical operators
 I(ANDrr8      , "and",   0x20, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  &= R8
