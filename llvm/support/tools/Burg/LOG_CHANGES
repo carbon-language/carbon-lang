@@ -1,0 +1,2 @@
+8/20/02 -- Vikram Adve
+	be.c: Replaced "char*" with "const char*" to avoid compiler warnings.
