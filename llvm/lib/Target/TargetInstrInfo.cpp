@@ -7,6 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
+// This file implements the TargetInstrInfo class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,14 +15,15 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
+using namespace llvm;
 
 namespace llvm {
-
-// External object describing the machine instructions
-// Initialized only when the TargetMachine class is created
-// and reset when that class is destroyed.
-// 
-const TargetInstrDescriptor* TargetInstrDescriptors = 0;
+  // External object describing the machine instructions Initialized only when
+  // the TargetMachine class is created and reset when that class is destroyed.
+  // 
+  // FIXME: UGLY SPARCV9 HACK!
+  const TargetInstrDescriptor* TargetInstrDescriptors = 0;
+}
 
 TargetInstrInfo::TargetInstrInfo(const TargetInstrDescriptor* Desc,
 				 unsigned numOpcodes)
@@ -36,6 +38,7 @@ TargetInstrInfo::~TargetInstrInfo() {
   TargetInstrDescriptors = NULL;	// reset global variable
 }
 
+// FIXME: SPARCV9 SPECIFIC!
 bool TargetInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
 					       int64_t intValue) const {
   // First, check if opCode has an immed field.
@@ -56,4 +59,14 @@ bool TargetInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
   return false;
 }
 
-} // End llvm namespace
+// commuteInstruction - The default implementation of this method just exchanges
+// operand 1 and 2.
+MachineInstr *TargetInstrInfo::commuteInstruction(MachineInstr *MI) const {
+  assert(MI->getOperand(1).isRegister() && MI->getOperand(2).isRegister() &&
+         "This only knows how to commute register operands so far");
+  unsigned Reg1 = MI->getOperand(1).getReg();
+  unsigned Reg2 = MI->getOperand(1).getReg();
+  MI->SetMachineOperandReg(2, Reg1);
+  MI->SetMachineOperandReg(1, Reg2);
+  return MI;
+}
