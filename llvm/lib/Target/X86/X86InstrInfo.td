@@ -495,6 +495,7 @@ def SETGr    : X86Inst<"setg" , 0x9F, MRMS0r, Arg8>, TB;            // R8 = <  s
 // register allocated to cmovXX XY, Z
 def CMOVErr16 : I2A16<"cmove", 0x44, MRMSrcReg>, TB, OpSize;        // if ==, R16 = R16
 def CMOVNErr32: I2A32<"cmovne",0x45, MRMSrcReg>, TB;                // if !=, R32 = R32
+def CMOVSrr32 : I2A32<"cmovs", 0x48, MRMSrcReg>, TB;                // if signed, R32 = R32
 
 // Integer comparisons
 def CMPrr8  : X86Inst<"cmp", 0x38, MRMDestReg, Arg8 >;              // compare R8, R8
