@@ -1939,17 +1939,16 @@ bool InstCombiner::runOnFunction(Function &F) {
     // Check to see if we can DIE the instruction...
     if (isInstructionTriviallyDead(I)) {
       // Add operands to the worklist...
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (Instruction *Op = dyn_cast<Instruction>(I->getOperand(i)))
-          WorkList.push_back(Op);
-
+      if (I->getNumOperands() < 4)
+        for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+          if (Instruction *Op = dyn_cast<Instruction>(I->getOperand(i)))
+            WorkList.push_back(Op);
       ++NumDeadInst;
-      BasicBlock::iterator BBI = I;
-      if (dceInstruction(BBI)) {
-        removeFromWorkList(I);
-        continue;
-      }
-    } 
+
+      I->getParent()->getInstList().erase(I);
+      removeFromWorkList(I);
+      continue;
+    }
 
     // Instruction isn't dead, see if we can constant propagate it...
     if (Constant *C = ConstantFoldInstruction(I)) {
@@ -1960,13 +1959,10 @@ bool InstCombiner::runOnFunction(Function &F) {
       ReplaceInstUsesWith(*I, C);
 
       ++NumConstProp;
-      BasicBlock::iterator BBI = I;
-      if (dceInstruction(BBI)) {
-        removeFromWorkList(I);
-        continue;
-      }
+      I->getParent()->getInstList().erase(I);
+      continue;
     }
-    
+
     // Now that we have an instruction, try combining it to simplify it...
     if (Instruction *Result = visit(*I)) {
       ++NumCombined;
@@ -1975,7 +1971,20 @@ bool InstCombiner::runOnFunction(Function &F) {
         // Instructions can end up on the worklist more than once.  Make sure
         // we do not process an instruction that has been deleted.
         removeFromWorkList(I);
-        ReplaceInstWithInst(I, Result);
+
+        // Move the name to the new instruction first...
+        std::string OldName = I->getName(); I->setName("");
+        Result->setName(I->getName());
+
+        // Insert the new instruction into the basic block...
+        BasicBlock *InstParent = I->getParent();
+        InstParent->getInstList().insert(I, Result);
+
+        // Everything uses the new instruction now...
+        I->replaceAllUsesWith(Result);
+
+        // Erase the old instruction.
+        InstParent->getInstList().erase(I);
       } else {
         BasicBlock::iterator II = I;
 
