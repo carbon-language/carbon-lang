@@ -261,7 +261,7 @@ const std::string &Type::getDescription() const {
 bool StructType::indexValid(const Value *V) const {
   // Structure indexes require unsigned integer constants.
   if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(V))
-    return CU->getValue() < ETypes.size();
+    return CU->getValue() < ContainedTys.size();
   return false;
 }
 
@@ -271,9 +271,9 @@ bool StructType::indexValid(const Value *V) const {
 const Type *StructType::getTypeAtIndex(const Value *V) const {
   assert(isa<Constant>(V) && "Structure index must be a constant!!");
   unsigned Idx = cast<ConstantUInt>(V)->getValue();
-  assert(Idx < ETypes.size() && "Structure index out of range!");
+  assert(Idx < ContainedTys.size() && "Structure index out of range!");
   assert(indexValid(V) && "Invalid structure index!"); // Duplicate check
-  return ETypes[Idx];
+  return ContainedTys[Idx];
 }
 
 
@@ -358,12 +358,13 @@ Type *Type::LabelTy  = &TheLabelTy;
 FunctionType::FunctionType(const Type *Result,
                            const std::vector<const Type*> &Params, 
                            bool IsVarArgs) : DerivedType(FunctionTyID), 
-    ResultType(PATypeHandle(Result, this)),
-    isVarArgs(IsVarArgs) {
+                                             isVarArgs(IsVarArgs) {
   bool isAbstract = Result->isAbstract();
-  ParamTys.reserve(Params.size());
-  for (unsigned i = 0; i < Params.size(); ++i) {
-    ParamTys.push_back(PATypeHandle(Params[i], this));
+  ContainedTys.reserve(Params.size()+1);
+  ContainedTys.push_back(PATypeHandle(Result, this));
+
+  for (unsigned i = 0; i != Params.size(); ++i) {
+    ContainedTys.push_back(PATypeHandle(Params[i], this));
     isAbstract |= Params[i]->isAbstract();
   }
 
@@ -373,11 +374,11 @@ FunctionType::FunctionType(const Type *Result,
 
 StructType::StructType(const std::vector<const Type*> &Types)
   : CompositeType(StructTyID) {
-  ETypes.reserve(Types.size());
+  ContainedTys.reserve(Types.size());
   bool isAbstract = false;
   for (unsigned i = 0; i < Types.size(); ++i) {
     assert(Types[i] != Type::VoidTy && "Void type in method prototype!!");
-    ETypes.push_back(PATypeHandle(Types[i], this));
+    ContainedTys.push_back(PATypeHandle(Types[i], this));
     isAbstract |= Types[i]->isAbstract();
   }
 
@@ -405,43 +406,21 @@ OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
 #endif
 }
 
-
-// getAlwaysOpaqueTy - This function returns an opaque type.  It doesn't matter
-// _which_ opaque type it is, but the opaque type must never get resolved.
-//
-static Type *getAlwaysOpaqueTy() {
-  static Type *AlwaysOpaqueTy = OpaqueType::get();
-  static PATypeHolder Holder(AlwaysOpaqueTy);
-  return AlwaysOpaqueTy;
+// dropAllTypeUses - When this (abstract) type is resolved to be equal to
+// another (more concrete) type, we must eliminate all references to other
+// types, to avoid some circular reference problems.
+void DerivedType::dropAllTypeUses() {
+  if (!ContainedTys.empty()) {
+    while (ContainedTys.size() > 1)
+      ContainedTys.pop_back();
+    
+    // The type must stay abstract.  To do this, we insert a pointer to a type
+    // that will never get resolved, thus will always be abstract.
+    static Type *AlwaysOpaqueTy = OpaqueType::get();
+    static PATypeHolder Holder(AlwaysOpaqueTy);
+    ContainedTys[0] = AlwaysOpaqueTy;
+  }
 }
-
-
-//===----------------------------------------------------------------------===//
-// dropAllTypeUses methods - These methods eliminate any possibly recursive type
-// references from a derived type.  The type must remain abstract, so we make
-// sure to use an always opaque type as an argument.
-//
-
-void FunctionType::dropAllTypeUses() {
-  ResultType = getAlwaysOpaqueTy();
-  ParamTys.clear();
-}
-
-void ArrayType::dropAllTypeUses() {
-  ElementType = getAlwaysOpaqueTy();
-}
-
-void StructType::dropAllTypeUses() {
-  ETypes.clear();
-  ETypes.push_back(PATypeHandle(getAlwaysOpaqueTy(), this));
-}
-
-void PointerType::dropAllTypeUses() {
-  ElementType = getAlwaysOpaqueTy();
-}
-
-
-
 
 // isTypeAbstract - This is a recursive function that walks a type hierarchy
 // calculating whether or not a type is abstract.  Worst case it will have to do
@@ -465,7 +444,7 @@ bool Type::isTypeAbstract() {
   // one!
   for (Type::subtype_iterator I = subtype_begin(), E = subtype_end();
        I != E; ++I)
-    if (const_cast<Type*>(*I)->isTypeAbstract()) {
+    if (const_cast<Type*>(I->get())->isTypeAbstract()) {
       setAbstract(true);        // Restore the abstract bit.
       return true;              // This type is abstract if subtype is abstract!
     }
@@ -601,8 +580,8 @@ public:
       for (Type::subtype_iterator I = Ty->subtype_begin(),
              E = Ty->subtype_end(); I != E; ++I) {
         for (df_ext_iterator<const Type *, std::set<const Type*> > 
-               DFI = df_ext_begin(*I, VisitedTypes),
-               E = df_ext_end(*I, VisitedTypes); DFI != E; ++DFI)
+               DFI = df_ext_begin(I->get(), VisitedTypes),
+               E = df_ext_end(I->get(), VisitedTypes); DFI != E; ++DFI)
           if (*DFI == Ty) {
             HasTypeCycle = true;
             goto FoundCycle;
@@ -1051,14 +1030,10 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
     FunctionTypes.getEntryForType(this);
 
   // Find the type element we are refining...
-  if (ResultType == OldType) {
-    ResultType.removeUserFromConcrete();
-    ResultType = NewType;
-  }
-  for (unsigned i = 0, e = ParamTys.size(); i != e; ++i)
-    if (ParamTys[i] == OldType) {
-      ParamTys[i].removeUserFromConcrete();
-      ParamTys[i] = NewType;
+  for (unsigned i = 0, e = ContainedTys.size(); i != e; ++i)
+    if (ContainedTys[i] == OldType) {
+      ContainedTys[i].removeUserFromConcrete();
+      ContainedTys[i] = NewType;
     }
 
   FunctionTypes.finishRefinement(TMI);
@@ -1088,8 +1063,8 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
     ArrayTypes.getEntryForType(this);
 
   assert(getElementType() == OldType);
-  ElementType.removeUserFromConcrete();
-  ElementType = NewType;
+  ContainedTys[0].removeUserFromConcrete();
+  ContainedTys[0] = NewType;
 
   ArrayTypes.finishRefinement(TMI);
 }
@@ -1117,12 +1092,12 @@ void StructType::refineAbstractType(const DerivedType *OldType,
   TypeMap<StructValType, StructType>::iterator TMI =
     StructTypes.getEntryForType(this);
 
-  for (int i = ETypes.size()-1; i >= 0; --i)
-    if (ETypes[i] == OldType) {
-      ETypes[i].removeUserFromConcrete();
+  for (int i = ContainedTys.size()-1; i >= 0; --i)
+    if (ContainedTys[i] == OldType) {
+      ContainedTys[i].removeUserFromConcrete();
 
       // Update old type to new type in the array...
-      ETypes[i] = NewType;
+      ContainedTys[i] = NewType;
     }
 
   StructTypes.finishRefinement(TMI);
@@ -1150,9 +1125,9 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
   TypeMap<PointerValType, PointerType>::iterator TMI =
     PointerTypes.getEntryForType(this);
 
-  assert(ElementType == OldType);
-  ElementType.removeUserFromConcrete();
-  ElementType = NewType;
+  assert(ContainedTys[0] == OldType);
+  ContainedTys[0].removeUserFromConcrete();
+  ContainedTys[0] = NewType;
 
   PointerTypes.finishRefinement(TMI);
 }

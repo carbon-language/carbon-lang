@@ -36,6 +36,7 @@
 #include "llvm/Value.h"
 #include "Support/GraphTraits.h"
 #include "Support/iterator"
+#include <vector>
 
 namespace llvm {
 
@@ -105,6 +106,15 @@ protected:
   /// abstract types.  When types are refined to other types, this field is set
   /// to the more refined type.  Only abstract types can be forwarded.
   mutable const Type *ForwardType;
+
+  /// ContainedTys - The list of types contained by this one.  For example, this
+  /// includes the arguments of a function type, the elements of the structure,
+  /// the pointee of a pointer, etc.  Note that keeping this vector in the Type
+  /// class wastes some space for types that do not contain anything (such as
+  /// primitive types).  However, keeping it here allows the subtype_* members
+  /// to be implemented MUCH more efficiently, and dynamically very few types do
+  /// not contain any elements (most are derived).
+  std::vector<PATypeHandle> ContainedTys;
 
 public:
   virtual void print(std::ostream &O) const;
@@ -204,22 +214,22 @@ public:
   //===--------------------------------------------------------------------===//
   // Type Iteration support
   //
-  class TypeIterator;
-  typedef TypeIterator subtype_iterator;
-  inline subtype_iterator subtype_begin() const;   // DEFINED BELOW
-  inline subtype_iterator subtype_end() const;     // DEFINED BELOW
+  typedef std::vector<PATypeHandle>::const_iterator subtype_iterator;
+  subtype_iterator subtype_begin() const { return ContainedTys.begin(); }
+  subtype_iterator subtype_end() const { return ContainedTys.end(); }
 
   /// getContainedType - This method is used to implement the type iterator
   /// (defined a the end of the file).  For derived types, this returns the
   /// types 'contained' in the derived type.
   ///
-  virtual const Type *getContainedType(unsigned i) const {
-    assert(0 && "No contained types!");
-    return 0;
+  const Type *getContainedType(unsigned i) const {
+    assert(i < ContainedTys.size() && "Index out of range!");
+    return ContainedTys[i];
   }
 
-  /// getNumContainedTypes - Return the number of types in the derived type
-  virtual unsigned getNumContainedTypes() const { return 0; }
+  /// getNumContainedTypes - Return the number of types in the derived type.
+  ///
+  unsigned getNumContainedTypes() const { return ContainedTys.size(); }
 
   //===--------------------------------------------------------------------===//
   // Static members exported by the Type class itself.  Useful for getting
@@ -249,49 +259,7 @@ public:
   }
 
 #include "llvm/Type.def"
-
-private:
-  class TypeIterator : public bidirectional_iterator<const Type, ptrdiff_t> {
-    const Type * const Ty;
-    unsigned Idx;
-
-    typedef TypeIterator _Self;
-  public:
-    TypeIterator(const Type *ty, unsigned idx) : Ty(ty), Idx(idx) {}
-    ~TypeIterator() {}
-
-    const _Self &operator=(const _Self &RHS) {
-      assert(Ty == RHS.Ty && "Cannot assign from different types!");
-      Idx = RHS.Idx;
-      return *this;
-    }
-    
-    bool operator==(const _Self& x) const { return Idx == x.Idx; }
-    bool operator!=(const _Self& x) const { return !operator==(x); }
-    
-    pointer operator*() const { return Ty->getContainedType(Idx); }
-    pointer operator->() const { return operator*(); }
-    
-    _Self& operator++() { ++Idx; return *this; } // Preincrement
-    _Self operator++(int) { // Postincrement
-      _Self tmp = *this; ++*this; return tmp; 
-    }
-    
-    _Self& operator--() { --Idx; return *this; }  // Predecrement
-    _Self operator--(int) { // Postdecrement
-      _Self tmp = *this; --*this; return tmp;
-    }
-  };
 };
-
-inline Type::TypeIterator Type::subtype_begin() const {
-  return TypeIterator(this, 0);
-}
-
-inline Type::TypeIterator Type::subtype_end() const {
-  return TypeIterator(this, getNumContainedTypes());
-}
-
 
 // Provide specializations of GraphTraits to be able to treat a type as a 
 // graph of sub types...

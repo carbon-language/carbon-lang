@@ -19,7 +19,6 @@
 #define LLVM_DERIVED_TYPES_H
 
 #include "llvm/Type.h"
-#include <vector>
 
 namespace llvm {
 
@@ -57,7 +56,7 @@ protected:
   // dropAllTypeUses - When this (abstract) type is resolved to be equal to
   // another (more concrete) type, we must eliminate all references to other
   // types, to avoid some circular reference problems.
-  virtual void dropAllTypeUses() = 0;
+  void dropAllTypeUses();
   
 public:
 
@@ -122,8 +121,6 @@ public:
 
 class FunctionType : public DerivedType {
   friend class TypeMap<FunctionValType, FunctionType>;
-  PATypeHandle ResultType;
-  std::vector<PATypeHandle> ParamTys;
   bool isVarArgs;
 
   FunctionType(const FunctionType &);                   // Do not implement
@@ -137,11 +134,6 @@ protected:
   FunctionType(const Type *Result, const std::vector<const Type*> &Params, 
                bool IsVarArgs);
 
-  // dropAllTypeUses - When this (abstract) type is resolved to be equal to
-  // another (more concrete) type, we must eliminate all references to other
-  // types, to avoid some circular reference problems.
-  virtual void dropAllTypeUses();
-
 public:
   /// FunctionType::get - This static method is the primary way of constructing
   /// a FunctionType
@@ -150,25 +142,19 @@ public:
                            bool isVarArg);
 
   inline bool isVarArg() const { return isVarArgs; }
-  inline const Type *getReturnType() const { return ResultType; }
+  inline const Type *getReturnType() const { return ContainedTys[0]; }
 
   typedef std::vector<PATypeHandle>::const_iterator param_iterator;
-  param_iterator param_begin() const { return ParamTys.begin(); }
-  param_iterator param_end() const { return ParamTys.end(); }
+  param_iterator param_begin() const { return ContainedTys.begin()+1; }
+  param_iterator param_end() const { return ContainedTys.end(); }
 
   // Parameter type accessors...
-  const Type *getParamType(unsigned i) const { return ParamTys[i]; }
+  const Type *getParamType(unsigned i) const { return ContainedTys[i+1]; }
 
   // getNumParams - Return the number of fixed parameters this function type
   // requires.  This does not consider varargs.
   //
-  unsigned getNumParams() const { return ParamTys.size(); }
-
-
-  virtual const Type *getContainedType(unsigned i) const {
-    return i == 0 ? ResultType.get() : ParamTys[i-1].get();
-  }
-  virtual unsigned getNumContainedTypes() const { return ParamTys.size()+1; }
+  unsigned getNumParams() const { return ContainedTys.size()-1; }
 
   // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
@@ -213,8 +199,6 @@ public:
 
 class StructType : public CompositeType {
   friend class TypeMap<StructValType, StructType>;
-  std::vector<PATypeHandle> ETypes;                 // Element types of struct
-
   StructType(const StructType &);                   // Do not implement
   const StructType &operator=(const StructType &);  // Do not implement
 
@@ -226,11 +210,6 @@ protected:
   // Private ctor - Only can be created by a static member...
   StructType(const std::vector<const Type*> &Types);
 
-  // dropAllTypeUses - When this (abstract) type is resolved to be equal to
-  // another (more concrete) type, we must eliminate all references to other
-  // types, to avoid some circular reference problems.
-  virtual void dropAllTypeUses();
-  
 public:
   /// StructType::get - This static method is the primary way to create a
   /// StructType.
@@ -238,20 +217,15 @@ public:
 
   // Iterator access to the elements
   typedef std::vector<PATypeHandle>::const_iterator element_iterator;
-  element_iterator element_begin() const { return ETypes.begin(); }
-  element_iterator element_end() const { return ETypes.end(); }
+  element_iterator element_begin() const { return ContainedTys.begin(); }
+  element_iterator element_end() const { return ContainedTys.end(); }
 
   // Random access to the elements
-  unsigned getNumElements() const { return ETypes.size(); }
+  unsigned getNumElements() const { return ContainedTys.size(); }
   const Type *getElementType(unsigned N) const {
-    assert(N < ETypes.size() && "Element number out of range!");
-    return ETypes[N];
+    assert(N < ContainedTys.size() && "Element number out of range!");
+    return ContainedTys[N];
   }
-
-  virtual const Type *getContainedType(unsigned i) const { 
-    return ETypes[i].get();
-  }
-  virtual unsigned getNumContainedTypes() const { return ETypes.size(); }
 
   // getTypeAtIndex - Given an index value into the type, return the type of the
   // element.  For a structure type, this must be a constant value...
@@ -284,25 +258,19 @@ class SequentialType : public CompositeType {
   SequentialType(const SequentialType &);                  // Do not implement!
   const SequentialType &operator=(const SequentialType &); // Do not implement!
 protected:
-  PATypeHandle ElementType;
-
-  SequentialType(PrimitiveID TID, const Type *ElType)
-    : CompositeType(TID), ElementType(PATypeHandle(ElType, this)) {
+  SequentialType(PrimitiveID TID, const Type *ElType) : CompositeType(TID) {
+    ContainedTys.reserve(1);
+    ContainedTys.push_back(PATypeHandle(ElType, this));
   }
 
 public:
-  inline const Type *getElementType() const { return ElementType; }
-
-  virtual const Type *getContainedType(unsigned i) const { 
-    return ElementType.get();
-  }
-  virtual unsigned getNumContainedTypes() const { return 1; }
+  inline const Type *getElementType() const { return ContainedTys[0]; }
 
   // getTypeAtIndex - Given an index value into the type, return the type of the
   // element.  For sequential types, there is only one subtype...
   //
   virtual const Type *getTypeAtIndex(const Value *V) const {
-    return ElementType.get();
+    return ContainedTys[0];
   }
   virtual bool indexValid(const Value *V) const {
     return V->getType()->isInteger();
@@ -333,11 +301,6 @@ protected:
 
   // Private ctor - Only can be created by a static member...
   ArrayType(const Type *ElType, unsigned NumEl);
-
-  // dropAllTypeUses - When this (abstract) type is resolved to be equal to
-  // another (more concrete) type, we must eliminate all references to other
-  // types, to avoid some circular reference problems.
-  virtual void dropAllTypeUses();
 
 public:
   /// ArrayType::get - This static method is the primary way to construct an
@@ -374,10 +337,6 @@ protected:
   // Private ctor - Only can be created by a static member...
   PointerType(const Type *ElType);
 
-  // dropAllTypeUses - When this (abstract) type is resolved to be equal to
-  // another (more concrete) type, we must eliminate all references to other
-  // types, to avoid some circular reference problems.
-  virtual void dropAllTypeUses();
 public:
   /// PointerType::get - This is the only way to construct a new pointer type.
   static PointerType *get(const Type *ElementType);
@@ -407,13 +366,6 @@ protected:
 
   // Private ctor - Only can be created by a static member...
   OpaqueType();
-
-  // dropAllTypeUses - When this (abstract) type is resolved to be equal to
-  // another (more concrete) type, we must eliminate all references to other
-  // types, to avoid some circular reference problems.
-  virtual void dropAllTypeUses() {
-    // FIXME: THIS IS NOT AN ABSTRACT TYPE USER!
-  }  // No type uses
 
 public:
   // OpaqueType::get - Static factory method for the OpaqueType class...
