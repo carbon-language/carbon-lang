@@ -15,12 +15,12 @@
 #ifndef CONSTANTHANDLING_H
 #define CONSTANTHANDLING_H
 
-#include "llvm/Constants.h"
-#include "llvm/Type.h"
+#include <vector>
 
 namespace llvm {
-
-class PointerType;
+  class Constant;
+  class Type;
+  class PointerType;
 
 struct ConstRules {
   ConstRules() {}
@@ -37,44 +37,24 @@ struct ConstRules {
   virtual Constant *shl(const Constant *V1, const Constant *V2) const = 0;
   virtual Constant *shr(const Constant *V1, const Constant *V2) const = 0;
 
-  virtual ConstantBool *lessthan(const Constant *V1, 
-                                 const Constant *V2) const = 0;
-  virtual ConstantBool *equalto(const Constant *V1, 
-                                const Constant *V2) const = 0;
+  virtual Constant *lessthan(const Constant *V1, const Constant *V2) const = 0;
+                             
+  virtual Constant *equalto(const Constant *V1, const Constant *V2) const = 0;
 
   // Casting operators.  ick
-  virtual ConstantBool *castToBool  (const Constant *V) const = 0;
-  virtual ConstantSInt *castToSByte (const Constant *V) const = 0;
-  virtual ConstantUInt *castToUByte (const Constant *V) const = 0;
-  virtual ConstantSInt *castToShort (const Constant *V) const = 0;
-  virtual ConstantUInt *castToUShort(const Constant *V) const = 0;
-  virtual ConstantSInt *castToInt   (const Constant *V) const = 0;
-  virtual ConstantUInt *castToUInt  (const Constant *V) const = 0;
-  virtual ConstantSInt *castToLong  (const Constant *V) const = 0;
-  virtual ConstantUInt *castToULong (const Constant *V) const = 0;
-  virtual ConstantFP   *castToFloat (const Constant *V) const = 0;
-  virtual ConstantFP   *castToDouble(const Constant *V) const = 0;
-  virtual Constant     *castToPointer(const Constant *V,
-                                      const PointerType *Ty) const = 0;
-
-  inline Constant *castTo(const Constant *V, const Type *Ty) const {
-    switch (Ty->getPrimitiveID()) {
-    case Type::BoolTyID:   return castToBool(V);
-    case Type::UByteTyID:  return castToUByte(V);
-    case Type::SByteTyID:  return castToSByte(V);
-    case Type::UShortTyID: return castToUShort(V);
-    case Type::ShortTyID:  return castToShort(V);
-    case Type::UIntTyID:   return castToUInt(V);
-    case Type::IntTyID:    return castToInt(V);
-    case Type::ULongTyID:  return castToULong(V);
-    case Type::LongTyID:   return castToLong(V);
-    case Type::FloatTyID:  return castToFloat(V);
-    case Type::DoubleTyID: return castToDouble(V);
-    case Type::PointerTyID:
-      return castToPointer(V, reinterpret_cast<const PointerType*>(Ty));
-    default: return 0;
-    }
-  }
+  virtual Constant *castToBool  (const Constant *V) const = 0;
+  virtual Constant *castToSByte (const Constant *V) const = 0;
+  virtual Constant *castToUByte (const Constant *V) const = 0;
+  virtual Constant *castToShort (const Constant *V) const = 0;
+  virtual Constant *castToUShort(const Constant *V) const = 0;
+  virtual Constant *castToInt   (const Constant *V) const = 0;
+  virtual Constant *castToUInt  (const Constant *V) const = 0;
+  virtual Constant *castToLong  (const Constant *V) const = 0;
+  virtual Constant *castToULong (const Constant *V) const = 0;
+  virtual Constant *castToFloat (const Constant *V) const = 0;
+  virtual Constant *castToDouble(const Constant *V) const = 0;
+  virtual Constant *castToPointer(const Constant *V,
+                                  const PointerType *Ty) const = 0;
 
   // ConstRules::get - Return an instance of ConstRules for the specified
   // constant operands.
