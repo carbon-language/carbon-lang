@@ -227,12 +227,25 @@ bool V8ISel::runOnFunction(Function &Fn) {
 
 
 void V8ISel::visitReturnInst(ReturnInst &I) {
-  if (I.getNumOperands() == 0) {
-    // Just emit a 'jmpl' instruction to return.
-    BuildMI(BB, V8::JMPLi, 2, V8::G0).addZImm(8).addReg(V8::I7);
-    return;
+  if (I.getNumOperands () == 1) {
+    unsigned RetValReg = getReg (I.getOperand (0));
+    switch (getClass (I.getOperand (0)->getType ())) {
+      case cByte:
+      case cShort:
+      case cInt:
+        // Schlep it over into i0 (where it will become o0 after restore).
+        BuildMI (BB, V8::ORrr, 2, V8::I0).addReg(V8::G0).addReg(RetValReg);
+        break;
+      default:
+        visitInstruction (I);
+        return;
+    }
+  } else if (I.getNumOperands () != 1) {
+    visitInstruction (I);
   }
-  visitInstruction(I);
+  // Just emit a 'retl' instruction to return.
+  BuildMI(BB, V8::RETL, 0);
+  return;
 }
 
 void V8ISel::visitBinaryOperator (BinaryOperator &I) {
@@ -249,36 +262,36 @@ void V8ISel::visitBinaryOperator (BinaryOperator &I) {
       BuildMI (BB, V8::SUBrr, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
       break;
     default:
-	  visitInstruction (I);
+      visitInstruction (I);
       return;
   }
 
   switch (getClass (I.getType ())) {
     case cByte: 
-	  if (I.getType ()->isSigned ()) { // add byte
-		BuildMI (BB, V8::ANDri, 2, DestReg).addReg (ResultReg).addZImm (0xff);
-	  } else { // add ubyte
-		unsigned TmpReg = makeAnotherReg (I.getType ());
-		BuildMI (BB, V8::SLLri, 2, TmpReg).addReg (ResultReg).addZImm (24);
-		BuildMI (BB, V8::SRAri, 2, DestReg).addReg (TmpReg).addZImm (24);
-	  }
+      if (I.getType ()->isSigned ()) { // add byte
+        BuildMI (BB, V8::ANDri, 2, DestReg).addReg (ResultReg).addZImm (0xff);
+      } else { // add ubyte
+        unsigned TmpReg = makeAnotherReg (I.getType ());
+        BuildMI (BB, V8::SLLri, 2, TmpReg).addReg (ResultReg).addZImm (24);
+        BuildMI (BB, V8::SRAri, 2, DestReg).addReg (TmpReg).addZImm (24);
+      }
       break;
     case cShort:
-	  if (I.getType ()->isSigned ()) { // add short
-		unsigned TmpReg = makeAnotherReg (I.getType ());
-		BuildMI (BB, V8::SLLri, 2, TmpReg).addReg (ResultReg).addZImm (16);
-		BuildMI (BB, V8::SRAri, 2, DestReg).addReg (TmpReg).addZImm (16);
-	  } else { // add ushort
-		unsigned TmpReg = makeAnotherReg (I.getType ());
-		BuildMI (BB, V8::SLLri, 2, TmpReg).addReg (ResultReg).addZImm (24);
-		BuildMI (BB, V8::SRLri, 2, DestReg).addReg (TmpReg).addZImm (24);
-	  }
+      if (I.getType ()->isSigned ()) { // add short
+        unsigned TmpReg = makeAnotherReg (I.getType ());
+        BuildMI (BB, V8::SLLri, 2, TmpReg).addReg (ResultReg).addZImm (16);
+        BuildMI (BB, V8::SRAri, 2, DestReg).addReg (TmpReg).addZImm (16);
+      } else { // add ushort
+        unsigned TmpReg = makeAnotherReg (I.getType ());
+        BuildMI (BB, V8::SLLri, 2, TmpReg).addReg (ResultReg).addZImm (24);
+        BuildMI (BB, V8::SRLri, 2, DestReg).addReg (TmpReg).addZImm (24);
+      }
       break;
     case cInt:
-	  BuildMI (BB, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (ResultReg);
+      BuildMI (BB, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (ResultReg);
       break;
     default:
-	  visitInstruction (I);
+      visitInstruction (I);
       return;
   }
 }
