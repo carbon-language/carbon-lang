@@ -7,7 +7,9 @@
 #ifndef LLVM_CODEGEN_MACHINEBASICBLOCK_H
 #define LLVM_CODEGEN_MACHINEBASICBLOCK_H
 
-#include "llvm/BasicBlock.h"
+#include "llvm/Annotation.h"
+#include <vector>
+class BasicBlock;
 class MachineInstr;
 
 extern AnnotationID MCFBB_AID;
@@ -16,7 +18,7 @@ extern AnnotationID MCFBB_AID;
 class MachineBasicBlock;
 typedef MachineBasicBlock MachineCodeForBasicBlock;
 
-class MachineBasicBlock: public Annotation {
+class MachineBasicBlock : public Annotation {
   std::vector<MachineInstr*> Insts;
 public:
   MachineBasicBlock() : Annotation(MCFBB_AID) {}
@@ -24,12 +26,13 @@ public:
   
   // Static methods to retrieve or destroy the MachineBasicBlock
   // object for a given basic block.
-  static MachineBasicBlock& get(const BasicBlock *bb) {
-    return *(MachineBasicBlock*)bb->getOrCreateAnnotation(MCFBB_AID);
+  static MachineBasicBlock& get(const BasicBlock *BB) {
+    return *(MachineBasicBlock*)
+      ((Annotable*)BB)->getOrCreateAnnotation(MCFBB_AID);
   }
   
-  static void destroy(const BasicBlock *bb) {
-    bb->deleteAnnotation(MCFBB_AID);
+  static void destroy(const BasicBlock *BB) {
+    ((Annotable*)BB)->deleteAnnotation(MCFBB_AID);
   }
   
   typedef std::vector<MachineInstr*>::iterator                iterator;
