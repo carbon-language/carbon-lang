@@ -334,9 +334,9 @@ bool SparcV9CodeEmitter::isFPInstr(MachineInstr &MI) {
       unsigned fakeReg = MO.getReg(), realReg, regClass, regType;
       regType = TM.getRegInfo().getRegType(fakeReg);
       // At least map fakeReg into its class
-      fakeReg = TM.getRegInfo().getClassRegNum(fakeReg, regClass);
-      if (regClass == UltraSparcRegInfo::FPSingleRegType ||
-          regClass == UltraSparcRegInfo::FPDoubleRegType)
+      // fakeReg = TM.getRegInfo().getClassRegNum(fakeReg, regClass);
+      if (regType == UltraSparcRegInfo::FPSingleRegType ||
+          regType == UltraSparcRegInfo::FPDoubleRegType)
         return true;
     }
   }
@@ -344,9 +344,9 @@ bool SparcV9CodeEmitter::isFPInstr(MachineInstr &MI) {
 }
 
 unsigned 
-SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg, unsigned regClass,
-                                  MachineInstr &MI) {
-  switch (regClass) {
+SparcV9CodeEmitter::getRealRegNumByType(unsigned fakeReg, unsigned regType,
+                                        MachineInstr &MI) {
+  switch (regType) {
   case UltraSparcRegInfo::IntRegType: {
     // Sparc manual, p31
     static const unsigned IntRegMap[] = {
@@ -354,11 +354,9 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg, unsigned regClass,
       8, 9, 10, 11, 12, 13, 15,
       // "l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7",
       16, 17, 18, 19, 20, 21, 22, 23,
-      // "i0", "i1", "i2", "i3", "i4", "i5",  
-      24, 25, 26, 27, 28, 29,
-      // "i6", "i7",
-      30, 31,
-      // "g0", "g1", "g2", "g3", "g4", "g5",  "g6", "g7", 
+      // "i0", "i1", "i2", "i3", "i4", "i5", "i6", "i7",
+      24, 25, 26, 27, 28, 29, 30, 31,
+      // "g0", "g1", "g2", "g3", "g4", "g5", "g6", "g7", 
       0, 1, 2, 3, 4, 5, 6, 7,
       // "o6"
       14
@@ -368,15 +366,17 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg, unsigned regClass,
     break;
   }
   case UltraSparcRegInfo::FPSingleRegType: {
+    DEBUG(std::cerr << "FP single reg: " << fakeReg << "\n");
     return fakeReg;
   }
   case UltraSparcRegInfo::FPDoubleRegType: {
+    DEBUG(std::cerr << "FP double reg: " << fakeReg << "\n");
     return fakeReg;
   }
   case UltraSparcRegInfo::FloatCCRegType: {
     /* These are laid out %fcc0 - %fcc3 => 0 - 3, so are correct */
+    DEBUG(std::cerr << "FP CC reg: " << fakeReg << "\n");
     return fakeReg;
-
   }
   case UltraSparcRegInfo::IntCCRegType: {
     static const unsigned FPInstrIntCCReg[]  = { 6 /* xcc */, 4  /* icc */ };
@@ -384,11 +384,13 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg, unsigned regClass,
     
     if (isFPInstr(MI)) {
       assert(fakeReg < sizeof(FPInstrIntCCReg)/sizeof(FPInstrIntCCReg[0])
-             && "Int CC register out of bounds for FPInstr IntCCReg map");      
+             && "FP CC register out of bounds for FPInstr IntCCReg map");      
+      DEBUG(std::cerr << "FP instr, IntCC reg: " << FPInstrIntCCReg[fakeReg] << "\n");
       return FPInstrIntCCReg[fakeReg];
     } else {
       assert(fakeReg < sizeof(IntInstrIntCCReg)/sizeof(IntInstrIntCCReg[0])
              && "Int CC register out of bounds for IntInstr IntCCReg map");
+      DEBUG(std::cerr << "FP instr, IntCC reg: " << IntInstrIntCCReg[fakeReg] << "\n");
       return IntInstrIntCCReg[fakeReg];
     }
   }
@@ -397,6 +399,60 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg, unsigned regClass,
     return fakeReg;
   }
 }
+
+unsigned 
+SparcV9CodeEmitter::getRealRegNumByClass(unsigned fakeReg, unsigned regClass,
+                                         MachineInstr &MI) {
+  switch (regClass) {
+  case UltraSparcRegInfo::IntRegClassID: {
+    // Sparc manual, p31
+    static const unsigned IntRegMap[] = {
+      // "o0", "o1", "o2", "o3", "o4", "o5",       "o7",
+      8, 9, 10, 11, 12, 13, 15,
+      // "l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7",
+      16, 17, 18, 19, 20, 21, 22, 23,
+      // "i0", "i1", "i2", "i3", "i4", "i5", "i6", "i7",
+      24, 25, 26, 27, 28, 29, 30, 31,
+      // "g0", "g1", "g2", "g3", "g4", "g5", "g6", "g7", 
+      0, 1, 2, 3, 4, 5, 6, 7,
+      // "o6"
+      14
+    }; 
+ 
+    return IntRegMap[fakeReg];
+    break;
+  }
+  case UltraSparcRegInfo::FloatRegClassID: {
+    DEBUG(std::cerr << "FP reg: " << fakeReg << "\n");
+    return fakeReg;
+  }
+  case UltraSparcRegInfo::IntCCRegClassID: {
+    static const unsigned FPInstrIntCCReg[]  = { 6 /* xcc */, 4  /* icc */ };
+    static const unsigned IntInstrIntCCReg[] = { 2 /* xcc */, 0  /* icc */ };
+    
+    if (isFPInstr(MI)) {
+      assert(fakeReg < sizeof(FPInstrIntCCReg)/sizeof(FPInstrIntCCReg[0])
+             && "FP CC register out of bounds for FPInstr IntCCReg map");      
+      DEBUG(std::cerr << "FP instr, IntCC reg: " << FPInstrIntCCReg[fakeReg] << "\n");
+      return FPInstrIntCCReg[fakeReg];
+    } else {
+      assert(fakeReg < sizeof(IntInstrIntCCReg)/sizeof(IntInstrIntCCReg[0])
+             && "Int CC register out of bounds for IntInstr IntCCReg map");
+      DEBUG(std::cerr << "FP instr, IntCC reg: " << IntInstrIntCCReg[fakeReg] << "\n");
+      return IntInstrIntCCReg[fakeReg];
+    }
+  }
+  case UltraSparcRegInfo::FloatCCRegClassID: {
+    /* These are laid out %fcc0 - %fcc3 => 0 - 3, so are correct */
+    DEBUG(std::cerr << "FP CC reg: " << fakeReg << "\n");
+    return fakeReg;
+  }
+  default:
+    assert(0 && "Invalid unified register number in getRegType");
+    return fakeReg;
+  }
+}
+
 
 int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
                                               MachineOperand &MO) {
@@ -477,19 +533,22 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
   } else if (MO.isPhysicalRegister() ||
              MO.getType() == MachineOperand::MO_CCRegister)
   {
-    // This is necessary because the Sparc doesn't actually lay out registers
-    // in the real fashion -- it skips those that it chooses not to allocate,
-    // i.e. those that are the SP, etc.
-    unsigned fakeReg = MO.getReg(), realReg, regClass, regType;
-    regType = TM.getRegInfo().getRegType(fakeReg);
+    // This is necessary because the Sparc backend doesn't actually lay out
+    // registers in the real fashion -- it skips those that it chooses not to
+    // allocate, i.e. those that are the FP, SP, etc.
+    unsigned fakeReg = MO.getAllocatedRegNum(), regClass, regType;
+    unsigned realRegByClass; //realRegByType, 
+    const TargetRegInfo &RI = TM.getRegInfo();
+    DEBUG(std::cerr << std::dec << "LLC: " << fakeReg << " => "
+                    << RI.getUnifiedRegName(fakeReg) << "\n");
+    regType = RI.getRegType(fakeReg);
     // At least map fakeReg into its class
-    fakeReg = TM.getRegInfo().getClassRegNum(fakeReg, regClass);
-    // Find the real register number for use in an instruction
-    /////realReg = getRealRegNum(fakeReg, regClass, MI);
-    realReg = getRealRegNum(fakeReg, regType, MI);
-    DEBUG(std::cerr << MO << ": Reg[" << std::dec << fakeReg << "] = "
-                    << realReg << "\n");
-    rv = realReg;
+    fakeReg = RI.getClassRegNum(fakeReg, regClass);
+    //realRegByType = getRealRegNumByType(fakeReg, regType, MI);
+    realRegByClass = getRealRegNumByClass(fakeReg, regClass, MI);
+    DEBUG(std::cerr << MO << ": Reg[" << std::dec << fakeReg << "] = by class: "
+                    << realRegByClass << "\n");
+    rv = realRegByClass;
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
     DEBUG(std::cerr << "immed: " << rv << "\n");
@@ -561,8 +620,7 @@ bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   {
     Constant *C = (Constant*)*I;
     unsigned idx = MCP.getConstantPoolIndex(C);
-    DEBUG(std::cerr << "Mapping constant 0x" << (intptr_t)C << " to " 
-                    << idx << "\n");
+    DEBUG(std::cerr << "Constant[" << idx << "] = 0x" << (intptr_t)C << "\n");
     ConstantMap[C] = idx;
   }  
   MCE.emitConstantPool(&MCP);
@@ -571,31 +629,24 @@ bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
     emitBasicBlock(*I);
   MCE.finishFunction(MF);
 
-  DEBUG(std::cerr << "Finishing function " << MF.getFunction()->getName() 
-                  << "\n");
+  DEBUG(std::cerr << "Finishing fn " << MF.getFunction()->getName() << "\n");
   ConstantMap.clear();
-  for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    long Location = BBLocations[BBRefs[i].first];
-    unsigned *Ref = BBRefs[i].second.first;
-    MachineInstr *MI = BBRefs[i].second.second;
-    DEBUG(std::cerr << "Fixup @" << std::hex << Ref << " to " << Location
-                    << " in instr: " << std::dec << *MI << "\n");
-  }
 
   // Resolve branches to BasicBlocks for the entire function
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
     long Location = BBLocations[BBRefs[i].first];
     unsigned *Ref = BBRefs[i].second.first;
     MachineInstr *MI = BBRefs[i].second.second;
-    DEBUG(std::cerr << "attempting to resolve BB: " << i << "\n");
+    DEBUG(std::cerr << "Fixup @ " << std::hex << Ref << " to 0x" << Location
+                    << " in instr: " << std::dec << *MI);
     for (unsigned ii = 0, ee = MI->getNumOperands(); ii != ee; ++ii) {
       MachineOperand &op = MI->getOperand(ii);
       if (op.isPCRelativeDisp()) {
         // the instruction's branch target is made such that it branches to
-        // PC + (br target * 4), so undo that arithmetic here:
+        // PC + (branchTarget * 4), so undo that arithmetic here:
         // Location is the target of the branch
         // Ref is the location of the instruction, and hence the PC
-        unsigned branchTarget = (Location - (long)Ref) >> 2;
+        int64_t branchTarget = (Location - (long)Ref) >> 2;
         // Save the flags.
         bool loBits32=false, hiBits32=false, loBits64=false, hiBits64=false;   
         if (op.opLoBits32()) { loBits32=true; }

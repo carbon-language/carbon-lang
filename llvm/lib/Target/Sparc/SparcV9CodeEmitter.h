@@ -43,13 +43,15 @@ public:
 
 private:    
   int64_t getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
-  unsigned getValueBit(int64_t Val, unsigned bit);
+  inline unsigned getValueBit(int64_t Val, unsigned bit);
   void emitBasicBlock(MachineBasicBlock &MBB);
   void* getGlobalAddress(GlobalValue *V, MachineInstr &MI,
                          bool isPCRelative);
   bool isFPInstr(MachineInstr &MI);
-  unsigned getRealRegNum(unsigned fakeReg, unsigned regClass,
-                         MachineInstr &MI);
+  unsigned getRealRegNumByType(unsigned fakeReg, unsigned regType,
+                               MachineInstr &MI);
+  unsigned getRealRegNumByClass(unsigned fakeReg, unsigned regClass,
+                                MachineInstr &MI);
 
 };
 
