@@ -688,13 +688,13 @@ if ($BuildError eq "") {
 
   # Loop over all of the records, summarizing them into rows for the running
   # totals file.
-  my $WallTimeRE = "[A-Za-z0-9.: ]+\\(([0-9.]+) wall clock";
+  my $WallTimeRE = "Time: ([0-9.]+) seconds \\([0-9.]+ wall clock";
   foreach $Rec (@Records) {
     my $rNATTime = GetRegex 'TEST-RESULT-nat-time: program\s*([.0-9m]+)', $Rec;
     my $rCBETime = GetRegex 'TEST-RESULT-cbe-time: program\s*([.0-9m]+)', $Rec;
     my $rLLCTime = GetRegex 'TEST-RESULT-llc-time: program\s*([.0-9m]+)', $Rec;
     my $rJITTime = GetRegex 'TEST-RESULT-jit-time: program\s*([.0-9m]+)', $Rec;
-    my $rOptTime = GetRegex "TEST-RESULT-compile: $WallTimeRE", $Rec;
+    my $rOptTime = GetRegex "TEST-RESULT-compile: .*$WallTimeRE", $Rec;
     my $rBytecodeSize = GetRegex 'TEST-RESULT-compile: *([0-9]+)', $Rec;
     my $rMachCodeSize = GetRegex 'TEST-RESULT-jit-machcode: *([0-9]+).*bytes of machine code', $Rec;
 
