@@ -1192,16 +1192,14 @@ void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prol
   int maxStageCount = 0;
 
   MSchedGraphNode *branch = 0;
-  MSchedGraphNode *BAbranch = 0;
+
 
   for(MSSchedule::kernel_iterator I = schedule.kernel_begin(), E = schedule.kernel_end(); I != E; ++I) {
     maxStageCount = std::max(maxStageCount, I->second);
     
     //Ignore the branch, we will handle this separately
     if(I->first->isBranch()) {
-      if (I->first->getInst()->getOpcode() == V9::BA)
-	BAbranch = I->first;
-      else
+      if (I->first->getInst()->getOpcode() != V9::BA)
 	branch = I->first;
       continue;
     }
@@ -1241,6 +1239,10 @@ void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prol
 		//Save copy in tmpInstruction
 		tmp = new TmpInstruction(mOp.getVRegValue());
 		
+		//Get machine code for this instruction
+		MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) mOp.getVRegValue());
+		tempMvec.addTemp((Value*) tmp);
+
 		DEBUG(std::cerr << "Value: " << *(mOp.getVRegValue()) << " New Value: " << *tmp << " Stage: " << i << "\n");
 		
 		newValues[mOp.getVRegValue()][i]= tmp;
@@ -1275,8 +1277,6 @@ void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prol
     //Stick in branch at the end
     machineBB->push_back(branch->getInst()->clone());
     
-    //Stick in BA branch at the end
-    machineBB->push_back(BAbranch->getInst()->clone());
 
   (((MachineBasicBlock*)origBB)->getParent())->getBasicBlockList().push_back(machineBB);  
     prologues.push_back(machineBB);
@@ -1322,7 +1322,7 @@ void ModuloSchedulingPass::writeEpilogues(std::vector<MachineBasicBlock *> &epil
     DEBUG(std::cerr << " Epilogue #: " << i << "\n");
 
 
-
+    std::map<Value*, int> inEpilogue;
 
      for(MachineBasicBlock::const_iterator MI = origBB->begin(), ME = origBB->end(); ME != MI; ++MI) {
       for(int j=schedule.getMaxStage(); j > i; --j) {
@@ -1334,19 +1334,25 @@ void ModuloSchedulingPass::writeEpilogues(std::vector<MachineBasicBlock *> &epil
 	  for(unsigned opNum=0; opNum < clone->getNumOperands(); ++opNum) {
 	    //get machine operand
 	    const MachineOperand &mOp = clone->getOperand(opNum);
-
-	  //If this is the last instructions for the max iterations ago, don't update operands
-	    if(j == schedule.getMaxStage() && (i == 0))
-	      continue;
 	    
 	    if((mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isUse())) {
 	      
 	      DEBUG(std::cerr << "Writing PHI for " << *(mOp.getVRegValue()) << "\n");
+	    
+	      //If this is the last instructions for the max iterations ago, don't update operands
+	      if(inEpilogue.count(mOp.getVRegValue()))
+		if(inEpilogue[mOp.getVRegValue()] == i)
+		  continue;
 	      
 	      //Quickly write appropriate phis for this operand
 	      if(newValues.count(mOp.getVRegValue())) {
 		if(newValues[mOp.getVRegValue()].count(i)) {
 		  Instruction *tmp = new TmpInstruction(newValues[mOp.getVRegValue()][i]);
+		 
+		  //Get machine code for this instruction
+		  MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) mOp.getVRegValue());
+		  tempMvec.addTemp((Value*) tmp);
+
 		  MachineInstr *saveValue = BuildMI(machineBB, V9::PHI, 3).addReg(newValues[mOp.getVRegValue()][i]).addReg(kernelPHIs[mOp.getVRegValue()][i]).addRegDef(tmp);
 		  DEBUG(std::cerr << "Resulting PHI: " << *saveValue << "\n");
 		  valPHIs[mOp.getVRegValue()] = tmp;
@@ -1357,6 +1363,9 @@ void ModuloSchedulingPass::writeEpilogues(std::vector<MachineBasicBlock *> &epil
 		//Update the operand in the cloned instruction
 		clone->getOperand(opNum).setValueReg(valPHIs[mOp.getVRegValue()]); 
 	      }
+	    }
+	    else if((mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isDef())) {
+	      inEpilogue[mOp.getVRegValue()] = i;
 	    }
 	  }
 	  machineBB->push_back(clone);
@@ -1392,6 +1401,10 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
    //Insert into machine basic block
    machineBB->push_back(instClone);
 
+   if(I->first->isBranch()) {
+     //Add kernel noop
+     BuildMI(machineBB, V9::NOP, 0);
+   }
    
    //Loop over Machine Operands
    for(unsigned i=0; i < inst->getNumOperands(); ++i) {
@@ -1409,6 +1422,10 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
 	 //If its in the value saved, we need to create a temp instruction and use that instead
 	 if(valuesToSave.count(mOp.getVRegValue())) {
 	   TmpInstruction *tmp = new TmpInstruction(mOp.getVRegValue());
+	   	
+	   //Get machine code for this instruction
+	   MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) mOp.getVRegValue());
+	   tempMvec.addTemp((Value*) tmp);
 	   
 	   //Update the operand in the cloned instruction
 	   instClone->getOperand(i).setValueReg(tmp);
@@ -1425,6 +1442,10 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
 	   
 	   TmpInstruction *tmp = new TmpInstruction(mOp.getVRegValue());
 	   
+	   //Get machine code for this instruction
+	   MachineCodeForInstruction & tempVec = MachineCodeForInstruction::get((Instruction*) mOp.getVRegValue());
+	   tempVec.addTemp((Value*) tmp);
+
 	   //Create new machine instr and put in MBB
 	   MachineInstr *saveValue = BuildMI(machineBB, V9::ORr, 3).addReg(mOp.getVRegValue()).addImm(0).addRegDef(tmp);
 	   
@@ -1476,12 +1497,23 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
        if(count < (V->second).size()) {
 	 if(lastPhi == 0) {
 	   lastPhi = new TmpInstruction(I->second);
+
+	   //Get machine code for this instruction
+	   MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) V->first);
+	   tempMvec.addTemp((Value*) lastPhi);
+
 	   MachineInstr *saveValue = BuildMI(*machineBB, machineBB->begin(), V9::PHI, 3).addReg(kernelValue[V->first]).addReg(I->second).addRegDef(lastPhi);
 	   DEBUG(std::cerr << "Resulting PHI: " << *saveValue << "\n");
 	   newValLocation[lastPhi] = machineBB;
 	 }
 	 else {
 	   Instruction *tmp = new TmpInstruction(I->second);
+
+	   //Get machine code for this instruction
+	   MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) V->first);
+	   tempMvec.addTemp((Value*) tmp);
+	   
+
 	   MachineInstr *saveValue = BuildMI(*machineBB, machineBB->begin(), V9::PHI, 3).addReg(lastPhi).addReg(I->second).addRegDef(tmp);
 	   DEBUG(std::cerr << "Resulting PHI: " << *saveValue << "\n");
 	   lastPhi = tmp;
@@ -1513,53 +1545,89 @@ void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vect
 
   //Worklist to delete things
   std::vector<std::pair<MachineBasicBlock*, MachineBasicBlock::iterator> > worklist;
+
+  //Worklist of TmpInstructions that need to be added to a MCFI
+  std::vector<Instruction*> addToMCFI;
   
+  //Worklist to add OR instructions to end of kernel so not to invalidate the iterator
+  //std::vector<std::pair<Instruction*, Value*> > newORs;
+
   const TargetInstrInfo *TMI = target.getInstrInfo();
 
   //Start with the kernel and for each phi insert a copy for the phi def and for each arg
   for(MachineBasicBlock::iterator I = kernelBB->begin(), E = kernelBB->end(); I != E; ++I) {
+  
     //Get op code and check if its a phi
-     if(I->getOpcode() == V9::PHI) {
-       Instruction *tmp = 0;
-       for(unsigned i = 0; i < I->getNumOperands(); ++i) {
-	 //Get Operand
-	 const MachineOperand &mOp = I->getOperand(i);
-	 assert(mOp.getType() == MachineOperand::MO_VirtualRegister && "Should be a Value*\n");
-	 
-	 if(!tmp) {
-	   tmp = new TmpInstruction(mOp.getVRegValue());
-	 }
+    if(I->getOpcode() == V9::PHI) {
+      
+      DEBUG(std::cerr << "Replacing PHI: " << *I << "\n");
+      Instruction *tmp = 0;
 
-      	 //Now for all our arguments we read, OR to the new TmpInstruction that we created
-	 if(mOp.isUse()) {
-	   DEBUG(std::cerr << "Use: " << mOp << "\n");
-	   //Place a copy at the end of its BB but before the branches
-	   assert(newValLocation.count(mOp.getVRegValue()) && "We must know where this value is located\n");
-	   //Reverse iterate to find the branches, we can safely assume no instructions have been
-	   //put in the nop positions
-	   for(MachineBasicBlock::iterator inst = --(newValLocation[mOp.getVRegValue()])->end(), endBB = (newValLocation[mOp.getVRegValue()])->begin(); inst != endBB; --inst) {
-	     MachineOpCode opc = inst->getOpcode();
-	     if(TMI->isBranch(opc) || TMI->isNop(opc))
-	       continue;
-	     else {
-	       BuildMI(*(newValLocation[mOp.getVRegValue()]), ++inst, V9::ORr, 3).addReg(mOp.getVRegValue()).addImm(0).addRegDef(tmp);
-	       break;
-	     }
-	       
-	   }
+      for(unsigned i = 0; i < I->getNumOperands(); ++i) {
+	//Get Operand
+	const MachineOperand &mOp = I->getOperand(i);
+	assert(mOp.getType() == MachineOperand::MO_VirtualRegister && "Should be a Value*\n");
+	
+	if(!tmp) {
+	  tmp = new TmpInstruction(mOp.getVRegValue());
+	  addToMCFI.push_back(tmp);
+	}
 
-	 }
-	 else {
-	   //Remove the phi and replace it with an OR
-	   DEBUG(std::cerr << "Def: " << mOp << "\n");
-	   BuildMI(*kernelBB, I, V9::ORr, 3).addReg(tmp).addImm(0).addRegDef(mOp.getVRegValue());
-	   worklist.push_back(std::make_pair(kernelBB, I));
-	 }
+	//Now for all our arguments we read, OR to the new TmpInstruction that we created
+	if(mOp.isUse()) {
+	  DEBUG(std::cerr << "Use: " << mOp << "\n");
+	  //Place a copy at the end of its BB but before the branches
+	  assert(newValLocation.count(mOp.getVRegValue()) && "We must know where this value is located\n");
+	  //Reverse iterate to find the branches, we can safely assume no instructions have been
+	  //put in the nop positions
+	  for(MachineBasicBlock::iterator inst = --(newValLocation[mOp.getVRegValue()])->end(), endBB = (newValLocation[mOp.getVRegValue()])->begin(); inst != endBB; --inst) {
+	    MachineOpCode opc = inst->getOpcode();
+	    if(TMI->isBranch(opc) || TMI->isNop(opc))
+	      continue;
+	    else {
+	      BuildMI(*(newValLocation[mOp.getVRegValue()]), ++inst, V9::ORr, 3).addReg(mOp.getVRegValue()).addImm(0).addRegDef(tmp);
+	      break;
+	    }
+	    
+	  }
 
-       }
-     }
-       
+	}
+	else {
+	  //Remove the phi and replace it with an OR
+	  DEBUG(std::cerr << "Def: " << mOp << "\n");
+	  //newORs.push_back(std::make_pair(tmp, mOp.getVRegValue()));
+	  BuildMI(*kernelBB, I, V9::ORr, 3).addReg(tmp).addImm(0).addRegDef(mOp.getVRegValue());
+	  worklist.push_back(std::make_pair(kernelBB, I));
+	}
+	
+      }
+      
+    }
+
+    else {
+      //We found an instruction that we can add to its mcfi
+      if(addToMCFI.size() > 0) {
+	for(unsigned i = 0; i < I->getNumOperands(); ++i) {
+	  const MachineOperand &mOp = I->getOperand(i);
+	  if(mOp.getType() == MachineOperand::MO_VirtualRegister) {
+	    if(!isa<TmpInstruction>(mOp.getVRegValue()) && !isa<PHINode>(mOp.getVRegValue())) {
+	      //Get machine code for this instruction
+	      MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) mOp.getVRegValue());
+	      for(unsigned x = 0; x < addToMCFI.size(); ++x) {
+		tempMvec.addTemp(addToMCFI[x]);
+	      }
+	      addToMCFI.clear();
+	      break;
+	    }
+	  }
+	}
+      }
+    }
+    
   }
+
+  //for(std::vector<std::pair<Instruction*, Value*> >::reverse_iterator I = newORs.rbegin(), IE = newORs.rend(); I != IE; ++I)
+  //BuildMI(*kernelBB, kernelBB->begin(), V9::ORr, 3).addReg(I->first).addImm(0).addRegDef(I->second);
 
   //Remove phis from epilogue
   for(std::vector<MachineBasicBlock*>::iterator MB = epilogues.begin(), ME = epilogues.end(); MB != ME; ++MB) {
@@ -1567,6 +1635,7 @@ void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vect
       //Get op code and check if its a phi
       if(I->getOpcode() == V9::PHI) {
 	Instruction *tmp = 0;
+
 	for(unsigned i = 0; i < I->getNumOperands(); ++i) {
 	  //Get Operand
 	  const MachineOperand &mOp = I->getOperand(i);
@@ -1574,6 +1643,7 @@ void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vect
 	  
 	  if(!tmp) {
 	    tmp = new TmpInstruction(mOp.getVRegValue());
+	    addToMCFI.push_back(tmp);
 	  }
 	  
 	  //Now for all our arguments we read, OR to the new TmpInstruction that we created
@@ -1593,7 +1663,7 @@ void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vect
 	      }
 	      
 	    }
-	    
+	  	  	    
 	  }
 	  else {
 	    //Remove the phi and replace it with an OR
@@ -1604,16 +1674,40 @@ void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vect
 	  
 	}
       }
+
+      else {
+	//We found an instruction that we can add to its mcfi
+	if(addToMCFI.size() > 0) {
+	  for(unsigned i = 0; i < I->getNumOperands(); ++i) {
+	    const MachineOperand &mOp = I->getOperand(i);
+	    if(mOp.getType() == MachineOperand::MO_VirtualRegister) {
+
+	       if(!isa<TmpInstruction>(mOp.getVRegValue()) && !isa<PHINode>(mOp.getVRegValue())) {
+		 //Get machine code for this instruction
+		 MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) mOp.getVRegValue());
+		 for(unsigned x = 0; x < addToMCFI.size(); ++x) {
+		   tempMvec.addTemp(addToMCFI[x]);
+		 }
+		 addToMCFI.clear();
+		 break;
+	       }
+	    }
+	  }
+	}
+      }
     }
   }
 
     //Delete the phis
   for(std::vector<std::pair<MachineBasicBlock*, MachineBasicBlock::iterator> >::iterator I =  worklist.begin(), E = worklist.end(); I != E; ++I) {
-    DEBUG(std::cerr << "Deleting PHI " << I->second << "\n");
+  
+    DEBUG(std::cerr << "Deleting PHI " << *I->second << "\n");
     I->first->erase(I->second);
 		    
   }
 
+
+  assert((addToMCFI.size() == 0) && "We should have added all TmpInstructions to some MachineCodeForInstruction");
 }
 
 
@@ -1744,30 +1838,34 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
       }
     }
 
-   
- 
     //Update branch
     for(unsigned opNum = 0; opNum < branch->getNumOperands(); ++opNum) {
       MachineOperand &mOp = branch->getOperand(opNum);
       if (mOp.getType() == MachineOperand::MO_PCRelativeDisp) {
 	mOp.setValueReg(llvm_epilogues[(llvm_epilogues.size()-1-I)]);
+	
       }
     }
 
     //Update llvm basic block with our new branch instr
     DEBUG(std::cerr << BB->getBasicBlock()->getTerminator() << "\n");
     const BranchInst *branchVal = dyn_cast<BranchInst>(BB->getBasicBlock()->getTerminator());
-    TmpInstruction *tmp = new TmpInstruction(branchVal->getCondition());
+    //TmpInstruction *tmp = new TmpInstruction(branchVal->getCondition());
+
+    //Add TmpInstruction to original branches MCFI
+    //MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(branchVal);
+    //tempMvec.addTemp((Value*) tmp);
+
     if(I == prologues.size()-1) {
       TerminatorInst *newBranch = new BranchInst(llvmKernelBB,
 						 llvm_epilogues[(llvm_epilogues.size()-1-I)], 
-						 tmp, 
+						 branchVal->getCondition(), 
 						 llvm_prologues[I]);
     }
     else
       TerminatorInst *newBranch = new BranchInst(llvm_prologues[I+1],
 						 llvm_epilogues[(llvm_epilogues.size()-1-I)], 
-						 tmp, 
+						 branchVal->getCondition(), 
 						 llvm_prologues[I]);
 
     assert(branch != 0 && "There must be a terminator for this machine basic block!\n");
@@ -1776,8 +1874,9 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
     BuildMI(prologues[I], V9::NOP, 0);
     
     //Add a unconditional branch to the next prologue
-    if(I != prologues.size()-1)
+    if(I != prologues.size()-1) {
       BuildMI(prologues[I], V9::BA, 1).addPCDisp(llvm_prologues[I+1]);
+    }
     else
       BuildMI(prologues[I], V9::BA, 1).addPCDisp(llvmKernelBB);
 
@@ -1787,12 +1886,18 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
 
   //Fix up kernel machine branches
   MachineInstr *branch = 0;
+  MachineInstr *BAbranch = 0;
+
   for(MachineBasicBlock::reverse_iterator mInst = machineKernelBB->rbegin(), mInstEnd = machineKernelBB->rend(); mInst != mInstEnd; ++mInst) {
     MachineOpCode OC = mInst->getOpcode();
     if(TMI->isBranch(OC)) {
-      branch = &*mInst;
-      DEBUG(std::cerr << *mInst << "\n");
-      break;
+      if(mInst->getOpcode() == V9::BA) {
+	BAbranch = &*mInst;
+      }
+      else {
+	branch = &*mInst;
+	break;
+      }
     }
   }
 
@@ -1807,27 +1912,39 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
     }
   }
   
+  Value *origBAVal = 0;
+
+  //Update kernel BA branch
+  for(unsigned opNum = 0; opNum < BAbranch->getNumOperands(); ++opNum) {
+    MachineOperand &mOp = BAbranch->getOperand(opNum);
+    if (mOp.getType() == MachineOperand::MO_PCRelativeDisp) {
+      origBAVal = mOp.getVRegValue();
+      if(llvm_epilogues.size() > 0)
+	mOp.setValueReg(llvm_epilogues[0]);
+      
+    }
+  }
+
+  assert((origBAVal != 0) && "Could not find original branch always value");
+
   //Update kernelLLVM branches
   const BranchInst *branchVal = dyn_cast<BranchInst>(BB->getBasicBlock()->getTerminator());
+  //TmpInstruction *tmp = new TmpInstruction(branchVal->getCondition());
+
+  //Add TmpInstruction to original branches MCFI
+  //MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(branchVal);
+  //tempMvec.addTemp((Value*) tmp);
+  
   TerminatorInst *newBranch = new BranchInst(llvmKernelBB,
 					     llvm_epilogues[0], 
-					     new TmpInstruction(branchVal->getCondition()), 
+					     branchVal->getCondition(), 
 					     llvmKernelBB);
 
-  //Add kernel noop
-   BuildMI(machineKernelBB, V9::NOP, 0);
-
-   //Add unconditional branch to first epilogue
-   BuildMI(machineKernelBB, V9::BA, 1).addPCDisp(llvm_epilogues[0]);
-
-
-   //Add kernel noop
-   BuildMI(machineKernelBB, V9::NOP, 0);
 
    //Lastly add unconditional branches for the epilogues
    for(unsigned I = 0; I <  epilogues.size(); ++I) {
      
-    //Now since I don't trust fall throughs, add a unconditional branch to the next prologue
+    //Now since we don't have fall throughs, add a unconditional branch to the next prologue
      if(I != epilogues.size()-1) {
        BuildMI(epilogues[I], V9::BA, 1).addPCDisp(llvm_epilogues[I+1]);
        //Add unconditional branch to end of epilogue
@@ -1835,41 +1952,25 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
 						  llvm_epilogues[I]);
 
      }
-    else {
-      MachineBasicBlock *origBlock = (MachineBasicBlock*) BB;
-      for(MachineBasicBlock::reverse_iterator inst = origBlock->rbegin(), instEnd = origBlock->rend(); inst != instEnd; ++inst) {
-	MachineOpCode OC = inst->getOpcode();
-	if(TMI->isBranch(OC)) {
-	  branch = &*inst;
-	  DEBUG(std::cerr << "Exit branch from loop" << *inst << "\n");
-	  break;
-	
-	}
-	
-	for(unsigned opNum = 0; opNum < branch->getNumOperands(); ++opNum) {
-	  MachineOperand &mOp = branch->getOperand(opNum);
-	  
-	  if (mOp.getType() == MachineOperand::MO_PCRelativeDisp) {
-	    BuildMI(epilogues[I], V9::BA, 1).addPCDisp(mOp.getVRegValue());
-	    break;
-	  }
-	}
-	
-      }
+     else {
+       BuildMI(epilogues[I], V9::BA, 1).addPCDisp(origBAVal);
+       
       
-      //Update last epilogue exit branch
-      BranchInst *branchVal = (BranchInst*) dyn_cast<BranchInst>(BB->getBasicBlock()->getTerminator());
-      //Find where we are supposed to branch to
-      BasicBlock *nextBlock = 0;
-      for(unsigned j=0; j <branchVal->getNumSuccessors(); ++j) {
-	if(branchVal->getSuccessor(j) != BB->getBasicBlock())
-	  nextBlock = branchVal->getSuccessor(j);
-      }
-	TerminatorInst *newBranch = new BranchInst(nextBlock, llvm_epilogues[I]);
-    }
-    //Add one more nop!
-    BuildMI(epilogues[I], V9::NOP, 0);
-
+       //Update last epilogue exit branch
+       BranchInst *branchVal = (BranchInst*) dyn_cast<BranchInst>(BB->getBasicBlock()->getTerminator());
+       //Find where we are supposed to branch to
+       BasicBlock *nextBlock = 0;
+       for(unsigned j=0; j <branchVal->getNumSuccessors(); ++j) {
+	 if(branchVal->getSuccessor(j) != BB->getBasicBlock())
+	   nextBlock = branchVal->getSuccessor(j);
+       }
+       
+       assert((nextBlock != 0) && "Next block should not be null!");
+       TerminatorInst *newBranch = new BranchInst(nextBlock, llvm_epilogues[I]);
+     }
+     //Add one more nop!
+     BuildMI(epilogues[I], V9::NOP, 0);
+     
    }
 
    //FIX UP Machine BB entry!!
