@@ -79,12 +79,20 @@ static inline bool FileExists(const std::string &FN) {
 
 // LoadObject - Read the specified "object file", which should not search the
 // library path to find it.
-static inline std::auto_ptr<Module> LoadObject(const std::string &FN,
+static inline std::auto_ptr<Module> LoadObject(std::string FN,
                                                std::string &OutErrorMessage) {
   if (Verbose) std::cerr << "Loading '" << FN << "'\n";
   if (!FileExists(FN)) {
-    OutErrorMessage = "could not find input file '" + FN + "'!";
-    return std::auto_ptr<Module>();
+    // Attempt to load from the LLVM_LIB_SEARCH_PATH directory... if we would
+    // otherwise fail.  This is used to locate objects like crtend.o.
+    //
+    char *SearchPath = getenv("LLVM_LIB_SEARCH_PATH");
+    if (SearchPath && FileExists(std::string(SearchPath)+"/"+FN))
+      FN = std::string(SearchPath)+"/"+FN;
+    else {
+      OutErrorMessage = "could not find input file '" + FN + "'!";
+      return std::auto_ptr<Module>();
+    }
   }
 
   std::string ErrorMessage;
@@ -224,6 +232,13 @@ static void GetAllUndefinedSymbols(Module *M,
 
 static bool LinkLibrary(Module *M, const std::string &LibName,
                         std::string &ErrorMessage) {
+  std::set<std::string> UndefinedSymbols;
+  GetAllUndefinedSymbols(M, UndefinedSymbols);
+  if (UndefinedSymbols.empty()) {
+    if (Verbose) std::cerr << "  No symbols undefined, don't link library!\n";
+    return false;  // No need to link anything in!
+  }
+
   std::vector<Module*> Objects;
   bool isArchive;
   if (LoadLibrary(LibName, Objects, isArchive, ErrorMessage)) return true;
@@ -233,9 +248,6 @@ static bool LinkLibrary(Module *M, const std::string &LibName,
   DefinedSymbols.resize(Objects.size());
   for (unsigned i = 0; i != Objects.size(); ++i)
     GetAllDefinedSymbols(Objects[i], DefinedSymbols[i]);
-
-  std::set<std::string> UndefinedSymbols;
-  GetAllUndefinedSymbols(M, UndefinedSymbols);
 
   bool Linked = true;
   while (Linked) {     // While we are linking in object files, loop.
