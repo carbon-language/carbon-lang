@@ -233,6 +233,17 @@ case "$enableval" in
   *) AC_MSG_ERROR([Invalid setting for --enable-doxygen. Use "yes" or "no"]) ;;
 esac
 
+dnl Allow a specific llvm-gcc/llvm-g++ pair to be used with this LLVM config.
+AC_ARG_WITH(llvmgccdir,
+  AS_HELP_STRING([--with-llvmgccdir],
+    [Specify location of llvm-gcc install dir (default searches PATH)]),,
+    withval=default)
+case "$withval" in
+  default) WITH_LLVMGCCDIR=default ;;
+  /*)      WITH_LLVMGCCDIR=$withval ;;
+  *) AC_MSG_ERROR([Invalid path for --with-llvmgccdir. Provide full path]) ;;
+esac
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 4: Check for programs we need and that they are the right version
@@ -254,8 +265,6 @@ AC_PATH_PROG(CP, [cp], [cp])
 AC_PATH_PROG(DATE, [date], [date])
 AC_PATH_PROG(FIND, [find], [find])
 AC_PATH_PROG(GREP, [grep], [grep])
-AC_PATH_PROG(LLVMGCC, [llvm-gcc], [llvm-gcc])
-AC_PATH_PROG(LLVMGXX, [llvm-g++], [llvm-g++])
 AC_PATH_PROG(MKDIR,[mkdir],[mkdir])
 AC_PATH_PROG(MV,   [mv],   [mv])
 AC_PATH_PROG(PAX,  [pax],  [pax])
@@ -302,6 +311,16 @@ case "$etags_version" in
 esac
 AC_SUBST(ETAGSFLAGS,$ETAGSFLAGS)
 
+if test "$WITH_LLVMGCCDIR" != "default" ; then
+  AC_PATH_PROG(LLVMGCC, [llvm-gcc], [llvm-gcc])
+  AC_PATH_PROG(LLVMGXX, [llvm-g++], [llvm-g++])
+else
+  LLVMGCC=$WITH_LLVMGCCDIR/bin/llvm-gcc
+  LLVMGXX=$WITH_LLVMGCCDIR/bin/llvm-g++
+  AC_SUBST(LLVMGCC,$LLVMGCC)
+  AC_SUBST(LLVMGXX,$LLVMGXX)
+fi
+  
 AC_MSG_CHECKING([tool compatibility])
 
 dnl Ensure that compilation tools are GCC or a GNU compatible compiler such as
@@ -386,23 +405,20 @@ dnl=== SECTION 6: Check for header files
 dnl===
 dnl===-----------------------------------------------------------------------===
 
+dnl First, use autoconf provided macros for specific headers that we need
 dnl We don't check for ancient stuff or things that are guaranteed to be there
 dnl by the C++ standard. We always use the <cfoo> versions of <foo.h> C headers.
-AC_HEADER_STDC
-
-dnl However, we do need some system specific header files. Generally we're
-dnl looking for POSIX headers.
-AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([sys/time.h sys/mman.h sys/resource.h sys/time.h sys/types.h])
-AC_CHECK_HEADERS([dlfcn.h execinfo.h fcntl.h limits.h link.h])
-AC_CHECK_HEADERS([malloc.h unistd.h windows.h])
-AC_HEADER_TIME
+dnl Generally we're looking for POSIX headers.
+AC_HEADER_DIRENT
 AC_HEADER_MMAP_ANONYMOUS
+AC_HEADER_STAT
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_HEADER_TIME
 
-dnl Check for things that need to be included in public headers, and so
-dnl for which we may not have access to a HAVE_* preprocessor #define.
-dnl (primarily used in DataTypes.h)
-AC_CHECK_HEADERS([inttypes.h stdint.h])
+AC_CHECK_HEADERS([dlfcn.h execinfo.h fcntl.h inttypes.h limits.h link.h])
+AC_CHECK_HEADERS([malloc.h signal.h stdint.h unistd.h utime.h windows.h])
+AC_CHECK_HEADERS([sys/mman.h sys/param.h sys/resource.h sys/time.h sys/types.h])
 
 dnl===-----------------------------------------------------------------------===
 dnl===
@@ -427,7 +443,7 @@ dnl===-----------------------------------------------------------------------===
 
 AC_CHECK_FUNCS([backtrace getcwd getpagesize getrusage gettimeofday isatty ])
 AC_CHECK_FUNCS([mkdtemp mkstemp mktemp ])
-AC_CHECK_FUNCS([realpath strdup strtoq strtoll sysconf ])
+AC_CHECK_FUNCS([realpath setrlimit strdup strtoq strtoll sysconf ])
 AC_C_PRINTF_A
 AC_FUNC_ALLOCA
 AC_FUNC_RAND48
