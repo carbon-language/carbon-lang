@@ -8,12 +8,12 @@
 //===----------------------------------------------------------------------===//
 //
 // fpcmp is a tool that basically works like the 'cmp' tool, except that it can
-// tolerate errors due to floating point noise, with the -r option.
+// tolerate errors due to floating point noise, with the -r and -a options.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/CommandLine.h"
-#include "llvm/System/MappedFile.h"
+#include "llvm/Support/FileUtilities.h"
 #include <iostream>
 #include <cmath>
 
@@ -31,159 +31,14 @@ namespace {
   AbsTolerance("a", cl::desc("Absolute error tolerated"), cl::init(0));
 }
 
-static bool isNumberChar(char C) {
-  switch (C) {
-  case '0': case '1': case '2': case '3': case '4':
-  case '5': case '6': case '7': case '8': case '9': 
-  case '.': case '+': case '-':
-  case 'e':
-  case 'E': return true;
-  default: return false;
-  }
-}
-
-static char *BackupNumber(char *Pos, char *FirstChar) {
-  // If we didn't stop in the middle of a number, don't backup.
-  if (!isNumberChar(*Pos)) return Pos;
-
-  // Otherwise, return to the start of the number.
-  while (Pos > FirstChar && isNumberChar(Pos[-1]))
-    --Pos;
-  return Pos;
-}
-
-static void CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End) {
-  char *F1NumEnd, *F2NumEnd;
-  double V1 = 0.0, V2 = 0.0; 
-  // If we stop on numbers, compare their difference.
-  if (isNumberChar(*F1P) && isNumberChar(*F2P)) {
-    V1 = strtod(F1P, &F1NumEnd);
-    V2 = strtod(F2P, &F2NumEnd);
-  } else {
-    // Otherwise, the diff failed.
-    F1NumEnd = F1P;
-    F2NumEnd = F2P;
-  }
-
-  if (F1NumEnd == F1P || F2NumEnd == F2P) {
-    std::cerr << "Comparison failed, not a numeric difference.\n";
-    exit(1);
-  }
-
-  // Check to see if these are inside the absolute tolerance
-  if (AbsTolerance < std::abs(V1-V2)) {
-    // Nope, check the relative tolerance...
-    double Diff;
-    if (V2)
-      Diff = std::abs(V1/V2 - 1.0);
-    else if (V1)
-      Diff = std::abs(V2/V1 - 1.0);
-    else
-      Diff = 0;  // Both zero.
-    if (Diff > RelTolerance) {
-      std::cerr << "Compared: " << V1 << " and " << V2 << ": diff = "
-                << Diff << "\n";
-      std::cerr << "Out of tolerance: rel/abs: " << RelTolerance
-                << "/" << AbsTolerance << "\n";
-      exit(1);
-    }
-  }
-
-  // Otherwise, advance our read pointers to the end of the numbers.
-  F1P = F1NumEnd;  F2P = F2NumEnd;
-}
-
-// PadFileIfNeeded - If the files are not identical, we will have to be doing
-// numeric comparisons in here.  There are bad cases involved where we (i.e.,
-// strtod) might run off the beginning or end of the file if it starts or ends
-// with a number.  Because of this, if needed, we pad the file so that it starts
-// and ends with a null character.
-static void PadFileIfNeeded(char *&FileStart, char *&FileEnd, char *&FP) {
-  if (isNumberChar(FileStart[0]) || isNumberChar(FileEnd[-1])) {
-    unsigned FileLen = FileEnd-FileStart;
-    char *NewFile = new char[FileLen+2];
-    NewFile[0] = 0;              // Add null padding
-    NewFile[FileLen+1] = 0;      // Add null padding
-    memcpy(NewFile+1, FileStart, FileLen);
-    FP = NewFile+(FP-FileStart)+1;
-    FileStart = NewFile+1;
-    FileEnd = FileStart+FileLen;
-  }
-}
-
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
 
-  try {
-    // map in the files into memory
-    sys::Path F1Path(File1);
-    sys::Path F2Path(File2);
-    sys::MappedFile F1 ( F1Path );
-    sys::MappedFile F2 ( F2Path );
-    F1.map();
-    F2.map();
-
-    // Okay, now that we opened the files, scan them for the first difference.
-    char *File1Start = F1.charBase();
-    char *File2Start = F2.charBase();
-    char *File1End = File1Start+F1.size();
-    char *File2End = File2Start+F2.size();
-    char *F1P = File1Start;
-    char *F2P = File2Start;
-
-    // Scan for the end of file or first difference.
-    while (F1P < File1End && F2P < File2End && *F1P == *F2P)
-      ++F1P, ++F2P;
-
-    // Common case: identifical files.
-    if (F1P == File1End && F2P == File2End) return 0;
-
-    // If the files need padding, do so now.
-    PadFileIfNeeded(File1Start, File1End, F1P);
-    PadFileIfNeeded(File2Start, File2End, F2P);
-    
-    while (1) {
-      // Scan for the end of file or next difference.
-      while (F1P < File1End && F2P < File2End && *F1P == *F2P)
-        ++F1P, ++F2P;
-
-      if (F1P >= File1End || F2P >= File2End) break;
-
-      // Okay, we must have found a difference.  Backup to the start of the
-      // current number each stream is at so that we can compare from the
-      // beginning.
-      F1P = BackupNumber(F1P, File1Start);
-      F2P = BackupNumber(F2P, File2Start);
-
-      // Now that we are at the start of the numbers, compare them, exiting if
-      // they don't match.
-      CompareNumbers(F1P, F2P, File1End, File2End);
-    }
-
-    // Okay, we reached the end of file.  If both files are at the end, we
-    // succeeded.
-    bool F1AtEnd = F1P >= File1End;
-    bool F2AtEnd = F2P >= File2End;
-    if (F1AtEnd & F2AtEnd) return 0;
-
-    // Else, we might have run off the end due to a number: backup and retry.
-    if (F1AtEnd && isNumberChar(F1P[-1])) --F1P;
-    if (F2AtEnd && isNumberChar(F2P[-1])) --F2P;
-    F1P = BackupNumber(F1P, File1Start);
-    F2P = BackupNumber(F2P, File2Start);
-
-    // Now that we are at the start of the numbers, compare them, exiting if
-    // they don't match.
-    CompareNumbers(F1P, F2P, File1End, File2End);
-
-    // If we found the end, we succeeded.
-    if (F1P >= File1End && F2P >= File2End) return 0;
-
-  } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": error: " << msg << "\n";
-    return 2;
-  }
-
-  return 1;
+  std::string ErrorMsg;
+  int DF = DiffFilesWithTolerance(File1, File2, AbsTolerance, RelTolerance,
+                                  &ErrorMsg);
+  if (!ErrorMsg.empty())
+    std::cerr << argv[0] << ": " << ErrorMsg << "\n";
+  return DF;
 }
 
