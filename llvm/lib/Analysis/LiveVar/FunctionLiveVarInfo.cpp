@@ -180,28 +180,29 @@ void FunctionLiveVarInfo::releaseMemory() {
 const ValueSet &
 FunctionLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MInst,
                                               const BasicBlock *BB) {
-  if (const ValueSet *LVSet = MInst2LVSetBI[MInst]) {
-    return *LVSet;                      // if found, just return the set
-  } else { 
-    calcLiveVarSetsForBB(BB);          // else, calc for all instrs in BB
-    return *MInst2LVSetBI[MInst];
+  const ValueSet *LVSet = MInst2LVSetBI[MInst];
+  if (LVSet == NULL && BB != NULL) {    // if not found and BB provided
+    calcLiveVarSetsForBB(BB);           // calc LVSet for all instrs in BB
+    LVSet = MInst2LVSetBI[MInst];
   }
+  return *LVSet;
 }
 
 
 //-----------------------------------------------------------------------------
 // Gives live variable information after a machine instruction
 //-----------------------------------------------------------------------------
+
 const ValueSet & 
 FunctionLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MI,
                                              const BasicBlock *BB) {
 
-  if (const ValueSet *LVSet = MInst2LVSetAI[MI]) {
-    return *LVSet;                      // if found, just return the set
-  } else { 
-    calcLiveVarSetsForBB(BB);           // else, calc for all instrs in BB
+  const ValueSet *LVSet = MInst2LVSetAI[MI];
+  if (LVSet == NULL && BB != NULL) {    // if not found and BB provided 
+    calcLiveVarSetsForBB(BB);           // calc LVSet for all instrs in BB
     return *MInst2LVSetAI[MI];
   }
+  return *LVSet;
 }
 
 // This function applies a machine instr to a live var set (accepts OutSet) and
