@@ -9,7 +9,6 @@ Current bugs:
   to do >16bit subtractions to the stack pointer.
 
 Codegen improvements needed:
-* we unconditionally emit save/restore of LR even if we don't use it
 * no alias analysis causes us to generate slow code for Shootout/matrix
 * setCondInst needs to know branchless versions of seteq/setne/etc
 * cast elimination pass (uint -> sbyte -> short, kill the byte -> short)
