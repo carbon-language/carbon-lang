@@ -9,6 +9,7 @@
 #include "llvm/PassManager.h"
 #include "PassManagerT.h"         // PassManagerT implementation
 #include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
 #include "Support/STLExtras.h"
 #include "Support/TypeInfo.h"
 #include <set>
@@ -76,11 +77,17 @@ bool PassManager::run(Module &M) { return PM->run(M); }
 // is a simple Pimpl class that wraps the PassManagerT template. It
 // is like PassManager, but only deals in FunctionPasses.
 //
-FunctionPassManager::FunctionPassManager() : PM(new PassManagerT<Function>()) {}
+FunctionPassManager::FunctionPassManager(ModuleProvider *P) : 
+  PM(new PassManagerT<Function>()), MP(P) {}
 FunctionPassManager::~FunctionPassManager() { delete PM; }
 void FunctionPassManager::add(FunctionPass *P) { PM->add(P); }
 void FunctionPassManager::add(ImmutablePass *IP) { PM->add(IP); }
-bool FunctionPassManager::run(Function &F) { return PM->run(F); }
+bool FunctionPassManager::run(Function &F) { 
+  Function *mF = MP->getModule()->getNamedFunction(F.getName());
+  assert((&F == mF) && "ModuleProvider does not contain this function!");
+  MP->materializeFunction(&F);
+  return PM->run(F); 
+}
 
 
 //===----------------------------------------------------------------------===//
@@ -177,7 +184,7 @@ const char *Pass::getPassName() const {
   return typeid(*this).name();
 }
 
-// print - Print out the internal state of the pass.  This is called by Analyse
+// print - Print out the internal state of the pass.  This is called by Analyze
 // to print out the contents of an analysis.  Otherwise it is not necessary to
 // implement this method.
 //
