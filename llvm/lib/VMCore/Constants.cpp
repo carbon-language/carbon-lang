@@ -1058,6 +1058,8 @@ namespace llvm {
            V.first < Instruction::BinaryOpsEnd) ||
           V.first == Instruction::Shl || V.first == Instruction::Shr)
         return new ConstantExpr(V.first, V.second[0], V.second[1]);
+      if (V.first == Instruction::Select)
+        return new ConstantExpr(V.second[0], V.second[1], V.second[2]);
       
       assert(V.first == Instruction::GetElementPtr && "Invalid ConstantExpr!");
       
