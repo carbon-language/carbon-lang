@@ -8,23 +8,25 @@
 #ifndef EXECUTION_ENGINE_H
 #define EXECUTION_ENGINE_H
 
+#include "llvm/ModuleProvider.h"
 #include <vector>
 #include <string>
 #include <map>
 #include <cassert>
 class Constant;
-class Type;
-class GlobalValue;
 class Function;
+union GenericValue;
+class GlobalValue;
 class Module;
 class TargetData;
-union GenericValue;
+class Type;
 
 class ExecutionEngine {
   Module &CurMod;
   const TargetData *TD;
 
 protected:
+  ModuleProvider *MP;
   // GlobalAddress - A mapping between LLVM global values and their actualized
   // version...
   std::map<const GlobalValue*, void *> GlobalAddress;
@@ -32,9 +34,13 @@ protected:
   void setTargetData(const TargetData &td) {
     TD = &td;
   }
+
 public:
-  ExecutionEngine(Module *M) : CurMod(*M) {
-    assert(M && "Module is null?");
+  ExecutionEngine(ModuleProvider *P) : CurMod(*(P->getModule())), MP(P) {
+    assert(P && "ModuleProvider is null?");
+  }
+  ExecutionEngine(Module *M) : CurMod(*M), MP(0) {
+     assert(M && "Module is null?");
   }
   virtual ~ExecutionEngine();
   
@@ -47,8 +53,8 @@ public:
   virtual GenericValue run(Function *F,
                            const std::vector<GenericValue> &ArgValues) = 0;
 
-  static ExecutionEngine *create (Module *M, bool ForceInterpreter,
-				  bool TraceMode);
+  static ExecutionEngine *create(ModuleProvider *MP, bool ForceInterpreter,
+                                 bool TraceMode);
 
   void addGlobalMapping(const Function *F, void *Addr) {
     void *&CurVal = GlobalAddress[(const GlobalValue*)F];
