@@ -73,7 +73,8 @@ int main(int argc, char **argv) {
                     << "Use -f command line argument to force output\n";
           return 1;
         }
-        Out = new std::ofstream(OutputFilename.c_str());
+        Out = new std::ofstream(OutputFilename.c_str(), std::ios_base::out | 
+                                std::ios_base::trunc | std::ios_base::binary);
       } else {                      // Specified stdout
 	Out = &std::cout;       
       }
@@ -100,7 +101,8 @@ int main(int argc, char **argv) {
           return 1;
         }
 
-	Out = new std::ofstream(OutputFilename.c_str());
+	Out = new std::ofstream(OutputFilename.c_str(), std::ios_base::out | 
+                                std::ios_base::trunc | std::ios_base::binary);
         // Make sure that the Out file gets unlinked from the disk if we get a
         // SIGINT
         RemoveFileOnSignal(OutputFilename);
