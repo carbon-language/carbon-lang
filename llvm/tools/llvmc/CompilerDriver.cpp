@@ -14,7 +14,11 @@
 
 #include "CompilerDriver.h"
 #include "ConfigLexer.h"
+#include "llvm/Bytecode/Reader.h"
+#include "llvm/Module.h"
+#include "Support/FileUtilities.h"
 #include "Support/SystemUtils.h"
+#include "Support/StringExtras.h"
 #include <iostream>
 
 using namespace llvm;
@@ -24,12 +28,6 @@ namespace {
     size_t dotpos = fullName.rfind('.',fullName.size());
     if ( dotpos == std::string::npos ) return fullName;
     return fullName.substr(0, dotpos);
-  }
-
-  inline std::string GetSuffix(const std::string& fullName) {
-    size_t dotpos = fullName.rfind('.',fullName.size());
-    if ( dotpos = std::string::npos ) return "";
-    return fullName.substr(dotpos+1);
   }
 
   const char OutputSuffix[] = ".o";
@@ -82,12 +80,12 @@ namespace {
 // to be portable but we're avoiding that for now.
 namespace sys {
 
-  bool FileReadable(const std::string& fname) {
+  bool FileIsReadable(const std::string& fname) {
     return 0 == access(fname.c_str(), F_OK | R_OK);
   }
 
   void CleanupTempFile(const std::string& fname) {
-    if (FileReadable(fname))
+    if (FileIsReadable(fname))
       unlink(fname.c_str());
   }
 
@@ -227,31 +225,24 @@ CompilerDriver::Action* CompilerDriver::GetAction(ConfigData* cd,
         // FIXME: Ignore for now
       } else if (*PI == "%opt%") {
         if (!emitRawCode) {
-          if (pat->isSet(GROKS_DASH_O)) {
-            if (optLevel != OPT_NONE) {
-              std::string optArg("-O");
-              switch (optLevel) {
-                case OPT_FAST_COMPILE : optArg.append("1"); break;
-                case OPT_SIMPLE:        optArg.append("2"); break;
-                case OPT_AGGRESSIVE:    optArg.append("3"); break;
-                case OPT_LINK_TIME:     optArg.append("4"); break;
-                case OPT_AGGRESSIVE_LINK_TIME: optArg.append("5"); break;
-                default : 
-                  assert(!"Invalid optimization argument!");
-                  optArg.append("0"); 
-                  break;
-              }
-              action->args.push_back(optArg);
-            }
-          } else {
-            if (cd->opts.size() > static_cast<unsigned>(optLevel) && 
-                !cd->opts[optLevel].empty())
-              action->args.insert(action->args.end(), cd->opts[optLevel].begin(),
+          if (cd->opts.size() > static_cast<unsigned>(optLevel) && 
+              !cd->opts[optLevel].empty())
+            action->args.insert(action->args.end(), cd->opts[optLevel].begin(),
                 cd->opts[optLevel].end());
-          }
+          else
+            error("Optimization options for level " + utostr(unsigned(optLevel)) + 
+                  " were not specified");
         }
+      } else if (*PI == "%args%") {
+        if (AdditionalArgs.size() > unsigned(phase))
+          if (!AdditionalArgs[phase].empty()) {
+            // Get specific options for each kind of action type
+            StringVector& addargs = AdditionalArgs[phase];
+            // Add specific options for each kind of action type
+            action->args.insert(action->args.end(), addargs.begin(), addargs.end());
+          }
       } else {
-        error("Invalid substitution name");
+        error("Invalid substitution name" + *PI);
       }
     } else {
       // Its not a substitution, just put it in the action
@@ -260,11 +251,6 @@ CompilerDriver::Action* CompilerDriver::GetAction(ConfigData* cd,
     PI++;
   }
 
-  // Get specific options for each kind of action type
-  StringVector& args = AdditionalArgs[phase];
-
-  // Add specific options for each kind of action type
-  action->args.insert(action->args.end(), args.begin(), args.end());
 
   // Finally, we're done
   return action;
@@ -336,22 +322,23 @@ int CompilerDriver::execute(const InputList& InpList,
   /// PRE-PROCESSING / TRANSLATION / OPTIMIZATION / ASSEMBLY phases
   // for each input item
   std::vector<std::string> LinkageItems;
+  std::string OutFile(Output);
   InputList::const_iterator I = InpList.begin();
   while ( I != InpList.end() ) {
     // Get the suffix of the file name
-    std::string suffix = GetSuffix(I->first);
+    const std::string& ftype = I->second;
 
     // If its a library, bytecode file, or object file, save 
     // it for linking below and short circuit the 
     // pre-processing/translation/assembly phases
-    if (I->second.empty() || suffix == "o" || suffix == "bc") {
+    if (ftype.empty() ||  ftype == "o" || ftype == "bc") {
       // We shouldn't get any of these types of files unless we're 
       // later going to link. Enforce this limit now.
       if (finalPhase != LINKING) {
         error("Pre-compiled objects found but linking not requested");
       }
       LinkageItems.push_back(I->first);
-      continue; // short circuit remainder of loop
+      ++I; continue; // short circuit remainder of loop
     }
 
     // At this point, we know its something we need to translate
@@ -363,18 +350,6 @@ int CompilerDriver::execute(const InputList& InpList,
             "' are not recognized." ); 
     if (isDebug)
       DumpConfigData(cd,I->second);
-
-    // We have valid configuration data, now figure out where the output
-    // of compilation should end up.
-    std::string OutFile;
-    if (finalPhase != LINKING) {
-      if (InpList.size() == 1 && !Output.empty()) 
-        OutFile = Output;
-      else
-        OutFile = RemoveSuffix(I->first) + OutputSuffix;
-    } else {
-      OutFile = Output;
-    }
 
     // Initialize the input file
     std::string InFile(I->first);
@@ -443,33 +418,35 @@ int CompilerDriver::execute(const InputList& InpList,
     action = cd->Optimizer;
 
     // Get the optimization action, if needed, or error if appropriate
-    if (!action.program.empty() && !emitRawCode) {
-      if (action.isSet(REQUIRED_FLAG) || finalPhase == OPTIMIZATION) {
-        if (finalPhase == OPTIMIZATION)
-          actions.push_back(GetAction(cd,InFile,OutFile,OPTIMIZATION));
-        else {
-          actions.push_back(GetAction(cd,InFile,TempOptimizerOut,OPTIMIZATION));
-          InFile = TempOptimizerOut;
+    if (!emitRawCode) {
+      if (!action.program.empty()) {
+        if (action.isSet(REQUIRED_FLAG) || finalPhase == OPTIMIZATION) {
+          if (finalPhase == OPTIMIZATION)
+            actions.push_back(GetAction(cd,InFile,OutFile,OPTIMIZATION));
+          else {
+            actions.push_back(GetAction(cd,InFile,TempOptimizerOut,OPTIMIZATION));
+            InFile = TempOptimizerOut;
+          }
+          // ll -> bc Helper
+          if (action.isSet(OUTPUT_IS_ASM_FLAG)) {
+            /// The output of the translator is an LLVM Assembly program
+            /// We need to translate it to bytecode
+            Action* action = new Action();
+            action->program = "llvm-as";
+            action->args.push_back(InFile);
+            action->args.push_back("-f");
+            action->args.push_back("-o");
+            InFile += ".bc";
+            action->args.push_back(InFile);
+            actions.push_back(action);
+          }
         }
-        // ll -> bc Helper
-        if (action.isSet(OUTPUT_IS_ASM_FLAG)) {
-          /// The output of the translator is an LLVM Assembly program
-          /// We need to translate it to bytecode
-          Action* action = new Action();
-          action->program = "llvm-as";
-          action->args.push_back(InFile);
-          action->args.push_back("-f");
-          action->args.push_back("-o");
-          InFile += ".bc";
-          action->args.push_back(InFile);
-          actions.push_back(action);
-        }
-      }
-    } else if (finalPhase == OPTIMIZATION) {
-      error(cd->langName + " does not support optimization");
-    } else if (action.isSet(REQUIRED_FLAG)) {
-      error(std::string("Don't know how to optimize ") + 
+      } else if (finalPhase == OPTIMIZATION) {
+        error(cd->langName + " does not support optimization");
+      } else if (action.isSet(REQUIRED_FLAG)) {
+        error(std::string("Don't know how to optimize ") + 
             cd->langName + " files");
+      }
     }
 
     // Short-circuit remaining actions if all they want is optimization
@@ -478,13 +455,16 @@ int CompilerDriver::execute(const InputList& InpList,
     /// ASSEMBLY PHASE
     action = cd->Assembler;
 
-    if (finalPhase == ASSEMBLY) {
+    if (finalPhase == ASSEMBLY || emitNativeCode) {
       if (emitNativeCode) {
         if (action.program.empty()) {
           error(std::string("Native Assembler not specified for ") +
                 cd->langName + " files");
-        } else {
+        } else if (finalPhase == ASSEMBLY) {
           actions.push_back(GetAction(cd,InFile,OutFile,ASSEMBLY));
+        } else {
+          actions.push_back(GetAction(cd,InFile,TempAssemblerOut,ASSEMBLY));
+          InFile = TempAssemblerOut;
         }
       } else {
         // Just convert back to llvm assembly with llvm-dis
@@ -497,7 +477,13 @@ int CompilerDriver::execute(const InputList& InpList,
         actions.push_back(action);
       }
     }
+
+    // Short-circuit remaining actions if all they want is assembly output
+    if (finalPhase == ASSEMBLY) { ++I; continue; }
       
+    // Register the OutFile as a link candidate
+    LinkageItems.push_back(InFile);
+
     // Go to next file to be processed
     ++I;
   }
@@ -505,7 +491,61 @@ int CompilerDriver::execute(const InputList& InpList,
   /// LINKING PHASE
   if (finalPhase == LINKING) {
     if (emitNativeCode) {
+      error("llvmc doesn't know how to link native code yet");
     } else {
+      // First, we need to examine the files to ensure that they all contain
+      // bytecode files. Since the final output is bytecode, we can only
+      // link bytecode.
+      StringVector::const_iterator I = LinkageItems.begin();
+      StringVector::const_iterator E = LinkageItems.end();
+      StringVector lib_list;
+      while (I != E ) {
+        if (sys::FileIsReadable(*I)) {
+          if (CheckMagic(*I, "llvm")) {
+            // Examine the bytecode file for additional bytecode libraries to
+            // link in.
+            ModuleProvider* mp = getBytecodeModuleProvider(*I);
+            assert(mp!=0 && "Couldn't get module provider from bytecode file");
+            Module* M = mp->releaseModule();
+            assert(M!=0 && "Couldn't get module from module provider");
+            Module::lib_iterator LI = M->lib_begin();
+            Module::lib_iterator LE = M->lib_end();
+            while ( LI != LE ) {
+              if (sys::FileIsReadable(*LI)) {
+                if (CheckMagic(*I,"llvm")) {
+                  lib_list.push_back(*LI);
+                } else {
+                  error(std::string("Library '") + *LI + "' required by file '"
+                        + *I + "' is not an LLVM bytecode file");
+                }
+              } else {
+                error(std::string("Library '") + *LI + "' required by file '"
+                      + *I + "' is not readable");
+              }
+              ++I;
+            }
+          } else {
+            error(std::string("File '") + *I + " is not an LLVM byte code file");
+          } 
+        } else {
+          error(std::string("File '") + *I + " is not readable");
+        }
+        ++I;
+      }
+
+      // We're emitting bytecode so let's build an llvm-link Action
+      Action* link = new Action();
+      link->program = "llvm-link";
+      link->args = LinkageItems;
+      link->args.insert(link->args.end(), lib_list.begin(), lib_list.end());
+      link->args.push_back("-f");
+      link->args.push_back("-o");
+      link->args.push_back(OutFile);
+      if (timePasses)
+        link->args.push_back("-time-passes");
+      if (showStats)
+        link->args.push_back("-stats");
+      actions.push_back(link);
     }
   }
 
@@ -524,7 +564,7 @@ int CompilerDriver::execute(const InputList& InpList,
     ::sys::CleanupTempFile(TempOptimizerOut);
 
     // Cleanup temporary directory we created
-    if (::sys::FileReadable(TempDir))
+    if (::sys::FileIsReadable(TempDir))
       rmdir(TempDir.c_str());
   }
 
