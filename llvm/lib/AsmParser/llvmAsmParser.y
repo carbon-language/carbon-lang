@@ -919,7 +919,20 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     if (Ty == 0)
       ThrowException("Global const reference must be a pointer type!");
 
+    // ConstExprs can exist in the body of a function, thus creating
+    // ConstantPointerRefs whenever they refer to a variable.  Because we are in
+    // the context of a function, getValNonImprovising will search the functions
+    // symbol table instead of the module symbol table for the global symbol,
+    // which throws things all off.  To get around this, we just tell
+    // getValNonImprovising that we are at global scope here.
+    //
+    Function *SavedCurFn = CurMeth.CurrentFunction;
+    CurMeth.CurrentFunction = 0;
+
     Value *V = getValNonImprovising(Ty, $2);
+
+    CurMeth.CurrentFunction = SavedCurFn;
+
 
     // If this is an initializer for a constant pointer, which is referencing a
     // (currently) undefined variable, create a stub now that shall be replaced
@@ -960,7 +973,6 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
   };
 
 
-// FIXME: ConstExpr::get never return null!  Do checking here in the parser.
 ConstExpr: Types CAST ConstVal {
     $$ = ConstantExpr::getCast($3, $1->get());
     delete $1;
