@@ -53,6 +53,8 @@ void MappedFile::initialize() {
       info_ = 0;
       ThrowErrno(std::string("Can't stat file: ") + path_.get());
     }
+  } else {
+    throw std::string("Can't open file: ") + path_.get();
   }
 }
 
@@ -74,6 +76,7 @@ void MappedFile::unmap() {
 }
 
 void* MappedFile::map() {
+  assert(info_ && "MappedFile not initialized");
   if (!isMapped()) {
     int prot = PROT_NONE;
     int flags = 0;
