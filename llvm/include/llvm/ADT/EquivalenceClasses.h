@@ -112,6 +112,19 @@ class EquivalenceClasses {
   std::set<ECValue> TheMapping;
 
 public:
+  EquivalenceClasses() {}
+  EquivalenceClasses(const EquivalenceClasses &RHS) {
+    operator=(RHS);
+  }
+
+  const EquivalenceClasses &operator=(const EquivalenceClasses &RHS) {
+    for (iterator I = RHS.begin(), E = RHS.end(); I != E; ++I)
+      if (I->isLeader())
+        insert(I->getData());
+      else
+        unionSets(I->getData(), *RHS.findLeader(I));
+    return *this;
+  }
   
   //===--------------------------------------------------------------------===//
   // Inspection methods
@@ -132,6 +145,17 @@ public:
   member_iterator member_end() const {
     return member_iterator(0);
   }
+
+  /// getNumClasses - Return the number of equivalence classes in this set.
+  /// Note that this is a linear time operation.
+  unsigned getNumClasses() const {
+    unsigned NC = 0;
+    for (iterator I = begin(), E = end(); I != E; ++I)
+      if (I->isLeader()) ++NC;
+    return NC;
+  }
+
+
 
   //===--------------------------------------------------------------------===//
   // Mutation methods
