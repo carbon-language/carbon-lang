@@ -268,6 +268,9 @@ struct DominatorSet : public DominatorSetBase {
     AU.addRequired<ImmediateDominators>();
     AU.setPreservesAll();
   }
+
+  // stub - dummy function, just ignore it
+  static void stub();
 };
 
 
@@ -506,6 +509,9 @@ private:
                               const DominatorTree::Node *Node);
 };
 
+// Make sure that any clients of this file link in Dominators.cpp
+static IncludeFile
+DOMINATORS_INCLUDE_FILE((void*)&DominatorSet::stub);
 } // End llvm namespace
 
 #endif
