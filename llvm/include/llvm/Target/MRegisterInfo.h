@@ -242,14 +242,15 @@ public:
                            const TargetRegisterClass *RC) const = 0;
 
 
-  virtual bool canFoldMemoryOperand(MachineInstr* MI, unsigned i) const {
+  /// foldMemoryOperand - If this target supports it, fold a load or store of
+  /// the specified stack slot into the specified machine instruction for the
+  /// specified operand.  If this is possible, the target should perform the
+  /// folding and return true, otherwise it should return false.  If it folds
+  /// the instruction, it is likely that the MachineInstruction the iterator
+  /// references has been changed.
+  virtual bool foldMemoryOperand(MachineBasicBlock::iterator &MI,
+                                 unsigned OpNum, int FrameIndex) const {
     return false;
-  }
-
-  virtual int foldMemoryOperand(MachineInstr* MI,
-                                unsigned i,
-                                int FrameIndex) const {
-    return 0;
   }
 
   /// getCallFrameSetup/DestroyOpcode - These methods return the opcode of the
