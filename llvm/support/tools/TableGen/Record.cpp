@@ -153,7 +153,10 @@ void BitsInit::print(std::ostream &OS) const {
   OS << "{ ";
   for (unsigned i = 0, e = getNumBits(); i != e; ++i) {
     if (i) OS << ", ";
-    getBit(e-i-1)->print(OS);
+    if (Init *Bit = getBit(e-i-1))
+      Bit->print(OS);
+    else
+      OS << "*";
   }
   OS << " }";
 }
