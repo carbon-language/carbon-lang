@@ -49,7 +49,7 @@ static inline TypeClass getClass(const Type *Ty) {
   case Type::UShortTyID:  return cShort;     // Short operands are class #1
   case Type::IntTyID:
   case Type::UIntTyID:
-  case Type::PointerTyID: return cInt;       // Int's and pointers are class #2
+  case Type::PointerTyID: return cInt;       // Ints and pointers are class #2
 
   case Type::FloatTyID:
   case Type::DoubleTyID:  return cFP;        // Floating Point is #3
@@ -72,12 +72,14 @@ namespace {
   struct ISel : public FunctionPass, InstVisitor<ISel> {
     TargetMachine &TM;
     MachineFunction *F;                 // The function we are compiling into
-    Module *M;                          // Current module
     MachineBasicBlock *BB;              // The current MBB we are compiling
     int VarArgsFrameIndex;              // FrameIndex for start of varargs area
     int ReturnAddressIndex;             // FrameIndex for the return address
 
     std::map<Value*, unsigned> RegMap;  // Mapping between Val's and SSA Regs
+
+    // External functions used in the Module
+    std::map<std::string, Function*> Func;
 
     // MBBMap - Mapping between LLVM BB -> Machine BB
     std::map<const BasicBlock*, MachineBasicBlock*> MBBMap;
@@ -88,15 +90,23 @@ namespace {
 
     ISel(TargetMachine &tm) : TM(tm), F(0), BB(0) {}
 
-		bool doInitialization(Module &Mod) {
-      M = &Mod;
+    bool doInitialization(Module &M) {
       // Add external functions that we may call
-			Type *d = Type::DoubleTy;
-			// double fmod(double, double);
-			Mod.getOrInsertFunction("fmod", d, d, d, 0);
-			// { "__moddi3", "__divdi3", "__umoddi3", "__udivdi3" };
-			return false;
-		}
+      Type *d = Type::DoubleTy;
+      Type *l = Type::LongTy;
+      Type *ul = Type::ULongTy;
+      // double fmod(double, double);
+      Func["fmod"] = M.getOrInsertFunction("fmod", d, d, d, 0);
+      // long __moddi3(long, long);
+      Func["__moddi3"] = M.getOrInsertFunction("__moddi3", l, l, l, 0);
+      // long __divdi3(long, long);
+      Func["__divdi3"] = M.getOrInsertFunction("__divdi3", l, l, l, 0);
+      // unsigned long __umoddi3(unsigned long, unsigned long);
+      Func["__umoddi3"] = M.getOrInsertFunction("__umoddi3", ul, ul, ul, 0);
+      // unsigned long __udivdi3(unsigned long, unsigned long);
+      Func["__udivdi3"] = M.getOrInsertFunction("__udivdi3", ul, ul, ul, 0);
+      return false;
+    }
 
     /// runOnFunction - Top level implementation of instruction selection for
     /// the entire function.
@@ -515,7 +525,7 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
   };
   static const unsigned FPR[] = {
     PPC32::F1, PPC32::F2, PPC32::F3, PPC32::F4, PPC32::F5, PPC32::F6, PPC32::F7, 
-		PPC32::F8, PPC32::F9, PPC32::F10, PPC32::F11, PPC32::F12, PPC32::F13
+    PPC32::F8, PPC32::F9, PPC32::F10, PPC32::F11, PPC32::F12, PPC32::F13
   };
     
   MachineFrameInfo *MFI = F->getFrameInfo();
@@ -889,7 +899,7 @@ void ISel::visitSetCondInst(SetCondInst &I) {
   unsigned Op0Reg = getReg(I.getOperand(0));
   unsigned Op1Reg = getReg(I.getOperand(1));
   unsigned DestReg = getReg(I);
-	unsigned OpNum = I.getOpcode();
+  unsigned OpNum = I.getOpcode();
   const Type *Ty = I.getOperand (0)->getType();
                    
   EmitComparison(OpNum, I.getOperand(0), I.getOperand(1), BB, BB->end());
@@ -1208,9 +1218,9 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       PPC32::R7, PPC32::R8, PPC32::R9, PPC32::R10,
     };
     static const unsigned FPR[] = {
-	    PPC32::F1, PPC32::F2, PPC32::F3, PPC32::F4, PPC32::F5, PPC32::F6, 
-			PPC32::F7, PPC32::F8, PPC32::F9, PPC32::F10, PPC32::F11, PPC32::F12, 
-			PPC32::F13
+      PPC32::F1, PPC32::F2, PPC32::F3, PPC32::F4, PPC32::F5, PPC32::F6, 
+      PPC32::F7, PPC32::F8, PPC32::F9, PPC32::F10, PPC32::F11, PPC32::F12, 
+      PPC32::F13
     };
     unsigned GPR_idx = 0, FPR_idx = 0;
     
@@ -1949,10 +1959,8 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     } else {               // Floating point remainder...
       unsigned Op0Reg = getReg(Op0, BB, IP);
       unsigned Op1Reg = getReg(Op1, BB, IP);
-      Function *FmodFn = M->getNamedFunction("fmod");
-      assert(FmodFn && "fmod() does not exist in the module");
       MachineInstr *TheCall =
-        BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(FmodFn, true);
+        BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(Func["fmod"], true);
       std::vector<ValueRecord> Args;
       Args.push_back(ValueRecord(Op0Reg, Type::DoubleTy));
       Args.push_back(ValueRecord(Op1Reg, Type::DoubleTy));
@@ -1961,13 +1969,13 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     return;
   case cLong: {
      // FIXME: Make sure the module has external function
-     static const char *FnName[] =
+     static const char *Fn[] =
       { "__moddi3", "__divdi3", "__umoddi3", "__udivdi3" };
     unsigned Op0Reg = getReg(Op0, BB, IP);
     unsigned Op1Reg = getReg(Op1, BB, IP);
     unsigned NameIdx = Ty->isUnsigned()*2 + isDiv;
     MachineInstr *TheCall =
-      BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol(FnName[NameIdx], true);
+      BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(Func[Fn[NameIdx]], true);
 
     std::vector<ValueRecord> Args;
     Args.push_back(ValueRecord(Op0Reg, Type::LongTy));
