@@ -110,7 +110,6 @@ and Settings" directory).  We welcome patches to fix this issue.
 <p>
 <b>Linux/x86:</b> <br>
 <b>MacOS X/PowerPC:</b><br>
-<b>cygwin/x86:</b>
 </p>
 
 <pre>
@@ -122,9 +121,18 @@ and Settings" directory).  We welcome patches to fix this issue.
  % gmake all; gmake install
 </pre>
 
-<p>
-<b>Solaris/SPARC:</b>
-</p>
+<p><b>cygwin/x86:</b></p>
+
+<pre>
+ % cd build
+ % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls --disable-shared \
+   --enable-languages=c,c++ --disable-c-mbchar
+ % gmake all-gcc
+ % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
+ % gmake all; gmake install
+</pre>
+
+<p><b>Solaris/SPARC:</b></p>
 
 <p>
 For Solaris/SPARC, LLVM only supports the SPARC V9.  Therefore, the
