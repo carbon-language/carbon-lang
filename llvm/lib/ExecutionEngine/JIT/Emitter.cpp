@@ -187,7 +187,7 @@ void Emitter::startFunctionStub(const Function &F, unsigned StubSize) {
 void *Emitter::finishFunctionStub(const Function &F) {
   NumBytes += CurByte-CurBlock;
   DEBUG(std::cerr << "Finished CodeGen of [0x" << std::hex
-                  << (unsigned)(intptr_t)CurBlock
+                  << (uintptr_t)CurBlock
                   << std::dec << "] Function stub for: " << F.getName()
                   << ": " << CurByte-CurBlock << " bytes of text\n");
   std::swap(CurBlock, SavedCurBlock);
