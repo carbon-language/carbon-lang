@@ -92,7 +92,7 @@ static void CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End) {
     if (Diff > RelTolerance) {
       std::cerr << "Compared: " << V1 << " and " << V2 << ": diff = "
                 << Diff << "\n";
-      std::cerr << "Out of tolerence: rel/abs: " << RelTolerance
+      std::cerr << "Out of tolerance: rel/abs: " << RelTolerance
                 << "/" << AbsTolerance << "\n";
       exit(1);
     }
