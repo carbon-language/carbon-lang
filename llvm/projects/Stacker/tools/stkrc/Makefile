@@ -9,7 +9,7 @@ LEVEL=../../../..
 # Give the name of a library.  This will build a dynamic version.
 #
 TOOLNAME=stkrc
-USEDLIBS=stkr_compiler asmparser bcwriter vmcore support.a
+USEDLIBS=stkr_compiler asmparser bcwriter vmcore support.a LLVMsystem.a
 
 ifdef PARSE_DEBUG
 CPPFLAGS = -DPARSE_DEBUG=1
