@@ -19,8 +19,7 @@
 
 #include "Support/DynamicLinker.h"
 #include "Support/CommandLine.h"
-#include "Config/dlfcn.h"
-#include "Config/link.h"
+#include "Config/config.h"
 #include <iostream>
 using namespace llvm;
 
