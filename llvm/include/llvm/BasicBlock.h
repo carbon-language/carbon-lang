@@ -89,16 +89,6 @@ public:
   TerminatorInst *getTerminator();
   const TerminatorInst *const getTerminator() const;
   
-  // Provide a scoped predecessor and successor iterator
-  typedef PredIterator<BasicBlock, Value::use_iterator> pred_iterator;
-  typedef PredIterator<const BasicBlock, 
-                       Value::use_const_iterator> pred_const_iterator;
-
-  typedef SuccIterator<TerminatorInst*, BasicBlock> succ_iterator;
-  typedef SuccIterator<const TerminatorInst*,
-                       const BasicBlock> succ_const_iterator;
-  
-  
   //===--------------------------------------------------------------------===//
   /// Instruction iterator methods
   ///
