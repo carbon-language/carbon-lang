@@ -49,7 +49,7 @@ static void CheckAllGraphs(Module *M, GT &ECGraphs) {
         continue;  // Only check a graph once.
 
       DSGraph::NodeMapTy GlobalsGraphNodeMapping;
-      G.computeGlobalGraphMapping(GlobalsGraphNodeMapping);
+      G.computeGToGGMapping(GlobalsGraphNodeMapping);
     } 
 }
 #endif
