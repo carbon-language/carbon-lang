@@ -13,6 +13,13 @@
 #include <iostream>
 #include <vector>
 
+// for debug information selecton
+enum ModuloSchedDebugLevel_t { 
+  ModuloSchedDebugLevel_NoDebugInfo,
+  ModuloSchedDebugLevel_PrintSchedule,
+  ModuloSchedDebugLevel_PrintScheduleProcess,
+};
+
 class ModuloScheduling: NonCopyable {
 private:
 
@@ -48,6 +55,10 @@ private:
   typedef BasicBlock::InstListType InstListType;
   typedef std::vector<std::vector<ModuloSchedGraphNode*> > vvNodeType;
 
+
+
+
+
 public:
 
   ModuloScheduling(ModuloSchedGraph & _graph):
@@ -60,18 +71,23 @@ public:
 
   ~ModuloScheduling() {};
 
-  // for debug information selecton
-  enum DebugLevel_t {
-    DebugLevel_NoDebugInfo,
-    DebugLevel_PrintSchedule,
-    DebugLevel_PrintScheduleProcess,
-  };
 
-  static DebugLevel_t DebugLevel;
 
-  static bool printSchedule() { return DebugLevel >= DebugLevel_PrintSchedule; }
-  static bool printScheduleProcess() {
-    return DebugLevel >= DebugLevel_PrintScheduleProcess;
+  static bool 
+  printSchedule() { 
+
+    //return ModuloScheduling::DebugLevel >= DebugLevel_PrintSchedule; 
+    return false;
+
+
+  }
+  static bool 
+  printScheduleProcess() {
+  
+    //return DebugLevel >= DebugLevel_PrintScheduleProcess;
+    return false;
+
+
   }
 
   // The method to compute schedule and instert epilogue and prologue

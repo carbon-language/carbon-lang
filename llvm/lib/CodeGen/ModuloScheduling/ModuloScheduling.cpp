@@ -35,19 +35,19 @@
 // see ModuloSchedulingPass::runOnFunction()
 //************************************************************
 
-namespace {
-  cl::opt<ModuloScheduling::DebugLevel_t,true>
-    SDL_opt("modsched", cl::Hidden, cl::location(ModuloScheduling::DebugLevel),
-            cl::desc("enable modulo scheduling debugging information"),
-            cl::values(clEnumValN(ModuloScheduling::DebugLevel_NoDebugInfo,
-                                  "none", "disable debug output"),
-                       clEnumValN(ModuloScheduling::DebugLevel_PrintSchedule,
-                                  "psched", "print original and new schedule"),
-                       clEnumValN(ModuloScheduling::DebugLevel_PrintScheduleProcess,
-                                  "pschedproc",
-                                  "print how the new schdule is produced"),
-                       0));
-}
+ModuloSchedDebugLevel_t ModuloSchedDebugLevel;
+
+cl::opt<ModuloSchedDebugLevel_t,true>
+SDL_opt("modsched", cl::Hidden, cl::location(ModuloSchedDebugLevel),
+	cl::desc("enable modulo scheduling debugging information"),
+	cl::values(clEnumValN(ModuloSchedDebugLevel_NoDebugInfo,
+			      "none", "disable debug output"),
+		   clEnumValN(ModuloSchedDebugLevel_PrintSchedule,
+			      "psched", "print original and new schedule"),
+		   clEnumValN(ModuloSchedDebugLevel_PrintScheduleProcess,
+			      "pschedproc",
+			      "print how the new schdule is produced"),
+		   0));
 
 // Computes the schedule and inserts epilogue and prologue
 //
