@@ -14,8 +14,11 @@
 #ifndef ANALYZER_INTERNALS_H
 #define ANALYZER_INTERNALS_H
 
+#include "ReaderPrimitives.h"
 #include "Parser.h"
 #include "llvm/Bytecode/Analyzer.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 
 // Enable to trace to figure out what the heck is going on when parsing fails
 //#define TRACE_LEVEL 10
@@ -29,6 +32,14 @@
 #endif
 
 namespace llvm {
+
+inline void AbstractBytecodeParser::readBlock(const unsigned char *&Buf,
+			       const unsigned char *EndBuf, 
+			       unsigned &Type, unsigned &Size)
+{
+  Type = read(Buf, EndBuf);
+  Size = read(Buf, EndBuf);
+}
 
 class BytecodeAnalyzer {
   BytecodeAnalyzer(const BytecodeAnalyzer &);  // DO NOT IMPLEMENT
