@@ -203,6 +203,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     v2ssMap_.clear();
 
     DEBUG(
+        unsigned i = 0;
         for (MachineBasicBlockPtrs::iterator
                  mbbi = mbbs_.begin(), mbbe = mbbs_.end();
              mbbi != mbbe; ++mbbi) {
@@ -213,7 +214,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                  ii != ie; ++ii) {
                 MachineInstr* instr = *ii;
                      
-                std::cerr << "\t";
+                std::cerr << i++ << "\t";
                 instr->print(std::cerr, *tm_);
             }
         }
@@ -268,6 +269,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             }
         }
     }
+    
     DEBUG(std::cerr << "finished register allocation\n");
     DEBUG(printVirt2PhysMap());
 
