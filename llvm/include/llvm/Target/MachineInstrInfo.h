@@ -7,16 +7,15 @@
 #ifndef LLVM_TARGET_MACHINEINSTRINFO_H
 #define LLVM_TARGET_MACHINEINSTRINFO_H
 
-#include "Support/NonCopyable.h"
 #include "Support/DataTypes.h"
-#include "llvm/Constant.h"
-#include "llvm/DerivedTypes.h"
+#include <vector>
 
 class MachineInstrDescriptor;
 class MachineInstr;
 class TargetMachine;
 class Value;
 class Instruction;
+class Constant;
 class Function;
 class MachineCodeForInstruction;
 
@@ -50,7 +49,6 @@ extern const MachineInstrDescriptor *TargetInstrDescriptors;
 // 
 //---------------------------------------------------------------------------
 
-
 const unsigned	M_NOP_FLAG		= 1 << 0;
 const unsigned	M_BRANCH_FLAG		= 1 << 1;
 const unsigned	M_CALL_FLAG		= 1 << 2;
@@ -82,7 +80,7 @@ struct MachineInstrDescriptor {
 };
 
 
-class MachineInstrInfo : public NonCopyableV {
+class MachineInstrInfo {
 public:
   const TargetMachine& target;
 
@@ -91,6 +89,8 @@ protected:
   unsigned descSize;		// number of entries in the desc array
   unsigned numRealOpCodes;		// number of non-dummy op codes
   
+  MachineInstrInfo(const MachineInstrInfo &); // DO NOT IMPLEMENT
+  void operator=(const MachineInstrInfo &);   // DO NOT IMPLEMENT
 public:
   MachineInstrInfo(const TargetMachine& tgt,
                    const MachineInstrDescriptor *desc, unsigned descSize,
@@ -241,14 +241,12 @@ public:
   // Queries about representation of LLVM quantities (e.g., constants)
   //-------------------------------------------------------------------------
 
-  // Test if this type of constant must be loaded from memory into
-  // a register, i.e., cannot be set bitwise in register and cannot
-  // use immediate fields of instructions.  Note that this only makes
-  // sense for primitive types.
-  virtual bool ConstantTypeMustBeLoaded(const Constant* CV) const {
-    assert(CV->getType()->isPrimitiveType() || isa<PointerType>(CV->getType()));
-    return !(CV->getType()->isIntegral() || isa<PointerType>(CV->getType()));
-  }
+  /// ConstantTypeMustBeLoaded - Test if this type of constant must be loaded
+  /// from memory into a register, i.e., cannot be set bitwise in register and
+  /// cannot use immediate fields of instructions.  Note that this only makes
+  /// sense for primitive types.
+  ///
+  virtual bool ConstantTypeMustBeLoaded(const Constant* CV) const;
 
   // Test if this constant may not fit in the immediate field of the
   // machine instructions (probably) generated for this instruction.
