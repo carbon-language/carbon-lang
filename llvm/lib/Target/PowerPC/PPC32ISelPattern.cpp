@@ -290,16 +290,23 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
         // If we have 2 or more GPRs, we won't do anything and let the ISD::CALL
         // functionality in SelectExpr move pieces for us.
         if (GPR_remaining > 1) {
-          args_to_use.push_back(Args[i].first);
+          SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
+            Args[i].first, DAG.getConstant(1, MVT::i32));
+          SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
+            Args[i].first, DAG.getConstant(0, MVT::i32));
+          args_to_use.push_back(Hi);          
+          args_to_use.push_back(Lo);          
           GPR_remaining -= 2;
         } else if (GPR_remaining > 0) {
-          args_to_use.push_back(Args[i].first);
-          SDOperand LowPart = 
-            DAG.getNode(ISD::TRUNCATE, MVT::i32, Args[i].first);
+          SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
+            Args[i].first, DAG.getConstant(1, MVT::i32));
+          SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
+            Args[i].first, DAG.getConstant(0, MVT::i32));
+          args_to_use.push_back(Hi);          
           SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
           PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
           Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       LowPart, PtrOff));
+                                       Lo, PtrOff));
           --GPR_remaining;
         } else {
           Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
@@ -312,6 +319,7 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
           --FPR_remaining;
           ArgOffset += 4;
         } else if (FPR_remaining > 0) {
+          args_to_use.push_back(Args[i].first);
           --FPR_remaining;
           if (GPR_remaining > 0) --GPR_remaining;
         } else {
@@ -324,6 +332,7 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
         if (FPR_remaining > 0 && GPR_remaining > 0 && isVarArg) {
           --FPR_remaining;
         } else if (FPR_remaining > 0) {
+          args_to_use.push_back(Args[i].first);
           --FPR_remaining;
           if (GPR_remaining > 0) --GPR_remaining;
           if (GPR_remaining > 0) --GPR_remaining;
@@ -546,9 +555,11 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     return Result;
 
   case ISD::CopyFromReg:
-    // FIXME: Handle copy from physregs!
-    // Just use the specified register as our input.
-    return dyn_cast<RegSDNode>(Node)->getReg();
+    if (Result == 1)
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+    Tmp1 = dyn_cast<RegSDNode>(Node)->getReg();
+    BuildMI(BB, PPC::FMR, 1, Result).addReg(Tmp1);
+    return Result;
     
   case ISD::LOAD:
   case ISD::EXTLOAD:
@@ -749,13 +760,20 @@ unsigned ISel::SelectExpr(SDOperand N) {
         case MVT::f64:
           if (FPR_remaining > 0) {
             BuildMI(BB, PPC::FMR, 1, FPR[FPR_idx]).addReg(VRegs[i]);
+            ++FPR_idx;
             --FPR_remaining;
           }
           break;
         }
         // All arguments consume GPRs available for argument passing
-        if (GPR_remaining > 0) --GPR_remaining;
-        if (MVT::f64 == OperandType && GPR_remaining > 0) --GPR_remaining;
+        if (GPR_remaining > 0) { 
+          ++GPR_idx; 
+          --GPR_remaining;
+        }
+        if (MVT::f64 == OperandType && GPR_remaining > 0) {
+          ++GPR_idx;
+          --GPR_remaining;
+        }
     }
 
     // Emit the correct call instruction based on the type of symbol called.
