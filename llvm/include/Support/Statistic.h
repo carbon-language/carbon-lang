@@ -80,6 +80,8 @@ public:
   DataType operator--(int) { return Value--; }
   const Statistic &operator+=(const DataType &V) { Value += V; return *this; }
   const Statistic &operator-=(const DataType &V) { Value -= V; return *this; }
+  const Statistic &operator*=(const DataType &V) { Value *= V; return *this; }
+  const Statistic &operator/=(const DataType &V) { Value /= V; return *this; }
 };
 
 } // End llvm namespace
