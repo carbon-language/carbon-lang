@@ -122,11 +122,8 @@ static void AddLoadsAndStores(AllocaInst* XSlot, Instruction& X,
 }
 
 static void DeletePhis(PhiSet& phisToGo) {
-  for (PhiSetIterator PI=phisToGo.begin(), PE=phisToGo.end(); PI != PE; ++PI) {
-    assert((*PI)->use_size() == 0 && "This PHI should be DEAD!");
-    (*PI)->getParent()->getInstList().remove(*PI);
-    delete *PI;
-  }
+  for (PhiSetIterator PI = phisToGo.begin(), PE =phisToGo.end(); PI != PE; ++PI)
+    (*PI)->getParent()->getInstList().erase(*PI);
   phisToGo.clear();
 }
 
