@@ -9,7 +9,7 @@
 #define LLVM_TARGET_MACHINEREGINFO_H
 
 #include "Support/NonCopyable.h"
-#include <ext/hash_map>
+#include <Support/hash_map>
 #include <string>
 
 class TargetMachine;

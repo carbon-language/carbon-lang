@@ -148,7 +148,7 @@ ChooseBFpccInstruction(const InstructionNode* instrNode,
 static TmpInstruction*
 GetTmpForCC(Value* boolVal, const Function *F, const Type* ccType)
 {
-  typedef std::hash_map<const Value*, TmpInstruction*> BoolTmpCache;
+  typedef hash_map<const Value*, TmpInstruction*> BoolTmpCache;
   static BoolTmpCache boolToTmpCache;     // Map boolVal -> TmpInstruction*
   static const Function *lastFunction = 0;// Use to flush cache between funcs
   

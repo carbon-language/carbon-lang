@@ -27,7 +27,6 @@
 
 using std::vector;
 using std::pair;
-using std::hash_map;
 using std::cerr;
 
 //*********************** Internal Data Structures *************************/

@@ -34,7 +34,7 @@ class GlobalIdTable: public Annotation {
   static AnnotationID AnnotId;
   friend class AsmPrinter;              // give access to AnnotId
   
-  typedef std::hash_map<const Value*, int> ValIdMap;
+  typedef hash_map<const Value*, int> ValIdMap;
   typedef ValIdMap::const_iterator ValIdMapConstIterator;
   typedef ValIdMap::      iterator ValIdMapIterator;
 public:
@@ -474,7 +474,7 @@ private:
   void printConstant(         const Constant* CV, std::string valID = "");
 
   static void FoldConstants(const Module &M,
-                            std::hash_set<const Constant*> &moduleConstants);
+                            hash_set<const Constant*> &moduleConstants);
 };
 
 
@@ -741,10 +741,10 @@ SparcModuleAsmPrinter::printConstant(const Constant* CV, string valID)
 
 
 void SparcModuleAsmPrinter::FoldConstants(const Module &M,
-                                          std::hash_set<const Constant*> &MC) {
+                                          hash_set<const Constant*> &MC) {
   for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal()) {
-      const std::hash_set<const Constant*> &pool =
+      const hash_set<const Constant*> &pool =
         MachineCodeForMethod::get(I).getConstantPoolValues();
       MC.insert(pool.begin(), pool.end());
     }
@@ -774,7 +774,7 @@ void SparcModuleAsmPrinter::emitGlobalsAndConstants(const Module &M) {
   // lets force these constants into the slot table so that we can get
   // unique names for unnamed constants also.
   // 
-  std::hash_set<const Constant*> moduleConstants;
+  hash_set<const Constant*> moduleConstants;
   FoldConstants(M, moduleConstants);
     
   // Now, emit the three data sections separately; the cost of I/O should
@@ -786,7 +786,7 @@ void SparcModuleAsmPrinter::emitGlobalsAndConstants(const Module &M) {
     if (GI->hasInitializer() && GI->isConstant())
       printGlobalVariable(GI);
   
-  for (std::hash_set<const Constant*>::const_iterator
+  for (hash_set<const Constant*>::const_iterator
          I = moduleConstants.begin(),
          E = moduleConstants.end();  I != E; ++I)
     printConstant(*I);

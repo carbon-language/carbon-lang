@@ -25,7 +25,7 @@
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/Target/MachineSchedInfo.h"
 #include <list>
-#include <ext/hash_set>
+#include <Support/hash_set>
 #include <iostream>
 class Function;
 class MachineInstr;

@@ -12,10 +12,9 @@
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Annotation.h"
 #include <iterator>
-#include <ext/hash_set>
+#include <Support/hash_set>
 class Instruction;
 using std::vector;
-using std::hash_set;
 
 //---------------------------------------------------------------------------
 // class MachineOperand 

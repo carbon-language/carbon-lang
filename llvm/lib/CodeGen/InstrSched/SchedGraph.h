@@ -211,14 +211,14 @@ private:
 
 class SchedGraph :
   public NonCopyable,
-  private std::hash_map<const MachineInstr*, SchedGraphNode*>
+  private hash_map<const MachineInstr*, SchedGraphNode*>
 {
 private:
   std::vector<const BasicBlock*> bbVec; // basic blocks included in the graph
   SchedGraphNode* graphRoot;		// the root and leaf are not inserted
   SchedGraphNode* graphLeaf;		//  in the hash_map (see getNumNodes())
   
-  typedef std::hash_map<const MachineInstr*, SchedGraphNode*> map_base;
+  typedef hash_map<const MachineInstr*, SchedGraphNode*> map_base;
 public:
   using map_base::iterator;
   using map_base::const_iterator;

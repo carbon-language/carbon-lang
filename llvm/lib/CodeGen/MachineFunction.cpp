@@ -266,7 +266,7 @@ MachineCodeForMethod::popAllTempValues(const TargetMachine& target)
 int
 MachineCodeForMethod::getOffset(const Value* val) const
 {
-  std::hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
+  hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
   return (pair == offsets.end())? INVALID_FRAME_OFFSET : pair->second;
 }
 

@@ -12,7 +12,7 @@
 #include "llvm/Annotation.h"
 #include "Support/NonCopyable.h"
 #include "Support/HashExtras.h"
-#include <ext/hash_set>
+#include <Support/hash_set>
 class Value;
 class Function;
 class Constant;

@@ -270,7 +270,7 @@ SchedPriorities::instructionHasLastUse(FunctionLiveVarInfo &LVI,
 				       const SchedGraphNode* graphNode) {
   const MachineInstr *MI = graphNode->getMachineInstr();
   
-  std::hash_map<const MachineInstr*, bool>::const_iterator
+  hash_map<const MachineInstr*, bool>::const_iterator
     ui = lastUseMap.find(MI);
   if (ui != lastUseMap.end())
     return ui->second;

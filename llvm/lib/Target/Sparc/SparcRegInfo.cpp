@@ -1317,7 +1317,7 @@ UltraSparcRegInfo::insertCallerSavingCode(vector<MachineInstr*>& instrnsBefore,
   
   // has set to record which registers were saved/restored
   //
-  std::hash_set<unsigned> PushedRegSet;
+  hash_set<unsigned> PushedRegSet;
 
   CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI);
   
