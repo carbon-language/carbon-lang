@@ -19,13 +19,12 @@ class PrintModulePass : public Pass {
   std::ostream *Out;      // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
 public:
-  inline PrintModulePass(std::ostream *o = &std::cout, bool DS = false)
+  PrintModulePass() : Out(&std::cerr), DeleteStream(false) {}
+  PrintModulePass(std::ostream *o, bool DS = false)
     : Out(o), DeleteStream(DS) {
   }
 
-  const char *getPassName() const { return "Module Printer"; }
-  
-  inline ~PrintModulePass() {
+  ~PrintModulePass() {
     if (DeleteStream) delete Out;
   }
   
@@ -44,13 +43,12 @@ class PrintFunctionPass : public FunctionPass {
   std::ostream *Out;      // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
 public:
-  inline PrintFunctionPass(const std::string &B, std::ostream *o = &std::cout,
-                           bool DS = false)
+  PrintFunctionPass() : Banner(""), Out(&std::cerr), DeleteStream(false) {}
+  PrintFunctionPass(const std::string &B, std::ostream *o = &std::cout,
+                    bool DS = false)
     : Banner(B), Out(o), DeleteStream(DS) {
   }
 
-  const char *getPassName() const { return "Function Printer"; }
-  
   inline ~PrintFunctionPass() {
     if (DeleteStream) delete Out;
   }
