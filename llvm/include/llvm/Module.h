@@ -10,6 +10,7 @@
 
 #include "llvm/Value.h"
 #include "llvm/SymTabValue.h"
+#include "llvm/ValueHolder.h"
 class Method;
 
 class Module : public Value, public SymTabValue {
