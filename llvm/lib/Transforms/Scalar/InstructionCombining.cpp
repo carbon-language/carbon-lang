@@ -35,6 +35,7 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Pass.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -60,13 +61,23 @@ namespace {
     std::vector<Instruction*> WorkList;
     TargetData *TD;
 
-    void AddUsesToWorkList(Instruction &I) {
-      // The instruction was simplified, add all users of the instruction to
-      // the work lists because they might get more simplified now...
-      //
+    /// AddUsersToWorkList - When an instruction is simplified, add all users of
+    /// the instruction to the work lists because they might get more simplified
+    /// now.
+    ///
+    void AddUsersToWorkList(Instruction &I) {
       for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
            UI != UE; ++UI)
         WorkList.push_back(cast<Instruction>(*UI));
+    }
+
+    /// AddUsesToWorkList - When an instruction is simplified, add operands to
+    /// the work lists because they might get more simplified now.
+    ///
+    void AddUsesToWorkList(Instruction &I) {
+      for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+        if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(i)))
+          WorkList.push_back(Op);
     }
 
     // removeFromWorkList - remove all instances of I from the worklist.
@@ -133,10 +144,24 @@ namespace {
     // modified.
     //
     Instruction *ReplaceInstUsesWith(Instruction &I, Value *V) {
-      AddUsesToWorkList(I);         // Add all modified instrs to worklist
+      AddUsersToWorkList(I);         // Add all modified instrs to worklist
       I.replaceAllUsesWith(V);
       return &I;
     }
+
+    // EraseInstFromFunction - When dealing with an instruction that has side
+    // effects or produces a void value, we can't rely on DCE to delete the
+    // instruction.  Instead, visit methods should return the value returned by
+    // this function.
+    Instruction *EraseInstFromFunction(Instruction &I) {
+      assert(I.use_empty() && "Cannot erase instruction that is used!");
+      AddUsesToWorkList(I);
+      removeFromWorkList(&I);
+      I.getParent()->getInstList().erase(&I);
+      return 0;  // Don't do anything with FI
+    }
+
+
   private:
     /// InsertOperandCastBefore - This inserts a cast of V to DestTy before the
     /// InsertBefore instruction.  This is specialized a bit to avoid inserting
@@ -1909,6 +1934,23 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
 // CallInst simplification
 //
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
+  // Intrinsics cannot occur in an invoke, so handle them here instead of in
+  // visitCallSite.
+  if (Function *F = CI.getCalledFunction())
+    switch (F->getIntrinsicID()) {
+    case Intrinsic::memmove:
+    case Intrinsic::memcpy:
+    case Intrinsic::memset:
+      // memmove/cpy/set of zero bytes is a noop.
+      if (Constant *NumBytes = dyn_cast<Constant>(CI.getOperand(3))) {
+        if (NumBytes->isNullValue())
+          return EraseInstFromFunction(CI);
+      }
+      break;
+    default:
+      break;
+    }
+
   return visitCallSite(&CI);
 }
 
@@ -2074,7 +2116,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         // Otherwise, it's a call, just insert cast right after the call instr
         InsertNewInstBefore(NC, *Caller);
       }
-      AddUsesToWorkList(*Caller);
+      AddUsersToWorkList(*Caller);
     } else {
       NV = Constant::getNullValue(Caller->getType());
     }
@@ -2158,7 +2200,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       assert(Sum && "Constant folding of longs failed!?");
       GEP.setOperand(0, Src->getOperand(0));
       GEP.setOperand(1, Sum);
-      AddUsesToWorkList(*Src);   // Reduce use count of Src
+      AddUsersToWorkList(*Src);   // Reduce use count of Src
       return &GEP;
     } else if (Src->getNumOperands() == 2) {
       // Replace: gep (gep %P, long B), long A, ...
@@ -2289,11 +2331,8 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
 
   // If we have 'free null' delete the instruction.  This can happen in stl code
   // when lots of inlining happens.
-  if (isa<ConstantPointerNull>(Op)) {
-    FI.getParent()->getInstList().erase(&FI);
-    removeFromWorkList(&FI);
-    return 0;  // Don't do anything with FI
-  }
+  if (isa<ConstantPointerNull>(Op))
+    return EraseInstFromFunction(FI);
 
   return 0;
 }
@@ -2407,9 +2446,7 @@ bool InstCombiner::runOnFunction(Function &F) {
     if (isInstructionTriviallyDead(I)) {
       // Add operands to the worklist...
       if (I->getNumOperands() < 4)
-        for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-          if (Instruction *Op = dyn_cast<Instruction>(I->getOperand(i)))
-            WorkList.push_back(Op);
+        AddUsesToWorkList(*I);
       ++NumDeadInst;
 
       I->getParent()->getInstList().erase(I);
@@ -2420,9 +2457,7 @@ bool InstCombiner::runOnFunction(Function &F) {
     // Instruction isn't dead, see if we can constant propagate it...
     if (Constant *C = ConstantFoldInstruction(I)) {
       // Add operands to the worklist...
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (Instruction *Op = dyn_cast<Instruction>(I->getOperand(i)))
-          WorkList.push_back(Op);
+      AddUsesToWorkList(*I);
       ReplaceInstUsesWith(*I, C);
 
       ++NumConstProp;
@@ -2468,7 +2503,7 @@ bool InstCombiner::runOnFunction(Function &F) {
 
       if (Result) {
         WorkList.push_back(Result);
-        AddUsesToWorkList(*Result);
+        AddUsersToWorkList(*Result);
       }
       Changed = true;
     }
