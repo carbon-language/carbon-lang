@@ -58,7 +58,7 @@ unsigned X86RegisterInfo::getStackPointer() const {
 }
 
 const unsigned* X86RegisterInfo::getCalleeSaveRegs() const {
-  static const unsigned CalleeSaveRegs[] = { X86::ESI, X86::EDI, X86::EBX, X86::EBP,
+  static const unsigned CalleeSaveRegs[] = { X86::ESI, X86::EDI, X86::EBX,
                                              MRegisterInfo::NoRegister };
   return CalleeSaveRegs;
 }
@@ -68,4 +68,57 @@ const unsigned* X86RegisterInfo::getCallerSaveRegs() const {
   static const unsigned CallerSaveRegs[] = { X86::EAX, X86::ECX, X86::EDX,
                                              MRegisterInfo::NoRegister };
   return CallerSaveRegs;
+}
+
+MachineBasicBlock::iterator 
+X86RegisterInfo::emitPrologue(MachineBasicBlock *MBB,
+                              MachineBasicBlock::iterator MBBI,
+                              unsigned numBytes) const
+{
+  MachineInstr *MI;
+
+  // PUSH ebp
+  MI = BuildMI (X86::PUSHr32, 1).addReg(X86::EBP);
+  MBBI = ++(MBB->insert(MBBI, MI));
+
+  // MOV ebp, esp
+  MI = BuildMI (X86::MOVrr32, 2).addReg(X86::EBP).addReg(X86::ESP);
+  MBBI = ++(MBB->insert(MBBI, MI));  
+
+  // adjust stack pointer
+  MI  = BuildMI(X86::SUBri32, 2).addReg(X86::ESP).addZImm(numBytes);
+  MBBI = ++(MBB->insert(MBBI, MI));
+
+  // PUSH all callee-save registers
+  const unsigned* regs = getCalleeSaveRegs();
+  while (*regs) {
+    MI = BuildMI(X86::PUSHr32, 1).addReg(*regs);
+    MBBI = ++(MBB->insert(MBBI, MI));
+    ++regs;
+  }
+
+  return MBBI;
+}
+
+MachineBasicBlock::iterator
+X86RegisterInfo::emitEpilogue(MachineBasicBlock *MBB,
+                              MachineBasicBlock::iterator MBBI,
+                              unsigned numBytes) const
+{
+  MachineInstr *MI;
+
+  // POP all callee-save registers in REVERSE ORDER
+  static const unsigned regs[] = { X86::EBX, X86::EDI, X86::ESI,
+                                   MRegisterInfo::NoRegister };
+  unsigned idx = 0;
+  while (regs[idx]) {
+    MI = BuildMI(X86::POPr32, 1).addReg(regs[idx++]);
+    MBBI = ++(MBB->insert(MBBI, MI));
+  }
+  
+  // insert LEAVE
+  MI = BuildMI(X86::LEAVE, 0);
+  MBBI = ++(MBB->insert(MBBI, MI));
+  
+  return MBBI;
 }

@@ -35,6 +35,14 @@ struct X86RegisterInfo : public MRegisterInfo {
   const unsigned* getCalleeSaveRegs() const;
   const unsigned* getCallerSaveRegs() const;
 
+  MachineBasicBlock::iterator emitPrologue(MachineBasicBlock *MBB,
+                                           MachineBasicBlock::iterator MBBI,
+                                           unsigned numBytes) const;
+
+  MachineBasicBlock::iterator emitEpilogue(MachineBasicBlock *MBB,
+                                           MachineBasicBlock::iterator MBBI,
+                                           unsigned numBytes) const;
+
   /// Returns register class appropriate for input SSA register
   /// 
   const TargetRegisterClass *getClassForReg(unsigned Reg) const;
