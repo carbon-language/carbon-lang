@@ -25,7 +25,7 @@ LObjects := $(addprefix Output/,$(LObjs))
 # Link the library, then perform postlink optimization...
 $(DESTLIBNAME): $(DESTLIBDIR)/.dir $(LObjects)
 	$(LLINK) -f $(LObjects) $(LDFLAGS) | \
-	   $(LOPT) -f -cleangcc -raise -constprop -dce -o $@
+	   $(LOPT) -f -deadtypeelim -raise -constprop -dce -o $@
 
 # Install target for libraries: Copy into the gcc install directory in chris's
 # tree...
