@@ -11,6 +11,11 @@ a:link img, a:visited img {border-style: none}
 address img { float: right; width: 88px; height: 31px; }
 address     { clear: right; }
 
+TR, TD      { border: 2px solid gray; padding: 4pt 4pt 2pt 2pt; }
+TH          { border: 2px solid gray; font-weight: bold; font-size: 105%; }
+TABLE       { text-align: center; border: 2px solid black; 
+              border-collapse: collapse; margin-top: 1em; margin-left: 1em; 
+              margin-right: 1em; margin-bottom: 1em; }
 /* 
  * Documentation 
  */
@@ -58,3 +63,6 @@ address     { clear: right; }
                   padding: 0 1em 0 1em;
                   display:table;
                 }
+
+/* Left align table cell */
+.td_left        { border: 2px solid gray; text-align: left; }
