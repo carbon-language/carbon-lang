@@ -22,11 +22,12 @@ namespace {
       std::cout << "\n--- Basic Block: " << BB.getBasicBlock()->getName()<<"\n";
     }
 
-    void startFunctionStub(Function &F, unsigned StubSize) {
+    void startFunctionStub(const Function &F, unsigned StubSize) {
       std::cout << "\n--- Function stub for function: " << F.getName() << "\n";
     }
-    void finishFunctionStub(Function &F) {
+    void *finishFunctionStub(const Function &F) {
       std::cout << "\n";
+      return 0;
     }
     
     void emitByte(unsigned char B) {

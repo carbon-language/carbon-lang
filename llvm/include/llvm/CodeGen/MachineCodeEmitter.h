@@ -45,12 +45,12 @@ struct MachineCodeEmitter {
   /// specifies the total size required by the stub.  Stubs are not allowed to
   /// have constant pools, the can only use the other emit* methods.
   ///
-  virtual void startFunctionStub(Function &F, unsigned StubSize) {}
+  virtual void startFunctionStub(const Function &F, unsigned StubSize) {}
 
   /// finishFunctionStub - This callback is invoked to terminate a function
   /// stub.
   ///
-  virtual void finishFunctionStub(Function &F) {}
+  virtual void *finishFunctionStub(const Function &F) { return 0; }
 
   /// emitByte - This callback is invoked when a byte needs to be written to the
   /// output stream.
