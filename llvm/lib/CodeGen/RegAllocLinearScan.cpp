@@ -21,6 +21,7 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "Support/Debug.h"
+#include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include "LiveIntervals.h"
 #include "PhysRegTracker.h"
@@ -33,6 +34,10 @@
 using namespace llvm;
 
 namespace {
+
+    Statistic<double> efficiency
+    ("regalloc", "Ratio of intervals processed over total intervals");
+
     class RA : public MachineFunctionPass {
     private:
         MachineFunction* mf_;
@@ -178,7 +183,7 @@ void RA::linearScan()
         // pick the interval with the earliest start point
         IntervalPtrs::value_type cur = unhandled_.front();
         unhandled_.pop_front();
-
+        ++efficiency;
         DEBUG(std::cerr << "\n*** CURRENT ***: " << *cur << '\n');
 
         processActiveIntervals(cur);
@@ -201,6 +206,7 @@ void RA::linearScan()
         DEBUG(printIntervals("inactive", inactive_.begin(), inactive_.end()));
         // DEBUG(verifyAssignment());
     }
+    efficiency /= li_->getIntervals().size();
 
     // expire any remaining active intervals
     for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
