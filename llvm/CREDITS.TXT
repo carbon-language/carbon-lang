@@ -110,6 +110,10 @@ E: rspencer@x10sys.com
 W: http://llvm.x10sys.com/rspencer
 D: Stacker, llvmc, bytecode, other. See web page for current notes.
 
+N: Adam Treat
+E: manyoso@yahoo.com
+D: C++ bugs filed, and C++ front-end bug fixes.
+
 N: Bill Wendling
 E: wendling@isanbard.org
 D: The `Lower Setjmp/Longjmp' pass, improvements to the -lowerswitch pass.
