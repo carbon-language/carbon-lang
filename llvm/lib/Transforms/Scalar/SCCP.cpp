@@ -23,6 +23,7 @@
 #include "llvm/ConstantPool.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/iOther.h"
+#include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/Tools/STLExtras.h"
 #include "llvm/Assembly/Writer.h"
@@ -429,8 +430,13 @@ void SCCP::UpdateInstruction(Instruction *I) {
   
   //===-------------------------------------------------------------------===//
   // Handle Unary instructions...
+  //   Also treated as unary here, are cast instructions and getelementptr
+  //   instructions on struct* operands.
   //
-  if (I->isUnaryOp() || I->getOpcode() == Instruction::Cast) {
+  if (I->isUnaryOp() || I->getOpcode() == Instruction::Cast || 
+      (I->getOpcode() == Instruction::GetElementPtr &&
+       ((GetElementPtrInst*)I)->isStructSelector())) {
+
     Value *V = I->getOperand(0);
     InstVal &VState = getValueState(V);
     if (VState.isOverdefined()) {        // Inherit overdefinedness of operand
