@@ -16,9 +16,7 @@
 
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
-#include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/hash_map"
 #include <vector>
 #include <map>
 
@@ -52,6 +50,10 @@ namespace llvm {
     /// a call site.
     std::map<DSNode*, Function *> OneCalledFunction;
 
+    /// GlobalECs - The equivalence classes for each global value that is merged
+    /// with other global values in the DSGraphs.
+    EquivalenceClasses<GlobalValue*> GlobalECs;
+
   public:
     /// EquivClassGraphs - Computes the equivalence classes and then the
     /// folded DS graphs for each class.
@@ -61,6 +63,8 @@ namespace llvm {
     /// print - Print out the analysis results...
     ///
     void print(std::ostream &O, const Module *M) const;
+
+    EquivalenceClasses<GlobalValue*> &getGlobalECs() { return GlobalECs; }
 
     /// getDSGraph - Return the data structure graph for the specified function.
     /// This returns the folded graph.  The folded graph is the same as the CBU

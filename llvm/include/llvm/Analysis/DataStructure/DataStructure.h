@@ -18,11 +18,13 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/hash_map"
 #include "llvm/ADT/hash_set"
+#include "llvm/ADT/EquivalenceClasses.h"
 
 namespace llvm {
 
 class Type;
 class Instruction;
+class GlobalValue;
 class DSGraph;
 class DSNode;
 class DSNodeHandle;
@@ -46,6 +48,10 @@ class LocalDataStructures : public ModulePass {
   // DSInfo, one graph for each function
   hash_map<Function*, DSGraph*> DSInfo;
   DSGraph *GlobalsGraph;
+
+  /// GlobalECs - The equivalence classes for each global value that is merged
+  /// with other global values in the DSGraphs.
+  EquivalenceClasses<GlobalValue*> GlobalECs;
 public:
   ~LocalDataStructures() { releaseMemory(); }
 
@@ -65,6 +71,8 @@ public:
   }
 
   DSGraph &getGlobalsGraph() const { return *GlobalsGraph; }
+
+  EquivalenceClasses<GlobalValue*> &getGlobalECs() { return GlobalECs; }
 
   /// print - Print out the analysis results...
   ///
@@ -98,6 +106,10 @@ protected:
   // This map is only maintained during construction of BU Graphs
   std::map<std::vector<Function*>,
            std::pair<DSGraph*, std::vector<DSNodeHandle> > > *IndCallGraphMap;
+
+  /// GlobalECs - The equivalence classes for each global value that is merged
+  /// with other global values in the DSGraphs.
+  EquivalenceClasses<GlobalValue*> GlobalECs;
 public:
   ~BUDataStructures() { releaseMemory(); }
 
@@ -117,6 +129,9 @@ public:
   }
 
   DSGraph &getGlobalsGraph() const { return *GlobalsGraph; }
+
+  EquivalenceClasses<GlobalValue*> &getGlobalECs() { return GlobalECs; }
+
 
   /// deleteValue/copyValue - Interfaces to update the DSGraphs in the program.
   /// These correspond to the interfaces defined in the AliasAnalysis class.
@@ -162,6 +177,10 @@ class TDDataStructures : public ModulePass {
   hash_map<Function*, DSGraph*> DSInfo;
   hash_set<Function*> ArgsRemainIncomplete;
   DSGraph *GlobalsGraph;
+
+  /// GlobalECs - The equivalence classes for each global value that is merged
+  /// with other global values in the DSGraphs.
+  EquivalenceClasses<GlobalValue*> GlobalECs;
 public:
   ~TDDataStructures() { releaseMyMemory(); }
 
@@ -181,6 +200,8 @@ public:
   }
 
   DSGraph &getGlobalsGraph() const { return *GlobalsGraph; }
+  EquivalenceClasses<GlobalValue*> &getGlobalECs() { return GlobalECs; }
+
 
   /// deleteValue/copyValue - Interfaces to update the DSGraphs in the program.
   /// These correspond to the interfaces defined in the AliasAnalysis class.
