@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcRegClassInfo.h"
+#include "SparcInternals.h"
 #include "llvm/Type.h"
 #include "../../CodeGen/RegAlloc/RegAllocCommon.h"   // FIXME!
 
@@ -22,7 +23,7 @@
 //  
 //-----------------------------------------------------------------------------
 void SparcIntRegClass::colorIGNode(IGNode * Node,
-                                   std::vector<bool> &IsColorUsedArr) const
+                               const std::vector<bool> &IsColorUsedArr) const
 {
   LiveRange *LR = Node->getParentLR();
 
@@ -129,7 +130,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node,
 // depends solely on the opcode, so the name can be chosen in EmitAssembly.
 //-----------------------------------------------------------------------------
 void SparcIntCCRegClass::colorIGNode(IGNode *Node,
-                                     std::vector<bool> &IsColorUsedArr) const
+                                 const std::vector<bool> &IsColorUsedArr) const
 {
   if (Node->getNumOfNeighbors() > 0)
     Node->getParentLR()->markForSpill();
@@ -177,13 +178,21 @@ void SparcIntCCRegClass::colorIGNode(IGNode *Node,
 //
 //----------------------------------------------------------------------------
 void SparcFloatRegClass::colorIGNode(IGNode * Node,
-                                     std::vector<bool> &IsColorUsedArr) const
+                                 const std::vector<bool> &IsColorUsedArr) const
 {
   LiveRange *LR = Node->getParentLR();
 
-  // Mark the second color for double-precision registers:
-  // This is UGLY and should be merged into nearly identical code
-  // in RegClass::colorIGNode that handles the first color.
+#ifndef NDEBUG
+  // Check that the correct colors have been are marked for fp-doubles.
+  // 
+  // FIXME: This is old code that is no longer needed.  Temporarily converting
+  // it into a big assertion just to check that the replacement logic
+  // (invoking SparcFloatRegClass::markColorsUsed() directly from
+  // RegClass::colorIGNode) works correctly.
+  // 
+  // In fact, this entire function should be identical to
+  // SparcIntRegClass::colorIGNode(), and perhaps can be
+  // made into a general case in CodeGen/RegAlloc/RegClass.cpp.  
   // 
   unsigned NumNeighbors =  Node->getNumOfNeighbors();   // total # of neighbors
   for(unsigned n=0; n < NumNeighbors; n++) {            // for each neigh 
@@ -192,17 +201,19 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
     
     if (NeighLR->hasColor() &&
 	NeighLR->getType() == Type::DoubleTy) {
-      IsColorUsedArr[ (NeighLR->getColor()) + 1 ] = true;  
+      assert(IsColorUsedArr[ NeighLR->getColor() ] &&
+             IsColorUsedArr[ NeighLR->getColor()+1 ]);
       
     } else if (NeighLR->hasSuggestedColor() &&
                NeighLR-> isSuggestedColorUsable() ) {
 
       // if the neighbour can use the suggested color 
-      IsColorUsedArr[ NeighLR->getSuggestedColor() ] = true;
+      assert(IsColorUsedArr[ NeighLR->getSuggestedColor() ]);
       if (NeighLR->getType() == Type::DoubleTy)
-        IsColorUsedArr[ (NeighLR->getSuggestedColor()) + 1 ] = true;  
+        assert(IsColorUsedArr[ NeighLR->getSuggestedColor()+1 ]);
     }
   }
+#endif
 
   // **NOTE: We don't check for call interferences in allocating suggested
   // color in this class since ALL registers are volatile. If this fact
@@ -275,6 +286,58 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
   }
 }
 
+//-----------------------------------------------------------------------------
+// This method marks the registers used for a given register number.
+// This marks a single register for Float regs, but the R,R+1 pair
+// for double-precision registers.
+//-----------------------------------------------------------------------------
+
+void SparcFloatRegClass::markColorsUsed(unsigned RegInClass,
+                                        int UserRegType,
+                                        int RegTypeWanted,
+                                    std::vector<bool> &IsColorUsedArr) const
+{
+  if (UserRegType == UltraSparcRegInfo::FPDoubleRegType ||
+      RegTypeWanted == UltraSparcRegInfo::FPDoubleRegType) {
+    // This register is used as or is needed as a double-precision reg.
+    // We need to mark the [even,odd] pair corresponding to this reg.
+    // Get the even numbered register corresponding to this reg.
+    unsigned EvenRegInClass = RegInClass & ~1u;
+    assert(EvenRegInClass+1 < NumOfAllRegs &&
+           EvenRegInClass+1 < IsColorUsedArr.size());
+    IsColorUsedArr[EvenRegInClass]   = true;
+    IsColorUsedArr[EvenRegInClass+1] = true;
+  }
+  else {
+    assert(RegInClass < NumOfAllRegs && RegInClass < IsColorUsedArr.size());
+    assert(UserRegType == RegTypeWanted
+           && "Something other than FP single/double types share a reg class?");
+    IsColorUsedArr[RegInClass] = true;
+  }
+}
+
+// This method finds unused registers of the specified register type,
+// using the given "used" flag array IsColorUsedArr.  It checks a single
+// entry in the array directly for float regs, and checks the pair [R,R+1]
+// for double-precision registers
+// It returns -1 if no unused color is found.
+// 
+int SparcFloatRegClass::findUnusedColor(int RegTypeWanted,
+                                const std::vector<bool> &IsColorUsedArr) const
+{
+  if (RegTypeWanted == UltraSparcRegInfo::FPDoubleRegType) {
+    unsigned NC = 2 * this->getNumOfAvailRegs();
+    assert(IsColorUsedArr.size() == NC && "Invalid colors-used array");
+    for (unsigned c = 0; c < NC; c+=2)
+      if (!IsColorUsedArr[c]) {
+        assert(!IsColorUsedArr[c+1] && "Incorrect used regs for FP double!");
+	return c;
+      }
+    return -1;
+  }
+  else
+    return TargetRegClassInfo::findUnusedColor(RegTypeWanted, IsColorUsedArr);
+}
 
 //-----------------------------------------------------------------------------
 // Helper method for coloring a node of Float Reg class.
@@ -285,22 +348,24 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
 int SparcFloatRegClass::findFloatColor(const LiveRange *LR, 
                                        unsigned Start,
                                        unsigned End, 
-                                       std::vector<bool> &IsColorUsedArr) const
+                               const std::vector<bool> &IsColorUsedArr) const
 {
-  bool ColorFound = false;
-  unsigned c;
-
   if (LR->getType() == Type::DoubleTy) { 
     // find first unused color for a double 
-    for (c=Start; c < End ; c+= 2)
-      if (!IsColorUsedArr[c] && !IsColorUsedArr[c+1]) 
+    assert(Start % 2 == 0 && "Odd register number could be used for double!");
+    for (unsigned c=Start; c < End ; c+= 2)
+      if (!IsColorUsedArr[c]) {
+        assert(!IsColorUsedArr[c+1] &&
+               "Incorrect marking of used regs for Sparc FP double!");
 	return c;
+      }
   } else {
     // find first unused color for a single
-    for (c = Start; c < End; c++)
+    for (unsigned c = Start; c < End; c++)
       if (!IsColorUsedArr[c])
         return c;
   }
-  
+
   return -1;
+
 }

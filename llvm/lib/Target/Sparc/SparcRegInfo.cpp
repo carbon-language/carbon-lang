@@ -229,12 +229,12 @@ int UltraSparcRegInfo::getRegTypeForClassAndType(unsigned regClassID,
   }
 }
 
-int UltraSparcRegInfo::getRegType(const Type* type) const
+int UltraSparcRegInfo::getRegTypeForDataType(const Type* type) const
 {
   return getRegTypeForClassAndType(getRegClassIDOfType(type), type);
 }
 
-int UltraSparcRegInfo::getRegType(const LiveRange *LR) const
+int UltraSparcRegInfo::getRegTypeForLR(const LiveRange *LR) const
 {
   return getRegTypeForClassAndType(LR->getRegClassID(), LR->getType());
 }
@@ -355,27 +355,26 @@ UltraSparcRegInfo::suggestReg4CallAddr(MachineInstr * CallMI,
 void UltraSparcRegInfo::suggestRegs4MethodArgs(const Function *Meth, 
 					       LiveRangeInfo& LRI) const 
 {
-  // check if this is a varArgs function. needed for choosing regs.
+  // Check if this is a varArgs function. needed for choosing regs.
   bool isVarArgs = isVarArgsFunction(Meth->getType());
   
-  // for each argument.  count INT and FP arguments separately.
-  unsigned argNo=0, intArgNo=0, fpArgNo=0;
+  // Count the arguments, *ignoring* whether they are int or FP args.
+  // Use this common arg numbering to pick the right int or fp register.
+  unsigned argNo=0;
   for(Function::const_aiterator I = Meth->abegin(), E = Meth->aend();
       I != E; ++I, ++argNo) {
-    // get the LR of arg
     LiveRange *LR = LRI.getLiveRangeForValue(I);
     assert(LR && "No live range found for method arg");
     
-    unsigned regType = getRegType(LR);
-    unsigned regClassIDOfArgReg = BadRegClass; // reg class of chosen reg (unused)
+    unsigned regType = getRegTypeForLR(LR);
+    unsigned regClassIDOfArgReg = BadRegClass; // for chosen reg (unused)
     
     int regNum = (regType == IntRegType)
-      ? regNumForIntArg(/*inCallee*/ true, isVarArgs,
-                        argNo, regClassIDOfArgReg)
-      : regNumForFPArg(regType, /*inCallee*/ true, isVarArgs,
-                       argNo, regClassIDOfArgReg); 
+      ? regNumForIntArg(/*inCallee*/ true, isVarArgs, argNo, regClassIDOfArgReg)
+      : regNumForFPArg(regType, /*inCallee*/ true, isVarArgs, argNo,
+                       regClassIDOfArgReg); 
     
-    if(regNum != getInvalidRegNum())
+    if (regNum != getInvalidRegNum())
       LR->setSuggestedColor(regNum);
   }
 }
@@ -403,7 +402,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
     LiveRange *LR = LRI.getLiveRangeForValue(I);
     assert( LR && "No live range found for method arg");
 
-    unsigned regType = getRegType(LR);
+    unsigned regType = getRegTypeForLR(LR);
     unsigned RegClassID = LR->getRegClassID();
     
     // Find whether this argument is coming in a register (if not, on stack)
@@ -601,7 +600,7 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
     if (!LR)
       continue;                    // no live ranges for constants and labels
 
-    unsigned regType = getRegType(LR);
+    unsigned regType = getRegTypeForLR(LR);
     unsigned regClassIDOfArgReg = BadRegClass; // chosen reg class (unused)
 
     // Choose a register for this arg depending on whether it is
@@ -623,242 +622,6 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
 
 
 //---------------------------------------------------------------------------
-// Helper method for UltraSparcRegInfo::colorCallArgs().
-//---------------------------------------------------------------------------
-    
-void
-UltraSparcRegInfo::InitializeOutgoingArg(MachineInstr* CallMI,
-                             AddedInstrns *CallAI,
-                             PhyRegAlloc &PRA, LiveRange* LR,
-                             unsigned regType, unsigned RegClassID,
-                             int UniArgRegOrNone, unsigned argNo,
-                             std::vector<MachineInstr*> &AddedInstrnsBefore)
-  const
-{
-  assert(0 && "Should never get here because we are now using precopying!");
-
-  MachineInstr *AdMI;
-  bool isArgInReg = false;
-  unsigned UniArgReg = BadRegClass;          // unused unless initialized below
-  if (UniArgRegOrNone != getInvalidRegNum())
-    {
-      isArgInReg = true;
-      UniArgReg = (unsigned) UniArgRegOrNone;
-    }
-  
-  if (! LR->isMarkedForSpill()) {
-    unsigned UniLRReg = getUnifiedRegNum(RegClassID, LR->getColor());
-    
-    // if LR received the correct color, nothing to do
-    if( isArgInReg && UniArgReg == UniLRReg )
-      return;
-    
-    // The LR is allocated to a register UniLRReg and must be copied
-    // to UniArgReg or to the stack slot.
-    // 
-    if( isArgInReg ) {
-      // Copy UniLRReg to UniArgReg
-      cpReg2RegMI(AddedInstrnsBefore, UniLRReg, UniArgReg, regType);
-    }
-    else {
-      // Copy UniLRReg to the stack to pass the arg on stack.
-      const TargetFrameInfo& frameInfo = target.getFrameInfo();
-      int argOffset = frameInfo.getOutgoingArgOffset(PRA.MF, argNo);
-      cpReg2MemMI(CallAI->InstrnsBefore,
-                  UniLRReg, getStackPointer(), argOffset, regType);
-    }
-
-  } else {                          // LR is not colored (i.e., spilled)      
-    
-    if( isArgInReg ) {
-      // Insert a load instruction to load the LR to UniArgReg
-      cpMem2RegMI(AddedInstrnsBefore, getFramePointer(),
-                  LR->getSpillOffFromFP(), UniArgReg, regType);
-                                        // Now add the instruction
-    }
-      
-    else {
-      // Now, we have to pass the arg on stack. Since LR  also did NOT
-      // receive a register we have to move an argument in memory to 
-      // outgoing parameter on stack.
-      // Use TReg to load and store the value.
-      // Use TmpOff to save TReg, since that may have a live value.
-      // 
-      int TReg = PRA.getUniRegNotUsedByThisInst(LR->getRegClass(), CallMI);
-      int TmpOff = PRA.MF.getInfo()->
-	             pushTempValue(getSpilledRegSize(getRegType(LR)));
-      const TargetFrameInfo& frameInfo = target.getFrameInfo();
-      int argOffset = frameInfo.getOutgoingArgOffset(PRA.MF, argNo);
-      
-      MachineInstr *Ad1, *Ad2, *Ad3, *Ad4;
-        
-      // Sequence:
-      // (1) Save TReg on stack    
-      // (2) Load LR value into TReg from stack pos of LR
-      // (3) Store Treg on outgoing Arg pos on stack
-      // (4) Load the old value of TReg from stack to TReg (restore it)
-      // 
-      // OPTIMIZE THIS:
-      // When reverse pointers in MahineInstr are introduced: 
-      // Call PRA.getUnusedRegAtMI(....) to get an unused reg. Step 1 is
-      // needed only if this fails. Currently, we cannot call the
-      // above method since we cannot find LVSetBefore without the BB 
-      // 
-      // NOTE: We directly add to CallAI->InstrnsBefore instead of adding to
-      // AddedInstrnsBefore since these instructions must not be reordered.
-      cpReg2MemMI(CallAI->InstrnsBefore,
-                  TReg, getFramePointer(), TmpOff, regType);
-      cpMem2RegMI(CallAI->InstrnsBefore,
-                  getFramePointer(), LR->getSpillOffFromFP(), TReg, regType); 
-      cpReg2MemMI(CallAI->InstrnsBefore,
-                  TReg, getStackPointer(), argOffset, regType);
-      cpMem2RegMI(CallAI->InstrnsBefore,
-                  getFramePointer(), TmpOff, TReg, regType); 
-    }
-  }
-}
-
-//---------------------------------------------------------------------------
-// After graph coloring, we have call this method to see whehter the return
-// value and the call args received the correct colors. If not, we have
-// to instert copy instructions.
-//---------------------------------------------------------------------------
-
-void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
-				      LiveRangeInfo &LRI,
-				      AddedInstrns *CallAI,
-				      PhyRegAlloc &PRA,
-				      const BasicBlock *BB) const {
-
-  assert ( (target.getInstrInfo()).isCall(CallMI->getOpCode()) );
-
-  CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI); 
-  
-  // First color the return value of the call.
-  // If there is a LR for the return value, it means this
-  // method returns a value
-  
-  MachineInstr *AdMI;
-
-  const Value *RetVal = argDesc->getReturnValue();
-
-  if (RetVal) {
-    LiveRange *RetValLR = LRI.getLiveRangeForValue( RetVal );
-    assert(RetValLR && "ERROR: No LR for non-void return value");
-
-    // Mark the return value register as used by this instruction
-    unsigned RegClassID = RetValLR->getRegClassID();
-    unsigned CorrectCol = (RegClassID == IntRegClassID
-                           ? (unsigned) SparcIntRegClass::o0
-                           : (unsigned) SparcFloatRegClass::f0);
-    
-    CallMI->insertUsedReg(getUnifiedRegNum(RegClassID, CorrectCol));	
-    
-  } // if there a return value
-  
-
-  //-------------------------------------------
-  // Now color all args of the call instruction
-  //-------------------------------------------
-
-  std::vector<MachineInstr*> AddedInstrnsBefore;
-  
-  unsigned NumOfCallArgs = argDesc->getNumArgs();
-  
-  for(unsigned argNo=0, i=0, intArgNo=0, fpArgNo=0;
-      i < NumOfCallArgs; ++i, ++argNo) {    
-    
-    const Value *CallArg = argDesc->getArgInfo(i).getArgVal();
-    unsigned regType = getRegType(CallArg->getType());
-
-    // Find whether this argument is coming in a register (if not, on stack)
-    // Also find the correct register the argument must use (UniArgReg)
-    //
-    bool isArgInReg = false;
-    int UniArgReg = getInvalidRegNum();	  // reg that LR MUST be colored with
-    unsigned regClassIDOfArgReg = BadRegClass; // reg class of chosen reg
-    
-    // Find the register that must be used for this arg, depending on
-    // whether it is an INT or FP value.  Here we ignore whether or not it
-    // is a varargs calls, because FP arguments will be explicitly copied
-    // to an integer Value and handled under (argCopy != NULL) below.
-    // 
-    int regNum = (regType == IntRegType)
-      ? regNumForIntArg(/*inCallee*/ false, /*isVarArgs*/ false,
-                        argNo, regClassIDOfArgReg)
-      : regNumForFPArg(regType, /*inCallee*/ false, /*isVarArgs*/ false,
-                       argNo, regClassIDOfArgReg); 
-    
-    if (regNum != getInvalidRegNum()) {
-      isArgInReg = true;
-      UniArgReg = getUnifiedRegNum(regClassIDOfArgReg, regNum);
-      CallMI->insertUsedReg(UniArgReg);         // mark the reg as used
-    }
-
-    // Repeat for the second copy of the argument, which would be
-    // an FP argument being passed to a function with no prototype.
-    // It may either be passed as a copy in an integer register
-    // (in argCopy), or on the stack (useStackSlot).
-    int argCopyReg = argDesc->getArgInfo(i).getArgCopy();
-    if (argCopyReg != TargetRegInfo::getInvalidRegNum())
-      {
-        CallMI->insertUsedReg(argCopyReg); // mark the reg as used
-      }
-  }  // for each parameter in call instruction
-
-  // If we added any instruction before the call instruction, verify
-  // that they are in the proper order and if not, reorder them
-  // 
-  std::vector<MachineInstr*> ReorderedVec;
-  if (!AddedInstrnsBefore.empty()) {
-
-    if (DEBUG_RA) {
-      std::cerr << "\nCalling reorder with instrns: \n";
-      for(unsigned i=0; i < AddedInstrnsBefore.size(); i++)
-	std::cerr  << *(AddedInstrnsBefore[i]);
-    }
-
-    OrderAddedInstrns(AddedInstrnsBefore, ReorderedVec, PRA);
-    assert(ReorderedVec.size() >= AddedInstrnsBefore.size()
-           && "Dropped some instructions when reordering!");
-    
-    if (DEBUG_RA) {
-      std::cerr << "\nAfter reordering instrns: \n";
-      for(unsigned i = 0; i < ReorderedVec.size(); i++)
-	std::cerr << *ReorderedVec[i];
-    }
-  }
-  
-  // Now insert caller saving code for this call instruction
-  //
-  insertCallerSavingCode(CallAI->InstrnsBefore, CallAI->InstrnsAfter,
-                         CallMI, BB, PRA);
-  
-  // Then insert the final reordered code for the call arguments.
-  // 
-  for(unsigned i=0; i < ReorderedVec.size(); i++)
-    CallAI->InstrnsBefore.push_back( ReorderedVec[i] );
-
-#ifndef NDEBUG
-  // Temporary sanity checking code to detect whether the same machine
-  // instruction is ever inserted twice before/after a call.
-  // I suspect this is happening but am not sure. --Vikram, 7/1/03.
-  // 
-  std::set<const MachineInstr*> instrsSeen;
-  for (int i = 0, N = CallAI->InstrnsBefore.size(); i < N; ++i) {
-    assert(instrsSeen.find(CallAI->InstrnsBefore[i]) == instrsSeen.end() &&
-           "Duplicate machine instruction in InstrnsBefore!");
-    instrsSeen.insert(CallAI->InstrnsBefore[i]);
-  } 
-  for (int i = 0, N = CallAI->InstrnsAfter.size(); i < N; ++i) {
-    assert(instrsSeen.find(CallAI->InstrnsAfter[i]) == instrsSeen.end() &&
-           "Duplicate machine instruction in InstrnsBefore/After!");
-    instrsSeen.insert(CallAI->InstrnsAfter[i]);
-  } 
-#endif
-}
-
-//---------------------------------------------------------------------------
 // this method is called for an LLVM return instruction to identify which
 // values will be returned from this method and to suggest colors.
 //---------------------------------------------------------------------------
@@ -878,41 +641,6 @@ void UltraSparcRegInfo::suggestReg4RetValue(MachineInstr *RetMI,
       LR->setSuggestedColor(LR->getRegClassID() == IntRegClassID
                             ? (unsigned) SparcIntRegClass::i0
                             : (unsigned) SparcFloatRegClass::f0);
-}
-
-
-
-//---------------------------------------------------------------------------
-// Colors the return value of a method to %i0 or %f0, if possible. If it is
-// not possilbe to directly color the LR, insert a copy instruction to move
-// the LR to %i0 or %f0. When the LR is spilled, instead of the copy, we 
-// have to put a load instruction.
-//---------------------------------------------------------------------------
-void UltraSparcRegInfo::colorRetValue(MachineInstr *RetMI, 
-				      LiveRangeInfo &LRI,
-				      AddedInstrns *RetAI) const {
-
-  assert((target.getInstrInfo()).isReturn( RetMI->getOpCode()));
-
-  // To find the return value (if any), we can get the LLVM return instr.
-  // from the return address register, which is the first operand
-  Value* tmpI = RetMI->getOperand(0).getVRegValue();
-  ReturnInst* retI=cast<ReturnInst>(cast<TmpInstruction>(tmpI)->getOperand(0));
-  if (const Value *RetVal = retI->getReturnValue()) {
-
-    unsigned RegClassID = getRegClassIDOfType(RetVal->getType());
-    unsigned regType = getRegType(RetVal->getType());
-    unsigned CorrectCol = (RegClassID == IntRegClassID
-                           ? (unsigned) SparcIntRegClass::i0
-                           : (unsigned) SparcFloatRegClass::f0);
-
-    // convert to unified number
-    unsigned UniRetReg = getUnifiedRegNum(RegClassID, CorrectCol);
-
-    // Mark the register as used by this instruction
-    RetMI->insertUsedReg(UniRetReg);
-  } // if there is a return value
-
 }
 
 //---------------------------------------------------------------------------
@@ -1126,7 +854,7 @@ UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
 void
 UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest,
                                  std::vector<MachineInstr*>& mvec) const {
-  int RegType = getRegType(Src->getType());
+  int RegType = getRegTypeForDataType(Src->getType());
   MachineInstr * MI = NULL;
 
   switch( RegType ) {
@@ -1251,7 +979,7 @@ UltraSparcRegInfo::insertCallerSavingCode
 	    
 	    // if we haven't already pushed that register
 
-	    unsigned RegType = getRegType(LR);
+	    unsigned RegType = getRegTypeForLR(LR);
 
 	    // Now get two instructions - to push on stack and pop from stack
 	    // and add them to InstrnsBefore and InstrnsAfter of the
@@ -1369,241 +1097,4 @@ void UltraSparcRegInfo::printReg(const LiveRange *LR) const {
   if (RegClassID == FloatRegClassID && LR->getType() == Type::DoubleTy)
     std::cerr << "+" << getUnifiedRegName(uRegName+1);
   std::cerr << "]\n";
-}
-
-//---------------------------------------------------------------------------
-// This method examines instructions inserted by RegAlloc code before a
-// machine instruction to detect invalid orders that destroy values before
-// they are used. If it detects such conditions, it reorders the instructions.
-//
-// The unordered instructions come in the UnordVec. These instructions are
-// instructions inserted by RegAlloc. All such instruction MUST have 
-// their USES BEFORE THE DEFS after reordering.
-// 
-// The UnordVec & OrdVec must be DISTINCT. The OrdVec must be empty when
-// this method is called.
-// 
-// This method uses two vectors for efficiency in accessing
-// 
-// Since instructions are inserted in RegAlloc, this assumes that the 
-// first operand is the source reg and the last operand is the dest reg.
-// It also does not consider operands that are both use and def.
-// 
-// All the uses are before THE def to a register
-//---------------------------------------------------------------------------
-
-void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
-					  std::vector<MachineInstr*> &OrdVec,
-                                          PhyRegAlloc &PRA) const{
-
-  /*
-    Problem: We can have instructions inserted by RegAlloc like
-    1. add %ox %g0 %oy
-    2. add %oy %g0 %oz, where z!=x or z==x
-
-    This is wrong since %oy used by 2 is overwritten by 1
-  
-    Solution:
-    We re-order the instructions so that the uses are before the defs
-
-    Algorithm:
-    
-    do
-      for each instruction 'DefInst' in the UnOrdVec
-         for each instruction 'UseInst' that follows the DefInst
-           if the reg defined by DefInst is used by UseInst
-	     mark DefInst as not movable in this iteration
-	 If DefInst is not marked as not-movable, move DefInst to OrdVec
-    while all instructions in DefInst are moved to OrdVec
-    
-    For moving, we call the move2OrdVec(). It checks whether there is a def
-    in it for the uses in the instruction to be added to OrdVec. If there
-    are no preceding defs, it just appends the instruction. If there is a
-    preceding def, it puts two instructions to save the reg on stack before
-    the load and puts a restore at use.
-
-  */
-
-  bool CouldMoveAll;
-  bool DebugPrint = false;
-
-  do {
-    CouldMoveAll = true;
-    std::vector<MachineInstr*>::iterator DefIt = UnordVec.begin();
-
-    for( ; DefIt !=  UnordVec.end(); ++DefIt ) {
-
-      // for each instruction in the UnordVec do ...
-
-      MachineInstr *DefInst = *DefIt;
-
-      if( DefInst == NULL) continue;
-
-      //std::cerr << "\nInst in UnordVec = " <<  *DefInst;
-      
-      // last operand is the def (unless for a store which has no def reg)
-      MachineOperand& DefOp = DefInst->getOperand(DefInst->getNumOperands()-1);
-      
-      if ((DefOp.opIsDefOnly() || DefOp.opIsDefAndUse()) &&
-          DefOp.getType() == MachineOperand::MO_MachineRegister) {
-	
-	// If the operand in DefInst is a def ...
-	bool DefEqUse = false;
-	
-	std::vector<MachineInstr*>::iterator UseIt = DefIt;
-	UseIt++;
-	
-	for( ; UseIt !=  UnordVec.end(); ++UseIt ) {
-
-	  MachineInstr *UseInst = *UseIt;
-	  if( UseInst == NULL) continue;
-	  
-	  // for each inst (UseInst) that is below the DefInst do ...
-	  MachineOperand& UseOp = UseInst->getOperand(0);
-	  
-	  if (!UseOp.opIsDefOnly() &&  
-	      UseOp.getType() == MachineOperand::MO_MachineRegister) {
-	    
-	    // if use is a register ...
-	    
-	    if( DefOp.getMachineRegNum() == UseOp.getMachineRegNum() ) {
-	      
-	      // if Def and this use are the same, it means that this use
-	      // is destroyed by a def before it is used
-	      
-	      // std::cerr << "\nCouldn't move " << *DefInst;
-
-	      DefEqUse = true;
-	      CouldMoveAll = false;	
-	      DebugPrint = true;
-	      break;
-	    } // if two registers are equal
-	    
-	  } // if use is a register
-	  
-	}// for all use instructions
-	
-	if( ! DefEqUse ) {
-	  
-	  // after examining all the instructions that follow the DefInst
-	  // if there are no dependencies, we can move it to the OrdVec
-
-	  // std::cerr << "Moved to Ord: " << *DefInst;
-
-	  moveInst2OrdVec(OrdVec, DefInst, PRA);
-
-	  //OrdVec.push_back(DefInst);
-
-	  // mark the pos of DefInst with NULL to indicate that it is
-	  // empty
-	  *DefIt = NULL;
-	}
-    
-      } // if Def is a machine register
-      
-    } // for all instructions in the UnordVec
-    
-
-  } while(!CouldMoveAll);
-
-  if (DebugPrint && DEBUG_RA) {
-    std::cerr << "\nAdded instructions were reordered to:\n";
-    for(unsigned i=0; i < OrdVec.size(); i++)
-      std::cerr << *OrdVec[i];
-  }
-}
-
-
-
-
-
-void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr*> &OrdVec,
-					MachineInstr *UnordInst,
-					PhyRegAlloc &PRA) const {
-  MachineOperand& UseOp = UnordInst->getOperand(0);
-
-  if (!UseOp.opIsDefOnly() &&
-      UseOp.getType() ==  MachineOperand::MO_MachineRegister) {
-
-    // for the use of UnordInst, see whether there is a defining instr
-    // before in the OrdVec
-    bool DefEqUse = false;
-
-    std::vector<MachineInstr*>::iterator OrdIt = OrdVec.begin();
-  
-    for( ; OrdIt !=  OrdVec.end(); ++OrdIt ) {
-
-      MachineInstr *OrdInst = *OrdIt ;
-
-      MachineOperand& DefOp = 
-	OrdInst->getOperand(OrdInst->getNumOperands()-1);
-
-      if( (DefOp.opIsDefOnly() || DefOp.opIsDefAndUse()) &&  
-	  DefOp.getType() == MachineOperand::MO_MachineRegister) {
-
-	//std::cerr << "\nDefining Ord Inst: " <<  *OrdInst;
-	  
-	if( DefOp.getMachineRegNum() == UseOp.getMachineRegNum() ) {
-
-	  // we are here because there is a preceding def in the OrdVec 
-	  // for the use in this intr we are going to insert. This
-	  // happened because the original code was like:
-	  // 1. add %ox %g0 %oy
-	  // 2. add %oy %g0 %ox
-	  // In Round1, we added 2 to OrdVec but 1 remained in UnordVec
-	  // Now we are processing %ox of 1.
-	  // We have to 
-	      
-	  int UReg = DefOp.getMachineRegNum();
-	  int RegType = getRegType(UReg);
-	  MachineInstr *AdIBef, *AdIAft;
-	      
-	  int StackOff =
-	    PRA.MF.getInfo()->pushTempValue(getSpilledRegSize(RegType));
-	  
-	  // Save the UReg (%ox) on stack before it's destroyed
-          std::vector<MachineInstr*> mvec;
-	  cpReg2MemMI(mvec, UReg, getFramePointer(), StackOff, RegType);
-          for (std::vector<MachineInstr*>::iterator MI=mvec.begin();
-	       MI != mvec.end(); ++MI)
-            OrdIt = 1+OrdVec.insert(OrdIt, *MI);
-	  
-	  // Load directly into DReg (%oy)
-	  MachineOperand&  DOp=
-	    (UnordInst->getOperand(UnordInst->getNumOperands()-1));
-	  assert((DOp.opIsDefOnly() || DefOp.opIsDefAndUse()) &&
-                 "Last operand is not the def");
-	  const int DReg = DOp.getMachineRegNum();
-	  
-	  cpMem2RegMI(OrdVec, getFramePointer(), StackOff, DReg, RegType);
-	    
-	  if( DEBUG_RA ) {
-            std::cerr << "\nFixed CIRCULAR references by reordering:";
-	    std::cerr << "\nBefore CIRCULAR Reordering:\n";
-	    std::cerr << *UnordInst;
-	    std::cerr << *OrdInst;
-	  
-	    std::cerr << "\nAfter CIRCULAR Reordering - All Inst so far:\n";
-	    for(unsigned i=0; i < OrdVec.size(); i++)
-	      std::cerr << *(OrdVec[i]);
-	  }
-	  
-	  // Do not copy the UseInst to OrdVec
-	  DefEqUse = true;
-	  break;  
-	  
-	}// if two registers are equal
-
-      } // if Def is a register
-
-    } // for each instr in OrdVec
-
-    if(!DefEqUse) {  
-
-      // We didn't find a def in the OrdVec, so just append this inst
-      OrdVec.push_back( UnordInst );  
-      //std::cerr << "Reordered Inst (Moved Dn): " <<  *UnordInst;
-    }
-    
-  }// if the operand in UnordInst is a use
 }

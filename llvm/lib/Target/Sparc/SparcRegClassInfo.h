@@ -19,7 +19,8 @@ struct SparcIntRegClass : public TargetRegClassInfo {
   SparcIntRegClass(unsigned ID) 
     : TargetRegClassInfo(ID, NumOfAvailRegs, NumOfAllRegs) {  }
 
-  void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const;
+  void colorIGNode(IGNode *Node,
+                   const std::vector<bool> &IsColorUsedArr) const;
 
   inline bool isRegVolatile(int Reg) const {
     return (Reg < (int)StartOfNonVolatileRegs); 
@@ -81,12 +82,32 @@ struct SparcIntRegClass : public TargetRegClassInfo {
 
 class SparcFloatRegClass : public TargetRegClassInfo {
   int findFloatColor(const LiveRange *LR, unsigned Start,
-		     unsigned End, std::vector<bool> &IsColorUsedArr) const;
+		     unsigned End,
+                     const std::vector<bool> &IsColorUsedArr) const;
 public:
   SparcFloatRegClass(unsigned ID) 
     : TargetRegClassInfo(ID, NumOfAvailRegs, NumOfAllRegs) {}
 
-  void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const;
+  // This method marks the registers used for a given register number.
+  // This marks a single register for Float regs, but the R,R+1 pair
+  // for double-precision registers.
+  // 
+  virtual void markColorsUsed(unsigned RegInClass,
+                              int UserRegType,
+                              int RegTypeWanted,
+                              std::vector<bool> &IsColorUsedArr) const;
+  
+  // This method finds unused registers of the specified register type,
+  // using the given "used" flag array IsColorUsedArr.  It checks a single
+  // entry in the array directly for float regs, and checks the pair [R,R+1]
+  // for double-precision registers
+  // It returns -1 if no unused color is found.
+  // 
+  virtual int findUnusedColor(int RegTypeWanted,
+                              const std::vector<bool> &IsColorUsedArr) const;
+
+  void colorIGNode(IGNode *Node,
+                   const std::vector<bool> &IsColorUsedArr) const;
 
   // according to  Sparc 64 ABI, all %fp regs are volatile
   inline bool isRegVolatile(int Reg) const { return true; }
@@ -129,7 +150,8 @@ struct SparcIntCCRegClass : public TargetRegClassInfo {
   SparcIntCCRegClass(unsigned ID) 
     : TargetRegClassInfo(ID, 1, 3) {  }
   
-  void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const;
+  void colorIGNode(IGNode *Node,
+                   const std::vector<bool> &IsColorUsedArr) const;
 
   // according to  Sparc 64 ABI,  %ccr is volatile
   //
@@ -143,8 +165,6 @@ struct SparcIntCCRegClass : public TargetRegClassInfo {
 };
 
 
-
-
 //-----------------------------------------------------------------------------
 // Float CC Register Class
 // Only 4 Float CC registers are available for allocation.
@@ -154,7 +174,8 @@ struct SparcFloatCCRegClass : public TargetRegClassInfo {
   SparcFloatCCRegClass(unsigned ID) 
     : TargetRegClassInfo(ID, 4, 5) {  }
 
-  void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const {
+  void colorIGNode(IGNode *Node,
+                   const std::vector<bool> &IsColorUsedArr) const {
     for(unsigned c = 0; c != 4; ++c)
       if (!IsColorUsedArr[c]) { // find unused color
         Node->setColor(c);   
@@ -184,7 +205,8 @@ struct SparcSpecialRegClass : public TargetRegClassInfo {
   SparcSpecialRegClass(unsigned ID) 
     : TargetRegClassInfo(ID, 0, 1) {  }
 
-  void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const {
+  void colorIGNode(IGNode *Node,
+                   const std::vector<bool> &IsColorUsedArr) const {
     assert(0 && "SparcSpecialRegClass should never be used for allocation");
   }
   

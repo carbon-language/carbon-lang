@@ -385,13 +385,13 @@ public:
   void colorMethodArgs(const Function *Meth,  LiveRangeInfo &LRI,
 		       AddedInstrns *FirstAI) const;
 
-  void colorCallArgs(MachineInstr *CallMI, LiveRangeInfo &LRI,
-		     AddedInstrns *CallAI,  PhyRegAlloc &PRA,
-		     const BasicBlock *BB) const;
-
-  void colorRetValue(MachineInstr *RetI,   LiveRangeInfo& LRI,
-		     AddedInstrns *RetAI) const;
-
+  // This method inserts the caller saving code for call instructions
+  //
+  void insertCallerSavingCode(std::vector<MachineInstr*>& instrnsBefore,
+                              std::vector<MachineInstr*>& instrnsAfter,
+                              MachineInstr *CallMI, 
+			      const BasicBlock *BB,
+                              PhyRegAlloc &PRA ) const;
 
   // method used for printing a register for debugging purposes
   //
@@ -452,19 +452,15 @@ public:
   }
 
   // Get the register type for a register identified different ways.
-  int getRegType(const Type* type) const;
-  int getRegType(const LiveRange *LR) const;
+  // Note that getRegTypeForLR(LR) != getRegTypeForDataType(LR->getType())!
+  // The reg class of a LR depends both on the Value types in it and whether
+  // they are CC registers or not (for example).
+  int getRegTypeForDataType(const Type* type) const;
+  int getRegTypeForLR(const LiveRange *LR) const;
   int getRegType(int unifiedRegNum) const;
 
   virtual unsigned getFramePointer() const;
   virtual unsigned getStackPointer() const;
-
-  // This method inserts the caller saving code for call instructions
-  //
-  void insertCallerSavingCode(std::vector<MachineInstr*>& instrnsBefore,
-                              std::vector<MachineInstr*>& instrnsAfter,
-                              MachineInstr *MInst, 
-			      const BasicBlock *BB, PhyRegAlloc &PRA ) const;
 };
 
 
