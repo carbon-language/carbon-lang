@@ -604,7 +604,7 @@ void GetElementPtrInst::init(Value *Ptr, Value *Idx0, Value *Idx1) {
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
-				     const std::string &Name, Instruction *InBe)
+                                     const std::string &Name, Instruction *InBe)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                           Idx, true))),
                 GetElementPtr, 0, 0, Name, InBe) {
@@ -612,7 +612,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
-				     const std::string &Name, BasicBlock *IAE)
+                                     const std::string &Name, BasicBlock *IAE)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                           Idx, true))),
                 GetElementPtr, 0, 0, Name, IAE) {
@@ -628,7 +628,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
-		                     const std::string &Name, BasicBlock *IAE)
+                                     const std::string &Name, BasicBlock *IAE)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                           Idx0, Idx1, true))),
                 GetElementPtr, 0, 0, Name, IAE) {
@@ -738,7 +738,7 @@ void BinaryOperator::init(BinaryOps iType)
 }
 
 BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
-				       const std::string &Name,
+                                       const std::string &Name,
                                        Instruction *InsertBefore) {
   assert(S1->getType() == S2->getType() &&
          "Cannot create binary operator with two operands of differing type!");
@@ -754,7 +754,7 @@ BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
 }
 
 BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
-				       const std::string &Name,
+                                       const std::string &Name,
                                        BasicBlock *InsertAtEnd) {
   BinaryOperator *Res = create(Op, S1, S2, Name);
   InsertAtEnd->getInstList().push_back(Res);
