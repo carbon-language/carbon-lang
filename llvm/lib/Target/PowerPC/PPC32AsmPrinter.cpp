@@ -75,6 +75,7 @@ namespace {
 
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool elideOffsetKeyword = false);
+    void printImmOp(const MachineOperand &MO, unsigned ArgType);
     void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);    
     bool doInitialization(Module &M);
@@ -419,13 +420,11 @@ void Printer::printOp(const MachineOperand &MO,
     return;
 
   case MachineOperand::MO_SignExtendedImmed:
-    O << (short)MO.getImmedValue();
+  case MachineOperand::MO_UnextendedImmed:
+    std::cerr << "printOp() does not handle immediate values\n";
+    abort();
     return;
 
-  case MachineOperand::MO_UnextendedImmed:
-    O << (unsigned short)MO.getImmedValue();
-    return;
-    
   case MachineOperand::MO_PCRelativeDisp:
     std::cerr << "Shouldn't use addPCDisp() when building PPC MachineInstrs";
     abort();
@@ -479,6 +478,17 @@ void Printer::printOp(const MachineOperand &MO,
   }
 }
 
+void Printer::printImmOp(const MachineOperand &MO, unsigned ArgType) {
+  int Imm = MO.getImmedValue();
+  if (ArgType == PPC32II::Simm16 || ArgType == PPC32II::Disimm16) {
+    O << (short)Imm;
+  } else if (ArgType == PPC32II::Zimm16) {
+    O << (unsigned short)Imm;
+  } else {
+    O << Imm;
+  }
+}
+
 /// printMachineInstruction -- Print out a single PPC32 LLVM instruction
 /// MI in Darwin syntax to the current output stream.
 ///
@@ -486,11 +496,10 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   unsigned Opcode = MI->getOpcode();
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   const TargetInstrDescriptor &Desc = TII.get(Opcode);
-  unsigned int i;
+  unsigned i;
 
-  unsigned int ArgCount = MI->getNumOperands();
-    //Desc.TSFlags & PPC32II::ArgCountMask;
-  unsigned int ArgType[] = {
+  unsigned ArgCount = MI->getNumOperands();
+  unsigned ArgType[] = {
     (Desc.TSFlags >> PPC32II::Arg0TypeShift) & PPC32II::ArgTypeMask,
     (Desc.TSFlags >> PPC32II::Arg1TypeShift) & PPC32II::ArgTypeMask,
     (Desc.TSFlags >> PPC32II::Arg2TypeShift) & PPC32II::ArgTypeMask,
@@ -516,15 +525,15 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     O << "\n";
     return;
   } else if (Opcode == PPC32::CALLpcrel) {
-    O << TII.getName(MI->getOpcode()) << " ";
+    O << TII.getName(Opcode) << " ";
     printOp(MI->getOperand(0));
     O << "\n";
     return;
   } else if (Opcode == PPC32::CALLindirect) {
-    O << TII.getName(MI->getOpcode()) << " ";
-    printOp(MI->getOperand(0));
+    O << TII.getName(Opcode) << " ";
+    printImmOp(MI->getOperand(0), ArgType[0]);
     O << ", ";
-    printOp(MI->getOperand(1));
+    printImmOp(MI->getOperand(1), ArgType[0]);
     O << "\n";
     return;
   } else if (Opcode == PPC32::MovePCtoLR) {
@@ -537,7 +546,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     return;
   }
 
-  O << TII.getName(MI->getOpcode()) << " ";
+  O << TII.getName(Opcode) << " ";
   if (Opcode == PPC32::LOADLoDirect || Opcode == PPC32::LOADLoIndirect) {
     printOp(MI->getOperand(0));
     O << ", lo16(";
@@ -562,7 +571,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   } else if (ArgCount == 3 && ArgType[1] == PPC32II::Disimm16) {
     printOp(MI->getOperand(0));
     O << ", ";
-    printOp(MI->getOperand(1));
+    printImmOp(MI->getOperand(1), ArgType[1]);
     O << "(";
     if (MI->getOperand(2).hasAllocatedReg() &&
         MI->getOperand(2).getReg() == PPC32::R0)
@@ -584,6 +593,8 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
         assert(8 == MI->getOperand(i).getImmedValue()
           && "branch off PC not to pc+8?");
         //printOp(MI->getOperand(i));
+      } else if (MI->getOperand(i).isImmediate()) {
+        printImmOp(MI->getOperand(i), ArgType[i]);
       } else {
         printOp(MI->getOperand(i));
       }
