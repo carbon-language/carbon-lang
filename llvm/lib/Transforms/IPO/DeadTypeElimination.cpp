@@ -18,15 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iMemory.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iOther.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "Support/StatisticReporter.h"
-#include <algorithm>
-#include <iostream>
 
 static Statistic<> NumTypeSymtabEntriesKilled("cleangcc\t- Number of unused typenames removed from symtab");
 
@@ -34,8 +26,6 @@ using std::vector;
 
 namespace {
   struct CleanupGCCOutput : public FunctionPass {
-    const char *getPassName() const { return "Cleanup GCC Output"; }
-
     // doPassInitialization - For this pass, it removes global symbol table
     // entries for primitive types.  These are never used for linking in GCC and
     // they make the output uglier to look at, so we nuke them.
@@ -58,6 +48,7 @@ namespace {
       AU.addRequired(FindUsedTypes::ID);
     }
   };
+  RegisterPass<CleanupGCCOutput> X("cleangcc", "Cleanup GCC Output");
 }
 
 Pass *createCleanupGCCOutputPass() {
