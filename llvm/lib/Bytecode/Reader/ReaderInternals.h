@@ -21,7 +21,6 @@
 #define TRACE_LEVEL 0
 
 #if TRACE_LEVEL    // ByteCodeReading_TRACEer
-#include "llvm/Assembly/Writer.h"
 #define BCR_TRACE(n, X) if (n < TRACE_LEVEL) cerr << std::string(n*2, ' ') << X
 #else
 #define BCR_TRACE(n, X)
@@ -143,7 +142,7 @@ struct InstPlaceHolderHelper : public Instruction {
 
 struct BBPlaceHolderHelper : public BasicBlock {
   BBPlaceHolderHelper(const Type *Ty) : BasicBlock() {
-    assert(Ty->isLabelType());
+    assert(Ty == Type::LabelTy);
   }
 };
 
