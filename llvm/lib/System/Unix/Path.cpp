@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <llvm/Config/config.h>
+#include <llvm/Config/alloca.h>
 #include "Unix.h"
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -157,20 +158,29 @@ Path::getBasename() const {
 
 bool Path::hasMagicNumber(const std::string &Magic) const {
   size_t len = Magic.size();
-  char buf[ 1 + len];
-  std::ifstream f(path.c_str());
-  f.read(buf, len);
+  assert(len < 1024 && "Request for magic string too long");
+  char* buf = (char*) alloca(1 + len);
+  int fd = ::open(path.c_str(),O_RDONLY);
+  if (fd < 0)
+    return false;
+  if (0 != ::read(fd, buf, len))
+    return false;
+  close(fd);
   buf[len] = '\0';
-  f.close();
   return Magic == buf;
 }
 
 bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
   if (!isFile())
     return false;
-  char buf[1 + len];
-  std::ifstream f(path.c_str());
-  f.read(buf,len);
+  assert(len < 1024 && "Request for magic string too long");
+  char* buf = (char*) alloca(1 + len);
+  int fd = ::open(path.c_str(),O_RDONLY);
+  if (fd < 0)
+    return false;
+  if (0 != ::read(fd, buf, len))
+    return false;
+  close(fd);
   buf[len] = '\0';
   Magic = buf;
   return true;
