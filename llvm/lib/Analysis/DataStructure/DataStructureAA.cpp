@@ -53,6 +53,10 @@ namespace {
 
     void getMustAliases(Value *P, std::vector<Value*> &RetVals);
 
+    bool pointsToConstantMemory(const Value *P) {
+      return getAnalysis<AliasAnalysis>().pointsToConstantMemory(P);
+    }
+
   private:
     DSGraph *getGraphForValue(const Value *V);
   };
