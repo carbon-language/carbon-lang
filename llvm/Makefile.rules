@@ -121,8 +121,12 @@ endif
 # Compilation options...
 #---------------------------------------------------------
 
-# Special tools used while building
-RunBurg  := $(BURG) $(BURG_OPTS)
+# Special tools used while building the LLVM tree.  Burg is built as part of the
+# utils directory.
+#
+BURG    := $(LEVEL)/utils/Burg/burg
+RunBurg := $(BURG) $(BURG_OPTS)
+
 
 # Enable this for profiling support with 'gprof'
 ifdef ENABLE_PROFILING
@@ -181,8 +185,8 @@ AR       = ar cq
 Source  := $(ExtraSource) $(wildcard *.cpp *.c *.y *.l)
 
 Objs := $(sort $(patsubst Debug/%.o, %.o, $(addsuffix .o,$(basename $(Source)))))
-ObjectsO = $(addprefix $(BUILD_ROOT)/Release/,$(Objs)))
-ObjectsG = $(addprefix $(BUILD_ROOT)/Debug/,$(Objs))
+ObjectsO := $(addprefix $(BUILD_ROOT)/Release/,$(Objs)))
+ObjectsG := $(addprefix $(BUILD_ROOT)/Debug/,$(Objs))
 
 
 #---------------------------------------------------------
