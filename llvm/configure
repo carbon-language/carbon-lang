@@ -23784,7 +23784,7 @@ _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define LLVM_CONFIGDIR "$LLVM_ETCDIR"
+#define LLVM_ETCDIR "$LLVM_ETCDIR"
 _ACEOF
 
 
