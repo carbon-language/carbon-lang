@@ -239,8 +239,10 @@ Path::getLast() const {
   return path.substr(pos+1);
 }
 
-void
+bool
 Path::getStatusInfo(StatusInfo& info) {
+  if (!isFile() || !readable())
+    return false;
   struct stat buf;
   if (0 != stat(path.c_str(), &buf)) {
     ThrowErrno(std::string("Can't get status: ")+path);
@@ -253,6 +255,7 @@ Path::getStatusInfo(StatusInfo& info) {
   info.isDir = S_ISDIR(buf.st_mode);
   if (info.isDir && path[path.length()-1] != '/')
     path += '/';
+  return true;
 }
 
 bool
