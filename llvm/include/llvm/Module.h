@@ -77,7 +77,6 @@ private:
   // Accessor for the underlying GVRefMap... only through the Constant class...
   friend class Constant;
   friend class ConstantPointerRef;
-  void mutateConstantPointerRef(GlobalValue *OldGV, GlobalValue *NewGV);
   ConstantPointerRef *getConstantPointerRef(GlobalValue *GV);
   void destroyConstantPointerRef(ConstantPointerRef *CPR);
 
