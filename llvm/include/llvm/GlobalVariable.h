@@ -85,8 +85,9 @@ public:
   /// runtime execution of the program.  Assigning a value into the constant
   /// leads to undefined behavior.
   ///
-  inline bool isConstant() const { return isConstantGlobal; }
-
+  bool isConstant() const { return isConstantGlobal; }
+  void setConstant(bool Value) { isConstantGlobal = Value; }
+  
   virtual void print(std::ostream &OS) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
