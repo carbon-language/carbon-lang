@@ -66,6 +66,22 @@ void MethodLiveVarInfo::constructBBs()
     if(DEBUG_LV) 
       LVBB->printAllSets();
   }
+
+  // Since the PO iterator does not discover unreachable blocks,
+  // go over the random iterator and init those blocks as well.
+  // However, LV info is not correct for those blocks (they are not
+  // analyzed)
+
+  Method::const_iterator BBRI = Meth->begin();  // random iterator for BBs   
+
+  for( ; BBRI != Meth->end(); ++BBRI, ++POId) {     
+
+    if(   ! BB2BBLVMap[ *BBRI ] )
+      BB2BBLVMap[ *BBRI ] = new BBLiveVar( *BBRI, POId );
+
+  }
+
+
 }
 
 

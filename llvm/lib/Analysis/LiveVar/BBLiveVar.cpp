@@ -41,20 +41,17 @@ void BBLiveVar::calcDefUseSets()
     // iterate over  MI operands to find defs
     for( MachineInstr::val_op_const_iterator OpI(MInst); !OpI.done() ; ++OpI) {
 
-      const Value *Op = *OpI;
-
-      if( OpI.isDef() ) {     // add to Defs only if this operand is a def
-  
-	DefSet.add( Op );     // operand is a def - so add to def set
-	InSet.remove( Op);    // this definition kills any uses
-	InSetChanged = true; 
-
-	if( DEBUG_LV > 1) {   
-	  cout << "  +Def: "; printValue( Op ); cout << endl;
-	}
-      }
+      if( OpI.isDef() )      // add to Defs only if this operand is a def
+	addDef( *OpI );
     }
 
+    // do for implicit operands as well
+    for( unsigned i=0; i < MInst->getNumImplicitRefs(); ++i) {
+      if(  MInst->implicitRefIsDefined(i) )
+	addDef( MInst->getImplicitRef(i) );
+     }
+
+    
     bool IsPhi = ( MInst->getOpCode() == PHI );
 
  
@@ -65,29 +62,22 @@ void BBLiveVar::calcDefUseSets()
       if ( ((Op)->getType())->isLabelType() )    
 	continue;             // don't process labels
 
-      if(! OpI.isDef() ) {    // add to Defs only if this operand is a use
-
-	InSet.add( Op );      // An operand is a use - so add to use set
-	OutSet.remove( Op );  // remove if there is a def below this use
-	InSetChanged = true; 
-
-	if( DEBUG_LV > 1) {   // debug msg of level 2
-	  cout << "   Use: "; printValue( Op ); cout << endl;
-	}
+      if(! OpI.isDef() ) {   // add to Defs only if this operand is a use
+	addUse( Op );
 
 	if( IsPhi ) {         // for a phi node
-                              // put args into the PhiArgMap (Val -> BB)
-
+	  // put args into the PhiArgMap (Val -> BB)
+	
 	  const Value * ArgVal = Op;
 	  ++OpI;              // increment to point to BB of value
 	  const Value * BBVal = *OpI; 
-
-
+	  
+	  
 	  assert( (BBVal)->getValueType() == Value::BasicBlockVal );
 	  
 	  PhiArgMap[ ArgVal ] = (const BasicBlock *) (BBVal); 
 	  assert( PhiArgMap[ ArgVal ] );
-
+	  
 	  if( DEBUG_LV > 1) {   // debug msg of level 2
 	    cout << "   - phi operand "; 
 	    printValue( ArgVal ); 
@@ -96,14 +86,55 @@ void BBLiveVar::calcDefUseSets()
 	    cout<<endl;
 	  }
 
-	}
+	} // if( IsPhi )
 
-      }
-    } 
+      } // if a use
+
+    } // for all operands
+
+    // do for implicit operands as well
+    for( unsigned i=0; i < MInst->getNumImplicitRefs(); ++i) {
+
+      assert( !IsPhi && "Phi cannot have implicit opeands");
+      const Value *Op =  MInst->getImplicitRef(i);
+
+      if ( ((Op)->getType())->isLabelType() )    
+	continue;             // don't process labels
+      if(  ! MInst->implicitRefIsDefined(i) )
+	addUse( Op );
+     }
 
   } // for all machine instructions
 } 
 	
+
+// To add an operand wichi is a def
+
+void  BBLiveVar::addDef(const Value *Op) 
+{
+  DefSet.add( Op );     // operand is a def - so add to def set
+  InSet.remove( Op);    // this definition kills any uses
+  InSetChanged = true; 
+
+  if( DEBUG_LV > 1) {   
+    cout << "  +Def: "; printValue( Op ); cout << endl;
+  }
+}
+
+// To add an operand which is a use
+
+void  BBLiveVar::addUse(const Value *Op) 
+{
+  InSet.add( Op );      // An operand is a use - so add to use set
+  OutSet.remove( Op );  // remove if there is a def below this use
+  InSetChanged = true; 
+
+  if( DEBUG_LV > 1) {   // debug msg of level 2
+    cout << "   Use: "; printValue( Op ); cout << endl;
+  }
+
+}
+
 
 
 bool BBLiveVar::applyTransferFunc() // calculates the InSet in terms of OutSet 
