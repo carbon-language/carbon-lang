@@ -110,7 +110,6 @@ class Instruction {
 //
 class InstrInfo {
   Instruction PHIInst;
-  Instruction NOOPInst;
 
   // If the target wants to associate some target-specific information with each
   // instruction, it should provide these two lists to indicate how to assemble
