@@ -9,6 +9,7 @@
 #include "llvm/Type.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/Analysis/Expressions.h"
+#include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include <algorithm>
 

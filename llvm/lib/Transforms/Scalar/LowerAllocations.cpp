@@ -10,6 +10,7 @@
 #include "llvm/Transforms/ChangeAllocations.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Module.h"
+#include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"

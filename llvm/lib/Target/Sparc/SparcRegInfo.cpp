@@ -14,6 +14,7 @@
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
+#include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
 #include <iostream>
 using std::cerr;

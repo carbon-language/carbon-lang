@@ -8,6 +8,7 @@
 //#define DEBUG_IP_CLOSURE 1
 
 #include "llvm/Analysis/DataStructure.h"
+#include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
