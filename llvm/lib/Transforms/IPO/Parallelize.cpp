@@ -45,7 +45,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Cilkifier.h"
-#include "Support/NonCopyable.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include "Support/hash_set"
@@ -280,9 +279,7 @@ void Cilkifier::visitCallInst(CallInst& CI)
 // useful parallelism.
 //---------------------------------------------------------------------------- 
 
-class FindParallelCalls: public InstVisitor<FindParallelCalls>,
-                         public NonCopyable
-{
+class FindParallelCalls : public InstVisitor<FindParallelCalls> {
   typedef hash_set<CallInst*>           DependentsSet;
   typedef DependentsSet::iterator       Dependents_iterator;
   typedef DependentsSet::const_iterator Dependents_const_iterator;
@@ -296,6 +293,8 @@ class FindParallelCalls: public InstVisitor<FindParallelCalls>,
                      CallInst*      root,
                      DependentsSet& depsOfRoot);
 
+  FindParallelCalls(const FindParallelCalls &); // DO NOT IMPLEMENT
+  void operator=(const FindParallelCalls&);     // DO NOT IMPLEMENT
 public:
   std::vector<CallInst*> parallelCalls;
 

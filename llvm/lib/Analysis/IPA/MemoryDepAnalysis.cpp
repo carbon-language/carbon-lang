@@ -21,7 +21,6 @@
 #include "llvm/Support/CFG.h"
 #include "Support/TarjanSCCIterator.h"
 #include "Support/Statistic.h"
-#include "Support/NonCopyable.h"
 #include "Support/STLExtras.h"
 #include "Support/hash_map"
 #include "Support/hash_set"
@@ -116,14 +115,14 @@ struct ModRefTable
 /// and all that use any node.
 ///--------------------------------------------------------------------------
 
-class ModRefInfoBuilder: public InstVisitor<ModRefInfoBuilder>,
-                         public NonCopyable
-{
+class ModRefInfoBuilder : public InstVisitor<ModRefInfoBuilder> {
   const DSGraph&            funcGraph;
   const FunctionModRefInfo& funcModRef;
   ModRefTable&              modRefTable;
 
-  ModRefInfoBuilder(); // do not implement
+  ModRefInfoBuilder();                         // DO NOT IMPLEMENT
+  ModRefInfoBuilder(const ModRefInfoBuilder&); // DO NOT IMPLEMENT
+  void operator=(const ModRefInfoBuilder&);    // DO NOT IMPLEMENT
 
 public:
   /*ctor*/      ModRefInfoBuilder(const DSGraph&  _funcGraph,
