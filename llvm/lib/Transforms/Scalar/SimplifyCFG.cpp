@@ -14,7 +14,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Module.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Pass.h"
 #include "Support/StatisticReporter.h"
