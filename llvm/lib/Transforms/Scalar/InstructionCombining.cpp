@@ -501,20 +501,47 @@ static inline bool isEliminableCastOfCast(const CastInst &CI,
 
   // Allow free casting and conversion of sizes as long as the sign doesn't
   // change...
-  if (isCIntegral(SrcTy) && isCIntegral(MidTy) && isCIntegral(DstTy) &&
-      SrcTy->isSigned() == MidTy->isSigned() &&
-      MidTy->isSigned() == DstTy->isSigned()) {
-    // Only accept cases where we are either monotonically increasing the type
-    // size, or monotonically decreasing it.
-    //
+  if (isCIntegral(SrcTy) && isCIntegral(MidTy) && isCIntegral(DstTy)) {
     unsigned SrcSize = SrcTy->getPrimitiveSize();
     unsigned MidSize = MidTy->getPrimitiveSize();
     unsigned DstSize = DstTy->getPrimitiveSize();
-    if (SrcSize <= MidSize && MidSize <= DstSize)
-      return true;
 
+    // Cases where we are monotonically decreasing the size of the type are
+    // always ok, regardless of what sign changes are going on.
+    //
     if (SrcSize >= MidSize && MidSize >= DstSize)
       return true;
+
+    // If we are monotonically growing, things are more complex.
+    //
+    if (SrcSize <= MidSize && MidSize <= DstSize) {
+      // We have eight combinations of signedness to worry about. Here's the
+      // table:
+      static const int SignTable[8] = {
+        // CODE, SrcSigned, MidSigned, DstSigned, Comment
+        1,     //   U          U          U       Always ok
+        1,     //   U          U          S       Always ok
+        3,     //   U          S          U       Ok iff SrcSize != MidSize
+        3,     //   U          S          S       Ok iff SrcSize != MidSize
+        0,     //   S          U          U       Never ok
+        2,     //   S          U          S       Ok iff MidSize == DstSize
+        1,     //   S          S          U       Always ok
+        1,     //   S          S          S       Always ok
+      };
+
+      // Choose an action based on the current entry of the signtable that this
+      // cast of cast refers to...
+      unsigned Row = SrcTy->isSigned()*4+MidTy->isSigned()*2+DstTy->isSigned();
+      switch (SignTable[Row]) {
+      case 0: return false;              // Never ok
+      case 1: return true;               // Always ok
+      case 2: return MidSize == DstSize; // Ok iff MidSize == DstSize
+      case 3:                            // Ok iff SrcSize != MidSize
+        return SrcSize != MidSize || SrcTy == Type::BoolTy;
+      default: assert(0 && "Bad entry in sign table!");
+      }
+      return false;  // NOT REACHED
+    }
   }
 
   // Otherwise, we cannot succeed.  Specifically we do not want to allow things
