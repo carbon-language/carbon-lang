@@ -19,16 +19,21 @@
 
 
 struct ModulePassPrinter : public Pass {
-  Pass *PassToPrint;
-  ModulePassPrinter(Pass *PI) : PassToPrint(PI) {}
+  const PassInfo *PassToPrint;
+  ModulePassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
 
   virtual bool run(Module &M) {
     std::cout << "Printing Analysis info for Pass "
               << PassToPrint->getPassName() << ":\n";
-    PassToPrint->print(std::cout, &M);
+    getAnalysis<Pass>(PassToPrint).print(std::cout, &M);
     
     // Get and print pass...
     return false;
+  }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired(PassToPrint);
+    AU.setPreservesAll();
   }
 };
 
@@ -122,7 +127,7 @@ int main(int argc, char **argv) {
       else if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P))
         Passes.add(new FunctionPassPrinter(Analysis));
       else
-        Passes.add(new ModulePassPrinter(P));
+        Passes.add(new ModulePassPrinter(Analysis));
 
     } else
       cerr << "Cannot create pass: " << Analysis->getPassName() << "\n";
