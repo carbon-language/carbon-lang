@@ -631,8 +631,8 @@ void ModuloSchedulingPass::findAllReccurrences(MSchedGraphNode *node,
     int distance = 0;
     int RecMII = II; //Starting value
     MSchedGraphNode *last = node;
-    MSchedGraphNode *srcBackEdge;
-    MSchedGraphNode *destBackEdge;
+    MSchedGraphNode *srcBackEdge = 0;
+    MSchedGraphNode *destBackEdge = 0;
     
 
 
@@ -1736,7 +1736,7 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
       //Update last epilogue exit branch
       BranchInst *branchVal = (BranchInst*) dyn_cast<BranchInst>(BB->getBasicBlock()->getTerminator());
       //Find where we are supposed to branch to
-      BasicBlock *nextBlock;
+      BasicBlock *nextBlock = 0;
       for(unsigned j=0; j <branchVal->getNumSuccessors(); ++j) {
 	if(branchVal->getSuccessor(j) != BB->getBasicBlock())
 	  nextBlock = branchVal->getSuccessor(j);
