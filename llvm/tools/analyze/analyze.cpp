@@ -24,6 +24,7 @@
 #include "llvm/Analysis/Expressions.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
+#include "llvm/Analysis/FindUsedTypes.h"
 #include <algorithm>
 
 static void PrintMethod(Method *M) {
@@ -75,6 +76,12 @@ static void PrintUnsafePtrTypes(Module *M) {
   FUPT.printResults(M, cout);
 }
 
+static void PrintUsedTypes(Module *M) {
+  FindUsedTypes FUT;
+  FUT.run(M);
+  FUT.printTypes(cout, M);
+}
+
 static void PrintDominatorSets(Method *M) {
   cout << cfg::DominatorSet(M);
 }
@@ -104,7 +111,9 @@ static void PrintPostDomFrontier(Method *M) {
 
 enum Ans {
   PassDone,   // Unique Marker
-  print, intervals, exprclassify, instforest, callgraph, unsafepointertypes,
+  print, intervals, exprclassify, instforest, callgraph,
+  printusedtypes, unsafepointertypes,
+
   domset, idom, domtree, domfrontier,
   postdomset, postidom, postdomtree, postdomfrontier,
 };
@@ -118,6 +127,7 @@ cl::EnumList<enum Ans> AnalysesList(cl::NoFlags,
   clEnumVal(exprclassify   , "Classify Expressions"),
   clEnumVal(instforest     , "Print Instruction Forest"),
   clEnumVal(callgraph      , "Print Call Graph"),
+  clEnumVal(printusedtypes , "Print Types Used by Module"),
   clEnumVal(unsafepointertypes, "Print Unsafe Pointer Types"),
 
   clEnumVal(domset         , "Print Dominator Sets"),
@@ -152,7 +162,8 @@ struct {
 };
 
 pair<enum Ans, void (*)(Module *)> ModAnTable[] = {
-  pair<enum Ans, void (*)(Module *)>(callgraph      , PrintCallGraph),
+  pair<enum Ans, void (*)(Module *)>(callgraph         , PrintCallGraph),
+  pair<enum Ans, void (*)(Module *)>(printusedtypes    , PrintUsedTypes),
   pair<enum Ans, void (*)(Module *)>(unsafepointertypes, PrintUnsafePtrTypes),
 };
 
