@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "../../Target/SparcV9/MachineCodeForInstruction.h"
 #include "../../Target/SparcV9/LiveVar/FunctionLiveVarInfo.h"
+#include "../../Target/SparcV9/SparcV9InstrInfo.h"
 #include "Support/CommandLine.h"
 #include <algorithm>
 #include <iostream>
@@ -633,8 +634,7 @@ RecordSchedule(MachineBasicBlock &MBB, const SchedulingManager& S)
   // some NOPs from delay slots.  Also, PHIs are not included in the schedule.
   unsigned numInstr = 0;
   for (MachineBasicBlock::iterator I=MBB.begin(); I != MBB.end(); ++I)
-    if (! mii.isNop(I->getOpcode()) &&
-	! mii.isDummyPhiInstr(I->getOpcode()))
+    if (!(I->getOpcode() == V9::NOP || I->getOpcode() == V9::PHI))
       ++numInstr;
   assert(S.isched.getNumInstructions() >= numInstr &&
 	 "Lost some non-NOP instructions during scheduling!");
@@ -645,7 +645,7 @@ RecordSchedule(MachineBasicBlock &MBB, const SchedulingManager& S)
   // First find the dummy instructions at the start of the basic block
   MachineBasicBlock::iterator I = MBB.begin();
   for ( ; I != MBB.end(); ++I)
-    if (! mii.isDummyPhiInstr(I->getOpcode()))
+    if (I->getOpcode() != V9::PHI)
       break;
   
   // Remove all except the dummy PHI instructions from MBB, and
