@@ -240,7 +240,7 @@ bool ADCE::doADCE() {
     //
     if (!AliveBlocks.count(&Func->front())) {
       BasicBlock *NewEntry = new BasicBlock();
-      new BranchInst(&Func->front(), NewEntry->end());
+      NewEntry->getInstList().push_back(new BranchInst(&Func->front()));
       Func->getBasicBlockList().push_front(NewEntry);
       AliveBlocks.insert(NewEntry);    // This block is always alive!
     }
@@ -353,8 +353,8 @@ bool ADCE::doADCE() {
         // Delete the old terminator instruction...
         BB->getInstList().pop_back();
         const Type *RetTy = Func->getReturnType();
-        new ReturnInst(RetTy != Type::VoidTy ? Constant::getNullValue(RetTy) :0,
-                       BB->end());
+        BB->getInstList().push_back(new ReturnInst(RetTy != Type::VoidTy ?
+                                           Constant::getNullValue(RetTy) : 0));
       }
 
       BB->dropAllReferences();
