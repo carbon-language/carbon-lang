@@ -117,7 +117,6 @@ bool Steens::runOnModule(Module &M) {
   ResultGraph = new DSGraph(GlobalECs, getTargetData());
   GlobalsGraph = new DSGraph(GlobalECs, getTargetData());
   ResultGraph->setGlobalsGraph(GlobalsGraph);
-  ResultGraph->setPrintAuxCalls();
 
   // Loop over the rest of the module, merging graphs for non-external functions
   // into this graph.
@@ -173,7 +172,8 @@ bool Steens::runOnModule(Module &M) {
   // Update the "incomplete" markers on the nodes, ignoring unknownness due to
   // incoming arguments...
   ResultGraph->maskIncompleteMarkers();
-  ResultGraph->markIncompleteNodes(DSGraph::IgnoreFormalArgs);
+  ResultGraph->markIncompleteNodes(DSGraph::IgnoreFormalArgs |
+                                   DSGraph::IgnoreGlobals);
 
   // Remove any nodes that are dead after all of the merging we have done...
   // FIXME: We should be able to disable the globals graph for steens!
@@ -186,7 +186,6 @@ bool Steens::runOnModule(Module &M) {
 // alias - This is the only method here that does anything interesting...
 AliasAnalysis::AliasResult Steens::alias(const Value *V1, unsigned V1Size,
                                          const Value *V2, unsigned V2Size) {
-  // FIXME: HANDLE Size argument!
   assert(ResultGraph && "Result graph has not been computed yet!");
 
   DSGraph::ScalarMapTy &GSM = ResultGraph->getScalarMap();
