@@ -147,9 +147,6 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
     Changed = true;
   }
 
-
-  DominatorSet &DS = getAnalysis<DominatorSet>();  // Update dominator info
-
   // Next, check to make sure that all exit nodes of the loop only have
   // predecessors that are inside of the loop.  This check guarantees that the
   // loop preheader/header will dominate the exit blocks.  If the exit block has
@@ -158,16 +155,19 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
   L->getExitBlocks(ExitBlocks);
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *ExitBlock = ExitBlocks[i];
-    if (!DS.dominates(L->getHeader(), ExitBlock)) {
-      BasicBlock *NewBB = RewriteLoopExitBlock(L, ExitBlock);
-      for (unsigned j = i; j != ExitBlocks.size(); ++j)
-        if (ExitBlocks[j] == ExitBlock)
-          ExitBlocks[j] = NewBB;
-      
-      NumInserted++;
-      Changed = true;
+    for (pred_iterator PI = pred_begin(ExitBlock), PE = pred_end(ExitBlock);
+         PI != PE; ++PI)
+      if (!L->contains(*PI)) {
+        BasicBlock *NewBB = RewriteLoopExitBlock(L, ExitBlock);
+        for (unsigned j = i; j != ExitBlocks.size(); ++j)
+          if (ExitBlocks[j] == ExitBlock)
+            ExitBlocks[j] = NewBB;
+
+        NumInserted++;
+        Changed = true;
+        break;
+      }
     }
-  }
 
   // If the header has more than two predecessors at this point (from the
   // preheader and from multiple backedges), we must adjust the loop.
