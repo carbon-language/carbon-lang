@@ -550,7 +550,7 @@ endif
 # Create a TAGS database for emacs
 #------------------------------------------------------------------------
 
-ifdef ETAGS
+ifneq ($(ETAGS),false)
 ifeq ($(LEVEL), .)
 SRCDIRS := $(wildcard $(SourceDir)/include $(SourceDir)/lib $(SourceDir)/tools)
 
@@ -729,7 +729,7 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 	@$(DATE) > $@
 
 # To create postscript files from dot files...
-ifdef DOT
+ifneq ($(DOT),false)
 %.ps: %.dot
 	${DOT} -Tps < $< > $@
 else
