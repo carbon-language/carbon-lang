@@ -3,7 +3,7 @@
 
 declare bool %pred()
 
-void %test({ int, int }* %P) {
+void %test1({ int, int }* %P) {
 	br label %Loop
 Loop:
 	%INDVAR = phi int [0, %0], [%INDVAR2, %Loop]
@@ -21,9 +21,7 @@ Out:
 	ret void
 }
 
-declare bool %pred()
-
-void %test([2 x int]* %P) {
+void %test2([2 x int]* %P) {
 	br label %Loop
 Loop:
 	%INDVAR = phi int [0, %0], [%INDVAR2, %Loop]
