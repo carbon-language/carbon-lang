@@ -644,11 +644,10 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 
     Assert1(FT->getNumParams() == 1,
             "Illegal # arguments for intrinsic function!", IF);
-    Assert1(ReturnType->isFirstClassType(),
-            "Return type is not a first class type!", IF);
-    Assert1(ParamType->getPrimitiveID() == Type::PointerTyID,
+    Assert1(isa<PointerType>(ParamType),
             "First argument not a pointer!", IF);
-    Assert1(((dyn_cast<PointerType>(ParamType)->getContainedType(0)) == ReturnType), "Pointer type doesn't match return type!", IF);
+    Assert1(((cast<PointerType>(ParamType)->getElementType()) == ReturnType),
+            "Pointer type doesn't match return type!", IF);
     NumArgs = 1;
     break;
   }
