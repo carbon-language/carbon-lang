@@ -316,7 +316,7 @@ bool LICM::SafeToHoist(Instruction &Inst) {
 
 
 void LICM::visitLoadInst(LoadInst &LI) {
-  if (isLoopInvariant(LI.getOperand(0)) &&
+  if (isLoopInvariant(LI.getOperand(0)) && !LI.isVolatile() &&
       !pointerInvalidatedByLoop(LI.getOperand(0)) && SafeToHoist(LI)) {
     hoist(LI);
     ++NumHoistedLoads;
