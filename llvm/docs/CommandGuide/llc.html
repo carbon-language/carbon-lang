@@ -93,7 +93,7 @@ OPTIONS
 		<dt> x86 </dt>
 		<dd>IA-32 (Pentium and above)</dd>
 
-		<dt> sparc </dt>
+		<dt> sparcv9 </dt>
 		<dd>SPARC V9</dd>
 
 		<dt> c </dt>
@@ -104,6 +104,12 @@ OPTIONS
 	<li>-o &lt;filename&gt;
 	<br>
 	Specify the output filename.
+	<p>
+
+	<li>-enable-correct-eh-support
+	<br>
+	Instruct the -lowerinvoke pass to insert code for correct exception handling
+  support.  This is expensive and is by default omitted for efficiency.
 	<p>
 
 	<li> -help
