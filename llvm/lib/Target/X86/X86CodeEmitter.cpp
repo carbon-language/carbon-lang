@@ -185,10 +185,10 @@ namespace {
     }
 
   private:
-    void emitBasicBlock(MachineBasicBlock &MBB);
-    void emitInstruction(MachineInstr &MI);
+    void emitBasicBlock(const MachineBasicBlock &MBB);
+    void emitInstruction(const MachineInstr &MI);
 
-    void emitPCRelativeBlockAddress(BasicBlock *BB);
+    void emitPCRelativeBlockAddress(const BasicBlock *BB);
     void emitMaybePCRelativeValue(unsigned Address, bool isPCRelative);
     void emitGlobalAddressForCall(GlobalValue *GV);
     void emitGlobalAddressForPtr(GlobalValue *GV);
@@ -237,11 +237,11 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-void Emitter::emitBasicBlock(MachineBasicBlock &MBB) {
+void Emitter::emitBasicBlock(const MachineBasicBlock &MBB) {
   if (uint64_t Addr = MCE.getCurrentPCValue())
     BasicBlockAddrs[MBB.getBasicBlock()] = Addr;
 
-  for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I)
+  for (MachineBasicBlock::const_iterator I = MBB.begin(), E = MBB.end(); I != E; ++I)
     emitInstruction(*I);
 }
 
@@ -251,7 +251,7 @@ void Emitter::emitBasicBlock(MachineBasicBlock &MBB) {
 /// (because this is a forward branch), it keeps track of the information
 /// necessary to resolve this address later (and emits a dummy value).
 ///
-void Emitter::emitPCRelativeBlockAddress(BasicBlock *BB) {
+void Emitter::emitPCRelativeBlockAddress(const BasicBlock *BB) {
   // FIXME: Emit backward branches directly
   BBRefs.push_back(std::make_pair(BB, MCE.getCurrentPCValue()));
   MCE.emitWord(0);   // Emit a dummy value
@@ -476,7 +476,7 @@ static unsigned sizeOfPtr(const TargetInstrDescriptor &Desc) {
   }
 }
 
-void Emitter::emitInstruction(MachineInstr &MI) {
+void Emitter::emitInstruction(const MachineInstr &MI) {
   NumEmitted++;  // Keep track of the # of mi's emitted
 
   unsigned Opcode = MI.getOpcode();
@@ -516,7 +516,7 @@ void Emitter::emitInstruction(MachineInstr &MI) {
   case X86II::RawFrm:
     MCE.emitByte(BaseOpcode);
     if (MI.getNumOperands() == 1) {
-      MachineOperand &MO = MI.getOperand(0);
+      const MachineOperand &MO = MI.getOperand(0);
       if (MO.isPCRelativeDisp()) {
         // Conditional branch... FIXME: this should use an MBB destination!
         emitPCRelativeBlockAddress(cast<BasicBlock>(MO.getVRegValue()));
@@ -536,7 +536,7 @@ void Emitter::emitInstruction(MachineInstr &MI) {
   case X86II::AddRegFrm:
     MCE.emitByte(BaseOpcode + getX86RegNum(MI.getOperand(0).getReg()));
     if (MI.getNumOperands() == 2) {
-      MachineOperand &MO1 = MI.getOperand(1);
+      const MachineOperand &MO1 = MI.getOperand(1);
       if (Value *V = MO1.getVRegValueOrNull()) {
 	assert(sizeOfImm(Desc) == 4 && "Don't know how to emit non-pointer values!");
         emitGlobalAddressForPtr(cast<GlobalValue>(V));
