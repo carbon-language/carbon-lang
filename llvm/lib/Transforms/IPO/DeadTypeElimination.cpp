@@ -27,7 +27,7 @@ namespace {
     // getAnalysisUsage - This function needs FindUsedTypes to do its job...
     //
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired(FindUsedTypes::ID);
+      AU.addRequired<FindUsedTypes>();
     }
   };
   RegisterOpt<DTE> X("deadtypeelim", "Dead Type Elimination");

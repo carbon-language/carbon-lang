@@ -55,8 +55,8 @@ public:
   // getAnalysisUsage - We require post dominance frontiers (aka Control
   // Dependence Graph)
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired(PostDominatorTree::ID);
-    AU.addRequired(PostDominanceFrontier::ID);
+    AU.addRequired<PostDominatorTree>();
+    AU.addRequired<PostDominanceFrontier>();
   }
 
 

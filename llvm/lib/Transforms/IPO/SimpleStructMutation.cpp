@@ -29,8 +29,8 @@ namespace {
     // FindUsedTypes and FindUnsafePointerTypes analysis passes...
     //
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired(FindUsedTypes::ID);
-      AU.addRequired(FindUnsafePointerTypes::ID);
+      AU.addRequired<FindUsedTypes>();
+      AU.addRequired<FindUnsafePointerTypes>();
       MutateStructTypes::getAnalysisUsage(AU);
     }
     

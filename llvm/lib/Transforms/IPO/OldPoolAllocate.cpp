@@ -246,7 +246,7 @@ namespace {
     // to be able to see what is pool allocatable.
     //
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired(DataStructure::ID);
+      AU.addRequired<DataStructure>();
     }
 
   public:

@@ -83,7 +83,7 @@ namespace {
     // module.
     //
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired(CallGraph::ID);
+      AU.addRequired<CallGraph>();
     }
   };
   RegisterOpt<GlobalDCE> X("globaldce", "Dead Global Elimination");

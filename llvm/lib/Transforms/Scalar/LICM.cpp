@@ -39,7 +39,7 @@ namespace {
     // This transformation requires natural loop information...
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
-      AU.addRequired(LoopInfo::ID); 
+      AU.addRequired<LoopInfo>();
     }
 
   private:

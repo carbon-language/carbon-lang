@@ -44,7 +44,7 @@ namespace {
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
-      AU.addRequired(DominatorSet::ID);
+      AU.addRequired<DominatorSet>();
     }
 
     // insertPiNodeFor - Insert a Pi node for V in the successors of BB if our

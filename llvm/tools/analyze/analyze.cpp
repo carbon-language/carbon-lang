@@ -25,14 +25,14 @@ struct ModulePassPrinter : public Pass {
   virtual bool run(Module &M) {
     std::cout << "Printing Analysis info for Pass "
               << PassToPrint->getPassName() << ":\n";
-    getAnalysis<Pass>(PassToPrint).print(std::cout, &M);
+    getAnalysisID<Pass>(PassToPrint).print(std::cout, &M);
     
     // Get and print pass...
     return false;
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired(PassToPrint);
+    AU.addRequiredID(PassToPrint);
     AU.setPreservesAll();
   }
 };
@@ -44,14 +44,14 @@ struct FunctionPassPrinter : public FunctionPass {
   virtual bool runOnFunction(Function &F) {
     std::cout << "Printing Analysis info for function '" << F.getName()
               << "': Pass " << PassToPrint->getPassName() << ":\n";
-    getAnalysis<Pass>(PassToPrint).print(std::cout, F.getParent());
+    getAnalysisID<Pass>(PassToPrint).print(std::cout, F.getParent());
 
     // Get and print pass...
     return false;
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired(PassToPrint);
+    AU.addRequiredID(PassToPrint);
     AU.setPreservesAll();
   }
 };
@@ -63,14 +63,14 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
   virtual bool runOnBasicBlock(BasicBlock &BB) {
     std::cout << "Printing Analysis info for BasicBlock '" << BB.getName()
               << "': Pass " << PassToPrint->getPassName() << ":\n";
-    getAnalysis<Pass>(PassToPrint).print(std::cout, BB.getParent()->getParent());
+    getAnalysisID<Pass>(PassToPrint).print(std::cout, BB.getParent()->getParent());
 
     // Get and print pass...
     return false;
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired(PassToPrint);
+    AU.addRequiredID(PassToPrint);
     AU.setPreservesAll();
   }
 };

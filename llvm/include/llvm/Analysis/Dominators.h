@@ -183,7 +183,7 @@ struct ImmediateDominators : public ImmediateDominatorsBase {
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired(DominatorSet::ID);
+    AU.addRequired<DominatorSet>();
   }
 };
 
@@ -207,7 +207,7 @@ struct ImmediatePostDominators : public ImmediateDominatorsBase {
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired(PostDominatorSet::ID);
+    AU.addRequired<PostDominatorSet>();
   }
 };
 
@@ -287,7 +287,7 @@ struct DominatorTree : public DominatorTreeBase {
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired(DominatorSet::ID);
+    AU.addRequired<DominatorSet>();
   }
 private:
   void calculate(const DominatorSet &DS);
@@ -313,7 +313,7 @@ struct PostDominatorTree : public DominatorTreeBase {
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired(PostDominatorSet::ID);
+    AU.addRequired<PostDominatorSet>();
   }
 private:
   void calculate(const PostDominatorSet &DS);
@@ -365,7 +365,7 @@ struct DominanceFrontier : public DominanceFrontierBase {
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired(DominatorTree::ID);
+    AU.addRequired<DominatorTree>();
   }
 private:
   const DomSetType &calculate(const DominatorTree &DT,
@@ -393,7 +393,7 @@ struct PostDominanceFrontier : public DominanceFrontierBase {
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired(PostDominatorTree::ID);
+    AU.addRequired<PostDominatorTree>();
   }
 private:
   const DomSetType &calculate(const PostDominatorTree &DT,

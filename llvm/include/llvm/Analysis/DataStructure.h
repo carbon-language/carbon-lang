@@ -444,7 +444,7 @@ public:
   // getAnalysisUsage - This obviously provides a data structure graph.
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired(LocalDataStructures::ID);
+    AU.addRequired<LocalDataStructures>();
   }
 private:
   DSGraph &calculateGraph(Function &F);
@@ -481,7 +481,7 @@ public:
   // getAnalysisUsage - This obviously provides a data structure graph.
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired(BUDataStructures::ID);
+    AU.addRequired<BUDataStructures>();
   }
 private:
   DSGraph &calculateGraph(Function &F);

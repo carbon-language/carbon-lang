@@ -1502,7 +1502,7 @@ namespace {
   
     // getAnalysisUsage - We use LiveVarInfo...
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired(FunctionLiveVarInfo::ID);
+      AU.addRequired<FunctionLiveVarInfo>();
     }
     
     bool runOnFunction(Function &F);
