@@ -141,8 +141,8 @@ private:
   /// Result - If this is an instruction or expander pattern, this is the
   /// register result, specified with a (set) in the pattern.
   ///
-  Record *Result;
-  std::string ResultName;     // The name of the result value...
+  std::string ResultName;      // The name of the result value...
+  TreePatternNode *ResultNode; // The leaf node for the result register...
 
   /// TheRecord - The actual TableGen record corresponding to this pattern.
   ///
@@ -172,8 +172,9 @@ public:
 
   /// Pattern - Constructor used for cloning nonterminal patterns
   Pattern(TreePatternNode *tree, Record *rec, bool res,
-          InstrSelectorEmitter &ise) : PTy(Nonterminal), Tree(tree), Result(0),
-                                       TheRecord(rec), Resolved(res), ISE(ise) {
+          InstrSelectorEmitter &ise)
+    : PTy(Nonterminal), Tree(tree), ResultNode(0), TheRecord(rec),
+      Resolved(res), ISE(ise) {
     calculateArgs(Tree, "");
   }
 
@@ -185,8 +186,11 @@ public:
   ///
   TreePatternNode *getTree() const { return Tree; }
   
-  Record *getResult() const { return Result; }
+  Record *getResult() const {
+    return ResultNode ? ResultNode->getValueRecord() : 0;
+  }
   const std::string &getResultName() const { return ResultName; }
+  TreePatternNode *getResultNode() const { return ResultNode; }
 
   /// getRecord - Return the actual TableGen record corresponding to this
   /// pattern.
@@ -200,6 +204,9 @@ public:
   }
   Record *getArgRec(unsigned i) const {
     return getArg(i)->getValueRecord();
+  }
+  Init *getArgVal(unsigned i) const {
+    return getArg(i)->getValue();
   }
   const std::string &getArgName(unsigned i) const {
     assert(i < Args.size() && "Argument reference out of range!");
@@ -372,7 +379,7 @@ private:
   /// to the BuildMI call.  If it is false, we are printing the result register
   /// name.
   void PrintExpanderOperand(Init *Arg, const std::string &NameVar,
-                            Record *ArgDecl, Pattern *P,
+                            TreePatternNode *ArgDecl, Pattern *P,
                             bool PrintArg, std::ostream &OS);
 };
 

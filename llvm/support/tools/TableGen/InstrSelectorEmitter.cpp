@@ -117,7 +117,7 @@ void TreePatternNode::dump() const { std::cerr << *this; }
 //
 Pattern::Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
                  InstrSelectorEmitter &ise)
-  : PTy(pty), Result(0), TheRecord(TheRec), ISE(ise) {
+  : PTy(pty), ResultNode(0), TheRecord(TheRec), ISE(ise) {
 
   // First, parse the pattern...
   Tree = ParseTreePattern(RawPat);
@@ -137,7 +137,7 @@ Pattern::Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
       assert(Tree->getNumChildren() == 2 && "Set with != 2 arguments?");
       if (!Tree->getChild(0)->isLeaf())
         error("Arg #0 of set should be a register or register class!");
-      Result = Tree->getChild(0)->getValueRecord();
+      ResultNode = Tree->getChild(0);
       ResultName = Tree->getChildName(0);
       Tree = Tree->getChild(1);
     }
@@ -855,11 +855,14 @@ static void ReduceAllOperands(TreePatternNode *N, const std::string &Name,
 /// name.
 void InstrSelectorEmitter::PrintExpanderOperand(Init *Arg,
                                                 const std::string &NameVar,
-                                                Record *ArgDecl,
+                                                TreePatternNode *ArgDeclNode,
                                                 Pattern *P, bool PrintArg,
                                                 std::ostream &OS) {
   if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
     Record *Arg = DI->getDef();
+    if (!ArgDeclNode->isLeaf())
+      P->error("Expected leaf node as argument!");
+    Record *ArgDecl = ArgDeclNode->getValueRecord();
     if (Arg->isSubClassOf("Register")) {
       // This is a physical register reference... make sure that the instruction
       // requested a register!
@@ -882,8 +885,28 @@ void InstrSelectorEmitter::PrintExpanderOperand(Init *Arg,
       OS << NameVar;
       if (PrintArg) OS << ")";
       return;
+    } else if (Arg->getName() == "frameidx") {
+      if (!PrintArg) P->error("Cannot define a new frameidx value!");
+      OS << ".addFrameIndex(" << NameVar << ")";
+      return;
     }
     P->error("Unknown operand type '" + Arg->getName() + "' to expander!");
+  } else if (IntInit *II = dynamic_cast<IntInit*>(Arg)) {
+    if (!NameVar.empty())
+      P->error("Illegal to specify a name for a constant initializer arg!");
+
+    // Hack this check to allow R32 values with 0 as the initializer for memory
+    // references... FIXME!
+    if (ArgDeclNode->isLeaf() && II->getValue() == 0 &&
+        ArgDeclNode->getValueRecord()->getName() == "R32") {
+      OS << ".addReg(0)";
+    } else {
+      if (ArgDeclNode->isLeaf() || ArgDeclNode->getOperator()->getName()!="imm")
+        P->error("Illegal immediate int value '" + itostr(II->getValue()) +
+               "' operand!");
+      OS << ".addZImm(" << II->getValue() << ")";
+    }
+    return;
   }
   P->error("Unknown operand type to expander!");
 }
@@ -1201,7 +1224,8 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
               std::string ArgNameVal =
                 getArgName(P, DIInst->getArgName(0), Operands);
               PrintExpanderOperand(DIInst->getArg(0), ArgNameVal,
-                                   R, P, false, OS << ", ");
+                                   InstPat->getResultNode(), P, false,
+                                   OS << ", ");
             }
             OS << ")";
 
@@ -1210,7 +1234,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
                 getArgName(P, DIInst->getArgName(i), Operands);
 
               PrintExpanderOperand(DIInst->getArg(i), ArgNameVal,
-                                  InstPat->getArgRec(i-hasResult), P, true, OS);
+                                   InstPat->getArg(i-hasResult), P, true, OS);
             }
 
             OS << ";\n";
