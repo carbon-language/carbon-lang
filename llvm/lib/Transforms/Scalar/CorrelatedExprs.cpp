@@ -41,8 +41,7 @@
 #include "Support/PostOrderIterator.h"
 #include "Support/Statistic.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumSetCCRemoved("cee", "Number of setcc instruction eliminated");
@@ -285,7 +284,7 @@ namespace {
   RegisterOpt<CEE> X("cee", "Correlated Expression Elimination");
 }
 
-Pass *createCorrelatedExpressionEliminationPass() { return new CEE(); }
+Pass *llvm::createCorrelatedExpressionEliminationPass() { return new CEE(); }
 
 
 bool CEE::runOnFunction(Function &F) {
@@ -1316,5 +1315,3 @@ void Relation::print(std::ostream &OS) const {
 void Relation::dump() const { print(std::cerr); }
 void ValueInfo::dump() const { print(std::cerr, 0); }
 void RegionInfo::dump() const { print(std::cerr); }
-
-} // End llvm namespace

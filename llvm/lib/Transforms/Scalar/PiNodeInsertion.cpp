@@ -41,8 +41,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/Support/CFG.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumInserted("pinodes", "Number of Pi nodes inserted");
@@ -66,7 +65,7 @@ namespace {
   RegisterOpt<PiNodeInserter> X("pinodes", "Pi Node Insertion");
 }
 
-Pass *createPiNodeInsertionPass() { return new PiNodeInserter(); }
+Pass *llvm::createPiNodeInsertionPass() { return new PiNodeInserter(); }
 
 
 bool PiNodeInserter::runOnFunction(Function &F) {
@@ -183,6 +182,3 @@ bool PiNodeInserter::insertPiNodeFor(Value *V, BasicBlock *Succ, Value *Rep) {
   ++NumInserted;
   return true;
 }
-
-
-} // End llvm namespace

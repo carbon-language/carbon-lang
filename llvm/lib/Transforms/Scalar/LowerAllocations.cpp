@@ -21,8 +21,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumLowered("lowerallocs", "Number of allocations lowered");
@@ -56,7 +55,7 @@ namespace {
 }
 
 // createLowerAllocationsPass - Interface to this file...
-FunctionPass *createLowerAllocationsPass() {
+FunctionPass *llvm::createLowerAllocationsPass() {
   return new LowerAllocations();
 }
 
@@ -134,4 +133,3 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
   return Changed;
 }
 
-} // End llvm namespace

@@ -24,8 +24,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumAdded("lowerrefs", "# of getelementptr instructions added");
@@ -33,17 +32,14 @@ namespace {
   struct DecomposePass : public BasicBlockPass {
     virtual bool runOnBasicBlock(BasicBlock &BB);
   };
+  RegisterOpt<DecomposePass> X("lowerrefs", "Decompose multi-dimensional "
+                               "structure/array references");
 }
-
-RegisterOpt<DecomposePass> X("lowerrefs", "Decompose multi-dimensional "
-                             "structure/array references");
 
 // runOnBasicBlock - Entry point for array or structure references with multiple
 // indices.
 //
-bool
-DecomposePass::runOnBasicBlock(BasicBlock &BB)
-{
+bool DecomposePass::runOnBasicBlock(BasicBlock &BB) {
   bool changed = false;
   for (BasicBlock::iterator II = BB.begin(); II != BB.end(); )
     if (GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(II++)) // pre-inc
@@ -52,9 +48,7 @@ DecomposePass::runOnBasicBlock(BasicBlock &BB)
   return changed;
 }
 
-FunctionPass
-*createDecomposeMultiDimRefsPass()
-{
+FunctionPass *llvm::createDecomposeMultiDimRefsPass() {
   return new DecomposePass();
 }
 
@@ -81,9 +75,7 @@ FunctionPass
 // 
 // Return value: true if the instruction was replaced; false otherwise.
 // 
-bool
-DecomposeArrayRef(GetElementPtrInst* GEP)
-{
+bool llvm::DecomposeArrayRef(GetElementPtrInst* GEP) {
   if (GEP->getNumIndices() < 2)
     return false;
 
@@ -135,4 +127,3 @@ DecomposeArrayRef(GetElementPtrInst* GEP)
   return true;
 }
 
-} // End llvm namespace

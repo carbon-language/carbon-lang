@@ -25,8 +25,7 @@
 #include "llvm/Pass.h"
 #include "Support/Statistic.h"
 #include <set>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumSimpl("cfgsimplify", "Number of blocks simplified");
@@ -38,7 +37,7 @@ namespace {
 }
 
 // Public interface to the CFGSimplification pass
-FunctionPass *createCFGSimplificationPass() {
+FunctionPass *llvm::createCFGSimplificationPass() {
   return new CFGSimplifyPass();
 }
 
@@ -103,5 +102,3 @@ bool CFGSimplifyPass::runOnFunction(Function &F) {
 
   return Changed;
 }
-
-} // End llvm namespace

@@ -30,8 +30,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumEliminated("tailduplicate",
@@ -56,7 +55,7 @@ namespace {
 }
 
 // Public interface to the Tail Duplication pass
-Pass *createTailDuplicationPass() { return new TailDup(); }
+Pass *llvm::createTailDuplicationPass() { return new TailDup(); }
 
 /// runOnFunction - Top level algorithm - Loop over each unconditional branch in
 /// the function, eliminating it if it looks attractive enough.
@@ -342,5 +341,3 @@ Value *TailDup::GetValueOutBlock(BasicBlock *BB, Value *OrigVal,
 
   return GetValueInBlock(BB, OrigVal, ValueMap, OutValueMap);
 }
-
-} // End llvm namespace

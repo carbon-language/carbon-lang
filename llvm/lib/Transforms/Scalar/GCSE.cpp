@@ -22,8 +22,7 @@
 #include "llvm/Support/InstIterator.h"
 #include "Support/Statistic.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumInstRemoved("gcse", "Number of instructions removed");
@@ -56,7 +55,7 @@ namespace {
 }
 
 // createGCSEPass - The public interface to this file...
-FunctionPass *createGCSEPass() { return new GCSE(); }
+FunctionPass *llvm::createGCSEPass() { return new GCSE(); }
 
 // GCSE::runOnFunction - This is the main transformation entry point for a
 // function.
@@ -270,5 +269,3 @@ Instruction *GCSE::EliminateCSE(Instruction *I, Instruction *Other) {
 
   return Ret;
 }
-
-} // End llvm namespace

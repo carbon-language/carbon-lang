@@ -23,8 +23,7 @@
 #include "llvm/Support/InstIterator.h"
 #include "Support/Statistic.h"
 #include <set>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> DIEEliminated("die", "Number of insts removed");
@@ -54,7 +53,7 @@ namespace {
   RegisterOpt<DeadInstElimination> X("die", "Dead Instruction Elimination");
 }
 
-Pass *createDeadInstEliminationPass() {
+Pass *llvm::createDeadInstEliminationPass() {
   return new DeadInstElimination();
 }
 
@@ -122,8 +121,7 @@ bool DCE::runOnFunction(Function &F) {
   return true;
 }
 
-Pass *createDeadCodeEliminationPass() {
+Pass *llvm::createDeadCodeEliminationPass() {
   return new DCE();
 }
 
-} // End llvm namespace

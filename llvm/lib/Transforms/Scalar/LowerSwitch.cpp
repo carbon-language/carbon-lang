@@ -22,8 +22,7 @@
 #include "llvm/Pass.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumLowered("lowerswitch", "Number of SwitchInst's replaced");
@@ -62,7 +61,7 @@ namespace {
 }
 
 // createLowerSwitchPass - Interface to this file...
-FunctionPass *createLowerSwitchPass() {
+FunctionPass *llvm::createLowerSwitchPass() {
   return new LowerSwitch();
 }
 
@@ -83,12 +82,12 @@ bool LowerSwitch::runOnFunction(Function &F) {
 
 // operator<< - Used for debugging purposes.
 //
-std::ostream& operator << (std::ostream& O, std::vector<LowerSwitch::Case>& C)
-{
+std::ostream& operator<<(std::ostream &O,
+                         const std::vector<LowerSwitch::Case> &C) {
   O << "[";
 
-  for (std::vector<LowerSwitch::Case>::iterator B = C.begin(), E = C.end();
-      B != E; ) {
+  for (std::vector<LowerSwitch::Case>::const_iterator B = C.begin(),
+         E = C.end(); B != E; ) {
     O << *B->first;
     if (++B != E) O << ", ";
   }
@@ -224,5 +223,3 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
   // We are now done with the switch instruction, delete it.
   delete SI;
 }
-
-} // End llvm namespace

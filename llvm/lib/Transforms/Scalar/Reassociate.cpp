@@ -33,8 +33,7 @@
 #include "Support/Debug.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumLinear ("reassociate","Number of insts linearized");
@@ -61,7 +60,7 @@ namespace {
 }
 
 // Public interface to the Reassociate pass
-FunctionPass *createReassociatePass() { return new Reassociate(); }
+FunctionPass *llvm::createReassociatePass() { return new Reassociate(); }
 
 void Reassociate::BuildRankMap(Function &F) {
   unsigned i = 2;
@@ -295,4 +294,3 @@ bool Reassociate::runOnFunction(Function &F) {
   return Changed;
 }
 
-} // End llvm namespace

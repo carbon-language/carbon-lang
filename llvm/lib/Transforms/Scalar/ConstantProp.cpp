@@ -26,8 +26,7 @@
 #include "llvm/Support/InstIterator.h"
 #include "Support/Statistic.h"
 #include <set>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumInstKilled("constprop", "Number of instructions killed");
@@ -43,7 +42,7 @@ namespace {
   RegisterOpt<ConstantPropagation> X("constprop","Simple constant propagation");
 }
 
-Pass *createConstantPropagationPass() {
+Pass *llvm::createConstantPropagationPass() {
   return new ConstantPropagation();
 }
 
@@ -75,5 +74,3 @@ bool ConstantPropagation::runOnFunction(Function &F) {
   }
   return Changed;
 }
-
-} // End llvm namespace

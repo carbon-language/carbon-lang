@@ -35,13 +35,12 @@
 #include "Support/PostOrderIterator.h"
 #include "Support/Statistic.h"
 #include "Support/hash_set"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumExprsEliminated("pre", "Number of expressions constantified");
   Statistic<> NumRedundant      ("pre", "Number of redundant exprs eliminated");
-  static Statistic<> NumInserted       ("pre", "Number of expressions inserted");
+  Statistic<> NumInserted       ("pre", "Number of expressions inserted");
 
   struct PRE : public FunctionPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -633,4 +632,3 @@ bool PRE::ProcessExpression(Instruction *Expr) {
   return Changed;
 }
 
-} // End llvm namespace
