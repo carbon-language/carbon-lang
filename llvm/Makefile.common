@@ -302,7 +302,7 @@ endif
 
 # Create dependencies for the *.cpp files...
 $(BUILD_ROOT)/Depend/%.d: %.cpp $(BUILD_ROOT)/Depend/.dir
-	$(Depend) $< | sed 's|$*\.o *|Release/& Debug/& Depend/$(@F)|g' > $@
+	$(Depend) $< | sed 's|$*\.o *|$(BUILD_ROOT)/Release/& $(BUILD_ROOT)/Debug/& $(BUILD_ROOT)/Depend/$(@F)|g' > $@
 
 # Create dependencies for the *.c files...
 $(BUILD_ROOT)/Depend/%.d: %.c $(BUILD_ROOT)/Depend/.dir
