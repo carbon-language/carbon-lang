@@ -271,6 +271,22 @@ class UltraSparcRegInfo : public MachineRegInfo
   }
 
 
+  int getRegType(int reg) const {
+    if( reg < 32 ) 
+      return IntRegType;
+    else if ( reg < (32 + 32) )
+      return FPSingleRegType;
+    else if ( reg < (64 + 32) )
+      return FPDoubleRegType;
+    else if( reg < (64+32+4) )
+      return FloatCCRegType;
+    else if( reg < (64+32+4+2) )  
+      return IntCCRegType;             
+    else 
+      assert(0 && "Invalid register number in getRegType");
+  }
+
+
 
   // ***TODO: See this method is necessary
 
@@ -284,8 +300,19 @@ class UltraSparcRegInfo : public MachineRegInfo
   MachineInstr * cpCCR2IntMI(const unsigned IntReg) const;
   MachineInstr * cpInt2CCRMI(const unsigned IntReg) const;
 
+
+
+  void moveInst2OrdVec(vector<MachineInstr *> &OrdVec, MachineInstr *UnordInst,
+		       PhyRegAlloc &PRA ) const;
+
   void OrderAddedInstrns( vector<MachineInstr *> &UnordVec, 
-			  vector<MachineInstr *> &OrdVec) const;
+			  vector<MachineInstr *> &OrdVec,
+			  PhyRegAlloc &PRA) const;
+
+
+
+
+
 
 
  public:

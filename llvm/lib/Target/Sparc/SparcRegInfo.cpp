@@ -741,16 +741,16 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 
   if( ! AddedInstrnsBefore.empty() ) {
 
-    if( DEBUG_RA) {
+    if( DEBUG_RA  ) {
       cerr << "\nCalling reorder with instrns: \n";
       for(unsigned i=0; i < AddedInstrnsBefore.size(); i++)
 	cerr  << *(AddedInstrnsBefore[i]);
     }
 
     vector <MachineInstr *> TmpVec;
-    OrderAddedInstrns(AddedInstrnsBefore, TmpVec);
+    OrderAddedInstrns(AddedInstrnsBefore, TmpVec, PRA);
 
-    if( DEBUG_RA) {
+    if( DEBUG_RA   ) {
       cerr << "\nAfter reordering instrns: \n";
       for(unsigned i=0; i < TmpVec.size(); i++)
 	cerr << *(TmpVec[i]);
@@ -1007,7 +1007,7 @@ MachineInstr * UltraSparcRegInfo::cpMem2RegMI(const unsigned SrcPtrReg,
     MI->SetMachineOperand(0, SrcPtrReg, false);
     MI->SetMachineOperand(1, MachineOperand:: MO_SignExtendedImmed, 
 			  (int64_t) Offset, false);
-    MI->SetMachineOperand(2, DestReg, false);
+    MI->SetMachineOperand(2, DestReg, true);
     break;
 
   case FPSingleRegType:
@@ -1015,7 +1015,7 @@ MachineInstr * UltraSparcRegInfo::cpMem2RegMI(const unsigned SrcPtrReg,
     MI->SetMachineOperand(0, SrcPtrReg, false);
     MI->SetMachineOperand(1, MachineOperand:: MO_SignExtendedImmed, 
 			  (int64_t) Offset, false);
-    MI->SetMachineOperand(2, DestReg, false);
+    MI->SetMachineOperand(2, DestReg, true);
 
     break;
 
@@ -1024,14 +1024,14 @@ MachineInstr * UltraSparcRegInfo::cpMem2RegMI(const unsigned SrcPtrReg,
     MI->SetMachineOperand(0, SrcPtrReg, false);
     MI->SetMachineOperand(1, MachineOperand:: MO_SignExtendedImmed, 
 			  (int64_t) Offset, false);
-    MI->SetMachineOperand(2, DestReg, false);
+    MI->SetMachineOperand(2, DestReg, true);
     break;
 
   case IntCCRegType:
     assert( 0 && "Cannot directly load into %ccr from memory");
 
   default:
-    assert(0 && "Unknow RegType in cpMem2RegMI");
+    assert(0 && "Unknown RegType in cpMem2RegMI");
   }
 
   return MI;
@@ -1090,8 +1090,9 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
     LiveRange *RetValLR = PRA.LRI.getLiveRangeForValue( RetVal );
     assert( RetValLR && "No LR for RetValue of call");
 
-    PushedRegSet.insert(
-			getUnifiedRegNum((RetValLR->getRegClass())->getID(), 
+    if(  RetValLR->hasColor())
+      PushedRegSet.insert(
+	 getUnifiedRegNum((RetValLR->getRegClass())->getID(), 
 				      RetValLR->getColor() ) );
   }
 
@@ -1312,17 +1313,24 @@ void UltraSparcRegInfo::printReg(const LiveRange *const LR) {
 // they are used. If it detects such conditions, it reorders the instructions.
 //
 // The unordered instructions come in the UnordVec. These instructions are
-// instructions inserted by RegAlloc. All suhc instruction MUST have 
-// their USES BEFORE THE DEFS.
+// instructions inserted by RegAlloc. All such instruction MUST have 
+// their USES BEFORE THE DEFS after reordering.
 
 // The UnordVec & OrdVec must be DISTINCT. The OrdVec must be empty when
 // this method is called.
 
 // This method uses two vectors for efficiency in accessing
 
+// Since instructions are inserted in RegAlloc, this assumes that the 
+// first operand is the source reg and the last operand is the dest reg.
+
+// All the uses are before THE def to a register
+
+
 //---------------------------------------------------------------------------
 void UltraSparcRegInfo::OrderAddedInstrns( vector<MachineInstr *> &UnordVec, 
-					   vector<MachineInstr *> &OrdVec) const{
+					   vector<MachineInstr *> &OrdVec,
+					   PhyRegAlloc &PRA) const{
 
   /*
     Problem: We can have instructions inserted by RegAlloc like
@@ -1330,176 +1338,226 @@ void UltraSparcRegInfo::OrderAddedInstrns( vector<MachineInstr *> &UnordVec,
     2. add %oy %g0 %oz, where z!=x or z==x
 
     This is wrong since %oy used by 2 is overwritten by 1
-  */
+  
+    Solution:
+    We re-order the instructions so that the uses are before the defs
 
-  /* Algorithm:
-
-     Round 1:
-     For each instruction 'Inst' in UnordVec, starting from UnordVec.begin, 
-     let Def be the destination reg of instr.
-       For each use 'Use' of the following instruction
-         If Def==Use continue
-       If no use is found, push back 'Inst' to OrdVec 
-       
-     If no inst is left in UnordVec by the end of Round1, return
-
-     Round 2:
-     For each inst 'Inst' left in UnordVec
-       For each use 'Use' in Inst
-          If threre is NO Def for this Use in an inst in OrdVec
-	     push back Inst 
-	 Else 
-	     push_front a stack save instr mem location "Loc"
-	     push_back a restore inst to load to Use from Loc
-	     discard Inst (assert that one operand is %g0)
+    Algorithm:
+    
+    do
+      for each instruction 'DefInst' in the UnOrdVec
+         for each instruction 'UseInst' that follows the DefInst
+           if the reg defined by DefInst is used by UseInst
+	     mark DefInst as not movable in this iteration
+	 If DefInst is not marked as not-movable, move DefInst to OrdVec
+    while all instructions in DefInst are moved to OrdVec
+    
+    For moving, we call the move2OrdVec(). It checks whether there is a def
+    in it for the uses in the instruction to be added to OrdVec. If there
+    are no preceding defs, it just appends the instruction. If there is a
+    preceding def, it puts two instructions to save the reg on stack before
+    the load and puts a restore at use.
 
   */
 
-  bool CouldMoveAll = true;
 
+  bool CouldMoveAll;
+  bool DebugPrint = false;
 
-  vector<MachineInstr *>::iterator DefIt = UnordVec.begin();
+  do {
 
-  for( ; DefIt !=  UnordVec.end(); ++DefIt ) {
+    CouldMoveAll = true;
 
-    // for each instruction in the UnordVec do ...
+    vector<MachineInstr *>::iterator DefIt = UnordVec.begin();
 
-    MachineInstr *DefInst = *DefIt;
+    for( ; DefIt !=  UnordVec.end(); ++DefIt ) {
 
-    // cerr << "\nDefInst = " <<  *DefInst;
+      // for each instruction in the UnordVec do ...
 
-    for(unsigned OpNumD=0; OpNumD < DefInst->getNumOperands(); ++OpNumD) {
+      MachineInstr *DefInst = *DefIt;
 
-      MachineOperand& DefOp = DefInst->getOperand(OpNumD);
+      if( DefInst == NULL) continue;
 
+      //cerr << "\nInst in UnordVec = " <<  *DefInst;
+      
+      // last operand is the def (unless for a store which has no def reg)
+      MachineOperand& DefOp = DefInst->getOperand(DefInst->getNumOperands()-1);
+      
       if( DefOp.opIsDef() &&  
 	  DefOp.getOperandType() ==  MachineOperand::MO_MachineRegister) {
-
+	
 	// If the operand in DefInst is a def ...
-
+	
 	bool DefEqUse = false;
-
+	
 	vector<MachineInstr *>::iterator UseIt = DefIt;
 	UseIt++;
-
+	
 	for( ; UseIt !=  UnordVec.end(); ++UseIt ) {
 
-	  // for each inst (UseInst) that is below the DefInst do ...
-
 	  MachineInstr *UseInst = *UseIt;
+	  if( UseInst == NULL) continue;
+	  
+	  // for each inst (UseInst) that is below the DefInst do ...
+	  
 
-	  for(unsigned OpNumU=0; OpNumU < UseInst->getNumOperands(); ++OpNumU){
+	  MachineOperand& UseOp = UseInst->getOperand(0);
+	  
+	  if( ! UseOp.opIsDef() &&  
+	      UseOp.getOperandType() == MachineOperand::MO_MachineRegister) {
+	    
+	    // if use is a register ...
+	    
+	    if( DefOp.getMachineRegNum() == UseOp.getMachineRegNum() ) {
+	      
+	      // if Def and this use are the same, it means that this use
+	      // is destroyed by a def before it is used
+	      
+	      // cerr << "\nCouldn't move " << *DefInst;
 
-	    MachineOperand& UseOp = UseInst->getOperand(OpNumU);
-
-	    if( ! UseOp.opIsDef() &&  
-		UseOp.getOperandType() == MachineOperand::MO_MachineRegister) {
-
-	      // if use is a register ...
-
-	      if( DefOp.getMachineRegNum() == UseOp.getMachineRegNum() ) {
-
-		// if Def and this use are the same, it means that this use
-		// is destroyed by a def before it is used
-
-		DefEqUse = true;
-		CouldMoveAll = false;
-
-		cerr << "\nReordered Ins (Moved up): " << *UseInst;
-		break;
-
-	      } // if two registers are equal
-
-	    } // if use is a register
-
-	  } // for all uses
-
+	      DefEqUse = true;
+	      CouldMoveAll = false;	
+	      DebugPrint = true;
+	      break;
+	    } // if two registers are equal
+	    
+	  } // if use is a register
+	  
 	}// for all use instructions
-
+	
 	if( ! DefEqUse ) {
-	  // cerr << "\nMoved Inst = " <<  *DefInst;
-	  OrdVec.push_back(DefInst);
+	  
+	  // after examining all the instructions that follow the DefInst
+	  // if there are no dependencies, we can move it to the OrdVec
+
+	  // cerr << "Moved to Ord: " << *DefInst;
+
+	  moveInst2OrdVec(OrdVec, DefInst, PRA);
+
+	  //OrdVec.push_back(DefInst);
+
+	  // mark the pos of DefInst with NULL to indicate that it is
+	  // empty
 	  *DefIt = NULL;
 	}
-	else 
-	  break;   // exit the loop since we can't move DefInst
-
+    
       } // if Def is a machine register
+      
+    } // for all instructions in the UnordVec
+    
 
-    } // for all Defs in DefInst (there should be only 1)
-
-  } // for all instructions in the UnordVec
+  } while( !CouldMoveAll);
 
 
-  if( CouldMoveAll ) { 
-    assert( (UnordVec.size() == OrdVec.size()) && 
-	    "Different Vec Sizes after reordering");
-    return;
+  if(DebugPrint) {
+    cerr << "\nAdded instructions were reordered to:\n";
+    for(unsigned int i=0; i < OrdVec.size(); i++)
+      cerr << *(OrdVec[i]);
   }
 
-
-  // We are here because there were two instructions like:
-  // 1. add %ox %g0 %oy
-  // 2. add %oy %g0 %oz, where z!=x or z==x
-  // and hence we could not move 1 to the OrdVec
-
-  // cerr << "\nCaution: Added instructions will be RE-ORDERED !@!@!";
-
-  vector< MachineInstr *>::iterator UnordIt = UnordVec.begin();
-
-  for( ; UnordIt !=  UnordVec.end(); ++UnordIt ) {
-
-    MachineInstr *UnordInst = *UnordIt;
-    if( UnordInst == NULL ) continue;
-
-    for(unsigned OpNumU=0; OpNumU < UnordInst->getNumOperands(); ++OpNumU) {
-
-      MachineOperand& UseOp = UnordInst->getOperand(OpNumU);
-
-      if( ! UseOp.opIsDef() &&  
-	  UseOp.getOperandType() ==  MachineOperand::MO_MachineRegister) {
-
-	if( UseOp.getMachineRegNum() == getZeroRegNum() )
-	  continue;
-
-	// for all uses of UnordInst 
-	bool DefEqUse = false;
-
-	vector<MachineInstr *>::iterator OrdIt = OrdVec.begin();
-  
-	for( ; OrdIt !=  OrdVec.end(); ++OrdIt ) {
-
-	  MachineInstr *OrdInst = *OrdIt ;
-
-	  for(unsigned OpNumO=0; OpNumO < OrdInst->getNumOperands(); ++OpNumO){
-
-	    MachineOperand& DefOp = OrdInst->getOperand(OpNumO);
-
-	    if( DefOp.opIsDef() &&  
-		DefOp.getOperandType() == MachineOperand::MO_MachineRegister) {
-
-	      if( DefOp.getMachineRegNum() == UseOp.getMachineRegNum() ) {
-
-		DefEqUse = true;
-		assert(0 && "Insert save/restre code for reordering");
-
-	      } // if two registers are equal
-
-	    } // if Def is a register
-
-	  } // for all defs
-
-	} // for each instr in OrdVec
-
-	if( !DefEqUse ) {
-	  OrdVec.push_back( UnordInst );
-	  cerr << "\nReordered instr (Moved Down): " <<  *UnordInst;
-	}
-    
-      } // if the operand in UnordInst is a use
- 
-    } // for each use in the UnordInst
-
-  } // for each UnordInst in UnordVec
-
 }
+
+
+
+
+
+
+
+
+void UltraSparcRegInfo::moveInst2OrdVec(vector<MachineInstr *> &OrdVec,
+					MachineInstr *UnordInst,
+					PhyRegAlloc &PRA ) const {
+
+  MachineOperand& UseOp = UnordInst->getOperand(0);
+
+  if( ! UseOp.opIsDef() &&  
+      UseOp.getOperandType() ==  MachineOperand::MO_MachineRegister) {
+
+    // for the use of UnordInst, see whether there is a defining instr
+    // before in the OrdVec
+    bool DefEqUse = false;
+
+    vector<MachineInstr *>::iterator OrdIt = OrdVec.begin();
+  
+    for( ; OrdIt !=  OrdVec.end(); ++OrdIt ) {
+
+      MachineInstr *OrdInst = *OrdIt ;
+
+      MachineOperand& DefOp = 
+	OrdInst->getOperand(OrdInst->getNumOperands()-1);
+
+      if( DefOp.opIsDef() &&  
+	  DefOp.getOperandType() == MachineOperand::MO_MachineRegister) {
+
+	//cerr << "\nDefining Ord Inst: " <<  *OrdInst;
+	  
+	if( DefOp.getMachineRegNum() == UseOp.getMachineRegNum() ) {
+
+	  // we are here because there is a preceding def in the OrdVec 
+	  // for the use in this intr we are going to insert. This
+	  // happened because the original code was like:
+	  // 1. add %ox %g0 %oy
+	  // 2. add %oy %g0 %ox
+	  // In Round1, we added 2 to OrdVec but 1 remained in UnordVec
+	  // Now we are processing %ox of 1.
+	  // We have to 
+	      
+	  const int UReg = DefOp.getMachineRegNum();
+	  const int RegType = getRegType(UReg);
+	  MachineInstr *AdIBef, *AdIAft;
+	      
+	  // TODO: Change 8 below
+	  const int StackOff =  PRA.mcInfo.pushTempValue(target, 8);
+	  
+	  // Save the UReg (%ox) on stack before it's destroyed
+	  AdIBef=cpReg2MemMI(UReg, getStackPointer(), StackOff, RegType);
+	  OrdIt = OrdVec.insert( OrdIt, AdIBef);
+	  OrdIt++;  // points to current instr we processed
+	  
+	  // Load directly into DReg (%oy)
+	  MachineOperand&  DOp=
+	    (UnordInst->getOperand(UnordInst->getNumOperands()-1));
+	  assert(DOp.opIsDef() && "Last operand is not the def");
+	  const int DReg = DOp.getMachineRegNum();
+	  
+	  AdIAft=cpMem2RegMI(getStackPointer(), StackOff, DReg, RegType);
+	  OrdVec.push_back(AdIAft);
+	    
+	  cerr << "\nFixed CIRCULAR references by reordering";
+
+	  if( DEBUG_RA ) {
+	    cerr << "\nBefore CIRCULAR Reordering:\n";
+	    cerr << *UnordInst;
+	    cerr << *OrdInst;
+	  
+	    cerr << "\nAfter CIRCULAR Reordering - All Inst so far:\n";
+	    for(unsigned i=0; i < OrdVec.size(); i++)
+	      cerr << *(OrdVec[i]);
+	  }
+	  
+	  // Do not copy the UseInst to OrdVec
+	  DefEqUse = true;
+	  break;  
+	  
+	}// if two registers are equal
+
+      } // if Def is a register
+
+    } // for each instr in OrdVec
+
+    if( !DefEqUse ) {  
+
+      // We didn't find a def in the OrdVec, so just append this inst
+      OrdVec.push_back( UnordInst );  
+      //cerr << "Reordered Inst (Moved Dn): " <<  *UnordInst;
+    }
+    
+  }// if the operand in UnordInst is a use
+ 
+}
+
+
+
+
+
+
