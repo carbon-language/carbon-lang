@@ -20,7 +20,6 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Assembly/CWriter.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
@@ -56,6 +55,11 @@ int main(int argc, char **argv) {
   std::ostream *Out = &std::cout;  // Default to printing to stdout...
   std::string ErrorMessage;
 
+  if (WriteMode == c) {
+    std::cerr << "ERROR: llvm-dis no longer contains the C backend.  Use 'llc -march=c' instead!\n";
+    exit(1);
+  }
+
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
   if (M.get() == 0) {
     std::cerr << argv[0] << ": ";
@@ -84,14 +88,10 @@ int main(int argc, char **argv) {
       int Len = IFN.length();
       if (IFN[Len-3] == '.' && IFN[Len-2] == 'b' && IFN[Len-1] == 'c') {
 	// Source ends in .bc
-	OutputFilename = std::string(IFN.begin(), IFN.end()-3);
+	OutputFilename = std::string(IFN.begin(), IFN.end()-3)+".ll";
       } else {
-	OutputFilename = IFN;   // Append a .ll to it
+	OutputFilename = IFN+".ll";
       }
-      if (WriteMode == c)
-        OutputFilename += ".c";
-      else
-        OutputFilename += ".ll";
 
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
@@ -116,16 +116,7 @@ int main(int argc, char **argv) {
   // All that dis does is write the assembly or C out to a file...
   //
   PassManager Passes;
-
-  switch (WriteMode) {
-  case LLVM:           // Output LLVM assembly
-    Passes.add(new PrintModulePass(Out));
-    break;
-  case c:              // Convert LLVM to C
-    AddPassesToWriteC(Passes, *Out);
-    break;
-  }
-
+  Passes.add(new PrintModulePass(Out));
   Passes.run(*M.get());
 
   if (Out != &std::cout) {

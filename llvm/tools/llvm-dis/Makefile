@@ -9,5 +9,5 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-dis
-USEDLIBS = cwriter ipa.a scalaropts.a target.a transformutils analysis.a bcreader vmcore support.a
+USEDLIBS = bcreader vmcore support.a
 include $(LEVEL)/Makefile.common
