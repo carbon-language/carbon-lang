@@ -18,10 +18,23 @@
 
 
 #include "llvm/CodeGen/MachineCodeEmitter.h"
-
+#include "llvm/CodeGen/MachineFunction.h"
 struct JelloMachineCodeEmitter : public MachineCodeEmitter {
+  void startFunction(MachineFunction &F) {
+    std::cout << "\n**** Writing machine code for function: "
+              << F.getFunction()->getName() << "\n";
+  }
 
+  void startBasicBlock(MachineBasicBlock &BB) {
+    std::cout << "\n--- Basic Block: " << BB.getBasicBlock()->getName() << "\n";
+  }
 
+  void emitByte(unsigned char B) {
+    std::cout << "0x" << std::hex << (unsigned int)B << std::dec << " ";
+  }
+  void emitPCRelativeDisp(Value *V) {
+    std::cout << "<" << V->getName() << ": 0x00 0x00 0x00 0x00> ";
+  }
 };
 
 
