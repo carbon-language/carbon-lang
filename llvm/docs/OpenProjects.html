@@ -188,7 +188,7 @@ Irreducible Loops</a>.</li>
 
 <div class="doc_text">
 
-<p>Sometimes creating new things is more fun that improving existing things.
+<p>Sometimes creating new things is more fun than improving existing things.
 These projects tend to be more involved and perhaps require more work, but can
 also be very rewarding.</p>
 
@@ -293,7 +293,6 @@ profiling code to work with the generic profiling interfaces.</li>
 <div class="doc_text">
 
 <ol>
-<li>Implement a global register allocator</li>
 <li>Implement a better instruction selector</li>
 <li>Implement support for the "switch" instruction without requiring the 
     lower-switches pass.</li>
@@ -309,7 +308,12 @@ profiling code to work with the generic profiling interfaces.</li>
 <div class="doc_text">
 
 <ol>
-<li>Write a new frontend for some language (Java? OCaml? Forth?)</li>
+<li>Port the <A HREF="http://www-sop.inria.fr/mimosa/fp/Bigloo/">Bigloo</A>
+Scheme compiler, from Manuel Serrano at INRIA Sophia-Antipolis, to
+output LLVM bytecode. It seems that it can already output .NET
+bytecode, JVM bytecode, and C, so LLVM would ostensibly be another good
+candidate.</li>
+<li>Write a new frontend for some other language (Java? OCaml? Forth?)</li>
 <li>Write a new backend for a target (IA64? MIPS? MMIX?)</li>
 <li>Random test vector generator: Use a C grammar to generate random C code;
 run it through llvm-gcc, then run a random set of passes on it using opt.
