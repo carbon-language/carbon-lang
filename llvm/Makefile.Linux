@@ -5,6 +5,9 @@
 #
 #===-----------------------------------------------------------------------====#
 
+# Set the architecture so that x86 platform dependant code is compmiled
+ARCH := x86
+
 # MakeSharedObjectOption - This option is passed to the linker by
 # Makefile.common when compiling a shared object.
 #

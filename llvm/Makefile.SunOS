@@ -5,6 +5,9 @@
 #
 #===-----------------------------------------------------------------------====#
 
+# Set the architecture so that Sparc platform dependant code is compmiled
+ARCH := Sparc
+
 # MakeSharedObjectOption - This option is passed to the linker by
 # Makefile.common when compiling a shared object.
 #
