@@ -20,15 +20,39 @@ llvm-as
 SYNOPSIS
 </h3>
 
-llvm-as [options] &lt; filename&gt;
+llvm-as [options] [filename]
 <h3>
 DESCRIPTION
 </h3>
 
-The llvm-as command is the LLVM assembler.  It takes a human readable LLVM
-assembly language file and translates it into LLVM bytecode.
+The llvm-as command is the LLVM assembler.  It reads a file containing human
+readable LLVM assembly language, translates it to LLVM bytecode, and writes the
+result into a file or to standard output.
+<p>
 
-By default, llvm-as places its output into filename.bc.
+If filename is omitted or is -, then llvm-as reads its input from standard
+input.
+<p>
+
+If an output file is not specified with the -o option, then llvm-as sends its
+output to a file or standard output by the following logic:
+
+<ul>
+	<li>
+	If the input is standard input, then the output is standard output.
+	<p>
+
+	<li>
+	If the input is a file that ends with .ll, then the output file is of
+	the same name, except that the suffix is changed to .bc.
+	<p>
+
+	<li>
+	If the input is a file that does not end with the .ll suffix, then the
+	output file has the same name as the input file, except that the .bc suffix
+	is appended.
+	<p>
+</ul>
 
 <h3>
 OPTIONS
@@ -49,7 +73,8 @@ OPTIONS
 
 	<li> -o &lt;filename&gt;
 	<br>
-	Specify the output filename.
+	Specify the output filename.  If filename is -, then llvm-as sends its
+	output to standard output.
 	<p>
 
 	<li> -stats
