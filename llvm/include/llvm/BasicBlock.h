@@ -65,8 +65,6 @@ public:
   /// Instruction iterators...
   typedef InstListType::iterator                              iterator;
   typedef InstListType::const_iterator                  const_iterator;
-  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
-  typedef std::reverse_iterator<iterator>             reverse_iterator;
 
   /// BasicBlock ctor - If the function parameter is specified, the basic block
   /// is automatically inserted at either the end of the function (if
@@ -118,11 +116,6 @@ public:
   inline const_iterator          begin() const { return InstList.begin(); }
   inline iterator                end  ()       { return InstList.end();   }
   inline const_iterator          end  () const { return InstList.end();   }
-
-  inline reverse_iterator       rbegin()       { return InstList.rbegin(); }
-  inline const_reverse_iterator rbegin() const { return InstList.rbegin(); }
-  inline reverse_iterator       rend  ()       { return InstList.rend();   }
-  inline const_reverse_iterator rend  () const { return InstList.rend();   }
 
   inline size_t                   size() const { return InstList.size();  }
   inline bool                    empty() const { return InstList.empty(); }
