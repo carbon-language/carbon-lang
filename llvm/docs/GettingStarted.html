@@ -178,6 +178,10 @@ and performance.
         <li><tt>--prefix=<i>directory</i></tt>
         <p>Specify for <i>directory</i> the full pathname of where you
         want the LLVM tools and libraries to be installed.</p></li>
+        <li><tt>--with-llvmgccdir=<i>directory</i></tt>
+        <p>Optionally, specify for <i>directory</i> the full pathname of the 
+        C/C++ FrontEnd installation to use with this LLVM configuration. If
+        not specified, the PATH will be searched.</p></li>
         <li><tt>--enable-spec2000=<i>directory</i></tt>
             <p>Enable the SPEC2000 benchmarks for testing.  The SPEC2000
             benchmarks should be available in
@@ -532,7 +536,7 @@ All these paths are absolute:</p>
 
     <dt>LLVMGCCDIR
     <dd>
-    This is the where the LLVM GCC Front End is installed.
+    This is where the LLVM GCC Front End is installed.
     <p>
     For the pre-built GCC front end binaries, the LLVMGCCDIR is
     <tt>cfrontend/<i>platform</i>/llvm-gcc</tt>.
@@ -756,6 +760,20 @@ script to configure the build system:</p>
 <p>The following options can be used to set or enable LLVM specific options:</p>
 
 <dl>
+  <dt><i>--with-llvmgccdir</i></dt>
+  <dd>Path to the LLVM C/C++ FrontEnd to be used with this LLVM configuration. 
+  The value of this option should specify the full pathname of the C/C++ Front
+  End to be used. If this option is not provided, the PATH will be searched for
+  a program named <i>llvm-gcc</i> and the C/C++ FrontEnd install directory will
+  be inferred from the path found. If the option is not given, and no llvm-gcc
+  can be found in the path then a warning will be produced by 
+  <tt>configure</tt> indicating this situation. LLVM may still be built with 
+  the <tt>tools-only</tt> target but attempting to build the runtime libraries
+  will fail as these libraries require llvm-gcc and llvm-g++. See 
+  <a href="#installcf">Install the GCC Front End</a> for details on installing
+  the C/C++ Front End. See
+  <a href="CFEBuildInstrs.html">Bootstrapping the LLVM C/C++ Front-End</a>
+  for details on building the C/C++ Front End.</dd>
   <dt><i>--with-tclinclude</i></dt>
   <dd>Path to the tcl include directory under which the <tt>tclsh</tt> can be
   found. Use this if you have multiple tcl installations on your machine and you
