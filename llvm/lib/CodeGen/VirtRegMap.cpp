@@ -89,8 +89,8 @@ namespace {
               tii_(tm_.getInstrInfo()),
               mri_(*tm_.getRegisterInfo()),
               vrm_(vrm),
-              p2vMap_(mri_.getNumRegs()),
-              dirty_(mri_.getNumRegs()) {
+              p2vMap_(mri_.getNumRegs(), 0),
+              dirty_(mri_.getNumRegs(), false) {
             DEBUG(std::cerr << "********** REWRITE MACHINE CODE **********\n");
             DEBUG(std::cerr << "********** Function: "
                   << mf_.getFunction()->getName() << '\n');
@@ -99,11 +99,11 @@ namespace {
         void eliminateVirtRegs() {
             for (MachineFunction::iterator mbbi = mf_.begin(),
                      mbbe = mf_.end(); mbbi != mbbe; ++mbbi) {
+                DEBUG(std::cerr << mbbi->getBasicBlock()->getName() << ":\n");
+                eliminateVirtRegsInMbb(*mbbi);
                 // clear map and dirty flag
                 p2vMap_.assign(p2vMap_.size(), 0);
                 dirty_.assign(dirty_.size(), false);
-                DEBUG(std::cerr << mbbi->getBasicBlock()->getName() << ":\n");
-                eliminateVirtRegsInMbb(*mbbi);
             }
         }
 
