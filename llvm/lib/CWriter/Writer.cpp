@@ -414,35 +414,54 @@ void CWriter::printModule(Module *M) {
       << "#ifndef NULL\n#define NULL 0\n#endif\n\n"
       << "typedef unsigned char bool;\n"
 
-      << "\n\n/* Global Symbols */\n";
+      << "\n\n/* Global Declarations */\n";
+
+  // First output all the declarations for the program, because C requires
+  // Functions & globals to be declared before they are used.
+  //
 
   // Loop over the symbol table, emitting all named constants...
   if (M->hasSymbolTable())
     printSymbolTable(*M->getSymbolTable());
 
-  Out << "\n\n/* Global Data */\n";
-  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
-    if (I->hasInternalLinkage()) Out << "static ";
-    printType(I->getType()->getElementType(), getValueName(I));
-
-    if (I->hasInitializer()) {
-      Out << " = " ;
-      writeOperand(I->getInitializer());
+  // Global variable declarations...
+  if (!M->gempty()) {
+    Out << "\n/* Global Variable Declarations */\n";
+    for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
+      Out << (I->hasExternalLinkage() ? "extern " : "static ");
+      printType(I->getType()->getElementType(), getValueName(I));
+      Out << ";\n";
     }
-    Out << ";\n";
   }
 
-  // First output all the declarations of the functions as C requires Functions 
-  // be declared before they are used.
-  //
-  Out << "\n\n/* Function Declarations */\n";
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    printFunctionDecl(I);
-  
+  // Function declarations
+  if (!M->empty()) {
+    Out << "\n/* Function Declarations */\n";
+    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+      printFunctionDecl(I);
+  }
+
+  // Output the global variable contents...
+  if (!M->gempty()) {
+    Out << "\n\n/* Global Data */\n";
+    for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
+      if (I->hasInternalLinkage()) Out << "static ";
+      printType(I->getType()->getElementType(), getValueName(I));
+      
+      if (I->hasInitializer()) {
+        Out << " = " ;
+        writeOperand(I->getInitializer());
+      }
+      Out << ";\n";
+    }
+  }
+
   // Output all of the functions...
-  Out << "\n\n/* Function Bodies */\n";
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    printFunction(I);
+  if (!M->empty()) {
+    Out << "\n\n/* Function Bodies */\n";
+    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+      printFunction(I);
+  }
 }
 
 
