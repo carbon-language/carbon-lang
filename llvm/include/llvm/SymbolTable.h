@@ -48,7 +48,7 @@ class SymbolTable : public AbstractTypeUser {
 public:
 
   /// @brief A mapping of names to types.
-  typedef std::map<const std::string, Type*> TypeMap;
+  typedef std::map<const std::string, const Type*> TypeMap;
 
   /// @brief An iterator over the TypeMap.
   typedef TypeMap::iterator type_iterator;
@@ -165,7 +165,6 @@ public:
   /// @brief Insert a constant or type.
   inline void insert(const std::string &Name, Value *Val) {
     assert(Val && "Can't insert null type into symbol table!");
-    assert(!isa<Type>(Val) && "Cannot insert types with this interface!");
     assert(isa<Constant>(Val) &&
            "Can only insert constants into a symbol table!");
     insertEntry(Name, Val->getType(), Val);
@@ -176,7 +175,7 @@ public:
   /// allows a type with an existing entry in the symbol table to get
   /// a new name.
   /// @brief Insert a type under a new name.
-  inline void insert(const std::string &Name, Type *Typ) {
+  inline void insert(const std::string &Name, const Type *Typ) {
     assert(Typ && "Can't insert null type into symbol table!");
     insertEntry(Name, Typ );
   }
@@ -194,7 +193,7 @@ public:
   /// the Type in the type map. If the Type is not in the symbol
   /// table, this method silently ignores the request.
   /// @brief Remove a named type from the symbol table.
-  void remove(Type* Typ );
+  void remove(const Type* Typ );
 
   /// Remove a constant or type with the specified name from the 
   /// symbol table.
@@ -202,7 +201,6 @@ public:
   /// @brief Remove a constant or type from the symbol table.
   inline Value* remove(const std::string &Name, Value *Val) {
     assert(Val && "Can't remove null value from symbol table!");
-    assert(!isa<Type>(Val) && "Can't remove types with this interface!");
     plane_iterator PI = pmap.find(Val->getType());
     return removeEntry(PI, PI->second.find(Name));
   }
@@ -332,7 +330,7 @@ private:
   void insertEntry(const std::string &Name, const Type *Ty, Value *V);
 
   /// @brief Insert a type into the symbol table with the specified name.
-  void insertEntry(const std::string &Name, Type *T);
+  void insertEntry(const std::string &Name, const Type *T);
 
   /// Remove a specific value from a specific plane in the SymbolTable.
   /// @returns the removed Value.
@@ -358,12 +356,11 @@ private:
   /// separate type planes for named values. That is, each named
   /// value is organized into a separate dictionary based on 
   /// Type. This means that the same name can be used for different
-  /// types without conflict. Note that the Type::TypeTy plane is
-  /// not stored in this map but is in tmap.
+  /// types without conflict. 
   /// @brief The mapping of types to names to values.
   PlaneMap pmap;
 
-  /// This is the Type::TypeTy plane. It is separated from the pmap
+  /// This is the type plane. It is separated from the pmap
   /// because the elements of the map are name/Type pairs not 
   /// name/Value pairs and Type is not a Value.
   TypeMap tmap;
