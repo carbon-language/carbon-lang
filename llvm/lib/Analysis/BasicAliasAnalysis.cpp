@@ -606,6 +606,9 @@ namespace {
 // Note that this list cannot contain libm functions (such as acos and sqrt)
 // that set errno on a domain or other error.
 static const char *DoesntAccessMemoryTable[] = {
+  // LLVM intrinsics:
+  "llvm.frameaddress", "llvm.returnaddress", "llvm.readport",
+
   "abs", "labs", "llabs", "imaxabs", "fabs", "fabsf", "fabsl",
   "trunc", "truncf", "truncl", "ldexp",
   
@@ -685,6 +688,10 @@ static const char *OnlyReadsMemoryTable[] = {
 
   // C99
   "nan", "nanf", "nand",
+
+  // File I/O
+  "feof", "ferror", "fileno",
+  "feof_unlocked", "ferror_unlocked", "fileno_unlocked"
 };
 
 static const unsigned ORMTableSize =
