@@ -10,13 +10,23 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/SlotCalculator.h"
-#include "llvm/ConstantPool.h"
+#include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Method.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/iOther.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/SymbolTable.h"
+#include "llvm/Support/STLExtras.h"
+#include "llvm/CFG.h"
+#include <algorithm>
+
+#if 0
+#define SC_DEBUG(X) cerr << X
+#else
+#define SC_DEBUG(X)
+#endif
 
 SlotCalculator::SlotCalculator(const Module *M, bool IgnoreNamed) {
   IgnoreNamedNodes = IgnoreNamed;
@@ -31,9 +41,7 @@ SlotCalculator::SlotCalculator(const Module *M, bool IgnoreNamed) {
   }
 
   if (M == 0) return;   // Empty table...
-
-  bool Result = processModule(M);
-  assert(Result == false && "Error in processModule!");
+  processModule();
 }
 
 SlotCalculator::SlotCalculator(const Method *M, bool IgnoreNamed) {
@@ -50,34 +58,131 @@ SlotCalculator::SlotCalculator(const Method *M, bool IgnoreNamed) {
 
   if (TheModule == 0) return;   // Empty table...
 
-  bool Result = processModule(TheModule);
-  assert(Result == false && "Error in processModule!");
-
-  incorporateMethod(M);
+  processModule();              // Process module level stuff
+  incorporateMethod(M);         // Start out in incorporated state
 }
+
+
+// processModule - Process all of the module level method declarations and
+// types that are available.
+//
+void SlotCalculator::processModule() {
+  SC_DEBUG("begin processModule!\n");
+  // Currently, the only module level declarations are methods and method
+  // prototypes.  We simply scavenge the types out of the methods, then add the
+  // methods themselves to the value table...
+  //
+  for_each(TheModule->begin(), TheModule->end(),  // Insert methods...
+	   bind_obj(this, &SlotCalculator::insertValue));
+
+  if (TheModule->hasSymbolTable() && !IgnoreNamedNodes) {
+    SC_DEBUG("Inserting SymbolTable values:\n");
+    processSymbolTable(TheModule->getSymbolTable());
+  }
+
+  SC_DEBUG("end processModule!\n");
+}
+
+// processSymbolTable - Insert all of the values in the specified symbol table
+// into the values table...
+//
+void SlotCalculator::processSymbolTable(const SymbolTable *ST) {
+  for (SymbolTable::const_iterator I = ST->begin(), E = ST->end(); I != E; ++I)
+    for (SymbolTable::type_const_iterator TI = I->second.begin(), 
+	   TE = I->second.end(); TI != TE; ++TI)
+      insertValue(TI->second);
+}
+
+void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
+  for (SymbolTable::const_iterator I = ST->begin(), E = ST->end(); I != E; ++I)
+    for (SymbolTable::type_const_iterator TI = I->second.begin(), 
+	   TE = I->second.end(); TI != TE; ++TI)
+      if (TI->second->isConstant())
+	insertValue(TI->second);
+}
+
 
 void SlotCalculator::incorporateMethod(const Method *M) {
   assert(ModuleLevel.size() == 0 && "Module already incorporated!");
 
+  SC_DEBUG("begin processMethod!\n");
+
   // Save the Table state before we process the method...
-  for (unsigned i = 0; i < Table.size(); ++i) {
+  for (unsigned i = 0; i < Table.size(); ++i)
     ModuleLevel.push_back(Table[i].size());
+
+  SC_DEBUG("Inserting method arguments\n");
+
+  // Iterate over method arguments, adding them to the value table...
+  for_each(M->getArgumentList().begin(), M->getArgumentList().end(),
+	   bind_obj(this, &SlotCalculator::insertValue));
+
+  // Iterate over all of the instructions in the method, looking for constant
+  // values that are referenced.  Add these to the value pools before any
+  // nonconstant values.  This will be turned into the constant pool for the
+  // bytecode writer.
+  //
+  if (!IgnoreNamedNodes) {                // Assembly writer does not need this!
+    SC_DEBUG("Inserting method constants:\n";
+	     for (constant_iterator I = constant_begin(M), E = constant_end(M);
+		  I != E; ++I) {
+	       cerr << "  " << I->getType()->getDescription() 
+		    << " " << I->getStrValue() << endl;
+	     });
+
+    // Emit all of the constants that are being used by the instructions in the
+    // method...
+    for_each(constant_begin(M), constant_end(M),
+	     bind_obj(this, &SlotCalculator::insertValue));
+
+    // If there is a symbol table, it is possible that the user has names for
+    // constants that are not being used.  In this case, we will have problems
+    // if we don't emit the constants now, because otherwise we will get 
+    // symboltable references to constants not in the output.  Scan for these
+    // constants now.
+    //
+    if (M->hasSymbolTable())
+      processSymbolTableConstants(M->getSymbolTable());
   }
 
-  // Process the method to incorporate its values into our table
-  processMethod(M);
+  SC_DEBUG("Inserting Labels:\n");
+
+  // Iterate over basic blocks, adding them to the value table...
+  for_each(M->begin(), M->end(),
+	   bind_obj(this, &SlotCalculator::insertValue));
+
+  SC_DEBUG("Inserting Instructions:\n");
+
+  // Add all of the instructions to the type planes...
+  for_each(M->inst_begin(), M->inst_end(),
+	   bind_obj(this, &SlotCalculator::insertValue));
+
+  if (M->hasSymbolTable() && !IgnoreNamedNodes) {
+    SC_DEBUG("Inserting SymbolTable values:\n");
+    processSymbolTable(M->getSymbolTable());
+  }
+
+  SC_DEBUG("end processMethod!\n");
 }
 
 void SlotCalculator::purgeMethod() {
   assert(ModuleLevel.size() != 0 && "Module not incorporated!");
   unsigned NumModuleTypes = ModuleLevel.size();
 
+  SC_DEBUG("begin purgeMethod!\n");
+
   // First, remove values from existing type planes
   for (unsigned i = 0; i < NumModuleTypes; ++i) {
     unsigned ModuleSize = ModuleLevel[i];  // Size of plane before method came
-    while (Table[i].size() != ModuleSize) {
-      NodeMap.erase(NodeMap.find(Table[i].back()));   // Erase from nodemap
-      Table[i].pop_back();                            // Shrink plane
+    TypePlane &CurPlane = Table[i];
+    SC_DEBUG("Processing Plane " << i << " of size " << CurPlane.size() <<endl);
+	     
+    while (CurPlane.size() != ModuleSize) {
+      SC_DEBUG("  Removing [" << i << "] Value=" << CurPlane.back() << "\n");
+      map<const Value *, unsigned>::iterator NI = NodeMap.find(CurPlane.back());
+      assert(NI != NodeMap.end() && "Node not in nodemap?");
+      NodeMap.erase(NI);   // Erase from nodemap
+      CurPlane.pop_back();                            // Shrink plane
     }
   }
 
@@ -87,6 +192,8 @@ void SlotCalculator::purgeMethod() {
   // Next, remove any type planes defined by the method...
   while (NumModuleTypes != Table.size()) {
     TypePlane &Plane = Table.back();
+    SC_DEBUG("Removing Plane " << (Table.size()-1) << " of size "
+	     << Plane.size() << endl);
     while (Plane.size()) {
       NodeMap.erase(NodeMap.find(Plane.back()));   // Erase from nodemap
       Plane.pop_back();                            // Shrink plane
@@ -94,44 +201,8 @@ void SlotCalculator::purgeMethod() {
 
     Table.pop_back();                      // Nuke the plane, we don't like it.
   }
-}
 
-bool SlotCalculator::processConstant(const ConstPoolVal *CPV) { 
-  //cerr << "Inserting constant: '" << CPV->getStrValue() << endl;
-  insertVal(CPV);
-  return false;
-}
-
-// processType - This callback occurs when an derived type is discovered
-// at the class level. This activity occurs when processing a constant pool.
-//
-bool SlotCalculator::processType(const Type *Ty) { 
-  //cerr << "processType: " << Ty->getName() << endl;
-  // TODO: Don't leak memory!!!  Free this in the dtor!
-  insertVal(new ConstPoolType(Ty));
-  return false; 
-}
-
-bool SlotCalculator::visitMethod(const Method *M) {
-  //cerr << "visitMethod: '" << M->getType()->getName() << "'\n";
-  insertVal(M);
-  return false; 
-}
-
-bool SlotCalculator::processMethodArgument(const MethodArgument *MA) {
-  insertVal(MA);
-  return false;
-}
-
-bool SlotCalculator::processBasicBlock(const BasicBlock *BB) {
-  insertVal(BB);
-  ModuleAnalyzer::processBasicBlock(BB);  // Lets visit the instructions too!
-  return false;
-}
-
-bool SlotCalculator::processInstruction(const Instruction *I) {
-  insertVal(I);
-  return false;
+  SC_DEBUG("end purgeMethod!\n");
 }
 
 int SlotCalculator::getValSlot(const Value *D) const {
@@ -141,35 +212,80 @@ int SlotCalculator::getValSlot(const Value *D) const {
   return (int)I->second;
 }
 
-void SlotCalculator::insertVal(const Value *D, bool dontIgnore = false) {
-  if (D == 0) return;
+
+int SlotCalculator::insertValue(const Value *D) {
+  if (const ConstPoolVal *CPV = D->castConstant()) {
+    // This makes sure that if a constant has uses (for example an array
+    // of const ints), that they are inserted also.
+    //
+    for_each(CPV->op_begin(), CPV->op_end(), 
+	     bind_obj(this, &SlotCalculator::insertValue));
+  }
+
+  int SlotNo = getValSlot(D);        // Check to see if it's already in!
+  if (SlotNo != -1) return SlotNo;
+  return insertVal(D); 
+}
+
+
+int SlotCalculator::insertVal(const Value *D, bool dontIgnore = false) {
+  assert(D && "Can't insert a null value!");
+  assert(getValSlot(D) == -1 && "Value is already in the table!");
 
   // If this node does not contribute to a plane, or if the node has a 
-  // name and we don't want names, then ignore the silly node...
+  // name and we don't want names, then ignore the silly node... Note that types
+  // do need slot numbers so that we can keep track of where other values land.
   //
   if (!dontIgnore)                               // Don't ignore nonignorables!
     if (D->getType() == Type::VoidTy ||          // Ignore void type nodes
-	(IgnoreNamedNodes && 
-	 (D->hasName() || (D->isConstant() && !(D->getType() == Type::TypeTy)))))
-	 return;// If IgnoreNamed nodes, ignore if it's a constant or has a name
+	(IgnoreNamedNodes &&                     // Ignore named and constants
+	 (D->hasName() || D->isConstant()) && !D->isType())) {
+      SC_DEBUG("ignored value " << D << endl);
+      return -1;                  // We do need types unconditionally though
+    }
 
+  // If it's a type, make sure that all subtypes of the type are included...
+  if (const Type *TheTy = D->castType()) {
+    SC_DEBUG("  Inserted type: " << TheTy->getDescription() << endl);
+
+    // Loop over any contained types in the definition... in reverse depth first
+    // order.  This assures that all of the leafs of a type are output before
+    // the type itself is. This also assures us that we will not hit infinite
+    // recursion on recursive types...
+    //
+    for (cfg::tdf_iterator I = cfg::tdf_begin(TheTy, true), 
+                           E = cfg::tdf_end(TheTy); I != E; ++I)
+      if (*I != TheTy) {
+	// If we haven't seen this sub type before, add it to our type table!
+	const Type *SubTy = *I;
+	if (getValSlot(SubTy) == -1) {
+	  SC_DEBUG("  Inserting subtype: " << SubTy->getDescription() << endl);
+	  doInsertVal(SubTy);
+	}
+      }
+  }
+
+  // Okay, everything is happy, actually insert the silly value now...
+  return doInsertVal(D);
+}
+
+
+// doInsertVal - This is a small helper function to be called only be insertVal.
+//
+int SlotCalculator::doInsertVal(const Value *D) {
   const Type *Typ = D->getType();
   unsigned Ty;
 
   // Used for debugging DefSlot=-1 assertion...
   //if (Typ == Type::TypeTy)
-  //  cerr << "Inserting type '" << D->castTypeAsserting()->getName() << "'!\n";
+  //  cerr << "Inserting type '" << D->castTypeAsserting()->getDescription() << "'!\n";
 
   if (Typ->isDerivedType()) {
     int DefSlot = getValSlot(Typ);
     if (DefSlot == -1) {                // Have we already entered this type?
-      // This can happen if a type is first seen in an instruction.  For 
-      // example, if you say 'malloc uint', this defines a type 'uint*' that
-      // may be undefined at this point.
-      //
-      cerr << "Type '" << Typ->getName() << "' unknown!\n";
-      assert(0 && "Shouldn't type be in constant pool!?!?!");
-      abort();
+      // Nope, this is the first we have seen the type, process it.
+      DefSlot = insertVal(Typ, true);
+      assert(DefSlot != -1 && "ProcessType returned -1 for a type?");
     }
     Ty = (unsigned)DefSlot;
   } else {
@@ -179,22 +295,11 @@ void SlotCalculator::insertVal(const Value *D, bool dontIgnore = false) {
   if (Table.size() <= Ty)    // Make sure we have the type plane allocated...
     Table.resize(Ty+1, TypePlane());
   
-  // Insert node into table and NodeMap...
-  NodeMap[D] = Table[Ty].size();
-
-  if (Typ == Type::TypeTy && !D->isType()) {
-    // If it's a type constant, add the Type also
+  SC_DEBUG("  Inserting value [" << Ty << "] = " << D << endl);
       
-    // All Type instances should be constant types!
-    const ConstPoolType *CPT = (const ConstPoolType*)D->castConstantAsserting();
-    int Slot = getValSlot(CPT->getValue());
-    if (Slot == -1) {
-      // Only add if it's not already here!
-      NodeMap[CPT->getValue()] = Table[Ty].size();
-    } else if (!CPT->hasName()) {    // If the type has no name...
-      NodeMap[D] = (unsigned)Slot;   // Don't readd type, merge.
-      return;
-    }
-  }
+  // Insert node into table and NodeMap...
+  unsigned DestSlot = NodeMap[D] = Table[Ty].size();
   Table[Ty].push_back(D);
+
+  return (int)DestSlot;
 }
