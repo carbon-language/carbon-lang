@@ -215,6 +215,11 @@ TarjanSCC_iterator<T> tarj_begin(T G)
   return TarjanSCC_iterator<T>::begin(G);
 }
 
+template <class T>
+TarjanSCC_iterator<T> tarj_end(T G)
+{
+  return TarjanSCC_iterator<T>::end(G);
+}
 
 //===----------------------------------------------------------------------===//
 
