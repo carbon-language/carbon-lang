@@ -56,7 +56,7 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
 
   // Output the version identifier... we are currently on bytecode version #2,
   // which corresponds to LLVM v1.3.
-  unsigned Version = (2 << 4) | isBigEndian | (hasLongPointers << 1) |
+  unsigned Version = (2 << 4) | (unsigned)isBigEndian | (hasLongPointers << 1) |
                      (hasNoEndianness << 2) | (hasNoPointerSize << 3);
   output_vbr(Version, Out);
   align32(Out);
@@ -203,7 +203,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2-4=Linkage,
     // bit5+ = Slot # for type
     unsigned oSlot = ((unsigned)Slot << 5) | (getEncodedLinkage(I) << 2) |
-                     (I->hasInitializer() << 1) | I->isConstant();
+                     (I->hasInitializer() << 1) | (unsigned)I->isConstant();
     output_vbr(oSlot, Out);
 
     // If we have an initializer, output it now.
@@ -363,6 +363,7 @@ void llvm::WriteBytecodeToFile(const Module *C, std::ostream &Out) {
   // sequential in memory, however, so write out as much as possible in big
   // chunks, until we're done.
   //
+
   std::deque<unsigned char>::const_iterator I = Buffer.begin(),E = Buffer.end();
   while (I != E) {                           // Loop until it's all written
     // Scan to see how big this chunk is...
@@ -370,16 +371,12 @@ void llvm::WriteBytecodeToFile(const Module *C, std::ostream &Out) {
     const unsigned char *LastPtr = ChunkPtr;
     while (I != E) {
       const unsigned char *ThisPtr = &*++I;
-      if (LastPtr+1 != ThisPtr) {   // Advanced by more than a byte of memory?
-        ++LastPtr;
+      if (++LastPtr != ThisPtr) // Advanced by more than a byte of memory?
         break;
-      }
-      LastPtr = ThisPtr;
     }
     
     // Write out the chunk...
     Out.write((char*)ChunkPtr, unsigned(LastPtr-ChunkPtr));
   }
-
   Out.flush();
 }
