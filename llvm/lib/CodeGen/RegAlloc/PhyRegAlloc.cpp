@@ -1177,7 +1177,8 @@ void PhyRegAlloc::saveState () {
 
 
 /// Check the saved state filled in by saveState(), and abort if it looks
-/// wrong. Only used when debugging.
+/// wrong. Only used when debugging. FIXME: Currently it just prints out
+/// the state, which isn't quite as useful.
 ///
 void PhyRegAlloc::verifySavedState () {
   std::vector<AllocInfo> &state = FnAllocState[Fn];
@@ -1233,6 +1234,7 @@ bool PhyRegAlloc::doFinalization (Module &M) {
   std::vector<Constant *> allstate;
   for (Module::iterator I = M.begin (), E = M.end (); I != E; ++I) {
     Function *F = I;
+    if (F->isExternal ()) continue;
     if (FnAllocState.find (F) == FnAllocState.end ()) {
       allstate.push_back (ConstantPointerNull::get (PT));
     } else {
