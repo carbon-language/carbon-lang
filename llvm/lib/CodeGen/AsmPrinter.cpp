@@ -67,11 +67,16 @@ void AsmPrinter::emitConstantValueOnly(const Constant *CV) {
       O << (unsigned long long)CI->getValue();
   else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV))
     O << CI->getValue();
-  else if (isa<GlobalValue>((Value*)CV))
-    // This is a constant address for a global variable or function.  Use the
-    // name of the variable or function as the address value.
-    O << Mang->getValueName(CV);
-  else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
+  else if (isa<GlobalValue>((Value*)CV)) {
+    // This is a constant address for a global variable or function. Use the
+    // name of the variable or function as the address value, possibly
+    // decorating it with GlobalVarAddrPrefix/Suffix or
+    // FunctionAddrPrefix/Suffix (these all default to "" )
+    if (isa<Function>((Value*)CV))
+      O << FunctionAddrPrefix << Mang->getValueName(CV) << FunctionAddrSuffix;
+    else
+      O << GlobalVarAddrPrefix << Mang->getValueName(CV) << GlobalVarAddrSuffix;
+  } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     const TargetData &TD = TM.getTargetData();
     switch(CE->getOpcode()) {
     case Instruction::GetElementPtr: {

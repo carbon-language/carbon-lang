@@ -54,6 +54,21 @@ namespace llvm {
     /// onto all global symbols.  This is often used for "_" or ".".
     const char *GlobalPrefix;    // Defaults to ""
 
+    /// GlobalVarAddrPrefix/Suffix - If these are nonempty, these strings
+    /// will enclose any GlobalVariable (that isn't a function)
+    ///
+    const char *GlobalVarAddrPrefix;       // Defaults to ""
+    const char *GlobalVarAddrSuffix;       // Defaults to ""
+
+    /// FunctionAddrPrefix/Suffix - If these are nonempty, these strings
+    /// will enclose any GlobalVariable that points to a function.
+    /// For example, this is used by the IA64 backend to materialize
+    /// function descriptors, by decorating the ".data8" object with the
+    /// @fptr( ) link-relocation operator.
+    ///
+    const char *FunctionAddrPrefix;       // Defaults to ""
+    const char *FunctionAddrSuffix;       // Defaults to ""
+
     /// ZeroDirective - this should be set to the directive used to get some
     /// number of zero bytes emitted to the current section.  Common cases are
     /// "\t.zero\t" and "\t.space\t".  If this is set to null, the
@@ -87,6 +102,10 @@ namespace llvm {
       : O(o), TM(tm),
         CommentString("#"),
         GlobalPrefix(""),
+	GlobalVarAddrPrefix(""),
+	GlobalVarAddrSuffix(""),
+	FunctionAddrPrefix(""),
+	FunctionAddrSuffix(""),
         ZeroDirective("\t.zero\t"),
         AsciiDirective("\t.ascii\t"),
         Data8bitsDirective("\t.byte\t"),
