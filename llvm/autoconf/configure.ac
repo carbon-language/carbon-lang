@@ -99,7 +99,29 @@ AC_CANONICAL_TARGET
 
 dnl Set the "OS" Makefile variable based on the system we are building on.
 dnl We will use the build machine information to set some variables.
+
+AC_MSG_CHECKING([support for generic build operating system])
 case $build in
+	*-*-aix*)
+             AC_SUBST(OS,[AIX])
+             platform_type="AIX"
+             ;;
+	*-*-cygwin*)
+             AC_SUBST(OS,[Cygwin])
+             platform_type="Cygwin"
+             ;;
+	*-*-darwin*)
+             AC_SUBST(OS,[Darwin])
+             platform_type="Darwin"
+             ;;
+        *-*-freebsd*)
+             AC_SUBST(OS,[Linux])
+             platform_type="Linux"
+             ;;
+        *-*-interix*)
+             AC_SUBST(OS,[SunOS])
+             platform_type="SunOS"
+             ;;
 	*-*-linux*)
              AC_SUBST(OS,[Linux])
              platform_type="Linux"
@@ -116,22 +138,6 @@ case $build in
                AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/sparc/llvm-gcc/])
              fi
              ;;
-	*-*-cygwin*)
-             AC_SUBST(OS,[Cygwin])
-             platform_type="Cygwin"
-             ;;
-	*-*-darwin*)
-             AC_SUBST(OS,[Darwin])
-             platform_type="Darwin"
-             ;;
-	*-*-aix*)
-             AC_SUBST(OS,[AIX])
-             platform_type="AIX"
-             ;;
-        *-*-interix*)
-             AC_SUBST(OS,[SunOS])
-             platform_type="SunOS"
-             ;;
         *-*-win32*)
              AC_SUBST(OS,[Win32])
              platform_type="Win32"
@@ -143,7 +149,7 @@ case $build in
 esac
 
 dnl Make sure we aren't attempting to configure for an unknown system
-if test $platform_type -eq "Unknown" ; then
+if test "$platform_type" = "Unknown" ; then
   AC_MSG_ERROR([Platform is unknown, configure can't continue])
 fi
 
@@ -152,6 +158,9 @@ dnl This helps the #inclusion of the system specific include files
 dnl for the operating system abstraction library
 AC_CONFIG_LINKS(lib/System/platform:lib/System/$platform_type)
 
+AC_MSG_RESULT($platform_type)
+
+AC_MSG_CHECKING(target architecture)
 dnl If we are targetting a Sparc machine running Solaris, pretend that it is
 dnl V9, since that is all that we support at the moment, and autoconf will only
 dnl tell us we're a sparc.
@@ -164,15 +173,25 @@ dnl Determine what our target architecture is and configure accordingly.
 dnl This will allow Makefiles to make a distinction between the hardware and
 dnl the OS.
 case $target in
-	i*86-*)           AC_SUBST(ARCH,[x86])
-	                  ;;
-	sparc*-*)         AC_SUBST(ARCH,[Sparc])
-	                  ;;
-	powerpc*-*)       AC_SUBST(ARCH,[PowerPC])
-	                  ;;
-	*)                AC_SUBST(ARCH,[Unknown])
-	                  ;;
+	i*86-*)       
+          ARCH="x86"
+          AC_SUBST(ARCH,[x86])
+	  ;;
+	sparc*-*)         
+          ARCH="Sparc"
+          AC_SUBST(ARCH,[Sparc])
+	  ;;
+	powerpc*-*)       
+          ARCH="PowerPC"
+          AC_SUBST(ARCH,[PowerPC])
+	  ;;
+	*)                
+          ARCH="Unknown"
+          AC_SUBST(ARCH,[Unknown])
+	  ;;
 esac
+
+AC_MSG_RESULT($ARCH)
 
 dnl Check for compilation tools
 AC_PROG_CXX
