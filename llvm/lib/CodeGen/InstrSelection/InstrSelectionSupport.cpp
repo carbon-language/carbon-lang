@@ -298,8 +298,8 @@ GetMemInstArgs(InstructionNode* memInstrNode,
 
   // If there are no indices, return the current pointer.
   // Else extract the pointer from the GEP and fold the indices.
-  return (gepNode)? GetGEPInstArgs(gepNode, idxVec, allConstantIndices)
-                  : ptrVal;
+  return gepNode ? GetGEPInstArgs(gepNode, idxVec, allConstantIndices)
+                 : ptrVal;
 }
 
 MachineOperand::MachineOperandType
@@ -380,6 +380,7 @@ ChooseRegOrImmed(Value* val,
 }
 
 
+
 //---------------------------------------------------------------------------
 // Function: FixConstantOperandsForInstr
 // 
@@ -400,7 +401,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
                             MachineInstr* minstr,
                             TargetMachine& target)
 {
-  vector<MachineInstr*> loadConstVec;
+  vector<MachineInstr*> MVec;
   
   MachineOpCode opCode = minstr->getOpCode();
   const TargetInstrInfo& instrInfo = target.getInstrInfo();
@@ -432,22 +433,18 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
       if (mop.getType() == MachineOperand::MO_VirtualRegister)
         {
           assert(mop.getVRegValue() != NULL);
-          opValue = mop.getVRegValue();
-          if (Constant *opConst = dyn_cast<Constant>(opValue))
-            {
-              opType = ChooseRegOrImmed(opConst, opCode, target,
-                             (immedPos == (int)op), machineRegNum, immedValue);
-              if (opType == MachineOperand::MO_VirtualRegister)
-                constantThatMustBeLoaded = true;
-            }
+          if (Constant *opConst = dyn_cast<Constant>(mop.getVRegValue())) {
+            opType = ChooseRegOrImmed(opConst, opCode, target,
+                                      (immedPos == (int)op), machineRegNum,
+                                      immedValue);
+            if (opType == MachineOperand::MO_VirtualRegister)
+              constantThatMustBeLoaded = true;
+          }
         }
       else
         {
-          assert(mop.getType() == MachineOperand::MO_SignExtendedImmed ||
-                 mop.getType() == MachineOperand::MO_UnextendedImmed);
-
-          bool isSigned = (mop.getType() ==
-                           MachineOperand::MO_SignExtendedImmed);
+          assert(mop.isImmediate());
+          bool isSigned = mop.getType() == MachineOperand::MO_SignExtendedImmed;
 
           // Bit-selection flags indicate an instruction that is extracting
           // bits from its operand so ignore this even if it is a big constant.
@@ -481,7 +478,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
         { // opValue is a constant that must be explicitly loaded into a reg
           assert(opValue);
           TmpInstruction* tmpReg = InsertCodeToLoadConstant(F, opValue, vmInstr,
-                                                        loadConstVec, target);
+                                                            MVec, target);
           minstr->SetMachineOperandVal(op, MachineOperand::MO_VirtualRegister,
                                        tmpReg);
         }
@@ -509,7 +506,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
       {
         Value* oldVal = minstr->getImplicitRef(i);
         TmpInstruction* tmpReg =
-          InsertCodeToLoadConstant(F, oldVal, vmInstr, loadConstVec, target);
+          InsertCodeToLoadConstant(F, oldVal, vmInstr, MVec, target);
         minstr->setImplicitRef(i, tmpReg);
         
         if (isCall)
@@ -524,7 +521,5 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
           }
       }
   
-  return loadConstVec;
+  return MVec;
 }
-
-

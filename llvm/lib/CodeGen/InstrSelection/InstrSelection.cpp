@@ -19,8 +19,11 @@
 #include "llvm/Pass.h"
 #include "Support/CommandLine.h"
 #include "Support/LeakDetector.h"
-using std::cerr;
 using std::vector;
+
+std::vector<MachineInstr*>
+FixConstantOperandsForInstr(Instruction* vmInstr, MachineInstr* minstr,
+                            TargetMachine& target);
 
 namespace {
   //===--------------------------------------------------------------------===//
@@ -108,10 +111,10 @@ bool InstructionSelection::runOnFunction(Function &F)
   
   if (SelectDebugLevel >= Select_DebugInstTrees)
     {
-      cerr << "\n\n*** Input to instruction selection for function "
-	   << F.getName() << "\n\n" << F
-           << "\n\n*** Instruction trees for function "
-	   << F.getName() << "\n\n";
+      std::cerr << "\n\n*** Input to instruction selection for function "
+	        << F.getName() << "\n\n" << F
+                << "\n\n*** Instruction trees for function "
+                << F.getName() << "\n\n";
       instrForest.dump();
     }
   
@@ -130,7 +133,7 @@ bool InstructionSelection::runOnFunction(Function &F)
       if (SelectDebugLevel >= Select_DebugBurgTrees)
 	{
 	  printcover(basicNode, 1, 0);
-	  cerr << "\nCover cost == " << treecost(basicNode, 1, 0) << "\n\n";
+	  std::cerr << "\nCover cost == " << treecost(basicNode, 1, 0) <<"\n\n";
 	  printMatches(basicNode);
 	}
       
@@ -159,7 +162,7 @@ bool InstructionSelection::runOnFunction(Function &F)
   
   if (SelectDebugLevel >= Select_PrintMachineCode)
     {
-      cerr << "\n*** Machine instructions after INSTRUCTION SELECTION\n";
+      std::cerr << "\n*** Machine instructions after INSTRUCTION SELECTION\n";
       MachineFunction::get(&F).dump();
     }
   
@@ -276,7 +279,7 @@ InstructionSelection::SelectInstructionsForTree(InstrTreeNode* treeRoot,
   int ruleForNode = burm_rule(treeRoot->state, goalnt);
   
   if (ruleForNode == 0) {
-    cerr << "Could not match instruction tree for instr selection\n";
+    std::cerr << "Could not match instruction tree for instr selection\n";
     abort();
   }
   
@@ -375,4 +378,3 @@ InstructionSelection::PostprocessMachineCodeForTree(InstructionNode* instrNode,
 Pass *createInstructionSelectionPass(TargetMachine &T) {
   return new InstructionSelection(T);
 }
-
