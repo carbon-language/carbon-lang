@@ -73,4 +73,24 @@ public:
   }
 };
 
+template<> struct simplify_type<User::op_iterator> {
+  typedef Value* SimpleType;
+  
+  static SimpleType getSimplifiedValue(const User::op_iterator &Val) {
+    return (SimpleType)Val->get();
+  }
+};
+template<> struct simplify_type<const User::op_iterator>
+  : public simplify_type<User::op_iterator> {};
+
+template<> struct simplify_type<User::const_op_iterator> {
+  typedef Value* SimpleType;
+  
+  static SimpleType getSimplifiedValue(const User::const_op_iterator &Val) {
+    return (SimpleType)Val->get();
+  }
+};
+template<> struct simplify_type<const User::const_op_iterator>
+  : public simplify_type<User::const_op_iterator> {};
+
 #endif
