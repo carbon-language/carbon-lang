@@ -109,9 +109,9 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         unsigned R1 = MI->getOperand(1).getReg();
         unsigned Scale = MI->getOperand(2).getImmedValue();
         unsigned R2 = MI->getOperand(3).getReg();
-        unsigned Offset = MI->getOperand(3).getImmedValue();
+        unsigned Offset = MI->getOperand(4).getImmedValue();
         I = MBB.insert(MBB.erase(I),
-                       BuildMI(Opcode, 2, R0).addReg(R1).addZImm(Scale).
+                       BuildMI(Opcode, 5, R0).addReg(R1).addZImm(Scale).
                              addReg(R2).addSImm(Offset).addZImm((char)Val));
         return true;
       }
@@ -144,6 +144,31 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         case X86::ORri32:   Opcode = X86::ORri32b; break;
         case X86::XORri16:  Opcode = X86::XORri16b; break;
         case X86::XORri32:  Opcode = X86::XORri32b; break;
+        }
+        unsigned R0 = MI->getOperand(0).getReg();
+        unsigned Scale = MI->getOperand(1).getImmedValue();
+        unsigned R1 = MI->getOperand(2).getReg();
+        unsigned Offset = MI->getOperand(3).getImmedValue();
+        I = MBB.insert(MBB.erase(I),
+                       BuildMI(Opcode, 5).addReg(R0).addZImm(Scale).
+                             addReg(R1).addSImm(Offset).addZImm((char)Val));
+        return true;
+      }
+    }
+    return false;
+
+
+  case X86::ANDmi16:  case X86::ANDmi32:
+    assert(MI->getNumOperands() == 5 && "These should all have 5 operands!");
+    if (MI->getOperand(4).isImmediate()) {
+      int Val = MI->getOperand(4).getImmedValue();
+      // If the value is the same when signed extended from 8 bits...
+      if (Val == (signed int)(signed char)Val) {
+        unsigned Opcode;
+        switch (MI->getOpcode()) {
+        default: assert(0 && "Unknown opcode value!");
+        case X86::ANDmi16:  Opcode = X86::ANDmi16b; break;
+        case X86::ANDmi32:  Opcode = X86::ANDmi32b; break;
         }
         unsigned R0 = MI->getOperand(0).getReg();
         I = MBB.insert(MBB.erase(I),

@@ -319,11 +319,26 @@ def IMULrmi32b : X86Inst<"imul", 0x6B, MRMSrcMem, Arg8 >;              // R32 = 
 def ANDrr8   : I2A8 <"and", 0x20, MRMDestReg>,         Pattern<(set R8 , (and R8 , R8 ))>;
 def ANDrr16  : I2A16<"and", 0x21, MRMDestReg>, OpSize, Pattern<(set R16, (and R16, R16))>;
 def ANDrr32  : I2A32<"and", 0x21, MRMDestReg>,         Pattern<(set R32, (and R32, R32))>;
+def ANDmr8   : I2A8 <"and", 0x20, MRMDestMem>;            // [mem8]  &= R8
+def ANDmr16  : I2A16<"and", 0x21, MRMDestMem>, OpSize;    // [mem16] &= R16
+def ANDmr32  : I2A32<"and", 0x21, MRMDestMem>;            // [mem32] &= R32
+def ANDrm8   : I2A8 <"and", 0x22, MRMSrcMem >;            // R8  &= [mem8]
+def ANDrm16  : I2A16<"and", 0x23, MRMSrcMem >, OpSize;    // R16 &= [mem16]
+def ANDrm32  : I2A32<"and", 0x23, MRMSrcMem >;            // R32 &= [mem32]
+
 def ANDri8   : I2A8 <"and", 0x80, MRMS4r    >,         Pattern<(set R8 , (and R8 , imm))>;
 def ANDri16  : I2A16<"and", 0x81, MRMS4r    >, OpSize, Pattern<(set R16, (and R16, imm))>;
 def ANDri32  : I2A32<"and", 0x81, MRMS4r    >,         Pattern<(set R32, (and R32, imm))>;
-def ANDri16b : I2A8 <"and", 0x83, MRMS4r    >, OpSize;
-def ANDri32b : I2A8 <"and", 0x83, MRMS4r    >;
+def ANDmi8   : I2A8 <"and", 0x80, MRMS4m    >;            // [mem8]  &= imm8
+def ANDmi16  : I2A16<"and", 0x81, MRMS4m    >, OpSize;    // [mem16] &= imm16
+def ANDmi32  : I2A32<"and", 0x81, MRMS4m    >;            // [mem32] &= imm32
+
+def ANDri16b : I2A8 <"and", 0x83, MRMS4r    >, OpSize;    // R16 &= imm8
+def ANDri32b : I2A8 <"and", 0x83, MRMS4r    >;            // R32 &= imm8
+def ANDmi16b : I2A8 <"and", 0x83, MRMS4m    >, OpSize;    // [mem16] &= imm8
+def ANDmi32b : I2A8 <"and", 0x83, MRMS4m    >;            // [mem32] &= imm8
+
+
 
 def ORrr8    : I2A8 <"or" , 0x08, MRMDestReg>,         Pattern<(set R8 , (or  R8 , R8 ))>;
 def ORrr16   : I2A16<"or" , 0x09, MRMDestReg>, OpSize, Pattern<(set R16, (or  R16, R16))>;
