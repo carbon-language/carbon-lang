@@ -625,22 +625,28 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   if (Op0 == Op1)
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
-  if (ConstantIntegral *Op1C = dyn_cast<ConstantIntegral>(Op1)) {
+  if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1)) {
     // xor X, 0 == X
-    if (Op1C->isNullValue())
+    if (RHS->isNullValue())
       return ReplaceInstUsesWith(I, Op0);
 
-    // Is this a "NOT" instruction?
-    if (Op1C->isAllOnesValue()) {
-      // xor (xor X, -1), -1 = not (not X) = X
-      if (Value *X = dyn_castNotVal(Op0))
-        return ReplaceInstUsesWith(I, X);
-
+    if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
       // xor (setcc A, B), true = not (setcc A, B) = setncc A, B
-      if (SetCondInst *SCI = dyn_cast<SetCondInst>(Op0))
-        if (SCI->use_size() == 1)
+      if (SetCondInst *SCI = dyn_cast<SetCondInst>(Op0I))
+        if (RHS == ConstantBool::True && SCI->use_size() == 1)
           return new SetCondInst(SCI->getInverseCondition(),
                                  SCI->getOperand(0), SCI->getOperand(1));
+          
+      if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1)))
+        if (Op0I->getOpcode() == Instruction::And) {
+          // (X & C1) ^ C2 --> (X & C1) | C2 iff (C1&C2) == 0
+          if ((*RHS & *Op0CI)->isNullValue())
+            return BinaryOperator::create(Instruction::Or, Op0, RHS);
+        } else if (Op0I->getOpcode() == Instruction::Or) {
+          // (X | C1) ^ C2 --> (X | C1) & ~C2 iff (C1&C2) == C2
+          if ((*RHS & *Op0CI) == RHS)
+            return BinaryOperator::create(Instruction::And, Op0, ~*RHS);
+        }
     }
   }
 
