@@ -319,6 +319,7 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
           IdxTy = Type::UIntTyID;
         else {
           switch (ValIdx & 3) {
+          default:
           case 0: IdxTy = Type::UIntTyID; break;
           case 1: IdxTy = Type::IntTyID; break;
           case 2: IdxTy = Type::ULongTyID; break;
