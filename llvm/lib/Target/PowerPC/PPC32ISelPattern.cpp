@@ -1365,6 +1365,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::SELECT: {
     Opc = SelectSetCR0(N.getOperand(0));
 
+    unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
+    unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
+
     // Create an iterator with which to insert the MBB for copying the false 
     // value and the MBB to hold the PHI instruction for this SetCC.
     MachineBasicBlock *thisMBB = BB;
@@ -1380,7 +1383,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     //   fallthrough --> copy0MBB
     MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
     MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-    unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
     BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(sinkMBB);
     MachineFunction *F = BB->getParent();
     F->getBasicBlockList().insert(It, copy0MBB);
@@ -1393,7 +1395,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     //   %FalseValue = ...
     //   # fallthrough to sinkMBB
     BB = copy0MBB;
-    unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
     // Update machine-CFG edges
     BB->addSuccessor(sinkMBB);
 
