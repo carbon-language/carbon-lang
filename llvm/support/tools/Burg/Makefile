@@ -6,9 +6,7 @@ EXTRASOURCES = gram.tab.c
 include $(LEVEL)/Makefile.common
 
 gram.tab.c gram.tab.h: gram.yc
-	$(VERB) $(BISON) -d $<
-	$(VERB) mv -f gram.tab.cc gram.tab.c
-	$(VERB) mv -f gram.tab.hc gram.tab.h
+	$(VERB) $(BISON) -o gram.tab.c -d $<
 
 clean::
 	rm -ff gram.tab.h gram.tab.c core* *.aux *.log *.dvi sample sample.c tmp
