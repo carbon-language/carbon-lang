@@ -49,7 +49,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function *M) {
 
   if (M->getReturnType() != Type::VoidTy) {
     // If the function doesn't return void... add a PHI node to the block...
-    PHINode *PN = new PHINode(M->getReturnType());
+    PHINode *PN = new PHINode(M->getReturnType(), "UnifiedRetVal");
     NewRetBlock->getInstList().push_back(PN);
 
     // Add an incoming element to the PHI node for every return instruction that
