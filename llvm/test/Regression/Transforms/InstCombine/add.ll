@@ -130,3 +130,8 @@ int %test20(int %x) {
         ret int %tmp.4
 }
 
+bool %test21(uint %x) {
+	%t = add uint %x, 4
+	%y = seteq uint %t, 123
+	ret bool %y
+}
