@@ -71,15 +71,10 @@ public:
   // Interfaces to the major aspects of target machine information:
   // -- Instruction opcode and operand information
   // -- Pipelines and scheduling information
-  // -- Register information
   // -- Stack frame information
-  // -- Cache hierarchy information
-  // -- Machine-level optimization information (peephole only)
   // 
-  virtual const TargetInstrInfo&        getInstrInfo() const = 0;
-  virtual const TargetSchedInfo&        getSchedInfo() const = 0;
-  virtual const TargetRegInfo&          getRegInfo()   const = 0;
-  virtual const TargetFrameInfo&        getFrameInfo() const = 0;
+  virtual const TargetInstrInfo        *getInstrInfo() const { return 0; }
+  virtual const TargetFrameInfo        *getFrameInfo() const { return 0; }
   const TargetData &getTargetData() const { return DataLayout; }
 
   /// getRegisterInfo - If register information is available, return it.  If
@@ -93,11 +88,10 @@ public:
   ///
   virtual TargetJITInfo *getJITInfo() { return 0; }
 
-  // Data storage information.  FIXME, this should be moved out to sparc
-  // specific code.
-  // 
-  virtual unsigned findOptimalStorageSize(const Type* ty) const;
-  
+  // These are deprecated interfaces.
+  virtual const TargetSchedInfo        *getSchedInfo() const { return 0; }
+  virtual const TargetRegInfo          *getRegInfo()   const { return 0; }
+
   /// addPassesToEmitAssembly - Add passes to the specified pass manager to get
   /// assembly langage code emitted.  Typically this will involve several steps
   /// of code generation.  This method should return true if assembly emission
