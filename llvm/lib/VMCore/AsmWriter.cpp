@@ -20,9 +20,29 @@
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
-#include "llvm/Support/STLExtras.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/Support/STLExtras.h"
+#include "llvm/Support/StringExtras.h"
 #include <algorithm>
+#include <map>
+
+static SlotCalculator *createSlotCalculator(const Value *V) {
+  assert(!isa<Type>(V) && "Can't create an SC for a type!");
+  if (const MethodArgument *MA =dyn_cast<const MethodArgument>(V)){
+    return new SlotCalculator(MA->getParent(), true);
+  } else if (const Instruction *I = dyn_cast<const Instruction>(V)) {
+    return new SlotCalculator(I->getParent()->getParent(), true);
+  } else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(V)) {
+    return new SlotCalculator(BB->getParent(), true);
+  } else if (const GlobalVariable *GV =dyn_cast<const GlobalVariable>(V)){
+    return new SlotCalculator(GV->getParent(), true);
+  } else if (const Method *Meth = dyn_cast<const Method>(V)) {
+    return new SlotCalculator(Meth, true);
+  } else if (const Module *Mod  = dyn_cast<const Module>(V)) {
+    return new SlotCalculator(Mod, true);
+  }
+  return 0;
+}
 
 // WriteAsOperand - Write the name of the specified value out to the specified
 // ostream.  This can be useful when you just want to print int %reg126, not the
@@ -31,7 +51,7 @@
 ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType, 
 			bool PrintName, SlotCalculator *Table) {
   if (PrintType)
-    Out << " " << V->getType();
+    Out << " " << V->getType()->getDescription();
   
   if (PrintName && V->hasName()) {
     Out << " %" << V->getName();
@@ -43,23 +63,12 @@ ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType,
       if (Table) {
 	Slot = Table->getValSlot(V);
       } else {
-	if (const Type *Ty = dyn_cast<const Type>(V)) {
-	  return Out << " " << Ty;
-	} else if (const MethodArgument *MA =dyn_cast<const MethodArgument>(V)){
-	  Table = new SlotCalculator(MA->getParent(), true);
-	} else if (const Instruction *I = dyn_cast<const Instruction>(V)) {
-	  Table = new SlotCalculator(I->getParent()->getParent(), true);
-	} else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(V)) {
-	  Table = new SlotCalculator(BB->getParent(), true);
-	} else if (const GlobalVariable *GV =dyn_cast<const GlobalVariable>(V)){
-	  Table = new SlotCalculator(GV->getParent(), true);
-	} else if (const Method *Meth = dyn_cast<const Method>(V)) {
-	  Table = new SlotCalculator(Meth, true);
-	} else if (const Module *Mod  = dyn_cast<const Module>(V)) {
-	  Table = new SlotCalculator(Mod, true);
-	} else {
-	  return Out << "BAD VALUE TYPE!";
-	}
+        if (const Type *Ty = dyn_cast<const Type>(V))
+          return Out << " " << Ty;
+
+        Table = createSlotCalculator(V);
+        if (Table == 0) return Out << "BAD VALUE TYPE!";
+
 	Slot = Table->getValSlot(V);
 	delete Table;
       }
@@ -76,63 +85,90 @@ ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType,
 class AssemblyWriter {
   ostream &Out;
   SlotCalculator &Table;
+  const Module *TheModule;
+  map<const Type *, string> TypeNames;
 public:
-  inline AssemblyWriter(ostream &o, SlotCalculator &Tab) : Out(o), Table(Tab) {
+  inline AssemblyWriter(ostream &o, SlotCalculator &Tab, const Module *M)
+    : Out(o), Table(Tab), TheModule(M) {
+
+    // If the module has a symbol table, take all global types and stuff their
+    // names into the TypeNames map.
+    //
+    if (M && M->hasSymbolTable()) {
+      const SymbolTable *ST = M->getSymbolTable();
+      SymbolTable::const_iterator PI = ST->find(Type::TypeTy);
+      if (PI != ST->end()) {
+        SymbolTable::type_const_iterator I = PI->second.begin();
+        for (; I != PI->second.end(); ++I) {
+          // As a heuristic, don't insert pointer to primitive types, because
+          // they are used too often to have a single useful name.
+          //
+          const Type *Ty = cast<const Type>(I->second);
+          if (!isa<PointerType>(Ty) ||
+              !cast<PointerType>(Ty)->getValueType()->isPrimitiveType())
+            TypeNames.insert(make_pair(Ty, "%"+I->first));
+        }
+      }
+    }
   }
 
-  inline void write(const Module *M)         { processModule(M);      }
-  inline void write(const GlobalVariable *G) { processGlobal(G);      }
-  inline void write(const Method *M)         { processMethod(M);      }
-  inline void write(const BasicBlock *BB)    { processBasicBlock(BB); }
-  inline void write(const Instruction *I)    { processInstruction(I); }
-  inline void write(const ConstPoolVal *CPV) { processConstant(CPV);  }
+  inline void write(const Module *M)         { printModule(M);      }
+  inline void write(const GlobalVariable *G) { printGlobal(G);      }
+  inline void write(const Method *M)         { printMethod(M);      }
+  inline void write(const BasicBlock *BB)    { printBasicBlock(BB); }
+  inline void write(const Instruction *I)    { printInstruction(I); }
+  inline void write(const ConstPoolVal *CPV) { printConstant(CPV);  }
 
 private :
-  void processModule(const Module *M);
-  void processSymbolTable(const SymbolTable &ST);
-  void processConstant(const ConstPoolVal *CPV);
-  void processGlobal(const GlobalVariable *GV);
-  void processMethod(const Method *M);
-  void processMethodArgument(const MethodArgument *MA);
-  void processBasicBlock(const BasicBlock *BB);
-  void processInstruction(const Instruction *I);
-  
+  void printModule(const Module *M);
+  void printSymbolTable(const SymbolTable &ST);
+  void printConstant(const ConstPoolVal *CPV);
+  void printGlobal(const GlobalVariable *GV);
+  void printMethod(const Method *M);
+  void printMethodArgument(const MethodArgument *MA);
+  void printBasicBlock(const BasicBlock *BB);
+  void printInstruction(const Instruction *I);
+  ostream &printType(const Type *Ty);
+
   void writeOperand(const Value *Op, bool PrintType, bool PrintName = true);
 
   // printInfoComment - Print a little comment after the instruction indicating
   // which slot it occupies.
   void printInfoComment(const Value *V);
 
+
+  string calcTypeName(const Type *Ty, vector<const Type *> &TypeStack);
 };
 
 
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType, 
 				  bool PrintName) {
-  WriteAsOperand(Out, Operand, PrintType, PrintName, &Table);
+  if (PrintType) { Out << " "; printType(Operand->getType()); }
+  WriteAsOperand(Out, Operand, false, PrintName, &Table);
 }
 
 
-void AssemblyWriter::processModule(const Module *M) {
+void AssemblyWriter::printModule(const Module *M) {
   // Loop over the symbol table, emitting all named constants...
   if (M->hasSymbolTable())
-    processSymbolTable(*M->getSymbolTable());
+    printSymbolTable(*M->getSymbolTable());
   
   for_each(M->gbegin(), M->gend(), 
-	   bind_obj(this, &AssemblyWriter::processGlobal));
+	   bind_obj(this, &AssemblyWriter::printGlobal));
 
   Out << "implementation\n";
   
   // Output all of the methods...
-  for_each(M->begin(), M->end(), bind_obj(this,&AssemblyWriter::processMethod));
+  for_each(M->begin(), M->end(), bind_obj(this,&AssemblyWriter::printMethod));
 }
 
-void AssemblyWriter::processGlobal(const GlobalVariable *GV) {
+void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (GV->hasName()) Out << "%" << GV->getName() << " = ";
 
   if (!GV->hasInitializer()) Out << "uninitialized ";
 
-  Out << (GV->isConstant() ? "constant " : "global ") 
-      << GV->getType()->getValueType()->getDescription();
+  Out << (GV->isConstant() ? "constant " : "global ");
+  printType(GV->getType()->getValueType());
 
   if (GV->hasInitializer())
     writeOperand(GV->getInitializer(), false, false);
@@ -142,10 +178,10 @@ void AssemblyWriter::processGlobal(const GlobalVariable *GV) {
 }
 
 
-// processSymbolTable - Run through symbol table looking for named constants
+// printSymbolTable - Run through symbol table looking for named constants
 // if a named constant is found, emit it's declaration...
 //
-void AssemblyWriter::processSymbolTable(const SymbolTable &ST) {
+void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
   for (SymbolTable::const_iterator TI = ST.begin(); TI != ST.end(); ++TI) {
     SymbolTable::type_const_iterator I = ST.type_begin(TI->first);
     SymbolTable::type_const_iterator End = ST.type_end(TI->first);
@@ -153,7 +189,7 @@ void AssemblyWriter::processSymbolTable(const SymbolTable &ST) {
     for (; I != End; ++I) {
       const Value *V = I->second;
       if (const ConstPoolVal *CPV = dyn_cast<const ConstPoolVal>(V)) {
-	processConstant(CPV);
+	printConstant(CPV);
       } else if (const Type *Ty = dyn_cast<const Type>(V)) {
 	Out << "\t%" << I->first << " = type " << Ty->getDescription() << endl;
       }
@@ -162,9 +198,9 @@ void AssemblyWriter::processSymbolTable(const SymbolTable &ST) {
 }
 
 
-// processConstant - Print out a constant pool entry...
+// printConstant - Print out a constant pool entry...
 //
-void AssemblyWriter::processConstant(const ConstPoolVal *CPV) {
+void AssemblyWriter::printConstant(const ConstPoolVal *CPV) {
   // Don't print out unnamed constants, they will be inlined
   if (!CPV->hasName()) return;
 
@@ -172,14 +208,15 @@ void AssemblyWriter::processConstant(const ConstPoolVal *CPV) {
   Out << "\t%" << CPV->getName() << " = ";
 
   // Print out the constant type...
-  Out << CPV->getType();
+  printType(CPV->getType());
 
   // Write the value out now...
   writeOperand(CPV, false, false);
 
   if (!CPV->hasName() && CPV->getType() != Type::VoidTy) {
     int Slot = Table.getValSlot(CPV); // Print out the def slot taken...
-    Out << "\t\t; <" << CPV->getType() << ">:";
+    Out << "\t\t; <";
+    printType(CPV->getType()) << ">:";
     if (Slot >= 0) Out << Slot;
     else Out << "<badref>";
   } 
@@ -187,27 +224,27 @@ void AssemblyWriter::processConstant(const ConstPoolVal *CPV) {
   Out << endl;
 }
 
-// processMethod - Process all aspects of a method.
+// printMethod - Print all aspects of a method.
 //
-void AssemblyWriter::processMethod(const Method *M) {
+void AssemblyWriter::printMethod(const Method *M) {
   // Print out the return type and name...
-  Out << "\n" << (M->isExternal() ? "declare " : "") 
-      << M->getReturnType() << " \"" << M->getName() << "\"(";
+  Out << "\n" << (M->isExternal() ? "declare " : "");
+  printType(M->getReturnType()) << " \"" << M->getName() << "\"(";
   Table.incorporateMethod(M);
 
-  // Loop over the arguments, processing them...
+  // Loop over the arguments, printing them...
   const MethodType *MT = cast<const MethodType>(M->getMethodType());
 
   if (!M->isExternal()) {
     for_each(M->getArgumentList().begin(), M->getArgumentList().end(),
-	     bind_obj(this, &AssemblyWriter::processMethodArgument));
+	     bind_obj(this, &AssemblyWriter::printMethodArgument));
   } else {
-    // Loop over the arguments, processing them...
+    // Loop over the arguments, printing them...
     const MethodType *MT = cast<const MethodType>(M->getMethodType());
     for (MethodType::ParamTypes::const_iterator I = MT->getParamTypes().begin(),
 	   E = MT->getParamTypes().end(); I != E; ++I) {
       if (I != MT->getParamTypes().begin()) Out << ", ";
-      Out << *I;
+      printType(*I);
     }
   }
 
@@ -221,13 +258,13 @@ void AssemblyWriter::processMethod(const Method *M) {
   if (!M->isExternal()) {
     // Loop over the symbol table, emitting all named constants...
     if (M->hasSymbolTable())
-      processSymbolTable(*M->getSymbolTable());
+      printSymbolTable(*M->getSymbolTable());
 
     Out << "begin";
   
     // Output all of its basic blocks... for the method
     for_each(M->begin(), M->end(),
-	     bind_obj(this, &AssemblyWriter::processBasicBlock));
+	     bind_obj(this, &AssemblyWriter::printBasicBlock));
 
     Out << "end\n";
   }
@@ -235,15 +272,15 @@ void AssemblyWriter::processMethod(const Method *M) {
   Table.purgeMethod();
 }
 
-// processMethodArgument - This member is called for every argument that 
+// printMethodArgument - This member is called for every argument that 
 // is passed into the method.  Simply print it out
 //
-void AssemblyWriter::processMethodArgument(const MethodArgument *Arg) {
+void AssemblyWriter::printMethodArgument(const MethodArgument *Arg) {
   // Insert commas as we go... the first arg doesn't get a comma
   if (Arg != Arg->getParent()->getArgumentList().front()) Out << ", ";
 
   // Output type...
-  Out << Arg->getType();
+  printType(Arg->getType());
   
   // Output name, if available...
   if (Arg->hasName())
@@ -252,9 +289,9 @@ void AssemblyWriter::processMethodArgument(const MethodArgument *Arg) {
     Out << "<badref>";
 }
 
-// processBasicBlock - This member is called for each basic block in a methd.
+// printBasicBlock - This member is called for each basic block in a methd.
 //
-void AssemblyWriter::processBasicBlock(const BasicBlock *BB) {
+void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
     Out << "\n" << BB->getName() << ":";
   } else {
@@ -269,7 +306,7 @@ void AssemblyWriter::processBasicBlock(const BasicBlock *BB) {
 
   // Output all of the instructions in the basic block...
   for_each(BB->begin(), BB->end(),
-	   bind_obj(this, &AssemblyWriter::processInstruction));
+	   bind_obj(this, &AssemblyWriter::printInstruction));
 }
 
 
@@ -278,7 +315,8 @@ void AssemblyWriter::processBasicBlock(const BasicBlock *BB) {
 //
 void AssemblyWriter::printInfoComment(const Value *V) {
   if (V->getType() != Type::VoidTy) {
-    Out << "\t\t; <" << V->getType() << ">";
+    Out << "\t\t; <";
+    printType(V->getType()) << ">";
 
     if (!V->hasName()) {
       int Slot = Table.getValSlot(V); // Print out the def slot taken...
@@ -289,9 +327,9 @@ void AssemblyWriter::printInfoComment(const Value *V) {
   }
 }
 
-// processInstruction - This member is called for each Instruction in a methd.
+// printInstruction - This member is called for each Instruction in a methd.
 //
-void AssemblyWriter::processInstruction(const Instruction *I) {
+void AssemblyWriter::printInstruction(const Instruction *I) {
   Out << "\t";
 
   // Print out name if it exists...
@@ -324,7 +362,8 @@ void AssemblyWriter::processInstruction(const Instruction *I) {
     }
     Out << "\n\t]";
   } else if (isa<PHINode>(I)) {
-    Out << " " << Operand->getType();
+    Out << " ";
+    printType(Operand->getType());
 
     Out << " [";  writeOperand(Operand, false); Out << ",";
     writeOperand(I->getOperand(1), false); Out << " ]";
@@ -363,14 +402,16 @@ void AssemblyWriter::processInstruction(const Instruction *I) {
 
   } else if (I->getOpcode() == Instruction::Malloc || 
 	     I->getOpcode() == Instruction::Alloca) {
-    Out << " " << cast<const PointerType>(I->getType())->getValueType();
+    Out << " ";
+    printType(cast<const PointerType>(I->getType())->getValueType());
     if (I->getNumOperands()) {
       Out << ",";
       writeOperand(I->getOperand(0), true);
     }
   } else if (isa<CastInst>(I)) {
     writeOperand(Operand, true);
-    Out << " to " << I->getType();
+    Out << " to ";
+    printType(I->getType());
   } else if (Operand) {   // Print the normal way...
 
     // PrintAllTypes - Instructions who have operands of all the same type 
@@ -390,8 +431,10 @@ void AssemblyWriter::processInstruction(const Instruction *I) {
     // Shift Left & Right print both types even for Ubyte LHS
     if (isa<ShiftInst>(I)) PrintAllTypes = true;
 
-    if (!PrintAllTypes)
-      Out << " " << I->getOperand(0)->getType();
+    if (!PrintAllTypes) {
+      Out << " ";
+      printType(I->getOperand(0)->getType());
+    }
 
     for (unsigned i = 0, E = I->getNumOperands(); i != E; ++i) {
       if (i) Out << ",";
@@ -404,6 +447,104 @@ void AssemblyWriter::processInstruction(const Instruction *I) {
 }
 
 
+string AssemblyWriter::calcTypeName(const Type *Ty,
+                                    vector<const Type *> &TypeStack) {
+  if (Ty->isPrimitiveType()) return Ty->getDescription();  // Base case
+
+  // Check to see if the type is named.
+  map<const Type *, string>::iterator I = TypeNames.find(Ty);
+  if (I != TypeNames.end()) return I->second;
+
+  // Check to see if the Type is already on the stack...
+  unsigned Slot = 0, CurSize = TypeStack.size();
+  while (Slot < CurSize && TypeStack[Slot] != Ty) ++Slot; // Scan for type
+
+  // This is another base case for the recursion.  In this case, we know 
+  // that we have looped back to a type that we have previously visited.
+  // Generate the appropriate upreference to handle this.
+  // 
+  if (Slot < CurSize)
+    return "\\" + utostr(CurSize-Slot);       // Here's the upreference
+
+  TypeStack.push_back(Ty);    // Recursive case: Add us to the stack..
+  
+  string Result;
+  switch (Ty->getPrimitiveID()) {
+  case Type::MethodTyID: {
+    const MethodType *MTy = cast<const MethodType>(Ty);
+    Result = calcTypeName(MTy->getReturnType(), TypeStack)+" (";
+    for (MethodType::ParamTypes::const_iterator
+           I = MTy->getParamTypes().begin(),
+           E = MTy->getParamTypes().end(); I != E; ++I) {
+      if (I != MTy->getParamTypes().begin())
+        Result += ", ";
+      Result += calcTypeName(*I, TypeStack);
+    }
+    if (MTy->isVarArg()) {
+      if (!MTy->getParamTypes().empty()) Result += ", ";
+      Result += "...";
+    }
+    Result += ")";
+    break;
+  }
+  case Type::StructTyID: {
+    const StructType *STy = cast<const StructType>(Ty);
+    Result = "{ ";
+    for (StructType::ElementTypes::const_iterator
+           I = STy->getElementTypes().begin(),
+           E = STy->getElementTypes().end(); I != E; ++I) {
+      if (I != STy->getElementTypes().begin())
+        Result += ", ";
+      Result += calcTypeName(*I, TypeStack);
+    }
+    Result += " }";
+    break;
+  }
+  case Type::PointerTyID:
+    Result = calcTypeName(cast<const PointerType>(Ty)->getValueType(), 
+                          TypeStack) + " *";
+    break;
+  case Type::ArrayTyID: {
+    const ArrayType *ATy = cast<const ArrayType>(Ty);
+    int NumElements = ATy->getNumElements();
+    Result = "[";
+    if (NumElements != -1) Result += itostr(NumElements) + " x ";
+    Result += calcTypeName(ATy->getElementType(), TypeStack) + "]";
+    break;
+  }
+  default:
+    assert(0 && "Unhandled case in getTypeProps!");
+    Result = "<error>";
+  }
+
+  TypeStack.pop_back();       // Remove self from stack...
+  return Result;
+}
+
+// printType - Go to extreme measures to attempt to print out a short, symbolic
+// version of a type name.
+//
+ostream &AssemblyWriter::printType(const Type *Ty) {
+  // Primitive types always print out their description, regardless of whether
+  // they have been named or not.
+  //
+  if (Ty->isPrimitiveType()) return Out << Ty->getDescription();
+
+  // Check to see if the type is named.
+  map<const Type *, string>::iterator I = TypeNames.find(Ty);
+  if (I != TypeNames.end()) return Out << I->second;
+
+  // Otherwise we have a type that has not been named but is a derived type.
+  // Carefully recurse the type hierarchy to print out any contained symbolic
+  // names.
+  //
+  vector<const Type *> TypeStack;
+  string TypeName = calcTypeName(Ty, TypeStack);
+  TypeNames.insert(make_pair(Ty, TypeName));   // Cache type name for later use
+  return Out << TypeName;
+}
+
+
 //===----------------------------------------------------------------------===//
 //                       External Interface declarations
 //===----------------------------------------------------------------------===//
@@ -413,7 +554,7 @@ void AssemblyWriter::processInstruction(const Instruction *I) {
 void WriteToAssembly(const Module *M, ostream &o) {
   if (M == 0) { o << "<null> module\n"; return; }
   SlotCalculator SlotTable(M, true);
-  AssemblyWriter W(o, SlotTable);
+  AssemblyWriter W(o, SlotTable, M);
 
   W.write(M);
 }
@@ -421,14 +562,14 @@ void WriteToAssembly(const Module *M, ostream &o) {
 void WriteToAssembly(const GlobalVariable *G, ostream &o) {
   if (G == 0) { o << "<null> global variable\n"; return; }
   SlotCalculator SlotTable(G->getParent(), true);
-  AssemblyWriter W(o, SlotTable);
+  AssemblyWriter W(o, SlotTable, G->getParent());
   W.write(G);
 }
 
 void WriteToAssembly(const Method *M, ostream &o) {
   if (M == 0) { o << "<null> method\n"; return; }
   SlotCalculator SlotTable(M->getParent(), true);
-  AssemblyWriter W(o, SlotTable);
+  AssemblyWriter W(o, SlotTable, M->getParent());
 
   W.write(M);
 }
@@ -438,22 +579,23 @@ void WriteToAssembly(const BasicBlock *BB, ostream &o) {
   if (BB == 0) { o << "<null> basic block\n"; return; }
 
   SlotCalculator SlotTable(BB->getParent(), true);
-  AssemblyWriter W(o, SlotTable);
+  AssemblyWriter W(o, SlotTable, 
+                   BB->getParent() ? BB->getParent()->getParent() : 0);
 
   W.write(BB);
 }
 
 void WriteToAssembly(const ConstPoolVal *CPV, ostream &o) {
   if (CPV == 0) { o << "<null> constant pool value\n"; return; }
-  WriteAsOperand(o, CPV, true, true, 0);
+  o << " " << CPV->getType()->getDescription() << " " << CPV->getStrValue();
 }
 
 void WriteToAssembly(const Instruction *I, ostream &o) {
   if (I == 0) { o << "<null> instruction\n"; return; }
 
-  SlotCalculator SlotTable(I->getParent() ? I->getParent()->getParent() : 0, 
-			   true);
-  AssemblyWriter W(o, SlotTable);
+  const Method *M = I->getParent() ? I->getParent()->getParent() : 0;
+  SlotCalculator SlotTable(M, true);
+  AssemblyWriter W(o, SlotTable, M ? M->getParent() : 0);
 
   W.write(I);
 }
