@@ -176,12 +176,13 @@ namespace {
 
         /// assignVirt2PhysReg - assigns the free physical register to
         /// the virtual register passed as arguments
-        void assignVirt2PhysReg(unsigned virtReg, unsigned physReg);
+        Virt2PhysMap::iterator
+        assignVirt2PhysReg(unsigned virtReg, unsigned physReg);
 
         /// clearVirtReg - free the physical register associated with this
         /// virtual register and disassociate virtual->physical and
         /// physical->virtual mappings
-        void clearVirtReg(unsigned virtReg);
+        void clearVirtReg(Virt2PhysMap::iterator it);
 
         /// assignVirt2StackSlot - assigns this virtual register to a
         /// stack slot
@@ -192,12 +193,13 @@ namespace {
         int getStackSlot(unsigned virtReg);
 
         /// spillVirtReg - spills the virtual register
-        void spillVirtReg(unsigned virtReg);
+        void spillVirtReg(Virt2PhysMap::iterator it);
 
         /// loadPhysReg - loads to the physical register the value of
         /// the virtual register specifed. Virtual register must have
         /// an assigned stack slot
-        void loadVirt2PhysReg(unsigned virtReg, unsigned physReg);
+        Virt2PhysMap::iterator
+        loadVirt2PhysReg(unsigned virtReg, unsigned physReg);
 
         void printVirtRegAssignment() const {
             std::cerr << "register assignment:\n";
@@ -460,7 +462,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                 continue;
             }
 
-            typedef std::vector<unsigned> Regs;
+            typedef std::vector<Virt2PhysMap::iterator> Regs;
             Regs toClear;
             Regs toSpill;
 
@@ -473,19 +475,19 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                 if (op.isVirtualRegister() && op.isUse()) {
                     unsigned virtReg = op.getAllocatedRegNum();
                     unsigned physReg = 0;
-                    Virt2PhysMap::const_iterator it = v2pMap_.find(virtReg);
+                    Virt2PhysMap::iterator it = v2pMap_.find(virtReg);
                     if (it != v2pMap_.end()) {
                         physReg = it->second;
                     }
                     else {
                         physReg = getFreeTempPhysReg(virtReg);
-                        loadVirt2PhysReg(virtReg, physReg);
+                        it = loadVirt2PhysReg(virtReg, physReg);
                         // we will clear uses that are not also defs
                         // before we allocate registers the defs
                         if (op.isDef())
-                            toSpill.push_back(virtReg);
+                            toSpill.push_back(it);
                         else
-                            toClear.push_back(virtReg);
+                            toClear.push_back(it);
                     }
                     (*currentInstr_)->SetMachineOperandReg(i, physReg);
                 }
@@ -504,16 +506,16 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                     assert(!op.isUse() && "we should not have uses here!");
                     unsigned virtReg = op.getAllocatedRegNum();
                     unsigned physReg = 0;
-                    Virt2PhysMap::const_iterator it = v2pMap_.find(virtReg);
+                    Virt2PhysMap::iterator it = v2pMap_.find(virtReg);
                     if (it != v2pMap_.end()) {
                         physReg = it->second;
                     }
                     else {
                         physReg = getFreeTempPhysReg(virtReg);
-                        assignVirt2PhysReg(virtReg, physReg);
+                        it = assignVirt2PhysReg(virtReg, physReg);
                         // need to spill this after we are done with
                         // this instruction
-                        toSpill.push_back(virtReg);
+                        toSpill.push_back(it);
                     }
                     (*currentInstr_)->SetMachineOperandReg(i, physReg);
                 }
@@ -774,17 +776,20 @@ unsigned RA::getFreeTempPhysReg(unsigned virtReg)
     return 0;
 }
 
-void RA::assignVirt2PhysReg(unsigned virtReg, unsigned physReg)
+RA::Virt2PhysMap::iterator
+RA::assignVirt2PhysReg(unsigned virtReg, unsigned physReg)
 {
-    bool inserted = v2pMap_.insert(std::make_pair(virtReg, physReg)).second;
+    bool inserted;
+    Virt2PhysMap::iterator it;
+    tie(it, inserted) = v2pMap_.insert(std::make_pair(virtReg, physReg));
     assert(inserted && "attempting to assign a virt->phys mapping to an "
            "already mapped register");
     prt_.addPhysRegUse(physReg);
+    return it;
 }
 
-void RA::clearVirtReg(unsigned virtReg)
+void RA::clearVirtReg(Virt2PhysMap::iterator it)
 {
-    Virt2PhysMap::iterator it = v2pMap_.find(virtReg);
     assert(it != v2pMap_.end() &&
            "attempting to clear a not allocated virtual register");
     unsigned physReg = it->second;
@@ -804,8 +809,9 @@ void RA::assignVirt2StackSlot(unsigned virtReg)
            "attempt to assign stack slot to already assigned register?");
     // if the virtual register was previously assigned clear the mapping
     // and free the virtual register
-    if (v2pMap_.count(virtReg)) {
-        clearVirtReg(virtReg);
+    Virt2PhysMap::iterator it = v2pMap_.find(virtReg);
+    if (it != v2pMap_.end()) {
+        clearVirtReg(it);
     }
 }
 
@@ -817,19 +823,23 @@ int RA::getStackSlot(unsigned virtReg)
     return it->second;
 }
 
-void RA::spillVirtReg(unsigned virtReg)
+void RA::spillVirtReg(Virt2PhysMap::iterator it)
 {
+    assert(it != v2pMap_.end() &&
+           "attempt to spill a not allocated virtual register");
+    unsigned virtReg = it->first;
     DEBUG(std::cerr << "\t\t\tspilling register: " << virtReg);
     const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(virtReg);
     int frameIndex = getStackSlot(virtReg);
     DEBUG(std::cerr << " to stack slot #" << frameIndex << '\n');
     ++numSpilled;
     instrAdded_ += mri_->storeRegToStackSlot(*currentMbb_, currentInstr_,
-                                             v2pMap_[virtReg], frameIndex, rc);
-    clearVirtReg(virtReg);
+                                             it->second, frameIndex, rc);
+    clearVirtReg(it);
 }
 
-void RA::loadVirt2PhysReg(unsigned virtReg, unsigned physReg)
+RA::Virt2PhysMap::iterator
+RA::loadVirt2PhysReg(unsigned virtReg, unsigned physReg)
 {
     DEBUG(std::cerr << "\t\t\tloading register: " << virtReg);
     const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(virtReg);
@@ -838,7 +848,7 @@ void RA::loadVirt2PhysReg(unsigned virtReg, unsigned physReg)
     ++numReloaded;
     instrAdded_ += mri_->loadRegFromStackSlot(*currentMbb_, currentInstr_,
                                               physReg, frameIndex, rc);
-    assignVirt2PhysReg(virtReg, physReg);
+    return assignVirt2PhysReg(virtReg, physReg);
 }
 
 FunctionPass* llvm::createLinearScanRegisterAllocator() {
