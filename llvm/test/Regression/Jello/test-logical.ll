@@ -1,5 +1,5 @@
 
-void %test() {
+void %main() {
 	%A = and sbyte 4, 8
 	%B = or sbyte %A, 7
 	%C = xor sbyte %B, %A

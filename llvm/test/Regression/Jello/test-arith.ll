@@ -1,5 +1,5 @@
 
-void %test() {
+void %main() {
 	%A = add sbyte 0, 12
 	%B = sub sbyte %A, %A
 	%C = mul sbyte %B, %B
