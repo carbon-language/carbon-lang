@@ -74,6 +74,9 @@ cl::list<std::string> PreprocessorToolOpts("Tpre", cl::ZeroOrMore,
   cl::desc("Pass specific options to the pre-processor"), 
   cl::value_desc("option"));
 
+cl::alias PreprocessorToolOptsAlias("Wp,", cl::ZeroOrMore,
+  cl::desc("Alias for -Tpre"), cl::aliasopt(PreprocessorToolOpts));
+
 cl::list<std::string> TranslatorToolOpts("Ttrn", cl::ZeroOrMore,
   cl::desc("Pass specific options to the assembler"),
   cl::value_desc("option"));
@@ -82,6 +85,9 @@ cl::list<std::string> AssemblerToolOpts("Tasm", cl::ZeroOrMore,
   cl::desc("Pass specific options to the assembler"),
   cl::value_desc("option"));
 
+cl::alias AssemblerToolOptsAlias("Wa,", cl::ZeroOrMore,
+  cl::desc("Alias for -Tasm"), cl::aliasopt(AssemblerToolOpts));
+
 cl::list<std::string> OptimizerToolOpts("Topt", cl::ZeroOrMore,
   cl::desc("Pass specific options to the optimizer"),
   cl::value_desc("option"));
@@ -89,6 +95,9 @@ cl::list<std::string> OptimizerToolOpts("Topt", cl::ZeroOrMore,
 cl::list<std::string> LinkerToolOpts("Tlnk", cl::ZeroOrMore,
   cl::desc("Pass specific options to the linker"),
   cl::value_desc("option"));
+
+cl::alias LinkerToolOptsAlias("Wl,", cl::ZeroOrMore,
+  cl::desc("Alias for -Tlnk"), cl::aliasopt(LinkerToolOpts));
 
 cl::list<std::string> fOpts("f", cl::ZeroOrMore, cl::Prefix,
   cl::desc("Pass through -f options to compiler tools"),
@@ -120,7 +129,6 @@ cl::list<std::string> Defines("D", cl::Prefix,
   cl::desc("Specify a symbol to define for source configuration"),
   cl::value_desc("symbol definition"));
 
-
 //===------------------------------------------------------------------------===
 //===          OUTPUT OPTIONS
 //===------------------------------------------------------------------------===
@@ -128,12 +136,9 @@ cl::list<std::string> Defines("D", cl::Prefix,
 cl::opt<std::string> OutputFilename("o", 
   cl::desc("Override output filename"), cl::value_desc("filename"));
 
-cl::opt<bool> ForceOutput("F", cl::Optional, cl::init(false),
-  cl::desc("Force output files to be overridden"));
-
 cl::opt<std::string> OutputMachine("m", cl::Prefix,
   cl::desc("Specify a target machine"), cl::value_desc("machine"));
-                                                                                                                                            
+
 cl::opt<bool> Native("native", cl::init(false),
   cl::desc("Generative native object and executables instead of bytecode"));
 
@@ -268,7 +273,6 @@ int main(int argc, char **argv) {
     if (Verbose)        flags |= CompilerDriver::VERBOSE_FLAG;
     if (Debug)          flags |= CompilerDriver::DEBUG_FLAG;
     if (DryRun)         flags |= CompilerDriver::DRY_RUN_FLAG;
-    if (ForceOutput)    flags |= CompilerDriver::FORCE_FLAG;
     if (Native)         flags |= CompilerDriver::EMIT_NATIVE_FLAG;
     if (EmitRawCode)    flags |= CompilerDriver::EMIT_RAW_FLAG;
     if (KeepTemps)      flags |= CompilerDriver::KEEP_TEMPS_FLAG;
