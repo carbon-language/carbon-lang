@@ -12,8 +12,7 @@
 
 #include "PPC64JITInfo.h"
 #include "PPC64TargetMachine.h"
-
-namespace llvm {
+using namespace llvm;
 
 /// addPassesToEmitMachineCode - Add passes to the specified pass manager to get
 /// machine code emitted.  This uses a MachineCodeEmitter object to handle
@@ -39,6 +38,4 @@ void *PPC64JITInfo::getJITStubForFunction(Function *F,
 void PPC64JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
   assert (0 && "PPC64JITInfo::replaceMachineCodeForFunction not implemented");
 }
-
-} // end llvm namespace
 

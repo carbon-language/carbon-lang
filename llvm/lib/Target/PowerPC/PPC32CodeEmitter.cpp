@@ -21,8 +21,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/Debug.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   class JITResolver {
@@ -346,6 +345,4 @@ void PPC32JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
 }
 
 #include "PPC32GenCodeEmitter.inc"
-
-} // end llvm namespace
 
