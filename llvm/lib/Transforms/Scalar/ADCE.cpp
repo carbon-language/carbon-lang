@@ -188,33 +188,29 @@ void ADCE::doADCE(DominanceFrontier &CDG) {
   //
   std::set<BasicBlock*> VisitedBlocks;
   BasicBlock *EntryBlock = fixupCFG(Func->front(), VisitedBlocks, AliveBlocks);
-  if (EntryBlock && EntryBlock != Func->front()) {
-    // We need to move the new entry block to be the first bb of the function
-    Function::iterator EBI = find(Func->begin(), Func->end(), EntryBlock);
-    std::swap(*EBI, *Func->begin()); // Exchange old location with start of fn
-
-    while (PHINode *PN = dyn_cast<PHINode>(EntryBlock->front())) {
-      assert(PN->getNumIncomingValues() == 1 &&
-             "Can only have a single incoming value at this point...");
-      // The incoming value must be outside of the scope of the function, a
-      // global variable, constant or parameter maybe...
-      //
-      PN->replaceAllUsesWith(PN->getIncomingValue(0));
-
-      // Nuke the phi node...
-      delete EntryBlock->getInstList().remove(EntryBlock->begin());
-    }
-  }
 
   // Now go through and tell dead blocks to drop all of their references so they
-  // can be safely deleted.
+  // can be safely deleted.  Also, as we are doing so, if the block has
+  // successors that are still live (and that have PHI nodes in them), remove
+  // the entry for this block from the phi nodes.
   //
   for (Function::iterator BI = Func->begin(), BE = Func->end(); BI != BE; ++BI){
     BasicBlock *BB = *BI;
     if (!AliveBlocks.count(BB)) {
+      // Remove entries from successors PHI nodes if they are still alive...
+      for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
+        if (AliveBlocks.count(*SI)) {  // Only if the successor is alive...
+          BasicBlock *Succ = *SI;
+          for (BasicBlock::iterator I = Succ->begin();// Loop over all PHI nodes
+               PHINode *PN = dyn_cast<PHINode>(*I); ++I)
+            PN->removeIncomingValue(BB);         // Remove value for this block
+        }
+
       BB->dropAllReferences();
     }
   }
+
+  cerr << "Before Deleting Blocks: " << Func;
 
   // Now loop through all of the blocks and delete them.  We can safely do this
   // now because we know that there are no references to dead blocks (because
@@ -227,6 +223,24 @@ void ADCE::doADCE(DominanceFrontier &CDG) {
       continue;                                     // Don't increment iterator
     }
     ++BI;                                           // Increment iterator...
+  }
+
+  if (EntryBlock && EntryBlock != Func->front()) {
+    // We need to move the new entry block to be the first bb of the function
+    Function::iterator EBI = find(Func->begin(), Func->end(), EntryBlock);
+    std::swap(*EBI, *Func->begin()); // Exchange old location with start of fn
+  }
+
+  while (PHINode *PN = dyn_cast<PHINode>(EntryBlock->front())) {
+    assert(PN->getNumIncomingValues() == 1 &&
+           "Can only have a single incoming value at this point...");
+    // The incoming value must be outside of the scope of the function, a
+    // global variable, constant or parameter maybe...
+    //
+    PN->replaceAllUsesWith(PN->getIncomingValue(0));
+    
+    // Nuke the phi node...
+    delete EntryBlock->getInstList().remove(EntryBlock->begin());
   }
 }
 
@@ -284,7 +298,7 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
     for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI) {
       BasicBlock *RetBB = fixupCFG(*SI, VisitedBlocks, AliveBlocks);
       if (RetBB) {
-	assert(ReturnBB == 0 && "One one live child allowed!");
+	assert(ReturnBB == 0 && "At most one live child allowed!");
 	ReturnBB = RetBB;
       }
     }
