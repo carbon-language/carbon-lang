@@ -201,30 +201,23 @@ static bool ResolveGlobalVariables(Module &M,
          "Concrete version should be an array type!");
 
   // Get the type of the things that may be resolved to us...
-  const Type *AETy =
-    cast<ArrayType>(Concrete->getType()->getElementType())->getElementType();
+  const ArrayType *CATy =cast<ArrayType>(Concrete->getType()->getElementType());
+  const Type *AETy = CATy->getElementType();
 
-  std::vector<Constant*> Args;
-  Args.push_back(Constant::getNullValue(Type::LongTy));
-  Args.push_back(Constant::getNullValue(Type::LongTy));
-  Constant *Replacement =
-    ConstantExpr::getGetElementPtr(ConstantPointerRef::get(Concrete), Args);
-  
+  Constant *CCPR = ConstantPointerRef::get(Concrete);
+
   for (unsigned i = 0; i != Globals.size(); ++i)
     if (Globals[i] != Concrete) {
       GlobalVariable *Old = cast<GlobalVariable>(Globals[i]);
-      if (Old->getType()->getElementType() != AETy) {
+      const ArrayType *OATy = cast<ArrayType>(Old->getType()->getElementType());
+      if (OATy->getElementType() != AETy || OATy->getNumElements() != 0) {
         std::cerr << "WARNING: Two global variables exist with the same name "
                   << "that cannot be resolved!\n";
         return false;
       }
 
-      // In this case, Old is a pointer to T, Concrete is a pointer to array of
-      // T.  Because of this, replace all uses of Old with a constantexpr
-      // getelementptr that returns the address of the first element of the
-      // array.
-      //
-      Old->replaceAllUsesWith(Replacement);
+      Old->replaceAllUsesWith(ConstantExpr::getCast(CCPR, Old->getType()));
+
       // Since there are no uses of Old anymore, remove it from the module.
       M.getGlobalList().erase(Old);
 
@@ -239,7 +232,6 @@ static bool ProcessGlobalsWithSameName(Module &M,
   assert(!Globals.empty() && "Globals list shouldn't be empty here!");
 
   bool isFunction = isa<Function>(Globals[0]);   // Is this group all functions?
-  bool Changed = false;
   GlobalValue *Concrete = 0;  // The most concrete implementation to resolve to
 
   assert((isFunction ^ isa<GlobalVariable>(Globals[0])) &&
@@ -271,32 +263,36 @@ static bool ProcessGlobalsWithSameName(Module &M,
       } else {
         Concrete = F;
       }
-      ++i;
     } else {
       // For global variables, we have to merge C definitions int A[][4] with
-      // int[6][4]
+      // int[6][4].  A[][4] is represented as A[0][4] by the CFE.
       GlobalVariable *GV = cast<GlobalVariable>(Globals[i]);
-      if (Concrete == 0) {
-        if (isa<ArrayType>(GV->getType()->getElementType()))
-          Concrete = GV;
-      } else {    // Must have different types... one is an array of the other?
-        const ArrayType *AT =
-          dyn_cast<ArrayType>(GV->getType()->getElementType());
+      if (!isa<ArrayType>(GV->getType()->getElementType())) {
+        Concrete = 0;
+        break;  // Non array's cannot be compatible with other types.
+      } else if (Concrete == 0) {
+        Concrete = GV;
+      } else {
+        // Must have different types... allow merging A[0][4] w/ A[6][4] if
+        // A[0][4] is external.
+        const ArrayType *NAT = cast<ArrayType>(GV->getType()->getElementType());
+        const ArrayType *CAT =
+          cast<ArrayType>(Concrete->getType()->getElementType());
 
-        // If GV is an array of Concrete, then GV is the array.
-        if (AT && AT->getElementType() == Concrete->getType()->getElementType())
-          Concrete = GV;
-        else {
-          // Concrete must be an array type, check to see if the element type of
-          // concrete is already GV.
-          AT = cast<ArrayType>(Concrete->getType()->getElementType());
-          if (AT->getElementType() != GV->getType()->getElementType())
-            Concrete = 0;           // Don't know how to handle it!
+        if (NAT->getElementType() != CAT->getElementType()) {
+          Concrete = 0;  // Non-compatible types
+          break;
+        } else if (NAT->getNumElements() == 0 && GV->isExternal()) {
+          // Concrete remains the same
+        } else if (CAT->getNumElements() == 0 && Concrete->isExternal()) {
+          Concrete = GV;   // Concrete becomes GV
+        } else {
+          Concrete = 0;    // Cannot merge these types...
+          break;
         }
       }
-      
-      ++i;
     }
+    ++i;
   }
 
   if (Globals.size() > 1) {         // Found a multiply defined global...
@@ -305,23 +301,23 @@ static bool ProcessGlobalsWithSameName(Module &M,
     // uses to use it instead.
     //
     if (!Concrete) {
-      std::cerr << "WARNING: Found function types that are not compatible:\n";
+      std::cerr << "WARNING: Found global types that are not compatible:\n";
       for (unsigned i = 0; i < Globals.size(); ++i) {
         std::cerr << "\t" << Globals[i]->getType()->getDescription() << " %"
                   << Globals[i]->getName() << "\n";
       }
       std::cerr << "  No linkage of globals named '" << Globals[0]->getName()
                 << "' performed!\n";
-      return Changed;
+      return false;
     }
 
     if (isFunction)
-      return Changed | ResolveFunctions(M, Globals, cast<Function>(Concrete));
+      return ResolveFunctions(M, Globals, cast<Function>(Concrete));
     else
-      return Changed | ResolveGlobalVariables(M, Globals,
-                                              cast<GlobalVariable>(Concrete));
+      return ResolveGlobalVariables(M, Globals,
+                                    cast<GlobalVariable>(Concrete));
   }
-  return Changed;
+  return false;
 }
 
 bool FunctionResolvingPass::run(Module &M) {
