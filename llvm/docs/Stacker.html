@@ -6,9 +6,21 @@
 </head>
 <body>
 <div class="doc_title">Stacker: An Example Of Using LLVM</div>
+<hr>
 <ol>
   <li><a href="#abstract">Abstract</a></li>
   <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#lessons">Lessons I Learned About LLVM</a>
+    <ol>
+      <li><a href="#value">Everything's a Value!</a></li>
+      <li><a href="#terminate">Terminate Those Blocks!</a></li>
+      <li><a href="#blocks">Concrete Blocks</a></li>
+      <li><a href="#push_back">push_back Is Your Friend</a></li>
+      <li><a href="#gep">The Wily GetElementPtrInst</a></li>
+      <li><a href="#linkage">Getting Linkage Types Right</a></li>
+      <li><a href="#constants">Constants Are Easier Than That!</a></li>
+    </ol>
+  </li>
   <li><a href="#lexicon">The Stacker Lexicon</a>
     <ol>
       <li><a href="#stack">The Stack</a>
@@ -18,12 +30,24 @@
       <li><a href="#builtins">Built-Ins</a>
     </ol>
   </li>
-  <li><a href="#directory">The Directory Structure </a>
+  <li><a href="#example">Prime: A Complete Example</a></li>
+  <li><a href="#internal">Internal Code Details</a>
+    <ol>
+      <li><a href="#directory">The Directory Structure </a></li>
+      <li><a href="#lexer">The Lexer</a></li>
+      <li><a href="#parser">The Parser</a></li>
+      <li><a href="#compiler">The Compiler</a></li>
+      <li><a href="#runtime">The Runtime</a></li>
+      <li><a href="#driver">Compiler Driver</a></li>
+      <li><a href="#tests">Test Programs</a></li>
+    </ol>
+  </li>
 </ol>
 <div class="doc_text">
 <p><b>Written by <a href="mailto:rspencer@x10sys.com">Reid Spencer</a> </b></p>
 <p> </p>
 </div>
+<hr>
 <!-- ======================================================================= -->
 <div class="doc_section"> <a name="abstract">Abstract </a></div>
 <div class="doc_text">
@@ -80,31 +104,266 @@ written Stacker definitions have that characteristic. </p>
 <p>Exercise for the reader: how could you make this a one line program?</p>
 </div>
 <!-- ======================================================================= -->
-<div class="doc_section"><a name="stack"></a>Lessons Learned About LLVM</div>
+<div class="doc_section"><a name="lessons"></a>Lessons I Learned About LLVM</div>
 <div class="doc_text">
 <p>Stacker was written for two purposes: (a) to get the author over the 
 learning curve and (b) to provide a simple example of how to write a compiler
 using LLVM. During the development of Stacker, many lessons about LLVM were
 learned. Those lessons are described in the following subsections.<p>
 </div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="value"></a>Everything's a Value!</div>
+<div class="doc_text">
+<p>Although I knew that LLVM used a Single Static Assignment (SSA) format, 
+it wasn't obvious to me how prevalent this idea was in LLVM until I really
+started using it.  Reading the Programmer's Manual and Language Reference I
+noted that most of the important LLVM IR (Intermediate Representation) C++ 
+classes were derived from the Value class. The full power of that simple
+design only became fully understood once I started constructing executable
+expressions for Stacker.</p>
+<p>This really makes your programming go faster. Think about compiling code
+for the following C/C++ expression: (a|b)*((x+1)/(y+1)). You could write a
+function using LLVM that does exactly that, this way:</p>
+<pre><code>
+Value* 
+expression(BasicBlock*bb, Value* a, Value* b, Value* x, Value* y )
+{
+    Instruction* tail = bb->getTerminator();
+    ConstantSInt* one = ConstantSInt::get( Type::IntTy, 1);
+    BinaryOperator* or1 = 
+	new BinaryOperator::create( Instruction::Or, a, b, "", tail );
+    BinaryOperator* add1 = 
+	new BinaryOperator::create( Instruction::Add, x, one, "", tail );
+    BinaryOperator* add2 =
+	new BinaryOperator::create( Instruction::Add, y, one, "", tail );
+    BinaryOperator* div1 = 
+	new BinaryOperator::create( Instruction::Div, add1, add2, "", tail);
+    BinaryOperator* mult1 = 
+	new BinaryOperator::create( Instruction::Mul, or1, div1, "", tail );
+
+    return mult1;
+}
+</code></pre>
+<p>"Okay, big deal," you say.  It is a big deal. Here's why. Note that I didn't
+have to tell this function which kinds of Values are being passed in. They could be
+instructions, Constants, Global Variables, etc. Furthermore, if you specify Values
+that are incorrect for this sequence of operations, LLVM will either notice right
+away (at compilation time) or the LLVM Verifier will pick up the inconsistency
+when the compiler runs. In no case will you make a type error that gets passed
+through to the generated program. This <em>really</em> helps you write a compiler
+that always generates correct code!<p>
+<p>The second point is that we don't have to worry about branching, registers,
+stack variables, saving partial results, etc. The instructions we create 
+<em>are</em> the values we use. Note that all that was created in the above
+code is a Constant value and five operators. Each of the instructions <em>is</em> 
+the resulting value of that instruction.</p>
+<p>The lesson is this: <em>SSA form is very powerful: there is no difference
+    between a value and the instruction that created it.</em> This is fully
+enforced by the LLVM IR. Use it to your best advantage.</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="terminate"></a>Terminate Those Blocks!</div>
+<div class="doc_text">
+<p>I had to learn about terminating blocks the hard way: using the debugger 
+to figure out what the LLVM verifier was trying to tell me and begging for
+help on the LLVMdev mailing list. I hope you avoid this experience.</p>
+<p>Emblazon this rule in your mind:</p>
+<ul>
+    <li><em>All</em> <code>BasicBlock</code>s in your compiler <b>must</b> be
+	terminated with a terminating instruction (branch, return, etc.).
+    </li>
+</ul>
+<p>Terminating instructions are a semantic requirement of the LLVM IR. There
+is no facility for implicitly chaining together blocks placed into a function
+in the order they occur. Indeed, in the general case, blocks will not be
+added to the function in the order of execution because of the recursive
+way compilers are written.</p>
+<p>Furthermore, if you don't terminate your blocks, your compiler code will 
+compile just fine. You won't find out about the problem until you're running 
+the compiler and the module you just created fails on the LLVM Verifier.</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="blocks"></a>Concrete Blocks</div>
+<div class="doc_text">
+<p>After a little initial fumbling around, I quickly caught on to how blocks
+should be constructed. The use of the standard template library really helps
+simply the interface. In general, here's what I learned:
+<ol>
+    <li><em>Create your blocks early.</em> While writing your compiler, you 
+    will encounter several situations where you know apriori that you will
+    need several blocks. For example, if-then-else, switch, while and for
+    statements in C/C++ all need multiple blocks for expression in LVVM. 
+    The rule is, create them early.</li>
+    <li><em>Terminate your blocks early.</em> This just reduces the chances 
+    that you forget to terminate your blocks which is required (go 
+    <a href="#terminate">here</a> for more). 
+    <li><em>Use getTerminator() for instruction insertion.</em> I noticed early on
+    that many of the constructors for the Instruction classes take an optional
+    <code>insert_before</code> argument. At first, I thought this was a mistake
+    because clearly the normal mode of inserting instructions would be one at
+    a time <em>after</em> some other instruction, not <em>before</em>. However,
+    if you hold on to your terminating instruction (or use the handy dandy
+    <code>getTerminator()</code> method on a <code>BasicBlock</code>), it can
+    always be used as the <code>insert_before</code> argument to your instruction
+    constructors. This causes the instruction to automatically be inserted in 
+    the RightPlace&tm; place, just before the terminating instruction. The 
+    nice thing about this design is that you can pass blocks around and insert 
+    new instructions into them without ever known what instructions came 
+    before. This makes for some very clean compiler design.</li>
+</ol>
+<p>The foregoing is such an important principal, its worth making an idiom:</p>
+<pre>
+<code>
+BasicBlock* bb = new BasicBlock();</li>
+bb->getInstList().push_back( new Branch( ... ) );
+new Instruction(..., bb->getTerminator() );
+</code>
+</pre>
+<p>To make this clear, consider the typical if-then-else statement
+(see StackerCompiler::handle_if() method).  We can set this up
+in a single function using LLVM in the following way: </p>
+<pre>
+using namespace llvm;
+BasicBlock*
+MyCompiler::handle_if( BasicBlock* bb, SetCondInst* condition )
+{
+    // Create the blocks to contain code in the structure of if/then/else
+    BasicBlock* then = new BasicBlock(); 
+    BasicBlock* else = new BasicBlock();
+    BasicBlock* exit = new BasicBlock();
+
+    // Insert the branch instruction for the "if"
+    bb->getInstList().push_back( new BranchInst( then, else, condition ) );
+
+    // Set up the terminating instructions
+    then->getInstList().push_back( new BranchInst( exit ) );
+    else->getInstList().push_back( new BranchInst( exit ) );
+
+    // Fill in the then part .. details excised for brevity
+    this->fill_in( then );
+
+    // Fill in the else part .. details excised for brevity
+    this->fill_in( else );
+
+    // Return a block to the caller that can be filled in with the code
+    // that follows the if/then/else construct.
+    return exit;
+}
+</pre>
+<p>Presumably in the foregoing, the calls to the "fill_in" method would add 
+the instructions for the "then" and "else" parts. They would use the third part
+of the idiom almost exclusively (inserting new instructions before the 
+terminator). Furthermore, they could even recurse back to <code>handle_if</code> 
+should they encounter another if/then/else statement and it will all "just work".
+<p>
+<p>Note how cleanly this all works out. In particular, the push_back methods on
+the <code>BasicBlock</code>'s instruction list. These are lists of type 
+<code>Instruction</code> which also happen to be <code>Value</code>s. To create 
+the "if" branch we merely instantiate a <code>BranchInst</code> that takes as 
+arguments the blocks to branch to and the condition to branch on. The blocks
+act like branch labels! This new <code>BranchInst</code> terminates
+the <code>BasicBlock</code> provided as an argument. To give the caller a way
+to keep inserting after calling <code>handle_if</code> we create an "exit" block
+which is returned to the caller.  Note that the "exit" block is used as the 
+terminator for both the "then" and the "else" blocks. This gaurantees that no
+matter what else "handle_if" or "fill_in" does, they end up at the "exit" block.
+</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="push_back"></a>push_back Is Your Friend</div>
+<div class="doc_text">
+<p>
+One of the first things I noticed is the frequent use of the "push_back"
+method on the various lists. This is so common that it is worth mentioning.
+The "push_back" inserts a value into an STL list, vector, array, etc. at the
+end. The method might have also been named "insert_tail" or "append".
+Althought I've used STL quite frequently, my use of push_back wasn't very
+high in other programs. In LLVM, you'll use it all the time.
+</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="gep"></a>The Wily GetElementPtrInst</div>
+<div class="doc_text">
+<p>
+It took a little getting used to and several rounds of postings to the LLVM
+mail list to wrap my head around this instruction correctly. Even though I had
+read the Language Reference and Programmer's Manual a couple times each, I still
+missed a few <em>very</em> key points:
+</p>
+<ul>
+    <li>GetElementPtrInst gives you back a Value for the last thing indexed</em>
+    <li>All global variables in LLVM  are <em>pointers</em>.
+    <li>Pointers must also be dereferenced with the GetElementPtrInst instruction.
+</ul>
+<p>This means that when you look up an element in the global variable (assuming
+its a struct or array), you <em>must</em> deference the pointer first! For many
+things, this leads to the idiom:
+</p>
+<pre><code>
+std::vector<Value*> index_vector;
+index_vector.push_back( ConstantSInt::get( Type::LongTy, 0 );
+// ... push other indices ...
+GetElementPtrInst* gep = new GetElementPtrInst( ptr, index_vector );
+</code></pre>
+<p>For example, suppose we have a global variable whose type is [24 x int]. The
+variable itself represents a <em>pointer</em> to that array. To subscript the
+array, we need two indices, not just one. The first index (0) dereferences the
+pointer. The second index subscripts the array. If you're a "C" programmer, this
+will run against your grain because you'll naturally think of the global array
+variable and the address of its first element as the same. That tripped me up
+for a while until I realized that they really do differ .. by <em>type</em>.
+Remember that LLVM is a strongly typed language itself. Absolutely everything
+has a type.  The "type" of the global variable is [24 x int]*. That is, its
+a pointer to an array of 24 ints.  When you dereference that global variable with
+a single index, you now have a " [24 x int]" type, the pointer is gone. Although
+the pointer value of the dereferenced global and the address of the zero'th element
+in the array will be the same, they differ in their type. The zero'th element has
+type "int" while the pointer value has type "[24 x int]".</p>
+<p>Get this one aspect of LLVM right in your head and you'll save yourself
+a lot of compiler writing headaches down the road.</p>
+</div>
+<!-- ======================================================================= -->
 <div class="doc_subsection"><a name="linkage"></a>Getting Linkage Types Right</div>
-<div class="doc_text"><p>To be completed.</p></div>
-<div class="doc_subsection"><a name="linkage"></a>Everything's a Value!</div>
-<div class="doc_text"><p>To be completed.</p></div>
-<div class="doc_subsection"><a name="linkage"></a>The Wily GetElementPtrInst</div>
-<div class="doc_text"><p>To be completed.</p></div>
-<div class="doc_subsection"><a name="linkage"></a>Constants Are Easier Than That!</div>
-<div class="doc_text"><p>To be completed.</p></div>
-<div class="doc_subsection"><a name="linkage"></a>Terminate Those Blocks!</div>
-<div class="doc_text"><p>To be completed.</p></div>
-<div class="doc_subsection"><a name="linkage"></a>new,get,create .. Its All The Same</div>
-<div class="doc_text"><p>To be completed.</p></div>
-<div class="doc_subsection"><a name="linkage"></a>Utility Functions To The Rescue</div>
-<div class="doc_text"><p>To be completed.</p></div>
-<div class="doc_subsection"><a name="linkage"></a>push_back Is Your Friend</div>
-<div class="doc_text"><p>To be completed.</p></div>
-<div class="doc_subsection"><a name="linkage"></a>Block Heads Come First</div>
-<div class="doc_text"><p>To be completed.</p></div>
+<div class="doc_text">
+<p>Linkage types in LLVM can be a little confusing, especially if your compiler
+writing mind has affixed very hard concepts to particular words like "weak",
+"external", "global", "linkonce", etc. LLVM does <em>not</em> use the precise
+definitions of say ELF or GCC even though they share common terms. To be fair,
+the concepts are related and similar but not precisely the same. This can lead
+you to think you know what a linkage type represents but in fact it is slightly
+different. I recommend you read the 
+<a href="LangRef.html#linkage"> Language Reference on this topic</a> very 
+carefully.<p>
+<p>Here are some handy tips that I discovered along the way:</p>
+<ul>
+    <li>Unitialized means external. That is, the symbol is declared in the current
+    module and can be used by that module but it is not defined by that module.</li>
+    <li>Setting an initializer changes a global's linkage type from whatever it was
+    to a normal, defind global (not external). You'll need to call the setLinkage()
+    method to reset it if you specify the initializer after the GlobalValue has been
+    constructed. This is important for LinkOnce and Weak linkage types.</li> 
+    <li>Appending linkage can be used to keep track of compilation information at
+    runtime. It could be used, for example, to build a full table of all the C++
+    virtual tables or hold the C++ RTTI data, or whatever. Appending linkage can 
+    only be applied to arrays. The arrays are concatenated together at link time.</li>
+</ul>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="constants"></a>Constants Are Easier Than That!</div>
+<div class="doc_text">
+<p>
+Constants in LLVM took a little getting used to until I discovered a few utility
+functions in the LLVM IR that make things easier. Here's what I learned: </p>
+<ul>
+ <li>Constants are Values like anything else and can be operands of instructions</li>
+ <li>Integer constants, frequently needed can be created using the static "get"
+ methods of the ConstantInt, ConstantSInt, and ConstantUInt classes. The nice thing
+ about these is that you can "get" any kind of integer quickly.</li>
+ <li>There's a special method on Constant class which allows you to get the null 
+ constant for <em>any</em> type. This is really handy for initializing large 
+ arrays or structures, etc.</li>
+</ul>
+</div>
 <!-- ======================================================================= -->
 <div class="doc_section"> <a name="lexicon">The Stacker Lexicon</a></div>
 <div class="doc_subsection"><a name="stack"></a>The Stack</div>
@@ -184,7 +443,7 @@ depending on what they do. The groups are as follows:</p>
     their operands. <br/> The words are: ABS NEG + - * / MOD */ ++ -- MIN MAX</li>
     <li><em>Stack</em>These words manipulate the stack directly by moving
     its elements around.<br/> The words are: DROP DUP SWAP OVER ROT DUP2 DROP2 PICK TUCK</li>
-    <li><em>Memory></em>These words allocate, free and manipulate memory
+    <li><em>Memory</em>These words allocate, free and manipulate memory
     areas outside the stack.<br/>The words are: MALLOC FREE GET PUT</li>
     <li><em>Control</em>These words alter the normal left to right flow
     of execution.<br/>The words are: IF ELSE ENDIF WHILE END RETURN EXIT RECURSE</li>
@@ -696,39 +955,19 @@ using the following construction:</p>
 </table>
 </div>
 <!-- ======================================================================= -->
-<div class="doc_section"> <a name="directory">Directory Structure</a></div>
+<div class="doc_section"> <a name="example">Prime: A Complete Example</a></div>
 <div class="doc_text">
-<p>The source code, test programs, and sample programs can all be found
-under the LLVM "projects" directory. You will need to obtain the LLVM sources
-to find it (either via anonymous CVS or a tarball. See the 
-<a href="GettingStarted.html">Getting Started</a> document).</p>
-<p>Under the "projects" directory there is a directory named "stacker". That
-directory contains everything, as follows:</p>
-<ul>
-    <li><em>lib</em> - contains most of the source code
-    <ul>
-	<li><em>lib/compiler</em> - contains the compiler library
-	<li><em>lib/runtime</em> - contains the runtime library
-    </ul></li>
-    <li><em>test</em> - contains the test programs</li>
-    <li><em>tools</em> - contains the Stacker compiler main program, stkrc
-    <ul>
-	<li><em>lib/stkrc</em> - contains the Stacker compiler main program
-    </ul</li>
-    <li><em>sample</em> - contains the sample programs</li>
-</ul>
-</div>
-<!-- ======================================================================= -->
-<div class="doc_section"> <a name="directory">Prime: A Complete Example</a></div>
-<div class="doc_text">
-<p>The following fully documented program highlights many of features of both
-the Stacker language and what is possible with LLVM. The program simply 
-prints out the prime numbers until it reaches
+<p>The following fully documented program highlights many features of both
+the Stacker language and what is possible with LLVM. The program has two modes
+of operations. If you provide numeric arguments to the program, it checks to see
+if those arguments are prime numbers, prints out the results. Without any 
+aruments, the program prints out any prime numbers it finds between 1 and one 
+million (there's a log of them!). The source code comments below tell the 
+remainder of the story.
 </p>
 </div>
 <div class="doc_text">
-<p><code>
-<![CDATA[
+<pre><code>
 ################################################################################
 #
 # Brute force prime number generator
@@ -964,19 +1203,68 @@ prints out the prime numbers until it reaches
     ENDIF
     0				( push return code )
 ;
-]]>
 </code>
-</p>
+</pre>
 </div>
 <!-- ======================================================================= -->
-<div class="doc_section"> <a name="lexicon">Internals</a></div>
-<div class="doc_text"><p>To be completed.</p></div>
-<div class="doc_subsection"><a name="stack"></a>The Lexer</div>
-<div class="doc_subsection"><a name="stack"></a>The Parser</div>
-<div class="doc_subsection"><a name="stack"></a>The Compiler</div>
-<div class="doc_subsection"><a name="stack"></a>The Stack</div>
-<div class="doc_subsection"><a name="stack"></a>Definitions Are Functions</div>
-<div class="doc_subsection"><a name="stack"></a>Words Are BasicBlocks</div>
+<div class="doc_section"> <a name="internal">Internals</a></div>
+<div class="doc_text">
+ <p><b>This section is under construction.</b>
+ <p>In the mean time, you can always read the code! It has comments!</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"> <a name="directory">Directory Structure</a></div>
+<div class="doc_text">
+<p>The source code, test programs, and sample programs can all be found
+under the LLVM "projects" directory. You will need to obtain the LLVM sources
+to find it (either via anonymous CVS or a tarball. See the 
+<a href="GettingStarted.html">Getting Started</a> document).</p>
+<p>Under the "projects" directory there is a directory named "stacker". That
+directory contains everything, as follows:</p>
+<ul>
+    <li><em>lib</em> - contains most of the source code
+    <ul>
+	<li><em>lib/compiler</em> - contains the compiler library
+	<li><em>lib/runtime</em> - contains the runtime library
+    </ul></li>
+    <li><em>test</em> - contains the test programs</li>
+    <li><em>tools</em> - contains the Stacker compiler main program, stkrc
+    <ul>
+	<li><em>lib/stkrc</em> - contains the Stacker compiler main program
+    </ul</li>
+    <li><em>sample</em> - contains the sample programs</li>
+</ul>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="lexer"></a>The Lexer</div>
+<div class="doc_text">
+<p>See projects/Stacker/lib/compiler/Lexer.l</p>
+</p></div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="parser"></a>The Parser</div>
+<div class="doc_text">
+<p>See projects/Stacker/lib/compiler/StackerParser.y</p>
+</p></div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="compiler"></a>The Compiler</div>
+<div class="doc_text">
+<p>See projects/Stacker/lib/compiler/StackerCompiler.cpp</p>
+</p></div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="runtime"></a>The Runtime</div>
+<div class="doc_text">
+<p>See projects/Stacker/lib/runtime/stacker_rt.c</p>
+</p></div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="driver"></a>Compiler Driver</div>
+<div class="doc_text">
+<p>See projects/Stacker/tools/stkrc/stkrc.cpp</p>
+</p></div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="tests"></a>Test Programs</div>
+<div class="doc_text">
+<p>See projects/Stacker/test/*.st</p>
+</p></div>
 <!-- ======================================================================= -->
 <hr>
 <div class="doc_footer">
