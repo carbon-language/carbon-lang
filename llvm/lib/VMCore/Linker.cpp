@@ -23,6 +23,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/System/Path.h"
 #include <iostream>
 #include <sstream>
 using namespace llvm;
@@ -835,6 +836,9 @@ static bool LinkAppendingVars(Module *M,
 // shouldn't be relied on to be consistent.
 //
 bool llvm::LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
+  assert(Dest != 0 && "Invalid Destination module");
+  assert(Src  != 0 && "Invalid Source Module");
+
   if (Dest->getEndianness() == Module::AnyEndianness)
     Dest->setEndianness(Src->getEndianness());
   if (Dest->getPointerSize() == Module::AnyPointerSize)
@@ -846,6 +850,16 @@ bool llvm::LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
   if (Src->getPointerSize() != Module::AnyPointerSize &&
       Dest->getPointerSize() != Src->getPointerSize())
     std::cerr << "WARNING: Linking two modules of different pointer size!\n";
+
+  // Update the destination module's dependent libraries list with the libraries 
+  // from the source module. There's no opportunity for duplicates here as the
+  // Module ensures that duplicate insertions are discarded.
+  Module::lib_iterator SI = Src->lib_begin();
+  Module::lib_iterator SE = Src->lib_end();
+  while ( SI != SE ) {
+    Dest->addLibrary(*SI);
+    ++SI;
+  }
 
   // LinkTypes - Go through the symbol table of the Src module and see if any
   // types are named in the src module that are not named in the Dst module.
@@ -914,6 +928,13 @@ bool llvm::LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
   // If there were any appending global variables, link them together now.
   //
   if (LinkAppendingVars(Dest, AppendingVars, ErrorMsg)) return true;
+
+  // If the source library's module id is in the dependent library list of the
+  // destination library, remove it since that module is now linked in.
+  sys::Path modId;
+  modId.set_file(Src->getModuleIdentifier());
+  if (!modId.is_empty())
+    Dest->removeLibrary(modId.get_basename());
 
   return false;
 }
