@@ -40,10 +40,9 @@ bool PowerPCInstrInfo::isMoveInstr(const MachineInstr& MI,
   } else if (oc == PPC32::ADDI) {             // addi r1, r2, 0
     assert(MI.getNumOperands() == 3 &&
            MI.getOperand(0).isRegister() &&
-           MI.getOperand(1).isRegister() &&
            MI.getOperand(2).isImmediate() &&
            "invalid PPC32 ADDI instruction!");
-    if (MI.getOperand(2).getImmedValue() == 0) {
+    if (MI.getOperand(1).isRegister() && MI.getOperand(2).getImmedValue()==0) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
       return true;
