@@ -1038,7 +1038,18 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
       FalseVal = ConstantExpr::getCast(F, Type::ShortTy);
   }
 
-  
+  unsigned TrueReg  = getReg(TrueVal, MBB, IP);
+  unsigned FalseReg = getReg(FalseVal, MBB, IP);
+  if (TrueReg == FalseReg) {
+    static const unsigned Opcode[] = {
+      X86::MOV8rr, X86::MOV16rr, X86::MOV32rr, X86::FpMOV, X86::MOV32rr
+    };
+    BuildMI(*MBB, IP, Opcode[SelectClass], 1, DestReg).addReg(TrueReg);
+    if (SelectClass == cLong)
+      BuildMI(*MBB, IP, X86::MOV32rr, 1, DestReg+1).addReg(TrueReg+1);
+    return;
+  }
+
   unsigned Opcode;
   if (SetCondInst *SCI = canFoldSetCCIntoBranchOrSelect(Cond)) {
     // We successfully folded the setcc into the select instruction.
@@ -1130,8 +1141,6 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
     }
   }
 
-  unsigned TrueReg  = getReg(TrueVal, MBB, IP);
-  unsigned FalseReg = getReg(FalseVal, MBB, IP);
   unsigned RealDestReg = DestReg;
 
 
