@@ -1,0 +1,42 @@
+<html>
+<title>LLVM: llvm-prof tool</title>
+
+<body bgcolor=white>
+
+<center><h1>LLVM: <tt>llvm-prof</tt> tool</h1></center>
+<HR>
+
+<h3>NAME</h3>
+<tt>llvm-prof</tt>
+
+<h3>SYNOPSIS</h3>
+<tt>llvm-prof [options] [bytecode file] [LLVM passes]</tt>
+
+<h3>DESCRIPTION</h3>
+
+The <tt>llvm-prof</tt> tool reads in an '<tt>llvmprof.out</tt>' file, a bytecode
+file for the program, and produces a human readable report, suitable for
+determining where the program hotspots are.<p>
+
+
+<h3>OPTIONS</h3>
+
+<ul>
+	<li><tt>-annotated-llvm</tt> or <tt>-A</tt><br>
+
+        In addition to the normal report printed, print out the code for the
+        program, annotated we execution frequency information. This can be
+        particularly useful when trying to visualize how frequently basic blocks
+        are executed.  This is most useful with basic block profiling
+        information or better.<p>
+</ul>
+
+<h3>EXIT STATUS</h3>
+
+<tt>llvm-prof</tt> returns 1 if it cannot load the bytecode file or the profile
+information, otherwise it exits with zero.
+
+<HR>
+Maintained by the <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.
+</body>
+</html>
