@@ -22,7 +22,7 @@ namespace llvm {
 namespace sys {
 
   /// This class provides an abstraction for the path to a file or directory 
-  /// in the operating system's filesystem and provides various basic operations 
+  /// in the operating system's filesystem and provides various basic operations
   /// on it.  Note that this class only represents the name of a path to a file
   /// or directory which may or may not be valid for a given machine's file 
   /// system. A Path ensures that the name it encapsulates is syntactical valid
@@ -48,8 +48,14 @@ namespace sys {
     public:
       typedef std::vector<Path> Vector;
 
-      /// This structure provides basic file system information about a file.
-      /// The structure is filled in by the getStatusInfo method.
+      /// This structure provides basic file system information about a file. It
+      /// is patterned after the stat(2) Unix operating system call but made
+      /// platform independent and eliminates many of the unix-specific fields.
+      /// However, to support llvm-ar, the mode, user, and group fields are
+      /// retained. These pertain to unix security and may not have a meaningful
+      /// value on non-Unix platforms. However, the fileSize and modTime fields
+      /// should always be applicabe on all platforms.  The structure is 
+      /// filled in by the getStatusInfo method.
       /// @brief File status structure
       struct StatusInfo {
         StatusInfo() : modTime(0,0) { fileSize=0; mode=0; user=0; group=0; }
@@ -60,7 +66,6 @@ namespace sys {
         uint32_t    group;      ///< Group ID of owner, if applicable
         bool        isDir;      ///< True if this is a directory.
       };
-
 
     /// @}
     /// @name Constructors
@@ -359,11 +364,14 @@ namespace sys {
 
       /// This function returns status information about the file. The type of
       /// path (file or directory) is updated to reflect the actual contents 
-      /// of the file system.
-      /// @returns nothing
+      /// of the file system. If the file does not exist, false is returned. 
+      /// For other (hard I/O) errors, a std::string is throwing indicating the
+      /// problem.
+      /// @returns true if the status info was obtained, false if the file does
+      /// not exist.
       /// @throws std::string if an error occurs.
       /// @brief Get file status.
-      void getStatusInfo(StatusInfo& stat);
+      bool getStatusInfo(StatusInfo& stat);
 
       /// This method attempts to set the Path object to \p unverified_path
       /// and interpret the name as a directory name.  The \p unverified_path 
@@ -435,11 +443,11 @@ namespace sys {
       bool appendSuffix(const std::string& suffix);
 
       /// The suffix of the filename is removed. The suffix begins with and
-      /// includes the last . character in the filename after the last directory 
+      /// includes the last . character in the filename after the last directory
       /// separator and extends until the end of the name. If no . character is
       /// after the last directory separator, then the file name is left
-      /// unchanged (i.e. it was already without a suffix) but the function return
-      /// false.
+      /// unchanged (i.e. it was already without a suffix) but the function 
+      /// returns false.
       /// @returns false if there was no suffix to remove, true otherwise.
       /// @throws nothing
       /// @brief Remove the suffix from a path name.
@@ -474,11 +482,10 @@ namespace sys {
       /// unique temporary file name is generated based on the contents of 
       /// \p this before the call. The new name is assigned to \p this and the
       /// file is created.  Note that this will both change the Path object
-      /// *and* create the corresponding file. The path of \p this will have 
-      /// six characters added to it (per mkstemp(3)) that ensure the file 
-      /// name is unique.
+      /// *and* create the corresponding file. This function will ensure that
+      /// the newly generated temporary file name is unique in the file system.
       /// @throws std::string if there is an error
-      /// @brief Create a temporary file
+      /// @brief Create a unique temporary file
       bool createTemporaryFile();
 
       /// This method attempts to destroy the directory named by the last in 
