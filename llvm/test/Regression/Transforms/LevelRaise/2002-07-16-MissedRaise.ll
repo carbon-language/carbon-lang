@@ -16,9 +16,9 @@
 void %reverse(%Tree %t) {
 bb0:                                    ;[#uses=0]
         %cast219 = cast %Tree %t to sbyte***            ; <sbyte***> [#uses=2]
-        %reg2221 = getelementptr sbyte*** %cast219, uint 6              ; <sbyte***> [#uses=1]
+        %reg2221 = getelementptr sbyte*** %cast219, long 6              ; <sbyte***> [#uses=1]
         %reg108 = load sbyte*** %reg2221                ; <sbyte**> [#uses=2]
-        %reg247 = getelementptr sbyte*** %cast219, uint 5               ; <sbyte***> [#uses=1]
+        %reg247 = getelementptr sbyte*** %cast219, long 5               ; <sbyte***> [#uses=1]
         store sbyte** %reg108, sbyte*** %reg247
         ret void
 }
