@@ -94,9 +94,7 @@ public:
              BasicBlock *InsertAtEnd)
     : AllocationInst(Ty, ArraySize, Malloc, Name, InsertAtEnd) {}
 
-  virtual Instruction *clone() const { 
-    return new MallocInst(*this);
-  }
+  virtual MallocInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const MallocInst *) { return true; }
@@ -126,9 +124,7 @@ public:
              BasicBlock *InsertAtEnd)
     : AllocationInst(Ty, ArraySize, Alloca, Name, InsertAtEnd) {}
 
-  virtual Instruction *clone() const { 
-    return new AllocaInst(*this);
-  }
+  virtual AllocaInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const AllocaInst *) { return true; }
@@ -154,7 +150,7 @@ public:
   explicit FreeInst(Value *Ptr, Instruction *InsertBefore = 0);
   FreeInst(Value *Ptr, BasicBlock *InsertAfter);
 
-  virtual Instruction *clone() const { return new FreeInst(Operands[0]); }
+  virtual FreeInst *clone() const;
 
   virtual bool mayWriteToMemory() const { return true; }
 
@@ -199,7 +195,7 @@ public:
   ///
   void setVolatile(bool V) { Volatile = V; }
 
-  virtual Instruction *clone() const { return new LoadInst(*this); }
+  virtual LoadInst *clone() const;
 
   virtual bool mayWriteToMemory() const { return isVolatile(); }
 
@@ -248,7 +244,7 @@ public:
   ///
   void setVolatile(bool V) { Volatile = V; }
 
-  virtual Instruction *clone() const { return new StoreInst(*this); }
+  virtual StoreInst *clone() const;
 
   virtual bool mayWriteToMemory() const { return true; }
 
@@ -301,7 +297,7 @@ public:
   GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
 		    const std::string &Name, BasicBlock *InsertAtEnd);
 
-  virtual Instruction *clone() const { return new GetElementPtrInst(*this); }
+  virtual GetElementPtrInst *clone() const;
   
   // getType - Overload to return most specific pointer type...
   inline const PointerType *getType() const {
@@ -434,7 +430,7 @@ public:
     init(S);
   }
 
-  virtual Instruction *clone() const { return new CastInst(*this); }
+  virtual CastInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CastInst *) { return true; }
@@ -482,7 +478,7 @@ public:
   explicit CallInst(Value *F, const std::string &Name, 
                     BasicBlock *InsertAtEnd);
 
-  virtual Instruction *clone() const { return new CallInst(*this); }
+  virtual CallInst *clone() const;
   bool mayWriteToMemory() const { return true; }
 
   // FIXME: These methods should be inline once we eliminate
@@ -540,7 +536,7 @@ public:
     return static_cast<OtherOps>(Instruction::getOpcode());
   }
 
-  virtual Instruction *clone() const { return new ShiftInst(*this); }
+  virtual ShiftInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ShiftInst *) { return true; }
@@ -593,7 +589,7 @@ public:
     return static_cast<OtherOps>(Instruction::getOpcode());
   }
 
-  virtual Instruction *clone() const { return new SelectInst(*this); }
+  virtual SelectInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SelectInst *) { return true; }
@@ -639,7 +635,7 @@ public:
 
   const Type *getArgType() const { return ArgTy; }
 
-  virtual Instruction *clone() const { return new VANextInst(*this); }
+  virtual VANextInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const VANextInst *) { return true; }
@@ -680,7 +676,7 @@ public:
     init(List);
   }
 
-  virtual Instruction *clone() const { return new VAArgInst(*this); }
+  virtual VAArgInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const VAArgInst *) { return true; }
@@ -712,7 +708,7 @@ public:
     : Instruction(Ty, Instruction::PHI, Name, InsertAtEnd) {
   }
 
-  virtual Instruction *clone() const { return new PHINode(*this); }
+  virtual PHINode *clone() const;
 
   /// getNumIncomingValues - Return the number of incoming edges
   ///
@@ -840,7 +836,7 @@ public:
     : TerminatorInst(Instruction::Ret, InsertAtEnd) {
   }
 
-  virtual Instruction *clone() const { return new ReturnInst(*this); }
+  virtual ReturnInst *clone() const;
 
   inline const Value *getReturnValue() const {
     return Operands.size() ? Operands[0].get() : 0; 
@@ -907,7 +903,7 @@ public:
     init(IfTrue, IfFalse, Cond);
   }
 
-  virtual Instruction *clone() const { return new BranchInst(*this); }
+  virtual BranchInst *clone() const;
 
   inline bool isUnconditional() const { return Operands.size() == 1; }
   inline bool isConditional()   const { return Operands.size() == 3; }
@@ -982,7 +978,7 @@ public:
     init(Value, Default);
   }
 
-  virtual Instruction *clone() const { return new SwitchInst(*this); }
+  virtual SwitchInst *clone() const;
 
   // Accessor Methods for Switch stmt
   //
@@ -1090,7 +1086,7 @@ public:
 	     const std::vector<Value*> &Params, const std::string &Name,
              BasicBlock *InsertAtEnd);
 
-  virtual Instruction *clone() const { return new InvokeInst(*this); }
+  virtual InvokeInst *clone() const;
 
   bool mayWriteToMemory() const { return true; }
 
@@ -1171,7 +1167,7 @@ struct UnwindInst : public TerminatorInst {
     : TerminatorInst(Instruction::Unwind, InsertAtEnd) {
   }
 
-  virtual Instruction *clone() const { return new UnwindInst(); }
+  virtual UnwindInst *clone() const;
 
   virtual const BasicBlock *getSuccessor(unsigned idx) const {
     assert(0 && "UnwindInst has no successors!");

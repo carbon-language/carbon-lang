@@ -162,9 +162,7 @@ public:
     return static_cast<BinaryOps>(Instruction::getOpcode());
   }
 
-  virtual Instruction *clone() const {
-    return create(getOpcode(), Operands[0], Operands[1]);
-  }
+  virtual BinaryOperator *clone() const;
 
   /// swapOperands - Exchange the two operands to this instruction.
   /// This instruction is safe to use on any binary instruction and
