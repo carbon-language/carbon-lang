@@ -207,15 +207,13 @@ bool InstructionSelection::runOnFunction(Function &F) {
   return true;
 }
 
-
-//-------------------------------------------------------------------------
-// This method inserts phi elimination code for all BBs in a method
-//-------------------------------------------------------------------------
-
-void
-InstructionSelection::InsertCodeForPhis(Function &F) {
-  // for all basic blocks in function
-  //
+/// InsertCodeForPhis - This method inserts Phi elimination code for
+/// all Phi nodes in the given function.  After this method is called,
+/// the Phi nodes still exist in the LLVM code, but copies are added to the
+/// machine code.
+///
+void InstructionSelection::InsertCodeForPhis(Function &F) {
+  // Iterate over every Phi node PN in F:
   MachineFunction &MF = MachineFunction::get(&F);
   for (MachineFunction::iterator BB = MF.begin(); BB != MF.end(); ++BB) {
     for (BasicBlock::const_iterator IIt = BB->getBasicBlock()->begin();
