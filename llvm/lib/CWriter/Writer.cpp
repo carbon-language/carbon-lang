@@ -18,10 +18,12 @@
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
+#include "llvm/PassManager.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/ConstantsScanner.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
@@ -40,34 +42,31 @@ namespace {
 
     std::map<const Type *, std::string> TypeNames;
     std::set<const Value*> MangledGlobals;
-    bool needsMalloc, emittedInvoke;
+    bool needsMalloc;
 
     std::map<const ConstantFP *, unsigned> FPConstantMap;
   public:
     CWriter(std::ostream &o) : Out(o) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesAll();
       AU.addRequired<FindUsedTypes>();
     }
 
-    virtual bool run(Module &M) {
-      // Initialize
-      TheModule = &M;
-      FUT = &getAnalysis<FindUsedTypes>();
+    virtual const char *getPassName() const { return "C backend"; }
 
-      // Ensure that all structure types have names...
-      bool Changed = nameAllUsedStructureTypes(M);
-      Mang = new Mangler(M);
+    bool doInitialization(Module &M);
+    bool run(Module &M) {
+      doInitialization(M);
 
-      // Run...
-      printModule(&M);
+      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+        if (!I->isExternal())
+          printFunction(*I);
 
       // Free memory...
       delete Mang;
       TypeNames.clear();
       MangledGlobals.clear();
-      return false;
+      return true;
     }
 
     std::ostream &printType(std::ostream &Out, const Type *Ty,
@@ -85,7 +84,7 @@ namespace {
     void printContainedStructs(const Type *Ty, std::set<const StructType *> &);
     void printFunctionSignature(const Function *F, bool Prototype);
 
-    void printFunction(Function *);
+    void printFunction(Function &);
 
     void printConstant(Constant *CPV);
     void printConstantArray(ConstantArray *CPA);
@@ -604,42 +603,27 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
       << "#endif\n\n";
 }
 
-// generateProcessorSpecificCode - This is where we add conditional compilation
-// directives to cater to specific processors as need be.
-//
-static void generateProcessorSpecificCode(std::ostream& Out) {
-  // According to ANSI C, longjmp'ing to a setjmp could invalidate any
-  // non-volatile variable in the scope of the setjmp.  For now, we are not
-  // doing analysis to determine which variables need to be marked volatile, so
-  // we just mark them all.
-  //
-  // HOWEVER, many targets implement setjmp by saving and restoring the register
-  // file, so they DON'T need variables to be marked volatile, and this is a
-  // HUGE pessimization for them.  For this reason, on known-good processors, we
-  // do not emit volatile qualifiers.
-  Out << "#if defined(__386__) || defined(__i386__) || \\\n"
-      << "    defined(i386) || defined(WIN32)\n"
-      << "/* setjmp does not require variables to be marked volatile */"
-      << "#define VOLATILE_FOR_SETJMP\n"
-      << "#else\n"
-      << "#define VOLATILE_FOR_SETJMP volatile\n"
-      << "#endif\n\n";
-}
+bool CWriter::doInitialization(Module &M) {
+  // Initialize
+  TheModule = &M;
+  FUT = &getAnalysis<FindUsedTypes>();
+  
+  // Ensure that all structure types have names...
+  bool Changed = nameAllUsedStructureTypes(M);
+  Mang = new Mangler(M);
 
-
-void CWriter::printModule(Module *M) {
   // Calculate which global values have names that will collide when we throw
   // away type information.
   {  // Scope to delete the FoundNames set when we are done with it...
     std::set<std::string> FoundNames;
-    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
       if (I->hasName())                      // If the global has a name...
         if (FoundNames.count(I->getName()))  // And the name is already used
           MangledGlobals.insert(I);          // Mangle the name
         else
           FoundNames.insert(I->getName());   // Otherwise, keep track of name
 
-    for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+    for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
       if (I->hasName())                      // If the global has a name...
         if (FoundNames.count(I->getName()))  // And the name is already used
           MangledGlobals.insert(I);          // Mangle the name
@@ -652,7 +636,6 @@ void CWriter::printModule(Module *M) {
   Out << "#include <stdarg.h>\n";      // Varargs support
   Out << "#include <setjmp.h>\n";      // Unwind support
   generateCompilerSpecificCode(Out);
-  generateProcessorSpecificCode(Out);
 
   // Provide a definition for `bool' if not compiling with a C++ compiler.
   Out << "\n"
@@ -662,11 +645,6 @@ void CWriter::printModule(Module *M) {
       << "typedef unsigned long long ConstantDoubleTy;\n"
       << "typedef unsigned int        ConstantFloatTy;\n"
     
-      << "\n\n/* Support for the invoke instruction */\n"
-      << "extern struct __llvm_jmpbuf_list_t {\n"
-      << "  jmp_buf buf; struct __llvm_jmpbuf_list_t *next;\n"
-      << "} *__llvm_jmpbuf_list;\n"
-
       << "\n\n/* Global Declarations */\n";
 
   // First output all the declarations for the program, because C requires
@@ -674,12 +652,12 @@ void CWriter::printModule(Module *M) {
   //
 
   // Loop over the symbol table, emitting all named constants...
-  printSymbolTable(M->getSymbolTable());
+  printSymbolTable(M.getSymbolTable());
 
   // Global variable declarations...
-  if (!M->gempty()) {
+  if (!M.gempty()) {
     Out << "\n/* External Global Variable Declarations */\n";
-    for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
+    for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
       if (I->hasExternalLinkage()) {
         Out << "extern ";
         printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
@@ -689,15 +667,16 @@ void CWriter::printModule(Module *M) {
   }
 
   // Function declarations
-  if (!M->empty()) {
+  if (!M.empty()) {
     Out << "\n/* Function Declarations */\n";
     needsMalloc = true;
-    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
+    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
       // If the function is external and the name collides don't print it.
       // Sometimes the bytecode likes to have multiple "declarations" for
       // external functions
       if ((I->hasInternalLinkage() || !MangledGlobals.count(I)) &&
-          !I->getIntrinsicID()) {
+          !I->getIntrinsicID() &&
+          I->getName() != "setjmp" && I->getName() != "longjmp") {
         printFunctionSignature(I, true);
         if (I->hasWeakLinkage()) Out << " __ATTRIBUTE_WEAK__";
         Out << ";\n";
@@ -712,9 +691,9 @@ void CWriter::printModule(Module *M) {
   }
 
   // Output the global variable declarations
-  if (!M->gempty()) {
+  if (!M.gempty()) {
     Out << "\n\n/* Global Variable Declarations */\n";
-    for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+    for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
       if (!I->isExternal()) {
         Out << "extern ";
         printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
@@ -728,9 +707,9 @@ void CWriter::printModule(Module *M) {
   }
 
   // Output the global variable definitions and contents...
-  if (!M->gempty()) {
+  if (!M.gempty()) {
     Out << "\n\n/* Global Variable Definitions and Initialization */\n";
-    for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+    for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
       if (!I->isExternal()) {
         if (I->hasInternalLinkage())
           Out << "static ";
@@ -755,27 +734,13 @@ void CWriter::printModule(Module *M) {
   }
 
   // Output all floating point constants that cannot be printed accurately...
-  printFloatingPointConstants(*M);
+  printFloatingPointConstants(M);
   
-  // Output all of the functions...
-  emittedInvoke = false;
-  if (!M->empty()) {
+  if (!M.empty())
     Out << "\n\n/* Function Bodies */\n";
-    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-      printFunction(I);
-  }
-
-  // If the program included an invoke instruction, we need to output the
-  // support code for it here!
-  if (emittedInvoke) {
-    Out << "\n/* More support for the invoke instruction */\n"
-        << "struct __llvm_jmpbuf_list_t *__llvm_jmpbuf_list "
-        << "__attribute__((common)) = 0;\n";
-  }
-
-  // Done with global FP constants
-  FPConstantMap.clear();
+  return false;
 }
+
 
 /// Output all floating point constants that cannot be printed accurately...
 void CWriter::printFloatingPointConstants(Module &M) {
@@ -963,36 +928,23 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   printType(Out, F->getReturnType(), FunctionInnards.str());
 }
 
-void CWriter::printFunction(Function *F) {
-  if (F->isExternal()) return;
-
-  printFunctionSignature(F, false);
+void CWriter::printFunction(Function &F) {
+  printFunctionSignature(&F, false);
   Out << " {\n";
 
-  // Determine whether or not the function contains any invoke instructions.
-  bool HasInvoke = false;
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-    if (isa<InvokeInst>(I->getTerminator())) {
-      HasInvoke = true;
-      break;
-    }
-
   // print local variable information for the function
-  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
+  for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I)
     if (const AllocaInst *AI = isDirectAlloca(*I)) {
       Out << "  ";
-      if (HasInvoke) Out << "VOLATILE_FOR_SETJMP ";
       printType(Out, AI->getAllocatedType(), Mang->getValueName(AI));
       Out << ";    /* Address exposed local */\n";
     } else if ((*I)->getType() != Type::VoidTy && !isInlinableInst(**I)) {
       Out << "  ";
-      if (HasInvoke) Out << "VOLATILE_FOR_SETJMP ";
       printType(Out, (*I)->getType(), Mang->getValueName(*I));
       Out << ";\n";
       
       if (isa<PHINode>(*I)) {  // Print out PHI node temporaries as well...
         Out << "  ";
-        if (HasInvoke) Out << "VOLATILE_FOR_SETJMP ";
         printType(Out, (*I)->getType(),
                   Mang->getValueName(*I)+"__PHI_TEMPORARY");
         Out << ";\n";
@@ -1002,7 +954,7 @@ void CWriter::printFunction(Function *F) {
   Out << "\n";
 
   // print the basic blocks
-  for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     BasicBlock *Prev = BB->getPrev();
 
     // Don't print the label for the basic block if there are no uses, or if the
@@ -1080,43 +1032,12 @@ void CWriter::visitSwitchInst(SwitchInst &SI) {
 }
 
 void CWriter::visitInvokeInst(InvokeInst &II) {
-  Out << "  {\n"
-      << "    struct __llvm_jmpbuf_list_t Entry;\n"
-      << "    Entry.next = __llvm_jmpbuf_list;\n"
-      << "    if (setjmp(Entry.buf)) {\n"
-      << "      __llvm_jmpbuf_list = Entry.next;\n";
-  printBranchToBlock(II.getParent(), II.getUnwindDest(), 4);
-  Out << "    }\n"
-      << "    __llvm_jmpbuf_list = &Entry;\n"
-      << "    ";
-
-  if (II.getType() != Type::VoidTy) outputLValue(&II);
-  visitCallSite(&II);
-  Out << ";\n"
-      << "    __llvm_jmpbuf_list = Entry.next;\n"
-      << "  }\n";
-  printBranchToBlock(II.getParent(), II.getNormalDest(), 0);
-  emittedInvoke = true;
+  assert(0 && "Lowerinvoke pass didn't work!");
 }
 
 
 void CWriter::visitUnwindInst(UnwindInst &I) {
-  // The unwind instructions causes a control flow transfer out of the current
-  // function, unwinding the stack until a caller who used the invoke
-  // instruction is found.  In this context, we code generated the invoke
-  // instruction to add an entry to the top of the jmpbuf_list.  Thus, here we
-  // just have to longjmp to the specified handler.
-  Out << "  if (__llvm_jmpbuf_list == 0) {  /* unwind */\n"
-      << "#ifdef _LP64\n"
-      << "    extern signed long long write();\n"
-      << "#else\n"
-      << "    extern write();\n"
-      << "#endif\n"
-      << "    ((void (*)(int, void*, unsigned))write)(2,\n"
-      << "           \"throw found with no handler!\\n\", 31); abort();\n"
-      << "  }\n"
-      << "  longjmp(__llvm_jmpbuf_list->buf, 1);\n";
-  emittedInvoke = true;
+  assert(0 && "Lowerinvoke pass didn't work!");
 }
 
 bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
@@ -1473,4 +1394,8 @@ void CWriter::visitVAArgInst(VAArgInst &I) {
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
 
-Pass *llvm::createWriteToCPass(std::ostream &o) { return new CWriter(o); }
+void llvm::AddPassesToWriteC(PassManager &PM, std::ostream &o) {
+  PM.add(createLowerInvokePass());
+  //PM.add(createLowerAllocationsPass());
+  PM.add(new CWriter(o));
+}
