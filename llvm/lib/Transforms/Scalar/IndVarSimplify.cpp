@@ -368,7 +368,17 @@ void IndVarSimplify::runOnLoop(Loop *L) {
 
   // If there are no induction variables in the loop, there is nothing more to
   // do.
-  if (IndVars.empty()) return;
+  if (IndVars.empty()) {
+    // Actually, if we know how many times the loop iterates, lets insert a
+    // canonical induction variable to help subsequent passes.
+    if (!isa<SCEVCouldNotCompute>(IterationCount)) {
+      ScalarEvolutionRewriter Rewriter(*SE, *LI);
+      Rewriter.GetOrInsertCanonicalInductionVariable(L,
+                                                     IterationCount->getType());
+      LinearFunctionTestReplace(L, IterationCount, Rewriter);
+    }
+    return;
+  }
 
   // Compute the type of the largest recurrence expression.
   //
