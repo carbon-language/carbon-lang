@@ -97,3 +97,39 @@ Record *CodeGenTarget::getInstructionSet() const {
   return TargetRec->getValueAsDef("InstructionSet");
 }
 
+void CodeGenTarget::ReadInstructions() const {
+  std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
+
+  if (Insts.size() == 0)
+    throw std::string("No 'Instruction' subclasses defined!");
+
+  for (unsigned i = 0, e = Insts.size(); i != e; ++i)
+    Instructions.insert(std::make_pair(Insts[i]->getName(), Insts[i]));
+}
+
+/// getPHIInstruction - Return the designated PHI instruction.
+const CodeGenInstruction &CodeGenTarget::getPHIInstruction() const {
+  Record *PHI = getInstructionSet()->getValueAsDef("PHIInst");
+  std::map<std::string, CodeGenInstruction>::const_iterator I =
+    getInstructions().find(PHI->getName());
+  if (I == Instructions.end())
+    throw "Could not find PHI instruction named '" + PHI->getName() + "'!";
+  return I->second;
+}
+
+CodeGenInstruction::CodeGenInstruction(Record *R) : TheDef(R) {
+  Name      = R->getValueAsString("Name");
+  Namespace = R->getValueAsString("Namespace");
+  AsmString = R->getValueAsString("AsmString");
+
+  //TODO: Parse OperandList
+  
+  isReturn     = R->getValueAsBit("isReturn");
+  isBranch     = R->getValueAsBit("isBranch");
+  isBarrier    = R->getValueAsBit("isBarrier");
+  isCall       = R->getValueAsBit("isCall");
+  isTwoAddress = R->getValueAsBit("isTwoAddress");
+  isTerminator = R->getValueAsBit("isTerminator");
+}
+
+

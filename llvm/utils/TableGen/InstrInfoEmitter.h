@@ -22,6 +22,7 @@ namespace llvm {
 class StringInit;
 class IntInit;
 class ListInit;
+class CodeGenInstruction;
 
 class InstrInfoEmitter : public TableGenBackend {
   RecordKeeper &Records;
@@ -36,7 +37,8 @@ public:
 private:
   void printDefList(ListInit *LI, const std::string &Name,
                     std::ostream &OS) const;
-  void emitRecord(Record *R, unsigned Num, Record *InstrInfo, std::ostream &OS);
+  void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
+                  Record *InstrInfo, std::ostream &OS);
   void emitShiftedValue(Record *R, StringInit *Val, IntInit *Shift,
                         std::ostream &OS);
 };

@@ -19,18 +19,7 @@ using namespace llvm;
 
 // runEnums - Print out enum values for all of the instructions.
 void InstrInfoEmitter::runEnums(std::ostream &OS) {
-  std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
-
-  if (Insts.size() == 0)
-    throw std::string("No 'Instruction' subclasses defined!");
-
-  std::string Namespace = Insts[0]->getValueAsString("Namespace");
-
   EmitSourceFileHeader("Target Instruction Enum Values", OS);
-
-  if (!Namespace.empty())
-    OS << "namespace " << Namespace << " {\n";
-  OS << "  enum {\n";
 
   CodeGenTarget Target;
 
@@ -38,12 +27,20 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
   Record *InstrInfo = Target.getInstructionSet();
   Record *PHI = InstrInfo->getValueAsDef("PHIInst");
 
+  std::string Namespace = Target.inst_begin()->second.Namespace;
+
+  if (!Namespace.empty())
+    OS << "namespace " << Namespace << " {\n";
+  OS << "  enum {\n";
+
   OS << "    " << PHI->getName() << ", \t// 0 (fixed for all targets)\n";
   
-  // Print out the rest of the instructions now...
-  for (unsigned i = 0, e = Insts.size(); i != e; ++i)
-    if (Insts[i] != PHI)
-      OS << "    " << Insts[i]->getName() << ", \t// " << i+1 << "\n";
+  // Print out the rest of the instructions now.
+  unsigned i = 0;
+  for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
+         E = Target.inst_end(); II != E; ++II)
+    if (II->second.TheDef != PHI)
+      OS << "    " << II->first << ", \t// " << ++i << "\n";
   
   OS << "  };\n";
   if (!Namespace.empty())
@@ -71,16 +68,14 @@ void InstrInfoEmitter::run(std::ostream &OS) {
   Record *InstrInfo = Target.getInstructionSet();
   Record *PHI = InstrInfo->getValueAsDef("PHIInst");
 
-  std::vector<Record*> Instructions =
-    Records.getAllDerivedDefinitions("Instruction");
-  
   // Emit empty implicit uses and defs lists
   OS << "static const unsigned EmptyImpUses[] = { 0 };\n"
      << "static const unsigned EmptyImpDefs[] = { 0 };\n";
 
   // Emit all of the instruction's implicit uses and defs...
-  for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
-    Record *Inst = Instructions[i];
+  for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
+         E = Target.inst_end(); II != E; ++II) {
+    Record *Inst = II->second.TheDef;
     ListInit *LI = Inst->getValueAsListInit("Uses");
     if (LI->getSize()) printDefList(LI, Inst->getName()+"ImpUses", OS);
     LI = Inst->getValueAsListInit("Defs");
@@ -89,27 +84,28 @@ void InstrInfoEmitter::run(std::ostream &OS) {
 
   OS << "\nstatic const TargetInstrDescriptor " << TargetName
      << "Insts[] = {\n";
-  emitRecord(PHI, 0, InstrInfo, OS);
+  emitRecord(Target.getPHIInstruction(), 0, InstrInfo, OS);
 
-  for (unsigned i = 0, e = Instructions.size(); i != e; ++i)
-    if (Instructions[i] != PHI)
-      emitRecord(Instructions[i], i+1, InstrInfo, OS);
+  unsigned i = 0;
+  for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
+         E = Target.inst_end(); II != E; ++II)
+    if (II->second.TheDef != PHI)
+      emitRecord(II->second, ++i, InstrInfo, OS);
   OS << "};\n";
   EmitSourceFileTail(OS);
 }
 
-void InstrInfoEmitter::emitRecord(Record *R, unsigned Num, Record *InstrInfo,
-                                  std::ostream &OS) {
-  OS << "  { \"" << R->getValueAsString("Name")
-     << "\",\t-1, -1, 0, false, 0, 0, 0, 0";
+void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
+                                  Record *InstrInfo, std::ostream &OS) {
+  OS << "  { \"" << Inst.Name << "\",\t-1, -1, 0, false, 0, 0, 0, 0";
 
   // Emit all of the target indepedent flags...
-  if (R->getValueAsBit("isReturn"))     OS << "|M_RET_FLAG";
-  if (R->getValueAsBit("isBranch"))     OS << "|M_BRANCH_FLAG";
-  if (R->getValueAsBit("isBarrier"))    OS << "|M_BARRIER_FLAG";
-  if (R->getValueAsBit("isCall"  ))     OS << "|M_CALL_FLAG";
-  if (R->getValueAsBit("isTwoAddress")) OS << "|M_2_ADDR_FLAG";
-  if (R->getValueAsBit("isTerminator")) OS << "|M_TERMINATOR_FLAG";
+  if (Inst.isReturn)     OS << "|M_RET_FLAG";
+  if (Inst.isBranch)     OS << "|M_BRANCH_FLAG";
+  if (Inst.isBarrier)    OS << "|M_BARRIER_FLAG";
+  if (Inst.isCall)       OS << "|M_CALL_FLAG";
+  if (Inst.isTwoAddress) OS << "|M_2_ADDR_FLAG";
+  if (Inst.isTerminator) OS << "|M_TERMINATOR_FLAG";
   OS << ", 0";
 
   // Emit all of the target-specific flags...
@@ -120,25 +116,25 @@ void InstrInfoEmitter::emitRecord(Record *R, unsigned Num, Record *InstrInfo,
           ":(TargetInfoFields, TargetInfoPositions) must be equal!";
 
   for (unsigned i = 0, e = LI->getSize(); i != e; ++i)
-    emitShiftedValue(R, dynamic_cast<StringInit*>(LI->getElement(i)),
+    emitShiftedValue(Inst.TheDef, dynamic_cast<StringInit*>(LI->getElement(i)),
                      dynamic_cast<IntInit*>(Shift->getElement(i)), OS);
 
   OS << ", ";
 
   // Emit the implicit uses and defs lists...
-  LI = R->getValueAsListInit("Uses");
+  LI = Inst.TheDef->getValueAsListInit("Uses");
   if (!LI->getSize())
     OS << "EmptyImpUses, ";
   else 
-    OS << R->getName() << "ImpUses, ";
+    OS << Inst.TheDef->getName() << "ImpUses, ";
 
-  LI = R->getValueAsListInit("Defs");
+  LI = Inst.TheDef->getValueAsListInit("Defs");
   if (!LI->getSize())
     OS << "EmptyImpDefs ";
   else 
-    OS << R->getName() << "ImpDefs ";
+    OS << Inst.TheDef->getName() << "ImpDefs ";
 
-  OS << " },  // Inst #" << Num << " = " << R->getName() << "\n";
+  OS << " },  // Inst #" << Num << " = " << Inst.TheDef->getName() << "\n";
 }
 
 void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,

@@ -17,10 +17,10 @@
 #ifndef CODEGEN_TARGET_H
 #define CODEGEN_TARGET_H
 
+#include "CodeGenInstruction.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include <iosfwd>
-#include <string>
-#include <vector>
+#include <map>
 
 namespace llvm {
 
@@ -43,6 +43,8 @@ class CodeGenTarget {
   std::vector<Record*> CalleeSavedRegisters;
   MVT::ValueType PointerType;
 
+  mutable std::map<std::string, CodeGenInstruction> Instructions;
+  void ReadInstructions() const;
 public:
   CodeGenTarget();
 
@@ -55,12 +57,24 @@ public:
 
   MVT::ValueType getPointerType() const { return PointerType; }
 
-  // getInstructionSet - Return the InstructionSet object...
+  // getInstructionSet - Return the InstructionSet object.
+  ///
   Record *getInstructionSet() const;
 
-  // getInstructionSet - Return the CodeGenInstructionSet object for this
-  // target, lazily reading it from the record keeper as needed.
-  // CodeGenInstructionSet *getInstructionSet -
+  /// getPHIInstruction - Return the designated PHI instruction.
+  const CodeGenInstruction &getPHIInstruction() const;
+
+  /// getInstructions - Return all of the instructions defined for this target.
+  ///
+  const std::map<std::string, CodeGenInstruction> &getInstructions() const {
+    if (Instructions.empty()) ReadInstructions();
+    return Instructions;
+  }
+
+  typedef std::map<std::string,
+                   CodeGenInstruction>::const_iterator inst_iterator;
+  inst_iterator inst_begin() const { return getInstructions().begin(); }
+  inst_iterator inst_end() const { return Instructions.end(); }
 };
 
 } // End llvm namespace
