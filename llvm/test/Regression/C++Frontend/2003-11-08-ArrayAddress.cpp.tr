@@ -1,4 +1,4 @@
-// RUN: %llvmg++ -xc++ %s -c -o - | llvm-dis | grep getelementptr
+// RUN: %llvmgxx -xc++ %s -c -o - | llvm-dis | grep getelementptr
 
 struct foo {
   int array[100];
