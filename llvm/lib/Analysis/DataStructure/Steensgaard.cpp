@@ -124,7 +124,7 @@ bool Steens::runOnModule(Module &M) {
   //
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal())
-      ResultGraph->cloneInto(LDS.getDSGraph(*I));
+      ResultGraph->spliceFrom(LDS.getDSGraph(*I));
 
   ResultGraph->removeTriviallyDeadNodes();
 
@@ -191,13 +191,18 @@ AliasAnalysis::AliasResult Steens::alias(const Value *V1, unsigned V1Size,
   DSGraph::ScalarMapTy &GSM = ResultGraph->getScalarMap();
 
   DSGraph::ScalarMapTy::iterator I = GSM.find(const_cast<Value*>(V1));
+  DSGraph::ScalarMapTy::iterator J = GSM.find(const_cast<Value*>(V2));
   if (I != GSM.end() && !I->second.isNull() &&
-      I->second.getNode()->isComplete()) {
+      J != GSM.end() && !J->second.isNull()) {
     DSNodeHandle &V1H = I->second;
-    DSGraph::ScalarMapTy::iterator J=GSM.find(const_cast<Value*>(V2));
-    if (J != GSM.end() && !J->second.isNull() &&
+    DSNodeHandle &V2H = J->second;
+
+    // If at least one of the nodes is complete, we can say something about
+    // this.  If one is complete and the other isn't, then they are obviously
+    // different nodes.  If they are both complete, we can't say anything
+    // useful.
+    if (I->second.getNode()->isComplete() ||
         J->second.getNode()->isComplete()) {
-      DSNodeHandle &V2H = J->second;
       // If the two pointers point to different data structure graph nodes, they
       // cannot alias!
       if (V1H.getNode() != V2H.getNode())
