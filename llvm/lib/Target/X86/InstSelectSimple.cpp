@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CFG.h"
 using namespace llvm;
@@ -2211,38 +2212,54 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
                             Value *Src, User::op_iterator IdxBegin,
                             User::op_iterator IdxEnd, unsigned TargetReg) {
   const TargetData &TD = TM.getTargetData();
-  const Type *Ty = Src->getType();
-  unsigned BaseReg = getReg(Src, MBB, IP);
 
-  // GEPs have zero or more indices; we must perform a struct access
-  // or array access for each one.
-  for (GetElementPtrInst::op_iterator oi = IdxBegin,
-         oe = IdxEnd; oi != oe; ++oi) {
-    Value *idx = *oi;
-    unsigned NextReg = BaseReg;
-    if (const StructType *StTy = dyn_cast<StructType>(Ty)) {
-      // It's a struct access.  idx is the index into the structure,
-      // which names the field. This index must have ubyte type.
-      const ConstantUInt *CUI = cast<ConstantUInt>(idx);
-      assert(CUI->getType() == Type::UByteTy
-              && "Funny-looking structure index in GEP");
-      // Use the TargetData structure to pick out what the layout of
-      // the structure is in memory.  Since the structure index must
-      // be constant, we can get its value and use it to find the
-      // right byte offset from the StructLayout class's list of
-      // structure member offsets.
+  std::vector<Value*> GEPOps;
+  GEPOps.resize(IdxEnd-IdxBegin+1);
+  GEPOps[0] = Src;
+  std::copy(IdxBegin, IdxEnd, GEPOps.begin()+1);
+  
+  std::vector<const Type*> GEPTypes;
+  GEPTypes.assign(gep_type_begin(Src->getType(), IdxBegin, IdxEnd),
+                  gep_type_end(Src->getType(), IdxBegin, IdxEnd));
+
+  // Keep emitting instructions until we consume the entire GEP instruction.
+  while (!GEPOps.empty()) {
+    unsigned OldSize = GEPOps.size();
+    
+    if (GEPTypes.empty()) {
+      // The getGEPIndex operation didn't want to build an LEA.  Check to see if
+      // all operands are consumed but the base pointer.  If so, just load it
+      // into the register.
+      unsigned BaseReg = getReg(GEPOps[0], MBB, IP);
+      BMI(MBB, IP, X86::MOVrr32, 1, TargetReg).addReg(BaseReg);
+      return;                // we are now done
+    } else if (const StructType *StTy = dyn_cast<StructType>(GEPTypes.back())) {
+      // It's a struct access.  CUI is the index into the structure,
+      // which names the field. This index must have unsigned type.
+      const ConstantUInt *CUI = cast<ConstantUInt>(GEPOps.back());
+      GEPOps.pop_back();        // Consume a GEP operand
+      GEPTypes.pop_back();
+
+      // Use the TargetData structure to pick out what the layout of the
+      // structure is in memory.  Since the structure index must be constant, we
+      // can get its value and use it to find the right byte offset from the
+      // StructLayout class's list of structure member offsets.
       unsigned idxValue = CUI->getValue();
       unsigned FieldOff = TD.getStructLayout(StTy)->MemberOffsets[idxValue];
       if (FieldOff) {
-        NextReg = makeAnotherReg(Type::UIntTy);
+        unsigned Reg = makeAnotherReg(Type::UIntTy);
         // Emit an ADD to add FieldOff to the basePtr.
-        BMI(MBB, IP, X86::ADDri32, 2,NextReg).addReg(BaseReg).addZImm(FieldOff);
+        BMI(MBB, IP, X86::ADDri32, 2, TargetReg).addReg(Reg).addZImm(FieldOff);
+        --IP;            // Insert the next instruction before this one.
+        TargetReg = Reg; // Codegen the rest of the GEP into this
       }
-      // The next type is the member of the structure selected by the
-      // index.
-      Ty = StTy->getElementType(idxValue);
-    } else if (const SequentialType *SqTy = cast<SequentialType>(Ty)) {
+      
+    } else {
       // It's an array or pointer access: [ArraySize x ElementType].
+      const SequentialType *SqTy = cast<SequentialType>(GEPTypes.back());
+      Value *idx = GEPOps.back();
+      GEPOps.pop_back();        // Consume a GEP operand
+      GEPTypes.pop_back();
 
       // idx is the index into the array.  Unlike with structure
       // indices, we may not know its actual value at code-generation
@@ -2259,41 +2276,52 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       // We want to add BaseReg to(idxReg * sizeof ElementType). First, we
       // must find the size of the pointed-to type (Not coincidentally, the next
       // type is the type of the elements in the array).
-      Ty = SqTy->getElementType();
-      unsigned elementSize = TD.getTypeSize(Ty);
+      const Type *ElTy = SqTy->getElementType();
+      unsigned elementSize = TD.getTypeSize(ElTy);
 
       // If idxReg is a constant, we don't need to perform the multiply!
       if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(idx)) {
         if (!CSI->isNullValue()) {
           unsigned Offset = elementSize*CSI->getValue();
-          NextReg = makeAnotherReg(Type::UIntTy);
-          BMI(MBB, IP, X86::ADDri32, 2,NextReg).addReg(BaseReg).addZImm(Offset);
+          unsigned Reg = makeAnotherReg(Type::UIntTy);
+          BMI(MBB, IP, X86::ADDri32, 2, TargetReg).addReg(Reg).addZImm(Offset);
+          --IP;            // Insert the next instruction before this one.
+          TargetReg = Reg; // Codegen the rest of the GEP into this
         }
       } else if (elementSize == 1) {
         // If the element size is 1, we don't have to multiply, just add
         unsigned idxReg = getReg(idx, MBB, IP);
-        NextReg = makeAnotherReg(Type::UIntTy);
-        BMI(MBB, IP, X86::ADDrr32, 2, NextReg).addReg(BaseReg).addReg(idxReg);
+        unsigned Reg = makeAnotherReg(Type::UIntTy);
+        BMI(MBB, IP, X86::ADDrr32, 2, TargetReg).addReg(Reg).addReg(idxReg);
+        --IP;            // Insert the next instruction before this one.
+        TargetReg = Reg; // Codegen the rest of the GEP into this
       } else {
         unsigned idxReg = getReg(idx, MBB, IP);
         unsigned OffsetReg = makeAnotherReg(Type::UIntTy);
 
+        // Make sure we can back the iterator up to point to the first
+        // instruction emitted.
+        MachineBasicBlock::iterator BeforeIt = IP;
+        if (IP == MBB->begin())
+          BeforeIt = MBB->end();
+        else
+          --BeforeIt;
         doMultiplyConst(MBB, IP, OffsetReg, Type::IntTy, idxReg, elementSize);
 
         // Emit an ADD to add OffsetReg to the basePtr.
-        NextReg = makeAnotherReg(Type::UIntTy);
-        BMI(MBB, IP, X86::ADDrr32, 2,NextReg).addReg(BaseReg).addReg(OffsetReg);
+        unsigned Reg = makeAnotherReg(Type::UIntTy);
+        BMI(MBB, IP, X86::ADDrr32, 2, TargetReg).addReg(Reg).addReg(OffsetReg);
+
+        // Step to the first instruction of the multiply.
+        if (BeforeIt == MBB->end())
+          IP = MBB->begin();
+        else
+          IP = ++BeforeIt;
+
+        TargetReg = Reg; // Codegen the rest of the GEP into this
       }
     }
-    // Now that we are here, further indices refer to subtypes of this
-    // one, so we don't need to worry about BaseReg itself, anymore.
-    BaseReg = NextReg;
   }
-  // After we have processed all the indices, the result is left in
-  // BaseReg.  Move it to the register where we were expected to
-  // put the answer.  A 32-bit move should do it, because we are in
-  // ILP32 land.
-  BMI(MBB, IP, X86::MOVrr32, 1, TargetReg).addReg(BaseReg);
 }
 
 
