@@ -172,7 +172,7 @@ public:
            ID == UIntTyID || ID == ULongTyID; 
   }
 
-  /// isInteger - Equilivant to isSigned() || isUnsigned()
+  /// isInteger - Equivalent to isSigned() || isUnsigned()
   ///
   bool isInteger() const { return ID >= UByteTyID && ID <= LongTyID; }
 
