@@ -1,5 +1,5 @@
 ; RUN: llvm-as -f %s -o %t.bc
-; RUN: lli -debug-only=jit %t.bc 2>&1 | not grep 'G()'
+; RUN: lli -debug-only=jit %t.bc 2>&1 | not grep 'Finished CodeGen of .* G'
 
 target endian = little
 target pointersize = 32
