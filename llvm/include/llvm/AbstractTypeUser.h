@@ -130,13 +130,13 @@ public:
   // to the new type.
   //
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-    assert(get() == OldTy && "Can't refine to unknown value!");
+    assert(get() == (const Type*)OldTy && "Can't refine to unknown value!");
 
     // Check to see if the type just became concrete.  If so, we have to
     // removeUser to get off its AbstractTypeUser list
     removeUserFromConcrete();
 
-    if (OldTy != NewTy)
+    if ((const Type*)OldTy != NewTy)
       PATypeHandle<TypeSC>::operator=((const TypeSC*)NewTy);
   }
 
