@@ -36,7 +36,7 @@ struct TypeInfo {
 
   // Compatibility functions
   bool before(const TypeInfo &rhs) const {
-    return Info->before(*rhs.Info);
+    return Info->before(*rhs.Info) != 0;
   }
   const char *getClassName() const {
     return Info->name();
