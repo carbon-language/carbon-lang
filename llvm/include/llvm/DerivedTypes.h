@@ -117,6 +117,14 @@ public:
   inline const Type *getReturnType() const { return ResultType; }
   inline const ParamTypes &getParamTypes() const { return ParamTys; }
 
+  // Parameter type accessors...
+  const Type *getParamType(unsigned i) const { return ParamTys[i]; }
+
+  // getNumParams - Return the number of fixed parameters this function type
+  // requires.  This does not consider varargs.
+  //
+  unsigned getNumParams() const { return ParamTys.size(); }
+
 
   virtual const Type *getContainedType(unsigned i) const {
     return i == 0 ? ResultType : 
