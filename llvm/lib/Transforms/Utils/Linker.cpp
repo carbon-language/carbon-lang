@@ -105,7 +105,7 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
     if (const ConstantArray *CPA = dyn_cast<ConstantArray>(CPV)) {
       const std::vector<Use> &Ops = CPA->getValues();
       std::vector<Constant*> Operands(Ops.size());
-      for (unsigned i = 0; i < Ops.size(); ++i)
+      for (unsigned i = 0, e = Ops.size(); i != e; ++i)
         Operands[i] = 
           cast<Constant>(RemapOperand(Ops[i], LocalMap, GlobalMap));
       Result = ConstantArray::get(cast<ArrayType>(CPA->getType()), Operands);
@@ -154,7 +154,7 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
     }
 
     // Cache the mapping in our local map structure...
-    LocalMap.insert(std::make_pair(In, const_cast<Constant*>(CPV)));
+    LocalMap.insert(std::make_pair(In, Result));
     return Result;
   }
 
