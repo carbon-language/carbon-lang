@@ -16,13 +16,7 @@ using std::map;
 static RegisterAnalysis<BUDataStructures>
 X("budatastructure", "Bottom-up Data Structure Analysis Closure");
 
-namespace DataStructureAnalysis { // TODO: FIXME: Eliminate
-  // isPointerType - Return true if this first class type is big enough to hold
-  // a pointer.
-  //
-  bool isPointerType(const Type *Ty);
-}
-using namespace DataStructureAnalysis;
+using namespace DS;
 
 
 // releaseMemory - If the pass pipeline is done with this pass, we can release

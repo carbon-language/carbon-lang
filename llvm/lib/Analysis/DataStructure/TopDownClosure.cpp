@@ -68,7 +68,7 @@ void TDDataStructures::ResolveCallSite(DSGraph &Graph,
 
   for (unsigned i = 0, e = CallSite.getNumPtrArgs(); i != e; ++i, ++AI) {
     // Advance the argument iterator to the first pointer argument...
-    while (!DataStructureAnalysis::isPointerType(AI->getType())) ++AI;
+    while (!DS::isPointerType(AI->getType())) ++AI;
     
     // TD ...Merge the formal arg scalar with the actual arg node
     DSNodeHandle &NodeForFormal = Graph.getNodeForValue(AI);

@@ -20,14 +20,10 @@ namespace {
   Statistic<> NumFolds("dsnode", "Number of nodes completely folded");
 };
 
-namespace DataStructureAnalysis {   // TODO: FIXME
-  // isPointerType - Return true if this first class type is big enough to hold
-  // a pointer.
-  //
-  bool isPointerType(const Type *Ty);
+namespace DS {   // TODO: FIXME
   extern TargetData TD;
 }
-using namespace DataStructureAnalysis;
+using namespace DS;
 
 //===----------------------------------------------------------------------===//
 // DSNode Implementation

@@ -30,12 +30,9 @@ using std::vector;
 static RegisterAnalysis<LocalDataStructures>
 X("datastructure", "Local Data Structure Analysis");
 
-using namespace DataStructureAnalysis;
-
-namespace DataStructureAnalysis {
+namespace DS {
   // FIXME: Do something smarter with target data!
   TargetData TD("temp-td");
-  unsigned PointerSize(TD.getPointerSize());
 
   // isPointerType - Return true if this type is big enough to hold a pointer.
   bool isPointerType(const Type *Ty) {
@@ -46,6 +43,7 @@ namespace DataStructureAnalysis {
     return false;
   }
 }
+using namespace DS;
 
 
 namespace {
