@@ -1,18 +1,10 @@
-//===- PromoteMemoryToRegister.cpp - Convert memory refs to regs ----------===//
+//===- PromoteMemoryToRegister.cpp - Convert allocas to registers ---------===//
 //
-// This file is used to promote memory references to be register references.  A
-// simple example of the transformation performed by this function is:
-//
-//        FROM CODE                           TO CODE
-//   %X = alloca int, uint 1                 ret int 42
-//   store int 42, int *%X
-//   %Y = load int* %X
-//   ret int %Y
-//
-// The code is transformed by looping over all of the alloca instruction,
-// calculating dominator frontiers, then inserting phi-nodes following the usual
-// SSA construction algorithm.  This code does not modify the CFG of the
-// function.
+// This file promote memory references to be register references.  It promotes
+// alloca instructions which only have loads and stores as uses.  An alloca is
+// transformed by using dominator frontiers to place PHI nodes, then traversing
+// the function in depth-first order to rewrite loads and stores as appropriate.
+// This is just the standard SSA construction algorithm.
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,10 +12,8 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
-#include "llvm/iTerminators.h"
 #include "llvm/Function.h"
 #include "llvm/Constant.h"
-#include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "Support/StringExtras.h"
 
@@ -139,6 +129,8 @@ void PromoteMem2Reg::run() {
   // and inserting the phi nodes we marked as necessary
   //
   RenamePass(F.begin(), 0, Values);
+
+  // The renamer uses the Visited set to avoid infinite loops.  Clear it now.
   Visited.clear();
 
   // Remove the allocas themselves from the function...
@@ -152,6 +144,54 @@ void PromoteMem2Reg::run() {
     if (!A->use_empty())
       A->replaceAllUsesWith(Constant::getNullValue(A->getType()));
     A->getParent()->getInstList().erase(A);
+  }
+
+  // At this point, the renamer has added entries to PHI nodes for all reachable
+  // code.  Unfortunately, there may be blocks which are not reachable, which
+  // the renamer hasn't traversed.  If this is the case, the PHI nodes may not
+  // have incoming values for all predecessors.  Loop over all PHI nodes we have
+  // created, inserting null constants if they are missing any incoming values.
+  //
+  for (std::map<BasicBlock*, std::vector<PHINode *> >::iterator I = 
+         NewPhiNodes.begin(), E = NewPhiNodes.end(); I != E; ++I) {
+
+    std::vector<BasicBlock*> Preds(pred_begin(I->first), pred_end(I->first));
+    std::vector<PHINode*> &PNs = I->second;
+    assert(!PNs.empty() && "Empty PHI node list??");
+
+    // Only do work here if there the PHI nodes are missing incoming values.  We
+    // know that all PHI nodes that were inserted in a block will have the same
+    // number of incoming values, so we can just check any PHI node.
+    PHINode *FirstPHI = PNs[0];
+    if (Preds.size() != FirstPHI->getNumIncomingValues()) {
+      // Ok, now we know that all of the PHI nodes are missing entries for some
+      // basic blocks.  Start by sorting the incoming predecessors for efficient
+      // access.
+      std::sort(Preds.begin(), Preds.end());
+
+      // Now we loop through all BB's which have entries in FirstPHI and remove
+      // them from the Preds list.
+      for (unsigned i = 0, e = FirstPHI->getNumIncomingValues(); i != e; ++i) {
+        // Do a log(n) search of teh Preds list for the entry we want.
+        std::vector<BasicBlock*>::iterator EntIt =
+          std::lower_bound(Preds.begin(), Preds.end(),
+                           FirstPHI->getIncomingBlock(i));
+        assert(EntIt != Preds.end() && *EntIt == FirstPHI->getIncomingBlock(i)&&
+               "PHI node has entry for a block which is not a predecessor!");
+
+        // Remove the entry
+        Preds.erase(EntIt);
+      }
+
+      // At this point, the blocks left in the preds list must have dummy
+      // entries inserted into every PHI nodes for the block.
+      for (unsigned i = 0, e = PNs.size(); i != e; ++i) {
+        PHINode *PN = PNs[i];
+        Value *NullVal = Constant::getNullValue(PN->getType());
+        for (unsigned pred = 0, e = Preds.size(); pred != e; ++pred)
+          PN->addIncoming(NullVal, Preds[pred]);
+      }
+    }
   }
 }
 
@@ -169,25 +209,10 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
 
   // Create a PhiNode using the dereferenced type... and add the phi-node to the
   // BasicBlock.
-  PHINode *PN = new PHINode(Allocas[AllocaNo]->getAllocatedType(),
-                            Allocas[AllocaNo]->getName() + "." +
-                                      utostr(VersionNumbers[AllocaNo]++),
-                            BB->begin());
-
-  // Add null incoming values for all predecessors.  This ensures that if one of
-  // the predecessors is not found in the depth-first traversal of the CFG (ie,
-  // because it is an unreachable predecessor), that all PHI nodes will have the
-  // correct number of entries for their predecessors.
-  Value *NullVal = Constant::getNullValue(PN->getType());
-
-  // This is necessary because adding incoming values to the PHI node adds uses
-  // to the basic blocks being used, which can invalidate the predecessor
-  // iterator!
-  std::vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
-  for (unsigned i = 0, e = Preds.size(); i != e; ++i)
-    PN->addIncoming(NullVal, Preds[i]);
-
-  BBPNs[AllocaNo] = PN;
+  BBPNs[AllocaNo] = new PHINode(Allocas[AllocaNo]->getAllocatedType(),
+                                Allocas[AllocaNo]->getName() + "." +
+                                         utostr(VersionNumbers[AllocaNo]++),
+                                BB->begin());
   return true;
 }
 
@@ -202,15 +227,10 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
     std::vector<PHINode *> &BBPNs = BBPNI->second;
     for (unsigned k = 0; k != BBPNs.size(); ++k)
       if (PHINode *PN = BBPNs[k]) {
-        // The PHI node may have multiple entries for this predecessor.  We must
-        // make sure we update all of them.
-        for (unsigned i = 0, e = PN->getNumOperands(); i != e; i += 2) {
-          if (PN->getOperand(i+1) == Pred)
-            // At this point we can assume that the array has phi nodes.. let's
-            // update the incoming data.
-            PN->setOperand(i, IncomingVals[k]);
-        }
-        // also note that the active variable IS designated by the phi node
+        // Add this incoming value to the PHI node.
+        PN->addIncoming(IncomingVals[k], Pred);
+
+        // The currently active variable for this block is now the PHI.
         IncomingVals[k] = PN;
       }
   }
