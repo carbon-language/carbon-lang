@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/CFG.h"
 #include "../SparcV9RegInfo.h"
 #include "Support/CommandLine.h"
 #include "Support/LeakDetector.h"
@@ -185,17 +186,30 @@ bool InstructionSelection::runOnFunction(Function &F) {
     SelectInstructionsForTree(basicNode, /*goalnt*/1);
   }
   
-  // Create the MachineBasicBlock records and add all of the MachineInstrs
-  // defined in the MachineCodeForInstruction objects to also live in the
-  // MachineBasicBlock objects.
+  // Create the MachineBasicBlocks and add all of the MachineInstrs
+  // defined in the MachineCodeForInstruction objects to the MachineBasicBlocks.
   MachineFunction &MF = MachineFunction::get(&F);
+  std::map<const BasicBlock *, MachineBasicBlock *> MBBMap;
   for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
-    MachineBasicBlock *MCBB = new MachineBasicBlock(BI);
-    MF.getBasicBlockList().push_back(MCBB);
+    MachineBasicBlock *MBB = new MachineBasicBlock(BI);
+    MF.getBasicBlockList().push_back(MBB);
+    MBBMap[BI] = MBB;
 
     for (BasicBlock::iterator II = BI->begin(); II != BI->end(); ++II) {
       MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(II);
-      MCBB->insert(MCBB->end(), mvec.begin(), mvec.end());
+      MBB->insert(MBB->end(), mvec.begin(), mvec.end());
+    }
+  }
+
+  // Initialize Machine-CFG for the function.
+  for (MachineFunction::iterator i = MF.begin (), e = MF.end (); i != e; ++i) {
+    MachineBasicBlock &MBB = *i;
+    const BasicBlock *BB = MBB.getBasicBlock ();
+    // for each successor S of BB, add MBBMap[S] as a successor of MBB.
+    for (succ_const_iterator si = succ_begin(BB), se = succ_end(BB); si != se; ++si) {
+      MachineBasicBlock *succMBB = MBBMap[*si];
+      assert (succMBB && "Can't find MachineBasicBlock for this successor");
+      MBB.addSuccessor (succMBB);
     }
   }
 
