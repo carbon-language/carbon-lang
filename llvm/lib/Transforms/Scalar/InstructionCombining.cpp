@@ -43,8 +43,8 @@ static Instruction *CombineBinOp(BinaryOperator *I) {
         if (I->getType()->isIntegral() && cast<ConstantInt>(Op2)->equalsInt(0)){
           // Eliminate 'add int %X, 0'
           I->replaceAllUsesWith(Op1);       // FIXME: This breaks the worklist
-          LocalChange = true;
-          break;
+          Changed = true;
+          return I;
         }
 
         if (Instruction *IOp1 = dyn_cast<Instruction>(Op1)) {
