@@ -175,6 +175,21 @@ public:
     Blocks.push_back(BB);
   }
 
+  /// moveToHeader - This method is used to move BB (which must be part of this
+  /// loop) to be the loop header of the loop (the block that dominates all
+  /// others).
+  void moveToHeader(BasicBlock *BB) {
+    if (Blocks[0] == BB) return;
+    for (unsigned i = 0; ; ++i) {
+      assert(i != Blocks.size() && "Loop does not contain BB!");
+      if (Blocks[i] == BB) {
+        Blocks[i] = Blocks[0];
+        Blocks[0] = BB;
+        return;
+      }
+    }
+  }
+
   /// removeBlockFromLoop - This removes the specified basic block from the
   /// current loop, updating the Blocks as appropriate.  This does not update
   /// the mapping in the LoopInfo class.
