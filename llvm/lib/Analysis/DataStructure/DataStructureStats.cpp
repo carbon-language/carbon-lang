@@ -11,7 +11,7 @@
 #include <vector>
 
 namespace {
-  Statistic<double> TotalNumCallees("totalcallees",
+  Statistic<> TotalNumCallees("totalcallees",
                 "Total number of callee functions at all indirect call sites");
   Statistic<> NumIndirectCalls("numindirect",
                 "Total number of indirect call sites in the program");
@@ -39,6 +39,14 @@ namespace {
   static RegisterAnalysis<DSGraphStats> Z("dsstats", "DS Graph Statistics");
 }
 
+static bool isIndirectCallee(Value *V) {
+  if (isa<Function>(V)) return false;
+
+  if (CastInst *CI = dyn_cast<CastInst>(V))
+    return isIndirectCallee(CI->getOperand(0));
+  return true;
+}
+
 
 void DSGraphStats::countCallees(const Function& F,
                                 const DSGraph& tdGraph)
@@ -47,7 +55,7 @@ void DSGraphStats::countCallees(const Function& F,
 
   const std::vector<DSCallSite>& callSites = tdGraph.getFunctionCalls();
   for (unsigned i=0, N = callSites.size(); i < N; ++i)
-    if (callSites[i].getCallInst().getCalledFunction() == NULL)
+    if (isIndirectCallee(callSites[i].getCallInst().getCalledValue()))
       { // This is an indirect function call
         std::vector<GlobalValue*> Callees =
           callSites[i].getCallee().getNode()->getGlobals();
@@ -66,10 +74,10 @@ void DSGraphStats::countCallees(const Function& F,
   TotalNumCallees  += totalNumCallees;
   NumIndirectCalls += numIndirectCalls;
 
-  std::cout << "  In function " << F.getName() << " :  "
-            << (double) (numIndirectCalls == 0? 0.0
-                         : (totalNumCallees / (double) numIndirectCalls)) 
-            << " avg. callees per indirect call\n";
+  if (numIndirectCalls)
+    std::cout << "  In function " << F.getName() << ":  "
+              << (totalNumCallees / (double) numIndirectCalls)
+              << " average callees per indirect call\n";
 }
 
 
