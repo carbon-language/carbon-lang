@@ -151,8 +151,15 @@ namespace {
     //
     Instruction *ReplaceInstUsesWith(Instruction &I, Value *V) {
       AddUsersToWorkList(I);         // Add all modified instrs to worklist
-      I.replaceAllUsesWith(V);
-      return &I;
+      if (&I != V) {
+        I.replaceAllUsesWith(V);
+        return &I;
+      } else {
+        // If we are replacing the instruction with itself, this must be in a
+        // segment of unreachable code, so just clobber the instruction.
+        I.replaceAllUsesWith(Constant::getNullValue(I.getType()));
+        return &I;
+      }
     }
 
     // EraseInstFromFunction - When dealing with an instruction that has side
@@ -424,7 +431,12 @@ Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
 
       // Make what used to be the LHS of the root be the user of the root...
       Value *ExtraOperand = TmpLHSI->getOperand(1);
-      Root.replaceAllUsesWith(TmpLHSI);          // Users now use TmpLHSI
+      if (&Root != TmpLHSI)
+        Root.replaceAllUsesWith(TmpLHSI);        // Users now use TmpLHSI
+      else {
+        Root.replaceAllUsesWith(Constant::getNullValue(TmpLHSI->getType()));
+        return 0;
+      }
       TmpLHSI->setOperand(1, &Root);             // TmpLHSI now uses the root
       BB->getInstList().remove(&Root);           // Remove root from the BB
       BB->getInstList().insert(TmpLHSI, &Root);  // Insert root before TmpLHSI
