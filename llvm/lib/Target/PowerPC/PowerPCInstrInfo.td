@@ -96,12 +96,14 @@ def CMPLDI : DForm_6_ext<10, 1, 0,
 def CMPL : XForm_16<"cmpl", 31, 32, 0, 0>;
 def CMPLW : XForm_16_ext<"cmplw", 31, 32, 0, 0>;
 def CMPLD : XForm_16_ext<"cmpld", 31, 32, 1, 0>;
+def CNTLZW : XForm_11<"cntlzw", 31, 26, 0, 0, 0>;
 def CRAND : XLForm_1<"crand", 19, 257, 0, 0>;
 def CRANDC : XLForm_1<"crandc", 19, 129, 0, 0>;
 def CRNOR : XLForm_1<"crnor", 19, 33, 0, 0>;
 def CROR : XLForm_1<"cror", 19, 449, 0, 0>;
 def DIVW : XOForm_1<"divw", 31, 491, 0, 0, 0, 0>;
 def DIVWU : XOForm_1<"divwu", 31, 459, 0, 0, 0, 0>;
+def EQV  : XForm_6<"eqv",  31, 284, 0, 0, 0>;
 def EXTSB : XForm_11<"extsb", 31, 954, 0, 0, 0>;
 def EXTSH : XForm_11<"extsh", 31, 922, 0, 0, 0>;
 def FADD : AForm_2<"fadd", 63, 21, 0, 0, 0>;
@@ -150,6 +152,7 @@ def NAND  : XForm_6<"nand",  31, 476, 0, 0, 0>;
 def NEG : XOForm_3<"neg", 31, 104, 0, 0, 0, 0>;
 def NOR  : XForm_6<"nor",  31, 124, 0, 0, 0>;
 def NOP : DForm_4_zero<"nop", 24, 0, 0, (ops), "nop">;
+def ORC  : XForm_6<"orc",  31, 412, 0, 0, 0>;
 def ORI  : DForm_4<24, 0, 0,
                    (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                    "ori $dst, $src1, $src2">;
@@ -171,6 +174,7 @@ def SRADI  : XSForm_1<"sradi",  31, 413, 0, 1, 0>;
 def SRAWI  : XForm_10<"srawi",  31, 824, 0, 0, 0>;
 def SRAD  : XForm_6<"srad",  31, 794, 0, 1, 0>;
 def SRAW  : XForm_6<"sraw",  31, 792, 0, 0, 0>;
+def SRWI : MForm_2<"srwi", 21, 0, 0, 0>;
 def STB : DForm_3<"stb", 38, 0, 0>;
 def STBU : DForm_3<"stbu", 39, 0, 0>;
 def STBX : XForm_8<"stbx", 31, 215, 0, 0>;

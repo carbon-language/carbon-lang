@@ -33,6 +33,7 @@ using namespace llvm;
 
 namespace {
   Statistic<> GEPFolds("ppc-codegen", "Number of GEPs folded");
+  Statistic<> NumSetCC("ppc-codegen", "Number of SetCC straight-lined");
 
   /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
   /// PPC Representation.
@@ -279,6 +280,10 @@ namespace {
       std::cerr << "Cannot instruction select: " << I;
       abort();
     }
+
+    unsigned ExtendOrClear(MachineBasicBlock *MBB,
+                           MachineBasicBlock::iterator IP,
+                           unsigned Reg, const Type *CompTy);
 
     /// promote32 - Make a value 32-bits wide, and put it somewhere.
     ///
@@ -959,6 +964,33 @@ void ISel::emitUCOM(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
     BuildMI(*MBB, IP, PPC::FCMPU, 2, PPC::CR0).addReg(LHS).addReg(RHS);
 }
 
+unsigned ISel::ExtendOrClear(MachineBasicBlock *MBB,
+                             MachineBasicBlock::iterator IP,
+                             unsigned Reg, const Type *CompTy) {
+  unsigned Class = getClassB(CompTy);
+
+  // Before we do a comparison or SetCC, we have to make sure that we truncate
+  // the source registers appropriately.
+  if (Class == cByte) {
+    unsigned TmpReg = makeAnotherReg(CompTy);
+    if (CompTy->isSigned())
+      BuildMI(*MBB, IP, PPC::EXTSB, 1, TmpReg).addReg(Reg);
+    else
+      BuildMI(*MBB, IP, PPC::RLWINM, 4, TmpReg).addReg(Reg).addImm(0)
+        .addImm(24).addImm(31);
+    Reg = TmpReg;
+  } else if (Class == cShort) {
+    unsigned TmpReg = makeAnotherReg(CompTy);
+    if (CompTy->isSigned())
+      BuildMI(*MBB, IP, PPC::EXTSH, 1, TmpReg).addReg(Reg);
+    else
+      BuildMI(*MBB, IP, PPC::RLWINM, 4, TmpReg).addReg(Reg).addImm(0)
+        .addImm(16).addImm(31);
+    Reg = TmpReg;
+  }
+  return Reg;
+}
+
 /// EmitComparison - emits a comparison of the two operands, returning the
 /// extended setcc code to use.  The result is in CR0.
 ///
@@ -968,27 +1000,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   // The arguments are already supposed to be of the same type.
   const Type *CompTy = Op0->getType();
   unsigned Class = getClassB(CompTy);
-  unsigned Op0r = getReg(Op0, MBB, IP);
-
-  // Before we do a comparison, we have to make sure that we're truncating our
-  // registers appropriately.
-  if (Class == cByte) {
-    unsigned TmpReg = makeAnotherReg(CompTy);
-    if (CompTy->isSigned())
-      BuildMI(*MBB, IP, PPC::EXTSB, 1, TmpReg).addReg(Op0r);
-    else
-      BuildMI(*MBB, IP, PPC::RLWINM, 4, TmpReg).addReg(Op0r).addImm(0)
-        .addImm(24).addImm(31);
-    Op0r = TmpReg;
-  } else if (Class == cShort) {
-    unsigned TmpReg = makeAnotherReg(CompTy);
-    if (CompTy->isSigned())
-      BuildMI(*MBB, IP, PPC::EXTSH, 1, TmpReg).addReg(Op0r);
-    else
-      BuildMI(*MBB, IP, PPC::RLWINM, 4, TmpReg).addReg(Op0r).addImm(0)
-        .addImm(16).addImm(31);
-    Op0r = TmpReg;
-  }
+  unsigned Op0r = ExtendOrClear(MBB, IP, getReg(Op0, MBB, IP), CompTy);
   
   // Use crand for lt, gt and crandc for le, ge
   unsigned CROpcode = (OpNum == 2 || OpNum == 4) ? PPC::CRAND : PPC::CRANDC;
@@ -1098,13 +1110,148 @@ void ISel::visitSetCondInst(SetCondInst &I) {
   if (canFoldSetCCIntoBranchOrSelect(&I))
     return;
 
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  const Type *Ty = Op0->getType();
+  unsigned Class = getClassB(Ty);
+  unsigned Opcode = I.getOpcode();
   unsigned DestReg = getReg(I);
-  unsigned OpNum = I.getOpcode();
-  const Type *Ty = I.getOperand (0)->getType();
 
-  EmitComparison(OpNum, I.getOperand(0), I.getOperand(1), BB, BB->end());
+  // If the comparison type is byte, short, or int, then we can emit a
+  // branchless version of the SetCC that puts 0 (false) or 1 (true) in the
+  // destination register.
+  if (Class <= cInt) {
+    ++NumSetCC;
+    MachineBasicBlock::iterator MI = BB->end();
+    unsigned OpNum = getSetCCNumber(Opcode);
+    unsigned Op0Reg = getReg(Op0, BB, MI);
+    Op0Reg = ExtendOrClear(BB, MI, Op0Reg, Ty);
+    
+    // comparisons against constant zero often have shorter sequences than the
+    // general case, handled below.
+    ConstantInt *CI = dyn_cast<ConstantInt>(Op1);
+    if (CI && CI->getRawValue() == 0) {
+      switch(OpNum) {
+      case 0: { // eq0
+        unsigned TempReg = makeAnotherReg(Type::IntTy);
+        BuildMI(*BB, MI, PPC::CNTLZW, 1, TempReg).addReg(Op0Reg);
+        BuildMI(*BB, MI, PPC::SRWI, 2, DestReg).addReg(TempReg).addImm(5);
+        break;
+        } 
+      case 1: { // ne0
+        unsigned TempReg = makeAnotherReg(Type::IntTy);
+        BuildMI(*BB, MI, PPC::ADDIC, 2, TempReg).addReg(Op0Reg).addSImm(-1);
+        BuildMI(*BB, MI, PPC::SUBFE, 2, DestReg).addReg(TempReg).addReg(Op0Reg);
+        break;
+        } 
+      case 2: { // lt0, always false if unsigned
+        if (Ty->isSigned())
+          BuildMI(*BB, MI, PPC::SRWI, 2, DestReg).addReg(Op0Reg).addImm(31);
+        else
+          BuildMI(*BB, MI, PPC::LI, 1, DestReg).addSImm(0);
+        break;
+        }
+      case 3: { // ge0, always true if unsigned
+        if (Ty->isSigned()) { 
+          unsigned TempReg = makeAnotherReg(Type::IntTy);
+          BuildMI(*BB, MI, PPC::SRWI, 2, TempReg).addReg(Op0Reg).addImm(31);
+          BuildMI(*BB, MI, PPC::XORI, 2, DestReg).addReg(TempReg).addImm(1);
+        } else {
+          BuildMI(*BB, MI, PPC::LI, 1, DestReg).addSImm(1);
+        }
+        break;
+        }
+      case 4: { // gt0, equivalent to ne0 if unsigned
+        unsigned Temp1 = makeAnotherReg(Type::IntTy);
+        unsigned Temp2 = makeAnotherReg(Type::IntTy);
+        if (Ty->isSigned()) { 
+          BuildMI(*BB, MI, PPC::NEG, 2, Temp1).addReg(Op0Reg);
+          BuildMI(*BB, MI, PPC::ANDC, 2, Temp2).addReg(Temp1).addReg(Op0Reg);
+          BuildMI(*BB, MI, PPC::SRWI, 2, DestReg).addReg(Temp2).addImm(31);
+        } else {
+          BuildMI(*BB, MI, PPC::ADDIC, 2, Temp1).addReg(Op0Reg).addSImm(-1);
+          BuildMI(*BB, MI, PPC::SUBFE, 2, DestReg).addReg(Temp1).addReg(Op0Reg);
+        }
+        break;
+        }
+      case 5: { // le0, equivalent to eq0 if unsigned
+        unsigned Temp1 = makeAnotherReg(Type::IntTy);
+        unsigned Temp2 = makeAnotherReg(Type::IntTy);
+        if (Ty->isSigned()) { 
+          BuildMI(*BB, MI, PPC::NEG, 2, Temp1).addReg(Op0Reg);
+          BuildMI(*BB, MI, PPC::ORC, 2, Temp2).addReg(Op0Reg).addReg(Temp1);
+          BuildMI(*BB, MI, PPC::SRWI, 2, DestReg).addReg(Temp2).addImm(31);
+        } else {
+          BuildMI(*BB, MI, PPC::CNTLZW, 1, Temp1).addReg(Op0Reg);
+          BuildMI(*BB, MI, PPC::SRWI, 2, DestReg).addReg(Temp1).addImm(5);
+        }
+        break;
+        }
+      } // switch
+      return;
+    }
+    unsigned Op1Reg = getReg(Op1, BB, MI);
+    switch(OpNum) {
+    case 0: { // eq
+      unsigned Temp1 = makeAnotherReg(Type::IntTy);
+      unsigned Temp2 = makeAnotherReg(Type::IntTy);
+      BuildMI(*BB, MI, PPC::SUBF, 2, Temp1).addReg(Op0Reg).addReg(Op1Reg);
+      BuildMI(*BB, MI, PPC::CNTLZW, 1, Temp2).addReg(Temp1);
+      BuildMI(*BB, MI, PPC::SRWI, 2, DestReg).addReg(Temp2).addImm(5);
+      break;
+      } 
+    case 1: { // ne
+      unsigned Temp1 = makeAnotherReg(Type::IntTy);
+      unsigned Temp2 = makeAnotherReg(Type::IntTy);
+      BuildMI(*BB, MI, PPC::SUBF, 2, Temp1).addReg(Op0Reg).addReg(Op1Reg);
+      BuildMI(*BB, MI, PPC::ADDIC, 2, Temp2).addReg(Temp1).addSImm(-1);
+      BuildMI(*BB, MI, PPC::SUBFE, 2, DestReg).addReg(Temp2).addReg(Temp1);
+      break;
+      } 
+    case 2: 
+    case 4: { // lt, gt
+      unsigned Temp1 = makeAnotherReg(Type::IntTy);
+      unsigned Temp2 = makeAnotherReg(Type::IntTy);
+      unsigned Temp3 = makeAnotherReg(Type::IntTy);
+      unsigned Temp4 = makeAnotherReg(Type::IntTy);
+      if (OpNum == 4) std::swap(Op0Reg, Op1Reg);
+      if (Ty->isSigned()) { 
+        BuildMI(*BB, MI, PPC::SUBFC, 2, Temp1).addReg(Op1Reg).addReg(Op0Reg);
+        BuildMI(*BB, MI, PPC::EQV, 2, Temp2).addReg(Op1Reg).addReg(Op0Reg);
+        BuildMI(*BB, MI, PPC::SRWI, 2, Temp3).addReg(Temp2).addImm(31);
+        BuildMI(*BB, MI, PPC::ADDZE, 1, Temp4).addReg(Temp3);
+        BuildMI(*BB, MI, PPC::RLWINM, 4, DestReg).addReg(Temp4).addImm(0)
+          .addImm(31).addImm(31);
+      } else {
+        BuildMI(*BB, MI, PPC::SUBFC, 2, Temp1).addReg(Op1Reg).addReg(Op0Reg);
+        BuildMI(*BB, MI, PPC::SUBFE, 2, Temp2).addReg(Temp1).addReg(Temp1);
+        BuildMI(*BB, MI, PPC::NEG, 2, DestReg).addReg(Temp2);
+      }
+      break;
+      }
+    case 3: 
+    case 5: { // le, ge
+      unsigned Temp1 = makeAnotherReg(Type::IntTy);
+      unsigned Temp2 = makeAnotherReg(Type::IntTy);
+      unsigned Temp3 = makeAnotherReg(Type::IntTy);
+      if (OpNum == 3) std::swap(Op0Reg, Op1Reg);
+      if (Ty->isSigned()) {
+        BuildMI(*BB, MI, PPC::SRWI, 2, Temp1).addReg(Op0Reg).addImm(31);
+        BuildMI(*BB, MI, PPC::SRAWI, 2, Temp2).addReg(Op1Reg).addImm(31);
+        BuildMI(*BB, MI, PPC::SUBFC, 2, Temp3).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(*BB, MI, PPC::ADDE, 2, DestReg).addReg(Temp2).addReg(Temp1);
+      } else {
+        BuildMI(*BB, MI, PPC::LI, 1, Temp2).addSImm(-1);
+        BuildMI(*BB, MI, PPC::SUBFC, 2, Temp1).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(*BB, MI, PPC::SUBFZE, 1, DestReg).addReg(Temp2);
+      }
+      break;
+      }
+    } // switch
+    return;
+  }
+  EmitComparison(Opcode, Op0, Op1, BB, BB->end());
   
-  unsigned Opcode = getPPCOpcodeForSetCCNumber(OpNum);
+  unsigned PPCOpcode = getPPCOpcodeForSetCCNumber(Opcode);
   MachineBasicBlock *thisMBB = BB;
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
   ilist<MachineBasicBlock>::iterator It = BB;
@@ -1121,7 +1268,7 @@ void ISel::visitSetCondInst(SetCondInst &I) {
   // bCC. But MBB->getFirstTerminator() can't understand this.
   MachineBasicBlock *copy1MBB = new MachineBasicBlock(LLVM_BB);
   F->getBasicBlockList().insert(It, copy1MBB);
-  BuildMI(BB, Opcode, 2).addReg(PPC::CR0).addMBB(copy1MBB);
+  BuildMI(BB, PPCOpcode, 2).addReg(PPC::CR0).addMBB(copy1MBB);
   MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
   F->getBasicBlockList().insert(It, copy0MBB);
   BuildMI(BB, PPC::B, 1).addMBB(copy0MBB);
