@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/MachineFunction.h ---------------------------*- C++ -*--=//
+//===-- llvm/CodeGen/MachineFunction.h --------------------------*- C++ -*-===//
 // 
 // Collect native machine code information for a method.  This allows
 // target-specific information about the generated code to be stored with each
@@ -27,6 +27,8 @@ class MachineFunction : private Annotation {
   hash_set<const Constant*> constantsForConstPool;
   hash_map<const Value*, int> offsets;
   const         Function* method;
+
+  // FIXME: State should be held elsewhere...
   unsigned	staticStackSize;
   unsigned	automaticVarsSize;
   unsigned	regSpillsSize;
@@ -39,8 +41,8 @@ class MachineFunction : private Annotation {
   bool          automaticVarsAreaFrozen;
   
 public:
-  /*ctor*/      MachineFunction(const Function* function,
-                                const TargetMachine& target);
+  MachineFunction(const Function* function,
+                  const TargetMachine& target);
   
   // The next two methods are used to construct and to retrieve
   // the MachineFunction object for the given method.
@@ -54,6 +56,14 @@ public:
   static void destruct(const Function *F);
   static MachineFunction& get(const Function* function);
   
+
+
+  //===--------------------------------------------------------------------===//
+  //
+  // FIXME: Most of the following state should be moved out to passes that use
+  // it, instead of being put here.
+  //
+
   //
   // Accessors for global information about generated code for a method.
   // 
