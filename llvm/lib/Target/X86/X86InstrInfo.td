@@ -455,23 +455,44 @@ class UsesCL { list<Register> Uses = [CL]; bit printImplicitUses = 1; }
 def SHLrCL8  : I2A8 <"shl", 0xD2, MRMS4r    >        , UsesCL; // R8  <<= cl
 def SHLrCL16 : I2A8 <"shl", 0xD3, MRMS4r    >, OpSize, UsesCL; // R16 <<= cl
 def SHLrCL32 : I2A8 <"shl", 0xD3, MRMS4r    >        , UsesCL; // R32 <<= cl
+def SHLmCL8  : I2A8 <"shl", 0xD2, MRMS4m    >        , UsesCL; // [mem8]  <<= cl
+def SHLmCL16 : I2A8 <"shl", 0xD3, MRMS4m    >, OpSize, UsesCL; // [mem16] <<= cl
+def SHLmCL32 : I2A8 <"shl", 0xD3, MRMS4m    >        , UsesCL; // [mem32] <<= cl
+
 def SHLri8   : I2A8 <"shl", 0xC0, MRMS4r    >;                 // R8  <<= imm8
 def SHLri16  : I2A8 <"shl", 0xC1, MRMS4r    >, OpSize;         // R16 <<= imm16
 def SHLri32  : I2A8 <"shl", 0xC1, MRMS4r    >;                 // R32 <<= imm32
+def SHLmi8   : I2A8 <"shl", 0xC0, MRMS4m    >;                 // [mem8]  <<= imm8
+def SHLmi16  : I2A8 <"shl", 0xC1, MRMS4m    >, OpSize;         // [mem16] <<= imm16
+def SHLmi32  : I2A8 <"shl", 0xC1, MRMS4m    >;                 // [mem32] <<= imm32
 
 def SHRrCL8  : I2A8 <"shr", 0xD2, MRMS5r    >        , UsesCL; // R8  >>= cl
 def SHRrCL16 : I2A8 <"shr", 0xD3, MRMS5r    >, OpSize, UsesCL; // R16 >>= cl
 def SHRrCL32 : I2A8 <"shr", 0xD3, MRMS5r    >        , UsesCL; // R32 >>= cl
+def SHRmCL8  : I2A8 <"shr", 0xD2, MRMS5m    >        , UsesCL; // [mem8]  >>= cl
+def SHRmCL16 : I2A8 <"shr", 0xD3, MRMS5m    >, OpSize, UsesCL; // [mem16] >>= cl
+def SHRmCL32 : I2A8 <"shr", 0xD3, MRMS5m    >        , UsesCL; // [mem32] >>= cl
+
 def SHRri8   : I2A8 <"shr", 0xC0, MRMS5r    >;                 // R8  >>= imm8
 def SHRri16  : I2A8 <"shr", 0xC1, MRMS5r    >, OpSize;         // R16 >>= imm16
 def SHRri32  : I2A8 <"shr", 0xC1, MRMS5r    >;                 // R32 >>= imm32
+def SHRmi8   : I2A8 <"shr", 0xC0, MRMS5m    >;                 // [mem8]  >>= imm8
+def SHRmi16  : I2A8 <"shr", 0xC1, MRMS5m    >, OpSize;         // [mem16] >>= imm16
+def SHRmi32  : I2A8 <"shr", 0xC1, MRMS5m    >;                 // [mem32] >>= imm32
 
 def SARrCL8  : I2A8 <"sar", 0xD2, MRMS7r    >        , UsesCL; // R8  >>>= cl
 def SARrCL16 : I2A8 <"sar", 0xD3, MRMS7r    >, OpSize, UsesCL; // R16 >>>= cl
 def SARrCL32 : I2A8 <"sar", 0xD3, MRMS7r    >        , UsesCL; // R32 >>>= cl
+def SARmCL8  : I2A8 <"sar", 0xD2, MRMS7m    >        , UsesCL; // [mem8]  >>>= cl
+def SARmCL16 : I2A8 <"sar", 0xD3, MRMS7m    >, OpSize, UsesCL; // [mem16] >>>= cl
+def SARmCL32 : I2A8 <"sar", 0xD3, MRMS7m    >        , UsesCL; // [mem32] >>>= cl
+
 def SARri8   : I2A8 <"sar", 0xC0, MRMS7r    >;                 // R8  >>>= imm8
 def SARri16  : I2A8 <"sar", 0xC1, MRMS7r    >, OpSize;         // R16 >>>= imm16
 def SARri32  : I2A8 <"sar", 0xC1, MRMS7r    >;                 // R32 >>>= imm32
+def SARmi8   : I2A8 <"sar", 0xC0, MRMS7m    >;                 // [mem8]  >>>= imm8
+def SARmi16  : I2A8 <"sar", 0xC1, MRMS7m    >, OpSize;         // [mem16] >>>= imm16
+def SARmi32  : I2A8 <"sar", 0xC1, MRMS7m    >;                 // [mem32] >>>= imm32
 
 def SHLDrrCL32 : I2A8 <"shld", 0xA5, MRMDestReg>, TB, UsesCL;   // R32 <<= R32,R32 cl
 def SHLDrri32  : I2A8 <"shld", 0xA4, MRMDestReg>, TB;           // R32 <<= R32,R32 imm8
