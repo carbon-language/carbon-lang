@@ -104,7 +104,7 @@ const Type *ConvertibleToGEP(const Type *Ty, Value *OffsetVal,
   // See if the cast is of an integer expression that is either a constant,
   // or a value scaled by some amount with a possible offset.
   //
-  ExprType Expr = ClassifyExpression(OffsetVal);
+  ExprType Expr = ClassifyExpr(OffsetVal);
 
   // Get the offset and scale values if they exists...
   // A scale of zero with Expr.Var != 0 means a scale of 1.

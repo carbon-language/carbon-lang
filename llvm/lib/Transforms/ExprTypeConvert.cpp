@@ -52,7 +52,7 @@ static bool MallocConvertibleToType(MallocInst *MI, const Type *Ty,
   if (!Ty->isSized()) return false;      // Can only alloc something with a size
 
   // Analyze the number of bytes allocated...
-  ExprType Expr = ClassifyExpression(MI->getArraySize());
+  ExprType Expr = ClassifyExpr(MI->getArraySize());
 
   // Get information about the base datatype being allocated, before & after
   int ReqTypeSize = TD.getTypeSize(Ty);
@@ -89,7 +89,7 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
   BasicBlock::iterator It = BB->end();
 
   // Analyze the number of bytes allocated...
-  ExprType Expr = ClassifyExpression(MI->getArraySize());
+  ExprType Expr = ClassifyExpr(MI->getArraySize());
 
   const PointerType *AllocTy = cast<PointerType>(Ty);
   const Type *ElType = AllocTy->getElementType();

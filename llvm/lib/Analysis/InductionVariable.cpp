@@ -89,8 +89,8 @@ InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo): End(0) {
   Value *V2 = Phi->getIncomingValue(1);
 
   if (L == 0) {  // No loop information?  Base everything on expression analysis
-    ExprType E1 = ClassifyExpression(V1);
-    ExprType E2 = ClassifyExpression(V2);
+    ExprType E1 = ClassifyExpr(V1);
+    ExprType E2 = ClassifyExpr(V2);
 
     if (E1.ExprTy > E2.ExprTy)        // Make E1 be the simpler expression
       std::swap(E1, E2);
@@ -152,7 +152,7 @@ InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo): End(0) {
     }
 
     if (Step == 0) {                  // Unrecognized step value...
-      ExprType StepE = ClassifyExpression(V2);
+      ExprType StepE = ClassifyExpr(V2);
       if (StepE.ExprTy != ExprType::Linear ||
           StepE.Var != Phi) return;
 
@@ -160,7 +160,7 @@ InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo): End(0) {
       if (isa<PointerType>(ETy)) ETy = Type::ULongTy;
       Step  = (Value*)(StepE.Offset ? StepE.Offset : ConstantInt::get(ETy, 0));
     } else {   // We were able to get a step value, simplify with expr analysis
-      ExprType StepE = ClassifyExpression(Step);
+      ExprType StepE = ClassifyExpr(Step);
       if (StepE.ExprTy == ExprType::Linear && StepE.Offset == 0) {
         // No offset from variable?  Grab the variable
         Step = StepE.Var;

@@ -233,13 +233,13 @@ static inline ExprType negate(const ExprType &E, Value *V) {
 }
 
 
-// ClassifyExpression: Analyze an expression to determine the complexity of the
-// expression, and which other values it depends on.  
+// ClassifyExpr: Analyze an expression to determine the complexity of the
+// expression, and which other values it depends on.
 //
 // Note that this analysis cannot get into infinite loops because it treats PHI
 // nodes as being an unknown linear expression.
 //
-ExprType llvm::ClassifyExpression(Value *Expr) {
+ExprType llvm::ClassifyExpr(Value *Expr) {
   assert(Expr != 0 && "Can't classify a null expression!");
   if (Expr->getType() == Type::FloatTy || Expr->getType() == Type::DoubleTy)
     return Expr;   // FIXME: Can't handle FP expressions
@@ -266,14 +266,14 @@ ExprType llvm::ClassifyExpression(Value *Expr) {
 
   switch (I->getOpcode()) {       // Handle each instruction type separately
   case Instruction::Add: {
-    ExprType Left (ClassifyExpression(I->getOperand(0)));
-    ExprType Right(ClassifyExpression(I->getOperand(1)));
+    ExprType Left (ClassifyExpr(I->getOperand(0)));
+    ExprType Right(ClassifyExpr(I->getOperand(1)));
     return handleAddition(Left, Right, I);
   }  // end case Instruction::Add
 
   case Instruction::Sub: {
-    ExprType Left (ClassifyExpression(I->getOperand(0)));
-    ExprType Right(ClassifyExpression(I->getOperand(1)));
+    ExprType Left (ClassifyExpr(I->getOperand(0)));
+    ExprType Right(ClassifyExpr(I->getOperand(1)));
     ExprType RightNeg = negate(Right, I);
     if (RightNeg.Var == I && !RightNeg.Offset && !RightNeg.Scale)
       return I;   // Could not negate value...
@@ -281,9 +281,9 @@ ExprType llvm::ClassifyExpression(Value *Expr) {
   }  // end case Instruction::Sub
 
   case Instruction::Shl: { 
-    ExprType Right(ClassifyExpression(I->getOperand(1)));
+    ExprType Right(ClassifyExpr(I->getOperand(1)));
     if (Right.ExprTy != ExprType::Constant) break;
-    ExprType Left(ClassifyExpression(I->getOperand(0)));
+    ExprType Left(ClassifyExpr(I->getOperand(0)));
     if (Right.Offset == 0) return Left;   // shl x, 0 = x
     assert(Right.Offset->getType() == Type::UByteTy &&
 	   "Shift amount must always be a unsigned byte!");
@@ -308,8 +308,8 @@ ExprType llvm::ClassifyExpression(Value *Expr) {
   }  // end case Instruction::Shl
 
   case Instruction::Mul: {
-    ExprType Left (ClassifyExpression(I->getOperand(0)));
-    ExprType Right(ClassifyExpression(I->getOperand(1)));
+    ExprType Left (ClassifyExpr(I->getOperand(0)));
+    ExprType Right(ClassifyExpr(I->getOperand(1)));
     if (Left.ExprTy > Right.ExprTy)
       std::swap(Left, Right);   // Make left be simpler than right
 
@@ -323,7 +323,7 @@ ExprType llvm::ClassifyExpression(Value *Expr) {
   } // end case Instruction::Mul
 
   case Instruction::Cast: {
-    ExprType Src(ClassifyExpression(I->getOperand(0)));
+    ExprType Src(ClassifyExpr(I->getOperand(0)));
     const Type *DestTy = I->getType();
     if (isa<PointerType>(DestTy))
       DestTy = Type::ULongTy;  // Pointer types are represented as ulong
