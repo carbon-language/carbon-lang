@@ -998,6 +998,38 @@ ConstVector : ConstVector ',' ConstVal {
 GlobalType : GLOBAL { $$ = false; } | CONSTANT { $$ = true; }
 
 
+//===----------------------------------------------------------------------===//
+//                             Rules to match Modules
+//===----------------------------------------------------------------------===//
+
+// Module rule: Capture the result of parsing the whole file into a result
+// variable...
+//
+Module : FunctionList {
+  $$ = ParserResult = $1;
+  CurModule.ModuleDone();
+}
+
+// FunctionList - A list of methods, preceeded by a constant pool.
+//
+FunctionList : FunctionList Function {
+    $$ = $1;
+    assert($2->getParent() == 0 && "Function already in module!");
+    $1->getFunctionList().push_back($2);
+    CurMeth.FunctionDone();
+  } 
+  | FunctionList FunctionProto {
+    $$ = $1;
+  }
+  | FunctionList IMPLEMENTATION {
+    $$ = $1;
+  }
+  | ConstPool {
+    $$ = CurModule.CurrentModule;
+    // Resolve circular types before we parse the body of the module
+    ResolveTypes(CurModule.LateResolveTypes);
+  }
+
 // ConstPool - Constants with optional names assigned to them.
 ConstPool : ConstPool OptAssign CONST ConstVal { 
     if (setValueName($4, $2)) { assert(0 && "No redefinitions allowed!"); }
@@ -1067,36 +1099,6 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
     delete $6;
   }
   | /* empty: end of list */ { 
-  }
-
-
-//===----------------------------------------------------------------------===//
-//                             Rules to match Modules
-//===----------------------------------------------------------------------===//
-
-// Module rule: Capture the result of parsing the whole file into a result
-// variable...
-//
-Module : FunctionList {
-  $$ = ParserResult = $1;
-  CurModule.ModuleDone();
-}
-
-// FunctionList - A list of methods, preceeded by a constant pool.
-//
-FunctionList : FunctionList Function {
-    $$ = $1;
-    assert($2->getParent() == 0 && "Function already in module!");
-    $1->getFunctionList().push_back($2);
-    CurMeth.FunctionDone();
-  } 
-  | FunctionList FunctionProto {
-    $$ = $1;
-  }
-  | ConstPool IMPLEMENTATION {
-    $$ = CurModule.CurrentModule;
-    // Resolve circular types before we parse the body of the module
-    ResolveTypes(CurModule.LateResolveTypes);
   }
 
 
