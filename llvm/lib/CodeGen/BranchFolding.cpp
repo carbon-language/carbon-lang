@@ -114,7 +114,7 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB,
   // explicitly.
   if (MBB->empty()) {
     if (MBB->pred_empty()) return false;
-    MachineFunction::iterator FallThrough = next(MBB);
+    MachineFunction::iterator FallThrough =next(MachineFunction::iterator(MBB));
     assert(FallThrough != MBB->getParent()->end() &&
            "Fell off the end of the function!");
     while (!MBB->pred_empty()) {
