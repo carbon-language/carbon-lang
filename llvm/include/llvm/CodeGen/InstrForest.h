@@ -24,71 +24,44 @@
 #ifndef LLVM_CODEGEN_INSTRFOREST_H
 #define LLVM_CODEGEN_INSTRFOREST_H
 
-/*
- CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
- C
- C The following types and macros are visible to the C code generated
- C by BURG.
- */
+//-------------------------------------------------------------------------
+// Data types needed by BURG and implemented by us
+//-------------------------------------------------------------------------
 
-extern "C" {
-  
-  //-------------------------------------------------------------------------
-  // Data types needed by BURG and implemented by us
-  //-------------------------------------------------------------------------
-  
-  typedef int OpLabel;
-  typedef int StateLabel;
-  
-  typedef struct BasicTreeNode_struct {
-    
-    BasicTreeNode_struct* leftChild;
-    BasicTreeNode_struct* rightChild;
-    BasicTreeNode_struct* parent;
-    OpLabel		  opLabel;
-    StateLabel		  state;
-    void*		  treeNodePtr;	/* points to the C++ tree node object
-					 * that "contains" this node */
-  } BasicTreeNode;
-  
-  //-------------------------------------------------------------------------
-  // Declarations of data and functions created by BURG
-  //-------------------------------------------------------------------------
-  
-# ifdef __STDC__
-#   define ARGS(x) x
-# else
-#   define ARGS(x) ()
-# endif
+typedef int OpLabel;
+typedef int StateLabel;
 
-  extern short*		burm_nts[];
+typedef struct BasicTreeNode_struct {
   
-  extern StateLabel	burm_label	ARGS((BasicTreeNode* p));
+  BasicTreeNode_struct* leftChild;
+  BasicTreeNode_struct* rightChild;
+  BasicTreeNode_struct* parent;
+  OpLabel		  opLabel;
+  StateLabel		  state;
+  void*		  treeNodePtr;	/* points to the C++ tree node object
+				 * that "contains" this node */
+} BasicTreeNode;
+
+//-------------------------------------------------------------------------
+// Declarations of data and functions created by BURG
+//-------------------------------------------------------------------------
+
+extern short*		burm_nts[];
   
-  extern StateLabel	burm_state	ARGS((OpLabel op,
-					      StateLabel leftState,
-					      StateLabel rightState));
+extern StateLabel	burm_label	(BasicTreeNode* p);
   
-  extern StateLabel	burm_rule	ARGS((StateLabel state,
-						      int goalNT));
+extern StateLabel	burm_state	(OpLabel op, StateLabel leftState,
+					 StateLabel rightState);
+
+extern StateLabel	burm_rule	(StateLabel state, int goalNT);
   
-  extern BasicTreeNode** burm_kids	ARGS((BasicTreeNode* p,
-					      int eruleno,
-					      BasicTreeNode* kids[]));
+extern BasicTreeNode** burm_kids	(BasicTreeNode* p, int eruleno,
+					 BasicTreeNode* kids[]);
   
-  extern void		printcover	ARGS((BasicTreeNode*, int, int));
-  extern void		printtree	ARGS((BasicTreeNode*));
-  extern int		treecost	ARGS((BasicTreeNode*, int, int));
-  extern void		printMatches	ARGS((BasicTreeNode*));
-
-}
-/* end extern "C" */
-
-
-/*CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC*/
-
-
-#ifdef __cplusplus
+extern void		printcover	(BasicTreeNode*, int, int);
+extern void		printtree	(BasicTreeNode*);
+extern int		treecost	(BasicTreeNode*, int, int);
+extern void		printMatches	(BasicTreeNode*);
 
 //************************** System Include Files **************************/
 
@@ -333,7 +306,5 @@ private:
 };
 
 //---------------------------------------------------------------------------
-
-#endif	/* #ifdef __cplusplus */
 
 #endif  /* #ifndef INSTRFOREST_H */

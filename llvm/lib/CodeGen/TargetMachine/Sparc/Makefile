@@ -14,6 +14,6 @@ include $(LEVEL)/Makefile.common
 
 BURG = burg -I
 
-%.burm.c: %.burg
+%.burm.cpp: %.burg
 	$(BURG) -o $@ $<
 
