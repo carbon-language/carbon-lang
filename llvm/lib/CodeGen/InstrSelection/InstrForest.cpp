@@ -227,8 +227,7 @@ InstrForest::buildTreesForMethod(Method *method)
        ++instrIter)
     {
       Instruction *instr = *instrIter;
-      if (! instr->isPHINode())
-	(void) this->buildTreeForInstruction(instr);
+      (void) this->buildTreeForInstruction(instr);
     } 
 }
 
@@ -291,15 +290,13 @@ InstrForest::buildTreeForInstruction(Instruction* instr)
   this->noteTreeNodeForInstr(instr, treeNode);
   
   // If the instruction has more than 2 instruction operands,
-  // then we will not add any children.  This assumes that instructions
-  // like 'call' that have more than 2 instruction operands do not
-  // ever get combined with the instructions that compute the operands. 
-  // Note that we only count operands of type instruction and not other
-  // values such as branch labels for a branch or switch instruction.
+  // then we need to create artificial list nodes to hold them.
+  // (Note that we only not count operands that get tree nodes, and not
+  // others such as branch labels for a branch or switch instruction.)
   //
   // To do this efficiently, we'll walk all operands, build treeNodes
-  // for all instruction operands and save them in an array, and then
-  // insert children at the end if there are not more than 2.
+  // for all appropriate operands and save them in an array.  We then
+  // insert children at the end, creating list nodes where needed.
   // As a performance optimization, allocate a child array only
   // if a fixed array is too small.
   // 
@@ -314,11 +311,9 @@ InstrForest::buildTreeForInstruction(Instruction* instr)
   //
   // Walk the operands of the instruction
   // 
-  for (Instruction::op_iterator opIter = instr->op_begin();
-       opIter != instr->op_end();
-       ++opIter)
+  for (Instruction::op_iterator O=instr->op_begin(); O != instr->op_end(); ++O)
     {
-      Value* operand = *opIter;
+      Value* operand = *O;
       
       // Check if the operand is a data value, not an branch label, type,
       // method or module.  If the operand is an address type (i.e., label
@@ -331,18 +326,16 @@ InstrForest::buildTreeForInstruction(Instruction* instr)
 	  || operand->getValueType() == Value::MethodVal)
 	 && ! instr->isTerminator());
 	 
-      if (/* (*opIter) != NULL
-	     &&*/ includeAddressOperand
-		  || operand->getValueType() == Value::InstructionVal
-		  ||  operand->getValueType() == Value::ConstantVal
-		  ||  operand->getValueType() == Value::MethodArgumentVal)
+      if (   includeAddressOperand
+	  || operand->getValueType() == Value::InstructionVal
+	  || operand->getValueType() == Value::ConstantVal
+	  || operand->getValueType() == Value::MethodArgumentVal)
 	{// This operand is a data value
 	  
 	  // An instruction that computes the incoming value is added as a
 	  // child of the current instruction if:
 	  //   the value has only a single use
-	  //   AND both instructions are in the same basic block
-	  //   AND the instruction is not a PHI
+	  //   AND both instructions are in the same basic block.
 	  // 
 	  // (Note that if the value has only a single use (viz., `instr'),
 	  //  the def of the value can be safely moved just before instr
@@ -354,8 +347,7 @@ InstrForest::buildTreeForInstruction(Instruction* instr)
 	  InstrTreeNode* opTreeNode;
 	  if (operand->getValueType() == Value::InstructionVal
 	      && operand->use_size() == 1
-	      && ((Instruction*)operand)->getParent() == instr->getParent()
-	      && ! ((Instruction*)operand)->isPHINode())
+	      && ((Instruction*)operand)->getParent() == instr->getParent())
 	    {
 	      // Recursively create a treeNode for it.
 	      opTreeNode =this->buildTreeForInstruction((Instruction*)operand);
@@ -391,7 +383,8 @@ InstrForest::buildTreeForInstruction(Instruction* instr)
   if (numChildren > 2)
     {
       unsigned instrOpcode = treeNode->getInstruction()->getOpcode();
-      assert(instrOpcode == Instruction::Call ||
+      assert(instrOpcode == Instruction::PHINode ||
+	     instrOpcode == Instruction::Call ||
 	     instrOpcode == Instruction::Load ||
 	     instrOpcode == Instruction::Store ||
 	     instrOpcode == Instruction::GetElementPtr);
