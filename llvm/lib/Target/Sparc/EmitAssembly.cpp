@@ -400,7 +400,7 @@ SparcAsmPrinter::printConstant(const ConstPoolVal* CV, string valID)
   
   Out << "\t"
       << TypeToDataDirective(CV->getType()) << "\t"
-      << CV->getStrValue(false) << endl;
+      << CV->getStrValue(true) << endl;
   
   Out << "\t.type" << "\t" << valID << ",#object" << endl;
   Out << "\t.size" << "\t" << valID << ","
