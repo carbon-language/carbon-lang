@@ -130,6 +130,7 @@ namespace {
     Instruction *visitAllocationInst(AllocationInst &AI);
     Instruction *visitFreeInst(FreeInst &FI);
     Instruction *visitLoadInst(LoadInst &LI);
+    Instruction *visitStoreInst(StoreInst &SI);
     Instruction *visitBranchInst(BranchInst &BI);
     Instruction *visitSwitchInst(SwitchInst &SI);
 
@@ -4804,6 +4805,42 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   return 0;
 }
 
+Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
+  Value *Val = SI.getOperand(0);
+  Value *Ptr = SI.getOperand(1);
+
+  if (isa<UndefValue>(Ptr)) {     // store X, undef -> noop (even if volatile)
+    removeFromWorkList(&SI);
+    SI.eraseFromParent();
+    ++NumCombined;
+    return 0;
+  }
+
+  if (SI.isVolatile()) return 0;  // Don't hack volatile loads.
+
+  // store X, null    -> turns into 'unreachable' in SimplifyCFG
+  if (isa<ConstantPointerNull>(Ptr)) {
+    if (!isa<UndefValue>(Val)) {
+      SI.setOperand(0, UndefValue::get(Val->getType()));
+      if (Instruction *U = dyn_cast<Instruction>(Val))
+        WorkList.push_back(U);  // Dropped a use.
+      ++NumCombined;
+    }
+    return 0;  // Do not modify these!
+  }
+
+  // store undef, Ptr -> noop
+  if (isa<UndefValue>(Val)) {
+    removeFromWorkList(&SI);
+    SI.eraseFromParent();
+    ++NumCombined;
+    return 0;
+  }
+
+  return 0;
+}
+
+
 Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
   // Change br (not X), label True, label False to: br X, label False, True
   Value *X;
@@ -5039,7 +5076,7 @@ bool InstCombiner::runOnFunction(Function &F) {
           // Instructions may end up in the worklist more than once.  Erase all
           // occurrances of this instruction.
           removeFromWorkList(I);
-          I->getParent()->getInstList().erase(I);
+          I->eraseFromParent();
         } else {
           WorkList.push_back(Result);
           AddUsersToWorkList(*Result);
