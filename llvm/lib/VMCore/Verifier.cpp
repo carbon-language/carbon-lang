@@ -131,7 +131,7 @@ namespace {  // Anonymous namespace for class
     void visitPHINode(PHINode &PN);
     void visitBinaryOperator(BinaryOperator &B);
     void visitShiftInst(ShiftInst &SI);
-    void visitVarArgInst(VarArgInst &VAI);
+    void visitVarArgInst(VarArgInst &VAI) { visitInstruction(VAI); }
     void visitCallInst(CallInst &CI);
     void visitGetElementPtrInst(GetElementPtrInst &GEP);
     void visitLoadInst(LoadInst &LI);
@@ -409,13 +409,6 @@ void Verifier::visitShiftInst(ShiftInst &SI) {
   visitInstruction(SI);
 }
 
-void Verifier::visitVarArgInst(VarArgInst &VAI) {
-  Assert1(VAI.getParent()->getParent()->getFunctionType()->isVarArg(),
-          "va_arg instruction may only occur in function with variable args!",
-          &VAI);
-  visitInstruction(VAI);
-}
-
 void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   const Type *ElTy =
     GetElementPtrInst::getIndexedType(GEP.getOperand(0)->getType(),
@@ -519,9 +512,10 @@ void Verifier::visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI) {
 
   switch (ID) {
   case LLVMIntrinsic::va_start:
-    Assert1(isa<Argument>(CI.getOperand(2)),
-            "va_start second argument should be a function argument!", &CI);
-    NumArgs = 2;
+    Assert1(CI.getParent()->getParent()->getFunctionType()->isVarArg(),
+            "llvm.va_start intrinsic may only occur in function with variable"
+            " args!", &CI);
+    NumArgs = 1;
     break;
   case LLVMIntrinsic::va_end: NumArgs = 1; break;
   case LLVMIntrinsic::va_copy: NumArgs = 2; break;
