@@ -6,8 +6,7 @@
 //   * Assumes values are constant unless proven otherwise
 //   * Assumes BasicBlocks are dead unless proven otherwise
 //   * Proves values to be constant, and replaces them with constants
-//   * Proves conditional branches constant, and unconditionalizes them
-//   * Folds multiple identical constants in the constant pool together
+//   * Proves conditional branches to be unconditional
 //
 // Notice that:
 //   * This pass has a habit of making definitions be dead.  It is a good idea
@@ -40,7 +39,6 @@ class InstVal {
   enum { 
     undefined,           // This instruction has no known value
     constant,            // This instruction has a constant value
-    // Range,            // This instruction is known to fall within a range
     overdefined          // This instruction has an unknown value
   } LatticeValue;        // The current lattice position
   Constant *ConstantVal; // If Constant value, the current value
@@ -151,7 +149,10 @@ private:
       ValueState[CPV].markConstant(CPV);
     } else if (isa<Argument>(V)) {                // Arguments are overdefined
       ValueState[V].markOverdefined();
-    } 
+    } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+      // The address of a global is a constant...
+      ValueState[V].markConstant(ConstantPointerRef::get(GV));
+    }
     // All others are underdefined by default...
     return ValueState[V];
   }
@@ -184,7 +185,7 @@ private:
   // Instructions that cannot be folded away...
   void visitStoreInst     (Instruction &I) { /*returns void*/ }
   void visitLoadInst      (Instruction &I) { markOverdefined(&I); }
-  void visitGetElementPtrInst(Instruction &I) { markOverdefined(&I); } // FIXME
+  void visitGetElementPtrInst(GetElementPtrInst &I);
   void visitCallInst      (Instruction &I) { markOverdefined(&I); }
   void visitInvokeInst    (Instruction &I) { markOverdefined(&I); }
   void visitAllocationInst(Instruction &I) { markOverdefined(&I); }
@@ -515,4 +516,29 @@ void SCCP::visitBinaryOperator(Instruction &I) {
     else
       markOverdefined(&I);   // Don't know how to fold this instruction.  :(
   }
+}
+
+// Handle getelementptr instructions... if all operands are constants then we
+// can turn this into a getelementptr ConstantExpr.
+//
+void SCCP::visitGetElementPtrInst(GetElementPtrInst &I) {
+  std::vector<Constant*> Operands;
+  Operands.reserve(I.getNumOperands());
+
+  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
+    InstVal &State = getValueState(I.getOperand(i));
+    if (State.isUndefined())
+      return;  // Operands are not resolved yet...
+    else if (State.isOverdefined()) {
+      markOverdefined(&I);
+      return;
+    }
+    assert(State.isConstant() && "Unknown state!");
+    Operands.push_back(State.getConstant());
+  }
+
+  Constant *Ptr = Operands[0];
+  Operands.erase(Operands.begin());  // Erase the pointer from idx list...
+
+  markConstant(&I, ConstantExpr::getGetElementPtr(Ptr, Operands));  
 }
