@@ -323,7 +323,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
   DSScalarMap &MainSM = Graph.getScalarMap();
   ReachabilityCloner RC(*GlobalsGraph, Graph, DSGraph::StripAllocaBit);
 
-  // Clone everything reachable from globals in the "main" graph into the
+  // Clone everything reachable from globals in the function graph into the
   // globals graph.
   for (DSScalarMap::global_iterator I = MainSM.global_begin(),
          E = MainSM.global_end(); I != E; ++I) 
