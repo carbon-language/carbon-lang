@@ -13,7 +13,10 @@
 
 #include "SparcV8.h"
 #include "SparcV8RegisterInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Type.h"
+#include "Support/STLExtras.h"
 using namespace llvm;
 
 SparcV8RegisterInfo::SparcV8RegisterInfo()
@@ -60,18 +63,23 @@ SparcV8RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
   abort();
 }
 
-void SparcV8RegisterInfo::processFunctionBeforeFrameFinalized(
-    MachineFunction &MF) const {
-  abort();
-}
+void SparcV8RegisterInfo::
+processFunctionBeforeFrameFinalized(MachineFunction &MF) const {}
 
 void SparcV8RegisterInfo::emitPrologue(MachineFunction &MF) const {
-  abort();
+  MachineBasicBlock &MBB = MF.front();
+
+  // Eventually this should emit the correct save instruction based on the
+  // number of bytes in the frame.  For now we just hardcode it.
+  BuildMI(MBB, MBB.begin(), V8::SAVEi, 2, V8::SP).addImm(-122).addReg(V8::SP);
 }
 
 void SparcV8RegisterInfo::emitEpilogue(MachineFunction &MF,
                                        MachineBasicBlock &MBB) const {
-  abort();
+  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  assert(MBBI->getOpcode() == V8::JMPLi &&
+         "Can only put epilog before return instruction!");
+  BuildMI(MBB, MBBI, V8::RESTOREi, 2, V8::O0).addImm(0).addReg(V8::L7);
 }
 
 

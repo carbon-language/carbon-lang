@@ -26,6 +26,9 @@ let Namespace = "V8" in {
   def I0 : Ri<24>;    def I1 : Ri<25>;    def I2 : Ri<26>;    def I3 : Ri<27>;
   def I4 : Ri<28>;    def I5 : Ri<29>;    def I6 : Ri<30>;    def I7 : Ri<31>;
 
+  // Standard register aliases.
+  def SP : Ri<14>;    def FP : Ri<30>;
+
   // Floating-point registers?
   // ...
 }
