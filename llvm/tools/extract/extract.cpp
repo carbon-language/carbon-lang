@@ -13,8 +13,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
-#include "llvm/Transforms/ConstantMerge.h"
-#include "llvm/Transforms/CleanupGCCOutput.h"
+#include "llvm/Transforms/IPO.h"
 #include "Support/CommandLine.h"
 #include <memory>
 
@@ -31,8 +30,6 @@ ExtractFunc("func", cl::desc("Specify function to extract"), cl::init("main"),
 
 
 struct FunctionExtractorPass : public Pass {
-  const char *getPassName() const { return "Function Extractor"; }
-
   bool run(Module &M) {
     // Mark all global variables to be internal
     for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
@@ -90,6 +87,9 @@ struct FunctionExtractorPass : public Pass {
 };
 
 
+static RegisterPass<FunctionExtractorPass> X("extract", "Function Extractor");
+
+
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm extractor\n");
 
@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
   Passes.add(new FunctionExtractorPass());
   Passes.add(createGlobalDCEPass());              // Delete unreachable globals
   Passes.add(createConstantMergePass());          // Merge dup global constants
-  Passes.add(createCleanupGCCOutputPass());       // Fix gccisms
+  Passes.add(createDeadTypeEliminationPass());    // Remove dead types...
   Passes.add(new WriteBytecodePass(&std::cout));  // Write bytecode to file...
 
   Passes.run(*M.get());
