@@ -12,18 +12,16 @@
 #include "llvm/Pass.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Intrinsics.h"
-#include "llvm/SlotCalculator.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/Mangler.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-#include <set>
 #include <sstream>
-#include "llvm/Support/Mangler.h"
 
 namespace {
   class CWriter : public Pass, public InstVisitor<CWriter> {
