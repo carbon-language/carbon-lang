@@ -6,9 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if 1
-#include "llvm/Pass.h"
-#else
+#if 0
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Analysis/DataStructure.h"
@@ -1749,7 +1747,6 @@ bool PoolAllocate::run(Module &M) {
   DS = 0;
   return false;
 }
-#endif
 
 // createPoolAllocatePass - Global function to access the functionality of this
 // pass...
@@ -1759,3 +1756,4 @@ Pass *createPoolAllocatePass() {
   return 0;
   //return new PoolAllocate(); 
 }
+#endif
