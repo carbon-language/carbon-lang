@@ -44,8 +44,16 @@ namespace ISD {
   /// SelectionDAG.
   ///
   enum NodeType {
-    // Leaf nodes
-    EntryToken, Constant, ConstantFP, GlobalAddress, FrameIndex, ConstantPool,
+    // EntryToken - This is the marker used to indicate the start of the region.
+    EntryToken,
+
+    // Token factor - This node is takes multiple tokens as input and produces a
+    // single token result.  This is used to represent the fact that the operand
+    // operators are independent of each other.
+    TokenFactor,
+    
+    // Various leaf nodes.
+    Constant, ConstantFP, GlobalAddress, FrameIndex, ConstantPool,
     BasicBlock, ExternalSymbol,
 
     // CopyToReg - This node has chain and child nodes, and an associated

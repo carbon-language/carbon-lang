@@ -21,6 +21,7 @@
 namespace llvm {
   class SelectionDAG;
   class SelectionDAGLowering;
+  class SDOperand;
   class SSARegMap;
   class MachineBasicBlock;
   class MachineFunction;
@@ -49,8 +50,8 @@ public:
 
   virtual void InstructionSelectBasicBlock(SelectionDAG &SD) = 0;
   
-  void CopyValueToVirtualRegister(SelectionDAGLowering &SDL,
-                                  Value *V, unsigned Reg);
+  SDOperand CopyValueToVirtualRegister(SelectionDAGLowering &SDL,
+                                       Value *V, unsigned Reg);
   void SelectBasicBlock(BasicBlock *BB, MachineFunction &MF,
                         FunctionLoweringInfo &FuncInfo);
   
