@@ -2324,11 +2324,21 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
   static const unsigned MOVrrTab[] = {X86::MOV8rr, X86::MOV16rr, X86::MOV32rr};
   static const unsigned MOVriTab[] = {X86::MOV8ri, X86::MOV16ri, X86::MOV32ri};
   static const unsigned ADDrrTab[] = {X86::ADD8rr, X86::ADD16rr, X86::ADD32rr};
+  static const unsigned NEGrTab[]  = {X86::NEG8r , X86::NEG16r , X86::NEG32r };
 
   unsigned Class = getClass(DestTy);
+  unsigned TmpReg;
 
   // Handle special cases here.
   switch (ConstRHS) {
+  case -2:
+    TmpReg = makeAnotherReg(DestTy);
+    BuildMI(*MBB, IP, NEGrTab[Class], 1, TmpReg).addReg(op0Reg);
+    BuildMI(*MBB, IP, ADDrrTab[Class], 1,DestReg).addReg(TmpReg).addReg(TmpReg);
+    return;
+  case -1:
+    BuildMI(*MBB, IP, NEGrTab[Class], 1, DestReg).addReg(op0Reg);
+    return;
   case 0:
     BuildMI(*MBB, IP, MOVriTab[Class], 1, DestReg).addImm(0);
     return;
@@ -2342,8 +2352,18 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
   case 5:
   case 9:
     if (Class == cInt) {
-      addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, DestReg),
+      addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, TmpReg),
                      op0Reg, ConstRHS-1, op0Reg, 0);
+      return;
+    }
+  case -3:
+  case -5:
+  case -9:
+    if (Class == cInt) {
+      TmpReg = makeAnotherReg(DestTy);
+      addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, TmpReg),
+                     op0Reg, -ConstRHS-1, op0Reg, 0);
+      BuildMI(*MBB, IP, NEGrTab[Class], 1, DestReg).addReg(TmpReg);
       return;
     }
   }
@@ -2353,13 +2373,31 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
     switch (Class) {
     default: assert(0 && "Unknown class for this function!");
     case cByte:
-      BuildMI(*MBB, IP, X86::SHL32ri,2, DestReg).addReg(op0Reg).addImm(Shift-1);
+      BuildMI(*MBB, IP, X86::SHL8ri,2, DestReg).addReg(op0Reg).addImm(Shift-1);
       return;
     case cShort:
-      BuildMI(*MBB, IP, X86::SHL32ri,2, DestReg).addReg(op0Reg).addImm(Shift-1);
+      BuildMI(*MBB, IP, X86::SHL16ri,2, DestReg).addReg(op0Reg).addImm(Shift-1);
       return;
     case cInt:
       BuildMI(*MBB, IP, X86::SHL32ri,2, DestReg).addReg(op0Reg).addImm(Shift-1);
+      return;
+    }
+  }
+
+  // If the element size is a negative power of 2, use a shift/neg to get it.
+  if (unsigned Shift = ExactLog2(-ConstRHS)) {
+    TmpReg = makeAnotherReg(DestTy);
+    BuildMI(*MBB, IP, NEGrTab[Class], 1, TmpReg).addReg(op0Reg);
+    switch (Class) {
+    default: assert(0 && "Unknown class for this function!");
+    case cByte:
+      BuildMI(*MBB, IP, X86::SHL8ri,2, DestReg).addReg(TmpReg).addImm(Shift-1);
+      return;
+    case cShort:
+      BuildMI(*MBB, IP, X86::SHL16ri,2, DestReg).addReg(TmpReg).addImm(Shift-1);
+      return;
+    case cInt:
+      BuildMI(*MBB, IP, X86::SHL32ri,2, DestReg).addReg(TmpReg).addImm(Shift-1);
       return;
     }
   }
@@ -2373,7 +2411,7 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
   }
 
   // Most general case, emit a normal multiply...
-  unsigned TmpReg = makeAnotherReg(DestTy);
+  TmpReg = makeAnotherReg(DestTy);
   BuildMI(*MBB, IP, MOVriTab[Class], 1, TmpReg).addImm(ConstRHS);
   
   // Emit a MUL to multiply the register holding the index by
