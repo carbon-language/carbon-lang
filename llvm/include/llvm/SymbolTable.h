@@ -79,8 +79,7 @@ public:
 /// @{
 public:
 
-  inline SymbolTable() 
-    : pmap(), tmap(), InternallyInconsistent(false), LastUnique(0) {}
+  SymbolTable() : LastUnique(0) {}
   ~SymbolTable();
 
 /// @}
@@ -321,15 +320,6 @@ private:
   /// because the elements of the map are name/Type pairs not 
   /// name/Value pairs and Type is not a Value.
   TypeMap tmap;
-
-  /// There are times when the symbol table is internally inconsistent with 
-  /// the rest of the program.  In this one case, a value exists with a Name, 
-  /// and it's not in the symbol table.  When we call V->setName(""), it 
-  /// tries to remove itself from the symbol table and dies.  We know this 
-  /// is happening, and so if the flag InternallyInconsistent is set, 
-  /// removal from the symbol table is a noop.
-  /// @brief Indicator of symbol table internal inconsistency.
-  bool InternallyInconsistent;
 
   /// This value is used to retain the last unique value used
   /// by getUniqueName to generate unique names.
