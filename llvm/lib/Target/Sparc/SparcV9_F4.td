@@ -14,14 +14,12 @@ class F4 : InstV9 {
 // F4_rs1 - Common class of instructions that use an rs1 field
 class F4_rs1 : F4 {
   bits<5> rs1;
-  //set Inst{29-25} = dontcare;
   set Inst{18-14} = rs1;
 }
 
 // F4_rs1rs2 - Common class of instructions that have rs1 and rs2 fields
 class F4_rs1rs2 : F4_rs1 {
   bits<5> rs2;
-  //set Inst{12-5} = dontcare;
   set Inst{4-0} = rs2;
 }
 
@@ -64,7 +62,7 @@ class F4_1<bits<2> opVal, bits<6> op3Val, string name> : F4_rs1rs2rd {
   set Name = name;
   set Inst{13} = 0; // i bit
   set Inst{12-11} = cc;
-  //set Inst{10-5} = dontcare;
+  set Inst{10-5} = 0; // don't care
 }
 
 class F4_2<bits<2> opVal, bits<6> op3Val, string name> : F4_rs1simm11rd {
@@ -88,7 +86,7 @@ class F4_3<bits<2> opVal, bits<6> op3Val, bits<4> condVal,
   set Name = name;
   set Inst{29-25} = rd;
   set Inst{13} = 0; // i bit
-  //set Inst{10-5} = dontcare;
+  set Inst{10-5} = 0; // don't care
   set Inst{4-0} = rs2;
 }
 
