@@ -248,7 +248,7 @@ let isReturn = 1, isTerminator = 1 in
 def JMP : MForm< 0x1A, (ops GPRC:$RD, GPRC:$RS), "jmp $RD,($RS),0">; //Jump
 let isCall = 1,
     Defs = [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19,
-            R20, R21, R22, R23, R24, R25, R26, R27, R29,
+            R20, R21, R22, R23, R24, R25, R27, R29,
             F0, F1,
             F10, F11, F12, F13, F14, F15, F16, F17, F18, F19,
             F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30],
