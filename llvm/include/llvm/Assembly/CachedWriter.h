@@ -34,7 +34,7 @@ class CachedWriter {
   AssemblyWriter *AW;
   SlotMachine *SC;
   bool SymbolicTypes;
-  std::ostream *Out;
+  std::ostream &Out;
 
 public:
   enum TypeWriter {
@@ -43,9 +43,9 @@ public:
   };
 
   CachedWriter(std::ostream &O = std::cout)
-    : AW(0), SC(0), SymbolicTypes(false), Out(&O) { }
+    : AW(0), SC(0), SymbolicTypes(false), Out(O) { }
   CachedWriter(const Module *M, std::ostream &O = std::cout)
-    : AW(0), SC(0), SymbolicTypes(false), Out(&O) {
+    : AW(0), SC(0), SymbolicTypes(false), Out(O) {
     setModule(M);
   }
   ~CachedWriter();
@@ -63,11 +63,11 @@ public:
   inline CachedWriter &operator<<(const PointerType *X);
 
   inline CachedWriter &operator<<(std::ostream &(&Manip)(std::ostream &)) {
-    *Out << Manip; return *this;
+    Out << Manip; return *this;
   }
 
   inline CachedWriter& operator<<(const char *X) {
-    *Out << X;
+    Out << X;
     return *this;
   }
 
@@ -75,9 +75,6 @@ public:
     SymbolicTypes = (tw == SymTypeOn);
     return *this;
   }
-
-  inline std::ostream& getStream() { return *Out; }
-  void setStream(std::ostream &os);
 };
 
 } // End llvm namespace
