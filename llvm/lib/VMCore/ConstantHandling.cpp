@@ -150,6 +150,22 @@ Constant *ConstantFoldGetElementPtr(const Constant *C,
   // If C is null and all idx's are null, return null of the right type.
 
   // FIXME: Implement folding of GEP constant exprs the same as instcombine does
+
+  // Implement folding of:
+  //    int* getelementptr ([2 x int]* cast ([3 x int]* %X to [2 x int]*),
+  //                        long 0, long 0)
+  // To: int* getelementptr ([3 x int]* %X, long 0, long 0)
+  //
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+    if (CE->getOpcode() == Instruction::Cast && IdxList.size() > 1)
+      if (const PointerType *SPT = 
+          dyn_cast<PointerType>(CE->getOperand(0)->getType()))
+        if (const ArrayType *SAT = dyn_cast<ArrayType>(SPT->getElementType()))
+          if (const ArrayType *CAT =
+              dyn_cast<ArrayType>(cast<PointerType>(C->getType())->getElementType()))
+            if (CAT->getElementType() == SAT->getElementType())
+              return ConstantExpr::getGetElementPtr(
+                      (Constant*)cast<Constant>(CE->getOperand(0)), IdxList);
   return 0;
 }
 
