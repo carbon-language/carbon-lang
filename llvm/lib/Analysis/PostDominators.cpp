@@ -31,6 +31,20 @@ bool DominatorSet::runOnFunction(Function *F) {
   return false;
 }
 
+// dominates - Return true if A dominates B.  This performs the special checks
+// neccesary if A and B are in the same basic block.
+//
+bool DominatorSet::dominates(Instruction *A, Instruction *B) const {
+  BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
+  if (BBA != BBB) return dominates(BBA, BBB);
+  
+  // Loop through the basic block until we find A or B.
+  BasicBlock::iterator I = BBA->begin();
+  for (; *I != A && *I != B; ++I) /*empty*/;
+  
+  // A dominates B if it is found first in the basic block...
+  return *I == A;
+}
 
 // calcForwardDominatorSet - This method calculates the forward dominator sets
 // for the specified function.

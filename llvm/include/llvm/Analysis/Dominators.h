@@ -20,6 +20,7 @@
 
 #include "llvm/Pass.h"
 #include <set>
+class Instruction;
 
 //===----------------------------------------------------------------------===//
 //
@@ -94,6 +95,12 @@ public:
   inline bool dominates(BasicBlock *A, BasicBlock *B) const {
     return getDominators(B).count(A) != 0;
   }
+
+  // dominates - Return true if A dominates B.  This performs the special checks
+  // neccesary if A and B are in the same basic block.
+  //
+  bool dominates(Instruction *A, Instruction *B) const;
+
 
   // getAnalysisUsage - This obviously provides a dominator set, but it also
   // uses the UnifyFunctionExitNode pass if building post-dominators
