@@ -1590,6 +1590,14 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
 
+  case ISD::BUILD_PAIR:
+    // Legalize both operands.  FIXME: in the future we should handle the case
+    // where the two elements are not legal.
+    assert(isTypeLegal(NVT) && "Cannot expand this multiple times yet!");
+    Lo = LegalizeOp(Node->getOperand(0));
+    Hi = LegalizeOp(Node->getOperand(1));
+    break;
+
   case ISD::LOAD: {
     SDOperand Ch = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
     SDOperand Ptr = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
