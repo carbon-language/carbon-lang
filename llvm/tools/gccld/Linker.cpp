@@ -69,7 +69,7 @@ static inline bool FileExists(const std::string &FN) {
 //  TRUE  - The file is an archive.
 //  FALSE - The file is not an archive.
 //
-static inline bool IsArchive (const std::string &filename)
+static inline bool IsArchive(const std::string &filename)
 {
   std::string ArchiveMagic("!<arch>\012");
   char buf[1 + ArchiveMagic.size()];
@@ -98,10 +98,10 @@ static inline bool IsArchive (const std::string &filename)
 //  If the file is not found, an empty string is returned.
 //
 static std::string
-FindLib (const std::string & Filename, const std::vector<std::string> & Paths)
+FindLib(const std::string &Filename, const std::vector<std::string> &Paths)
 {
   // Determine if the pathname can be found as it stands.
-  if (FileExists (Filename))
+  if (FileExists(Filename))
     return Filename;
 
   // If that doesn't work, convert the name into a library name.
@@ -112,13 +112,13 @@ FindLib (const std::string & Filename, const std::vector<std::string> & Paths)
   for (unsigned Index = 0; Index != Paths.size(); ++Index) {
     std::string Directory = Paths[Index] + "/";
 
-    if (FileExists (Directory + LibName + ".bc"))
+    if (FileExists(Directory + LibName + ".bc"))
       return Directory + LibName + ".bc";
 
-    if (FileExists (Directory + LibName + ".so"))
+    if (FileExists(Directory + LibName + ".so"))
       return Directory + LibName + ".so";
 
-    if (FileExists (Directory + LibName + ".a"))
+    if (FileExists(Directory + LibName + ".a"))
       return Directory + LibName + ".a";
   }
 
@@ -128,7 +128,7 @@ FindLib (const std::string & Filename, const std::vector<std::string> & Paths)
     return std::string();
 
   LibName = std::string(SearchPath) + "/" + LibName;
-  if (FileExists (LibName))
+  if (FileExists(LibName))
     return LibName;
 
   return std::string();
@@ -151,7 +151,7 @@ FindLib (const std::string & Filename, const std::vector<std::string> & Paths)
 //  None.
 //
 void
-GetAllDefinedSymbols (Module *M, std::set<std::string> &DefinedSymbols)
+GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols)
 {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
@@ -228,7 +228,7 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols)
 //  If an error occurs, the pointer is 0.
 //
 std::auto_ptr<Module>
-LoadObject (const std::string & FN, std::string &OutErrorMessage) {
+LoadObject(const std::string & FN, std::string &OutErrorMessage) {
   std::string ErrorMessage;
   Module *Result = ParseBytecodeFile(FN, &ErrorMessage);
   if (Result) return std::auto_ptr<Module>(Result);
@@ -256,11 +256,10 @@ LoadObject (const std::string & FN, std::string &OutErrorMessage) {
 //  TRUE  - An error occurred.
 //  FALSE - No errors.
 //
-static bool
-LinkInArchive (Module *M,
-               const std::string &Filename,
-               std::string &ErrorMessage,
-               bool Verbose)
+static bool LinkInArchive(Module *M,
+                          const std::string &Filename,
+                          std::string &ErrorMessage,
+                          bool Verbose)
 {
   //
   // Find all of the symbols currently undefined in the bytecode program.
@@ -268,7 +267,7 @@ LinkInArchive (Module *M,
   // no reason to link in any archive files.
   //
   std::set<std::string> UndefinedSymbols;
-  GetAllUndefinedSymbols (M, UndefinedSymbols);
+  GetAllUndefinedSymbols(M, UndefinedSymbols);
   if (UndefinedSymbols.empty()) {
     if (Verbose) std::cerr << "  No symbols undefined, don't link library!\n";
     return false;  // No need to link anything in!
@@ -279,14 +278,14 @@ LinkInArchive (Module *M,
   //
   if (Verbose) std::cerr << "  Loading '" << Filename << "'\n";
   std::vector<Module*> Objects;
-  if (ReadArchiveFile (Filename, Objects, &ErrorMessage))
+  if (ReadArchiveFile(Filename, Objects, &ErrorMessage))
     return true;
 
   //
   // Figure out which symbols are defined by all of the modules in the archive.
   //
   std::vector<std::set<std::string> > DefinedSymbols;
-  DefinedSymbols.resize (Objects.size());
+  DefinedSymbols.resize(Objects.size());
   for (unsigned i = 0; i != Objects.size(); ++i) {
     GetAllDefinedSymbols(Objects[i], DefinedSymbols[i]);
   }
@@ -354,16 +353,15 @@ LinkInArchive (Module *M,
 //  TRUE  - An error occurred.
 //  FALSE - No errors.
 //
-static bool
-LinkInFile (Module *HeadModule,
-            const std::string &Filename,
-            std::string &ErrorMessage,
-            bool Verbose)
+static bool LinkInFile(Module *HeadModule,
+                       const std::string &Filename,
+                       std::string &ErrorMessage,
+                       bool Verbose)
 {
   std::auto_ptr<Module> M(LoadObject(Filename, ErrorMessage));
   if (M.get() == 0) return true;
   if (Verbose) std::cerr << "Linking in '" << Filename << "'\n";
-  return (LinkModules (HeadModule, M.get(), &ErrorMessage));
+  return LinkModules(HeadModule, M.get(), &ErrorMessage);
 }
 
 //
@@ -407,7 +405,7 @@ bool LinkFiles(const char *progname,
 
   for (unsigned i = 1; i < Files.size(); ++i) {
     // Determine where this file lives.
-    if (FileExists (Files[i])) {
+    if (FileExists(Files[i])) {
       Pathname = Files[i];
     } else {
       if (SearchPath == NULL) {
@@ -416,32 +414,30 @@ bool LinkFiles(const char *progname,
       }
 
       Pathname = std::string(SearchPath)+"/"+Files[i];
-      if (!FileExists (Pathname)) {
+      if (!FileExists(Pathname)) {
         std::cerr << "Cannot find " << Files[i];
         return true;
       }
     }
 
-    //
     // A user may specify an ar archive without -l, perhaps because it
     // is not installed as a library. Detect that and link the library.
-    //
     if (IsArchive(Pathname)) {
       if (Verbose)
         std::cerr << "Linking archive '" << Files[i] << "'\n";
 
-      if (LinkInArchive (HeadModule, Pathname, ErrorMessage, Verbose)) {
+      if (LinkInArchive(HeadModule, Pathname, ErrorMessage, Verbose)) {
         PrintAndReturn(progname, ErrorMessage,
-                              ": Error linking in '" + Files[i] + "'");
+                       ": Error linking in '" + Files[i] + "'");
         return true;
       }
     } else {
       if (Verbose)
         std::cerr << "Linking file '" << Files[i] << "'\n";
 
-      if (LinkInFile (HeadModule, Pathname, ErrorMessage, Verbose)) {
+      if (LinkInFile(HeadModule, Pathname, ErrorMessage, Verbose)) {
         PrintAndReturn(progname, ErrorMessage,
-                              ": error linking in '" + Files[i] + "'");
+                       ": error linking in '" + Files[i] + "'");
         return true;
       }
     }
@@ -472,12 +468,12 @@ bool LinkFiles(const char *progname,
 //  FALSE - No error.
 //  TRUE  - Error.
 //
-bool LinkLibraries (const char *progname,
-                    Module *HeadModule,
-                    const std::vector<std::string> &Libraries,
-                    const std::vector<std::string> &LibPaths,
-                    bool Verbose,
-                    bool Native)
+bool LinkLibraries(const char *progname,
+                   Module *HeadModule,
+                   const std::vector<std::string> &Libraries,
+                   const std::vector<std::string> &LibPaths,
+                   bool Verbose,
+                   bool Native)
 {
   // String in which to receive error messages.
   std::string ErrorMessage;
@@ -495,10 +491,8 @@ bool LinkLibraries (const char *progname,
       }
     }
 
-    //
     // A user may specify an ar archive without -l, perhaps because it
     // is not installed as a library. Detect that and link the library.
-    //
     if (IsArchive(Pathname)) {
       if (Verbose)
         std::cerr << "Linking archive '" << Libraries[i] << "'\n";
