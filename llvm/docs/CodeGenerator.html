@@ -899,8 +899,7 @@ implementations.</p>
 
 <div class="doc_text">
 
-<p>
-The x86 has a very, uhm, flexible, way of accessing memory.  It is capable of
+<p>The x86 has a very flexible way of accessing memory.  It is capable of
 forming memory addresses of the following expression directly in integer
 instructions (which use ModR/M addressing):</p>
 
@@ -908,9 +907,9 @@ instructions (which use ModR/M addressing):</p>
    Base+[1,2,4,8]*IndexReg+Disp32
 </pre>
 
-<p>Wow, that's crazy.  In order to represent this, LLVM tracks no less than 4
-operands for each memory operand of this form.  This means that the "load" form
-of 'mov' has the following "Operands" in this order:</p>
+<p>In order to represent this, LLVM tracks no less than 4 operands for each
+memory operand of this form.  This means that the "load" form of 'mov' has the
+following <tt>MachineOperand</tt>s in this order:</p>
 
 <pre>
 Index:        0     |    1        2       3           4
