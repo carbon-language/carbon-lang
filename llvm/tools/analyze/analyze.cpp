@@ -25,8 +25,7 @@ struct ModulePassPrinter : public Pass {
   ModulePassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
 
   virtual bool run(Module &M) {
-    std::cout << "Printing Analysis info for Pass "
-              << PassToPrint->getPassName() << ":\n";
+    std::cout << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
     getAnalysisID<Pass>(PassToPrint).print(std::cout, &M);
     
     // Get and print pass...
@@ -46,8 +45,8 @@ struct FunctionPassPrinter : public FunctionPass {
   FunctionPassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
 
   virtual bool runOnFunction(Function &F) {
-    std::cout << "Printing Analysis info for function '" << F.getName()
-              << "': Pass " << PassToPrint->getPassName() << ":\n";
+    std::cout << "Printing analysis '" << PassToPrint->getPassName()
+              << "' for function '" << F.getName() << "':\n";
     getAnalysisID<Pass>(PassToPrint).print(std::cout, F.getParent());
 
     // Get and print pass...
