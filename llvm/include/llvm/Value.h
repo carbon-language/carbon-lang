@@ -110,6 +110,8 @@ public:
   inline use_const_iterator use_begin() const { return Uses.begin(); }
   inline use_iterator       use_end()         { return Uses.end();   }
   inline use_const_iterator use_end()   const { return Uses.end();   }
+  inline User              *use_back()        { return Uses.back();  }
+  inline const User        *use_back()  const { return Uses.back();  }
 
   inline void use_push_back(User *I)   { Uses.push_back(I); }
   User *use_remove(use_iterator &I);
