@@ -176,16 +176,15 @@ int llvm::GenerateCFile(const std::string &OutputFile,
                         const std::string &InputFile,
                         const std::string &llc, char ** const envp) {
   // Run LLC to convert the bytecode file into C.
-  const char *cmd[8];
+  const char *cmd[7];
 
   cmd[0] = llc.c_str();
   cmd[1] = "-march=c";
   cmd[2] = "-f";
-  cmd[3] = "-fno-strict-aliasing";
-  cmd[4] = "-o";
-  cmd[5] = OutputFile.c_str();
-  cmd[6] = InputFile.c_str();
-  cmd[7] = 0;
+  cmd[3] = "-o";
+  cmd[4] = OutputFile.c_str();
+  cmd[5] = InputFile.c_str();
+  cmd[6] = 0;
   return ExecWait(cmd, envp);
 }
 
