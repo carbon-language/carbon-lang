@@ -138,6 +138,18 @@ inline BinaryOp_match<LHS, RHS, Instruction::Xor> m_Xor(const LHS &L,
   return BinaryOp_match<LHS, RHS, Instruction::Xor>(L, R);
 }
 
+template<typename LHS, typename RHS>
+inline BinaryOp_match<LHS, RHS, Instruction::Shl> m_Shl(const LHS &L,
+                                                        const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::Shl>(L, R);
+}
+
+template<typename LHS, typename RHS>
+inline BinaryOp_match<LHS, RHS, Instruction::Shr> m_Shr(const LHS &L,
+                                                        const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::Shr>(L, R);
+}
+
 //===----------------------------------------------------------------------===//
 // Matchers for binary classes
 //
