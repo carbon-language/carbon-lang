@@ -1312,7 +1312,7 @@ Constant *BytecodeReader::ParseConstantValue(unsigned TypeID) {
     // Construct a ConstantExpr of the appropriate kind
     if (isExprNumArgs == 1) {           // All one-operand expressions
       if (Opcode != Instruction::Cast)
-        error("Only Cast instruction has one argument for ConstantExpr");
+        error("Only cast instruction has one argument for ConstantExpr");
 
       Constant* Result = ConstantExpr::getCast(ArgVec[0], getType(TypeID));
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
@@ -1568,6 +1568,12 @@ void BytecodeReader::ParseConstantPool(ValueTable &Tab,
       }
     }
   }
+
+  // After we have finished parsing the constant pool, we had better not have
+  // any dangling references left.
+  if (!ConstantFwdRefs.empty())
+    error("Unresolved constant references exist!");
+
   checkPastBlockEnd("Constant Pool");
   if (Handler) Handler->handleGlobalConstantsEnd();
 }
