@@ -1552,7 +1552,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
         unsigned CastElTySize = TD->getTypeSize(CastElTy);
         
         // If the allocation is for an even multiple of the cast type size
-        if (AllocElTySize % CastElTySize == 0) {
+        if (CastElTySize && (AllocElTySize % CastElTySize == 0)) {
           Value *Amt = ConstantUInt::get(Type::UIntTy, 
                                          AllocElTySize/CastElTySize);
           std::string Name = AI->getName(); AI->setName("");
