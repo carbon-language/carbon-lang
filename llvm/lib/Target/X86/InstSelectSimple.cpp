@@ -23,7 +23,6 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include <map>
-#include <iostream>
 
 using namespace MOTy;  // Get Use, Def, UseAndDef
 
