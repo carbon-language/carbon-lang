@@ -206,10 +206,7 @@ void V8Printer::emitConstantValueOnly(const Constant *CV) {
 void V8Printer::emitGlobalConstant(const Constant *CV) {  
   const TargetData &TD = TM.getTargetData();
 
-  if (CV->isNullValue()) {
-    O << "\t.zero\t " << TD.getTypeSize(CV->getType()) << "\n";      
-    return;
-  } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
+  if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     if (CVA->isString()) {
       O << "\t.ascii\t";
       printAsCString(O, CVA);
@@ -240,7 +237,7 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
 
       // Insert the field padding unless it's zero bytes...
       if (padSize)
-        O << "\t.zero\t " << padSize << "\n";      
+        O << "\t.skip\t " << padSize << "\n";      
     }
     assert(sizeSoFar == cvsLayout->StructSize &&
            "Layout of constant struct may be incorrect!");
