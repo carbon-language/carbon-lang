@@ -13,6 +13,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Value.h"
 #include "Support/Statistic.h"
+#include <alloca.h>
 
 namespace {
   Statistic<>
@@ -77,7 +78,9 @@ void JITResolver::CompilationCallback() {
   unsigned RetAddr = (unsigned)(intptr_t)__builtin_return_address(0);
   assert(StackPtr[1] == RetAddr &&
          "Could not find return address on the stack!");
-  bool isStub = ((unsigned char*)RetAddr)[0] == 0xCD;  // Interrupt marker?
+
+  // It's a stub if there is an interrupt marker after the call...
+  bool isStub = ((unsigned char*)(intptr_t)RetAddr)[0] == 0xCD;
 
   // FIXME FIXME FIXME FIXME: __builtin_frame_address doesn't work if frame
   // pointer elimination has been performed.  Having a variable sized alloca
@@ -97,20 +100,20 @@ void JITResolver::CompilationCallback() {
 #endif
 
   // Sanity check to make sure this really is a call instruction...
-  assert(((unsigned char*)RetAddr)[-1] == 0xE8 && "Not a call instr!");
+  assert(((unsigned char*)(intptr_t)RetAddr)[-1] == 0xE8 &&"Not a call instr!");
   
   unsigned NewVal = TheJITResolver->resolveFunctionReference(RetAddr);
 
   // Rewrite the call target... so that we don't fault every time we execute
   // the call.
-  *(unsigned*)RetAddr = NewVal-RetAddr-4;    
+  *(unsigned*)(intptr_t)RetAddr = NewVal-RetAddr-4;    
 
   if (isStub) {
     // If this is a stub, rewrite the call into an unconditional branch
     // instruction so that two return addresses are not pushed onto the stack
     // when the requested function finally gets called.  This also makes the
     // 0xCD byte (interrupt) dead, so the marker doesn't effect anything.
-    ((unsigned char*)RetAddr)[-1] = 0xE9;
+    ((unsigned char*)(intptr_t)RetAddr)[-1] = 0xE9;
   }
 
   // Change the return address to reexecute the call instruction...
@@ -195,7 +198,7 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
     unsigned Location = BasicBlockAddrs[BBRefs[i].first];
     unsigned Ref = BBRefs[i].second;
-    *(unsigned*)Ref = Location-Ref-4;
+    *(unsigned*)(intptr_t)Ref = Location-Ref-4;
   }
   BBRefs.clear();
   BasicBlockAddrs.clear();
