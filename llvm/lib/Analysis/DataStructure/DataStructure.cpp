@@ -1348,83 +1348,7 @@ void DSGraph::mergeInGraph(const DSCallSite &CS,
   TIME_REGION(X, "mergeInGraph");
 
   // If this is not a recursive call, clone the graph into this graph...
-  if (&Graph != this) {
-    // Clone the callee's graph into the current graph, keeping track of where
-    // scalars in the old graph _used_ to point, and of the new nodes matching
-    // nodes of the old graph.
-    ReachabilityCloner RC(*this, Graph, CloneFlags);
-    
-    // Map the return node pointer over.
-    if (!CS.getRetVal().isNull())
-      RC.merge(CS.getRetVal(), Args[0]);
-
-    // Map over all of the arguments.
-    for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i) {
-      if (i == Args.size()-1)
-        break;
-      
-      // Add the link from the argument scalar to the provided value.
-      RC.merge(CS.getPtrArg(i), Args[i+1]);
-    }
-    
-    // If requested, copy all of the calls.
-    if (!(CloneFlags & DontCloneCallNodes)) {
-      // Copy the function calls list.
-      for (fc_iterator I = Graph.fc_begin(), E = Graph.fc_end(); I != E; ++I)
-        FunctionCalls.push_back(DSCallSite(*I, RC));
-    }
-
-    // If the user has us copying aux calls (the normal case), set up a data
-    // structure to keep track of which ones we've copied over.
-    std::set<const DSCallSite*> CopiedAuxCall;
-    
-    // Clone over all globals that appear in the caller and callee graphs.
-    hash_set<GlobalVariable*> NonCopiedGlobals;
-    for (DSScalarMap::global_iterator GI = Graph.getScalarMap().global_begin(),
-           E = Graph.getScalarMap().global_end(); GI != E; ++GI)
-      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*GI))
-        if (ScalarMap.count(GV))
-          RC.merge(ScalarMap[GV], Graph.getNodeForValue(GV));
-        else
-          NonCopiedGlobals.insert(GV);
-    
-    // If the global does not appear in the callers graph we generally don't
-    // want to copy the node.  However, if there is a path from the node global
-    // node to a node that we did copy in the graph, we *must* copy it to
-    // maintain the connection information.  Every time we decide to include a
-    // new global, this might make other globals live, so we must iterate
-    // unfortunately.
-    bool MadeChange = true;
-    while (MadeChange) {
-      MadeChange = false;
-      for (hash_set<GlobalVariable*>::iterator I = NonCopiedGlobals.begin();
-           I != NonCopiedGlobals.end();) {
-        DSNode *GlobalNode = Graph.getNodeForValue(*I).getNode();
-        if (RC.hasClonedNode(GlobalNode)) {
-          // Already cloned it, remove from set.
-          NonCopiedGlobals.erase(I++);
-          MadeChange = true;
-        } else if (PathExistsToClonedNode(GlobalNode, RC)) {
-          RC.getClonedNH(Graph.getNodeForValue(*I));
-          NonCopiedGlobals.erase(I++);
-          MadeChange = true;
-        } else {
-          ++I;
-        }
-      }
-
-      // If requested, copy any aux calls that can reach copied nodes.
-      if (!(CloneFlags & DontCloneAuxCallNodes)) {
-        for (afc_iterator I = Graph.afc_begin(), E = Graph.afc_end(); I!=E; ++I)
-          if (CopiedAuxCall.insert(&*I).second &&
-              PathExistsToClonedNode(*I, RC)) {
-            AuxFunctionCalls.push_back(DSCallSite(*I, RC));
-            MadeChange = true;
-          }
-      }
-    }
-    
-  } else {
+  if (&Graph == this) {
     // Merge the return value with the return value of the context.
     Args[0].mergeWith(CS.getRetVal());
     
@@ -1436,7 +1360,57 @@ void DSGraph::mergeInGraph(const DSCallSite &CS,
       // Add the link from the argument scalar to the provided value.
       Args[i+1].mergeWith(CS.getPtrArg(i));
     }
+    return;
   }
+
+  // Clone the callee's graph into the current graph, keeping track of where
+  // scalars in the old graph _used_ to point, and of the new nodes matching
+  // nodes of the old graph.
+  ReachabilityCloner RC(*this, Graph, CloneFlags);
+    
+  // Map the return node pointer over.
+  if (!CS.getRetVal().isNull())
+    RC.merge(CS.getRetVal(), Args[0]);
+
+  // Map over all of the arguments.
+  for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i) {
+    if (i == Args.size()-1)
+      break;
+      
+    // Add the link from the argument scalar to the provided value.
+    RC.merge(CS.getPtrArg(i), Args[i+1]);
+  }
+    
+  // If requested, copy all of the calls.
+  if (!(CloneFlags & DontCloneCallNodes)) {
+    // Copy the function calls list.
+    for (fc_iterator I = Graph.fc_begin(), E = Graph.fc_end(); I != E; ++I)
+      FunctionCalls.push_back(DSCallSite(*I, RC));
+  }
+
+  // If the user has us copying aux calls (the normal case), set up a data
+  // structure to keep track of which ones we've copied over.
+  std::set<const DSCallSite*> CopiedAuxCall;
+    
+  // If the global does not appear in the callers graph we generally don't
+  // want to copy the node.  However, if there is a path from the node global
+  // node to a node that we did copy in the graph, we *must* copy it to
+  // maintain the connection information.  Every time we decide to include a
+  // new global, this might make other globals live, so we must iterate
+  // unfortunately.
+  bool MadeChange = true;
+  if (!(CloneFlags & DontCloneAuxCallNodes))
+    while (MadeChange) {
+      MadeChange = false;
+
+      // If requested, copy any aux calls that can reach copied nodes.
+      for (afc_iterator I = Graph.afc_begin(), E = Graph.afc_end(); I!=E; ++I)
+        if (CopiedAuxCall.insert(&*I).second &&
+            PathExistsToClonedNode(*I, RC)) {
+          AuxFunctionCalls.push_back(DSCallSite(*I, RC));
+          MadeChange = true;
+        }
+    }
 }
 
 
