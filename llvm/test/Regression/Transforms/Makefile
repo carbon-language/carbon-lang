@@ -22,6 +22,7 @@ DIRS  = ADCE \
 	ProfilePaths \
 	Reassociate \
 	SCCP \
+	ScalarRepl \
 	SimplifyCFG
 
 include $(LEVEL)/Makefile.common
