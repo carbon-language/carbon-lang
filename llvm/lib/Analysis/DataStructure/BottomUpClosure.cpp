@@ -205,7 +205,7 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
     }
 
     // Clean up the graph before we start inlining a bunch again...
-    SCCGraph->removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
+    SCCGraph->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
     // Now that we have one big happy family, resolve all of the call sites in
     // the graph...
