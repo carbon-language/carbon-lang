@@ -71,6 +71,12 @@ private:
 
   void markBlockAlive(BasicBlock *BB);
 
+
+  // dropReferencesOfDeadInstructionsInLiveBlock - Loop over all of the
+  // instructions in the specified basic block, dropping references on
+  // instructions that are dead according to LiveSet.
+  bool dropReferencesOfDeadInstructionsInLiveBlock(BasicBlock *BB);
+
   inline void markInstructionLive(Instruction *I) {
     if (LiveSet.count(I)) return;
     DEBUG(cerr << "Insn Live: " << I);
@@ -105,6 +111,32 @@ void ADCE::markBlockAlive(BasicBlock *BB) {
   
   // If this basic block is live, then the terminator must be as well!
   markTerminatorLive(BB);
+}
+
+// dropReferencesOfDeadInstructionsInLiveBlock - Loop over all of the
+// instructions in the specified basic block, dropping references on
+// instructions that are dead according to LiveSet.
+bool ADCE::dropReferencesOfDeadInstructionsInLiveBlock(BasicBlock *BB) {
+  bool Changed = false;
+  for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; )
+    if (!LiveSet.count(I)) {              // Is this instruction alive?
+      I->dropAllReferences();             // Nope, drop references... 
+      if (PHINode *PN = dyn_cast<PHINode>(&*I)) {
+        // We don't want to leave PHI nodes in the program that have
+        // #arguments != #predecessors, so we remove them now.
+        //
+        PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
+        
+        // Delete the instruction...
+        I = BB->getInstList().erase(I);
+        Changed = true;
+      } else {
+        ++I;
+      }
+    } else {
+      ++I;
+    }
+  return Changed;
 }
 
 
@@ -192,8 +224,17 @@ bool ADCE::doADCE() {
   //
   PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
 
-  // If there are some blocks dead...
-  if (AliveBlocks.size() != Func->size()) {
+
+  if (AliveBlocks.size() == Func->size()) {  // No dead blocks?
+    for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
+      // Loop over all of the instructions in the function, telling dead
+      // instructions to drop their references.  This is so that the next sweep
+      // over the program can safely delete dead instructions without other dead
+      // instructions still refering to them.
+      //
+      dropReferencesOfDeadInstructionsInLiveBlock(I);
+    
+  } else {                                   // If there are some blocks dead...
     // Insert a new entry node to eliminate the entry node as a special case.
     BasicBlock *NewEntry = new BasicBlock();
     NewEntry->getInstList().push_back(new BranchInst(&Func->front()));
@@ -284,23 +325,7 @@ bool ADCE::doADCE() {
         // sweep over the program can safely delete dead instructions without
         // other dead instructions still refering to them.
         //
-        for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; )
-          if (!LiveSet.count(I)) {              // Is this instruction alive?
-            I->dropAllReferences();             // Nope, drop references... 
-            if (PHINode *PN = dyn_cast<PHINode>(&*I)) {
-              // We don't want to leave PHI nodes in the program that have
-              // #arguments != #predecessors, so we remove them now.
-              //
-              PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
-
-              // Delete the instruction...
-              I = BB->getInstList().erase(I);
-            } else {
-              ++I;
-            }
-          } else {
-            ++I;
-          }
+        dropReferencesOfDeadInstructionsInLiveBlock(BB);
       }
   }
 
@@ -341,9 +366,9 @@ bool ADCE::doADCE() {
   // instructions from alive blocks.
   //
   for (Function::iterator BI = Func->begin(); BI != Func->end(); )
-    if (!AliveBlocks.count(BI))
+    if (!AliveBlocks.count(BI)) {                // Delete dead blocks...
       BI = Func->getBasicBlockList().erase(BI);
-    else {
+    } else {                                     // Scan alive blocks...
       for (BasicBlock::iterator II = BI->begin(); II != --BI->end(); )
         if (!LiveSet.count(II)) {             // Is this instruction alive?
           // Nope... remove the instruction from it's basic block...
