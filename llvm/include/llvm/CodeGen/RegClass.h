@@ -108,15 +108,8 @@ class RegClass {
   inline std::vector<bool> &getIsColorUsedArr() { return IsColorUsedArr; }
 
 
-  inline void printIGNodeList() const {
-    std::cerr << "IG Nodes for Register Class " << RegClassID << ":" << "\n";
-    IG.printIGNodeList(); 
-  }
-
-  inline void printIG() {  
-    std::cerr << "IG for Register Class " << RegClassID << ":" << "\n";
-    IG.printIG(); 
-  }
+  void printIGNodeList() const;
+  void printIG();
 };
 
 #endif
