@@ -56,7 +56,6 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createTailDuplicationPass());      // Simplify cfg by copying code
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createScalarReplAggregatesPass()); // Break up aggregate allocas
-  addPass(PM, createPromoteMemoryToRegister());  // Promote alloca's to regs
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
 
 
