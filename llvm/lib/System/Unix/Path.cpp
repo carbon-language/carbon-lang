@@ -377,8 +377,10 @@ Path::create_file() {
   if (!is_file()) return false; 
 
   // Create the file
-  if (0 != creat(path.c_str(), S_IRUSR | S_IWUSR))
+  int fd = ::creat(path.c_str(), S_IRUSR | S_IWUSR);
+  if (fd < 0)
     ThrowErrno(std::string(path.c_str()) + ": Can't create file");
+  ::close(fd);
 
   return true;
 }
