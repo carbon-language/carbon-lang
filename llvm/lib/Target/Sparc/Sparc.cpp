@@ -20,9 +20,7 @@
 #include "llvm/CodeGen/RegisterAllocation.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/Reoptimizer/Mapping/MappingInfo.h" 
-#include "llvm/Reoptimizer/Mapping/FInfo.h" 
 #include "Support/CommandLine.h"
-using std::cerr;
 
 static const unsigned ImplicitRegUseList[] = { 0 }; /* not used yet */
 // Build the MachineInstruction Description Array...
