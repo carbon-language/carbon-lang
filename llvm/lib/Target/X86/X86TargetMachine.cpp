@@ -27,6 +27,13 @@ using namespace llvm;
 
 X86VectorEnum llvm::X86Vector = NoSSE;
 
+/// X86TargetMachineModule - Note that this is used on hosts that cannot link
+/// in a library unless there are references into the library.  In particular,
+/// it seems that it is not possible to get things to work on Win32 without
+/// this.  Though it is unused, do not remove it.
+extern "C" int X86TargetMachineModule;
+int X86TargetMachineModule = 0;
+
 namespace {
   cl::opt<bool> NoSSAPeephole("disable-ssa-peephole", cl::init(true),
                         cl::desc("Disable the ssa-based peephole optimizer "
