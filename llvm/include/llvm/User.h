@@ -48,15 +48,15 @@ public:
   inline op_iterator       op_end()         { return Operands.end(); }
   inline op_const_iterator op_end()   const { return Operands.end(); }
 
-  // dropAllReferences() - This virtual function should be overridden to "let
-  // go" of all references that this user is maintaining.  This allows one to 
+  // dropAllReferences() - This function is in charge of "letting go" of all
+  // objects that this User refers to.  This allows one to
   // 'delete' a whole class at a time, even though there may be circular
   // references... first all references are dropped, and all use counts go to
   // zero.  Then everything is delete'd for real.  Note that no operations are
   // valid on an object that has "dropped all references", except operator 
   // delete.
   //
-  virtual void dropAllReferences() {
+  inline void dropAllReferences() {
     Operands.clear();
   }
 
