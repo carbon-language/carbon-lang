@@ -721,9 +721,8 @@ unsigned Constant::mutateReferences(Value *OldV, Value *NewV) {
     GlobalValue *OldGV = CPR->getValue();
 
     assert(OldGV == OldV && "Cannot mutate old value if I'm not using it!");
-
-    OldGV->getParent()->mutateConstantPointerRef(OldGV, NewGV);
     Operands[0] = NewGV;
+    OldGV->getParent()->mutateConstantPointerRef(OldGV, NewGV);
     return 1;
   } else {
     Constant *NewC = cast<Constant>(NewV);
