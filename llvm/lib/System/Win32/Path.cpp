@@ -23,6 +23,9 @@
 #include <fstream>
 #include <malloc.h>
 
+// We need to undo a macro defined in Windows.h, otherwise we won't compile:
+#undef CopyFile
+
 static void FlipBackSlashes(std::string& s) {
   for (size_t i = 0; i < s.size(); i++)
     if (s[i] == '\\')
@@ -574,13 +577,15 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
 
 void 
 sys::CopyFile(const sys::Path &Dest, const sys::Path &Src) {
-  if (!::CopyFile(Src.c_str(), Dest.c_str(), false))
+  // Can't use CopyFile macro defined in Windows.h because it would mess up the
+  // above line.  We use the expansion it would have in a non-UNICODE build.
+  if (!::CopyFileA(Src.c_str(), Dest.c_str(), false))
     ThrowError("Can't copy '" + Src.toString() + 
                "' to '" + Dest.toString() + "'");
 }
 
 void 
-Path::makeUnique( bool reuse_current ) {
+Path::makeUnique(bool reuse_current) {
   if (reuse_current && !exists())
     return; // File doesn't exist already, just use it!
 
