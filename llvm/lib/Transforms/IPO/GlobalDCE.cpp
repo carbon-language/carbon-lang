@@ -26,7 +26,6 @@ using namespace llvm;
 namespace {
   Statistic<> NumFunctions("globaldce","Number of functions removed");
   Statistic<> NumVariables("globaldce","Number of global variables removed");
-  Statistic<> NumGVs("globaldce", "Number of global values removed");
 
   struct GlobalDCE : public Pass {
     // run - Do the GlobalDCE pass on the specified module, optionally updating
@@ -171,13 +170,10 @@ void GlobalDCE::MarkUsedGlobalsAsNeeded(Constant *C) {
 // might make it deader.
 //
 bool GlobalDCE::RemoveUnusedGlobalValue(GlobalValue &GV) {
-  for (Value::use_iterator I = GV.use_begin(), E = GV.use_end(); I != E; ++I)
-    if (GlobalValue* User = dyn_cast<GlobalValue>(*I))
-      if (User->removeDeadConstantUsers()) {  // Only if unreferenced...
-        ++NumGVs;
-      }
-   return false;
- }
+  if (GV.use_empty()) return false;
+  GV.removeDeadConstantUsers();
+  return GV.use_empty();
+}
  
 // SafeToDestroyConstant - It is safe to destroy a constant iff it is only used
 // by constants itself.  Note that constants cannot be cyclic, so this test is
