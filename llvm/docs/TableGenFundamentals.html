@@ -309,6 +309,8 @@ supported include:</p>
 <li>value{17} - Access to one or more bits of a value.</li>
 <li>DEF - Reference to a record definition.</li>
 <li>X.Y - Reference to the subfield of a value.</li>
+<li>list[4-7,17,2-3] - A slice of the 'list' list, including elements 
+     4,5,6,7,17,2, and 3 from it.  Elements may be included multiple times.</li>
 
 <li>(DEF a, b) - A dag value.  The first element is required to be a record
 definition, the remaining elements in the list may be arbitrary other values,
