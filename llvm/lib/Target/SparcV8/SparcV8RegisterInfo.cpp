@@ -25,10 +25,23 @@ SparcV8RegisterInfo::SparcV8RegisterInfo()
   : SparcV8GenRegisterInfo(V8::ADJCALLSTACKDOWN,
                            V8::ADJCALLSTACKUP) {}
 
+static const TargetRegisterClass *getClass(unsigned SrcReg) {
+  if (SparcV8::IntRegsRegisterClass->contains(SrcReg))
+    return SparcV8::IntRegsRegisterClass;
+  else if (SparcV8::FPRegsRegisterClass->contains(SrcReg))
+    return SparcV8::FPRegsRegisterClass;
+  else if (SparcV8::DFPRegsRegisterClass->contains(SrcReg))
+    return SparcV8::DFPRegsRegisterClass;
+  else {
+    std::cerr << "Error: register of unknown class found: " << SrcReg << "\n";
+    abort ();
+  }
+}
+
 void SparcV8RegisterInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, int FrameIdx) const {
-  const TargetRegisterClass *RC = getRegClass(SrcReg);
+  const TargetRegisterClass *RC = getClass(SrcReg);
 
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
   if (RC == SparcV8::IntRegsRegisterClass) 
@@ -47,7 +60,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 void SparcV8RegisterInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FrameIdx) const {
-  const TargetRegisterClass *RC = getRegClass(DestReg);
+  const TargetRegisterClass *RC = getClass(DestReg);
   if (RC == SparcV8::IntRegsRegisterClass) 
     BuildMI (MBB, I, V8::LD, 2, DestReg).addFrameIndex (FrameIdx).addSImm (0);
   else if (RC == SparcV8::FPRegsRegisterClass)
