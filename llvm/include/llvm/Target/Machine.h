@@ -14,6 +14,7 @@
 class TargetMachine;
 class MachineInstrInfo;
 class MachineInstrDescriptor;
+class MachineRegInfo;
 
 //---------------------------------------------------------------------------
 // Data types used to define information about a single machine instruction
@@ -55,6 +56,8 @@ public:
   virtual ~TargetMachine() {}
   
   virtual const MachineInstrInfo& getInstrInfo() const = 0;
+
+  virtual const MachineRegInfo& getRegInfo() const = 0;
 
   virtual unsigned int	findOptimalStorageSize	(const Type* ty) const;
   
