@@ -59,6 +59,8 @@ PHINode::PHINode(const PHINode &PN)
 }
 
 void PHINode::addIncoming(Value *D, BasicBlock *BB) {
+  assert(getType() == D->getType() &&
+         "All operands to PHI node must be the same type as the PHI node!");
   Operands.push_back(Use(D, this));
   Operands.push_back(Use(BB, this));
 }
