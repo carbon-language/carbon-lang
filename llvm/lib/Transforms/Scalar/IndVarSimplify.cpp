@@ -17,8 +17,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Analysis/InductionVariable.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
@@ -195,12 +194,12 @@ bool IndVarSimplify::runOnLoop(Loop *Loop) {
 
     while (isa<PHINode>(AfterPHIIt)) ++AfterPHIIt;
 
-    // Don't do math with pointers...
-    const Type *IVTy = IV->Phi->getType();
-    if (isa<PointerType>(IVTy)) IVTy = Type::ULongTy;
-
     // Don't modify the canonical indvar or unrecognized indvars...
     if (IV != Canonical && IV->InductionType != InductionVariable::Unknown) {
+      const Type *IVTy = IV->Phi->getType();
+      if (isa<PointerType>(IVTy))    // If indexing into a pointer, make the
+        IVTy = TD->getIntPtrType();  // index the appropriate type.
+
       Instruction *Val = IterCount;
       if (!isa<ConstantInt>(IV->Step) ||   // If the step != 1
           !cast<ConstantInt>(IV->Step)->equalsInt(1)) {
@@ -216,15 +215,26 @@ bool IndVarSimplify::runOnLoop(Loop *Loop) {
                                      IV->Phi->getName()+"-scale", AfterPHIIt);
       }
 
-      // If the start != 0
-      if (IV->Start != Constant::getNullValue(IV->Start->getType())) {
+      // If this is a pointer indvar...
+      if (isa<PointerType>(IV->Phi->getType())) {
+        std::vector<Value*> Idx;
+        // FIXME: this should not be needed when we fix PR82!
+        if (Val->getType() != Type::LongTy)
+          Val = new CastInst(Val, Type::LongTy, Val->getName(), AfterPHIIt);
+        Idx.push_back(Val);
+        Val = new GetElementPtrInst(IV->Start, Idx,
+                                    IV->Phi->getName()+"-offset",
+                                    AfterPHIIt);
+        
+      } else if (!isa<Constant>(IV->Start) ||   // If Start != 0...
+                 !cast<Constant>(IV->Start)->isNullValue()) {
         // If the types are not compatible, insert a cast now...
         if (Val->getType() != IVTy)
           Val = new CastInst(Val, IVTy, Val->getName(), AfterPHIIt);
         if (IV->Start->getType() != IVTy)
           IV->Start = new CastInst(IV->Start, IVTy, IV->Start->getName(),
                                    AfterPHIIt);
-
+        
         // Insert the instruction after the phi nodes...
         Val = BinaryOperator::create(Instruction::Add, Val, IV->Start,
                                      IV->Phi->getName()+"-offset", AfterPHIIt);
