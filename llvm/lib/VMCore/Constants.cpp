@@ -493,6 +493,13 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
   } else if (getOpcode() == Instruction::Cast) {
     assert(getOperand(0) == From && "Cast only has one use!");
     Replacement = ConstantExpr::getCast(To, getType());
+  } else if (getOpcode() == Instruction::Shl ||
+             getOpcode() == Instruction::Shr) {
+    Constant *C1 = getOperand(0);
+    Constant *C2 = getOperand(1);
+    if (C1 == From) C1 = To;
+    if (C2 == From) C2 = To;
+    Replacement = ConstantExpr::getShift(getOpcode(), C1, C2);
   } else if (getNumOperands() == 2) {
     Constant *C1 = getOperand(0);
     Constant *C2 = getOperand(1);
