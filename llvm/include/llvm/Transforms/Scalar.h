@@ -61,7 +61,7 @@ Pass *createDeadInstEliminationPass();
 // their other instructions become dead, to eliminate chains of dead
 // computations.
 //
-Pass *createDeadCodeEliminationPass();
+FunctionPass *createDeadCodeEliminationPass();
 
 //===----------------------------------------------------------------------===//
 //
@@ -132,7 +132,7 @@ Pass *createIndVarSimplifyPass();
 // into:
 //    %Z = add int 2, %X
 //
-Pass *createInstructionCombiningPass();
+FunctionPass *createInstructionCombiningPass();
 
 
 //===----------------------------------------------------------------------===//

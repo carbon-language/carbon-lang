@@ -123,7 +123,7 @@ bool DCE::runOnFunction(Function &F) {
   return true;
 }
 
-Pass *llvm::createDeadCodeEliminationPass() {
+FunctionPass *llvm::createDeadCodeEliminationPass() {
   return new DCE();
 }
 

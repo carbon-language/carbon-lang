@@ -23,12 +23,12 @@
 
 namespace llvm {
 
-class Pass;
+class FunctionPass;
 
 /// createLoadValueNumberingPass - Create and return a new pass that implements
 /// the ValueNumbering interface.
 ///
-Pass *createLoadValueNumberingPass();
+FunctionPass *createLoadValueNumberingPass();
 
 } // End llvm namespace
 

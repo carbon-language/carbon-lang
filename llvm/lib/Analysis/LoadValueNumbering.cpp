@@ -87,7 +87,7 @@ namespace {
   RegisterAnalysisGroup<ValueNumbering, LoadVN> Y;
 }
 
-Pass *llvm::createLoadValueNumberingPass() { return new LoadVN(); }
+FunctionPass *llvm::createLoadValueNumberingPass() { return new LoadVN(); }
 
 
 /// getAnalysisUsage - Does not modify anything.  It uses Value Numbering and

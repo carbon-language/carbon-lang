@@ -3210,7 +3210,7 @@ bool InstCombiner::runOnFunction(Function &F) {
   return Changed;
 }
 
-Pass *llvm::createInstructionCombiningPass() {
+FunctionPass *llvm::createInstructionCombiningPass() {
   return new InstCombiner();
 }
 
