@@ -1,0 +1,418 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>Accurate Garbage Collection with LLVM</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
+
+<div class="doc_title">
+  Accurate Garbage Collection with LLVM
+</div>
+
+<ol>
+  <li><a href="#introduction">Introduction</a>
+    <ul>
+    <li><a href="#feature">GC features provided and algorithms supported</a></li>
+    </ul>
+  </li>
+
+  <li><a href="#interfaces">Interfaces for user programs</a>
+    <ul>
+    <li><a href="#roots">Identifying GC roots on the stack: <tt>llvm.gcroot</tt></a></li>
+    <li><a href="#gcdescriptors">GC descriptor format for heap objects</a></li>
+    <li><a href="#allocate">Allocating memory from the GC</a></li>
+    <li><a href="#barriers">Reading and writing references to the heap</a></li>
+    <li><a href="#explicit">Explicit invocation of the garbage collector</a></li>
+    </ul>
+  </li>
+
+  <li><a href="#gcimpl">Implementing a garbage collector</a>
+    <ul>
+    <li><a href="#llvm_gc_readwrite">Implementing <tt>llvm_gc_read</tt> and <tt>llvm_gc_write</tt></a></li>
+    <li><a href="#traceroots">Tracing the GC roots from the program stack</a></li>
+    <li><a href="#gcimpls">GC implementations available</a></li>
+    </ul>
+  </li>
+
+<!--
+  <li><a href="#codegen">Implementing GC support in a code generator</a></li>
+-->
+</ol>
+
+<div class="doc_author">
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="introduction">Introduction</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Garbage collection is a widely used technique that frees the programmer from
+having to know the life-times of heap objects, making software easier to produce
+and maintain.  Many programming languages rely on garbage collection for
+automatic memory management.  There are two primary forms of garbage collection:
+conservative and accurate.</p>
+
+<p>Conservative garbage collection often does not require any special support
+from either the language or the compiler: it can handle non-type-safe
+programming languages (such as C/C++) and does not require any special
+information from the compiler.  The [LINK] Boehm collector is an example of a
+state-of-the-art conservative collector.</p>
+
+<p>Accurate garbage collection requires the ability to identify all pointers in
+the program at run-time (which requires that the source-language be type-safe in
+most cases).  Identifying pointers at run-time requires compiler support to
+locate all places that hold live pointer variables at run-time, including the
+<a href="#roots">processor stack and registers</a>.</p>
+
+<p>
+Conservative garbage collection is attractive because it does not require any
+special compiler support, but it does have problems.  In particular, because the
+conservative garbage collector cannot <i>know</i> that a particular word in the
+machine is a pointer, it cannot move live objects in the heap (preventing the
+use of compacting and generational GC algorithms) and it can occasionally suffer
+from memory leaks due to integer values that happen to point to objects in the
+program.  In addition, some aggressive compiler transformations can break
+conservative garbage collectors (though these seem rare in practice).
+</p>
+
+<p>
+Accurate garbage collectors do not suffer from any of these problems, but they
+can suffer from degraded scalar optimization of the program.  In particular,
+because the runtime must be able to identify and update all pointers active in
+the program, some optimizations are less effective.  In practice, however, the
+locality and performance benefits of using aggressive garbage allocation
+techniques dominates any low-level losses.
+</p>
+
+<p>
+This document describes the mechanisms and interfaces provided by LLVM to
+support accurate garbage collection.
+</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="feature">GC features provided and algorithms supported</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+LLVM provides support for a broad class of garbage collection algorithms,
+including compacting semi-space collectors, mark-sweep collectors, generational
+collectors, and even reference counting implementations.  It includes support
+for <a href="#barriers">read and write barriers</a>, and associating <a
+href="#roots">meta-data with stack objects</a> (used for tagless garbage
+collection).  All LLVM code generators support garbage collection, including the
+C backend.
+</p>
+
+<p>
+We hope that the primitive support built into LLVM is sufficient to support a
+broad class of garbage collected languages, including Scheme, ML, scripting
+languages, Java, C#, etc.  That said, the implemented garbage collectors may
+need to be extended to support language-specific features such as finalization,
+weak references, or other features.  As these needs are identified and
+implemented, they should be added to this specification.
+</p>
+
+<p>
+LLVM does not currently support garbage collection of multi-threaded programs or
+GC-safe points other than function calls, but these will be added in the future
+as there is interest.
+</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="interfaces">Interfaces for user programs</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>This section describes the interfaces provided by LLVM and by the garbage
+collector run-time that should be used by user programs.  As such, this is the
+interface that front-end authors should generate code for.
+</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="roots">Identifying GC roots on the stack: <tt>llvm.gcroot</tt></a>
+</div>
+
+<div class="doc_text">
+
+<div class="doc_code"><tt>
+  void %llvm.gcroot(&lt;ty&gt;** %ptrloc, &lt;ty2&gt;* %metadata)
+</tt></div>
+
+<p>
+The <tt>llvm.gcroot</tt> intrinsic is used to inform LLVM of a pointer variable
+on the stack.  The first argument contains the address of the variable on the
+stack, and the second contains a pointer to metadata that should be associated
+with the pointer (which <b>must</b> be a constant or global value address).  At
+runtime, the <tt>llvm.gcroot</tt> intrinsic stores a null pointer into the
+specified location to initialize the pointer.</p>
+
+<p>
+Consider the following fragment of Java code:
+</p>
+
+<pre>
+       {
+         Object X;   // A null-initialized reference to an object
+         ...
+       }
+</pre>
+
+<p>
+This block (which may be located in the middle of a function or in a loop nest),
+could be compiled to this LLVM code:
+</p>
+
+<pre>
+Entry:
+   ;; In the entry block for the function, allocate the
+   ;; stack space for X, which is an LLVM pointer.
+   %X = alloca %Object*
+   ...
+
+   ;; "CodeBlock" is the block corresponding to the start
+   ;;  of the scope scope above.
+CodeBlock:
+   ;; Initialize the object, telling LLVM that it is now live.
+   ;; Java has type-tags on objects, so it doesn't need any
+   ;; metadata.
+   call void %llvm.gcroot(%Object** %X, sbyte* null)
+   ...
+
+   ;; As the pointer goes out of scope, store a null value into
+   ;; it, to indicate that the value is no longer live.
+   store %Object* null, %Object** %X
+   ...
+</pre>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="gcdescriptors">GC descriptor format for heap objects</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+Either from root meta data, or from object headers.  Front-end can provide a
+call-back to get descriptor from object without meta-data.
+</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="allocate">Allocating memory from the GC</a>
+</div>
+
+<div class="doc_text">
+
+<div class="doc_code"><tt>
+  sbyte *%llvm_gc_allocate(unsigned %Size)
+</tt></div>
+
+<p>The <tt>llvm_gc_allocate</tt> function is a global function defined by the
+garbage collector implementation to allocate memory.  It should return a
+zeroed-out block of memory of the appropriate size.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="barriers">Reading and writing references to the heap</a>
+</div>
+
+<div class="doc_text">
+
+<div class="doc_code"><tt>
+  sbyte *%llvm.gcread(sbyte **)<br>
+  void %llvm.gcwrite(sbyte*, sbyte**)
+</tt></div>
+
+<p>Several of the more interesting garbage collectors (e.g., generational
+collectors) need to be informed when the mutator (the program that needs garbage
+collection) reads or writes object references into the heap.  In the case of a
+generational collector, it needs to keep track of which "old" generation objects
+have references stored into them.  The amount of code that typically needs to be
+executed is usually quite small, so the overall performance impact of the
+inserted code is tolerable.</p>
+
+<p>To support garbage collectors that use read or write barriers, LLVM provides
+the <tt>llvm.gcread</tt> and <tt>llvm.gcwrite</tt> intrinsics.  The first
+intrinsic has exactly the same semantics as a non-volatile LLVM load and the
+second has the same semantics as a non-volatile LLVM store.  At code generation
+time, these intrinsics are replaced with calls into the garbage collector
+(<tt><a href="#llvm_gc_readwrite">llvm_gc_read</a></tt> and <tt><a
+href="#llvm_gc_readwrite">llvm_gc_write</a></tt> respectively), which are then
+inlined into the code.
+</p>
+
+<p>
+If you are writing a front-end for a garbage collected language, every load or
+store of a reference from or to the heap should use these intrinsics instead of
+normal LLVM loads/stores.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="initialize">Garbage collector startup and initialization</a>
+</div>
+
+<div class="doc_text">
+
+<div class="doc_code"><tt>
+  void %llvm_gc_initialize()
+</tt></div>
+
+<p>
+The <tt>llvm_gc_initialize</tt> function should be called once before any other
+garbage collection functions are called.  This gives the garbage collector the
+chance to initialize itself and allocate the heap spaces.
+</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="explicit">Explicit invocation of the garbage collector</a>
+</div>
+
+<div class="doc_text">
+
+<div class="doc_code"><tt>
+  void %llvm_gc_collect()
+</tt></div>
+
+<p>
+The <tt>llvm_gc_collect</tt> function is exported by the garbage collector
+implementations to provide a full collection, even when the heap is not
+exhausted.  This can be used by end-user code as a hint, and may be ignored by
+the garbage collector.
+</p>
+
+</div>
+
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="gcimpl">Implementing a garbage collector</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>
+Implementing a garbage collector for LLVM is fairly straight-forward.  The
+implementation must include the <a
+href="#allocate"><tt>llvm_gc_allocate</tt></a> and <a
+href="#explicit"><tt>llvm_gc_collect</tt></a> functions, and it must implement
+the <a href="#llvm_gc_readwrite">read/write barrier</a> functions as well.  To
+do this, it will probably have to <a href="#traceroots">trace through the roots
+from the stack</a> and understand the <a href="#gcdescriptors">GC descriptors
+for heap objects</a>.  Luckily, there are some <a href="#gcimpls">example
+implementations</a> available.
+</p>
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="llvm_gc_readwrite">Implementing <tt>llvm_gc_read</tt> and <tt>llvm_gc_write</tt></a>
+</div>
+
+<div class="doc_text">
+  <div class="doc_code"><tt>
+    void *llvm_gc_read(void **)<br>
+    void llvm_gc_write(void*, void**)
+ </tt></div>
+
+<p>
+These functions <i>must</i> be implemented in every garbage collector, even if
+they do not need read/write barriers.  In this case, just load or store the
+pointer, then return.
+</p>
+
+<p>
+If an actual read or write barrier is needed, it should be straight-forward to
+implement it.  Note that we may add a pointer to the start of the memory object
+as a parameter in the future, if needed.
+</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="traceroots">Tracing the GC roots from the program stack</a>
+</div>
+
+<div class="doc_text">
+  <div class="doc_code"><tt>
+     void llvm_cg_walk_gcroots(void (*FP)(void **Root, void *Meta));
+  </tt></div>
+
+<p>
+The <tt>llvm_cg_walk_gcroots</tt> function is a function provided by the code
+generator that iterates through all of the GC roots on the stack, calling the
+specified function pointer with each record.  For each GC root, the address of
+the pointer and the meta-data (from the <a
+href="#gcroot"><tt>llvm.gcroot</tt></a> intrinsic) are provided.
+</p>
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="gcimpls">GC implementations available</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+To make this more concrete, the currently implemented LLVM garbage collectors
+all live in the llvm/runtime/GC directory in the LLVM source-base.
+</p>
+
+<p>
+TODO: Brief overview of each.
+</p>
+
+</div>
+
+
+<!-- *********************************************************************** -->
+
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a>
+
+  <a href="mailto:sabre@nondot.org">Chris Lattner</a><br>
+  <a href="http://llvm.cs.uiuc.edu">LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date$
+</address>
+
+</body>
+</html>
