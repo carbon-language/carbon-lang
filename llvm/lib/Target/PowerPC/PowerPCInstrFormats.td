@@ -52,29 +52,108 @@ class PPC32Inst : Instruction {
 	let Namespace = "PPC32";
 }
 
-class PPC32InstPattern0 <string name, Format OperandType0, Format OperandType1, Format OperandType2, bits<6> opconstant0, bit ppc64, bit vmx> : PPC32Inst {
-	let Name = name;
-	let ArgCount = 3;
-	let PPC64 = ppc64;
-	let VMX =vmx;
+//===----------------------------------------------------------------------===//
+//
+// PowerPC instruction formats
 
-	let Arg0Type = OperandType0.Value;
-	let Arg1Type = OperandType1.Value;
-	let Arg2Type = OperandType2.Value;
-	let Arg3Type = 0;
-	let Arg4Type = 0;
-	let PPC64 = 0;
-	let VMX = 0;
-	bits<5> operand0;
-	bits<5> operand1;
-	bits<16> operand2;
+class PPC32I<string name, bits<6> opcode, bit ppc64, bit vmx> : Instruction {
+  field bits<32> Inst;
+  field bits<6> Opcode = opcode;
 
+  bits<3> ArgCount;
+  bits<5> Arg0Type;
+  bits<5> Arg1Type;
+  bits<5> Arg2Type;
+  bits<5> Arg3Type;
+  bits<5> Arg4Type;
+  bit PPC64 = ppc64;
+  bit VMX = vmx;
 
-	let Inst {31-26} = opconstant0;
-	let Inst {25-21} = operand0;
-	let Inst {20-16} = operand1;
-	let Inst {15-0} = operand2;
+  let Name = name;
+  let Inst{0-5} = Opcode;
 }
+
+class XForm_base_r3xo<string name, bits<6> opcode, bits<10> xo, bit ppc64, 
+                      bit vmx> : PPC32I<name, opcode, ppc64, vmx> {
+  let ArgCount = 3;
+  field bits<5>  A;
+  field bits<5>  B;
+  field bits<5>  C;
+  field bits<10> D = xo;
+  field bit     Rc = 0;
+
+  let ArgCount = 3;
+  let Arg0Type = Gpr.Value;
+  let Arg1Type = Gpr.Value;
+  let Arg2Type = Gpr.Value;
+  let Arg3Type = 0;
+  let Arg4Type = 0;
+
+  let Inst{6-10}  = A;
+  let Inst{11-15} = B;
+  let Inst{16-20} = C;
+  let Inst{21-30} = D;
+  let Inst{31}    = Rc;
+}
+
+class XForm_6<string name, bits<6> opcode, bits<10> xo, bit rc, bit ppc64, 
+              bit vmx> : XForm_base_r3xo<name, opcode, xo, ppc64, vmx> {
+  let Rc = rc;
+}
+
+class XForm_7<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx> 
+  : XForm_6<name, opcode, xo, 1, ppc64, vmx>;
+
+class XForm_10<string name, bits<6> opcode, bits<10> xo, bit rc, bit ppc64, 
+               bit vmx> : XForm_base_r3xo<name, opcode, xo, ppc64, vmx> {
+  let Rc = rc;
+  let Arg2Type = Imm5.Value;
+}
+
+class DForm_base<string name, bits<6> opcode, bit ppc64, bit vmx> 
+  : PPC32I<name, opcode, ppc64, vmx> {
+  field bits<5>  A;
+  field bits<5>  B;
+  field bits<16> C;
+  
+  let ArgCount = 3;
+  let Arg0Type = Gpr.Value;
+  let Arg1Type = Gpr.Value;
+  let Arg2Type = Simm16.Value;
+  let Arg3Type = 0;
+  let Arg4Type = 0;
+ 
+  let Inst{6-10}  = A;
+  let Inst{11-15} = B;
+  let Inst{16-31} = C;
+}
+
+class DForm_1<string name, bits<6> opcode, bit ppc64, bit vmx> 
+  : DForm_base<name, opcode, ppc64, vmx> {
+  let Arg2Type = Zimm16.Value;
+}
+
+class DForm_2<string name, bits<6> opcode, bit ppc64, bit vmx> 
+  : DForm_base<name, opcode, ppc64, vmx>;
+
+class DForm_2_r0<string name, bits<6> opcode, bit ppc64, bit vmx> 
+  : DForm_base<name, opcode, ppc64, vmx> {
+  let Arg1Type = Gpr0.Value;
+}
+
+// Currently we make the use/def reg distinction in ISel, not tablegen
+class DForm_3<string name, bits<6> opcode, bit ppc64, bit vmx> 
+  : DForm_1<name, opcode, ppc64, vmx>;
+
+class DForm_4<string name, bits<6> opcode, bit ppc64, bit vmx> 
+  : DForm_1<name, opcode, ppc64, vmx>;
+
+class DForm_7<string name, bits<6> opcode, bit ppc64, bit vmx> 
+  : DForm_base<name, opcode, ppc64, vmx> {
+  let Arg1Type = Imm5.Value;
+}
+
+//===----------------------------------------------------------------------===//
 
 class PPC32InstPattern1 <string name, Format OperandType0, Format OperandType1, bits<6> opconstant0, bits<5> opconstant1, bit ppc64, bit vmx> : PPC32Inst {
 	let Name = name;
@@ -145,55 +224,6 @@ class PPC32InstPattern3 <string name, Format OperandType0, Format OperandType1, 
 	let Inst {15-0} = opconstant1;
 	let Inst {25-21} = operand0;
 	let Inst {20-16} = operand1;
-}
-
-class PPC32InstPattern4 <string name, Format OperandType0, Format OperandType1, Format OperandType2, bits<6> opconstant0, bit ppc64, bit vmx> : PPC32Inst {
-	let Name = name;
-	let ArgCount = 3;
-	let PPC64 = ppc64;
-	let VMX =vmx;
-
-	let Arg0Type = OperandType0.Value;
-	let Arg1Type = OperandType1.Value;
-	let Arg2Type = OperandType2.Value;
-	let Arg3Type = 0;
-	let Arg4Type = 0;
-	let PPC64 = 0;
-	let VMX = 0;
-	bits<5> operand0;
-	bits<5> operand1;
-	bits<16> operand2;
-
-
-	let Inst {31-26} = opconstant0;
-	let Inst {20-16} = operand0;
-	let Inst {25-21} = operand1;
-	let Inst {15-0} = operand2;
-}
-
-class PPC32InstPattern5 <string name, Format OperandType0, Format OperandType1, Format OperandType2, bits<6> opconstant0, bits<11> opconstant1, bit ppc64, bit vmx> : PPC32Inst {
-	let Name = name;
-	let ArgCount = 3;
-	let PPC64 = ppc64;
-	let VMX =vmx;
-
-	let Arg0Type = OperandType0.Value;
-	let Arg1Type = OperandType1.Value;
-	let Arg2Type = OperandType2.Value;
-	let Arg3Type = 0;
-	let Arg4Type = 0;
-	let PPC64 = 0;
-	let VMX = 0;
-	bits<5> operand0;
-	bits<5> operand1;
-	bits<5> operand2;
-
-
-	let Inst {31-26} = opconstant0;
-	let Inst {10-0} = opconstant1;
-	let Inst {20-16} = operand0;
-	let Inst {25-21} = operand1;
-	let Inst {15-11} = operand2;
 }
 
 class PPC32InstPattern6 <string name, Format OperandType0, bits<6> opconstant0, bits<2> opconstant1, bit ppc64, bit vmx> : PPC32Inst {
