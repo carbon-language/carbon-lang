@@ -16,22 +16,27 @@ MVT::ValueType getValueType(Record *Rec) {
   return (MVT::ValueType)Rec->getValueAsInt("Value");
 }
 
-std::ostream &operator<<(std::ostream &OS, MVT::ValueType T) {
+std::string getName(MVT::ValueType T) {
   switch (T) {
-  case MVT::Other: return OS << "UNKNOWN";
-  case MVT::i1:    return OS << "i1";
-  case MVT::i8:    return OS << "i8";
-  case MVT::i16:   return OS << "i16";
-  case MVT::i32:   return OS << "i32";
-  case MVT::i64:   return OS << "i64";
-  case MVT::i128:  return OS << "i128";
-  case MVT::f32:   return OS << "f32";
-  case MVT::f64:   return OS << "f64";
-  case MVT::f80:   return OS << "f80";
-  case MVT::f128:  return OS << "f128";
-  case MVT::isVoid:return OS << "void";
+  case MVT::Other: return "UNKNOWN";
+  case MVT::i1:    return "i1";
+  case MVT::i8:    return "i8";
+  case MVT::i16:   return "i16";
+  case MVT::i32:   return "i32";
+  case MVT::i64:   return "i64";
+  case MVT::i128:  return "i128";
+  case MVT::f32:   return "f32";
+  case MVT::f64:   return "f64";
+  case MVT::f80:   return "f80";
+  case MVT::f128:  return "f128";
+  case MVT::isVoid:return "void";
+  default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
   }
-  return OS;
+}
+
+
+std::ostream &operator<<(std::ostream &OS, MVT::ValueType T) {
+  return OS << getName(T);
 }
 
 
