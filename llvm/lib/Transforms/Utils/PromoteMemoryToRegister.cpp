@@ -38,11 +38,10 @@ bool isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
   return true;
 }
 
-
 namespace {
   struct PromoteMem2Reg {
     // Allocas - The alloca instructions being promoted
-    const std::vector<AllocaInst*> &Allocas;
+    std::vector<AllocaInst*> Allocas;
     DominanceFrontier &DF;
     const TargetData &TD;
 
@@ -62,6 +61,8 @@ namespace {
     void run();
 
   private:
+    void PromoteLocallyUsedAlloca(AllocaInst *AI);
+
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
                     std::vector<Value*> &IncVals);
     bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx, unsigned &Version);
@@ -79,13 +80,53 @@ void PromoteMem2Reg::run() {
     assert(Allocas[i]->getParent()->getParent() == &F &&
            "All allocas should be in the same function, which is same as DF!");
 
+    if (AI->use_empty()) {
+      // If there are no uses of the alloca, just delete it now.
+      AI->getParent()->getInstList().erase(AI);
+
+      // Remove the alloca from the Allocas list, since it has been processed
+      Allocas[i] = Allocas.back();
+      Allocas.pop_back();
+      --i;
+      continue;
+    }
+
     // Calculate the set of write-locations for each alloca.  This is analogous
     // to counting the number of 'redefinitions' of each variable.
     std::vector<BasicBlock*> DefiningBlocks;
-    for (Value::use_iterator U =AI->use_begin(), E = AI->use_end(); U != E; ++U)
-      if (StoreInst *SI = dyn_cast<StoreInst>(cast<Instruction>(*U)))
-        // jot down the basic-block it came from
+
+    BasicBlock *OnlyBlock = 0;
+    bool OnlyUsedInOneBlock = true;
+
+    // As we scan the uses of the alloca instruction, keep track of stores, and
+    // decide whether all of the loads and stores to the alloca are within the
+    // same basic block.
+    for (Value::use_iterator U =AI->use_begin(), E = AI->use_end(); U != E;++U){
+      Instruction *User = cast<Instruction>(*U);
+      if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+        // Remember the basic blocks which define new values for the alloca
         DefiningBlocks.push_back(SI->getParent());
+      }
+
+      if (OnlyUsedInOneBlock) {
+        if (OnlyBlock == 0)
+          OnlyBlock = User->getParent();
+        else if (OnlyBlock != User->getParent())
+          OnlyUsedInOneBlock = false;
+      }
+    }
+
+    // If the alloca is only read and written in one basic block, just perform a
+    // linear sweep over the block to eliminate it.
+    if (OnlyUsedInOneBlock) {
+      PromoteLocallyUsedAlloca(AI);
+
+      // Remove the alloca from the Allocas list, since it has been processed
+      Allocas[i] = Allocas.back();
+      Allocas.pop_back();
+      --i;
+      continue;
+    }
 
     AllocaLookup[Allocas[i]] = i;
     
@@ -112,6 +153,9 @@ void PromoteMem2Reg::run() {
       }
     }
   }
+  
+  if (Allocas.empty())
+    return; // All of the allocas must have been trivial!
 
   // Set the incoming values for the basic block to be null values for all of
   // the alloca's.  We do this in case there is a load of a value that has not
@@ -194,6 +238,41 @@ void PromoteMem2Reg::run() {
   }
 }
 
+// PromoteLocallyUsedAlloca - Many allocas are only used within a single basic
+// block.  If this is the case, avoid traversing the CFG and inserting a lot of
+// potentially useless PHI nodes by just performing a single linear pass over
+// the basic block using the Alloca.
+//
+void PromoteMem2Reg::PromoteLocallyUsedAlloca(AllocaInst *AI) {
+  assert(!AI->use_empty() && "There are no uses of the alloca!");
+
+  // Uses of the uninitialized memory location shall get zero...
+  Value *CurVal = Constant::getNullValue(AI->getAllocatedType());
+  
+  BasicBlock *BB = cast<Instruction>(AI->use_back())->getParent();
+
+  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
+    Instruction *Inst = I++;
+    if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
+      if (LI->getOperand(0) == AI) {
+        // Loads just return the "current value"...
+        LI->replaceAllUsesWith(CurVal);
+        BB->getInstList().erase(LI);
+      }
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+      if (SI->getOperand(1) == AI) {
+        // Loads just update the "current value"...
+        CurVal = SI->getOperand(0);
+        BB->getInstList().erase(SI);
+      }
+    }
+  }
+
+  // After traversing the basic block, there should be no more uses of the
+  // alloca, remove it now.
+  assert(AI->use_empty() && "Uses of alloca from more than one BB??");
+  AI->getParent()->getInstList().erase(AI);
+}
 
 // QueuePhiNode - queues a phi-node to be added to a basic-block for a specific
 // Alloca returns true if there wasn't already a phi-node for that variable
