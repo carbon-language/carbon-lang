@@ -131,31 +131,28 @@ I noted that most of the important LLVM IR (Intermediate Representation) C++
 classes were derived from the Value class. The full power of that simple
 design only became fully understood once I started constructing executable
 expressions for Stacker.</p>
+
 <p>This really makes your programming go faster. Think about compiling code
 for the following C/C++ expression: <code>(a|b)*((x+1)/(y+1))</code>. Assuming
 the values are on the stack in the order a, b, x, y, this could be
 expressed in stacker as: <code>1 + SWAP 1 + / ROT2 OR *</code>.
-You could write a function using LLVM that computes this expression like this: </p>
-<pre><code>
+You could write a function using LLVM that computes this expression like 
+this: </p>
+
+<div class="doc_code"><pre>
 Value* 
 expression(BasicBlock* bb, Value* a, Value* b, Value* x, Value* y )
 {
-    Instruction* tail = bb->getTerminator();
-    ConstantSInt* one = ConstantSInt::get( Type::IntTy, 1);
-    BinaryOperator* or1 = 
-	BinaryOperator::create( Instruction::Or, a, b, "", tail );
-    BinaryOperator* add1 = 
-	BinaryOperator::create( Instruction::Add, x, one, "", tail );
-    BinaryOperator* add2 =
-	BinaryOperator::create( Instruction::Add, y, one, "", tail );
-    BinaryOperator* div1 = 
-	BinaryOperator::create( Instruction::Div, add1, add2, "", tail);
-    BinaryOperator* mult1 = 
-	BinaryOperator::create( Instruction::Mul, or1, div1, "", tail );
-
+    ConstantSInt* one = ConstantSInt::get(Type::IntTy, 1);
+    BinaryOperator* or1 = BinaryOperator::createOr(a, b, "", bb);
+    BinaryOperator* add1 = BinaryOperator::createAdd(x, one, "", bb);
+    BinaryOperator* add2 = BinaryOperator::createAdd(y, one, "", bb);
+    BinaryOperator* div1 = BinaryOperator::createDiv(add1, add2, "", bb);
+    BinaryOperator* mult1 = BinaryOperator::createMul(or1, div1, "", bb);
     return mult1;
 }
-</code></pre>
+</pre></div>
+
 <p>"Okay, big deal," you say?  It is a big deal. Here's why. Note that I didn't
 have to tell this function which kinds of Values are being passed in. They could be
 <code>Instruction</code>s, <code>Constant</code>s, <code>GlobalVariable</code>s, or
