@@ -1,4 +1,4 @@
-//===-- tools/llvm-ar/llvm-ar.cpp - LLVM archive librarian utility --------===//
+//===-- llvm-ar.cpp - LLVM archive librarian utility ----------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,25 +11,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Support/CommandLine.h"
-#include "llvm/Bytecode/Reader.h"
 #include "llvm/Module.h"
+#include "llvm/Bytecode/Reader.h"
+#include "Support/CommandLine.h"
+#include "Support/FileUtilities.h"
 #include <string>
-#include <iostream>
 #include <fstream>
-#include <vector>
-#include <sys/stat.h>
 #include <cstdio>
+#include <sys/stat.h>
 #include <sys/types.h> 
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
-
 using namespace llvm;
 
 using std::string;
-using std::vector;
-using std::cout;
 
 
 #define  ARFMAG    "\n"      /* header trailer string */ 
@@ -96,7 +92,7 @@ int Count;
 string Archive;
 
 //Member Files
-vector<string> Members;
+std::vector<string> Members;
 
 
 // WriteSymbolTable - Writes symbol table to ArchiveFile, return false
@@ -139,8 +135,8 @@ bool WriteSymbolTable(std::ofstream &ArchiveFile) {
   
 
   unsigned memoff = 0;  //Keep Track of total size of files added to archive
-  vector<unsigned> offsets; //Vector of offsets into archive file
-  vector<char> names; //Vector of characters that are the symbol names. 
+  std::vector<unsigned> offsets; //Vector of offsets into archive file
+  std::vector<char> names; //Vector of characters that are the symbol names. 
 
   //Loop over archive member files, parse bytecode, and generate symbol table.
   for(unsigned i=0; i<Members.size(); ++i) { 
@@ -154,15 +150,12 @@ bool WriteSymbolTable(std::ofstream &ArchiveFile) {
       return false;
     }
 
-    //Stat the file to get its size.
-    struct stat StatBuf;
-    if (stat(Members[i].c_str(), &StatBuf) == -1 || StatBuf.st_size == 0) {
+    // Size of file
+    unsigned Length = getFileSize(Members[i]);
+    if (Length == (unsigned)-1) {
       std::cerr << "Error stating file\n";
       return false;
     }
-
-    //Size of file
-    unsigned Length = StatBuf.st_size;
     
     //Read in file into a buffer.
     unsigned char *buf = (unsigned char*)mmap(0, Length,PROT_READ,
@@ -206,7 +199,7 @@ bool WriteSymbolTable(std::ofstream &ArchiveFile) {
 
   //Determine how large our symbol table is.
   unsigned symbolTableSize = sizeof(Hdr) + 4 + 4*(offsets.size()) + names.size();
-  cout << "Symbol Table Size: " << symbolTableSize << "\n";
+  std::cout << "Symbol Table Size: " << symbolTableSize << "\n";
 
   //Number of symbols should be in network byte order as well
   char num[4];
@@ -232,7 +225,7 @@ bool WriteSymbolTable(std::ofstream &ArchiveFile) {
       offsets[i] += adjust;
     }
     
-    cout << "Offset: " << offsets[i] << "\n";
+    std::cout << "Offset: " << offsets[i] << "\n";
     output[0] = (offsets[i] >> 24) & 255;
     output[1] = (offsets[i] >> 16) & 255;
     output[2] = (offsets[i] >> 8) & 255;
@@ -259,7 +252,7 @@ bool WriteSymbolTable(std::ofstream &ArchiveFile) {
 //
 bool AddMemberToArchive(string Member, std::ofstream &ArchiveFile) {
 
-  cout << "Member File Start: " << ArchiveFile.tellp() << "\n";
+  std::cout << "Member File Start: " << ArchiveFile.tellp() << "\n";
 
   ar_hdr Hdr; //Header for archive member file.
 
@@ -286,7 +279,7 @@ bool AddMemberToArchive(string Member, std::ofstream &ArchiveFile) {
   //file member size in decimal
   unsigned Length = StatBuf.st_size;
   sprintf(Hdr.size,"%d", Length);
-  cout << "Size: " << Length << "\n";
+  std::cout << "Size: " << Length << "\n";
 
   //file member user id in decimal
   sprintf(Hdr.uid, "%d", StatBuf.st_uid);
@@ -328,7 +321,7 @@ bool AddMemberToArchive(string Member, std::ofstream &ArchiveFile) {
   // Unmmap the memberfile
   munmap((char*)buf, Length);
   
-  cout << "Member File End: " << ArchiveFile.tellp() << "\n";
+  std::cout << "Member File End: " << ArchiveFile.tellp() << "\n";
 
   return true;
 }
@@ -354,12 +347,12 @@ void CreateArchive() {
 
   //If the '-s' option was specified, generate symbol table.
   if(SymTable) {
-    cout << "Symbol Table Start: " << ArchiveFile.tellp() << "\n";
+    std::cout << "Symbol Table Start: " << ArchiveFile.tellp() << "\n";
     if(!WriteSymbolTable(ArchiveFile)) {
       std::cerr << "Error creating symbol table. Exiting program.";
       exit(1);
     }
-    cout << "Symbol Table End: " << ArchiveFile.tellp() << "\n";
+    std::cout << "Symbol Table End: " << ArchiveFile.tellp() << "\n";
   }
   //Loop over all member files, and add to the archive.
   for(unsigned i=0; i < Members.size(); ++i) {
@@ -409,7 +402,7 @@ void printUse() {
 
 //Print version
 void printVersion() {
-  cout << VERSION;
+  std::cout << VERSION;
   exit(0);
 }
 
@@ -453,7 +446,7 @@ void getArchive() {
 void getMembers() {
   std::cerr << RestofArgs.size() << "\n";
   if(RestofArgs.size() > 0)
-    Members = vector<string>(RestofArgs); 
+    Members = std::vector<string>(RestofArgs); 
 }
 
 // Parse the operations and operation modifiers
