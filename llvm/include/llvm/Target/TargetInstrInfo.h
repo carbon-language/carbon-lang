@@ -51,7 +51,6 @@ const unsigned M_BARRIER_FLAG           = 1 << 4;
 const unsigned M_CC_FLAG		= 1 << 6;
 const unsigned M_LOAD_FLAG		= 1 << 10;
 const unsigned M_STORE_FLAG		= 1 << 12;
-const unsigned M_DUMMY_PHI_FLAG	= 1 << 13;
 // 3-addr instructions which really work like 2-addr ones, eg. X86 add/sub
 const unsigned M_2_ADDR_FLAG           = 1 << 15;
 
@@ -203,10 +202,6 @@ public:
   bool isStore(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_STORE_FLAG;
   }
-  bool isDummyPhiInstr(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_DUMMY_PHI_FLAG;
-  }
-
   virtual bool hasResultInterlock(MachineOpCode Opcode) const {
     return true;
   }
