@@ -136,11 +136,11 @@
   <tt>Makefile</tt>. This is the file first read by <tt>make</tt>. It has three
   sections:</p>
   <ol>
-    <li><a href="setvars">Settable Variables</a> - Required that must be set
+    <li><a href="#setvars">Settable Variables</a> - Required that must be set
     first.</li>
-    <li><a href="Makefile.common">include <tt>$(LEVEL)/Makefile.common</tt></a>
+    <li><a href="#Makefile.common">include <tt>$(LEVEL)/Makefile.common</tt></a>
     - include the LLVM Makefile system.
-    <li><a href="overvars">Override Variables</a> - Override variables set by
+    <li><a href="#overvars">Override Variables</a> - Override variables set by
     the LLVM Makefile system.
   </ol>
 </div>
@@ -154,12 +154,12 @@
   <ol>
     <li>It includes the project's configuration makefile to obtain values
     determined by the <tt>configure</tt> script. This is done by including the
-    <a href="Makefile.config"><tt>$(LEVEL)/Makefile.config</tt></a> file.</li>
+    <a href="#Makefile.config"><tt>$(LEVEL)/Makefile.config</tt></a> file.</li>
     <li>It specifies any other (static) values that are needed throughout the
     project. Only values that are used in all or a large proportion of the
     project's directories should be placed here.</li>
     <li>It includes the standard rules for the LLVM Makefile system,
-    <a href="Makefile.rules"><tt>$(LLVM_SRC_ROOT)/Makefile.rules</tt></a>. 
+    <a href="#Makefile.rules"><tt>$(LLVM_SRC_ROOT)/Makefile.rules</tt></a>. 
     This file is the "guts" of the LLVM Makefile system.</li>
   </ol>
 </div>
@@ -184,7 +184,7 @@
   <p>This file, located at <tt>$(LLVM_SRC_ROOT)/Makefile.rules</tt> is the heart
   of the LLVM Makefile System. It provides all the logic, dependencies, and
   rules for building the targets supported by the system. What it does largely
-  depends on the values of <tt>make</tt> <a href="variables">variables</a> that
+  depends on the values of <tt>make</tt> <a href="#variables">variables</a> that
   have been set <em>before</em> <tt>Makefile.rules</tt> is included.
 </div>
 
@@ -469,7 +469,7 @@
 <div class="doc_subsection"><a name="setvars">Control Variables</a></div>
 <div class="doc_text">
   <p>Variables listed in the table below should be set <em>before</em> the 
-  inclusion of <a href="Makefile.common"><tt>$(LEVEL)/Makefile.common</tt></a>. 
+  inclusion of <a href="#Makefile.common"><tt>$(LEVEL)/Makefile.common</tt></a>.
   These variables provide input to the LLVM make system that tell it what to do 
   for the current directory.</p>
   <dl>
@@ -583,7 +583,7 @@
     <li>On the <tt>make</tt> command line -- recommended.</li>
     <li>On the <tt>configure</tt> command line</li>
     <li>In the Makefile (only <em>after</em> the inclusion of <a
-    href="Makefile.common"><tt>$(LEVEL)/Makefile.common</tt></a>.</li>
+    href="#Makefile.common"><tt>$(LEVEL)/Makefile.common</tt></a>).</li>
   </ul>
   <p>The overridable variables are given below:</p>
   <dl>
