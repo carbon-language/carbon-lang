@@ -193,7 +193,7 @@ bool SROA::performScalarRepl(Function &F) {
           //
           std::string OldName = GEPI->getName();  // Steal the old name...
           std::vector<Value*> NewArgs;
-          NewArgs.push_back(Constant::getNullValue(Type::LongTy));
+          NewArgs.push_back(Constant::getNullValue(Type::IntTy));
           NewArgs.insert(NewArgs.end(), GEPI->op_begin()+3, GEPI->op_end());
           GEPI->setName("");
           RepValue =

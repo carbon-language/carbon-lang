@@ -608,10 +608,10 @@ static int IdxCompare(Constant *C1, Constant *C2) {
   if (!isa<ConstantInt>(C1) || !isa<ConstantInt>(C2))
     return -2; // don't know!
   
-  // Ok, we have two differing integer indices.  Convert them to
-  // be the same type.  Long is always big enough, so we use it.
-  C1 = ConstantExpr::getCast(C1, Type::LongTy);
-  C2 = ConstantExpr::getCast(C2, Type::LongTy);
+  // Ok, we have two differing integer indices.  Sign extend them to be the same
+  // type.  Long is always big enough, so we use it.
+  C1 = ConstantExpr::getSignExtend(C1, Type::LongTy);
+  C2 = ConstantExpr::getSignExtend(C2, Type::LongTy);
   if (C1 == C2) return 0;  // Are they just differing types?
 
   // If they are really different, now that they are the same type, then we

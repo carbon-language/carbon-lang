@@ -44,9 +44,10 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Support/CallSite.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
-#include "llvm/Support/CallSite.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include <algorithm>
@@ -92,6 +93,8 @@ namespace {
       AU.setPreservesCFG();
     }
 
+    TargetData &getTargetData() const { return *TD; }
+
     // Visitation implementation - Implement instruction combining for different
     // instruction types.  The semantics are as follows:
     // Return Value:
@@ -127,6 +130,7 @@ namespace {
     Instruction *visitCallSite(CallSite CS);
     bool transformConstExprCastCall(CallSite CS);
 
+  public:
     // InsertNewInstBefore - insert an instruction New before instruction Old
     // in the program.  Add the new instruction to the worklist.
     //
@@ -139,7 +143,6 @@ namespace {
       return New;
     }
 
-  public:
     // ReplaceInstUsesWith - This method is to be used when an instruction is
     // found to be dead, replacable with another preexisting expression.  Here
     // we add all uses of I to the worklist, replace all uses of I with the new
@@ -2272,6 +2275,20 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   return 0;
 }
 
+static Value *InsertSignExtendToPtrTy(Value *V, const Type *DTy,
+                                      Instruction *InsertPoint,
+                                      InstCombiner *IC) {
+  unsigned PS = IC->getTargetData().getPointerSize();
+  const Type *VTy = V->getType();
+  Instruction *Cast;
+  if (!VTy->isSigned() && VTy->getPrimitiveSize() < PS)
+    // We must insert a cast to ensure we sign-extend.
+    V = IC->InsertNewInstBefore(new CastInst(V, VTy->getSignedVersion(),
+                                             V->getName()), *InsertPoint);
+  return IC->InsertNewInstBefore(new CastInst(V, DTy, V->getName()),
+                                 *InsertPoint);
+}
+
 
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // Is it 'getelementptr %P, long 0'  or 'getelementptr %P'
@@ -2285,6 +2302,37 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
   if (GEP.getNumOperands() == 2 && HasZeroPointerIndex)
     return ReplaceInstUsesWith(GEP, GEP.getOperand(0));
+
+  // Eliminate unneeded casts for indices.
+  bool MadeChange = false;
+  for (unsigned i = 1, e = GEP.getNumOperands(); i != e; ++i)
+    if (CastInst *CI = dyn_cast<CastInst>(GEP.getOperand(i))) {
+      Value *Src = CI->getOperand(0);
+      const Type *SrcTy = Src->getType();
+      const Type *DestTy = CI->getType();
+      if (Src->getType()->isInteger()) {
+        if (SrcTy->getPrimitiveSize() == DestTy->getPrimitiveSize()) {
+          // We can always eliminate a cast from ulong or long to the other.  We
+          // can always eliminate a cast from uint to int or the other on 32-bit
+          // pointer platforms.
+          if (DestTy->getPrimitiveSize() >= TD->getPointerSize()) {
+            MadeChange = true;
+            GEP.setOperand(i, Src);
+          }
+        } else if (SrcTy->getPrimitiveSize() < DestTy->getPrimitiveSize() &&
+                   SrcTy->getPrimitiveSize() == 4) {
+          // We can always eliminate a cast from int to [u]long.  We can
+          // eliminate a cast from uint to [u]long iff the target is a 32-bit
+          // pointer target.
+          if (SrcTy->isSigned() || 
+              SrcTy->getPrimitiveSize() >= TD->getPointerSize()) {
+            MadeChange = true;
+            GEP.setOperand(i, Src);
+          }
+        }
+      }
+    }
+  if (MadeChange) return &GEP;
 
   // Combine Indices - If the source pointer to this getelementptr instruction
   // is a getelementptr instruction, combine the indices of the two
@@ -2304,14 +2352,17 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     // Can we combine the two pointer arithmetics offsets?
     if (SrcGEPOperands.size() == 2 && isa<Constant>(SrcGEPOperands[1]) &&
         isa<Constant>(GEP.getOperand(1))) {
+      Constant *SGC = cast<Constant>(SrcGEPOperands[1]);
+      Constant *GC  = cast<Constant>(GEP.getOperand(1));
+      if (SGC->getType() != GC->getType()) {
+        SGC = ConstantExpr::getSignExtend(SGC, Type::LongTy);
+        GC = ConstantExpr::getSignExtend(GC, Type::LongTy);
+      }
+      
       // Replace: gep (gep %P, long C1), long C2, ...
       // With:    gep %P, long (C1+C2), ...
-      Value *Sum = ConstantExpr::get(Instruction::Add,
-                                     cast<Constant>(SrcGEPOperands[1]),
-                                     cast<Constant>(GEP.getOperand(1)));
-      assert(Sum && "Constant folding of longs failed!?");
       GEP.setOperand(0, SrcGEPOperands[0]);
-      GEP.setOperand(1, Sum);
+      GEP.setOperand(1, ConstantExpr::getAdd(SGC, GC));
       if (Instruction *I = dyn_cast<Instruction>(GEP.getOperand(0)))
         AddUsersToWorkList(*I);   // Reduce use count of Src
       return &GEP;
@@ -2327,29 +2378,65 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           cast<Instruction>(SrcGEPOperands[0])->getNumOperands() == 2)
         return 0;   // Wait until our source is folded to completion.
 
-      Value *Sum = BinaryOperator::create(Instruction::Add, SrcGEPOperands[1],
-                                          GEP.getOperand(1),
-                                          GEP.getOperand(0)->getName()+".sum",
-                                          &GEP);
+      Value *Sum, *SO1 = SrcGEPOperands[1], *GO1 = GEP.getOperand(1);
+      if (SO1 == Constant::getNullValue(SO1->getType())) {
+        Sum = GO1;
+      } else if (GO1 == Constant::getNullValue(GO1->getType())) {
+        Sum = SO1;
+      } else {
+        // If they aren't the same type, convert both to an integer of the
+        // target's pointer size.
+        if (SO1->getType() != GO1->getType()) {
+          if (Constant *SO1C = dyn_cast<Constant>(SO1)) {
+            SO1 = ConstantExpr::getCast(SO1C, GO1->getType());
+          } else if (Constant *GO1C = dyn_cast<Constant>(GO1)) {
+            GO1 = ConstantExpr::getCast(GO1C, SO1->getType());
+          } else {
+            unsigned PS = TD->getPointerSize();
+            Instruction *Cast;
+            if (SO1->getType()->getPrimitiveSize() == PS) {
+              // Convert GO1 to SO1's type.
+              GO1 = InsertSignExtendToPtrTy(GO1, SO1->getType(), &GEP, this);
+
+            } else if (GO1->getType()->getPrimitiveSize() == PS) {
+              // Convert SO1 to GO1's type.
+              SO1 = InsertSignExtendToPtrTy(SO1, GO1->getType(), &GEP, this);
+            } else {
+              const Type *PT = TD->getIntPtrType();
+              SO1 = InsertSignExtendToPtrTy(SO1, PT, &GEP, this);
+              GO1 = InsertSignExtendToPtrTy(GO1, PT, &GEP, this);
+            }
+          }
+        }
+        Sum = BinaryOperator::create(Instruction::Add, SO1, GO1,
+                                     GEP.getOperand(0)->getName()+".sum", &GEP);
+      }
       GEP.setOperand(0, SrcGEPOperands[0]);
       GEP.setOperand(1, Sum);
       WorkList.push_back(cast<Instruction>(Sum));
       return &GEP;
-    } else if (*GEP.idx_begin() == Constant::getNullValue(Type::LongTy) &&
+    } else if (isa<Constant>(*GEP.idx_begin()) && 
+               cast<Constant>(*GEP.idx_begin())->isNullValue() &&
                SrcGEPOperands.size() != 1) { 
       // Otherwise we can do the fold if the first index of the GEP is a zero
       Indices.insert(Indices.end(), SrcGEPOperands.begin()+1,
                      SrcGEPOperands.end());
       Indices.insert(Indices.end(), GEP.idx_begin()+1, GEP.idx_end());
-    } else if (SrcGEPOperands.back() == Constant::getNullValue(Type::LongTy)) {
-      // FIXME: when we allow indices to be non-long values, support this for
-      // other types!
-
-      // If the src gep ends with a constant array index, merge this get into
-      // it, even if we have a non-zero array index.
-      Indices.insert(Indices.end(), SrcGEPOperands.begin()+1,
-                     SrcGEPOperands.end()-1);
-      Indices.insert(Indices.end(), GEP.idx_begin(), GEP.idx_end());
+    } else if (SrcGEPOperands.back() ==
+               Constant::getNullValue(SrcGEPOperands.back()->getType())) {
+      // We have to check to make sure this really is an ARRAY index we are
+      // ending up with, not a struct index.
+      generic_gep_type_iterator<std::vector<Value*>::iterator>
+        GTI = gep_type_begin(SrcGEPOperands[0]->getType(),
+                             SrcGEPOperands.begin()+1, SrcGEPOperands.end());
+      std::advance(GTI, SrcGEPOperands.size()-2);
+      if (isa<SequentialType>(*GTI)) {
+        // If the src gep ends with a constant array index, merge this get into
+        // it, even if we have a non-zero array index.
+        Indices.insert(Indices.end(), SrcGEPOperands.begin()+1,
+                       SrcGEPOperands.end()-1);
+        Indices.insert(Indices.end(), GEP.idx_begin(), GEP.idx_end());
+      }
     }
 
     if (!Indices.empty())
@@ -2428,7 +2515,7 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
       // Now that I is pointing to the first non-allocation-inst in the block,
       // insert our getelementptr instruction...
       //
-      std::vector<Value*> Idx(2, Constant::getNullValue(Type::LongTy));
+      std::vector<Value*> Idx(2, Constant::getNullValue(Type::IntTy));
       Value *V = new GetElementPtrInst(New, Idx, New->getName()+".sub", It);
 
       // Now make everything use the getelementptr instead of the original
@@ -2469,7 +2556,7 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
 /// expression, or null if something is funny.
 ///
 static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
-  if (CE->getOperand(1) != Constant::getNullValue(Type::LongTy))
+  if (CE->getOperand(1) != Constant::getNullValue(CE->getOperand(1)->getType()))
     return 0;  // Do not allow stepping over the value!
 
   // Loop over all of the operands, tracking down which value we are

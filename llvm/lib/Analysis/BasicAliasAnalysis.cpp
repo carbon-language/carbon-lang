@@ -353,6 +353,19 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   return MayAlias;
 }
 
+static bool ValuesEqual(Value *V1, Value *V2) {
+  if (V1->getType() == V2->getType())
+    return V1 == V2;
+  if (Constant *C1 = dyn_cast<Constant>(V1))
+    if (Constant *C2 = dyn_cast<Constant>(V2)) {
+      // Sign extend the constants to long types.
+      C1 = ConstantExpr::getSignExtend(C1, Type::LongTy);
+      C2 = ConstantExpr::getSignExtend(C2, Type::LongTy);
+      return C1 == C2;
+    }
+  return false;
+}
+
 /// CheckGEPInstructions - Check two GEP instructions with known must-aliasing
 /// base pointers.  This checks to see if the index expressions preclude the
 /// pointers from aliasing...
@@ -376,7 +389,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   unsigned MaxOperands = std::max(NumGEP1Operands, NumGEP2Operands);
   unsigned UnequalOper = 0;
   while (UnequalOper != MinOperands &&
-         GEP1Ops[UnequalOper] == GEP2Ops[UnequalOper]) {
+         ValuesEqual(GEP1Ops[UnequalOper], GEP2Ops[UnequalOper])) {
     // Advance through the type as we go...
     ++UnequalOper;
     if (const CompositeType *CT = dyn_cast<CompositeType>(BasePtr1Ty))
@@ -418,7 +431,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   if (SizeMax == ~0U) return MayAlias; // Avoid frivolous work...
 
   // Scan for the first operand that is constant and unequal in the
-  // two getelemenptrs...
+  // two getelementptrs...
   unsigned FirstConstantOper = UnequalOper;
   for (; FirstConstantOper != MinOperands; ++FirstConstantOper) {
     const Value *G1Oper = GEP1Ops[FirstConstantOper];
@@ -427,13 +440,23 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
     if (G1Oper != G2Oper)   // Found non-equal constant indexes...
       if (Constant *G1OC = dyn_cast<Constant>(const_cast<Value*>(G1Oper)))
         if (Constant *G2OC = dyn_cast<Constant>(const_cast<Value*>(G2Oper))) {
-          // Make sure they are comparable (ie, not constant expressions)...
-          // and make sure the GEP with the smaller leading constant is GEP1.
-          Constant *Compare = ConstantExpr::get(Instruction::SetGT, G1OC, G2OC);
-          if (ConstantBool *CV = dyn_cast<ConstantBool>(Compare)) {
-            if (CV->getValue())   // If they are comparable and G2 > G1
-              std::swap(GEP1Ops, GEP2Ops);  // Make GEP1 < GEP2
-            break;
+          if (G1OC->getType() != G2OC->getType()) {
+            // Sign extend both operands to long.
+            G1OC = ConstantExpr::getSignExtend(G1OC, Type::LongTy);
+            G2OC = ConstantExpr::getSignExtend(G2OC, Type::LongTy);
+            GEP1Ops[FirstConstantOper] = G1OC;
+            GEP2Ops[FirstConstantOper] = G2OC;
+          }
+
+          if (G1OC != G2OC) {
+            // Make sure they are comparable (ie, not constant expressions)...
+            // and make sure the GEP with the smaller leading constant is GEP1.
+            Constant *Compare = ConstantExpr::getSetGT(G1OC, G2OC);
+            if (ConstantBool *CV = dyn_cast<ConstantBool>(Compare)) {
+              if (CV->getValue())   // If they are comparable and G2 > G1
+                std::swap(GEP1Ops, GEP2Ops);  // Make GEP1 < GEP2
+              break;
+            }
           }
         }
     BasePtr1Ty = cast<CompositeType>(BasePtr1Ty)->getTypeAtIndex(G1Oper);
@@ -443,7 +466,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   // point, the GEP instructions have run through all of their operands, and we
   // haven't found evidence that there are any deltas between the GEP's.
   // However, one GEP may have more operands than the other.  If this is the
-  // case, there may still be hope.  This this now.
+  // case, there may still be hope.  Check this now.
   if (FirstConstantOper == MinOperands) {
     // Make GEP1Ops be the longer one if there is a longer one.
     if (GEP1Ops.size() < GEP2Ops.size())
@@ -494,10 +517,8 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   // initial equal sequence of variables into constant zeros to start with.
   for (unsigned i = 0; i != FirstConstantOper; ++i) {
     if (!isa<Constant>(GEP1Ops[i]) || isa<ConstantExpr>(GEP1Ops[i]) ||
-        !isa<Constant>(GEP2Ops[i]) || isa<ConstantExpr>(GEP2Ops[i])) {
-      GEP1Ops[i] = Constant::getNullValue(GEP1Ops[i]->getType());
-      GEP2Ops[i] = Constant::getNullValue(GEP2Ops[i]->getType());
-    }
+        !isa<Constant>(GEP2Ops[i]) || isa<ConstantExpr>(GEP2Ops[i]))
+      GEP1Ops[i] = GEP2Ops[i] = Constant::getNullValue(Type::UIntTy);
   }
 
   // We know that GEP1Ops[FirstConstantOper] & GEP2Ops[FirstConstantOper] are ok

@@ -2704,12 +2704,13 @@ void ISel::getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
       // idx is the index into the array.  Unlike with structure
       // indices, we may not know its actual value at code-generation
       // time.
-      assert(idx->getType() == Type::LongTy && "Bad GEP array index!");
 
       // If idx is a constant, fold it into the offset.
       unsigned TypeSize = TD.getTypeSize(SqTy->getElementType());
       if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(idx)) {
         Disp += TypeSize*CSI->getValue();
+      } else if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(idx)) {
+        Disp += TypeSize*CUI->getValue();
       } else {
         // If the index reg is already taken, we can't handle this index.
         if (IndexReg) return;
@@ -2833,12 +2834,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       GEPOps.pop_back();        // Consume a GEP operand
       GEPTypes.pop_back();
 
-      // idx is the index into the array.  Unlike with structure
-      // indices, we may not know its actual value at code-generation
-      // time.
-      assert(idx->getType() == Type::LongTy && "Bad GEP array index!");
-
-      // Most GEP instructions use a [cast (int/uint) to LongTy] as their
+      // Many GEP instructions use a [cast (int/uint) to LongTy] as their
       // operand on X86.  Handle this case directly now...
       if (CastInst *CI = dyn_cast<CastInst>(idx))
         if (CI->getOperand(0)->getType() == Type::IntTy ||
@@ -2852,9 +2848,9 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       unsigned elementSize = TD.getTypeSize(ElTy);
 
       // If idxReg is a constant, we don't need to perform the multiply!
-      if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(idx)) {
+      if (ConstantInt *CSI = dyn_cast<ConstantInt>(idx)) {
         if (!CSI->isNullValue()) {
-          unsigned Offset = elementSize*CSI->getValue();
+          unsigned Offset = elementSize*CSI->getRawValue();
           unsigned Reg = makeAnotherReg(Type::UIntTy);
           BuildMI(*MBB, IP, X86::ADD32ri, 2, TargetReg)
                                 .addReg(Reg).addImm(Offset);

@@ -137,7 +137,12 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
   if (!isa<PointerType>(Ptr)) return 0;   // Type isn't a pointer type!
 
   // Handle the special case of the empty set index set...
-  if (Idx.empty()) return cast<PointerType>(Ptr)->getElementType();
+  if (Idx.empty())
+    if (AllowCompositeLeaf ||
+        cast<PointerType>(Ptr)->getElementType()->isFirstClassType())
+      return cast<PointerType>(Ptr)->getElementType();
+    else
+      return 0;
  
   unsigned CurIdx = 0;
   while (const CompositeType *CT = dyn_cast<CompositeType>(Ptr)) {

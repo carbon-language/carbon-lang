@@ -277,14 +277,14 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
       // Store this old value as our 'next' field, and store our alloca as the
       // current jblist.
       std::vector<Value*> Idx;
-      Idx.push_back(Constant::getNullValue(Type::LongTy));
-      Idx.push_back(ConstantUInt::get(Type::UByteTy, 0));
+      Idx.push_back(Constant::getNullValue(Type::IntTy));
+      Idx.push_back(ConstantUInt::get(Type::UIntTy, 0));
       Value *NextFieldPtr = new GetElementPtrInst(JmpBuf, Idx, "NextField", II);
       new StoreInst(OldEntry, NextFieldPtr, II);
       new StoreInst(JmpBuf, JBListHead, II);
       
       // Call setjmp, passing in the address of the jmpbuffer.
-      Idx[1] = ConstantUInt::get(Type::UByteTy, 1);
+      Idx[1] = ConstantUInt::get(Type::UIntTy, 1);
       Value *JmpBufPtr = new GetElementPtrInst(JmpBuf, Idx, "TheJmpBuf", II);
       Value *SJRet = new CallInst(SetJmpFn, JmpBufPtr, "sjret", II);
 
@@ -369,14 +369,14 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     // JBList.
     std::vector<Value*> Idx;
     Idx.push_back(Constant::getNullValue(Type::LongTy));
-    Idx.push_back(ConstantUInt::get(Type::UByteTy, 0));
+    Idx.push_back(ConstantUInt::get(Type::UIntTy, 0));
     Value *NextFieldPtr = new GetElementPtrInst(RecPtr, Idx, "NextField", RI);
     Value *NextRec = new LoadInst(NextFieldPtr, "NextRecord", RI);
     new StoreInst(NextRec, JBListHead, RI);
 
     // Now that we popped the top of the JBList, get a pointer to the jmpbuf and
     // longjmp.
-    Idx[1] = ConstantUInt::get(Type::UByteTy, 1);
+    Idx[1] = ConstantUInt::get(Type::UIntTy, 1);
     Idx[0] = new GetElementPtrInst(RecPtr, Idx, "JmpBuf", RI);
     Idx[1] = ConstantInt::get(Type::IntTy, 1);
     new CallInst(LongJmpFn, Idx, "", RI);

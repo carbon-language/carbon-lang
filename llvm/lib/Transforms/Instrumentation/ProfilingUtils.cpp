@@ -40,7 +40,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   while (isa<AllocaInst>(InsertPos)) ++InsertPos;
 
   ConstantPointerRef *ArrayCPR = ConstantPointerRef::get(Array);
-  std::vector<Constant*> GEPIndices(2, Constant::getNullValue(Type::LongTy));
+  std::vector<Constant*> GEPIndices(2, Constant::getNullValue(Type::IntTy));
   Args[2] = ConstantExpr::getGetElementPtr(ArrayCPR, GEPIndices);
   
   unsigned NumElements =
@@ -89,8 +89,8 @@ void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
 
   // Create the getelementptr constant expression
   std::vector<Constant*> Indices(2);
-  Indices[0] = Constant::getNullValue(Type::LongTy);
-  Indices[1] = ConstantSInt::get(Type::LongTy, CounterNum);
+  Indices[0] = Constant::getNullValue(Type::IntTy);
+  Indices[1] = ConstantSInt::get(Type::IntTy, CounterNum);
   Constant *ElementPtr = ConstantExpr::getGetElementPtr(CounterArray, Indices);
 
   // Load, increment and store the value back.

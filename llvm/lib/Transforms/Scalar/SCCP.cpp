@@ -712,7 +712,7 @@ void SCCP::visitGetElementPtrInst(GetElementPtrInst &I) {
 /// null if something is funny.
 ///
 static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
-  if (CE->getOperand(1) != Constant::getNullValue(Type::LongTy))
+  if (CE->getOperand(1) != Constant::getNullValue(CE->getOperand(1)->getType()))
     return 0;  // Do not allow stepping over the value!
 
   // Loop over all of the operands, tracking down which value we are

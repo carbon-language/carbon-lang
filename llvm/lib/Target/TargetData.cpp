@@ -20,6 +20,7 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 using namespace llvm;
 
 // Handle the Pass registration stuff necessary to use TargetData's.
@@ -218,17 +219,11 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
   assert(isa<PointerType>(Ty) && "Illegal argument for getIndexedOffset()");
   uint64_t Result = 0;
 
-  for (unsigned CurIDX = 0; CurIDX != Idx.size(); ++CurIDX) {
-    if (Idx[CurIDX]->getType() == Type::LongTy) {
-      // Update Ty to refer to current element
-      Ty = cast<SequentialType>(Ty)->getElementType();
-
-      // Get the array index and the size of each array element.
-      int64_t arrayIdx = cast<ConstantSInt>(Idx[CurIDX])->getValue();
-      Result += arrayIdx * (int64_t)getTypeSize(Ty);
-    } else {
-      const StructType *STy = cast<StructType>(Ty);
-      assert(Idx[CurIDX]->getType() == Type::UByteTy && "Illegal struct idx");
+  generic_gep_type_iterator<std::vector<Value*>::const_iterator>
+    TI = gep_type_begin(ptrTy, Idx.begin(), Idx.end());
+  for (unsigned CurIDX = 0; CurIDX != Idx.size(); ++CurIDX, ++TI) {
+    if (const StructType *STy = dyn_cast<StructType>(*TI)) {
+      assert(Idx[CurIDX]->getType() == Type::UIntTy && "Illegal struct idx");
       unsigned FieldNo = cast<ConstantUInt>(Idx[CurIDX])->getValue();
 
       // Get structure layout information...
@@ -240,6 +235,13 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
 
       // Update Ty to refer to current element
       Ty = STy->getElementType(FieldNo);
+    } else {
+      // Update Ty to refer to current element
+      Ty = cast<SequentialType>(Ty)->getElementType();
+
+      // Get the array index and the size of each array element.
+      int64_t arrayIdx = cast<ConstantInt>(Idx[CurIDX])->getRawValue();
+      Result += arrayIdx * (int64_t)getTypeSize(Ty);
     }
   }
 

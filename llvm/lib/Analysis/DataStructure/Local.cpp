@@ -350,7 +350,8 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
 #if 0
   // Handle the pointer index specially...
   if (GEP.getNumOperands() > 1 &&
-      GEP.getOperand(1) != ConstantSInt::getNullValue(Type::LongTy)) {
+      (!isa<Constant>(GEP.getOperand(1)) ||
+       !cast<Constant>(GEP.getOperand(1))->isNullValue())) {
 
     // If we already know this is an array being accessed, don't do anything...
     if (!TopTypeRec.isArray) {
