@@ -105,9 +105,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   assert(BB->getTerminator() && "Degenerate basic block encountered!");
   assert(&BB->getParent()->front() != BB && "Can't Simplify entry block!");
 
-  // Check to see if the first instruction in this block is just an
-  // 'llvm.unwind'.  If so, replace any invoke instructions which use this as an
-  // exception destination with call instructions.
+  // Check to see if the first instruction in this block is just an unwind.  If
+  // so, replace any invoke instructions which use this as an exception
+  // destination with call instructions.
   //
   if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator()))
     if (BB->begin() == BasicBlock::iterator(UI)) {  // Empty block?
@@ -136,8 +136,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     }
 
   // Remove basic blocks that have no predecessors... which are unreachable.
-  if (pred_begin(BB) == pred_end(BB) &&
-      !BB->hasConstantReferences()) {
+  if (pred_begin(BB) == pred_end(BB)) {
     //cerr << "Removing BB: \n" << BB;
 
     // Loop through all of our successors and make sure they know that one
@@ -237,64 +236,62 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // pred, and if there is only one distinct successor of the predecessor, and
   // if there are no PHI nodes.
   //
-  if (!BB->hasConstantReferences()) {
-    pred_iterator PI(pred_begin(BB)), PE(pred_end(BB));
-    BasicBlock *OnlyPred = *PI++;
-    for (; PI != PE; ++PI)  // Search all predecessors, see if they are all same
-      if (*PI != OnlyPred) {
-        OnlyPred = 0;       // There are multiple different predecessors...
+  pred_iterator PI(pred_begin(BB)), PE(pred_end(BB));
+  BasicBlock *OnlyPred = *PI++;
+  for (; PI != PE; ++PI)  // Search all predecessors, see if they are all same
+    if (*PI != OnlyPred) {
+      OnlyPred = 0;       // There are multiple different predecessors...
+      break;
+    }
+  
+  BasicBlock *OnlySucc = 0;
+  if (OnlyPred && OnlyPred != BB &&    // Don't break self loops
+      OnlyPred->getTerminator()->getOpcode() != Instruction::Invoke) {
+    // Check to see if there is only one distinct successor...
+    succ_iterator SI(succ_begin(OnlyPred)), SE(succ_end(OnlyPred));
+    OnlySucc = BB;
+    for (; SI != SE; ++SI)
+      if (*SI != OnlySucc) {
+        OnlySucc = 0;     // There are multiple distinct successors!
         break;
       }
-  
-    BasicBlock *OnlySucc = 0;
-    if (OnlyPred && OnlyPred != BB &&    // Don't break self loops
-        OnlyPred->getTerminator()->getOpcode() != Instruction::Invoke) {
-      // Check to see if there is only one distinct successor...
-      succ_iterator SI(succ_begin(OnlyPred)), SE(succ_end(OnlyPred));
-      OnlySucc = BB;
-      for (; SI != SE; ++SI)
-        if (*SI != OnlySucc) {
-          OnlySucc = 0;     // There are multiple distinct successors!
-          break;
-        }
+  }
+
+  if (OnlySucc) {
+    //cerr << "Merging: " << BB << "into: " << OnlyPred;
+    TerminatorInst *Term = OnlyPred->getTerminator();
+
+    // Resolve any PHI nodes at the start of the block.  They are all
+    // guaranteed to have exactly one entry if they exist, unless there are
+    // multiple duplicate (but guaranteed to be equal) entries for the
+    // incoming edges.  This occurs when there are multiple edges from
+    // OnlyPred to OnlySucc.
+    //
+    while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
+      PN->replaceAllUsesWith(PN->getIncomingValue(0));
+      BB->getInstList().pop_front();  // Delete the phi node...
     }
 
-    if (OnlySucc) {
-      //cerr << "Merging: " << BB << "into: " << OnlyPred;
-      TerminatorInst *Term = OnlyPred->getTerminator();
-
-      // Resolve any PHI nodes at the start of the block.  They are all
-      // guaranteed to have exactly one entry if they exist, unless there are
-      // multiple duplicate (but guaranteed to be equal) entries for the
-      // incoming edges.  This occurs when there are multiple edges from
-      // OnlyPred to OnlySucc.
-      //
-      while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
-        PN->replaceAllUsesWith(PN->getIncomingValue(0));
-        BB->getInstList().pop_front();  // Delete the phi node...
-      }
-
-      // Delete the unconditional branch from the predecessor...
-      OnlyPred->getInstList().pop_back();
+    // Delete the unconditional branch from the predecessor...
+    OnlyPred->getInstList().pop_back();
       
-      // Move all definitions in the successor to the predecessor...
-      OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
+    // Move all definitions in the successor to the predecessor...
+    OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
                                      
-      // Make all PHI nodes that referred to BB now refer to Pred as their
-      // source...
-      BB->replaceAllUsesWith(OnlyPred);
+    // Make all PHI nodes that referred to BB now refer to Pred as their
+    // source...
+    BB->replaceAllUsesWith(OnlyPred);
 
-      std::string OldName = BB->getName();
+    std::string OldName = BB->getName();
 
-      // Erase basic block from the function... 
-      M->getBasicBlockList().erase(BB);
+    // Erase basic block from the function... 
+    M->getBasicBlockList().erase(BB);
 
-      // Inherit predecessors name if it exists...
-      if (!OldName.empty() && !OnlyPred->hasName())
-        OnlyPred->setName(OldName);
+    // Inherit predecessors name if it exists...
+    if (!OldName.empty() && !OnlyPred->hasName())
+      OnlyPred->setName(OldName);
       
-      return true;
-    }
+    return true;
   }
   
   return Changed;
