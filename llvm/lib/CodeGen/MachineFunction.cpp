@@ -126,7 +126,7 @@ void MachineFunction::print(std::ostream &OS) const {
   getConstantPool()->print(OS);
   
   for (const_iterator BB = begin(); BB != end(); ++BB) {
-    BasicBlock *LBB = BB->getBasicBlock();
+    const BasicBlock *LBB = BB->getBasicBlock();
     OS << "\n" << LBB->getName() << " (" << (const void*)LBB << "):\n";
     for (MachineBasicBlock::const_iterator I = BB->begin(); I != BB->end();++I){
       OS << "\t";

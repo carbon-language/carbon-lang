@@ -200,8 +200,8 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
           // at an appropriate point later.
           //
           bool ValueIsLive = false;
-          BasicBlock *BB = opBlock.getBasicBlock();
-          for (succ_iterator SI = succ_begin(BB), E = succ_end(BB);
+          const BasicBlock *BB = opBlock.getBasicBlock();
+          for (succ_const_iterator SI = succ_begin(BB), E = succ_end(BB);
                SI != E && !ValueIsLive; ++SI) {
             const std::pair<MachineBasicBlock*, unsigned> &
               SuccInfo = LV->getBasicBlockInfo(*SI);
