@@ -175,10 +175,6 @@ void *JIT::recompileAndRelinkFunction(Function *F) {
   // Delete the old function mapping.
   addGlobalMapping(F, 0);
 
-  // Destroy the machine code for this function.  FIXME: this should be
-  // incorporated into the code generator!
-  MachineFunction::destruct(F);
-
   // Recodegen the function
   runJITOnFunction(F);
 
