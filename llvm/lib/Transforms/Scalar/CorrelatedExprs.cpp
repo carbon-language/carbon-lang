@@ -634,7 +634,7 @@ void CEE::ReplaceUsesOfValueInRegion(Value *Orig, Value *New,
   assert(Orig != New && "Cannot replace value with itself");
   std::vector<Instruction*> InstsToChange;
   std::vector<PHINode*>     PHIsToChange;
-  InstsToChange.reserve(Orig->use_size());
+  InstsToChange.reserve(Orig->getNumUses());
 
   // Loop over instructions adding them to InstsToChange vector, this allows us
   // an easy way to avoid invalidating the use_iterator at a bad time.
