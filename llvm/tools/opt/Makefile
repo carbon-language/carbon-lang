@@ -5,7 +5,7 @@ USEDLIBS = bcreader bcwriter instrument profpaths \
 	   sparc mapping regalloc.a sched select codegen preopts \
            postopts.a \
 	   livevar scalaropts \
-	   ipo ipa.a datastructure transforms target.a analysis \
+	   ipo ipa.a datastructure transforms target.a analysis ipa.a \
            transformutils vmcore support
 
 TOOLLINKOPTS = -ldl
