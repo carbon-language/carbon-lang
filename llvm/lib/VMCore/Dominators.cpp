@@ -373,19 +373,20 @@ void DominatorTree::calculate(const ImmediateDominators &ID) {
   BasicBlock *Root = Roots[0];
   Nodes[Root] = RootNode = new Node(Root, 0); // Add a node for the root...
 
+  Function *F = Root->getParent();
   // Loop over all of the reachable blocks in the function...
-  for (ImmediateDominators::const_iterator I = ID.begin(), E = ID.end();
-       I != E; ++I) {
-    Node *&BBNode = Nodes[I->first];
-    if (!BBNode) {  // Haven't calculated this node yet?
-      // Get or calculate the node for the immediate dominator
-      Node *IDomNode = getNodeForBlock(I->second);
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+    if (BasicBlock *ImmDom = ID.get(I)) {  // Reachable block.
+      Node *&BBNode = Nodes[I];
+      if (!BBNode) {  // Haven't calculated this node yet?
+        // Get or calculate the node for the immediate dominator
+        Node *IDomNode = getNodeForBlock(ImmDom);
 
-      // Add a new tree node for this BasicBlock, and link it as a child of
-      // IDomNode
-      BBNode = IDomNode->addChild(new Node(I->first, IDomNode));
+        // Add a new tree node for this BasicBlock, and link it as a child of
+        // IDomNode
+        BBNode = IDomNode->addChild(new Node(I, IDomNode));
+      }
     }
-  }
 }
 
 static std::ostream &operator<<(std::ostream &o,
