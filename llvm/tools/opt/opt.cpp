@@ -51,6 +51,9 @@ static cl::opt<bool>
 NoOutput("no-output", cl::desc("Do not write result bytecode file"), cl::Hidden);
 
 static cl::opt<bool>
+NoVerify("no-verify", cl::desc("Do not verify result module"), cl::Hidden);
+
+static cl::opt<bool>
 Quiet("q", cl::desc("Don't print 'program modified' message"));
 
 static cl::alias
@@ -128,7 +131,8 @@ int main(int argc, char **argv) {
   }
 
   // Check that the module is well formed on completion of optimization
-  Passes.add(createVerifierPass());
+  if (!NoVerify)
+    Passes.add(createVerifierPass());
 
   // Write bytecode out to disk or cout as the last step...
   if (!NoOutput)
