@@ -2672,8 +2672,67 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
                           ValueFrameIdx, 4);
       }
     } else {
-      std::cerr << "ERROR: Cast fp-to-unsigned not implemented!\n";
-      abort();
+      unsigned Zero = getReg(ConstantFP::get(Type::DoubleTy, 0.0f));
+      double maxInt = (1LL << 32) - 1;
+      unsigned MaxInt = getReg(ConstantFP::get(Type::DoubleTy, maxInt));
+      double border = 1LL << 31;
+      unsigned Border = getReg(ConstantFP::get(Type::DoubleTy, border));
+      unsigned UseZero = makeAnotherReg(Type::DoubleTy);
+      unsigned UseMaxInt = makeAnotherReg(Type::DoubleTy);
+      unsigned UseChoice = makeAnotherReg(Type::DoubleTy);
+      unsigned TmpReg = makeAnotherReg(Type::DoubleTy);
+      unsigned TmpReg2 = makeAnotherReg(Type::DoubleTy);
+      unsigned ConvReg = makeAnotherReg(Type::DoubleTy);
+      unsigned IntTmp = makeAnotherReg(Type::IntTy);
+      unsigned XorReg = makeAnotherReg(Type::IntTy);
+      int FrameIdx = 
+        F->getFrameInfo()->CreateStackObject(SrcTy, TM.getTargetData());
+      // Update machine-CFG edges
+      MachineBasicBlock *XorMBB = new MachineBasicBlock(BB->getBasicBlock());
+      MachineBasicBlock *PhiMBB = new MachineBasicBlock(BB->getBasicBlock());
+      MachineBasicBlock *OldMBB = BB;
+      ilist<MachineBasicBlock>::iterator It = BB; ++It;
+      F->getBasicBlockList().insert(It, XorMBB);
+      F->getBasicBlockList().insert(It, PhiMBB);
+      BB->addSuccessor(XorMBB);
+      BB->addSuccessor(PhiMBB);
+
+      // Convert from floating point to unsigned 32-bit value
+      // Use 0 if incoming value is < 0.0
+      BuildMI(*BB, IP, PPC32::FSEL, 3, UseZero).addReg(SrcReg).addReg(SrcReg)
+        .addReg(Zero);
+      // Use 2**32 - 1 if incoming value is >= 2**32
+      BuildMI(*BB, IP, PPC32::FSUB, 2, UseMaxInt).addReg(MaxInt).addReg(SrcReg);
+      BuildMI(*BB, IP, PPC32::FSEL, 3, UseChoice).addReg(UseMaxInt)
+        .addReg(UseZero).addReg(MaxInt);
+      // Subtract 2**31
+      BuildMI(*BB, IP, PPC32::FSUB, 2, TmpReg).addReg(UseChoice).addReg(Border);
+      // Use difference if >= 2**31
+      BuildMI(*BB, IP, PPC32::FCMPU, 2, PPC32::CR0).addReg(UseChoice)
+        .addReg(Border);
+      BuildMI(*BB, IP, PPC32::FSEL, 3, TmpReg2).addReg(TmpReg).addReg(TmpReg)
+        .addReg(UseChoice);
+      // Convert to integer
+      BuildMI(*BB, IP, PPC32::FCTIWZ, 1, ConvReg).addReg(TmpReg2);
+      addFrameReference(BuildMI(*BB, IP, PPC32::STFD, 3).addReg(ConvReg),
+                        FrameIdx);
+      addFrameReference(BuildMI(*BB, IP, PPC32::LWZ, 2, IntTmp),
+                        FrameIdx, 4);
+      BuildMI(*BB, IP, PPC32::BLT, 2).addReg(PPC32::CR0).addMBB(PhiMBB);
+      BuildMI(*BB, IP, PPC32::B, 1).addMBB(XorMBB);
+
+      // XorMBB:
+      //   add 2**31 if input was >= 2**31
+      BB = XorMBB;
+      BuildMI(BB, PPC32::XORIS, 2, XorReg).addReg(IntTmp).addImm(0x8000);
+      BuildMI(BB, PPC32::B, 1).addMBB(PhiMBB);
+      XorMBB->addSuccessor(PhiMBB);
+
+      // PhiMBB:
+      //   DestReg = phi [ IntTmp, OldMBB ], [ XorReg, XorMBB ]
+      BB = PhiMBB;
+      BuildMI(BB, PPC32::PHI, 2, DestReg).addReg(IntTmp).addMBB(OldMBB)
+        .addReg(XorReg).addMBB(XorMBB);
     }
     return;
   }
