@@ -32,6 +32,7 @@ using namespace std;
 
 using cfg::DominanceFrontier;
 
+namespace {
 
 //instance of the promoter -- to keep all the local method data.
 // gets re-created for each method processed
@@ -67,28 +68,7 @@ class PromoteInstance
 	operator bool () { return didchange; }
 };
 
-class PromotePass : public MethodPass {
-	public:
-
-	// runOnMethod - To run this pass, first we calculate the alloca instructions
-	// that are safe for promotion, then we promote each one.
-	//
-	virtual bool runOnMethod(Method *M)
-	{
-		PromoteInstance inst(M, getAnalysis<DominanceFrontier>());
-		return (bool)inst;
-	}
-
-
-	// getAnalysisUsageInfo - We need dominance frontiers
-	//
-	virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-	Pass::AnalysisSet &Destroyed,
-	Pass::AnalysisSet &Provided) {
-		Requires.push_back(DominanceFrontier::ID);
-	}
-};
-
+}  // end of anonymous namespace
 
 // findSafeAllocas - Find allocas that are safe to promote
 //
@@ -125,13 +105,6 @@ void PromoteInstance::findSafeAllocas(Method *M)
       }
 }
 
-
-
-// newPromoteMemoryToRegister - Provide an entry point to create this pass.
-//
-Pass *newPromoteMemoryToRegister() {
-	return new PromotePass();
-}
 
 
 bool PromoteInstance::PromoteMethod(Method *M, DominanceFrontier & DF) {
@@ -333,3 +306,37 @@ bool PromoteInstance::queuePhiNode(BasicBlock *bb, int i /*the alloca*/)
 	}
 	return false;
 }
+
+
+namespace {
+  class PromotePass : public MethodPass {
+  public:
+
+    // runOnMethod - To run this pass, first we calculate the alloca
+    // instructions that are safe for promotion, then we promote each one.
+    //
+    virtual bool runOnMethod(Method *M)
+    {
+      PromoteInstance inst(M, getAnalysis<DominanceFrontier>());
+      return (bool)inst;
+    }
+    
+
+    // getAnalysisUsageInfo - We need dominance frontiers
+    //
+    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
+				      Pass::AnalysisSet &Destroyed,
+				      Pass::AnalysisSet &Provided) {
+      Requires.push_back(DominanceFrontier::ID);
+    }
+  };
+}
+  
+
+// createPromoteMemoryToRegister - Provide an entry point to create this pass.
+//
+Pass *createPromoteMemoryToRegister() {
+	return new PromotePass();
+}
+
+
