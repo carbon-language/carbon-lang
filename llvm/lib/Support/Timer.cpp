@@ -95,7 +95,7 @@ Timer::~Timer() {
 
 static inline long getMemUsage() {
   if (TrackSpace)
-    return sys::Process::GetMallocUsage();
+    return (long)sys::Process::GetMallocUsage();
   return 0;
 }
 
