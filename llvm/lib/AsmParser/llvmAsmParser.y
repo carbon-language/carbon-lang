@@ -103,7 +103,6 @@ static struct PerMethodInfo {
 } CurMeth;  // Info for the current method...
 
 static bool inMethodScope() { return CurMeth.CurrentMethod != 0; }
-static bool inModuleScope() { return CurMeth.CurrentMethod == 0; }
 
 
 //===----------------------------------------------------------------------===//
@@ -457,25 +456,18 @@ static bool setValueName(Value *V, char *NameStr) {
       // cerr << "Type: " << Ty->getDescription() << " != "
       //      << cast<const Type>(V)->getDescription() << "!\n";
     } else if (GlobalVariable *EGV = dyn_cast<GlobalVariable>(Existing)) {
-      GlobalVariable *GV = cast<GlobalVariable>(V);
+      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+        if (EGV->isConstant() == GV->isConstant() &&
+            (!EGV->hasInitializer() || !GV->hasInitializer() ||
+             EGV->getInitializer() == GV->getInitializer())) {
 
-      // We are allowed to redefine a global variable in two circumstances:
-      // 1. If at least one of the globals is uninitialized or 
-      // 2. If both initializers have the same value.
-      //
-      // This can only be done if the const'ness of the vars is the same.
-      //
-      if (EGV->isConstant() == GV->isConstant() &&
-          (!EGV->hasInitializer() || !GV->hasInitializer() ||
-           EGV->getInitializer() == GV->getInitializer())) {
-
-        // Make sure the existing global version gets the initializer!
-        if (GV->hasInitializer() && !EGV->hasInitializer())
-          EGV->setInitializer(GV->getInitializer());
-
-        return true;   // They are equivalent!
+          // Make sure the existing global version gets the initializer!
+          if (GV->hasInitializer() && !EGV->hasInitializer())
+            EGV->setInitializer(GV->getInitializer());
+          
+          return true;   // They are equivalent!
+        }
       }
-      
     }
     ThrowException("Redefinition of value name '" + Name + "' in the '" +
 		   V->getType()->getDescription() + "' type plane!");
@@ -1167,12 +1159,10 @@ ResolvedVal : Types ValueRef {
 
 
 BasicBlockList : BasicBlockList BasicBlock {
-    $1->getBasicBlocks().push_back($2);
-    $$ = $1;
+    ($$ = $1)->getBasicBlocks().push_back($2);
   }
   | MethodHeader BasicBlock { // Do not allow methods with 0 basic blocks   
-    $$ = $1;                  // in them...
-    $1->getBasicBlocks().push_back($2);
+    ($$ = $1)->getBasicBlocks().push_back($2);
   }
 
 
