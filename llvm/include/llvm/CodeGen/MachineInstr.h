@@ -84,6 +84,8 @@ private:
   
     int64_t immedVal;		// constant value for an explicit constant
   };
+
+
   
 public:
   /*ctor*/		MachineOperand	();
@@ -111,6 +113,9 @@ public:
     return immedVal;
   }
   
+  bool isDef;                   // is this a defition for the value
+                                // made public for faster access
+
 public:
   friend ostream& operator<<(ostream& os, const MachineOperand& mop);
   
@@ -134,7 +139,8 @@ MachineOperand::MachineOperand()
   : opType(MO_VirtualRegister),
     value(NULL),
     regNum(0),
-    immedVal(0)
+    immedVal(0),
+    isDef(false)
 {}
 
 inline
@@ -143,12 +149,14 @@ MachineOperand::MachineOperand(MachineOperandType operandType,
   : opType(operandType),
     value(_val),
     regNum(0),
-    immedVal(0)
+    immedVal(0),
+    isDef(false)
 {}
 
 inline
 MachineOperand::MachineOperand(const MachineOperand& mo)
-  : opType(mo.opType)
+  : opType(mo.opType),
+    isDef(false)
 {
   switch(opType) {
   case MO_VirtualRegister:
@@ -240,12 +248,13 @@ public:
   // Access to set the operands when building the machine instruction
   void			SetMachineOperand(unsigned int i,
 			      MachineOperand::MachineOperandType operandType,
-			      Value* _val);
+			      Value* _val, bool isDef=false);
   void			SetMachineOperand(unsigned int i,
 			      MachineOperand::MachineOperandType operandType,
-			      int64_t intValue);
+			      int64_t intValue, bool isDef=false);
   void			SetMachineOperand(unsigned int i,
-					  unsigned int regNum);
+					  unsigned int regNum, 
+					  bool isDef=false);
 };
 
 inline const MachineOpCode
@@ -299,7 +308,9 @@ public:
   
   inline _V*	operator*()  const { return minstr->getOperand(i).getVRegValue();}
   inline _V*	operator->() const { return operator*(); }
-  inline bool	isDef	()   const { return (((int) i) == resultPos); }
+  //  inline bool	isDef	()   const { return (((int) i) == resultPos); }
+
+  inline bool	isDef	()   const { return minstr->getOperand(i).isDef; } 
   inline bool	done	()   const { return (i == minstr->getNumOperands()); }
   
   inline _Self& operator++()	   { i++; skipToNextVal(); return *this; }
