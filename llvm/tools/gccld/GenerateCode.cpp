@@ -184,6 +184,7 @@ int llvm::GenerateBytecode(Module *M, bool Strip, bool Internalize,
       addPass(Passes, createFunctionInliningPass()); // Inline small functions
 
     addPass(Passes, createPruneEHPass());            // Remove dead EH info
+    addPass(Passes, createGlobalOptimizerPass());    // Optimize globals again.
     addPass(Passes, createGlobalDCEPass());          // Remove dead functions
 
     // If we didn't decide to inline a function, check to see if we can
