@@ -25,6 +25,10 @@ These are syntax highlighting files for the VIM editor. Included are:
 IMPORTANT: Making symlinks from ~/.vim/syntax/... to the syntax files in your
 LLVM source tree does not work, you DO need to copy the files directly.
 
+However, if you do not already have a ~/.vim/syntax/ directory, simply
+symlinking it to llvm/utils/vim will do the trick nicely, and you can stay
+up-to-date with CVS.
+
 Note: If you notice missing or incorrect syntax highlighting, please contact
 <llvmbugs [at] cs.uiuc.edu>; if you wish to provide a patch to improve the
 functionality, it will be most appreciated. Thank you.

@@ -11,11 +11,13 @@ endif
 
 syn case match
 
-syn keyword tgKeyword   def let in code dag
-syn keyword tgType      class int string list bit bits
+syn keyword tgKeyword   def let in code dag field
+syn keyword tgType      class int string list bit bits 
 syn match   tgNumber    /\<\d\+\>/
 syn match   tgNumber    /\<\d\+\.\d*\>/
 syn match   tgComment   /\/\/.*$/
+" FIXME: this does not capture multi-line C-style comments
+syn match   tgComment   /\/\*.*\*\//
 syn region  tgString    start=/"/ skip=/\\"/ end=/"/
 
 if version >= 508 || !exists("did_c_syn_inits")
@@ -26,9 +28,8 @@ if version >= 508 || !exists("did_c_syn_inits")
     command -nargs=+ HiLink hi def link <args>
   endif
 
-  HiLink tgKeyword Type
+  HiLink tgKeyword Statement
   HiLink tgType Type
-  "HiLink llvmStatement Statement
   HiLink tgNumber Number
   HiLink tgComment Comment
   HiLink tgString String
