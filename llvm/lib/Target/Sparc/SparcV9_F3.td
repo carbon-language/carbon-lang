@@ -108,9 +108,11 @@ class F3_11<bits<2> opVal, bits<6> op3Val,    string name> : F3_rdrs1rs2 {
   //set Inst{11-5} = dontcare;
 }
 
-class F3_12<bits<2> opVal, bits<6> op3Val,    string name> : F3 {
+class F3_12<bits<2> opVal, bits<6> op3Val,    string name> : F3_rdrs1 {
   bits<5> shcnt;
 
+  set op  = opVal;
+  set op3 = op3Val;
   set Name = name;
   set Inst{13} = 1; // i field = 1
   set Inst{12} = 0; // x field = 0
@@ -118,9 +120,11 @@ class F3_12<bits<2> opVal, bits<6> op3Val,    string name> : F3 {
   set Inst{4-0} = shcnt;
 }
 
-class F3_13<bits<2> opVal, bits<6> op3Val,    string name> : F3 {
+class F3_13<bits<2> opVal, bits<6> op3Val,    string name> : F3_rdrs1 {
   bits<6> shcnt;
 
+  set op  = opVal;
+  set op3 = op3Val;
   set Name = name;
   set Inst{13} = 1; // i field = 1
   set Inst{12} = 1; // x field = 1
