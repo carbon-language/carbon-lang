@@ -16,6 +16,7 @@
 #define LLVM_CONSTANTS_H
 
 #include "llvm/Constant.h"
+#include "llvm/Type.h"
 #include "Support/DataTypes.h"
 
 namespace llvm {
@@ -77,9 +78,9 @@ public:
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantIntegral *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in Constants.cpp
-  static inline bool classof(const Value *V) {
-    return isa<Constant>(V) && classof(cast<Constant>(V));
+  static bool classof(const Value *V) {
+    return V->getValueType() == SimpleConstantVal &&
+           V->getType()->isIntegral();
   }
 };
 
@@ -113,11 +114,8 @@ public:
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantBool *) { return true; }
-  static bool classof(const Constant *CPV) {
-    return (CPV == True) | (CPV == False);
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Constant>(V) && classof(cast<Constant>(V));
+  static bool classof(const Value *V) {
+    return (V == True) | (V == False);
   }
 };
 
@@ -155,9 +153,9 @@ public:
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantInt *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in Constants.cpp
-  static inline bool classof(const Value *V) {
-    return isa<Constant>(V) && classof(cast<Constant>(V));
+  static bool classof(const Value *V) {
+    return V->getValueType() == SimpleConstantVal &&
+           V->getType()->isInteger();
   }
 };
 
@@ -209,9 +207,9 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   ///
   static inline bool classof(const ConstantSInt *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in Constants.cpp
-  static inline bool classof(const Value *V) {
-    return isa<Constant>(V) && classof(cast<Constant>(V));
+  static bool classof(const Value *V) {
+    return V->getValueType() == SimpleConstantVal &&
+           V->getType()->isSigned();
   }
 };
 
@@ -245,9 +243,9 @@ public:
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantUInt *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in Constants.cpp
-  static inline bool classof(const Value *V) {
-    return isa<Constant>(V) && classof(cast<Constant>(V));
+  static bool classof(const Value *V) {
+    return V->getValueType() == SimpleConstantVal &&
+           V->getType()->isUnsigned();
   }
 };
 
@@ -302,9 +300,9 @@ public:
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantFP *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in Constants.cpp
-  static inline bool classof(const Value *V) {
-    return isa<Constant>(V) && classof(cast<Constant>(V));
+  static bool classof(const Value *V) {
+    return V->getValueType() == SimpleConstantVal &&
+           V->getType()->isFloatingPoint();
   }
 };
 
@@ -315,7 +313,8 @@ class ConstantAggregateZero : public Constant {
   friend struct ConstantCreator<ConstantAggregateZero, Type, char>;
   ConstantAggregateZero(const ConstantAggregateZero &);      // DO NOT IMPLEMENT
 protected:
-  ConstantAggregateZero(const Type *Ty) : Constant(Ty) {}
+  ConstantAggregateZero(const Type *Ty)
+    : Constant(Ty, ConstantAggregateZeroVal) {}
 public:
   /// get() - static factory method for creating a null aggregate.  It is
   /// illegal to call this method with a non-aggregate type.
@@ -331,10 +330,9 @@ public:
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   ///
-  static inline bool classof(const ConstantAggregateZero *) { return true; }
-  static bool classof(const Constant *CPV);
-  static inline bool classof(const Value *V) {
-    return isa<Constant>(V) && classof(cast<Constant>(V));
+  static bool classof(const ConstantAggregateZero *) { return true; }
+  static bool classof(const Value *V) {
+    return V->getValueType() == ConstantAggregateZeroVal;
   }
 };
 
@@ -384,9 +382,9 @@ public:
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantArray *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in Constants.cpp
-  static inline bool classof(const Value *V) {
-    return isa<Constant>(V) && classof(cast<Constant>(V));
+  static bool classof(const Value *V) {
+    return V->getValueType() == SimpleConstantVal &&
+           V->getType()->getTypeID() == Type::ArrayTyID;
   }
 };
 
@@ -429,9 +427,9 @@ public:
   
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantStruct *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in Constants.cpp
-  static inline bool classof(const Value *V) {
-    return isa<Constant>(V) && classof(cast<Constant>(V));
+  static bool classof(const Value *V) {
+    return V->getValueType() == SimpleConstantVal &&
+           V->getType()->getTypeID() == Type::StructTyID;
   }
 };
 
@@ -458,9 +456,9 @@ public:
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPointerNull *) { return true; }
-  static bool classof(const Constant *CPV);
-  static inline bool classof(const Value *V) {
-    return isa<Constant>(V) && classof(cast<Constant>(V));
+  static bool classof(const Value *V) {
+    return V->getValueType() == SimpleConstantVal &&
+           isa<PointerType>(V->getType());
   }
 };
 
@@ -565,9 +563,6 @@ public:
   /// getOpcodeName - Return a string representation for an opcode.
   const char *getOpcodeName() const;
   
-  /// isConstantExpr - Return true if this is a ConstantExpr
-  virtual bool isConstantExpr() const { return true; }
-
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
                                            bool DisableChecking = false);
@@ -583,11 +578,8 @@ public:
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantExpr *) { return true; }
-  static inline bool classof(const Constant *CPV) {
-    return CPV->isConstantExpr();
-  }
   static inline bool classof(const Value *V) {
-    return isa<Constant>(V) && classof(cast<Constant>(V));
+    return V->getValueType() == ConstantExprVal;
   }
 };
 
