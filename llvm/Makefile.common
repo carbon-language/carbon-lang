@@ -89,7 +89,7 @@ endif
 # Determine the path of the source tree relative from $HOME (the mythical
 # home directory).
 #
-HOME_OBJ_ROOT := $(OBJ_ROOT)/$(patsubst $(HOME)%,%,$(BUILD_SRC_ROOT))
+HOME_OBJ_ROOT := $(OBJ_ROOT)$(patsubst $(HOME)%,%,$(BUILD_SRC_ROOT))
 
 #
 # Set the object build directory.  Its location depends upon the source path
