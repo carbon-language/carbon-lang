@@ -1,61 +1,71 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head><title>How to submit an LLVM bug report</title></head>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>How to submit an LLVM bug report</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
 
-<body bgcolor=white>
+<div class="doc_title">
+  How to submit an LLVM bug report
+</div>
 
-<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp; <font size=+3 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>How to submit an LLVM bug report</b></font></td>
-</tr></table>
+<div>
 
-<table border=0 width=100%>
-<tr><td valign=top>
-<p><font size=+1>
+<table border="0" width="100%">
+<tr>
+<td valign="top">
+
 <ol>
-  <li><a href="#introduction">Introduction - Got bugs?</a>
+  <li><a href="#introduction">Introduction - Got bugs?</a></li>
   <li><a href="#crashers">Crashing Bugs</a>
     <ul>
     <li><a href="#front-end">Front-end bugs</a>
     <li><a href="#gccas">GCCAS bugs</a>
     <li><a href="#gccld">GCCLD bugs</a>
     <li><a href="#passes">Bugs in LLVM passes</a>
-    </ul>
-  <li><a href="#miscompilations">Miscompilations</a>
-  <li><a href="#codegen">Incorrect code generation (JIT and LLC)</a>
+    </ul></li>
+  <li><a href="#miscompilations">Miscompilations</a></li>
+  <li><a href="#codegen">Incorrect code generation (JIT and LLC)</a></li>
 
-  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a> and
-                   <a href="http://misha.brukman.net">Misha Brukman</a></b><p>
-</ol><p></font>
-</td><td valign=top align=right>
-<img src="Debugging.gif" width=444 height=314>
-</td></tr>
+</ol>
+
+<p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a> and
+                 <a href="http://misha.brukman.net">Misha Brukman</a></b></p>
+
+</td>
+<td align="right">
+  <img src="Debugging.gif" width="444" height="314">
+</td>
+</tr>
 </table>
 
-
 <!-- *********************************************************************** -->
-<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="introduction">Introduction - Got bugs?
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="introduction">Introduction - Got bugs?</a>
+</div>
 <!-- *********************************************************************** -->
 
-If you're working with LLVM and run into a bug, we definitely want to know about
-it.  This document describes what you can do to increase the odds of getting it
-fixed quickly.<p>
+<div class="doc_text">
 
-Basically you have to do two things at a minimum.  First, decide whether the bug
-<a href="#crashers">crashes the compiler</a> (or an LLVM pass), or if the
+<p>If you're working with LLVM and run into a bug, we definitely want to know
+about it.  This document describes what you can do to increase the odds of
+getting it fixed quickly.</p>
+
+<p>Basically you have to do two things at a minimum.  First, decide whether the
+bug <a href="#crashers">crashes the compiler</a> (or an LLVM pass), or if the
 compiler is <a href="#miscompilations">miscompiling</a> the program.  Based on
 what type of bug it is, follow the instructions in the linked section to narrow
 down the bug so that the person who fixes it will be able to find the problem
-more easily.<p>
+more easily.</p>
 
-Once you have a reduced test-case, go to
-<a href="http://llvm.cs.uiuc.edu/bugs/enter_bug.cgi">
-the LLVM Bug Tracking System,
-</a>
-select the catagory in which the bug falls, and fill out the form with the
-necessary details.  The bug description should contain the following
-information:
+<p>Once you have a reduced test-case, go to <a
+href="http://llvm.cs.uiuc.edu/bugs/enter_bug.cgi">the LLVM Bug Tracking
+System</a>, select the category in which the bug falls, and fill out the form
+with the necessary details.  The bug description should contain the following
+information:</p>
+
 <ul>
   <li>All information necessary to reproduce the problem.</li>
   <li>The reduced test-case that triggers the bug.</li>
@@ -63,220 +73,246 @@ information:
   repository).</li>
 </ul>
 
-<p>
-Thanks for helping us make LLVM better!<p>
+<p>Thanks for helping us make LLVM better!</p>
 
+</div>
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="crashers">Crashing Bugs
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="crashers">Crashing Bugs</a>
+</div>
 <!-- *********************************************************************** -->
 
-More often than not, bugs in the compiler cause it to crash - often due to an
+<div class="doc_text">
+
+<p>More often than not, bugs in the compiler cause it to crash - often due to an
 assertion failure of some sort.  If you are running <tt><b>opt</b></tt> or
 <tt><b>analyze</b></tt> directly, and something crashes, jump to the section on
 <a href="#passes">bugs in LLVM passes</a>.  Otherwise, the most important
 piece of the puzzle is to figure out if it is the GCC-based front-end that is
-buggy or if it's one of the LLVM tools that has problems.<p>
+buggy or if it's one of the LLVM tools that has problems.</p>
 
-To figure out which program is crashing (the front-end, <tt><b>gccas</b></tt>,
-or <tt><b>gccld</b></tt>), run the <tt><b>llvm-gcc</b></tt> command line as you
-were when the crash occurred, but add a <tt>-v</tt> option to the command line.
-The compiler will print out a bunch of stuff, and should end with telling you
-that one of <tt><b>cc1</b></tt>, <tt><b>gccas</b></tt>, or <tt><b>gccld</b></tt>
-crashed.<p>
+<p>To figure out which program is crashing (the front-end,
+<tt><b>gccas</b></tt>, or <tt><b>gccld</b></tt>), run the
+<tt><b>llvm-gcc</b></tt> command line as you were when the crash occurred, but
+add a <tt>-v</tt> option to the command line.  The compiler will print out a
+bunch of stuff, and should end with telling you that one of <tt><b>cc1</b></tt>,
+<tt><b>gccas</b></tt>, or <tt><b>gccld</b></tt> crashed.</p>
 
 <ul>
-<li>If <tt><b>cc1</b></tt> crashed, you found a problem with the front-end.
-Jump ahead to the section on <a href="#front-end">front-end bugs</a>.
-<li>If <tt><b>gccas</b></tt> crashed, you found a bug in <a href="#gccas">one of
-the passes in <tt><b>gccas</b></tt></a>.
-<li>If <tt><b>gccld</b></tt> crashed, you found a bug in <a href="#gccld">one
-of the passes in <tt><b>gccld</b></tt></a>.
-<li>Otherwise, something really weird happened.  Email the list with what you
-have at this point.
-</ul><p>
 
+  <li>If <tt><b>cc1</b></tt> crashed, you found a problem with the front-end.
+  Jump ahead to the section on <a href="#front-end">front-end bugs</a>.</li>
+
+  <li>If <tt><b>gccas</b></tt> crashed, you found a bug in <a href="#gccas">one
+  of the passes in <tt><b>gccas</b></tt></a>.</li>
+
+  <li>If <tt><b>gccld</b></tt> crashed, you found a bug in <a href="#gccld">one
+  of the passes in <tt><b>gccld</b></tt></a>.</li>
+
+  <li>Otherwise, something really weird happened. Email the list with what you
+  have at this point.</li>
+
+</ul>
+
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="front-end">Front-end bugs
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="front-end">Front-end bugs</a>
+</div>
 
-If the problem is in the front-end, you should re-run the same
+<div class="doc_text">
+
+<p>If the problem is in the front-end, you should re-run the same
 <tt>llvm-gcc</tt> command that resulted in the crash, but add the
-<tt>-save-temps</tt> option.  The compiler will crash again, but it
-will leave behind a <tt><i>foo</i>.i</tt> file (containing preprocessed
-C source code) and possibly <tt><i>foo</i>.s</tt> (containing LLVM
-assembly code), for each compiled <tt><i>foo</i>.c</tt> file. Send us
-the <tt><i>foo</i>.i</tt> file, along with a brief description of the
-error it caused.<p>
+<tt>-save-temps</tt> option.  The compiler will crash again, but it will leave
+behind a <tt><i>foo</i>.i</tt> file (containing preprocessed C source code) and
+possibly <tt><i>foo</i>.s</tt> (containing LLVM assembly code), for each
+compiled <tt><i>foo</i>.c</tt> file. Send us the <tt><i>foo</i>.i</tt> file,
+along with a brief description of the error it caused.</p>
+
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="gccas">GCCAS bugs
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="gccas">GCCAS bugs</a>
+</div>
 
-If you find that a bug crashes in the <tt><b>gccas</b></tt> stage of
+<div class="doc_text">
+
+<p>If you find that a bug crashes in the <tt><b>gccas</b></tt> stage of
 compilation, compile your test-case to a <tt>.s</tt> file with the
-<tt>-save-temps</tt> option to <tt><b>llvm-gcc</b></tt>. Then run:<p>
+<tt>-save-temps</tt> option to <tt><b>llvm-gcc</b></tt>. Then run:</p>
 
 <pre>
   <b>gccas</b> -debug-pass=Arguments &lt; /dev/null -o - &gt; /dev/null
-</pre><p>
+</pre>
 
-... which will print a list of arguments, indicating the list of passes that
+<p>... which will print a list of arguments, indicating the list of passes that
 <tt><b>gccas</b></tt> runs.  Once you have the input file and the list of
 passes, go to the section on <a href="#passes">debugging bugs in LLVM
-passes</a>.<p>
+passes</a>.</p>
 
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="gccld">GCCLD bugs
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="gccld">GCCLD bugs</a>
+</div>
 
-If you find that a bug crashes in the <tt><b>gccld</b></tt> stage of
+<div class="doc_text">
+
+<p>If you find that a bug crashes in the <tt><b>gccld</b></tt> stage of
 compilation, gather all of the <tt>.o</tt> bytecode files and libraries that are
 being linked together (the "<tt><b>llvm-gcc</b> -v</tt>" output should include
-the full list of objects linked).  Then run:<p>
+the full list of objects linked).  Then run:</p>
 
 <pre>
   <b>llvm-as</b> &lt; /dev/null &gt; null.bc
   <b>gccld</b> -debug-pass=Arguments null.bc
 </pre><p>
 
-... which will print a list of arguments, indicating the list of passes that
+<p>... which will print a list of arguments, indicating the list of passes that
 <tt><b>gccld</b></tt> runs.  Once you have the input files and the list of
 passes, go to the section on <a href="#passes">debugging bugs in LLVM
-passes</a>.<p>
+passes</a>.</p>
+
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="passes">Bugs in LLVM passes
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="passes">Bugs in LLVM passes</a>
+</div>
 
-At this point, you should have some number of LLVM assembly files or bytecode
+<div class="doc_text">
+
+<p>At this point, you should have some number of LLVM assembly files or bytecode
 files and a list of passes which crash when run on the specified input.  In
 order to reduce the list of passes (which is probably large) and the input to
-something tractable, use the <tt><b>bugpoint</b></tt> tool as follows:<p>
+something tractable, use the <tt><b>bugpoint</b></tt> tool as follows:</p>
 
 <pre>
   <b>bugpoint</b> &lt;input files&gt; &lt;list of passes&gt;
 </pre><p>
 
-<tt><b>bugpoint</b></tt> will print a bunch of output as it reduces the
-test-case, but it should eventually print something like this:<p>
+<p><tt><b>bugpoint</b></tt> will print a bunch of output as it reduces the
+test-case, but it should eventually print something like this:</p>
 
 <pre>
   ...
   Emitted bytecode to 'bugpoint-reduced-simplified.bc'
 
   *** You can reproduce the problem with: opt bugpoint-reduced-simplified.bc -licm
-</pre><p>
+</pre>
 
-Once you complete this, please send the LLVM bytecode file and the command line
-to reproduce the problem to the llvmbugs mailing list.<p>
+<p>Once you complete this, please send the LLVM bytecode file and the command
+line to reproduce the problem to the llvmbugs mailing list.</p>
 
+</div>
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="miscompilations">Miscompilations</a>
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="miscompilations">Miscompilations</a>
+</div>
 <!-- *********************************************************************** -->
 
-A miscompilation occurs when a pass does not correctly transform a program, thus
-producing errors that are only noticed during execution. This is different from
-producing invalid LLVM code (i.e., code not in SSA form, using values before
-defining them, etc.) which the verifier will check for after a pass finishes its
-run.<p>
+<div class="doc_text">
 
-To debug a miscompilation, you should choose which program you wish to run the
-output through, e.g. C backend, the JIT, or LLC, and a selection of passes, one
-of which may be causing the error, and run, for example:
+<p>A miscompilation occurs when a pass does not correctly transform a program,
+thus producing errors that are only noticed during execution. This is different
+from producing invalid LLVM code (i.e., code not in SSA form, using values
+before defining them, etc.) which the verifier will check for after a pass
+finishes its run.</p>
+
+<p>To debug a miscompilation, you should choose which program you wish to run
+the output through, e.g. C backend, the JIT, or LLC, and a selection of passes,
+one of which may be causing the error, and run, for example:</p>
 
 <pre>
   <b>bugpoint</b> -run-cbe [... optimization passes ...] file-to-test.bc
 </pre>
 
-<tt>bugpoint</tt> will try to narrow down your list of passes to the one pass
+<p><tt>bugpoint</tt> will try to narrow down your list of passes to the one pass
 that causes an error, and simplify the bytecode file as much as it can to assist
 you. It will print a message letting you know how to reproduce the resulting
-error.
+error.</p>
+
+</div>
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="codegen">Incorrect code generation</a>
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="codegen">Incorrect code generation</a>
+</div>
 <!-- *********************************************************************** -->
 
-Similarly to debugging incorrect compilation by mis-behaving passes, you can
+<div class="doc_text">
+
+<p>Similarly to debugging incorrect compilation by mis-behaving passes, you can
 debug incorrect code generation by either LLC or the JIT, using
 <tt>bugpoint</tt>. The process <tt>bugpoint</tt> follows in this case is to try
 to narrow the code down to a function that is miscompiled by one or the other
 method, but since for correctness, the entire program must be run,
 <tt>bugpoint</tt> will compile the code it deems to not be affected with the C
-Backend, and then link in the shared object it generates.<p>
+Backend, and then link in the shared object it generates.</p>
 
-To debug the JIT:
+<p>To debug the JIT:</p>
+
 <pre>
   <b>bugpoint</b> -run-jit -output=[correct output file] [bytecodefile]
 </pre>
 
-Similarly, to debug the LLC, one would run:
+<p>Similarly, to debug the LLC, one would run:</p>
+
 <pre>
   <b>bugpoint</b> -run-llc -output=[correct output file] [bytecodefile]
 </pre>
 
-At the end of a successful <tt>bugpoint</tt> run, you will be presented
+<p>At the end of a successful <tt>bugpoint</tt> run, you will be presented
 with two bytecode files: a <em>safe</em> file which can be compiled with the C
 backend and the <em>test</em> file which either LLC or the JIT
-mis-codegenerates, and thus causes the error.<p>
+mis-codegenerates, and thus causes the error.</p>
 
-To reproduce the error that <tt>bugpoint</tt> found, it is sufficient to do the
-following:
+<p>To reproduce the error that <tt>bugpoint</tt> found, it is sufficient to do
+the following:</p>
 
 <ol>
+
   <li>Regenerate the shared object from the safe bytecode file:<br>
+
 <pre>
   <b>llvm-dis</b> -c safe.bc -o safe.c<br>
   <b>gcc</b> -shared safe.c -o safe.so
 </pre></li>
+
   <li>If debugging LLC, compile test bytecode native and link with the shared object:<br>
+
 <pre>
   <b>llc</b> test.bc -o test.s -f<br>
   gcc test.s safe.so -o test.llc<br>
   ./test.llc [program options]
 </pre></li>
-      <p>
-     If debugging the JIT, load the shared object and supply the test bytecode:<br>
+      
+<p>If debugging the JIT, load the shared object and supply the test
+bytecode:</p>
+
 <pre>
   <b>lli</b> -load=safe.so test.bc [program options]
 </pre></li>  
+
 </ol>
 
-<!-- *********************************************************************** -->
-</ul>
+</div>
+
 <!-- *********************************************************************** -->
 
-<hr><font size-1>
-<address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
-<a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
-<br>
-<!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
-<!-- hhmts start -->
-Last modified: Mon Oct 27 12:00:00 CDT 2003
-<!-- hhmts end -->
-</font></body></html>
+<hr>
+<div class="doc_footer">
+  <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
+  <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
+  <br>
+  Last modified: $Date$
+</div>
+
+</body>
+</html>
