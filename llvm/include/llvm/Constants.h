@@ -283,6 +283,24 @@ public:
     return T.I == 0;
   }
 
+  /// isExactlyValue - We don't rely on operator== working on double values, as
+  /// it returns true for things that are clearly not equal, like -0.0 and 0.0.
+  /// As such, this method can be used to do an exact bit-for-bit comparison of
+  /// two floating point values.
+  bool isExactlyValue(double V) const {
+    union {
+      double V;
+      uint64_t I;
+    } T1;
+    T1.V = Val;
+    union {
+      double V;
+      uint64_t I;
+    } T2;
+    T2.V = Val;
+    return T1.I == T2.I;
+  }
+
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantFP *) { return true; }
   static bool classof(const Constant *CPV);  // defined in Constants.cpp
