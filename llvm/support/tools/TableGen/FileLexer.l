@@ -132,19 +132,21 @@ int yywrap() {
 
 %}
 
-Comment     \/\/.*
+Comment      \/\/.*
 
-Identifier  [a-zA-Z_][0-9a-zA-Z_]*
-Integer     [-+]?[0-9]+|0x[0-9a-fA-F]+|0b[01]+
-StringVal   \"[^"]*\"
-IncludeStr  include[ \t\n]+\"[^"]*\"
+Identifier   [a-zA-Z_][0-9a-zA-Z_]*
+Integer      [-+]?[0-9]+|0x[0-9a-fA-F]+|0b[01]+
+CodeFragment \[\{([^}]+|\}[^\]])*\}\]
+StringVal    \"[^"]*\"
+IncludeStr   include[ \t\n]+\"[^"]*\"
 
 %%
 
 {Comment}      { /* Ignore comments */ }
 
 {IncludeStr}   { HandleInclude(yytext); }
-
+{CodeFragment} { Filelval.StrVal = new std::string(yytext+2, yytext+yyleng-2);
+                 return CODEFRAGMENT; }
 
 int            { return INT; }
 bit            { return BIT; }

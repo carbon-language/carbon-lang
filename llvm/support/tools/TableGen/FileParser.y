@@ -155,7 +155,7 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
 
 %token INT BIT STRING BITS LIST CODE CLASS DEF FIELD SET IN
 %token <IntVal>      INTVAL
-%token <StrVal>      ID STRVAL
+%token <StrVal>      ID STRVAL CODEFRAGMENT
 
 %type <Ty>           Type
 %type <RecPtr>       DefList DefListNE
@@ -216,6 +216,9 @@ Value : INTVAL {
     $$ = new IntInit($1);
   } | STRVAL {
     $$ = new StringInit(*$1);
+    delete $1;
+  } | CODEFRAGMENT {
+    $$ = new CodeInit(*$1);
     delete $1;
   } | '?' {
     $$ = new UnsetInit();

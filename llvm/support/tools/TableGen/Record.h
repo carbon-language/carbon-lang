@@ -18,6 +18,7 @@ class BitInit;
 class BitsInit;
 class IntInit;
 class StringInit;
+class CodeInit;
 class ListInit;
 class DefInit;
 class TypedInit;
@@ -39,6 +40,7 @@ struct RecTy {
   virtual Init *convertValue(   IntInit *II) { return 0; }
   virtual Init *convertValue(StringInit *SI) { return 0; }
   virtual Init *convertValue(  ListInit *LI) { return 0; }
+  virtual Init *convertValue(  CodeInit *CI) { return 0; }
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
   virtual Init *convertValue( TypedInit *TI) { return 0; }
@@ -135,6 +137,7 @@ public:
 ///
 struct CodeRecTy : public RecTy {
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
+  Init *convertValue( CodeInit *CI) { return (Init*)CI; }
 
   void print(std::ostream &OS) const { OS << "code"; }
 };
@@ -319,6 +322,20 @@ public:
   }
 
   virtual void print(std::ostream &OS) const { OS << "\"" << Value << "\""; }
+};
+
+/// CodeInit - "[{...}]" - Represent a code fragment.
+///
+class CodeInit : public Init {
+  std::string Value;
+public:
+  CodeInit(const std::string &V) : Value(V) {}
+
+  virtual Init *convertInitializerTo(RecTy *Ty) {
+    return Ty->convertValue(this);
+  }
+
+  virtual void print(std::ostream &OS) const { OS << "[{" << Value << "}]"; }
 };
 
 /// ListInit - [AL, AH, CL] - Represent a list of defs
