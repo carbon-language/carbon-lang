@@ -10,9 +10,12 @@
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/InstrTypes.h"
 #include "llvm/Transforms/Instrumentation/Graph.h"
 #include <algorithm>
 #include <iostream>
+#include <sstream>
+#include <string>
 
 //using std::list;
 using std::map;
@@ -55,7 +58,6 @@ static void removeTreeEdges(Graph &g, Graph& t){
     Graph::nodeList nl=t.getNodeList(*NI);
     for(Graph::nodeList::iterator NLI=nl.begin(), NLE=nl.end();	NLI!=NLE;++NLI){
       Edge ed(NLI->element, *NI, NLI->weight);
-      //if(!g.hasEdge(ed)) t.removeEdge(ed);
       if(!g.hasEdgeAndWt(ed)) t.removeEdge(ed);//tree has only one edge
       //between any pair of vertices, so no need to delete by edge wt
     }
@@ -68,35 +70,53 @@ static void removeTreeEdges(Graph &g, Graph& t){
 //refers to the path we travelled
 int valueAssignmentToEdges(Graph& g){
   vector<Node *> revtop=g.reverseTopologicalSort();
-  /*
-  std::cerr<<"-----------Reverse topological sort\n";
-  for(vector<Node *>::iterator RI=revtop.begin(), RE=revtop.end(); RI!=RE; ++RI){
-    std::cerr<<(*RI)->getElement()->getName()<<":";
-  }
-  std::cerr<<"\n----------------------"<<std::endl;
-  */
   map<Node *,int > NumPaths;
-  for(vector<Node *>::iterator RI=revtop.begin(), RE=revtop.end(); RI!=RE; ++RI){
+  for(vector<Node *>::iterator RI=revtop.begin(), RE=revtop.end(); 
+      RI!=RE; ++RI){
     if(g.isLeaf(*RI))
       NumPaths[*RI]=1;
     else{
       NumPaths[*RI]=0;
-      /////
+
       Graph::nodeList &nlist=g.getNodeList(*RI);
       //sort nodelist by increasing order of numpaths
       
       int sz=nlist.size();
+      
+      //printing BB list
+      //std::cerr<<"node list------------\n";
+      //for(Graph::nodeList::iterator NLI=nlist.begin(), NLE=nlist.end(); 
+      //  NLI!=NLE; ++NLI)
+      //std::cerr<<NLI->element->getElement()->getName()<<"->";
+      
+      //std::cerr<<"\n-----------\n";
+
       for(int i=0;i<sz-1; i++){
 	int min=i;
-	for(int j=i+1; j<sz; j++)
-	  if(NumPaths[nlist[j].element]<NumPaths[nlist[min].element]) min=j;
-	
+	for(int j=i+1; j<sz; j++){
+          BasicBlock *bb1 = nlist[j].element->getElement();
+          BasicBlock *bb2 = nlist[min].element->getElement();
+          assert(bb1->getParent() == bb2->getParent() && 
+                 "BBs with diff parents"); 
+          TerminatorInst *ti = bb1->getTerminator();
+
+          //compare the order of BBs in the terminator instruction
+          for(int x=0, y = ti->getNumSuccessors(); x < y; x++){
+            if(ti->getSuccessor(x) == bb1){ //bb1 occurs first
+              min = j;
+              break;
+            }
+            if(ti->getSuccessor(x) == bb2) //bb2 occurs first
+              break;
+          }
+          
+        }
 	graphListElement tempEl=nlist[min];
 	nlist[min]=nlist[i];
 	nlist[i]=tempEl;
       }
+      
       //sorted now!
-
       for(Graph::nodeList::iterator GLI=nlist.begin(), GLE=nlist.end();
 	  GLI!=GLE; ++GLI){
 	GLI->weight=NumPaths[*RI];
@@ -141,12 +161,6 @@ static void inc_DFS(Graph& g,Graph& t,map<Edge, int, EdgeCompare>& Increment,
   
   vector<Node *> allNodes=t.getAllNodes();
 
-
-  //cerr<<"Called for\n";
-  //if(!e.isNull())
-  //printEdge(e);
-
-
   for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 
       ++NI){
     Graph::nodeList node_list=t.getNodeList(*NI);
@@ -187,8 +201,6 @@ static void inc_DFS(Graph& g,Graph& t,map<Edge, int, EdgeCompare>& Increment,
 				  *v==*(f.getFirst()))){
 	int dir_count=inc_Dir(e,f);
 	Increment[f]+=dir_count*events;
-	//cerr<<"assigned "<<Increment[f]<<" to"<<endl;
-	//printEdge(f);
       }
     }
   }
@@ -265,8 +277,6 @@ static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *, EdgeCompare> &i
       Node *w=nl->element;
       //if chords has v->w
       Edge ed(v,w, edgeWt, nl->randId);
-      //cerr<<"Assign:\n";
-      //printEdge(ed);
       bool hasEdge=false;
       for(vector<Edge>::iterator CI=chords.begin(), CE=chords.end();
 	  CI!=CE && !hasEdge;++CI){
@@ -280,7 +290,6 @@ static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *, EdgeCompare> &i
 	edCd->setCond(1);
 	edCd->setInc(edIncrements[ed]);
 	instr[ed]=edCd;
-	//std::cerr<<"Case 1\n";
       }
       else if(g.getNumberOfIncomingEdges(w)==1){
 	ws.push_back(w);
@@ -310,16 +319,11 @@ static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *, EdgeCompare> &i
     for(vector<Node *>::iterator EII=lllt.begin(); EII!=lllt.end() ;++EII){
       Node *lnode=*EII;
       Graph::nodeList &nl = g.getNodeList(lnode);
-      //cerr<<"Size:"<<lllt.size()<<"\n";
-      //cerr<<lnode->getElement()->getName()<<"\n";
       graphListElement *N = findNodeInList(nl, w);
-      if (N){// lt.push_back(lnode);
-	
-	//Node *v=*pd;
-	//Node *v=N->element;
+      if (N){	
 	Node *v=lnode;
+
 	//if chords has v->w
-	
 	Edge ed(v,w, N->weight, N->randId);
 	getEdgeCode *edCd=new getEdgeCode();
 	bool hasEdge=false;
@@ -420,19 +424,18 @@ static void moveDummyCode(vector<Edge> &stDummy,
     for(vector<Edge>::iterator BEI=be.begin(), BEE=be.end(); BEI!=BEE; ++BEI){
       if(ed.getRandId()==BEI->getRandId()){
 	
-	//cerr<<"Looking at edge--------\n";
-	//printEdge(ed);
-	
 	if(temp[*BEI]==0)
 	  temp[*BEI]=new getEdgeCode();
 	
 	//so ed is either in st, or ex!
 	if(ed.getFirst()==g.getRoot()){
+
 	  //so its in stDummy
 	  temp[*BEI]->setCdIn(edCd);
 	  toErase.push_back(ed);
 	}
 	else if(ed.getSecond()==g.getExit()){
+
 	  //so its in exDummy
 	  toErase.push_back(ed);
 	  temp[*BEI]->setCdOut(edCd);
@@ -447,119 +450,16 @@ static void moveDummyCode(vector<Edge> &stDummy,
   for(vector<Edge >::iterator vmi=toErase.begin(), vme=toErase.end(); vmi!=vme; 
       ++vmi){
     insertions.erase(*vmi);
-    //cerr<<"Erasing from insertion\n";
-    //printEdge(*vmi);
     g.removeEdgeWithWt(*vmi);
   }
   
   for(map<Edge,getEdgeCode *, EdgeCompare>::iterator MI=temp.begin(), 
       ME=temp.end(); MI!=ME; ++MI){
     insertions[MI->first]=MI->second;
-    //cerr<<"inserting into insertion-----\n";
-    //printEdge(MI->first);
   }
-  //cerr<<"----\n";
-  
-  /*
-    ///---new code end
-    bool dummyHasIt=false;
-
-    DEBUG(cerr<<"Current edge considered---\n";
-          printEdge(ed));
-
-    //now check if stDummy has ed
-    for(vec_iter VI=stDummy.begin(), VE=stDummy.end(); VI!=VE && !dummyHasIt; 
-	++VI){
-      if(*VI==ed){
-	//#ifdef DEBUG_PATH_PROFILES
-	cerr<<"Edge matched with stDummy\n";
-	printEdge(ed);
-	//#endif
-	dummyHasIt=true;
-	bool dummyInBe=false;
-	//dummy edge with code
-	for(vec_iter BE=be.begin(), BEE=be.end(); BE!=BEE && !dummyInBe; ++BE){
-	  Edge backEdge=*BE;
-	  Node *st=backEdge.getSecond();
-	  Node *dm=ed.getSecond();
-	  if(*dm==*st){
-	    //so this is the back edge to use
-	    //#ifdef DEBUG_PATH_PROFILES
-	    cerr<<"Moving to backedge\n";
-	    printEdge(backEdge);
-	    //#endif
-	    getEdgeCode *ged=new getEdgeCode();
-	    ged->setCdIn(edCd);
-	    toErase.push_back(ed);//MI);//ed);
-	    insertions[backEdge]=ged;
-	    dummyInBe=true;
-	  }
-	}
-	assert(dummyInBe);
-	//modf
-	//new
-	//vec_iter VII=VI;
-	stDummy.erase(VI);
-	break;
-	//end new
-      }
-    }
-    if(!dummyHasIt){
-      //so exDummy may hv it
-      bool inExDummy=false;
-      for(vec_iter VI=exDummy.begin(), VE=exDummy.end(); VI!=VE && !inExDummy; 
-	  ++VI){
-	if(*VI==ed){
-	  inExDummy=true;
-
-	  //#ifdef DEBUG_PATH_PROFILES
-	  cerr<<"Edge matched with exDummy\n";
-	  //#endif
-	  bool dummyInBe2=false;
-	  //dummy edge with code
-	  for(vec_iter BE=be.begin(), BEE=be.end(); BE!=BEE && !dummyInBe2; 
-	      ++BE){
-	    Edge backEdge=*BE;
-	    Node *st=backEdge.getFirst();
-	    Node *dm=ed.getFirst();
-	    if(*dm==*st){
-	      //so this is the back edge to use
-	      cerr<<"Moving to backedge\n";
-	      printEdge(backEdge);
-	      getEdgeCode *ged;
-	      if(insertions[backEdge]==NULL)
-		ged=new getEdgeCode();
-	      else
-		ged=insertions[backEdge];
-	      toErase.push_back(ed);//MI);//ed);
-	      ged->setCdOut(edCd);
-	      insertions[backEdge]=ged;
-	      dummyInBe2=true;
-	    }
-	  }
-	  assert(dummyInBe2);
-	  //modf
-	  //vec_iter VII=VI;
-	  exDummy.erase(VI);
-	  break;
-	  //end
-	}
-      }
-    }
-  }
-
-  */
+    
 #ifdef DEBUG_PATH_PROFILES
   cerr<<"size of deletions: "<<toErase.size()<<"\n";
-#endif
-  
-  /*
-  for(vector<map<Edge, getEdgeCode *>::iterator>::iterator 
-	vmi=toErase.begin(), vme=toErase.end(); vmi!=vme; ++vmi)
-
-    insertions.erase(*vmi);
-  */
-#ifdef DEBUG_PATH_PROFILES
   cerr<<"SIZE OF INSERTIONS AFTER DEL "<<insertions.size()<<"\n";
 #endif
 
@@ -576,7 +476,7 @@ void processGraph(Graph &g,
 		  vector<Edge >& exDummy, 
 		  int numPaths){
 
-  static int MethNo=0;
+  static int MethNo=-1;
   MethNo++;
   //Given a graph: with exit->root edge, do the following in seq:
   //1. get back edges
@@ -623,10 +523,10 @@ void processGraph(Graph &g,
   DEBUG(printGraph(g2));
 
   Graph *t=g2.getMaxSpanningTree();
-  //#ifdef DEBUG_PATH_PROFILES
-  //cerr<<"Original maxspanning tree\n";
-  //printGraph(*t);
-  //#endif
+#ifdef DEBUG_PATH_PROFILES
+  std::cerr<<"Original maxspanning tree\n";
+  printGraph(*t);
+#endif
   //now edges of tree t have weights reversed
   //(negative) because the algorithm used
   //to find max spanning tree is 
@@ -721,9 +621,7 @@ void processGraph(Graph &g,
   //edge code over to the corresponding back edge
 
   moveDummyCode(stDummy, exDummy, be, codeInsertions, g);
-  //cerr<<"After dummy removals\n";
-  //printGraph(g);
-
+  
 #ifdef DEBUG_PATH_PROFILES
   //debugging info
   cerr<<"After moving dummy code\n";
@@ -746,8 +644,6 @@ void processGraph(Graph &g,
   } 
 }
 
-
-
 //print the graph (for debugging)
 void printGraph(Graph &g){
   vector<Node *> lt=g.getAllNodes();
@@ -766,214 +662,3 @@ void printGraph(Graph &g){
   }
   cerr<<"--------------------Graph\n";
 }
-
-
-/*
-////////// Getting back BBs from path number
-
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/iMemory.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iOther.h"
-#include "llvm/iOperators.h"
-
-#include "llvm/Support/CFG.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Pass.h"
-
-void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph g, 
-		    vector<Edge> &stDummy, vector<Edge> &exDummy, vector<Edge> &be,
-		    double strand){
-  Graph::nodeList nlist=g.getNodeList(n);
-  int maxCount=-9999999;
-  bool isStart=false;
-
-  if(*n==*g.getRoot())//its root: so first node of path
-    isStart=true;
-
-  double edgeRnd=0;
-  Node *nextRoot=n;
-  for(Graph::nodeList::iterator NLI=nlist.begin(), NLE=nlist.end(); NLI!=NLE;
-      ++NLI){
-    //cerr<<"Saw:"<<NLI->weight<<endl;
-    if(NLI->weight>maxCount && NLI->weight<=pathNo){
-      maxCount=NLI->weight;
-      nextRoot=NLI->element;
-      edgeRnd=NLI->randId;
-      if(isStart)
-	strand=NLI->randId;
-    }
-  }
-  //cerr<<"Max:"<<maxCount<<endl;
-
-  if(!isStart)
-    assert(strand!=-1 && "strand not assigned!"); 
-
-  assert(!(*nextRoot==*n && pathNo>0) && "No more BBs to go");
-  assert(!(*nextRoot==*g.getExit() && pathNo-maxCount!=0) && "Reached exit");
-
-  vBB.push_back(n->getElement());
-
-  if(pathNo-maxCount==0 && *nextRoot==*g.getExit()){
-
-    //look for strnd and edgeRnd now:
-    bool has1=false, has2=false;
-    //check if exit has it
-    for(vector<Edge>::iterator VI=exDummy.begin(), VE=exDummy.end(); VI!=VE; 
-	++VI){
-      if(VI->getRandId()==edgeRnd){
-	has2=true;
-	//cerr<<"has2: looking at"<<std::endl;
-	//printEdge(*VI);
-	break;
-      }
-    }
-
-    //check if start has it
-    for(vector<Edge>::iterator VI=stDummy.begin(), VE=stDummy.end(); VI!=VE; 
-	++VI){
-      if(VI->getRandId()==strand){
-	//cerr<<"has1: looking at"<<std::endl;
-        //printEdge(*VI);
-	has1=true;
-	break;
-      }
-    }
-
-    if(has1){
-      //find backedge with endpoint vBB[1]
-      for(vector<Edge>::iterator VI=be.begin(), VE=be.end(); VI!=VE; ++VI){
-	assert(vBB.size()>0 && "vector too small");
-	if( VI->getSecond()->getElement() == vBB[1] ){
-	  vBB[0]=VI->getFirst()->getElement();
-	  break;
-	}
-      }
-    }
-
-    if(has2){
-      //find backedge with startpoint vBB[vBB.size()-1]
-      for(vector<Edge>::iterator VI=be.begin(), VE=be.end(); VI!=VE; ++VI){
-	assert(vBB.size()>0 && "vector too small");
-	if( VI->getFirst()->getElement() == vBB[vBB.size()-1] ){
-	  //if(vBB[0]==VI->getFirst()->getElement())
-	  //vBB.erase(vBB.begin()+vBB.size()-1);
-	  //else
-	  vBB.push_back(VI->getSecond()->getElement());
-	  break;
-	}
-      }
-    }
-    else 
-      vBB.push_back(nextRoot->getElement());
-   
-    return;
-  }
-
-  assert(pathNo-maxCount>=0);
-
-  return getPathFrmNode(nextRoot, vBB, pathNo-maxCount, g, stDummy, 
-			exDummy, be, strand);
-}
-
-
-static Node *findBB(std::vector<Node *> &st, BasicBlock *BB){
-  for(std::vector<Node *>::iterator si=st.begin(); si!=st.end(); ++si){
-    if(((*si)->getElement())==BB){
-      return *si;
-    }
-  }
-  return NULL;
-}
-
-void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){
-
-  //step 1: create graph
-  //Transform the cfg s.t. we have just one exit node
-  
-  std::vector<Node *> nodes;
-  std::vector<Edge> edges;
-  Node *tmp;
-  Node *exitNode=0, *startNode=0;
-  
-  BasicBlock *ExitNode = 0;
-  for (Function::iterator I = M->begin(), E = M->end(); I != E; ++I) {
-    BasicBlock *BB = *I;
-    if (isa<ReturnInst>(BB->getTerminator())) {
-      ExitNode = BB;
-      break;
-    }
-  }
-  
-  assert(ExitNode!=0 && "exitnode not found");
-
-  //iterating over BBs and making graph 
-  //The nodes must be uniquesly identified:
-  //That is, no two nodes must hav same BB*
-  
-  //First enter just nodes: later enter edges
-  for(Function::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
-    Node *nd=new Node(*BB);
-    nodes.push_back(nd); 
-    if(*BB==ExitNode)
-      exitNode=nd;
-    if(*BB==M->front())
-      startNode=nd;
-  }
-  
-  assert(exitNode!=0 && startNode!=0 && "Start or exit not found!");
- 
-  for (Function::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
-    Node *nd=findBB(nodes, *BB);
-    assert(nd && "No node for this edge!");
-
-    for(BasicBlock::succ_iterator s=succ_begin(*BB), se=succ_end(*BB); 
-	s!=se; ++s){
-      Node *nd2=findBB(nodes,*s);
-      assert(nd2 && "No node for this edge!");
-      Edge ed(nd,nd2,0);
-      edges.push_back(ed);
-    }
-  }
-  
-  static bool printed=false;
-  Graph g(nodes,edges, startNode, exitNode);
-
-  //if(!printed)
-  //printGraph(g);
-
-  if (M->getBasicBlocks().size() <= 1) return; //uninstrumented 
-
-  //step 2: getBackEdges
-  vector<Edge> be;
-  g.getBackEdges(be);
-
-  //cerr<<"BackEdges\n";
-  //for(vector<Edge>::iterator VI=be.begin(); VI!=be.end(); ++VI){
-    //printEdge(*VI);
-    //cerr<<"\n";
-  //}
-  //cerr<<"------\n";
-  //step 3: add dummy edges
-  vector<Edge> stDummy;
-  vector<Edge> exDummy;
-  addDummyEdges(stDummy, exDummy, g, be);
-
-  //cerr<<"After adding dummy edges\n";
-  //printGraph(g);
-
-  //step 4: value assgn to edges
-  int numPaths=valueAssignmentToEdges(g);
-  
-  //if(!printed){
-  //printGraph(g);
-  //printed=true;
-  //}
-
-  //step 5: now travel from root, select max(edge) < pathNo, 
-  //and go on until reach the exit
-  return getPathFrmNode(g.getRoot(), vBB, pathNo, g, stDummy, exDummy, be, -1);
-}
-
-*/
