@@ -200,11 +200,10 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
   if (DEBUG_RA >= RA_DEBUG_Interference)
     cerr << "\n For call inst: " << *MInst;
 
-  ValueSet::const_iterator LIt = LVSetAft->begin();
-
   // for each live var in live variable set after machine inst
   //
-  for ( ; LIt != LVSetAft->end(); ++LIt) {
+  for (ValueSet::const_iterator LIt = LVSetAft->begin(), LEnd = LVSetAft->end();
+       LIt != LEnd; ++LIt) {
 
     //  get the live range corresponding to live var
     //
