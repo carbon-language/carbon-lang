@@ -174,7 +174,6 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   } else {
     GCCArgs.push_back("assembler");
   }
-
   GCCArgs.push_back(ProgramFile.c_str());  // Specify the input filename...
   GCCArgs.push_back("-o");
   GCCArgs.push_back(OutputBinary.c_str()); // Output to the right file...
@@ -217,6 +216,7 @@ int GCC::MakeSharedObject(const std::string &InputFile,
   const char* GCCArgs[] = {
     GCCPath.c_str(),
     "-x", (fileType == AsmFile) ? "assembler" : "c",
+    "-fno-strict-aliasing",
     InputFile.c_str(),           // Specify the input filename...
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
     "-G",                        // Compile a shared library, `-G' for Sparc
