@@ -33,9 +33,9 @@ namespace {
     void *MovePCtoLROffset;
 
     // Tracks which instruction references which BasicBlock
-    std::vector<std::pair<const BasicBlock*, unsigned*> > BBRefs;
+    std::vector<std::pair<MachineBasicBlock*, unsigned*> > BBRefs;
     // Tracks where each BasicBlock starts
-    std::map<const BasicBlock*, long> BBLocations;
+    std::map<MachineBasicBlock*, long> BBLocations;
 
     /// getMachineOpValue - evaluates the MachineOperand of a given MachineInstr
     ///
@@ -120,7 +120,7 @@ bool PPC32CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void PPC32CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
-  BBLocations[MBB.getBasicBlock()] = MCE.getCurrentPCValue();
+  BBLocations[&MBB] = MCE.getCurrentPCValue();
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
     MachineInstr &MI = *I;
     unsigned Opcode = MI.getOpcode();
@@ -223,9 +223,8 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
                                         Reloc, MO.getGlobal(), Offset));
   } else if (MO.isMachineBasicBlock()) {
-    const BasicBlock *BB = MO.getMachineBasicBlock()->getBasicBlock();
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
-    BBRefs.push_back(std::make_pair(BB, CurrPC));
+    BBRefs.push_back(std::make_pair(MO.getMachineBasicBlock(), CurrPC));
   } else if (MO.isConstantPoolIndex()) {
     unsigned index = MO.getConstantPoolIndex();
     assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
