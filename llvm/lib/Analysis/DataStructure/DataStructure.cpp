@@ -13,6 +13,7 @@
 
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/iOther.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
@@ -1353,7 +1354,9 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
   if ((Flags & DSGraph::IgnoreGlobals) == 0)
     for (DSScalarMap::global_iterator I = ScalarMap.global_begin(),
            E = ScalarMap.global_end(); I != E; ++I)
-      markIncompleteNode(ScalarMap[*I].getNode());
+      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*I))
+        if (!GV->isConstant())
+          markIncompleteNode(ScalarMap[GV].getNode());
 }
 
 static inline void killIfUselessEdge(DSNodeHandle &Edge) {
