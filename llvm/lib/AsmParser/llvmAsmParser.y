@@ -1626,7 +1626,6 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       Ty = FunctionType::get($2->get(), ParamTypes, isVarArg);
       PFTy = PointerType::get(Ty);
     }
-    delete $2;
 
     Value *V = getVal(PFTy, $3);   // Get the function we're calling...
 
@@ -1657,6 +1656,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
 
       $$ = new InvokeInst(V, Normal, Except, *$5);
     }
+    delete $2;
     delete $5;
   }
   | UNWIND {
