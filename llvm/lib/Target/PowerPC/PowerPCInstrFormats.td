@@ -427,8 +427,8 @@ class XLForm_2_ext<string name, bits<6> opcode, bits<10> xo, bits<5> bo,
 }
 
 // 1.7.8 XFX-Form
-class XFXForm_1<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx>
-  : I<name, opcode, ppc64, vmx> {
+class XFXForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx, 
+                dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
   field bits<5>  ST;
   field bits<10> SPR;
 
@@ -443,21 +443,26 @@ class XFXForm_1<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx>
   let Inst{11-20} = SPR;
   let Inst{21-30} = xo;
   let Inst{31}    = 0;
+  let OperandList = OL;
+  let AsmString = asmstr;
 }
 
-class XFXForm_1_ext<string name, bits<6> opcode, bits<10> xo, bits<10> spr, 
-                    bit ppc64, bit vmx> : XFXForm_1<name,opcode,xo,ppc64,vmx> {
+class XFXForm_1_ext<bits<6> opcode, bits<10> xo, bits<10> spr, bit ppc64, 
+                    bit vmx, dag OL, string asmstr> 
+  : XFXForm_1<opcode, xo, ppc64, vmx, OL, asmstr> {
   let ArgCount = 1;
   let Arg0Type = Gpr.Value;
   let Arg1Type = 0;
   let SPR = spr;
 }
 
-class XFXForm_7<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx>
-  : XFXForm_1<name, opcode, xo, ppc64, vmx>;
+class XFXForm_7<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
+                dag OL, string asmstr>
+  : XFXForm_1<opcode, xo, ppc64, vmx, OL, asmstr>;
 
-class XFXForm_7_ext<string name, bits<6> opcode, bits<10> xo, bits<10> spr, 
-                    bit ppc64, bit vmx> : XFXForm_7<name,opcode,xo,ppc64,vmx> {
+class XFXForm_7_ext<bits<6> opcode, bits<10> xo, bits<10> spr, 
+                    bit ppc64, bit vmx, dag OL, string asmstr> 
+  : XFXForm_7<opcode, xo, ppc64, vmx, OL, asmstr> {
   let ArgCount = 1;
   let Arg0Type = Gpr.Value;
   let Arg1Type = 0;
@@ -465,8 +470,8 @@ class XFXForm_7_ext<string name, bits<6> opcode, bits<10> xo, bits<10> spr,
 }
 
 // 1.7.10 XS-Form
-class XSForm_1<string name, bits<6> opcode, bits<9> xo, bit rc, 
-                      bit ppc64, bit vmx> : I<name, opcode, ppc64, vmx> {
+class XSForm_1<bits<6> opcode, bits<9> xo, bit rc, bit ppc64, bit vmx,
+               dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
   field bits<5> RS;
   field bits<5> A;
   field bits<6> SH;
@@ -484,11 +489,13 @@ class XSForm_1<string name, bits<6> opcode, bits<9> xo, bit rc,
   let Inst{21-29} = xo;
   let Inst{30}    = SH{0};
   let Inst{31}    = rc;
+  let OperandList = OL;
+  let AsmString = asmstr;
 }
 
 // 1.7.11 XO-Form
-class XOForm_1<string name, bits<6> opcode, bits<9> xo, bit oe, bit rc, 
-               bit ppc64, bit vmx> : I<name, opcode, ppc64, vmx> {
+class XOForm_1<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
+               dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
   field bits<5>  RT;
   field bits<5>  RA;
   field bits<5>  RB;
@@ -506,29 +513,27 @@ class XOForm_1<string name, bits<6> opcode, bits<9> xo, bit oe, bit rc,
   let Inst{21}    = oe;
   let Inst{22-30} = xo;
   let Inst{31}    = rc;  
+  let OperandList = OL;
+  let AsmString = asmstr;
 }
 
-// This is a reversal of the two operands, used notably by extended ops SUB*:
-// sub  x, y, z == subf  x, z, y
-// subc x, y, z == subfc x, z, y
-class XOForm_1_rev<string name, bits<6> opcode, bits<9> xo, bit oe, bit rc,
-                   bit ppc64, bit vmx> 
-  : XOForm_1<name, opcode, xo, oe, rc, ppc64, vmx> {
+class XOForm_1r<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
+               dag OL, string asmstr>
+  : XOForm_1<opcode, xo, oe, rc, ppc64, vmx, OL, asmstr> {
   let Inst{11-15} = RB;
   let Inst{16-20} = RA;
 }
 
-class XOForm_2<string name, bits<6> opcode, bits<9> xo, bit rc, bit ppc64, 
-               bit vmx> : XOForm_1<name, opcode, xo, 0, rc, ppc64, vmx>;
-
-class XOForm_3<string name, bits<6> opcode, bits<9> xo, bit oe, bit rc, 
-               bit ppc64, bit vmx> : XOForm_1<name,opcode,xo,oe,rc,ppc64,vmx> {
+class XOForm_3<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
+               dag OL, string asmstr>
+  : XOForm_1<opcode, xo, oe, rc, ppc64, vmx, OL, asmstr> {
+  let ArgCount = 2;
   let RB = 0;
 }
 
 // 1.7.12 A-Form
-class AForm_1<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, 
-              bit vmx, dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
+class AForm_1<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx, 
+              dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
   let ArgCount = 4;
   field bits<5>  FRT;
   field bits<5>  FRA;
