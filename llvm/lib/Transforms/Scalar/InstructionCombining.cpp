@@ -476,6 +476,13 @@ Instruction *InstCombiner::visitShiftInst(Instruction &I) {
 }
 
 
+// isCIntegral - For the purposes of casting, we allow conversion of sizes and
+// stuff as long as the value type acts basically integral like.
+//
+static bool isCIntegral(const Type *Ty) {
+  return Ty->isIntegral() || Ty == Type::BoolTy;
+}
+
 // isEliminableCastOfCast - Return true if it is valid to eliminate the CI
 // instruction.
 //
@@ -488,13 +495,13 @@ static inline bool isEliminableCastOfCast(const CastInst &CI,
 
   // It is legal to eliminate the instruction if casting A->B->A if the sizes
   // are identical and the bits don't get reinterpreted (for example 
-  // int->float->int)
+  // int->float->int would not be allowed)
   if (SrcTy == DstTy && SrcTy->isLosslesslyConvertableTo(MidTy))
     return true;
 
   // Allow free casting and conversion of sizes as long as the sign doesn't
   // change...
-  if (SrcTy->isIntegral() && MidTy->isIntegral() && DstTy->isIntegral() &&
+  if (isCIntegral(SrcTy) && isCIntegral(MidTy) && isCIntegral(DstTy) &&
       SrcTy->isSigned() == MidTy->isSigned() &&
       MidTy->isSigned() == DstTy->isSigned()) {
     // Only accept cases where we are either monotonically increasing the type
@@ -503,10 +510,10 @@ static inline bool isEliminableCastOfCast(const CastInst &CI,
     unsigned SrcSize = SrcTy->getPrimitiveSize();
     unsigned MidSize = MidTy->getPrimitiveSize();
     unsigned DstSize = DstTy->getPrimitiveSize();
-    if (SrcSize < MidSize && MidSize < DstSize)
+    if (SrcSize <= MidSize && MidSize <= DstSize)
       return true;
 
-    if (SrcSize > MidSize && MidSize > DstSize)
+    if (SrcSize >= MidSize && MidSize >= DstSize)
       return true;
   }
 
