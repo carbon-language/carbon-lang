@@ -1,3 +1,5 @@
+/* FIXME: this testcase should be automated! */
+
 #include <stdio.h>
 
 typedef struct Tree_struct {

@@ -1,5 +1,7 @@
 /* Test globals used and unused within different parts of a program */
 
+/* FIXME: This testcase should be automated */
+
 #include <stdlib.h>
 
 extern void exit_dummy(int*);
