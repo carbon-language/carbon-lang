@@ -129,16 +129,12 @@ static inline bool isIdenticalBinaryInst(const Instruction &I1,
       I1.getOperand(1) == I2->getOperand(1))
     return true;
   
-  // If the instruction is commutative and associative, the instruction can
-  // match if the operands are swapped!
+  // If the instruction is commutative, the instruction can match if the
+  // operands are swapped!
   //
   if ((I1.getOperand(0) == I2->getOperand(1) &&
        I1.getOperand(1) == I2->getOperand(0)) &&
-      (I1.getOpcode() == Instruction::Add || 
-       I1.getOpcode() == Instruction::Mul ||
-       I1.getOpcode() == Instruction::And || 
-       I1.getOpcode() == Instruction::Or  ||
-       I1.getOpcode() == Instruction::Xor))
+      I1.isCommutative())
     return true;
 
   return false;
