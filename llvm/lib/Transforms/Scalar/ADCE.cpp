@@ -73,6 +73,8 @@ private:
   // instructions that are dead according to LiveSet.
   bool dropReferencesOfDeadInstructionsInLiveBlock(BasicBlock *BB);
 
+  TerminatorInst *convertToUnconditionalBranch(TerminatorInst *TI);
+
   inline void markInstructionLive(Instruction *I) {
     if (LiveSet.count(I)) return;
     DEBUG(std::cerr << "Insn Live: " << I);
@@ -136,6 +138,24 @@ bool ADCE::dropReferencesOfDeadInstructionsInLiveBlock(BasicBlock *BB) {
       ++I;
     }
   return Changed;
+}
+
+
+/// convertToUnconditionalBranch - Transform this conditional terminator
+/// instruction into an unconditional branch because we don't care which of the
+/// successors it goes to.  This eliminate a use of the condition as well.
+///
+TerminatorInst *ADCE::convertToUnconditionalBranch(TerminatorInst *TI) {
+  BranchInst *NB = new BranchInst(TI->getSuccessor(0), TI);
+  BasicBlock *BB = TI->getParent();
+
+  // Remove entries from PHI nodes to avoid confusing ourself later...
+  for (unsigned i = 1, e = TI->getNumSuccessors(); i != e; ++i)
+    TI->getSuccessor(i)->removePredecessor(BB);
+  
+  // Delete the old branch itself...
+  BB->getInstList().erase(TI);
+  return NB;
 }
 
 
@@ -234,13 +254,25 @@ bool ADCE::doADCE() {
   // new entry node...
   //
   if (AliveBlocks.size() == Func->size()) {  // No dead blocks?
-    for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
+    for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I) {
       // Loop over all of the instructions in the function, telling dead
       // instructions to drop their references.  This is so that the next sweep
       // over the program can safely delete dead instructions without other dead
       // instructions still refering to them.
       //
       dropReferencesOfDeadInstructionsInLiveBlock(I);
+
+      // Check to make sure the terminator instruction is live.  If it isn't,
+      // this means that the condition that it branches on (we know it is not an
+      // unconditional branch), is not needed to make the decision of where to
+      // go to, because all outgoing edges go to the same place.  We must remove
+      // the use of the condition (because it's probably dead), so we convert
+      // the terminator to a conditional branch.
+      //
+      TerminatorInst *TI = I->getTerminator();
+      if (!LiveSet.count(TI))
+        convertToUnconditionalBranch(TI);
+    }
     
   } else {                                   // If there are some blocks dead...
     // If the entry node is dead, insert a new entry node to eliminate the entry
@@ -269,17 +301,8 @@ bool ADCE::doADCE() {
         // on a condition that doesn't matter.  Make it an unconditional branch
         // to ONE of the successors.  This has the side effect of dropping a use
         // of the conditional value, which may also be dead.
-        if (!LiveSet.count(TI)) {
-          assert(TI->getNumSuccessors() > 1 && "Not a conditional?");
-          BranchInst *NB = new BranchInst(TI->getSuccessor(0), TI);
-
-          // Remove entries from PHI nodes to avoid confusing ourself later...
-          for (unsigned i = 1, e = TI->getNumSuccessors(); i != e; ++i)
-              TI->getSuccessor(i)->removePredecessor(BB);
-
-          BB->getInstList().erase(TI);
-          TI = NB;
-        }
+        if (!LiveSet.count(TI))
+          TI = convertToUnconditionalBranch(TI);
 
         // Loop over all of the successors, looking for ones that are not alive.
         // We cannot save the number of successors in the terminator instruction
