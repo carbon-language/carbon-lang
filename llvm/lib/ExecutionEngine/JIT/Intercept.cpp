@@ -15,7 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "VM.h"
+#include "JIT.h"
 #include "Support/DynamicLinker.h"
 #include <iostream>
 using namespace llvm;
@@ -28,7 +28,7 @@ static std::vector<void (*)()> AtExitHandlers;
 /// calls to atexit(3), which we intercept and store in
 /// AtExitHandlers.
 ///
-void VM::runAtExitHandlers() {
+void JIT::runAtExitHandlers() {
   while (!AtExitHandlers.empty()) {
     void (*Fn)() = AtExitHandlers.back();
     AtExitHandlers.pop_back();
@@ -45,7 +45,7 @@ static void NoopFn() {}
 
 // jit_exit - Used to intercept the "exit" library call.
 static void jit_exit(int Status) {
-  VM::runAtExitHandlers();   // Run atexit handlers...
+  JIT::runAtExitHandlers();   // Run atexit handlers...
   exit(Status);
 }
 
@@ -61,7 +61,7 @@ static int jit_atexit(void (*Fn)(void)) {
 /// function by using the dynamic loader interface.  As such it is only useful 
 /// for resolving library symbols, not code generated symbols.
 ///
-void *VM::getPointerToNamedFunction(const std::string &Name) {
+void *JIT::getPointerToNamedFunction(const std::string &Name) {
   // Check to see if this is one of the functions we want to intercept...
   if (Name == "exit") return (void*)&jit_exit;
   if (Name == "atexit") return (void*)&jit_atexit;

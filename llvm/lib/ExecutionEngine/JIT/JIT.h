@@ -1,4 +1,4 @@
-//===-- VM.h - Definitions for Virtual Machine ------------------*- C++ -*-===//
+//===-- JIT.h - Class definition for the JIT --------------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file defines the top-level Virtual Machine data structure.
+// This file defines the top-level JIT data structure.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef VM_H
-#define VM_H
+#ifndef JIT_H
+#define JIT_H
 
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/PassManager.h"
@@ -27,16 +27,16 @@ class TargetMachine;
 class TargetJITInfo;
 class MachineCodeEmitter;
 
-class VM : public ExecutionEngine {
+class JIT : public ExecutionEngine {
   TargetMachine &TM;       // The current target we are compiling to
   TargetJITInfo &TJI;      // The JITInfo for the target we are compiling to
   
   FunctionPassManager PM;  // Passes to compile a function
   MachineCodeEmitter *MCE; // MCE object
 
-  VM(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji);
+  JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji);
 public:
-  ~VM();
+  ~JIT();
 
   /// create - Create an return a new JIT compiler if there is one available
   /// for the current target.  Otherwise, return null.
@@ -79,13 +79,12 @@ public:
   /// which has already been compiled, to be compiled again, possibly
   /// after it has been modified. Then the entry to the old copy is overwritten
   /// with a branch to the new copy. If there was no old copy, this acts
-  /// just like VM::getPointerToFunction().
+  /// just like JIT::getPointerToFunction().
   ///
   void *recompileAndRelinkFunction(Function *F);
 
 private:
-  static MachineCodeEmitter *createEmitter(VM &V);
-  void setupPassManager();
+  static MachineCodeEmitter *createEmitter(JIT &J);
   void runJITOnFunction (Function *F);
 };
 

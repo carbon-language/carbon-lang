@@ -16,7 +16,7 @@
 #ifndef _POSIX_MAPPED_FILES
 #define _POSIX_MAPPED_FILES
 #endif
-#include "VM.h"
+#include "JIT.h"
 #include "llvm/Constant.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
@@ -31,7 +31,7 @@ using namespace llvm;
 
 namespace {
   Statistic<> NumBytes("jit", "Number of bytes of machine code compiled");
-  VM *TheVM = 0;
+  JIT *TheJIT = 0;
 
   /// JITMemoryManager - Manage memory for the JIT code generation in a logical,
   /// sane way.  This splits a large block of MAP_NORESERVE'd memory into two
@@ -142,7 +142,7 @@ namespace {
     // constant pool.
     std::vector<void*> ConstantPoolAddresses;
   public:
-    Emitter(VM &vm) { TheVM = &vm; }
+    Emitter(JIT &jit) { TheJIT = &jit; }
 
     virtual void startFunction(MachineFunction &F);
     virtual void finishFunction(MachineFunction &F);
@@ -166,13 +166,13 @@ namespace {
   };
 }
 
-MachineCodeEmitter *VM::createEmitter(VM &V) {
-  return new Emitter(V);
+MachineCodeEmitter *JIT::createEmitter(JIT &jit) {
+  return new Emitter(jit);
 }
 
 void Emitter::startFunction(MachineFunction &F) {
   CurByte = CurBlock = MemMgr.startFunctionBody();
-  TheVM->addGlobalMapping(F.getFunction(), CurBlock);
+  TheJIT->addGlobalMapping(F.getFunction(), CurBlock);
 }
 
 void Emitter::finishFunction(MachineFunction &F) {
@@ -197,8 +197,8 @@ void Emitter::emitConstantPool(MachineConstantPool *MCP) {
   unsigned TotalSize = 0;
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
     const Type *Ty = Constants[i]->getType();
-    unsigned Size      = TheVM->getTargetData().getTypeSize(Ty);
-    unsigned Alignment = TheVM->getTargetData().getTypeAlignment(Ty);
+    unsigned Size      = TheJIT->getTargetData().getTypeSize(Ty);
+    unsigned Alignment = TheJIT->getTargetData().getTypeAlignment(Ty);
     // Make sure to take into account the alignment requirements of the type.
     TotalSize = (TotalSize + Alignment-1) & ~(Alignment-1);
 
@@ -213,7 +213,7 @@ void Emitter::emitConstantPool(MachineConstantPool *MCP) {
   // Actually output all of the constants, and remember their addresses.
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
     void *Addr = Pool + ConstantOffset[i];
-    TheVM->InitializeMemory(Constants[i], Addr);
+    TheJIT->InitializeMemory(Constants[i], Addr);
     ConstantPoolAddresses.push_back(Addr);
   }
 }
@@ -248,10 +248,10 @@ void Emitter::emitWord(unsigned W) {
 uint64_t Emitter::getGlobalValueAddress(GlobalValue *V) {
   // Try looking up the function to see if it is already compiled, if not return
   // 0.
-  return (intptr_t)TheVM->getPointerToGlobalIfAvailable(V);
+  return (intptr_t)TheJIT->getPointerToGlobalIfAvailable(V);
 }
 uint64_t Emitter::getGlobalValueAddress(const std::string &Name) {
-  return (intptr_t)TheVM->getPointerToNamedFunction(Name);
+  return (intptr_t)TheJIT->getPointerToNamedFunction(Name);
 }
 
 // getConstantPoolEntryAddress - Return the address of the 'ConstantNum' entry
@@ -272,19 +272,19 @@ uint64_t Emitter::getCurrentPCValue() {
 }
 
 uint64_t Emitter::forceCompilationOf(Function *F) {
-  return (intptr_t)TheVM->getPointerToFunction(F);
+  return (intptr_t)TheJIT->getPointerToFunction(F);
 }
 
 // getPointerToNamedFunction - This function is used as a global wrapper to
-// VM::getPointerToNamedFunction for the purpose of resolving symbols when
+// JIT::getPointerToNamedFunction for the purpose of resolving symbols when
 // bugpoint is debugging the JIT. In that scenario, we are loading an .so and
 // need to resolve function(s) that are being mis-codegenerated, so we need to
 // resolve their addresses at runtime, and this is the way to do it.
 extern "C" {
   void *getPointerToNamedFunction(const char *Name) {
-    Module &M = TheVM->getModule();
+    Module &M = TheJIT->getModule();
     if (Function *F = M.getNamedFunction(Name))
-      return TheVM->getPointerToFunction(F);
-    return TheVM->getPointerToNamedFunction(Name);
+      return TheJIT->getPointerToFunction(F);
+    return TheJIT->getPointerToNamedFunction(Name);
   }
 }

@@ -1,4 +1,4 @@
-//===-- JIT.cpp - LLVM Just-In-Time Compiler ------------------------------===//
+//===-- JIT.cpp - LLVM Just in Time Compiler ------------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,102 +7,50 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements the top-level support for creating a Just-In-Time
-// compiler for the current architecture.
+// This tool implements a just-in-time compiler for LLVM, allowing direct
+// execution of LLVM bytecode in an efficient manner.
 //
 //===----------------------------------------------------------------------===//
 
-#include "VM.h"
-#include "llvm/Module.h"
+#include "JIT.h"
+#include "llvm/Function.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/CodeGen/MachineCodeEmitter.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetMachineImpls.h"
-#include "Support/CommandLine.h"
+#include "llvm/Target/TargetJITInfo.h"
 using namespace llvm;
 
-#if !defined(ENABLE_X86_JIT) && !defined(ENABLE_SPARC_JIT)
-#define NO_JITS_ENABLED
-#endif
-
-namespace {
-  enum ArchName { x86, Sparc };
-
-#ifndef NO_JITS_ENABLED
-  cl::opt<ArchName>
-  Arch("march", cl::desc("Architecture to JIT to:"), cl::Prefix,
-       cl::values(
-#ifdef ENABLE_X86_JIT
-                  clEnumVal(x86, "  IA-32 (Pentium and above)"),
-#endif
-#ifdef ENABLE_SPARC_JIT
-                  clEnumValN(Sparc, "sparc", "  Sparc-V9"),
-#endif
-                  0),
-#if defined(ENABLE_X86_JIT)
-  cl::init(x86)
-#elif defined(ENABLE_SPARC_JIT)
-  cl::init(Sparc)
-#endif
-       );
-#endif /* NO_JITS_ENABLED */
-}
-
-/// create - Create an return a new JIT compiler if there is one available
-/// for the current target.  Otherwise, return null.
-///
-ExecutionEngine *VM::create(ModuleProvider *MP) {
-  TargetMachine* (*TargetMachineAllocator)(const Module &) = 0;
-
-  // Allow a command-line switch to override what *should* be the default target
-  // machine for this platform. This allows for debugging a Sparc JIT on X86 --
-  // our X86 machines are much faster at recompiling LLVM and linking LLI.
-#ifndef NO_JITS_ENABLED
-
-  switch (Arch) {
-#ifdef ENABLE_X86_JIT
-  case x86:
-    TargetMachineAllocator = allocateX86TargetMachine;
-    break;
-#endif
-#ifdef ENABLE_SPARC_JIT
-  case Sparc:
-    TargetMachineAllocator = allocateSparcTargetMachine;
-    break;
-#endif
-  default:
-    assert(0 && "-march flag not supported on this host!");
-  }
-#else
-  return 0;
-#endif
-
-  // Allocate a target...
-  TargetMachine *Target = TargetMachineAllocator(*MP->getModule());
-  assert(Target && "Could not allocate target machine!");
-
-  // If the target supports JIT code generation, return a new JIT now.
-  if (TargetJITInfo *TJ = Target->getJITInfo())
-    return new VM(MP, *Target, *TJ);
-  return 0;
-}
-
-VM::VM(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
+JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
   : ExecutionEngine(MP), TM(tm), TJI(tji), PM(MP) {
   setTargetData(TM.getTargetData());
 
   // Initialize MCE
   MCE = createEmitter(*this);
   
-  setupPassManager();
+  // Compile LLVM Code down to machine code in the intermediate representation
+  TJI.addPassesToJITCompile(PM);
+
+  // Turn the machine code intermediate representation into bytes in memory that
+  // may be executed.
+  if (TM.addPassesToEmitMachineCode(PM, *MCE)) {
+    std::cerr << "lli: target '" << TM.getName()
+              << "' doesn't support machine code emission!\n";
+    abort();
+  }
 
   emitGlobals();
 }
 
+JIT::~JIT() {
+  delete MCE;
+  delete &TM;
+}
+
 /// run - Start execution with the specified function and arguments.
 ///
-GenericValue VM::run(Function *F, const std::vector<GenericValue> &ArgValues)
-{
+GenericValue JIT::run(Function *F, const std::vector<GenericValue> &ArgValues) {
   assert (F && "Function *F was null at entry to run()");
 
   int (*PF)(int, char **, const char **) =
@@ -119,4 +67,75 @@ GenericValue VM::run(Function *F, const std::vector<GenericValue> &ArgValues)
   GenericValue rv;
   rv.IntVal = ExitCode;
   return rv;
+}
+
+/// runJITOnFunction - Run the FunctionPassManager full of
+/// just-in-time compilation passes on F, hopefully filling in
+/// GlobalAddress[F] with the address of F's machine code.
+///
+void JIT::runJITOnFunction(Function *F) {
+  static bool isAlreadyCodeGenerating = false;
+  assert(!isAlreadyCodeGenerating && "Error: Recursive compilation detected!");
+
+  // JIT the function
+  isAlreadyCodeGenerating = true;
+  PM.run(*F);
+  isAlreadyCodeGenerating = false;
+}
+
+/// getPointerToFunction - This method is used to get the address of the
+/// specified function, compiling it if neccesary.
+///
+void *JIT::getPointerToFunction(Function *F) {
+  void *&Addr = GlobalAddress[F];   // Check if function already code gen'd
+  if (Addr) return Addr;
+
+  // Make sure we read in the function if it exists in this Module
+  MP->materializeFunction(F);
+
+  if (F->isExternal())
+    return Addr = getPointerToNamedFunction(F->getName());
+
+  runJITOnFunction(F);
+  assert(Addr && "Code generation didn't add function to GlobalAddress table!");
+  return Addr;
+}
+
+// getPointerToFunctionOrStub - If the specified function has been
+// code-gen'd, return a pointer to the function.  If not, compile it, or use
+// a stub to implement lazy compilation if available.
+//
+void *JIT::getPointerToFunctionOrStub(Function *F) {
+  // If we have already code generated the function, just return the address.
+  std::map<const GlobalValue*, void *>::iterator I = GlobalAddress.find(F);
+  if (I != GlobalAddress.end()) return I->second;
+
+  // If the target supports "stubs" for functions, get a stub now.
+  if (void *Ptr = TJI.getJITStubForFunction(F, *MCE))
+    return Ptr;
+
+  // Otherwise, if the target doesn't support it, just codegen the function.
+  return getPointerToFunction(F);
+}
+
+/// recompileAndRelinkFunction - This method is used to force a function
+/// which has already been compiled, to be compiled again, possibly
+/// after it has been modified. Then the entry to the old copy is overwritten
+/// with a branch to the new copy. If there was no old copy, this acts
+/// just like JIT::getPointerToFunction().
+///
+void *JIT::recompileAndRelinkFunction(Function *F) {
+  void *&Addr = GlobalAddress[F];   // Check if function already code gen'd
+
+  // If it's not already compiled (this is kind of weird) there is no
+  // reason to patch it up.
+  if (!Addr) { return getPointerToFunction (F); }
+
+  void *OldAddr = Addr;
+  Addr = 0;
+  MachineFunction::destruct(F);
+  runJITOnFunction(F);
+  assert(Addr && "Code generation didn't add function to GlobalAddress table!");
+  TJI.replaceMachineCodeForFunction(OldAddr, Addr);
+  return Addr;
 }
