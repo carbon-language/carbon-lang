@@ -37,11 +37,25 @@ void VM::setupPassManager() {
   }
 }
 
+/// runJITOnFunction - Run the FunctionPassManager full of
+/// just-in-time compilation passes on F, hopefully filling in
+/// GlobalAddress[F] with the address of F's machine code.
+///
+void VM::runJITOnFunction (Function *F) {
+  static bool isAlreadyCodeGenerating = false;
+  assert(!isAlreadyCodeGenerating && "ERROR: RECURSIVE COMPILATION DETECTED!");
+
+  // JIT the function
+  isAlreadyCodeGenerating = true;
+  PM.run(*F);
+  isAlreadyCodeGenerating = false;
+}
+
 /// getPointerToFunction - This method is used to get the address of the
 /// specified function, compiling it if neccesary.
 ///
 void *VM::getPointerToFunction(Function *F) {
-  void *&Addr = GlobalAddress[F];   // Function already code gen'd
+  void *&Addr = GlobalAddress[F];   // Check if function already code gen'd
   if (Addr) return Addr;
 
   // Make sure we read in the function if it exists in this Module
@@ -50,14 +64,28 @@ void *VM::getPointerToFunction(Function *F) {
   if (F->isExternal())
     return Addr = getPointerToNamedFunction(F->getName());
 
-  static bool isAlreadyCodeGenerating = false;
-  assert(!isAlreadyCodeGenerating && "ERROR: RECURSIVE COMPILATION DETECTED!");
-
-  // JIT the function
-  isAlreadyCodeGenerating = true;
-  PM.run(*F);
-  isAlreadyCodeGenerating = false;
-
+  runJITOnFunction (F);
   assert(Addr && "Code generation didn't add function to GlobalAddress table!");
+  return Addr;
+}
+
+/// recompileAndRelinkFunction - This method is used to force a function
+/// which has already been compiled, to be compiled again, possibly
+/// after it has been modified. Then the entry to the old copy is overwritten
+/// with a branch to the new copy. If there was no old copy, this acts
+/// just like VM::getPointerToFunction().
+///
+void *VM::recompileAndRelinkFunction(Function *F) {
+  void *&Addr = GlobalAddress[F];   // Check if function already code gen'd
+
+  // If it's not already compiled (this is kind of weird) there is no
+  // reason to patch it up.
+  if (!Addr) { return getPointerToFunction (F); }
+
+  void *OldAddr = Addr;
+  Addr = 0;
+  runJITOnFunction (F);
+  assert(Addr && "Code generation didn't add function to GlobalAddress table!");
+  TM.replaceMachineCodeForFunction (OldAddr, Addr);
   return Addr;
 }
