@@ -100,7 +100,7 @@ void MachineInstr::SetMachineOperandVal(unsigned i,
                                         Value* V) {
   assert(i < operands.size());          // may be explicit or implicit op
   operands[i].opType = opTy;
-  operands[i].value = V;
+  operands[i].contents.value = V;
   operands[i].regNum = -1;
 }
 
@@ -113,8 +113,8 @@ MachineInstr::SetMachineOperandConst(unsigned i,
          "immed. constant cannot be defined");
 
   operands[i].opType = opTy;
-  operands[i].value = NULL;
-  operands[i].immedVal = intValue;
+  operands[i].contents.value = NULL;
+  operands[i].contents.immedVal = intValue;
   operands[i].regNum = -1;
   operands[i].flags = 0;
 }
@@ -123,7 +123,7 @@ void MachineInstr::SetMachineOperandReg(unsigned i, int regNum) {
   assert(i < getNumOperands());          // must be explicit op
 
   operands[i].opType = MachineOperand::MO_MachineRegister;
-  operands[i].value = NULL;
+  operands[i].contents.value = NULL;
   operands[i].regNum = regNum;
 }
 
@@ -162,7 +162,7 @@ MachineInstr::substituteValue(const Value* oldVal, Value* newVal,
           notDefsAndUses && (O.isDef() && !O.isUse()) ||
           !notDefsAndUses && O.isDef())
         {
-          O.getMachineOperand().value = newVal;
+          O.getMachineOperand().contents.value = newVal;
           ++numSubst;
         }
       else
@@ -175,7 +175,7 @@ MachineInstr::substituteValue(const Value* oldVal, Value* newVal,
           notDefsAndUses && (getImplicitOp(i).isDef() && !getImplicitOp(i).isUse()) ||
           !notDefsAndUses && getImplicitOp(i).isDef())
         {
-          getImplicitOp(i).value = newVal;
+          getImplicitOp(i).contents.value = newVal;
           ++numSubst;
         }
       else

@@ -110,71 +110,80 @@ public:
   
 private:
   union {
-    Value*	value;		// BasicBlockVal for a label operand.
-				// ConstantVal for a non-address immediate.
-				// Virtual register for an SSA operand,
-				//   including hidden operands required for
-				//   the generated machine code.     
-                                // LLVM global for MO_GlobalAddress.
+    Value*  value;      // BasicBlockVal for a label operand.
+                        // ConstantVal for a non-address immediate.
+                        // Virtual register for an SSA operand,
+                        //   including hidden operands required for
+                        //   the generated machine code.     
+                        // LLVM global for MO_GlobalAddress.
 
     int immedVal;		// Constant value for an explicit constant
 
     MachineBasicBlock *MBB;     // For MO_MachineBasicBlock type
     std::string *SymbolName;    // For MO_ExternalSymbol type
-  };
+  } contents;
 
   char flags;                   // see bit field definitions above
   MachineOperandType opType:8;  // Pack into 8 bits efficiently after flags.
   int regNum;	                // register number for an explicit register
                                 // will be set for a value after reg allocation
 private:
+  void zeroContents () { 
+    memset (&contents, 0, sizeof (contents));
+  }
+
   MachineOperand(int ImmVal = 0, MachineOperandType OpTy = MO_VirtualRegister)
-    : immedVal(ImmVal),
-      flags(0),
-      opType(OpTy),
-      regNum(-1) {}
+    : flags(0), opType(OpTy), regNum(-1) {
+    zeroContents ();
+  }
 
   MachineOperand(int Reg, MachineOperandType OpTy, UseType UseTy)
-    : immedVal(0), flags(UseTy), opType(OpTy), regNum(Reg) { }
+    : flags(UseTy), opType(OpTy), regNum(Reg) {
+    zeroContents ();
+  }
 
   MachineOperand(Value *V, MachineOperandType OpTy, UseType UseTy,
 		 bool isPCRelative = false)
-    : value(V),
-      flags(UseTy | (isPCRelative ? PCRELATIVE : 0)),
-      opType(OpTy),
-      regNum(-1) {
+    : flags(UseTy | (isPCRelative?PCRELATIVE:0)), opType(OpTy), regNum(-1) {
+    zeroContents ();
+    contents.value = V;
   }
 
   MachineOperand(MachineBasicBlock *mbb)
-    : MBB(mbb), flags(0), opType(MO_MachineBasicBlock), regNum(-1) { }
+    : flags(0), opType(MO_MachineBasicBlock), regNum(-1) {
+    zeroContents ();
+    contents.MBB = mbb;
+  }
 
   MachineOperand(const std::string &SymName, bool isPCRelative)
-    : SymbolName(new std::string(SymName)), flags(isPCRelative ? PCRELATIVE :0),
-      opType(MO_ExternalSymbol), regNum(-1) {}
+    : flags(isPCRelative?PCRELATIVE:0), opType(MO_ExternalSymbol), regNum(-1) {
+    zeroContents ();
+    contents.SymbolName = new std::string (SymName);
+  }
 
 public:
-  MachineOperand(const MachineOperand &M) : immedVal(M.immedVal),
-					    flags(M.flags),
-					    opType(M.opType),
-					    regNum(M.regNum) {
+  MachineOperand(const MachineOperand &M)
+    : flags(M.flags), opType(M.opType), regNum(M.regNum) {
+    zeroContents ();
+    contents = M.contents;
     if (isExternalSymbol())
-      SymbolName = new std::string(M.getSymbolName());
+      contents.SymbolName = new std::string(M.getSymbolName());
   }
 
   ~MachineOperand() {
     if (isExternalSymbol())
-      delete SymbolName;
+      delete contents.SymbolName;
   }
   
   const MachineOperand &operator=(const MachineOperand &MO) {
     if (isExternalSymbol())             // if old operand had a symbol name,
-      delete SymbolName;                // release old memory
-    immedVal = MO.immedVal;
+      delete contents.SymbolName;       // release old memory
+    contents = MO.contents;
     flags    = MO.flags;
     opType   = MO.opType;
     regNum   = MO.regNum;
     if (isExternalSymbol())
-      SymbolName = new std::string(MO.getSymbolName());
+      contents.SymbolName = new std::string(MO.getSymbolName());
     return *this;
   }
 
@@ -184,9 +193,7 @@ public:
 
   /// getUseType - Returns the MachineOperandUseType of this operand.
   ///
-  UseType getUseType() const {
-      return UseType(flags & (USEFLAG|DEFFLAG));
-  }
+  UseType getUseType() const { return UseType(flags & (USEFLAG|DEFFLAG)); }
 
   /// isPCRelative - This returns the value of the PCRELATIVE flag, which
   /// indicates whether this operand should be emitted as a PC relative value
@@ -205,6 +212,8 @@ public:
     return opType == MO_MachineRegister || opType == MO_VirtualRegister;
   }
 
+  /// Accessors that tell you what kind of MachineOperand you're looking at.
+  ///
   bool isMachineBasicBlock() const { return opType == MO_MachineBasicBlock; }
   bool isPCRelativeDisp() const { return opType == MO_PCRelativeDisp; }
   bool isImmediate() const {
@@ -215,83 +224,109 @@ public:
   bool isGlobalAddress() const { return opType == MO_GlobalAddress; }
   bool isExternalSymbol() const { return opType == MO_ExternalSymbol; }
 
-  Value* getVRegValue() const {
-    assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
-	   isPCRelativeDisp());
-    return value;
-  }
+  /// getVRegValueOrNull - Get the Value* out of a MachineOperand if it
+  /// has one. This is deprecated and only used by the SPARC v9 backend.
+  ///
   Value* getVRegValueOrNull() const {
     return (opType == MO_VirtualRegister || opType == MO_CCRegister || 
-            isPCRelativeDisp()) ? value : NULL;
+            isPCRelativeDisp()) ? contents.value : NULL;
+  }
+
+  /// MachineOperand accessors that only work on certain types of
+  /// MachineOperand...
+  ///
+  Value* getVRegValue() const {
+    assert ((opType == MO_VirtualRegister || opType == MO_CCRegister
+             || isPCRelativeDisp()) && "Wrong MachineOperand accessor");
+    return contents.value;
   }
   int getMachineRegNum() const {
-    assert(opType == MO_MachineRegister);
+    assert(opType == MO_MachineRegister && "Wrong MachineOperand accessor");
     return regNum;
   }
-  int getImmedValue() const { assert(isImmediate()); return immedVal; }
-  void setImmedValue(int ImmVal) { assert(isImmediate()); immedVal = ImmVal; }
-
+  int getImmedValue() const {
+    assert(isImmediate() && "Wrong MachineOperand accessor");
+    return contents.immedVal;
+  }
   MachineBasicBlock *getMachineBasicBlock() const {
-    assert(isMachineBasicBlock() && "Can't get MBB in non-MBB operand!");
-    return MBB;
+    assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
+    return contents.MBB;
   }
-  int getFrameIndex() const { assert(isFrameIndex()); return immedVal; }
+  int getFrameIndex() const {
+    assert(isFrameIndex() && "Wrong MachineOperand accessor");
+    return contents.immedVal;
+  }
   unsigned getConstantPoolIndex() const {
-    assert(isConstantPoolIndex());
-    return immedVal;
+    assert(isConstantPoolIndex() && "Wrong MachineOperand accessor");
+    return contents.immedVal;
   }
-
   GlobalValue *getGlobal() const {
-    assert(isGlobalAddress());
-    return (GlobalValue*)value;
+    assert(isGlobalAddress() && "Wrong MachineOperand accessor");
+    return (GlobalValue*)contents.value;
   }
-
   const std::string &getSymbolName() const {
-    assert(isExternalSymbol());
-    return *SymbolName;
+    assert(isExternalSymbol() && "Wrong MachineOperand accessor");
+    return *contents.SymbolName;
   }
 
+  /// MachineOperand methods for testing that work on any kind of
+  /// MachineOperand...
+  ///
   bool            isUse           () const { return flags & USEFLAG; }
   MachineOperand& setUse          ()       { flags |= USEFLAG; return *this; }
-  bool		  isDef           () const { return flags & DEFFLAG; }
+  bool            isDef           () const { return flags & DEFFLAG; }
   MachineOperand& setDef          ()       { flags |= DEFFLAG; return *this; }
   bool            isHiBits32      () const { return flags & HIFLAG32; }
   bool            isLoBits32      () const { return flags & LOFLAG32; }
   bool            isHiBits64      () const { return flags & HIFLAG64; }
   bool            isLoBits64      () const { return flags & LOFLAG64; }
 
-  // used to check if a machine register has been allocated to this operand
+  /// hasAllocatedReg - Returns true iff a machine register has been
+  /// allocated to this operand.
+  ///
   bool hasAllocatedReg() const {
     return (regNum >= 0 &&
             (opType == MO_VirtualRegister || opType == MO_CCRegister || 
              opType == MO_MachineRegister));
   }
 
-  // used to get the reg number if when one is allocated
+  /// getReg - Returns the register number. It is a runtime error to call this
+  /// if a register is not allocated.
+  ///
   unsigned getReg() const {
     assert(hasAllocatedReg());
     return regNum;
   }
 
-  // ********** TODO: get rid of this duplicate code! ***********
+  /// MachineOperand mutators...
+  ///
   void setReg(unsigned Reg) {
+    // This method's comment used to say: 'TODO: get rid of this duplicate
+    // code.' It's not clear where the duplication is.
     assert(hasAllocatedReg() && "This operand cannot have a register number!");
     regNum = Reg;
   }    
+  void setImmedValue(int immVal) {
+    assert(isImmediate() && "Wrong MachineOperand mutator");
+    contents.immedVal = immVal;
+  }
 
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
 
 private:
-
-  // Construction methods needed for fine-grain control.
-  // These must be accessed via coresponding methods in MachineInstr.
+  /// markHi32, markLo32, etc. - These methods must be accessed via
+  /// corresponding methods in MachineInstr.  These methods are deprecated
+  /// and only used by the SPARC v9 back-end.
+  ///
   void markHi32()      { flags |= HIFLAG32; }
   void markLo32()      { flags |= LOFLAG32; }
   void markHi64()      { flags |= HIFLAG64; }
   void markLo64()      { flags |= LOFLAG64; }
   
-  // Replaces the Value with its corresponding physical register after
-  // register allocation is complete
+  /// setRegForValue - Replaces the Value with its corresponding physical
+  /// register after register allocation is complete. This is deprecated
+  /// and only used by the SPARC v9 back-end.
+  ///
   void setRegForValue(int reg) {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
 	   opType == MO_MachineRegister);
@@ -321,18 +356,18 @@ private:
 //===----------------------------------------------------------------------===//
 
 class MachineInstr {
-  short            Opcode;              // the opcode
+  short Opcode;                         // the opcode
   unsigned char numImplicitRefs;        // number of implicit operands
   std::vector<MachineOperand> operands; // the operands
   MachineInstr* prev, *next;            // links for our intrusive list
   MachineBasicBlock* parent;            // pointer to the owning basic block
+
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
 
   MachineInstr(const MachineInstr &);  // DO NOT IMPLEMENT
   void operator=(const MachineInstr&); // DO NOT IMPLEMENT
 
-private:
   // Intrusive list support
   //
   friend class ilist_traits<MachineInstr>;
@@ -358,7 +393,7 @@ public:
   const MachineBasicBlock* getParent() const { return parent; }
   MachineBasicBlock* getParent() { return parent; }
 
-  /// Accessors for opcode.
+  /// getOpcode - Returns the opcode of this MachineInstr.
   ///
   const int getOpcode() const { return Opcode; }
 
