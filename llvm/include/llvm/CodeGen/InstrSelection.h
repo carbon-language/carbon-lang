@@ -75,26 +75,45 @@ bool		SelectInstructionsForMethod	(Method* method,
 //---------------------------------------------------------------------------
 
 class TmpInstruction : public Instruction {
-  TmpInstruction (const TmpInstruction  &CI) : Instruction(CI.getType(), CI.getOpcode()) {
+  TmpInstruction (const TmpInstruction  &ci)
+    : Instruction(ci.getType(), ci.getOpcode())
+  {
     Operands.reserve(2);
     Operands.push_back(Use(Operands[0], this));
     Operands.push_back(Use(Operands[1], this));
   }
 public:
-  TmpInstruction(OtherOps Opcode, Value *S1, Value* S2, const string &Name = "")
-    : Instruction(S1->getType(), Opcode, Name)
+  // Constructor that uses the type of S1 as the type of the temporary.
+  // s1 must be a valid value.  s2 may be NULL.
+  TmpInstruction(OtherOps opcode, Value *s1, Value* s2, const string &name="")
+    : Instruction(s1->getType(), opcode, name)
   {
-    assert(Opcode == TMP_INSTRUCTION_OPCODE &&
-           "Tmp instruction opcode invalid!");
-    Operands.reserve(S2? 2 : 1);
-    Operands.push_back(Use(S1, this));
-    if (S2)
-      Operands.push_back(Use(S2, this));
+    assert(s1 != NULL && "Use different constructor if both operands are 0");
+    Initialize(opcode, s1, s2);
+  }
+  
+  // Constructor that allows the type of the temporary to be specified.
+  // Both S1 and S2 may be NULL.
+  TmpInstruction(OtherOps opcode, const Type* tmpType,
+                 Value *s1, Value* s2, const string &name = "")
+    : Instruction(tmpType, opcode, name)
+  {
+    Initialize(opcode, s1, s2);
   }
   
   virtual Instruction *clone() const { return new TmpInstruction(*this); }
   virtual const char *getOpcodeName() const {
     return "userOp1";
+  }
+  
+private:
+  void Initialize(OtherOps opcode, Value *s1, Value* s2) {
+    assert(opcode==TMP_INSTRUCTION_OPCODE && "Tmp instruction opcode invalid");
+    Operands.reserve(s1 && s2? 2 : ((s1 || s2)? 1 : 0));
+    if (s1)
+      Operands.push_back(Use(s1, this));
+    if (s2)
+      Operands.push_back(Use(s2, this));
   }
 };
 
