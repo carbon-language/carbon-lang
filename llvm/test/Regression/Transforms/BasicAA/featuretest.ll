@@ -6,6 +6,10 @@
 ; RUN: else exit 0
 ; RUN: fi
 
+%Global = external global { int }
+
+implementation
+
 
 ; Array test:  Test that operations on one local array do not invalidate 
 ; operations on another array.  Important for scientific codes.
@@ -71,4 +75,14 @@ int %gep_distance_test3(int * %A) {
 	%C = getelementptr sbyte* %B, long 4
 	%Y = load sbyte* %C
 	ret int 8
+}
+
+; Test that we can disambiguate globals reached through constantexpr geps
+int %constexpr_test() {
+   %X = alloca int
+   %Y = load int* %X
+   store int 5, int* getelementptr ({ int }* %Global, long 0, ubyte 0)
+   %REMOVE = load int* %X
+   %retval = sub int %Y, %REMOVE
+   ret int %retval
 }
