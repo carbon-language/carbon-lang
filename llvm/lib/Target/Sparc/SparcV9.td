@@ -525,71 +525,71 @@ def FMOVRQGEZ : F4_6<2, 0b110101, 0b111, 0b00111, "fmovrqgez">;//fmovsrz r,r,rd
 // Section A.35: Move Integer Register on Condition (MOVcc) - p194
 // For integer condition codes
 def MOVAr    : F4_3<2, 0b101100, 0b1000, "mova">;      // mova   i/xcc, rs2, rd
-def MOVAi    : F4_4<2, 0b101100, 0b1000, "mova">;      // mova   i/xcc, rs2, rd
+def MOVAi    : F4_4<2, 0b101100, 0b1000, "mova">;      // mova   i/xcc, imm, rd
 def MOVNr    : F4_3<2, 0b101100, 0b0000, "movn">;      // movn   i/xcc, rs2, rd
-def MOVNi    : F4_4<2, 0b101100, 0b0000, "movn">;      // movn   i/xcc, rs2, rd
+def MOVNi    : F4_4<2, 0b101100, 0b0000, "movn">;      // movn   i/xcc, imm, rd
 def MOVNEr   : F4_3<2, 0b101100, 0b1001, "movne">;     // movne  i/xcc, rs2, rd
-def MOVNEi   : F4_4<2, 0b101100, 0b1001, "movne">;     // movne  i/xcc, rs2, rd
+def MOVNEi   : F4_4<2, 0b101100, 0b1001, "movne">;     // movne  i/xcc, imm, rd
 def MOVEr    : F4_3<2, 0b101100, 0b0001, "move">;      // move   i/xcc, rs2, rd
-def MOVEi    : F4_4<2, 0b101100, 0b0001, "move">;      // move   i/xcc, rs2, rd
+def MOVEi    : F4_4<2, 0b101100, 0b0001, "move">;      // move   i/xcc, imm, rd
 def MOVGr    : F4_3<2, 0b101100, 0b1010, "movg">;      // movg   i/xcc, rs2, rd
-def MOVGi    : F4_4<2, 0b101100, 0b1010, "movg">;      // movg   i/xcc, rs2, rd
+def MOVGi    : F4_4<2, 0b101100, 0b1010, "movg">;      // movg   i/xcc, imm, rd
 def MOVLEr   : F4_3<2, 0b101100, 0b0010, "movle">;     // movle  i/xcc, rs2, rd
-def MOVLEi   : F4_4<2, 0b101100, 0b0010, "movle">;     // movle  i/xcc, rs2, rd
+def MOVLEi   : F4_4<2, 0b101100, 0b0010, "movle">;     // movle  i/xcc, imm, rd
 def MOVGEr   : F4_3<2, 0b101100, 0b1011, "movge">;     // movge  i/xcc, rs2, rd
-def MOVGEi   : F4_4<2, 0b101100, 0b1011, "movge">;     // movge  i/xcc, rs2, rd
+def MOVGEi   : F4_4<2, 0b101100, 0b1011, "movge">;     // movge  i/xcc, imm, rd
 def MOVLr    : F4_3<2, 0b101100, 0b0011, "movl">;      // movl   i/xcc, rs2, rd
-def MOVLi    : F4_4<2, 0b101100, 0b0011, "movl">;      // movl   i/xcc, rs2, rd
+def MOVLi    : F4_4<2, 0b101100, 0b0011, "movl">;      // movl   i/xcc, imm, rd
 def MOVGUr   : F4_3<2, 0b101100, 0b1100, "movgu">;     // movgu  i/xcc, rs2, rd
-def MOVGUi   : F4_4<2, 0b101100, 0b1100, "movgu">;     // movgu  i/xcc, rs2, rd
+def MOVGUi   : F4_4<2, 0b101100, 0b1100, "movgu">;     // movgu  i/xcc, imm, rd
 def MOVLEUr  : F4_3<2, 0b101100, 0b0100, "movleu">;    // movleu i/xcc, rs2, rd
-def MOVLEUi  : F4_4<2, 0b101100, 0b0100, "movleu">;    // movleu i/xcc, rs2, rd
+def MOVLEUi  : F4_4<2, 0b101100, 0b0100, "movleu">;    // movleu i/xcc, imm, rd
 def MOVCCr   : F4_3<2, 0b101100, 0b1101, "movcc">;     // movcc  i/xcc, rs2, rd
-def MOVCCi   : F4_4<2, 0b101100, 0b1101, "movcc">;     // movcc  i/xcc, rs2, rd
+def MOVCCi   : F4_4<2, 0b101100, 0b1101, "movcc">;     // movcc  i/xcc, imm, rd
 def MOVCSr   : F4_3<2, 0b101100, 0b0101, "movcs">;     // movcs  i/xcc, rs2, rd
-def MOVCSi   : F4_4<2, 0b101100, 0b0101, "movcs">;     // movcs  i/xcc, rs2, rd
+def MOVCSi   : F4_4<2, 0b101100, 0b0101, "movcs">;     // movcs  i/xcc, imm, rd
 def MOVPOSr  : F4_3<2, 0b101100, 0b1110, "movpos">;    // movpos i/xcc, rs2, rd
-def MOVPOSi  : F4_4<2, 0b101100, 0b1110, "movpos">;    // movpos i/xcc, rs2, rd
+def MOVPOSi  : F4_4<2, 0b101100, 0b1110, "movpos">;    // movpos i/xcc, imm, rd
 def MOVNEGr  : F4_3<2, 0b101100, 0b0110, "movneg">;    // movneg i/xcc, rs2, rd
-def MOVNEGi  : F4_4<2, 0b101100, 0b0110, "movneg">;    // movneg i/xcc, rs2, rd
+def MOVNEGi  : F4_4<2, 0b101100, 0b0110, "movneg">;    // movneg i/xcc, imm, rd
 def MOVVCr   : F4_3<2, 0b101100, 0b1111, "movvc">;     // movvc  i/xcc, rs2, rd
-def MOVVCi   : F4_4<2, 0b101100, 0b1111, "movvc">;     // movvc  i/xcc, rs2, rd
+def MOVVCi   : F4_4<2, 0b101100, 0b1111, "movvc">;     // movvc  i/xcc, imm, rd
 def MOVVSr   : F4_3<2, 0b101100, 0b0111, "movvs">;     // movvs  i/xcc, rs2, rd
-def MOVVSi   : F4_4<2, 0b101100, 0b0111, "movvs">;     // movvs  i/xcc, rs2, rd
+def MOVVSi   : F4_4<2, 0b101100, 0b0111, "movvs">;     // movvs  i/xcc, imm, rd
 
 // For floating-point condition codes
 def MOVFAr   : F4_3<2, 0b101100, 0b1000, "movfa">;     // movfa   i/xcc, rs2, rd
-def MOVFAi   : F4_4<2, 0b101100, 0b1000, "movfa">;     // movfa   i/xcc, rs2, rd
+def MOVFAi   : F4_4<2, 0b101100, 0b1000, "movfa">;     // movfa   i/xcc, imm, rd
 def MOVFNr   : F4_3<2, 0b101100, 0b0000, "movfn">;     // movfn   i/xcc, rs2, rd
-def MOVFNi   : F4_4<2, 0b101100, 0b0000, "movfn">;     // movfn   i/xcc, rs2, rd
+def MOVFNi   : F4_4<2, 0b101100, 0b0000, "movfn">;     // movfn   i/xcc, imm, rd
 def MOVFUr   : F4_3<2, 0b101100, 0b0111, "movfu">;     // movfu   i/xcc, rs2, rd
-def MOVFUi   : F4_4<2, 0b101100, 0b0111, "movfu">;     // movfu   i/xcc, rs2, rd
+def MOVFUi   : F4_4<2, 0b101100, 0b0111, "movfu">;     // movfu   i/xcc, imm, rd
 def MOVFGr   : F4_3<2, 0b101100, 0b0110, "movfg">;     // movfg   i/xcc, rs2, rd
-def MOVFGi   : F4_4<2, 0b101100, 0b0110, "movfg">;     // movfg   i/xcc, rs2, rd
+def MOVFGi   : F4_4<2, 0b101100, 0b0110, "movfg">;     // movfg   i/xcc, imm, rd
 def MOVFUGr  : F4_3<2, 0b101100, 0b0101, "movfug">;    // movfug  i/xcc, rs2, rd
-def MOVFUGi  : F4_4<2, 0b101100, 0b0101, "movfug">;    // movfug  i/xcc, rs2, rd
+def MOVFUGi  : F4_4<2, 0b101100, 0b0101, "movfug">;    // movfug  i/xcc, imm, rd
 def MOVFLr   : F4_3<2, 0b101100, 0b0100, "movfl">;     // movfl   i/xcc, rs2, rd
-def MOVFLi   : F4_4<2, 0b101100, 0b0100, "movfl">;     // movfl   i/xcc, rs2, rd
+def MOVFLi   : F4_4<2, 0b101100, 0b0100, "movfl">;     // movfl   i/xcc, imm, rd
 def MOVFULr  : F4_3<2, 0b101100, 0b0011, "movful">;    // movful  i/xcc, rs2, rd
-def MOVFULi  : F4_4<2, 0b101100, 0b0011, "movful">;    // movful  i/xcc, rs2, rd
+def MOVFULi  : F4_4<2, 0b101100, 0b0011, "movful">;    // movful  i/xcc, imm, rd
 def MOVFLGr  : F4_3<2, 0b101100, 0b0010, "movflg">;    // movflg  i/xcc, rs2, rd
-def MOVFLGi  : F4_4<2, 0b101100, 0b0010, "movflg">;    // movflg  i/xcc, rs2, rd
+def MOVFLGi  : F4_4<2, 0b101100, 0b0010, "movflg">;    // movflg  i/xcc, imm, rd
 def MOVFNEr  : F4_3<2, 0b101100, 0b0001, "movfne">;    // movfne  i/xcc, rs2, rd
-def MOVFNEi  : F4_4<2, 0b101100, 0b0001, "movfne">;    // movfne  i/xcc, rs2, rd
+def MOVFNEi  : F4_4<2, 0b101100, 0b0001, "movfne">;    // movfne  i/xcc, imm, rd
 def MOVFEr   : F4_3<2, 0b101100, 0b1001, "movfe">;     // movfe   i/xcc, rs2, rd
-def MOVFEi   : F4_4<2, 0b101100, 0b1001, "movfe">;     // movfe   i/xcc, rs2, rd
+def MOVFEi   : F4_4<2, 0b101100, 0b1001, "movfe">;     // movfe   i/xcc, imm, rd
 def MOVFUEr  : F4_3<2, 0b101100, 0b1010, "movfue">;    // movfue  i/xcc, rs2, rd
-def MOVFUEi  : F4_4<2, 0b101100, 0b1010, "movfue">;    // movfue  i/xcc, rs2, rd
+def MOVFUEi  : F4_4<2, 0b101100, 0b1010, "movfue">;    // movfue  i/xcc, imm, rd
 def MOVFGEr  : F4_3<2, 0b101100, 0b1011, "movfge">;    // movfge  i/xcc, rs2, rd
-def MOVFGEi  : F4_4<2, 0b101100, 0b1011, "movfge">;    // movfge  i/xcc, rs2, rd
+def MOVFGEi  : F4_4<2, 0b101100, 0b1011, "movfge">;    // movfge  i/xcc, imm, rd
 def MOVFUGEr : F4_3<2, 0b101100, 0b1100, "movfuge">;   // movfuge i/xcc, rs2, rd
-def MOVFUGEi : F4_4<2, 0b101100, 0b1100, "movfuge">;   // movfuge i/xcc, rs2, rd
+def MOVFUGEi : F4_4<2, 0b101100, 0b1100, "movfuge">;   // movfuge i/xcc, imm, rd
 def MOVFLEr  : F4_3<2, 0b101100, 0b1101, "movfle">;    // movfle  i/xcc, rs2, rd
-def MOVFLEi  : F4_4<2, 0b101100, 0b1101, "movfle">;    // movfle  i/xcc, rs2, rd
+def MOVFLEi  : F4_4<2, 0b101100, 0b1101, "movfle">;    // movfle  i/xcc, imm, rd
 def MOVFULEr : F4_3<2, 0b101100, 0b1110, "movfule">;   // movfule i/xcc, rs2, rd
-def MOVFULEi : F4_4<2, 0b101100, 0b1110, "movfule">;   // movfule i/xcc, rs2, rd
+def MOVFULEi : F4_4<2, 0b101100, 0b1110, "movfule">;   // movfule i/xcc, imm, rd
 def MOVFOr   : F4_3<2, 0b101100, 0b1111, "movfo">;     // movfo   i/xcc, rs2, rd
-def MOVFOi   : F4_4<2, 0b101100, 0b1111, "movfo">;     // movfo   i/xcc, rs2, rd
+def MOVFOi   : F4_4<2, 0b101100, 0b1111, "movfo">;     // movfo   i/xcc, imm, rd
 
 // Section A.36: Move Integer Register on Register Condition (MOVR)
 def MOVRZr   : F3_5<2, 0b101111, 0b001, "movrz">;      // movrz   rs1, rs2, rd
@@ -607,10 +607,10 @@ def MOVRGEZi : F3_6<2, 0b101111, 0b111, "movrgez">;    // movrgez rs1, imm, rd
 
 // Section A.37: Multiply and Divide (64-bit) - p199
 def MULXr  : F3_1<2, 0b001001, "mulx">;        // mulx   r, r, r
-def SDIVXr : F3_1<2, 0b101101, "sdivx">;       // sdivx  r, r, r
-def UDIVXr : F3_1<2, 0b001101, "udivx">;       // udivx  r, r, r
 def MULXi  : F3_2<2, 0b001001, "mulx">;        // mulx   r, i, r
+def SDIVXr : F3_1<2, 0b101101, "sdivx">;       // sdivx  r, r, r
 def SDIVXi : F3_2<2, 0b101101, "sdivx">;       // sdivx  r, i, r
+def UDIVXr : F3_1<2, 0b001101, "udivx">;       // udivx  r, r, r
 def UDIVXi : F3_2<2, 0b001101, "udivx">;       // udivx  r, i, r
 
 // Section A.38: Multiply (32-bit) - p200
