@@ -2,7 +2,7 @@ LLVM Target Skeleton
 --------------------
 
 This directory contains a very simple skeleton that can be used as the
-starting point for new LLVM targets.  Basically you can take this code
+starting point for new LLVM targets.  Basically, you can take this code
 and start filling stuff in.
 
 This directory contains mainly stubs and placeholders; there is no binary 
@@ -16,4 +16,3 @@ be replaced with your target details.
 
 As always, if you're starting a new port, please mention it on the llvmdev
 list, and if you have questions, that is a great place to ask.
-
