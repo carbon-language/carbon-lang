@@ -8,15 +8,19 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/Codegen/MachineInstr.h"
 
 Instruction::Instruction(const Type *ty, unsigned it, const string &Name) 
-  : User(ty, Value::InstructionVal, Name) {
+  : User(ty, Value::InstructionVal, Name),
+    machineInstrVec(new MachineCodeForVMInstr)
+{
   Parent = 0;
   iType = it;
 }
 
 Instruction::~Instruction() {
-  assert(getParent() == 0 && "Instruction still embeded in basic block!");
+  assert(getParent() == 0 && "Instruction still embedded in basic block!");
+  delete machineInstrVec;
 }
 
 // Specialize setName to take care of symbol table majik
@@ -26,4 +30,27 @@ void Instruction::setName(const string &name) {
     PP->getSymbolTable()->remove(this);
   Value::setName(name);
   if (PP && hasName()) PP->getSymbolTableSure()->insert(this);
+}
+
+void
+Instruction::addMachineInstruction(MachineInstr* minstr)
+{
+  machineInstrVec->push_back(minstr);
+}
+
+// Dont make this inline because you would need to include
+// MachineInstr.h in Instruction.h, which creates a circular
+// sequence of forward declarations.  Trying to fix that will
+// cause a serious circularity in link order.
+// 
+const vector<Value*>&
+Instruction::getTempValuesForMachineCode() const
+{
+  return machineInstrVec->getTempValues();
+}
+
+void
+Instruction::dropAllReferences() {
+  machineInstrVec->dropAllReferences();
+  User::dropAllReferences();
 }
