@@ -67,6 +67,8 @@ public:
                             const ConstPoolVal *V2) const = 0;
   virtual ConstPoolVal *sub(const ConstPoolVal *V1, 
                             const ConstPoolVal *V2) const = 0;
+  virtual ConstPoolVal *mul(const ConstPoolVal *V1, 
+			    const ConstPoolVal *V2) const = 0;
 
   virtual ConstPoolBool *lessthan(const ConstPoolVal *V1, 
                                   const ConstPoolVal *V2) const = 0;
@@ -101,6 +103,11 @@ inline ConstPoolVal *operator+(const ConstPoolVal &V1, const ConstPoolVal &V2) {
 inline ConstPoolVal *operator-(const ConstPoolVal &V1, const ConstPoolVal &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
   return ConstRules::get(V1)->sub(&V1, &V2);
+}
+
+inline ConstPoolVal *operator*(const ConstPoolVal &V1, const ConstPoolVal &V2) {
+  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
+  return ConstRules::get(V1)->mul(&V1, &V2);
 }
 
 inline ConstPoolBool *operator<(const ConstPoolVal &V1, 
