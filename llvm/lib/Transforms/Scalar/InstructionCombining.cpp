@@ -4206,7 +4206,17 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   if (isa<AllocaInst>(I) && I->getParent() == &DestBlock->getParent()->front())
     return false;
 
-  if (isa<LoadInst>(I)) return false;
+  // We can only sink load instructions if there is nothing between the load and
+  // the end of block that could change the value.
+  if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+    if (LI->isVolatile()) return false;  // Don't sink volatile loads.
+
+    for (BasicBlock::iterator Scan = LI, E = LI->getParent()->end();
+         Scan != E; ++Scan)
+      if (Scan->mayWriteToMemory())
+        return false;
+    std::cerr << "SUNK LOAD: " << *LI;
+  }
 
   BasicBlock::iterator InsertPos = DestBlock->begin();
   while (isa<PHINode>(InsertPos)) ++InsertPos;
