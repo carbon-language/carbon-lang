@@ -29,20 +29,20 @@
 extern "C" __declspec(dllimport) void* __stdcall GetCurrentProcess();
 
 namespace {
-	struct ForceLinking {
-		ForceLinking() {
-			// We must reference the passes in such a way that VC++ will not
-			// delete it all as dead code, even with whole program optimization,
-			// yet is effectively a NO-OP.  As the compiler isn't smart enough
-			// to know that GetCurrentProcess() never returns
-			// INVALID_HANDLE_VALUE, this will do the job.
-			if (GetCurrentProcess() != (void *) -1)
-				return;
+    struct ForceLinking {
+        ForceLinking() {
+            // We must reference the passes in such a way that VC++ will not
+            // delete it all as dead code, even with whole program optimization,
+            // yet is effectively a NO-OP.  As the compiler isn't smart enough
+            // to know that GetCurrentProcess() never returns
+            // INVALID_HANDLE_VALUE, this will do the job.
+            if (GetCurrentProcess() != (void *) -1)
+                return;
 
-			std::vector<llvm::BasicBlock*> bbv;
+            std::vector<llvm::BasicBlock*> bbv;
 
-			// The commented out calls below refer to non-existant creation
-			// functions.  They will be uncommented as the functions are added.
+            // The commented out calls below refer to non-existant creation
+            // functions.  They will be uncommented as the functions are added.
 
             // (void) llvm::createADCEPass();
             // (void) llvm::createArgPromotionPass();
@@ -105,8 +105,8 @@ namespace {
             (void) llvm::createTailDuplicationPass();
             // (void) llvm::createTraceBasicBlocksPass();
             (void) llvm::createUnifyFunctionExitNodesPass();
-		}
-	} X;
+        }
+    } X;
 };
 
 #endif // LLVM_ON_WIN32
