@@ -17,6 +17,9 @@
 
 SchedDebugLevel_t SchedDebugLevel;
 
+static cl::opt<bool> EnableFillingDelaySlots("sched-fill-delay-slots",
+              cl::desc("Fill branch delay slots during local scheduling"));
+
 static cl::opt<SchedDebugLevel_t, true>
 SDL_opt("dsched", cl::Hidden, cl::location(SchedDebugLevel),
         cl::desc("enable instruction scheduling debugging information"),
@@ -1255,7 +1258,8 @@ ChooseInstructionsForDelaySlots(SchedulingManager& S, MachineBasicBlock &MBB,
   std::vector<SchedGraphNode*> delayNodeVec;
   const MachineInstr* brInstr = NULL;
   
-  if (termInstr->getOpcode() != Instruction::Ret)
+  if (EnableFillingDelaySlots &&
+      termInstr->getOpcode() != Instruction::Ret)
   {
     // To find instructions that need delay slots without searching the full
     // machine code, we assume that the only delayed instructions are CALLs
@@ -1285,6 +1289,8 @@ ChooseInstructionsForDelaySlots(SchedulingManager& S, MachineBasicBlock &MBB,
   
   // Also mark delay slots for other delayed instructions to hold NOPs. 
   // Simply passing in an empty delayNodeVec will have this effect.
+  // If brInstr is not handled above (EnableFillingDelaySlots == false),
+  // brInstr will be NULL so this will handle the branch instrs. as well.
   // 
   delayNodeVec.clear();
   for (unsigned i=0; i < MBB.size(); ++i)
