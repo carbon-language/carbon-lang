@@ -31,9 +31,15 @@ struct AssemblyAnnotationWriter {
   // the start of a function.
   virtual void emitFunctionAnnot(const Function *F, std::ostream &OS) {}
 
-  // emitBasicBlockAnnot - This may be implemented to emit a string right after
-  // the basic block label, but before the first instruction in the block.
-  virtual void emitBasicBlockAnnot(const BasicBlock *BB, std::ostream &OS) {}
+  // emitBasicBlockStartAnnot - This may be implemented to emit a string right
+  // after the basic block label, but before the first instruction in the block.
+  virtual void emitBasicBlockStartAnnot(const BasicBlock *BB, std::ostream &OS){
+  }
+
+  // emitBasicBlockEndAnnot - This may be implemented to emit a string right
+  // after the basic block.
+  virtual void emitBasicBlockEndAnnot(const BasicBlock *BB, std::ostream &OS){
+  }
 
   // emitInstructionAnnot - This may be implemented to emit a string right
   // before an instruction is emitted.
