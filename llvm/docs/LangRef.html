@@ -81,6 +81,7 @@
       <li><a href="#i_va_start">'<tt>llvm.va_start</tt>' Intrinsic</a>
       <li><a href="#i_va_end"  >'<tt>llvm.va_end</tt>'   Intrinsic</a>
       <li><a href="#i_va_copy" >'<tt>llvm.va_copy</tt>'  Intrinsic</a>
+      <li><a href="#i_unwind"  >'<tt>llvm.unwind</tt>'  Intrinsic</a>
     </ol>
   </ol>
 
@@ -741,13 +742,14 @@ conditional branches, or with a lookup table.<p>
 
 <h5>Overview:</h5>
 
-The '<tt>invoke</tt>' instruction is used to cause control flow to transfer to a
-specified function, with the possibility of control flow transfer to either the
-'<tt>normal label</tt>' label or the '<tt>exception label</tt>'.  The '<tt><a
-href="#i_call">call</a></tt>' instruction is closely related, but guarantees
-that control flow either never returns from the called function, or that it
-returns to the instruction following the '<tt><a href="#i_call">call</a></tt>'
-instruction.<p>
+The '<tt>invoke</tt>' instruction causes control to transfer to a specified
+function, with the possibility of control flow transfer to either the
+'<tt>normal label</tt>' label or the '<tt>exception label</tt>'.  If the callee
+function invokes the "<tt><a href="#i_ret">ret</a></tt>" instruction, control
+flow will return to the "normal" label.  If the callee (or any indirect callees)
+calls the "<a href="#i_unwind"><tt>llvm.unwind</tt></a>" intrinsic, control is
+interrupted, and continued at the "except" label.<p>
+
 
 <h5>Arguments:</h5>
 
@@ -757,7 +759,7 @@ This instruction requires several arguments:<p>
 <li>'<tt>ptr to function ty</tt>': shall be the signature of the pointer to
 function value being invoked.  In most cases, this is a direct function
 invocation, but indirect <tt>invoke</tt>s are just as possible, branching off
-an arbitrary pointer to function value.<p>
+an arbitrary pointer to function value.
 
 <li>'<tt>function ptr val</tt>': An LLVM value containing a pointer to a
 function to be invoked.
@@ -769,26 +771,26 @@ accepts a variable number of arguments, the extra arguments can be specified.
 <li>'<tt>normal label</tt>': the label reached when the called function executes
 a '<tt><a href="#i_ret">ret</a></tt>' instruction.
 
-<li>'<tt>exception label</tt>': the label reached when an exception is thrown.
+<li>'<tt>exception label</tt>': the label reached when a callee calls the <a
+href="#i_unwind"><tt>llvm.unwind</tt></a> intrinsic.
 </ol>
 
 <h5>Semantics:</h5>
 
 This instruction is designed to operate as a standard '<tt><a
 href="#i_call">call</a></tt>' instruction in most regards.  The primary
-difference is that it associates a label with the function invocation that may
-be accessed via the runtime library provided by the execution environment.  This
-instruction is used in languages with destructors to ensure that proper cleanup
-is performed in the case of either a <tt>longjmp</tt> or a thrown exception.
-Additionally, this is important for implementation of '<tt>catch</tt>' clauses
-in high-level languages that support them.<p>
+difference is that it establishes an association with a label, which is used by the runtime library to unwind the stack.<p>
 
-<!-- For a more comprehensive explanation of how this instruction is used, look in the llvm/docs/2001-05-18-ExceptionHandling.txt document.<p> -->
+This instruction is used in languages with destructors to ensure that proper
+cleanup is performed in the case of either a <tt>longjmp</tt> or a thrown
+exception.  Additionally, this is important for implementation of
+'<tt>catch</tt>' clauses in high-level languages that support them.<p>
 
 <h5>Example:</h5>
 <pre>
   %retval = invoke int %Test(int 15)
-              to label %Continue except label %TestCleanup     <i>; {int}:retval set</i>
+              to label %Continue
+              except label %TestCleanup     <i>; {int}:retval set</i>
 </pre>
 
 
@@ -1801,6 +1803,32 @@ because the <tt><a href="i_va_begin">llvm.va_begin</a></tt> intrinsic may be
 arbitrarily complex and require memory allocation, for example.<p>
 
 
+<!-- _______________________________________________________________________ -->
+</ul><a name="i_unwind"><h4><hr size=0>'<tt>llvm.unwind</tt>' Intrinsic</h4><ul>
+
+<h5>Syntax:</h5>
+<pre>
+  call void (void)* %llvm.unwind()
+</pre>
+
+<h5>Overview:</h5>
+
+The '<tt>llvm.unwind</tt>' intrinsic unwinds the stack, continuing control flow
+at the first callee in the dynamic call stack which used an <a
+href="#i_invoke"><tt>invoke</tt></a> instruction to perform the call.  This is
+primarily used to implement exception handling.
+
+<h5>Semantics:</h5>
+
+The '<tt>llvm.unwind</tt>' intrinsic causes execution of the current function to
+immediately halt.  The dynamic call stack is then searched for the first <a
+href="#i_invoke"><tt>invoke</tt></a> instruction on the call stack.  Once found,
+execution continues at the "exceptional" destination block specified by the
+invoke instruction.  If there is no <tt>invoke</tt> instruction in the dynamic
+call chain, undefined behavior results.
+
+
+
 <!-- *********************************************************************** -->
 </ul>
 <!-- *********************************************************************** -->
@@ -1811,7 +1839,7 @@ arbitrarily complex and require memory allocation, for example.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Mon Jul 14 12:12:22 CDT 2003
+Last modified: Thu Aug 28 17:11:50 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
