@@ -1,4 +1,4 @@
-//===-- llvm/Type.def - File that describes various LLVM types ---*- C++ -*--=//
+//===-- llvm/Type.def - File that describes various LLVM types --*- C++ -*-===//
 //
 // This file contains descriptions of the various LLVM types and derived types.
 // This file serves as a source of in source documentation and a can be

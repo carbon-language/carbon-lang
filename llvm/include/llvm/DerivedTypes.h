@@ -1,4 +1,4 @@
-//===-- llvm/DerivedTypes.h - Classes for handling data types ----*- C++ -*--=//
+//===-- llvm/DerivedTypes.h - Classes for handling data types ---*- C++ -*-===//
 //
 // This file contains the declarations of classes that represent "derived 
 // types".  These are things like "arrays of x" or "structure of x, y, z" or

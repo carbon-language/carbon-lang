@@ -1,4 +1,4 @@
-//===-- llvm/SymbolTableListTraits.h - Traits for iplist -------*- C++ -*--===//
+//===-- llvm/SymbolTableListTraits.h - Traits for iplist --------*- C++ -*-===//
 //
 // This file defines a generic class that is used to implement the automatic
 // symbol table manipulation that occurs when you put (for example) a named

@@ -1,12 +1,12 @@
-//===-- llvm/Support/CFG.h - Process LLVM structures as graphs ---*- C++ -*--=//
+//===-- llvm/Support/CFG.h - Process LLVM structures as graphs --*- C++ -*-===//
 //
 // This file defines specializations of GraphTraits that allow Function and
 // BasicBlock graphs to be treated as proper graphs for generic algorithms.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CFG_H
-#define LLVM_CFG_H
+#ifndef LLVM_SUPPORT_CFG_H
+#define LLVM_SUPPORT_CFG_H
 
 #include "Support/GraphTraits.h"
 #include "llvm/Function.h"

@@ -1,4 +1,4 @@
-//===-- llvm/Value.h - Definition of the Value class -------------*- C++ -*--=//
+//===-- llvm/Value.h - Definition of the Value class ------------*- C++ -*-===//
 //
 // This file defines the very important Value class.  This is subclassed by a
 // bunch of other important classes, like Instruction, Function, Type, etc...

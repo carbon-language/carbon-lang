@@ -1,4 +1,4 @@
-//===- llvm/Support/InstVisitor.h - Define instruction visitors --*- C++ -*--=//
+//===- llvm/Support/InstVisitor.h - Define instruction visitors -*- C++ -*-===//
 //
 // This template class is used to define instruction visitors in a typesafe
 // manner without having to use lots of casts and a big switch statement (in

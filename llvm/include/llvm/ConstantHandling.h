@@ -1,4 +1,4 @@
-//===-- ConstantHandling.h - Stuff for manipulating constants ----*- C++ -*--=//
+//===-- ConstantHandling.h - Stuff for manipulating constants ---*- C++ -*-===//
 //
 // This file contains the declarations of some cool operators that allow you
 // to do natural things with constant pool values.

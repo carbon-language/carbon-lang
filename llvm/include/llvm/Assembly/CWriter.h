@@ -1,4 +1,4 @@
-//===-- llvm/Assembly/CWriter.h - C Printer for LLVM programs --*- C++ -*--===//
+//===-- llvm/Assembly/CWriter.h - C Printer for LLVM programs ---*- C++ -*-===//
 //
 // This functionality is implemented by the lib/CWriter library.  This library
 // is used to print C language files to an iostream.

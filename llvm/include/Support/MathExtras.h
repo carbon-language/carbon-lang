@@ -1,4 +1,4 @@
-//===-- Support/MathExtras.h - Useful math functions -------------*- C++ -*--=//
+//===-- Support/MathExtras.h - Useful math functions ------------*- C++ -*-===//
 //
 // This file contains some functions that are useful for math stuff.
 //

@@ -1,4 +1,4 @@
-//===-- llvm/Global.h - Class to represent a global variable -----*- C++ -*--=//
+//===-- llvm/Global.h - Class to represent a global variable ----*- C++ -*-===//
 //
 // This file contains the declaration of the GlobalVariable class, which
 // represents a single global variable (or constant) in the VM.

@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/InstForest.h ------------------------------*- C++ -*--===//
+//===-- llvm/CodeGen/InstForest.h -------------------------------*- C++ -*-===//
 //
 // Purpose:
 //	Convert SSA graph to instruction trees for instruction selection.

@@ -1,4 +1,4 @@
-//===- llvm/Pass.h - Base class for XForm Passes -----------------*- C++ -*--=//
+//===- llvm/Pass.h - Base class for Passes ----------------------*- C++ -*-===//
 //
 // This file defines a base class that indicates that a specified class is a
 // transformation pass implementation.

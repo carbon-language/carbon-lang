@@ -1,4 +1,4 @@
-//===- CallGraph.h - Build a Module's call graph -----------------*- C++ -*--=//
+//===- CallGraph.h - Build a Module's call graph ----------------*- C++ -*-===//
 //
 // This interface is used to build and manipulate a call graph, which is a very 
 // useful tool for interprocedural optimization.

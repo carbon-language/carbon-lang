@@ -1,4 +1,4 @@
-//===-- Support/GraphTraits.h - Graph traits template ------------*- C++ -*--=//
+//===-- Support/GraphTraits.h - Graph traits template -----------*- C++ -*-===//
 //
 // This file defines the little GraphTraits<X> template class that should be 
 // specialized by classes that want to be iteratable by generic graph iterators.

@@ -1,4 +1,4 @@
-//===-- llvm/Type.h - Classes for handling data types ------------*- C++ -*--=//
+//===-- llvm/Type.h - Classes for handling data types -----------*- C++ -*-===//
 //
 // This file contains the declaration of the Type class.  For more "Type" type
 // stuff, look in DerivedTypes.h.
@@ -37,8 +37,7 @@ class PointerType;
 class StructType;
 class OpaqueType;
 
-class Type : public Value {
-public:
+struct Type : public Value {
   ///===-------------------------------------------------------------------===//
   /// Definitions of all of the base types for the Type system.  Based on this
   /// value, you can cast to a "DerivedType" subclass (see DerivedTypes.h)

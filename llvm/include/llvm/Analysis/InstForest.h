@@ -1,4 +1,4 @@
-//===- llvm/Analysis/InstForest.h - Partition Func into forest ---*- C++ -*--=//
+//===- llvm/Analysis/InstForest.h - Partition Func into forest --*- C++ -*-===//
 //
 // This interface is used to partition a method into a forest of instruction
 // trees, where the following invariants hold:

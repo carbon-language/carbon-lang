@@ -1,4 +1,4 @@
-//===-- Mangler.h - Self-contained c/asm llvm name mangler -*- C++ -*- ----===//
+//===-- Mangler.h - Self-contained c/asm llvm name mangler ------*- C++ -*-===//
 //
 // Unified name mangler for CWriter and assembly backends.
 //

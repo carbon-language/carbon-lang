@@ -1,4 +1,4 @@
-//===-- Support/PostOrderIterator.h - Generic PostOrder iterator -*- C++ -*--=//
+//===- Support/PostOrderIterator.h - Generic PostOrder iterator -*- C++ -*-===//
 //
 // This file builds on the Support/GraphTraits.h file to build a generic graph
 // post order iterator.  This should work over any graph type that has a

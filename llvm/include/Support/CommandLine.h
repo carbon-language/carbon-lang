@@ -1,4 +1,4 @@
-//===- Support/CommandLine.h - Flexible Command line parser ------*- C++ -*--=//
+//===- Support/CommandLine.h - Flexible Command line parser -----*- C++ -*-===//
 //
 // This class implements a command line argument processor that is useful when
 // creating a tool.  It provides a simple, minimalistic interface that is easily

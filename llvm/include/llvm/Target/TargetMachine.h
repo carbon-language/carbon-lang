@@ -1,4 +1,4 @@
-//===-- llvm/Target/TargetMachine.h - General Target Information -*- C++ -*-==//
+//===-- llvm/Target/TargetMachine.h - Target Information --------*- C++ -*-===//
 //
 // This file describes the general parts of a Target machine.
 //

@@ -1,4 +1,4 @@
-//===- llvm/Assembly/PrintModulePass.h - Printing Pass -----------*- C++ -*--=//
+//===- llvm/Assembly/PrintModulePass.h - Printing Pass ----------*- C++ -*-===//
 //
 // This file defines two passes to print out a module.  The PrintModulePass pass
 // simply prints out the entire module when it is executed.  The

@@ -1,4 +1,4 @@
-//===-- Support/GraphWriter.h - Write a graph to a .dot file ---*- C++ -*--===//
+//===-- Support/GraphWriter.h - Write a graph to a .dot file ----*- C++ -*-===//
 //
 // This file defines a simple interface that can be used to print out generic
 // LLVM graphs to ".dot" files.  "dot" is a tool that is part of the AT&T

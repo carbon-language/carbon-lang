@@ -1,4 +1,4 @@
-//===-- llvm/Assembly/CachedWriter.h - Printer Accellerator ------*- C++ -*--=//
+//===-- llvm/Assembly/CachedWriter.h - Printer Accellerator -----*- C++ -*-===//
 //
 // This file defines a 'CacheWriter' class that is used to accelerate printing
 // chunks of LLVM.  This is used when a module is not being changed, but random

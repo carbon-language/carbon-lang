@@ -1,9 +1,9 @@
-//===-- SchedGraphCommon.h - Scheduling Base Graph ---------------*- C++ -*---=//
+//===-- SchedGraphCommon.h - Scheduling Base Graph --------------*- C++ -*-===//
 //
 // A common graph class that is based on the SSA graph. It includes
 // extra dependencies that are caused by machine resources.
 //
-//===-------------------------------------------------------------------------=// 
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_SCHEDGRAPHCOMMON_H
 #define LLVM_CODEGEN_SCHEDGRAPHCOMMON_H

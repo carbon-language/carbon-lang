@@ -1,4 +1,4 @@
-//===-- InstrScheduling.h - Interface To Instruction Scheduling --*- C++ -*-==//
+//===-- InstrScheduling.h - Interface To Instruction Scheduling -*- C++ -*-===//
 //
 // This file defines a minimal, but complete, interface to instruction
 // scheduling.
@@ -21,6 +21,6 @@ class TargetMachine;
 //   are still in SSA form.
 //---------------------------------------------------------------------------
 
-FunctionPass *createInstructionSchedulingWithSSAPass(const TargetMachine &Target);
+FunctionPass *createInstructionSchedulingWithSSAPass(const TargetMachine &TM);
 
 #endif

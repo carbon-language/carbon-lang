@@ -1,4 +1,4 @@
-//===- IntervalPartition.h - Interval partition Calculation ------*- C++ -*--=//
+//===- IntervalPartition.h - Interval partition Calculation -----*- C++ -*-===//
 //
 // This file contains the declaration of the IntervalPartition class, which
 // calculates and represents the interval partition of a function, or a

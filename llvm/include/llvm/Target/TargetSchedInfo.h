@@ -1,4 +1,4 @@
-//===- Target/TargetSchedInfo.h - Target Instruction Sched Info --*- C++ -*-==//
+//===- Target/TargetSchedInfo.h - Target Instruction Sched Info -*- C++ -*-===//
 //
 // This file describes the target machine to the instruction scheduler.
 //

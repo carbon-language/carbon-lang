@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/MachineInstr.h - MachineInstr class ---------*- C++ -*--=//
+//===-- llvm/CodeGen/MachineInstr.h - MachineInstr class --------*- C++ -*-===//
 //
 // This file contains the declaration of the MachineInstr class, which is the
 // basic representation for all target dependent machine instructions used by
@@ -12,7 +12,6 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "Support/Annotation.h"
 #include "Support/iterator"
-#include <set>
 
 class Value;
 class Function;

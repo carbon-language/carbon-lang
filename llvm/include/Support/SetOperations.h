@@ -1,4 +1,4 @@
-//===-- Support/SetOperations.h - Generic Set Operations ---------*- C++ -*--=//
+//===-- Support/SetOperations.h - Generic Set Operations --------*- C++ -*-===//
 //
 // This file defines generic set operations that may be used on set's of
 // different types, and different element types.

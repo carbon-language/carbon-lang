@@ -1,4 +1,4 @@
-//===-- llvm/Bytecode/Writer.h - Writer for VM bytecode files ----*- C++ -*--=//
+//===-- llvm/Bytecode/Writer.h - Writer for VM bytecode files ---*- C++ -*-===//
 //
 // This functionality is implemented by the lib/BytecodeWriter library.
 // This library is used to write VM bytecode files to an iostream.  First, you

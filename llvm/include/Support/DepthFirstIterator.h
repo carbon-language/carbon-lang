@@ -1,4 +1,4 @@
-//===- Support/DepthFirstIterator.h - Depth First iterator -------*- C++ -*--=//
+//===- Support/DepthFirstIterator.h - Depth First iterator ------*- C++ -*-===//
 //
 // This file builds on the Support/GraphTraits.h file to build generic depth
 // first graph iterator.

@@ -1,4 +1,4 @@
-//===-- <Support/ilist> - Intrusive Linked List Template ---------*- C++ -*--=//
+//===-- Support/ilist - Intrusive Linked List Template ----------*- C++ -*-===//
 //
 // This file defines classes to implement an intrusive doubly linked list class
 // (ie each node of the list must contain a next and previous field for the

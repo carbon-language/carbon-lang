@@ -1,4 +1,4 @@
-//===-- llvm/Bytecode/Primitives.h - Bytecode file format prims --*- C++ -*--=//
+//===-- llvm/Bytecode/Primitives.h - Bytecode file format prims -*- C++ -*-===//
 //
 // This header defines some basic functions for reading and writing basic 
 // primitive types to a bytecode stream.

@@ -1,4 +1,4 @@
-//===-- llvm/BasicBlock.h - Represent a basic block in the VM ----*- C++ -*--=//
+//===-- llvm/BasicBlock.h - Represent a basic block in the VM ---*- C++ -*-===//
 ///
 /// \class BasicBlock
 ///

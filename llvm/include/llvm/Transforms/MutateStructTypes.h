@@ -1,4 +1,4 @@
-//===- llvm/Transforms/MutateStructTypes.h - Change struct defns -*- C++ -*--=//
+//===-- llvm/Transforms/MutateStructTypes.h - Rearrange structs -*- C++ -*-===//
 //
 // This pass is used to change structure accesses and type definitions in some
 // way.  It can be used to arbitrarily permute structure fields, safely, without

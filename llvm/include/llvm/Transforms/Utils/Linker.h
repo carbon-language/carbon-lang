@@ -1,4 +1,4 @@
-//===- llvm/Transforms/Utils/Linker.h - Module Linker Interface --*- C++ -*--=//
+//===- llvm/Transforms/Utils/Linker.h - Module Linker Interface -*- C++ -*-===//
 //
 // This file defines the interface to the module linker.
 //

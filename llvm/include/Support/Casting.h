@@ -1,4 +1,4 @@
-//===-- Support/Casting.h - Allow flexible, checked, casts -------*- C++ -*--=//
+//===-- Support/Casting.h - Allow flexible, checked, casts ------*- C++ -*-===//
 //
 // This file defines the isa<X>(), cast<X>(), dyn_cast<X>(), cast_or_null<X>(),
 // and dyn_cast_or_null<X>() templates.

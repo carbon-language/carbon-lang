@@ -1,4 +1,4 @@
-//===-- llvm/SymbolTable.h - Implement a type plane'd symtab ------*- C++ -*-=//
+//===-- llvm/SymbolTable.h - Implement a type plane'd symtab ----*- C++ -*-===//
 //
 // This file implements a symbol table that has planed broken up by type.  
 // Identical types may have overlapping symbol names as long as they are 

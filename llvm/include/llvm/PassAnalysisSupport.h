@@ -1,4 +1,4 @@
-//===- llvm/PassAnalysisSupport.h - Analysis Pass Support code ---*- C++ -*-==//
+//===- llvm/PassAnalysisSupport.h - Analysis Pass Support code --*- C++ -*-===//
 //
 // This file defines stuff that is used to define and "use" Analysis Passes.
 // This file is automatically #included by Pass.h, so:

@@ -1,4 +1,4 @@
-//=- llvm/Analysis/PostDominators.h - Post Dominator Calculation -*- C++ -*--=//
+//=- llvm/Analysis/PostDominators.h - Post Dominator Calculation-*- C++ -*-===//
 //
 // This file exposes interfaces to post dominance information.
 //

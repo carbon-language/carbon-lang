@@ -1,4 +1,4 @@
-//===-- llvm/Instruction.def - File that describes Instructions --*- C++ -*--=//
+//===-- llvm/Instruction.def - File that describes Instructions -*- C++ -*-===//
 //
 // This file contains descriptions of the various LLVM instructions.  This is
 // used as a central place for enumerating the different instructions and 

@@ -1,4 +1,4 @@
-//===- llvm/Analysis/FindUsedTypes.h - Find all Types in use -----*- C++ -*--=//
+//===- llvm/Analysis/FindUsedTypes.h - Find all Types in use ----*- C++ -*-===//
 //
 // This pass is used to seek out all of the types in use by the program.
 //

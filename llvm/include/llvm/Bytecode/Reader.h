@@ -1,4 +1,4 @@
-//===-- llvm/Bytecode/Reader.h - Reader for VM bytecode files ----*- C++ -*--=//
+//===-- llvm/Bytecode/Reader.h - Reader for VM bytecode files ---*- C++ -*-===//
 //
 // This functionality is implemented by the lib/Bytecode/Reader library.
 // This library is used to read VM bytecode files from an iostream.

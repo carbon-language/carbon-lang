@@ -1,4 +1,4 @@
-//===-- llvm/AbstractTypeUser.h - AbstractTypeUser Interface -----*- C++ -*--=//
+//===-- llvm/AbstractTypeUser.h - AbstractTypeUser Interface ----*- C++ -*-===//
 //
 // The AbstractTypeUser class is an interface to be implemented by classes who
 // could possible use an abstract type.  Abstract types are denoted by the

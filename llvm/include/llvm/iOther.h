@@ -1,4 +1,4 @@
-//===-- llvm/iOther.h - "Other" instruction node definitions -----*- C++ -*--=//
+//===-- llvm/iOther.h - "Other" instruction node definitions ----*- C++ -*-===//
 //
 // This file contains the declarations for instructions that fall into the 
 // grandiose 'other' catagory...

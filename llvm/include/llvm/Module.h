@@ -1,4 +1,4 @@
-//===-- llvm/Module.h - C++ class to represent a VM module -------*- C++ -*--=//
+//===-- llvm/Module.h - C++ class to represent a VM module ------*- C++ -*-===//
 //
 // This file contains the declarations for the Module class that is used to 
 // maintain all the information related to a VM module.

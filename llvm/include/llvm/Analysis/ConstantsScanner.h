@@ -1,4 +1,4 @@
-//==-- llvm/Analysis/ConstantsScanner.h - Iterate over constants -*- C++ -*-==//
+//==- llvm/Analysis/ConstantsScanner.h - Iterate over constants -*- C++ -*-===//
 //
 // This class implements an iterator to walk through the constants referenced by
 // a method.  This is used by the Bytecode & Assembly writers to build constant

@@ -1,4 +1,4 @@
-//===-- Scalar.h - Scalar Transformations ------------------------*- C++ -*-==//
+//===-- Scalar.h - Scalar Transformations -----------------------*- C++ -*-===//
 //
 // This header file defines prototypes for accessor functions that expose passes
 // in the Scalar transformations library.

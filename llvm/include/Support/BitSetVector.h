@@ -1,13 +1,11 @@
-//===-- BitVectorSet.h - A bit-vector representation of sets -----*- C++ -*--=//
+//===-- BitVectorSet.h - A bit-vector representation of sets ----*- C++ -*-===//
 //
-// class BitVectorSet --
-// 
-// An implementation of the bit-vector representation of sets.
-// Unlike vector<bool>, this allows much more efficient parallel set
-// operations on bits, by using the bitset template .  The bitset template
-// unfortunately can only represent sets with a size chosen at compile-time.
-// We therefore use a vector of bitsets.  The maxmimum size of our sets
-// (i.e., the size of the universal set) can be chosen at creation time.
+// This is an implementation of the bit-vector representation of sets.  Unlike
+// vector<bool>, this allows much more efficient parallel set operations on
+// bits, by using the bitset template.  The bitset template unfortunately can
+// only represent sets with a size chosen at compile-time.  We therefore use a
+// vector of bitsets.  The maxmimum size of our sets (i.e., the size of the
+// universal set) can be chosen at creation time.
 //
 // External functions:
 // 

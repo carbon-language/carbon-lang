@@ -1,4 +1,4 @@
-//===-- llvm/Target/TargetRegInfo.h - Target Register Info -------*- C++ -*-==//
+//===-- llvm/Target/TargetRegInfo.h - Target Register Info ------*- C++ -*-===//
 //
 // This file is used to describe the register system of a target to the
 // register allocator.

@@ -1,4 +1,4 @@
-//===- llvm/Bytecode/WriteBytecodePass.h - Bytecode Writer Pass --*- C++ -*--=//
+//===- llvm/Bytecode/WriteBytecodePass.h - Bytecode Writer Pass -*- C++ -*-===//
 //
 // This file defines a simple pass to write the working module to a file after
 // pass processing is completed.

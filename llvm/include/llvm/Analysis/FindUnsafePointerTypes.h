@@ -1,4 +1,4 @@
-//===- llvm/Analysis/FindUnsafePointerTypes.h - Unsafe pointers ---*- C++ -*-=//
+//===- llvm/Analysis/FindUnsafePointerTypes.h - Unsafe pointers -*- C++ -*-===//
 //
 // This file defines a pass that can be used to determine, interprocedurally, 
 // which pointer types are accessed unsafely in a program.  If there is an

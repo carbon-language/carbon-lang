@@ -1,4 +1,4 @@
-//===- Support/TypeInfo.h - Support class for type_info objects --*- C++ -*--=//
+//===- Support/TypeInfo.h - Support class for type_info objects -*- C++ -*-===//
 //
 // This class makes std::type_info objects behave like first class objects that
 // can be put in maps and hashtables.  This code is based off of code in the

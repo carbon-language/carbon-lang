@@ -1,4 +1,4 @@
-//===-- Transform/Utils/BasicBlockUtils.h - BasicBlock Utilities -*- C++ -*-==//
+//===-- Transform/Utils/BasicBlockUtils.h - BasicBlock Utils ----*- C++ -*-===//
 //
 // This family of functions perform manipulations on basic blocks, and
 // instructions contained within basic blocks.

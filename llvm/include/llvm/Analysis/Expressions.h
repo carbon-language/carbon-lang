@@ -1,4 +1,4 @@
-//===- llvm/Analysis/Expressions.h - Expression Analysis Utils ---*- C++ -*--=//
+//===- llvm/Analysis/Expressions.h - Expression Analysis Utils --*- C++ -*-===//
 //
 // This file defines a package of expression analysis utilties:
 //

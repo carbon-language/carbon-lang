@@ -1,4 +1,4 @@
-//===-- llvm/Constant.h - Constant class definition --------------*- C++ -*--=//
+//===-- llvm/Constant.h - Constant class definition -------------*- C++ -*-===//
 //
 // This file contains the declaration of the Constant class.
 //

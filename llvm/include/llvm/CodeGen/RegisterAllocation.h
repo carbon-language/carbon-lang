@@ -1,4 +1,4 @@
-//===-- CodeGen/RegisterAllocation.h - RegAlloc Pass -------------*- C++ -*--=//
+//===-- CodeGen/RegisterAllocation.h - RegAlloc Pass ------------*- C++ -*-===//
 //
 // This pass register allocates a module, a method at a time.
 //

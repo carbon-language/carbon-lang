@@ -1,5 +1,4 @@
 //===-- Support/hash_map - "Portable" wrapper around hash_map ---*- C++ -*-===//
-// vim:ft=cpp
 // 
 // This file provides a wrapper around the mysterious <hash_map> header file
 // that seems to move around between GCC releases into and out of namespaces at

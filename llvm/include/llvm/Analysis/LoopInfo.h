@@ -1,4 +1,4 @@
-//===- llvm/Analysis/LoopInfo.h - Natural Loop Calculator --------*- C++ -*--=//
+//===- llvm/Analysis/LoopInfo.h - Natural Loop Calculator -------*- C++ -*-===//
 //
 // This file defines the LoopInfo class that is used to identify natural loops
 // and determine the loop depth of various nodes of the CFG.  Note that natural

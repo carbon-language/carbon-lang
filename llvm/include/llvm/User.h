@@ -1,4 +1,4 @@
-//===-- llvm/User.h - User class definition ----------------------*- C++ -*--=//
+//===-- llvm/User.h - User class definition ---------------------*- C++ -*-===//
 //
 // This class defines the interface that one who 'use's a Value must implement.
 // Each instance of the Value class keeps track of what User's have handles

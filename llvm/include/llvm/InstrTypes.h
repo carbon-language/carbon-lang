@@ -1,4 +1,4 @@
-//===-- llvm/InstrTypes.h - Important Instruction subclasses -----*- C++ -*--=//
+//===-- llvm/InstrTypes.h - Important Instruction subclasses ----*- C++ -*-===//
 //
 // This file defines various meta classes of instructions that exist in the VM
 // representation.  Specific concrete subclasses of these may be found in the 

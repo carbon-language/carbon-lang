@@ -1,4 +1,4 @@
-//===- llvm/Analysis/Interval.h - Interval Class Declaration -----*- C++ -*--=//
+//===- llvm/Analysis/Interval.h - Interval Class Declaration ----*- C++ -*-===//
 //
 // This file contains the declaration of the Interval class, which
 // represents a set of CFG nodes and is a portion of an interval partition.

@@ -1,4 +1,4 @@
-//===-- Local.h - Functions to perform local transformations -----*- C++ -*--=//
+//===-- Local.h - Functions to perform local transformations ----*- C++ -*-===//
 //
 // This family of functions perform various local transformations to the
 // program.

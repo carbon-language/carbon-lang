@@ -1,4 +1,4 @@
-//===- Support/Tree.h - Generic n-way tree structure -------------*- C++ -*--=//
+//===- Support/Tree.h - Generic n-way tree structure ------------*- C++ -*-===//
 //
 // This class defines a generic N way tree node structure.  The tree structure
 // is immutable after creation, but the payload contained within it is not.

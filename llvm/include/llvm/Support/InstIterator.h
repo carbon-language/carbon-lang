@@ -1,4 +1,4 @@
-//===-- llvm/Support/InstIterator.h - Classes for inst iteration -*- C++ -*--=//
+//===- llvm/Support/InstIterator.h - Classes for inst iteration -*- C++ -*-===//
 //
 // This file contains definitions of two iterators for iterating over the
 // instructions in a function.  This is effectively a wrapper around a two level

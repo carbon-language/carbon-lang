@@ -1,4 +1,4 @@
-//===-- include/Support/DataTypes.h - Define fixed size types ----*- C++ -*--=//
+//===-- include/Support/DataTypes.h - Define fixed size types ---*- C++ -*-===//
 //
 // This file contains definitions to figure out the size of _HOST_ data types.
 // This file is important because different host OS's define different macros,

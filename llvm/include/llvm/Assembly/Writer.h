@@ -1,4 +1,4 @@
-//===-- llvm/Assembly/Writer.h - Printer for VM assembly files ---*- C++ -*--=//
+//===-- llvm/Assembly/Writer.h - Printer for VM assembly files --*- C++ -*-===//
 //
 // This functionality is implemented by the lib/Assembly/Writer library.
 // This library is used to print VM assembly language files to an iostream. It
@@ -21,13 +21,11 @@ class Type;
 class Module;
 class Value;
 
-
 // WriteTypeSymbolic - This attempts to write the specified type as a symbolic
 // type, iff there is an entry in the modules symbol table for the specified
 // type or one of it's component types.  This is slower than a simple x << Type;
 //
 std::ostream &WriteTypeSymbolic(std::ostream &, const Type *, const Module *M);
-
 
 // WriteAsOperand - Write the name of the specified value out to the specified
 // ostream.  This can be useful when you just want to print int %reg126, not the

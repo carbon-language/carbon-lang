@@ -1,4 +1,4 @@
-//===- SystemUtils.h - Utilities to do low-level system stuff --*- C++ -*--===//
+//===- SystemUtils.h - Utilities to do low-level system stuff ---*- C++ -*-===//
 //
 // This file contains functions used to do a variety of low-level, often
 // system-specific, tasks.

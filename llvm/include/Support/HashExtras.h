@@ -1,4 +1,4 @@
-//===-- HashExtras.h - Useful functions for STL hash containers --*- C++ -*--=//
+//===-- HashExtras.h - Useful functions for STL hash containers -*- C++ -*-===//
 //
 // This file contains some templates that are useful if you are working with the
 // STL Hashed containers.

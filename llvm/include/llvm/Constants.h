@@ -1,4 +1,4 @@
-//===-- llvm/Constants.h - Constant class subclass definitions ---*- C++ -*--=//
+//===-- llvm/Constants.h - Constant class subclass definitions --*- C++ -*-===//
 //
 // This file contains the declarations for the subclasses of Constant, which
 // represent the different type of constant pool values

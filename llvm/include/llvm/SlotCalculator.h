@@ -1,4 +1,4 @@
-//===-- llvm/SlotCalculator.h - Calculate value slots ------------*- C++ -*-==//
+//===-- llvm/SlotCalculator.h - Calculate value slots -----------*- C++ -*-===//
 //
 // This class calculates the slots that values will land in.  This is useful for
 // when writing bytecode or assembly out, because you have to know these things.

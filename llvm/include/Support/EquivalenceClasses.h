@@ -1,12 +1,11 @@
-//===-- Support/EquivalenceClasses.h -------------------------*- C++ -*--=//
+//===-- Support/EquivalenceClasses.h ----------------------------*- C++ -*-===//
 // 
-// Generic implementation of equivalence classes and implementation of 
-// union-find algorithms
-// A not-so-fancy implementation: 2 level tree i.e root and one more level
-// Overhead of a union = size of the equivalence class being attached
-// Overhead of a find = 1.
+// Generic implementation of equivalence classes and implementation of
+// union-find algorithms A not-so-fancy implementation: 2 level tree i.e root
+// and one more level Overhead of a union = size of the equivalence class being
+// attached Overhead of a find = 1.
 // 
-//===------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #ifndef SUPPORT_EQUIVALENCECLASSES_H
 #define SUPPORT_EQUIVALENCECLASSES_H
@@ -68,7 +67,6 @@ public:
       return EqClass;
     
     ElemTy classLeader = Elem2ECLeaderMap[Element1];
-
     for (typename std::map<ElemTy, ElemTy>::iterator ElemI = 
 	   Elem2ECLeaderMap.begin(), ElemE = Elem2ECLeaderMap.end(); 
 	 ElemI != ElemE; ++ElemI) {
@@ -77,13 +75,11 @@ public:
     }
     
     return EqClass;
-    
   }
 
   std::map<ElemTy, ElemTy>& getLeaderMap() {
     return Elem2ECLeaderMap ;
   }
-  
 };
 
 #endif

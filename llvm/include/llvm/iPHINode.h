@@ -1,4 +1,4 @@
-//===-- llvm/iPHINode.h - PHI instruction definition -------------*- C++ -*--=//
+//===-- llvm/iPHINode.h - PHI instruction definition ------------*- C++ -*-===//
 //
 // This file defines the PHINode class.
 //

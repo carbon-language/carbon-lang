@@ -1,4 +1,4 @@
-//===- IntervalIterator.h - Interval Iterator Declaration --------*- C++ -*--=//
+//===- IntervalIterator.h - Interval Iterator Declaration -------*- C++ -*-===//
 //
 // This file defines an iterator that enumerates the intervals in a control flow
 // graph of some sort.  This iterator is parametric, allowing iterator over the

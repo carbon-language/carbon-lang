@@ -1,4 +1,4 @@
-//===-- Support/StringExtras.h - Useful string functions ---------*- C++ -*--=//
+//===-- Support/StringExtras.h - Useful string functions --------*- C++ -*-===//
 //
 // This file contains some functions that are useful when dealing with strings.
 //

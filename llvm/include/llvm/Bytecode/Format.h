@@ -1,4 +1,4 @@
-//===-- llvm/Bytecode/Format.h - VM bytecode file format info ----*- C++ -*--=//
+//===-- llvm/Bytecode/Format.h - VM bytecode file format info ---*- C++ -*-===//
 //
 // This header defines intrinsic constants that are useful to libraries that 
 // need to hack on bytecode files directly, like the reader and writer.
@@ -24,7 +24,7 @@ public:
     ModuleGlobalInfo,
     GlobalTypePlane,
 
-    // Method subtypes:
+    // Function subtypes:
     MethodInfo = 0x21,
     // Can also have ConstantPool block
     // Can also have SymbolTable block
