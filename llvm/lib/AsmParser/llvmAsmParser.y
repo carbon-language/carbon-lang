@@ -137,8 +137,6 @@ static struct PerFunctionInfo {
     isDeclare = false;
   }
 
-  inline ~PerFunctionInfo() {}
-
   inline void FunctionStart(Function *M) {
     CurrentFunction = M;
   }
@@ -172,9 +170,9 @@ static struct PerFunctionInfo {
     CurrentFunction = 0;
     isDeclare = false;
   }
-} CurMeth;  // Info for the current function...
+} CurFun;  // Info for the current function...
 
-static bool inFunctionScope() { return CurMeth.CurrentFunction != 0; }
+static bool inFunctionScope() { return CurFun.CurrentFunction != 0; }
 
 
 //===----------------------------------------------------------------------===//
@@ -182,7 +180,7 @@ static bool inFunctionScope() { return CurMeth.CurrentFunction != 0; }
 //===----------------------------------------------------------------------===//
 
 static int InsertValue(Value *D,
-                       std::vector<ValueList> &ValueTab = CurMeth.Values) {
+                       std::vector<ValueList> &ValueTab = CurFun.Values) {
   if (D->hasName()) return -1;           // Is this a numbered definition?
 
   // Yes, insert the value into the value table...
@@ -211,8 +209,8 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
     Num -= CurModule.Types.size();
 
     // Check that the number is within bounds...
-    if (Num <= CurMeth.Types.size())
-      return CurMeth.Types[Num];
+    if (Num <= CurFun.Types.size())
+      return CurFun.Types[Num];
     break;
   }
   case ValID::NameVal: {                // Is it a named definition?
@@ -220,7 +218,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
     SymbolTable *SymTab = 0;
     Value *N = 0;
     if (inFunctionScope()) {
-      SymTab = &CurMeth.CurrentFunction->getSymbolTable();
+      SymTab = &CurFun.CurrentFunction->getSymbolTable();
       N = SymTab->lookup(Type::TypeTy, Name);
     }
 
@@ -247,7 +245,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   if (DoNotImprovise) return 0;  // Do we just want a null to be returned?
 
   std::map<ValID, PATypeHolder> &LateResolver = inFunctionScope() ? 
-    CurMeth.LateResolveTypes : CurModule.LateResolveTypes;
+    CurFun.LateResolveTypes : CurModule.LateResolveTypes;
   
   std::map<ValID, PATypeHolder>::iterator I = LateResolver.find(D);
   if (I != LateResolver.end()) {
@@ -261,7 +259,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
 
 static Value *lookupInSymbolTable(const Type *Ty, const std::string &Name) {
   SymbolTable &SymTab = 
-    inFunctionScope() ? CurMeth.CurrentFunction->getSymbolTable() :
+    inFunctionScope() ? CurFun.CurrentFunction->getSymbolTable() :
                         CurModule.CurrentModule->getSymbolTable();
   return SymTab.lookup(Ty, Name);
 }
@@ -289,12 +287,12 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     }
 
     // Make sure that our type is within bounds
-    if (CurMeth.Values.size() <= type) return 0;
+    if (CurFun.Values.size() <= type) return 0;
 
     // Check that the number is within bounds...
-    if (CurMeth.Values[type].size() <= Num) return 0;
+    if (CurFun.Values[type].size() <= Num) return 0;
   
-    return CurMeth.Values[type][Num];
+    return CurFun.Values[type][Num];
   }
 
   case ValID::NameVal: {                // Is it a named definition?
@@ -376,7 +374,7 @@ static Value *getVal(const Type *Ty, const ValID &D) {
 
   assert(d != 0 && "How did we not make something?");
   if (inFunctionScope())
-    InsertValue(d, CurMeth.LateResolveValues);
+    InsertValue(d, CurFun.LateResolveValues);
   else 
     InsertValue(d, CurModule.LateResolveValues);
   return d;
@@ -391,7 +389,7 @@ static Value *getVal(const Type *Ty, const ValID &D) {
 // values not defined yet... for example, a forward branch, or the PHI node for
 // a loop body.
 //
-// This keeps a table (CurMeth.LateResolveValues) of all such forward references
+// This keeps a table (CurFun.LateResolveValues) of all such forward references
 // and back patchs after we are done.
 //
 
@@ -441,14 +439,14 @@ static void ResolveDefinitions(std::vector<ValueList> &LateResolvers,
 //
 static void ResolveTypeTo(char *Name, const Type *ToTy) {
   std::vector<PATypeHolder> &Types = inFunctionScope() ? 
-     CurMeth.Types : CurModule.Types;
+     CurFun.Types : CurModule.Types;
 
    ValID D;
    if (Name) D = ValID::create(Name);
    else      D = ValID::create((int)Types.size());
 
    std::map<ValID, PATypeHolder> &LateResolver = inFunctionScope() ? 
-     CurMeth.LateResolveTypes : CurModule.LateResolveTypes;
+     CurFun.LateResolveTypes : CurModule.LateResolveTypes;
   
    std::map<ValID, PATypeHolder>::iterator I = LateResolver.find(D);
    if (I != LateResolver.end()) {
@@ -491,7 +489,7 @@ static bool setValueName(Value *V, char *NameStr) {
 		   "' to a null valued instruction!");
 
   SymbolTable &ST = inFunctionScope() ? 
-    CurMeth.CurrentFunction->getSymbolTable() : 
+    CurFun.CurrentFunction->getSymbolTable() : 
     CurModule.CurrentModule->getSymbolTable();
 
   Value *Existing = ST.lookup(V->getType(), Name);
@@ -986,12 +984,12 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     // which throws things all off.  To get around this, we just tell
     // getValNonImprovising that we are at global scope here.
     //
-    Function *SavedCurFn = CurMeth.CurrentFunction;
-    CurMeth.CurrentFunction = 0;
+    Function *SavedCurFn = CurFun.CurrentFunction;
+    CurFun.CurrentFunction = 0;
 
     Value *V = getValNonImprovising(Ty, $2);
 
-    CurMeth.CurrentFunction = SavedCurFn;
+    CurFun.CurrentFunction = SavedCurFn;
 
     // If this is an initializer for a constant pointer, which is referencing a
     // (currently) undefined variable, create a stub now that shall be replaced
@@ -1133,7 +1131,7 @@ FunctionList : FunctionList Function {
     $$ = $1;
     assert($2->getParent() == 0 && "Function already in module!");
     $1->getFunctionList().push_back($2);
-    CurMeth.FunctionDone();
+    CurFun.FunctionDone();
   } 
   | FunctionList FunctionProto {
     $$ = $1;
@@ -1169,7 +1167,7 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
       // If this is not a redefinition of a type...
       if (!$2) {
         InsertType($4->get(),
-                   inFunctionScope() ? CurMeth.Types : CurModule.Types);
+                   inFunctionScope() ? CurFun.Types : CurModule.Types);
       }
     }
 
@@ -1301,7 +1299,7 @@ FunctionHeaderH : TypesV Name '(' ArgList ')' {
   if ((Fn = CurModule.CurrentModule->getFunction(FunctionName, FT))) {
     // Yes it is.  If this is the case, either we need to be a forward decl,
     // or it needs to be.
-    if (!CurMeth.isDeclare && !Fn->isExternal())
+    if (!CurFun.isDeclare && !Fn->isExternal())
       ThrowException("Redefinition of function '" + FunctionName + "'!");
     
     // If we found a preexisting function prototype, remove it from the
@@ -1321,7 +1319,7 @@ FunctionHeaderH : TypesV Name '(' ArgList ')' {
   }
   free($2);  // Free strdup'd memory!
 
-  CurMeth.FunctionStart(Fn);
+  CurFun.FunctionStart(Fn);
 
   // Add all of the arguments we parsed to the function...
   if ($4) {                     // Is null if empty...
@@ -1349,14 +1347,14 @@ FunctionHeaderH : TypesV Name '(' ArgList ')' {
 BEGIN : BEGINTOK | '{';                // Allow BEGIN or '{' to start a function
 
 FunctionHeader : OptLinkage FunctionHeaderH BEGIN {
-  $$ = CurMeth.CurrentFunction;
+  $$ = CurFun.CurrentFunction;
 
   // Make sure that we keep track of the linkage type even if there was a
   // previous "declare".
   $$->setLinkage($1);
 
   // Resolve circular types before we parse the body of the function.
-  ResolveTypes(CurMeth.LateResolveTypes);
+  ResolveTypes(CurFun.LateResolveTypes);
 };
 
 END : ENDTOK | '}';                    // Allow end of '}' to end a function
@@ -1365,11 +1363,11 @@ Function : BasicBlockList END {
   $$ = $1;
 };
 
-FunctionProto : DECLARE { CurMeth.isDeclare = true; } FunctionHeaderH {
-  $$ = CurMeth.CurrentFunction;
+FunctionProto : DECLARE { CurFun.isDeclare = true; } FunctionHeaderH {
+  $$ = CurFun.CurrentFunction;
   assert($$->getParent() == 0 && "Function already in module!");
   CurModule.CurrentModule->getFunctionList().push_back($$);
-  CurMeth.FunctionDone();
+  CurFun.FunctionDone();
 };
 
 //===----------------------------------------------------------------------===//
