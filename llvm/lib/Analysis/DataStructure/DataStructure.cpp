@@ -76,6 +76,34 @@ DSNode *DSNodeHandle::HandleForwarding() const {
 }
 
 //===----------------------------------------------------------------------===//
+// DSScalarMap Implementation
+//===----------------------------------------------------------------------===//
+
+DSNodeHandle &DSScalarMap::AddGlobal(GlobalValue *GV) {
+  assert(ValueMap.count(GV) == 0 && "GV already exists!");
+
+  // If the node doesn't exist, check to see if it's a global that is
+  // equated to another global in the program.
+  EquivalenceClasses<GlobalValue*>::iterator ECI = GlobalECs.findValue(GV);
+  if (ECI != GlobalECs.end()) {
+    GlobalValue *Leader = *GlobalECs.findLeader(ECI);
+    if (Leader != GV) {
+      GV = Leader;
+      iterator I = ValueMap.find(GV);
+      if (I != ValueMap.end())
+        return I->second;
+    }
+  }
+  
+  // Okay, this is either not an equivalenced global or it is the leader, it
+  // will be inserted into the scalar map now.
+  GlobalSet.insert(GV);
+
+  return ValueMap.insert(std::make_pair(GV, DSNodeHandle())).first->second;
+}
+
+
+//===----------------------------------------------------------------------===//
 // DSNode Implementation
 //===----------------------------------------------------------------------===//
 
