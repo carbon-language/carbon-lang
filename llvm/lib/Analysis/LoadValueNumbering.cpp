@@ -374,17 +374,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
   // Get dominators.
   DominatorSet &DomSetInfo = getAnalysis<DominatorSet>();
 
-  // Find all of the candidate loads and stores that are in the same block as
-  // the defining instruction.
   std::set<Instruction*> Instrs;
-  Instrs.insert(CandidateLoads[LoadBB].begin(), CandidateLoads[LoadBB].end());
-  CandidateLoads.erase(LoadBB);
-  Instrs.insert(CandidateStores[LoadBB].begin(), CandidateStores[LoadBB].end());
-  CandidateStores.erase(LoadBB);
-
-  // If there is anything left in the Instrs set, it could not possibly equal
-  // LI.
-  Instrs.clear();
 
   // TransparentBlocks - For each basic block the load/store is alive across,
   // figure out if the pointer is invalidated or not.  If it is invalidated, the
