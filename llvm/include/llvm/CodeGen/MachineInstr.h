@@ -129,13 +129,7 @@ private:
   int regNum;	                // register number for an explicit register
                                 // will be set for a value after reg allocation
 private:
-  MachineOperand()
-    : immedVal(0),
-      flags(0),
-      opType(MO_VirtualRegister),
-      regNum(-1) {}
-
-  MachineOperand(int64_t ImmVal, MachineOperandType OpTy)
+  MachineOperand(int64_t ImmVal = 0, MachineOperandType OpTy = MO_VirtualRegister)
     : immedVal(ImmVal),
       flags(0),
       opType(OpTy),
