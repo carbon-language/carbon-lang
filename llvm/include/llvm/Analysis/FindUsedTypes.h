@@ -44,7 +44,7 @@ private:
   //
   void IncorporateSymbolTable(const SymbolTable *ST);
 
-protected:
+public:
   // doPassInitialization - This loops over global constants defined in the
   // module, converting them to their new type.
   //
