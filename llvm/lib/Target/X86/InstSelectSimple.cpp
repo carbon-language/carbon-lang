@@ -86,6 +86,10 @@ namespace {
     // MBBMap - Mapping between LLVM BB -> Machine BB
     std::map<const BasicBlock*, MachineBasicBlock*> MBBMap;
 
+    // AllocaMap - Mapping from fixed sized alloca instructions to the
+    // FrameIndex for the alloca.
+    std::map<AllocaInst*, unsigned> AllocaMap;
+
     ISel(TargetMachine &tm) : TM(tm), F(0), BB(0) {}
 
     /// runOnFunction - Top level implementation of instruction selection for
@@ -122,6 +126,7 @@ namespace {
 
       RegMap.clear();
       MBBMap.clear();
+      AllocaMap.clear();
       F = 0;
       // We always build a machine code representation for the function
       return true;
@@ -350,9 +355,7 @@ namespace {
       return F->getSSARegMap()->createVirtualRegister(RC);
     }
 
-    /// getReg - This method turns an LLVM value into a register number.  This
-    /// is guaranteed to produce the same register number for a particular value
-    /// every time it is queried.
+    /// getReg - This method turns an LLVM value into a register number.
     ///
     unsigned getReg(Value &V) { return getReg(&V); }  // Allow references
     unsigned getReg(Value *V) {
@@ -361,35 +364,85 @@ namespace {
       return getReg(V, BB, It);
     }
     unsigned getReg(Value *V, MachineBasicBlock *MBB,
-                    MachineBasicBlock::iterator IPt) {
-      // If this operand is a constant, emit the code to copy the constant into
-      // the register here...
-      //
-      if (Constant *C = dyn_cast<Constant>(V)) {
-        unsigned Reg = makeAnotherReg(V->getType());
-        copyConstantToRegister(MBB, IPt, C, Reg);
-        return Reg;
-      } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-        unsigned Reg = makeAnotherReg(V->getType());
-        // Move the address of the global into the register
-        BuildMI(*MBB, IPt, X86::MOV32ri, 1, Reg).addGlobalAddress(GV);
-        return Reg;
-      } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
-        // Do not emit noop casts at all.
-        if (getClassB(CI->getType()) == getClassB(CI->getOperand(0)->getType()))
-          return getReg(CI->getOperand(0), MBB, IPt);
-      }
+                    MachineBasicBlock::iterator IPt);
 
-      unsigned &Reg = RegMap[V];
-      if (Reg == 0) {
-        Reg = makeAnotherReg(V->getType());
-        RegMap[V] = Reg;
-      }
-
-      return Reg;
-    }
+    /// getFixedSizedAllocaFI - Return the frame index for a fixed sized alloca
+    /// that is to be statically allocated with the initial stack frame
+    /// adjustment.
+    unsigned getFixedSizedAllocaFI(AllocaInst *AI);
   };
 }
+
+/// dyn_castFixedAlloca - If the specified value is a fixed size alloca
+/// instruction in the entry block, return it.  Otherwise, return a null
+/// pointer.
+static AllocaInst *dyn_castFixedAlloca(Value *V) {
+  if (AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
+    BasicBlock *BB = AI->getParent();
+    if (isa<ConstantUInt>(AI->getArraySize()) && BB ==&BB->getParent()->front())
+      return AI;
+  }
+  return 0;
+}
+
+/// getReg - This method turns an LLVM value into a register number.
+///
+unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
+                      MachineBasicBlock::iterator IPt) {
+  // If this operand is a constant, emit the code to copy the constant into
+  // the register here...
+  //
+  if (Constant *C = dyn_cast<Constant>(V)) {
+    unsigned Reg = makeAnotherReg(V->getType());
+    copyConstantToRegister(MBB, IPt, C, Reg);
+    return Reg;
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    unsigned Reg = makeAnotherReg(V->getType());
+    // Move the address of the global into the register
+    BuildMI(*MBB, IPt, X86::MOV32ri, 1, Reg).addGlobalAddress(GV);
+    return Reg;
+  } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
+    // Do not emit noop casts at all.
+    if (getClassB(CI->getType()) == getClassB(CI->getOperand(0)->getType()))
+      return getReg(CI->getOperand(0), MBB, IPt);
+  } else if (AllocaInst *AI = dyn_castFixedAlloca(V)) {
+    // If the alloca address couldn't be folded into the instruction addressing,
+    // emit an explicit LEA as appropriate.
+    unsigned Reg = makeAnotherReg(V->getType());
+    unsigned FI = getFixedSizedAllocaFI(AI);
+    addFrameReference(BuildMI(*MBB, IPt, X86::LEA32r, 4, Reg), FI);
+    return Reg;
+  }
+
+  unsigned &Reg = RegMap[V];
+  if (Reg == 0) {
+    Reg = makeAnotherReg(V->getType());
+    RegMap[V] = Reg;
+  }
+
+  return Reg;
+}
+
+/// getFixedSizedAllocaFI - Return the frame index for a fixed sized alloca
+/// that is to be statically allocated with the initial stack frame
+/// adjustment.
+unsigned ISel::getFixedSizedAllocaFI(AllocaInst *AI) {
+  // Already computed this?
+  std::map<AllocaInst*, unsigned>::iterator I = AllocaMap.lower_bound(AI);
+  if (I != AllocaMap.end() && I->first == AI) return I->second;
+
+  const Type *Ty = AI->getAllocatedType();
+  ConstantUInt *CUI = cast<ConstantUInt>(AI->getArraySize());
+  unsigned TySize = TM.getTargetData().getTypeSize(Ty);
+  TySize *= CUI->getValue();   // Get total allocated size...
+  unsigned Alignment = TM.getTargetData().getTypeAlignment(Ty);
+      
+  // Create a new stack object using the frame manager...
+  int FrameIdx = F->getFrameInfo()->CreateStackObject(TySize, Alignment);
+  AllocaMap.insert(I, std::make_pair(AI, FrameIdx));
+  return FrameIdx;
+}
+
 
 /// copyConstantToRegister - Output the instructions required to put the
 /// specified constant into the specified register.
@@ -630,27 +683,24 @@ void ISel::SelectPHINodes() {
 
           // If this is a constant or GlobalValue, we may have to insert code
           // into the basic block to compute it into a virtual register.
-          if (isa<Constant>(Val) || isa<GlobalValue>(Val)) {
-            if (isa<ConstantExpr>(Val)) {
-              // Because we don't want to clobber any values which might be in
-              // physical registers with the computation of this constant (which
-              // might be arbitrarily complex if it is a constant expression),
-              // just insert the computation at the top of the basic block.
-              MachineBasicBlock::iterator PI = PredMBB->begin();
-              
-              // Skip over any PHI nodes though!
-              while (PI != PredMBB->end() && PI->getOpcode() == X86::PHI)
-                ++PI;
-              
-              ValReg = getReg(Val, PredMBB, PI);
-            } else {
-              // Simple constants get emitted at the end of the basic block,
-              // before any terminator instructions.  We "know" that the code to
-              // move a constant into a register will never clobber any flags.
-              ValReg = getReg(Val, PredMBB, PredMBB->getFirstTerminator());
-            }
+          if ((isa<Constant>(Val) && !isa<ConstantExpr>(Val)) ||
+              isa<GlobalValue>(Val)) {
+            // Simple constants get emitted at the end of the basic block,
+            // before any terminator instructions.  We "know" that the code to
+            // move a constant into a register will never clobber any flags.
+            ValReg = getReg(Val, PredMBB, PredMBB->getFirstTerminator());
           } else {
-            ValReg = getReg(Val);
+            // Because we don't want to clobber any values which might be in
+            // physical registers with the computation of this constant (which
+            // might be arbitrarily complex if it is a constant expression),
+            // just insert the computation at the top of the basic block.
+            MachineBasicBlock::iterator PI = PredMBB->begin();
+            
+            // Skip over any PHI nodes though!
+            while (PI != PredMBB->end() && PI->getOpcode() == X86::PHI)
+              ++PI;
+            
+            ValReg = getReg(Val, PredMBB, PI);
           }
 
           // Remember that we inserted a value for this PHI for this predecessor
@@ -3582,25 +3632,12 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
 /// frame manager, otherwise do it the hard way.
 ///
 void ISel::visitAllocaInst(AllocaInst &I) {
+  if (dyn_castFixedAlloca(&I)) return;
+
   // Find the data size of the alloca inst's getAllocatedType.
   const Type *Ty = I.getAllocatedType();
   unsigned TySize = TM.getTargetData().getTypeSize(Ty);
 
-  // If this is a fixed size alloca in the entry block for the function,
-  // statically stack allocate the space.
-  //
-  if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(I.getArraySize())) {
-    if (I.getParent() == I.getParent()->getParent()->begin()) {
-      TySize *= CUI->getValue();   // Get total allocated size...
-      unsigned Alignment = TM.getTargetData().getTypeAlignment(Ty);
-      
-      // Create a new stack object using the frame manager...
-      int FrameIdx = F->getFrameInfo()->CreateStackObject(TySize, Alignment);
-      addFrameReference(BuildMI(BB, X86::LEA32r, 5, getReg(I)), FrameIdx);
-      return;
-    }
-  }
-  
   // Create a register to hold the temporary result of multiplying the type size
   // constant by the variable amount.
   unsigned TotalSizeReg = makeAnotherReg(Type::UIntTy);
