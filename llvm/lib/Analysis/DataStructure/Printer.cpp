@@ -177,8 +177,7 @@ struct DOTGraphTraits<DSGraph*> : public DefaultDOTGraphTraits {
   }
 
   static const char *getGraphProperties(DSGraph *G) {
-    return "\tnode [shape=Mrecord];\n"
-           "\tedge [arrowtail=\"dot\"];\n"
+    return "\tedge [arrowtail=\"dot\"];\n"
            "\tsize=\"10,7.5\";\n"
            "\trotate=\"90\";\n";
   }
@@ -188,12 +187,13 @@ struct DOTGraphTraits<DSGraph*> : public DefaultDOTGraphTraits {
   }
 
   static std::string getNodeAttributes(DSNode *N) {
-    return "";//fontname=Courier";
+    return "shape=Mrecord";//fontname=Courier";
   }
   
-  //static int getEdgeSourceLabel(DSNode *Node, node_iterator I) {
-  //    return MergeMap[i];
-  //  }
+  static int getEdgeSourceLabel(DSNode *Node, DSNode::iterator I) {
+    assert(Node == I.getNode() && "Iterator not for this node!");
+    return Node->getMergeMapLabel(I.getLink());
+  }
 };
 
 
@@ -205,7 +205,7 @@ void DSGraph::writeGraphToFile(std::ostream &O, const string &GraphName) {
   
   if (F.good()) {
     WriteGraph(F, this);
-    print(F);
+    //print(F);
     O << " [" << getGraphSize() << "+" << getFunctionCalls().size() << "]\n";
   } else {
     O << "  error opening file for writing!\n";
