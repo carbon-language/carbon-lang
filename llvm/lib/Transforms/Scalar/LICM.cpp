@@ -337,9 +337,18 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
 /// exit blocks of the loop.
 ///
 bool LICM::isNotUsedInLoop(Instruction &I) {
-  for (Value::use_iterator UI = I.use_begin(), E = I.use_end(); UI != E; ++UI)
-    if (CurLoop->contains(cast<Instruction>(*UI)->getParent()))
+  for (Value::use_iterator UI = I.use_begin(), E = I.use_end(); UI != E; ++UI) {
+    Instruction *User = cast<Instruction>(*UI);
+    if (PHINode *PN = dyn_cast<PHINode>(User)) {
+      // PHI node uses occur in predecessor blocks!
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        if (PN->getIncomingValue(i) == &I)
+          if (CurLoop->contains(PN->getIncomingBlock(i)))
+            return false;
+    } else if (CurLoop->contains(User->getParent())) {
       return false;
+    }
+  }
   return true;
 }
 
