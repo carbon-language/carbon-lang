@@ -164,19 +164,11 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
   // Get the offset and scale now...
   // A scale of zero with Expr.Var != 0 means a scale of 1.
   //
-  // TODO: Handle negative offsets for C code like this:
-  //   for (unsigned i = 12; i < 14; ++i) x[j*i-12] = ...
-  unsigned Offset = 0;
+  int Offset = 0;
   int Scale = 0;
 
-  // Get the offset value if it exists...
-  if (Expr.Offset) {
-    int Val = getConstantValue(Expr.Offset);
-    if (Val < 0) return false;  // Don't mess with negative offsets
-    Offset = (unsigned)Val;
-  }
-
-  // Get the scale value if it exists...
+  // Get the offset and scale values if they exists...
+  if (Expr.Offset) Offset = getConstantValue(Expr.Offset);
   if (Expr.Scale) Scale = getConstantValue(Expr.Scale);
   if (Expr.Var && Scale == 0) Scale = 1;   // Scale != 0 if Expr.Var != 0
  
@@ -190,8 +182,9 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
     CompTy = cast<CompositeType>(NextTy);
 
     if (const StructType *StructTy = dyn_cast<StructType>(CompTy)) {
+      if (Offset < 0) return 0;  // Can't index negatively into structure
       // Step into the appropriate element of the structure...
-      unsigned ActualOffset = Offset;
+      unsigned ActualOffset = (unsigned)Offset;
       NextTy = getStructOffsetStep(StructTy, ActualOffset, Indices);
       Offset -= ActualOffset;
     } else {
@@ -212,7 +205,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
           return 0;  // Didn't scale by a multiple of element size, bail out
         Scale = 0;   // Scale is consumed
 
-        unsigned Index = Offset/ElSize;       // is zero unless Offset > ElSize
+        int Index = Offset/ElSize;            // is zero unless Offset > ElSize
         Offset -= Index*ElSize;               // Consume part of the offset
 
         if (BI) {              // Generate code?
@@ -239,7 +232,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
           }
 
           if (Index) {  // Add an offset to the index
-            Value *IndexAmt = ConstantUInt::get(Type::UIntTy, Index);
+            Value *IndexAmt = ConstantUInt::get(Type::UIntTy, (unsigned)Index);
             Instruction *Offseter = BinaryOperator::create(Instruction::Add,
                                                            Expr.Var, IndexAmt);
             if (Expr.Var->hasName())
@@ -251,11 +244,11 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
 
         Indices.push_back(Expr.Var);
         Expr.Var = 0;
-      } else if (Offset >= ElSize) {
+      } else if (Offset >= (int)ElSize || -Offset >= (int)ElSize) {
         // Calculate the index that we are entering into the array cell with
         unsigned Index = Offset/ElSize;
         Indices.push_back(ConstantUInt::get(Type::UIntTy, Index));
-        Offset -= Index*ElSize;               // Consume part of the offset
+        Offset -= (int)(Index*ElSize);            // Consume part of the offset
 
       } else if (isa<ArrayType>(CompTy) || Indices.empty()) {
         // Must be indexing a small amount into the first cell of the array
