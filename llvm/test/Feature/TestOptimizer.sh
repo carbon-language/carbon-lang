@@ -1,10 +1,10 @@
 #!/bin/sh
-LD_LIBRARY_PATH=../../lib/Debug
+LD_LIBRARY_PATH=$3
 export LD_LIBRARY_PATH
 
-AS=../../tools/Debug/as
-DIS=../../tools/Debug/dis
-OPT=../../tools/Debug/opt
+AS=$2/as
+DIS=$2/dis
+OPT=$2/opt
 
 echo "======== Running optimizier test on $1"
 

@@ -4,11 +4,11 @@
 
 rm -f test.bc.temp[12]
 
-LD_LIBRARY_PATH=../../lib/Debug
+LD_LIBRARY_PATH=$3
 export LD_LIBRARY_PATH
 
-AS=../../tools/Debug/as
-DIS=../../tools/Debug/dis
+AS=$2/as
+DIS=$2/dis
 
 echo "======== Running assembler/disassembler test on $1"
 

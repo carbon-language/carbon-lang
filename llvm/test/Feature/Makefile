@@ -23,10 +23,10 @@ testcodegen : $(OTESTS:%.ll=%.mc)
 testsparc   : $(OTESTS:%.ll=%.s)
 
 Output/%.asmdis: % $(LAS) $(LDIS) Output/.dir
-	@./TestAsmDisasm.sh $<
+	@./TestAsmDisasm.sh $< $(TOOLDEBUG) $(LIBDEBUG)
 
 Output/%.opt: % $(LAS) $(LDIS) $(LOPT) Output/.dir
-	@./TestOptimizer.sh $<
+	@./TestOptimizer.sh $< $(TOOLDEBUG) $(LIBDEBUG)
 
 Output/%.mc: Output/%.bc $(LLC)
 	@echo "======== Generating machine instructions for $<"
