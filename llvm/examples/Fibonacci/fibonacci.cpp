@@ -50,7 +50,6 @@ static Function *CreateFibFunction(Module *M) {
   Argument *ArgX = FibF->abegin();   // Get the arg.
   ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
 
-
   // Create the true_block.
   BasicBlock *RetBB = new BasicBlock("return", FibF);
   // Create an exit block.
@@ -103,10 +102,9 @@ int main(int argc, char **argv) {
 
   std::cerr << "OK\n";
   std::cerr << "We just constructed this LLVM module:\n\n---------\n" << *M;
-  std::cerr << "---------\nstarting fibonacci(" 
-	    << n << ") with JIT...\n";
+  std::cerr << "---------\nstarting fibonacci(" << n << ") with JIT...\n";
 
-  // Call the `foo' function with argument n:
+  // Call the Fibonacci function with argument n:
   std::vector<GenericValue> Args(1);
   Args[0].IntVal = n;
   GenericValue GV = EE->runFunction(FibF, Args);
