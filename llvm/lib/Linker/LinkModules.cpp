@@ -275,72 +275,64 @@ static void PrintMap(const std::map<const Value*, Value*> &M) {
 }
 
 
-// RemapOperand - Use LocalMap and GlobalMap to convert references from one
-// module to another.  This is somewhat sophisticated in that it can
-// automatically handle constant references correctly as well...
+// RemapOperand - Use ValueMap to convert references from one module to another.
+// This is somewhat sophisticated in that it can automatically handle constant
+// references correctly as well...
 //
 static Value *RemapOperand(const Value *In,
-                           std::map<const Value*, Value*> &LocalMap,
-                           std::map<const Value*, Value*> *GlobalMap) {
-  std::map<const Value*,Value*>::const_iterator I = LocalMap.find(In);
-  if (I != LocalMap.end()) return I->second;
+                           std::map<const Value*, Value*> &ValueMap) {
+  std::map<const Value*,Value*>::const_iterator I = ValueMap.find(In);
+  if (I != ValueMap.end()) return I->second;
 
-  if (GlobalMap) {
-    I = GlobalMap->find(In);
-    if (I != GlobalMap->end()) return I->second;
-  }
-
-  // Check to see if it's a constant that we are interesting in transforming...
+  // Check to see if it's a constant that we are interesting in transforming.
   if (const Constant *CPV = dyn_cast<Constant>(In)) {
     if ((!isa<DerivedType>(CPV->getType()) && !isa<ConstantExpr>(CPV)) ||
         isa<ConstantAggregateZero>(CPV))
-      return const_cast<Constant*>(CPV);   // Simple constants stay identical...
+      return const_cast<Constant*>(CPV);   // Simple constants stay identical.
 
     Constant *Result = 0;
 
     if (const ConstantArray *CPA = dyn_cast<ConstantArray>(CPV)) {
       std::vector<Constant*> Operands(CPA->getNumOperands());
       for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
-        Operands[i] =
-          cast<Constant>(RemapOperand(CPA->getOperand(i), LocalMap, GlobalMap));
+        Operands[i] =cast<Constant>(RemapOperand(CPA->getOperand(i), ValueMap));
       Result = ConstantArray::get(cast<ArrayType>(CPA->getType()), Operands);
     } else if (const ConstantStruct *CPS = dyn_cast<ConstantStruct>(CPV)) {
       std::vector<Constant*> Operands(CPS->getNumOperands());
       for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i)
-        Operands[i] =
-          cast<Constant>(RemapOperand(CPS->getOperand(i), LocalMap, GlobalMap));
+        Operands[i] =cast<Constant>(RemapOperand(CPS->getOperand(i), ValueMap));
       Result = ConstantStruct::get(cast<StructType>(CPS->getType()), Operands);
     } else if (isa<ConstantPointerNull>(CPV) || isa<UndefValue>(CPV)) {
       Result = const_cast<Constant*>(CPV);
     } else if (isa<GlobalValue>(CPV)) {
-      Result = cast<Constant>(RemapOperand(CPV, LocalMap, GlobalMap));
+      Result = cast<Constant>(RemapOperand(CPV, ValueMap));
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
-        Value *Ptr = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
+        Value *Ptr = RemapOperand(CE->getOperand(0), ValueMap);
         std::vector<Constant*> Indices;
         Indices.reserve(CE->getNumOperands()-1);
         for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
           Indices.push_back(cast<Constant>(RemapOperand(CE->getOperand(i),
-                                                        LocalMap, GlobalMap)));
+                                                        ValueMap)));
 
         Result = ConstantExpr::getGetElementPtr(cast<Constant>(Ptr), Indices);
       } else if (CE->getNumOperands() == 1) {
         // Cast instruction
         assert(CE->getOpcode() == Instruction::Cast);
-        Value *V = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
+        Value *V = RemapOperand(CE->getOperand(0), ValueMap);
         Result = ConstantExpr::getCast(cast<Constant>(V), CE->getType());
       } else if (CE->getNumOperands() == 3) {
         // Select instruction
         assert(CE->getOpcode() == Instruction::Select);
-        Value *V1 = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
-        Value *V2 = RemapOperand(CE->getOperand(1), LocalMap, GlobalMap);
-        Value *V3 = RemapOperand(CE->getOperand(2), LocalMap, GlobalMap);
+        Value *V1 = RemapOperand(CE->getOperand(0), ValueMap);
+        Value *V2 = RemapOperand(CE->getOperand(1), ValueMap);
+        Value *V3 = RemapOperand(CE->getOperand(2), ValueMap);
         Result = ConstantExpr::getSelect(cast<Constant>(V1), cast<Constant>(V2),
                                          cast<Constant>(V3));
       } else if (CE->getNumOperands() == 2) {
         // Binary operator...
-        Value *V1 = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
-        Value *V2 = RemapOperand(CE->getOperand(1), LocalMap, GlobalMap);
+        Value *V1 = RemapOperand(CE->getOperand(0), ValueMap);
+        Value *V2 = RemapOperand(CE->getOperand(1), ValueMap);
 
         Result = ConstantExpr::get(CE->getOpcode(), cast<Constant>(V1),
                                    cast<Constant>(V2));
@@ -353,20 +345,12 @@ static Value *RemapOperand(const Value *In,
     }
 
     // Cache the mapping in our local map structure...
-    if (GlobalMap)
-      GlobalMap->insert(std::make_pair(In, Result));
-    else
-      LocalMap.insert(std::make_pair(In, Result));
+    ValueMap.insert(std::make_pair(In, Result));
     return Result;
   }
 
-  std::cerr << "XXX LocalMap: \n";
-  PrintMap(LocalMap);
-
-  if (GlobalMap) {
-    std::cerr << "XXX GlobalMap: \n";
-    PrintMap(*GlobalMap);
-  }
+  std::cerr << "LinkModules ValueMap: \n";
+  PrintMap(ValueMap);
 
   std::cerr << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
   assert(0 && "Couldn't remap value!");
@@ -563,7 +547,7 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
     if (SGV->hasInitializer()) {      // Only process initialized GV's
       // Figure out what the initializer looks like in the dest module...
       Constant *SInit =
-        cast<Constant>(RemapOperand(SGV->getInitializer(), ValueMap, 0));
+        cast<Constant>(RemapOperand(SGV->getInitializer(), ValueMap));
 
       GlobalVariable *DGV = cast<GlobalVariable>(ValueMap[SGV]);    
       if (DGV->hasInitializer()) {
@@ -680,16 +664,15 @@ static bool LinkFunctionBody(Function *Dest, Function *Src,
                              std::map<const Value*, Value*> &GlobalMap,
                              std::string *Err) {
   assert(Src && Dest && Dest->isExternal() && !Src->isExternal());
-  std::map<const Value*, Value*> LocalMap;   // Map for function local values
 
-  // Go through and convert function arguments over...
+  // Go through and convert function arguments over, remembering the mapping.
   Function::aiterator DI = Dest->abegin();
   for (Function::aiterator I = Src->abegin(), E = Src->aend();
        I != E; ++I, ++DI) {
     DI->setName(I->getName());  // Copy the name information over...
 
     // Add a mapping to our local map
-    LocalMap.insert(std::make_pair(I, DI));
+    GlobalMap.insert(std::make_pair(I, DI));
   }
 
   // Splice the body of the source function into the dest function.
@@ -705,7 +688,12 @@ static bool LinkFunctionBody(Function *Dest, Function *Src,
       for (Instruction::op_iterator OI = I->op_begin(), OE = I->op_end();
            OI != OE; ++OI)
         if (!isa<Instruction>(*OI) && !isa<BasicBlock>(*OI))
-          *OI = RemapOperand(*OI, LocalMap, &GlobalMap);
+          *OI = RemapOperand(*OI, GlobalMap);
+
+  // There is no need to map the arguments anymore.
+  for (Function::aiterator I = Src->abegin(), E = Src->aend();
+       I != E; ++I, ++DI)
+    GlobalMap.erase(I);
 
   return false;
 }
