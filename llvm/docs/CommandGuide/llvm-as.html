@@ -1,0 +1,83 @@
+<html>
+<title>
+llvm-as
+</title>
+
+<body>
+
+<center>
+<h1>Low Level Virtual Machine</h1>
+</center>
+<HR>
+
+<h3>
+NAME
+</h3>
+
+llvm-as
+
+<h3>
+SYNOPSIS
+</h3>
+
+llvm-as [options] &lt; filename&gt;
+<h3>
+DESCRIPTION
+</h3>
+
+The llvm-as command is the LLVM assembler.  It takes a human readable LLVM
+assembly language file and translates it into LLVM bytecode.
+
+By default, llvm-as places its output into filename.bc.
+
+<h3>
+OPTIONS
+</h3>
+
+<ul>
+	<li> -f
+	<br>
+	Force overwrite.  Normally, llvm-as will refuse to overwrite an output
+	file that already exists.  With this option, llvm-as will overwrite the
+	output file and replace it with new bytecode.
+	<p>
+
+	<li> -help
+	<br>
+	Print a summary of command line options.
+	<p>
+
+	<li> -o &lt;filename&gt;
+	<br>
+	Specify the output filename.
+	<p>
+
+	<li> -stats
+	<br>
+	Print statistics.
+	<p>
+
+	<li> -time-passes
+	<br>
+	Record the amount of time needed for each pass and print it to standard
+	error.
+	<p>
+</ul>
+
+<h3>
+EXIT STATUS
+</h3>
+
+If llvm-as succeeds, it will exit with 0.  Otherwise, if an error occurs, it
+will exit with a non-zero value.
+
+<h3>
+SEE ALSO
+</h3>
+llvm-dis
+
+<HR>
+University of Illinois at Urbana-Champaign
+</body>
+</html>
+

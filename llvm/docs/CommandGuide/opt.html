@@ -1,0 +1,116 @@
+<html>
+<title>
+opt
+</title>
+
+<body>
+
+<center>
+<h1>Low Level Virtual Machine</h1>
+</center>
+<HR>
+
+<h3>
+NAME
+</h3>
+
+opt
+
+<h3>
+SYNOPSIS
+</h3>
+
+opt [options] &lt; filename&gt;
+<h3>
+DESCRIPTION
+</h3>
+
+The opt command is the LLVM optimizer.  It takes LLVM bytecode as input, runs
+the specified optimizations on it, and then outputs the optimized code in LLVM
+bytecode.
+
+The optimizations available via opt depend upon what libraries it was linked
+with, as well as any additional libraries that have been loaded with the -load
+option.  Use the -help option to determine what optimizations you can use.
+
+<h3>
+OPTIONS
+</h3>
+
+<ul>
+	<li> -f
+	<br>
+	Force overwrite.  Normally, opt will refuse to overwrite an output
+	file that already exists.  With this option, opt will overwrite the
+	output file and replace it with new bytecode.
+	<p>
+
+	<li> -help
+	<br>
+	Print a summary of command line options.
+	<p>
+
+	<li> -o &lt;filename&gt;
+	<br>
+	Specify the output filename.
+	<p>
+
+	<li> -stats
+	<br>
+	Print statistics.
+	<p>
+
+	<li> -time-passes
+	<br>
+	Record the amount of time needed for each pass and print it to standard
+	error.
+	<p>
+
+	<li> -internalize-public-api-file &lt;filename&gt;
+	<br>
+	Preserve the symbol names listed in the file filename.
+	<p>
+
+	<li> -internalize-public-api-list=&lt;list&gt;
+	<br>
+	Perserve the symbol names specified.
+	<p>
+
+	<li> -q
+	<br>
+	Quiet mode.  Do not print messages on whether the program was modified.
+	<p>
+
+	<li> -load &lt;plugin.so&gt;
+	<br>
+	Load the dynamic object plugin.so.  This object should register new
+	optimization passes.  Once loaded, the object will add new command line
+	options to enable various optimizations.  To see the new complete list
+	of optimizations, use the -help and -load options together:
+	<p>
+	opt -load  &lt;plugin.so&gt; -help
+	<p>
+
+	<li> -p
+	<br>
+	Print module after each transformation.
+	<p>
+</ul>
+
+<h3>
+EXIT STATUS
+</h3>
+
+If opt succeeds, it will exit with 0.  Otherwise, if an error occurs, it
+will exit with a non-zero value.
+
+<h3>
+SEE ALSO
+</h3>
+analyze
+
+<HR>
+University of Illinois at Urbana-Champaign
+</body>
+</html>
+

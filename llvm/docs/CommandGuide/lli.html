@@ -1,0 +1,80 @@
+<html>
+<title>
+lli
+</title>
+
+<body>
+
+<center>
+<h1>Low Level Virtual Machine</h1>
+</center>
+<HR>
+
+<h3>
+NAME
+</h3>
+
+lli
+
+<h3>
+SYNOPSIS
+</h3>
+
+lli [options] &lt; filename&gt;
+<h3>
+DESCRIPTION
+</h3>
+
+The lli command is the LLVM interpreter.  It takes a program in LLVM bytecode
+format and executes it, either using an interpreter or a Just In Time (JIT)
+compiler.
+
+<h3>
+OPTIONS
+</h3>
+
+<ul>
+	<li> -array-checks
+	<br>
+	Enable array bound checks.
+	<p>
+
+	<li> -help
+	<br>
+	Print a summary of command line options.
+	<p>
+
+	<li> -disable-fp-elim
+	<br>
+	Disable frame pointer elimination optimization.
+	<p>
+
+	<li> -stats
+	<br>
+	Print statistics.
+	<p>
+
+	<li> -time-passes
+	<br>
+	Record the amount of time needed for each pass and print it to standard
+	error.
+	<p>
+</ul>
+
+<h3>
+EXIT STATUS
+</h3>
+
+If lli succeeds, it will exit with 0.  Otherwise, if an error occurs, it
+will exit with a non-zero value.
+
+<h3>
+SEE ALSO
+</h3>
+llvm-dis
+
+<HR>
+University of Illinois at Urbana-Champaign
+</body>
+</html>
+

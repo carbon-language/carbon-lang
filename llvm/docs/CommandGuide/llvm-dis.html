@@ -1,0 +1,89 @@
+<html>
+<title>
+llvm-dis
+</title>
+
+<body>
+
+<center>
+<h1>Low Level Virtual Machine</h1>
+</center>
+<HR>
+
+<h3>
+NAME
+</h3>
+
+llvm-dis
+
+<h3>
+SYNOPSIS
+</h3>
+
+llvm-dis [options] &lt; filename&gt;
+<h3>
+DESCRIPTION
+</h3>
+
+The llvm-dis command is the LLVM disassembler.  It takes an LLVM bytecode file
+and converts it into one of several human readable formats.
+
+By default, llvm-dis places its output in filename.ll, removing the .bc suffix
+if it exists.
+<h3>
+OPTIONS
+</h3>
+
+<ul>
+	<li> -llvm
+	<br>
+	Instruct llvm-dis to generate LLVM assembly code in human readable
+	format.  This is the default behavior.
+	<p>
+
+	<li> -c
+	<br>
+	Instruct llvm-dis to generate C source code.
+	<p>
+
+	<li> -f
+	<br>
+	Force overwrite.  Normally, llvm-dis will refuse to overwrite an output
+	file that already exists.  With this option, llvm-dis will overwrite the
+	output file.
+	<p>
+
+	<li> -help
+	<br>
+	Print a summary of command line options.
+	<p>
+
+	<li> -o &lt;filename&gt;
+	<br>
+	Specify the output filename.
+	<p>
+
+	<li> -time-pdisses
+	<br>
+	Record the amount of time needed for each pdiss and print it to standard
+	error.
+	<p>
+</ul>
+
+<h3>
+EXIT STATUS
+</h3>
+
+If llvm-dis succeeds, it will exit with 0.  Otherwise, if an error occurs, it
+will exit with a non-zero value.
+
+<h3>
+SEE ALSO
+</h3>
+llvm-dis
+
+<HR>
+University of Illinois at Urbana-Champaign
+</body>
+</html>
+

@@ -1,0 +1,124 @@
+<html>
+<title>
+gccld
+</title>
+
+<body>
+
+<center>
+<h1>Low Level Virtual Machine</h1>
+</center>
+<HR>
+
+<h3>
+NAME
+</h3>
+
+gccld
+
+<h3>
+SYNOPSIS
+</h3>
+
+gccld [options] &lt; filename&gt;
+<h3>
+DESCRIPTION
+</h3>
+
+The gccld utility takes a set of LLVM bytecode files GCC and links them
+together into a single LLVM bytecode file.  It will link in any LLVM bytecode
+libraries that are necessary to make a single LLVM "bytecode executable."
+<p>
+The gccld utility is primarily used by the GCC front end, and as such, attempts
+to mimic the interface provided by the default system linker so that it can act
+as a "drop-in" replacement.
+
+<h3>
+OPTIONS
+</h3>
+
+<ul>
+	<li> -help
+	<br>
+	Print a summary of command line options.
+	<p>
+
+	<li> -o &lt;filename&gt;
+	<br>
+	Specify the output filename which will hold the assembled bytecode.
+	<p>
+
+	<li> -stats
+	<br>
+	Print statistics.
+	<p>
+
+	<li> -time-passes
+	<br>
+	Record the amount of time needed for each pass and print it to standard
+	error.
+	<p>
+
+	<li> -verify
+	<br>
+	Verify each pass result.
+	<p>
+
+	<li> -L=&lt;directory&gt;
+	<br>
+	Add directory to the list of directories to search when looking for
+	libraries.
+	<p>
+
+	<li> -disable-internalize
+	<br>
+	Do not mark all symbols as internal.
+	<p>
+
+	<li> -internalize-public-api-file &lt;filename&gt;
+	<br>
+	Preserve the list of symbol names in the file filename.
+	<p>
+
+	<li> -internalize-public-api-list &lt;list&gt;
+	<br>
+	Preserve the symbol names in list.
+	<p>
+
+	<li> -l=&lt;library prefix&gt;
+	<br>
+	Specify libraries to link to
+	<p>
+
+	<li> -link-as-library
+	<br>
+	Link the .bc files together as a library, not an executable.
+	<p>
+
+	<li> -s
+	<br>
+	Strip symbol information from the generated executable.
+	<p>
+
+	<li> -v
+	<br>
+	Print information about actions taken.
+</ul>
+
+<h3>
+EXIT STATUS
+</h3>
+
+If gccld succeeds, it will exit with 0.  Otherwise, if an error occurs, it
+will exit with a non-zero value.
+
+<h3>
+SEE ALSO
+</h3>
+llvm-dis
+
+<HR>
+University of Illinois at Urbana-Champaign
+</body>
+</html>
+
