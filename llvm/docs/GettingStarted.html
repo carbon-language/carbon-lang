@@ -237,6 +237,11 @@ software you will need.</p>
   <td>GCC 3.4.X, binutils 2.15</td>
 </tr>
 <tr>
+  <td>MinGW/Win32</td>
+  <td>x86<sup>1</sup><sup>6</sup></td>
+  <td>GCC 3.4.X, binutils 2.15</td>
+</tr>
+<tr>
   <td>Linux</td>
   <td>amd64<sup>3</sup></td>
   <td>GCC</td>
@@ -254,7 +259,7 @@ software you will need.</p>
 <tr>
   <td>Windows</td>
   <td>x86<sup>1</sup></td>
-  <td>Visual Studio .NET<sup>4,5</sup>, MinGW</td>
+  <td>Visual Studio .NET<sup>4,5</sup></td>
 <tr>
   <td>AIX<sup>3,4</sup></td>
   <td>PowerPC</td>
@@ -274,6 +279,17 @@ Notes:<br>
 <sup>3</sup> No native code generation<br>
 <sup>4</sup> Build is not complete: one or more tools don't link<br>
 <sup>5</sup> The GCC-based C/C++ frontend does not build<br>
+<sup>6</sup> The port is done using the MSYS shell. 
+Download (from http://www.mingw.org/MinGWiki/) and install 
+bison (excl. M4.exe) and flex in that order. 
+Build binutils 2.15 from source if necessary.
+If you want to compile the Cfrontend then upgrade to texinfo 4.5+ from source.
+If you need to create a library for an MS dll do these three steps:
+1) pexports /C/WINNT/SYSTEM32/file.dll | sed "s/^_//" > /C/MinGW/lib/file.def 
+2) Edit file and append @&lt;ordinal&gt; to the missing function name
+3) dlltool.exe -k -d /C/MinGW/lib/file.def -l /C/MinGW/lib/libfile.a.
+Add in .profile: export CPPFLAGS="-D__MINGW -DLLVM_ON_WIN32=1"
+<br>
 </p>
 
 <p>Note that you will need about 1-3 GB of space for a full LLVM build in Debug
