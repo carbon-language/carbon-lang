@@ -159,6 +159,21 @@ unsigned Type::getPrimitiveSize() const {
   }
 }
 
+/// isSizedDerivedType - Derived types like structures and arrays are sized
+/// iff all of the members of the type are sized as well.  Since asking for
+/// their size is relatively uncommon, move this operation out of line.
+bool Type::isSizedDerivedType() const {
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(this))
+    return ATy->getElementType()->isSized();
+
+  if (!isa<StructType>(this)) return false;
+
+  // Okay, our struct is sized if all of the elements are...
+  for (subtype_iterator I = subtype_begin(), E = subtype_end(); I != E; ++I)
+    if (!(*I)->isSized()) return false;
+
+  return true;
+}
 
 /// getForwardedTypeInternal - This method is used to implement the union-find
 /// algorithm for when a type is being forwarded to another type.

@@ -206,8 +206,8 @@ public:
   /// TargetData subsystem to do this.
   ///
   bool isSized() const {
-    return ID != VoidTyID && ID != TypeTyID &&
-           ID != FunctionTyID && ID != LabelTyID && ID != OpaqueTyID;
+    return (ID >= BoolTyID && ID <= DoubleTyID) || ID == PointerTyID ||
+           isSizedDerivedType();
   }
 
   /// getPrimitiveSize - Return the basic size of this type if it is a primative
@@ -306,6 +306,11 @@ public:
       RefCountIsZero();
   }
 private:
+  /// isSizedDerivedType - Derived types like structures and arrays are sized
+  /// iff all of the members of the type are sized as well.  Since asking for
+  /// their size is relatively uncommon, move this operation out of line.
+  bool isSizedDerivedType() const;
+
   virtual void RefCountIsZero() const {
     abort(); // only on derived types!
   }
