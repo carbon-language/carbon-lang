@@ -27,7 +27,6 @@ void AnalysisResolver::setAnalysisResolver(Pass *P, AnalysisResolver *AR) {
 // debugging on, a command line option (--debug-pass) is enabled that causes the
 // pass name to be printed before it executes.
 //
-#ifndef NDEBUG
 #include "Support/CommandLine.h"
 #include <typeinfo>
 #include <iostream>
@@ -88,7 +87,6 @@ void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
 void Pass::dumpPassStructure(unsigned Offset = 0) {
   std::cerr << std::string(Offset*2, ' ') << typeid(*this).name() << "\n";
 }
-#endif
 
 
 //===----------------------------------------------------------------------===//
