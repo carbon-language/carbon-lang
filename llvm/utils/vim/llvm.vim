@@ -20,7 +20,7 @@ syn keyword llvmStatement add sub mul div rem
 syn keyword llvmStatement and or xor
 syn keyword llvmStatement setne seteq setlt setgt setle setge
 
-syn keyword llvmStatement phi call cast shl shr
+syn keyword llvmStatement phi call cast shl shr va_arg
 syn keyword llvmStatement ret br switch invoke
 syn keyword llvmStatement malloc alloca free load store getelementptr
 
