@@ -34,7 +34,7 @@
           <li><a href="#checkout">Checkout LLVM from CVS</a>
 	  <li><a href="#config">Local LLVM Configuration</tt></a>
           <li><a href="#compile">Compiling the LLVM Suite Source Code</a>
-          <li><a href="#build">Building the LLVM C Front End</a>
+          <li><a href="#build">Compiling the LLVM C Front End</a>
           <li><a href="#objfiles">The location for object files</tt></a>
         </ol>
       <li><a href="#layout">Program layout</a>
@@ -542,7 +542,7 @@
     anything in or below that directory that is out of date.
 
     <!------------------------------------------------------------------------->
-    <h3><a name="build">Building the LLVM C Front End</a></h3>
+    <h3><a name="build">Compiling the LLVM C Front End</a></h3>
     <!------------------------------------------------------------------------->
 
     <b>
@@ -580,12 +580,12 @@
             </ul>
         </ul>
 
-        <li><tt>make bootstrap</tt>
+        <li><tt>make</tt>
 
         <li>The build will eventually fail.  Don't worry; chances are good that
         everything that needed to build is built.
 
-        <li><tt>make install</tt>
+        <li><tt>make -k install</tt>
     </ol>
 
     At this point, you should have a working copy of the LLVM C front end
