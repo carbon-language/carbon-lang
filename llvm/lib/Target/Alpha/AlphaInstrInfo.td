@@ -79,13 +79,15 @@ let Uses = [R29, R28] in {
   def STT_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "stt $RA,$DISP">; //store double
 }
 
+
+//RESULTS of these go to R27
 let Uses = [R29], 
-    Defs = [R28, R29, R23, R24, R25, R27] in
+    Defs = [R28, R23, R24, R25, R27] in
 {
-  def REMQU : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "remqu $RA,$RB,$RC">; //unsigned remander
-  def REMQ  : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "remq $RA,$RB,$RC">; //signed remander
-  def DIVQU : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "divqu $RA,$RB,$RC">; //unsigned division
-  def DIVQ  : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "divq $RA,$RB,$RC">; //signed division
+  def REMQU : PseudoInstAlpha<(ops GPRC:$RA, GPRC:$RB), "remqu $RA,$RB,$$27">; //unsigned remander
+  def REMQ  : PseudoInstAlpha<(ops GPRC:$RA, GPRC:$RB), "remq $RA,$RB,$$27">; //signed remander
+  def DIVQU : PseudoInstAlpha<(ops GPRC:$RA, GPRC:$RB), "divqu $RA,$RB,$$27">; //unsigned division
+  def DIVQ  : PseudoInstAlpha<(ops GPRC:$RA, GPRC:$RB), "divq $RA,$RB,$$27">; //signed division
 }
 
 //***********************
@@ -96,31 +98,52 @@ let Uses = [R29],
 
 let isTwoAddress = 1 in {
 //conditional moves, int
- def CMOVEQ   : OForm<  0x11, 0x24, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND), "cmoveq $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND =  zero
- def CMOVEQi  : OFormL< 0x11, 0x24, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),   "cmoveq $RCOND,$L,$RDEST">; //CMOVE if RCOND =  zero
- def CMOVGE   : OForm<  0x11, 0x46, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND), "CMOVGE $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND >= zero
- def CMOVGEi  : OFormL< 0x11, 0x46, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),   "CMOVGE $RCOND,$L,$RDEST">; //CMOVE if RCOND >= zero
- def CMOVGT   : OForm<  0x11, 0x66, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND), "CMOVGT $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND > zero
- def CMOVGTi  : OFormL< 0x11, 0x66, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),   "CMOVGT $RCOND,$L,$RDEST">; //CMOVE if RCOND > zero
- def CMOVLBC  : OForm<  0x11, 0x16, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND), "CMOVLBC $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND low bit clear
- def CMOVLBCi : OFormL< 0x11, 0x16, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),   "CMOVLBC $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit clear
- def CMOVLBS  : OForm<  0x11, 0x14, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND), "CMOVLBS $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND low bit set
- def CMOVLBSi : OFormL< 0x11, 0x14, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),   "CMOVLBS $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit set
- def CMOVLE   : OForm<  0x11, 0x64, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND), "CMOVLE $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND <= zero
- def CMOVLEi  : OFormL< 0x11, 0x64, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),   "CMOVLE $RCOND,$L,$RDEST">; //CMOVE if RCOND <= zero
- def CMOVLT   : OForm<  0x11, 0x44, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND), "CMOVLT $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND < zero
- def CMOVLTi  : OFormL< 0x11, 0x44, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),   "CMOVLT $RCOND,$L,$RDEST">; //CMOVE if RCOND < zero
- def CMOVNE   : OForm<  0x11, 0x26, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND), "cmovne $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND != zero
- def CMOVNEi  : OFormL< 0x11, 0x26, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),   "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND != zero
+ def CMOVEQ   : OForm<  0x11, 0x24, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
+        "cmoveq $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND =  zero
+ def CMOVEQi  : OFormL< 0x11, 0x24, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
+        "cmoveq $RCOND,$L,$RDEST">; //CMOVE if RCOND =  zero
+ def CMOVGE   : OForm<  0x11, 0x46, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
+        "CMOVGE $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND >= zero
+ def CMOVGEi  : OFormL< 0x11, 0x46, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
+        "CMOVGE $RCOND,$L,$RDEST">; //CMOVE if RCOND >= zero
+ def CMOVGT   : OForm<  0x11, 0x66, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
+        "CMOVGT $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND > zero
+ def CMOVGTi  : OFormL< 0x11, 0x66, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
+        "CMOVGT $RCOND,$L,$RDEST">; //CMOVE if RCOND > zero
+ def CMOVLBC  : OForm<  0x11, 0x16, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
+        "CMOVLBC $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND low bit clear
+ def CMOVLBCi : OFormL< 0x11, 0x16, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
+        "CMOVLBC $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit clear
+ def CMOVLBS  : OForm<  0x11, 0x14, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
+        "CMOVLBS $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND low bit set
+ def CMOVLBSi : OFormL< 0x11, 0x14, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
+        "CMOVLBS $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit set
+ def CMOVLE   : OForm<  0x11, 0x64, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
+        "CMOVLE $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND <= zero
+ def CMOVLEi  : OFormL< 0x11, 0x64, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
+        "CMOVLE $RCOND,$L,$RDEST">; //CMOVE if RCOND <= zero
+ def CMOVLT   : OForm<  0x11, 0x44, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
+        "CMOVLT $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND < zero
+ def CMOVLTi  : OFormL< 0x11, 0x44, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
+        "CMOVLT $RCOND,$L,$RDEST">; //CMOVE if RCOND < zero
+ def CMOVNE   : OForm<  0x11, 0x26, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
+        "cmovne $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND != zero
+ def CMOVNEi  : OFormL< 0x11, 0x26, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
+        "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND != zero
 
 //conditional moves, fp
- def FCMOVEQ  : FPForm<0x17, 0x02A, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), "fcmoveq $RCOND,$RSRC,$RDEST">; //FCMOVE if = zero
- def FCMOVGE  : FPForm<0x17, 0x02D, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), "fcmovge $RCOND,$RSRC,$RDEST">; //FCMOVE if >= zero
- def FCMOVGT  : FPForm<0x17, 0x02F, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), "fcmovge $RCOND,$RSRC,$RDEST">; //FCMOVE if > zero
- def FCMOVLE  : FPForm<0x17, 0x02E, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), "fcmovle $RCOND,$RSRC,$RDEST">; //FCMOVE if <= zero
- def FCMOVLT  : FPForm<0x17, 0x02, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), "fcmovlt $RCOND,$RSRC,$RDEST">; // FCMOVE if < zero
- def FCMOVNE : FPForm<0x17, 0x02B, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), "fcmovne $RCOND,$RSRC,$RDEST">; //FCMOVE if != zero
-
+ def FCMOVEQ  : FPForm<0x17, 0x02A, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND),
+        "fcmoveq $RCOND,$RSRC,$RDEST">; //FCMOVE if = zero
+ def FCMOVGE  : FPForm<0x17, 0x02D, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND),
+        "fcmovge $RCOND,$RSRC,$RDEST">; //FCMOVE if >= zero
+ def FCMOVGT  : FPForm<0x17, 0x02F, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND),
+        "fcmovgt $RCOND,$RSRC,$RDEST">; //FCMOVE if > zero
+ def FCMOVLE  : FPForm<0x17, 0x02E, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND),
+        "fcmovle $RCOND,$RSRC,$RDEST">; //FCMOVE if <= zero
+ def FCMOVLT  : FPForm<0x17, 0x02, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND),
+        "fcmovlt $RCOND,$RSRC,$RDEST">; // FCMOVE if < zero
+ def FCMOVNE : FPForm<0x17, 0x02B, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND),
+        "fcmovne $RCOND,$RSRC,$RDEST">; //FCMOVE if != zero
 }
 
 def ADDL     : OForm< 0x10, 0x00, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "addl $RA,$RB,$RC">; //Add longword
@@ -218,6 +241,7 @@ def SLi      : OFormL<0x12, 0x39, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "SLL $RA,$
 def SRA      : OForm< 0x12, 0x3C, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SRA $RA,$RB,$RC">; //Shift right arithmetic
 def SRAi     : OFormL<0x12, 0x3C, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "SRA $RA,$L,$RC">; //Shift right arithmetic
 def SRL      : OForm< 0x12, 0x34, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SRL $RA,$RB,$RC">; //Shift right logical
+
 def SRLi     : OFormL<0x12, 0x34, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "SRL $RA,$L,$RC">; //Shift right logical
 def SUBL     : OForm< 0x10, 0x09, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SUBL $RA,$RB,$RC">; //Subtract longword
 def SUBLi    : OFormL<0x10, 0x09, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "SUBL $RA,$L,$RC">; //Subtract longword

@@ -49,6 +49,7 @@ namespace {
       addRegisterClass(MVT::f32, Alpha::FPRCRegisterClass);
       
       setOperationAction(ISD::EXTLOAD          , MVT::i1   , Promote);
+      setOperationAction(ISD::EXTLOAD          , MVT::f32  , Promote);
 
       setOperationAction(ISD::ZEXTLOAD         , MVT::i1   , Expand);
       setOperationAction(ISD::ZEXTLOAD         , MVT::i32  , Expand);
@@ -64,6 +65,7 @@ namespace {
       setOperationAction(ISD::MEMSET           , MVT::Other, Expand);
       setOperationAction(ISD::MEMCPY           , MVT::Other, Expand);
 
+      //Doesn't work yet
       setOperationAction(ISD::SETCC            , MVT::f32,   Promote);
 
       computeRegisterProperties();
@@ -557,7 +559,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
         case ISD::SETGE: Opc = invTest ? Alpha::FCMOVLE : Alpha::FCMOVGE; break;
         case ISD::SETNE: Opc = invTest ? Alpha::FCMOVEQ : Alpha::FCMOVNE; break;
         }
-        BuildMI(BB, Opc, 3, Result).addReg(TV).addReg(FV).addReg(Tmp3);
+        BuildMI(BB, Opc, 3, Result).addReg(FV).addReg(TV).addReg(Tmp3);
         return Result;
       }
       else
@@ -843,11 +845,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R30).addReg(Alpha::R30);
     return Result;
 
-  case ISD::ConstantPool:
-    Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
-    AlphaLowering.restoreGP(BB);
-    BuildMI(BB, Alpha::LDQ_SYM, 1, Result).addConstantPoolIndex(Tmp1);
-    return Result;
+//   case ISD::ConstantPool:
+//     Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
+//     AlphaLowering.restoreGP(BB);
+//     BuildMI(BB, Alpha::LDQ_SYM, 1, Result).addConstantPoolIndex(Tmp1);
+//     return Result;
 
   case ISD::FrameIndex:
     BuildMI(BB, Alpha::LDA, 2, Result)
@@ -1393,8 +1395,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
+    //set up regs explicitly (helps Reg alloc)
+    BuildMI(BB, Alpha::BIS, 2, Alpha::R24).addReg(Tmp1).addReg(Tmp1);
+    BuildMI(BB, Alpha::BIS, 2, Alpha::R25).addReg(Tmp2).addReg(Tmp2); 
     AlphaLowering.restoreGP(BB);
-    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    BuildMI(BB, Opc, 2).addReg(Alpha::R24).addReg(Alpha::R25);
+    BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R27).addReg(Alpha::R27); 
     return Result;
 
   case ISD::FP_TO_UINT:
