@@ -465,7 +465,7 @@ ac_includes_default="\
 #endif"
 
 ac_unique_file=""Makefile.config.in""
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL DOT ETAGS ETAGSFLAGS PYTHON QMTEST ENDIAN HAVE_STD_ITERATOR HAVE_BI_ITERATOR HAVE_FWD_ITERATOR ALLOCA MMAP_FILE ENABLE_OPTIMIZED SPEC_ROOT USE_SPEC SPEC95_ROOT USE_SPEC95 POVRAY_ROOT USE_POVRAY UPB DISABLE_LLC_DIFFS JIT LLVMCC1 LLVMCC1PLUS BCR PAPIDIR SHLIBEXT LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL DOT ETAGS ETAGSFLAGS PYTHON QMTEST ENDIAN HAVE_STD_EXT_HASH_MAP HAVE_GNU_EXT_HASH_MAP HAVE_GLOBAL_HASH_MAP HAVE_STD_EXT_HASH_SET HAVE_GNU_EXT_HASH_SET HAVE_GLOBAL_HASH_SET HAVE_STD_ITERATOR HAVE_BI_ITERATOR HAVE_FWD_ITERATOR ALLOCA MMAP_FILE ENABLE_OPTIMIZED SPEC_ROOT USE_SPEC SPEC95_ROOT USE_SPEC95 POVRAY_ROOT USE_POVRAY UPB DISABLE_LLC_DIFFS JIT LLVMCC1 LLVMCC1PLUS BCR PAPIDIR SHLIBEXT LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -19815,13 +19815,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 echo "$as_me:$LINENO: result: $ac_cv_cxx_have_std_ext_hash_map" >&5
 echo "${ECHO_T}$ac_cv_cxx_have_std_ext_hash_map" >&6
- if test "$ac_cv_cxx_have_std_ext_hash_map" = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_STD_EXT_HASH_MAP
-_ACEOF
-
+ HAVE_STD_EXT_HASH_MAP=0
+ if test "$ac_cv_cxx_have_std_ext_hash_map" = yes
+ then
+   HAVE_STD_EXT_HASH_MAP=1
  fi
+
  echo "$as_me:$LINENO: checking whether the compiler has <ext/hash_map> defining template class __gnu_cxx::hash_map" >&5
 echo $ECHO_N "checking whether the compiler has <ext/hash_map> defining template class __gnu_cxx::hash_map... $ECHO_C" >&6
 if test "${ac_cv_cxx_have_gnu_ext_hash_map+set}" = set; then
@@ -19884,13 +19883,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 echo "$as_me:$LINENO: result: $ac_cv_cxx_have_gnu_ext_hash_map" >&5
 echo "${ECHO_T}$ac_cv_cxx_have_gnu_ext_hash_map" >&6
- if test "$ac_cv_cxx_have_gnu_ext_hash_map" = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_GNU_EXT_HASH_MAP
-_ACEOF
-
+ HAVE_GNU_EXT_HASH_MAP=0
+ if test "$ac_cv_cxx_have_gnu_ext_hash_map" = yes
+ then
+   HAVE_GNU_EXT_HASH_MAP=1
  fi
+
  echo "$as_me:$LINENO: checking whether the compiler has <hash_map> defining template class ::hash_map" >&5
 echo $ECHO_N "checking whether the compiler has <hash_map> defining template class ::hash_map... $ECHO_C" >&6
 if test "${ac_cv_cxx_have_global_hash_map+set}" = set; then
@@ -19950,13 +19948,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 echo "$as_me:$LINENO: result: $ac_cv_cxx_have_global_hash_map" >&5
 echo "${ECHO_T}$ac_cv_cxx_have_global_hash_map" >&6
- if test "$ac_cv_cxx_have_global_hash_map" = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_GLOBAL_HASH_MAP
-_ACEOF
-
+ HAVE_GLOBAL_HASH_MAP=0
+ if test "$ac_cv_cxx_have_global_hash_map" = yes
+ then
+   HAVE_GLOBAL_HASH_MAP=1
  fi
+
 echo "$as_me:$LINENO: checking whether the compiler has <ext/hash_set> defining template class std::hash_set" >&5
 echo $ECHO_N "checking whether the compiler has <ext/hash_set> defining template class std::hash_set... $ECHO_C" >&6
 if test "${ac_cv_cxx_have_std_ext_hash_set+set}" = set; then
@@ -20019,13 +20016,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 echo "$as_me:$LINENO: result: $ac_cv_cxx_have_std_ext_hash_set" >&5
 echo "${ECHO_T}$ac_cv_cxx_have_std_ext_hash_set" >&6
- if test "$ac_cv_cxx_have_std_ext_hash_set" = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_STD_EXT_HASH_SET
-_ACEOF
-
+ HAVE_STD_EXT_HASH_SET=0
+ if test "$ac_cv_cxx_have_std_ext_hash_set" = yes
+ then
+   HAVE_STD_EXT_HASH_SET=1
  fi
+
  echo "$as_me:$LINENO: checking whether the compiler has <ext/hash_set> defining template class __gnu_cxx::hash_set" >&5
 echo $ECHO_N "checking whether the compiler has <ext/hash_set> defining template class __gnu_cxx::hash_set... $ECHO_C" >&6
 if test "${ac_cv_cxx_have_gnu_ext_hash_set+set}" = set; then
@@ -20088,13 +20084,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 echo "$as_me:$LINENO: result: $ac_cv_cxx_have_gnu_ext_hash_set" >&5
 echo "${ECHO_T}$ac_cv_cxx_have_gnu_ext_hash_set" >&6
- if test "$ac_cv_cxx_have_gnu_ext_hash_set" = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_GNU_EXT_HASH_SET
-_ACEOF
-
+ HAVE_GNU_EXT_HASH_SET=0
+ if test "$ac_cv_cxx_have_gnu_ext_hash_set" = yes
+ then
+   HAVE_GNU_EXT_HASH_SET=1
  fi
+
  echo "$as_me:$LINENO: checking whether the compiler has <hash_set> defining template class ::hash_set" >&5
 echo $ECHO_N "checking whether the compiler has <hash_set> defining template class ::hash_set... $ECHO_C" >&6
 if test "${ac_cv_cxx_have_global_hash_set+set}" = set; then
@@ -20154,13 +20149,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 echo "$as_me:$LINENO: result: $ac_cv_cxx_have_global_hash_set" >&5
 echo "${ECHO_T}$ac_cv_cxx_have_global_hash_set" >&6
- if test "$ac_cv_cxx_have_global_hash_set" = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_GLOBAL_HASH_SET
-_ACEOF
-
+ HAVE_GLOBAL_HASH_SET=0
+ if test "$ac_cv_cxx_have_global_hash_set" = yes
+ then
+   HAVE_GLOBAL_HASH_SET=1
  fi
+
 echo "$as_me:$LINENO: checking whether the compiler has ext/slist" >&5
 echo $ECHO_N "checking whether the compiler has ext/slist... $ECHO_C" >&6
 if test "${ac_cv_cxx_have_ext_slist+set}" = set; then
@@ -20348,7 +20342,6 @@ then
    HAVE_STD_ITERATOR=1
 fi
 
-
 echo "$as_me:$LINENO: checking whether the compiler has the bidirectional iterator" >&5
 echo $ECHO_N "checking whether the compiler has the bidirectional iterator... $ECHO_C" >&6
 if test "${ac_cv_cxx_have_bi_iterator+set}" = set; then
@@ -20418,7 +20411,6 @@ then
    HAVE_BI_ITERATOR=1
 fi
 
-
 echo "$as_me:$LINENO: checking whether the compiler has forward iterators" >&5
 echo $ECHO_N "checking whether the compiler has forward iterators... $ECHO_C" >&6
 if test "${ac_cv_cxx_have_fwd_iterator+set}" = set; then
@@ -20487,7 +20479,6 @@ if test "$ac_cv_cxx_have_fwd_iterator" = yes
 then
    HAVE_FWD_ITERATOR=1
 fi
-
 
 
 # The Ultrix 4.2 mips builtin alloca declared by alloca.h only works
@@ -21925,7 +21916,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-                    ac_config_files="$ac_config_files Makefile.config include/Support/iterator"
+                                        ac_config_files="$ac_config_files Makefile.config include/Support/iterator include/Support/hash_map include/Support/hash_set"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -22509,6 +22500,8 @@ do
   # Handling of arguments.
   "Makefile.config" ) CONFIG_FILES="$CONFIG_FILES Makefile.config" ;;
   "include/Support/iterator" ) CONFIG_FILES="$CONFIG_FILES include/Support/iterator" ;;
+  "include/Support/hash_map" ) CONFIG_FILES="$CONFIG_FILES include/Support/hash_map" ;;
+  "include/Support/hash_set" ) CONFIG_FILES="$CONFIG_FILES include/Support/hash_set" ;;
   "Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
   "Makefile.common" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile.common" ;;
   "lib/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS lib/Makefile" ;;
@@ -22699,6 +22692,12 @@ s,@ETAGSFLAGS@,$ETAGSFLAGS,;t t
 s,@PYTHON@,$PYTHON,;t t
 s,@QMTEST@,$QMTEST,;t t
 s,@ENDIAN@,$ENDIAN,;t t
+s,@HAVE_STD_EXT_HASH_MAP@,$HAVE_STD_EXT_HASH_MAP,;t t
+s,@HAVE_GNU_EXT_HASH_MAP@,$HAVE_GNU_EXT_HASH_MAP,;t t
+s,@HAVE_GLOBAL_HASH_MAP@,$HAVE_GLOBAL_HASH_MAP,;t t
+s,@HAVE_STD_EXT_HASH_SET@,$HAVE_STD_EXT_HASH_SET,;t t
+s,@HAVE_GNU_EXT_HASH_SET@,$HAVE_GNU_EXT_HASH_SET,;t t
+s,@HAVE_GLOBAL_HASH_SET@,$HAVE_GLOBAL_HASH_SET,;t t
 s,@HAVE_STD_ITERATOR@,$HAVE_STD_ITERATOR,;t t
 s,@HAVE_BI_ITERATOR@,$HAVE_BI_ITERATOR,;t t
 s,@HAVE_FWD_ITERATOR@,$HAVE_FWD_ITERATOR,;t t
