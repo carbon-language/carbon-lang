@@ -27,6 +27,7 @@
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/STLExtras.h"
+#include <iostream>
 using namespace llvm;
 
 PowerPCRegisterInfo::PowerPCRegisterInfo()

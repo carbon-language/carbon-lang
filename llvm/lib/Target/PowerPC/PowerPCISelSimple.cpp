@@ -27,6 +27,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "Support/Debug.h"
 #include <vector>
+#include <iostream>
 using namespace llvm;
 
 namespace {
