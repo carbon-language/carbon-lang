@@ -944,18 +944,6 @@ static unsigned getPPCOpcodeForSetCCNumber(unsigned Opcode) {
   }
 }
 
-static unsigned invertPPCBranchOpcode(unsigned Opcode) {
-  switch (Opcode) {
-  default: assert(0 && "Unknown PPC32 branch opcode!");
-  case PPC32::BEQ: return PPC32::BNE;
-  case PPC32::BNE: return PPC32::BEQ;
-  case PPC32::BLT: return PPC32::BGE;
-  case PPC32::BGE: return PPC32::BLT;
-  case PPC32::BGT: return PPC32::BLE;
-  case PPC32::BLE: return PPC32::BGT;
-  }
-}
-
 /// emitUCOM - emits an unordered FP compare.
 void ISel::emitUCOM(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
                      unsigned LHS, unsigned RHS) {
@@ -1369,16 +1357,17 @@ void ISel::visitBranchInst(BranchInst &BI) {
     // Nope, cannot fold setcc into this branch.  Emit a branch on a condition
     // computed some other way...
     unsigned condReg = getReg(BI.getCondition());
-    BuildMI(BB, PPC32::CMPLI, 3, PPC32::CR1).addImm(0).addReg(condReg)
+    BuildMI(BB, PPC32::CMPLI, 3, PPC32::CR0).addImm(0).addReg(condReg)
       .addImm(0);
     if (BI.getSuccessor(1) == NextBB) {
       if (BI.getSuccessor(0) != NextBB)
-        BuildMI(BB, PPC32::BNE, 2).addReg(PPC32::CR1)
-          .addMBB(MBBMap[BI.getSuccessor(0)]);
+        BuildMI(BB, PPC32::COND_BRANCH, 3).addReg(PPC32::CR0).addImm(PPC32::BNE)
+          .addMBB(MBBMap[BI.getSuccessor(0)])
+          .addMBB(MBBMap[BI.getSuccessor(1)]);
     } else {
-      BuildMI(BB, PPC32::BEQ, 2).addReg(PPC32::CR1)
-        .addMBB(MBBMap[BI.getSuccessor(1)]);
-      
+      BuildMI(BB, PPC32::COND_BRANCH, 3).addReg(PPC32::CR0).addImm(PPC32::BEQ)
+        .addMBB(MBBMap[BI.getSuccessor(1)])
+        .addMBB(MBBMap[BI.getSuccessor(0)]);
       if (BI.getSuccessor(0) != NextBB)
         BuildMI(BB, PPC32::B, 1).addMBB(MBBMap[BI.getSuccessor(0)]);
     }
@@ -1391,16 +1380,18 @@ void ISel::visitBranchInst(BranchInst &BI) {
   OpNum = EmitComparison(OpNum, SCI->getOperand(0), SCI->getOperand(1), BB,MII);
   
   if (BI.getSuccessor(0) != NextBB) {
-    BuildMI(BB, Opcode, 2).addReg(PPC32::CR0)
-      .addMBB(MBBMap[BI.getSuccessor(0)]);
+    BuildMI(BB, PPC32::COND_BRANCH, 3).addReg(PPC32::CR0).addImm(Opcode)
+      .addMBB(MBBMap[BI.getSuccessor(0)])
+      .addMBB(MBBMap[BI.getSuccessor(1)]);
     if (BI.getSuccessor(1) != NextBB)
       BuildMI(BB, PPC32::B, 1).addMBB(MBBMap[BI.getSuccessor(1)]);
   } else {
     // Change to the inverse condition...
     if (BI.getSuccessor(1) != NextBB) {
-      Opcode = invertPPCBranchOpcode(Opcode);
-      BuildMI(BB, Opcode, 2).addReg(PPC32::CR0)
-        .addMBB(MBBMap[BI.getSuccessor(1)]);
+      Opcode = PowerPCInstrInfo::invertPPCBranchOpcode(Opcode);
+      BuildMI(BB, PPC32::COND_BRANCH, 3).addReg(PPC32::CR0).addImm(Opcode)
+        .addMBB(MBBMap[BI.getSuccessor(1)])
+        .addMBB(MBBMap[BI.getSuccessor(0)]);
     }
   }
 }
