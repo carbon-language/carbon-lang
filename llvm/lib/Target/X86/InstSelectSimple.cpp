@@ -1109,11 +1109,20 @@ void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
 
   Value *Val = VR.Val;
   const Type *Ty = VR.Ty;
-  if (Val)
+  if (Val) {
     if (Constant *C = dyn_cast<Constant>(Val)) {
       Val = ConstantExpr::getCast(C, Type::IntTy);
       Ty = Type::IntTy;
     }
+
+    // If this is a simple constant, just emit a MOVri directly to avoid the
+    // copy.
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
+      int TheVal = CI->getRawValue() & 0xFFFFFFFF;
+    BuildMI(BB, X86::MOV32ri, 1, targetReg).addImm(TheVal);
+      return;
+    }
+  }
 
   // Make sure we have the register number for this value...
   unsigned Reg = Val ? getReg(Val) : VR.Reg;
