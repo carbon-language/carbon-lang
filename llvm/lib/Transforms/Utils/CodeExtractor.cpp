@@ -657,10 +657,19 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
                                  succ_end(codeReplacer));
   for (unsigned i = 0, e = Succs.size(); i != e; ++i)
     for (BasicBlock::iterator I = Succs[i]->begin();
-         PHINode *PN = dyn_cast<PHINode>(I); ++I)
+         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+      std::set<BasicBlock*> ProcessedPreds;
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
         if (BlocksToExtract.count(PN->getIncomingBlock(i)))
-          PN->setIncomingBlock(i, codeReplacer);
+          if (ProcessedPreds.insert(PN->getIncomingBlock(i)).second)
+            PN->setIncomingBlock(i, codeReplacer);
+          else {
+            // There were multiple entries in the PHI for this block, now there
+            // is only one, so remove the duplicated entries.
+            PN->removeIncomingValue(i, false);
+            --i; --e;
+          }
+    }
   
   //std::cerr << "NEW FUNCTION: " << *newFunction;
   //  verifyFunction(*newFunction);
