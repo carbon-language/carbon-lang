@@ -34,71 +34,79 @@ namespace {
     std::map<const Function*, unsigned> Fkey; //key of F to num
     std::map<const MachineInstr*, unsigned> BBkey; //key BB to num
     std::map<const MachineInstr*, unsigned> MIkey; //key MI to num
-    
+    void writePrologue(const std::string &comment,
+                       const std::string &symbolPrefix, unsigned num);
+    void writeEpilogue(const std::string &symbolPrefix, unsigned num);
+
     bool doInitialization(Module &M);
     void create_BB_to_MInumber_Key(Function &FI);    
     void create_MI_to_number_Key(Function &FI);
-    void writeBBToMImap(Function &FI);
-    void writeLLVMToMImap(Function &FI);
-    void getMappingInfoForFunction::writePrologue(const char * area,    
-						  const char *label,
-						  unsigned FunctionNo);
-    void getMappingInfoForFunction::writeEpilogue(const char *area, 
-						  const char *label,
-						  unsigned FunctionNo);
+    void writeBBToMImap(Function &FI, unsigned num);
+    void writeLLVMToMImap(Function &FI, unsigned num);
     unsigned writeNumber(unsigned X);
   };
 }
 
 /// MappingInfoForFunction -- Static factory method: returns a new
-/// getMappingInfoForFunction Pass object.
+/// getMappingInfoForFunction Pass object, which uses OUT as its
+/// output stream for assembly output. 
 Pass *MappingInfoForFunction(std::ostream &out){
   return (new getMappingInfoForFunction(out));
 }
 
-/// runOnFunction -- Builds up the maps for the given function and then
-/// writes them out as assembly code to the current output stream Out.
+/// runOnFunction -- Builds up the maps for the given function FI and then
+/// writes them out as assembly code to the current output stream OUT.
 /// This is an entry point to the pass, called by the PassManager.
 bool getMappingInfoForFunction::runOnFunction(Function &FI) {
-  // First we build up the maps.
+  // First we build temporary tables used to write out the maps.
   create_BB_to_MInumber_Key(FI);
   create_MI_to_number_Key(FI);
-  unsigned FunctionNo = Fkey[&FI];
+  unsigned num = Fkey[&FI]; // Function number for the current function.
 
-  // Now, print out the maps.
-  writePrologue("BB TO MI MAP", "BBMIMap", FunctionNo);
-  writeBBToMImap(FI);
-  writeEpilogue("BB TO MI MAP", "BBMIMap", FunctionNo);  
-  
-  writePrologue("LLVM I TO MI MAP", "LMIMap", FunctionNo);
-  writeLLVMToMImap(FI);
-  writeEpilogue("LLVM I TO MI MAP", "LMIMap", FunctionNo); 
+  // Now, write out the maps.
+  writeBBToMImap(FI, num);
+  writeLLVMToMImap(FI, num);
+
   return false; 
 }  
 
-void getMappingInfoForFunction::writePrologue(const char *area,
-					      const char *label, 
-					      unsigned FunctionNo){
-  Out << "!" << area << "\n";   
+/// writePrologue -- Output a COMMENT describing the map, then output a
+/// global symbol to start the map named by concatenating SYMBOLPREFIX
+/// and NUM, then output a word containing the length of the map, to the
+/// current output stream Out. This also switches the current section to
+/// .rodata in the assembly output.
+void getMappingInfoForFunction::writePrologue(const std::string &comment,
+                                              const std::string &symbolPrefix,
+                                              unsigned num) {
+  // Comment:
+  Out << "!" << comment << "\n";   
+  // Switch sections:
   Out << "\t.section \".rodata\"\n\t.align 8\n";  
-  Out << "\t.global " << label << FunctionNo << "\n";    
-  Out << "\t.type " << label << FunctionNo << ",#object\n"; 
-  Out << label << FunctionNo << ":\n"; 
-  Out << "\t.word .end_" << label << FunctionNo << "-"
-      << label << FunctionNo << "\n";
+  // Global symbol naming the map:
+  Out << "\t.global " << symbolPrefix << num << "\n";    
+  Out << "\t.type " << symbolPrefix << num << ",#object\n"; 
+  Out << symbolPrefix << num << ":\n"; 
+  // Length word:
+  Out << "\t.word .end_" << symbolPrefix << num << "-"
+      << symbolPrefix << num << "\n";
 }
 
-void getMappingInfoForFunction::writeEpilogue(const char *area,
-					      const char *label,
-					      unsigned FunctionNo){
-  Out << ".end_" << label << FunctionNo << ":\n";    
-  Out << "\t.size " << label << FunctionNo << ", .end_" 
-      << label << FunctionNo << "-" << label 
-      << FunctionNo << "\n\n\n\n";
+/// writeEpilogue -- Outputs a local symbol to end the map named by
+/// concatenating SYMBOLPREFIX and NUM, followed by a .size directive that
+/// gives the size of the map, to the current output stream Out.
+void getMappingInfoForFunction::writeEpilogue(const std::string &symbolPrefix,
+                                              unsigned num) {
+  // Local symbol ending the map:
+  Out << ".end_" << symbolPrefix << num << ":\n";    
+  // Size directive:
+  Out << "\t.size " << symbolPrefix << num << ", .end_" 
+      << symbolPrefix << num << "-" << symbolPrefix 
+      << num << "\n\n\n\n";
 }
 
 /// writeNumber -- Write out the number X as a sequence of .byte
-/// directives to the current output stream Out.
+/// directives to the current output stream Out. This method performs a
+/// run-length encoding of the unsigned integers X that are output.
 unsigned getMappingInfoForFunction::writeNumber(unsigned X) {
   unsigned i=0;
   do {
@@ -173,8 +181,11 @@ void getMappingInfoForFunction::create_MI_to_number_Key(Function &FI) {
 /// the number of the MachineBasicBlock in the function as computed by
 /// create_BB_to_MInumber_Key; and third, the number of MachineInstrs in
 /// the MachineBasicBlock.
-void getMappingInfoForFunction::writeBBToMImap(Function &FI){
+void getMappingInfoForFunction::writeBBToMImap(Function &FI, unsigned num){
   unsigned bb = 0;
+  const std::string MapComment = "BB TO MI MAP";
+  const std::string MapSymbolPrefix = "BBMIMap";
+  writePrologue(MapComment, MapSymbolPrefix, num);
   MachineFunction &MF = MachineFunction::get(&FI);  
   for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();
        BI != BE; ++BI, ++bb) {
@@ -183,6 +194,7 @@ void getMappingInfoForFunction::writeBBToMImap(Function &FI){
     writeNumber(BBkey[miBB[0]]);
     writeNumber(miBB.size());
   }
+  writeEpilogue(MapSymbolPrefix, num);  
 }
 
 /// writeLLVMToMImap -- Output the LLVM I TO MI MAP for the given function
@@ -197,9 +209,11 @@ void getMappingInfoForFunction::writeBBToMImap(Function &FI){
 /// (as reported by MachineCodeForInstruction), and 3) the MachineInstr
 /// number calculated by create_MI_to_number_Key, for each of the
 /// MachineInstrs that correspond to that Instruction.
-void getMappingInfoForFunction::writeLLVMToMImap(Function &FI) {
-
+void getMappingInfoForFunction::writeLLVMToMImap(Function &FI, unsigned num) {
   unsigned bb = 0;
+  const std::string MapComment = "LLVM I TO MI MAP";
+  const std::string MapSymbolPrefix = "LMIMap";
+  writePrologue(MapComment, MapSymbolPrefix, num);
   for (Function::iterator BI = FI.begin(), BE = FI.end(); 
        BI != BE; ++BI, ++bb) {
     unsigned li = 0;
@@ -216,4 +230,5 @@ void getMappingInfoForFunction::writeLLVMToMImap(Function &FI) {
       }
     }
   } 
+  writeEpilogue(MapSymbolPrefix, num); 
 }
