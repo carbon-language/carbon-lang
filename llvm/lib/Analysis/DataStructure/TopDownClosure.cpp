@@ -62,9 +62,11 @@ bool TDDataStructures::runOnModule(Module &M) {
   const DSScalarMap &GGSM = GlobalsGraph->getScalarMap();
   hash_set<DSNode*> Visited;
   for (DSScalarMap::global_iterator I=GGSM.global_begin(), E=GGSM.global_end();
-       I != E; ++I)
-    markReachableFunctionsExternallyAccessible(GGSM.find(*I)->second.getNode(),
-                                               Visited);
+       I != E; ++I) {
+    DSNode *N = GGSM.find(*I)->second.getNode();
+    if (N->isIncomplete())
+      markReachableFunctionsExternallyAccessible(N, Visited);
+  }
 
   // Loop over unresolved call nodes.  Any functions passed into (but not
   // returned!) from unresolvable call nodes may be invoked outside of the
@@ -103,6 +105,13 @@ bool TDDataStructures::runOnModule(Module &M) {
     InlineCallersIntoGraph(*PostOrder.back());
     PostOrder.pop_back();
   }
+
+  // Free the IndCallMap.
+  while (!IndCallMap.empty()) {
+    delete IndCallMap.begin()->second;
+    IndCallMap.erase(IndCallMap.begin());
+  }
+    
 
   ArgsRemainIncomplete.clear();
   GlobalsGraph->removeTriviallyDeadNodes();
@@ -202,8 +211,6 @@ void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
            GI = DSG.getScalarMap().global_begin(),
            E = DSG.getScalarMap().global_end(); GI != E; ++GI)
       RC.getClonedNH(GG.getNodeForValue(*GI));
-
-
   }
 
   DEBUG(std::cerr << "[TD] Inlining callers into '" << DSG.getFunctionNames()
@@ -223,16 +230,21 @@ void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
     do {
       const DSCallSite &CS = *EdgesFromCaller.back().CS;
       Function &CF = *EdgesFromCaller.back().CalledFunction;
-      DEBUG(std::cerr << "   [TD] Inlining graph for call to Fn '"
-            << CF.getName() << "' from Fn '"
-            << CS.getCallSite().getInstruction()->
-                            getParent()->getParent()->getName()
-            << "': " << CF.getFunctionType()->getNumParams()
+      DEBUG(std::cerr << "   [TD] Inlining graph into Fn '"
+            << CF.getName() << "' from ");
+      if (CallerGraph.getReturnNodes().empty())
+        DEBUG(std::cerr << "SYNTHESIZED INDIRECT GRAPH");
+      else
+        DEBUG (std::cerr << "Fn '"
+               << CS.getCallSite().getInstruction()->
+               getParent()->getParent()->getName() << "'");
+      DEBUG(std::cerr << ": " << CF.getFunctionType()->getNumParams()
             << " args\n");
       
       // Get the formal argument and return nodes for the called function and
       // merge them with the cloned subgraph.
-      RC.mergeCallSite(DSG.getCallSiteForArguments(CF), CS);
+      DSCallSite T1 = DSG.getCallSiteForArguments(CF);
+      RC.mergeCallSite(T1, CS);
       ++NumTDInlines;
 
       EdgesFromCaller.pop_back();
@@ -276,19 +288,98 @@ void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
   // edges to the CallerEdges structure for each callee.
   for (DSGraph::fc_iterator CI = DSG.fc_begin(), E = DSG.fc_end();
        CI != E; ++CI) {
+
+    // Handle direct calls efficiently.
+    if (CI->isDirectCall()) {
+      if (!CI->getCalleeFunc()->isExternal() &&
+          !DSG.getReturnNodes().count(CI->getCalleeFunc()))
+        CallerEdges[&getDSGraph(*CI->getCalleeFunc())]
+          .push_back(CallerCallEdge(&DSG, &*CI, CI->getCalleeFunc()));
+      continue;
+    }
+
     Instruction *CallI = CI->getCallSite().getInstruction();
     // For each function in the invoked function list at this call site...
     std::pair<BUDataStructures::ActualCalleesTy::const_iterator,
               BUDataStructures::ActualCalleesTy::const_iterator> 
       IP = ActualCallees.equal_range(CallI);
-    // Loop over each actual callee at this call site
-    for (BUDataStructures::ActualCalleesTy::const_iterator I = IP.first;
-         I != IP.second; ++I) {
-      DSGraph& CalleeGraph = getDSGraph(*I->second);
-      if (&CalleeGraph != &DSG)
-        CallerEdges[&CalleeGraph].push_back(CallerCallEdge(&DSG, &*CI,
-                                                           I->second));
+
+    // Skip over all calls to this graph (SCC calls).
+    while (IP.first != IP.second && &getDSGraph(*IP.first->second) == &DSG)
+      ++IP.first;
+
+    // All SCC calls?
+    if (IP.first == IP.second) continue;
+
+    Function *FirstCallee = IP.first->second;
+    ++IP.first;
+
+    // Skip over more SCC calls.
+    while (IP.first != IP.second && &getDSGraph(*IP.first->second) == &DSG)
+      ++IP.first;
+
+    // If there is exactly one callee from this call site, remember the edge in
+    // CallerEdges.
+    if (IP.first == IP.second) {
+      if (!FirstCallee->isExternal())
+        CallerEdges[&getDSGraph(*FirstCallee)]
+          .push_back(CallerCallEdge(&DSG, &*CI, FirstCallee));
+      continue;
     }
+
+    // Otherwise, there are multiple callees from this call site, so it must be
+    // an indirect call.  Chances are that there will be other call sites with
+    // this set of targets.  If so, we don't want to do M*N inlining operations,
+    // so we build up a new, private, graph that represents the calls of all
+    // calls to this set of functions.
+    std::vector<Function*> Callees;
+    IP = ActualCallees.equal_range(CallI);
+    for (BUDataStructures::ActualCalleesTy::const_iterator I = IP.first;
+         I != IP.second; ++I)
+      if (!I->second->isExternal())
+        Callees.push_back(I->second);
+    std::sort(Callees.begin(), Callees.end());
+
+    std::map<std::vector<Function*>, DSGraph*>::iterator IndCallRecI =
+      IndCallMap.lower_bound(Callees);
+
+    DSGraph *IndCallGraph;
+
+    // If we already have this graph, recycle it.
+    if (IndCallRecI != IndCallMap.end() && IndCallRecI->first == Callees) {
+      std::cerr << "  [TD] *** Reuse of indcall graph for " << Callees.size()
+                << " callees!\n";
+      IndCallGraph = IndCallRecI->second;
+    } else {
+      // Otherwise, create a new DSGraph to represent this.
+      IndCallGraph = new DSGraph(DSG.getGlobalECs(), DSG.getTargetData());
+
+      // Make a nullary dummy call site, which will eventually get some content
+      // merged into it.  The actual callee function doesn't matter here, so we
+      // just pass it something to keep the ctor happy.
+      std::vector<DSNodeHandle> ArgDummyVec;
+      DSCallSite DummyCS(CI->getCallSite(), DSNodeHandle(), Callees[0]/*dummy*/,
+                         ArgDummyVec);
+      IndCallGraph->getFunctionCalls().push_back(DummyCS);
+
+      IndCallRecI = IndCallMap.insert(IndCallRecI,
+                                      std::make_pair(Callees, IndCallGraph));
+
+      // Additionally, make sure that each of the callees inlines this graph
+      // exactly once.
+      DSCallSite *NCS = &IndCallGraph->getFunctionCalls().front();
+      for (unsigned i = 0, e = Callees.size(); i != e; ++i) {
+        DSGraph& CalleeGraph = getDSGraph(*Callees[i]);
+        if (&CalleeGraph != &DSG)
+          CallerEdges[&CalleeGraph].push_back(CallerCallEdge(IndCallGraph, NCS,
+                                                             Callees[i]));
+      }
+    }
+
+    // Now that we know which graph to use for this, merge the caller
+    // information into the graph, based on information from the call site.
+    ReachabilityCloner RC(*IndCallGraph, DSG, 0);
+    RC.mergeCallSite(IndCallGraph->getFunctionCalls().front(), *CI);
   }
 }
 
