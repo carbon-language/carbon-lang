@@ -53,7 +53,7 @@ static inline string GetFileNameRoot(const string &InputFilename) {
   return outputFilename;
 }
 
-static void insertTraceCodeFor(Module *M) {
+static void insertTraceCodeFor(Module &M) {
   PassManager Passes;
 
   // Insert trace code in all functions in the module
@@ -70,7 +70,7 @@ static void insertTraceCodeFor(Module *M) {
   }
   
   // Eliminate duplication in constant pool
-  Passes.add(createDynamicConstantMergePass());
+  Passes.add(createConstantMergePass());
 
   // Run passes to insert and clean up trace code...
   Passes.run(M);
@@ -99,7 +99,7 @@ static void insertTraceCodeFor(Module *M) {
     // compile should still succeed, just the native linker will probably fail.
     //
     std::auto_ptr<Module> TraceRoutines(TraceModule);
-    if (LinkModules(M, TraceRoutines.get(), &ErrorMessage))
+    if (LinkModules(&M, TraceRoutines.get(), &ErrorMessage))
       cerr << "Warning: Error linking in trace routines: "
            << ErrorMessage << "\n";
   }
@@ -116,7 +116,7 @@ static void insertTraceCodeFor(Module *M) {
     } else {
       cerr << "Emitting trace code to '" << TraceFilename
            << "' for comparison...\n";
-      WriteBytecodeToFile(M, Out);
+      WriteBytecodeToFile(&M, Out);
     }
   }
 
@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
   }
 
   if (TraceValues != TraceOff)    // If tracing enabled...
-    insertTraceCodeFor(M.get());  // Hack up module before using passmanager...
+    insertTraceCodeFor(*M.get()); // Hack up module before using passmanager...
 
   // Build up all of the passes that we want to do to the module...
   PassManager Passes;
@@ -208,7 +208,7 @@ int main(int argc, char **argv) {
   Target.addPassesToEmitAssembly(Passes, *Out);
   
   // Run our queue of passes all at once now, efficiently.
-  Passes.run(M.get());
+  Passes.run(*M.get());
 
   if (Out != &std::cout) delete Out;
 

@@ -53,8 +53,8 @@ public:
 private:
   DomSetMapType Doms;
 
-  void calcForwardDominatorSet(Function *F);
-  void calcPostDominatorSet(Function *F);
+  void calcForwardDominatorSet(Function &F);
+  void calcPostDominatorSet(Function &F);
 public:
   // DominatorSet ctor - Build either the dominator set or the post-dominator
   // set for a function... 
@@ -69,7 +69,7 @@ public:
     else return "Dominator Set Construction";
   }
 
-  virtual bool runOnFunction(Function *F);
+  virtual bool runOnFunction(Function &F);
 
   // Accessor interface:
   typedef DomSetMapType::const_iterator const_iterator;
@@ -132,7 +132,7 @@ public:
     else return "Immediate Dominators Construction";
   }
 
-  virtual bool runOnFunction(Function *F) {
+  virtual bool runOnFunction(Function &F) {
     IDoms.clear();     // Reset from the last time we were run...
     DominatorSet *DS;
     if (isPostDominator())
@@ -228,7 +228,7 @@ public:
     else return "Dominator Tree Construction";
   }
 
-  virtual bool runOnFunction(Function *F) {
+  virtual bool runOnFunction(Function &F) {
     reset();
     DominatorSet *DS;
     if (isPostDominator())
@@ -289,7 +289,7 @@ public:
     else return "Dominance Frontier Construction";
   }
 
-  virtual bool runOnFunction(Function *) {
+  virtual bool runOnFunction(Function &) {
     Frontiers.clear();
     DominatorTree *DT;
     if (isPostDominator())

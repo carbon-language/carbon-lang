@@ -118,7 +118,7 @@ public:
   virtual const char *getPassName() const { return "Call Graph Construction"; }
 
   // run - Compute the call graph for the specified module.
-  virtual bool run(Module *TheModule);
+  virtual bool run(Module &M);
 
   // getAnalysisUsage - This obviously provides a call graph
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {

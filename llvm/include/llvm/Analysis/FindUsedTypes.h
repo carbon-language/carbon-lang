@@ -51,7 +51,7 @@ private:
 public:
   // run - This incorporates all types used by the specified module
   //
-  bool run(Module *M);
+  bool run(Module &M);
 
   // getAnalysisUsage - Of course, we provide ourself...
   //

@@ -12,7 +12,24 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/iOther.h"
 #include "llvm/Argument.h"
-#include "ValueHolderImpl.h"
+#include "SymbolTableListTraitsImpl.h"
+
+iplist<BasicBlock> &ilist_traits<BasicBlock>::getList(Function *F) {
+  return F->getBasicBlockList();
+}
+
+Argument *ilist_traits<Argument>::createNode() {
+  return new Argument(Type::IntTy);
+}
+
+iplist<Argument> &ilist_traits<Argument>::getList(Function *F) {
+  return F->getArgumentList();
+}
+
+// Explicit instantiations of SymbolTableListTraits since some of the methods
+// are not in the public header file...
+template SymbolTableListTraits<Argument, Function, Function>;
+template SymbolTableListTraits<BasicBlock, Function, Function>;
 
 //===----------------------------------------------------------------------===//
 // Argument Implementation
@@ -28,36 +45,28 @@ void Argument::setName(const std::string &name, SymbolTable *ST) {
   if (P && hasName()) P->getSymbolTable()->insert(this);
 }
 
-
-
 //===----------------------------------------------------------------------===//
 // Function Implementation
 //===----------------------------------------------------------------------===//
 
 
-// Instantiate Templates - This ugliness is the price we have to pay
-// for having a ValueHolderImpl.h file seperate from ValueHolder.h!  :(
-//
-template class ValueHolder<Argument  , Function, Function>;
-template class ValueHolder<BasicBlock, Function, Function>;
-
 Function::Function(const FunctionType *Ty, bool isInternal,
                    const std::string &name)
-  : GlobalValue(PointerType::get(Ty), Value::FunctionVal, isInternal, name),
-    BasicBlocks(this), ArgumentList(this, this) {
+  : GlobalValue(PointerType::get(Ty), Value::FunctionVal, isInternal, name) {
+  BasicBlocks.setItemParent(this);
+  BasicBlocks.setParent(this);
+  ArgumentList.setItemParent(this);
+  ArgumentList.setParent(this);
   ParentSymTab = SymTab = 0;
 }
 
 Function::~Function() {
   dropAllReferences();    // After this it is safe to delete instructions.
 
-  // TODO: Should remove from the end, not the beginning of vector!
-  iterator BI = begin();
-  while ((BI = begin()) != end())
-    delete BasicBlocks.remove(BI);
+  BasicBlocks.clear();    // Delete all basic blocks...
 
   // Delete all of the method arguments and unlink from symbol table...
-  ArgumentList.delete_all();
+  ArgumentList.clear();
   ArgumentList.setParent(0);
   delete SymTab;
 }
@@ -118,7 +127,8 @@ bool Function::hasSymbolTable() const {
 // delete.
 //
 void Function::dropAllReferences() {
-  for_each(begin(), end(), std::mem_fun(&BasicBlock::dropAllReferences));
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    I->dropAllReferences();
 }
 
 //===----------------------------------------------------------------------===//

@@ -1489,18 +1489,17 @@ namespace {
       AU.addRequired(FunctionLiveVarInfo::ID);
     }
     
-    bool runOnFunction(Function *F);
+    bool runOnFunction(Function &F);
   };
 } // end anonymous namespace
 
 
-bool
-InstructionSchedulingWithSSA::runOnFunction(Function *M)
+bool InstructionSchedulingWithSSA::runOnFunction(Function &F)
 {
   if (SchedDebugLevel == Sched_Disable)
     return false;
   
-  SchedGraphSet graphSet(M, target);	
+  SchedGraphSet graphSet(&F, target);	
   
   if (SchedDebugLevel >= Sched_PrintSchedGraphs)
     {
@@ -1520,7 +1519,7 @@ InstructionSchedulingWithSSA::runOnFunction(Function *M)
         cerr << "\n*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
       
       // expensive!
-      SchedPriorities schedPrio(M, graph,getAnalysis<FunctionLiveVarInfo>());
+      SchedPriorities schedPrio(&F, graph,getAnalysis<FunctionLiveVarInfo>());
       SchedulingManager S(target, graph, schedPrio);
           
       ChooseInstructionsForDelaySlots(S, bb, graph); // modifies graph
@@ -1533,7 +1532,7 @@ InstructionSchedulingWithSSA::runOnFunction(Function *M)
   if (SchedDebugLevel >= Sched_PrintMachineCode)
     {
       cerr << "\n*** Machine instructions after INSTRUCTION SCHEDULING\n";
-      MachineCodeForMethod::get(M).dump();
+      MachineCodeForMethod::get(&F).dump();
     }
   
   return false;

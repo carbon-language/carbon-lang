@@ -42,7 +42,7 @@ namespace {
   struct PiNodeInserter : public FunctionPass {
     const char *getPassName() const { return "Pi Node Insertion"; }
     
-    virtual bool runOnFunction(Function *F);
+    virtual bool runOnFunction(Function &F);
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
@@ -61,11 +61,10 @@ namespace {
 Pass *createPiNodeInsertionPass() { return new PiNodeInserter(); }
 
 
-bool PiNodeInserter::runOnFunction(Function *F) {
+bool PiNodeInserter::runOnFunction(Function &F) {
   bool Changed = false;
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-    BasicBlock *BB = *I;
-    TerminatorInst *TI = BB->getTerminator();
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    TerminatorInst *TI = I->getTerminator();
     
     // FIXME: Insert PI nodes for switch statements too
 
@@ -112,8 +111,7 @@ bool PiNodeInserter::runOnFunction(Function *F) {
 }
 
 
-// alreadyHasPiNodeFor - Return true if there is already a Pi node in BB for
-// V.
+// alreadyHasPiNodeFor - Return true if there is already a Pi node in BB for V.
 static bool alreadyHasPiNodeFor(Value *V, BasicBlock *BB) {
   for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I)
     if (PHINode *PN = dyn_cast<PHINode>(*I))

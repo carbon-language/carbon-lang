@@ -84,29 +84,20 @@ void LiveRangeInfo::constructLiveRanges() {
 
   // first find the live ranges for all incoming args of the function since
   // those LRs start from the start of the function
-      
-  // get the argument list
-  const Function::ArgumentListType& ArgList = Meth->getArgumentList();
-
-  Function::ArgumentListType::const_iterator ArgIt = ArgList.begin();
-  for( ; ArgIt != ArgList.end() ; ++ArgIt) {     // for each argument
-    LiveRange * ArgRange = new LiveRange();      // creates a new LR and 
-    const Value *Val = (const Value *) *ArgIt;
-
-    ArgRange->insert(Val);     // add the arg (def) to it
-    LiveRangeMap[Val] = ArgRange;
+  for (Function::const_aiterator AI = Meth->abegin(); AI != Meth->aend(); ++AI){
+    LiveRange *ArgRange = new LiveRange();      // creates a new LR and 
+    ArgRange->insert(AI);     // add the arg (def) to it
+    LiveRangeMap[AI] = ArgRange;
 
     // create a temp machine op to find the register class of value
     //const MachineOperand Op(MachineOperand::MO_VirtualRegister);
 
-    unsigned rcid = MRI.getRegClassIDOfValue( Val );
-    ArgRange->setRegClass(RegClassList[ rcid ] );
+    unsigned rcid = MRI.getRegClassIDOfValue(AI);
+    ArgRange->setRegClass(RegClassList[rcid]);
 
     			   
-    if( DEBUG_RA > 1) {     
-      cerr << " adding LiveRange for argument "
-           << RAV((const Value *)*ArgIt) << "\n";
-    }
+    if( DEBUG_RA > 1)
+      cerr << " adding LiveRange for argument " << RAV(AI) << "\n";
   }
 
   // Now suggest hardware registers for these function args 
@@ -123,7 +114,7 @@ void LiveRangeInfo::constructLiveRanges() {
     // the same Value in machine instructions.
 
     // get the iterator for machine instructions
-    const MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
+    const MachineCodeForBasicBlock& MIVec = BBI->getMachineInstrVec();
 
     // iterate over all the machine instructions in BB
     for(MachineCodeForBasicBlock::const_iterator MInstIterator = MIVec.begin();
@@ -275,7 +266,7 @@ void LiveRangeInfo::coalesceLRs()
       BBI != BBE; ++BBI) {
 
     // get the iterator for machine instructions
-    const MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
+    const MachineCodeForBasicBlock& MIVec = BBI->getMachineInstrVec();
     MachineCodeForBasicBlock::const_iterator MInstIterator = MIVec.begin();
 
     // iterate over all the machine instructions in BB

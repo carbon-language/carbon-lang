@@ -47,9 +47,10 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   // info into a vector...
   //
   std::vector<InductionVariable> IndVars;    // Induction variables for block
-  for (BasicBlock::iterator I = Header->begin(); 
-       PHINode *PN = dyn_cast<PHINode>(*I); ++I)
+  BasicBlock::iterator AfterPHIIt = Header->begin();
+  for (; PHINode *PN = dyn_cast<PHINode>(&*AfterPHIIt); ++AfterPHIIt)
     IndVars.push_back(InductionVariable(PN, Loops));
+  // AfterPHIIt now points to first nonphi instruction...
 
   // If there are no phi nodes in this basic block, there can't be indvars...
   if (IndVars.empty()) return Changed;
@@ -77,7 +78,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
     PHINode *PN = new PHINode(Type::UIntTy, "cann-indvar");
 
     // Insert the phi node at the end of the other phi nodes...
-    Header->getInstList().insert(Header->begin()+IndVars.size(), PN);
+    AfterPHIIt = ++Header->getInstList().insert(AfterPHIIt, PN);
 
     // Create the increment instruction to add one to the counter...
     Instruction *Add = BinaryOperator::create(Instruction::Add, PN,
@@ -85,7 +86,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
                                               "add1-indvar");
 
     // Insert the add instruction after all of the PHI nodes...
-    Header->getInstList().insert(Header->begin()+(IndVars.size()+1), Add);
+    Header->getInstList().insert(AfterPHIIt, Add);
 
     // Figure out which block is incoming and which is the backedge for the loop
     BasicBlock *Incoming, *BackEdgeBlock;
@@ -123,7 +124,6 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   // Loop through and replace all of the auxillary induction variables with
   // references to the primary induction variable...
   //
-  unsigned InsertPos = IndVars.size();
   for (unsigned i = 0; i < IndVars.size(); ++i) {
     InductionVariable *IV = &IndVars[i];
 
@@ -139,12 +139,11 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
 
         // If the types are not compatible, insert a cast now...
         if (Val->getType() != IV->Step->getType())
-          Val = InsertCast(Val, IV->Step->getType(),
-                           Header->begin()+InsertPos++);
+          Val = InsertCast(Val, IV->Step->getType(), AfterPHIIt);
 
         Val = BinaryOperator::create(Instruction::Mul, Val, IV->Step, Name);
         // Insert the phi node at the end of the other phi nodes...
-        Header->getInstList().insert(Header->begin()+InsertPos++, Val);
+        Header->getInstList().insert(AfterPHIIt, Val);
       }
 
       if (!isa<Constant>(IV->Start) ||   // If the start != 0
@@ -154,18 +153,16 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
 
         // If the types are not compatible, insert a cast now...
         if (Val->getType() != IV->Start->getType())
-          Val = InsertCast(Val, IV->Start->getType(),
-                           Header->begin()+InsertPos++);
+          Val = InsertCast(Val, IV->Start->getType(), AfterPHIIt);
 
         Val = BinaryOperator::create(Instruction::Add, Val, IV->Start, Name);
         // Insert the phi node at the end of the other phi nodes...
-        Header->getInstList().insert(Header->begin()+InsertPos++, Val);
+        Header->getInstList().insert(AfterPHIIt, Val);
       }
 
       // If the PHI node has a different type than val is, insert a cast now...
       if (Val->getType() != IV->Phi->getType())
-          Val = InsertCast(Val, IV->Phi->getType(),
-                           Header->begin()+InsertPos++);
+        Val = InsertCast(Val, IV->Phi->getType(), AfterPHIIt);
       
       // Replace all uses of the old PHI node with the new computed value...
       IV->Phi->replaceAllUsesWith(Val);
@@ -176,9 +173,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
       Val->setName(OldName);
 
       // Delete the old, now unused, phi node...
-      Header->getInstList().remove(IV->Phi);
-      delete IV->Phi;
-      InsertPos--;            // Deleted an instr, decrement insert position
+      Header->getInstList().erase(IV->Phi);
       Changed = true;
       ++NumRemoved;
     }
@@ -193,7 +188,7 @@ namespace {
       return "Induction Variable Cannonicalize";
     }
 
-    virtual bool runOnFunction(Function *F) {
+    virtual bool runOnFunction(Function &) {
       LoopInfo &LI = getAnalysis<LoopInfo>();
 
       // Induction Variables live in the header nodes of loops

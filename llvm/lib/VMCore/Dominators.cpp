@@ -21,7 +21,7 @@ using std::set;
 AnalysisID DominatorSet::ID(AnalysisID::create<DominatorSet>(), true);
 AnalysisID DominatorSet::PostDomID(AnalysisID::create<DominatorSet>(), true);
 
-bool DominatorSet::runOnFunction(Function *F) {
+bool DominatorSet::runOnFunction(Function &F) {
   Doms.clear();   // Reset from the last time we were run...
 
   if (isPostDominator())
@@ -40,17 +40,17 @@ bool DominatorSet::dominates(Instruction *A, Instruction *B) const {
   
   // Loop through the basic block until we find A or B.
   BasicBlock::iterator I = BBA->begin();
-  for (; *I != A && *I != B; ++I) /*empty*/;
+  for (; &*I != A && &*I != B; ++I) /*empty*/;
   
   // A dominates B if it is found first in the basic block...
-  return *I == A;
+  return &*I == A;
 }
 
 // calcForwardDominatorSet - This method calculates the forward dominator sets
 // for the specified function.
 //
-void DominatorSet::calcForwardDominatorSet(Function *M) {
-  Root = M->getEntryNode();
+void DominatorSet::calcForwardDominatorSet(Function &F) {
+  Root = &F.getEntryNode();
   assert(pred_begin(Root) == pred_end(Root) &&
 	 "Root node has predecessors in function!");
 
@@ -59,7 +59,7 @@ void DominatorSet::calcForwardDominatorSet(Function *M) {
     Changed = false;
 
     DomSetType WorkingSet;
-    df_iterator<Function*> It = df_begin(M), End = df_end(M);
+    df_iterator<Function*> It = df_begin(&F), End = df_end(&F);
     for ( ; It != End; ++It) {
       BasicBlock *BB = *It;
       pred_iterator PI = pred_begin(BB), PEnd = pred_end(BB);
@@ -93,7 +93,7 @@ void DominatorSet::calcForwardDominatorSet(Function *M) {
 // only have a single exit node (return stmt), then calculates the post
 // dominance sets for the function.
 //
-void DominatorSet::calcPostDominatorSet(Function *F) {
+void DominatorSet::calcPostDominatorSet(Function &F) {
   // Since we require that the unify all exit nodes pass has been run, we know
   // that there can be at most one return instruction in the function left.
   // Get it.
@@ -101,8 +101,8 @@ void DominatorSet::calcPostDominatorSet(Function *F) {
   Root = getAnalysis<UnifyFunctionExitNodes>().getExitNode();
 
   if (Root == 0) {  // No exit node for the function?  Postdomsets are all empty
-    for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
-      Doms[*FI] = DomSetType();
+    for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
+      Doms[FI] = DomSetType();
     return;
   }
 

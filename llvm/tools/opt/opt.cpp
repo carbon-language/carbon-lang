@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
   Passes.add(new WriteBytecodePass(Out, Out != &std::cout));
 
   // Now that we have all of the passes ready, run them.
-  if (Passes.run(M.get()) && !Quiet)
+  if (Passes.run(*M.get()) && !Quiet)
     cerr << "Program modified.\n";
 
   return 0;

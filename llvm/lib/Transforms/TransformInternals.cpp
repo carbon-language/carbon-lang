@@ -140,12 +140,12 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
         Offset -= Index*ElSize;               // Consume part of the offset
 
         if (BI) {              // Generate code?
-          BasicBlock *BB = (**BI)->getParent();
+          BasicBlock *BB = (*BI)->getParent();
           if (Expr.Var->getType() != Type::UIntTy) {
             CastInst *IdxCast = new CastInst(Expr.Var, Type::UIntTy);
             if (Expr.Var->hasName())
               IdxCast->setName(Expr.Var->getName()+"-idxcast");
-            *BI = BB->getInstList().insert(*BI, IdxCast)+1;
+            *BI = ++BB->getInstList().insert(*BI, IdxCast);
             Expr.Var = IdxCast;
           }
 
@@ -158,7 +158,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
             if (Expr.Var->hasName())
               Scaler->setName(Expr.Var->getName()+"-scale");
 
-            *BI = BB->getInstList().insert(*BI, Scaler)+1;
+            *BI = ++BB->getInstList().insert(*BI, Scaler);
             Expr.Var = Scaler;
           }
 
@@ -168,7 +168,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
                                                            Expr.Var, IndexAmt);
             if (Expr.Var->hasName())
               Offseter->setName(Expr.Var->getName()+"-offset");
-            *BI = BB->getInstList().insert(*BI, Offseter)+1;
+            *BI = ++BB->getInstList().insert(*BI, Offseter);
             Expr.Var = Offseter;
           }
         }

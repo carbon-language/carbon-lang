@@ -79,16 +79,16 @@ public:
   // getLoopFor - Return the inner most loop that BB lives in.  If a basic block
   // is in no loop (for example the entry node), null is returned.
   //
-  const Loop *getLoopFor(BasicBlock *BB) const {
-    std::map<BasicBlock *, Loop*>::const_iterator I = BBMap.find(BB);
+  const Loop *getLoopFor(const BasicBlock *BB) const {
+    std::map<BasicBlock *, Loop*>::const_iterator I=BBMap.find((BasicBlock*)BB);
     return I != BBMap.end() ? I->second : 0;
   }
-  inline const Loop *operator[](BasicBlock *BB) const {
+  inline const Loop *operator[](const BasicBlock *BB) const {
     return getLoopFor(BB);
   }
 
   // getLoopDepth - Return the loop nesting level of the specified block...
-  unsigned getLoopDepth(BasicBlock *BB) const {
+  unsigned getLoopDepth(const BasicBlock *BB) const {
     const Loop *L = getLoopFor(BB);
     return L ? L->getLoopDepth() : 0;
   }
@@ -105,7 +105,7 @@ public:
 #endif
 
   // runOnFunction - Pass framework implementation
-  virtual bool runOnFunction(Function *F);
+  virtual bool runOnFunction(Function &F);
 
   virtual void releaseMemory();
 

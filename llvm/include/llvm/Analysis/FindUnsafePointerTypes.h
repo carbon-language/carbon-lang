@@ -41,7 +41,7 @@ public:
   // values of various types.  If they are deemed to be 'unsafe' note that the
   // type is not safe to transform.
   //
-  virtual bool run(Module *M);
+  virtual bool run(Module &M);
 
   // printResults - Loop over the results of the analysis, printing out unsafe
   // types.

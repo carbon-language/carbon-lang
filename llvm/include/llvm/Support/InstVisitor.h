@@ -57,7 +57,7 @@ class AllocationInst; class MemAccessInst;
 
 
 #define DELEGATE(CLASS_TO_VISIT) \
-  return ((SubClass*)this)->visit##CLASS_TO_VISIT((CLASS_TO_VISIT*)I)
+  return ((SubClass*)this)->visit##CLASS_TO_VISIT((CLASS_TO_VISIT&)I)
 
 
 template<typename SubClass, typename RetTy=void>
@@ -78,26 +78,32 @@ struct InstVisitor {
 
   // Define visitors for modules, functions and basic blocks...
   //
-  void visit(Module *M) {
+  void visit(Module &M) {
     ((SubClass*)this)->visitModule(M);
-    visit(M->begin(), M->end());
+    visit(M.begin(), M.end());
   }
-  void visit(Function *F) {
+  void visit(Function &F) {
     ((SubClass*)this)->visitFunction(F);
-    visit(F->begin(), F->end());
+    visit(F.begin(), F.end());
   }
-  void visit(BasicBlock *BB) {
+  void visit(BasicBlock &BB) {
     ((SubClass*)this)->visitBasicBlock(BB);
-    visit(BB->begin(), BB->end());
+    visit(BB.begin(), BB.end());
   }
+
+  // Forwarding functions so that the user can visit with pointers AND refs.
+  void visit(Module       *M)  { visit(*M); }
+  void visit(Function     *F)  { visit(*F); }
+  void visit(BasicBlock   *BB) { visit(*BB); }
+  RetTy visit(Instruction *I)  { return visit(*I); }
 
   // visit - Finally, code to visit an instruction...
   //
-  RetTy visit(Instruction *I) {
-    switch (I->getOpcode()) {
+  RetTy visit(Instruction &I) {
+    switch (I.getOpcode()) {
       // Build the switch statement using the Instruction.def file...
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
-    case Instruction::OPCODE:return ((SubClass*)this)->visit##OPCODE((CLASS*)I);
+    case Instruction::OPCODE:return ((SubClass*)this)->visit##OPCODE((CLASS&)I);
 #include "llvm/Instruction.def"
 
     default: assert(0 && "Unknown instruction type encountered!");
@@ -116,9 +122,9 @@ struct InstVisitor {
   // When visiting a module, function or basic block directly, these methods get
   // called to indicate when transitioning into a new unit.
   //
-  void visitModule    (Module *M) {}
-  void visitFunction  (Function *F) {}
-  void visitBasicBlock(BasicBlock *BB) {}
+  void visitModule    (Module &M) {}
+  void visitFunction  (Function &F) {}
+  void visitBasicBlock(BasicBlock &BB) {}
 
 
   // Define instruction specific visitor functions that can be overridden to
@@ -133,49 +139,49 @@ struct InstVisitor {
   // this, we do not autoexpand "Other" instructions, we do it manually.
   //
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
-    RetTy visit##OPCODE(CLASS *I) { DELEGATE(CLASS); }
+    RetTy visit##OPCODE(CLASS &I) { DELEGATE(CLASS); }
 #define HANDLE_OTHER_INST(NUM, OPCODE, CLASS)   // Ignore "other" instructions
 #include "llvm/Instruction.def"
 
   // Implement all "other" instructions, except for PHINode
-  RetTy visitCast(CastInst *I)       { DELEGATE(CastInst);    }
-  RetTy visitCall(CallInst *I)       { DELEGATE(CallInst);    }
-  RetTy visitShr(ShiftInst *I)       { DELEGATE(ShiftInst);   }
-  RetTy visitShl(ShiftInst *I)       { DELEGATE(ShiftInst);   }
-  RetTy visitUserOp1(Instruction *I) { DELEGATE(Instruction); }
-  RetTy visitUserOp2(Instruction *I) { DELEGATE(Instruction); }
+  RetTy visitCast(CastInst &I)       { DELEGATE(CastInst);    }
+  RetTy visitCall(CallInst &I)       { DELEGATE(CallInst);    }
+  RetTy visitShr(ShiftInst &I)       { DELEGATE(ShiftInst);   }
+  RetTy visitShl(ShiftInst &I)       { DELEGATE(ShiftInst);   }
+  RetTy visitUserOp1(Instruction &I) { DELEGATE(Instruction); }
+  RetTy visitUserOp2(Instruction &I) { DELEGATE(Instruction); }
 
   
   // Specific Instruction type classes... note that all of the casts are
   // neccesary because we use the instruction classes as opaque types...
   //
-  RetTy visitReturnInst(ReturnInst *I)              { DELEGATE(TerminatorInst);}
-  RetTy visitBranchInst(BranchInst *I)              { DELEGATE(TerminatorInst);}
-  RetTy visitSwitchInst(SwitchInst *I)              { DELEGATE(TerminatorInst);}
-  RetTy visitInvokeInst(InvokeInst *I)              { DELEGATE(TerminatorInst);}
-  RetTy visitGenericUnaryInst(GenericUnaryInst *I)  { DELEGATE(UnaryOperator); }
-  RetTy visitGenericBinaryInst(GenericBinaryInst *I){ DELEGATE(BinaryOperator);}
-  RetTy visitSetCondInst(SetCondInst *I)            { DELEGATE(BinaryOperator);}
-  RetTy visitMallocInst(MallocInst *I)              { DELEGATE(AllocationInst);}
-  RetTy visitAllocaInst(AllocaInst *I)              { DELEGATE(AllocationInst);}
-  RetTy visitFreeInst(FreeInst   *I)                { DELEGATE(Instruction); }
-  RetTy visitLoadInst(LoadInst   *I)                { DELEGATE(MemAccessInst); }
-  RetTy visitStoreInst(StoreInst  *I)               { DELEGATE(MemAccessInst); }
-  RetTy visitGetElementPtrInst(GetElementPtrInst *I){ DELEGATE(MemAccessInst); }
-  RetTy visitPHINode(PHINode    *I)                 { DELEGATE(Instruction); }
-  RetTy visitCastInst(CastInst   *I)                { DELEGATE(Instruction); }
-  RetTy visitCallInst(CallInst   *I)                { DELEGATE(Instruction); }
-  RetTy visitShiftInst(ShiftInst  *I)               { DELEGATE(Instruction); }
+  RetTy visitReturnInst(ReturnInst &I)              { DELEGATE(TerminatorInst);}
+  RetTy visitBranchInst(BranchInst &I)              { DELEGATE(TerminatorInst);}
+  RetTy visitSwitchInst(SwitchInst &I)              { DELEGATE(TerminatorInst);}
+  RetTy visitInvokeInst(InvokeInst &I)              { DELEGATE(TerminatorInst);}
+  RetTy visitGenericUnaryInst(GenericUnaryInst &I)  { DELEGATE(UnaryOperator); }
+  RetTy visitGenericBinaryInst(GenericBinaryInst &I){ DELEGATE(BinaryOperator);}
+  RetTy visitSetCondInst(SetCondInst &I)            { DELEGATE(BinaryOperator);}
+  RetTy visitMallocInst(MallocInst &I)              { DELEGATE(AllocationInst);}
+  RetTy visitAllocaInst(AllocaInst &I)              { DELEGATE(AllocationInst);}
+  RetTy visitFreeInst(FreeInst   &I)                { DELEGATE(Instruction); }
+  RetTy visitLoadInst(LoadInst   &I)                { DELEGATE(MemAccessInst); }
+  RetTy visitStoreInst(StoreInst  &I)               { DELEGATE(MemAccessInst); }
+  RetTy visitGetElementPtrInst(GetElementPtrInst &I){ DELEGATE(MemAccessInst); }
+  RetTy visitPHINode(PHINode    &I)                 { DELEGATE(Instruction); }
+  RetTy visitCastInst(CastInst   &I)                { DELEGATE(Instruction); }
+  RetTy visitCallInst(CallInst   &I)                { DELEGATE(Instruction); }
+  RetTy visitShiftInst(ShiftInst  &I)               { DELEGATE(Instruction); }
 
   // Next level propogators... if the user does not overload a specific
   // instruction type, they can overload one of these to get the whole class
   // of instructions...
   //
-  RetTy visitTerminatorInst(TerminatorInst *I) { DELEGATE(Instruction); }
-  RetTy visitUnaryOperator (UnaryOperator  *I) { DELEGATE(Instruction); }
-  RetTy visitBinaryOperator(BinaryOperator *I) { DELEGATE(Instruction); }
-  RetTy visitAllocationInst(AllocationInst *I) { DELEGATE(Instruction); }
-  RetTy visitMemAccessInst (MemAccessInst  *I) { DELEGATE(Instruction); }
+  RetTy visitTerminatorInst(TerminatorInst &I) { DELEGATE(Instruction); }
+  RetTy visitUnaryOperator (UnaryOperator  &I) { DELEGATE(Instruction); }
+  RetTy visitBinaryOperator(BinaryOperator &I) { DELEGATE(Instruction); }
+  RetTy visitAllocationInst(AllocationInst &I) { DELEGATE(Instruction); }
+  RetTy visitMemAccessInst (MemAccessInst  &I) { DELEGATE(Instruction); }
 
   // If the user wants a 'default' case, they can choose to override this
   // function.  If this function is not overloaded in the users subclass, then
@@ -183,7 +189,7 @@ struct InstVisitor {
   //
   // Note that you MUST override this function if your return type is not void.
   //
-  void visitInstruction(Instruction *I) {}  // Ignore unhandled instructions
+  void visitInstruction(Instruction &I) {}  // Ignore unhandled instructions
 };
 
 #undef DELEGATE

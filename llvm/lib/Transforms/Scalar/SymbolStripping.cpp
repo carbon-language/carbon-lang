@@ -42,29 +42,12 @@ static bool StripSymbolTable(SymbolTable *SymTab) {
   return RemovedSymbol;
 }
 
-
-// DoSymbolStripping - Remove all symbolic information from a function
-//
-static bool doSymbolStripping(Function *F) {
-  return StripSymbolTable(F->getSymbolTable());
-}
-
-// doStripGlobalSymbols - Remove all symbolic information from all functions 
-// in a module, and all module level symbols. (function names, etc...)
-//
-static bool doStripGlobalSymbols(Module *M) {
-  // Remove all symbols from functions in this module... and then strip all of
-  // the symbols in this module...
-  //  
-  return StripSymbolTable(M->getSymbolTable());
-}
-
 namespace {
   struct SymbolStripping : public FunctionPass {
     const char *getPassName() const { return "Strip Symbols from Functions"; }
 
-    virtual bool runOnFunction(Function *F) {
-      return doSymbolStripping(F);
+    virtual bool runOnFunction(Function &F) {
+      return StripSymbolTable(F.getSymbolTable());
     }
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -73,8 +56,8 @@ namespace {
 
   struct FullSymbolStripping : public SymbolStripping {
     const char *getPassName() const { return "Strip Symbols from Module"; }
-    virtual bool doInitialization(Module *M) {
-      return doStripGlobalSymbols(M);
+    virtual bool doInitialization(Module &M) {
+      return StripSymbolTable(M.getSymbolTable());
     }
   };
 }

@@ -442,7 +442,7 @@ public:
   virtual const char *getPassName() const { return "Data Structure Analysis"; }
 
   // run - Do nothing, because methods are analyzed lazily
-  virtual bool run(Module *TheModule) { return false; }
+  virtual bool run(Module &TheModule) { return false; }
 
   // getDSGraph - Return the data structure graph for the specified method.
   // Since method graphs are lazily computed, we may have to create one on the

@@ -985,7 +985,7 @@ SchedGraphSet::buildGraphsForMethod(const Function *F,
 				    const TargetMachine& target)
 {
   for (Function::const_iterator BI = F->begin(); BI != F->end(); ++BI)
-    addGraph(new SchedGraph(*BI, target));
+    addGraph(new SchedGraph(BI, target));
 }
 
 

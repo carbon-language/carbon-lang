@@ -13,8 +13,6 @@
 
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Pass.h"
@@ -34,7 +32,7 @@ namespace {
   struct FunctionResolvingPass : public Pass {
     const char *getPassName() const { return "Resolve Functions"; }
 
-    bool run(Module *M);
+    bool run(Module &M);
   };
 }
 
@@ -50,12 +48,10 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
     Dest->getFunctionType()->getParamTypes();
   BasicBlock *BB = CI->getParent();
 
-  // Get an iterator to where we want to insert cast instructions if the
+  // Keep an iterator to where we want to insert cast instructions if the
   // argument types don't agree.
   //
-  BasicBlock::iterator BBI = find(BB->begin(), BB->end(), CI);
-  assert(BBI != BB->end() && "CallInst not in parent block?");
-
+  BasicBlock::iterator BBI = CI;
   assert(CI->getNumOperands()-1 == ParamTys.size() &&
          "Function calls resolved funny somehow, incompatible number of args");
 
@@ -68,7 +64,7 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
 
     if (V->getType() != ParamTys[i-1]) { // Must insert a cast...
       Instruction *Cast = new CastInst(V, ParamTys[i-1]);
-      BBI = BB->getInstList().insert(BBI, Cast)+1;
+      BBI = ++BB->getInstList().insert(BBI, Cast);
       V = Cast;
     }
 
@@ -80,7 +76,7 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
   // Replace the old call instruction with a new call instruction that calls
   // the real function.
   //
-  BBI = BB->getInstList().insert(BBI, NewCall)+1;
+  BBI = ++BB->getInstList().insert(BBI, NewCall);
 
   // Remove the old call instruction from the program...
   BB->getInstList().remove(BBI);
@@ -110,8 +106,8 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
 }
 
 
-bool FunctionResolvingPass::run(Module *M) {
-  SymbolTable *ST = M->getSymbolTable();
+bool FunctionResolvingPass::run(Module &M) {
+  SymbolTable *ST = M.getSymbolTable();
   if (!ST) return false;
 
   std::map<string, vector<Function*> > Functions;
@@ -151,9 +147,8 @@ bool FunctionResolvingPass::run(Module *M) {
         // warnings... here we will actually DCE the function so that it isn't
         // used later.
         //
-        if (Functions[i]->use_size() == 0) {
-          M->getFunctionList().remove(Functions[i]);
-          delete Functions[i];
+        if (Functions[i]->use_empty()) {
+          M.getFunctionList().erase(Functions[i]);
           Functions.erase(Functions.begin()+i);
           Changed = true;
           ++NumResolved;

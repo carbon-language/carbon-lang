@@ -6,9 +6,6 @@
 
 #include "llvm/iTerminators.h"
 #include "llvm/BasicBlock.h"
-#ifndef NDEBUG
-#include "llvm/Type.h"
-#endif
 
 SwitchInst::SwitchInst(Value *V, BasicBlock *DefDest) 
   : TerminatorInst(Instruction::Switch) {

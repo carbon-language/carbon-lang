@@ -33,12 +33,12 @@ public:
   // doPassInitialization - For the raise allocations pass, this finds a
   // declaration for malloc and free if they exist.
   //
-  bool doInitialization(Module *M);
+  bool doInitialization(Module &M);
 
   // runOnBasicBlock - This method does the actual work of converting
   // instructions over, assuming that the pass has already been initialized.
   //
-  bool runOnBasicBlock(BasicBlock *BB);
+  bool runOnBasicBlock(BasicBlock &BB);
 };
 
 }  // end anonymous namespace
@@ -50,7 +50,7 @@ Pass *createRaiseAllocationsPass() {
 }
 
 
-bool RaiseAllocations::doInitialization(Module *M) {
+bool RaiseAllocations::doInitialization(Module &M) {
   // If the module has a symbol table, they might be referring to the malloc
   // and free functions.  If this is the case, grab the method pointers that 
   // the module is using.
@@ -68,22 +68,22 @@ bool RaiseAllocations::doInitialization(Module *M) {
                    std::vector<const Type*>(1, PointerType::get(Type::SByteTy)),
                       false);
 
-  MallocFunc = M->getFunction("malloc", MallocType);
-  FreeFunc   = M->getFunction("free"  , FreeType);
+  MallocFunc = M.getFunction("malloc", MallocType);
+  FreeFunc   = M.getFunction("free"  , FreeType);
 
   // Check to see if the prototype is missing, giving us sbyte*(...) * malloc
   // This handles the common declaration of: 'char *malloc();'
   if (MallocFunc == 0) {
     MallocType = FunctionType::get(PointerType::get(Type::SByteTy),
                                    std::vector<const Type*>(), true);
-    MallocFunc = M->getFunction("malloc", MallocType);
+    MallocFunc = M.getFunction("malloc", MallocType);
   }
 
   // Check to see if the prototype was forgotten, giving us void (...) * free
   // This handles the common forward declaration of: 'void free();'
   if (FreeFunc == 0) {
     FreeType = FunctionType::get(Type::VoidTy, std::vector<const Type*>(),true);
-    FreeFunc = M->getFunction("free", FreeType);
+    FreeFunc = M.getFunction("free", FreeType);
   }
 
 
@@ -95,12 +95,12 @@ bool RaiseAllocations::doInitialization(Module *M) {
 
 // runOnBasicBlock - Process a basic block, fixing it up...
 //
-bool RaiseAllocations::runOnBasicBlock(BasicBlock *BB) {
+bool RaiseAllocations::runOnBasicBlock(BasicBlock &BB) {
   bool Changed = false;
-  BasicBlock::InstListType &BIL = BB->getInstList();
+  BasicBlock::InstListType &BIL = BB.getInstList();
 
-  for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
-    Instruction *I = *BI;
+  for (BasicBlock::iterator BI = BB.begin(); BI != BB.end();) {
+    Instruction *I = BI;
 
     if (CallInst *CI = dyn_cast<CallInst>(I)) {
       if (CI->getCalledValue() == MallocFunc) {      // Replace call to malloc?
@@ -111,7 +111,7 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock *BB) {
         // source size.
         if (Source->getType() != Type::UIntTy) {
           CastInst *New = new CastInst(Source, Type::UIntTy, "MallocAmtCast");
-          BI = BIL.insert(BI, New)+1;
+          BI = ++BIL.insert(BI, New);
           Source = New;
         }
 
@@ -132,7 +132,7 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock *BB) {
         if (!isa<PointerType>(Source->getType())) {
           CastInst *New = new CastInst(Source, PointerType::get(Type::SByteTy),
                                        "FreePtrCast");
-          BI = BIL.insert(BI, New)+1;
+          BI = ++BIL.insert(BI, New);
           Source = New;
         }
 

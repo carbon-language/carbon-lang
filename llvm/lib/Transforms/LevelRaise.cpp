@@ -58,13 +58,13 @@ static inline bool isReinterpretingCast(const CastInst *CI) {
 //
 static bool HandleCastToPointer(BasicBlock::iterator BI,
                                 const PointerType *DestPTy) {
-  CastInst *CI = cast<CastInst>(*BI);
-  if (CI->use_empty()) return false;
+  CastInst &CI = cast<CastInst>(*BI);
+  if (CI.use_empty()) return false;
 
   // Scan all of the uses, looking for any uses that are not add
   // instructions.  If we have non-adds, do not make this transformation.
   //
-  for (Value::use_iterator I = CI->use_begin(), E = CI->use_end();
+  for (Value::use_iterator I = CI.use_begin(), E = CI.use_end();
        I != E; ++I) {
     if (BinaryOperator *BO = dyn_cast<BinaryOperator>(*I)) {
       if (BO->getOpcode() != Instruction::Add)
@@ -75,7 +75,7 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
   }
 
   std::vector<Value*> Indices;
-  Value *Src = CI->getOperand(0);
+  Value *Src = CI.getOperand(0);
   const Type *Result = ConvertableToGEP(DestPTy, Src, Indices, &BI);
   if (Result == 0) return false;  // Not convertable...
 
@@ -83,13 +83,13 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
 
   // If we have a getelementptr capability... transform all of the 
   // add instruction uses into getelementptr's.
-  while (!CI->use_empty()) {
-    BinaryOperator *I = cast<BinaryOperator>(*CI->use_begin());
+  while (!CI.use_empty()) {
+    BinaryOperator *I = cast<BinaryOperator>(*CI.use_begin());
     assert(I->getOpcode() == Instruction::Add && I->getNumOperands() == 2 &&
            "Use is not a valid add instruction!");
     
     // Get the value added to the cast result pointer...
-    Value *OtherPtr = I->getOperand((I->getOperand(0) == CI) ? 1 : 0);
+    Value *OtherPtr = I->getOperand((I->getOperand(0) == &CI) ? 1 : 0);
 
     Instruction *GEP = new GetElementPtrInst(OtherPtr, Indices, I->getName());
     PRINT_PEEPHOLE1("cast-add-to-gep:i", I);
@@ -102,16 +102,14 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
       // add instruction type, insert a cast now.
       //
 
-      // Insert the GEP instruction before the old add instruction... and get an
-      // iterator to point at the add instruction...
-      BasicBlock::iterator GEPI = InsertInstBeforeInst(GEP, I)+1;
+      // Insert the GEP instruction before the old add instruction...
+      I->getParent()->getInstList().insert(I, GEP);
 
       PRINT_PEEPHOLE1("cast-add-to-gep:o", GEP);
-      CastInst *CI = new CastInst(GEP, I->getType());
-      GEP = CI;
+      GEP = new CastInst(GEP, I->getType());
 
       // Replace the old add instruction with the shiny new GEP inst
-      ReplaceInstWithInst(I->getParent()->getInstList(), GEPI, GEP);
+      ReplaceInstWithInst(I, GEP);
     }
 
     PRINT_PEEPHOLE1("cast-add-to-gep:o", GEP);
@@ -160,7 +158,7 @@ static bool PeepholeOptimizeAddCast(BasicBlock *BB, BasicBlock::iterator &BI,
 
   GetElementPtrInst *GEP = new GetElementPtrInst(SrcPtr, Indices,
                                                  AddOp2->getName());
-  BI = BB->getInstList().insert(BI, GEP)+1;
+  BI = ++BB->getInstList().insert(BI, GEP);
 
   Instruction *NCI = new CastInst(GEP, AddOp1->getType());
   ReplaceInstWithInst(BB->getInstList(), BI, NCI);
@@ -169,7 +167,7 @@ static bool PeepholeOptimizeAddCast(BasicBlock *BB, BasicBlock::iterator &BI,
 }
 
 static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
-  Instruction *I = *BI;
+  Instruction *I = BI;
 
   if (CastInst *CI = dyn_cast<CastInst>(I)) {
     Value       *Src    = CI->getOperand(0);
@@ -193,7 +191,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       // DCE the instruction now, to avoid having the iterative version of DCE
       // have to worry about it.
       //
-      delete BB->getInstList().remove(BI);
+      BI = BB->getInstList().erase(BI);
 
       ++NumCastOfCast;
       return true;
@@ -326,7 +324,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             GetElementPtrInst *GEP = new GetElementPtrInst(Src, Indices,
                                                            CI->getName());
             CI->setName("");
-            BI = BB->getInstList().insert(BI, GEP)+1;
+            BI = ++BB->getInstList().insert(BI, GEP);
 
             // Make the old cast instruction reference the new GEP instead of
             // the old src value.
@@ -359,7 +357,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     //
     if (CastInst *CI = dyn_cast<CastInst>(Pointer))
       if (Value *CastSrc = CI->getOperand(0)) // CSPT = CastSrcPointerType
-        if (PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
+        if (const PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
           // convertable types?
           if (Val->getType()->isLosslesslyConvertableTo(CSPT->getElementType()) &&
               !SI->hasIndices()) {      // No subscripts yet!
@@ -369,7 +367,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             CastInst *NCI = new CastInst(Val, CSPT->getElementType(),
                                          CI->getName());
             CI->setName("");
-            BI = BB->getInstList().insert(BI, NCI)+1;
+            BI = ++BB->getInstList().insert(BI, NCI);
 
             // Replace the old store with a new one!
             ReplaceInstWithInst(BB->getInstList(), BI,
@@ -399,7 +397,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     //
     if (CastInst *CI = dyn_cast<CastInst>(Pointer))
       if (Value *CastSrc = CI->getOperand(0)) // CSPT = CastSrcPointerType
-        if (PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
+        if (const PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
           // convertable types?
           if (PtrElType->isLosslesslyConvertableTo(CSPT->getElementType()) &&
               !LI->hasIndices()) {      // No subscripts yet!
@@ -410,7 +408,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             
             // Insert the new T cast instruction... stealing old T's name
             CastInst *NCI = new CastInst(NewLI, LI->getType(), CI->getName());
-            BI = BB->getInstList().insert(BI, NewLI)+1;
+            BI = ++BB->getInstList().insert(BI, NewLI);
 
             // Replace the old store with a new one!
             ReplaceInstWithInst(BB->getInstList(), BI, NCI);
@@ -435,24 +433,22 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
 
 
-static bool DoRaisePass(Function *F) {
+static bool DoRaisePass(Function &F) {
   bool Changed = false;
-  for (Function::iterator MI = F->begin(), ME = F->end(); MI != ME; ++MI) {
-    BasicBlock *BB = *MI;
-    BasicBlock::InstListType &BIL = BB->getInstList();
-
+  for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB)
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
       DEBUG(cerr << "Processing: " << *BI);
       if (dceInstruction(BI) || doConstantPropogation(BI)) {
         Changed = true; 
         ++NumDCEorCP;
         DEBUG(cerr << "***\t\t^^-- DeadCode Elinated!\n");
-      } else if (PeepholeOptimize(BB, BI))
+      } else if (PeepholeOptimize(BB, BI)) {
         Changed = true;
-      else
+      } else {
         ++BI;
+      }
     }
-  }
+
   return Changed;
 }
 
@@ -460,8 +456,8 @@ static bool DoRaisePass(Function *F) {
 // RaisePointerReferences::doit - Raise a function representation to a higher
 // level.
 //
-static bool doRPR(Function *F) {
-  DEBUG(cerr << "\n\n\nStarting to work on Function '" << F->getName()<< "'\n");
+static bool doRPR(Function &F) {
+  DEBUG(cerr << "\n\n\nStarting to work on Function '" << F.getName() << "'\n");
 
   // Insert casts for all incoming pointer pointer values that are treated as
   // arrays...
@@ -486,7 +482,7 @@ namespace {
   struct RaisePointerReferences : public FunctionPass {
     const char *getPassName() const { return "Raise Pointer References"; }
 
-    virtual bool runOnFunction(Function *F) { return doRPR(F); }
+    virtual bool runOnFunction(Function &F) { return doRPR(F); }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();

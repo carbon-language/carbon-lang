@@ -11,14 +11,29 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
-#include "ValueHolderImpl.h"
+#include "SymbolTableListTraitsImpl.h"
+#include <algorithm>
 #include <map>
 
-// Instantiate Templates - This ugliness is the price we have to pay
-// for having a DefHolderImpl.h file seperate from DefHolder.h!  :(
-//
-template class ValueHolder<GlobalVariable, Module, Module>;
-template class ValueHolder<Function, Module, Module>;
+Function *ilist_traits<Function>::createNode() {
+  return new Function(FunctionType::get(Type::VoidTy,std::vector<const Type*>(),
+                                        false), false);
+}
+GlobalVariable *ilist_traits<GlobalVariable>::createNode() {
+  return new GlobalVariable(Type::IntTy, false, false);
+}
+
+iplist<Function> &ilist_traits<Function>::getList(Module *M) {
+  return M->getFunctionList();
+}
+iplist<GlobalVariable> &ilist_traits<GlobalVariable>::getList(Module *M) {
+  return M->getGlobalList();
+}
+
+// Explicit instantiations of SymbolTableListTraits since some of the methods
+// are not in the public header file...
+template SymbolTableListTraits<GlobalVariable, Module, Module>;
+template SymbolTableListTraits<Function, Module, Module>;
 
 // Define the GlobalValueRefMap as a struct that wraps a map so that we don't
 // have Module.h depend on <map>
@@ -27,16 +42,20 @@ struct GlobalValueRefMap : public std::map<GlobalValue*, ConstantPointerRef*>{
 };
 
 
-Module::Module() : GlobalList(this, this), FunctionList(this, this) {
+Module::Module() {
+  FunctionList.setItemParent(this);
+  FunctionList.setParent(this);
+  GlobalList.setItemParent(this);
+  GlobalList.setParent(this);
   GVRefMap = 0;
   SymTab = 0;
 }
 
 Module::~Module() {
   dropAllReferences();
-  GlobalList.delete_all();
+  GlobalList.clear();
   GlobalList.setParent(0);
-  FunctionList.delete_all();
+  FunctionList.clear();
   FunctionList.setParent(0);
   delete SymTab;
 }
@@ -136,11 +155,11 @@ std::string Module::getTypeName(const Type *Ty) {
 // delete.
 //
 void Module::dropAllReferences() {
-  for_each(FunctionList.begin(), FunctionList.end(),
-	   std::mem_fun(&Function::dropAllReferences));
+  for(Module::iterator I = begin(), E = end(); I != E; ++I)
+    I->dropAllReferences();
 
-  for_each(GlobalList.begin(), GlobalList.end(),
-	   std::mem_fun(&GlobalVariable::dropAllReferences));
+  for(Module::giterator I = gbegin(), E = gend(); I != E; ++I)
+    I->dropAllReferences();
 
   // If there are any GlobalVariable references still out there, nuke them now.
   // Since all references are hereby dropped, nothing could possibly reference

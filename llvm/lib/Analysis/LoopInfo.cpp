@@ -35,7 +35,7 @@ void LoopInfo::releaseMemory() {
 //===----------------------------------------------------------------------===//
 // LoopInfo implementation
 //
-bool LoopInfo::runOnFunction(Function *F) {
+bool LoopInfo::runOnFunction(Function &) {
   releaseMemory();
   Calculate(getAnalysis<DominatorSet>());    // Update
   return false;

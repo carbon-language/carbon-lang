@@ -101,7 +101,7 @@ public:
   // runOnFunction - Run the Sparse Conditional Constant Propogation algorithm,
   // and return true if the function was modified.
   //
-  bool runOnFunction(Function *F);
+  bool runOnFunction(Function &F);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.preservesCFG();
@@ -167,7 +167,7 @@ private:
   // 
   void markExecutable(BasicBlock *BB) {
     if (BBExecutable.count(BB)) return;
-    DEBUG(cerr << "Marking BB Executable: " << BB);
+    DEBUG(cerr << "Marking BB Executable: " << *BB);
     BBExecutable.insert(BB);   // Basic block is executable!
     BBWorkList.push_back(BB);  // Add the block to the work list!
   }
@@ -177,35 +177,35 @@ private:
   // operand made a transition, or the instruction is newly executable.  Change
   // the value type of I to reflect these changes if appropriate.
   //
-  void visitPHINode(PHINode *I);
+  void visitPHINode(PHINode &I);
 
   // Terminators
-  void visitReturnInst(ReturnInst *I) { /*does not have an effect*/ }
-  void visitTerminatorInst(TerminatorInst *TI);
+  void visitReturnInst(ReturnInst &I) { /*does not have an effect*/ }
+  void visitTerminatorInst(TerminatorInst &TI);
 
-  void visitUnaryOperator(Instruction *I);
-  void visitCastInst(CastInst *I) { visitUnaryOperator(I); }
-  void visitBinaryOperator(Instruction *I);
-  void visitShiftInst(ShiftInst *I) { visitBinaryOperator(I); }
+  void visitUnaryOperator(Instruction &I);
+  void visitCastInst(CastInst &I) { visitUnaryOperator(I); }
+  void visitBinaryOperator(Instruction &I);
+  void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
 
   // Instructions that cannot be folded away...
-  void visitStoreInst     (Instruction *I) { /*returns void*/ }
-  void visitMemAccessInst (Instruction *I) { markOverdefined(I); }
-  void visitCallInst      (Instruction *I) { markOverdefined(I); }
-  void visitInvokeInst    (Instruction *I) { markOverdefined(I); }
-  void visitAllocationInst(Instruction *I) { markOverdefined(I); }
-  void visitFreeInst      (Instruction *I) { /*returns void*/ }
+  void visitStoreInst     (Instruction &I) { /*returns void*/ }
+  void visitMemAccessInst (Instruction &I) { markOverdefined(&I); }
+  void visitCallInst      (Instruction &I) { markOverdefined(&I); }
+  void visitInvokeInst    (Instruction &I) { markOverdefined(&I); }
+  void visitAllocationInst(Instruction &I) { markOverdefined(&I); }
+  void visitFreeInst      (Instruction &I) { /*returns void*/ }
 
-  void visitInstruction(Instruction *I) {
+  void visitInstruction(Instruction &I) {
     // If a new instruction is added to LLVM that we don't handle...
     cerr << "SCCP: Don't know how to handle: " << I;
-    markOverdefined(I);   // Just in case
+    markOverdefined(&I);   // Just in case
   }
 
   // getFeasibleSuccessors - Return a vector of booleans to indicate which
   // successors are reachable from a given terminator instruction.
   //
-  void getFeasibleSuccessors(TerminatorInst *I, std::vector<bool> &Succs);
+  void getFeasibleSuccessors(TerminatorInst &TI, std::vector<bool> &Succs);
 
   // isEdgeFeasible - Return true if the control flow edge from the 'From' basic
   // block to the 'To' basic block is currently feasible...
@@ -218,8 +218,8 @@ private:
   //
   void OperandChangedState(User *U) {
     // Only instructions use other variable values!
-    Instruction *I = cast<Instruction>(U);
-    if (!BBExecutable.count(I->getParent())) return;// Inst not executable yet!
+    Instruction &I = cast<Instruction>(*U);
+    if (!BBExecutable.count(I.getParent())) return;// Inst not executable yet!
     visit(I);
   }
 };
@@ -241,9 +241,9 @@ Pass *createSCCPPass() {
 // runOnFunction() - Run the Sparse Conditional Constant Propogation algorithm,
 // and return true if the function was modified.
 //
-bool SCCP::runOnFunction(Function *F) {
+bool SCCP::runOnFunction(Function &F) {
   // Mark the first block of the function as being executable...
-  markExecutable(F->front());
+  markExecutable(&F.front());
 
   // Process the work lists until their are empty!
   while (!BBWorkList.empty() || !InstWorkList.empty()) {
@@ -284,8 +284,8 @@ bool SCCP::runOnFunction(Function *F) {
   }
 
   if (DebugFlag) {
-    for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-      if (!BBExecutable.count(*I))
+    for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+      if (!BBExecutable.count(I))
         cerr << "BasicBlock Dead:" << *I;
   }
 
@@ -293,20 +293,19 @@ bool SCCP::runOnFunction(Function *F) {
   // constants if we have found them to be of constant values.
   //
   bool MadeChanges = false;
-  for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI) {
-    BasicBlock *BB = *FI;
+  for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB)
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
-      Instruction *Inst = *BI;
-      InstVal &IV = ValueState[Inst];
+      Instruction &Inst = *BI;
+      InstVal &IV = ValueState[&Inst];
       if (IV.isConstant()) {
         Constant *Const = IV.getConstant();
         DEBUG(cerr << "Constant: " << Const << " = " << Inst);
 
         // Replaces all of the uses of a variable with uses of the constant.
-        Inst->replaceAllUsesWith(Const);
+        Inst.replaceAllUsesWith(Const);
 
         // Remove the operator from the list of definitions... and delete it.
-        delete BB->getInstList().remove(BI);
+        BI = BB->getInstList().erase(BI);
 
         // Hey, we just changed something!
         MadeChanges = true;
@@ -315,7 +314,6 @@ bool SCCP::runOnFunction(Function *F) {
         ++BI;
       }
     }
-  }
 
   // Reset state so that the next invocation will have empty data structures
   BBExecutable.clear();
@@ -328,9 +326,9 @@ bool SCCP::runOnFunction(Function *F) {
 // getFeasibleSuccessors - Return a vector of booleans to indicate which
 // successors are reachable from a given terminator instruction.
 //
-void SCCP::getFeasibleSuccessors(TerminatorInst *TI, std::vector<bool> &Succs) {
-  assert(Succs.size() == TI->getNumSuccessors() && "Succs vector wrong size!");
-  if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+void SCCP::getFeasibleSuccessors(TerminatorInst &TI, std::vector<bool> &Succs) {
+  assert(Succs.size() == TI.getNumSuccessors() && "Succs vector wrong size!");
+  if (BranchInst *BI = dyn_cast<BranchInst>(&TI)) {
     if (BI->isUnconditional()) {
       Succs[0] = true;
     } else {
@@ -343,14 +341,14 @@ void SCCP::getFeasibleSuccessors(TerminatorInst *TI, std::vector<bool> &Succs) {
         Succs[BCValue.getConstant() == ConstantBool::False] = true;
       }
     }
-  } else if (InvokeInst *II = dyn_cast<InvokeInst>(TI)) {
+  } else if (InvokeInst *II = dyn_cast<InvokeInst>(&TI)) {
     // Invoke instructions successors are always executable.
     Succs[0] = Succs[1] = true;
-  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(&TI)) {
     InstVal &SCValue = getValueState(SI->getCondition());
     if (SCValue.isOverdefined()) {  // Overdefined condition?
       // All destinations are executable!
-      Succs.assign(TI->getNumSuccessors(), true);
+      Succs.assign(TI.getNumSuccessors(), true);
     } else if (SCValue.isConstant()) {
       Constant *CPV = SCValue.getConstant();
       // Make sure to skip the "default value" which isn't a value
@@ -367,7 +365,7 @@ void SCCP::getFeasibleSuccessors(TerminatorInst *TI, std::vector<bool> &Succs) {
     }
   } else {
     cerr << "SCCP: Don't know how to handle: " << TI;
-    Succs.assign(TI->getNumSuccessors(), true);
+    Succs.assign(TI.getNumSuccessors(), true);
   }
 }
 
@@ -384,7 +382,7 @@ bool SCCP::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
   // Check to make sure this edge itself is actually feasible now...
   TerminatorInst *FT = From->getTerminator();
   std::vector<bool> SuccFeasible(FT->getNumSuccessors());
-  getFeasibleSuccessors(FT, SuccFeasible);
+  getFeasibleSuccessors(*FT, SuccFeasible);
 
   // Check all edges from From to To.  If any are feasible, return true.
   for (unsigned i = 0, e = SuccFeasible.size(); i != e; ++i)
@@ -414,8 +412,8 @@ bool SCCP::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 //    successors executable.
 //
 
-void SCCP::visitPHINode(PHINode *PN) {
-  unsigned NumValues = PN->getNumIncomingValues(), i;
+void SCCP::visitPHINode(PHINode &PN) {
+  unsigned NumValues = PN.getNumIncomingValues(), i;
   InstVal *OperandIV = 0;
 
   // Look at all of the executable operands of the PHI node.  If any of them
@@ -425,11 +423,11 @@ void SCCP::visitPHINode(PHINode *PN) {
   // If there are no executable operands, the PHI remains undefined.
   //
   for (i = 0; i < NumValues; ++i) {
-    if (isEdgeFeasible(PN->getIncomingBlock(i), PN->getParent())) {
-      InstVal &IV = getValueState(PN->getIncomingValue(i));
+    if (isEdgeFeasible(PN.getIncomingBlock(i), PN.getParent())) {
+      InstVal &IV = getValueState(PN.getIncomingValue(i));
       if (IV.isUndefined()) continue;  // Doesn't influence PHI node.
       if (IV.isOverdefined()) {   // PHI node becomes overdefined!
-        markOverdefined(PN);
+        markOverdefined(&PN);
         return;
       }
 
@@ -445,7 +443,7 @@ void SCCP::visitPHINode(PHINode *PN) {
           // Yes there is.  This means the PHI node is not constant.
           // You must be overdefined poor PHI.
           //
-          markOverdefined(PN);         // The PHI node now becomes overdefined
+          markOverdefined(&PN);         // The PHI node now becomes overdefined
           return;    // I'm done analyzing you
         }
       }
@@ -459,18 +457,18 @@ void SCCP::visitPHINode(PHINode *PN) {
   //
   if (OperandIV) {
     assert(OperandIV->isConstant() && "Should only be here for constants!");
-    markConstant(PN, OperandIV->getConstant());  // Aquire operand value
+    markConstant(&PN, OperandIV->getConstant());  // Aquire operand value
   }
 }
 
-void SCCP::visitTerminatorInst(TerminatorInst *TI) {
-  std::vector<bool> SuccFeasible(TI->getNumSuccessors());
+void SCCP::visitTerminatorInst(TerminatorInst &TI) {
+  std::vector<bool> SuccFeasible(TI.getNumSuccessors());
   getFeasibleSuccessors(TI, SuccFeasible);
 
   // Mark all feasible successors executable...
   for (unsigned i = 0, e = SuccFeasible.size(); i != e; ++i)
     if (SuccFeasible[i]) {
-      BasicBlock *Succ = TI->getSuccessor(i);
+      BasicBlock *Succ = TI.getSuccessor(i);
       markExecutable(Succ);
 
       // Visit all of the PHI nodes that merge values from this block...
@@ -478,49 +476,49 @@ void SCCP::visitTerminatorInst(TerminatorInst *TI) {
       // constant now may not be.
       //
       for (BasicBlock::iterator I = Succ->begin();
-           PHINode *PN = dyn_cast<PHINode>(*I); ++I)
-        visitPHINode(PN);
+           PHINode *PN = dyn_cast<PHINode>(&*I); ++I)
+        visitPHINode(*PN);
     }
 }
 
-void SCCP::visitUnaryOperator(Instruction *I) {
-  Value *V = I->getOperand(0);
+void SCCP::visitUnaryOperator(Instruction &I) {
+  Value *V = I.getOperand(0);
   InstVal &VState = getValueState(V);
   if (VState.isOverdefined()) {        // Inherit overdefinedness of operand
-    markOverdefined(I);
+    markOverdefined(&I);
   } else if (VState.isConstant()) {    // Propogate constant value
     Constant *Result = isa<CastInst>(I)
-      ? ConstantFoldCastInstruction(VState.getConstant(), I->getType())
-      : ConstantFoldUnaryInstruction(I->getOpcode(), VState.getConstant());
+      ? ConstantFoldCastInstruction(VState.getConstant(), I.getType())
+      : ConstantFoldUnaryInstruction(I.getOpcode(), VState.getConstant());
 
     if (Result) {
       // This instruction constant folds!
-      markConstant(I, Result);
+      markConstant(&I, Result);
     } else {
-      markOverdefined(I);   // Don't know how to fold this instruction.  :(
+      markOverdefined(&I);   // Don't know how to fold this instruction.  :(
     }
   }
 }
 
 // Handle BinaryOperators and Shift Instructions...
-void SCCP::visitBinaryOperator(Instruction *I) {
-  InstVal &V1State = getValueState(I->getOperand(0));
-  InstVal &V2State = getValueState(I->getOperand(1));
+void SCCP::visitBinaryOperator(Instruction &I) {
+  InstVal &V1State = getValueState(I.getOperand(0));
+  InstVal &V2State = getValueState(I.getOperand(1));
   if (V1State.isOverdefined() || V2State.isOverdefined()) {
-    markOverdefined(I);
+    markOverdefined(&I);
   } else if (V1State.isConstant() && V2State.isConstant()) {
     Constant *Result = 0;
     if (isa<BinaryOperator>(I))
-      Result = ConstantFoldBinaryInstruction(I->getOpcode(),
+      Result = ConstantFoldBinaryInstruction(I.getOpcode(),
                                              V1State.getConstant(),
                                              V2State.getConstant());
     else if (isa<ShiftInst>(I))
-      Result = ConstantFoldShiftInstruction(I->getOpcode(),
+      Result = ConstantFoldShiftInstruction(I.getOpcode(),
                                             V1State.getConstant(),
                                             V2State.getConstant());
     if (Result)
-      markConstant(I, Result);      // This instruction constant folds!
+      markConstant(&I, Result);      // This instruction constant folds!
     else
-      markOverdefined(I);   // Don't know how to fold this instruction.  :(
+      markOverdefined(&I);   // Don't know how to fold this instruction.  :(
   }
 }

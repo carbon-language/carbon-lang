@@ -7,10 +7,7 @@
 
 #include "llvm/iTerminators.h"
 #include "llvm/BasicBlock.h"
-#ifndef NDEBUG
-#include "llvm/Type.h"       // Only used for assertions...
-#include <iostream>
-#endif
+#include "llvm/Type.h"
 
 BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond) 
   : TerminatorInst(Instruction::Br) {
@@ -24,14 +21,6 @@ BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond)
 
   assert(!!False == !!Cond &&
 	 "Either both cond and false or neither can be specified!");
-
-#ifndef NDEBUG
-  if (Cond != 0 && Cond->getType() != Type::BoolTy) {
-    std::cerr << "Bad Condition: ";
-    Cond->dump();
-    std::cerr << "\n";
-  }
-#endif
   assert((Cond == 0 || Cond->getType() == Type::BoolTy) && 
          "May only branch on boolean predicates!!!!");
 }

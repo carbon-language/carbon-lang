@@ -11,15 +11,11 @@
 
 #include "llvm/SlotCalculator.h"
 #include "llvm/Analysis/ConstantsScanner.h"
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iOther.h"
 #include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/Argument.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -75,20 +71,22 @@ void SlotCalculator::processModule() {
   //
   for (Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
        I != E; ++I) {
-    if ((*I)->hasInitializer())
-      insertValue((*I)->getInitializer());
+    if (I->hasInitializer())
+      insertValue(I->getInitializer());
   }
 
   // Add all of the global variables to the value table...
   //
-  for_each(TheModule->gbegin(), TheModule->gend(),
-	   bind_obj(this, &SlotCalculator::insertValue));
+  for(Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
+      I != E; ++I)
+    insertValue(I);
 
   // Scavenge the types out of the functions, then add the functions themselves
   // to the value table...
   //
-  for_each(TheModule->begin(), TheModule->end(),  // Insert functions...
-	   bind_obj(this, &SlotCalculator::insertValue));
+  for(Module::const_iterator I = TheModule->begin(), E = TheModule->end();
+      I != E; ++I)
+    insertValue(I);
 
   // Insert constants that are named at module level into the slot pool so that
   // the module symbol table can refer to them...
@@ -132,8 +130,8 @@ void SlotCalculator::incorporateFunction(const Function *M) {
   SC_DEBUG("Inserting function arguments\n");
 
   // Iterate over function arguments, adding them to the value table...
-  for_each(M->getArgumentList().begin(), M->getArgumentList().end(),
-	   bind_obj(this, &SlotCalculator::insertValue));
+  for(Function::const_aiterator I = M->abegin(), E = M->aend(); I != E; ++I)
+    insertValue(I);
 
   // Iterate over all of the instructions in the function, looking for constant
   // values that are referenced.  Add these to the value pools before any
@@ -166,8 +164,10 @@ void SlotCalculator::incorporateFunction(const Function *M) {
   SC_DEBUG("Inserting Labels:\n");
 
   // Iterate over basic blocks, adding them to the value table...
-  for_each(M->begin(), M->end(),
-	   bind_obj(this, &SlotCalculator::insertValue));
+  for (Function::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+    insertValue(I);
+  /*  for_each(M->begin(), M->end(),
+      bind_obj(this, &SlotCalculator::insertValue));*/
 
   SC_DEBUG("Inserting Instructions:\n");
 

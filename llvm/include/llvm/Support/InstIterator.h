@@ -35,22 +35,22 @@ public:
   typedef IIty                            reference;
   
   template<class M> InstIterator(M &m) 
-    : BBs(m.getBasicBlocks()), BB(BBs.begin()) {    // begin ctor
+    : BBs(m.getBasicBlockList()), BB(BBs.begin()) {    // begin ctor
     if (BB != BBs.end()) {
-      BI = (*BB)->begin();
+      BI = BB->begin();
       advanceToNextBB();
     }
   }
 
   template<class M> InstIterator(M &m, bool) 
-    : BBs(m.getBasicBlocks()), BB(BBs.end()) {    // end ctor
+    : BBs(m.getBasicBlockList()), BB(BBs.end()) {    // end ctor
   }
 
   // Accessors to get at the underlying iterators...
   inline BBIty &getBasicBlockIterator()  { return BB; }
   inline BIty  &getInstructionIterator() { return BI; }
   
-  inline IIty operator*()  const { return *BI; }
+  inline IIty operator*()  const { return &*BI; }
   inline IIty operator->() const { return operator*(); }
   
   inline bool operator==(const InstIterator &y) const { 
@@ -70,9 +70,9 @@ public:
   }
     
   InstIterator& operator--() { 
-    while (BB == BBs.end() || BI == (*BB)->begin()) {
+    while (BB == BBs.end() || BI == BB->begin()) {
       --BB;
-      BI = (*BB)->end();
+      BI = BB->end();
     }
     --BI;
     return *this; 
@@ -87,19 +87,19 @@ private:
   inline void advanceToNextBB() {
     // The only way that the II could be broken is if it is now pointing to
     // the end() of the current BasicBlock and there are successor BBs.
-    while (BI == (*BB)->end()) {
+    while (BI == BB->end()) {
       ++BB;
       if (BB == BBs.end()) break;
-      BI = (*BB)->begin();
+      BI = BB->begin();
     }
   }
 };
 
 
-typedef InstIterator<ValueHolder<BasicBlock, Function, Function>,
+typedef InstIterator<iplist<BasicBlock>,
                      Function::iterator, BasicBlock::iterator,
                      Instruction*> inst_iterator;
-typedef InstIterator<const ValueHolder<BasicBlock, Function, Function>,
+typedef InstIterator<const iplist<BasicBlock>,
                      Function::const_iterator, 
                      BasicBlock::const_iterator,
                      const Instruction*> const_inst_iterator;
@@ -111,6 +111,14 @@ inline const_inst_iterator inst_begin(const Function *F) {
 }
 inline const_inst_iterator inst_end(const Function *F) {
   return const_inst_iterator(*F, true);
+}
+inline inst_iterator inst_begin(Function &F) { return inst_iterator(F); }
+inline inst_iterator inst_end(Function &F)   { return inst_iterator(F, true); }
+inline const_inst_iterator inst_begin(const Function &F) {
+  return const_inst_iterator(F);
+}
+inline const_inst_iterator inst_end(const Function &F) {
+  return const_inst_iterator(F, true);
 }
 
 #endif

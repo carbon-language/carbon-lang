@@ -42,7 +42,7 @@ public:
   const char *getPassName() const { return "Interval Partition Construction"; }
 
   // run - Calculate the interval partition for this function
-  virtual bool runOnFunction(Function *F);
+  virtual bool runOnFunction(Function &F);
 
   // IntervalPartition ctor - Build a reduced interval partition from an
   // existing interval graph.  This takes an additional boolean parameter to

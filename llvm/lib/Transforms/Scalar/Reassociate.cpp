@@ -39,13 +39,13 @@ namespace {
       return "Expression Reassociation";
     }
 
-    bool runOnFunction(Function *F);
+    bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
     }
   private:
-    void BuildRankMap(Function *F);
+    void BuildRankMap(Function &F);
     unsigned getRank(Value *V);
     bool ReassociateExpr(BinaryOperator *I);
     bool ReassociateBB(BasicBlock *BB);
@@ -54,9 +54,9 @@ namespace {
 
 Pass *createReassociatePass() { return new Reassociate(); }
 
-void Reassociate::BuildRankMap(Function *F) {
+void Reassociate::BuildRankMap(Function &F) {
   unsigned i = 1;
-  ReversePostOrderTraversal<Function*> RPOT(F);
+  ReversePostOrderTraversal<Function*> RPOT(&F);
   for (ReversePostOrderTraversal<Function*>::rpo_iterator I = RPOT.begin(),
          E = RPOT.end(); I != E; ++I)
     RankMap[*I] = ++i;
@@ -182,15 +182,11 @@ static Value *NegateValue(Value *V, BasicBlock *BB, BasicBlock::iterator &BI) {
       // adding it now, we are assured that the neg instructions we just
       // inserted dominate the instruction we are about to insert after them.
       //
-      BasicBlock::iterator NBI = BI;
-
-      // Scan through the inserted instructions, looking for RHS, which must be
-      // after LHS in the instruction list.
-      while (*NBI != RHS) ++NBI;
+      BasicBlock::iterator NBI = cast<Instruction>(RHS);
 
       Instruction *Add =
         BinaryOperator::create(Instruction::Add, LHS, RHS, I->getName()+".neg");
-      BB->getInstList().insert(NBI+1, Add);  // Add to the basic block...
+      BB->getInstList().insert(++NBI, Add);  // Add to the basic block...
       return Add;
     }
 
@@ -209,12 +205,11 @@ static Value *NegateValue(Value *V, BasicBlock *BB, BasicBlock::iterator &BI) {
 bool Reassociate::ReassociateBB(BasicBlock *BB) {
   bool Changed = false;
   for (BasicBlock::iterator BI = BB->begin(); BI != BB->end(); ++BI) {
-    Instruction *Inst = *BI;
 
     // If this instruction is a commutative binary operator, and the ranks of
     // the two operands are sorted incorrectly, fix it now.
     //
-    if (BinaryOperator *I = isCommutativeOperator(Inst)) {
+    if (BinaryOperator *I = isCommutativeOperator(BI)) {
       if (!I->use_empty()) {
         // Make sure that we don't have a tree-shaped computation.  If we do,
         // linearize it.  Convert (A+B)+(C+D) into ((A+B)+C)+D
@@ -245,22 +240,23 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
         Changed |= ReassociateExpr(I);
       }
 
-    } else if (Inst->getOpcode() == Instruction::Sub &&
-               Inst->getOperand(0) != Constant::getNullValue(Inst->getType())) {
+    } else if (BI->getOpcode() == Instruction::Sub &&
+               BI->getOperand(0) != Constant::getNullValue(BI->getType())) {
       // Convert a subtract into an add and a neg instruction... so that sub
       // instructions can be commuted with other add instructions...
       //
       Instruction *New = BinaryOperator::create(Instruction::Add,
-                                                Inst->getOperand(0),
-                                                Inst->getOperand(1),
-                                                Inst->getName());
-      Value *NegatedValue = Inst->getOperand(1);
+                                                BI->getOperand(0),
+                                                BI->getOperand(1),
+                                                BI->getName());
+      Value *NegatedValue = BI->getOperand(1);
 
       // Everyone now refers to the add instruction...
-      Inst->replaceAllUsesWith(New);
+      BI->replaceAllUsesWith(New);
 
       // Put the new add in the place of the subtract... deleting the subtract
-      delete BB->getInstList().replaceWith(BI, New);
+      BI = BB->getInstList().erase(BI);
+      BI = ++BB->getInstList().insert(BI, New);
 
       // Calculate the negative value of Operand 1 of the sub instruction...
       // and set it as the RHS of the add instruction we just made...
@@ -275,13 +271,13 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
 }
 
 
-bool Reassociate::runOnFunction(Function *F) {
+bool Reassociate::runOnFunction(Function &F) {
   // Recalculate the rank map for F
   BuildRankMap(F);
 
   bool Changed = false;
-  for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
-    Changed |= ReassociateBB(*FI);
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
+    Changed |= ReassociateBB(FI);
 
   // We are done with the rank map...
   RankMap.clear();

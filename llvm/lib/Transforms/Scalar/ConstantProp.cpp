@@ -26,7 +26,7 @@ namespace {
   struct ConstantPropogation : public FunctionPass {
     const char *getPassName() const { return "Simple Constant Propogation"; }
 
-    bool runOnFunction(Function *F);
+    bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
@@ -39,7 +39,7 @@ Pass *createConstantPropogationPass() {
 }
 
 
-bool ConstantPropogation::runOnFunction(Function *F) {
+bool ConstantPropogation::runOnFunction(Function &F) {
   // Initialize the worklist to all of the instructions ready to process...
   std::set<Instruction*> WorkList(inst_begin(F), inst_end(F));
   bool Changed = false;

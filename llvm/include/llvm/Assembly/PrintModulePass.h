@@ -29,8 +29,8 @@ public:
     if (DeleteStream) delete Out;
   }
   
-  bool run(Module *M) {
-    (*Out) << M;
+  bool run(Module &M) {
+    (*Out) << (Value&)M;
     return false;
   }
 
@@ -58,8 +58,8 @@ public:
   // runOnFunction - This pass just prints a banner followed by the function as
   // it's processed.
   //
-  bool runOnFunction(Function *F) {
-    (*Out) << Banner << (Value*)F;
+  bool runOnFunction(Function &F) {
+    (*Out) << Banner << (Value&)F;
     return false;
   }
   

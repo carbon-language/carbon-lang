@@ -1,0 +1,492 @@
+//===-- <Support/ilist> - Intrusive Linked List Template ---------*- C++ -*--=//
+//
+// This file defines classes to implement an intrusive doubly linked list class
+// (ie each node of the list must contain a next and previous field for the
+// list.
+//
+// The ilist_traits trait class is used to gain access to the next and previous
+// fields of the node type that the list is instantiated with.  If it is not
+// specialized, the list defaults to using the getPrev(), getNext() method calls
+// to get the next and previous pointers.
+//
+// The ilist class itself, should be a plug in replacement for list, assuming
+// that the nodes contain next/prev pointers.  This list replacement does not
+// provides a constant time size() method, so be careful to use empty() when you
+// really want to know if I'm empty.
+//
+// The ilist class is implemented by allocating a 'tail' node when the list is
+// created (using ilist_traits<>::createEndMarker()).  This tail node is
+// absolutely required because the user must be able to compute end()-1. Because
+// of this, users of the direct next/prev links will see an extra link on the
+// end of the list, which should be ignored.
+//
+// Requirements for a user of this list:
+//
+//   1. The user must provide {g|s}et{Next|Prev} methods, or specialize
+//      ilist_traits to provide an alternate way of getting and setting next and
+//      prev links.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef INCLUDED_SUPPORT_ILIST
+#define INCLUDED_SUPPORT_ILIST
+
+#include <assert.h>
+#include <iterator>
+
+template<typename NodeTy, typename Traits> class iplist;
+template<typename NodeTy> class ilist_iterator;
+
+// Template traits for intrusive list.  By specializing this template class, you
+// can change what next/prev fields are used to store the links...
+template<typename NodeTy>
+struct ilist_traits {
+  static NodeTy *getPrev(NodeTy *N) { return N->getPrev(); }
+  static NodeTy *getNext(NodeTy *N) { return N->getNext(); }
+  static const NodeTy *getPrev(const NodeTy *N) { return N->getPrev(); }
+  static const NodeTy *getNext(const NodeTy *N) { return N->getNext(); }
+
+  static void setPrev(NodeTy *N, NodeTy *Prev) { N->setPrev(Prev); }
+  static void setNext(NodeTy *N, NodeTy *Next) { N->setNext(Next); }
+
+  static NodeTy *createNode() { return new NodeTy(); }
+  static NodeTy *createNode(const NodeTy &V) { return new NodeTy(V); }
+
+
+  void addNodeToList(NodeTy *NTy) {}
+  void removeNodeFromList(NodeTy *NTy) {}
+  void transferNodesFromList(iplist<NodeTy, ilist_traits> &L2,
+                             ilist_iterator<NodeTy> first,
+                             ilist_iterator<NodeTy> last) {}
+};
+
+// Const traits are the same as nonconst traits...
+template<typename Ty>
+struct ilist_traits<const Ty> : public ilist_traits<Ty> {};
+
+
+//===----------------------------------------------------------------------===//
+// ilist_iterator<Node> - Iterator for intrusive list.
+//
+template<typename NodeTy>
+class ilist_iterator : public std::bidirectional_iterator<NodeTy, ptrdiff_t> {
+  typedef ilist_traits<NodeTy> Traits;
+  pointer NodePtr;
+public:
+  typedef size_t size_type;
+
+  ilist_iterator(pointer NP) : NodePtr(NP) {}
+  ilist_iterator() : NodePtr(0) {}
+
+  // This is templated so that we can allow constructing a const iterator from
+  // a nonconst iterator...
+  template<class node_ty>
+  ilist_iterator(const ilist_iterator<node_ty> &RHS)
+    : NodePtr(RHS.getNodePtrUnchecked()) {}
+
+  // This is templated so that we can allow assigning to a const iterator from
+  // a nonconst iterator...
+  template<class node_ty>
+  const ilist_iterator &operator=(const ilist_iterator<node_ty> &RHS) {
+    NodePtr = RHS.getNodePtrUnchecked();
+    return *this;
+  }
+
+  // Accessors...
+  operator pointer() const {
+    assert(Traits::getNext(NodePtr) != 0 && "Dereferencing end()!");
+    return NodePtr;
+  }
+
+  reference operator*() const {
+    assert(Traits::getNext(NodePtr) != 0 && "Dereferencing end()!");
+    return *NodePtr;
+  }
+  pointer operator->() { return &operator*(); }
+  const pointer operator->() const { return &operator*(); }
+
+  // Comparison operators
+  bool operator==(const ilist_iterator &RHS) const {
+    return NodePtr == RHS.NodePtr;
+  }
+  bool operator!=(const ilist_iterator &RHS) const {
+    return NodePtr != RHS.NodePtr;
+  }
+
+  // Increment and decrement operators...
+  ilist_iterator &operator--() {      // predecrement - Back up
+    NodePtr = Traits::getPrev(NodePtr);
+    assert(NodePtr && "--'d off the beginning of an ilist!");
+    return *this;
+  }
+  ilist_iterator &operator++() {      // preincrement - Advance
+    NodePtr = Traits::getNext(NodePtr);
+    assert(NodePtr && "++'d off the end of an ilist!");
+    return *this;
+  }
+  ilist_iterator operator--(int) {    // postdecrement operators...
+    ilist_iterator tmp = *this;
+    --*this;
+    return tmp;
+  }
+  ilist_iterator operator++(int) {    // postincrement operators...
+    ilist_iterator tmp = *this;
+    ++*this;
+    return tmp;
+  }
+
+
+  // Dummy operators to make errors apparent...
+  template<class X> void operator+(X Val) {}
+  template<class X> void operator-(X Val) {}
+
+  // Internal interface, do not use...
+  pointer getNodePtrUnchecked() const { return NodePtr; }
+};
+
+
+//===----------------------------------------------------------------------===//
+//
+// iplist - The subset of list functionality that can safely be used on nodes of
+// polymorphic types, ie a heterogeneus list with a common base class that holds
+// the next/prev pointers...
+//
+template<typename NodeTy, typename Traits=ilist_traits<NodeTy> >
+class iplist : public Traits {
+  NodeTy *Head, *Tail;
+
+  static bool op_less(NodeTy &L, NodeTy &R) { return L < R; }
+  static bool op_equal(NodeTy &L, NodeTy &R) { return L == R; }
+public:
+  typedef NodeTy *pointer;
+  typedef const NodeTy *const_pointer;
+  typedef NodeTy &reference;
+  typedef const NodeTy &const_reference;
+  typedef NodeTy value_type;
+  typedef ilist_iterator<NodeTy> iterator;
+  typedef ilist_iterator<const NodeTy> const_iterator;
+  typedef size_t size_type;
+  typedef ptrdiff_t difference_type;
+  typedef reverse_iterator<const_iterator>  const_reverse_iterator;
+  typedef reverse_iterator<iterator>  reverse_iterator;
+
+  iplist() : Head(createNode()), Tail(Head) {
+    setNext(Head, 0);
+    setPrev(Head, 0);
+  }
+  ~iplist() { clear(); delete Tail; }
+
+  // Iterator creation methods...
+  iterator begin()             { return iterator(Head); }
+  const_iterator begin() const { return const_iterator(Head); }
+  iterator end()               { return iterator(Tail); }
+  const_iterator end() const   { return const_iterator(Tail); }
+
+  // reverse iterator creation methods...
+  reverse_iterator rbegin()            { return reverse_iterator(end()); }
+  const_reverse_iterator rbegin() const{ return const_reverse_iterator(end()); }
+  reverse_iterator rend()              { return reverse_iterator(begin()); }
+  const_reverse_iterator rend() const  {return const_reverse_iterator(begin());}
+
+  // Miscellaneous inspection routines...
+  size_type max_size() const { return size_type(-1); }
+  bool empty() const { return Head == Tail; }
+
+  // Front and back accessor functions...
+  reference front() {
+    assert(!empty() && "Called front() on empty list!");
+    return *Head;
+  }
+  const_reference front() const {
+    assert(!empty() && "Called front() on empty list!");
+    return *Head;
+  }
+  reference back() {
+    assert(!empty() && "Called back() on empty list!");
+    return *getPrev(Tail);
+  }
+  const_reference back() const {
+    assert(!empty() && "Called back() on empty list!");
+    return *getPrev(Tail);
+  }
+
+  void swap(iplist &RHS) {
+    abort();     // Swap does not use list traits callback correctly yet!
+    std::swap(Head, RHS.Head);
+    std::swap(Tail, RHS.Tail);
+  }
+
+  iterator insert(iterator where, NodeTy *New) {
+    NodeTy *CurNode = where.getNodePtrUnchecked(), *PrevNode = getPrev(CurNode);
+    setNext(New, CurNode);
+    setPrev(New, PrevNode);
+
+    if (PrevNode)
+      setNext(PrevNode, New);
+    else
+      Head = New;
+    setPrev(CurNode, New);
+
+    addNodeToList(New);  // Notify traits that we added a node...
+    return New;
+  }
+
+  NodeTy *remove(iterator &IT) {
+    assert(IT != end() && "Cannot remove end of list!");
+    NodeTy *Node = &*IT;
+    NodeTy *NextNode = getNext(Node);
+    NodeTy *PrevNode = getPrev(Node);
+
+    if (PrevNode)
+      setNext(PrevNode, NextNode);
+    else
+      Head = NextNode;
+    setPrev(NextNode, PrevNode);
+    IT = NextNode;
+    removeNodeFromList(Node);  // Notify traits that we added a node...
+    return Node;
+  }
+
+  NodeTy *remove(const iterator &IT) {
+    iterator MutIt = IT;
+    return remove(MutIt);
+  }
+
+  // erase - remove a node from the controlled sequence... and delete it.
+  iterator erase(iterator where) {
+    delete remove(where);
+    return where;
+  }
+
+
+private:
+  // transfer - The heart of the splice function.  Move linked list nodes from
+  // [first, last) into position.
+  //
+  void transfer(iterator position, iplist &L2, iterator first, iterator last) {
+    assert(first != last && "Should be checked by callers");
+    if (position != last) {
+      // Remove [first, last) from its old position.
+      NodeTy *First = &*first, *Prev = getPrev(First);
+      NodeTy *Next = last.getNodePtrUnchecked(), *Last = getPrev(Next);
+      if (Prev)
+        setNext(Prev, Next);
+      else
+        L2.Head = Next;
+      setPrev(Next, Prev);
+
+      // Splice [first, last) into its new position.
+      NodeTy *PosNext = position.getNodePtrUnchecked();
+      NodeTy *PosPrev = getPrev(PosNext);
+
+      // Fix head of list...
+      if (PosPrev)
+        setNext(PosPrev, First);
+      else
+        Head = First;
+      setPrev(First, PosPrev);
+
+      // Fix end of list...
+      setNext(Last, PosNext);
+      setPrev(PosNext, Last);
+
+      transferNodesFromList(L2, First, PosNext);
+    }
+  }
+
+public:
+
+  //===----------------------------------------------------------------------===
+  // Functionality derived from other functions defined above...
+  //
+
+  size_type size() const {
+    size_type Result = 0;
+    std::distance(begin(), end(), Result);
+    return Result;
+  }
+
+  iterator erase(iterator first, iterator last) {
+    while (first != last)
+      first = erase(first);
+    return last;
+  }
+
+  void clear() { erase(begin(), end()); }
+
+  // Front and back inserters...
+  void push_front(NodeTy *val) { insert(begin(), val); }
+  void push_back(NodeTy *val) { insert(end(), val); }
+  void pop_front() {
+    assert(!empty() && "pop_front() on empty list!");
+    erase(begin());
+  }
+  void pop_back() {
+    assert(!empty() && "pop_back() on empty list!");
+    iterator t = end(); erase(--t);
+  }
+
+  // Special forms of insert...
+  template<class InIt> void insert(iterator where, InIt first, InIt last) {
+    for (; first != last; ++first) insert(where, *first);
+  }
+
+  // Splice members - defined in terms of transfer...
+  void splice(iterator where, iplist &L2) {
+    if (!L2.empty())
+      transfer(where, L2, L2.begin(), L2.end());
+  }
+  void splice(iterator where, iplist &L2, iterator first) {
+    iterator last = first; ++last;
+    if (where == first || where == last) return; // No change
+    transfer(where, L2, first, last);
+  }
+  void splice(iterator where, iplist &L2, iterator first, iterator last) {
+    if (first != last) transfer(where, L2, first, last);
+  }
+
+
+
+  //===----------------------------------------------------------------------===
+  // High-Level Functionality that shouldn't really be here, but is part of list
+  //
+
+  // These two functions are actually called remove/remove_if in list<>, but
+  // they actually do the job of erase, rename them accordingly.
+  //
+  void erase(const NodeTy &val) {
+    for (iterator I = begin(), E = end(); I != E; ) {
+      iterator next = I; ++next;
+      if (*I == val) erase(I);
+      I = next;
+    }
+  }
+  template<class Pr1> void erase_if(Pr1 pred) {
+    for (iterator I = begin(), E = end(); I != E; ) {
+      iterator next = I; ++next;
+      if (pred(*I)) erase(I);
+      I = next;
+    }
+  }
+
+  template<class Pr2> void unique(Pr2 pred) {
+    if (empty()) return;
+    for (iterator I = begin(), E = end(), Next = begin(); ++Next != E;) {
+      if (pred(*I))
+        erase(Next);
+      else
+        I = Next;
+      Next = I;
+    }
+  }
+  void unique() { unique(op_equal); }
+
+  template<class Pr3> void merge(iplist &right, Pr3 pred) {
+    iterator first1 = begin(), last1 = end();
+    iterator first2 = right.begin(), last2 = right.end();
+    while (first1 != last1 && first2 != last2)
+      if (pred(*first2, *first1)) {
+        iterator next = first2;
+        transfer(first1, right, first2, ++next);
+        first2 = next;
+      } else {
+        ++first1;
+      }
+    if (first2 != last2) transfer(last1, right, first2, last2);
+  }
+  void merge(iplist &right) { return merge(right, op_less); }
+
+  template<class Pr3> void sort(Pr3 pred);
+  void sort() { sort(op_less); }
+  void reverse();
+};
+
+
+template<typename NodeTy>
+struct ilist : public iplist<NodeTy> {
+  ilist() {}
+  ilist(const ilist &right) {
+    insert(begin(), right.begin(), right.end());
+  }
+  explicit ilist(size_type count) {
+    insert(begin(), count, NodeTy());
+  } 
+  ilist(size_type count, const NodeTy &val) {
+    insert(begin(), count, val);
+  }
+  template<class InIt> ilist(InIt first, InIt last) {
+    insert(begin(), first, last);
+  }
+
+
+  // Forwarding functions: A workaround for GCC 2.95 which does not correctly
+  // support 'using' declarations to bring a hidden member into scope.
+  //
+  iterator insert(iterator a, NodeTy *b){ return iplist<NodeTy>::insert(a, b); }
+  void push_front(NodeTy *a) { iplist<NodeTy>::push_front(a); }
+  void push_back(NodeTy *a)  { iplist<NodeTy>::push_back(a); }
+  
+
+  // Main implementation here - Insert for a node passed by value...
+  iterator insert(iterator where, const NodeTy &val) {
+    return insert(where, createNode(val));
+  }
+
+
+  // Front and back inserters...
+  void push_front(const NodeTy &val) { insert(begin(), val); }
+  void push_back(const NodeTy &val) { insert(end(), val); }
+
+  // Special forms of insert...
+  template<class InIt> void insert(iterator where, InIt first, InIt last) {
+    for (; first != last; ++first) insert(where, *first);
+  }
+  void insert(iterator where, size_type count, const NodeTy &val) {
+    for (; count != 0; --count) insert(where, val);
+  }
+
+  // Assign special forms...
+  void assign(size_type count, const NodeTy &val) {
+    iterator I = begin();
+    for (; I != end() && count != 0; ++I, --count)
+      *I = val;
+    if (count != 0)
+      insert(end(), n, val);
+    else
+      erase(I, end());
+  }
+  template<class InIt> void assign(InIt first, InIt last) {
+    iterator first1 = begin(), last1 = end();
+    for ( ; first1 != last1 && first2 != last2; ++first1, ++first2)
+      *first1 = *first2;
+    if (first2 == last2)
+      erase(first1, last1);
+    else
+      insert(last1, first2, last2);
+  }
+
+
+  // Resize members...
+  void resize(size_type newsize, NodeTy val) {
+    iterator i = begin();
+    size_type len = 0;
+    for ( ; i != end() && len < newsize; ++i, ++len) /* empty*/ ;
+
+    if (len == newsize)
+      erase(i, end());
+    else                                          // i == end()
+      insert(end(), newsize - len, val);
+  }
+  void resize(size_type newsize) { resize(newsize, NodeTy()); }
+
+};
+
+namespace std {
+  // Ensure that swap uses the fast list swap...
+  template<class Ty>
+  void swap(iplist<Ty> &Left, iplist<Ty> &Right) {
+    Left.swap(Right);
+  }
+}  // End 'std' extensions...
+
+#endif

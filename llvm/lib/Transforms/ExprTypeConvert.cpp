@@ -31,7 +31,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 static bool AllIndicesZero(const MemAccessInst *MAI) {
   for (User::const_op_iterator S = MAI->idx_begin(), E = MAI->idx_end();
        S != E; ++S)
-    if (!isa<Constant>(*S) || !cast<Constant>(*S)->isNullValue())
+    if (!isa<Constant>(S->get()) || !cast<Constant>(S->get())->isNullValue())
       return false;
   return true;
 }
@@ -110,7 +110,7 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
   unsigned Scale  = (unsigned)ScaleVal  * OldTypeSize / DataSize;
 
   // Locate the malloc instruction, because we may be inserting instructions
-  It = find(BB->getInstList().begin(), BB->getInstList().end(), MI);
+  It = MI;
 
   // If we have a scale, apply it first...
   if (Expr.Var) {
@@ -118,7 +118,7 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
     if (Expr.Var->getType() != Type::UIntTy) {
       Instruction *CI = new CastInst(Expr.Var, Type::UIntTy);
       if (Expr.Var->hasName()) CI->setName(Expr.Var->getName()+"-uint");
-      It = BB->getInstList().insert(It, CI)+1;
+      It = ++BB->getInstList().insert(It, CI);
       Expr.Var = CI;
     }
 
@@ -127,7 +127,7 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
         BinaryOperator::create(Instruction::Mul, Expr.Var,
                                ConstantUInt::get(Type::UIntTy, Scale));
       if (Expr.Var->hasName()) ScI->setName(Expr.Var->getName()+"-scl");
-      It = BB->getInstList().insert(It, ScI)+1;
+      It = ++BB->getInstList().insert(It, ScI);
       Expr.Var = ScI;
     }
 
@@ -145,7 +145,7 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
       BinaryOperator::create(Instruction::Add, Expr.Var,
                              ConstantUInt::get(Type::UIntTy, Offset));
     if (Expr.Var->hasName()) AddI->setName(Expr.Var->getName()+"-off");
-    It = BB->getInstList().insert(It, AddI)+1;
+    It = ++BB->getInstList().insert(It, AddI);
     Expr.Var = AddI;
   }
 
@@ -193,9 +193,10 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     // We also do not allow conversion of a cast that casts from a ptr to array
     // of X to a *X.  For example: cast [4 x %List *] * %val to %List * *
     //
-    if (PointerType *SPT = dyn_cast<PointerType>(I->getOperand(0)->getType()))
-      if (PointerType *DPT = dyn_cast<PointerType>(I->getType()))
-        if (ArrayType *AT = dyn_cast<ArrayType>(SPT->getElementType()))
+    if (const PointerType *SPT = 
+        dyn_cast<PointerType>(I->getOperand(0)->getType()))
+      if (const PointerType *DPT = dyn_cast<PointerType>(I->getType()))
+        if (const ArrayType *AT = dyn_cast<ArrayType>(SPT->getElementType()))
           if (AT->getElementType() == DPT->getElementType())
             return false;
     break;
@@ -475,7 +476,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
       // and we could convert this to an appropriate GEP for the new type.
       //
       const PointerType *NewSrcTy = PointerType::get(PVTy);
-      BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
+      BasicBlock::iterator It = I;
 
       // Check to see if 'N' is an expression that can be converted to
       // the appropriate size... if so, allow it.
@@ -519,9 +520,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
   assert(Res->getType() == Ty && "Didn't convert expr to correct type!");
 
-  BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
-  assert(It != BIL.end() && "Instruction not in own basic block??");
-  BIL.insert(It, Res);
+  BIL.insert(I, Res);
 
   // Add the instruction to the expression map
   VMC.ExprMap[I] = Res;
@@ -618,9 +617,10 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     // We also do not allow conversion of a cast that casts from a ptr to array
     // of X to a *X.  For example: cast [4 x %List *] * %val to %List * *
     //
-    if (PointerType *SPT = dyn_cast<PointerType>(I->getOperand(0)->getType()))
-      if (PointerType *DPT = dyn_cast<PointerType>(I->getType()))
-        if (ArrayType *AT = dyn_cast<ArrayType>(SPT->getElementType()))
+    if (const PointerType *SPT = 
+        dyn_cast<PointerType>(I->getOperand(0)->getType()))
+      if (const PointerType *DPT = dyn_cast<PointerType>(I->getType()))
+        if (const ArrayType *AT = dyn_cast<ArrayType>(SPT->getElementType()))
           if (AT->getElementType() == DPT->getElementType())
             return false;
     return true;
@@ -719,7 +719,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
         // a whole structure at a time), so the level raiser must be trying to
         // store into the first field.  Check for this and allow it now:
         //
-        if (StructType *SElTy = dyn_cast<StructType>(ElTy)) {
+        if (const StructType *SElTy = dyn_cast<StructType>(ElTy)) {
           unsigned Offset = 0;
           std::vector<Value*> Indices;
           ElTy = getStructOffsetType(ElTy, Offset, Indices, false);
@@ -817,9 +817,9 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
 
     // Are we trying to change the function pointer value to a new type?
     if (OpNum == 0) {
-      PointerType *PTy = dyn_cast<PointerType>(Ty);
+      const PointerType *PTy = dyn_cast<PointerType>(Ty);
       if (PTy == 0) return false;  // Can't convert to a non-pointer type...
-      FunctionType *MTy = dyn_cast<FunctionType>(PTy->getElementType());
+      const FunctionType *MTy = dyn_cast<FunctionType>(PTy->getElementType());
       if (MTy == 0) return false;  // Can't convert to a non ptr to function...
 
       // Perform sanity checks to make sure that new function type has the
@@ -926,7 +926,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     if (isa<PointerType>(NewTy)) {
       Value *IndexVal = I->getOperand(OldVal == I->getOperand(0) ? 1 : 0);
       std::vector<Value*> Indices;
-      BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
+      BasicBlock::iterator It = I;
 
       if (const Type *ETy = ConvertableToGEP(NewTy, IndexVal, Indices, &It)) {
         // If successful, convert the add to a GEP
@@ -1016,7 +1016,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     // Convert a one index getelementptr into just about anything that is
     // desired.
     //
-    BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
+    BasicBlock::iterator It = I;
     const Type *OldElTy = cast<PointerType>(I->getType())->getElementType();
     unsigned DataSize = TD.getTypeSize(OldElTy);
     Value *Index = I->getOperand(1);
@@ -1025,7 +1025,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       // Insert a multiply of the old element type is not a unit size...
       Index = BinaryOperator::create(Instruction::Mul, Index,
                                      ConstantUInt::get(Type::UIntTy, DataSize));
-      It = BIL.insert(It, cast<Instruction>(Index))+1;
+      It = ++BIL.insert(It, cast<Instruction>(Index));
     }
 
     // Perform the conversion now...
@@ -1042,7 +1042,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       // Convert a getelementptr sbyte * %reg111, uint 16 freely back to
       // anything that is a pointer type...
       //
-      BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
+      BasicBlock::iterator It = I;
     
       // Check to see if the second argument is an expression that can
       // be converted to the appropriate size... if so, allow it.
@@ -1086,8 +1086,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     std::vector<Value*> Params(I->op_begin()+1, I->op_end());
 
     if (Meth == OldVal) {   // Changing the function pointer?
-      PointerType *NewPTy = cast<PointerType>(NewVal->getType());
-      FunctionType *NewTy = cast<FunctionType>(NewPTy->getElementType());
+      const PointerType *NewPTy = cast<PointerType>(NewVal->getType());
+      const FunctionType *NewTy = cast<FunctionType>(NewPTy->getElementType());
       const FunctionType::ParamTypes &PTs = NewTy->getParamTypes();
 
       // Get an iterator to the call instruction so that we can insert casts for
@@ -1096,7 +1096,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       // compatible.  The reason for this is that we prefer to have resolved
       // functions but casted arguments if possible.
       //
-      BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
+      BasicBlock::iterator It = I;
 
       // Convert over all of the call operands to their new types... but only
       // convert over the part that is not in the vararg section of the call.
@@ -1107,7 +1107,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
           // is a lossless cast...
           //
           Params[i] = new CastInst(Params[i], PTs[i], "call.resolve.cast");
-          It = BIL.insert(It, cast<Instruction>(Params[i]))+1;
+          It = ++BIL.insert(It, cast<Instruction>(Params[i]));
         }
       Meth = NewVal;  // Update call destination to new value
 
@@ -1130,7 +1130,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   // If the instruction was newly created, insert it into the instruction
   // stream.
   //
-  BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
+  BasicBlock::iterator It = I;
   assert(It != BIL.end() && "Instruction not in own basic block??");
   BIL.insert(It, Res);   // Keep It pointing to old instruction
 
@@ -1186,7 +1186,7 @@ static void RecursiveDelete(ValueMapCache &Cache, Instruction *I) {
 
   for (User::op_iterator OI = I->op_begin(), OE = I->op_end(); 
        OI != OE; ++OI)
-    if (Instruction *U = dyn_cast<Instruction>(*OI)) {
+    if (Instruction *U = dyn_cast<Instruction>(OI->get())) {
       *OI = 0;
       RecursiveDelete(Cache, U);
     }

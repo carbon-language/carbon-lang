@@ -26,7 +26,7 @@ namespace {
   struct CFGSimplifyPass : public FunctionPass {
     const char *getPassName() const { return "Simplify CFG"; }
     
-    virtual bool runOnFunction(Function *F);
+    virtual bool runOnFunction(Function &F);
   };
 }
 
@@ -49,29 +49,28 @@ static bool MarkAliveBlocks(BasicBlock *BB, std::set<BasicBlock*> &Reachable) {
 // It is possible that we may require multiple passes over the code to fully
 // simplify the CFG.
 //
-bool CFGSimplifyPass::runOnFunction(Function *F) {
+bool CFGSimplifyPass::runOnFunction(Function &F) {
   std::set<BasicBlock*> Reachable;
-  bool Changed = MarkAliveBlocks(F->front(), Reachable);
+  bool Changed = MarkAliveBlocks(F.begin(), Reachable);
 
   // If there are unreachable blocks in the CFG...
-  if (Reachable.size() != F->size()) {
-    assert(Reachable.size() < F->size());
-    NumSimpl += F->size()-Reachable.size();
+  if (Reachable.size() != F.size()) {
+    assert(Reachable.size() < F.size());
+    NumSimpl += F.size()-Reachable.size();
 
     // Loop over all of the basic blocks that are not reachable, dropping all of
     // their internal references...
-    for (Function::iterator I = F->begin()+1, E = F->end(); I != E; ++I)
-      if (!Reachable.count(*I)) {
-        BasicBlock *BB = *I;
+    for (Function::iterator BB = ++F.begin(), E = F.end(); BB != E; ++BB)
+      if (!Reachable.count(BB)) {
         for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI!=SE; ++SI)
           if (Reachable.count(*SI))
             (*SI)->removePredecessor(BB);
         BB->dropAllReferences();
       }
     
-    for (Function::iterator I = F->begin()+1; I != F->end();)
-      if (!Reachable.count(*I))
-        delete F->getBasicBlocks().remove(I);
+    for (Function::iterator I = ++F.begin(); I != F.end();)
+      if (!Reachable.count(I))
+        I = F.getBasicBlockList().erase(I);
       else
         ++I;
 
@@ -85,12 +84,10 @@ bool CFGSimplifyPass::runOnFunction(Function *F) {
     // Loop over all of the basic blocks (except the first one) and remove them
     // if they are unneeded...
     //
-    for (Function::iterator BBIt = F->begin()+1; BBIt != F->end(); ) {
-      if (SimplifyCFG(BBIt)) {
+    for (Function::iterator BBIt = ++F.begin(); BBIt != F.end(); ) {
+      if (SimplifyCFG(BBIt++)) {
         LocalChange = true;
         ++NumSimpl;
-      } else {
-        ++BBIt;
       }
     }
     Changed |= LocalChange;

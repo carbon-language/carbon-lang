@@ -162,22 +162,18 @@ class InstForest : public std::vector<InstTreeNode<Payload> *> {
 public:
   // ctor - Create an instruction forest for the specified method...
   InstForest(Function *F) {
-    for (Function::iterator MI = F->begin(), ME = F->end(); MI != ME; ++MI) {
-      BasicBlock *BB = *MI;
-      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-        Instruction *Inst = *I;
-        if (!getInstNode(Inst)) {  // Do we already have a tree for this inst?
+    for (Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB)
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+        if (!getInstNode(I)) {  // Do we already have a tree for this inst?
           // No, create one!  InstTreeNode ctor automatically adds the
           // created node into our InstMap
-          push_back(new InstTreeNode<Payload>(*this, Inst, 0));
+          push_back(new InstTreeNode<Payload>(*this, I, 0));
         }
-      }
-    }
   }
 
   // dtor - Free the trees...
   ~InstForest() {
-    for (unsigned i = size(); i > 0; --i)
+    for (unsigned i = size(); i != 0; --i)
       delete operator[](i-1);
   }
 

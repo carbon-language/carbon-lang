@@ -49,12 +49,11 @@ namespace {
 
     const char *getPassName() const { return "Register Allocation"; }
     
-    bool runOnFunction(Function *F) {
+    bool runOnFunction(Function &F) {
       if (DEBUG_RA)
-        cerr << "\n******************** Function "<< F->getName()
-             << " ********************\n";
+        cerr << "\n********* Function "<< F.getName() << " ***********\n";
       
-      PhyRegAlloc PRA(F, Target, &getAnalysis<FunctionLiveVarInfo>(),
+      PhyRegAlloc PRA(&F, Target, &getAnalysis<FunctionLiveVarInfo>(),
                       &getAnalysis<LoopInfo>());
       PRA.allocateRegisters();
       
@@ -87,7 +86,7 @@ PhyRegAlloc::PhyRegAlloc(Function *F, const TargetMachine& tm,
 
   // create each RegisterClass and put in RegClassList
   //
-  for(unsigned int rc=0; rc < NumOfRegClasses; rc++)  
+  for (unsigned rc=0; rc < NumOfRegClasses; rc++)  
     RegClassList.push_back(new RegClass(F, MRI.getMachineRegClass(rc),
                                         &ResColList));
 }
@@ -97,7 +96,7 @@ PhyRegAlloc::PhyRegAlloc(Function *F, const TargetMachine& tm,
 // Destructor: Deletes register classes
 //----------------------------------------------------------------------------
 PhyRegAlloc::~PhyRegAlloc() { 
-  for( unsigned int rc=0; rc < NumOfRegClasses; rc++)
+  for ( unsigned rc=0; rc < NumOfRegClasses; rc++)
     delete RegClassList[rc];
 
   AddedInstrMap.clear();
@@ -120,7 +119,7 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
     if (HMI->first) { 
       LiveRange *L = HMI->second;   // get the LiveRange
       if (!L) { 
-        if( DEBUG_RA) {
+        if (DEBUG_RA) {
           cerr << "\n*?!?Warning: Null liver range found for: "
                << RAV(HMI->first) << "\n";
         }
@@ -128,7 +127,7 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
       }
                                         // if the Value * is not null, and LR  
                                         // is not yet written to the IGNodeList
-      if( !(L->getUserIGNode())  ) {  
+      if (!(L->getUserIGNode())  ) {  
         RegClass *const RC =           // RegClass of first value in the LR
           RegClassList[ L->getRegClass()->getID() ];
         
@@ -138,10 +137,10 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
   }
     
   // init RegClassList
-  for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
+  for ( unsigned rc=0; rc < NumOfRegClasses ; rc++)  
     RegClassList[rc]->createInterferenceGraph();
 
-  if( DEBUG_RA)
+  if (DEBUG_RA)
     cerr << "LRLists Created!\n";
 }
 
@@ -171,7 +170,7 @@ void PhyRegAlloc::addInterference(const Value *Def,
 
   // for each live var in live variable set
   //
-  for( ; LIt != LVSet->end(); ++LIt) {
+  for ( ; LIt != LVSet->end(); ++LIt) {
 
     if (DEBUG_RA > 1)
       cerr << "< Def=" << RAV(Def) << ", Lvar=" << RAV(*LIt) << "> ";
@@ -184,7 +183,7 @@ void PhyRegAlloc::addInterference(const Value *Def,
     // doesn't have a dominating def - see Assumptions above
     //
     if (LROfVar) {  
-      if(LROfDef == LROfVar)            // do not set interf for same LR
+      if (LROfDef == LROfVar)            // do not set interf for same LR
 	continue;
 
       // if 2 reg classes are the same set interference
@@ -212,20 +211,20 @@ void PhyRegAlloc::addInterference(const Value *Def,
 void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst, 
 				       const ValueSet *LVSetAft) {
 
-  if( DEBUG_RA)
+  if (DEBUG_RA)
     cerr << "\n For call inst: " << *MInst;
 
   ValueSet::const_iterator LIt = LVSetAft->begin();
 
   // for each live var in live variable set after machine inst
   //
-  for( ; LIt != LVSetAft->end(); ++LIt) {
+  for ( ; LIt != LVSetAft->end(); ++LIt) {
 
     //  get the live range corresponding to live var
     //
     LiveRange *const LR = LRI.getLiveRangeForValue(*LIt ); 
 
-    if( LR && DEBUG_RA) {
+    if (LR && DEBUG_RA) {
       cerr << "\n\tLR Aft Call: ";
       printSet(*LR);
     }
@@ -233,9 +232,9 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
     // LR can be null if it is a const since a const 
     // doesn't have a dominating def - see Assumptions above
     //
-    if( LR )   {  
+    if (LR )   {  
       LR->setCallInterference();
-      if( DEBUG_RA) {
+      if (DEBUG_RA) {
 	cerr << "\n  ++Added call interf for LR: " ;
 	printSet(*LR);
       }
@@ -259,7 +258,7 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
 
   // If the CALL is an indirect call, find the LR of the function pointer.
   // That has a call interference because it conflicts with outgoing args.
-  if( const Value *AddrVal = argDesc->getIndirectFuncPtr()) {
+  if (const Value *AddrVal = argDesc->getIndirectFuncPtr()) {
     LiveRange *AddrValLR = LRI.getLiveRangeForValue( AddrVal );
     assert( AddrValLR && "No LR for indirect addr val of call");
     AddrValLR->setCallInterference();
@@ -278,7 +277,7 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
 void PhyRegAlloc::buildInterferenceGraphs()
 {
 
-  if(DEBUG_RA) cerr << "Creating interference graphs ...\n";
+  if (DEBUG_RA) cerr << "Creating interference graphs ...\n";
 
   unsigned BBLoopDepthCost;
   for (Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
@@ -286,26 +285,26 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
     // find the 10^(loop_depth) of this BB 
     //
-    BBLoopDepthCost = (unsigned) pow(10.0, LoopDepthCalc->getLoopDepth(*BBI));
+    BBLoopDepthCost = (unsigned)pow(10.0, LoopDepthCalc->getLoopDepth(BBI));
 
     // get the iterator for machine instructions
     //
-    const MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
+    const MachineCodeForBasicBlock& MIVec = BBI->getMachineInstrVec();
     MachineCodeForBasicBlock::const_iterator MII = MIVec.begin();
 
     // iterate over all the machine instructions in BB
     //
-    for( ; MII != MIVec.end(); ++MII) {  
+    for ( ; MII != MIVec.end(); ++MII) {  
 
       const MachineInstr *MInst = *MII; 
 
       // get the LV set after the instruction
       //
-      const ValueSet &LVSetAI = LVI->getLiveVarSetAfterMInst(MInst, *BBI);
+      const ValueSet &LVSetAI = LVI->getLiveVarSetAfterMInst(MInst, BBI);
     
       const bool isCallInst = TM.getInstrInfo().isCall(MInst->getOpCode());
 
-      if( isCallInst ) {
+      if (isCallInst ) {
 	// set the isCallInterference flag of each live range wich extends
 	// accross this call instruction. This information is used by graph
 	// coloring algo to avoid allocating volatile colors to live ranges
@@ -339,9 +338,9 @@ void PhyRegAlloc::buildInterferenceGraphs()
       // instr (currently, only calls have this).
       //
       unsigned NumOfImpRefs =  MInst->getNumImplicitRefs();
-      if(  NumOfImpRefs > 0 ) {
-	for(unsigned z=0; z < NumOfImpRefs; z++) 
-	  if( MInst->implicitRefIsDefined(z) )
+      if ( NumOfImpRefs > 0 ) {
+	for (unsigned z=0; z < NumOfImpRefs; z++) 
+	  if (MInst->implicitRefIsDefined(z) )
 	    addInterference( MInst->getImplicitRef(z), &LVSetAI, isCallInst );
       }
 
@@ -355,7 +354,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
   //  
   addInterferencesForArgs();          
 
-  if( DEBUG_RA)
+  if (DEBUG_RA)
     cerr << "Interference graphs calculted!\n";
 
 }
@@ -380,14 +379,14 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
     assert((LROfOp1 || !It1.isDef()) && "No LR for Def in PSEUDO insruction");
 
     MachineInstr::const_val_op_iterator It2 = It1;
-    for(++It2; It2 != ItE; ++It2) {
+    for (++It2; It2 != ItE; ++It2) {
       const LiveRange *LROfOp2 = LRI.getLiveRangeForValue(*It2); 
 
       if (LROfOp2) {
 	RegClass *RCOfOp1 = LROfOp1->getRegClass(); 
 	RegClass *RCOfOp2 = LROfOp2->getRegClass(); 
  
-	if( RCOfOp1 == RCOfOp2 ){ 
+	if (RCOfOp1 == RCOfOp2 ){ 
 	  RCOfOp1->setInterference( LROfOp1, LROfOp2 );  
 	  setInterf = true;
 	}
@@ -409,21 +408,14 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
 //----------------------------------------------------------------------------
 void PhyRegAlloc::addInterferencesForArgs() {
   // get the InSet of root BB
-  const ValueSet &InSet = LVI->getInSetOfBB(Meth->front());  
+  const ValueSet &InSet = LVI->getInSetOfBB(&Meth->front());  
 
-  // get the argument list
-  const Function::ArgumentListType &ArgList = Meth->getArgumentList();  
-
-  // get an iterator to arg list
-  Function::ArgumentListType::const_iterator ArgIt = ArgList.begin();          
-
-
-  for( ; ArgIt != ArgList.end() ; ++ArgIt) {  // for each argument
-    addInterference((Value*)*ArgIt, &InSet, false);// add interferences between 
-                                              // args and LVars at start
-    if( DEBUG_RA > 1)
-      cerr << " - %% adding interference for  argument "
-           << RAV((const Value *)*ArgIt) << "\n";
+  for (Function::const_aiterator AI = Meth->abegin(); AI != Meth->aend(); ++AI) {
+    // add interferences between args and LVars at start 
+    addInterference(AI, &InSet, false);
+    
+    if (DEBUG_RA > 1)
+      cerr << " - %% adding interference for  argument " << RAV(AI) << "\n";
   }
 }
 
@@ -472,9 +464,9 @@ AppendInstructions(std::vector<MachineInstr *> &IAft,
     {
       MachineInstr* OrigMI = *MII;
       std::vector<MachineInstr *>::iterator AdIt; 
-      for( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt )
+      for ( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt )
         {
-          if(DEBUG_RA) {
+          if (DEBUG_RA) {
             if (OrigMI) cerr << "For MInst: " << *OrigMI;
             cerr << msg << " APPENDed instr: "  << **AdIt << "\n";
           }
@@ -487,25 +479,22 @@ AppendInstructions(std::vector<MachineInstr *> &IAft,
 
 void PhyRegAlloc::updateMachineCode()
 {
-  const BasicBlock* entryBB = Meth->getEntryNode();
-  if (entryBB) {
-    MachineCodeForBasicBlock& MIVec = entryBB->getMachineInstrVec();
-    MachineCodeForBasicBlock::iterator MII = MIVec.begin();
+  MachineCodeForBasicBlock& MIVec = Meth->getEntryNode().getMachineInstrVec();
     
-    // Insert any instructions needed at method entry
-    PrependInstructions(AddedInstrAtEntry.InstrnsBefore, MIVec, MII,
-                        "At function entry: \n");
-    assert(AddedInstrAtEntry.InstrnsAfter.empty() &&
-           "InstrsAfter should be unnecessary since we are just inserting at "
-           "the function entry point here.");
-  }
+  // Insert any instructions needed at method entry
+  MachineCodeForBasicBlock::iterator MII = MIVec.begin();
+  PrependInstructions(AddedInstrAtEntry.InstrnsBefore, MIVec, MII,
+                      "At function entry: \n");
+  assert(AddedInstrAtEntry.InstrnsAfter.empty() &&
+         "InstrsAfter should be unnecessary since we are just inserting at "
+         "the function entry point here.");
   
   for (Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
        BBI != BBE; ++BBI) {
     
     // iterate over all the machine instructions in BB
-    MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
-    for(MachineCodeForBasicBlock::iterator MII = MIVec.begin();
+    MachineCodeForBasicBlock &MIVec = BBI->getMachineInstrVec();
+    for (MachineCodeForBasicBlock::iterator MII = MIVec.begin();
         MII != MIVec.end(); ++MII) {  
       
       MachineInstr *MInst = *MII; 
@@ -530,7 +519,7 @@ void PhyRegAlloc::updateMachineCode()
 	mcInfo.popAllTempValues(TM);  
 	
 	if (TM.getInstrInfo().isCall(Opcode))
-	  MRI.colorCallArgs(MInst, LRI, &AI, *this, *BBI);
+	  MRI.colorCallArgs(MInst, LRI, &AI, *this, BBI);
 	else if (TM.getInstrInfo().isReturn(Opcode))
 	  MRI.colorRetValue(MInst, LRI, &AI);
       }
@@ -540,7 +529,7 @@ void PhyRegAlloc::updateMachineCode()
 
       // if this machine instr is call, insert caller saving code
 
-      if( (TM.getInstrInfo()).isCall( MInst->getOpCode()) )
+      if ((TM.getInstrInfo()).isCall( MInst->getOpCode()) )
 	MRI.insertCallerSavingCode(MInst,  *BBI, *this );
 	
       */
@@ -551,22 +540,22 @@ void PhyRegAlloc::updateMachineCode()
       // mcInfo.popAllTempValues(TM);
       // TODO ** : do later
       
-      //for(MachineInstr::val_const_op_iterator OpI(MInst);!OpI.done();++OpI) {
+      //for (MachineInstr::val_const_op_iterator OpI(MInst);!OpI.done();++OpI) {
 
 
       // Now replace set the registers for operands in the machine instruction
       //
-      for(unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
+      for (unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
 
 	MachineOperand& Op = MInst->getOperand(OpNum);
 
-	if( Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
+	if (Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
 	    Op.getOperandType() ==  MachineOperand::MO_CCRegister) {
 
 	  const Value *const Val =  Op.getVRegValue();
 
 	  // delete this condition checking later (must assert if Val is null)
-	  if( !Val) {
+	  if (!Val) {
             if (DEBUG_RA)
               cerr << "Warning: NULL Value found for operand\n";
 	    continue;
@@ -575,7 +564,7 @@ void PhyRegAlloc::updateMachineCode()
 
 	  LiveRange *const LR = LRI.getLiveRangeForValue(Val);
 
-	  if ( !LR ) {
+	  if (!LR ) {
 
 	    // nothing to worry if it's a const or a label
 
@@ -586,7 +575,7 @@ void PhyRegAlloc::updateMachineCode()
             }
 
 	    // if register is not allocated, mark register as invalid
-	    if( Op.getAllocatedRegNum() == -1)
+	    if (Op.getAllocatedRegNum() == -1)
 	      Op.setRegForValue( MRI.getInvalidRegNum()); 
 	    
 
@@ -595,7 +584,7 @@ void PhyRegAlloc::updateMachineCode()
 	
 	  unsigned RCID = (LR->getRegClass())->getID();
 
-	  if( LR->hasColor() ) {
+	  if (LR->hasColor() ) {
 	    Op.setRegForValue( MRI.getUnifiedRegNum(RCID, LR->getColor()) );
 	  }
 	  else {
@@ -604,7 +593,7 @@ void PhyRegAlloc::updateMachineCode()
 	    // for spilled opeands in this machine instruction
 
 	    //assert(0 && "LR must be spilled");
-	    insertCode4SpilledLR(LR, MInst, *BBI, OpNum );
+	    insertCode4SpilledLR(LR, MInst, BBI, OpNum );
 
 	  }
 	}
@@ -620,7 +609,7 @@ void PhyRegAlloc::updateMachineCode()
       // If there are instructions to be added, *before* this machine
       // instruction, add them now.
       //      
-      if(AddedInstrMap.count(MInst)) {
+      if (AddedInstrMap.count(MInst)) {
         PrependInstructions(AddedInstrMap[MInst].InstrnsBefore, MIVec, MII,"");
       }
       
@@ -638,7 +627,7 @@ void PhyRegAlloc::updateMachineCode()
 	if ((delay=TM.getInstrInfo().getNumDelaySlots(MInst->getOpCode())) >0){ 
 	  move2DelayedInstr(MInst,  *(MII+delay) );
 
-	  if(DEBUG_RA)  cerr<< "\nMoved an added instr after the delay slot";
+	  if (DEBUG_RA)  cerr<< "\nMoved an added instr after the delay slot";
 	}
        
 	else {
@@ -698,10 +687,10 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     AI.InstrnsBefore.insert(AI.InstrnsBefore.end(),
                             AdIMid.begin(), AdIMid.end());
     
-    if(MIBef)
+    if (MIBef)
       AI.InstrnsBefore.push_back(MIBef);
 
-    if(MIAft)
+    if (MIAft)
       AI.InstrnsAfter.insert(AI.InstrnsAfter.begin(), MIAft);
     
   } else {   // if this is a Def
@@ -722,14 +711,16 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
 
   }  // if !DEF
   
-  cerr << "\nFor Inst " << *MInst;
-  cerr << " - SPILLED LR: "; printSet(*LR);
-  cerr << "\n - Added Instructions:";
-  if (MIBef) cerr <<  *MIBef;
-  for (vector<MachineInstr*>::const_iterator II=AdIMid.begin();
-       II != AdIMid.end(); ++II)
-    cerr <<  **II;
-  if (MIAft) cerr <<  *MIAft;
+  if (DEBUG_RA) {
+    cerr << "\nFor Inst " << *MInst;
+    cerr << " - SPILLED LR: "; printSet(*LR);
+    cerr << "\n - Added Instructions:";
+    if (MIBef) cerr <<  *MIBef;
+    for (vector<MachineInstr*>::const_iterator II=AdIMid.begin();
+         II != AdIMid.end(); ++II)
+      cerr <<  **II;
+    if (MIAft) cerr <<  *MIAft;
+  }
 
   Op.setRegForValue(TmpRegU);    // set the opearnd
 }
@@ -755,7 +746,7 @@ int PhyRegAlloc::getUsableUniRegAtMI(RegClass *RC,
   int RegU =  getUnusedUniRegAtMI(RC, MInst, LVSetBef);
 
 
-  if( RegU != -1) {
+  if (RegU != -1) {
     // we found an unused register, so we can simply use it
     MIBef = MIAft = NULL;
   }
@@ -799,20 +790,20 @@ int PhyRegAlloc::getUnusedUniRegAtMI(RegClass *RC,
   
   std::vector<bool> &IsColorUsedArr = RC->getIsColorUsedArr();
   
-  for(unsigned i=0; i <  NumAvailRegs; i++)     // Reset array
+  for (unsigned i=0; i <  NumAvailRegs; i++)     // Reset array
       IsColorUsedArr[i] = false;
       
   ValueSet::const_iterator LIt = LVSetBef->begin();
 
   // for each live var in live variable set after machine inst
-  for( ; LIt != LVSetBef->end(); ++LIt) {
+  for ( ; LIt != LVSetBef->end(); ++LIt) {
 
    //  get the live range corresponding to live var
     LiveRange *const LRofLV = LRI.getLiveRangeForValue(*LIt );    
 
     // LR can be null if it is a const since a const 
     // doesn't have a dominating def - see Assumptions above
-    if( LRofLV && LRofLV->getRegClass() == RC && LRofLV->hasColor() ) 
+    if (LRofLV && LRofLV->getRegClass() == RC && LRofLV->hasColor() ) 
       IsColorUsedArr[ LRofLV->getColor() ] = true;
   }
 
@@ -822,7 +813,7 @@ int PhyRegAlloc::getUnusedUniRegAtMI(RegClass *RC,
 
   setRelRegsUsedByThisInst(RC, MInst);
 
-  for(unsigned c=0; c < NumAvailRegs; c++)   // find first unused color
+  for (unsigned c=0; c < NumAvailRegs; c++)   // find first unused color
      if (!IsColorUsedArr[c])
        return MRI.getUnifiedRegNum(RC->getID(), c);
    
@@ -841,12 +832,12 @@ int PhyRegAlloc::getUniRegNotUsedByThisInst(RegClass *RC,
   unsigned NumAvailRegs =  RC->getNumOfAvailRegs();
 
 
-  for(unsigned i=0; i < NumAvailRegs ; i++)   // Reset array
+  for (unsigned i=0; i < NumAvailRegs ; i++)   // Reset array
     IsColorUsedArr[i] = false;
 
   setRelRegsUsedByThisInst(RC, MInst);
 
-  for(unsigned c=0; c < RC->getNumOfAvailRegs(); c++)// find first unused color
+  for (unsigned c=0; c < RC->getNumOfAvailRegs(); c++)// find first unused color
     if (!IsColorUsedArr[c])
       return  MRI.getUnifiedRegNum(RC->getID(), c);
 
@@ -865,19 +856,19 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC,
 
  vector<bool> &IsColorUsedArr = RC->getIsColorUsedArr();
   
- for(unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
+ for (unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
     
    const MachineOperand& Op = MInst->getOperand(OpNum);
 
-    if( Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
+    if (Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
 	Op.getOperandType() ==  MachineOperand::MO_CCRegister ) {
 
       const Value *const Val =  Op.getVRegValue();
 
-      if( Val ) 
-	if( MRI.getRegClassIDOfValue(Val) == RC->getID() ) {   
+      if (Val ) 
+	if (MRI.getRegClassIDOfValue(Val) == RC->getID() ) {   
 	  int Reg;
-	  if( (Reg=Op.getAllocatedRegNum()) != -1) {
+	  if ((Reg=Op.getAllocatedRegNum()) != -1) {
 	    IsColorUsedArr[Reg] = true;
 	  }
 	  else {
@@ -885,8 +876,8 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC,
 	    // a register but it has a LR and that received a color
 
 	    LiveRange *LROfVal =  LRI.getLiveRangeForValue(Val);
-	    if( LROfVal) 
-	      if( LROfVal->hasColor() )
+	    if (LROfVal) 
+	      if (LROfVal->hasColor() )
 		IsColorUsedArr[LROfVal->getColor()] = true;
 	  }
 	
@@ -900,12 +891,12 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC,
  
  // If there are implicit references, mark them as well
 
- for(unsigned z=0; z < MInst->getNumImplicitRefs(); z++) {
+ for (unsigned z=0; z < MInst->getNumImplicitRefs(); z++) {
 
    LiveRange *const LRofImpRef = 
      LRI.getLiveRangeForValue( MInst->getImplicitRef(z)  );    
    
-   if(LRofImpRef && LRofImpRef->hasColor())
+   if (LRofImpRef && LRofImpRef->hasColor())
      IsColorUsedArr[LRofImpRef->getColor()] = true;
  }
 }
@@ -957,35 +948,35 @@ void PhyRegAlloc::printMachineCode()
 
   for (Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
        BBI != BBE; ++BBI) {
-    cerr << "\n"; printLabel(*BBI); cerr << ": ";
+    cerr << "\n"; printLabel(BBI); cerr << ": ";
 
     // get the iterator for machine instructions
-    MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
+    MachineCodeForBasicBlock& MIVec = BBI->getMachineInstrVec();
     MachineCodeForBasicBlock::iterator MII = MIVec.begin();
 
     // iterate over all the machine instructions in BB
-    for( ; MII != MIVec.end(); ++MII) {  
+    for ( ; MII != MIVec.end(); ++MII) {  
       MachineInstr *const MInst = *MII; 
 
       cerr << "\n\t";
       cerr << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
 
-      for(unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
+      for (unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
 	MachineOperand& Op = MInst->getOperand(OpNum);
 
-	if( Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
+	if (Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
 	    Op.getOperandType() ==  MachineOperand::MO_CCRegister /*|| 
 	    Op.getOperandType() ==  MachineOperand::MO_PCRelativeDisp*/ ) {
 
 	  const Value *const Val = Op.getVRegValue () ;
 	  // ****this code is temporary till NULL Values are fixed
-	  if( ! Val ) {
+	  if (! Val ) {
 	    cerr << "\t<*NULL*>";
 	    continue;
 	  }
 
 	  // if a label or a constant
-	  if(isa<BasicBlock>(Val)) {
+	  if (isa<BasicBlock>(Val)) {
 	    cerr << "\t"; printLabel(	Op.getVRegValue	() );
 	  } else {
 	    // else it must be a register value
@@ -997,17 +988,17 @@ void PhyRegAlloc::printMachineCode()
 	    else 
 	      cerr << "(" << Val << ")";
 
-	    if( Op.opIsDef() )
+	    if (Op.opIsDef() )
 	      cerr << "*";
 
 	    const LiveRange *LROfVal = LRI.getLiveRangeForValue(Val);
-	    if( LROfVal )
-	      if( LROfVal->hasSpillOffset() )
+	    if (LROfVal )
+	      if (LROfVal->hasSpillOffset() )
 		cerr << "$";
 	  }
 
 	} 
-	else if(Op.getOperandType() ==  MachineOperand::MO_MachineRegister) {
+	else if (Op.getOperandType() ==  MachineOperand::MO_MachineRegister) {
 	  cerr << "\t" << "%" << MRI.getUnifiedRegName(Op.getMachineRegNum());
 	}
 
@@ -1018,10 +1009,10 @@ void PhyRegAlloc::printMachineCode()
     
 
       unsigned NumOfImpRefs =  MInst->getNumImplicitRefs();
-      if( NumOfImpRefs > 0) {
+      if (NumOfImpRefs > 0) {
 	cerr << "\tImplicit:";
 
-	for(unsigned z=0; z < NumOfImpRefs; z++)
+	for (unsigned z=0; z < NumOfImpRefs; z++)
 	  cerr << RAV(MInst->getImplicitRef(z)) << "\t";
       }
 
@@ -1047,7 +1038,7 @@ void PhyRegAlloc::colorCallRetArgs()
   CallRetInstrListType &CallRetInstList = LRI.getCallRetInstrList();
   CallRetInstrListType::const_iterator It = CallRetInstList.begin();
 
-  for( ; It != CallRetInstList.end(); ++It ) {
+  for ( ; It != CallRetInstList.end(); ++It ) {
 
     const MachineInstr *const CRMI = *It;
     unsigned OpCode =  CRMI->getOpCode();
@@ -1076,8 +1067,8 @@ void PhyRegAlloc::colorCallRetArgs()
 //----------------------------------------------------------------------------
 void PhyRegAlloc::colorIncomingArgs()
 {
-  const BasicBlock *const FirstBB = Meth->front();
-  const MachineInstr *FirstMI = FirstBB->getMachineInstrVec().front();
+  const BasicBlock &FirstBB = Meth->front();
+  const MachineInstr *FirstMI = FirstBB.getMachineInstrVec().front();
   assert(FirstMI && "No machine instruction in entry BB");
 
   MRI.colorMethodArgs(Meth, LRI, &AddedInstrAtEntry);
@@ -1104,19 +1095,19 @@ void PhyRegAlloc::printLabel(const Value *const Val) {
 
 void PhyRegAlloc::markUnusableSugColors()
 {
-  if(DEBUG_RA ) cerr << "\nmarking unusable suggested colors ...\n";
+  if (DEBUG_RA ) cerr << "\nmarking unusable suggested colors ...\n";
 
   // hash map iterator
   LiveRangeMapType::const_iterator HMI = (LRI.getLiveRangeMap())->begin();   
   LiveRangeMapType::const_iterator HMIEnd = (LRI.getLiveRangeMap())->end();   
 
-    for(; HMI != HMIEnd ; ++HMI ) {
+    for (; HMI != HMIEnd ; ++HMI ) {
       if (HMI->first) { 
 	LiveRange *L = HMI->second;      // get the LiveRange
 	if (L) { 
-	  if(L->hasSuggestedColor()) {
+	  if (L->hasSuggestedColor()) {
 	    int RCID = L->getRegClass()->getID();
-	    if( MRI.isRegVolatile( RCID,  L->getSuggestedColor()) &&
+	    if (MRI.isRegVolatile( RCID,  L->getSuggestedColor()) &&
 		L->isCallInterference() )
 	      L->setSuggestedColorUsable( false );
 	    else
@@ -1142,7 +1133,7 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
   LiveRangeMapType::const_iterator HMI    = LRI.getLiveRangeMap()->begin();   
   LiveRangeMapType::const_iterator HMIEnd = LRI.getLiveRangeMap()->end();   
 
-  for( ; HMI != HMIEnd ; ++HMI) {
+  for ( ; HMI != HMIEnd ; ++HMI) {
     if (HMI->first && HMI->second) {
       LiveRange *L = HMI->second;      // get the LiveRange
       if (!L->hasColor())   //  NOTE: ** allocating the size of long Type **
@@ -1176,25 +1167,25 @@ void PhyRegAlloc::allocateRegisters()
   
   if (DEBUG_RA) {
     // print all LRs in all reg classes
-    for( unsigned int rc=0; rc < NumOfRegClasses  ; rc++)  
-      RegClassList[ rc ]->printIGNodeList(); 
+    for ( unsigned rc=0; rc < NumOfRegClasses  ; rc++)  
+      RegClassList[rc]->printIGNodeList(); 
     
     // print IGs in all register classes
-    for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
-      RegClassList[ rc ]->printIG();       
+    for ( unsigned rc=0; rc < NumOfRegClasses ; rc++)  
+      RegClassList[rc]->printIG();       
   }
   
 
   LRI.coalesceLRs();                    // coalesce all live ranges
   
 
-  if( DEBUG_RA) {
+  if (DEBUG_RA) {
     // print all LRs in all reg classes
-    for( unsigned int rc=0; rc < NumOfRegClasses  ; rc++)  
+    for ( unsigned rc=0; rc < NumOfRegClasses  ; rc++)  
       RegClassList[ rc ]->printIGNodeList(); 
     
     // print IGs in all register classes
-    for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
+    for ( unsigned rc=0; rc < NumOfRegClasses ; rc++)  
       RegClassList[ rc ]->printIG();       
   }
 
@@ -1206,7 +1197,7 @@ void PhyRegAlloc::allocateRegisters()
   markUnusableSugColors(); 
 
   // color all register classes using the graph coloring algo
-  for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
+  for (unsigned rc=0; rc < NumOfRegClasses ; rc++)  
     RegClassList[ rc ]->colorAllRegs();    
 
   // Atter grpah coloring, if some LRs did not receive a color (i.e, spilled)

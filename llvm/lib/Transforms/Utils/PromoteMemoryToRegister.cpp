@@ -52,7 +52,7 @@ namespace {
     // runOnFunction - To run this pass, first we calculate the alloca
     // instructions that are safe for promotion, then we promote each one.
     //
-    virtual bool runOnFunction(Function *F);
+    virtual bool runOnFunction(Function &F);
 
     // getAnalysisUsage - We need dominance frontiers
     //
@@ -65,7 +65,7 @@ namespace {
     void Traverse(BasicBlock *BB, BasicBlock *Pred, vector<Value*> &IncVals,
                   set<BasicBlock*> &Visited);
     bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx);
-    void FindSafeAllocas(Function *F);
+    void FindSafeAllocas(Function &F);
   };
 
 }  // end of anonymous namespace
@@ -102,12 +102,12 @@ static inline bool isSafeAlloca(const AllocaInst *AI) {
 
 // FindSafeAllocas - Find allocas that are safe to promote
 //
-void PromotePass::FindSafeAllocas(Function *F) {
-  BasicBlock *BB = F->getEntryNode();  // Get the entry node for the function
+void PromotePass::FindSafeAllocas(Function &F) {
+  BasicBlock &BB = F.getEntryNode();  // Get the entry node for the function
 
   // Look at all instructions in the entry node
-  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-    if (AllocaInst *AI = dyn_cast<AllocaInst>(*I))       // Is it an alloca?
+  for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I)
+    if (AllocaInst *AI = dyn_cast<AllocaInst>(&*I))       // Is it an alloca?
       if (isSafeAlloca(AI)) {   // If safe alloca, add alloca to safe list
         AllocaLookup[AI] = Allocas.size();  // Keep reverse mapping
         Allocas.push_back(AI);
@@ -116,7 +116,7 @@ void PromotePass::FindSafeAllocas(Function *F) {
 
 
 
-bool PromotePass::runOnFunction(Function *F) {
+bool PromotePass::runOnFunction(Function &F) {
   // Calculate the set of safe allocas
   FindSafeAllocas(F);
 
@@ -178,7 +178,7 @@ bool PromotePass::runOnFunction(Function *F) {
   // and inserting the phi nodes we marked as necessary
   //
   set<BasicBlock*> Visited;         // The basic blocks we've already visited
-  Traverse(F->front(), 0, Values, Visited);
+  Traverse(F.begin(), 0, Values, Visited);
 
   // Remove all instructions marked by being placed in the KillList...
   //
@@ -186,8 +186,7 @@ bool PromotePass::runOnFunction(Function *F) {
     Instruction *I = KillList.back();
     KillList.pop_back();
 
-    I->getParent()->getInstList().remove(I);
-    delete I;
+    I->getParent()->getInstList().erase(I);
   }
 
   NumPromoted += Allocas.size();
@@ -248,7 +247,7 @@ void PromotePass::Traverse(BasicBlock *BB, BasicBlock *Pred,
 
   // keep track of the value of each variable we're watching.. how?
   for (BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II) {
-    Instruction *I = *II; //get the instruction
+    Instruction *I = II; // get the instruction
 
     if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
       Value *Ptr = LI->getPointerOperand();

@@ -19,7 +19,6 @@
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
 #include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Type.h"
-#include "llvm/Instruction.h"
 #include "llvm/Module.h"
 #include "llvm/Support/InstIterator.h"
 #include "Support/CommandLine.h"
@@ -50,21 +49,20 @@ static inline bool isSafeInstruction(const Instruction *I) {
 }
 
 
-bool FindUnsafePointerTypes::run(Module *Mod) {
-  for (Module::iterator MI = Mod->begin(), ME = Mod->end();
-       MI != ME; ++MI) {
-    const Function *M = *MI;  // We don't need/want write access
-    for (const_inst_iterator I = inst_begin(M), E = inst_end(M); I != E; ++I) {
-      const Instruction *Inst = *I;
-      const Type *ITy = Inst->getType();
+bool FindUnsafePointerTypes::run(Module &Mod) {
+  for (Module::iterator FI = Mod.begin(), E = Mod.end();
+       FI != E; ++FI) {
+    const Function *F = FI;  // We don't need/want write access
+    for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
+      const Type *ITy = I->getType();
       if (isa<PointerType>(ITy) && !UnsafeTypes.count((PointerType*)ITy))
-        if (!isSafeInstruction(Inst)) {
+        if (!isSafeInstruction(*I)) {
           UnsafeTypes.insert((PointerType*)ITy);
 
           if (PrintFailures) {
-            CachedWriter CW(M->getParent(), std::cerr);
+            CachedWriter CW(F->getParent(), std::cerr);
             CW << "FindUnsafePointerTypes: Type '" << ITy
-               << "' marked unsafe in '" << M->getName() << "' by:\n" << Inst;
+               << "' marked unsafe in '" << F->getName() << "' by:\n" << **I;
           }
         }
     }

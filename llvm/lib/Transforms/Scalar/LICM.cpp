@@ -35,7 +35,7 @@ namespace {
   struct LICM : public FunctionPass, public InstVisitor<LICM> {
     const char *getPassName() const { return "Loop Invariant Code Motion"; }
 
-    virtual bool runOnFunction(Function *F);
+    virtual bool runOnFunction(Function &F);
 
     // This transformation requires natural loop information...
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -69,7 +69,7 @@ namespace {
     // hoist - When an instruction is found to only use loop invariant operands
     // that is safe to hoist, this instruction is called to do the dirty work.
     //
-    void hoist(Instruction *I);
+    void hoist(Instruction &I);
 
     // isLoopInvariant - Return true if the specified value is loop invariant
     inline bool isLoopInvariant(Value *V) {
@@ -85,21 +85,21 @@ namespace {
     // the specified instruction types are hoisted.
     //
     friend class InstVisitor<LICM>;
-    void visitUnaryOperator(Instruction *I) {
-      if (isLoopInvariant(I->getOperand(0))) hoist(I);
+    void visitUnaryOperator(Instruction &I) {
+      if (isLoopInvariant(I.getOperand(0))) hoist(I);
     }
-    void visitBinaryOperator(Instruction *I) {
-      if (isLoopInvariant(I->getOperand(0)) &&isLoopInvariant(I->getOperand(1)))
+    void visitBinaryOperator(Instruction &I) {
+      if (isLoopInvariant(I.getOperand(0)) && isLoopInvariant(I.getOperand(1)))
         hoist(I);
     }
 
-    void visitCastInst(CastInst *I) { visitUnaryOperator((Instruction*)I); }
-    void visitShiftInst(ShiftInst *I) { visitBinaryOperator((Instruction*)I); }
+    void visitCastInst(CastInst &I) { visitUnaryOperator((Instruction&)I); }
+    void visitShiftInst(ShiftInst &I) { visitBinaryOperator((Instruction&)I); }
 
-    void visitGetElementPtrInst(GetElementPtrInst *GEPI) {
-      Instruction *I = (Instruction*)GEPI;
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (!isLoopInvariant(I->getOperand(i))) return;
+    void visitGetElementPtrInst(GetElementPtrInst &GEPI) {
+      Instruction &I = (Instruction&)GEPI;
+      for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+        if (!isLoopInvariant(I.getOperand(i))) return;
       hoist(I);
     }
   };
@@ -107,7 +107,7 @@ namespace {
 
 Pass *createLICMPass() { return new LICM(); }
 
-bool LICM::runOnFunction(Function *F) {
+bool LICM::runOnFunction(Function &) {
   // get our loop information...
   const std::vector<Loop*> &TopLevelLoops =
     getAnalysis<LoopInfo>().getTopLevelLoops();
@@ -177,30 +177,26 @@ void LICM::visitLoop(Loop *L) {
 }
 
 void LICM::visitBasicBlock(BasicBlock *BB) {
-  // This cannot use an iterator, because it might get invalidated when PHI
-  // nodes are inserted!
-  //
-  for (unsigned i = 0; i < BB->size(); ) {
-    visit(BB->begin()[i]);
+  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
+    visit(*I);
     
-    BasicBlock::iterator It = BB->begin()+i;
-    if (dceInstruction(It))
+    if (dceInstruction(I))
       Changed = true;
     else
-      ++i;
+      ++I;
   }
 }
 
 
-void LICM::hoist(Instruction *Inst) {
-  if (Inst->use_empty()) return;  // Don't (re) hoist dead instructions!
+void LICM::hoist(Instruction &Inst) {
+  if (Inst.use_empty()) return;  // Don't (re) hoist dead instructions!
   //cerr << "Hoisting " << Inst;
 
   BasicBlock *Header = CurLoop->getHeader();
 
   // Old instruction will be removed, so take it's name...
-  string InstName = Inst->getName();
-  Inst->setName("");
+  string InstName = Inst.getName();
+  Inst.setName("");
 
   // The common case is that we have a pre-header.  Generate special case code
   // that is faster if that is the case.
@@ -209,21 +205,21 @@ void LICM::hoist(Instruction *Inst) {
     BasicBlock *Pred = LoopPreds[0];
 
     // Create a new copy of the instruction, for insertion into Pred.
-    Instruction *New = Inst->clone();
+    Instruction *New = Inst.clone();
     New->setName(InstName);
 
     // Insert the new node in Pred, before the terminator.
-    Pred->getInstList().insert(Pred->end()-1, New);
+    Pred->getInstList().insert(--Pred->end(), New);
 
-    // Kill the old instruction.
-    Inst->replaceAllUsesWith(New);
+    // Kill the old instruction...
+    Inst.replaceAllUsesWith(New);
     ++NumHoistedPH;
 
   } else {
     // No loop pre-header, insert a PHI node into header to capture all of the
     // incoming versions of the value.
     //
-    PHINode *LoopVal = new PHINode(Inst->getType(), InstName+".phi");
+    PHINode *LoopVal = new PHINode(Inst.getType(), InstName+".phi");
 
     // Insert the new PHI node into the loop header...
     Header->getInstList().push_front(LoopVal);
@@ -233,11 +229,11 @@ void LICM::hoist(Instruction *Inst) {
       BasicBlock *Pred = LoopPreds[i];
       
       // Create a new copy of the instruction, for insertion into Pred.
-      Instruction *New = Inst->clone();
+      Instruction *New = Inst.clone();
       New->setName(InstName);
 
       // Insert the new node in Pred, before the terminator.
-      Pred->getInstList().insert(Pred->end()-1, New);
+      Pred->getInstList().insert(--Pred->end(), New);
 
       // Add the incoming value to the PHI node.
       LoopVal->addIncoming(New, Pred);
@@ -253,7 +249,7 @@ void LICM::hoist(Instruction *Inst) {
     // entire loop body.  The old definition was defined _inside_ of the loop,
     // so the scope cannot extend outside of the loop, so we're ok.
     //
-    Inst->replaceAllUsesWith(LoopVal);
+    Inst.replaceAllUsesWith(LoopVal);
     ++NumHoistedNPH;
   }
 

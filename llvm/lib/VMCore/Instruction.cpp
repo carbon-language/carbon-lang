@@ -4,10 +4,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Instruction.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/Type.h"
 
 Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name) 
   : User(ty, Value::InstructionVal, Name) {

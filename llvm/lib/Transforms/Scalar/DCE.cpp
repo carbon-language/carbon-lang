@@ -28,10 +28,9 @@ namespace {
   struct DeadInstElimination : public BasicBlockPass {
     const char *getPassName() const { return "Dead Instruction Elimination"; }
     
-    virtual bool runOnBasicBlock(BasicBlock *BB) {
-      BasicBlock::InstListType &Vals = BB->getInstList();
+    virtual bool runOnBasicBlock(BasicBlock &BB) {
       bool Changed = false;
-      for (BasicBlock::iterator DI = Vals.begin(); DI != Vals.end(); )
+      for (BasicBlock::iterator DI = BB.begin(); DI != BB.end(); )
         if (dceInstruction(DI)) {
           Changed = true;
           ++DIEEliminated;
@@ -60,7 +59,7 @@ namespace {
   struct DCE : public FunctionPass {
     const char *getPassName() const { return "Dead Code Elimination"; }
 
-    virtual bool runOnFunction(Function *F);
+    virtual bool runOnFunction(Function &F);
 
      virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
@@ -68,7 +67,7 @@ namespace {
  };
 }
 
-bool DCE::runOnFunction(Function *F) {
+bool DCE::runOnFunction(Function &F) {
   // Start out with all of the instructions in the worklist...
   std::vector<Instruction*> WorkList(inst_begin(F), inst_end(F));
   std::set<Instruction*> DeadInsts;
@@ -103,16 +102,14 @@ bool DCE::runOnFunction(Function *F) {
   if (DeadInsts.empty()) return false;
 
   // Otherwise, loop over the program, removing and deleting the instructions...
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-    BasicBlock::InstListType &BBIL = (*I)->getInstList();
-    for (BasicBlock::iterator BI = BBIL.begin(); BI != BBIL.end(); )
-      if (DeadInsts.count(*BI)) {            // Is this instruction dead?
-        delete BBIL.remove(BI);              // Yup, remove and delete inst
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+    for (BasicBlock::iterator BI = I->begin(); BI != I->end(); )
+      if (DeadInsts.count(BI)) {             // Is this instruction dead?
+        BI = I->getInstList().erase(BI);     // Yup, remove and delete inst
         ++DCEEliminated;
       } else {                               // This instruction is not dead
         ++BI;                                // Continue on to the next one...
       }
-  }
 
   return true;
 }

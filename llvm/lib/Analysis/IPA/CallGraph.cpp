@@ -95,31 +95,30 @@ void CallGraph::addToCallGraph(Function *M) {
   }
 
   // Look for an indirect method call...
-  for (Function::iterator BBI = M->begin(), BBE = M->end(); BBI != BBE; ++BBI) {
-    BasicBlock *BB = *BBI;
+  for (Function::iterator BB = M->begin(), BBE = M->end(); BB != BBE; ++BB)
     for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II){
-      Instruction *I = *II;
+      Instruction &I = *II;
 
-      if (CallInst *CI = dyn_cast<CallInst>(I)) {
+      if (CallInst *CI = dyn_cast<CallInst>(&I)) {
         if (CI->getCalledFunction() == 0)
           Node->addCalledMethod(ExternalNode);
-      } else if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
+      } else if (InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
         if (II->getCalledFunction() == 0)
           Node->addCalledMethod(ExternalNode);
       }
     }
-  }
 }
 
-bool CallGraph::run(Module *TheModule) {
+bool CallGraph::run(Module &M) {
   destroy();
 
-  Mod = TheModule;
+  Mod = &M;
   ExternalNode = getNodeFor(0);
   Root = 0;
 
   // Add every method to the call graph...
-  for_each(Mod->begin(), Mod->end(), bind_obj(this,&CallGraph::addToCallGraph));
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    addToCallGraph(I);
 
   // If we didn't find a main method, use the external call graph node
   if (Root == 0) Root = ExternalNode;

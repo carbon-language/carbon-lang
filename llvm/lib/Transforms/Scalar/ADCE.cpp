@@ -46,8 +46,8 @@ public:
   
   // Execute the Aggressive Dead Code Elimination Algorithm
   //
-  virtual bool runOnFunction(Function *F) {
-    Func = F;
+  virtual bool runOnFunction(Function &F) {
+    Func = &F;
     bool Changed = doADCE();
     assert(WorkList.empty());
     LiveSet.clear();
@@ -126,14 +126,12 @@ bool ADCE::doADCE() {
        BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
     for (BasicBlock::iterator II = BB->begin(), EI = BB->end(); II != EI; ) {
-      Instruction *I = *II;
-
-      if (I->hasSideEffects() || I->getOpcode() == Instruction::Ret) {
-	markInstructionLive(I);
+      if (II->hasSideEffects() || II->getOpcode() == Instruction::Ret) {
+	markInstructionLive(II);
         ++II;  // Increment the inst iterator if the inst wasn't deleted
-      } else if (isInstructionTriviallyDead(I)) {
+      } else if (isInstructionTriviallyDead(II)) {
         // Remove the instruction from it's basic block...
-        delete BB->getInstList().remove(II);
+        II = BB->getInstList().erase(II);
         ++NumInstRemoved;
         MadeChanges = true;
       } else {
@@ -185,9 +183,8 @@ bool ADCE::doADCE() {
   if (DebugFlag) {
     cerr << "Current Function: X = Live\n";
     for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
-      for (BasicBlock::iterator BI = (*I)->begin(), BE = (*I)->end();
-           BI != BE; ++BI) {
-        if (LiveSet.count(*BI)) cerr << "X ";
+      for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI){
+        if (LiveSet.count(BI)) cerr << "X ";
         cerr << *BI;
       }
   }
@@ -201,8 +198,8 @@ bool ADCE::doADCE() {
   if (AliveBlocks.size() != Func->size()) {
     // Insert a new entry node to eliminate the entry node as a special case.
     BasicBlock *NewEntry = new BasicBlock();
-    NewEntry->getInstList().push_back(new BranchInst(Func->front()));
-    Func->getBasicBlocks().push_front(NewEntry);
+    NewEntry->getInstList().push_back(new BranchInst(&Func->front()));
+    Func->getBasicBlockList().push_front(NewEntry);
     AliveBlocks.insert(NewEntry);    // This block is always alive!
     
     // Loop over all of the alive blocks in the function.  If any successor
@@ -211,8 +208,8 @@ bool ADCE::doADCE() {
     // the block to reflect this.
     //
     for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
-      if (AliveBlocks.count(*I)) {
-        BasicBlock *BB = *I;
+      if (AliveBlocks.count(I)) {
+        BasicBlock *BB = I;
         TerminatorInst *TI = BB->getTerminator();
       
         // Loop over all of the successors, looking for ones that are not alive
@@ -242,7 +239,7 @@ bool ADCE::doADCE() {
             // should be identical to the incoming values for LastDead.
             //
             for (BasicBlock::iterator II = NextAlive->begin();
-                 PHINode *PN = dyn_cast<PHINode>(*II); ++II) {
+                 PHINode *PN = dyn_cast<PHINode>(&*II); ++II) {
               // Get the incoming value for LastDead...
               int OldIdx = PN->getBasicBlockIndex(LastDead);
               assert(OldIdx != -1 && "LastDead is not a pred of NextAlive!");
@@ -258,17 +255,16 @@ bool ADCE::doADCE() {
         // sweep over the program can safely delete dead instructions without
         // other dead instructions still refering to them.
         //
-        for (BasicBlock::iterator I = BB->begin(), E = BB->end()-1; I != E; ++I)
-          if (!LiveSet.count(*I))               // Is this instruction alive?
-            (*I)->dropAllReferences();          // Nope, drop references... 
+        for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; ++I)
+          if (!LiveSet.count(I))                // Is this instruction alive?
+            I->dropAllReferences();             // Nope, drop references... 
       }
   }
 
   // Loop over all of the basic blocks in the function, dropping references of
   // the dead basic blocks
   //
-  for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I) {
-    BasicBlock *BB = *I;
+  for (Function::iterator BB = Func->begin(), E = Func->end(); BB != E; ++BB) {
     if (!AliveBlocks.count(BB)) {
       // Remove all outgoing edges from this basic block and convert the
       // terminator into a return instruction.
@@ -283,7 +279,7 @@ bool ADCE::doADCE() {
         }
         
         // Delete the old terminator instruction...
-        delete BB->getInstList().remove(BB->end()-1);
+        BB->getInstList().pop_back();
         const Type *RetTy = Func->getReturnType();
         Instruction *New = new ReturnInst(RetTy != Type::VoidTy ?
                                           Constant::getNullValue(RetTy) : 0);
@@ -302,14 +298,13 @@ bool ADCE::doADCE() {
   // instructions from alive blocks.
   //
   for (Function::iterator BI = Func->begin(); BI != Func->end(); )
-    if (!AliveBlocks.count(*BI))
-      delete Func->getBasicBlocks().remove(BI);
+    if (!AliveBlocks.count(BI))
+      BI = Func->getBasicBlockList().erase(BI);
     else {
-      BasicBlock *BB = *BI;
-      for (BasicBlock::iterator II = BB->begin(); II != BB->end()-1; )
-        if (!LiveSet.count(*II)) {             // Is this instruction alive?
+      for (BasicBlock::iterator II = BI->begin(); II != --BI->end(); )
+        if (!LiveSet.count(II)) {             // Is this instruction alive?
           // Nope... remove the instruction from it's basic block...
-          delete BB->getInstList().remove(II);
+          II = BI->getInstList().erase(II);
           ++NumInstRemoved;
           MadeChanges = true;
         } else {

@@ -4,29 +4,61 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ValueHolderImpl.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Constant.h"
 #include "llvm/iPHINode.h"
+#include "llvm/SymbolTable.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "SymbolTableListTraitsImpl.h"
+#include <algorithm>
 
-// Instantiate Templates - This ugliness is the price we have to pay
-// for having a ValueHolderImpl.h file seperate from ValueHolder.h!  :(
+// DummyInst - An instance of this class is used to mark the end of the
+// instruction list.  This is not a real instruction.
 //
-template class ValueHolder<Instruction, BasicBlock, Function>;
+struct DummyInst : public Instruction {
+  DummyInst() : Instruction(Type::VoidTy, NumOtherOps) {}
+
+  virtual Instruction *clone() const { assert(0 && "Cannot clone EOL");abort();}
+  virtual const char *getOpcodeName() const { return "*end-of-list-inst*"; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast...
+  static inline bool classof(const DummyInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == NumOtherOps;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+Instruction *ilist_traits<Instruction>::createNode() {
+  return new DummyInst();
+}
+iplist<Instruction> &ilist_traits<Instruction>::getList(BasicBlock *BB) {
+  return BB->getInstList();
+}
+
+// Explicit instantiation of SymbolTableListTraits since some of the methods
+// are not in the public header file...
+template SymbolTableListTraits<Instruction, BasicBlock, Function>;
+
 
 BasicBlock::BasicBlock(const std::string &name, Function *Parent)
-  : Value(Type::LabelTy, Value::BasicBlockVal, name), InstList(this, 0),
+  : Value(Type::LabelTy, Value::BasicBlockVal, name),
     machineInstrVec(new MachineCodeForBasicBlock) {
+  // Initialize the instlist...
+  InstList.setItemParent(this);
+
   if (Parent)
-    Parent->getBasicBlocks().push_back(this);
+    Parent->getBasicBlockList().push_back(this);
 }
 
 BasicBlock::~BasicBlock() {
   dropAllReferences();
-  InstList.delete_all();
+  InstList.clear();
   delete machineInstrVec;
 }
 
@@ -40,33 +72,19 @@ void BasicBlock::setName(const std::string &name, SymbolTable *ST) {
   if (P && hasName()) P->getSymbolTable()->insert(this);
 }
 
-void BasicBlock::setParent(Function *parent) { 
-  if (getParent() && hasName())
-    getParent()->getSymbolTable()->remove(this);
-
-  InstList.setParent(parent);
-
-  if (getParent() && hasName())
-    getParent()->getSymbolTableSure()->insert(this);
-}
-
 TerminatorInst *BasicBlock::getTerminator() {
   if (InstList.empty()) return 0;
-  Instruction *T = InstList.back();
-  if (isa<TerminatorInst>(T)) return cast<TerminatorInst>(T);
-  return 0;
+  return dyn_cast<TerminatorInst>(&InstList.back());
 }
 
 const TerminatorInst *const BasicBlock::getTerminator() const {
   if (InstList.empty()) return 0;
-  if (const TerminatorInst *TI = dyn_cast<TerminatorInst>(InstList.back()))
-    return TI;
-  return 0;
+  return dyn_cast<TerminatorInst>(&InstList.back());
 }
 
 void BasicBlock::dropAllReferences() {
-  for_each(InstList.begin(), InstList.end(), 
-	   std::mem_fun(&Instruction::dropAllReferences));
+  for(iterator I = begin(), E = end(); I != E; ++I)
+    I->dropAllReferences();
 }
 
 // hasConstantReferences() - This predicate is true if there is a 
@@ -123,7 +141,7 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
 
   if (max_idx <= 2) {                // <= Two predecessors BEFORE I remove one?
     // Yup, loop through and nuke the PHI nodes
-    while (PHINode *PN = dyn_cast<PHINode>(front())) {
+    while (PHINode *PN = dyn_cast<PHINode>(&front())) {
       PN->removeIncomingValue(Pred); // Remove the predecessor first...
       
       assert(PN->getNumIncomingValues() == max_idx-1 && 
@@ -134,12 +152,12 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
 	PN->replaceAllUsesWith(PN->getOperand(0));
       else // Otherwise there are no incoming values/edges, replace with dummy
         PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
-      delete getInstList().remove(begin());    // Remove the PHI node
+      getInstList().pop_front();    // Remove the PHI node
     }
   } else {
     // Okay, now we know that we need to remove predecessor #pred_idx from all
     // PHI nodes.  Iterate over each PHI node fixing them up
-    for (iterator II = begin(); PHINode *PN = dyn_cast<PHINode>(*II); ++II)
+    for (iterator II = begin(); PHINode *PN = dyn_cast<PHINode>(&*II); ++II)
       PN->removeIncomingValue(Pred);
   }
 }
@@ -170,7 +188,7 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I) {
     iterator EndIt = end();
     Inst = InstList.remove(--EndIt);                  // Remove from end
     New->InstList.push_front(Inst);                   // Add to front
-  } while (Inst != *I);   // Loop until we move the specified instruction.
+  } while (Inst != &*I);   // Loop until we move the specified instruction.
 
   // Add a branch instruction to the newly formed basic block.
   InstList.push_back(new BranchInst(New));
@@ -186,7 +204,7 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I) {
     // incoming values...
     BasicBlock *Successor = *I;
     for (BasicBlock::iterator II = Successor->begin();
-         PHINode *PN = dyn_cast<PHINode>(*II); ++II) {
+         PHINode *PN = dyn_cast<PHINode>(&*II); ++II) {
       int IDX = PN->getBasicBlockIndex(this);
       while (IDX != -1) {
         PN->setIncomingBlock((unsigned)IDX, New);

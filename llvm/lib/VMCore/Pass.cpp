@@ -9,8 +9,6 @@
 #include "llvm/PassManager.h"
 #include "PassManagerT.h"         // PassManagerT implementation
 #include "llvm/Module.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "Support/STLExtras.h"
 #include "Support/CommandLine.h"
 #include <typeinfo>
@@ -75,7 +73,7 @@ void AnalysisUsage::preservesCFG() {
 PassManager::PassManager() : PM(new PassManagerT<Module>()) {}
 PassManager::~PassManager() { delete PM; }
 void PassManager::add(Pass *P) { PM->add(P); }
-bool PassManager::run(Module *M) { return PM->run(M); }
+bool PassManager::run(Module &M) { return PM->run(M); }
 
 
 //===----------------------------------------------------------------------===//
@@ -220,11 +218,11 @@ const char *Pass::getPassName() const { return typeid(*this).name(); }
 // run - On a module, we run this pass by initializing, runOnFunction'ing once
 // for every function in the module, then by finalizing.
 //
-bool FunctionPass::run(Module *M) {
+bool FunctionPass::run(Module &M) {
   bool Changed = doInitialization(M);
   
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (!(*I)->isExternal())      // Passes are not run on external functions!
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (!I->isExternal())      // Passes are not run on external functions!
     Changed |= runOnFunction(*I);
   
   return Changed | doFinalization(M);
@@ -232,11 +230,11 @@ bool FunctionPass::run(Module *M) {
 
 // run - On a function, we simply initialize, run the function, then finalize.
 //
-bool FunctionPass::run(Function *F) {
-  if (F->isExternal()) return false;// Passes are not run on external functions!
+bool FunctionPass::run(Function &F) {
+  if (F.isExternal()) return false;// Passes are not run on external functions!
 
-  return doInitialization(F->getParent()) | runOnFunction(F)
-       | doFinalization(F->getParent());
+  return doInitialization(*F.getParent()) | runOnFunction(F)
+       | doFinalization(*F.getParent());
 }
 
 void FunctionPass::addToPassManager(PassManagerT<Module> *PM,
@@ -256,9 +254,9 @@ void FunctionPass::addToPassManager(PassManagerT<Function> *PM,
 // To run this pass on a function, we simply call runOnBasicBlock once for each
 // function.
 //
-bool BasicBlockPass::runOnFunction(Function *F) {
+bool BasicBlockPass::runOnFunction(Function &F) {
   bool Changed = false;
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     Changed |= runOnBasicBlock(*I);
   return Changed;
 }
@@ -266,8 +264,8 @@ bool BasicBlockPass::runOnFunction(Function *F) {
 // To run directly on the basic block, we initialize, runOnBasicBlock, then
 // finalize.
 //
-bool BasicBlockPass::run(BasicBlock *BB) {
-  Module *M = BB->getParent()->getParent();
+bool BasicBlockPass::run(BasicBlock &BB) {
+  Module &M = *BB.getParent()->getParent();
   return doInitialization(M) | runOnBasicBlock(BB) | doFinalization(M);
 }
 

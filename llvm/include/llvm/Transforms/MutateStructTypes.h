@@ -58,7 +58,7 @@ public:
   }
 
   // run - do the transformation
-  virtual bool run(Module *M);
+  virtual bool run(Module &M);
 
 protected:
 
@@ -76,7 +76,7 @@ private:
   // functions for functions than need to be copied because they have a new
   // signature type.
   //
-  void processGlobals(Module *M);
+  void processGlobals(Module &M);
 
   // transformFunction - This transforms the instructions of the function to use
   // the new types.
@@ -86,7 +86,7 @@ private:
   // removeDeadGlobals - This removes the old versions of functions that are no
   // longer needed.
   //
-  void removeDeadGlobals(Module *M);
+  void removeDeadGlobals(Module &M);
 
 private:
   // ConvertType - Convert from the old type system to the new one...

@@ -5,10 +5,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/SymbolTable.h"
-#include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
+#include "llvm/InstrTypes.h"
 #include "Support/StringExtras.h"
 #include <iostream>
 #include <algorithm>

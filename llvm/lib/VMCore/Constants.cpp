@@ -8,7 +8,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/GlobalValue.h"
 #include "llvm/Module.h"
 #include "llvm/SlotCalculator.h"
 #include "Support/StringExtras.h"

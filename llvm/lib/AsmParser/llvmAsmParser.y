@@ -45,8 +45,8 @@ string CurFilename;
 #define UR_OUT(X)
 #endif
 
-// This contains info used when building the body of a method.  It is destroyed
-// when the method is completed.
+// This contains info used when building the body of a function.  It is
+// destroyed when the function is completed.
 //
 typedef vector<Value *> ValueList;           // Numbered defs
 static void ResolveDefinitions(vector<ValueList> &LateResolvers,
@@ -68,9 +68,9 @@ static struct PerModuleInfo {
   GlobalRefsType GlobalRefs;
 
   void ModuleDone() {
-    // If we could not resolve some methods at method compilation time (calls to
-    // methods before they are defined), resolve them now...  Types are resolved
-    // when the constant pool has been completely parsed.
+    // If we could not resolve some functions at function compilation time
+    // (calls to functions before they are defined), resolve them now...  Types
+    // are resolved when the constant pool has been completely parsed.
     //
     ResolveDefinitions(LateResolveValues);
 
@@ -88,7 +88,7 @@ static struct PerModuleInfo {
       ThrowException(UndefinedReferences);
     }
 
-    Values.clear();         // Clear out method local definitions
+    Values.clear();         // Clear out function local definitions
     Types.clear();
     CurrentModule = 0;
   }
@@ -132,13 +132,13 @@ static struct PerModuleInfo {
 } CurModule;
 
 static struct PerFunctionInfo {
-  Function *CurrentFunction;     // Pointer to current method being created
+  Function *CurrentFunction;     // Pointer to current function being created
 
   vector<ValueList> Values;      // Keep track of numbered definitions
   vector<ValueList> LateResolveValues;
   vector<PATypeHolder> Types;
   map<ValID, PATypeHolder> LateResolveTypes;
-  bool isDeclare;                // Is this method a forward declararation?
+  bool isDeclare;                // Is this function a forward declararation?
 
   inline PerFunctionInfo() {
     CurrentFunction = 0;
@@ -156,12 +156,12 @@ static struct PerFunctionInfo {
     // resolve the branches now...
     ResolveDefinitions(LateResolveValues, &CurModule.LateResolveValues);
 
-    Values.clear();         // Clear out method local definitions
+    Values.clear();         // Clear out function local definitions
     Types.clear();
     CurrentFunction = 0;
     isDeclare = false;
   }
-} CurMeth;  // Info for the current method...
+} CurMeth;  // Info for the current function...
 
 static bool inFunctionScope() { return CurMeth.CurrentFunction != 0; }
 
@@ -210,7 +210,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
     Value *N = SymTab ? SymTab->lookup(Type::TypeTy, Name) : 0;
 
     if (N == 0) {
-      // Symbol table doesn't automatically chain yet... because the method
+      // Symbol table doesn't automatically chain yet... because the function
       // hasn't been added to the module...
       //
       SymTab = CurModule.CurrentModule->getSymbolTable();
@@ -741,7 +741,7 @@ OptInternal : INTERNAL { $$ = true; } | /*empty*/ { $$ = false; };
 
 //===----------------------------------------------------------------------===//
 // Types includes all predefined types... except void, because it can only be
-// used in specific contexts (method returning void for example).  To have
+// used in specific contexts (function returning void for example).  To have
 // access to it, a user must explicitly use TypesV.
 //
 
@@ -810,7 +810,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     delete $1;
   };
 
-// TypeList - Used for struct declarations and as a basis for method type 
+// TypeList - Used for struct declarations and as a basis for function type 
 // declaration type lists
 //
 TypeListI : UpRTypes {
@@ -821,7 +821,7 @@ TypeListI : UpRTypes {
     ($$=$1)->push_back(*$3); delete $3;
   };
 
-// ArgTypeList - List of types for a method type declaration...
+// ArgTypeList - List of types for a function type declaration...
 ArgTypeListI : TypeListI
   | TypeListI ',' DOTDOTDOT {
     ($$=$1)->push_back(Type::VoidTy);
@@ -1011,7 +1011,7 @@ Module : FunctionList {
   CurModule.ModuleDone();
 };
 
-// FunctionList - A list of methods, preceeded by a constant pool.
+// FunctionList - A list of functions, preceeded by a constant pool.
 //
 FunctionList : FunctionList Function {
     $$ = $1;
@@ -1164,10 +1164,11 @@ FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
       // Yes it is.  If this is the case, either we need to be a forward decl,
       // or it needs to be.
       if (!CurMeth.isDeclare && !M->isExternal())
-	ThrowException("Redefinition of method '" + FunctionName + "'!");      
+	ThrowException("Redefinition of function '" + FunctionName + "'!");
 
-      // If we found a preexisting method prototype, remove it from the module,
-      // so that we don't get spurious conflicts with global & local variables.
+      // If we found a preexisting function prototype, remove it from the
+      // module, so that we don't get spurious conflicts with global & local
+      // variables.
       //
       CurModule.CurrentModule->getFunctionList().remove(M);
     }
@@ -1182,10 +1183,8 @@ FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
 
   CurMeth.FunctionStart(M);
 
-  // Add all of the arguments we parsed to the method...
+  // Add all of the arguments we parsed to the function...
   if ($5 && !CurMeth.isDeclare) {        // Is null if empty...
-    Function::ArgumentListType &ArgList = M->getArgumentList();
-
     for (list<pair<Argument*, char*> >::iterator I = $5->begin();
          I != $5->end(); ++I) {
       if (setValueName(I->first, I->second)) {  // Insert into symtab...
@@ -1193,7 +1192,7 @@ FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
       }
       
       InsertValue(I->first);
-      ArgList.push_back(I->first);
+      M->getArgumentList().push_back(I->first);
     }
     delete $5;                     // We're now done with the argument list
   } else if ($5) {
@@ -1212,7 +1211,7 @@ BEGIN : BEGINTOK | '{';                // Allow BEGIN or '{' to start a function
 FunctionHeader : FunctionHeaderH BEGIN {
   $$ = CurMeth.CurrentFunction;
 
-  // Resolve circular types before we parse the body of the method.
+  // Resolve circular types before we parse the body of the function.
   ResolveTypes(CurMeth.LateResolveTypes);
 };
 
@@ -1275,10 +1274,10 @@ ResolvedVal : Types ValueRef {
 
 
 BasicBlockList : BasicBlockList BasicBlock {
-    ($$ = $1)->getBasicBlocks().push_back($2);
+    ($$ = $1)->getBasicBlockList().push_back($2);
   }
-  | FunctionHeader BasicBlock { // Do not allow methods with 0 basic blocks   
-    ($$ = $1)->getBasicBlocks().push_back($2);
+  | FunctionHeader BasicBlock { // Do not allow functions with 0 basic blocks   
+    ($$ = $1)->getBasicBlockList().push_back($2);
   };
 
 
@@ -1358,7 +1357,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     }
     delete $2;
 
-    Value *V = getVal(PMTy, $3);   // Get the method we're calling...
+    Value *V = getVal(PMTy, $3);   // Get the function we're calling...
 
     BasicBlock *Normal = dyn_cast<BasicBlock>($8);
     BasicBlock *Except = dyn_cast<BasicBlock>($10);
@@ -1494,7 +1493,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     }
     delete $2;
 
-    Value *V = getVal(PMTy, $3);   // Get the method we're calling...
+    Value *V = getVal(PMTy, $3);   // Get the function we're calling...
 
     // Create the call node...
     if (!$5) {                                   // Has no arguments?

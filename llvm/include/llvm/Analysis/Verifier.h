@@ -25,10 +25,10 @@ Pass *createVerifierPass();
 // verifyModule - Check a module for errors, printing messages on stderr.
 // Return true if the module is corrupt.
 //
-bool verifyModule(const Module *M);
+bool verifyModule(const Module &M);
 
 // verifyFunction - Check a function for errors, useful for use when debugging a
 // pass.
-bool verifyFunction(const Function *F);
+bool verifyFunction(const Function &F);
 
 #endif

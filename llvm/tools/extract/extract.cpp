@@ -24,30 +24,29 @@ static cl::String ExtractFunc("func", "Specify function to extract", 0, "main");
 struct FunctionExtractorPass : public Pass {
   const char *getPassName() const { return "Function Extractor"; }
 
-  bool run(Module *M) {
+  bool run(Module &M) {
     // Mark all global variables to be internal
-    for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
-      (*I)->setInternalLinkage(true);
+    for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+      I->setInternalLinkage(true);
 
     Function *Named = 0;
 
     // Loop over all of the functions in the module, dropping all references in
     // functions that are not the named function.
-    for (Module::iterator I = M->begin(), E = M->end(); I != E;)
+    for (Module::iterator I = M.begin(), E = M.end(); I != E;)
       // Check to see if this is the named function!
-      if (!Named && (*I)->getName() == ExtractFunc) {
+      if (!Named && I->getName() == ExtractFunc) {
         // Yes, it is.  Keep track of it...
-        Named = *I;
+        Named = I;
 
         // Make sure it's globally accessable...
         Named->setInternalLinkage(false);
 
         // Remove the named function from the module.
-        M->getFunctionList().remove(I);
-        E = M->end();
+        M.getFunctionList().remove(I);
       } else {
         // Nope it's not the named function, delete the body of the function
-        (*I)->dropAllReferences();
+        I->dropAllReferences();
         ++I;
       }
 
@@ -57,27 +56,26 @@ struct FunctionExtractorPass : public Pass {
     // functions.
     std::vector<Function*> NewFunctions;
     
-    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-      if (!(*I)->use_empty()) {
-        Function *New = new Function((*I)->getFunctionType(), false,
-                                     (*I)->getName());
-        (*I)->replaceAllUsesWith(New);
+    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+      if (!I->use_empty()) {
+        Function *New = new Function(I->getFunctionType(), false, I->getName());
+        I->replaceAllUsesWith(New);
         NewFunctions.push_back(New);
       }
     
     // Now the module only has unused functions with their references dropped.
     // Delete them all now!
-    M->getFunctionList().delete_all();
+    M.getFunctionList().clear();
 
     // Re-insert the named function...
     if (Named)
-      M->getFunctionList().push_back(Named);
+      M.getFunctionList().push_back(Named);
     else
       std::cerr << "Warning: Function '" << ExtractFunc << "' not found!\n";
     
     // Insert all of the function stubs...
-    M->getFunctionList().insert(M->end(), NewFunctions.begin(),
-                                NewFunctions.end());
+    M.getFunctionList().insert(M.end(), NewFunctions.begin(),
+                               NewFunctions.end());
     return true;
   }
 };
@@ -102,6 +100,6 @@ int main(int argc, char **argv) {
   Passes.add(createCleanupGCCOutputPass());       // Fix gccisms
   Passes.add(new WriteBytecodePass(&std::cout));  // Write bytecode to file...
 
-  Passes.run(M.get());
+  Passes.run(*M.get());
   return 0;
 }

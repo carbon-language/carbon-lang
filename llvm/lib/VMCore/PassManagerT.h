@@ -424,7 +424,7 @@ template<> struct PassManagerTraits<BasicBlock> : public BasicBlockPass {
   // runPass - Specify how the pass should be run on the UnitType
   static bool runPass(PassClass *P, BasicBlock *M) {
     // todo, init and finalize
-    return P->runOnBasicBlock(M);
+    return P->runOnBasicBlock(*M);
   }
 
   // Dummy implementation of PassStarted/PassEnded
@@ -437,9 +437,9 @@ template<> struct PassManagerTraits<BasicBlock> : public BasicBlockPass {
   virtual const char *getPassName() const { return "BasicBlock Pass Manager"; }
 
   // Implement the BasicBlockPass interface...
-  virtual bool doInitialization(Module *M);
-  virtual bool runOnBasicBlock(BasicBlock *BB);
-  virtual bool doFinalization(Module *M);
+  virtual bool doInitialization(Module &M);
+  virtual bool runOnBasicBlock(BasicBlock &BB);
+  virtual bool doFinalization(Module &M);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
@@ -472,7 +472,7 @@ template<> struct PassManagerTraits<Function> : public FunctionPass {
 
   // runPass - Specify how the pass should be run on the UnitType
   static bool runPass(PassClass *P, Function *F) {
-    return P->runOnFunction(F);
+    return P->runOnFunction(*F);
   }
 
   // Dummy implementation of PassStarted/PassEnded
@@ -485,9 +485,9 @@ template<> struct PassManagerTraits<Function> : public FunctionPass {
   virtual const char *getPassName() const { return "Function Pass Manager"; }
 
   // Implement the FunctionPass interface...
-  virtual bool doInitialization(Module *M);
-  virtual bool runOnFunction(Function *F);
-  virtual bool doFinalization(Module *M);
+  virtual bool doInitialization(Module &M);
+  virtual bool runOnFunction(Function &F);
+  virtual bool doFinalization(Module &M);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
@@ -515,7 +515,7 @@ template<> struct PassManagerTraits<Module> : public Pass {
   typedef AnalysisResolver ParentClass;
 
   // runPass - Specify how the pass should be run on the UnitType
-  static bool runPass(PassClass *P, Module *M) { return P->run(M); }
+  static bool runPass(PassClass *P, Module *M) { return P->run(*M); }
 
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
@@ -539,9 +539,9 @@ template<> struct PassManagerTraits<Module> : public Pass {
   }
 
   // run - Implement the PassManager interface...
-  bool run(Module *M) {
+  bool run(Module &M) {
     TimeInfo = TimingInfo::create();
-    bool Result = ((PassManagerT<Module>*)this)->runOnUnit(M);
+    bool Result = ((PassManagerT<Module>*)this)->runOnUnit(&M);
     if (TimeInfo) {
       delete TimeInfo;
       TimeInfo = 0;
@@ -563,18 +563,18 @@ template<> struct PassManagerTraits<Module> : public Pass {
 
 // PassManagerTraits<BasicBlock> Implementations
 //
-inline bool PassManagerTraits<BasicBlock>::doInitialization(Module *M) {
+inline bool PassManagerTraits<BasicBlock>::doInitialization(Module &M) {
   bool Changed = false;
   for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
     ((PMType*)this)->Passes[i]->doInitialization(M);
   return Changed;
 }
 
-inline bool PassManagerTraits<BasicBlock>::runOnBasicBlock(BasicBlock *BB) {
-  return ((PMType*)this)->runOnUnit(BB);
+inline bool PassManagerTraits<BasicBlock>::runOnBasicBlock(BasicBlock &BB) {
+  return ((PMType*)this)->runOnUnit(&BB);
 }
 
-inline bool PassManagerTraits<BasicBlock>::doFinalization(Module *M) {
+inline bool PassManagerTraits<BasicBlock>::doFinalization(Module &M) {
   bool Changed = false;
   for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
     ((PMType*)this)->Passes[i]->doFinalization(M);
@@ -584,18 +584,18 @@ inline bool PassManagerTraits<BasicBlock>::doFinalization(Module *M) {
 
 // PassManagerTraits<Function> Implementations
 //
-inline bool PassManagerTraits<Function>::doInitialization(Module *M) {
+inline bool PassManagerTraits<Function>::doInitialization(Module &M) {
   bool Changed = false;
   for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
     ((PMType*)this)->Passes[i]->doInitialization(M);
   return Changed;
 }
 
-inline bool PassManagerTraits<Function>::runOnFunction(Function *F) {
-  return ((PMType*)this)->runOnUnit(F);
+inline bool PassManagerTraits<Function>::runOnFunction(Function &F) {
+  return ((PMType*)this)->runOnUnit(&F);
 }
 
-inline bool PassManagerTraits<Function>::doFinalization(Module *M) {
+inline bool PassManagerTraits<Function>::doFinalization(Module &M) {
   bool Changed = false;
   for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
     ((PMType*)this)->Passes[i]->doFinalization(M);

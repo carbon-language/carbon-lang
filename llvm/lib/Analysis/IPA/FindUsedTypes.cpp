@@ -7,10 +7,8 @@
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Assembly/CachedWriter.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Instruction.h"
 #include "llvm/Support/InstIterator.h"
 
 AnalysisID FindUsedTypes::ID(AnalysisID::create<FindUsedTypes>());
@@ -42,25 +40,25 @@ void FindUsedTypes::IncorporateSymbolTable(const SymbolTable *ST) {
 
 // run - This incorporates all types used by the specified module
 //
-bool FindUsedTypes::run(Module *m) {
+bool FindUsedTypes::run(Module &m) {
   UsedTypes.clear();  // reset if run multiple times...
 
-  if (IncludeSymbolTables && m->hasSymbolTable())
-    IncorporateSymbolTable(m->getSymbolTable()); // Add symtab first...
+  if (IncludeSymbolTables && m.hasSymbolTable())
+    IncorporateSymbolTable(m.getSymbolTable()); // Add symtab first...
 
   // Loop over global variables, incorporating their types
-  for (Module::const_giterator I = m->gbegin(), E = m->gend(); I != E; ++I)
-    IncorporateType((*I)->getType());
+  for (Module::const_giterator I = m.gbegin(), E = m.gend(); I != E; ++I)
+    IncorporateType(I->getType());
 
-  for (Module::iterator MI = m->begin(), ME = m->end(); MI != ME; ++MI) {
-    const Function *M = *MI;
-    if (IncludeSymbolTables && M->hasSymbolTable())
-      IncorporateSymbolTable(M->getSymbolTable()); // Add symtab first...
+  for (Module::iterator MI = m.begin(), ME = m.end(); MI != ME; ++MI) {
+    const Function &F = *MI;
+    if (IncludeSymbolTables && F.hasSymbolTable())
+      IncorporateSymbolTable(F.getSymbolTable()); // Add symtab first...
   
     // Loop over all of the instructions in the function, adding their return
     // type as well as the types of their operands.
     //
-    for (const_inst_iterator II = inst_begin(M), IE = inst_end(M);
+    for (const_inst_iterator II = inst_begin(F), IE = inst_end(F);
          II != IE; ++II) {
       const Instruction *I = *II;
       const Type *Ty = I->getType();
