@@ -119,7 +119,8 @@ private:
 					 Value* _val);
   void			InitializeConst	(MachineOperandType operandType,
 					 int64_t intValue);
-  void			InitializeReg	(int regNum);
+  void			InitializeReg	(int regNum,
+                                         bool isCCReg);
 
   friend class MachineInstr;
 
@@ -198,9 +199,9 @@ MachineOperand::InitializeConst(MachineOperandType operandType,
 }
 
 inline void
-MachineOperand::InitializeReg(int _regNum)
+MachineOperand::InitializeReg(int _regNum, bool isCCReg)
 {
-  opType = MO_MachineRegister;
+  opType = isCCReg? MO_CCRegister : MO_MachineRegister;
   value = NULL;
   regNum = (int) _regNum;
 }
@@ -284,15 +285,16 @@ public:
 
 
   // Access to set the operands when building the machine instruction
-  void			SetMachineOperand(unsigned i,
+  void			SetMachineOperandVal(unsigned i,
 			      MachineOperand::MachineOperandType operandType,
 			      Value* _val, bool isDef=false);
-  void			SetMachineOperand(unsigned i,
+  void			SetMachineOperandConst(unsigned i,
 			      MachineOperand::MachineOperandType operandType,
-			      int64_t intValue, bool isDef=false);
-  void			SetMachineOperand(unsigned i,
-					  int regNum, 
-					  bool isDef=false);
+                              int64_t intValue);
+  void			SetMachineOperandReg(unsigned i,
+                                             int regNum, 
+                                             bool isDef=false,
+                                             bool isCCReg=false);
 
   void                  addImplicitRef	 (Value* val, 
                                           bool isDef=false);
