@@ -808,6 +808,7 @@ SparcV9RegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
     cpReg2MemMI(mvec, scratchReg, PtrReg, Offset, IntRegType);
     return;
 
+  case SpecialRegType: // used only for %fsr itself.
   case FloatCCRegType: {
     unsigned fsrReg =  getUnifiedRegNum(SparcV9RegInfo::SpecialRegClassID,
                                            SparcV9SpecialRegClass::fsr);
@@ -898,6 +899,7 @@ SparcV9RegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
                                     SparcV9IntCCRegClass::ccr), MachineOperand::Def));
     break;
     
+  case SpecialRegType: // used only for %fsr itself
   case FloatCCRegType: {
     unsigned fsrRegNum =  getUnifiedRegNum(SparcV9RegInfo::SpecialRegClassID,
                                            SparcV9SpecialRegClass::fsr);
