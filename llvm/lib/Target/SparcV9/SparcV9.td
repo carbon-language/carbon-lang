@@ -24,7 +24,6 @@ class InstV9 : Instruction {          // SparcV9 instruction baseline
   field bits<32> Inst;
 
   let Namespace = "V9";
-  let ClassPrefix = "SparcV9";
 
   bits<2> op;
   let Inst{31-30} = op;               // Top two bits are the 'op' field
