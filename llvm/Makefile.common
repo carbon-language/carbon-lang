@@ -39,15 +39,29 @@ install ::
 #---------------------------------------------------------
 
 # Add -L options to the link command lines...
-LibPathsO = -L $(LEVEL)/lib/VMCore/Release \
+LibPathsO = -L $(LEVEL)/lib/Support/Release \
+	    -L $(LEVEL)/lib/VMCore/Release \
             -L $(LEVEL)/lib/Assembly/Parser/Release \
             -L $(LEVEL)/lib/Assembly/Writer/Release \
             -L $(LEVEL)/lib/Analysis/Release \
             -L $(LEVEL)/lib/Bytecode/Writer/Release \
             -L $(LEVEL)/lib/Bytecode/Reader/Release \
-            -L $(LEVEL)/lib/Optimizations/Release
+            -L $(LEVEL)/lib/Optimizations/Release \
+            -L $(LEVEL)/lib/CodeGen/InstrSelection/Release \
+            -L $(LEVEL)/lib/CodeGen/TargetMachine/Release \
+            -L $(LEVEL)/lib/CodeGen/TargetMachine/Sparc/Release \
+            -L $(LEVEL)/lib/LLC/Release
 
 LibPathsG = $(LibPathsO:Release=Debug)
+
+
+# List of libraries in all the directories on LibPathsG/O.
+# Add one of these to the list of dependences for an executable
+# to ensure it is relinked when any of the libs is updated.
+# See llvm/lib/LLC/Makefile for an example.
+LibsO = $(addsuffix /lib*.a,$(subst -L,,$(LibPathsO)))
+LibsG = $(addsuffix /lib*.a,$(subst -L,,$(LibPathsG)))
+
 
 # Enable this for profiling support with 'gprof'
 #Prof = -pg
