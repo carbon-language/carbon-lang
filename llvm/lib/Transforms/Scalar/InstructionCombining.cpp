@@ -2457,11 +2457,10 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   if (!isa<ConstantExpr>(CS.getCalledValue())) return false;
   ConstantExpr *CE = cast<ConstantExpr>(CS.getCalledValue());
   if (CE->getOpcode() != Instruction::Cast ||
-      !isa<ConstantPointerRef>(CE->getOperand(0)))
+      !isa<GlobalValue>(CE->getOperand(0)))
     return false;
-  ConstantPointerRef *CPR = cast<ConstantPointerRef>(CE->getOperand(0));
-  if (!isa<Function>(CPR->getValue())) return false;
-  Function *Callee = cast<Function>(CPR->getValue());
+  if (!isa<Function>(CE->getOperand(0))) return false;
+  Function *Callee = cast<Function>(CE->getOperand(0));
   Instruction *Caller = CS.getInstruction();
 
   // Okay, this is a cast from a function to a different type.  Unless doing so
@@ -2811,7 +2810,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
     if (I == E) {  // If they are all constants...
       Constant *CE =
-        ConstantExpr::getGetElementPtr(ConstantPointerRef::get(GV), Indices);
+        ConstantExpr::getGetElementPtr(GV, Indices);
 
       // Replace all uses of the GEP with the new constexpr...
       return ReplaceInstUsesWith(GEP, CE);
@@ -2978,8 +2977,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   if (Constant *C = dyn_cast<Constant>(Op))
     if (C->isNullValue())  // load null -> 0
       return ReplaceInstUsesWith(LI, Constant::getNullValue(LI.getType()));
-    else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C))
-      Op = CPR->getValue();
+    else if (isa<GlobalValue>(C))
+      Op = C;
 
   // Instcombine load (constant global) into the value loaded...
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op))
@@ -2989,11 +2988,10 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   // Instcombine load (constantexpr_GEP global, 0, ...) into the value loaded...
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op))
     if (CE->getOpcode() == Instruction::GetElementPtr) {
-      if (ConstantPointerRef *G=dyn_cast<ConstantPointerRef>(CE->getOperand(0)))
-        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getValue()))
-          if (GV->isConstant() && !GV->isExternal())
-            if (Constant *V = GetGEPGlobalInitializer(GV->getInitializer(), CE))
-              return ReplaceInstUsesWith(LI, V);
+      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
+        if (GV->isConstant() && !GV->isExternal())
+          if (Constant *V = GetGEPGlobalInitializer(GV->getInitializer(), CE))
+            return ReplaceInstUsesWith(LI, V);
     } else if (CE->getOpcode() == Instruction::Cast) {
       if (Instruction *Res = InstCombineLoadCast(*this, LI))
         return Res;
@@ -3106,12 +3104,11 @@ bool InstCombiner::runOnFunction(Function &F) {
     }
 
     // Check to see if any of the operands of this instruction are a
-    // ConstantPointerRef.  Since they sneak in all over the place and inhibit
+    // GlobalValue.  Since they sneak in all over the place and inhibit
     // optimization, we want to strip them out unconditionally!
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-      if (ConstantPointerRef *CPR =
-          dyn_cast<ConstantPointerRef>(I->getOperand(i))) {
-        I->setOperand(i, CPR->getValue());
+      if (isa<GlobalValue>(I->getOperand(i))) {
+        I->setOperand(i, I->getOperand(i));
         Changed = true;
       }
 

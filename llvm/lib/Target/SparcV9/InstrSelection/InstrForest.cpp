@@ -244,8 +244,7 @@ InstructionNode* InstrForest::buildTreeForInstruction(Instruction *instr) {
 	&& !instr->isTerminator();
     
       if (includeAddressOperand || isa<Instruction>(operand) ||
-	  isa<Constant>(operand) || isa<Argument>(operand) ||
-	  isa<GlobalVariable>(operand))
+	  isa<Constant>(operand) || isa<Argument>(operand)) 
       {
         // This operand is a data value
 	
@@ -273,8 +272,11 @@ InstructionNode* InstrForest::buildTreeForInstruction(Instruction *instr) {
           // Recursively create a treeNode for it.
           opTreeNode = buildTreeForInstruction((Instruction*)operand);
         } else if (Constant *CPV = dyn_cast<Constant>(operand)) {
-          // Create a leaf node for a constant
-          opTreeNode = new ConstantNode(CPV);
+          if (isa<GlobalValue>(CPV))
+            opTreeNode = new VRegNode(operand);
+          else
+            // Create a leaf node for a constant
+            opTreeNode = new ConstantNode(CPV);
         } else {
           // Create a leaf node for the virtual register
           opTreeNode = new VRegNode(operand);

@@ -85,8 +85,6 @@ namespace {
 
 // getGlobalAddr(): Put address of a global into a v. register.
 static GetElementPtrInst* getGlobalAddr(Value* ptr, Instruction& insertBefore) {
-  if (isa<ConstantPointerRef>(ptr))
-    ptr = cast<ConstantPointerRef>(ptr)->getValue();
 
   return (isa<GlobalVariable>(ptr))
     ? new GetElementPtrInst(ptr,

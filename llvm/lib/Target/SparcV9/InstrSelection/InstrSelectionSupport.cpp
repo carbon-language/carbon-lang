@@ -22,6 +22,7 @@
 #include "llvm/Constants.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/GlobalValue.h"
 #include "../SparcV9InstrSelectionSupport.h"
 
 namespace llvm {
@@ -159,13 +160,14 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
       if (mop.getType() == MachineOperand::MO_VirtualRegister) {
         assert(mop.getVRegValue() != NULL);
         opValue = mop.getVRegValue();
-        if (Constant *opConst = dyn_cast<Constant>(opValue)) {
-          opType = ChooseRegOrImmed(opConst, opCode, target,
-                                    (immedPos == (int)op), machineRegNum,
-                                    immedValue);
-          if (opType == MachineOperand::MO_VirtualRegister)
-            constantThatMustBeLoaded = true;
-        }
+        if (Constant *opConst = dyn_cast<Constant>(opValue)) 
+          if (!isa<GlobalValue>(opConst)) {
+            opType = ChooseRegOrImmed(opConst, opCode, target,
+                                      (immedPos == (int)op), machineRegNum,
+                                      immedValue);
+            if (opType == MachineOperand::MO_VirtualRegister)
+              constantThatMustBeLoaded = true;
+          }
       } else {
         //
         // If the operand is from the constant pool, don't try to change it.
@@ -242,8 +244,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
     argDesc = CallArgsDescriptor::get(minstr);
   
   for (unsigned i=0, N=minstr->getNumImplicitRefs(); i < N; ++i)
-    if (isa<Constant>(minstr->getImplicitRef(i)) ||
-        isa<GlobalValue>(minstr->getImplicitRef(i)))
+    if (isa<Constant>(minstr->getImplicitRef(i)))
       {
         Value* oldVal = minstr->getImplicitRef(i);
         TmpInstruction* tmpReg =

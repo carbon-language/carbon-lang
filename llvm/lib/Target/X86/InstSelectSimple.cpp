@@ -394,15 +394,9 @@ unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
                       MachineBasicBlock::iterator IPt) {
   // If this operand is a constant, emit the code to copy the constant into
   // the register here...
-  //
   if (Constant *C = dyn_cast<Constant>(V)) {
     unsigned Reg = makeAnotherReg(V->getType());
     copyConstantToRegister(MBB, IPt, C, Reg);
-    return Reg;
-  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    unsigned Reg = makeAnotherReg(V->getType());
-    // Move the address of the global into the register
-    BuildMI(*MBB, IPt, X86::MOV32ri, 1, Reg).addGlobalAddress(GV);
     return Reg;
   } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
     // Do not emit noop casts at all, unless it's a double -> float cast.
@@ -554,8 +548,8 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
     BuildMI(*MBB, IP, X86::MOV32ri, 1, R).addImm(0);
-  } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
-    BuildMI(*MBB, IP, X86::MOV32ri, 1, R).addGlobalAddress(CPR->getValue());
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
+    BuildMI(*MBB, IP, X86::MOV32ri, 1, R).addGlobalAddress(GV);
   } else {
     std::cerr << "Offending constant: " << *C << "\n";
     assert(0 && "Type not handled yet!");
@@ -688,8 +682,7 @@ void ISel::SelectPHINodes() {
 
           // If this is a constant or GlobalValue, we may have to insert code
           // into the basic block to compute it into a virtual register.
-          if ((isa<Constant>(Val) && !isa<ConstantExpr>(Val)) ||
-              isa<GlobalValue>(Val)) {
+          if ((isa<Constant>(Val) && !isa<ConstantExpr>(Val))) {
             // Simple constants get emitted at the end of the basic block,
             // before any terminator instructions.  We "know" that the code to
             // move a constant into a register will never clobber any flags.
@@ -3635,8 +3628,6 @@ bool ISel::isGEPFoldable(MachineBasicBlock *MBB,
                          Value *Src, User::op_iterator IdxBegin,
                          User::op_iterator IdxEnd, unsigned &BaseReg,
                          unsigned &Scale, unsigned &IndexReg, unsigned &Disp) {
-  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Src))
-    Src = CPR->getValue();
 
   std::vector<Value*> GEPOps;
   GEPOps.resize(IdxEnd-IdxBegin+1);
@@ -3660,8 +3651,6 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
                             Value *Src, User::op_iterator IdxBegin,
                             User::op_iterator IdxEnd, unsigned TargetReg) {
   const TargetData &TD = TM.getTargetData();
-  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Src))
-    Src = CPR->getValue();
 
   // If this is a getelementptr null, with all constant integer indices, just
   // replace it with TargetReg = 42.

@@ -56,16 +56,14 @@ SparcV9InstrInfo::ConvertConstantToIntType(const TargetMachine &target,
   if (! destType->isIntegral() && ! isa<PointerType>(destType))
     return C;
 
-  if (! isa<Constant>(V))
+  if (! isa<Constant>(V) || isa<GlobalValue>(V))
     return C;
 
-  // ConstantPointerRef: no conversions needed: get value and return it
-  if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(V)) {
-    // A ConstantPointerRef is just a reference to GlobalValue.
+  // GlobalValue: no conversions needed: get value and return it
+  if (const GlobalValue* GV = dyn_cast<GlobalValue>(V)) {
     isValidConstant = true;             // may be overwritten by recursive call
-    return (CPR->isNullValue()? 0
-            : ConvertConstantToIntType(target, CPR->getValue(), destType,
-                                       isValidConstant));
+    return GV->isNullValue() ? 0 :
+	   ConvertConstantToIntType(target, GV, destType, isValidConstant);
   }
 
   // ConstantBool: no conversions needed: get value and return it
@@ -284,7 +282,7 @@ CreateSETXLabel(const TargetMachine& target,
                 Value* val, Instruction* tmpReg, Instruction* dest,
                 std::vector<MachineInstr*>& mvec)
 {
-  assert(isa<Constant>(val) || isa<GlobalValue>(val) &&
+  assert(isa<Constant>(val) && 
          "I only know about constant values and global addresses");
   
   MachineInstr* MI;
@@ -467,7 +465,7 @@ SparcV9InstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
                                       std::vector<MachineInstr*>& mvec,
                                       MachineCodeForInstruction& mcfi) const
 {
-  assert(isa<Constant>(val) || isa<GlobalValue>(val) &&
+  assert(isa<Constant>(val) &&
          "I only know about constant values and global addresses");
   
   // Use a "set" instruction for known constants or symbolic constants (labels)
@@ -477,10 +475,6 @@ SparcV9InstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
   // 
   const Type* valType = val->getType();
   
-  // A ConstantPointerRef is just a reference to GlobalValue.
-  while (isa<ConstantPointerRef>(val))
-    val = cast<ConstantPointerRef>(val)->getValue();
-
   if (isa<GlobalValue>(val)) {
       TmpInstruction* tmpReg =
         new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
@@ -688,7 +682,9 @@ SparcV9InstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
   // a global variable (i.e., a constant address), generate a load
   // instruction instead of an add
   // 
-  if (isa<Constant>(src)) {
+  if (isa<GlobalValue>(src))
+    loadConstantToReg = true;
+  else if (isa<Constant>(src)) {
     unsigned int machineRegNum;
     int64_t immedValue;
     MachineOperand::MachineOperandType opType =
@@ -698,8 +694,6 @@ SparcV9InstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
     if (opType == MachineOperand::MO_VirtualRegister)
       loadConstantToReg = true;
   }
-  else if (isa<GlobalValue>(src))
-    loadConstantToReg = true;
   
   if (loadConstantToReg) { 
     // `src' is constant and cannot fit in immed field for the ADD
