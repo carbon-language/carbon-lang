@@ -175,10 +175,7 @@ private:
     hash_map<Value*, InstVal>::iterator I = ValueState.find(V);
     if (I != ValueState.end()) return I->second;  // Common case, in the map
       
-    if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-      // The address of a global is a constant...
-      ValueState[V].markConstant(GV);
-    } else if (Constant *CPV = dyn_cast<Constant>(V)) {  // Constants are constant
+    if (Constant *CPV = dyn_cast<Constant>(V)) {  // Constants are constant
       ValueState[CPV].markConstant(CPV);
     } else if (isa<Argument>(V)) {                // Arguments are overdefined
       ValueState[V].markOverdefined();
