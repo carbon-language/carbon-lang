@@ -25,31 +25,31 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
   const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
 
   /// Code Generation virtual methods...
-  void storeRegToStackSlot(MachineBasicBlock &MBB,
-			   MachineBasicBlock::iterator &MBBI,
-			   unsigned SrcReg, int FrameIndex,
-			   const TargetRegisterClass *RC) const;
+  int storeRegToStackSlot(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator &MBBI,
+                          unsigned SrcReg, int FrameIndex,
+                          const TargetRegisterClass *RC) const;
 
-  void loadRegFromStackSlot(MachineBasicBlock &MBB,
-			    MachineBasicBlock::iterator &MBBI,
-			    unsigned DestReg, int FrameIndex,
-			    const TargetRegisterClass *RC) const;
+  int loadRegFromStackSlot(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator &MBBI,
+                           unsigned DestReg, int FrameIndex,
+                           const TargetRegisterClass *RC) const;
   
-  void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
+  int copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
 		   unsigned DestReg, unsigned SrcReg,
 		   const TargetRegisterClass *RC) const;
 
-  void eliminateCallFramePseudoInstr(MachineFunction &MF,
-				     MachineBasicBlock &MBB,
-				     MachineBasicBlock::iterator &I) const;
+  int eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                    MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator &I) const;
 
-  void eliminateFrameIndex(MachineFunction &MF,
-			   MachineBasicBlock::iterator &II) const;
+  int eliminateFrameIndex(MachineFunction &MF,
+                          MachineBasicBlock::iterator &II) const;
 
-  void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
+  int processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 
-  void emitPrologue(MachineFunction &MF) const;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+  int emitPrologue(MachineFunction &MF) const;
+  int emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 };
 
 #endif

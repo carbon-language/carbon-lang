@@ -185,24 +185,40 @@ public:
   }
 
   //===--------------------------------------------------------------------===//
-  // Interfaces used by the register allocator and stack frame manipulation
-  // passes to move data around between registers, immediates and memory.
+  // All basic block modifier functions below return the number of
+  // instructions added to/removed from the basic block passed as their
+  // first argument.
+  //
+  // FIXME: This is only needed because we use a std::vector instead
+  // of an ilist to keep MachineBasicBlock instructions. Inserting an
+  // instruction to a MachineBasicBlock invalidates all iterators to
+  // the basic block. The return value can be used to update an index
+  // to the machine basic block instruction vector and circumvent the
+  // iterator elimination problem but this is really not needed if we
+  // move to a better representation.
   //
 
-  virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
-				   MachineBasicBlock::iterator &MBBI,
-				   unsigned SrcReg, int FrameIndex,
-				   const TargetRegisterClass *RC) const = 0;
+  //===--------------------------------------------------------------------===//
+  // Interfaces used by the register allocator and stack frame manipulation
+  // passes to move data around between registers, immediates and memory.
+  // The return value is the number of instructions added/deleted to/from the
+  // basic block.
+  //
 
-  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
-				    MachineBasicBlock::iterator &MBBI,
-				    unsigned DestReg, int FrameIndex,
-				    const TargetRegisterClass *RC) const = 0;
+  virtual int storeRegToStackSlot(MachineBasicBlock &MBB,
+                                  MachineBasicBlock::iterator &MBBI,
+                                  unsigned SrcReg, int FrameIndex,
+                                  const TargetRegisterClass *RC) const = 0;
 
-  virtual void copyRegToReg(MachineBasicBlock &MBB,
-			    MachineBasicBlock::iterator &MBBI,
-			    unsigned DestReg, unsigned SrcReg,
-			    const TargetRegisterClass *RC) const = 0;
+  virtual int loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator &MBBI,
+                                   unsigned DestReg, int FrameIndex,
+                                   const TargetRegisterClass *RC) const = 0;
+
+  virtual int copyRegToReg(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator &MBBI,
+                           unsigned DestReg, unsigned SrcReg,
+                           const TargetRegisterClass *RC) const = 0;
 
 
   /// getCallFrameSetup/DestroyOpcode - These methods return the opcode of the
@@ -220,9 +236,10 @@ public:
   /// instructions (but only if the Target is using them).  It is responsible
   /// for eliminating these instructions, replacing them with concrete
   /// instructions.  This method need only be implemented if using call frame
-  /// setup/destroy pseudo instructions.
+  /// setup/destroy pseudo instructions. The return value is the number of
+  /// instructions added/deleted to/from the basic block.
   ///
-  virtual void eliminateCallFramePseudoInstr(MachineFunction &MF,
+  virtual int eliminateCallFramePseudoInstr(MachineFunction &MF,
 					     MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator &I) const {
     assert(getCallFrameSetupOpcode()== -1 && getCallFrameDestroyOpcode()== -1 &&
@@ -234,25 +251,30 @@ public:
   /// processFunctionBeforeFrameFinalized - This method is called immediately
   /// before the specified functions frame layout (MF.getFrameInfo()) is
   /// finalized.  Once the frame is finalized, MO_FrameIndex operands are
-  /// replaced with direct constants.  This method is optional.
+  /// replaced with direct constants.  This method is optional. The return value
+  /// is the number of instructions added/deleted to/from the basic block
   ///
-  virtual void processFunctionBeforeFrameFinalized(MachineFunction &MF) const {}
+  virtual int processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
+    return 0;
+  }
 
   /// eliminateFrameIndex - This method must be overriden to eliminate abstract
   /// frame indices from instructions which may use them.  The instruction
   /// referenced by the iterator contains an MO_FrameIndex operand which must be
   /// eliminated by this method.  This method may modify or replace the
   /// specified instruction, as long as it keeps the iterator pointing the the
-  /// finished product.
+  /// finished product. The return value is the number of instructions
+  /// added/deleted to/from the basic block
   ///
-  virtual void eliminateFrameIndex(MachineFunction &MF,
-				   MachineBasicBlock::iterator &II) const = 0;
+  virtual int eliminateFrameIndex(MachineFunction &MF,
+                                  MachineBasicBlock::iterator &II) const = 0;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
-  /// the function.
-  virtual void emitPrologue(MachineFunction &MF) const = 0;
-  virtual void emitEpilogue(MachineFunction &MF,
-			    MachineBasicBlock &MBB) const = 0;
+  /// the function. The return value is the number of instructions
+  /// added/deleted to/from the basic block (entry for prologue, 
+  virtual int emitPrologue(MachineFunction &MF) const = 0;
+  virtual int emitEpilogue(MachineFunction &MF,
+                           MachineBasicBlock &MBB) const = 0;
 };
 
 #endif
