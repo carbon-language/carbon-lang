@@ -1,0 +1,67 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>Data Structure Graph Analysis Status Page</title>
+  </head>
+
+  <body>
+    <h1>Data Structure Graph Analysis Status Page</h1>
+
+<hr>
+<h2>Nov 6, 2002:</h2>
+
+Notes: Debug build, no globals graph, no array collapsing.<p>
+
+<pre>
+Name:                         LocTime:  BUTime:   TDTime:   TotTime:  AnlzTime:      LocSize:  BUSize:   TDSize:   TotSize:    NumFold main    __main  
+ackermann.llvm.lib            0.0004    0.0005    0.0004    0.0048    0m0.035s  |    6976      992       840       18736     |    *    0+0     0+0     
+ary3.llvm.lib                 0.0008    0.0011    0.0010    0.0073    0m0.067s  |    7992      7808      2416      34264     |    6    0+0     0+0     
+fib2.llvm.lib                 0.0005    0.0007    0.0004    0.0070    0m0.055s  |    1776      5312      1080      23992     |    *    0+0     0+0     
+hash.llvm.lib                 0.0020    0.0031    0.0063    0.0227    0m0.062s  |    17488     23928     12584     67400     |    *    2+0     2+0     
+heapsort.llvm.lib             0.0006    0.0008    0.0007    0.0078    0m0.026s  |    2264      13720     2216      33016     |    *    2+0     2+0     
+hello.llvm.lib                0.0002    0.0002    0.0002    0.0016    0m0.017s  |    504       2816      336       3656      |    *    0+0     0+0     
+lists.llvm.lib                0.0028    0.0098    0.0042    0.0226    0m0.074s  |    22272     14264     12128     60688     |    57   0+0     0+0     
+llubenchmark.llvm.lib         0.0012    0.0011    0.0017    0.0112    0m0.046s  |    9680      2144      9944      32776     |    *    4+1     4+1     
+matrix.llvm.lib               0.0008    0.0013    0.0014    0.0078    0m0.039s  |    7848      10416     2200      36176     |    *    0+0     0+0     
+matrixTranspose.llvm.lib      0.0004    0.0015    0.0019    0.0058    0m0.034s  |    9136      14520     25336     48992     |    *    1+0     1+0     
+methcall.llvm.lib             analyze: DataStructure.cpp:191: bool DSNode::mergeTypeInfo(const Type*, unsigned int): Assertion `Offset < Size && "Cannot merge something into a part of our type that doesn't exist!"' failed.
+objinst.llvm.lib              analyze: DataStructure.cpp:191: bool DSNode::mergeTypeInfo(const Type*, unsigned int): Assertion `Offset < Size && "Cannot merge something into a part of our type that doesn't exist!"' failed.
+pi.llvm.lib                   0.0004    0.0004    0.0005    0.0035    0m0.016s  |    4744      1248      4368      10360     |    *    0+0     0+0     
+printargs.llvm.lib            0.0004    0.0003    0.0003    0.0022    0m0.031s  |    888       504       512       1904      |    *    0+0     0+0     
+random.llvm.lib               0.0005    0.0005    0.0005    0.0062    0m0.021s  |    1584      4704      5752      25264     |    *    2+0     2+0     
+sumarray.llvm.lib             0.0002    0.0003    0.0002    0.0020    0m0.029s  |    976       3424      464       6976      |    3    0+0     0+0     
+sumarray2d.llvm.lib           0.0010    0.0073    0.0090    0.0193    0m0.038s  |    41416     47080     80696     171512    |    *    0+0     0+0     
+sumarraymalloc.llvm.lib       0.0006    0.0007    0.0005    0.0052    0m0.027s  |    2032      5984      1368      23472     |    *    0+0     0+0     
+indvars.llvm.lib              0.0018    0.0207    0.0270    0.0514    0m0.066s  |    82040     87944     160872    333400    |    *    0+0     0+0     
+bh.llvm.lib                   0.0081    0.0129    0.0162    0.0577    0m0.185s  |    55112     75768     42928     240056    |    74   11+0    11+0    
+bisort.llvm.lib               0.0018    0.0024    0.0025    0.0149    0m0.054s  |    12776     18296     6808      48952     |    *    4+0     4+0     
+em3d.llvm.lib                 0.0035    0.0098    0.0179    0.0401    0m0.083s  |    33816     49744     54144     146112    |    10   14+1    14+1    
+health.llvm.lib               0.0034    0.0062    0.0058    0.0244    0m0.088s  |    28432     27992     12640     83992     |    72   6+0     6+0     
+mst.llvm.lib                  0.0024    0.0038    0.0051    0.0191    0m0.077s  |    16520     25840     14016     71048     |    10   9+0     9+0     
+perimeter.llvm.lib            0.0020    0.0033    0.0025    0.0156    0m0.046s  |    13968     12720     3928      43272     |    *    1+0     1+0     
+power.llvm.lib                0.0028    0.0039    0.0063    0.0208    0m0.064s  |    20960     30136     23504     82696     |    *    4+0     4+0     
+treeadd.llvm.lib              0.0008    0.0010    0.0008    0.0065    0m0.023s  |    7928      6424      2088      28432     |    *    1+0     1+0     
+tsp.llvm.lib                  0.0034    0.0037    0.0033    0.0184    0m0.055s  |    17304     13808     17968     63704     |    18   4+0     4+0     
+voronoi.llvm.lib              0.0135    0.0197    0.0526    0.1006    0m0.212s  |    78560     83336     116312    292200    |    19   16+0    16+0    
+optimizer-eval.llvm.lib       0.0096    0.1005    0.3984    0.5400    0m0.667s  |    76736     140000    409448    644528    |    58   7+0     7+0     
+sgefa.llvm.lib                0.0060    0.0263    0.0336    0.0824    0m0.144s  |    82280     96016     67728     270712    |    *    2+0     2+0     
+sieve.llvm.lib                0.0006    0.0023    0.0068    0.0137    0m0.050s  |    9872      13808     38872     76312     |    *    1+0     1+0     
+sim.llvm.lib                  0.0133    0.2114    1.0950    1.3635    0m1.521s  |    62864     98984     200600    457536    |    *    71+7    71+7    
+164.gzip.llvm.lib             0.0221    0.0817    0.2879    0.4718    0m1.014s  |    235048    421864    1439120   2192624   |    17   114+1   114+1   
+181.mcf.lib                   0.0119    0.0349    0.1130    0.1824    0m0.306s  |    120504    192920    545720    876032    |    195  14+0    14+0    
+197.parser.lib                analyze: ../../../include/llvm/Analysis/DSNode.h:74: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
+254.gap.lib                   analyze: ../../../include/llvm/Analysis/DSNode.h:74: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
+255.vortex.lib                analyze: DataStructure.cpp:191: bool DSNode::mergeTypeInfo(const Type*, unsigned int): Assertion `Offset < Size && "Cannot merge something into a part of our type that doesn't exist!"' failed.
+256.bzip2.lib                 0.0151    0.0609    0.6638    0.7968    0m1.050s  |    210880    387776    3371632   4041800   |    18   65+1    65+1    
+300.twolf.lib                 0.1784    0.5300    42.3220   43.6094   0m45.547s |    522056    653816    10076992  11252864  |    1269 410+12  410+12  
+burg.llvm.lib                 analyze: ../../../include/llvm/Analysis/DSNode.h:74: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
+</pre>
+
+    <hr>
+    <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
+<!-- Created: Wed Nov  6 19:57:57 CST 2002 -->
+<!-- hhmts start -->
+Last modified: Wed Nov  6 20:01:51 CST 2002
+<!-- hhmts end -->
+  </body>
+</html>
