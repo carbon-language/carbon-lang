@@ -2,9 +2,10 @@ Inspired by the CREDITS file from the Linux source tree, this file is,
 likewise, at least a partial list of people who have contributed to the LLVM
 project. The format and the next paragraph are stolen directly from that file.
 
-The list sorted by name and formatted to allow easy grepping and beautification
-by scripts.  The fields are: name (N), email (E), web-address (W), PGP key ID
-and fingerprint (P), description (D), and snail-mail address (S).
+The list is sorted by name and formatted to allow easy grepping and
+beautification by scripts.  The fields are: name (N), email (E), web-address
+(W), PGP key ID and fingerprint (P), description (D), and snail-mail address
+(S).
 
 N: Vikram Adve
 E: vadve@cs.uiuc.edu
@@ -23,7 +24,7 @@ D: Portions of X86 and Sparc JIT compilers, incremental bytecode loader
 
 N: Cameron Buschardt
 E: buschard@uiuc.edu
-D: Author of the mem2reg pass
+D: The `mem2reg' pass - promotes values stored in memory to registers
 
 N: Casey Carter
 E: ccarter@uiuc.edu
