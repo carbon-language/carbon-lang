@@ -1,7 +1,8 @@
 TODO:
 * implement not-R0 register GPR class
-* fix rlwimi generation to be use-and-def
 * implement scheduling info
+* implement do-loop pass
+* implement do-loop -> bdnz transform
 * implement powerpc-64 for darwin
 * implement powerpc-64 for aix
 * use stfiwx in float->int
