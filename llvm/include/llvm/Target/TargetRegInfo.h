@@ -76,8 +76,6 @@ public:
   // class (eg. int, float) must be returned.
   virtual unsigned getRegClassIDOfType  (const Type *type,
 					 bool isCCReg = false) const =0;
-  virtual unsigned getRegClassIDOfValue (const Value *Val,
-					 bool isCCReg = false) const =0;
   virtual unsigned getRegClassIDOfReg   (int unifiedRegNum)    const =0;
   virtual unsigned getRegClassIDOfRegType(int regType)         const =0;
   
@@ -179,14 +177,8 @@ public:
   // Returns the assembly-language name of the specified machine register.
   virtual const char * const getUnifiedRegName(int UnifiedRegNum) const = 0;
 
-  // The following 4 methods are used to find the RegType (a target-specific
-  // enum) for a reg class and a given primitive type, a LiveRange, a Value,
-  // or a particular machine register.
-  // The fifth function gives the reg class of the given RegType.
-  // 
-  virtual int getRegType(unsigned regClassID, const Type* type) const = 0;
+  virtual int getRegType(const Type* type) const = 0;
   virtual int getRegType(const LiveRange *LR) const = 0;
-  virtual int getRegType(const Value *Val) const = 0;
   virtual int getRegType(int unifiedRegNum) const = 0;
   
   // The following methods are used to get the frame/stack pointers
