@@ -13,16 +13,11 @@
 
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/CommandLine.h"
-#include <algorithm>
-#include <iostream>
-#include <functional>
+#include "llvm/System/Process.h"
 #include <fstream>
+#include <iostream>
 #include <map>
-#include "llvm/Config/sys/resource.h"
-#include "llvm/Config/sys/time.h"
-#include "llvm/Config/unistd.h"
-#include "llvm/Config/malloc.h"
-#include "llvm/Config/windows.h"
+
 using namespace llvm;
 
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on.
@@ -42,12 +37,10 @@ static std::string &getLibSupportInfoOutputFilename() {
 }
 
 namespace {
-#ifdef HAVE_MALLINFO
   cl::opt<bool>
   TrackSpace("track-memory", cl::desc("Enable -time-passes memory "
                                       "tracking (this may be slow)"),
              cl::Hidden);
-#endif
 
   cl::opt<std::string, true>
   InfoOutputFilename("info-output-file", cl::value_desc("filename"),
@@ -98,65 +91,26 @@ Timer::~Timer() {
   }
 }
 
-static long getMemUsage() {
-#ifdef HAVE_MALLINFO
-  if (TrackSpace) {
-    struct mallinfo MI = mallinfo();
-    return MI.uordblks/*+MI.hblkhd*/;
-  }
-#endif
-  return 0;
-}
-
 struct TimeRecord {
   double Elapsed, UserTime, SystemTime;
   long MemUsed;
 };
 
 static TimeRecord getTimeRecord(bool Start) {
-#if defined(HAVE_WINDOWS_H)
-  unsigned __int64 ProcCreate, ProcExit, KernelTime, UserTime, CurTime;
-
-  GetProcessTimes(GetCurrentProcess(), (FILETIME*)&ProcCreate, 
-                  (FILETIME*)&ProcExit, (FILETIME*)&KernelTime, 
-                  (FILETIME*)&UserTime);
-  GetSystemTimeAsFileTime((FILETIME*)&CurTime);
-
-  // FILETIME's are # of 100 nanosecond ticks.
-  double ScaleFactor = 1.0/(10*1000*1000);
-
   TimeRecord Result;
-  Result.Elapsed    = (CurTime-ProcCreate)*ScaleFactor;  // Wall time
-  Result.UserTime   = UserTime*ScaleFactor;
-  Result.SystemTime = KernelTime*ScaleFactor;
-  return Result;
-#elif defined(HAVE_GETRUSAGE)
-  struct rusage RU;
-  struct timeval T;
-  long MemUsed = 0;
-  if (Start) {
-    MemUsed = getMemUsage();
-    if (getrusage(RUSAGE_SELF, &RU))
-      perror("getrusage call failed: -time-passes info incorrect!");
-  }
-  gettimeofday(&T, 0);
 
-  if (!Start) {
-    if (getrusage(RUSAGE_SELF, &RU))
-      perror("getrusage call failed: -time-passes info incorrect!");
-    MemUsed = getMemUsage();
-  }
+  sys::TimeValue now(0,0);
+  sys::TimeValue user(0,0);
+  sys::TimeValue sys(0,0);
 
-  TimeRecord Result;
-  Result.Elapsed    =           T.tv_sec +           T.tv_usec/1000000.0;
-  Result.UserTime   = RU.ru_utime.tv_sec + RU.ru_utime.tv_usec/1000000.0;
-  Result.SystemTime = RU.ru_stime.tv_sec + RU.ru_stime.tv_usec/1000000.0;
-  Result.MemUsed = MemUsed;
+  sys::Process::GetTimeUsage(now,user,sys);
+
+  Result.Elapsed    = now.seconds()  + now.microseconds()  / 1000000.0;
+  Result.UserTime   = user.seconds() + user.microseconds() / 1000000.0;
+  Result.UserTime   = sys.seconds()  + sys.microseconds()  / 1000000.0;
+  Result.MemUsed = sys::Process::GetMallocUsage();
+
   return Result;
-#else
-  // Can't get resource usage.
-  return TimeRecord();
-#endif
 }
 
 static std::vector<Timer*> ActiveTimers;
@@ -202,7 +156,7 @@ void Timer::sum(const Timer &T) {
 /// currently active timers, which will be printed when the timer group prints
 ///
 void Timer::addPeakMemoryMeasurement() {
-  long MemUsed = getMemUsage();
+  long MemUsed = sys::Process::GetMallocUsage();
 
   for (std::vector<Timer*>::iterator I = ActiveTimers.begin(),
          E = ActiveTimers.end(); I != E; ++I)
