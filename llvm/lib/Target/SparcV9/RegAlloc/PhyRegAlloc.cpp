@@ -1355,10 +1355,11 @@ bool PhyRegAlloc::runOnFunction (Function &F) {
   colorIncomingArgs();
 
   // Save register allocation state for this function in a Constant.
-  if (SaveRegAllocState)
+  if (SaveRegAllocState) {
     saveState();
-  if (DEBUG_RA) { // Check our work.
-    verifySavedState ();
+    if (DEBUG_RA) { // Check our work.
+      verifySavedState ();
+    }
   }
 
   // Now update the machine code with register names and add any additional
