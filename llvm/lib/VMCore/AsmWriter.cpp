@@ -912,15 +912,15 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(AI->getArraySize(), true);
     }
   } else if (isa<CastInst>(I)) {
-    writeOperand(Operand, true);
+    if (Operand) writeOperand(Operand, true);   // Work with broken code
     Out << " to ";
     printType(I.getType());
   } else if (isa<VAArgInst>(I)) {
-    writeOperand(Operand, true);
+    if (Operand) writeOperand(Operand, true);   // Work with broken code
     Out << ", ";
     printType(I.getType());
   } else if (const VANextInst *VAN = dyn_cast<VANextInst>(&I)) {
-    writeOperand(Operand, true);
+    if (Operand) writeOperand(Operand, true);   // Work with broken code
     Out << ", ";
     printType(VAN->getArgType());
   } else if (Operand) {   // Print the normal way...
