@@ -507,7 +507,10 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   // appropriate number of args that the assembler expects.  This is because
   // may have many arguments appended to record the uses of registers that are
   // holding arguments to the called function.
-  if (Opcode == PPC32::IMPLICIT_DEF) {
+  if (Opcode == PPC32::COND_BRANCH) {
+    std::cerr << "Error: untranslated conditional branch psuedo instruction!\n";
+    abort();
+  } else if (Opcode == PPC32::IMPLICIT_DEF) {
     O << "; IMPLICIT DEF ";
     printOp(MI->getOperand(0));
     O << "\n";
@@ -569,10 +572,18 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     O << ")\n";
   } else {
     for (i = 0; i < ArgCount; ++i) {
+      // addi and friends
       if (i == 1 && ArgCount == 3 && ArgType[2] == PPC32II::Simm16 &&
           MI->getOperand(1).hasAllocatedReg() && 
           MI->getOperand(1).getReg() == PPC32::R0) {
         O << "0";
+      // for long branch support, bc $+8
+      } else if (i == 1 && ArgCount == 2 && MI->getOperand(1).isImmediate() &&
+                 TII.isBranch(MI->getOpcode())) {
+        O << "$+8";
+        assert(8 == MI->getOperand(i).getImmedValue()
+          && "branch off PC not to pc+8?");
+        //printOp(MI->getOperand(i));
       } else {
         printOp(MI->getOperand(i));
       }
