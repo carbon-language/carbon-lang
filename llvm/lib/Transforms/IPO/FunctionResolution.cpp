@@ -25,6 +25,7 @@
 #include "llvm/Pass.h"
 #include "llvm/iOther.h"
 #include "llvm/Constants.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/Statistic.h"
 #include <algorithm>
@@ -34,6 +35,10 @@ namespace {
   Statistic<> NumGlobals("funcresolve", "Number of global variables resolved");
 
   struct FunctionResolvingPass : public Pass {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetData>();
+    }
+
     bool run(Module &M);
   };
   RegisterOpt<FunctionResolvingPass> X("funcresolve", "Resolve Functions");
@@ -125,7 +130,7 @@ static bool ResolveGlobalVariables(Module &M,
   return Changed;
 }
 
-static bool ProcessGlobalsWithSameName(Module &M,
+static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
                                        std::vector<GlobalValue*> &Globals) {
   assert(!Globals.empty() && "Globals list shouldn't be empty here!");
 
@@ -202,6 +207,31 @@ static bool ProcessGlobalsWithSameName(Module &M,
 
     if (!Concrete)
       Concrete = Globals[0];
+    else if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Concrete)) {
+      // Handle special case hack to change globals if it will make their types
+      // happier in the long run.  The situation we do this is intentionally
+      // extremely limited.
+      if (GV->use_empty() && GV->hasInitializer() &&
+          GV->getInitializer()->isNullValue()) {
+        // Check to see if there is another (external) global with the same size
+        // and a non-empty use-list.  If so, we will make IT be the real
+        // implementation.
+        unsigned TS = TD.getTypeSize(Concrete->getType()->getElementType());
+        for (unsigned i = 0, e = Globals.size(); i != e; ++i)
+          if (Globals[i] != Concrete && !Globals[i]->use_empty() &&
+              isa<GlobalVariable>(Globals[i]) &&
+              TD.getTypeSize(Globals[i]->getType()->getElementType()) == TS) {
+            // At this point we want to replace Concrete with Globals[i].  Make
+            // concrete external, and Globals[i] have an initializer.
+            GlobalVariable *NGV = cast<GlobalVariable>(Globals[i]);
+            const Type *ElTy = NGV->getType()->getElementType();
+            NGV->setInitializer(Constant::getNullValue(ElTy));
+            cast<GlobalVariable>(Concrete)->setInitializer(0);
+            Concrete = NGV;
+            break;
+          }
+      }
+    }
 
     if (isFunction)
       return ResolveFunctions(M, Globals, cast<Function>(Concrete));
@@ -236,12 +266,14 @@ bool FunctionResolvingPass::run(Module &M) {
 
   bool Changed = false;
 
+  TargetData &TD = getAnalysis<TargetData>();
+
   // Now we have a list of all functions with a particular name.  If there is
   // more than one entry in a list, merge the functions together.
   //
   for (std::map<std::string, std::vector<GlobalValue*> >::iterator
          I = Globals.begin(), E = Globals.end(); I != E; ++I)
-    Changed |= ProcessGlobalsWithSameName(M, I->second);
+    Changed |= ProcessGlobalsWithSameName(M, TD, I->second);
 
   // Now loop over all of the globals, checking to see if any are trivially
   // dead.  If so, remove them now.
