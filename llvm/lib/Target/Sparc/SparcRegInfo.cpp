@@ -143,17 +143,16 @@ UltraSparcRegInfo::getCallInstRetAddr(const MachineInstr *CallMI) const {
 // of a LiveRange, Value and using the unified RegClassID
 //
 int UltraSparcRegInfo::getRegType(const LiveRange *LR) const {
-  unsigned Typ;
   switch (LR->getRegClass()->getID()) {
   case IntRegClassID: return IntRegType; 
-  case FloatRegClassID: 
-    Typ = LR->getTypeID();
-    if (Typ == Type::FloatTyID) 
+  case FloatRegClassID: {
+    const Type *Typ = LR->getType();
+    if (Typ == Type::FloatTy) 
       return FPSingleRegType;
-    else if (Typ == Type::DoubleTyID)
+    else if (Typ == Type::DoubleTy)
       return FPDoubleRegType;
     assert(0 && "Unknown type in FloatRegClass");
-    
+  }
   case IntCCRegClassID: return IntCCRegType; 
   case FloatCCRegClassID: return FloatCCRegType; 
   default: assert( 0 && "Unknown reg class ID");
@@ -1444,7 +1443,7 @@ void UltraSparcRegInfo::printReg(const LiveRange *LR) {
 
   } else if (RegClassID == FloatRegClassID) {
     cerr << "[" << SparcFloatRegOrder::getRegName(LR->getColor());
-    if( LR->getTypeID() == Type::DoubleTyID )
+    if( LR->getType() == Type::DoubleTy)
       cerr << "+" << SparcFloatRegOrder::getRegName(LR->getColor()+1);
     cerr << "]\n";
   }

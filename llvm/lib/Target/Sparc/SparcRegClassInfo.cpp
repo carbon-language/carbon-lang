@@ -1,6 +1,7 @@
 #include "SparcRegClassInfo.h"
 #include "llvm/CodeGen/IGNode.h"
 #include "llvm/Target/Sparc.h"
+#include "llvm/Type.h"
 #include <iostream>
 using std::cerr;
 
@@ -145,10 +146,8 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const {
 //     If a color is still not fond, mark for spilling
 //
 //----------------------------------------------------------------------------
-void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
-{
-
-  LiveRange * LR = Node->getParentLR();
+void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const{
+  LiveRange *LR = Node->getParentLR();
   unsigned NumNeighbors =  Node->getNumOfNeighbors();   // total # of neighbors
 
   for(unsigned n=0; n < NumNeighbors; n++) {            // for each neigh 
@@ -157,7 +156,7 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
 
       if( NeighLR->hasColor() )   {                     // if neigh has a color
       	IsColorUsedArr[ NeighLR->getColor() ] = true; // record that color
-	if( NeighLR->getTypeID() == Type::DoubleTyID )
+	if (NeighLR->getType() == Type::DoubleTy)
 	  IsColorUsedArr[ (NeighLR->getColor()) + 1 ] = true;  
       }
       else if( NeighLR->hasSuggestedColor() )   {   // if neigh has sugg color
@@ -167,7 +166,7 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
 	  // if the neighbout can use the suggested color 
 	  
 	  IsColorUsedArr[ NeighLR->getSuggestedColor() ] = true;
-	  if( NeighLR->getTypeID() == Type::DoubleTyID )
+	  if (NeighLR->getType() == Type::DoubleTy)
 	    IsColorUsedArr[ (NeighLR->getSuggestedColor()) + 1 ] = true;  
 	}
 
@@ -200,7 +199,7 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
   // cannot go there. By doing that, we provide more space for singles
   // in f0 - f31
   //
-  if( LR->getTypeID() == Type::DoubleTyID )       
+  if (LR->getType() == Type::DoubleTy)       
     ColorFound = findFloatColor( LR, 32, 64, IsColorUsedArr );
     
 
@@ -265,11 +264,11 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
 
 int SparcFloatRegClass::findFloatColor(const LiveRange *LR, 
 				       unsigned Start, unsigned End, 
-				       bool IsColorUsedArr[] ) const {
+				       bool IsColorUsedArr[]) const {
   bool ColorFound = false;
   unsigned c;
 
-  if (LR->getTypeID() == Type::DoubleTyID) { 
+  if (LR->getType() == Type::DoubleTy) { 
     // find first unused color for a double 
     for (c=Start; c < End ; c+= 2)
       if (!IsColorUsedArr[c] && !IsColorUsedArr[c+1]) 

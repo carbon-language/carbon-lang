@@ -327,7 +327,7 @@ void LiveRangeInfo::coalesceLRs()
 	    if( ! LROfUse ) {           // if LR of use is not found
 
 	      //don't warn about labels
-	      if (!((*UseI)->getType())->isLabelType() && DEBUG_RA)
+	      if (!isa<BasicBlock>(*UseI) && DEBUG_RA)
 		cerr << " !! Warning: No LR for use " << RAV(*UseI) << "\n";
 	      continue;                 // ignore and continue
 	    }
@@ -338,21 +338,19 @@ void LiveRangeInfo::coalesceLRs()
 	    //RegClass *const RCOfUse = LROfUse->getRegClass();
 	    //if( RCOfDef == RCOfUse ) {  // if the reg classes are the same
 
-	    if( MRI.getRegType(LROfDef) == MRI.getRegType(LROfUse) ) {
+	    if (MRI.getRegType(LROfDef) == MRI.getRegType(LROfUse)) {
 
 	      // If the two RegTypes are the same
-
-	      if( ! RCOfDef->getInterference(LROfDef, LROfUse) ) {
+	      if (!RCOfDef->getInterference(LROfDef, LROfUse) ) {
 
 		unsigned CombinedDegree =
 		  LROfDef->getUserIGNode()->getNumOfNeighbors() + 
 		  LROfUse->getUserIGNode()->getNumOfNeighbors();
 
-		if( CombinedDegree <= RCOfDef->getNumOfAvailRegs() ) {
-
+		if (CombinedDegree <= RCOfDef->getNumOfAvailRegs()) {
 		  // if both LRs do not have suggested colors
-		  if( ! (LROfDef->hasSuggestedColor() &&  
-		         LROfUse->hasSuggestedColor() ) ) {
+		  if (!(LROfDef->hasSuggestedColor() &&  
+                        LROfUse->hasSuggestedColor())) {
 		    
 		    RCOfDef->mergeIGNodesOfLRs(LROfDef, LROfUse);
 		    unionAndUpdateLRs(LROfDef, LROfUse);

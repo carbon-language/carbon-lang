@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Method.h"
+#include "llvm/Type.h"
 #include <iostream>
 #include <math.h>
 using std::cerr;
@@ -1164,22 +1165,19 @@ void PhyRegAlloc::markUnusableSugColors()
 // this method allocate a new spill position on the stack.
 //----------------------------------------------------------------------------
 
-void PhyRegAlloc::allocateStackSpace4SpilledLRs()
-{
-  if(DEBUG_RA ) cerr << "\nsetting LR stack offsets ...\n";
+void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
+  if (DEBUG_RA) cerr << "\nsetting LR stack offsets ...\n";
 
-  // hash map iterator
-  LiveRangeMapType::const_iterator HMI = (LRI.getLiveRangeMap())->begin();   
-  LiveRangeMapType::const_iterator HMIEnd = (LRI.getLiveRangeMap())->end();   
+  LiveRangeMapType::const_iterator HMI    = LRI.getLiveRangeMap()->begin();   
+  LiveRangeMapType::const_iterator HMIEnd = LRI.getLiveRangeMap()->end();   
 
-    for(  ; HMI != HMIEnd ; ++HMI ) {
-      if(HMI->first && HMI->second) {
-	LiveRange *L = HMI->second;      // get the LiveRange
-        if( ! L->hasColor() ) 
-          //  NOTE: ** allocating the size of long Type **
-          L->setSpillOffFromFP(mcInfo.allocateSpilledValue(TM, Type::LongTy));
-      }
-    } // for all LR's in hash map
+  for( ; HMI != HMIEnd ; ++HMI) {
+    if (HMI->first && HMI->second) {
+      LiveRange *L = HMI->second;      // get the LiveRange
+      if (!L->hasColor())   //  NOTE: ** allocating the size of long Type **
+        L->setSpillOffFromFP(mcInfo.allocateSpilledValue(TM, Type::LongTy));
+    }
+  } // for all LR's in hash map
 }
 
 
