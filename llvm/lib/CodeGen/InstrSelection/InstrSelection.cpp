@@ -23,6 +23,7 @@
 #include "llvm/Method.h"
 #include "llvm/iOther.h"
 #include "llvm/Target/MachineRegInfo.h"
+#include <string.h>
 
 
 //******************** Internal Data Declarations ************************/
@@ -251,6 +252,11 @@ void InsertCode4AllPhisInMeth(Method *method, TargetMachine &target) {
 
 	Value *PhiCpRes = 
 	  new Value(PN->getType(), PN->getValueType() );
+
+	string *Name = new string("PhiCp:");
+	(*Name) += (int) PhiCpRes;
+	PhiCpRes->setName( *Name );
+  
 
 	// for each incoming value of the phi, insert phi elimination
 	//

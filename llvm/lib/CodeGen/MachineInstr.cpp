@@ -95,8 +95,8 @@ operator<< (ostream& os, const MachineInstr& minstr)
   
   for (unsigned i=0, N=minstr.getNumOperands(); i < N; i++) {
     os << "\t" << minstr.getOperand(i);
-    if( minstr.getOperand(i).opIsDef() ) os << "*";
-
+    if( minstr.getOperand(i).opIsDef() ) 
+      os << "*";
   }
   
 #undef DEBUG_VAL_OP_ITERATOR
@@ -122,7 +122,7 @@ operator<< (ostream& os, const MachineInstr& minstr)
     for(unsigned z=0; z < NumOfImpRefs; z++) {
       os << minstr.getImplicitRef(z);
       if( minstr.implicitRefIsDefined(z)) os << "*";
-      cout << "\t";
+      os << "\t";
     }
   }
 
