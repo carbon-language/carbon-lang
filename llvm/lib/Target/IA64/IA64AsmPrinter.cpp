@@ -36,7 +36,7 @@ namespace {
 
   struct IA64SharedAsmPrinter : public AsmPrinter {
 
-    std::set<std::string> ExternalFunctionNames;
+    std::set<std::string> ExternalFunctionNames, ExternalObjectNames;
     
     IA64SharedAsmPrinter(std::ostream &O, TargetMachine &TM)
       : AsmPrinter(O, TM) { }
@@ -84,7 +84,8 @@ void IA64SharedAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
  
   if (CP.empty()) return;
 
-  O << "\n\t.section .data\n"; // would be nice to have this rodata? hmmm
+  O << "\n\t.section .data, \"aw\", \"progbits\"\n";
+      // FIXME: would be nice to have rodata (no 'w') when appropriate?
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
     O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
@@ -112,7 +113,7 @@ bool IA64SharedAsmPrinter::doFinalization(Module &M) {
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchSection(O, CurSection, ".data");
         if (I->hasInternalLinkage())
-          O << "\t.local " << name << "\n";
+// FIXME          O << "\t.local " << name << "\n";
         
         O << "\t.common " << name << "," << TD.getTypeSize(C->getType())
           << "," << (1 << Align);
@@ -169,6 +170,14 @@ bool IA64SharedAsmPrinter::doFinalization(Module &M) {
   }
   O << "\n\n";
  
+  // we print out ".global X \n .type X, @object" for each external object
+  O << "\n\n// (external) symbols referenced (and not defined) above: \n";
+  for (std::set<std::string>::iterator i = ExternalObjectNames.begin(),
+       e = ExternalObjectNames.end(); i!=e; ++i) {
+    O << "\t.global " << *i << "\n\t.type " << *i << ", @object\n";
+  }
+  O << "\n\n";
+
   AsmPrinter::doFinalization(M);
   return false; // success
 }
@@ -265,7 +274,7 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   O << "\n\t.section .text, \"ax\", \"progbits\"\n";
               // ^^  means "Allocated instruXions in mem, initialized"
-  emitAlignment(4);
+  emitAlignment(5);
   O << "\t.global\t" << CurrentFnName << "\n";
   O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
@@ -343,9 +352,12 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
     // the function somewhere (GNU gas has no problem without this, but
     // Intel ias rightly complains of an 'undefined symbol')
   
-    if(F && isBRCALLinsn && F->isExternal())
+    if(F /*&& isBRCALLinsn*/ && F->isExternal())
       ExternalFunctionNames.insert(Mang->getValueName(MO.getGlobal()));
-    
+    else
+      if(GV->isExternal()) // e.g. stuff like 'stdin'
+	ExternalObjectNames.insert(Mang->getValueName(MO.getGlobal()));
+
     if (!isBRCALLinsn)
       O << "@ltoff(";
     if (Needfptr)
@@ -364,6 +376,7 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
   }
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
+    ExternalFunctionNames.insert(MO.getSymbolName());
     return;
   default:
     O << "<AsmPrinter: unknown operand type: " << MO.getType() << " >"; return;    
@@ -384,7 +397,8 @@ void IA64AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 bool IA64AsmPrinter::doInitialization(Module &M) {
   AsmPrinter::doInitialization(M);
   
-  O << "\t.psr	  lsb\n"  // should be "msb" on HP-UX, for starters
+  O << "\n.ident \"LLVM-ia64\"\n\n"
+    << "\t.psr	  lsb\n"  // should be "msb" on HP-UX, for starters
     << "\t.radix  C\n"
     << "\t.psr	  abi64\n"; // we only support 64 bits for now
   return false;
