@@ -16,12 +16,12 @@
 #include "llvm/Module.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Pass.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <set>
 
-static Statistic<> NumSimpl("cfgsimplify\t- Number of blocks simplified");
-
 namespace {
+  Statistic<> NumSimpl("cfgsimplify", "Number of blocks simplified");
+
   struct CFGSimplifyPass : public FunctionPass {
     virtual bool runOnFunction(Function &F);
   };

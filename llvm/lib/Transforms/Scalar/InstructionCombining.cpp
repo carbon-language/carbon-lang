@@ -25,14 +25,14 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <algorithm>
 
-static Statistic<> NumCombined ("instcombine\t- Number of insts combined");
-static Statistic<> NumConstProp("instcombine\t- Number of constant folds");
-static Statistic<> NumDeadInst ("instcombine\t- Number of dead inst eliminate");
-
 namespace {
+  Statistic<> NumCombined ("instcombine", "Number of insts combined");
+  Statistic<> NumConstProp("instcombine", "Number of constant folds");
+  Statistic<> NumDeadInst ("instcombine", "Number of dead inst eliminated");
+
   class InstCombiner : public FunctionPass,
                        public InstVisitor<InstCombiner, Instruction*> {
     // Worklist of all of the instructions that need to be simplified.

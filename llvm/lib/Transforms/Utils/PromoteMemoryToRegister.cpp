@@ -23,18 +23,17 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iTerminators.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
-#include "Support/StatisticReporter.h"
-
-static Statistic<> NumPromoted("mem2reg\t\t- Number of alloca's promoted");
+#include "Support/Statistic.h"
 
 using std::vector;
 using std::map;
 using std::set;
 
 namespace {
+  Statistic<> NumPromoted("mem2reg", "Number of alloca's promoted");
+
   struct PromotePass : public FunctionPass {
     vector<AllocaInst*>          Allocas;      // the alloca instruction..
     map<Instruction*, unsigned>  AllocaLookup; // reverse mapping of above

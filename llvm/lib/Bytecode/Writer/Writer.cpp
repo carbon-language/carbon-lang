@@ -25,14 +25,14 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <string.h>
 #include <algorithm>
 
 static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");
 
 static Statistic<> 
-BytesWritten("bytecodewriter\t- Number of bytecode bytes written");
+BytesWritten("bytecodewriter", "Number of bytecode bytes written");
 
 
 BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M) 

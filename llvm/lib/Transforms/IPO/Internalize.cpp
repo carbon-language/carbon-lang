@@ -9,12 +9,11 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 
 namespace {
-  Statistic<> NumFunctions("internalize\t- Number of functions internalized");
-  Statistic<> NumGlobals  ("internalize\t- Number of global vars internalized");
-
+  Statistic<> NumFunctions("internalize", "Number of functions internalized");
+  Statistic<> NumGlobals  ("internalize", "Number of global vars internalized");
 
   class InternalizePass : public Pass {
     virtual bool run(Module &M) {

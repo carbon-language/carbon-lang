@@ -12,32 +12,31 @@
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "llvm/Pass.h"
-#include "Support/StatisticReporter.h"
-
-static Statistic<> NumRaised("raiseallocs\t- Number of allocations raised");
+#include "Support/Statistic.h"
 
 namespace {
+  Statistic<> NumRaised("raiseallocs", "Number of allocations raised");
 
-// RaiseAllocations - Turn %malloc and %free calls into the appropriate
-// instruction.
-//
-class RaiseAllocations : public BasicBlockPass {
-  Function *MallocFunc;   // Functions in the module we are processing
-  Function *FreeFunc;     // Initialized by doPassInitializationVirt
-public:
-  RaiseAllocations() : MallocFunc(0), FreeFunc(0) {}
-
-  // doPassInitialization - For the raise allocations pass, this finds a
-  // declaration for malloc and free if they exist.
+  // RaiseAllocations - Turn %malloc and %free calls into the appropriate
+  // instruction.
   //
-  bool doInitialization(Module &M);
-
-  // runOnBasicBlock - This method does the actual work of converting
-  // instructions over, assuming that the pass has already been initialized.
-  //
-  bool runOnBasicBlock(BasicBlock &BB);
-};
-
+  class RaiseAllocations : public BasicBlockPass {
+    Function *MallocFunc;   // Functions in the module we are processing
+    Function *FreeFunc;     // Initialized by doPassInitializationVirt
+  public:
+    RaiseAllocations() : MallocFunc(0), FreeFunc(0) {}
+    
+    // doPassInitialization - For the raise allocations pass, this finds a
+    // declaration for malloc and free if they exist.
+    //
+    bool doInitialization(Module &M);
+    
+    // runOnBasicBlock - This method does the actual work of converting
+    // instructions over, assuming that the pass has already been initialized.
+    //
+    bool runOnBasicBlock(BasicBlock &BB);
+  };
+  
   RegisterOpt<RaiseAllocations>
   X("raiseallocs", "Raise allocations from calls to instructions");
 }  // end anonymous namespace

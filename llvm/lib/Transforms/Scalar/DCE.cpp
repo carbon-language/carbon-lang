@@ -14,17 +14,17 @@
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <set>
 
-static Statistic<> DIEEliminated("die\t\t- Number of insts removed");
-static Statistic<> DCEEliminated("dce\t\t- Number of insts removed");
-
-//===----------------------------------------------------------------------===//
-// DeadInstElimination pass implementation
-//
-
 namespace {
+  Statistic<> DIEEliminated("die", "Number of insts removed");
+  Statistic<> DCEEliminated("dce", "Number of insts removed");
+
+  //===--------------------------------------------------------------------===//
+  // DeadInstElimination pass implementation
+  //
+
   struct DeadInstElimination : public BasicBlockPass {
     virtual bool runOnBasicBlock(BasicBlock &BB) {
       bool Changed = false;

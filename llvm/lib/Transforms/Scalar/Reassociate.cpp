@@ -18,20 +18,19 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iOperators.h"
 #include "llvm/Type.h"
 #include "llvm/Pass.h"
 #include "llvm/Constant.h"
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
-#include "Support/StatisticReporter.h"
-
-static Statistic<> NumLinear ("reassociate\t- Number of insts linearized");
-static Statistic<> NumChanged("reassociate\t- Number of insts reassociated");
-static Statistic<> NumSwapped("reassociate\t- Number of insts with operands swapped");
+#include "Support/Statistic.h"
 
 namespace {
+  Statistic<> NumLinear ("reassociate","Number of insts linearized");
+  Statistic<> NumChanged("reassociate","Number of insts reassociated");
+  Statistic<> NumSwapped("reassociate","Number of insts with operands swapped");
+
   class Reassociate : public FunctionPass {
     std::map<BasicBlock*, unsigned> RankMap;
   public:

@@ -9,54 +9,53 @@
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "Support/DepthFirstIterator.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <algorithm>
 
-static Statistic<> NumFunctions("globaldce\t- Number of functions removed");
-static Statistic<> NumVariables("globaldce\t- Number of global variables removed");
-static Statistic<> NumCPRs("globaldce\t- Number of const pointer refs removed");
-static Statistic<> NumConsts("globaldce\t- Number of init constants removed");
-
-static bool RemoveUnreachableFunctions(Module &M, CallGraph &CallGraph) {
-  // Calculate which functions are reachable from the external functions in the
-  // call graph.
-  //
-  std::set<CallGraphNode*> ReachableNodes(df_begin(&CallGraph),
-                                          df_end(&CallGraph));
-
-  // Loop over the functions in the module twice.  The first time is used to
-  // drop references that functions have to each other before they are deleted.
-  // The second pass removes the functions that need to be removed.
-  //
-  std::vector<CallGraphNode*> FunctionsToDelete;   // Track unused functions
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    CallGraphNode *N = CallGraph[I];
-
-    if (!ReachableNodes.count(N)) {              // Not reachable??
-      I->dropAllReferences();
-      N->removeAllCalledFunctions();
-      FunctionsToDelete.push_back(N);
-      ++NumFunctions;
-    }
-  }
-
-  // Nothing to do if no unreachable functions have been found...
-  if (FunctionsToDelete.empty()) return false;
-
-  // Unreachables functions have been found and should have no references to
-  // them, delete them now.
-  //
-  for (std::vector<CallGraphNode*>::iterator I = FunctionsToDelete.begin(),
-	 E = FunctionsToDelete.end(); I != E; ++I)
-    delete CallGraph.removeFunctionFromModule(*I);
-
-  return true;
-}
-
 namespace {
+  Statistic<> NumFunctions("globaldce","Number of functions removed");
+  Statistic<> NumVariables("globaldce","Number of global variables removed");
+  Statistic<> NumCPRs("globaldce", "Number of const pointer refs removed");
+  Statistic<> NumConsts("globaldce", "Number of init constants removed");
+
+  bool RemoveUnreachableFunctions(Module &M, CallGraph &CallGraph) {
+    // Calculate which functions are reachable from the external functions in
+    // the call graph.
+    //
+    std::set<CallGraphNode*> ReachableNodes(df_begin(&CallGraph),
+                                            df_end(&CallGraph));
+
+    // Loop over the functions in the module twice.  The first time is used to
+    // drop references that functions have to each other before they are
+    // deleted.  The second pass removes the functions that need to be removed.
+    //
+    std::vector<CallGraphNode*> FunctionsToDelete;   // Track unused functions
+    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+      CallGraphNode *N = CallGraph[I];
+      
+      if (!ReachableNodes.count(N)) {              // Not reachable??
+        I->dropAllReferences();
+        N->removeAllCalledFunctions();
+        FunctionsToDelete.push_back(N);
+        ++NumFunctions;
+      }
+    }
+    
+    // Nothing to do if no unreachable functions have been found...
+    if (FunctionsToDelete.empty()) return false;
+    
+    // Unreachables functions have been found and should have no references to
+    // them, delete them now.
+    //
+    for (std::vector<CallGraphNode*>::iterator I = FunctionsToDelete.begin(),
+           E = FunctionsToDelete.end(); I != E; ++I)
+      delete CallGraph.removeFunctionFromModule(*I);
+    
+    return true;
+  }
+  
   struct GlobalDCE : public Pass {
     // run - Do the GlobalDCE pass on the specified module, optionally updating
     // the specified callgraph to reflect the changes.

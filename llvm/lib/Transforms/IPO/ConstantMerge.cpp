@@ -14,7 +14,7 @@
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 
 namespace {
   struct ConstantMerge : public Pass {
@@ -28,7 +28,7 @@ namespace {
     void replaceConstantWith(Constant *Old, Constant *New);
   };
 
-  Statistic<> NumMerged("constmerge\t\t- Number of global constants merged");
+  Statistic<> NumMerged("constmerge", "Number of global constants merged");
   RegisterOpt<ConstantMerge> X("constmerge","Merge Duplicate Global Constants");
 }
 

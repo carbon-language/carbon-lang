@@ -17,12 +17,12 @@
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <set>
 
-static Statistic<> NumInstKilled("constprop - Number of instructions killed");
-
 namespace {
+  Statistic<> NumInstKilled("constprop", "Number of instructions killed");
+
   struct ConstantPropogation : public FunctionPass {
     bool runOnFunction(Function &F);
 

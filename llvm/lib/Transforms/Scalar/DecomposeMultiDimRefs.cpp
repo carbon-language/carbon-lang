@@ -16,10 +16,10 @@
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 
 namespace {
-  Statistic<> NumAdded("lowerrefs\t\t- # of getelementptr instructions added");
+  Statistic<> NumAdded("lowerrefs", "# of getelementptr instructions added");
 
   struct DecomposePass : public BasicBlockPass {
     virtual bool runOnBasicBlock(BasicBlock &BB);

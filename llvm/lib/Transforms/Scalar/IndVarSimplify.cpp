@@ -14,11 +14,11 @@
 #include "llvm/Constants.h"
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 
 namespace {
-  Statistic<> NumRemoved ("indvars\t\t- Number of aux indvars removed");
-  Statistic<> NumInserted("indvars\t\t- Number of cannonical indvars added");
+  Statistic<> NumRemoved ("indvars", "Number of aux indvars removed");
+  Statistic<> NumInserted("indvars", "Number of cannonical indvars added");
 }
 
 // InsertCast - Cast Val to Ty, setting a useful name on the cast if Val has a

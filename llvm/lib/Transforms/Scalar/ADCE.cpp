@@ -17,16 +17,14 @@
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 #include "Support/DepthFirstIterator.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <algorithm>
-#include <iostream>
 using std::cerr;
 using std::vector;
 
-static Statistic<> NumBlockRemoved("adce\t\t- Number of basic blocks removed");
-static Statistic<> NumInstRemoved ("adce\t\t- Number of instructions removed");
-
 namespace {
+  Statistic<> NumBlockRemoved("adce", "Number of basic blocks removed");
+  Statistic<> NumInstRemoved ("adce", "Number of instructions removed");
 
 //===----------------------------------------------------------------------===//
 // ADCE Class

@@ -32,13 +32,13 @@
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <algorithm>
 
 namespace {
-  Statistic<>NumSetCCRemoved("cee\t\t- Number of setcc instruction eliminated");
-  Statistic<>NumOperandsCann("cee\t\t- Number of operands cannonicalized");
-  Statistic<>BranchRevectors("cee\t\t- Number of branches revectored");
+  Statistic<> NumSetCCRemoved("cee", "Number of setcc instruction eliminated");
+  Statistic<> NumOperandsCann("cee", "Number of operands cannonicalized");
+  Statistic<> BranchRevectors("cee", "Number of branches revectored");
 
   class ValueInfo;
   class Relation {

@@ -13,12 +13,12 @@
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 
-static Statistic<> NumLowered("lowerallocs\t- Number of allocations lowered");
 using std::vector;
 
 namespace {
+  Statistic<> NumLowered("lowerallocs", "Number of allocations lowered");
 
   /// LowerAllocations - Turn malloc and free instructions into %malloc and
   /// %free calls.

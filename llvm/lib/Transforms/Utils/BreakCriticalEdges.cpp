@@ -14,10 +14,10 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Support/CFG.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 
 namespace {
-  Statistic<> NumBroken("break-crit-edges\t- Number of blocks inserted");
+  Statistic<> NumBroken("break-crit-edges", "Number of blocks inserted");
 
   struct BreakCriticalEdges : public FunctionPass {
     virtual bool runOnFunction(Function &F);

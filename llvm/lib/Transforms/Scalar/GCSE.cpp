@@ -13,13 +13,13 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/Support/InstIterator.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <algorithm>
 
 namespace {
-  Statistic<> NumInstRemoved("gcse\t\t- Number of instructions removed");
-  Statistic<> NumLoadRemoved("gcse\t\t- Number of loads removed");
-  Statistic<> NumNonInsts   ("gcse\t\t- Number of instructions removed due "
+  Statistic<> NumInstRemoved("gcse", "Number of instructions removed");
+  Statistic<> NumLoadRemoved("gcse", "Number of loads removed");
+  Statistic<> NumNonInsts   ("gcse", "Number of instructions removed due "
                              "to non-instruction values");
 
   class GCSE : public FunctionPass {

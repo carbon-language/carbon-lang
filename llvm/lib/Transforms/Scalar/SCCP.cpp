@@ -24,17 +24,17 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <algorithm>
 #include <set>
 using std::cerr;
-
-static Statistic<> NumInstRemoved("sccp\t\t- Number of instructions removed");
 
 // InstVal class - This class represents the different lattice values that an 
 // instruction may occupy.  It is a simple class with value semantics.
 //
 namespace {
+  Statistic<> NumInstRemoved("sccp", "Number of instructions removed");
+
 class InstVal {
   enum { 
     undefined,           // This instruction has no known value

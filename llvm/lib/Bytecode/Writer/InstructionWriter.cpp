@@ -14,13 +14,13 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <algorithm>
 
 static Statistic<> 
-NumOversized("bytecodewriter\t- Number of oversized instructions");
+NumOversized("bytecodewriter", "Number of oversized instructions");
 static Statistic<> 
-NumNormal("bytecodewriter\t- Number of normal instructions");
+NumNormal("bytecodewriter", "Number of normal instructions");
 
 typedef unsigned char uchar;
 

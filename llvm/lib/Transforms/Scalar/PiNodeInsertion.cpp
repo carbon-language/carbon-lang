@@ -29,16 +29,15 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOperators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Support/CFG.h"
-#include "Support/StatisticReporter.h"
-
-static Statistic<> NumInserted("pinodes\t\t- Number of Pi nodes inserted");
+#include "Support/Statistic.h"
 
 namespace {
+  Statistic<> NumInserted("pinodes", "Number of Pi nodes inserted");
+
   struct PiNodeInserter : public FunctionPass {
     virtual bool runOnFunction(Function &F);
     

@@ -13,10 +13,10 @@
 #include "llvm/iPHINode.h"
 #include "llvm/Constant.h"
 #include "llvm/Support/CFG.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 
 namespace {
-  Statistic<> NumInserted("preheaders\t- Number of pre-header nodes inserted");
+  Statistic<> NumInserted("preheaders", "Number of pre-header nodes inserted");
 
   struct Preheaders : public FunctionPass {
     virtual bool runOnFunction(Function &F);

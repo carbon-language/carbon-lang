@@ -13,14 +13,14 @@
 #include "llvm/iMemory.h"
 #include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include "llvm/Assembly/Writer.h"
 #include <algorithm>
 using std::string;
 
 namespace {
-  Statistic<>NumHoisted("licm\t\t- Number of instructions hoisted out of loop");
-  Statistic<> NumHoistedLoads("licm\t\t- Number of load insts hoisted");
+  Statistic<> NumHoisted("licm", "Number of instructions hoisted out of loop");
+  Statistic<> NumHoistedLoads("licm", "Number of load insts hoisted");
 
   struct LICM : public FunctionPass, public InstVisitor<LICM> {
     virtual bool runOnFunction(Function &F);

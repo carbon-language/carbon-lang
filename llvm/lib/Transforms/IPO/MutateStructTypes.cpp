@@ -19,12 +19,11 @@
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
-#include "llvm/Argument.h"
 #include "llvm/Constants.h"
 #include "Support/STLExtras.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <algorithm>
-#include <iostream>
+
 using std::map;
 using std::vector;
 

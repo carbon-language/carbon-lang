@@ -18,7 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/iOther.h"
 #include "llvm/Constant.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <algorithm>
 
 using std::vector;
@@ -26,7 +26,7 @@ using std::string;
 using std::cerr;
 
 namespace {
-  Statistic<>NumResolved("funcresolve\t- Number of varargs functions resolved");
+  Statistic<>NumResolved("funcresolve", "Number of varargs functions resolved");
 
   struct FunctionResolvingPass : public Pass {
     bool run(Module &M);

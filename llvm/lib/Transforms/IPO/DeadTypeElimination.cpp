@@ -10,7 +10,7 @@
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 
 using std::vector;
 
@@ -31,7 +31,8 @@ namespace {
     }
   };
   RegisterOpt<DTE> X("deadtypeelim", "Dead Type Elimination");
-  Statistic<> NumKilled("deadtypeelim\t- Number of unused typenames removed from symtab");
+  Statistic<>
+  NumKilled("deadtypeelim", "Number of unused typenames removed from symtab");
 }
 
 Pass *createDeadTypeEliminationPass() {
