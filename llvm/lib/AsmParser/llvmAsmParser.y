@@ -58,6 +58,14 @@ static struct PerModuleInfo {
   vector<ValueList>    LateResolveValues;
   vector<PATypeHolder<Type> > Types, LateResolveTypes;
 
+  // GlobalRefs - This maintains a mapping between <Type, ValID>'s and forward
+  // references to global values.  Global values may be referenced before they
+  // are defined, and if so, the temporary object that they represent is held
+  // here.  This is used for forward references of ConstPoolPointerReferences.
+  //
+  typedef map<pair<const PointerType *, ValID>, GlobalVariable*> GlobalRefsType;
+  GlobalRefsType GlobalRefs;
+
   void ModuleDone() {
     // If we could not resolve some methods at method compilation time (calls to
     // methods before they are defined), resolve them now...  Types are resolved
@@ -65,10 +73,56 @@ static struct PerModuleInfo {
     //
     ResolveDefinitions(LateResolveValues);
 
+    // Check to make sure that all global value forward references have been
+    // resolved!
+    //
+    if (!GlobalRefs.empty()) {
+      // TODO: Make this more detailed! Loop over each undef value and print
+      // info
+      ThrowException("TODO: Make better error - Unresolved forward constant references exist!");
+    }
+
     Values.clear();         // Clear out method local definitions
     Types.clear();
     CurrentModule = 0;
   }
+
+
+  // DeclareNewGlobalValue - Called every type a new GV has been defined.  This
+  // is used to remove things from the forward declaration map, resolving them
+  // to the correct thing as needed.
+  //
+  void DeclareNewGlobalValue(GlobalValue *GV, ValID D) {
+    // Check to see if there is a forward reference to this global variable...
+    // if there is, eliminate it and patch the reference to use the new def'n.
+    GlobalRefsType::iterator I = GlobalRefs.find(make_pair(GV->getType(), D));
+
+    if (I != GlobalRefs.end()) {
+      GlobalVariable *OldGV = I->second;   // Get the placeholder...
+      I->first.second.destroy();  // Free string memory if neccesary
+      
+      // Loop over all of the uses of the GlobalValue.  The only thing they are
+      // allowed to be at this point is ConstPoolPointerReference's.
+      assert(OldGV->use_size() == 1 && "Only one reference should exist!");
+      while (!OldGV->use_empty()) {
+	User *U = OldGV->use_back();  // Must be a ConstPoolPointerReference...
+	ConstPoolPointerReference *CPPR = cast<ConstPoolPointerReference>(U);
+	assert(CPPR->getValue() == OldGV && "Something isn't happy");
+	
+	// Change the const pool reference to point to the real global variable
+	// now.  This should drop a use from the OldGV.
+	CPPR->mutateReference(GV);
+      }
+    
+      // Remove GV from the module...
+      CurrentModule->getGlobalList().remove(OldGV);
+      delete OldGV;                        // Delete the old placeholder
+
+      // Remove the map entry for the global now that it has been created...
+      GlobalRefs.erase(I);
+    }
+  }
+
 } CurModule;
 
 static struct PerMethodInfo {
@@ -109,14 +163,16 @@ static bool inMethodScope() { return CurMeth.CurrentMethod != 0; }
 //               Code to handle definitions of all the types
 //===----------------------------------------------------------------------===//
 
-static void InsertValue(Value *D, vector<ValueList> &ValueTab = CurMeth.Values){
-  if (!D->hasName()) {             // Is this a numbered definition?
-    unsigned type = D->getType()->getUniqueID();
-    if (ValueTab.size() <= type)
-      ValueTab.resize(type+1, ValueList());
-    //printf("Values[%d][%d] = %d\n", type, ValueTab[type].size(), D);
-    ValueTab[type].push_back(D);
-  }
+static int InsertValue(Value *D, vector<ValueList> &ValueTab = CurMeth.Values) {
+  if (D->hasName()) return -1;           // Is this a numbered definition?
+
+  // Yes, insert the value into the value table...
+  unsigned type = D->getType()->getUniqueID();
+  if (ValueTab.size() <= type)
+    ValueTab.resize(type+1, ValueList());
+  //printf("Values[%d][%d] = %d\n", type, ValueTab[type].size(), D);
+  ValueTab[type].push_back(D);
+  return ValueTab[type].size()-1;
 }
 
 // TODO: FIXME when Type are not const
@@ -193,10 +249,11 @@ static Value *lookupInSymbolTable(const Type *Ty, const string &Name) {
   return N;
 }
 
-static Value *getVal(const Type *Ty, const ValID &D, 
-                     bool DoNotImprovise = false) {
-  assert(Ty != Type::TypeTy && "Should use getTypeVal for types!");
-
+// getValNonImprovising - Look up the value specified by the provided type and
+// the provided ValID.  If the value exists and has already been defined, return
+// it.  Otherwise return null.
+//
+static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   switch (D.Type) {
   case ValID::NumberVal: {                 // Is it a numbered definition?
     unsigned type = Ty->getUniqueID();
@@ -211,87 +268,88 @@ static Value *getVal(const Type *Ty, const ValID &D,
     }
 
     // Make sure that our type is within bounds
-    if (CurMeth.Values.size() <= type)
-      break;
+    if (CurMeth.Values.size() <= type) return 0;
 
     // Check that the number is within bounds...
-    if (CurMeth.Values[type].size() <= Num)
-      break;
+    if (CurMeth.Values[type].size() <= Num) return 0;
   
     return CurMeth.Values[type][Num];
   }
+
   case ValID::NameVal: {                // Is it a named definition?
-    string Name(D.Name);
-    Value *N = lookupInSymbolTable(Ty, Name);
-    if (N == 0) break;
+    Value *N = lookupInSymbolTable(Ty, string(D.Name));
+    if (N == 0) return 0;
 
     D.destroy();  // Free old strdup'd memory...
     return N;
   }
 
-  case ValID::ConstSIntVal:     // Is it a constant pool reference??
-  case ValID::ConstUIntVal:     // Is it an unsigned const pool reference?
-  case ValID::ConstStringVal:   // Is it a string const pool reference?
-  case ValID::ConstFPVal:       // Is it a floating point const pool reference?
-  case ValID::ConstNullVal: {   // Is it a null value?
-    ConstPoolVal *CPV = 0;
-
-    // Check to make sure that "Ty" is an integral type, and that our 
-    // value will fit into the specified type...
-    switch (D.Type) {
-    case ValID::ConstSIntVal:
-      if (Ty == Type::BoolTy) {  // Special handling for boolean data
-        CPV = ConstPoolBool::get(D.ConstPool64 != 0);
-      } else {
-        if (!ConstPoolSInt::isValueValidForType(Ty, D.ConstPool64))
-          ThrowException("Symbolic constant pool value '" +
-			 itostr(D.ConstPool64) + "' is invalid for type '" + 
-			 Ty->getName() + "'!");
-        CPV = ConstPoolSInt::get(Ty, D.ConstPool64);
-      }
-      break;
-    case ValID::ConstUIntVal:
-      if (!ConstPoolUInt::isValueValidForType(Ty, D.UConstPool64)) {
-        if (!ConstPoolSInt::isValueValidForType(Ty, D.ConstPool64)) {
-          ThrowException("Integral constant pool reference is invalid!");
-        } else {     // This is really a signed reference.  Transmogrify.
-          CPV = ConstPoolSInt::get(Ty, D.ConstPool64);
-        }
-      } else {
-        CPV = ConstPoolUInt::get(Ty, D.UConstPool64);
-      }
-      break;
-    case ValID::ConstStringVal:
-      cerr << "FIXME: TODO: String constants [sbyte] not implemented yet!\n";
-      abort();
-      break;
-    case ValID::ConstFPVal:
-      if (!ConstPoolFP::isValueValidForType(Ty, D.ConstPoolFP))
-	ThrowException("FP constant invalid for type!!");
-      CPV = ConstPoolFP::get(Ty, D.ConstPoolFP);
-      break;
-    case ValID::ConstNullVal:
-      if (!Ty->isPointerType())
-        ThrowException("Cannot create a a non pointer null!");
-      CPV = ConstPoolPointer::getNull(cast<PointerType>(Ty));
-      break;
-    default:
-      assert(0 && "Unhandled case!");
+  // Check to make sure that "Ty" is an integral type, and that our 
+  // value will fit into the specified type...
+  case ValID::ConstSIntVal:    // Is it a constant pool reference??
+    if (Ty == Type::BoolTy) {  // Special handling for boolean data
+      return ConstPoolBool::get(D.ConstPool64 != 0);
+    } else {
+      if (!ConstPoolSInt::isValueValidForType(Ty, D.ConstPool64))
+	ThrowException("Symbolic constant pool value '" +
+		       itostr(D.ConstPool64) + "' is invalid for type '" + 
+		       Ty->getName() + "'!");
+      return ConstPoolSInt::get(Ty, D.ConstPool64);
     }
-    assert(CPV && "How did we escape creating a constant??");
-    return CPV;
-  }   // End of case 2,3,4
+
+  case ValID::ConstUIntVal:     // Is it an unsigned const pool reference?
+    if (!ConstPoolUInt::isValueValidForType(Ty, D.UConstPool64)) {
+      if (!ConstPoolSInt::isValueValidForType(Ty, D.ConstPool64)) {
+	ThrowException("Integral constant pool reference is invalid!");
+      } else {     // This is really a signed reference.  Transmogrify.
+	return ConstPoolSInt::get(Ty, D.ConstPool64);
+      }
+    } else {
+      return ConstPoolUInt::get(Ty, D.UConstPool64);
+    }
+
+  case ValID::ConstStringVal:    // Is it a string const pool reference?
+    cerr << "FIXME: TODO: String constants [sbyte] not implemented yet!\n";
+    abort();
+    return 0;
+
+  case ValID::ConstFPVal:        // Is it a floating point const pool reference?
+    if (!ConstPoolFP::isValueValidForType(Ty, D.ConstPoolFP))
+      ThrowException("FP constant invalid for type!!");
+    return ConstPoolFP::get(Ty, D.ConstPoolFP);
+    
+  case ValID::ConstNullVal:      // Is it a null value?
+    if (!Ty->isPointerType())
+      ThrowException("Cannot create a a non pointer null!");
+    return ConstPoolPointerNull::get(cast<PointerType>(Ty));
+    
   default:
     assert(0 && "Unhandled case!");
+    return 0;
   }   // End of switch
 
+  assert(0 && "Unhandled case!");
+  return 0;
+}
+
+
+// getVal - This function is identical to getValNonImprovising, except that if a
+// value is not already defined, it "improvises" by creating a placeholder var
+// that looks and acts just like the requested variable.  When the value is
+// defined later, all uses of the placeholder variable are replaced with the
+// real thing.
+//
+static Value *getVal(const Type *Ty, const ValID &D) {
+  assert(Ty != Type::TypeTy && "Should use getTypeVal for types!");
+
+  // See if the value has already been defined...
+  Value *V = getValNonImprovising(Ty, D);
+  if (V) return V;
 
   // If we reached here, we referenced either a symbol that we don't know about
   // or an id number that hasn't been read yet.  We may be referencing something
   // forward, so just create an entry to be resolved later and get to it...
   //
-  if (DoNotImprovise) return 0;  // Do we just want a null to be returned?
-
   Value *d = 0;
   vector<ValueList> *LateResolver = inMethodScope() ? 
     &CurMeth.LateResolveValues : &CurModule.LateResolveValues;
@@ -340,8 +398,7 @@ static void ResolveDefinitions(vector<ValueList> &LateResolvers) {
       LateResolvers[ty].pop_back();
       ValID &DID = getValIDFromPlaceHolder(V);
 
-      Value *TheRealValue = getVal(Type::getUniqueIDType(ty), DID, true);
-
+      Value *TheRealValue = getValNonImprovising(Type::getUniqueIDType(ty),DID);
       if (TheRealValue == 0) {
 	if (DID.Type == 1)
 	  ThrowException("Reference to an invalid definition: '" +DID.getName()+
@@ -433,6 +490,10 @@ static bool setValueName(Value *V, char *NameStr) {
   string Name(NameStr);           // Copy string
   free(NameStr);                  // Free old string
 
+  if (V->getType() == Type::VoidTy) 
+    ThrowException("Can't assign name '" + Name + 
+		   "' to a null valued instruction!");
+
   SymbolTable *ST = inMethodScope() ? 
     CurMeth.CurrentMethod->getSymbolTableSure() : 
     CurModule.CurrentModule->getSymbolTableSure();
@@ -471,11 +532,12 @@ static bool setValueName(Value *V, char *NameStr) {
           if (GV->hasInitializer() && !EGV->hasInitializer())
             EGV->setInitializer(GV->getInitializer());
           
+	  delete GV;     // Destroy the duplicate!
           return true;   // They are equivalent!
         }
       }
     }
-    ThrowException("Redefinition of value name '" + Name + "' in the '" +
+    ThrowException("Redefinition of value named '" + Name + "' in the '" +
 		   V->getType()->getDescription() + "' type plane!");
   }
 
@@ -613,7 +675,8 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type <JumpTable>     JumpTable
 %type <BoolVal>       GlobalType                  // GLOBAL or CONSTANT?
 
-%type <ValIDVal>      ValueRef ConstValueRef // Reference to a definition or BB
+// ValueRef - Unresolved reference to a definition or BB
+%type <ValIDVal>      ValueRef ConstValueRef SymbolicValueRef
 %type <ValueVal>      ResolvedVal            // <type> <valref> pair
 // Tokens and types for handling constant integer values
 //
@@ -641,7 +704,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 
 
 %token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE GLOBAL CONSTANT UNINIT
-%token TO DOTDOTDOT STRING NULL_TOK CONST
+%token TO EXCEPT DOTDOTDOT STRING NULL_TOK CONST
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
@@ -660,7 +723,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 
 // Other Operators
 %type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI CALL CAST SHL SHR
+%token <OtherOpVal> PHI CALL INVOKE CAST SHL SHR
 
 %start Module
 %%
@@ -744,7 +807,10 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     vector<const Type*> Params;
     mapto($3->begin(), $3->end(), back_inserter(Params), 
 	  mem_fun_ref(&PATypeHandle<Type>::get));
-    $$ = newTH(HandleUpRefs(MethodType::get(*$1, Params)));
+    bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
+    if (isVarArg) Params.pop_back();
+
+    $$ = newTH(HandleUpRefs(MethodType::get(*$1, Params, isVarArg)));
     delete $3;      // Delete the argument list
     delete $1;      // Delete the old type handle
   }
@@ -881,29 +947,48 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       ThrowException("Cannot make null pointer constant with type: '" + 
                      (*$1)->getDescription() + "'!");
 
-    $$ = ConstPoolPointer::getNull(PTy);
+    $$ = ConstPoolPointerNull::get(PTy);
     delete $1;
   }
-  | Types VAR_ID {
-    string Name($2); free($2);  // Change to a responsible mem manager
+  | Types SymbolicValueRef {
     const PointerType *Ty = dyn_cast<const PointerType>($1->get());
     if (Ty == 0)
       ThrowException("Global const reference must be a pointer type!");
 
-    Value *N = lookupInSymbolTable(Ty, Name);
-    if (N == 0)
-      ThrowException("Global pointer reference '%" + Name +
-                     "' must be defined before use!");    
+    Value *V = getValNonImprovising(Ty, $2);
 
-    // TODO FIXME: This should also allow methods... when common baseclass
-    // exists
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(N)) {
-      $$ = ConstPoolPointerReference::get(GV);
-    } else {
-      ThrowException("'%" + Name + "' is not a global value reference!");
+    // If this is an initializer for a constant pointer, which is referencing a
+    // (currently) undefined variable, create a stub now that shall be replaced
+    // in the future with the right type of variable.
+    //
+    if (V == 0) {
+      assert(isa<PointerType>(Ty) && "Globals may only be used as pointers!");
+      const PointerType *PT = cast<PointerType>(Ty);
+
+      // First check to see if the forward references value is already created!
+      PerModuleInfo::GlobalRefsType::iterator I =
+	CurModule.GlobalRefs.find(make_pair(PT, $2));
+    
+      if (I != CurModule.GlobalRefs.end()) {
+	V = I->second;             // Placeholder already exists, use it...
+      } else {
+	// TODO: Include line number info by creating a subclass of
+	// TODO: GlobalVariable here that includes the said information!
+	
+	// Create a placeholder for the global variable reference...
+	GlobalVariable *GV = new GlobalVariable(PT->getValueType(), false);
+	// Keep track of the fact that we have a forward ref to recycle it
+	CurModule.GlobalRefs.insert(make_pair(make_pair(PT, $2), GV));
+
+	// Must temporarily push this value into the module table...
+	CurModule.CurrentModule->getGlobalList().push_back(GV);
+	V = GV;
+      }
     }
 
-    delete $1;
+    GlobalValue *GV = cast<GlobalValue>(V);
+    $$ = ConstPoolPointerReference::get(GV);
+    delete $1;            // Free the type handle
   }
 
 
@@ -972,7 +1057,14 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
     GlobalVariable *GV = new GlobalVariable(Ty, $3, Initializer);
     if (!setValueName(GV, $2)) {   // If not redefining...
       CurModule.CurrentModule->getGlobalList().push_back(GV);
-      InsertValue(GV, CurModule.Values);
+      int Slot = InsertValue(GV, CurModule.Values);
+
+      if (Slot != -1) {
+	CurModule.DeclareNewGlobalValue(GV, ValID::create(Slot));
+      } else {
+	CurModule.DeclareNewGlobalValue(GV, ValID::create(
+				                (char*)GV->getName().c_str()));
+      }
     }
   }
   | ConstPool OptAssign UNINIT GlobalType Types {
@@ -986,7 +1078,15 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
     GlobalVariable *GV = new GlobalVariable(Ty, $4);
     if (!setValueName(GV, $2)) {   // If not redefining...
       CurModule.CurrentModule->getGlobalList().push_back(GV);
-      InsertValue(GV, CurModule.Values);
+      int Slot = InsertValue(GV, CurModule.Values);
+
+      if (Slot != -1) {
+	CurModule.DeclareNewGlobalValue(GV, ValID::create(Slot));
+      } else {
+	assert(GV->hasName() && "Not named and not numbered!?");
+	CurModule.DeclareNewGlobalValue(GV, ValID::create(
+				                (char*)GV->getName().c_str()));
+      }
     }
   }
   | /* empty: end of list */ { 
@@ -1044,7 +1144,7 @@ ArgListH : ArgVal ',' ArgListH {
   }
   | DOTDOTDOT {
     $$ = new list<MethodArgument*>();
-    $$->push_back(new MethodArgument(Type::VoidTy));
+    $$->push_front(new MethodArgument(Type::VoidTy));
   }
 
 ArgList : ArgListH {
@@ -1061,7 +1161,10 @@ MethodHeaderH : TypesV STRINGCONSTANT '(' ArgList ')' {
     for (list<MethodArgument*>::iterator I = $4->begin(); I != $4->end(); ++I)
       ParamTypeList.push_back((*I)->getType());
 
-  const MethodType  *MT  = MethodType::get(*$1, ParamTypeList);
+  bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
+  if (isVarArg) ParamTypeList.pop_back();
+
+  const MethodType  *MT  = MethodType::get(*$1, ParamTypeList, isVarArg);
   const PointerType *PMT = PointerType::get(MT);
   delete $1;
 
@@ -1080,6 +1183,7 @@ MethodHeaderH : TypesV STRINGCONSTANT '(' ArgList ')' {
   if (M == 0) {  // Not already defined?
     M = new Method(MT, $2);
     InsertValue(M, CurModule.Values);
+    CurModule.DeclareNewGlobalValue(M, ValID::create($2));
   }
 
   free($2);  // Free strdup'd memory!
@@ -1145,16 +1249,19 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   }
 */
 
-// ValueRef - A reference to a definition... 
-ValueRef : INTVAL {           // Is it an integer reference...?
+// SymbolicValueRef - Reference to one of two ways of symbolically refering to
+// another value.
+//
+SymbolicValueRef : INTVAL {  // Is it an integer reference...?
     $$ = ValID::create($1);
   }
   | VAR_ID {                 // Is it a named reference...?
     $$ = ValID::create($1);
   }
-  | ConstValueRef {
-    $$ = $1;
-  }
+
+// ValueRef - A reference to a definition... either constant or symbolic
+ValueRef : SymbolicValueRef | ConstValueRef
+
 
 // ResolvedVal - a <type> <value> pair.  This is used only in cases where the
 // type immediately preceeds the value reference, and allows complex constant
@@ -1175,13 +1282,19 @@ BasicBlockList : BasicBlockList BasicBlock {
 // Basic blocks are terminated by branching instructions: 
 // br, br/cc, switch, ret
 //
-BasicBlock : InstructionList BBTerminatorInst  {
-    $1->getInstList().push_back($2);
+BasicBlock : InstructionList OptAssign BBTerminatorInst  {
+    if (setValueName($3, $2)) { assert(0 && "No redefn allowed!"); }
+    InsertValue($3);
+
+    $1->getInstList().push_back($3);
     InsertValue($1);
     $$ = $1;
   }
-  | LABELSTR InstructionList BBTerminatorInst  {
-    $2->getInstList().push_back($3);
+  | LABELSTR InstructionList OptAssign BBTerminatorInst  {
+    if (setValueName($4, $3)) { assert(0 && "No redefn allowed!"); }
+    InsertValue($4);
+
+    $2->getInstList().push_back($4);
     if (setValueName($2, $1)) { assert(0 && "No label redef allowed!"); }
 
     InsertValue($2);
@@ -1220,10 +1333,66 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     for (; I != end; ++I)
       S->dest_push_back(I->first, I->second);
   }
+  | INVOKE TypesV ValueRef '(' ValueRefListE ')' TO ResolvedVal 
+    EXCEPT ResolvedVal {
+    const PointerType *PMTy;
+    const MethodType *Ty;
+
+    if (!(PMTy = dyn_cast<PointerType>($2->get())) ||
+        !(Ty = dyn_cast<MethodType>(PMTy->getValueType()))) {
+      // Pull out the types of all of the arguments...
+      vector<const Type*> ParamTypes;
+      if ($5) {
+        for (list<Value*>::iterator I = $5->begin(), E = $5->end(); I != E; ++I)
+          ParamTypes.push_back((*I)->getType());
+      }
+
+      bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
+      if (isVarArg) ParamTypes.pop_back();
+
+      Ty = MethodType::get($2->get(), ParamTypes, isVarArg);
+      PMTy = PointerType::get(Ty);
+    }
+    delete $2;
+
+    Value *V = getVal(PMTy, $3);   // Get the method we're calling...
+
+    BasicBlock *Normal = dyn_cast<BasicBlock>($8);
+    BasicBlock *Except = dyn_cast<BasicBlock>($10);
+
+    if (Normal == 0 || Except == 0)
+      ThrowException("Invoke instruction without label destinations!");
+
+    // Create the call node...
+    if (!$5) {                                   // Has no arguments?
+      $$ = new InvokeInst(cast<Method>(V), Normal, Except, vector<Value*>());
+    } else {                                     // Has arguments?
+      // Loop through MethodType's arguments and ensure they are specified
+      // correctly!
+      //
+      MethodType::ParamTypes::const_iterator I = Ty->getParamTypes().begin();
+      MethodType::ParamTypes::const_iterator E = Ty->getParamTypes().end();
+      list<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
+
+      for (; ArgI != ArgE && I != E; ++ArgI, ++I)
+	if ((*ArgI)->getType() != *I)
+	  ThrowException("Parameter " +(*ArgI)->getName()+ " is not of type '" +
+			 (*I)->getName() + "'!");
+
+      if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
+	ThrowException("Invalid number of parameters detected!");
+
+      $$ = new InvokeInst(cast<Method>(V), Normal, Except,
+			  vector<Value*>($5->begin(), $5->end()));
+    }
+    delete $5;
+  }
+
+
 
 JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     $$ = $1;
-    ConstPoolVal *V = cast<ConstPoolVal>(getVal($2, $3, true));
+    ConstPoolVal *V = cast<ConstPoolVal>(getValNonImprovising($2, $3));
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");
 
@@ -1231,7 +1400,7 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
   }
   | IntType ConstValueRef ',' LABEL ValueRef {
     $$ = new list<pair<ConstPoolVal*, BasicBlock*> >();
-    ConstPoolVal *V = cast<ConstPoolVal>(getVal($1, $2, true));
+    ConstPoolVal *V = cast<ConstPoolVal>(getValNonImprovising($1, $2));
 
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");
@@ -1314,7 +1483,11 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
         for (list<Value*>::iterator I = $5->begin(), E = $5->end(); I != E; ++I)
           ParamTypes.push_back((*I)->getType());
       }
-      Ty = MethodType::get($2->get(), ParamTypes);
+
+      bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
+      if (isVarArg) ParamTypes.pop_back();
+
+      Ty = MethodType::get($2->get(), ParamTypes, isVarArg);
       PMTy = PointerType::get(Ty);
     }
     delete $2;
@@ -1340,8 +1513,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
 	ThrowException("Invalid number of parameters detected!");
 
-      $$ = new CallInst(cast<Method>(V),
-			vector<Value*>($5->begin(), $5->end()));
+      $$ = new CallInst(V, vector<Value*>($5->begin(), $5->end()));
     }
     delete $5;
   }
@@ -1390,7 +1562,8 @@ MemoryInst : MALLOC Types {
 
   | LOAD Types ValueRef UByteList {
     if (!(*$2)->isPointerType())
-      ThrowException("Can't load from nonpointer type: " + (*$2)->getName());
+      ThrowException("Can't load from nonpointer type: " +
+		     (*$2)->getDescription());
     if (LoadInst::getIndexedType(*$2, *$4) == 0)
       ThrowException("Invalid indices for load instruction!");
 
