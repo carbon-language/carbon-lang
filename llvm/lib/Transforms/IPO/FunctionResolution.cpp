@@ -36,94 +36,6 @@ Pass *createFunctionResolvingPass() {
   return new FunctionResolvingPass();
 }
 
-// ConvertCallTo - Convert a call to a varargs function with no arg types
-// specified to a concrete nonvarargs function.
-//
-static void ConvertCallTo(CallInst *CI, Function *Dest) {
-  const FunctionType::ParamTypes &ParamTys =
-    Dest->getFunctionType()->getParamTypes();
-  BasicBlock *BB = CI->getParent();
-
-  // Keep an iterator to where we want to insert cast instructions if the
-  // argument types don't agree.
-  //
-  unsigned NumArgsToCopy = CI->getNumOperands()-1;
-  if (NumArgsToCopy != ParamTys.size() &&
-      !(NumArgsToCopy > ParamTys.size() &&
-        Dest->getFunctionType()->isVarArg())) {
-    std::cerr << "WARNING: Call arguments do not match expected number of"
-              << " parameters.\n";
-    std::cerr << "WARNING: In function '"
-              << CI->getParent()->getParent()->getName() << "': call: " << *CI;
-    std::cerr << "Function resolved to: ";
-    WriteAsOperand(std::cerr, Dest);
-    std::cerr << "\n";
-    if (NumArgsToCopy > ParamTys.size())
-      NumArgsToCopy = ParamTys.size();
-  }
-
-  std::vector<Value*> Params;
-
-  // Convert all of the call arguments over... inserting cast instructions if
-  // the types are not compatible.
-  for (unsigned i = 1; i <= NumArgsToCopy; ++i) {
-    Value *V = CI->getOperand(i);
-
-    if (i-1 < ParamTys.size() && V->getType() != ParamTys[i-1]) {
-      // Must insert a cast...
-      V = new CastInst(V, ParamTys[i-1], "argcast", CI);
-    }
-
-    Params.push_back(V);
-  }
-  
-  // If the function takes extra parameters that are not being passed in, pass
-  // null values in now...
-  for (unsigned i = NumArgsToCopy; i < ParamTys.size(); ++i)
-    Params.push_back(Constant::getNullValue(ParamTys[i]));
-
-  // Replace the old call instruction with a new call instruction that calls
-  // the real function.
-  //
-  Instruction *NewCall = new CallInst(Dest, Params, "", CI);
-  std::string Name = CI->getName(); CI->setName("");
-
-  // Transfer the name over...
-  if (NewCall->getType() != Type::VoidTy)
-    NewCall->setName(Name);
-
-  // Replace uses of the old instruction with the appropriate values...
-  //
-  if (NewCall->getType() == CI->getType()) {
-    CI->replaceAllUsesWith(NewCall);
-    NewCall->setName(Name);
-
-  } else if (NewCall->getType() == Type::VoidTy) {
-    // Resolved function does not return a value but the prototype does.  This
-    // often occurs because undefined functions default to returning integers.
-    // Just replace uses of the call (which are broken anyway) with dummy
-    // values.
-    CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
-  } else if (CI->getType() == Type::VoidTy) {
-    // If we are gaining a new return value, we don't have to do anything
-    // special here, because it will automatically be ignored.
-  } else {
-    // Insert a cast instruction to convert the return value of the function
-    // into it's new type.  Of course we only need to do this if the return
-    // value of the function is actually USED.
-    //
-    if (!CI->use_empty()) {
-      // Insert the new cast instruction...
-      CastInst *NewCast = new CastInst(NewCall, CI->getType(), Name, CI);
-      CI->replaceAllUsesWith(NewCast);
-    }
-  }
-
-  // The old instruction is no longer needed, destroy it!
-  BB->getInstList().erase(CI);
-}
-
-
 static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
                              Function *Concrete) {
   bool Changed = false;
@@ -168,36 +80,12 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       // functions and that the Old function has no varargs fns specified.  In
       // otherwords it's just <retty> (...)
       //
-      for (unsigned i = 0; i < Old->use_size(); ) {
-        User *U = *(Old->use_begin()+i);
-        if (CastInst *CI = dyn_cast<CastInst>(U)) {
-          // Convert casts directly
-          assert(CI->getOperand(0) == Old);
-          CI->setOperand(0, Concrete);
-          Changed = true;
-          ++NumResolved;
-        } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
-          // Can only fix up calls TO the argument, not args passed in.
-          if (CI->getCalledValue() == Old) {
-            ConvertCallTo(CI, Concrete);
-            Changed = true;
-            ++NumResolved;
-          } else {
-            ++i;
-          }
-        } else {
-          ++i;
-        }
-      }
-
-      // If there are any more uses that we could not resolve, force them to use
-      // a casted pointer now.
-      if (!Old->use_empty()) {
-        NumResolved += Old->use_size();
-        Constant *NewCPR = ConstantPointerRef::get(Concrete);
-        Old->replaceAllUsesWith(ConstantExpr::getCast(NewCPR, Old->getType()));
-        Changed = true;
-      }
+      Value *Replacement = Concrete;
+      if (Concrete->getType() != Old->getType())
+        Replacement = ConstantExpr::getCast(ConstantPointerRef::get(Concrete),
+                                            Old->getType());
+      NumResolved += Old->use_size();
+      Old->replaceAllUsesWith(Replacement);
 
       // Since there are no uses of Old anymore, remove it from the module.
       M.getFunctionList().erase(Old);
