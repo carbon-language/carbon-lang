@@ -30,7 +30,7 @@ class TargetData {
   unsigned char PointerAlignment;      // Defaults to 8 bytes
   AnnotationID  AID;                   // AID for structure layout annotation
  
-  static Annotation *TypeAnFactory(AnnotationID, Annotable *, void *);
+  static Annotation *TypeAnFactory(AnnotationID, const Annotable *, void *);
 public:
   TargetData(const string &TargetName, unsigned char PtrSize = 8,
 	     unsigned char PtrAl = 8, unsigned char DoubleAl = 8,
@@ -65,7 +65,7 @@ public:
 				 const vector<ConstPoolVal*> &Indices) const;
 
   inline const StructLayout *getStructLayout(const StructType *Ty) const {
-    return (const StructLayout*)((Value*)Ty)->getOrCreateAnnotation(AID);
+    return (const StructLayout*)((const Type*)Ty)->getOrCreateAnnotation(AID);
   }
 };
 
