@@ -68,7 +68,9 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
   for (Value::use_iterator I = CI.use_begin(), E = CI.use_end();
        I != E; ++I) {
     if (BinaryOperator *BO = dyn_cast<BinaryOperator>(*I)) {
-      if (BO->getOpcode() != Instruction::Add)
+      if (BO->getOpcode() != Instruction::Add ||
+          // Avoid add sbyte* %X, %X cases...
+          BO->getOperand(0) == BO->getOperand(1))
         return false;
     } else {
       return false;
