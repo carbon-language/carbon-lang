@@ -735,7 +735,7 @@ void RA::addSpillCode(IntervalPtrs::value_type li, int slot)
                     DEBUG(std::cerr << "\t\t\t\tadded store for reg" << li->reg
                           << " to ss#" << slot << " after: \t\t"
                           << LiveIntervals::getBaseIndex(index) << " \t";
-                          prior(mi,2)->print(std::cerr, *tm_));
+                          mi->print(std::cerr, *tm_));
                 }
             }
         }
