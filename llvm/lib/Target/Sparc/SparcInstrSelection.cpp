@@ -16,10 +16,8 @@
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iMemory.h"
-#include "llvm/iOther.h"
-#include "llvm/Function.h"
+#include "llvm/Instructions.h"
+#include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/Intrinsics.h"
@@ -1434,6 +1432,22 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
                    addReg(callInstr.getOperand(2)).
                    addReg(callInstr.getOperand(1)));
     return true;
+
+  case LLVMIntrinsic::setjmp: {
+    // act as if we return 0
+    unsigned g0 = target.getRegInfo().getZeroRegNum();
+    mvec.push_back(BuildMI(V9::ORr,3).addMReg(g0).addMReg(g0)
+                   .addReg(&callInstr, MOTy::Def));
+    return true;
+  }
+
+  case LLVMIntrinsic::longjmp: {
+    // call abort()
+    Module* M = callInstr.getParent()->getParent()->getParent();
+    Function *F = M->getNamedFunction("abort");
+    mvec.push_back(BuildMI(V9::CALL, 1).addReg(F));
+    return true;
+  }
 
   default:
     return false;
