@@ -65,6 +65,13 @@ void DSNode::removeReferrer(PointerValSet *PVS) {
 }
 
 
+// removeAllIncomingEdges - Erase all edges in the graph that point to this node
+void DSNode::removeAllIncomingEdges() {
+  while (!Referrers.empty())
+    Referrers.back()->removePointerTo(this);
+}
+
+
 static void replaceIn(std::string &S, char From, const std::string &To) {
   for (unsigned i = 0; i < S.size(); )
     if (S[i] == From) {
@@ -145,12 +152,14 @@ NewDSNode::NewDSNode(AllocationInst *V)
   : DSNode(NewNode, V->getType()->getElementType()), Allocation(V) {
 }
 
+bool NewDSNode::isAllocaNode() const {
+  return isa<AllocaInst>(Allocation);
+}
+
+
 string NewDSNode::getCaption() const {
   stringstream OS;
-  if (isa<MallocInst>(Allocation))
-    OS << "new ";
-  else
-    OS << "alloca ";
+  OS << (isMallocNode() ? "new " : "alloca ");
 
   WriteTypeSymbolic(OS, getType(),
                     Allocation->getParent()->getParent()->getParent());
@@ -170,11 +179,12 @@ string GlobalDSNode::getCaption() const {
 }
 
 
-ShadowDSNode::ShadowDSNode(DSNode *P, Module *M)
+ShadowDSNode::ShadowDSNode(DSNode *P, Module *M, bool C = false)
   : DSNode(ShadowNode, cast<PointerType>(P->getType())->getElementType()) {
   Parent = P;
   Mod = M;
   ShadowParent = 0;
+  CriticalNode = C;
 }
 
 ShadowDSNode::ShadowDSNode(const Type *Ty, Module *M, ShadowDSNode *ShadParent)
@@ -182,12 +192,16 @@ ShadowDSNode::ShadowDSNode(const Type *Ty, Module *M, ShadowDSNode *ShadParent)
   Parent = 0;
   Mod = M;
   ShadowParent = ShadParent;
+  CriticalNode = false;
 }
 
 std::string ShadowDSNode::getCaption() const {
   stringstream OS;
+  if (CriticalNode) OS << "# ";
+  OS << "shadow ";
   WriteTypeSymbolic(OS, getType(), Mod);
-  return "shadow " + OS.str();
+  if (CriticalNode) OS << " #";
+  return OS.str();
 }
 
 void ShadowDSNode::mapNode(map<const DSNode*, DSNode*> &NodeMap,
