@@ -34,10 +34,19 @@ struct MachineInstrBuilder {
     return *this;
   }
 
-  /// addReg - Add an LLVM value that is to be used as a register...x
+  /// addReg - Add an LLVM value that is to be used as a register...
   ///
   MachineInstrBuilder &addReg(Value *V, bool isDef = false, bool isDNU = false){
     MI->addRegOperand(V, isDef, isDNU);
+    return *this;
+  }
+
+  /// addClobber - Assert that this MI is going to clobber a specific
+  /// register. Useful for instructions that always clobber certain hard regs.
+  /// (Same as addReg(RegNo, true) but shorter and more obvious).
+  ///
+  MachineInstrBuilder &addClobber(int RegNo) {
+    MI->addRegOperand(RegNo, true);
     return *this;
   }
 

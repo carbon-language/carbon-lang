@@ -211,33 +211,30 @@ ISel::visitSetCondInst (SetCondInst & I)
 	  break;
 	}
       // (Non-trapping) compare and pop twice.
-      // FIXME: Result of comparison -> condition codes, not a register.
       BuildMI (BB, X86::FUCOMPP, 0);
       // Move fp status word (concodes) to ax.
       BuildMI (BB, X86::FNSTSWr8, 1, X86::AX);
       // Load real concodes from ax.
-      // FIXME: Once again, flags are not modeled.
-      BuildMI (BB, X86::SAHF, 0);
+      BuildMI (BB, X86::SAHF, 1, X86::EFLAGS).addReg(X86::AH);
     }
   else
     {				// integer comparison
       // Emit: cmp <var1>, <var2> (do the comparison).  We can
       // compare 8-bit with 8-bit, 16-bit with 16-bit, 32-bit with
       // 32-bit.
-      // FIXME: Result of comparison -> condition codes, not a register.
       switch (comparisonWidth)
 	{
 	case 1:
 	  BuildMI (BB, X86::CMPrr8, 2,
-		   X86::NoReg).addReg (reg1).addReg (reg2);
+		   X86::EFLAGS).addReg (reg1).addReg (reg2);
 	  break;
 	case 2:
 	  BuildMI (BB, X86::CMPrr16, 2,
-		   X86::NoReg).addReg (reg1).addReg (reg2);
+		   X86::EFLAGS).addReg (reg1).addReg (reg2);
 	  break;
 	case 4:
 	  BuildMI (BB, X86::CMPrr32, 2,
-		   X86::NoReg).addReg (reg1).addReg (reg2);
+		   X86::EFLAGS).addReg (reg1).addReg (reg2);
 	  break;
 	case 8:
 	default:
@@ -297,15 +294,11 @@ ISel::visitSetCondInst (SetCondInst & I)
     case 1:
       BuildMI (BB, X86::MOVrr8, 1, resultReg).addReg (X86::AL);
       break;
-      // FIXME: What to do about implicit destination registers?
-      // E.g., you don't specify it, but CBW is more like AX = CBW(AL).
     case 2:
-      BuildMI (BB, X86::CBW, 0, X86::AX);
-      BuildMI (BB, X86::MOVrr16, 1, resultReg).addReg (X86::AX);
+      BuildMI (BB, X86::MOVZXr16r8, 1, resultReg).addReg (X86::AL);
       break;
     case 4:
-      BuildMI (BB, X86::CWDE, 0, X86::EAX);
-      BuildMI (BB, X86::MOVrr32, 1, resultReg).addReg (X86::EAX);
+      BuildMI (BB, X86::MOVZXr32r8, 1, resultReg).addReg (X86::AL);
       break;
     case 8:
     default:
@@ -331,6 +324,7 @@ ISel::visitReturnInst (ReturnInst & I)
 {
   if (I.getNumOperands () == 1)
     {
+      bool unsignedReturnValue = I.getOperand(0)->getType()->isUnsigned();
       unsigned val = getReg (I.getOperand (0));
       unsigned operandSize =
 	I.getOperand (0)->getType ()->getPrimitiveSize ();
@@ -358,21 +352,22 @@ ISel::visitReturnInst (ReturnInst & I)
 	    {
 	    case 1:
 	      // ret sbyte, ubyte: Extend value into EAX and return
-	      // MOV AL, <val>
-	      // CBW
-	      BuildMI (BB, X86::MOVrr8, 1, X86::AL).addReg (val);
-	      BuildMI (BB, X86::CBW, 0);
+		if (unsignedReturnValue) {
+		  BuildMI (BB, X86::MOVZXr32r8, 1, X86::EAX).addReg (val);
+		} else {
+		  BuildMI (BB, X86::MOVSXr32r8, 1, X86::EAX).addReg (val);
+		}
 	      break;
 	    case 2:
 	      // ret short, ushort: Extend value into EAX and return
-	      // MOV AX, <val>
-	      // CWDE
-	      BuildMI (BB, X86::MOVrr16, 1, X86::AX).addReg (val);
-	      BuildMI (BB, X86::CWDE, 0);
+		if (unsignedReturnValue) {
+		  BuildMI (BB, X86::MOVZXr32r16, 1, X86::EAX).addReg (val);
+		} else {
+		  BuildMI (BB, X86::MOVSXr32r16, 1, X86::EAX).addReg (val);
+		}
 	      break;
 	    case 4:
 	      // ret int, uint, ptr: Move value into EAX and return
-	      // MOV EAX, <val>
 	      BuildMI (BB, X86::MOVrr32, 1, X86::EAX).addReg (val);
 	      break;
 	    case 8:
@@ -387,8 +382,7 @@ ISel::visitReturnInst (ReturnInst & I)
 	    }
 	}
     }
-  // Emit a 'leave' and a 'ret'
-  BuildMI (BB, X86::LEAVE, 0);
+  // Emit a 'ret' -- the 'leave' will be added by the reg allocator, I guess?
   BuildMI (BB, X86::RET, 0);
 }
 
@@ -473,7 +467,7 @@ void ISel::visitDivRem(BinaryOperator &I) {
 
   static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
   static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
-  static const unsigned ExtOpcode[]={ X86::CBW   , X86::CWD    , X86::CWQ     };
+  static const unsigned ExtOpcode[]={ X86::CBW   , X86::CWD    , X86::CDQ     };
   static const unsigned ClrOpcode[]={ X86::XORrr8, X86::XORrr16, X86::XORrr32 };
   static const unsigned ExtRegs[]  ={ X86::AH    , X86::DX     , X86::EDX     };
 
@@ -502,7 +496,7 @@ void ISel::visitDivRem(BinaryOperator &I) {
   // Figure out which register we want to pick the result out of...
   unsigned DestReg = (I.getOpcode() == Instruction::Div) ? Reg : ExtReg;
   
-  // Emit the appropriate multiple instruction...
+  // Emit the appropriate divide or remainder instruction...
   // FIXME: We need to mark that this modified AH, DX, or EDX also!!
   BuildMI(BB,DivOpcode[isSigned][Class], 2, DestReg).addReg(Reg).addReg(Op1Reg);
 

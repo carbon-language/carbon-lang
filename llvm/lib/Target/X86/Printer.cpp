@@ -6,7 +6,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
+#include "X86InstrInfo.h"
 #include "llvm/Pass.h"
+#include "llvm/Function.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include <iostream>
 
@@ -21,17 +24,40 @@ namespace {
   };
 }
 
-bool Printer::runOnFunction(Function &F) {
-  MachineFunction &MF = MachineFunction::get(&F);
-  O << "x86 printing not implemented yet!\n";
-  
-  // This should use the X86InstructionInfo::print method to print assembly
-  // for each instruction
+/// runOnFunction - This uses the X86InstructionInfo::print method
+/// to print assembly for each instruction.
+bool Printer::runOnFunction (Function & F)
+{
+  static unsigned bbnumber = 0;
+  MachineFunction & MF = MachineFunction::get (&F);
+  const MachineInstrInfo & MII = TM.getInstrInfo ();
+  const X86InstrInfo & x86ii = dynamic_cast <const X86InstrInfo &> (MII);
+
+  O << "# x86 printing not implemented yet!\n";
+
+  // Print out labels for the function.
+  O << "\t.globl\t" << F.getName () << "\n";
+  O << "\t.type\t" << F.getName () << ", @function\n";
+  O << F.getName () << ":\n";
+
+  // Print out code for the function.
+  for (MachineFunction::const_iterator bb_i = MF.begin (), bb_e = MF.end ();
+       bb_i != bb_e; ++bb_i)
+    {
+      // Print a label for the basic block.
+      O << ".BB" << bbnumber++ << ":\n";
+      for (MachineBasicBlock::const_iterator i_i = bb_i->begin (), i_e =
+	   bb_i->end (); i_i != i_e; ++i_i)
+	{
+	  // Print the assembly for the instruction.
+	  O << "\t";
+	  x86ii.print (*i_i, O);
+	}
+    }
+
+  // We didn't modify anything.
   return false;
 }
-
-
-
 
 /// createX86CodePrinterPass - Print out the specified machine code function to
 /// the specified stream.  This function should work regardless of whether or

@@ -64,5 +64,10 @@ R(BH, "bh", MRF::INT8, 0)
 
 // Flags, Segment registers, etc...
 
+// This is a slimy hack to make it possible to say that flags are clobbered...
+// Ideally we'd model instructions based on which particular flag(s) they
+// could clobber. 
+R(EFLAGS, "eflags", MRF::INT8, 0)
+
 // We are now done with the R macro
 #undef R
