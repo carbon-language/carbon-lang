@@ -375,19 +375,13 @@ public:
   ///
   MachineInstr(MachineBasicBlock *MBB, int Opcode, unsigned numOps);
   
-
-  // The opcode.
-  // 
+  /// Accessors for opcode and associated flags.
+  ///
   const int getOpcode() const { return opCode; }
-  const int getOpCode() const { return opCode; }
+  unsigned getOpCodeFlags() const { return opCodeFlags; }
 
-  // Opcode flags.
-  // 
-  unsigned       getOpCodeFlags() const { return opCodeFlags; }
-
-  //
-  // Access to explicit operands of the instruction
-  // 
+  /// Access to explicit operands of the instruction.
+  ///
   unsigned getNumOperands() const { return operands.size() - numImplicitRefs; }
   
   const MachineOperand& getOperand(unsigned i) const {
