@@ -27,6 +27,18 @@
    R(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET)
 #endif
 
+// Pseudo Floating Point registers
+#ifndef PFP
+#define PFP(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET) \
+   R(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET)
+#endif
+
+// Floating Point Stack registers
+#ifndef FPS
+#define FPS(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET) \
+   R(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET)
+#endif
+
 // Arguments passed into the R macros
 //  #1: Enum Name - This ends up being a symbol in the X86 namespace
 //  #2: Register name - The name of the register as used by the gnu assembler
@@ -69,14 +81,33 @@ R16( SI, "SI" , MRF::INT16, 0, A_SI)
 R16( DI, "DI" , MRF::INT16, 0, A_DI)
 
 // 8 bit registers aliased with registers above as well
-  R8 ( AL, "AL" , MRF::INT8 , 0, A_AL)
-  R8 ( CL, "CL" , MRF::INT8 , 0, A_CL)
-  R8 ( DL, "DL" , MRF::INT8 , 0, A_DL)
-  R8 ( BL, "BL" , MRF::INT8 , 0, A_BL)
-  R8 ( AH, "AH" , MRF::INT8 , 0, A_AH)
-  R8 ( CH, "CH" , MRF::INT8 , 0, A_CH)
-  R8 ( DH, "DH" , MRF::INT8 , 0, A_DH)
-  R8 ( BH, "BH" , MRF::INT8 , 0, A_BH)
+R8 ( AL, "AL" , MRF::INT8 , 0, A_AL)
+R8 ( CL, "CL" , MRF::INT8 , 0, A_CL)
+R8 ( DL, "DL" , MRF::INT8 , 0, A_DL)
+R8 ( BL, "BL" , MRF::INT8 , 0, A_BL)
+R8 ( AH, "AH" , MRF::INT8 , 0, A_AH)
+R8 ( CH, "CH" , MRF::INT8 , 0, A_CH)
+R8 ( DH, "DH" , MRF::INT8 , 0, A_DH)
+R8 ( BH, "BH" , MRF::INT8 , 0, A_BH)
+
+// Pseudo Floating Point Registers
+PFP(FP0, "fp0", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP1, "fp1", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP2, "fp2", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP3, "fp3", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP4, "fp4", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP5, "fp5", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP6, "fp6", MRF::FP80 , 0, 0 /*noalias*/)
+
+// Floating point stack registers
+FPS(ST0, "ST(0)", MRF::FP80, 0, 0)
+FPS(ST1, "ST(1)", MRF::FP80, 0, 0)
+FPS(ST2, "ST(2)", MRF::FP80, 0, 0)
+FPS(ST3, "ST(3)", MRF::FP80, 0, 0)
+FPS(ST4, "ST(4)", MRF::FP80, 0, 0)
+FPS(ST5, "ST(5)", MRF::FP80, 0, 0)
+FPS(ST6, "ST(6)", MRF::FP80, 0, 0)
+FPS(ST7, "ST(7)", MRF::FP80, 0, 0)
 
 // Flags, Segment registers, etc...
 
@@ -126,3 +157,5 @@ ALIASLIST(A_BH      , X86::EBX, X86::BX, 0)
 #undef R8
 #undef R16
 #undef R32
+#undef PFP
+#undef FPS
