@@ -119,6 +119,18 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
   }
 }
 
+static const std::string sizePtr (const MachineInstrDescriptor &Desc) {
+  switch (Desc.TSFlags & X86II::MemArgMask) {
+    case X86II::MemArg8:   return "BYTE PTR"; 
+    case X86II::MemArg16:  return "WORD PTR"; 
+    case X86II::MemArg32:  return "DWORD PTR"; 
+    case X86II::MemArg64:  return "QWORD PTR"; 
+    case X86II::MemArg80:  return "XWORD PTR"; 
+    case X86II::MemArg128: return "128BIT PTR";  // dunno what the real one is
+    default: return "<SIZE?> PTR"; // crack being smoked
+  }
+}
+
 static void printMemReference(std::ostream &O, const MachineInstr *MI,
                               unsigned Op, const MRegisterInfo &RI) {
   assert(isMem(MI, Op) && "Invalid memory reference!");
@@ -233,7 +245,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     assert(isMem(MI, 0) && MI->getNumOperands() == 4+1 &&
            isReg(MI->getOperand(4)) && "Bad format for MRMDestMem!");
 
-    O << getName(MI->getOpCode()) << " <SIZE> PTR ";
+    O << getName(MI->getOpCode()) << " " << sizePtr (Desc) << " ";
     printMemReference(O, MI, 0, RI);
     O << ", ";
     printOp(O, MI->getOperand(4), RI);
@@ -283,7 +295,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
 
     O << getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
-    O << ", <SIZE> PTR ";
+    O << ", " << sizePtr (Desc) << " ";
     printMemReference(O, MI, MI->getNumOperands()-4, RI);
     O << "\n";
     return;

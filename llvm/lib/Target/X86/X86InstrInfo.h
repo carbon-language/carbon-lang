@@ -80,6 +80,17 @@ namespace X86II {
     // which most often indicates that the instruction operates on 16 bit data
     // instead of 32 bit data.
     OpSize      = 1 << 7,
+
+    // This three-bit field describes the size of a memory operand.
+    // I'm just being paranoid not using the zero value; there's 
+    // probably no reason you couldn't use it.
+    MemArg8     = 0x1 << 8,
+    MemArg16    = 0x2 << 8,
+    MemArg32    = 0x3 << 8,
+    MemArg64    = 0x4 << 8,
+    MemArg80    = 0x5 << 8,
+    MemArg128   = 0x6 << 8,
+    MemArgMask  = 0x7 << 8,
   };
 }
 
