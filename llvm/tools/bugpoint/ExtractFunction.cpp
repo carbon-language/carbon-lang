@@ -78,6 +78,11 @@ Module *BugDriver::deleteInstructionFromProgram(Instruction *I,
 ///
 Module *BugDriver::performFinalCleanups() const {
   Module *M = CloneModule(Program);
+
+  // Make all functions external, so GlobalDCE doesn't delete them...
+  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    I->setLinkage(GlobalValue::ExternalLinkage);
+
   PassManager CleanupPasses;
   CleanupPasses.add(createFunctionResolvingPass());
   CleanupPasses.add(createGlobalDCEPass());
