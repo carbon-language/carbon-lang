@@ -127,7 +127,7 @@ public:
   DSNodeHandle cloneInto(const DSGraph &G,
                          std::map<Value*, DSNodeHandle> &OldValMap,
                          std::map<const DSNode*, DSNode*> &OldNodeMap,
-                         bool StripScalars = false, bool StripAllocas = false);
+                         bool StripAllocas = false);
 
 #if 0
   // cloneGlobalInto - Clone the given global node (or the node for the given
