@@ -1,6 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>LLVM Bytecode File Format</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
   <style type="text/css">
@@ -255,17 +256,6 @@ variable bit rate encoding as described above.</p>
         bytes using the signed variable bit rate encoding.</td>
     </tr>
     <tr>
-      <td><a name="opcode"><b>opcode</b></a></td>
-      <td class="td_left">An enumerated integer value used in the instruction 
-        format that identifies the LLVM instruction opcode referenced. The
-        specific values used depend on the version of LLVM you're using. See the
-        <a
-          href="http://llvm.org/cvsweb/cvsweb.cgi/llvm/include/llvm/Instruction.def">
-          <tt>include/llvm/Instruction.def</tt></a> file for the definitive set of
-          opcode values used for your release. The opcode values are the first 
-          argument to the various <tt>HANDLE_*_INST</tt> macros.
-      </td>
-    <tr>
       <td><a name="char"><b>char</b></a></td>
       <td class="td_left">A single unsigned character encoded into one byte</td>
     </tr>
@@ -408,10 +398,9 @@ slot numbers with their "type plane". That is, Values of the same type
 are written to the bytecode file in a list (sequentially). Their order in 
 that list determines their slot number. This means that slot #1 doesn't mean
 anything unless you also specify for which type you want slot #1. Types are
-handled specially and are always written to the file first (in the <a
- href="#globaltypes">Global Type Pool</a>) and in such a way that both forward 
-and backward references of the types can often be resolved with a single pass 
-through the type pool. </p>
+always written to the file first (in the <a href="#globaltypes">Global Type 
+Pool</a>) and in such a way that both forward and backward references of the 
+types can often be resolved with a single pass through the type pool. </p>
 <p>Slot numbers are also kept small by rearranging their order. Because
 of the structure of LLVM, certain values are much more likely to be used
 frequently in the body of a function. For this reason, a compaction table is
@@ -420,6 +409,10 @@ smaller.  Suppose you have a function body that uses just the types "int*" and
 "{double}" but uses them thousands of time. Its worthwhile to ensure that the 
 slot number for these types are low so they can be encoded in a single byte 
 (via vbr). This is exactly what the compaction table does.</p>
+<p>In summary then, a slot number can be though of as just a vbr encoded index 
+into a list of Type* or Value*. To keep slot numbers low, Value* are indexed by
+two slot numbers: the "type plane index" (type slot) and the "value index"
+(value slot).</p>
 </div>
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="general">General Structure</a> </div>
@@ -731,7 +724,7 @@ triples</a>.
 <div class="doc_subsection"><a name="globaltypes">Global Type Pool</a> </div>
 <div class="doc_text">
 <p>The global type pool consists of type definitions. Their order of appearance
-in the file determines their slot number (0 based). Slot numbers are
+in the file determines their type slot number (0 based). Slot numbers are
 used to replace pointers in the intermediate representation. Each slot number 
 uniquely identifies one entry in a type plane (a collection of values of the
 same type).  Since all values have types and are associated with the order in 
@@ -765,7 +758,7 @@ table below.</p>
 of type, as given in the following sections.</p>
 <h3>Primitive Types</h3>
 <p>The primitive types encompass the basic integer and floating point
-types</p>
+types. They are encoded simply as their TypeID.</p>
 <table>
   <tbody>
     <tr>
@@ -813,11 +806,11 @@ following mapping:
     </tr>
     <tr>
       <td><a href="#uint24_vbr">uint24_vbr</a></td>
-      <td class="td_left">Slot number of function's return type.</td>
+      <td class="td_left">Type slot number of function's return type.</td>
     </tr>
     <tr>
       <td><a href="#llist">llist</a>(<a href="#uint24_vbr">uint24_vbr</a>)</td>
-      <td class="td_left">Slot number of each argument's type.</td>
+      <td class="td_left">Type slot number of each argument's type.</td>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a>?</td>
@@ -856,7 +849,7 @@ missing otherwise.</td>
     </tr>
     <tr>
       <td><a href="#uint24_vbr">uint24_vbr</a></td>
-      <td class="td_left">Slot number of array's element type.</td>
+      <td class="td_left">Type slot number of array's element type.</td>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a></td>
@@ -877,7 +870,7 @@ missing otherwise.</td>
     </tr>
     <tr>
       <td><a href="#uint24_vbr">uint24_vbr</a></td>
-      <td class="td_left">Slot number of pointer's element type.</td>
+      <td class="td_left">Type slot number of pointer's element type.</td>
     </tr>
   </tbody>
 </table>
@@ -916,12 +909,12 @@ all functions. The format is shown in the table below:</p>
     <tr>
       <td><a href="#zlist">zlist</a>(<a href="#globalvar">globalvar</a>)</td>
       <td class="td_left">A zero terminated list of global var
-definitions occuring in the module.</td>
+definitions occurring in the module.</td>
     </tr>
     <tr>
       <td><a href="#zlist">zlist</a>(<a href="#uint24_vbr">uint24_vbr</a>)</td>
       <td class="td_left">A zero terminated list of function types
-occuring in the module.</td>
+occurring in the module.</td>
     </tr>
     <tr>
       <td style="vertical-align: top;"><a href="#llist">llist</a>(<a
@@ -975,7 +968,7 @@ follows. </td>
     </tr>
     <tr>
       <td><a href="#bit">bit(5-31)</a></td>
-      <td class="td_left">Slot number of type for the global variable.</td>
+      <td class="td_left">Type slot number of type for the global variable.</td>
     </tr>
   </tbody>
 </table>
@@ -990,7 +983,7 @@ the global variable field, if it has one.</p>
     <tr>
       <td>(<a href="#zlist">zlist</a>(<a href="#uint32_vbr">uint32_vbr</a>))?
       </td>
-      <td class="td_left">An optional zero-terminated list of slot
+      <td class="td_left">An optional zero-terminated list of value slot
 numbers of the global variable's constant initializer.</td>
     </tr>
   </tbody>
@@ -1040,7 +1033,7 @@ uniquely from other constant planes that follow. </td>
     </tr>
     <tr>
       <td><a href="#uint24_vbr">uint24_vbr</a>+</td>
-      <td class="td_left">Slot number of the constant string's type.
+      <td class="td_left">Type slot number of the constant string's type.
 Note that the constant string's type implicitly defines the length of
 the string. </td>
     </tr>
@@ -1075,7 +1068,7 @@ for the details. </p>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"><a name="constant">Constant Field</a></div>
 <div class="doc_text">
-<p>Constants come in many shapes and flavors. The sections that followe
+<p>Constants come in many shapes and flavors. The sections that follow
 define the format for each of them. All constants start with a <a
  href="#uint32_vbr">uint32_vbr</a> encoded integer that provides the
 number of operands for the constant. For primitive, structure, and
@@ -1093,10 +1086,10 @@ corresponding value. </li>
   <li><b>Floating Point</b>. Both the float and double types are
 written literally in binary format.</li>
   <li><b>Arrays</b>. Arrays are written simply as a list of <a
- href="#uint32_vbr">uint32_vbr</a> encoded slot numbers to the constant
+ href="#uint32_vbr">uint32_vbr</a> encoded value slot numbers to the constant
 element values.</li>
   <li><b>Structures</b>. Structures are written simply as a list of <a
- href="#uint32_vbr">uint32_vbr</a> encoded slot numbers to the constant
+ href="#uint32_vbr">uint32_vbr</a> encoded value slot numbers to the constant
 field values of the structure.</li>
 </ul>
 <p>When the number of operands to the constant is non-zero, we have a
@@ -1114,12 +1107,12 @@ expression.</td>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a></td>
-      <td class="td_left">The slot number of the constant value for an
+      <td class="td_left">The value slot number of the constant value for an
 operand.<sup>1</sup></td>
     </tr>
     <tr>
       <td><a href="#uint24_vbr">uint24_vbr</a></td>
-      <td class="td_left">The slot number for the type of the constant
+      <td class="td_left">The type slot number for the type of the constant
 value for an operand.<sup>1</sup></td>
     </tr>
   </tbody>
@@ -1191,7 +1184,7 @@ save bytecode space. If not, then a regular constant pool is written.</li>
 <div class="doc_text">
 <p>Compaction tables are part of a function definition. They are merely
 a device for reducing the size of bytecode files. The size of a
-bytecode file is dependent on the <em>value</em> of the slot numbers
+bytecode file is dependent on the <em>values</em> of the slot numbers
 used because larger values use more bytes in the variable bit rate
 encoding scheme. Furthermore, the compressed instruction format
 reserves only six bits for the type of the instruction. In large
@@ -1214,7 +1207,7 @@ both. Compaction tables have the format shown in the table below.</p>
     </tr>
     <tr>
       <td><a href="#uint24_vbr">uint24_vbr</a>+</td>
-      <td class="td_left">The slot number in the global type plane of
+      <td class="td_left">The type slot number in the global types of
 the type that will be referenced in the function with the index of this
 entry in the compaction table.</td>
     </tr>
@@ -1227,9 +1220,9 @@ details.</td>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a>+</td>
-      <td class="td_left">The slot number in the globals of the value
+      <td class="td_left">The value slot number in the global values
 that will be referenced in the function with the index of this entry in
-the compaction table</td>
+the compaction table.</td>
     </tr>
   </tbody>
 </table>
@@ -1247,8 +1240,7 @@ encoding uses a <a href="#uint32_vbr">uint32_vbr</a> for each of the
 length and type, in that order.</p>
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="instructionlist">Instruction List</a>
-</div>
+<div class="doc_subsection"><a name="instructionlist">Instruction List</a></div>
 <div class="doc_text">
 <p>The instructions in a function are written as a simple list. Basic
 blocks are inferred by the terminating instruction types. The format of
@@ -1301,8 +1293,8 @@ format.</td>
     </tr>
     <tr>
       <td><a href="#uint24_vbr">uint24_vbr</a></td>
-      <td class="td_left">Provides the slot number of the result type
-of the instruction</td>
+      <td class="td_left">Provides the type slot number of the result type of
+        the instruction.</td>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a></td>
@@ -1310,8 +1302,8 @@ of the instruction</td>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a>+</td>
-      <td class="td_left">The slot number of the value(s) for the
-operand(s). <sup>1</sup></td>
+      <td class="td_left">The slot number of the value(s) for the operand(s).
+        <sup>1</sup></td>
     </tr>
   </tbody>
 </table>
@@ -1335,27 +1327,27 @@ single <a href="#uint32_vbr">uint32_vbr</a> as follows:</p>
     <tr>
       <td>0-1</td>
       <td>constant "1"</td>
-      <td class="td_left">These two bits must be the value 1 which
-identifies this as an instruction of format 1.</td>
+      <td class="td_left">These two bits must be the value 1 which identifies 
+        this as an instruction of format 1.</td>
     </tr>
     <tr>
       <td>2-7</td>
       <td><a href="#opcode">opcode</a></td>
-      <td class="td_left">Specifies the opcode of the instruction. Note
-that the maximum opcode value is 63.</td>
+      <td class="td_left">Specifies the opcode of the instruction. Note that 
+        the maximum opcode value is 63.</td>
     </tr>
     <tr>
       <td>8-19</td>
       <td><a href="#unsigned">unsigned</a></td>
-      <td class="td_left">Specifies the slot number of the type for
-this instruction. Maximum slot number is 2<sup>12</sup>-1=4095.</td>
+      <td class="td_left">Specifies the slot number of the type for this 
+        instruction. Maximum slot number is 2<sup>12</sup>-1=4095.</td>
     </tr>
     <tr>
       <td>20-31</td>
       <td><a href="#unsigned">unsigned</a></td>
-      <td class="td_left">Specifies the slot number of the value for
-the first operand. Maximum slot number is 2<sup>12</sup>-1=4095. Note
-that the value 2<sup>12</sup>-1 denotes zero operands.</td>
+      <td class="td_left">Specifies the slot number of the value for the 
+        first operand. Maximum slot number is 2<sup>12</sup>-1=4095. Note that 
+        the value 2<sup>12</sup>-1 denotes zero operands.</td>
     </tr>
   </tbody>
 </table>
@@ -1372,32 +1364,32 @@ that the value 2<sup>12</sup>-1 denotes zero operands.</td>
     <tr>
       <td>0-1</td>
       <td>constant "2"</td>
-      <td class="td_left">These two bits must be the value 2 which
-identifies this as an instruction of format 2.</td>
+      <td class="td_left">These two bits must be the value 2 which identifies 
+        this as an instruction of format 2.</td>
     </tr>
     <tr>
       <td>2-7</td>
       <td><a href="#opcodes">opcode</a></td>
-      <td class="td_left">Specifies the opcode of the instruction. Note
-that the maximum opcode value is 63.</td>
+      <td class="td_left">Specifies the opcode of the instruction. Note that 
+        the maximum opcode value is 63.</td>
     </tr>
     <tr>
       <td>8-15</td>
       <td><a href="#unsigned">unsigned</a></td>
-      <td class="td_left">Specifies the slot number of the type for
-this instruction. Maximum slot number is 2<sup>8</sup>-1=255.</td>
+      <td class="td_left">Specifies the slot number of the type for this 
+        instruction. Maximum slot number is 2<sup>8</sup>-1=255.</td>
     </tr>
     <tr>
       <td>16-23</td>
       <td><a href="#unsigned">unsigned</a></td>
-      <td class="td_left">Specifies the slot number of the value for
-the first operand. Maximum slot number is 2<sup>8</sup>-1=255.</td>
+      <td class="td_left">Specifies the slot number of the value for the first 
+        operand. Maximum slot number is 2<sup>8</sup>-1=255.</td>
     </tr>
     <tr>
       <td>24-31</td>
       <td><a href="#unsigned">unsigned</a></td>
-      <td class="td_left">Specifies the slot number of the value for
-the second operand. Maximum slot number is 2<sup>8</sup>-1=255.</td>
+      <td class="td_left">Specifies the slot number of the value for the second 
+        operand. Maximum slot number is 2<sup>8</sup>-1=255.</td>
     </tr>
   </tbody>
 </table>
@@ -1414,51 +1406,120 @@ single <a href="#uint32_vbr">uint32_vbr</a> as follows:</p>
     <tr>
       <td>0-1</td>
       <td>constant "3"</td>
-      <td class="td_left">These two bits must be the value 3 which
-identifies this as an instruction of format 3.</td>
+      <td class="td_left">These two bits must be the value 3 which identifies 
+        this as an instruction of format 3.</td>
     </tr>
     <tr>
       <td>2-7</td>
       <td><a href="#opcodes">opcode</a></td>
-      <td class="td_left">Specifies the opcode of the instruction. Note
-that the maximum opcode value is 63.</td>
+      <td class="td_left">Specifies the opcode of the instruction. Note that 
+        the maximum opcode value is 63.</td>
     </tr>
     <tr>
       <td>8-13</td>
       <td><a href="#unsigned">unsigned</a></td>
-      <td class="td_left">Specifies the slot number of the type for
-this instruction. Maximum slot number is 2<sup>6</sup>-1=63.</td>
+      <td class="td_left">Specifies the slot number of the type for this 
+        instruction. Maximum slot number is 2<sup>6</sup>-1=63.</td>
     </tr>
     <tr>
       <td>14-19</td>
       <td><a href="#unsigned">unsigned</a></td>
-      <td class="td_left">Specifies the slot number of the value for
-the first operand. Maximum slot number is 2<sup>6</sup>-1=63.</td>
+      <td class="td_left">Specifies the slot number of the value for the first 
+        operand. Maximum slot number is 2<sup>6</sup>-1=63.</td>
     </tr>
     <tr>
       <td>20-25</td>
       <td><a href="#unsigned">unsigned</a></td>
-      <td class="td_left">Specifies the slot number of the value for
-the second operand. Maximum slot number is 2<sup>6</sup>-1=63.</td>
+      <td class="td_left">Specifies the slot number of the value for the second
+        operand. Maximum slot number is 2<sup>6</sup>-1=63.</td>
     </tr>
     <tr>
       <td>26-31</td>
       <td><a href="#unsigned">unsigned</a></td>
-      <td class="td_left">Specifies the slot number of the value for
-the third operand. Maximum slot number is 2<sup>6</sup>-1=63.</td>
+      <td class="td_left">Specifies the slot number of the value for the third
+        operand. Maximum slot number is 2<sup>6</sup>-1=63.</td>
     </tr>
   </tbody>
 </table>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="opcodes">Opcodes</a></div>
+<div class="doc_text">
+  <p>Instructions encode an opcode that identifies the kind of instruction.
+  Opcodes are an enumerated integer value. The specific values used depend on
+  the version of LLVM you're using. The opcode values are defined in the
+  <a href="http://llvm.org/cvsweb/cvsweb.cgi/llvm/include/llvm/Instruction.def">
+  <tt>include/llvm/Instruction.def</tt></a> file. You should check there for the
+  most recent definitions. The table below provides the opcodes defined as of
+  the writing of this document. The table associates each opcode mneumonic with
+  its enumeration value and the bytecode and LLVM version numbers in which the
+  opcode was introduced.</p>
+  <table>
+    <tbody>
+      <tr>
+        <th>Opcode</th>
+        <th>Number</th>
+        <th>Bytecode Version</th>
+        <th>LLVM Version</th>
+      </tr>
+      <tr><td colspan="4"><b>Terminator Instructions</b></td></tr>
+      <tr><td>Ret</td><td>1</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Br</td><td>2</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Switch</td><td>3</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Invoke</td><td>4</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Unwind</td><td>5</td><td>1</td><td>1.0</td></tr>
+      <tr><td colspan="4"><b>Binary Operators</b></td></tr>
+      <tr><td>Add</td><td>6</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Sub</td><td>7</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Mul</td><td>8</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Div</td><td>9</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Rem</td><td>10</td><td>1</td><td>1.0</td></tr>
+      <tr><td colspan="4"><b>Logical Operators</b></td></tr>
+      <tr><td>And</td><td>11</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Or</td><td>12</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Xor</td><td>13</td><td>1</td><td>1.0</td></tr>
+      <tr><td colspan="4"><b>Binary Comparison Operators</b></td></tr>
+      <tr><td>SetEQ</td><td>14</td><td>1</td><td>1.0</td></tr>
+      <tr><td>SetNE</td><td>15</td><td>1</td><td>1.0</td></tr>
+      <tr><td>SetLE</td><td>16</td><td>1</td><td>1.0</td></tr>
+      <tr><td>SetGE</td><td>17</td><td>1</td><td>1.0</td></tr>
+      <tr><td>SetLT</td><td>18</td><td>1</td><td>1.0</td></tr>
+      <tr><td>SetGT</td><td>19</td><td>1</td><td>1.0</td></tr>
+      <tr><td colspan="4"><b>Memory Operators</b></td></tr>
+      <tr><td>Malloc</td><td>20</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Free</td><td>21</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Alloca</td><td>22</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Load</td><td>23</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Store</td><td>24</td><td>1</td><td>1.0</td></tr>
+      <tr><td>GetElementPtr</td><td>25</td><td>1</td><td>1.0</td></tr>
+      <tr><td colspan="4"><b>Other Operators</b></td></tr>
+      <tr><td>PHI</td><td>26</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Cast</td><td>27</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Call</td><td>28</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Shl</td><td>29</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Shr</td><td>30</td><td>1</td><td>1.0</td></tr>
+      <tr><td>VANext</td><td>31</td><td>1</td><td>1.0</td></tr>
+      <tr><td>VAArg</td><td>32</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Select</td><td>33</td><td>2</td><td>1.2</td></tr>
+      <tr><td>UserOp1</td><td>34</td><td>1</td><td>1.0</td></tr>
+      <tr><td>UserOp2</td><td>35</td><td>1</td><td>1.0</td></tr>
+    </tbody>
+  </table>
+</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="symtab">Symbol Table</a> </div>
 <div class="doc_text">
-<p>A symbol table can be put out in conjunction with a module or a function.
-A symbol table is a list of type planes. Each type plane starts with the number
-of entries in the plane and the type plane's slot number (so the type
-can be looked up in the global type pool). For each entry in a type
-plane, the slot number of the value and the name associated with that
-value are written. The format is given in the table below. </p>
+<p>A symbol table can be put out in conjunction with a module or a function. A
+symbol table has a list of name/type associations followed by a list of
+name/value associations. The name/value associations are organized into "type
+planes" so that all values of a common type are listed together.  Each type 
+plane starts with the number of entries in the plane and the type slot number
+for all the values in that plane (so the type can be looked up in the global 
+type pool). For each entry in a type plane, the slot number of the value and 
+the name associated with that value are written. The format is given in the 
+table below. </p>
 <table>
   <tbody>
     <tr>
@@ -1471,15 +1532,47 @@ value are written. The format is given in the table below. </p>
       <td class="td_left">Symbol Table Identifier (0x04)</td>
     </tr>
     <tr>
-      <td><a href="#llist">llist</a>(<a href="#symtab_entry">symtab_entry</a>)</td>
+      <td><a href="#llist">llist</a>(<a href="#symtab_entry">type_entry</a>)</td>
       <td class="td_left">A length list of symbol table entries for
         <tt>Type</tt>s
       </td>
     </tr>
     <tr>
       <td><a href="#zlist">llist</a>(<a href="#symtab_plane">symtab_plane</a>)</td>
-      <td class="td_left">A length list of planes of symbol table
+      <td class="td_left">A length list of "type planes" of symbol table
         entries for <tt>Value</tt>s</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="type_entry">Symbol Table Type
+Entry</a>
+</div>
+<div class="doc_text">
+<p>A symbol table type entry associates a name with a type. The name is provided
+simply as an array of chars. The type is provided as a type slot number (index)
+into the global type pool. The format is given in the following table:</p>
+<table>
+  <tbody>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr>
+    <tr>
+      <td><a href="#uint32_vbr">uint24_vbr</a></td>
+      <td class="td_left">Type slot number of the type being given a
+        name relative to the global type pool.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Length of the character array that follows.</td>
+    </tr>
+    <tr>
+      <td><a href="#char">char</a>+</td>
+      <td class="td_left">The characters of the name.</td>
     </tr>
   </tbody>
 </table>
@@ -1503,22 +1596,23 @@ values of a common type. The encoding is given in the following table:</p>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a></td>
-      <td class="td_left">Slot number of type for this plane.</td>
+      <td class="td_left">Type slot number of type for all values in this plane..</td>
     </tr>
     <tr>
-      <td><a href="#symtab_entry">symtab_entry</a>+</td>
-      <td class="td_left">The symbol table entries for this plane.</td>
+      <td><a href="#value_entry">value_entry</a>+</td>
+      <td class="td_left">The symbol table entries for to associate values with
+        names.</td>
     </tr>
   </tbody>
 </table>
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="symtab_entry">Symbol Table
+<div class="doc_subsubsection"><a name="value_entry">Symbol Table Value
 Entry</a>
 </div>
 <div class="doc_text">
-<p>A symbol table entry provides the assocation between a type or
-value's slot number and the name given to that type or value. The
+<p>A symbol table value entry provides the assocation between a value and the
+name given to the value. The value is referenced by its slot number. The
 format is given in the following table:</p>
 <table>
   <tbody>
@@ -1528,7 +1622,7 @@ format is given in the following table:</p>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint24_vbr</a></td>
-      <td class="td_left">Slot number of the type or value being given a name.
+      <td class="td_left">Value slot number of the value being given a name.
       </td>
     </tr>
     <tr>
@@ -1542,6 +1636,7 @@ format is given in the following table:</p>
   </tbody>
 </table>
 </div>
+
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="versiondiffs">Version Differences</a>
 </div>
@@ -1686,7 +1781,5 @@ From 1.1</a></div>
 <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a><br>
 Last modified: $Date$
 </address>
-<!-- vim: sw=2
--->
 </body>
 </html>
