@@ -14,11 +14,125 @@
 #include "llvm/Value.h"
 
 namespace {
+  class JITResolver {
+    MachineCodeEmitter &MCE;
+
+    // LazyCodeGenMap - Keep track of call sites for functions that are to be
+    // lazily resolved.
+    std::map<unsigned, Function*> LazyCodeGenMap;
+
+    // LazyResolverMap - Keep track of the lazy resolver created for a
+    // particular function so that we can reuse them if necessary.
+    std::map<Function*, unsigned> LazyResolverMap;
+  public:
+    JITResolver(MachineCodeEmitter &mce) : MCE(mce) {}
+    unsigned getLazyResolver(Function *F);
+    unsigned addFunctionReference(unsigned Address, Function *F);
+    
+  private:
+    unsigned emitStubForFunction(Function *F);
+    static void CompilationCallback();
+    unsigned resolveFunctionReference(unsigned RetAddr);
+  };
+
+  JITResolver *TheJITResolver;
+}
+
+
+/// addFunctionReference - This method is called when we need to emit the
+/// address of a function that has not yet been emitted, so we don't know the
+/// address.  Instead, we emit a call to the CompilationCallback method, and
+/// keep track of where we are.
+///
+unsigned JITResolver::addFunctionReference(unsigned Address, Function *F) {
+  LazyCodeGenMap[Address] = F;  
+  return (intptr_t)&JITResolver::CompilationCallback;
+}
+
+unsigned JITResolver::resolveFunctionReference(unsigned RetAddr) {
+  std::map<unsigned, Function*>::iterator I = LazyCodeGenMap.find(RetAddr);
+  assert(I != LazyCodeGenMap.end() && "Not in map!");
+  Function *F = I->second;
+  LazyCodeGenMap.erase(I);
+  return MCE.forceCompilationOf(F);
+}
+
+unsigned JITResolver::getLazyResolver(Function *F) {
+  std::map<Function*, unsigned>::iterator I = LazyResolverMap.lower_bound(F);
+  if (I != LazyResolverMap.end() && I->first == F) return I->second;
+  
+//std::cerr << "Getting lazy resolver for : " << ((Value*)F)->getName() << "\n";
+
+  unsigned Stub = emitStubForFunction(F);
+  LazyResolverMap.insert(I, std::make_pair(F, Stub));
+  return Stub;
+}
+
+void JITResolver::CompilationCallback() {
+  unsigned *StackPtr = (unsigned*)__builtin_frame_address(0);
+  unsigned RetAddr = (unsigned)__builtin_return_address(0);
+
+  assert(StackPtr[1] == RetAddr &&
+         "Could not find return address on the stack!");
+  bool isStub = ((unsigned char*)RetAddr)[0] == 0xCD;  // Interrupt marker?
+
+  // The call instruction should have pushed the return value onto the stack...
+  RetAddr -= 4;  // Backtrack to the reference itself...
+
+#if 0
+  DEBUG(std::cerr << "In callback! Addr=0x" << std::hex << RetAddr
+                  << " ESP=0x" << (unsigned)StackPtr << std::dec
+                  << ": Resolving call to function: "
+                  << TheVM->getFunctionReferencedName((void*)RetAddr) << "\n");
+#endif
+
+  // Sanity check to make sure this really is a call instruction...
+  assert(((unsigned char*)RetAddr)[-1] == 0xE8 && "Not a call instr!");
+  
+  unsigned NewVal = TheJITResolver->resolveFunctionReference(RetAddr);
+
+  // Rewrite the call target... so that we don't fault every time we execute
+  // the call.
+  *(unsigned*)RetAddr = NewVal-RetAddr-4;    
+
+  if (isStub) {
+    // If this is a stub, rewrite the call into an unconditional branch
+    // instruction so that two return addresses are not pushed onto the stack
+    // when the requested function finally gets called.  This also makes the
+    // 0xCD byte (interrupt) dead, so the marker doesn't effect anything.
+    ((unsigned char*)RetAddr)[-1] = 0xE9;
+  }
+
+  // Change the return address to reexecute the call instruction...
+  StackPtr[1] -= 5;
+}
+
+/// emitStubForFunction - This method is used by the JIT when it needs to emit
+/// the address of a function for a function whose code has not yet been
+/// generated.  In order to do this, it generates a stub which jumps to the lazy
+/// function compiler, which will eventually get fixed to call the function
+/// directly.
+///
+unsigned JITResolver::emitStubForFunction(Function *F) {
+  MCE.startFunctionStub(*F, 6);
+  MCE.emitByte(0xE8);   // Call with 32 bit pc-rel destination...
+
+  unsigned Address = addFunctionReference(MCE.getCurrentPCValue(), F);
+  MCE.emitWord(Address-MCE.getCurrentPCValue()-4);
+
+  MCE.emitByte(0xCD);   // Interrupt - Just a marker identifying the stub!
+  return (intptr_t)MCE.finishFunctionStub(*F);
+}
+
+
+
+namespace {
   class Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
     MachineCodeEmitter  &MCE;
+    std::map<BasicBlock*, unsigned> BasicBlockAddrs;
+    std::vector<std::pair<BasicBlock*, unsigned> > BBRefs;
   public:
-
     Emitter(MachineCodeEmitter &mce) : II(0), MCE(mce) {}
 
     bool runOnMachineFunction(MachineFunction &MF);
@@ -30,6 +144,11 @@ namespace {
   private:
     void emitBasicBlock(MachineBasicBlock &MBB);
     void emitInstruction(MachineInstr &MI);
+
+    void emitPCRelativeBlockAddress(BasicBlock *BB);
+    void emitMaybePCRelativeValue(unsigned Address, bool isPCRelative);
+    void emitGlobalAddressForCall(GlobalValue *GV);
+    void emitGlobalAddressForPtr(GlobalValue *GV);
 
     void emitRegModRMByte(unsigned ModRMReg, unsigned RegOpcodeField);
     void emitSIBByte(unsigned SS, unsigned Index, unsigned Base);
@@ -61,14 +180,89 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
     emitBasicBlock(*I);
   MCE.finishFunction(MF);
+
+  // Resolve all forward branches now...
+  for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
+    unsigned Location = BasicBlockAddrs[BBRefs[i].first];
+    unsigned Ref = BBRefs[i].second;
+    *(unsigned*)Ref = Location-Ref-4;
+  }
+  BBRefs.clear();
+  BasicBlockAddrs.clear();
   return false;
 }
 
 void Emitter::emitBasicBlock(MachineBasicBlock &MBB) {
-  MCE.startBasicBlock(MBB);
+  if (uint64_t Addr = MCE.getCurrentPCValue())
+    BasicBlockAddrs[MBB.getBasicBlock()] = Addr;
+
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I)
     emitInstruction(**I);
 }
+
+
+/// emitPCRelativeBlockAddress - This method emits the PC relative address of
+/// the specified basic block, or if the basic block hasn't been emitted yet
+/// (because this is a forward branch), it keeps track of the information
+/// necessary to resolve this address later (and emits a dummy value).
+///
+void Emitter::emitPCRelativeBlockAddress(BasicBlock *BB) {
+  // FIXME: Emit backward branches directly
+  BBRefs.push_back(std::make_pair(BB, MCE.getCurrentPCValue()));
+  MCE.emitWord(0);   // Emit a dummy value
+}
+
+/// emitMaybePCRelativeValue - Emit a 32-bit address which may be PC relative.
+///
+void Emitter::emitMaybePCRelativeValue(unsigned Address, bool isPCRelative) {
+  if (isPCRelative)
+    MCE.emitWord(Address-MCE.getCurrentPCValue()-4);
+  else
+    MCE.emitWord(Address);
+}
+
+/// emitGlobalAddressForCall - Emit the specified address to the code stream
+/// assuming this is part of a function call, which is PC relative.
+///
+void Emitter::emitGlobalAddressForCall(GlobalValue *GV) {
+  // Get the address from the backend...
+  unsigned Address = MCE.getGlobalValueAddress(GV);
+  
+  // If the machine code emitter doesn't know what the address IS yet, we have
+  // to take special measures.
+  //
+  if (Address == 0) {
+    // FIXME: this is JIT specific!
+    if (TheJITResolver == 0)
+      TheJITResolver = new JITResolver(MCE);
+    Address = TheJITResolver->addFunctionReference(MCE.getCurrentPCValue(),
+                                                   (Function*)GV);
+  }
+  emitMaybePCRelativeValue(Address, true);
+}
+
+/// emitGlobalAddress - Emit the specified address to the code stream assuming
+/// this is part of a "take the address of a global" instruction, which is not
+/// PC relative.
+///
+void Emitter::emitGlobalAddressForPtr(GlobalValue *GV) {
+  // Get the address from the backend...
+  unsigned Address = MCE.getGlobalValueAddress(GV);
+
+  // If the machine code emitter doesn't know what the address IS yet, we have
+  // to take special measures.
+  //
+  if (Address == 0) {
+    // FIXME: this is JIT specific!
+    if (TheJITResolver == 0)
+      TheJITResolver = new JITResolver(MCE);
+    Address = TheJITResolver->getLazyResolver((Function*)GV);
+  }
+
+  emitMaybePCRelativeValue(Address, false);
+}
+
+
 
 
 namespace N86 {  // Native X86 Register numbers...
@@ -134,11 +328,12 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
                                unsigned Op, unsigned RegOpcodeField) {
   const MachineOperand &Disp     = MI.getOperand(Op+3);
   if (MI.getOperand(Op).isConstantPoolIndex()) {
-    // Emit a direct address reference [disp32] where the displacement is
-    // controlled by the MCE.
+    // Emit a direct address reference [disp32] where the displacement of the
+    // constant pool entry is controlled by the MCE.
     MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
     unsigned Index = MI.getOperand(Op).getConstantPoolIndex();
-    MCE.emitFunctionConstantValueAddress(Index, Disp.getImmedValue());
+    unsigned Address = MCE.getConstantPoolEntryAddress(Index);
+    MCE.emitWord(Address+Disp.getImmedValue());
     return;
   }
 
@@ -219,7 +414,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   }
 }
 
-unsigned sizeOfPtr(const TargetInstrDescriptor &Desc) {
+static unsigned sizeOfPtr(const TargetInstrDescriptor &Desc) {
   switch (Desc.TSFlags & X86II::ArgMask) {
   case X86II::Arg8:   return 1;
   case X86II::Arg16:  return 2;
@@ -231,7 +426,6 @@ unsigned sizeOfPtr(const TargetInstrDescriptor &Desc) {
     return 0;
   }
 }
-
 
 void Emitter::emitInstruction(MachineInstr &MI) {
   unsigned Opcode = MI.getOpcode();
@@ -267,11 +461,15 @@ void Emitter::emitInstruction(MachineInstr &MI) {
     if (MI.getNumOperands() == 1) {
       MachineOperand &MO = MI.getOperand(0);
       if (MO.isPCRelativeDisp()) {
-	MCE.emitPCRelativeDisp(MO.getVRegValue());
+        // Conditional branch... FIXME: this should use an MBB destination!
+        emitPCRelativeBlockAddress(cast<BasicBlock>(MO.getVRegValue()));
       } else if (MO.isGlobalAddress()) {
-	MCE.emitGlobalAddress(MO.getGlobal(), MO.isPCRelative());
+        assert(MO.isPCRelative() && "Call target is not PC Relative?");
+        emitGlobalAddressForCall(MO.getGlobal());
       } else if (MO.isExternalSymbol()) {
-	MCE.emitGlobalAddress(MO.getSymbolName(), MO.isPCRelative());
+        unsigned Address = MCE.getGlobalValueAddress(MO.getSymbolName());
+        assert(Address && "Unknown external symbol!");
+        emitMaybePCRelativeValue(Address, MO.isPCRelative());
       } else {
 	assert(0 && "Unknown RawFrm operand!");
       }
@@ -287,13 +485,17 @@ void Emitter::emitInstruction(MachineInstr &MI) {
 	unsigned Size = sizeOfPtr(Desc);
 	if (Value *V = MO1.getVRegValueOrNull()) {
 	  assert(Size == 4 && "Don't know how to emit non-pointer values!");
-	  MCE.emitGlobalAddress(cast<GlobalValue>(V), false);
+          emitGlobalAddressForPtr(cast<GlobalValue>(V));
 	} else if (MO1.isGlobalAddress()) {
 	  assert(Size == 4 && "Don't know how to emit non-pointer values!");
-	  MCE.emitGlobalAddress(MO1.getGlobal(), MO1.isPCRelative());
+          assert(!MO1.isPCRelative() && "Function pointer ref is PC relative?");
+          emitGlobalAddressForPtr(MO1.getGlobal());
 	} else if (MO1.isExternalSymbol()) {
 	  assert(Size == 4 && "Don't know how to emit non-pointer values!");
-	  MCE.emitGlobalAddress(MO1.getSymbolName(), MO1.isPCRelative());
+
+          unsigned Address = MCE.getGlobalValueAddress(MO1.getSymbolName());
+          assert(Address && "Unknown external symbol!");
+          emitMaybePCRelativeValue(Address, MO1.isPCRelative());
 	} else {
 	  emitConstant(MO1.getImmedValue(), Size);
 	}
