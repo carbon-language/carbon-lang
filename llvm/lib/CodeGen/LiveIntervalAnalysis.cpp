@@ -374,7 +374,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
     DEBUG(std::cerr << '\n');
 }
 
-void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
+void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
                                               MachineBasicBlock::iterator mi,
                                               LiveInterval& interval)
 {
@@ -383,7 +383,6 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
     DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
     typedef LiveVariables::killed_iterator KillIter;
 
-    MachineBasicBlock::iterator e = mbb->end();
     unsigned baseIndex = getInstructionIndex(mi);
     unsigned start = getDefIndex(baseIndex);
     unsigned end = start;
@@ -403,8 +402,9 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
     // If it is not dead on definition, it must be killed by a
     // subsequent instruction. Hence its interval is:
     // [defSlot(def), useSlot(kill)+1)
-    do {
+    while (1) {
         ++mi;
+        assert(mi != MBB->end() && "physreg was not killed in defining block!");
         baseIndex += InstrSlots::NUM;
         for (KillIter ki = lv_->killed_begin(mi), ke = lv_->killed_end(mi);
              ki != ke; ++ki) {
@@ -414,7 +414,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                 goto exit;
             }
         }
-    } while (mi != e);
+    }
 
 exit:
     assert(start < end && "did not find end of interval?");
@@ -422,35 +422,16 @@ exit:
     DEBUG(std::cerr << " +" << LiveRange(start, end) << '\n');
 }
 
-void LiveIntervals::handleRegisterDef(MachineBasicBlock* mbb,
-                                      MachineBasicBlock::iterator mi,
-                                      unsigned reg)
-{
-    if (MRegisterInfo::isPhysicalRegister(reg)) {
-        if (lv_->getAllocatablePhysicalRegisters()[reg]) {
-            handlePhysicalRegisterDef(mbb, mi, getOrCreateInterval(reg));
-            for (const unsigned* as = mri_->getAliasSet(reg); *as; ++as)
-                handlePhysicalRegisterDef(mbb, mi, getOrCreateInterval(*as));
-        }
-    }
-    else
-        handleVirtualRegisterDef(mbb, mi, getOrCreateInterval(reg));
-}
-
-unsigned LiveIntervals::getInstructionIndex(MachineInstr* instr) const
-{
-    Mi2IndexMap::const_iterator it = mi2iMap_.find(instr);
-    return (it == mi2iMap_.end() ?
-            std::numeric_limits<unsigned>::max() :
-            it->second);
-}
-
-MachineInstr* LiveIntervals::getInstructionFromIndex(unsigned index) const
-{
-    index /= InstrSlots::NUM; // convert index to vector index
-    assert(index < i2miMap_.size() &&
-           "index does not correspond to an instruction");
-    return i2miMap_[index];
+void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
+                                      MachineBasicBlock::iterator MI,
+                                      unsigned reg) {
+  if (MRegisterInfo::isVirtualRegister(reg))
+    handleVirtualRegisterDef(MBB, MI, getOrCreateInterval(reg));
+  else if (lv_->getAllocatablePhysicalRegisters()[reg]) {
+    handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(reg));
+    for (const unsigned* AS = mri_->getAliasSet(reg); *AS; ++AS)
+      handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(*AS));
+  }
 }
 
 /// computeIntervals - computes the live intervals for virtual
@@ -488,14 +469,6 @@ void LiveIntervals::computeIntervals()
             }
         }
     }
-}
-
-unsigned LiveIntervals::rep(unsigned reg)
-{
-    Reg2RegMap::iterator it = r2rMap_.find(reg);
-    if (it != r2rMap_.end())
-        return it->second = rep(it->second);
-    return reg;
 }
 
 void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {

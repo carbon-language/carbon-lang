@@ -101,11 +101,20 @@ namespace llvm {
         }
 
         /// getInstructionIndex - returns the base index of instr
-        unsigned getInstructionIndex(MachineInstr* instr) const;
+        unsigned getInstructionIndex(MachineInstr* instr) const {
+          Mi2IndexMap::const_iterator it = mi2iMap_.find(instr);
+          assert(it != mi2iMap_.end() && "Invalid instruction!");
+          return it->second;
+        }
 
         /// getInstructionFromIndex - given an index in any slot of an
         /// instruction return a pointer the instruction
-        MachineInstr* getInstructionFromIndex(unsigned index) const;
+        MachineInstr* getInstructionFromIndex(unsigned index) const {
+          index /= InstrSlots::NUM; // convert index to vector index
+          assert(index < i2miMap_.size() &&
+                 "index does not correspond to an instruction");
+          return i2miMap_[index];
+        }
 
         Intervals& getIntervals() { return intervals_; }
 
@@ -150,7 +159,12 @@ namespace llvm {
         LiveInterval& getOrCreateInterval(unsigned reg);
 
         /// rep - returns the representative of this register
-        unsigned rep(unsigned reg);
+        unsigned rep(unsigned reg) {
+          Reg2RegMap::iterator it = r2rMap_.find(reg);
+          if (it != r2rMap_.end())
+            return it->second = rep(it->second);
+          return reg;
+        }
 
         void printRegName(unsigned reg) const;
     };
