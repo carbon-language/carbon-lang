@@ -142,9 +142,9 @@ Module *BugDriver::ExtractLoop(Module *M) {
   }
 
   // Check to see if we created any new functions.  If not, no loops were
-  // extracted and we should return null.
-  static unsigned NumExtracted = 15;
-
+  // extracted and we should return null.  Limit the number of loops we extract
+  // to avoid taking forever.
+  static unsigned NumExtracted = 32;
   if (M->size() == NewM->size() || --NumExtracted == 0) {
     delete NewM;
     return 0;
@@ -153,8 +153,6 @@ Module *BugDriver::ExtractLoop(Module *M) {
     Module::iterator MI = NewM->begin();
     for (unsigned i = 0, e = M->size(); i != e; ++i)
       ++MI;
-    for (; MI != NewM->end(); ++MI)
-      std::cerr << "NEW FUNCTION: " << *MI;
   }
   
   return NewM;
