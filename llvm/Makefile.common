@@ -5,7 +5,8 @@
 # These are platform dependant, so this is the file used to specify these
 # system dependant operations.
 #
-# The following functionality may be set by setting incoming variables:
+# The following functionality can be set by setting incoming variables.
+# The variable $(LEVEL) *must* be set:
 #
 # 1. LEVEL - The level of the current subdirectory from the top of the 
 #    MagicStats view.  This level should be expressed as a path, for 
@@ -21,6 +22,10 @@
 #    to the local files, you can use the ExtraSource variable
 #
 #===-----------------------------------------------------------------------====
+
+# Configuration file to set paths specific to local installation of LLVM
+# 
+include $(LEVEL)/Makefile.config
 
 # These are options that can either be enabled here, or can be enabled on the
 # make command line (ie, make ENABLE_PROFILING=1)
@@ -41,20 +46,6 @@
 #
 #ENABLE_OPTIMIZED = 1
 
-# Current working directory, used below
-CUR_DIRECTORY := $(shell pwd)
-
-# Path to directory where object files should be stored during a build.
-# Set this to "." if you do not want to use a separate place for object files.
-# 
-BUILD_DIR = /shared/$(LOGIN_NAME)$(patsubst $(HOME)%,%,$(CUR_DIRECTORY))
-
-# Flag whether or not to use a separate location for build files
-#
-ifeq ($(BUILD_DIR),".")
-  BUILD_ROOT = $(BUILD_DIR)
-endif
-
 ifdef SHARED_LIBRARY
 # if SHARED_LIBRARY is specified, the default is to build the dynamic lib
 dynamic ::
@@ -71,12 +62,12 @@ install ::
 # /shared directory by default because it is guaranteed to be local to the
 # current machine.
 #
-ifdef BUILD_ROOT
-BUILD_ROOT_TOP := $(LEVEL)
+ifeq ($(LLVM_OBJ_DIR),.)
+BUILD_ROOT     = $(LLVM_OBJ_DIR)
+BUILD_ROOT_TOP = $(LEVEL)
 else
 
-LOGIN_NAME := $(shell whoami)
-BUILD_ROOT := $(BUILD_DIR)
+BUILD_ROOT := $(LLVM_OBJ_DIR)$(patsubst $(HOME)%,%,$(shell pwd))
 
 # Calculate the BUILD_ROOT_TOP variable, which is the top of the llvm/ tree.
 # Note that although this is just equal to $(BUILD_ROOT)/$(LEVEL), we cannot use
@@ -85,22 +76,20 @@ BUILD_ROOT := $(BUILD_DIR)
 # the directory to eliminate the ../'s
 #
 TOP_DIRECTORY := $(shell cd $(LEVEL); pwd)
-BUILD_ROOT_TOP := /shared/$(LOGIN_NAME)$(patsubst $(HOME)%,%,$(TOP_DIRECTORY))
+BUILD_ROOT_TOP := $(LLVM_OBJ_DIR)$(patsubst $(HOME)%,%,$(TOP_DIRECTORY))
 endif
 
 #--------------------------------------------------------------------
-# Installation configuration options... 
+# Variables derived from configuration options... 
 #--------------------------------------------------------------------
 
 #BinInstDir=/usr/local/bin
 #LibInstDir=/usrl/local/lib/xxx
 #DocInstDir=/usr/doc/xxx
 
-BURG = /home/vadve/vadve/Research/DynOpt/Burg/burg
 BURG_OPTS = -I
 
-
-PURIFY = /usr/dcs/applications/purify/bin/purify -cache-dir="$(BUILD_ROOT_TOP)/../purifycache" -chain-length="30" -messages=all 
+PURIFY := $(PURIFY) -cache-dir="$(BUILD_ROOT_TOP)/../purifycache" -chain-length="30" -messages=all 
 
 # Shorthand for commonly accessed directories
 LIBDEBUG    := $(BUILD_ROOT_TOP)/lib/Debug
