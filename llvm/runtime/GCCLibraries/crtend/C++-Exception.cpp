@@ -214,6 +214,10 @@ void __llvm_cxxeh_end_catch() /* might throw */ {
     E->ExceptionDestructor(E);        // Release memory for the exception
 }
 
+void __llvm_cxxeh_call_terminate() throw() {
+  __terminate(__terminate_handler);
+}
+
 
 // __llvm_cxxeh_rethrow - This function turns the top-level caught exception
 // into an uncaught exception, in preparation for an llvm.unwind, which should

@@ -69,6 +69,7 @@ extern "C" {
   void __llvm_cxxeh_throw(void *ObjectPtr, void *TypeInfoPtr,
                           void (*DtorPtr)(void*)) throw();
 
+  void __llvm_cxxeh_call_terminate() throw() __attribute__((noreturn));
   void * __llvm_cxxeh_current_uncaught_exception_isa(void *Ty)
     throw();
   void *__llvm_cxxeh_begin_catch() throw();
