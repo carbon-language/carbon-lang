@@ -155,18 +155,30 @@ namespace {  // Anonymous namespace for class
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
     void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
 
+
+    void WriteValue(const Value *V) {
+      if (!V) return;
+      if (isa<Instruction>(V))
+        std::cerr << *V;
+      else {
+        WriteAsOperand (std::cerr, V, true, true, Mod);
+        std::cerr << "\n";
+      }
+    }
+
+
     // CheckFailed - A check failed, so print out the condition and the message
     // that failed.  This provides a nice place to put a breakpoint if you want
     // to see why something is not correct.
     //
-    inline void CheckFailed(const std::string &Message,
-                            const Value *V1 = 0, const Value *V2 = 0,
-                            const Value *V3 = 0, const Value *V4 = 0) {
+    void CheckFailed(const std::string &Message,
+                     const Value *V1 = 0, const Value *V2 = 0,
+                     const Value *V3 = 0, const Value *V4 = 0) {
       std::cerr << Message << "\n";
-      if (V1) { WriteAsOperand (std::cerr, V1, true, true, Mod); std::cerr << "\n"; }
-      if (V2) { WriteAsOperand (std::cerr, V2, true, true, Mod); std::cerr << "\n"; }
-      if (V3) { WriteAsOperand (std::cerr, V3, true, true, Mod); std::cerr << "\n"; }
-      if (V4) { WriteAsOperand (std::cerr, V4, true, true, Mod); std::cerr << "\n"; }
+      WriteValue(V1);
+      WriteValue(V2);
+      WriteValue(V3);
+      WriteValue(V4);
       Broken = true;
     }
   };
