@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="Configure"
+	ProjectGUID="{19514E48-456C-4B9D-8637-F2285476461E}"
+	Keyword="Win32Proj">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Configure|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="1"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
+				MinimalRebuild="TRUE"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="5"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="TRUE"
+				DebugInformationFormat="4"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				OutputFile="$(OutDir)/Configure.exe"
+				LinkIncremental="2"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile="$(OutDir)/Configure.pdb"
+				SubSystem="1"
+				TargetMachine="1"/>
+			<Tool
+				Name="VCMIDLTool"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			<File
+				RelativePath="..\..\include\llvm\Config\config.h.in">
+				<FileConfiguration
+					Name="Configure|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(InputDir)config.h &quot;s/#undef PACKAGE_NAME/#define PACKAGE_NAME \&quot;LLVM (win32 vc7.1)\&quot;/;s/#undef PACKAGE_VERSION/#define PACKAGE_VERSION 1.4/;s/#undef HAVE_WINDOWS_H/#define HAVE_WINDOWS_H 1/;s/#undef HAVE_LIMITS_H/#define HAVE_LIMITS_H 1/;s/#undef HAVE_SYS_STAT_H/#define HAVE_SYS_STAT_H 1/;s/#undef SHLIBEXT/#define SHLIBEXT \&quot;.lib\&quot;/&quot;
+"
+						Outputs="$(InputDir)config.h"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Support\DataTypes.h.in">
+				<FileConfiguration
+					Name="Configure|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(InputDir)DataTypes.h &quot;s/#undef HAVE_SYS_TYPES_H/#define HAVE_SYS_TYPES_H 1/;s/#undef HAVE_INTTYPES_H/#define HAVE_INTTYPES_H 1/;s/#undef HAVE_STDINT_H/#define HAVE_STD_INT_H 1/&quot;
+"
+						Outputs="$(InputDir)DataTypes.h"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\hash_map.in">
+				<FileConfiguration
+					Name="Configure|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(InputDir)hash_map &quot;s/#undef HAVE_GLOBAL_HASH_MAP/#define HAVE_GLOBAL_HASH_MAP 1/;/using HASH_NAMESPACE\:\:hash;.*$/{D};/#include.*HashExtras.*$/{D}&quot;
+"
+						Outputs="$(InputDir)hash_map"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\hash_set.in">
+				<FileConfiguration
+					Name="Configure|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(InputDir)hash_set &quot;s/#undef HAVE_GLOBAL_HASH_SET/#define HAVE_GLOBAL_HASH_SET 1/;/using HASH_NAMESPACE\:\:hash;.*$/{D};/#include.*HashExtras.*$/{D}&quot;
+"
+						Outputs="$(InputDir)hash_set"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\iterator.in">
+				<FileConfiguration
+					Name="Configure|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(InputDir)iterator &quot;s/#undef HAVE_BI_ITERATOR/#define HAVE_BI_ITERATOR 0/;s/#undef HAVE_STD_ITERATOR/#define HAVE_STD_ITERATOR 1/;s/#undef HAVE_FWD_ITERATOR/#define HAVE_FWD_ITERATOR 0/&quot;
+"
+						Outputs="..\..\include\llvm\ADT\iterator"/>
+				</FileConfiguration>
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;inc;xsd"
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+		</Filter>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

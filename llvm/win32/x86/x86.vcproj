@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="x86"
+	ProjectGUID="{144EEBF6-8C9B-4473-B715-2C821666AF6C}"
+	Keyword="Win32Proj">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="..\Debug"
+			IntermediateDirectory="Debug"
+			ConfigurationType="4"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="..\..\tablegen_includes;..\..\include;.."
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;__STDC_LIMIT_MACROS"
+				MinimalRebuild="TRUE"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				ForceConformanceInForLoopScope="TRUE"
+				RuntimeTypeInfo="TRUE"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="TRUE"
+				DebugInformationFormat="4"
+				DisableSpecificWarnings="4800;4244;4267"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/x86.lib"/>
+			<Tool
+				Name="VCMIDLTool"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"
+				CommandLine="mkdir ..\..\tablegen_includes
+..\tools\TableGen.exe -gen-register-enums -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenRegisterNames.inc
+..\tools\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenRegisterInfo.h.inc
+..\tools\TableGen.exe -gen-register-desc -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenRegisterInfo.inc
+..\tools\TableGen.exe -gen-instr-enums -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenInstrNames.inc
+..\tools\TableGen.exe -gen-instr-desc -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenInstrInfo.inc
+..\tools\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenATTAsmWriter.inc
+..\tools\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenIntelAsmWriter.inc
+"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="..\Release"
+			IntermediateDirectory="Release"
+			ConfigurationType="4"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="..\..\tablegen_includes;..\..\include;.."
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__STDC_LIMIT_MACROS"
+				RuntimeLibrary="2"
+				ForceConformanceInForLoopScope="TRUE"
+				RuntimeTypeInfo="TRUE"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="TRUE"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4099;4800;4244;4267"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/x86.lib"/>
+			<Tool
+				Name="VCMIDLTool"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"
+				CommandLine="mkdir ..\..\tablegen_includes
+..\tools\TableGen.exe -gen-register-enums -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenRegisterNames.inc
+..\tools\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenRegisterInfo.h.inc
+..\tools\TableGen.exe -gen-register-desc -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenRegisterInfo.inc
+..\tools\TableGen.exe -gen-instr-enums -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenInstrNames.inc
+..\tools\TableGen.exe -gen-instr-desc -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenInstrInfo.inc
+..\tools\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenATTAsmWriter.inc
+..\tools\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenIntelAsmWriter.inc
+"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			<File
+				RelativePath="..\..\lib\Target\X86\X86AsmPrinter.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86CodeEmitter.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86FloatingPoint.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86InstrInfo.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86ISelPattern.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86ISelSimple.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86PeepholeOpt.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86RegisterInfo.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86TargetMachine.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86TargetMachine.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;inc;xsd"
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			<File
+				RelativePath="..\..\lib\Target\X86\X86.h">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86InstrBuilder.h">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86InstrInfo.h">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86JITInfo.h">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86RegisterInfo.h">
+			</File>
+		</Filter>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>
