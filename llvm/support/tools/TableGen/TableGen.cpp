@@ -16,7 +16,7 @@ namespace {
   cl::opt<ActionType>
   Action(cl::desc("Action to perform:"),
          cl::values(clEnumValN(PrintRecords, "print-records",
-                               "Print all records to stdout"),
+                               "Print all records to stdout (default)"),
                     clEnumValN(GenEmitter, "gen-emitter",
                                "Generate machine code emitter"),
                     clEnumValN(PrintEnums, "print-enums",
@@ -26,7 +26,8 @@ namespace {
                     0));
 
   cl::opt<std::string>
-  Class("class", cl::desc("Print Enum list for this class"));
+  Class("class", cl::desc("Print Enum list for this class"),
+        cl::value_desc("class name"));
 
  cl::opt<std::string>
  OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"),
