@@ -62,7 +62,7 @@ public:
 class CallArgsDescriptor: public Annotation { // Annotation for a MachineInstr
 private:
   static AnnotationID AID;              // AnnotationID for this class
-  vector<CallArgInfo> argInfoVec;       // Descriptor for each argument
+  std::vector<CallArgInfo> argInfoVec;       // Descriptor for each argument
   const CallInst* callInstr;            // The call instruction == result value
   const Value* funcPtr;                 // Pointer for indirect calls 
   TmpInstruction* retAddrReg;           // Tmp value for return address reg.

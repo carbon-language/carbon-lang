@@ -73,6 +73,7 @@ public:
   // operator< - Allow insertion into a map...
   bool operator<(const PointerValSet &PVS) const;
   bool operator==(const PointerValSet &PVS) const;
+  bool operator!=(const PointerValSet &PVS) const { return !operator==(PVS); }
 
   const PointerVal &operator[](unsigned i) const { return Vals[i]; }
 

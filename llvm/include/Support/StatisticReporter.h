@@ -52,7 +52,7 @@ protected:
   void destroy() const;
 
   // printValue - Overridden by template class to print out the value type...
-  virtual void printValue(ostream &o) const = 0;
+  virtual void printValue(std::ostream &o) const = 0;
 
   // hasSomeData - Return true if some data has been aquired.  Avoid printing
   // lots of zero counts.
@@ -65,7 +65,7 @@ template <typename DataType=unsigned>
 class Statistic : private StatisticBase {
   DataType Value;
 
-  virtual void printValue(ostream &o) const { o << Value; }
+  virtual void printValue(std::ostream &o) const { o << Value; }
   virtual bool hasSomeData() const { return Value != DataType(); }
 public:
   // Normal constructor, default initialize data item...

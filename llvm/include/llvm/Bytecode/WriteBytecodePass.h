@@ -12,10 +12,10 @@
 #include "llvm/Bytecode/Writer.h"
 
 class WriteBytecodePass : public Pass {
-  ostream *Out;           // ostream to print on
+  std::ostream *Out;           // ostream to print on
   bool DeleteStream;
 public:
-  inline WriteBytecodePass(ostream *o = &cout, bool DS = false)
+  inline WriteBytecodePass(std::ostream *o = &std::cout, bool DS = false)
     : Out(o), DeleteStream(DS) {
   }
 

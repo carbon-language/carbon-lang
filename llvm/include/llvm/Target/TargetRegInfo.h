@@ -144,16 +144,16 @@ public:
   // necessary.
   //
   virtual void cpReg2RegMI(unsigned SrcReg, unsigned DestReg,
-                           int RegType, vector<MachineInstr*>& mvec) const = 0;
+                           int RegType, std::vector<MachineInstr*>& mvec) const = 0;
 
   virtual void cpReg2MemMI(unsigned SrcReg, unsigned DestPtrReg, int Offset,
-                           int RegTypee, vector<MachineInstr*>& mvec) const=0;
+                           int RegTypee, std::vector<MachineInstr*>& mvec) const=0;
 
   virtual void cpMem2RegMI(unsigned SrcPtrReg, int Offset, unsigned DestReg,
-                           int RegTypee, vector<MachineInstr*>& mvec) const=0;
+                           int RegTypee, std::vector<MachineInstr*>& mvec) const=0;
 
   virtual void cpValue2Value(Value *Src, Value *Dest,
-                             vector<MachineInstr*>& mvec) const = 0;
+                             std::vector<MachineInstr*>& mvec) const = 0;
 
   virtual bool isRegVolatile(int RegClassID, int Reg) const = 0;
   

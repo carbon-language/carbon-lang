@@ -30,7 +30,7 @@ extern void	GetInstructionsByRule	(InstructionNode* subtreeRoot,
 					 int ruleForNode,
 					 short* nts,
 					 TargetMachine &Target,
-                                         vector<MachineInstr*>& mvec);
+                                         std::vector<MachineInstr*>& mvec);
 
 extern bool	ThisIsAChainRule	(int eruleno);
 
