@@ -75,19 +75,15 @@ int main(int argc, char** argv, const char ** envp) {
   }
 #endif
 
-  // FIXME: in adddition to being gross, this is also wrong: This should use the
-  // pointersize/endianness of the host if the pointer size is not specified!!
-  unsigned Config = (M->getEndianness() != Module::BigEndian ? TM::LittleEndian : TM::BigEndian) |
-                    (M->getPointerSize() != Module::Pointer64 ? TM::PtrSize32    : TM::PtrSize64);
   ExecutionEngine *EE = 0;
 
   // If there is nothing that is forcing us to use the interpreter, make a JIT.
   if (!ForceInterpreter && !DebugMode && !TraceMode)
-    EE = ExecutionEngine::createJIT(M, Config);
+    EE = ExecutionEngine::createJIT(M);
 
   // If we can't make a JIT, make an interpreter instead.
   if (EE == 0)
-    EE = ExecutionEngine::createInterpreter(M, Config, DebugMode, TraceMode);
+    EE = ExecutionEngine::createInterpreter(M, DebugMode, TraceMode);
 
   // Add the module name to the start of the argv vector...
   // But delete .bc first, since programs (and users) might not expect to

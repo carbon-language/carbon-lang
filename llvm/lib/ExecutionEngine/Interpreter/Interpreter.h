@@ -87,7 +87,8 @@ class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   // AtExitHandlers - List of functions to call when the program exits.
   std::vector<Function*> AtExitHandlers;
 public:
-  Interpreter(Module *M, unsigned Config, bool DebugMode, bool TraceMode);
+  Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
+              bool DebugMode, bool TraceMode);
   inline ~Interpreter() { CW.setModule(0); }
 
   // getExitCode - return the code that should be the exit code for the lli

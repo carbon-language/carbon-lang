@@ -7,27 +7,44 @@
 //===----------------------------------------------------------------------===//
 
 #include "Interpreter.h"
-#include "llvm/Target/TargetMachineImpls.h"
+#include "llvm/Module.h"
 
 /// createInterpreter - Create a new interpreter object.  This can never fail.
 ///
 ExecutionEngine *ExecutionEngine::createInterpreter(Module *M,
-						    unsigned Config,
 						    bool DebugMode,
 						    bool TraceMode) {
-  return new Interpreter(M, Config, DebugMode, TraceMode);
+  bool isLittleEndian;
+  switch (M->getEndianness()) {
+  case Module::LittleEndian: isLittleEndian = true; break;
+  case Module::BigEndian:    isLittleEndian = false; break;
+  case Module::AnyPointerSize:
+    int Test = 0;
+    *(char*)&Test = 1;    // Return true if the host is little endian
+    isLittleEndian = (Test == 1);
+    break;
+  }
+
+  bool isLongPointer;
+  switch (M->getPointerSize()) {
+  case Module::Pointer32: isLongPointer = false; break;
+  case Module::Pointer64: isLongPointer = true; break;
+  case Module::AnyPointerSize:
+    isLongPointer = (sizeof(void*) == 8);  // Follow host
+    break;
+  }
+
+  return new Interpreter(M, isLittleEndian, isLongPointer, DebugMode,TraceMode);
 }
 
 //===----------------------------------------------------------------------===//
 // Interpreter ctor - Initialize stuff
 //
-Interpreter::Interpreter(Module *M, unsigned Config,
-			 bool DebugMode, bool TraceMode)
+Interpreter::Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
+                         bool DebugMode, bool TraceMode)
   : ExecutionEngine(M), ExitCode(0), Debug(DebugMode), Trace(TraceMode),
-    CurFrame(-1), TD("lli", (Config & TM::EndianMask) == TM::LittleEndian,
-		     (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
-		     (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
-		     (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4) {
+    CurFrame(-1), TD("lli", isLittleEndian, isLongPointer ? 8 : 4,
+                     isLongPointer ? 8 : 4, isLongPointer ? 8 : 4) {
 
   setTargetData(TD);
   // Initialize the "backend"

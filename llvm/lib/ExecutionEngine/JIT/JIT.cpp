@@ -44,9 +44,9 @@ namespace {
 /// createJIT - Create an return a new JIT compiler if there is one available
 /// for the current target.  Otherwise it returns null.
 ///
-ExecutionEngine *ExecutionEngine::createJIT(Module *M, unsigned Config) {
+ExecutionEngine *ExecutionEngine::createJIT(Module *M) {
   
-  TargetMachine* (*TargetMachineAllocator)(unsigned) = 0;
+  TargetMachine* (*TargetMachineAllocator)(const Module &) = 0;
 
   // Allow a command-line switch to override what *should* be the default target
   // machine for this platform. This allows for debugging a Sparc JIT on X86 --
@@ -71,7 +71,7 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M, unsigned Config) {
   }
 
   // Allocate a target...
-  TargetMachine *Target = (*TargetMachineAllocator)(Config);
+  TargetMachine *Target = TargetMachineAllocator(*M);
   assert(Target && "Could not allocate target machine!");
   
   // Create the virtual machine object...
