@@ -109,21 +109,34 @@ inline std::ostream &operator<<(std::ostream &OS, const RecTy &Ty) {
 ///
 class BitRecTy : public RecTy {
 public:
-  Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
-  Init *convertValue(BitInit *BI) { return (Init*)BI; }
-  Init *convertValue(BitsInit *BI);
-  Init *convertValue(IntInit *II);
-  Init *convertValue(TypedInit *VI);
-  Init *convertValue(VarBitInit *VB) { return (Init*)VB; }
+  virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
+  virtual Init *convertValue(   BitInit *BI) { return (Init*)BI; }
+  virtual Init *convertValue(  BitsInit *BI);
+  virtual Init *convertValue(   IntInit *II);
+  virtual Init *convertValue(StringInit *SI) { return 0; }
+  virtual Init *convertValue(  ListInit *LI) { return 0; }
+  virtual Init *convertValue(  CodeInit *CI) { return 0; }
+  virtual Init *convertValue(VarBitInit *VB) { return (Init*)VB; }
+  virtual Init *convertValue(   DefInit *DI) { return 0; }
+  virtual Init *convertValue(   DagInit *DI) { return 0; }
+  virtual Init *convertValue( TypedInit *TI);
+  virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
+  virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
   void print(std::ostream &OS) const { OS << "bit"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
-  virtual bool baseClassOf(const BitRecTy *RHS) const { return true; }
-  virtual bool baseClassOf(const BitsRecTy *RHS) const;
-  virtual bool baseClassOf(const IntRecTy *RHS) const { return true; }
+  virtual bool baseClassOf(const BitRecTy    *RHS) const { return true; }
+  virtual bool baseClassOf(const BitsRecTy   *RHS) const;
+  virtual bool baseClassOf(const IntRecTy    *RHS) const { return true; }
+  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
+  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const CodeRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
+
 };
 
 
@@ -137,22 +150,37 @@ public:
 
   unsigned getNumBits() const { return Size; }
 
-  Init *convertValue(UnsetInit *UI);
-  Init *convertValue(BitInit *UI);
-  Init *convertValue(BitsInit *BI);
-  Init *convertValue(IntInit *II);
-  Init *convertValue(TypedInit *VI);
+  virtual Init *convertValue( UnsetInit *UI);
+  virtual Init *convertValue(   BitInit *UI);
+  virtual Init *convertValue(  BitsInit *BI);
+  virtual Init *convertValue(   IntInit *II);
+  virtual Init *convertValue(StringInit *SI) { return 0; }
+  virtual Init *convertValue(  ListInit *LI) { return 0; }
+  virtual Init *convertValue(  CodeInit *CI) { return 0; }
+  virtual Init *convertValue(VarBitInit *VB) { return 0; }
+  virtual Init *convertValue(   DefInit *DI) { return 0; }
+  virtual Init *convertValue(   DagInit *DI) { return 0; }
+  virtual Init *convertValue( TypedInit *TI);
+  virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
+  virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
+
 
   void print(std::ostream &OS) const { OS << "bits<" << Size << ">"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
-  virtual bool baseClassOf(const BitRecTy *RHS) const { return Size == 1; }
-  virtual bool baseClassOf(const IntRecTy *RHS) const { return true; }
-  virtual bool baseClassOf(const BitsRecTy *RHS) const {
+  virtual bool baseClassOf(const BitRecTy    *RHS) const { return Size == 1; }
+  virtual bool baseClassOf(const BitsRecTy   *RHS) const {
     return RHS->Size == Size;
   }
+  virtual bool baseClassOf(const IntRecTy    *RHS) const { return true; }
+  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
+  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const CodeRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
+
 };
 
 
@@ -160,11 +188,20 @@ public:
 ///
 class IntRecTy : public RecTy {
 public:
-  Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
-  Init *convertValue(IntInit *II) { return (Init*)II; }
-  Init *convertValue(BitInit *BI);
-  Init *convertValue(BitsInit *BI);
-  Init *convertValue(TypedInit *TI);
+  virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
+  virtual Init *convertValue(   BitInit *BI);
+  virtual Init *convertValue(  BitsInit *BI);
+  virtual Init *convertValue(   IntInit *II) { return (Init*)II; }
+  virtual Init *convertValue(StringInit *SI) { return 0; }
+  virtual Init *convertValue(  ListInit *LI) { return 0; }
+  virtual Init *convertValue(  CodeInit *CI) { return 0; }
+  virtual Init *convertValue(VarBitInit *VB) { return 0; }
+  virtual Init *convertValue(   DefInit *DI) { return 0; }
+  virtual Init *convertValue(   DagInit *DI) { return 0; }
+  virtual Init *convertValue( TypedInit *TI);
+  virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
+  virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
+
 
   void print(std::ostream &OS) const { OS << "int"; }
 
@@ -172,25 +209,49 @@ public:
     return RHS->baseClassOf(this);
   }
 
-  virtual bool baseClassOf(const BitRecTy *RHS) const { return true; }
-  virtual bool baseClassOf(const IntRecTy *RHS) const { return true; }
-  virtual bool baseClassOf(const BitsRecTy *RHS) const { return true; }
+  virtual bool baseClassOf(const BitRecTy    *RHS) const { return true; }
+  virtual bool baseClassOf(const BitsRecTy   *RHS) const { return true; }
+  virtual bool baseClassOf(const IntRecTy    *RHS) const { return true; }
+  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
+  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const CodeRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
+
 };
 
 /// StringRecTy - 'string' - Represent an string value
 ///
 class StringRecTy : public RecTy {
 public:
-  Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
-  Init *convertValue(StringInit *SI) { return (Init*)SI; }
-  Init *convertValue(TypedInit *TI);
+  virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
+  virtual Init *convertValue(   BitInit *BI) { return 0; }
+  virtual Init *convertValue(  BitsInit *BI) { return 0; }
+  virtual Init *convertValue(   IntInit *II) { return 0; }
+  virtual Init *convertValue(StringInit *SI) { return (Init*)SI; }
+  virtual Init *convertValue(  ListInit *LI) { return 0; }
+  virtual Init *convertValue(  CodeInit *CI) { return 0; }
+  virtual Init *convertValue(VarBitInit *VB) { return 0; }
+  virtual Init *convertValue(   DefInit *DI) { return 0; }
+  virtual Init *convertValue(   DagInit *DI) { return 0; }
+  virtual Init *convertValue( TypedInit *TI);
+  virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
+  virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
+
   void print(std::ostream &OS) const { OS << "string"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
 
+  virtual bool baseClassOf(const BitRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const BitsRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const IntRecTy    *RHS) const { return false; }
   virtual bool baseClassOf(const StringRecTy *RHS) const { return true; }
+  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const CodeRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
 };
 
 // ListRecTy - 'list<Ty>' - Represent a list of values, all of which must be of
@@ -205,9 +266,19 @@ public:
 
   RecTy *getElementType() const { return Ty; }
 
-  Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
-  Init *convertValue(ListInit *LI);
-  Init *convertValue(TypedInit *TI);
+  virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
+  virtual Init *convertValue(   BitInit *BI) { return 0; }
+  virtual Init *convertValue(  BitsInit *BI) { return 0; }
+  virtual Init *convertValue(   IntInit *II) { return 0; }
+  virtual Init *convertValue(StringInit *SI) { return 0; }
+  virtual Init *convertValue(  ListInit *LI);
+  virtual Init *convertValue(  CodeInit *CI) { return 0; }
+  virtual Init *convertValue(VarBitInit *VB) { return 0; }
+  virtual Init *convertValue(   DefInit *DI) { return 0; }
+  virtual Init *convertValue(   DagInit *DI) { return 0; }
+  virtual Init *convertValue( TypedInit *TI);
+  virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
+  virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
   
   void print(std::ostream &OS) const;
 
@@ -215,41 +286,84 @@ public:
     return RHS->baseClassOf(this);
   }
 
-  virtual bool baseClassOf(const ListRecTy *RHS) const {
+  virtual bool baseClassOf(const BitRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const BitsRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const IntRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
+  virtual bool baseClassOf(const ListRecTy   *RHS) const {
     return RHS->getElementType()->typeIsConvertibleTo(Ty); 
   }
+  virtual bool baseClassOf(const CodeRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
 };
 
 /// CodeRecTy - 'code' - Represent an code fragment, function or method.
 ///
 class CodeRecTy : public RecTy {
 public:
-  Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
-  Init *convertValue( CodeInit *CI) { return (Init*)CI; }
-  Init *convertValue(TypedInit *TI);
+  virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
+  virtual Init *convertValue(   BitInit *BI) { return 0; }
+  virtual Init *convertValue(  BitsInit *BI) { return 0; }
+  virtual Init *convertValue(   IntInit *II) { return 0; }
+  virtual Init *convertValue(StringInit *SI) { return 0; }
+  virtual Init *convertValue(  ListInit *LI) { return 0; }
+  virtual Init *convertValue(  CodeInit *CI) { return (Init*)CI; }
+  virtual Init *convertValue(VarBitInit *VB) { return 0; }
+  virtual Init *convertValue(   DefInit *DI) { return 0; }
+  virtual Init *convertValue(   DagInit *DI) { return 0; }
+  virtual Init *convertValue( TypedInit *TI);
+  virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
+  virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
+
 
   void print(std::ostream &OS) const { OS << "code"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
-  virtual bool baseClassOf(const CodeRecTy *RHS) const { return true; }
+  virtual bool baseClassOf(const BitRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const BitsRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const IntRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
+  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const CodeRecTy   *RHS) const { return true; }
+  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
 };
 
 /// DagRecTy - 'dag' - Represent a dag fragment
 ///
 class DagRecTy : public RecTy {
 public:
-  Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
-  Init *convertValue( DagInit *CI) { return (Init*)CI; }
-  Init *convertValue(TypedInit *TI);
+  virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
+  virtual Init *convertValue(   BitInit *BI) { return 0; }
+  virtual Init *convertValue(  BitsInit *BI) { return 0; }
+  virtual Init *convertValue(   IntInit *II) { return 0; }
+  virtual Init *convertValue(StringInit *SI) { return 0; }
+  virtual Init *convertValue(  ListInit *LI) { return 0; }
+  virtual Init *convertValue(  CodeInit *CI) { return 0; }
+  virtual Init *convertValue(VarBitInit *VB) { return 0; }
+  virtual Init *convertValue(   DefInit *DI) { return 0; }
+  virtual Init *convertValue(   DagInit *CI) { return (Init*)CI; }
+  virtual Init *convertValue( TypedInit *TI);
+  virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
+  virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
   void print(std::ostream &OS) const { OS << "dag"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
-  virtual bool baseClassOf(const DagRecTy *RHS) const { return true; }
+
+  virtual bool baseClassOf(const BitRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const BitsRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const IntRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
+  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const CodeRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const DagRecTy    *RHS) const { return true; }
+  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
 };
 
 
@@ -263,15 +377,32 @@ public:
 
   Record *getRecord() const { return Rec; }
 
-  Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
-  Init *convertValue(  DefInit *DI);
-  Init *convertValue(TypedInit *VI); 
+  virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
+  virtual Init *convertValue(   BitInit *BI) { return 0; }
+  virtual Init *convertValue(  BitsInit *BI) { return 0; }
+  virtual Init *convertValue(   IntInit *II) { return 0; }
+  virtual Init *convertValue(StringInit *SI) { return 0; }
+  virtual Init *convertValue(  ListInit *LI) { return 0; }
+  virtual Init *convertValue(  CodeInit *CI) { return 0; }
+  virtual Init *convertValue(VarBitInit *VB) { return 0; }
+  virtual Init *convertValue(   DefInit *DI);
+  virtual Init *convertValue(   DagInit *DI) { return 0; }
+  virtual Init *convertValue( TypedInit *VI); 
+  virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
+  virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
   void print(std::ostream &OS) const;
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
+  virtual bool baseClassOf(const BitRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const BitsRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const IntRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
+  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const CodeRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
   virtual bool baseClassOf(const RecordRecTy *RHS) const;
 };
 
