@@ -53,7 +53,7 @@ namespace llvm {
 struct ModRefTable {
   typedef hash_map<Instruction*, ModRefInfo> ModRefMap;
   typedef ModRefMap::const_iterator                 const_map_iterator;
-  typedef ModRefMap::      iterator                        map_iterator;
+  typedef ModRefMap::      iterator                       map_iterator;
   typedef std::vector<Instruction*>::const_iterator const_ref_iterator;
   typedef std::vector<Instruction*>::      iterator       ref_iterator;
 
@@ -131,9 +131,9 @@ class ModRefInfoBuilder : public InstVisitor<ModRefInfoBuilder> {
   void operator=(const ModRefInfoBuilder&);    // DO NOT IMPLEMENT
 
 public:
-  /*ctor*/      ModRefInfoBuilder(const DSGraph&  _funcGraph,
-                                  const FunctionModRefInfo& _funcModRef,
-                                  ModRefTable&    _modRefTable)
+  ModRefInfoBuilder(const DSGraph& _funcGraph,
+                    const FunctionModRefInfo& _funcModRef,
+                    ModRefTable& _modRefTable)
     : funcGraph(_funcGraph), funcModRef(_funcModRef), modRefTable(_modRefTable)
   {
   }
@@ -142,15 +142,15 @@ public:
   // Add the call to the defs list if it modifies any nodes and to the uses
   // list if it refs any nodes.
   // 
-  void          visitCallInst   (CallInst& callInst) {
+  void visitCallInst(CallInst& callInst) {
     ModRefInfo safeModRef(funcGraph.getGraphSize());
     const ModRefInfo* callModRef = funcModRef.getModRefInfo(callInst);
-    if (callModRef == NULL)
-      { // call to external/unknown function: mark all nodes as Mod and Ref
-        safeModRef.getModSet().set();
-        safeModRef.getRefSet().set();
-        callModRef = &safeModRef;
-      }
+    if (callModRef == NULL) {
+      // call to external/unknown function: mark all nodes as Mod and Ref
+      safeModRef.getModSet().set();
+      safeModRef.getRefSet().set();
+      callModRef = &safeModRef;
+    }
 
     modRefTable.modRefMap.insert(std::make_pair(&callInst,
                                                 ModRefInfo(*callModRef)));
@@ -163,40 +163,36 @@ public:
   // At a store instruction, add to the mod set the single node pointed to
   // by the pointer argument of the store.  Interestingly, if there is no
   // such node, that would be a null pointer reference!
-  void          visitStoreInst  (StoreInst& storeInst) {
+  void visitStoreInst(StoreInst& storeInst) {
     const DSNodeHandle& ptrNode =
       funcGraph.getNodeForValue(storeInst.getPointerOperand());
-    if (const DSNode* target = ptrNode.getNode())
-      {
-        unsigned nodeId = funcModRef.getNodeId(target);
-        ModRefInfo& minfo =
-          modRefTable.modRefMap.insert(
-            std::make_pair(&storeInst,
-                           ModRefInfo(funcGraph.getGraphSize()))).first->second;
-        minfo.setNodeIsMod(nodeId);
-        modRefTable.AddDef(&storeInst);
-      }
-    else
+    if (const DSNode* target = ptrNode.getNode()) {
+      unsigned nodeId = funcModRef.getNodeId(target);
+      ModRefInfo& minfo =
+        modRefTable.modRefMap.insert(
+          std::make_pair(&storeInst,
+                         ModRefInfo(funcGraph.getGraphSize()))).first->second;
+      minfo.setNodeIsMod(nodeId);
+      modRefTable.AddDef(&storeInst);
+    } else
       std::cerr << "Warning: Uninitialized pointer reference!\n";
   }
 
   // At a load instruction, add to the ref set the single node pointed to
   // by the pointer argument of the load.  Interestingly, if there is no
   // such node, that would be a null pointer reference!
-  void          visitLoadInst  (LoadInst& loadInst) {
+  void visitLoadInst(LoadInst& loadInst) {
     const DSNodeHandle& ptrNode =
       funcGraph.getNodeForValue(loadInst.getPointerOperand());
-    if (const DSNode* target = ptrNode.getNode())
-      {
-        unsigned nodeId = funcModRef.getNodeId(target);
-        ModRefInfo& minfo =
-          modRefTable.modRefMap.insert(
-            std::make_pair(&loadInst,
-                           ModRefInfo(funcGraph.getGraphSize()))).first->second;
-        minfo.setNodeIsRef(nodeId);
-        modRefTable.AddUse(&loadInst);
-      }
-    else
+    if (const DSNode* target = ptrNode.getNode()) {
+      unsigned nodeId = funcModRef.getNodeId(target);
+      ModRefInfo& minfo =
+        modRefTable.modRefMap.insert(
+          std::make_pair(&loadInst,
+                         ModRefInfo(funcGraph.getGraphSize()))).first->second;
+      minfo.setNodeIsRef(nodeId);
+      modRefTable.AddUse(&loadInst);
+    } else
       std::cerr << "Warning: Uninitialized pointer reference!\n";
   }
 };
