@@ -15,6 +15,8 @@
 #ifndef LLVM_CODEGEN_PASSES_H
 #define LLVM_CODEGEN_PASSES_H
 
+#include <iostream>
+
 namespace llvm {
 
   class FunctionPass;
@@ -23,8 +25,9 @@ namespace llvm {
   
   /// MachineFunctionPrinter pass - This pass prints out the machine function to
   /// standard error, as a debugging tool.
-  FunctionPass *createMachineFunctionPrinterPass();
-    
+  FunctionPass *createMachineFunctionPrinterPass(std::ostream *OS = &std::cerr,
+                                                 const std::string &Banner ="");
+
   /// PHIElimination pass - This pass eliminates machine instruction PHI nodes
   /// by inserting copy instructions.  This destroys SSA information, but is the
   /// desired input for some register allocators.  This pass is "required" by

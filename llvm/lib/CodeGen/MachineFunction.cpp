@@ -34,6 +34,12 @@ static AnnotationID MF_AID(
 
 namespace {
   struct Printer : public MachineFunctionPass {
+    std::ostream *OS;
+    const std::string &Banner;
+
+    Printer (std::ostream *_OS, const std::string &_Banner) :
+      OS (_OS), Banner (_Banner) { }
+
     const char *getPassName() const { return "MachineFunction Printer"; }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -41,14 +47,19 @@ namespace {
     }
 
     bool runOnMachineFunction(MachineFunction &MF) {
-      MF.dump();
+      (*OS) << Banner;
+      MF.print (*OS);
       return false;
     }
   };
 }
 
-FunctionPass *llvm::createMachineFunctionPrinterPass() {
-  return new Printer();
+/// Returns a newly-created MachineFunction Printer pass. The default output
+/// stream is std::cerr; the default banner is empty.
+///
+FunctionPass *llvm::createMachineFunctionPrinterPass(std::ostream *OS,
+                                                     const std::string &Banner) {
+  return new Printer(OS, Banner);
 }
 
 namespace {
