@@ -162,6 +162,13 @@ prdirs::
 	echo "LLVM  Source Root: " $(LLVM_SRC_ROOT);
 	echo "LLVM  Object Root: " $(LLVM_OBJ_ROOT);
 
+#
+# Mark all of these targets as phony.  This will hopefully speed up builds
+# slightly since GNU Make will not try to find implicit rules for targets
+# which are marked as Phony.
+#
+.PHONY: all dynamic clean distclean install test bytecode prdirs
+
 ###########################################################################
 # Miscellaneous paths and commands:
 #	This section defines various configuration macros, such as where
