@@ -17,6 +17,7 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/LoadValueNumbering.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
@@ -30,9 +31,24 @@ using namespace llvm;
 namespace {
   cl::opt<bool>
   DisableInline("disable-inlining", cl::desc("Do not run the inliner pass"));
+
+  cl::opt<bool>
+  Verify("verify", cl::desc("Verify intermediate results of all passes"));
+
+  cl::opt<bool>
+  DisableOptimizations("disable-opt",
+                       cl::desc("Do not run any optimization passes"));
 }
 
 namespace llvm {
+
+static inline void addPass(PassManager &PM, Pass *P) {
+  // Add the pass to the pass manager...
+  PM.add(P);
+  
+  // If we are verifying all of the intermediate steps, add the verifier...
+  if (Verify) PM.add(createVerifierPass());
+}
 
 /// GenerateBytecode - generates a bytecode file from the specified module.
 ///
@@ -53,60 +69,64 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
   // a little bit.  Do this now.
   PassManager Passes;
 
+  if (Verify) Passes.add(createVerifierPass());
+
   // Add an appropriate TargetData instance for this module...
-  Passes.add(new TargetData("gccld", M));
+  addPass (Passes, new TargetData("gccld", M));
 
-  // Linking modules together can lead to duplicated global constants, only keep
-  // one copy of each constant...
-  Passes.add(createConstantMergePass());
+  if (!DisableOptimizations) {
+    // Linking modules together can lead to duplicated global constants, only
+    // keep one copy of each constant...
+    addPass (Passes, createConstantMergePass());
 
-  // If the -s command line option was specified, strip the symbols out of the
-  // resulting program to make it smaller.  -s is a GCC option that we are
-  // supporting.
-  if (Strip)
-    Passes.add(createSymbolStrippingPass());
+    // If the -s command line option was specified, strip the symbols out of the
+    // resulting program to make it smaller.  -s is a GCC option that we are
+    // supporting.
+    if (Strip)
+      addPass (Passes, createSymbolStrippingPass());
 
-  // Often if the programmer does not specify proper prototypes for the
-  // functions they are calling, they end up calling a vararg version of the
-  // function that does not get a body filled in (the real function has typed
-  // arguments).  This pass merges the two functions.
-  Passes.add(createFunctionResolvingPass());
+    // Often if the programmer does not specify proper prototypes for the
+    // functions they are calling, they end up calling a vararg version of the
+    // function that does not get a body filled in (the real function has typed
+    // arguments).  This pass merges the two functions.
+    addPass (Passes, createFunctionResolvingPass());
 
-  if (Internalize) {
-    // Now that composite has been compiled, scan through the module, looking
-    // for a main function.  If main is defined, mark all other functions
-    // internal.
-    Passes.add(createInternalizePass());
+    if (Internalize) {
+      // Now that composite has been compiled, scan through the module, looking
+      // for a main function.  If main is defined, mark all other functions
+      // internal.
+      addPass (Passes, createInternalizePass());
+    }
+
+    // Propagate constants at call sites into the functions they call.
+    addPass (Passes, createIPConstantPropagationPass());
+
+    // Remove unused arguments from functions...
+    addPass (Passes, createDeadArgEliminationPass());
+
+    if (!DisableInline)
+      addPass (Passes, createFunctionInliningPass()); // Inline small functions
+
+    // Run a few AA driven optimizations here and now, to cleanup the code.
+    // Eventually we should put an IP AA in place here.
+
+    addPass (Passes, createLICMPass());               // Hoist loop invariants
+    addPass (Passes, createLoadValueNumberingPass()); // GVN for load instrs
+    addPass (Passes, createGCSEPass());               // Remove common subexprs
+
+    // The FuncResolve pass may leave cruft around if functions were prototyped
+    // differently than they were defined.  Remove this cruft.
+    addPass (Passes, createInstructionCombiningPass());
+
+    // Delete basic blocks, which optimization passes may have killed...
+    addPass (Passes, createCFGSimplificationPass());
+
+    // Now that we have optimized the program, discard unreachable functions...
+    addPass (Passes, createGlobalDCEPass());
   }
 
-  // Propagate constants at call sites into the functions they call.
-  Passes.add(createIPConstantPropagationPass());
-
-  // Remove unused arguments from functions...
-  Passes.add(createDeadArgEliminationPass());
-
-  if (!DisableInline)
-    Passes.add(createFunctionInliningPass());   // Inline small functions
-
-  // Run a few AA driven optimizations here and now, to cleanup the code.
-  // Eventually we should put an IP AA in place here.
-
-  Passes.add(createLICMPass());                 // Hoist loop invariants
-  Passes.add(createLoadValueNumberingPass());   // GVN for load instructions
-  Passes.add(createGCSEPass());                 // Remove common subexprs
-
-  // The FuncResolve pass may leave cruft around if functions were prototyped
-  // differently than they were defined.  Remove this cruft.
-  Passes.add(createInstructionCombiningPass());
-
-  // Delete basic blocks, which optimization passes may have killed...
-  Passes.add(createCFGSimplificationPass());
-
-  // Now that we have optimized the program, discard unreachable functions...
-  Passes.add(createGlobalDCEPass());
-
   // Add the pass that writes bytecode to the output file...
-  Passes.add(new WriteBytecodePass(Out));
+  addPass (Passes, new WriteBytecodePass(Out));
 
   // Run our queue of passes all at once now, efficiently.
   Passes.run(*M);
