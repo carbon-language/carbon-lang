@@ -646,9 +646,6 @@ static const char *DoesntAccessMemoryTable[] = {
   // glibc functions:
   "__fpclassify", "__fpclassifyf", "__fpclassifyl",
   "__signbit", "__signbitf", "__signbitl",
-
-  // C++ operator new/operator new[]
-  "_Znwj", "_Znaj",
 };
 
 static const unsigned DAMTableSize =
