@@ -19,12 +19,12 @@ elif test -d ../../llvm/autoconf/m4 ; then
   llvm_m4=`pwd`
   cd $cwd
 else
-  die "Can't find the LLVM autoconf/m4 directory. llvm-test should be checked out to projects directory"
+  die "Can't find the LLVM autoconf/m4 directory. The project should be checked out to projects directory"
 fi
 echo "Regenerating aclocal.m4 with aclocal"
 rm -f aclocal.m4
-aclocal -I $cwd/m4 -I $llvm_m4 || die "aclocal failed"
+aclocal -I $llvm_m4 -I "$llvm_m4/.." || die "aclocal failed"
 echo "Regenerating configure with autoconf 2.5x"
-autoconf --force --warnings=all -o ../configure configure.ac || die "autoconf failed"
+autoconf --warnings=all -o ../configure configure.ac || die "autoconf failed"
 cd ..
 exit 0
