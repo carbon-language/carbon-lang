@@ -217,7 +217,11 @@ private:
   
   inline void markOverdefined(LatticeVal &IV, Value *V) {
     if (IV.markOverdefined()) {
-      DEBUG(std::cerr << "markOverdefined: " << *V);
+      DEBUG(std::cerr << "markOverdefined: ";
+            if (Function *F = dyn_cast<Function>(V))
+              std::cerr << "Function '" << F->getName() << "'\n";
+            else
+              std::cerr << *V);
       // Only instructions go on the work list
       OverdefinedInstWorkList.push_back(V);
     }
@@ -934,26 +938,29 @@ void SCCPSolver::Solve() {
 /// should be rerun.
 bool SCCPSolver::ResolveBranchesIn(Function &F) {
   bool BranchesResolved = false;
-  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-    TerminatorInst *TI = BB->getTerminator();
-    if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-      if (BI->isConditional()) {
-        LatticeVal &BCValue = getValueState(BI->getCondition());
-        if (BCValue.isUndefined()) {
-          BI->setCondition(ConstantBool::True);
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    if (BBExecutable.count(BB)) {
+      TerminatorInst *TI = BB->getTerminator();
+      if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+        if (BI->isConditional()) {
+          LatticeVal &BCValue = getValueState(BI->getCondition());
+          if (BCValue.isUndefined()) {
+            BI->setCondition(ConstantBool::True);
+            BranchesResolved = true;
+            visit(BI);
+          }
+        }
+      } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+        LatticeVal &SCValue = getValueState(SI->getCondition());
+        if (SCValue.isUndefined()) {
+          const Type *CondTy = SI->getCondition()->getType();
+          SI->setCondition(Constant::getNullValue(CondTy));
           BranchesResolved = true;
-          visit(BI);
+          visit(SI);
         }
       }
-    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
-      LatticeVal &SCValue = getValueState(SI->getCondition());
-      if (SCValue.isUndefined()) {
-        SI->setCondition(Constant::getNullValue(SI->getCondition()->getType()));
-        BranchesResolved = true;
-        visit(SI);
-      }
     }
-  }
+
   return BranchesResolved;
 }
 
@@ -1007,6 +1014,7 @@ bool SCCP::runOnFunction(Function &F) {
   bool ResolvedBranches = true;
   while (ResolvedBranches) {
     Solver.Solve();
+    DEBUG(std::cerr << "RESOLVING UNDEF BRANCHES\n");
     ResolvedBranches = Solver.ResolveBranchesIn(F);
   }
 
@@ -1146,6 +1154,7 @@ bool IPSCCP::runOnModule(Module &M) {
   while (ResolvedBranches) {
     Solver.Solve();
 
+    DEBUG(std::cerr << "RESOLVING UNDEF BRANCHES\n");
     ResolvedBranches = false;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
       ResolvedBranches |= Solver.ResolveBranchesIn(*F);
@@ -1284,6 +1293,7 @@ bool IPSCCP::runOnModule(Module &M) {
       SI->eraseFromParent();
     }
     M.getGlobalList().erase(GV);
+    ++IPNumGlobalConst;
   }
   
   return MadeChanges;
