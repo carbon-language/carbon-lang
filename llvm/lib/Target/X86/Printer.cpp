@@ -823,8 +823,9 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     // register reference for the mod/rm field, it's a memory reference.
     //
     assert(MI->getOperand(0).isRegister() &&
-           (MI->getNumOperands() == 1+4 && isMem(MI, 1)) || 
-(MI->getNumOperands() == 2+4 && MI->getOperand(5).isImmediate() && isMem(MI, 1))
+           ((MI->getNumOperands() == 1+4 && isMem(MI, 1)) || 
+            (MI->getNumOperands() == 2+4 && MI->getOperand(5).isImmediate() && 
+             isMem(MI, 1)))
            && "Bad format for MRMSrcMem!");
     O << TII.getName(MI->getOpcode()) << " ";
     printOp(MI->getOperand(0));
