@@ -22,6 +22,80 @@
 static TargetData TD("lli Interpreter");
 
 //===----------------------------------------------------------------------===//
+//                     Value Manipulation code
+//===----------------------------------------------------------------------===//
+
+static unsigned getOperandSlot(Value *V) {
+  SlotNumber *SN = (SlotNumber*)V->getAnnotation(SlotNumberAID);
+  assert(SN && "Operand does not have a slot number annotation!");
+  return SN->SlotNum;
+}
+
+#define GET_CONST_VAL(TY, CLASS) \
+  case Type::TY##TyID: Result.TY##Val = cast<CLASS>(CPV)->getValue(); break
+
+static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
+  if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(V)) {
+    GenericValue Result;
+    switch (CPV->getType()->getPrimitiveID()) {
+      GET_CONST_VAL(Bool   , ConstPoolBool);
+      GET_CONST_VAL(UByte  , ConstPoolUInt);
+      GET_CONST_VAL(SByte  , ConstPoolSInt);
+      GET_CONST_VAL(UShort , ConstPoolUInt);
+      GET_CONST_VAL(Short  , ConstPoolSInt);
+      GET_CONST_VAL(UInt   , ConstPoolUInt);
+      GET_CONST_VAL(Int    , ConstPoolSInt);
+      GET_CONST_VAL(Float  , ConstPoolFP);
+      GET_CONST_VAL(Double , ConstPoolFP);
+    case Type::PointerTyID:
+      if (isa<ConstPoolPointerNull>(CPV)) {
+        Result.PointerVal = 0;
+      } else if (ConstPoolPointerRef *CPR =dyn_cast<ConstPoolPointerRef>(CPV)) {
+        assert(0 && "Not implemented!");
+      } else {
+        assert(0 && "Unknown constant pointer type!");
+      }
+      break;
+    default:
+      cout << "ERROR: Constant unimp for type: " << CPV->getType() << endl;
+    }
+    return Result;
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    GlobalAddress *Address = 
+      (GlobalAddress*)GV->getOrCreateAnnotation(GlobalAddressAID);
+    GenericValue Result;
+    Result.PointerVal = (GenericValue*)Address->Ptr;
+    return Result;
+  } else {
+    unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
+    return SF.Values[TyP][getOperandSlot(V)];
+  }
+}
+
+static void printOperandInfo(Value *V, ExecutionContext &SF) {
+  if (isa<ConstPoolVal>(V)) {
+    cout << "Constant Pool Value\n";
+  } else if (isa<GlobalValue>(V)) {
+    cout << "Global Value\n";
+  } else {
+    unsigned TyP  = V->getType()->getUniqueID();   // TypePlane for value
+    unsigned Slot = getOperandSlot(V);
+    cout << "Value=" << (void*)V << " TypeID=" << TyP << " Slot=" << Slot
+	 << " Addr=" << &SF.Values[TyP][Slot] << " SF=" << &SF << endl;
+  }
+}
+
+
+
+static void SetValue(Value *V, GenericValue Val, ExecutionContext &SF) {
+  unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
+
+  //cout << "Setting value: " << &SF.Values[TyP][getOperandSlot(V)] << endl;
+  SF.Values[TyP][getOperandSlot(V)] = Val;
+}
+
+
+//===----------------------------------------------------------------------===//
 //                    Annotation Wrangling code
 //===----------------------------------------------------------------------===//
 
@@ -36,10 +110,10 @@ void Interpreter::initializeExecutionEngine() {
 // specified memory location...
 //
 static void InitializeMemory(ConstPoolVal *Init, char *Addr) {
-#define INITIALIZE_MEMORY(TYID, CLASS, TY) \
-  case Type::TYID##TyID: {                 \
+#define INITIALIZE_MEMORY(TYID, CLASS, TY)  \
+  case Type::TYID##TyID: {                  \
     TY Tmp = cast<CLASS>(Init)->getValue(); \
-    memcpy(Addr, &Tmp, sizeof(TY));        \
+    memcpy(Addr, &Tmp, sizeof(TY));         \
   } return
 
   switch (Init->getType()->getPrimitiveID()) {
@@ -55,6 +129,7 @@ static void InitializeMemory(ConstPoolVal *Init, char *Addr) {
     INITIALIZE_MEMORY(Float  , ConstPoolFP  , float);
     INITIALIZE_MEMORY(Double , ConstPoolFP  , double);
 #undef INITIALIZE_MEMORY
+
   case Type::ArrayTyID: {
     ConstPoolArray *CPA = cast<ConstPoolArray>(Init);
     const vector<Use> &Val = CPA->getValues();
@@ -64,9 +139,29 @@ static void InitializeMemory(ConstPoolVal *Init, char *Addr) {
       InitializeMemory(cast<ConstPoolVal>(Val[i].get()), Addr+i*ElementSize);
     return;
   }
-    // TODO: Struct and Pointer!
-  case Type::StructTyID:
+
+  case Type::StructTyID: {
+    ConstPoolStruct *CPS = cast<ConstPoolStruct>(Init);
+    const StructLayout *SL=TD.getStructLayout(cast<StructType>(CPS->getType()));
+    const vector<Use> &Val = CPS->getValues();
+    for (unsigned i = 0; i < Val.size(); ++i)
+      InitializeMemory(cast<ConstPoolVal>(Val[i].get()),
+                       Addr+SL->MemberOffsets[i]);
+    return;
+  }
+
   case Type::PointerTyID:
+    if (isa<ConstPoolPointerNull>(Init)) {
+      *(void**)Addr = 0;
+    } else if (ConstPoolPointerRef *CPR = dyn_cast<ConstPoolPointerRef>(Init)) {
+      GlobalAddress *Address = 
+       (GlobalAddress*)CPR->getValue()->getOrCreateAnnotation(GlobalAddressAID);
+      *(void**)Addr = (GenericValue*)Address->Ptr;
+    } else {
+      assert(0 && "Unknown Constant pointer type!");
+    }
+    return;
+
   default:
     cout << "Bad Type: " << Init->getType()->getDescription() << endl;
     assert(0 && "Unknown constant type to initialize memory with!");
@@ -113,81 +208,6 @@ Annotation *GlobalAddress::Create(AnnotationID AID, const Annotable *O, void *){
 
   return new GlobalAddress(Addr, true);  // Simply invoke the ctor
 }
-
-//===----------------------------------------------------------------------===//
-//                     Value Manipulation code
-//===----------------------------------------------------------------------===//
-
-static unsigned getOperandSlot(Value *V) {
-  SlotNumber *SN = (SlotNumber*)V->getAnnotation(SlotNumberAID);
-  assert(SN && "Operand does not have a slot number annotation!");
-  return SN->SlotNum;
-}
-
-#define GET_CONST_VAL(TY, CLASS) \
-  case Type::TY##TyID: Result.TY##Val = cast<CLASS>(CPV)->getValue(); break
-
-static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
-  if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(V)) {
-    GenericValue Result;
-    switch (CPV->getType()->getPrimitiveID()) {
-      GET_CONST_VAL(Bool   , ConstPoolBool);
-      GET_CONST_VAL(UByte  , ConstPoolUInt);
-      GET_CONST_VAL(SByte  , ConstPoolSInt);
-      GET_CONST_VAL(UShort , ConstPoolUInt);
-      GET_CONST_VAL(Short  , ConstPoolSInt);
-      GET_CONST_VAL(UInt   , ConstPoolUInt);
-      GET_CONST_VAL(Int    , ConstPoolSInt);
-      GET_CONST_VAL(Float  , ConstPoolFP);
-      GET_CONST_VAL(Double , ConstPoolFP);
-    case Type::PointerTyID:
-      if (isa<ConstPoolPointerNull>(CPV)) {
-        Result.PointerVal = 0;
-      } else if (ConstPoolPointerReference *CPR = 
-                 dyn_cast<ConstPoolPointerReference>(CPV)) {
-        assert(0 && "Not implemented!");
-      } else {
-        assert(0 && "Unknown constant pointer type!");
-      }
-      break;
-    default:
-      cout << "ERROR: Constant unimp for type: " << CPV->getType() << endl;
-    }
-    return Result;
-  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    GlobalAddress *Address = 
-      (GlobalAddress*)GV->getOrCreateAnnotation(GlobalAddressAID);
-    GenericValue Result;
-    Result.PointerVal = (GenericValue*)Address->Ptr;
-    return Result;
-  } else {
-    unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
-    return SF.Values[TyP][getOperandSlot(V)];
-  }
-}
-
-static void printOperandInfo(Value *V, ExecutionContext &SF) {
-  if (isa<ConstPoolVal>(V)) {
-    cout << "Constant Pool Value\n";
-  } else if (isa<GlobalValue>(V)) {
-    cout << "Global Value\n";
-  } else {
-    unsigned TyP  = V->getType()->getUniqueID();   // TypePlane for value
-    unsigned Slot = getOperandSlot(V);
-    cout << "Value=" << (void*)V << " TypeID=" << TyP << " Slot=" << Slot
-	 << " Addr=" << &SF.Values[TyP][Slot] << " SF=" << &SF << endl;
-  }
-}
-
-
-
-static void SetValue(Value *V, GenericValue Val, ExecutionContext &SF) {
-  unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
-
-  //cout << "Setting value: " << &SF.Values[TyP][getOperandSlot(V)] << endl;
-  SF.Values[TyP][getOperandSlot(V)] = Val;
-}
-
 
 
 //===----------------------------------------------------------------------===//
