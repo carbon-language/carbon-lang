@@ -41,15 +41,12 @@ X86TargetMachine::X86TargetMachine(unsigned Config)
   FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, 4) {
 }
 
-// llc backend for x86
+
+// addPassesToEmitAssembly - We currently use all of the same passes as the JIT
+// does to emit statically compiled machine code.
 bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 					       std::ostream &Out) {
-  PM.add(createLowerSwitchPass());
-  PM.add(createX86SimpleInstructionSelector(*this));
-  PM.add(createLocalRegisterAllocator());
-  PM.add(createX86FloatingPointStackifierPass());
-  PM.add(createPrologEpilogCodeInserter());
-  PM.add(createX86PeepholeOptimizerPass());
+  addPassesToJITCompile(PM);
   PM.add(createX86CodePrinterPass(Out, *this));
   return false; // success!
 }
@@ -93,7 +90,6 @@ bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
 
   if (PrintCode)  // Print the register-allocated code
     PM.add(createX86CodePrinterPass(std::cerr, *this));
-
   return false; // success!
 }
 
