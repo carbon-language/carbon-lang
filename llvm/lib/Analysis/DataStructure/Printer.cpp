@@ -146,7 +146,7 @@ void DSGraph::print(std::ostream &O) const {
     O << "\tNode0x1" << "[ plaintext=circle, label =\""
       << escapeLabel("returning") << "\"];\n";
     writeEdge(O, (void*)1, "", -1, RetNode, "arrowtail=tee,color=gray63");
-  }    
+  }
 
   // Output all of the call nodes...
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
@@ -193,6 +193,23 @@ struct DOTGraphTraits<DSGraph*> : public DefaultDOTGraphTraits {
   static int getEdgeSourceLabel(DSNode *Node, DSNode::iterator I) {
     assert(Node == I.getNode() && "Iterator not for this node!");
     return Node->getMergeMapLabel(I.getOffset());
+  }
+
+  /// addCustomGraphFeatures - Use this graph writing hook to emit call nodes
+  /// and the return node.
+  ///
+  static void addCustomGraphFeatures(DSGraph *G, GraphWriter<DSGraph*> &GW) {
+    // Output the returned value pointer...
+    if (G->getRetNode().getNode() != 0) {
+      // Output the return node...
+      GW.emitSimpleNode((void*)1, "plaintext=circle", "returning");
+
+      // Add edge from return node to real destination
+      int RetEdgeDest = G->getRetNode().getOffset();
+      if (RetEdgeDest == 0) RetEdgeDest = -1;
+      GW.emitEdge((void*)1, -1, G->getRetNode().getNode(),
+                  RetEdgeDest, "arrowtail=tee,color=gray63");
+    }
   }
 };
 
