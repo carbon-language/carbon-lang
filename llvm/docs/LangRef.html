@@ -1405,6 +1405,7 @@ instructions), the memory is reclaimed.<p>
 <h5>Syntax:</h5>
 <pre>
   &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt;
+  &lt;result&gt; = volatile load &lt;ty&gt;* &lt;pointer&gt;
 </pre>
 
 <h5>Overview:</h5>
@@ -1412,7 +1413,12 @@ The '<tt>load</tt>' instruction is used to read from memory.<p>
 
 <h5>Arguments:</h5>
 
-The argument to the '<tt>load</tt>' instruction specifies the memory address to load from.  The pointer must point to a <a href="t_firstclass">first class</a> type.<p>
+The argument to the '<tt>load</tt>' instruction specifies the memory address to
+load from.  The pointer must point to a <a href="t_firstclass">first class</a>
+type.  If the <tt>load</tt> is marked as <tt>volatile</tt> then the optimizer is
+not allowed to modify the number or order of execution of this <tt>load</tt>
+with other volatile <tt>load</tt> and <tt><a href="#i_store">store</a></tt>
+instructions. <p>
 
 <h5>Semantics:</h5>
 
@@ -1434,6 +1440,7 @@ The location of memory pointed to is loaded.
 <h5>Syntax:</h5>
 <pre>
   store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;                   <i>; yields {void}</i>
+  volatile store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;                   <i>; yields {void}</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -1443,8 +1450,11 @@ The '<tt>store</tt>' instruction is used to write to memory.<p>
 
 There are two arguments to the '<tt>store</tt>' instruction: a value to store
 and an address to store it into.  The type of the '<tt>&lt;pointer&gt;</tt>'
-operand must be a pointer to the type of the '<tt>&lt;value&gt;</tt>'
-operand.<p>
+operand must be a pointer to the type of the '<tt>&lt;value&gt;</tt>' operand.
+If the <tt>store</tt> is marked as <tt>volatile</tt> then the optimizer is not
+allowed to modify the number or order of execution of this <tt>store</tt> with
+other volatile <tt>load</tt> and <tt><a href="#i_store">store</a></tt>
+instructions.<p>
 
 <h5>Semantics:</h5> The contents of memory are updated to contain
 '<tt>&lt;value&gt;</tt>' at the location specified by the
@@ -1895,7 +1905,7 @@ arbitrarily complex and require memory allocation, for example.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Tue Sep  2 19:41:01 CDT 2003
+Last modified: Mon Sep  8 13:27:14 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
