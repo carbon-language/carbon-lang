@@ -153,17 +153,12 @@ $LOC = GetRegex "([0-9]+) +total", `wc -l \`utils/getsrcs.sh\` | grep total`;
 # Build the entire tree, saving build messages to the build log
 #
 if (!$NOCHECKOUT) {
-  # Change the Makefile.config to build into the local directory...
-  rename "Makefile.config", "Makefile.config.orig";
-  system "sed '/^OBJ_ROOT/d' < Makefile.config.orig > Makefile.config";
-  system "echo >> Makefile.config";
-  system "echo 'OBJ_ROOT := .' >> Makefile.config";
-
+  system "(time -p ./configure) > $Prefix-Build-Log.txt 2>&1";
   # Change the Makefile.config to not strip executables...
   system "echo 'KEEP_SYMBOLS := 1' >> Makefile.config";
 
   # Build the entire tree, capturing the output into $Prefix-Build-Log.txt
-  system "(time -p gmake $MAKEOPTS) > $Prefix-Build-Log.txt 2>&1";
+  system "(time -p gmake $MAKEOPTS) >> $Prefix-Build-Log.txt 2>&1";
 }
 
 
