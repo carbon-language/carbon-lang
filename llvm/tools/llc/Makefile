@@ -17,7 +17,7 @@ USEDLIBS = \
 	skeleton \
 	selectiondag \
 	sparcv9regalloc \
-	sched \
+	sparcv9sched \
 	codegen \
 	target.a \
 	sparcv9livevar \

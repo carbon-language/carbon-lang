@@ -41,7 +41,7 @@ endif
 ifdef ENABLE_SPARC_JIT
   CPPFLAGS += -DENABLE_SPARC_JIT
   JITLIBS  += sparcv9
-  ARCHLIBS += sched sparcv9livevar instrument.a profpaths \
+  ARCHLIBS += sparcv9sched sparcv9livevar instrument.a profpaths \
               bcwriter transforms.a ipo.a ipa.a datastructure.a \
               sparcv9regalloc
 endif
