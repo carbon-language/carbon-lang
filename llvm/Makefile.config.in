@@ -23,14 +23,9 @@ ENDIAN=@ENDIAN@
 
 # Path to the C++ compiler to use.  This is an optional setting, which defaults
 # to whatever your gmake defaults to.
-#
-# Under Linux, for some reason the compiler driver wants to search the PATH to
-# find the system assembler, which breaks if the LLVM assembler is in our path.
-# Hack it to use the assembler in /usr/bin directly.
 CXX = @CXX@
 
-# We have the same problem with the CC binary, which use used by testcases for
-# native builds.
+# Path to the CC binary, which use used by testcases for native builds.
 CC := @CC@
 
 # Linker flags.
