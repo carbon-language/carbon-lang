@@ -2490,6 +2490,7 @@ Value *ScalarEvolutionRewriter::ExpandCodeFor(SCEVHandle SH,
       if ((*UI)->getType() == Ty)
         if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI))) {
           BasicBlock::iterator It = I; ++It;
+          while (isa<PHINode>(It)) ++It;
           if (It != BasicBlock::iterator(CI)) {
             // Splice the cast immediately after the operand in question.
             I->getParent()->getInstList().splice(It,
