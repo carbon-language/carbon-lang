@@ -1,7 +1,7 @@
 ; This testcase checks to make sure the sinker does not cause problems with
 ; critical edges.
 
-; RUN: llvm-as < %s | opt -licm | llvm-dis | grep -C1 add | grep Exit
+; RUN: llvm-as < %s | opt -licm | llvm-dis | %prcontext add 1 | grep Exit
 
 implementation   ; Functions:
 

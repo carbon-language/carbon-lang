@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -licm | llvm-dis | grep -C1 add | grep preheader.loopexit: 
+; RUN: llvm-as < %s | opt -licm | llvm-dis | %prcontext add 1 | grep preheader.loopexit: 
 
 implementation
 

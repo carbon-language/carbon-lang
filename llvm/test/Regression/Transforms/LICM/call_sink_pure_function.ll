@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -basicaa -licm | llvm-dis | grep -C1 strlen | grep Out: 
+; RUN: llvm-as < %s | opt -basicaa -licm | llvm-dis | %prcontext strlen 1 | grep Out: 
 declare int %strlen(sbyte*)
 declare void %foo()
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars  | llvm-dis | grep -C1 Loop: | grep %indvar
+; RUN: llvm-as < %s | opt -indvars  | llvm-dis | %prcontext Loop: 1 | grep %indvar
 
 ; The indvar simplification code should ensure that the first PHI in the block 
 ; is the canonical one!

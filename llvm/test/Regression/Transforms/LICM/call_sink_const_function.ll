@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -basicaa -licm | llvm-dis | grep -C1 sin | grep Out: 
+; RUN: llvm-as < %s | opt -basicaa -licm | llvm-dis | %prcontext sin 1 | grep Out: 
 declare double %sin(double)
 declare void %foo()
 

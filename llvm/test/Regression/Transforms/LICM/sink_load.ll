@@ -2,7 +2,7 @@
 ; result of the load is only used outside of the loop, sink the load instead of
 ; hoisting it!
 ;
-; RUN: llvm-as < %s | opt -licm | llvm-dis | grep -C1 load | grep Out: 
+; RUN: llvm-as < %s | opt -licm | llvm-dis | %prcontext load 1 | grep Out: 
 
 %X = global int 5
 
