@@ -1880,8 +1880,8 @@ void BytecodeReader::ParseModuleGlobalInfo() {
       cast<FunctionType>(cast<PointerType>(Ty)->getElementType());
 
 
-    // Insert the place hodler
-    Function* Func = new Function(FTy, GlobalValue::InternalLinkage, 
+    // Insert the place holder.
+    Function* Func = new Function(FTy, GlobalValue::ExternalLinkage, 
                                   "", TheModule);
     insertValue(Func, FnSignature >> 5, ModuleValues);
 
