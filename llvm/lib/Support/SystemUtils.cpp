@@ -14,19 +14,21 @@
 
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Program.h"
+#include "llvm/System/Process.h"
+#include <iostream>
 
 using namespace llvm;
 
-/// isStandardOutAConsole - Return true if we can tell that the standard output
-/// stream goes to a terminal window or console.
-bool llvm::isStandardOutAConsole() {
-#if HAVE_ISATTY
-  return isatty(1);
-#endif
-  // If we don't have isatty, just return false.
+bool llvm::CheckBytecodeOutputToConsole(std::ostream* stream_to_check) {
+  if (stream_to_check == &std::cout && sys::Process::StandardOutIsDisplayed()) {
+    std::cerr << "WARNING: You're attempting to print out a bytecode file.\n";
+    std::cerr << "This is inadvisable as it may cause display problems. If\n";
+    std::cerr << "you REALLY want to taste LLVM bytecode first-hand, you can\n";
+    std::cerr << "force output with the `-f' option.\n\n";
+    return true;
+  }
   return false;
 }
-
 
 /// FindExecutable - Find a named executable, giving the argv[0] of program
 /// being executed. This allows us to find another LLVM tool if it is built

@@ -19,9 +19,12 @@
 
 namespace llvm {
 
-/// isStandardOutAConsole - Return true if we can tell that the standard output
-/// stream goes to a terminal window or console.
-bool isStandardOutAConsole();
+/// Determine if the ostream provided is connected to the std::cout and 
+/// displayed or not (to a console window). If so, generate a warning message 
+/// advising against display of bytecode and return true. Otherwise just return
+/// false
+/// @brief Check for output written to a console
+bool CheckBytecodeOutputToConsole(std::ostream* stream_to_check);
 
 /// FindExecutable - Find a named executable, giving the argv[0] of program
 /// being executed. This allows us to find another LLVM tool if it is built into
