@@ -19,8 +19,6 @@
 #include "llvm/iOther.h"
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
-using std::cerr;
-using std::vector;
 
 enum {
   BadRegClass = ~0
@@ -665,7 +663,7 @@ UltraSparcRegInfo::InitializeOutgoingArg(MachineInstr* CallMI,
                              PhyRegAlloc &PRA, LiveRange* LR,
                              unsigned regType, unsigned RegClassID,
                              int UniArgRegOrNone, unsigned argNo,
-                             std::vector<MachineInstr *>& AddedInstrnsBefore)
+                             std::vector<MachineInstr*> &AddedInstrnsBefore)
   const
 {
   MachineInstr *AdMI;
@@ -778,7 +776,7 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
     LiveRange *RetValLR = LRI.getLiveRangeForValue( RetVal );
 
     if (!RetValLR) {
-      cerr << "\nNo LR for:" << RAV(RetVal) << "\n";
+      std::cerr << "\nNo LR for:" << RAV(RetVal) << "\n";
       assert(RetValLR && "ERR:No LR for non-void return value");
     }
 
@@ -840,7 +838,7 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
   // Now color all args of the call instruction
   //-------------------------------------------
 
-  std::vector<MachineInstr *> AddedInstrnsBefore;
+  std::vector<MachineInstr*> AddedInstrnsBefore;
   
   unsigned NumOfCallArgs = argDesc->getNumArgs();
   
@@ -882,7 +880,7 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
     // not possible to have a null LR since all args (even consts)  
     // must be defined before
     if (!LR) {          
-      cerr << " ERROR: In call instr, no LR for arg:  " << RAV(CallArg) <<"\n";
+      std::cerr <<" ERROR: In call instr, no LR for arg: " <<RAV(CallArg)<<"\n";
       assert(LR && "NO LR for call arg");  
     }
     
@@ -929,13 +927,13 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
   // If we added any instruction before the call instruction, verify
   // that they are in the proper order and if not, reorder them
   // 
-  std::vector<MachineInstr *> ReorderedVec;
+  std::vector<MachineInstr*> ReorderedVec;
   if (!AddedInstrnsBefore.empty()) {
 
     if (DEBUG_RA) {
-      cerr << "\nCalling reorder with instrns: \n";
+      std::cerr << "\nCalling reorder with instrns: \n";
       for(unsigned i=0; i < AddedInstrnsBefore.size(); i++)
-	cerr  << *(AddedInstrnsBefore[i]);
+	std::cerr  << *(AddedInstrnsBefore[i]);
     }
 
     OrderAddedInstrns(AddedInstrnsBefore, ReorderedVec, PRA);
@@ -943,9 +941,9 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
            && "Dropped some instructions when reordering!");
     
     if (DEBUG_RA) {
-      cerr << "\nAfter reordering instrns: \n";
+      std::cerr << "\nAfter reordering instrns: \n";
       for(unsigned i = 0; i < ReorderedVec.size(); i++)
-	cerr << *ReorderedVec[i];
+	std::cerr << *ReorderedVec[i];
     }
   }
   
@@ -980,7 +978,7 @@ void UltraSparcRegInfo::suggestReg4RetValue(MachineInstr *RetMI,
     LiveRange *const LR = LRI.getLiveRangeForValue( RetVal ); 
 
     if (!LR) {
-      cerr << "\nNo LR for:" << RAV(RetVal) << "\n";
+      std::cerr << "\nNo LR for:" << RAV(RetVal) << "\n";
       assert(0 && "No LR for return value of non-void method");
     }
 
@@ -1015,7 +1013,7 @@ void UltraSparcRegInfo::colorRetValue(MachineInstr *RetMI,
     LiveRange *LR = LRI.getLiveRangeForValue(RetVal); 
 
     if (!LR) {
-      cerr << "\nNo LR for:" << RAV(RetVal) << "\n";
+      std::cerr << "\nNo LR for:" << RAV(RetVal) << "\n";
       // assert( LR && "No LR for return value of non-void method");
       return;
     }
@@ -1060,7 +1058,7 @@ void UltraSparcRegInfo::colorRetValue(MachineInstr *RetMI,
     else {                              // if the LR is spilled
       cpMem2RegMI(RetAI->InstrnsBefore, getFramePointer(),
                   LR->getSpillOffFromFP(), UniRetReg, regType);
-      //cerr << "\nCopied the return value from stack\n";
+      //std::cerr << "\nCopied the return value from stack\n";
     }
   
   } // if there is a return value
@@ -1094,7 +1092,7 @@ UltraSparcRegInfo::regTypeNeedsScratchReg(int RegType,
 //---------------------------------------------------------------------------
 
 void
-UltraSparcRegInfo::cpReg2RegMI(vector<MachineInstr*>& mvec,
+UltraSparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
                                unsigned SrcReg,
                                unsigned DestReg,
                                int RegType) const {
@@ -1152,7 +1150,7 @@ UltraSparcRegInfo::cpReg2RegMI(vector<MachineInstr*>& mvec,
 
 
 void
-UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
+UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
                                unsigned SrcReg, 
                                unsigned DestPtrReg,
                                int Offset, int RegType,
@@ -1206,7 +1204,7 @@ UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
 
 
 void
-UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
+UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
                                unsigned SrcPtrReg,	
                                int Offset,
                                unsigned DestReg,
@@ -1264,7 +1262,7 @@ UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
 
 void
 UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest,
-                                 vector<MachineInstr*>& mvec) const {
+                                 std::vector<MachineInstr*>& mvec) const {
   int RegType = getRegType(Src->getType());
   MachineInstr * MI = NULL;
 
@@ -1306,11 +1304,12 @@ UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest,
 
 
 void
-UltraSparcRegInfo::insertCallerSavingCode(vector<MachineInstr*>& instrnsBefore,
-                                          vector<MachineInstr*>& instrnsAfter,
-                                          MachineInstr *CallMI, 
-                                          const BasicBlock *BB,
-                                          PhyRegAlloc &PRA) const
+UltraSparcRegInfo::insertCallerSavingCode
+(std::vector<MachineInstr*> &instrnsBefore,
+ std::vector<MachineInstr*> &instrnsAfter,
+ MachineInstr *CallMI, 
+ const BasicBlock *BB,
+ PhyRegAlloc &PRA) const
 {
   assert ( (target.getInstrInfo()).isCall(CallMI->getOpCode()) );
   
@@ -1377,7 +1376,7 @@ UltraSparcRegInfo::insertCallerSavingCode(vector<MachineInstr*>& instrnsBefore,
 	    int StackOff = 
 	      PRA.MF.getInfo()->pushTempValue(getSpilledRegSize(RegType));
             
-	    vector<MachineInstr*> AdIBef, AdIAft;
+	    std::vector<MachineInstr*> AdIBef, AdIAft;
             
 	    //---- Insert code for pushing the reg on stack ----------
             
@@ -1439,11 +1438,11 @@ UltraSparcRegInfo::insertCallerSavingCode(vector<MachineInstr*>& instrnsBefore,
 	    PushedRegSet.insert(Reg);
             
 	    if(DEBUG_RA) {
-	      cerr << "\nFor call inst:" << *CallMI;
-	      cerr << " -inserted caller saving instrs: Before:\n\t ";
+	      std::cerr << "\nFor call inst:" << *CallMI;
+	      std::cerr << " -inserted caller saving instrs: Before:\n\t ";
               for_each(instrnsBefore.begin(), instrnsBefore.end(),
                        std::mem_fun(&MachineInstr::dump));
-	      cerr << " -and After:\n\t ";
+	      std::cerr << " -and After:\n\t ";
               for_each(instrnsAfter.begin(), instrnsAfter.end(),
                        std::mem_fun(&MachineInstr::dump));
 	    }	    
@@ -1465,25 +1464,25 @@ UltraSparcRegInfo::insertCallerSavingCode(vector<MachineInstr*>& instrnsBefore,
 
 void UltraSparcRegInfo::printReg(const LiveRange *LR) {
   unsigned RegClassID = LR->getRegClassID();
-  cerr << " *Node " << (LR->getUserIGNode())->getIndex();
+  std::cerr << " *Node " << (LR->getUserIGNode())->getIndex();
 
   if (!LR->hasColor()) {
-    cerr << " - could not find a color\n";
+    std::cerr << " - could not find a color\n";
     return;
   }
   
   // if a color is found
 
-  cerr << " colored with color "<< LR->getColor();
+  std::cerr << " colored with color "<< LR->getColor();
 
   if (RegClassID == IntRegClassID) {
-    cerr<< " [" << SparcIntRegClass::getRegName(LR->getColor()) << "]\n";
+    std::cerr<< " [" << SparcIntRegClass::getRegName(LR->getColor()) << "]\n";
 
   } else if (RegClassID == FloatRegClassID) {
-    cerr << "[" << SparcFloatRegClass::getRegName(LR->getColor());
+    std::cerr << "[" << SparcFloatRegClass::getRegName(LR->getColor());
     if( LR->getType() == Type::DoubleTy)
-      cerr << "+" << SparcFloatRegClass::getRegName(LR->getColor()+1);
-    cerr << "]\n";
+      std::cerr << "+" << SparcFloatRegClass::getRegName(LR->getColor()+1);
+    std::cerr << "]\n";
   }
 }
 
@@ -1545,7 +1544,7 @@ void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
 
   do {
     CouldMoveAll = true;
-    std::vector<MachineInstr *>::iterator DefIt = UnordVec.begin();
+    std::vector<MachineInstr*>::iterator DefIt = UnordVec.begin();
 
     for( ; DefIt !=  UnordVec.end(); ++DefIt ) {
 
@@ -1555,7 +1554,7 @@ void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
 
       if( DefInst == NULL) continue;
 
-      //cerr << "\nInst in UnordVec = " <<  *DefInst;
+      //std::cerr << "\nInst in UnordVec = " <<  *DefInst;
       
       // last operand is the def (unless for a store which has no def reg)
       MachineOperand& DefOp = DefInst->getOperand(DefInst->getNumOperands()-1);
@@ -1566,7 +1565,7 @@ void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
 	// If the operand in DefInst is a def ...
 	bool DefEqUse = false;
 	
-	std::vector<MachineInstr *>::iterator UseIt = DefIt;
+	std::vector<MachineInstr*>::iterator UseIt = DefIt;
 	UseIt++;
 	
 	for( ; UseIt !=  UnordVec.end(); ++UseIt ) {
@@ -1587,7 +1586,7 @@ void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
 	      // if Def and this use are the same, it means that this use
 	      // is destroyed by a def before it is used
 	      
-	      // cerr << "\nCouldn't move " << *DefInst;
+	      // std::cerr << "\nCouldn't move " << *DefInst;
 
 	      DefEqUse = true;
 	      CouldMoveAll = false;	
@@ -1604,7 +1603,7 @@ void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
 	  // after examining all the instructions that follow the DefInst
 	  // if there are no dependencies, we can move it to the OrdVec
 
-	  // cerr << "Moved to Ord: " << *DefInst;
+	  // std::cerr << "Moved to Ord: " << *DefInst;
 
 	  moveInst2OrdVec(OrdVec, DefInst, PRA);
 
@@ -1623,9 +1622,9 @@ void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
   } while(!CouldMoveAll);
 
   if (DebugPrint && DEBUG_RA) {
-    cerr << "\nAdded instructions were reordered to:\n";
+    std::cerr << "\nAdded instructions were reordered to:\n";
     for(unsigned i=0; i < OrdVec.size(); i++)
-      cerr << *OrdVec[i];
+      std::cerr << *OrdVec[i];
   }
 }
 
@@ -1633,7 +1632,7 @@ void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
 
 
 
-void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
+void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr*> &OrdVec,
 					MachineInstr *UnordInst,
 					PhyRegAlloc &PRA) const {
   MachineOperand& UseOp = UnordInst->getOperand(0);
@@ -1645,7 +1644,7 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
     // before in the OrdVec
     bool DefEqUse = false;
 
-    std::vector<MachineInstr *>::iterator OrdIt = OrdVec.begin();
+    std::vector<MachineInstr*>::iterator OrdIt = OrdVec.begin();
   
     for( ; OrdIt !=  OrdVec.end(); ++OrdIt ) {
 
@@ -1657,7 +1656,7 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
       if( DefOp.opIsDef() &&  
 	  DefOp.getType() == MachineOperand::MO_MachineRegister) {
 
-	//cerr << "\nDefining Ord Inst: " <<  *OrdInst;
+	//std::cerr << "\nDefining Ord Inst: " <<  *OrdInst;
 	  
 	if( DefOp.getMachineRegNum() == UseOp.getMachineRegNum() ) {
 
@@ -1678,9 +1677,9 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
 	    PRA.MF.getInfo()->pushTempValue(getSpilledRegSize(RegType));
 	  
 	  // Save the UReg (%ox) on stack before it's destroyed
-          vector<MachineInstr*> mvec;
+          std::vector<MachineInstr*> mvec;
 	  cpReg2MemMI(mvec, UReg, getFramePointer(), StackOff, RegType);
-          for (vector<MachineInstr*>::iterator MI=mvec.begin();
+          for (std::vector<MachineInstr*>::iterator MI=mvec.begin();
 	       MI != mvec.end(); ++MI)
             OrdIt = 1+OrdVec.insert(OrdIt, *MI);
 	  
@@ -1693,14 +1692,14 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
 	  cpMem2RegMI(OrdVec, getFramePointer(), StackOff, DReg, RegType);
 	    
 	  if( DEBUG_RA ) {
-            cerr << "\nFixed CIRCULAR references by reordering:";
-	    cerr << "\nBefore CIRCULAR Reordering:\n";
-	    cerr << *UnordInst;
-	    cerr << *OrdInst;
+            std::cerr << "\nFixed CIRCULAR references by reordering:";
+	    std::cerr << "\nBefore CIRCULAR Reordering:\n";
+	    std::cerr << *UnordInst;
+	    std::cerr << *OrdInst;
 	  
-	    cerr << "\nAfter CIRCULAR Reordering - All Inst so far:\n";
+	    std::cerr << "\nAfter CIRCULAR Reordering - All Inst so far:\n";
 	    for(unsigned i=0; i < OrdVec.size(); i++)
-	      cerr << *(OrdVec[i]);
+	      std::cerr << *(OrdVec[i]);
 	  }
 	  
 	  // Do not copy the UseInst to OrdVec
@@ -1717,7 +1716,7 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
 
       // We didn't find a def in the OrdVec, so just append this inst
       OrdVec.push_back( UnordInst );  
-      //cerr << "Reordered Inst (Moved Dn): " <<  *UnordInst;
+      //std::cerr << "Reordered Inst (Moved Dn): " <<  *UnordInst;
     }
     
   }// if the operand in UnordInst is a use

@@ -7,8 +7,6 @@
 #include "SparcRegClassInfo.h"
 #include "llvm/Type.h"
 #include "../../CodeGen/RegAlloc/RegAllocCommon.h"   // FIXME!
-using std::cerr;
-using std::vector;
 
 //-----------------------------------------------------------------------------
 // Int Register Class - method for coloring a node in the interference graph.
@@ -23,11 +21,13 @@ using std::vector;
 //     If both above fail, spill.
 //  
 //-----------------------------------------------------------------------------
-void SparcIntRegClass::colorIGNode(IGNode * Node, vector<bool> &IsColorUsedArr) const {
+void SparcIntRegClass::colorIGNode(IGNode * Node,
+                                   std::vector<bool> &IsColorUsedArr) const
+{
   LiveRange *LR = Node->getParentLR();
 
   if( DEBUG_RA ) {
-    cerr << "\nColoring LR [CallInt=" << LR->isCallInterference() <<"]:"; 
+    std::cerr << "\nColoring LR [CallInt=" << LR->isCallInterference() <<"]:"; 
     printSet(*LR);
   }
 
@@ -43,18 +43,18 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, vector<bool> &IsColorUsedArr) 
 	// there are no call interferences. Otherwise, it will get spilled.
 
 	if (DEBUG_RA)
-	  cerr << "\n  -Coloring with sug color: " << SugCol;
+	  std::cerr << "\n  -Coloring with sug color: " << SugCol;
 
 	LR->setColor(  LR->getSuggestedColor() );
 	return;
       }
        else if(DEBUG_RA)
-	 cerr << "\n Couldn't alloc Sug col - LR voloatile & calls interf";
+	 std::cerr << "\n Couldn't alloc Sug col - LR voloatile & calls interf";
 
     }
-    else if ( DEBUG_RA ) {                // can't allocate the suggested col
-      cerr << "  \n  Could NOT allocate the suggested color (already used) ";
-      printSet(*LR); cerr << "\n";
+    else if (DEBUG_RA) {                // can't allocate the suggested col
+      std::cerr << "\n  Could NOT allocate the suggested color (already used) ";
+      printSet(*LR); std::cerr << "\n";
     }
   }
 
@@ -81,7 +81,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, vector<bool> &IsColorUsedArr) 
 
   if( ColorFound) {
     LR->setColor(c);                  // first color found in preffered order
-    if (DEBUG_RA) cerr << "\n  Colored after first search with col " << c ; 
+    if (DEBUG_RA) std::cerr << "\n  Colored after first search with col " << c;
   }
 
   // if color is not found because of call interference
@@ -103,7 +103,8 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, vector<bool> &IsColorUsedArr) 
        // since LR span across calls, must save across calls 
        //
        LR->markForSaveAcrossCalls();       
-       if(DEBUG_RA) cerr << "\n  Colored after SECOND search with col " << c ;
+       if (DEBUG_RA)
+         std::cerr << "\n  Colored after SECOND search with col " << c;
     }
   }
 
@@ -136,7 +137,8 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, vector<bool> &IsColorUsedArr) 
 //
 //----------------------------------------------------------------------------
 void SparcFloatRegClass::colorIGNode(IGNode * Node,
-                                     vector<bool> &IsColorUsedArr) const{
+                                     std::vector<bool> &IsColorUsedArr) const
+{
   LiveRange *LR = Node->getParentLR();
 
   // Mark the second color for double-precision registers:
@@ -172,8 +174,8 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
       LR->setColor(  LR->getSuggestedColor() );
       return;
     } else if (DEBUG_RA)  {                 // can't allocate the suggested col
-      cerr << " Could NOT allocate the suggested color for LR ";
-      printSet(*LR); cerr << "\n";
+      std::cerr << " Could NOT allocate the suggested color for LR ";
+      printSet(*LR); std::cerr << "\n";
     }
   }
 
@@ -247,9 +249,11 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
 // type of the Node (i.e., float/double)
 //-----------------------------------------------------------------------------
 
-int SparcFloatRegClass::findFloatColor(const LiveRange *LR, 
-				       unsigned Start, unsigned End, 
-				       vector<bool> &IsColorUsedArr) const {
+int SparcFloatRegClass::findFloatColor
+(const LiveRange *LR, 
+ unsigned Start, unsigned End, 
+ std::vector<bool> &IsColorUsedArr) const
+{
   bool ColorFound = false;
   unsigned c;
 

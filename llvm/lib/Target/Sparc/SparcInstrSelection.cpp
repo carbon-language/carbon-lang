@@ -24,10 +24,9 @@
 #include "llvm/ConstantHandling.h"
 #include "Support/MathExtras.h"
 #include <math.h>
-using std::vector;
 
 static inline void Add3OperandInstr(unsigned Opcode, InstructionNode* Node,
-                                    vector<MachineInstr*>& mvec) {
+                                    std::vector<MachineInstr*>& mvec) {
   mvec.push_back(BuildMI(Opcode, 3).addReg(Node->leftChild()->getValue())
                                    .addReg(Node->rightChild()->getValue())
                                    .addRegDef(Node->getValue()));
@@ -73,7 +72,7 @@ IsZero(Value* idx)
 }
 
 static Value*
-FoldGetElemChain(InstrTreeNode* ptrNode, vector<Value*>& chainIdxVec,
+FoldGetElemChain(InstrTreeNode* ptrNode, std::vector<Value*>& chainIdxVec,
                  bool lastInstHasLeadingNonZero)
 {
   InstructionNode* gepNode = dyn_cast<InstructionNode>(ptrNode);
@@ -164,7 +163,7 @@ FoldGetElemChain(InstrTreeNode* ptrNode, vector<Value*>& chainIdxVec,
 
 static Value *
 GetGEPInstArgs(InstructionNode* gepNode,
-               vector<Value*>& idxVec,
+               std::vector<Value*>& idxVec,
                bool& allConstantIndices)
 {
   allConstantIndices = true;
@@ -221,7 +220,7 @@ GetGEPInstArgs(InstructionNode* gepNode,
 
 static Value*
 GetMemInstArgs(InstructionNode* memInstrNode,
-               vector<Value*>& idxVec,
+               std::vector<Value*>& idxVec,
                bool& allConstantIndices)
 {
   allConstantIndices = false;
@@ -745,7 +744,7 @@ CreateShiftInstructions(const TargetMachine& target,
                         Value* optArgVal2, /* Use optArgVal2 if not NULL */
                         unsigned optShiftNum, /* else use optShiftNum */
                         Instruction* destVal,
-                        vector<MachineInstr*>& mvec,
+                        std::vector<MachineInstr*>& mvec,
                         MachineCodeForInstruction& mcfi)
 {
   assert((optArgVal2 != NULL || optShiftNum <= 64) &&
@@ -788,7 +787,7 @@ CreateShiftInstructions(const TargetMachine& target,
 static inline unsigned
 CreateMulConstInstruction(const TargetMachine &target, Function* F,
                           Value* lval, Value* rval, Instruction* destVal,
-                          vector<MachineInstr*>& mvec,
+                          std::vector<MachineInstr*>& mvec,
                           MachineCodeForInstruction& mcfi)
 {
   /* Use max. multiply cost, viz., cost of MULX */
@@ -869,7 +868,7 @@ CreateCheapestMulConstInstruction(const TargetMachine &target,
                                   Function* F,
                                   Value* lval, Value* rval,
                                   Instruction* destVal,
-                                  vector<MachineInstr*>& mvec,
+                                  std::vector<MachineInstr*>& mvec,
                                   MachineCodeForInstruction& mcfi)
 {
   Value* constOp;
@@ -892,7 +891,7 @@ CreateCheapestMulConstInstruction(const TargetMachine &target,
 static inline void
 CreateMulInstruction(const TargetMachine &target, Function* F,
                      Value* lval, Value* rval, Instruction* destVal,
-                     vector<MachineInstr*>& mvec,
+                     std::vector<MachineInstr*>& mvec,
                      MachineCodeForInstruction& mcfi,
                      MachineOpCode forceMulOp = INVALID_MACHINE_OPCODE)
 {
@@ -941,7 +940,7 @@ ChooseDivInstruction(TargetMachine &target,
 static inline void
 CreateDivConstInstruction(TargetMachine &target,
                           const InstructionNode* instrNode,
-                          vector<MachineInstr*>& mvec)
+                          std::vector<MachineInstr*>& mvec)
 {
   Value* LHS  = instrNode->leftChild()->getValue();
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
@@ -1005,7 +1004,7 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
                                 Instruction* result,
                                 unsigned tsize,
                                 Value* numElementsVal,
-                                vector<MachineInstr*>& getMvec)
+                                std::vector<MachineInstr*>& getMvec)
 {
   Value* totalSizeVal;
   MachineInstr* M;
@@ -1076,7 +1075,7 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
                              Instruction* result,
                              unsigned tsize,
                              unsigned numElements,
-                             vector<MachineInstr*>& getMvec)
+                             std::vector<MachineInstr*>& getMvec)
 {
   assert(tsize > 0 && "Illegal (zero) type size for alloca");
   assert(result && result->getParent() &&
@@ -1131,13 +1130,13 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
 
 static void
 SetOperandsForMemInstr(unsigned Opcode,
-                       vector<MachineInstr*>& mvec,
+                       std::vector<MachineInstr*>& mvec,
                        InstructionNode* vmInstrNode,
                        const TargetMachine& target)
 {
   Instruction* memInst = vmInstrNode->getInstruction();
   // Index vector, ptr value, and flag if all indices are const.
-  vector<Value*> idxVec;
+  std::vector<Value*> idxVec;
   bool allConstantIndices;
   Value* ptrVal = GetMemInstArgs(vmInstrNode, idxVec, allConstantIndices);
 
@@ -1176,7 +1175,7 @@ SetOperandsForMemInstr(unsigned Opcode,
 
           Value* idxVal = idxVec[firstIdxIsZero];
 
-          vector<MachineInstr*> mulVec;
+          std::vector<MachineInstr*> mulVec;
           Instruction* addr = new TmpInstruction(Type::ULongTy, memInst);
           MachineCodeForInstruction::get(memInst).addTemp(addr);
 
@@ -1366,7 +1365,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                       int ruleForNode,
                       short* nts,
                       TargetMachine &target,
-                      vector<MachineInstr*>& mvec)
+                      std::vector<MachineInstr*>& mvec)
 {
   bool checkCast = false;		// initialize here to use fall-through
   bool maskUnsignedResult = false;
@@ -2171,7 +2170,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                     intArgReg = new TmpInstruction(Type::IntTy, argVal);
                     destMCFI.addTemp(intArgReg);
                     
-                    vector<MachineInstr*> copyMvec;
+                    std::vector<MachineInstr*> copyMvec;
                     target.getInstrInfo().CreateCodeToCopyFloatToInt(target,
                                            callInstr->getParent()->getParent(),
                                            argVal, (TmpInstruction*) intArgReg,
@@ -2256,7 +2255,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         ForwardOperand(subtreeRoot, subtreeRoot->parent(), forwardOperandNum);
       else
         {
-          vector<MachineInstr*> minstrVec;
+          std::vector<MachineInstr*> minstrVec;
           Instruction* instr = subtreeRoot->getInstruction();
           target.getInstrInfo().
             CreateCopyInstructionsByType(target,
