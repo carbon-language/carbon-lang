@@ -530,7 +530,6 @@ public:
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(MachineOperand(reg, MachineOperand::MO_MachineRegister,
                                       isDef ? MOTy::Def : MOTy::Use));
-    insertUsedReg(reg);
   }
 
   /// addMachineRegOperand - Add a virtual register operand to this MachineInstr
@@ -540,7 +539,6 @@ public:
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(MachineOperand(reg, MachineOperand::MO_MachineRegister,
                                       UTy));
-    insertUsedReg(reg);
   }
 
   /// addZeroExtImmOperand - Add a zero extended constant argument to the

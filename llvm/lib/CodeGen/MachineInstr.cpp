@@ -111,7 +111,6 @@ void MachineInstr::SetMachineOperandReg(unsigned i, int regNum) {
   operands[i].opType = MachineOperand::MO_MachineRegister;
   operands[i].value = NULL;
   operands[i].regNum = regNum;
-  insertUsedReg(regNum);
 }
 
 void
@@ -119,14 +118,12 @@ MachineInstr::SetRegForOperand(unsigned i, int regNum)
 {
   assert(i < getNumOperands());          // must be explicit op
   operands[i].setRegForValue(regNum);
-  insertUsedReg(regNum);
 }
 
 void
 MachineInstr::SetRegForImplicitRef(unsigned i, int regNum)
 {
   getImplicitOp(i).setRegForValue(regNum);
-  insertUsedReg(regNum);
 }
 
 
