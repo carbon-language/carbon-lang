@@ -87,14 +87,15 @@ public:
   // According the definition of a MachineOperand class, a Value in a
   // machine instruction can go into either a normal register or a 
   // condition code register. If isCCReg is true below, the ID of the condition
-  // code regiter class will be returned. Otherwise, the normal register
+  // code register class will be returned. Otherwise, the normal register
   // class (eg. int, float) must be returned.
   virtual unsigned getRegClassIDOfType  (const Type *type,
 					 bool isCCReg = false) const =0;
   virtual unsigned getRegClassIDOfValue (const Value *Val,
 					 bool isCCReg = false) const =0;
+  virtual unsigned getRegClassIDOfReg   (int unifiedRegNum)    const =0;
+  virtual unsigned getRegClassIDOfRegType(int regType)         const =0;
   
-
   inline unsigned int getNumOfRegClasses() const { 
     return MachineRegClassArr.size(); 
   }  
@@ -120,20 +121,20 @@ public:
   virtual void suggestRegs4MethodArgs(const Function *Func, 
 			 LiveRangeInfo &LRI) const = 0;
 
-  virtual void suggestRegs4CallArgs(const MachineInstr *CallI, 
+  virtual void suggestRegs4CallArgs(MachineInstr *CallI, 
 			LiveRangeInfo &LRI, std::vector<RegClass *> RCL) const = 0;
 
-  virtual void suggestReg4RetValue(const MachineInstr *RetI, 
+  virtual void suggestReg4RetValue(MachineInstr *RetI, 
 				   LiveRangeInfo &LRI) const = 0;
 
   virtual void colorMethodArgs(const Function *Func,  LiveRangeInfo &LRI,
                                AddedInstrns *FirstAI) const = 0;
 
-  virtual void colorCallArgs(const MachineInstr *CalI, 
+  virtual void colorCallArgs(MachineInstr *CalI, 
 			     LiveRangeInfo& LRI, AddedInstrns *CallAI, 
 			     PhyRegAlloc &PRA, const BasicBlock *BB) const = 0;
 
-  virtual void colorRetValue(const MachineInstr *RetI, LiveRangeInfo &LRI,
+  virtual void colorRetValue(MachineInstr *RetI, LiveRangeInfo &LRI,
 			     AddedInstrns *RetAI) const = 0;
 
 
@@ -143,15 +144,29 @@ public:
   // interface. However, they can be moved to MachineInstrInfo interface if
   // necessary.
   //
-  virtual void cpReg2RegMI(unsigned SrcReg, unsigned DestReg,
-                           int RegType, std::vector<MachineInstr*>& mvec) const = 0;
+  // The function regTypeNeedsScratchReg() can be used to check whether a
+  // scratch register is needed to copy a register of type `regType' to
+  // or from memory.  If so, such a scratch register can be provided by
+  // the caller (e.g., if it knows which regsiters are free); otherwise
+  // an arbitrary one will be chosen and spilled by the copy instructions.
+  // If a scratch reg is needed, the reg. type that must be used
+  // for scratch registers is returned in scratchRegType.
+  //
+  virtual bool regTypeNeedsScratchReg(int RegType,
+                                      int& scratchRegType) const = 0;
+  
+  virtual void cpReg2RegMI(std::vector<MachineInstr*>& mvec,
+                           unsigned SrcReg, unsigned DestReg,
+                           int RegType) const = 0;
+  
+  virtual void cpReg2MemMI(std::vector<MachineInstr*>& mvec,
+                           unsigned SrcReg, unsigned DestPtrReg, int Offset,
+                           int RegType, int scratchReg = -1) const=0;
 
-  virtual void cpReg2MemMI(unsigned SrcReg, unsigned DestPtrReg, int Offset,
-                           int RegTypee, std::vector<MachineInstr*>& mvec) const=0;
-
-  virtual void cpMem2RegMI(unsigned SrcPtrReg, int Offset, unsigned DestReg,
-                           int RegTypee, std::vector<MachineInstr*>& mvec) const=0;
-
+  virtual void cpMem2RegMI(std::vector<MachineInstr*>& mvec,
+                           unsigned SrcPtrReg, int Offset, unsigned DestReg,
+                           int RegType, int scratchReg = -1) const=0;
+  
   virtual void cpValue2Value(Value *Src, Value *Dest,
                              std::vector<MachineInstr*>& mvec) const = 0;
 
@@ -170,21 +185,24 @@ public:
   
 
   // Each register class has a seperate space for register IDs. To convert
-  // a regId in a register class to a common Id, we use the folloing method(s)
+  // a regId in a register class to a common Id, or vice versa,
+  // we use the folloing methods.
   //
-  virtual int getUnifiedRegNum(int RegClassID, int reg) const = 0;
-
+  virtual int getUnifiedRegNum(unsigned regClassID, int reg) const = 0;
+  virtual int getClassRegNum(int unifiedRegNum, unsigned& regClassID) const =0;
+  
+  // Returns the assembly-language name of the specified machine register.
   virtual const std::string getUnifiedRegName(int UnifiedRegNum) const = 0;
 
-
-  // The following 4 methods are used to find the RegType (see enum above)
-  // of a LiveRange, Value and using the unified RegClassID
-  //
+  // The following 4 methods are used to find the RegType (a target-specific
+  // enum) for a reg class and a given primitive type, a LiveRange, a Value,
+  // or a particular machine register.
+  // The fifth function gives the reg class of the given RegType.
+  // 
   virtual int getRegType(unsigned regClassID, const Type* type) const = 0;
   virtual int getRegType(const LiveRange *LR) const = 0;
   virtual int getRegType(const Value *Val) const = 0;
-  virtual int getRegType(int reg) const = 0;
-
+  virtual int getRegType(int unifiedRegNum) const = 0;
   
   // The following methods are used to get the frame/stack pointers
   // 
@@ -202,7 +220,7 @@ public:
   // an architecture. This must insert code for saving and restoring 
   // such registers on
   //
-  virtual void insertCallerSavingCode(const MachineInstr *MInst, 
+  virtual void insertCallerSavingCode(MachineInstr *MInst, 
 				      const BasicBlock *BB, 
 				      PhyRegAlloc &PRA) const = 0;
 
