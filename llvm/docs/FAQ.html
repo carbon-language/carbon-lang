@@ -111,7 +111,7 @@ Source Initiative (OSI).</p>
 <div class="answer">
 <p>Yes.  The modified source distribution must retain the copyright notice and
 follow the three bulletted conditions listed in the <a
-href="http://llvm.cs.uiuc.edu/releases/1.0/LICENSE.TXT">LLVM license</a>.</p>
+href="http://llvm.cs.uiuc.edu/releases/1.2/LICENSE.TXT">LLVM license</a>.</p>
 </div>
 
 <div class="question">
@@ -388,13 +388,13 @@ not linking on your system because the feature isn't available on your system.
 <div class="question">
 <p>
 When I compile code using the LLVM GCC front end, it complains that it cannot
-find crtend.o.
+find libcrtend.a.
 </p>
 </div>
 
 <div class="answer">
 <p>
-In order to find crtend.o, you must have the directory in which it lives in
+In order to find libcrtend.a, you must have the directory in which it lives in
 your LLVM_LIB_SEARCH_PATH environment variable.  For the binary distribution of
 the LLVM GCC front end, this will be the full path of the bytecode-libs
 directory inside of the LLVM GCC distribution.
