@@ -21,6 +21,9 @@
 /* Does not have bi-directional iterator */
 #undef HAVE_BI_ITERATOR
 
+/* Define if bzip2 library is available on this platform. */
+#undef HAVE_BZIP2
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
@@ -196,6 +199,9 @@
 
 /* Define to 1 if you have the <windows.h> header file. */
 #undef HAVE_WINDOWS_H
+
+/* Define if zlib library is available on this platform. */
+#undef HAVE_ZLIB
 
 /* Installation directory for binary executables */
 #undef LLVM_BINDIR
