@@ -798,6 +798,33 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
       }
     }
     break;
+
+  case Instruction::Shl: {
+    // We know that the AND will not produce any of the bits shifted in, so if
+    // the anded constant includes them, clear them now!
+    //
+    Constant *AllOne = ConstantIntegral::getAllOnesValue(AndRHS->getType());
+    Constant *CI = *AndRHS & *(*AllOne << *OpRHS);
+    if (CI != AndRHS) {
+      TheAnd.setOperand(1, CI);
+      return &TheAnd;
+    }
+    break;
+  } 
+  case Instruction::Shr:
+    // We know that the AND will not produce any of the bits shifted in, so if
+    // the anded constant includes them, clear them now!  This only applies to
+    // unsigned shifts, because a signed shr may bring in set bits!
+    //
+    if (AndRHS->getType()->isUnsigned()) {
+      Constant *AllOne = ConstantIntegral::getAllOnesValue(AndRHS->getType());
+      Constant *CI = *AndRHS & *(*AllOne >> *OpRHS);
+      if (CI != AndRHS) {
+        TheAnd.setOperand(1, CI);
+        return &TheAnd;
+      }
+    }
+    break;
   }
   return 0;
 }
