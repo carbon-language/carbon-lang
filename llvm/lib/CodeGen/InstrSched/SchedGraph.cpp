@@ -138,12 +138,12 @@ void SchedGraphEdge::dump(int indent=0) const {
 
 /*ctor*/
 SchedGraphNode::SchedGraphNode(unsigned int _nodeId,
-			       const Instruction* _instr,
+                               const BasicBlock*   _bb,
 			       const MachineInstr* _minstr,
                                int   indexInBB,
 			       const TargetMachine& target)
   : nodeId(_nodeId),
-    instr(_instr),
+    bb(_bb),
     minstr(_minstr),
     origIndexInBB(indexInBB),
     latency(0)
@@ -603,9 +603,6 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
   if (node == NULL)
     return;
   
-  assert(node->getInstr() && "Should be no dummy nodes here!");
-  const Instruction* instr = node->getInstr();
-  
   // Add edges for all operands of the machine instruction.
   // 
   for (unsigned i=0, numOps=minstr.getNumOperands(); i < numOps; i++)
@@ -778,26 +775,73 @@ SchedGraph::buildNodesforBB(const TargetMachine& target,
                             ValueToDefVecMap& valueToDefVecMap)
 {
   const MachineInstrInfo& mii = target.getInstrInfo();
-  int origIndexInBB = 0;
   
   // Build graph nodes for each VM instruction and gather def/use info.
   // Do both those together in a single pass over all machine instructions.
-  for (BasicBlock::const_iterator II = bb->begin(); II != bb->end(); ++II)
-    {
-      const Instruction *instr = *II;
-      const MachineCodeForVMInstr& mvec = instr->getMachineInstrVec();
-      for (unsigned i=0; i < mvec.size(); i++)
-        if (! mii.isDummyPhiInstr(mvec[i]->getOpCode()))
+  const MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
+  for (unsigned i=0; i < mvec.size(); i++)
+    if (! mii.isDummyPhiInstr(mvec[i]->getOpCode()))
+      {
+        SchedGraphNode* node = new SchedGraphNode(getNumNodes(), bb,
+                                                  mvec[i], i, target);
+        this->noteGraphNodeForInstr(mvec[i], node);
+        
+        // Remember all register references and value defs
+        findDefUseInfoAtInstr(target, node,
+                              memNodeVec, regToRefVecMap,valueToDefVecMap);
+      }
+  
+#undef REALLY_NEED_TO_SEARCH_SUCCESSOR_PHIS
+#ifdef REALLY_NEED_TO_SEARCH_SUCCESSOR_PHIS
+  // This is a BIG UGLY HACK.  IT NEEDS TO BE ELIMINATED.
+  // Look for copy instructions inserted in this BB due to Phi instructions
+  // in the successor BBs.
+  // There MUST be exactly one copy per Phi in successor nodes.
+  // 
+  for (BasicBlock::succ_const_iterator SI=bb->succ_begin(), SE=bb->succ_end();
+       SI != SE; ++SI)
+    for (BasicBlock::const_iterator PI=(*SI)->begin(), PE=(*SI)->end();
+         PI != PE; ++PI)
+      {
+        if ((*PI)->getOpcode() != Instruction::PHINode)
+          break;                        // No more Phis in this successor
+        
+        // Find the incoming value from block bb to block (*SI)
+        int bbIndex = cast<PHINode>(*PI)->getBasicBlockIndex(bb);
+        assert(bbIndex >= 0 && "But I know bb is a predecessor of (*SI)?");
+        Value* inVal = cast<PHINode>(*PI)->getIncomingValue(bbIndex);
+        assert(inVal != NULL && "There must be an in-value on every edge");
+        
+        // Find the machine instruction that makes a copy of inval to (*PI).
+        // This must be in the current basic block (bb).
+        const MachineCodeForVMInstr& mvec = (*PI)->getMachineInstrVec();
+        const MachineInstr* theCopy = NULL;
+        for (unsigned i=0; i < mvec.size() && theCopy == NULL; i++)
+          if (! mii.isDummyPhiInstr(mvec[i]->getOpCode()))
+            // not a Phi: assume this is a copy and examine its operands
+            for (int o=0, N=(int) mvec[i]->getNumOperands(); o < N; o++)
+              {
+                const MachineOperand& mop = mvec[i]->getOperand(o);
+                if (mvec[i]->operandIsDefined(o))
+                  assert(mop.getVRegValue() == (*PI) && "dest shd be my Phi");
+                else if (mop.getVRegValue() == inVal)
+                  { // found the copy!
+                    theCopy = mvec[i];
+                    break;
+                  }
+              }
+        
+        // Found the dang instruction.  Now create a node and do the rest...
+        if (theCopy != NULL)
           {
-            SchedGraphNode* node = new SchedGraphNode(getNumNodes(), instr,
-                                            mvec[i], origIndexInBB++, target);
-            this->noteGraphNodeForInstr(mvec[i], node);
-            
-            // Remember all register references and value defs
+            SchedGraphNode* node = new SchedGraphNode(getNumNodes(), bb,
+                                            theCopy, origIndexInBB++, target);
+            this->noteGraphNodeForInstr(theCopy, node);
             findDefUseInfoAtInstr(target, node,
                                   memNodeVec, regToRefVecMap,valueToDefVecMap);
           }
-    }
+      }
+#endif  REALLY_NEED_TO_SEARCH_SUCCESSOR_PHIS
 }
 
 

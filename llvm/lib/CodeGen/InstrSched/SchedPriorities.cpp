@@ -264,7 +264,7 @@ SchedPriorities::instructionHasLastUse(MethodLiveVarInfo& methodLiveVarInfo,
   
   // else check if instruction is a last use and save it in the hash_map
   bool hasLastUse = false;
-  const BasicBlock* bb = graphNode->getInstr()->getParent();
+  const BasicBlock* bb = graphNode->getBB();
   const LiveVarSet* liveVars =
     methodLiveVarInfo.getLiveVarSetBeforeMInst(minstr, bb);
   

@@ -142,7 +142,7 @@ private:
 class SchedGraphNode: public NonCopyable {
 private:
   unsigned int nodeId;
-  const Instruction* instr;
+  const BasicBlock* bb;
   const MachineInstr* minstr;
   vector<SchedGraphEdge*> inEdges;
   vector<SchedGraphEdge*> outEdges;
@@ -160,13 +160,13 @@ public:
   // Accessor methods
   // 
   unsigned int		getNodeId	() const { return nodeId; }
-  const Instruction*	getInstr	() const { return instr; }
   const MachineInstr*	getMachineInstr	() const { return minstr; }
   const MachineOpCode	getOpCode	() const { return minstr->getOpCode();}
   int			getLatency	() const { return latency; }
   unsigned int		getNumInEdges	() const { return inEdges.size(); }
   unsigned int		getNumOutEdges	() const { return outEdges.size(); }
   bool			isDummyNode	() const { return (minstr == NULL); }
+  const BasicBlock*	getBB           () const { return bb; }
   int                   getOrigIndexInBB() const { return origIndexInBB; }
   
   //
@@ -203,7 +203,7 @@ private:
   // disable default constructor and provide a ctor for single-block graphs
   /*ctor*/		SchedGraphNode();	// DO NOT IMPLEMENT
   /*ctor*/		SchedGraphNode	(unsigned int _nodeId,
-					 const Instruction* _instr,
+					 const BasicBlock*   _bb,
 					 const MachineInstr* _minstr,
                                          int   indexInBB,
 					 const TargetMachine& _target);

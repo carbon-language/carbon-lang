@@ -1235,33 +1235,27 @@ ReplaceNopsWithUsefulInstr(SchedulingManager& S,
   // If not enough useful instructions were found, use the NOPs to
   // fill delay slots, otherwise, just discard them.
   //  
-  MachineCodeForVMInstr& termMvec = node->getInstr()->getMachineInstrVec();
-  unsigned int firstDelaySlotIdx;
-  for (unsigned i=0; i < termMvec.size(); ++i)
-    if (termMvec[i] == brInstr)
-      {
-        firstDelaySlotIdx = i+1;
-        break;
-      }
-  assert(firstDelaySlotIdx <= termMvec.size()-1 &&
-         "This sucks! Where's that delay slot instruction?");
+  unsigned int firstDelaySlotIdx = node->getOrigIndexInBB() + 1;
+  MachineCodeForBasicBlock& bbMvec  = node->getBB()->getMachineInstrVec();
+  assert(bbMvec[firstDelaySlotIdx - 1] == brInstr &&
+         "Incorrect instr. index in basic block for brInstr");
   
   // First find all useful instructions already in the delay slots
   // and USE THEM.  We'll throw away the unused alternatives below
   // 
   for (unsigned i=firstDelaySlotIdx; i < firstDelaySlotIdx + ndelays; ++i)
-    if (! mii.isNop(termMvec[i]->getOpCode()))
+    if (! mii.isNop(bbMvec[i]->getOpCode()))
       sdelayNodeVec.insert(sdelayNodeVec.begin(),
-                           graph->getGraphNodeForInstr(termMvec[i]));
+                           graph->getGraphNodeForInstr(bbMvec[i]));
   
   // Then find the NOPs and keep only as many as are needed.
   // Put the rest in nopNodeVec to be deleted.
   for (unsigned i=firstDelaySlotIdx; i < firstDelaySlotIdx + ndelays; ++i)
-    if (mii.isNop(termMvec[i]->getOpCode()))
+    if (mii.isNop(bbMvec[i]->getOpCode()))
       if (sdelayNodeVec.size() < ndelays)
-        sdelayNodeVec.push_back(graph->getGraphNodeForInstr(termMvec[i]));
+        sdelayNodeVec.push_back(graph->getGraphNodeForInstr(bbMvec[i]));
       else
-        nopNodeVec.push_back(graph->getGraphNodeForInstr(termMvec[i]));
+        nopNodeVec.push_back(graph->getGraphNodeForInstr(bbMvec[i]));
   
   assert(sdelayNodeVec.size() >= ndelays);
   
