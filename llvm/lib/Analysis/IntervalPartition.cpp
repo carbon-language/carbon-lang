@@ -11,13 +11,17 @@
 using namespace cfg;
 using std::make_pair;
 
+AnalysisID IntervalPartition::ID(AnalysisID::create<IntervalPartition>());
+
 //===----------------------------------------------------------------------===//
 // IntervalPartition Implementation
 //===----------------------------------------------------------------------===//
 
-// Destructor - Free memory
-IntervalPartition::~IntervalPartition() {
+// destroy - Reset state back to before method was analyzed
+void IntervalPartition::destroy() {
   for_each(begin(), end(), deleter<cfg::Interval>);
+  IntervalMap.clear();
+  RootInterval = 0;
 }
 
 // addIntervalToPartition - Add an interval to the internal list of intervals,
@@ -48,7 +52,7 @@ void IntervalPartition::updatePredecessors(cfg::Interval *Int) {
 // IntervalPartition ctor - Build the first level interval partition for the
 // specified method...
 //
-IntervalPartition::IntervalPartition(Method *M) {
+bool IntervalPartition::runOnMethod(Method *M) {
   assert(M->front() && "Cannot operate on prototypes!");
 
   // Pass false to intervals_begin because we take ownership of it's memory
@@ -67,6 +71,7 @@ IntervalPartition::IntervalPartition(Method *M) {
   // predecessors for each block...
   for_each(begin(), end(), 
 	   bind_obj(this, &IntervalPartition::updatePredecessors));
+  return false;
 }
 
 

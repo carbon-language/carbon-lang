@@ -21,7 +21,7 @@
 //  . PHI nodes must have an entry for each predecessor, with no extras.
 //  . All other things that are tested by asserts spread about the code...
 //  . All basic blocks should only end with terminator insts, not contain them
-//  . All methods must have >= 1 basic block
+//  . The entry node to a method must not have predecessors!
 //  . Verify that none of the Value getType()'s are null.
 //  . Method's cannot take a void typed parameter
 //  . Verify that a method's argument list agrees with it's declared type.

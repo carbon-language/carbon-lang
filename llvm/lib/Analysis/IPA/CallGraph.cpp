@@ -19,6 +19,9 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 
+AnalysisID cfg::CallGraph::ID(AnalysisID::create<cfg::CallGraph>());
+//AnalysisID cfg::CallGraph::ID(AnalysisID::template AnalysisID<cfg::CallGraph>());
+
 // getNodeFor - Return the node for the specified method or create one if it
 // does not already exist.
 //
@@ -53,7 +56,9 @@ void cfg::CallGraph::addToCallGraph(Method *M) {
   }
 }
 
-cfg::CallGraph::CallGraph(Module *TheModule) {
+bool cfg::CallGraph::run(Module *TheModule) {
+  destroy();
+
   Mod = TheModule;
 
   // Create the root node of the module...
@@ -61,13 +66,16 @@ cfg::CallGraph::CallGraph(Module *TheModule) {
 
   // Add every method to the call graph...
   for_each(Mod->begin(), Mod->end(), bind_obj(this,&CallGraph::addToCallGraph));
+  
+  return false;
 }
 
-cfg::CallGraph::~CallGraph() {
+void cfg::CallGraph::destroy() {
   for (MethodMapTy::iterator I = MethodMap.begin(), E = MethodMap.end();
        I != E; ++I) {
     delete I->second;
   }
+  MethodMap.clear();
 }
 
 

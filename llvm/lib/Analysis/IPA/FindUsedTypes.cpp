@@ -9,6 +9,11 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
+#include "llvm/Method.h"
+
+AnalysisID FindUsedTypes::ID(AnalysisID::create<FindUsedTypes>());
+AnalysisID FindUsedTypes::IncludeSymbolTableID(AnalysisID::create<FindUsedTypes>());
 
 // IncorporateType - Incorporate one type and all of its subtypes into the
 // collection of used types.
@@ -34,43 +39,39 @@ void FindUsedTypes::IncorporateSymbolTable(const SymbolTable *ST) {
   assert(0 && "Unimp");
 }
 
-
-// doInitialization - This loops over global constants defined in the
-// module, converting them to their new type.
-//
-bool FindUsedTypes::doInitialization(Module *m) {
-  const Module *M = m;
-  if (IncludeSymbolTables && M->hasSymbolTable())
-    IncorporateSymbolTable(M->getSymbolTable()); // Add symtab first...
-
-  // Loop over global variables, incorporating their types
-  for (Module::const_giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
-    IncorporateType((*I)->getType());
-  return false;
-}
-
 // doPerMethodWork - This incorporates all types used by the specified method
 //
-bool FindUsedTypes::runOnMethod(Method *m) {
-  const Method *M = m;
-  if (IncludeSymbolTables && M->hasSymbolTable())
-  IncorporateSymbolTable(M->getSymbolTable()); // Add symtab first...
+bool FindUsedTypes::run(Module *m) {
+  UsedTypes.clear();  // reset if run multiple times...
+
+  if (IncludeSymbolTables && m->hasSymbolTable())
+    IncorporateSymbolTable(m->getSymbolTable()); // Add symtab first...
+
+  // Loop over global variables, incorporating their types
+  for (Module::const_giterator I = m->gbegin(), E = m->gend(); I != E; ++I)
+    IncorporateType((*I)->getType());
+
+  for (Module::iterator MI = m->begin(), ME = m->end(); MI != ME; ++MI) {
+    const Method *M = *MI;
+    if (IncludeSymbolTables && M->hasSymbolTable())
+      IncorporateSymbolTable(M->getSymbolTable()); // Add symtab first...
   
-  // Loop over all of the instructions in the method, adding their return type
-  // as well as the types of their operands.
-  //
-  for (Method::const_inst_iterator II = M->inst_begin(), IE = M->inst_end();
-       II != IE; ++II) {
-    const Instruction *I = *II;
-    const Type *Ty = I->getType();
+    // Loop over all of the instructions in the method, adding their return type
+    // as well as the types of their operands.
+    //
+    for (Method::const_inst_iterator II = M->inst_begin(), IE = M->inst_end();
+         II != IE; ++II) {
+      const Instruction *I = *II;
+      const Type *Ty = I->getType();
     
-    IncorporateType(Ty);  // Incorporate the type of the instruction
-    for (User::const_op_iterator OI = I->op_begin(), OE = I->op_end();
-         OI != OE; ++OI)
-      if ((*OI)->getType() != Ty)          // Avoid set lookup in common case
-        IncorporateType((*OI)->getType()); // Insert inst operand types as well
+      IncorporateType(Ty);  // Incorporate the type of the instruction
+      for (User::const_op_iterator OI = I->op_begin(), OE = I->op_end();
+           OI != OE; ++OI)
+        if ((*OI)->getType() != Ty)         // Avoid set lookup in common case
+          IncorporateType((*OI)->getType());// Insert inst operand types as well
+    }
   }
-  
+ 
   return false;
 }
 
@@ -89,4 +90,12 @@ void FindUsedTypes::printTypes(std::ostream &o, const Module *M = 0) const {
     for (std::set<const Type *>::const_iterator I = UsedTypes.begin(),
            E = UsedTypes.end(); I != E; ++I)
       o << "  " << *I << "\n";
+}
+
+// getAnalysisUsageInfo - Of course, we provide ourself...
+//
+void FindUsedTypes::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                         Pass::AnalysisSet &Destroyed,
+                                         Pass::AnalysisSet &Provided) {
+  Provided.push_back(FindUsedTypes::ID);
 }

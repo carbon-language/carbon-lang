@@ -13,11 +13,27 @@
 #include "Support/DepthFirstIterator.h"
 #include <algorithm>
 
+AnalysisID cfg::LoopInfo::ID(AnalysisID::create<cfg::LoopInfo>());
+
+//===----------------------------------------------------------------------===//
+// cfg::Loop implementation
+//
 bool cfg::Loop::contains(const BasicBlock *BB) const {
   return find(Blocks.begin(), Blocks.end(), BB) != Blocks.end();
 }
 
-cfg::LoopInfo::LoopInfo(const DominatorSet &DS) {
+
+//===----------------------------------------------------------------------===//
+// cfg::LoopInfo implementation
+//
+bool cfg::LoopInfo::runOnMethod(Method *M) {
+  BBMap.clear();                             // Reset internal state of analysis
+  TopLevelLoops.clear();
+  Calculate(getAnalysis<DominatorSet>());    // Update
+  return false;
+}
+
+void cfg::LoopInfo::Calculate(const DominatorSet &DS) {
   const BasicBlock *RootNode = DS.getRoot();
 
   for (df_iterator<const BasicBlock*> NI = df_begin(RootNode),
@@ -28,6 +44,14 @@ cfg::LoopInfo::LoopInfo(const DominatorSet &DS) {
   for (unsigned i = 0; i < TopLevelLoops.size(); ++i)
     TopLevelLoops[i]->setLoopDepth(1);
 }
+
+void cfg::LoopInfo::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                         Pass::AnalysisSet &Destroyed,
+                                         Pass::AnalysisSet &Provided) {
+  Required.push_back(DominatorSet::ID);
+  Provided.push_back(ID);
+}
+
 
 cfg::Loop *cfg::LoopInfo::ConsiderForLoop(const BasicBlock *BB,
 					  const DominatorSet &DS) {

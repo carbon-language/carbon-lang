@@ -6,12 +6,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/SimplifyCFG.h"
+#include "llvm/Transforms/UnifyMethodExitNodes.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Type.h"
 using std::vector;
+
+AnalysisID UnifyMethodExitNodes::ID(AnalysisID::create<UnifyMethodExitNodes>());
+
 
 // UnifyAllExitNodes - Unify all exit nodes of the CFG by creating a new
 // BasicBlock, and converting all returns to unconditional branches to this

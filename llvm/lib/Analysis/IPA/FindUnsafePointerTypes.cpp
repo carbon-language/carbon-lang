@@ -19,7 +19,12 @@
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
 #include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Type.h"
+#include "llvm/Instruction.h"
+#include "llvm/Method.h"
+#include "llvm/Module.h"
 #include "Support/CommandLine.h"
+
+AnalysisID FindUnsafePointerTypes::ID(AnalysisID::create<FindUnsafePointerTypes>());
 
 // Provide a command line option to turn on printing of which instructions cause
 // a type to become invalid
@@ -49,22 +54,25 @@ static inline bool isSafeInstruction(const Instruction *I) {
 // values of various types.  If they are deemed to be 'unsafe' note that the
 // type is not safe to transform.
 //
-bool FindUnsafePointerTypes::runOnMethod(Method *Meth) {
-  const Method *M = Meth;  // We don't need/want write access
-  for (Method::const_inst_iterator I = M->inst_begin(), E = M->inst_end();
-       I != E; ++I) {
-    const Instruction *Inst = *I;
-    const Type *ITy = Inst->getType();
-    if (ITy->isPointerType() && !UnsafeTypes.count((PointerType*)ITy))
-      if (!isSafeInstruction(Inst)) {
-        UnsafeTypes.insert((PointerType*)ITy);
+bool FindUnsafePointerTypes::run(Module *Mod) {
+  for (Module::iterator MI = Mod->begin(), ME = Mod->end();
+       MI != ME; ++MI) {
+    const Method *M = *MI;  // We don't need/want write access
+    for (Method::const_inst_iterator I = M->inst_begin(), E = M->inst_end();
+         I != E; ++I) {
+      const Instruction *Inst = *I;
+      const Type *ITy = Inst->getType();
+      if (ITy->isPointerType() && !UnsafeTypes.count((PointerType*)ITy))
+        if (!isSafeInstruction(Inst)) {
+          UnsafeTypes.insert((PointerType*)ITy);
 
-        if (PrintFailures) {
-          CachedWriter CW(M->getParent(), std::cerr);
-          CW << "FindUnsafePointerTypes: Type '" << ITy
-             << "' marked unsafe in '" << Meth->getName() << "' by:\n" << Inst;
+          if (PrintFailures) {
+            CachedWriter CW(M->getParent(), std::cerr);
+            CW << "FindUnsafePointerTypes: Type '" << ITy
+               << "' marked unsafe in '" << M->getName() << "' by:\n" << Inst;
+          }
         }
-      }
+    }
   }
 
   return false;
@@ -74,7 +82,8 @@ bool FindUnsafePointerTypes::runOnMethod(Method *Meth) {
 // printResults - Loop over the results of the analysis, printing out unsafe
 // types.
 //
-void FindUnsafePointerTypes::printResults(const Module *M, std::ostream &o) {
+void FindUnsafePointerTypes::printResults(const Module *M,
+                                          std::ostream &o) const {
   if (UnsafeTypes.empty()) {
     o << "SafePointerAccess Analysis: No unsafe types found!\n";
     return;
@@ -89,4 +98,12 @@ void FindUnsafePointerTypes::printResults(const Module *M, std::ostream &o) {
     
     CW << " #" << Counter << ". " << (Value*)*I << "\n";
   }
+}
+
+// getAnalysisUsageInfo - Of course, we provide ourself...
+//
+void FindUnsafePointerTypes::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                                  Pass::AnalysisSet &Destroyed,
+                                                  Pass::AnalysisSet &Provided) {
+  Provided.push_back(FindUnsafePointerTypes::ID);
 }
