@@ -13,17 +13,12 @@
 /// DSGraph - The graph that represents a function.
 ///
 class DSGraph {
-  Function *Func;
-  std::vector<DSNode*> Nodes;
-  DSNodeHandle RetNode;                          // Node that gets returned...
-  std::map<Value*, DSNodeHandle> ScalarMap;
+  Function *Func;          // Func - The LLVM function this graph corresponds to
+  DSGraph *GlobalsGraph;   // Pointer to the common graph of global objects
 
-#if 0
-  // GlobalsGraph -- Reference to the common graph of globally visible objects.
-  // This includes GlobalValues, New nodes, Cast nodes, and Calls.
-  // 
-  GlobalDSGraph* GlobalsGraph;
-#endif
+  DSNodeHandle RetNode;    // The node that gets returned...
+  std::vector<DSNode*> Nodes;
+  std::map<Value*, DSNodeHandle> ScalarMap;
 
   // FunctionCalls - This vector maintains a single entry for each call
   // instruction in the current graph.  The first entry in the vector is the
@@ -41,18 +36,26 @@ class DSGraph {
 
   void operator=(const DSGraph &); // DO NOT IMPLEMENT
 public:
-  DSGraph() : Func(0) {}           // Create a new, empty, DSGraph.
-  DSGraph(Function &F);            // Compute the local DSGraph
+  DSGraph() : Func(0), GlobalsGraph(0) {}      // Create a new, empty, DSGraph.
+  DSGraph(Function &F, DSGraph *GlobalsGraph); // Compute the local DSGraph
 
   // Copy ctor - If you want to capture the node mapping between the source and
   // destination graph, you may optionally do this by specifying a map to record
   // this into.
+  //
+  // Note that a copied graph does not retain the GlobalsGraph pointer of the
+  // source.  You need to set a new GlobalsGraph with the setGlobalsGraph
+  // method.
+  //
   DSGraph(const DSGraph &DSG);
   DSGraph(const DSGraph &DSG, std::map<const DSNode*, DSNodeHandle> &NodeMap);
   ~DSGraph();
 
   bool hasFunction() const { return Func != 0; }
   Function &getFunction() const { return *Func; }
+
+  DSGraph *getGlobalsGraph() const { return GlobalsGraph; }
+  void setGlobalsGraph(DSGraph *G) { GlobalsGraph = G; }
 
   /// getNodes - Get a vector of all the nodes in the graph
   /// 

@@ -131,7 +131,7 @@ namespace {
 //===----------------------------------------------------------------------===//
 // DSGraph constructor - Simply use the GraphBuilder to construct the local
 // graph.
-DSGraph::DSGraph(Function &F) : Func(&F) {
+DSGraph::DSGraph(Function &F, DSGraph *GG) : Func(&F), GlobalsGraph(GG) {
   // Use the graph builder to construct the local version of the graph
   GraphBuilder B(*this, Nodes, RetNode, ScalarMap, FunctionCalls);
   markIncompleteNodes();
@@ -416,12 +416,16 @@ void LocalDataStructures::releaseMemory() {
   // Empty map so next time memory is released, data structures are not
   // re-deleted.
   DSInfo.clear();
+  delete GlobalsGraph;
+  GlobalsGraph = 0;
 }
 
 bool LocalDataStructures::run(Module &M) {
+  GlobalsGraph = new DSGraph();
+
   // Calculate all of the graphs...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal())
-      DSInfo.insert(std::make_pair(I, new DSGraph(*I)));
+      DSInfo.insert(std::make_pair(I, new DSGraph(*I, GlobalsGraph)));
   return false;
 }

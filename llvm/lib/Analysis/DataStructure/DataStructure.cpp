@@ -501,14 +501,14 @@ Function &DSCallSite::getCaller() const {
 // DSGraph Implementation
 //===----------------------------------------------------------------------===//
 
-DSGraph::DSGraph(const DSGraph &G) : Func(G.Func) {
+DSGraph::DSGraph(const DSGraph &G) : Func(G.Func), GlobalsGraph(0) {
   std::map<const DSNode*, DSNodeHandle> NodeMap;
   RetNode = cloneInto(G, ScalarMap, NodeMap);
 }
 
 DSGraph::DSGraph(const DSGraph &G,
                  std::map<const DSNode*, DSNodeHandle> &NodeMap)
-  : Func(G.Func) {
+  : Func(G.Func), GlobalsGraph(0) {
   RetNode = cloneInto(G, ScalarMap, NodeMap);
 }
 
@@ -1055,28 +1055,6 @@ void DSGraph::maskNodeTypes(unsigned char Mask) {
 //===----------------------------------------------------------------------===//
 // GlobalDSGraph Implementation
 //===----------------------------------------------------------------------===//
-
-GlobalDSGraph::GlobalDSGraph() : DSGraph(*(Function*)0, this) {
-}
-
-GlobalDSGraph::~GlobalDSGraph() {
-  assert(Referrers.size() == 0 &&
-         "Deleting global graph while references from other graphs exist");
-}
-
-void GlobalDSGraph::addReference(const DSGraph* referrer) {
-  if (referrer != this)
-    Referrers.insert(referrer);
-}
-
-void GlobalDSGraph::removeReference(const DSGraph* referrer) {
-  if (referrer != this) {
-    assert(Referrers.find(referrer) != Referrers.end() && "This is very bad!");
-    Referrers.erase(referrer);
-    if (Referrers.size() == 0)
-      delete this;
-  }
-}
 
 #if 0
 // Bits used in the next function

@@ -33,6 +33,7 @@ namespace DataStructureAnalysis {
 class LocalDataStructures : public Pass {
   // DSInfo, one graph for each function
   std::map<const Function*, DSGraph*> DSInfo;
+  DSGraph *GlobalsGraph;
 public:
   ~LocalDataStructures() { releaseMemory(); }
 
