@@ -53,7 +53,10 @@ public:
   ~DSGraph();
 
   bool hasFunction() const { return Func != 0; }
-  Function &getFunction() const { return *Func; }
+  Function &getFunction() const {
+    assert(hasFunction() && "Cannot call getFunction on graph without a fn!");
+    return *Func;
+  }
 
   DSGraph *getGlobalsGraph() const { return GlobalsGraph; }
   void setGlobalsGraph(DSGraph *G) { GlobalsGraph = G; }

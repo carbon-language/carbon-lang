@@ -1029,6 +1029,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
     if (AuxFCallsAlive[i])
       AuxFunctionCalls[CurIdx++].swap(AuxFunctionCalls[i]);
   if (!(Flags & DSGraph::RemoveUnreachableGlobals)) {
+    assert(GlobalsGraph && "No globals graph available??");
     // Move the unreachable call nodes to the globals graph...
     GlobalsGraph->AuxFunctionCalls.insert(GlobalsGraph->AuxFunctionCalls.end(),
                                           AuxFunctionCalls.begin()+CurIdx,
