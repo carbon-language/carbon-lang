@@ -198,9 +198,11 @@ sub GetDejagnuTestResults { # (filename, log)
   my @lines;
   my $firstline;
   $/ = "\n"; #Make sure we're going line at a time.
+
+  print "Dejagnu test results:\n";
+
   if (open SRCHFILE, $filename) {
     # Process test results
-    push(@lines,"<h3>UNEXPECTED TEST RESULTS</h3><ol><li>\n");
     my $first_list = 1;
     my $should_break = 1;
     my $nocopy = 0;
@@ -211,20 +213,30 @@ sub GetDejagnuTestResults { # (filename, log)
         if ( m/^XPASS:/ || m/^FAIL:/ ) {
           $nocopy = 0;
           if ( $first_list ) {
+            push(@lines,"<h3>UNEXPECTED TEST RESULTS</h3><ol><li>\n");
             $first_list = 0;
             $should_break = 1;
             push(@lines,"<b>$_</b><br/>\n");
+            print "  $_\n";
           } else {
             push(@lines,"</li><li><b>$_</b><br/>\n");
+            print "  $_\n";
           }
         } elsif ( m/Summary/ ) {
-          if ( $first_list ) { push(@lines,"<b>PERFECT!</b>"); }
-          push(@lines,"</li></ol><h3>STATISTICS</h3><pre>\n");
+          if ( $first_list ) {
+	    push(@lines,"<b>PERFECT!</b>"); 
+	    print "  PERFECT!\n";
+	  } else {
+	    push(@lines, "</li></ol>\n");
+	  }
+          push(@lines,"<h3>STATISTICS</h3><pre>\n");
+	  print "\nSTATISTICS:\n";
           $should_break = 0;
           $nocopy = 0;
           $readingsum = 1;
         } elsif ( $readingsum ) {
           push(@lines,"$_\n");
+	  print "$_\n";
         }
       }
     }
@@ -446,7 +458,6 @@ if(!$NODEJAGNU) {
   CopyFile("test/testrun.sum", $DejagnuSum);
 
   $DejagnuTestResults = GetDejagnuTestResults($DejagnuSum, $DejagnuLog);
-  print $DejagnuTestResults;
 
 } else {
   $DejagnuTestResults = "Skipped by user choice.";
