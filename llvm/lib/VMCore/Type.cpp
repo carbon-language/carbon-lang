@@ -17,14 +17,8 @@
 #include "Support/DepthFirstIterator.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
-#include "Support/Statistic.h"
 #include <algorithm>
-
 using namespace llvm;
-
-static Statistic<> NumSlowTypes("type", "num slow types");
-static Statistic<> NumTypeEqualsCalls("type", "num typeequals calls");
-static Statistic<> NumTypeEquals("type", "num types actually equal");
 
 // DEBUG_MERGE_TYPES - Enable this #define to see how and when derived types are
 // created and later destroyed, all in an effort to make sure that there is only
@@ -657,8 +651,6 @@ public:
       }
       
     } else {
-      ++NumSlowTypes;
-
       // Now we check to see if there is an existing entry in the table which is
       // structurally identical to the newly refined type.  If so, this type
       // gets refined to the pre-existing type.
@@ -667,11 +659,8 @@ public:
       tie(I, E) = TypesByHash.equal_range(TypeHash);
       Entry = E;
       for (; I != E; ++I) {
-        ++NumTypeEqualsCalls;
         if (I->second != Ty) {
           if (TypesEqual(Ty, I->second)) {
-            ++NumTypeEquals;
-            
             assert(Ty->isAbstract() && "Replacing a non-abstract type?");
             TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
             
