@@ -285,6 +285,24 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     return false;   // No match, maybe next time.
   }
 
+  case Instruction::Call: {
+    if (isa<Function>(I->getOperand(0)))
+      return false;  // Don't even try to change direct calls.
+
+    // If this is a function pointer, we can convert the return type if we can
+    // convert the source function pointer.
+    //
+    const PointerType *PT = cast<PointerType>(I->getOperand(0)->getType());
+    const FunctionType *FT = cast<FunctionType>(PT->getElementType());
+    std::vector<const Type *> ArgTys(FT->getParamTypes().begin(),
+                                     FT->getParamTypes().end());
+    const FunctionType *NewTy =
+      FunctionType::get(Ty, ArgTys, FT->isVarArg());
+    if (!ExpressionConvertableToType(I->getOperand(0),
+                                     PointerType::get(NewTy), CTMap))
+      return false;
+    break;
+  }
   default:
     return false;
   }
@@ -477,9 +495,30 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
 
     assert(Res && "Didn't find match!");
-    break;   // No match, maybe next time.
+    break;
   }
 
+  case Instruction::Call: {
+    assert(!isa<Function>(I->getOperand(0)));
+
+    // If this is a function pointer, we can convert the return type if we can
+    // convert the source function pointer.
+    //
+    const PointerType *PT = cast<PointerType>(I->getOperand(0)->getType());
+    const FunctionType *FT = cast<FunctionType>(PT->getElementType());
+    std::vector<const Type *> ArgTys(FT->getParamTypes().begin(),
+                                     FT->getParamTypes().end());
+    const FunctionType *NewTy =
+      FunctionType::get(Ty, ArgTys, FT->isVarArg());
+    const PointerType *NewPTy = PointerType::get(NewTy);
+
+    Res = new CallInst(Constant::getNullValue(NewPTy),
+                       std::vector<Value*>(I->op_begin()+1, I->op_end()),
+                       Name);
+    VMC.ExprMap[I] = Res;
+    Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), NewPTy, VMC));
+    break;
+  }
   default:
     assert(0 && "Expression convertable, but don't know how to convert?");
     return 0;
