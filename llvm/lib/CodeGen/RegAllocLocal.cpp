@@ -31,8 +31,8 @@ namespace {
     const MRegisterInfo *RegInfo;
     LiveVariables *LV;
 
-    // StackSlotForVirtReg - Maps SSA Regs => frame index where these values are
-    // spilled
+    // StackSlotForVirtReg - Maps virtual regs to the frame index where these
+    // values are spilled.
     std::map<unsigned, int> StackSlotForVirtReg;
 
     // Virt2PhysRegMap - This map contains entries for each virtual register
@@ -127,9 +127,12 @@ namespace {
     }
 
     /// getStackSpaceFor - This returns the frame index of the specified virtual
-    /// register on the stack, allocating space if neccesary.
+    /// register on the stack, allocating space if necessary.
     int getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC);
 
+    /// removePhysReg - This method marks the specified physical register as no
+    /// longer being in use.
+    ///
     void removePhysReg(unsigned PhysReg);
 
     /// spillVirtReg - This method spills the value specified by PhysReg into
@@ -184,17 +187,18 @@ namespace {
     ///
     unsigned reloadVirtReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator &I, unsigned VirtReg);
+
+    void reloadPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
+                       unsigned PhysReg);
   };
 }
 
 
-/// getStackSpaceFor - This allocates space for the specified virtual
-/// register to be held on the stack.
-int RA::getStackSpaceFor(unsigned VirtReg,
-                              const TargetRegisterClass *RC) {
-  // Find the location VirtReg would belong...
-  std::map<unsigned, int>::iterator I =
-    StackSlotForVirtReg.lower_bound(VirtReg);
+/// getStackSpaceFor - This allocates space for the specified virtual register
+/// to be held on the stack.
+int RA::getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC) {
+  // Find the location Reg would belong...
+  std::map<unsigned, int>::iterator I =StackSlotForVirtReg.lower_bound(VirtReg);
 
   if (I != StackSlotForVirtReg.end() && I->first == VirtReg)
     return I->second;          // Already has space allocated?
@@ -228,21 +232,32 @@ void RA::removePhysReg(unsigned PhysReg) {
 ///
 void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                       unsigned VirtReg, unsigned PhysReg) {
-  // If this is just a marker register, we don't need to spill it.
-  if (VirtReg != 0) {
-    const TargetRegisterClass *RegClass =
-      MF->getSSARegMap()->getRegClass(VirtReg);
-    int FrameIndex = getStackSpaceFor(VirtReg, RegClass);
 
-    // If we need to spill this value, do so now...
+  DEBUG(std::cerr << "  Spilling register " << RegInfo->getName(PhysReg));
+  if (VirtReg == 0) {
+    DEBUG(std::cerr << " which corresponds to no vreg, "
+                    << "must be spurious physreg: ignoring (WARNING)\n");
+  } else {
+    // FIXME: move this into the conditional??
+    const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
+    int FrameIndex = getStackSpaceFor(VirtReg, RC);
+
+    DEBUG(std::cerr << " containing %reg" << VirtReg;
+          if (!isVirtRegModified(VirtReg))
+           std::cerr << " which has not been modified, so no store necessary!");
+
+    // Otherwise, there is a virtual register corresponding to this physical
+    // register.  We only need to spill it into its stack slot if it has been
+    // modified.
     if (isVirtRegModified(VirtReg)) {
-      // Add move instruction(s)
-      RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIndex, RegClass);
+      DEBUG(std::cerr << " to stack slot #" << FrameIndex);
+      RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIndex, RC);
       ++NumSpilled;   // Update statistics
     }
     Virt2PhysRegMap.erase(VirtReg);   // VirtReg no longer available
   }
 
+  DEBUG(std::cerr << "\n");
   removePhysReg(PhysReg);
 }
 
@@ -433,11 +448,16 @@ unsigned RA::reloadVirtReg(MachineBasicBlock &MBB,
 
   markVirtRegModified(VirtReg, false);   // Note that this reg was just reloaded
 
+  DEBUG(std::cerr << "  Reloading %reg" << VirtReg << " into "
+                  << RegInfo->getName(PhysReg) << "\n");
+
   // Add move instruction(s)
   RegInfo->loadRegFromStackSlot(MBB, I, PhysReg, FrameIndex, RC);
   ++NumReloaded;    // Update statistics
   return PhysReg;
 }
+
+
 
 void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
@@ -445,6 +465,13 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
   for (; I != MBB.end(); ++I) {
     MachineInstr *MI = *I;
     const TargetInstrDescriptor &TID = TM->getInstrInfo().get(MI->getOpcode());
+    DEBUG(std::cerr << "\nStarting RegAlloc of: " << *MI;
+          std::cerr << "  Regs have values: ";
+          for (std::map<unsigned, unsigned>::const_iterator
+                 I = PhysRegsUsed.begin(), E = PhysRegsUsed.end(); I != E; ++I)
+             std::cerr << "[" << RegInfo->getName(I->first)
+                       << ",%reg" << I->second << "] ";
+          std::cerr << "\n");
 
     // Loop over the implicit uses, making sure that they are at the head of the
     // use order list, so they don't get reallocated.
@@ -453,11 +480,13 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         MarkPhysRegRecentlyUsed(ImplicitUses[i]);
 
     // Get the used operands into registers.  This has the potiential to spill
-    // incoming values if we are out of registers.
+    // incoming values if we are out of registers.  Note that we completely
+    // ignore physical register uses here.  We assume that if an explicit
+    // physical register is referenced by the instruction, that it is guaranteed
+    // to be live-in, or the input is badly hosed.
     //
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
-      if (MI->getOperand(i).opIsUse() &&
-          MI->getOperand(i).isVirtualRegister()) {
+      if (MI->getOperand(i).opIsUse() && MI->getOperand(i).isVirtualRegister()){
         unsigned VirtSrcReg = MI->getOperand(i).getAllocatedRegNum();
         unsigned PhysSrcReg = reloadVirtReg(MBB, I, VirtSrcReg);
         MI->SetMachineOperandReg(i, PhysSrcReg);  // Assign the input register
@@ -481,9 +510,14 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         }
 
         if (PhysReg) {
-          DEBUG(std::cerr << "V: " << VirtReg << " P: " << PhysReg
-                << " Killed by: " << *MI);
-          removePhysReg(PhysReg);
+          DEBUG(std::cerr << "  Last use of " << RegInfo->getName(PhysReg)
+                      << "[%reg" << VirtReg <<"], removing it from live set\n");
+          // If the physical register was used, but there was no definition of
+          // the physical register (we are reading garbage), Live Variables will
+          // tell us that this is the last use of the register even though we
+          // don't know of anything in the register.  No need to remove it.
+          if (VirtReg != PhysReg || PhysRegsUsed.count(PhysReg))
+            removePhysReg(PhysReg);
         }
       }
     }
@@ -565,8 +599,9 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         }
 
         if (PhysReg) {
-          DEBUG(std::cerr << "V: " << VirtReg << " P: " << PhysReg
-        	<< " dead after: " << *MI);
+          DEBUG(std::cerr << "  Register " << RegInfo->getName(PhysReg)
+                          << " [%reg" << VirtReg
+                          << "] is never used, removing it frame live list\n");
           removePhysReg(PhysReg);
         }
       }
