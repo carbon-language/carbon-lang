@@ -193,10 +193,12 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
       Ty = cast<SequentialType>(Ty)->getElementType();
 
       // Get the array index and the size of each array element.
-      // Both must be known constants, or the index shd be 0; else this fails.
+      // The size must be a known value, except if arrayIdx is 0.
+      // In particular, don't try to get the type size if the arrayIdx is 0:
+      // 0 index into an unsized type is legal and should be allowed.
       int64_t arrayIdx = cast<ConstantSInt>(Idx[CurIDX])->getValue();
-      Result += arrayIdx * (int64_t)getTypeSize(Ty);
-
+      Result += arrayIdx == 0? 0
+                             : arrayIdx * (int64_t)getTypeSize(Ty);
     } else {
       const StructType *STy = cast<StructType>(Ty);
       assert(Idx[CurIDX]->getType() == Type::UByteTy && "Illegal struct idx");
