@@ -26,7 +26,7 @@ typedef uint64_t Pointer;
 
 /* Index IntegerHashFunc(const Generic value, const Index size) */
 #define IntegerHashFunc(value, size) \
-  (value % size)
+  (((value << 3) ^ (value >> 3)) % size)
 
 /* Index IntegerRehashFunc(const Generic oldHashValue, const Index size) */
 #define IntegerRehashFunc(oldHashValue, size) \
@@ -77,10 +77,9 @@ extern void Delete(PtrValueHashTable* ptrTable, void* ptr);
 void
 InitializeTable(PtrValueHashTable* ptrTable, Index newSize)
 {
-  ptrTable->table = (PtrValueHashEntry*) malloc(newSize *
+  ptrTable->table = (PtrValueHashEntry*) calloc(newSize,
                                                 sizeof(PtrValueHashEntry));
-  ptrTable->fullEmptyFlags = (FULLEMPTY*) malloc(newSize * sizeof(FULLEMPTY));
-  memset(ptrTable->fullEmptyFlags, '\0', newSize * sizeof(FULLEMPTY));
+  ptrTable->fullEmptyFlags = (FULLEMPTY*) calloc(newSize, sizeof(FULLEMPTY));
   ptrTable->capacity = newSize;
   ptrTable->size = 0;
 }
@@ -97,23 +96,41 @@ CreateTable(Index initialSize)
 void
 ReallocTable(PtrValueHashTable* ptrTable, Index newSize)
 {
-  if (newSize > ptrTable->capacity)
-    {
-      unsigned int i;
+  if (newSize <= ptrTable->capacity)
+    return;
+
+#ifndef NDEBUG
+  printf("\n***\n*** WARNING: REALLOCATING SPACE FOR POINTER HASH TABLE.\n");
+  printf("*** oldSize = %ld, oldCapacity = %ld\n***\n\n",
+         ptrTable->size, ptrTable->capacity); 
+  printf("*** NEW SEQUENCE NUMBER FOR A POINTER WILL PROBABLY NOT MATCH ");
+  printf(" THE OLD ONE!\n***\n\n");
+#endif
+
+  unsigned int i;
+  PtrValueHashEntry* oldTable = ptrTable->table;
+  FULLEMPTY* oldFlags = ptrTable->fullEmptyFlags; 
+  Index oldSize = ptrTable->size;
+  Index oldCapacity = ptrTable->capacity;
+  
+  /* allocate the new storage and flags and re-insert the old entries */
+  InitializeTable(ptrTable, newSize);
+  memcpy(ptrTable->table, oldTable,
+         oldCapacity * sizeof(PtrValueHashEntry));
+  memcpy(ptrTable->fullEmptyFlags, oldFlags,
+         oldCapacity * sizeof(FULLEMPTY));
+  ptrTable->size = oldSize;
+
+#ifndef NDEBUG
+  for (i=0; i < oldCapacity; ++i) {
+    assert(ptrTable->fullEmptyFlags[i] == oldFlags[i]);
+    assert(ptrTable->table[i].key == oldTable[i].key);
+    assert(ptrTable->table[i].value == oldTable[i].value);
+  }
+#endif
       
-      PtrValueHashEntry* oldTable = ptrTable->table;
-      FULLEMPTY* oldFlags = ptrTable->fullEmptyFlags; 
-      Index oldSize = ptrTable->size;
-      
-      /* allocate the new storage and flags and re-insert the old entries */
-      InitializeTable(ptrTable, newSize);
-      for (i=0; i < oldSize; ++i) 
-        Insert(ptrTable, oldTable[i].key, oldTable[i].value);
-      assert(ptrTable->size == oldSize);
-      
-      free(oldTable);
-      free(oldFlags);
-    }
+  free(oldTable);
+  free(oldFlags);
 }
 
 void
@@ -231,7 +248,7 @@ Delete(PtrValueHashTable* ptrTable, void* ptr)
  *===---------------------------------------------------------------------===*/
 
 PtrValueHashTable* SequenceNumberTable = NULL;
-Index INITIAL_SIZE = 1 << 18;
+Index INITIAL_SIZE = 1 << 22;
 
 #define MAX_NUM_SAVED 1024
 
