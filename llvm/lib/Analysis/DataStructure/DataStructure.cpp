@@ -997,10 +997,10 @@ void DSGraph::removeDeadNodes() {
   // Mark all nodes reachable by (non-global) scalar nodes as alive...
   for (std::map<Value*, DSNodeHandle>::iterator I = ScalarMap.begin(),
          E = ScalarMap.end(); I != E; ++I)
-    if (!isa<GlobalValue>(I->first))              // Don't mark globals!
+    // if (!isa<GlobalValue>(I->first))              // Don't mark globals!
       markAlive(I->second.getNode(), Alive);
-    else                    // Keep track of global nodes
-      GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
+    // else                    // Keep track of global nodes
+    //   GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
 
   // The return value is alive as well...
   markAlive(RetNode.getNode(), Alive);
