@@ -872,6 +872,13 @@ void Instruction::print(std::ostream &o) const {
 
 void Constant::print(std::ostream &o) const {
   if (this == 0) { o << "<null> constant value\n"; return; }
+
+  // Handle CPR's special, because they have context information...
+  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(this)) {
+    CPR->getValue()->print(o);  // Print as a global value, with context info.
+    return;
+  }
+
   o << " " << getType()->getDescription() << " ";
 
   map<const Type *, string> TypeTable;
