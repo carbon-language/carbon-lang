@@ -6,6 +6,7 @@
 
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "Support/Statistic.h"
@@ -145,11 +146,11 @@ unsigned RegAllocSimple::getStackSpaceFor(unsigned VirtReg,
 }
 
 unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
-  const TargetRegisterClass* regClass = MF->getRegClass(virtualReg);
+  const TargetRegisterClass* RC = MF->getSSARegMap()->getRegClass(virtualReg);
   
-  unsigned regIdx = RegClassIdx[regClass]++;
-  assert(regIdx < regClass->getNumRegs() && "Not enough registers!");
-  unsigned physReg = regClass->getRegister(regIdx);
+  unsigned regIdx = RegClassIdx[RC]++;
+  assert(regIdx < RC->getNumRegs() && "Not enough registers!");
+  unsigned physReg = RC->getRegister(regIdx);
 
   if (RegsUsed.find(physReg) == RegsUsed.end())
     return physReg;
@@ -160,14 +161,14 @@ unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
 unsigned RegAllocSimple::reloadVirtReg(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator &I,
                                        unsigned VirtReg) {
-  const TargetRegisterClass* regClass = MF->getRegClass(VirtReg);
-  unsigned stackOffset = getStackSpaceFor(VirtReg, regClass);
+  const TargetRegisterClass* RC = MF->getSSARegMap()->getRegClass(VirtReg);
+  unsigned stackOffset = getStackSpaceFor(VirtReg, RC);
   unsigned PhysReg = getFreeReg(VirtReg);
 
   // Add move instruction(s)
   ++NumReloaded;
-  I = RegInfo->loadRegOffset2Reg(MBB, I, PhysReg, RegInfo->getFramePointer(),
-                                 -stackOffset, regClass->getDataSize());
+  RegInfo->loadRegOffset2Reg(MBB, I, PhysReg, RegInfo->getFramePointer(),
+			     -stackOffset, RC);
   return PhysReg;
 }
 
@@ -175,13 +176,13 @@ void RegAllocSimple::spillVirtReg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator &I,
                                   unsigned VirtReg, unsigned PhysReg)
 {
-  const TargetRegisterClass* regClass = MF->getRegClass(VirtReg);
-  unsigned stackOffset = getStackSpaceFor(VirtReg, regClass);
+  const TargetRegisterClass* RC = MF->getSSARegMap()->getRegClass(VirtReg);
+  unsigned stackOffset = getStackSpaceFor(VirtReg, RC);
 
   // Add move instruction(s)
   ++NumSpilled;
-  I = RegInfo->storeReg2RegOffset(MBB, I, PhysReg, RegInfo->getFramePointer(),
-                                  -stackOffset, regClass->getDataSize());
+  RegInfo->storeReg2RegOffset(MBB, I, PhysReg, RegInfo->getFramePointer(),
+			      -stackOffset, RC);
 }
 
 
@@ -234,20 +235,21 @@ void RegAllocSimple::EliminatePHINodes(MachineBasicBlock &MBB) {
         
         // move back to the first branch instruction so new instructions
         // are inserted right in front of it and not in front of a non-branch
+	//
         if (!MII.isBranch(opMI->getOpcode()))
           ++opI;
 
-        unsigned dataSize = MF->getRegClass(virtualReg)->getDataSize();
+        const TargetRegisterClass *RC =
+	  MF->getSSARegMap()->getRegClass(virtualReg);
 
         // Retrieve the constant value from this op, move it to target
         // register of the phi
         if (opVal.isImmediate()) {
-          opI = RegInfo->moveImm2Reg(opBlock, opI, virtualReg,
-                                     (unsigned) opVal.getImmedValue(),
-                                     dataSize);
+          RegInfo->moveImm2Reg(opBlock, opI, virtualReg,
+			       (unsigned) opVal.getImmedValue(), RC);
         } else {
-          opI = RegInfo->moveReg2Reg(opBlock, opI, virtualReg,
-                                     opVal.getAllocatedRegNum(), dataSize);
+          RegInfo->moveReg2Reg(opBlock, opI, virtualReg,
+			       opVal.getAllocatedRegNum(), RC);
         }
       }
     }
@@ -331,8 +333,8 @@ void RegAllocSimple::EmitPrologue() {
     unsigned Offset = getStackSpaceFor(CSRegs[i], RegClass);
 
     // Insert the spill to the stack frame...
-    I = RegInfo->storeReg2RegOffset(MBB, I,CSRegs[i],RegInfo->getFramePointer(),
-                                    -Offset, RegClass->getDataSize());
+    RegInfo->storeReg2RegOffset(MBB, I,CSRegs[i],RegInfo->getFramePointer(),
+				-Offset, RegClass);
     ++NumSpilled;
   }
 
@@ -353,8 +355,8 @@ void RegAllocSimple::EmitEpilogue(MachineBasicBlock &MBB) {
     const TargetRegisterClass *RegClass = RegInfo->getRegClass(CSRegs[i]);
     unsigned Offset = getStackSpaceFor(CSRegs[i], RegClass);
 
-    I = RegInfo->loadRegOffset2Reg(MBB, I, CSRegs[i],RegInfo->getFramePointer(),
-                                   -Offset, RegClass->getDataSize());
+    RegInfo->loadRegOffset2Reg(MBB, I, CSRegs[i],RegInfo->getFramePointer(),
+			       -Offset, RegClass);
     --I;  // Insert in reverse order
     ++NumReloaded;
   }
