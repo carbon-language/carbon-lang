@@ -350,9 +350,6 @@ bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
 
     // TODO: Figure out how to test if a double can be cast to a float!
   case Type::FloatTyID:
-    /*
-    return (Val <= UINT8_MAX);
-    */
   case Type::DoubleTyID:
     return true;          // This is the largest type...
   }
@@ -361,7 +358,8 @@ bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
 //===----------------------------------------------------------------------===//
 //                replaceUsesOfWithOnConstant implementations
 
-void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To) {
+void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                                bool DisableChecking) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
 
   std::vector<Constant*> Values;
@@ -376,13 +374,17 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To) {
   assert(Replacement != this && "I didn't contain From!");
 
   // Everyone using this now uses the replacement...
-  replaceAllUsesWith(Replacement);
+  if (DisableChecking)
+    uncheckedReplaceAllUsesWith(Replacement);
+  else
+    replaceAllUsesWith(Replacement);
   
   // Delete the old constant!
   destroyConstant();  
 }
 
-void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To) {
+void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                                 bool DisableChecking) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
 
   std::vector<Constant*> Values;
@@ -397,33 +399,42 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To) {
   assert(Replacement != this && "I didn't contain From!");
 
   // Everyone using this now uses the replacement...
-  replaceAllUsesWith(Replacement);
+  if (DisableChecking)
+    uncheckedReplaceAllUsesWith(Replacement);
+  else
+    replaceAllUsesWith(Replacement);
   
   // Delete the old constant!
   destroyConstant();
 }
 
-void ConstantPointerRef::replaceUsesOfWithOnConstant(Value *From, Value *To) {
+void ConstantPointerRef::replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                                     bool DisableChecking) {
   if (isa<GlobalValue>(To)) {
     assert(From == getOperand(0) && "Doesn't contain from!");
     ConstantPointerRef *Replacement =
       ConstantPointerRef::get(cast<GlobalValue>(To));
     
     // Everyone using this now uses the replacement...
-    replaceAllUsesWith(Replacement);
+    if (DisableChecking)
+      uncheckedReplaceAllUsesWith(Replacement);
+    else
+      replaceAllUsesWith(Replacement);
     
-    // Delete the old constant!
-    destroyConstant();
   } else {
     // Just replace ourselves with the To value specified.
-    replaceAllUsesWith(To);
-  
-    // Delete the old constant!
-    destroyConstant();
+    if (DisableChecking)
+      uncheckedReplaceAllUsesWith(To);
+    else
+      replaceAllUsesWith(To);
   }
+
+  // Delete the old constant!
+  destroyConstant();
 }
 
-void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV) {
+void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
+                                               bool DisableChecking) {
   assert(isa<Constant>(ToV) && "Cannot make Constant refer to non-constant!");
   Constant *To = cast<Constant>(ToV);
 
@@ -457,7 +468,10 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV) {
   assert(Replacement != this && "I didn't contain From!");
 
   // Everyone using this now uses the replacement...
-  replaceAllUsesWith(Replacement);
+  if (DisableChecking)
+    uncheckedReplaceAllUsesWith(Replacement);
+  else
+    replaceAllUsesWith(Replacement);
   
   // Delete the old constant!
   destroyConstant();
