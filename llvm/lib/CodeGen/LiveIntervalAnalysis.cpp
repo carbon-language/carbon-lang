@@ -58,6 +58,8 @@ namespace {
   EnableJoining("join-liveintervals",
                 cl::desc("Join compatible live intervals"),
                 cl::init(true));
+  cl::opt<bool>
+  DisableHack("disable-hack");
 };
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const
@@ -86,6 +88,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   mf_ = &fn;
   tm_ = &fn.getTarget();
   mri_ = tm_->getRegisterInfo();
+  tii_ = tm_->getInstrInfo();
   lv_ = &getAnalysis<LiveVariables>();
   allocatableRegs_ = mri_->getAllocatableSet(fn);
   r2rMap_.grow(mf_->getSSARegMap()->getLastVirtReg());
@@ -120,7 +123,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   // perform a final pass over the instructions and compute spill
   // weights, coalesce virtual registers and remove identity moves
   const LoopInfo& loopInfo = getAnalysis<LoopInfo>();
-  const TargetInstrInfo& tii = *tm_->getInstrInfo();
 
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
        mbbi != mbbe; ++mbbi) {
@@ -131,7 +133,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
          mii != mie; ) {
       // if the move will be an identity move delete it
       unsigned srcReg, dstReg, RegRep;
-      if (tii.isMoveInstr(*mii, srcReg, dstReg) &&
+      if (tii_->isMoveInstr(*mii, srcReg, dstReg) &&
           (RegRep = rep(srcReg)) == rep(dstReg)) {
         // remove from def list
         LiveInterval &interval = getOrCreateInterval(RegRep);
@@ -444,7 +446,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
 
 void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
                                               MachineBasicBlock::iterator mi,
-                                              LiveInterval& interval)
+                                              LiveInterval& interval,
+                                              unsigned SrcReg, unsigned DestReg)
 {
   // A physical register cannot be live across basic block, so its
   // lifetime must end somewhere in its defining basic block.
@@ -486,6 +489,45 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
 
 exit:
   assert(start < end && "did not find end of interval?");
+
+  // Finally, if this is defining a new range for the physical register, and if
+  // that physreg is just a copy from a vreg, and if THAT vreg was a copy from
+  // the physreg, then the new fragment has the same value as the one copied
+  // into the vreg.
+  if (interval.reg == DestReg && !interval.empty() &&
+      MRegisterInfo::isVirtualRegister(SrcReg) && !DisableHack) {
+
+    // Get the live interval for the vreg, see if it is defined by a copy.
+    LiveInterval &SrcInterval = getOrCreateInterval(SrcReg);
+
+    if (SrcInterval.containsOneValue()) {
+      assert(!SrcInterval.empty() && "Can't contain a value and be empty!");
+
+      // Get the first index of the first range.  Though the interval may have
+      // multiple liveranges in it, we only check the first.
+      unsigned StartIdx = SrcInterval.begin()->start;
+      MachineInstr *SrcDefMI = getInstructionFromIndex(StartIdx);
+
+      // Check to see if the vreg was defined by a copy instruction, and that
+      // the source was this physreg.
+      unsigned VRegSrcSrc, VRegSrcDest;
+      if (tii_->isMoveInstr(*SrcDefMI, VRegSrcSrc, VRegSrcDest) &&
+          SrcReg == VRegSrcDest && VRegSrcSrc == DestReg) {
+        // Okay, now we know that the vreg was defined by a copy from this
+        // physreg.  Find the value number being copied and use it as the value
+        // for this range.
+        const LiveRange *DefRange = interval.getLiveRangeContaining(StartIdx-1);
+        if (DefRange) {
+          LiveRange LR(start, end, DefRange->ValId);
+          interval.addRange(LR);
+          DEBUG(std::cerr << " +" << LR << '\n');
+          return;
+        }
+      }
+    }
+  }
+
+
   LiveRange LR(start, end, interval.getNextValue());
   interval.addRange(LR);
   DEBUG(std::cerr << " +" << LR << '\n');
@@ -497,9 +539,14 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
   if (MRegisterInfo::isVirtualRegister(reg))
     handleVirtualRegisterDef(MBB, MI, getOrCreateInterval(reg));
   else if (allocatableRegs_[reg]) {
-    handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(reg));
+    unsigned SrcReg = 0, DestReg = 0;
+    bool IsMove = tii_->isMoveInstr(*MI, SrcReg, DestReg);
+
+    handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(reg),
+                              SrcReg, DestReg);
     for (const unsigned* AS = mri_->getAliasSet(reg); *AS; ++AS)
-      handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(*AS));
+      handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(*AS),
+                                SrcReg, DestReg);
   }
 }
 
@@ -541,7 +588,6 @@ void LiveIntervals::computeIntervals()
 
 void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
   DEBUG(std::cerr << ((Value*)MBB->getBasicBlock())->getName() << ":\n");
-  const TargetInstrInfo &TII = *tm_->getInstrInfo();
 
   for (MachineBasicBlock::iterator mi = MBB->begin(), mie = MBB->end();
        mi != mie; ++mi) {
@@ -551,7 +597,7 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
     // physical registers since we do not have liveness information
     // on not allocatable physical registers
     unsigned regA, regB;
-    if (TII.isMoveInstr(*mi, regA, regB) &&
+    if (tii_->isMoveInstr(*mi, regA, regB) &&
         (MRegisterInfo::isVirtualRegister(regA) || allocatableRegs_[regA]) &&
         (MRegisterInfo::isVirtualRegister(regB) || allocatableRegs_[regB])) {
 

@@ -28,12 +28,14 @@ namespace llvm {
 
   class LiveVariables;
   class MRegisterInfo;
+  class TargetInstrInfo;
   class VirtRegMap;
 
   class LiveIntervals : public MachineFunctionPass {
     MachineFunction* mf_;
     const TargetMachine* tm_;
     const MRegisterInfo* mri_;
+    const TargetInstrInfo* tii_;
     LiveVariables* lv_;
 
     typedef std::map<MachineInstr*, unsigned> Mi2IndexMap;
@@ -154,11 +156,15 @@ namespace llvm {
                                   MachineBasicBlock::iterator mi,
                                   LiveInterval& interval);
 
-    /// handlePhysicalRegisterDef - update intervals for a
-    /// physical register def
+    /// handlePhysicalRegisterDef - update intervals for a physical register
+    /// def.  If the defining instruction is a move instruction, SrcReg will be
+    /// the input register, and DestReg will be the result.  Note that Interval
+    /// may not match DestReg (it might be an alias instead).
+    ///
     void handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                                    MachineBasicBlock::iterator mi,
-                                   LiveInterval& interval);
+                                   LiveInterval& interval,
+                                   unsigned SrcReg, unsigned DestReg);
 
     /// Return true if the two specified registers belong to different
     /// register classes.  The registers may be either phys or virt regs.
