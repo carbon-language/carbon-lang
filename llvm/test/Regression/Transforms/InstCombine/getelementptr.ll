@@ -35,3 +35,10 @@ sbyte * %foo5() {
 	%A = getelementptr [10 x sbyte]* %Global, long 0, long 4
 	ret sbyte* %A
 }
+
+int* %foo6() {
+	%M = malloc [4 x int]
+	%A = getelementptr [4 x int]* %M, long 0, long 0
+	%B = getelementptr int* %A, long 2
+	ret int* %B
+}
