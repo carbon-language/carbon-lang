@@ -1,4 +1,4 @@
-//===- SparcV9_F4.td - Format 4 instructions: SparcV9 Target --------------===//
+//===- SparcV9_F4.td - SparcV9 Format 4 instructions -------*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
