@@ -48,7 +48,7 @@ namespace {
   };
 }
 
-Instruction *ilist_traits<Instruction>::createNode() {
+Instruction *ilist_traits<Instruction>::createSentinal() {
   return new DummyInst();
 }
 iplist<Instruction> &ilist_traits<Instruction>::getList(BasicBlock *BB) {

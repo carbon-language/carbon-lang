@@ -55,7 +55,8 @@ public:
     N->Next = next;
   }
 
-  static MachineBasicBlock* createNode();
+  static MachineBasicBlock* createSentinal();
+  static void destroySentinal(MachineBasicBlock *MBB) { delete MBB; }
   void addNodeToList(MachineBasicBlock* N);
   void removeNodeFromList(MachineBasicBlock* N);
   void transferNodesFromList(iplist<MachineBasicBlock,

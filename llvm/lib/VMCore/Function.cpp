@@ -20,7 +20,7 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
-BasicBlock *ilist_traits<BasicBlock>::createNode() {
+BasicBlock *ilist_traits<BasicBlock>::createSentinal() {
   BasicBlock *Ret = new BasicBlock();
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
@@ -31,7 +31,7 @@ iplist<BasicBlock> &ilist_traits<BasicBlock>::getList(Function *F) {
   return F->getBasicBlockList();
 }
 
-Argument *ilist_traits<Argument>::createNode() {
+Argument *ilist_traits<Argument>::createSentinal() {
   Argument *Ret = new Argument(Type::IntTy);
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
