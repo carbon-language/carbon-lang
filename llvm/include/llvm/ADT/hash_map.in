@@ -106,20 +106,21 @@ using HASH_NAMESPACE::hash;
 // out specializations like stl_bvector.h, causing link conflicts.
 #include <vector>
 
-#include "llvm/ADT/HashExtras.h"
-
 #ifdef _MSC_VER
 
 // GCC and VC++ have differing ways of implementing hash_maps.  As it's not
 // standardized, that's to be expected.  This adapter class allows VC++
 // hash_map to use GCC's hash classes.
 namespace stdext {
-  template<class Key> struct hash {
-    inline size_t operator()(const Key &) const {
-      return 0;
+  template<class Key> struct hash;
+  
+  // Provide a hash function for unsigned ints...
+  template<> struct hash<unsigned int> {
+    inline size_t operator()(unsigned int Val) const {
+	  return Val;
     }
   };
-  
+
   template<class Key> class hash_compare<Key, std::less<Key> > {
     std::less<Key> comp;
   public:
@@ -133,5 +134,7 @@ namespace stdext {
 }
 
 #endif
+
+#include "llvm/ADT/HashExtras.h"
 
 #endif
