@@ -71,6 +71,19 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                  CI->getName(), CI);
     break;
   }
+  case Intrinsic::memmove: {
+    // The memmove intrinsic take an extra alignment argument that the memcpy
+    // libc function does not.
+    const FunctionType *CFT = Callee->getFunctionType();
+    FunctionType *FT =
+      FunctionType::get(*CFT->param_begin(), 
+           std::vector<const Type*>(CFT->param_begin(), CFT->param_end()-1),
+                        false);
+    Function *MemMove = M->getOrInsertFunction("memmove", FT);
+    new CallInst(MemMove, std::vector<Value*>(CI->op_begin()+1, CI->op_end()-1),
+                 CI->getName(), CI);
+    break;
+  }
   }
 
   assert(CI->use_empty() &&

@@ -563,6 +563,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::dbg_declare:     NumArgs = 1; break;
 
   case Intrinsic::memcpy:          NumArgs = 4; break;
+  case Intrinsic::memmove:         NumArgs = 4; break;
  
   case Intrinsic::alpha_ctlz:      NumArgs = 1; break;
   case Intrinsic::alpha_cttz:      NumArgs = 1; break;
