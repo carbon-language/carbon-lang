@@ -89,6 +89,8 @@ SchedPriorities::initializeReadyHeap(const SchedGraph* graph)
   
   candsAsHeap.makeHeap();
   
+  nextToTry = candsAsHeap.begin();
+  
 #ifdef TEST_HEAP_CONVERSION
   cerr << "After heap conversion:\n";
   copy(candsAsHeap.begin(), candsAsHeap.end(),
@@ -107,9 +109,9 @@ SchedPriorities::insertReady(const SchedGraphNode* node)
   
   if (SchedDebugLevel >= Sched_PrintSchedTrace)
     {
-      cerr << "    Cycle " << (long)getTime() << ": "
-	   << " Node " << node->getNodeId() << " is ready; "
-	   << " Delay = " << (long)getNodeDelayRef(node) << "; Instruction: \n";
+      cerr << " Node " << node->getNodeId() << " will be ready in Cycle "
+           << earliestForNode[node->getNodeId()] << "; "
+	   << " Delay = " <<(long)getNodeDelayRef(node) << "; Instruction: \n";
       cerr << "        " << *node->getMachineInstr() << "\n";
     }
 }
