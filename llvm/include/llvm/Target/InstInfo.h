@@ -19,7 +19,10 @@ typedef int InstrSchedClass;
 // The actual object needs to be created separately for each target machine.
 // This variable is initialized and reset by class MachineInstrInfo.
 // 
-extern const MachineInstrDescriptor* TargetInstrDescriptors;
+// FIXME: This should be a property of the target so that more than one target
+// at a time can be active...
+//
+extern const MachineInstrDescriptor *TargetInstrDescriptors;
 
 
 //---------------------------------------------------------------------------
@@ -50,16 +53,16 @@ const unsigned int	M_DUMMY_PHI_FLAG	= 1 << 13;
 
 
 struct MachineInstrDescriptor {
-  string	opCodeString;	// Assembly language mnemonic for the opcode.
-  int		numOperands;	// Number of args; -1 if variable #args
-  int		resultPos;	// Position of the result; -1 if no result
-  unsigned int	maxImmedConst;	// Largest +ve constant in IMMMED field or 0.
-  bool		immedIsSignExtended;	// Is IMMED field sign-extended? If so,
-				//   smallest -ve value is -(maxImmedConst+1).
-  unsigned int  numDelaySlots;	// Number of delay slots after instruction
-  unsigned int  latency;	// Latency in machine cycles
-  InstrSchedClass schedClass;	// enum  identifying instr sched class
-  unsigned int	  iclass;	// flags identifying machine instr class
+  string	  opCodeString;  // Assembly language mnemonic for the opcode.
+  int		  numOperands;   // Number of args; -1 if variable #args
+  int		  resultPos;     // Position of the result; -1 if no result
+  unsigned int	  maxImmedConst; // Largest +ve constant in IMMMED field or 0.
+  bool		  immedIsSignExtended; // Is IMMED field sign-extended? If so,
+				 //   smallest -ve value is -(maxImmedConst+1).
+  unsigned int    numDelaySlots; // Number of delay slots after instruction
+  unsigned int    latency;	 // Latency in machine cycles
+  InstrSchedClass schedClass;	 // enum  identifying instr sched class
+  unsigned int	  iclass;	 // flags identifying machine instr class
 };
 
 
@@ -70,37 +73,31 @@ protected:
   unsigned int numRealOpCodes;		// number of non-dummy op codes
   
 public:
-  /*ctor*/		MachineInstrInfo(const MachineInstrDescriptor* _desc,
-					 unsigned int _descSize,
-					 unsigned int _numRealOpCodes);
-  /*dtor*/ virtual	~MachineInstrInfo();
+  MachineInstrInfo(const MachineInstrDescriptor *desc, unsigned descSize,
+		   unsigned numRealOpCodes);
+  virtual ~MachineInstrInfo();
   
-  unsigned int		getNumRealOpCodes() const {
-    return numRealOpCodes;
-  }
-  
-  unsigned int		getNumTotalOpCodes() const {
-    return descSize;
-  }
+  unsigned getNumRealOpCodes()  const { return numRealOpCodes; }
+  unsigned getNumTotalOpCodes() const { return descSize; }
   
   const MachineInstrDescriptor& getDescriptor(MachineOpCode opCode) const {
-    assert(opCode >= 0 && opCode < (int) descSize);
+    assert(opCode >= 0 && opCode < (int)descSize);
     return desc[opCode];
   }
   
-  int			getNumOperands	(MachineOpCode opCode) const {
+  int getNumOperands(MachineOpCode opCode) const {
     return getDescriptor(opCode).numOperands;
   }
   
-  int			getResultPos	(MachineOpCode opCode) const {
+  int getResultPos(MachineOpCode opCode) const {
     return getDescriptor(opCode).resultPos;
   }
   
-  unsigned int		getNumDelaySlots(MachineOpCode opCode) const {
+  unsigned getNumDelaySlots(MachineOpCode opCode) const {
     return getDescriptor(opCode).numDelaySlots;
   }
   
-  InstrSchedClass	getSchedClass	(MachineOpCode opCode) const {
+  InstrSchedClass getSchedClass(MachineOpCode opCode) const {
     return getDescriptor(opCode).schedClass;
   }
   
@@ -108,63 +105,63 @@ public:
   // Query instruction class flags according to the machine-independent
   // flags listed above.
   // 
-  unsigned int	getIClass		(MachineOpCode opCode) const {
+  unsigned int getIClass(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass;
   }
-  bool		isNop			(MachineOpCode opCode) const {
+  bool isNop(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_NOP_FLAG;
   }
-  bool		isBranch		(MachineOpCode opCode) const {
+  bool isBranch(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_BRANCH_FLAG;
   }
-  bool		isCall			(MachineOpCode opCode) const {
+  bool isCall(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_CALL_FLAG;
   }
-  bool		isReturn		(MachineOpCode opCode) const {
+  bool isReturn(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_RET_FLAG;
   }
-  bool		isControlFlow		(MachineOpCode opCode) const {
+  bool isControlFlow(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_BRANCH_FLAG
         || getDescriptor(opCode).iclass & M_CALL_FLAG
         || getDescriptor(opCode).iclass & M_RET_FLAG;
   }
-  bool		isArith			(MachineOpCode opCode) const {
+  bool isArith(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_RET_FLAG;
   }
-  bool		isCCInstr		(MachineOpCode opCode) const {
+  bool isCCInstr(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_CC_FLAG;
   }
-  bool		isLogical		(MachineOpCode opCode) const {
+  bool isLogical(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_LOGICAL_FLAG;
   }
-  bool		isIntInstr		(MachineOpCode opCode) const {
+  bool isIntInstr(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_INT_FLAG;
   }
-  bool		isFloatInstr		(MachineOpCode opCode) const {
+  bool isFloatInstr(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_FLOAT_FLAG;
   }
-  bool		isConditional		(MachineOpCode opCode) const {
+  bool isConditional(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_CONDL_FLAG;
   }
-  bool		isLoad			(MachineOpCode opCode) const {
+  bool isLoad(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_LOAD_FLAG;
   }
-  bool		isPrefetch		(MachineOpCode opCode) const {
+  bool isPrefetch(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_PREFETCH_FLAG;
   }
-  bool		isLoadOrPrefetch	(MachineOpCode opCode) const {
+  bool isLoadOrPrefetch(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_LOAD_FLAG
         || getDescriptor(opCode).iclass & M_PREFETCH_FLAG;
   }
-  bool		isStore			(MachineOpCode opCode) const {
+  bool isStore(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_STORE_FLAG;
   }
-  bool		isMemoryAccess		(MachineOpCode opCode) const {
+  bool isMemoryAccess(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_LOAD_FLAG
         || getDescriptor(opCode).iclass & M_PREFETCH_FLAG
         || getDescriptor(opCode).iclass & M_STORE_FLAG;
   }
-  bool		isDummyPhiInstr		(MachineOpCode opCode) const {
+  bool isDummyPhiInstr(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_DUMMY_PHI_FLAG;
   }
 
@@ -173,36 +170,35 @@ public:
   bool isPhi(MachineOpCode opCode) { return isDummyPhiInstr(opCode); }  
   
 
-
   // Check if an instruction can be issued before its operands are ready,
   // or if a subsequent instruction that uses its result can be issued
   // before the results are ready.
   // Default to true since most instructions on many architectures allow this.
   // 
-  virtual bool		hasOperandInterlock(MachineOpCode opCode) const {
+  virtual bool hasOperandInterlock(MachineOpCode opCode) const {
     return true;
   }
   
-  virtual bool		hasResultInterlock(MachineOpCode opCode) const {
+  virtual bool hasResultInterlock(MachineOpCode opCode) const {
     return true;
   }
   
   // 
   // Latencies for individual instructions and instruction pairs
   // 
-  virtual int		minLatency	(MachineOpCode opCode) const {
+  virtual int minLatency(MachineOpCode opCode) const {
     return getDescriptor(opCode).latency;
   }
   
-  virtual int		maxLatency	(MachineOpCode opCode) const {
+  virtual int maxLatency(MachineOpCode opCode) const {
     return getDescriptor(opCode).latency;
   }
   
   // Check if the specified constant fits in the immediate field
   // of this machine instruction
   // 
-  virtual bool		constantFitsInImmedField(MachineOpCode opCode,
-						 int64_t intValue) const;
+  virtual bool constantFitsInImmedField(MachineOpCode opCode,
+					int64_t intValue) const;
   
   // Return the largest +ve constant that can be held in the IMMMED field
   // of this machine instruction.
@@ -210,8 +206,8 @@ public:
   // (this is true for all immediate fields in SPARC instructions).
   // Return 0 if the instruction has no IMMED field.
   // 
-  virtual uint64_t	maxImmedConstant(MachineOpCode opCode,
-					 bool& isSignExtended) const {
+  virtual uint64_t maxImmedConstant(MachineOpCode opCode,
+				    bool &isSignExtended) const {
     isSignExtended = getDescriptor(opCode).immedIsSignExtended;
     return getDescriptor(opCode).maxImmedConst;
   }

@@ -13,6 +13,7 @@
 
 class TargetMachine;
 class MachineInstrInfo;
+class MachineInstrDescriptor;
 
 //---------------------------------------------------------------------------
 // Data types used to define information about a single machine instruction
@@ -20,7 +21,6 @@ class MachineInstrInfo;
 
 typedef int MachineOpCode;
 typedef int OpCodeMask;
-
 
 
 //---------------------------------------------------------------------------
@@ -42,8 +42,8 @@ public:
   // Register information.  This needs to be reorganized into a single class.
   int		zeroRegNum;	// register that gives 0 if any (-1 if none)
   
-public:
-  TargetMachine(const string &targetname,
+protected:
+  TargetMachine(const string &targetname, // Can only create subclasses...
 		unsigned char PtrSize = 8, unsigned char PtrAl = 8,
 		unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
 		unsigned char LongAl = 8, unsigned char IntAl = 4,
@@ -51,10 +51,11 @@ public:
     : TargetName(targetname), DataLayout(targetname, PtrSize, PtrAl,
 					 DoubleAl, FloatAl, LongAl, IntAl, 
 					 ShortAl, ByteAl) { }
+public:
   virtual ~TargetMachine() {}
   
   virtual const MachineInstrInfo& getInstrInfo() const = 0;
-  
+
   virtual unsigned int	findOptimalStorageSize	(const Type* ty) const;
   
   // This really should be in the register info class
