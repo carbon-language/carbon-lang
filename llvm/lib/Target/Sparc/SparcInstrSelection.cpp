@@ -2859,9 +2859,19 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
         unsigned numSubst = 0;
         for (unsigned i=0, N=mvec.size(); i < N; ++i) {
+
+          // Make sure we substitute all occurrences of dest in these instrs.
+          // Otherwise, we will have bogus code.
           bool someArgsWereIgnored = false;
-          numSubst += mvec[i]->substituteValue(dest, tmpI, /*defsOnly*/ true,
-                                               /*defsAndUses*/ false,
+
+          // Make sure not to substitute an upwards-exposed use -- that would
+          // introduce a use of `tmpI' with no preceding def.  Therefore,
+          // substitute a use or def-and-use operand only if a previous def
+          // operand has already been substituted (i.e., numSusbt > 0).
+          // 
+          numSubst += mvec[i]->substituteValue(dest, tmpI,
+                                               /*defsOnly*/ numSubst == 0,
+                                               /*notDefsAndUses*/ numSubst > 0,
                                                someArgsWereIgnored);
           assert(!someArgsWereIgnored &&
                  "Operand `dest' exists but not replaced: probably bogus!");
