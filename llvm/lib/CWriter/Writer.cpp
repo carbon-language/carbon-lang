@@ -1133,7 +1133,7 @@ void CWriter::visitCallInst(CallInst &I) {
       switch (ID) {
       default:  assert(0 && "Unknown LLVM intrinsic!");
       case LLVMIntrinsic::va_start: 
-        Out << "va_start((va_list)*";
+        Out << "va_start(*(va_list*)";
         writeOperand(I.getOperand(1));
         Out << ", ";
         // Output the last argument to the enclosing function...
@@ -1141,12 +1141,12 @@ void CWriter::visitCallInst(CallInst &I) {
         Out << ")";
         return;
       case LLVMIntrinsic::va_end:
-        Out << "va_end((va_list)*";
+        Out << "va_end(*(va_list*)";
         writeOperand(I.getOperand(1));
         Out << ")";
         return;
       case LLVMIntrinsic::va_copy:
-        Out << "va_copy((va_list)*";
+        Out << "va_copy(*(va_list*)";
         writeOperand(I.getOperand(1));
         Out << ", (va_list)";
         writeOperand(I.getOperand(2));
