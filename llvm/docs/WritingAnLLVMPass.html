@@ -77,6 +77,7 @@
      <li><a href="#agconcepts">Analysis Group Concepts</a></li>
      <li><a href="#registerag">Using <tt>RegisterAnalysisGroup</tt></a></li>
      </ul></li>
+  <li><a href="#passStatistics">Pass Statistics</a>
   <li><a href="#passmanager">What PassManager does</a>
     <ul>
     <li><a href="#releaseMemory">The <tt>releaseMemory</tt> method</a></li>
@@ -1202,6 +1203,23 @@ href="http://llvm.cs.uiuc.edu/doxygen/structBasicAliasAnalysis.html">BasicAliasA
 pass is the default implementation for the interface.</p>
 
 </div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="passStatistics">Pass Statistics</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+<p>The file <a
+href="http:://llvm.cs.uiuc.edu/doxygen/Statistic_8h-source.html"><tt>Statistic</tt></a>
+class, is designed to be an easy way to expose various success
+metrics from passes.  These statistics are printed at the end of a
+run, when the -stats command line option is enabled on the command
+line. See the <a href="http://llvm.org/docs/ProgrammersManual.html#Statistic">Statistics section</a> in the Programmers Manual for details. 
+
+</div>
+
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
