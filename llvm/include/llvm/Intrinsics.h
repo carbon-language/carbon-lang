@@ -60,6 +60,8 @@ namespace Intrinsic {
     // Input/Output intrinsics
     readport,
     writeport,
+    readio,
+    writeio,
 
     //===------------------------------------------------------------------===//
     // This section defines intrinsic functions used to represent Alpha
