@@ -357,7 +357,7 @@ struct UnsignedIntType : public Type {
 };
 
 struct OtherType : public Type {
-   OtherType(std:;string name, TypeID id) : Type(name,id) {}
+   OtherType(std::string name, TypeID id) : Type(name,id) {}
 };
 
 
