@@ -1286,10 +1286,6 @@ void DSGraph::cloneInto(const DSGraph &G,
     DSNode *MappedNodeN = MappedNode.getNode();
     H.mergeWith(DSNodeHandle(MappedNodeN,
                              I->second.getOffset()+MappedNode.getOffset()));
-
-    // If this is a global, add the global to this fn or merge if already exists
-    if (GlobalValue* GV = dyn_cast<GlobalValue>(I->first))
-      ScalarMap[GV].mergeWith(H);
   }
 
   if (!(CloneFlags & DontCloneCallNodes)) {
