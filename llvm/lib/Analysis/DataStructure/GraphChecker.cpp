@@ -52,6 +52,7 @@ namespace {
       }
       AU.setPreservesAll();
     }
+    void print(std::ostream &O, const Module *M) const {}
 
   private:
     void verify(const DSGraph &G);
