@@ -6,6 +6,6 @@ USEDLIBS = bcreader bcwriter \
            ipo ipa.a datastructure transforms target.a analysis \
            transformutils vmcore support
 
-TOOLLINKOPTS = -ldl
+TOOLLINKOPTS = $(PLATFORMLIBDL)
 
 include $(LEVEL)/Makefile.common

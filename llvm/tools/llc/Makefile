@@ -18,7 +18,7 @@ USEDLIBS = mapping \
 	   bcwriter \
            vmcore \
            support
-TOOLLINKOPTS = -ldl
+TOOLLINKOPTS = $(PLATFORMLIBDL)
 
 include $(LEVEL)/Makefile.common
 

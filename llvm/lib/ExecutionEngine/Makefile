@@ -29,6 +29,6 @@ USEDLIBS = lli-interpreter $(JITLIBS) $(ARCHLIBS) scalaropts analysis.a \
 # Have gcc tell the linker to export symbols from the program so that
 # dynamically loaded modules can be linked against them.
 #
-TOOLLINKOPTS = -ldl
+TOOLLINKOPTS = $(PLATFORMLIBDL)
 
 include $(LEVEL)/Makefile.common

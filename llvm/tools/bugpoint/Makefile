@@ -8,6 +8,6 @@ ANALIBS  = datastructure ipa target.a
 USEDLIBS = ipo scalaropts analysis $(OPTLIBS) $(ANALIBS) \
            transformutils asmparser bcreader bcwriter vmcore support
 
-TOOLLINKOPTS = -ldl
+TOOLLINKOPTS = $(PLATFORMLIBDL)
 
 include $(LEVEL)/Makefile.common
