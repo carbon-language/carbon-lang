@@ -12,8 +12,8 @@
 #define LLVM_METHOD_H
 
 #include "llvm/SymTabValue.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/GlobalValue.h"
+#include "llvm/ValueHolder.h"
 
 class Instruction;
 class BasicBlock;
@@ -103,134 +103,6 @@ public:
   // delete.
   //
   void dropAllReferences();
-
-  //===--------------------------------------------------------------------===//
-  // Method Instruction iterator code
-  //===--------------------------------------------------------------------===//
-  // 
-  template <class _BB_t, class _BB_i_t, class _BI_t, class _II_t> 
-  class InstIterator;
-  typedef InstIterator<BasicBlocksType, iterator, 
-		       BasicBlock::iterator, Instruction*> inst_iterator;
-  typedef InstIterator<const BasicBlocksType, const_iterator, 
-		       BasicBlock::const_iterator,
-		       const Instruction*> const_inst_iterator;
-
-  // This inner class is used to implement inst_begin() & inst_end() for
-  // inst_iterator and const_inst_iterator's.
-  //
-  template <class _BB_t, class _BB_i_t, class _BI_t, class _II_t>
-  class InstIterator {
-    typedef _BB_t   BBty;
-    typedef _BB_i_t BBIty;
-    typedef _BI_t   BIty;
-    typedef _II_t   IIty;
-    _BB_t  &BBs;      // BasicBlocksType
-    _BB_i_t BB;       // BasicBlocksType::iterator
-    _BI_t   BI;       // BasicBlock::iterator
-  public:
-    typedef std::bidirectional_iterator_tag iterator_category;
-    typedef IIty                            value_type;
-    typedef unsigned                        difference_type;
-    typedef BIty                            pointer;
-    typedef IIty                            reference;
-    
-    template<class M> InstIterator(M &m) 
-      : BBs(m.getBasicBlocks()), BB(BBs.begin()) {    // begin ctor
-      if (BB != BBs.end()) {
-	BI = (*BB)->begin();
-	resyncInstructionIterator();
-      }
-    }
-
-    template<class M> InstIterator(M &m, bool) 
-      : BBs(m.getBasicBlocks()), BB(BBs.end()) {    // end ctor
-    }
-
-    // Accessors to get at the underlying iterators...
-    inline BBIty &getBasicBlockIterator()  { return BB; }
-    inline BIty  &getInstructionIterator() { return BI; }
-
-    inline IIty operator*()  const { return *BI; }
-    inline IIty operator->() const { return operator*(); }
-
-    inline bool operator==(const InstIterator &y) const { 
-      return BB == y.BB && (BB == BBs.end() || BI == y.BI);
-    }
-    inline bool operator!=(const InstIterator& y) const { 
-      return !operator==(y);
-    }
-
-    // resyncInstructionIterator - This should be called if the 
-    // InstructionIterator is modified outside of our control.  This resynchs
-    // the internals of the InstIterator to a consistent state.
-    //
-    inline void resyncInstructionIterator() {
-      // The only way that the II could be broken is if it is now pointing to
-      // the end() of the current BasicBlock and there are successor BBs.
-      while (BI == (*BB)->end()) {
-	++BB;
-	if (BB == BBs.end()) break;
-	BI = (*BB)->begin();
-      }
-    }
-
-    InstIterator& operator++() { 
-      ++BI;
-      resyncInstructionIterator();   // Make sure it is still valid.
-      return *this; 
-    }
-    inline InstIterator operator++(int) { 
-      InstIterator tmp = *this; ++*this; return tmp; 
-    }
-    
-    InstIterator& operator--() { 
-      while (BB == BBs.end() || BI == (*BB)->begin()) {
-	--BB;
-	BI = (*BB)->end();
-      }
-      --BI;
-      return *this; 
-    }
-    inline InstIterator  operator--(int) { 
-      InstIterator tmp = *this; --*this; return tmp; 
-    }
-
-    inline bool atEnd() const { return BB == BBs.end(); }
-  };
-
-  inline inst_iterator inst_begin() { return inst_iterator(*this); }
-  inline inst_iterator inst_end()   { return inst_iterator(*this, true); }
-  inline const_inst_iterator inst_begin() const { return const_inst_iterator(*this); }
-  inline const_inst_iterator inst_end()   const { return const_inst_iterator(*this, true); }
-};
-
-// Provide specializations of GraphTraits to be able to treat a method as a 
-// graph of basic blocks... these are the same as the basic block iterators,
-// except that the root node is implicitly the first node of the method.
-//
-template <> struct GraphTraits<Method*> : public GraphTraits<BasicBlock*> {
-  static NodeType *getEntryNode(Method *M) { return M->front(); }
-};
-template <> struct GraphTraits<const Method*> :
-  public GraphTraits<const BasicBlock*> {
-  static NodeType *getEntryNode(const Method *M) { return M->front(); }
-};
-
-// Provide specializations of GraphTraits to be able to treat a method as a 
-// graph of basic blocks... and to walk it in inverse order.  Inverse order for
-// a method is considered to be when traversing the predecessor edges of a BB
-// instead of the successor edges.
-//
-template <> struct GraphTraits<Inverse<Method*> > :
-  public GraphTraits<Inverse<BasicBlock*> > {
-  static NodeType *getEntryNode(Inverse<Method *> G) { return G.Graph->front();}
-};
-template <> struct GraphTraits<Inverse<const Method*> > :
-  public GraphTraits<Inverse<const BasicBlock*> > {
-  static NodeType *getEntryNode(Inverse<const Method *> G) {
-    return G.Graph->front();
-  }
 };
 
 #endif

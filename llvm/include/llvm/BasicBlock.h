@@ -3,10 +3,8 @@
 // This file contains the declaration of the BasicBlock class, which represents
 // a single basic block in the VM.
 //
-// Note that basic blocks themselves are Def's, because they are referenced
+// Note that basic blocks themselves are Value's, because they are referenced
 // by instructions like branches and can go in switch tables and stuff...
-//
-// This may see wierd at first, but it's really pretty cool.  :)
 //
 //===----------------------------------------------------------------------===//
 //
@@ -24,7 +22,6 @@
 
 #include "llvm/ValueHolder.h"
 #include "llvm/InstrTypes.h"
-#include "Support/GraphTraits.h"
 #include <iterator>
 
 class Instruction;
@@ -252,72 +249,5 @@ public:
     return succ_const_iterator(getTerminator(), true);
   }
 };
-
-
-//===--------------------------------------------------------------------===//
-// GraphTraits specializations for basic block graphs (CFGs)
-//===--------------------------------------------------------------------===//
-
-// Provide specializations of GraphTraits to be able to treat a method as a 
-// graph of basic blocks...
-
-template <> struct GraphTraits<BasicBlock*> {
-  typedef BasicBlock NodeType;
-  typedef BasicBlock::succ_iterator ChildIteratorType;
-
-  static NodeType *getEntryNode(BasicBlock *BB) { return BB; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
-    return N->succ_begin(); 
-  }
-  static inline ChildIteratorType child_end(NodeType *N) { 
-    return N->succ_end(); 
-  }
-};
-
-template <> struct GraphTraits<const BasicBlock*> {
-  typedef const BasicBlock NodeType;
-  typedef BasicBlock::succ_const_iterator ChildIteratorType;
-
-  static NodeType *getEntryNode(const BasicBlock *BB) { return BB; }
-
-  static inline ChildIteratorType child_begin(NodeType *N) { 
-    return N->succ_begin(); 
-  }
-  static inline ChildIteratorType child_end(NodeType *N) { 
-    return N->succ_end(); 
-  }
-};
-
-// Provide specializations of GraphTraits to be able to treat a method as a 
-// graph of basic blocks... and to walk it in inverse order.  Inverse order for
-// a method is considered to be when traversing the predecessor edges of a BB
-// instead of the successor edges.
-//
-template <> struct GraphTraits<Inverse<BasicBlock*> > {
-  typedef BasicBlock NodeType;
-  typedef BasicBlock::pred_iterator ChildIteratorType;
-  static NodeType *getEntryNode(Inverse<BasicBlock *> G) { return G.Graph; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
-    return N->pred_begin(); 
-  }
-  static inline ChildIteratorType child_end(NodeType *N) { 
-    return N->pred_end(); 
-  }
-};
-
-template <> struct GraphTraits<Inverse<const BasicBlock*> > {
-  typedef const BasicBlock NodeType;
-  typedef BasicBlock::pred_const_iterator ChildIteratorType;
-  static NodeType *getEntryNode(Inverse<const BasicBlock*> G) {
-    return G.Graph; 
-  }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
-    return N->pred_begin(); 
-  }
-  static inline ChildIteratorType child_end(NodeType *N) { 
-    return N->pred_end(); 
-  }
-};
-
 
 #endif
