@@ -279,6 +279,9 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
       //
       DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
       
+      if (Callee->getName() == "bc_raise")
+        std::cerr << "HERE!\n";
+
       DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
             << "[" << GI.getGraphSize() << "+"
             << GI.getAuxFunctionCalls().size() << "] into '"

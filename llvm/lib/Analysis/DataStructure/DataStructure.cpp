@@ -33,10 +33,6 @@ namespace {
   Statistic<> NumDNE            ("dsa", "Number of nodes removed by reachability");
   Statistic<> NumTrivialDNE     ("dsa", "Number of nodes trivially removed");
   Statistic<> NumTrivialGlobalDNE("dsa", "Number of globals trivially removed");
-
-  cl::opt<bool>
-  EnableDSNodeGlobalRootsHack("enable-dsa-globalrootshack", cl::Hidden,
-                cl::desc("Make DSA less aggressive when cloning graphs"));
 };
 
 #if 1
@@ -1239,15 +1235,12 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
         AuxFunctionCalls.push_back(DSCallSite(Graph.AuxFunctionCalls[i], RC));
     }
     
-    // If the user requested it, add the nodes that we need to clone to the
-    // RootNodes set.
-    if (!EnableDSNodeGlobalRootsHack)
-      // FIXME: Why is this not iterating over the globals in the graph??
-      for (node_iterator NI = Graph.node_begin(), E = Graph.node_end();
-           NI != E; ++NI)
-        if (!(*NI)->getGlobals().empty())
-          RC.getClonedNH(*NI);
-                                                 
+    // Clone over all globals that appear in the caller and callee graphs.
+    for (DSScalarMap::global_iterator GI = Graph.getScalarMap().global_begin(),
+           E = Graph.getScalarMap().global_end(); GI != E; ++GI)
+      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*GI))
+        if (ScalarMap.count(GV))
+          RC.merge(ScalarMap[GV], Graph.getNodeForValue(GV));
   } else {
     DSNodeHandle RetVal = getReturnNodeFor(F);
 
