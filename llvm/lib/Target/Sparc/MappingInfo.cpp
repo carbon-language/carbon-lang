@@ -43,7 +43,7 @@ namespace {
     void create_MI_to_number_Key(Function &FI);
     void writeBBToMImap(Function &FI, unsigned num);
     void writeLLVMToMImap(Function &FI, unsigned num);
-    unsigned writeNumber(unsigned X);
+    void writeNumber(unsigned X);
   };
 }
 
@@ -104,19 +104,24 @@ void getMappingInfoForFunction::writeEpilogue(const std::string &symbolPrefix,
       << num << "\n\n\n\n";
 }
 
+/// outByte -- NOT DONE YET.
+void outByte (unsigned char b) {
+  Out << "\t.byte " << tmp << "\n";
+}
+
+
 /// writeNumber -- Write out the number X as a sequence of .byte
 /// directives to the current output stream Out. This method performs a
 /// run-length encoding of the unsigned integers X that are output.
-unsigned getMappingInfoForFunction::writeNumber(unsigned X) {
+void getMappingInfoForFunction::writeNumber(unsigned X) {
   unsigned i=0;
   do {
     unsigned tmp = X & 127;
     X >>= 7;
     if (X) tmp |= 128;
-    Out << "\t.byte " << tmp << "\n";
+    outByte (tmp);
     ++i;
   } while(X);
-  return i;
 }
 
 /// doInitialization -- Assign a number to each Function, as follows:
