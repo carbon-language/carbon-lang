@@ -24,6 +24,10 @@
                        <tt>dyn_cast&lt;&gt;</tt> templates</a>
     <li><a href="#DEBUG">The <tt>DEBUG()</tt> macro &amp;
                        <tt>-debug</tt> option</a>
+    <ul>
+      <li><a href="#DEBUG_TYPE">Fine grained debug info with 
+          <tt>DEBUG_TYPE</tt> and the <tt>-debug-only</tt> option</a/>
+    </ul>
     <li><a href="#Statistic">The <tt>Statistic</tt> template &amp;
                        <tt>-stats</tt> option</a>
 <!--
@@ -324,12 +328,11 @@ Naturally, because of this, you don't want to delete the debug printouts, but
 you don't want them to always be noisy.  A standard compromise is to comment
 them out, allowing you to enable them if you need them in the future.<p>
 
-The "<tt><a
-href="/doxygen/Statistic_8h-source.html">Support/Statistic.h</a></tt>"
-file provides a macro named <tt>DEBUG()</tt> that is a much nicer solution to
-this problem.  Basically, you can put arbitrary code into the argument of the
-<tt>DEBUG</tt> macro, and it is only executed if '<tt>opt</tt>' is run with the
-'<tt>-debug</tt>' command line argument:
+The "<tt><a href="/doxygen/Debug_8h-source.html">Support/Debug.h</a></tt>" file
+provides a macro named <tt>DEBUG()</tt> that is a much nicer solution to this
+problem.  Basically, you can put arbitrary code into the argument of the
+<tt>DEBUG</tt> macro, and it is only executed if '<tt>opt</tt>' (or any other
+tool) is run with the '<tt>-debug</tt>' command line argument:
 
 <pre>
      ... 
@@ -347,7 +350,7 @@ Then you can run your pass like this:<p>
   $
 </pre><p>
 
-Using the <tt>DEBUG()</tt> macro instead of a home brewed solution allows you to
+Using the <tt>DEBUG()</tt> macro instead of a home-brewed solution allows you to
 now have to create "yet another" command line option for the debug output for
 your pass.  Note that <tt>DEBUG()</tt> macros are disabled for optimized builds,
 so they do not cause a performance impact at all (for the same reason, they
@@ -358,6 +361,62 @@ enable or disable it directly in gdb.  Just use "<tt>set DebugFlag=0</tt>" or
 "<tt>set DebugFlag=1</tt>" from the gdb if the program is running.  If the
 program hasn't been started yet, you can always just run it with
 <tt>-debug</tt>.<p>
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="DEBUG_TYPE"><hr size=0>Fine grained debug info with 
+          <tt>DEBUG_TYPE()</tt> and the <tt>-debug-only</tt> option</a> </h4><ul>
+
+Sometimes you may find yourself in a situation where enabling <tt>-debug</tt>
+just turns on <b>too much</b> information (such as when working on the code
+generator).  If you want to enable debug information with more fine-grained
+control, you define the <tt>DEBUG_TYPE</tt> macro and the <tt>-debug</tt> only
+option as follows:<p>
+
+<pre>
+     ...
+     DEBUG(std::cerr &lt;&lt; "No debug type\n");
+     #undef  DEBUG_TYPE
+     #define DEBUG_TYPE "foo"
+     DEBUG(std::cerr &lt;&lt; "'foo' debug type\n");
+     #undef  DEBUG_TYPE
+     #define DEBUG_TYPE "bar"
+     DEBUG(std::cerr &lt;&lt; "'bar' debug type\n");
+     #undef  DEBUG_TYPE
+     #define DEBUG_TYPE ""
+     DEBUG(std::cerr &lt;&lt; "No debug type (2)\n");
+     ...
+</pre><p>
+
+Then you can run your pass like this:<p>
+
+<pre>
+  $ opt &lt; a.bc &gt; /dev/null -mypass
+    &lt;no output&gt;
+  $ opt &lt; a.bc &gt; /dev/null -mypass -debug
+    No debug type
+    'foo' debug type
+    'bar' debug type
+    No debug type (2)
+  $ opt &lt; a.bc &gt; /dev/null -mypass -debug-only=foo
+    No debug type
+    'foo' debug type
+    No debug type (2)
+  $ opt &lt; a.bc &gt; /dev/null -mypass -debug-only=bar
+    No debug type
+    'bar' debug type
+    No debug type (2)
+  $
+</pre><p>
+
+Of course, in practice, you should only set <tt>DEBUG_TYPE</tt> at the top of a
+file, to specify the debug type for the entire module (if you do this before you
+<tt>#include "Support/Debug.h"</tt>, you don't have to insert the ugly
+<tt>#undef</tt>'s).  Also, you should use names more meaningful that "foo" and
+"bar", because there is no system in place to ensure that names do not conflict:
+if two different modules use the same string, they will all be turned on when
+the name is specified.  This allows all, say, instruction scheduling debug
+information to be enabled with <tt>-debug-type=InstrSched</tt>, even if the
+source lives in multiple files.<p>
 
 
 <!-- ======================================================================= -->
@@ -1734,6 +1793,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Wed Apr 23 11:21:57 CDT 2003
+Last modified: Fri Aug  1 16:40:37 CDT 2003
 <!-- hhmts end -->
 </font></body></html>
