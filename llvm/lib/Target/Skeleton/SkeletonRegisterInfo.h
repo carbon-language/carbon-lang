@@ -25,17 +25,17 @@ namespace llvm {
     const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
     
     // See MRegisterInfo.h for information on these methods.
-    int storeRegToStackSlot(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator MBBI,
-                            unsigned SrcReg, int FrameIndex) const;
-    
-    int loadRegFromStackSlot(MachineBasicBlock &MBB,
+    void storeRegToStackSlot(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator MBBI,
-                             unsigned DestReg, int FrameIndex) const;
+                             unsigned SrcReg, int FrameIndex) const;
     
-    int copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-                     unsigned DestReg, unsigned SrcReg,
-                     const TargetRegisterClass *RC) const;
+    void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator MBBI,
+                              unsigned DestReg, int FrameIndex) const;
+    
+    void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+                      unsigned DestReg, unsigned SrcReg,
+                      const TargetRegisterClass *RC) const;
     
     void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                        MachineBasicBlock &MBB,
