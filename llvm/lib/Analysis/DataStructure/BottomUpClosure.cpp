@@ -313,41 +313,31 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
     if (CalledFuncs.empty()) {
       // Remember that we could not resolve this yet!
       AuxCallsList.splice(AuxCallsList.end(), TempFCs, TempFCs.begin());
+      continue;
     } else if (CalledFuncs.size() == 1) {
       Function *Callee = *CalledFuncs.begin();
 
-      if (ReturnNodes.count(Callee)) {
-        // Self recursion... simply link up the formal arguments with the
-        // actual arguments.
-        DEBUG(std::cerr << "    Self Inlining: " << Callee->getName() << "\n");
-        
-        // Handle self recursion by resolving the arguments and return value
-        Graph.mergeInGraph(CS, *Callee, Graph, 0);
-      } else {
-        ActualCallees.insert(std::make_pair(CS.getCallSite().getInstruction(),
-                                            Callee));
+      ActualCallees.insert(std::make_pair(CS.getCallSite().getInstruction(),
+                                          Callee));
 
-        // Get the data structure graph for the called function.
-        //
-        DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
-        
-        DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
-              << "[" << GI.getGraphSize() << "+"
-              << GI.getAuxFunctionCalls().size() << "] into '"
-              << Graph.getFunctionNames() << "' [" << Graph.getGraphSize() <<"+"
-              << Graph.getAuxFunctionCalls().size() << "]\n");
-        Graph.mergeInGraph(CS, *Callee, GI,
-                           DSGraph::KeepModRefBits | 
-                           DSGraph::StripAllocaBit|DSGraph::DontCloneCallNodes);
-        ++NumBUInlines;
-
+      // Get the data structure graph for the called function.
+      //
+      DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
+      
+      DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
+            << "[" << GI.getGraphSize() << "+"
+            << GI.getAuxFunctionCalls().size() << "] into '"
+            << Graph.getFunctionNames() << "' [" << Graph.getGraphSize() <<"+"
+            << Graph.getAuxFunctionCalls().size() << "]\n");
+      Graph.mergeInGraph(CS, *Callee, GI,
+                         DSGraph::KeepModRefBits | 
+                         DSGraph::StripAllocaBit|DSGraph::DontCloneCallNodes);
+      ++NumBUInlines;
+      
 #if 0
-        Graph.writeGraphToFile(std::cerr, "bu_" + F.getName() + "_after_" +
-                               Callee->getName());
+      Graph.writeGraphToFile(std::cerr, "bu_" + F.getName() + "_after_" +
+                             Callee->getName());
 #endif
-      }
-
-      TempFCs.erase(TempFCs.begin());
     } else {
       if (!Printed)
         std::cerr << "In Fns: " << Graph.getFunctionNames() << "\n";
@@ -366,39 +356,30 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
       for (std::set<Function*>::iterator I = CalledFuncs.begin(),
              E = CalledFuncs.end(); I != E; ++I) {
         Function *Callee = *I;
-        if (ReturnNodes.count(Callee)) {
-          // Self recursion... simply link up the formal arguments with the
-          // actual arguments.
-          DEBUG(std::cerr << "    Self Inlining: " << Callee->getName() << "\n");
+        ActualCallees.insert(std::make_pair(CS.getCallSite().getInstruction(),
+                                            Callee));
           
-          // Handle self recursion by resolving the arguments and return value
-          Graph.mergeInGraph(CS, *Callee, Graph, 0);
-        } else {
-          ActualCallees.insert(std::make_pair(CS.getCallSite().getInstruction(),
-                                              Callee));
-          
-          // Get the data structure graph for the called function.
-          //
-          DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
-          
-          DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
-                << "[" << GI.getGraphSize() << "+"
-                << GI.getAuxFunctionCalls().size() << "] into '"
-                << Graph.getFunctionNames() << "' [" << Graph.getGraphSize() <<"+"
-                << Graph.getAuxFunctionCalls().size() << "]\n");
-          Graph.mergeInGraph(CS, *Callee, GI,
-                             DSGraph::KeepModRefBits | 
-                             DSGraph::StripAllocaBit|DSGraph::DontCloneCallNodes);
-          ++NumBUInlines;
-          
+        // Get the data structure graph for the called function.
+        //
+        DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
+        
+        DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
+              << "[" << GI.getGraphSize() << "+"
+              << GI.getAuxFunctionCalls().size() << "] into '"
+              << Graph.getFunctionNames() << "' [" << Graph.getGraphSize() <<"+"
+              << Graph.getAuxFunctionCalls().size() << "]\n");
+        Graph.mergeInGraph(CS, *Callee, GI,
+                           DSGraph::KeepModRefBits | 
+                           DSGraph::StripAllocaBit|DSGraph::DontCloneCallNodes);
+        ++NumBUInlines;
+        
 #if 0
-          Graph.writeGraphToFile(std::cerr, "bu_" + F.getName() + "_after_" +
-                                 Callee->getName());
+        Graph.writeGraphToFile(std::cerr, "bu_" + F.getName() + "_after_" +
+                               Callee->getName());
 #endif
-        }
       }
-      TempFCs.erase(TempFCs.begin());
     }
+    TempFCs.erase(TempFCs.begin());
   }
 
   // Recompute the Incomplete markers
