@@ -1298,6 +1298,14 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
         if (ConstantExpr::getAnd(CI, Mask)->isNullValue())
           return true;
       break;
+    case Instruction::Or:
+      // If the LHS and the RHS are MaskedValueIsZero, the result is also zero.
+      return MaskedValueIsZero(I->getOperand(1), Mask) && 
+             MaskedValueIsZero(I->getOperand(0), Mask);
+    case Instruction::Select:
+      // If the T and F values are MaskedValueIsZero, the result is also zero.
+      return MaskedValueIsZero(I->getOperand(2), Mask) && 
+             MaskedValueIsZero(I->getOperand(1), Mask);
     case Instruction::Cast: {
       const Type *SrcTy = I->getOperand(0)->getType();
       if (SrcTy->isIntegral()) {
@@ -1535,9 +1543,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (Op0 == Op1)
     return ReplaceInstUsesWith(I, Op1);
 
-  // and X, -1 == X
   if (ConstantIntegral *AndRHS = dyn_cast<ConstantIntegral>(Op1)) {
-    if (AndRHS->isAllOnesValue())              // and X, -1 == X
+    // and X, -1 == X
+    if (AndRHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op0);
 
     if (MaskedValueIsZero(Op0, AndRHS))        // LHS & RHS == 0
@@ -1545,9 +1553,10 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
     // If the mask is not masking out any bits, there is no reason to do the
     // and in the first place.
-    if (MaskedValueIsZero(Op0,
-                          cast<ConstantIntegral>(ConstantExpr::getNot(AndRHS))))
-        return ReplaceInstUsesWith(I, Op0);
+    ConstantIntegral *NotAndRHS = 
+      cast<ConstantIntegral>(ConstantExpr::getNot(AndRHS));
+    if (MaskedValueIsZero(Op0, NotAndRHS))                          
+      return ReplaceInstUsesWith(I, Op0);
 
     // Optimize a variety of ((val OP C1) & C2) combinations...
     if (isa<BinaryOperator>(Op0) || isa<ShiftInst>(Op0)) {
@@ -1563,6 +1572,28 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
           return BinaryOperator::createAnd(Op0RHS, AndRHS);      
         if (MaskedValueIsZero(Op0RHS, AndRHS))
           return BinaryOperator::createAnd(Op0LHS, AndRHS);      
+
+        // If the mask is only needed on one incoming arm, push it up.
+        if (Op0I->hasOneUse()) {
+          if (MaskedValueIsZero(Op0LHS, NotAndRHS)) {
+            // Not masking anything out for the LHS, move to RHS.
+            Instruction *NewRHS = BinaryOperator::createAnd(Op0RHS, AndRHS,
+                                                   Op0RHS->getName()+".masked");
+            InsertNewInstBefore(NewRHS, I);
+            return BinaryOperator::create(
+                       cast<BinaryOperator>(Op0I)->getOpcode(), Op0LHS, NewRHS);
+          }  
+          if (!isa<Constant>(NotAndRHS) &&
+              MaskedValueIsZero(Op0RHS, NotAndRHS)) {
+            // Not masking anything out for the RHS, move to LHS.
+            Instruction *NewLHS = BinaryOperator::createAnd(Op0LHS, AndRHS,
+                                                   Op0LHS->getName()+".masked");
+            InsertNewInstBefore(NewLHS, I);
+            return BinaryOperator::create(
+                       cast<BinaryOperator>(Op0I)->getOpcode(), NewLHS, Op0RHS);
+          }
+        }
+
         break;
       case Instruction::And:
         // (X & V) & C2 --> 0 iff (V & C2) == 0
