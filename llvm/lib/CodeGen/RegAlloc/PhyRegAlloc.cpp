@@ -20,6 +20,7 @@
 // 
 //===----------------------------------------------------------------------===//
 
+#include "AllocInfo.h"
 #include "IGNode.h"
 #include "PhyRegAlloc.h"
 #include "RegAllocCommon.h"
@@ -1129,54 +1130,12 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
 }
 
 
-namespace {
-  /// AllocInfo - Structure representing one instruction's
-  /// operand's-worth of register allocation state. We create tables
-  /// made out of these data structures to generate mapping information
-  /// for this register allocator. (FIXME: This might move to a header
-  /// file at some point.)
-  ///
-  struct AllocInfo {
-    unsigned Instruction;
-    unsigned Operand;
-    unsigned AllocState;
-    int Placement;
-    AllocInfo (unsigned Instruction_, unsigned Operand_,
-               unsigned AllocState_, int Placement_) :
-      Instruction (Instruction_), Operand (Operand_),
-      AllocState (AllocState_), Placement (Placement_) { }
-    /// getConstantType - Return a StructType representing an AllocInfo
-    /// object.
-    ///
-    static StructType *getConstantType () {
-      std::vector<const Type *> TV;
-      TV.push_back (Type::UIntTy);
-      TV.push_back (Type::UIntTy);
-      TV.push_back (Type::UIntTy);
-      TV.push_back (Type::IntTy);
-      return StructType::get (TV);
-    }
-    /// toConstant - Convert this AllocInfo into an LLVM Constant of type
-    /// getConstantType(), and return the Constant.
-    ///
-    Constant *toConstant () const {
-      StructType *ST = getConstantType ();
-      std::vector<Constant *> CV;
-      CV.push_back (ConstantUInt::get (Type::UIntTy, Instruction));
-      CV.push_back (ConstantUInt::get (Type::UIntTy, Operand));
-      CV.push_back (ConstantUInt::get (Type::UIntTy, AllocState));
-      CV.push_back (ConstantSInt::get (Type::IntTy, Placement));
-      return ConstantStruct::get (ST, CV);
-    }
-  };
-}
-
 /// Save the global register allocation decisions made by the register
 /// allocator so that they can be accessed later (sort of like "poor man's
 /// debug info").
 ///
 void PhyRegAlloc::saveState () {
-  std::vector<Constant *> &state = FnAllocState[Fn];
+  std::vector<AllocInfo> &state = FnAllocState[Fn];
   unsigned Insn = 0;
   LiveRangeMapType::const_iterator HMIEnd = LRI->getLiveRangeMap ()->end ();   
   for (const_inst_iterator II=inst_begin (Fn), IE=inst_end (Fn); II != IE; ++II)
@@ -1204,10 +1163,10 @@ void PhyRegAlloc::saveState () {
           Placement = L->getSpillOffFromFP ();
         }
       }
-      state.push_back (AllocInfo (Insn, i, AllocState,
-                                  Placement).toConstant ());
+      state.push_back (AllocInfo (Insn, i, AllocState, Placement));
     }
 }
+
 
 /// Check the saved state filled in by saveState(), and abort if it looks
 /// wrong. Only used when debugging.
@@ -1216,6 +1175,11 @@ void PhyRegAlloc::verifySavedState () {
   /// not yet implemented
 }
 
+/// Finish the job of saveState(), by collapsing FnAllocState into an LLVM
+/// Constant and stuffing it inside the Module. (NOTE: Soon, there will be
+/// other, better ways of storing the saved state; this one is cumbersome and
+/// will never work with the JIT.)
+///
 bool PhyRegAlloc::doFinalization (Module &M) { 
   if (!SaveRegAllocState)
     return false; // Nothing to do here, unless we're saving state.
@@ -1234,11 +1198,14 @@ bool PhyRegAlloc::doFinalization (Module &M) {
     if (FnAllocState.find (F) == FnAllocState.end ()) {
       allstate.push_back (ConstantPointerNull::get (PT));
     } else {
-      std::vector<Constant *> &state = FnAllocState[F];
+      std::vector<AllocInfo> &state = FnAllocState[F];
 
       // Convert state into an LLVM ConstantArray, and put it in a
       // ConstantStruct (named S) along with its size.
-      unsigned Size = state.size ();
+      std::vector<Constant *> stateConstants;
+      for (unsigned i = 0, s = state.size (); i != s; ++i)
+        stateConstants.push_back (state[i].toConstant ());
+      unsigned Size = stateConstants.size ();
       ArrayType *AT = ArrayType::get (AllocInfo::getConstantType (), Size);
       std::vector<const Type *> TV;
       TV.push_back (Type::UIntTy);
@@ -1246,7 +1213,7 @@ bool PhyRegAlloc::doFinalization (Module &M) {
       StructType *ST = StructType::get (TV);
       std::vector<Constant *> CV;
       CV.push_back (ConstantUInt::get (Type::UIntTy, Size));
-      CV.push_back (ConstantArray::get (AT, state));
+      CV.push_back (ConstantArray::get (AT, stateConstants));
       Constant *S = ConstantStruct::get (ST, CV);
 
       GlobalVariable *GV =
