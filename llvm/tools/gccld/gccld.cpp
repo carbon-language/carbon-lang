@@ -66,7 +66,7 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
     if (Verbose) {
       cerr << "Error opening bytecode file: '" << Filename << "'";
       if (ErrorMessage.size()) cerr << ": " << ErrorMessage;
-      cerr << std::endl;
+      cerr << "\n";
     }
     
     if (NextLibPathIdx == LibPaths.size()) break;
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 
   if (!Libraries.empty()) {
     // Sort libraries list...
-    //sort(Libraries.begin(), Libraries.end());
+    std::sort(Libraries.begin(), Libraries.end());
 
     // Remove duplicate libraries entries...
     Libraries.erase(unique(Libraries.begin(), Libraries.end()),
