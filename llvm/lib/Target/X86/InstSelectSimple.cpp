@@ -140,6 +140,10 @@ namespace {
     void doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator &MBBI,
                     unsigned DestReg, const Type *DestTy,
 		    unsigned Op0Reg, unsigned Op1Reg);
+    void doMultiplyConst(MachineBasicBlock *MBB, 
+                         MachineBasicBlock::iterator &MBBI,
+                         unsigned DestReg, const Type *DestTy,
+                         unsigned Op0Reg, unsigned Op1Val);
     void visitMul(BinaryOperator &B);
 
     void visitDiv(BinaryOperator &B) { visitDivRem(B); }
@@ -153,10 +157,10 @@ namespace {
 
     // Comparison operators...
     void visitSetCondInst(SetCondInst &I);
-    bool EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1,
-                                     MachineBasicBlock *MBB,
-                                     MachineBasicBlock::iterator &MBBI);
-
+    unsigned EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
+                            MachineBasicBlock *MBB,
+                            MachineBasicBlock::iterator &MBBI);
+    
     // Memory Instructions
     MachineInstr *doFPLoad(MachineBasicBlock *MBB,
 			   MachineBasicBlock::iterator &MBBI,
@@ -360,7 +364,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
 
     default:
       std::cerr << "Offending expr: " << C << "\n";
-      assert(0 && "Constant expressions not yet handled!\n");
+      assert(0 && "Constant expression not yet handled!\n");
     }
   }
 
@@ -599,17 +603,23 @@ static unsigned getSetCCNumber(unsigned Opcode) {
 // setge -> setge       setae
 // setgt -> setg        seta
 // setle -> setle       setbe
-static const unsigned SetCCOpcodeTab[2][6] = {
-  {X86::SETEr, X86::SETNEr, X86::SETBr, X86::SETAEr, X86::SETAr, X86::SETBEr},
-  {X86::SETEr, X86::SETNEr, X86::SETLr, X86::SETGEr, X86::SETGr, X86::SETLEr},
+// ----
+//          sets                       // Used by comparison with 0 optimization
+//          setns
+static const unsigned SetCCOpcodeTab[2][8] = {
+  { X86::SETEr, X86::SETNEr, X86::SETBr, X86::SETAEr, X86::SETAr, X86::SETBEr,
+    0, 0 },
+  { X86::SETEr, X86::SETNEr, X86::SETLr, X86::SETGEr, X86::SETGr, X86::SETLEr,
+    X86::SETSr, X86::SETNSr },
 };
 
-bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1,
-                                       MachineBasicBlock *MBB,
-                                       MachineBasicBlock::iterator &IP) {
+// EmitComparison - This function emits a comparison of the two operands,
+// returning the extended setcc code to use.
+unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
+                              MachineBasicBlock *MBB,
+                              MachineBasicBlock::iterator &IP) {
   // The arguments are already supposed to be of the same type.
   const Type *CompTy = Op0->getType();
-  bool isSigned = CompTy->isSigned();
   unsigned Class = getClassB(CompTy);
   unsigned Op0r = getReg(Op0, MBB, IP);
 
@@ -621,14 +631,26 @@ bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1,
       // Mask off any upper bits of the constant, if there are any...
       Op1v &= (1ULL << (8 << Class)) - 1;
 
-      switch (Class) {
-      case cByte:  BMI(MBB,IP, X86::CMPri8, 2).addReg(Op0r).addZImm(Op1v);break;
-      case cShort: BMI(MBB,IP, X86::CMPri16,2).addReg(Op0r).addZImm(Op1v);break;
-      case cInt:   BMI(MBB,IP, X86::CMPri32,2).addReg(Op0r).addZImm(Op1v);break;
-      default:
-        assert(0 && "Invalid class!");
+      // If this is a comparison against zero, emit more efficient code.  We
+      // can't handle unsigned comparisons against zero unless they are == or
+      // !=.  These should have been strength reduced already anyway.
+      if (Op1v == 0 && (CompTy->isSigned() || OpNum < 2)) {
+        static const unsigned TESTTab[] = {
+          X86::TESTrr8, X86::TESTrr16, X86::TESTrr32
+        };
+        BMI(MBB, IP, TESTTab[Class], 2).addReg(Op0r).addReg(Op0r);
+
+        if (OpNum == 2) return 6;   // Map jl -> js
+        if (OpNum == 3) return 7;   // Map jg -> jns
+        return OpNum;
       }
-      return isSigned;
+
+      static const unsigned CMPTab[] = {
+        X86::CMPri8, X86::CMPri16, X86::CMPri32
+      };
+
+      BMI(MBB, IP, CMPTab[Class], 2).addReg(Op0r).addZImm(Op1v);
+      return OpNum;
     }
 
   unsigned Op1r = getReg(Op1, MBB, IP);
@@ -650,7 +672,6 @@ bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1,
     BMI(MBB, IP, X86::FpUCOM, 2).addReg(Op0r).addReg(Op1r);
     BMI(MBB, IP, X86::FNSTSWr8, 0);
     BMI(MBB, IP, X86::SAHF, 1);
-    isSigned = false;   // Compare with unsigned operators
     break;
 
   case cLong:
@@ -679,16 +700,16 @@ bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1,
       BMI(MBB, IP, X86::CMPrr32, 2).addReg(Op0r).addReg(Op1r);
       BMI(MBB, IP, SetCCOpcodeTab[0][OpNum], 0, X86::AL);
       BMI(MBB, IP, X86::CMPrr32, 2).addReg(Op0r+1).addReg(Op1r+1);
-      BMI(MBB, IP, SetCCOpcodeTab[isSigned][OpNum], 0, X86::BL);
+      BMI(MBB, IP, SetCCOpcodeTab[CompTy->isSigned()][OpNum], 0, X86::BL);
       BMI(MBB, IP, X86::IMPLICIT_DEF, 0, X86::BH);
       BMI(MBB, IP, X86::IMPLICIT_DEF, 0, X86::AH);
       BMI(MBB, IP, X86::CMOVErr16, 2, X86::BX).addReg(X86::BX).addReg(X86::AX);
       // NOTE: visitSetCondInst knows that the value is dumped into the BL
       // register at this point for long values...
-      return isSigned;
+      return OpNum;
     }
   }
-  return isSigned;
+  return OpNum;
 }
 
 
@@ -711,9 +732,13 @@ void ISel::emitSetCCOperation(MachineBasicBlock *MBB,
                               Value *Op0, Value *Op1, unsigned Opcode,
                               unsigned TargetReg) {
   unsigned OpNum = getSetCCNumber(Opcode);
-  bool isSigned = EmitComparisonGetSignedness(OpNum, Op0, Op1, MBB, IP);
+  OpNum = EmitComparison(OpNum, Op0, Op1, MBB, IP);
 
-  if (getClassB(Op0->getType()) != cLong || OpNum < 2) {
+  const Type *CompTy = Op0->getType();
+  unsigned CompClass = getClassB(CompTy);
+  bool isSigned = CompTy->isSigned() && CompClass != cFP;
+
+  if (CompClass != cLong || OpNum < 2) {
     // Handle normal comparisons with a setcc instruction...
     BMI(MBB, IP, SetCCOpcodeTab[isSigned][OpNum], 0, TargetReg);
   } else {
@@ -845,9 +870,12 @@ void ISel::visitBranchInst(BranchInst &BI) {
 
   unsigned OpNum = getSetCCNumber(SCI->getOpcode());
   MachineBasicBlock::iterator MII = BB->end();
-  bool isSigned = EmitComparisonGetSignedness(OpNum, SCI->getOperand(0),
-                                              SCI->getOperand(1), BB, MII);
+  OpNum = EmitComparison(OpNum, SCI->getOperand(0), SCI->getOperand(1), BB, MII);
+
+  const Type *CompTy = SCI->getOperand(0)->getType();
+  bool isSigned = CompTy->isSigned() && getClassB(CompTy) != cFP;
   
+
   // LLVM  -> X86 signed  X86 unsigned
   // -----    ----------  ------------
   // seteq -> je          je
@@ -856,9 +884,14 @@ void ISel::visitBranchInst(BranchInst &BI) {
   // setge -> jge         jae
   // setgt -> jg          ja
   // setle -> jle         jbe
-  static const unsigned OpcodeTab[2][6] = {
-    { X86::JE, X86::JNE, X86::JB, X86::JAE, X86::JA, X86::JBE },
-    { X86::JE, X86::JNE, X86::JL, X86::JGE, X86::JG, X86::JLE },
+  // ----
+  //          js                  // Used by comparison with 0 optimization
+  //          jns
+
+  static const unsigned OpcodeTab[2][8] = {
+    { X86::JE, X86::JNE, X86::JB, X86::JAE, X86::JA, X86::JBE, 0, 0 },
+    { X86::JE, X86::JNE, X86::JL, X86::JGE, X86::JG, X86::JLE,
+      X86::JS, X86::JNS },
   };
   
   if (BI.getSuccessor(0) != NextBB) {
@@ -1049,17 +1082,38 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
                             OperatorClass, DestReg);
 }
 
-/// visitSimpleBinary - Implement simple binary operators for integral types...
-/// OperatorClass is one of: 0 for Add, 1 for Sub, 2 for And, 3 for Or,
-/// 4 for Xor.
+/// emitSimpleBinaryOperation - Implement simple binary operators for integral
+/// types...  OperatorClass is one of: 0 for Add, 1 for Sub, 2 for And, 3 for
+/// Or, 4 for Xor.
 ///
 /// emitSimpleBinaryOperation - Common code shared between visitSimpleBinary
 /// and constant expression support.
-void ISel::emitSimpleBinaryOperation(MachineBasicBlock *BB,
+///
+void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
                                      MachineBasicBlock::iterator &IP,
                                      Value *Op0, Value *Op1,
-                                     unsigned OperatorClass,unsigned TargetReg){
+                                     unsigned OperatorClass, unsigned DestReg) {
   unsigned Class = getClassB(Op0->getType());
+
+  // sub 0, X -> neg X
+  if (OperatorClass == 1 && Class != cLong)
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0))
+      if (CI->isNullValue()) {
+        unsigned op1Reg = getReg(Op1, MBB, IP);
+        switch (Class) {
+        default: assert(0 && "Unknown class for this function!");
+        case cByte:
+          BMI(MBB, IP, X86::NEGr8, 1, DestReg).addReg(op1Reg);
+          return;
+        case cShort:
+          BMI(MBB, IP, X86::NEGr16, 1, DestReg).addReg(op1Reg);
+          return;
+        case cInt:
+          BMI(MBB, IP, X86::NEGr32, 1, DestReg).addReg(op1Reg);
+          return;
+        }
+      }
+
   if (!isa<ConstantInt>(Op1) || Class == cLong) {
     static const unsigned OpcodeTab[][4] = {
       // Arithmetic operators
@@ -1080,41 +1134,63 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *BB,
     
     unsigned Opcode = OpcodeTab[OperatorClass][Class];
     assert(Opcode && "Floating point arguments to logical inst?");
-    unsigned Op0r = getReg(Op0, BB, IP);
-    unsigned Op1r = getReg(Op1, BB, IP);
-    BMI(BB, IP, Opcode, 2, TargetReg).addReg(Op0r).addReg(Op1r);
+    unsigned Op0r = getReg(Op0, MBB, IP);
+    unsigned Op1r = getReg(Op1, MBB, IP);
+    BMI(MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1r);
     
     if (isLong) {        // Handle the upper 32 bits of long values...
       static const unsigned TopTab[] = {
         X86::ADCrr32, X86::SBBrr32, X86::ANDrr32, X86::ORrr32, X86::XORrr32
       };
-      BMI(BB, IP, TopTab[OperatorClass], 2,
-          TargetReg+1).addReg(Op0r+1).addReg(Op1r+1);
+      BMI(MBB, IP, TopTab[OperatorClass], 2,
+          DestReg+1).addReg(Op0r+1).addReg(Op1r+1);
     }
-  } else {
-    // Special case: op Reg, <const>
-    ConstantInt *Op1C = cast<ConstantInt>(Op1);
-
-    static const unsigned OpcodeTab[][3] = {
-      // Arithmetic operators
-      { X86::ADDri8, X86::ADDri16, X86::ADDri32 },  // ADD
-      { X86::SUBri8, X86::SUBri16, X86::SUBri32 },  // SUB
-      
-      // Bitwise operators
-      { X86::ANDri8, X86::ANDri16, X86::ANDri32 },  // AND
-      { X86:: ORri8, X86:: ORri16, X86:: ORri32 },  // OR
-      { X86::XORri8, X86::XORri16, X86::XORri32 },  // XOR
-    };
-
-    assert(Class < 3 && "General code handles 64-bit integer types!");
-    unsigned Opcode = OpcodeTab[OperatorClass][Class];
-    unsigned Op0r = getReg(Op0, BB, IP);
-    uint64_t Op1v = cast<ConstantInt>(Op1C)->getRawValue();
-
-    // Mask off any upper bits of the constant, if there are any...
-    Op1v &= (1ULL << (8 << Class)) - 1;
-    BMI(BB, IP, Opcode, 2, TargetReg).addReg(Op0r).addZImm(Op1v);
+    return;
   }
+
+  // Special case: op Reg, <const>
+  ConstantInt *Op1C = cast<ConstantInt>(Op1);
+  unsigned Op0r = getReg(Op0, MBB, IP);
+
+  // xor X, -1 -> not X
+  if (OperatorClass == 4 && Op1C->isAllOnesValue()) {
+    static unsigned const NOTTab[] = { X86::NOTr8, X86::NOTr16, X86::NOTr32 };
+    BMI(MBB, IP, NOTTab[Class], 1, DestReg).addReg(Op0r);
+    return;
+  }
+
+  // add X, -1 -> dec X
+  if (OperatorClass == 0 && Op1C->isAllOnesValue()) {
+    static unsigned const DECTab[] = { X86::DECr8, X86::DECr16, X86::DECr32 };
+    BMI(MBB, IP, DECTab[Class], 1, DestReg).addReg(Op0r);
+    return;
+  }
+
+  // add X, 1 -> inc X
+  if (OperatorClass == 0 && Op1C->equalsInt(1)) {
+    static unsigned const DECTab[] = { X86::INCr8, X86::INCr16, X86::INCr32 };
+    BMI(MBB, IP, DECTab[Class], 1, DestReg).addReg(Op0r);
+    return;
+  }
+  
+  static const unsigned OpcodeTab[][3] = {
+    // Arithmetic operators
+    { X86::ADDri8, X86::ADDri16, X86::ADDri32 },  // ADD
+    { X86::SUBri8, X86::SUBri16, X86::SUBri32 },  // SUB
+    
+    // Bitwise operators
+    { X86::ANDri8, X86::ANDri16, X86::ANDri32 },  // AND
+    { X86:: ORri8, X86:: ORri16, X86:: ORri32 },  // OR
+    { X86::XORri8, X86::XORri16, X86::XORri32 },  // XOR
+  };
+  
+  assert(Class < 3 && "General code handles 64-bit integer types!");
+  unsigned Opcode = OpcodeTab[OperatorClass][Class];
+  uint64_t Op1v = cast<ConstantInt>(Op1C)->getRawValue();
+  
+  // Mask off any upper bits of the constant, if there are any...
+  Op1v &= (1ULL << (8 << Class)) - 1;
+  BMI(MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addZImm(Op1v);
 }
 
 /// doMultiply - Emit appropriate instructions to multiply together the
@@ -1145,19 +1221,75 @@ void ISel::doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator &MBBI,
   }
 }
 
+// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
+// returns zero when the input is not exactly a power of two.
+static unsigned ExactLog2(unsigned Val) {
+  if (Val == 0) return 0;
+  unsigned Count = 0;
+  while (Val != 1) {
+    if (Val & 1) return 0;
+    Val >>= 1;
+    ++Count;
+  }
+  return Count+1;
+}
+
+void ISel::doMultiplyConst(MachineBasicBlock *MBB,
+                           MachineBasicBlock::iterator &IP,
+                           unsigned DestReg, const Type *DestTy,
+                           unsigned op0Reg, unsigned ConstRHS) {
+  unsigned Class = getClass(DestTy);
+
+  // If the element size is exactly a power of 2, use a shift to get it.
+  if (unsigned Shift = ExactLog2(ConstRHS)) {
+    switch (Class) {
+    default: assert(0 && "Unknown class for this function!");
+    case cByte:
+      BMI(MBB, IP, X86::SHLir32, 2, DestReg).addReg(op0Reg).addZImm(Shift-1);
+      return;
+    case cShort:
+      BMI(MBB, IP, X86::SHLir32, 2, DestReg).addReg(op0Reg).addZImm(Shift-1);
+      return;
+    case cInt:
+      BMI(MBB, IP, X86::SHLir32, 2, DestReg).addReg(op0Reg).addZImm(Shift-1);
+      return;
+    }
+  }
+
+  // Most general case, emit a normal multiply...
+  static const unsigned MOVirTab[] = {
+    X86::MOVir8, X86::MOVir16, X86::MOVir32
+  };
+
+  unsigned TmpReg = makeAnotherReg(DestTy);
+  BMI(MBB, IP, MOVirTab[Class], 1, TmpReg).addZImm(ConstRHS);
+  
+  // Emit a MUL to multiply the register holding the index by
+  // elementSize, putting the result in OffsetReg.
+  doMultiply(MBB, IP, DestReg, DestTy, op0Reg, TmpReg);
+}
+
 /// visitMul - Multiplies are not simple binary operators because they must deal
 /// with the EAX register explicitly.
 ///
 void ISel::visitMul(BinaryOperator &I) {
   unsigned Op0Reg  = getReg(I.getOperand(0));
-  unsigned Op1Reg  = getReg(I.getOperand(1));
   unsigned DestReg = getReg(I);
 
   // Simple scalar multiply?
   if (I.getType() != Type::LongTy && I.getType() != Type::ULongTy) {
-    MachineBasicBlock::iterator MBBI = BB->end();
-    doMultiply(BB, MBBI, DestReg, I.getType(), Op0Reg, Op1Reg);
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(1))) {
+      unsigned Val = (unsigned)CI->getRawValue(); // Cannot be 64-bit constant
+      MachineBasicBlock::iterator MBBI = BB->end();
+      doMultiplyConst(BB, MBBI, DestReg, I.getType(), Op0Reg, Val);
+    } else {
+      unsigned Op1Reg  = getReg(I.getOperand(1));
+      MachineBasicBlock::iterator MBBI = BB->end();
+      doMultiply(BB, MBBI, DestReg, I.getType(), Op0Reg, Op1Reg);
+    }
   } else {
+    unsigned Op1Reg  = getReg(I.getOperand(1));
+
     // Long value.  We have to do things the hard way...
     // Multiply the two low parts... capturing carry into EDX
     BuildMI(BB, X86::MOVrr32, 1, X86::EAX).addReg(Op0Reg);
@@ -1949,19 +2081,6 @@ void ISel::visitVAArgInst(VAArgInst &I) {
 }
 
 
-// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
-// returns zero when the input is not exactly a power of two.
-static unsigned ExactLog2(unsigned Val) {
-  if (Val == 0) return 0;
-  unsigned Count = 0;
-  while (Val != 1) {
-    if (Val & 1) return 0;
-    Val >>= 1;
-    ++Count;
-  }
-  return Count+1;
-}
-
 void ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
   unsigned outputReg = getReg(I);
   MachineBasicBlock::iterator MI = BB->end();
@@ -2040,19 +2159,9 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       } else {
         unsigned idxReg = getReg(idx, MBB, IP);
         unsigned OffsetReg = makeAnotherReg(Type::UIntTy);
-        if (unsigned Shift = ExactLog2(elementSize)) {
-          // If the element size is exactly a power of 2, use a shift to get it.
-          BMI(MBB, IP, X86::SHLir32, 2,
-              OffsetReg).addReg(idxReg).addZImm(Shift-1);
-        } else {
-          // Most general case, emit a multiply...
-          unsigned elementSizeReg = makeAnotherReg(Type::LongTy);
-          BMI(MBB, IP, X86::MOVir32, 1, elementSizeReg).addZImm(elementSize);
-        
-          // Emit a MUL to multiply the register holding the index by
-          // elementSize, putting the result in OffsetReg.
-          doMultiply(MBB, IP, OffsetReg, Type::IntTy, idxReg, elementSizeReg);
-        }
+
+        doMultiplyConst(MBB, IP, OffsetReg, Type::IntTy, idxReg, elementSize);
+
         // Emit an ADD to add OffsetReg to the basePtr.
 	NextReg = makeAnotherReg(Type::UIntTy);
         BMI(MBB, IP, X86::ADDrr32, 2,NextReg).addReg(BaseReg).addReg(OffsetReg);
@@ -2097,12 +2206,10 @@ void ISel::visitAllocaInst(AllocaInst &I) {
   // constant by the variable amount.
   unsigned TotalSizeReg = makeAnotherReg(Type::UIntTy);
   unsigned SrcReg1 = getReg(I.getArraySize());
-  unsigned SizeReg = makeAnotherReg(Type::UIntTy);
-  BuildMI(BB, X86::MOVir32, 1, SizeReg).addZImm(TySize);
   
   // TotalSizeReg = mul <numelements>, <TypeSize>
   MachineBasicBlock::iterator MBBI = BB->end();
-  doMultiply(BB, MBBI, TotalSizeReg, Type::UIntTy, SrcReg1, SizeReg);
+  doMultiplyConst(BB, MBBI, TotalSizeReg, Type::UIntTy, SrcReg1, TySize);
 
   // AddedSize = add <TotalSizeReg>, 15
   unsigned AddedSizeReg = makeAnotherReg(Type::UIntTy);
@@ -2135,10 +2242,9 @@ void ISel::visitMallocInst(MallocInst &I) {
     Arg = getReg(ConstantUInt::get(Type::UIntTy, C->getValue() * AllocSize));
   } else {
     Arg = makeAnotherReg(Type::UIntTy);
-    unsigned Op0Reg = getReg(ConstantUInt::get(Type::UIntTy, AllocSize));
-    unsigned Op1Reg = getReg(I.getOperand(0));
+    unsigned Op0Reg = getReg(I.getOperand(0));
     MachineBasicBlock::iterator MBBI = BB->end();
-    doMultiply(BB, MBBI, Arg, Type::UIntTy, Op0Reg, Op1Reg);
+    doMultiplyConst(BB, MBBI, Arg, Type::UIntTy, Op0Reg, AllocSize);
   }
 
   std::vector<ValueRecord> Args;
