@@ -59,14 +59,14 @@ namespace {
 
     bool doInitialization(Module &M);
     bool run(Module &M) {
-      // First pass, lower all unhandled intrinsics.
-      lowerIntrinsics(M);
-
       doInitialization(M);
 
       for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-        if (!I->isExternal())
+        if (!I->isExternal()) {
+          // First pass, lower all unhandled intrinsics.
+          lowerIntrinsics(*I);
           printFunction(*I);
+        }
 
       // Free memory...
       delete Mang;
@@ -82,7 +82,7 @@ namespace {
     void writeOperandInternal(Value *Operand);
 
   private :
-    void lowerIntrinsics(Module &M);
+    void lowerIntrinsics(Function &F);
 
     bool nameAllUsedStructureTypes(Module &M);
     void printModule(Module *M);
@@ -655,6 +655,8 @@ bool CWriter::doInitialization(Module &M) {
   // Initialize
   TheModule = &M;
   FUT = &getAnalysis<FindUsedTypes>();
+
+  IL.AddPrototypes(M);
   
   // Ensure that all structure types have names...
   bool Changed = nameAllUsedStructureTypes(M);
@@ -776,7 +778,7 @@ bool CWriter::doInitialization(Module &M) {
 void CWriter::printFloatingPointConstants(Module &M) {
   union {
     double D;
-    unsigned long long U;
+    uint64_t U;
   } DBLUnion;
 
   union {
@@ -1219,33 +1221,32 @@ void CWriter::visitSelectInst(SelectInst &I) {
 }
 
 
-void CWriter::lowerIntrinsics(Module &M) {
-  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
-    for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
-        if (CallInst *CI = dyn_cast<CallInst>(I++))
-          if (Function *F = CI->getCalledFunction())
-            switch (F->getIntrinsicID()) {
-            case Intrinsic::not_intrinsic:
-            case Intrinsic::vastart:
-            case Intrinsic::vacopy:
-            case Intrinsic::vaend:
-            case Intrinsic::returnaddress:
-            case Intrinsic::frameaddress:
-            case Intrinsic::setjmp:
-            case Intrinsic::longjmp:
-              // We directly implement these intrinsics
-              break;
-            default:
-              // All other intrinsic calls we must lower.
-              Instruction *Before = CI->getPrev();
-              IL.LowerIntrinsicCall(CI);
-              if (Before) {        // Move iterator to instruction after call
-                I = Before; ++I;
-              } else {
-                I = BB->begin();
-              }
+void CWriter::lowerIntrinsics(Function &F) {
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
+      if (CallInst *CI = dyn_cast<CallInst>(I++))
+        if (Function *F = CI->getCalledFunction())
+          switch (F->getIntrinsicID()) {
+          case Intrinsic::not_intrinsic:
+          case Intrinsic::vastart:
+          case Intrinsic::vacopy:
+          case Intrinsic::vaend:
+          case Intrinsic::returnaddress:
+          case Intrinsic::frameaddress:
+          case Intrinsic::setjmp:
+          case Intrinsic::longjmp:
+            // We directly implement these intrinsics
+            break;
+          default:
+            // All other intrinsic calls we must lower.
+            Instruction *Before = CI->getPrev();
+            IL.LowerIntrinsicCall(CI);
+            if (Before) {        // Move iterator to instruction after call
+              I = Before; ++I;
+            } else {
+              I = BB->begin();
             }
+          }
 }
 
 
