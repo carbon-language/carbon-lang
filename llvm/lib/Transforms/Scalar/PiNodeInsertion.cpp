@@ -154,20 +154,15 @@ bool PiNodeInserter::insertPiNodeFor(Value *V, BasicBlock *Succ, Value *Rep) {
   // dominates with references to the Pi node itself.
   //
   DominatorSet &DS = getAnalysis<DominatorSet>();
-  for (unsigned i = 0; i < V->use_size(); ) {
-    if (Instruction *U = dyn_cast<Instruction>(*(V->use_begin()+i)))
+  for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; )
+    if (Instruction *U = dyn_cast<Instruction>(*I++))
       if (U->getParent()->getParent() == Succ->getParent() &&
           DS.dominates(Succ, U->getParent())) {
         // This instruction is dominated by the Pi node, replace reference to V
         // with a reference to the Pi node.
         //
         U->replaceUsesOfWith(V, Pi);
-        continue;           // Do not skip the next use...
       }
-      
-    // This use is not dominated by the Pi node, skip it...
-    ++i;
-  }
     
   // Set up the incoming value for the Pi node... do this after uses have been
   // replaced, because we don't want the Pi node to refer to itself.
