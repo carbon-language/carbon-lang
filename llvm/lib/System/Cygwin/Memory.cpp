@@ -43,7 +43,7 @@ MemoryBlock Memory::AllocateRWX(unsigned NumBytes) {
   return result;
 }
 
-void Memory::ReleaseRWX(Memory& M) {
+void Memory::ReleaseRWX(MemoryBlock& M) {
   if (M.Address == 0 || M.Size == 0) return;
   if (0 != munmap(M.Address, M.Size)) {
     throw std::string("Can't release RWX Memory: ") + strerror(errno);
