@@ -27,9 +27,15 @@ Linker::LinkInLibrary(const std::string& Lib)
 
   // If its an archive, try to link it in
   if (Pathname.isArchive()) {
-    if (LinkInArchive(Pathname)) {
+    if (LinkInArchive(Pathname))
       return error("Cannot link archive '" + Pathname.toString() + "'");
-    }
+  } else if (Pathname.isBytecodeFile()) {
+    // LLVM ".so" file.
+    if (LinkInFile(Pathname))
+      return error("Cannot link file '" + Pathname.toString() + "'");
+
+  } else if (Pathname.isDynamicLibrary()) {
+    return warning("Library '" + Lib + "' is a native dynamic library.");
   } else {
     return warning("Supposed library '" + Lib + "' isn't a library.");
   }

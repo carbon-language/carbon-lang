@@ -133,7 +133,9 @@ static inline sys::Path IsLibrary(const std::string& Name,
 
   FullPath.elideSuffix();
   FullPath.appendSuffix(&(LTDL_SHLIB_EXT[1]));
-  if (FullPath.isDynamicLibrary())
+  if (FullPath.isDynamicLibrary())  // Native shared library?
+    return FullPath;
+  if (FullPath.isBytecodeFile())    // .so file containing bytecode?
     return FullPath;
 
   FullPath.clear();
