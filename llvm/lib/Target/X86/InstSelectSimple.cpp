@@ -91,6 +91,10 @@ namespace {
       return false;  // We never modify the LLVM itself.
     }
 
+    virtual const char *getPassName() const {
+      return "X86 Simple Instruction Selection";
+    }
+
     /// visitBasicBlock - This method is called when we are visiting a new basic
     /// block.  This simply creates a new MachineBasicBlock to emit code into
     /// and adds it to the current MachineFunction.  Subsequent visit* for

@@ -25,6 +25,10 @@ namespace {
 
     bool runOnFunction(Function &F);
 
+    virtual const char *getPassName() const {
+      return "X86 Machine Code Emitter";
+    }
+
   private:
     void emitBasicBlock(MachineBasicBlock &MBB);
     void emitInstruction(MachineInstr &MI);

@@ -21,6 +21,10 @@ namespace {
 
     Printer(TargetMachine &tm, std::ostream &o) : TM(tm), O(o) {}
 
+    virtual const char *getPassName() const {
+      return "X86 Assembly Printer";
+    }
+
     bool runOnFunction(Function &F);
   };
 }
