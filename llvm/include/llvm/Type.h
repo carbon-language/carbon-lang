@@ -146,6 +146,14 @@ public:
   //
   bool isLosslesslyConvertableTo(const Type *Ty) const;
 
+  // isSized - Return true if it makes sense to take the size of this type.  To
+  // get the actual size for a particular target, it is reasonable to use the
+  // TargetData subsystem to do this.
+  //
+  bool isSized() const {
+    return ID != TypeTyID && ID != MethodTyID && ID != OpaqueTyID;
+  }
+
   //===--------------------------------------------------------------------===//
   // Type Iteration support
   //
@@ -190,8 +198,12 @@ public:
   // Note that all other types can just compare to see if this == Type::xxxTy;
   //
   inline bool isPrimitiveType() const { return ID < FirstDerivedTyID;  }
-
   inline bool isDerivedType()   const { return ID >= FirstDerivedTyID; }
+
+  // isFirstClassType - Return true if the value is holdable in a register.
+  inline bool isFirstClassType() const {
+    return isPrimitiveType() || ID == PointerTyID;
+  }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Type *T) { return true; }
