@@ -1,7 +1,5 @@
 * Must update PHI node to have a pair between predecessor and value.
 * Enhance BB to make predecessor handling easier (to update PHI nodes)
-* Must add BB iterator to iterate depth first, and reverse depth first
-* Move getBinaryOperator from Instruction to BinaryOperator
 * Provide a pass that eliminates critical edges from the CFG
 * Provide a print hook to print out xvcg format files for vis
 * I need to provide an option to the bytecode loader to ignore memory 
