@@ -154,6 +154,14 @@ namespace ISD {
     // call).  Arguments have already been lowered to explicit DAGs according to
     // the calling convention in effect here.
     CALL,
+
+    // MEMSET/MEMCPY/MEMMOVE - The first operand is the chain, and the rest
+    // correspond to the operands of the LLVM intrinsic functions.  The only
+    // result is a token chain.  The alignment argument is guaranteed to be a
+    // Constant node.
+    MEMSET,
+    MEMMOVE,
+    MEMCPY,
     
     // ADJCALLSTACKDOWN/ADJCALLSTACKUP - These operators mark the beginning and
     // end of a call sequence and indicate how much the stack pointer needs to
@@ -405,8 +413,8 @@ protected:
   }
   SDNode(unsigned NT, std::vector<SDOperand> &Nodes) : NodeType(NT) {
     Operands.swap(Nodes);
-    for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-      Nodes[i].Val->Uses.push_back(this);
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+      Operands[i].Val->Uses.push_back(this);
   }
 
   virtual ~SDNode() {
