@@ -17,6 +17,7 @@ BUGPOINT NOTES:
 #include "BugDriver.h"
 #include "SystemUtils.h"
 #include "Support/CommandLine.h"
+#include "Support/Statistic.h"
 #include <fstream>
 #include <iostream>
 
@@ -101,12 +102,13 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
     0
   };
 
+  std::cout << "<lli>";
   return RunProgramWithTimeout(LLIPath, Args,
                                InputFile, OutputFile, OutputFile);
 }
 
 //===----------------------------------------------------------------------===//
-// GCC Implementation of AbstractIntepreter interface
+// GCC abstraction
 //
 // This is not a *real* AbstractInterpreter as it does not accept bytecode
 // files, but only input acceptable to GCC, i.e. C, C++, and assembly files
@@ -145,7 +147,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
                         FileType fileType,
                         const std::string &OutputFile,
                         const std::string &SharedLib) {
-  std::string OutputBinary = "bugpoint.gcc.exe";
+  std::string OutputBinary = getUniqueFilename("bugpoint.gcc.exe");
   const char **GCCArgs;
 
   const char *ArgsWithoutSO[] = {
@@ -159,9 +161,9 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   };
   const char *ArgsWithSO[] = {
     GCCPath.c_str(),
+    SharedLib.c_str(),           // Specify the shared library to link in...
     "-x", (fileType == AsmFile) ? "assembler" : "c",
     ProgramFile.c_str(),         // Specify the input filename...
-    SharedLib.c_str(),           // Specify the shared library to link in...
     "-o", OutputBinary.c_str(),  // Output to the right filename...
     "-lm",                       // Hard-code the math library...
     "-O2",                       // Optimize the program a bit...
@@ -181,9 +183,8 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
     0
   };
 
-  std::cout << "<program>";
-
   // Now that we have a binary, run it!
+  std::cout << "<program>";
   int ProgramResult = RunProgramWithTimeout(OutputBinary, ProgramArgs,
                                             InputFile, OutputFile, OutputFile);
   std::cout << "\n";
@@ -194,7 +195,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 int GCC::MakeSharedObject(const std::string &InputFile,
                           FileType fileType,
                           std::string &OutputFile) {
-  OutputFile = "./bugpoint.so";
+  OutputFile = getUniqueFilename("./bugpoint.so");
   // Compile the C/asm file into a shared object
   const char* GCCArgs[] = {
     GCCPath.c_str(),
@@ -277,7 +278,6 @@ public:
 
   int OutputAsm(const std::string &Bytecode,
                 std::string &OutputAsmFile);
-
 };
 
 int LLC::OutputAsm(const std::string &Bytecode,
@@ -347,26 +347,25 @@ public:
 int JIT::ExecuteProgram(const std::string &Bytecode,
                         const std::string &OutputFile,
                         const std::string &SharedLib) {
-  if (SharedLib.empty()) {
-    const char* Args[] = {
-      LLIPath.c_str(),
-      "-quiet",
-      "-force-interpreter=false",
-      Bytecode.c_str(),
-      0
-    };
-    return RunProgramWithTimeout(LLIPath, Args,
-                                 InputFile, OutputFile, OutputFile);
-  } else {
-    const char* Args[] = {
-      LLIPath.c_str(), "-quiet", "-force-interpreter=false", 
-      "-load", SharedLib.c_str(),
-      Bytecode.c_str(),
-      0
-    };
-    return RunProgramWithTimeout(LLIPath, Args,
-                                 InputFile, OutputFile, OutputFile);
-  }
+  const char* ArgsWithoutSO[] = {
+    LLIPath.c_str(), "-quiet", "-force-interpreter=false",
+    Bytecode.c_str(),
+    0
+  };
+
+  const char* ArgsWithSO[] = {
+    LLIPath.c_str(), "-quiet", "-force-interpreter=false", 
+    "-load", SharedLib.c_str(),
+    Bytecode.c_str(),
+    0
+  };
+
+  const char** JITArgs = SharedLib.empty() ? ArgsWithoutSO : ArgsWithSO;
+
+  std::cout << "<jit>";
+  DEBUG(std::cerr << "\nSending output to " << OutputFile << "\n");
+  return RunProgramWithTimeout(LLIPath, JITArgs,
+                               InputFile, OutputFile, OutputFile);
 }
 
 //===----------------------------------------------------------------------===//
@@ -591,7 +590,11 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
     if (C1 != C2) { FilesDifferent = true; break; }
   } while (C1 != EOF);
 
-  removeFile(Output);
+  //removeFile(Output);
   if (RemoveBytecode) removeFile(BytecodeFile);
   return FilesDifferent;
+}
+
+bool BugDriver::isExecutingJIT() {
+  return InterpreterSel == RunJIT;
 }

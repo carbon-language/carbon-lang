@@ -81,7 +81,6 @@ public:
   bool debugPassMiscompilation(const PassInfo *ThePass,
 			       const std::string &ReferenceOutput);
 
-
   /// compileSharedObject - This method creates a SharedObject from a given
   /// BytecodeFile for debugging a code generator.
   int compileSharedObject(const std::string &BytecodeFile,
@@ -91,6 +90,8 @@ public:
   /// set of functions, using the CBE as a ``safe'' code generator for other
   /// functions that are not under consideration.
   bool debugCodeGenerator();
+
+  bool isExecutingJIT();
 
 private:
   /// ParseInputFile - Given a bytecode or assembly input filename, parse and
