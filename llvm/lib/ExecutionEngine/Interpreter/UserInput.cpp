@@ -236,14 +236,14 @@ bool Interpreter::callMethod(const string &Name) {
 
 static void *CreateArgv(const vector<string> &InputArgv) {
   // Pointers are 64 bits...
-  uint64_t *Result = new uint64_t[InputArgv.size()+1];
+  uint64_t *Result = new PointerTy[InputArgv.size()+1];
 
   for (unsigned i = 0; i < InputArgv.size(); ++i) {
     unsigned Size = InputArgv[i].size()+1;
     char *Dest = new char[Size];
     copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
     Dest[Size-1] = 0;
-    Result[i] = (uint64_t)Dest;
+    Result[i] = (PointerTy)Dest;
   }
 
   Result[InputArgv.size()] = 0;
