@@ -35,7 +35,7 @@ Value::~Value() {
   //
   if (Uses.begin() != Uses.end()) {
     std::cerr << "While deleting: " << *Ty << "%" << Name << "\n";
-    for (use_const_iterator I = Uses.begin(); I != Uses.end(); ++I)
+    for (use_const_iterator I = Uses.begin(), E = Uses.end(); I != E; ++I)
       std::cerr << "Use still stuck around after Def is destroyed:"
                 << **I << "\n";
   }
@@ -47,25 +47,6 @@ Value::~Value() {
 }
 
 
-
-
-void Value::replaceAllUsesWith(Value *New) {
-  assert(New && "Value::replaceAllUsesWith(<null>) is invalid!");
-  assert(New != this && "this->replaceAllUsesWith(this) is NOT valid!");
-  assert(New->getType() == getType() &&
-         "replaceAllUses of value with new value of different type!");
-  while (!Uses.empty()) {
-    User *Use = Uses.back();
-    // Must handle Constants specially, we cannot call replaceUsesOfWith on a
-    // constant!
-    if (Constant *C = dyn_cast<Constant>(Use)) {
-      C->replaceUsesOfWithOnConstant(this, New);
-    } else {
-      Use->replaceUsesOfWith(this, New);
-    }
-  }
-}
-
 // uncheckedReplaceAllUsesWith - This is exactly the same as replaceAllUsesWith,
 // except that it doesn't have all of the asserts.  The asserts fail because we
 // are half-way done resolving types, which causes some types to exist as two
@@ -74,31 +55,24 @@ void Value::replaceAllUsesWith(Value *New) {
 //
 void Value::uncheckedReplaceAllUsesWith(Value *New) {
   while (!Uses.empty()) {
-    User *Use = Uses.back();
+    Use &U = Uses.back();
     // Must handle Constants specially, we cannot call replaceUsesOfWith on a
     // constant!
-    if (Constant *C = dyn_cast<Constant>(Use)) {
-      C->replaceUsesOfWithOnConstant(this, New, true);
+    if (Constant *C = dyn_cast<Constant>(U.getUser())) {
+      C->replaceUsesOfWithOnConstant(this, New);
     } else {
-      Use->replaceUsesOfWith(this, New);
+      U.set(New);
     }
   }
 }
 
+void Value::replaceAllUsesWith(Value *New) {
+  assert(New && "Value::replaceAllUsesWith(<null>) is invalid!");
+  assert(New != this && "this->replaceAllUsesWith(this) is NOT valid!");
+  assert(New->getType() == getType() &&
+         "replaceAllUses of value with new value of different type!");
 
-void Value::killUse(User *U) {
-  assert(U != 0 && "Null users are not allowed!");
-  unsigned i;
-
-  // Scan backwards through the uses list looking for the user.  We do this
-  // because vectors like to be accessed on the end.  This is incredibly
-  // important from a performance perspective.
-  for (i = Uses.size()-1; Uses[i] != U; --i)
-    /* empty */;
-
-  assert(i < Uses.size() && "Use not in uses list!!");
-  Uses[i] = Uses.back();
-  Uses.pop_back();
+  uncheckedReplaceAllUsesWith(New);
 }
 
 //===----------------------------------------------------------------------===//
