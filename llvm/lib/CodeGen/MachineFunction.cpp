@@ -26,55 +26,13 @@
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "llvm/Pass.h"
-#include "Config/limits.h"
-
-namespace llvm {
-
-const int INVALID_FRAME_OFFSET = INT_MAX; // std::numeric_limits<int>::max();
+using namespace llvm;
 
 static AnnotationID MF_AID(
                  AnnotationManager::getID("CodeGen::MachineCodeForFunction"));
 
 
-//===---------------------------------------------------------------------===//
-// Code generation/destruction passes
-//===---------------------------------------------------------------------===//
-
 namespace {
-  class ConstructMachineFunction : public FunctionPass {
-    TargetMachine &Target;
-  public:
-    ConstructMachineFunction(TargetMachine &T) : Target(T) {}
-    
-    const char *getPassName() const {
-      return "ConstructMachineFunction";
-    }
-    
-    bool runOnFunction(Function &F) {
-      MachineFunction::construct(&F, Target).getInfo()->CalculateArgSize();
-      return false;
-    }
-  };
-
-  struct DestroyMachineFunction : public FunctionPass {
-    const char *getPassName() const { return "FreeMachineFunction"; }
-    
-    static void freeMachineCode(Instruction &I) {
-      MachineCodeForInstruction::destroy(&I);
-    }
-    
-    bool runOnFunction(Function &F) {
-      for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
-        for (BasicBlock::iterator I = FI->begin(), E = FI->end(); I != E; ++I)
-          MachineCodeForInstruction::get(I).dropAllReferences();
-      
-      for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
-        for_each(FI->begin(), FI->end(), freeMachineCode);
-      
-      return false;
-    }
-  };
-
   struct Printer : public FunctionPass {
     const char *getPassName() const { return "MachineFunction Printer"; }
 
@@ -89,15 +47,7 @@ namespace {
   };
 }
 
-FunctionPass *createMachineCodeConstructionPass(TargetMachine &Target) {
-  return new ConstructMachineFunction(Target);
-}
-
-FunctionPass *createMachineCodeDestructionPass() {
-  return new DestroyMachineFunction();
-}
-
-FunctionPass *createMachineFunctionPrinterPass() {
+FunctionPass *llvm::createMachineFunctionPrinterPass() {
   return new Printer();
 }
 
@@ -341,24 +291,23 @@ MachineFunctionInfo::computeOffsetforLocalVar(const Value* val,
   return aligned;
 }
 
-int
-MachineFunctionInfo::allocateLocalVar(const Value* val,
-				      unsigned sizeToUse)
-{
+
+int MachineFunctionInfo::allocateLocalVar(const Value* val,
+                                          unsigned sizeToUse) {
   assert(! automaticVarsAreaFrozen &&
          "Size of auto vars area has been used to compute an offset so "
          "no more automatic vars should be allocated!");
   
   // Check if we've allocated a stack slot for this value already
   // 
-  int offset = getOffset(val);
-  if (offset == INVALID_FRAME_OFFSET)
-    {
-      unsigned getPaddedSize;
-      offset = computeOffsetforLocalVar(val, getPaddedSize, sizeToUse);
-      offsets[val] = offset;
-      incrementAutomaticVarsSize(getPaddedSize);
-    }
+  hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
+  if (pair != offsets.end())
+    return pair->second;
+
+  unsigned getPaddedSize;
+  unsigned offset = computeOffsetforLocalVar(val, getPaddedSize, sizeToUse);
+  offsets[val] = offset;
+  incrementAutomaticVarsSize(getPaddedSize);
   return offset;
 }
 
@@ -410,11 +359,3 @@ void MachineFunctionInfo::popAllTempValues() {
   resetTmpAreaSize();            // clear tmp area to reuse
 }
 
-int
-MachineFunctionInfo::getOffset(const Value* val) const
-{
-  hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
-  return (pair == offsets.end()) ? INVALID_FRAME_OFFSET : pair->second;
-}
-
-} // End llvm namespace
