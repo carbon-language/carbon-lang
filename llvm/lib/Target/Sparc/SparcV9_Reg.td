@@ -9,7 +9,10 @@
 class V9Reg : Register { set Namespace = "SparcV9"; }
 
 // Ri - One of the 32 64 bit integer registers
-class Ri<bits<5> num> : V9Reg { set Size = 64; field bits<5> Num = num; }
+class Ri<bits<5> num> : V9Reg {
+  set RegType = i64;              // All integer registers are 64 bits in size
+  field bits<5> Num = num;        // Numbers are identified with a 5 bit ID
+}
 
 def G0 : Ri< 0>;    def G1 : Ri< 1>;    def G2 : Ri< 2>;    def G3 : Ri< 3>;
 def G4 : Ri< 4>;    def G5 : Ri< 5>;    def G6 : Ri< 6>;    def G7 : Ri< 7>;
