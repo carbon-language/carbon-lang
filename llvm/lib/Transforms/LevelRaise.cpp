@@ -26,7 +26,7 @@
 
 #ifdef DEBUG_PEEPHOLE_INSTS
 #define PRINT_PEEPHOLE(ID, NUM, I)            \
-  cerr << "Inst P/H " << ID << "[" << NUM << "] " << I;
+  std::cerr << "Inst P/H " << ID << "[" << NUM << "] " << I;
 #else
 #define PRINT_PEEPHOLE(ID, NUM, I)
 #endif
