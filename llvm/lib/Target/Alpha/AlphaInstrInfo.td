@@ -98,12 +98,12 @@ let isTwoAddress = 1 in {
   def CMOVEQ_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, FPRC:$RCOND),
                                   "fbne $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
   def CMOVEQi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, FPRC:$RCOND),
-                                  "fbne $RCOND, 42f\n\taddi $$31,$L,$RDEST\n42:\n">;
+                                  "fbne $RCOND, 42f\n\taddq $$31,$L,$RDEST\n42:\n">;
 
   def CMOVNE_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, FPRC:$RCOND),
                                   "fbeq $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
   def CMOVNEi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, FPRC:$RCOND),
-                                  "fbeq $RCOND, 42f\n\taddi $$31,$L,$RDEST\n42:\n">;
+                                  "fbeq $RCOND, 42f\n\taddq $$31,$L,$RDEST\n42:\n">;
 
 }
 
