@@ -11,6 +11,7 @@
 #define LLVM_ASSEMBLY_PRINTMODULEPASS_H
 
 #include "llvm/Pass.h"
+#include "llvm/Value.h"
 #include <iostream>
 
 class PrintModulePass : public Pass {
@@ -49,7 +50,7 @@ public:
   // it's processed.
   //
   bool runOnMethod(Function *F) {
-    (*Out) << Banner << F;
+    (*Out) << Banner << (Value*)F;
     return false;
   }
 };
