@@ -44,6 +44,14 @@ bool llvm::isExecutableFile(const std::string &ExeFileName) {
     return Buf.st_mode & S_IXOTH;
 }
 
+/// isStandardOutAConsole - Return true if we can tell that the standard output
+/// stream goes to a terminal window or console.
+bool llvm::isStandardOutAConsole() {
+  // FIXME: if we don't have isatty, just return false.
+  return isatty(1);
+}
+
+
 /// FindExecutable - Find a named executable, giving the argv[0] of program
 /// being executed. This allows us to find another LLVM tool if it is built
 /// into the same directory, but that directory is neither the current
