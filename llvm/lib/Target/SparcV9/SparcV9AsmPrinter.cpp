@@ -651,7 +651,7 @@ SparcV9AsmPrinter::printOneOperand(const MachineOperand &mop,
     
     case MachineOperand::MO_ConstantPoolIndex:
       {
-        toAsm << ".CPI_" << currFunction->getName() 
+        toAsm << ".CPI_" << getID(currFunction)
               << "_" << mop.getConstantPoolIndex();
         break;
       }
@@ -663,8 +663,8 @@ SparcV9AsmPrinter::printOneOperand(const MachineOperand &mop,
         
         if (const BasicBlock *BB = dyn_cast<BasicBlock>(Val))
           toAsm << getID(BB);
-        else if (const Function *M = dyn_cast<Function>(Val))
-          toAsm << getID(M);
+        else if (const Function *F = dyn_cast<Function>(Val))
+          toAsm << getID(F);
         else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Val))
           toAsm << getID(GV);
         else if (const Constant *CV = dyn_cast<Constant>(Val))
