@@ -155,5 +155,25 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I) {
 
   // Add a branch instruction to the newly formed basic block.
   InstList.push_back(new BranchInst(New));
+
+  // Now we must loop through all of the successors of the New block (which
+  // _were_ the successors of the 'this' block), and update any PHI nodes in
+  // successors.  If there were PHI nodes in the successors, then they need to
+  // know that incoming branches will be from New, not from Old.
+  //
+  for (BasicBlock::succ_iterator I = succ_begin(New), E = succ_end(New);
+       I != E; ++I) {
+    // Loop over any phi nodes in the basic block, updating the BB field of
+    // incoming values...
+    BasicBlock *Successor = *I;
+    for (BasicBlock::iterator II = Successor->begin();
+         PHINode *PN = dyn_cast<PHINode>(*II); ++II) {
+      int IDX = PN->getBasicBlockIndex(this);
+      while (IDX != -1) {
+        PN->setIncomingBlock((unsigned)IDX, New);
+        IDX = PN->getBasicBlockIndex(this);
+      }
+    }
+  }
   return New;
 }
