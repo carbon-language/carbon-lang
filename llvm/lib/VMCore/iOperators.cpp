@@ -78,9 +78,14 @@ BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
 
 BinaryOperator *BinaryOperator::createNeg(Value *Op, const std::string &Name,
                                           Instruction *InsertBefore) {
-  return new BinaryOperator(Instruction::Sub,
-                            Constant::getNullValue(Op->getType()), Op,
-                            Op->getType(), Name, InsertBefore);
+  if (!Op->getType()->isFloatingPoint())
+    return new BinaryOperator(Instruction::Sub,
+                              Constant::getNullValue(Op->getType()), Op,
+                              Op->getType(), Name, InsertBefore);
+  else
+    return new BinaryOperator(Instruction::Sub,
+                              ConstantFP::get(Op->getType(), -0.0), Op,
+                              Op->getType(), Name, InsertBefore);
 }
 
 BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
@@ -98,8 +103,11 @@ static inline bool isConstantAllOnes(const Value *V) {
 
 bool BinaryOperator::isNeg(const Value *V) {
   if (const BinaryOperator *Bop = dyn_cast<BinaryOperator>(V))
-    return Bop->getOpcode() == Instruction::Sub &&
-      Bop->getOperand(0) == Constant::getNullValue(Bop->getType());
+    if (Bop->getOpcode() == Instruction::Sub)
+      if (!V->getType()->isFloatingPoint())
+        return Bop->getOperand(0) == Constant::getNullValue(Bop->getType());
+      else
+        return Bop->getOperand(0) == ConstantFP::get(Bop->getType(), -0.0);
   return false;
 }
 
