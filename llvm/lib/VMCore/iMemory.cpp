@@ -17,6 +17,7 @@
 using namespace llvm;
 
 void AllocationInst::init(const Type *Ty, Value *ArraySize, unsigned iTy) {
+  assert(Ty != Type::VoidTy && "Cannot allocate void elements!");
   // ArraySize defaults to 1.
   if (!ArraySize) ArraySize = ConstantUInt::get(Type::UIntTy, 1);
 
