@@ -10,10 +10,9 @@
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
 #include "llvm/Pass.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/InstIterator.h"
-
-// FIXME: This should keep sizes associated with pointers!
 
 /// mergeSetIn - Merge the specified alias set into this alias set...
 ///
@@ -54,17 +53,25 @@ void AliasSet::removeFromTracker(AliasSetTracker &AST) {
   AST.removeAliasSet(this);
 }
 
-void AliasSet::addPointer(AliasSetTracker &AST, HashNodePair &Entry){
+void AliasSet::addPointer(AliasSetTracker &AST, HashNodePair &Entry,
+                          unsigned Size) {
   assert(!Entry.second.hasAliasSet() && "Entry already in set!");
 
   AliasAnalysis &AA = AST.getAliasAnalysis();
 
   if (isMustAlias())    // Check to see if we have to downgrade to _may_ alias
-    if (Value *V = getSomePointer())
-      if (AA.alias(V, ~0, Entry.first, ~0) == AliasAnalysis::MayAlias)
+    if (HashNodePair *P = getSomePointer()) {
+      AliasAnalysis::AliasResult Result =
+        AA.alias(P->first, P->second.getSize(), Entry.first, Size);
+      if (Result == AliasAnalysis::MayAlias)
         AliasTy = MayAlias;
+      else                  // First entry of must alias must have maximum size!
+        P->second.updateSize(Size);
+      assert(Result != AliasAnalysis::NoAlias && "Cannot be part of must set!");
+    }
 
   Entry.second.setAliasSet(this);
+  Entry.second.updateSize(Size);
 
   // Add it to the end of the list...
   if (PtrListTail)
@@ -77,27 +84,28 @@ void AliasSet::addPointer(AliasSetTracker &AST, HashNodePair &Entry){
 
 void AliasSet::addCallSite(CallSite CS) {
   CallSites.push_back(CS);
-  AliasTy = MayAlias;         // FIXME: Too conservative
+  AliasTy = MayAlias;         // FIXME: Too conservative?
 }
 
 /// aliasesPointer - Return true if the specified pointer "may" (or must)
 /// alias one of the members in the set.
 ///
-bool AliasSet::aliasesPointer(const Value *Ptr, AliasAnalysis &AA) const {
+bool AliasSet::aliasesPointer(const Value *Ptr, unsigned Size,
+                              AliasAnalysis &AA) const {
   if (AliasTy == MustAlias) {
     assert(CallSites.empty() && "Illegal must alias set!");
 
     // If this is a set of MustAliases, only check to see if the pointer aliases
     // SOME value in the set...
-    Value *SomePtr = getSomePointer();
+    HashNodePair *SomePtr = getSomePointer();
     assert(SomePtr && "Empty must-alias set??");
-    return AA.alias(SomePtr, ~0, Ptr, ~0);
+    return AA.alias(SomePtr->first, SomePtr->second.getSize(), Ptr, Size);
   }
 
   // If this is a may-alias set, we have to check all of the pointers in the set
   // to be sure it doesn't alias the set...
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if (AA.alias(Ptr, ~0, *I, ~0))
+    if (AA.alias(Ptr, Size, I->first, I->second.getSize()))
       return true;
 
   // Check the call sites list and invoke list...
@@ -118,10 +126,11 @@ bool AliasSet::aliasesCallSite(CallSite CS, AliasAnalysis &AA) const {
 /// instruction referring to the pointer into.  If there are multiple alias sets
 /// that may alias the pointer, merge them together and return the unified set.
 ///
-AliasSet *AliasSetTracker::findAliasSetForPointer(const Value *Ptr) {
+AliasSet *AliasSetTracker::findAliasSetForPointer(const Value *Ptr,
+                                                  unsigned Size) {
   AliasSet *FoundSet = 0;
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if (!I->Forward && I->aliasesPointer(Ptr, AA)) {
+    if (!I->Forward && I->aliasesPointer(Ptr, Size, AA)) {
       if (FoundSet == 0) {  // If this is the first alias set ptr can go into...
         FoundSet = I;       // Remember it.
       } else {              // Otherwise, we must merge the sets...
@@ -151,31 +160,34 @@ AliasSet *AliasSetTracker::findAliasSetForCallSite(CallSite CS) {
 
 /// getAliasSetForPointer - Return the alias set that the specified pointer
 /// lives in...
-AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer) {
+AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, unsigned Size){
   AliasSet::HashNodePair &Entry = getEntryFor(Pointer);
 
   // Check to see if the pointer is already known...
-  if (Entry.second.hasAliasSet()) {
+  if (Entry.second.hasAliasSet() && Size <= Entry.second.getSize()) {
     // Return the set!
     return *Entry.second.getAliasSet(*this)->getForwardedTarget(*this);
-  } else if (AliasSet *AS = findAliasSetForPointer(Pointer)) {
+  } else if (AliasSet *AS = findAliasSetForPointer(Pointer, Size)) {
     // Add it to the alias set it aliases...
-    AS->addPointer(*this, Entry);
+    AS->addPointer(*this, Entry, Size);
     return *AS;
   } else {
     // Otherwise create a new alias set to hold the loaded pointer...
     AliasSets.push_back(AliasSet());
-    AliasSets.back().addPointer(*this, Entry);
+    AliasSets.back().addPointer(*this, Entry, Size);
     return AliasSets.back();
   }
 }
 
 void AliasSetTracker::add(LoadInst *LI) {
-  addPointer(LI->getOperand(0), AliasSet::Refs);
+  addPointer(LI->getOperand(0),
+             AA.getTargetData().getTypeSize(LI->getType()), AliasSet::Refs);
 }
 
 void AliasSetTracker::add(StoreInst *SI) {
-  addPointer(SI->getOperand(1), AliasSet::Mods);
+  addPointer(SI->getOperand(1),
+             AA.getTargetData().getTypeSize(SI->getOperand(0)->getType()),
+             AliasSet::Mods);
 }
 
 void AliasSetTracker::add(CallSite CS) {
@@ -221,7 +233,8 @@ void AliasSet::print(std::ostream &OS) const {
     OS << "Pointers: ";
     for (iterator I = begin(), E = end(); I != E; ++I) {
       if (I != begin()) OS << ", ";
-      WriteAsOperand(OS, *I);
+      WriteAsOperand(OS << "(", I->first);
+      OS << ", " << I->second.getSize() << ")";
     }
   }
   if (!CallSites.empty()) {

@@ -29,11 +29,18 @@ class AliasSet {
   class PointerRec {
     HashNodePair *NextInList;
     AliasSet *AS;
+    unsigned Size;
   public:
-    PointerRec() : NextInList(0), AS(0) {}
+    PointerRec() : NextInList(0), AS(0), Size(0) {}
 
     HashNodePair *getNext() const { return NextInList; }
     bool hasAliasSet() const { return AS != 0; }
+
+    void updateSize(unsigned NewSize) {
+      if (NewSize > Size) Size = NewSize;
+    }
+
+    unsigned getSize() const { return Size; }
 
     AliasSet *getAliasSet(AliasSetTracker &AST) { 
       assert(AS && "No AliasSet yet!");
@@ -87,7 +94,7 @@ class AliasSet {
   unsigned AliasTy : 1;
 
   /// Define an iterator for alias sets... this is just a forward iterator.
-  class iterator : public forward_iterator<Value*, ptrdiff_t> {
+  class iterator : public forward_iterator<HashNodePair, ptrdiff_t> {
     HashNodePair *CurNode;
   public:
     iterator(HashNodePair *CN = 0) : CurNode(CN) {}
@@ -102,11 +109,11 @@ class AliasSet {
       return *this;
     }
   
-    value_type operator*() const {
+    value_type &operator*() const {
       assert(CurNode && "Dereferencing AliasSet.end()!");
-      return CurNode->first;
+      return *CurNode;
     }
-    value_type operator->() const { return operator*(); }
+    value_type *operator->() const { return &operator*(); }
   
     iterator& operator++() {                // Preincrement
       assert(CurNode && "Advancing past AliasSet.end()!");
@@ -148,8 +155,8 @@ private:
   AliasSet() : PtrListHead(0), PtrListTail(0), Forward(0), RefCount(0),
                AccessTy(NoModRef), AliasTy(MustAlias) {
   }
-  Value *getSomePointer() const {
-    return PtrListHead ? PtrListHead->first : 0;
+  HashNodePair *getSomePointer() const {
+    return PtrListHead ? PtrListHead : 0;
   }
 
   /// getForwardedTarget - Return the real alias set this represents.  If this
@@ -170,13 +177,13 @@ private:
 
   void removeFromTracker(AliasSetTracker &AST);
 
-  void addPointer(AliasSetTracker &AST, HashNodePair &Entry);
+  void addPointer(AliasSetTracker &AST, HashNodePair &Entry, unsigned Size);
   void addCallSite(CallSite CS);
 
   /// aliasesPointer - Return true if the specified pointer "may" (or must)
   /// alias one of the members in the set.
   ///
-  bool aliasesPointer(const Value *Ptr, AliasAnalysis &AA) const;
+  bool aliasesPointer(const Value *Ptr, unsigned Size, AliasAnalysis &AA) const;
   bool aliasesCallSite(CallSite CS, AliasAnalysis &AA) const;
 };
 
@@ -219,7 +226,7 @@ public:
 
   /// getAliasSetForPointer - Return the alias set that the specified pointer
   /// lives in...
-  AliasSet &getAliasSetForPointer(Value *P);
+  AliasSet &getAliasSetForPointer(Value *P, unsigned Size);
 
   /// getAliasAnalysis - Return the underlying alias analysis object used by
   /// this tracker.
@@ -248,11 +255,11 @@ private:
                                             AliasSet::PointerRec())).first;
   }
 
-  void addPointer(Value *P, AliasSet::AccessType E) {
-    AliasSet &AS = getAliasSetForPointer(P);
+  void addPointer(Value *P, unsigned Size, AliasSet::AccessType E) {
+    AliasSet &AS = getAliasSetForPointer(P, Size);
     AS.AccessTy |= E;
   }
-  AliasSet *findAliasSetForPointer(const Value *Ptr);
+  AliasSet *findAliasSetForPointer(const Value *Ptr, unsigned Size);
 
   AliasSet *findAliasSetForCallSite(CallSite CS);
 };
