@@ -22,6 +22,7 @@ ifndef LLVMGCCDIR
 LLVMGCCDIR := /home/vadve/lattner/cvs/gcc_install_x86
 endif
 
-# For now we disable all LLC tests, because LLC does not generate x86 code
-#
-DISABLE_LLC := 1
+# For now we disable running LLC output, because LLC does not generate x86 code
+# LLC itself can be run so disable the diffs, not LLC itself.
+# 
+DISABLE_LLC_DIFFS := 1
