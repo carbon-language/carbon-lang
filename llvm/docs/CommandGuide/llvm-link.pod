@@ -65,7 +65,7 @@ occurs, it will exit with a non-zero value.
 
 =head1 SEE ALSO
 
-L<gccld>
+L<gccld|gccld>
 
 =head1 AUTHORS
 
