@@ -28,11 +28,15 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ValueHolder.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 using namespace llvm;
 
 namespace {
+  cl::opt<unsigned>
+  Threshold("taildup-threshold", cl::desc("Max block size to tail duplicate"),
+            cl::init(6), cl::Hidden);
   Statistic<> NumEliminated("tailduplicate",
                             "Number of unconditional branches eliminated");
   Statistic<> NumPHINodes("tailduplicate", "Number of phi nodes inserted");
@@ -106,7 +110,7 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
   while (isa<PHINode>(*I)) ++I;
 
   for (unsigned Size = 0; I != Dest->end(); ++Size, ++I)
-    if (Size == 6) return false;  // The block is too large...
+    if (Size == Threshold) return false;  // The block is too large...
 
   // Do not tail duplicate a block that has thousands of successors into a block
   // with a single successor if the block has many other predecessors.  This can
