@@ -47,6 +47,10 @@ namespace {
       addRegisterClass(MVT::f32, PPC32::FPRCRegisterClass);
       addRegisterClass(MVT::f64, PPC32::FPRCRegisterClass);
       
+      setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
+      setOperationAction(ISD::MEMSET, MVT::Other, Expand);
+      setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
+
       computeRegisterProperties();
     }
 
@@ -372,6 +376,7 @@ LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
 std::pair<SDOperand, SDOperand> PPC32TargetLowering::
 LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
                         SelectionDAG &DAG) {
+  assert(0 && "LowerFrameReturnAddress unimplemented");
   abort();
 }
 
@@ -1072,6 +1077,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     
   case ISD::FP_TO_UINT:
   case ISD::FP_TO_SINT:
+    assert(0 && "FP_TO_S/UINT unimplemented");
     abort();
  
   case ISD::SETCC:

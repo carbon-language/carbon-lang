@@ -349,7 +349,13 @@ void PowerPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_ExternalSymbol:
-    O << MO.getSymbolName();
+    if (IsCallOp) {
+      std::string Name(GlobalPrefix); Name += MO.getSymbolName();
+      FnStubs.insert(Name);
+      O << "L" << Name << "$stub";
+      return;
+    }
+    O << GlobalPrefix << MO.getSymbolName();
     return;
 
   case MachineOperand::MO_GlobalAddress: {
