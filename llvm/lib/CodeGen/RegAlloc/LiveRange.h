@@ -109,7 +109,7 @@ class LiveRange : public ValueSet
 
 
 
-  inline bool hasSpillOffset() {
+  inline bool hasSpillOffset() const {
     return  HasSpillOffset;
   }
 

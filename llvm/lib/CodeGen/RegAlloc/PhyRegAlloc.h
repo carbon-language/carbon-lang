@@ -128,15 +128,16 @@ class PhyRegAlloc: public NonCopyable
   friend class UltraSparcRegInfo;
 
 
-  int getUsableRegAtMI(RegClass *RC,  const int RegType, const MachineInstr *MInst,
-		       const LiveVarSet *LVSetBef, MachineInstr *MIBef, 
-		       MachineInstr *MIAft );
+  int getUsableUniRegAtMI(RegClass *RC,  const int RegType, 
+			  const MachineInstr *MInst,
+			  const LiveVarSet *LVSetBef, MachineInstr *MIBef, 
+			  MachineInstr *MIAft );
 
-  int getUnusedRegAtMI(RegClass *RC,  const MachineInstr *MInst, 
+  int getUnusedUniRegAtMI(RegClass *RC,  const MachineInstr *MInst, 
 		       const LiveVarSet *LVSetBef);
 
-  void setRegsUsedByThisInst(RegClass *RC, const MachineInstr *MInst );
-  int getRegNotUsedByThisInst(RegClass *RC, const MachineInstr *MInst);
+  void setRelRegsUsedByThisInst(RegClass *RC, const MachineInstr *MInst );
+  int getUniRegNotUsedByThisInst(RegClass *RC, const MachineInstr *MInst);
 
   void addInterf4PseudoInstr(const MachineInstr *MInst);
 
