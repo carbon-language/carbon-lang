@@ -45,7 +45,7 @@ let Namespace = "X86" in {
   // This is a slimy hack to make it possible to say that flags are clobbered...
   // Ideally we'd model instructions based on which particular flag(s) they
   // could clobber. 
-  def EFLAGS : Register;
+  //def EFLAGS : Register;
 }
 
 //===----------------------------------------------------------------------===//
@@ -96,5 +96,5 @@ def RFP : RegisterClass<f80, 4, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 
 // Registers which cannot be allocated... and are thus left unnamed.
 def : RegisterClass<f80, 4, [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]>;
-def : RegisterClass<i16, 2, [EFLAGS]>;
+//def : RegisterClass<i16, 2, [EFLAGS]>;
 
