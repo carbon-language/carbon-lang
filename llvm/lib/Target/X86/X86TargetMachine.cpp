@@ -64,12 +64,10 @@ bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
   else
     PM.add(createLocalRegisterAllocator(*this));
 
-  // Print the instruction selected machine code...
-  // PM.add(createMachineFunctionPrinterPass());
-
-  // Print the register-allocated code
-  if (PrintCode)
+  if (PrintCode)  // Print the register-allocated code
     PM.add(createX86CodePrinterPass(*this, std::cerr));
+
+  PM.add(createMachineCodeDestructionPass());
 
   return false; // success!
 }
