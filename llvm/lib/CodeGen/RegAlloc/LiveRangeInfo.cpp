@@ -8,7 +8,7 @@
 #include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
@@ -148,10 +148,10 @@ void LiveRangeInfo::constructLiveRanges() {
   //
   for (Function::const_iterator BBI=Meth->begin(); BBI != Meth->end(); ++BBI){
     // get the vector of machine instructions for this basic block.
-    MachineCodeForBasicBlock& MIVec = MachineCodeForBasicBlock::get(BBI);
+    MachineBasicBlock& MIVec = MachineBasicBlock::get(BBI);
 
     // iterate over all the machine instructions in BB
-    for(MachineCodeForBasicBlock::iterator MInstIterator = MIVec.begin();
+    for(MachineBasicBlock::iterator MInstIterator = MIVec.begin();
         MInstIterator != MIVec.end(); ++MInstIterator) {  
       MachineInstr *MInst = *MInstIterator; 
 
@@ -252,12 +252,11 @@ void LiveRangeInfo::coalesceLRs()
       BBI != BBE; ++BBI) {
 
     // get the iterator for machine instructions
-    const MachineCodeForBasicBlock& MIVec = MachineCodeForBasicBlock::get(BBI);
-    MachineCodeForBasicBlock::const_iterator MInstIterator = MIVec.begin();
+    const MachineBasicBlock& MIVec = MachineBasicBlock::get(BBI);
+    MachineBasicBlock::const_iterator MInstIterator = MIVec.begin();
 
     // iterate over all the machine instructions in BB
     for( ; MInstIterator != MIVec.end(); ++MInstIterator) {  
-      
       const MachineInstr * MInst = *MInstIterator; 
 
       if( DEBUG_RA >= RA_DEBUG_LiveRanges) {

@@ -9,7 +9,7 @@
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
-#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -275,8 +275,8 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
     // get the iterator for machine instructions
     //
-    const MachineCodeForBasicBlock& MIVec = MachineCodeForBasicBlock::get(BBI);
-    MachineCodeForBasicBlock::const_iterator MII = MIVec.begin();
+    const MachineBasicBlock& MIVec = MachineBasicBlock::get(BBI);
+    MachineBasicBlock::const_iterator MII = MIVec.begin();
 
     // iterate over all the machine instructions in BB
     //
@@ -420,8 +420,8 @@ void PhyRegAlloc::addInterferencesForArgs() {
 //-----------------------------
 inline void
 InsertBefore(MachineInstr* newMI,
-             MachineCodeForBasicBlock& MIVec,
-             MachineCodeForBasicBlock::iterator& MII)
+             MachineBasicBlock& MIVec,
+             MachineBasicBlock::iterator& MII)
 {
   MII = MIVec.insert(MII, newMI);
   ++MII;
@@ -429,8 +429,8 @@ InsertBefore(MachineInstr* newMI,
 
 inline void
 InsertAfter(MachineInstr* newMI,
-            MachineCodeForBasicBlock& MIVec,
-            MachineCodeForBasicBlock::iterator& MII)
+            MachineBasicBlock& MIVec,
+            MachineBasicBlock::iterator& MII)
 {
   ++MII;    // insert before the next instruction
   MII = MIVec.insert(MII, newMI);
@@ -438,16 +438,16 @@ InsertAfter(MachineInstr* newMI,
 
 inline void
 SubstituteInPlace(MachineInstr* newMI,
-                  MachineCodeForBasicBlock& MIVec,
-                  MachineCodeForBasicBlock::iterator MII)
+                  MachineBasicBlock& MIVec,
+                  MachineBasicBlock::iterator MII)
 {
   *MII = newMI;
 }
 
 inline void
 PrependInstructions(vector<MachineInstr *> &IBef,
-                    MachineCodeForBasicBlock& MIVec,
-                    MachineCodeForBasicBlock::iterator& MII,
+                    MachineBasicBlock& MIVec,
+                    MachineBasicBlock::iterator& MII,
                     const std::string& msg)
 {
   if (!IBef.empty())
@@ -467,8 +467,8 @@ PrependInstructions(vector<MachineInstr *> &IBef,
 
 inline void
 AppendInstructions(std::vector<MachineInstr *> &IAft,
-                   MachineCodeForBasicBlock& MIVec,
-                   MachineCodeForBasicBlock::iterator& MII,
+                   MachineBasicBlock& MIVec,
+                   MachineBasicBlock::iterator& MII,
                    const std::string& msg)
 {
   if (!IAft.empty())
@@ -489,10 +489,10 @@ AppendInstructions(std::vector<MachineInstr *> &IAft,
 
 void PhyRegAlloc::updateMachineCode()
 {
-  MachineCodeForBasicBlock& MIVec = MachineCodeForBasicBlock::get(&Meth->getEntryNode());
+  MachineBasicBlock& MIVec = MachineBasicBlock::get(&Meth->getEntryNode());
     
   // Insert any instructions needed at method entry
-  MachineCodeForBasicBlock::iterator MII = MIVec.begin();
+  MachineBasicBlock::iterator MII = MIVec.begin();
   PrependInstructions(AddedInstrAtEntry.InstrnsBefore, MIVec, MII,
                       "At function entry: \n");
   assert(AddedInstrAtEntry.InstrnsAfter.empty() &&
@@ -503,8 +503,8 @@ void PhyRegAlloc::updateMachineCode()
        BBI != BBE; ++BBI) {
 
     // iterate over all the machine instructions in BB
-    MachineCodeForBasicBlock &MIVec = MachineCodeForBasicBlock::get(BBI);
-    for (MachineCodeForBasicBlock::iterator MII = MIVec.begin();
+    MachineBasicBlock &MIVec = MachineBasicBlock::get(BBI);
+    for (MachineBasicBlock::iterator MII = MIVec.begin();
         MII != MIVec.end(); ++MII) {  
       
       MachineInstr *MInst = *MII; 
@@ -958,8 +958,8 @@ void PhyRegAlloc::printMachineCode()
     cerr << "\n"; printLabel(BBI); cerr << ": ";
 
     // get the iterator for machine instructions
-    MachineCodeForBasicBlock& MIVec = MachineCodeForBasicBlock::get(BBI);
-    MachineCodeForBasicBlock::iterator MII = MIVec.begin();
+    MachineBasicBlock& MIVec = MachineBasicBlock::get(BBI);
+    MachineBasicBlock::iterator MII = MIVec.begin();
 
     // iterate over all the machine instructions in BB
     for ( ; MII != MIVec.end(); ++MII) {  
@@ -1039,7 +1039,7 @@ void PhyRegAlloc::printMachineCode()
 void PhyRegAlloc::colorIncomingArgs()
 {
   const BasicBlock &FirstBB = Meth->front();
-  const MachineInstr *FirstMI = MachineCodeForBasicBlock::get(&FirstBB).front();
+  const MachineInstr *FirstMI = MachineBasicBlock::get(&FirstBB).front();
   assert(FirstMI && "No machine instruction in entry BB");
 
   MRI.colorMethodArgs(Meth, LRI, &AddedInstrAtEntry);
