@@ -406,6 +406,10 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
     GenericValue Val = getConstantValue(Init);
     StoreValueToMemory(Val, (GenericValue*)Addr, Init->getType());
     return;
+  } else if (isa<ConstantAggregateZero>(Init)) {
+    unsigned Size = getTargetData().getTypeSize(Init->getType());
+    memset(Addr, 0, Size);
+    return;
   }
 
   switch (Init->getType()->getPrimitiveID()) {
