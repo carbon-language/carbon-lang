@@ -52,6 +52,8 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
 
+  PM.add(createLowerConstantExpressionsPass());
+
   PM.add(createPPCSimpleInstructionSelector(*this));
 
   if (PrintMachineCode)
@@ -80,6 +82,8 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
+
+  PM.add(createLowerConstantExpressionsPass());
 
   PM.add(createPPCSimpleInstructionSelector(TM));
   PM.add(createRegisterAllocator());
