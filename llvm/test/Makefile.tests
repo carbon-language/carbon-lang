@@ -5,19 +5,6 @@
 
 .PHONY: clean default
 
-## Special targets to build a program from multiple source files
-## 
-ifdef PROG
-
-default:    $(PROG).clean.bc $(PROG).native
-  #.SECONDARY: $(PROG).clean.bc	## keep %.clean.bc from being deleted
-
-$(PROG).bc: $(OBJS)
-	$(LLINK) -f $(OBJS) -o $@ $(CFLAGS)
-
-$(PROG).native: $(OBJS:.o=.c)
-	gcc -o $@ $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) -Wall
-endif
 
 TOOLS    = $(LEVEL)/tools/Debug
 
@@ -46,6 +33,19 @@ CCFLAGS = $(CFLAGS)
 LDFLAGS = $(CFLAGS)
 ASFLAGS = -c $(CFLAGS)
 
+## Special targets to build a program from multiple source files
+## 
+ifdef PROG
+
+default:    $(PROG).clean.bc $(PROG).native
+  #.SECONDARY: $(PROG).clean.bc	## keep %.clean.bc from being deleted
+
+$(PROG).bc: $(OBJS)
+	$(LLINK) -f $(OBJS) -o $@
+
+$(PROG).native: $(OBJS:.o=.c)
+	gcc -o $@ $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) -Wall
+endif
 
 ## Special target to force target-dependent library to be compiled
 ## directly to native code.
