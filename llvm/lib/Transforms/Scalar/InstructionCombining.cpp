@@ -317,14 +317,23 @@ static inline Value *dyn_castNotVal(Value *V) {
 
 // dyn_castFoldableMul - If this value is a multiply that can be folded into
 // other computations (because it has a constant operand), return the
-// non-constant operand of the multiply.
+// non-constant operand of the multiply, and set CST to point to the multiplier.
+// Otherwise, return null.
 //
-static inline Value *dyn_castFoldableMul(Value *V) {
+static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
   if (V->hasOneUse() && V->getType()->isInteger())
-    if (Instruction *I = dyn_cast<Instruction>(V))
+    if (Instruction *I = dyn_cast<Instruction>(V)) {
       if (I->getOpcode() == Instruction::Mul)
-        if (isa<Constant>(I->getOperand(1)))
+        if (CST = dyn_cast<ConstantInt>(I->getOperand(1)))
           return I->getOperand(0);
+      if (I->getOpcode() == Instruction::Shl)
+        if (CST = dyn_cast<ConstantInt>(I->getOperand(1))) {
+          // The multiplier is really 1 << CST.
+          Constant *One = ConstantInt::get(V->getType(), 1);
+          CST = cast<ConstantInt>(ConstantExpr::getShl(One, CST));
+          return I->getOperand(0);
+        }
+    }
   return 0;
 }
 
@@ -595,41 +604,25 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     if (Value *V = dyn_castNegVal(RHS))
       return BinaryOperator::createSub(LHS, V);
 
-  // X*C + X --> X * (C+1)
-  if (dyn_castFoldableMul(LHS) == RHS) {
-    Constant *CP1 =
-      ConstantExpr::getAdd(
-                        cast<Constant>(cast<Instruction>(LHS)->getOperand(1)),
-                        ConstantInt::get(I.getType(), 1));
-    return BinaryOperator::createMul(RHS, CP1);
+  ConstantInt *C2;
+  if (Value *X = dyn_castFoldableMul(LHS, C2)) {
+    if (X == RHS)   // X*C + X --> X * (C+1)
+      return BinaryOperator::createMul(RHS, AddOne(C2));
+
+    // X*C1 + X*C2 --> X * (C1+C2)
+    ConstantInt *C1;
+    if (X == dyn_castFoldableMul(RHS, C1))
+      return BinaryOperator::createMul(X, ConstantExpr::getAdd(C1, C2));
   }
 
   // X + X*C --> X * (C+1)
-  if (dyn_castFoldableMul(RHS) == LHS) {
-    Constant *CP1 =
-      ConstantExpr::getAdd(
-                        cast<Constant>(cast<Instruction>(RHS)->getOperand(1)),
-                        ConstantInt::get(I.getType(), 1));
-    return BinaryOperator::createMul(LHS, CP1);
-  }
+  if (dyn_castFoldableMul(RHS, C2) == LHS)
+    return BinaryOperator::createMul(LHS, AddOne(C2));
+
 
   // (A & C1)+(B & C2) --> (A & C1)|(B & C2) iff C1&C2 == 0
-  ConstantInt *C2;
   if (match(RHS, m_And(m_Value(), m_ConstantInt(C2))))
     if (Instruction *R = AssociativeOpt(I, AddMaskingAnd(C2))) return R;
-
-  // (X + (X << C2)) --> X * ((1 << C2) + 1)
-  // ((X << C2) + X) --> X * ((1 << C2) + 1)
-  Value *Tmp;
-  if ((RHS->hasOneUse() && match(RHS, m_Shl(m_Value(Tmp),
-                                            m_ConstantInt(C2))) && LHS == Tmp)||
-      (LHS->hasOneUse() && match(LHS, m_Shl(m_Value(Tmp),
-                                            m_ConstantInt(C2))) && RHS == Tmp)){
-    ConstantInt *One = ConstantInt::get(LHS->getType(), 1);
-    Constant *NewRHS =
-      ConstantExpr::getAdd(ConstantExpr::getShl(One, C2), One);
-    return BinaryOperator::createMul(Tmp, NewRHS);
-  }
 
   if (ConstantInt *CRHS = dyn_cast<ConstantInt>(RHS)) {
     Value *X;
@@ -800,24 +793,26 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
                                                ConstantExpr::getNeg(DivRHS));
 
       // X - X*C --> X * (1-C)
-      if (dyn_castFoldableMul(Op1I) == Op0) {
-        Constant *CP1 =
-          ConstantExpr::getSub(ConstantInt::get(I.getType(), 1),
-                         cast<Constant>(cast<Instruction>(Op1)->getOperand(1)));
-        assert(CP1 && "Couldn't constant fold 1-C?");
+      ConstantInt *C2;
+      if (dyn_castFoldableMul(Op1I, C2) == Op0) {
+        Constant *CP1 = 
+          ConstantExpr::getSub(ConstantInt::get(I.getType(), 1), C2);
         return BinaryOperator::createMul(Op0, CP1);
       }
     }
 
-  // X*C - X --> X * (C-1)
-  if (dyn_castFoldableMul(Op0) == Op1) {
-    Constant *CP1 =
-     ConstantExpr::getSub(cast<Constant>(cast<Instruction>(Op0)->getOperand(1)),
-                        ConstantInt::get(I.getType(), 1));
-    assert(CP1 && "Couldn't constant fold C - 1?");
-    return BinaryOperator::createMul(Op1, CP1);
-  }
+  
+  ConstantInt *C1;
+  if (Value *X = dyn_castFoldableMul(Op0, C1)) {
+    if (X == Op1) { // X*C - X --> X * (C-1)
+      Constant *CP1 = ConstantExpr::getSub(C1, ConstantInt::get(I.getType(),1));
+      return BinaryOperator::createMul(Op1, CP1);
+    }
 
+    ConstantInt *C2;   // X*C1 - X*C2 -> X * (C1-C2)
+    if (X == dyn_castFoldableMul(Op1, C2))
+      return BinaryOperator::createMul(Op1, ConstantExpr::getSub(C1, C2));
+  }
   return 0;
 }
 
