@@ -30,6 +30,9 @@
 #include <set>
 #include <algorithm>
 
+// This is the environment given to the program.
+extern char ** environ;
+
 namespace {
   cl::list<std::string> 
   InputFilenames(cl::Positional, cl::desc("<input bytecode files>"),
@@ -64,6 +67,9 @@ namespace {
   LinkAsLibrary("link-as-library", cl::desc("Link the .bc files together as a"
                                             " library, not an executable"));
 
+  cl::opt<bool>    
+  Native("native", cl::desc("Generate a native binary instead of a shell script"));
+  
   // Compatibility options that are ignored, but support by LD
   cl::opt<std::string>
   CO3("soname", cl::Hidden, cl::desc("Compatibility option: ignored"));
@@ -313,6 +319,69 @@ static int PrintAndReturn(const char *progname, const std::string &Message,
   return 1;
 }
 
+//
+// Function: remove_env()
+//
+// Description:
+//	Remove the specified environment variable from the environment array.
+//
+// Inputs:
+//	name - The name of the variable to remove.  It cannot be NULL.
+//	envp - The array of environment variables.  It cannot be NULL.
+//
+// Outputs:
+//	envp - The pointer to the specified variable name is removed.
+//
+// Return value:
+//	None.
+//
+// Notes:
+//  This is mainly done because functions to remove items from the environment
+//  are not available across all platforms.  In particular, Solaris does not
+//  seem to have an unsetenv() function or a setenv() function (or they are
+//  undocumented if they do exist).
+//
+static void
+remove_env (const char * name, char ** envp)
+{
+  // Pointer for scanning arrays
+  register char * p;
+
+  // Index for selecting elements of the environment array
+  register int index;
+
+  for (index=0; envp[index] != NULL; index++)
+  {
+    //
+    // Find the first equals sign in the array and make it an EOS character.
+    //
+    p = strchr (envp[index], '=');
+    if (p == NULL)
+    {
+      continue;
+    }
+    else
+    {
+      *p = '\0';
+    }
+
+    //
+    // Compare the two strings.  If they are equal, zap this string.
+    // Otherwise, restore it.
+    //
+    if (!strcmp (name, envp[index]))
+    {
+      envp[index] = NULL;
+    }
+    else
+    {
+      *p = '=';
+    }
+  }
+
+  return;
+}
+
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
@@ -432,13 +501,62 @@ int main(int argc, char **argv) {
   Out.close();
 
   if (!LinkAsLibrary) {
-    // Output the script to start the program...
-    std::ofstream Out2(OutputFilename.c_str());
-    if (!Out2.good())
-      return PrintAndReturn(argv[0], "error opening '" + OutputFilename +
-                                     "' for writing!");
-    Out2 << "#!/bin/sh\nlli -q $0.bc $*\n";
-    Out2.close();
+    //
+    // If the user wants to generate a native executable, compile it from the
+    // bytecode file.
+    //
+    // Otherwise, create a script that will run the bytecode through the JIT.
+    //
+    if (Native)
+    {
+      // Name of the output assembly file
+      std::string AssemblyFile = OutputFilename + ".s";
+
+      // Name of the command to execute
+      std::string cmd;
+
+      //
+      // Create an executable file from the bytecode file.
+      //
+      remove_env ("LIBRARY_PATH", environ);
+      remove_env ("COLLECT_GCC_OPTIONS", environ);
+      remove_env ("GCC_EXEC_PREFIX", environ);
+      remove_env ("COMPILER_PATH", environ);
+      remove_env ("COLLECT_GCC", environ);
+
+      //
+      // Run LLC to convert the bytecode file into assembly code.
+      //
+      cmd = "llc -f -o " + AssemblyFile + " " + RealBytecodeOutput;
+      if ((system (cmd.c_str())) == -1)
+      {
+        return PrintAndReturn (argv[0], "Failed to compile bytecode");
+      }
+
+      //
+      // Run GCC to assemble and link the program into native code.
+      //
+      // Note:
+      //  We can't just assemble and link the file with the system assembler
+      //  and linker because we don't know where to put the _start symbol.
+      //  GCC mysteriously knows how to do it.
+      //
+      cmd = "gcc -o " + OutputFilename + " " + AssemblyFile;
+      if ((system (cmd.c_str())) == -1)
+      {
+        return PrintAndReturn (argv[0], "Failed to link native code file");
+      }
+    }
+    else
+    {
+      // Output the script to start the program...
+      std::ofstream Out2(OutputFilename.c_str());
+      if (!Out2.good())
+        return PrintAndReturn(argv[0], "error opening '" + OutputFilename +
+                                       "' for writing!");
+      Out2 << "#!/bin/sh\nlli -q $0.bc $*\n";
+      Out2.close();
+    }
   
     // Make the script executable...
     MakeFileExecutable (OutputFilename);
