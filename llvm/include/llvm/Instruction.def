@@ -1,0 +1,145 @@
+//===-- llvm/Instruction.def - File that describes Instructions --*- C++ -*--=//
+//
+// This file contains descriptions of the various LLVM instructions.  This is
+// used as a central place for enumerating the different instructions and 
+// should eventually be the place to put comments about the instructions.
+//
+//===----------------------------------------------------------------------===//
+
+// NOTE: NO INCLUDE GUARD DESIRED!
+
+// Provide definitions of macros so that users of this file don't have to define
+// everything to use it...
+//
+#ifndef FIRST_TERM_INST
+#define FIRST_TERM_INST(num)
+#endif
+#ifndef HANDLE_TERM_INST
+#define HANDLE_TERM_INST(num, opcode, instclass)
+#endif
+#ifndef LAST_TERM_INST
+#define LAST_TERM_INST(num)
+#endif
+
+#ifndef FIRST_UNARY_INST
+#define FIRST_UNARY_INST(num)
+#endif
+#ifndef HANDLE_UNARY_INST
+#define HANDLE_UNARY_INST(num, opcode, instclass)
+#endif
+#ifndef LAST_UNARY_INST
+#define LAST_UNARY_INST(num)
+#endif
+
+#ifndef FIRST_BINARY_INST
+#define FIRST_BINARY_INST(num)
+#endif
+#ifndef HANDLE_BINARY_INST
+#define HANDLE_BINARY_INST(num, opcode, instclass)
+#endif
+#ifndef LAST_BINARY_INST
+#define LAST_BINARY_INST(num)
+#endif
+
+#ifndef FIRST_MEMORY_INST
+#define FIRST_MEMORY_INST(num)
+#endif
+#ifndef HANDLE_MEMORY_INST
+#define HANDLE_MEMORY_INST(num, opcode, instclass)
+#endif
+#ifndef LAST_MEMORY_INST
+#define LAST_MEMORY_INST(num)
+#endif
+
+#ifndef FIRST_OTHER_INST
+#define FIRST_OTHER_INST(num)
+#endif
+#ifndef HANDLE_OTHER_INST
+#define HANDLE_OTHER_INST(num, opcode, instclass)
+#endif
+#ifndef LAST_OTHER_INST
+#define LAST_OTHER_INST(num)
+#endif
+
+
+// Terminator Instructions - These instructions are used to terminate a basic
+// block of the program.   Every basic block must end with one of these
+// instructions for it to be a well formed basic block.
+//
+ FIRST_TERM_INST  ( 1)
+HANDLE_TERM_INST  ( 1, Ret   , ReturnInst)
+HANDLE_TERM_INST  ( 2, Br    , BranchInst)
+HANDLE_TERM_INST  ( 3, Switch, SwitchInst)
+HANDLE_TERM_INST  ( 4, Invoke, InvokeInst)
+  LAST_TERM_INST  ( 4)
+
+// The single unary instruction... a binary inverse.
+ FIRST_UNARY_INST ( 5)
+HANDLE_UNARY_INST ( 5, Not   , GenericUnaryInst)
+  LAST_UNARY_INST ( 5)
+
+// Standard binary operators...
+ FIRST_BINARY_INST( 6)
+HANDLE_BINARY_INST( 6, Add   , GenericBinaryInst)
+HANDLE_BINARY_INST( 7, Sub   , GenericBinaryInst)
+HANDLE_BINARY_INST( 8, Mul   , GenericBinaryInst)
+HANDLE_BINARY_INST( 9, Div   , GenericBinaryInst)
+HANDLE_BINARY_INST(10, Rem   , GenericBinaryInst)
+
+// Logical operators...
+HANDLE_BINARY_INST(11, And   , GenericBinaryInst)
+HANDLE_BINARY_INST(12, Or    , GenericBinaryInst)
+HANDLE_BINARY_INST(13, Xor   , GenericBinaryInst)
+
+// Binary comparison operators...
+HANDLE_BINARY_INST(14, SetEQ , SetCondInst)
+HANDLE_BINARY_INST(15, SetNE , SetCondInst)
+HANDLE_BINARY_INST(16, SetLE , SetCondInst)
+HANDLE_BINARY_INST(17, SetGE , SetCondInst)
+HANDLE_BINARY_INST(18, SetLT , SetCondInst)
+HANDLE_BINARY_INST(19, SetGT , SetCondInst)
+  LAST_BINARY_INST(19)
+
+// Memory operators...
+ FIRST_MEMORY_INST(20)
+HANDLE_MEMORY_INST(20, Malloc, MallocInst)  // Heap management instructions
+HANDLE_MEMORY_INST(21, Free  , FreeInst  )
+HANDLE_MEMORY_INST(22, Alloca, AllocaInst)  // Stack management
+HANDLE_MEMORY_INST(23, Load  , LoadInst  )  // Memory manipulation instrs
+HANDLE_MEMORY_INST(24, Store , StoreInst )
+HANDLE_MEMORY_INST(25, GetElementPtr, GetElementPtrInst)
+  LAST_MEMORY_INST(25)
+
+// Other operators...
+ FIRST_OTHER_INST(26)
+HANDLE_OTHER_INST(26, PHINode, PHINode    )  // PHI node instruction
+HANDLE_OTHER_INST(27, Cast   , CastInst   )  // Type cast
+HANDLE_OTHER_INST(28, Call   , CallInst   )  // Call a function
+
+HANDLE_OTHER_INST(29, Shl    , ShiftInst  )  // Shift operations
+HANDLE_OTHER_INST(30, Shr    , ShiftInst  )
+
+HANDLE_OTHER_INST(31, UserOp1, Instruction)  // May be used internally in a pass
+HANDLE_OTHER_INST(32, UserOp2, Instruction)
+  LAST_OTHER_INST(32)
+
+#undef  FIRST_TERM_INST
+#undef HANDLE_TERM_INST
+#undef   LAST_TERM_INST
+
+#undef  FIRST_UNARY_INST
+#undef HANDLE_UNARY_INST
+#undef   LAST_UNARY_INST
+
+#undef  FIRST_BINARY_INST
+#undef HANDLE_BINARY_INST
+#undef   LAST_BINARY_INST
+
+#undef  FIRST_MEMORY_INST
+#undef HANDLE_MEMORY_INST
+#undef   LAST_MEMORY_INST
+
+#undef  FIRST_OTHER_INST
+#undef HANDLE_OTHER_INST
+#undef   LAST_OTHER_INST
+
