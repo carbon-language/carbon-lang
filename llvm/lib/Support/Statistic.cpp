@@ -43,7 +43,7 @@ struct StatRecord {
   std::string Value;
   const char *Name, *Desc;
 
-  StatRecord(const std::string V, const char *N, const char *D)
+  StatRecord(const std::string &V, const char *N, const char *D)
     : Value(V), Name(N), Desc(D) {}
 
   bool operator<(const StatRecord &SR) const {
