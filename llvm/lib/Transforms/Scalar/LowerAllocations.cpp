@@ -87,8 +87,6 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
   // Loop over all of the instructions, looking for malloc or free instructions
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I) {
     if (MallocInst *MI = dyn_cast<MallocInst>(&*I)) {
-      BBIL.remove(I);   // remove the malloc instr...
-
       const Type *AllocTy = MI->getType()->getElementType();
       
       // Get the number of bytes to be allocated for one element of the
@@ -101,39 +99,32 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
         MallocArg = MI->getOperand(0);         // Operand * 1 = Operand
       } else if (MI->getNumOperands()) {
         // Multiply it by the array size if neccesary...
-        MallocArg = BinaryOperator::create(Instruction::Mul,MI->getOperand(0),
-                                           MallocArg);
-        I = ++BBIL.insert(I, cast<Instruction>(MallocArg));
+        MallocArg = BinaryOperator::create(Instruction::Mul, MI->getOperand(0),
+                                           MallocArg, "", I);
       }
       
       // Create the call to Malloc...
       CallInst *MCall = new CallInst(MallocFunc,
-                                     vector<Value*>(1, MallocArg));
-      I = BBIL.insert(I, MCall);
+                                     vector<Value*>(1, MallocArg), "", I);
       
       // Create a cast instruction to convert to the right type...
-      CastInst *MCast = new CastInst(MCall, MI->getType());
-      I = BBIL.insert(++I, MCast);
+      CastInst *MCast = new CastInst(MCall, MI->getType(), "", I);
       
       // Replace all uses of the old malloc inst with the cast inst
       MI->replaceAllUsesWith(MCast);
-      delete MI;                          // Delete the malloc inst
+      I = --BBIL.erase(I);         // remove and delete the malloc instr...
       Changed = true;
       ++NumLowered;
     } else if (FreeInst *FI = dyn_cast<FreeInst>(&*I)) {
-      BBIL.remove(I);
-      
       // Cast the argument to free into a ubyte*...
       CastInst *MCast = new CastInst(FI->getOperand(0), 
-                                     PointerType::get(Type::UByteTy));
-      I = ++BBIL.insert(I, MCast);
+                                     PointerType::get(Type::UByteTy), "", I);
       
       // Insert a call to the free function...
-      CallInst *FCall = new CallInst(FreeFunc, vector<Value*>(1, MCast));
-      I = BBIL.insert(I, FCall);
+      CallInst *FCall = new CallInst(FreeFunc, vector<Value*>(1, MCast), "", I);
       
       // Delete the old free instruction
-      delete FI;
+      I = --BBIL.erase(I);
       Changed = true;
       ++NumLowered;
     }

@@ -241,10 +241,8 @@ void LICM::hoist(Instruction &Inst) {
     // No loop pre-header, insert a PHI node into header to capture all of the
     // incoming versions of the value.
     //
-    PHINode *LoopVal = new PHINode(Inst.getType(), InstName+".phi");
-
-    // Insert the new PHI node into the loop header...
-    Header->getInstList().push_front(LoopVal);
+    PHINode *LoopVal = new PHINode(Inst.getType(), InstName+".phi",
+                                   Header->begin());
 
     // Insert cloned versions of the instruction into all of the loop preds.
     for (unsigned i = 0, e = LoopPreds.size(); i != e; ++i) {

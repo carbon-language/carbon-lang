@@ -108,7 +108,7 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock &BB) {
   bool Changed = false;
   BasicBlock::InstListType &BIL = BB.getInstList();
 
-  for (BasicBlock::iterator BI = BB.begin(); BI != BB.end();) {
+  for (BasicBlock::iterator BI = BB.begin(); BI != BB.end(); ++BI) {
     Instruction *I = BI;
 
     if (CallInst *CI = dyn_cast<CallInst>(I)) {
@@ -118,19 +118,14 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock &BB) {
         
         // If no prototype was provided for malloc, we may need to cast the
         // source size.
-        if (Source->getType() != Type::UIntTy) {
-          CastInst *New = new CastInst(Source, Type::UIntTy, "MallocAmtCast");
-          BI = ++BIL.insert(BI, New);
-          Source = New;
-        }
+        if (Source->getType() != Type::UIntTy)
+          Source = new CastInst(Source, Type::UIntTy, "MallocAmtCast", BI);
 
-        MallocInst *MallocI = new MallocInst(PtrSByte, Source, CI->getName());
-                                             
-        CI->setName("");
-        ReplaceInstWithInst(BIL, BI, MallocI);
+        std::string Name(CI->getName()); CI->setName("");
+        BI = new MallocInst(PtrSByte, Source, Name, BI);
+        BIL.erase(I);
         Changed = true;
         ++NumRaised;
-        continue;  // Skip the ++BI
       } else if (CI->getCalledValue() == FreeFunc) { // Replace call to free?
         // If no prototype was provided for free, we may need to cast the
         // source pointer.  This should be really uncommon, but it's neccesary
@@ -138,21 +133,15 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock &BB) {
         //   free((long)ptr);
         //
         Value *Source = CI->getOperand(1);
-        if (!isa<PointerType>(Source->getType())) {
-          CastInst *New = new CastInst(Source, PointerType::get(Type::SByteTy),
-                                       "FreePtrCast");
-          BI = ++BIL.insert(BI, New);
-          Source = New;
-        }
-
-        ReplaceInstWithInst(BIL, BI, new FreeInst(Source));
+        if (!isa<PointerType>(Source->getType()))
+          Source = new CastInst(Source, PointerType::get(Type::SByteTy),
+                                "FreePtrCast", BI);
+        BI = new FreeInst(Source, BI);
+        BIL.erase(I);
         Changed = true;
-        continue;  // Skip the ++BI
         ++NumRaised;
       }
     }
-
-    ++BI;
   }
 
   return Changed;

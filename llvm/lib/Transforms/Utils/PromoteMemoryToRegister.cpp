@@ -196,14 +196,12 @@ bool PromotePass::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   // If the BB already has a phi node added for the i'th alloca then we're done!
   if (BBPNs[AllocaNo]) return false;
 
-  // Create a PhiNode using the dereferenced type...
+  // Create a PhiNode using the dereferenced type... and add the phi-node to the
+  // BasicBlock
   PHINode *PN = new PHINode(Allocas[AllocaNo]->getAllocatedType(),
-                            Allocas[AllocaNo]->getName()+".mem2reg");
+                            Allocas[AllocaNo]->getName()+".mem2reg",
+                            BB->begin());
   BBPNs[AllocaNo] = PN;
-
-  // Add the phi-node to the basic-block
-  BB->getInstList().push_front(PN);
-
   PhiNodes[AllocaNo].push_back(BB);
   return true;
 }

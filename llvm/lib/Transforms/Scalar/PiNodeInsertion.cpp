@@ -148,13 +148,8 @@ bool PiNodeInserter::insertPiNodeFor(Value *V, BasicBlock *Succ, Value *Rep) {
     
   // Create the Pi node...
   Value *Pi = Rep;
-  if (Rep == 0) {
-    PHINode *Phi = new PHINode(V->getType(), V->getName() + ".pi");
-    
-    // Insert the Pi node in the successor basic block...
-    Succ->getInstList().push_front(Phi);
-    Pi = Phi;
-  }
+  if (Rep == 0)      // Insert the Pi node in the successor basic block...
+    Pi = new PHINode(V->getType(), V->getName() + ".pi", Succ->begin());
     
   // Loop over all of the uses of V, replacing ones that the Pi node
   // dominates with references to the Pi node itself.
