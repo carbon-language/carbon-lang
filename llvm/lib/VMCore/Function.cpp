@@ -142,6 +142,10 @@ const FunctionType *Function::getFunctionType() const {
   return cast<FunctionType>(getType()->getElementType());
 }
 
+bool Function::isVarArg() const {
+  return getFunctionType()->isVarArg();
+}
+
 const Type *Function::getReturnType() const { 
   return getFunctionType()->getReturnType();
 }

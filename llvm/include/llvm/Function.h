@@ -90,6 +90,10 @@ public:
   const Type *getReturnType() const;           // Return the type of the ret val
   const FunctionType *getFunctionType() const; // Return the FunctionType for me
 
+  /// isVarArg - Return true if this function takes a variable number of
+  /// arguments.
+  bool isVarArg() const;
+
   /// isExternal - Is the body of this function unknown? (The basic block list
   /// is empty if so.) This is true for external functions, defined as forward
   /// "declare"ations
