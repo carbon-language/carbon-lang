@@ -451,7 +451,7 @@ void LICM::sink(Instruction &I) {
           // instruction, otherwise clone the original instruction and insert
           // the copy.
           Instruction *New;
-          if (InsertedBlocks.empty()) {
+          if (InsertedBlocks.size() == 1) {
             I.getParent()->getInstList().remove(&I);
             ExitBlock->getInstList().insert(InsertPt, &I);
             New = &I;
