@@ -40,7 +40,7 @@ BytesWritten("bytecodewriter", "Number of bytecode bytes written");
 
 
 BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M) 
-  : Out(o), Table(M, false) {
+  : Out(o), Table(M, true) {
 
   outputSignature();
 
