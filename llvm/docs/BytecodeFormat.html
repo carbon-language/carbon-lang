@@ -580,30 +580,57 @@ bytecode file. This block is always four bytes in length and differs from the
 other blocks because there is no identifier and no block length at the start
 of the block. Essentially, this block is just the "magic number" for the file.
 </p>
+<p>There are two types of signatures for LLVM bytecode: uncompressed and
+compressed as shown in the table below. </p>
 <table>
   <tbody>
     <tr>
       <th><b>Type</b></th>
-      <th class="td_left"><b>Field Description</b></th>
+      <th class="td_left"><b>Uncompressed</b></th>
+      <th class="td_left"><b>Compressed</b></th>
     </tr>
     <tr>
       <td><a href="#char">char</a></td>
       <td class="td_left">Constant "l" (0x6C)</td>
+      <td class="td_left">Constant "l" (0x6C)</td>
     </tr>
     <tr>
       <td><a href="#char">char</a></td>
+      <td class="td_left">Constant "l" (0x6C)</td>
       <td class="td_left">Constant "l" (0x6C)</td>
     </tr>
     <tr>
       <td><a href="#char">char</a></td>
       <td class="td_left">Constant "v" (0x76)</td>
+      <td class="td_left">Constant "v" (0x76)</td>
     </tr>
     <tr>
       <td><a href="#char">char</a></td>
       <td class="td_left">Constant "m" (0x6D)</td>
+      <td class="td_left">Constant "c" (0x63)</td>
+    </tr>
+    <tr>
+      <td><a href="#char">char</a></td>
+      <td class="td_left">N/A</td>
+      <td class="td_left">'0'=null,'1'=gzip,'2'=bzip2</td>
     </tr>
   </tbody>
 </table>
+<p>In other words, the uncompressed signature is just the characters 'llvm'
+while the compressed signature is the characters 'llvc' followed by an ascii
+digit ('0', '1', or '2') that indicates the kind of compression used. A value of
+'0' indicates that null compression was used. This can happen when compression
+was requested on a platform that wasn't configured for gzip or bzip2. A value of
+'1' means that the rest of the file is compressed using the gzip algorithm and
+should be uncompressed before interpretation. A value of '2' means that the rest
+of the file is compressed using the bzip2 algorithm and should be uncompressed
+before interpretation. In all cases, the data resulting from uncompression
+should be interpreted as if it occurred immediately after the 'llvm'
+signature (i.e. the uncompressed data begins with the 
+<a href="#module">Module Block</a></p>
+<p><b>NOTE:</b> As of LLVM 1.4, all bytecode files produced by the LLVM tools
+are compressed byte default. To disable compression, pass the 
+<tt>--disable-compression</tt> option to the tool, if it supports it.
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="module">Module Block</a> </div>
