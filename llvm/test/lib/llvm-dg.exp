@@ -1,4 +1,4 @@
-proc llvm-runtest { programs srcdir subdir target_triplet} {
+proc llvm-runtest { programs srcdir subdir target_triplet llvmgcc llvmgxx prcontext} {
 
     set path [file join $srcdir $subdir]
     
@@ -37,9 +37,19 @@ proc llvm-runtest { programs srcdir subdir target_triplet} {
 
 		#replace %s with filename
 		regsub -all {%s} $runline $filename new_runline
-		
+
+		#replace %t with temp filenames
 		regsub -all {%t} $new_runline [file join Output $tmpFile] new_runline
-	
+
+		#replace %llvmgcc with actual path to llvmgcc
+		regsub -all {%llvmgcc} $new_runline $llvmgcc new_runline
+
+		#replace %llvmgxx with actual path to llvmg++
+		regsub -all {%llvmgxx} $new_runline $llvmgxx new_runline
+		
+		#replace %prcontext with actual path to llvmg++ (Goes away when we remove qmtest)
+		regsub -all {%prcontext} $new_runline "python $prcontext" new_runline
+
 		puts $scriptFileId $new_runline
 	    } elseif {[regexp {XFAIL:[ *](.+)} $line match targets]} {
 		set targets
