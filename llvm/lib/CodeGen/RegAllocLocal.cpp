@@ -93,8 +93,8 @@ namespace {
     }
 
     void MarkPhysRegRecentlyUsed(unsigned Reg) {
-      assert(!PhysRegsUseOrder.empty() && "No registers used!");
-      if (PhysRegsUseOrder.back() == Reg) return;  // Already most recently used
+      if(PhysRegsUseOrder.empty() ||
+         PhysRegsUseOrder.back() == Reg) return;  // Already most recently used
 
       for (unsigned i = PhysRegsUseOrder.size(); i != 0; --i)
         if (areRegsEqual(Reg, PhysRegsUseOrder[i-1])) {
