@@ -1119,26 +1119,3 @@ void ConstantExpr::destroyConstant() {
 const char *ConstantExpr::getOpcodeName() const {
   return Instruction::getOpcodeName(getOpcode());
 }
-
-unsigned Constant::mutateReferences(Value *OldV, Value *NewV) {
-  // Uses of constant pointer refs are global values, not constants!
-  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(this)) {
-    GlobalValue *NewGV = cast<GlobalValue>(NewV);
-    GlobalValue *OldGV = CPR->getValue();
-
-    assert(OldGV == OldV && "Cannot mutate old value if I'm not using it!");
-    Operands[0] = NewGV;
-    OldGV->getParent()->mutateConstantPointerRef(OldGV, NewGV);
-    return 1;
-  } else {
-    Constant *NewC = cast<Constant>(NewV);
-    unsigned NumReplaced = 0;
-    for (unsigned i = 0, N = getNumOperands(); i != N; ++i)
-      if (Operands[i] == OldV) {
-        ++NumReplaced;
-        Operands[i] = NewC;
-      }
-    return NumReplaced;
-  }
-}
-
