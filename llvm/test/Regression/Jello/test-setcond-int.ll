@@ -2,8 +2,8 @@
 int %main() {
 	%int1 = add int 0, 0
 	%int2 = add int 0, 0
-	;%long1 = add long 0, 0
-	;%long2 = add long 0, 0
+	%long1 = add long 0, 0
+	%long2 = add long 0, 0
 	%sbyte1 = add sbyte 0, 0
 	%sbyte2 = add sbyte 0, 0
 	%short1 = add short 0, 0
@@ -12,8 +12,8 @@ int %main() {
 	%ubyte2 = add ubyte 0, 0
 	%uint1 = add uint 0, 0
 	%uint2 = add uint 0, 0
-	;%ulong1 = add ulong 0, 0
-	;%ulong2 = add ulong 0, 0
+	%ulong1 = add ulong 0, 0
+	%ulong2 = add ulong 0, 0
 	%ushort1 = add ushort 0, 0
 	%ushort2 = add ushort 0, 0
 	%test1 = seteq ubyte %ubyte1, %ubyte2
@@ -34,12 +34,12 @@ int %main() {
 	%test16 = setle uint %uint1, %uint2
 	%test17 = setlt uint %uint1, %uint2
 	%test18 = setne uint %uint1, %uint2
-	;%test19 = seteq ulong %ulong1, %ulong2
-	;%test20 = setge ulong %ulong1, %ulong2
-	;%test21 = setgt ulong %ulong1, %ulong2
-	;%test22 = setle ulong %ulong1, %ulong2
-	;%test23 = setlt ulong %ulong1, %ulong2
-	;%test24 = setne ulong %ulong1, %ulong2
+	%test19 = seteq ulong %ulong1, %ulong2
+	%test20 = setge ulong %ulong1, %ulong2
+	%test21 = setgt ulong %ulong1, %ulong2
+	%test22 = setle ulong %ulong1, %ulong2
+	%test23 = setlt ulong %ulong1, %ulong2
+	%test24 = setne ulong %ulong1, %ulong2
 	%test25 = seteq sbyte %sbyte1, %sbyte2
 	%test26 = setge sbyte %sbyte1, %sbyte2
 	%test27 = setgt sbyte %sbyte1, %sbyte2
@@ -58,11 +58,11 @@ int %main() {
 	%test40 = setle int %int1, %int2
 	%test41 = setlt int %int1, %int2
 	%test42 = setne int %int1, %int2
-	;%test43 = seteq long %long1, %long2
-	;%test44 = setge long %long1, %long2
-	;%test45 = setgt long %long1, %long2
-	;%test46 = setle long %long1, %long2
-	;%test47 = setlt long %long1, %long2
-	;%test48 = setne long %long1, %long2
+	%test43 = seteq long %long1, %long2
+	%test44 = setge long %long1, %long2
+	%test45 = setgt long %long1, %long2
+	%test46 = setle long %long1, %long2
+	%test47 = setlt long %long1, %long2
+	%test48 = setne long %long1, %long2
 	ret int 0
 }
