@@ -54,9 +54,8 @@ void CodeEmitterGen::run(std::ostream &o) {
     std::map<std::string, bool> OpContinuous;
     for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
       if (!Vals[i].getPrefix() &&  !Vals[i].getValue()->isComplete() &&
-          /* ignore annul and predict bits since no one sets them yet */
-          Vals[i].getName() != "annul" && Vals[i].getName() != "predict")
-      {
+          // ignore annul and predict bits since no one sets them yet
+          Vals[i].getName() != "annul" && Vals[i].getName() != "predict") {
         // Is the operand continuous? If so, we can just mask and OR it in
         // instead of doing it bit-by-bit, saving a lot in runtime cost.        
         const BitsInit *InstInit = BI;
@@ -112,6 +111,8 @@ void CodeEmitterGen::run(std::ostream &o) {
           }
         }
 
+        // If we have found no bit in "Inst" which comes from this field, then
+        // this is not an operand!!
         if (beginBitInInst != -1) {
           o << "      // op" << op << ": " << Vals[i].getName() << "\n"
             << "      int64_t op" << op 
@@ -164,7 +165,7 @@ void CodeEmitterGen::run(std::ostream &o) {
         // Scan through the field looking for bit initializers of the current
         // variable...
         for (int i = FieldInitializer->getNumBits()-1; i >= 0; --i) {
-          if (BitInit *BI=dynamic_cast<BitInit*>(FieldInitializer->getBit(i)))
+          if (BitInit *BI = dynamic_cast<BitInit*>(FieldInitializer->getBit(i)))
           {
             DEBUG(o << "      // bit init: f: " << f << ", i: " << i << "\n");
           } else if (UnsetInit *UI =
