@@ -118,10 +118,6 @@ main(int argc, char **argv)
                 << Opt->getPassName() << "\n";
   }
 
-  // Decompose multi-dimensional refs into a sequence of 1D refs
-  // FIXME: This is sparc specific!
-  Passes.add(createDecomposeMultiDimRefsPass());
-
   // Replace malloc and free instructions with library calls.
   // Do this after tracing until lli implements these lib calls.
   // For now, it will emulate malloc and free internally.
