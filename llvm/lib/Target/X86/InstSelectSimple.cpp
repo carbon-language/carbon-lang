@@ -1233,7 +1233,57 @@ void ISel::visitShiftInst(ShiftInst &I) {
 	}
       }
     } else {
-      visitInstruction(I);  // FIXME: Implement long shift by non-constant
+      unsigned TmpReg = makeAnotherReg(Type::IntTy);
+
+      if (!isLeftShift && isSigned) {
+        // If this is a SHR of a Long, then we need to do funny sign extension
+        // stuff.  TmpReg gets the value to use as the high-part if we are
+        // shifting more than 32 bits.
+        BuildMI(BB, X86::SARir32, 2, TmpReg).addReg(SrcReg).addZImm(31);
+      } else {
+        // Other shifts use a fixed zero value if the shift is more than 32
+        // bits.
+        BuildMI(BB, X86::MOVir32, 1, TmpReg).addZImm(0);
+      }
+
+      // Initialize CL with the shift amount...
+      unsigned ShiftAmount = getReg(I.getOperand(1));
+      BuildMI(BB, X86::MOVrr8, 1, X86::CL).addReg(ShiftAmount);
+
+      unsigned TmpReg2 = makeAnotherReg(Type::IntTy);
+      unsigned TmpReg3 = makeAnotherReg(Type::IntTy);
+      if (isLeftShift) {
+        // TmpReg2 = shld inHi, inLo
+        BuildMI(BB, X86::SHLDrr32, 2, TmpReg2).addReg(SrcReg+1).addReg(SrcReg);
+        // TmpReg3 = shl  inLo, CL
+        BuildMI(BB, X86::SHLrr32, 1, TmpReg3).addReg(SrcReg);
+
+        // Set the flags to indicate whether the shift was by more than 32 bits.
+        BuildMI(BB, X86::TESTri8, 2).addReg(X86::CL).addZImm(32);
+
+        // DestHi = (>32) ? TmpReg3 : TmpReg2;
+        BuildMI(BB, X86::CMOVNErr32, 2, 
+                DestReg+1).addReg(TmpReg2).addReg(TmpReg3);
+        // DestLo = (>32) ? TmpReg : TmpReg3;
+        BuildMI(BB, X86::CMOVNErr32, 2, DestReg).addReg(TmpReg3).addReg(TmpReg);
+      } else {
+        // TmpReg2 = shrd inLo, inHi
+        BuildMI(BB, X86::SHRDrr32, 2, TmpReg2).addReg(SrcReg).addReg(SrcReg+1);
+        // TmpReg3 = s[ah]r  inHi, CL
+        BuildMI(BB, isSigned ? X86::SARrr32 : X86::SHRrr32, 1, TmpReg3)
+                       .addReg(SrcReg+1);
+
+        // Set the flags to indicate whether the shift was by more than 32 bits.
+        BuildMI(BB, X86::TESTri8, 2).addReg(X86::CL).addZImm(32);
+
+        // DestLo = (>32) ? TmpReg3 : TmpReg2;
+        BuildMI(BB, X86::CMOVNErr32, 2, 
+                DestReg).addReg(TmpReg2).addReg(TmpReg3);
+
+        // DestHi = (>32) ? TmpReg : TmpReg3;
+        BuildMI(BB, X86::CMOVNErr32, 2, 
+                DestReg+1).addReg(TmpReg3).addReg(TmpReg);
+      }
     }
     return;
   }
