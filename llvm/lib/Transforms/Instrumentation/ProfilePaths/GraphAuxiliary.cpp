@@ -8,18 +8,14 @@
 
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Transforms/Instrumentation/Graph.h"
-#include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/iTerminators.h"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include <string>
 
 //using std::list;
 using std::map;
