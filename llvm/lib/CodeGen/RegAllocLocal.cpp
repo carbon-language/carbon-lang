@@ -238,10 +238,6 @@ void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
     DEBUG(std::cerr << " which corresponds to no vreg, "
                     << "must be spurious physreg: ignoring (WARNING)\n");
   } else {
-    // FIXME: move this into the conditional??
-    const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
-    int FrameIndex = getStackSpaceFor(VirtReg, RC);
-
     DEBUG(std::cerr << " containing %reg" << VirtReg;
           if (!isVirtRegModified(VirtReg))
            std::cerr << " which has not been modified, so no store necessary!");
@@ -250,6 +246,8 @@ void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
     // register.  We only need to spill it into its stack slot if it has been
     // modified.
     if (isVirtRegModified(VirtReg)) {
+      const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
+      int FrameIndex = getStackSpaceFor(VirtReg, RC);
       DEBUG(std::cerr << " to stack slot #" << FrameIndex);
       RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIndex, RC);
       ++NumSpilled;   // Update statistics
