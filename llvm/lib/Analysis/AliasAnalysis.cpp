@@ -47,7 +47,6 @@ namespace {
       return AA.canCallModify(CI, Ptr);
     }
     bool visitStoreInst(StoreInst &SI) {
-      assert(!SI.hasIndices() && "Only support stores without indexing!");
       return AA.alias(Ptr, SI.getOperand(1));
     }
 
@@ -63,9 +62,9 @@ namespace {
 //
 AliasAnalysis::~AliasAnalysis() {}
 
-// canBasicBlockModify - Return true if it is possible for execution of the
-// specified basic block to modify the value pointed to by Ptr.
-//
+/// canBasicBlockModify - Return true if it is possible for execution of the
+/// specified basic block to modify the value pointed to by Ptr.
+///
 bool AliasAnalysis::canBasicBlockModify(const BasicBlock &bb,
                                         const Value *Ptr) const {
   CanModify CM(this, Ptr);
@@ -78,11 +77,11 @@ bool AliasAnalysis::canBasicBlockModify(const BasicBlock &bb,
   return false;
 }
 
-// canInstructionRangeModify - Return true if it is possible for the execution
-// of the specified instructions to modify the value pointed to by Ptr.  The
-// instructions to consider are all of the instructions in the range of [I1,I2]
-// INCLUSIVE.  I1 and I2 must be in the same basic block.
-//
+/// canInstructionRangeModify - Return true if it is possible for the execution
+/// of the specified instructions to modify the value pointed to by Ptr.  The
+/// instructions to consider are all of the instructions in the range of [I1,I2]
+/// INCLUSIVE.  I1 and I2 must be in the same basic block.
+///
 bool AliasAnalysis::canInstructionRangeModify(const Instruction &I1,
                                               const Instruction &I2,
                                               const Value *Ptr) const {
