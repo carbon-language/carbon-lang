@@ -51,6 +51,11 @@ const int  LabelNodeOp	= 100;
 const int  RetValueOp	= 100 + Instruction::Ret;
 const int  BrCondOp	= 100 + Instruction::Br;
 
+const int  BAndOp       = 100 + Instruction::And;
+const int  BOrOp        = 100 + Instruction::Or;
+const int  BXorOp       = 100 + Instruction::Xor;
+const int  BNotOp       = 100 + Instruction::Not;
+
 const int  SetCCOp	= 100 + Instruction::SetEQ;
 
 const int  AllocaN	= 100 + Instruction::Alloca;		// 121
