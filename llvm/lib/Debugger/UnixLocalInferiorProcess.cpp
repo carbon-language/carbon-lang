@@ -419,6 +419,9 @@ void IP::writeToChild(void *Buffer, unsigned Size) const {
 void IP::killChild() const {
   assert(ChildPID != 0 && "Child has already been reaped!");
   
+  // If the process terminated on its own accord, closing the pipe file
+  // descriptors, we will get here.  Check to see if the process has already
+  // died in this manner, gracefully.
   int Status = 0;
   int PID;
   do {
@@ -426,7 +429,23 @@ void IP::killChild() const {
   } while (PID < 0 && errno == EINTR);
   if (PID < 0) throw "Error waiting for child to exit!";
 
-  // If the child process was already dead, then it died unexpectedly.
+  // Ok, there is a slight race condition here.  It's possible that we will find
+  // out that the file descriptor closed before waitpid will indicate that the
+  // process gracefully died.  If we don't know that the process gracefully
+  // died, wait a bit and try again.  This is pretty nasty.
+  if (PID == 0) {
+    usleep(10000);   // Wait a bit.
+
+    // Try again.
+    Status = 0;
+    do {
+      PID = waitpid(ChildPID, &Status, WNOHANG);
+    } while (PID < 0 && errno == EINTR);
+    if (PID < 0) throw "Error waiting for child to exit!";
+  }
+
+  // If the child process was already dead, then indicate that the process
+  // terminated on its own.
   if (PID) {
     assert(PID == ChildPID && "Didn't reap child?");
     ChildPID = 0;            // Child has been reaped
