@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/IPO.h"
+#include "llvm/iTerminators.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -54,17 +55,56 @@ namespace {
 bool LoopExtractor::runOnFunction(Function &F) {
   LoopInfo &LI = getAnalysis<LoopInfo>();
 
-  // We don't want to keep extracting the only loop of a function into a new one
-  if (LI.begin() == LI.end() || LI.begin() + 1 == LI.end())
+  // If this function has no loops, there is nothing to do.
+  if (LI.begin() == LI.end())
     return false;
 
+  // If there is more than one top-level loop in this function, extract all of
+  // the loops.
   bool Changed = false;
-
-  // Try to move each loop out of the code into separate function
-  for (LoopInfo::iterator i = LI.begin(), e = LI.end(); i != e; ++i) {
-    if (NumLoops == 0) return Changed;
-    --NumLoops;
-    Changed |= (ExtractLoop(*i) != 0);
+  if (LI.end()-LI.begin() > 1) {
+    for (LoopInfo::iterator i = LI.begin(), e = LI.end(); i != e; ++i) {
+      if (NumLoops == 0) return Changed;
+      --NumLoops;
+      Changed |= (ExtractLoop(*i) != 0);
+    }
+  } else {
+    // Otherwise there is exactly one top-level loop.  If this function is more
+    // than a minimal wrapper around the loop, extract the loop.
+    Loop *TLL = *LI.begin();
+    bool ShouldExtractLoop = false;
+    
+    // Extract the loop if the entry block doesn't branch to the loop header.
+    TerminatorInst *EntryTI = F.getEntryBlock().getTerminator();
+    if (!isa<BranchInst>(EntryTI) ||
+        !cast<BranchInst>(EntryTI)->isUnconditional() || 
+        EntryTI->getSuccessor(0) != TLL->getHeader())
+      ShouldExtractLoop = true;
+    else {
+      // Check to see if any exits from the loop are more than just return
+      // blocks.
+      for (unsigned i = 0, e = TLL->getExitBlocks().size(); i != e; ++i)
+        if (!isa<ReturnInst>(TLL->getExitBlocks()[i]->getTerminator())) {
+          ShouldExtractLoop = true;
+          break;
+        }
+    }
+    
+    if (ShouldExtractLoop) {
+      if (NumLoops == 0) return Changed;
+      --NumLoops;
+      Changed |= (ExtractLoop(TLL) != 0);
+    } else {
+      // Okay, this function is a minimal container around the specified loop.
+      // If we extract the loop, we will continue to just keep extracting it
+      // infinitely... so don't extract it.  However, if the loop contains any
+      // subloops, extract them.
+      for (Loop::iterator i = TLL->begin(), e = TLL->end(); i != e; ++i) {
+        if (NumLoops == 0) return Changed;
+        --NumLoops;
+        Changed |= (ExtractLoop(*i) != 0);
+      }
+    }
   }
 
   return Changed;
