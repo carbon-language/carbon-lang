@@ -50,6 +50,7 @@ public:
 
   virtual void InstructionSelectBasicBlock(SelectionDAG &SD) = 0;
   
+private:
   SDOperand CopyValueToVirtualRegister(SelectionDAGLowering &SDL,
                                        Value *V, unsigned Reg);
   void SelectBasicBlock(BasicBlock *BB, MachineFunction &MF,
@@ -58,6 +59,8 @@ public:
   void BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
            std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                          FunctionLoweringInfo &FuncInfo);
+  void LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
+                      std::vector<SDOperand> &UnorderedChains);
 };
 
 }
