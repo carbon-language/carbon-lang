@@ -560,8 +560,15 @@ void X86ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       BuildMI(*MBB, IP, X86::FLD0, 0, R);
     else if (CFP->isExactlyValue(+1.0))
       BuildMI(*MBB, IP, X86::FLD1, 0, R);
-    else {  // FIXME: PI, other native values
-      // FIXME: Could handle -1.0 with FLD1/FCHS
+    else if (CFP->isExactlyValue(-0.0)) {
+      unsigned Tmp = makeAnotherReg(Type::DoubleTy);
+      BuildMI(*MBB, IP, X86::FLD0, 0, Tmp);
+      BuildMI(*MBB, IP, X86::FCHS, 1, R).addReg(Tmp);      
+    } else if (CFP->isExactlyValue(-1.0)) {
+      unsigned Tmp = makeAnotherReg(Type::DoubleTy);
+      BuildMI(*MBB, IP, X86::FLD1, 0, Tmp);
+      BuildMI(*MBB, IP, X86::FCHS, 1, R).addReg(Tmp);      
+    } else {  // FIXME: PI, other native values
       // FIXME: 2*PI -> LDPI + FADD
 
       // Otherwise we need to spill the constant to memory.
