@@ -251,7 +251,8 @@ namespace {
     ///
     Node *getNode(Value *V) {
       if (Constant *C = dyn_cast<Constant>(V))
-        return getNodeForConstantPointer(C);
+        if (!isa<GlobalValue>(C))
+          return getNodeForConstantPointer(C);
 
       std::map<Value*, unsigned>::iterator I = ValueNodes.find(V);
       if (I == ValueNodes.end()) {
