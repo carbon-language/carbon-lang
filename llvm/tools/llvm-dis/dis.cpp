@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
 	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
 	break;
       case rpo: {           // Reverse Post Order
-	ReversePostOrderTraversal RPOT(M);
+	ReversePostOrderTraversal<Method*> RPOT(M);
 	copy(RPOT.begin(), RPOT.end(),
 	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
 	break;

@@ -112,32 +112,28 @@ ipo_iterator<T> ipo_end(T G){
 //
 // This class should be used like this:
 // {
-//   cfg::ReversePostOrderTraversal RPOT(MethodPtr);   // Expensive to create
-//   for (cfg::rpo_iterator I = RPOT.begin(); I != RPOT.end(); ++I) {
+//   ReversePostOrderTraversal<Method*> RPOT(MethodPtr); // Expensive to create
+//   for (rpo_iterator I = RPOT.begin(); I != RPOT.end(); ++I) {
 //      ...
 //   }
-//   for (cfg::rpo_iterator I = RPOT.begin(); I != RPOT.end(); ++I) {
+//   for (rpo_iterator I = RPOT.begin(); I != RPOT.end(); ++I) {
 //      ...
 //   }
 // }
 //
 
-#include "llvm/BasicBlock.h"  // FIXME!
-#include "llvm/Method.h"      // FIXME!
-
-typedef std::vector<BasicBlock*>::reverse_iterator rpo_iterator;
-// TODO: FIXME: ReversePostOrderTraversal is not generic!
+template<class GraphT, class GT = GraphTraits<GraphT> >
 class ReversePostOrderTraversal {
-  std::vector<BasicBlock*> Blocks;       // Block list in normal PO order
-  inline void Initialize(BasicBlock *BB) {
+  typedef typename GT::NodeType NodeType;
+  std::vector<NodeType*> Blocks;       // Block list in normal PO order
+  inline void Initialize(NodeType *BB) {
     copy(po_begin(BB), po_end(BB), back_inserter(Blocks));
   }
 public:
-  inline ReversePostOrderTraversal(Method *M) {
-    Initialize(M->front());
-  }
-  inline ReversePostOrderTraversal(BasicBlock *BB) {
-    Initialize(BB);
+  typedef std::vector<NodeType*>::reverse_iterator rpo_iterator;
+
+  inline ReversePostOrderTraversal(GraphT G) {
+    Initialize(GT::getEntryNode(G));
   }
 
   // Because we want a reverse post order, use reverse iterators from the vector
