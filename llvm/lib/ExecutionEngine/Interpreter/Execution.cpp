@@ -1038,7 +1038,7 @@ static void executeCastInst(CastInst &I, ExecutionContext &SF) {
     IMPLEMENT_CAST_CASE(UByte  , (unsigned char));
     IMPLEMENT_CAST_CASE(SByte  , (  signed char));
     IMPLEMENT_CAST_CASE(UShort , (unsigned short));
-    IMPLEMENT_CAST_CASE(Short  , (  signed char));
+    IMPLEMENT_CAST_CASE(Short  , (  signed short));
     IMPLEMENT_CAST_CASE(UInt   , (unsigned int ));
     IMPLEMENT_CAST_CASE(Int    , (  signed int ));
     IMPLEMENT_CAST_CASE(ULong  , (uint64_t));
