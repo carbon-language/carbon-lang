@@ -13,10 +13,6 @@ all:: qmtest
 #	will use QMTest by default.
 #
 
-# List of the functioning QM Tests
-QMTESTS=feature \
-        regression
-
 # QMTest option specifying the location of the QMTest database.
 QMDB= -D $(LLVM_SRC_ROOT)/test/QMTestDB
 
@@ -46,6 +42,8 @@ QMTEST= qmtest $(QMDB)
 qmtest:: $(LLVM_OBJ_ROOT)/test/tmp register
 	$(QMTEST) run -O $(LLVM_SRC_ROOT)/test/QMTestDB/expectations.qmr $(CONTEXT)
 
+%.t:: $(LLVM_OBJ_ROOT)/test/tmp register
+	$(QMTEST) run -O $(LLVM_SRC_ROOT)/test/QMTestDB/expectations.qmr $(CONTEXT) $*
 
 #
 # Create the temporary directory used by the test suite.
