@@ -157,45 +157,6 @@ std::string llvm::getUniqueFilename(const std::string &FilenameBase) {
   return Result;
 }
 
-static bool AddPermissionsBits (const std::string &Filename, int bits) {
-  // Get the umask value from the operating system.  We want to use it
-  // when changing the file's permissions. Since calling umask() sets
-  // the umask and returns its old value, we must call it a second
-  // time to reset it to the user's preference.
-  int mask = umask(0777); // The arg. to umask is arbitrary.
-  umask(mask);            // Restore the umask.
-
-  // Get the file's current mode.
-  struct stat st;
-  if ((stat(Filename.c_str(), &st)) == -1)
-    return false;
-
-  // Change the file to have whichever permissions bits from 'bits'
-  // that the umask would not disable.
-  if ((chmod(Filename.c_str(), (st.st_mode | (bits & ~mask)))) == -1)
-    return false;
-
-  return true;
-}
-
-/// MakeFileExecutable - Make the file named Filename executable by
-/// setting whichever execute permissions bits the process's current
-/// umask would allow. Filename must name an existing file or
-/// directory.  Returns true on success, false on error.
-///
-bool llvm::MakeFileExecutable(const std::string &Filename) {
-  return AddPermissionsBits(Filename, 0111);
-}
-
-/// MakeFileReadable - Make the file named Filename readable by
-/// setting whichever read permissions bits the process's current
-/// umask would allow. Filename must name an existing file or
-/// directory.  Returns true on success, false on error.
-///
-bool llvm::MakeFileReadable(const std::string &Filename) {
-  return AddPermissionsBits(Filename, 0444);
-}
-
 //===----------------------------------------------------------------------===//
 // FDHandle class implementation
 //

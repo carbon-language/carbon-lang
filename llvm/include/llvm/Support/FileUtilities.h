@@ -49,18 +49,6 @@ void removeFile(const std::string &Filename);
 ///
 std::string getUniqueFilename(const std::string &FilenameBase);
 
-/// MakeFileExecutable - This method turns on whatever access attributes are
-/// needed to make the specified file executable.  It returns true on success.
-/// In case of failure, the file's access attributes are unspecified.
-///
-bool MakeFileExecutable(const std::string &Filename);
-
-/// MakeFileReadable - This method turns on whatever access attributes are
-/// needed to make the specified file readable.  It returns true on success.
-/// In case of failure, the file's access attributes are unspecified.
-///
-bool MakeFileReadable(const std::string &Filename);
-
 /// FDHandle - Simple handle class to make sure a file descriptor gets closed
 /// when the object is destroyed.  This handle acts similarly to an
 /// std::auto_ptr, in that the copy constructor and assignment operators
