@@ -91,13 +91,13 @@ R8 ( DH, "DH" , MRF::INT8 , 0, A_DH)
 R8 ( BH, "BH" , MRF::INT8 , 0, A_BH)
 
 // Pseudo Floating Point Registers
-PFP(FP0, "fp0", MRF::FP80 , 0, 0 /*noalias*/)
-PFP(FP1, "fp1", MRF::FP80 , 0, 0 /*noalias*/)
-PFP(FP2, "fp2", MRF::FP80 , 0, 0 /*noalias*/)
-PFP(FP3, "fp3", MRF::FP80 , 0, 0 /*noalias*/)
-PFP(FP4, "fp4", MRF::FP80 , 0, 0 /*noalias*/)
-PFP(FP5, "fp5", MRF::FP80 , 0, 0 /*noalias*/)
-PFP(FP6, "fp6", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP0, "FP0", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP1, "FP1", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP2, "FP2", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP3, "FP3", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP4, "FP4", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP5, "FP5", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP6, "FP6", MRF::FP80 , 0, 0 /*noalias*/)
 
 // Floating point stack registers
 FPS(ST0, "ST(0)", MRF::FP80, 0, 0)
