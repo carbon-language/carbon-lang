@@ -665,21 +665,21 @@ def OR32ri8  : Ii8<0x83, MRM1r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "or{l} {$src2, $dst|$dst, $src2}">;
 let isTwoAddress = 0 in {
   def OR8mr  : I<0x08, MRMDestMem, (ops i8mem:$dst, R8:$src),
-                 "or{b} $dst, $src">;
+                 "or{b} {$src, $dst|$dst, $src}">;
   def OR16mr : I<0x09, MRMDestMem, (ops i16mem:$dst, R16:$src),
-                 "or{w} $dst, $src">, OpSize;
+                 "or{w} {$src, $dst|$dst, $src}">, OpSize;
   def OR32mr : I<0x09, MRMDestMem, (ops i32mem:$dst, R32:$src),
-                 "or{l} $dst, $src">;
+                 "or{l} {$src, $dst|$dst, $src}">;
   def OR8mi    : Ii8<0x80, MRM1m, (ops i8mem :$dst, i8imm:$src),
-                 "or{b} $dst, $src">;
+                 "or{b} {$src, $dst|$dst, $src}">;
   def OR16mi   : Ii16<0x81, MRM1m, (ops i16mem:$dst, i16imm:$src),
-                 "or{w} $dst, $src">, OpSize;
+                 "or{w} {$src, $dst|$dst, $src}">, OpSize;
   def OR32mi   : Ii32<0x81, MRM1m, (ops i32mem:$dst, i32imm:$src),
-                 "or{l} $dst, $src">;
+                 "or{l} {$src, $dst|$dst, $src}">;
   def OR16mi8  : Ii8<0x83, MRM1m, (ops i16mem:$dst, i8imm:$src),
-                 "or{w} $dst, $src">, OpSize;
+                 "or{w} {$src, $dst|$dst, $src}">, OpSize;
   def OR32mi8  : Ii8<0x83, MRM1m, (ops i32mem:$dst, i8imm:$src),
-                 "or{l} $dst, $src">;
+                 "or{l} {$src, $dst|$dst, $src}">;
 }
 
 
