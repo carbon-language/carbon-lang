@@ -97,7 +97,7 @@ public:
 				       ResourceId      _resourceId,
 				       int _minDelay = -1);
   
-  /*dtor*/		~SchedGraphEdge() {}
+  /*dtor*/		~SchedGraphEdge();
   
   SchedGraphNode*	getSrc		() const { return src; }
   SchedGraphNode*	getSink		() const { return sink; }
@@ -139,8 +139,10 @@ private:
   int latency;
   
 public:
-  typedef	vector<SchedGraphEdge*>::iterator	iterator;
-  typedef	vector<SchedGraphEdge*>::const_iterator	const_iterator;
+  typedef vector<SchedGraphEdge*>::      iterator	        iterator;
+  typedef vector<SchedGraphEdge*>::const_iterator         const_iterator;
+  typedef vector<SchedGraphEdge*>::      reverse_iterator reverse_iterator;
+  typedef vector<SchedGraphEdge*>::const_reverse_iterator const_reverse_iterator;
   
 public:
   //
@@ -166,11 +168,6 @@ public:
   const_iterator	endInEdges	() const { return inEdges.end(); }
   const_iterator	beginOutEdges	() const { return outEdges.begin(); }
   const_iterator	endOutEdges	() const { return outEdges.end(); }
-  
-  //
-  // Limited modifier methods
-  // 
-  void			eraseAllEdges	();
   
 public:
   //
@@ -229,9 +226,18 @@ public:
   }
   
   //
-  // Delete a node from the graph.
+  // Delete nodes or edges from the graph.
   // 
-  void		  eraseNode(SchedGraphNode* node);
+  void		eraseNode		(SchedGraphNode* node);
+  
+  void		eraseIncomingEdges	(SchedGraphNode* node,
+					 bool addDummyEdges = true);
+  
+  void		eraseOutgoingEdges	(SchedGraphNode* node,
+					 bool addDummyEdges = true);
+  
+  void		eraseIncidentEdges	(SchedGraphNode* node,
+					 bool addDummyEdges = true);
   
   //
   // Unordered iterators.
