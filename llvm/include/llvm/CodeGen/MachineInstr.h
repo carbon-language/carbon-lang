@@ -16,6 +16,7 @@
 class Value;
 class Function;
 class MachineBasicBlock;
+class TargetMachine;
 
 typedef int MachineOpCode;
 
@@ -325,7 +326,8 @@ public:
 
   //
   // Debugging support
-  // 
+  //
+  void print(std::ostream &OS, const TargetMachine &TM);
   void dump() const;
   friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
 
