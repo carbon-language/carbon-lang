@@ -18,7 +18,10 @@ class Function;
 class Constant;
 class Type;
 class TargetMachine;
+class Pass;
 
+Pass *createMachineCodeConstructionPass(TargetMachine &Target);
+Pass *createMachineCodeDestructionPass();
 
 class MachineFunction : private Annotation {
   hash_set<const Constant*> constantsForConstPool;
