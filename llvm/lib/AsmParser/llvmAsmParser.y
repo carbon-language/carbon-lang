@@ -763,7 +763,7 @@ OptAssign : Name '=' {
 
 OptLinkage : INTERNAL  { $$ = GlobalValue::InternalLinkage; } |
              LINKONCE  { $$ = GlobalValue::LinkOnceLinkage; } |
-             WEAK      { $$ = GlobalValue::LinkOnceLinkage; /* FIXME */ } |
+             WEAK      { $$ = GlobalValue::WeakLinkage; } |
              APPENDING { $$ = GlobalValue::AppendingLinkage; } |
              /*empty*/ { $$ = GlobalValue::ExternalLinkage; };
 

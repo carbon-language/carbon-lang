@@ -584,8 +584,9 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     Out << "external ";
   else
     switch (GV->getLinkage()) {
-    case GlobalValue::InternalLinkage: Out << "internal "; break;
-    case GlobalValue::LinkOnceLinkage: Out << "linkonce "; break;
+    case GlobalValue::InternalLinkage:  Out << "internal "; break;
+    case GlobalValue::LinkOnceLinkage:  Out << "linkonce "; break;
+    case GlobalValue::WeakLinkage:      Out << "weak "; break;
     case GlobalValue::AppendingLinkage: Out << "appending "; break;
     case GlobalValue::ExternalLinkage: break;
     }
@@ -652,8 +653,9 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << "declare ";
   else
     switch (F->getLinkage()) {
-    case GlobalValue::InternalLinkage: Out << "internal "; break;
-    case GlobalValue::LinkOnceLinkage: Out << "linkonce "; break;
+    case GlobalValue::InternalLinkage:  Out << "internal "; break;
+    case GlobalValue::LinkOnceLinkage:  Out << "linkonce "; break;
+    case GlobalValue::WeakLinkage:      Out << "weak "; break;
     case GlobalValue::AppendingLinkage: Out << "appending "; break;
     case GlobalValue::ExternalLinkage: break;
     }

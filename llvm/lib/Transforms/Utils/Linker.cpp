@@ -433,6 +433,24 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
     } else if (DGV->isExternal()) {   // If DGV is external but SGV is not...
       ValueMap.insert(std::make_pair(SGV, DGV));
       DGV->setLinkage(SGV->getLinkage());    // Inherit linkage!
+    } else if (SGV->hasWeakLinkage()) {
+      // At this point we know that DGV has LinkOnce, Appending, Weak, or
+      // External linkage.  If DGV is Appending, this is an error.
+      if (DGV->hasAppendingLinkage())
+        return Error(Err, "Linking globals named '" + SGV->getName() +
+                     " ' with 'weak' and 'appending' linkage is not allowed!");
+      // Otherwise, just perform the link.
+      ValueMap.insert(std::make_pair(SGV, DGV));
+    } else if (DGV->hasWeakLinkage()) {
+      // At this point we know that SGV has LinkOnce, Appending, or External
+      // linkage.  If SGV is Appending, this is an error.
+      if (SGV->hasAppendingLinkage())
+        return Error(Err, "Linking globals named '" + SGV->getName() +
+                     " ' with 'weak' and 'appending' linkage is not allowed!");
+      if (!SGV->hasLinkOnceLinkage())
+        DGV->setLinkage(SGV->getLinkage());    // Inherit linkage!
+      ValueMap.insert(std::make_pair(SGV, DGV));
+  
     } else if (SGV->getLinkage() != DGV->getLinkage()) {
       return Error(Err, "Global variables named '" + SGV->getName() +
                    "' have different linkage specifiers!");
@@ -505,7 +523,7 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
             return Error(Err, "Global Variable Collision on '" + 
                          SGV->getType()->getDescription() +"':%"+SGV->getName()+
                          " - Global variables have different initializers");
-        } else if (DGV->hasLinkOnceLinkage()) {
+        } else if (DGV->hasLinkOnceLinkage() || DGV->hasWeakLinkage()) {
           // Nothing is required, mapped values will take the new global
           // automatically.
         } else if (DGV->hasAppendingLinkage()) {
@@ -573,6 +591,16 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // Link the external functions, update linkage qualifiers
       ValueMap.insert(std::make_pair(SF, DF));
       DF->setLinkage(SF->getLinkage());
+
+    } else if (SF->hasWeakLinkage()) {
+      // At this point we know that DF has LinkOnce, Weak, or External linkage.
+      ValueMap.insert(std::make_pair(SF, DF));
+
+    } else if (DF->hasWeakLinkage()) {
+      // At this point we know that SF has LinkOnce or External linkage.
+      ValueMap.insert(std::make_pair(SF, DF));
+      if (!SF->hasLinkOnceLinkage())   // Don't inherit linkonce linkage
+        DF->setLinkage(SF->getLinkage());
 
     } else if (SF->getLinkage() != DF->getLinkage()) {
       return Error(Err, "Functions named '" + SF->getName() +
@@ -667,10 +695,9 @@ static bool LinkFunctionBodies(Module *Dest, const Module *Src,
       // DF not external SF external?
       if (!DF->isExternal()) {
         if (DF->hasLinkOnceLinkage()) continue; // No relinkage for link-once!
-        if (Err)
-          *Err = "Function '" + (SF->hasName() ? SF->getName() :std::string(""))
-               + "' body multiply defined!";
-        return true;
+        if (SF->hasWeakLinkage()) continue;
+        return Error(Err, "Function '" + SF->getName() +
+                     "' body multiply defined!");
       }
 
       if (LinkFunctionBody(DF, SF, ValueMap, Err)) return true;

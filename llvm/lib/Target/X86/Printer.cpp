@@ -948,7 +948,8 @@ bool Printer::doFinalization(Module &M) {
       unsigned Align = TD.getTypeAlignment(C->getType());
 
       if (C->isNullValue() && 
-          (I->hasLinkOnceLinkage() || I->hasInternalLinkage())) {
+          (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
+           I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchSection(O, CurSection, ".data");
         if (I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
@@ -961,6 +962,7 @@ bool Printer::doFinalization(Module &M) {
       } else {
         switch (I->getLinkage()) {
         case GlobalValue::LinkOnceLinkage:
+        case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
           // Nonnull linkonce -> weak
           O << "\t.weak " << name << "\n";
           SwitchSection(O, CurSection, "");

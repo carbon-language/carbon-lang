@@ -684,6 +684,8 @@ void CWriter::printModule(Module *M) {
         printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
         if (I->hasLinkOnceLinkage())
           Out << " __attribute__((common))";
+        else if (I->hasWeakLinkage())
+          Out << " __attribute__((weak))";
         if (!I->getInitializer()->isNullValue()) {
           Out << " = " ;
           writeOperand(I->getInitializer());
@@ -893,6 +895,8 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   FunctionInnards << ")";
   // Print out the return type and the entire signature for that matter
   printType(Out, F->getReturnType(), FunctionInnards.str());
+
+  if (F->hasWeakLinkage()) Out << " __attribute((weak))";
 }
 
 void CWriter::printFunction(Function *F) {
