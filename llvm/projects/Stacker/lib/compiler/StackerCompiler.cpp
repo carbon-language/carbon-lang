@@ -132,7 +132,7 @@ StackerCompiler::compile(
 	    /*type=*/ stack_type, 
 	    /*isConstant=*/ false, 
 	    /*Linkage=*/ GlobalValue::AppendingLinkage, 
-	    /*initializer=*/0, 
+	    /*initializer=*/Constant::getNullValue(stack_type), 
 	    /*name=*/ "_stack_",
 	    /*parent=*/ TheModule 
 	);
@@ -144,7 +144,7 @@ StackerCompiler::compile(
 	    /*type=*/Type::LongTy, 
 	    /*isConstant=*/false,
 	    /*Linkage=*/GlobalValue::LinkOnceLinkage, 
-	    /*initializer=*/0, 
+	    /*initializer=*/Constant::getNullValue(Type::LongTy), 
 	    /*name=*/"_index_",
 	    /*parent=*/TheModule
 	);
