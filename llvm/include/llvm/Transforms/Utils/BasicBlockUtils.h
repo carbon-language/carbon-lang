@@ -18,6 +18,7 @@
 // FIXME: Move to this file: BasicBlock::removePredecessor, BB::splitBasicBlock
 
 #include "llvm/BasicBlock.h"
+#include "llvm/Support/CFG.h"
 class Instruction;
 class Pass;
 
@@ -63,5 +64,23 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum);
 /// the edge was split, false otherwise.
 ///
 bool SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P = 0);
+
+inline bool SplitCriticalEdge(BasicBlock *BB, succ_iterator SI, Pass *P = 0) {
+  return SplitCriticalEdge(BB->getTerminator(), SI.getSuccessorIndex(), P);
+}
+
+/// SplitCriticalEdge - If the edge from *PI to BB is not critical, return
+/// false.  Otherwise, split all edges between the two blocks and return true.
+/// This updates all of the same analyses as the other SplitCriticalEdge
+/// function.
+inline bool SplitCriticalEdge(BasicBlock *Succ, pred_iterator PI, Pass *P = 0) {
+  BasicBlock *Pred = *PI;
+  bool MadeChange = false;
+  for (succ_iterator SI = succ_begin(Pred), E = succ_end(Pred); SI != E; ++SI)
+    if (*SI == Succ)
+      MadeChange |= SplitCriticalEdge(Pred, SI, P);
+  return MadeChange;
+}
+
 
 #endif
