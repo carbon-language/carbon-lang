@@ -90,20 +90,20 @@ inline pred_const_iterator pred_end(const BasicBlock *BB) {
 // BasicBlock succ_iterator definition
 //===--------------------------------------------------------------------===//
 
-template <class _Term, class _BB>           // Successor Iterator
-class SuccIterator : public bidirectional_iterator<_BB, ptrdiff_t> {
-  const _Term Term;
+template <class Term_, class BB_>           // Successor Iterator
+class SuccIterator : public bidirectional_iterator<BB_, ptrdiff_t> {
+  const Term_ Term;
   unsigned idx;
-  typedef bidirectional_iterator<_BB, ptrdiff_t> super;
+  typedef bidirectional_iterator<BB_, ptrdiff_t> super;
 public:
-  typedef SuccIterator<_Term, _BB> _Self;
+  typedef SuccIterator<Term_, BB_> _Self;
   typedef typename super::pointer pointer;
   // TODO: This can be random access iterator, need operator+ and stuff tho
     
-  inline SuccIterator(_Term T) : Term(T), idx(0) {         // begin iterator
+  inline SuccIterator(Term_ T) : Term(T), idx(0) {         // begin iterator
     assert(T && "getTerminator returned null!");
   }
-  inline SuccIterator(_Term T, bool)                       // end iterator
+  inline SuccIterator(Term_ T, bool)                       // end iterator
     : Term(T), idx(Term->getNumSuccessors()) {
     assert(T && "getTerminator returned null!");
   }
