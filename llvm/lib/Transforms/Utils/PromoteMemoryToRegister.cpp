@@ -8,11 +8,11 @@
 //===----------------------------------------------------------------------===//
 //
 // This file promote memory references to be register references.  It promotes
-// alloca instructions which only have loads and stores as uses.  An alloca is
-// transformed by using dominator frontiers to place PHI nodes, then traversing
-// the function in depth-first order to rewrite loads and stores as appropriate.
-// This is just the standard SSA construction algorithm to construct "pruned"
-// SSA form.
+// alloca instructions which only have loads and stores as uses (or that have
+// PHI nodes which are only loaded from).  An alloca is transformed by using
+// dominator frontiers to place PHI nodes, then traversing the function in
+// depth-first order to rewrite loads and stores as appropriate.  This is just
+// the standard SSA construction algorithm to construct "pruned" SSA form.
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,6 +20,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
+#include "llvm/iOther.h"
 #include "llvm/Function.h"
 #include "llvm/Constant.h"
 #include "llvm/Support/CFG.h"
@@ -27,7 +28,8 @@
 using namespace llvm;
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
-/// This is true if there are only loads and stores to the alloca...
+/// This is true if there are only loads and stores to the alloca... of if there
+/// is a PHI node using the address which can be trivially transformed.
 ///
 bool llvm::isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
   // FIXME: If the memory unit is of pointer or integer type, we can permit
@@ -36,13 +38,47 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
   // Only allow direct loads and stores...
   for (Value::use_const_iterator UI = AI->use_begin(), UE = AI->use_end();
        UI != UE; ++UI)     // Loop over all of the uses of the alloca
-    if (!isa<LoadInst>(*UI))
-      if (const StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
-        if (SI->getOperand(0) == AI)
-          return false;   // Don't allow a store of the AI, only INTO the AI.
-      } else {
-        return false;   // Not a load or store?
-      }
+    if (isa<LoadInst>(*UI)) {
+      // noop
+    } else if (const StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+      if (SI->getOperand(0) == AI)
+        return false;   // Don't allow a store OF the AI, only INTO the AI.
+    } else if (const PHINode *PN = dyn_cast<PHINode>(*UI)) {
+      // We only support PHI nodes in a few simple cases.  The PHI node is only
+      // allowed to have one use, which must be a load instruction, and can only
+      // use alloca instructions (no random pointers).  Also, there cannot be
+      // any accesses to AI between the PHI node and the use of the PHI.
+      if (!PN->hasOneUse()) return false;
+
+      // Our transformation causes the unconditional loading of all pointer
+      // operands to the PHI node.  Because this could cause a fault if there is
+      // a critical edge in the CFG and if one of the pointers is illegal, we
+      // refuse to promote PHI nodes unless they are obviously safe.  For now,
+      // obviously safe means that all of the operands are allocas.
+      //
+      // If we wanted to extend this code to break critical edges, this
+      // restriction could be relaxed, and we could even handle uses of the PHI
+      // node that are volatile loads or stores.
+      //
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        if (!isa<AllocaInst>(PN->getIncomingValue(i)))
+          return false;
+      
+      // Now make sure the one user instruction is in the same basic block as
+      // the PHI, and that there are no loads or stores between the PHI node and
+      // the access.
+      BasicBlock::const_iterator UI = cast<Instruction>(PN->use_back());
+      if (!isa<LoadInst>(UI) || cast<LoadInst>(UI)->isVolatile()) return false;
+      
+      // Scan looking for memory accesses.
+      for (--UI; !isa<PHINode>(UI); --UI)
+        if (isa<LoadInst>(UI) || isa<StoreInst>(UI) || isa<CallInst>(UI))
+          return false;
+
+      // If we got this far, we can promote the PHI use.
+    } else {
+      return false;   // Not a load, store, or promotable PHI?
+    }
   
   return true;
 }
@@ -106,8 +142,7 @@ void PromoteMem2Reg::run() {
     }
 
     // Calculate the set of read and write-locations for each alloca.  This is
-    // analogous to counting the number of 'uses' and 'definitions' of each
-    // variable.
+    // analogous to finding the 'uses' and 'definitions' of each variable.
     std::vector<BasicBlock*> DefiningBlocks;
     std::vector<BasicBlock*> UsingBlocks;
 
@@ -117,14 +152,48 @@ void PromoteMem2Reg::run() {
     // As we scan the uses of the alloca instruction, keep track of stores, and
     // decide whether all of the loads and stores to the alloca are within the
     // same basic block.
+  RestartUseScan:
     for (Value::use_iterator U =AI->use_begin(), E = AI->use_end(); U != E;++U){
       Instruction *User = cast<Instruction>(*U);
       if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
         // Remember the basic blocks which define new values for the alloca
         DefiningBlocks.push_back(SI->getParent());
-      } else {
+      } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
         // Otherwise it must be a load instruction, keep track of variable reads
-        UsingBlocks.push_back(cast<LoadInst>(User)->getParent());
+        UsingBlocks.push_back(LI->getParent());
+      } else {
+        // Because of the restrictions we placed on PHI node uses above, the PHI
+        // node reads the block in any using predecessors.  Transform the PHI of
+        // addresses into a PHI of loaded values.
+        PHINode *PN = cast<PHINode>(User);
+        assert(PN->hasOneUse() && "Cannot handle PHI Node with != 1 use!");
+        LoadInst *PNUser = cast<LoadInst>(PN->use_back());
+        std::string PNUserName = PNUser->getName(); PNUser->setName("");
+
+        // Create the new PHI node and insert load instructions as appropriate.
+        PHINode *NewPN = new PHINode(AI->getAllocatedType(), PNUserName, PN);
+        std::map<BasicBlock*, LoadInst*> NewLoads;
+        for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+          BasicBlock *Pred = PN->getIncomingBlock(i);
+          LoadInst *&NewLoad = NewLoads[Pred];
+          if (NewLoad == 0)  // Insert the new load in the predecessor
+            NewLoad = new LoadInst(PN->getIncomingValue(i),
+                                   PN->getIncomingValue(i)->getName()+".val",
+                                   Pred->getTerminator());
+          NewPN->addIncoming(NewLoad, Pred);
+        }
+
+        // Remove the old load.
+        PNUser->replaceAllUsesWith(NewPN);
+        PNUser->getParent()->getInstList().erase(PNUser);
+
+        // Remove the old PHI node.
+        PN->getParent()->getInstList().erase(PN);
+
+        // Restart our scan of uses...
+        DefiningBlocks.clear();
+        UsingBlocks.clear();
+        goto RestartUseScan;
       }
 
       if (OnlyUsedInOneBlock) {
