@@ -54,8 +54,7 @@ namespace {
   private:
     bool isSafeElementUse(Value *Ptr);
     bool isSafeUseOfAllocation(Instruction *User);
-    bool isSafeStructAllocaToPromote(AllocationInst *AI);
-    bool isSafeArrayAllocaToPromote(AllocationInst *AI);
+    bool isSafeAllocaToPromote(AllocationInst *AI);
     AllocaInst *AddNewAlloca(Function &F, const Type *Ty, AllocationInst *Base);
   };
 
@@ -139,10 +138,7 @@ bool SROA::performScalarRepl(Function &F) {
 
     // Check that all of the users of the allocation are capable of being
     // transformed.
-    if (isa<StructType>(AI->getAllocatedType())) {
-      if (!isSafeStructAllocaToPromote(AI))
-        continue;
-    } else if (!isSafeArrayAllocaToPromote(AI))
+    if (!isSafeAllocaToPromote(AI))
       continue;
 
     DEBUG(std::cerr << "Found inst to xform: " << *AI);
@@ -230,10 +226,28 @@ bool SROA::isSafeUseOfAllocation(Instruction *User) {
         !isa<Constant>(GEPI->getOperand(2)) ||
         isa<ConstantExpr>(GEPI->getOperand(2)))
       return false;
-  } else {
-    return false;
+
+    // If this is a use of an array allocation, do a bit more checking for
+    // sanity.
+    if (GEPI->getOperand(2)->getType() == Type::LongTy) {
+      const PointerType *PTy =cast<PointerType>(GEPI->getOperand(0)->getType());
+      const ArrayType *AT = cast<ArrayType>(PTy->getElementType());
+      int64_t NumElements = AT->getNumElements();
+
+      // Check to make sure that index falls within the array.  If not,
+      // something funny is going on, so we won't do the optimization.
+      //
+      if (cast<ConstantSInt>(GEPI->getOperand(2))->getValue() >= NumElements ||
+          cast<ConstantSInt>(GEPI->getOperand(2))->getValue() < 0)
+        return false;
+    }
+
+    // If there are any non-simple uses of this getelementptr, make sure to
+    // reject them.
+    if (isSafeElementUse(GEPI))
+      return true;
   }
-  return true;
+  return false;
 }
 
 /// isSafeElementUse - Check to see if this use is an allowed use for a
@@ -271,67 +285,16 @@ bool SROA::isSafeElementUse(Value *Ptr) {
 /// isSafeStructAllocaToPromote - Check to see if the specified allocation of a
 /// structure can be broken down into elements.
 ///
-bool SROA::isSafeStructAllocaToPromote(AllocationInst *AI) {
+bool SROA::isSafeAllocaToPromote(AllocationInst *AI) {
   // Loop over the use list of the alloca.  We can only transform it if all of
   // the users are safe to transform.
   //
   for (Value::use_iterator I = AI->use_begin(), E = AI->use_end();
-       I != E; ++I) {
+       I != E; ++I)
     if (!isSafeUseOfAllocation(cast<Instruction>(*I))) {
       DEBUG(std::cerr << "Cannot transform: " << *AI << "  due to user: "
                       << *I);
       return false;
     }
-
-    // Pedantic check to avoid breaking broken programs...
-    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*I))
-      if (GEPI->getNumOperands() == 3 && !isSafeElementUse(GEPI))
-        return false;
-  }
   return true;
 }
-
-
-/// isSafeArrayAllocaToPromote - Check to see if the specified allocation of a
-/// structure can be broken down into elements.
-///
-bool SROA::isSafeArrayAllocaToPromote(AllocationInst *AI) {
-  const ArrayType *AT = cast<ArrayType>(AI->getAllocatedType());
-  int64_t NumElements = AT->getNumElements();
-
-  // Loop over the use list of the alloca.  We can only transform it if all of
-  // the users are safe to transform.  Array allocas have extra constraints to
-  // meet though.
-  //
-  for (Value::use_iterator I = AI->use_begin(), E = AI->use_end();
-       I != E; ++I) {
-    Instruction *User = cast<Instruction>(*I);
-    if (!isSafeUseOfAllocation(User)) {
-      DEBUG(std::cerr << "Cannot transform: " << *AI << "  due to user: "
-                      << User);
-      return false;
-    }
-
-    // Check to make sure that getelementptr follow the extra rules for arrays:
-    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
-      // Check to make sure that index falls within the array.  If not,
-      // something funny is going on, so we won't do the optimization.
-      //
-      if (cast<ConstantSInt>(GEPI->getOperand(2))->getValue() >= NumElements)
-        return false;
-
-      // Check to make sure that the only thing that uses the resultant pointer
-      // is safe for an array access.  For example, code that looks like:
-      //   P = &A[0];  P = P + 1
-      // is legal, and should prevent promotion.
-      //
-      if (!isSafeElementUse(GEPI)) {
-        DEBUG(std::cerr << "Cannot transform: " << *AI
-                        << "  due to uses of user: " << *GEPI);
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
