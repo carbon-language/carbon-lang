@@ -2,6 +2,11 @@
 #include <sys/types.h>
 
 void
+ll__main()
+{ /* Empty version of GCC's initialization function */
+}
+
+void
 printSByte(char c)
 {
   putchar(c);
