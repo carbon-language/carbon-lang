@@ -1,4 +1,5 @@
 TODO:
+* use stfiwx in float->int
 * implement cast fp to bool
 * implement algebraic shift right long by reg
 * implement scheduling info
