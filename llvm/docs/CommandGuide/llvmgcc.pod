@@ -2,26 +2,26 @@
 
 =head1 NAME
 
-llvmgcc - LLVM C front-end
+llvm-gcc - LLVM C front-end
 
 =head1 SYNOPSIS
 
-B<llvmgcc> [I<options>] I<filename>
+B<llvm-gcc> [I<options>] I<filename>
 
 =head1 DESCRIPTION
 
-The B<llvmgcc> command is the LLVM C front end.  It is a modified
+The B<llvm-gcc> command is the LLVM C front end.  It is a modified
 version of gcc that takes C programs and compiles them into LLVM
 bytecode or assembly language, depending upon the options.
 
-Unless the B<-S> option is specified, B<llvmgcc> will use the
+Unless the B<-S> option is specified, B<llvm-gcc> will use the
 L<gccas|gccas> program to perform some optimizations and create an
-LLVM bytecode file. Unless the B<-c> option is specified, B<llvmgcc>
+LLVM bytecode file. Unless the B<-c> option is specified, B<llvm-gcc>
 will also use the L<gccld|gccld> program to perform further
 optimizations and link the resulting bytecode file(s) with support
 libraries to create an executable program.
 
-Being derived from the GNU Compiler Collection, B<llvmgcc> has many
+Being derived from the GNU Compiler Collection, B<llvm-gcc> has many
 of gcc's features and accepts most of gcc's options.  It handles a
 number of gcc's extensions to the C programming language.
 
@@ -72,12 +72,12 @@ Pass I<option> to the linker (usually gccld).
 
 =head1 EXIT STATUS
 
-If B<llvmgcc> succeeds, it will exit with 0.  Otherwise, if an error
+If B<llvm-gcc> succeeds, it will exit with 0.  Otherwise, if an error
 occurs, it will exit with a non-zero value.
 
 =head1 SEE ALSO
 
-L<llvmg++|llvmgxx>, L<gccas|gccas>, L<gccld|gccld>
+L<llvm-g++|llvmgxx>, L<gccas|gccas>, L<gccld|gccld>
 
 =head1 AUTHORS
 
