@@ -229,7 +229,7 @@ my $DateRE = "[-:0-9 ]+\\+[0-9]+";
 # Loop over every record from the CVS history, filling in the hashes.
 foreach $File (@CVSHistory) {
   my ($Type, $Date, $UID, $Rev, $Filename);
-  if ($File =~ /([AMRUGC])\s($DateRE)\s([^\s]+)\s+([0-9.]+)\s+([^\s]+)\s+([^\s]+)/) {
+  if ($File =~ /([AMRUGC])\s($DateRE)\s([^\s].......) (.[0-9.]*)\s+([^\s]+)\s+([^\s]+)/) {
     ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, $4, "$6/$5");
   } elsif ($File =~ /([W])\s($DateRE)\s([^\s]+) +([^\s]+)\s+([^\s]+)/) {
     ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, $4, "$6/$5");
