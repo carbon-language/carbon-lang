@@ -142,6 +142,37 @@ GenericValue lle_X_printVal(MethodType *M, const vector<GenericValue> &ArgVal) {
   return GenericValue();
 }
 
+// Implement 'void printString(X)'
+// Argument must be [ubyte {x N} ] * or sbyte *
+GenericValue lle_X_printString(MethodType *M, const vector<GenericValue> &ArgVal) {
+  assert(ArgVal.size() == 1 && "generic print only takes one argument!");
+  return lle_VP_printstr(M, ArgVal);
+}
+
+// Implement 'void print<TYPE>(X)' for each primitive type or pointer type
+#define PRINT_TYPE_FUNC(TYPENAME,TYPEID) \
+  GenericValue lle_X_print##TYPENAME##(MethodType *M,\
+                                       const vector<GenericValue> &ArgVal) {\
+    assert(ArgVal.size() == 1 && "generic print only takes one argument!");\
+    assert(M->getParamTypes()[0].get()->getPrimitiveID()\
+           == Type::##TYPEID##);\
+    Interpreter::printValue(M->getParamTypes()[0], ArgVal[0]);\
+    return GenericValue();\
+  }
+
+PRINT_TYPE_FUNC(Byte,    SByteTyID)
+PRINT_TYPE_FUNC(UByte,   UByteTyID)
+PRINT_TYPE_FUNC(Short,   ShortTyID)
+PRINT_TYPE_FUNC(UShort,  UShortTyID)
+PRINT_TYPE_FUNC(Int,     IntTyID)
+PRINT_TYPE_FUNC(UInt,    UIntTyID)
+PRINT_TYPE_FUNC(Long,    LongTyID)
+PRINT_TYPE_FUNC(ULong,   ULongTyID)
+PRINT_TYPE_FUNC(Float,   FloatTyID)
+PRINT_TYPE_FUNC(Double,  DoubleTyID)
+PRINT_TYPE_FUNC(Pointer, PointerTyID)
+
+
 // void "putchar"(sbyte)
 GenericValue lle_Vb_putchar(MethodType *M, const vector<GenericValue> &Args) {
   cout << Args[0].SByteVal;
