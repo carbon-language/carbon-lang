@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#if 0
 int stat(const char *file_name, struct stat *buf) { return 0; }
 int fstat(int filedes, struct stat *buf) { return 0; }
 int lstat(const char *file_name, struct stat *buf) { return 0; }
@@ -140,3 +141,4 @@ double pow(double x, double y) { return x; }
 int tolower(int x) { return x; }
 int toupper(int x) { return x; }
 
+#endif
