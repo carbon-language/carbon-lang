@@ -7,8 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file turns an LLVM BasicBlock into a target independent SelectionDAG in
-// preparation for target specific optimizations and instruction selection.
+// This file turns an LLVM BasicBlock into a target-independent SelectionDAG in
+// preparation for target-specific optimizations and instruction selection.
 //
 //===----------------------------------------------------------------------===//
 
