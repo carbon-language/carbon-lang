@@ -1,3 +1,4 @@
+; RUN: analyze %s -budatastructure -dont-print-ds
 
 %MidFnTy = type void (\2*)
 
