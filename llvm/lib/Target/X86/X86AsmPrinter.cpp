@@ -84,9 +84,10 @@ bool X86SharedAsmPrinter::doInitialization(Module& M) {
   forCygwin = false;
   const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5)
-    forCygwin = TT.find("cygwin") != std::string::npos;
+    forCygwin = TT.find("cygwin") != std::string::npos || 
+                TT.find("mingw")  != std::string::npos;
   else if (TT.empty()) {
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
     forCygwin = true;
 #else
     forCygwin = false;
