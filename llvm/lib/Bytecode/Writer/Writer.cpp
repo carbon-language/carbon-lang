@@ -896,7 +896,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
     // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2-4=Linkage,
     // bit5+ = Slot # for type
-    unsigned oSlot = ((unsigned)Slot << 6) | (getEncodedLinkage(I) << 2) |
+    unsigned oSlot = ((unsigned)Slot << 5) | (getEncodedLinkage(I) << 2) |
                      (I->hasInitializer() << 1) | (unsigned)I->isConstant();
     output_vbr(oSlot );
 
