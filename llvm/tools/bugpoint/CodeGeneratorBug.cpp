@@ -253,8 +253,9 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
     for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
       std::cout << " " << InputArgv[i];
     std::cout << "\n";
-    std::cout << "The shared object was created with:\ndis -c " << SafeModuleBC 
-              << "-o " << SharedObject << "\n";
+    std::cout << "The shared object was created with:\n  dis -c "
+              << SafeModuleBC << " -o temporary.c\n"
+              << "  gcc -shared temporary.c -o " << SharedObject << "\n";
   } else {
     removeFile(TestModuleBC);
     removeFile(SafeModuleBC);
