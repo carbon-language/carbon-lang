@@ -269,7 +269,7 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
       if (&G != SCCGraph) {
         {
           DSGraph::NodeMapTy NodeMap;
-          SCCGraph->cloneInto(G, SCCGraph->getReturnNodes(), NodeMap);
+          SCCGraph->cloneInto(G, NodeMap);
         }
         // Update the DSInfo map and delete the old graph...
         for (DSGraph::retnodes_iterator I = G.retnodes_begin(),
@@ -413,7 +413,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
             // bother merging it in again.
             if (!GI->containsFunction(*I)) {
               DSGraph::NodeMapTy NodeMap;
-              GI->cloneInto(getDSGraph(**I), GI->getReturnNodes(), NodeMap);
+              GI->cloneInto(getDSGraph(**I), NodeMap);
               ++NumBUInlines;
             }
 

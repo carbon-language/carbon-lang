@@ -1169,14 +1169,14 @@ DSGraph::DSGraph(const DSGraph &G, EquivalenceClasses<GlobalValue*> &ECs,
   : GlobalsGraph(0), ScalarMap(ECs), TD(G.TD) {
   PrintAuxCalls = false;
   NodeMapTy NodeMap;
-  cloneInto(G, ReturnNodes, NodeMap, CloneFlags);
+  cloneInto(G, NodeMap, CloneFlags);
 }
 
 DSGraph::DSGraph(const DSGraph &G, NodeMapTy &NodeMap,
                  EquivalenceClasses<GlobalValue*> &ECs)
   : GlobalsGraph(0), ScalarMap(ECs), TD(G.TD) {
   PrintAuxCalls = false;
-  cloneInto(G, ReturnNodes, NodeMap);
+  cloneInto(G, NodeMap);
 }
 
 DSGraph::~DSGraph() {
@@ -1242,8 +1242,7 @@ DSNode *DSGraph::addObjectToGraph(Value *Ptr, bool UseDeclaredType) {
 ///
 /// The CloneFlags member controls various aspects of the cloning process.
 ///
-void DSGraph::cloneInto(const DSGraph &G,
-                        ReturnNodesTy &OldReturnNodes, NodeMapTy &OldNodeMap,
+void DSGraph::cloneInto(const DSGraph &G, NodeMapTy &OldNodeMap,
                         unsigned CloneFlags) {
   TIME_REGION(X, "cloneInto");
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
@@ -1306,9 +1305,9 @@ void DSGraph::cloneInto(const DSGraph &G,
     const DSNodeHandle &Ret = I->second;
     DSNodeHandle &MappedRet = OldNodeMap[Ret.getNode()];
     DSNode *MappedRetN = MappedRet.getNode();
-    OldReturnNodes.insert(std::make_pair(I->first,
-                          DSNodeHandle(MappedRetN,
-                                       MappedRet.getOffset()+Ret.getOffset())));
+    ReturnNodes.insert(std::make_pair(I->first,
+                                      DSNodeHandle(MappedRetN,
+                                     MappedRet.getOffset()+Ret.getOffset())));
   }
 }
 
