@@ -83,6 +83,10 @@ public:
       return I->op_begin()+3; // Skip Function, BB, BB
   }
   arg_iterator arg_end() const { return I->op_end(); }
+
+  bool operator<(const CallSite &CS) const {
+    return getInstruction() < CS.getInstruction();
+  }
 };
 
 #endif
