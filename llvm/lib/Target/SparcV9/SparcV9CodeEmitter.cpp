@@ -528,7 +528,7 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
     return fakeReg;
   }
   default:
-    assert(0 && "Invalid unified register number in getRegType");
+    assert(0 && "Invalid unified register number in getRealRegNum");
     return fakeReg;
   }
 }
