@@ -129,3 +129,56 @@ bool LoopExtractor::runOnFunction(Function &F) {
 Pass *llvm::createSingleLoopExtractorPass() {
   return new SingleLoopExtractor();
 }
+
+
+namespace {
+  /// BlockExtractorPass - This pass is used by bugpoint to extract all blocks
+  /// from the module into their own functions except for those specified by the
+  /// BlocksToNotExtract list.
+  class BlockExtractorPass : public Pass {
+    std::vector<BasicBlock*> BlocksToNotExtract;
+  public:
+    BlockExtractorPass(std::vector<BasicBlock*> &B) : BlocksToNotExtract(B) {}
+    BlockExtractorPass() {}
+
+    bool run(Module &M);
+  };
+  RegisterOpt<BlockExtractorPass>
+  XX("extract-blocks", "Extract Basic Blocks From Module (for bugpoint use)");
+}
+
+// createBlockExtractorPass - This pass extracts all blocks (except those
+// specified in the argument list) from the functions in the module.
+//
+Pass *llvm::createBlockExtractorPass(std::vector<BasicBlock*> &BTNE) {
+  return new BlockExtractorPass(BTNE);
+}
+
+bool BlockExtractorPass::run(Module &M) {
+  std::set<BasicBlock*> TranslatedBlocksToNotExtract;
+  for (unsigned i = 0, e = BlocksToNotExtract.size(); i != e; ++i) {
+    BasicBlock *BB = BlocksToNotExtract[i];
+    Function *F = BB->getParent();
+
+    // Map the corresponding function in this module.
+    Function *MF = M.getFunction(F->getName(), F->getFunctionType());
+
+    // Figure out which index the basic block is in its function.
+    Function::iterator BBI = MF->begin();
+    std::advance(BBI, std::distance(F->begin(), Function::iterator(BB)));
+    TranslatedBlocksToNotExtract.insert(BBI);
+  }
+
+  // Now that we know which blocks to not extract, figure out which ones we WANT
+  // to extract.
+  std::vector<BasicBlock*> BlocksToExtract;
+  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
+    for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+      if (!TranslatedBlocksToNotExtract.count(BB))
+        BlocksToExtract.push_back(BB);
+
+  for (unsigned i = 0, e = BlocksToExtract.size(); i != e; ++i)
+    ExtractBasicBlock(BlocksToExtract[i]);
+  
+  return !BlocksToExtract.empty();
+}
