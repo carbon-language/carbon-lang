@@ -3013,7 +3013,8 @@ void PPC32ISel::visitLoadInst(LoadInst &I) {
     ConstantSInt *offset = GEPMap[GEPI].offset;
 
     if (Class != cLong) {
-      unsigned TmpReg = makeAnotherReg(I.getType());
+      unsigned TmpReg = LoadNeedsSignExtend(I) ? makeAnotherReg(I.getType())
+                                               : DestReg;
       if (indexReg == 0)
         BuildMI(BB, ImmOpcode, 2, TmpReg).addSImm(offset->getValue())
           .addReg(baseReg);
@@ -3021,8 +3022,6 @@ void PPC32ISel::visitLoadInst(LoadInst &I) {
         BuildMI(BB, IdxOpcode, 2, TmpReg).addReg(indexReg).addReg(baseReg);
       if (LoadNeedsSignExtend(I))
         BuildMI(BB, PPC::EXTSB, 1, DestReg).addReg(TmpReg);
-      else
-        BuildMI(BB, PPC::OR, 2, DestReg).addReg(TmpReg).addReg(TmpReg);
     } else {
       indexReg = (indexReg != 0) ? indexReg : getReg(offset);
       unsigned indexPlus4 = makeAnotherReg(Type::IntTy);
@@ -3820,7 +3819,7 @@ void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
         indexReg = getReg(remainder, MBB, IP);
         remainder = 0;
       }
-    } else {
+    } else if (!remainder->isNullValue()) {
       unsigned TmpReg = makeAnotherReg(Type::IntTy);
       emitBinaryConstOperation(MBB, IP, indexReg, remainder, 0, TmpReg);
       indexReg = TmpReg;
@@ -3835,12 +3834,19 @@ void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
   // destination register.
   unsigned TargetReg = getReg(GEPI, MBB, IP);
   unsigned basePtrReg = getReg(Src, MBB, IP);
-  if (indexReg != 0) { 
-    unsigned TmpReg = makeAnotherReg(Type::IntTy);
-    BuildMI(*MBB, IP, PPC::ADD, 2, TmpReg).addReg(indexReg).addReg(basePtrReg);
+
+  if ((indexReg == 0) && remainder->isNullValue())
+    RegMap[GEPI] = basePtrReg;
+
+  if (!remainder->isNullValue()) {
+    unsigned TmpReg = (indexReg == 0) ? TargetReg : makeAnotherReg(Type::IntTy);
+    emitBinaryConstOperation(MBB, IP, basePtrReg, remainder, 0, TmpReg);
     basePtrReg = TmpReg;
   }
-  emitBinaryConstOperation(MBB, IP, basePtrReg, remainder, 0, TargetReg);
+  if (indexReg != 0) { 
+    BuildMI(*MBB, IP, PPC::ADD, 2, TargetReg).addReg(indexReg)
+      .addReg(basePtrReg);
+  }
 }
 
 /// visitAllocaInst - If this is a fixed size alloca, allocate space from the
