@@ -29,10 +29,12 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
+#include "llvm/iOperators.h"
+#include "llvm/iOther.h"
 #include "llvm/Module.h"
 #include "Graph.h"
 #include <fstream>
-
+#include <stdio.h>
 using std::vector;
 
 struct ProfilePaths : public FunctionPass {
@@ -61,7 +63,7 @@ static Node *findBB(std::vector<Node *> &st, BasicBlock *BB){
 bool ProfilePaths::runOnFunction(Function &F){
 
   static int mn = -1;
-
+  static int CountCounter = 1;
   if(F.isExternal()) {
     return false;
   }
@@ -157,6 +159,38 @@ bool ProfilePaths::runOnFunction(Function &F){
 
   //if(numPaths<=1) return false;
 
+  static GlobalVariable *threshold = NULL;
+  static bool insertedThreshold = false;
+
+  if(!insertedThreshold){
+    threshold = new GlobalVariable(Type::IntTy, false,
+                                   GlobalValue::ExternalLinkage, 0,
+                                   "reopt_threshold");
+
+    F.getParent()->getGlobalList().push_back(threshold);
+    insertedThreshold = true;
+  }
+
+  assert(threshold && "GlobalVariable threshold not defined!");
+
+
+  if(fr->getParent()->getName() == "main"){
+    //intialize threshold
+    vector<const Type*> initialize_args;
+    initialize_args.push_back(PointerType::get(Type::IntTy));
+    
+    const FunctionType *Fty = FunctionType::get(Type::VoidTy, initialize_args,
+                                                false);
+    Function *initialMeth = fr->getParent()->getParent()->getOrInsertFunction("reoptimizerInitialize", Fty);
+    assert(initialMeth && "Initialize method could not be inserted!");
+    
+    vector<Value *> trargs;
+    trargs.push_back(threshold);
+  
+    new CallInst(initialMeth, trargs, "", fr->begin());
+  }
+
+
   if(numPaths<=1 || numPaths >5000) return false;
   
 #ifdef DEBUG_PATH_PROFILES  
@@ -185,24 +219,15 @@ bool ProfilePaths::runOnFunction(Function &F){
 
   const ArrayType *ATy = ArrayType::get(Type::IntTy, numPaths);
   Constant *initializer =  ConstantArray::get(ATy, arrayInitialize);
+  char tempChar[20];
+  sprintf(tempChar, "Count%d", CountCounter);
+  CountCounter++;
+  std::string countStr = tempChar;
   GlobalVariable *countVar = new GlobalVariable(ATy, false,
                                                 GlobalValue::InternalLinkage, 
-                                                initializer, "Count",
+                                                initializer, countStr,
                                                 F.getParent());
-  static GlobalVariable *threshold = NULL;
-  static bool insertedThreshold = false;
-
-  if(!insertedThreshold){
-    threshold = new GlobalVariable(Type::IntTy, false,
-                                   GlobalValue::ExternalLinkage, 0,
-                                   "reopt_threshold");
-
-    F.getParent()->getGlobalList().push_back(threshold);
-    insertedThreshold = true;
-  }
-
-  assert(threshold && "GlobalVariable threshold not defined!");
-
+  
   // insert initialization code in first (entry) BB
   // this includes initializing r and count
   insertInTopBB(&F.getEntryNode(),numPaths, rVar, threshold);

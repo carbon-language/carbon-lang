@@ -293,7 +293,7 @@ void insertInTopBB(BasicBlock *front,
 //iniArgs.push_back(ConstantSInt::get(Type::IntTy, k));
 //new CallInst(inCountMth, iniArgs, "", here);
   
-
+/*
   if(front->getParent()->getName() == "main"){
     //intialize threshold
     vector<const Type*> initialize_args;
@@ -309,6 +309,7 @@ void insertInTopBB(BasicBlock *front,
   
     new CallInst(initialMeth, trargs, "", here);
   }
+*/
 }
 
 
