@@ -6,9 +6,6 @@
 // Note that this does not provide full 'java style' security and verifications,
 // instead it just tries to ensure that code is well formed.
 //
-//  . There are no duplicated names in a symbol table... ie there !exist a val
-//    with the same name as something in the symbol table, but with a different
-//    address as what is in the symbol table...
 //  * Both of a binary operator's parameters are the same type
 //  * Verify that the indices of mem access instructions match other operands
 //  . Verify that arithmetic and other things are only performed on first class
@@ -194,6 +191,7 @@ void Verifier::visitTerminatorInst(TerminatorInst &I) {
   // Ensure that terminators only exist at the end of the basic block.
   Assert1(&I == I.getParent()->getTerminator(),
           "Terminator found in the middle of a basic block!", I.getParent());
+  visitInstruction(I);
 }
 
 void Verifier::visitReturnInst(ReturnInst &RI) {
@@ -294,6 +292,8 @@ void Verifier::visitCallInst(CallInst &CI) {
     Assert2(CI.getOperand(i+1)->getType() == FTy->getParamType(i),
             "Call parameter type does not match function signature!",
             CI.getOperand(i+1), FTy->getParamType(i));
+
+  visitInstruction(CI);
 }
 
 // visitBinaryOperator - Check that both arguments to the binary operator are
@@ -335,7 +335,7 @@ void Verifier::visitStoreInst(StoreInst &SI) {
 }
 
 
-// verifyInstruction - Verify that a non-terminator instruction is well formed.
+// verifyInstruction - Verify that an instruction is well formed.
 //
 void Verifier::visitInstruction(Instruction &I) {
   Assert1(I.getParent(), "Instruction not embedded in basic block!", &I);
@@ -360,8 +360,26 @@ void Verifier::visitInstruction(Instruction &I) {
               "Only PHI nodes may reference their own value!", &I);
   }
 
+  // Check that void typed values don't have names
   Assert1(I.getType() != Type::VoidTy || !I.hasName(),
           "Instruction has a name, but provides a void value!", &I);
+
+  // Check that a definition dominates all of its uses.
+  // FIXME: This should use dominator set information, instead of this local
+  // hack that we have now.
+  //
+  for (User::use_iterator UI = I.use_begin(), UE = I.use_end();
+       UI != UE; ++UI) {
+    Instruction *I2 = cast<Instruction>(*UI);
+    // Same basic block?
+    if (I.getParent() == I2->getParent() && !isa<PHINode>(I2)) {
+      // Make sure the instruction is not before the current instruction...
+      for (Instruction *Test = I.getPrev(); Test != 0; Test = Test->getPrev())
+        Assert2(Test != I2, "Definition of value does not dominate a use!",
+                &I, I2);
+    }
+  }
+
 }
 
 
