@@ -132,7 +132,7 @@ BasicBlock *Preheaders::SplitBlockPredecessors(BasicBlock *BB,
   //
   if (!Preds.empty()) {  // Is the loop not obviously dead?
     for (BasicBlock::iterator I = BB->begin();
-         PHINode *PN = dyn_cast<PHINode>(&*I); ++I) {
+         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
       
       // Create the new PHI node, insert it into NewBB at the end of the block
       PHINode *NewPHI = new PHINode(PN->getType(), PN->getName()+".ph", BI);
@@ -160,7 +160,7 @@ BasicBlock *Preheaders::SplitBlockPredecessors(BasicBlock *BB,
     
   } else {                       // Otherwise the loop is dead...
     for (BasicBlock::iterator I = BB->begin();
-         PHINode *PN = dyn_cast<PHINode>(&*I); ++I)
+         PHINode *PN = dyn_cast<PHINode>(I); ++I)
       // Insert dummy values as the incoming value...
       PN->addIncoming(Constant::getNullValue(PN->getType()), NewBB);
   }  

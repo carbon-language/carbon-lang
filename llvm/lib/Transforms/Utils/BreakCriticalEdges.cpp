@@ -85,7 +85,7 @@ void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   // merge incoming values from NewBB instead of from TIBB.
   //
   for (BasicBlock::iterator I = DestBB->begin();
-       PHINode *PN = dyn_cast<PHINode>(&*I); ++I) {
+       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
     // We no longer enter through TIBB, now we come in through NewBB.
     PN->replaceUsesOfWith(TIBB, NewBB);
   }

@@ -45,7 +45,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   //
   std::vector<InductionVariable> IndVars;    // Induction variables for block
   BasicBlock::iterator AfterPHIIt = Header->begin();
-  for (; PHINode *PN = dyn_cast<PHINode>(&*AfterPHIIt); ++AfterPHIIt)
+  for (; PHINode *PN = dyn_cast<PHINode>(AfterPHIIt); ++AfterPHIIt)
     IndVars.push_back(InductionVariable(PN, Loops));
   // AfterPHIIt now points to first nonphi instruction...
 

@@ -386,7 +386,7 @@ void insertBB(Edge ed,
   for(BasicBlock::iterator BB2Inst = BB2->begin(), BBend = BB2->end(); 
       BB2Inst != BBend; ++BB2Inst){
    
-    if(PHINode *phiInst=dyn_cast<PHINode>(&*BB2Inst)){
+    if(PHINode *phiInst=dyn_cast<PHINode>(BB2Inst)){
       int bbIndex=phiInst->getBasicBlockIndex(BB1);
       assert(bbIndex>=0);
       phiInst->setIncomingBlock(bbIndex, newBB);

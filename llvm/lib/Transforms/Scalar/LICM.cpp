@@ -319,12 +319,12 @@ void LICM::PromoteValuesInLoop() {
     // Rewrite all loads and stores in the block of the pointer...
     for (BasicBlock::iterator II = (*I)->begin(), E = (*I)->end();
          II != E; ++II) {
-      if (LoadInst *L = dyn_cast<LoadInst>(&*II)) {
+      if (LoadInst *L = dyn_cast<LoadInst>(II)) {
         std::map<Value*, AllocaInst*>::iterator
           I = ValueToAllocaMap.find(L->getOperand(0));
         if (I != ValueToAllocaMap.end())
           L->setOperand(0, I->second);    // Rewrite load instruction...
-      } else if (StoreInst *S = dyn_cast<StoreInst>(&*II)) {
+      } else if (StoreInst *S = dyn_cast<StoreInst>(II)) {
         std::map<Value*, AllocaInst*>::iterator
           I = ValueToAllocaMap.find(S->getOperand(1));
         if (I != ValueToAllocaMap.end())

@@ -87,7 +87,7 @@ bool ProfilePaths::runOnFunction(Function &F){
     nodes.push_back(nd); 
     if(&*BB == ExitNode)
       exitNode=nd;
-    if(&*BB==F.begin())
+    if(BB==F.begin())
       startNode=nd;
   }
 

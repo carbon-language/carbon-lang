@@ -474,7 +474,7 @@ void SCCP::visitTerminatorInst(TerminatorInst &TI) {
       // constant now may not be.
       //
       for (BasicBlock::iterator I = Succ->begin();
-           PHINode *PN = dyn_cast<PHINode>(&*I); ++I)
+           PHINode *PN = dyn_cast<PHINode>(I); ++I)
         visitPHINode(*PN);
     }
 }

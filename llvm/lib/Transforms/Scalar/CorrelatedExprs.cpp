@@ -450,11 +450,11 @@ bool CEE::ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
     
   // Put the newly discovered information into the RegionInfo...
   for (BasicBlock::iterator I = OldSucc->begin(), E = OldSucc->end(); I!=E; ++I)
-    if (PHINode *PN = dyn_cast<PHINode>(&*I)) {
+    if (PHINode *PN = dyn_cast<PHINode>(I)) {
       int OpNum = PN->getBasicBlockIndex(BB);
       assert(OpNum != -1 && "PHI doesn't have incoming edge for predecessor!?");
       PropagateEquality(PN, PN->getIncomingValue(OpNum), NewRI);      
-    } else if (SetCondInst *SCI = dyn_cast<SetCondInst>(&*I)) {
+    } else if (SetCondInst *SCI = dyn_cast<SetCondInst>(I)) {
       Relation::KnownResult Res = getSetCCResult(SCI, NewRI);
       if (Res == Relation::Unknown) return false;
       PropagateEquality(SCI, ConstantBool::get(Res), NewRI);
@@ -563,7 +563,7 @@ void CEE::ForwardSuccessorTo(TerminatorInst *TI, unsigned SuccNo,
   // node with a new value.
   //
   for (BasicBlock::iterator I = OldSucc->begin();
-       PHINode *PN = dyn_cast<PHINode>(&*I); ) {
+       PHINode *PN = dyn_cast<PHINode>(I); ) {
 
     // Get the value flowing across the old edge and remove the PHI node entry
     // for this edge: we are about to remove the edge!  Don't remove the PHI
@@ -993,7 +993,7 @@ void CEE::ComputeReplacements(RegionInfo &RI) {
 bool CEE::SimplifyBasicBlock(BasicBlock &BB, const RegionInfo &RI) {
   bool Changed = false;
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ) {
-    Instruction *Inst = &*I++;
+    Instruction *Inst = I++;
 
     // Convert instruction arguments to canonical forms...
     Changed |= SimplifyInstruction(Inst, RI);

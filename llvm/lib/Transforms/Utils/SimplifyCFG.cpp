@@ -40,7 +40,7 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
       // Loop over all of the PHI nodes checking to see if there are
       // incompatible values coming in.
       for (BasicBlock::iterator I = Succ->begin();
-           PHINode *PN = dyn_cast<PHINode>(&*I); ++I) {
+           PHINode *PN = dyn_cast<PHINode>(I); ++I) {
         // Loop up the entries in the PHI node for BB and for *PI if the values
         // coming in are non-equal, we cannot merge these two blocks (instead we
         // should insert a conditional move or something, then merge the
@@ -56,7 +56,7 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 
   // Loop over all of the PHI nodes in the successor BB
   for (BasicBlock::iterator I = Succ->begin();
-       PHINode *PN = dyn_cast<PHINode>(&*I); ++I) {
+       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
     Value *OldVal = PN->removeIncomingValue(BB, false);
     assert(OldVal && "No entry in PHI for Pred BB!");
 

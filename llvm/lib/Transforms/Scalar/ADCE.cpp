@@ -119,7 +119,7 @@ bool ADCE::dropReferencesOfDeadInstructionsInLiveBlock(BasicBlock *BB) {
   for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; )
     if (!LiveSet.count(I)) {              // Is this instruction alive?
       I->dropAllReferences();             // Nope, drop references... 
-      if (PHINode *PN = dyn_cast<PHINode>(&*I)) {
+      if (PHINode *PN = dyn_cast<PHINode>(I)) {
         // We don't want to leave PHI nodes in the program that have
         // #arguments != #predecessors, so we remove them now.
         //
@@ -310,7 +310,7 @@ bool ADCE::doADCE() {
               // should be identical to the incoming values for LastDead.
               //
               for (BasicBlock::iterator II = NextAlive->begin();
-                   PHINode *PN = dyn_cast<PHINode>(&*II); ++II) {
+                   PHINode *PN = dyn_cast<PHINode>(II); ++II) {
                 // Get the incoming value for LastDead...
                 int OldIdx = PN->getBasicBlockIndex(LastDead);
                 assert(OldIdx != -1 && "LastDead is not a pred of NextAlive!");

@@ -85,7 +85,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
 
   // Loop over all of the instructions, looking for malloc or free instructions
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I) {
-    if (MallocInst *MI = dyn_cast<MallocInst>(&*I)) {
+    if (MallocInst *MI = dyn_cast<MallocInst>(I)) {
       const Type *AllocTy = MI->getType()->getElementType();
       
       // Get the number of bytes to be allocated for one element of the
@@ -114,7 +114,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       I = --BBIL.erase(I);         // remove and delete the malloc instr...
       Changed = true;
       ++NumLowered;
-    } else if (FreeInst *FI = dyn_cast<FreeInst>(&*I)) {
+    } else if (FreeInst *FI = dyn_cast<FreeInst>(I)) {
       // Cast the argument to free into a ubyte*...
       CastInst *MCast = new CastInst(FI->getOperand(0), 
                                      PointerType::get(Type::UByteTy), "", I);

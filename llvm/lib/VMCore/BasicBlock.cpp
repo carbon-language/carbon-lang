@@ -196,7 +196,7 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
   } else {
     // Okay, now we know that we need to remove predecessor #pred_idx from all
     // PHI nodes.  Iterate over each PHI node fixing them up
-    for (iterator II = begin(); PHINode *PN = dyn_cast<PHINode>(&*II); ++II)
+    for (iterator II = begin(); PHINode *PN = dyn_cast<PHINode>(II); ++II)
       PN->removeIncomingValue(Pred);
   }
 }
@@ -243,7 +243,7 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I) {
     // incoming values...
     BasicBlock *Successor = *I;
     for (BasicBlock::iterator II = Successor->begin();
-         PHINode *PN = dyn_cast<PHINode>(&*II); ++II) {
+         PHINode *PN = dyn_cast<PHINode>(II); ++II) {
       int IDX = PN->getBasicBlockIndex(this);
       while (IDX != -1) {
         PN->setIncomingBlock((unsigned)IDX, New);

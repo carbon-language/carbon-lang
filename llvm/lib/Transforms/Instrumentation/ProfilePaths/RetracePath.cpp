@@ -140,7 +140,7 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
     BasicBlock *ExitNode = 0;
     for (Function::iterator I = M->begin(), E = M->end(); I != E; ++I){
       if (isa<ReturnInst>(I->getTerminator())) {
-        ExitNode = &*I;
+        ExitNode = I;
         break;
       }
     }
@@ -160,7 +160,7 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
       if(BB->size()==3 || BB->size() ==2){
         for(BasicBlock::iterator II = BB->begin(), IE = BB->end();
             II != IE; ++II){
-          if(CallInst *callInst = dyn_cast<CallInst>(&*II)){
+          if(CallInst *callInst = dyn_cast<CallInst>(II)){
             //std::cerr<<*callInst;
             Function *calledFunction = callInst->getCalledFunction();
             if(calledFunction && calledFunction->getName() == "trigger"){
@@ -199,7 +199,7 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
         continue;
       
       //if(BB->size()==3)
-      //if(CallInst *callInst = dyn_cast<CallInst>(&*BB->getInstList().begin()))
+      //if(CallInst *callInst = dyn_cast<CallInst>(BB->getInstList().begin()))
       //if(callInst->getCalledFunction()->getName() == "trigger")
       //continue;
       
@@ -216,20 +216,20 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
       Node *nd=findBB(nodes, BB);
       assert(nd && "No node for this edge!");
       
-      for(BasicBlock::succ_iterator s=succ_begin(&*BB), se=succ_end(&*BB); 
+      for(BasicBlock::succ_iterator s=succ_begin(BB), se=succ_end(BB); 
           s!=se; ++s){
         
         if(triggerBBs[*s] == 9){
           //if(!pathReg[M]){ //Get the path register for this!
           //if(BB->size()>8)
-          //  if(LoadInst *ldInst = dyn_cast<LoadInst>(&*BB->getInstList().begin()))
+          //  if(LoadInst *ldInst = dyn_cast<LoadInst>(BB->getInstList().begin()))
           //    pathReg[M] = ldInst->getPointerOperand();
           //}
           continue;
         }
         //if((*s)->size()==3)
         //if(CallInst *callInst = 
-        //   dyn_cast<CallInst>(&*(*s)->getInstList().begin()))
+        //   dyn_cast<CallInst>((*s)->getInstList().begin()))
         //  if(callInst->getCalledFunction()->getName() == "trigger")
         //    continue;
         
@@ -284,11 +284,11 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
         VBI != VBE; ++VBI){
       for(BasicBlock::iterator BBI = (*VBI)->begin(), BBE = (*VBI)->end();
           BBI != BBE; ++BBI){
-        if(LoadInst *ldInst = dyn_cast<LoadInst>(&*BBI)){
+        if(LoadInst *ldInst = dyn_cast<LoadInst>(BBI)){
           if(pathReg[M] == ldInst->getPointerOperand())
             instToErase.push_back(ldInst);
         }
-        else if(StoreInst *stInst = dyn_cast<StoreInst>(&*BBI)){
+        else if(StoreInst *stInst = dyn_cast<StoreInst>(BBI)){
           if(pathReg[M] == stInst->getPointerOperand())
             instToErase.push_back(stInst);
         }

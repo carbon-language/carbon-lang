@@ -44,7 +44,7 @@ DecomposePass::runOnBasicBlock(BasicBlock &BB)
 {
   bool changed = false;
   for (BasicBlock::iterator II = BB.begin(); II != BB.end(); )
-    if (GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(&*II++)) // pre-inc
+    if (GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(II++)) // pre-inc
       if (gep->getNumIndices() >= 2)
         changed |= DecomposeArrayRef(gep); // always modifies II
   return changed;

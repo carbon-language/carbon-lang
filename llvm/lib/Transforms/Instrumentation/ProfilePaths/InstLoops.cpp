@@ -133,7 +133,7 @@ void getBackEdgesVisit(BasicBlock *u,
         for(BasicBlock::iterator BB2Inst = BB->begin(), BBend = BB->end(); 
             BB2Inst != BBend; ++BB2Inst){
         
-          if(PHINode *phiInst=dyn_cast<PHINode>(&*BB2Inst)){
+          if (PHINode *phiInst = dyn_cast<PHINode>(BB2Inst)){
             int bbIndex = phiInst->getBasicBlockIndex(u);
             if(bbIndex>=0){
               phiInst->setIncomingBlock(bbIndex, newBB);

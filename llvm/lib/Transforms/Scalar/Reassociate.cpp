@@ -224,7 +224,7 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
     // the two operands are sorted incorrectly, fix it now.
     //
     if (BI->isAssociative()) {
-      BinaryOperator *I = cast<BinaryOperator>(&*BI);
+      BinaryOperator *I = cast<BinaryOperator>(BI);
       if (!I->use_empty()) {
         // Make sure that we don't have a tree-shaped computation.  If we do,
         // linearize it.  Convert (A+B)+(C+D) into ((A+B)+C)+D

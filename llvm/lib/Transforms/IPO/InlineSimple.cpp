@@ -169,7 +169,7 @@ static inline bool ShouldInlineFunction(const CallInst *CI, const Function *F) {
 
 static inline bool DoFunctionInlining(BasicBlock *BB) {
   for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
-    if (CallInst *CI = dyn_cast<CallInst>(&*I)) {
+    if (CallInst *CI = dyn_cast<CallInst>(I)) {
       // Check to see if we should inline this function
       Function *F = CI->getCalledFunction();
       if (F && ShouldInlineFunction(CI, F)) {

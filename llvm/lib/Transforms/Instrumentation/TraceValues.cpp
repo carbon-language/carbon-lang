@@ -298,9 +298,9 @@ ReleasePtrSeqNumbers(BasicBlock *BB,
                      ExternalFuncs& externalFuncs) {
   
   for (BasicBlock::iterator II=BB->begin(), IE = BB->end(); II != IE; ++II)
-    if (FreeInst *FI = dyn_cast<FreeInst>(&*II))
+    if (FreeInst *FI = dyn_cast<FreeInst>(II))
       InsertReleaseInst(FI->getOperand(0), BB, FI,externalFuncs.ReleasePtrFunc);
-    else if (AllocaInst *AI = dyn_cast<AllocaInst>(&*II))
+    else if (AllocaInst *AI = dyn_cast<AllocaInst>(II))
       InsertRecordInst(AI, BB, AI->getNext(), externalFuncs.RecordPtrFunc);
 }  
 
@@ -332,7 +332,7 @@ static void TraceValuesAtBBExit(BasicBlock *BB,
   // instruction *preceding* InsertPos to check when to terminate the loop.
   // 
   for (BasicBlock::iterator II = BB->begin(); &*II != InsertPos; ++II) {
-    if (StoreInst *SI = dyn_cast<StoreInst>(&*II)) {
+    if (StoreInst *SI = dyn_cast<StoreInst>(II)) {
       assert(valuesStoredInFunction &&
              "Should not be printing a store instruction at function exit");
       LoadInst *LI = new LoadInst(SI->getPointerOperand(), "reload." +
