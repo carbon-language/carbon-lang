@@ -356,9 +356,9 @@ void doPrint() {
           std::cout << "Printing " << I->getPath().get() << "\n";
 
         if (I->isCompressedBytecode())
-          Compressor::decompressToFile(data+4,I->getSize()-4,std::cout);
+          Compressor::decompressToStream(data+4,I->getSize()-4,std::cout);
         else if (I->isCompressed()) {
-          Compressor::decompressToFile(data,I->getSize(),std::cout);
+          Compressor::decompressToStream(data,I->getSize(),std::cout);
         } else {
           unsigned len = I->getSize();
           std::cout.write(data, len);
@@ -420,7 +420,7 @@ void doDisplayTable() {
         std::cout << "/" << std::setw(4) << I->getGroup();
         std::cout << " " << std::setw(8) << I->getSize();
         std::cout << " " << std::setw(20) << 
-          I->getModTime().ToString().substr(4);
+          I->getModTime().toString().substr(4);
         std::cout << " " << I->getPath().get() << "\n";
       } else {
         std::cout << I->getPath().get() << "\n";
@@ -464,7 +464,7 @@ void doExtract() {
 
       // Write the data, making sure to uncompress things first
       if (I->isCompressed()) {
-        Compressor::decompressToFile(data,len,file);
+        Compressor::decompressToStream(data,len,file);
       } else {
         file.write(data,len);
       }
