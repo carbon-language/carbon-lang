@@ -1570,9 +1570,14 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
     // of a signed value.
     //
     unsigned TypeBits = Op0->getType()->getPrimitiveSize()*8;
-    if (CUI->getValue() >= TypeBits &&
-        (!Op0->getType()->isSigned() || isLeftShift))
-      return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
+    if (CUI->getValue() >= TypeBits) {
+      if (!Op0->getType()->isSigned() || isLeftShift)
+        return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
+      else {
+        I.setOperand(1, ConstantUInt::get(Type::UByteTy, TypeBits-1));
+        return &I;
+      }
+    }
 
     // ((X*C1) << C2) == (X * (C1 << C2))
     if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0))
@@ -1636,6 +1641,8 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
         // Check for (A << c1) << c2   and   (A >> c1) >> c2
         if (I.getOpcode() == Op0SI->getOpcode()) {
           unsigned Amt = ShiftAmt1+ShiftAmt2;   // Fold into one big shift...
+          if (Op0->getType()->getPrimitiveSize()*8 < Amt)
+            Amt = Op0->getType()->getPrimitiveSize()*8;
           return new ShiftInst(I.getOpcode(), Op0SI->getOperand(0),
                                ConstantUInt::get(Type::UByteTy, Amt));
         }
