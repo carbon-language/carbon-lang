@@ -131,9 +131,6 @@
 				RelativePath="..\..\lib\VMCore\Globals.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\VMCore\InstrTypes.cpp">
-			</File>
-			<File
 				RelativePath="..\..\lib\VMCore\Instruction.cpp">
 			</File>
 			<File
