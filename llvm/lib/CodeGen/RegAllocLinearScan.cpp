@@ -428,11 +428,8 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
     DEBUG(std::cerr << "\tprocessing active intervals:\n");
     for (IntervalPtrs::iterator i = active_.begin(); i != active_.end();) {
         unsigned reg = (*i)->reg;
-        // remove expired intervals. we expire earlier because this if
-        // an interval expires this is going to be the last use. in
-        // this case we can reuse the register for a def in the same
-        // instruction
-        if ((*i)->expiredAt(cur->start() + 1)) {
+        // remove expired intervals
+        if ((*i)->expiredAt(cur->start())) {
             DEBUG(std::cerr << "\t\tinterval " << **i << " expired\n");
             if (reg >= MRegisterInfo::FirstVirtualRegister) {
                 reg = v2pMap_[reg];
@@ -465,11 +462,8 @@ void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
     for (IntervalPtrs::iterator i = inactive_.begin(); i != inactive_.end();) {
         unsigned reg = (*i)->reg;
 
-        // remove expired intervals. we expire earlier because this if
-        // an interval expires this is going to be the last use. in
-        // this case we can reuse the register for a def in the same
-        // instruction
-        if ((*i)->expiredAt(cur->start() + 1)) {
+        // remove expired intervals
+        if ((*i)->expiredAt(cur->start())) {
             DEBUG(std::cerr << "\t\t\tinterval " << **i << " expired\n");
             // remove from inactive
             i = inactive_.erase(i);
