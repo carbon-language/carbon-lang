@@ -64,13 +64,6 @@ void llvm::MoveFileOverIfUpdated(const std::string &New,
   }  
 }
 
-/// removeFile - Delete the specified file
-///
-void llvm::removeFile(const std::string &Filename) {
-  std::remove(Filename.c_str());
-}
-
-
 //===----------------------------------------------------------------------===//
 // FDHandle class implementation
 //

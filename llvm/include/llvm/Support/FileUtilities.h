@@ -15,7 +15,7 @@
 #ifndef LLVM_SUPPORT_FILEUTILITIES_H
 #define LLVM_SUPPORT_FILEUTILITIES_H
 
-#include <string>
+#include "llvm/System/Path.h"
 
 namespace llvm {
 
@@ -34,10 +34,6 @@ bool DiffFiles(const std::string &FileA, const std::string &FileB,
 ///
 void MoveFileOverIfUpdated(const std::string &New, const std::string &Old);
  
-/// removeFile - Delete the specified file.
-///
-void removeFile(const std::string &Filename);
-
 /// FDHandle - Simple handle class to make sure a file descriptor gets closed
 /// when the object is destroyed.  This handle acts similarly to an
 /// std::auto_ptr, in that the copy constructor and assignment operators
@@ -81,14 +77,15 @@ public:
   /// specified (if deleteIt is true).
   ///
   class FileRemover {
-    std::string Filename;
+    sys::Path Filename;
     bool DeleteIt;
   public:
-    FileRemover(const std::string &filename, bool deleteIt = true)
+    FileRemover(const sys::Path &filename, bool deleteIt = true)
       : Filename(filename), DeleteIt(deleteIt) {}
     
     ~FileRemover() {
-      if (DeleteIt) removeFile(Filename);
+      if (DeleteIt) 
+        Filename.destroyFile();
     }
 
     /// releaseFile - Take ownership of the file away from the FileRemover so it
