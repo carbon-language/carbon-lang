@@ -551,7 +551,7 @@ static unsigned getImmediateForOpcode(SDOperand N, unsigned Opcode,
     if (v <= -2 || v >= 2) { return 4; }
     break;
   case ISD::UDIV:
-    if (v != 0) { return 4; }
+    if (v > 1) { return 4; }
     break;
   }
   return 0;
@@ -711,10 +711,7 @@ SDOperand ISel::BuildSDIVSequence(SDOperand N) {
   // Extract the sign bit and add it to the quotient
   SDOperand T = 
     ISelDAG->getNode(ISD::SRL, MVT::i32, Q, ISelDAG->getConstant(31, MVT::i32));
-  Q = ISelDAG->getNode(ISD::ADD, MVT::i32, Q, T);
-  // Compute the remainder
-  T = ISelDAG->getNode(ISD::MUL, MVT::i32, Q, N.getOperand(1));
-  return ISelDAG->getNode(ISD::SUB, MVT::i32, N.getOperand(0), T);
+  return ISelDAG->getNode(ISD::ADD, MVT::i32, Q, T);
 }
 
 /// BuildUDIVSequence - Given an ISD::UDIV node expressing a divide by constant,
@@ -739,9 +736,7 @@ SDOperand ISel::BuildUDIVSequence(SDOperand N) {
     Q = ISelDAG->getNode(ISD::SRL, MVT::i32, NPQ, 
                            ISelDAG->getConstant(magics.s-1, MVT::i32));
   }
-  // Compute the remainder
-  SDOperand T = ISelDAG->getNode(ISD::MUL, MVT::i32, Q, N.getOperand(1));
-  return ISelDAG->getNode(ISD::SUB, MVT::i32, N.getOperand(0), T);
+  return Q;
 }
 
 /// getGlobalBaseReg - Output the instructions required to put the
@@ -1601,11 +1596,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
       return Result;
     // If this is a divide by constant, we can emit code using some magic
     // constants to implement it as a multiply instead.
-    //case 4:
-    //  if (opcode == ISD::SDIV)
-    //    return SelectExpr(BuildSDIVSequence(N));
-    //  else
-    //    return SelectExpr(BuildUDIVSequence(N));
+    case 4:
+      ExprMap.erase(N);
+      if (opcode == ISD::SDIV) 
+        return SelectExpr(BuildSDIVSequence(N));
+      else
+        return SelectExpr(BuildUDIVSequence(N));
     }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
