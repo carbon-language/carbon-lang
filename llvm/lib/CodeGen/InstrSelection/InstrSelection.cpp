@@ -14,11 +14,14 @@
 //	
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/Function.h"
+#include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicLowering.h"
 #include "llvm/iPHINode.h"
+#include "llvm/iOther.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/InstrForest.h"
-#include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -26,13 +29,12 @@
 #include "llvm/Target/TargetRegInfo.h"
 #include "Support/CommandLine.h"
 #include "Support/LeakDetector.h"
-#include <vector>
 
 namespace llvm {
-
-std::vector<MachineInstr*>
-FixConstantOperandsForInstr(Instruction* vmInstr, MachineInstr* minstr,
-                            TargetMachine& target);
+  std::vector<MachineInstr*>
+  FixConstantOperandsForInstr(Instruction *I, MachineInstr *MI,
+                              TargetMachine &TM);
+}
 
 namespace {
   //===--------------------------------------------------------------------===//
@@ -66,6 +68,7 @@ namespace {
   //
   class InstructionSelection : public FunctionPass {
     TargetMachine &Target;
+    IntrinsicLowering &IL;
     void InsertCodeForPhis(Function &F);
     void InsertPhiElimInstructions(BasicBlock *BB,
                                    const std::vector<MachineInstr*>& CpVec);
@@ -73,7 +76,8 @@ namespace {
     void PostprocessMachineCodeForTree(InstructionNode* instrNode,
                                        int ruleForNode, short* nts);
   public:
-    InstructionSelection(TargetMachine &T) : Target(T) {}
+    InstructionSelection(TargetMachine &TM, IntrinsicLowering &il)
+      : Target(TM), IL(il) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
@@ -84,7 +88,6 @@ namespace {
   };
 }
 
-namespace llvm {
 
 TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
                                Value *s1, Value *s2, const std::string &name)
@@ -118,10 +121,37 @@ TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
   LeakDetector::removeGarbageObject(this);
 }
 
-} // End llvm namespace
+bool InstructionSelection::runOnFunction(Function &F) {
+  // First pass - Walk the function, lowering any calls to intrinsic functions
+  // which the instruction selector cannot handle.
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
+      if (CallInst *CI = dyn_cast<CallInst>(I++))
+        if (Function *F = CI->getCalledFunction())
+          switch (F->getIntrinsicID()) {
+#undef va_start
+#undef va_copy
+#undef va_end
+          case Intrinsic::va_start:
+          case Intrinsic::va_copy:
+          case Intrinsic::va_end:
+            // We directly implement these intrinsics.  Note that this knowledge
+            // is incestuously entangled with the code in
+            // SparcInstrSelection.cpp and must be updated when it is updated.
+            // Since ALL of the code in this library is incestuously intertwined
+            // with it already and sparc specific, we will live with this.
+            break;
+          default:
+            // All other intrinsic calls we must lower.
+            Instruction *Before = CI->getPrev();
+            IL.LowerIntrinsicCall(CI);
+            if (Before) {        // Move iterator to instruction after call
+              I = Before;  ++I;
+            } else {
+              I = BB->begin();
+            }
+          }
 
-bool InstructionSelection::runOnFunction(Function &F)
-{
   //
   // Build the instruction trees to be given as inputs to BURG.
   // 
@@ -384,8 +414,7 @@ InstructionSelection::PostprocessMachineCodeForTree(InstructionNode* instrNode,
 // createInstructionSelectionPass - Public entrypoint for instruction selection
 // and this file as a whole...
 //
-FunctionPass *createInstructionSelectionPass(TargetMachine &T) {
-  return new InstructionSelection(T);
+FunctionPass *llvm::createInstructionSelectionPass(TargetMachine &T,
+                                                   IntrinsicLowering &IL) {
+  return new InstructionSelection(T, IL);
 }
-
-} // End llvm namespace
