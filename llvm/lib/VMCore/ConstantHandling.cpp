@@ -16,16 +16,12 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
 #include <cmath>
-
-namespace llvm {
-
-AnnotationID ConstRules::AID(AnnotationManager::getID("opt::ConstRules",
-						      &ConstRules::find));
+using namespace llvm;
 
 // ConstantFoldInstruction - Attempt to constant fold the specified instruction.
 // If successful, the constant result is returned, if not, null is returned.
 //
-Constant *ConstantFoldInstruction(Instruction *I) {
+Constant *llvm::ConstantFoldInstruction(Instruction *I) {
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
     if (PN->getNumIncomingValues() == 0)
       return Constant::getNullValue(PN->getType());
@@ -85,7 +81,8 @@ static unsigned getSize(const Type *Ty) {
   return S ? S : 8;  // Treat pointers at 8 bytes
 }
 
-Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy) {
+Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
+                                            const Type *DestTy) {
   if (V->getType() == DestTy) return (Constant*)V;
 
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
@@ -117,11 +114,12 @@ Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy) {
         return ConstantExpr::getCast(CE->getOperand(0), DestTy);
     }
 
-  return ConstRules::get(*V, *V)->castTo(V, DestTy);
+  return ConstRules::get(*V, *V).castTo(V, DestTy);
 }
 
-Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
-                                        const Constant *V2) {
+Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
+                                              const Constant *V1,
+                                              const Constant *V2) {
   switch (Opcode) {
   case Instruction::Add:     return *V1 + *V2;
   case Instruction::Sub:     return *V1 - *V2;
@@ -142,8 +140,9 @@ Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
   return 0;
 }
 
-Constant *ConstantFoldShiftInstruction(unsigned Opcode, const Constant *V1, 
-                                       const Constant *V2) {
+Constant *llvm::ConstantFoldShiftInstruction(unsigned Opcode,
+                                             const Constant *V1, 
+                                             const Constant *V2) {
   switch (Opcode) {
   case Instruction::Shl:     return *V1 << *V2;
   case Instruction::Shr:     return *V1 >> *V2;
@@ -151,8 +150,8 @@ Constant *ConstantFoldShiftInstruction(unsigned Opcode, const Constant *V1,
   }
 }
 
-Constant *ConstantFoldGetElementPtr(const Constant *C,
-                                    const std::vector<Constant*> &IdxList) {
+Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
+                                        const std::vector<Constant*> &IdxList) {
   if (IdxList.size() == 0 ||
       (IdxList.size() == 1 && IdxList[0]->isNullValue()))
     return const_cast<Constant*>(C);
@@ -592,53 +591,41 @@ struct DirectFPRules
   }
 };
 
-//===----------------------------------------------------------------------===//
-//                            DirectRules Subclasses
-//===----------------------------------------------------------------------===//
-//
-// Given the DirectRules class we can now implement lots of types with little
-// code.  Thank goodness C++ compilers are great at stomping out layers of 
-// templates... can you imagine having to do this all by hand? (/me is lazy :)
-//
+ConstRules &ConstRules::get(const Constant &V1, const Constant &V2) {
+  static EmptyRules   EmptyR;
+  static BoolRules    BoolR;
+  static PointerRules PointerR;
+  static DirectIntRules<ConstantSInt,   signed char , &Type::SByteTy>  SByteR;
+  static DirectIntRules<ConstantUInt, unsigned char , &Type::UByteTy>  UByteR;
+  static DirectIntRules<ConstantSInt,   signed short, &Type::ShortTy>  ShortR;
+  static DirectIntRules<ConstantUInt, unsigned short, &Type::UShortTy> UShortR;
+  static DirectIntRules<ConstantSInt,   signed int  , &Type::IntTy>    IntR;
+  static DirectIntRules<ConstantUInt, unsigned int  , &Type::UIntTy>   UIntR;
+  static DirectIntRules<ConstantSInt,  int64_t      , &Type::LongTy>   LongR;
+  static DirectIntRules<ConstantUInt, uint64_t      , &Type::ULongTy>  ULongR;
+  static DirectFPRules <ConstantFP  , float         , &Type::FloatTy>  FloatR;
+  static DirectFPRules <ConstantFP  , double        , &Type::DoubleTy> DoubleR;
 
-// ConstRules::find - Return the constant rules that take care of the specified
-// type.
-//
-Annotation *ConstRules::find(AnnotationID AID, const Annotable *TyA, void *) {
-  assert(AID == ConstRules::AID && "Bad annotation for factory!");
-  const Type *Ty = cast<Type>((const Value*)TyA);
-  
-  switch (Ty->getPrimitiveID()) {
-  case Type::BoolTyID:    return new BoolRules();
-  case Type::PointerTyID: return new PointerRules();
-  case Type::SByteTyID:
-    return new DirectIntRules<ConstantSInt,   signed char , &Type::SByteTy>();
-  case Type::UByteTyID:
-    return new DirectIntRules<ConstantUInt, unsigned char , &Type::UByteTy>();
-  case Type::ShortTyID:
-    return new DirectIntRules<ConstantSInt,   signed short, &Type::ShortTy>();
-  case Type::UShortTyID:
-    return new DirectIntRules<ConstantUInt, unsigned short, &Type::UShortTy>();
-  case Type::IntTyID:
-    return new DirectIntRules<ConstantSInt,   signed int  , &Type::IntTy>();
-  case Type::UIntTyID:
-    return new DirectIntRules<ConstantUInt, unsigned int  , &Type::UIntTy>();
-  case Type::LongTyID:
-    return new DirectIntRules<ConstantSInt,  int64_t      , &Type::LongTy>();
-  case Type::ULongTyID:
-    return new DirectIntRules<ConstantUInt, uint64_t      , &Type::ULongTy>();
-  case Type::FloatTyID:
-    return new DirectFPRules<ConstantFP  , float         , &Type::FloatTy>();
-  case Type::DoubleTyID:
-    return new DirectFPRules<ConstantFP  , double        , &Type::DoubleTy>();
-  default:
-    return new EmptyRules();
+  if (isa<ConstantExpr>(V1) || isa<ConstantExpr>(V2))
+    return EmptyR;
+
+  // FIXME: This assert doesn't work because shifts pass both operands in to
+  // check for constant exprs.  :(
+  //assert(V1.getType() == V2.getType() &&"Nonequal types to constant folder?");
+
+  switch (V1.getType()->getPrimitiveID()) {
+  default: assert(0 && "Unknown value type for constant folding!");
+  case Type::BoolTyID:    return BoolR;
+  case Type::PointerTyID: return PointerR;
+  case Type::SByteTyID:   return SByteR;
+  case Type::UByteTyID:   return UByteR;
+  case Type::ShortTyID:   return ShortR;
+  case Type::UShortTyID:  return UShortR;
+  case Type::IntTyID:     return IntR;
+  case Type::UIntTyID:    return UIntR;
+  case Type::LongTyID:    return LongR;
+  case Type::ULongTyID:   return ULongR;
+  case Type::FloatTyID:   return FloatR;
+  case Type::DoubleTyID:  return DoubleR;
   }
 }
-
-ConstRules *ConstRules::getConstantExprRules() {
-  static EmptyRules CERules;
-  return &CERules;
-}
-
-} // End llvm namespace
