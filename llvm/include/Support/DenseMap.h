@@ -9,7 +9,7 @@
 //
 // This file implements a dense map. A dense map template takes two
 // types. The first is the mapped type and the second is a functor
-// that maps its argument to a size_t. On instanciation a "null" value
+// that maps its argument to a size_t. On instantiation a "null" value
 // can be provided to be used as a "does not exist" indicator in the
 // map. A member function grow() is provided that given the value of
 // the maximally indexed key (the argument of the functor) makes sure
@@ -48,11 +48,13 @@ public:
     }
 
     void clear() {
-        storage_.assign(storage_.size(), nullVal_);
+        storage_.clear();
     }
 
     void grow(IndexT n) {
-        storage_.resize(toIndex_(n) + 1, nullVal_);
+        unsigned NewSize = toIndex_(n) + 1;
+        if (NewSize > storage_.size())
+            storage_.resize(NewSize, nullVal_);
     }
 };
 
