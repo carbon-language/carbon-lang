@@ -682,12 +682,18 @@ IfUnequal:
 
   <i>; Lookup indirect branch</i>
   switch uint &lt;value&gt;, label &lt;defaultdest&gt;, %switchtype &lt;switchtable&gt;
-
+<!--
   <i>; Indexed indirect branch</i>
   switch uint &lt;idxvalue&gt;, label &lt;defaultdest&gt;, [&lt;anysize&gt; x label] &lt;desttable&gt;
+-->
 </pre>
 
 <h5>Overview:</h5>
+
+<b>NOTE:</b> The switch instruction may go away in the future.  It is not very
+well supported in LLVM anyway, so don't go to great lengths to support it.  Talk
+to <a href="mailto:sabre@nondot.org">Chris</a> for more info if this concerns
+you.<p>
 
 The '<tt>switch</tt>' instruction is used to transfer control flow to one of
 several different places.  It is a generalization of the '<tt>br</tt>'
@@ -1700,7 +1706,7 @@ more...
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Tue Oct 29 01:57:05 CST 2002
+Last modified: Mon Nov  4 18:20:38 CST 2002
 <!-- hhmts end -->
 </font>
 </body></html>
