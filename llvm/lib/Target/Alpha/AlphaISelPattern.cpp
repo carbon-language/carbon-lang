@@ -157,7 +157,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       case MVT::i32:
       case MVT::i64:
 	BuildMI(&BB, Alpha::IDEF, 0, args_int[count - 1]);
-	argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64))));
+	argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64)));
 	argPreg.push_back(args_int[count - 1]);
 	break;
 	}
