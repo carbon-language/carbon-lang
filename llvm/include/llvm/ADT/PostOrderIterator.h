@@ -39,14 +39,14 @@ class po_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t> {
       NodeType *BB = *VisitStack.top().second++;
       if (!Visited.count(BB)) {  // If the block is not visited...
 	Visited.insert(BB);
-	VisitStack.push(make_pair(BB, GT::child_begin(BB)));
+	VisitStack.push(std::make_pair(BB, GT::child_begin(BB)));
       }
     }
   }
 
   inline po_iterator(NodeType *BB) {
     Visited.insert(BB);
-    VisitStack.push(make_pair(BB, GT::child_begin(BB)));
+    VisitStack.push(std::make_pair(BB, GT::child_begin(BB)));
     traverseChild();
   }
   inline po_iterator() { /* End is when stack is empty */ }

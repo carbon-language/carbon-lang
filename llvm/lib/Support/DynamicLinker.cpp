@@ -21,8 +21,9 @@
 #include "llvm/Support/DynamicLinker.h"
 #include "llvm/Config/dlfcn.h"
 #include "llvm/Config/windows.h"
-#include <cassert>
 #include <vector>
+#include <cassert>
+#include <cstdio>
 using namespace llvm;
 
 #if defined(HAVE_WINDOWS_H)

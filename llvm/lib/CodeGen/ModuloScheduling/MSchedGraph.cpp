@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
 #include <cstdlib>
+#include <algorithm>
 using namespace llvm;
 
 MSchedGraphNode::MSchedGraphNode(const MachineInstr* inst, 
@@ -67,7 +68,7 @@ bool MSchedGraphNode::isSuccessor(MSchedGraphNode *succ) {
 
 
 bool MSchedGraphNode::isPredecessor(MSchedGraphNode *pred) {
-  if(find( Predecessors.begin(),  Predecessors.end(), pred) !=   Predecessors.end())
+  if(std::find( Predecessors.begin(),  Predecessors.end(), pred) !=   Predecessors.end())
     return true;
   else
     return false;

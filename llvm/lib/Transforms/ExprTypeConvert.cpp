@@ -828,7 +828,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
   }
 
   case Instruction::Call: {
-    User::op_iterator OI = find(I->op_begin(), I->op_end(), V);
+    User::op_iterator OI = std::find(I->op_begin(), I->op_end(), V);
     assert (OI != I->op_end() && "Not using value!");
     unsigned OpNum = OI - I->op_begin();
 
@@ -1206,7 +1206,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
     } else {                   // Changing an argument, must be in vararg area
       std::vector<Value*>::iterator OI =
-        find(Params.begin(), Params.end(), OldVal);
+        std::find(Params.begin(), Params.end(), OldVal);
       assert (OI != Params.end() && "Not using value!");
 
       *OI = NewVal;

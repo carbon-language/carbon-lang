@@ -25,6 +25,7 @@
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/ADT/StringExtras.h"
 #include <cmath>
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <utility>
@@ -580,7 +581,7 @@ void ModuloSchedulingPass::addReccurrence(std::vector<MSchedGraphNode*> &recurre
     if(R->second.size() == recurrence.size()) {
       
       for(std::vector<MSchedGraphNode*>::const_iterator node = R->second.begin(), end = R->second.end(); node != end; ++node) {
-	if(find(recurrence.begin(), recurrence.end(), *node) == recurrence.end()) {
+	if(std::find(recurrence.begin(), recurrence.end(), *node) == recurrence.end()) {
 	  all_same = all_same && false;
 	  break;
 	}
@@ -623,7 +624,7 @@ void ModuloSchedulingPass::findAllReccurrences(MSchedGraphNode *node,
 					       std::vector<MSchedGraphNode*> &visitedNodes,
 					       int II) {
 
-  if(find(visitedNodes.begin(), visitedNodes.end(), node) != visitedNodes.end()) {
+  if(std::find(visitedNodes.begin(), visitedNodes.end(), node) != visitedNodes.end()) {
     std::vector<MSchedGraphNode*> recurrence;
     bool first = true;
     int delay = 0;
@@ -714,7 +715,7 @@ void ModuloSchedulingPass::computePartialOrder() {
     for(std::vector<MSchedGraphNode*>::const_iterator N = I->second.begin(), NE = I->second.end(); N != NE; ++N) {
       bool found = false;
       for(std::vector<std::vector<MSchedGraphNode*> >::iterator PO = partialOrder.begin(), PE = partialOrder.end(); PO != PE; ++PO) {
-	if(find(PO->begin(), PO->end(), *N) != PO->end())
+	if(std::find(PO->begin(), PO->end(), *N) != PO->end())
 	  found = true;
       }
       if(!found) {
@@ -728,16 +729,16 @@ void ModuloSchedulingPass::computePartialOrder() {
 	    //Check if we are supposed to ignore this edge or not
 	    if(!ignoreEdge(*P, *N))
 	      //Check if already in this recurrence
-	      if(find(I->second.begin(), I->second.end(), *P) == I->second.end()) {
+	      if(std::find(I->second.begin(), I->second.end(), *P) == I->second.end()) {
 		//Also need to check if in partial order
 		bool predFound = false;
 		for(std::vector<std::vector<MSchedGraphNode*> >::iterator PO = partialOrder.begin(), PEND = partialOrder.end(); PO != PEND; ++PO) {
-		  if(find(PO->begin(), PO->end(), *P) != PO->end())
+		  if(std::find(PO->begin(), PO->end(), *P) != PO->end())
 		    predFound = true;
 		}
 		
 		if(!predFound)
-		  if(find(new_recurrence.begin(), new_recurrence.end(), *P) == new_recurrence.end())
+		  if(std::find(new_recurrence.begin(), new_recurrence.end(), *P) == new_recurrence.end())
 		     new_recurrence.push_back(*P);
 		
 	      }
@@ -756,7 +757,7 @@ void ModuloSchedulingPass::computePartialOrder() {
     bool found = false;
     //Check if its already in our partial order, if not add it to the final vector
     for(std::vector<std::vector<MSchedGraphNode*> >::iterator PO = partialOrder.begin(), PE = partialOrder.end(); PO != PE; ++PO) {
-      if(find(PO->begin(), PO->end(), I->first) != PO->end())
+      if(std::find(PO->begin(), PO->end(), I->first) != PO->end())
 	found = true;
     }
     if(!found)
@@ -772,7 +773,7 @@ void ModuloSchedulingPass::computePartialOrder() {
 void ModuloSchedulingPass::predIntersect(std::vector<MSchedGraphNode*> &CurrentSet, std::vector<MSchedGraphNode*> &IntersectResult) {
   
   //Sort CurrentSet so we can use lowerbound
-  sort(CurrentSet.begin(), CurrentSet.end());
+  std::sort(CurrentSet.begin(), CurrentSet.end());
   
   for(unsigned j=0; j < FinalNodeOrder.size(); ++j) {
     for(MSchedGraphNode::pred_iterator P = FinalNodeOrder[j]->pred_begin(), 
@@ -782,9 +783,9 @@ void ModuloSchedulingPass::predIntersect(std::vector<MSchedGraphNode*> &CurrentS
       if(ignoreEdge(*P,FinalNodeOrder[j]))
 	continue;
 	 
-      if(find(CurrentSet.begin(), 
+      if(std::find(CurrentSet.begin(), 
 		     CurrentSet.end(), *P) != CurrentSet.end())
-	if(find(FinalNodeOrder.begin(), FinalNodeOrder.end(), *P) == FinalNodeOrder.end())
+	if(std::find(FinalNodeOrder.begin(), FinalNodeOrder.end(), *P) == FinalNodeOrder.end())
 	  IntersectResult.push_back(*P);
     }
   } 
@@ -793,7 +794,7 @@ void ModuloSchedulingPass::predIntersect(std::vector<MSchedGraphNode*> &CurrentS
 void ModuloSchedulingPass::succIntersect(std::vector<MSchedGraphNode*> &CurrentSet, std::vector<MSchedGraphNode*> &IntersectResult) {
 
   //Sort CurrentSet so we can use lowerbound
-  sort(CurrentSet.begin(), CurrentSet.end());
+  std::sort(CurrentSet.begin(), CurrentSet.end());
   
   for(unsigned j=0; j < FinalNodeOrder.size(); ++j) {
     for(MSchedGraphNode::succ_iterator P = FinalNodeOrder[j]->succ_begin(), 
@@ -803,9 +804,9 @@ void ModuloSchedulingPass::succIntersect(std::vector<MSchedGraphNode*> &CurrentS
       if(ignoreEdge(FinalNodeOrder[j],*P))
 	continue;
 
-      if(find(CurrentSet.begin(), 
+      if(std::find(CurrentSet.begin(), 
 		     CurrentSet.end(), *P) != CurrentSet.end())
-	if(find(FinalNodeOrder.begin(), FinalNodeOrder.end(), *P) == FinalNodeOrder.end())
+	if(std::find(FinalNodeOrder.begin(), FinalNodeOrder.end(), *P) == FinalNodeOrder.end())
 	  IntersectResult.push_back(*P);
     }
   }
@@ -914,13 +915,13 @@ void ModuloSchedulingPass::orderNodes() {
 	  }
 	  
 	  //Append our node with greatest height to the NodeOrder
-	  if(find(FinalNodeOrder.begin(), FinalNodeOrder.end(), highestHeightNode) == FinalNodeOrder.end()) {
+	  if(std::find(FinalNodeOrder.begin(), FinalNodeOrder.end(), highestHeightNode) == FinalNodeOrder.end()) {
 	    DEBUG(std::cerr << "Adding node to Final Order: " << *highestHeightNode << "\n");
 	    FinalNodeOrder.push_back(highestHeightNode);
 	  }
 
 	  //Remove V from IntersectOrder
-	  IntersectCurrent.erase(find(IntersectCurrent.begin(), 
+	  IntersectCurrent.erase(std::find(IntersectCurrent.begin(), 
 				      IntersectCurrent.end(), highestHeightNode));
 
 
@@ -929,11 +930,11 @@ void ModuloSchedulingPass::orderNodes() {
 		E = highestHeightNode->succ_end(); P != E; ++P) {
 	    //if(lower_bound(CurrentSet->begin(), 
 	    //	   CurrentSet->end(), *P) != CurrentSet->end()) {
-	    if(find(CurrentSet->begin(), CurrentSet->end(), *P) != CurrentSet->end()) {  
+	    if(std::find(CurrentSet->begin(), CurrentSet->end(), *P) != CurrentSet->end()) {  
 	      if(ignoreEdge(highestHeightNode, *P))
 		continue;
 	      //If not already in Intersect, add
-	      if(find(IntersectCurrent.begin(), IntersectCurrent.end(), *P) == IntersectCurrent.end())
+	      if(std::find(IntersectCurrent.begin(), IntersectCurrent.end(), *P) == IntersectCurrent.end())
 		IntersectCurrent.push_back(*P);
 	    }
 	  }
@@ -984,12 +985,12 @@ void ModuloSchedulingPass::orderNodes() {
 	  
 
 	  //Append highest depth node to the NodeOrder
-	   if(find(FinalNodeOrder.begin(), FinalNodeOrder.end(), highestDepthNode) == FinalNodeOrder.end()) {
+	   if(std::find(FinalNodeOrder.begin(), FinalNodeOrder.end(), highestDepthNode) == FinalNodeOrder.end()) {
 	     DEBUG(std::cerr << "Adding node to Final Order: " << *highestDepthNode << "\n");
 	     FinalNodeOrder.push_back(highestDepthNode);
 	   }
 	  //Remove heightestDepthNode from IntersectOrder
-	  IntersectCurrent.erase(find(IntersectCurrent.begin(), 
+	  IntersectCurrent.erase(std::find(IntersectCurrent.begin(), 
 				      IntersectCurrent.end(),highestDepthNode));
 	  
 
@@ -998,13 +999,13 @@ void ModuloSchedulingPass::orderNodes() {
 		E = highestDepthNode->pred_end(); P != E; ++P) {
 	    //if(lower_bound(CurrentSet->begin(), 
 	    //	   CurrentSet->end(), *P) != CurrentSet->end()) {
-	    if(find(CurrentSet->begin(), CurrentSet->end(), *P) != CurrentSet->end()) {
+	    if(std::find(CurrentSet->begin(), CurrentSet->end(), *P) != CurrentSet->end()) {
 	    
 	      if(ignoreEdge(*P, highestDepthNode))
 		continue;
 	    
 	    //If not already in Intersect, add
-	    if(find(IntersectCurrent.begin(), 
+	    if(std::find(IntersectCurrent.begin(), 
 		      IntersectCurrent.end(), *P) == IntersectCurrent.end())
 		IntersectCurrent.push_back(*P);
 	    }
