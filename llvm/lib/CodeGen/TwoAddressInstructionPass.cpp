@@ -151,10 +151,10 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
                     // update live variables for regB
                     if (LV->removeVirtualRegisterKilled(regB, &*mbbi, mi))
-                        LV->addVirtualRegisterKilled(regB, &*mbbi, prevMi);
+                        LV->addVirtualRegisterKilled(regB, prevMi);
 
                     if (LV->removeVirtualRegisterDead(regB, &*mbbi, mi))
-                        LV->addVirtualRegisterDead(regB, &*mbbi, prevMi);
+                        LV->addVirtualRegisterDead(regB, prevMi);
                 }
 
                 // replace all occurences of regB with regA

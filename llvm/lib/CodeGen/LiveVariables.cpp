@@ -99,7 +99,7 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
          "Should have kill for defblock!");
 
   // Add a new kill entry for this basic block.
-  VRInfo.Kills.push_back(std::make_pair(MBB, MI));
+  VRInfo.Kills.push_back(std::make_pair(MI->getParent(), MI));
 
   // Update all dominating blocks to mark them known live.
   const BasicBlock *BB = MBB->getBasicBlock();
@@ -233,7 +233,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 
             assert(VRInfo.DefInst == 0 && "Variable multiply defined!");
             VRInfo.DefInst = MI;
-            VRInfo.Kills.push_back(std::make_pair(MBB, MI)); // Defaults to dead
+            // Defaults to dead
+            VRInfo.Kills.push_back(std::make_pair(MI->getParent(), MI));
           } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
                      AllocatablePhysicalRegisters[MO.getReg()]) {
             HandlePhysRegDef(MO.getReg(), MI);

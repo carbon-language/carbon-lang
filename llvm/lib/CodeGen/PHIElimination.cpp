@@ -122,7 +122,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       // each for each incoming block), the "def" block and instruction fields
       // for the VarInfo is not filled in.
       //
-      LV->addVirtualRegisterKilled(IncomingReg, &MBB, PHICopy);
+      LV->addVirtualRegisterKilled(IncomingReg, PHICopy);
 
       // Since we are going to be deleting the PHI node, if it is the last use
       // of any registers, or if the value itself is dead, we need to move this
@@ -140,7 +140,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
 
         // Add all of the kills back, which will update the appropriate info...
         for (unsigned i = 0, e = Range.size(); i != e; ++i)
-          LV->addVirtualRegisterKilled(Range[i].second, &MBB, PHICopy);
+          LV->addVirtualRegisterKilled(Range[i].second, PHICopy);
       }
 
       RKs = LV->dead_range(MI);
@@ -149,7 +149,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
         Range.assign(RKs.first, RKs.second);
         LV->removeVirtualRegistersDead(RKs.first, RKs.second);
         for (unsigned i = 0, e = Range.size(); i != e; ++i)
-          LV->addVirtualRegisterDead(Range[i].second, &MBB, PHICopy);
+          LV->addVirtualRegisterDead(Range[i].second, PHICopy);
       }
     }
 
@@ -251,7 +251,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
           //
           if (!ValueIsLive) {
             MachineBasicBlock::iterator Prev = prior(I);
-            LV->addVirtualRegisterKilled(SrcReg, &opBlock, Prev);
+            LV->addVirtualRegisterKilled(SrcReg, Prev);
           }
         }
       }

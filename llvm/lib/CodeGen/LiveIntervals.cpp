@@ -263,7 +263,7 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
                         nI.addRange(start, end);
                         added.push_back(&nI);
                         // update live variables
-                        lv_->addVirtualRegisterKilled(nReg, mi->getParent(),mi);
+                        lv_->addVirtualRegisterKilled(nReg, mi);
                         DEBUG(std::cerr << "\t\t\t\tadded new interval: "
                               << nI << '\n');
                     }

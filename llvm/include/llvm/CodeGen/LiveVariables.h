@@ -151,11 +151,9 @@ public:
   /// specified register is killed after being used by the specified
   /// instruction.
   ///
-  void addVirtualRegisterKilled(unsigned IncomingReg,
-                                MachineBasicBlock *MBB,
-                                MachineInstr *MI) {
+  void addVirtualRegisterKilled(unsigned IncomingReg, MachineInstr *MI) {
     RegistersKilled.insert(std::make_pair(MI, IncomingReg));
-    getVarInfo(IncomingReg).Kills.push_back(std::make_pair(MBB, MI));
+    getVarInfo(IncomingReg).Kills.push_back(std::make_pair(MI->getParent(),MI));
   }
 
   /// removeVirtualRegisterKilled - Remove the specified virtual
@@ -189,11 +187,9 @@ public:
   /// addVirtualRegisterDead - Add information about the fact that the specified
   /// register is dead after being used by the specified instruction.
   ///
-  void addVirtualRegisterDead(unsigned IncomingReg,
-                              MachineBasicBlock *MBB,
-                              MachineInstr *MI) {
+  void addVirtualRegisterDead(unsigned IncomingReg, MachineInstr *MI) {
     RegistersDead.insert(std::make_pair(MI, IncomingReg));
-    getVarInfo(IncomingReg).Kills.push_back(std::make_pair(MBB, MI));
+    getVarInfo(IncomingReg).Kills.push_back(std::make_pair(MI->getParent(),MI));
   }
 
   /// removeVirtualRegisterDead - Remove the specified virtual
