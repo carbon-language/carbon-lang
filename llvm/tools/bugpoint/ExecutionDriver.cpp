@@ -18,6 +18,7 @@ BUGPOINT NOTES:
 #include "SystemUtils.h"
 #include "Support/CommandLine.h"
 #include "Support/Statistic.h"
+#include "Support/FileUtilities.h"
 #include <fstream>
 #include <iostream>
 
@@ -583,30 +584,16 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
   // Execute the program, generating an output file...
   std::string Output = executeProgram("", BytecodeFile, SharedObject);
 
-  std::ifstream ReferenceFile(ReferenceOutputFile.c_str());
-  if (!ReferenceFile) {
-    std::cerr << "Couldn't open reference output file '"
-              << ReferenceOutputFile << "'\n";
-    exit(1);
-  }
-
-  std::ifstream OutputFile(Output.c_str());
-  if (!OutputFile) {
-    std::cerr << "Couldn't open output file: " << Output << "'!\n";
-    exit(1);
-  }
-
+  std::string Error;
   bool FilesDifferent = false;
+  if (DiffFiles(ReferenceOutputFile, Output, &Error)) {
+    if (!Error.empty()) {
+      std::cerr << "While diffing output: " << Error << "\n";
+      exit(1);
+    }
+    FilesDifferent = true;
+  }
 
-  // Compare the two files...
-  int C1, C2;
-  do {
-    C1 = ReferenceFile.get();
-    C2 = OutputFile.get();
-    if (C1 != C2) { FilesDifferent = true; break; }
-  } while (C1 != EOF);
-
-  //removeFile(Output);
   if (RemoveBytecode) removeFile(BytecodeFile);
   return FilesDifferent;
 }
