@@ -2323,24 +2323,20 @@ void PPC32ISel::emitBinaryConstOperation(MachineBasicBlock *MBB,
     { PPC::ADDIS, PPC::ADDIS, PPC::ANDISo, PPC::ORIS, PPC::XORIS, PPC::SUBFIC }
   };
 
-  // Handle subtract now by inverting the constant value
-  ConstantInt *CI = Op1;
+  // Handle subtract now by inverting the constant value: X-4 == X+(-4)
   if (Opcode == 1) {
-    ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op1);
-    CI = ConstantSInt::get(Op1->getType(), -CSI->getValue());
+    Op1 = cast<ConstantInt>(ConstantExpr::getNeg(Op1));
+    Opcode = 0;
   }
   
   // xor X, -1 -> not X
-  if (Opcode == 4) {
-    ConstantInt *CI = dyn_cast<ConstantSInt>(Op1);
-    if (CI && CI->isAllOnesValue()) {
-      BuildMI(*MBB, IP, PPC::NOR, 2, DestReg).addReg(Op0Reg).addReg(Op0Reg);
-      return;
-    }
+  if (Opcode == 4 && Op1->isAllOnesValue()) {
+    BuildMI(*MBB, IP, PPC::NOR, 2, DestReg).addReg(Op0Reg).addReg(Op0Reg);
+    return;
   }
   
-  if (Opcode == 2 && !CI->isNullValue()) {
-    unsigned MB, ME, mask = CI->getRawValue();
+  if (Opcode == 2 && !Op1->isNullValue()) {
+    unsigned MB, ME, mask = Op1->getRawValue();
     if (isRunOfOnes(mask, MB, ME)) {
       BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(Op0Reg).addImm(0)
         .addImm(MB).addImm(ME);
@@ -2358,14 +2354,14 @@ void PPC32ISel::emitBinaryConstOperation(MachineBasicBlock *MBB,
   // For Add, Sub, and SubF the instruction takes a signed immediate.  For And,
   // Or, and Xor, the instruction takes an unsigned immediate.  There is no 
   // shifted immediate form of SubF so disallow its opcode for those constants.
-  if (canUseAsImmediateForOpcode(CI, Opcode, false)) {
+  if (canUseAsImmediateForOpcode(Op1, Opcode, false)) {
     if (Opcode < 2 || Opcode == 5)
       BuildMI(*MBB, IP, ImmOpTab[0][Opcode], 2, DestReg).addReg(Op0Reg)
         .addSImm(Op1->getRawValue());
     else
       BuildMI(*MBB, IP, ImmOpTab[0][Opcode], 2, DestReg).addReg(Op0Reg)
         .addZImm(Op1->getRawValue());
-  } else if (canUseAsImmediateForOpcode(CI, Opcode, true) && (Opcode < 5)) {
+  } else if (canUseAsImmediateForOpcode(Op1, Opcode, true) && (Opcode < 5)) {
     if (Opcode < 2)
       BuildMI(*MBB, IP, ImmOpTab[1][Opcode], 2, DestReg).addReg(Op0Reg)
         .addSImm(Op1->getRawValue() >> 16);
