@@ -1757,6 +1757,9 @@ fi
           ac_config_commands="$ac_config_commands test/Programs/External/SPEC/CFP2000/Makefile"
 
 
+          ac_config_commands="$ac_config_commands test/Programs/External/SPEC/CFP2000/177.mesa/Makefile"
+
+
           ac_config_commands="$ac_config_commands test/Programs/External/SPEC/CFP2000/179.art/Makefile"
 
 
@@ -1919,24 +1922,6 @@ fi
           ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/sim/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/NoSource/Makefile"
-
-
-          ac_config_commands="$ac_config_commands test/Programs/NoSource/Flex/Makefile"
-
-
-          ac_config_commands="$ac_config_commands test/Programs/NoSource/Larn/Makefile"
-
-
-          ac_config_commands="$ac_config_commands test/Programs/NoSource/Moria-5.5.2/Makefile"
-
-
-          ac_config_commands="$ac_config_commands test/Programs/NoSource/Povray31/Makefile"
-
-
-          ac_config_commands="$ac_config_commands test/Programs/NoSource/m4/Makefile"
-
-
           ac_config_commands="$ac_config_commands test/Programs/SingleSource/Makefile"
 
 
@@ -2034,9 +2019,6 @@ fi
 
 
           ac_config_commands="$ac_config_commands utils/TableGen/Makefile"
-
-
-          ac_config_commands="$ac_config_commands www/docs/Makefile"
 
 
           ac_config_commands="$ac_config_commands projects/Makefile"
@@ -4422,7 +4404,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4425 "configure"' > conftest.$ac_ext
+  echo '#line 4407 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5263,7 +5245,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5266:" \
+echo "$as_me:5248:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6272,11 +6254,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6275: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6257: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6279: \$? = $ac_status" >&5
+   echo "$as_me:6261: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6504,11 +6486,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6507: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6489: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6511: \$? = $ac_status" >&5
+   echo "$as_me:6493: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6571,11 +6553,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6574: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6556: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6578: \$? = $ac_status" >&5
+   echo "$as_me:6560: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8583,7 +8565,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8586 "configure"
+#line 8568 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -8681,7 +8663,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8684 "configure"
+#line 8666 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10817,11 +10799,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10820: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10802: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10824: \$? = $ac_status" >&5
+   echo "$as_me:10806: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -10884,11 +10866,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10887: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10869: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10891: \$? = $ac_status" >&5
+   echo "$as_me:10873: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12127,7 +12109,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12130 "configure"
+#line 12112 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12225,7 +12207,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12228 "configure"
+#line 12210 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13047,11 +13029,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13050: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13032: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13054: \$? = $ac_status" >&5
+   echo "$as_me:13036: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13114,11 +13096,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13117: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13099: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13121: \$? = $ac_status" >&5
+   echo "$as_me:13103: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15058,11 +15040,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15061: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15043: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15065: \$? = $ac_status" >&5
+   echo "$as_me:15047: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15290,11 +15272,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15293: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15275: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15297: \$? = $ac_status" >&5
+   echo "$as_me:15279: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15357,11 +15339,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15360: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15342: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15364: \$? = $ac_status" >&5
+   echo "$as_me:15346: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17369,7 +17351,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17372 "configure"
+#line 17354 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17467,7 +17449,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17470 "configure"
+#line 17452 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19216,7 +19198,8 @@ echo "$as_me:$LINENO: result: $ac_cv_search_dlopen" >&5
 echo "${ECHO_T}$ac_cv_search_dlopen" >&6
 if test "$ac_cv_search_dlopen" != no; then
   test "$ac_cv_search_dlopen" = "none required" || LIBS="$ac_cv_search_dlopen $LIBS"
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_DLOPEN 1
 _ACEOF
 
@@ -19329,7 +19312,8 @@ echo "$as_me:$LINENO: result: $ac_cv_search_mallinfo" >&5
 echo "${ECHO_T}$ac_cv_search_mallinfo" >&6
 if test "$ac_cv_search_mallinfo" != no; then
   test "$ac_cv_search_mallinfo" = "none required" || LIBS="$ac_cv_search_mallinfo $LIBS"
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_MALLINFO 1
 _ACEOF
 
@@ -20347,13 +20331,15 @@ echo "$as_me:$LINENO: result: $ac_cv_c_bigendian" >&5
 echo "${ECHO_T}$ac_cv_c_bigendian" >&6
 case $ac_cv_c_bigendian in
   yes)
-    cat >>confdefs.h <<\_ACEOF
-#define ENDIAN_BIG 1
+
+cat >>confdefs.h <<\_ACEOF
+#define ENDIAN_BIG
 _ACEOF
  ;;
   no)
-    cat >>confdefs.h <<\_ACEOF
-#define ENDIAN_LITTLE 1
+
+cat >>confdefs.h <<\_ACEOF
+#define ENDIAN_LITTLE
 _ACEOF
  ;;
   *)
@@ -22224,12 +22210,12 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
-
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -22238,7 +22224,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
   int fd;
   int main () {
-  fd = creat ("foo",0777); fd = (int) mmap (0, 1, PROT_READ, MAP_SHARED, fd, 0); unlink ("foo"); return (fd != MAP_FAILED);}
+  fd = creat ("foo",0777); fd = (int) mmap (0, 1, PROT_READ, MAP_SHARED, fd, 0); unlink ("foo"); return (fd != (int) MAP_FAILED);}
 _ACEOF
 rm -f conftest$ac_exeext
 if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
@@ -22273,8 +22259,9 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_func_mmap_file" >&5
 echo "${ECHO_T}$ac_cv_func_mmap_file" >&6
 if test "$ac_cv_func_mmap_file" = yes; then
-   cat >>confdefs.h <<\_ACEOF
-#define HAVE_MMAP_FILE 1
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_MMAP_FILE
 _ACEOF
 
    MMAP_FILE=yes
@@ -22349,8 +22336,9 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_header_mmap_anon" >&5
 echo "${ECHO_T}$ac_cv_header_mmap_anon" >&6
 if test "$ac_cv_header_mmap_anon" = yes; then
-   cat >>confdefs.h <<\_ACEOF
-#define HAVE_MMAP_ANONYMOUS 1
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_MMAP_ANONYMOUS
 _ACEOF
 
 fi
@@ -22426,7 +22414,8 @@ _ACEOF
 
 
 
-for ac_func in getcwd gettimeofday strcspn strdup strerror strspn strstr strtod strtol strtoq strtoll
+
+for ac_func in getcwd gettimeofday strcspn strdup strerror strspn strstr strtod strtol strtoq strtoll strsignal
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -22508,6 +22497,73 @@ _ACEOF
 
 fi
 done
+
+echo "$as_me:$LINENO: checking whether sys_siglist is declared" >&5
+echo $ECHO_N "checking whether sys_siglist is declared... $ECHO_C" >&6
+if test "${ac_cv_have_decl_sys_siglist+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#if HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+
+int
+main ()
+{
+#ifndef sys_siglist
+  char *p = (char *) sys_siglist;
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_have_decl_sys_siglist=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_have_decl_sys_siglist=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_have_decl_sys_siglist" >&5
+echo "${ECHO_T}$ac_cv_have_decl_sys_siglist" >&6
+if test $ac_cv_have_decl_sys_siglist = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_SYS_SIGLIST 1
+_ACEOF
+
+
+else
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_SYS_SIGLIST 0
+_ACEOF
+
+
+fi
+
 
 
 
@@ -23437,6 +23493,7 @@ ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/Makefile.spec`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CFP2000/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CFP2000/177.mesa/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CFP2000/179.art/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CFP2000/183.equake/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CFP2000/188.ammp/Makefile`
@@ -23491,12 +23548,6 @@ ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/P
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Ptrdist/yacr2/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/llubenchmark/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/sim/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/NoSource/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/NoSource/Flex/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/NoSource/Larn/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/NoSource/Moria-5.5.2/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/NoSource/Povray31/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/NoSource/m4/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/Makefile.singlesrc`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/Gizmos/Makefile`
@@ -23530,7 +23581,6 @@ ${srcdir}/autoconf/mkinstalldirs `dirname utils/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname utils/Burg/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname utils/Burg/Doc/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname utils/TableGen/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname www/docs/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname projects/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname projects/sample/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname projects/sample/Makefile.common`
@@ -23627,6 +23677,7 @@ do
   "test/Programs/External/SPEC/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/Makefile" ;;
   "test/Programs/External/SPEC/Makefile.spec" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/Makefile.spec" ;;
   "test/Programs/External/SPEC/CFP2000/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/CFP2000/Makefile" ;;
+  "test/Programs/External/SPEC/CFP2000/177.mesa/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/CFP2000/177.mesa/Makefile" ;;
   "test/Programs/External/SPEC/CFP2000/179.art/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/CFP2000/179.art/Makefile" ;;
   "test/Programs/External/SPEC/CFP2000/183.equake/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/CFP2000/183.equake/Makefile" ;;
   "test/Programs/External/SPEC/CFP2000/188.ammp/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/CFP2000/188.ammp/Makefile" ;;
@@ -23681,12 +23732,6 @@ do
   "test/Programs/MultiSource/Benchmarks/Ptrdist/yacr2/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Ptrdist/yacr2/Makefile" ;;
   "test/Programs/MultiSource/Benchmarks/llubenchmark/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/llubenchmark/Makefile" ;;
   "test/Programs/MultiSource/Benchmarks/sim/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/sim/Makefile" ;;
-  "test/Programs/NoSource/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/NoSource/Makefile" ;;
-  "test/Programs/NoSource/Flex/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/NoSource/Flex/Makefile" ;;
-  "test/Programs/NoSource/Larn/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/NoSource/Larn/Makefile" ;;
-  "test/Programs/NoSource/Moria-5.5.2/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/NoSource/Moria-5.5.2/Makefile" ;;
-  "test/Programs/NoSource/Povray31/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/NoSource/Povray31/Makefile" ;;
-  "test/Programs/NoSource/m4/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/NoSource/m4/Makefile" ;;
   "test/Programs/SingleSource/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/SingleSource/Makefile" ;;
   "test/Programs/SingleSource/Makefile.singlesrc" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/SingleSource/Makefile.singlesrc" ;;
   "test/Programs/SingleSource/Gizmos/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/SingleSource/Gizmos/Makefile" ;;
@@ -23720,7 +23765,6 @@ do
   "utils/Burg/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Burg/Makefile" ;;
   "utils/Burg/Doc/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Burg/Doc/Makefile" ;;
   "utils/TableGen/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/TableGen/Makefile" ;;
-  "www/docs/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS www/docs/Makefile" ;;
   "projects/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Makefile" ;;
   "projects/sample/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/sample/Makefile" ;;
   "projects/sample/Makefile.common" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/sample/Makefile.common" ;;
@@ -24448,6 +24492,7 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     test/Programs/External/SPEC/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/Makefile test/Programs/External/SPEC/Makefile ;;
     test/Programs/External/SPEC/Makefile.spec ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/Makefile.spec test/Programs/External/SPEC/Makefile.spec ;;
     test/Programs/External/SPEC/CFP2000/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/CFP2000/Makefile test/Programs/External/SPEC/CFP2000/Makefile ;;
+    test/Programs/External/SPEC/CFP2000/177.mesa/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/CFP2000/177.mesa/Makefile test/Programs/External/SPEC/CFP2000/177.mesa/Makefile ;;
     test/Programs/External/SPEC/CFP2000/179.art/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/CFP2000/179.art/Makefile test/Programs/External/SPEC/CFP2000/179.art/Makefile ;;
     test/Programs/External/SPEC/CFP2000/183.equake/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/CFP2000/183.equake/Makefile test/Programs/External/SPEC/CFP2000/183.equake/Makefile ;;
     test/Programs/External/SPEC/CFP2000/188.ammp/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/CFP2000/188.ammp/Makefile test/Programs/External/SPEC/CFP2000/188.ammp/Makefile ;;
@@ -24502,12 +24547,6 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     test/Programs/MultiSource/Benchmarks/Ptrdist/yacr2/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Ptrdist/yacr2/Makefile test/Programs/MultiSource/Benchmarks/Ptrdist/yacr2/Makefile ;;
     test/Programs/MultiSource/Benchmarks/llubenchmark/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/llubenchmark/Makefile test/Programs/MultiSource/Benchmarks/llubenchmark/Makefile ;;
     test/Programs/MultiSource/Benchmarks/sim/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/sim/Makefile test/Programs/MultiSource/Benchmarks/sim/Makefile ;;
-    test/Programs/NoSource/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/NoSource/Makefile test/Programs/NoSource/Makefile ;;
-    test/Programs/NoSource/Flex/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/NoSource/Flex/Makefile test/Programs/NoSource/Flex/Makefile ;;
-    test/Programs/NoSource/Larn/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/NoSource/Larn/Makefile test/Programs/NoSource/Larn/Makefile ;;
-    test/Programs/NoSource/Moria-5.5.2/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/NoSource/Moria-5.5.2/Makefile test/Programs/NoSource/Moria-5.5.2/Makefile ;;
-    test/Programs/NoSource/Povray31/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/NoSource/Povray31/Makefile test/Programs/NoSource/Povray31/Makefile ;;
-    test/Programs/NoSource/m4/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/NoSource/m4/Makefile test/Programs/NoSource/m4/Makefile ;;
     test/Programs/SingleSource/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/Makefile test/Programs/SingleSource/Makefile ;;
     test/Programs/SingleSource/Makefile.singlesrc ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/Makefile.singlesrc test/Programs/SingleSource/Makefile.singlesrc ;;
     test/Programs/SingleSource/Gizmos/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/Gizmos/Makefile test/Programs/SingleSource/Gizmos/Makefile ;;
@@ -24541,7 +24580,6 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     utils/Burg/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/Burg/Makefile utils/Burg/Makefile ;;
     utils/Burg/Doc/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/Burg/Doc/Makefile utils/Burg/Doc/Makefile ;;
     utils/TableGen/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/TableGen/Makefile utils/TableGen/Makefile ;;
-    www/docs/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/www/docs/Makefile www/docs/Makefile ;;
     projects/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/Makefile projects/Makefile ;;
     projects/sample/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/sample/Makefile projects/sample/Makefile ;;
     projects/sample/Makefile.common ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/sample/Makefile.common projects/sample/Makefile.common ;;
