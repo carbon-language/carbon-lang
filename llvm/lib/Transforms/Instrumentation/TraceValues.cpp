@@ -292,7 +292,7 @@ InsertPushOnEntryFunc(Function *M,
 static void 
 InsertReleaseRecordedInst(BasicBlock *BB,
                           Function* ReleaseOnReturnFunc) {
-  BasicBlock::iterator BBI = BB->end()--;
+  BasicBlock::iterator BBI = --BB->end();
   BBI = ++BB->getInstList().insert(BBI, new CallInst(ReleaseOnReturnFunc,
                                                      vector<Value*>()));
 }
@@ -318,16 +318,14 @@ ReleasePtrSeqNumbers(BasicBlock *BB,
 }  
 
 
-// Insert print instructions at the end of the basic block *bb
-// for each value in valueVec[] that is live at the end of that basic block,
-// or that is stored to memory in this basic block.
-// If the value is stored to memory, we load it back before printing
+// Insert print instructions at the end of basic block BB for each value
+// computed in BB that is live at the end of BB,
+// or that is stored to memory in BB.
+// If the value is stored to memory, we load it back before printing it
 // We also return all such loaded values in the vector valuesStoredInFunction
 // for printing at the exit from the function.  (Note that in each invocation
 // of the function, this will only get the last value stored for each static
 // store instruction).
-// *bb must be the block in which the value is computed;
-// this is not checked here.
 // 
 static void TraceValuesAtBBExit(BasicBlock *BB,
                                 Function *Printf, Function* HashPtrToSeqNum,
@@ -335,9 +333,18 @@ static void TraceValuesAtBBExit(BasicBlock *BB,
   // Get an iterator to point to the insertion location, which is
   // just before the terminator instruction.
   // 
-  BasicBlock::iterator InsertPos = BB->end()--;
-  assert(BB->back().isTerminator());
+  BasicBlock::iterator InsertPos = --BB->end();
+  assert(InsertPos->isTerminator());
   
+#undef CANNOT_SAVE_CCR_ACROSS_CALLS
+#ifdef CANNOT_SAVE_CCR_ACROSS_CALLS
+  // 
+  // *** DISABLING THIS BECAUSE SAVING %CCR ACROSS CALLS WORKS NOW.
+  // *** DELETE THIS CODE AFTER SOME TESTING.
+  // *** NOTE: THIS CODE IS BROKEN ANYWAY WHEN THE SETCC IS NOT JUST
+  // ***       BEFORE THE BRANCH.
+  // -- Vikram Adve, 7/7/02.
+  // 
   // If the terminator is a conditional branch, insert the trace code just
   // before the instruction that computes the branch condition (just to
   // avoid putting a call between the CC-setting instruction and the branch).
@@ -351,25 +358,32 @@ static void TraceValuesAtBBExit(BasicBlock *BB,
         if (I->getParent() == BB) {
           InsertPos = SetCC = I; // Back up until we can insert before the setcc
         }
+#endif CANNOT_SAVE_CCR_ACROSS_CALLS
 
   std::ostringstream OutStr;
   WriteAsOperand(OutStr, BB, false);
   InsertPrintInst(0, BB, InsertPos, "LEAVING BB:" + OutStr.str(),
                   Printf, HashPtrToSeqNum);
 
-  // Insert a print instruction for each value.
+  // Insert a print instruction for each instruction preceding InsertPos.
+  // The print instructions must go before InsertPos, so we use the
+  // instruction *preceding* InsertPos to check when to terminate the loop.
   // 
-  for (BasicBlock::iterator II = BB->begin(), IE = InsertPos++; II != IE; ++II){
-    if (StoreInst *SI = dyn_cast<StoreInst>(&*II)) {
-      assert(valuesStoredInFunction &&
-             "Should not be printing a store instruction at function exit");
-      LoadInst *LI = new LoadInst(SI->getPointerOperand(), SI->copyIndices(),
+  if (InsertPos != BB->begin()) { // there's at least one instr before InsertPos
+    BasicBlock::iterator II = BB->begin(), IEincl = InsertPos;
+    --IEincl;
+    do {                          // do from II up to IEincl, inclusive
+      if (StoreInst *SI = dyn_cast<StoreInst>(&*II)) {
+        assert(valuesStoredInFunction &&
+               "Should not be printing a store instruction at function exit");
+        LoadInst *LI = new LoadInst(SI->getPointerOperand(), SI->copyIndices(),
                                   "reload."+SI->getPointerOperand()->getName());
-      InsertPos = ++BB->getInstList().insert(InsertPos, LI);
-      valuesStoredInFunction->push_back(LI);
-    }
-    if (ShouldTraceValue(II))
-      InsertVerbosePrintInst(II, BB, InsertPos, "  ", Printf, HashPtrToSeqNum);
+        InsertPos = ++BB->getInstList().insert(InsertPos, LI);
+        valuesStoredInFunction->push_back(LI);
+      }
+      if (ShouldTraceValue(II))
+        InsertVerbosePrintInst(II, BB, InsertPos, "  ", Printf,HashPtrToSeqNum);
+    } while (II++ != IEincl);
   }
 }
 
@@ -398,7 +412,7 @@ static inline void InsertCodeToShowFunctionExit(BasicBlock *BB,
                                                 Function *Printf,
                                                 Function* HashPtrToSeqNum) {
   // Get an iterator to point to the insertion location
-  BasicBlock::iterator BBI = BB->end()--;
+  BasicBlock::iterator BBI = --BB->end();
   ReturnInst &Ret = cast<ReturnInst>(BB->back());
   
   std::ostringstream OutStr;
