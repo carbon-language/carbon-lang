@@ -152,7 +152,7 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
   } else {
     // SCCFunctions - Keep track of the functions in the current SCC
     //
-    hash_set<Function*> SCCFunctions;
+    hash_set<DSGraph*> SCCGraphs;
 
     Function *NF;
     std::vector<Function*>::iterator FirstInSCC = Stack.end();
@@ -160,36 +160,38 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
     do {
       NF = *--FirstInSCC;
       ValMap[NF] = ~0U;
-      SCCFunctions.insert(NF);
 
       // Figure out which graph is the largest one, in order to speed things up
       // a bit in situations where functions in the SCC have widely different
       // graph sizes.
       DSGraph &NFGraph = getDSGraph(*NF);
+      SCCGraphs.insert(&NFGraph);
       if (!SCCGraph || SCCGraph->getGraphSize() < NFGraph.getGraphSize())
         SCCGraph = &NFGraph;
     } while (NF != F);
 
     std::cerr << "Calculating graph for SCC #: " << MyID << " of size: "
-              << SCCFunctions.size() << "\n";
+              << SCCGraphs.size() << "\n";
 
     // Compute the Max SCC Size...
-    if (MaxSCC < SCCFunctions.size())
-      MaxSCC = SCCFunctions.size();
+    if (MaxSCC < SCCGraphs.size())
+      MaxSCC = SCCGraphs.size();
 
     // First thing first, collapse all of the DSGraphs into a single graph for
     // the entire SCC.  We computed the largest graph, so clone all of the other
     // (smaller) graphs into it.  Discard all of the old graphs.
     //
-    for (hash_set<Function*>::iterator I = SCCFunctions.begin(),
-           E = SCCFunctions.end(); I != E; ++I) {
-      DSGraph &G = getDSGraph(**I);
+    for (hash_set<DSGraph*>::iterator I = SCCGraphs.begin(),
+           E = SCCGraphs.end(); I != E; ++I) {
+      DSGraph &G = **I;
       if (&G != SCCGraph) {
         DSGraph::NodeMapTy NodeMap;
         SCCGraph->cloneInto(G, SCCGraph->getScalarMap(),
                             SCCGraph->getReturnNodes(), NodeMap);
         // Update the DSInfo map and delete the old graph...
-        DSInfo[*I] = SCCGraph;
+        for (DSGraph::ReturnNodesTy::iterator I = G.getReturnNodes().begin(),
+               E = G.getReturnNodes().end(); I != E; ++I)
+          DSInfo[I->first] = SCCGraph;
         delete &G;
       }
     }
