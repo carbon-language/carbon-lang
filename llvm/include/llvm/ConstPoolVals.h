@@ -110,11 +110,11 @@ public:
     return Val.Unsigned == V;
   }
 
-  // isIntegral - Equilivent to isSigned() || isUnsigned, but with only a single
+  // isIntegral - Equivalent to isSigned() || isUnsigned, but with only a single
   // virtual function invocation.
   //
   virtual bool isIntegral() const { return 1; }
-
+  
   // ConstPoolInt::get static method: return a constant pool int with the
   // specified value.  as above, we work only with very small values here.
   //
@@ -223,5 +223,25 @@ public:
 
   inline const vector<Use> &getValues() const { return Operands; }
 };
+
+//===---------------------------------------------------------------------------
+// External functions
+//
+
+// Convenience functions to get the value of an integer constant, for an
+// appropriate integer or non-integer type that can be held in an integer.
+// The type of the argument must be the following:
+//   GetSignedIntConstantValue:   signed integer or bool
+//   GetUnsignedIntConstantValue: unsigned integer, bool, or pointer
+//   GetConstantValueAsSignedInt: any of the above, but the value
+//				  must fit into a int64_t.
+// 
+// isValidConstant is set to true if a valid constant was found.
+// 
+int64_t	 GetSignedIntConstantValue	(const Value* val, bool& isValidConst);
+uint64_t GetUnsignedIntConstantValue	(const Value* val, bool& isValidConst);
+int64_t	 GetConstantValueAsSignedInt	(const Value* val, bool& isValidConst);
+
+//===---------------------------------------------------------------------------
 
 #endif
