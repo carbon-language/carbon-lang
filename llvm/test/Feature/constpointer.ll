@@ -8,6 +8,8 @@
 
 %t3 = global int * %t1           ;; Forward reference
 %t1 = global int 4
+%t4 = global int ** %t3		 ;; reference to reference
+
 %t2 = global int * %t1
 
 global float * %0                ;; Forward numeric reference
@@ -18,6 +20,10 @@ global float * %0                ;; Numeric reference
 
 %fptr = global void() * %f       ;; Forward ref method defn
 declare void "f"()               ;; External method
+
+%sptr1   = global [11x sbyte]* %somestr		;; Forward ref to a constant
+%somestr = constant [11x sbyte] c"hello world"
+%sptr2   = global [11x sbyte]* %somestr
 
 implementation
 
