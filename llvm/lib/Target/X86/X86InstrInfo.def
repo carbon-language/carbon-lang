@@ -182,6 +182,13 @@ I(XORrr8      , "xor",   0x30, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)    
 I(XORrr16     , "xor",   0x31, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 ^= R16
 I(XORrr32     , "xor",   0x31, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 ^= R32
 
+// test instructions are just like and, except they don't generate a result (but
+// they do set flags).
+I(TESTri8     , "test",  0xF6, 0, X86II::MRMS0r | X86II::Arg8,  NoIR, NoIR)                  // flags = R8 & imm8
+I(TESTri16    , "test",  0xF7, 0, X86II::MRMS0r | X86II::Arg16 | X86II::OpSize, NoIR, NoIR)  // flags = R16 & imm16
+I(TESTri32    , "test",  0xF7, 0, X86II::MRMS0r | X86II::Arg32, NoIR, NoIR)                  // flags = R32 & imm32
+
+
 // Shift instructions
 I(SHLrr8      , "shl",  0xD2, M_2_ADDR_FLAG, X86II::MRMS4r, O_CL, NoIR)                                   // R8   <<= cl
 I(SHLrr16     , "shl",  0xD3, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::OpSize, O_CL, NoIR)                   // R16  <<= cl
