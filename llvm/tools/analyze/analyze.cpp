@@ -130,8 +130,8 @@ int main(int argc, char **argv) {
         Passes.add(new ModulePassPrinter(Analysis));
 
     } else
-      cerr << argv[0] << ": cannot create pass: "
-           << Analysis->getPassName() << "\n";
+      std::cerr << argv[0] << ": cannot create pass: "
+                << Analysis->getPassName() << "\n";
   }
 
   Passes.run(*CurMod);
