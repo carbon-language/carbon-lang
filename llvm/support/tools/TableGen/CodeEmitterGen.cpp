@@ -1,6 +1,5 @@
 #include "Record.h"
 #include "CodeEmitterGen.h"
-#include <ostream>
 
 void CodeEmitterGen::createEmitter(std::ostream &o) {
   std::vector<Record*> Insts;

@@ -7,7 +7,7 @@
 #define CODEMITTERGEN_H
 
 #include "Record.h"
-#include <ostream>
+#include <iostream>
 
 struct CodeEmitterGen {
   RecordKeeper &Records;
