@@ -1302,6 +1302,24 @@ void CWriter::visitCallInst(CallInst &I) {
         // exception throw.
         Out << "abort()";
         return;
+      case Intrinsic::memcpy:
+        Out << "memcpy(";
+        writeOperand(I.getOperand(1));
+        Out << ", ";
+        writeOperand(I.getOperand(2));
+        Out << ", ";
+        writeOperand(I.getOperand(3));
+        Out << ")";
+        return;
+      case Intrinsic::memmove:
+        Out << "memmove(";
+        writeOperand(I.getOperand(1));
+        Out << ", ";
+        writeOperand(I.getOperand(2));
+        Out << ", ";
+        writeOperand(I.getOperand(3));
+        Out << ")";
+        return;
       }
     }
   visitCallSite(&I);
