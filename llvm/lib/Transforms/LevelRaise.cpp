@@ -21,7 +21,7 @@
 
 #include "llvm/Assembly/Writer.h"
 
-#define DEBUG_PEEPHOLE_INSTS 1
+//#define DEBUG_PEEPHOLE_INSTS 1
 
 #ifdef DEBUG_PEEPHOLE_INSTS
 #define PRINT_PEEPHOLE(ID, NUM, I)            \
