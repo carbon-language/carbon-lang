@@ -367,10 +367,6 @@ public:
   ///
   std::string getAsString() const;
 
-  /// getValues - Return a vector of the component constants that make up this
-  /// array.
-  inline const std::vector<Use> &getValues() const { return Operands; }
-
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.  This always returns false because zero arrays are always
   /// created as ConstantAggregateZero objects.
@@ -409,10 +405,6 @@ public:
   inline const StructType *getType() const {
     return reinterpret_cast<const StructType*>(Value::getType());
   }
-
-  /// getValues - Return a vector of the component constants that make up this
-  /// structure.
-  inline const std::vector<Use> &getValues() const { return Operands; }
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.  This always returns false because zero structs are always
