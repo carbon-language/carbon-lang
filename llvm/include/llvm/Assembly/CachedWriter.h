@@ -62,12 +62,16 @@ public:
   inline CachedWriter &operator<<(const PointerType *X) {
     return *this << (const Value*)X; 
   }
-};
 
-template<class X>
-inline CachedWriter &operator<<(CachedWriter &CW, const X &v) {
-  CW.Out << v;
-  return CW;
-}
+  inline CachedWriter &operator<<(ostream &(&Manip)(ostream &)) {
+    Out << Manip; return *this;
+  }
+
+  template<class X>
+  inline CachedWriter &operator<<(const X &v) {
+    Out << v;
+    return *this;
+  }
+};
 
 #endif
