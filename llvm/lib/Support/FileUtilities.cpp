@@ -18,6 +18,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include <cmath>
 #include <cstring>
+#include <cctype>
 using namespace llvm;
 
 static bool isNumberChar(char C) {
@@ -47,6 +48,14 @@ static bool CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End,
                            std::string *ErrorMsg) {
   char *F1NumEnd, *F2NumEnd;
   double V1 = 0.0, V2 = 0.0; 
+
+  // If one of the positions is at a space and the other isn't, chomp up 'til
+  // the end of the space.
+  while (isspace(*F1P) && F1P != F1End)
+    ++F1P;
+  while (isspace(*F2P) && F2P != F2End)
+    ++F2P;
+
   // If we stop on numbers, compare their difference.
   if (isNumberChar(*F1P) && isNumberChar(*F2P)) {
     V1 = strtod(F1P, &F1NumEnd);
