@@ -45,6 +45,12 @@ namespace {
 
 using namespace DS;
 
+/// isForwarding - Return true if this NodeHandle is forwarding to another
+/// one.
+bool DSNodeHandle::isForwarding() const {
+  return N && N->isForwarding();
+}
+
 DSNode *DSNodeHandle::HandleForwarding() const {
   assert(N->isForwarding() && "Can only be invoked if forwarding!");
 
@@ -674,8 +680,8 @@ void DSNode::MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH) {
     CurNodeH.getNode()->foldNodeCompletely();
     assert(CurNodeH.getNode() && CurNodeH.getOffset() == 0 &&
            "folding did not make offset 0?");
-    NOffset = NH.getOffset();
     NSize = NH.getNode()->getSize();
+    NOffset = NH.getOffset();
     assert(NOffset == 0 && NSize == 1);
   }
 
@@ -782,8 +788,10 @@ DSNodeHandle ReachabilityCloner::getClonedNH(const DSNodeHandle &SrcNH) {
   const DSNode *SN = SrcNH.getNode();
 
   DSNodeHandle &NH = NodeMap[SN];
-  if (!NH.isNull())    // Node already mapped?
-    return DSNodeHandle(NH.getNode(), NH.getOffset()+SrcNH.getOffset());
+  if (!NH.isNull()) {   // Node already mapped?
+    DSNode *NHN = NH.getNode();
+    return DSNodeHandle(NHN, NH.getOffset()+SrcNH.getOffset());
+  }
 
   // If SrcNH has globals and the destination graph has one of the same globals,
   // merge this node with the destination node, which is much more efficient.
@@ -797,7 +805,8 @@ DSNodeHandle ReachabilityCloner::getClonedNH(const DSNodeHandle &SrcNH) {
         // We found one, use merge instead!
         merge(GI->second, Src.getNodeForValue(GV));
         assert(!NH.isNull() && "Didn't merge node!");
-        return DSNodeHandle(NH.getNode(), NH.getOffset()+SrcNH.getOffset());
+        DSNode *NHN = NH.getNode();
+        return DSNodeHandle(NHN, NH.getOffset()+SrcNH.getOffset());
       }
     }
   }
@@ -864,12 +873,12 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
   const DSNode *SN = SrcNH.getNode();
   DSNodeHandle &SCNH = NodeMap[SN];  // SourceClonedNodeHandle
   if (!SCNH.isNull()) {   // Node already cloned?
-    NH.mergeWith(DSNodeHandle(SCNH.getNode(),
+    DSNode *SCNHN = SCNH.getNode();
+    NH.mergeWith(DSNodeHandle(SCNHN,
                               SCNH.getOffset()+SrcNH.getOffset()));
-
     return;  // Nothing to do!
   }
-
+  
   // Okay, so the source node has not already been cloned.  Instead of creating
   // a new DSNode, only to merge it into the one we already have, try to perform
   // the merge in-place.  The only case we cannot handle here is when the offset
@@ -1095,9 +1104,10 @@ void DSNode::remapLinks(DSGraph::NodeMapTy &OldNodeMap) {
   for (unsigned i = 0, e = Links.size(); i != e; ++i)
     if (DSNode *N = Links[i].getNode()) {
       DSGraph::NodeMapTy::const_iterator ONMI = OldNodeMap.find(N);
-      if (ONMI != OldNodeMap.end())
-        Links[i].setTo(ONMI->second.getNode(),
-                       Links[i].getOffset()+ONMI->second.getOffset());
+      if (ONMI != OldNodeMap.end()) {
+        DSNode *ONMIN = ONMI->second.getNode();
+        Links[i].setTo(ONMIN, Links[i].getOffset()+ONMI->second.getOffset());
+      }
     }
 }
 
@@ -1170,7 +1180,8 @@ void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
          E = G.ScalarMap.end(); I != E; ++I) {
     DSNodeHandle &MappedNode = OldNodeMap[I->second.getNode()];
     DSNodeHandle &H = OldValMap[I->first];
-    H.mergeWith(DSNodeHandle(MappedNode.getNode(),
+    DSNode *MappedNodeN = MappedNode.getNode();
+    H.mergeWith(DSNodeHandle(MappedNodeN,
                              I->second.getOffset()+MappedNode.getOffset()));
 
     // If this is a global, add the global to this fn or merge if already exists
@@ -1202,8 +1213,9 @@ void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
          E = G.getReturnNodes().end(); I != E; ++I) {
     const DSNodeHandle &Ret = I->second;
     DSNodeHandle &MappedRet = OldNodeMap[Ret.getNode()];
+    DSNode *MappedRetN = MappedRet.getNode();
     OldReturnNodes.insert(std::make_pair(I->first,
-                          DSNodeHandle(MappedRet.getNode(),
+                          DSNodeHandle(MappedRetN,
                                        MappedRet.getOffset()+Ret.getOffset())));
   }
 }
@@ -1354,7 +1366,7 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
       
       // Add the link from the argument scalar to the provided value
       DSNodeHandle &NH = getNodeForValue(AI);
-      assert(NH.getNode() && "Pointer argument without scalarmap entry?");
+      assert(!NH.isNull() && "Pointer argument without scalarmap entry?");
       NH.mergeWith(CS.getPtrArg(i));
     }
   }
@@ -1777,7 +1789,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   { TIME_REGION(Y, "removeDeadNodes:scalarscan");
   for (DSScalarMap::iterator I = ScalarMap.begin(), E = ScalarMap.end(); I !=E;)
     if (isa<GlobalValue>(I->first)) {             // Keep track of global nodes
-      assert(I->second.getNode() && "Null global node?");
+      assert(!I->second.isNull() && "Null global node?");
       assert(I->second.getNode()->isGlobalNode() && "Should be a global node!");
       GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
 
@@ -1948,7 +1960,7 @@ void DSGraph::AssertGraphOK() const {
 
   for (ScalarMapTy::const_iterator I = ScalarMap.begin(),
          E = ScalarMap.end(); I != E; ++I) {
-    assert(I->second.getNode() && "Null node in scalarmap!");
+    assert(!I->second.isNull() && "Null node in scalarmap!");
     AssertNodeInGraph(I->second.getNode());
     if (GlobalValue *GV = dyn_cast<GlobalValue>(I->first)) {
       assert(I->second.getNode()->isGlobalNode() &&
@@ -1971,7 +1983,7 @@ void DSGraph::computeNodeMapping(const DSNodeHandle &NH1,
   if (N1 == 0 || N2 == 0) return;
 
   DSNodeHandle &Entry = NodeMap[N1];
-  if (Entry.getNode()) {
+  if (!Entry.isNull()) {
     // Termination of recursion!
     if (StrictChecking) {
       assert(Entry.getNode() == N2 && "Inconsistent mapping detected!");
