@@ -1,0 +1,8 @@
+; RUN: llvm-as < %s | opt -dse | llvm-dis | not grep DEAD
+
+void %test(int* %Q) {
+	%P = alloca int
+	%DEAD = load int* %Q
+	store int %DEAD, int* %P  ;; Alloca goes out of scope, dead store.
+	ret void
+}
