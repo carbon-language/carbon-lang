@@ -192,19 +192,19 @@ can do.</p>
 <p>To start out, you need to include the CommandLine header file into your
 program:</p>
 
-<pre>
+<div class="doc_code"><pre>
   #include "Support/CommandLine.h"
-</pre>
+</pre></div>
 
 <p>Additionally, you need to add this as the first line of your main
 program:</p>
 
-<pre>
+<div class="doc_code"><pre>
 int main(int argc, char **argv) {
   <a href="#cl::ParseCommandLineOptions">cl::ParseCommandLineOptions</a>(argc, argv);
   ...
 }
-</pre>
+</pre></div>
 
 <p>... which actually parses the arguments and fills in the variable
 declarations.</p>
@@ -220,9 +220,9 @@ to specify where to put the output.  With the CommandLine library, this is
 represented like this:</p>
 
 <a name="value_desc_example"></a>
-<pre>
+<div class="doc_code"><pre>
 <a href="#cl::opt">cl::opt</a>&lt;string&gt; OutputFilename("<i>o</i>", <a href="#cl::desc">cl::desc</a>("<i>Specify output filename</i>"), <a href="#cl::value_desc">cl::value_desc</a>("<i>filename</i>"));
-</pre>
+</pre></div>
 
 <p>This declares a global variable "<tt>OutputFilename</tt>" that is used to
 capture the result of the "<tt>o</tt>" argument (first parameter).  We specify
@@ -235,25 +235,25 @@ that the data type that we are parsing is a string.</p>
 to output for the "<tt>--help</tt>" option.  In this case, we get a line that
 looks like this:</p>
 
-<pre>
+<div class="doc_code"><pre>
 USAGE: compiler [options]
 
 OPTIONS:
   -help             - display available options (--help-hidden for more)
   <b>-o &lt;filename&gt;     - Specify output filename</b>
-</pre>
+</pre></div>
 
 <p>Because we specified that the command line option should parse using the
 <tt>string</tt> data type, the variable declared is automatically usable as a
 real string in all contexts that a normal C++ string object may be used.  For
 example:</p>
 
-<pre>
+<div class="doc_code"><pre>
   ...
   ofstream Output(OutputFilename.c_str());
   if (Out.good()) ...
   ...
-</pre>
+</pre></div>
 
 <p>There are many different options that you can use to customize the command
 line option handling library, but the above example shows the general interface
@@ -270,9 +270,9 @@ href="#positional">positional</a> arguments to be specified for the program.
 These positional arguments are filled with command line parameters that are not
 in option form.  We use this feature like this:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <a href="#cl::opt">cl::opt</a>&lt;string&gt; InputFilename(<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;input file&gt;</i>"), <a href="#cl::init">cl::init</a>("<i>-</i>"));
-</pre>
+</pre></div>
 
 <p>This declaration indicates that the first positional argument should be
 treated as the input filename.  Here we use the <tt><a
@@ -285,16 +285,16 @@ that the user always specify an input filename, we would add the <tt><a
 href="#cl::Required">cl::Required</a></tt> flag, and we could eliminate the
 <tt><a href="#cl::init">cl::init</a></tt> modifier, like this:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <a href="#cl::opt">cl::opt</a>&lt;string&gt; InputFilename(<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;input file&gt;</i>"), <b><a href="#cl::Required">cl::Required</a></b>);
-</pre>
+</pre></div>
 
 <p>Again, the CommandLine library does not require the options to be specified
 in any particular order, so the above declaration is equivalent to:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <a href="#cl::opt">cl::opt</a>&lt;string&gt; InputFilename(<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::Required">cl::Required</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;input file&gt;</i>"));
-</pre>
+</pre></div>
 
 <p>By simply adding the <tt><a href="#cl::Required">cl::Required</a></tt> flag,
 the CommandLine library will automatically issue an error if the argument is not
@@ -304,13 +304,13 @@ can alter the default behaviour of the library, on a per-option basis.  By
 adding one of the declarations above, the <tt>--help</tt> option synopsis is now
 extended to:</p>
 
-<pre>
+<div class="doc_code"><pre>
 USAGE: compiler [options] <b>&lt;input file&gt;</b>
 
 OPTIONS:
   -help             - display available options (--help-hidden for more)
   -o &lt;filename&gt;     - Specify output filename
-</pre>
+</pre></div>
 
 <p>... indicating that an input filename is expected.</p>
 
@@ -329,11 +329,11 @@ file, "<tt>--quiet</tt>" to enable quiet mode, and "<tt>-q</tt>" for backwards
 compatibility with some of our users.  We can support these by declaring options
 of boolean type like this:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <a href="#cl::opt">cl::opt</a>&lt;bool&gt; Force ("<i>f</i>", <a href="#cl::desc">cl::desc</a>("<i>Overwrite output files</i>"));
 <a href="#cl::opt">cl::opt</a>&lt;bool&gt; Quiet ("<i>quiet</i>", <a href="#cl::desc">cl::desc</a>("<i>Don't print informational messages</i>"));
 <a href="#cl::opt">cl::opt</a>&lt;bool&gt; Quiet2("<i>q</i>", <a href="#cl::desc">cl::desc</a>("<i>Don't print informational messages</i>"), <a href="#cl::Hidden">cl::Hidden</a>);
-</pre>
+</pre></div>
 
 <p>This does what you would expect: it declares three boolean variables
 ("<tt>Force</tt>", "<tt>Quiet</tt>", and "<tt>Quiet2</tt>") to recognize these
@@ -351,12 +351,12 @@ it assigns the value of true to the variable), or it allows the values
 "<tt>true</tt>" or "<tt>false</tt>" to be specified, allowing any of the
 following inputs:</p>
 
-<pre>
+<div class="doc_code"><pre>
  compiler -f          # No value, 'Force' == true
  compiler -f=true     # Value specified, 'Force' == true
  compiler -f=TRUE     # Value specified, 'Force' == true
  compiler -f=FALSE    # Value specified, 'Force' == false
-</pre>
+</pre></div>
 
 <p>... you get the idea.  The <a href="#boolparser">bool parser</a> just turns
 the string values into boolean values, and rejects things like '<tt>compiler
@@ -367,7 +367,7 @@ library calls to parse the string value into the specified data type.</p>
 
 <p>With the declarations above, "<tt>compiler --help</tt>" emits this:</p>
 
-<pre>
+<div class="doc_code"><pre>
 USAGE: compiler [options] &lt;input file&gt;
 
 OPTIONS:
@@ -375,11 +375,11 @@ OPTIONS:
   -o     - Override output filename
   <b>-quiet - Don't print informational messages</b>
   -help  - display available options (--help-hidden for more)
-</pre>
+</pre></div>
 
 <p>and "<tt>opt --help-hidden</tt>" prints this:</p>
 
-<pre>
+<div class="doc_code"><pre>
 USAGE: compiler [options] &lt;input file&gt;
 
 OPTIONS:
@@ -388,7 +388,7 @@ OPTIONS:
   <b>-q     - Don't print informational messages</b>
   -quiet - Don't print informational messages
   -help  - display available options (--help-hidden for more)
-</pre>
+</pre></div>
 
 <p>This brief example has shown you how to use the '<tt><a
 href="#cl::opt">cl::opt</a></tt>' class to parse simple scalar command line
@@ -408,22 +408,22 @@ and <a href="#list">lists</a> of options.</p>
 <p>So far, the example works well, except for the fact that we need to check the
 quiet condition like this now:</p>
 
-<pre>
+<div class="doc_code"><pre>
 ...
   if (!Quiet &amp;&amp; !Quiet2) printInformationalMessage(...);
 ...
-</pre>
+</pre></div>
 
 <p>... which is a real pain!  Instead of defining two values for the same
 condition, we can use the "<tt><a href="#cl::alias">cl::alias</a></tt>" class to make the "<tt>-q</tt>"
 option an <b>alias</b> for the "<tt>-quiet</tt>" option, instead of providing
 a value itself:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <a href="#cl::opt">cl::opt</a>&lt;bool&gt; Force ("<i>f</i>", <a href="#cl::desc">cl::desc</a>("<i>Overwrite output files</i>"));
 <a href="#cl::opt">cl::opt</a>&lt;bool&gt; Quiet ("<i>quiet</i>", <a href="#cl::desc">cl::desc</a>("<i>Don't print informational messages</i>"));
 <a href="#cl::alias">cl::alias</a>     QuietA("<i>q</i>", <a href="#cl::desc">cl::desc</a>("<i>Alias for -quiet</i>"), <a href="#cl::aliasopt">cl::aliasopt</a>(Quiet));
-</pre>
+</pre></div>
 
 <p>The third line (which is the only one we modified from above) defines a
 "<tt>-q</tt> alias that updates the "<tt>Quiet</tt>" variable (as specified by
@@ -436,11 +436,11 @@ output</tt>).</p>
 
 <p>Now the application code can simply use:</p>
 
-<pre>
+<div class="doc_code"><pre>
 ...
   if (!Quiet) printInformationalMessage(...);
 ...
-</pre>
+</pre></div>
 
 <p>... which is much nicer!  The "<tt><a href="#cl::alias">cl::alias</a></tt>"
 can be used to specify an alternative name for any variable type, and has many
@@ -486,7 +486,7 @@ see if some level &gt;= "<tt>-O1</tt>" is enabled.</li>
 CommandLine library fill it in with the appropriate level directly, which is
 used like this:</p>
 
-<pre>
+<div class="doc_code"><pre>
 enum OptLevel {
   g, O1, O2, O3
 };
@@ -502,7 +502,7 @@ enum OptLevel {
 ...
   if (OptimizationLevel &gt;= O2) doPartialRedundancyElimination(...);
 ...
-</pre>
+</pre></div>
 
 <p>This declaration defines a variable "<tt>OptimizationLevel</tt>" of the
 "<tt>OptLevel</tt>" enum type.  This variable can be assigned any of the values
@@ -514,7 +514,7 @@ enum values can be specified.  The "<tt>clEnumVal</tt>" macros ensure that the
 command line arguments matched the enum values.  With this option added, our
 help output now is:</p>
 
-<pre>
+<div class="doc_code"><pre>
 USAGE: compiler [options] &lt;input file&gt;
 
 OPTIONS:
@@ -527,14 +527,14 @@ OPTIONS:
   -help         - display available options (--help-hidden for more)
   -o &lt;filename&gt; - Specify output filename
   -quiet        - Don't print informational messages
-</pre>
+</pre></div>
 
 <p>In this case, it is sort of awkward that flag names correspond directly to
 enum names, because we probably don't want a enum definition named "<tt>g</tt>"
 in our program.  Because of this, we can alternatively write this example like
 this:</p>
 
-<pre>
+<div class="doc_code"><pre>
 enum OptLevel {
   Debug, O1, O2, O3
 };
@@ -550,7 +550,7 @@ enum OptLevel {
 ...
   if (OptimizationLevel == Debug) outputDebugInfo(...);
 ...
-</pre>
+</pre></div>
 
 <p>By using the "<tt>clEnumValN</tt>" macro instead of "<tt>clEnumVal</tt>", we
 can directly specify the name that the flag should get.  In general a direct
@@ -575,7 +575,7 @@ following options, of which only one can be specified at a time:
 our optimization level flags, but we also specify an option name.  For this
 case, the code looks like this:</p>
 
-<pre>
+<div class="doc_code"><pre>
 enum DebugLev {
   nodebuginfo, quick, detailed
 };
@@ -587,14 +587,14 @@ enum DebugLev {
      clEnumVal(quick,               "<i>enable quick debug information</i>"),
      clEnumVal(detailed,            "<i>enable detailed debug information</i>"),
     clEnumValEnd));
-</pre>
+</pre></div>
 
 <p>This definition defines an enumerated command line variable of type "<tt>enum
 DebugLev</tt>", which works exactly the same way as before.  The difference here
 is just the interface exposed to the user of your program and the help output by
 the "<tt>--help</tt>" option:</p>
 
-<pre>
+<div class="doc_code"><pre>
 USAGE: compiler [options] &lt;input file&gt;
 
 OPTIONS:
@@ -611,7 +611,7 @@ OPTIONS:
   -help         - display available options (--help-hidden for more)
   -o &lt;filename&gt; - Specify output filename
   -quiet        - Don't print informational messages
-</pre>
+</pre></div>
 
 <p>Again, the only structural difference between the debug level declaration and
 the optimization level declaration is that the debug level declaration includes
@@ -637,16 +637,16 @@ important.  This is what the "<tt><a href="#cl::list">cl::list</a></tt>"
 template is for.  First, start by defining an enum of the optimizations that you
 would like to perform:</p>
 
-<pre>
+<div class="doc_code"><pre>
 enum Opts {
   // 'inline' is a C++ keyword, so name it 'inlining'
   dce, constprop, inlining, strip
 };
-</pre>
+</pre></div>
 
 <p>Then define your "<tt><a href="#cl::list">cl::list</a></tt>" variable:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <a href="#cl::list">cl::list</a>&lt;Opts&gt; OptimizationList(<a href="#cl::desc">cl::desc</a>("<i>Available Optimizations:</i>"),
   <a href="#cl::values">cl::values</a>(
     clEnumVal(dce               , "<i>Dead Code Elimination</i>"),
@@ -654,17 +654,17 @@ enum Opts {
    clEnumValN(inlining, "<i>inline</i>", "<i>Procedure Integration</i>"),
     clEnumVal(strip             , "<i>Strip Symbols</i>"),
   clEnumValEnd));
-</pre>
+</pre></div>
 
 <p>This defines a variable that is conceptually of the type
 "<tt>std::vector&lt;enum Opts&gt;</tt>".  Thus, you can access it with standard
 vector methods:</p>
 
-<pre>
+<div class="doc_code"><pre>
   for (unsigned i = 0; i != OptimizationList.size(); ++i)
     switch (OptimizationList[i])
        ...
-</pre>
+</pre></div>
 
 <p>... to iterate through the list of options specified.</p>
 
@@ -676,11 +676,11 @@ arguments together if there may be more than one specified.  In the case of a
 linker, for example, the linker takes several '<tt>.o</tt>' files, and needs to
 capture them into a list.  This is naturally specified as:</p>
 
-<pre>
+<div class="doc_code"><pre>
 ...
 <a href="#cl::list">cl::list</a>&lt;std::string&gt; InputFilenames(<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::desc">cl::desc</a>("&lt;Input files&gt;"), <a href="#cl::OneOrMore">cl::OneOrMore</a>);
 ...
-</pre>
+</pre></div>
 
 <p>This variable works just like a "<tt>vector&lt;string&gt;</tt>" object.  As
 such, accessing the list is simple, just like above.  In this example, we used
@@ -709,17 +709,17 @@ call in main.  This additional argument is then printed as the overview
 information for your program, allowing you to include any additional information
 that you want.  For example:</p>
 
-<pre>
+<div class="doc_code"><pre>
 int main(int argc, char **argv) {
   <a href="#cl::ParseCommandLineOptions">cl::ParseCommandLineOptions</a>(argc, argv, " CommandLine compiler example\n\n"
                               "  This program blah blah blah...\n");
   ...
 }
-</pre>
+</pre></div>
 
-<p>Would yield the help output:</p>
+<p>would yield the help output:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <b>OVERVIEW: CommandLine compiler example
 
   This program blah blah blah...</b>
@@ -730,7 +730,7 @@ OPTIONS:
   ...
   -help             - display available options (--help-hidden for more)
   -o &lt;filename&gt;     - Specify output filename
-</pre>
+</pre></div>
 
 </div>
 
@@ -764,20 +764,20 @@ tool takes a regular expression argument, and an optional filename to search
 through (which defaults to standard input if a filename is not specified).
 Using the CommandLine library, this would be specified as:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <a href="#cl::opt">cl::opt</a>&lt;string&gt; Regex   (<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;regular expression&gt;</i>"), <a href="#cl::Required">cl::Required</a>);
 <a href="#cl::opt">cl::opt</a>&lt;string&gt; Filename(<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;input file&gt;</i>"), <a href="#cl::init">cl::init</a>("<i>-</i>"));
-</pre>
+</pre></div>
 
 <p>Given these two option declarations, the <tt>--help</tt> output for our grep
 replacement would look like this:</p>
 
-<pre>
+<div class="doc_code"><pre>
 USAGE: spiffygrep [options] <b>&lt;regular expression&gt; &lt;input file&gt;</b>
 
 OPTIONS:
   -help - display available options (--help-hidden for more)
-</pre>
+</pre></div>
 
 <p>... and the resultant program could be used just like the standard
 <tt>grep</tt> tool.</p>
@@ -804,7 +804,7 @@ first, you will have trouble doing this, because it will try to find an argument
 named '<tt>-foo</tt>', and will fail (and single quotes will not save you).
 Note that the system <tt>grep</tt> has the same problem:</p>
 
-<pre>
+<div class="doc_code"><pre>
   $ spiffygrep '-foo' test.txt
   Unknown command line argument '-foo'.  Try: spiffygrep --help'
 
@@ -813,7 +813,7 @@ Note that the system <tt>grep</tt> has the same problem:</p>
   grep: illegal option -- o
   grep: illegal option -- o
   Usage: grep -hblcnsviw pattern file . . .
-</pre>
+</pre></div>
 
 <p>The solution for this problem is the same for both your tool and the system
 version: use the '<tt>--</tt>' marker.  When the user specifies '<tt>--</tt>' on
@@ -821,10 +821,10 @@ the command line, it is telling the program that all options after the
 '<tt>--</tt>' should be treated as positional arguments, not options.  Thus, we
 can use it like this:</p>
 
-<pre>
+<div class="doc_code"><pre>
   $ spiffygrep -- -foo test.txt
     ...output...
-</pre>
+</pre></div>
 
 </div>
 
@@ -847,7 +847,9 @@ can use it like this:</p>
   <tt>cl::list::getPosition(optnum)</tt> method. This method returns the
   absolute position (as found on the command line) of the <tt>optnum</tt>
   item in the <tt>cl::list</tt>.</p>
-  <p>The idiom for usage is like this:<pre><tt>
+  <p>The idiom for usage is like this:</p>
+  
+  <div class="doc_code"><pre>
   static cl::list&lt;std::string&gt; Files(cl::Positional, cl::OneOrMore);
   static cl::listlt;std::string&gt; Libraries("l", cl::ZeroOrMore);
 
@@ -877,8 +879,8 @@ can use it like this:</p>
       else
         break; // we're done with the list
     }
-  }
-  </tt></pre></p>
+  }</pre></div>
+
   <p>Note that, for compatibility reasons, the <tt>cl::opt</tt> also supports an
   <tt>unsigned getPosition()</tt> option that will provide the absolute position
   of that option. You can apply the same approach as above with a 
@@ -906,23 +908,23 @@ arguments to the script.  These arguments to the script are parsed by the bourne
 shell command line option processor, but are not interpreted as options to the
 shell itself.  Using the CommandLine library, we would specify this as:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <a href="#cl::opt">cl::opt</a>&lt;string&gt; Script(<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;input script&gt;</i>"), <a href="#cl::init">cl::init</a>("-"));
 <a href="#cl::list">cl::list</a>&lt;string&gt;  Argv(<a href="#cl::ConsumeAfter">cl::ConsumeAfter</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;program arguments&gt;...</i>"));
 <a href="#cl::opt">cl::opt</a>&lt;bool&gt;    Trace("<i>x</i>", <a href="#cl::desc">cl::desc</a>("<i>Enable trace output</i>"));
-</pre>
+</pre></div>
 
 <p>which automatically provides the help output:</p>
 
-<pre>
+<div class="doc_code"><pre>
 USAGE: spiffysh [options] <b>&lt;input script&gt; &lt;program arguments&gt;...</b>
 
 OPTIONS:
   -help - display available options (--help-hidden for more)
   <b>-x    - Enable trace output</b>
-</pre>
+</pre></div>
 
-<p>At runtime, if we run our new shell replacement as '<tt>spiffysh -x test.sh
+<p>At runtime, if we run our new shell replacement as `<tt>spiffysh -x test.sh
 -a -x -y bar</tt>', the <tt>Trace</tt> variable will be set to true, the
 <tt>Script</tt> variable will be set to "<tt>test.sh</tt>", and the
 <tt>Argv</tt> list will contain <tt>["-a", "-x", "-y", "bar"]</tt>, because they
@@ -1308,7 +1310,7 @@ and they will still work as designed.</p>
 input option into (potentially multiple) prefix and grouping options.  The
 strategy basically looks like this:</p>
 
-<p><tt>parse(string OrigInput) {</tt>
+<div class="doc_code"><tt>parse(string OrigInput) {</tt>
 
 <ol>
 <li><tt>string input = OrigInput;</tt>
@@ -1324,10 +1326,10 @@ strategy basically looks like this:</p>
 &nbsp;&nbsp;while (!isOption(input) &amp;&amp; !input.empty()) input.pop_back();<br>
 }</tt>
 <li><tt>if (!OrigInput.empty()) error();</tt></li>
-
 </ol>
 
 <p><tt>}</tt></p>
+</div>
 
 </div>
 
@@ -1452,13 +1454,13 @@ options, and is the one used most of the time.  It is a templated class which
 can take up to three arguments (all except for the first have default values
 though):</p>
 
-<pre>
+<div class="doc_code"><pre>
 <b>namespace</b> cl {
   <b>template</b> &lt;<b>class</b> DataType, <b>bool</b> ExternalStorage = <b>false</b>,
             <b>class</b> ParserClass = parser&lt;DataType&gt; &gt;
   <b>class</b> opt;
 }
-</pre>
+</pre></div>
 
 <p>The first template argument specifies what underlying data type the command
 line argument is, and is used to select a default parser implementation.  The
@@ -1486,13 +1488,13 @@ href="#customparser">custom parser</a>.</p>
 line options.  It too is a templated class which can take up to three
 arguments:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <b>namespace</b> cl {
   <b>template</b> &lt;<b>class</b> DataType, <b>class</b> Storage = <b>bool</b>,
             <b>class</b> ParserClass = parser&lt;DataType&gt; &gt;
   <b>class</b> list;
 }
-</pre>
+</pre></div>
 
 <p>This class works the exact same as the <a
 href="#cl::opt"><tt>cl::opt</tt></a> class, except that the second argument is
@@ -1512,11 +1514,11 @@ be used.</p>
 <p>The <tt>cl::alias</tt> class is a nontemplated class that is used to form
 aliases for other arguments.</p>
 
-<pre>
+<div class="doc_code"><pre>
 <b>namespace</b> cl {
   <b>class</b> alias;
 }
-</pre>
+</pre></div>
 
 <p>The <a href="#cl::aliasopt"><tt>cl::aliasopt</tt></a> attribute should be
 used to specify which option this is an alias for.  Alias arguments default to
@@ -1535,22 +1537,22 @@ the conversion from string to data.</p>
 <p>The <tt>cl::extrahelp</tt> class is a nontemplated class that allows extra
 help text to be printed out for the <tt>--help</tt> option.</p>
 
-<pre>
+<div class="doc_code"><pre>
 <b>namespace</b> cl {
   <b>struct</b> extrahelp;
 }
-</pre>
+</pre></div>
 
 <p>To use the extrahelp, simply construct one with a <tt>const char*</tt> 
 parameter to the constructor. The text passed to the constructor will be printed
 at the bottom of the help message, verbatim. Note that multiple
-<tt>cl::extrahelp</tt> <b>can</b> be used but this practice is discouraged. If
+<tt>cl::extrahelp</tt> <b>can</b> be used, but this practice is discouraged. If
 your tool needs to print additional help information, put all that help into a
 single <tt>cl::extrahelp</tt> instance.</p>
 <p>For example:</p>
-<pre>
+<div class="doc_code"><pre>
   cl::extrahelp("\nADDITIONAL HELP:\n\n  This is the extra help\n");
-</pre>
+</pre></div>
 </div>
 
 <!-- ======================================================================= -->
@@ -1677,13 +1679,13 @@ this the default for all <tt>unsigned</tt> options.</p>
 
 <p>To start out, we declare our new <tt>FileSizeParser</tt> class:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <b>struct</b> FileSizeParser : <b>public</b> cl::basic_parser&lt;<b>unsigned</b>&gt; {
   <i>// parse - Return true on error.</i>
   <b>bool</b> parse(cl::Option &amp;O, <b>const char</b> *ArgName, <b>const</b> std::string &amp;ArgValue,
              <b>unsigned</b> &amp;Val);
 };
-</pre>
+</pre></div>
 
 <p>Our new class inherits from the <tt>cl::basic_parser</tt> template class to
 fill in the default, boiler plate, code for us.  We give it the data type that
@@ -1699,7 +1701,7 @@ is not well formed, the parser should output an error message and return true.
 Otherwise it should return false and set '<tt>Val</tt>' to the parsed value.  In
 our example, we implement <tt>parse</tt> as:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <b>bool</b> FileSizeParser::parse(cl::Option &amp;O, <b>const char</b> *ArgName,
                            <b>const</b> std::string &amp;Arg, <b>unsigned</b> &amp;Val) {
   <b>const char</b> *ArgStart = Arg.c_str();
@@ -1725,7 +1727,7 @@ our example, we implement <tt>parse</tt> as:</p>
     }
   }
 }
-</pre>
+</pre></div>
 
 <p>This function implements a very simple parser for the kinds of strings we are
 interested in.  Although it has some holes (it allows "<tt>123KKK</tt>" for
@@ -1734,25 +1736,25 @@ itself to print out the error message (the <tt>error</tt> method always returns
 true) in order to get a nice error message (shown below).  Now that we have our
 parser class, we can use it like this:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <b>static</b> <a href="#cl::opt">cl::opt</a>&lt;<b>unsigned</b>, <b>false</b>, FileSizeParser&gt;
 MFS(<i>"max-file-size"</i>, <a href="#cl::desc">cl::desc</a>(<i>"Maximum file size to accept"</i>),
     <a href="#cl::value_desc">cl::value_desc</a>("<i>size</i>"));
-</pre>
+</pre></div>
 
 <p>Which adds this to the output of our program:</p>
 
-<pre>
+<div class="doc_code"><pre>
 OPTIONS:
   -help                 - display available options (--help-hidden for more)
   ...
   <b>-max-file-size=&lt;size&gt; - Maximum file size to accept</b>
-</pre>
+</pre></div>
 
 <p>And we can test that our parse works correctly now (the test program just
 prints out the max-file-size argument value):</p>
 
-<pre>
+<div class="doc_code"><pre>
 $ ./test
 MFS: 0
 $ ./test -max-file-size=123MB
@@ -1761,7 +1763,7 @@ $ ./test -max-file-size=3G
 MFS: 3221225472
 $ ./test -max-file-size=dog
 -max-file-size option: 'dog' value invalid for file size argument!
-</pre>
+</pre></div>
 
 <p>It looks like it works.  The error message that we get is nice and helpful,
 and we seem to accept reasonable file sizes.  This wraps up the "custom parser"
