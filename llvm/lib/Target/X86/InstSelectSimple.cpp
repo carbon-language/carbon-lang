@@ -207,7 +207,7 @@ namespace {
       // the register here...
       //
       if (Constant *C = dyn_cast<Constant>(V)) {
-        copyConstantToRegister(C, Reg, BB, IPt);
+        copyConstantToRegister(C, Reg, MBB, IPt);
       } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
         // Move the address of the global into the register
         BMI(MBB, IPt, X86::MOVir32, 1, Reg).addReg(GV);
