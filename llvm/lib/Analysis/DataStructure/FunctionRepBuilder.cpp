@@ -63,10 +63,11 @@ void InitVisitor::visitCallInst(CallInst *CI) {
   Rep->CallNodes.push_back(C);
   Rep->CallMap[CI] = C;
       
-  if (isa<PointerType>(CI->getType())) {
+  if (PointerType *PT = dyn_cast<PointerType>(CI->getType())) {
     // Create a critical shadow node to represent the memory object that the
     // return value points to...
-    ShadowDSNode *Shad = new ShadowDSNode(C, Func->getParent(), true);
+    ShadowDSNode *Shad = new ShadowDSNode(PT->getElementType(),
+                                          Func->getParent(), true);
     Rep->ShadowNodes.push_back(Shad);
     
     // The return value of the function is a pointer to the shadow value
@@ -142,13 +143,14 @@ void FunctionRepBuilder::initializeWorkList(Function *Func) {
   for (Function::ArgumentListType::iterator I = Func->getArgumentList().begin(),
          E = Func->getArgumentList().end(); I != E; ++I)
     // Only process arguments that are of pointer type...
-    if (isa<PointerType>((*I)->getType())) {
+    if (PointerType *PT = dyn_cast<PointerType>((*I)->getType())) {
       ArgDSNode *Arg = new ArgDSNode(*I);
       ArgNodes.push_back(Arg);
       
       // Add a critical shadow value for it to represent what it is pointing
       // to and add this to the value map...
-      ShadowDSNode *Shad = new ShadowDSNode(Arg, Func->getParent(), true);
+      ShadowDSNode *Shad = new ShadowDSNode(PT->getElementType(),
+                                            Func->getParent(), true);
       ShadowNodes.push_back(Shad);
       ValueMap[*I].add(PointerVal(Shad), *I);
       
@@ -245,11 +247,10 @@ void FunctionRepBuilder::visitLoadInst(LoadInst *LI) {
 
     if (Field.size()) {             // Field loaded wasn't null?
       Changed |= LIPVS.add(Field);
-    } else if (Ptr.Node->NodeType == DSNode::ShadowNode) {
+    } else if (ShadowDSNode *Shad = dyn_cast<ShadowDSNode>(Ptr.Node)) {
       // If we are loading a null field out of a shadow node, we need to
       // synthesize a new shadow node and link it in...
       //
-      ShadowDSNode *Shad = (ShadowDSNode*)Ptr.Node;
       ShadowDSNode *SynthNode =
         Shad->synthesizeNode(DestTy->getElementType(), this);
       Field.add(SynthNode);
