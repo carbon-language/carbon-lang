@@ -57,12 +57,12 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
   if (Ty->isPrimitiveType() ||
       isa<OpaqueType>(Ty)) return Ty;  // Don't convert primitives
 
-  map<const Type *, PATypeHolder<Type> >::iterator I = TypeMap.find(Ty);
+  map<const Type *, PATypeHolder>::iterator I = TypeMap.find(Ty);
   if (I != TypeMap.end()) return I->second;
 
   const Type *DestTy = 0;
 
-  PATypeHolder<Type> PlaceHolder = OpaqueType::get();
+  PATypeHolder PlaceHolder = OpaqueType::get();
   TypeMap.insert(std::make_pair(Ty, PlaceHolder.get()));
 
   switch (Ty->getPrimitiveID()) {
@@ -226,7 +226,7 @@ void MutateStructTypes::setTransforms(const TransformsType &XForm) {
     }
 
     // Create a new type that corresponds to the destination type
-    PATypeHolder<StructType> NSTy = StructType::get(NewType);
+    PATypeHolder NSTy = StructType::get(NewType);
 
     // Refine the old opaque type to the new type to properly handle recursive
     // types...
@@ -235,7 +235,8 @@ void MutateStructTypes::setTransforms(const TransformsType &XForm) {
     cast<DerivedType>(OldTypeStub)->refineAbstractTypeTo(NSTy);
 
     // Add the transformation to the Transforms map.
-    Transforms.insert(std::make_pair(OldTy, std::make_pair(NSTy, InVec)));
+    Transforms.insert(std::make_pair(OldTy,
+                       std::make_pair(cast<StructType>(NSTy.get()), InVec)));
 
     DEBUG_MST(cerr << "Mutate " << OldTy << "\nTo " << NSTy << endl);
   }
