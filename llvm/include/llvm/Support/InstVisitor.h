@@ -88,6 +88,10 @@ struct InstVisitor {
 
   // Define visitors for functions and basic blocks...
   //
+  void visit(Module &M) {
+    ((SubClass*)this)->visitModule(M);
+    visit(M.begin(), M.end());
+  }
   void visit(Function &F) {
     ((SubClass*)this)->visitFunction(F);
     visit(F.begin(), F.end());
@@ -127,6 +131,7 @@ struct InstVisitor {
   // When visiting a module, function or basic block directly, these methods get
   // called to indicate when transitioning into a new unit.
   //
+  void visitModule    (Module &M) {}
   void visitFunction  (Function &F) {}
   void visitBasicBlock(BasicBlock &BB) {}
 
