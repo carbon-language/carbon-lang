@@ -326,7 +326,7 @@ inline DSNode *DSNodeHandle::getNode() const {
   return HandleForwarding();
 }
 
-inline void DSNodeHandle::setNode(DSNode *n) {
+inline void DSNodeHandle::setNode(DSNode *n) const {
   assert(!n || !n->getForwardNode() && "Cannot set node to a forwarded node!");
   if (N) N->NumReferrers--;
   N = n;
@@ -377,11 +377,14 @@ inline void DSNodeHandle::addEdgeTo(unsigned Off, const DSNodeHandle &Node) {
 /// mergeWith - Merge the logical node pointed to by 'this' with the node
 /// pointed to by 'N'.
 ///
-inline void DSNodeHandle::mergeWith(const DSNodeHandle &Node) {
-  if (N != 0)
+inline void DSNodeHandle::mergeWith(const DSNodeHandle &Node) const {
+  if (!isNull())
     getNode()->mergeWith(Node, Offset);
-  else     // No node to merge with, so just point to Node
-    *this = Node;
+  else {   // No node to merge with, so just point to Node
+    Offset = 0;
+    setNode(Node.getNode());
+    Offset = Node.getOffset();
+  }
 }
 
 } // End llvm namespace

@@ -93,7 +93,7 @@ public:
   inline DSNode *getNode() const;  // Defined inline in DSNode.h
   unsigned getOffset() const { return Offset; }
 
-  inline void setNode(DSNode *N);  // Defined inline in DSNode.h
+  inline void setNode(DSNode *N) const;  // Defined inline in DSNode.h
   void setOffset(unsigned O) {
     //assert((!N || Offset < N->Size || (N->Size == 0 && Offset == 0) ||
     //       !N->ForwardNH.isNull()) && "Node handle offset out of range!");
@@ -108,7 +108,7 @@ public:
   /// mergeWith - Merge the logical node pointed to by 'this' with the node
   /// pointed to by 'N'.
   ///
-  void mergeWith(const DSNodeHandle &N);
+  void mergeWith(const DSNodeHandle &N) const;
 
   // hasLink - Return true if there is a link at the specified offset...
   inline bool hasLink(unsigned Num) const;
