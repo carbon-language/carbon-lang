@@ -377,7 +377,6 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
 // real thing.
 //
 static Value *getVal(const Type *Ty, const ValID &D) {
-  assert(Ty != Type::TypeTy && "Should use getTypeVal for types!");
 
   // See if the value has already been defined...
   Value *V = getValNonImprovising(Ty, D);
@@ -519,17 +518,7 @@ static bool setValueName(Value *V, char *NameStr) {
   Value *Existing = ST.lookup(V->getType(), Name);
 
   if (Existing) {    // Inserting a name that is already defined???
-    // There is only one case where this is allowed: when we are refining an
-    // opaque type.  In this case, Existing will be an opaque type.
-    if (const Type *Ty = dyn_cast<Type>(Existing)) {
-      if (const OpaqueType *OpTy = dyn_cast<OpaqueType>(Ty)) {
-	// We ARE replacing an opaque type!
-	((OpaqueType*)OpTy)->refineAbstractTypeTo(cast<Type>(V));
-	return true;
-      }
-    }
-
-    // Otherwise, we are a simple redefinition of a value, check to see if it
+    // We are a simple redefinition of a value, check to see if it
     // is defined the same as the old one...
     if (const Type *Ty = dyn_cast<Type>(Existing)) {
       if (Ty == cast<Type>(V)) return true;  // Yes, it's equal.
