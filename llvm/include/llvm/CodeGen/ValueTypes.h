@@ -19,6 +19,7 @@
 #include <cassert>
 
 namespace llvm {
+  class Type;
 
 /// MVT namespace - This namespace defines the ValueType enum, which contains
 /// the various low-level value types.
@@ -67,6 +68,15 @@ namespace MVT {  // MVT = Machine Value Types
     case MVT::i128: return 128;
     }
   }
+
+  /// MVT::getValueTypeString - This function returns value type as a string,
+  /// e.g. "i32".
+  const char *getValueTypeString(ValueType VT);
+
+  /// MVT::getTypeForValueType - This method returns an LLVM type corresponding
+  /// to the specified ValueType.  For integer types, this returns an unsigned
+  /// type.  Note that this will abort for types that cannot be represented.
+  const Type *getTypeForValueType(ValueType VT);
 };
 
 } // End llvm namespace
