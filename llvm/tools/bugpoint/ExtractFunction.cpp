@@ -24,6 +24,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
+#include "Support/FileUtilities.h"
 using namespace llvm;
 
 namespace llvm {
@@ -129,6 +130,7 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
                 << Filename << "'!\n";
       exit(1);
     }
+    removeFile(Filename);
   }
   return M;
 }
