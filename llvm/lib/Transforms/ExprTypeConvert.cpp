@@ -981,19 +981,24 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     const Type *LoadedTy =
       cast<PointerType>(NewVal->getType())->getElementType();
 
-    std::vector<Value*> Indices;
-    Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+    Value *Src = NewVal;
 
     if (const CompositeType *CT = dyn_cast<CompositeType>(LoadedTy)) {
+      std::vector<Value*> Indices;
+      Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+
       unsigned Offset = 0;   // No offset, get first leaf.
       LoadedTy = getStructOffsetType(CT, Offset, Indices, false);
+      assert(LoadedTy->isFirstClassType());
+
+      if (Indices.size() != 1) {     // Do not generate load X, 0
+        Src = new GetElementPtrInst(Src, Indices, Name+".idx");
+        // Insert the GEP instruction before this load.
+        BIL.insert(I, cast<Instruction>(Src));
+      }
     }
-    assert(LoadedTy->isFirstClassType());
-
-    if (Indices.size() == 1)
-      Indices.clear();    // Do not generate load X, 0
-
-    Res = new LoadInst(NewVal, Indices, Name);
+    
+    Res = new LoadInst(Src, Name);
     assert(Res->getType()->isFirstClassType() && "Load of structure or array!");
     break;
   }
@@ -1009,23 +1014,27 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
         //
         const Type *ElTy =
           cast<PointerType>(VMCI->second->getType())->getElementType();
-        if (ElTy == NewTy) {
-          // If it happens to be converted to exactly the right type, use it
-          // directly...
-          Res = new StoreInst(NewVal, VMCI->second);
-        } else {
+        
+        Value *SrcPtr = VMCI->second;
+
+        if (ElTy != NewTy) {
           // We check that this is a struct in the initial scan...
           const StructType *SElTy = cast<StructType>(ElTy);
           
-          unsigned Offset = 0;
           std::vector<Value*> Indices;
           Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+
+          unsigned Offset = 0;
           const Type *Ty = getStructOffsetType(ElTy, Offset, Indices, false);
           assert(Offset == 0 && "Offset changed!");
           assert(NewTy == Ty && "Did not convert to correct type!");
 
-          Res = new StoreInst(NewVal, VMCI->second, Indices);
+          SrcPtr = new GetElementPtrInst(SrcPtr, Indices,
+                                         SrcPtr->getName()+".idx");
+          // Insert the GEP instruction before this load.
+          BIL.insert(I, cast<Instruction>(SrcPtr));
         }
+        Res = new StoreInst(NewVal, SrcPtr);
 
         VMC.ExprMap[I] = Res;
       } else {
@@ -1038,16 +1047,25 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       }
     } else {                           // Replace the source pointer
       const Type *ValTy = cast<PointerType>(NewTy)->getElementType();
-      std::vector<Value*> Indices;
+
+      Value *SrcPtr = NewVal;
 
       if (isa<StructType>(ValTy)) {
-        unsigned Offset = 0;
+        std::vector<Value*> Indices;
         Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+
+        unsigned Offset = 0;
         ValTy = getStructOffsetType(ValTy, Offset, Indices, false);
+
         assert(Offset == 0 && ValTy);
+
+        SrcPtr = new GetElementPtrInst(SrcPtr, Indices,
+                                       SrcPtr->getName()+".idx");
+        // Insert the GEP instruction before this load.
+        BIL.insert(I, cast<Instruction>(SrcPtr));
       }
 
-      Res = new StoreInst(Constant::getNullValue(ValTy), NewVal, Indices);
+      Res = new StoreInst(Constant::getNullValue(ValTy), SrcPtr);
       VMC.ExprMap[I] = Res;
       Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), ValTy, VMC));
     }
