@@ -10,13 +10,6 @@
 #include "llvm/Pass.h"
 #include <string>
 
-// Hack around broken gdb! stack traces from system assert don't work, but do
-// from a fault.  :(
-#undef assert
-#define assert(x) \
-  do { if (!(x)) { std::cerr << "assertion failure!: " #x "\n"; \
-       int *P = 0; *P = 17; }} while (0)
-
 class Type;
 class GlobalValue;
 class DSNode;                  // Each node in the graph
