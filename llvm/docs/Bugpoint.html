@@ -20,7 +20,7 @@ problems in LLVM tools and passes.  It can be used to debug three types of
 failures: optimizer crashes, miscompilations by optimizers, or bad native
 code generation (including problems in the static and JIT compilers).  It aims 
 to reduce large test cases to small, useful ones.  For example,
-if <tt><a href="CommandGuide/gccas.html">gccas</a></tt> crashes while optimizing a file, it
+if <tt><a href="CommandGuide/html/gccas.html">gccas</a></tt> crashes while optimizing a file, it
 will identify the optimization (or combination of optimizations) that causes the
 crash, and reduce the file down to a small example which triggers the crash.<p>
 
@@ -84,8 +84,8 @@ flow graph, to reduce the size of the function as much as possible.  Finally,
 <tt>bugpoint</tt> deletes any individual LLVM instructions whose absence does
 not eliminate the failure.  At the end, <tt>bugpoint</tt> should tell you what
 passes crash, give you a bytecode file, and give you instructions on how to
-reproduce the failure with <tt><a href="CommandGuide/opt.html">opt</a></tt>, <tt><a
-href="CommandGuide/analyze.html">analyze</a></tt>, or <tt><a href="CommandGuide/llc.html">llc</a></tt>.<p>
+reproduce the failure with <tt><a href="CommandGuide/html/opt.html">opt</a></tt>, <tt><a
+href="CommandGuide/html/analyze.html">analyze</a></tt>, or <tt><a href="CommandGuide/html/llc.html">llc</a></tt>.<p>
 
 <a name="codegendebug">
 <h4>Code generator debugger</h4>
