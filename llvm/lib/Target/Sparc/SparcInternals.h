@@ -250,10 +250,6 @@ class UltraSparcRegInfo : public MachineRegInfo {
   // order for efficiency.
 
 
-  // reverse pointer to get info about the ultra sparc machine
-  //
-  const UltraSparc *const UltraSparcInfo;
-
   // Number of registers used for passing int args (usually 6: %o0 - %o5)
   //
   unsigned const NumOfIntArgRegs;
@@ -328,13 +324,6 @@ class UltraSparcRegInfo : public MachineRegInfo {
   
 public:
   UltraSparcRegInfo(const UltraSparc &tgt);
-
-  // To get complete machine information structure using the machine register
-  // information
-  //
-  inline const UltraSparc &getUltraSparcInfo() const { 
-    return *UltraSparcInfo;
-  }
 
   // To find the register class used for a specified Type
   //
