@@ -325,6 +325,14 @@ static Value *RemapOperand(const Value *In,
         assert(CE->getOpcode() == Instruction::Cast);
         Value *V = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
         Result = ConstantExpr::getCast(cast<Constant>(V), CE->getType());
+      } else if (CE->getNumOperands() == 3) {
+        // Select instruction
+        assert(CE->getOpcode() == Instruction::Select);
+        Value *V1 = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
+        Value *V2 = RemapOperand(CE->getOperand(1), LocalMap, GlobalMap);
+        Value *V3 = RemapOperand(CE->getOperand(2), LocalMap, GlobalMap);
+        Result = ConstantExpr::getSelect(cast<Constant>(V1), cast<Constant>(V2),
+                                         cast<Constant>(V3));
       } else if (CE->getNumOperands() == 2) {
         // Binary operator...
         Value *V1 = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
