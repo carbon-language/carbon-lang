@@ -1,9 +1,9 @@
-//===- llvm/Analysis/InductionVariable.h - Induction variable ----*- C++ -*--=//
+//===- InductionVariable.cpp - Induction variable classification ----------===//
 //
-// This interface is used to identify and classify induction variables that
-// exist in the program.  Induction variables must contain a PHI node that
-// exists in a loop header.  Because of this, they are identified an managed by
-// this PHI node.
+// This file implements identification and classification of induction 
+// variables.  Induction variables must contain a PHI node that exists in a 
+// loop header.  Because of this, they are identified an managed by this PHI 
+// node.
 //
 // Induction variables are classified into a type.  Knowing that an induction
 // variable is of a specific type can constrain the values of the start and
