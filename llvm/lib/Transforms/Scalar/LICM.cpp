@@ -67,6 +67,7 @@ namespace {
     BasicBlock *Preheader;   // The preheader block of the current loop...
     Loop *CurLoop;           // The current loop we are working on...
     AliasSetTracker *CurAST; // AliasSet information for the current loop...
+    DominatorTree *CurDT;    // Dominator Tree for the current Loop...
 
     /// visitLoop - Hoist expressions out of the specified loop...    
     ///
@@ -95,6 +96,11 @@ namespace {
     /// that is safe to hoist, this instruction is called to do the dirty work.
     ///
     void hoist(Instruction &I);
+
+    /// SafeToHoist - Only hoist an instruction if it is not a trapping instruction
+    /// or if it is a trapping instruction and is guaranteed to execute
+    ///
+    bool SafeToHoist(Instruction &I);
 
     /// pointerInvalidatedByLoop - Return true if the body of this loop may
     /// store into the memory location pointed to by V.
@@ -133,12 +139,12 @@ namespace {
     ///
     friend class InstVisitor<LICM>;
     void visitBinaryOperator(Instruction &I) {
-      if (isLoopInvariant(I.getOperand(0)) && isLoopInvariant(I.getOperand(1)))
+      if (isLoopInvariant(I.getOperand(0)) && isLoopInvariant(I.getOperand(1)) && SafeToHoist(I))
         hoist(I);
     }
     void visitCastInst(CastInst &CI) {
       Instruction &I = (Instruction&)CI;
-      if (isLoopInvariant(I.getOperand(0))) hoist(I);
+      if (isLoopInvariant(I.getOperand(0)) && SafeToHoist(CI)) hoist(I);
     }
     void visitShiftInst(ShiftInst &I) { visitBinaryOperator((Instruction&)I); }
 
@@ -148,7 +154,8 @@ namespace {
       Instruction &I = (Instruction&)GEPI;
       for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
         if (!isLoopInvariant(I.getOperand(i))) return;
-      hoist(I);
+      if(SafeToHoist(GEPI))
+        hoist(I);
     }
   };
 
@@ -216,7 +223,9 @@ void LICM::visitLoop(Loop *L, AliasSetTracker &AST) {
   // that we are guaranteed to see definitions before we see uses.  This allows
   // us to perform the LICM transformation in one pass, without iteration.
   //
-  HoistRegion(getAnalysis<DominatorTree>()[L->getHeader()]);
+  CurDT = &getAnalysis<DominatorTree>();
+  
+  HoistRegion(CurDT->getNode(L->getHeader()));
 
   // Now that all loop invariants have been removed from the loop, promote any
   // memory references to scalars that we can...
@@ -269,10 +278,55 @@ void LICM::hoist(Instruction &Inst) {
   Changed = true;
 }
 
+/// SafeToHoist - Only hoist an instruction if it is not a trapping instruction
+/// or if it is a trapping instruction and is guaranteed to execute
+///
+bool LICM::SafeToHoist(Instruction &Inst) {
+
+  //If it is a trapping instruction, then check if its guaranteed to execute.
+  if(Inst.isTrapping()) {
+
+    //Get the instruction's basic block.
+    BasicBlock *InstBB = Inst.getParent();
+    
+    //Get the Dominator Tree Node for the instruction's basic block/
+    DominatorTree::Node *InstDTNode = CurDT->getNode(InstBB);
+
+    //Get the exit blocks for the current loop.
+    const std::vector<BasicBlock* > ExitBlocks = CurLoop->getExitBlocks();
+
+    //For each exit block, get the DT node and walk up the DT until
+    //the instruction's basic block is found or we exit the loop.
+    for(unsigned i=0; i < ExitBlocks.size(); ++i) {
+      DominatorTree::Node *IDom = CurDT->getNode(ExitBlocks[i]);
+      
+      //Using boolean variable because exit nodes are not "contained"
+      //in the loop, so can not use that as the while test condition
+      //for first pass.
+      bool inLoop = true;
+
+      while(inLoop) {
+ 
+        //compare Instruction DT node to Current DT Node
+        if(IDom == InstDTNode)
+          return true;
+
+        //Get next Immediate Dominator.
+        IDom = IDom->getIDom();
+
+        //See if we exited the loop.
+        inLoop = CurLoop->contains(IDom->getNode());
+      }
+      return false;
+    }
+  }
+  return true;
+}
+
 
 void LICM::visitLoadInst(LoadInst &LI) {
   if (isLoopInvariant(LI.getOperand(0)) &&
-      !pointerInvalidatedByLoop(LI.getOperand(0))) {
+      !pointerInvalidatedByLoop(LI.getOperand(0)) && SafeToHoist(LI)) {
     hoist(LI);
     ++NumHoistedLoads;
   }
