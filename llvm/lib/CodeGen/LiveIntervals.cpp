@@ -146,7 +146,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
         unsigned liveBlockIndex = it->first;
         MachineBasicBlock* liveBlock = it->second;
         if (liveBlockIndex < vi.AliveBlocks.size() &&
-            vi.AliveBlocks[liveBlockIndex]) {
+            vi.AliveBlocks[liveBlockIndex] &&
+            !liveBlock->empty()) {
             unsigned start =  getInstructionIndex(liveBlock->front());
             unsigned end = getInstructionIndex(liveBlock->back()) + 1;
             interval->addRange(start, end);
