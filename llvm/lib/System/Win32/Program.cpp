@@ -69,7 +69,8 @@ Program::FindProgramByName(const std::string& progName) {
 //
 int 
 Program::ExecuteAndWait(const Path& path, 
-                        const std::vector<std::string>& args) {
+                        const std::vector<std::string>& args,
+                        const char** env) {
   if (!path.executable())
     throw path.toString() + " is not executable"; 
 
@@ -124,8 +125,9 @@ Program::ExecuteAndWait(const Path& path,
   PROCESS_INFORMATION pi;
   memset(&pi, 0, sizeof(pi));
 
+  LPVOID lpEnvironment = envp;
   if (!CreateProcess(path.c_str(), command, NULL, NULL, FALSE, 0,
-                     NULL, NULL, &si, &pi))
+                     lpEnvironment, NULL, &si, &pi))
   {
     ThrowError(std::string("Couldn't execute program '") + 
                path.toString() + "'");

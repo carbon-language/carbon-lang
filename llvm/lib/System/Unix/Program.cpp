@@ -79,7 +79,8 @@ Program::FindProgramByName(const std::string& progName) {
 //
 int 
 Program::ExecuteAndWait(const Path& path, 
-                        const std::vector<std::string>& args) {
+                        const std::vector<std::string>& args,
+                        const char ** envp ) {
   if (!path.executable())
     throw path.toString() + " is not executable"; 
 
@@ -103,11 +104,15 @@ Program::ExecuteAndWait(const Path& path,
       break;
 
     // Child process: Execute the program.
-    case 0:
-      execve (path.c_str(), (char** const)argv, environ);
+    case 0: {
+      char** env = environ;
+      if (envp != 0)
+        env = (char**) envp;
+      execve (path.c_str(), (char** const)argv, env);
       // If the execve() failed, we should exit and let the parent pick up
       // our non-zero exit status.
       exit (errno);
+    }
 
     // Parent process: Break out of the switch to do our processing.
     default:
