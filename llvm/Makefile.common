@@ -72,7 +72,7 @@ endif
 # Set the source root directory.
 #
 ifndef BUILD_SRC_ROOT
-BUILD_SRC_ROOT = $(BUILD_SRC_DIR)/$(LEVEL)
+BUILD_SRC_ROOT = $(shell cd $(BUILD_SRC_DIR)/$(LEVEL); pwd)
 endif
 
 #
@@ -83,7 +83,7 @@ ifndef BUILD_OBJ_DIR
 ifeq ($(OBJ_ROOT),.)
 BUILD_OBJ_DIR = $(shell pwd)
 else
-BUILD_OBJ_DIR := $(OBJ_ROOT)$(patsubst $(HOME)%,%,$(shell cd $(BUILD_SRC_DIR); pwd))
+BUILD_OBJ_DIR := $(OBJ_ROOT)$(patsubst $(shell dirname $(BUILD_SRC_ROOT))%,%,$(shell cd $(BUILD_SRC_DIR); pwd))
 endif
 endif
 
@@ -94,7 +94,7 @@ ifndef BUILD_OBJ_ROOT
 ifeq ($(OBJ_ROOT),.)
 BUILD_OBJ_ROOT = $(shell cd $(LEVEL); pwd)
 else
-BUILD_OBJ_ROOT := $(OBJ_ROOT)$(patsubst $(HOME)%,%,$(shell cd $(LEVEL); pwd))
+BUILD_OBJ_ROOT := $(OBJ_ROOT)$(patsubst $(shell dirname $(BUILD_SRC_ROOT))%,%,$(shell cd $(BUILD_SRC_ROOT); pwd))
 endif
 endif
 
