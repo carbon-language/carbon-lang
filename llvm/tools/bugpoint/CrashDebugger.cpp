@@ -265,10 +265,10 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
 
   // See if we can get away with nuking all of the global variable initializers
   // in the program...
-  if (BD.getProgram()->gbegin() != BD.getProgram()->gend()) {
+  if (BD.getProgram()->global_begin() != BD.getProgram()->global_end()) {
     Module *M = CloneModule(BD.getProgram());
     bool DeletedInit = false;
-    for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+    for (Module::global_iterator I = M->global_begin(), E = M->global_end(); I != E; ++I)
       if (I->hasInitializer()) {
         I->setInitializer(0);
         I->setLinkage(GlobalValue::ExternalLinkage);

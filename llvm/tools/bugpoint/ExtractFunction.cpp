@@ -183,13 +183,13 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
   // between the two modules will work.
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     I->setLinkage(GlobalValue::ExternalLinkage);
-  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+  for (Module::global_iterator I = M->global_begin(), E = M->global_end(); I != E; ++I)
     I->setLinkage(GlobalValue::ExternalLinkage);
 
   Module *New = CloneModule(M);
 
   // Make sure global initializers exist only in the safe module (CBE->.so)
-  for (Module::giterator I = New->gbegin(), E = New->gend(); I != E; ++I)
+  for (Module::global_iterator I = New->global_begin(), E = New->global_end(); I != E; ++I)
     I->setInitializer(0);  // Delete the initializer to make it external
 
   // Remove the Test functions from the Safe module
