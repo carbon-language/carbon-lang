@@ -1209,7 +1209,7 @@ void ISel::EmitByteSwap(unsigned DestReg, unsigned SrcReg, unsigned Class) {
   // Emit the byte swap instruction...
   switch (Class) {
   case cByte:
-    // No byteswap neccesary for 8 bit value...
+    // No byteswap necessary for 8 bit value...
     BuildMI(BB, X86::MOVrr8, 1, DestReg).addReg(SrcReg);
     break;
   case cInt:
@@ -1219,7 +1219,7 @@ void ISel::EmitByteSwap(unsigned DestReg, unsigned SrcReg, unsigned Class) {
     
   case cShort:
     // For 16 bit we have to use an xchg instruction, because there is no
-    // 16-bit bswap.  XCHG is neccesarily not in SSA form, so we force things
+    // 16-bit bswap.  XCHG is necessarily not in SSA form, so we force things
     // into AX to do the xchg.
     //
     BuildMI(BB, X86::MOVrr16, 1, X86::AX).addReg(SrcReg);
