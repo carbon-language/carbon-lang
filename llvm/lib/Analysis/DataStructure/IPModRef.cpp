@@ -333,7 +333,7 @@ void FunctionModRefInfo::print(std::ostream &O) const
          CI = callSiteModRefInfo.begin(), CE = callSiteModRefInfo.end();
        CI != CE; ++CI)
     {
-      O << "  ----Mod/Ref information for call site\n" << CI->first;
+      O << "  ----Mod/Ref information for call site\n" << *CI->first;
 
       O << "    --Objects modified at call site:\n";
       DPH.printValuesInBitVec(O, CI->second->getModSet());
