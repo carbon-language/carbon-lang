@@ -7,8 +7,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
+#include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Bytecode/Writer.h"
+#include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
@@ -20,7 +21,6 @@
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Transforms/Scalar/ConstantProp.h"
-#include "llvm/Transforms/Scalar/InductionVars.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
@@ -28,8 +28,7 @@
 #include <fstream>
 #include <memory>
 
-
-
+// Opts enum - All of the transformations we can do...
 enum Opts {
   // Basic optimizations
   dce, constprop, inlining, constmerge, strip, mstrip,
@@ -44,34 +43,65 @@ enum Opts {
   globaldce, swapstructs, sortstructs,
 };
 
+
+// New template functions - Provide functions that return passes of specified
+// types, with specified arguments...
+//
+template<class PassClass>
+Pass *New() {
+  return new PassClass();
+}
+
+template<class PassClass, typename ArgTy1, ArgTy1 Arg1>
+Pass *New() {
+  return new PassClass(Arg1);
+}
+
+template<class PassClass, typename ArgTy1, ArgTy1 Arg1, 
+                          typename ArgTy2, ArgTy1 Arg2>
+Pass *New() {
+  return new PassClass(Arg1, Arg2);
+}
+
+static Pass *NewPrintMethodPass() {
+  return new PrintMethodPass("Current Method: \n", &cerr);
+}
+
+// OptTable - Correlate enum Opts to Pass constructors...
+//
 struct {
   enum Opts OptID;
-  Pass *ThePass;
+  Pass * (*PassCtor)();
 } OptTable[] = {
-  { dce        , new DeadCodeElimination() },
-  { constprop  , new ConstantPropogation() }, 
-  { inlining   , new MethodInlining() },
-  { constmerge , new ConstantMerge() },
-  { strip      , new SymbolStripping() },
-  { mstrip     , new FullSymbolStripping() },
-  { indvars    , new InductionVariableSimplify() },
-  { instcombine, new InstructionCombining() },
-  { sccp       , new SCCPPass() },
-  { adce       , new AgressiveDCE() },
-  { raise      , new RaisePointerReferences() },
-  { trace      , new InsertTraceCode(true, true) },
-  { tracem     , new InsertTraceCode(false, true) },
-  { print      , new PrintMethodPass("Current Method: \n",&cerr) },
-  { raiseallocs, new RaiseAllocations() },
-  { cleangcc   , new CleanupGCCOutput() },
-  { globaldce  , new GlobalDCE() },
-  { swapstructs, new SimpleStructMutation(SimpleStructMutation::SwapElements) },
-  { sortstructs, new SimpleStructMutation(SimpleStructMutation::SortElements) },
+  { dce        , New<DeadCodeElimination> },
+  { constprop  , New<ConstantPropogation> }, 
+  { inlining   , New<MethodInlining> },
+  { constmerge , New<ConstantMerge> },
+  { strip      , New<SymbolStripping> },
+  { mstrip     , New<FullSymbolStripping> },
+  { indvars    , New<InductionVariableSimplify> },
+  { instcombine, New<InstructionCombining> },
+  { sccp       , New<SCCPPass> },
+  { adce       , New<AgressiveDCE> },
+  { raise      , New<RaisePointerReferences> },
+  { trace      , New<InsertTraceCode, bool, true, bool, true> },
+  { tracem     , New<InsertTraceCode, bool, false, bool, true> },
+  { print      , NewPrintMethodPass },
+  { raiseallocs, New<RaiseAllocations> },
+  { cleangcc   , New<CleanupGCCOutput> },
+  { globaldce  , New<GlobalDCE> },
+  { swapstructs, New<SimpleStructMutation, SimpleStructMutation::Transform,
+                     SimpleStructMutation::SwapElements>},
+  { sortstructs, New<SimpleStructMutation, SimpleStructMutation::Transform,
+                     SimpleStructMutation::SortElements>},
 };
 
+// Command line option handling code...
+//
 cl::String InputFilename ("", "Load <arg> file to optimize", cl::NoFlags, "-");
 cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");
 cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
+cl::Flag   PrintEachXForm("p", "Print module after each transformation");
 cl::Flag   Quiet         ("q", "Don't print modifying pass names", 0, false);
 cl::Alias  QuietA        ("quiet", "Alias for -q", cl::NoFlags, Quiet);
 cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
@@ -82,7 +112,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(strip      , "Strip Symbols"),
   clEnumVal(mstrip     , "Strip Module Symbols"),
   clEnumVal(indvars    , "Simplify Induction Variables"),
-  clEnumVal(instcombine, "Simplify Induction Variables"),
+  clEnumVal(instcombine, "Combine redundant instructions"),
   clEnumVal(sccp       , "Sparse Conditional Constant Propogation"),
   clEnumVal(adce       , "Agressive DCE"),
 
@@ -98,33 +128,20 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(print      , "Print working method to stderr"),
 0);
 
-static void RunOptimization(Module *M, enum Opts Opt) {
-  for (unsigned j = 0; j < sizeof(OptTable)/sizeof(OptTable[0]); ++j)
-    if (Opt == OptTable[j].OptID) {
-      if (OptTable[j].ThePass->run(M) && !Quiet)
-	cerr << OptimizationList.getArgName(Opt)
-	     << " pass made modifications!\n";
-      return;
-    }
-  
-  cerr << "Optimization tables inconsistent!!\n";
-}
+
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv,
 			      " llvm .bc -> .bc modular optimizer\n");
+
+  // Load the input module...
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
   if (M.get() == 0) {
     cerr << "bytecode didn't read correctly.\n";
     return 1;
   }
 
-  PassManager Passes;
-
-  // Run all of the optimizations specified on the command line
-  for (unsigned i = 0; i < OptimizationList.size(); ++i)
-    RunOptimization(M.get(), OptimizationList[i]);
-
+  // Figure out what stream we are supposed to write to...
   std::ostream *Out = &std::cout;  // Default to printing to stdout...
   if (OutputFilename != "") {
     if (!Force && std::ifstream(OutputFilename.c_str())) {
@@ -141,9 +158,30 @@ int main(int argc, char **argv) {
     }
   }
 
-  // Okay, we're done now... write out result...
-  WriteBytecodeToFile(M.get(), *Out);
+  // Create a PassManager to hold and optimize the collection of passes we are
+  // about to build...
+  //
+  PassManager Passes;
 
-  if (Out != &cout) delete Out;
+  // Create a new optimization pass for each one specified on the command line
+  for (unsigned i = 0; i < OptimizationList.size(); ++i) {
+    enum Opts Opt = OptimizationList[i];
+    for (unsigned j = 0; j < sizeof(OptTable)/sizeof(OptTable[0]); ++j)
+      if (Opt == OptTable[j].OptID) {
+        Passes.add(OptTable[j].PassCtor());
+        break;
+      }
+
+    if (PrintEachXForm)
+      Passes.add(new PrintModulePass(&std::cerr));
+  }
+
+  // Write bytecode out to disk or cout as the last step...
+  Passes.add(new WriteBytecodePass(Out, Out != &std::cout));
+
+  // Now that we have all of the passes ready, run them.
+  if (Passes.run(M.get()) && !Quiet)
+    cerr << "Program modified.\n";
+
   return 0;
 }
