@@ -192,7 +192,7 @@ inline void BytecodeReader::read_block(unsigned &Type, unsigned &Size) {
     switch (Type) {
     case BytecodeFormat::Reserved_DoNotUse : 
       error("Reserved_DoNotUse used as Module Type?");
-      Type = BytecodeFormat::Module; break;
+      Type = BytecodeFormat::ModuleBlockID; break;
     case BytecodeFormat::Module: 
       Type = BytecodeFormat::ModuleBlockID; break;
     case BytecodeFormat::Function:
@@ -215,7 +215,7 @@ inline void BytecodeReader::read_block(unsigned &Type, unsigned &Size) {
       /// We just let its value creep thru.
       break;
     default:
-      error("Invalid module type found: " + utostr(Type));
+      error("Invalid block id found: " + utostr(Type));
       break;
     }
   } else {
@@ -1209,7 +1209,7 @@ const Type *BytecodeReader::ParseType() {
   return Result;
 }
 
-// ParseType - We have to use this weird code to handle recursive
+// ParseTypes - We have to use this weird code to handle recursive
 // types.  We know that recursive types will only reference the current slab of
 // values in the type plane, but they can forward reference types before they
 // have been read.  For example, Type #0 might be '{ Ty#1 }' and Type #1 might
@@ -1226,6 +1226,9 @@ void BytecodeReader::ParseTypes(TypeListTy &Tab, unsigned NumEntries){
   Tab.reserve(NumEntries);
   for (unsigned i = 0; i != NumEntries; ++i)
     Tab.push_back(OpaqueType::get());
+
+  if (Handler) 
+    Handler->handleTypeList(NumEntries);
 
   // Loop through reading all of the types.  Forward types will make use of the
   // opaque types just inserted.
@@ -1661,10 +1664,11 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
   for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (Argument *A = dyn_cast<Argument>(I->getOperand(i))) {
-          std::map<Value*, Value*>::iterator It = ForwardRefMapping.find(A);
-          if (It != ForwardRefMapping.end()) I->setOperand(i, It->second);
-        }
+        if (Value* V = I->getOperand(i))
+          if (Argument *A = dyn_cast<Argument>(V)) {
+            std::map<Value*, Value*>::iterator It = ForwardRefMapping.find(A);
+            if (It != ForwardRefMapping.end()) I->setOperand(i, It->second);
+          }
 
   while (!ForwardReferences.empty()) {
     std::map<std::pair<unsigned,unsigned>, Value*>::iterator I =
@@ -1861,16 +1865,22 @@ void BytecodeReader::ParseModuleGlobalInfo() {
   // If this bytecode format has dependent library information in it ..
   if (!hasNoDependentLibraries) {
     // Read in the number of dependent library items that follow
+    BufPtr SaveAt = At;
     unsigned num_dep_libs = read_vbr_uint();
     std::string dep_lib;
     while( num_dep_libs-- ) {
       dep_lib = read_str();
       TheModule->addLibrary(dep_lib);
+      if (Handler)
+        Handler->handleDependentLibrary(dep_lib);
     }
+
 
     // Read target triple and place into the module
     std::string triple = read_str();
     TheModule->setTargetTriple(triple);
+    if (Handler)
+      Handler->handleTargetTriple(triple);
   }
 
   if (hasInconsistentModuleGlobalInfo)
@@ -1909,16 +1919,19 @@ void BytecodeReader::ParseVersionInfo() {
   has32BitTypes = false;
   hasNoDependentLibraries = false;
   hasAlignment = false;
+  hasInconsistentBBSlotNums = false;
+  hasVBRByteTypes = false;
+  hasUnnecessaryModuleBlockId = false;
 
   switch (RevisionNum) {
-  case 0:               //  LLVM 1.0, 1.1 release version
+  case 0:               //  LLVM 1.0, 1.1 (Released)
     // Base LLVM 1.0 bytecode format.
     hasInconsistentModuleGlobalInfo = true;
     hasExplicitPrimitiveZeros = true;
 
-
     // FALL THROUGH
-  case 1:               // LLVM 1.2 release version
+
+  case 1:               // LLVM 1.2 (Released)
     // LLVM 1.2 added explicit support for emitting strings efficiently.
 
     // Also, it fixed the problem where the size of the ModuleGlobalInfo block
@@ -1937,39 +1950,58 @@ void BytecodeReader::ParseVersionInfo() {
 
     // FALL THROUGH
     
-  case 2:  /// 1.2.5 (mid-release) version
+  case 2:                // 1.2.5 (Not Released)
 
-    /// LLVM 1.2 and earlier had two-word block headers. This is a bit wasteful,
-    /// especially for small files where the 8 bytes per block is a large fraction
-    /// of the total block size. In LLVM 1.3, the block type and length are 
-    /// compressed into a single 32-bit unsigned integer. 27 bits for length, 5
-    /// bits for block type.
+    // LLVM 1.2 and earlier had two-word block headers. This is a bit wasteful,
+    // especially for small files where the 8 bytes per block is a large fraction
+    // of the total block size. In LLVM 1.3, the block type and length are 
+    // compressed into a single 32-bit unsigned integer. 27 bits for length, 5
+    // bits for block type.
     hasLongBlockHeaders = true;
 
-    /// LLVM 1.2 and earlier wrote type slot numbers as vbr_uint32. In LLVM 1.3
-    /// this has been reduced to vbr_uint24. It shouldn't make much difference 
-    /// since we haven't run into a module with > 24 million types, but for safety
-    /// the 24-bit restriction has been enforced in 1.3 to free some bits in
-    /// various places and to ensure consistency.
+    // LLVM 1.2 and earlier wrote type slot numbers as vbr_uint32. In LLVM 1.3
+    // this has been reduced to vbr_uint24. It shouldn't make much difference 
+    // since we haven't run into a module with > 24 million types, but for safety
+    // the 24-bit restriction has been enforced in 1.3 to free some bits in
+    // various places and to ensure consistency.
     has32BitTypes = true;
 
-    /// LLVM 1.2 and earlier did not provide a target triple nor a list of 
-    /// libraries on which the bytecode is dependent. LLVM 1.3 provides these
-    /// features, for use in future versions of LLVM.
+    // LLVM 1.2 and earlier did not provide a target triple nor a list of 
+    // libraries on which the bytecode is dependent. LLVM 1.3 provides these
+    // features, for use in future versions of LLVM.
     hasNoDependentLibraries = true;
 
     // FALL THROUGH
-  case 3:               // LLVM 1.3 release version
-    /// LLVM 1.3 and earlier caused alignment bytes to be written on some block
-    /// boundaries and at the end of some strings. In extreme cases (e.g. lots 
-    /// of GEP references to a constant array), this can increase the file size
-    /// by 30% or more. In version 1.4 alignment is done away with completely.
+
+  case 3:               // LLVM 1.3 (Released)
+    // LLVM 1.3 and earlier caused alignment bytes to be written on some block
+    // boundaries and at the end of some strings. In extreme cases (e.g. lots 
+    // of GEP references to a constant array), this can increase the file size
+    // by 30% or more. In version 1.4 alignment is done away with completely.
     hasAlignment = true;
 
     // FALL THROUGH
-  case 4:
-    break;
+    
+  case 4:               // 1.3.1 (Not Released)
+    // In version 4, basic blocks have a minimum index of 0 whereas all the 
+    // other primitives have a minimum index of 1 (because 0 is the "null" 
+    // value. In version 5, we made this consistent.
+    hasInconsistentBBSlotNums = true;
 
+    // In version 4, the types SByte and UByte were encoded as vbr_uint so that
+    // signed values > 63 and unsigned values >127 would be encoded as two
+    // bytes. In version 5, they are encoded directly in a single byte.
+    hasVBRByteTypes = true;
+
+    // In version 4, modules begin with a "Module Block" which encodes a 4-byte
+    // integer value 0x01 to identify the module block. This is unnecessary and
+    // removed in version 5.
+    hasUnnecessaryModuleBlockId = true;
+
+    // FALL THROUGH
+
+  case 5:              // LLVM 1.4 (Released)
+    break;
   default:
     error("Unknown bytecode version number: " + itostr(RevisionNum));
   }
@@ -2006,7 +2038,8 @@ void BytecodeReader::ParseModule() {
       if (SeenGlobalTypePlane)
         error("Two GlobalTypePlane Blocks Encountered!");
 
-      ParseGlobalTypes();
+      if (Size > 0)
+        ParseGlobalTypes();
       SeenGlobalTypePlane = true;
       break;
 
@@ -2070,8 +2103,7 @@ void BytecodeReader::ParseModule() {
 /// This function completely parses a bytecode buffer given by the \p Buf
 /// and \p Length parameters.
 void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length, 
-                                   const std::string &ModuleID,
-                                   bool processFunctions) {
+                                   const std::string &ModuleID) {
 
   try {
     At = MemStart = BlockStart = Buf;
@@ -2112,10 +2144,6 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
     // Check for missing functions
     if (hasFunctions())
       error("Function expected, but bytecode stream ended!");
-
-    // Process all the function bodies now, if requested
-    if (processFunctions)
-      ParseAllFunctionBodies();
 
     // Tell the handler we're done with the module
     if (Handler) 
