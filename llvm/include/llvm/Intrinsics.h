@@ -22,9 +22,10 @@ namespace LLVMIntrinsic {
     va_end,         // Used to represent a va_end call in C
     va_copy,        // Used to represent a va_copy call in C
 
+    unwind,         // Unwind stack until containing invoke is found
+
     // Exception handling intrinsics...
-    exc_throw,      // Throw an exception
-    exc_rethrow,    // Rethrow a caught exception
+    exc_setcurrent, // Set the current pending exception
     exc_getcurrent, // Get the current pending exception
 
     // Setjmp/Longjmp intrinsics...
