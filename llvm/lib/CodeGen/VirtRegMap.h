@@ -87,6 +87,11 @@ namespace llvm {
             v2pMap_[virtReg] = NO_PHYS_REG;
         }
 
+        void clearAllVirt() {
+            v2pMap_.clear();
+            grow();
+        }
+
         bool hasStackSlot(unsigned virtReg) const {
             return getStackSlot(virtReg) != NO_STACK_SLOT;
         }
