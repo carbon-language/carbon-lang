@@ -84,10 +84,11 @@ public:
   // specified by the iterator, and leaves the iterator pointing to the element 
   // that used to follow the element deleted.
   //
-  ValueSubclass *remove(iterator &DI);         // Defined in ValueHolderImpl.h
-  ValueSubclass *remove(const iterator &DI);   // Defined in ValueHolderImpl.h
-  void           remove(ValueSubclass *D);     // Defined in ValueHolderImpl.h
-  ValueSubclass *pop_back();                   // Defined in ValueHolderImpl.h
+  ValueSubclass *remove(iterator &DI);
+  ValueSubclass *remove(const iterator &DI);
+  void           remove(ValueSubclass *D);
+  void           remove(iterator Start, iterator End);
+  ValueSubclass *pop_back();
 
   // replaceWith - This removes the element pointed to by 'Where', and inserts
   // NewValue in it's place.  The old value is returned.  'Where' must be a
