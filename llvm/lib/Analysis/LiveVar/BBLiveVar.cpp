@@ -101,7 +101,7 @@ void BBLiveVar::calcDefUseSets() {
 	  
 	  if (DEBUG_LV >= LV_DEBUG_Verbose)
 	    cerr << "   - phi operand " << RAV(ArgVal) << " came from BB "
-                 << RAV(PredBB) << endl;
+                 << RAV(PredBB) << "\n";
 	} // if( IsPhi )
         else {
           // It is not a Phi use: add to regular use set and remove later defs.
