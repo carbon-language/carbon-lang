@@ -332,11 +332,31 @@ public:
     }
   }
 
+  Pass *getImmutablePassOrNull(const PassInfo *ID) const {
+    for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i) {
+      const PassInfo *IPID = ImmutablePasses[i]->getPassInfo();
+      if (IPID == ID)
+        return ImmutablePasses[i];
+      
+      // This pass is the current implementation of all of the interfaces it
+      // implements as well.
+      //
+      const std::vector<const PassInfo*> &II =
+        IPID->getInterfacesImplemented();
+      for (unsigned j = 0, e = II.size(); j != e; ++j)
+        if (II[j] == ID) return ImmutablePasses[i];
+    }
+    return 0;
+  }
+
   Pass *getAnalysisOrNullDown(const PassInfo *ID) const {
     std::map<AnalysisID, Pass*>::const_iterator I = CurrentAnalyses.find(ID);
 
     if (I != CurrentAnalyses.end())
       return I->second;  // Found it.
+
+    if (Pass *P = getImmutablePassOrNull(ID))
+      return P;
 
     if (Batcher)
       return ((AnalysisResolver*)Batcher)->getAnalysisOrNullDown(ID);
@@ -350,6 +370,8 @@ public:
 
     if (Parent)          // Try scanning...
       return Parent->getAnalysisOrNullUp(ID);
+    else if (!ImmutablePasses.empty())
+      return getImmutablePassOrNull(ID);
     return 0;
   }
 
@@ -386,7 +408,9 @@ public:
       if (Parent) {
         Parent->markPassUsed(P, this);
       } else {
-        assert(0 && "Pass available but not found! "
+        assert(getAnalysisOrNullUp(P) && 
+               dynamic_cast<ImmutablePass*>(getAnalysisOrNullUp(P)) &&
+               "Pass available but not found! "
                "Perhaps this is a module pass requiring a function pass?");
       }
     }
@@ -556,18 +580,6 @@ public:
     
     // Initialize the immutable pass...
     IP->initializePass();
-
-    // Add this pass to the currently available set...
-    if (const PassInfo *PI = IP->getPassInfo()) {
-      CurrentAnalyses[PI] = IP;
-
-      // This pass is the current implementation of all of the interfaces it
-      // implements as well.
-      //
-      const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
-      for (unsigned i = 0, e = II.size(); i != e; ++i)
-        CurrentAnalyses[II[i]] = IP;
-    }
   }
 };
 
