@@ -17,10 +17,9 @@
 // A null type is returned if the indices are invalid for the specified 
 // pointer type.
 //
-/* static */
 const Type* MemAccessInst::getIndexedType(const Type *Ptr, 
-					const vector<ConstPoolVal*> &Idx,
-					bool AllowStructLeaf = false) {
+					  const vector<ConstPoolVal*> &Idx,
+					  bool AllowStructLeaf = false) {
   if (!Ptr->isPointerType()) return 0;   // Type isn't a pointer type!
  
   // Get the type pointed to...
@@ -45,7 +44,6 @@ const Type* MemAccessInst::getIndexedType(const Type *Ptr,
   }
 }
 
-/* static */
 unsigned int
 MemAccessInst::getIndexedOfsetForTarget(const Type *Ptr, 
 					const vector<ConstPoolVal*> &Idx,
@@ -92,8 +90,7 @@ MemAccessInst::getIndexedOfsetForTarget(const Type *Ptr,
 
 LoadInst::LoadInst(Value *Ptr, const vector<ConstPoolVal*> &Idx,
 		   const string &Name = "")
-  : MemAccessInst(getIndexedType(Ptr->getType(), Idx), Load, Idx, Name)
-{
+  : MemAccessInst(getIndexedType(Ptr->getType(), Idx), Load, Idx, Name) {
   assert(getIndexedType(Ptr->getType(), Idx) && "Load operands invalid!");
   Operands.reserve(1+Idx.size());
   Operands.push_back(Use(Ptr, this));
