@@ -1,5 +1,5 @@
 LEVEL  = ../../..
 DIRS   = ADCE CFGSimplify ConstProp DecomposeMultiDimRefs FunctionResolve GCSE \
-	 InstCombine LevelRaise LICM Mem2Reg PiNodeInserter ProfilePaths \
-	 Reassociate SCCP
+	 Inline InstCombine LevelRaise LICM Mem2Reg PiNodeInserter ProfilePaths \
+	 Reassociate SCCP SimplifyCFG
 include $(LEVEL)/Makefile.common
