@@ -28,9 +28,33 @@ public:
   void add(Pass *P);
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of
-  /// whether any of the functions modifies the program, and if so, return true.
+  /// whether any of the passes modifies the module, and if so, return true.
   ///
   bool run(Module &M);
+};
+
+class FunctionPass;
+class Function;
+
+class FunctionPassManager {
+  PassManagerT<Function> *PM;    // This is a straightforward Pimpl class
+public:
+  FunctionPassManager();
+  ~FunctionPassManager();
+
+  /// add - Add a pass to the queue of passes to run.  This passes
+  /// ownership of the FunctionPass to the PassManager.  When the
+  /// PassManager is destroyed, the pass will be destroyed as well, so
+  /// there is no need to delete the pass.  This implies that all
+  /// passes MUST be allocated with 'new'.
+  ///
+  void add(FunctionPass *P);
+
+  /// run - Execute all of the passes scheduled for execution.  Keep
+  /// track of whether any of the passes modifies the function, and if
+  /// so, return true.
+  ///
+  bool run(Function &M);
 };
 
 #endif

@@ -70,6 +70,16 @@ PassManager::~PassManager() { delete PM; }
 void PassManager::add(Pass *P) { PM->add(P); }
 bool PassManager::run(Module &M) { return PM->run(M); }
 
+//===----------------------------------------------------------------------===//
+// FunctionPassManager implementation - The FunctionPassManager class
+// is a simple Pimpl class that wraps the PassManagerT template. It
+// is like PassManager, but only deals in FunctionPasses.
+//
+FunctionPassManager::FunctionPassManager() : PM(new PassManagerT<Function>()) {}
+FunctionPassManager::~FunctionPassManager() { delete PM; }
+void FunctionPassManager::add(FunctionPass *P) { PM->add(P); }
+bool FunctionPassManager::run(Function &F) { return PM->run(F); }
+
 
 //===----------------------------------------------------------------------===//
 // TimingInfo Class - This class is used to calculate information about the
