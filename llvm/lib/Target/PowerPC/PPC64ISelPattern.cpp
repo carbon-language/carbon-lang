@@ -1069,7 +1069,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     MVT::ValueType TypeBeingLoaded = (ISD::LOAD == opcode) ?
       Node->getValueType(0) : cast<MVTSDNode>(Node)->getExtraValueType();
     bool sext = (ISD::SEXTLOAD == opcode);
-    bool byte = (MVT::i8 == TypeBeingLoaded);
     
     // Make sure we generate both values.
     if (Result != 1)

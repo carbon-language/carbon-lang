@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines a pattern matching instruction selector for 32 bit PowerPC.
+// Magic number generation for integer divide from the PowerPC Compiler Writer's
+// Guide, section 3.2.3.5
 //
 //===----------------------------------------------------------------------===//
 
@@ -54,6 +56,10 @@ namespace {
       // PowerPC has an i16 but no i8 (or i1) SEXTLOAD
       setOperationAction(ISD::SEXTLOAD, MVT::i1, Expand);
       setOperationAction(ISD::SEXTLOAD, MVT::i8, Expand);
+      
+      // PowerPC has no SREM/UREM instructions
+      setOperationAction(ISD::SREM, MVT::i32, Expand);
+      setOperationAction(ISD::UREM, MVT::i32, Expand);
 
       setShiftAmountFlavor(Extend);   // shl X, 32 == 0
       addLegalFPImmediate(+0.0); // Necessary for FSEL
@@ -439,9 +445,10 @@ Statistic<>FusedFP("ppc-codegen", "Number of fused fp operations");
 /// SelectionDAG operations.
 //===--------------------------------------------------------------------===//
 class ISel : public SelectionDAGISel {
-  
-  /// Comment Here.
   PPC32TargetLowering PPC32Lowering;
+  SelectionDAG *ISelDAG;  // Hack to support us having a dag->dag transform
+                          // for sdiv and udiv until it is put into the future
+                          // dag combiner.
   
   /// ExprMap - As shared expressions are codegen'd, we keep track of which
   /// vreg the value is produced in, so we only emit one copy of each compiled
@@ -452,8 +459,8 @@ class ISel : public SelectionDAGISel {
   bool GlobalBaseInitialized;
   
 public:
-  ISel(TargetMachine &TM) : SelectionDAGISel(PPC32Lowering), PPC32Lowering(TM) 
-  {}
+  ISel(TargetMachine &TM) : SelectionDAGISel(PPC32Lowering), PPC32Lowering(TM),
+                            ISelDAG(0) {}
   
   /// runOnFunction - Override this function in order to reset our per-function
   /// variables.
@@ -468,11 +475,17 @@ public:
   virtual void InstructionSelectBasicBlock(SelectionDAG &DAG) {
     DEBUG(BB->dump());
     // Codegen the basic block.
+    ISelDAG = &DAG;
     Select(DAG.getRoot());
     
     // Clear state used for selection.
     ExprMap.clear();
+    ISelDAG = 0;
   }
+
+  // dag -> dag expanders for integer divide by constant
+  SDOperand BuildSDIVSequence(SDOperand N);
+  SDOperand BuildUDIVSequence(SDOperand N);
   
   unsigned getGlobalBaseReg();
   unsigned getConstDouble(double floatVal, unsigned Result);
@@ -504,7 +517,8 @@ static unsigned ExactLog2(unsigned Val) {
 /// of 1 indicates that the constant may be used in normal immediate form.  A
 /// return value of 2 indicates that the constant may be used in shifted
 /// immediate form.  A return value of 3 indicates that log base 2 of the
-/// constant may be used.
+/// constant may be used.  A return value of 4 indicates that the constant is
+/// suitable for conversion into a magic number for integer division.
 ///
 static unsigned getImmediateForOpcode(SDOperand N, unsigned Opcode,
                                       unsigned& Imm, bool U = false) {
@@ -534,6 +548,10 @@ static unsigned getImmediateForOpcode(SDOperand N, unsigned Opcode,
     break;
   case ISD::SDIV:
     if ((Imm = ExactLog2(v))) { return 3; }
+    if (v <= -2 || v >= 2) { return 4; }
+    break;
+  case ISD::UDIV:
+    if (v != 0) { return 4; }
     break;
   }
   return 0;
@@ -574,6 +592,156 @@ static unsigned IndexedOpForOp(unsigned Opcode) {
   }
   return 0;
 }
+
+// Structure used to return the necessary information to codegen an SDIV as 
+// a multiply.
+struct ms {
+  int m; // magic number
+  int s; // shift amount
+};
+
+struct mu {
+  unsigned int m; // magic number
+  int a;          // add indicator
+  int s;          // shift amount
+};
+
+/// magic - calculate the magic numbers required to codegen an integer sdiv as
+/// a sequence of multiply and shifts.  Requires that the divisor not be 0, 1, 
+/// or -1.
+static struct ms magic(int d) {
+  int p;
+  unsigned int ad, anc, delta, q1, r1, q2, r2, t;
+  const unsigned int two31 = 2147483648U; // 2^31
+  struct ms mag;
+  
+  ad = abs(d);
+  t = two31 + ((unsigned int)d >> 31);
+  anc = t - 1 - t%ad;   // absolute value of nc
+  p = 31;               // initialize p
+  q1 = two31/anc;       // initialize q1 = 2p/abs(nc)
+  r1 = two31 - q1*anc;  // initialize r1 = rem(2p,abs(nc))
+  q2 = two31/ad;        // initialize q2 = 2p/abs(d)
+  r2 = two31 - q2*ad;   // initialize r2 = rem(2p,abs(d))
+  do {
+    p = p + 1;
+    q1 = 2*q1;        // update q1 = 2p/abs(nc)
+    r1 = 2*r1;        // update r1 = rem(2p/abs(nc))
+    if (r1 >= anc) {  // must be unsigned comparison
+      q1 = q1 + 1;
+      r1 = r1 - anc;
+    }
+    q2 = 2*q2;        // update q2 = 2p/abs(d)
+    r2 = 2*r2;        // update r2 = rem(2p/abs(d))
+    if (r2 >= ad) {   // must be unsigned comparison
+      q2 = q2 + 1;
+      r2 = r2 - ad;
+    }
+    delta = ad - r2;
+  } while (q1 < delta || (q1 == delta && r1 == 0));
+
+  mag.m = q2 + 1;
+  if (d < 0) mag.m = -mag.m; // resulting magic number
+  mag.s = p - 32;            // resulting shift
+  return mag;
+}
+
+/// magicu - calculate the magic numbers required to codegen an integer udiv as
+/// a sequence of multiply, add and shifts.  Requires that the divisor not be 0.
+static struct mu magicu(unsigned d)
+{
+  int p;
+  unsigned int nc, delta, q1, r1, q2, r2;
+  struct mu magu;
+  magu.a = 0;               // initialize "add" indicator
+  nc = - 1 - (-d)%d;
+  p = 31;                   // initialize p
+  q1 = 0x80000000/nc;       // initialize q1 = 2p/nc
+  r1 = 0x80000000 - q1*nc;  // initialize r1 = rem(2p,nc)
+  q2 = 0x7FFFFFFF/d;        // initialize q2 = (2p-1)/d
+  r2 = 0x7FFFFFFF - q2*d;   // initialize r2 = rem((2p-1),d)
+  do {
+    p = p + 1;
+    if (r1 >= nc - r1 ) {
+      q1 = 2*q1 + 1;  // update q1
+      r1 = 2*r1 - nc; // update r1
+    }
+    else {
+      q1 = 2*q1; // update q1
+      r1 = 2*r1; // update r1
+    }
+    if (r2 + 1 >= d - r2) {
+      if (q2 >= 0x7FFFFFFF) magu.a = 1;
+      q2 = 2*q2 + 1;     // update q2
+      r2 = 2*r2 + 1 - d; // update r2
+    }
+    else {
+      if (q2 >= 0x80000000) magu.a = 1;
+      q2 = 2*q2;     // update q2
+      r2 = 2*r2 + 1; // update r2
+    }
+    delta = d - 1 - r2;
+  } while (p < 64 && (q1 < delta || (q1 == delta && r1 == 0)));
+  magu.m = q2 + 1; // resulting magic number
+  magu.s = p - 32;  // resulting shift
+  return magu;
+}
+}
+
+/// BuildSDIVSequence - Given an ISD::SDIV node expressing a divide by constant,
+/// return a DAG expression to select that will generate the same value by
+/// multiplying by a magic number.  See:
+/// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
+SDOperand ISel::BuildSDIVSequence(SDOperand N) {
+  int d = (int)cast<ConstantSDNode>(N.getOperand(1))->getSignExtended();
+  ms magics = magic(d);
+  // Multiply the numerator (operand 0) by the magic value
+  SDOperand Q = ISelDAG->getNode(ISD::MULHS, MVT::i32, N.getOperand(0), 
+                                 ISelDAG->getConstant(magics.m, MVT::i32));
+  // If d > 0 and m < 0, add the numerator
+  if (d > 0 && magics.m < 0)
+    Q = ISelDAG->getNode(ISD::ADD, MVT::i32, Q, N.getOperand(0));
+  // If d < 0 and m > 0, subtract the numerator.
+  if (d < 0 && magics.m > 0)
+    Q = ISelDAG->getNode(ISD::SUB, MVT::i32, Q, N.getOperand(0));
+  // Shift right algebraic if shift value is nonzero
+  if (magics.s > 0)
+    Q = ISelDAG->getNode(ISD::SRA, MVT::i32, Q, 
+                         ISelDAG->getConstant(magics.s, MVT::i32));
+  // Extract the sign bit and add it to the quotient
+  SDOperand T = 
+    ISelDAG->getNode(ISD::SRL, MVT::i32, Q, ISelDAG->getConstant(31, MVT::i32));
+  Q = ISelDAG->getNode(ISD::ADD, MVT::i32, Q, T);
+  // Compute the remainder
+  T = ISelDAG->getNode(ISD::MUL, MVT::i32, Q, N.getOperand(1));
+  return ISelDAG->getNode(ISD::SUB, MVT::i32, N.getOperand(0), T);
+}
+
+/// BuildUDIVSequence - Given an ISD::UDIV node expressing a divide by constant,
+/// return a DAG expression to select that will generate the same value by
+/// multiplying by a magic number.  See:
+/// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
+SDOperand ISel::BuildUDIVSequence(SDOperand N) {
+  unsigned d = 
+    (unsigned)cast<ConstantSDNode>(N.getOperand(1))->getSignExtended();
+  mu magics = magicu(d);
+  // Multiply the numerator (operand 0) by the magic value
+  SDOperand Q = ISelDAG->getNode(ISD::MULHU, MVT::i32, N.getOperand(0), 
+                                 ISelDAG->getConstant(magics.m, MVT::i32));
+  if (magics.a == 0) {
+    Q = ISelDAG->getNode(ISD::SRL, MVT::i32, Q, 
+                         ISelDAG->getConstant(magics.s, MVT::i32));
+  } else {
+    SDOperand NPQ = ISelDAG->getNode(ISD::SUB, MVT::i32, N.getOperand(0), Q);
+    NPQ = ISelDAG->getNode(ISD::SRL, MVT::i32, NPQ, 
+                           ISelDAG->getConstant(1, MVT::i32));
+    NPQ = ISelDAG->getNode(ISD::ADD, MVT::i32, NPQ, Q);
+    Q = ISelDAG->getNode(ISD::SRL, MVT::i32, NPQ, 
+                           ISelDAG->getConstant(magics.s-1, MVT::i32));
+  }
+  // Compute the remainder
+  SDOperand T = ISelDAG->getNode(ISD::MUL, MVT::i32, Q, N.getOperand(1));
+  return ISelDAG->getNode(ISD::SUB, MVT::i32, N.getOperand(0), T);
 }
 
 /// getGlobalBaseReg - Output the instructions required to put the
@@ -1091,7 +1259,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     MVT::ValueType TypeBeingLoaded = (ISD::LOAD == opcode) ?
       Node->getValueType(0) : cast<MVTSDNode>(Node)->getExtraValueType();
     bool sext = (ISD::SEXTLOAD == opcode);
-    bool byte = (MVT::i8 == TypeBeingLoaded);
     
     // Make sure we generate both values.
     if (Result != 1)
@@ -1413,33 +1580,38 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
     return Result;
 
+  case ISD::MULHS:
+  case ISD::MULHU:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    Opc = (ISD::MULHU == opcode) ? PPC::MULHWU : PPC::MULHW;
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+
   case ISD::SDIV:
   case ISD::UDIV:
-    if (3 == getImmediateForOpcode(N.getOperand(1), opcode, Tmp3)) {
+    switch (getImmediateForOpcode(N.getOperand(1), opcode, Tmp3)) {
+    default: break;
+    // If this is an sdiv by a power of two, we can use an srawi/addze pair.
+    case 3:
       Tmp1 = MakeReg(MVT::i32);
       Tmp2 = SelectExpr(N.getOperand(0));
       BuildMI(BB, PPC::SRAWI, 2, Tmp1).addReg(Tmp2).addImm(Tmp3);
       BuildMI(BB, PPC::ADDZE, 1, Result).addReg(Tmp1);
       return Result;
+    // If this is a divide by constant, we can emit code using some magic
+    // constants to implement it as a multiply instead.
+    case 4:
+      if (opcode == ISD::SDIV)
+        return SelectExpr(BuildSDIVSequence(N));
+      else
+        return SelectExpr(BuildUDIVSequence(N));
     }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     Opc = (ISD::UDIV == opcode) ? PPC::DIVWU : PPC::DIVW;
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
-
-  case ISD::UREM:
-  case ISD::SREM: {
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    Tmp3 = MakeReg(MVT::i32);
-    unsigned Tmp4 = MakeReg(MVT::i32);
-    Opc = (ISD::UREM == opcode) ? PPC::DIVWU : PPC::DIVW;
-    BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-    BuildMI(BB, PPC::MULLW, 2, Tmp4).addReg(Tmp3).addReg(Tmp2);
-    BuildMI(BB, PPC::SUBF, 2, Result).addReg(Tmp4).addReg(Tmp1);
-    return Result;
-  }
 
   case ISD::ADD_PARTS:
   case ISD::SUB_PARTS: {

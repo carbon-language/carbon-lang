@@ -368,6 +368,8 @@ def DIVW  : XOForm_1<31, 491, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "divw $rT, $rA, $rB">;
 def DIVWU : XOForm_1<31, 459, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "divwu $rT, $rA, $rB">;
+def MULHW : XOForm_1<31, 75, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+                     "mulhw $rT, $rA, $rB">;
 def MULHWU : XOForm_1<31, 11, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "mulhwu $rT, $rA, $rB">;
 def MULLD : XOForm_1<31, 233, 0, 0, 1, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
