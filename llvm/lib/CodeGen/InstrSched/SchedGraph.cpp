@@ -13,21 +13,18 @@
 //**************************************************************************/
 
 #include "SchedGraph.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Instruction.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/InstrSelection.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/MachineRegInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/Method.h"
 #include "llvm/iOther.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
-#include <algorithm>
-#include <vector>
 #include <iostream>
-#include <ext/hash_map>
 
 using std::vector;
 using std::pair;
@@ -353,12 +350,12 @@ SchedGraph::addCDEdges(const TerminatorInst* term,
 		       const TargetMachine& target)
 {
   const MachineInstrInfo& mii = target.getInstrInfo();
-  MachineCodeForVMInstr& termMvec = term->getMachineInstrVec();
+  MachineCodeForInstruction &termMvec = MachineCodeForInstruction::get(term);
   
   // Find the first branch instr in the sequence of machine instrs for term
   // 
   unsigned first = 0;
-  while (! mii.isBranch(termMvec[first]->getOpCode()))
+  while (!mii.isBranch(termMvec[first]->getOpCode()))
     ++first;
   assert(first < termMvec.size() &&
 	 "No branch instructions for BR?  Ok, but weird!  Delete assertion.");
