@@ -250,7 +250,7 @@ namespace {
     DataStructure *DS;
 
     // Prototypes that we add to support pool allocation...
-    Function *PoolInit, *PoolDestroy, *PoolAlloc, *PoolFree;
+    Function *PoolInit, *PoolDestroy, *PoolAlloc, *PoolAllocArray, *PoolFree;
 
     // The map of already transformed functions... note that the keys of this
     // map do not have meaningful values for 'Call' or the 'PoolHandle' elements
@@ -314,11 +314,6 @@ namespace {
 //
 static bool isNotPoolableAlloc(const AllocDSNode *DS) {
   if (DS->isAllocaNode()) return true;  // Do not pool allocate alloca's.
-
-  MallocInst *MI = cast<MallocInst>(DS->getAllocation());
-  if (MI->isArrayAllocation() && !isa<Constant>(MI->getArraySize()))
-    return true;   // Do not allow variable size allocations...
-
   return false;
 }
 
@@ -456,7 +451,7 @@ public:
         if (isa<Constant>(Ref.OldVal) &&  // Refering to a null ptr?
             cast<Constant>(Ref.OldVal)->isNullValue()) {
           // Transform the null pointer into a null index... caching in XFormMap
-          XFormMap[Ref.OldVal] = NewVal =Constant::getNullConstant(POINTERTYPE);
+          XFormMap[Ref.OldVal] = NewVal = Constant::getNullValue(POINTERTYPE);
           //} else if (isa<Argument>(Ref.OldVal)) {
         } else {
           cerr << "Unknown reference to: " << Ref.OldVal << "\n";
@@ -485,15 +480,16 @@ public:
     Instruction *PoolBase = createPoolBaseInstruction(I->getOperand(0));
 
     // Cast our index to be a UIntTy so we can use it to index into the pool...
-    CastInst *Index = new CastInst(Constant::getNullConstant(POINTERTYPE),
+    CastInst *Index = new CastInst(Constant::getNullValue(POINTERTYPE),
                                    Type::UIntTy, I->getOperand(0)->getName());
 
     ReferencesToUpdate.push_back(RefToUpdate(Index, 0, I->getOperand(0)));
 
     vector<Value*> Indices(I->idx_begin(), I->idx_end());
-    assert(Indices[0] == ConstantUInt::get(Type::UIntTy, 0) &&
-           "Cannot handle array indexing yet!");
-    Indices[0] = Index;
+    Instruction *IdxInst =
+      BinaryOperator::create(Instruction::Add, Indices[0], Index,
+                             I->getName()+".idx");
+    Indices[0] = IdxInst;
     Instruction *NewLoad = new LoadInst(PoolBase, Indices, I->getName());
 
     // Replace the load instruction with the new load instruction...
@@ -502,8 +498,11 @@ public:
     // Add the pool base calculator instruction before the load...
     II = NewLoad->getParent()->getInstList().insert(II, PoolBase) + 1;
 
+    // Add the idx calculator instruction before the load...
+    II = NewLoad->getParent()->getInstList().insert(II, Index) + 1;
+
     // Add the cast before the load instruction...
-    NewLoad->getParent()->getInstList().insert(II, Index);
+    NewLoad->getParent()->getInstList().insert(II, IdxInst);
 
     // If not yielding a pool allocated pointer, use the new load value as the
     // value in the program instead of the old load value...
@@ -523,20 +522,22 @@ public:
 
     Value *Val = I->getOperand(0);  // The value to store...
     // Check to see if the value we are storing is a data structure pointer...
-    if (const ScalarInfo *ValScalar = getScalar(I->getOperand(0)))
-      Val = Constant::getNullConstant(POINTERTYPE);  // Yes, store a dummy
+    //if (const ScalarInfo *ValScalar = getScalar(I->getOperand(0)))
+    if (isa<PointerType>(I->getOperand(0)->getType()))
+      Val = Constant::getNullValue(POINTERTYPE);  // Yes, store a dummy
 
     Instruction *PoolBase = createPoolBaseInstruction(I->getOperand(1));
 
     // Cast our index to be a UIntTy so we can use it to index into the pool...
-    CastInst *Index = new CastInst(Constant::getNullConstant(POINTERTYPE),
+    CastInst *Index = new CastInst(Constant::getNullValue(POINTERTYPE),
                                    Type::UIntTy, I->getOperand(1)->getName());
     ReferencesToUpdate.push_back(RefToUpdate(Index, 0, I->getOperand(1)));
 
     vector<Value*> Indices(I->idx_begin(), I->idx_end());
-    assert(Indices[0] == ConstantUInt::get(Type::UIntTy, 0) &&
-           "Cannot handle array indexing yet!");
-    Indices[0] = Index;
+    Instruction *IdxInst =
+      BinaryOperator::create(Instruction::Add, Indices[0], Index, "idx");
+    Indices[0] = IdxInst;
+
     Instruction *NewStore = new StoreInst(Val, PoolBase, Indices);
 
     if (Val != I->getOperand(0))    // Value stored was a pointer?
@@ -549,6 +550,9 @@ public:
     // Add the pool base calculator instruction before the index...
     II = Index->getParent()->getInstList().insert(II, PoolBase) + 2;
 
+    // Add the indexing instruction...
+    II = Index->getParent()->getInstList().insert(II, IdxInst) + 1;
+
     // Add the store after the cast instruction...
     Index->getParent()->getInstList().insert(II, NewStore);
   }
@@ -556,9 +560,19 @@ public:
 
   // Create call to poolalloc for every malloc instruction
   void visitMallocInst(MallocInst *I) {
+    const ScalarInfo &SCI = getScalarRef(I);
     vector<Value*> Args;
-    Args.push_back(getScalarRef(I).Pool.Handle);
-    CallInst *Call = new CallInst(PoolAllocator.PoolAlloc, Args, I->getName());
+
+    CallInst *Call;
+    if (!I->isArrayAllocation()) {
+      Args.push_back(SCI.Pool.Handle);
+      Call = new CallInst(PoolAllocator.PoolAlloc, Args, I->getName());
+    } else {
+      Args.push_back(I->getArraySize());
+      Args.push_back(SCI.Pool.Handle);
+      Call = new CallInst(PoolAllocator.PoolAllocArray, Args, I->getName());
+    }    
+
     ReplaceInstWith(I, Call);
   }
 
@@ -566,7 +580,7 @@ public:
   void visitFreeInst(FreeInst *I) {
     // Create a new call to poolfree before the free instruction
     vector<Value*> Args;
-    Args.push_back(Constant::getNullConstant(POINTERTYPE));
+    Args.push_back(Constant::getNullValue(POINTERTYPE));
     Args.push_back(getScalarRef(I->getOperand(0)).Pool.Handle);
     Instruction *NewCall = new CallInst(PoolAllocator.PoolFree, Args);
     ReplaceInstWith(I, NewCall);
@@ -585,7 +599,7 @@ public:
     for (unsigned i = 0, e = TI.ArgInfo.size(); i != e; ++i) {
       // Replace all of the pointer arguments with our new pointer typed values.
       if (TI.ArgInfo[i].ArgNo != -1)
-        Args[TI.ArgInfo[i].ArgNo] = Constant::getNullConstant(POINTERTYPE);
+        Args[TI.ArgInfo[i].ArgNo] = Constant::getNullValue(POINTERTYPE);
 
       // Add all of the pool arguments...
       Args.push_back(TI.ArgInfo[i].PoolHandle);
@@ -616,7 +630,7 @@ public:
   // nodes...
   //
   void visitPHINode(PHINode *PN) {
-    Value *DummyVal = Constant::getNullConstant(POINTERTYPE);
+    Value *DummyVal = Constant::getNullValue(POINTERTYPE);
     PHINode *NewPhi = new PHINode(POINTERTYPE, PN->getName());
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
       NewPhi->addIncoming(DummyVal, PN->getIncomingBlock(i));
@@ -629,7 +643,7 @@ public:
 
   // visitReturnInst - Replace ret instruction with a new return...
   void visitReturnInst(ReturnInst *I) {
-    Instruction *Ret = new ReturnInst(Constant::getNullConstant(POINTERTYPE));
+    Instruction *Ret = new ReturnInst(Constant::getNullValue(POINTERTYPE));
     ReplaceInstWith(I, Ret);
     ReferencesToUpdate.push_back(RefToUpdate(Ret, 0, I->getOperand(0)));
   }
@@ -637,7 +651,7 @@ public:
   // visitSetCondInst - Replace a conditional test instruction with a new one
   void visitSetCondInst(SetCondInst *SCI) {
     BinaryOperator *I = (BinaryOperator*)SCI;
-    Value *DummyVal = Constant::getNullConstant(POINTERTYPE);
+    Value *DummyVal = Constant::getNullValue(POINTERTYPE);
     BinaryOperator *New = BinaryOperator::create(I->getOpcode(), DummyVal,
                                                  DummyVal, I->getName());
     ReplaceInstWith(I, New);
@@ -741,9 +755,9 @@ public:
           PoolDescValues.end()) {
 
         assert("Make sure it's a load of the pool base, not a chaining field" &&
-               LI->getOperand(1) == Constant::getNullConstant(Type::UIntTy) &&
-               LI->getOperand(2) == Constant::getNullConstant(Type::UByteTy) &&
-               LI->getOperand(3) == Constant::getNullConstant(Type::UByteTy));
+               LI->getOperand(1) == Constant::getNullValue(Type::UIntTy) &&
+               LI->getOperand(2) == Constant::getNullValue(Type::UByteTy) &&
+               LI->getOperand(3) == Constant::getNullValue(Type::UByteTy));
 
         // If it is a load of a pool base, keep track of it for future reference
         PoolDescMap.insert(make_pair(LoadAddr, LI));
@@ -1059,7 +1073,7 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
   vector<ScalarInfo> Scalars;
 
 #ifdef DEBUG_TRANSFORM_PROGRESS
-  cerr << "Building scalar map:\n";
+  cerr << "Building scalar map for fn '" << F->getName() << "' body:\n";
 #endif
 
   for (map<Value*, PointerValSet>::iterator I = ValMap.begin(),
@@ -1068,6 +1082,7 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
 
     // Check to see if the scalar points to a data structure node...
     for (unsigned i = 0, e = PVS.size(); i != e; ++i) {
+      if (PVS[i].Index) { cerr << "Problem in " << F->getName() << " for " << I->first << "\n"; }
       assert(PVS[i].Index == 0 && "Nonzero not handled yet!");
         
       // If the allocation is in the nonescaping set...
@@ -1519,14 +1534,14 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
     // Add a symbol table entry for the new type if there was one for the old
     // type...
     string OldName = CurModule->getTypeName(Allocs[i]->getType());
-    if (!OldName.empty())
-      CurModule->addTypeName(OldName+".p", PI->second.NewType);
+    if (OldName.empty()) OldName = "node";
+    CurModule->addTypeName(OldName+".p", PI->second.NewType);
 
     // Create the abstract pool types that will need to be resolved in a second
     // pass once an abstract type is created for each pool.
     //
     // Can only handle limited shapes for now...
-    StructType *OldNodeTy = cast<StructType>(Allocs[i]->getType());
+    const Type *OldNodeTy = Allocs[i]->getType();
     vector<const Type*> PoolTypes;
 
     // Pool type is the first element of the pool descriptor type...
@@ -1542,7 +1557,7 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
     StructType *PoolType = StructType::get(PoolTypes);
 
     // Add a symbol table entry for the pooltype if possible...
-    if (!OldName.empty()) CurModule->addTypeName(OldName+".pool", PoolType);
+    CurModule->addTypeName(OldName+".pool", PoolType);
 
     // Create the pool type, with opaque values for pointers...
     AbsPoolTyMap.insert(make_pair(Allocs[i], PoolType));
@@ -1686,8 +1701,9 @@ void PoolAllocate::addPoolPrototypes(Module *M) {
   FunctionType *PoolFreeTy = FunctionType::get(Type::VoidTy, Args, true);
   PoolFree = M->getOrInsertFunction("poolfree", PoolFreeTy);
 
-  // Add the %PoolTy type to the symbol table of the module...
-  //M->addTypeName("PoolTy", PoolTy->getElementType());
+  Args[0] = Type::UIntTy;            // Number of slots to allocate
+  FunctionType *PoolAllocArrayTy = FunctionType::get(POINTERTYPE, Args, true);
+  PoolAllocArray = M->getOrInsertFunction("poolallocarray", PoolAllocArrayTy);
 }
 
 
