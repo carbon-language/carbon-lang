@@ -99,6 +99,7 @@ namespace {
     Instruction *visitInstruction(Instruction &I) { return 0; }
 
   private:
+    Instruction *visitCallSite(CallSite CS);
     bool transformConstExprCastCall(CallSite CS);
 
     // InsertNewInstBefore - insert an instruction New before instruction Old
@@ -1581,15 +1582,13 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
 // CallInst simplification
 //
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
-  if (transformConstExprCastCall(&CI)) return 0;
-  return 0;
+  return visitCallSite(&CI);
 }
 
 // InvokeInst simplification
 //
 Instruction *InstCombiner::visitInvokeInst(InvokeInst &II) {
-  if (transformConstExprCastCall(&II)) return 0;
-  return 0;
+  return visitCallSite(&II);
 }
 
 // getPromotedType - Return the specified type promoted as it would be to pass
@@ -1603,6 +1602,15 @@ static const Type *getPromotedType(const Type *Ty) {
   case Type::FloatTyID:  return Type::DoubleTy;
   default:               return Ty;
   }
+}
+
+// visitCallSite - Improvements for call and invoke instructions.
+//
+Instruction *InstCombiner::visitCallSite(CallSite CS) {
+  if (transformConstExprCastCall(CS)) return 0;
+
+  
+  return 0;
 }
 
 // transformConstExprCastCall - If the callee is a constexpr cast of a function,
