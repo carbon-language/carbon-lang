@@ -397,9 +397,13 @@ InstructionNode* InstrForest::buildTreeForInstruction(Instruction *instr) {
         } else if (Constant *CPV = dyn_cast<Constant>(operand)) {
           if (isa<GlobalValue>(CPV))
             opTreeNode = new VRegNode(operand);
-          else
+          else if (isa<UndefValue>(CPV)) {
+            opTreeNode = new
+               ConstantNode(Constant::getNullValue(CPV->getType()));
+          } else {
             // Create a leaf node for a constant
             opTreeNode = new ConstantNode(CPV);
+          }
         } else {
           // Create a leaf node for the virtual register
           opTreeNode = new VRegNode(operand);
@@ -541,7 +545,7 @@ uint64_t ConvertConstantToIntType(const TargetMachine &target, const Value *V,
   }
 
   // ConstantPointerNull: it's really just a big, shiny version of zero.
-  if (const ConstantPointerNull *CPN = dyn_cast<ConstantPointerNull>(V)) {
+  if (isa<ConstantPointerNull>(V)) {
     isValidConstant = true;
     return 0;
   }
@@ -565,6 +569,9 @@ uint64_t ConvertConstantToIntType(const TargetMachine &target, const Value *V,
     double fC = CFP->getValue();
     C = (destType->isSigned()? (uint64_t) (int64_t) fC
                              : (uint64_t)           fC);
+  } else if (isa<UndefValue>(V)) {
+    isValidConstant = true;
+    C = 0;
   }
 
   // Now if a valid value was found, convert it to destType.
@@ -839,7 +846,8 @@ bool ConstantMayNotFitInImmedField(const Constant* CV, const Instruction* I) {
   if (I->getOpcode() >= MaxConstantsTable.size()) // user-defined op (or bug!)
     return true;
 
-  if (isa<ConstantPointerNull>(CV))               // can always use %g0
+  // can always use %g0
+  if (isa<ConstantPointerNull>(CV) || isa<UndefValue>(CV))
     return false;
 
   if (isa<SwitchInst>(I)) // Switch instructions will be lowered!
@@ -1561,7 +1569,8 @@ static inline void Add3OperandInstr(unsigned Opcode, InstructionNode* Node,
 /// IsZero - Check for a constant 0.
 ///
 static inline bool IsZero(Value* idx) {
-  return (idx == ConstantSInt::getNullValue(idx->getType()));
+  return (isa<Constant>(idx) && cast<Constant>(idx)->isNullValue()) ||
+         isa<UndefValue>(idx);
 }
 
 /// FoldGetElemChain - Fold a chain of GetElementPtr instructions containing

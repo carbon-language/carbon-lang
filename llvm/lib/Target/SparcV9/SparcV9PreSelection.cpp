@@ -55,6 +55,15 @@ namespace {
     void visitCallInst(CallInst &I);
     void visitPHINode(PHINode &PN);
 
+    void visitBasicBlock(BasicBlock &BB) {
+      if (isa<UnreachableInst>(BB.getTerminator())) {
+        BB.getInstList().pop_back();
+        const Type *RetTy = BB.getParent()->getReturnType();
+        Value *RetVal = RetTy == Type::VoidTy ? 0 : UndefValue::get(RetTy);
+        new ReturnInst(RetVal, &BB);
+      }
+    }
+
     // Helper functions for visiting operands of every instruction
     // 
     // visitOperands() works on every operand in [firstOp, lastOp-1].

@@ -315,7 +315,7 @@ void AsmPrinter::printSingleConstantValue(const Constant* CV) {
   
   if (const GlobalValue* GV = dyn_cast<GlobalValue>(CV)) {
     O << getID(GV) << "\n";
-  } else if (isa<ConstantPointerNull>(CV)) {
+  } else if (isa<ConstantPointerNull>(CV) || isa<UndefValue>(CV)) {
     // Null pointer value
     O << "0\n";
   } else if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV)) { 
@@ -482,7 +482,7 @@ std::string AsmPrinter::valToExprString(const Value* V,
       S += utostr(CI->getValue());
     else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV))
       S += ftostr(CFP->getValue());
-    else if (isa<ConstantPointerNull>(CV))
+    else if (isa<ConstantPointerNull>(CV) || isa<UndefValue>(CV))
       S += "0";
     else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV))
       S += ConstantExprToString(CE, target);
@@ -750,7 +750,9 @@ void SparcV9AsmPrinter::printGlobalVariable(const GlobalVariable* GV) {
   if (GV->hasExternalLinkage())
     O << "\t.global\t" << getID(GV) << "\n";
   
-  if (GV->hasInitializer() && ! GV->getInitializer()->isNullValue()) {
+  if (GV->hasInitializer() &&
+      !(GV->getInitializer()->isNullValue() ||
+        isa<UndefValue>(GV->getInitializer()))) {
     printConstant(GV->getInitializer(), getID(GV));
   } else {
     O << "\t.align\t" << TypeToAlignment(GV->getType()->getElementType(),
@@ -769,7 +771,8 @@ void SparcV9AsmPrinter::emitGlobals(const Module &M) {
       assert(GI->hasInitializer());
       if (GI->isConstant())
         enterSection(ReadOnlyData);   // read-only, initialized data
-      else if (GI->getInitializer()->isNullValue())
+      else if (GI->getInitializer()->isNullValue() ||
+               isa<UndefValue>(GI->getInitializer()))
         enterSection(ZeroInitRWData); // read-write zero data
       else
         enterSection(InitRWData);     // read-write non-zero data
