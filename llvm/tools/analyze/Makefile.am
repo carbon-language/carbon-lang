@@ -17,6 +17,7 @@ analyze_SOURCES = \
   GraphPrinters.cpp
 
 analyze_LDADD = \
-  $(call GETOBJS,AsmParser,BCReader,Core) \
-  $(call GETLIBS,Analysis,IPA,DataStructure,ScalarOpts,Transforms,Target) \
-  $(call GETLIBS,ScalarOpts,TransformUtils,Support,System)
+  $(call GETOBJS,AsmParser,BCReader,Analysis,IPA,DataStructure,ScalarOpts) \
+  $(call GETLIBS,Transforms,Target,ScalarOpts,TransformUtils) \
+  $(call GETOBJS,Core) \
+  $(call GETLIBS,Support,System)
