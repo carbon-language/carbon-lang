@@ -158,6 +158,9 @@ FunctionModRefInfo::computeModRef(const CallInst& callInst)
       if (csgNodes[i]->isRead())
         callModRefInfo->setNodeIsRef(getNodeId(origNodes[i]));
     }
+
+  // Drop nodemap before we delete the graph...
+  NodeMap.clear();
   delete csgp;
 }
 
@@ -194,7 +197,6 @@ void FunctionModRefInfo::dump() const
 // class IPModRef: An interprocedural pass that computes IP Mod/Ref info.
 //----------------------------------------------------------------------------
 
-
 // Free the FunctionModRefInfo objects cached in funcToModRefInfoMap.
 // 
 void IPModRef::releaseMemory()
@@ -215,6 +217,7 @@ void IPModRef::releaseMemory()
 bool IPModRef::run(Module &theModule)
 {
   M = &theModule;
+
   for (Module::const_iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI)
     if (! FI->isExternal())
       getFuncInfo(*FI, /*computeIfMissing*/ true);
