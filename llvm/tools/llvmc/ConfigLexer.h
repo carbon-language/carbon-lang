@@ -84,6 +84,7 @@ enum ConfigLexerTokens {
   PREPROCESSOR, ///< The name "preprocessor" (and variants)
   REQUIRED,     ///< The name "required" (and variants)
   SEPARATOR,    ///< A configuration item separator
+  SPACE,        ///< Space between options
   STATS_SUBST,  ///< The stats substitution item %stats%
   STRING,       ///< A quoted string
   TARGET_SUBST, ///< The substitition item %target%
