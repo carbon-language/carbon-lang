@@ -1,12 +1,13 @@
-//===-- IntervalWriter.cpp - Library for printing Intervals ------*- C++ -*--=//
+//===-- Analysis/Writer.cpp - Printing routines for analyses -----*- C++ -*--=//
 //
-// This library implements the interval printing functionality defined in 
-// llvm/Assembly/Writer.h
+// This library file implements analysis result printing support for 
+// llvm/Analysis/Writer.h
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Assembly/Writer.h"
+#include "llvm/Analysis/Writer.h"
 #include "llvm/Analysis/Interval.h"
+#include "llvm/Analysis/Dominators.h"
 #include <iterator>
 #include <algorithm>
 
@@ -26,8 +27,6 @@ void cfg::WriteToOutput(const Interval *I, ostream &o) {
   copy(I->Successors.begin(), I->Successors.end(), 
        ostream_iterator<BasicBlock*>(o, "\n"));
 }
-
-#include "llvm/Analysis/Dominators.h"
 
 ostream &operator<<(ostream &o, const set<const BasicBlock*> &BBs) {
   copy(BBs.begin(), BBs.end(), ostream_iterator<const BasicBlock*>(o, "\n"));
@@ -53,8 +52,24 @@ void cfg::WriteToOutput(const ImmediateDominators &ID, ostream &o) {
 }
 
 
-void cfg::WriteToOutput(const DominatorTree &DT, ostream &o) {
+static ostream &operator<<(ostream &o, const cfg::DominatorTree::Node *Node) {
+  return o << Node->getNode() << "\n------------------------------------------\n";
+	   
+}
 
+static void PrintDomTree(const cfg::DominatorTree::Node *N, ostream &o,
+			 unsigned Lev) {
+  o << "Level #" << Lev << ":  " << N;
+  for (cfg::DominatorTree::Node::const_iterator I = N->begin(), E = N->end(); 
+       I != E; ++I) {
+    PrintDomTree(*I, o, Lev+1);
+  }
+}
+
+void cfg::WriteToOutput(const DominatorTree &DT, ostream &o) {
+  o << "=============================--------------------------------\n"
+    << "Inorder Dominator Tree:\n";
+  PrintDomTree(DT[DT.getRoot()], o, 1);
 }
 
 void cfg::WriteToOutput(const DominanceFrontier &DF, ostream &o) {
