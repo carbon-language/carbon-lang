@@ -1,11 +1,10 @@
-//===-- TargetMachine.cpp - General Target Information ---------------------==//
+//===-- MachineInstrInfo.cpp - Target Instruction Information -------------===//
 //
-// This file describes the general parts of a Target machine.
-// This file also implements MachineInstrInfo and MachineCacheInfo.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
 
@@ -34,6 +33,9 @@ MachineInstrInfo::~MachineInstrInfo() {
   TargetInstrDescriptors = NULL;	// reset global variable
 }
 
+void MachineInstrInfo::print(const MachineInstr *MI, std::ostream &O) const {
+  O << *MI;
+}
 
 bool MachineInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
                                                 int64_t intValue) const {
