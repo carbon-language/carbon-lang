@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_COMPRESSOR_H
 
 #include "llvm/Support/DataTypes.h"
+#include <ostream>
 
 namespace llvm {
 
@@ -43,20 +44,83 @@ namespace llvm {
         COMP_TYPE_BZIP2 = '2',   ///< Use bzip2 algorithm (preferred)
       };
 
-      /// A callback function type used by the Compressor to get the next chunk 
-      /// of data to which (de)compressed output will be written. This function
-      /// must be written by the caller to provide the buffering of the output
-      /// data.
+    /// @}
+    /// @name High Level Interface
+    /// @{
+    public:
+      /// This method compresses a block of memory pointed to by \p in with 
+      /// size \p size to a block of memory, \p out, that is allocated with 
+      /// malloc. It is the caller's responsibility to free \p out. The \p hint
+      /// indicates which type of compression the caller would *prefer*.
+      /// @throws std::string explaining error if a compression error occurs
+      /// @returns The size of the output buffer \p out.
+      /// @brief Compress memory to a new memory buffer.
+      static uint64_t compressToNewBuffer(
+        const char* in,           ///< The buffer to be compressed
+        unsigned size,            ///< The size of the buffer to be compressed
+        char*&out,                ///< The returned output buffer
+        Algorithm hint            ///< Hint for type of compression to perform
+          = COMP_TYPE_BZIP2
+      );
+
+      /// This method compresses a block of memory pointed to by \p in with 
+      /// size \p size to a stream. The stream \p out must be open and ready for
+      /// writing when this method is called. The stream will not be closed by
+      /// this method.  The \p hint argument indicates which type of 
+      /// compression the caller would *prefer*.
+      /// @returns The amount of data written to \p out.
+      /// @brief Compress memory to a file.
+      static uint64_t compressToStream(
+        const char*in,            ///< The buffer to be compressed
+        unsigned size,            ///< The size of the buffer to be compressed
+        std::ostream& out,        ///< The output stream to write data on
+        Algorithm hint            ///< Hint for type of compression to perform
+          = COMP_TYPE_BZIP2
+      );
+
+      /// This method decompresses a block of memory pointed to by \p in with 
+      /// size \p size to a new block of memory, \p out, \p that was allocated
+      /// by malloc. It is the caller's responsibility to free \p out. 
+      /// @returns The size of the output buffer \p out.
+      /// @brief Decompress memory to a new memory buffer.
+      static uint64_t decompressToNewBuffer(
+        const char *in,           ///< The buffer to be decompressed
+        unsigned size,            ///< Size of the buffer to be decompressed
+        char*&out                 ///< The returned output buffer
+      );
+
+      /// This method decompresses a block of memory pointed to by \p in with 
+      /// size \p size to a stream. The stream \p out must be open and ready for
+      /// writing when this method is called. The stream will not be closed by
+      /// this method. 
+      /// @returns The amount of data written to \p out.
+      /// @brief Decompress memory to a stream.
+      static uint64_t decompressToStream(
+        const char *in,           ///< The buffer to be decompressed
+        unsigned size,            ///< Size of the buffer to be decompressed
+        std::ostream& out         ///< The stream to write write data on
+      );
+
+    /// @}
+    /// @name Low Level Interface
+    /// @{
+    public:
+      /// A callback function type used by the Compressor's low level interface
+      /// to get the next chunk of data to which (de)compressed output will be 
+      /// written. This callback completely abstracts the notion of how to 
+      /// handle the output data of compression or decompression. The callback
+      /// is responsible for determining both the storage location and the size 
+      /// of the output. The callback may also do other things with the data
+      /// such as write it, transmit it, etc. Note that providing very small
+      /// values for \p size will make the compression run very inefficiently.
+      /// It is recommended that \p size be chosen based on the some multiple or
+      /// fraction of the object being decompressed or compressed, respetively.
       /// @returns 0 for success, 1 for failure
       /// @throws nothing
       /// @brief Output callback function type
       typedef unsigned (OutputDataCallback)(char*& buffer, unsigned& size,
                                             void* context);
 
-    /// @}
-    /// @name Methods
-    /// @{
-    public:
       /// This function does the compression work. The block of memory starting
       /// at \p in and extending for \p size bytes is compressed. The compressed
       /// output is written to memory blocks returned by the \p cb callback. The
@@ -72,9 +136,15 @@ namespace llvm {
       /// @throws std::string if an error occurs
       /// @returns the total size of the compressed data
       /// @brief Compress a block of memory.
-      static uint64_t compress(char* in, unsigned size, OutputDataCallback* cb,
-                               Algorithm hint = COMP_TYPE_BZIP2,
-                               void* context = 0);
+      static uint64_t compress(
+        const char* in,            ///< The buffer to be compressed
+        unsigned size,             ///< The size of the buffer to be compressed
+        OutputDataCallback* cb,    ///< Call back for memory allocation
+        Algorithm hint             ///< Hint for type of compression to perform
+          = COMP_TYPE_BZIP2,
+        void* context              ///< Context for callback
+          = 0
+      );
 
       /// This function does the decompression work. The block of memory
       /// starting at \p in and extending for \p size bytes is decompressed. The
@@ -89,8 +159,13 @@ namespace llvm {
       /// @throws std::string if an error occurs
       /// @returns the total size of the decompressed data
       /// @brief Decompress a block of memory.
-      static uint64_t decompress(char *in, unsigned size, 
-                                 OutputDataCallback* cb, void* context = 0);
+      static uint64_t decompress(
+        const char *in,              ///< The buffer to be decompressed
+        unsigned size,               ///< Size of the buffer to be decompressed
+        OutputDataCallback* cb,      ///< Call back for memory allocation
+        void* context                ///< Context for callback
+          = 0
+      );
 
     /// @}
   };
