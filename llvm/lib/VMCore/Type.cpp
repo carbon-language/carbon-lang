@@ -521,7 +521,7 @@ protected:
     ValType Tmp(*(ValType*)this);                     // Copy this.
     PATypeHandle<TypeClass> OldType(Table.get(*(ValType*)this), this);
     Table.remove(*(ValType*)this);                    // Destroy's this!
-#if 0
+#if 1
     // Refine temporary to new state...
     Tmp.doRefinement(OldTy, NewTy); 
 
@@ -771,6 +771,12 @@ PointerType *PointerType::get(const Type *ValueType) {
   return PT;
 }
 
+void debug_type_tables() {
+  FunctionTypes.dump();
+  ArrayTypes.dump();
+  StructTypes.dump();
+  PointerTypes.dump();
+}
 
 
 //===----------------------------------------------------------------------===//
