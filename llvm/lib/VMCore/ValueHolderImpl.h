@@ -16,7 +16,7 @@
 template<class ValueSubclass, class ItemParentType, class SymTabType>
 void ValueHolder<ValueSubclass,ItemParentType,SymTabType>
 ::setParent(SymTabType *P) { 
-  if (Parent) {     // Remove all of the items from the old symbol table..
+  if (Parent && !empty()) {  // Remove all of the items from the old symtab..
     SymbolTable *SymTab = Parent->getSymbolTable();
     for (iterator I = begin(); I != end(); ++I)
       if ((*I)->hasName()) SymTab->remove(*I);
@@ -24,7 +24,7 @@ void ValueHolder<ValueSubclass,ItemParentType,SymTabType>
 
   Parent = P; 
 
-  if (Parent) {     // Remove all of the items from the old symbol table..
+  if (Parent && !empty()) {  // Add all of the items to the new symtab...
     SymbolTable *SymTab = Parent->getSymbolTableSure();
     for (iterator I = begin(); I != end(); ++I)
       if ((*I)->hasName()) SymTab->insert(*I);
