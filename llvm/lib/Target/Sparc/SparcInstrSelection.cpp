@@ -1418,7 +1418,7 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
     int firstVarArgOff = numFixedArgs * argSize + target.getFrameInfo().
       getFirstIncomingArgOffset(MachineFunction::get(func), ignore);
     mvec.push_back(BuildMI(V9::ADDi, 3).addMReg(fpReg).addSImm(firstVarArgOff).
-                   addReg(callInstr.getOperand(1)));
+                   addRegDef(callInstr.getOperand(1)));
     return true;
   }
 
