@@ -381,8 +381,8 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
 }
 
 
-// Create an instruction sequence to copy an integer value `val'
-// to a floating point value `dest' by copying to memory and back.
+// Create an instruction sequence to copy an integer register `val'
+// to a floating point register `dest' by copying to memory and back.
 // val must be an integral type.  dest must be a Float or Double.
 // The generated instructions are returned in `mvec'.
 // Any temp. registers (TmpInstruction) created are recorded in mcfi.
@@ -396,39 +396,55 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
                                         vector<MachineInstr*>& mvec,
                                         MachineCodeForInstruction& mcfi) const
 {
-  assert((val->getType()->isInteger() || isa<PointerType>(val->getType()))
-         && "Source type must be integer or pointer");
+  assert((val->getType()->isIntegral() || isa<PointerType>(val->getType()))
+         && "Source type must be integral (integer or bool) or pointer");
   assert(dest->getType()->isFloatingPoint()
          && "Dest type must be float/double");
-  
+
+  // Get a stack slot to use for the copy
   int offset = MachineCodeForMethod::get(F).allocateLocalVar(target, val); 
-  
+
+  // Get the size of the source value being copied. 
+  size_t srcSize = target.DataLayout.getTypeSize(val->getType());
+
   // Store instruction stores `val' to [%fp+offset].
-  // The store and load opCodes are based on the value being copied, and
-  // they use integer and float types that accomodate the
-  // larger of the source type and the destination type:
-  // On SparcV9: int for float, long for double.
+  // The store and load opCodes are based on the size of the source value.
+  // If the value is smaller than 32 bits, we must sign- or zero-extend it
+  // to 32 bits since the load-float will load 32 bits.
   // Note that the store instruction is the same for signed and unsigned ints.
-  Type* tmpType = (dest->getType() == Type::FloatTy)? Type::IntTy
-                                                    : Type::LongTy;
-  MachineInstr* store = new MachineInstr(ChooseStoreInstruction(tmpType));
-  store->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, val);
+  const Type* storeType = (srcSize <= 4)? Type::IntTy : Type::LongTy;
+  Value* storeVal = val;
+  if (srcSize < target.DataLayout.getTypeSize(Type::FloatTy))
+    { // sign- or zero-extend respectively
+      storeVal = new TmpInstruction(storeType, val);
+      if (val->getType()->isSigned())
+        CreateSignExtensionInstructions(target, F, val, 8*srcSize, storeVal,
+                                        mvec, mcfi);
+      else
+        CreateZeroExtensionInstructions(target, F, val, 8*srcSize, storeVal,
+                                        mvec, mcfi);
+    }
+  MachineInstr* store=new MachineInstr(ChooseStoreInstruction(storeType));
+  store->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, storeVal);
   store->SetMachineOperandReg(1, target.getRegInfo().getFramePointer());
   store->SetMachineOperandConst(2,MachineOperand::MO_SignExtendedImmed,offset);
   mvec.push_back(store);
 
   // Load instruction loads [%fp+offset] to `dest'.
+  // The type of the load opCode is the floating point type that matches the
+  // stored type in size:
+  // On SparcV9: float for int or smaller, double for long.
   // 
-  MachineInstr* load =new MachineInstr(ChooseLoadInstruction(dest->getType()));
+  const Type* loadType = (srcSize <= 4)? Type::FloatTy : Type::DoubleTy;
+  MachineInstr* load = new MachineInstr(ChooseLoadInstruction(loadType));
   load->SetMachineOperandReg(0, target.getRegInfo().getFramePointer());
   load->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,offset);
   load->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, dest);
   mvec.push_back(load);
 }
 
-
-// Similarly, create an instruction sequence to copy an FP value
-// `val' to an integer value `dest' by copying to memory and back.
+// Similarly, create an instruction sequence to copy an FP register
+// `val' to an integer register `dest' by copying to memory and back.
 // The generated instructions are returned in `mvec'.
 // Any temp. registers (TmpInstruction) created are recorded in mcfi.
 // Any stack space required is allocated via MachineCodeForMethod.
@@ -443,30 +459,30 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
 {
   const Type* opTy   = val->getType();
   const Type* destTy = dest->getType();
-  
+
   assert(opTy->isFloatingPoint() && "Source type must be float/double");
-  assert((destTy->isInteger() || isa<PointerType>(destTy))
-         && "Dest type must be integer or pointer");
+  assert((destTy->isIntegral() || isa<PointerType>(destTy))
+         && "Dest type must be integer, bool or pointer");
 
   int offset = MachineCodeForMethod::get(F).allocateLocalVar(target, val); 
-  
+
   // Store instruction stores `val' to [%fp+offset].
   // The store opCode is based only the source value being copied.
   // 
-  MachineInstr* store=new MachineInstr(ChooseStoreInstruction(val->getType()));
+  MachineInstr* store=new MachineInstr(ChooseStoreInstruction(opTy));
   store->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, val);
   store->SetMachineOperandReg(1, target.getRegInfo().getFramePointer());
   store->SetMachineOperandConst(2,MachineOperand::MO_SignExtendedImmed,offset);
   mvec.push_back(store);
-  
+
   // Load instruction loads [%fp+offset] to `dest'.
   // The type of the load opCode is the integer type that matches the
-  // source type in size: (and the dest type in sign):
+  // source type in size:
   // On SparcV9: int for float, long for double.
   // Note that we *must* use signed loads even for unsigned dest types, to
-  // ensure that we get the right sign-extension for smaller-than-64-bit
-  // unsigned dest. types (i.e., UByte, UShort or UInt):
-  const Type* loadTy = opTy == Type::FloatTy? Type::IntTy : Type::LongTy;
+  // ensure correct sign-extension for UByte, UShort or UInt:
+  // 
+  const Type* loadTy = (opTy == Type::FloatTy)? Type::IntTy : Type::LongTy;
   MachineInstr* load = new MachineInstr(ChooseLoadInstruction(loadTy));
   load->SetMachineOperandReg(0, target.getRegInfo().getFramePointer());
   load->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,offset);
@@ -538,9 +554,40 @@ UltraSparcInstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
 }
 
 
+// Helper function for sign-extension and zero-extension.
+// For SPARC v9, we sign-extend the given operand using SLL; SRA/SRL.
+inline void
+CreateBitExtensionInstructions(bool signExtend,
+                               const TargetMachine& target,
+                               Function* F,
+                               Value* srcVal,
+                               unsigned int srcSizeInBits,
+                               Value* dest,
+                               vector<MachineInstr*>& mvec,
+                               MachineCodeForInstruction& mcfi)
+{
+  MachineInstr* M;
+  assert(srcSizeInBits <= 32 &&
+         "Hmmm... 32 < srcSizeInBits < 64 unexpected but could be handled.");
+
+  if (srcSizeInBits < 32)
+    { // SLL is needed since operand size is < 32 bits.
+      TmpInstruction *tmpI = new TmpInstruction(dest->getType(),
+                                                srcVal, dest,"make32");
+      mcfi.addTemp(tmpI);
+      M = Create3OperandInstr_UImmed(SLLX, srcVal, 32-srcSizeInBits, tmpI);
+      mvec.push_back(M);
+      srcVal = tmpI;
+    }
+
+  M = Create3OperandInstr_UImmed(signExtend? SRA : SRL,
+                                 srcVal, 32-srcSizeInBits, dest);
+  mvec.push_back(M);
+}
+
+
 // Create instruction sequence to produce a sign-extended register value
-// from an arbitrary sized value (sized in bits, not bytes).
-// For SPARC v9, we sign-extend the given unsigned operand using SLL; SRA.
+// from an arbitrary-sized integer value (sized in bits, not bytes).
 // The generated instructions are returned in `mvec'.
 // Any temp. registers (TmpInstruction) created are recorded in mcfi.
 // Any stack space required is allocated via MachineCodeForMethod.
@@ -549,27 +596,34 @@ void
 UltraSparcInstrInfo::CreateSignExtensionInstructions(
                                         const TargetMachine& target,
                                         Function* F,
-                                        Value* unsignedSrcVal,
+                                        Value* srcVal,
                                         unsigned int srcSizeInBits,
                                         Value* dest,
                                         vector<MachineInstr*>& mvec,
                                         MachineCodeForInstruction& mcfi) const
 {
-  MachineInstr* M;
-  assert(srcSizeInBits < 64 && "Sign extension unnecessary!");
-  assert(srcSizeInBits > 0 && srcSizeInBits <= 32
-    && "Hmmm... 32 < srcSizeInBits < 64 unexpected but could be handled here.");
-  
-  if (srcSizeInBits < 32)
-    { // SLL is needed since operand size is < 32 bits.
-      TmpInstruction *tmpI = new TmpInstruction(dest->getType(),
-                                                unsignedSrcVal, dest,"make32");
-      mcfi.addTemp(tmpI);
-      M = Create3OperandInstr_UImmed(SLL,unsignedSrcVal,32-srcSizeInBits,tmpI);
-      mvec.push_back(M);
-      unsignedSrcVal = tmpI;
-    }
-  
-  M = Create3OperandInstr_UImmed(SRA, unsignedSrcVal, 32-srcSizeInBits, dest);
-  mvec.push_back(M);
+  CreateBitExtensionInstructions(/*signExtend*/ true, target, F, srcVal,
+                                 srcSizeInBits, dest, mvec, mcfi);
+}
+
+
+// Create instruction sequence to produce a zero-extended register value
+// from an arbitrary-sized integer value (sized in bits, not bytes).
+// For SPARC v9, we sign-extend the given operand using SLL; SRL.
+// The generated instructions are returned in `mvec'.
+// Any temp. registers (TmpInstruction) created are recorded in mcfi.
+// Any stack space required is allocated via MachineCodeForMethod.
+// 
+void
+UltraSparcInstrInfo::CreateZeroExtensionInstructions(
+                                        const TargetMachine& target,
+                                        Function* F,
+                                        Value* srcVal,
+                                        unsigned int srcSizeInBits,
+                                        Value* dest,
+                                        vector<MachineInstr*>& mvec,
+                                        MachineCodeForInstruction& mcfi) const
+{
+  CreateBitExtensionInstructions(/*signExtend*/ false, target, F, srcVal,
+                                 srcSizeInBits, dest, mvec, mcfi);
 }
