@@ -17,6 +17,7 @@ USEDLIBS = \
 	LLVMSparcV9 \
 	LLVMX86 \
 	LLVMAlpha \
+	LLVMIA64 \
 	LLVMSkeleton \
 	LLVMSparcV9RegAlloc \
 	LLVMSparcV9InstrSched \
