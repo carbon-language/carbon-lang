@@ -24,7 +24,7 @@ cl::Flag   ProfileMode  ("profile", "Enable Profiling [unimp]");
 Interpreter::Interpreter() : ExitCode(0), Profile(ProfileMode), 
                              Trace(TraceMode), CurFrame(-1) {
   CurMod = 0;
-  loadModule(InputArgv.size() ? InputArgv[0] : "");
+  loadModule(InputArgv.size() ? InputArgv[0] : "-");
 
   // Initialize the "backend"
   initializeExecutionEngine();
