@@ -18,11 +18,9 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
 #include "PowerPCTargetMachine.h"
-#include <set>
 
 namespace llvm {
 
-class GlobalValue;
 class IntrinsicLowering;
 
 class PPC32TargetMachine : public PowerPCTargetMachine {
