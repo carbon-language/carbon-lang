@@ -24,8 +24,7 @@ the resultant bytecode file.  If any of the passes crash, or if they produce an
 LLVM module which is not verifiable, bugpoint enters "crash debugging mode".
 Otherwise, <tt>bugpoint</tt> tries to run the resultant program with a code
 generator.  If the code generated program does not match the reference output,
-it enters "miscompilation debugging mode".  If the <tt>-mode</tt> option is
-specified, <tt>bugpoint</tt> enters "code generator debugging mode".
+it enters "miscompilation debugging mode".
 
 <h4>Crash debugging mode</h4>
 
@@ -56,7 +55,7 @@ TODO
 	<li><tt>-disable-(adce,dce,final-cleanup,simplifycfg)</tt>
 	<br>
 	<tt>bugpoint</tt> uses several passes internally for cleanup routines to
-	reduce the size of the program.  If you're trying to find a bug in out
+	reduce the size of the program.  If you're trying to find a bug in one
 	of these passes, <tt>bugpoint</tt> may crash.  These options tell
 	<tt>bugpoint</tt> not use the specified passes.
 	<p>
@@ -81,13 +80,6 @@ TODO
 	<tt>opt -load  &lt;plugin.so&gt; -help</tt>
 	<p>
 
-	<li> <tt>-mode=(compile|codegen)</tt>
-	<br>
-	Specify whether <tt>bugpoint</tt> should operate in compilation
-	debugging mode (detecting miscompilations and optimizer crashes), or in
-	code generator debugging mode.
-	<p>
-
 	<li> <tt>-output &lt;filename&gt;</tt>
 	<br>
 	Specify a reference output for the &lt;stdout&gt; file stream.
@@ -96,7 +88,7 @@ TODO
 	<li> <tt>-run-(lli|jit|llc|cbe)</tt>
 	<br>
 	Specify which code generator <tt>bugpoint</tt> should use to run the
-	program with.
+	program.
 	<p>
 
 </ul>
@@ -107,7 +99,7 @@ If <tt>bugpoint</tt> succeeds in finding a problem, it will exit with 0.
 Otherwise, if an error occurs, it will exit with a non-zero value.
 
 <h3>SEE ALSO</h3>
-<a href="opt.html"><tt>opt</tt></a>
+<a href="opt.html"><tt>opt</tt></a>,
 <a href="analyze.html"><tt>analyze</tt></a>
 
 <HR>
