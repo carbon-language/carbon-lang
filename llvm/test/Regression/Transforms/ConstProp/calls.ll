@@ -4,6 +4,7 @@ declare double %cos(double)
 declare double %sin(double)
 declare double %tan(double)
 declare double %sqrt(double)
+declare bool %llvm.isnan(double)
 
 double %T() {
 	%A = call double %cos(double 0.0)
@@ -14,4 +15,11 @@ double %T() {
 	%D = call double %sqrt(double 4.0)
 	%c = add double %b, %D
 	ret double %c
+}
+
+bool %TNAN() {
+	%A = call bool %llvm.isnan(double 0x7FF8000000000000)  ;; it's a nan!
+	%B = call bool %llvm.isnan(double 123.0)
+	%C = or bool %A, %B
+	ret bool %C
 }
