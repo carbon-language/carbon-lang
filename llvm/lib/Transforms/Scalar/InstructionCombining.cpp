@@ -2004,9 +2004,14 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // Is it 'getelementptr %P, long 0'  or 'getelementptr %P'
   // If so, eliminate the noop.
-  if ((GEP.getNumOperands() == 2 &&
-       GEP.getOperand(1) == Constant::getNullValue(Type::LongTy)) ||
-      GEP.getNumOperands() == 1)
+  if (GEP.getNumOperands() == 1)
+    return ReplaceInstUsesWith(GEP, GEP.getOperand(0));
+
+  bool HasZeroPointerIndex = false;
+  if (Constant *C = dyn_cast<Constant>(GEP.getOperand(1)))
+    HasZeroPointerIndex = C->isNullValue();
+
+  if (GEP.getNumOperands() == 2 && HasZeroPointerIndex)
     return ReplaceInstUsesWith(GEP, GEP.getOperand(0));
 
   // Combine Indices - If the source pointer to this getelementptr instruction
@@ -2072,6 +2077,31 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
       // Replace all uses of the GEP with the new constexpr...
       return ReplaceInstUsesWith(GEP, CE);
+    }
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GEP.getOperand(0))) {
+    if (CE->getOpcode() == Instruction::Cast) {
+      if (HasZeroPointerIndex) {
+        // transform: GEP (cast [10 x ubyte]* X to [0 x ubyte]*), long 0, ...
+        // into     : GEP [10 x ubyte]* X, long 0, ...
+        //
+        // This occurs when the program declares an array extern like "int X[];"
+        //
+        Constant *X = CE->getOperand(0);
+        const PointerType *CPTy = cast<PointerType>(CE->getType());
+        if (const PointerType *XTy = dyn_cast<PointerType>(X->getType()))
+          if (const ArrayType *XATy =
+              dyn_cast<ArrayType>(XTy->getElementType()))
+            if (const ArrayType *CATy =
+                dyn_cast<ArrayType>(CPTy->getElementType()))
+              if (CATy->getElementType() == XATy->getElementType()) {
+                // At this point, we know that the cast source type is a pointer
+                // to an array of the same type as the destination pointer
+                // array.  Because the array type is never stepped over (there
+                // is a leading zero) we can fold the cast into this GEP.
+                GEP.setOperand(0, X);
+                return &GEP;
+              }
+      }
     }
   }
 

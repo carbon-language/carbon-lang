@@ -126,7 +126,8 @@ bool TailDup::canEliminateUnconditionalBranch(TerminatorInst *TI) {
   // Basically, we refuse to make the transformation if any of the values
   // computed in the 'tail' are used in any other basic blocks.
   BasicBlock *Tail = TI->getSuccessor(0);
-
+  assert(isa<BranchInst>(TI) && cast<BranchInst>(TI)->isUnconditional());
+  
   for (BasicBlock::iterator I = Tail->begin(), E = Tail->end(); I != E; ++I)
     for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
          ++UI) {
