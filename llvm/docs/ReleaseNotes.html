@@ -120,14 +120,21 @@ In this release, the following Quality of Implementation issues were fixed:
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
-In this release, the following build problems were fixed:
+LLVM gained several improvements to its build and installation
+infrastructure in this release. There is now
+a <tt>autoconf/AutoRegen.sh</tt> script that you can run to rebuild the
+<tt>configure</tt> script and its associated files
+(<a href="http://llvm.cs.uiuc.edu/PR105">Bug 105</a>) as well as beta support
+for "make install" (<a href="http://llvm.cs.uiuc.edu/PR208">Bug 208</a> and
+<a href="http://llvm.cs.uiuc.edu/PR220">Bug 220</a>) and RPM package generation
+(<a href="http://llvm.cs.uiuc.edu/PR203">Bug 203</a>).
+Additionally, in this release, the following build problems were fixed:
 </div>
 
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR210">[build] Makefiles break if C frontend target string has unexpected value</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR214">[build] hard-wired assumption that shared-library extension is ".so"</a></li>
 <li><A href="http://llvm.cs.uiuc.edu/PR222">make tools-only doesn't make lib/Support</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR105">[build] Usage of autoconf is awkward</a></li>
 </ol>
 
 <!--=========================================================================-->
