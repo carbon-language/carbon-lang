@@ -69,8 +69,9 @@ class BranchInst : public TerminatorInst {
   BranchInst(const BranchInst &BI);
 public:
   // If cond = null, then is an unconditional br...
-  BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse = 0, Value *cond = 0,
+  BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *cond = 0,
              Instruction *InsertBefore = 0);
+  BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore = 0);
 
   virtual Instruction *clone() const { return new BranchInst(*this); }
 
