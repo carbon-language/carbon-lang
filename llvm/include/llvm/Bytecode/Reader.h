@@ -13,6 +13,7 @@
 #define LLVM_BYTECODE_READER_H
 
 #include <string>
+#include <vector>
 
 class Module;
 
@@ -22,5 +23,11 @@ Module *ParseBytecodeFile(const std::string &Filename,
                           std::string *ErrorStr = 0);
 Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned BufferSize,
                             std::string *ErrorStr = 0);
+
+// ReadArchiveFile - Read bytecode files from the specfied .a file, returning
+// true on error, or false on success.
+//
+bool ReadArchiveFile(const std::string &Filename, std::vector<Module*> &Objects,
+                     std::string *ErrorStr = 0);
 
 #endif
