@@ -37,8 +37,7 @@ struct SparcV9RegisterInfo : public MRegisterInfo {
                     MachineBasicBlock::iterator MI,
                     unsigned DestReg, unsigned SrcReg,
                     const TargetRegisterClass *RC) const;
-  void eliminateFrameIndex (MachineFunction &MF,
-                            MachineBasicBlock::iterator MI) const;
+  void eliminateFrameIndex (MachineBasicBlock::iterator MI) const;
   void emitPrologue (MachineFunction &MF) const;
   void emitEpilogue (MachineFunction &MF, MachineBasicBlock &MBB) const;
 };

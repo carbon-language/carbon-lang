@@ -297,8 +297,8 @@ int SparcV9RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   abort ();
 }
 
-void SparcV9RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
-                                         MachineBasicBlock::iterator MI) const {
+void SparcV9RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI) 
+  const {
   abort ();
 }
 
