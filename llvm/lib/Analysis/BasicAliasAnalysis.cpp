@@ -182,6 +182,22 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   return MayAlias;
 }
 
+static Value *CheckArrayIndicesForOverflow(const Type *PtrTy,
+                                           const std::vector<Value*> &Indices,
+                                           const ConstantInt *Idx) {
+  if (const ConstantSInt *IdxS = dyn_cast<ConstantSInt>(Idx)) {
+    if (IdxS->getValue() < 0)   // Underflow on the array subscript?
+      return Constant::getNullValue(Type::LongTy);
+    else {                       // Check for overflow
+      const ArrayType *ATy =
+        cast<ArrayType>(GetElementPtrInst::getIndexedType(PtrTy, Indices,true));
+      if (IdxS->getValue() >= (int64_t)ATy->getNumElements())
+        return ConstantSInt::get(Type::LongTy, ATy->getNumElements()-1);
+    }
+  }
+  return (Value*)Idx;  // Everything is acceptable.
+}
+
 // CheckGEPInstructions - Check two GEP instructions of compatible types and
 // equal number of arguments.  This checks to see if the index expressions
 // preclude the pointers from aliasing...
@@ -214,7 +230,7 @@ BasicAliasAnalysis::CheckGEPInstructions(GetElementPtrInst *GEP1, unsigned G1S,
   //
   unsigned SizeMax = std::max(G1S, G2S);
   if (SizeMax == ~0U) return MayAlias; // Avoid frivolous work...
-      
+
   // Scan for the first operand that is constant and unequal in the
   // two getelemenptrs...
   unsigned FirstConstantOper = UnequalOper;
@@ -262,16 +278,20 @@ BasicAliasAnalysis::CheckGEPInstructions(GetElementPtrInst *GEP1, unsigned G1S,
   const Type *GEPPointerTy = GEP1->getOperand(0)->getType();
   
   // Loop over the rest of the operands...
-  for (unsigned i = FirstConstantOper+1; i!=NumGEPOperands; ++i){
+  for (unsigned i = FirstConstantOper+1; i != NumGEPOperands; ++i) {
     const Value *Op1 = GEP1->getOperand(i);
     const Value *Op2 = GEP2->getOperand(i);
     if (Op1 == Op2) {   // If they are equal, use a zero index...
       Indices1.push_back(Constant::getNullValue(Op1->getType()));
       Indices2.push_back(Indices1.back());
     } else {
-      if (isa<Constant>(Op1))
+      if (const ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
+        // If this is an array index, make sure the array element is in range...
+        if (i != 1)   // The pointer index can be "out of range"
+          Op1 = CheckArrayIndicesForOverflow(GEPPointerTy, Indices1, Op1C);
+
         Indices1.push_back((Value*)Op1);
-      else {
+      } else {
         // GEP1 is known to produce a value less than GEP2.  To be
         // conservatively correct, we must assume the largest possible constant
         // is used in this position.  This cannot be the initial index to the
@@ -287,8 +307,13 @@ BasicAliasAnalysis::CheckGEPInstructions(GetElementPtrInst *GEP1, unsigned G1S,
                                              ElTy->getNumElements()-1));
       }
       
-      if (isa<Constant>(Op2))
+      if (const ConstantInt *Op1C = dyn_cast<ConstantInt>(Op2)) {
+        // If this is an array index, make sure the array element is in range...
+        if (i != 1)   // The pointer index can be "out of range"
+          Op1 = CheckArrayIndicesForOverflow(GEPPointerTy, Indices2, Op1C);
+
         Indices2.push_back((Value*)Op2);
+      }
       else // Conservatively assume the minimum value for this index
         Indices2.push_back(Constant::getNullValue(Op2->getType()));
     }
