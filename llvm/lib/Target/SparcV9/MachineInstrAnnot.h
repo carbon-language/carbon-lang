@@ -15,7 +15,7 @@
 #define MACHINE_INSTR_ANNOT_h
 
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Target/TargetRegInfo.h"
+#include "SparcV9RegInfo.h"
 
 namespace llvm {
 

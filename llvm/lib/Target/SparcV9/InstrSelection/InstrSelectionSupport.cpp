@@ -17,7 +17,7 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegInfo.h"
+#include "../SparcV9RegInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/BasicBlock.h"

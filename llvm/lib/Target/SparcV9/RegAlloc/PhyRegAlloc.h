@@ -28,7 +28,7 @@
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Target/TargetMachine.h" 
-#include "llvm/Target/TargetRegInfo.h"
+#include "../SparcV9RegInfo.h"
 #include <map>
 
 namespace llvm {

@@ -17,7 +17,7 @@
 #ifndef REGCLASS_H
 #define REGCLASS_H
 
-#include "llvm/Target/TargetRegInfo.h"
+#include "../SparcV9RegInfo.h"
 #include "InterferenceGraph.h"
 #include <stack>
 

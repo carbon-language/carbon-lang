@@ -19,7 +19,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSchedInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include "llvm/Target/TargetRegInfo.h"
+#include "SparcV9RegInfo.h"
 #include "llvm/Type.h"
 #include "SparcV9RegClassInfo.h"
 #include "Config/sys/types.h"

@@ -14,7 +14,7 @@
 #include "IGNode.h"
 #include "RegAllocCommon.h"
 #include "RegClass.h"
-#include "llvm/Target/TargetRegInfo.h"
+#include "../SparcV9RegInfo.h"
 
 namespace llvm {
 

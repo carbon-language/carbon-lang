@@ -18,7 +18,7 @@
 
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegInfo.h"
+#include "SparcV9RegInfo.h"
 
 namespace llvm {
 
