@@ -80,7 +80,7 @@ public:
 
   virtual TestResult doTest(std::vector<Function*> &Prefix,
                             std::vector<Function*> &Kept) {
-    if (TestFuncs(Kept))
+    if (!Kept.empty() && TestFuncs(Kept))
       return KeepSuffix;
     if (!Prefix.empty() && TestFuncs(Prefix))
       return KeepPrefix;
