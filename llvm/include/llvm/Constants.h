@@ -232,6 +232,9 @@ public:
   static ConstantArray *get(const string &Initializer);
   
   virtual string getStrValue() const;
+  inline const ArrayType *getType() const {
+    return (ArrayType*)Value::getType();
+  }
 
   inline const vector<Use> &getValues() const { return Operands; }
 
@@ -263,6 +266,9 @@ public:
 			      const vector<Constant*> &V);
 
   virtual string getStrValue() const;
+  inline const StructType *getType() const {
+    return (StructType*)Value::getType();
+  }
 
   inline const vector<Use> &getValues() const { return Operands; }
 
@@ -292,6 +298,9 @@ protected:
   ~ConstantPointer() {}
 public:
   virtual string getStrValue() const = 0;
+  inline const PointerType *getType() const {
+    return (PointerType*)Value::getType();
+  }
 
   // isNullValue - Return true if this is the value that would be returned by
   // getNullConstant.
