@@ -1,4 +1,4 @@
-/* Title:   ValueSet.h
+/* Title:   LiveVarSet.h
    Author:  Ruchira Sasanka
    Date:    Jun 30, 01
    Purpose: Contains the class definition of LiveVarSet which is used for
@@ -16,8 +16,12 @@ class LiveVarSet : public ValueSet
 {
 
  public:
-  void applyTranferFuncForInst(const Instruction *const Inst); 
-  
+
+  // This function applies a machine instr to a live var set (accepts OutSet)
+  // and makes necessary changes to it (produces InSet).
+
+  void applyTranferFuncForMInst(const MachineInstr *const MInst);
+
 };
 
 

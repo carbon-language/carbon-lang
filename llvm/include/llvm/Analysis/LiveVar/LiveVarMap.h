@@ -1,4 +1,4 @@
-/* Title:   ValueSet.h
+/* Title:   LiveVarMap.h
    Author:  Ruchira Sasanka
    Date:    Jun 30, 01
    Purpose: This file contains the class for a map between the BasicBlock class
@@ -18,8 +18,8 @@ class BasicBlock;
 class BBLiveVar;
 
 
-struct hashFuncInst {        // sturcture containing the hash function for Inst
-  inline size_t operator () (const Instruction *val) const { 
+struct hashFuncMInst {  // sturcture containing the hash function for MInst
+  inline size_t operator () (const MachineInstr *val) const { 
     return (size_t) val;  
   }
 };
@@ -37,8 +37,8 @@ struct hashFuncBB {          // sturcture containing the hash function for BB
 typedef hash_map<const BasicBlock *,  
 		 BBLiveVar *, hashFuncBB > BBToBBLiveVarMapType;
 
-typedef hash_map<const Instruction *,  const LiveVarSet *, 
-		 hashFuncInst> InstToLiveVarSetMapType;
+typedef hash_map<const MachineInstr *,  const LiveVarSet *, 
+		 hashFuncMInst> MInstToLiveVarSetMapType;
 
 
 #endif
