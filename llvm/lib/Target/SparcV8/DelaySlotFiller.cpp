@@ -68,6 +68,26 @@ static bool hasDelaySlot (unsigned Opcode) {
     case V8::CALL:
     case V8::JMPLrr:
     case V8::RETL:
+    case V8::FBA:
+    case V8::FBN:
+    case V8::FBU:
+    case V8::FBG:
+    case V8::FBUG:
+    case V8::FBL:
+    case V8::FBUL:
+    case V8::FBLG:
+    case V8::FBNE:
+    case V8::FBE:
+    case V8::FBUE:
+    case V8::FBGE:
+    case V8::FBUGE:
+    case V8::FBLE:
+    case V8::FBULE:
+    case V8::FBO:
+    case V8::FCMPS:
+    case V8::FCMPD:
+    case V8::FCMPES:
+    case V8::FCMPED:
       return true;
     default:
       return false;

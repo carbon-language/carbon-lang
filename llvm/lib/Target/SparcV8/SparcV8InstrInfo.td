@@ -163,6 +163,31 @@ def BLEU : BranchV8<0b0100, "bleu">;
 def BCC  : BranchV8<0b1101, "bcc">;
 def BCS  : BranchV8<0b0101, "bcs">;
 
+// Section B.22 - Branch on Floating-point Condition Codes Instructions, p. 121
+
+// floating-point conditional branch class:
+class FPBranchV8<bits<4> cc, string nm> : F2_2<cc, 0b110, nm> {
+  let isBranch = 1;
+  let isTerminator = 1;
+}
+
+def FBA  : FPBranchV8<0b1000, "fba">;
+def FBN  : FPBranchV8<0b0000, "fbn">;
+def FBU  : FPBranchV8<0b0111, "fbu">;
+def FBG  : FPBranchV8<0b0110, "fbg">;
+def FBUG : FPBranchV8<0b0101, "fbug">;
+def FBL  : FPBranchV8<0b0100, "fbl">;
+def FBUL : FPBranchV8<0b0011, "fbul">;
+def FBLG : FPBranchV8<0b0010, "fblg">;
+def FBNE : FPBranchV8<0b0001, "fbne">;
+def FBE  : FPBranchV8<0b1001, "fbe">;
+def FBUE : FPBranchV8<0b1010, "fbue">;
+def FBGE : FPBranchV8<0b1011, "fbge">;
+def FBUGE: FPBranchV8<0b1100, "fbuge">;
+def FBLE : FPBranchV8<0b1101, "fble">;
+def FBULE: FPBranchV8<0b1110, "fbule">;
+def FBO  : FPBranchV8<0b1111, "fbo">;
+
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
 def CALL : InstV8 {
@@ -206,4 +231,11 @@ def FMULD  : F3_3<2, 0b110100, 0b001001010, "fmuld">;
 def FSMULD : F3_3<2, 0b110100, 0b001101001, "fsmuld">;
 def FDIVS  : F3_3<2, 0b110100, 0b001001101, "fdivs">;
 def FDIVD  : F3_3<2, 0b110100, 0b001001110, "fdivd">;
+
+// Floating-point Compare Instructions, p. 148
+// Note: the 2nd template arg is different for these guys
+def FCMPS  : F3_3<2, 0b110101, 0b001010001, "fcmps">;
+def FCMPD  : F3_3<2, 0b110101, 0b001010010, "fcmpd">;
+def FCMPES : F3_3<2, 0b110101, 0b001010101, "fcmpes">;
+def FCMPED : F3_3<2, 0b110101, 0b001010110, "fcmped">;
 
