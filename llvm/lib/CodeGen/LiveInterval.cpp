@@ -214,7 +214,8 @@ LiveInterval::addRangeFrom(LiveRange LR, Ranges::iterator From) {
       // Check to make sure that we are not overlapping two live ranges with
       // different ValId's.
       assert(B->end <= Start &&
-             "Cannot overlap two LiveRanges with differing ValID's");
+             "Cannot overlap two LiveRanges with differing ValID's"
+             " (did you def the same reg twice in a MachineInstr?)");
     }
   }
 
