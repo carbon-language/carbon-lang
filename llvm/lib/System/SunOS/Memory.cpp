@@ -39,7 +39,7 @@ MemoryBlock Memory::AllocateRWX(unsigned NumBytes) {
   }
   MemoryBlock result;
   result.Address = pa;
-  result.AllocSize = NumPages*pageSize;
+  result.Size = NumPages*pageSize;
   return result;
 }
 
