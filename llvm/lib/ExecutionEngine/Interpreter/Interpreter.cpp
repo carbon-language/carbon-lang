@@ -32,7 +32,7 @@ Interpreter::Interpreter(Module *M, unsigned Config,
   setTargetData(TD);
   // Initialize the "backend"
   initializeExecutionEngine();
-  initializeExternalMethods();
+  initializeExternalFunctions();
   CW.setModule(M);  // Update Writer
 }
 
@@ -42,7 +42,7 @@ int Interpreter::run(const std::string &MainFunction,
 		     const std::vector<std::string> &Args) {
   // Start interpreter into the main function...
   //
-  if (!callMainMethod(MainFunction, Args) && !Debug) {
+  if (!callMainFunction(MainFunction, Args) && !Debug) {
     // If not in debug mode and if the call succeeded, run the code now...
     run();
   }

@@ -22,7 +22,6 @@
 #include <math.h>
 #include <stdio.h>
 using std::vector;
-using std::cout;
 
 typedef GenericValue (*ExFunc)(FunctionType *, const vector<GenericValue> &);
 static std::map<const Function *, ExFunc> Functions;
@@ -78,7 +77,7 @@ static ExFunc lookupFunction(const Function *M) {
     ExtName += getTypeID(Ty);
   ExtName += "_" + M->getName();
 
-  //cout << "Tried: '" << ExtName << "'\n";
+  //std::cout << "Tried: '" << ExtName << "'\n";
   ExFunc FnPtr = FuncNames[ExtName];
   if (FnPtr == 0)
     FnPtr = (ExFunc)dlsym(RTLD_DEFAULT, ExtName.c_str());
@@ -91,7 +90,7 @@ static ExFunc lookupFunction(const Function *M) {
   return FnPtr;
 }
 
-GenericValue Interpreter::callExternalMethod(Function *M,
+GenericValue Interpreter::callExternalFunction(Function *M,
                                          const vector<GenericValue> &ArgVals) {
   TheInterpreter = this;
 
@@ -100,8 +99,8 @@ GenericValue Interpreter::callExternalMethod(Function *M,
   std::map<const Function *, ExFunc>::iterator FI = Functions.find(M);
   ExFunc Fn = (FI == Functions.end()) ? lookupFunction(M) : FI->second;
   if (Fn == 0) {
-    cout << "Tried to execute an unknown external function: "
-	 << M->getType()->getDescription() << " " << M->getName() << "\n";
+    std::cout << "Tried to execute an unknown external function: "
+              << M->getType()->getDescription() << " " << M->getName() << "\n";
     return GenericValue();
   }
 
@@ -117,85 +116,21 @@ GenericValue Interpreter::callExternalMethod(Function *M,
 //
 extern "C" {  // Don't add C++ manglings to llvm mangling :)
 
-// Implement void printstr([ubyte {x N}] *)
-GenericValue lle_VP_printstr(FunctionType *M,
-			     const vector<GenericValue> &ArgVal){
-  assert(ArgVal.size() == 1 && "printstr only takes one argument!");
-  cout << (char*)GVTOP(ArgVal[0]);
-  return GenericValue();
-}
-
-// Implement 'void print(X)' for every type...
-GenericValue lle_X_print(FunctionType *M, const vector<GenericValue> &ArgVals) {
-  assert(ArgVals.size() == 1 && "generic print only takes one argument!");
-
-  Interpreter::print(M->getParamTypes()[0], ArgVals[0]);
-  return GenericValue();
-}
-
-// Implement 'void printVal(X)' for every type...
-GenericValue lle_X_printVal(FunctionType *M,
-			    const vector<GenericValue> &ArgVal) {
-  assert(ArgVal.size() == 1 && "generic print only takes one argument!");
-
-  // Specialize print([ubyte {x N} ] *) and print(sbyte *)
-  if (const PointerType *PTy = 
-      dyn_cast<PointerType>(M->getParamTypes()[0].get()))
-    if (PTy->getElementType() == Type::SByteTy ||
-        isa<ArrayType>(PTy->getElementType())) {
-      return lle_VP_printstr(M, ArgVal);
-    }
-
-  Interpreter::printValue(M->getParamTypes()[0], ArgVal[0]);
-  return GenericValue();
-}
-
-// Implement 'void printString(X)'
-// Argument must be [ubyte {x N} ] * or sbyte *
-GenericValue lle_X_printString(FunctionType *M,
-			       const vector<GenericValue> &ArgVal) {
-  assert(ArgVal.size() == 1 && "generic print only takes one argument!");
-  return lle_VP_printstr(M, ArgVal);
-}
-
-// Implement 'void print<TYPE>(X)' for each primitive type or pointer type
-#define PRINT_TYPE_FUNC(TYPENAME,TYPEID) \
-  GenericValue lle_X_print##TYPENAME(FunctionType *M,\
-                                     const vector<GenericValue> &ArgVal) {\
-    assert(ArgVal.size() == 1 && "generic print only takes one argument!");\
-    assert(M->getParamTypes()[0].get()->getPrimitiveID() == Type::TYPEID);\
-    Interpreter::printValue(M->getParamTypes()[0], ArgVal[0]);\
-    return GenericValue();\
-  }
-
-PRINT_TYPE_FUNC(SByte,   SByteTyID)
-PRINT_TYPE_FUNC(UByte,   UByteTyID)
-PRINT_TYPE_FUNC(Short,   ShortTyID)
-PRINT_TYPE_FUNC(UShort,  UShortTyID)
-PRINT_TYPE_FUNC(Int,     IntTyID)
-PRINT_TYPE_FUNC(UInt,    UIntTyID)
-PRINT_TYPE_FUNC(Long,    LongTyID)
-PRINT_TYPE_FUNC(ULong,   ULongTyID)
-PRINT_TYPE_FUNC(Float,   FloatTyID)
-PRINT_TYPE_FUNC(Double,  DoubleTyID)
-PRINT_TYPE_FUNC(Pointer, PointerTyID)
-
-
 // void putchar(sbyte)
 GenericValue lle_Vb_putchar(FunctionType *M, const vector<GenericValue> &Args) {
-  cout << Args[0].SByteVal;
+  std::cout << Args[0].SByteVal;
   return GenericValue();
 }
 
 // int putchar(int)
 GenericValue lle_ii_putchar(FunctionType *M, const vector<GenericValue> &Args) {
-  cout << ((char)Args[0].IntVal) << std::flush;
+  std::cout << ((char)Args[0].IntVal) << std::flush;
   return Args[0];
 }
 
 // void putchar(ubyte)
 GenericValue lle_VB_putchar(FunctionType *M, const vector<GenericValue> &Args) {
-  cout << Args[0].SByteVal << std::flush;
+  std::cout << Args[0].SByteVal << std::flush;
   return Args[0];
 }
 
@@ -395,7 +330,7 @@ GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
         sprintf(Buffer, FmtBuf, (void*)GVTOP(Args[ArgNo++])); break;
       case 's': 
         sprintf(Buffer, FmtBuf, (char*)GVTOP(Args[ArgNo++])); break;
-      default:  cout << "<unknown printf code '" << *FmtStr << "'!>";
+      default:  std::cout << "<unknown printf code '" << *FmtStr << "'!>";
         ArgNo++; break;
       }
       strcpy(OutputBuffer, Buffer);
@@ -413,7 +348,7 @@ GenericValue lle_X_printf(FunctionType *M, const vector<GenericValue> &Args) {
   NewArgs.push_back(PTOGV(Buffer));
   NewArgs.insert(NewArgs.end(), Args.begin(), Args.end());
   GenericValue GV = lle_X_sprintf(M, NewArgs);
-  cout << Buffer;
+  std::cout << Buffer;
   return GV;
 }
 
@@ -763,22 +698,7 @@ GenericValue lle_X_fprintf(FunctionType *M, const vector<GenericValue> &Args) {
 } // End extern "C"
 
 
-void Interpreter::initializeExternalMethods() {
-  FuncNames["lle_VP_printstr"] = lle_VP_printstr;
-  FuncNames["lle_X_print"] = lle_X_print;
-  FuncNames["lle_X_printVal"] = lle_X_printVal;
-  FuncNames["lle_X_printString"] = lle_X_printString;
-  FuncNames["lle_X_printUByte"] = lle_X_printUByte;
-  FuncNames["lle_X_printSByte"] = lle_X_printSByte;
-  FuncNames["lle_X_printUShort"] = lle_X_printUShort;
-  FuncNames["lle_X_printShort"] = lle_X_printShort;
-  FuncNames["lle_X_printInt"] = lle_X_printInt;
-  FuncNames["lle_X_printUInt"] = lle_X_printUInt;
-  FuncNames["lle_X_printLong"] = lle_X_printLong;
-  FuncNames["lle_X_printULong"] = lle_X_printULong;
-  FuncNames["lle_X_printFloat"] = lle_X_printFloat;
-  FuncNames["lle_X_printDouble"] = lle_X_printDouble;
-  FuncNames["lle_X_printPointer"] = lle_X_printPointer;
+void Interpreter::initializeExternalFunctions() {
   FuncNames["lle_Vb_putchar"]     = lle_Vb_putchar;
   FuncNames["lle_ii_putchar"]     = lle_ii_putchar;
   FuncNames["lle_VB_putchar"]     = lle_VB_putchar;
@@ -810,7 +730,7 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_strcat"]       = lle_X_strcat;
   FuncNames["lle_X_strcpy"]       = lle_X_strcpy;
   FuncNames["lle_X_strlen"]       = lle_X_strlen;
-  FuncNames["lle_X___strdup"]       = lle_X___strdup;
+  FuncNames["lle_X___strdup"]     = lle_X___strdup;
   FuncNames["lle_X_memset"]       = lle_X_memset;
   FuncNames["lle_X_memcpy"]       = lle_X_memcpy;
 

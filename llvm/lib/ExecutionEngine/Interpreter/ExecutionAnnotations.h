@@ -8,7 +8,7 @@
 #define LLI_EXECUTION_ANNOTATIONS_H
 
 //===----------------------------------------------------------------------===//
-// Support for MethodInfo annotations
+// Support for FunctionInfo annotations
 //===----------------------------------------------------------------------===//
 
 // This annotation (attached only to Function objects) is used to cache useful
@@ -18,20 +18,19 @@
 // This annotation object is created on demand, and attaches other annotation
 // objects to the instructions in the function when it's created.
 //
-static AnnotationID MethodInfoAID(
+static AnnotationID FunctionInfoAID(
 	            AnnotationManager::getID("Interpreter::FunctionInfo"));
 
-struct MethodInfo : public Annotation {
-  MethodInfo(Function *F);
+struct FunctionInfo : public Annotation {
+  FunctionInfo(Function *F);
   std::vector<unsigned> NumPlaneElements;
 
-
-  // Create - Factory function to allow MethodInfo annotations to be
+  // Create - Factory function to allow FunctionInfo annotations to be
   // created on demand.
   //
   static Annotation *Create(AnnotationID AID, const Annotable *O, void *) {
-    assert(AID == MethodInfoAID);
-    return new MethodInfo(cast<Function>((Value*)O));  // Simply invoke the ctor
+    assert(AID == FunctionInfoAID);
+    return new FunctionInfo(cast<Function>((Value*)O));
   }
 
 private:
@@ -47,7 +46,7 @@ private:
 // hold the the slot number for the value in its type plane.
 //
 // Entities have this annotation attached to them when the containing
-// function has it's MethodInfo created (by the MethodInfo ctor).
+// function has it's FunctionInfo created (by the FunctionInfo ctor).
 //
 static AnnotationID SlotNumberAID(
 	            AnnotationManager::getID("Interpreter::SlotNumber"));
@@ -72,7 +71,7 @@ struct SlotNumber : public Annotation {
 // calculating which value slot to store the result of the instruction in.
 //
 // Instructions have this annotation attached to them when the containing
-// function has it's MethodInfo created (by the MethodInfo ctor).
+// function has it's FunctionInfo created (by the FunctionInfo ctor).
 //
 struct InstNumber : public SlotNumber {
   unsigned InstNum;   // Ranges from 1->

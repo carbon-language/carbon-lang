@@ -157,8 +157,8 @@ static void SetValue(Value *V, GenericValue Val, ExecutionContext &SF) {
 
 void Interpreter::initializeExecutionEngine() {
   TheEE = this;
-  AnnotationManager::registerAnnotationFactory(MethodInfoAID,
-                                               &MethodInfo::Create);
+  AnnotationManager::registerAnnotationFactory(FunctionInfoAID,
+                                               &FunctionInfo::Create);
   initializeSignalHandlers();
 }
 
@@ -588,7 +588,7 @@ void Interpreter::executeRetInst(ReturnInst &I, ExecutionContext &SF) {
   }
 
   // Save previously executing meth
-  const Function *M = ECStack.back().CurMethod;
+  const Function *M = ECStack.back().CurFunction;
 
   // Pop the current stack frame... this invalidates SF
   ECStack.pop_back();
@@ -880,7 +880,7 @@ void Interpreter::executeCallInst(CallInst &I, ExecutionContext &SF) {
   // and treat it as a function pointer.
   GenericValue SRC = getOperandValue(I.getCalledValue(), SF);
   
-  callMethod((Function*)GVTOP(SRC), ArgVals);
+  callFunction((Function*)GVTOP(SRC), ArgVals);
 }
 
 static void executePHINode(PHINode &I, ExecutionContext &SF) {
@@ -1014,7 +1014,7 @@ static void executeCastInst(CastInst &I, ExecutionContext &SF) {
 //                        Dispatch and Execution Code
 //===----------------------------------------------------------------------===//
 
-MethodInfo::MethodInfo(Function *F) : Annotation(MethodInfoAID) {
+FunctionInfo::FunctionInfo(Function *F) : Annotation(FunctionInfoAID) {
   // Assign slot numbers to the function arguments...
   for (Function::const_aiterator AI = F->abegin(), E = F->aend(); AI != E; ++AI)
     AI->addAnnotation(new SlotNumber(getValueSlot(AI)));
@@ -1027,7 +1027,7 @@ MethodInfo::MethodInfo(Function *F) : Annotation(MethodInfoAID) {
       II->addAnnotation(new InstNumber(++InstNum, getValueSlot(II)));
 }
 
-unsigned MethodInfo::getValueSlot(const Value *V) {
+unsigned FunctionInfo::getValueSlot(const Value *V) {
   unsigned Plane = V->getType()->getUniqueID();
   if (Plane >= NumPlaneElements.size())
     NumPlaneElements.resize(Plane+1, 0);
@@ -1036,15 +1036,15 @@ unsigned MethodInfo::getValueSlot(const Value *V) {
 
 
 //===----------------------------------------------------------------------===//
-// callMethod - Execute the specified function...
+// callFunction - Execute the specified function...
 //
-void Interpreter::callMethod(Function *F,
-                             const std::vector<GenericValue> &ArgVals) {
+void Interpreter::callFunction(Function *F,
+                               const std::vector<GenericValue> &ArgVals) {
   assert((ECStack.empty() || ECStack.back().Caller == 0 || 
 	  ECStack.back().Caller->getNumOperands()-1 == ArgVals.size()) &&
 	 "Incorrect number of arguments passed into function call!");
   if (F->isExternal()) {
-    GenericValue Result = callExternalMethod(F, ArgVals);
+    GenericValue Result = callExternalFunction(F, ArgVals);
     const Type *RetTy = F->getReturnType();
 
     // Copy the result back into the result variable if we are not returning
@@ -1074,23 +1074,24 @@ void Interpreter::callMethod(Function *F,
   // the function.  Also calculate the number of values for each type slot
   // active.
   //
-  MethodInfo *MethInfo = (MethodInfo*)F->getOrCreateAnnotation(MethodInfoAID);
+  FunctionInfo *FuncInfo =
+    (FunctionInfo*)F->getOrCreateAnnotation(FunctionInfoAID);
   ECStack.push_back(ExecutionContext());         // Make a new stack frame...
 
   ExecutionContext &StackFrame = ECStack.back(); // Fill it in...
-  StackFrame.CurMethod = F;
+  StackFrame.CurFunction = F;
   StackFrame.CurBB     = F->begin();
   StackFrame.CurInst   = StackFrame.CurBB->begin();
-  StackFrame.MethInfo  = MethInfo;
+  StackFrame.FuncInfo  = FuncInfo;
 
   // Initialize the values to nothing...
-  StackFrame.Values.resize(MethInfo->NumPlaneElements.size());
-  for (unsigned i = 0; i < MethInfo->NumPlaneElements.size(); ++i) {
-    StackFrame.Values[i].resize(MethInfo->NumPlaneElements[i]);
+  StackFrame.Values.resize(FuncInfo->NumPlaneElements.size());
+  for (unsigned i = 0; i < FuncInfo->NumPlaneElements.size(); ++i) {
+    StackFrame.Values[i].resize(FuncInfo->NumPlaneElements[i]);
 
     // Taint the initial values of stuff
     memset(&StackFrame.Values[i][0], 42,
-           MethInfo->NumPlaneElements[i]*sizeof(GenericValue));
+           FuncInfo->NumPlaneElements[i]*sizeof(GenericValue));
   }
 
   StackFrame.PrevBB = 0;  // No previous BB for PHI nodes...
@@ -1345,7 +1346,7 @@ void Interpreter::infoValue(const std::string &Name) {
 //
 void Interpreter::printStackFrame(int FrameNo) {
   if (FrameNo == -1) FrameNo = CurFrame;
-  Function *F = ECStack[FrameNo].CurMethod;
+  Function *F = ECStack[FrameNo].CurFunction;
   const Type *RetTy = F->getReturnType();
 
   CW << ((FrameNo == CurFrame) ? '>' : '-') << "#" << FrameNo << ". "

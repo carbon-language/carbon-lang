@@ -10,9 +10,6 @@
 #include "llvm/Function.h"
 #include "llvm/Transforms/Utils/Linker.h"
 #include <algorithm>
-using std::string;
-using std::cout;
-using std::cin;
 
 enum CommandID {
   Quit, Help,                                 // Basics
@@ -29,10 +26,10 @@ static struct CommandTableElement {
   enum CommandID CID;
 
   inline bool operator<(const CommandTableElement &E) const {
-    return string(Name) < string(E.Name);
+    return std::string(Name) < std::string(E.Name);
   }
-  inline bool operator==(const string &S) const { 
-    return string(Name) == S;
+  inline bool operator==(const std::string &S) const { 
+    return std::string(Name) == S;
   }
 } CommandTable[] = {
   { "quit"     , Quit       }, { "q", Quit }, { "", Quit }, // Empty str = eof
@@ -76,25 +73,25 @@ void Interpreter::handleUserInput() {
   printCurrentInstruction();
 
   do {
-    string Command;
-    cout << "lli> " << std::flush;
-    cin >> Command;
+    std::string Command;
+    std::cout << "lli> " << std::flush;
+    std::cin >> Command;
 
     CommandTableElement *E = find(CommandTable, CommandTableEnd, Command);
 
     if (E == CommandTableEnd) {
-      cout << "Error: '" << Command << "' not recognized!\n";
+      std::cout << "Error: '" << Command << "' not recognized!\n";
       continue;
     }
 
     switch (E->CID) {
     case Quit:       UserQuit = true;   break;
     case Print:
-      cin >> Command;
+      std::cin >> Command;
       print(Command);
       break;
     case Info:
-      cin >> Command;
+      std::cin >> Command;
       infoValue(Command);
       break;
      
@@ -102,32 +99,32 @@ void Interpreter::handleUserInput() {
     case StackTrace: printStackTrace(); break;
     case Up: 
       if (CurFrame > 0) { --CurFrame; printStackFrame(); }
-      else cout << "Error: Already at root of stack!\n";
+      else std::cout << "Error: Already at root of stack!\n";
       break;
     case Down:
       if ((unsigned)CurFrame < ECStack.size()-1) {
         ++CurFrame;
         printStackFrame();
       } else
-        cout << "Error: Already at bottom of stack!\n";
+        std::cout << "Error: Already at bottom of stack!\n";
       break;
     case Next:       nextInstruction(); break;
     case Step:       stepInstruction(); break;
     case Run:        run();             break;
     case Finish:     finish();          break;
     case Call:
-      cin >> Command;
-      callMethod(Command);    // Enter the specified function
+      std::cin >> Command;
+      callFunction(Command);    // Enter the specified function
       finish();               // Run until it's complete
       break;
 
     case TraceOpt:
       Trace = !Trace;
-      cout << "Tracing " << (Trace ? "enabled\n" : "disabled\n");
+      std::cout << "Tracing " << (Trace ? "enabled\n" : "disabled\n");
       break;
 
     default:
-      cout << "Command '" << Command << "' unimplemented!\n";
+      std::cout << "Command '" << Command << "' unimplemented!\n";
       break;
     }
 
@@ -137,15 +134,15 @@ void Interpreter::handleUserInput() {
 //===----------------------------------------------------------------------===//
 // setBreakpoint - Enable a breakpoint at the specified location
 //
-void Interpreter::setBreakpoint(const string &Name) {
+void Interpreter::setBreakpoint(const std::string &Name) {
   Value *PickedVal = ChooseOneOption(Name, LookupMatchingNames(Name));
   // TODO: Set a breakpoint on PickedVal
 }
 
 //===----------------------------------------------------------------------===//
-// callMethod - Enter the specified method...
+// callFunction - Enter the specified function...
 //
-bool Interpreter::callMethod(const string &Name) {
+bool Interpreter::callFunction(const std::string &Name) {
   std::vector<Value*> Options = LookupMatchingNames(Name);
 
   for (unsigned i = 0; i < Options.size(); ++i) { // Remove non-fn matches...
@@ -164,7 +161,7 @@ bool Interpreter::callMethod(const string &Name) {
   std::vector<GenericValue> Args;
   // TODO, get args from user...
 
-  callMethod(F, Args);  // Start executing it...
+  callFunction(F, Args);  // Start executing it...
 
   // Reset the current frame location to the top of stack
   CurFrame = ECStack.size()-1;
@@ -172,11 +169,11 @@ bool Interpreter::callMethod(const string &Name) {
   return false;
 }
 
-// callMainMethod - This is a nasty gross hack that will dissapear when
-// callMethod can parse command line options and stuff for us.
+// callMainFunction - This is a nasty gross hack that will dissapear when
+// callFunction can parse command line options and stuff for us.
 //
-bool Interpreter::callMainMethod(const string &Name,
-                                 const std::vector<string> &InputArgv) {
+bool Interpreter::callMainFunction(const std::string &Name,
+                                   const std::vector<std::string> &InputArgv) {
   std::vector<Value*> Options = LookupMatchingNames(Name);
 
   for (unsigned i = 0; i < Options.size(); ++i) { // Remove non-fn matches...
@@ -196,7 +193,8 @@ bool Interpreter::callMainMethod(const string &Name,
   std::vector<GenericValue> Args;
   switch (MT->getParamTypes().size()) {
   default:
-    cout << "Unknown number of arguments to synthesize for '" << Name << "'!\n";
+    std::cout << "Unknown number of arguments to synthesize for '" << Name
+              << "'!\n";
     return true;
   case 2: {
     PointerType *SPP = PointerType::get(PointerType::get(Type::SByteTy));
@@ -211,7 +209,7 @@ bool Interpreter::callMainMethod(const string &Name,
     // fallthrough
   case 1:
     if (!MT->getParamTypes()[0]->isInteger()) {
-      cout << "First argument of '" << Name << "' should be an integer!\n";
+      std::cout << "First argument of '" << Name << "' should be an integer!\n";
       return true;
     } else {
       GenericValue GV; GV.UIntVal = InputArgv.size();
@@ -222,7 +220,7 @@ bool Interpreter::callMainMethod(const string &Name,
     break;
   }
 
-  callMethod(M, Args);  // Start executing it...
+  callFunction(M, Args);  // Start executing it...
 
   // Reset the current frame location to the top of stack
   CurFrame = ECStack.size()-1;
@@ -234,13 +232,13 @@ bool Interpreter::callMainMethod(const string &Name,
 
 void Interpreter::list() {
   if (ECStack.empty())
-    cout << "Error: No program executing!\n";
+    std::cout << "Error: No program executing!\n";
   else
-    CW << ECStack[CurFrame].CurMethod;   // Just print the function out...
+    CW << ECStack[CurFrame].CurFunction;   // Just print the function out...
 }
 
 void Interpreter::printStackTrace() {
-  if (ECStack.empty()) cout << "No program executing!\n";
+  if (ECStack.empty()) std::cout << "No program executing!\n";
 
   for (unsigned i = 0; i < ECStack.size(); ++i) {
     printStackFrame((int)i);

@@ -19,7 +19,7 @@
 
 extern CachedWriter CW;     // Object to accelerate printing of LLVM
 
-struct MethodInfo;          // Defined in ExecutionAnnotations.h
+struct FunctionInfo;        // Defined in ExecutionAnnotations.h
 class CallInst;
 class ReturnInst;
 class BranchInst;
@@ -63,10 +63,10 @@ typedef std::vector<GenericValue> ValuePlaneTy;
 // executing.
 //
 struct ExecutionContext {
-  Function             *CurMethod;  // The currently executing function
+  Function             *CurFunction;// The currently executing function
   BasicBlock           *CurBB;      // The currently executing BB
   BasicBlock::iterator  CurInst;    // The next instruction to execute
-  MethodInfo           *MethInfo;   // The MethInfo annotation for the function
+  FunctionInfo         *FuncInfo;   // The FuncInfo annotation for the function
   std::vector<ValuePlaneTy>  Values;// ValuePlanes for each type
   std::vector<GenericValue>  VarArgs; // Values passed through an ellipsis
 
@@ -111,21 +111,21 @@ public:
   void handleUserInput();
 
   // User Interation Methods...
-  bool callMethod(const std::string &Name);      // return true on failure
+  bool callFunction(const std::string &Name);      // return true on failure
   void setBreakpoint(const std::string &Name);
   void infoValue(const std::string &Name);
   void print(const std::string &Name);
   static void print(const Type *Ty, GenericValue V);
   static void printValue(const Type *Ty, GenericValue V);
 
-  bool callMainMethod(const std::string &MainName,
-                      const std::vector<std::string> &InputFilename);
+  bool callMainFunction(const std::string &MainName,
+                        const std::vector<std::string> &InputFilename);
 
   void list();             // Do the 'list' command
   void printStackTrace();  // Do the 'backtrace' command
 
   // Code execution methods...
-  void callMethod(Function *F, const std::vector<GenericValue> &ArgVals);
+  void callFunction(Function *F, const std::vector<GenericValue> &ArgVals);
   bool executeInstruction(); // Execute one instruction...
 
   void stepInstruction();  // Do the 'step' command
@@ -138,13 +138,13 @@ public:
   void executeRetInst(ReturnInst &I, ExecutionContext &SF);
   void executeBrInst(BranchInst &I, ExecutionContext &SF);
   void executeAllocInst(AllocationInst &I, ExecutionContext &SF);
-  GenericValue callExternalMethod(Function *F, 
-                                  const std::vector<GenericValue> &ArgVals);
+  GenericValue callExternalFunction(Function *F, 
+                                    const std::vector<GenericValue> &ArgVals);
   void exitCalled(GenericValue GV);
 
-  // getCurrentMethod - Return the currently executing method
-  inline Function *getCurrentMethod() const {
-    return CurFrame < 0 ? 0 : ECStack[CurFrame].CurMethod;
+  // getCurrentFunction - Return the currently executing function
+  inline Function *getCurrentFunction() const {
+    return CurFrame < 0 ? 0 : ECStack[CurFrame].CurFunction;
   }
 
   // isStopped - Return true if a program is stopped.  Return false if no
@@ -194,7 +194,7 @@ private:  // Helper functions
 
 
   void initializeExecutionEngine();
-  void initializeExternalMethods();
+  void initializeExternalFunctions();
 };
 
 #endif

@@ -8,8 +8,6 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Module.h"
-#include <iostream>
-using std::cout;
 
 //===----------------------------------------------------------------------===//
 //
@@ -36,9 +34,9 @@ static inline void LookupMatchingNames(const std::string &Name,
 //
 std::vector<Value*> Interpreter::LookupMatchingNames(const std::string &Name) {
   std::vector<Value*> Results;
-  Function *CurMeth = getCurrentMethod();
+  Function *CurFunc = getCurrentFunction();
   
-  if (CurMeth) ::LookupMatchingNames(Name, CurMeth->getSymbolTable(), Results);
+  if (CurFunc) ::LookupMatchingNames(Name, CurFunc->getSymbolTable(), Results);
   ::LookupMatchingNames(Name, getModule().getSymbolTable(), Results);
   return Results;
 }
@@ -52,25 +50,26 @@ Value *Interpreter::ChooseOneOption(const std::string &Name,
   switch (Opts.size()) {
   case 1: return Opts[0];
   case 0: 
-    cout << "Error: no entities named '" << Name << "' found!\n";
+    std::cout << "Error: no entities named '" << Name << "' found!\n";
     return 0;
   default: break;  // Must prompt user...
   }
 
-  cout << "Multiple entities named '" << Name << "' found!  Please choose:\n";
-  cout << "  0. Cancel operation\n";
+  std::cout << "Multiple entities named '" << Name
+            << "' found!  Please choose:\n";
+  std::cout << "  0. Cancel operation\n";
   for (unsigned i = 0; i < Opts.size(); ++i) {
-    cout << "  " << (i+1) << ".";
-    WriteAsOperand(cout, Opts[i]) << "\n";
+    std::cout << "  " << (i+1) << ".";
+    WriteAsOperand(std::cout, Opts[i]) << "\n";
   }
 
   unsigned Option;
   do {
-    cout << "lli> " << std::flush;
+    std::cout << "lli> " << std::flush;
     std::cin >> Option;
     if (Option > Opts.size())
-      cout << "Invalid selection: Please choose from 0 to " << Opts.size()
-	   << "\n";
+      std::cout << "Invalid selection: Please choose from 0 to " << Opts.size()
+                << "\n";
   } while (Option > Opts.size());
 
   if (Option == 0) return 0;
