@@ -303,7 +303,8 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
 
   std::string Error;
   bool FilesDifferent = false;
-  if (DiffFiles(ReferenceOutputFile, Output.toString(), &Error)) {
+  if (DiffFilesWithTolerance(ReferenceOutputFile, Output.toString(), 0, 0,
+                             &Error)) {
     if (!Error.empty()) {
       std::cerr << "While diffing output: " << Error << '\n';
       exit(1);
