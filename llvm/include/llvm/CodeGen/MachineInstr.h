@@ -398,9 +398,6 @@ public:
   const MachineBasicBlock* getParent() const { return parent; }
   MachineBasicBlock* getParent() { return parent; }
 
-  //void setParent(const MachineBasicBlock *MBB) { parent = MBB; } 
-  void setParent(MachineBasicBlock *MBB) { parent = MBB; } 
-
   /// getOpcode - Returns the opcode of this MachineInstr.
   ///
   const int getOpcode() const { return Opcode; }
@@ -461,10 +458,8 @@ public:
                          MachineOperand::MO_VirtualRegister, V);
   }
 
-  //Clone Instruction 
-  //Create a copy of 'this' instruction that is
-  //identical in all ways except the following: The instruction has no
-  //parent The instruction has no name
+  /// clone - Create a copy of 'this' instruction that is identical in
+  /// all ways except the the instruction has no parent, prev, or next.
   MachineInstr* clone();
 
   //

@@ -73,7 +73,8 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, short opcode,
 MachineInstr::MachineInstr(const MachineInstr &MI) {
   Opcode = MI.getOpcode();
   numImplicitRefs = MI.getNumImplicitRefs();
- 
+  operands.reserve(MI.getNumOperands());
+
   //Add operands
   for(unsigned i=0; i < MI.getNumOperands(); ++i)
     operands.push_back(MachineOperand(MI.getOperand(i)));
@@ -89,7 +90,7 @@ MachineInstr::~MachineInstr()
 ///all ways except the following: The instruction has no parent The
 ///instruction has no name
 MachineInstr* MachineInstr::clone() {
-  MachineInstr* newInst = new MachineInstr(*this);
+  return new MachineInstr(*this);
 }
 
 /// OperandComplete - Return true if it's illegal to add a new operand
