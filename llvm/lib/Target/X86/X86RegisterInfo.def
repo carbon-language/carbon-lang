@@ -45,7 +45,7 @@
 //  #3: Register Flags - A bitfield of flags or'd together from the
 //      MRegisterInfo.h file.
 //  #4: Target Specific Flags - Another bitfield containing X86 specific flags
-//      as neccesary.
+//      as necessary.
 //  #5: Alias set for registers aliased to this register (sets defined below).
 
 
