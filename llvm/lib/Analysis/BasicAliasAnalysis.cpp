@@ -186,9 +186,8 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
         return NoModRef;
     }
 
-  // If P points to a constant memory location, the call definitely could not
-  // modify the memory location.
-  return pointsToConstantMemory(P) ? Ref : ModRef;
+  // The AliasAnalysis base class has some smarts, lets use them.
+  return AliasAnalysis::getModRefInfo(CS, P, Size);
 }
 
 // alias - Provide a bunch of ad-hoc rules to disambiguate in common cases, such
@@ -597,11 +596,15 @@ static const char *DoesntAccessMemoryTable[] = {
   "sin", "sinf", "sinl",      "sinh", "sinhf", "sinhl",
   "tan", "tanf", "tanl",      "tanh", "tanhf", "tanhl",
 
+  // ctype.h
   "isalnum", "isalpha", "iscntrl", "isdigit", "isgraph", "islower", "isprint"
   "ispunct", "isspace", "isupper", "isxdigit", "tolower", "toupper",
 
+  // wctype.h"
   "iswalnum", "iswalpha", "iswcntrl", "iswdigit", "iswgraph", "iswlower",
   "iswprint", "iswpunct", "iswspace", "iswupper", "iswxdigit",
+
+  "iswctype", "towctrans", "towlower", "towupper", 
 
   "btowc", "wctob", 
 };
