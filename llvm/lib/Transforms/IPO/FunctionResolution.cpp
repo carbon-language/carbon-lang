@@ -80,6 +80,9 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
   // Remove the old call instruction from the program...
   BB->getInstList().remove(BBI);
 
+  // Transfer the name over...
+  NewCall->setName(CI->getName());
+
   // Replace uses of the old instruction with the appropriate values...
   //
   if (NewCall->getType() == CI->getType()) {
@@ -94,10 +97,19 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
     CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
   } else if (CI->getType() == Type::VoidTy) {
     // If we are gaining a new return value, we don't have to do anything
-    // special.
+    // special here, because it will automatically be ignored.
   } else {
-    assert(0 && "This should have been checked before!");
-    abort();
+    // Insert a cast instruction to convert the return value of the function
+    // into it's new type.  Of course we only need to do this if the return
+    // value of the function is actually USED.
+    //
+    if (!CI->use_empty()) {
+      CastInst *NewCast = new CastInst(NewCall, CI->getType(),
+                                       NewCall->getName());
+      CI->replaceAllUsesWith(NewCast);
+      // Insert the new cast instruction...
+      BB->getInstList().insert(BBI, NewCast);
+    }
   }
 
   // The old instruction is no longer needed, destroy it!
@@ -190,10 +202,6 @@ bool FunctionResolvingPass::run(Module &M) {
             const FunctionType *ConcreteMT = Concrete->getFunctionType();
             bool Broken = false;
 
-            assert((Old->getReturnType() == Concrete->getReturnType() ||
-                    Concrete->getReturnType() == Type::VoidTy ||
-                    Old->getReturnType() == Type::VoidTy) &&
-                   "Differing return types not handled yet!");
             assert(OldMT->getParamTypes().size() <=
                    ConcreteMT->getParamTypes().size() &&
                    "Concrete type must have more specified parameters!");
