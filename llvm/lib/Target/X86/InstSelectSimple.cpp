@@ -124,10 +124,9 @@ namespace {
     void visitSimpleBinary(BinaryOperator &B, unsigned OpcodeClass);
     void visitAdd(BinaryOperator &B) { visitSimpleBinary(B, 0); }
     void visitSub(BinaryOperator &B) { visitSimpleBinary(B, 1); }
-    void doMultiply(unsigned destReg, const Type *resultType,
-		    unsigned op0Reg, unsigned op1Reg,
-                    MachineBasicBlock *MBB,
-                    MachineBasicBlock::iterator &MBBI);
+    void doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator &MBBI,
+                    unsigned destReg, const Type *resultType,
+		    unsigned op0Reg, unsigned op1Reg);
     void visitMul(BinaryOperator &B);
 
     void visitDiv(BinaryOperator &B) { visitDivRem(B); }
@@ -179,9 +178,9 @@ namespace {
     /// copyConstantToRegister - Output the instructions required to put the
     /// specified constant into the specified register.
     ///
-    void copyConstantToRegister(Constant *C, unsigned Reg,
-                                MachineBasicBlock *MBB,
-                                MachineBasicBlock::iterator &MBBI);
+    void copyConstantToRegister(MachineBasicBlock *MBB,
+                                MachineBasicBlock::iterator &MBBI,
+                                Constant *C, unsigned Reg);
 
     /// makeAnotherReg - This method returns the next register number
     /// we haven't yet used.
@@ -213,7 +212,7 @@ namespace {
       // the register here...
       //
       if (Constant *C = dyn_cast<Constant>(V)) {
-        copyConstantToRegister(C, Reg, MBB, IPt);
+        copyConstantToRegister(MBB, IPt, C, Reg);
       } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
         // Move the address of the global into the register
         BMI(MBB, IPt, X86::MOVir32, 1, Reg).addReg(GV);
@@ -287,9 +286,9 @@ static inline TypeClass getClassB(const Type *Ty) {
 /// copyConstantToRegister - Output the instructions required to put the
 /// specified constant into the specified register.
 ///
-void ISel::copyConstantToRegister(Constant *C, unsigned R,
-                                  MachineBasicBlock *MBB,
-                                  MachineBasicBlock::iterator &IP) {
+void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
+                                  MachineBasicBlock::iterator &IP,
+                                  Constant *C, unsigned R) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     if (CE->getOpcode() == Instruction::GetElementPtr) {
       emitGEPOperation(MBB, IP, CE->getOperand(0),
@@ -669,11 +668,9 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
 /// doMultiply - Emit appropriate instructions to multiply together
 /// the registers op0Reg and op1Reg, and put the result in destReg.
 /// The type of the result should be given as resultType.
-void
-ISel::doMultiply(unsigned destReg, const Type *resultType,
-		 unsigned op0Reg, unsigned op1Reg,
-                 MachineBasicBlock *MBB, MachineBasicBlock::iterator &MBBI)
-{
+void ISel::doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator &MBBI,
+                      unsigned destReg, const Type *resultType,
+                      unsigned op0Reg, unsigned op1Reg) {
   unsigned Class = getClass (resultType);
 
   // FIXME:
@@ -704,7 +701,7 @@ void ISel::visitMul(BinaryOperator &I) {
   unsigned Op0Reg  = getReg(I.getOperand(0));
   unsigned Op1Reg  = getReg(I.getOperand(1));
   MachineBasicBlock::iterator MBBI = BB->end();
-  doMultiply(DestReg, I.getType(), Op0Reg, Op1Reg, BB, MBBI);
+  doMultiply(BB, MBBI, DestReg, I.getType(), Op0Reg, Op1Reg);
 }
 
 
@@ -934,6 +931,19 @@ ISel::visitCastInst (CastInst &CI)
   visitInstruction (CI);
 }
 
+// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
+// returns zero when the input is not exactly a power of two.
+static unsigned ExactLog2(unsigned Val) {
+  if (Val == 0) return 0;
+  unsigned Count = 0;
+  while (Val != 1) {
+    if (Val & 1) return 0;
+    Val >>= 1;
+    ++Count;
+  }
+  return Count+1;
+}
+
 /// visitGetElementPtrInst - I don't know, most programs don't have
 /// getelementptr instructions, right? That means we can put off
 /// implementing this, right? Right. This method emits machine
@@ -983,34 +993,56 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       // The next type is the member of the structure selected by the
       // index.
       Ty = StTy->getElementTypes ()[idxValue];
-    } else if (const SequentialType *SqTy = cast <SequentialType> (Ty)) {
+    } else if (const SequentialType *SqTy = cast <SequentialType>(Ty)) {
       // It's an array or pointer access: [ArraySize x ElementType].
-      const Type *typeOfSequentialTypeIndex = SqTy->getIndexType ();
+
       // idx is the index into the array.  Unlike with structure
       // indices, we may not know its actual value at code-generation
       // time.
-      assert (idx->getType () == typeOfSequentialTypeIndex
-	      && "Funny-looking array index in GEP");
-      // We want to add basePtrReg to (idxReg * sizeof
-      // ElementType). First, we must find the size of the pointed-to
-      // type.  (Not coincidentally, the next type is the type of the
-      // elements in the array.)
-      Ty = SqTy->getElementType ();
-      unsigned elementSize = TD.getTypeSize (Ty);
-      unsigned elementSizeReg = makeAnotherReg(typeOfSequentialTypeIndex);
-      copyConstantToRegister(ConstantSInt::get(typeOfSequentialTypeIndex,
-                                              elementSize), elementSizeReg,
-                             MBB, IP);
-                             
-      unsigned idxReg = getReg(idx, MBB, IP);
-      // Emit a MUL to multiply the register holding the index by
-      // elementSize, putting the result in memberOffsetReg.
-      unsigned memberOffsetReg = makeAnotherReg(Type::UIntTy);
-      doMultiply (memberOffsetReg, typeOfSequentialTypeIndex,
-		  elementSizeReg, idxReg, MBB, IP);
-      // Emit an ADD to add memberOffsetReg to the basePtr.
-      BMI(MBB, IP, X86::ADDrr32, 2,
-          nextBasePtrReg).addReg (basePtrReg).addReg (memberOffsetReg);
+      assert(idx->getType() == Type::LongTy && "Bad GEP array index!");
+
+      // We want to add basePtrReg to (idxReg * sizeof ElementType). First, we
+      // must find the size of the pointed-to type (Not coincidentally, the next
+      // type is the type of the elements in the array).
+      Ty = SqTy->getElementType();
+      unsigned elementSize = TD.getTypeSize(Ty);
+
+      // If idxReg is a constant, we don't need to perform the multiply!
+      if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(idx)) {
+        if (CSI->isNullValue()) {
+          BMI(MBB, IP, X86::MOVrr32, 1, nextBasePtrReg).addReg(basePtrReg);
+        } else {
+          unsigned Offset = elementSize*CSI->getValue();
+
+          BMI(MBB, IP, X86::ADDri32, 2,
+              nextBasePtrReg).addReg(basePtrReg).addZImm(Offset);
+        }
+      } else if (elementSize == 1) {
+        // If the element size is 1, we don't have to multiply, just add
+        unsigned idxReg = getReg(idx, MBB, IP);
+        BMI(MBB, IP, X86::ADDrr32, 2,
+            nextBasePtrReg).addReg(basePtrReg).addReg(idxReg);
+      } else {
+        unsigned idxReg = getReg(idx, MBB, IP);
+        unsigned OffsetReg = makeAnotherReg(Type::UIntTy);
+        if (unsigned Shift = ExactLog2(elementSize)) {
+          // If the element size is exactly a power of 2, use a shift to get it.
+
+          BMI(MBB, IP, X86::SHLir32, 2,
+              OffsetReg).addReg(idxReg).addZImm(Shift-1);
+        } else {
+          // Most general case, emit a multiply...
+          unsigned elementSizeReg = makeAnotherReg(Type::LongTy);
+          BMI(MBB, IP, X86::MOVir32, 1, elementSizeReg).addZImm(elementSize);
+        
+          // Emit a MUL to multiply the register holding the index by
+          // elementSize, putting the result in OffsetReg.
+          doMultiply(MBB, IP, OffsetReg, Type::LongTy, idxReg, elementSizeReg);
+        }
+        // Emit an ADD to add OffsetReg to the basePtr.
+        BMI(MBB, IP, X86::ADDrr32, 2,
+            nextBasePtrReg).addReg (basePtrReg).addReg (OffsetReg);
+      }
     }
     // Now that we are here, further indices refer to subtypes of this
     // one, so we don't need to worry about basePtrReg itself, anymore.
