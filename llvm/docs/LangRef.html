@@ -125,6 +125,7 @@
         <ol>
           <li><a href="#i_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a></li>
           <li><a href="#i_frameaddress">'<tt>llvm.frameaddress</tt>'   Intrinsic</a></li>
+          <li><a href="#i_prefetch">'<tt>llvm.prefetch</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_os">Operating System Intrinsics</a>
@@ -2498,6 +2499,52 @@ aggressive transformations, so the value returned may not that of the obvious
 source-language caller.
 </p>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_prefetch">'<tt>llvm.prefetch</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  call void (sbyte *, uint, uint)* %llvm.prefetch(sbyte * &lt;address&gt;,
+                                                  uint &lt;rw&gt;, 
+                                                  uint &lt;locality&gt;)
+</pre>
+
+<h5>Overview:</h5>
+
+
+<p>
+The '<tt>llvm.prefetch</tt>' intrinsic is a hint to the code generator to insert
+a prefetch instruction if supported, otherwise it is a noop.  Prefetches have no
+behavior affect on the program, but can change the performance characteristics
+of the code.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+<tt>address</tt> is the address to be prefetched, <tt>rw</tt> is the specifier
+determining if the fetch should be for a read (0) or write (1), and
+<tt>locality</tt> is a temporal locality specifier ranging from (0) - no
+locality, to (3) - exteremely local keep in cache.  The <tt>rw</tt> and
+<tt>locality</tt> arguments must be constant integers.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+This intrinsic does not modify the behavior of the program.  In particular,
+prefetches cannot trap and do not produce a value.  On targets that support this
+intrinsic, the prefetch can provide hints to the processor cache for better
+performance.
+</p>
+
+</div>
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
