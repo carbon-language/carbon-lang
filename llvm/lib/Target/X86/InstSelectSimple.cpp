@@ -389,10 +389,9 @@ ISel::visitCallInst (CallInst & CI)
 {
   // Push the arguments on the stack in reverse order, as specified by
   // the ABI.
-  for (unsigned i = CI.getNumOperands (); i >= 1; --i)
+  for (unsigned i = CI.getNumOperands()-1; i >= 1; --i)
     {
       Value *v = CI.getOperand (i);
-      unsigned argReg = getReg (v);
       switch (getClass (v->getType ()))
 	{
 	case cByte:
@@ -404,7 +403,7 @@ ISel::visitCallInst (CallInst & CI)
 	  break;
 	case cInt:
 	case cFloat:
-	  BuildMI (BB, X86::PUSHr32, 1).addReg (argReg);
+	  BuildMI (BB, X86::PUSHr32, 1).addReg(getReg(v));
 	  break;
 	default:
 	  // FIXME: long/ulong/double args not handled.
