@@ -89,6 +89,10 @@ class TemplateRules : public ConstRules {
   virtual ConstPoolFP   *castToDouble(const ConstPoolVal *V) const {
     return SubClassName::CastToDouble((const ArgType*)V);
   }
+  virtual ConstPoolPointer *castToPointer(const ConstPoolVal *V, 
+                                          const PointerType *Ty) const {
+    return SubClassName::CastToPointer((const ArgType*)V, Ty);
+  }
 
   //===--------------------------------------------------------------------===//
   // Default "noop" implementations
@@ -121,6 +125,8 @@ class TemplateRules : public ConstRules {
   inline static ConstPoolUInt *CastToULong (const ConstPoolVal *V) { return 0; }
   inline static ConstPoolFP   *CastToFloat (const ConstPoolVal *V) { return 0; }
   inline static ConstPoolFP   *CastToDouble(const ConstPoolVal *V) { return 0; }
+  inline static ConstPoolPointer *CastToPointer(const ConstPoolVal *,
+                                                const PointerType *) {return 0;}
 };
 
 
@@ -156,6 +162,67 @@ struct BoolRules : public TemplateRules<ConstPoolBool, BoolRules> {
   inline static ConstPoolVal *And(const ConstPoolBool *V1, 
                                   const ConstPoolBool *V2) {
     return ConstPoolBool::get(V1->getValue() & V2->getValue());
+  }
+};
+
+
+//===----------------------------------------------------------------------===//
+//                            PointerRules Class
+//===----------------------------------------------------------------------===//
+//
+// PointerRules provides a concrete base class of ConstRules for pointer types
+//
+struct PointerRules : public TemplateRules<ConstPoolPointer, PointerRules> {
+  inline static ConstPoolBool *CastToBool  (const ConstPoolVal *V) {
+    if (V->isNullValue()) return ConstPoolBool::False;
+    return 0;  // Can't const prop other types of pointers
+  }
+  inline static ConstPoolSInt *CastToSByte (const ConstPoolVal *V) {
+    if (V->isNullValue()) return ConstPoolSInt::get(Type::SByteTy, 0);
+    return 0;  // Can't const prop other types of pointers
+  }
+  inline static ConstPoolUInt *CastToUByte (const ConstPoolVal *V) {
+    if (V->isNullValue()) return ConstPoolUInt::get(Type::UByteTy, 0);
+    return 0;  // Can't const prop other types of pointers
+  }
+  inline static ConstPoolSInt *CastToShort (const ConstPoolVal *V) {
+    if (V->isNullValue()) return ConstPoolSInt::get(Type::ShortTy, 0);
+    return 0;  // Can't const prop other types of pointers
+  }
+  inline static ConstPoolUInt *CastToUShort(const ConstPoolVal *V) {
+    if (V->isNullValue()) return ConstPoolUInt::get(Type::UShortTy, 0);
+    return 0;  // Can't const prop other types of pointers
+  }
+  inline static ConstPoolSInt *CastToInt   (const ConstPoolVal *V) {
+    if (V->isNullValue()) return ConstPoolSInt::get(Type::IntTy, 0);
+    return 0;  // Can't const prop other types of pointers
+  }
+  inline static ConstPoolUInt *CastToUInt  (const ConstPoolVal *V) {
+    if (V->isNullValue()) return ConstPoolUInt::get(Type::UIntTy, 0);
+    return 0;  // Can't const prop other types of pointers
+  }
+  inline static ConstPoolSInt *CastToLong  (const ConstPoolVal *V) {
+    if (V->isNullValue()) return ConstPoolSInt::get(Type::LongTy, 0);
+    return 0;  // Can't const prop other types of pointers
+  }
+  inline static ConstPoolUInt *CastToULong (const ConstPoolVal *V) {
+    if (V->isNullValue()) return ConstPoolUInt::get(Type::ULongTy, 0);
+    return 0;  // Can't const prop other types of pointers
+  }
+  inline static ConstPoolFP   *CastToFloat (const ConstPoolVal *V) {
+    if (V->isNullValue()) return ConstPoolFP::get(Type::FloatTy, 0);
+    return 0;  // Can't const prop other types of pointers
+  }
+  inline static ConstPoolFP   *CastToDouble(const ConstPoolVal *V) {
+    if (V->isNullValue()) return ConstPoolFP::get(Type::DoubleTy, 0);
+    return 0;  // Can't const prop other types of pointers
+  }
+
+  inline static ConstPoolPointer *CastToPointer(const ConstPoolPointer *V,
+                                                const PointerType *PTy) {
+    if (V->isNullValue())
+      return ConstPoolPointerNull::get(PTy);
+    return 0;  // Can't const prop other types of pointers
   }
 };
 
@@ -204,6 +271,13 @@ struct DirectRules
     return ConstPoolBool::get(Result);
   } 
 
+  inline static ConstPoolPointer *CastToPointer(const ConstPoolClass *V,
+                                                const PointerType *PTy) {
+    if (V->isNullValue())    // Is it a FP or Integral null value?
+      return ConstPoolPointerNull::get(PTy);
+    return 0;  // Can't const prop other types of pointers
+  }
+
   // Casting operators.  ick
 #define DEF_CAST(TYPE, CLASS, CTYPE) \
   inline static CLASS *CastTo##TYPE  (const ConstPoolClass *V) {    \
@@ -241,7 +315,8 @@ Annotation *ConstRules::find(AnnotationID AID, const Annotable *TyA, void *) {
   const Type *Ty = cast<Type>((const Value*)TyA);
   
   switch (Ty->getPrimitiveID()) {
-  case Type::BoolTyID: return new BoolRules();
+  case Type::BoolTyID:    return new BoolRules();
+  case Type::PointerTyID: return new PointerRules();
   case Type::SByteTyID:
     return new DirectRules<ConstPoolSInt,   signed char , &Type::SByteTy>();
   case Type::UByteTyID:

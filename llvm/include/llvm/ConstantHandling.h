@@ -36,6 +36,7 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
+class PointerType;
 
 namespace opt {
 
@@ -90,6 +91,8 @@ public:
   virtual ConstPoolUInt *castToULong (const ConstPoolVal *V) const = 0;
   virtual ConstPoolFP   *castToFloat (const ConstPoolVal *V) const = 0;
   virtual ConstPoolFP   *castToDouble(const ConstPoolVal *V) const = 0;
+  virtual ConstPoolPointer *castToPointer(const ConstPoolVal *V,
+                                          const PointerType *Ty) const = 0;
 
   inline ConstPoolVal *castTo(const ConstPoolVal *V, const Type *Ty) const {
     switch (Ty->getPrimitiveID()) {
@@ -104,6 +107,7 @@ public:
     case Type::LongTyID:   return castToLong(V);
     case Type::FloatTyID:  return castToFloat(V);
     case Type::DoubleTyID: return castToDouble(V);
+    case Type::PointerTyID:return castToPointer(V, (PointerType*)Ty);
     default: return 0;
     }
   }
