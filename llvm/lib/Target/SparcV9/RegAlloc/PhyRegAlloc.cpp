@@ -542,7 +542,7 @@ void PhyRegAlloc::updateMachineCode()
               }
 
               // move instruction before branch
-              MBB.insert(MII, MBB.remove(DelaySlotMI));
+              MBB.insert(MII, MBB.remove(DelaySlotMI++));
 
               // On cond1 we are done (we already moved the
               // instruction out of the delay slot). On cond2 we need
