@@ -301,7 +301,6 @@ namespace {
 ///
 void AsmPrinter::printSingleConstantValue(const Constant* CV) {
   assert(CV->getType() != Type::VoidTy &&
-         CV->getType() != Type::TypeTy &&
          CV->getType() != Type::LabelTy &&
          "Unexpected type for Constant");
   
