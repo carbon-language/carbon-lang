@@ -28,9 +28,6 @@
 #include <strstream>
 #include "llvm/Assembly/Writer.h"
 
-
-const char* const PRINTF = "printVal";
-
 static inline GlobalVariable *
 GetStringRef(Module *M, const string &str)
 {
@@ -67,84 +64,66 @@ FindValuesToTraceInBB(BasicBlock* bb, vector<Value*>& valuesToTraceInBB)
 }
 
 // The invocation should be:
-//       call "printf"(fmt, value).
+//       call "printVal"(value).
 // 
-static Value *GetPrintMethodForType(Module *Mod, const Type *valueType) {
-  vector<const Type*> ArgTys;
-  ArgTys.reserve(2);
-  ArgTys.push_back(PointerType::get(ArrayType::get(Type::UByteTy)));
-  ArgTys.push_back(valueType);
-  
-  MethodType *printMethodTy = MethodType::get(Type::VoidTy, ArgTys,
-                                              /*isVarArg*/ false);
+static Value *GetPrintMethodForType(Module *Mod, const Type *VTy) {
+  MethodType *MTy = MethodType::get(Type::VoidTy, vector<const Type*>(1, VTy),
+                                    /*isVarArg*/ false);
   
   SymbolTable *ST = Mod->getSymbolTableSure();
-  if (Value *V = ST->lookup(PointerType::get(printMethodTy), PRINTF))
+  if (Value *V = ST->lookup(PointerType::get(MTy), "printVal"))
     return V;
 
   // Create a new method and add it to the module
-  Method *M = new Method(printMethodTy, PRINTF);
+  Method *M = new Method(MTy, "printVal");
   Mod->getMethodList().push_back(M);
   return M;
 }
 
 
-static Instruction*
-CreatePrintInstr(Value* val,
-                 const BasicBlock* bb,
-                 Module* module,
-                 unsigned int indent,
-                 bool isMethodExit)
-{
-  strstream scopeNameString;
-  const Type* valueType = val->getType();
+static void InsertPrintInsts(Value *Val,
+                             BasicBlock::iterator &BBI,
+                             Module *Mod,
+                             unsigned int indent,
+                             bool isMethodExit) {
+  const Type* ValTy = Val->getType();
+  BasicBlock *BB = (*BBI)->getParent();
   
-  assert(valueType->isPrimitiveType() &&
-         valueType->getPrimitiveID() != Type::VoidTyID &&
-         valueType->getPrimitiveID() != Type::TypeTyID &&
-         valueType->getPrimitiveID() != Type::LabelTyID && 
+  assert(ValTy->isPrimitiveType() &&
+         ValTy->getPrimitiveID() != Type::VoidTyID &&
+         ValTy->getPrimitiveID() != Type::TypeTyID &&
+         ValTy->getPrimitiveID() != Type::LabelTyID && 
          "Unsupported type for printing");
   
-  const Value* scopeToUse = (isMethodExit)? (const Value*) bb->getParent()
-                                          : (const Value*) bb;
+  const Value* scopeToUse = 
+    isMethodExit ? (const Value*)BB->getParent() : (const Value*)BB;
+
+  // Create the marker string...
+  strstream scopeNameString;
   WriteAsOperand(scopeNameString, scopeToUse) << " : ";
-  WriteAsOperand(scopeNameString, val) << " = "
-                                       << val->getType()->getDescription()
-                                       << ends;
+  WriteAsOperand(scopeNameString, Val) << " = " << ends;
   string fmtString(indent, ' ');
   
-  fmtString += " At exit of " + string(isMethodExit ? "Method " : "BB ") +
-    scopeNameString.str();
-  
-  switch(valueType->getPrimitiveID()) {
-  case Type::BoolTyID:
-  case Type::UByteTyID: case Type::UShortTyID:
-  case Type::UIntTyID:  case Type::ULongTyID:
-  case Type::SByteTyID: case Type::ShortTyID:
-  case Type::IntTyID:   case Type::LongTyID:
-    fmtString += " %d\0A";
-    break;
-    
-  case Type::FloatTyID:     case Type::DoubleTyID:
-    fmtString += " %g\0A";
-    break;
-    
-  case Type::PointerTyID:
-    fmtString += " %p\0A";
-    break;
-    
-  default:
-    assert(0 && "Should not get here.  Check the IF expression above");
-    return NULL;
-  }
-  
-  GlobalVariable *fmtVal = GetStringRef(module, fmtString);
-  
-  vector<Value*> paramList;
-  paramList.push_back(fmtVal);
-  paramList.push_back(val);
+  fmtString += string(" At exit of") + scopeNameString.str();
 
-  return new CallInst(GetPrintMethodForType(module, valueType), paramList);
+  // Turn the marker string into a global variable...
+  GlobalVariable *fmtVal = GetStringRef(Mod, fmtString);
+  
+  // Insert the first print instruction to print the string flag:
+  Instruction *I = new CallInst(GetPrintMethodForType(Mod, fmtVal->getType()),
+                                vector<Value*>(1, fmtVal));
+  BBI = BB->getInstList().insert(BBI, I)+1;
+
+  // Insert the next print instruction to print the value:
+  I = new CallInst(GetPrintMethodForType(Mod, ValTy),
+                   vector<Value*>(1, Val));
+  BBI = BB->getInstList().insert(BBI, I)+1;
+
+  // Print out a newline
+  fmtVal = GetStringRef(Mod, "\n");
+  I = new CallInst(GetPrintMethodForType(Mod, fmtVal->getType()),
+                   vector<Value*>(1, fmtVal));
+  BBI = BB->getInstList().insert(BBI, I)+1;
 }
 
 
@@ -165,17 +144,13 @@ TraceValuesAtBBExit(const vector<Value*>& valueVec,
   // 
   BasicBlock::InstListType& instList = bb->getInstList();
   TerminatorInst* termInst = bb->getTerminator(); 
-  BasicBlock::InstListType::iterator here = instList.end()-1;
+  BasicBlock::iterator here = instList.end()-1;
   assert((*here)->isTerminator());
   
   // Insert a print instruction for each value.
   // 
   for (unsigned i=0, N=valueVec.size(); i < N; i++)
-    {
-      Instruction* traceInstr =
-        CreatePrintInstr(valueVec[i], bb, module, indent, isMethodExit);
-      here = instList.insert(here, traceInstr);
-    }
+    InsertPrintInsts(valueVec[i], here, module, indent, isMethodExit);
 }
 
 static void
@@ -220,11 +195,14 @@ bool InsertTraceCode::doInsertTraceCode(Method *M, bool traceBasicBlockExits,
                                    valuesToTraceInBB.end());
     }
   }
-  
+
+#if 0
+  // Disable this code until we have a proper exit node.
   if (traceMethodExits) {
     TraceValuesAtBBExit(valuesToTraceInMethod, exitBB, module,
                         /*indent*/ 0, /*isMethodExit*/ true);
     InsertCodeToShowMethodExit(exitBB);
   }
+#endif
   return true;
 }
