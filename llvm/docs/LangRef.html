@@ -764,7 +764,7 @@ match the return type of the function.</p>
 <h5>Semantics:</h5>
 <p>When the '<tt>ret</tt>' instruction is executed, control flow
 returns back to the calling function's context.  If the caller is a "<a
- href="#i_call"><tt>call</tt></a> instruction, execution continues at
+ href="#i_call"><tt>call</tt></a>" instruction, execution continues at
 the instruction after the call.  If the caller was an "<a
  href="#i_invoke"><tt>invoke</tt></a>" instruction, execution continues
 at the beginning "normal" of the destination block.  If the instruction
@@ -2357,6 +2357,52 @@ ensures that accesses to memory mapped I/O registers occur in program order.
 
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_interrupt_handler">'<tt>llvm.interrupt_handler</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  call void (void)* %llvm.interrupt_handler (void)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.interrupt_handler</tt>' intrinsic installs the specified function
+as an interrupt handler for the specified interrupt.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The first argument is the value to write to the memory mapped I/O location.
+The second argument is a pointer indicating the memory address to which the
+data should be written.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+The '<tt>llvm.writeio</tt>' intrinsic writes <i>value</i> to the memory mapped
+I/O address specified by <i>pointer</i>.  The value must be a
+<a href="#t_firstclass">first class</a> type.  However, certain architectures
+may not support I/O on all first class types.  For example, 32 bit processors
+may only support I/O on data types that are 32 bits or less.
+</p>
+
+<p>
+This intrinsic enforces an in-order memory model for llvm.readio and
+llvm.writeio calls on machines that use dynamic scheduling.  Dynamically
+scheduled processors may execute loads and stores out of order, re-ordering at
+run time accesses to memory mapped I/O registers.  Using these intrinsics
+ensures that accesses to memory mapped I/O registers occur in program order.
+</p>
+
+</div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
