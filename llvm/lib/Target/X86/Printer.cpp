@@ -295,7 +295,6 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
   const MachineInstrDescriptor &Desc = get(Opcode);
 
   // Print instruction prefixes if neccesary
-  
   if (Desc.TSFlags & X86II::OpSize) O << "66 "; // Operand size...
   if (Desc.TSFlags & X86II::TB) O << "0F ";     // Two-byte opcode prefix
 
@@ -304,6 +303,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     O << "\t\t\t";
     O << "-"; MI->print(O, TM);
     break;
+
   case X86II::RawFrm:
     toHex(O, getBaseOpcodeFor(Opcode));
     O << "\n\t\t\t\t";
@@ -315,7 +315,6 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     }
     O << "\n";
     return;
-
 
   case X86II::AddRegFrm: {
     // There are currently two forms of acceptable AddRegFrm instructions.
