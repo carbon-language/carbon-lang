@@ -31,7 +31,8 @@ static inline const Type *checkType(const Type *Ty) {
 }
 
 Value::Value(const Type *ty, unsigned scid, const std::string &name)
-  : SubclassID(scid), Ty(checkType(ty)), UseList(0), Name(name) {
+  : SubclassID(scid), SubclassData(0), Ty(checkType(ty)),
+    UseList(0), Name(name) {
   if (!isa<Constant>(this) && !isa<BasicBlock>(this))
     assert((Ty->isFirstClassType() || Ty == Type::VoidTy || 
            isa<OpaqueType>(ty)) &&
