@@ -248,7 +248,7 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
 
 const TargetRegisterClass*
 PowerPCRegisterInfo::getRegClassForType(const Type* Ty) const {
-	switch (Ty->getPrimitiveID()) {
+	switch (Ty->getTypeID()) {
 		case Type::LongTyID:
 		case Type::ULongTyID: assert(0 && "Long values can't fit in registers!");
 		default:              assert(0 && "Invalid type to getClass!");
