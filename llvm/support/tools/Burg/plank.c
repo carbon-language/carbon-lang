@@ -2,6 +2,7 @@ char rcsid_plank[] = "$Id$";
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "b.h"
 #include "fe.h"
 
@@ -35,7 +36,7 @@ static void purgePlanks ARGS((List));
 static void inToEx ARGS((void));
 static void makePlankRuleMacros ARGS((void));
 static void makePlankRule ARGS((void));
-static void exceptionSwitch ARGS((List, char *, char *, char *, int, char *));
+static void exceptionSwitch ARGS((List, const char *, const char *, const char *, int, const char *));
 static void doPlankLabel ARGS((Operator));
 static void doPlankLabelSafely ARGS((Operator));
 static void doPlankLabelMacrosSafely ARGS((Operator));
@@ -602,7 +603,7 @@ makePlankRule()
 }
 
 static void
-exceptionSwitch(es, sw, pre, post, offset, def) List es; char *sw; char *pre; char *post; int offset; char *def;
+exceptionSwitch(es, sw, pre, post, offset, def) List es; const char *sw; const char *pre; const char *post; int offset; const char *def;
 {
 	if (es) {
 		fprintf(outfile, "\t\tswitch (%s) {\n", sw);

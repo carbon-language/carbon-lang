@@ -306,6 +306,6 @@ extern int debugTables;
 
 extern void doStart ARGS((char *));
 extern void exit ARGS((int));
-extern int fatal ARGS((char *, int));
-extern void yyerror ARGS((char *));
-extern void yyerror1 ARGS((char *));
+extern int fatal ARGS((const char *, int));
+extern void yyerror ARGS((const char *));
+extern void yyerror1 ARGS((const char *));

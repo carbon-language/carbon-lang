@@ -2,6 +2,7 @@ char rcsid_nonterminal[] = "$Id$";
 
 #include "b.h"
 #include <stdio.h>
+#include <string.h>
 
 NonTerminal	start;
 NonTerminalNum	max_nonterminal = 1;
@@ -29,7 +30,6 @@ int
 nonTerminalName(buf, i) char *buf; int i;
 {
 	List l;
-	extern char *strcpy ARGS((char *, char *));
 
 	for (l = nonterminals; l; l = l->next) {
 		NonTerminal nt = (NonTerminal) l->x;

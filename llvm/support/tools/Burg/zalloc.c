@@ -9,7 +9,7 @@ extern void free ARGS((void *));
 extern void *malloc ARGS((unsigned));
 
 int
-fatal(name, line) char *name; int line;
+fatal(const char *name, int line)
 {
 	fprintf(stderr, "assertion failed: file %s, line %d\n", name, line);
 	exit(1);

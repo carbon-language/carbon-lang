@@ -5,7 +5,7 @@ char rcsid_lex[] = "$Id$";
 #include <string.h>
 #include "b.h"
 #include "fe.h"
-#include "y.tab.h"
+#include "gram.tab.h"
 
 static char buf[BUFSIZ];
 
@@ -245,14 +245,13 @@ yylex()
 	return(0);
 }
 
-void
-yyerror1(str) char *str;
+void yyerror1(const char *str)
 {
 	fprintf(stderr, "line %d: %s", yyline, str);
 }
 
 void
-yyerror(str) char *str;
+yyerror(const char *str)
 {
 	yyerror1(str);
 	fprintf(stderr, "\n");

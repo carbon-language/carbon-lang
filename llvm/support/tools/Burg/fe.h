@@ -121,7 +121,7 @@ extern int	max_ruleAST;
 extern List	ruleASTs;
 
 extern FILE	*outfile;
-extern char	*prefix;
+extern const char *prefix;
 extern int 	trimflag;
 extern int 	speedflag;
 extern int 	grammarflag;

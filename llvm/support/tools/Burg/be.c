@@ -8,7 +8,7 @@ char rcsid_be[] = "$Id$";
 #define ERROR_VAL 0
 
 FILE *outfile;
-char *prefix = "burm";
+const char *prefix = "burm";
 
 static void doKids ARGS((RuleAST));
 static void doLabel ARGS((Operator));
@@ -24,7 +24,7 @@ static void printPatternAST_int ARGS((PatternAST));
 static void setVectors ARGS((PatternAST));
 static void trailing_zeroes ARGS((int));
 static int seminal ARGS((int from, int to));
-static void printRule ARGS((RuleAST, char *));
+static void printRule ARGS((RuleAST, const char *));
 
 static void
 doLabel(op) Operator op;
@@ -329,10 +329,10 @@ makeLHSmap()
 			fprintf(outfile, "\t0,\n");
 		}
 	}
-	fprintf(outfile, "};\n\n", prefix);
+	fprintf(outfile, "};\n\n");
 }
 
-static int seminal(from, to)
+static int seminal(int from, int to)
 {
 	return allpairs[from][to].rule ? allpairs[from][to].rule->erulenum : 0;
 
@@ -453,7 +453,7 @@ makeDeltaCostArray()
 	for (s = 0; s < states-1; s++) {
 		fprintf(outfile, "{ /* state #%d: ", s+1);
 		printRepresentative(outfile, sortedStates[s]);
-		fprintf(outfile, " */\n", s+1);
+		fprintf(outfile, " */\n");
 		fprintf(outfile, "\t{0},\n");
 		for (nt = 1; nt < last_user_nonterminal; nt++) {
 			makeCostVector(1, sortedStates[s]->closed[nt].delta);
@@ -616,7 +616,7 @@ makeNts()
 }
 
 static void
-printRule(r,d) RuleAST r; char *d;
+printRule(RuleAST r, const char *d)
 {
 	if (r) {
 		fprintf(outfile, "%s: ", r->rule->lhs->name);
