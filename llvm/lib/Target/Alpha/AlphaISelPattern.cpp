@@ -1046,7 +1046,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       SDOperand Chain   = N.getOperand(0);
       SDOperand Address = N.getOperand(1);
 
-      assert(DestType == MVT::i64 && "unknown Load dest type");
+      assert(N.getValue(0).getValueType() == MVT::i64 && "unknown Load dest type");
 
       if (Address.getOpcode() == ISD::GlobalAddress)
         {
