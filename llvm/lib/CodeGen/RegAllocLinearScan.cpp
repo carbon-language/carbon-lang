@@ -34,17 +34,15 @@ namespace {
     Statistic<> numReloaded("ra-linearscan", "Number of registers reloaded");
 
     class RA : public MachineFunctionPass {
-    public:
-        typedef std::vector<const LiveIntervals::Interval*> IntervalPtrs;
-
     private:
         MachineFunction* mf_;
         const TargetMachine* tm_;
         const MRegisterInfo* mri_;
-        MachineBasicBlock* currentMbb_;
+        MachineFunction::iterator currentMbb_;
         MachineBasicBlock::iterator currentInstr_;
         typedef LiveIntervals::Intervals Intervals;
         const Intervals* li_;
+        typedef std::vector<const LiveIntervals::Interval*> IntervalPtrs;
         IntervalPtrs active_, inactive_;
 
         typedef std::vector<unsigned> Regs;
@@ -56,9 +54,6 @@ namespace {
 
         unsigned regUse_[MRegisterInfo::FirstVirtualRegister];
         unsigned regUseBackup_[MRegisterInfo::FirstVirtualRegister];
-
-        typedef LiveIntervals::MachineBasicBlockPtrs MachineBasicBlockPtrs;
-        MachineBasicBlockPtrs mbbs_;
 
         typedef std::map<unsigned, unsigned> Virt2PhysMap;
         Virt2PhysMap v2pMap_;
@@ -204,29 +199,10 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     active_.clear();
     inactive_.clear();
 
-    mbbs_ = getAnalysis<LiveIntervals>().getOrderedMachineBasicBlockPtrs();
     v2pMap_.clear();
     v2ssMap_.clear();
     memset(regUse_, 0, sizeof(regUse_));
     memset(regUseBackup_, 0, sizeof(regUseBackup_));
-
-    DEBUG(
-        unsigned i = 0;
-        for (MachineBasicBlockPtrs::iterator
-                 mbbi = mbbs_.begin(), mbbe = mbbs_.end();
-             mbbi != mbbe; ++mbbi) {
-            MachineBasicBlock* mbb = *mbbi;
-            std::cerr << mbb->getBasicBlock()->getName() << '\n';
-            for (MachineBasicBlock::iterator
-                     ii = mbb->begin(), ie = mbb->end();
-                 ii != ie; ++ii) {
-                MachineInstr* instr = *ii;
-
-                std::cerr << i++ << "\t";
-                instr->print(std::cerr, *tm_);
-            }
-        }
-        );
 
     // FIXME: this will work only for the X86 backend. I need to
     // device an algorthm to select the minimal (considering register
@@ -316,10 +292,8 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     DEBUG(printVirt2PhysMap());
 
     DEBUG(std::cerr << "Rewrite machine code:\n");
-    for (MachineBasicBlockPtrs::iterator
-             mbbi = mbbs_.begin(), mbbe = mbbs_.end(); mbbi != mbbe; ++mbbi) {
+    for (currentMbb_ = mf_->begin(); currentMbb_ != mf_->end(); ++currentMbb_) {
         instrAdded_ = 0;
-        currentMbb_ = *mbbi;
 
         for (currentInstr_ = currentMbb_->begin();
              currentInstr_ != currentMbb_->end(); ++currentInstr_) {
