@@ -19,6 +19,7 @@
 #define LLVM_ANALYSIS_LOOP_INFO_H
 
 #include "llvm/Pass.h"
+#include "Support/GraphTraits.h"
 #include <set>
 
 class DominatorSet;
@@ -185,5 +186,32 @@ private:
 // Make sure that any clients of this file link in LoopInfo.cpp
 static IncludeFile
 LOOP_INFO_INCLUDE_FILE((void*)&LoopInfo::stub);
+
+// Allow clients to walk the list of nested loops...
+template <> struct GraphTraits<const Loop*> {
+  typedef const Loop NodeType;
+  typedef std::vector<Loop*>::const_iterator ChildIteratorType;
+
+  static NodeType *getEntryNode(const Loop *L) { return L; }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return N->getSubLoops().begin();
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return N->getSubLoops().end();
+  }
+};
+
+template <> struct GraphTraits<Loop*> {
+  typedef Loop NodeType;
+  typedef std::vector<Loop*>::const_iterator ChildIteratorType;
+
+  static NodeType *getEntryNode(Loop *L) { return L; }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return N->getSubLoops().begin();
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return N->getSubLoops().end();
+  }
+};
 
 #endif
