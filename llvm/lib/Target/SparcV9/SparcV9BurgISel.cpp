@@ -2494,8 +2494,8 @@ static void CreateCodeForVariableSizeAlloca(const TargetMachine& target,
                                numElementsVal->getType(), isValid);
     assert(isValid && "Unexpectedly large array dimension in alloca!");
     int64_t total = numElem * tsize;
-    if (int extra= total % target.getFrameInfo()->getStackFrameSizeAlignment())
-      total += target.getFrameInfo()->getStackFrameSizeAlignment() - extra;
+    if (int extra= total % SparcV9FrameInfo::StackFrameSizeAlignment)
+      total += SparcV9FrameInfo::StackFrameSizeAlignment - extra;
     totalSizeVal = ConstantSInt::get(Type::IntTy, total);
   } else {
     // The size is not a constant.  Generate code to compute it and
