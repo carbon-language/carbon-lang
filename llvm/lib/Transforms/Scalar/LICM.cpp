@@ -31,6 +31,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "licm"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
