@@ -28,8 +28,6 @@ namespace {
       AU.addPreserved<DominatorTree>();
       AU.addPreservedID(LoopPreheadersID);   // No preheaders deleted.
     }
-  private:
-    void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum);
   };
 
   RegisterOpt<BreakCriticalEdges> X("break-crit-edges",
@@ -45,9 +43,9 @@ Pass *createBreakCriticalEdgesPass() { return new BreakCriticalEdges(); }
 // Critical edges are edges from a block with multiple successors to a block
 // with multiple predecessors.
 //
-static bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum) {
+bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum) {
   assert(SuccNum < TI->getNumSuccessors() && "Illegal edge specification!");
-  assert (TI->getNumSuccessors() > 1);
+  if (TI->getNumSuccessors() == 1) return false;
 
   const BasicBlock *Dest = TI->getSuccessor(SuccNum);
   pred_const_iterator I = pred_begin(Dest), E = pred_end(Dest);
@@ -62,7 +60,7 @@ static bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum) {
 // will update DominatorSet, ImmediateDominator and DominatorTree information if
 // it is available, thus calling this pass will not invalidate either of them.
 //
-void BreakCriticalEdges::SplitCriticalEdge(TerminatorInst *TI,unsigned SuccNum){
+void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   assert(isCriticalEdge(TI, SuccNum) &&
          "Cannot break a critical edge, if it isn't a critical edge");
   BasicBlock *TIBB = TI->getParent();
@@ -90,12 +88,15 @@ void BreakCriticalEdges::SplitCriticalEdge(TerminatorInst *TI,unsigned SuccNum){
     PN->replaceUsesOfWith(TIBB, NewBB);
   }
 
+  // If we don't have a pass object, we can't update anything...
+  if (P == 0) return;
+
   // Now update analysis information.  These are the analyses that we are
   // currently capable of updating...
   //
 
   // Should we update DominatorSet information?
-  if (DominatorSet *DS = getAnalysisToUpdate<DominatorSet>()) {
+  if (DominatorSet *DS = P->getAnalysisToUpdate<DominatorSet>()) {
     // The blocks that dominate the new one are the blocks that dominate TIBB
     // plus the new block itself.
     DominatorSet::DomSetType DomSet = DS->getDominators(TIBB);
@@ -104,14 +105,14 @@ void BreakCriticalEdges::SplitCriticalEdge(TerminatorInst *TI,unsigned SuccNum){
   }
 
   // Should we update ImmdediateDominator information?
-  if (ImmediateDominators *ID = getAnalysisToUpdate<ImmediateDominators>()) {
+  if (ImmediateDominators *ID = P->getAnalysisToUpdate<ImmediateDominators>()) {
     // TIBB is the new immediate dominator for NewBB.  NewBB doesn't dominate
     // anything.
     ID->addNewBlock(NewBB, TIBB);
   }
   
   // Should we update DominatorTree information?
-  if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>()) {
+  if (DominatorTree *DT = P->getAnalysisToUpdate<DominatorTree>()) {
     DominatorTree::Node *TINode = DT->getNode(TIBB);
     
     // The new block is not the immediate dominator for any other nodes, but
@@ -131,7 +132,7 @@ bool BreakCriticalEdges::runOnFunction(Function &F) {
     if (TI->getNumSuccessors() > 1)
       for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
         if (isCriticalEdge(TI, i)) {
-          SplitCriticalEdge(TI, i);
+          SplitCriticalEdge(TI, i, this);
           ++NumBroken;
           Changed = true;
         }
