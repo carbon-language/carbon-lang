@@ -34,18 +34,16 @@ endif
 .PRECIOUS: Output/%.llvm.bc
 .PRECIOUS: Output/%.llvm
 
-TOOLS    = $(LLVMTOOLCURRENT)
-
 # LLVM Tool Definitions (LLVMGCC, LLVMGXX, LLVMAS are provided by Makefile.rules)
-LLI      = $(TOOLS)/lli
-LLC      = $(TOOLS)/llc
-LGCCAS   = $(TOOLS)/gccas
+LLI      = $(LLVMTOOLCURRENT)/lli
+LLC      = $(LLVMTOOLCURRENT)/llc
+LGCCAS   = $(LLVMTOOLCURRENT)/gccas
 LGCCLD   = $(LGCCLDPROG) -L$(LLVMGCCDIR)/lib/gcc/$(LLVMGCCARCH) -L$(LLVMGCCDIR)/lib
-LDIS     = $(TOOLS)/llvm-dis 
-LOPT     = $(TOOLS)/opt
-LLINK    = $(TOOLS)/llvm-link
-LANALYZE = $(TOOLS)/analyze
-LBUGPOINT= $(TOOLS)/bugpoint
+LDIS     = $(LLVMTOOLCURRENT)/llvm-dis 
+LOPT     = $(LLVMTOOLCURRENT)/opt
+LLINK    = $(LLVMTOOLCURRENT)/llvm-link
+LANALYZE = $(LLVMTOOLCURRENT)/analyze
+LBUGPOINT= $(LLVMTOOLCURRENT)/bugpoint
 
 LCCFLAGS  += -O2 -Wall
 LCXXFLAGS += -O2 -Wall
