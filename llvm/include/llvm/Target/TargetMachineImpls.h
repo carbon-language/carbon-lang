@@ -16,6 +16,10 @@
 #define LLVM_TARGET_TARGETMACHINEIMPLS_H
 
 namespace llvm {
+  /// Command line options shared between TargetMachine implementations - 
+  /// these should go in their own header eventually.
+  ///
+  extern bool PrintMachineCode;
 
   class TargetMachine;
   class Module;

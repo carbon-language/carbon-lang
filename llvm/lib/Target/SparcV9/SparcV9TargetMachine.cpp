@@ -162,6 +162,10 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
     PM.add(createInstructionSchedulingWithSSAPass(*this));
 
   PM.add(getRegisterAllocator(*this));
+
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
+
   PM.add(createPrologEpilogInsertionPass());
 
   if (!DisablePeephole)

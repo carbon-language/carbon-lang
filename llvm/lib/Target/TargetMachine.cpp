@@ -14,7 +14,21 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Type.h"
 #include "llvm/IntrinsicLowering.h"
+#include "Support/CommandLine.h"
 using namespace llvm;
+
+//---------------------------------------------------------------------------
+// Command-line options that tend to be useful on more than one back-end.
+//
+
+namespace llvm { 
+  bool PrintMachineCode;
+};
+namespace {
+  cl::opt<bool, true> PrintCode("print-machineinstrs",
+    cl::desc("Print generated machine code"),
+    cl::location(PrintMachineCode), cl::init(false));
+};
 
 //---------------------------------------------------------------------------
 // TargetMachine Class

@@ -25,8 +25,6 @@
 using namespace llvm;
 
 namespace {
-  cl::opt<bool> PrintCode("print-machineinstrs",
-			  cl::desc("Print generated machine code"));
   cl::opt<bool> NoPatternISel("disable-pattern-isel", cl::init(true),
                         cl::desc("Use the 'simple' X86 instruction selector"));
   cl::opt<bool> NoSSAPeephole("disable-ssa-peephole", cl::init(true),
@@ -79,18 +77,18 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
     PM.add(createX86SSAPeepholeOptimizerPass());
 
   // Print the instruction selected machine code...
-  if (PrintCode)
+  if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   // Perform register allocation to convert to a concrete x86 representation
   PM.add(createRegisterAllocator());
 
-  if (PrintCode)
+  if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   PM.add(createX86FloatingPointStackifierPass());
 
-  if (PrintCode)
+  if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
@@ -98,7 +96,7 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 
   PM.add(createX86PeepholeOptimizerPass());
 
-  if (PrintCode)  // Print the register-allocated code
+  if (PrintMachineCode)  // Print the register-allocated code
     PM.add(createX86CodePrinterPass(std::cerr, *this));
 
   if (!DisableOutput)
@@ -138,18 +136,18 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // FIXME: Add SSA based peephole optimizer here.
 
   // Print the instruction selected machine code...
-  if (PrintCode)
+  if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   // Perform register allocation to convert to a concrete x86 representation
   PM.add(createRegisterAllocator());
 
-  if (PrintCode)
+  if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   PM.add(createX86FloatingPointStackifierPass());
 
-  if (PrintCode)
+  if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
@@ -157,7 +155,7 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   PM.add(createX86PeepholeOptimizerPass());
 
-  if (PrintCode)  // Print the register-allocated code
+  if (PrintMachineCode)  // Print the register-allocated code
     PM.add(createX86CodePrinterPass(std::cerr, TM));
 }
 
