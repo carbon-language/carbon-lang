@@ -92,6 +92,7 @@ namespace {
       }
 
       /// getValue - Return the LLVM value corresponding to this node.
+      ///
       Value *getValue() const { return Val; }
 
       typedef std::vector<Node*>::const_iterator iterator;
@@ -302,7 +303,9 @@ namespace {
     Node *getNodeForConstantPointer(Constant *C);
     Node *getNodeForConstantPointerTarget(Constant *C);
     void AddGlobalInitializerConstraints(Node *N, Constant *C);
+
     void AddConstraintsForNonInternalLinkage(Function *F);
+    bool AddConstraintsForExternalFunction(Function *F);
     void AddConstraintsForCall(CallSite CS, Function *F);
 
 
@@ -353,6 +356,7 @@ AliasAnalysis::AliasResult Andersens::alias(const Value *V1, unsigned V1Size,
 
   return AliasAnalysis::alias(V1, V1Size, V2, V2Size);
 }
+
 
 /// getMustAlias - We can provide must alias information if we know that a
 /// pointer can only point to a specific function or the null pointer.
@@ -551,6 +555,9 @@ void Andersens::AddGlobalInitializerConstraints(Node *N, Constant *C) {
   }
 }
 
+/// AddConstraintsForNonInternalLinkage - If this function does not have
+/// internal linkage, realize that we can't trust anything passed into or
+/// returned by this function.
 void Andersens::AddConstraintsForNonInternalLinkage(Function *F) {
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     if (isa<PointerType>(I->getType()))
@@ -559,6 +566,35 @@ void Andersens::AddConstraintsForNonInternalLinkage(Function *F) {
       Constraints.push_back(Constraint(Constraint::Copy, getNode(I),
                                        &GraphNodes[UniversalSet]));
 }
+
+/// AddConstraintsForExternalFunction - If this is a call to a "known" function,
+/// add the constraints an return false.  If this is a call to an unknown
+/// function, return true.
+bool Andersens::AddConstraintsForExternalFunction(Function *F) {
+  assert(F->isExternal() && "Not an external function!");
+
+  // These functions don't induce any points-to constraints.
+  if (F->getName() == "printf" || F->getName() == "fprintf" ||
+      F->getName() == "open" || F->getName() == "fopen" ||
+      F->getName() == "atoi" ||
+      F->getName() == "llvm.memset" || F->getName() == "memcmp" ||
+      F->getName() == "read" || F->getName() == "write")
+    return false;
+
+  // These functions do induce points-to edges.
+  if (F->getName() == "llvm.memcpy" || F->getName() == "llvm.memmove") {
+    Function::arg_iterator Dst = F->arg_begin(), Src = Dst;
+    // Note: this is a poor approximation, this says Dest = Src, instead of
+    // *Dest = *Src.
+    ++Src;
+    Constraints.push_back(Constraint(Constraint::Copy, getNode(Dst),
+                                     getNode(Src)));
+    return false;
+  }
+
+  return true;
+}
+
 
 
 /// CollectConstraints - This stage scans the program, adding a constraint to
@@ -615,7 +651,9 @@ void Andersens::CollectConstraints(Module &M) {
       // allocation in the body of the function and a node to represent all
       // pointer values defined by instructions and used as operands.
       visit(F);
-    } else {
+    } else if (AddConstraintsForExternalFunction(F)) {
+      // If we don't "know" about this function, assume the worst.
+
       // External functions that return pointers return the universal set.
       if (isa<PointerType>(F->getFunctionType()->getReturnType()))
         Constraints.push_back(Constraint(Constraint::Copy,
