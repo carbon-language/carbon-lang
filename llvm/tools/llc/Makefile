@@ -13,6 +13,7 @@ USEDLIBS = \
 	LLVMSparcV9ModuloSched \
 	LLVMCBackend \
 	LLVMPowerPC \
+	LLVMSparcV8 \
 	LLVMSparcV9 \
 	LLVMX86 \
 	LLVMSkeleton \
