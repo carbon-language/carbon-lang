@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BBLiveVar.h"
-#include "llvm/CodeGen/FunctionLiveVarInfo.h"
+#include "FunctionLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/CFG.h"

@@ -18,7 +18,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SchedPriorities.h"
-#include "llvm/CodeGen/FunctionLiveVarInfo.h"
+#include "../../Target/Sparc/LiveVar/FunctionLiveVarInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
