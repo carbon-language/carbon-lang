@@ -36,8 +36,8 @@ static string getCaption(const DSNode *N, const DSGraph *G) {
     OS << "\n";
   }
 
-  if (N->NodeType & DSNode::AllocaNode ) OS << "A";
-  if (N->NodeType & DSNode::NewNode    ) OS << "N";
+  if (N->NodeType & DSNode::AllocaNode ) OS << "S";
+  if (N->NodeType & DSNode::NewNode    ) OS << "H";
   if (N->NodeType & DSNode::GlobalNode ) OS << "G";
   if (N->NodeType & DSNode::UnknownNode) OS << "U";
   if (N->NodeType & DSNode::Incomplete ) OS << "I";
