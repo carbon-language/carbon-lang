@@ -1445,22 +1445,19 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   // Let's check for chain rules outside the switch so that we don't have
   // to duplicate the list of chain rule production numbers here again
   // 
-  if (ThisIsAChainRule(ruleForNode))
-    {
-      // Chain rules have a single nonterminal on the RHS.
-      // Get the rule that matches the RHS non-terminal and use that instead.
-      // 
-      assert(nts[0] && ! nts[1]
-             && "A chain rule should have only one RHS non-terminal!");
-      nextRule = burm_rule(subtreeRoot->state, nts[0]);
-      nts = burm_nts[nextRule];
-      GetInstructionsByRule(subtreeRoot, nextRule, nts, target, mvec);
-    }
-  else
-    {
-      switch(ruleForNode) {
-      case 1:	// stmt:   Ret
-      case 2:	// stmt:   RetValue(reg)
+  if (ThisIsAChainRule(ruleForNode)) {
+    // Chain rules have a single nonterminal on the RHS.
+    // Get the rule that matches the RHS non-terminal and use that instead.
+    // 
+    assert(nts[0] && ! nts[1]
+           && "A chain rule should have only one RHS non-terminal!");
+    nextRule = burm_rule(subtreeRoot->state, nts[0]);
+    nts = burm_nts[nextRule];
+    GetInstructionsByRule(subtreeRoot, nextRule, nts, target, mvec);
+  } else {
+    switch(ruleForNode) {
+    case 1:	// stmt:   Ret
+    case 2:	// stmt:   RetValue(reg)
       {         // NOTE: Prepass of register allocation is responsible
                 //	 for moving return value to appropriate register.
                 // Mark the return-address register as a hidden virtual reg.
@@ -1486,24 +1483,24 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }  
         
-      case 3:	// stmt:   Store(reg,reg)
-      case 4:	// stmt:   Store(reg,ptrreg)
-        SetOperandsForMemInstr(ChooseStoreInstruction(
+    case 3:	// stmt:   Store(reg,reg)
+    case 4:	// stmt:   Store(reg,ptrreg)
+      SetOperandsForMemInstr(ChooseStoreInstruction(
                         subtreeRoot->leftChild()->getValue()->getType()),
                                mvec, subtreeRoot, target);
-        break;
+      break;
 
-      case 5:	// stmt:   BrUncond
-        {
-          BranchInst *BI = cast<BranchInst>(subtreeRoot->getInstruction());
-          mvec.push_back(BuildMI(V9::BA, 1).addPCDisp(BI->getSuccessor(0)));
+    case 5:	// stmt:   BrUncond
+      {
+        BranchInst *BI = cast<BranchInst>(subtreeRoot->getInstruction());
+        mvec.push_back(BuildMI(V9::BA, 1).addPCDisp(BI->getSuccessor(0)));
         
-          // delay slot
-          mvec.push_back(BuildMI(V9::NOP, 0));
-          break;
-        }
-
-      case 206:	// stmt:   BrCond(setCCconst)
+        // delay slot
+        mvec.push_back(BuildMI(V9::NOP, 0));
+        break;
+      }
+      
+    case 206:	// stmt:   BrCond(setCCconst)
       { // setCCconst => boolean was computed with `%b = setCC type reg1 const'
         // If the constant is ZERO, we can use the branch-on-integer-register
         // instructions and avoid the SUBcc instruction entirely.
@@ -1519,37 +1516,37 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
              || isa<PointerType>(constVal->getType()))
             && GetConstantValueAsSignedInt(constVal, isValidConst) == 0
             && isValidConst)
-          {
-            // That constant is a zero after all...
-            // Use the left child of setCC as the first argument!
-            // Mark the setCC node so that no code is generated for it.
-            InstructionNode* setCCNode = (InstructionNode*)
-                                         subtreeRoot->leftChild();
-            assert(setCCNode->getOpLabel() == SetCCOp);
-            setCCNode->markFoldedIntoParent();
+        {
+          // That constant is a zero after all...
+          // Use the left child of setCC as the first argument!
+          // Mark the setCC node so that no code is generated for it.
+          InstructionNode* setCCNode = (InstructionNode*)
+                                       subtreeRoot->leftChild();
+          assert(setCCNode->getOpLabel() == SetCCOp);
+          setCCNode->markFoldedIntoParent();
             
-            BranchInst* brInst=cast<BranchInst>(subtreeRoot->getInstruction());
+          BranchInst* brInst=cast<BranchInst>(subtreeRoot->getInstruction());
             
-            M = BuildMI(ChooseBprInstruction(subtreeRoot), 2)
-                                .addReg(setCCNode->leftChild()->getValue())
-                                .addPCDisp(brInst->getSuccessor(0));
-            mvec.push_back(M);
+          M = BuildMI(ChooseBprInstruction(subtreeRoot), 2)
+            .addReg(setCCNode->leftChild()->getValue())
+            .addPCDisp(brInst->getSuccessor(0));
+          mvec.push_back(M);
             
-            // delay slot
-            mvec.push_back(BuildMI(V9::NOP, 0));
+          // delay slot
+          mvec.push_back(BuildMI(V9::NOP, 0));
 
-            // false branch
-            mvec.push_back(BuildMI(V9::BA, 1)
-                           .addPCDisp(brInst->getSuccessor(1)));
+          // false branch
+          mvec.push_back(BuildMI(V9::BA, 1)
+                         .addPCDisp(brInst->getSuccessor(1)));
             
-            // delay slot
-            mvec.push_back(BuildMI(V9::NOP, 0));
-            break;
-          }
+          // delay slot
+          mvec.push_back(BuildMI(V9::NOP, 0));
+          break;
+        }
         // ELSE FALL THROUGH
       }
 
-      case 6:	// stmt:   BrCond(setCC)
+    case 6:	// stmt:   BrCond(setCC)
       { // bool => boolean was computed with SetCC.
         // The branch to use depends on whether it is FP, signed, or unsigned.
         // If it is an integer CC, we also need to find the unique
@@ -1562,7 +1559,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                      brInst->getParent()->getParent(),
                                      isFPBranch? Type::FloatTy : Type::IntTy);
         M = BuildMI(Opcode, 2).addCCReg(ccValue)
-                              .addPCDisp(brInst->getSuccessor(0));
+          .addPCDisp(brInst->getSuccessor(0));
         mvec.push_back(M);
 
         // delay slot
@@ -1575,8 +1572,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec.push_back(BuildMI(V9::NOP, 0));
         break;
       }
-        
-      case 208:	// stmt:   BrCond(boolconst)
+      
+    case 208:	// stmt:   BrCond(boolconst)
       {
         // boolconst => boolean is a constant; use BA to first or second label
         Constant* constVal = 
@@ -1592,7 +1589,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
         
-      case   8:	// stmt:   BrCond(boolreg)
+    case   8:	// stmt:   BrCond(boolreg)
       { // boolreg   => boolean is stored in an existing register.
         // Just use the branch-on-integer-register instruction!
         // 
@@ -1612,26 +1609,26 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }  
       
-      case 9:	// stmt:   Switch(reg)
-        assert(0 && "*** SWITCH instruction is not implemented yet.");
-        break;
+    case 9:	// stmt:   Switch(reg)
+      assert(0 && "*** SWITCH instruction is not implemented yet.");
+      break;
 
-      case 10:	// reg:   VRegList(reg, reg)
-        assert(0 && "VRegList should never be the topmost non-chain rule");
-        break;
+    case 10:	// reg:   VRegList(reg, reg)
+      assert(0 && "VRegList should never be the topmost non-chain rule");
+      break;
 
-      case 21:	// bool:  Not(bool,reg): Both these are implemented as:
-      case 421:	// reg:   BNot(reg,reg):	reg = reg XOR-NOT 0
+    case 21:	// bool:  Not(bool,reg): Both these are implemented as:
+    case 421:	// reg:   BNot(reg,reg):	reg = reg XOR-NOT 0
       { // First find the unary operand. It may be left or right, usually right.
         Value* notArg = BinaryOperator::getNotArgument(
                            cast<BinaryOperator>(subtreeRoot->getInstruction()));
         unsigned ZeroReg = target.getRegInfo().getZeroRegNum();
         mvec.push_back(BuildMI(V9::XNORr, 3).addReg(notArg).addMReg(ZeroReg)
-                                       .addRegDef(subtreeRoot->getValue()));
+                       .addRegDef(subtreeRoot->getValue()));
         break;
       }
 
-      case 22:	// reg:   ToBoolTy(reg):
+    case 22:	// reg:   ToBoolTy(reg):
       {
         const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
         assert(opType->isIntegral() || isa<PointerType>(opType));
@@ -1639,12 +1636,12 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
       
-      case 23:	// reg:   ToUByteTy(reg)
-      case 24:	// reg:   ToSByteTy(reg)
-      case 25:	// reg:   ToUShortTy(reg)
-      case 26:	// reg:   ToShortTy(reg)
-      case 27:	// reg:   ToUIntTy(reg)
-      case 28:	// reg:   ToIntTy(reg)
+    case 23:	// reg:   ToUByteTy(reg)
+    case 24:	// reg:   ToSByteTy(reg)
+    case 25:	// reg:   ToUShortTy(reg)
+    case 26:	// reg:   ToShortTy(reg)
+    case 27:	// reg:   ToUIntTy(reg)
+    case 28:	// reg:   ToIntTy(reg)
       {
         //======================================================================
         // Rules for integer conversions:
@@ -1711,8 +1708,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
 
-      case 29:	// reg:   ToULongTy(reg)
-      case 30:	// reg:   ToLongTy(reg)
+    case 29:	// reg:   ToULongTy(reg)
+    case 30:	// reg:   ToLongTy(reg)
       {
         Value* opVal = subtreeRoot->leftChild()->getValue();
         const Type* opType = opVal->getType();
@@ -1727,106 +1724,106 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
       
-      case  31:	// reg:   ToFloatTy(reg):
-      case  32:	// reg:   ToDoubleTy(reg):
-      case 232:	// reg:   ToDoubleTy(Constant):
+    case  31:	// reg:   ToFloatTy(reg):
+    case  32:	// reg:   ToDoubleTy(reg):
+    case 232:	// reg:   ToDoubleTy(Constant):
       
-        // If this instruction has a parent (a user) in the tree 
-        // and the user is translated as an FsMULd instruction,
-        // then the cast is unnecessary.  So check that first.
-        // In the future, we'll want to do the same for the FdMULq instruction,
-        // so do the check here instead of only for ToFloatTy(reg).
-        // 
-        if (subtreeRoot->parent() != NULL) {
-          const MachineCodeForInstruction& mcfi =
-            MachineCodeForInstruction::get(
+      // If this instruction has a parent (a user) in the tree 
+      // and the user is translated as an FsMULd instruction,
+      // then the cast is unnecessary.  So check that first.
+      // In the future, we'll want to do the same for the FdMULq instruction,
+      // so do the check here instead of only for ToFloatTy(reg).
+      // 
+      if (subtreeRoot->parent() != NULL) {
+        const MachineCodeForInstruction& mcfi =
+          MachineCodeForInstruction::get(
                 cast<InstructionNode>(subtreeRoot->parent())->getInstruction());
-          if (mcfi.size() == 0 || mcfi.front()->getOpCode() == V9::FSMULD)
-            forwardOperandNum = 0;    // forward first operand to user
-        }
+        if (mcfi.size() == 0 || mcfi.front()->getOpCode() == V9::FSMULD)
+          forwardOperandNum = 0;    // forward first operand to user
+      }
 
-        if (forwardOperandNum != 0) {    // we do need the cast
-          Value* leftVal = subtreeRoot->leftChild()->getValue();
-          const Type* opType = leftVal->getType();
-          MachineOpCode opCode=ChooseConvertToFloatInstr(
-                                       subtreeRoot->getOpLabel(), opType);
-          if (opCode == V9::INVALID_OPCODE) {  // no conversion needed
-            forwardOperandNum = 0;      // forward first operand to user
-          } else {
-            // If the source operand is a non-FP type it must be
-            // first copied from int to float register via memory!
-            Instruction *dest = subtreeRoot->getInstruction();
-            Value* srcForCast;
-            int n = 0;
-            if (! opType->isFloatingPoint()) {
-              // Create a temporary to represent the FP register
-              // into which the integer will be copied via memory.
-              // The type of this temporary will determine the FP
-              // register used: single-prec for a 32-bit int or smaller,
-              // double-prec for a 64-bit int.
-              // 
-              uint64_t srcSize =
-                target.getTargetData().getTypeSize(leftVal->getType());
-              Type* tmpTypeToUse =
-                (srcSize <= 4)? Type::FloatTy : Type::DoubleTy;
-              srcForCast = new TmpInstruction(tmpTypeToUse, dest);
-              MachineCodeForInstruction &destMCFI = 
-                MachineCodeForInstruction::get(dest);
-              destMCFI.addTemp(srcForCast);
+      if (forwardOperandNum != 0) {    // we do need the cast
+        Value* leftVal = subtreeRoot->leftChild()->getValue();
+        const Type* opType = leftVal->getType();
+        MachineOpCode opCode=ChooseConvertToFloatInstr(
+                                                       subtreeRoot->getOpLabel(), opType);
+        if (opCode == V9::INVALID_OPCODE) {  // no conversion needed
+          forwardOperandNum = 0;      // forward first operand to user
+        } else {
+          // If the source operand is a non-FP type it must be
+          // first copied from int to float register via memory!
+          Instruction *dest = subtreeRoot->getInstruction();
+          Value* srcForCast;
+          int n = 0;
+          if (! opType->isFloatingPoint()) {
+            // Create a temporary to represent the FP register
+            // into which the integer will be copied via memory.
+            // The type of this temporary will determine the FP
+            // register used: single-prec for a 32-bit int or smaller,
+            // double-prec for a 64-bit int.
+            // 
+            uint64_t srcSize =
+              target.getTargetData().getTypeSize(leftVal->getType());
+            Type* tmpTypeToUse =
+              (srcSize <= 4)? Type::FloatTy : Type::DoubleTy;
+            srcForCast = new TmpInstruction(tmpTypeToUse, dest);
+            MachineCodeForInstruction &destMCFI = 
+              MachineCodeForInstruction::get(dest);
+            destMCFI.addTemp(srcForCast);
 
-              target.getInstrInfo().CreateCodeToCopyIntToFloat(target,
+            target.getInstrInfo().CreateCodeToCopyIntToFloat(target,
                          dest->getParent()->getParent(),
                          leftVal, cast<Instruction>(srcForCast),
                          mvec, destMCFI);
-            } else
-              srcForCast = leftVal;
-
-            M = BuildMI(opCode, 2).addReg(srcForCast).addRegDef(dest);
-            mvec.push_back(M);
-          }
-        }
-        break;
-
-      case 19:	// reg:   ToArrayTy(reg):
-      case 20:	// reg:   ToPointerTy(reg):
-        forwardOperandNum = 0;          // forward first operand to user
-        break;
-
-      case 233:	// reg:   Add(reg, Constant)
-        maskUnsignedResult = true;
-        M = CreateAddConstInstruction(subtreeRoot);
-        if (M != NULL) {
+          } else
+            srcForCast = leftVal;
+          
+          M = BuildMI(opCode, 2).addReg(srcForCast).addRegDef(dest);
           mvec.push_back(M);
-          break;
         }
-        // ELSE FALL THROUGH
-        
-      case 33:	// reg:   Add(reg, reg)
-        maskUnsignedResult = true;
-        Add3OperandInstr(ChooseAddInstruction(subtreeRoot), subtreeRoot, mvec);
+      }
+      break;
+      
+    case 19:	// reg:   ToArrayTy(reg):
+    case 20:	// reg:   ToPointerTy(reg):
+      forwardOperandNum = 0;          // forward first operand to user
+      break;
+      
+    case 233:	// reg:   Add(reg, Constant)
+      maskUnsignedResult = true;
+      M = CreateAddConstInstruction(subtreeRoot);
+      if (M != NULL) {
+        mvec.push_back(M);
         break;
-
-      case 234:	// reg:   Sub(reg, Constant)
-        maskUnsignedResult = true;
-        M = CreateSubConstInstruction(subtreeRoot);
-        if (M != NULL) {
-          mvec.push_back(M);
-          break;
-        }
-        // ELSE FALL THROUGH
+      }
+      // ELSE FALL THROUGH
         
-      case 34:	// reg:   Sub(reg, reg)
-        maskUnsignedResult = true;
-        Add3OperandInstr(ChooseSubInstructionByType(
+    case 33:	// reg:   Add(reg, reg)
+      maskUnsignedResult = true;
+      Add3OperandInstr(ChooseAddInstruction(subtreeRoot), subtreeRoot, mvec);
+      break;
+      
+    case 234:	// reg:   Sub(reg, Constant)
+      maskUnsignedResult = true;
+      M = CreateSubConstInstruction(subtreeRoot);
+      if (M != NULL) {
+        mvec.push_back(M);
+        break;
+      }
+      // ELSE FALL THROUGH
+        
+    case 34:	// reg:   Sub(reg, reg)
+      maskUnsignedResult = true;
+      Add3OperandInstr(ChooseSubInstructionByType(
                                    subtreeRoot->getInstruction()->getType()),
-                         subtreeRoot, mvec);
-        break;
+                       subtreeRoot, mvec);
+      break;
 
-      case 135:	// reg:   Mul(todouble, todouble)
-        checkCast = true;
-        // FALL THROUGH 
+    case 135:	// reg:   Mul(todouble, todouble)
+      checkCast = true;
+      // FALL THROUGH 
 
-      case 35:	// reg:   Mul(reg, reg)
+    case 35:	// reg:   Mul(reg, reg)
       {
         maskUnsignedResult = true;
         MachineOpCode forceOp = ((checkCast && BothFloatToDouble(subtreeRoot))
@@ -1840,11 +1837,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                              MachineCodeForInstruction::get(mulInstr),forceOp);
         break;
       }
-      case 335:	// reg:   Mul(todouble, todoubleConst)
-        checkCast = true;
-        // FALL THROUGH 
+    case 335:	// reg:   Mul(todouble, todoubleConst)
+      checkCast = true;
+      // FALL THROUGH 
 
-      case 235:	// reg:   Mul(reg, Constant)
+    case 235:	// reg:   Mul(reg, Constant)
       {
         maskUnsignedResult = true;
         MachineOpCode forceOp = ((checkCast && BothFloatToDouble(subtreeRoot))
@@ -1859,22 +1856,22 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                              forceOp);
         break;
       }
-      case 236:	// reg:   Div(reg, Constant)
-        maskUnsignedResult = true;
-        L = mvec.size();
-        CreateDivConstInstruction(target, subtreeRoot, mvec);
-        if (mvec.size() > L)
-          break;
-        // ELSE FALL THROUGH
-      
-      case 36:	// reg:   Div(reg, reg)
-        maskUnsignedResult = true;
-        Add3OperandInstr(ChooseDivInstruction(target, subtreeRoot),
-                         subtreeRoot, mvec);
+    case 236:	// reg:   Div(reg, Constant)
+      maskUnsignedResult = true;
+      L = mvec.size();
+      CreateDivConstInstruction(target, subtreeRoot, mvec);
+      if (mvec.size() > L)
         break;
+      // ELSE FALL THROUGH
+      
+    case 36:	// reg:   Div(reg, reg)
+      maskUnsignedResult = true;
+      Add3OperandInstr(ChooseDivInstruction(target, subtreeRoot),
+                       subtreeRoot, mvec);
+      break;
 
-      case  37:	// reg:   Rem(reg, reg)
-      case 237:	// reg:   Rem(reg, Constant)
+    case  37:	// reg:   Rem(reg, reg)
+    case 237:	// reg:   Rem(reg, Constant)
       {
         maskUnsignedResult = true;
         Instruction* remInstr = subtreeRoot->getInstruction();
@@ -1908,15 +1905,15 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
       
-      case  38:	// bool:   And(bool, bool)
-      case 238:	// bool:   And(bool, boolconst)
-      case 338:	// reg :   BAnd(reg, reg)
-      case 538:	// reg :   BAnd(reg, Constant)
-        Add3OperandInstr(V9::ANDr, subtreeRoot, mvec);
-        break;
+    case  38:	// bool:   And(bool, bool)
+    case 238:	// bool:   And(bool, boolconst)
+    case 338:	// reg :   BAnd(reg, reg)
+    case 538:	// reg :   BAnd(reg, Constant)
+      Add3OperandInstr(V9::ANDr, subtreeRoot, mvec);
+      break;
 
-      case 138:	// bool:   And(bool, not)
-      case 438:	// bool:   BAnd(bool, bnot)
+    case 138:	// bool:   And(bool, not)
+    case 438:	// bool:   BAnd(bool, bnot)
       { // Use the argument of NOT as the second argument!
         // Mark the NOT node so that no code is generated for it.
         InstructionNode* notNode = (InstructionNode*) subtreeRoot->rightChild();
@@ -1930,15 +1927,15 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
 
-      case  39:	// bool:   Or(bool, bool)
-      case 239:	// bool:   Or(bool, boolconst)
-      case 339:	// reg :   BOr(reg, reg)
-      case 539:	// reg :   BOr(reg, Constant)
-        Add3OperandInstr(V9::ORr, subtreeRoot, mvec);
-        break;
+    case  39:	// bool:   Or(bool, bool)
+    case 239:	// bool:   Or(bool, boolconst)
+    case 339:	// reg :   BOr(reg, reg)
+    case 539:	// reg :   BOr(reg, Constant)
+      Add3OperandInstr(V9::ORr, subtreeRoot, mvec);
+      break;
 
-      case 139:	// bool:   Or(bool, not)
-      case 439:	// bool:   BOr(bool, bnot)
+    case 139:	// bool:   Or(bool, not)
+    case 439:	// bool:   BOr(bool, bnot)
       { // Use the argument of NOT as the second argument!
         // Mark the NOT node so that no code is generated for it.
         InstructionNode* notNode = (InstructionNode*) subtreeRoot->rightChild();
@@ -1952,15 +1949,15 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
 
-      case  40:	// bool:   Xor(bool, bool)
-      case 240:	// bool:   Xor(bool, boolconst)
-      case 340:	// reg :   BXor(reg, reg)
-      case 540:	// reg :   BXor(reg, Constant)
-        Add3OperandInstr(V9::XORr, subtreeRoot, mvec);
-        break;
+    case  40:	// bool:   Xor(bool, bool)
+    case 240:	// bool:   Xor(bool, boolconst)
+    case 340:	// reg :   BXor(reg, reg)
+    case 540:	// reg :   BXor(reg, Constant)
+      Add3OperandInstr(V9::XORr, subtreeRoot, mvec);
+      break;
 
-      case 140:	// bool:   Xor(bool, not)
-      case 440:	// bool:   BXor(bool, bnot)
+    case 140:	// bool:   Xor(bool, not)
+    case 440:	// bool:   BXor(bool, bnot)
       { // Use the argument of NOT as the second argument!
         // Mark the NOT node so that no code is generated for it.
         InstructionNode* notNode = (InstructionNode*) subtreeRoot->rightChild();
@@ -1974,13 +1971,13 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
 
-      case 41:	// boolconst:   SetCC(reg, Constant)
-        // 
-        // If the SetCC was folded into the user (parent), it will be
-        // caught above.  All other cases are the same as case 42,
-        // so just fall through.
-        // 
-      case 42:	// bool:   SetCC(reg, reg):
+    case 41:	// boolconst:   SetCC(reg, Constant)
+      // 
+      // If the SetCC was folded into the user (parent), it will be
+      // caught above.  All other cases are the same as case 42,
+      // so just fall through.
+      // 
+    case 42:	// bool:   SetCC(reg, reg):
       {
         // This generates a SUBCC instruction, putting the difference in
         // a result register, and setting a condition code.
@@ -2087,21 +2084,21 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
 
-      case 51:	// reg:   Load(reg)
-      case 52:	// reg:   Load(ptrreg)
+    case 51:	// reg:   Load(reg)
+    case 52:	// reg:   Load(ptrreg)
         SetOperandsForMemInstr(ChooseLoadInstruction(
                                    subtreeRoot->getValue()->getType()),
                                mvec, subtreeRoot, target);
         break;
 
-      case 55:	// reg:   GetElemPtr(reg)
-      case 56:	// reg:   GetElemPtrIdx(reg,reg)
-        // If the GetElemPtr was folded into the user (parent), it will be
-        // caught above.  For other cases, we have to compute the address.
-        SetOperandsForMemInstr(V9::ADDr, mvec, subtreeRoot, target);
-        break;
+    case 55:	// reg:   GetElemPtr(reg)
+    case 56:	// reg:   GetElemPtrIdx(reg,reg)
+      // If the GetElemPtr was folded into the user (parent), it will be
+      // caught above.  For other cases, we have to compute the address.
+      SetOperandsForMemInstr(V9::ADDr, mvec, subtreeRoot, target);
+      break;
 
-      case 57:	// reg:  Alloca: Implement as 1 instruction:
+    case 57:	// reg:  Alloca: Implement as 1 instruction:
       {         //	    add %fp, offsetFromFP -> result
         AllocationInst* instr =
           cast<AllocationInst>(subtreeRoot->getInstruction());
@@ -2112,7 +2109,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
 
-      case 58:	// reg:   Alloca(reg): Implement as 3 instructions:
+    case 58:	// reg:   Alloca(reg): Implement as 3 instructions:
                 //	mul num, typeSz -> tmp
                 //	sub %sp, tmp    -> %sp
       {         //	add %sp, frameSizeBelowDynamicArea -> result
@@ -2140,7 +2137,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
 
-      case 61:	// reg:   Call
+    case 61:	// reg:   Call
       {         // Generate a direct (CALL) or indirect (JMPL) call.
                 // Mark the return-address register, the indirection
                 // register (for indirect calls), the operands of the Call,
@@ -2257,7 +2254,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
       
-      case 62:	// reg:   Shl(reg, reg)
+    case 62:	// reg:   Shl(reg, reg)
       {
         Value* argVal1 = subtreeRoot->leftChild()->getValue();
         Value* argVal2 = subtreeRoot->rightChild()->getValue();
@@ -2274,7 +2271,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
       
-      case 63:	// reg:   Shr(reg, reg)
+    case 63:	// reg:   Shr(reg, reg)
       { 
         const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
         assert((opType->isInteger() || isa<PointerType>(opType)) &&
@@ -2286,10 +2283,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
       
-      case 64:	// reg:   Phi(reg,reg)
-        break;                          // don't forward the value
+    case 64:	// reg:   Phi(reg,reg)
+      break;                          // don't forward the value
 
-      case 65:	// reg:   VaArg(reg)
+    case 65:	// reg:   VaArg(reg)
       {
         // Use value initialized by va_start as pointer to args on the stack.
         // Load argument via current pointer value, then increment pointer.
@@ -2302,15 +2299,15 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
       
-      case 71:	// reg:     VReg
-      case 72:	// reg:     Constant
-        break;                          // don't forward the value
+    case 71:	// reg:     VReg
+    case 72:	// reg:     Constant
+      break;                          // don't forward the value
 
-      default:
-        assert(0 && "Unrecognized BURG rule");
-        break;
-      }
+    default:
+      assert(0 && "Unrecognized BURG rule");
+      break;
     }
+  }
 
   if (forwardOperandNum >= 0) {
     // We did not generate a machine instruction but need to use operand.

@@ -98,13 +98,13 @@ public:
 
     toAsm << "\n\t.section ";
     switch (S)
-      {
-      default: assert(0 && "Bad section name!");
-      case Text:         toAsm << "\".text\""; break;
-      case ReadOnlyData: toAsm << "\".rodata\",#alloc"; break;
-      case InitRWData:   toAsm << "\".data\",#alloc,#write"; break;
-      case ZeroInitRWData: toAsm << "\".bss\",#alloc,#write"; break;
-      }
+    {
+    default: assert(0 && "Bad section name!");
+    case Text:         toAsm << "\".text\""; break;
+    case ReadOnlyData: toAsm << "\".rodata\",#alloc"; break;
+    case InitRWData:   toAsm << "\".data\",#alloc,#write"; break;
+    case ZeroInitRWData: toAsm << "\".bss\",#alloc,#write"; break;
+    }
     toAsm << "\n";
   }
 
@@ -118,18 +118,16 @@ public:
     if (isdigit(S[0]))
       Result = "ll";
     
-    for (unsigned i = 0; i < S.size(); ++i)
-      {
-        char C = S[i];
-        if (C == '_' || C == '.' || C == '$' || isalpha(C) || isdigit(C))
-          Result += C;
-        else
-          {
-            Result += '_';
-            Result += char('0' + ((unsigned char)C >> 4));
-            Result += char('0' + (C & 0xF));
-          }
+    for (unsigned i = 0; i < S.size(); ++i) {
+      char C = S[i];
+      if (C == '_' || C == '.' || C == '$' || isalpha(C) || isdigit(C))
+        Result += C;
+      else {
+        Result += '_';
+        Result += char('0' + ((unsigned char)C >> 4));
+        Result += char('0' + (C & 0xF));
       }
+    }
     return Result;
   }
 
@@ -190,15 +188,15 @@ public:
                               const TargetMachine& target) {
     string S;
     switch(CE->getOpcode()) {
-    case Instruction::GetElementPtr:
-      { // generate a symbolic expression for the byte address
-        const Value* ptrVal = CE->getOperand(0);
-        std::vector<Value*> idxVec(CE->op_begin()+1, CE->op_end());
-	const TargetData &TD = target.getTargetData();
-        S += "(" + valToExprString(ptrVal, target) + ") + ("
-          + utostr(TD.getIndexedOffset(ptrVal->getType(),idxVec)) + ")";
-        break;
-      }
+    case Instruction::GetElementPtr: {
+      // generate a symbolic expression for the byte address
+      const Value* ptrVal = CE->getOperand(0);
+      std::vector<Value*> idxVec(CE->op_begin()+1, CE->op_end());
+      const TargetData &TD = target.getTargetData();
+      S += "(" + valToExprString(ptrVal, target) + ") + ("
+        + utostr(TD.getIndexedOffset(ptrVal->getType(),idxVec)) + ")";
+      break;
+    }
 
     case Instruction::Cast:
       // Support only non-converting casts for now, i.e., a no-op.
@@ -351,27 +349,22 @@ SparcFunctionAsmPrinter::OpIsMemoryAddressBase(const MachineInstr *MI,
 
 unsigned int
 SparcFunctionAsmPrinter::printOperands(const MachineInstr *MI,
-                               unsigned int opNum)
+                                       unsigned int opNum)
 {
   const MachineOperand& mop = MI->getOperand(opNum);
   
-  if (OpIsBranchTargetLabel(MI, opNum))
-    {
-      PrintOp1PlusOp2(mop, MI->getOperand(opNum+1), MI->getOpCode());
-      return 2;
-    }
-  else if (OpIsMemoryAddressBase(MI, opNum))
-    {
-      toAsm << "[";
-      PrintOp1PlusOp2(mop, MI->getOperand(opNum+1), MI->getOpCode());
-      toAsm << "]";
-      return 2;
-    }
-  else
-    {
-      printOneOperand(mop, MI->getOpCode());
-      return 1;
-    }
+  if (OpIsBranchTargetLabel(MI, opNum)) {
+    PrintOp1PlusOp2(mop, MI->getOperand(opNum+1), MI->getOpCode());
+    return 2;
+  } else if (OpIsMemoryAddressBase(MI, opNum)) {
+    toAsm << "[";
+    PrintOp1PlusOp2(mop, MI->getOperand(opNum+1), MI->getOpCode());
+    toAsm << "]";
+    return 2;
+  } else {
+    printOneOperand(mop, MI->getOpCode());
+    return 1;
+  }
 }
 
 void
@@ -392,52 +385,50 @@ SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &mop,
     needBitsFlag = false;
   
   switch (mop.getType())
-    {
-    case MachineOperand::MO_VirtualRegister:
-    case MachineOperand::MO_CCRegister:
-    case MachineOperand::MO_MachineRegister:
-      {
-        int regNum = (int)mop.getAllocatedRegNum();
+  {
+  case MachineOperand::MO_VirtualRegister:
+  case MachineOperand::MO_CCRegister:
+  case MachineOperand::MO_MachineRegister: {
+    int regNum = (int)mop.getAllocatedRegNum();
         
-        if (regNum == Target.getRegInfo().getInvalidRegNum()) {
-          // better to print code with NULL registers than to die
-          toAsm << "<NULL VALUE>";
-        } else {
-          toAsm << "%" << Target.getRegInfo().getUnifiedRegName(regNum);
-        }
-        break;
-      }
-    
-    case MachineOperand::MO_PCRelativeDisp:
-      {
-        const Value *Val = mop.getVRegValue();
-        assert(Val && "\tNULL Value in SparcFunctionAsmPrinter");
-        
-        if (const BasicBlock *BB = dyn_cast<const BasicBlock>(Val))
-          toAsm << getID(BB);
-        else if (const Function *M = dyn_cast<Function>(Val))
-          toAsm << getID(M);
-        else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Val))
-          toAsm << getID(GV);
-        else if (const Constant *CV = dyn_cast<Constant>(Val))
-          toAsm << getID(CV);
-        else
-          assert(0 && "Unrecognized value in SparcFunctionAsmPrinter");
-        break;
-      }
-    
-    case MachineOperand::MO_SignExtendedImmed:
-      toAsm << mop.getImmedValue();
-      break;
-
-    case MachineOperand::MO_UnextendedImmed:
-      toAsm << (uint64_t) mop.getImmedValue();
-      break;
-    
-    default:
-      toAsm << mop;      // use dump field
-      break;
+    if (regNum == Target.getRegInfo().getInvalidRegNum()) {
+      // better to print code with NULL registers than to die
+      toAsm << "<NULL VALUE>";
+    } else {
+      toAsm << "%" << Target.getRegInfo().getUnifiedRegName(regNum);
     }
+    break;
+  }
+    
+  case MachineOperand::MO_PCRelativeDisp: {
+    const Value *Val = mop.getVRegValue();
+    assert(Val && "\tNULL Value in SparcFunctionAsmPrinter");
+        
+    if (const BasicBlock *BB = dyn_cast<const BasicBlock>(Val))
+      toAsm << getID(BB);
+    else if (const Function *M = dyn_cast<Function>(Val))
+      toAsm << getID(M);
+    else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Val))
+      toAsm << getID(GV);
+    else if (const Constant *CV = dyn_cast<Constant>(Val))
+      toAsm << getID(CV);
+    else
+      assert(0 && "Unrecognized value in SparcFunctionAsmPrinter");
+    break;
+  }
+    
+  case MachineOperand::MO_SignExtendedImmed:
+    toAsm << mop.getImmedValue();
+    break;
+
+  case MachineOperand::MO_UnextendedImmed:
+    toAsm << (uint64_t) mop.getImmedValue();
+    break;
+    
+  default:
+    toAsm << mop;      // use dump field
+    break;
+  }
   
   if (needBitsFlag)
     toAsm << ")";
@@ -450,7 +441,7 @@ SparcFunctionAsmPrinter::emitMachineInst(const MachineInstr *MI)
   unsigned Opcode = MI->getOpCode();
 
   if (Target.getInstrInfo().isDummyPhiInstr(Opcode))
-    return;  // IGNORE PHI NODES
+    return;  // Ignore Phi nodes
 
   toAsm << "\t" << Target.getInstrInfo().getName(Opcode) << "\t";
 
@@ -460,7 +451,7 @@ SparcFunctionAsmPrinter::emitMachineInst(const MachineInstr *MI)
   unsigned N = 1;
   for (unsigned OpNum = 0; OpNum < MI->getNumOperands(); OpNum += N)
     if (! ((1 << OpNum) & Mask)) {        // Ignore this operand?
-      if (NeedComma) toAsm << ", ";         // Handle comma outputing
+      if (NeedComma) toAsm << ", ";       // Handle comma outputing
       NeedComma = true;
       N = printOperands(MI, OpNum);
     } else
@@ -667,12 +658,11 @@ TypeToSize(const Type* type, const TargetMachine& target)
 inline unsigned int
 ConstantToSize(const Constant* CV, const TargetMachine& target)
 {
-  if (const ConstantArray* CVA = dyn_cast<ConstantArray>(CV))
-    {
-      const ArrayType *aty = cast<ArrayType>(CVA->getType());
-      if (ArrayTypeIsString(aty))
-        return 1 + CVA->getNumOperands();
-    }
+  if (const ConstantArray* CVA = dyn_cast<ConstantArray>(CV)) {
+    const ArrayType *aty = cast<ArrayType>(CVA->getType());
+    if (ArrayTypeIsString(aty))
+      return 1 + CVA->getNumOperands();
+  }
   
   return TypeToSize(CV->getType(), target);
 }
@@ -727,46 +717,40 @@ SparcModuleAsmPrinter::printSingleConstantValue(const Constant* CV)
   
   toAsm << "\t" << TypeToDataDirective(CV->getType()) << "\t";
   
-  if (CV->getType()->isPrimitiveType())
-    {
-      if (CV->getType()->isFloatingPoint()) {
-        // FP Constants are printed as integer constants to avoid losing
-        // precision...
-        double Val = cast<ConstantFP>(CV)->getValue();
-        if (CV->getType() == Type::FloatTy) {
-          float FVal = (float)Val;
-          char *ProxyPtr = (char*)&FVal;        // Abide by C TBAA rules
-          toAsm << *(unsigned int*)ProxyPtr;            
-        } else if (CV->getType() == Type::DoubleTy) {
-          char *ProxyPtr = (char*)&Val;         // Abide by C TBAA rules
-          toAsm << *(uint64_t*)ProxyPtr;            
-        } else {
-          assert(0 && "Unknown floating point type!");
-        }
-        
-        toAsm << "\t! " << CV->getType()->getDescription()
-              << " value: " << Val << "\n";
+  if (CV->getType()->isPrimitiveType()) {
+    if (CV->getType()->isFloatingPoint()) {
+      // FP Constants are printed as integer constants to avoid losing
+      // precision...
+      double Val = cast<ConstantFP>(CV)->getValue();
+      if (CV->getType() == Type::FloatTy) {
+        float FVal = (float)Val;
+        char *ProxyPtr = (char*)&FVal;        // Abide by C TBAA rules
+        toAsm << *(unsigned int*)ProxyPtr;            
+      } else if (CV->getType() == Type::DoubleTy) {
+        char *ProxyPtr = (char*)&Val;         // Abide by C TBAA rules
+        toAsm << *(uint64_t*)ProxyPtr;            
       } else {
-        WriteAsOperand(toAsm, CV, false, false) << "\n";
+        assert(0 && "Unknown floating point type!");
       }
+        
+      toAsm << "\t! " << CV->getType()->getDescription()
+            << " value: " << Val << "\n";
+    } else {
+      WriteAsOperand(toAsm, CV, false, false) << "\n";
     }
-  else if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV))
-    { // This is a constant address for a global variable or method.
-      // Use the name of the variable or method as the address value.
-      toAsm << getID(CPR->getValue()) << "\n";
-    }
-  else if (isa<ConstantPointerNull>(CV))
-    { // Null pointer value
-      toAsm << "0\n";
-    }
-  else if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
-    { // Constant expression built from operators, constants, and symbolic addrs
-      toAsm << ConstantExprToString(CE, Target) << "\n";
-    }
-  else
-    {
-      assert(0 && "Unknown elementary type for constant");
-    }
+  } else if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV)) {
+    // This is a constant address for a global variable or method.
+    // Use the name of the variable or method as the address value.
+    toAsm << getID(CPR->getValue()) << "\n";
+  } else if (isa<ConstantPointerNull>(CV)) { 
+    // Null pointer value
+    toAsm << "0\n";
+  } else if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV)) { 
+    // Constant expression built from operators, constants, and symbolic addrs
+    toAsm << ConstantExprToString(CE, Target) << "\n";
+  } else {
+    assert(0 && "Unknown elementary type for constant");
+  }
 }
 
 void
@@ -775,11 +759,10 @@ SparcModuleAsmPrinter::PrintZeroBytesToPad(int numBytes)
   for ( ; numBytes >= 8; numBytes -= 8)
     printSingleConstantValue(Constant::getNullValue(Type::ULongTy));
 
-  if (numBytes >= 4)
-    {
-      printSingleConstantValue(Constant::getNullValue(Type::UIntTy));
-      numBytes -= 4;
-    }
+  if (numBytes >= 4) {
+    printSingleConstantValue(Constant::getNullValue(Type::UIntTy));
+    numBytes -= 4;
+  }
 
   while (numBytes--)
     printSingleConstantValue(Constant::getNullValue(Type::UByteTy));
@@ -793,41 +776,37 @@ SparcModuleAsmPrinter::printConstantValueOnly(const Constant* CV,
 {
   const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
 
-  if (CVA && isStringCompatible(CVA))
-    { // print the string alone and return
-      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
-    }
-  else if (CVA)
-    { // Not a string.  Print the values in successive locations
-      const std::vector<Use> &constValues = CVA->getValues();
-      for (unsigned i=0; i < constValues.size(); i++)
-        printConstantValueOnly(cast<Constant>(constValues[i].get()));
-    }
-  else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV))
-    { // Print the fields in successive locations. Pad to align if needed!
-      const StructLayout *cvsLayout =
-        Target.getTargetData().getStructLayout(CVS->getType());
-      const std::vector<Use>& constValues = CVS->getValues();
-      unsigned sizeSoFar = 0;
-      for (unsigned i=0, N = constValues.size(); i < N; i++)
-        {
-          const Constant* field = cast<Constant>(constValues[i].get());
+  if (CVA && isStringCompatible(CVA)) {
+    // print the string alone and return
+    toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
+  } else if (CVA) { 
+    // Not a string.  Print the values in successive locations
+    const std::vector<Use> &constValues = CVA->getValues();
+    for (unsigned i=0; i < constValues.size(); i++)
+      printConstantValueOnly(cast<Constant>(constValues[i].get()));
+  } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
+    // Print the fields in successive locations. Pad to align if needed!
+    const StructLayout *cvsLayout =
+      Target.getTargetData().getStructLayout(CVS->getType());
+    const std::vector<Use>& constValues = CVS->getValues();
+    unsigned sizeSoFar = 0;
+    for (unsigned i=0, N = constValues.size(); i < N; i++) {
+      const Constant* field = cast<Constant>(constValues[i].get());
 
-          // Check if padding is needed and insert one or more 0s.
-          unsigned fieldSize =
-	    Target.getTargetData().getTypeSize(field->getType());
-          int padSize = ((i == N-1? cvsLayout->StructSize
-                                  : cvsLayout->MemberOffsets[i+1])
-                         - cvsLayout->MemberOffsets[i]) - fieldSize;
-          sizeSoFar += (fieldSize + padSize);
+      // Check if padding is needed and insert one or more 0s.
+      unsigned fieldSize =
+        Target.getTargetData().getTypeSize(field->getType());
+      int padSize = ((i == N-1? cvsLayout->StructSize
+                      : cvsLayout->MemberOffsets[i+1])
+                     - cvsLayout->MemberOffsets[i]) - fieldSize;
+      sizeSoFar += (fieldSize + padSize);
 
-          // Now print the actual field value
-          printConstantValueOnly(field, padSize);
-        }
-      assert(sizeSoFar == cvsLayout->StructSize &&
-             "Layout of constant struct may be incorrect!");
+      // Now print the actual field value
+      printConstantValueOnly(field, padSize);
     }
-  else
+    assert(sizeSoFar == cvsLayout->StructSize &&
+           "Layout of constant struct may be incorrect!");
+  } else
     printSingleConstantValue(CV);
 
   if (numPadBytesAfter)
@@ -847,12 +826,12 @@ SparcModuleAsmPrinter::printConstant(const Constant* CV, string valID)
   
   // Print .size and .type only if it is not a string.
   const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
-  if (CVA && isStringCompatible(CVA))
-    { // print it as a string and return
-      toAsm << valID << ":\n";
-      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
-      return;
-    }
+  if (CVA && isStringCompatible(CVA)) {
+    // print it as a string and return
+    toAsm << valID << ":\n";
+    toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
+    return;
+  }
   
   toAsm << "\t.type" << "\t" << valID << ",#object\n";
 
