@@ -34,33 +34,12 @@
 #include "llvm/Assembly/Writer.h"
 #include <algorithm>
 
-struct ConstPoolDCE { 
-  enum { EndOffs = 0 };
-  static bool isDCEable(const ConstPoolVal *CPV) {
-    // TODO: The bytecode writer requires that all used types are in the
-    // constant pool for the current method.  This is messy and is really
-    // irritating. FIXME
-    return CPV->getType() != Type::TypeTy;  // Don't DCE Type plane constants!
-  }
-};
-
-struct BasicBlockDCE {
-  enum { EndOffs = 1 };
-  static bool isDCEable(const Instruction *I) {
-    return !I->hasSideEffects();
-  }
-};
-
-
-template<class Container, class DCEController>
-static bool RemoveUnusedDefs(Container &Vals, DCEController DCEControl) {
+static bool RemoveUnusedDefs(BasicBlock::InstListType &Vals) {
   bool Changed = false;
-  int Offset = DCEController::EndOffs;
-
-  for (typename Container::iterator DI = Vals.begin(); 
-       DI != Vals.end()-Offset; ) {
+  for (BasicBlock::InstListType::iterator DI = Vals.begin(); 
+       DI != Vals.end()-1; ) {
     // Look for un"used" definitions...
-    if ((*DI)->use_empty() && DCEController::isDCEable(*DI)) {
+    if ((*DI)->use_empty() && !(*DI)->hasSideEffects()) {
       // Bye bye
       //cerr << "Removing: " << *DI;
       delete Vals.remove(DI);
@@ -272,7 +251,7 @@ static bool DoDCEPass(Method *M) {
 
   // Loop through now and remove instructions that have no uses...
   for (BBIt = M->begin(); BBIt != BBEnd; ++BBIt) {
-    Changed |= RemoveUnusedDefs((*BBIt)->getInstList(), BasicBlockDCE());
+    Changed |= RemoveUnusedDefs((*BBIt)->getInstList());
     Changed |= RemoveSingularPHIs(*BBIt);
   }
 
