@@ -8,23 +8,20 @@
 
 implementation
 
-int "test1"(int %A)
-begin
+int %test1(int %A) {
 	%B = mul int %A, 1
 	ret int %B
-end
+}
 
-int "test2"(int %A)
-begin
+int %test2(int %A) {
 	%B = mul int %A, 2   ; Should convert to an add instruction
 	ret int %B
-end
+}
 
-int "test3"(int %A)
-begin
+int %test3(int %A) {
 	%B = mul int %A, 0   ; This should disappear entirely
 	ret int %B
-end
+}
 
 double %test4(double %A) {
 	%B = mul double 1.0, %A   ; This is safe for FP
