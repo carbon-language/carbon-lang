@@ -1,4 +1,4 @@
-//===-- llvm/SlotCalculator.h - Calculate value slots -----------*- C++ -*-===//
+//===-- Analysis/SlotCalculator.h - Calculate value slots -------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,12 +17,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SLOTCALCULATOR_H
-#define LLVM_SLOTCALCULATOR_H
+#ifndef LLVM_ANALYSIS_SLOTCALCULATOR_H
+#define LLVM_ANALYSIS_SLOTCALCULATOR_H
 
 #include <vector>
 #include <map>
-#include <cassert>
 
 namespace llvm {
 
