@@ -15,8 +15,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Expressions.h"
-#include "llvm/ConstantHandling.h"
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/Type.h"
 using namespace llvm;
 
 ExprType::ExprType(Value *Val) {
@@ -114,9 +115,8 @@ static const ConstantInt *Add(const ConstantInt *Arg1,
   assert(Arg1->getType() == Arg2->getType() && "Types must be compatible!");
 
   // Actually perform the computation now!
-  Constant *Result = *Arg1 + *Arg2;
-  assert(Result && Result->getType() == Arg1->getType() &&
-	 "Couldn't perform addition!");
+  Constant *Result = ConstantExpr::get(Instruction::Add, (Constant*)Arg1,
+                                       (Constant*)Arg2);
   ConstantInt *ResultI = cast<ConstantInt>(Result);
 
   // Check to see if the result is one of the special cases that we want to
@@ -164,7 +164,8 @@ static inline const ConstantInt *Mul(const ConstantInt *Arg1,
   assert(Arg1->getType() == Arg2->getType() && "Types must be compatible!");
 
   // Actually perform the computation now!
-  Constant *Result = *Arg1 * *Arg2;
+  Constant *Result = ConstantExpr::get(Instruction::Mul, (Constant*)Arg1,
+                                       (Constant*)Arg2);
   assert(Result && Result->getType() == Arg1->getType() && 
 	 "Couldn't perform multiplication!");
   ConstantInt *ResultI = cast<ConstantInt>(Result);
@@ -225,7 +226,8 @@ static inline ExprType negate(const ExprType &E, Value *V) {
   const Type *Ty = V->getType();
   ConstantInt *Zero   = getUnsignedConstant(0, Ty);
   ConstantInt *One    = getUnsignedConstant(1, Ty);
-  ConstantInt *NegOne = cast<ConstantInt>(*Zero - *One);
+  ConstantInt *NegOne = cast<ConstantInt>(ConstantExpr::get(Instruction::Sub,
+                                                            Zero, One));
   if (NegOne == 0) return V;  // Couldn't subtract values...
 
   return ExprType(DefOne (E.Scale , Ty) * NegOne, E.Var,
@@ -338,12 +340,12 @@ ExprType llvm::ClassifyExpr(Value *Expr) {
     const ConstantInt *Offset = Src.Offset;
     const ConstantInt *Scale  = Src.Scale;
     if (Offset) {
-      const Constant *CPV = ConstantFoldCastInstruction(Offset, DestTy);
-      if (!CPV) return I;
+      const Constant *CPV = ConstantExpr::getCast((Constant*)Offset, DestTy);
+      if (!isa<ConstantInt>(CPV)) return I;
       Offset = cast<ConstantInt>(CPV);
     }
     if (Scale) {
-      const Constant *CPV = ConstantFoldCastInstruction(Scale, DestTy);
+      const Constant *CPV = ConstantExpr::getCast((Constant*)Scale, DestTy);
       if (!CPV) return I;
       Scale = cast<ConstantInt>(CPV);
     }
