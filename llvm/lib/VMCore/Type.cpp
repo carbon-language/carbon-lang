@@ -140,7 +140,7 @@ MethodType::MethodType(const Type *Result, const vector<const Type*> &Params,
     ResultType(PATypeHandle<Type>(Result, this)),
     isVarArgs(IsVarArgs) {
   ParamTys.reserve(Params.size());
-  for (unsigned i = 0; i < Params.size()-IsVarArgs; ++i)
+  for (unsigned i = 0; i < Params.size(); ++i)
     ParamTys.push_back(PATypeHandle<Type>(Params[i], this));
 
   setDerivedTypeProperties();
@@ -155,8 +155,10 @@ ArrayType::ArrayType(const Type *ElType, int NumEl)
 StructType::StructType(const vector<const Type*> &Types)
   : DerivedType("", StructTyID) {
   ETypes.reserve(Types.size());
-  for (unsigned i = 0; i < Types.size(); ++i)
+  for (unsigned i = 0; i < Types.size(); ++i) {
+    assert(Types[i] != Type::VoidTy && "Void type in method prototype!!");
     ETypes.push_back(PATypeHandle<Type>(Types[i], this));
+  }
   setDerivedTypeProperties();
 }
 
@@ -315,12 +317,17 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   for (; I != IE && I2 != IE2; ++I, ++I2)
     if (!TypesEqual(*I, *I2, EqTypes)) return false;
 
-  // One really annoying special case that breaks an otherwise nice simple
+  // Two really annoying special cases that breaks an otherwise nice simple
   // algorithm is the fact that arraytypes have sizes that differentiates types,
-  // consider this now.
-  if (Ty->isArrayType())
-    if (cast<const ArrayType>(Ty)->getNumElements() !=
-	cast<const ArrayType>(Ty2)->getNumElements()) return false;
+  // and that method types can be varargs or not.  Consider this now.
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    if (ATy->getNumElements() != cast<const ArrayType>(Ty2)->getNumElements())
+      return false;
+  } else if (const MethodType *MTy = dyn_cast<MethodType>(Ty)) {
+    if (MTy->isVarArg() != cast<const MethodType>(Ty2)->isVarArg())
+      return false;
+  }
+
 
   return I == IE && I2 == IE2;    // Types equal if both iterators are done
 }
@@ -446,10 +453,12 @@ protected:
 class MethodValType : public ValTypeBase<MethodValType, MethodType> {
   PATypeHandle<Type> RetTy;
   vector<PATypeHandle<Type> > ArgTypes;
+  bool isVarArg;
 public:
   MethodValType(const Type *ret, const vector<const Type*> &args,
-		TypeMap<MethodValType, MethodType> &Tab)
-    : ValTypeBase<MethodValType, MethodType>(Tab), RetTy(ret, this) {
+		bool IVA, TypeMap<MethodValType, MethodType> &Tab)
+    : ValTypeBase<MethodValType, MethodType>(Tab), RetTy(ret, this),
+      isVarArg(IVA) {
     for (unsigned i = 0; i < args.size(); ++i)
       ArgTypes.push_back(PATypeHandle<Type>(args[i], this));
   }
@@ -458,7 +467,8 @@ public:
   // this MethodValType owns them, not the old one!
   //
   MethodValType(const MethodValType &MVT) 
-    : ValTypeBase<MethodValType, MethodType>(MVT), RetTy(MVT.RetTy, this) {
+    : ValTypeBase<MethodValType, MethodType>(MVT), RetTy(MVT.RetTy, this),
+      isVarArg(MVT.isVarArg) {
     ArgTypes.reserve(MVT.ArgTypes.size());
     for (unsigned i = 0; i < MVT.ArgTypes.size(); ++i)
       ArgTypes.push_back(PATypeHandle<Type>(MVT.ArgTypes[i], this));
@@ -472,8 +482,11 @@ public:
   }
 
   inline bool operator<(const MethodValType &MTV) const {
-    return RetTy.get() <  MTV.RetTy.get() ||
-          (RetTy.get() == MTV.RetTy.get() && ArgTypes < MTV.ArgTypes);
+    if (RetTy.get() < MTV.RetTy.get()) return true;
+    if (RetTy.get() > MTV.RetTy.get()) return false;
+
+    if (ArgTypes < MTV.ArgTypes) return true;
+    return (ArgTypes == MTV.ArgTypes) && isVarArg < MTV.isVarArg;
   }
 };
 
@@ -482,13 +495,13 @@ static TypeMap<MethodValType, MethodType> MethodTypes;
 
 // MethodType::get - The factory function for the MethodType class...
 MethodType *MethodType::get(const Type *ReturnType, 
-			    const vector<const Type*> &Params) {
-  MethodValType VT(ReturnType, Params, MethodTypes);
+			    const vector<const Type*> &Params,
+			    bool isVarArg) {
+  MethodValType VT(ReturnType, Params, isVarArg, MethodTypes);
   MethodType *MT = MethodTypes.get(VT);
   if (MT) return MT;
 
-  bool IsVarArg = Params.size() && (Params[Params.size()-1] == Type::VoidTy);
-  MethodTypes.add(VT, MT = new MethodType(ReturnType, Params, IsVarArg));
+  MethodTypes.add(VT, MT = new MethodType(ReturnType, Params, isVarArg));
 
 #ifdef DEBUG_MERGE_TYPES
   cerr << "Derived new type: " << MT << endl;
