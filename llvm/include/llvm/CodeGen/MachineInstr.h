@@ -133,10 +133,8 @@ private:
   void			InitializeReg	(unsigned int regNum);
 
   friend class MachineInstr;
-  friend class  ValOpIterator<const MachineInstr, const Value>;
-
-  //friend class MachineInstr::val_op_const_iterator;
-  //friend class MachineInstr::val_op_iterator;
+  friend class ValOpIterator<const MachineInstr, const Value>;
+  friend class ValOpIterator<      MachineInstr,       Value>;
 };
 
 
@@ -243,6 +241,8 @@ public:
   const MachineOperand& getOperand	(unsigned int i) const;
         MachineOperand& getOperand	(unsigned int i);
   
+  bool			operandIsDefined(unsigned int i) const;
+  
   void			dump		(unsigned int indent = 0) const;
   
 public:
@@ -287,6 +287,12 @@ MachineInstr::getOperand(unsigned int i) const
 {
   assert(i < operands.size() && "getOperand() out of range!");
   return operands[i];
+}
+
+inline bool
+MachineInstr::operandIsDefined(unsigned int i) const
+{
+  return getOperand(i).opIsDef();
 }
 
 
@@ -448,11 +454,15 @@ MachineOperand::MachineOperandType
 				 unsigned int& getMachineRegNum,
 				 int64_t& getImmedValue);
 
+
 ostream& operator<<(ostream& os, const MachineInstr& minstr);
 
 
 ostream& operator<<(ostream& os, const MachineOperand& mop);
 					 
+
+void	PrintMachineInstructions	(Method* method);
+
 
 //**************************************************************************/
 
