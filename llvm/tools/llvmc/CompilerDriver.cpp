@@ -70,11 +70,6 @@ namespace {
     DumpAction(&cd->Linker);
   }
 
-  void CleanupTempFile(const char* fname) {
-    if (0 == access(fname, F_OK | R_OK))
-      unlink(fname);
-  }
-
   /// This specifies the passes to run for OPT_FAST_COMPILE (-O1)
   /// which should reduce the volume of code and make compilation
   /// faster. This is also safe on any llvm module. 
@@ -86,6 +81,16 @@ namespace {
 // Stuff in this namespace properly belongs in lib/System and needs
 // to be portable but we're avoiding that for now.
 namespace sys {
+
+  bool FileReadable(const std::string& fname) {
+    return 0 == access(fname.c_str(), F_OK | R_OK);
+  }
+
+  void CleanupTempFile(const std::string& fname) {
+    if (FileReadable(fname))
+      unlink(fname.c_str());
+  }
+
   std::string MakeTemporaryDirectory() {
     char temp_name[64];
     strcpy(temp_name,"/tmp/llvm_XXXXXX");
@@ -453,6 +458,7 @@ int CompilerDriver::execute(const InputList& InpList,
           Action* action = new Action();
           action->program = "llvm-as";
           action->args.push_back(InFile);
+          action->args.push_back("-f");
           action->args.push_back("-o");
           InFile += ".bc";
           action->args.push_back(InFile);
@@ -470,9 +476,26 @@ int CompilerDriver::execute(const InputList& InpList,
     if (finalPhase == OPTIMIZATION) { ++I; continue; }
 
     /// ASSEMBLY PHASE
-    if (emitNativeCode) {
-      // We must cause native code to be generated
-    } else {
+    action = cd->Assembler;
+
+    if (finalPhase == ASSEMBLY) {
+      if (emitNativeCode) {
+        if (action.program.empty()) {
+          error(std::string("Native Assembler not specified for ") +
+                cd->langName + " files");
+        } else {
+          actions.push_back(GetAction(cd,InFile,OutFile,ASSEMBLY));
+        }
+      } else {
+        // Just convert back to llvm assembly with llvm-dis
+        Action* action = new Action();
+        action->program = "llvm-dis";
+        action->args.push_back(InFile);
+        action->args.push_back("-f");
+        action->args.push_back("-o");
+        action->args.push_back(OutFile);
+        actions.push_back(action);
+      }
     }
       
     // Go to next file to be processed
@@ -480,8 +503,10 @@ int CompilerDriver::execute(const InputList& InpList,
   }
 
   /// LINKING PHASE
-  if (emitNativeCode) {
-  } else {
+  if (finalPhase == LINKING) {
+    if (emitNativeCode) {
+    } else {
+    }
   }
 
   /// RUN THE ACTIONS
@@ -494,12 +519,12 @@ int CompilerDriver::execute(const InputList& InpList,
 
   if (!keepTemps) {
     // Cleanup files
-    CleanupTempFile(TempPreprocessorOut.c_str());
-    CleanupTempFile(TempTranslatorOut.c_str());
-    CleanupTempFile(TempOptimizerOut.c_str());
+    ::sys::CleanupTempFile(TempPreprocessorOut);
+    ::sys::CleanupTempFile(TempTranslatorOut);
+    ::sys::CleanupTempFile(TempOptimizerOut);
 
     // Cleanup temporary directory we created
-    if (0 == access(TempDir.c_str(), F_OK | W_OK))
+    if (::sys::FileReadable(TempDir))
       rmdir(TempDir.c_str());
   }
 
