@@ -284,17 +284,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
   if (LI->isVolatile())
     return getAnalysis<ValueNumbering>().getEqualNumberNodes(V, RetVals);
   
-  // If we have a load instruction, find all of the load and store instructions
-  // that use the same source operand.  We implement this recursively, because
-  // there could be a load of a load of a load that are all identical.  We are
-  // guaranteed that this cannot be an infinite recursion because load
-  // instructions would have to pass through a PHI node in order for there to be
-  // a cycle.  The PHI node would be handled by the else case here, breaking the
-  // infinite recursion.
-  //
-  std::vector<Value*> PointerSources;
-  getEqualNumberNodes(LI->getOperand(0), PointerSources);
-  PointerSources.push_back(LI->getOperand(0));
+  Value *PointerSource = LI->getOperand(0);
   
   BasicBlock *LoadBB = LI->getParent();
   Function *F = LoadBB->getParent();
@@ -305,27 +295,18 @@ void LoadVN::getEqualNumberNodes(Value *V,
   //
   std::map<BasicBlock*, std::vector<LoadInst*> >  CandidateLoads;
   std::map<BasicBlock*, std::vector<StoreInst*> > CandidateStores;
-  std::set<AllocationInst*> Allocations;
-  
-  while (!PointerSources.empty()) {
-    Value *Source = PointerSources.back();
-    PointerSources.pop_back();                // Get a source pointer...
-
-    if (AllocationInst *AI = dyn_cast<AllocationInst>(Source))
-      Allocations.insert(AI);
     
-    for (Value::use_iterator UI = Source->use_begin(), UE = Source->use_end();
-         UI != UE; ++UI)
-      if (LoadInst *Cand = dyn_cast<LoadInst>(*UI)) {// Is a load of source?
-        if (Cand->getParent()->getParent() == F &&   // In the same function?
-            Cand != LI && !Cand->isVolatile())       // Not LI itself?
-          CandidateLoads[Cand->getParent()].push_back(Cand);     // Got one...
-      } else if (StoreInst *Cand = dyn_cast<StoreInst>(*UI)) {
-        if (Cand->getParent()->getParent() == F && !Cand->isVolatile() &&
-            Cand->getOperand(1) == Source)  // It's a store THROUGH the ptr...
-          CandidateStores[Cand->getParent()].push_back(Cand);
-      }
-  }
+  for (Value::use_iterator UI = PointerSource->use_begin(),
+         UE = PointerSource->use_end(); UI != UE; ++UI)
+    if (LoadInst *Cand = dyn_cast<LoadInst>(*UI)) {// Is a load of source?
+      if (Cand->getParent()->getParent() == F &&   // In the same function?
+          Cand != LI && !Cand->isVolatile())       // Not LI itself?
+        CandidateLoads[Cand->getParent()].push_back(Cand);     // Got one...
+    } else if (StoreInst *Cand = dyn_cast<StoreInst>(*UI)) {
+      if (Cand->getParent()->getParent() == F && !Cand->isVolatile() &&
+          Cand->getOperand(1) == PointerSource) // It's a store THROUGH the ptr.
+        CandidateStores[Cand->getParent()].push_back(Cand);
+    }
   
   // Get alias analysis & dominators.
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
@@ -358,7 +339,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
     } else if (AllocationInst *AI = dyn_cast<AllocationInst>(I)) {
       // If we run into an allocation of the value being loaded, then the
       // contents are not initialized.
-      if (Allocations.count(AI)) {
+      if ((Value*)AI == PointerSource) {
         LoadInvalidatedInBBBefore = true;
         RetVals.push_back(UndefValue::get(LI->getType()));
         break;
