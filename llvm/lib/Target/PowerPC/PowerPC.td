@@ -24,9 +24,8 @@ include "PowerPCInstrInfo.td"
 def PowerPCInstrInfo : InstrInfo {
   let PHIInst  = PHI;
 
-  let TSFlagsFields = ["ArgCount", "Arg0Type", "Arg1Type", "Arg2Type", 
-                       "Arg3Type", "Arg4Type", "VMX", "PPC64"];
-  let TSFlagsShifts = [ 0, 3, 8, 13, 18, 23, 28, 29 ];
+  let TSFlagsFields = [ "VMX", "PPC64" ];
+  let TSFlagsShifts = [ 0, 1 ];
 
   let isLittleEndianEncoding = 1;
 }
