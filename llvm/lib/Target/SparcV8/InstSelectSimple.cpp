@@ -13,6 +13,7 @@
 
 #include "SparcV8.h"
 #include "SparcV8InstrInfo.h"
+#include "Support/Debug.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicLowering.h"
 #include "llvm/Pass.h"
@@ -91,6 +92,12 @@ namespace {
     void visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI);
 
     void LoadArgumentsToVirtualRegs(Function *F);
+
+    /// SelectPHINodes - Insert machine code to generate phis.  This is tricky
+    /// because we have to generate our sources into the source basic blocks,
+    /// not the current one.
+    ///
+    void SelectPHINodes();
 
     /// copyConstantToRegister - Output the instructions required to put the
     /// specified constant into the specified register.
@@ -303,6 +310,102 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *F) {
   }
 }
 
+void V8ISel::SelectPHINodes() {
+  const TargetInstrInfo &TII = *TM.getInstrInfo();
+  const Function &LF = *F->getFunction();  // The LLVM function...
+  for (Function::const_iterator I = LF.begin(), E = LF.end(); I != E; ++I) {
+    const BasicBlock *BB = I;
+    MachineBasicBlock &MBB = *MBBMap[I];
+
+    // Loop over all of the PHI nodes in the LLVM basic block...
+    MachineBasicBlock::iterator PHIInsertPoint = MBB.begin();
+    for (BasicBlock::const_iterator I = BB->begin();
+         PHINode *PN = const_cast<PHINode*>(dyn_cast<PHINode>(I)); ++I) {
+
+      // Create a new machine instr PHI node, and insert it.
+      unsigned PHIReg = getReg(*PN);
+      MachineInstr *PhiMI = BuildMI(MBB, PHIInsertPoint,
+                                    V8::PHI, PN->getNumOperands(), PHIReg);
+
+      MachineInstr *LongPhiMI = 0;
+      if (PN->getType() == Type::LongTy || PN->getType() == Type::ULongTy)
+        LongPhiMI = BuildMI(MBB, PHIInsertPoint,
+                            V8::PHI, PN->getNumOperands(), PHIReg+1);
+
+      // PHIValues - Map of blocks to incoming virtual registers.  We use this
+      // so that we only initialize one incoming value for a particular block,
+      // even if the block has multiple entries in the PHI node.
+      //
+      std::map<MachineBasicBlock*, unsigned> PHIValues;
+
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+        MachineBasicBlock *PredMBB = 0;
+        for (MachineBasicBlock::pred_iterator PI = MBB.pred_begin (),
+             PE = MBB.pred_end (); PI != PE; ++PI)
+          if (PN->getIncomingBlock(i) == (*PI)->getBasicBlock()) {
+            PredMBB = *PI;
+            break;
+          }
+        assert (PredMBB && "Couldn't find incoming machine-cfg edge for phi");
+        
+        unsigned ValReg;
+        std::map<MachineBasicBlock*, unsigned>::iterator EntryIt =
+          PHIValues.lower_bound(PredMBB);
+
+        if (EntryIt != PHIValues.end() && EntryIt->first == PredMBB) {
+          // We already inserted an initialization of the register for this
+          // predecessor.  Recycle it.
+          ValReg = EntryIt->second;
+
+        } else {        
+          // Get the incoming value into a virtual register.
+          //
+          Value *Val = PN->getIncomingValue(i);
+
+          // If this is a constant or GlobalValue, we may have to insert code
+          // into the basic block to compute it into a virtual register.
+          if ((isa<Constant>(Val) && !isa<ConstantExpr>(Val)) ||
+              isa<GlobalValue>(Val)) {
+            // Simple constants get emitted at the end of the basic block,
+            // before any terminator instructions.  We "know" that the code to
+            // move a constant into a register will never clobber any flags.
+            ValReg = getReg(Val, PredMBB, PredMBB->getFirstTerminator());
+          } else {
+            // Because we don't want to clobber any values which might be in
+            // physical registers with the computation of this constant (which
+            // might be arbitrarily complex if it is a constant expression),
+            // just insert the computation at the top of the basic block.
+            MachineBasicBlock::iterator PI = PredMBB->begin();
+            
+            // Skip over any PHI nodes though!
+            while (PI != PredMBB->end() && PI->getOpcode() == V8::PHI)
+              ++PI;
+            
+            ValReg = getReg(Val, PredMBB, PI);
+          }
+
+          // Remember that we inserted a value for this PHI for this predecessor
+          PHIValues.insert(EntryIt, std::make_pair(PredMBB, ValReg));
+        }
+
+        PhiMI->addRegOperand(ValReg);
+        PhiMI->addMachineBasicBlockOperand(PredMBB);
+        if (LongPhiMI) {
+          LongPhiMI->addRegOperand(ValReg+1);
+          LongPhiMI->addMachineBasicBlockOperand(PredMBB);
+        }
+      }
+
+      // Now that we emitted all of the incoming values for the PHI node, make
+      // sure to reposition the InsertPoint after the PHI that we just added.
+      // This is needed because we might have inserted a constant into this
+      // block, right after the PHI's which is before the old insert point!
+      PHIInsertPoint = LongPhiMI ? LongPhiMI : PhiMI;
+      ++PHIInsertPoint;
+    }
+  }
+}
+
 bool V8ISel::runOnFunction(Function &Fn) {
   // First pass over the function, lower any unknown intrinsic functions
   // with the IntrinsicLowering class.
@@ -327,7 +430,7 @@ bool V8ISel::runOnFunction(Function &Fn) {
   visit(Fn);
   
   // Select the PHI nodes
-  //SelectPHINodes();
+  SelectPHINodes();
   
   RegMap.clear();
   MBBMap.clear();
@@ -421,16 +524,16 @@ void V8ISel::visitStoreInst(StoreInst &I) {
   unsigned PtrReg = getReg (I.getOperand (1));
   switch (getClassB (SrcVal->getType ())) {
    case cByte:
-    BuildMI (BB, V8::STBrm, 1, SrcReg).addReg (PtrReg).addSImm(0);
+    BuildMI (BB, V8::STBrm, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
     return;
    case cShort:
-    BuildMI (BB, V8::STHrm, 1, SrcReg).addReg (PtrReg).addSImm(0);
+    BuildMI (BB, V8::STHrm, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
     return;
    case cInt:
-    BuildMI (BB, V8::STrm, 1, SrcReg).addReg (PtrReg).addSImm(0);
+    BuildMI (BB, V8::STrm, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
     return;
    case cLong:
-    BuildMI (BB, V8::STDrm, 1, SrcReg).addReg (PtrReg).addSImm(0);
+    BuildMI (BB, V8::STDrm, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
     return;
    default:
     std::cerr << "Store instruction not handled: " << I;
@@ -499,32 +602,22 @@ static inline BasicBlock *getBlockAfter(BasicBlock *BB) {
 /// visitBranchInst - Handles conditional and unconditional branches.
 ///
 void V8ISel::visitBranchInst(BranchInst &I) {
-  // Update machine-CFG edges
-  BB->addSuccessor (MBBMap[I.getSuccessor(0)]);
-  if (I.isConditional())
-    BB->addSuccessor (MBBMap[I.getSuccessor(1)]);
-
-  BasicBlock *NextBB = getBlockAfter(I.getParent());  // BB after current one
-
   BasicBlock *takenSucc = I.getSuccessor (0);
-  if (!I.isConditional()) {  // Unconditional branch?
-    if (I.getSuccessor(0) != NextBB)
-      BuildMI (BB, V8::BA, 1).addMBB (MBBMap[takenSucc]);
-      return;
-  }
+  MachineBasicBlock *takenSuccMBB = MBBMap[takenSucc];
+  BB->addSuccessor (takenSuccMBB);
+  if (I.isConditional()) {  // conditional branch
+    BasicBlock *notTakenSucc = I.getSuccessor (1);
+    MachineBasicBlock *notTakenSuccMBB = MBBMap[notTakenSucc];
+    BB->addSuccessor (notTakenSuccMBB);
 
-  unsigned CondReg = getReg (I.getCondition ());
-  BasicBlock *notTakenSucc = I.getSuccessor (1);
-  // Set Z condition code if CondReg was false
-  BuildMI (BB, V8::CMPri, 2).addSImm (0).addReg (CondReg);
-  if (notTakenSucc == NextBB) {
-    if (takenSucc != NextBB)
-      BuildMI (BB, V8::BNE, 1).addMBB (MBBMap[takenSucc]);
-  } else {
-    BuildMI (BB, V8::BE, 1).addMBB (MBBMap[notTakenSucc]);
-    if (takenSucc != NextBB)
-      BuildMI (BB, V8::BA, 1).addMBB (MBBMap[takenSucc]);
+    // CondReg=(<condition>);
+    // If (CondReg==0) goto notTakenSuccMBB;
+    unsigned CondReg = getReg (I.getCondition ());
+    BuildMI (BB, V8::CMPri, 2).addSImm (0).addReg (CondReg);
+    BuildMI (BB, V8::BE, 1).addMBB (notTakenSuccMBB);
   }
+  // goto takenSuccMBB;
+  BuildMI (BB, V8::BA, 1).addMBB (takenSuccMBB);
 }
 
 /// emitGEPOperation - Common code shared between visitGetElementPtrInst and
@@ -714,29 +807,62 @@ void V8ISel::visitSetCondInst(Instruction &I) {
    V8::BLEU, V8::BLE,        // setle = bleu    ble
    V8::BCC,  V8::BGE         // setge = bcc     bge
   };
-  unsigned Opcode = OpcodeTab[BranchIdx + (Ty->isSigned() ? 1 : 0)];
-  MachineBasicBlock *Copy1MBB, *Copy0MBB, *CopyCondMBB;
-  MachineBasicBlock::iterator IP;
-#if 0
-  // Cond. Branch from BB --> either Copy1MBB or Copy0MBB --> CopyCondMBB
-  // Then once we're done with the SetCC, BB = CopyCondMBB.
-  BasicBlock *LLVM_BB = BB.getBasicBlock ();
-  unsigned Cond0Reg = makeAnotherReg (I.getType ());
-  unsigned Cond1Reg = makeAnotherReg (I.getType ());
-  F->getBasicBlockList ().push_back (Copy1MBB = new MachineBasicBlock (LLVM_BB));
-  F->getBasicBlockList ().push_back (Copy0MBB = new MachineBasicBlock (LLVM_BB));
-  F->getBasicBlockList ().push_back (CopyCondMBB = new MachineBasicBlock (LLVM_BB));
-  BuildMI (BB, Opcode, 1).addMBB (Copy1MBB);
-  BuildMI (BB, V8::BA, 1).addMBB (Copy0MBB);
-  IP = Copy1MBB->begin ();
-  BuildMI (*Copy1MBB, IP, V8::ORri, 2, Cond1Reg).addZImm (1).addReg (V8::G0);
-  BuildMI (*Copy1MBB, IP, V8::BA, 1).addMBB (CopyCondMBB);
-  IP = Copy0MBB->begin ();
-  BuildMI (*Copy0MBB, IP, V8::ORri, 2, Cond0Reg).addZImm (0).addReg (V8::G0);
-  BuildMI (*Copy0MBB, IP, V8::BA, 1).addMBB (CopyCondMBB);
-  // What should go in CopyCondMBB: PHI, then OR to copy cond. reg to DestReg
-#endif
-  visitInstruction(I);
+  unsigned Opcode = OpcodeTab[2*BranchIdx + (Ty->isSigned() ? 1 : 0)];
+
+  MachineBasicBlock *thisMBB = BB;
+  const BasicBlock *LLVM_BB = BB->getBasicBlock ();
+  //  thisMBB:
+  //  ...
+  //   subcc %reg0, %reg1, %g0
+  //   bCC copy1MBB
+  //   ba copy0MBB
+
+  // FIXME: we wouldn't need copy0MBB (we could fold it into thisMBB)
+  // if we could insert other, non-terminator instructions after the
+  // bCC. But MBB->getFirstTerminator() can't understand this.
+  MachineBasicBlock *copy1MBB = new MachineBasicBlock (LLVM_BB);
+  F->getBasicBlockList ().push_back (copy1MBB);
+  BuildMI (BB, Opcode, 1).addMBB (copy1MBB);
+  MachineBasicBlock *copy0MBB = new MachineBasicBlock (LLVM_BB);
+  F->getBasicBlockList ().push_back (copy0MBB);
+  BuildMI (BB, V8::BA, 1).addMBB (copy0MBB);
+  // Update machine-CFG edges
+  BB->addSuccessor (copy1MBB);
+  BB->addSuccessor (copy0MBB);
+
+  //  copy0MBB:
+  //   %FalseValue = or %G0, 0
+  //   ba sinkMBB
+  BB = copy0MBB;
+  unsigned FalseValue = makeAnotherReg (I.getType ());
+  BuildMI (BB, V8::ORri, 2, FalseValue).addReg (V8::G0).addZImm (0);
+  MachineBasicBlock *sinkMBB = new MachineBasicBlock (LLVM_BB);
+  F->getBasicBlockList ().push_back (sinkMBB);
+  BuildMI (BB, V8::BA, 1).addMBB (sinkMBB);
+  // Update machine-CFG edges
+  BB->addSuccessor (sinkMBB);
+
+  DEBUG (std::cerr << "thisMBB is at " << (void*)thisMBB << "\n");
+  DEBUG (std::cerr << "copy1MBB is at " << (void*)copy1MBB << "\n");
+  DEBUG (std::cerr << "copy0MBB is at " << (void*)copy0MBB << "\n");
+  DEBUG (std::cerr << "sinkMBB is at " << (void*)sinkMBB << "\n");
+
+  //  copy1MBB:
+  //   %TrueValue = or %G0, 1
+  //   ba sinkMBB
+  BB = copy1MBB;
+  unsigned TrueValue = makeAnotherReg (I.getType ());
+  BuildMI (BB, V8::ORri, 2, TrueValue).addReg (V8::G0).addZImm (1);
+  BuildMI (BB, V8::BA, 1).addMBB (sinkMBB);
+  // Update machine-CFG edges
+  BB->addSuccessor (sinkMBB);
+
+  //  sinkMBB:
+  //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, copy1MBB ]
+  //  ...
+  BB = sinkMBB;
+  BuildMI (BB, V8::PHI, 4, DestReg).addReg (FalseValue)
+    .addMBB (copy0MBB).addReg (TrueValue).addMBB (copy1MBB);
 }
 
 
