@@ -121,6 +121,8 @@ private:
 
   bool ExpandShift(unsigned Opc, SDOperand Op, SDOperand Amt,
                    SDOperand &Lo, SDOperand &Hi);
+  void ExpandAddSub(bool isAdd, SDOperand Op, SDOperand Amt,
+                    SDOperand &Lo, SDOperand &Hi);
 
   SDOperand getIntPtrConstant(uint64_t Val) {
     return DAG.getConstant(Val, TLI.getPointerTy());
@@ -753,6 +755,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   }
+  case ISD::ADD_PARTS:
+  case ISD::SUB_PARTS: {
+    std::vector<SDOperand> Ops;
+    bool Changed = false;
+    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+      Ops.push_back(LegalizeOp(Node->getOperand(i)));
+      Changed |= Ops.back() != Node->getOperand(i);
+    }
+    if (Changed)
+      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Ops);
+    break;
+  }
   case ISD::ADD:
   case ISD::SUB:
   case ISD::MUL:
@@ -1183,6 +1197,27 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   return Result;
 }
 
+/// ExpandAddSub - Find a clever way to expand this add operation into
+/// subcomponents.
+void SelectionDAGLegalize::ExpandAddSub(bool isAdd, SDOperand LHS,SDOperand RHS,
+                                        SDOperand &Lo, SDOperand &Hi) {
+  // Expand the subcomponents.
+  SDOperand LHSL, LHSH, RHSL, RHSH;
+  ExpandOp(LHS, LHSL, LHSH);
+  ExpandOp(RHS, RHSL, RHSH);
+
+  // Convert this add to the appropriate ADDC pair.  The low part has no carry
+  // in.
+  unsigned Opc = isAdd ? ISD::ADD_PARTS : ISD::SUB_PARTS;
+  std::vector<SDOperand> Ops;
+  Ops.push_back(LHSL);
+  Ops.push_back(LHSH);
+  Ops.push_back(RHSL);
+  Ops.push_back(RHSH);
+  Lo = DAG.getNode(Opc, LHSL.getValueType(), Ops);
+  Hi = Lo.getValue(1);
+}
+
 /// ExpandShift - Try to find a clever way to expand this shift operation out to
 /// smaller elements.  If we can't find a way that is more efficient than a
 /// libcall on this target, return false.  Otherwise, return true with the
@@ -1444,8 +1479,12 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     LibCallName = "__lshrdi3";
     break;
 
-  case ISD::ADD:  LibCallName = "__adddi3"; break;
-  case ISD::SUB:  LibCallName = "__subdi3"; break;
+  case ISD::ADD:
+    ExpandAddSub(true, Node->getOperand(0), Node->getOperand(1), Lo, Hi);
+    break;
+  case ISD::SUB:
+    ExpandAddSub(false, Node->getOperand(0), Node->getOperand(1), Lo, Hi);
+    break;
   case ISD::MUL:  LibCallName = "__muldi3"; break;
   case ISD::SDIV: LibCallName = "__divdi3"; break;
   case ISD::UDIV: LibCallName = "__udivdi3"; break;
