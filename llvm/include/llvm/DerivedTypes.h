@@ -23,7 +23,7 @@ class DerivedType : public Type {
   char isRefining;                                   // Used for recursive types
 
 protected:
-  inline DerivedType(const string &Name, PrimitiveID id) : Type(Name, id) {
+  inline DerivedType(PrimitiveID id) : Type("", id) {
     isRefining = false;
   }
 
@@ -145,12 +145,11 @@ public:
 };
 
 
-// CompositeType - Common super class of ArrayType and StructType...
+// CompositeType - Common super class of ArrayType, StructType, and PointerType
 //
 class CompositeType : public DerivedType {
 protected:
-  inline CompositeType(const string &Name, PrimitiveID id)
-    : DerivedType(Name, id) { }
+  inline CompositeType(PrimitiveID id) : DerivedType(id) { }
 
 public:
 
@@ -170,69 +169,8 @@ public:
   static inline bool classof(const CompositeType *T) { return true; }
   static inline bool classof(const Type *T) {
     return T->getPrimitiveID() == ArrayTyID || 
-           T->getPrimitiveID() == StructTyID;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<const Type>(V));
-  }
-};
-
-
-class ArrayType : public CompositeType {
-private:
-  PATypeHandle<Type> ElementType;
-  int NumElements;       // >= 0 for sized array, -1 for unbounded/unknown array
-
-  ArrayType(const ArrayType &);                   // Do not implement
-  const ArrayType &operator=(const ArrayType &);  // Do not implement
-protected:
-  // This should really be private, but it squelches a bogus warning
-  // from GCC to make them protected:  warning: `class ArrayType' only 
-  // defines private constructors and has no friends
-
-
-  // Private ctor - Only can be created by a static member...
-  ArrayType(const Type *ElType, int NumEl);
-public:
-
-  inline const Type *getElementType() const { return ElementType; }
-  inline int         getNumElements() const { return NumElements; }
-
-  inline bool isSized()   const { return NumElements >= 0; }
-  inline bool isUnsized() const { return NumElements == -1; }
-
-  virtual const Type *getContainedType(unsigned i) const { 
-    return i == 0 ? ElementType.get() : 0;
-  }
-  virtual unsigned getNumContainedTypes() const { return 1; }
-
-  // getTypeAtIndex - Given an index value into the type, return the type of the
-  // element.  For an arraytype, there is only one subtype...
-  //
-  virtual const Type *getTypeAtIndex(const Value *V) const {
-    return ElementType.get();
-  }
-  virtual bool indexValid(const Value *V) const {
-    return V->getType() == Type::UIntTy;   // Must be an unsigned int index
-  }
-
-  // getIndexType - Return the type required of indices for this composite.
-  // For structures, this is ubyte, for arrays, this is uint
-  //
-  virtual const Type *getIndexType() const { return Type::UIntTy; }
-
-  // refineAbstractType - Called when a contained type is found to be more
-  // concrete - this could potentially change us from an abstract type to a
-  // concrete type.
-  //
-  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
-
-  static ArrayType *get(const Type *ElementType, int NumElements = -1);
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ArrayType *T) { return true; }
-  static inline bool classof(const Type *T) {
-    return T->getPrimitiveID() == ArrayTyID;
+           T->getPrimitiveID() == StructTyID ||
+           T->getPrimitiveID() == PointerTyID;
   }
   static inline bool classof(const Value *V) {
     return isa<Type>(V) && classof(cast<const Type>(V));
@@ -296,10 +234,94 @@ public:
 };
 
 
-class PointerType : public DerivedType {
-private:
-  PATypeHandle<Type> ValueType;
+// SequentialType - This is the superclass of the array and pointer type
+// classes.  Both of these represent "arrays" in memory.  The array type
+// represents a specifically sized array, pointer types are unsized/unknown size
+// arrays.  SequentialType holds the common features of both, which stem from
+// the fact that both lay their components out in memory identically.
+//
+class SequentialType : public CompositeType {
+  SequentialType(const SequentialType &);                  // Do not implement!
+  const SequentialType &operator=(const SequentialType &); // Do not implement!
+protected:
+  PATypeHandle<Type> ElementType;
 
+  SequentialType(PrimitiveID TID, const Type *ElType)
+    : CompositeType(TID), ElementType(PATypeHandle<Type>(ElType, this)) {
+  }
+public:
+
+  inline const Type *getElementType() const { return ElementType; }
+
+  virtual const Type *getContainedType(unsigned i) const { 
+    return i == 0 ? ElementType.get() : 0;
+  }
+  virtual unsigned getNumContainedTypes() const { return 1; }
+
+  // getTypeAtIndex - Given an index value into the type, return the type of the
+  // element.  For sequential types, there is only one subtype...
+  //
+  virtual const Type *getTypeAtIndex(const Value *V) const {
+    return ElementType.get();
+  }
+  virtual bool indexValid(const Value *V) const {
+    return V->getType() == Type::UIntTy;   // Must be an unsigned int index
+  }
+
+  // getIndexType() - Return the type required of indices for this composite.
+  // For structures, this is ubyte, for arrays, this is uint
+  //
+  virtual const Type *getIndexType() const { return Type::UIntTy; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const SequentialType *T) { return true; }
+  static inline bool classof(const Type *T) {
+    return T->getPrimitiveID() == ArrayTyID ||
+           T->getPrimitiveID() == PointerTyID;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Type>(V) && classof(cast<const Type>(V));
+  }
+};
+
+
+class ArrayType : public SequentialType {
+  unsigned NumElements;
+
+  ArrayType(const ArrayType &);                   // Do not implement
+  const ArrayType &operator=(const ArrayType &);  // Do not implement
+protected:
+  // This should really be private, but it squelches a bogus warning
+  // from GCC to make them protected:  warning: `class ArrayType' only 
+  // defines private constructors and has no friends
+
+
+  // Private ctor - Only can be created by a static member...
+  ArrayType(const Type *ElType, unsigned NumEl);
+public:
+  inline unsigned    getNumElements() const { return NumElements; }
+
+  // refineAbstractType - Called when a contained type is found to be more
+  // concrete - this could potentially change us from an abstract type to a
+  // concrete type.
+  //
+  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
+
+  static ArrayType *get(const Type *ElementType, unsigned NumElements);
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ArrayType *T) { return true; }
+  static inline bool classof(const Type *T) {
+    return T->getPrimitiveID() == ArrayTyID;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Type>(V) && classof(cast<const Type>(V));
+  }
+};
+
+
+
+class PointerType : public SequentialType {
   PointerType(const PointerType &);                   // Do not implement
   const PointerType &operator=(const PointerType &);  // Do not implement
 protected:
@@ -311,14 +333,7 @@ protected:
   // Private ctor - Only can be created by a static member...
   PointerType(const Type *ElType);
 public:
-
-  inline const Type *getElementType() const { return ValueType; }
-
-  virtual const Type *getContainedType(unsigned i) const { 
-    return i == 0 ? ValueType.get() : 0;
-  }
-  virtual unsigned getNumContainedTypes() const { return 1; }
-
+  // PointerType::get - Named constructor for pointer types...
   static PointerType *get(const Type *ElementType);
 
   // refineAbstractType - Called when a contained type is found to be more
@@ -375,6 +390,7 @@ public:
 // the code.  Hence this bit of uglyness.
 //
 template <class TypeSubClass> void PATypeHandle<TypeSubClass>::addUser() {
+  assert(Ty && "Type Handle has a null type!");
   if (Ty->isAbstract())
     cast<DerivedType>(Ty)->addAbstractTypeUser(User);
 }
