@@ -9,9 +9,9 @@
 #ifndef LLVM_ANALYSIS_MODULEANALYZER_H
 #define LLVM_ANALYSIS_MODULEANALYZER_H
 
-#include "llvm/ConstantPool.h"
 #include <set>
 
+class Type;
 class Module;
 class Method;
 class BasicBlock;
@@ -33,11 +33,6 @@ protected:
   //
   bool processModule(const Module *M);
 
-  //===--------------------------------------------------------------------===//
-  //  Stages of processing Module level information
-  //
-  virtual bool processConstPool(const ConstantPool &CP, bool isMethod);
-
   // processType - This callback occurs when an derived type is discovered
   // at the class level. This activity occurs when processing a constant pool.
   //
@@ -48,27 +43,6 @@ protected:
   //
   virtual bool processMethods(const Module *M);
 
-  //===--------------------------------------------------------------------===//
-  //  Stages of processing a constant pool
-  //
-
-  // processConstPoolPlane - Called once for every populated plane in the
-  // constant pool.  The default action is to do nothing.  The processConstPool
-  // method does the iteration over constants.
-  //
-  virtual bool processConstPoolPlane(const ConstantPool &CP,
-				     const ConstantPool::PlaneType &Pl, 
-				     bool isMethod) {
-    return false;
-  }
-
-  // processConstant is called once per each constant in the constant pool.  It
-  // traverses the constant pool such that it visits each constant in the
-  // order of its type.  Thus, all 'int' typed constants shall be visited 
-  // sequentially, etc...
-  //
-  virtual bool processConstant(const ConstPoolVal *CPV) { return false; }
-
   // visitMethod - This member is called after the constant pool has been 
   // processed.  The default implementation of this is a noop.
   //
@@ -76,8 +50,6 @@ protected:
 
   //===--------------------------------------------------------------------===//
   //  Stages of processing Method level information
-  //
-  // (processConstPool is also used above, with the isMethod flag set to true)
   //
 
   // processMethod - Process all aspects of a method.
