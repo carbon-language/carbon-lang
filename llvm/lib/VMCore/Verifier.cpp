@@ -238,6 +238,54 @@ void Verifier::visitFunction(Function &F) {
 // verifyBasicBlock - Verify that a basic block is well formed...
 //
 void Verifier::visitBasicBlock(BasicBlock &BB) {
+  // Check constraints that this basic block imposes on all of the PHI nodes in
+  // it.
+  if (isa<PHINode>(BB.front())) {
+    std::vector<BasicBlock*> Preds(pred_begin(&BB), pred_end(&BB));
+    std::sort(Preds.begin(), Preds.end());
+    
+    for (BasicBlock::iterator I = BB.begin();
+         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+
+      // Ensure that PHI nodes have at least one entry!
+      Assert1(PN->getNumIncomingValues() != 0,
+              "PHI nodes must have at least one entry.  If the block is dead, "
+              "the PHI should be removed!", PN);
+      Assert1(PN->getNumIncomingValues() >= Preds.size(),
+              "PHINode has more entries than the basic block has predecessors!",
+              PN);
+      Assert1(PN->getNumIncomingValues() <= Preds.size(),
+              "PHINode has less entries than the basic block has predecessors!",
+              PN);
+      
+      // Get and sort all incoming values in the PHI node...
+      std::vector<std::pair<BasicBlock*, Value*> > Values;
+      Values.reserve(PN->getNumIncomingValues());
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        Values.push_back(std::make_pair(PN->getIncomingBlock(i),
+                                        PN->getIncomingValue(i)));
+      std::sort(Values.begin(), Values.end());
+      
+      for (unsigned i = 0, e = Values.size(); i != e; ++i) {
+        // Check to make sure that if there is more than one entry for a
+        // particular basic block in this PHI node, that the incoming values are
+        // all identical.
+        //
+        Assert4(i == 0 || Values[i].first  != Values[i-1].first ||
+                Values[i].second == Values[i-1].second,
+                "PHI node has multiple entries for the same basic block with "
+                "different incoming values!", PN, Values[i].first,
+                Values[i].second, Values[i-1].second);
+        
+        // Check to make sure that the predecessors and PHI node entries are
+        // matched up.
+        Assert3(Values[i].first == Preds[i],
+                "PHI node entries do not match predecessors!", PN,
+                Values[i].first, Preds[i]);        
+      }
+    }
+  }
+
   // Ensure that basic blocks have terminators!
   Assert1(BB.getTerminator(), "Basic Block does not have terminator!", &BB);
 }
@@ -279,61 +327,11 @@ void Verifier::visitPHINode(PHINode &PN) {
   // This can be tested by checking whether the instruction before this is
   // either nonexistant (because this is begin()) or is a PHI node.  If not,
   // then there is some other instruction before a PHI.
-  Assert2(PN.getPrev() == 0 || isa<PHINode>(PN.getPrev()),
+  Assert2(&PN.getParent()->front() == &PN || isa<PHINode>(PN.getPrev()),
           "PHI nodes not grouped at top of basic block!",
           &PN, PN.getParent());
 
-  // Ensure that PHI nodes have at least one entry!
-  Assert1(PN.getNumIncomingValues() != 0,
-          "PHI nodes must have at least one entry.  If the block is dead, "
-          "the PHI should be removed!",
-          &PN);
-
-  std::vector<BasicBlock*> Preds(pred_begin(PN.getParent()),
-                                 pred_end(PN.getParent()));
-  // Loop over all of the incoming values, make sure that there are
-  // predecessors for each one...
-  //
-  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
-    // Make sure all of the incoming values are the right types...
-    Assert2(PN.getType() == PN.getIncomingValue(i)->getType(),
-            "PHI node argument type does not agree with PHI node type!",
-            &PN, PN.getIncomingValue(i));
-
-    BasicBlock *BB = PN.getIncomingBlock(i);
-    std::vector<BasicBlock*>::iterator PI =
-      find(Preds.begin(), Preds.end(), BB);
-    Assert2(PI != Preds.end(), "PHI node has entry for basic block that"
-            " is not a predecessor!", &PN, BB);
-    Preds.erase(PI);
-  }
-  
-  // There should be no entries left in the predecessor list...
-  for (std::vector<BasicBlock*>::iterator I = Preds.begin(),
-         E = Preds.end(); I != E; ++I)
-    Assert2(0, "PHI node does not have entry for a predecessor basic block!",
-            &PN, *I);
-
-  // Now we go through and check to make sure that if there is more than one
-  // entry for a particular basic block in this PHI node, that the incoming
-  // values are all identical.
-  //
-  std::vector<std::pair<BasicBlock*, Value*> > Values;
-  Values.reserve(PN.getNumIncomingValues());
-  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
-    Values.push_back(std::make_pair(PN.getIncomingBlock(i),
-                                    PN.getIncomingValue(i)));
-
-  // Sort the Values vector so that identical basic block entries are adjacent.
-  std::sort(Values.begin(), Values.end());
-
-  // Check for identical basic blocks with differing incoming values...
-  for (unsigned i = 1, e = PN.getNumIncomingValues(); i < e; ++i)
-    Assert4(Values[i].first  != Values[i-1].first ||
-            Values[i].second == Values[i-1].second,
-            "PHI node has multiple entries for the same basic block with "
-            "different incoming values!", &PN, Values[i].first,
-            Values[i].second, Values[i-1].second);
+  // All other PHI node constraints are checked in the visitBasicBlock method.
 
   visitInstruction(PN);
 }
@@ -442,6 +440,17 @@ void Verifier::visitInstruction(Instruction &I) {
   BasicBlock *BB = I.getParent();  
   Assert1(BB, "Instruction not embedded in basic block!", &I);
 
+  if (!isa<PHINode>(I)) {   // Check that non-phi nodes are not self referential
+    for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
+         UI != UE; ++UI)
+      Assert1(*UI != (User*)&I,
+              "Only PHI nodes may reference their own value!", &I);
+  }
+
+  // Check that void typed values don't have names
+  Assert1(I.getType() != Type::VoidTy || !I.hasName(),
+          "Instruction has a name, but provides a void value!", &I);
+
   // Check that all uses of the instruction, if they are instructions
   // themselves, actually have parent basic blocks.  If the use is not an
   // instruction, it is an error!
@@ -455,53 +464,31 @@ void Verifier::visitInstruction(Instruction &I) {
             " embeded in a basic block!", &I, Used);
   }
 
-  if (!isa<PHINode>(I)) {   // Check that non-phi nodes are not self referential
-    for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
-         UI != UE; ++UI)
-      Assert1(*UI != (User*)&I,
-              "Only PHI nodes may reference their own value!", &I);
-  }
-
-  // Check that void typed values don't have names
-  Assert1(I.getType() != Type::VoidTy || !I.hasName(),
-          "Instruction has a name, but provides a void value!", &I);
-
-  // Check that a definition dominates all of its uses.
-  //
-  for (User::use_iterator UI = I.use_begin(), UE = I.use_end();
-       UI != UE; ++UI) {
-    Instruction *Use = cast<Instruction>(*UI);
-      
-    // PHI nodes are more difficult than other nodes because they actually
-    // "use" the value in the predecessor basic blocks they correspond to.
-    if (PHINode *PN = dyn_cast<PHINode>(Use)) {
-      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-        if (&I == PN->getIncomingValue(i)) {
-          // Make sure that I dominates the end of pred(i)
-          BasicBlock *Pred = PN->getIncomingBlock(i);
-          
-          // Use must be dominated by by definition unless use is unreachable!
-          Assert2(DS->dominates(BB, Pred) ||
-                  !DS->dominates(&BB->getParent()->getEntryBlock(), Pred),
-                  "Instruction does not dominate all uses!",
-                  &I, PN);
-        }
-
-    } else {
-      // Use must be dominated by by definition unless use is unreachable!
-      Assert2(DS->dominates(&I, Use) ||
-              !DS->dominates(&BB->getParent()->getEntryBlock(),
-                             Use->getParent()),
-              "Instruction does not dominate all uses!", &I, Use);
-    }
-  }
-
-  // Check to make sure that the "address of" an intrinsic function is never
-  // taken.
-  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
+    // Check to make sure that the "address of" an intrinsic function is never
+    // taken.
     if (Function *F = dyn_cast<Function>(I.getOperand(i)))
       Assert1(!F->isIntrinsic() || (i == 0 && isa<CallInst>(I)),
               "Cannot take the address of an intrinsic!", &I);
+
+    else if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(i))) {
+      // Check that a definition dominates all of its uses.
+      //
+      if (!isa<PHINode>(I)) {
+        // Definition must dominate use unless use is unreachable!
+        Assert2(DS->dominates(Op->getParent(), BB) ||
+                !DS->dominates(&BB->getParent()->getEntryBlock(), BB),
+                "Instruction does not dominate all uses!", Op, &I);
+      } else {
+        // PHI nodes are more difficult than other nodes because they actually
+        // "use" the value in the predecessor basic blocks they correspond to.
+        BasicBlock *PredBB = cast<BasicBlock>(I.getOperand(i+1));
+        Assert2(DS->dominates(Op->getParent(), PredBB) ||
+                !DS->dominates(&BB->getParent()->getEntryBlock(), PredBB),
+                "Instruction does not dominate all uses!", Op, &I);
+      }
+    }
+  }
 }
 
 /// visitIntrinsicFunction - Allow intrinsics to be verified in different ways.
