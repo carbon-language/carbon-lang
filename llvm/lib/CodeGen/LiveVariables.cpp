@@ -237,9 +237,9 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       }
 
       // Loop over implicit defs, defining them.
-      if (const unsigned *ImplicitDefs = MID.ImplicitDefs)
-	for (unsigned i = 0; ImplicitDefs[i]; ++i)
-	  HandlePhysRegDef(ImplicitDefs[i], MI);
+      for (const unsigned *ImplicitDefs = MID.ImplicitDefs;
+           *ImplicitDefs; ++ImplicitDefs)
+        HandlePhysRegDef(*ImplicitDefs, MI);
 
       // Process all explicit defs...
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {

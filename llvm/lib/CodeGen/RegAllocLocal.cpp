@@ -551,13 +551,13 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       }
 
     // Loop over the implicit defs, spilling them as well.
-    if (const unsigned *ImplicitDefs = TID.ImplicitDefs)
-      for (unsigned i = 0; ImplicitDefs[i]; ++i) {
-        unsigned Reg = ImplicitDefs[i];
-        spillPhysReg(MBB, I, Reg);
-        PhysRegsUseOrder.push_back(Reg);
-        PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-      }
+    for (const unsigned *ImplicitDefs = TID.ImplicitDefs;
+         *ImplicitDefs; ++ImplicitDefs) {
+      unsigned Reg = *ImplicitDefs;
+      spillPhysReg(MBB, I, Reg);
+      PhysRegsUseOrder.push_back(Reg);
+      PhysRegsUsed[Reg] = 0;            // It is free and reserved now
+    }
 
     // Okay, we have allocated all of the source operands and spilled any values
     // that would be destroyed by defs of this instruction.  Loop over the
