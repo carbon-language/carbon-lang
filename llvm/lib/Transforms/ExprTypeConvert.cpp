@@ -586,9 +586,11 @@ bool ValueConvertableToType(Value *V, const Type *Ty,
   // It is safe to convert the specified value to the specified type IFF all of
   // the uses of the value can be converted to accept the new typed value.
   //
-  for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I)
-    if (!OperandConvertableToType(*I, V, Ty, ConvertedTypes))
-      return false;
+  if (V->getType() != Ty) {
+    for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I)
+      if (!OperandConvertableToType(*I, V, Ty, ConvertedTypes))
+        return false;
+  }
 
   return true;
 }
@@ -780,8 +782,44 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     assert (OI != I->op_end() && "Not using value!");
     unsigned OpNum = OI - I->op_begin();
 
-    if (OpNum == 0)
-      return false; // Can't convert method pointer type yet.  FIXME
+    // Are we trying to change the method pointer value to a new type?
+    if (OpNum == 0) {
+      PointerType *PTy = dyn_cast<PointerType>(Ty);
+      if (PTy == 0) return false;  // Can't convert to a non-pointer type...
+      MethodType *MTy = dyn_cast_or_null<MethodType>(PTy->getElementType());
+      if (MTy == 0) return false;  // Can't convert to a non ptr to method...
+
+      // Perform sanity checks to make sure that new method type has the
+      // correct number of arguments...
+      //
+      unsigned NumArgs = I->getNumOperands()-1;  // Don't include method ptr
+
+      // Cannot convert to a type that requires more fixed arguments than
+      // the call provides...
+      //
+      if (NumArgs < MTy->getParamTypes().size()) return false;
+      
+      // Unless this is a vararg method type, we cannot provide more arguments
+      // than are desired...
+      //
+      if (!MTy->isVarArg() && NumArgs > MTy->getParamTypes().size())
+        return false;
+
+      // Okay, at this point, we know that the call and the method type match
+      // number of arguments.  Now we see if we can convert the arguments
+      // themselves.
+      //
+      const MethodType::ParamTypes &PTs = MTy->getParamTypes();
+      for (unsigned i = 0, NA = PTs.size(); i < NA; ++i)
+        if (!PTs[i]->isLosslesslyConvertableTo(I->getOperand(i+1)->getType()))
+          return false;   // Operands must have compatible types!
+
+      // Okay, at this point, we know that all of the arguments can be
+      // converted.  We succeed if we can change the return type if
+      // neccesary...
+      //
+      return ValueConvertableToType(I, MTy->getReturnType(), CTMap);
+    }
     
     const PointerType *MPtr = cast<PointerType>(I->getOperand(0)->getType());
     const MethodType *MTy = cast<MethodType>(MPtr->getElementType());
@@ -1010,11 +1048,26 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     Value *Meth = I->getOperand(0);
     std::vector<Value*> Params(I->op_begin()+1, I->op_end());
 
-    std::vector<Value*>::iterator OI =
-      find(Params.begin(), Params.end(), OldVal);
-    assert (OI != Params.end() && "Not using value!");
+    if (Meth == OldVal) {   // Changing the method pointer?
+      PointerType *NewPTy = cast<PointerType>(NewVal->getType());
+      MethodType *NewTy = cast<MethodType>(NewPTy->getElementType());
+      const MethodType::ParamTypes &PTs = NewTy->getParamTypes();
 
-    *OI = NewVal;
+      // Convert over all of the call operands to their new types... but only
+      // convert over the part that is not in the vararg section of the call.
+      //
+      for (unsigned i = 0; i < PTs.size(); ++i)
+        Params[i] = ConvertExpressionToType(Params[i], PTs[i], VMC);
+      Meth = NewVal;  // Update call destination to new value
+
+    } else {                   // Changing an argument, must be in vararg area
+      std::vector<Value*>::iterator OI =
+        find(Params.begin(), Params.end(), OldVal);
+      assert (OI != Params.end() && "Not using value!");
+
+      *OI = NewVal;
+    }
+
     Res = new CallInst(Meth, Params, Name);
     break;
   }
