@@ -1,0 +1,42 @@
+/*===-- GCInterface.h - Public interface exposed by garbage collectors ----===*\
+|*
+|*                     The LLVM Compiler Infrastructure
+|*
+|* This file was developed by the LLVM research group and is distributed under
+|* the University of Illinois Open Source License. See LICENSE.TXT for details.
+|* 
+|*===----------------------------------------------------------------------===*|
+|* 
+|* This file defines the common public interface that must be exposed by all
+|* LLVM garbage collectors.
+|*
+\*===----------------------------------------------------------------------===*/
+
+#ifndef GCINTERFACE_H
+#define GCINTERFACE_H
+
+/* llvm_gc_initialize - This function is called to initalize the garbage
+ * collector.
+ */
+void llvm_gc_initialize();
+
+/* llvm_gc_allocate - This function allocates Size bytes from the heap and
+ * returns a pointer to it.
+ */
+void *llvm_gc_allocate(unsigned Size);
+
+/* llvm_gc_collect - This function forces a garbage collection cycle.
+ */
+void llvm_gc_collect();
+
+/* llvm_gc_read - This function should be implemented to include any read
+ * barrier code that is needed by the garbage collector.
+ */
+void *llvm_gc_read(void **P);
+
+/* llvm_gc_write - This function should be implemented to include any write
+ * barrier code that is needed by the garbage collector.
+ */
+void llvm_gc_write(void *V, void **P);
+
+#endif
