@@ -322,7 +322,6 @@ public:
 
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
 
-private:
   /// markHi32, markLo32, etc. - These methods must be accessed via
   /// corresponding methods in MachineInstr.  These methods are deprecated
   /// and only used by the SPARC v9 back-end.
@@ -332,6 +331,7 @@ private:
   void markHi64()      { flags |= HIFLAG64; }
   void markLo64()      { flags |= LOFLAG64; }
   
+private:
   /// setRegForValue - Replaces the Value with its corresponding physical
   /// register after register allocation is complete. This is deprecated
   /// and only used by the SPARC v9 back-end.
@@ -664,12 +664,6 @@ public:
   unsigned substituteValue(const Value* oldVal, Value* newVal,
                            bool defsOnly, bool notDefsAndUses,
                            bool& someArgsWereIgnored);
-
-  void setOperandHi32(unsigned i) { operands[i].markHi32(); }
-  void setOperandLo32(unsigned i) { operands[i].markLo32(); }
-  void setOperandHi64(unsigned i) { operands[i].markHi64(); }
-  void setOperandLo64(unsigned i) { operands[i].markLo64(); }
-  
   
   // SetRegForOperand -
   // SetRegForImplicitRef -
