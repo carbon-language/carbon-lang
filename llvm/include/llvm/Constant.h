@@ -37,11 +37,20 @@ public:
 
   virtual void print(std::ostream &O) const;
 
+  // isConstantExpr - Return true if this is a ConstantExpr
+  virtual bool isConstantExpr() const { return false; }
+  
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Constant *) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueType() == Value::ConstantVal;
   }
+
+  // WARNING: Only to be used by Bytecode & Assembly Parsers!  USER CODE SHOULD
+  // NOT USE THIS!!
+  // Returns the number of uses of OldV that were replaced.
+  virtual unsigned mutateReferences(Value* OldV, Value *NewV) { return 0; }
+  // END WARNING!!
 };
 
 #endif
