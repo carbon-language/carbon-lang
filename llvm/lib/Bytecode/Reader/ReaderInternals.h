@@ -24,8 +24,6 @@
 #define BCR_TRACE(n, X)
 #endif
 
-typedef unsigned char uchar;
-
 struct RawInst {       // The raw fields out of the bytecode stream...
   unsigned NumOperands;
   unsigned Opcode;
@@ -52,7 +50,7 @@ public:
     freeTable(ModuleValues);
   }
 
-  Module *ParseBytecode(const uchar *Buf, const uchar *EndBuf,
+  Module *ParseBytecode(const unsigned char *Buf, const unsigned char *EndBuf,
                         const std::string &ModuleID);
 
   std::string getError() const { return Error; }
@@ -128,24 +126,29 @@ private:
     }
   }
 
-  bool ParseModule          (const uchar * Buf, const uchar *End);
-  bool ParseVersionInfo     (const uchar *&Buf, const uchar *End);
-  bool ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End);
-  bool ParseSymbolTable   (const uchar *&Buf, const uchar *End, SymbolTable *);
-  bool ParseFunction      (const uchar *&Buf, const uchar *End);
-  bool ParseBasicBlock    (const uchar *&Buf, const uchar *End, BasicBlock *&);
-  bool ParseInstruction   (const uchar *&Buf, const uchar *End, Instruction *&,
-                           BasicBlock *BB /*HACK*/);
-  bool ParseRawInst       (const uchar *&Buf, const uchar *End, RawInst &);
+  bool ParseModule        (const unsigned char * Buf, const unsigned char *End);
+  bool ParseVersionInfo   (const unsigned char *&Buf, const unsigned char *End);
+  bool ParseModuleGlobalInfo(const unsigned char *&Buf, const unsigned char *E);
+  bool ParseSymbolTable   (const unsigned char *&Buf, const unsigned char *End,
+                           SymbolTable *);
+  bool ParseFunction      (const unsigned char *&Buf, const unsigned char *End);
+  bool ParseBasicBlock    (const unsigned char *&Buf, const unsigned char *End,
+                           BasicBlock *&);
+  bool ParseInstruction   (const unsigned char *&Buf, const unsigned char *End,
+                           Instruction *&, BasicBlock *BB /*HACK*/);
+  bool ParseRawInst       (const unsigned char *&Buf, const unsigned char *End,
+                           RawInst &);
 
-  bool ParseGlobalTypes(const uchar *&Buf, const uchar *EndBuf);
-  bool ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
+  bool ParseGlobalTypes(const unsigned char *&Buf, const unsigned char *EndBuf);
+  bool ParseConstantPool(const unsigned char *&Buf, const unsigned char *EndBuf,
 			 ValueTable &Tab, TypeValuesListTy &TypeTab);
-  bool parseConstantValue(const uchar *&Buf, const uchar *End,
+  bool parseConstantValue(const unsigned char *&Buf, const unsigned char *End,
                           const Type *Ty, Constant *&V);
-  bool parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
+  bool parseTypeConstants(const unsigned char *&Buf,
+                          const unsigned char *EndBuf,
 			  TypeValuesListTy &Tab, unsigned NumEntries);
-  const Type *parseTypeConstant(const uchar *&Buf, const uchar *EndBuf);
+  const Type *parseTypeConstant(const unsigned char *&Buf,
+                                const unsigned char *EndBuf);
 
   Value      *getValue(const Type *Ty, unsigned num, bool Create = true);
   const Type *getType(unsigned ID);
@@ -212,7 +215,8 @@ static inline unsigned getValueIDNumberFromPlaceHolder(Value *Val) {
   }
 }
 
-static inline bool readBlock(const uchar *&Buf, const uchar *EndBuf, 
+static inline bool readBlock(const unsigned char *&Buf,
+                             const unsigned char *EndBuf, 
 			     unsigned &Type, unsigned &Size) {
 #if DEBUG_OUTPUT
   bool Result = read(Buf, EndBuf, Type) || read(Buf, EndBuf, Size);

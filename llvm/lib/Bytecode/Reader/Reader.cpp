@@ -215,7 +215,8 @@ bool BytecodeParser::postResolveValues(ValueTable &ValTab) {
   return Error;
 }
 
-bool BytecodeParser::ParseBasicBlock(const uchar *&Buf, const uchar *EndBuf, 
+bool BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
+                                     const unsigned char *EndBuf, 
 				     BasicBlock *&BB) {
   BB = new BasicBlock();
 
@@ -237,7 +238,8 @@ bool BytecodeParser::ParseBasicBlock(const uchar *&Buf, const uchar *EndBuf,
   return false;
 }
 
-bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf,
+bool BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
+                                      const unsigned char *EndBuf,
 				      SymbolTable *ST) {
   while (Buf < EndBuf) {
     // Symtab block header: [num entries][type id number]
@@ -294,7 +296,8 @@ void BytecodeParser::ResolveReferencesToValue(Value *NewV, unsigned Slot) {
 }
 
 
-bool BytecodeParser::ParseFunction(const uchar *&Buf, const uchar *EndBuf) {
+bool BytecodeParser::ParseFunction(const unsigned char *&Buf,
+                                   const unsigned char *EndBuf) {
   // Clear out the local values table...
   if (FunctionSignatureList.empty()) {
     Error = "Function found, but FunctionSignatureList empty!";
@@ -390,7 +393,8 @@ bool BytecodeParser::ParseFunction(const uchar *&Buf, const uchar *EndBuf) {
   return false;
 }
 
-bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End){
+bool BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
+                                           const unsigned char *End){
   if (!FunctionSignatureList.empty()) {
     Error = "Two ModuleGlobalInfo packets found!";
     return true;  // Two ModuleGlobal blocks?
@@ -488,7 +492,8 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End){
   return false;
 }
 
-bool BytecodeParser::ParseVersionInfo(const uchar *&Buf, const uchar *EndBuf) {
+bool BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
+                                      const unsigned char *EndBuf) {
   unsigned Version;
   if (read_vbr(Buf, EndBuf, Version)) return true;
 
@@ -538,7 +543,8 @@ bool BytecodeParser::ParseVersionInfo(const uchar *&Buf, const uchar *EndBuf) {
   return false;
 }
 
-bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf) {
+bool BytecodeParser::ParseModule(const unsigned char *Buf,
+                                 const unsigned char *EndBuf) {
   unsigned Type, Size;
   if (readBlock(Buf, EndBuf, Type, Size)) return true;
   if (Type != BytecodeFormat::Module || Buf+Size != EndBuf) {
@@ -625,7 +631,8 @@ static inline Module *Error(std::string *ErrorStr, const char *Message) {
   return 0;
 }
 
-Module *BytecodeParser::ParseBytecode(const uchar *Buf, const uchar *EndBuf,
+Module *BytecodeParser::ParseBytecode(const unsigned char *Buf,
+                                      const unsigned char *EndBuf,
                                       const std::string &ModuleID) {
   unsigned Sig;
   // Read and check signature...
@@ -703,7 +710,7 @@ Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
     munmap((char*)Buffer, Length);
   } else {                              // Read from stdin
     int BlockSize;
-    uchar Buffer[4096*4];
+    unsigned char Buffer[4096*4];
     std::vector<unsigned char> FileData;
 
     // Read in all of the data from stdin, we cannot mmap stdin...
@@ -719,9 +726,10 @@ Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
 
 #define ALIGN_PTRS 0
 #if ALIGN_PTRS
-    uchar *Buf = (uchar*)mmap(0, FileData.size(), PROT_READ|PROT_WRITE, 
-			      MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-    assert((Buf != (uchar*)-1) && "mmap returned error!");
+    unsigned char *Buf =
+      (unsigned char*)mmap(0, FileData.size(), PROT_READ|PROT_WRITE, 
+                           MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+    assert((Buf != (unsigned char*)-1) && "mmap returned error!");
     memcpy(Buf, &FileData[0], FileData.size());
 #else
     unsigned char *Buf = &FileData[0];

@@ -17,7 +17,8 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 
-bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf, 
+bool BytecodeParser::ParseRawInst(const unsigned char *&Buf,
+                                  const unsigned char *EndBuf, 
 				  RawInst &Result) {
   unsigned Op, Typ;
   if (read(Buf, EndBuf, Op)) return true;
@@ -113,7 +114,8 @@ bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf,
 }
 
 
-bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
+bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
+                                      const unsigned char *EndBuf,
 				      Instruction *&Res,
                                       BasicBlock *BB /*HACK*/) {
   RawInst Raw;

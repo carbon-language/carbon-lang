@@ -13,8 +13,8 @@
 #include "llvm/Constants.h"
 #include <algorithm>
 
-const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
-					      const uchar *EndBuf) {
+const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
+					      const unsigned char *EndBuf) {
   unsigned PrimType;
   if (read_vbr(Buf, EndBuf, PrimType)) return 0;
 
@@ -131,7 +131,8 @@ void BytecodeParser::refineAbstractType(const DerivedType *OldType,
 // with a new resolved concrete type.
 //
 void debug_type_tables();
-bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
+bool BytecodeParser::parseTypeConstants(const unsigned char *&Buf,
+                                        const unsigned char *EndBuf,
 					TypeValuesListTy &Tab,
 					unsigned NumEntries) {
   assert(Tab.size() == 0 && "should not have read type constants in before!");
@@ -173,7 +174,8 @@ bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
 }
 
 
-bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
+bool BytecodeParser::parseConstantValue(const unsigned char *&Buf,
+                                        const unsigned char *EndBuf,
                                         const Type *Ty, Constant *&V) {
 
   // We must check for a ConstantExpr before switching by type because
@@ -379,12 +381,14 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
   return false;
 }
 
-bool BytecodeParser::ParseGlobalTypes(const uchar *&Buf, const uchar *EndBuf) {
+bool BytecodeParser::ParseGlobalTypes(const unsigned char *&Buf,
+                                      const unsigned char *EndBuf) {
   ValueTable T;
   return ParseConstantPool(Buf, EndBuf, T, ModuleTypeValues);
 }
 
-bool BytecodeParser::ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
+bool BytecodeParser::ParseConstantPool(const unsigned char *&Buf,
+                                       const unsigned char *EndBuf,
 				       ValueTable &Tab, 
 				       TypeValuesListTy &TypeTab) {
   while (Buf < EndBuf) {
