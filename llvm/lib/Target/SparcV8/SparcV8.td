@@ -10,26 +10,41 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Get the target-independent interfaces which we are implementing...
-//
-include "../Target.td"
+//===----------------------------------------------------------------------===//
+// Target-independent interfaces which we are implementing
+//===----------------------------------------------------------------------===//
+
+include "../../Target.td"
 
 //===----------------------------------------------------------------------===//
 // Register File Description
 //===----------------------------------------------------------------------===//
 
 include "SparcV8RegisterInfo.td"
+
+//===----------------------------------------------------------------------===//
+// Instruction Descriptions
+//===----------------------------------------------------------------------===//
+
 include "SparcV8InstrInfo.td"
 
 def SparcV8InstrInfo : InstrInfo {
-  let PHIInst  = PHI;
+  let PHIInst = PHI;
+
+  // Define how we want to layout our target-specific information field.
+  let TSFlagsFields = [];
+  let TSFlagsShifts = [];
 }
+
+//===----------------------------------------------------------------------===//
+// Declare the target which we are implementing
+//===----------------------------------------------------------------------===//
 
 def SparcV8 : Target {
   // Pointers are 32-bits in size.
   let PointerType = i32;
 
-  // These regs are nonvolatile across calls:
+  // FIXME: Specify callee-saved registers
   let CalleeSavedRegisters = [];
 
   // Pull in Instruction Info:
