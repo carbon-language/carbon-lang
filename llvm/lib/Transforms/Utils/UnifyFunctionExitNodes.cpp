@@ -5,7 +5,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/SimplifyCFG.h"
 #include "llvm/Transforms/UnifyMethodExitNodes.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
@@ -23,7 +22,7 @@ AnalysisID UnifyMethodExitNodes::ID(AnalysisID::create<UnifyMethodExitNodes>());
 //
 // If there are no return stmts in the Method, a null pointer is returned.
 //
-BasicBlock *cfg::UnifyAllExitNodes(Method *M) {
+bool UnifyMethodExitNodes::doit(Method *M, BasicBlock *&ExitNode) {
   vector<BasicBlock*> ReturningBlocks;
 
   // Loop over all of the blocks in a method, tracking all of the blocks that
@@ -33,16 +32,19 @@ BasicBlock *cfg::UnifyAllExitNodes(Method *M) {
     if ((*I)->getTerminator()->getOpcode() == Instruction::Ret)
       ReturningBlocks.push_back(*I);
 
-  if (ReturningBlocks.size() == 0) 
-    return 0;                          // No blocks return
-  else if (ReturningBlocks.size() == 1)
-    return ReturningBlocks.front();    // Already has a single return block
+  if (ReturningBlocks.size() == 0) {
+    ExitNode = 0;
+    return false;                      // No blocks return
+  } else if (ReturningBlocks.size() == 1) {
+    ExitNode = ReturningBlocks.front();    // Already has a single return block
+    return false;
+  }
 
   // Otherwise, we need to insert a new basic block into the method, add a PHI
   // node (if the function returns a value), and convert all of the return 
   // instructions into unconditional branches.
   //
-  BasicBlock *NewRetBlock = new BasicBlock("", M);
+  BasicBlock *NewRetBlock = new BasicBlock("UnifiedExitNode", M);
 
   if (M->getReturnType() != Type::VoidTy) {
     // If the method doesn't return void... add a PHI node to the block...
@@ -70,5 +72,6 @@ BasicBlock *cfg::UnifyAllExitNodes(Method *M) {
     delete (*I)->getInstList().pop_back();  // Remove the return insn
     (*I)->getInstList().push_back(new BranchInst(NewRetBlock));
   }
-  return NewRetBlock;
+  ExitNode = NewRetBlock;
+  return true;
 }

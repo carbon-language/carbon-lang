@@ -10,7 +10,6 @@
 #define LLVM_XFORMS_UNIFY_METHOD_EXIT_NODES_H
 
 #include "llvm/Pass.h"
-#include "llvm/Analysis/SimplifyCFG.h"   // FIXME!!
 
 struct UnifyMethodExitNodes : public MethodPass {
   BasicBlock *ExitNode;
@@ -18,10 +17,17 @@ public:
   static AnalysisID ID;            // Pass ID
   UnifyMethodExitNodes(AnalysisID id) : ExitNode(0) { assert(ID == id); }
 
-  virtual bool runOnMethod(Method *M) {
-    ExitNode = cfg::UnifyAllExitNodes(M);
+  // UnifyAllExitNodes - Unify all exit nodes of the CFG by creating a new
+  // BasicBlock, and converting all returns to unconditional branches to this
+  // new basic block.  The singular exit node is returned in ExitNode.
+  //
+  // If there are no return stmts in the Method, a null pointer is returned.
+  //
+  static bool doit(Method *M, BasicBlock *&ExitNode);
 
-    return true; // FIXME: This should return a correct code!!!
+
+  virtual bool runOnMethod(Method *M) {
+    return doit(M, ExitNode);
   }
 
   BasicBlock *getExitNode() const { return ExitNode; }
