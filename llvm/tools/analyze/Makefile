@@ -3,7 +3,7 @@ include $(LEVEL)/Makefile.common
 
 all:: analyze
 clean ::
-	rm -f opt
+	rm -f analyze
 
 analyze : $(ObjectsG) Debug/.dir Depend/.dir
 	$(LinkG) -o $@ $(ObjectsG) -lopt -lasmparser \
