@@ -20,5 +20,7 @@ declare void "foo"(%bb)
 
 %bb = type int
 
+%exception_descriptor = type int
+
 implementation
 
