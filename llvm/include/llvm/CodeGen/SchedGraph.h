@@ -19,27 +19,15 @@
 #ifndef LLVM_CODEGEN_SCHEDGRAPH_H
 #define LLVM_CODEGEN_SCHEDGRAPH_H
 
-//************************** System Include Files **************************/
-
-#include <hash_map>
-#include <vector>
-
-//*************************** User Include Files ***************************/
-
 #include "llvm/CFGdecls.h"			// just for graph iterators
 #include "llvm/Support/NonCopyable.h"
 #include "llvm/Support/HashExtras.h"
-#include "llvm/Support/StringExtras.h"
-#include "llvm/CodeGen/TargetMachine.h"
-#include "llvm/CodeGen/MachineInstr.h"
-
-//************************* Opaque Declarations ****************************/
+#include <hash_map>
 
 class Value;
 class Instruction;
 class BasicBlock;
 class Method;
-class MachineInstr;
 class TargetMachine;
 class SchedGraphEdge; 
 class SchedGraphNode; 
@@ -131,8 +119,8 @@ public:
   // 
   friend ostream& operator<<(ostream& os, const SchedGraphEdge& edge);
   
-  void		dump	(int indent=0) const { printIndent(indent);
-					       cout << *this; }
+  void		dump	(int indent=0) const;
+    
 private:
   // disable default ctor
   /*ctor*/		SchedGraphEdge();	// DO NOT IMPLEMENT
@@ -160,7 +148,6 @@ public:
   unsigned int		getNodeId	() const { return nodeId; }
   const Instruction*	getInstr	() const { return instr; }
   const MachineInstr*	getMachineInstr	() const { return minstr; }
-  MachineOpCode		getOpCode	() const { return minstr->getOpCode();}
   int			getLatency	() const { return latency; }
   unsigned int		getNumInEdges	() const { return inEdges.size(); }
   unsigned int		getNumOutEdges	() const { return outEdges.size(); }
@@ -190,8 +177,7 @@ public:
   // 
   friend ostream& operator<<(ostream& os, const SchedGraphNode& node);
   
-  void		dump	(int indent=0) const { printIndent(indent);
-					       cout << *this; }
+  void		dump	(int indent=0) const;
   
 private:
   friend class SchedGraph;		// give access for ctor and dtor
@@ -386,52 +372,61 @@ private:
 // for <const SchedGraphNode, SchedGraphNode::const_iterator>.
 // 
 template <class _NodeType, class _EdgeType, class _EdgeIter>
-class InOutIterator: public std::bidirectional_iterator<_NodeType, ptrdiff_t> {
+class PredIterator: public std::bidirectional_iterator<_NodeType, ptrdiff_t> {
 protected:
   _EdgeIter oi;
 public:
-  typedef InOutIterator<_NodeType, _EdgeType, _EdgeIter> _Self;
+  typedef PredIterator<_NodeType, _EdgeType, _EdgeIter> _Self;
   
-  inline InOutIterator(_EdgeIter startEdge) : oi(startEdge) {}
+  inline PredIterator(_EdgeIter startEdge) : oi(startEdge) {}
   
   inline bool operator==(const _Self& x) const { return oi == x.oi; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
   
   // operator*() differs for pred or succ iterator
-  virtual inline _NodeType* operator*()  const = 0;
+  inline _NodeType* operator*() const { return (*oi)->getSrc(); }
   inline	 _NodeType* operator->() const { return operator*(); }
   
   inline _EdgeType* getEdge() const { return *(oi); }
   
-  inline _Self& operator++() { ++oi; return *this; }	// Preincrement
-  // inline _Self operator++(int) {			// Postincrement
-  //   _Self tmp(*this); ++*this; return tmp; 
-  // }
+  inline _Self &operator++() { ++oi; return *this; }    // Preincrement
+  inline _Self operator++(int) {                      	// Postincrement
+    _Self tmp(*this); ++*this; return tmp; 
+  }
   
-  inline _Self& operator--() { --oi; return *this; } 	// Predecrement
-  // inline _Self operator--(int) {			// Postdecrement
-  //   _Self tmp = *this; --*this; return tmp;
-  // }
+  inline _Self &operator--() { --oi; return *this; }    // Predecrement
+  inline _Self operator--(int) {                       	// Postdecrement
+    _Self tmp = *this; --*this; return tmp;
+  }
 };
 
 template <class _NodeType, class _EdgeType, class _EdgeIter>
-class PredIterator: public InOutIterator<_NodeType, _EdgeType, _EdgeIter> {
+class SuccIterator: public std::bidirectional_iterator<_NodeType, ptrdiff_t> {
+protected:
+  _EdgeIter oi;
 public:
-  inline PredIterator(_EdgeIter startEdge)
-    : InOutIterator<_NodeType, _EdgeType, _EdgeIter>(startEdge) {}
+  typedef SuccIterator<_NodeType, _EdgeType, _EdgeIter> _Self;
   
-  virtual inline _NodeType* operator*() const { return (*oi)->getSrc(); }
-};
-
-template <class _NodeType, class _EdgeType, class _EdgeIter>
-class SuccIterator: public InOutIterator<_NodeType, _EdgeType, _EdgeIter> {
-public:
-  inline SuccIterator(_EdgeIter startEdge)
-    : InOutIterator<_NodeType, _EdgeType, _EdgeIter>(startEdge) {}
+  inline SuccIterator(_EdgeIter startEdge) : oi(startEdge) {}
   
-  virtual inline _NodeType* operator*() const { return (*oi)->getSink(); }
+  inline bool operator==(const _Self& x) const { return oi == x.oi; }
+  inline bool operator!=(const _Self& x) const { return !operator==(x); }
+  
+  inline _NodeType* operator*() const { return (*oi)->getSink(); }
+  inline	 _NodeType* operator->() const { return operator*(); }
+  
+  inline _EdgeType* getEdge() const { return *(oi); }
+  
+  inline _Self &operator++() { ++oi; return *this; }    // Preincrement
+  inline _Self operator++(int) {                      	// Postincrement
+    _Self tmp(*this); ++*this; return tmp; 
+  }
+  
+  inline _Self &operator--() { --oi; return *this; }    // Predecrement
+  inline _Self operator--(int) {                       	// Postdecrement
+    _Self tmp = *this; --*this; return tmp;
+  }
 };
-
 
 // 
 // sg_pred_iterator
