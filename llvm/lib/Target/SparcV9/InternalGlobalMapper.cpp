@@ -19,21 +19,21 @@
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 using namespace llvm;
 
-namespace llvm {
-
 typedef std::vector<Constant *> GVVectorTy;
 
-class InternalGlobalMapper : public ModulePass {
-public:
-  bool runOnModule(Module &M);
-};
+namespace {
+  struct InternalGlobalMapper : public ModulePass {
+    bool runOnModule(Module &M);
+  };
+}
 
-ModulePass *llvm::createInternalGlobalMapperPass() {
-  return new InternalGlobalMapper();
+namespace llvm {
+  ModulePass *createInternalGlobalMapperPass() {
+    return new InternalGlobalMapper();
+  }
 }
 
 static void maybeAddInternalValueToVector (GVVectorTy &Vector, GlobalValue &GV){
@@ -80,5 +80,3 @@ bool InternalGlobalMapper::runOnModule(Module &M) {
 
   return true; // Module was modified.
 }
-
-} // end namespace llvm
