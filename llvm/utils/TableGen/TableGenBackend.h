@@ -1,4 +1,11 @@
 //===- TableGenBackend.h - Base class for TableGen Backends -----*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // The TableGenBackend class is provided as a common interface for all TableGen
 // backends.  It provides useful services and an standardized interface.

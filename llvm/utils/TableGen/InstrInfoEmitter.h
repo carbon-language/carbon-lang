@@ -1,4 +1,11 @@
 //===- InstrInfoEmitter.h - Generate a Instruction Set Desc. ----*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This tablegen backend is responsible for emitting a description of the target
 // instruction set for the code generator.
