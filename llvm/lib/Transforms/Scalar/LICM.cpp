@@ -366,7 +366,12 @@ void LICM::sink(Instruction &I) {
   DEBUG(std::cerr << "LICM sinking instruction: " << I);
 
   const std::vector<BasicBlock*> &ExitBlocks = CurLoop->getExitBlocks();
-  
+  std::vector<Value*> Operands(I.op_begin(), I.op_end());
+
+  if (isa<LoadInst>(I)) ++NumMovedLoads;
+  ++NumSunk;
+  Changed = true;
+
   // The case where there is only a single exit node of this loop is common
   // enough that we handle it as a special (more efficient) case.  It is more
   // efficient to handle because there are no PHI nodes that need to be placed.
@@ -386,7 +391,6 @@ void LICM::sink(Instruction &I) {
   } else if (ExitBlocks.size() == 0) {
     // The instruction is actually dead if there ARE NO exit blocks.
     I.getParent()->getInstList().erase(&I);
-    return;   // Don't count this as a sunk instruction, don't check operands.
   } else {
     // Otherwise, if we have multiple exits, use the PromoteMem2Reg function to
     // do all of the hard work of inserting PHI nodes as necessary.  We convert
@@ -469,17 +473,12 @@ void LICM::sink(Instruction &I) {
     PromoteMemToReg(Allocas, *DT, *DF, AA->getTargetData());
   }
   
-  if (isa<LoadInst>(I)) ++NumMovedLoads;
-  ++NumSunk;
-  Changed = true;
-
   // Since we just sunk an instruction, check to see if any other instructions
   // used by this instruction are now sinkable.  If so, sink them too.
-  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
-    if (Instruction *OpI = dyn_cast<Instruction>(I.getOperand(i)))
+  for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+    if (Instruction *OpI = dyn_cast<Instruction>(Operands[i]))
       if (CurLoop->contains(OpI->getParent()) && canSinkOrHoistInst(*OpI) &&
-          isNotUsedInLoop(*OpI) &&
-          isSafeToExecuteUnconditionally(*OpI))
+          isNotUsedInLoop(*OpI) && isSafeToExecuteUnconditionally(*OpI))
         sink(*OpI);
 }
 
