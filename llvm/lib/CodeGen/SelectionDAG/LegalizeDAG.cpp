@@ -380,7 +380,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
         Result = DAG.getCopyToReg(Tmp1, Tmp2, cast<RegSDNode>(Node)->getReg());
       break;
-    case Expand: {
+    case Promote:
+      Tmp2 = PromoteOp(Node->getOperand(1));
+      Result = DAG.getCopyToReg(Tmp1, Tmp2, cast<RegSDNode>(Node)->getReg());
+      break;
+    case Expand:
       SDOperand Lo, Hi;
       ExpandOp(Node->getOperand(1), Lo, Hi);      
       unsigned Reg = cast<RegSDNode>(Node)->getReg();
@@ -389,10 +393,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       assert(isTypeLegal(Result.getValueType()) &&
              "Cannot expand multiple times yet (i64 -> i16)");
       break;
-    }
-    case Promote:
-      assert(0 && "CopyToReg should not require promotion!");
-      abort();
     }
     break;
 
@@ -917,6 +917,13 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Result = DAG.getNode(ISD::FP_EXTEND, NVT, Op);
     assert(isa<ConstantFPSDNode>(Result) && "Didn't constant fold fp_extend?");
     break;
+  case ISD::CopyFromReg:
+    Result = DAG.getCopyFromReg(cast<RegSDNode>(Node)->getReg(), NVT,
+                                Node->getOperand(0));
+    // Remember that we legalized the chain.
+    AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
+    break;
+
   case ISD::SETCC:
     assert(getTypeAction(TLI.getSetCCResultTy()) == Legal &&
            "SetCC type is not legal??");
