@@ -180,11 +180,6 @@ Path::GetLLVMDefaultConfigDir() {
 }
 
 Path
-Path::GetLLVMConfigDir() {
-  return GetLLVMDefaultConfigDir();
-}
-
-Path
 Path::GetUserHomeDirectory() {
   const char* home = getenv("HOME");
   if (home) {
@@ -600,7 +595,7 @@ Path::makeUnique() {
   dir.elideFile();
   std::string fname = this->getLast();
 
-  char* newName = alloca(MAX_PATH+1);
+  char newName[MAX_PATH + 1];
   if (!GetTempFileName(dir.c_str(), fname.c_str(), 0, newName))
     ThrowError("Cannot make unique filename for '" + path + "'");
 

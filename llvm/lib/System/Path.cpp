@@ -26,8 +26,10 @@ using namespace sys;
 Path
 Path::GetLLVMConfigDir() {
   Path result;
+#ifdef LLVM_ETCDIR
   if (result.setDirectory(LLVM_ETCDIR))
     return result;
+#endif
   return GetLLVMDefaultConfigDir();
 }
 
