@@ -30,6 +30,21 @@
 #include <iostream>
 using namespace llvm;
 
+static long getLower16(long l)
+{
+  long y = l / 65536;
+  if (l % 65536 > 32767)
+    ++y;
+  return l - y * 65536;
+}
+
+static long getUpper16(long l)
+{
+  long y = l / 65536;
+  if (l % 65536 > 32767)
+    ++y;
+  return y;
+}
 
 AlphaRegisterInfo::AlphaRegisterInfo()
   : AlphaGenRegisterInfo(Alpha::ADJUSTSTACKDOWN, Alpha::ADJUSTSTACKUP)
@@ -102,7 +117,6 @@ void AlphaRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   if (hasFP(MF)) {
-    assert(0 && "TODO");
     // If we have a frame pointer, turn the adjcallstackup instruction into a
     // 'sub ESP, <amt>' and the adjcallstackdown instruction into 'add ESP,
     // <amt>'
@@ -115,24 +129,31 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
       Amount = (Amount+Align-1)/Align*Align;
 
-//    MachineInstr *New;
-//       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
-// 	New=BuildMI(X86::SUB32ri, 1, X86::ESP, MachineOperand::UseAndDef)
-//               .addZImm(Amount);
-//       } else {
-// 	assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
-// 	New=BuildMI(X86::ADD32ri, 1, X86::ESP, MachineOperand::UseAndDef)
-//               .addZImm(Amount);
-//       }
-
+      MachineInstr *New;
+      if (Old->getOpcode() == Alpha::ADJUSTSTACKDOWN) {
+ 	New=BuildMI(Alpha::LDA, 2, Alpha::R30)
+          .addImm(-Amount).addReg(Alpha::R30);
+      } else {
+ 	assert(Old->getOpcode() == Alpha::ADJUSTSTACKUP);
+ 	New=BuildMI(Alpha::LDA, 2, Alpha::R30)
+          .addImm(Amount).addReg(Alpha::R30);
+      }
+      
       // Replace the pseudo instruction with a new instruction...
-      //MBB.insert(I, New);
-      abort();
+      MBB.insert(I, New);
     }
   }
 
   MBB.erase(I);
 }
+
+//Alpha has a slightly funny stack:
+//Args 
+//<- incoming SP
+//fixed locals (and spills, callee saved, etc)
+//<- FP
+//variable locals
+//<- SP
 
 void
 AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
@@ -140,7 +161,8 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  
+  bool FP = hasFP(MF);
+
   while (!MI.getOperand(i).isFrameIndex()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
@@ -149,22 +171,32 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   int FrameIndex = MI.getOperand(i).getFrameIndex();
 
   // Add the base register of R30 (SP) or R15 (FP).
-  MI.SetMachineOperandReg(i + 1, hasFP(MF) ? Alpha::R15 : Alpha::R30);
+  MI.SetMachineOperandReg(i + 1, FP ? Alpha::R15 : Alpha::R30);
   
-  // Now add the frame object offset to the offset from r1.
+  // Now add the frame object offset to the offset from the virtual frame index.
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
-  // If we're not using a Frame Pointer that has been set to the value of the
-  // SP before having the stack size subtracted from it, then add the stack size
-  // to Offset to get the correct offset.
-  Offset += MF.getFrameInfo()->getStackSize();
+  DEBUG(std::cerr << "FI: " << FrameIndex << " Offset: " << Offset << "\n");
 
-   if (Offset > 32767 || Offset < -32768) {
-     std::cerr << "Offset needs to be " << Offset << "\n";
-     assert(0 && "stack too big");
-   } else {
-     MI.SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed, Offset);
-   }
+  Offset += MF.getFrameInfo()->getStackSize();
+  
+  DEBUG(std::cerr << "Corrected Offset " << Offset << 
+        " for stack size: " << MF.getFrameInfo()->getStackSize() << "\n");
+
+  if (Offset > 32767 || Offset < -32768) {
+    //so in this case, we need to use a temporary register, and move the original
+    //inst off the SP/FP
+    //fix up the old:
+    MI.SetMachineOperandReg(i + 1, Alpha::R28);
+    MI.SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed, 
+                              getLower16(Offset));
+    //insert the new
+    MachineInstr* nMI=BuildMI(Alpha::LDAH, 2, Alpha::R28)
+      .addImm(getUpper16(Offset)).addReg(FP ? Alpha::R15 : Alpha::R30);
+    MBB.insert(--II, nMI);
+  } else {
+    MI.SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed, Offset);
+  }
 }
 
 
@@ -173,6 +205,7 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineInstr *MI;
+  bool FP = hasFP(MF);
   
   //handle GOP offset
   MI = BuildMI(Alpha::LDGP, 0);
@@ -181,42 +214,48 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
 
-  if (MFI->hasCalls()) {
+  if (MFI->hasCalls() && !FP) {
     // We reserve argument space for call sites in the function immediately on 
     // entry to the current function.  This eliminates the need for add/sub 
     // brackets around call sites.
+    //If there is a frame pointer, then we don't do this
     NumBytes += MFI->getMaxCallFrameSize();
     std::cerr << "Added " << MFI->getMaxCallFrameSize() << " to the stack due to calls\n";
   }
 
+  if (FP)
+    NumBytes += 8; //reserve space for the old FP
+
   // Do we need to allocate space on the stack?
   if (NumBytes == 0) return;
 
-  // Add the size of R30 to  NumBytes size for the store of R30 to the 
-  // stack
-//   std::cerr << "Spillsize of R30 is " << getSpillSize(Alpha::R30) << "\n";
-//   NumBytes = NumBytes + getSpillSize(Alpha::R30)/8;
-
   // Update frame info to pretend that this is part of the stack...
   MFI->setStackSize(NumBytes);
-  
+
   // adjust stack pointer: r30 -= numbytes
-  
   if (NumBytes <= 32767) {
     MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(-NumBytes).addReg(Alpha::R30);
     MBB.insert(MBBI, MI);
   } else if ((unsigned long)NumBytes <= (unsigned long)32767 * (unsigned long)65536) {
-    long y = NumBytes / 65536;
-    if (NumBytes % 65536 > 32767)
-      ++y;
-    MI=BuildMI(Alpha::LDAH, 2, Alpha::R30).addImm(-y).addReg(Alpha::R30);
+    MI=BuildMI(Alpha::LDAH, 2, Alpha::R30).addImm(getUpper16(-NumBytes)).addReg(Alpha::R30);
     MBB.insert(MBBI, MI);
-    MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(-(NumBytes - y * 65536)).addReg(Alpha::R30);
+    MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(getLower16(-NumBytes)).addReg(Alpha::R30);
     MBB.insert(MBBI, MI);
   } else {
     std::cerr << "Too big a stack frame at " << NumBytes << "\n";
     abort();
   }
+
+  //now if we need to, save the old FP and set the new
+  if (FP)
+  {
+    MI=BuildMI(Alpha::STQ, 3).addReg(Alpha::R15).addImm(0).addReg(Alpha::R30);
+    MBB.insert(MBBI, MI);
+    //this must be the last instr in the prolog
+    MI=BuildMI(Alpha::BIS, 2, Alpha::R15).addReg(Alpha::R30).addReg(Alpha::R30);
+    MBB.insert(MBBI, MI);
+  }
+
 }
 
 void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
@@ -227,8 +266,17 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
   assert((MBBI->getOpcode() == Alpha::RET || MBBI->getOpcode() == Alpha::RETURN) &&
 	 "Can only insert epilog into returning blocks");
   
+  bool FP = hasFP(MF);
+ 
   // Get the number of bytes allocated from the FrameInfo...
   unsigned NumBytes = MFI->getStackSize();
+
+  //now if we need to, restore the old FP
+  if (FP)
+  {
+    MI=BuildMI(Alpha::LDQ, 2, Alpha::R15).addImm(0).addReg(Alpha::R15);
+    MBB.insert(MBBI, MI);
+  }
 
    if (NumBytes != 0) 
      {
@@ -236,12 +284,9 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
          MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(NumBytes).addReg(Alpha::R30);
          MBB.insert(MBBI, MI);
        } else if ((unsigned long)NumBytes <= (unsigned long)32767 * (unsigned long)65536) {
-         long y = NumBytes / 65536;
-         if (NumBytes % 65536 > 32767)
-           ++y;
-         MI=BuildMI(Alpha::LDAH, 2, Alpha::R30).addImm(y).addReg(Alpha::R30);
+         MI=BuildMI(Alpha::LDAH, 2, Alpha::R30).addImm(getUpper16(NumBytes)).addReg(Alpha::R30);
          MBB.insert(MBBI, MI);
-         MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(NumBytes - y * 65536).addReg(Alpha::R30);
+         MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(getLower16(NumBytes)).addReg(Alpha::R30);
          MBB.insert(MBBI, MI);
        } else {
          std::cerr << "Too big a stack frame at " << NumBytes << "\n";

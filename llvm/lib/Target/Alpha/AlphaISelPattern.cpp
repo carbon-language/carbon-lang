@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Debug.h"
 #include <set>
 #include <algorithm>
 using namespace llvm;
@@ -156,7 +157,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
         BuildMI(&BB, Alpha::IDEF, 0, args_float[count]);
         argVreg[count] = 
           MF.getSSARegMap()->createVirtualRegister(
-                             getRegClassFor(getValueType(I->getType())));
+                            getRegClassFor(getValueType(I->getType())));
         argPreg[count] = args_float[count];
         argOpc[count] = Alpha::CPYS;
         argt = newroot = DAG.getCopyFromReg(argVreg[count], 
@@ -180,7 +181,6 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
             DAG.getNode(ISD::TRUNCATE, getValueType(I->getType()), newroot);
         break;
       }
-      ++count;
     } else { //more args
       // Create the frame index object for this incoming parameter...
       int FI = MFI->CreateFixedObject(8, 8 * (count - 6));
@@ -191,19 +191,14 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       argt = newroot = DAG.getLoad(getValueType(I->getType()), 
                                    DAG.getEntryNode(), FIN);
     }
+    ++count;
     DAG.setRoot(newroot.getValue(1));
     ArgValues.push_back(argt);
   }
 
   BuildMI(&BB, Alpha::IDEF, 0, Alpha::R29);
   BuildMI(&BB, Alpha::BIS, 2, GP).addReg(Alpha::R29).addReg(Alpha::R29);
-  for (int i = 0; i < count; ++i) {
-    if (argPreg[i] == Alpha::F16 || argPreg[i] == Alpha::F17 || 
-        argPreg[i] == Alpha::F18 || argPreg[i] == Alpha::F19 || 
-        argPreg[i] == Alpha::F20 || argPreg[i] == Alpha::F21)
-    {
-      assert(argOpc[i] == Alpha::CPYS && "Using BIS for a float??");
-    }
+  for (int i = 0; i < count && i < 6; ++i) {
     BuildMI(&BB, argOpc[i], 2, 
             argVreg[i]).addReg(argPreg[i]).addReg(argPreg[i]);
   }
@@ -311,6 +306,7 @@ public:
   /// InstructionSelectBasicBlock - This callback is invoked by
   /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
   virtual void InstructionSelectBasicBlock(SelectionDAG &DAG) {
+    DEBUG(BB->dump());
     // Codegen the basic block.
     Select(DAG.getRoot());
     
@@ -570,8 +566,9 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
         BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
       }
       else if(Address.getOpcode() == ISD::FrameIndex) {
-        Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
-        BuildMI(BB, Opc, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
+        BuildMI(BB, Opc, 2, Result)
+          .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
+          .addReg(Alpha::F31);
       } else {
         long offset;
         SelectAddr(Address, Tmp1, offset);
@@ -636,7 +633,9 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       }
       else if(Address.getOpcode() == ISD::FrameIndex) {
         Tmp2 = cast<FrameIndexSDNode>(Address)->getIndex();
-        BuildMI(BB, Alpha::LDS, 2, Tmp1).addFrameIndex(Tmp2).addReg(Alpha::F31);
+        BuildMI(BB, Alpha::LDS, 2, Tmp1)
+          .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
+          .addReg(Alpha::F31);
       } else {
         long offset;
         SelectAddr(Address, Tmp2, offset);
@@ -723,6 +722,47 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Node->dump();
     assert(0 && "Node not handled!\n");
  
+  case ISD::DYNAMIC_STACKALLOC:
+    // Generate both result values.
+    if (Result != 1)
+      ExprMap[N.getValue(1)] = 1;   // Generate the token
+    else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+
+    // FIXME: We are currently ignoring the requested alignment for handling
+    // greater than the stack alignment.  This will need to be revisited at some
+    // point.  Align = N.getOperand(2);
+
+    if (!isa<ConstantSDNode>(N.getOperand(2)) ||
+        cast<ConstantSDNode>(N.getOperand(2))->getValue() != 0) {
+      std::cerr << "Cannot allocate stack object with greater alignment than"
+                << " the stack alignment yet!";
+      abort();
+    }
+  
+    Select(N.getOperand(0));
+    if (ConstantSDNode* CN = dyn_cast<ConstantSDNode>(N.getOperand(1)))
+    {
+      if (CN->getValue() < 32000)
+      {
+        BuildMI(BB, Alpha::LDA, 2, Alpha::R30)
+          .addImm(-CN->getValue()).addReg(Alpha::R30);
+      } else {
+        Tmp1 = SelectExpr(N.getOperand(1));
+        // Subtract size from stack pointer, thereby allocating some space.
+        BuildMI(BB, Alpha::SUBQ, 2, Alpha::R30).addReg(Alpha::R30).addReg(Tmp1);
+      }
+    } else {
+      Tmp1 = SelectExpr(N.getOperand(1));
+      // Subtract size from stack pointer, thereby allocating some space.
+      BuildMI(BB, Alpha::SUBQ, 2, Alpha::R30).addReg(Alpha::R30).addReg(Tmp1);
+    }
+
+    // Put a pointer to the space into the result register, by copying the stack
+    // pointer.
+    BuildMI(BB, Alpha::BIS, 1, Result).addReg(Alpha::R30).addReg(Alpha::R30);
+    return Result;
+
   case ISD::ConstantPool:
     Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
     AlphaLowering.restoreGP(BB);
@@ -730,8 +770,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::FrameIndex:
-    Tmp1 = cast<FrameIndexSDNode>(N)->getIndex();
-    BuildMI(BB, Alpha::LDA, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
+    BuildMI(BB, Alpha::LDA, 2, Result)
+      .addFrameIndex(cast<FrameIndexSDNode>(N)->getIndex())
+      .addReg(Alpha::F31);
     return Result;
   
   case ISD::EXTLOAD:
@@ -776,8 +817,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
         BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
       }
       else if(Address.getOpcode() == ISD::FrameIndex) {
-        Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
-        BuildMI(BB, Opc, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
+        BuildMI(BB, Opc, 2, Result)
+          .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
+          .addReg(Alpha::F31);
       } else {
         long offset;
         SelectAddr(Address, Tmp1, offset);
@@ -1111,14 +1153,16 @@ unsigned ISel::SelectExpr(SDOperand N) {
           //Can only compare doubles, and dag won't promote for me
           if (SetCC->getOperand(0).getValueType() == MVT::f32)
           {
-            std::cerr << "Setcc On float?\n";
+            //assert(0 && "Setcc On float?\n");
+            std::cerr << "Setcc on float!\n";
             Tmp3 = MakeReg(MVT::f64);
             BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp1);
             Tmp1 = Tmp3;
           }
           if (SetCC->getOperand(1).getValueType() == MVT::f32)
           {
-            std::cerr << "Setcc On float?\n";
+            //assert (0 && "Setcc On float?\n");
+            std::cerr << "Setcc on float!\n";
             Tmp3 = MakeReg(MVT::f64);
             BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp2);
             Tmp2 = Tmp3;
@@ -1338,7 +1382,6 @@ void ISel::Select(SDOperand N) {
 
   SDNode *Node = N.Val;
   
-
   switch (opcode) {
 
   default:
@@ -1457,8 +1500,9 @@ void ISel::Select(SDOperand N) {
       }
       else if(Address.getOpcode() == ISD::FrameIndex)
       {
-        Tmp2 = cast<FrameIndexSDNode>(Address)->getIndex();
-        BuildMI(BB, Opc, 3).addReg(Tmp1).addFrameIndex(Tmp2).addReg(Alpha::F31);
+        BuildMI(BB, Opc, 3).addReg(Tmp1)
+          .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
+          .addReg(Alpha::F31);
       }
       else
       {
@@ -1475,7 +1519,7 @@ void ISel::Select(SDOperand N) {
   case ISD::LOAD:
   case ISD::CopyFromReg:
   case ISD::CALL:
-    //   case ISD::DYNAMIC_STACKALLOC:
+  case ISD::DYNAMIC_STACKALLOC:
     ExprMap.erase(N);
     SelectExpr(N);
     return;
