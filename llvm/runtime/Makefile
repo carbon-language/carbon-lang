@@ -32,7 +32,3 @@ include $(LEVEL)/Makefile.common
 # Install target for libraries: Copy into $LLVMGCCDIR/bytecode-libs
 #
 install::
-
-clean::
-	$(VERB) rm -f $(DESTLIBBYTECODE)/*
-
