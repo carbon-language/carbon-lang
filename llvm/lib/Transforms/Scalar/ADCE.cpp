@@ -264,8 +264,6 @@ bool ADCE::doADCE() {
       for (pred_iterator PI = pred_begin(I), E = pred_end(I); PI != E; ++PI)
         markInstructionLive((*PI)->getTerminator());
 
-
-
   DEBUG(std::cerr << "Processing work list\n");
 
   // AliveBlocks - Set of basic blocks that we know have instructions that are
@@ -291,12 +289,12 @@ bool ADCE::doADCE() {
     // makes the predecessors alive.
     //
     if (PHINode *PN = dyn_cast<PHINode>(I))
-      for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
-        if (AliveBlocks.insert(*PI).second) // Block is now ALIVE!
-          markBlockAlive(*PI);
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        if (AliveBlocks.insert(PN->getIncomingBlock(i)).second)
+          markBlockAlive(PN->getIncomingBlock(i));     // Block is newly ALIVE!
 
     // Loop over all of the operands of the live instruction, making sure that
-    // they are known to be alive as well...
+    // they are known to be alive as well.
     //
     for (unsigned op = 0, End = I->getNumOperands(); op != End; ++op)
       if (Instruction *Operand = dyn_cast<Instruction>(I->getOperand(op)))
