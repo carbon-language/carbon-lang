@@ -15,6 +15,7 @@ class PassInfo;
 class Module;
 class Function;
 class AbstractInterpreter;
+class Instruction;
 
 class BugDriver {
   const std::string ToolName;  // Name of bugpoint
@@ -116,6 +117,13 @@ private:
   /// copy, which it returns.
   ///
   Module *extractFunctionFromModule(Function *F) const;
+
+  /// deleteInstructionFromProgram - This method clones the current Program and
+  /// deletes the specified instruction from the cloned module.  It then runs a
+  /// series of cleanup passes (ADCE and SimplifyCFG) to eliminate any code
+  /// which depends on the value.  The modified module is then returned.
+  ///
+  Module *deleteInstructionFromProgram(Instruction *I, unsigned Simp) const;
 
   /// initializeExecutionEnvironment - This method is used to set up the
   /// environment for executing LLVM programs.

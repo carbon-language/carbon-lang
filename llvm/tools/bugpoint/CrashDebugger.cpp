@@ -114,18 +114,63 @@ bool BugDriver::debugPassCrash(const PassInfo *Pass) {
         delete Program;
         Program = M;
       }
+
+    if (CountFunctions(Program) > 1) {
+      std::cout << "\n*** Couldn't reduce testcase to one function.\n"
+                << "    Attempting to remove individual functions.\n";
+      std::cout << "XXX Individual function removal unimplemented!\n";
+    }
   }
 
-  if (CountFunctions(Program) > 1) {
-    std::cout << "\n*** Couldn't reduce testcase to one function.\n"
-	      << "    Attempting to remove individual functions.\n";
-    std::cout << "XXX Individual function removal unimplemented!\n";
-  }
+  // FIXME: This should attempt to delete entire basic blocks at a time to speed
+  // up convergence...
 
-  // Now that we have deleted the functions that are unneccesary for the
-  // program, try to remove instructions and basic blocks that are not neccesary
-  // to cause the crash.
-  //
+  unsigned Simplification = 4;
+  do {
+    --Simplification;
+    std::cout << "\n*** Attempting to reduce testcase by deleting instruc"
+              << "tions: Simplification Level #" << Simplification << "\n";
+
+    // Now that we have deleted the functions that are unneccesary for the
+    // program, try to remove instructions that are not neccesary to cause the
+    // crash.  To do this, we loop through all of the instructions in the
+    // remaining functions, deleting them (replacing any values produced with
+    // nulls), and then running ADCE and SimplifyCFG.  If the transformed input
+    // still triggers failure, keep deleting until we cannot trigger failure
+    // anymore.
+    //
+  TryAgain:
+    
+    // Loop over all of the (non-terminator) instructions remaining in the
+    // function, attempting to delete them.
+    for (Module::iterator FI = Program->begin(), E = Program->end();
+         FI != E; ++FI)
+      if (!FI->isExternal()) {
+        for (Function::iterator BI = FI->begin(), E = FI->end(); BI != E; ++BI)
+          for (BasicBlock::iterator I = BI->begin(), E = --BI->end();
+               I != E; ++I) {
+            Module *M = deleteInstructionFromProgram(I, Simplification);
+            
+            // Make the function the current program...
+            std::swap(Program, M);
+            
+            // Find out if the pass still crashes on this pass...
+            std::cout << "Checking instruction '" << I->getName() << "': ";
+            if (runPass(Pass)) {
+              // Yup, it does, we delete the old module, and continue trying to
+              // reduce the testcase...
+              EmitProgressBytecode(Pass, "reduced-" + I->getName());
+              delete M;
+              goto TryAgain;  // I wish I had a multi-level break here!
+            }
+            
+            // This pass didn't crash without this instruction, try the next
+            // one.
+            delete Program;
+            Program = M;
+          }
+      }
+  } while (Simplification);
   
   return false;
 }
