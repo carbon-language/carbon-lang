@@ -67,6 +67,12 @@ public:
   ///   * The instruction has no name
   ///
   virtual Instruction *clone() const = 0;
+
+  /// isIdenticalTo - Return true if the specified instruction is exactly
+  /// identical to the current one.  This means that all operands match and any
+  /// extra information (e.g. load is volatile) agree.
+  bool isIdenticalTo(Instruction *I) const;
+
   
   // Accessor methods...
   //

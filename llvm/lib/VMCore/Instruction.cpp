@@ -11,14 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Type.h"
 #include "llvm/Support/LeakDetector.h"
 using namespace llvm;
 
-void Instruction::init()
-{
+void Instruction::init() {
   // Make sure that we get added to a basicblock
   LeakDetector::addGarbageObject(this);
 }
@@ -132,6 +132,31 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   }
   
   return 0;
+}
+
+/// isIdenticalTo - Return true if the specified instruction is exactly
+/// identical to the current one.  This means that all operands match and any
+/// extra information (e.g. load is volatile) agree.
+bool Instruction::isIdenticalTo(Instruction *I) const {
+  if (getOpcode() != I->getOpcode() ||
+      getNumOperands() != I->getNumOperands() ||
+      getType() != I->getType())
+    return false;
+
+  // We have two instructions of identical opcode and #operands.  Check to see
+  // if all operands are the same.
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+    if (getOperand(i) != I->getOperand(i))
+      return false;
+
+  // Check special state that is a part of some instructions.
+  if (const LoadInst *LI = dyn_cast<LoadInst>(this))
+    return LI->isVolatile() == cast<LoadInst>(I)->isVolatile();
+  if (const StoreInst *SI = dyn_cast<StoreInst>(this))
+    return SI->isVolatile() == cast<StoreInst>(I)->isVolatile();
+  if (const VANextInst *VAN = dyn_cast<VANextInst>(this))
+    return VAN->getArgType() == cast<VANextInst>(I)->getArgType();
+  return true;
 }
 
 
