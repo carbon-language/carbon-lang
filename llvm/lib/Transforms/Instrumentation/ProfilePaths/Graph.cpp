@@ -1,7 +1,7 @@
-//===--Graph.cpp--- implements Graph class ---------------- ------*- C++ -*--=//
+//===-- Graph.cpp - Implements Graph class --------------------------------===//
 //
-// This implements Graph for helping in trace generation
-// This graph gets used by "ProfilePaths" class
+// This implements Graph for helping in trace generation This graph gets used by
+// "ProfilePaths" class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -10,9 +10,7 @@
 #include "Support/Debug.h"
 #include <algorithm>
 
-using std::map;
 using std::vector;
-using std::cerr;
 
 const graphListElement *findNodeInList(const Graph::nodeList &NL,
 					      Node *N) {
@@ -326,7 +324,7 @@ struct compare_nodes {
 
 
 static void printNode(Node *nd){
-  cerr<<"Node:"<<nd->getElement()->getName()<<"\n";
+  std::cerr<<"Node:"<<nd->getElement()->getName()<<"\n";
 }
 
 //Get the Maximal spanning tree (also a graph)
@@ -354,8 +352,8 @@ Graph* Graph::getMaxSpanningTree(){
 
   vector<Node *> vt;
   
-  map<Node*, Node* > parent;
-  map<Node*, int > ed_weight;
+  std::map<Node*, Node* > parent;
+  std::map<Node*, int > ed_weight;
 
   //initialize: wt(root)=0, wt(others)=infinity
   //parent(root)=NULL, parent(others) not defined (but not null)
@@ -377,14 +375,14 @@ Graph* Graph::getMaxSpanningTree(){
   //keep pulling out vertex of min wt from vt
   while(!vt.empty()){
     Node *u=*(min_element(vt.begin(), vt.end(), compare_nodes()));
-    DEBUG(cerr<<"popped wt"<<(u)->getWeight()<<"\n";
+    DEBUG(std::cerr<<"popped wt"<<(u)->getWeight()<<"\n";
           printNode(u));
 
     if(parent[u]!=NULL){ //so not root
       Edge edge(parent[u],u, ed_weight[u]); //assign edge in spanning tree
       st->addEdge(edge,ed_weight[u]);
 
-      DEBUG(cerr<<"added:\n";
+      DEBUG(std::cerr<<"added:\n";
             printEdge(edge));
     }
 
@@ -412,8 +410,8 @@ Graph* Graph::getMaxSpanningTree(){
 	  break;
 	}
       }
-      DEBUG(cerr<<"wt:v->wt"<<weight<<":"<<v->getWeight()<<"\n";
-            printNode(v);cerr<<"node wt:"<<(*v).weight<<"\n");
+      DEBUG(std::cerr<<"wt:v->wt"<<weight<<":"<<v->getWeight()<<"\n";
+            printNode(v);std::cerr<<"node wt:"<<(*v).weight<<"\n");
 
       //so if v in in vt, change wt(v) to wt(u->v)
       //only if wt(u->v)<wt(v)
@@ -422,7 +420,7 @@ Graph* Graph::getMaxSpanningTree(){
 	ed_weight[v]=weight;
 	v->setWeight(weight);
 
-	DEBUG(cerr<<v->getWeight()<<":Set weight------\n";
+	DEBUG(std::cerr<<v->getWeight()<<":Set weight------\n";
               printGraph();
               printEdge(Edge(u,v,weight)));
       }
@@ -434,15 +432,15 @@ Graph* Graph::getMaxSpanningTree(){
 //print the graph (for debugging)   
 void Graph::printGraph(){
    vector<Node *> lt=getAllNodes();
-   cerr<<"Graph---------------------\n";
+   std::cerr<<"Graph---------------------\n";
    for(vector<Node *>::iterator LI=lt.begin(), LE=lt.end(); LI!=LE; ++LI){
-     cerr<<((*LI)->getElement())->getName()<<"->";
+     std::cerr<<((*LI)->getElement())->getName()<<"->";
      Graph::nodeList &nl = getNodeList(*LI);
      for(Graph::nodeList::iterator NI=nl.begin(), NE=nl.end(); NI!=NE; ++NI){
-       cerr<<":"<<"("<<(NI->element->getElement())
+       std::cerr<<":"<<"("<<(NI->element->getElement())
 	 ->getName()<<":"<<NI->element->getWeight()<<","<<NI->weight<<")";
      }
-     cerr<<"--------\n";
+     std::cerr<<"--------\n";
    }
 }
 
@@ -487,7 +485,7 @@ void Graph::makeUnDirectional(){
     for(nodeList::iterator NLI=nl.begin(), NLE=nl.end(); NLI!=NLE; ++NLI){
       Edge ed(NLI->element, *NI, NLI->weight);
       if(!hasEdgeAndWt(ed)){
-	DEBUG(cerr<<"######doesn't hv\n";
+	DEBUG(std::cerr<<"######doesn't hv\n";
               printEdge(ed));
 	addEdgeForce(ed);
       }
@@ -521,8 +519,8 @@ void Graph::reverseWts(){
 //have been visited
 //So we have a back edge when we meet a successor of
 //a node with smaller time, and GREY color
-void Graph::getBackEdges(vector<Edge > &be, map<Node *, int> &d){
-  map<Node *, Color > color;
+void Graph::getBackEdges(vector<Edge > &be, std::map<Node *, int> &d){
+  std::map<Node *, Color > color;
   int time=0;
 
   getBackEdgesVisit(getRoot(), be, color, d, time);
@@ -531,8 +529,8 @@ void Graph::getBackEdges(vector<Edge > &be, map<Node *, int> &d){
 //helper function to get back edges: it is called by 
 //the "getBackEdges" function above
 void Graph::getBackEdgesVisit(Node *u, vector<Edge > &be,
-			      map<Node *, Color > &color,
-			      map<Node *, int > &d, int &time) {
+			      std::map<Node *, Color > &color,
+			      std::map<Node *, int > &d, int &time) {
   color[u]=GREY;
   time++;
   d[u]=time;
