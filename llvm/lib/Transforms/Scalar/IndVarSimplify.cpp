@@ -454,6 +454,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
     Changed = true;
   }
 
+#if 0
   // Now replace all derived expressions in the loop body with simpler
   // expressions.
   for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i)
@@ -478,6 +479,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
           }          
         }
     }
+#endif
 
   DeleteTriviallyDeadInstructions(DeadInsts);
 }
