@@ -99,3 +99,9 @@ int %test15(int %A, int %B) {
 	%D = rem int %B, %C   ;; X % -Y === X % Y
 	ret int %D
 }
+
+int %test16(int %A) {
+	%X = div int %A, 1123
+	%Y = sub int 0, %X
+	ret int %Y
+}
