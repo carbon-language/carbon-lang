@@ -38,6 +38,7 @@
 	  <li><a href="#JIT">JIT Tools</a></li>
 	</ol>
       </li>
+      <li><a href="#projects">Projects</a></li>
     </ol>
   </li>
   <li><a href="#targets">Targets Supported</a>
@@ -115,10 +116,15 @@
   software, but it can build yours too. Built into the system is knowledge of
   the <tt>llvm/projects</tt> directory. Any directory under <tt>projects</tt>
   that has both a <tt>configure</tt> script and a <tt>Makefile</tt> is assumed
-  to be a project that uses the LLVM Makefile system. This allows your project
+  to be a project that uses the LLVM Makefile system.  Building software that
+  uses LLVM does not require the LLVM Makefile System nor even placement in the
+  <tt>llvm/projects</tt> directory. However, doing so will allow your project
   to get up and running quickly by utilizing the built-in features that are used
   to compile LLVM. LLVM compiles itself using the same features of the makefile
   system as used for projects.</p>
+  <p>For complete details on setting up your projects configuration, simply
+  mimic the <tt>llvm/projects/sample</tt> project or for further details, 
+  consult the <a href="Projects.html">Projects.html</a> page.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -380,7 +386,7 @@
     <tr><td><a href="#dist"><tt>dist</tt></a></td><td>all</td>
       <td>Prepare a source distribution tarball.
     </td></tr>
-    <tr><td><a href="#dist-check"><tt>dist-check</tt></a></td><td>all check</td>
+    <tr><td><a href="#dist-check"><tt>dist-check</tt></a></td><td>all</td>
       <td>Prepare a source distribution tarball and check that it builds.
     </td></tr>
     <tr><td><a href="#dist-clean"><tt>dist-clean</tt></a></td><td>clean</td>
@@ -535,7 +541,7 @@
 <div class="doc_subsection"><a name="reconfigure">reconfigure</a></div>
 <div class="doc_text">
   <p>This utility target will force a reconfigure of LLVM or your project. It 
-  simply runs <tt>$(BUILD_OBJ_ROOT)/config.status --recheck</tt> to rerun the
+  simply runs <tt>$(PROJ_OBJ_ROOT)/config.status --recheck</tt> to rerun the
   configuration tests and rebuild the configured files. This isn't generally
   useful as the makefiles will reconfigure themselves whenever its necessary.
   </p>
@@ -544,10 +550,10 @@
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="spotless">spotless</a></div>
 <div class="doc_text">
-  <p>This utility target, only available when <tt>$(BUILD_OBJ_ROOT)</tt> is not 
-  the same as <tt>$(BUILD_SRC_ROOT)</tt>, will completely clean the
-  <tt>$(BUILD_OBJ_ROOT)</tt> directoy by removing its content entirely and 
-  reconfiguring the directory. This returns the <tt>$(BUILD_OBJ_ROOT)</tt> 
+  <p>This utility target, only available when <tt>$(PROJ_OBJ_ROOT)</tt> is not 
+  the same as <tt>$(PROJ_SRC_ROOT)</tt>, will completely clean the
+  <tt>$(PROJ_OBJ_ROOT)</tt> directoy by removing its content entirely and 
+  reconfiguring the directory. This returns the <tt>$(PROJ_OBJ_ROOT)</tt> 
   directory to a completely fresh state. All content in the directory except 
   configured files and top-level makefiles will be lost.</p>
   <div class="doc_warning"><p>Use with caution.</p></div>
@@ -737,12 +743,12 @@
     <dd>Specifies the path to the <tt>ar</tt> tool.</dd>
     <dt><a name="BISON"><tt>BISON</tt></a><small>(configured)</small></dt>
     <dd>Specifies the path to the <tt>bison</tt> tool.</dd>
-    <dt><a name="BUILD_OBJ_DIR"><tt>BUILD_OBJ_DIR</tt></a></dt>
+    <dt><a name="PROJ_OBJ_DIR"><tt>PROJ_OBJ_DIR</tt></a></dt>
     <dd>The directory into which the products of build rules will be placed.
     This might be the same as 
-    <a href="#BUILD_SRC_DIR"><tt>BUILD_SRC_DIR</tt></a> but typically is
+    <a href="#PROJ_SRC_DIR"><tt>PROJ_SRC_DIR</tt></a> but typically is
     not.</dd>
-    <dt><a name="BUILD_SRC_DIR"><tt>BUILD_SRC_DIR</tt></a></dt>
+    <dt><a name="PROJ_SRC_DIR"><tt>PROJ_SRC_DIR</tt></a></dt>
     <dd>The directory which contains the source files to be built.</dd>
     <dt><a name="BURG"><tt>BURG</tt></a></dt>
     <dd>Specifies the path to the <tt>burg</tt> tool.</dd>
