@@ -8,6 +8,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/Support/StringExtras.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Method.h"
 
 SymbolTable::~SymbolTable() {
   // Drop all abstract type references in the type plane...
@@ -158,6 +159,13 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
 				     const Type *NewType) {
   if (OldType == NewType) return;  // Noop, don't waste time dinking around
 
+  // Get a handle to the new type plane...
+  iterator NewTypeIt = find(NewType);
+  if (NewTypeIt == super::end())       // If no plane exists, add one
+    NewTypeIt = super::insert(make_pair(NewType, VarMap())).first;
+
+  VarMap &NewPlane = NewTypeIt->second;
+
   // Search to see if we have any values of the type oldtype.  If so, we need to
   // move them into the newtype plane...
   iterator TPI = find(OldType);
@@ -165,8 +173,54 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
     VarMap &OldPlane = TPI->second;
     while (!OldPlane.empty()) {
       pair<const string, Value*> V = *OldPlane.begin();
+
+      // Check to see if there is already a value in the symbol table that this
+      // would collide with.
+      type_iterator TI = NewPlane.find(V.first);
+      if (TI != NewPlane.end() && TI->second == V.second) {
+        // No action
+
+      } else if (TI != NewPlane.end()) {
+        // The only thing we are allowing for now is two method prototypes being
+        // folded into one.
+        //
+        if (Method *ExistM = dyn_cast<Method>(TI->second))
+          if (Method *NewM = dyn_cast<Method>(V.second))
+            if (ExistM->isExternal() && NewM->isExternal()) {
+              // Ok we have two external methods.  Make all uses of the new one
+              // use the old one...
+              //
+              NewM->replaceAllUsesWith(ExistM);
+
+              // Now we just convert it to an unnamed method... which won't get
+              // added to our symbol table.  The problem is that if we call
+              // setName on the method that it will try to remove itself from
+              // the symbol table and die... because it's not in the symtab
+              // right now.  To fix this, we temporarily insert it (by setting
+              // TI's entry to the old value.  Then after it is removed, we
+              // restore ExistM into the symbol table.
+              //
+              if (NewM->getType() == NewType) {
+                TI->second = NewM;     // Add newM to the symtab
+
+                // Remove newM from the symtab
+                NewM->setName("");
+
+                // Readd ExistM to the symbol table....
+                NewPlane.insert(make_pair(V.first, ExistM));
+              } else {
+                NewM->setName("");
+              }
+              continue;
+            }
+        assert(0 && "Two ploanes folded together with overlapping "
+               "value names!");
+      } else {
+        insertEntry(V.first, NewType, V.second);
+
+      }
+      // Remove the item from the old type plane
       OldPlane.erase(OldPlane.begin());
-      insertEntry(V.first, NewType, V.second);
     }
 
     // Ok, now we are not referencing the type anymore... take me off your user
