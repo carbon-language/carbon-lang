@@ -16,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include "Support/SetVector.h"
 
 namespace llvm {
   /// This class provides the high level interface to the LLVM Compiler Driver.
@@ -194,7 +195,15 @@ namespace llvm {
     private:
       Action* GetAction(ConfigData* cd, const std::string& input, 
                        const std::string& output, Phases phase );
+
       bool DoAction(Action* a);
+
+      std::string GetPathForLinkageItem(const std::string& link_item,
+                                        const std::string& dir);
+
+      bool ProcessLinkageItem(const std::string& link_item,
+                              SetVector<std::string>& set,
+                              std::string& err);
 
     /// @}
     /// @name Data
