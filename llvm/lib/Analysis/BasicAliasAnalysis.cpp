@@ -11,6 +11,11 @@
 // that simply implements a few identities (two different globals cannot alias,
 // etc), but otherwise does no analysis.
 //
+// FIXME: This could be extended for a very simple form of mod/ref information.
+// If a pointer is locally allocated (either malloc or alloca) and never passed
+// into a call or stored to memory, then we know that calls will not mod/ref the
+// memory.  This can be important for tailcallelim.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/AliasAnalysis.h"
