@@ -12,8 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SparcInternals.h"
-#include "SparcRegClassInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/InstrSelection.h"
@@ -22,10 +20,14 @@
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "../../CodeGen/RegAlloc/LiveRangeInfo.h"   // FIXME!!
 #include "../../CodeGen/RegAlloc/LiveRange.h"       // FIXME!!
+#include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
-#include "llvm/Function.h"
-#include "llvm/DerivedTypes.h"
+#include "SparcInternals.h"
+#include "SparcRegClassInfo.h"
+#include "SparcRegInfo.h"
+#include "SparcTargetMachine.h"
 
 namespace llvm {
 
@@ -33,7 +35,7 @@ enum {
   BadRegClass = ~0
 };
 
-UltraSparcRegInfo::UltraSparcRegInfo(const UltraSparc &tgt)
+SparcRegInfo::SparcRegInfo(const SparcTargetMachine &tgt)
   : TargetRegInfo(tgt), NumOfIntArgRegs(6), NumOfFloatArgRegs(32)
 {
   MachineRegClassArr.push_back(new SparcIntRegClass(IntRegClassID));
@@ -50,16 +52,16 @@ UltraSparcRegInfo::UltraSparcRegInfo(const UltraSparc &tgt)
 // getZeroRegNum - returns the register that contains always zero.
 // this is the unified register number
 //
-int UltraSparcRegInfo::getZeroRegNum() const {
-  return getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+int SparcRegInfo::getZeroRegNum() const {
+  return getUnifiedRegNum(SparcRegInfo::IntRegClassID,
                           SparcIntRegClass::g0);
 }
 
 // getCallAddressReg - returns the reg used for pushing the address when a
 // method is called. This can be used for other purposes between calls
 //
-unsigned UltraSparcRegInfo::getCallAddressReg() const {
-  return getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+unsigned SparcRegInfo::getCallAddressReg() const {
+  return getUnifiedRegNum(SparcRegInfo::IntRegClassID,
                           SparcIntRegClass::o7);
 }
 
@@ -67,8 +69,8 @@ unsigned UltraSparcRegInfo::getCallAddressReg() const {
 // It should be made sure that this  register contains the return 
 // value when a return instruction is reached.
 //
-unsigned UltraSparcRegInfo::getReturnAddressReg() const {
-  return getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+unsigned SparcRegInfo::getReturnAddressReg() const {
+  return getUnifiedRegNum(SparcRegInfo::IntRegClassID,
                           SparcIntRegClass::i7);
 }
 
@@ -133,14 +135,14 @@ const char * const SparcSpecialRegClass::getRegName(unsigned reg) const {
 }
 
 // Get unified reg number for frame pointer
-unsigned UltraSparcRegInfo::getFramePointer() const {
-  return getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+unsigned SparcRegInfo::getFramePointer() const {
+  return getUnifiedRegNum(SparcRegInfo::IntRegClassID,
                           SparcIntRegClass::i6);
 }
 
 // Get unified reg number for stack pointer
-unsigned UltraSparcRegInfo::getStackPointer() const {
-  return getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+unsigned SparcRegInfo::getStackPointer() const {
+  return getUnifiedRegNum(SparcRegInfo::IntRegClassID,
                           SparcIntRegClass::o6);
 }
 
@@ -173,7 +175,7 @@ isVarArgsCall(const MachineInstr *CallMI) {
 //                           regClassId is set to the register class ID.
 // 
 int
-UltraSparcRegInfo::regNumForIntArg(bool inCallee, bool isVarArgsCall,
+SparcRegInfo::regNumForIntArg(bool inCallee, bool isVarArgsCall,
                                    unsigned argNo, unsigned& regClassId) const
 {
   regClassId = IntRegClassID;
@@ -192,7 +194,7 @@ UltraSparcRegInfo::regNumForIntArg(bool inCallee, bool isVarArgsCall,
 //                           regClassId is set to the register class ID.
 // 
 int
-UltraSparcRegInfo::regNumForFPArg(unsigned regType,
+SparcRegInfo::regNumForFPArg(unsigned regType,
                                   bool inCallee, bool isVarArgsCall,
                                   unsigned argNo, unsigned& regClassId) const
 {
@@ -221,7 +223,7 @@ UltraSparcRegInfo::regNumForFPArg(unsigned regType,
 // The following 4  methods are used to find the RegType (SparcInternals.h)
 // of a LiveRange, a Value, and for a given register unified reg number.
 //
-int UltraSparcRegInfo::getRegTypeForClassAndType(unsigned regClassID,
+int SparcRegInfo::getRegTypeForClassAndType(unsigned regClassID,
                                                  const Type* type) const
 {
   switch (regClassID) {
@@ -237,17 +239,17 @@ int UltraSparcRegInfo::getRegTypeForClassAndType(unsigned regClassID,
   }
 }
 
-int UltraSparcRegInfo::getRegTypeForDataType(const Type* type) const
+int SparcRegInfo::getRegTypeForDataType(const Type* type) const
 {
   return getRegTypeForClassAndType(getRegClassIDOfType(type), type);
 }
 
-int UltraSparcRegInfo::getRegTypeForLR(const LiveRange *LR) const
+int SparcRegInfo::getRegTypeForLR(const LiveRange *LR) const
 {
   return getRegTypeForClassAndType(LR->getRegClassID(), LR->getType());
 }
 
-int UltraSparcRegInfo::getRegType(int unifiedRegNum) const
+int SparcRegInfo::getRegType(int unifiedRegNum) const
 {
   if (unifiedRegNum < 32) 
     return IntRegType;
@@ -267,7 +269,7 @@ int UltraSparcRegInfo::getRegType(int unifiedRegNum) const
 
 // To find the register class used for a specified Type
 //
-unsigned UltraSparcRegInfo::getRegClassIDOfType(const Type *type,
+unsigned SparcRegInfo::getRegClassIDOfType(const Type *type,
                                                 bool isCCReg) const {
   Type::PrimitiveID ty = type->getPrimitiveID();
   unsigned res;
@@ -290,7 +292,7 @@ unsigned UltraSparcRegInfo::getRegClassIDOfType(const Type *type,
     return res;
 }
 
-unsigned UltraSparcRegInfo::getRegClassIDOfRegType(int regType) const {
+unsigned SparcRegInfo::getRegClassIDOfRegType(int regType) const {
   switch(regType) {
   case IntRegType:      return IntRegClassID;
   case FPSingleRegType:
@@ -307,7 +309,7 @@ unsigned UltraSparcRegInfo::getRegClassIDOfRegType(int regType) const {
 // Suggests a register for the ret address in the RET machine instruction.
 // We always suggest %i7 by convention.
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::suggestReg4RetAddr(MachineInstr *RetMI, 
+void SparcRegInfo::suggestReg4RetAddr(MachineInstr *RetMI, 
 					   LiveRangeInfo& LRI) const {
 
   assert(target.getInstrInfo().isReturn(RetMI->getOpCode()));
@@ -336,7 +338,7 @@ void UltraSparcRegInfo::suggestReg4RetAddr(MachineInstr *RetMI,
 // Sparc ABI dictates that %o7 be used for this purpose.
 //---------------------------------------------------------------------------
 void
-UltraSparcRegInfo::suggestReg4CallAddr(MachineInstr * CallMI,
+SparcRegInfo::suggestReg4CallAddr(MachineInstr * CallMI,
                                        LiveRangeInfo& LRI) const
 {
   CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI); 
@@ -360,7 +362,7 @@ UltraSparcRegInfo::suggestReg4CallAddr(MachineInstr * CallMI,
 //  If the arg is passed on stack due to the lack of regs, NOTHING will be
 //  done - it will be colored (or spilled) as a normal live range.
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::suggestRegs4MethodArgs(const Function *Meth, 
+void SparcRegInfo::suggestRegs4MethodArgs(const Function *Meth, 
 					       LiveRangeInfo& LRI) const 
 {
   // Check if this is a varArgs function. needed for choosing regs.
@@ -393,7 +395,7 @@ void UltraSparcRegInfo::suggestRegs4MethodArgs(const Function *Meth,
 // the correct hardware registers if they did not receive the correct
 // (suggested) color through graph coloring.
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::colorMethodArgs(const Function *Meth, 
+void SparcRegInfo::colorMethodArgs(const Function *Meth, 
                             LiveRangeInfo &LRI,
                             std::vector<MachineInstr*>& InstrnsBefore,
                             std::vector<MachineInstr*>& InstrnsAfter) const {
@@ -566,7 +568,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
 // This method is called before graph coloring to suggest colors to the
 // outgoing call args and the return value of the call.
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI, 
+void SparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI, 
 					     LiveRangeInfo& LRI) const {
   assert ( (target.getInstrInfo()).isCall(CallMI->getOpCode()) );
 
@@ -634,7 +636,7 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
 // this method is called for an LLVM return instruction to identify which
 // values will be returned from this method and to suggest colors.
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::suggestReg4RetValue(MachineInstr *RetMI, 
+void SparcRegInfo::suggestReg4RetValue(MachineInstr *RetMI, 
                                             LiveRangeInfo& LRI) const {
 
   assert( (target.getInstrInfo()).isReturn( RetMI->getOpCode() ) );
@@ -662,7 +664,7 @@ void UltraSparcRegInfo::suggestReg4RetValue(MachineInstr *RetMI,
 //---------------------------------------------------------------------------
 
 bool
-UltraSparcRegInfo::regTypeNeedsScratchReg(int RegType,
+SparcRegInfo::regTypeNeedsScratchReg(int RegType,
                                           int& scratchRegType) const
 {
   if (RegType == IntCCRegType)
@@ -679,7 +681,7 @@ UltraSparcRegInfo::regTypeNeedsScratchReg(int RegType,
 //---------------------------------------------------------------------------
 
 void
-UltraSparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
+SparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
                                unsigned SrcReg,
                                unsigned DestReg,
                                int RegType) const {
@@ -695,7 +697,7 @@ UltraSparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
     if (getRegType(DestReg) == IntRegType) {
       // copy intCC reg to int reg
       MI = (BuildMI(V9::RDCCR, 2)
-            .addMReg(getUnifiedRegNum(UltraSparcRegInfo::IntCCRegClassID,
+            .addMReg(getUnifiedRegNum(SparcRegInfo::IntCCRegClassID,
                                       SparcIntCCRegClass::ccr))
             .addMReg(DestReg,MOTy::Def));
     } else {
@@ -705,7 +707,7 @@ UltraSparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
       MI = (BuildMI(V9::WRCCRr, 3)
             .addMReg(SrcReg)
             .addMReg(SparcIntRegClass::g0)
-            .addMReg(getUnifiedRegNum(UltraSparcRegInfo::IntCCRegClassID,
+            .addMReg(getUnifiedRegNum(SparcRegInfo::IntCCRegClassID,
                                       SparcIntCCRegClass::ccr), MOTy::Def));
     }
     break;
@@ -743,7 +745,7 @@ UltraSparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
 
 
 void
-UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
+SparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
                                unsigned SrcReg, 
                                unsigned PtrReg,
                                int Offset, int RegType,
@@ -763,7 +765,7 @@ UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
       OffReg = PRA.getUnusedUniRegAtMI(RC, RegType, MInst, LVSetBef);
 #else
       // Default to using register g4 for holding large offsets
-      OffReg = getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+      OffReg = getUnifiedRegNum(SparcRegInfo::IntRegClassID,
                                 SparcIntRegClass::g4);
 #endif
       assert(OffReg >= 0 && "FIXME: cpReg2MemMI cannot find an unused reg.");
@@ -796,7 +798,7 @@ UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
     assert(scratchReg >= 0 && "Need scratch reg to store %ccr to memory");
     assert(getRegType(scratchReg) ==IntRegType && "Invalid scratch reg");
     MI = (BuildMI(V9::RDCCR, 2)
-          .addMReg(getUnifiedRegNum(UltraSparcRegInfo::IntCCRegClassID,
+          .addMReg(getUnifiedRegNum(SparcRegInfo::IntCCRegClassID,
                                     SparcIntCCRegClass::ccr))
           .addMReg(scratchReg, MOTy::Def));
     mvec.push_back(MI);
@@ -805,7 +807,7 @@ UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
     return;
 
   case FloatCCRegType: {
-    unsigned fsrReg =  getUnifiedRegNum(UltraSparcRegInfo::SpecialRegClassID,
+    unsigned fsrReg =  getUnifiedRegNum(SparcRegInfo::SpecialRegClassID,
                                            SparcSpecialRegClass::fsr);
     if (target.getInstrInfo().constantFitsInImmedField(V9::STXFSRi, Offset))
       MI=BuildMI(V9::STXFSRi,3).addMReg(fsrReg).addMReg(PtrReg).addSImm(Offset);
@@ -827,7 +829,7 @@ UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
 
 
 void
-UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
+SparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
                                unsigned PtrReg,	
                                int Offset,
                                unsigned DestReg,
@@ -848,7 +850,7 @@ UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
       OffReg = PRA.getUnusedUniRegAtMI(RC, RegType, MInst, LVSetBef);
 #else
       // Default to using register g4 for holding large offsets
-      OffReg = getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+      OffReg = getUnifiedRegNum(SparcRegInfo::IntRegClassID,
                                 SparcIntRegClass::g4);
 #endif
       assert(OffReg >= 0 && "FIXME: cpReg2MemMI cannot find an unused reg.");
@@ -890,12 +892,12 @@ UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
     MI = (BuildMI(V9::WRCCRr, 3)
           .addMReg(scratchReg)
           .addMReg(SparcIntRegClass::g0)
-          .addMReg(getUnifiedRegNum(UltraSparcRegInfo::IntCCRegClassID,
+          .addMReg(getUnifiedRegNum(SparcRegInfo::IntCCRegClassID,
                                     SparcIntCCRegClass::ccr), MOTy::Def));
     break;
     
   case FloatCCRegType: {
-    unsigned fsrRegNum =  getUnifiedRegNum(UltraSparcRegInfo::SpecialRegClassID,
+    unsigned fsrRegNum =  getUnifiedRegNum(SparcRegInfo::SpecialRegClassID,
                                            SparcSpecialRegClass::fsr);
     if (target.getInstrInfo().constantFitsInImmedField(V9::LDXFSRi, Offset))
       MI = BuildMI(V9::LDXFSRi, 3).addMReg(PtrReg).addSImm(Offset)
@@ -919,7 +921,7 @@ UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
 
 
 void
-UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest,
+SparcRegInfo::cpValue2Value(Value *Src, Value *Dest,
                                  std::vector<MachineInstr*>& mvec) const {
   int RegType = getRegTypeForDataType(Src->getType());
   MachineInstr * MI = NULL;
@@ -948,7 +950,7 @@ UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest,
 // Print the register assigned to a LR
 //---------------------------------------------------------------------------
 
-void UltraSparcRegInfo::printReg(const LiveRange *LR) const {
+void SparcRegInfo::printReg(const LiveRange *LR) const {
   unsigned RegClassID = LR->getRegClassID();
   std::cerr << " Node ";
 

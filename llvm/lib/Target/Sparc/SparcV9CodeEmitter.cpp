@@ -35,6 +35,8 @@
 #include "Support/hash_set"
 #include "Support/Statistic.h"
 #include "SparcInternals.h"
+#include "SparcTargetMachine.h"
+#include "SparcRegInfo.h"
 #include "SparcV9CodeEmitter.h"
 #include "Config/alloca.h"
 
@@ -46,8 +48,8 @@ namespace {
   Statistic<> CallbackCalls("callback", "Number CompilationCallback() calls");
 }
 
-bool UltraSparc::addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                            MachineCodeEmitter &MCE) {
+bool SparcTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
+                                                    MachineCodeEmitter &MCE) {
   MachineCodeEmitter *M = &MCE;
   DEBUG(M = MachineCodeEmitter::createFilePrinterEmitter(MCE));
   PM.add(new SparcV9CodeEmitter(*this, *M));
@@ -102,10 +104,10 @@ namespace {
 
   private:
     uint64_t emitStubForFunction(Function *F);
-    static void SaveRegisters(uint64_t DoubleFP[], uint64_t &FSR,
-                              uint64_t &FPRS, uint64_t &CCR);
-    static void RestoreRegisters(uint64_t DoubleFP[], uint64_t &FSR,
-                                 uint64_t &FPRS, uint64_t &CCR);
+    static void SaveRegisters(uint64_t DoubleFP[], uint64_t CC[],
+                              uint64_t Globals[]);
+    static void RestoreRegisters(uint64_t DoubleFP[], uint64_t CC[],
+                                 uint64_t Globals[]);
     static void CompilationCallback();
     uint64_t resolveFunctionReference(uint64_t RetAddr);
 
@@ -209,17 +211,20 @@ void JITResolver::insertFarJumpAtAddr(int64_t Target, uint64_t Addr) {
   }
 }
 
-void JITResolver::SaveRegisters(uint64_t DoubleFP[], uint64_t &FSR, 
-                                uint64_t &FPRS, uint64_t &CCR) {
+void JITResolver::SaveRegisters(uint64_t DoubleFP[], uint64_t CC[], 
+                                uint64_t Globals[]) {
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
 
-#if 0
   __asm__ __volatile__ (// Save condition-code registers
                         "stx %%fsr, %0;\n\t" 
                         "rd %%fprs, %1;\n\t" 
                         "rd %%ccr,  %2;\n\t"
-                        : "=m"(FSR), "=r"(FPRS), "=r"(CCR));
-#endif
+                        : "=m"(CC[0]), "=r"(CC[1]), "=r"(CC[2]));
+
+  __asm__ __volatile__ (// Save globals g1 and g5
+                        "stx %%g1, %0;\n\t"
+                        "stx %%g5, %0;\n\t"
+                        : "=m"(Globals[0]), "=m"(Globals[1]));
 
   // GCC says: `asm' only allows up to thirty parameters!
   __asm__ __volatile__ (// Save Single/Double FP registers, part 1
@@ -261,18 +266,21 @@ void JITResolver::SaveRegisters(uint64_t DoubleFP[], uint64_t &FSR,
 }
 
 
-void JITResolver::RestoreRegisters(uint64_t DoubleFP[], uint64_t &FSR, 
-                                   uint64_t &FPRS, uint64_t &CCR)
+void JITResolver::RestoreRegisters(uint64_t DoubleFP[], uint64_t CC[], 
+                                   uint64_t Globals[])
 {
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
 
-#if 0
   __asm__ __volatile__ (// Restore condition-code registers
                         "ldx %0,    %%fsr;\n\t" 
                         "wr  %1, 0, %%fprs;\n\t"
                         "wr  %2, 0, %%ccr;\n\t" 
-                        :: "m"(FSR), "r"(FPRS), "r"(CCR));
-#endif
+                        :: "m"(CC[0]), "r"(CC[1]), "r"(CC[2]));
+
+  __asm__ __volatile__ (// Restore globals g1 and g5
+                        "ldx %0, %%g1;\n\t"
+                        "ldx %0, %%g5;\n\t"
+                        :: "m"(Globals[0]), "m"(Globals[1]));
 
   // GCC says: `asm' only allows up to thirty parameters!
   __asm__ __volatile__ (// Restore Single/Double FP registers, part 1
@@ -314,11 +322,12 @@ void JITResolver::RestoreRegisters(uint64_t DoubleFP[], uint64_t &FSR,
 }
 
 void JITResolver::CompilationCallback() {
-  // Local space to save double registers
+  // Local space to save the registers
   uint64_t DoubleFP[32];
-  uint64_t FSR, FPRS, CCR;
+  uint64_t CC[3];
+  uint64_t Globals[2];
 
-  SaveRegisters(DoubleFP, FSR, FPRS, CCR);
+  SaveRegisters(DoubleFP, CC, Globals);
   ++CallbackCalls;
 
   uint64_t CameFrom = (uint64_t)(intptr_t)__builtin_return_address(0);
@@ -394,7 +403,7 @@ void JITResolver::CompilationCallback() {
   __asm__ __volatile__ ("sub %%i7, %0, %%i7" : : "r" (Offset+12));
 #endif
 
-  RestoreRegisters(DoubleFP, FSR, FPRS, CCR);
+  RestoreRegisters(DoubleFP, CC, Globals);
 }
 
 /// emitStubForFunction - This method is used by the JIT when it needs to emit
@@ -476,7 +485,7 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
   fakeReg = RI.getClassRegNum(fakeReg, regClass);
 
   switch (regClass) {
-  case UltraSparcRegInfo::IntRegClassID: {
+  case SparcRegInfo::IntRegClassID: {
     // Sparc manual, p31
     static const unsigned IntRegMap[] = {
       // "o0", "o1", "o2", "o3", "o4", "o5",       "o7",
@@ -494,12 +503,12 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
     return IntRegMap[fakeReg];
     break;
   }
-  case UltraSparcRegInfo::FloatRegClassID: {
+  case SparcRegInfo::FloatRegClassID: {
     DEBUG(std::cerr << "FP reg: " << fakeReg << "\n");
-    if (regType == UltraSparcRegInfo::FPSingleRegType) {
+    if (regType == SparcRegInfo::FPSingleRegType) {
       // only numbered 0-31, hence can already fit into 5 bits (and 6)
       DEBUG(std::cerr << "FP single reg, returning: " << fakeReg << "\n");
-    } else if (regType == UltraSparcRegInfo::FPDoubleRegType) {
+    } else if (regType == SparcRegInfo::FPDoubleRegType) {
       // FIXME: This assumes that we only have 5-bit register fields!
       // From Sparc Manual, page 40.
       // The bit layout becomes: b[4], b[3], b[2], b[1], b[5]
@@ -509,7 +518,7 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
     }
     return fakeReg;
   }
-  case UltraSparcRegInfo::IntCCRegClassID: {
+  case SparcRegInfo::IntCCRegClassID: {
     /*                                   xcc, icc, ccr */
     static const unsigned IntCCReg[] = {  6,   4,   2 };
     
@@ -518,7 +527,7 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
     DEBUG(std::cerr << "IntCC reg: " << IntCCReg[fakeReg] << "\n");
     return IntCCReg[fakeReg];
   }
-  case UltraSparcRegInfo::FloatCCRegClassID: {
+  case SparcRegInfo::FloatCCRegClassID: {
     /* These are laid out %fcc0 - %fcc3 => 0 - 3, so are correct */
     DEBUG(std::cerr << "FP CC reg: " << fakeReg << "\n");
     return fakeReg;
@@ -573,7 +582,7 @@ inline void SparcV9CodeEmitter::emitFarCall(uint64_t Target, Function *F) {
   }
 }
 
-void UltraSparc::replaceMachineCodeForFunction (void *Old, void *New) {
+void SparcTargetMachine::replaceMachineCodeForFunction (void *Old, void *New) {
   assert (TheJITResolver &&
 	"Can only call replaceMachineCodeForFunction from within JIT");
   uint64_t Target = (uint64_t)(intptr_t)New;

@@ -9,8 +9,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SparcInternals.h"
-#include "SparcInstrSelectionSupport.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -22,6 +20,9 @@
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "SparcInternals.h"
+#include "SparcInstrSelectionSupport.h"
+#include "SparcInstrInfo.h"
 
 namespace llvm {
 
@@ -41,7 +42,7 @@ static const uint32_t MAXSIMM = (1 << 12) - 1; // set bits in simm13 field of OR
 //---------------------------------------------------------------------------
 
 uint64_t
-UltraSparcInstrInfo::ConvertConstantToIntType(const TargetMachine &target,
+SparcInstrInfo::ConvertConstantToIntType(const TargetMachine &target,
                                               const Value *V,
                                               const Type *destType,
                                               bool  &isValidConstant) const
@@ -406,7 +407,7 @@ InitializeMaxConstantsTable()
 
 
 //---------------------------------------------------------------------------
-// class UltraSparcInstrInfo 
+// class SparcInstrInfo 
 // 
 // Purpose:
 //   Information about individual instructions.
@@ -416,7 +417,7 @@ InitializeMaxConstantsTable()
 //---------------------------------------------------------------------------
 
 /*ctor*/
-UltraSparcInstrInfo::UltraSparcInstrInfo()
+SparcInstrInfo::SparcInstrInfo()
   : TargetInstrInfo(SparcMachineInstrDesc,
                     /*descSize = */ V9::NUM_TOTAL_OPCODES,
                     /*numRealOpCodes = */ V9::NUM_REAL_OPCODES)
@@ -425,7 +426,7 @@ UltraSparcInstrInfo::UltraSparcInstrInfo()
 }
 
 bool
-UltraSparcInstrInfo::ConstantMayNotFitInImmedField(const Constant* CV,
+SparcInstrInfo::ConstantMayNotFitInImmedField(const Constant* CV,
                                                    const Instruction* I) const
 {
   if (I->getOpcode() >= MaxConstantsTable.size()) // user-defined op (or bug!)
@@ -455,12 +456,12 @@ UltraSparcInstrInfo::ConstantMayNotFitInImmedField(const Constant* CV,
 // Any stack space required is allocated via MachineFunction.
 // 
 void
-UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
-                                           Function* F,
-                                           Value* val,
-                                           Instruction* dest,
-                                           std::vector<MachineInstr*>& mvec,
-                                       MachineCodeForInstruction& mcfi) const
+SparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
+                                      Function* F,
+                                      Value* val,
+                                      Instruction* dest,
+                                      std::vector<MachineInstr*>& mvec,
+                                      MachineCodeForInstruction& mcfi) const
 {
   assert(isa<Constant>(val) || isa<GlobalValue>(val) &&
          "I only know about constant values and global addresses");
@@ -552,7 +553,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
 // Any stack space required is allocated via MachineFunction.
 // 
 void
-UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
+SparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
                                         Function* F,
                                         Value* val,
                                         Instruction* dest,
@@ -613,7 +614,7 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
 // Temporary stack space required is allocated via MachineFunction.
 // 
 void
-UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
+SparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
                                         Function* F,
                                         Value* val,
                                         Instruction* dest,
@@ -664,11 +665,11 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
 // Any stack space required is allocated via MachineFunction.
 // 
 void
-UltraSparcInstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
-                                                  Function *F,
-                                                  Value* src,
-                                                  Instruction* dest,
-                                               std::vector<MachineInstr*>& mvec,
+SparcInstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
+                                             Function *F,
+                                             Value* src,
+                                             Instruction* dest,
+                                             std::vector<MachineInstr*>& mvec,
                                           MachineCodeForInstruction& mcfi) const
 {
   bool loadConstantToReg = false;
@@ -760,7 +761,7 @@ CreateBitExtensionInstructions(bool signExtend,
 // Any stack space required is allocated via MachineFunction.
 // 
 void
-UltraSparcInstrInfo::CreateSignExtensionInstructions(
+SparcInstrInfo::CreateSignExtensionInstructions(
                                         const TargetMachine& target,
                                         Function* F,
                                         Value* srcVal,
@@ -782,7 +783,7 @@ UltraSparcInstrInfo::CreateSignExtensionInstructions(
 // Any stack space required is allocated via MachineFunction.
 // 
 void
-UltraSparcInstrInfo::CreateZeroExtensionInstructions(
+SparcInstrInfo::CreateZeroExtensionInstructions(
                                         const TargetMachine& target,
                                         Function* F,
                                         Value* srcVal,

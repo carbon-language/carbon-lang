@@ -11,9 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Type.h"
 #include "SparcRegClassInfo.h"
 #include "SparcInternals.h"
-#include "llvm/Type.h"
+#include "SparcRegInfo.h"
 #include "../../CodeGen/RegAlloc/RegAllocCommon.h"   // FIXME!
 #include "../../CodeGen/RegAlloc/IGNode.h"           // FIXME!
 
@@ -320,8 +321,8 @@ void SparcFloatRegClass::markColorsUsed(unsigned RegInClass,
                                         int RegTypeWanted,
                                     std::vector<bool> &IsColorUsedArr) const
 {
-  if (UserRegType == UltraSparcRegInfo::FPDoubleRegType ||
-      RegTypeWanted == UltraSparcRegInfo::FPDoubleRegType) {
+  if (UserRegType == SparcRegInfo::FPDoubleRegType ||
+      RegTypeWanted == SparcRegInfo::FPDoubleRegType) {
     // This register is used as or is needed as a double-precision reg.
     // We need to mark the [even,odd] pair corresponding to this reg.
     // Get the even numbered register corresponding to this reg.
@@ -348,7 +349,7 @@ void SparcFloatRegClass::markColorsUsed(unsigned RegInClass,
 int SparcFloatRegClass::findUnusedColor(int RegTypeWanted,
                                 const std::vector<bool> &IsColorUsedArr) const
 {
-  if (RegTypeWanted == UltraSparcRegInfo::FPDoubleRegType) {
+  if (RegTypeWanted == SparcRegInfo::FPDoubleRegType) {
     unsigned NC = 2 * this->getNumOfAvailRegs();
     assert(IsColorUsedArr.size() == NC && "Invalid colors-used array");
     for (unsigned c = 0; c < NC; c+=2)

@@ -6,26 +6,30 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-//
-// This file contains the code for the Sparc Target that does not fit in any of
-// the other files in this directory.
-//
+// 
+// Primary interface to machine description for the UltraSPARC.  Primarily just
+// initializes machine-dependent parameters in class TargetMachine, and creates
+// machine-dependent subclasses for classes such as TargetInstrInfo.
+// 
 //===----------------------------------------------------------------------===//
 
-#include "SparcInternals.h"
-#include "MappingInfo.h" 
 #include "llvm/Function.h"
 #include "llvm/PassManager.h"
 #include "llvm/Assembly/PrintModulePass.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrScheduling.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetMachineImpls.h"
+#include "llvm/Transforms/Scalar.h"
+#include "MappingInfo.h" 
+#include "SparcInternals.h"
+#include "SparcTargetMachine.h"
 #include "Support/CommandLine.h"
+
+using namespace llvm;
 
 namespace llvm {
 
@@ -62,87 +66,9 @@ namespace {
                           cl::Hidden);
 }
 
-//----------------------------------------------------------------------------
-// allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
-// that implements the Sparc backend. (the llvm/CodeGen/Sparc.h interface)
-//----------------------------------------------------------------------------
+} // End llvm namespace
 
-TargetMachine *allocateSparcTargetMachine(const Module &M) {
-  return new UltraSparc();
-}
-
-//---------------------------------------------------------------------------
-// class UltraSparcFrameInfo 
-// 
-//   Interface to stack frame layout info for the UltraSPARC.
-//   Starting offsets for each area of the stack frame are aligned at
-//   a multiple of getStackFrameSizeAlignment().
-//---------------------------------------------------------------------------
-
-int
-UltraSparcFrameInfo::getFirstAutomaticVarOffset(MachineFunction& ,
-                                                bool& pos) const
-{
-  pos = false;                          // static stack area grows downwards
-  return StaticAreaOffsetFromFP;
-}
-
-int
-UltraSparcFrameInfo::getRegSpillAreaOffset(MachineFunction& mcInfo,
-                                           bool& pos) const
-{
-  // ensure no more auto vars are added
-  mcInfo.getInfo()->freezeAutomaticVarsArea();
-  
-  pos = false;                          // static stack area grows downwards
-  unsigned autoVarsSize = mcInfo.getInfo()->getAutomaticVarsSize();
-  return StaticAreaOffsetFromFP - autoVarsSize; 
-}
-
-int
-UltraSparcFrameInfo::getTmpAreaOffset(MachineFunction& mcInfo,
-                                      bool& pos) const
-{
-  MachineFunctionInfo *MFI = mcInfo.getInfo();
-  MFI->freezeAutomaticVarsArea();     // ensure no more auto vars are added
-  MFI->freezeSpillsArea();            // ensure no more spill slots are added
-  
-  pos = false;                          // static stack area grows downwards
-  unsigned autoVarsSize = MFI->getAutomaticVarsSize();
-  unsigned spillAreaSize = MFI->getRegSpillsSize();
-  int offset = autoVarsSize + spillAreaSize;
-  return StaticAreaOffsetFromFP - offset;
-}
-
-int
-UltraSparcFrameInfo::getDynamicAreaOffset(MachineFunction& mcInfo,
-                                          bool& pos) const
-{
-  // Dynamic stack area grows downwards starting at top of opt-args area.
-  // The opt-args, required-args, and register-save areas are empty except
-  // during calls and traps, so they are shifted downwards on each
-  // dynamic-size alloca.
-  pos = false;
-  unsigned optArgsSize = mcInfo.getInfo()->getMaxOptionalArgsSize();
-  if (int extra = optArgsSize % getStackFrameSizeAlignment())
-    optArgsSize += (getStackFrameSizeAlignment() - extra);
-  int offset = optArgsSize + FirstOptionalOutgoingArgOffsetFromSP;
-  assert((offset - OFFSET) % getStackFrameSizeAlignment() == 0);
-  return offset;
-}
-
-//---------------------------------------------------------------------------
-// class UltraSparcMachine 
-// 
-// Purpose:
-//   Primary interface to machine description for the UltraSPARC.
-//   Primarily just initializes machine-dependent parameters in
-//   class TargetMachine, and creates machine-dependent subclasses
-//   for classes such as TargetInstrInfo. 
-// 
-//---------------------------------------------------------------------------
-
-UltraSparc::UltraSparc()
+SparcTargetMachine::SparcTargetMachine()
   : TargetMachine("UltraSparc-Native", false),
     schedInfo(*this),
     regInfo(*this),
@@ -153,7 +79,8 @@ UltraSparc::UltraSparc()
 // addPassesToEmitAssembly - This method controls the entire code generation
 // process for the ultra sparc.
 //
-bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
+bool
+SparcTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 {
   // The following 3 passes used to be inserted specially by llc.
   // Replace malloc and free instructions with library calls.
@@ -225,7 +152,7 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 // addPassesToJITCompile - This method controls the JIT method of code
 // generation for the UltraSparc.
 //
-bool UltraSparc::addPassesToJITCompile(FunctionPassManager &PM) {
+bool SparcTargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
   const TargetData &TD = getTargetData();
 
   PM.add(new TargetData("lli", TD.isLittleEndian(), TD.getPointerSize(),
@@ -269,4 +196,15 @@ bool UltraSparc::addPassesToJITCompile(FunctionPassManager &PM) {
   return false; // success!
 }
 
-} // End llvm namespace
+//----------------------------------------------------------------------------
+// allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
+// that implements the Sparc backend. (the llvm/CodeGen/Sparc.h interface)
+//----------------------------------------------------------------------------
+
+namespace llvm {
+
+TargetMachine *allocateSparcTargetMachine(const Module &M) {
+  return new SparcTargetMachine();
+}
+
+}

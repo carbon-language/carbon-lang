@@ -11,9 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SparcInstrSelectionSupport.h"
-#include "SparcInternals.h"
-#include "SparcRegClassInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/DerivedTypes.h"
@@ -28,6 +25,10 @@
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
+#include "SparcInstrSelectionSupport.h"
+#include "SparcInternals.h"
+#include "SparcRegClassInfo.h"
+#include "SparcRegInfo.h"
 #include "Support/MathExtras.h"
 #include <algorithm>
 #include <cmath>
@@ -1583,8 +1584,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         //     -- For non-FP values, create an add-with-0 instruction
         // 
         if (retVal != NULL) {
-          const UltraSparcRegInfo& regInfo =
-            (UltraSparcRegInfo&) target.getRegInfo();
+          const SparcRegInfo& regInfo =
+            (SparcRegInfo&) target.getRegInfo();
           const Type* retType = retVal->getType();
           unsigned regClassID = regInfo.getRegClassIDOfType(retType);
           unsigned retRegNum = (retType->isFloatingPoint()
@@ -2488,8 +2489,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           MachineFunction& MF = MachineFunction::get(currentFunc);
           MachineCodeForInstruction& mcfi =
             MachineCodeForInstruction::get(callInstr); 
-          const UltraSparcRegInfo& regInfo =
-            (UltraSparcRegInfo&) target.getRegInfo();
+          const SparcRegInfo& regInfo =
+            (SparcRegInfo&) target.getRegInfo();
           const TargetFrameInfo& frameInfo = target.getFrameInfo();
 
           // Create hidden virtual register for return address with type void*
