@@ -26,7 +26,7 @@ namespace {
 //===------------------------------------------------------------------------===
 //===          PHASE OPTIONS
 //===------------------------------------------------------------------------===
-static cl::opt<CompilerDriver::Phases> FinalPhase(
+cl::opt<CompilerDriver::Phases> FinalPhase(
   cl::desc("Choose final phase of compilation:"), 
   cl::init(CompilerDriver::LINKING),
   cl::values(
@@ -45,7 +45,7 @@ static cl::opt<CompilerDriver::Phases> FinalPhase(
 //===------------------------------------------------------------------------===
 //===          OPTIMIZATION OPTIONS
 //===------------------------------------------------------------------------===
-static cl::opt<CompilerDriver::OptimizationLevels> OptLevel(
+cl::opt<CompilerDriver::OptimizationLevels> OptLevel(
   cl::desc("Choose level of optimization to apply:"),
   cl::init(CompilerDriver::OPT_FAST_COMPILE),
   cl::values(
@@ -69,23 +69,23 @@ static cl::opt<CompilerDriver::OptimizationLevels> OptLevel(
 //===          TOOL OPTIONS
 //===------------------------------------------------------------------------===
 
-static cl::list<std::string> PreprocessorToolOpts("Tpre", cl::ZeroOrMore,
+cl::list<std::string> PreprocessorToolOpts("Tpre", cl::ZeroOrMore,
   cl::desc("Pass specific options to the pre-processor"), 
   cl::value_desc("option"));
 
-static cl::list<std::string> TranslatorToolOpts("Ttrn", cl::ZeroOrMore,
+cl::list<std::string> TranslatorToolOpts("Ttrn", cl::ZeroOrMore,
   cl::desc("Pass specific options to the assembler"),
   cl::value_desc("option"));
 
-static cl::list<std::string> AssemblerToolOpts("Tasm", cl::ZeroOrMore,
+cl::list<std::string> AssemblerToolOpts("Tasm", cl::ZeroOrMore,
   cl::desc("Pass specific options to the assembler"),
   cl::value_desc("option"));
 
-static cl::list<std::string> OptimizerToolOpts("Topt", cl::ZeroOrMore,
+cl::list<std::string> OptimizerToolOpts("Topt", cl::ZeroOrMore,
   cl::desc("Pass specific options to the optimizer"),
   cl::value_desc("option"));
 
-static cl::list<std::string> LinkerToolOpts("Tlnk", cl::ZeroOrMore,
+cl::list<std::string> LinkerToolOpts("Tlnk", cl::ZeroOrMore,
   cl::desc("Pass specific options to the linker"),
   cl::value_desc("option"));
 
@@ -93,10 +93,10 @@ static cl::list<std::string> LinkerToolOpts("Tlnk", cl::ZeroOrMore,
 //===          INPUT OPTIONS
 //===------------------------------------------------------------------------===
 
-static cl::list<std::string> LibPaths("L", cl::Prefix,
+cl::list<std::string> LibPaths("L", cl::Prefix,
   cl::desc("Specify a library search path"), cl::value_desc("directory"));
                                                                                                                                             
-static cl::list<std::string> Libraries("l", cl::Prefix,
+cl::list<std::string> Libraries("l", cl::Prefix,
   cl::desc("Specify libraries to link to"), cl::value_desc("library prefix"));
 
 
@@ -104,39 +104,45 @@ static cl::list<std::string> Libraries("l", cl::Prefix,
 //===          OUTPUT OPTIONS
 //===------------------------------------------------------------------------===
 
-static cl::opt<std::string> OutputFilename("o", 
+cl::opt<std::string> OutputFilename("o", 
   cl::desc("Override output filename"), cl::value_desc("filename"));
 
-static cl::opt<std::string> OutputMachine("m", cl::Prefix,
+cl::opt<std::string> OutputMachine("m", cl::Prefix,
   cl::desc("Specify a target machine"), cl::value_desc("machine"));
                                                                                                                                             
-static cl::opt<bool> Native("native", cl::init(false),
+cl::opt<bool> Native("native", cl::init(false),
   cl::desc("Generative native object and executables instead of bytecode"));
 
 //===------------------------------------------------------------------------===
 //===          INFORMATION OPTIONS
 //===------------------------------------------------------------------------===
 
-static cl::opt<bool> DryRun("dry-run", cl::Optional, cl::init(false),
+cl::opt<bool> DryRun("dry-run", cl::Optional, cl::init(false),
   cl::desc("Do everything but perform the compilation actions"));
 
-static cl::alias DryRunAlias("y", cl::Optional,
+cl::alias DryRunAlias("y", cl::Optional,
   cl::desc("Alias for -dry-run"), cl::aliasopt(DryRun));
 
-static cl::opt<bool> Verbose("verbose", cl::Optional, cl::init(false),
+cl::opt<bool> Verbose("verbose", cl::Optional, cl::init(false),
   cl::desc("Print out each action taken"));
 
-static cl::alias VerboseAlias("v", cl::Optional, 
+cl::alias VerboseAlias("v", cl::Optional, 
   cl::desc("Alias for -verbose"), cl::aliasopt(Verbose));
 
-static cl::opt<bool> Debug("debug", cl::Optional, cl::init(false), 
+cl::opt<bool> Debug("debug", cl::Optional, cl::init(false), 
   cl::Hidden, cl::desc("Print out debugging information"));
 
-static cl::alias DebugAlias("d", cl::Optional,
+cl::alias DebugAlias("d", cl::Optional,
   cl::desc("Alias for -debug"), cl::aliasopt(Debug));
 
-static cl::opt<bool> TimeActions("time-actions", cl::Optional, cl::init(false),
+cl::opt<bool> TimeActions("time-actions", cl::Optional, cl::init(false),
   cl::desc("Print execution time for each action taken"));
+
+cl::opt<bool> TimePasses("time-passes", cl::Optional, cl::init(false),
+  cl::desc("Print execution time for each optimization pass"));
+
+cl::opt<bool> ShowStats("stats", cl::Optional, cl::init(false),
+  cl::desc("Print statistics accumulated during optimization"));
 
 //===------------------------------------------------------------------------===
 //===          ADVANCED OPTIONS
@@ -151,6 +157,9 @@ static cl::opt<bool> EmitRawCode("emit-raw-code", cl::Hidden, cl::Optional,
 
 static cl::opt<bool> PipeCommands("pipe", cl::Optional,
   cl::desc("Invoke sub-commands by linking input/output with pipes"));
+
+static cl::opt<bool> KeepTemporaries("keep-temps", cl::Optional,
+  cl::desc("Don't delete the temporary files created during compilation"));
 
 //===------------------------------------------------------------------------===
 //===          POSITIONAL OPTIONS
@@ -192,86 +201,97 @@ const std::string GetFileType(const std::string& fname, unsigned pos ) {
 
 /// @brief The main program for llvmc
 int main(int argc, char **argv) {
-  // Make sure we print stack trace if we get bad signals
-  PrintStackTraceOnErrorSignal();
+  try {
+    // Make sure we print stack trace if we get bad signals
+    PrintStackTraceOnErrorSignal();
 
-  // Parse the command line options
-  cl::ParseCommandLineOptions(argc, argv, 
-    " LLVM Compilation Driver (llvmc)\n\n"
-    "  This program provides easy invocation of the LLVM tool set\n"
-    "  and source language compiler tools.\n"
-  );
+    // Parse the command line options
+    cl::ParseCommandLineOptions(argc, argv, 
+      " LLVM Compilation Driver (llvmc)\n\n"
+      "  This program provides easy invocation of the LLVM tool set\n"
+      "  and source language compiler tools.\n"
+    );
 
-  // Deal with unimplemented options.
-  if (Native)
-    std::cerr << argv[0] << ": Not implemented yet: -native";
-  if (EmitRawCode)
-    std::cerr << argv[0] << ": Not implemented yet: -emit-raw-code";
-  if (PipeCommands)
-    std::cerr << argv[0] << ": Not implemented yet: -pipe";
+    // Deal with unimplemented options.
+    if (PipeCommands)
+      std::cerr << argv[0] << ": Not implemented yet: -pipe";
 
-  // Default the output file, only if we're going to try to link
-  if (OutputFilename.empty() && OptLevel == CompilerDriver::LINKING)
-    OutputFilename = "a.out";
+    // Default the output file, only if we're going to try to link
+    if (OutputFilename.empty() && OptLevel == CompilerDriver::LINKING)
+      OutputFilename = "a.out";
 
-  // Construct the ConfigDataProvider object
-  LLVMC_ConfigDataProvider Provider;
-  Provider.setConfigDir(ConfigDir);
+    // Construct the ConfigDataProvider object
+    LLVMC_ConfigDataProvider Provider;
+    Provider.setConfigDir(ConfigDir);
 
-  // Construct the CompilerDriver object
-  CompilerDriver CD(Provider);
+    // Construct the CompilerDriver object
+    CompilerDriver CD(Provider);
 
-  // Configure the driver based on options
-  CD.setVerbose(Verbose);
-  CD.setDebug(Debug);
-  CD.setDryRun(DryRun);
-  CD.setFinalPhase(FinalPhase);
-  CD.setOptimization(OptLevel);
-  CD.setOutputMachine(OutputMachine);
-  CD.setEmitNativeCode(Native);
-  CD.setEmitRawCode(EmitRawCode);
-  CD.setLibraryPaths(LibPaths);
-  CD.setPreprocessorOptions(PreprocessorToolOpts);
-  CD.setTranslatorOptions(TranslatorToolOpts);
-  CD.setOptimizerOptions(OptimizerToolOpts);
-  CD.setAssemblerOptions(AssemblerToolOpts);
-  CD.setLinkerOptions(LinkerToolOpts);
+    // Configure the driver based on options
+    CD.setVerbose(Verbose);
+    CD.setDebug(Debug);
+    CD.setDryRun(DryRun);
+    CD.setFinalPhase(FinalPhase);
+    CD.setOptimization(OptLevel);
+    CD.setOutputMachine(OutputMachine);
+    CD.setEmitNativeCode(Native);
+    CD.setEmitRawCode(EmitRawCode);
+    CD.setTimeActions(TimeActions);
+    CD.setTimePasses(TimePasses);
+    CD.setShowStats(ShowStats);
+    CD.setKeepTemporaries(KeepTemporaries);
+    CD.setLibraryPaths(LibPaths);
+    if (!PreprocessorToolOpts.empty())
+        CD.setPhaseArgs(CompilerDriver::PREPROCESSING, PreprocessorToolOpts);
+    if (!TranslatorToolOpts.empty())
+        CD.setPhaseArgs(CompilerDriver::TRANSLATION, TranslatorToolOpts);
+    if (!OptimizerToolOpts.empty())
+        CD.setPhaseArgs(CompilerDriver::OPTIMIZATION, OptimizerToolOpts);
+    if (!AssemblerToolOpts.empty())
+        CD.setPhaseArgs(CompilerDriver::ASSEMBLY,AssemblerToolOpts);
+    if (!LinkerToolOpts.empty())
+        CD.setPhaseArgs(CompilerDriver::LINKING, LinkerToolOpts);
 
-  // Prepare the list of files to be compiled by the CompilerDriver.
-  CompilerDriver::InputList InpList;
-  std::vector<std::string>::iterator fileIt = Files.begin();
-  std::vector<std::string>::iterator libIt  = Libraries.begin();
-  unsigned libPos = 0, filePos = 0;
-  while ( 1 ) {
-    if ( libIt != Libraries.end() )
-      libPos = Libraries.getPosition( libIt - Libraries.begin() );
-    else
-      libPos = 0;
-    if ( fileIt != Files.end() )
-      filePos = Files.getPosition( fileIt - Files.begin() );
-    else
-      filePos = 0;
+    // Prepare the list of files to be compiled by the CompilerDriver.
+    CompilerDriver::InputList InpList;
+    std::vector<std::string>::iterator fileIt = Files.begin();
+    std::vector<std::string>::iterator libIt  = Libraries.begin();
+    unsigned libPos = 0, filePos = 0;
+    while ( 1 ) {
+      if ( libIt != Libraries.end() )
+        libPos = Libraries.getPosition( libIt - Libraries.begin() );
+      else
+        libPos = 0;
+      if ( fileIt != Files.end() )
+        filePos = Files.getPosition( fileIt - Files.begin() );
+      else
+        filePos = 0;
 
-    if ( filePos != 0 && (libPos == 0 || filePos < libPos) ) {
-      // Add a source file
-      InpList.push_back( std::make_pair(*fileIt, GetFileType(*fileIt,filePos)));
-      ++fileIt;
+      if ( filePos != 0 && (libPos == 0 || filePos < libPos) ) {
+        // Add a source file
+        InpList.push_back( std::make_pair(*fileIt, GetFileType(*fileIt,filePos)));
+        ++fileIt;
+      }
+      else if ( libPos != 0 && (filePos == 0 || libPos < filePos) ) {
+        // Add a library
+        InpList.push_back( std::make_pair(*libIt++,""));
+      }
+      else
+        break; // we're done with the list
     }
-    else if ( libPos != 0 && (filePos == 0 || libPos < filePos) ) {
-      // Add a library
-      InpList.push_back( std::make_pair(*libIt++,""));
+
+    // Tell the driver to do its thing
+    int result = CD.execute(InpList,OutputFilename);
+    if (result != 0) {
+      std::cerr << argv[0] << ": Error executing actions. Terminated.\n";
+      return result;
     }
-    else
-      break; // we're done with the list
-  }
 
-  // Tell the driver to do its thing
-  int result = CD.execute(InpList,OutputFilename);
-  if (result != 0) {
-    std::cerr << argv[0] << ": Error executing actions. Terminated.\n";
-    return result;
+    // All is good, return success
+    return 0;
+  } catch (std::string& msg) {
+    std::cerr << msg << "\n";
+  } catch (...) {
+    std::cerr << "Unexpected unknown exception occurred.\n";
   }
-
-  // All is good, return success
-  return 0;
 }

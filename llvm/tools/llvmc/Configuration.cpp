@@ -15,21 +15,21 @@
 #include "ConfigData.h"
 #include "ConfigLexer.h"
 #include "CompilerDriver.h"
+#include "Support/CommandLine.h"
 #include "Support/StringExtras.h"
 #include <iostream>
 #include <fstream>
 
 using namespace llvm;
 
-extern int ::Configlineno;
-
 namespace llvm {
-  ConfigLexerInfo ConfigLexerData;
+  ConfigLexerInfo ConfigLexerState;
   InputProvider* ConfigLexerInput = 0;
 
   InputProvider::~InputProvider() {}
   void InputProvider::error(const std::string& msg) {
-    std::cerr << name << ":" << Configlineno << ": Error: " << msg << "\n";
+    std::cerr << name << ":" << ConfigLexerState.lineNum << ": Error: " << 
+      msg << "\n";
     errCount++;
   }
 
@@ -65,17 +65,34 @@ namespace {
       std::ifstream F;
   };
 
+  cl::opt<bool> DumpTokens("dump-tokens", cl::Optional, cl::Hidden, cl::init(false),
+    cl::desc("Dump lexical tokens (debug use only)."));
+
   struct Parser
   {
+    Parser() {
+      token = EOFTOK;
+      provider = 0;
+      confDat = 0;
+      ConfigLexerState.lineNum = 1;
+      ConfigLexerState.in_value = false;
+      ConfigLexerState.StringVal.clear();
+      ConfigLexerState.IntegerVal = 0;
+    };
+
     ConfigLexerTokens token;
     InputProvider* provider;
     CompilerDriver::ConfigData* confDat;
-    CompilerDriver::Action* action;
 
-    int next() { return token = Configlex(); }
+    int next() { 
+      token = Configlex();
+      if (DumpTokens) 
+        std::cerr << token << "\n";
+      return token;
+    }
 
     bool next_is_real() { 
-      token = Configlex(); 
+      next();
       return (token != EOLTOK) && (token != ERRORTOK) && (token != 0);
     }
 
@@ -96,7 +113,7 @@ namespace {
           switch (token ) {
             case STRING :
             case OPTION : 
-              result += ConfigLexerData.StringVal + " ";
+              result += ConfigLexerState.StringVal + " ";
               break;
             default:
               error("Invalid name");
@@ -130,15 +147,32 @@ namespace {
       return result;
     }
 
-    void parseOptionList(CompilerDriver::StringVector& optList ) {
-      while (next_is_real()) {
-        if (token == STRING || token == OPTION)
-          optList.push_back(ConfigLexerData.StringVal);
-        else {
-          error("Expecting a program option", false);
-          break;
-        }
+    bool parseSubstitution(CompilerDriver::StringVector& optList) {
+      switch (token) {
+        case IN_SUBST:          optList.push_back("@in@"); break;
+        case OUT_SUBST:         optList.push_back("@out@"); break;
+        case TIME_SUBST:        optList.push_back("@time@"); break;
+        case STATS_SUBST:       optList.push_back("@stats@"); break;
+        case OPT_SUBST:         optList.push_back("@opt@"); break;
+        case TARGET_SUBST:      optList.push_back("@target@"); break;
+        default:
+          return false;
       }
+      return true;
+    }
+
+    void parseOptionList(CompilerDriver::StringVector& optList ) {
+      if (next() == EQUALS) {
+        while (next_is_real()) {
+          if (token == STRING || token == OPTION)
+            optList.push_back(ConfigLexerState.StringVal);
+          else if (!parseSubstitution(optList)) {
+            error("Expecting a program argument or substitution", false);
+            break;
+          }
+        }
+      } else
+        error("Expecting '='");
     }
 
     void parseLang() {
@@ -174,25 +208,17 @@ namespace {
           // no value (valid)
           action.program.clear();
           action.args.clear();
-          action.inputAt = 0;
-          action.outputAt = 0;
         } else {
           if (token == STRING || token == OPTION) {
-            action.program = ConfigLexerData.StringVal;
+            action.program = ConfigLexerState.StringVal;
           } else {
             error("Expecting a program name");
           }
           while (next_is_real()) {
             if (token == STRING || token == OPTION) {
-              action.args.push_back(ConfigLexerData.StringVal);
-            } else if (token == IN_SUBST) {
-              action.inputAt = action.args.size();
-              action.args.push_back("@in@");
-            } else if (token == OUT_SUBST) {
-              action.outputAt = action.args.size();
-              action.args.push_back("@out@");
-            } else {
-              error("Expecting a program argument", false);
+              action.args.push_back(ConfigLexerState.StringVal);
+            } else if (!parseSubstitution(action.args)) {
+              error("Expecting a program argument or substitution", false);
               break;
             }
           }
@@ -246,12 +272,13 @@ namespace {
           else
             confDat->Translator.clear(CompilerDriver::GROKS_DASH_O_FLAG);
           break;
-        case GROKS_O10N:
+        case OUTPUT_IS_ASM:
           if (parseBoolean())
-            confDat->Translator.set(CompilerDriver::GROKS_O10N_FLAG);
+            confDat->Translator.set(CompilerDriver::OUTPUT_IS_ASM_FLAG);
           else
-            confDat->Translator.clear(CompilerDriver::GROKS_O10N_FLAG);
+            confDat->Translator.clear(CompilerDriver::OUTPUT_IS_ASM_FLAG);
           break;
+
         default:
           error("Expecting 'command', 'required', 'preprocesses', "
                 "'groks_dash_O' or 'optimizes'");
@@ -264,17 +291,29 @@ namespace {
         case COMMAND:
           parseCommand(confDat->Optimizer);
           break;
+        case PREPROCESSES:
+          if (parseBoolean())
+            confDat->Optimizer.set(CompilerDriver::PREPROCESSES_FLAG);
+          else
+            confDat->Optimizer.clear(CompilerDriver::PREPROCESSES_FLAG);
+          break;
+        case TRANSLATES:
+          if (parseBoolean())
+            confDat->Optimizer.set(CompilerDriver::TRANSLATES_FLAG);
+          else
+            confDat->Optimizer.clear(CompilerDriver::TRANSLATES_FLAG);
+          break;
         case GROKS_DASH_O:
           if (parseBoolean())
             confDat->Optimizer.set(CompilerDriver::GROKS_DASH_O_FLAG);
           else
             confDat->Optimizer.clear(CompilerDriver::GROKS_DASH_O_FLAG);
           break;
-        case GROKS_O10N:
+        case OUTPUT_IS_ASM:
           if (parseBoolean())
-            confDat->Optimizer.set(CompilerDriver::GROKS_O10N_FLAG);
+            confDat->Translator.set(CompilerDriver::OUTPUT_IS_ASM_FLAG);
           else
-            confDat->Optimizer.clear(CompilerDriver::GROKS_O10N_FLAG);
+            confDat->Translator.clear(CompilerDriver::OUTPUT_IS_ASM_FLAG);
           break;
         default:
           error("Expecting 'command' or 'groks_dash_O'");
@@ -303,12 +342,6 @@ namespace {
             confDat->Linker.set(CompilerDriver::GROKS_DASH_O_FLAG);
           else
             confDat->Linker.clear(CompilerDriver::GROKS_DASH_O_FLAG);
-          break;
-        case GROKS_O10N:
-          if (parseBoolean())
-            confDat->Linker.set(CompilerDriver::GROKS_O10N_FLAG);
-          else
-            confDat->Linker.clear(CompilerDriver::GROKS_O10N_FLAG);
           break;
         default:
           error("Expecting 'command'");
@@ -349,7 +382,6 @@ namespace {
     p.token = EOFTOK;
     p.provider = &provider;
     p.confDat = &confDat;
-    p.action = 0;
     p.parseFile();
   }
 }

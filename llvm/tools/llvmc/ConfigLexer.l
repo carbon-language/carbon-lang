@@ -14,7 +14,6 @@
 
 
 %option prefix="Config"
-%option yylineno
 %option nostdinit
 %option never-interactive
 %option batch
@@ -23,9 +22,9 @@
 %option 8bit
 %option outfile="ConfigLexer.cpp"
 %option ecs
-%option noreject
 %option noyymore
-%array
+%option noreject
+%pointer
 
 %{
 
@@ -38,53 +37,73 @@
     if (result == 0 ) result = YY_NULL; \
   }
 
+#define YY_FATAL_ERROR(msg) \
+  { \
+    assert(ConfigLexerInput != 0 && "Oops"); \
+    ConfigLexerInput->error(msg); \
+  }
+
 #define YY_DECL ConfigLexerTokens llvm::Configlex()
 
 #define yyterminate() { return EOFTOK; }
 
 using namespace llvm;
 
-/* Conversion of text ints to binary */
-static int64_t IntToVal(const char *Buffer) {
-  int64_t Result = 0;
-  for (; *Buffer; Buffer++) {
-    int64_t OldRes = Result;
-    Result *= 10;
-    Result += *Buffer-'0';
+inline llvm::ConfigLexerTokens 
+handleContext(const char* tokenText, llvm::ConfigLexerTokens token) {
+  if (ConfigLexerState.in_value) {
+    ConfigLexerState.StringVal = tokenText;
+    return OPTION;
   }
-  return Result;
+  return token;
 }
 
-bool in_value = false;
+inline llvm::ConfigLexerTokens 
+handleSubstitution(llvm::ConfigLexerTokens token) {
+  if (ConfigLexerState.in_value) 
+    return token;
+  YY_FATAL_ERROR("Substitition tokens not allowed in names" ); 
+  return ERRORTOK;
+};
+
+inline llvm::ConfigLexerTokens handleBoolean(llvm::ConfigLexerTokens token) {
+  if (ConfigLexerState.in_value)
+    return token;
+  YY_FATAL_ERROR("Boolean values not allowed in names");
+  return ERRORTOK;
+}
 
 %}
 
-LANG            lang|Lang|LANG
-PREPROCESSOR    preprocessor|PreProcessor|PREPROCESSOR
-TRANSLATOR      translator|Translator|TRANSLATOR
-OPTIMIZER       optimizer|Optimizer|OPTIMIZER
 ASSEMBLER       assembler|Assembler|ASSEMBLER
+BadSubst        \@[^iots][a-zA-Z]\@
+COMMAND         command|Command|COMMAND
+Comment         \#[^\n]*\n
+NewLine         \n
+Eq              \=
+EscNewLine      \\\n
+GROKS_DASH_O    groks_dash_O|Groks_Dash_O|GROKS_DASH_O
+LANG            lang|Lang|LANG
 LINKER          linker|Linker|LINKER
 NAME            name|Name|NAME
-REQUIRED        required|Required|REQUIRED
-COMMAND         command|Command|COMMAND
-PREPROCESSES    preprocesses|PreProcesses|PREPROCESSES
-GROKS_DASH_O    groks_dash_O|Groks_Dash_O|GROKS_DASH_O
-GROKS_O10N      groks_optimization|Groks_Optimization|GROKS_OPTIMIZATION
-OPTIMIZES       optimizes|Optimizes|OPTIMIZES
 OPT1            opt1|Opt1|OPT1
 OPT2            opt2|Opt2|OPT2
 OPT3            opt3|Opt3|OPT3
 OPT4            opt4|Opt4|OPT4
 OPT5            opt5|Opt5|OPT5
-Comment         \#[^\n]*
-NewLine         \n
-White           [ \t]*
-Option          [-A-Za-z0-9_:%+/\\|,]*
+OPTIMIZER       optimizer|Optimizer|OPTIMIZER
+OPTIMIZES       optimizes|Optimizes|OPTIMIZES
+Option          [-A-Za-z0-9_:%+/\\|,][-A-Za-z0-9_:%+/\\|,@]*
+OUTPUT_IS_ASM   output_is_asm|Output_Is_Asm|OUTPUT_IS_ASM
+PREPROCESSES    preprocesses|PreProcesses|PREPROCESSES
+PREPROCESSOR    preprocessor|PreProcessor|PREPROCESSOR
+REQUIRED        required|Required|REQUIRED
 Sep             \.
-Eq              \=
 String          \"[^\"]*\"
-Integer         [-+]?[0-9]+
+TRANSLATES      translates|Translates|TRANSLATES
+TRANSLATOR      translator|Translator|TRANSLATOR
+White           [ \t]*
+
 True            true|True|TRUE
 False           false|False|FALSE
 On              on|On|ON
@@ -94,64 +113,68 @@ No              no|No|NO
 
 %%
 
-{NewLine}       { in_value = false; return EOLTOK; }
-{Eq}            { in_value = true; return EQUALS; }
-{Comment}       { /* Ignore comments */ }
 {White}         { /* Ignore whitespace */ }
 
-{LANG}          { if (in_value) { ConfigLexerData.StringVal = "lang"; 
-                    return OPTION;  } else return LANG; }
-{PREPROCESSOR}  { if (in_value) { ConfigLexerData.StringVal = "preprocessor";
-                    return OPTION; } else return PREPROCESSOR; }
-{TRANSLATOR}    { if (in_value) { ConfigLexerData.StringVal = "translator";
-                    return OPTION; } else return TRANSLATOR; }
-{OPTIMIZER}     { if (in_value) { ConfigLexerData.StringVal = "optimizer";
-                    return OPTION; } else return OPTIMIZER; }
-{ASSEMBLER}     { if (in_value) { ConfigLexerData.StringVal = "assembler";
-                    return OPTION; } else return ASSEMBLER; }
-{LINKER}        { if (in_value) { ConfigLexerData.StringVal = "linker";
-                    return OPTION; } else return LINKER; }
-{NAME}          { if (in_value) { ConfigLexerData.StringVal = "name";
-                    return OPTION; } else return NAME; }
-{REQUIRED}      { if (in_value) { ConfigLexerData.StringVal = "required";
-                    return OPTION; } else return REQUIRED; }
-{COMMAND}       { if (in_value) { ConfigLexerData.StringVal = "command";
-                    return OPTION; } else return COMMAND; }
-{PREPROCESSES}  { if (in_value) { ConfigLexerData.StringVal = "preprocesses";
-                    return OPTION; } else return PREPROCESSES; }
-{GROKS_DASH_O}  { if (in_value) { ConfigLexerData.StringVal = "groks_dash_O";
-                    return OPTION; } else return GROKS_DASH_O; }
-{GROKS_O10N}    { if (in_value) { ConfigLexerData.StringVal = 
-                    "groks_optimization"; return OPTION; } 
-                    else return GROKS_O10N; }
-{OPTIMIZES}     { if (in_value) { ConfigLexerData.StringVal = "optimizes";
-                    return OPTION; } else return OPTIMIZES; }
-{OPT1}          { if (in_value) { ConfigLexerData.StringVal = "opt1";
-                    return OPTION; } else return OPT1; }
-{OPT2}          { if (in_value) { ConfigLexerData.StringVal = "opt2";
-                    return OPTION; } else return OPT2; }
-{OPT3}          { if (in_value) { ConfigLexerData.StringVal = "opt3";
-                    return OPTION; } else return OPT3; }
-{OPT4}          { if (in_value) { ConfigLexerData.StringVal = "opt4";
-                    return OPTION; } else return OPT4; }
-{OPT5}          { if (in_value) { ConfigLexerData.StringVal = "opt5";
-                    return OPTION; } else return OPT5; }
-@in@            { if (in_value) return IN_SUBST; else return ERRORTOK;  }
-@out@           { if (in_value) return OUT_SUBST; else return ERRORTOK; }
-{True}          { if (in_value) return TRUETOK; else return ERRORTOK; }
-{On}            { if (in_value) return TRUETOK; else return ERRORTOK; }
-{Yes}           { if (in_value) return TRUETOK; else return ERRORTOK; }
-{False}         { if (in_value) return FALSETOK; else return ERRORTOK; }
-{Off}           { if (in_value) return FALSETOK; else return ERRORTOK; }
-{No}            { if (in_value) return FALSETOK; else return ERRORTOK; }
+{Comment}       { /* Ignore comments */
+                  ConfigLexerState.in_value = false; 
+                  ConfigLexerState.lineNum++; 
+                  return EOLTOK; 
+                }
 
-{Option}        { ConfigLexerData.StringVal = yytext; return OPTION; }
-{Integer}       { ConfigLexerData.IntegerVal = IntToVal(yytext); return INTEGER; }
-{String}        { yytext[yyleng-1] = 0;          // nuke end quote
-                  ConfigLexerData.StringVal = yytext+1;  // Nuke start quote
+{EscNewLine}    { ConfigLexerState.lineNum++; 
+                  /* Don't return EOLTOK! */
+                }
+
+{NewLine}       { ConfigLexerState.in_value = false; 
+                  ConfigLexerState.lineNum++; 
+                  return EOLTOK; 
+                }
+
+{Eq}            { ConfigLexerState.in_value = true; 
+                  return EQUALS; 
+                }
+
+{LANG}          { return handleContext("lang",LANG); }
+{PREPROCESSOR}  { return handleContext("preprocessor",PREPROCESSOR); }
+{TRANSLATOR}    { return handleContext("translator",TRANSLATOR); }
+{OPTIMIZER}     { return handleContext("optimizer",OPTIMIZER); }
+{ASSEMBLER}     { return handleContext("assembler",ASSEMBLER); }
+{LINKER}        { return handleContext("linker",LINKER); }
+{NAME}          { return handleContext("name",NAME); }
+{REQUIRED}      { return handleContext("required",REQUIRED); }
+{COMMAND}       { return handleContext("command",COMMAND); }
+{PREPROCESSES}  { return handleContext("preprocesses",PREPROCESSES); }
+{TRANSLATES}    { return handleContext("translates",TRANSLATES); }
+{OPTIMIZES}     { return handleContext("optimizes",OPTIMIZES); }
+{GROKS_DASH_O}  { return handleContext("groks_dash_O",GROKS_DASH_O); }
+{OUTPUT_IS_ASM} { return handleContext("output_ias_asm",OUTPUT_IS_ASM); }
+{OPT1}          { return handleContext("opt1",OPT1); }
+{OPT2}          { return handleContext("opt2",OPT2); }
+{OPT3}          { return handleContext("opt3",OPT3); }
+{OPT4}          { return handleContext("opt4",OPT4); }
+{OPT5}          { return handleContext("opt5",OPT5); }
+
+@in@            { return handleSubstitution(IN_SUBST); }
+@out@           { return handleSubstitution(OUT_SUBST); }
+@time@          { return handleSubstitution(TIME_SUBST); }
+@stats@         { return handleSubstitution(STATS_SUBST); }
+@opt@           { return handleSubstitution(OPT_SUBST); }
+@target@        { return handleSubstitution(TARGET_SUBST); }
+{BadSubst}      { YY_FATAL_ERROR("Invalid substitution token"); }
+{True}          { return handleBoolean(TRUETOK); }
+{On}            { return handleBoolean(TRUETOK); }
+{Yes}           { return handleBoolean(TRUETOK); }
+{False}         { return handleBoolean(FALSETOK); }
+{Off}           { return handleBoolean(FALSETOK); }
+{No}            { return handleBoolean(FALSETOK); }
+
+{Option}        { ConfigLexerState.StringVal = yytext; return OPTION; }
+{String}        { ConfigLexerState.StringVal = yytext+1;  // Nuke start quote
+                  ConfigLexerState.StringVal.erase(
+                  --ConfigLexerState.StringVal.end());
                   return STRING;
                 }
-{Sep}           { if (in_value) { ConfigLexerData.StringVal = yytext;
+{Sep}           { if (ConfigLexerState.in_value) { ConfigLexerState.StringVal = yytext;
                     return OPTION; } }
 
 

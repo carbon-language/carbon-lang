@@ -22,9 +22,11 @@ struct ConfigLexerInfo
 {
   int64_t     IntegerVal;
   std::string StringVal;
+  bool in_value;
+  unsigned lineNum;
 };
 
-extern ConfigLexerInfo ConfigLexerData;
+extern ConfigLexerInfo ConfigLexerState;
 
 class InputProvider {
   public:
@@ -57,6 +59,10 @@ enum ConfigLexerTokens {
   STRING,       ///< A quoted string
   IN_SUBST,     ///< The input substitution item @in@
   OUT_SUBST,    ///< The output substitution item @out@
+  STATS_SUBST,  ///< The stats substitution item @stats@
+  TIME_SUBST,   ///< The substitution item @time@
+  OPT_SUBST,    ///< The substitution item @opt@
+  TARGET_SUBST, ///< The substitition item @target@
   LANG,         ///< The item "lang" (and case variants)
   PREPROCESSOR, ///< The item "preprocessor" (and case variants)
   TRANSLATOR,   ///< The item "translator" (and case variants)
@@ -67,9 +73,10 @@ enum ConfigLexerTokens {
   REQUIRED,     ///< The item "required" (and case variants)
   COMMAND,      ///< The item "command" (and case variants)
   PREPROCESSES, ///< The item "preprocesses" (and case variants)
-  GROKS_DASH_O, ///< The item "groks_dash_O" (and case variants)
-  GROKS_O10N,   ///< The item "groks_optimization" (and case variants)
+  TRANSLATES,   ///< The item "translates" (and case variants)
   OPTIMIZES,    ///< The item "optimizes" (and case variants)
+  GROKS_DASH_O, ///< The item "groks_dash_O" (and case variants)
+  OUTPUT_IS_ASM,///< The item "outut_is_asm" (and case variants)
   OPT1,         ///< The item "opt1" (and case variants)
   OPT2,         ///< The item "opt2" (and case variants)
   OPT3,         ///< The item "opt3" (and case variants)

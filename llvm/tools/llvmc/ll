@@ -4,7 +4,6 @@
   preprocessor.required=false
   translator.command=llvm-as @in@ -o @out@
   translator.groks_dash_O=no
-  translator.groks_optimization=no
   translator.optimizes=no
   translator.preprocesses=true
   translator.required=TRUE

@@ -32,13 +32,17 @@ namespace llvm {
       /// @brief A vector of strings, commonly used
       typedef std::vector<std::string> StringVector;
 
+      /// @brief A table of strings, indexed typically by Phases
+      typedef std::vector<StringVector> StringTable;
+
       /// @brief The phases of processing that llvmc understands
       enum Phases {
         PREPROCESSING, ///< Source language combining, filtering, substitution
         TRANSLATION,   ///< Translate source -> LLVM bytecode/assembly
         OPTIMIZATION,  ///< Optimize translation result 
-        LINKING,       ///< Link bytecode and native code
         ASSEMBLY,      ///< Convert program to executable
+        LINKING,       ///< Link bytecode and native code
+        NUM_PHASES     ///< Always last!
       };
 
       /// @brief The levels of optimization llvmc understands
@@ -56,9 +60,10 @@ namespace llvm {
         REQUIRED_FLAG        = 0x0001, ///< Should the action always be run?
         GROKS_DASH_O_FLAG    = 0x0002, ///< Understands the -On options?
         PREPROCESSES_FLAG    = 0x0004, ///< Does this action preprocess?
-        OPTIMIZES_FLAG       = 0x0008, ///< Does this action optimize?
-        GROKS_O10N_FLAG      = 0x0010, ///< Understands optimization options?
-        FLAGS_MASK           = 0x001F, ///< Union of all flags
+        TRANSLATES_FLAG      = 0x0008, ///< Does this action translate?
+        OPTIMIZES_FLAG       = 0x0010, ///< Does this action optimize?
+        OUTPUT_IS_ASM_FLAG   = 0x0020, ///< Action produces .ll files?
+        FLAGS_MASK           = 0x003F, ///< Union of all flags
       };
 
       /// This type is the input list to the CompilerDriver. It provides
@@ -73,25 +78,24 @@ namespace llvm {
       /// @brief A structure to hold the action data for a given source
       /// language.
       struct Action {
-        Action() : inputAt(0) , outputAt(0), flags(0) {}
+        Action() : flags(0) {}
         std::string program;   ///< The program to execve
         StringVector args;     ///< Arguments to the program
-        size_t inputAt;        ///< Argument index to insert input file
-        size_t outputAt;       ///< Argument index to insert output file
         unsigned flags;        ///< Action specific flags
         void set(unsigned fl ) { flags |= fl; }
         void clear(unsigned fl) { flags &= (FLAGS_MASK ^ fl); }
-        bool isSet(unsigned fl) { return flags&fl != 0; }
+        bool isSet(unsigned fl) { return (flags&fl) != 0; }
       };
 
       struct ConfigData {
-        std::string langName;           ///< The name of the source language 
-        std::vector<StringVector> opts; ///< The o10n options for each level
-        Action PreProcessor;            ///< PreProcessor command line
-        Action Translator;              ///< Translator command line
-        Action Optimizer;               ///< Optimizer command line
-        Action Assembler;               ///< Assembler command line
-        Action Linker;                  ///< Linker command line
+        ConfigData();
+        std::string langName;   ///< The name of the source language 
+        StringTable opts;       ///< The o10n options for each level
+        Action PreProcessor;    ///< PreProcessor command line
+        Action Translator;      ///< Translator command line
+        Action Optimizer;       ///< Optimizer command line
+        Action Assembler;       ///< Assembler command line
+        Action Linker;          ///< Linker command line
       };
 
       /// This pure virtual interface class defines the interface between the
@@ -148,6 +152,12 @@ namespace llvm {
       /// execution time of each action taken.
       void setTimeActions( bool TF ) { timeActions = TF; }
 
+      /// @brief Cause the CompilerDriver to print timings for each pass.
+      void setTimePasses( bool TF ) { timePasses = TF; }
+
+      /// @brief Cause the CompilerDriver to show statistics gathered
+      void setShowStats( bool TF ) { showStats = TF; }
+
       /// @brief Indicate that native code is to be generated instead
       /// of LLVM bytecode.
       void setEmitNativeCode( bool TF ) { emitNativeCode = TF; }
@@ -155,34 +165,17 @@ namespace llvm {
       /// @brief Indicate that raw, unoptimized code is to be generated.
       void setEmitRawCode(bool TF ) { emitRawCode = TF; }
 
+      void setKeepTemporaries(bool TF) { keepTemps = TF; }
+
       /// @brief Set the output machine name.
       void setOutputMachine( const std::string& machineName ) {
         machine = machineName;
       }
 
       /// @brief Set Preprocessor specific options
-      void setPreprocessorOptions(const std::vector<std::string>& opts) {
-        PreprocessorOptions = opts;
-      }
-
-      /// @brief Set Translator specific options
-      void setTranslatorOptions(const std::vector<std::string>& opts) {
-        TranslatorOptions = opts;
-      }
-
-      /// @brief Set Optimizer specific options
-      void setOptimizerOptions(const std::vector<std::string>& opts) {
-        OptimizerOptions = opts;
-      }
-
-      /// @brief Set Assembler specific options
-      void setAssemblerOptions(const std::vector<std::string>& opts) {
-        AssemblerOptions = opts;
-      }
-
-      /// @brief Set Linker specific options
-      void setLinkerOptions(const std::vector<std::string>& opts) {
-        LinkerOptions = opts;
+      void setPhaseArgs(Phases phase, const std::vector<std::string>& opts) {
+        assert(phase <= LINKING && phase >= PREPROCESSING);
+        AdditionalArgs[phase] = opts;
       }
 
       /// @brief Set Library Paths
@@ -202,7 +195,7 @@ namespace llvm {
     private:
       Action* GetAction(ConfigData* cd, const std::string& input, 
                        const std::string& output, Phases phase );
-      void DoAction(Action* a);
+      bool DoAction(Action* a);
 
     /// @}
     /// @name Data
@@ -215,15 +208,15 @@ namespace llvm {
       bool isVerbose;               ///< Print actions?
       bool isDebug;                 ///< Print lotsa debug info?
       bool timeActions;             ///< Time the actions executed ?
+      bool timePasses;              ///< Time each pass and print timing ?
+      bool showStats;               ///< Show gathered statistics ?
       bool emitRawCode;             ///< Emit Raw (unoptimized) code?
       bool emitNativeCode;          ///< Emit native code instead of bytecode?
+      bool keepTemps;               ///< Keep temporary files?
       std::string machine;          ///< Target machine name
-      std::vector<std::string> LibraryPaths;
-      std::vector<std::string> PreprocessorOptions; 
-      std::vector<std::string> TranslatorOptions;
-      std::vector<std::string> OptimizerOptions;
-      std::vector<std::string> AssemblerOptions;
-      std::vector<std::string> LinkerOptions;
+      StringVector LibraryPaths;    ///< -L options
+      StringTable  AdditionalArgs;  ///< The -Txyz options
+      std::string TempDir;          ///< Name of the temporary directory.
 
     /// @}
 

@@ -14,6 +14,7 @@
 
 #include "CompilerDriver.h"
 #include "ConfigLexer.h"
+#include "Support/SystemUtils.h"
 #include <iostream>
 
 using namespace llvm;
@@ -33,27 +34,25 @@ namespace {
 
   const char OutputSuffix[] = ".o";
 
-  void WriteAction(CompilerDriver::Action* a ) {
-    std::cerr << a->program;
-    std::vector<std::string>::iterator I = a->args.begin();
-    while (I != a->args.end()) {
+  void WriteAction(CompilerDriver::Action* action ) {
+    std::cerr << action->program;
+    std::vector<std::string>::iterator I = action->args.begin();
+    while (I != action->args.end()) {
       std::cerr << " " + *I;
       ++I;
     }
     std::cerr << "\n";
   }
 
-  void DumpAction(CompilerDriver::Action* a) {
-    std::cerr << "command = " << a->program;
-    std::vector<std::string>::iterator I = a->args.begin();
-    while (I != a->args.end()) {
+  void DumpAction(CompilerDriver::Action* action) {
+    std::cerr << "command = " << action->program;
+    std::vector<std::string>::iterator I = action->args.begin();
+    while (I != action->args.end()) {
       std::cerr << " " + *I;
       ++I;
     }
     std::cerr << "\n";
-    std::cerr << "flags = " << a->flags << "\n";
-    std::cerr << "inputAt = " << a->inputAt << "\n";
-    std::cerr << "outputAt = " << a->outputAt << "\n";
+    std::cerr << "flags = " << action->flags << "\n";
   }
 
   void DumpConfigData(CompilerDriver::ConfigData* cd, const std::string& type ){
@@ -79,9 +78,55 @@ namespace {
   /// This specifies the passes to run for OPT_FAST_COMPILE (-O1)
   /// which should reduce the volume of code and make compilation
   /// faster. This is also safe on any llvm module. 
-  static const char* DefaultOptimizations[] = {
-    "-simplifycfg", "-mem2reg", "-mergereturn", "-instcombine",
+  static const char* DefaultFastCompileOptimizations[] = {
+    "-simplifycfg", "-mem2reg", "-instcombine"
   };
+}
+
+// Stuff in this namespace properly belongs in lib/System and needs
+// to be portable but we're avoiding that for now.
+namespace sys {
+  std::string MakeTemporaryDirectory() {
+    char temp_name[64];
+    strcpy(temp_name,"/tmp/llvm_XXXXXX");
+    if (0 == mkdtemp(temp_name))
+      throw std::string("Can't create temporary directory");
+    return temp_name;
+  }
+
+  std::string FindExecutableInPath(const std::string& program) {
+    // First, just see if the program is already executable
+    if (isExecutableFile(program)) return program;
+
+    // Get the path. If its empty, we can't do anything
+    const char *PathStr = getenv("PATH");
+    if (PathStr == 0) return "";
+
+    // Now we have a colon separated list of directories to search; try them.
+    unsigned PathLen = strlen(PathStr);
+    while (PathLen) {
+      // Find the first colon...
+      const char *Colon = std::find(PathStr, PathStr+PathLen, ':');
+    
+      // Check to see if this first directory contains the executable...
+      std::string FilePath = std::string(PathStr, Colon) + '/' + program;
+      if (isExecutableFile(FilePath))
+        return FilePath;                    // Found the executable!
+   
+      // Nope it wasn't in this directory, check the next range!
+      PathLen -= Colon-PathStr;
+      PathStr = Colon;
+
+      // Advance past duplicate coons
+      while (*PathStr == ':') {
+        PathStr++;
+        PathLen--;
+      }
+    }
+
+    // If we fell out, we ran out of directories in PATH to search, return failure
+    return "";
+  }
 }
 
 CompilerDriver::CompilerDriver(ConfigDataProvider& confDatProv )
@@ -94,46 +139,43 @@ CompilerDriver::CompilerDriver(ConfigDataProvider& confDatProv )
   , timeActions(false)
   , emitRawCode(false)
   , emitNativeCode(false)
+  , keepTemps(false)
   , machine()
   , LibraryPaths()
-  , PreprocessorOptions()
-  , TranslatorOptions()
-  , OptimizerOptions()
-  , AssemblerOptions()
-  , LinkerOptions()
+  , AdditionalArgs()
+  , TempDir()
 {
   // FIXME: These libraries are platform specific
   LibraryPaths.push_back("/lib");
   LibraryPaths.push_back("/usr/lib");
+  AdditionalArgs.reserve(NUM_PHASES);
+  StringVector emptyVec;
+  for (unsigned i = 0; i < NUM_PHASES; ++i)
+    AdditionalArgs.push_back(emptyVec);
 }
 
 CompilerDriver::~CompilerDriver() {
   cdp = 0;
   LibraryPaths.clear();
-  PreprocessorOptions.clear();
-  TranslatorOptions.clear();
-  OptimizerOptions.clear();
-  AssemblerOptions.clear();
-  LinkerOptions.clear();
+  AdditionalArgs.clear();
+}
+
+CompilerDriver::ConfigData::ConfigData()
+  : langName()
+  , PreProcessor()
+  , Translator()
+  , Optimizer()
+  , Assembler()
+  , Linker()
+{
+  StringVector emptyVec;
+  for (unsigned i = 0; i < NUM_PHASES; ++i)
+    opts.push_back(emptyVec);
 }
 
 void CompilerDriver::error( const std::string& errmsg ) {
-  std::cerr << "Error: " << errmsg << ".\n";
+  std::cerr << "llvmc: Error: " << errmsg << ".\n";
   exit(1);
-}
-
-inline std::string makeDashO(CompilerDriver::OptimizationLevels lev) {
-  if (lev == CompilerDriver::OPT_NONE) return "";
-  std::string result("-O");
-  switch (lev) {
-    case CompilerDriver::OPT_FAST_COMPILE :     result.append("1"); break;
-    case CompilerDriver::OPT_SIMPLE:            result.append("2"); break;
-    case CompilerDriver::OPT_AGGRESSIVE:        result.append("3"); break;
-    case CompilerDriver::OPT_LINK_TIME:         result.append("4"); break;
-    case CompilerDriver::OPT_AGGRESSIVE_LINK_TIME: result.append("5"); break;
-    default:                    assert(!"Invalid optimization level!");
-  }
-  return result;
 }
 
 CompilerDriver::Action* CompilerDriver::GetAction(ConfigData* cd, 
@@ -141,7 +183,9 @@ CompilerDriver::Action* CompilerDriver::GetAction(ConfigData* cd,
                           const std::string& output,
                           Phases phase)
 {
-  Action* pat = 0;
+  Action* pat = 0; ///< The pattern/template for the action
+  Action* action = new Action; ///< The actual action to execute
+
   // Get the action pattern
   switch (phase) {
     case PREPROCESSING: pat = &cd->PreProcessor; break;
@@ -155,74 +199,93 @@ CompilerDriver::Action* CompilerDriver::GetAction(ConfigData* cd,
   }
   assert(pat != 0 && "Invalid command pattern");
 
-  // Create the resulting action
-  Action* a = new Action(*pat);
+  // Copy over some pattern things that don't need to change
+  action->program = pat->program;
+  action->flags = pat->flags;
 
-  // Replace the substitution arguments
-  if (pat->inputAt < a->args.size())
-    a->args[pat->inputAt] = input;
-  if (pat->outputAt < a->args.size())
-    a->args[pat->outputAt] = output;
-
-  // Insert specific options for each kind of action type
-  switch (phase) {
-    case PREPROCESSING:
-      a->args.insert(a->args.begin(), PreprocessorOptions.begin(), 
-                    PreprocessorOptions.end());
-      break;
-    case TRANSLATION:   
-      a->args.insert(a->args.begin(), TranslatorOptions.begin(), 
-                    TranslatorOptions.end());
-      if (a->isSet(GROKS_DASH_O_FLAG))
-        a->args.insert(a->args.begin(), makeDashO(optLevel));
-      else if (a->isSet(GROKS_O10N_FLAG))
-        a->args.insert(a->args.begin(), cd->opts[optLevel].begin(),
-            cd->opts[optLevel].end());
-      break;
-    case OPTIMIZATION:  
-      a->args.insert(a->args.begin(), OptimizerOptions.begin(), 
-                    OptimizerOptions.end());
-      if (a->isSet(GROKS_DASH_O_FLAG))
-        a->args.insert(a->args.begin(), makeDashO(optLevel));
-      else if (a->isSet(GROKS_O10N_FLAG))
-        a->args.insert(a->args.begin(), cd->opts[optLevel].begin(),
-            cd->opts[optLevel].end());
-      break;
-    case ASSEMBLY:      
-      a->args.insert(a->args.begin(), AssemblerOptions.begin(), 
-                    AssemblerOptions.end());
-      break;
-    case LINKING:       
-      a->args.insert(a->args.begin(), LinkerOptions.begin(), 
-                    LinkerOptions.end());
-      if (a->isSet(GROKS_DASH_O_FLAG))
-        a->args.insert(a->args.begin(), makeDashO(optLevel));
-      else if (a->isSet(GROKS_O10N_FLAG))
-        a->args.insert(a->args.begin(), cd->opts[optLevel].begin(),
-            cd->opts[optLevel].end());
-      break;
-    default:
-      assert(!"Invalid driver phase!");
-      break;
+  // Do the substitutions from the pattern to the actual
+  StringVector::iterator PI = pat->args.begin();
+  StringVector::iterator PE = pat->args.end();
+  while (PI != PE) {
+    if ((*PI)[0] == '@') {
+      if (*PI == "@in@") {
+        action->args.push_back(input);
+      } else if (*PI == "@out@") {
+        action->args.push_back(output);
+      } else if (*PI == "@time@") {
+        if (timePasses)
+          action->args.push_back("-time-passes");
+      } else if (*PI == "@stats@") {
+        if (showStats)
+          action->args.push_back("-stats");
+      } else if (*PI == "@target@") {
+        // FIXME: Ignore for now
+      } else if (*PI == "@opt@") {
+        if (!emitRawCode) {
+          if (pat->isSet(GROKS_DASH_O)) {
+            if (optLevel != OPT_NONE) {
+              std::string optArg("-O");
+              switch (optLevel) {
+                case OPT_FAST_COMPILE : optArg.append("1"); break;
+                case OPT_SIMPLE:        optArg.append("2"); break;
+                case OPT_AGGRESSIVE:    optArg.append("3"); break;
+                case OPT_LINK_TIME:     optArg.append("4"); break;
+                case OPT_AGGRESSIVE_LINK_TIME: optArg.append("5"); break;
+                default : 
+                  assert(!"Invalid optimization argument!");
+                  optArg.append("0"); 
+                  break;
+              }
+              action->args.push_back(optArg);
+            }
+          } else {
+            if (cd->opts.size() > static_cast<unsigned>(optLevel) && 
+                !cd->opts[optLevel].empty())
+              action->args.insert(action->args.end(), cd->opts[optLevel].begin(),
+                cd->opts[optLevel].end());
+          }
+        }
+      } else {
+        error("Invalid substitution name");
+      }
+    } else {
+      // Its not a substitution, just put it in the action
+      action->args.push_back(*PI);
+    }
+    PI++;
   }
-  return a;
+
+  // Get specific options for each kind of action type
+  StringVector& args = AdditionalArgs[phase];
+
+  // Add specific options for each kind of action type
+  action->args.insert(action->args.end(), args.begin(), args.end());
+
+  // Finally, we're done
+  return action;
 }
 
-void CompilerDriver::DoAction(Action*a)
-{
+bool CompilerDriver::DoAction(Action*action) {
+  assert(action != 0 && "Invalid Action!");
   if (isVerbose)
-    WriteAction(a);
+    WriteAction(action);
   if (!isDryRun) {
-    std::cerr << "execve(\"" << a->program << "\",[\"";
-    std::vector<std::string>::iterator I = a->args.begin();
-    while (I != a->args.end()) {
-      std::cerr << *I;
-      ++I;
-      if (I != a->args.end())
-        std::cerr << "\",\"";
-    }
-    std::cerr << "\"],ENV);\n";
+    std::string prog(sys::FindExecutableInPath(action->program));
+    if (prog.empty())
+      error("Can't find program '" + action->program + "'");
+
+    // Get the program's arguments
+    const char* argv[action->args.size() + 1];
+    argv[0] = prog.c_str();
+    unsigned i = 1;
+    for (; i <= action->args.size(); ++i)
+      argv[i] = action->args[i-1].c_str();
+    argv[i] = 0;
+
+    // Invoke the program
+    return !ExecWait(argv, environ);
   }
+  return true;
 }
 
 int CompilerDriver::execute(const InputList& InpList, 
@@ -259,15 +322,11 @@ int CompilerDriver::execute(const InputList& InpList,
   std::vector<Action*> actions;
 
   // Create a temporary directory for our temporary files
-  char temp_name[64];
-  strcpy(temp_name,"/tmp/llvm_XXXXXX");
-  if (0 == mkdtemp(temp_name))
-      error("Can't create temporary directory");
-  std::string TempDir(temp_name);
-  std::string TempPreprocessorOut(TempDir + "/preproc.tmp");
-  std::string TempTranslatorOut(TempDir + "/trans.tmp");
-  std::string TempOptimizerOut(TempDir + "/opt.tmp");
-  std::string TempAssemblerOut(TempDir + "/asm.tmp");
+  std::string TempDir(sys::MakeTemporaryDirectory());
+  std::string TempPreprocessorOut(TempDir + "/preproc.o");
+  std::string TempTranslatorOut(TempDir + "/trans.o");
+  std::string TempOptimizerOut(TempDir + "/opt.o");
+  std::string TempAssemblerOut(TempDir + "/asm.o");
 
   /// PRE-PROCESSING / TRANSLATION / OPTIMIZATION / ASSEMBLY phases
   // for each input item
@@ -312,76 +371,137 @@ int CompilerDriver::execute(const InputList& InpList,
       OutFile = Output;
     }
 
+    // Initialize the input file
+    std::string InFile(I->first);
+
     // PRE-PROCESSING PHASE
-    Action& a = cd->PreProcessor;
+    Action& action = cd->PreProcessor;
 
     // Get the preprocessing action, if needed, or error if appropriate
-    if (!a.program.empty()) {
-      if (a.isSet(REQUIRED_FLAG) || finalPhase == PREPROCESSING) {
-        actions.push_back(GetAction(cd,I->first,
-              TempPreprocessorOut,PREPROCESSING));
+    if (!action.program.empty()) {
+      if (action.isSet(REQUIRED_FLAG) || finalPhase == PREPROCESSING) {
+        if (finalPhase == PREPROCESSING)
+          actions.push_back(GetAction(cd,InFile,OutFile,PREPROCESSING));
+        else {
+          actions.push_back(GetAction(cd,InFile,TempPreprocessorOut,
+                            PREPROCESSING));
+          InFile = TempPreprocessorOut;
+        }
       }
     } else if (finalPhase == PREPROCESSING) {
       error(cd->langName + " does not support pre-processing");
-    } else if (a.isSet(REQUIRED_FLAG)) {
+    } else if (action.isSet(REQUIRED_FLAG)) {
       error(std::string("Don't know how to pre-process ") + 
             cd->langName + " files");
     }
+
     // Short-circuit remaining actions if all they want is pre-processing
     if (finalPhase == PREPROCESSING) { ++I; continue; };
 
     /// TRANSLATION PHASE
-    a = cd->Translator;
+    action = cd->Translator;
 
     // Get the translation action, if needed, or error if appropriate
-    if (!a.program.empty()) {
-      if (a.isSet(REQUIRED_FLAG) || finalPhase == TRANSLATION) {
-        actions.push_back(GetAction(cd,I->first,TempTranslatorOut,TRANSLATION));
+    if (!action.program.empty()) {
+      if (action.isSet(REQUIRED_FLAG) || finalPhase == TRANSLATION) {
+        if (finalPhase == TRANSLATION) 
+          actions.push_back(GetAction(cd,InFile,OutFile,TRANSLATION));
+        else {
+          actions.push_back(GetAction(cd,InFile,TempTranslatorOut,TRANSLATION));
+          InFile = TempTranslatorOut;
+        }
+
+        // ll -> bc Helper
+        if (action.isSet(OUTPUT_IS_ASM_FLAG)) {
+          /// The output of the translator is an LLVM Assembly program
+          /// We need to translate it to bytecode
+          Action* action = new Action();
+          action->program = "llvm-as";
+          action->args.push_back(InFile);
+          action->args.push_back("-o");
+          InFile += ".bc";
+          action->args.push_back(InFile);
+          actions.push_back(action);
+        }
       }
     } else if (finalPhase == TRANSLATION) {
       error(cd->langName + " does not support translation");
-    } else if (a.isSet(REQUIRED_FLAG)) {
+    } else if (action.isSet(REQUIRED_FLAG)) {
       error(std::string("Don't know how to translate ") + 
             cd->langName + " files");
     }
+
     // Short-circuit remaining actions if all they want is translation
     if (finalPhase == TRANSLATION) { ++I; continue; }
 
     /// OPTIMIZATION PHASE
-    a = cd->Optimizer;
+    action = cd->Optimizer;
 
     // Get the optimization action, if needed, or error if appropriate
-    if (!a.program.empty()) {
-      actions.push_back(GetAction(cd,I->first,TempOptimizerOut,OPTIMIZATION));
+    if (!action.program.empty() && !emitRawCode) {
+      if (action.isSet(REQUIRED_FLAG) || finalPhase == OPTIMIZATION) {
+        if (finalPhase == OPTIMIZATION)
+          actions.push_back(GetAction(cd,InFile,OutFile,OPTIMIZATION));
+        else {
+          actions.push_back(GetAction(cd,InFile,TempOptimizerOut,OPTIMIZATION));
+          InFile = TempOptimizerOut;
+        }
+        // ll -> bc Helper
+        if (action.isSet(OUTPUT_IS_ASM_FLAG)) {
+          /// The output of the translator is an LLVM Assembly program
+          /// We need to translate it to bytecode
+          Action* action = new Action();
+          action->program = "llvm-as";
+          action->args.push_back(InFile);
+          action->args.push_back("-o");
+          InFile += ".bc";
+          action->args.push_back(InFile);
+          actions.push_back(action);
+        }
+      }
     } else if (finalPhase == OPTIMIZATION) {
       error(cd->langName + " does not support optimization");
-    } else if (a.isSet(REQUIRED_FLAG)) {
+    } else if (action.isSet(REQUIRED_FLAG)) {
       error(std::string("Don't know how to optimize ") + 
             cd->langName + " files");
     }
+
     // Short-circuit remaining actions if all they want is optimization
     if (finalPhase == OPTIMIZATION) { ++I; continue; }
 
+    /// ASSEMBLY PHASE
+    if (emitNativeCode) {
+      // We must cause native code to be generated
+    } else {
+    }
+      
+    // Go to next file to be processed
     ++I;
   }
 
   /// LINKING PHASE
+  if (emitNativeCode) {
+  } else {
+  }
 
   /// RUN THE ACTIONS
   std::vector<Action*>::iterator aIter = actions.begin();
   while (aIter != actions.end()) {
-    DoAction(*aIter);
+    if (!DoAction(*aIter))
+      error("Action failed");
     aIter++;
   }
 
-  // Cleanup files
-  CleanupTempFile(TempPreprocessorOut.c_str());
-  CleanupTempFile(TempTranslatorOut.c_str());
-  CleanupTempFile(TempOptimizerOut.c_str());
+  if (!keepTemps) {
+    // Cleanup files
+    CleanupTempFile(TempPreprocessorOut.c_str());
+    CleanupTempFile(TempTranslatorOut.c_str());
+    CleanupTempFile(TempOptimizerOut.c_str());
 
-  // Cleanup temporary directory we created
-  if (0 == access(TempDir.c_str(), F_OK | W_OK))
-    rmdir(TempDir.c_str());
+    // Cleanup temporary directory we created
+    if (0 == access(TempDir.c_str(), F_OK | W_OK))
+      rmdir(TempDir.c_str());
+  }
 
   return 0;
 }
