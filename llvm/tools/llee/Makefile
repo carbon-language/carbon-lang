@@ -14,12 +14,12 @@ include $(LEVEL)/Makefile.common
 
 all:: llee
 
-llee: $(ToolDir)/llee
+llee: $(LLVMToolDir)/llee
 
-$(ToolDir)/llee: Makefile
+$(LLVMToolDir)/llee: Makefile
 	$(Echo) Constructing llee shell script
 	$(Verb) echo exec env LD_PRELOAD=$(LibDir)/libLLVMexecve$(SHLIBEXT) $$\* > $@
 	$(Verb) chmod u+x $@
 
 clean::
-	$(Verb) rm -f $(ToolDir)/llee
+	$(Verb) rm -f $(LLVMToolDir)/llee
