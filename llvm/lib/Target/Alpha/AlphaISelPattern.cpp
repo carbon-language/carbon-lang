@@ -1170,19 +1170,39 @@ void ISel::Select(SDOperand N) {
      return;
 
   case ISD::STORE: 
-    Select(N.getOperand(0));
-    Tmp1 = SelectExpr(N.getOperand(1)); //value
-    if (N.getOperand(2).getOpcode() == ISD::GlobalAddress)
-      {
-	AlphaLowering.restoreGP(BB);
-	BuildMI(BB, Alpha::STORE, 2).addReg(Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(N.getOperand(2))->getGlobal());
-      }
-    else
-      {
-	Tmp2 = SelectExpr(N.getOperand(2)); //address
-	BuildMI(BB, Alpha::STQ, 3).addReg(Tmp1).addImm(0).addReg(Tmp2);
-      }
-    return;
+    {
+      Select(N.getOperand(0));
+      Tmp1 = SelectExpr(N.getOperand(1)); //value
+      MVT::ValueType DestType = N.getOperand(1).getValueType();
+      if (N.getOperand(2).getOpcode() == ISD::GlobalAddress)
+	{
+	  AlphaLowering.restoreGP(BB);
+	  if (DestType == MVT::i64) Opc = Alpha::STORE;
+	  else if (DestType == MVT::f64) Opc = Alpha::STT_SYM;
+	  else if (DestType == MVT::f32) Opc = Alpha::STS_SYM;
+	  else assert(0 && "unknown Type in store");
+	  BuildMI(BB, Opc, 2).addReg(Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(N.getOperand(2))->getGlobal());
+	}
+      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(2))) 
+	{
+	  AlphaLowering.restoreGP(BB);
+	  if (DestType == MVT::i64) Opc = Alpha::STORE;
+	  else if (DestType == MVT::f64) Opc = Alpha::STT_SYM;
+	  else if (DestType == MVT::f32) Opc = Alpha::STS_SYM;
+	  else assert(0 && "unknown Type in store");
+	  BuildMI(BB, Opc, 2).addReg(Tmp1).addConstantPoolIndex(CP->getIndex());
+	}
+      else
+	{
+	  Tmp2 = SelectExpr(N.getOperand(2)); //address
+	  if (DestType == MVT::i64) Opc = Alpha::STQ;
+	  else if (DestType == MVT::f64) Opc = Alpha::STT;
+	  else if (DestType == MVT::f32) Opc = Alpha::STS;
+	  else assert(0 && "unknown Type in store");
+	  BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(0).addReg(Tmp2);
+	}
+      return;
+    }
 
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:

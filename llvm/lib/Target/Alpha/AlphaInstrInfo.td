@@ -62,8 +62,10 @@ let Uses = [R29, R28] in {
   def LOAD : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldq $RA,$DISP">; //Load quadword
   def LDW : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldw $RA,$DISP($RB)">; // Load sign-extended word
   def LDB : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldb $RA,$DISP($RB)">; //Load byte
-  def LDS_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lds $RA,$DISP">; //Load quadword
-  def LDT_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldt $RA,$DISP">; //Load quadword
+  def LDS_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lds $RA,$DISP">; //Load float
+  def LDT_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldt $RA,$DISP">; //Load double
+  def STS_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "sts $RA,$DISP">; //store float
+  def STT_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "stt $RA,$DISP">; //store double
 }
 
 let Uses = [R28, R23, R24, R25, R26] in
