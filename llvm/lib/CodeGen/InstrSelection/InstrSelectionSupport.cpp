@@ -333,9 +333,9 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
           int64_t immedValue;
           MachineOperand::MachineOperandType opType =
             ChooseRegOrImmed(opValue, minstr->getOpCode(), target,
-                             /*canUseImmed*/ (op == 1),
+                             (target.getInstrInfo().getImmmedConstantPos(minstr->getOpCode()) == (int) op),
                              machineRegNum, immedValue);
-              
+          
           if (opType == MachineOperand::MO_MachineRegister)
             minstr->SetMachineOperand(op, machineRegNum);
           else if (opType == MachineOperand::MO_VirtualRegister)
