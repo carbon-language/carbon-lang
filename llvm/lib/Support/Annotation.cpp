@@ -15,6 +15,18 @@
 #include "Support/Annotation.h"
 using namespace llvm;
 
+Annotation::~Annotation() {}  // Designed to be subclassed
+
+Annotable::~Annotable() {   // Virtual because it's designed to be subclassed...
+  Annotation *A = AnnotationList;
+  while (A) {
+    Annotation *Next = A->getNext();
+    delete A;
+    A = Next;
+  }
+}
+
+
 typedef std::map<const std::string, unsigned> IDMapType;
 static unsigned IDCounter = 0;  // Unique ID counter
 
@@ -40,7 +52,6 @@ static void eraseFromFactMap(unsigned ID) {
     TheFactMap = 0;
   }
 }
-
 
 AnnotationID AnnotationManager::getID(const std::string &Name) {  // Name -> ID
   IDMapType::iterator I = getIDMap().find(Name);

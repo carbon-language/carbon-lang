@@ -44,7 +44,7 @@ class DerivedType;
 
 class AbstractTypeUser {
 protected:
-  virtual ~AbstractTypeUser() {}                        // Derive from me
+  virtual ~AbstractTypeUser();                        // Derive from me
 public:
 
   /// refineAbstractType - The callback method invoked when an abstract type is

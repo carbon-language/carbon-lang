@@ -68,7 +68,7 @@ class Annotation {
   Annotation *Next;        // The next annotation in the linked list
 public:
   inline Annotation(AnnotationID id) : ID(id), Next(0) {}
-  virtual ~Annotation() {}  // Designed to be subclassed
+  virtual ~Annotation();  // Designed to be subclassed
 
   // getID - Return the unique ID# of this annotation
   inline AnnotationID getID() const { return ID; }
@@ -95,14 +95,7 @@ class Annotable {
   void operator=(const Annotable &);   // Do not implement
 public:
   Annotable() : AnnotationList(0) {}
-  virtual ~Annotable() {   // Virtual because it's designed to be subclassed...
-    Annotation *A = AnnotationList;
-    while (A) {
-      Annotation *Next = A->getNext();
-      delete A;
-      A = Next;
-    }
-  }
+  virtual ~Annotable();    // Virtual because it's designed to be subclassed...
 
   // getAnnotation - Search the list for annotations of the specified ID.  The
   // pointer returned is either null (if no annotations of the specified ID

@@ -26,6 +26,7 @@ using namespace llvm;
 //
 //#define DEBUG_MERGE_TYPES 1
 
+AbstractTypeUser::~AbstractTypeUser() {}
 
 //===----------------------------------------------------------------------===//
 //                         Type Class Implementation
