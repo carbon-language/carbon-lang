@@ -86,6 +86,13 @@ FreeInst::FreeInst(Value *Ptr, BasicBlock *InsertAtEnd)
 //                           LoadInst Implementation
 //===----------------------------------------------------------------------===//
 
+void LoadInst::init(Value *Ptr) {
+  assert(Ptr && isa<PointerType>(Ptr->getType()) && 
+         "Ptr must have pointer type.");
+  Operands.reserve(1);
+  Operands.push_back(Use(Ptr, this));
+}
+
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBef)
   : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
                 Load, Name, InsertBef), Volatile(false) {
@@ -111,6 +118,7 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
                 Load, Name, InsertAE), Volatile(isVolatile) {
   init(Ptr);
 }
+
 
 //===----------------------------------------------------------------------===//
 //                           StoreInst Implementation
@@ -138,6 +146,15 @@ StoreInst::StoreInst(Value *Val, Value *Ptr, bool isVolatile,
   init(Val, Ptr);
 }
 
+void StoreInst::init(Value *Val, Value *Ptr) {
+  assert(isa<PointerType>(Ptr->getType()) &&
+         Val->getType() == cast<PointerType>(Ptr->getType())->getElementType()
+         && "Ptr must have pointer type.");
+
+  Operands.reserve(2);
+  Operands.push_back(Use(Val, this));
+  Operands.push_back(Use(Ptr, this));
+}
 
 //===----------------------------------------------------------------------===//
 //                       GetElementPtrInst Implementation
