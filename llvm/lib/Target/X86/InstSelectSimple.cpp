@@ -9,6 +9,7 @@
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
+#include "llvm/iPHINode.h"
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
@@ -54,6 +55,7 @@ namespace {
     // Visitation methods for various instructions.  These methods simply emit
     // fixed X86 code for each instruction.
     //
+    void visitPHINode(PHINode &I);
     void visitReturnInst(ReturnInst &RI);
     void visitBranchInst(BranchInst &BI);
     void visitAdd(BinaryOperator &B);
@@ -140,6 +142,20 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R) {
   }
 }
 
+/// visitPHINode - Turn an LLVM PHI node into an X86 PHI node...
+///
+void ISel::visitPHINode(PHINode &PN) {
+  MachineInstr *MI = BuildMI(BB, X86::PHI, PN.getNumOperands(), getReg(PN));
+
+  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
+    // FIXME: This will put constants after the PHI nodes in the block, which
+    // is invalid.  They should be put inline into the PHI node eventually.
+    //
+    MI->addRegOperand(getReg(PN.getIncomingValue(i)));
+    MI->addPCDispOperand(PN.getIncomingBlock(i));
+  }
+}
+
 
 /// 'ret' instruction - Here we are interested in meeting the x86 ABI.  As such,
 /// we have the following possibilities:
@@ -163,6 +179,11 @@ void ISel::visitReturnInst(ReturnInst &I) {
   BuildMI(BB, X86::RET, 0);
 }
 
+/// visitBranchInst - Handle conditional and unconditional branches here.  Note
+/// that since code layout is frozen at this point, that if we are trying to
+/// jump to a block that is the immediate successor of the current block, we can
+/// just make a fall-through. (but we don't currently).
+///
 void ISel::visitBranchInst(BranchInst &BI) {
   if (BI.isConditional())   // Only handles unconditional branches so far...
     visitInstruction(BI);
