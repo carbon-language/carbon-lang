@@ -95,6 +95,8 @@ bool Preheaders::ProcessLoop(Loop *L) {
   for (unsigned i = 0, e = L->getExitBlocks().size(); i != e; ++i)
     if (!DS.dominates(Header, L->getExitBlocks()[i])) {
       RewriteLoopExitBlock(L, L->getExitBlocks()[i]);
+      assert(DS.dominates(Header, L->getExitBlocks()[i]) &&
+             "RewriteLoopExitBlock failed?");
       NumInserted++;
       Changed = true;
     }
@@ -270,19 +272,22 @@ void Preheaders::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   DominatorSet &DS = getAnalysis<DominatorSet>();
   assert(!DS.dominates(L->getHeader(), Exit) &&
          "Loop already dominates exit block??");
+  assert(std::find(L->getExitBlocks().begin(), L->getExitBlocks().end(), Exit)
+         != L->getExitBlocks().end() && "Not a current exit block!");
   
   std::vector<BasicBlock*> LoopBlocks;
   for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit); I != E; ++I)
     if (L->contains(*I))
       LoopBlocks.push_back(*I);
 
-  BasicBlock *NewBB =
-    SplitBlockPredecessors(Exit, ".loopexit", LoopBlocks);
-  
+  assert(!LoopBlocks.empty() && "No edges coming in from outside the loop?");
+  BasicBlock *NewBB = SplitBlockPredecessors(Exit, ".loopexit", LoopBlocks);
+
   // Update Loop Information - we know that the new block will be in the parent
   // loop of L.
   if (Loop *Parent = L->getParentLoop())
     Parent->addBasicBlockToLoop(NewBB, getAnalysis<LoopInfo>());
+  L->changeExitBlock(Exit, NewBB);   // Update exit block information
 
   // Update dominator information...  The blocks that dominate NewBB are the
   // intersection of the dominators of predecessors, plus the block itself.
