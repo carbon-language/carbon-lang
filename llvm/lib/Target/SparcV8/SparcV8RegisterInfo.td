@@ -25,13 +25,20 @@ include "../SparcRegisterInfo.td"
 //
 def IntRegs : RegisterClass<i32, 32, [L0, L1, L2, L3, L4, L5, L6, L7,
                                      I0, I1, I2, I3, I4, I5,
-                                     G1, G2, G3, G4, G5, G6, G7,
+                                     G1,
                                      O0, O1, O2, O3, O4, O5, O7,
-                                     // Non-allocatable regs
-                                     O6, I6, I7, G0]> {
+                                     // Non-allocatable regs:
+                                     G2, G3, G4, // FIXME: OK for use only in
+                                                 // applications, not libraries.
+                                     O6, // stack ptr
+                                     I6, // frame ptr
+                                     I7, // return address
+                                     G0, // constant zero
+                                     G5, G6, G7 // reserved for kernel
+                                     ]> {
   let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
-      return end()-4;  // Don't allocate special registers
+      return end()-10;  // Don't allocate special registers
     }
   }];
 }

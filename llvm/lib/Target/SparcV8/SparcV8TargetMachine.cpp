@@ -31,7 +31,7 @@ namespace {
 ///
 SparcV8TargetMachine::SparcV8TargetMachine(const Module &M,
                                            IntrinsicLowering *IL)
-  : TargetMachine("SparcV8", IL, false, 4, 4, 8, 4, 8),
+  : TargetMachine("SparcV8", IL, false, 4, 4, 8, 4, 8, 4, 4, 4, 4),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0), JITInfo(*this) {
 }
 
