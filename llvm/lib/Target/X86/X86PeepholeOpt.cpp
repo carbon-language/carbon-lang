@@ -191,10 +191,17 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         unsigned R0 = MI->getOperand(0).getReg();
         unsigned Scale = MI->getOperand(1).getImmedValue();
         unsigned R1 = MI->getOperand(2).getReg();
-        unsigned Offset = MI->getOperand(3).getImmedValue();
-        I = MBB.insert(MBB.erase(I),
-                       BuildMI(Opcode, 5).addReg(R0).addZImm(Scale).
-                             addReg(R1).addSImm(Offset).addZImm((char)Val));
+        if (MI->getOperand(3).isImmediate()) {
+          unsigned Offset = MI->getOperand(3).getImmedValue();
+          I = MBB.insert(MBB.erase(I),
+                         BuildMI(Opcode, 5).addReg(R0).addZImm(Scale).
+                         addReg(R1).addSImm(Offset).addZImm((char)Val));
+        } else if (MI->getOperand(3).isGlobalAddress()) {
+          GlobalValue *GA = MI->getOperand(3).getGlobal();
+          I = MBB.insert(MBB.erase(I),
+                         BuildMI(Opcode, 5).addReg(R0).addZImm(Scale).
+                         addReg(R1).addGlobalAddress(GA).addZImm((char)Val));
+        }
         return true;
       }
     }
