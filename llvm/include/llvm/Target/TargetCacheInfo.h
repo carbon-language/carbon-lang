@@ -1,16 +1,16 @@
-//===-- llvm/Target/MachineCacheInfo.h --------------------------*- C++ -*-===//
+//===-- llvm/Target/TargetCacheInfo.h ---------------------------*- C++ -*-===//
 //
 //  Describes properties of the target cache architecture.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_MACHINECACHEINFO_H
-#define LLVM_TARGET_MACHINECACHEINFO_H
+#ifndef LLVM_TARGET_TARGETCACHEINFO_H
+#define LLVM_TARGET_TARGETCACHEINFO_H
 
 #include "Support/DataTypes.h"
 class TargetMachine;
 
-struct MachineCacheInfo : public NonCopyableV {
+struct TargetCacheInfo : public NonCopyableV {
   const TargetMachine &target;
 protected:
   unsigned int           numLevels;
@@ -19,7 +19,7 @@ protected:
   std::vector<unsigned short> cacheAssoc;
   
 public:
-  MachineCacheInfo(const TargetMachine& tgt) : target(tgt) {
+  TargetCacheInfo(const TargetMachine& tgt) : target(tgt) {
     Initialize();
   }
   

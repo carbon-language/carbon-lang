@@ -25,8 +25,8 @@ public:
 
   virtual const MachineSchedInfo &getSchedInfo() const { abort(); }
   virtual const MachineRegInfo   &getRegInfo()   const { abort(); }
-  virtual const MachineCacheInfo &getCacheInfo() const { abort(); }
-  virtual const MachineOptInfo   &getOptInfo()   const { abort(); }
+  virtual const TargetCacheInfo  &getCacheInfo() const { abort(); }
+  virtual const TargetOptInfo    &getOptInfo()   const { abort(); }
 
   /// addPassesToJITCompile - Add passes to the specified pass manager to
   /// implement a fast dynamic compiler for this target.  Return true if this is

@@ -14,7 +14,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include "llvm/Target/MachineCacheInfo.h"
+#include "llvm/Target/TargetCacheInfo.h"
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "llvm/Pass.h"

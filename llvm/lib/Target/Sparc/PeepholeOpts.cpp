@@ -10,7 +10,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineInstrInfo.h"
-#include "llvm/Target/MachineOptInfo.h"
+#include "llvm/Target/TargetOptInfo.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
 

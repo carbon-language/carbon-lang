@@ -1,12 +1,12 @@
 //===-- TargetMachine.cpp - General Target Information ---------------------==//
 //
 // This file describes the general parts of a Target machine.
-// This file also implements MachineCacheInfo.
+// This file also implements TargetCacheInfo.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MachineCacheInfo.h"
+#include "llvm/Target/TargetCacheInfo.h"
 #include "llvm/Type.h"
 
 //---------------------------------------------------------------------------
@@ -36,13 +36,13 @@ unsigned TargetMachine::findOptimalStorageSize(const Type *Ty) const {
 
 
 //---------------------------------------------------------------------------
-// class MachineCacheInfo 
+// class TargetCacheInfo 
 // 
 // Purpose:
 //   Describes properties of the target cache architecture.
 //---------------------------------------------------------------------------
 
-void MachineCacheInfo::Initialize() {
+void TargetCacheInfo::Initialize() {
   numLevels = 2;
   cacheLineSizes.push_back(16);  cacheLineSizes.push_back(32); 
   cacheSizes.push_back(1 << 15); cacheSizes.push_back(1 << 20);

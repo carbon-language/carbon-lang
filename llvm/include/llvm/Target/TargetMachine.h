@@ -15,8 +15,8 @@ class MachineInstrDescriptor;
 class MachineSchedInfo;
 class MachineRegInfo;
 class TargetFrameInfo;
-class MachineCacheInfo;
-class MachineOptInfo;
+class TargetCacheInfo;
+class TargetOptInfo;
 class MachineCodeEmitter;
 class MRegisterInfo;
 class PassManager;
@@ -60,8 +60,8 @@ public:
   virtual const MachineSchedInfo&       getSchedInfo() const = 0;
   virtual const MachineRegInfo&	        getRegInfo()   const = 0;
   virtual const TargetFrameInfo&        getFrameInfo() const = 0;
-  virtual const MachineCacheInfo&       getCacheInfo() const = 0;
-  virtual const MachineOptInfo&         getOptInfo()   const = 0;
+  virtual const TargetCacheInfo&        getCacheInfo() const = 0;
+  virtual const TargetOptInfo&          getOptInfo()   const = 0;
   const TargetData &getTargetData() const { return DataLayout; }
 
   /// getRegisterInfo - If register information is available, return it.  If
