@@ -81,3 +81,16 @@ Module *BugDriver::deleteInstructionFromProgram(Instruction *I,
   Passes.run(*Result);
   return Result;
 }
+
+/// performFinalCleanups - This method clones the current Program and performs
+/// a series of cleanups intended to get rid of extra cruft on the module
+/// before handing it to the user...
+///
+Module *BugDriver::performFinalCleanups() const {
+  PassManager CleanupPasses;
+  CleanupPasses.add(createFunctionResolvingPass());
+  CleanupPasses.add(createGlobalDCEPass());
+  Module *M = CloneModule(Program);
+  CleanupPasses.run(*M);
+  return M;
+}

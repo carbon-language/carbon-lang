@@ -84,6 +84,7 @@ static unsigned CountFunctions(Module *M) {
 ///
 bool BugDriver::debugPassCrash(const PassInfo *Pass) {
   EmitProgressBytecode(Pass, "passinput");
+  bool Reduced = false, AnyReduction = false;
 
   if (CountFunctions(Program) > 1) {
     // Attempt to reduce the input program down to a single function that still
@@ -106,7 +107,7 @@ bool BugDriver::debugPassCrash(const PassInfo *Pass) {
           // reduce the testcase...
           delete M;
 
-          EmitProgressBytecode(Pass, "reduced-"+I->getName());
+          Reduced = AnyReduction = true;
           break;
         }
         
@@ -120,6 +121,11 @@ bool BugDriver::debugPassCrash(const PassInfo *Pass) {
                 << "    Attempting to remove individual functions.\n";
       std::cout << "XXX Individual function removal unimplemented!\n";
     }
+  }
+
+  if (Reduced) {
+    EmitProgressBytecode(Pass, "reduced-function");
+    Reduced = false;
   }
 
   // FIXME: This should attempt to delete entire basic blocks at a time to speed
@@ -159,8 +165,8 @@ bool BugDriver::debugPassCrash(const PassInfo *Pass) {
             if (runPass(Pass)) {
               // Yup, it does, we delete the old module, and continue trying to
               // reduce the testcase...
-              EmitProgressBytecode(Pass, "reduced-" + I->getName());
               delete M;
+              Reduced = AnyReduction = true;
               goto TryAgain;  // I wish I had a multi-level break here!
             }
             
@@ -171,6 +177,28 @@ bool BugDriver::debugPassCrash(const PassInfo *Pass) {
           }
       }
   } while (Simplification);
-  
+
+  // Try to clean up the testcase by running funcresolve and globaldce...
+  if (AnyReduction) {
+    std::cout << "\n*** Attempting to perform final cleanups: ";
+    Module *M = performFinalCleanups();
+    std::swap(Program, M);
+            
+    // Find out if the pass still crashes on the cleaned up program...
+    if (runPass(Pass)) {
+      // Yup, it does, keep the reduced version...
+      delete M;
+      Reduced = AnyReduction = true;
+    } else {
+      delete Program;   // Otherwise, restore the original module...
+      Program = M;
+    }
+  }
+
+  if (Reduced) {
+    EmitProgressBytecode(Pass, "reduced-simplified");
+    Reduced = false;
+  }
+
   return false;
 }

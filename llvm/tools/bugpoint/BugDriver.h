@@ -125,6 +125,12 @@ private:
   ///
   Module *deleteInstructionFromProgram(Instruction *I, unsigned Simp) const;
 
+  /// performFinalCleanups - This method clones the current Program and performs
+  /// a series of cleanups intended to get rid of extra cruft on the module
+  /// before handing it to the user...
+  ///
+  Module *performFinalCleanups() const;
+
   /// initializeExecutionEnvironment - This method is used to set up the
   /// environment for executing LLVM programs.
   ///
