@@ -66,7 +66,7 @@ N: Reid Spencer
 E: rspencer@x10sys.com
 W: http://extprosys.sourceforge.net/
 D: 'llvm' namespacification, Stacker FE, VMCore cleanup (SymbolTable, 
-D: Value != Type, CPR removal, bytecode improvements).
+D: Value != Type, CPR removal, bytecode improvements, llvmcs).
 
 N: Bill Wendling
 E: wendling@isanbard.org
