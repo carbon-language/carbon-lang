@@ -42,6 +42,11 @@ class TemplateRules : public ConstRules {
     return SubClassName::Sub((const ArgType *)V1, (const ArgType *)V2);  
   }
 
+  virtual ConstPoolVal *mul(const ConstPoolVal *V1, 
+                            const ConstPoolVal *V2) const { 
+    return SubClassName::Mul((const ArgType *)V1, (const ArgType *)V2);  
+  }
+
   virtual ConstPoolBool *lessthan(const ConstPoolVal *V1, 
                                   const ConstPoolVal *V2) const { 
     return SubClassName::LessThan((const ArgType *)V1, (const ArgType *)V2);
@@ -56,11 +61,12 @@ class TemplateRules : public ConstRules {
   inline static ConstPoolVal *Add(const ArgType *V1, const ArgType *V2) {
     return 0;
   }
-
   inline static ConstPoolVal *Sub(const ArgType *V1, const ArgType *V2) {
     return 0;
   }
-
+  inline static ConstPoolVal *Mul(const ArgType *V1, const ArgType *V2) {
+    return 0;
+  }
   inline static ConstPoolBool *LessThan(const ArgType *V1, const ArgType *V2) {
     return 0;
   }
@@ -134,6 +140,13 @@ struct DirectRules
   inline static ConstPoolVal *Sub(const ConstPoolClass *V1, 
                                   const ConstPoolClass *V2) {
     BuiltinType Result = (BuiltinType)V1->getValue() -
+                         (BuiltinType)V2->getValue();
+    return new ConstPoolClass(*Ty, Result);
+  }
+
+  inline static ConstPoolVal *Mul(const ConstPoolClass *V1, 
+				   const ConstPoolClass *V2) {
+    BuiltinType Result = (BuiltinType)V1->getValue() *
                          (BuiltinType)V2->getValue();
     return new ConstPoolClass(*Ty, Result);
   }
