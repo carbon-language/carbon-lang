@@ -13,7 +13,7 @@
 class Instruction : public User {
   BasicBlock *Parent;
 
-  friend class ValueHolder<Instruction,BasicBlock,Method>;
+  friend class ValueHolder<Instruction,BasicBlock,Function>;
   inline void setParent(BasicBlock *P) { Parent = P; }
 protected:
   unsigned iType;      // InstructionType
@@ -59,6 +59,8 @@ public:
   inline bool isBinaryOp() const {
     return iType >= FirstBinaryOp && iType < NumBinaryOps;
   }
+
+  virtual void print(std::ostream &OS) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) { return true; }

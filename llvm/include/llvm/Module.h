@@ -120,6 +120,8 @@ public:
     return V->getValueType() == Value::ModuleVal;
   }
 
+  virtual void print(std::ostream &OS) const;
+
   // dropAllReferences() - This function causes all the subinstructions to "let
   // go" of all references that they are maintaining.  This allows one to
   // 'delete' a whole class at a time, even though there may be circular

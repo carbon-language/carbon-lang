@@ -66,6 +66,8 @@ public:
   inline const Function *getParent() const { return Parent; }
   inline       Function *getParent()       { return Parent; }
 
+  virtual void print(std::ostream &OS) const;
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FunctionArgument *) { return true; }
   static inline bool classof(const Value *V) {

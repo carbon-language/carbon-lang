@@ -83,6 +83,7 @@ public:
   inline const BasicBlock        *back() const { return BasicBlocks.back(); }
   inline       BasicBlock        *back()       { return BasicBlocks.back(); }
 
+  virtual void print(std::ostream &OS) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Function *) { return true; }

@@ -47,6 +47,8 @@ public:
   // getNullConstant.
   virtual bool isNullValue() const = 0;
 
+  virtual void print(std::ostream &O) const;
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Constant *) { return true; }
   static inline bool classof(const Value *V) {

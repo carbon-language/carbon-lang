@@ -59,6 +59,8 @@ public:
   //
   inline bool isConstant() const { return isConstantGlobal; }
 
+  virtual void print(std::ostream &OS) const;
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GlobalVariable *) { return true; }
   static inline bool classof(const Value *V) {

@@ -104,6 +104,8 @@ public:
   const InstListType &getInstList() const { return InstList; }
         InstListType &getInstList()       { return InstList; }
 
+  virtual void print(std::ostream &OS) const;
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BasicBlock *BB) { return true; }
   static inline bool classof(const Value *V) {
