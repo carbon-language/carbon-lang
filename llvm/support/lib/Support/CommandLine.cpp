@@ -37,6 +37,35 @@ static void AddArgument(const string &ArgName, Option *Opt) {
 static const char *ProgramName = 0;
 static const char *ProgramOverview = 0;
 
+static inline bool ProvideOption(Option *Handler, const char *ArgName,
+                                 const char *Value, int argc, char **argv,
+                                 int &i) {
+  // Enforce value requirements
+  switch (Handler->getValueExpectedFlag()) {
+  case ValueRequired:
+    if (Value == 0 || *Value == 0) {  // No value specified?
+      if (i+1 < argc) {     // Steal the next argument, like for '-o filename'
+        Value = argv[++i];
+      } else {
+        return Handler->error(" requires a value!");
+      }
+    }
+    break;
+  case ValueDisallowed:
+    if (*Value != 0)
+      return Handler->error(" does not allow a value! '" + 
+                            string(Value) + "' specified.");
+    break;
+  case ValueOptional: break;
+  default: cerr << "Bad ValueMask flag! CommandLine usage error:" 
+                << Handler->getValueExpectedFlag() << endl; abort();
+  }
+
+  // Run the handler now!
+  return Handler->addOccurance(ArgName, Value);
+}
+
+
 void cl::ParseCommandLineOptions(int &argc, char **argv,
 				 const char *Overview = 0) {
   ProgramName = argv[0];  // Save this away safe and snug
@@ -59,6 +88,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
       const char *ArgNameEnd = ArgName;
       while (*ArgNameEnd && *ArgNameEnd != '=' &&
              *ArgNameEnd != '/') ++ArgNameEnd; // Scan till end
+      // TODO: Remove '/' case.  Implement single letter args properly!
 
       Value = ArgNameEnd;
       if (*Value)           // If we have an equals sign...
@@ -66,7 +96,8 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
       if (*ArgName != 0) {
 	// Extract arg name part
-        map<string, Option*>::iterator I = getOpts().find(string(ArgName, ArgNameEnd));
+        map<string, Option*>::iterator I = 
+          getOpts().find(string(ArgName, ArgNameEnd));
         Handler = I != getOpts().end() ? I->second : 0;
       }
     }
@@ -78,32 +109,13 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
       continue;
     }
 
-    // Enforce value requirements
-    switch (Handler->getValueExpectedFlag()) {
-    case ValueRequired:
-      if (Value == 0 || *Value == 0) {  // No value specified?
-	if (i+1 < argc) {     // Steal the next argument, like for '-o filename'
-	  Value = argv[++i];
-	} else {
-	  ErrorParsing = Handler->error(" requires a value!");
-	  continue;
-	}
-      }
-      break;
-    case ValueDisallowed:
-      if (*Value != 0) {
-	ErrorParsing = Handler->error(" does not allow a value! '" + 
-				      string(Value) + "' specified.");
-	continue;
-      }
-      break;
-    case ValueOptional: break;
-    default: cerr << "Bad ValueMask flag! CommandLine usage error:" 
-		  << Handler->getValueExpectedFlag() << endl; abort();
-    }
+    ErrorParsing |= ProvideOption(Handler, ArgName, Value, argc, argv, i);
 
-    // Run the handler now!
-    ErrorParsing |= Handler->addOccurance(ArgName, Value);
+    // If this option should consume all arguments that come after it...
+    if (Handler->getNumOccurancesFlag() == ConsumeAfter) {
+      for (++i; i < argc; ++i)
+        ErrorParsing |= ProvideOption(Handler, ArgName, argv[i], argc, argv, i);
+    }
   }
 
   // Loop over args and make sure all required args are specified!
@@ -157,7 +169,8 @@ bool Option::addOccurance(const char *ArgName, const string &Value) {
       return error(": must occur exactly one time!", ArgName);
     // Fall through
   case OneOrMore:
-  case ZeroOrMore: break;
+  case ZeroOrMore:
+  case ConsumeAfter: break;
   default: return error(": bad num occurances flag value!");
   }
 
@@ -219,7 +232,7 @@ bool String::handleOccurance(const char *ArgName, const string &Arg) {
 // StringList valued command line option implementation
 //
 bool StringList::handleOccurance(const char *ArgName, const string &Arg) {
-  Values.push_back(Arg);
+  push_back(Arg);
   return false;
 }
 
