@@ -8,7 +8,7 @@
 #include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Function.h"
@@ -146,13 +146,13 @@ void LiveRangeInfo::constructLiveRanges() {
   // 
   // Also, find CALL and RETURN instructions, which need extra work.
   //
-  for (Function::const_iterator BBI=Meth->begin(); BBI != Meth->end(); ++BBI){
-    // get the vector of machine instructions for this basic block.
-    MachineBasicBlock& MIVec = MachineBasicBlock::get(BBI);
+  MachineFunction &MF = MachineFunction::get(Meth);
+  for (MachineFunction::iterator BBI = MF.begin(); BBI != MF.end(); ++BBI) {
+    MachineBasicBlock &MBB = *BBI;
 
     // iterate over all the machine instructions in BB
-    for(MachineBasicBlock::iterator MInstIterator = MIVec.begin();
-        MInstIterator != MIVec.end(); ++MInstIterator) {  
+    for(MachineBasicBlock::iterator MInstIterator = MBB.begin();
+        MInstIterator != MBB.end(); ++MInstIterator) {  
       MachineInstr *MInst = *MInstIterator; 
 
       // If the machine instruction is a  call/return instruction, add it to
@@ -248,35 +248,30 @@ void LiveRangeInfo::coalesceLRs()
   if(DEBUG_RA >= RA_DEBUG_LiveRanges) 
     cerr << "\nCoalescing LRs ...\n";
 
-  for(Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
-      BBI != BBE; ++BBI) {
-
-    // get the iterator for machine instructions
-    const MachineBasicBlock& MIVec = MachineBasicBlock::get(BBI);
-    MachineBasicBlock::const_iterator MInstIterator = MIVec.begin();
+  MachineFunction &MF = MachineFunction::get(Meth);
+  for (MachineFunction::iterator BBI = MF.begin(); BBI != MF.end(); ++BBI) {
+    MachineBasicBlock &MBB = *BBI;
 
     // iterate over all the machine instructions in BB
-    for( ; MInstIterator != MIVec.end(); ++MInstIterator) {  
-      const MachineInstr * MInst = *MInstIterator; 
+    for(MachineBasicBlock::iterator MII = MBB.begin(); MII != MBB.end(); ++MII){
+      const MachineInstr *MI = *MII;
 
       if( DEBUG_RA >= RA_DEBUG_LiveRanges) {
 	cerr << " *Iterating over machine instr ";
-	MInst->dump();
+	MI->dump();
 	cerr << "\n";
       }
 
-
       // iterate over  MI operands to find defs
-      for(MachineInstr::const_val_op_iterator DefI = MInst->begin(),
-            DefE = MInst->end(); DefI != DefE; ++DefI) {
+      for(MachineInstr::const_val_op_iterator DefI = MI->begin(),
+            DefE = MI->end(); DefI != DefE; ++DefI) {
 	if (DefI.isDef()) {            // iff this operand is a def
 	  LiveRange *LROfDef = getLiveRangeForValue( *DefI );
 	  RegClass *RCOfDef = LROfDef->getRegClass();
 
-	  MachineInstr::const_val_op_iterator UseI = MInst->begin(),
-            UseE = MInst->end();
-	  for( ; UseI != UseE; ++UseI){ // for all uses
-
+	  MachineInstr::const_val_op_iterator UseI = MI->begin(),
+            UseE = MI->end();
+	  for( ; UseI != UseE; ++UseI) { // for all uses
  	    LiveRange *LROfUse = getLiveRangeForValue( *UseI );
 	    if (!LROfUse) {             // if LR of use is not found
 	      //don't warn about labels

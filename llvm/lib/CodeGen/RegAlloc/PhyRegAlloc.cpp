@@ -77,16 +77,13 @@ Pass *getRegisterAllocator(TargetMachine &T) {
 //----------------------------------------------------------------------------
 PhyRegAlloc::PhyRegAlloc(Function *F, const TargetMachine& tm, 
 			 FunctionLiveVarInfo *Lvi, LoopInfo *LDC) 
-                       :  TM(tm), Meth(F),
-                          mcInfo(MachineFunction::get(F)),
-                          LVI(Lvi), LRI(F, tm, RegClassList), 
-			  MRI(tm.getRegInfo()),
-                          NumOfRegClasses(MRI.getNumOfRegClasses()),
-			  LoopDepthCalc(LDC) {
+  :  TM(tm), Fn(F), MF(MachineFunction::get(F)), LVI(Lvi),
+     LRI(F, tm, RegClassList), MRI(tm.getRegInfo()),
+     NumOfRegClasses(MRI.getNumOfRegClasses()), LoopDepthCalc(LDC) {
 
   // create each RegisterClass and put in RegClassList
   //
-  for (unsigned rc=0; rc < NumOfRegClasses; rc++)  
+  for (unsigned rc=0; rc != NumOfRegClasses; rc++)  
     RegClassList.push_back(new RegClass(F, MRI.getMachineRegClass(rc),
                                         &ResColList));
 }
@@ -266,29 +263,28 @@ void PhyRegAlloc::buildInterferenceGraphs()
     cerr << "Creating interference graphs ...\n";
 
   unsigned BBLoopDepthCost;
-  for (Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
+  for (MachineFunction::iterator BBI = MF.begin(), BBE = MF.end();
        BBI != BBE; ++BBI) {
+    const MachineBasicBlock &MBB = *BBI;
+    const BasicBlock *BB = MBB.getBasicBlock();
 
     // find the 10^(loop_depth) of this BB 
     //
-    BBLoopDepthCost = (unsigned)pow(10.0, LoopDepthCalc->getLoopDepth(BBI));
+    BBLoopDepthCost = (unsigned)pow(10.0, LoopDepthCalc->getLoopDepth(BB));
 
     // get the iterator for machine instructions
     //
-    const MachineBasicBlock& MIVec = MachineBasicBlock::get(BBI);
-    MachineBasicBlock::const_iterator MII = MIVec.begin();
+    MachineBasicBlock::const_iterator MII = MBB.begin();
 
     // iterate over all the machine instructions in BB
     //
-    for ( ; MII != MIVec.end(); ++MII) {  
-
-      const MachineInstr *MInst = *MII; 
+    for ( ; MII != MBB.end(); ++MII) {
+      const MachineInstr *MInst = *MII;
 
       // get the LV set after the instruction
       //
-      const ValueSet &LVSetAI = LVI->getLiveVarSetAfterMInst(MInst, BBI);
-    
-      const bool isCallInst = TM.getInstrInfo().isCall(MInst->getOpCode());
+      const ValueSet &LVSetAI = LVI->getLiveVarSetAfterMInst(MInst, BB);
+      bool isCallInst = TM.getInstrInfo().isCall(MInst->getOpCode());
 
       if (isCallInst ) {
 	// set the isCallInterference flag of each live range wich extends
@@ -298,7 +294,6 @@ void PhyRegAlloc::buildInterferenceGraphs()
 	//
 	setCallInterferences(MInst, &LVSetAI);
       }
-
 
       // iterate over all MI operands to find defs
       //
@@ -394,9 +389,9 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
 
 void PhyRegAlloc::addInterferencesForArgs() {
   // get the InSet of root BB
-  const ValueSet &InSet = LVI->getInSetOfBB(&Meth->front());  
+  const ValueSet &InSet = LVI->getInSetOfBB(&Fn->front());  
 
-  for (Function::const_aiterator AI=Meth->abegin(); AI != Meth->aend(); ++AI) {
+  for (Function::const_aiterator AI = Fn->abegin(); AI != Fn->aend(); ++AI) {
     // add interferences between args and LVars at start 
     addInterference(AI, &InSet, false);
     
@@ -420,25 +415,25 @@ void PhyRegAlloc::addInterferencesForArgs() {
 //-----------------------------
 inline void
 InsertBefore(MachineInstr* newMI,
-             MachineBasicBlock& MIVec,
+             MachineBasicBlock& MBB,
              MachineBasicBlock::iterator& MII)
 {
-  MII = MIVec.insert(MII, newMI);
+  MII = MBB.insert(MII, newMI);
   ++MII;
 }
 
 inline void
 InsertAfter(MachineInstr* newMI,
-            MachineBasicBlock& MIVec,
+            MachineBasicBlock& MBB,
             MachineBasicBlock::iterator& MII)
 {
   ++MII;    // insert before the next instruction
-  MII = MIVec.insert(MII, newMI);
+  MII = MBB.insert(MII, newMI);
 }
 
 inline void
 SubstituteInPlace(MachineInstr* newMI,
-                  MachineBasicBlock& MIVec,
+                  MachineBasicBlock& MBB,
                   MachineBasicBlock::iterator MII)
 {
   *MII = newMI;
@@ -446,7 +441,7 @@ SubstituteInPlace(MachineInstr* newMI,
 
 inline void
 PrependInstructions(vector<MachineInstr *> &IBef,
-                    MachineBasicBlock& MIVec,
+                    MachineBasicBlock& MBB,
                     MachineBasicBlock::iterator& MII,
                     const std::string& msg)
 {
@@ -460,14 +455,14 @@ PrependInstructions(vector<MachineInstr *> &IBef,
             if (OrigMI) cerr << "For MInst:\n  " << *OrigMI;
             cerr << msg << "PREPENDed instr:\n  " << **AdIt << "\n";
           }
-          InsertBefore(*AdIt, MIVec, MII);
+          InsertBefore(*AdIt, MBB, MII);
         }
     }
 }
 
 inline void
 AppendInstructions(std::vector<MachineInstr *> &IAft,
-                   MachineBasicBlock& MIVec,
+                   MachineBasicBlock& MBB,
                    MachineBasicBlock::iterator& MII,
                    const std::string& msg)
 {
@@ -481,34 +476,30 @@ AppendInstructions(std::vector<MachineInstr *> &IAft,
             if (OrigMI) cerr << "For MInst:\n  " << *OrigMI;
             cerr << msg << "APPENDed instr:\n  "  << **AdIt << "\n";
           }
-          InsertAfter(*AdIt, MIVec, MII);
+          InsertAfter(*AdIt, MBB, MII);
         }
     }
 }
 
 
-void PhyRegAlloc::updateMachineCode()
-{
-  MachineBasicBlock& MIVec = MachineBasicBlock::get(&Meth->getEntryNode());
-    
+void PhyRegAlloc::updateMachineCode() {
   // Insert any instructions needed at method entry
-  MachineBasicBlock::iterator MII = MIVec.begin();
-  PrependInstructions(AddedInstrAtEntry.InstrnsBefore, MIVec, MII,
+  MachineBasicBlock::iterator MII = MF.front().begin();
+  PrependInstructions(AddedInstrAtEntry.InstrnsBefore, MF.front(), MII,
                       "At function entry: \n");
   assert(AddedInstrAtEntry.InstrnsAfter.empty() &&
          "InstrsAfter should be unnecessary since we are just inserting at "
          "the function entry point here.");
   
-  for (Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
+  for (MachineFunction::iterator BBI = MF.begin(), BBE = MF.end();
        BBI != BBE; ++BBI) {
 
     // iterate over all the machine instructions in BB
-    MachineBasicBlock &MIVec = MachineBasicBlock::get(BBI);
-    for (MachineBasicBlock::iterator MII = MIVec.begin();
-        MII != MIVec.end(); ++MII) {  
-      
+    MachineBasicBlock &MBB = *BBI;
+    for (MachineBasicBlock::iterator MII = MBB.begin();
+         MII != MBB.end(); ++MII) {  
+
       MachineInstr *MInst = *MII; 
-      
       unsigned Opcode =  MInst->getOpCode();
     
       // do not process Phis
@@ -516,20 +507,19 @@ void PhyRegAlloc::updateMachineCode()
 	continue;
 
       // Reset tmp stack positions so they can be reused for each machine instr.
-      mcInfo.popAllTempValues(TM);  
+      MF.popAllTempValues(TM);  
 	
       // Now insert speical instructions (if necessary) for call/return
       // instructions. 
       //
       if (TM.getInstrInfo().isCall(Opcode) ||
-	  TM.getInstrInfo().isReturn(Opcode)) {
-
-	AddedInstrns &AI = AddedInstrMap[MInst];
+          TM.getInstrInfo().isReturn(Opcode)) {
+        AddedInstrns &AI = AddedInstrMap[MInst];
 	
-	if (TM.getInstrInfo().isCall(Opcode))
-	  MRI.colorCallArgs(MInst, LRI, &AI, *this, BBI);
-	else if (TM.getInstrInfo().isReturn(Opcode))
-	  MRI.colorRetValue(MInst, LRI, &AI);
+        if (TM.getInstrInfo().isCall(Opcode))
+          MRI.colorCallArgs(MInst, LRI, &AI, *this, MBB.getBasicBlock());
+        else if (TM.getInstrInfo().isReturn(Opcode))
+          MRI.colorRetValue(MInst, LRI, &AI);
       }
       
       // Set the registers for operands in the machine instruction
@@ -553,13 +543,13 @@ void PhyRegAlloc::updateMachineCode()
                   continue;
                 }
           
-              if (LR->hasColor() )
+              if (LR->hasColor())
                 MInst->SetRegForOperand(OpNum,
                                 MRI.getUnifiedRegNum(LR->getRegClass()->getID(),
                                                      LR->getColor()));
               else
                 // LR did NOT receive a color (register). Insert spill code.
-                insertCode4SpilledLR(LR, MInst, BBI, OpNum );
+                insertCode4SpilledLR(LR, MInst, MBB.getBasicBlock(), OpNum);
             }
         } // for each operand
 
@@ -573,7 +563,7 @@ void PhyRegAlloc::updateMachineCode()
       // branch because putting code before or after it would be VERY BAD!
       // 
       unsigned bumpIteratorBy = 0;
-      if (MII != MIVec.begin())
+      if (MII != MBB.begin())
         if (unsigned predDelaySlots =
             TM.getInstrInfo().getNumDelaySlots((*(MII-1))->getOpCode()))
           {
@@ -585,10 +575,10 @@ void PhyRegAlloc::updateMachineCode()
               // Current instruction is in the delay slot of a branch and it
               // needs spill code inserted before or after it.
               // Move it before the preceding branch.
-              InsertBefore(MInst, MIVec, --MII);
+              InsertBefore(MInst, MBB, --MII);
               MachineInstr* nopI =
                 new MachineInstr(TM.getInstrInfo().getNOPOpCode());
-              SubstituteInPlace(nopI, MIVec, MII+1); // replace orig with NOP
+              SubstituteInPlace(nopI, MBB, MII+1); // replace orig with NOP
               --MII;                  // point to MInst in new location
               bumpIteratorBy = 2;     // later skip the branch and the NOP!
             }
@@ -598,7 +588,7 @@ void PhyRegAlloc::updateMachineCode()
       // instruction, add them now.
       //      
       if (AddedInstrMap.count(MInst)) {
-        PrependInstructions(AddedInstrMap[MInst].InstrnsBefore, MIVec, MII,"");
+        PrependInstructions(AddedInstrMap[MInst].InstrnsBefore, MBB, MII,"");
       }
       
       // If there are instructions to be added *after* this machine
@@ -627,7 +617,7 @@ void PhyRegAlloc::updateMachineCode()
 	else {
 	  // Here we can add the "instructions after" to the current
 	  // instruction since there are no delay slots for this instruction
-	  AppendInstructions(AddedInstrMap[MInst].InstrnsAfter, MIVec, MII,"");
+	  AppendInstructions(AddedInstrMap[MInst].InstrnsAfter, MBB, MII,"");
 	}  // if not delay
       }
 
@@ -667,7 +657,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   RegClass *RC = LR->getRegClass();
   const ValueSet &LVSetBef = LVI->getLiveVarSetBeforeMInst(MInst, BB);
 
-  mcInfo.pushTempValue(TM, MRI.getSpilledRegSize(RegType) );
+  MF.pushTempValue(TM, MRI.getSpilledRegSize(RegType) );
   
   vector<MachineInstr*> MIBef, MIAft;
   vector<MachineInstr*> AdIMid;
@@ -758,7 +748,7 @@ int PhyRegAlloc::getUsableUniRegAtMI(const int RegType,
     // we couldn't find an unused register. Generate code to free up a reg by
     // saving it on stack and restoring after the instruction
     
-    int TmpOff = mcInfo.pushTempValue(TM,  MRI.getSpilledRegSize(RegType) );
+    int TmpOff = MF.pushTempValue(TM,  MRI.getSpilledRegSize(RegType) );
     
     RegU = getUniRegNotUsedByThisInst(RC, MInst);
     
@@ -950,19 +940,19 @@ void PhyRegAlloc::move2DelayedInstr(const MachineInstr *OrigMI,
 void PhyRegAlloc::printMachineCode()
 {
 
-  cerr << "\n;************** Function " << Meth->getName()
+  cerr << "\n;************** Function " << Fn->getName()
        << " *****************\n";
 
-  for (Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
+  for (MachineFunction::iterator BBI = MF.begin(), BBE = MF.end();
        BBI != BBE; ++BBI) {
-    cerr << "\n"; printLabel(BBI); cerr << ": ";
+    cerr << "\n"; printLabel(BBI->getBasicBlock()); cerr << ": ";
 
     // get the iterator for machine instructions
-    MachineBasicBlock& MIVec = MachineBasicBlock::get(BBI);
-    MachineBasicBlock::iterator MII = MIVec.begin();
+    MachineBasicBlock& MBB = *BBI;
+    MachineBasicBlock::iterator MII = MBB.begin();
 
     // iterate over all the machine instructions in BB
-    for ( ; MII != MIVec.end(); ++MII) {  
+    for ( ; MII != MBB.end(); ++MII) {  
       MachineInstr *const MInst = *MII; 
 
       cerr << "\n\t";
@@ -1038,22 +1028,18 @@ void PhyRegAlloc::printMachineCode()
 //----------------------------------------------------------------------------
 void PhyRegAlloc::colorIncomingArgs()
 {
-  const BasicBlock &FirstBB = Meth->front();
-  const MachineInstr *FirstMI = MachineBasicBlock::get(&FirstBB).front();
-  assert(FirstMI && "No machine instruction in entry BB");
-
-  MRI.colorMethodArgs(Meth, LRI, &AddedInstrAtEntry);
+  MRI.colorMethodArgs(Fn, LRI, &AddedInstrAtEntry);
 }
 
 
 //----------------------------------------------------------------------------
 // Used to generate a label for a basic block
 //----------------------------------------------------------------------------
-void PhyRegAlloc::printLabel(const Value *const Val) {
+void PhyRegAlloc::printLabel(const Value *Val) {
   if (Val->hasName())
     cerr  << Val->getName();
   else
-    cerr << "Label" <<  Val;
+    cerr << "Label" << Val;
 }
 
 
@@ -1106,7 +1092,7 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
     if (HMI->first && HMI->second) {
       LiveRange *L = HMI->second;      // get the LiveRange
       if (!L->hasColor()) {   //  NOTE: ** allocating the size of long Type **
-        int stackOffset = mcInfo.allocateSpilledValue(TM, Type::LongTy);
+        int stackOffset = MF.allocateSpilledValue(TM, Type::LongTy);
         L->setSpillOffFromFP(stackOffset);
         if (DEBUG_RA)
           cerr << "  LR# " << L->getUserIGNode()->getIndex()
@@ -1148,19 +1134,17 @@ void PhyRegAlloc::allocateRegisters()
     for ( unsigned rc=0; rc < NumOfRegClasses ; rc++)  
       RegClassList[rc]->printIG();       
   }
-  
 
   LRI.coalesceLRs();                    // coalesce all live ranges
-  
 
   if (DEBUG_RA >= RA_DEBUG_LiveRanges) {
     // print all LRs in all reg classes
-    for ( unsigned rc=0; rc < NumOfRegClasses  ; rc++)  
-      RegClassList[ rc ]->printIGNodeList(); 
+    for (unsigned rc=0; rc < NumOfRegClasses; rc++)
+      RegClassList[rc]->printIGNodeList();
     
     // print IGs in all register classes
-    for ( unsigned rc=0; rc < NumOfRegClasses ; rc++)  
-      RegClassList[ rc ]->printIG();       
+    for (unsigned rc=0; rc < NumOfRegClasses; rc++)
+      RegClassList[rc]->printIG();
   }
 
 
@@ -1172,14 +1156,14 @@ void PhyRegAlloc::allocateRegisters()
 
   // color all register classes using the graph coloring algo
   for (unsigned rc=0; rc < NumOfRegClasses ; rc++)  
-    RegClassList[ rc ]->colorAllRegs();    
+    RegClassList[rc]->colorAllRegs();    
 
   // Atter grpah coloring, if some LRs did not receive a color (i.e, spilled)
   // a poistion for such spilled LRs
   //
   allocateStackSpace4SpilledLRs();
 
-  mcInfo.popAllTempValues(TM);  // TODO **Check
+  MF.popAllTempValues(TM);  // TODO **Check
 
   // color incoming args - if the correct color was not received
   // insert code to copy to the correct register
@@ -1194,7 +1178,7 @@ void PhyRegAlloc::allocateRegisters()
 
   if (DEBUG_RA) {
     cerr << "\n**** Machine Code After Register Allocation:\n\n";
-    MachineFunction::get(Meth).dump();
+    MF.dump();
   }
 }
 
