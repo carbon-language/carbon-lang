@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the generic Unix implementation
-#include "../Unix/SUS/Process.cpp"
+#include "../Unix/Process.cpp"
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only Linux specific code 
