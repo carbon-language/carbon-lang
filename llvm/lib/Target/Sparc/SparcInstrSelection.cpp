@@ -1446,8 +1446,28 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
   case LLVMIntrinsic::longjmp: {
     // call abort()
     Module* M = callInstr.getParent()->getParent()->getParent();
-    Function *F = M->getNamedFunction("abort");
-    mvec.push_back(BuildMI(V9::CALL, 1).addReg(F));
+    const FunctionType *voidvoidFuncTy =
+      FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false);
+    Function *F = M->getOrInsertFunction("abort", voidvoidFuncTy);
+    assert(F && "Unable to get or create `abort' function declaration");
+
+    // Create hidden virtual register for return address with type void*
+    TmpInstruction* retAddrReg =
+      new TmpInstruction(MachineCodeForInstruction::get(&callInstr),
+                         PointerType::get(Type::VoidTy), &callInstr);
+    
+    // Use a descriptor to pass information about call arguments
+    // to the register allocator.  This descriptor will be "owned"
+    // and freed automatically when the MachineCodeForInstruction
+    // object for the callInstr goes away.
+    CallArgsDescriptor* argDesc =
+      new CallArgsDescriptor(&callInstr, retAddrReg, false, false);
+
+    MachineInstr* callMI = BuildMI(V9::CALL, 1).addPCDisp(F);
+    callMI->addImplicitRef(retAddrReg, /*isDef*/ true);
+    
+    mvec.push_back(callMI);
+    mvec.push_back(BuildMI(V9::NOP, 0));
     return true;
   }
 
