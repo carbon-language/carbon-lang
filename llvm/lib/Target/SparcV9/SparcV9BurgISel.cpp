@@ -627,7 +627,7 @@ CreateSETUWConst(uint32_t C,
   bool smallNegValue =isSigned && sC < 0 && sC != -sC && -sC < (int32_t)MAXSIMM;
 
   //Create TmpInstruction for intermediate values
-  TmpInstruction *tmpReg;
+  TmpInstruction *tmpReg = 0;
 
   // Set the high 22 bits in dest if non-zero and simm13 field of OR not enough
   if (!smallNegValue && (C & ~MAXLO) && C > MAXSIMM) {
