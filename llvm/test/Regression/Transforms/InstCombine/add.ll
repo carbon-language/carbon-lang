@@ -105,3 +105,14 @@ ubyte %test16(ubyte %A) {
         ret ubyte %C
 }
 
+int %test17(int %A) {
+        %B = xor int %A, -1
+        %C = add int %B, 1      ; == sub int 0, %A
+        ret int %C
+}
+
+ubyte %test18(ubyte %A) {
+        %B = xor ubyte %A, 255
+        %C = add ubyte %B, 17      ; == sub ubyte 16, %A
+        ret ubyte %C
+}
