@@ -469,6 +469,10 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
     AM.Disp += cast<ConstantSDNode>(N)->getValue();
     return false;
   case ISD::SHL:
+    // We might have folded the load into this shift, so don't regen the value
+    // if so.
+    if (ExprMap.count(N)) break;
+
     if (AM.IndexReg == 0 && AM.Scale == 1)
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1))) {
         unsigned Val = CN->getValue();
@@ -479,13 +483,13 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
           // Okay, we know that we have a scale by now.  However, if the scaled
           // value is an add of something and a constant, we can fold the
           // constant into the disp field here.
-          if (ShVal.Val->getOpcode() == ISD::ADD &&
+          if (ShVal.Val->getOpcode() == ISD::ADD && !ExprMap.count(ShVal) &&
               isa<ConstantSDNode>(ShVal.Val->getOperand(1))) {
             AM.IndexReg = SelectExpr(ShVal.Val->getOperand(0));
             ConstantSDNode *AddVal =
               cast<ConstantSDNode>(ShVal.Val->getOperand(1));
             AM.Disp += AddVal->getValue() << Val;
-          } else {          
+          } else {
             AM.IndexReg = SelectExpr(ShVal);
           }
           return false;
@@ -493,6 +497,10 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
       }
     break;
   case ISD::MUL:
+    // We might have folded the load into this mul, so don't regen the value if
+    // so.
+    if (ExprMap.count(N)) break;
+
     // X*[3,5,9] -> X+X*[2,4,8]
     if (AM.IndexReg == 0 && AM.BaseType == X86AddressMode::RegBase &&
         AM.Base.Reg == 0)
@@ -506,7 +514,7 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
           // Okay, we know that we have a scale by now.  However, if the scaled
           // value is an add of something and a constant, we can fold the
           // constant into the disp field here.
-          if (MulVal.Val->getOpcode() == ISD::ADD &&
+          if (MulVal.Val->getOpcode() == ISD::ADD && !ExprMap.count(MulVal) &&
               isa<ConstantSDNode>(MulVal.Val->getOperand(1))) {
             Reg = SelectExpr(MulVal.Val->getOperand(0));
             ConstantSDNode *AddVal =
@@ -522,6 +530,10 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
     break;
 
   case ISD::ADD: {
+    // We might have folded the load into this mul, so don't regen the value if
+    // so.
+    if (ExprMap.count(N)) break;
+
     X86AddressMode Backup = AM;
     if (!SelectAddress(N.Val->getOperand(0), AM) &&
         !SelectAddress(N.Val->getOperand(1), AM))
@@ -935,14 +947,8 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS) {
     }
     if (Opc) {
       X86AddressMode AM;
-      unsigned Reg;
-      if (getRegPressure(LHS) > getRegPressure(RHS)) {
-        EmitFoldedLoad(LHS, AM);
-        Reg = SelectExpr(RHS);
-      } else {
-        Reg = SelectExpr(RHS);
-        EmitFoldedLoad(LHS, AM);
-      }
+      EmitFoldedLoad(LHS, AM);
+      unsigned Reg = SelectExpr(RHS);
       addFullAddress(BuildMI(BB, Opc, 5), AM).addReg(Reg);
       return;
     }
@@ -977,7 +983,11 @@ bool ISel::isFoldableLoad(SDOperand Op) {
     return false;
 
   // If this load has already been emitted, we clearly can't fold it.
-  if (ExprMap.count(Op)) return false;
+  assert(Op.ResNo == 0 && "Not a use of the value of the load?");
+  if (ExprMap.count(Op.getValue(1))) return false;
+  assert(!ExprMap.count(Op.getValue(0)) && "Value in map but not token chain?");
+  assert(!LoweredTokens.count(Op.getValue(1)) &&
+         "Token lowered but value not in map?");
 
   // Finally, there can only be one use of its value.
   return Op.Val->hasNUsesOfValue(1, 0);
@@ -997,8 +1007,11 @@ void ISel::EmitFoldedLoad(SDOperand Op, X86AddressMode &AM) {
   }
 
   // The chain for this load is now lowered.
-  LoweredTokens.insert(SDOperand(Op.Val, 1));
+  assert(ExprMap.count(SDOperand(Op.Val, 1)) == 0 &&
+         "Load emitted more than once?");
   ExprMap[SDOperand(Op.Val, 1)] = 1;
+  if (!LoweredTokens.insert(Op.getValue(1)).second)
+    assert(0 && "Load emitted more than once!");
 }
 
 unsigned ISel::SelectExpr(SDOperand N) {
@@ -1418,13 +1431,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::f64: Opc = X86::FADD64m; break;
       }
       X86AddressMode AM;
-      if (getRegPressure(Op0) > getRegPressure(Op1)) {
-        Tmp1 = SelectExpr(Op0);
-        EmitFoldedLoad(Op1, AM);
-      } else {
-        EmitFoldedLoad(Op1, AM);
-        Tmp1 = SelectExpr(Op0);
-      }
+      EmitFoldedLoad(Op1, AM);
+      Tmp1 = SelectExpr(Op0);
       addFullAddress(BuildMI(BB, Opc, 5, Result).addReg(Tmp1), AM);
       return Result;
     }
@@ -1598,13 +1606,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
         }
         if (Opc) {
           X86AddressMode AM;
-          if (getRegPressure(Op0) > getRegPressure(Op1)) {
-            EmitFoldedLoad(Op0, AM);
-            Tmp1 = SelectExpr(Op1);
-          } else {
-            Tmp1 = SelectExpr(Op1);
-            EmitFoldedLoad(Op0, AM);
-          }
+          EmitFoldedLoad(Op0, AM);
+          Tmp1 = SelectExpr(Op1);
           addFullAddress(BuildMI(BB, Opc, 5, Result).addReg(Tmp1), AM);
           return Result;
         }
@@ -1630,13 +1633,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
 
       X86AddressMode AM;
-      if (getRegPressure(Op0) > getRegPressure(Op1)) {
-        Tmp1 = SelectExpr(Op0);
-        EmitFoldedLoad(Op1, AM);
-      } else {
-        EmitFoldedLoad(Op1, AM);
-        Tmp1 = SelectExpr(Op0);
-      }
+      EmitFoldedLoad(Op1, AM);
+      Tmp1 = SelectExpr(Op0);
       if (Opc) {
         addFullAddress(BuildMI(BB, Opc, 5, Result).addReg(Tmp1), AM);
       } else {
@@ -1969,7 +1967,17 @@ unsigned ISel::SelectExpr(SDOperand N) {
       addConstantPoolReference(BuildMI(BB, Opc, 4, Result), CP->getIndex());
     } else {
       X86AddressMode AM;
-      EmitFoldedLoad(N, AM);
+
+      SDOperand Chain   = N.getOperand(0);
+      SDOperand Address = N.getOperand(1);
+      if (getRegPressure(Chain) > getRegPressure(Address)) {
+        Select(Chain);
+        SelectAddress(Address, AM);
+      } else {
+        SelectAddress(Address, AM);
+        Select(Chain);
+      }
+
       addFullAddress(BuildMI(BB, Opc, 4, Result), AM);
     }
     return Result;
