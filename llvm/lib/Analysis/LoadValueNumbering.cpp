@@ -24,7 +24,7 @@
 #include <set>
 
 namespace {
-  // FIXME: This should not be a functionpass.
+  // FIXME: This should not be a FunctionPass.
   struct LoadVN : public FunctionPass, public ValueNumbering {
     
     /// Pass Implementation stuff.  This doesn't do any analysis.
@@ -50,6 +50,8 @@ namespace {
     /// calls occur that could modify the value produced by the load.
     ///
     bool haveEqualValueNumber(LoadInst *LI, LoadInst *LI2, AliasAnalysis &AA,
+                              DominatorSet &DomSetInfo) const;
+    bool haveEqualValueNumber(LoadInst *LI, StoreInst *SI, AliasAnalysis &AA,
                               DominatorSet &DomSetInfo) const;
   };
 
@@ -83,13 +85,13 @@ void LoadVN::getEqualNumberNodes(Value *V,
                                  std::vector<Value*> &RetVals) const {
 
   if (LoadInst *LI = dyn_cast<LoadInst>(V)) {
-    // If we have a load instruction, find all of the load instructions that use
-    // the same source operand.  We implement this recursively, because there
-    // could be a load of a load of a load that are all identical.  We are
-    // guaranteed that this cannot be an infinite recursion because load
-    // instructions would have to pass through a PHI node in order for there to
-    // be a cycle.  The PHI node would be handled by the else case here,
-    // breaking the infinite recursion.
+    // If we have a load instruction, find all of the load and store
+    // instructions that use the same source operand.  We implement this
+    // recursively, because there could be a load of a load of a load that are
+    // all identical.  We are guaranteed that this cannot be an infinite
+    // recursion because load instructions would have to pass through a PHI node
+    // in order for there to be a cycle.  The PHI node would be handled by the
+    // else case here, breaking the infinite recursion.
     //
     std::vector<Value*> PointerSources;
     getEqualNumberNodes(LI->getOperand(0), PointerSources);
@@ -98,30 +100,40 @@ void LoadVN::getEqualNumberNodes(Value *V,
     Function *F = LI->getParent()->getParent();
 
     // Now that we know the set of equivalent source pointers for the load
-    // instruction, look to see if there are any load candiates that are
-    // identical.
+    // instruction, look to see if there are any load or store candiates that
+    // are identical.
     //
     std::vector<LoadInst*> CandidateLoads;
+    std::vector<StoreInst*> CandidateStores;
+
     while (!PointerSources.empty()) {
       Value *Source = PointerSources.back();
       PointerSources.pop_back();                // Get a source pointer...
 
       for (Value::use_iterator UI = Source->use_begin(), UE = Source->use_end();
            UI != UE; ++UI)
-        if (LoadInst *Cand = dyn_cast<LoadInst>(*UI))  // Is a load of source?
+        if (LoadInst *Cand = dyn_cast<LoadInst>(*UI)) {// Is a load of source?
           if (Cand->getParent()->getParent() == F &&   // In the same function?
               Cand != LI)                              // Not LI itself?
             CandidateLoads.push_back(Cand);     // Got one...
+        } else if (StoreInst *Cand = dyn_cast<StoreInst>(*UI)) {
+          if (Cand->getParent()->getParent() == F &&
+              Cand->getOperand(1) == Source)  // It's a store THROUGH the ptr...
+            CandidateStores.push_back(Cand);
+        }
     }
 
     // Remove duplicates from the CandidateLoads list because alias analysis
     // processing may be somewhat expensive and we don't want to do more work
     // than neccesary.
     //
+    unsigned OldSize = CandidateLoads.size();
     std::sort(CandidateLoads.begin(), CandidateLoads.end());
     CandidateLoads.erase(std::unique(CandidateLoads.begin(),
                                      CandidateLoads.end()),
                          CandidateLoads.end());
+    // FIXME: REMOVE THIS SORTING AND UNIQUING IF IT CAN'T HAPPEN
+    assert(CandidateLoads.size() == OldSize && "Shrunk the candloads list?");
 
     // Get Alias Analysis...
     AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
@@ -133,9 +145,11 @@ void LoadVN::getEqualNumberNodes(Value *V,
     for (unsigned i = 0, e = CandidateLoads.size(); i != e; ++i)
       if (haveEqualValueNumber(LI, CandidateLoads[i], AA, DomSetInfo))
         RetVals.push_back(CandidateLoads[i]);
-    
+    for (unsigned i = 0, e = CandidateStores.size(); i != e; ++i)
+      if (haveEqualValueNumber(LI, CandidateStores[i], AA, DomSetInfo))
+        RetVals.push_back(CandidateStores[i]->getOperand(0));
+      
   } else {
-    // Make sure passmanager doesn't try to fulfill our request with ourself!
     assert(&getAnalysis<ValueNumbering>() != (ValueNumbering*)this &&
            "getAnalysis() returned this!");
 
@@ -215,7 +229,7 @@ bool LoadVN::haveEqualValueNumber(LoadInst *L1, LoadInst *L2,
     return true;
   } else {
     // Make sure that there are no store instructions between L1 and the end of
-    // it's basic block...
+    // its basic block...
     //
     if (AA.canInstructionRangeModify(*L1, *BB1->getTerminator(), LoadAddress,
                                      LoadSize))
@@ -225,6 +239,74 @@ bool LoadVN::haveEqualValueNumber(LoadInst *L1, LoadInst *L2,
     // and the second load instruction...
     //
     if (AA.canInstructionRangeModify(BB2->front(), *L2, LoadAddress, LoadSize))
+      return false;   // Cannot eliminate load
+
+    // Do a depth first traversal of the inverse CFG starting at L2's block,
+    // looking for L1's block.  The inverse CFG is made up of the predecessor
+    // nodes of a block... so all of the edges in the graph are "backward".
+    //
+    std::set<BasicBlock*> VisitedSet;
+    for (pred_iterator PI = pred_begin(BB2), PE = pred_end(BB2); PI != PE; ++PI)
+      if (CheckForInvalidatingInst(*PI, BB1, LoadAddress, LoadSize, AA,
+                                   VisitedSet))
+        return false;
+
+    // If we passed all of these checks then we are sure that the two loads
+    // produce the same value.
+    return true;
+  }
+}
+
+
+/// haveEqualValueNumber - Given a load instruction and a store instruction,
+/// determine if the stored value reaches the loaded value unambiguously on
+/// every execution of the program.  This uses the AliasAnalysis implementation
+/// to invalidate the stored value when stores or function calls occur that
+/// could modify the value produced by the load.
+///
+bool LoadVN::haveEqualValueNumber(LoadInst *Load, StoreInst *Store,
+                                  AliasAnalysis &AA,
+                                  DominatorSet &DomSetInfo) const {
+  // If the store does not dominate the load, we cannot do anything...
+  if (!DomSetInfo.dominates(Store, Load)) 
+    return false;
+
+  BasicBlock *BB1 = Store->getParent(), *BB2 = Load->getParent();
+  Value *LoadAddress = Load->getOperand(0);
+
+  assert(LoadAddress->getType() == Store->getOperand(1)->getType() &&
+         "How could the same source pointer return different types?");
+
+  // Find out how many bytes of memory are loaded by the load instruction...
+  unsigned LoadSize = getAnalysis<TargetData>().getTypeSize(Load->getType());
+
+  // Compute a basic block iterator pointing to the instruction after the store.
+  BasicBlock::iterator StoreIt = Store; ++StoreIt;
+
+  // Check to see if the intervening instructions between the two store and load
+  // include a store or call...
+  //
+  if (BB1 == BB2) {  // In same basic block?
+    // In this degenerate case, no checking of global basic blocks has to occur
+    // just check the instructions BETWEEN Store & Load...
+    //
+    if (AA.canInstructionRangeModify(*StoreIt, *Load, LoadAddress, LoadSize))
+      return false;   // Cannot eliminate load
+
+    // No instructions invalidate the stored value, they produce the same value!
+    return true;
+  } else {
+    // Make sure that there are no store instructions between the Store and the
+    // end of its basic block...
+    //
+    if (AA.canInstructionRangeModify(*StoreIt, *BB1->getTerminator(),
+                                     LoadAddress, LoadSize))
+      return false;   // Cannot eliminate load
+
+    // Make sure that there are no store instructions between the start of BB2
+    // and the second load instruction...
+    //
+    if (AA.canInstructionRangeModify(BB2->front(), *Load, LoadAddress,LoadSize))
       return false;   // Cannot eliminate load
 
     // Do a depth first traversal of the inverse CFG starting at L2's block,
