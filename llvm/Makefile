@@ -8,10 +8,10 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = .
 DIRS = lib/Support utils lib tools 
-OPTIONAL_DIRS = projects
 
 ifneq ($(MAKECMDGOALS),tools-only)
 DIRS += runtime
+OPTIONAL_DIRS = projects
 endif
 
 include $(LEVEL)/Makefile.common
