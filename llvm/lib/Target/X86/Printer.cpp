@@ -16,12 +16,14 @@
 
 #include "X86.h"
 #include "X86InstrInfo.h"
+#include "X86TargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
@@ -37,6 +39,37 @@ namespace {
   // frontend
   cl::opt<bool> EmitCygwin("enable-cygwin-compatible-output", cl::Hidden,
          cl::desc("Emit X86 assembly code suitable for consumption by cygwin"));
+
+  struct GasBugWorkaroundEmitter : public MachineCodeEmitter {
+      GasBugWorkaroundEmitter(std::ostream& o) 
+          : O(o), OldFlags(O.flags()), firstByte(true) {
+          O << std::hex;
+      }
+
+      ~GasBugWorkaroundEmitter() {
+          O.flags(OldFlags);
+          O << "\t# ";
+      }
+
+      virtual void emitByte(unsigned char B) {
+          if (!firstByte) O << "\n\t";
+          firstByte = false;
+          O << ".byte 0x" << (unsigned) B;
+      }
+
+      // These should never be called
+      virtual void emitWord(unsigned W) { assert(0); }
+      virtual uint64_t getGlobalValueAddress(GlobalValue *V) { assert(0); }
+      virtual uint64_t getGlobalValueAddress(const std::string &Name) { assert(0); }
+      virtual uint64_t getConstantPoolEntryAddress(unsigned Index) { assert(0); }
+      virtual uint64_t getCurrentPCValue() { assert(0); }
+      virtual uint64_t forceCompilationOf(Function *F) { assert(0); }
+
+  private:
+      std::ostream& O;
+      std::ios::fmtflags OldFlags;
+      bool firstByte;
+  };
 
   struct Printer : public MachineFunctionPass {
     /// Output stream on which we're printing assembly code.
@@ -768,82 +801,37 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 
     const MachineOperand &Op3 = MI->getOperand(3);
 
-    // Bug: The 80-bit FP store-pop instruction "fstp XWORD PTR [...]"
+    // gas bugs:
+    //
+    // The 80-bit FP store-pop instruction "fstp XWORD PTR [...]"
     // is misassembled by gas in intel_syntax mode as its 32-bit
     // equivalent "fstp DWORD PTR [...]". Workaround: Output the raw
     // opcode bytes instead of the instruction.
-    if (MI->getOpcode() == X86::FSTP80m) {
-      if ((MI->getOperand(0).getReg() == X86::ESP)
-	  && (MI->getOperand(1).getImmedValue() == 1)) {
-        if (Op3.isImmediate() && 
-            Op3.getImmedValue() >= -128 && Op3.getImmedValue() <= 127) {
-          // 1 byte disp.
-          O << ".byte 0xdb, 0x7c, 0x24, 0x" << std::hex
-            << ((unsigned)Op3.getImmedValue() & 255) << std::dec << "\t# ";
-        } else {
-          O << ".byte 0xdb, 0xbc, 0x24\n\t";
-          O << ".long ";
-          printOp(Op3);
-          O << "\t# ";
-	}
-      }
-    }
-
-    // Bug: The 80-bit FP load instruction "fld XWORD PTR [...]" is
+    //
+    // The 80-bit FP load instruction "fld XWORD PTR [...]" is
     // misassembled by gas in intel_syntax mode as its 32-bit
     // equivalent "fld DWORD PTR [...]". Workaround: Output the raw
     // opcode bytes instead of the instruction.
-    if (MI->getOpcode() == X86::FLD80m &&
-        MI->getOperand(0).getReg() == X86::ESP &&
-        MI->getOperand(1).getImmedValue() == 1) {
-      if (Op3.isImmediate() && Op3.getImmedValue() >= -128 &&
-          Op3.getImmedValue() <= 127) {   // 1 byte displacement
-        O << ".byte 0xdb, 0x6c, 0x24, 0x" << std::hex
-          << ((unsigned)Op3.getImmedValue() & 255) << std::dec << "\t# ";
-      } else {
-        O << ".byte 0xdb, 0xac, 0x24\n\t";
-        O << ".long ";
-        printOp(Op3);
-        O << "\t# ";
-      }
-    }
-
-    // Bug: gas intel_syntax mode treats "fild QWORD PTR [...]" as an
+    //
+    // gas intel_syntax mode treats "fild QWORD PTR [...]" as an
     // invalid opcode, saying "64 bit operations are only supported in
     // 64 bit modes." libopcodes disassembles it as "fild DWORD PTR
     // [...]", which is wrong. Workaround: Output the raw opcode bytes
     // instead of the instruction.
-    if (MI->getOpcode() == X86::FILD64m &&
-        MI->getOperand(0).getReg() == X86::ESP &&
-        MI->getOperand(1).getImmedValue() == 1) {
-      if (Op3.isImmediate() && Op3.getImmedValue() >= -128 &&
-          Op3.getImmedValue() <= 127) {   // 1 byte displacement
-        O << ".byte 0xdf, 0x6c, 0x24, 0x" << std::hex
-          << ((unsigned)Op3.getImmedValue() & 255) << std::dec << "\t# ";
-      } else {
-        O << ".byte 0xdf, 0xac, 0x24\n\t";
-        O << ".long ";
-        printOp(Op3);
-        O << std::dec << "\t# ";
-      }
+    //
+    // gas intel_syntax mode treats "fistp QWORD PTR [...]" as an
+    // invalid opcode, saying "64 bit operations are only supported in
+    // 64 bit modes." libopcodes disassembles it as "fistpll DWORD PTR
+    // [...]", which is wrong. Workaround: Output the raw opcode bytes
+    // instead of the instruction.
+    if (MI->getOpcode() == X86::FSTP80m ||
+        MI->getOpcode() == X86::FLD80m ||
+        MI->getOpcode() == X86::FILD64m ||
+        MI->getOpcode() == X86::FISTP64m) {
+        GasBugWorkaroundEmitter gwe(O);
+        X86::emitInstruction(gwe, (X86InstrInfo&)TM.getInstrInfo(), *MI);
     }
 
-    // Bug: gas intel_syntax mode treats "fistp QWORD PTR [...]" as
-    // an invalid opcode, saying "64 bit operations are only
-    // supported in 64 bit modes." libopcodes disassembles it as
-    // "fistpll DWORD PTR [...]", which is wrong. Workaround: Output
-    // "fistpll DWORD PTR " instead, which is what libopcodes is
-    // expecting to see.
-    if (MI->getOpcode() == X86::FISTP64m) {
-      O << "fistpll DWORD PTR ";
-      printMemReference(MI, 0);
-      if (MI->getNumOperands() == 5) {
-	O << ", ";
-	printOp(MI->getOperand(4));
-      }
-      O << "\t# ";
-    }
-    
     O << TII.getName(MI->getOpcode()) << " ";
     O << sizePtr(Desc) << " ";
     printMemReference(MI, 0);
@@ -854,7 +842,6 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     O << "\n";
     return;
   }
-
   default:
     O << "\tUNKNOWN FORM:\t\t-"; MI->print(O, TM); break;
   }
