@@ -8,6 +8,7 @@
 #include "SystemUtils.h"
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>

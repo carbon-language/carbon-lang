@@ -18,6 +18,7 @@ BUGPOINT NOTES:
 #include "SystemUtils.h"
 #include "Support/CommandLine.h"
 #include <fstream>
+#include <iostream>
 
 namespace {
   // OutputType - Allow the user to specify the way code should be run, to test
