@@ -24,14 +24,10 @@ class Rf<bits<5> num> : Register {
 class Rd<bits<5> num> : Register {
   field bits<5> Num = num;
 }
-// Rs - Special "ancillary state registers"
+// Rs - Special "ancillary state registers" registers, like the Y, ASR, PSR,
+// WIM, TBR, etc registers
 class Rs<bits<5> num> : Register {
   field bits<5> Num = num;
-}
-
-// Special register used for multiplies and divides
-let Namespace = "V8" in {
-  def Y : Rs<0>;
 }
 
 let Namespace = "V8" in {
@@ -62,6 +58,9 @@ let Namespace = "V8" in {
   def D4  : Rd< 8>; def D5  : Rd<10>; def D6  : Rd<12>; def D7  : Rd<14>;
   def D8  : Rd<16>; def D9  : Rd<18>; def D10 : Rd<20>; def D11 : Rd<22>;
   def D12 : Rd<24>; def D13 : Rd<26>; def D14 : Rd<28>; def D15 : Rd<30>;
+
+  // The Y register.
+  def Y   : Rs<0>;
 }
 
 
