@@ -340,14 +340,16 @@ $CVSOPT = "";
 $CVSOPT = "-z3" if $CVSRootDir =~ /^:ext:/; # Use compression if going over ssh.
 if (!$NOCHECKOUT) {
   if ( $VERBOSE ) { print "CHECKOUT STAGE\n"; }
-  system "(time -p $NICE cvs $CVSOPT -d $CVSRootDir co llvm) > $CVSLog 2>&1";
+  system "(time -p ($NICE cvs $CVSOPT -d $CVSRootDir co -APR llvm; cd llvm/projects ; " .
+     "$NICE cvs $CVSOPT -d $CVSRootDir co -APR llvm-test ) ) > $CVSLog 2>&1";
+  ChangeDir( $BuildDir , "CVS Checkout directory") ;
 }
 
 ChangeDir( "llvm" , "llvm source directory") ;
 
 if (!$NOCHECKOUT) {
   if ( $VERBOSE ) { print "UPDATE STAGE\n"; }
-  system "$NICE cvs update -P -d >> $CVSLog 2>&1" ;
+  system "$NICE cvs update -PdRA >> $CVSLog 2>&1" ;
 }
 
 if ( $Template eq "" ) {
@@ -557,7 +559,7 @@ my $ExternalProgramsTable = "!";
 sub TestDirectory {
   my $SubDir = shift;
 
-  ChangeDir( "test/Programs/$SubDir", "Programs Test Subdirectory" );
+  ChangeDir( "projects/llvm-test/$SubDir", "Programs Test Subdirectory" );
 
   my $ProgramTestLog = "$Prefix-$SubDir-ProgramTest.txt";
 
@@ -675,7 +677,7 @@ if ($BuildError eq "") {
   my ($NATTime, $CBETime, $LLCTime, $JITTime, $OptTime, $BytecodeSize,
       $MachCodeSize) = ("","","","","","","");
   if (!$NORUNNINGTESTS) {
-    ChangeDir( "$BuildDir/llvm/test/Programs/MultiSource/Benchmarks/Olden",
+    ChangeDir( "$BuildDir/llvm/projects/llvm-test/MultiSource/Benchmarks/Olden",
       "Olden Test Directory");
 
     # Clean out previous results...
