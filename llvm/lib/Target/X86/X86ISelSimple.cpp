@@ -815,7 +815,9 @@ void X86ISel::InsertFPRegKills() {
       MachineBasicBlock *SBB = *SI;
       for (MachineBasicBlock::iterator I = SBB->begin();
            I != SBB->end() && I->getOpcode() == X86::PHI; ++I) {
-        if (RegMap.getRegClass(I->getOperand(0).getReg())->getSize() == 10)
+        const TargetRegisterClass *RC =
+          RegMap.getRegClass(I->getOperand(0).getReg());
+        if (RC->getSize() == 10 || RC->getSize() == 8)
           goto UsesFPReg;
       }
     }
