@@ -13,7 +13,6 @@
 
 #include "llvm/Analysis/LiveVar/ValueSet.h"
 #include "llvm/Value.h"
-#include <iostream>
 
 class RegClass;
 class IGNode;
