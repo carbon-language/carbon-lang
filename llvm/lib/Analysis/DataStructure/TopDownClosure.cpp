@@ -68,7 +68,7 @@ bool TDDataStructures::run(Module &M) {
       markReachableFunctionsExternallyAccessible(I->second.getNode(), Visited);
 
   // Loop over unresolved call nodes.  Any functions passed into (but not
-  // returned!?) from unresolvable call nodes may be invoked outside of the
+  // returned!) from unresolvable call nodes may be invoked outside of the
   // current module.
   const std::vector<DSCallSite> &Calls = GlobalsGraph->getAuxFunctionCalls();
   for (unsigned i = 0, e = Calls.size(); i != e; ++i) {
@@ -228,79 +228,60 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
   const BUDataStructures::ActualCalleesTy &ActualCallees =
     getAnalysis<BUDataStructures>().getActualCallees();
 
-  // Loop over all the call sites and all the callees at each call site.
-  // Clone and merge the reachable subgraph from the call into callee's graph.
-  // 
+  // Loop over all the call sites and all the callees at each call site.  Build
+  // a mapping from called DSGraph's to the call sites in this function that
+  // invoke them.  This is useful because we can be more efficient if there are
+  // multiple call sites to the callees in the graph from this caller.
+  std::multimap<DSGraph*, std::pair<Function*, const DSCallSite*> > CallSites;
+
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
     Instruction *CallI = FunctionCalls[i].getCallSite().getInstruction();
     // For each function in the invoked function list at this call site...
     std::pair<BUDataStructures::ActualCalleesTy::const_iterator,
       BUDataStructures::ActualCalleesTy::const_iterator>
           IP = ActualCallees.equal_range(CallI);
-
-    // Multiple callees may have the same graph, so try to inline and merge
-    // only once for each <callSite,calleeGraph> pair, not once for each
-    // <callSite,calleeFunction> pair; the latter will be correct but slower.
-    hash_set<DSGraph*> GraphsSeen;
-
     // Loop over each actual callee at this call site
     for (BUDataStructures::ActualCalleesTy::const_iterator I = IP.first;
          I != IP.second; ++I) {
       DSGraph& CalleeGraph = getDSGraph(*I->second);
       assert(&CalleeGraph != &Graph && "TD need not inline graph into self!");
 
-      // if this callee graph is already done at this site, skip this callee
-      if (GraphsSeen.find(&CalleeGraph) != GraphsSeen.end())
-        continue;
-      GraphsSeen.insert(&CalleeGraph);
+      CallSites.insert(std::make_pair(&CalleeGraph,
+                           std::make_pair(I->second, &FunctionCalls[i])));
+    }
+  }
 
-      // Get the root nodes for cloning the reachable subgraph into each callee:
-      // -- all global nodes that appear in both the caller and the callee
-      // -- return value at this call site, if any
-      // -- actual arguments passed at this call site
-      // -- callee node at this call site, if this is an indirect call (this may
-      //    not be needed for merging, but allows us to create CS and therefore
-      //    simplify the merging below).
-      hash_set<const DSNode*> RootNodeSet;
-      for (DSGraph::ScalarMapTy::const_iterator
-             SI = CalleeGraph.getScalarMap().begin(),
-             SE = CalleeGraph.getScalarMap().end(); SI != SE; ++SI)
-        if (GlobalValue* GV = dyn_cast<GlobalValue>(SI->first)) {
-          DSGraph::ScalarMapTy::const_iterator GI=Graph.getScalarMap().find(GV);
-          if (GI != Graph.getScalarMap().end())
-            RootNodeSet.insert(GI->second.getNode());
-        }
+  // Now that we built the mapping, actually perform the inlining a callee graph
+  // at a time.
+  std::multimap<DSGraph*,std::pair<Function*,const DSCallSite*> >::iterator CSI;
+  for (CSI = CallSites.begin(); CSI != CallSites.end(); ) {
+    DSGraph &CalleeGraph = *CSI->first;
+    // Iterate through all of the call sites of this graph, cloning and merging
+    // any nodes required by the call.
+    ReachabilityCloner RC(CalleeGraph, Graph, DSGraph::StripModRefBits);
 
-      if (const DSNode* RetNode = FunctionCalls[i].getRetVal().getNode())
-        RootNodeSet.insert(RetNode);
+    // Clone over any global nodes that appear in both graphs.
+    for (DSGraph::ScalarMapTy::const_iterator
+           SI = CalleeGraph.getScalarMap().begin(),
+           SE = CalleeGraph.getScalarMap().end(); SI != SE; ++SI)
+      if (GlobalValue *GV = dyn_cast<GlobalValue>(SI->first)) {
+        DSGraph::ScalarMapTy::const_iterator GI = Graph.getScalarMap().find(GV);
+        if (GI != Graph.getScalarMap().end())
+          RC.merge(SI->second, GI->second);
+      }
 
-      for (unsigned j=0, N=FunctionCalls[i].getNumPtrArgs(); j < N; ++j)
-        if (const DSNode* ArgTarget = FunctionCalls[i].getPtrArg(j).getNode())
-          RootNodeSet.insert(ArgTarget);
-
-      if (FunctionCalls[i].isIndirectCall())
-        RootNodeSet.insert(FunctionCalls[i].getCalleeNode());
-
+    // Loop over all of the distinct call sites in the caller of the callee.
+    for (; CSI != CallSites.end() && CSI->first == &CalleeGraph; ++CSI) {
+      Function &CF = *CSI->second.first;
+      const DSCallSite &CS = *CSI->second.second;
       DEBUG(std::cerr << "     [TD] Resolving arguments for callee graph '"
             << CalleeGraph.getFunctionNames()
-            << "': " << I->second->getFunctionType()->getNumParams()
-            << " args\n          at call site (DSCallSite*) 0x"
-            << &FunctionCalls[i] << "\n");
+            << "': " << CF.getFunctionType()->getNumParams()
+            << " args\n          at call site (DSCallSite*) 0x" << &CS << "\n");
       
-      DSGraph::NodeMapTy NodeMapInCallee; // map from nodes to clones in callee
-      CalleeGraph.cloneReachableSubgraph(Graph, RootNodeSet,
-                                         NodeMapInCallee,
-                                         DSGraph::StripModRefBits |
-                                         DSGraph::KeepAllocaBit);
-
-      // Transform our call site info into the cloned version for CalleeGraph
-      DSCallSite CS(FunctionCalls[i], NodeMapInCallee);
-
-      // Get the formal argument and return nodes for the called function
-      // and merge them with the cloned subgraph.  Global nodes were merged  
-      // already by cloneReachableSubgraph() above.
-      CalleeGraph.getCallSiteForArguments(*I->second).mergeWith(CS);
-
+      // Get the formal argument and return nodes for the called function and
+      // merge them with the cloned subgraph.
+      RC.mergeCallSite(CalleeGraph.getCallSiteForArguments(CF), CS);
       ++NumTDInlines;
     }
   }
