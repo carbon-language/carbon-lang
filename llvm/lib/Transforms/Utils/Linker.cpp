@@ -423,15 +423,6 @@ bool LinkModules(Module *Dest, const Module *Src, string *ErrorMsg) {
   //
   map<const Value*, Value*> ValueMap;
 
-  // FIXME:
-  // FIXME: This should be a two step process:
-  // FIXME:   1. LinkGlobals & LinkFunctionProtos
-  // FIXME:   2. LinkGlobalContents
-  // FIXME:
-  // FIXME: Global variables and functions are the same!
-  // FIXME:
-
-
   // Insert all of the globals in src into the Dest module... without
   // initializers
   if (LinkGlobals(Dest, Src, ValueMap, ErrorMsg)) return true;
