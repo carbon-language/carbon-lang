@@ -510,16 +510,16 @@ static bool setValueName(Value *V, char *NameStr) {
       // 1. If at least one of the globals is uninitialized or 
       // 2. If both initializers have the same value.
       //
-      // This can only be done if the const'ness of the vars is the same.
-      //
       if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
-        if (EGV->isConstant() == GV->isConstant() &&
-            (!EGV->hasInitializer() || !GV->hasInitializer() ||
-             EGV->getInitializer() == GV->getInitializer())) {
+        if (!EGV->hasInitializer() || !GV->hasInitializer() ||
+             EGV->getInitializer() == GV->getInitializer()) {
 
-          // Make sure the existing global version gets the initializer!
+          // Make sure the existing global version gets the initializer!  Make
+          // sure that it also gets marked const if the new version is.
           if (GV->hasInitializer() && !EGV->hasInitializer())
             EGV->setInitializer(GV->getInitializer());
+          if (GV->isConstant())
+            EGV->setConstant(true);
           
 	  delete GV;     // Destroy the duplicate!
           return true;   // They are equivalent!
