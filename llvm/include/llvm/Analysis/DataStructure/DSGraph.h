@@ -372,10 +372,7 @@ public:
     assert((!N || N->getParentGraph() == this) &&
            "AssertNodeInGraph: Node is not in graph!");
   }
-  void AssertNodeContainsGlobal(const DSNode *N, GlobalValue *GV) const {
-    assert(std::find(N->getGlobals().begin(), N->getGlobals().end(), GV) !=
-           N->getGlobals().end() && "Global value not in node!");
-  }
+  void AssertNodeContainsGlobal(const DSNode *N, GlobalValue *GV) const;
 
   void AssertCallSiteInGraph(const DSCallSite &CS) const;
   void AssertCallNodesInGraph() const;
