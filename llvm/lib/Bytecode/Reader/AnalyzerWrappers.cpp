@@ -312,8 +312,8 @@ void llvm::PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
       print(Out, "Number of VBR Compressed Bytes",  I->second.vbrCompBytes);
       print(Out, "Number of VBR Expanded Bytes",    I->second.vbrExpdBytes);
       print(Out, "VBR Savings", 
-	double(I->second.vbrExpdBytes)-double(I->second.vbrCompBytes),
-	double(I->second.byteSize));
+        double(I->second.vbrExpdBytes)-double(I->second.vbrCompBytes),
+        double(I->second.byteSize));
       ++I;
     }
   }
