@@ -37,3 +37,8 @@ uint %test6(uint %A) {
 	%B = shl uint %A, ubyte 1   ;; convert to an add instruction
 	ret uint %B
 }
+
+int %test7(ubyte %A) {
+	%B = shr int -1, ubyte %A   ;; Always equal to -1
+	ret int %B
+}
