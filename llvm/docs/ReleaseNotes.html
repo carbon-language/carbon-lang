@@ -79,7 +79,11 @@ bug fixes for those problems found since the 1.4 release.</p>
       Interprocedural Sparse Conditional Constant Propagation</a> pass, named
      -ipsccp, which is run by default at link-time.</li>
   <li>LLVM 1.5 is now about 15% faster than LLVM 1.4 and its core data structures
-      use about 20% less memory.</li>
+      use about 30% less memory.</li>
+  <li>LLVM includes new experimental native code generators for SparcV8 and 
+      Alpha.</li>
+  <li>Support for Microsoft Visual Studio is improved, and <a 
+      href="GettingStartedVS.html">not documented</a>.</li>
 </ol>
 
 </div>
@@ -216,6 +220,7 @@ components, please contact us on the llvmdev list.</p>
     be used to step through programs and inspect the stack.</li>
 <li>The "iterative scan" register allocator (enabled with -regalloc=iterativescan)
     is not stable.</li>
+<li>The SparcV8 and Alpha ports are experimental.</li>
 </ul>
 
 </div>
