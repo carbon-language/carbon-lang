@@ -13,7 +13,7 @@
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/Sparc.h"
+#include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Support/PassNameParser.h"
 #include "Support/Signals.h"
 #include <fstream>
