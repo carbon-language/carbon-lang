@@ -8,6 +8,7 @@
 
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/iTerminators.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include <map>
 
@@ -86,4 +87,43 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
     for (BasicBlock::iterator II = NBB->begin(); II != NBB->end(); ++II)
       RemapInstruction(II, ValueMap);
   }
+}
+
+/// CloneFunction - Return a copy of the specified function, but without
+/// embedding the function into another module.  Also, any references specified
+/// in the ValueMap are changed to refer to their mapped value instead of the
+/// original one.  If any of the arguments to the function are in the ValueMap,
+/// the arguments are deleted from the resultant function.  The ValueMap is
+/// updated to include mappings from all of the instructions and basicblocks in
+/// the function from their old to new values.
+///
+Function *CloneFunction(const Function *F,
+                        std::map<const Value*, Value*> &ValueMap) {
+  std::vector<const Type*> ArgTypes;
+
+  // The user might be deleting arguments to the function by specifying them in
+  // the ValueMap.  If so, we need to not add the arguments to the arg ty vector
+  //
+  for (Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+    if (ValueMap.count(I) == 0)  // Haven't mapped the argument to anything yet?
+      ArgTypes.push_back(I->getType());
+
+  // Create a new function type...
+  FunctionType *FTy = FunctionType::get(F->getFunctionType()->getReturnType(),
+                                    ArgTypes, F->getFunctionType()->isVarArg());
+
+  // Create the new function...
+  Function *NewF = new Function(FTy, F->hasInternalLinkage(), F->getName());
+  
+  // Loop over the arguments, copying the names of the mapped arguments over...
+  Function::aiterator DestI = NewF->abegin();
+  for (Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+    if (ValueMap.count(I)) {        // Is this argument preserved?
+      DestI->setName(I->getName()); // Copy the name over...
+      ValueMap[I] = DestI;          // Add mapping to ValueMap
+    }
+
+  std::vector<ReturnInst*> Returns;  // Ignore returns cloned...
+  CloneFunctionInto(NewF, F, ValueMap, Returns);
+  return NewF;                    
 }
