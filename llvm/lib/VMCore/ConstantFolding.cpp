@@ -20,9 +20,7 @@
 
 #include "ConstantFolding.h"
 #include "llvm/Constants.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOperators.h"
-#include "llvm/InstrTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include <cmath>
