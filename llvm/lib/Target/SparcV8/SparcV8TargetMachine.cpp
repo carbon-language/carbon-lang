@@ -137,6 +137,10 @@ void SparcV8JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // FIXME: implement the select instruction in the instruction selector.
   PM.add(createLowerSelectPass());
   
+  // Print LLVM code input to instruction selector:
+  if (PrintMachineCode)
+    PM.add(new PrintFunctionPass());
+  
   PM.add(createSparcV8SimpleInstructionSelector(TM));
 
   // Print machine instructions as they were initially generated.
