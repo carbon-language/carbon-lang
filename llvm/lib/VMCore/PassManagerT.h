@@ -173,15 +173,16 @@ public:
     CurrentAnalyses.clear();
 
     // Add any immutable passes to the CurrentAnalyses set...
-    for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i)
-      if (const PassInfo *PI = ImmutablePasses[i]->getPassInfo()) {
-        CurrentAnalyses[PI] = ImmutablePasses[i];
+    for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i) {
+      ImmutablePass *IPass = ImmutablePasses[i];
+      if (const PassInfo *PI = IPass->getPassInfo()) {
+        CurrentAnalyses[PI] = IPass;
 
         const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
         for (unsigned i = 0, e = II.size(); i != e; ++i)
-          CurrentAnalyses[II[i]] = ImmutablePasses[i];
+          CurrentAnalyses[II[i]] = IPass;
       }
-
+    }
 
     // LastUserOf - This contains the inverted LastUseOfMap...
     std::map<Pass *, std::vector<Pass*> > LastUserOf;
@@ -297,6 +298,10 @@ public:
 
   // dumpPassStructure - Implement the -debug-passes=PassStructure option
   virtual void dumpPassStructure(unsigned Offset = 0) {
+    // Print out the immutable passes...
+    for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i)
+      ImmutablePasses[i]->dumpPassStructure(0);
+
     std::cerr << std::string(Offset*2, ' ') << Traits::getPMName()
               << " Pass Manager\n";
     for (typename std::vector<PassClass*>::iterator
