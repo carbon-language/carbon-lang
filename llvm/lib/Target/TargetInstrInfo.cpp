@@ -33,8 +33,9 @@ MachineInstrInfo::~MachineInstrInfo() {
   TargetInstrDescriptors = NULL;	// reset global variable
 }
 
-void MachineInstrInfo::print(const MachineInstr *MI, std::ostream &O) const {
-  O << *MI;
+void MachineInstrInfo::print(const MachineInstr *MI, std::ostream &O,
+                             const TargetMachine &TM) const {
+  MI->print(O, TM);
 }
 
 bool MachineInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
