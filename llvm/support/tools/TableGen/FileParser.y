@@ -245,6 +245,10 @@ Value : INTVAL {
     $$ = Init;
     delete $2;
   } | ID {
+    if (CurRec == 0) {
+      err() << "Def/Class name '" << *$1 << "' not allowed here!\n";
+      abort();
+    }
     if (const RecordVal *RV = CurRec->getValue(*$1)) {
       $$ = new VarInit(*$1, RV->getType());
     } else if (Record *D = Records.getDef(*$1)) {
