@@ -1,4 +1,4 @@
-##===- lib/CodeGen/ModuloScheduling/Makefile ---------------*- Makefile -*-===##
+##===- lib/Target/SparcV9/ModuloScheduling/Makefile --------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,10 +6,9 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-LEVEL = ../../..
 
+LEVEL = ../../../..
 DIRS  = 
-
-LIBRARYNAME = modulosched
+LIBRARYNAME = sparcv9modulosched
 
 include $(LEVEL)/Makefile.common
