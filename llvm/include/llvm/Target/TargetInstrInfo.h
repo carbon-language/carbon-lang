@@ -72,13 +72,17 @@ struct MachineInstrDescriptor {
 
 
 class MachineInstrInfo : public NonCopyableV {
+public:
+  const TargetMachine& target;
+
 protected:
   const MachineInstrDescriptor* desc;	// raw array to allow static init'n
   unsigned int descSize;		// number of entries in the desc array
   unsigned int numRealOpCodes;		// number of non-dummy op codes
   
 public:
-  MachineInstrInfo(const MachineInstrDescriptor *desc, unsigned descSize,
+  MachineInstrInfo(const TargetMachine& tgt,
+                   const MachineInstrDescriptor *desc, unsigned descSize,
 		   unsigned numRealOpCodes);
   virtual ~MachineInstrInfo();
   
@@ -231,6 +235,19 @@ public:
                                       Instruction* dest,
                                       vector<MachineInstr*>& minstrVec,
                                       vector<TmpInstruction*>& temps) const =0;
+
+  // Create an instruction sequence to copy an integer value `val' from an
+  // integer to a floating point register `dest'.  val must be an integral
+  // type.  dest must be a Float or Double.
+  // The generated instructions are returned in `minstrVec'.
+  // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
+  // 
+  virtual void  CreateCodeToCopyIntToFloat(Method* method,
+                                           Value* val,
+                                           Instruction* dest,
+                                           vector<MachineInstr*>& minstrVec,
+                                           vector<TmpInstruction*>& tempVec,
+                                           TargetMachine& target) const = 0;
 };
 
 #endif
