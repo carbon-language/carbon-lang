@@ -249,20 +249,6 @@ struct UltraSparcInstrInfo : public TargetInstrInfo {
 //----------------------------------------------------------------------------
 
 class UltraSparcRegInfo : public TargetRegInfo {
-public:
-  // The actual register classes in the Sparc
-  //
-  // **** WARNING: If this enum order is changed, also modify 
-  // getRegisterClassOfValue method below since it assumes this particular 
-  // order for efficiency.
-  // 
-  enum RegClassIDs { 
-    IntRegClassID,                      // Integer
-    FloatRegClassID,                    // Float (both single/double)
-    IntCCRegClassID,                    // Int Condition Code
-    FloatCCRegClassID,                  // Float Condition code
-    SpecialRegClassID                   // Special (unallocated) registers
-  };
 
 private:
 
@@ -326,6 +312,20 @@ public:
     IntCCRegType,
     FloatCCRegType,
     SpecialRegType
+  };
+
+  // The actual register classes in the Sparc
+  //
+  // **** WARNING: If this enum order is changed, also modify 
+  // getRegisterClassOfValue method below since it assumes this particular 
+  // order for efficiency.
+  // 
+  enum RegClassIDs { 
+    IntRegClassID,                      // Integer
+    FloatRegClassID,                    // Float (both single/double)
+    IntCCRegClassID,                    // Int Condition Code
+    FloatCCRegClassID,                  // Float Condition code
+    SpecialRegClassID                   // Special (unallocated) registers
   };
 
   UltraSparcRegInfo(const UltraSparc &tgt);
