@@ -9,6 +9,11 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-ar 
-USEDLIBS = LLVMBCReader LLVMCore LLVMSupport.a LLVMSystem.a
+USEDLIBS = LLVMArchive.a LLVMBCReader LLVMCore LLVMSupport.a LLVMSystem.a
 
 include $(LEVEL)/Makefile.common
+
+check-local::
+	$(ToolDir)/llvm-ar zRrS nada.a .
+	$(ToolDir)/llvm-ar tv nada.a | grep Debug/llvm-ar.d >/dev/null 2>&1
+	$(RM) -f nada.a

@@ -10,8 +10,9 @@
 LEVEL = ../..
 
 TOOLNAME = gccld
-USEDLIBS = LLVMipo.a LLVMTransforms.a LLVMScalarOpts.a LLVMAnalysis.a LLVMipa.a \
-	   LLVMTransformUtils.a LLVMTarget.a LLVMBCReader LLVMBCWriter LLVMCore \
-	   LLVMSupport.a LLVMSystem.a
+USEDLIBS = LLVMipo.a LLVMTransforms.a LLVMScalarOpts.a LLVMAnalysis.a \
+	   LLVMipa.a LLVMTransformUtils.a LLVMTarget.a LLVMLinker.a \
+	   LLVMArchive.a LLVMBCReader LLVMBCWriter \
+	   LLVMCore LLVMSupport.a LLVMSystem.a
 
 include $(LEVEL)/Makefile.common
