@@ -26,6 +26,7 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "Support/StatisticReporter.h"
+#include <algorithm>
 
 static Statistic<> NumCombined("instcombine\t- Number of insts combined");
 
@@ -551,8 +552,18 @@ bool InstCombiner::runOnFunction(Function *F) {
     if (Result) {
       ++NumCombined;
       // Should we replace the old instruction with a new one?
-      if (Result != I)
+      if (Result != I) {
+        // Instructions can end up on the worklist more than once.  Make sure
+        // we do not process an instruction that has been deleted.
+        std::vector<Instruction*>::iterator It = std::find(WorkList.begin(),
+                                                           WorkList.end(), I);
+        while (It != WorkList.end()) {
+          It = WorkList.erase(It);
+          It = std::find(It, WorkList.end(), I);
+        }
+
         ReplaceInstWithInst(I, Result);
+      }
 
       WorkList.push_back(Result);
       AddUsesToWorkList(Result);
