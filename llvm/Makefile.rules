@@ -762,6 +762,7 @@ $(MAKE_CONFIG): $(MAKE_CONFIG_IN)
 #------------------------------------------------------------------------
 # If the Makefile in the source tree has been updated, copy it over into the
 # build tree.
+ifneq ($(OBJMKFILE),$(SRCMKFILE))
 .PRECIOUS: $(OBJMKFILE)
 $(OBJMKFILE): $(SRCMKFILE)
 	@$(ECHO) "Updating Makefile from : $(dir $<)"
@@ -769,6 +770,7 @@ $(OBJMKFILE): $(SRCMKFILE)
 	$(VERB) cp -f $< $@
 	$(VERB) $(MAKE) $(MAKEFLAGS) $(MAKECMDGOALS)
 	@exit 0;
+endif
 
 ###############################################################################
 # MISCELLANEOUS - utility targets
