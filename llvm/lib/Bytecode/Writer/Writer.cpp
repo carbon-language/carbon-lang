@@ -35,8 +35,7 @@
 #include "Support/Statistic.h"
 #include "Config/string.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");
 
@@ -267,7 +266,7 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   }
 }
 
-void WriteBytecodeToFile(const Module *C, std::ostream &Out) {
+void llvm::WriteBytecodeToFile(const Module *C, std::ostream &Out) {
   assert(C && "You can't write a null module!!");
 
   std::deque<unsigned char> Buffer;
@@ -302,5 +301,3 @@ void WriteBytecodeToFile(const Module *C, std::ostream &Out) {
 
   Out.flush();
 }
-
-} // End llvm namespace
