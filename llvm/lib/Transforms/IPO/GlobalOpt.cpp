@@ -18,6 +18,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
@@ -194,7 +195,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
           } else {
             GS.StoredType = GlobalStatus::isStored;
           }
-      } else if (I->getOpcode() == Instruction::GetElementPtr) {
+      } else if (isa<GetElementPtrInst>(I)) {
         if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
 
         // If the first two indices are constants, this can be SRA'd.
@@ -212,7 +213,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
         } else {
           GS.isNotSuitableForSRA = true;
         }
-      } else if (I->getOpcode() == Instruction::Select) {
+      } else if (isa<SelectInst>(I)) {
         if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
         GS.isNotSuitableForSRA = true;
       } else if (PHINode *PN = dyn_cast<PHINode>(I)) {
@@ -222,6 +223,16 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
           if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
         GS.isNotSuitableForSRA = true;
       } else if (isa<SetCondInst>(I)) {
+        GS.isNotSuitableForSRA = true;
+      } else if (isa<MemCpyInst>(I) || isa<MemMoveInst>(I)) {
+        if (I->getOperand(1) == V)
+          GS.StoredType = GlobalStatus::isStored;
+        if (I->getOperand(2) == V)
+          GS.isLoaded = true;
+        GS.isNotSuitableForSRA = true;
+      } else if (isa<MemSetInst>(I)) {
+        assert(I->getOperand(1) == V && "Memset only takes one pointer!");
+        GS.StoredType = GlobalStatus::isStored;
         GS.isNotSuitableForSRA = true;
       } else {
         return true;  // Any other non-load instruction might take address!
@@ -270,6 +281,7 @@ static Constant *getAggregateConstantElement(Constant *Agg, Constant *Idx) {
 }
 
 static Constant *TraverseGEPInitializer(User *GEP, Constant *Init) {
+  if (Init == 0) return 0;
   if (GEP->getNumOperands() == 1 ||
       !isa<Constant>(GEP->getOperand(1)) ||
       !cast<Constant>(GEP->getOperand(1))->isNullValue())
@@ -294,47 +306,50 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
     User *U = *UI++;
     
     if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
-      // Replace the load with the initializer.
-      LI->replaceAllUsesWith(Init);
-      LI->eraseFromParent();
-      Changed = true;
+      if (Init) {
+        // Replace the load with the initializer.
+        LI->replaceAllUsesWith(Init);
+        LI->eraseFromParent();
+        Changed = true;
+      }
     } else if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
       // Store must be unreachable or storing Init into the global.
       SI->eraseFromParent();
       Changed = true;
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
-        if (Constant *SubInit = TraverseGEPInitializer(CE, Init))
-          Changed |= CleanupConstantGlobalUsers(CE, SubInit);
-        if (CE->use_empty()) {
-          CE->destroyConstant();
-          Changed = true;
-        }
+        Constant *SubInit = TraverseGEPInitializer(CE, Init);
+        Changed |= CleanupConstantGlobalUsers(CE, SubInit);
+      } else if (CE->getOpcode() == Instruction::Cast &&
+                 isa<PointerType>(CE->getType())) {
+        // Pointer cast, delete any stores and memsets to the global.
+        Changed |= CleanupConstantGlobalUsers(CE, 0);
+      }
+
+      if (CE->use_empty()) {
+        CE->destroyConstant();
+        Changed = true;
       }
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(U)) {
-      if (Constant *SubInit = TraverseGEPInitializer(GEP, Init))
-        Changed |= CleanupConstantGlobalUsers(GEP, SubInit);
-      else {
-        // If this GEP has variable indexes, we should still be able to delete
-        // any stores through it.
-        for (Value::use_iterator GUI = GEP->use_begin(), E = GEP->use_end();
-             GUI != E;)
-          if (StoreInst *SI = dyn_cast<StoreInst>(*GUI++)) {
-            SI->eraseFromParent();
-            Changed = true;
-          }
-      }
+      Constant *SubInit = TraverseGEPInitializer(GEP, Init);
+      Changed |= CleanupConstantGlobalUsers(GEP, SubInit);
 
       if (GEP->use_empty()) {
         GEP->eraseFromParent();
         Changed = true;
       }
+    } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(U)) { // memset/cpy/mv
+      if (MI->getRawDest() == V) {
+        MI->eraseFromParent();
+        Changed = true;
+      }
+
     } else if (Constant *C = dyn_cast<Constant>(U)) {
       // If we have a chain of dead constantexprs or other things dangling from
       // us, and if they are all dead, nuke them without remorse.
       if (ConstantIsDead(C)) {
         C->destroyConstant();
-        // This could have incalidated UI, start over from scratch.x
+        // This could have invalidated UI, start over from scratch.
         CleanupConstantGlobalUsers(V, Init);
         return true;
       }
