@@ -12,6 +12,7 @@
 
 #include "SchedPriorities.h"
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
 using std::cerr;
@@ -269,7 +270,7 @@ SchedPriorities::instructionHasLastUse(FunctionLiveVarInfo &LVI,
   
   // else check if instruction is a last use and save it in the hash_map
   bool hasLastUse = false;
-  const BasicBlock* bb = graphNode->getBB();
+  const BasicBlock* bb = graphNode->getMachineBasicBlock().getBasicBlock();
   const ValueSet &LVs = LVI.getLiveVarSetBeforeMInst(MI, bb);
   
   for (MachineInstr::const_val_op_iterator OI = MI->begin(), OE = MI->end();

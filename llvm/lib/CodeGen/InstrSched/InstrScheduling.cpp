@@ -628,16 +628,15 @@ AssignInstructionsToSlots(class SchedulingManager& S, unsigned maxIssue)
 // of the basic block, since they are not part of the schedule.
 //   
 static void
-RecordSchedule(const BasicBlock* bb, const SchedulingManager& S)
+RecordSchedule(MachineBasicBlock &MBB, const SchedulingManager& S)
 {
-  MachineBasicBlock& mvec = MachineBasicBlock::get(bb);
   const MachineInstrInfo& mii = S.schedInfo.getInstrInfo();
   
 #ifndef NDEBUG
   // Lets make sure we didn't lose any instructions, except possibly
   // some NOPs from delay slots.  Also, PHIs are not included in the schedule.
   unsigned numInstr = 0;
-  for (MachineBasicBlock::iterator I=mvec.begin(); I != mvec.end(); ++I)
+  for (MachineBasicBlock::iterator I=MBB.begin(); I != MBB.end(); ++I)
     if (! mii.isNop((*I)->getOpCode()) &&
 	! mii.isDummyPhiInstr((*I)->getOpCode()))
       ++numInstr;
@@ -649,18 +648,18 @@ RecordSchedule(const BasicBlock* bb, const SchedulingManager& S)
     return;				// empty basic block!
   
   // First find the dummy instructions at the start of the basic block
-  MachineBasicBlock::iterator I = mvec.begin();
-  for ( ; I != mvec.end(); ++I)
+  MachineBasicBlock::iterator I = MBB.begin();
+  for ( ; I != MBB.end(); ++I)
     if (! mii.isDummyPhiInstr((*I)->getOpCode()))
       break;
   
-  // Erase all except the dummy PHI instructions from mvec, and
+  // Erase all except the dummy PHI instructions from MBB, and
   // pre-allocate create space for the ones we will put back in.
-  mvec.erase(I, mvec.end());
+  MBB.erase(I, MBB.end());
   
   InstrSchedule::const_iterator NIend = S.isched.end();
   for (InstrSchedule::const_iterator NI = S.isched.begin(); NI != NIend; ++NI)
-    mvec.push_back(const_cast<MachineInstr*>((*NI)->getMachineInstr()));
+    MBB.push_back(const_cast<MachineInstr*>((*NI)->getMachineInstr()));
 }
 
 
@@ -1202,11 +1201,10 @@ FindUsefulInstructionsForDelaySlots(SchedulingManager& S,
 // If not enough useful instructions were found, mark the NOPs to be used
 // for filling delay slots, otherwise, otherwise just discard them.
 // 
-void
-ReplaceNopsWithUsefulInstr(SchedulingManager& S,
-                           SchedGraphNode* node,
-                           vector<SchedGraphNode*> sdelayNodeVec,
-                           SchedGraph* graph)
+static void ReplaceNopsWithUsefulInstr(SchedulingManager& S,
+                                       SchedGraphNode* node,
+                                       vector<SchedGraphNode*> sdelayNodeVec,
+                                       SchedGraph* graph)
 {
   vector<SchedGraphNode*> nopNodeVec;   // this will hold unused NOPs
   const MachineInstrInfo& mii = S.getInstrInfo();
@@ -1219,35 +1217,36 @@ ReplaceNopsWithUsefulInstr(SchedulingManager& S,
   // fill delay slots, otherwise, just discard them.
   //  
   unsigned int firstDelaySlotIdx = node->getOrigIndexInBB() + 1;
-  MachineBasicBlock& bbMvec = MachineBasicBlock::get(node->getBB());
-  assert(bbMvec[firstDelaySlotIdx - 1] == brInstr &&
+  MachineBasicBlock& MBB = node->getMachineBasicBlock();
+  assert(MBB[firstDelaySlotIdx - 1] == brInstr &&
          "Incorrect instr. index in basic block for brInstr");
   
   // First find all useful instructions already in the delay slots
   // and USE THEM.  We'll throw away the unused alternatives below
   // 
   for (unsigned i=firstDelaySlotIdx; i < firstDelaySlotIdx + ndelays; ++i)
-    if (! mii.isNop(bbMvec[i]->getOpCode()))
+    if (! mii.isNop(MBB[i]->getOpCode()))
       sdelayNodeVec.insert(sdelayNodeVec.begin(),
-                           graph->getGraphNodeForInstr(bbMvec[i]));
+                           graph->getGraphNodeForInstr(MBB[i]));
   
   // Then find the NOPs and keep only as many as are needed.
   // Put the rest in nopNodeVec to be deleted.
   for (unsigned i=firstDelaySlotIdx; i < firstDelaySlotIdx + ndelays; ++i)
-    if (mii.isNop(bbMvec[i]->getOpCode()))
+    if (mii.isNop(MBB[i]->getOpCode()))
       if (sdelayNodeVec.size() < ndelays)
-        sdelayNodeVec.push_back(graph->getGraphNodeForInstr(bbMvec[i]));
+        sdelayNodeVec.push_back(graph->getGraphNodeForInstr(MBB[i]));
       else
 	{
-	  nopNodeVec.push_back(graph->getGraphNodeForInstr(bbMvec[i]));
+	  nopNodeVec.push_back(graph->getGraphNodeForInstr(MBB[i]));
 	  
 	  //remove the MI from the Machine Code For Instruction
+          TerminatorInst *TI = MBB.getBasicBlock()->getTerminator();
 	  MachineCodeForInstruction& llvmMvec = 
-	    MachineCodeForInstruction::get((Instruction *)
-					   (node->getBB()->getTerminator()));
+	    MachineCodeForInstruction::get((Instruction *)TI);
+          
 	  for(MachineCodeForInstruction::iterator mciI=llvmMvec.begin(), 
 		mciE=llvmMvec.end(); mciI!=mciE; ++mciI){
-	    if(*mciI==bbMvec[i])
+	    if (*mciI==MBB[i])
 	      llvmMvec.erase(mciI);
 	  }
 	}
@@ -1281,12 +1280,12 @@ ReplaceNopsWithUsefulInstr(SchedulingManager& S,
 // regalloc.
 // 
 static void
-ChooseInstructionsForDelaySlots(SchedulingManager& S,
-				const BasicBlock *bb,
+ChooseInstructionsForDelaySlots(SchedulingManager& S, MachineBasicBlock &MBB,
 				SchedGraph *graph)
 {
   const MachineInstrInfo& mii = S.getInstrInfo();
-  const Instruction *termInstr = (Instruction*)bb->getTerminator();
+
+  Instruction *termInstr = (Instruction*)MBB.getBasicBlock()->getTerminator();
   MachineCodeForInstruction &termMvec=MachineCodeForInstruction::get(termInstr);
   vector<SchedGraphNode*> delayNodeVec;
   const MachineInstr* brInstr = NULL;
@@ -1324,12 +1323,11 @@ ChooseInstructionsForDelaySlots(SchedulingManager& S,
   // Simply passing in an empty delayNodeVec will have this effect.
   // 
   delayNodeVec.clear();
-  const MachineBasicBlock& bbMvec = MachineBasicBlock::get(bb);
-  for (unsigned i=0; i < bbMvec.size(); ++i)
-    if (bbMvec[i] != brInstr &&
-        mii.getNumDelaySlots(bbMvec[i]->getOpCode()) > 0)
+  for (unsigned i=0; i < MBB.size(); ++i)
+    if (MBB[i] != brInstr &&
+        mii.getNumDelaySlots(MBB[i]->getOpCode()) > 0)
       {
-        SchedGraphNode* node = graph->getGraphNodeForInstr(bbMvec[i]);
+        SchedGraphNode* node = graph->getGraphNodeForInstr(MBB[i]);
         ReplaceNopsWithUsefulInstr(S, node, delayNodeVec, graph);
       }
 }
@@ -1520,9 +1518,7 @@ bool InstructionSchedulingWithSSA::runOnFunction(Function &F)
        GI != GE; ++GI)
     {
       SchedGraph* graph = (*GI);
-      const vector<const BasicBlock*> &bbvec = graph->getBasicBlocks();
-      assert(bbvec.size() == 1 && "Cannot schedule multiple basic blocks");
-      const BasicBlock* bb = bbvec[0];
+      MachineBasicBlock &MBB = graph->getBasicBlock();
       
       if (SchedDebugLevel >= Sched_PrintSchedTrace)
         cerr << "\n*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
@@ -1531,11 +1527,9 @@ bool InstructionSchedulingWithSSA::runOnFunction(Function &F)
       SchedPriorities schedPrio(&F, graph,getAnalysis<FunctionLiveVarInfo>());
       SchedulingManager S(target, graph, schedPrio);
           
-      ChooseInstructionsForDelaySlots(S, bb, graph); // modifies graph
-      
+      ChooseInstructionsForDelaySlots(S, MBB, graph); // modifies graph
       ForwardListSchedule(S);               // computes schedule in S
-      
-      RecordSchedule(bb, S);                // records schedule in BB
+      RecordSchedule(MBB, S);                // records schedule in BB
     }
   
   if (SchedDebugLevel >= Sched_PrintMachineCode)

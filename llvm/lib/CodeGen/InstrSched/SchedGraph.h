@@ -132,9 +132,8 @@ private:
 
 
 class SchedGraphNode: public NonCopyable {
-private:
-  unsigned int nodeId;
-  const BasicBlock* bb;
+  unsigned nodeId;
+  MachineBasicBlock *MBB;
   const MachineInstr* minstr;
   std::vector<SchedGraphEdge*> inEdges;
   std::vector<SchedGraphEdge*> outEdges;
@@ -151,14 +150,14 @@ public:
   //
   // Accessor methods
   // 
-  unsigned int		getNodeId	() const { return nodeId; }
-  const MachineInstr*	getMachineInstr	() const { return minstr; }
-  const MachineOpCode	getOpCode	() const { return minstr->getOpCode();}
-  int			getLatency	() const { return latency; }
-  unsigned int		getNumInEdges	() const { return inEdges.size(); }
-  unsigned int		getNumOutEdges	() const { return outEdges.size(); }
+  unsigned              getNodeId	() const { return nodeId; }
+  const MachineInstr*   getMachineInstr	() const { return minstr; }
+  const MachineOpCode   getOpCode	() const { return minstr->getOpCode(); }
+  int                   getLatency	() const { return latency; }
+  unsigned              getNumInEdges	() const { return inEdges.size(); }
+  unsigned              getNumOutEdges	() const { return outEdges.size(); }
   bool			isDummyNode	() const { return (minstr == NULL); }
-  const BasicBlock*	getBB           () const { return bb; }
+  MachineBasicBlock    &getMachineBasicBlock() const { return *MBB; }
   int                   getOrigIndexInBB() const { return origIndexInBB; }
   
   //
@@ -194,11 +193,10 @@ private:
   
   // disable default constructor and provide a ctor for single-block graphs
   /*ctor*/		SchedGraphNode();	// DO NOT IMPLEMENT
-  /*ctor*/		SchedGraphNode	(unsigned int _nodeId,
-					 const BasicBlock*   _bb,
-					 const MachineInstr* _minstr,
+  /*ctor*/		SchedGraphNode	(unsigned nodeId,
+                                         MachineBasicBlock *mbb,
                                          int   indexInBB,
-					 const TargetMachine& _target);
+					 const TargetMachine& Target);
   /*dtor*/		~SchedGraphNode	();
 };
 
@@ -208,8 +206,7 @@ class SchedGraph :
   public NonCopyable,
   private hash_map<const MachineInstr*, SchedGraphNode*>
 {
-private:
-  std::vector<const BasicBlock*> bbVec; // basic blocks included in the graph
+  MachineBasicBlock &MBB;               // basic blocks for this graph
   SchedGraphNode* graphRoot;		// the root and leaf are not inserted
   SchedGraphNode* graphLeaf;		//  in the hash_map (see getNumNodes())
   
@@ -222,8 +219,8 @@ public:
   //
   // Accessor methods
   //
-  const std::vector<const BasicBlock*>& getBasicBlocks() const { return bbVec; }
-  const unsigned int		   getNumNodes()    const { return size()+2; }
+  MachineBasicBlock               &getBasicBlock()  const { return MBB; }
+  unsigned                         getNumNodes()    const { return size()+2; }
   SchedGraphNode*		   getRoot()	    const { return graphRoot; }
   SchedGraphNode*		   getLeaf()	    const { return graphLeaf; }
   
@@ -272,8 +269,7 @@ private:
   friend class SchedGraphSet;		// give access to ctor
   
   // disable default constructor and provide a ctor for single-block graphs
-  /*ctor*/	SchedGraph		();	// DO NOT IMPLEMENT
-  /*ctor*/	SchedGraph		(const BasicBlock* bb,
+  /*ctor*/	SchedGraph		(MachineBasicBlock &bb,
 					 const TargetMachine& target);
   /*dtor*/	~SchedGraph		();
   
@@ -289,8 +285,8 @@ private:
   //
   void  	buildGraph		(const TargetMachine& target);
   
-  void          buildNodesforBB         (const TargetMachine& target,
-                                         const BasicBlock* bb,
+  void          buildNodesForBB         (const TargetMachine& target,
+                                         MachineBasicBlock &MBB,
                                          std::vector<SchedGraphNode*>& memNod,
                                          RegToRefVecMap& regToRefVecMap,
                                          ValueToDefVecMap& valueToDefVecMap);
