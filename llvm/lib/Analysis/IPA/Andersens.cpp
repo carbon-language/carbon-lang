@@ -41,6 +41,12 @@
 // pointers.  If we find that an internal function's address escapes outside of
 // the program, we update this assumption.
 //
+// Future Improvements:
+//   This implementation of Andersen's algorithm is extremely slow.  To make it
+//   scale reasonably well, the inclusion constraints could be sorted (easy), 
+//   offline variable substitution would be a huge win (straight-forward), and 
+//   online cycle elimination (trickier) might help as well.
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "anders-aa"
