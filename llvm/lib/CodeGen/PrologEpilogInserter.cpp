@@ -96,6 +96,7 @@ FunctionPass *llvm::createPrologEpilogCodeInserter() { return new PEI(); }
 void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
   const MRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
   const TargetFrameInfo *TFI = Fn.getTarget().getFrameInfo();
+  const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
 
   // Get the callee saved register list...
   const unsigned *CSRegs = RegInfo->getCalleeSaveRegs();
@@ -133,6 +134,11 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
                    "Register allocation must be performed!");
             ModifiedRegs[MO.getReg()] = true;         // Register is modified
           }
+
+          // Mark any implicitly defined registers as being modified.
+          for (const unsigned *ImpDefs = TII.getImplicitDefs(I->getOpcode());
+               *ImpDefs; ++ImpDefs)
+            ModifiedRegs[*ImpDefs] = true;
         }
         ++I;
       }
