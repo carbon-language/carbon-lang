@@ -14,7 +14,6 @@
 #ifndef SKELETON_REGISTERINFO_H
 #define SKELETON_REGISTERINFO_H
 
-#include "llvm/Target/MRegisterInfo.h"
 #include "SkeletonGenRegisterInfo.h.inc"
 
 namespace llvm {
@@ -24,7 +23,6 @@ namespace llvm {
     SkeletonRegisterInfo();
     const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
     
-    // See MRegisterInfo.h for information on these methods.
     void storeRegToStackSlot(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator MBBI,
                              unsigned SrcReg, int FrameIndex) const;
