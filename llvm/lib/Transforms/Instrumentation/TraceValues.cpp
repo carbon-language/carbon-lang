@@ -118,9 +118,11 @@ FunctionPass *llvm::createTraceValuesPassForBasicBlocks() {
   return new BasicBlockTracer();
 }
 
-// Add a prototype for external functions used by the tracing code.
+// Add a prototype for external functions used by the tracing code and require
+// the trace library for this module.
 //
 void ExternalFuncs::doInitialization(Module &M) {
+  M.addLibrary("trace");
   const Type *SBP = PointerType::get(Type::SByteTy);
   const FunctionType *MTy =
     FunctionType::get(Type::IntTy, std::vector<const Type*>(1, SBP), true);
