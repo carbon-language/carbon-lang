@@ -168,7 +168,7 @@ string ConstPoolArray::getStrValue() const {
   // 
   const Type *ETy = cast<ArrayType>(getType())->getElementType();
   bool isString = (ETy == Type::SByteTy || ETy == Type::UByteTy);
-  for (unsigned i = 0; i < Operands.size(); i++)
+  for (unsigned i = 0; i < Operands.size(); ++i)
     if (ETy == Type::SByteTy &&
         cast<ConstPoolSInt>(Operands[i])->getValue() < 0) {
       isString = false;
@@ -177,7 +177,7 @@ string ConstPoolArray::getStrValue() const {
 
   if (isString) {
     Result = "c\"";
-    for (unsigned i = 0; i < Operands.size(); i++) {
+    for (unsigned i = 0; i < Operands.size(); ++i) {
       unsigned char C = (ETy == Type::SByteTy) ?
         (unsigned char)cast<ConstPoolSInt>(Operands[i])->getValue() :
         (unsigned char)cast<ConstPoolUInt>(Operands[i])->getValue();
@@ -186,8 +186,8 @@ string ConstPoolArray::getStrValue() const {
         Result += C;
       } else {
         Result += '\\';
-        Result += (C/16)+'0';
-        Result += (C&15)+'0';
+        Result += ( C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A');
+        Result += ((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A');
       }
     }
     Result += "\"";
