@@ -38,6 +38,7 @@ static struct MCFIInitializer {
 
 MachineCodeForInstruction&
 MachineCodeForInstruction::get(const Instruction *I){
+  assert(I != NULL);
   return *(MachineCodeForInstruction*)I->getOrCreateAnnotation(MCFI_AID);
 }
 
