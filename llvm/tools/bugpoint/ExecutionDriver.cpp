@@ -15,10 +15,10 @@ BUGPOINT NOTES:
 */
 
 #include "BugDriver.h"
-#include "Support/SystemUtils.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/FileUtilities.h"
+#include "Support/SystemUtils.h"
 #include <fstream>
 #include <iostream>
 

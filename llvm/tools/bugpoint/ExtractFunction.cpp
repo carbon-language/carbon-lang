@@ -6,14 +6,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
+#include "llvm/Constant.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Type.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/Type.h"
-#include "llvm/Constant.h"
 #include "Support/CommandLine.h"
 
 bool DisableSimplifyCFG = false;

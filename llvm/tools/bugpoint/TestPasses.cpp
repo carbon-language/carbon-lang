@@ -5,11 +5,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Pass.h"
-#include "llvm/iOther.h"
-#include "llvm/Support/InstVisitor.h"
-#include "llvm/Constant.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Constant.h"
+#include "llvm/iOther.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/InstVisitor.h"
 
 namespace {
   /// CrashOnCalls - This pass is used to test bugpoint.  It intentionally

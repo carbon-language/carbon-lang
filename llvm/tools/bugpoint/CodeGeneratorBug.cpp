@@ -5,7 +5,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
-#include "Support/SystemUtils.h"
 #include "ListReducer.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -23,6 +22,7 @@
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/StringExtras.h"
+#include "Support/SystemUtils.h"
 #include <algorithm>
 #include <set>
 

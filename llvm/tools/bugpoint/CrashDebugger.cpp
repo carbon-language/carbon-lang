@@ -5,20 +5,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
-#include "Support/SystemUtils.h"
 #include "ListReducer.h"
-#include "llvm/Module.h"
-#include "llvm/PassManager.h"
-#include "llvm/Pass.h"
 #include "llvm/Constant.h"
 #include "llvm/iTerminators.h"
-#include "llvm/Type.h"
+#include "llvm/Module.h"
+#include "llvm/Pass.h"
+#include "llvm/PassManager.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/Support/CFG.h"
+#include "llvm/Type.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Bytecode/Writer.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Bytecode/Writer.h"
+#include "Support/SystemUtils.h"
 #include <fstream>
 #include <set>
 

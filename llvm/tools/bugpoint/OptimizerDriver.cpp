@@ -9,16 +9,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
-#include "Support/SystemUtils.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Target/TargetData.h"
+#include "Support/SystemUtils.h"
+#include <fstream>
+#include <stdlib.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <fstream>
 
 /// writeProgramToFile - This writes the current "Program" to the named bytecode
 /// file.  If an error occurs, true is returned.

@@ -7,13 +7,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
-#include "Support/SystemUtils.h"
 #include "llvm/Module.h"
-#include "llvm/Bytecode/Reader.h"
-#include "llvm/Assembly/Parser.h"
-#include "llvm/Transforms/Utils/Linker.h"
 #include "llvm/Pass.h"
+#include "llvm/Assembly/Parser.h"
+#include "llvm/Bytecode/Reader.h"
+#include "llvm/Transforms/Utils/Linker.h"
 #include "Support/CommandLine.h"
+#include "Support/SystemUtils.h"
 #include <memory>
 
 // Anonymous namespace to define command line options for debugging.

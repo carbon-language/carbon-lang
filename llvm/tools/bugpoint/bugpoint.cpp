@@ -7,8 +7,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
-#include "Support/CommandLine.h"
 #include "llvm/Support/PassNameParser.h"
+#include "Support/CommandLine.h"
 
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
