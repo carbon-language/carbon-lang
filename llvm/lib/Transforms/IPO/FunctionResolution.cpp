@@ -236,14 +236,16 @@ static bool ProcessGlobalsWithSameName(Module &M,
     // later.
     //
     if (Globals[i]->isExternal() && Globals[i]->use_empty()) {
-      if (isFunction)
+      if (isFunction) {
         M.getFunctionList().erase(cast<Function>(Globals[i]));
-      else
+        ++NumResolved;
+      } else {
         M.getGlobalList().erase(cast<GlobalVariable>(Globals[i]));
+        ++NumGlobals;
+      }
 
       Globals.erase(Globals.begin()+i);
       Changed = true;
-      ++NumResolved;
     } else if (isFunction) {
       // For functions, we look to merge functions definitions of "int (...)"
       // to 'int (int)' or 'int ()' or whatever else is not completely generic.
