@@ -1382,8 +1382,21 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::XOR:
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       Tmp1 = SelectExpr(N.getOperand(0));
+
+      if (CN->isAllOnesValue()) {
+        switch (N.getValueType()) {
+        default: assert(0 && "Cannot add this type!");
+        case MVT::i1:
+        case MVT::i8:  Opc = X86::NOT8r;  break;
+        case MVT::i16: Opc = X86::NOT16r; break;
+        case MVT::i32: Opc = X86::NOT32r; break;
+        }
+        BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
+        return Result;
+      }
+
       switch (N.getValueType()) {
-      default: assert(0 && "Cannot add this type!");
+      default: assert(0 && "Cannot xor this type!");
       case MVT::i1:
       case MVT::i8:  Opc = X86::XOR8ri;  break;
       case MVT::i16: Opc = X86::XOR16ri; break;
