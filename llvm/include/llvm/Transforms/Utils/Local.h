@@ -89,7 +89,7 @@ Value *hasConstantValue(PHINode *PN);
 bool SimplifyCFG(BasicBlock *BB);
 
 /// DemoteRegToStack - This function takes a virtual register computed by an
-/// Instruction& X and replaces it with a slot in the stack frame, allocated via
+/// Instruction and replaces it with a slot in the stack frame, allocated via
 /// alloca.  This allows the CFG to be changed around without fear of
 /// invalidating the SSA information for the value.  It returns the pointer to
 /// the alloca inserted to create a stack slot for X.
