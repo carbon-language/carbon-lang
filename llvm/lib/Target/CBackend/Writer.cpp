@@ -1508,15 +1508,14 @@ void CWriter::visitCallInst(CallInst &I) {
         Out << ')';
         return;
       case Intrinsic::prefetch:
-	// This is only supported on GCC for now...
-	Out << "LLVM_PREFETCH((const void *)";
+        Out << "LLVM_PREFETCH((const void *)";
         writeOperand(I.getOperand(1));
         Out << ", ";
         writeOperand(I.getOperand(2));
         Out << ", ";
         writeOperand(I.getOperand(3));
         Out << ")";
-	return;
+        return;
       }
     }
 
