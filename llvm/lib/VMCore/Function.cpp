@@ -104,8 +104,6 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
 Function::~Function() {
   dropAllReferences();    // After this it is safe to delete instructions.
 
-  BasicBlocks.clear();    // Delete all basic blocks...
-
   // Delete all of the method arguments and unlink from symbol table...
   ArgumentList.clear();
   ArgumentList.setParent(0);
@@ -149,6 +147,7 @@ const Type *Function::getReturnType() const {
 void Function::dropAllReferences() {
   for (iterator I = begin(), E = end(); I != E; ++I)
     I->dropAllReferences();
+  BasicBlocks.clear();    // Delete all basic blocks...
 }
 
 /// getIntrinsicID - This method returns the ID number of the specified
