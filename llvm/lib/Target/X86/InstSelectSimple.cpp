@@ -19,6 +19,8 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Support/InstVisitor.h"
 
+using namespace MOTy;  // Get Use, Def, UseAndDef
+
 namespace {
   struct ISel : public FunctionPass, InstVisitor<ISel> {
     TargetMachine &TM;
@@ -147,6 +149,7 @@ static inline TypeClass getClass(const Type *Ty) {
   }
 }
 
+
 /// copyConstantToRegister - Output the instructions required to put the
 /// specified constant into the specified register.
 ///
@@ -172,6 +175,7 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R) {
     assert(0 && "Type not handled yet!");
   }
 }
+
 
 /// SetCC instructions - Here we just emit boilerplate code to set a byte-sized
 /// register, then move it to wherever the result should be. 
@@ -327,8 +331,8 @@ ISel::visitSetCondInst (SetCondInst & I)
 ///   ret short, ushort: Extend value into EAX and return
 ///   ret int, uint    : Move value into EAX and return
 ///   ret pointer      : Move value into EAX and return
-///   ret long, ulong  : Move value into EAX/EDX (?) and return
-///   ret float/double : ?  Top of FP stack?  XMM0?
+///   ret long, ulong  : Move value into EAX/EDX and return
+///   ret float/double : Top of FP stack
 ///
 void ISel::visitReturnInst (ReturnInst &I) {
   if (I.getNumOperands() == 0) {
@@ -382,6 +386,7 @@ void ISel::visitReturnInst (ReturnInst &I) {
   BuildMI(BB, X86::RET, 0);
 }
 
+
 /// visitBranchInst - Handle conditional and unconditional branches here.  Note
 /// that since code layout is frozen at this point, that if we are trying to
 /// jump to a block that is the immediate successor of the current block, we can
@@ -433,23 +438,26 @@ void ISel::visitMul(BinaryOperator &I) {
     visitInstruction(I);
 
   static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
+  static const unsigned Clobbers[] ={ X86::AH    , X86::DX     , X86::EDX     };
   static const unsigned MulOpcode[]={ X86::MULrr8, X86::MULrr16, X86::MULrr32 };
   static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
 
-  unsigned Reg = Regs[Class];
-  unsigned Op0Reg = getReg(I.getOperand(0));
-  unsigned Op1Reg = getReg(I.getOperand(1));
+  unsigned Reg     = Regs[Class];
+  unsigned Clobber = Clobbers[Class];
+  unsigned Op0Reg  = getReg(I.getOperand(0));
+  unsigned Op1Reg  = getReg(I.getOperand(1));
 
   // Put the first operand into one of the A registers...
   BuildMI(BB, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
   
-  // Emit the appropriate multiple instruction...
-  // FIXME: We need to mark that this modified AH, DX, or EDX also!!
-  BuildMI(BB, MulOpcode[Class], 2, Reg).addReg(Reg).addReg(Op1Reg);
+  // Emit the appropriate multiply instruction...
+  BuildMI(BB, MulOpcode[Class], 4)
+    .addReg(Reg, UseAndDef).addReg(Op1Reg).addClobber(Clobber);
 
   // Put the result into the destination register...
   BuildMI(BB, MovOpcode[Class], 1, getReg(I)).addReg(Reg);
 }
+
 
 /// visitDivRem - Handle division and remainder instructions... these
 /// instruction both require the same instructions to be generated, they just
@@ -489,16 +497,17 @@ void ISel::visitDivRem(BinaryOperator &I) {
     BuildMI(BB, ClrOpcode[Class], 2, ExtReg).addReg(ExtReg).addReg(ExtReg);
   }
 
+  // Emit the appropriate divide or remainder instruction...
+  BuildMI(BB, DivOpcode[isSigned][Class], 2)
+    .addReg(Reg, UseAndDef).addReg(ExtReg, UseAndDef).addReg(Op1Reg);
+
   // Figure out which register we want to pick the result out of...
   unsigned DestReg = (I.getOpcode() == Instruction::Div) ? Reg : ExtReg;
   
-  // Emit the appropriate divide or remainder instruction...
-  // FIXME: We need to mark that this modified AH, DX, or EDX also!!
-  BuildMI(BB,DivOpcode[isSigned][Class], 2, DestReg).addReg(Reg).addReg(Op1Reg);
-
   // Put the result into the destination register...
   BuildMI(BB, MovOpcode[Class], 1, getReg(I)).addReg(DestReg);
 }
+
 
 /// Shift instructions: 'shl', 'sar', 'shr' - Some special cases here
 /// for constant immediate shift values, and for constant immediate
@@ -561,6 +570,7 @@ void ISel::visitShiftInst (ShiftInst &I) {
     }
 }
 
+
 /// visitLoadInst - Implement LLVM load instructions in terms of the x86 'mov'
 /// instruction.
 ///
@@ -574,6 +584,7 @@ void ISel::visitLoadInst(LoadInst &I) {
   unsigned AddressReg = getReg(I.getOperand(0));
   addDirectMem(BuildMI(BB, Opcode[Class], 4, getReg(I)), AddressReg);
 }
+
 
 /// visitStoreInst - Implement LLVM store instructions in terms of the x86 'mov'
 /// instruction.
