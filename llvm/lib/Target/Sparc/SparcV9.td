@@ -94,7 +94,7 @@ set isDeprecated = 1 in {
   //def FBPO     : F2_3<0b1111, "fbpo">;              // Branch on ordered
 //}
 
-// Section A.6: p170: Bicc
+// Section A.6: Branch on Integer condition codes (Bicc) - p146
 set isDeprecated = 1 in {
   set op2 = 0b010 in {
     def BA     : F2_2<0b1000, "ba">;              // Branch always
@@ -116,7 +116,7 @@ set isDeprecated = 1 in {
   }
 }
 
-// Section A.7: p172
+// Section A.7: Branch on integer condition codes with prediction - p148
 //set op2 = 0b001 in {
 //  def BPA     : F2_3<0b1000, "bpa">;              // Branch always
 //  def BPN     : F2_3<0b0000, "bpn">;              // Branch never
@@ -414,9 +414,9 @@ set op2 = 0b100 in {
 //}
 // uses 6 least significant bits of rs2
 set x = 1 in {
-  //  def SLLr6  : F3_11<2, 0b100101, "sll">;                // sll r, r, r
-  //  def SRLr6  : F3_11<2, 0b100110, "srl">;                // srl r, r, r
-  //  def SRAr6  : F3_11<2, 0b100111, "sra">;                // sra r, r, r
+  def SLLr6  : F3_11<2, 0b100101, "sll">;                // sll r, r, r
+  def SRLr6  : F3_11<2, 0b100110, "srl">;                // srl r, r, r
+  def SRAr6  : F3_11<2, 0b100111, "sra">;                // sra r, r, r
   def SLLXr6 : F3_11<2, 0b100101, "sllx">;               // sllx r, r, r
   def SRLXr6 : F3_11<2, 0b100110, "srlx">;               // srlx r, r, r
   def SRAXr6 : F3_11<2, 0b100111, "srax">;               // srax r, r, r
@@ -429,9 +429,9 @@ set x = 1 in {
 //def SRLXi5 : F3_12<2, 0b100110, "srlx">;               // srlx r, shcnt32, r
 //def SRAXi5 : F3_12<2, 0b100111, "srax">;               // srax r, shcnt32, r
 
-//def SLLi6  : F3_13<2, 0b100101, "sll">;                // sll r, shcnt64, r
-//def SRLi6  : F3_13<2, 0b100110, "srl">;                // srl r, shcnt64, r
-//def SRAi6  : F3_13<2, 0b100111, "sra">;                // sra r, shcnt64, r
+def SLLi6  : F3_13<2, 0b100101, "sll">;                  // sll r, shcnt64, r
+def SRLi6  : F3_13<2, 0b100110, "srl">;                  // srl r, shcnt64, r
+def SRAi6  : F3_13<2, 0b100111, "sra">;                  // sra r, shcnt64, r
 def SLLXi6 : F3_13<2, 0b100101, "sllx">;                 // sllx r, shcnt64, r
 def SRLXi6 : F3_13<2, 0b100110, "srlx">;                 // srlx r, shcnt64, r
 def SRAXi6 : F3_13<2, 0b100111, "srax">;                 // srax r, shcnt64, r
