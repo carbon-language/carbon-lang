@@ -14,6 +14,109 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/GlobalVariable.h"
+
+// Create a TargetData structure to handle memory addressing and size/alignment
+// computations
+//
+static TargetData TD("lli Interpreter");
+
+//===----------------------------------------------------------------------===//
+//                    Annotation Wrangling code
+//===----------------------------------------------------------------------===//
+
+void Interpreter::initializeExecutionEngine() {
+  AnnotationManager::registerAnnotationFactory(MethodInfoAID,
+                                               &MethodInfo::Create);
+  AnnotationManager::registerAnnotationFactory(GlobalAddressAID, 
+                                               &GlobalAddress::Create);
+}
+
+// InitializeMemory - Recursive function to apply a ConstPool value into the
+// specified memory location...
+//
+static void InitializeMemory(ConstPoolVal *Init, char *Addr) {
+#define INITIALIZE_MEMORY(TYID, CLASS, TY) \
+  case Type::TYID##TyID: {                 \
+    TY Tmp = cast<CLASS>(Init)->getValue(); \
+    memcpy(Addr, &Tmp, sizeof(TY));        \
+  } return
+
+  switch (Init->getType()->getPrimitiveID()) {
+    INITIALIZE_MEMORY(Bool   , ConstPoolBool, bool);
+    INITIALIZE_MEMORY(UByte  , ConstPoolUInt, unsigned char);
+    INITIALIZE_MEMORY(SByte  , ConstPoolSInt, signed   char);
+    INITIALIZE_MEMORY(UShort , ConstPoolUInt, unsigned short);
+    INITIALIZE_MEMORY(Short  , ConstPoolSInt, signed   short);
+    INITIALIZE_MEMORY(UInt   , ConstPoolUInt, unsigned int);
+    INITIALIZE_MEMORY(Int    , ConstPoolSInt, signed   int);
+    INITIALIZE_MEMORY(ULong  , ConstPoolUInt, uint64_t);
+    INITIALIZE_MEMORY(Long   , ConstPoolSInt,  int64_t);
+    INITIALIZE_MEMORY(Float  , ConstPoolFP  , float);
+    INITIALIZE_MEMORY(Double , ConstPoolFP  , double);
+#undef INITIALIZE_MEMORY
+  case Type::ArrayTyID: {
+    ConstPoolArray *CPA = cast<ConstPoolArray>(Init);
+    const vector<Use> &Val = CPA->getValues();
+    unsigned ElementSize = 
+      TD.getTypeSize(cast<ArrayType>(CPA->getType())->getElementType());
+    for (unsigned i = 0; i < Val.size(); ++i)
+      InitializeMemory(cast<ConstPoolVal>(Val[i].get()), Addr+i*ElementSize);
+    return;
+  }
+    // TODO: Struct and Pointer!
+  case Type::StructTyID:
+  case Type::PointerTyID:
+  default:
+    cout << "Bad Type: " << Init->getType()->getDescription() << endl;
+    assert(0 && "Unknown constant type to initialize memory with!");
+  }
+}
+
+Annotation *GlobalAddress::Create(AnnotationID AID, const Annotable *O, void *){
+  assert(AID == GlobalAddressAID);
+
+  // This annotation will only be created on GlobalValue objects...
+  GlobalValue *GVal = cast<GlobalValue>((Value*)O);
+
+  if (isa<Method>(GVal)) {
+    // The GlobalAddress object for a method is just a pointer to method itself.
+    // Don't delete it when the annotation is gone though!
+    return new GlobalAddress(GVal, false);
+  }
+
+  // Handle the case of a global variable...
+  assert(isa<GlobalVariable>(GVal) && 
+         "Global value found that isn't a method or global variable!");
+  GlobalVariable *GV = cast<GlobalVariable>(GVal);
+  
+  // First off, we must allocate space for the global variable to point at...
+  const Type *Ty = GV->getType()->getValueType();  // Type to be allocated
+  unsigned NumElements = 1;
+
+  if (isa<ArrayType>(Ty) && cast<ArrayType>(Ty)->isUnsized()) {
+    assert(GV->hasInitializer() && "Const val must have an initializer!");
+    // Allocating a unsized array type?
+    Ty = cast<const ArrayType>(Ty)->getElementType();  // Get the actual type...
+
+    // Get the number of elements being allocated by the array...
+    NumElements =cast<ConstPoolArray>(GV->getInitializer())->getValues().size();
+  }
+
+  // Allocate enough memory to hold the type...
+  void *Addr = malloc(NumElements * TD.getTypeSize(Ty));
+  assert(Addr != 0 && "Null pointer returned by malloc!");
+
+  // Initialize the memory if there is an initializer...
+  if (GV->hasInitializer())
+    InitializeMemory(GV->getInitializer(), (char*)Addr);
+
+  return new GlobalAddress(Addr, true);  // Simply invoke the ctor
+}
+
+//===----------------------------------------------------------------------===//
+//                     Value Manipulation code
+//===----------------------------------------------------------------------===//
 
 static unsigned getOperandSlot(Value *V) {
   SlotNumber *SN = (SlotNumber*)V->getAnnotation(SlotNumberAID);
@@ -22,7 +125,7 @@ static unsigned getOperandSlot(Value *V) {
 }
 
 #define GET_CONST_VAL(TY, CLASS) \
-  case Type::TY##TyID: Result.TY##Val = ((CLASS*)CPV)->getValue(); break
+  case Type::TY##TyID: Result.TY##Val = cast<CLASS>(CPV)->getValue(); break
 
 static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
   if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(V)) {
@@ -37,9 +140,25 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
       GET_CONST_VAL(Int    , ConstPoolSInt);
       GET_CONST_VAL(Float  , ConstPoolFP);
       GET_CONST_VAL(Double , ConstPoolFP);
+    case Type::PointerTyID:
+      if (isa<ConstPoolPointerNull>(CPV)) {
+        Result.PointerVal = 0;
+      } else if (ConstPoolPointerReference *CPR = 
+                 dyn_cast<ConstPoolPointerReference>(CPV)) {
+        assert(0 && "Not implemented!");
+      } else {
+        assert(0 && "Unknown constant pointer type!");
+      }
+      break;
     default:
       cout << "ERROR: Constant unimp for type: " << CPV->getType() << endl;
     }
+    return Result;
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    GlobalAddress *Address = 
+      (GlobalAddress*)GV->getOrCreateAnnotation(GlobalAddressAID);
+    GenericValue Result;
+    Result.PointerVal = (GenericValue*)Address->Ptr;
     return Result;
   } else {
     unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
@@ -48,7 +167,11 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
 }
 
 static void printOperandInfo(Value *V, ExecutionContext &SF) {
-  if (!isa<ConstPoolVal>(V)) {
+  if (isa<ConstPoolVal>(V)) {
+    cout << "Constant Pool Value\n";
+  } else if (isa<GlobalValue>(V)) {
+    cout << "Global Value\n";
+  } else {
     unsigned TyP  = V->getType()->getUniqueID();   // TypePlane for value
     unsigned Slot = getOperandSlot(V);
     cout << "Value=" << (void*)V << " TypeID=" << TyP << " Slot=" << Slot
@@ -294,7 +417,7 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
     if (RetTy) {          // Nonvoid return type?
       cout << "Method " << M->getType() << " \"" << M->getName()
 	   << "\" returned ";
-      printValue(RetTy, Result);
+      print(RetTy, Result);
       cout << endl;
 
       if (RetTy->isIntegral())
@@ -319,7 +442,7 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
     // instruction.
     cout << "Method " << M->getType() << " \"" << M->getName()
 	 << "\" returned ";
-    printValue(RetTy, Result);
+    print(RetTy, Result);
     cout << endl;
   }
 }
@@ -340,11 +463,6 @@ void Interpreter::executeBrInst(BranchInst *I, ExecutionContext &SF) {
 //===----------------------------------------------------------------------===//
 //                     Memory Instruction Implementations
 //===----------------------------------------------------------------------===//
-
-// Create a TargetData structure to handle memory addressing and size/alignment
-// computations
-//
-static TargetData TD("lli Interpreter");
 
 void Interpreter::executeAllocInst(AllocationInst *I, ExecutionContext &SF) {
   const Type *Ty = I->getType()->getValueType();  // Type to be allocated
@@ -367,7 +485,7 @@ void Interpreter::executeAllocInst(AllocationInst *I, ExecutionContext &SF) {
   SetValue(I, Result, SF);
 
   if (I->getOpcode() == Instruction::Alloca) {
-    // Keep track to free it later...
+    // TODO: FIXME: alloca should keep track of memory to free it later...
   }
 }
 
@@ -602,10 +720,6 @@ unsigned MethodInfo::getValueSlot(const Value *V) {
 }
 
 
-void Interpreter::initializeExecutionEngine() {
-  AnnotationManager::registerAnnotationFactory(MethodInfoAID, CreateMethodInfo);
-}
-
 //===----------------------------------------------------------------------===//
 // callMethod - Execute the specified method...
 //
@@ -703,9 +817,6 @@ void Interpreter::stepInstruction() {  // Do the 'step' command
 }
 
 // --- UI Stuff...
-
-
-
 void Interpreter::nextInstruction() {  // Do the 'next' command
   if (ECStack.empty()) {
     cout << "Error: no program running, cannot 'next'!\n";
@@ -746,7 +857,6 @@ void Interpreter::run() {
   if (HitBreakpoint) {
     cout << "Breakpoint hit!\n";
   }
-
   // Print the next instruction to execute...
   printCurrentInstruction();
 }
@@ -787,8 +897,6 @@ void Interpreter::printCurrentInstruction() {
 }
 
 void Interpreter::printValue(const Type *Ty, GenericValue V) {
-  cout << Ty << " ";
-
   switch (Ty->getPrimitiveID()) {
   case Type::BoolTyID:   cout << (V.BoolVal?"true":"false"); break;
   case Type::SByteTyID:  cout << V.SByteVal;  break;
@@ -806,15 +914,20 @@ void Interpreter::printValue(const Type *Ty, GenericValue V) {
   }
 }
 
-void Interpreter::printValue(const string &Name) {
+void Interpreter::print(const Type *Ty, GenericValue V) {
+  cout << Ty << " ";
+  printValue(Ty, V);
+}
+
+void Interpreter::print(const string &Name) {
   Value *PickedVal = ChooseOneOption(Name, LookupMatchingNames(Name));
   if (!PickedVal) return;
 
   if (const Method *M = dyn_cast<const Method>(PickedVal)) {
     cout << M;  // Print the method
   } else {      // Otherwise there should be an annotation for the slot#
-    printValue(PickedVal->getType(), 
-	       getOperandValue(PickedVal, ECStack[CurFrame]));
+    print(PickedVal->getType(), 
+          getOperandValue(PickedVal, ECStack[CurFrame]));
     cout << endl;
   }
     
@@ -825,8 +938,8 @@ void Interpreter::infoValue(const string &Name) {
   if (!PickedVal) return;
 
   cout << "Value: ";
-  printValue(PickedVal->getType(), 
-	     getOperandValue(PickedVal, ECStack[CurFrame]));
+  print(PickedVal->getType(), 
+        getOperandValue(PickedVal, ECStack[CurFrame]));
   cout << endl;
   printOperandInfo(PickedVal, ECStack[CurFrame]);
 }

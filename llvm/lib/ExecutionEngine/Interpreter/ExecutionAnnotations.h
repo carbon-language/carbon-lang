@@ -25,19 +25,18 @@ struct MethodInfo : public Annotation {
   MethodInfo(Method *M);
   vector<unsigned> NumPlaneElements;
 
+
+  // Create - Factory function to allow MethodInfo annotations to be
+  // created on demand.
+  //
+  static Annotation *Create(AnnotationID AID, const Annotable *O, void *) {
+    assert(AID == MethodInfoAID);
+    return new MethodInfo(cast<Method>((Value*)O));  // Simply invoke the ctor
+  }
+
 private:
   unsigned getValueSlot(const Value *V);
 };
-
-// CreateMethodInfo - Factory function to allow MethodInfo annotations to be
-// created on demand.
-//
-inline static Annotation *CreateMethodInfo(AnnotationID AID, const Annotable *O,
-					   void *) {
-  assert(AID == MethodInfoAID);
-  return new MethodInfo((Method*)O);  // Simply invoke the ctor
-}
-
 
 //===----------------------------------------------------------------------===//
 // Support for the SlotNumber annotation
@@ -88,5 +87,33 @@ struct InstNumber : public SlotNumber {
 static AnnotationID BreakpointAID(
 	            AnnotationManager::getID("Interpreter::Breakpoint"));
 // Just use an Annotation directly, Breakpoint is currently just a marker
+
+
+//===----------------------------------------------------------------------===//
+// Support for the GlobalAddress annotation
+//===----------------------------------------------------------------------===//
+
+// This annotation (attached only to GlobalValue objects) is used to hold the
+// address of the chunk of memory that represents a global value.  For Method's,
+// this pointer is the Method object pointer that represents it.  For global
+// variables, this is the dynamically allocated (and potentially initialized)
+// chunk of memory for the global.  This annotation is created on demand.
+//
+static AnnotationID GlobalAddressAID(
+	            AnnotationManager::getID("Interpreter::GlobalAddress"));
+
+struct GlobalAddress : public Annotation {
+  void *Ptr;   // The pointer itself
+  bool Delete; // Should I delete them memory on destruction?
+
+  GlobalAddress(void *ptr, bool d) : Annotation(GlobalAddressAID), Ptr(ptr), 
+                                     Delete(d) {}
+  ~GlobalAddress() { if (Delete) free(Ptr); }
+  
+  // Create - Factory function to allow GlobalAddress annotations to be
+  // created on demand.
+  //
+  static Annotation *Create(AnnotationID AID, const Annotable *O, void *);
+};
 
 #endif

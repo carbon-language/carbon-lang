@@ -91,16 +91,44 @@ void Interpreter::callExternalMethod(Method *M,
 //
 extern "C" {  // Don't add C++ manglings to llvm mangling :)
 
+// Implement void printstr([ubyte {x N}] *)
+GenericValue lle_VP_printstr(MethodType *M, const vector<GenericValue> &ArgVal){
+  assert(ArgVal.size() == 1 && "printstr only takes one argument!");
+  cout << (char*)ArgVal[0].PointerVal;
+  return GenericValue();
+}
+
 // Implement 'void print(X)' for every type...
 GenericValue lle_X_print(MethodType *M, const vector<GenericValue> &ArgVals) {
   assert(ArgVals.size() == 1 && "generic print only takes one argument!");
-  Interpreter::printValue(M->getParamTypes()[0], ArgVals[0]);
+
+  Interpreter::print(M->getParamTypes()[0], ArgVals[0]);
+  return GenericValue();
+}
+
+// Implement 'void printVal(X)' for every type...
+GenericValue lle_X_printVal(MethodType *M, const vector<GenericValue> &ArgVal) {
+  assert(ArgVal.size() == 1 && "generic print only takes one argument!");
+
+  // Specialize print([ubyte {x N} ] *)
+  if (PointerType *PTy = dyn_cast<PointerType>(M->getParamTypes()[0].get()))
+    if (const ArrayType *ATy = dyn_cast<ArrayType>(PTy->getValueType())) {
+      return lle_VP_printstr(M, ArgVal);
+    }
+
+  Interpreter::printValue(M->getParamTypes()[0], ArgVal[0]);
   return GenericValue();
 }
 
 // void "putchar"(sbyte)
 GenericValue lle_Vb_putchar(MethodType *M, const vector<GenericValue> &Args) {
   cout << Args[0].SByteVal;
+  return GenericValue();
+}
+
+// void "putchar"(ubyte)
+GenericValue lle_VB_putchar(MethodType *M, const vector<GenericValue> &Args) {
+  cout << Args[0].UByteVal;
   return GenericValue();
 }
 

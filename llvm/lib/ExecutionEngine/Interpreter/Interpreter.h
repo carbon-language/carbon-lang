@@ -74,10 +74,13 @@ public:
   void handleUserInput();
 
   // User Interation Methods...
+  void loadModule(const string &Filename);
+  bool flushModule();
   bool callMethod(const string &Name);      // return true on failure
   void setBreakpoint(const string &Name);
   void infoValue(const string &Name);
-  void printValue(const string &Name);
+  void print(const string &Name);
+  static void print(const Type *Ty, GenericValue V);
   static void printValue(const Type *Ty, GenericValue V);
 
 

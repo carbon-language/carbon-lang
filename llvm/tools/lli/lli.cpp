@@ -9,7 +9,6 @@
 
 #include "Interpreter.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Bytecode/Reader.h"
 
 cl::String InputFilename(""       , "Input filename", cl::NoFlags, "-");
 cl::String MainFunction ("f"      , "Function to execute", cl::NoFlags, "main");
@@ -21,10 +20,8 @@ cl::Flag   ProfileMode  ("profile", "Enable Profiling [unimp]");
 // Interpreter ctor - Initialize stuff
 //
 Interpreter::Interpreter() : ExitCode(0), Profile(ProfileMode), CurFrame(-1) {
-  CurMod = ParseBytecodeFile(InputFilename);
-  if (CurMod == 0) {
-    cout << "Error parsing '" << InputFilename << "': No module loaded.\n";
-  }
+  CurMod = 0;
+  loadModule(InputFilename);
 
   // Initialize the "backend"
   initializeExecutionEngine();

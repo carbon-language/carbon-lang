@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Interpreter.h"
+#include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/Writer.h"
 #include <algorithm>
 
@@ -81,9 +82,14 @@ void Interpreter::handleUserInput() {
 
     switch (E->CID) {
     case Quit:       UserQuit = true;   break;
+    case Load:
+      cin >> Command;
+      loadModule(Command);
+      break;
+    case Flush: flushModule(); break;
     case Print:
       cin >> Command;
-      printValue(Command);
+      print(Command);
       break;
     case Info:
       cin >> Command;
@@ -118,6 +124,43 @@ void Interpreter::handleUserInput() {
   } while (!UserQuit);
 }
 
+//===----------------------------------------------------------------------===//
+// loadModule - Load a new module to execute...
+//
+void Interpreter::loadModule(const string &Filename) {
+  if (CurMod && !flushModule()) return;  // Kill current execution
+
+  CurMod = ParseBytecodeFile(Filename);
+  if (CurMod == 0) {
+    cout << "Error parsing '" << Filename << "': No module loaded.\n";
+    return;
+  }
+
+  // TODO: link in support library...
+}
+
+
+//===----------------------------------------------------------------------===//
+// flushModule - Return true if the current program has been unloaded.
+//
+bool Interpreter::flushModule() {
+  if (CurMod == 0) {
+    cout << "Error flushing: No module loaded!\n";
+    return false;
+  }
+
+  if (!ECStack.empty()) {
+    // TODO: if use is not sure, return false
+    cout << "Killing current execution!\n";
+    ECStack.clear();
+    CurFrame = -1;
+  }
+
+  delete CurMod;
+  CurMod = 0;
+  ExitCode = 0;
+  return true;
+}
 
 //===----------------------------------------------------------------------===//
 // setBreakpoint - Enable a breakpoint at the specified location
