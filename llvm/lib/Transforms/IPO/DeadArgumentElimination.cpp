@@ -17,6 +17,7 @@
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
 #include "llvm/Support/CallSite.h"
+#include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Support/iterator"
 #include <set>

@@ -31,6 +31,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/CFG.h"
+#include "Support/Debug.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/Statistic.h"
 #include <algorithm>

@@ -23,6 +23,7 @@
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/Transforms/Scalar.h"
+#include "Support/Debug.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/Statistic.h"

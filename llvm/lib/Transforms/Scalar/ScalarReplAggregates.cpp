@@ -13,8 +13,9 @@
 #include "llvm/iMemory.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
-#include "Support/StringExtras.h"
+#include "Support/Debug.h"
 #include "Support/Statistic.h"
+#include "Support/StringExtras.h"
 
 namespace {
   Statistic<> NumReplaced("scalarrepl", "Number of alloca's broken up");

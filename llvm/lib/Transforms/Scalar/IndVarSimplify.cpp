@@ -13,8 +13,9 @@
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/Support/CFG.h"
-#include "Support/STLExtras.h"
+#include "Support/Debug.h"
 #include "Support/Statistic.h"
+#include "Support/STLExtras.h"
 
 namespace {
   Statistic<> NumRemoved ("indvars", "Number of aux indvars removed");

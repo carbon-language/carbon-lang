@@ -9,8 +9,9 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
-#include "Support/Statistic.h"
 #include "Support/CommandLine.h"
+#include "Support/Debug.h"
+#include "Support/Statistic.h"
 #include <fstream>
 #include <set>
 

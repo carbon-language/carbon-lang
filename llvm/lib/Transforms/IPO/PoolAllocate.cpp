@@ -15,7 +15,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/InstVisitor.h"
-#include "Support/Statistic.h"
+#include "Support/Debug.h"
 #include "Support/VectorExtras.h"
 using namespace PA;
 

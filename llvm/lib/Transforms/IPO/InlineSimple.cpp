@@ -10,8 +10,9 @@
 #include "llvm/Pass.h"
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
-#include "Support/Statistic.h"
 #include "Support/CommandLine.h"
+#include "Support/Debug.h"
+#include "Support/Statistic.h"
 #include <set>
 
 namespace {

@@ -11,7 +11,7 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Module.h"
-#include "Support/Statistic.h"
+#include "Support/Debug.h"
 
 namespace {
   class Steens : public Pass, public AliasAnalysis {

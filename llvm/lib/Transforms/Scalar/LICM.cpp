@@ -31,8 +31,9 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CFG.h"
-#include "Support/Statistic.h"
 #include "Support/CommandLine.h"
+#include "Support/Debug.h"
+#include "Support/Statistic.h"
 #include "llvm/Assembly/Writer.h"
 #include <algorithm>
 

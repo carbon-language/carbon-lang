@@ -26,6 +26,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Constant.h"
 #include "llvm/Support/CFG.h"
+#include "Support/Debug.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/Statistic.h"
 

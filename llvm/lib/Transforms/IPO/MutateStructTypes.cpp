@@ -18,7 +18,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Constants.h"
 #include "Support/STLExtras.h"
-#include "Support/Statistic.h"
+#include "Support/Debug.h"
 #include <algorithm>
 
 // ValuePlaceHolder - A stupid little marker value.  It appears as an

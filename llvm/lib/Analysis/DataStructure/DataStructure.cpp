@@ -10,6 +10,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
+#include "Support/Debug.h"
 #include "Support/STLExtras.h"
 #include "Support/Statistic.h"
 #include "Support/Timer.h"

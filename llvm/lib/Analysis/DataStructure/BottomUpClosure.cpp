@@ -10,6 +10,7 @@
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Module.h"
 #include "Support/Statistic.h"
+#include "Support/Debug.h"
 #include "DSCallSiteIterator.h"
 
 namespace {

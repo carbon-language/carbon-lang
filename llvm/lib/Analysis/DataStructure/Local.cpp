@@ -17,9 +17,9 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/TargetData.h"
-#include "Support/Statistic.h"
-#include "Support/Timer.h"
 #include "Support/CommandLine.h"
+#include "Support/Debug.h"
+#include "Support/Timer.h"
 
 // FIXME: This should eventually be a FunctionPass that is automatically
 // aggregated into a Pass.

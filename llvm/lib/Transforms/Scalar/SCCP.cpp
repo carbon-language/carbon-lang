@@ -20,8 +20,9 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstVisitor.h"
-#include "Support/STLExtras.h"
+#include "Support/Debug.h"
 #include "Support/Statistic.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
 #include <set>
 

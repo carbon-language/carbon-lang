@@ -27,7 +27,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Assembly/Writer.h"
-#include "Support/Statistic.h"
+#include "Support/Debug.h"
 
 static bool isLoopInvariant(const Value *V, const Loop *L) {
   if (isa<Constant>(V) || isa<Argument>(V) || isa<GlobalValue>(V))

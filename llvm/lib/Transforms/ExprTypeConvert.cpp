@@ -13,7 +13,7 @@
 #include "llvm/ConstantHandling.h"
 #include "llvm/Analysis/Expressions.h"
 #include "Support/STLExtras.h"
-#include "Support/Statistic.h"
+#include "Support/Debug.h"
 #include <algorithm>
 using std::cerr;
 

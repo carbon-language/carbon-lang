@@ -10,7 +10,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/iTerminators.h"
-#include "Support/Statistic.h"
+#include "Support/Debug.h"
 #include <algorithm>
 #include "Graph.h"
 
