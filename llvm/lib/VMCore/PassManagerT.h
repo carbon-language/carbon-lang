@@ -216,7 +216,8 @@ public:
       // parent that we (the passmanager) are using the analysis so that it
       // frees the analysis AFTER this pass manager runs.
       //
-      assert(Parent != 0 && "Pass available but not found!");
+      assert(Parent != 0 && "Pass available but not found! "
+             "Did your analysis pass 'Provide' itself?");
       Parent->markPassUsed(P, this);
     }
   }
