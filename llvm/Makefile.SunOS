@@ -10,10 +10,9 @@
 #
 MakeSharedObjectOption := -G
 
-# ExportSymbols - This is used by tools that need to make sure that all of their
-# symbols are exported for use at runtime by dlsym.
-#
-ExportSymbols :=
+# PLATFORMLINKOPTS - On sun we need to link to libmalloc.so to get a definition
+# of mallinfo.
+ExportSymbols := -lmalloc
 
 # Path to location for LLVM front-end for this architecture.  This setting may
 # be overriden by the Makefile.config option, and should not override it if set.
