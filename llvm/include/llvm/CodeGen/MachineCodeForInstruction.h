@@ -1,18 +1,17 @@
-//===-- llvm/CodeGen/MachineCodeForInstruction.h -----------------*- C++ -*--=//
+//===-- llvm/CodeGen/MachineCodeForInstruction.h ----------------*- C++ -*-===//
 //
-//   Representation of the sequence of machine instructions created
-//   for a single VM instruction.  Additionally records information
-//   about hidden and implicit values used by the machine instructions:
-//   about hidden values used by the machine instructions:
+// Representation of the sequence of machine instructions created for a single
+// VM instruction.  Additionally records information about hidden and implicit
+// values used by the machine instructions: about hidden values used by the
+// machine instructions:
 // 
-//   "Temporary values" are intermediate values used in the machine
-//   instruction sequence, but not in the VM instruction
-//   Note that such values should be treated as pure SSA values with
-//   no interpretation of their operands (i.e., as a TmpInstruction
-//   object which actually represents such a value).
+// "Temporary values" are intermediate values used in the machine instruction
+// sequence, but not in the VM instruction Note that such values should be
+// treated as pure SSA values with no interpretation of their operands (i.e., as
+// a TmpInstruction object which actually represents such a value).
 // 
-//   (2) "Implicit uses" are values used in the VM instruction but not in
-//       the machine instruction sequence
+// (2) "Implicit uses" are values used in the VM instruction but not in
+//     the machine instruction sequence
 // 
 //===----------------------------------------------------------------------===//
 
@@ -25,16 +24,40 @@ class MachineInstr;
 class Instruction;
 class Value;
 
-class MachineCodeForInstruction 
-                  : public Annotation, public std::vector<MachineInstr*> {
+class MachineCodeForInstruction : public Annotation {
   std::vector<Value*> tempVec;         // used by m/c instr but not VM instr
-  
+  std::vector<MachineInstr*> Contents;
 public:
   MachineCodeForInstruction();
   ~MachineCodeForInstruction();
   
   static MachineCodeForInstruction &get(const Instruction *I);
   static void destroy(const Instruction *I);
+
+  // Access to underlying machine instructions...
+  typedef std::vector<MachineInstr*>::iterator iterator;
+  typedef std::vector<MachineInstr*>::const_iterator const_iterator;
+
+  unsigned size() const { return Contents.size(); }
+  bool empty() const { return Contents.empty(); }
+  MachineInstr *front() const { return Contents.front(); }
+  MachineInstr *back() const { return Contents.back(); }
+  MachineInstr *&operator[](unsigned i) { return Contents[i]; }
+  MachineInstr *operator[](unsigned i) const { return Contents[i]; }
+  void pop_back() { Contents.pop_back(); }
+
+  iterator begin() { return Contents.begin(); }
+  iterator end()   { return Contents.end(); }
+  const_iterator begin() const { return Contents.begin(); }
+  const_iterator end()   const { return Contents.end(); }
+
+  template<class InIt>
+  void insert(iterator where, InIt first, InIt last) {
+    Contents.insert(where, first, last);
+  }
+  iterator erase(iterator where) { return Contents.erase(where); }
+  iterator erase(iterator s, iterator e) { return Contents.erase(s, e); }
+  
 
   // dropAllReferences() - This function drops all references within
   // temporary (hidden) instructions created in implementing the original
@@ -46,7 +69,7 @@ public:
   const std::vector<Value*> &getTempValues() const { return tempVec; }
         std::vector<Value*> &getTempValues()       { return tempVec; }
   
-  inline MachineCodeForInstruction &addTemp(Value *tmp) {
+  MachineCodeForInstruction &addTemp(Value *tmp) {
     tempVec.push_back(tmp);
     return *this;
   }
