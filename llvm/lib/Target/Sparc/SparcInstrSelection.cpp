@@ -286,11 +286,12 @@ ChooseConvertToFloatInstr(OpLabel vopCode, const Type* opType)
 }
 
 static inline MachineOpCode 
-ChooseConvertToIntInstr(OpLabel vopCode, const Type* opType)
+ChooseConvertToIntInstr(Type::PrimitiveID tid, const Type* opType)
 {
   MachineOpCode opCode = INVALID_OPCODE;;
   
-  if (vopCode == ToSByteTy || vopCode == ToShortTy || vopCode == ToIntTy)
+  if (tid==Type::SByteTyID || tid==Type::ShortTyID  || tid==Type::IntTyID ||
+      tid==Type::UByteTyID || tid==Type::UShortTyID || tid==Type::UIntTyID)
     {
       switch (opType->getPrimitiveID())
         {
@@ -301,7 +302,7 @@ ChooseConvertToIntInstr(OpLabel vopCode, const Type* opType)
           break;
         }
     }
-  else if (vopCode == ToLongTy)
+  else if (tid==Type::LongTyID || tid==Type::ULongTyID)
     {
       switch (opType->getPrimitiveID())
         {
@@ -319,9 +320,9 @@ ChooseConvertToIntInstr(OpLabel vopCode, const Type* opType)
 }
 
 MachineInstr*
-CreateConvertToIntInstr(OpLabel vopCode, Value* srcVal, Value* destVal)
+CreateConvertToIntInstr(Type::PrimitiveID destTID, Value* srcVal,Value* destVal)
 {
-  MachineOpCode opCode = ChooseConvertToIntInstr(vopCode, srcVal->getType());
+  MachineOpCode opCode = ChooseConvertToIntInstr(destTID, srcVal->getType());
   assert(opCode != INVALID_OPCODE && "Expected to need conversion!");
   
   MachineInstr* M = new MachineInstr(opCode);
@@ -329,6 +330,38 @@ CreateConvertToIntInstr(OpLabel vopCode, Value* srcVal, Value* destVal)
   M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, destVal);
   return M;
 }
+
+// CreateCodeToConvertIntToFloat: Convert FP value to signed or unsigned integer
+// The FP value must be converted to the dest type in an FP register,
+// and the result is then copied from FP to int register via memory.
+static void
+CreateCodeToConvertIntToFloat (const TargetMachine& target,
+                               Value* opVal,
+                               Instruction* destI,
+                               std::vector<MachineInstr*>& mvec,
+                               MachineCodeForInstruction& mcfi)
+{
+  // Create a temporary to represent the FP register into which the
+  // int value will placed after conversion.  The type of this temporary
+  // depends on the type of FP register to use: single-prec for a 32-bit
+  // int or smaller; double-prec for a 64-bit int.
+  // 
+  const Type* destTypeToUse = (destI->getType() == Type::LongTy)? Type::DoubleTy
+                                                                : Type::FloatTy;
+  Value* destForCast = new TmpInstruction(destTypeToUse, opVal);
+  mcfi.addTemp(destForCast);
+
+  // Create the fp-to-int conversion code
+  MachineInstr* M = CreateConvertToIntInstr(destI->getType()->getPrimitiveID(),
+                                            opVal, destForCast);
+  mvec.push_back(M);
+
+  // Create the fpreg-to-intreg copy code
+  target.getInstrInfo().
+    CreateCodeToCopyFloatToInt(target, destI->getParent()->getParent(),
+                               (TmpInstruction*)destForCast, destI, mvec, mcfi);
+}
+
 
 static inline MachineOpCode 
 ChooseAddInstruction(const InstructionNode* instrNode)
@@ -1494,30 +1527,34 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Instruction* destI =  subtreeRoot->getInstruction();
         Value* opVal = subtreeRoot->leftChild()->getValue();
         const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
-        assert(opType->isIntegral() ||
-               isa<PointerType>(opType) ||
-               opType == Type::BoolTy && "Cast is illegal for other types");
-        
-        unsigned opSize = target.DataLayout.getTypeSize(opType);
-        unsigned destSize = target.DataLayout.getTypeSize(destI->getType());
-        
-        if (opSize > destSize ||
-            (opType->isSigned()
-             && destSize < target.DataLayout.getIntegerRegize()))
-          { // operand is larger than dest,
-            //    OR both are equal but smaller than the full register size
-            //       AND operand is signed, so it may have extra sign bits:
-            // mask high bits using AND
-            // 
-            M = Create3OperandInstr(AND, opVal,
-                                    ConstantUInt::get(Type::ULongTy,
-                                          ((uint64_t) 1 << 8*destSize) - 1),
-                                    destI);
-            mvec.push_back(M);
+        if (opType->isIntegral()
+            || isa<PointerType>(opType)
+            || opType == Type::BoolTy)
+          {
+            unsigned opSize = target.DataLayout.getTypeSize(opType);
+            unsigned destSize = target.DataLayout.getTypeSize(destI->getType());
+            if (opSize > destSize ||
+                (opType->isSigned()
+                 && destSize < target.DataLayout.getIntegerRegize()))
+              { // operand is larger than dest,
+                //    OR both are equal but smaller than the full register size
+                //       AND operand is signed, so it may have extra sign bits:
+                // mask high bits using AND
+                M = Create3OperandInstr(AND, opVal,
+                                        ConstantUInt::get(Type::ULongTy,
+                                              ((uint64_t) 1 << 8*destSize) - 1),
+                                        destI);
+                mvec.push_back(M);
+              }
+            else
+              forwardOperandNum = 0;          // forward first operand to user
           }
+        else if (opType->isFloatingPoint())
+          CreateCodeToConvertIntToFloat(target, opVal, destI, mvec,
+                                        MachineCodeForInstruction::get(destI));
         else
-          forwardOperandNum = 0;          // forward first operand to user
-        
+          assert(0 && "Unrecognized operand type for convert-to-unsigned");
+
         break;
       }
       
@@ -1526,11 +1563,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 28:	// reg:   ToIntTy(reg)
       case 30:	// reg:   ToLongTy(reg)
       {
-        unsigned int oldMvecSize = mvec.size(); // to check if it grew
         Instruction* destI =  subtreeRoot->getInstruction();
         Value* opVal = subtreeRoot->leftChild()->getValue();
         MachineCodeForInstruction& mcfi =MachineCodeForInstruction::get(destI);
-        
+
         const Type* opType = opVal->getType();
         if (opType->isIntegral()
             || isa<PointerType>(opType)
@@ -1542,11 +1578,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             const Type* destType = destI->getType();
             unsigned opSize = target.DataLayout.getTypeSize(opType);
             unsigned destSize = target.DataLayout.getTypeSize(destType);
-            if (opSize <= destSize && !opType->isSigned())
-              { // operand is smaller than or same size as dest:
-                // -- if operand is signed (checked above), nothing to do
-                // -- if operand is unsigned, sign-extend the value:
-                // 
+            if (opSize < destSize && !opType->isSigned())
+              { // operand is unsigned and smaller than dest: sign-extend
                 target.getInstrInfo().CreateSignExtensionInstructions(target, destI->getParent()->getParent(), opVal, 8*opSize, destI, mvec, mcfi);
               }
             else if (opSize > destSize)
@@ -1564,51 +1597,14 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 
                 target.getInstrInfo().CreateSignExtensionInstructions(target, destI->getParent()->getParent(), tmpI, 8*destSize, destI, mvec, mcfi);
               }
-          }
-        else
-          {
-            // If the source operand is an FP type, the int result must be
-            // copied from float to int register via memory!
-            Value* leftVal = subtreeRoot->leftChild()->getValue();
-            Value* destForCast;
-            vector<MachineInstr*> minstrVec;
-            
-            if (opType->isFloatingPoint())
-              {
-                // Create a temporary to represent the INT register
-                // into which the FP value will be copied via memory.
-                // The type of this temporary will determine the FP
-                // register used: single-prec for a 32-bit int or smaller,
-                // double-prec for a 64-bit int.
-                // 
-                const Type* destTypeToUse =
-                  (destI->getType() == Type::LongTy)? Type::DoubleTy
-                                                   : Type::FloatTy;
-                destForCast = new TmpInstruction(destTypeToUse, leftVal);
-                MachineCodeForInstruction &destMCFI = 
-                  MachineCodeForInstruction::get(destI);
-                destMCFI.addTemp(destForCast);
-                
-                target.getInstrInfo().
-                  CreateCodeToCopyFloatToInt(target,
-                                             destI->getParent()->getParent(),
-                                             (TmpInstruction*) destForCast,
-                                             destI, minstrVec, destMCFI);
-              }
             else
-              destForCast = leftVal;
-            
-            M = CreateConvertToIntInstr(subtreeRoot->getOpLabel(),
-                                        leftVal, destForCast);
-            mvec.push_back(M);
-            
-            // Append the copy code, if any, after the conversion instr.
-            mvec.insert(mvec.end(), minstrVec.begin(), minstrVec.end());
+              forwardOperandNum = 0;          // forward first operand to user
           }
-        
-        if (oldMvecSize == mvec.size()) // no instruction was generated
-          forwardOperandNum = 0;  // forward first operand to user
-        
+        else if (opType->isFloatingPoint())
+          CreateCodeToConvertIntToFloat(target, opVal, destI, mvec, mcfi);
+        else
+          assert(0 && "Unrecognized operand type for convert-to-signed");
+
         break;
       }  
       
