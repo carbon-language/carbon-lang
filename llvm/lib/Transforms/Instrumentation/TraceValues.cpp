@@ -69,7 +69,8 @@ PrintMethodNameForType(const Type* type)
 
 static inline GlobalVariable *GetStringRef(Module *M, const string &str) {
   ConstPoolArray *Init = ConstPoolArray::get(str);
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), /*Const*/true, Init);
+  GlobalVariable *GV = new GlobalVariable(Init->getType(), /*Const*/true,
+					  /*intern*/true, Init);
   M->getGlobalList().push_back(GV);
   return GV;
 }
