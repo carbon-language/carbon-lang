@@ -10,10 +10,10 @@
 #include "llvm/Target/MachineInstrInfo.h"
 #include "X86RegisterInfo.h"
 
-class X86InstructionInfo : public MachineInstrInfo {
+class X86InstrInfo : public MachineInstrInfo {
   const X86RegisterInfo RI;
 public:
-  X86InstructionInfo();
+  X86InstrInfo();
 
   /// getRegisterInfo - MachineInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should

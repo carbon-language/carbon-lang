@@ -5,7 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
-#include "X86InstructionInfo.h"
+#include "X86InstrInfo.h"
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
 #include "llvm/Type.h"
