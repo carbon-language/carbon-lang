@@ -156,7 +156,7 @@ static struct PerFunctionInfo {
     // Any forward referenced blocks left?
     if (!BBForwardRefs.empty())
       ThrowException("Undefined reference to label " +
-                     BBForwardRefs.begin()->second.first.getName());
+                     BBForwardRefs.begin()->first->getName());
 
     // Resolve all forward references now.
     ResolveDefinitions(LateResolveValues, &CurModule.LateResolveValues);
