@@ -36,4 +36,4 @@ Path::is_directory() const {
 // Include the truly platform-specific parts of this class.
 #include "platform/Path.cpp"
 
-// vim: sw=2
+// vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
