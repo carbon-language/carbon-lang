@@ -261,7 +261,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
 
             // the spill weight is now infinity as it
             // cannot be spilled again
-            nI.weight = HUGE_VAL;
+            nI.weight = float(HUGE_VAL);
             LiveRange LR(start, end, nI.getNextValue());
             DEBUG(std::cerr << " +" << LR);
             nI.addRange(LR);
@@ -694,6 +694,7 @@ bool LiveIntervals::overlapsAliases(const LiveInterval *LHS,
 }
 
 LiveInterval LiveIntervals::createInterval(unsigned reg) {
-  float Weight = MRegisterInfo::isPhysicalRegister(reg) ?  HUGE_VAL :0.0F;
+  float Weight = MRegisterInfo::isPhysicalRegister(reg) ? 
+                       (float)HUGE_VAL :0.0F;
   return LiveInterval(reg, Weight);
 }
