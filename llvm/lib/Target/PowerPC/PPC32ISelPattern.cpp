@@ -1069,6 +1069,24 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Select(N.getOperand(0));
     ExprMap[N.getValue(Node->getNumValues()-1)] = 1;
 
+    MachineInstr *CallMI;
+    // Emit the correct call instruction based on the type of symbol called.
+    if (GlobalAddressSDNode *GASD = 
+        dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) {
+      CallMI = BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(GASD->getGlobal(), 
+                                                           true);
+    } else if (ExternalSymbolSDNode *ESSDN = 
+               dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) {
+      CallMI = BuildMI(PPC::CALLpcrel, 1).addExternalSymbol(ESSDN->getSymbol(), 
+                                                            true);
+    } else {
+      Tmp1 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, PPC::OR, 2, PPC::R12).addReg(Tmp1).addReg(Tmp1);
+      BuildMI(BB, PPC::MTCTR, 1).addReg(PPC::R12);
+      CallMI = BuildMI(PPC::CALLindirect, 3).addImm(20).addImm(0)
+        .addReg(PPC::R12);
+    }
+       
     // Load the register args to virtual regs
     std::vector<unsigned> ArgVR;
     for(int i = 2, e = Node->getNumOperands(); i < e; ++i)
@@ -1083,32 +1101,24 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i16:
       case MVT::i32:
         assert(GPR_idx < 8 && "Too many int args");
-        if (N.getOperand(i+2).getOpcode() != ISD::UNDEF)
+        if (N.getOperand(i+2).getOpcode() != ISD::UNDEF) {
           BuildMI(BB, PPC::OR,2,GPR[GPR_idx]).addReg(ArgVR[i]).addReg(ArgVR[i]);
+          CallMI->addRegOperand(GPR[GPR_idx], MachineOperand::Use);
+        }
         ++GPR_idx;
         break;
       case MVT::f64:
       case MVT::f32:
         assert(FPR_idx < 13 && "Too many fp args");
         BuildMI(BB, PPC::FMR, 1, FPR[FPR_idx]).addReg(ArgVR[i]);
+        CallMI->addRegOperand(FPR[FPR_idx], MachineOperand::Use);
         ++FPR_idx;
         break;
       }
     }
-
-    // Emit the correct call instruction based on the type of symbol called.
-    if (GlobalAddressSDNode *GASD = 
-        dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) {
-      BuildMI(BB, PPC::CALLpcrel, 1).addGlobalAddress(GASD->getGlobal(), true);
-    } else if (ExternalSymbolSDNode *ESSDN = 
-               dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) {
-      BuildMI(BB, PPC::CALLpcrel, 1).addExternalSymbol(ESSDN->getSymbol(), true);
-    } else {
-      Tmp1 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, PPC::OR, 2, PPC::R12).addReg(Tmp1).addReg(Tmp1);
-      BuildMI(BB, PPC::MTCTR, 1).addReg(PPC::R12);
-      BuildMI(BB, PPC::CALLindirect, 3).addImm(20).addImm(0).addReg(PPC::R12);
-    }
+    
+    // Put the call instruction in the correct place in the MachineBasicBlock
+    BB->push_back(CallMI);
 
     switch (Node->getValueType(0)) {
     default: assert(0 && "Unknown value type for call result!");
