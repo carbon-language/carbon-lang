@@ -55,8 +55,6 @@ private:
 
   void operator=(const Value &);     // Do not implement
   Value(const Value &);              // Do not implement
-protected:
-  inline void setType(const Type *ty) { Ty = ty; }
 public:
   Value(const Type *Ty, ValueTy vty, const std::string &name = "");
   virtual ~Value();
