@@ -881,11 +881,6 @@ ConstPool : ConstPool OptAssign ConstVal {
   | ConstPool OptAssign GlobalType ResolvedVal {
     const Type *Ty = $4->getType();
     // Global declarations appear in Constant Pool
-    if (Ty->isArrayType() && Ty->castArrayType()->isUnsized()) {
-      ThrowException("Type '" + Ty->getDescription() +
-		     "' is not a sized type!");
-    }
-
     ConstPoolVal *Initializer = $4->castConstant();
     if (Initializer == 0)
       ThrowException("Global value initializer is not a constant!");
