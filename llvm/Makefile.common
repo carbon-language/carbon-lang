@@ -206,6 +206,7 @@ endif
 
 ifdef LIBRARYNAME
 
+# Make sure there isn't any extranous whitespace on the LIBRARYNAME option
 LIBRARYNAME := $(strip $(LIBRARYNAME))
 
 LIBNAME_O    := $(LIBRELEASE)/lib$(LIBRARYNAME).so
