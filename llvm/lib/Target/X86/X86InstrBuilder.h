@@ -49,6 +49,14 @@ inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
   return MIB.addReg(Reg).addZImm(1).addReg(0).addSImm(Offset);
 }
 
+inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
+                                                 unsigned BaseReg,
+                                                 unsigned Scale,
+                                                 unsigned IndexReg,
+                                                 unsigned Disp) {
+  return MIB.addReg(BaseReg).addZImm(Scale).addReg(IndexReg).addSImm(Disp);
+}
+
 /// addFrameReference - This function is used to add a reference to the base of
 /// an abstract object on the stack frame of the current function.  This
 /// reference has base register as the FrameIndex offset until it is resolved.
