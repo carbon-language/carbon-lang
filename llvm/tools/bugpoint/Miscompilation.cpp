@@ -298,7 +298,7 @@ bool BugDriver::debugMiscompilation() {
     std::cout << "Generating reference output from raw program...";
     Output = executeProgram("bugpoint.reference.out");
     CreatedOutput = true;
-    std::cout << " done! Reference output is: bugpoint.reference.out.\n";
+    std::cout << " done! Reference output is: " << Output << "\n";
   } else if (diffProgram(Output)) {
     std::cout << "\n*** Input program does not match reference diff!\n"
 	      << "    Must be problem with input source!\n";
