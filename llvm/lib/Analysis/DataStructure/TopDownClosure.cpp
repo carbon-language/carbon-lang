@@ -62,9 +62,10 @@ bool TDDataStructures::run(Module &M) {
   // globals graph.
   const DSScalarMap &GGSM = GlobalsGraph->getScalarMap();
   hash_set<DSNode*> Visited;
-  for (DSScalarMap::global_iterator I = GGSM.global_begin(), E = GGSM.global_end();
+  for (DSScalarMap::global_iterator I=GGSM.global_begin(), E=GGSM.global_end();
        I != E; ++I)
-    markReachableFunctionsExternallyAccessible(GGSM.find(*I)->second.getNode(), Visited);
+    markReachableFunctionsExternallyAccessible(GGSM.find(*I)->second.getNode(),
+                                               Visited);
 
   // Loop over unresolved call nodes.  Any functions passed into (but not
   // returned!) from unresolvable call nodes may be invoked outside of the

@@ -464,7 +464,8 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
   // If we found our type exactly, early exit
   if (SubType == NewTy) return false;
 
-  // Differing function types don't require us to merge.  They are not values anyway.
+  // Differing function types don't require us to merge.  They are not values
+  // anyway.
   if (isa<FunctionType>(SubType) &&
       isa<FunctionType>(NewTy)) return false;
 
@@ -555,9 +556,9 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
 
 
 
-// addEdgeTo - Add an edge from the current node to the specified node.  This
-// can cause merging of nodes in the graph.
-//
+/// addEdgeTo - Add an edge from the current node to the specified node.  This
+/// can cause merging of nodes in the graph.
+///
 void DSNode::addEdgeTo(unsigned Offset, const DSNodeHandle &NH) {
   if (NH.isNull()) return;       // Nothing to do
 
@@ -571,10 +572,10 @@ void DSNode::addEdgeTo(unsigned Offset, const DSNodeHandle &NH) {
 }
 
 
-// MergeSortedVectors - Efficiently merge a vector into another vector where
-// duplicates are not allowed and both are sorted.  This assumes that 'T's are
-// efficiently copyable and have sane comparison semantics.
-//
+/// MergeSortedVectors - Efficiently merge a vector into another vector where
+/// duplicates are not allowed and both are sorted.  This assumes that 'T's are
+/// efficiently copyable and have sane comparison semantics.
+///
 static void MergeSortedVectors(std::vector<GlobalValue*> &Dest,
                                const std::vector<GlobalValue*> &Src) {
   // By far, the most common cases will be the simple ones.  In these cases,
@@ -722,14 +723,14 @@ void DSNode::MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH) {
 }
 
 
-// mergeWith - Merge this node and the specified node, moving all links to and
-// from the argument node into the current node, deleting the node argument.
-// Offset indicates what offset the specified node is to be merged into the
-// current node.
-//
-// The specified node may be a null pointer (in which case, we update it to
-// point to this node).
-//
+/// mergeWith - Merge this node and the specified node, moving all links to and
+/// from the argument node into the current node, deleting the node argument.
+/// Offset indicates what offset the specified node is to be merged into the
+/// current node.
+///
+/// The specified node may be a null pointer (in which case, we update it to
+/// point to this node).
+///
 void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   DSNode *N = NH.getNode();
   if (N == this && NH.getOffset() == Offset)
