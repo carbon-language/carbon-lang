@@ -7,7 +7,9 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// FIXME: Document.
+// CodeEmitterGen uses the descriptions of instructions and their fields to
+// construct an automated code emitter: a function that, given a MachineInstr,
+// returns the (currently, 32-bit unsigned) value of the instruction.
 //
 //===----------------------------------------------------------------------===//
 
@@ -152,7 +154,7 @@ void CodeEmitterGen::run(std::ostream &o) {
               << " &= (1<<" << beginBitInVar+1 << ") - 1;\n";
             
             // Shift the value to the correct place (according to place in inst)
-            assert(endBitInInst >= 0 && "Negative shift amount in inst position!");
+            assert(endBitInInst >= 0 && "Negative shift amount!");
             if (endBitInInst != 0)
               o << "      op" << OpOrder[Vals[i].getName()]
               << " <<= " << endBitInInst << ";\n";
