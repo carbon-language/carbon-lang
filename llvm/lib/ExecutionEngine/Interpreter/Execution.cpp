@@ -936,7 +936,7 @@ static void StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                             Ptr->Untyped[7] = (Val.ULongVal >> 56) & 255;
                             break;
     default:
-      cout << "Cannot load value of type " << Ty << "!\n";
+      cout << "Cannot store value of type " << Ty << "!\n";
     }
   } else {
     switch (Ty->getPrimitiveID()) {
@@ -967,7 +967,7 @@ static void StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                             Ptr->Untyped[0] = (Val.ULongVal >> 56) & 255;
                             break;
     default:
-      cout << "Cannot load value of type " << Ty << "!\n";
+      cout << "Cannot store value of type " << Ty << "!\n";
     }
   }
 }
@@ -975,7 +975,8 @@ static void StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
 static void executeStoreInst(StoreInst &I, ExecutionContext &SF) {
   GenericValue Val = getOperandValue(I.getOperand(0), SF);
   GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
-  StoreValueToMemory(Val, (GenericValue *)SRC.PointerVal, I.getType());
+  StoreValueToMemory(Val, (GenericValue *)SRC.PointerVal,
+                     I.getOperand(0)->getType());
 }
 
 
