@@ -37,12 +37,12 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
-enum ArchName { noarch, X86, Sparc, PowerPC, CBackend };
+enum ArchName { noarch, X86, SparcV9, PowerPC, CBackend };
 
 static cl::opt<ArchName>
 Arch("march", cl::desc("Architecture to generate assembly for:"), cl::Prefix,
      cl::values(clEnumValN(X86,      "x86",     "  IA-32 (Pentium and above)"),
-                clEnumValN(Sparc,    "sparc",   "  SPARC V9"),
+                clEnumValN(SparcV9,  "sparcv9", "  SPARC V9"),
                 clEnumValN(PowerPC,  "powerpc", "  PowerPC"),
                 clEnumValN(CBackend, "c",       "  C backend"),
 		0),
@@ -90,8 +90,8 @@ int main(int argc, char **argv) {
   case X86:
     TargetMachineAllocator = allocateX86TargetMachine;
     break;
-  case Sparc:
-    TargetMachineAllocator = allocateSparcTargetMachine;
+  case SparcV9:
+    TargetMachineAllocator = allocateSparcV9TargetMachine;
     break;
   case PowerPC:
     TargetMachineAllocator = allocatePowerPCTargetMachine;
@@ -109,14 +109,14 @@ int main(int argc, char **argv) {
       TargetMachineAllocator = allocatePowerPCTargetMachine;
     } else if (mod.getEndianness()  == Module::BigEndian &&
                mod.getPointerSize() == Module::Pointer64) { 
-      TargetMachineAllocator = allocateSparcTargetMachine;
+      TargetMachineAllocator = allocateSparcV9TargetMachine;
     } else {
       // If the module is target independent, favor a target which matches the
       // current build system.
 #if defined(i386) || defined(__i386__) || defined(__x86__)
       TargetMachineAllocator = allocateX86TargetMachine;
 #elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-      TargetMachineAllocator = allocateSparcTargetMachine;
+      TargetMachineAllocator = allocateSparcV9TargetMachine;
 #elif defined(__POWERPC__) || defined(__ppc__) || defined(__APPLE__)
       TargetMachineAllocator = allocatePowerPCTargetMachine;
 #else

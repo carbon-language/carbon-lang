@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SparcInternals.h"
+#include "SparcV9Internals.h"
 #include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"

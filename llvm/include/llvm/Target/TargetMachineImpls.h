@@ -29,12 +29,12 @@ namespace llvm {
   TargetMachine *allocateCTargetMachine(const Module &M,
                                         IntrinsicLowering *IL = 0);
 
-  // allocateSparcTargetMachine - Allocate and return a subclass of
+  // allocateSparcV9TargetMachine - Allocate and return a subclass of
   // TargetMachine that implements the Sparc backend.  This takes ownership of
   // the IntrinsicLowering pointer, deleting it when the target machine is
   // destroyed.
   //
-  TargetMachine *allocateSparcTargetMachine(const Module &M,
+  TargetMachine *allocateSparcV9TargetMachine(const Module &M,
                                             IntrinsicLowering *IL = 0);
   
   // allocateX86TargetMachine - Allocate and return a subclass of TargetMachine

@@ -9,16 +9,16 @@
 LEVEL = ../..
 TOOLNAME = llc
 USEDLIBS = cwriter \
-           sparc \
+           sparcv9 \
            x86 \
            powerpc \
            selectiondag \
-           regalloc \
+           sparcv9regalloc \
            sched \
-           select \
+           sparcv9select \
            codegen \
            target.a \
-           livevar \
+           sparcv9livevar \
            ipa.a   \
            transforms.a \
            scalaropts.a \

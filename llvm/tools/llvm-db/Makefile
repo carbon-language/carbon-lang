@@ -41,10 +41,10 @@ endif
 # What the Sparc JIT requires
 ifdef ENABLE_SPARC_JIT
   CPPFLAGS += -DENABLE_SPARC_JIT
-  JITLIBS  += sparc 
-  ARCHLIBS += sched livevar instrument.a profpaths \
-              bcwriter transforms.a ipo.a ipa.a datastructure.a regalloc \
-              select
+  JITLIBS  += sparcv9
+  ARCHLIBS += sched sparcv9livevar instrument.a profpaths \
+              bcwriter transforms.a ipo.a ipa.a datastructure.a \
+              sparcv9regalloc sparcv9select
 endif
 
 USEDLIBS = lli-interpreter $(JITLIBS) $(ARCHLIBS) scalaropts analysis.a \

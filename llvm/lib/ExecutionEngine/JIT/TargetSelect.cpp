@@ -28,7 +28,7 @@ using namespace llvm;
 #endif
 
 namespace {
-  enum ArchName { x86, Sparc };
+  enum ArchName { x86, SparcV9 };
 
 #ifndef NO_JITS_ENABLED
   cl::opt<ArchName>
@@ -38,13 +38,13 @@ namespace {
                   clEnumVal(x86, "  IA-32 (Pentium and above)"),
 #endif
 #ifdef ENABLE_SPARC_JIT
-                  clEnumValN(Sparc, "sparc", "  Sparc-V9"),
+                  clEnumValN(Sparc, "sparcv9", "  Sparc-V9"),
 #endif
                   0),
 #if defined(ENABLE_X86_JIT)
   cl::init(x86)
 #elif defined(ENABLE_SPARC_JIT)
-  cl::init(Sparc)
+  cl::init(SparcV9)
 #endif
        );
 #endif /* NO_JITS_ENABLED */
@@ -69,8 +69,8 @@ ExecutionEngine *JIT::create(ModuleProvider *MP, IntrinsicLowering *IL) {
     break;
 #endif
 #ifdef ENABLE_SPARC_JIT
-  case Sparc:
-    TargetMachineAllocator = allocateSparcTargetMachine;
+  case SparcV9:
+    TargetMachineAllocator = allocateSparcV9TargetMachine;
     break;
 #endif
   default:

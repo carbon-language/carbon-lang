@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
-DIRS = CBackend X86 Sparc PowerPC
+DIRS = CBackend X86 SparcV9 PowerPC
 LIBRARYNAME = target
 BUILD_ARCHIVE = 1
 
