@@ -142,7 +142,7 @@ public:
   /// isSigned - Return whether an integral numeric type is signed.  This is
   /// true for SByteTy, ShortTy, IntTy, LongTy.  Note that this is not true for
   /// Float and Double.
-  //
+  ///
   virtual bool isSigned() const { return 0; }
   
   /// isUnsigned - Return whether a numeric type is unsigned.  This is not quite
