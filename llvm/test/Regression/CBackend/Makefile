@@ -19,4 +19,5 @@ Output/%.to: Output/%.c
 		(rm -f $@; $(FAILURE) $@ )
 
 Output/%.c: %.ll Output/.dir $(LAS) $(LDIS)
-	$(LAS) < $< | $(LDIS) -c > $@
+	$(LAS) < $< | $(LDIS) -c > $@ || \
+		(rm -f $@; $(FAILURE) $@ )
