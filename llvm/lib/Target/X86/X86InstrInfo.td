@@ -495,10 +495,14 @@ def SARmi16  : I2A8 <"sar", 0xC1, MRMS7m    >, OpSize;         // [mem16] >>>= i
 def SARmi32  : I2A8 <"sar", 0xC1, MRMS7m    >;                 // [mem32] >>>= imm32
 
 def SHLDrrCL32 : I2A8 <"shld", 0xA5, MRMDestReg>, TB, UsesCL;   // R32 <<= R32,R32 cl
+def SHLDmrCL32 : I2A8 <"shld", 0xA5, MRMDestMem>, TB, UsesCL;   // [mem32] <<= [mem32],R32 cl
 def SHLDrri32  : I2A8 <"shld", 0xA4, MRMDestReg>, TB;           // R32 <<= R32,R32 imm8
+def SHLDmri32  : I2A8 <"shld", 0xA4, MRMDestMem>, TB;           // [mem32] <<= [mem32],R32 imm8
 
 def SHRDrrCL32 : I2A8 <"shrd", 0xAD, MRMDestReg>, TB, UsesCL;   // R32 >>= R32,R32 cl
+def SHRDmrCL32 : I2A8 <"shrd", 0xAD, MRMDestMem>, TB, UsesCL;   // [mem32] >>= [mem32],R32 cl
 def SHRDrri32  : I2A8 <"shrd", 0xAC, MRMDestReg>, TB;           // R32 >>= R32,R32 imm8
+def SHRDmri32  : I2A8 <"shrd", 0xAC, MRMDestMem>, TB;           // [mem32] >>= [mem32],R32 imm8
 
 // Condition code ops, incl. set if equal/not equal/...
 def SAHF     : X86Inst<"sahf" , 0x9E, RawFrm, Arg8>, Imp<[AH],[]>;  // flags = AH

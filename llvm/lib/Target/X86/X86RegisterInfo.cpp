@@ -98,6 +98,13 @@ static MachineInstr *MakeMRInst(unsigned Opcode, unsigned FrameIndex,
                  .addReg(MI->getOperand(1).getReg());
 }
 
+static MachineInstr *MakeMRIInst(unsigned Opcode, unsigned FrameIndex,
+                                 MachineInstr *MI) {
+  return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
+      .addReg(MI->getOperand(1).getReg())
+      .addZImm(MI->getOperand(2).getImmedValue());
+}
+
 static MachineInstr *MakeMIInst(unsigned Opcode, unsigned FrameIndex,
                                 MachineInstr *MI) {
   if (MI->getOperand(1).isImmediate())
@@ -215,6 +222,10 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
     case X86::SARri8:  NI = MakeMIInst(X86::SARmi8 , FrameIndex, MI); break;
     case X86::SARri16: NI = MakeMIInst(X86::SARmi16, FrameIndex, MI); break;
     case X86::SARri32: NI = MakeMIInst(X86::SARmi32, FrameIndex, MI); break;
+    case X86::SHLDrrCL32:NI = MakeMRInst( X86::SHLDmrCL32,FrameIndex, MI);break;
+    case X86::SHLDrri32: NI = MakeMRIInst(X86::SHLDmri32, FrameIndex, MI);break;
+    case X86::SHRDrrCL32:NI = MakeMRInst( X86::SHRDmrCL32,FrameIndex, MI);break;
+    case X86::SHRDrri32: NI = MakeMRIInst(X86::SHRDmri32, FrameIndex, MI);break;
     case X86::TESTrr8: NI = MakeMRInst(X86::TESTmr8 ,FrameIndex, MI); break;
     case X86::TESTrr16:NI = MakeMRInst(X86::TESTmr16,FrameIndex, MI); break;
     case X86::TESTrr32:NI = MakeMRInst(X86::TESTmr32,FrameIndex, MI); break;
