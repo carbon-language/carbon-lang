@@ -29,24 +29,25 @@ using namespace MOTy;  // Get Use, Def, UseAndDef
 
 /// BMI - A special BuildMI variant that takes an iterator to insert the
 /// instruction at as well as a basic block.
-inline static MachineInstrBuilder BMI(MachineBasicBlock *BB,
+/// this is the version for when you have a destination register in mind.
+inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator &I,
                                       MachineOpCode Opcode,
                                       unsigned NumOperands,
                                       unsigned DestReg) {
   MachineInstr *MI = new MachineInstr(Opcode, NumOperands+1, true, true);
-  I = ++BB->insert(I, MI);
+  I = ++MBB->insert(I, MI);
   return MachineInstrBuilder(MI).addReg(DestReg, MOTy::Def);
 }
 
 /// BMI - A special BuildMI variant that takes an iterator to insert the
 /// instruction at as well as a basic block.
-inline static MachineInstrBuilder BMI(MachineBasicBlock *BB,
+inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator &I,
                                       MachineOpCode Opcode,
                                       unsigned NumOperands) {
   MachineInstr *MI = new MachineInstr(Opcode, NumOperands, true, true);
-  I = ++BB->insert(I, MI);
+  I = ++MBB->insert(I, MI);
   return MachineInstrBuilder(MI);
 }
 
@@ -194,7 +195,7 @@ namespace {
       MachineBasicBlock::iterator It = BB->end();
       return getReg(V, BB, It);
     }
-    unsigned getReg(Value *V, MachineBasicBlock *BB,
+    unsigned getReg(Value *V, MachineBasicBlock *MBB,
                     MachineBasicBlock::iterator &IPt) {
       unsigned &Reg = RegMap[V];
       if (Reg == 0) {
@@ -209,7 +210,7 @@ namespace {
         copyConstantToRegister(C, Reg, BB, IPt);
       } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
         // Move the address of the global into the register
-        BMI(BB, IPt, X86::MOVir32, 1, Reg).addReg(GV);
+        BMI(MBB, IPt, X86::MOVir32, 1, Reg).addReg(GV);
       } else if (Argument *A = dyn_cast<Argument>(V)) {
 	// Find the position of the argument in the argument list.
 	const Function *f = F->getFunction ();
@@ -230,7 +231,7 @@ namespace {
 	assert (argPos != -1
 		&& "Argument not found in current function's argument list");
 	// Load it out of the stack frame at EBP + 4*argPos.
-	addRegOffset(BMI(BB, IPt, X86::MOVmr32, 4, Reg), X86::EBP, 4*argPos);
+	addRegOffset(BMI(MBB, IPt, X86::MOVmr32, 4, Reg), X86::EBP, 4*argPos);
       }
 
       return Reg;
@@ -275,7 +276,7 @@ static inline TypeClass getClass(const Type *Ty) {
 /// specified constant into the specified register.
 ///
 void ISel::copyConstantToRegister(Constant *C, unsigned R,
-                                  MachineBasicBlock *BB,
+                                  MachineBasicBlock *MBB,
                                   MachineBasicBlock::iterator &IP) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     if (CE->getOpcode() == Instruction::GetElementPtr) {
@@ -298,17 +299,17 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R,
 
     if (C->getType()->isSigned()) {
       ConstantSInt *CSI = cast<ConstantSInt>(C);
-      BMI(BB, IP, IntegralOpcodeTab[Class], 1, R).addSImm(CSI->getValue());
+      BMI(MBB, IP, IntegralOpcodeTab[Class], 1, R).addSImm(CSI->getValue());
     } else {
       ConstantUInt *CUI = cast<ConstantUInt>(C);
-      BMI(BB, IP, IntegralOpcodeTab[Class], 1, R).addZImm(CUI->getValue());
+      BMI(MBB, IP, IntegralOpcodeTab[Class], 1, R).addZImm(CUI->getValue());
     }
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
-    BMI(BB, IP, X86::MOVir32, 1, R).addZImm(0);
+    BMI(MBB, IP, X86::MOVir32, 1, R).addZImm(0);
   } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
     unsigned SrcReg = getReg(CPR->getValue(), BB, IP);
-    BMI(BB, IP, X86::MOVrr32, 1, R).addReg(SrcReg);
+    BMI(MBB, IP, X86::MOVrr32, 1, R).addReg(SrcReg);
   } else {
     std::cerr << "Offending constant: " << C << "\n";
     assert(0 && "Type not handled yet!");
@@ -665,13 +666,13 @@ ISel::doMultiply(unsigned destReg, const Type *resultType,
 
   // Emit a MOV to put the first operand into the appropriately-sized
   // subreg of EAX.
-  BMI(BB, MBBI, MovOpcode[Class], 1, Reg).addReg (op0Reg);
+  BMI(MBB, MBBI, MovOpcode[Class], 1, Reg).addReg (op0Reg);
   
   // Emit the appropriate multiply instruction.
-  BMI(BB, MBBI, MulOpcode[Class], 1).addReg (op1Reg);
+  BMI(MBB, MBBI, MulOpcode[Class], 1).addReg (op1Reg);
 
   // Emit another MOV to put the result into the destination register.
-  BMI(BB, MBBI, MovOpcode[Class], 1, destReg).addReg (Reg);
+  BMI(MBB, MBBI, MovOpcode[Class], 1, destReg).addReg (Reg);
 }
 
 /// visitMul - Multiplies are not simple binary operators because they must deal
@@ -924,7 +925,7 @@ ISel::visitGetElementPtrInst (GetElementPtrInst &I)
                    I.op_begin()+1, I.op_end(), getReg(I));
 }
 
-void ISel::emitGEPOperation(MachineBasicBlock *BB,
+void ISel::emitGEPOperation(MachineBasicBlock *MBB,
                             MachineBasicBlock::iterator &IP,
                             Value *Src, User::op_iterator IdxBegin,
                             User::op_iterator IdxEnd, unsigned TargetReg) {
@@ -953,7 +954,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *BB,
       unsigned memberOffset =
 	TD.getStructLayout (StTy)->MemberOffsets[idxValue];
       // Emit an ADD to add memberOffset to the basePtr.
-      BMI(BB, IP, X86::ADDri32, 2,
+      BMI(MBB, IP, X86::ADDri32, 2,
           nextBasePtrReg).addReg (basePtrReg).addZImm (memberOffset);
       // The next type is the member of the structure selected by the
       // index.
@@ -972,8 +973,8 @@ void ISel::emitGEPOperation(MachineBasicBlock *BB,
       // elements in the array.)
       Ty = SqTy->getElementType ();
       unsigned elementSize = TD.getTypeSize (Ty);
-      unsigned elementSizeReg = makeAnotherReg(Type::UIntTy);
-      copyConstantToRegister(ConstantInt::get(typeOfSequentialTypeIndex,
+      unsigned elementSizeReg = makeAnotherReg(typeOfSequentialTypeIndex);
+      copyConstantToRegister(ConstantSInt::get(typeOfSequentialTypeIndex,
                                               elementSize), elementSizeReg,
                              BB, IP);
                              
@@ -984,7 +985,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *BB,
       doMultiply (memberOffsetReg, typeOfSequentialTypeIndex,
 		  elementSizeReg, idxReg, BB, IP);
       // Emit an ADD to add memberOffsetReg to the basePtr.
-      BMI(BB, IP, X86::ADDrr32, 2,
+      BMI(MBB, IP, X86::ADDrr32, 2,
           nextBasePtrReg).addReg (basePtrReg).addReg (memberOffsetReg);
     }
     // Now that we are here, further indices refer to subtypes of this
@@ -995,7 +996,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *BB,
   // basePtrReg.  Move it to the register where we were expected to
   // put the answer.  A 32-bit move should do it, because we are in
   // ILP32 land.
-  BMI(BB, IP, X86::MOVrr32, 1, TargetReg).addReg (basePtrReg);
+  BMI(MBB, IP, X86::MOVrr32, 1, TargetReg).addReg (basePtrReg);
 }
 
 
