@@ -173,7 +173,7 @@ namespace {
                     Virt2PhysMap::const_iterator it = v2pMap_.find(reg);
                     reg = (it == v2pMap_.end() ? 0 : it->second);
                 }
-                std::cerr << mri_->getName((*i)->reg) << '\n';
+                std::cerr << mri_->getName(reg) << '\n';
             }
         }
 
