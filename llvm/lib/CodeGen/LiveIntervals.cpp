@@ -361,7 +361,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
 
     // If it is not dead on definition, it must be killed by a
     // subsequent instruction. Hence its interval is:
-    // [defSlot(def), useSlot(def)+1)
+    // [defSlot(def), useSlot(kill)+1)
     do {
         ++mi;
         baseIndex += InstrSlots::NUM;
