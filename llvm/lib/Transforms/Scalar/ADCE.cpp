@@ -283,10 +283,8 @@ bool ADCE::doADCE() {
 
     BasicBlock *BB = I->getParent();
     if (!ReachableBBs.count(BB)) continue;
-    if (!AliveBlocks.count(BB)) {     // Basic block not alive yet...
-      AliveBlocks.insert(BB);         // Block is now ALIVE!
+    if (AliveBlocks.insert(BB).second)     // Basic block not alive yet.
       markBlockAlive(BB);             // Make it so now!
-    }
 
     // PHI nodes are a special case, because the incoming values are actually
     // defined in the predecessor nodes of this block, meaning that the PHI
@@ -294,10 +292,8 @@ bool ADCE::doADCE() {
     //
     if (PHINode *PN = dyn_cast<PHINode>(I))
       for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
-        if (!AliveBlocks.count(*PI)) {
-          AliveBlocks.insert(BB);         // Block is now ALIVE!
+        if (AliveBlocks.insert(*PI).second) // Block is now ALIVE!
           markBlockAlive(*PI);
-        }
 
     // Loop over all of the operands of the live instruction, making sure that
     // they are known to be alive as well...
