@@ -142,7 +142,6 @@ static struct PerFunctionInfo {
   std::map<const Type*, ValueList> LateResolveValues;
   std::vector<PATypeHolder> Types;
   std::map<ValID, PATypeHolder> LateResolveTypes;
-  SymbolTable LocalSymtab;
   bool isDeclare;                // Is this function a forward declararation?
 
   inline PerFunctionInfo() {
@@ -179,7 +178,6 @@ static struct PerFunctionInfo {
 
     Values.clear();         // Clear out function local definitions
     Types.clear();          // Clear out function local types
-    LocalSymtab.clear();    // Clear out function local symbol table
     CurrentFunction = 0;
     isDeclare = false;
   }
@@ -486,23 +484,6 @@ static void setValueNameInternal(Value *V, const std::string &Name,
 
   // Set the name
   V->setName(Name, &ST);
-
-  // If we're in function scope
-  if (inFunctionScope()) {
-    // Look up the symbol in the Function's local symboltable
-    Value *Existing = CurFun.LocalSymtab.lookup(V->getType(),Name);
-
-    // If it already exists, bail out.  We have to recheck this, because there
-    // may be entries inserted into the current basic block (which has not yet
-    // been inserted into the function) which collide.
-    if (Existing) {
-      ThrowException("Redefinition of value named '" + Name + "' in the '" +
-		   V->getType()->getDescription() + "' type plane!");
-    } else {
-      // otherwise, since it doesn't exist, insert it.
-      CurFun.LocalSymtab.insert(V);
-    }
-  }
 }
 
 // setValueName - Set the specified value to the name given.  The name may be
@@ -591,7 +572,7 @@ static bool setValueNameMergingDuplicates(Value *V, char *NameStr) {
 // This function returns true if the type has already been defined, but is
 // allowed to be redefined in the specified context.  If the name is a new name
 // for the type plane, it is inserted and false is returned.
-static bool setTypeName(Type *T, char *NameStr) {
+static bool setTypeName(const Type *T, char *NameStr) {
   if (NameStr == 0) return false;
   
   std::string Name(NameStr);      // Copy string
@@ -599,20 +580,19 @@ static bool setTypeName(Type *T, char *NameStr) {
 
   // We don't allow assigning names to void type
   if (T == Type::VoidTy) 
-    ThrowException("Can't assign name '" + Name + "' to the null type!");
+    ThrowException("Can't assign name '" + Name + "' to the void type!");
 
   SymbolTable &ST = inFunctionScope() ? 
     CurFun.CurrentFunction->getSymbolTable() : 
     CurModule.CurrentModule->getSymbolTable();
 
-  Type *Existing = ST.lookupType(Name);
-
-  if (Existing) {    // Inserting a name that is already defined???
+  // Inserting a name that is already defined???
+  if (Type *Existing = ST.lookupType(Name)) {
     // There is only one case where this is allowed: when we are refining an
     // opaque type.  In this case, Existing will be an opaque type.
     if (const OpaqueType *OpTy = dyn_cast<OpaqueType>(Existing)) {
       // We ARE replacing an opaque type!
-      ((OpaqueType*)OpTy)->refineAbstractTypeTo(T);
+      const_cast<OpaqueType*>(OpTy)->refineAbstractTypeTo(T);
       return true;
     }
 
@@ -630,23 +610,6 @@ static bool setTypeName(Type *T, char *NameStr) {
   // Okay, its a newly named type. Set its name.
   if (!Name.empty()) ST.insert(Name, T);
 
-  // If we're in function scope
-  if (inFunctionScope()) {
-    // Look up the symbol in the function's local symboltable
-    Existing = CurFun.LocalSymtab.lookupType(Name);
-
-    // If it already exists
-    if (Existing) {
-      // Bail
-      ThrowException("Redefinition of type named '" + Name + "' in the '" +
-		   T->getDescription() + "' type plane in function scope!");
-
-    // otherwise, since it doesn't exist
-    } else {
-      // Insert it.
-      CurFun.LocalSymtab.insert(Name,T);
-    }
-  }
   return false;
 }
 
@@ -752,14 +715,7 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
   // Allocate a new module to read
   CurModule.CurrentModule = new Module(Filename);
 
-  try {
-    yyparse();       // Parse the file.
-  } catch (...) {
-    // Clear the symbol table so it doesn't complain when it
-    // gets destructed
-    CurFun.LocalSymtab.clear();
-    throw;
-  }
+  yyparse();       // Parse the file, potentially throwing exception
 
   Module *Result = ParserResult;
 
@@ -771,7 +727,6 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
                   << "Assemble and disassemble to update it.\n";
         ObsoleteVarArgs = true;
       }
-
 
   if (ObsoleteVarArgs) {
     // If the user is making use of obsolete varargs intrinsics, adjust them for
@@ -1408,15 +1363,12 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
     // If types are not resolved eagerly, then the two types will not be
     // determined to be the same type!
     //
-    ResolveTypeTo($2, $4->get());
+    ResolveTypeTo($2, *$4);
 
-    // TODO: FIXME when Type are not const
-    if (!setTypeName(const_cast<Type*>($4->get()), $2)) {
-      // If this is not a redefinition of a type...
-      if (!$2) {
-        InsertType($4->get(),
-                   inFunctionScope() ? CurFun.Types : CurModule.Types);
-      }
+    if (!setTypeName(*$4, $2) && !$2) {
+      // If this is a named type that is not a redefinition, add it to the slot
+      // table.
+      InsertType(*$4, inFunctionScope() ? CurFun.Types : CurModule.Types);
     }
 
     delete $4;
