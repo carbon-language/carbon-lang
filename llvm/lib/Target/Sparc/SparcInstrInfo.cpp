@@ -16,10 +16,10 @@
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/Method.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Type.h"
 
 
 //************************ Internal Functions ******************************/
@@ -33,8 +33,7 @@ CreateIntSetInstruction(int64_t C, Value* dest,
   uint64_t absC = (C >= 0)? C : -C;
   if (absC > (unsigned int) ~0)
     { // C does not fit in 32 bits
-      TmpInstruction* tmpReg =
-        new TmpInstruction(Instruction::UserOp1, Type::IntTy, NULL, NULL);
+      TmpInstruction* tmpReg = new TmpInstruction(Type::IntTy);
       tempVec.push_back(tmpReg);
       
       minstr = new MachineInstr(SETX);
@@ -60,8 +59,7 @@ CreateUIntSetInstruction(uint64_t C, Value* dest,
   MachineInstr* minstr;
   if (C > (unsigned int) ~0)
     { // C does not fit in 32 bits
-      TmpInstruction* tmpReg =
-        new TmpInstruction(Instruction::UserOp1, Type::IntTy, NULL, NULL);
+      TmpInstruction *tmpReg = new TmpInstruction(Type::IntTy);
       tempVec.push_back(tmpReg);
       
       minstr = new MachineInstr(SETX);
@@ -152,16 +150,14 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
       int64_t zeroOffset = 0; // to avoid ambiguity with (Value*) 0
       
       TmpInstruction* tmpReg =
-        new TmpInstruction(Instruction::UserOp1,
-                           PointerType::get(val->getType()), val, NULL);
+        new TmpInstruction(PointerType::get(val->getType()), val);
       tempVec.push_back(tmpReg);
       
       if (isa<Constant>(val))
         {
           // Create another TmpInstruction for the hidden integer register
           TmpInstruction* addrReg =
-            new TmpInstruction(Instruction::UserOp1,
-                               PointerType::get(val->getType()), val, NULL);
+            new TmpInstruction(PointerType::get(val->getType()), val);
           tempVec.push_back(addrReg);
           addrVal = addrReg;
         }
