@@ -39,6 +39,7 @@ public:
   }
   template<class PassClass>
   AnalysisUsage &addRequired() {
+    assert(Pass::getClassPassInfo<PassClass>() && "Pass class not registered!");
     Required.push_back(Pass::getClassPassInfo<PassClass>());
     return *this;
   }
@@ -53,6 +54,7 @@ public:
 
   template<class PassClass>
   AnalysisUsage &addPreserved() {
+    assert(Pass::getClassPassInfo<PassClass>() && "Pass class not registered!");
     Preserved.push_back(Pass::getClassPassInfo<PassClass>());
     return *this;
   }
