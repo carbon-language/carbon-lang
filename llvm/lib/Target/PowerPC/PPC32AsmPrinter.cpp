@@ -45,6 +45,7 @@ namespace {
 
     PPC32AsmPrinter(std::ostream &O, TargetMachine &TM)
       : AsmPrinter(O, TM), LabelNumber(0) {
+      CommentChar = ";";
       GlobalPrefix = "_";
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
       Data64bitsDirective = 0;       // we can't emit a 64-bit unit
