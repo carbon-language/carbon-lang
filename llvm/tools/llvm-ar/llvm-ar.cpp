@@ -277,12 +277,10 @@ bool AddMemberToArchive(string Member, std::ofstream &ArchiveFile) {
   sprintf(Hdr.gid, "%d", StatBuf.st_gid);
 
   //file member date in decimal
-  sprintf(Hdr.date,"%d", StatBuf.st_mtime);
-  
+  sprintf(Hdr.date,"%d", (int)StatBuf.st_mtime);
   
   //file member mode in OCTAL
   sprintf(Hdr.mode,"%d", StatBuf.st_mode);
-  
  
   //add our header trailer
   memcpy(Hdr.fmag,ARFMAG,sizeof(ARFMAG));
@@ -290,7 +288,6 @@ bool AddMemberToArchive(string Member, std::ofstream &ArchiveFile) {
   //write header to archive file
   ArchiveFile.write((char*)&Hdr, sizeof(Hdr));
   
- 
   //open Member file for reading and copy to buffer
   int FD = open(Member.c_str(),O_RDONLY);
   if (FD == -1) {
