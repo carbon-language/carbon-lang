@@ -1471,22 +1471,40 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
             if (ShAmt) {
               bool CanFold = Shift->getOpcode() != Instruction::Shr ||
                              Shift->getType()->isUnsigned();
-              if (!CanFold && 
+              if (!CanFold) {
                 // To test for the bad case of the signed shr, see if any
                 // of the bits shifted in could be tested after the mask.
-                ConstantExpr::getAnd(ConstantExpr::getShl(ConstantInt::getAllOnesValue(Ty), ConstantUInt::get(Type::UByteTy, Ty->getPrimitiveSize()*8-ShAmt->getValue())), AndCST)->isNullValue()) {
-                CanFold = true;
+                Constant *OShAmt = ConstantUInt::get(Type::UByteTy, 
+                                   Ty->getPrimitiveSize()*8-ShAmt->getValue());
+                Constant *ShVal = 
+                 ConstantExpr::getShl(ConstantInt::getAllOnesValue(Ty), OShAmt);
+                if (ConstantExpr::getAnd(ShVal, AndCST)->isNullValue())
+                  CanFold = true;
               }
 
               if (CanFold) {
                 unsigned ShiftOp = Shift->getOpcode() == Instruction::Shl
                   ? Instruction::Shr : Instruction::Shl;
-                I.setOperand(1, ConstantExpr::get(ShiftOp, CI, ShAmt));
-                LHSI->setOperand(1,ConstantExpr::get(ShiftOp,AndCST,ShAmt));
-                LHSI->setOperand(0, Shift->getOperand(0));
-                WorkList.push_back(Shift); // Shift is dead.
-                AddUsesToWorkList(I);
-                return &I;
+                Constant *NewCst = ConstantExpr::get(ShiftOp, CI, ShAmt);
+
+                // Check to see if we are shifting out any of the bits being
+                // compared.
+                if (ConstantExpr::get(Shift->getOpcode(), NewCst, ShAmt) != CI){
+                  // If we shifted bits out, the fold is not going to work out.
+                  // As a special case, check to see if this means that the
+                  // result is always true or false now.
+                  if (I.getOpcode() == Instruction::SetEQ)
+                    return ReplaceInstUsesWith(I, ConstantBool::False);
+                  if (I.getOpcode() == Instruction::SetNE)
+                    return ReplaceInstUsesWith(I, ConstantBool::True);
+                } else {
+                  I.setOperand(1, NewCst);
+                  LHSI->setOperand(1, ConstantExpr::get(ShiftOp, AndCST,ShAmt));
+                  LHSI->setOperand(0, Shift->getOperand(0));
+                  WorkList.push_back(Shift); // Shift is dead.
+                  AddUsesToWorkList(I);
+                  return &I;
+                }
               }
             }
           }
