@@ -623,6 +623,22 @@ Constant *llvm::ConstantFoldSelectInstruction(const Constant *Cond,
   return 0;
 }
 
+/// isZeroSizedType - This type is zero sized if its an array or structure of
+/// zero sized types.  The only leaf zero sized type is an empty structure.
+static bool isMaybeZeroSizedType(const Type *Ty) {
+  if (isa<OpaqueType>(Ty)) return true;  // Can't say.
+  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+
+    // If all of elements have zero size, this does too.
+    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
+      if (!isMaybeZeroSizedType(Ty)) return false;
+    return true;
+
+  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    return isMaybeZeroSizedType(ATy->getElementType());
+  }
+  return false;
+}
 
 /// IdxCompare - Compare the two constants as though they were getelementptr
 /// indices.  This allows coersion of the types to be the same thing.
@@ -631,7 +647,7 @@ Constant *llvm::ConstantFoldSelectInstruction(const Constant *Cond,
 /// first is less than the second, return -1, if the second is less than the
 /// first, return 1.  If the constants are not integral, return -2.
 ///
-static int IdxCompare(Constant *C1, Constant *C2) {
+static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
   if (C1 == C2) return 0;
 
   // Ok, we found a different index.  Are either of the operands
@@ -644,6 +660,11 @@ static int IdxCompare(Constant *C1, Constant *C2) {
   C1 = ConstantExpr::getSignExtend(C1, Type::LongTy);
   C2 = ConstantExpr::getSignExtend(C2, Type::LongTy);
   if (C1 == C2) return 0;  // Are they just differing types?
+
+  // If the type being indexed over is really just a zero sized type, there is
+  // no pointer difference being made here.
+  if (isMaybeZeroSizedType(ElTy))
+    return -2; // dunno.
 
   // If they are really different, now that they are the same type, then we
   // found a difference!
@@ -779,8 +800,11 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
             unsigned i = 1;
             
             // Compare all of the operands the GEP's have in common.
-            for (;i != CE1->getNumOperands() && i != CE2->getNumOperands(); ++i)
-              switch (IdxCompare(CE1->getOperand(i), CE2->getOperand(i))) {
+            gep_type_iterator GTI = gep_type_begin(CE1);
+            for (;i != CE1->getNumOperands() && i != CE2->getNumOperands();
+                 ++i, ++GTI)
+              switch (IdxCompare(CE1->getOperand(i), CE2->getOperand(i),
+                                 GTI.getIndexedType())) {
               case -1: return Instruction::SetLT;
               case 1:  return Instruction::SetGT;
               case -2: return Instruction::BinaryOpsEnd;
@@ -790,10 +814,17 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
             // are non-zero then we have a difference, otherwise we are equal.
             for (; i < CE1->getNumOperands(); ++i)
               if (!CE1->getOperand(i)->isNullValue())
-                return Instruction::SetGT;
+                if (isa<ConstantIntegral>(CE1->getOperand(i)))
+                  return Instruction::SetGT;
+                else
+                  return Instruction::BinaryOpsEnd; // Might be equal.
+                    
             for (; i < CE2->getNumOperands(); ++i)
               if (!CE2->getOperand(i)->isNullValue())
-                return Instruction::SetLT;
+                if (isa<ConstantIntegral>(CE2->getOperand(i)))
+                  return Instruction::SetLT;
+                else
+                  return Instruction::BinaryOpsEnd; // Might be equal.
             return Instruction::SetEQ;
           }
         }
