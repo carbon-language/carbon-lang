@@ -16,6 +16,7 @@
 #include "gccld.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
@@ -83,6 +84,13 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
 
   if (!DisableInline)
     Passes.add(createFunctionInliningPass());   // Inline small functions
+
+  // Run a few AA driven optimizations here and now, to cleanup the code.
+  // Eventually we should put an IP AA in place here.
+
+  Passes.add(createLICMPass());                 // Hoist loop invariants
+  Passes.add(createLoadValueNumberingPass());   // GVN for load instructions
+  Passes.add(createGCSEPass());                 // Remove common subexprs
 
   // The FuncResolve pass may leave cruft around if functions were prototyped
   // differently than they were defined.  Remove this cruft.
