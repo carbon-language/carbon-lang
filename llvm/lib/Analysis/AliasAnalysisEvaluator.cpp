@@ -17,10 +17,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Assembly/Writer.h"
@@ -115,7 +116,7 @@ bool AAEval::runOnFunction(Function &F) {
         isa<Function>(Inst.getOperand(0)))
       ++OI;  // Skip actual functions for direct function calls.
     for (; OI != Inst.op_end(); ++OI)
-      if (isa<PointerType>((*OI)->getType()))
+      if (isa<PointerType>((*OI)->getType()) && !isa<ConstantPointerNull>(*OI))
         Pointers.insert(*OI);
 
     CallSite CS = CallSite::get(&*I);
