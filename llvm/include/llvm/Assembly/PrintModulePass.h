@@ -20,6 +20,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
+#include <iostream>
 
 namespace llvm {
 
