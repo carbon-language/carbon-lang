@@ -1655,12 +1655,27 @@ void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
 
 void CWriter::visitLoadInst(LoadInst &I) {
   Out << "*";
+  if (I.isVolatile()) {
+    Out << "((volatile ";
+    printType(Out, I.getOperand(0)->getType());
+    Out << ")";
+  }
+
   writeOperand(I.getOperand(0));
+
+  if (I.isVolatile())
+    Out << ")";
 }
 
 void CWriter::visitStoreInst(StoreInst &I) {
   Out << "*";
+  if (I.isVolatile()) {
+    Out << "((volatile ";
+    printType(Out, I.getPointerOperand()->getType());
+    Out << ")";
+  }
   writeOperand(I.getPointerOperand());
+  if (I.isVolatile()) Out << ")";
   Out << " = ";
   writeOperand(I.getOperand(0));
 }
