@@ -1,0 +1,3 @@
+; Found by inspection of the code
+
+global {} { int 7, float 1.0, int 7, int 8 }
