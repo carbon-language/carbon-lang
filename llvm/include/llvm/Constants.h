@@ -11,16 +11,17 @@
 #include "llvm/Constant.h"
 #include "Support/DataTypes.h"
 
+
 class ArrayType;
 class StructType;
 class PointerType;
+class ConstantExpr;
 
 //===---------------------------------------------------------------------------
 // ConstantBool - Boolean Values
 //
 class ConstantBool : public Constant {
   bool Val;
-  ConstantBool(const ConstantBool &);     // DO NOT IMPLEMENT
   ConstantBool(bool V);
   ~ConstantBool() {}
 public:
@@ -253,7 +254,7 @@ public:
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPointer *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in CPV.cpp
+  static bool classof(const Constant *CPV);  // defined in Constants.cpp
   static inline bool classof(const Value *V) {
     return isa<Constant>(V) && classof(cast<Constant>(V));
   }
@@ -277,7 +278,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPointerNull *) { return true; }
   static inline bool classof(const ConstantPointer *P) {
-    return P->getNumOperands() == 0;
+    return (P->getNumOperands() == 0 && P->isNullValue());
   }
   static inline bool classof(const Constant *CPV) {
     return isa<ConstantPointer>(CPV) && classof(cast<ConstantPointer>(CPV));
@@ -313,7 +314,8 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPointerRef *) { return true; }
   static inline bool classof(const ConstantPointer *CPV) {
-    return CPV->getNumOperands() == 1;
+    // check for a single operand (the target value)
+    return (CPV->getNumOperands() == 1);
   }
   static inline bool classof(const Constant *CPV) {
     return isa<ConstantPointer>(CPV) && classof(cast<ConstantPointer>(CPV));
@@ -324,10 +326,72 @@ public:
 
   // WARNING: Only to be used by Bytecode & Assembly Parsers!  USER CODE SHOULD
   // NOT USE THIS!!
-  void mutateReference(GlobalValue *NewGV);
+  // Returns the number of uses of OldV that were replaced.
+  virtual unsigned mutateReferences(Value* OldV, Value *NewV);
   // END WARNING!!
 };
 
+
+// ConstantExpr - a constant value that is initialized with
+// an expression using other constant values.  This is only used
+// to represent values that cannot be evaluated at compile-time
+// (e.g., something derived from an address) because it does
+// not have a mechanism to store the actual value.
+// Use the appropriate Constant subclass above for known constants.
+//
+class ConstantExpr : public Constant {
+protected:
+  unsigned iType;      // operation type
+  
+protected:
+  ConstantExpr(unsigned opCode, Constant *C,  const Type *Ty);
+  ConstantExpr(unsigned opCode, Constant* C1, Constant* C2, const Type *Ty);
+  ConstantExpr(unsigned opCode, Constant* C,
+               const std::vector<Value*>& IdxList, const Type *Ty);
+  ~ConstantExpr() {}
+  
+  virtual void destroyConstant() { destroyConstantImpl(); }
+  
+public:
+  // Static methods to construct a ConstantExpr of different kinds.
+  static ConstantExpr *get(unsigned opCode, Constant *C, const Type *Ty);
+  static ConstantExpr *get(unsigned opCode,
+                           Constant *C1, Constant *C2, const Type *Ty);
+  static ConstantExpr *get(unsigned opCode, Constant* C,
+                           const std::vector<Value*>& idxList, const Type *Ty);
+  
+  // isNullValue - Return true if this is the value that would be returned by
+  // getNullValue.
+  virtual bool isNullValue() const { return false; }
+  
+  // getOpcode - Return the opcode at the root of this constant expression
+  unsigned getOpcode() const { return iType; }
+
+  // getOpcodeName - Return a string representation for an opcode.
+  static const char* getOpcodeName(unsigned opCode);
+  const char* getOpcodeName() const {
+    return getOpcodeName(getOpcode());
+  }
+  
+  // isConstantExpr - Return true if this is a ConstantExpr
+  virtual bool isConstantExpr() const { return true; }
+  
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ConstantExpr *) { return true; }
+  static inline bool classof(const Constant *CPV) {
+    return CPV->isConstantExpr();
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Constant>(V) && classof(cast<Constant>(V));
+  }
+
+public:
+  // WARNING: Only to be used by Bytecode & Assembly Parsers!  USER CODE SHOULD
+  // NOT USE THIS!!
+  // Returns the number of uses of OldV that were replaced.
+  virtual unsigned mutateReferences(Value* OldV, Value *NewV);
+  // END WARNING!!
+};
 
 
 #endif
