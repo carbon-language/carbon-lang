@@ -79,7 +79,9 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
   switch (DestTyT->getPrimitiveID()) {
   case Type::FunctionTyID: {
     if (cast<FunctionType>(DestTyT)->isVarArg() !=
-        cast<FunctionType>(SrcTyT)->isVarArg())
+        cast<FunctionType>(SrcTyT)->isVarArg() ||
+        cast<FunctionType>(DestTyT)->getNumContainedTypes() !=
+        cast<FunctionType>(SrcTyT)->getNumContainedTypes())
       return true;
     for (unsigned i = 0, e = getFT(DestTy)->getNumContainedTypes(); i != e; ++i)
       if (RecursiveResolveTypesI(getFT(DestTy)->getContainedType(i),
