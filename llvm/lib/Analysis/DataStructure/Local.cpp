@@ -117,6 +117,8 @@ namespace {
     void visitInstruction(Instruction &I);
 
     void visitCallSite(CallSite CS);
+    void visitVANextInst(VANextInst &I);
+    void visitVAArgInst(VAArgInst   &I);
 
     void MergeConstantInitIntoNode(DSNodeHandle &NH, Constant *C);
   private:
@@ -281,11 +283,7 @@ DSNodeHandle &GraphBuilder::getLink(const DSNodeHandle &node, unsigned LinkNo) {
 /// merge the two destinations together.
 ///
 void GraphBuilder::setDestTo(Value &V, const DSNodeHandle &NH) {
-  DSNodeHandle &AINH = ScalarMap[&V];
-  if (AINH.getNode() == 0)   // Not pointing to anything yet?
-    AINH = NH;               // Just point directly to NH
-  else
-    AINH.mergeWith(NH);
+  ScalarMap[&V].mergeWith(NH);
 }
 
 
@@ -442,7 +440,7 @@ void GraphBuilder::visitLoadInst(LoadInst &LI) {
 void GraphBuilder::visitStoreInst(StoreInst &SI) {
   const Type *StoredTy = SI.getOperand(0)->getType();
   DSNodeHandle Dest = getValueDest(*SI.getOperand(1));
-  if (Dest.getNode() == 0) return;
+  if (Dest.isNull()) return;
 
   // Mark that the node is written to...
   Dest.getNode()->setModifiedMarker();
@@ -459,6 +457,25 @@ void GraphBuilder::visitReturnInst(ReturnInst &RI) {
   if (RI.getNumOperands() && isPointerType(RI.getOperand(0)->getType()))
     RetNode->mergeWith(getValueDest(*RI.getOperand(0)));
 }
+
+void GraphBuilder::visitVANextInst(VANextInst &I) {
+  getValueDest(*I.getOperand(0)).mergeWith(getValueDest(I));
+}
+
+void GraphBuilder::visitVAArgInst(VAArgInst &I) {
+  DSNodeHandle Ptr = getValueDest(*I.getOperand(0));
+  if (Ptr.isNull()) return;
+
+  // Make that the node is read from.
+  Ptr.getNode()->setReadMarker();
+
+  // Ensure a typerecord exists...
+  Ptr.getNode()->mergeTypeInfo(I.getType(), Ptr.getOffset(), false);
+
+  if (isPointerType(I.getType()))
+    setDestTo(I, getLink(Ptr));
+}
+
 
 void GraphBuilder::visitCallInst(CallInst &CI) {
   visitCallSite(&CI);
@@ -477,6 +494,15 @@ void GraphBuilder::visitCallSite(CallSite CS) {
   if (Function *F = dyn_cast<Function>(Callee))
     if (F->isExternal())
       switch (F->getIntrinsicID()) {
+      case Intrinsic::va_start:
+        getValueDest(*CS.getInstruction()).getNode()->setAllocaNodeMarker();
+        return;
+      case Intrinsic::va_copy:
+        getValueDest(*CS.getInstruction()).
+          mergeWith(getValueDest(**(CS.arg_begin())));
+        return;
+      case Intrinsic::va_end:
+        return;  // noop
       case Intrinsic::memmove:
       case Intrinsic::memcpy: {
         // Merge the first & second arguments, and mark the memory read and
