@@ -17,6 +17,7 @@
 #include "InstrInfoEmitter.h"
 #include "InstrSelectorEmitter.h"
 #include <algorithm>
+#include <cstdio>
 #include <fstream>
 
 enum ActionType {
