@@ -82,6 +82,7 @@ enum ConfigLexerTokens {
   OPT3,         ///< The item "opt3" (and case variants)
   OPT4,         ///< The item "opt4" (and case variants)
   OPT5,         ///< The item "opt5" (and case variants)
+  VERSION,      ///< The item "version" (and case variants)
 };
 
 extern ConfigLexerTokens Configlex();
