@@ -12,6 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
+#include <psapi.h>
+#include <malloc.h>
+
+#pragma comment(lib, "psapi.lib")
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only Win32 specific code 
@@ -41,28 +45,26 @@ Process::GetPageSize() {
   return PageSize;
 }
 
-void* 
 uint64_t 
 Process::GetMallocUsage()
 {
-#ifdef HAVE_MALLINFO
-  struct mallinfo mi = ::mallinfo();
-  return mi.uordblks;
-#warning Cannot get malloc info on this platform
-  return 0;
-#endif
+  _HEAPINFO hinfo;
+  hinfo._pentry = NULL;
+
+  size_t size = 0;
+
+  while (_heapwalk(&hinfo) == _HEAPOK)
+    size += hinfo._size;
+
+  return size;
 }
 
 uint64_t
 Process::GetTotalMemoryUsage()
 {
-#ifdef HAVE_MALLINFO
-  struct mallinfo mi = ::mallinfo();
-  return mi.uordblks + mi.hblkhd
-#else
-#warning Cannot get total memory size on this platform
-  return 0;
-#endif
+  PROCESS_MEMORY_COUNTERS pmc;
+  GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
+  return pmc.PagefileUsage;
 }
 
 void
@@ -71,17 +73,16 @@ Process::GetTimeUsage(
 {
   elapsed = TimeValue::now();
 
-  unsigned __int64 ProcCreate, ProcExit, KernelTime, UserTime;
+  uint64_t ProcCreate, ProcExit, KernelTime, UserTime;
   GetProcessTimes(GetCurrentProcess(), (FILETIME*)&ProcCreate, 
-                  (FILETIME*)&ProcExit, (FILETIME*)&KernelTime, 
-                  (FILETIME*)&UserTime
-  );
+                  (FILETIME*)&ProcExit, (FILETIME*)&KernelTime,
+                  (FILETIME*)&UserTime);
 
   // FILETIME's are # of 100 nanosecond ticks (1/10th of a microsecond)
   user_time.seconds( UserTime / 10000000 );
-  user_time.nanoseconds( (UserTime % 10000000) * 100 );
+  user_time.nanoseconds( unsigned(UserTime % 10000000) * 100 );
   sys_time.seconds( KernelTime / 10000000 );
-  user_time.nanoseconds( (UserTime % 10000000) * 100 );
+  sys_time.nanoseconds( unsigned(KernelTime % 10000000) * 100 );
 }
 
 }

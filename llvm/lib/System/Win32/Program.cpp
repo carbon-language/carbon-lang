@@ -69,8 +69,10 @@ Program::FindProgramByName(const std::string& progName) {
 //
 int 
 Program::ExecuteAndWait(const Path& path, 
-                        const std::vector<std::string>& args,
-                        const char** envp) {
+                        const char** args,
+                        const char** envp,
+                        const Path** redirects,
+                        unsigned secondsToWait) {
   if (!path.executable())
     throw path.toString() + " is not executable"; 
 
@@ -84,9 +86,9 @@ Program::ExecuteAndWait(const Path& path,
   if (progname.find(' ') != std::string::npos)
     len += 2;
 
-  for (unsigned i = 0; i < args.size(); i++) {
-    len += args[i].length() + 1;
-    if (args[i].find(' ') != std::string::npos)
+  for (unsigned i = 0; args[i]; i++) {
+    len += strlen(args[i]) + 1;
+    if (strchr(args[i], ' '))
       len += 2;
   }
 
@@ -103,13 +105,14 @@ Program::ExecuteAndWait(const Path& path,
     *p++ = '"';
   *p++ = ' ';
 
-  for (unsigned i = 0; i < args.size(); i++) {
-    const std::string& arg = args[i];
-    needsQuoting = arg.find(' ') != std::string::npos;
+  for (unsigned i = 0; args[i]; i++) {
+    const char *arg = args[i];
+	size_t len = strlen(arg);
+    needsQuoting = strchr(arg, ' ') != 0;
     if (needsQuoting)
       *p++ = '"';
-    memcpy(p, arg.c_str(), arg.length());
-    p += arg.length();
+    memcpy(p, arg, len);
+    p += len;
     if (needsQuoting)
       *p++ = '"';
     *p++ = ' ';
@@ -122,6 +125,8 @@ Program::ExecuteAndWait(const Path& path,
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(si);
 
+  // TODO: do replacement of standard input/output/error handles.
+
   PROCESS_INFORMATION pi;
   memset(&pi, 0, sizeof(pi));
 
@@ -133,7 +138,17 @@ Program::ExecuteAndWait(const Path& path,
   }
 
   // Wait for it to terminate.
-  WaitForSingleObject(pi.hProcess, INFINITE);
+  DWORD millisecondsToWait = INFINITE;
+  if (secondsToWait > 0)
+    millisecondsToWait = secondsToWait * 1000;
+
+  if (WaitForSingleObject(pi.hProcess, millisecondsToWait) == WAIT_TIMEOUT) {
+    if (!TerminateProcess(pi.hProcess, 1)) {
+      ThrowError(std::string("Failed to terminate timed-out program '") + 
+                 path.toString() + "'");
+    }
+    WaitForSingleObject(pi.hProcess, INFINITE);
+  }
   
   // Get its exit status.
   DWORD status;
