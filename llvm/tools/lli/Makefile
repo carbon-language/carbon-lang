@@ -9,58 +9,8 @@
 LEVEL = ../..
 TOOLNAME = lli
 
-# Get the $(ARCH) setting
-include $(LEVEL)/Makefile.config
-
-# Generic JIT libraries
-JITLIBS   = lli-jit codegen executionengine
-ARCHLIBS  =
-
-# You can enable the X86 JIT on a non-X86 host by setting the flag
-# ENABLE_X86_JIT on the make command line. If not, it will still be
-# enabled automagically on an X86 host.
-ifeq ($(ARCH), x86)
-  ENABLE_X86_JIT = 1
-endif
-
-# What the X86 JIT requires
-ifdef ENABLE_X86_JIT
-  CPPFLAGS += -DENABLE_X86_JIT
-  JITLIBS  += x86 selectiondag
-  # X86 doesn't require any ARCHLIBS
-endif
-
-# You can enable the Sparc JIT on a non-Sparc host by setting the flag
-# ENABLE_SPARC_JIT on the make command line. If not, it will still be
-# enabled automagically on an Sparc host.
-ifeq ($(ARCH), Sparc)
-  ENABLE_SPARC_JIT = 1
-endif
-
-# What the Sparc JIT requires
-ifdef ENABLE_SPARC_JIT
-  CPPFLAGS += -DENABLE_SPARC_JIT
-  JITLIBS  += sparcv9
-  ARCHLIBS += sparcv9sched sparcv9livevar instrument.a profpaths \
-              bcwriter transforms.a ipo.a ipa.a datastructure.a \
-              sparcv9regalloc
-endif
-
-# You can enable the PowerPC JIT on a non-PowerPC host by setting the flag
-# ENABLE_PPC_JIT on the make command line. If not, it will still be
-# enabled automagically on an PowerPC host.
-ifeq ($(ARCH), PowerPC)
-  ENABLE_PPC_JIT = 1
-endif
-
-# What the PowerPC JIT requires
-ifdef ENABLE_PPC_JIT
-  CPPFLAGS += -DENABLE_PPC_JIT
-  JITLIBS  += powerpc
-endif
-
-USEDLIBS = lli-interpreter $(JITLIBS) $(ARCHLIBS) scalaropts analysis.a \
-           transformutils.a bcreader vmcore support target.a LLVMsystem.a
+# Enable JIT support
+include ../Makefile.JIT
 
 # Have gcc tell the linker to export symbols from the program so that
 # dynamically loaded modules can be linked against them.
