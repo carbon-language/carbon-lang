@@ -25,8 +25,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "Support/CommandLine.h"
 #include <set>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   cl::opt<bool> PrintNo  ("print-no-aliases", cl::ReallyHidden);
@@ -51,11 +50,12 @@ namespace {
   X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator");
 }
 
-static inline void PrintResults(const char *Msg, bool P, Value *V1, Value *V2) {
+static inline void PrintResults(const char *Msg, bool P, Value *V1, Value *V2,
+                                Module *M) {
   if (P) {
     std::cerr << "  " << Msg << ":\t";
-    WriteAsOperand(std::cerr, V1) << ", ";
-    WriteAsOperand(std::cerr, V2) << "\n";
+    WriteAsOperand(std::cerr, V1, true, true, M) << ", ";
+    WriteAsOperand(std::cerr, V2, true, true, M) << "\n";
   }
 }
 
@@ -85,13 +85,13 @@ bool AAEval::runOnFunction(Function &F) {
     for (std::set<Value *>::iterator I2 = Pointers.begin(); I2 != I1; ++I2)
       switch (AA.alias(*I1, 0, *I2, 0)) {
       case AliasAnalysis::NoAlias:
-        PrintResults("No", PrintNo, *I1, *I2);
+        PrintResults("No", PrintNo, *I1, *I2, F.getParent());
         ++No; break;
       case AliasAnalysis::MayAlias:
-        PrintResults("May", PrintMay, *I1, *I2);
+        PrintResults("May", PrintMay, *I1, *I2, F.getParent());
         ++May; break;
       case AliasAnalysis::MustAlias:
-        PrintResults("Must", PrintMust, *I1, *I2);
+        PrintResults("Must", PrintMust, *I1, *I2, F.getParent());
         ++Must; break;
       default:
         std::cerr << "Unknown alias query result!\n";
@@ -116,5 +116,3 @@ bool AAEval::doFinalization(Module &M) {
             << May*100/Sum << "%/" << Must*100/Sum<<"%\n";
   return false;
 }
-
-} // End llvm namespace
