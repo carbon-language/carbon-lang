@@ -45,7 +45,7 @@ namespace llvm {
     int getStartCycle(MSchedGraphNode *node);
     void clear() { schedule.clear(); resourceNumPerCycle.clear(); kernel.clear(); }
     std::vector<std::pair<MSchedGraphNode*, int> >* getKernel() { return &kernel; }
-    bool constructKernel(int II);
+    bool constructKernel(int II, std::vector<MSchedGraphNode*> &branches);
     int getMaxStage() { return maxStage; }
 
    

@@ -19,6 +19,7 @@
 
 using namespace llvm;
 
+//Returns a boolean indicating if the start cycle needs to be increased/decreased
 bool MSSchedule::insert(MSchedGraphNode *node, int cycle) {
   
   //First, check if the cycle has a spot free to start
@@ -147,6 +148,7 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
 	    std::map<int, int>::iterator resourceUse = resourcesForCycle->second.find(resourceNum);
 	    //assert if not in the map.. since it should be!
 	    //assert(resourceUse != resourcesForCycle.end() && "Resource should be in map!");
+	    DEBUG(std::cerr << "Removing resource num " << resourceNum << " from cycle " << oldCycle << "\n");
 	    --resourceUse->second;
 	  }
 	}
@@ -163,7 +165,7 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
 
 }
 
-bool MSSchedule::constructKernel(int II) {
+bool MSSchedule::constructKernel(int II, std::vector<MSchedGraphNode*> &branches) {
  
   int stageNum = (schedule.rbegin()->first)/ II;
   DEBUG(std::cerr << "Number of Stages: " << stageNum << "\n");
@@ -188,6 +190,11 @@ bool MSSchedule::constructKernel(int II) {
     }
   }
   
+  //Push on branches. Branch vector is in order of last branch to first.
+  for(std::vector<MSchedGraphNode*>::reverse_iterator B = branches.rbegin() , BE = branches.rend(); B != BE; ++B) {
+    kernel.push_back(std::make_pair(*B, 0));
+  }
+
   if(stageNum > 0)
     maxStage = stageNum;
   else

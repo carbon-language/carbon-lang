@@ -1029,7 +1029,38 @@ void ModuloSchedulingPass::findAllReccurrences(MSchedGraphNode *node,
   }
 }
 
+void ModuloSchedulingPass::searchPath(MSchedGraphNode *node, 
+				      std::vector<MSchedGraphNode*> &path,
+				      std::set<MSchedGraphNode*> &nodesToAdd) {
+  //Push node onto the path
+  path.push_back(node);
 
+  //Loop over all successors and see if there is a path from this node to 
+  //a recurrence in the partial order, if so.. add all nodes to be added to recc
+  for(MSchedGraphNode::succ_iterator S = node->succ_begin(), SE = node->succ_end(); S != SE; 
+      ++S) {
+
+    //If this node exists in a recurrence already in the partial order, then add all
+    //nodes in the path to the set of nodes to add
+     //Check if its already in our partial order, if not add it to the final vector
+    for(std::vector<std::set<MSchedGraphNode*> >::iterator PO = partialOrder.begin(), 
+	  PE = partialOrder.end(); PO != PE; ++PO) {
+      
+      //Check if we should ignore this edge first
+      if(ignoreEdge(node,*S))
+	continue;
+
+      if(PO->count(*S)) {
+	nodesToAdd.insert(*S);
+      }
+      searchPath(*S, path, nodesToAdd);
+      }
+    
+  }
+  
+  //Pop Node off the path
+  path.pop_back();
+}
 
 
 
@@ -1042,74 +1073,79 @@ void ModuloSchedulingPass::computePartialOrder() {
   //on BA being there?
   std::vector<MSchedGraphNode*> branches;
   
-  //Loop over all recurrences and add to our partial order
-  //be sure to remove nodes that are already in the partial order in
-  //a different recurrence and don't add empty recurrences.
-  for(std::set<std::pair<int, std::vector<MSchedGraphNode*> > >::reverse_iterator I = recurrenceList.rbegin(), E=recurrenceList.rend(); I !=E; ++I) {
-    
-    //Add nodes that connect this recurrence to the previous recurrence
-    
-    //If this is the first recurrence in the partial order, add all predecessors
-    for(std::vector<MSchedGraphNode*>::const_iterator N = I->second.begin(), NE = I->second.end(); N != NE; ++N) {
-
-    }
-
+  //Steps to add a recurrence to the partial order
+  // 1) Find reccurrence with the highest RecMII. Add it to the partial order.
+  // 2) For each recurrence with decreasing RecMII, add it to the partial order along with
+  // any nodes that connect this recurrence to recurrences already in the partial order
+  for(std::set<std::pair<int, std::vector<MSchedGraphNode*> > >::reverse_iterator 
+	I = recurrenceList.rbegin(), E=recurrenceList.rend(); I !=E; ++I) {
 
     std::set<MSchedGraphNode*> new_recurrence;
+
     //Loop through recurrence and remove any nodes already in the partial order
-    for(std::vector<MSchedGraphNode*>::const_iterator N = I->second.begin(), NE = I->second.end(); N != NE; ++N) {
+    for(std::vector<MSchedGraphNode*>::const_iterator N = I->second.begin(), 
+	  NE = I->second.end(); N != NE; ++N) {
+
       bool found = false;
-      for(std::vector<std::set<MSchedGraphNode*> >::iterator PO = partialOrder.begin(), PE = partialOrder.end(); PO != PE; ++PO) {
+      for(std::vector<std::set<MSchedGraphNode*> >::iterator PO = partialOrder.begin(), 
+	    PE = partialOrder.end(); PO != PE; ++PO) {
 	if(PO->count(*N))
 	  found = true;
       }
+
+      //Check if its a branch, and remove to handle special
       if(!found) {
 	if((*N)->isBranch()) {
 	  branches.push_back(*N);
 	}
 	else
 	  new_recurrence.insert(*N);
-	}
-	if(partialOrder.size() == 0)
-	  //For each predecessors, add it to this recurrence ONLY if it is not already in it
-	  for(MSchedGraphNode::pred_iterator P = (*N)->pred_begin(), 
-		PE = (*N)->pred_end(); P != PE; ++P) {
-	    
-	    //Check if we are supposed to ignore this edge or not
-	    if(!ignoreEdge(*P, *N))
-	      //Check if already in this recurrence
-	      if(std::find(I->second.begin(), I->second.end(), *P) == I->second.end()) {
-		//Also need to check if in partial order
-		bool predFound = false;
-		for(std::vector<std::set<MSchedGraphNode*> >::iterator PO = partialOrder.begin(), PEND = partialOrder.end(); PO != PEND; ++PO) {
-		  if(PO->count(*P))
-		    predFound = true;
-		}
-		
-		if(!predFound)
-		  if(!new_recurrence.count(*P)) {
-		    if((*P)->isBranch()) {
-		      branches.push_back(*P);
-		    }
-		    else
-		      new_recurrence.insert(*P);
-		    
-		  }
-	      }
-	  }
+      }
+
     }
     
-    if(new_recurrence.size() > 0)
+
+    if(new_recurrence.size() > 0) {
+     
+      std::vector<MSchedGraphNode*> path;
+      std::set<MSchedGraphNode*> nodesToAdd;
+
+      //Add nodes that connect this recurrence to recurrences in the partial path
+      for(std::set<MSchedGraphNode*>::iterator N = new_recurrence.begin(),
+	    NE = new_recurrence.end(); N != NE; ++N)
+	searchPath(*N, path, nodesToAdd);
+      
+      //Add nodes to this recurrence if they are not already in the partial order
+      for(std::set<MSchedGraphNode*>::iterator N = nodesToAdd.begin(), NE = nodesToAdd.end();
+	  N != NE; ++N) {
+	bool found = false;
+	for(std::vector<std::set<MSchedGraphNode*> >::iterator PO = partialOrder.begin(), 
+	      PE = partialOrder.end(); PO != PE; ++PO) {
+	  if(PO->count(*N))
+	    found = true;
+	}
+	if(!found) {
+	  assert("FOUND CONNECTOR");
+	  new_recurrence.insert(*N);
+	}
+      }
+
       partialOrder.push_back(new_recurrence);
+
+    }
   }
   
   //Add any nodes that are not already in the partial order
   //Add them in a set, one set per connected component
   std::set<MSchedGraphNode*> lastNodes;
-  for(std::map<MSchedGraphNode*, MSNodeAttributes>::iterator I = nodeToAttributesMap.begin(), E = nodeToAttributesMap.end(); I != E; ++I) {
+  for(std::map<MSchedGraphNode*, MSNodeAttributes>::iterator I = nodeToAttributesMap.begin(), 
+	E = nodeToAttributesMap.end(); I != E; ++I) {
+    
     bool found = false;
+    
     //Check if its already in our partial order, if not add it to the final vector
-    for(std::vector<std::set<MSchedGraphNode*> >::iterator PO = partialOrder.begin(), PE = partialOrder.end(); PO != PE; ++PO) {
+    for(std::vector<std::set<MSchedGraphNode*> >::iterator PO = partialOrder.begin(), 
+	  PE = partialOrder.end(); PO != PE; ++PO) {
       if(PO->count(I->first))
 	found = true;
     }
@@ -1131,9 +1167,7 @@ void ModuloSchedulingPass::computePartialOrder() {
     if(ccSet.size() > 0)
       partialOrder.push_back(ccSet);
   }
-  //if(lastNodes.size() > 0)
-  //partialOrder.push_back(lastNodes);
-  
+ 
   //Clean up branches by putting them in final order
   std::map<unsigned, MSchedGraphNode*> branchOrder;
   for(std::vector<MSchedGraphNode*>::iterator I = branches.begin(), E = branches.end(); I != E; ++I)
@@ -1441,9 +1475,8 @@ bool ModuloSchedulingPass::computeSchedule() {
 
   while(!success) {
 
-    int branchES = II - 1;
-    int branchLS = II - 1;
-    bool lastBranch = true;
+    //Keep track of branches, but do not insert into the schedule
+    std::vector<MSchedGraphNode*> branches;
 
     //Loop over the final node order and process each node
     for(std::vector<MSchedGraphNode*>::iterator I = FinalNodeOrder.begin(), 
@@ -1465,54 +1498,62 @@ bool ModuloSchedulingPass::computeSchedule() {
 	  for(std::vector<MSchedGraphNode*>::iterator schedNode = nodesByCycle->second.begin(), SNE = nodesByCycle->second.end(); schedNode != SNE; ++schedNode) {
 	    
 	    if((*I)->isPredecessor(*schedNode)) {
-	      //if(!ignoreEdge(*schedNode, *I)) {
-		int diff = (*I)->getInEdge(*schedNode).getIteDiff();
-		int ES_Temp = nodesByCycle->first + (*schedNode)->getLatency() - diff * II;
-		DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << nodesByCycle->first << "\n");
-		DEBUG(std::cerr << "Temp EarlyStart: " << ES_Temp << " Prev EarlyStart: " << EarlyStart << "\n");
-		EarlyStart = std::max(EarlyStart, ES_Temp);
-		hasPred = true;
-		//}
+	      int diff = (*I)->getInEdge(*schedNode).getIteDiff();
+	      int ES_Temp = nodesByCycle->first + (*schedNode)->getLatency() - diff * II;
+	      DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << nodesByCycle->first << "\n");
+	      DEBUG(std::cerr << "Temp EarlyStart: " << ES_Temp << " Prev EarlyStart: " << EarlyStart << "\n");
+	      EarlyStart = std::max(EarlyStart, ES_Temp);
+	      hasPred = true;
 	    }
 	    if((*I)->isSuccessor(*schedNode)) {
-	      //if(!ignoreEdge(*I,*schedNode)) {
-		int diff = (*schedNode)->getInEdge(*I).getIteDiff();
-		int LS_Temp = nodesByCycle->first - (*I)->getLatency() + diff * II;
-		DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << nodesByCycle->first << "\n");
-		DEBUG(std::cerr << "Temp LateStart: " << LS_Temp << " Prev LateStart: " << LateStart << "\n");
-		LateStart = std::min(LateStart, LS_Temp);
-		hasSucc = true;
-		//}
+	      int diff = (*schedNode)->getInEdge(*I).getIteDiff();
+	      int LS_Temp = nodesByCycle->first - (*I)->getLatency() + diff * II;
+	      DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << nodesByCycle->first << "\n");
+	      DEBUG(std::cerr << "Temp LateStart: " << LS_Temp << " Prev LateStart: " << LateStart << "\n");
+	      LateStart = std::min(LateStart, LS_Temp);
+	      hasSucc = true;
 	    }
 	  }
 	}
       }
       else {
-	if(lastBranch) {
-	  EarlyStart = branchES;
-	  LateStart = branchLS;
-	  lastBranch = false;
-	  --branchES;
-	  branchLS = 0;
+	branches.push_back(*I);
+	continue;
+      }
+
+      //Check if this node is a pred or succ to a branch, and restrict its placement
+      //even though the branch is not in the schedule
+      int count = branches.size();
+      for(std::vector<MSchedGraphNode*>::iterator B = branches.begin(), BE = branches.end();
+	  B != BE; ++B) {
+	if((*I)->isPredecessor(*B)) {
+	  int diff = (*I)->getInEdge(*B).getIteDiff();
+	  int ES_Temp = (II+count) + (*B)->getLatency() - diff * II;
+	  DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << (II+count) << "\n");
+	  DEBUG(std::cerr << "Temp EarlyStart: " << ES_Temp << " Prev EarlyStart: " << EarlyStart << "\n");
+	  EarlyStart = std::max(EarlyStart, ES_Temp);
+	  hasPred = true;
 	}
-	else {
-	  EarlyStart = branchLS;
-	  LateStart = branchES;
-	  assert( (EarlyStart >= 0) && (LateStart >=0) && "EarlyStart and LateStart must be greater then 0"); 
-	  --branchES;
+	
+	if((*I)->isSuccessor(*B)) {
+	  int diff = (*B)->getInEdge(*I).getIteDiff();
+	  int LS_Temp = (II+count) - (*I)->getLatency() + diff * II;
+	  DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << (II+count) << "\n");
+	  DEBUG(std::cerr << "Temp LateStart: " << LS_Temp << " Prev LateStart: " << LateStart << "\n");
+	  LateStart = std::min(LateStart, LS_Temp);
+	  hasSucc = true;
 	}
-	hasPred = 0;
-	hasSucc = 1;
+	
+	count--;
       }
  
-      DEBUG(std::cerr << "Has Successors: " << hasSucc << ", Has Pred: " << hasPred << "\n");
-      DEBUG(std::cerr << "EarlyStart: " << EarlyStart << ", LateStart: " << LateStart << "\n");
-
-      
       //Check if the node has no pred or successors and set Early Start to its ASAP
       if(!hasSucc && !hasPred)
 	EarlyStart = nodeToAttributesMap.find(*I)->second.ASAP;
       
+      DEBUG(std::cerr << "Has Successors: " << hasSucc << ", Has Pred: " << hasPred << "\n");
+      DEBUG(std::cerr << "EarlyStart: " << EarlyStart << ", LateStart: " << LateStart << "\n");
+
       //Now, try to schedule this node depending upon its pred and successor in the schedule
       //already
       if(!hasSucc && hasPred)
@@ -1520,10 +1561,13 @@ bool ModuloSchedulingPass::computeSchedule() {
       else if(!hasPred && hasSucc)
 	success = scheduleNode(*I, LateStart, (LateStart - II +1));
       else if(hasPred && hasSucc) {
-	if(EarlyStart > LateStart)
-	  success = false;
-      	else
-	  success = scheduleNode(*I, EarlyStart, std::min(LateStart, (EarlyStart + II -1)));
+	if(EarlyStart > LateStart) {
+	  //success = false;
+	  LateStart = EarlyStart;
+	  DEBUG(std::cerr << "Early Start can not be later then the late start cycle, schedule fails\n");
+	}
+      	//else
+	success = scheduleNode(*I, EarlyStart, std::min(LateStart, (EarlyStart + II -1)));
       }
       else
 	success = scheduleNode(*I, EarlyStart, EarlyStart + II - 1);
@@ -1539,7 +1583,7 @@ bool ModuloSchedulingPass::computeSchedule() {
 
     if(success) {
       DEBUG(std::cerr << "Constructing Schedule Kernel\n");
-      success = schedule.constructKernel(II);
+      success = schedule.constructKernel(II, branches);
       DEBUG(std::cerr << "Done Constructing Schedule Kernel\n");
       if(!success) {
 	++IncreasedII;
@@ -1548,8 +1592,10 @@ bool ModuloSchedulingPass::computeSchedule() {
       }
     }
     
-    if(II >= capII)
+    if(II >= capII) {
+      DEBUG(std::cerr << "Maximum II reached, giving up\n");
       return false;
+    }
 
     assert(II < capII && "The II should not exceed the original loop number of cycles");
   } 

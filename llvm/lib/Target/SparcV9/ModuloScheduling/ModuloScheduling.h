@@ -97,7 +97,12 @@ namespace llvm {
     void unblock(MSchedGraphNode *u, std::set<MSchedGraphNode*> &blocked,
 		 std::map<MSchedGraphNode*, std::set<MSchedGraphNode*> > &B);
 
+    void searchPath(MSchedGraphNode *node, 
+		    std::vector<MSchedGraphNode*> &path,
+		    std::set<MSchedGraphNode*> &nodesToAdd);
+
     void computePartialOrder();
+
     bool computeSchedule();
     bool scheduleNode(MSchedGraphNode *node, 
 		      int start, int end);
