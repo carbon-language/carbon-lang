@@ -31,38 +31,8 @@ using namespace DataStructureAnalysis;
 //===----------------------------------------------------------------------===//
 
 DSNode::DSNode(enum NodeTy NT, const Type *T) : NodeType(NT) {
-  // If this node is big enough to have pointer fields, add space for them now.
-  if (T != Type::VoidTy && !isa<FunctionType>(T)) { // Avoid TargetData assert's
-    MergeMap.resize(TD.getTypeSize(T));
-
-    // Assign unique values to all of the elements of MergeMap
-    if (MergeMap.size() < 128) {
-      // Handle the common case of reasonable size structures...
-      for (unsigned i = 0, e = MergeMap.size(); i != e; ++i)
-        MergeMap[i] = -1-i;   // Assign -1, -2, -3, ...
-    } else {
-      // It's possible that we have something really big here.  In this case,
-      // divide the object into chunks until it will fit into 128 elements.
-      unsigned Multiple = MergeMap.size()/128;
-
-      // It's probably an array, and probably some power of two in size.
-      // Because of this, find the biggest power of two that is bigger than
-      // multiple to use as our real Multiple.
-      unsigned RealMultiple = 2;
-      while (RealMultiple <= Multiple) RealMultiple <<= 1;
-
-      unsigned RealBound = MergeMap.size()/RealMultiple;
-      assert(RealBound <= 128 && "Math didn't work out right");
-
-      // Now go through and assign indexes that are between -1 and -128
-      // inclusive
-      //
-      for (unsigned i = 0, e = MergeMap.size(); i != e; ++i)
-        MergeMap[i] = -1-(i % RealBound);   // Assign -1, -2, -3...
-    }
-  }
-
-  TypeEntries.push_back(TypeRec(T, 0));
+  // Add the type entry if it is specified...
+  if (T) getTypeRec(T, 0);
 }
 
 // DSNode copy constructor... do not copy over the referrers list!
@@ -94,6 +64,44 @@ void DSNode::addGlobal(GlobalValue *GV) {
     NodeType |= GlobalNode;
   }
 }
+
+/// foldNodeCompletely - If we determine that this node has some funny
+/// behavior happening to it that we cannot represent, we fold it down to a
+/// single, completely pessimistic, node.  This node is represented as a
+/// single byte with a single TypeEntry of "void".
+///
+void DSNode::foldNodeCompletely() {
+  // We are no longer typed at all...
+  TypeEntries.clear();
+  TypeEntries.push_back(DSTypeRec(Type::VoidTy, 0));
+
+  // Loop over all of our referrers, making them point to our one byte of space.
+  for (vector<DSNodeHandle*>::iterator I = Referrers.begin(), E=Referrers.end();
+       I != E; ++I)
+    (*I)->setOffset(0);
+
+  // Fold the MergeMap down to a single byte of space...
+  MergeMap.resize(1);
+  MergeMap[0] = -1;
+
+  // If we have links, merge all of our outgoing links together...
+  if (!Links.empty()) {
+    MergeMap[0] = 0;      // We now contain an outgoing edge...
+    for (unsigned i = 1, e = Links.size(); i != e; ++i)
+      Links[0].mergeWith(Links[i]);
+    Links.resize(1);
+  }
+}
+
+/// isNodeCompletelyFolded - Return true if this node has been completely
+/// folded down to something that can never be expanded, effectively losing
+/// all of the field sensitivity that may be present in the node.
+///
+bool DSNode::isNodeCompletelyFolded() const {
+  return getSize() == 1 && TypeEntries.size() == 1 &&
+         TypeEntries[0].Ty == Type::VoidTy;
+}
+
 
 
 /// setLink - Set the link at the specified offset to the specified
@@ -142,6 +150,108 @@ void DSNode::addEdgeTo(unsigned Offset, const DSNodeHandle &NH) {
   } else {                             // No merging to perform...
     setLink(Offset, NH);               // Just force a link in there...
   }
+}
+
+/// getTypeRec - This method returns the specified type record if it exists.
+/// If it does not yet exist, the method checks to see whether or not the
+/// request would result in an untrackable state.  If adding it would cause
+/// untrackable state, we foldNodeCompletely the node and return the void
+/// record, otherwise we add an new TypeEntry and return it.
+///
+DSTypeRec &DSNode::getTypeRec(const Type *Ty, unsigned Offset) {
+  // If the node is already collapsed, we can't do anything... bail out early
+  if (isNodeCompletelyFolded()) {
+    assert(TypeEntries.size() == 1 && "Node folded and Entries.size() != 1?");
+    return TypeEntries[0];
+  }
+
+  // First search to see if we already have a record for this...
+  DSTypeRec SearchFor(Ty, Offset);
+
+  std::vector<DSTypeRec>::iterator I;
+  if (TypeEntries.size() < 5) {  // Linear search if we have few entries.
+    I = TypeEntries.begin();
+    while (I != TypeEntries.end() && *I < SearchFor)
+      ++I;
+  } else {
+    I = std::lower_bound(TypeEntries.begin(), TypeEntries.end(), SearchFor);
+  }
+  
+  // At this point, I either points to the right entry or it points to the entry
+  // we are to insert the new entry in front of...
+  //
+  if (I != TypeEntries.end() && *I == SearchFor)
+    return *I;
+  
+  // ASSUME that it's okay to add this type entry.
+  // FIXME: This should check to make sure it's ok.
+  
+  // If the data size is different then our current size, try to resize the node
+  unsigned ReqSize = Ty->isSized() ? TD.getTypeSize(Ty) : 0;
+  if (getSize() < ReqSize) {
+    // If we are trying to make it bigger, and we can grow the node, do so.
+    if (growNode(ReqSize)) {
+      assert(isNodeCompletelyFolded() && "Node isn't folded?");
+      return TypeEntries[0];
+    }
+
+  } else if (getSize() > ReqSize) {
+    // If we are trying to make the node smaller, we don't have to do anything.
+
+  }
+
+  return *TypeEntries.insert(I, SearchFor);
+}
+
+/// growNode - Attempt to grow the node to the specified size.  This may do one
+/// of three things:
+///   1. Grow the node, return false
+///   2. Refuse to grow the node, but maintain a trackable situation, return
+///      false.
+///   3. Be unable to track if node was that size, so collapse the node and
+///      return true.
+///
+bool DSNode::growNode(unsigned ReqSize) {
+  unsigned OldSize = getSize();
+
+  if (0) {
+    // FIXME: DSNode::growNode() doesn't perform correct safety checks yet!
+    
+    foldNodeCompletely();
+    return true;
+  }
+
+  assert(ReqSize > OldSize && "Not growing node!");
+
+  // Resize the merge map to have enough space...
+  MergeMap.resize(ReqSize);
+
+  // Assign unique values to all of the elements of MergeMap
+  if (ReqSize < 128) {
+    // Handle the common case of reasonable size structures...
+    for (unsigned i = OldSize; i != ReqSize; ++i)
+      MergeMap[i] = -1-i;   // Assign -1, -2, -3, ...
+  } else {
+    // It's possible that we have something really big here.  In this case,
+    // divide the object into chunks until it will fit into 128 elements.
+    unsigned Multiple = ReqSize/128;
+    
+    // It's probably an array, and probably some power of two in size.
+    // Because of this, find the biggest power of two that is bigger than
+    // multiple to use as our real Multiple.
+    unsigned RealMultiple = 2;
+    while (RealMultiple <= Multiple) RealMultiple <<= 1;
+    
+    unsigned RealBound = ReqSize/RealMultiple;
+    assert(RealBound <= 128 && "Math didn't work out right");
+    
+    // Now go through and assign indexes that are between -1 and -128
+    // inclusive
+    //
+    for (unsigned i = OldSize; i != ReqSize; ++i)
+      MergeMap[i] = -1-(i % RealBound);   // Assign -1, -2, -3...
+  }
+  return false;
 }
 
 /// mergeMappedValues - This is the higher level form of rewriteMergeMap.  It is
@@ -236,10 +346,20 @@ void MergeSortedVectors(vector<T> &Dest, const vector<T> &Src) {
 void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   DSNode *N = NH.getNode();
   if (N == 0 || (N == this && NH.getOffset() == Offset))
-      return;  // Noop
+    return;  // Noop
 
   assert(NH.getNode() != this &&
          "Cannot merge two portions of the same node yet!");
+
+  // If we are merging a node with a completely folded node, then both nodes are
+  // now completely folded.
+  //
+  if (isNodeCompletelyFolded()) {
+    NH.getNode()->foldNodeCompletely();
+  } else if (NH.getNode()->isNodeCompletelyFolded()) {
+    foldNodeCompletely();
+    Offset = 0;
+  }
 
   // If both nodes are not at offset 0, make sure that we are merging the node
   // at an later offset into the node with the zero offset.
@@ -322,26 +442,17 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   NodeType |= N->NodeType;
   N->NodeType = 0;   // N is now a dead node.
 
-  // If this merging into node has more than just void nodes in it, merge!
-  assert(!N->TypeEntries.empty() && "TypeEntries is empty for a node?");
-  if (N->TypeEntries.size() != 1 || N->TypeEntries[0].Ty != Type::VoidTy) {
-    // If the current node just has a Void entry in it, remove it.
-    if (TypeEntries.size() == 1 && TypeEntries[0].Ty == Type::VoidTy)
-      TypeEntries.clear();
-
-    // Adjust all of the type entries we are merging in by the offset... and add
-    // them to the TypeEntries list.
-    //
-    if (NOffset != 0) {  // This case is common enough to optimize for
-      // Offset all of the TypeEntries in N with their new offset
-      for (unsigned i = 0, e = N->TypeEntries.size(); i != e; ++i)
-        N->TypeEntries[i].Offset += NOffset;
-    }
-
-    MergeSortedVectors(TypeEntries, N->TypeEntries);
-
-    N->TypeEntries.clear();
+  // Adjust all of the type entries we are merging in by the offset...
+  //
+  if (NOffset != 0) {  // This case is common enough to optimize for
+    // Offset all of the TypeEntries in N with their new offset
+    for (unsigned i = 0, e = N->TypeEntries.size(); i != e; ++i)
+      N->TypeEntries[i].Offset += NOffset;
   }
+
+  // ... now add them to the TypeEntries list.
+  MergeSortedVectors(TypeEntries, N->TypeEntries);
+  N->TypeEntries.clear();   // N is dead, no type-entries need exist
 
   // Merge the globals list...
   if (!N->Globals.empty()) {
@@ -408,6 +519,7 @@ static void CopyFunctionCallsList(const vector<DSCallSite>& fromCalls,
 
 /// remapLinks - Change all of the Links in the current node according to the
 /// specified mapping.
+///
 void DSNode::remapLinks(std::map<const DSNode*, DSNode*> &OldNodeMap) {
   for (unsigned i = 0, e = Links.size(); i != e; ++i) 
     Links[i].setNode(OldNodeMap[Links[i].getNode()]);

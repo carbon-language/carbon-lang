@@ -83,6 +83,30 @@ public:
 
 
 //===----------------------------------------------------------------------===//
+/// DSTypeRec - This structure is used to represent a single type that is held
+/// in a DSNode.
+///
+struct DSTypeRec {
+  const Type *Ty;                 // The type itself...
+  unsigned Offset;                // The offset in the node
+  bool isArray;                   // Have we accessed an array of elements?
+  
+  DSTypeRec() : Ty(0), Offset(0), isArray(false) {}
+  DSTypeRec(const Type *T, unsigned O) : Ty(T), Offset(O), isArray(false) {}
+  
+  bool operator<(const DSTypeRec &TR) const {
+    // Sort first by offset!
+    return Offset < TR.Offset || (Offset == TR.Offset && Ty < TR.Ty);
+  }
+  bool operator==(const DSTypeRec &TR) const {
+    return Ty == TR.Ty && Offset == TR.Offset;
+  }
+  bool operator!=(const DSTypeRec &TR) const { return !operator==(TR); }
+};
+
+
+
+//===----------------------------------------------------------------------===//
 /// DSNode - Data structure node class
 ///
 /// This class represents an untyped memory object of Size bytes.  It keeps
@@ -121,31 +145,11 @@ class DSNode {
   ///
   std::vector<DSNodeHandle*> Referrers;
 
-  /// TypeRec - This structure is used to represent a single type that is held
-  /// in a DSNode.
-  struct TypeRec {
-    const Type *Ty;                 // The type itself...
-    unsigned Offset;                // The offset in the node
-    bool isArray;                   // Have we accessed an array of elements?
-
-    TypeRec() : Ty(0), Offset(0), isArray(false) {}
-    TypeRec(const Type *T, unsigned O) : Ty(T), Offset(O), isArray(false) {}
-
-    bool operator<(const TypeRec &TR) const {
-      // Sort first by offset!
-      return Offset < TR.Offset || (Offset == TR.Offset && Ty < TR.Ty);
-    }
-    bool operator==(const TypeRec &TR) const {
-      return Ty == TR.Ty && Offset == TR.Offset;
-    }
-    bool operator!=(const TypeRec &TR) const { return !operator==(TR); }
-  };
-
   /// TypeEntries - As part of the merging process of this algorithm, nodes of
   /// different types can be represented by this single DSNode.  This vector is
   /// kept sorted.
   ///
-  std::vector<TypeRec> TypeEntries;
+  std::vector<DSTypeRec> TypeEntries;
 
   /// Globals - The list of global values that are merged into this node.
   ///
@@ -195,7 +199,7 @@ public:
   unsigned getSize() const { return MergeMap.size(); }
 
   // getTypeEntries - Return the possible types and their offsets in this object
-  const std::vector<TypeRec> &getTypeEntries() const { return TypeEntries; }
+  const std::vector<DSTypeRec> &getTypeEntries() const { return TypeEntries; }
 
   /// getReferrers - Return a list of the pointers to this node...
   ///
@@ -229,10 +233,34 @@ public:
     return 0;
   }
 
+  /// getMergeMapLabel - Return the merge map entry specified, to allow printing
+  /// out of DSNodes nicely for DOT graphs.
+  ///
   int getMergeMapLabel(unsigned i) const {
     assert(i < MergeMap.size() && "MergeMap index out of range!");
     return MergeMap[i];
   }
+
+  /// getTypeRec - This method returns the specified type record if it exists.
+  /// If it does not yet exist, the method checks to see whether or not the
+  /// request would result in an untrackable state.  If adding it would cause
+  /// untrackable state, we foldNodeCompletely the node and return the void
+  /// record, otherwise we add an new TypeEntry and return it.
+  ///
+  DSTypeRec &getTypeRec(const Type *Ty, unsigned Offset);
+
+  /// foldNodeCompletely - If we determine that this node has some funny
+  /// behavior happening to it that we cannot represent, we fold it down to a
+  /// single, completely pessimistic, node.  This node is represented as a
+  /// single byte with a single TypeEntry of "void".
+  ///
+  void foldNodeCompletely();
+
+  /// isNodeCompletelyFolded - Return true if this node has been completely
+  /// folded down to something that can never be expanded, effectively losing
+  /// all of the field sensitivity that may be present in the node.
+  ///
+  bool isNodeCompletelyFolded() const;
 
   /// setLink - Set the link at the specified offset to the specified
   /// NodeHandle, replacing what was there.  It is uncommon to use this method,
@@ -305,6 +333,16 @@ private:
   /// rewriting the map entries.
   ///
   void mergeMappedValues(signed char V1, signed char V2);
+
+  /// growNode - Attempt to grow the node to the specified size.  This may do
+  /// one of three things:
+  ///   1. Grow the node, return false
+  ///   2. Refuse to grow the node, but maintain a trackable situation, return
+  ///      false.
+  ///   3. Be unable to track if node was that size, so collapse the node and
+  ///      return true.
+  ///
+  bool growNode(unsigned RequestedSize);
 };
 
 

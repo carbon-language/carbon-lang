@@ -61,6 +61,7 @@ namespace {
     vector<DSNode*> &Nodes;
     DSNodeHandle &RetNode;               // Node that gets returned...
     map<Value*, DSNodeHandle> &ValueMap;
+    map<GlobalValue*, DSNodeHandle> GlobalScalarValueMap;
     vector<DSCallSite> &FunctionCalls;
 
   public:
@@ -112,7 +113,7 @@ namespace {
     /// value.  This either returns the already existing node, or creates a new
     /// one and adds it to the graph, if none exists.
     ///
-    DSNodeHandle getValueNode(Value &V);
+    DSNodeHandle &getValueNode(Value &V);
 
     /// getValueDest - Return the DSNode that the actual value points to.  This
     /// is basically the same thing as: getLink(getValueNode(V), 0)
@@ -184,25 +185,37 @@ DSNodeHandle &GraphBuilder::getGlobalNode(GlobalValue &V) {
 // This either returns the already existing node, or creates a new one and adds
 // it to the graph, if none exists.
 //
-DSNodeHandle GraphBuilder::getValueNode(Value &V) {
+DSNodeHandle &GraphBuilder::getValueNode(Value &V) {
   assert(isPointerType(V.getType()) && "Should only use pointer scalars!");
 
-  DSNodeHandle &NH = ValueMap[&V];
-  if (NH.getNode()) return NH;     // Already have a node?  Just return it...
-  
-  // Otherwise we need to create a new scalar node...
-  DSNode *N = createNode(DSNode::ScalarNode, V.getType());
-
-  // If this is a global value, create the global pointed to.
   if (GlobalValue *GV = dyn_cast<GlobalValue>(&V)) {
-    N->addEdgeTo(0, getGlobalNode(*GV));
-    return DSNodeHandle(N, 0);
-  } else {
+    // The GlobalScalarValueMap keeps track of the scalar nodes that point to
+    // global values...  The ValueMap contains pointers to the global memory
+    // object itself, not the scalar constant that points to the memory.
+    //
+    DSNodeHandle &NH = GlobalScalarValueMap[GV];
+    if (NH.getNode()) return NH;
+
+    // If this is a global value, create the global pointed to.
+    DSNode *N = createNode(DSNode::ScalarNode, V.getType());
     NH.setOffset(0);
     NH.setNode(N);
-  }
 
-  return NH;
+    N->addEdgeTo(0, getGlobalNode(*GV));
+    return NH;
+    
+  } else {
+    DSNodeHandle &NH = ValueMap[&V];
+    if (NH.getNode())
+      return NH;     // Already have a node?  Just return it...
+  
+    // Otherwise we need to create a new scalar node...
+    DSNode *N = createNode(DSNode::ScalarNode, V.getType());
+
+    NH.setOffset(0);
+    NH.setNode(N);
+    return NH;
+  }
 }
 
 /// getValueDest - Return the DSNode that the actual value points to.  This
@@ -220,27 +233,25 @@ DSNodeHandle &GraphBuilder::getValueDest(Value &V) {
 /// type should be linked to if we need to create a new node.
 ///
 DSNodeHandle &GraphBuilder::getLink(const DSNodeHandle &node,
-                                    unsigned LinkNo, const Type *FieldTy) {
+                                    unsigned LinkNo,
+                                    const Type *FieldTy  // FIXME: eliminate
+                                    ) {
   DSNodeHandle &Node = const_cast<DSNodeHandle&>(node);
-
   DSNodeHandle *Link = Node.getLink(LinkNo);
   if (Link) return *Link;
-  
-  // If the link hasn't been created yet, make and return a new shadow node of
-  // the appropriate type for FieldTy...
-  //
 
+#if 0    // FIXME: delete
   // If we are indexing with a typed pointer, then the thing we are pointing
   // to is of the pointed type.  If we are pointing to it with an integer
   // (because of cast to an integer), we represent it with a void type.
   //
-  const Type *ReqTy;
+  const Type *ReqTy = 0;
   if (const PointerType *Ptr = dyn_cast<PointerType>(FieldTy))
     ReqTy = Ptr->getElementType();
-  else
-    ReqTy = Type::VoidTy;
+#endif
   
-  DSNode *N = createNode(DSNode::ShadowNode, ReqTy);
+  // If the link hasn't been created yet, make and return a new shadow node
+  DSNode *N = createNode(DSNode::ShadowNode, 0);
   Node.setLink(LinkNo, N);
   return *Node.getLink(LinkNo);
 }
@@ -254,8 +265,7 @@ DSNodeHandle &GraphBuilder::getLink(const DSNodeHandle &node,
 /// object, pointing the scalar to it.
 ///
 void GraphBuilder::handleAlloc(AllocationInst &AI, DSNode::NodeTy NodeType) {
-  //DSNode *New = createNode(NodeType, Type::VoidTy);
-  DSNode *New = createNode(NodeType, AI.getAllocatedType());
+  DSNode *New = createNode(NodeType, 0);
 
   // Make the scalar point to the new node...
   getValueNode(AI).addEdgeTo(New);
@@ -277,18 +287,50 @@ void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   DSNodeHandle Value = getValueDest(*GEP.getOperand(0));
 
   unsigned Offset = 0;
-  const Type *CurTy = GEP.getOperand(0)->getType();
+  const PointerType *PTy = cast<PointerType>(GEP.getOperand(0)->getType());
+  const Type *CurTy = PTy->getElementType();
+  DSTypeRec &TopTypeRec =
+    Value.getNode()->getTypeRec(PTy->getElementType(), Value.getOffset());
 
-  for (unsigned i = 1, e = GEP.getNumOperands(); i != e; ++i)
+  // If the node had to be folded... exit quickly
+  if (TopTypeRec.Ty == Type::VoidTy) {
+    getValueNode(GEP).addEdgeTo(Value);  // GEP result points to folded node
+    return;
+  }
+
+  // Handle the pointer index specially...
+  if (GEP.getNumOperands() > 1 &&
+      GEP.getOperand(1) != ConstantSInt::getNullValue(Type::LongTy)) {
+
+    // If we already know this is an array being accessed, don't do anything...
+    if (!TopTypeRec.isArray) {
+      TopTypeRec.isArray = true;
+
+      // If we are treating some inner field pointer as an array, fold the node
+      // up because we cannot handle it right.  This can come because of
+      // something like this:  &((&Pt->X)[1]) == &Pt->Y
+      //
+      if (Value.getOffset()) {
+        // Value is now the pointer we want to GEP to be...
+        Value.getNode()->foldNodeCompletely();
+        getValueNode(GEP).addEdgeTo(Value);  // GEP result points to folded node
+        return;
+      } else {
+        // This is a pointer to the first byte of the node.  Make sure that we
+        // are pointing to the outter most type in the node.
+        // FIXME: We need to check one more case here...
+      }
+    }
+  }
+
+  // All of these subscripts are indexing INTO the elements we have...
+  for (unsigned i = 2, e = GEP.getNumOperands(); i < e; ++i)
     if (GEP.getOperand(i)->getType() == Type::LongTy) {
       // Get the type indexing into...
       const SequentialType *STy = cast<SequentialType>(CurTy);
       CurTy = STy->getElementType();
       if (ConstantSInt *CS = dyn_cast<ConstantSInt>(GEP.getOperand(i))) {
-        if (isa<PointerType>(STy))
-          std::cerr << "Pointer indexing not handled yet!\n";
-        else 
-          Offset += CS->getValue()*TD.getTypeSize(CurTy);
+        Offset += CS->getValue()*TD.getTypeSize(CurTy);
       } else {
         // Variable index into a node.  We must merge all of the elements of the
         // sequential type here.
@@ -326,6 +368,9 @@ void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 void GraphBuilder::visitLoadInst(LoadInst &LI) {
   DSNodeHandle &Ptr = getValueDest(*LI.getOperand(0));
   Ptr.getNode()->NodeType |= DSNode::Read;
+
+  // Ensure a typerecord exists...
+  Ptr.getNode()->getTypeRec(LI.getType(), Ptr.getOffset());
   
   if (isPointerType(LI.getType()))
     getValueNode(LI).addEdgeTo(getLink(Ptr, 0, LI.getType()));
@@ -334,9 +379,13 @@ void GraphBuilder::visitLoadInst(LoadInst &LI) {
 void GraphBuilder::visitStoreInst(StoreInst &SI) {
   DSNodeHandle &Dest = getValueDest(*SI.getOperand(1));
   Dest.getNode()->NodeType |= DSNode::Modified;
+  const Type *StoredTy = SI.getOperand(0)->getType();
+
+  // Ensure a typerecord exists...
+  Dest.getNode()->getTypeRec(StoredTy, Dest.getOffset());
 
   // Avoid adding edges from null, or processing non-"pointer" stores
-  if (isPointerType(SI.getOperand(0)->getType()) &&
+  if (isPointerType(StoredTy) &&
       !isa<ConstantPointerNull>(SI.getOperand(0))) {
     Dest.addEdgeTo(getValueDest(*SI.getOperand(0)));
   }
