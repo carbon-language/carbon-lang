@@ -151,14 +151,7 @@ bool BugDriver::run() {
 
   // Make sure the reference output file gets deleted on exit from this
   // function, if appropriate.
-  struct Remover {
-    bool DeleteIt; const std::string &Filename;
-    Remover(bool deleteIt, const std::string &filename)
-      : DeleteIt(deleteIt), Filename(filename) {}
-    ~Remover() {
-      if (DeleteIt) removeFile(Filename);
-    }
-  } RemoverInstance(CreatedOutput, ReferenceOutputFile);
+  FileRemover RemoverInstance(CreatedOutput, ReferenceOutputFile);
 
   // Diff the output of the raw program against the reference output.  If it
   // matches, then we have a miscompilation bug.
