@@ -217,6 +217,7 @@ class F3_15<bits<2> opVal, bits<6> op3Val,
 
   set op  = opVal;
   set op3 = op3Val;
+  set Name = name;
   set Inst{26-25} = cc;
   set Inst{18-14} = rs1;
   set Inst{13-5}  = opfVal;
