@@ -14,8 +14,8 @@
 
 <ol>
   <li><a href="#introduction">Introduction and Warning</a></li>
-  <li><a href="#instruction">Adding a new instruction</a></li>
   <li><a href="#intrinsic">Adding a new intrinsic function</a></li>
+  <li><a href="#instruction">Adding a new instruction</a></li>
   <li><a href="#type">Adding a new type</a>
   <ol>
     <li><a href="#fund_type">Adding a new fundamental type</a></li>
@@ -71,6 +71,45 @@ href="http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVM-dev</a>.</p>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
+  <a name="intrinsic">Adding a new intrinsic function</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Adding a new intrinsic function to LLVM is much easier than adding a new
+instruction.  Almost all extensions to LLVM should start as an intrinsic
+function and then be turned into an instruction if warranted.</p>
+
+<ol>
+<li><tt>llvm/docs/LangRef.html</tt>:
+    Document the intrinsic.  Decide whether it is code generator specific and
+    what the restrictions are.  Talk to other people about it so that you are
+    sure it's a good idea.</li>
+
+<li><tt>llvm/include/llvm/Intrinsics.h</tt>:
+    add an enum in the <tt>llvm::Intrinsic</tt> namespace</li>
+
+<li><tt>llvm/lib/VMCore/IntrinsicLowering.cpp</tt>:
+    implement the lowering for this intrinsic</li>
+
+<li><tt>llvm/lib/VMCore/Verifier.cpp</tt>:
+    Add code to check the invariants of the intrinsic are respected.</li>
+
+<li><tt>llvm/lib/VMCore/Function.cpp (<tt>Function::getIntrinsicID()</tt>)</tt>:
+    Identify the new intrinsic function, returning the enum for the intrinsic
+    that you added.</li>
+<li>Test your intrinsic</li>
+<li><tt>llvm/test/Regression/*</tt>: add your test cases to the test suite.</li>
+</ol>
+
+<p>If this intrinsic requires code generator support (ie, it cannot be lowered).
+You should also add support to the code generator in question.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
   <a name="instruction">Adding a new instruction</a>
 </div>
 <!-- *********************************************************************** -->
@@ -116,31 +155,6 @@ to understand this new instruction.</p>
 
 </div>
 
-<!-- *********************************************************************** -->
-<div class="doc_section">
-  <a name="intrinsic">Adding a new intrinsic function</a>
-</div>
-<!-- *********************************************************************** -->
-
-<div class="doc_text">
-
-<ol>
-
-<li><tt>llvm/include/llvm/Intrinsics.h</tt>:
-    add an enum in the <tt>llvm::Intrinsic</tt> namespace</li>
-
-<li><tt>llvm/lib/VMCore/IntrinsicLowering.cpp</tt>:
-    implement the lowering for this intrinsic</li>
-
-<li><tt>llvm/lib/VMCore/Verifier.cpp</tt>:
-    handle the new intrinsic</li>
-
-<li><tt>llvm/lib/VMCore/Function.cpp</tt>:
-    handle the new intrinsic</li>
-
-</ol>
-
-</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
