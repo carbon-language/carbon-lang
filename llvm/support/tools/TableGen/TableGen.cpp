@@ -1,7 +1,9 @@
 #include "Record.h"
 #include "Support/CommandLine.h"
+#include "Support/Signals.h"
 #include "CodeEmitterGen.h"
 #include <algorithm>
+#include <fstream>
 
 enum ActionType {
   PrintRecords,
@@ -25,6 +27,10 @@ namespace {
 
   cl::opt<std::string>
   Class("class", cl::desc("Print Enum list for this class"));
+
+ cl::opt<std::string>
+ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"),
+                cl::init("-"));
 }
 
 
@@ -374,13 +380,26 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
   ParseFile();
 
+  std::ostream *Out = &std::cout;
+  if (OutputFilename != "-") {
+    Out = new std::ofstream(OutputFilename.c_str());
+
+    if (!Out->good()) {
+      std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+      return 1;
+    }
+
+    // Make sure the file gets removed if *gasp* tablegen crashes...
+    RemoveFileOnSignal(OutputFilename);
+  }
+
   switch (Action) {
   case Parse: ParseMachineCode(); break;
   case GenEmitter:
-    CodeEmitterGen(Records).createEmitter(std::cout);
+    CodeEmitterGen(Records).createEmitter(*Out);
     break;
   case PrintRecords:
-    std::cout << Records;           // No argument, dump all contents
+    *Out << Records;           // No argument, dump all contents
     break;
   case PrintEnums:
     Record *R = Records.getClass(Class);
@@ -393,11 +412,13 @@ int main(int argc, char **argv) {
     for (std::map<std::string, Record*>::const_iterator I = Defs.begin(),
 	   E = Defs.end(); I != E; ++I) {
       if (I->second->isSubClassOf(R)) {
-	std::cout << I->first << ", ";
+	*Out << I->first << ", ";
       }
     }
-    std::cout << "\n";
+    *Out << "\n";
     break;
   }
+
+  if (Out != &std::cout) delete Out;
   return 0;
 }
