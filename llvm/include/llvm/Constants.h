@@ -280,7 +280,6 @@ class ConstantArray : public Constant {
   ConstantArray(const ConstantArray &);      // DO NOT IMPLEMENT
 protected:
   ConstantArray(const ArrayType *T, const std::vector<Constant*> &Val);
-  void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantArray *get(const ArrayType *T, const std::vector<Constant*> &);
@@ -336,7 +335,6 @@ class ConstantStruct : public Constant {
   ConstantStruct(const ConstantStruct &);      // DO NOT IMPLEMENT
 protected:
   ConstantStruct(const StructType *T, const std::vector<Constant*> &Val);
-  void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantStruct *get(const StructType *T,
@@ -409,7 +407,6 @@ class ConstantPointerNull : public ConstantPointer {
   ConstantPointerNull(const ConstantPointerNull &);      // DO NOT IMPLEMENT
 protected:
   ConstantPointerNull(const PointerType *T) : ConstantPointer(T) {}
-  void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 
 public:
 
@@ -494,7 +491,6 @@ protected:
   // GEP instruction creation ctor
   ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
                const Type *DestTy);
-  void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
   
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that
