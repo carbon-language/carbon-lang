@@ -1,4 +1,4 @@
-//===-- Mangler.h - Self-contained c/asm llvm name mangler ------*- C++ -*-===//
+//===-- Mangler.h - Self-contained llvm name mangler ------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,25 +7,21 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// Unified name mangler for CWriter and assembly backends.
+// Unified name mangler for various backends.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_SUPPORT_MANGLER_H
 #define LLVM_SUPPORT_MANGLER_H
 
-namespace llvm {
-
-class Value;
-class Module;
-
-} // End llvm namespace
-
 #include <map>
 #include <set>
 #include <string>
 
 namespace llvm {
+class Value;
+class Module;
+class GlobalValue;
 
 class Mangler {
   /// This keeps track of which global values have had their names
@@ -40,6 +36,8 @@ class Mangler {
   ValueMap Memo;
 
   unsigned Count;
+
+  void InsertName(GlobalValue *GV, std::map<std::string, GlobalValue*> &Names);
 public:
 
   // Mangler ctor - if AddUnderscorePrefix is true, then all public global
