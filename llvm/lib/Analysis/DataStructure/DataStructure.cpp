@@ -1375,6 +1375,30 @@ DSCallSite DSGraph::getCallSiteForArguments(Function &F) const {
   return DSCallSite(CallSite(), getReturnNodeFor(F), &F, Args);
 }
 
+/// getDSCallSiteForCallSite - Given an LLVM CallSite object that is live in
+/// the context of this graph, return the DSCallSite for it.
+DSCallSite DSGraph::getDSCallSiteForCallSite(CallSite CS) const {
+  DSNodeHandle RetVal;
+  Instruction *I = CS.getInstruction();
+  if (isPointerType(I->getType()))
+    RetVal = getNodeForValue(I);
+
+  std::vector<DSNodeHandle> Args;
+  Args.reserve(CS.arg_end()-CS.arg_begin());
+
+  // Calculate the arguments vector...
+  for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end(); I != E; ++I)
+    if (isPointerType((*I)->getType()))
+      Args.push_back(getNodeForValue(*I));
+
+  // Add a new function call entry...
+  if (Function *F = CS.getCalledFunction())
+    return DSCallSite(CS, RetVal, F, Args);
+  else
+    return DSCallSite(CS, RetVal,
+                      getNodeForValue(CS.getCalledValue()).getNode(), Args);
+}
+
 
 
 // markIncompleteNodes - Mark the specified node as having contents that are not
