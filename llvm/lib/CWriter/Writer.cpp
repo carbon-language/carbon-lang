@@ -535,6 +535,7 @@ void CWriter::printModule(Module *M) {
 
       << "\n\n/* Support for floating point constants */\n"
       << "typedef unsigned long long ConstantDoubleTy;\n"
+      << "typedef unsigned int        ConstantFloatTy;\n"
 
       << "\n\n/* Global Declarations */\n";
 
@@ -772,9 +773,17 @@ void CWriter::printFunction(Function *F) {
         double Val = FPC->getValue();
         
         FPConstantMap[FPC] = FPCounter;  // Number the FP constants
-        Out << "  const ConstantDoubleTy FloatConstant" << FPCounter++
-            << " = 0x" << std::hex << *(unsigned long long*)&Val << std::dec
-            << ";    /* " << Val << " */\n";
+
+        if (FPC->getType() == Type::DoubleTy)
+          Out << "  const ConstantDoubleTy FloatConstant" << FPCounter++
+              << " = 0x" << std::hex << *(unsigned long long*)&Val << std::dec
+              << ";    /* " << Val << " */\n";
+        else if (FPC->getType() == Type::FloatTy)
+          Out << "  const ConstantFloatTy FloatConstant" << FPCounter++
+              << " = 0x" << std::hex << *(unsigned*)&Val << std::dec
+              << ";    /* " << Val << " */\n";
+        else
+          assert(0 && "Unknown float type!");
       }
 
   Out << "\n";
