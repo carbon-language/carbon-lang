@@ -3,7 +3,6 @@
 
 * Need to implement getelementptr, load, and store for indirection through
   arrays and multidim arrays
-* Indirect calls should use the icall instruction
 * Rewrite the llvm parser/lexer in http://www.antlr.org when time permits.
   They actually do C++.  Imagine that.
 * Need to implement constant propogation of cast instructions!
@@ -17,17 +16,6 @@
   order.  Then enable TestOptimizer.sh to diff -sccp output.  Currently it 
   doesn't work because the diff fails because of ordering of the constant 
   pool. :(
-* Should provide "castTerminator, castPHI, etc" functions in Instruction, and
-  similar functions in other classes, that effectively do dynamic casts.  This
-  would allow code like this:
-    if (I->isTerminator()) {
-      TerminatorInst *TI = (TerminatorInst*)I;
-      ...
-    }
-  to be written as:
-    if (TerminatorInst *TI = I->castTerminatorInst()) {
-       ...
-    }
 * Think about whether edge split SSA form would be useful to do.
 * Inlining should attempt to give block names the same name in the inlined 
   method (using SymbolTable::getUniqueName)
@@ -51,7 +39,6 @@
 * Implement a header file that can read either assembly or bytecode, implement 
   a writer that can output either based on what is read with this reader..
 * Implement the following derived types:
-  * pointer                          int *
   * "packed format", like this:    [4 x sbyte]: Packed SIMD datatype
 * Maybe 'tailcall' also?
 * Include a method level bytecode block that defines a mapping between values 
