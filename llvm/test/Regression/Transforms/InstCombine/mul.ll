@@ -45,3 +45,8 @@ ulong %test8(ulong %i) {
 	%j = mul ulong %i, 18446744073709551615 ; tmp = sub 0, %i
 	ret ulong %j
 }
+
+uint %test9(uint %i) {
+	%j = mul uint %i, 4294967295    ; %j = sub 0, %i
+	ret uint %j
+}
