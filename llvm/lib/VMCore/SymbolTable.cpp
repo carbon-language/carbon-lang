@@ -80,6 +80,7 @@ void SymbolTable::remove(Value *N) {
 // removeEntry - Remove a value from the symbol table...
 //
 Value *SymbolTable::removeEntry(iterator Plane, type_iterator Entry) {
+  if (InternallyInconsistent) return 0;
   assert(Plane != super::end() &&
          Entry != Plane->second.end() && "Invalid entry to remove!");
 
@@ -206,37 +207,32 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
         // The only thing we are allowing for now is two method prototypes being
         // folded into one.
         //
-        if (Method *ExistM = dyn_cast<Method>(TI->second))
-          if (Method *NewM = dyn_cast<Method>(V.second))
-            if (ExistM->isExternal() && NewM->isExternal()) {
-              // Ok we have two external methods.  Make all uses of the new one
-              // use the old one...
-              //
-              NewM->replaceAllUsesWith(ExistM);
+        Method *ExistM = dyn_cast<Method>(TI->second);
+        Method *NewM = dyn_cast<Method>(V.second);
 
-              // Now we just convert it to an unnamed method... which won't get
-              // added to our symbol table.  The problem is that if we call
-              // setName on the method that it will try to remove itself from
-              // the symbol table and die... because it's not in the symtab
-              // right now.  To fix this, we temporarily insert it (by setting
-              // TI's entry to the old value.  Then after it is removed, we
-              // restore ExistM into the symbol table.
-              //
-              if (NewM->getType() == NewType) {
-                TI->second = NewM;     // Add newM to the symtab
+        if (ExistM && NewM && ExistM->isExternal() && NewM->isExternal()) {
+          // Ok we have two external methods.  Make all uses of the new one
+          // use the old one...
+          //
+          NewM->replaceAllUsesWith(ExistM);
+          
+          // Now we just convert it to an unnamed method... which won't get
+          // added to our symbol table.  The problem is that if we call
+          // setName on the method that it will try to remove itself from
+          // the symbol table and die... because it's not in the symtab
+          // right now.  To fix this, we have an internally consistent flag
+          // that turns remove into a noop.  Thus the name will get null'd
+          // out, but the symbol table won't get upset.
+          //
+          InternallyInconsistent = true;
 
-                // Remove newM from the symtab
-                NewM->setName("");
-
-                // Readd ExistM to the symbol table....
-                NewPlane.insert(make_pair(V.first, ExistM));
-              } else {
-                NewM->setName("");
-              }
-              continue;
-            }
-        assert(0 && "Two ploanes folded together with overlapping "
-               "value names!");
+          // Remove newM from the symtab
+          NewM->setName("");
+          InternallyInconsistent = false;
+        } else {
+          assert(0 && "Two ploanes folded together with overlapping "
+                 "value names!");
+        }
       } else {
         insertEntry(V.first, NewType, V.second);
 

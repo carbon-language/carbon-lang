@@ -24,13 +24,8 @@
 #include "llvm/ConstPoolVals.h"
 #endif
 
-class Value;
 class Type;
 
-// TODO: Change this back to vector<map<const string, Value *> >
-// Make the vector be a data member, and base it on UniqueID's
-// That should be much more efficient!
-//
 class SymbolTable : public AbstractTypeUser,
 		    public map<const Type *, map<const string, Value *> > {
 public:
@@ -47,7 +42,10 @@ public:
   typedef VarMap::iterator type_iterator;
   typedef VarMap::const_iterator type_const_iterator;
 
-  inline SymbolTable(SymbolTable *P = 0) { ParentSymTab = P; }
+  inline SymbolTable(SymbolTable *P = 0) {
+    ParentSymTab = P;
+    InternallyInconsistent = false;
+  }
   ~SymbolTable();
 
   SymbolTable *getParentSymTab() { return ParentSymTab; }
@@ -106,6 +104,15 @@ public:
   void dump() const;  // Debug method, print out symbol table
 
 private:
+  // InternallyInconsistent - There are times when the symbol table is
+  // internally inconsistent with the rest of the program.  In this one case, a
+  // value exists with a Name, and it's not in the symbol table.  When we call
+  // V->setName(""), it tries to remove itself from the symbol table and dies.
+  // We know this is happening, and so if the flag InternallyInconsistent is
+  // set, removal from the symbol table is a noop.
+  //
+  bool InternallyInconsistent;
+
   inline super::value_type operator[](const Type *Ty) {
     assert(0 && "Should not use this operator to access symbol table!");
     return super::value_type();
