@@ -1255,12 +1255,11 @@ Constant *ConstantExpr::getZeroExtend(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::getSizeOf(const Type *Ty) {
-  // sizeof is implemented as: (unsigned) gep (Ty*)null, 1
+  // sizeof is implemented as: (ulong) gep (Ty*)null, 1
   return getCast(
-    getGetElementPtr(
-      getNullValue(PointerType::get(Ty)),
-      std::vector<Constant*>(1, ConstantInt::get(Type::UIntTy, 1))),
-    Type::UIntTy);
+    getGetElementPtr(getNullValue(PointerType::get(Ty)),
+                 std::vector<Constant*>(1, ConstantInt::get(Type::UIntTy, 1))),
+    Type::ULongTy);
 }
 
 Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,

@@ -558,7 +558,7 @@ public:
   }
 
   /// getSizeOf constant expr - computes the size of a type in a target
-  /// independent way (Note: the return type is UInt but the object is not
+  /// independent way (Note: the return type is ULong but the object is not
   /// necessarily a ConstantUInt).
   ///
   static Constant *getSizeOf(const Type *Ty);
