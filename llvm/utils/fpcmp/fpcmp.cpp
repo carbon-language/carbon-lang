@@ -15,8 +15,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include <iostream>
-#include <cmath>
-
 using namespace llvm;
 
 namespace {
