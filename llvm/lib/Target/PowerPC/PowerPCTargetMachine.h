@@ -50,6 +50,9 @@ public:
                                           MachineCodeEmitter &MCE);
   
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
+
+  static unsigned getModuleMatchQuality(const Module &M);
+  static unsigned getJITMatchQuality();
 };
 
 } // end namespace llvm

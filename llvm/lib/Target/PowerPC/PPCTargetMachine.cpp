@@ -28,6 +28,26 @@ namespace {
   RegisterTarget<PowerPCTargetMachine> X("powerpc", "  PowerPC (experimental)");
 }
 
+unsigned PowerPCTargetMachine::getJITMatchQuality() {
+#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
+  return 10;
+#else
+  return 0;
+#endif
+}
+  
+unsigned PowerPCTargetMachine::getModuleMatchQuality(const Module &M) {
+  if (M.getEndianness()  == Module::BigEndian &&
+      M.getPointerSize() == Module::Pointer32)
+    return 10;                                   // Direct match
+  else if (M.getEndianness() != Module::AnyEndianness ||
+           M.getPointerSize() != Module::AnyPointerSize)
+    return 0;                                    // Match for some other target
+
+  return getJITMatchQuality()/2;
+}
+
+
 /// PowerPCTargetMachine ctor - Create an ILP32 architecture model
 ///
 /// FIXME: Should double alignment be 8 bytes?  Then we get a PtrAl != DoubleAl
