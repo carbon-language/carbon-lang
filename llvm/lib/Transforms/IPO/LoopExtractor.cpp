@@ -36,9 +36,10 @@ namespace {
     virtual bool runOnFunction(Function &F);
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequiredID(BreakCriticalEdgesID);
+      AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<DominatorSet>();
       AU.addRequired<LoopInfo>();
-      AU.addRequiredID(LoopSimplifyID);
     }
   };
 
