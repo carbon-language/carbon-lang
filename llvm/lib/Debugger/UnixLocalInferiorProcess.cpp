@@ -34,6 +34,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/ADT/StringExtras.h"
+#include "FDHandle.h"
 #include <cerrno>
 #include <csignal>
 #include <unistd.h>        // Unix-specific debugger support
