@@ -40,7 +40,7 @@ Value::~Value() {
                 << **I << "\n";
   }
 #endif
-  assert(Uses.begin() == Uses.end());
+  assert(Uses.begin() == Uses.end() &&"Uses remain when a value is destroyed!");
 
   // There should be no uses of this object anymore, remove it.
   LeakDetector::removeGarbageObject(this);
