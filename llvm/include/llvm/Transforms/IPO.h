@@ -6,10 +6,11 @@
 #ifndef LLVM_TRANSFORMS_CLEANUPGCCOUTPUT_H
 #define LLVM_TRANSFORMS_CLEANUPGCCOUTPUT_H
 
-#include "llvm/Pass.h"
+#include "llvm/Analysis/FindUsedTypes.h"
 
 class CleanupGCCOutput : public Pass {
   Method *Malloc, *Free;  // Pointers to external declarations, or null if none
+  FindUsedTypes FUT;      // Use FUT to eliminate type names that are never used
 public:
 
   inline CleanupGCCOutput() : Malloc(0), Free(0) {}
@@ -31,6 +32,9 @@ public:
   // doPerMethodWork - This method simplifies the specified method hopefully.
   //
   bool doPerMethodWork(Method *M);
+
+  // doPassFinalization - Strip out type names that are unused by the program
+  bool doPassFinalization(Module *M);
 private:
   bool doOneCleanupPass(Method *M);
 };

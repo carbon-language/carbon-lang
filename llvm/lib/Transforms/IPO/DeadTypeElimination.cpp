@@ -5,9 +5,8 @@
 // things to try to clean it up:
 //
 // * Eliminate names for GCC types that we know can't be needed by the user.
-// - Eliminate names for types that are unused in the entire translation unit
-//    but only if they do not name a structure type!
-// - Replace calls to 'sbyte *%malloc(uint)' and 'void %free(sbyte *)' with
+// * Eliminate names for types that are unused in the entire translation unit
+// * Replace calls to 'sbyte *%malloc(uint)' and 'void %free(sbyte *)' with
 //   malloc and free instructions.
 //
 // Note:  This code produces dead declarations, it is a good idea to run DCE
@@ -206,6 +205,10 @@ static inline bool ShouldNukeSymtabEntry(const pair<string, Value*> &E) {
   // Nuke all names for primitive types!
   if (cast<Type>(E.second)->isPrimitiveType()) return true;
 
+  // Nuke all pointers to primitive types as well...
+  if (const PointerType *PT = dyn_cast<PointerType>(E.second))
+    if (PT->getValueType()->isPrimitiveType()) return true;
+
   // The only types that could contain .'s in the program are things generated
   // by GCC itself, including "complex.float" and friends.  Nuke them too.
   if (E.first.find('.') != string::npos) return true;
@@ -219,6 +222,8 @@ static inline bool ShouldNukeSymtabEntry(const pair<string, Value*> &E) {
 //
 bool CleanupGCCOutput::doPassInitialization(Module *M) {
   bool Changed = false;
+
+  FUT.doPassInitialization(M);
 
   if (PtrArrSByte == 0) {
     PtrArrSByte = PointerType::get(ArrayType::get(Type::SByteTy));
@@ -547,5 +552,40 @@ static bool fixLocalProblems(Method *M) {
 bool CleanupGCCOutput::doPerMethodWork(Method *M) {
   bool Changed = fixLocalProblems(M);
   while (doOneCleanupPass(M)) Changed = true;
+
+  FUT.doPerMethodWork(M);
+  return Changed;
+}
+
+bool CleanupGCCOutput::doPassFinalization(Module *M) {
+  bool Changed = false;
+  FUT.doPassFinalization(M);
+
+  if (M->hasSymbolTable()) {
+    SymbolTable *ST = M->getSymbolTable();
+    const set<const Type *> &UsedTypes = FUT.getTypes();
+
+    // Check the symbol table for superfluous type entries that aren't used in
+    // the program
+    //
+    // Grab the 'type' plane of the module symbol...
+    SymbolTable::iterator STI = ST->find(Type::TypeTy);
+    if (STI != ST->end()) {
+      // Loop over all entries in the type plane...
+      SymbolTable::VarMap &Plane = STI->second;
+      for (SymbolTable::VarMap::iterator PI = Plane.begin(); PI != Plane.end();)
+        if (!UsedTypes.count(cast<Type>(PI->second))) {
+#if MAP_IS_NOT_BRAINDEAD
+          PI = Plane.erase(PI);     // STD C++ Map should support this!
+#else
+          Plane.erase(PI);          // Alas, GCC 2.95.3 doesn't  *SIGH*
+          PI = Plane.begin();       // N^2 algorithms are fun.  :(
+#endif
+          Changed = true;
+        } else {
+          ++PI;
+        }
+    }
+  }
   return Changed;
 }
