@@ -9,15 +9,7 @@
 #include "llvm/Constants.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
-#include <iostream>
 #include <algorithm>
-
-using std::vector;
-using std::string;
-using std::map;
-using std::swap;
-using std::make_pair;
-using std::cerr;
 
 // DEBUG_MERGE_TYPES - Enable this #define to see how and when derived types are
 // created and later destroyed, all in an effort to make sure that there is only
@@ -26,20 +18,19 @@ using std::cerr;
 //#define DEBUG_MERGE_TYPES 1
 
 
-
 //===----------------------------------------------------------------------===//
 //                         Type Class Implementation
 //===----------------------------------------------------------------------===//
 
 static unsigned CurUID = 0;
-static vector<const Type *> UIDMappings;
+static std::vector<const Type *> UIDMappings;
 
 void PATypeHolder::dump() const {
-  cerr << "PATypeHolder(" << (void*)this << ")\n";
+  std::cerr << "PATypeHolder(" << (void*)this << ")\n";
 }
 
 
-Type::Type(const string &name, PrimitiveID id)
+Type::Type(const std::string &name, PrimitiveID id)
   : Value(Type::TypeTy, Value::TypeVal) {
   setDescription(name);
   ID = id;
@@ -48,7 +39,7 @@ Type::Type(const string &name, PrimitiveID id)
   UIDMappings.push_back(this);
 }
 
-void Type::setName(const string &Name, SymbolTable *ST) {
+void Type::setName(const std::string &Name, SymbolTable *ST) {
   assert(ST && "Type::setName - Must provide symbol table argument!");
 
   if (Name.size()) ST->insert(Name, this);
@@ -152,7 +143,7 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
 // type.
 //
 struct SignedIntType : public Type {
-  SignedIntType(const string &Name, PrimitiveID id) : Type(Name, id) {}
+  SignedIntType(const std::string &Name, PrimitiveID id) : Type(Name, id) {}
 
   // isSigned - Return whether a numeric type is signed.
   virtual bool isSigned() const { return 1; }
@@ -164,7 +155,7 @@ struct SignedIntType : public Type {
 };
 
 struct UnsignedIntType : public Type {
-  UnsignedIntType(const string &N, PrimitiveID id) : Type(N, id) {}
+  UnsignedIntType(const std::string &N, PrimitiveID id) : Type(N, id) {}
 
   // isUnsigned - Return whether a numeric type is signed.
   virtual bool isUnsigned() const { return 1; }
@@ -205,7 +196,7 @@ Type *Type::VoidTy   = new            Type("void"  , VoidTyID),
 //===----------------------------------------------------------------------===//
 
 FunctionType::FunctionType(const Type *Result,
-                           const vector<const Type*> &Params, 
+                           const std::vector<const Type*> &Params, 
                            bool IsVarArgs) : DerivedType(FunctionTyID), 
     ResultType(PATypeHandle<Type>(Result, this)),
     isVarArgs(IsVarArgs) {
@@ -216,7 +207,7 @@ FunctionType::FunctionType(const Type *Result,
   setDerivedTypeProperties();
 }
 
-StructType::StructType(const vector<const Type*> &Types)
+StructType::StructType(const std::vector<const Type*> &Types)
   : CompositeType(StructTyID) {
   ETypes.reserve(Types.size());
   for (unsigned i = 0; i < Types.size(); ++i) {
@@ -240,7 +231,7 @@ OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
   setAbstract(true);
   setDescription("opaque"+utostr(getUniqueID()));
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "Derived new type: " << getDescription() << endl;
+  std::cerr << "Derived new type: " << getDescription() << "\n";
 #endif
 }
 
@@ -257,8 +248,9 @@ OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
 // some whacko opaque types, but in most cases, it will do some simple stuff
 // when it hits non-abstract types that aren't recursive.
 //
-static string getTypeProps(const Type *Ty, vector<const Type *> &TypeStack,
-			   bool &isAbstract, bool &isRecursive) {
+static std::string getTypeProps(const Type *Ty,
+                                std::vector<const Type *> &TypeStack,
+                                bool &isAbstract, bool &isRecursive) {
   if (!Ty->isAbstract() && !Ty->isRecursive() && // Base case for the recursion
       Ty->getDescription().size()) {
     return Ty->getDescription();                 // Primitive = leaf type
@@ -278,7 +270,7 @@ static string getTypeProps(const Type *Ty, vector<const Type *> &TypeStack,
       isRecursive = true;                         // We know we are recursive
       return "\\" + utostr(CurSize-Slot);         // Here's the upreference
     } else {                      // Recursive case: abstract derived type...
-      string Result;
+      std::string Result;
       TypeStack.push_back(Ty);    // Add us to the stack..
       
       switch (Ty->getPrimitiveID()) {
@@ -345,7 +337,7 @@ static string getTypeProps(const Type *Ty, vector<const Type *> &TypeStack,
 // getTypeProps function does all the dirty work.
 //
 void DerivedType::setDerivedTypeProperties() {
-  vector<const Type *> TypeStack;
+  std::vector<const Type *> TypeStack;
   bool isAbstract = false, isRecursive = false;
   
   setDescription(getTypeProps(this, TypeStack, isAbstract, isRecursive));
@@ -365,20 +357,20 @@ void DerivedType::setDerivedTypeProperties() {
 // that assumes that two graphs are the same until proven otherwise.
 //
 static bool TypesEqual(const Type *Ty, const Type *Ty2,
-		       map<const Type *, const Type *> &EqTypes) {
+		       std::map<const Type *, const Type *> &EqTypes) {
   if (Ty == Ty2) return true;
   if (Ty->getPrimitiveID() != Ty2->getPrimitiveID()) return false;
   if (Ty->isPrimitiveType()) return true;
   if (isa<OpaqueType>(Ty))
     return false;  // Two nonequal opaque types are never equal
 
-  map<const Type*, const Type*>::iterator It = EqTypes.find(Ty);
+  std::map<const Type*, const Type*>::iterator It = EqTypes.find(Ty);
   if (It != EqTypes.end())
     return It->second == Ty2;    // Looping back on a type, check for equality
 
   // Otherwise, add the mapping to the table to make sure we don't get
   // recursion on the types...
-  EqTypes.insert(make_pair(Ty, Ty2));
+  EqTypes.insert(std::make_pair(Ty, Ty2));
 
   // Iterate over the types and make sure the the contents are equivalent...
   Type::subtype_iterator I  = Ty ->subtype_begin(), IE  = Ty ->subtype_end();
@@ -401,7 +393,7 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
 }
 
 static bool TypesEqual(const Type *Ty, const Type *Ty2) {
-  map<const Type *, const Type *> EqTypes;
+  std::map<const Type *, const Type *> EqTypes;
   return TypesEqual(Ty, Ty2, EqTypes);
 }
 
@@ -417,19 +409,20 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2) {
 //
 template<class ValType, class TypeClass>
 class TypeMap : public AbstractTypeUser {
-  typedef map<ValType, PATypeHandle<TypeClass> > MapTy;
+  typedef std::map<ValType, PATypeHandle<TypeClass> > MapTy;
   MapTy Map;
 public:
   ~TypeMap() { print("ON EXIT"); }
 
   inline TypeClass *get(const ValType &V) {
-    typename map<ValType, PATypeHandle<TypeClass> >::iterator I = Map.find(V);
+    typename std::map<ValType, PATypeHandle<TypeClass> >::iterator I
+      = Map.find(V);
     // TODO: FIXME: When Types are not CONST.
     return (I != Map.end()) ? (TypeClass*)I->second.get() : 0;
   }
 
   inline void add(const ValType &V, TypeClass *T) {
-    Map.insert(make_pair(V, PATypeHandle<TypeClass>(T, this)));
+    Map.insert(std::make_pair(V, PATypeHandle<TypeClass>(T, this)));
     print("add");
   }
 
@@ -450,9 +443,9 @@ public:
   //
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
 #ifdef DEBUG_MERGE_TYPES
-    cerr << "Removing Old type from Tab: " << (void*)OldTy << ", "
-	 << OldTy->getDescription() << "  replacement == " << (void*)NewTy
-	 << ", " << NewTy->getDescription() << endl;
+    std::cerr << "Removing Old type from Tab: " << (void*)OldTy << ", "
+              << OldTy->getDescription() << "  replacement == " << (void*)NewTy
+              << ", " << NewTy->getDescription() << "\n";
 #endif
     for (typename MapTy::iterator I = Map.begin(), E = Map.end(); I != E; ++I)
       if (I->second == OldTy) {
@@ -471,11 +464,11 @@ public:
 
   void print(const char *Arg) const {
 #ifdef DEBUG_MERGE_TYPES
-    cerr << "TypeMap<>::" << Arg << " table contents:\n";
+    std::cerr << "TypeMap<>::" << Arg << " table contents:\n";
     unsigned i = 0;
     for (MapTy::const_iterator I = Map.begin(), E = Map.end(); I != E; ++I)
-      cerr << " " << (++i) << ". " << I->second << " " 
-	   << I->second->getDescription() << endl;
+      std::cerr << " " << (++i) << ". " << I->second << " " 
+                << I->second->getDescription() << "\n";
 #endif
   }
 
@@ -522,7 +515,7 @@ protected:
   }
 
   void dump() const {
-    cerr << "ValTypeBase instance!\n";
+    std::cerr << "ValTypeBase instance!\n";
   }
 };
 
@@ -536,10 +529,10 @@ protected:
 //
 class FunctionValType : public ValTypeBase<FunctionValType, FunctionType> {
   PATypeHandle<Type> RetTy;
-  vector<PATypeHandle<Type> > ArgTypes;
+  std::vector<PATypeHandle<Type> > ArgTypes;
   bool isVarArg;
 public:
-  FunctionValType(const Type *ret, const vector<const Type*> &args,
+  FunctionValType(const Type *ret, const std::vector<const Type*> &args,
 		bool IVA, TypeMap<FunctionValType, FunctionType> &Tab)
     : ValTypeBase<FunctionValType, FunctionType>(Tab), RetTy(ret, this),
       isVarArg(IVA) {
@@ -586,7 +579,7 @@ static TypeMap<FunctionValType, FunctionType> FunctionTypes;
 
 // FunctionType::get - The factory function for the FunctionType class...
 FunctionType *FunctionType::get(const Type *ReturnType, 
-                                const vector<const Type*> &Params,
+                                const std::vector<const Type*> &Params,
                                 bool isVarArg) {
   FunctionValType VT(ReturnType, Params, isVarArg, FunctionTypes);
   FunctionType *MT = FunctionTypes.get(VT);
@@ -595,7 +588,7 @@ FunctionType *FunctionType::get(const Type *ReturnType,
   FunctionTypes.add(VT, MT = new FunctionType(ReturnType, Params, isVarArg));
 
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "Derived new type: " << MT << endl;
+  std::cerr << "Derived new type: " << MT << "\n";
 #endif
   return MT;
 }
@@ -648,7 +641,7 @@ ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
   ArrayTypes.add(AVT, AT = new ArrayType(ElementType, NumElements));
 
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "Derived new type: " << AT->getDescription() << endl;
+  std::cerr << "Derived new type: " << AT->getDescription() << "\n";
 #endif
   return AT;
 }
@@ -660,9 +653,9 @@ ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
 // StructValType - Define a class to hold the key that goes into the TypeMap
 //
 class StructValType : public ValTypeBase<StructValType, StructType> {
-  vector<PATypeHandle<Type> > ElTypes;
+  std::vector<PATypeHandle<Type> > ElTypes;
 public:
-  StructValType(const vector<const Type*> &args,
+  StructValType(const std::vector<const Type*> &args,
 		TypeMap<StructValType, StructType> &Tab)
     : ValTypeBase<StructValType, StructType>(Tab) {
     ElTypes.reserve(args.size());
@@ -699,7 +692,7 @@ public:
 
 static TypeMap<StructValType, StructType> StructTypes;
 
-StructType *StructType::get(const vector<const Type*> &ETypes) {
+StructType *StructType::get(const std::vector<const Type*> &ETypes) {
   StructValType STV(ETypes, StructTypes);
   StructType *ST = StructTypes.get(STV);
   if (ST) return ST;
@@ -708,7 +701,7 @@ StructType *StructType::get(const vector<const Type*> &ETypes) {
   StructTypes.add(STV, ST = new StructType(ETypes));
 
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "Derived new type: " << ST->getDescription() << endl;
+  std::cerr << "Derived new type: " << ST->getDescription() << "\n";
 #endif
   return ST;
 }
@@ -761,7 +754,7 @@ PointerType *PointerType::get(const Type *ValueType) {
   PointerTypes.add(PVT, PT = new PointerType(ValueType));
 
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "Derived new type: " << PT->getDescription() << endl;
+  std::cerr << "Derived new type: " << PT->getDescription() << "\n";
 #endif
   return PT;
 }
@@ -785,8 +778,9 @@ void DerivedType::addAbstractTypeUser(AbstractTypeUser *U) const {
   assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
 
 #if DEBUG_MERGE_TYPES
-  cerr << "  addAbstractTypeUser[" << (void*)this << ", " << getDescription() 
-       << "][" << AbstractTypeUsers.size() << "] User = " << U << endl;
+  std::cerr << "  addAbstractTypeUser[" << (void*)this << ", "
+            << getDescription() << "][" << AbstractTypeUsers.size()
+            << "] User = " << U << "\n";
 #endif
   AbstractTypeUsers.push_back(U);
 }
@@ -812,14 +806,14 @@ void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
   AbstractTypeUsers.erase(AbstractTypeUsers.begin()+i);
       
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "  remAbstractTypeUser[" << (void*)this << ", "
-       << getDescription() << "][" << i << "] User = " << U << endl;
+  std::cerr << "  remAbstractTypeUser[" << (void*)this << ", "
+            << getDescription() << "][" << i << "] User = " << U << "\n";
 #endif
     
   if (AbstractTypeUsers.empty() && isAbstract()) {
 #ifdef DEBUG_MERGE_TYPES
-    cerr << "DELETEing unused abstract type: <" << getDescription()
-         << ">[" << (void*)this << "]" << endl;
+    std::cerr << "DELETEing unused abstract type: <" << getDescription()
+              << ">[" << (void*)this << "]" << "\n";
 #endif
     delete this;                  // No users of this abstract type!
   }
@@ -836,9 +830,9 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   assert(this != NewType && "Can't refine to myself!");
 
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "REFINING abstract type [" << (void*)this << " " << getDescription()
-       << "] to [" << (void*)NewType << " " << NewType->getDescription()
-       << "]!\n";
+  std::cerr << "REFINING abstract type [" << (void*)this << " "
+            << getDescription() << "] to [" << (void*)NewType << " "
+            << NewType->getDescription() << "]!\n";
 #endif
 
 
@@ -870,14 +864,14 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
 
     if (User == this) {
       // Move self use to the start of the list.  Increment NSU.
-      swap(AbstractTypeUsers.back(), AbstractTypeUsers[NumSelfUses++]);
+      std::swap(AbstractTypeUsers.back(), AbstractTypeUsers[NumSelfUses++]);
     } else {
       unsigned OldSize = AbstractTypeUsers.size();
 #ifdef DEBUG_MERGE_TYPES
-      cerr << " REFINING user " << OldSize-1 << "[" << (void*)User
-           << "] of abstract type ["
-	   << (void*)this << " " << getDescription() << "] to [" 
-	   << (void*)NewTy.get() << " " << NewTy->getDescription() << "]!\n";
+      std::cerr << " REFINING user " << OldSize-1 << "[" << (void*)User
+                << "] of abstract type [" << (void*)this << " "
+                << getDescription() << "] to [" << (void*)NewTy.get() << " "
+                << NewTy->getDescription() << "]!\n";
 #endif
       User->refineAbstractType(this, NewTy);
 
@@ -885,11 +879,11 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
       if (AbstractTypeUsers.size() == OldSize) {
         User->refineAbstractType(this, NewTy);
         if (AbstractTypeUsers.back() != User)
-          cerr << "User changed!\n";
-        cerr << "Top of user list is:\n";
+          std::cerr << "User changed!\n";
+        std::cerr << "Top of user list is:\n";
         AbstractTypeUsers.back()->dump();
         
-        cerr <<"\nOld User=\n";
+        std::cerr <<"\nOld User=\n";
         User->dump();
       }
 #endif
@@ -917,7 +911,8 @@ void DerivedType::typeIsRefined() {
   ++isRefining;
 
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "typeIsREFINED type: " << (void*)this <<" "<<getDescription() << "\n";
+  std::cerr << "typeIsREFINED type: " << (void*)this <<" "<<getDescription()
+            << "\n";
 #endif
 
   // In this loop we have to be very careful not to get into infinite loops and
@@ -933,7 +928,7 @@ void DerivedType::typeIsRefined() {
   // should be small, we use a vector instead of a full featured set to keep
   // track of what users we have notified so far.
   //
-  vector<AbstractTypeUser*> Refined;
+  std::vector<AbstractTypeUser*> Refined;
   while (1) {
     unsigned i;
     for (i = AbstractTypeUsers.size(); i != 0; --i)
@@ -947,8 +942,9 @@ void DerivedType::typeIsRefined() {
     Refined.push_back(ATU);  // Keep track of which users we have refined!
 
 #ifdef DEBUG_MERGE_TYPES
-    cerr << " typeIsREFINED user " << i << "[" << ATU << "] of abstract type ["
-	 << (void*)this << " " << getDescription() << "]\n";
+    std::cerr << " typeIsREFINED user " << i << "[" << ATU
+              << "] of abstract type [" << (void*)this << " "
+              << getDescription() << "]\n";
 #endif
     ATU->refineAbstractType(this, this);
   }
@@ -960,9 +956,9 @@ void DerivedType::typeIsRefined() {
     for (unsigned i = 0; i < AbstractTypeUsers.size(); ++i) {
       if (AbstractTypeUsers[i] != this) {
         // Debugging hook
-        cerr << "FOUND FAILURE\nUser: ";
+        std::cerr << "FOUND FAILURE\nUser: ";
         AbstractTypeUsers[i]->dump();
-        cerr << "\nCatch:\n";
+        std::cerr << "\nCatch:\n";
         AbstractTypeUsers[i]->refineAbstractType(this, this);
         assert(0 && "Type became concrete,"
                " but it still has abstract type users hanging around!");
@@ -981,9 +977,9 @@ void DerivedType::typeIsRefined() {
 void FunctionType::refineAbstractType(const DerivedType *OldType,
                                       const Type *NewType) {
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "FunctionTy::refineAbstractTy(" << (void*)OldType << "[" 
-       << OldType->getDescription() << "], " << (void*)NewType << " [" 
-       << NewType->getDescription() << "])\n";
+  std::cerr << "FunctionTy::refineAbstractTy(" << (void*)OldType << "[" 
+            << OldType->getDescription() << "], " << (void*)NewType << " [" 
+            << NewType->getDescription() << "])\n";
 #endif
   // Find the type element we are refining...
   if (ResultType == OldType) {
@@ -1013,9 +1009,9 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
 void ArrayType::refineAbstractType(const DerivedType *OldType,
 				   const Type *NewType) {
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "ArrayTy::refineAbstractTy(" << (void*)OldType << "[" 
-       << OldType->getDescription() << "], " << (void*)NewType << " [" 
-       << NewType->getDescription() << "])\n";
+  std::cerr << "ArrayTy::refineAbstractTy(" << (void*)OldType << "[" 
+            << OldType->getDescription() << "], " << (void*)NewType << " [" 
+            << NewType->getDescription() << "])\n";
 #endif
 
   assert(getElementType() == OldType);
@@ -1039,9 +1035,9 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
 void StructType::refineAbstractType(const DerivedType *OldType,
 				    const Type *NewType) {
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "StructTy::refineAbstractTy(" << (void*)OldType << "[" 
-       << OldType->getDescription() << "], " << (void*)NewType << " [" 
-       << NewType->getDescription() << "])\n";
+  std::cerr << "StructTy::refineAbstractTy(" << (void*)OldType << "[" 
+            << OldType->getDescription() << "], " << (void*)NewType << " [" 
+            << NewType->getDescription() << "])\n";
 #endif
   for (int i = ETypes.size()-1; i >= 0; --i)
     if (ETypes[i] == OldType) {
@@ -1067,9 +1063,9 @@ void StructType::refineAbstractType(const DerivedType *OldType,
 void PointerType::refineAbstractType(const DerivedType *OldType,
 				     const Type *NewType) {
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "PointerTy::refineAbstractTy(" << (void*)OldType << "[" 
-       << OldType->getDescription() << "], " << (void*)NewType << " [" 
-       << NewType->getDescription() << "])\n";
+  std::cerr << "PointerTy::refineAbstractTy(" << (void*)OldType << "[" 
+            << OldType->getDescription() << "], " << (void*)NewType << " [" 
+            << NewType->getDescription() << "])\n";
 #endif
 
   assert(ElementType == OldType);
