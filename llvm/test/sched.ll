@@ -1,9 +1,8 @@
 implementation
 declare int "printf"(sbyte*, int, float)
 
-
-int "testissue"(int %i, float %x, float %y)
-begin
+int %testissue(int %i, float %x, float %y) {
+	br label %bb1
 bb1:
 	%x1 = mul float %x, %y			;; x1
 	%y1 = mul float %y, 0.75		;; y1
@@ -24,7 +23,6 @@ bb1:
 	br bool %b, label %bb1, label %bb2
 
 bb2:
-	%Msg = cast ulong 0 to sbyte *
-	call int %printf(sbyte* %Msg, int %m1, float %z3)
+	call int %printf(sbyte* null, int %m1, float %z3)
 	ret int 0
 end
