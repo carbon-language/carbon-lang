@@ -21,9 +21,6 @@
    */
 #undef HAVE_ALLOCA_H
 
-/* Define to 1 if you have the <assert.h> header file. */
-#undef HAVE_ASSERT_H
-
 /* define if the compiler has bidirectional iterator */
 #undef HAVE_BI_ITERATOR
 
@@ -32,9 +29,6 @@
 
 /* Define if dlopen() is available on this platform. */
 #undef HAVE_DLOPEN
-
-/* Define to 1 if you have the <errno.h> header file. */
-#undef HAVE_ERRNO_H
 
 /* define if the compiler has ext/slist */
 #undef HAVE_EXT_SLIST
@@ -95,9 +89,6 @@
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
 
-/* Define to 1 if you have the <math.h> header file. */
-#undef HAVE_MATH_H
-
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
@@ -121,9 +112,6 @@
    system's thread library. */
 #undef HAVE_PTHREAD_MUTEX_LOCK
 
-/* Define to 1 if you have the <signal.h> header file. */
-#undef HAVE_SIGNAL_H
-
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -141,32 +129,14 @@
 /* define if the compiler has STL iterators */
 #undef HAVE_STD_ITERATOR
 
-/* Define to 1 if you have the `strcspn' function. */
-#undef HAVE_STRCSPN
-
 /* Define to 1 if you have the `strdup' function. */
 #undef HAVE_STRDUP
-
-/* Define to 1 if you have the `strerror' function. */
-#undef HAVE_STRERROR
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
-
-/* Define to 1 if you have the `strspn' function. */
-#undef HAVE_STRSPN
-
-/* Define to 1 if you have the `strstr' function. */
-#undef HAVE_STRSTR
-
-/* Define to 1 if you have the `strtod' function. */
-#undef HAVE_STRTOD
-
-/* Define to 1 if you have the `strtol' function. */
-#undef HAVE_STRTOL
 
 /* Define to 1 if you have the `strtoll' function. */
 #undef HAVE_STRTOLL
@@ -236,13 +206,6 @@
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
 #undef YYTEXT_POINTER
-
-/* Define to empty if `const' does not conform to ANSI C. */
-#undef const
-
-/* Define as `__inline' if that's what the C compiler calls it, or to nothing
-   if it is not supported. */
-#undef inline
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
