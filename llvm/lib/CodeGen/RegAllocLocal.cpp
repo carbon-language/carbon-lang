@@ -683,7 +683,6 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
 
   // initialize the virtual->physical register map to have a 'null'
   // mapping for all virtual registers
-  Virt2PhysRegMap.clear();
   Virt2PhysRegMap.grow(MF->getSSARegMap()->getLastVirtReg());
 
   // Loop over all of the basic blocks, eliminating virtual register references
