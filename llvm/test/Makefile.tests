@@ -5,6 +5,14 @@
 
 ## NOTE: This is preliminary and will change in the future
 
+# If the user specified a TEST= option on the command line, we do not want to do
+# the default testing type.  Instead, we change the default target to be the
+# test:: target.
+#
+ifdef TEST
+test::
+endif
+
 include ${LEVEL}/Makefile.common
 
 # Specify ENABLE_STATS on the command line to enable -stats output from gccas
