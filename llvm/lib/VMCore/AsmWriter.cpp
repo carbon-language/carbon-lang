@@ -64,6 +64,29 @@ static SlotCalculator *createSlotCalculator(const Value *V) {
   return 0;
 }
 
+// getLLVMName - Turn the specified string into an 'LLVM name', which is either
+// prefixed with % (if the string only contains simple characters) or is
+// surrounded with ""'s (if it has special chars in it).
+static std::string getLLVMName(const std::string &Name) {
+  assert(!Name.empty() && "Cannot get empty name!");
+
+  // First character cannot start with a number...
+  if (Name[0] >= '0' && Name[0] <= '9')
+    return "\"" + Name + "\"";
+
+  // Scan to see if we have any characters that are not on the "white list"
+  for (unsigned i = 0, e = Name.size(); i != e; ++i) {
+    char C = Name[i];
+    assert(C != '"' && "Illegal character in LLVM value name!");
+    if ((C < 'a' || C > 'z') && (C < 'A' || C > 'Z') && (C < '0' || C > '9') &&
+        C != '-' && C != '.' && C != '_')
+      return "\"" + Name + "\"";
+  }
+  
+  // If we get here, then the identifier is legal to use as a "VarID".
+  return "%"+Name;
+}
+
 
 // If the module has a symbol table, take all global types and stuff their
 // names into the TypeNames map.
@@ -82,7 +105,7 @@ static void fillTypeNameTable(const Module *M,
       const Type *Ty = cast<Type>(I->second);
       if (!isa<PointerType>(Ty) ||
           !cast<PointerType>(Ty)->getElementType()->isPrimitiveType())
-        TypeNames.insert(std::make_pair(Ty, "%"+I->first));
+        TypeNames.insert(std::make_pair(Ty, getLLVMName(I->first)));
     }
   }
 }
@@ -332,7 +355,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
   } else if (const ConstantPointerRef *PR = dyn_cast<ConstantPointerRef>(CV)) {
     const GlobalValue *V = PR->getValue();
     if (V->hasName()) {
-      Out << "%" << V->getName();
+      Out << getLLVMName(V->getName());
     } else if (Table) {
       int Slot = Table->getValSlot(V);
       if (Slot >= 0)
@@ -375,7 +398,7 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
                                    SlotCalculator *Table) {
   Out << " ";
   if (PrintName && V->hasName()) {
-    Out << "%" << V->getName();
+    Out << getLLVMName(V->getName());
   } else {
     if (const Constant *CV = dyn_cast<Constant>(V)) {
       WriteConstantInt(Out, CV, PrintName, TypeTable, Table);
@@ -547,7 +570,7 @@ void AssemblyWriter::printModule(const Module *M) {
 }
 
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
-  if (GV->hasName()) Out << "%" << GV->getName() << " = ";
+  if (GV->hasName()) Out << getLLVMName(GV->getName()) << " = ";
 
   if (!GV->hasInitializer()) 
     Out << "external ";
@@ -583,7 +606,7 @@ void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
       if (const Constant *CPV = dyn_cast<Constant>(V)) {
 	printConstant(CPV);
       } else if (const Type *Ty = dyn_cast<Type>(V)) {
-	Out << "\t%" << I->first << " = type ";
+	Out << "\t" << getLLVMName(I->first) << " = type ";
 
         // Make sure we print out at least one level of the type structure, so
         // that we do not get %FILE = type %FILE
@@ -602,7 +625,7 @@ void AssemblyWriter::printConstant(const Constant *CPV) {
   if (!CPV->hasName()) return;
 
   // Print out name...
-  Out << "\t%" << CPV->getName() << " =";
+  Out << "\t" << getLLVMName(CPV->getName()) << " =";
 
   // Write the value out now...
   writeOperand(CPV, true, false);
@@ -627,7 +650,7 @@ void AssemblyWriter::printFunction(const Function *F) {
     case GlobalValue::ExternalLinkage: break;
     }
 
-  printType(F->getReturnType()) << " %" << F->getName() << "(";
+  printType(F->getReturnType()) << " " << getLLVMName(F->getName()) << "(";
   Table.incorporateFunction(F);
 
   // Loop over the arguments, printing them...
@@ -670,7 +693,7 @@ void AssemblyWriter::printArgument(const Argument *Arg) {
   
   // Output name, if available...
   if (Arg->hasName())
-    Out << " %" << Arg->getName();
+    Out << " " << getLLVMName(Arg->getName());
   else if (Table.getValSlot(Arg) < 0)
     Out << "<badref>";
 }
@@ -736,7 +759,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
   // Print out name if it exists...
   if (I.hasName())
-    Out << "%" << I.getName() << " = ";
+    Out << getLLVMName(I.getName()) << " = ";
 
   // Print out the opcode...
   Out << I.getOpcodeName();
