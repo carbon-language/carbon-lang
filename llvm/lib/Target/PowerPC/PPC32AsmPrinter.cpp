@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "Support/CommandLine.h"
@@ -82,6 +83,17 @@ namespace {
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool LoadAddrOp = false);
     void printImmOp(const MachineOperand &MO, unsigned ArgType);
+
+    void printOperand(const MachineInstr *MI, unsigned OpNo, MVT::ValueType VT){
+      const MachineOperand &MO = MI->getOperand(OpNo);
+      if (MO.getType() == MachineOperand::MO_MachineRegister) {
+        assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
+        O << LowercaseString(TM.getRegisterInfo()->get(MO.getReg()).Name);
+      } else {
+        printOp(MO);
+      }
+    }
+
     void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);    
     bool doInitialization(Module &M);

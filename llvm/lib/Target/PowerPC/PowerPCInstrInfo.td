@@ -15,7 +15,13 @@
 include "PowerPCInstrFormats.td"
 
 let isTerminator = 1, isReturn = 1 in
-	def BLR : XLForm_2_ext<"blr", 19, 16, 20, 31, 1, 0, 0>;
+  def BLR : XLForm_2_ext<"blr", 19, 16, 20, 31, 1, 0, 0>;
+
+class II<dag OL, string asmstr> {
+  dag OperandList = OL;
+  string AsmString = asmstr;
+}
+
 
 // Pseudo-instructions:
 def PHI : Pseudo<"PHI">;          // PHI node...
@@ -121,7 +127,8 @@ def LFSX : XForm_25<"lfsx", 31, 535, 0, 0>;
 def LFD : DForm_8<"lfd", 50, 0, 0>;
 def LFDX : XForm_25<"lfdx", 31, 599, 0, 0>;
 def MFCR : XForm_5<"mfcr", 31, 19, 0, 0>;
-def MFLR : XFXForm_1_ext<"mflr", 31, 399, 8, 0, 0>;
+def MFLR : XFXForm_1_ext<"", 31, 399, 8, 0, 0>,
+                      II<(ops GPRC:$reg), "mflr $reg">;
 def MFCTR : XFXForm_1_ext<"mfctr", 31, 399, 9, 0, 0>;
 def MTLR : XFXForm_7_ext<"mtlr", 31, 467, 8, 0, 0>;
 def MTCTR : XFXForm_7_ext<"mtctr", 31, 467, 9, 0, 0>;
