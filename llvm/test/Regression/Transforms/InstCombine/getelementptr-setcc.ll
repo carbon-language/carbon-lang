@@ -15,3 +15,18 @@ bool %test2(short* %P, int %I) {
     ret bool %C
 }
 
+int %test3(int* %P, int %A, int %B) {
+        %tmp.4 = getelementptr int* %P, int %A          ; <int*> [#uses=1]
+        %tmp.9 = getelementptr int* %P, int %B          ; <int*> [#uses=1]
+        %tmp.10 = seteq int* %tmp.4, %tmp.9             ; <bool> [#uses=1]
+        %tmp.11 = cast bool %tmp.10 to int              ; <int> [#uses=1]
+        ret int %tmp.11
+}
+
+int %test4(int* %P, int %A, int %B) {
+        %tmp.4 = getelementptr int* %P, int %A          ; <int*> [#uses=1]
+        %tmp.6 = seteq int* %tmp.4, %P          ; <bool> [#uses=1]
+        %tmp.7 = cast bool %tmp.6 to int                ; <int> [#uses=1]
+        ret int %tmp.7
+}
+
