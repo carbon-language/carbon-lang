@@ -8,13 +8,11 @@
 # Indicates our relative path to the top of the project's root directory.
 #
 LEVEL = ../../..
-
-#
-# Directories that needs to be built.
-#
 DIRS = 
 
-SAMPLES = fibonacci hello prime
+EXTRA_DIST = fibonacci.st hello.st prime.st goof.st
+
+SAMPLES = fibonacci hello prime goof
 
 LLVMC_EXEC = $(TOOLDIR)/llvmc
 
