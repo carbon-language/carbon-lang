@@ -237,14 +237,14 @@ bool llvm::InlineFunction(CallSite CS) {
     // updated due to new incoming edges, and make the invoke case more
     // symmetric to the call case.
     AfterCallBB = OrigBB->splitBasicBlock(NewBr,
-                                          CalledFunc->getName()+".entry");
+                                          CalledFunc->getName()+".exit");
     
   } else {  // It's a call
     // If this is a call instruction, we need to split the basic block that
     // the call lives in.
     //
     AfterCallBB = OrigBB->splitBasicBlock(TheCall,
-                                          CalledFunc->getName()+".entry");
+                                          CalledFunc->getName()+".exit");
   }
 
   // Change the branch that used to go to AfterCallBB to branch to the first
