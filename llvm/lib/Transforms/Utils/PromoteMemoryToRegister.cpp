@@ -168,6 +168,8 @@ void PromoteMem2Reg::run() {
     //
     while (!I->use_empty()) {
       Instruction *U = cast<Instruction>(I->use_back());
+      if (!U->use_empty())  // If uses remain in dead code segment...
+        U->replaceAllUsesWith(Constant::getNullValue(U->getType()));
       U->getParent()->getInstList().erase(U);
     }
 
