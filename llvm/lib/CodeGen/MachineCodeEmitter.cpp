@@ -140,7 +140,6 @@ namespace {
 
     void emitWord(unsigned W) {
       MCE.emitWord(W);
-      assert(0 && "FilePrinterEmitter::emitWord not implemented!");
     }
     uint64_t getGlobalValueAddress(GlobalValue *V) {
       return MCE.getGlobalValueAddress(V);
