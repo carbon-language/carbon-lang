@@ -568,20 +568,23 @@ static vector<pair<unsigned, OpaqueType *> > UpRefs;
 
 static PATypeHolder<Type> HandleUpRefs(const Type *ty) {
   PATypeHolder<Type> Ty(ty);
-  UR_OUT(UpRefs.size() << " upreferences active!\n");
+  UR_OUT("Type '" << ty->getDescription() << 
+         "' newly formed.  Resolving upreferences.\n" <<
+         UpRefs.size() << " upreferences active!\n");
   for (unsigned i = 0; i < UpRefs.size(); ) {
-    UR_OUT("TypeContains(" << Ty->getDescription() << ", " 
+    UR_OUT("  UR#" << i << " - TypeContains(" << Ty->getDescription() << ", " 
 	   << UpRefs[i].second->getDescription() << ") = " 
-	   << TypeContains(Ty, UpRefs[i].second) << endl);
+	   << (TypeContains(Ty, UpRefs[i].second) ? "true" : "false") << endl);
     if (TypeContains(Ty, UpRefs[i].second)) {
       unsigned Level = --UpRefs[i].first;   // Decrement level of upreference
-      UR_OUT("Uplevel Ref Level = " << Level << endl);
+      UR_OUT("  Uplevel Ref Level = " << Level << endl);
       if (Level == 0) {                     // Upreference should be resolved! 
-	UR_OUT("About to resolve upreference!\n";
+	UR_OUT("  * Resolving upreference for "
+               << UpRefs[i].second->getDescription() << endl;
 	       string OldName = UpRefs[i].second->getDescription());
 	UpRefs[i].second->refineAbstractTypeTo(Ty);
 	UpRefs.erase(UpRefs.begin()+i);     // Remove from upreference list...
-	UR_OUT("Type '" << OldName << "' refined upreference to: "
+	UR_OUT("  * Type '" << OldName << "' refined upreference to: "
 	       << (const void*)Ty << ", " << Ty->getDescription() << endl);
 	continue;
       }
