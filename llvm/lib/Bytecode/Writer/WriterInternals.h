@@ -27,7 +27,7 @@ public:
 
 protected:
   void outputConstants(bool isMethod);
-  void processMethod(const Method *M);
+  void processMethod(const Function *F);
   void processBasicBlock(const BasicBlock *BB);
   void processInstruction(const Instruction *I);
 

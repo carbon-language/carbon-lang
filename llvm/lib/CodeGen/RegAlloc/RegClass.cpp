@@ -6,9 +6,9 @@ using std::cerr;
 // This constructor inits IG. The actual matrix is created by a call to 
 // createInterferenceGraph() above.
 //----------------------------------------------------------------------------
-RegClass::RegClass(const Method *const M, 
-		   const MachineRegClassInfo *const Mrc, 
-		   const ReservedColorListType *const RCL)
+RegClass::RegClass(const Function *M, 
+		   const MachineRegClassInfo *Mrc,
+		   const ReservedColorListType *RCL)
                   :  Meth(M), MRC(Mrc), RegClassID( Mrc->getRegClassID() ),
                      IG(this), IGNodeStack(), ReservedColorList(RCL) {
   if( DEBUG_RA)

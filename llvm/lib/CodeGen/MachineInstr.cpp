@@ -167,7 +167,7 @@ std::ostream &operator<<(std::ostream &os, const MachineOperand &mop)
     case MachineOperand::MO_PCRelativeDisp:
       {
         const Value* opVal = mop.getVRegValue();
-        bool isLabel = isa<Method>(opVal) || isa<BasicBlock>(opVal);
+        bool isLabel = isa<Function>(opVal) || isa<BasicBlock>(opVal);
         os << "%disp(" << (isLabel? "label " : "addr-of-val ");
         if (opVal->hasName())
           os << opVal->getName();
