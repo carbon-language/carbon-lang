@@ -105,12 +105,15 @@ void Interpreter::handleUserInput() {
     case List:       list();            break;
     case StackTrace: printStackTrace(); break;
     case Up: 
-      if (CurFrame > 0) --CurFrame;
+      if (CurFrame > 0) { --CurFrame; printStackFrame(); }
       else cout << "Error: Already at root of stack!\n";
       break;
     case Down:
-      if ((unsigned)CurFrame < ECStack.size()-1) ++CurFrame;
-      else cout << "Error: Already at bottom of stack!\n";
+      if ((unsigned)CurFrame < ECStack.size()-1) {
+        ++CurFrame;
+        printStackFrame();
+      } else
+        cout << "Error: Already at bottom of stack!\n";
       break;
     case Next:       nextInstruction(); break;
     case Step:       stepInstruction(); break;
@@ -277,8 +280,8 @@ bool Interpreter::callMainMethod(const string &Name,
   case 2: {
     PointerType *SPP = PointerType::get(PointerType::get(Type::SByteTy));
     if (MT->getParamTypes()[1] != SPP) {
-      cout << "Second argument of '" << Name << "' should have type: '"
-           << SPP->getDescription() << "'!\n";
+      CW << "Second argument of '" << Name << "' should have type: '"
+         << SPP << "'!\n";
       return true;
     }
 
@@ -305,4 +308,21 @@ bool Interpreter::callMainMethod(const string &Name,
   CurFrame = ECStack.size()-1;
 
   return false;
+}
+
+
+
+void Interpreter::list() {
+  if (ECStack.empty())
+    cout << "Error: No program executing!\n";
+  else
+    CW << ECStack[CurFrame].CurMethod;   // Just print the method out...
+}
+
+void Interpreter::printStackTrace() {
+  if (ECStack.empty()) cout << "No program executing!\n";
+
+  for (unsigned i = 0; i < ECStack.size(); ++i) {
+    printStackFrame((int)i);
+  }
 }

@@ -136,6 +136,11 @@ private:  // Helper functions
   //
   void printCurrentInstruction();
 
+  // printStackFrame - Print information about the specified stack frame, or -1
+  // for the default one.
+  //
+  void printStackFrame(int FrameNo = -1);
+
   // LookupMatchingNames - Search the current method namespace, then the global
   // namespace looking for values that match the specified name.  Return ALL
   // matches to that name.  This is obviously slow, and should only be used for

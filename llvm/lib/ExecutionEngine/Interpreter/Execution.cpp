@@ -27,10 +27,12 @@ CachedWriter CW;     // Object to accellerate printing of LLVM
 
 
 sigjmp_buf SignalRecoverBuffer;
+static bool InInstruction = false;
 
 extern "C" {
 static void SigHandler(int Signal) {
-  siglongjmp(SignalRecoverBuffer, Signal);
+  if (InInstruction)
+    siglongjmp(SignalRecoverBuffer, Signal);
 }
 }
 
@@ -41,6 +43,7 @@ static void initializeSignalHandlers() {
   sigemptyset(&Action.sa_mask);
   sigaction(SIGSEGV, &Action, 0);
   sigaction(SIGBUS, &Action, 0);
+  sigaction(SIGINT, &Action, 0);
   //sigaction(SIGFP, &Action, 0);
 }
 
@@ -193,7 +196,7 @@ static void InitializeMemory(ConstPoolVal *Init, char *Addr) {
     return;
 
   default:
-    cout << "Bad Type: " << Init->getType()->getDescription() << endl;
+    CW << "Bad Type: " << Init->getType() << endl;
     assert(0 && "Unknown constant type to initialize memory with!");
   }
 }
@@ -982,11 +985,17 @@ bool Interpreter::executeInstruction() {
   //
   if (int SigNo = sigsetjmp(SignalRecoverBuffer, 1)) {
     --SF.CurInst;   // Back up to erroring instruction
-    cout << "EXCEPTION OCCURRED [Signal " << _sys_siglistp[SigNo] << "]:\n";
-    printStackTrace();
+    if (SigNo != SIGINT) {
+      cout << "EXCEPTION OCCURRED [Signal " << _sys_siglistp[SigNo] << "]:\n";
+      printStackTrace();
+    } else {
+      cout << "CTRL-C Detected, execution halted.\n";
+    }
+    InInstruction = false;
     return true;
   }
 
+  InInstruction = true;
   if (I->isBinaryOp()) {
     executeBinaryInst(cast<BinaryOperator>(I), SF);
   } else {
@@ -1013,6 +1022,7 @@ bool Interpreter::executeInstruction() {
       cout << "Don't know how to execute this instruction!\n-->" << I;
     }
   }
+  InInstruction = false;
   
   // Reset the current frame location to the top of stack
   CurFrame = ECStack.size()-1;
@@ -1161,7 +1171,6 @@ void Interpreter::print(const string &Name) {
           getOperandValue(PickedVal, ECStack[CurFrame]));
     cout << endl;
   }
-    
 }
 
 void Interpreter::infoValue(const string &Name) {
@@ -1175,22 +1184,25 @@ void Interpreter::infoValue(const string &Name) {
   printOperandInfo(PickedVal, ECStack[CurFrame]);
 }
 
-void Interpreter::list() {
-  if (ECStack.empty())
-    cout << "Error: No program executing!\n";
-  else
-    CW << ECStack[CurFrame].CurMethod;   // Just print the method out...
-}
-
-void Interpreter::printStackTrace() {
-  if (ECStack.empty()) cout << "No program executing!\n";
-
-  for (unsigned i = 0; i < ECStack.size(); ++i) {
-    cout << (((int)i == CurFrame) ? '>' : '-');
-    CW << "#" << i << ". " << ECStack[i].CurMethod->getType() << " \""
-       << ECStack[i].CurMethod->getName() << "\"(";
-    // TODO: Print Args
-    cout << ")" << endl;
-    CW << *ECStack[i].CurInst;
+// printStackFrame - Print information about the specified stack frame, or -1
+// for the default one.
+//
+void Interpreter::printStackFrame(int FrameNo = -1) {
+  if (FrameNo == -1) FrameNo = CurFrame;
+  cout << ((FrameNo == CurFrame) ? '>' : '-');
+  Method *Meth = ECStack[FrameNo].CurMethod;
+  CW << "#" << FrameNo << ". " << (Value*)Meth->getType() << " \""
+     << Meth->getName() << "\"(";
+  
+  Method::ArgumentListType &Args = Meth->getArgumentList();
+  for (unsigned i = 0; i < Args.size(); ++i) {
+    if (i != 0) cout << ", ";
+    CW << (Value*)Args[i] << "=";
+    
+    printValue(Args[i]->getType(), getOperandValue(Args[i], ECStack[FrameNo]));
   }
+
+  cout << ")" << endl;
+  CW << *(ECStack[FrameNo].CurInst-(FrameNo != int(ECStack.size()-1)));
 }
+
