@@ -89,12 +89,11 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-// SCCP Class
 //
-// This class does all of the work of Sparse Conditional Constant Propagation.
-//
-namespace {
-class SCCP : public FunctionPass, public InstVisitor<SCCP> {
+/// SCCPSolver - This class is a general purpose solver for Sparse Conditional
+/// Constant Propagation.
+///
+class SCCPSolver : public InstVisitor<SCCPSolver> {
   std::set<BasicBlock*>     BBExecutable;// The basic blocks that are executable
   hash_map<Value*, InstVal> ValueState;  // The state each value is in...
 
@@ -121,22 +120,31 @@ class SCCP : public FunctionPass, public InstVisitor<SCCP> {
   std::set<Edge> KnownFeasibleEdges;
 public:
 
-  // runOnFunction - Run the Sparse Conditional Constant Propagation algorithm,
-  // and return true if the function was modified.
-  //
-  bool runOnFunction(Function &F);
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesCFG();
+  /// MarkBlockExecutable - This method can be used by clients to mark all of
+  /// the blocks that are known to be intrinsically live in the processed unit.
+  void MarkBlockExecutable(BasicBlock *BB) {
+    DEBUG(std::cerr << "Marking Block Executable: " << BB->getName() << "\n");
+    BBExecutable.insert(BB);   // Basic block is executable!
+    BBWorkList.push_back(BB);  // Add the block to the work list!
   }
 
+  /// Solve - Solve for constants and executable blocks.
+  ///
+  void Solve();
 
-  //===--------------------------------------------------------------------===//
-  // The implementation of this class
-  //
+  /// getExecutableBlocks - Once we have solved for constants, return the set of
+  /// blocks that is known to be executable.
+  std::set<BasicBlock*> &getExecutableBlocks() {
+    return BBExecutable;
+  }
+
+  /// getValueMapping - Once we have solved for constants, return the mapping of
+  /// LLVM values to InstVals.
+  hash_map<Value*, InstVal> &getValueMapping() {
+    return ValueState;
+  }
+
 private:
-  friend struct InstVisitor<SCCP>;        // Allow callbacks from visitor
-
   // markConstant - Make a value be marked as "constant".  If the value
   // is not already a constant, add it to the instruction work list so that 
   // the users of the instruction are updated later.
@@ -158,7 +166,8 @@ private:
   inline void markOverdefined(InstVal &IV, Instruction *I) {
     if (IV.markOverdefined()) {
       DEBUG(std::cerr << "markOverdefined: " << *I);
-      OverdefinedInstWorkList.push_back(I);  // Only instructions go on the work list
+      // Only instructions go on the work list
+      OverdefinedInstWorkList.push_back(I);
     }
   }
   inline void markOverdefined(Instruction *I) {
@@ -206,12 +215,33 @@ private:
       }
 
     } else {
-      DEBUG(std::cerr << "Marking Block Executable: " << Dest->getName()<<"\n");
-      BBExecutable.insert(Dest);   // Basic block is executable!
-      BBWorkList.push_back(Dest);  // Add the block to the work list!
+      MarkBlockExecutable(Dest);
     }
   }
 
+  // getFeasibleSuccessors - Return a vector of booleans to indicate which
+  // successors are reachable from a given terminator instruction.
+  //
+  void getFeasibleSuccessors(TerminatorInst &TI, std::vector<bool> &Succs);
+
+  // isEdgeFeasible - Return true if the control flow edge from the 'From' basic
+  // block to the 'To' basic block is currently feasible...
+  //
+  bool isEdgeFeasible(BasicBlock *From, BasicBlock *To);
+
+  // OperandChangedState - This method is invoked on all of the users of an
+  // instruction that was just changed state somehow....  Based on this
+  // information, we need to update the specified user of this instruction.
+  //
+  void OperandChangedState(User *U) {
+    // Only instructions use other variable values!
+    Instruction &I = cast<Instruction>(*U);
+    if (BBExecutable.count(I.getParent()))   // Inst is executable?
+      visit(I);
+  }
+
+private:
+  friend class InstVisitor<SCCPSolver>;
 
   // visit implementations - Something changed in this instruction... Either an 
   // operand made a transition, or the instruction is newly executable.  Change
@@ -249,149 +279,13 @@ private:
     std::cerr << "SCCP: Don't know how to handle: " << I;
     markOverdefined(&I);   // Just in case
   }
-
-  // getFeasibleSuccessors - Return a vector of booleans to indicate which
-  // successors are reachable from a given terminator instruction.
-  //
-  void getFeasibleSuccessors(TerminatorInst &TI, std::vector<bool> &Succs);
-
-  // isEdgeFeasible - Return true if the control flow edge from the 'From' basic
-  // block to the 'To' basic block is currently feasible...
-  //
-  bool isEdgeFeasible(BasicBlock *From, BasicBlock *To);
-
-  // OperandChangedState - This method is invoked on all of the users of an
-  // instruction that was just changed state somehow....  Based on this
-  // information, we need to update the specified user of this instruction.
-  //
-  void OperandChangedState(User *U) {
-    // Only instructions use other variable values!
-    Instruction &I = cast<Instruction>(*U);
-    if (BBExecutable.count(I.getParent()))   // Inst is executable?
-      visit(I);
-  }
 };
-
-  RegisterOpt<SCCP> X("sccp", "Sparse Conditional Constant Propagation");
-} // end anonymous namespace
-
-
-// createSCCPPass - This is the public interface to this file...
-FunctionPass *llvm::createSCCPPass() {
-  return new SCCP();
-}
-
-
-//===----------------------------------------------------------------------===//
-// SCCP Class Implementation
-
-
-// runOnFunction() - Run the Sparse Conditional Constant Propagation algorithm,
-// and return true if the function was modified.
-//
-bool SCCP::runOnFunction(Function &F) {
-  // Mark the first block of the function as being executable...
-  BBExecutable.insert(F.begin());   // Basic block is executable!
-  BBWorkList.push_back(F.begin());  // Add the block to the work list!
-
-  // Process the work lists until they are empty!
-  while (!BBWorkList.empty() || !InstWorkList.empty() || 
-	 !OverdefinedInstWorkList.empty()) {
-    // Process the instruction work list...
-    while (!OverdefinedInstWorkList.empty()) {
-      Instruction *I = OverdefinedInstWorkList.back();
-      OverdefinedInstWorkList.pop_back();
-
-      DEBUG(std::cerr << "\nPopped off OI-WL: " << I);
-      
-      // "I" got into the work list because it either made the transition from
-      // bottom to constant
-      //
-      // Anything on this worklist that is overdefined need not be visited
-      // since all of its users will have already been marked as overdefined
-      // Update all of the users of this instruction's value...
-      //
-      for_each(I->use_begin(), I->use_end(),
-	       bind_obj(this, &SCCP::OperandChangedState));
-    }
-    // Process the instruction work list...
-    while (!InstWorkList.empty()) {
-      Instruction *I = InstWorkList.back();
-      InstWorkList.pop_back();
-
-      DEBUG(std::cerr << "\nPopped off I-WL: " << *I);
-      
-      // "I" got into the work list because it either made the transition from
-      // bottom to constant
-      //
-      // Anything on this worklist that is overdefined need not be visited
-      // since all of its users will have already been marked as overdefined.
-      // Update all of the users of this instruction's value...
-      //
-      InstVal &Ival = getValueState (I);
-      if (!Ival.isOverdefined())
-	for_each(I->use_begin(), I->use_end(),
-		 bind_obj(this, &SCCP::OperandChangedState));
-    }
-
-    // Process the basic block work list...
-    while (!BBWorkList.empty()) {
-      BasicBlock *BB = BBWorkList.back();
-      BBWorkList.pop_back();
-
-      DEBUG(std::cerr << "\nPopped off BBWL: " << *BB);
-
-      // Notify all instructions in this basic block that they are newly
-      // executable.
-      visit(BB);
-    }
-  }
-
-  DEBUG(for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-          if (!BBExecutable.count(I))
-             std::cerr << "BasicBlock Dead:" << *I);
-
-  // Iterate over all of the instructions in a function, replacing them with
-  // constants if we have found them to be of constant values.
-  //
-  bool MadeChanges = false;
-  for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB)
-    for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
-      Instruction &Inst = *BI;
-      InstVal &IV = ValueState[&Inst];
-      if (IV.isConstant()) {
-        Constant *Const = IV.getConstant();
-        DEBUG(std::cerr << "Constant: " << *Const << " = " << Inst);
-
-        // Replaces all of the uses of a variable with uses of the constant.
-        Inst.replaceAllUsesWith(Const);
-
-        // Remove the operator from the list of definitions... and delete it.
-        BI = BB->getInstList().erase(BI);
-
-        // Hey, we just changed something!
-        MadeChanges = true;
-        ++NumInstRemoved;
-      } else {
-        ++BI;
-      }
-    }
-
-  // Reset state so that the next invocation will have empty data structures
-  BBExecutable.clear();
-  ValueState.clear();
-  std::vector<Instruction*>().swap(OverdefinedInstWorkList);
-  std::vector<Instruction*>().swap(InstWorkList);
-  std::vector<BasicBlock*>().swap(BBWorkList);
-
-  return MadeChanges;
-}
-
 
 // getFeasibleSuccessors - Return a vector of booleans to indicate which
 // successors are reachable from a given terminator instruction.
 //
-void SCCP::getFeasibleSuccessors(TerminatorInst &TI, std::vector<bool> &Succs) {
+void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
+                                       std::vector<bool> &Succs) {
   Succs.resize(TI.getNumSuccessors());
   if (BranchInst *BI = dyn_cast<BranchInst>(&TI)) {
     if (BI->isUnconditional()) {
@@ -441,7 +335,7 @@ void SCCP::getFeasibleSuccessors(TerminatorInst &TI, std::vector<bool> &Succs) {
 // isEdgeFeasible - Return true if the control flow edge from the 'From' basic
 // block to the 'To' basic block is currently feasible...
 //
-bool SCCP::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
+bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
   assert(BBExecutable.count(To) && "Dest should always be alive!");
 
   // Make sure the source basic block is executable!!
@@ -514,7 +408,7 @@ bool SCCP::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 // 7. If a conditional branch has a value that is overdefined, make all
 //    successors executable.
 //
-void SCCP::visitPHINode(PHINode &PN) {
+void SCCPSolver::visitPHINode(PHINode &PN) {
   InstVal &PNIV = getValueState(&PN);
   if (PNIV.isOverdefined()) {
     // There may be instructions using this PHI node that are not overdefined
@@ -586,7 +480,7 @@ void SCCP::visitPHINode(PHINode &PN) {
     markConstant(PNIV, &PN, OperandVal);      // Acquire operand value
 }
 
-void SCCP::visitTerminatorInst(TerminatorInst &TI) {
+void SCCPSolver::visitTerminatorInst(TerminatorInst &TI) {
   std::vector<bool> SuccFeasible;
   getFeasibleSuccessors(TI, SuccFeasible);
 
@@ -598,7 +492,7 @@ void SCCP::visitTerminatorInst(TerminatorInst &TI) {
       markEdgeExecutable(BB, TI.getSuccessor(i));
 }
 
-void SCCP::visitCastInst(CastInst &I) {
+void SCCPSolver::visitCastInst(CastInst &I) {
   Value *V = I.getOperand(0);
   InstVal &VState = getValueState(V);
   if (VState.isOverdefined())          // Inherit overdefinedness of operand
@@ -607,7 +501,7 @@ void SCCP::visitCastInst(CastInst &I) {
     markConstant(&I, ConstantExpr::getCast(VState.getConstant(), I.getType()));
 }
 
-void SCCP::visitSelectInst(SelectInst &I) {
+void SCCPSolver::visitSelectInst(SelectInst &I) {
   InstVal &CondValue = getValueState(I.getCondition());
   if (CondValue.isOverdefined())
     markOverdefined(&I);
@@ -630,7 +524,7 @@ void SCCP::visitSelectInst(SelectInst &I) {
 }
 
 // Handle BinaryOperators and Shift Instructions...
-void SCCP::visitBinaryOperator(Instruction &I) {
+void SCCPSolver::visitBinaryOperator(Instruction &I) {
   InstVal &IV = ValueState[&I];
   if (IV.isOverdefined()) return;
 
@@ -716,7 +610,7 @@ void SCCP::visitBinaryOperator(Instruction &I) {
 // Handle getelementptr instructions... if all operands are constants then we
 // can turn this into a getelementptr ConstantExpr.
 //
-void SCCP::visitGetElementPtrInst(GetElementPtrInst &I) {
+void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
   InstVal &IV = ValueState[&I];
   if (IV.isOverdefined()) return;
 
@@ -769,7 +663,7 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
 
 // Handle load instructions.  If the operand is a constant pointer to a constant
 // global, we can replace the load with the loaded constant value!
-void SCCP::visitLoadInst(LoadInst &I) {
+void SCCPSolver::visitLoadInst(LoadInst &I) {
   InstVal &IV = ValueState[&I];
   if (IV.isOverdefined()) return;
 
@@ -807,7 +701,7 @@ void SCCP::visitLoadInst(LoadInst &I) {
   markOverdefined(IV, &I);
 }
 
-void SCCP::visitCallInst(CallInst &I) {
+void SCCPSolver::visitCallInst(CallInst &I) {
   InstVal &IV = ValueState[&I];
   if (IV.isOverdefined()) return;
 
@@ -837,3 +731,150 @@ void SCCP::visitCallInst(CallInst &I) {
   else
     markOverdefined(IV, &I);
 }
+
+
+void SCCPSolver::Solve() {
+  // Process the work lists until they are empty!
+  while (!BBWorkList.empty() || !InstWorkList.empty() || 
+	 !OverdefinedInstWorkList.empty()) {
+    // Process the instruction work list...
+    while (!OverdefinedInstWorkList.empty()) {
+      Instruction *I = OverdefinedInstWorkList.back();
+      OverdefinedInstWorkList.pop_back();
+
+      DEBUG(std::cerr << "\nPopped off OI-WL: " << I);
+      
+      // "I" got into the work list because it either made the transition from
+      // bottom to constant
+      //
+      // Anything on this worklist that is overdefined need not be visited
+      // since all of its users will have already been marked as overdefined
+      // Update all of the users of this instruction's value...
+      //
+      for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+           UI != E; ++UI)
+        OperandChangedState(*UI);
+    }
+    // Process the instruction work list...
+    while (!InstWorkList.empty()) {
+      Instruction *I = InstWorkList.back();
+      InstWorkList.pop_back();
+
+      DEBUG(std::cerr << "\nPopped off I-WL: " << *I);
+      
+      // "I" got into the work list because it either made the transition from
+      // bottom to constant
+      //
+      // Anything on this worklist that is overdefined need not be visited
+      // since all of its users will have already been marked as overdefined.
+      // Update all of the users of this instruction's value...
+      //
+      if (!getValueState(I).isOverdefined())
+        for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+             UI != E; ++UI)
+          OperandChangedState(*UI);
+    }
+    
+    // Process the basic block work list...
+    while (!BBWorkList.empty()) {
+      BasicBlock *BB = BBWorkList.back();
+      BBWorkList.pop_back();
+      
+      DEBUG(std::cerr << "\nPopped off BBWL: " << *BB);
+      
+      // Notify all instructions in this basic block that they are newly
+      // executable.
+      visit(BB);
+    }
+  }
+}
+
+
+namespace {
+//===----------------------------------------------------------------------===//
+//
+/// SCCP Class - This class does all of the work of Sparse Conditional Constant
+/// Propagation.
+///
+class SCCP : public FunctionPass, public InstVisitor<SCCP> {
+public:
+
+  // runOnFunction - Run the Sparse Conditional Constant Propagation algorithm,
+  // and return true if the function was modified.
+  //
+  bool runOnFunction(Function &F);
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesCFG();
+  }
+};
+
+  RegisterOpt<SCCP> X("sccp", "Sparse Conditional Constant Propagation");
+} // end anonymous namespace
+
+
+// createSCCPPass - This is the public interface to this file...
+FunctionPass *llvm::createSCCPPass() {
+  return new SCCP();
+}
+
+
+//===----------------------------------------------------------------------===//
+// SCCP Class Implementation
+
+
+// runOnFunction() - Run the Sparse Conditional Constant Propagation algorithm,
+// and return true if the function was modified.
+//
+bool SCCP::runOnFunction(Function &F) {
+  SCCPSolver Solver;
+
+  // Mark the first block of the function as being executable.
+  Solver.MarkBlockExecutable(F.begin());
+
+  // Solve for constants.
+  Solver.Solve();
+
+  DEBUG(std::cerr << "SCCP on function '" << F.getName() << "'\n");
+  DEBUG(std::set<BasicBlock*> &ExecutableBBs = Solver.getExecutableBlocks();
+        for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+          if (!ExecutableBBs.count(I))
+             std::cerr << "  BasicBlock Dead:" << *I);
+
+  // Iterate over all of the instructions in a function, replacing them with
+  // constants if we have found them to be of constant values.
+  //
+  bool MadeChanges = false;
+  hash_map<Value*, InstVal> &Values = Solver.getValueMapping();
+  for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB)
+    for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
+      Instruction *Inst = BI++;
+      if (Inst->getType() != Type::VoidTy) {
+        InstVal &IV = Values[Inst];
+        if (IV.isConstant() || IV.isUndefined()) {
+          Constant *Const;
+          if (IV.isConstant()) {
+            Const = IV.getConstant();
+            DEBUG(std::cerr << "  Constant: " << *Const << " = " << *Inst);
+          } else {
+            Const = UndefValue::get(Inst->getType());
+            DEBUG(std::cerr << "  Undefined: " << *Inst);
+          }
+          
+          // Replaces all of the uses of a variable with uses of the constant.
+          Inst->replaceAllUsesWith(Const);
+          
+          // Delete the instruction.
+          BB->getInstList().erase(Inst);
+          
+          // Hey, we just changed something!
+          MadeChanges = true;
+          ++NumInstRemoved;
+        }
+      }
+    }
+
+  return MadeChanges;
+}
+
+
