@@ -1323,8 +1323,10 @@ void Interpreter::printCurrentInstruction() {
 void Interpreter::printValue(const Type *Ty, GenericValue V) {
   switch (Ty->getPrimitiveID()) {
   case Type::BoolTyID:   cout << (V.BoolVal?"true":"false"); break;
-  case Type::SByteTyID:  cout << V.SByteVal;  break;
-  case Type::UByteTyID:  cout << V.UByteVal;  break;
+  case Type::SByteTyID:
+    cout << (int)V.SByteVal << " '" << V.SByteVal << "'";  break;
+  case Type::UByteTyID:
+    cout << (unsigned)V.UByteVal << " '" << V.UByteVal << "'";  break;
   case Type::ShortTyID:  cout << V.ShortVal;  break;
   case Type::UShortTyID: cout << V.UShortVal; break;
   case Type::IntTyID:    cout << V.IntVal;    break;
