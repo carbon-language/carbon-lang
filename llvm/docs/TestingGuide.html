@@ -24,6 +24,7 @@
 <li><a href="#qmstructure">QMTest Structure</a></li>
 <li><a href="#progstructure">Programs Structure</a></li>
 <li><a href="#run">Running the LLVM Tests</a></li>
+<li><a href="#nightly">Running the nightly tester</a></li>
 </ol>
 
 <div class="doc_author">
@@ -368,6 +369,37 @@ can tell the difference between an expected and unexpected failure.</p>
 only warnings and other miscellaneous output will be generated.  If a test
 fails, a large &lt;program&gt; FAILED message will be displayed.  This will help
 you separate benign warnings from actual test failures.</p>
+
+</div>
+
+<!--===============================================================-->
+<div class="doc_section"><a name="nightly">Running the nightly tester</a></div>
+<!--===============================================================-->
+
+<div class="doc_text">
+
+<p>
+The <a href="http://llvm.cs.uiuc.edu/testresults/">LLVM Nightly Testers</a>
+automatically check out an LLVM tree, build it, run the "nightly" 
+program test (described above) and all of the regression tests, then 
+delete the checked out tree.  This tester is designed to ensure that 
+programs don't break as well as keep track of LLVM's progress over time.</p>
+
+<p>
+If you'd like to set up an instance of the nightly tester to run on your 
+machine, take a look at the comments at the top of the utils/NightlyTester.pl
+file.  We usually run it from a crontab entry that looks ilke this:
+</p>
+
+<pre>
+5 3 * * *       LLVM_LIB_SEARCH_PATH=.../llvm-gcc/bytecode-libs $HOME/llvm/utils/NightlyTest.pl -parallel -enable-linscan ...CVSREPOSTRING... $HOME/buildtest-X86 $HOME/cvs/testresults-X86
+</pre>
+
+<p>
+Take a look at the NightlyTest.pl file to see what all of the flags and 
+strings do.  If you start running the nightly tests, please let us know and 
+we'll link your page to the global tester page.  Thanks!
+</p>
       
 </div>
 
