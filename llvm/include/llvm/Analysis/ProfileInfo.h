@@ -21,8 +21,16 @@
 #ifndef LLVM_ANALYSIS_PROFILEINFO_H
 #define LLVM_ANALYSIS_PROFILEINFO_H
 
+#include <string>
+
 namespace llvm {
   class BasicBlock;
+  class Pass;
+
+  /// createProfileLoaderPass - This function returns a Pass that loads the
+  /// profiling information for the module from the specified filename, making
+  /// it available to the optimizers.
+  Pass *createProfileLoaderPass(const std::string &Filename);
 
   struct ProfileInfo {
     virtual ~ProfileInfo();  // We want to be subclassed
