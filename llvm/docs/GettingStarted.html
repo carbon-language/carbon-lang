@@ -748,11 +748,11 @@ source code:</p>
   <tt>./configure --prefix=[dir]</tt>, defaults to <tt>/usr/local</tt>.
   <p>
   
-  <dt><tt>gmake install-bytecode</tt>
+  <dt><tt>gmake -C runtime install</tt>
   <dd>
-  Assuming you built LLVM into $OBJDIR, when this command is run in
-  $OBJDIR/runtime, it will install bytecode libraries into the GCC front end's
-  bytecode library directory.  If you need to update your bytecode libraries,
+  Assuming you built LLVM into $OBJDIR, when this command is run, it will 
+  install bytecode libraries into the GCC front end's bytecode library 
+  directory.  If you need to update your bytecode libraries,
   this is the target to use once you've built them.
   <p>
 </dl>
