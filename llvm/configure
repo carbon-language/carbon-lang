@@ -465,7 +465,7 @@ ac_includes_default="\
 #endif"
 
 ac_unique_file=""Makefile.config.in""
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL DOT ETAGS ETAGSFLAGS PYTHON QMTEST ENDIAN HAVE_STD_EXT_HASH_MAP HAVE_GNU_EXT_HASH_MAP HAVE_GLOBAL_HASH_MAP HAVE_STD_EXT_HASH_SET HAVE_GNU_EXT_HASH_SET HAVE_GLOBAL_HASH_SET HAVE_STD_ITERATOR HAVE_BI_ITERATOR HAVE_FWD_ITERATOR ALLOCA MMAP_FILE ENABLE_OPTIMIZED SPEC_ROOT USE_SPEC SPEC95_ROOT USE_SPEC95 POVRAY_ROOT USE_POVRAY UPB DISABLE_LLC_DIFFS JIT LLVMCC1 LLVMCC1PLUS BCR PAPIDIR SHLIBEXT LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL DOT ETAGS ETAGSFLAGS PYTHON QMTEST HAVE_PTHREAD_MUTEX_LOCK ENDIAN HAVE_STD_EXT_HASH_MAP HAVE_GNU_EXT_HASH_MAP HAVE_GLOBAL_HASH_MAP HAVE_STD_EXT_HASH_SET HAVE_GNU_EXT_HASH_SET HAVE_GLOBAL_HASH_SET HAVE_STD_ITERATOR HAVE_BI_ITERATOR HAVE_FWD_ITERATOR ALLOCA MMAP_FILE ENABLE_OPTIMIZED SPEC_ROOT USE_SPEC SPEC95_ROOT USE_SPEC95 POVRAY_ROOT USE_POVRAY UPB DISABLE_LLC_DIFFS JIT LLVMCC1 LLVMCC1PLUS BCR PAPIDIR SHLIBEXT LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -18674,12 +18674,11 @@ echo "$as_me:$LINENO: result: $ac_cv_search_pthread_mutex_lock" >&5
 echo "${ECHO_T}$ac_cv_search_pthread_mutex_lock" >&6
 if test "$ac_cv_search_pthread_mutex_lock" != no; then
   test "$ac_cv_search_pthread_mutex_lock" = "none required" || LIBS="$ac_cv_search_pthread_mutex_lock $LIBS"
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_PTHREAD_MUTEX_LOCK 1
-_ACEOF
-
+  HAVE_PTHREAD_MUTEX_LOCK=1
+else
+  HAVE_PTHREAD_MUTEX_LOCK=0
 fi
+
 
 
 echo "$as_me:$LINENO: checking for ANSI C header files" >&5
@@ -20154,124 +20153,6 @@ echo "${ECHO_T}$ac_cv_cxx_have_global_hash_set" >&6
  then
    HAVE_GLOBAL_HASH_SET=1
  fi
-
-echo "$as_me:$LINENO: checking whether the compiler has ext/slist" >&5
-echo $ECHO_N "checking whether the compiler has ext/slist... $ECHO_C" >&6
-if test "${ac_cv_cxx_have_ext_slist+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-
-
-
-  ac_ext=cc
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <ext/slist>
-#ifdef HAVE_NAMESPACES
-using namespace std;
-#endif
-int
-main ()
-{
-slist<int> s; return 0;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_cxx_have_ext_slist=std
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_cxx_have_ext_slist=no
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <ext/slist>
-#ifdef HAVE_NAMESPACES
-using namespace __gnu_cxx;
-#endif
-int
-main ()
-{
-slist<int> s; return 0;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_cxx_have_ext_slist=gnu
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_cxx_have_ext_slist=no
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-
-  ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-
-fi
-echo "$as_me:$LINENO: result: $ac_cv_cxx_have_ext_slist" >&5
-echo "${ECHO_T}$ac_cv_cxx_have_ext_slist" >&6
-if test "$ac_cv_cxx_have_ext_slist" = std; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_EXT_SLIST std
-_ACEOF
-
-fi
-if test "$ac_cv_cxx_have_ext_slist" = gnu; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_EXT_SLIST gnu
-_ACEOF
-
-fi
 
 echo "$as_me:$LINENO: checking whether the compiler has the standard iterator" >&5
 echo $ECHO_N "checking whether the compiler has the standard iterator... $ECHO_C" >&6
@@ -21916,7 +21797,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-                                        ac_config_files="$ac_config_files Makefile.config include/Support/iterator include/Support/hash_map include/Support/hash_set"
+                                                  ac_config_files="$ac_config_files Makefile.config include/Support/iterator include/Support/hash_map include/Support/hash_set include/Support/ThreadSupport.h"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -22502,6 +22383,7 @@ do
   "include/Support/iterator" ) CONFIG_FILES="$CONFIG_FILES include/Support/iterator" ;;
   "include/Support/hash_map" ) CONFIG_FILES="$CONFIG_FILES include/Support/hash_map" ;;
   "include/Support/hash_set" ) CONFIG_FILES="$CONFIG_FILES include/Support/hash_set" ;;
+  "include/Support/ThreadSupport.h" ) CONFIG_FILES="$CONFIG_FILES include/Support/ThreadSupport.h" ;;
   "Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
   "Makefile.common" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile.common" ;;
   "lib/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS lib/Makefile" ;;
@@ -22691,6 +22573,7 @@ s,@ETAGS@,$ETAGS,;t t
 s,@ETAGSFLAGS@,$ETAGSFLAGS,;t t
 s,@PYTHON@,$PYTHON,;t t
 s,@QMTEST@,$QMTEST,;t t
+s,@HAVE_PTHREAD_MUTEX_LOCK@,$HAVE_PTHREAD_MUTEX_LOCK,;t t
 s,@ENDIAN@,$ENDIAN,;t t
 s,@HAVE_STD_EXT_HASH_MAP@,$HAVE_STD_EXT_HASH_MAP,;t t
 s,@HAVE_GNU_EXT_HASH_MAP@,$HAVE_GNU_EXT_HASH_MAP,;t t
