@@ -1181,44 +1181,6 @@ void PhyRegAlloc::saveState () {
 }
 
 
-/// Dump the saved state filled in by saveState() out to stderr. Only
-/// used when debugging.
-///
-void PhyRegAlloc::dumpSavedState () {
-  std::vector<AllocInfo> &state = FnAllocState[Fn];
-  int ArgNum = 0;
-  for (Function::const_aiterator i=Fn->abegin (), e=Fn->aend (); i != e; ++i) {
-    const Argument *Arg = &*i;
-    std::cerr << "Argument:  " << *Arg << "\n"
-              << "FnAllocState:\n";
-    for (unsigned i = 0; i < state.size (); ++i) {
-      AllocInfo &S = state[i];
-      if (S.Instruction == -1 && S.Operand == ArgNum)
-        std::cerr << "  " << S << "\n";
-    }
-    std::cerr << "----------\n";
-    ++ArgNum;
-  }
-  int Insn = 0;
-  for (const_inst_iterator II=inst_begin (Fn), IE=inst_end (Fn); II!=IE; ++II) {
-    const Instruction *I = &*II;
-    MachineCodeForInstruction &Instrs = MachineCodeForInstruction::get (I);
-    std::cerr << "Instruction: " << *I
-              << "MachineCodeForInstruction:\n";
-    for (unsigned i = 0, n = Instrs.size (); i != n; ++i)
-      std::cerr << "  " << *Instrs[i];
-    std::cerr << "FnAllocState:\n";
-    for (unsigned i = 0; i < state.size (); ++i) {
-      AllocInfo &S = state[i];
-      if (Insn == S.Instruction)
-        std::cerr << "  " << S << "\n";
-    }
-    std::cerr << "----------\n";
-    ++Insn;
-  }
-}
-
-
 bool PhyRegAlloc::doFinalization (Module &M) { 
   if (SaveRegAllocState) finishSavingState (M);
   return false;
@@ -1377,20 +1339,15 @@ bool PhyRegAlloc::runOnFunction (Function &F) {
   colorIncomingArgs();
 
   // Save register allocation state for this function in a Constant.
-  if (SaveRegAllocState) {
+  if (SaveRegAllocState)
     saveState();
-  }
 
   // Now update the machine code with register names and add any additional
   // code inserted by the register allocator to the instruction stream.
   updateMachineCode(); 
 
-  if (SaveRegAllocState) {
-    if (DEBUG_RA) // Check our work.
-      dumpSavedState ();
-    if (!SaveStateToModule)
-      finishSavingState (const_cast<Module&> (*Fn->getParent ()));
-  }
+  if (SaveRegAllocState && !SaveStateToModule)
+    finishSavingState (const_cast<Module&> (*Fn->getParent ()));
 
   if (DEBUG_RA) {
     std::cerr << "\n**** Machine Code After Register Allocation:\n\n";
