@@ -72,20 +72,11 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 <p>This is the third public release of the LLVM compiler infrastructure.
 </p>
 
-<p>At this time, LLVM is known to correctly compile and run all non-unwinding C
+<p>At this time, LLVM is known to correctly compile and run all C
 &amp; C++ SPEC CPU2000 benchmarks, the Olden benchmarks, and the Ptrdist
 benchmarks.  It has also been used to compile <b>many</b> other programs.  LLVM
 now also works with a broad variety of C++ programs, though it has still
-received much less testing than the C front-end.
-</p>
-
-<p>
-The LLVM native code generators are very stable but do not currently support
-unwinding (exception throwing or <tt>longjmp</tt>ing), which prevent them from
-working with programs like the <tt>253.perlbmk</tt> in SPEC CPU2000.  The C
-backend and the rest of LLVM supports these programs, so you can
-still use LLVM with them.  Support for unwinding will be added in a future
-release.
+received less testing than the C front-end.
 </p>
 
 
@@ -531,12 +522,7 @@ href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.</li>
 <div class="doc_text">
 
 <ul>
-
-<li>The X86 code generator <a
-href="http://llvm.cs.uiuc.edu/PR16">does not currently
-support the <tt>unwind</tt> instruction</a>, so code that throws a C++ exception
-or calls the C <tt>longjmp</tt> function will abort.</li>
-
+<li>None so far.
 </ul>
 
 </div>
@@ -549,17 +535,7 @@ or calls the C <tt>longjmp</tt> function will abort.</li>
 <div class="doc_text">
 
 <ul>
-
-<li>The Sparc code generator <a
-href="http://llvm.cs.uiuc.edu/PR16">does not currently
-support the <tt>unwind</tt> instruction</a>, so code that throws a C++ exception
-or calls the C <tt>longjmp</tt> function will abort.</li>
-
-<li>
-<a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=167">
-The llc program can crash on legal code.
-</a>
-</li>
+<li>None so far.
 </ul>
 
 </div>
