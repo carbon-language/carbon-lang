@@ -15,9 +15,13 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/GlobalVariable.h"
+#include "Support/CommandLine.h"
 #include <math.h>  // For fmod
 #include <signal.h>
 #include <setjmp.h>
+
+cl::Flag   QuietMode ("quiet"  , "Do not emit any non-program output");
+cl::Alias  QuietModeA("q"      , "Alias for -quiet", cl::NoFlags, QuietMode);
 
 
 // Create a TargetData structure to handle memory addressing and size/alignment
@@ -28,7 +32,6 @@ CachedWriter CW;     // Object to accelerate printing of LLVM
 
 
 #ifdef PROFILE_STRUCTURE_FIELDS
-#include "Support/CommandLine.h"
 static cl::Flag ProfileStructureFields("profilestructfields", 
                                        "Profile Structure Field Accesses");
 #include <map>
@@ -238,19 +241,9 @@ Annotation *GlobalAddress::Create(AnnotationID AID, const Annotable *O, void *){
   
   // First off, we must allocate space for the global variable to point at...
   const Type *Ty = GV->getType()->getElementType();  // Type to be allocated
-  unsigned NumElements = 1;
-
-  if (isa<ArrayType>(Ty) && cast<ArrayType>(Ty)->isUnsized()) {
-    assert(GV->hasInitializer() && "Const val must have an initializer!");
-    // Allocating a unsized array type?
-    Ty = cast<const ArrayType>(Ty)->getElementType();  // Get the actual type...
-
-    // Get the number of elements being allocated by the array...
-    NumElements =cast<ConstantArray>(GV->getInitializer())->getValues().size();
-  }
 
   // Allocate enough memory to hold the type...
-  void *Addr = calloc(NumElements, TD.getTypeSize(Ty));
+  void *Addr = calloc(1, TD.getTypeSize(Ty));
   assert(Addr != 0 && "Null pointer returned by malloc!");
 
   // Initialize the memory if there is an initializer...
@@ -647,9 +640,11 @@ static void PerformExitStuff() {
 }
 
 void Interpreter::exitCalled(GenericValue GV) {
-  cout << "Program returned ";
-  print(Type::IntTy, GV);
-  cout << " via 'void exit(int)'\n";
+  if (!QuietMode) {
+    cout << "Program returned ";
+    print(Type::IntTy, GV);
+    cout << " via 'void exit(int)'\n";
+  }
 
   ExitCode = GV.SByteVal;
   ECStack.clear();
@@ -674,10 +669,12 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
 
   if (ECStack.empty()) {  // Finished main.  Put result into exit code...
     if (RetTy) {          // Nonvoid return type?
-      CW << "Method " << M->getType() << " \"" << M->getName()
-         << "\" returned ";
-      print(RetTy, Result);
-      cout << endl;
+      if (!QuietMode) {
+        CW << "Method " << M->getType() << " \"" << M->getName()
+           << "\" returned ";
+        print(RetTy, Result);
+        cout << endl;
+      }
 
       if (RetTy->isIntegral())
 	ExitCode = Result.SByteVal;   // Capture the exit code of the program
@@ -698,7 +695,7 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
       SetValue(NewSF.Caller, Result, NewSF);
 
     NewSF.Caller = 0;          // We returned from the call...
-  } else {
+  } else if (!QuietMode) {
     // This must be a function that is executing because of a user 'call'
     // instruction.
     CW << "Method " << M->getType() << " \"" << M->getName()
@@ -731,11 +728,8 @@ void Interpreter::executeAllocInst(AllocationInst *I, ExecutionContext &SF) {
   const Type *Ty = I->getType()->getElementType();  // Type to be allocated
   unsigned NumElements = 1;
 
+  // FIXME: Malloc/Alloca should always have an argument!
   if (I->getNumOperands()) {   // Allocating a unsized array type?
-    assert(isa<ArrayType>(Ty) && cast<const ArrayType>(Ty)->isUnsized() && 
-	   "Allocation inst with size operand for !unsized array type???");
-    Ty = cast<const ArrayType>(Ty)->getElementType();  // Get the actual type...
-
     // Get the number of elements being allocated by the array...
     GenericValue NumEl = getOperandValue(I->getOperand(0), SF);
     NumElements = NumEl.UIntVal;
@@ -770,8 +764,7 @@ static PointerTy getElementOffset(MemAccessInst *I, ExecutionContext &SF) {
          "Cannot getElementOffset of a nonpointer type!");
 
   PointerTy Total = 0;
-  const Type *Ty =
-    cast<PointerType>(I->getPointerOperand()->getType())->getElementType();
+  const Type *Ty = I->getPointerOperand()->getType();
   
   unsigned ArgOff = I->getFirstIndexOperandNumber();
   while (ArgOff < I->getNumOperands()) {
@@ -794,22 +787,22 @@ static PointerTy getElementOffset(MemAccessInst *I, ExecutionContext &SF) {
       
       Total += SLO->MemberOffsets[Index];
       Ty = STy->getElementTypes()[Index];
-    } else {
-      const ArrayType *AT = cast<ArrayType>(Ty);
+    } else if (const SequentialType *ST = cast<SequentialType>(Ty)) {
 
       // Get the index number for the array... which must be uint type...
       assert(I->getOperand(ArgOff)->getType() == Type::UIntTy);
       unsigned Idx = getOperandValue(I->getOperand(ArgOff++), SF).UIntVal;
-      if (AT->isSized() && Idx >= (unsigned)AT->getNumElements()) {
-        cerr << "Out of range memory access to element #" << Idx
-             << " of a " << AT->getNumElements() << " element array."
-             << " Subscript #" << (ArgOff-I->getFirstIndexOperandNumber())
-             << "\n";
-        // Get outta here!!!
-        siglongjmp(SignalRecoverBuffer, -1);
-      }
+      if (const ArrayType *AT = dyn_cast<ArrayType>(ST))
+        if (Idx >= AT->getNumElements()) {
+          cerr << "Out of range memory access to element #" << Idx
+               << " of a " << AT->getNumElements() << " element array."
+               << " Subscript #" << (ArgOff-I->getFirstIndexOperandNumber())
+               << "\n";
+          // Get outta here!!!
+          siglongjmp(SignalRecoverBuffer, -1);
+        }
 
-      Ty = AT->getElementType();
+      Ty = ST->getElementType();
       unsigned Size = TD.getTypeSize(Ty);
       Total += Size*Idx;
     }  
@@ -1071,7 +1064,7 @@ void Interpreter::callMethod(Method *M, const vector<GenericValue> &ArgVals) {
         SetValue(SF.Caller, Result, SF);
       
         SF.Caller = 0;          // We returned from the call...
-      } else {
+      } else if (!QuietMode) {
         // print it.
         CW << "Method " << M->getType() << " \"" << M->getName()
            << "\" returned ";
