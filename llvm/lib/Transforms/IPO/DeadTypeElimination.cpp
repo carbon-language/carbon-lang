@@ -80,8 +80,7 @@ bool DTE::runOnModule(Module &M) {
     // the type is not used, remove it.
     const Type *RHS = TI->second;
     if (ShouldNukeSymtabEntry(RHS) || !UsedTypes.count(RHS)) {
-      SymbolTable::type_iterator ToRemove = TI++;
-      ST.remove(ToRemove->second);
+      ST.remove(TI++);
       ++NumKilled;
       Changed = true;
     } else {
