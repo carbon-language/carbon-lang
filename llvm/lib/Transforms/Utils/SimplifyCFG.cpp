@@ -518,7 +518,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
         AddPredecessorToBlock(NewSuccessors[i], Pred, BB);
 
       // Now that the successors are updated, create the new Switch instruction.
-      SwitchInst *NewSI = new SwitchInst(CV, PredDefault, PTI);
+      SwitchInst *NewSI = new SwitchInst(CV, PredDefault, PredCases.size(),PTI);
       for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
         NewSI->addCase(PredCases[i].first, PredCases[i].second);
 
@@ -1209,7 +1209,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           if (!TrueWhenEqual) std::swap(DefaultBB, EdgeBB);
           
           // Create the new switch instruction now.
-          SwitchInst *New = new SwitchInst(CompVal, DefaultBB, BI);
+          SwitchInst *New = new SwitchInst(CompVal, DefaultBB,Values.size(),BI);
           
           // Add all of the 'cases' to the switch instruction.
           for (unsigned i = 0, e = Values.size(); i != e; ++i)

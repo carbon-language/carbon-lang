@@ -439,7 +439,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
   // Now we can emit a switch statement using the call as a value.
   SwitchInst *TheSwitch =
     new SwitchInst(ConstantUInt::getNullValue(Type::UShortTy),
-                   codeReplacer, codeReplacer);
+                   codeReplacer, 0, codeReplacer);
 
   // Since there may be multiple exits from the original region, make the new
   // function return an unsigned, switch on that number.  This loop iterates
