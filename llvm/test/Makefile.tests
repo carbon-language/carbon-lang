@@ -65,6 +65,7 @@ CP	= /bin/cp -f
 ## If TRACE or TRACEM is "yes", set the appropriate llc flag (-trace or -tracem)
 ## mark that tracing on, and set the TRACELIBS variable.
 TRACEFLAGS = 
+DOTRACING  =
 ifeq ($(TRACE), yes)
     TRACEFLAGS += -trace
     DOTRACING = yes
@@ -74,7 +75,7 @@ else
 	DOTRACING = yes
     endif
 endif
-ifeq ($(DOTRACING), yes)
+ifdef DOTRACING
     TRACELIBS := -L$(LEVEL)/test/Libraries/Output -linstr.$(ARCH)
 endif
 
