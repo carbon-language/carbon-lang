@@ -161,9 +161,8 @@ int llvm::GenerateBytecode(Module *M, bool Strip, bool Internalize,
       addPass(Passes, createInternalizePass());
     }
 
-    // Now that we internalized some globals, see if we can mark any globals as
-    // being constant!
-    addPass(Passes, createGlobalConstifierPass());
+    // Now that we internalized some globals, see if we can hack on them!
+    addPass(Passes, createGlobalOptimizerPass());
 
     // Linking modules together can lead to duplicated global constants, only
     // keep one copy of each constant...

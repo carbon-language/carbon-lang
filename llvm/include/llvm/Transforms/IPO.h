@@ -41,10 +41,10 @@ ModulePass *createConstantMergePass();
 
 
 //===----------------------------------------------------------------------===//
-/// createGlobalConstifierPass - This function returns a new pass that marks
-/// internal globals "constant" if they are provably never written to.
+/// createGlobalOptimizerPass - This function returns a new pass that optimizes
+/// non-address taken internal globals.
 ///
-ModulePass *createGlobalConstifierPass();
+ModulePass *createGlobalOptimizerPass();
 
 
 //===----------------------------------------------------------------------===//
