@@ -162,11 +162,7 @@ namespace {
                             MachineBasicBlock::iterator &MBBI);
     
     // Memory Instructions
-    MachineInstr *doFPLoad(MachineBasicBlock *MBB,
-			   MachineBasicBlock::iterator &MBBI,
-			   const Type *Ty, unsigned DestReg);
     void visitLoadInst(LoadInst &I);
-    void doFPStore(const Type *Ty, unsigned DestAddrReg, unsigned SrcReg);
     void visitStoreInst(StoreInst &I);
     void visitGetElementPtrInst(GetElementPtrInst &I);
     void visitAllocaInst(AllocaInst &I);
@@ -401,7 +397,11 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       // Otherwise we need to spill the constant to memory...
       MachineConstantPool *CP = F->getConstantPool();
       unsigned CPI = CP->getConstantPoolIndex(CFP);
-      addConstantPoolReference(doFPLoad(MBB, IP, CFP->getType(), R), CPI);
+      const Type *Ty = CFP->getType();
+
+      assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
+      unsigned LoadOpcode = Ty == Type::FloatTy ? X86::FLDr32 : X86::FLDr64;
+      addConstantPoolReference(BMI(MBB, IP, LoadOpcode, 4, R), CPI);
     }
 
   } else if (isa<ConstantPointerNull>(C)) {
@@ -1536,52 +1536,6 @@ void ISel::visitShiftInst(ShiftInst &I) {
 }
 
 
-/// doFPLoad - This method is used to load an FP value from memory using the
-/// current endianness.  NOTE: This method returns a partially constructed load
-/// instruction which needs to have the memory source filled in still.
-///
-MachineInstr *ISel::doFPLoad(MachineBasicBlock *MBB,
-			     MachineBasicBlock::iterator &MBBI,
-			     const Type *Ty, unsigned DestReg) {
-  assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
-  unsigned LoadOpcode = Ty == Type::FloatTy ? X86::FLDr32 : X86::FLDr64;
-
-  if (TM.getTargetData().isLittleEndian()) // fast path...
-    return BMI(MBB, MBBI, LoadOpcode, 4, DestReg);
-
-  // If we are big-endian, start by creating an LEA instruction to represent the
-  // address of the memory location to load from...
-  //
-  unsigned SrcAddrReg = makeAnotherReg(Type::UIntTy);
-  MachineInstr *Result = BMI(MBB, MBBI, X86::LEAr32, 5, SrcAddrReg);
-
-  // Allocate a temporary stack slot to transform the value into...
-  int FrameIdx = F->getFrameInfo()->CreateStackObject(Ty, TM.getTargetData());
-
-  // Perform the bswaps 32 bits at a time...
-  unsigned TmpReg1 = makeAnotherReg(Type::UIntTy);
-  unsigned TmpReg2 = makeAnotherReg(Type::UIntTy);
-  addDirectMem(BMI(MBB, MBBI, X86::MOVmr32, 4, TmpReg1), SrcAddrReg);
-  BMI(MBB, MBBI, X86::BSWAPr32, 1, TmpReg2).addReg(TmpReg1);
-  unsigned Offset = (Ty == Type::DoubleTy) << 2;
-  addFrameReference(BMI(MBB, MBBI, X86::MOVrm32, 5),
-		    FrameIdx, Offset).addReg(TmpReg2);
-  
-  if (Ty == Type::DoubleTy) {   // Swap the other 32 bits of a double value...
-    TmpReg1 = makeAnotherReg(Type::UIntTy);
-    TmpReg2 = makeAnotherReg(Type::UIntTy);
-
-    addRegOffset(BMI(MBB, MBBI, X86::MOVmr32, 4, TmpReg1), SrcAddrReg, 4);
-    BMI(MBB, MBBI, X86::BSWAPr32, 1, TmpReg2).addReg(TmpReg1);
-    unsigned Offset = (Ty == Type::DoubleTy) << 2;
-    addFrameReference(BMI(MBB, MBBI, X86::MOVrm32,5), FrameIdx).addReg(TmpReg2);
-  }
-
-  // Now we can reload the final byteswapped result into the final destination.
-  addFrameReference(BMI(MBB, MBBI, LoadOpcode, 4, DestReg), FrameIdx);
-  return Result;
-}
-
 /// EmitByteSwap - Byteswap SrcReg into DestReg.
 ///
 void ISel::EmitByteSwap(unsigned DestReg, unsigned SrcReg, unsigned Class) {
@@ -1616,8 +1570,6 @@ void ISel::EmitByteSwap(unsigned DestReg, unsigned SrcReg, unsigned Class) {
 /// need to worry about the memory layout of the target machine.
 ///
 void ISel::visitLoadInst(LoadInst &I) {
-  bool isLittleEndian  = TM.getTargetData().isLittleEndian();
-  bool hasLongPointers = TM.getTargetData().getPointerSize() == 8;
   unsigned SrcAddrReg = getReg(I.getOperand(0));
   unsigned DestReg = getReg(I);
 
@@ -1625,7 +1577,10 @@ void ISel::visitLoadInst(LoadInst &I) {
   switch (Class) {
   case cFP: {
     MachineBasicBlock::iterator MBBI = BB->end();
-    addDirectMem(doFPLoad(BB, MBBI, I.getType(), DestReg), SrcAddrReg);
+    assert(I.getType() == Type::FloatTy || I.getType() == Type::DoubleTy && 
+           "Unknown FP type!");
+    unsigned Opc = I.getType() == Type::FloatTy ? X86::FLDr32 : X86::FLDr64;
+    addDirectMem(BMI(BB, MBBI, Opc, 4, DestReg), SrcAddrReg);
     return;
   }
   case cLong: case cInt: case cShort: case cByte:
@@ -1633,20 +1588,7 @@ void ISel::visitLoadInst(LoadInst &I) {
   default: assert(0 && "Unknown memory class!");
   }
 
-  // We need to adjust the input pointer if we are emulating a big-endian
-  // long-pointer target.  On these systems, the pointer that we are interested
-  // in is in the upper part of the eight byte memory image of the pointer.  It
-  // also happens to be byte-swapped, but this will be handled later.
-  //
-  if (!isLittleEndian && hasLongPointers && isa<PointerType>(I.getType())) {
-    unsigned R = makeAnotherReg(Type::UIntTy);
-    BuildMI(BB, X86::ADDri32, 2, R).addReg(SrcAddrReg).addZImm(4);
-    SrcAddrReg = R;
-  }
-
   unsigned IReg = DestReg;
-  if (!isLittleEndian)  // If big endian we need an intermediate stage
-    DestReg = makeAnotherReg(Class != cLong ? I.getType() : Type::UIntTy);
 
   static const unsigned Opcode[] = {
     X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, 0, X86::MOVmr32
@@ -1654,108 +1596,32 @@ void ISel::visitLoadInst(LoadInst &I) {
   addDirectMem(BuildMI(BB, Opcode[Class], 4, DestReg), SrcAddrReg);
 
   // Handle long values now...
-  if (Class == cLong) {
-    if (isLittleEndian) {
-      addRegOffset(BuildMI(BB, X86::MOVmr32, 4, DestReg+1), SrcAddrReg, 4);
-    } else {
-      EmitByteSwap(IReg+1, DestReg, cInt);
-      unsigned TempReg = makeAnotherReg(Type::IntTy);
-      addRegOffset(BuildMI(BB, X86::MOVmr32, 4, TempReg), SrcAddrReg, 4);
-      EmitByteSwap(IReg, TempReg, cInt);
-    }
-    return;
-  }
-
-  if (!isLittleEndian)
-    EmitByteSwap(IReg, DestReg, Class);
+  if (Class == cLong)
+    addRegOffset(BuildMI(BB, X86::MOVmr32, 4, DestReg+1), SrcAddrReg, 4);
 }
-
-
-/// doFPStore - This method is used to store an FP value to memory using the
-/// current endianness.
-///
-void ISel::doFPStore(const Type *Ty, unsigned DestAddrReg, unsigned SrcReg) {
-  assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
-  unsigned StoreOpcode = Ty == Type::FloatTy ? X86::FSTr32 : X86::FSTr64;
-
-  if (TM.getTargetData().isLittleEndian()) {  // fast path...
-    addDirectMem(BuildMI(BB, StoreOpcode,5), DestAddrReg).addReg(SrcReg);
-    return;
-  }
-
-  // Allocate a temporary stack slot to transform the value into...
-  int FrameIdx = F->getFrameInfo()->CreateStackObject(Ty, TM.getTargetData());
-  unsigned SrcAddrReg = makeAnotherReg(Type::UIntTy);
-  addFrameReference(BuildMI(BB, X86::LEAr32, 5, SrcAddrReg), FrameIdx);
-
-  // Store the value into a temporary stack slot...
-  addDirectMem(BuildMI(BB, StoreOpcode, 5), SrcAddrReg).addReg(SrcReg);
-
-  // Perform the bswaps 32 bits at a time...
-  unsigned TmpReg1 = makeAnotherReg(Type::UIntTy);
-  unsigned TmpReg2 = makeAnotherReg(Type::UIntTy);
-  addDirectMem(BuildMI(BB, X86::MOVmr32, 4, TmpReg1), SrcAddrReg);
-  BuildMI(BB, X86::BSWAPr32, 1, TmpReg2).addReg(TmpReg1);
-  unsigned Offset = (Ty == Type::DoubleTy) << 2;
-  addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
-	       DestAddrReg, Offset).addReg(TmpReg2);
-  
-  if (Ty == Type::DoubleTy) {   // Swap the other 32 bits of a double value...
-    TmpReg1 = makeAnotherReg(Type::UIntTy);
-    TmpReg2 = makeAnotherReg(Type::UIntTy);
-
-    addRegOffset(BuildMI(BB, X86::MOVmr32, 4, TmpReg1), SrcAddrReg, 4);
-    BuildMI(BB, X86::BSWAPr32, 1, TmpReg2).addReg(TmpReg1);
-    unsigned Offset = (Ty == Type::DoubleTy) << 2;
-    addDirectMem(BuildMI(BB, X86::MOVrm32, 5), DestAddrReg).addReg(TmpReg2);
-  }
-}
-
 
 /// visitStoreInst - Implement LLVM store instructions in terms of the x86 'mov'
 /// instruction.
 ///
 void ISel::visitStoreInst(StoreInst &I) {
-  bool isLittleEndian  = TM.getTargetData().isLittleEndian();
-  bool hasLongPointers = TM.getTargetData().getPointerSize() == 8;
   unsigned ValReg      = getReg(I.getOperand(0));
   unsigned AddressReg  = getReg(I.getOperand(1));
-
-  unsigned Class = getClassB(I.getOperand(0)->getType());
+ 
+  const Type *ValTy = I.getOperand(0)->getType();
+  unsigned Class = getClassB(ValTy);
   switch (Class) {
   case cLong:
-    if (isLittleEndian) {
-      addDirectMem(BuildMI(BB, X86::MOVrm32, 1+4), AddressReg).addReg(ValReg);
-      addRegOffset(BuildMI(BB, X86::MOVrm32, 1+4),
-		   AddressReg, 4).addReg(ValReg+1);
-    } else {
-      unsigned T1 = makeAnotherReg(Type::IntTy);
-      unsigned T2 = makeAnotherReg(Type::IntTy);
-      EmitByteSwap(T1, ValReg  , cInt);
-      EmitByteSwap(T2, ValReg+1, cInt);
-      addDirectMem(BuildMI(BB, X86::MOVrm32, 1+4), AddressReg).addReg(T2);
-      addRegOffset(BuildMI(BB, X86::MOVrm32, 1+4), AddressReg, 4).addReg(T1);
-    }
+    addDirectMem(BuildMI(BB, X86::MOVrm32, 1+4), AddressReg).addReg(ValReg);
+    addRegOffset(BuildMI(BB, X86::MOVrm32, 1+4), AddressReg,4).addReg(ValReg+1);
     return;
-  case cFP:
-    doFPStore(I.getOperand(0)->getType(), AddressReg, ValReg);
+  case cFP: {
+    unsigned StoreOpcode = ValTy == Type::FloatTy ? X86::FSTr32 : X86::FSTr64;
+    addDirectMem(BuildMI(BB, StoreOpcode, 5), AddressReg).addReg(ValReg);
     return;
+  }
   case cInt: case cShort: case cByte:
     break;      // Integers of various sizes handled below
   default: assert(0 && "Unknown memory class!");
-  }
-
-  if (!isLittleEndian && hasLongPointers &&
-      isa<PointerType>(I.getOperand(0)->getType())) {
-    unsigned R = makeAnotherReg(Type::UIntTy);
-    BuildMI(BB, X86::ADDri32, 2, R).addReg(AddressReg).addZImm(4);
-    AddressReg = R;
-  }
-
-  if (!isLittleEndian && Class != cByte) {
-    unsigned R = makeAnotherReg(I.getOperand(0)->getType());
-    EmitByteSwap(R, ValReg, Class);
-    ValReg = R;
   }
 
   static const unsigned Opcode[] = { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32 };

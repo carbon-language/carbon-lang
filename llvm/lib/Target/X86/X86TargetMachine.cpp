@@ -33,12 +33,7 @@ TargetMachine *allocateX86TargetMachine(const Module &M) {
 /// X86TargetMachine ctor - Create an ILP32 architecture model
 ///
 X86TargetMachine::X86TargetMachine(const Module &M)
-  : TargetMachine("X86", 
-		  M.getEndianness() != Module::BigEndian,
-                  M.getPointerSize() != Module::Pointer64 ? 4 : 8,
-                  M.getPointerSize() != Module::Pointer64 ? 4 : 8,
-                  M.getPointerSize() != Module::Pointer64 ? 4 : 8,
-                  4, M.getPointerSize() != Module::Pointer64 ? 4 : 8),
+  : TargetMachine("X86", true, 4, 4, 4, 4, 4),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, 4) {
 }
 
