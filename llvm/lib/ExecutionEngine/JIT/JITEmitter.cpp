@@ -1,4 +1,4 @@
-//===-- Emitter.cpp - Write machine code to executable memory -------------===//
+//===-- JITEmitter.cpp - Write machine code to executable memory ----------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -209,12 +209,12 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 
 
 //===----------------------------------------------------------------------===//
-// JIT MachineCodeEmitter code.
+// JITEmitter code.
 //
 namespace {
-  /// Emitter - The JIT implementation of the MachineCodeEmitter, which is used
-  /// to output functions to memory for execution.
-  class Emitter : public MachineCodeEmitter {
+  /// JITEmitter - The JIT implementation of the MachineCodeEmitter, which is
+  /// used to output functions to memory for execution.
+  class JITEmitter : public MachineCodeEmitter {
     JITMemoryManager MemMgr;
 
     // CurBlock - The start of the current block of memory.  CurByte - The
@@ -233,7 +233,7 @@ namespace {
     /// emitted.
     std::vector<MachineRelocation> Relocations;
   public:
-    Emitter(JIT &jit) { TheJIT = &jit; }
+    JITEmitter(JIT &jit) { TheJIT = &jit; }
 
     virtual void startFunction(MachineFunction &F);
     virtual void finishFunction(MachineFunction &F);
@@ -258,11 +258,11 @@ namespace {
 }
 
 MachineCodeEmitter *JIT::createEmitter(JIT &jit) {
-  return new Emitter(jit);
+  return new JITEmitter(jit);
 }
 
-void *Emitter::getPointerToGlobal(GlobalValue *V, void *Reference,
-                                  bool DoesntNeedStub) {
+void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
+                                     bool DoesntNeedStub) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     /// FIXME: If we straightened things out, this could actually emit the
     /// global immediately instead of queuing it for codegen later!
@@ -294,12 +294,12 @@ void *Emitter::getPointerToGlobal(GlobalValue *V, void *Reference,
   return getJITResolver(this).getFunctionStub(F);
 }
 
-void Emitter::startFunction(MachineFunction &F) {
+void JITEmitter::startFunction(MachineFunction &F) {
   CurByte = CurBlock = MemMgr.startFunctionBody();
   TheJIT->addGlobalMapping(F.getFunction(), CurBlock);
 }
 
-void Emitter::finishFunction(MachineFunction &F) {
+void JITEmitter::finishFunction(MachineFunction &F) {
   MemMgr.endFunctionBody(CurByte);
   ConstantPoolAddresses.clear();
   NumBytes += CurByte-CurBlock;
@@ -329,7 +329,7 @@ void Emitter::finishFunction(MachineFunction &F) {
   Relocations.clear();
 }
 
-void Emitter::emitConstantPool(MachineConstantPool *MCP) {
+void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
   const std::vector<Constant*> &Constants = MCP->getConstants();
   if (Constants.empty()) return;
 
@@ -362,30 +362,30 @@ void Emitter::emitConstantPool(MachineConstantPool *MCP) {
   }
 }
 
-void Emitter::startFunctionStub(unsigned StubSize) {
+void JITEmitter::startFunctionStub(unsigned StubSize) {
   SavedCurBlock = CurBlock;  SavedCurByte = CurByte;
   CurByte = CurBlock = MemMgr.allocateStub(StubSize);
 }
 
-void *Emitter::finishFunctionStub(const Function *F) {
+void *JITEmitter::finishFunctionStub(const Function *F) {
   NumBytes += CurByte-CurBlock;
   std::swap(CurBlock, SavedCurBlock);
   CurByte = SavedCurByte;
   return SavedCurBlock;
 }
 
-void Emitter::emitByte(unsigned char B) {
+void JITEmitter::emitByte(unsigned char B) {
   *CurByte++ = B;   // Write the byte to memory
 }
 
-void Emitter::emitWord(unsigned W) {
+void JITEmitter::emitWord(unsigned W) {
   // This won't work if the endianness of the host and target don't agree!  (For
   // a JIT this can't happen though.  :)
   *(unsigned*)CurByte = W;
   CurByte += sizeof(unsigned);
 }
 
-void Emitter::emitWordAt(unsigned W, unsigned *Ptr) {
+void JITEmitter::emitWordAt(unsigned W, unsigned *Ptr) {
   *Ptr = W;
 }
 
@@ -393,7 +393,7 @@ void Emitter::emitWordAt(unsigned W, unsigned *Ptr) {
 // in the constant pool that was last emitted with the 'emitConstantPool'
 // method.
 //
-uint64_t Emitter::getConstantPoolEntryAddress(unsigned ConstantNum) {
+uint64_t JITEmitter::getConstantPoolEntryAddress(unsigned ConstantNum) {
   assert(ConstantNum < ConstantPoolAddresses.size() &&
 	 "Invalid ConstantPoolIndex!");
   return (intptr_t)ConstantPoolAddresses[ConstantNum];
@@ -402,11 +402,11 @@ uint64_t Emitter::getConstantPoolEntryAddress(unsigned ConstantNum) {
 // getCurrentPCValue - This returns the address that the next emitted byte
 // will be output to.
 //
-uint64_t Emitter::getCurrentPCValue() {
+uint64_t JITEmitter::getCurrentPCValue() {
   return (intptr_t)CurByte;
 }
 
-uint64_t Emitter::getCurrentPCOffset() {
+uint64_t JITEmitter::getCurrentPCOffset() {
   return (intptr_t)CurByte-(intptr_t)CurBlock;
 }
 
