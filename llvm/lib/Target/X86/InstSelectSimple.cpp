@@ -577,8 +577,14 @@ ISel::visitCallInst (CallInst & CI)
 	  break;
 	}
     }
-  // Emit a CALL instruction with PC-relative displacement.
-  BuildMI (BB, X86::CALLpcrel32, 1).addPCDisp (CI.getCalledValue ());
+
+  if (Function *F = CI.getCalledFunction()) {
+    // Emit a CALL instruction with PC-relative displacement.
+    BuildMI(BB, X86::CALLpcrel32, 1).addPCDisp(F);
+  } else {
+    unsigned Reg = getReg(CI.getCalledValue());
+    BuildMI(BB, X86::CALLr32, 1).addReg(Reg);
+  }
 
   // Adjust the stack by `bytesPushed' amount if non-zero
   if (bytesPushed > 0)
