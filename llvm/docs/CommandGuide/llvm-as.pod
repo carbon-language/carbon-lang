@@ -10,9 +10,9 @@ B<llvm-as> [I<options>] [I<filename>]
 
 =head1 DESCRIPTION
 
-The B<llvm-as> command invokes the LLVM assembler.  It reads a file containing
-human-readable LLVM assembly language, translates it to LLVM bytecode, and
-writes the result into a file or to standard output.
+B<llvm-as> is the LLVM assembler.  It reads a file containing human-readable
+LLVM assembly language, translates it to LLVM bytecode, and writes the result
+into a file or to standard output.
 
 If F<filename> is omitted or is C<->, then B<llvm-as> reads its input from
 standard input.
