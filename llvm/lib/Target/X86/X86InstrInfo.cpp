@@ -42,8 +42,8 @@ bool X86InstrInfo::isNOPinstr(const MachineInstr &MI) const {
   // Make sure the instruction is EXACTLY `xchg ax, ax'
   if (MI.getOpcode() == X86::XCHGrr16) {
     const MachineOperand &op0 = MI.getOperand(0), &op1 = MI.getOperand(1);
-    if (op0.isMachineRegister() && op0.getMachineRegNum() == X86::AX &&
-        op1.isMachineRegister() && op1.getMachineRegNum() == X86::AX) {
+    if (op0.isPhysicalRegister() && op0.getReg() == X86::AX &&
+        op1.isPhysicalRegister() && op1.getReg() == X86::AX) {
       return true;
     }
   }
