@@ -1018,7 +1018,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
 void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
                                         FunctionLoweringInfo &FuncInfo) {
-  SelectionDAG DAG(TLI.getTargetMachine(), MF);
+  SelectionDAG DAG(TLI, MF);
   CurDAG = &DAG;
   std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
 
@@ -1031,7 +1031,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
 
   // Second step, hack on the DAG until it only uses operations and types that
   // the target supports.
-  DAG.Legalize(TLI);
+  DAG.Legalize();
 
   DEBUG(std::cerr << "Legalized selection DAG:\n");
   DEBUG(DAG.dump());
