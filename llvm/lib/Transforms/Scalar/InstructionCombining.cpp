@@ -2563,7 +2563,8 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
               Constant *Mask;
               if (CI->getType()->isUnsigned()) {
                 unsigned TypeBits = CI->getType()->getPrimitiveSize()*8;
-                Val &= (1ULL << TypeBits)-1;
+                if (TypeBits != 64)
+                  Val &= (1ULL << TypeBits)-1;
                 Mask = ConstantUInt::get(CI->getType(), Val);
               } else {
                 Mask = ConstantSInt::get(CI->getType(), Val);
