@@ -18,12 +18,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/PromoteMemoryToRegister.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/iMemory.h"
 #include "llvm/Pass.h"
 #include "llvm/Method.h"
-
 #include "llvm/Assembly/Writer.h"  // For debugging
+using cfg::DominanceFrontier;
 
+// PromotePass - This class is implements the PromoteMemoryToRegister pass
+//
 class PromotePass : public MethodPass {
 public:
   // runOnMethod - To run this pass, first we calculate the alloca instructions
@@ -33,14 +36,27 @@ public:
     std::vector<AllocaInst*> Allocas;
     findSafeAllocas(M, Allocas);      // Calculate safe allocas
 
+    // Get dominance frontier information...
+    DominanceFrontier &DF = getAnalysis<DominanceFrontier>();
+
     // Transform each alloca in turn...
     for (std::vector<AllocaInst*>::iterator I = Allocas.begin(),
            E = Allocas.end(); I != E; ++I)
-      promoteAlloca(*I);
+      promoteAlloca(*I, DF);
 
     return !Allocas.empty();
   }
 
+
+  // getAnalysisUsageInfo - We need dominance frontiers
+  //
+  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
+                                    Pass::AnalysisSet &Destroyed,
+                                    Pass::AnalysisSet &Provided) {
+    Requires.push_back(DominanceFrontier::ID);
+  }
+
+private:
   // findSafeAllocas - Find allocas that are safe to promote
   //
   void findSafeAllocas(Method *M, std::vector<AllocaInst*> &Allocas) const;
@@ -48,7 +64,7 @@ public:
   // promoteAlloca - Convert the use chain of an alloca instruction into
   // register references.
   //
-  void promoteAlloca(AllocaInst *AI);
+  void promoteAlloca(AllocaInst *AI, DominanceFrontier &DF);
 };
 
 
@@ -79,15 +95,18 @@ void PromotePass::findSafeAllocas(Method *M,
 
 }
 
+
+
 // promoteAlloca - Convert the use chain of an alloca instruction into
 // register references.
 //
-void PromotePass::promoteAlloca(AllocaInst *AI) {
+void PromotePass::promoteAlloca(AllocaInst *AI, DominanceFrontier &DFInfo) {
   cerr << "TODO: Should process: " << AI;
 }
 
 
-
+// newPromoteMemoryToRegister - Provide an entry point to create this pass.
+//
 Pass *newPromoteMemoryToRegister() {
   return new PromotePass();
 }
