@@ -187,6 +187,7 @@ bool BytecodeWriter::processInstruction(const Instruction *I) {
     break;
   case Instruction::Store:
     Ty = I->getOperand(1)->getType();  // Encode the pointer type...
+    assert(Ty->isPointerType() && "Store to nonpointer type!?!?");
     break;
   default:              // Otherwise use the default behavior...
     Ty = NumOperands ? I->getOperand(0)->getType() : I->getType();
@@ -197,6 +198,11 @@ bool BytecodeWriter::processInstruction(const Instruction *I) {
   int Slot = Table.getValSlot(Ty);
   assert(Slot != -1 && "Type not available!!?!");
   Type = (unsigned)Slot;
+
+  // Make sure that we take the type number into consideration.  We don't want
+  // to overflow the field size for the instruction format we select.
+  //
+  if (Slot > MaxOpSlot) MaxOpSlot = Slot;
 
   // Handle the special case for cast...
   if (I->getOpcode() == Instruction::Cast) {
