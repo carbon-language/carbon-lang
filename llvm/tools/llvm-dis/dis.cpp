@@ -17,7 +17,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Function.h"
 #include "llvm/Support/CFG.h"

@@ -6,7 +6,6 @@
 
 #include "Interpreter.h"
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Transforms/Linker.h"
 #include <algorithm>
