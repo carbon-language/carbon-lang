@@ -124,7 +124,7 @@ namespace {
     void PromoteValuesInLoop();
 
     /// findPromotableValuesInLoop - Check the current loop for stores to
-    /// definate pointers, which are not loaded and stored through may aliases.
+    /// definite pointers, which are not loaded and stored through may aliases.
     /// If these are found, create an alloca for the value, add it to the
     /// PromotedValues list, and keep track of the mapping from value to
     /// alloca...
@@ -409,7 +409,7 @@ void LICM::PromoteValuesInLoop() {
                   AA->getTargetData());
 }
 
-/// findPromotableValuesInLoop - Check the current loop for stores to definate
+/// findPromotableValuesInLoop - Check the current loop for stores to definite
 /// pointers, which are not loaded and stored through may aliases.  If these are
 /// found, create an alloca for the value, add it to the PromotedValues list,
 /// and keep track of the mapping from value to alloca...
