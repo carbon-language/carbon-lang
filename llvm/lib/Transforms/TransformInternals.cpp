@@ -83,6 +83,27 @@ BasicBlock::iterator InsertInstBeforeInst(Instruction *NewInst,
 
 
 
+static const Type *getStructOffsetStep(const StructType *STy, unsigned &Offset,
+                                       std::vector<Value*> &Indices) {
+  assert(Offset < TD.getTypeSize(STy) && "Offset not in composite!");
+  const StructLayout *SL = TD.getStructLayout(STy);
+
+  // This loop terminates always on a 0 <= i < MemberOffsets.size()
+  unsigned i;
+  for (i = 0; i < SL->MemberOffsets.size()-1; ++i)
+    if (Offset >= SL->MemberOffsets[i] && Offset < SL->MemberOffsets[i+1])
+      break;
+  
+  assert(Offset >= SL->MemberOffsets[i] &&
+         (i == SL->MemberOffsets.size()-1 || Offset < SL->MemberOffsets[i+1]));
+  
+  // Make sure to save the current index...
+  Indices.push_back(ConstantUInt::get(Type::UByteTy, i));
+  Offset = SL->MemberOffsets[i];
+  return STy->getContainedType(i);
+}
+
+
 // getStructOffsetType - Return a vector of offsets that are to be used to index
 // into the specified struct type to get as close as possible to index as we
 // can.  Note that it is possible that we cannot get exactly to Offset, in which
@@ -95,36 +116,22 @@ BasicBlock::iterator InsertInstBeforeInst(Instruction *NewInst,
 // false if you want a leaf
 //
 const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
-                                std::vector<Value*> &Offsets,
+                                std::vector<Value*> &Indices,
                                 bool StopEarly = true) {
-  if (Offset == 0 && StopEarly && !Offsets.empty())
+  if (Offset == 0 && StopEarly && !Indices.empty())
     return Ty;    // Return the leaf type
 
   unsigned ThisOffset;
   const Type *NextType;
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
-    assert(Offset < TD.getTypeSize(STy) && "Offset not in composite!");
-    const StructLayout *SL = TD.getStructLayout(STy);
-
-    // This loop terminates always on a 0 <= i < MemberOffsets.size()
-    unsigned i;
-    for (i = 0; i < SL->MemberOffsets.size()-1; ++i)
-      if (Offset >= SL->MemberOffsets[i] && Offset <  SL->MemberOffsets[i+1])
-        break;
-  
-    assert(Offset >= SL->MemberOffsets[i] &&
-           (i == SL->MemberOffsets.size()-1 || Offset <SL->MemberOffsets[i+1]));
-    
-    // Make sure to save the current index...
-    Offsets.push_back(ConstantUInt::get(Type::UByteTy, i));
-    ThisOffset = SL->MemberOffsets[i];
-    NextType = STy->getElementTypes()[i];
+    ThisOffset = Offset;
+    NextType = getStructOffsetStep(STy, ThisOffset, Indices);
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     assert(Offset < TD.getTypeSize(ATy) && "Offset not in composite!");
 
     NextType = ATy->getElementType();
     unsigned ChildSize = TD.getTypeSize(NextType);
-    Offsets.push_back(ConstantUInt::get(Type::UIntTy, Offset/ChildSize));
+    Indices.push_back(ConstantUInt::get(Type::UIntTy, Offset/ChildSize));
     ThisOffset = (Offset/ChildSize)*ChildSize;
   } else {
     Offset = 0;   // Return the offset that we were able to acheive
@@ -133,7 +140,7 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
 
   unsigned SubOffs = Offset - ThisOffset;
   const Type *LeafTy = getStructOffsetType(NextType, SubOffs,
-                                           Offsets, StopEarly);
+                                           Indices, StopEarly);
   Offset = ThisOffset + SubOffs;
   return LeafTy;
 }
@@ -183,10 +190,9 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
     CompTy = cast<CompositeType>(NextTy);
 
     if (const StructType *StructTy = dyn_cast<StructType>(CompTy)) {
+      // Step into the appropriate element of the structure...
       unsigned ActualOffset = Offset;
-      NextTy = getStructOffsetType(StructTy, ActualOffset, Indices);
-      if (StructTy == NextTy && ActualOffset == 0)
-        return 0; // No progress.  :(
+      NextTy = getStructOffsetStep(StructTy, ActualOffset, Indices);
       Offset -= ActualOffset;
     } else {
       const Type *ElTy = cast<SequentialType>(CompTy)->getElementType();
