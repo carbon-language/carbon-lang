@@ -47,6 +47,7 @@ static std::string getCaption(const DSNode *N, const DSGraph *G) {
     if (N->NodeType & DSNode::Incomplete ) OS << "I";
     if (N->NodeType & DSNode::Modified   ) OS << "M";
     if (N->NodeType & DSNode::Read       ) OS << "R";
+    if (N->NodeType & DSNode::DEAD       ) OS << "<dead>";
     OS << "\n";
   }
 
@@ -64,7 +65,7 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
     if (G->hasFunction())
       return "Function " + G->getFunction().getName();
     else
-      return "Globals graph";
+      return "Global graph";
   }
 
   static const char *getGraphProperties(const DSGraph *G) {
@@ -189,6 +190,7 @@ void DSGraph::viewGraph() const {
     return;
   }
   print(F);
+  F.close();
   if (system("dot -Tps /tmp/tempgraph.dot > /tmp/tempgraph.ps"))
     std::cerr << "Error running dot: 'dot' not in path?\n";
   system("gv /tmp/tempgraph.ps");
