@@ -1,4 +1,4 @@
-//===-- ReaderInternals.h - Definitions internal to the reader ------------===//
+//===-- ReaderInternals.h - Definitions internal to the reader --*- C++ -*-===//
 //
 //  This header file defines various stuff that is used by the bytecode reader.
 //
