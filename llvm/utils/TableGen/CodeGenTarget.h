@@ -93,6 +93,12 @@ public:
   inst_iterator inst_begin() const { return getInstructions().begin(); }
   inst_iterator inst_end() const { return Instructions.end(); }
 
+  /// getInstructionsByEnumValue - Return all of the instructions defined by the
+  /// target, ordered by their enum value.
+  void getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
+                                                &NumberedInstructions);
+
+
   /// getPHIInstruction - Return the designated PHI instruction.
   ///
   const CodeGenInstruction &getPHIInstruction() const;

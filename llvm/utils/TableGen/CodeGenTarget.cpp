@@ -198,6 +198,22 @@ const CodeGenInstruction &CodeGenTarget::getPHIInstruction() const {
   return I->second;
 }
 
+/// getInstructionsByEnumValue - Return all of the instructions defined by the
+/// target, ordered by their enum value.
+void CodeGenTarget::
+getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
+                                                 &NumberedInstructions) {
+
+  // Print out the rest of the instructions now.
+  unsigned i = 0;
+  const CodeGenInstruction *PHI = &getPHIInstruction();
+  NumberedInstructions.push_back(PHI);
+  for (inst_iterator II = inst_begin(), E = inst_end(); II != E; ++II)
+    if (&II->second != PHI)
+      NumberedInstructions.push_back(&II->second);
+}
+
+
 /// isLittleEndianEncoding - Return whether this target encodes its instruction
 /// in little-endian format, i.e. bits laid out in the order [0..n]
 ///

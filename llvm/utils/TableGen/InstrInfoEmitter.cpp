@@ -26,7 +26,6 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
 
   // We must emit the PHI opcode first...
   Record *InstrInfo = Target.getInstructionSet();
-  Record *PHI = InstrInfo->getValueAsDef("PHIInst");
 
   std::string Namespace = Target.inst_begin()->second.Namespace;
 
@@ -34,15 +33,13 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
     OS << "namespace " << Namespace << " {\n";
   OS << "  enum {\n";
 
-  OS << "    " << PHI->getName() << ", \t// 0 (fixed for all targets)\n";
-  
-  // Print out the rest of the instructions now.
-  unsigned i = 0;
-  for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
-         E = Target.inst_end(); II != E; ++II)
-    if (II->second.TheDef != PHI)
-      OS << "    " << II->first << ", \t// " << ++i << "\n";
-  
+  std::vector<const CodeGenInstruction*> NumberedInstructions;
+  Target.getInstructionsByEnumValue(NumberedInstructions);
+
+  for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
+    OS << "    " << NumberedInstructions[i]->TheDef->getName()
+       << ", \t// " << i << "\n";
+  }
   OS << "  };\n";
   if (!Namespace.empty())
     OS << "}\n";
