@@ -110,3 +110,9 @@ uint %test16(uint %A) {             ; ~(X+c) == (-c-1)-X
 	%C = xor uint %B, 4294967295
 	ret uint %C
 }
+
+uint %test17(uint %A) {             ; ~(c-X) == X-(c-1) == X+(-c+1)
+	%B = sub uint 123, %A
+	%C = xor uint %B, 4294967295
+	ret uint %C
+}
