@@ -134,7 +134,8 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       //
       for (unsigned i = 0; i < OldMT->getParamTypes().size(); ++i)
         if (OldMT->getParamTypes()[i] != ConcreteMT->getParamTypes()[i]) {
-          std::cerr << "Parameter types conflict for: '" << OldMT
+          std::cerr << "funcresolve: Function [" << Old->getName()
+                    << "]: Parameter types conflict for: '" << OldMT
                     << "' and '" << ConcreteMT << "'\n";
           return Changed;
         }
