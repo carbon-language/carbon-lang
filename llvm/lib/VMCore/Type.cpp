@@ -14,6 +14,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Constants.h"
+#include "Support/DepthFirstIterator.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -495,7 +496,6 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
 		       std::map<const Type *, const Type *> &EqTypes) {
   if (Ty == Ty2) return true;
   if (Ty->getPrimitiveID() != Ty2->getPrimitiveID()) return false;
-  if (Ty->isPrimitiveType()) return true;
   if (isa<OpaqueType>(Ty))
     return false;  // Two unequal opaque types are never equal
 
@@ -595,23 +595,61 @@ public:
     // updated.  Remove the obsolete entry from the map.
     Map.erase(TyIt);
 
-    // Now we check to see if there is an existing entry in the table which is
-    // structurally identical to the newly refined type.  If so, this type gets
-    // refined to the pre-existing type.
-    //
-    for (iterator I = Map.begin(), E = Map.end(); I != E; ++I)
-      if (TypesEqual(Ty, I->second)) {
+    // Determine whether there is a cycle through the type graph which passes
+    // back through this type.  Other cycles are ok, 
+    bool HasTypeCycle = false;
+    {
+      std::set<const Type*> VisitedTypes;
+      for (Type::subtype_iterator I = Ty->subtype_begin(),
+             E = Ty->subtype_end(); I != E; ++I) {
+        for (df_ext_iterator<const Type *, std::set<const Type*> > 
+               DFI = df_ext_begin(*I, VisitedTypes),
+               E = df_ext_end(*I, VisitedTypes); DFI != E; ++DFI)
+          if (*DFI == Ty) {
+            HasTypeCycle = true;
+            goto FoundCycle;
+          }
+      }
+    }
+  FoundCycle:
+
+    ValType Key = ValType::get(Ty);
+
+    // If there are no cycles going through this node, we can do a simple,
+    // efficient lookup in the map, instead of an inefficient nasty linear
+    // lookup.
+    if (!HasTypeCycle) {
+      iterator I = Map.find(ValType::get(Ty));
+      if (I != Map.end()) {
+        // We already have this type in the table.  Get rid of the newly refined
+        // type.
         assert(Ty->isAbstract() && "Replacing a non-abstract type?");
         TypeClass *NewTy = I->second;
-
+        
         // Refined to a different type altogether?
         Ty->refineAbstractTypeTo(NewTy);
         return;
       }
+      
+    } else {
+      // Now we check to see if there is an existing entry in the table which is
+      // structurally identical to the newly refined type.  If so, this type
+      // gets refined to the pre-existing type.
+      //
+      for (iterator I = Map.begin(), E = Map.end(); I != E; ++I)
+        if (TypesEqual(Ty, I->second)) {
+          assert(Ty->isAbstract() && "Replacing a non-abstract type?");
+          TypeClass *NewTy = I->second;
+          
+          // Refined to a different type altogether?
+          Ty->refineAbstractTypeTo(NewTy);
+          return;
+        }
+    }
 
     // If there is no existing type of the same structure, we reinsert an
     // updated record into the map.
-    Map.insert(std::make_pair(ValType::get(Ty), Ty));
+    Map.insert(std::make_pair(Key, Ty));
 
     // If the type is currently thought to be abstract, rescan all of our
     // subtypes to see if the type has just become concrete!
