@@ -1266,11 +1266,11 @@ void Interpreter::print(const std::string &Name) {
   Value *PickedVal = ChooseOneOption(Name, LookupMatchingNames(Name));
   if (!PickedVal) return;
 
-  if (const Function *F = dyn_cast<const Function>(PickedVal)) {
+  if (const Function *F = dyn_cast<Function>(PickedVal)) {
     CW << F;  // Print the function
-  } else if (const Type *Ty = dyn_cast<const Type>(PickedVal)) {
+  } else if (const Type *Ty = dyn_cast<Type>(PickedVal)) {
     CW << "type %" << Name << " = " << Ty->getDescription() << "\n";
-  } else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(PickedVal)) {
+  } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(PickedVal)) {
     CW << BB;   // Print the basic block
   } else {      // Otherwise there should be an annotation for the slot#
     print(PickedVal->getType(), 
