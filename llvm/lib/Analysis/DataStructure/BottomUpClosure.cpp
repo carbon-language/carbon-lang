@@ -61,7 +61,14 @@ static void ResolveArguments(DSCallSite &Call, Function &F,
   Function::aiterator AI = F.abegin();
   for (unsigned i = 0, e = Call.getNumPtrArgs(); i != e; ++i, ++AI) {
     // Advance the argument iterator to the first pointer argument...
-    while (!isPointerType(AI->getType())) ++AI;
+    while (!isPointerType(AI->getType())) {
+      ++AI;
+#ifndef NDEBUG
+      if (AI == F.aend())
+        std::cerr << "Bad call to Function: " << F.getName() << "\n";
+#endif
+      assert(AI != F.aend() && "# Args provided is not # Args required!");
+    }
     
     // Add the link from the argument scalar to the provided value
     ScalarMap[AI].mergeWith(Call.getPtrArg(i));
