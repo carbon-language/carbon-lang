@@ -51,12 +51,12 @@ bool PostDominatorSet::runOnFunction(Function &F) {
   do {
     Changed = false;
 
-    std::set<const BasicBlock*> Visited;
+    std::set<BasicBlock*> Visited;
     DomSetType WorkingSet;
 
     for (unsigned i = 0, e = Roots.size(); i != e; ++i)
-      for (idf_iterator<BasicBlock*> It = idf_begin(Roots[i]),
-             E = idf_end(Roots[i]); It != E; ++It) {
+      for (idf_ext_iterator<BasicBlock*> It = idf_ext_begin(Roots[i], Visited),
+             E = idf_ext_end(Roots[i], Visited); It != E; ++It) {
         BasicBlock *BB = *It;
         succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
         if (SI != SE) {                // Is there SOME successor?
