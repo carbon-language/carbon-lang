@@ -143,7 +143,7 @@ endif
 ifeq ($(LEVEL), .)
 
 tags:
-	etags -l c++ `find . -name '*.cpp'` `find . -name '*.h'`
+	etags -l c++ `find . -name '*.cpp' -o -name '*.h'`
 
 all:: tags
 
