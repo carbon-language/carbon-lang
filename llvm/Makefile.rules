@@ -1098,11 +1098,3 @@ printvars::
 	@$(ECHO) "Compile.CXX: " '$(Compile.CXX)'
 	@$(ECHO) "Compile.C: " '$(Compile.C)'
 
-# This frivolous target provided for Resistor who requested that the makefiles
-# be hardened and that he get a "pony" after the makefiles (accidentally) 
-# deleted his unix kernel.
-pony::
-	@wget -q \
-	http://search.cpan.org/src/ASAVIGE/Acme-EyeDrops-1.40/lib/Acme/EyeDrops/pony2.eye \
-	-O /tmp/resistor.pony
-	@cat /tmp/resistor.pony
