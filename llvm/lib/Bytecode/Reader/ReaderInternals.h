@@ -45,6 +45,9 @@ public:
     FirstDerivedTyID = Type::FirstDerivedTyID;
   }
   ~BytecodeParser() {
+    freeState();
+  }
+  void freeState() {
     freeTable(Values);
     freeTable(LateResolveValues);
     freeTable(ModuleValues);
