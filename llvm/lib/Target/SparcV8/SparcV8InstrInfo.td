@@ -62,7 +62,7 @@ def CALL : InstV8 {
   let Name = "call";
 }
 
-// Section B.9 - SETHI Instruction, p. 102
+// Section B.9 - SETHI Instruction, p. 104
 def SETHIi: F2_1<0b100, "sethi">;
 
 // Section B.11 - Logical Instructions, p. 106
@@ -77,6 +77,9 @@ def SRAri : F3_1<2, 0b100111, "sra">;
 
 // Section B.13 - Add Instructions, p. 108
 def ADDrr : F3_1<2, 0b000000, "add">;
+
+// Section B.15 - Subtract Instructions, p. 110
+def SUBrr : F3_1<2, 0b000100, "sub">;
 
 // Section B.25 - Jump and Link, p. 126
 def JMPLr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd

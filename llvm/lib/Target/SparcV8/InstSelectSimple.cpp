@@ -165,9 +165,8 @@ static TypeClass getClass (const Type *T) {
 void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
                                     MachineBasicBlock::iterator IP,
                                     Constant *C, unsigned R) {
-  if (C->getType()->isIntegral()) {
+  if (ConstantInt *CI = dyn_cast<ConstantInt> (C)) {
     unsigned Class = getClass(C->getType());
-    ConstantInt *CI = cast<ConstantInt>(C);
     switch (Class) {
       case cByte:
         BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addImm ((uint8_t) CI->getRawValue ());
@@ -185,12 +184,12 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
         return;
       }
       default:
-        assert (0 && "Can't move this kind of constant");
+        assert (0 && "Can't copy this kind of constant into register yet");
         return;
     }
   }
 
-  assert (0 && "Can't copy constants into registers yet");
+  assert (0 && "Can't copy this kind of constant into register yet");
 }
 
 bool V8ISel::runOnFunction(Function &Fn) {
@@ -245,6 +244,9 @@ void V8ISel::visitBinaryOperator (BinaryOperator &I) {
   switch (I.getOpcode ()) {
     case Instruction::Add: 
       BuildMI (BB, V8::ADDrr, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
+      break;
+    case Instruction::Sub: 
+      BuildMI (BB, V8::SUBrr, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
       break;
     default:
 	  visitInstruction (I);
