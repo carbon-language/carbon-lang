@@ -15,17 +15,24 @@ begin
 end
 
 ; A constant argument to a Phi produces a Cast instruction in the
-; corresponding predecessor basic block.  This has little to do with
-; selection but the code is a bit weird.
+; corresponding predecessor basic block.  This checks a few things:
+; -- phi arguments coming from the bottom of the same basic block
+;    (they should not be forward substituted in the machine code!)
+; -- code generation for casts of various types
+; -- use of immediate fields for integral constants of different sizes
+; -- branch on a constant condition
 ; 
 void "mergeConstants"(int * %x, int * %y)
 begin
-; <label>:0						;	  [#uses=1]
+; <label>:0
 	br label %Top
-Top:							;	  [#uses=4]
-	phi int [ 0, %0 ], [ 1, %Top ], [ 2, %Next ]	; <int>:0 [#uses=0]
+Top:
+	phi int    [ 0,    %0 ], [ 1,    %Top ], [ 524288, %Next ]
+	phi float  [ 0.0,  %0 ], [ 1.0,  %Top ], [ 2.0,    %Next ]
+	phi double [ 0.5,  %0 ], [ 1.5,  %Top ], [ 2.5,    %Next ]
+	phi bool   [ true, %0 ], [ false,%Top ], [ true,   %Next ]
 	br bool true, label %Top, label %Next
-Next:							;	  [#uses=2]
+Next:
 	br label %Top
 end
 
@@ -71,10 +78,12 @@ end
 
 ; Test cases where an LLVM instruction requires no machine
 ; instructions (e.g., cast int* to long).  But there are 2 cases:
-; 1. If the result register has only a single use, the operand will be
-;    copy-propagated during instruction selection.
-; 2. If the result register has multiple uses, it cannot be copy 
-;    propagated during instruction selection.  It will generate a
+; 1. If the result register has only a single use and the use is in the
+;    same basic block, the operand will be copy-propagated during
+;    instruction selection.
+; 2. If the result register has multiple uses or is in a different
+;    basic block, it cannot (or will not) be copy propagated during
+;    instruction selection.  It will generate a
 ;    copy instruction (add-with-0), but this copy should get coalesced
 ;    away by the register allocator.
 ;
