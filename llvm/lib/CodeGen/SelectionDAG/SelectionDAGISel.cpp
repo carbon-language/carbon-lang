@@ -304,14 +304,12 @@ public:
   void visitPHI(PHINode &I) { } // PHI nodes are handled specially.
   void visitCall(CallInst &I);
 
-  // FIXME: These should go through the FunctionLoweringInfo object!!!
   void visitVAStart(CallInst &I);
   void visitVANext(VANextInst &I);
   void visitVAArg(VAArgInst &I);
   void visitVAEnd(CallInst &I);
   void visitVACopy(CallInst &I);
-  void visitReturnAddress(CallInst &I);
-  void visitFrameAddress(CallInst &I);
+  void visitFrameReturnAddress(CallInst &I, bool isFrameAddress);
 
   void visitMemSet(CallInst &I);
   void visitMemCpy(CallInst &I);
@@ -576,10 +574,8 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
     case Intrinsic::vastart:  visitVAStart(I); return;
     case Intrinsic::vaend:    visitVAEnd(I); return;
     case Intrinsic::vacopy:   visitVACopy(I); return;
-    case Intrinsic::returnaddress:
-      visitReturnAddress(I); return;
-    case Intrinsic::frameaddress:
-      visitFrameAddress(I); return;
+    case Intrinsic::returnaddress: visitFrameReturnAddress(I, false); return;
+    case Intrinsic::frameaddress:  visitFrameReturnAddress(I, true); return;
     default:
       // FIXME: IMPLEMENT THESE.
       // readport, writeport, readio, writeio
@@ -651,45 +647,85 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   DAG.setRoot(Result.second);
 }
 
-void SelectionDAGLowering::visitVAStart(CallInst &I) {
+std::pair<SDOperand, SDOperand>
+TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG) {
   // We have no sane default behavior, just emit a useful error message and bail
   // out.
-  std::cerr << "Variable arguments support not implemented for this target!\n";
+  std::cerr << "Variable arguments handling not implemented on this target!\n";
   abort();
+}
+
+SDOperand TargetLowering::LowerVAEnd(SDOperand Chain, SDOperand L,
+                                     SelectionDAG &DAG) {
+  // Default to a noop.
+  return Chain;
+}
+
+std::pair<SDOperand,SDOperand>
+TargetLowering::LowerVACopy(SDOperand Chain, SDOperand L, SelectionDAG &DAG) {
+  // Default to returning the input list.
+  return std::make_pair(L, Chain);
+}
+
+std::pair<SDOperand,SDOperand>
+TargetLowering::LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
+                               const Type *ArgTy, SelectionDAG &DAG) {
+  // We have no sane default behavior, just emit a useful error message and bail
+  // out.
+  std::cerr << "Variable arguments handling not implemented on this target!\n";
+  abort();
+}
+
+
+void SelectionDAGLowering::visitVAStart(CallInst &I) {
+  std::pair<SDOperand,SDOperand> Result = TLI.LowerVAStart(DAG.getRoot(), DAG);
+  setValue(&I, Result.first);
+  DAG.setRoot(Result.second);
+}
+
+void SelectionDAGLowering::visitVAArg(VAArgInst &I) {
+  std::pair<SDOperand,SDOperand> Result =
+    TLI.LowerVAArgNext(false, DAG.getRoot(), getValue(I.getOperand(0)), 
+                       I.getType(), DAG);
+  setValue(&I, Result.first);
+  DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitVANext(VANextInst &I) {
-  // We have no sane default behavior, just emit a useful error message and bail
-  // out.
-  std::cerr << "Variable arguments support not implemented for this target!\n";
-  abort();
-}
-void SelectionDAGLowering::visitVAArg(VAArgInst &I) {
-  // We have no sane default behavior, just emit a useful error message and bail
-  // out.
-  std::cerr << "Variable arguments support not implemented for this target!\n";
-  abort();
+  std::pair<SDOperand,SDOperand> Result =
+    TLI.LowerVAArgNext(true, DAG.getRoot(), getValue(I.getOperand(0)), 
+                       I.getArgType(), DAG);
+  setValue(&I, Result.first);
+  DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitVAEnd(CallInst &I) {
-  // By default, this is a noop.  On almost all targets, this is fine.
+  DAG.setRoot(TLI.LowerVAEnd(DAG.getRoot(), getValue(I.getOperand(1)), DAG));
 }
 
 void SelectionDAGLowering::visitVACopy(CallInst &I) {
-  // By default, vacopy just does a simple pointer copy.
-  setValue(&I, getValue(I.getOperand(1)));
+  std::pair<SDOperand,SDOperand> Result =
+    TLI.LowerVACopy(DAG.getRoot(), getValue(I.getOperand(1)), DAG);
+  setValue(&I, Result.first);
+  DAG.setRoot(Result.second);
 }
 
-void SelectionDAGLowering::visitReturnAddress(CallInst &I) {
-  // It is always conservatively correct for llvm.returnaddress to return 0.
-  setValue(&I, getIntPtrConstant(0));
+
+// It is always conservatively correct for llvm.returnaddress and
+// llvm.frameaddress to return 0.
+std::pair<SDOperand, SDOperand>
+TargetLowering::LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain,
+                                        unsigned Depth, SelectionDAG &DAG) {
+  return std::make_pair(DAG.getConstant(0, getPointerTy()), Chain);
 }
 
-void SelectionDAGLowering::visitFrameAddress(CallInst &I) {
-  // It is always conservatively correct for llvm.frameaddress to return 0.
-  setValue(&I, getIntPtrConstant(0));
+void SelectionDAGLowering::visitFrameReturnAddress(CallInst &I, bool isFrame) {
+  unsigned Depth = (unsigned)cast<ConstantUInt>(I.getOperand(1))->getValue();
+  std::pair<SDOperand,SDOperand> Result =
+    TLI.LowerFrameReturnAddress(isFrame, DAG.getRoot(), Depth, DAG);
+  setValue(&I, Result.first);
+  DAG.setRoot(Result.second);
 }
-
 
 void SelectionDAGLowering::visitMemSet(CallInst &I) {
   MVT::ValueType IntPtr = TLI.getPointerTy();
