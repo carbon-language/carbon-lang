@@ -232,8 +232,8 @@ ifdef TOOL_VERBOSE
   C.Flags += -v
   CXX.Flags += -v
   LD.Flags += -v
-  BCLinkLib.Flags += -v
   VERBOSE := 1
+else
 endif
 
 # Adjust settings for verbose mode
@@ -286,12 +286,11 @@ Link          = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
 	        $(CompileCommonOpts) $(LD.Flags) $(Strip)
 Relink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
                 $(CompileCommonOpts)
-BCLinkLib     = $(LLVMGCC) -shared -nostdlib $(BCLinkLib.Flags)
 LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL)
 Burg          = $(BURG) -I $(BUILD_SRC_DIR)
 TableGen      = $(TBLGEN) -I $(BUILD_SRC_DIR)
 Archive       = $(AR) $(AR.Flags)
-LArchive      = $(ToolDir)/llvm-ar rcsf
+LArchive      = $(LLVMToolDir)/llvm-ar rcsf
 ifdef RANLIB
 Ranlib        = $(RANLIB)
 else
@@ -466,7 +465,7 @@ LIBRARYNAME := $(strip $(LIBRARYNAME))
 LibName.LA := $(LibDir)/lib$(LIBRARYNAME).la
 LibName.A  := $(LibDir)/lib$(LIBRARYNAME).a
 LibName.O  := $(LibDir)/$(LIBRARYNAME).o
-LibName.BC := $(LibDir)/lib$(LIBRARYNAME).bc
+LibName.BCA:= $(LibDir)/lib$(LIBRARYNAME).bca
 
 #---------------------------------------------------------
 # Shared Library Targets:
@@ -511,37 +510,41 @@ endif
 #---------------------------------------------------------
 ifdef BYTECODE_LIBRARY
 
-ifdef EXPORTED_SYMBOL_LIST
-  BCLinkLib += -Xlinker -internalize-public-api-list=$(EXPORTED_SYMBOL_LIST)
+all-local:: $(LibName.BCA)
+
+ifdef EXPORTED_SYMBOL_FILE
+BCLinkLib = $(LLVMGCC) -shared -nostdlib -Xlinker \
+	    -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
+
+$(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
+	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@) \
+	  "(internalize)"
+	$(BCLinkLib) -o $(ObjDir)/$(LIBRARYNAME).o $(ObjectsBC)
+	$(Verb) $(LArchive) $@ $(ObjDir)/$(LIBRARYNAME).o
 else
-  ifdef EXPORTED_SYMBOL_FILE
-    BCLinkLib += -Xlinker -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
-  else
-    BCLinkLib += -Xlinker -disable-internalize
-  endif
+$(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
+	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@)
+	$(Verb) $(LArchive) $@ $(ObjectsBC)
+
 endif
-
-all-local:: $(LibName.BC)
-
-$(LibName.BC): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
-	$(Echo) Linking $(BuildMode) Bytecode Library $(notdir $@)
-	$(Verb) $(BCLinkLib) -o $@ $(ObjectsBC)
 
 clean-local::
-ifneq ($(strip $(LibName.BC)),)
-	-$(Verb) $(RM) -f $(LibName.BC)
+ifneq ($(strip $(LibName.BCA)),)
+	-$(Verb) $(RM) -f $(LibName.BCA)
 endif
 
-DestBytecodeLib = $(bytecode_libdir)/lib$(LIBRARYNAME).bc
+DestBytecodeLib = $(bytecode_libdir)/lib$(LIBRARYNAME).a
+
+install-bytecode: $(DestBytecodeLib)
 
 install-local:: $(DestBytecodeLib)
 
-$(DestBytecodeLib): $(bytecode_libdir) $(LibName.BC) 
-	$(Echo) Installing $(BuildMode) Bytecode Library $(DestBytecodeLib)
-	$(Verb) $(INSTALL) $(LibName.BC) $@
+$(DestBytecodeLib): $(bytecode_libdir) $(LibName.BCA) 
+	$(Echo) Installing $(BuildMode) Bytecode Archive $(DestBytecodeLib)
+	$(Verb) $(INSTALL) $(LibName.BCA) $@
 
 uninstall-local::
-	$(Echo) Uninstalling $(BuildMode) Bytecode Library $(DestBytecodeLib)
+	$(Echo) Uninstalling $(BuildMode) Bytecode Archive $(DestBytecodeLib)
 	-$(Verb) $(RM) -f $(DestBytecodeLib)
 
 endif
