@@ -35,7 +35,7 @@ AnnotationID AnnotationManager::getID(const string &Name) {  // Name -> ID
 // getID - Name -> ID + registration of a factory function for demand driven
 // annotation support.
 AnnotationID AnnotationManager::getID(const string &Name, Factory Fact,
-				      void *Data=0) {
+				      void *Data) {
   AnnotationID Result(getID(Name));
   registerAnnotationFactory(Result, Fact, Data);
   return Result;		      
