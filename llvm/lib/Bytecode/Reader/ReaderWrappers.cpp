@@ -346,6 +346,30 @@ bool llvm::GetBytecodeDependentLibraries(const std::string &fname,
   }
 }
 
+namespace {
+void getSymbols(Module*M, std::vector<std::string>& symbols) {
+  // Loop over global variables
+  for (Module::giterator GI = M->gbegin(), GE=M->gend(); GI != GE; ++GI) {
+    if (GI->hasInitializer()) {
+      std::string name ( GI->getName() );
+      if (!name.empty()) {
+        symbols.push_back(name);
+      }
+    }
+  }
+
+  //Loop over functions
+  for (Module::iterator FI = M->begin(), FE=M->end(); FI != FE; ++FI) {
+    if (!FI->isExternal()) {
+      std::string name ( FI->getName() );
+      if (!name.empty()) {
+        symbols.push_back(name);
+      }
+    }
+  }
+}
+}
+
 // Get just the externally visible defined symbols from the bytecode
 bool llvm::GetBytecodeSymbols(const sys::Path& fName,
                               std::vector<std::string>& symbols) {
@@ -355,25 +379,8 @@ bool llvm::GetBytecodeSymbols(const sys::Path& fName,
     // Get the module from the provider
     Module* M = AMP->releaseModule();
 
-    // Loop over global variables
-    for (Module::giterator GI = M->gbegin(), GE=M->gend(); GI != GE; ++GI) {
-      if (GI->hasInitializer()) {
-        std::string name ( GI->getName() );
-        if (!name.empty()) {
-          symbols.push_back(name);
-        }
-      }
-    }
-
-    //Loop over functions
-    for (Module::iterator FI = M->begin(), FE=M->end(); FI != FE; ++FI) {
-      if (!FI->isExternal()) {
-        std::string name ( FI->getName() );
-        if (!name.empty()) {
-          symbols.push_back(name);
-        }
-      }
-    }
+    // Get the symbols
+    getSymbols(M, symbols);
 
     // Done with the module
     delete M;
@@ -384,4 +391,26 @@ bool llvm::GetBytecodeSymbols(const sys::Path& fName,
   }
 }
 
+bool llvm::GetBytecodeSymbols(const unsigned char*Buffer, unsigned Length,
+                              const std::string& ModuleID,
+                              std::vector<std::string>& symbols) {
+
+  try {
+    std::auto_ptr<ModuleProvider>
+      AMP(getBytecodeBufferModuleProvider(Buffer, Length, ModuleID));
+
+    // Get the module from the provider
+    Module* M = AMP->releaseModule();
+
+    // Get the symbols
+    getSymbols(M, symbols);
+
+    // Done with the module
+    delete M;
+    return true;
+
+  } catch (...) {
+    return false;
+  }
+}
 // vim: sw=2 ai
