@@ -356,7 +356,6 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       }
 #endif
 
-#if 1
   } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
     Value *Val     = SI->getOperand(0);
     Value *Pointer = SI->getPointerOperand();
@@ -396,6 +395,46 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             return true;
           }
 
+  } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+    Value *Pointer = LI->getOperand(0);
+    const Type *PtrElType =
+      cast<PointerType>(Pointer->getType())->getElementType();
+    
+    // Peephole optimize the following instructions:
+    // %Val = cast <T1>* to <T2>*    ;; If T1 is losslessly convertable to T2
+    // %t = load <T2>* %P
+    //
+    // Into: 
+    // %t = load <T1>* %P
+    // %Val = cast <T1> to <T2>
+    //
+    // Note: This is not taken care of by expr conversion because there might
+    // not be a cast available for the store to convert the incoming value of.
+    // This code is basically here to make sure that pointers don't have casts
+    // if possible.
+    //
+    if (CastInst *CI = dyn_cast<CastInst>(Pointer))
+      if (Value *CastSrc = CI->getOperand(0)) // CSPT = CastSrcPointerType
+        if (PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
+          // convertable types?
+          if (PtrElType->isLosslesslyConvertableTo(CSPT->getElementType()) &&
+              !LI->hasIndices()) {      // No subscripts yet!
+            PRINT_PEEPHOLE2("load-src-cast:in ", Pointer, LI);
+
+            // Create the new load instruction... loading the pre-casted value
+            LoadInst *NewLI = new LoadInst(CastSrc, LI->getName());
+            
+            // Insert the new T cast instruction... stealing old T's name
+            CastInst *NCI = new CastInst(NewLI, LI->getType(), CI->getName());
+            BI = BB->getInstList().insert(BI, NewLI)+1;
+
+            // Replace the old store with a new one!
+            ReplaceInstWithInst(BB->getInstList(), BI, NCI);
+            PRINT_PEEPHOLE3("load-src-cast:out", NCI, CastSrc, NewLI);
+            ++NumLoadStorePeepholes;
+            return true;
+          }
+
   } else if (I->getOpcode() == Instruction::Add &&
              isa<CastInst>(I->getOperand(1))) {
 
@@ -404,7 +443,6 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       ++NumGEPInstFormed;
       return true;
     }
-#endif
   }
 
   return false;
