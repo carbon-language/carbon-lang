@@ -27,13 +27,111 @@
 #include "llvm/iOther.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/Analysis/SlotCalculator.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 using namespace llvm;
+
+namespace {
+
+/// This class provides computation of slot numbers for LLVM Assembly writing.
+/// @brief LLVM Assembly Writing Slot Computation.
+class SlotMachine {
+
+/// @name Types
+/// @{
+public:
+
+  /// @brief A mapping of Values to slot numbers
+  typedef std::map<const Value*, unsigned> ValueMap;
+
+  /// @brief A plane with next slot number and ValueMap
+  struct Plane { 
+    unsigned next_slot;        ///< The next slot number to use
+    ValueMap map;              ///< The map of Value* -> unsigned
+    Plane() { next_slot = 0; } ///< Make sure we start at 0
+  };
+
+  /// @brief The map of planes by Type
+  typedef std::map<const Type*, Plane> TypedPlanes;
+
+/// @}
+/// @name Constructors
+/// @{
+public:
+  /// @brief Construct from a module
+  SlotMachine(const Module *M );
+
+  /// @brief Construct from a function, starting out in incorp state.
+  SlotMachine(const Function *F );
+
+/// @}
+/// @name Accessors
+/// @{
+public:
+  /// Return the slot number of the specified value in it's type
+  /// plane.  Its an error to ask for something not in the SlotMachine.
+  /// Its an error to ask for a Type*
+  unsigned getSlot(const Value *V) const;
+
+/// @}
+/// @name Mutators
+/// @{
+public:
+  /// If you'd like to deal with a function instead of just a module, use 
+  /// this method to get its data into the SlotMachine.
+  void incorporateFunction(const Function *F);
+
+  /// After calling incorporateFunction, use this method to remove the 
+  /// most recently incorporated function from the SlotMachine. This 
+  /// will reset the state of the machine back to just the module contents.
+  void purgeFunction();
+
+/// @}
+/// @name Implementation Details
+/// @{
+private:
+  /// Values can be crammed into here at will. If they haven't 
+  /// been inserted already, they get inserted, otherwise they are ignored.
+  /// Either way, the slot number for the Value* is returned.
+  unsigned createSlot(const Value *V);
+
+  /// Insert a value into the value table. Return the slot number
+  /// that it now occupies.  BadThings(TM) will happen if you insert a
+  /// Value that's already been inserted. 
+  unsigned insertValue( const Value *V );
+
+  /// Add all of the module level global variables (and their initializers)
+  /// and function declarations, but not the contents of those functions.
+  void processModule();
+
+  SlotMachine(const SlotMachine &);  // DO NOT IMPLEMENT
+  void operator=(const SlotMachine &);  // DO NOT IMPLEMENT
+
+/// @}
+/// @name Data
+/// @{
+public:
+
+  /// @brief The module for which we are holding slot numbers
+  const Module *TheModule;
+
+  /// @brief Whether or not we have a function incorporated
+  bool FunctionIncorporated;
+
+  /// @brief The TypePlanes map for the module level data
+  TypedPlanes mMap;
+
+  /// @brief The TypePlanes map for the function level data
+  TypedPlanes fMap;
+
+/// @}
+
+};
+
+}
 
 static RegisterPass<PrintModulePass>
 X("printm", "Print module to stderr",PassInfo::Analysis|PassInfo::Optimization);
@@ -43,7 +141,7 @@ Y("print","Print function to stderr",PassInfo::Analysis|PassInfo::Optimization);
 static void WriteAsOperandInternal(std::ostream &Out, const Value *V, 
                                    bool PrintName,
                                  std::map<const Type *, std::string> &TypeTable,
-                                   SlotCalculator *Table);
+                                   SlotMachine *Machine);
 
 static const Module *getModuleFromVal(const Value *V) {
   if (const Argument *MA = dyn_cast<Argument>(V))
@@ -58,18 +156,18 @@ static const Module *getModuleFromVal(const Value *V) {
   return 0;
 }
 
-static SlotCalculator *createSlotCalculator(const Value *V) {
+static SlotMachine *createSlotMachine(const Value *V) {
   assert(!isa<Type>(V) && "Can't create an SC for a type!");
   if (const Argument *FA = dyn_cast<Argument>(V)) {
-    return new SlotCalculator(FA->getParent(), false);
+    return new SlotMachine(FA->getParent());
   } else if (const Instruction *I = dyn_cast<Instruction>(V)) {
-    return new SlotCalculator(I->getParent()->getParent(), false);
+    return new SlotMachine(I->getParent()->getParent());
   } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
-    return new SlotCalculator(BB->getParent(), false);
+    return new SlotMachine(BB->getParent());
   } else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)){
-    return new SlotCalculator(GV->getParent(), false);
+    return new SlotMachine(GV->getParent());
   } else if (const Function *Func = dyn_cast<Function>(V)) {
-    return new SlotCalculator(Func, false);
+    return new SlotMachine(Func);
   }
   return 0;
 }
@@ -246,7 +344,7 @@ std::ostream &llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
 static void WriteConstantInt(std::ostream &Out, const Constant *CV, 
                              bool PrintName,
                              std::map<const Type *, std::string> &TypeTable,
-                             SlotCalculator *Table) {
+                             SlotMachine *Machine) {
   if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
     Out << (CB == ConstantBool::True ? "true" : "false");
   } else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV)) {
@@ -322,12 +420,12 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
         Out << " ";
         printTypeInt(Out, ETy, TypeTable);
         WriteAsOperandInternal(Out, CA->getOperand(0),
-                               PrintName, TypeTable, Table);
+                               PrintName, TypeTable, Machine);
         for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
           Out << ", ";
           printTypeInt(Out, ETy, TypeTable);
           WriteAsOperandInternal(Out, CA->getOperand(i), PrintName,
-                                 TypeTable, Table);
+                                 TypeTable, Machine);
         }
       }
       Out << " ]";
@@ -339,14 +437,14 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
       printTypeInt(Out, CS->getOperand(0)->getType(), TypeTable);
 
       WriteAsOperandInternal(Out, CS->getOperand(0),
-                             PrintName, TypeTable, Table);
+                             PrintName, TypeTable, Machine);
 
       for (unsigned i = 1; i < CS->getNumOperands(); i++) {
         Out << ", ";
         printTypeInt(Out, CS->getOperand(i)->getType(), TypeTable);
 
         WriteAsOperandInternal(Out, CS->getOperand(i),
-                               PrintName, TypeTable, Table);
+                               PrintName, TypeTable, Machine);
       }
     }
 
@@ -355,14 +453,14 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     Out << "null";
 
   } else if (const ConstantPointerRef *PR = dyn_cast<ConstantPointerRef>(CV)) {
-    WriteAsOperandInternal(Out, PR->getValue(), true, TypeTable, Table);
+    WriteAsOperandInternal(Out, PR->getValue(), true, TypeTable, Machine);
 
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     Out << CE->getOpcodeName() << " (";
     
     for (User::const_op_iterator OI=CE->op_begin(); OI != CE->op_end(); ++OI) {
       printTypeInt(Out, (*OI)->getType(), TypeTable);
-      WriteAsOperandInternal(Out, *OI, PrintName, TypeTable, Table);
+      WriteAsOperandInternal(Out, *OI, PrintName, TypeTable, Machine);
       if (OI+1 != CE->op_end())
         Out << ", ";
     }
@@ -386,35 +484,30 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
 static void WriteAsOperandInternal(std::ostream &Out, const Value *V, 
                                    bool PrintName,
                                   std::map<const Type*, std::string> &TypeTable,
-                                   SlotCalculator *Table) {
+                                   SlotMachine *Machine) {
   Out << " ";
   if (PrintName && V->hasName()) {
     Out << getLLVMName(V->getName());
   } else {
     if (const Constant *CV = dyn_cast<Constant>(V)) {
-      WriteConstantInt(Out, CV, PrintName, TypeTable, Table);
+      WriteConstantInt(Out, CV, PrintName, TypeTable, Machine);
     } else {
       int Slot;
-      if (Table) {
-	Slot = Table->getSlot(V);
+      if (Machine) {
+	Slot = Machine->getSlot(V);
       } else {
         if (const Type *Ty = dyn_cast<Type>(V)) {
           Out << Ty->getDescription();
           return;
         }
 
-        Table = createSlotCalculator(V);
-        if (Table == 0) { Out << "BAD VALUE TYPE!"; return; }
+        Machine = createSlotMachine(V);
+        if (Machine == 0) { Out << "BAD VALUE TYPE!"; return; }
 
-	Slot = Table->getSlot(V);
-	delete Table;
+	Slot = Machine->getSlot(V);
+	delete Machine;
       }
-      if (Slot >= 0)  Out << "%" << Slot;
-      else if (PrintName)
-        if (V->hasName())
-          Out << "<badref: " << getLLVMName(V->getName()) << ">";
-        else
-          Out << "<badref>";     // Not embedded into a location?
+      Out << "%" << Slot;
     }
   }
 }
@@ -447,14 +540,14 @@ namespace llvm {
 
 class AssemblyWriter {
   std::ostream *Out;
-  SlotCalculator &Table;
+  SlotMachine &Machine;
   const Module *TheModule;
   std::map<const Type *, std::string> TypeNames;
   AssemblyAnnotationWriter *AnnotationWriter;
 public:
-  inline AssemblyWriter(std::ostream &o, SlotCalculator &Tab, const Module *M,
+  inline AssemblyWriter(std::ostream &o, SlotMachine &Mac, const Module *M,
                         AssemblyAnnotationWriter *AAW)
-    : Out(&o), Table(Tab), TheModule(M), AnnotationWriter(AAW) {
+    : Out(&o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
 
     // If the module has a symbol table, take all global types and stuff their
     // names into the TypeNames map.
@@ -548,7 +641,7 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType, 
 				  bool PrintName) {
   if (PrintType) { *Out << " "; printType(Operand->getType()); }
-  WriteAsOperandInternal(*Out, Operand, PrintName, TypeNames, &Table);
+  WriteAsOperandInternal(*Out, Operand, PrintName, TypeNames, &Machine);
 }
 
 
@@ -674,7 +767,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   else
     *Out << "\"\"";
   *Out << "(";
-  Table.incorporateFunction(F);
+  Machine.incorporateFunction(F);
 
   // Loop over the arguments, printing them...
   const FunctionType *FT = F->getFunctionType();
@@ -701,7 +794,7 @@ void AssemblyWriter::printFunction(const Function *F) {
     *Out << "}\n";
   }
 
-  Table.purgeFunction();
+  Machine.purgeFunction();
 }
 
 /// printArgument - This member is called for every argument that is passed into
@@ -717,8 +810,6 @@ void AssemblyWriter::printArgument(const Argument *Arg) {
   // Output name, if available...
   if (Arg->hasName())
     *Out << " " << getLLVMName(Arg->getName());
-  else if (Table.getSlot(Arg) < 0)
-    *Out << "<badref>";
 }
 
 /// printBasicBlock - This member is called for each basic block in a method.
@@ -727,12 +818,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
     *Out << "\n" << BB->getName() << ":";
   } else if (!BB->use_empty()) {      // Don't print block # of no uses...
-    int Slot = Table.getSlot(BB);
-    *Out << "\n; <label>:";
-    if (Slot >= 0) 
-      *Out << Slot;         // Extra newline separates out label's
-    else 
-      *Out << "<badref>"; 
+    *Out << "\n; <label>:" << Machine.getSlot(BB);
   }
 
   if (BB->getParent() == 0)
@@ -777,9 +863,7 @@ void AssemblyWriter::printInfoComment(const Value &V) {
     printType(V.getType()) << ">";
 
     if (!V.hasName()) {
-      int Slot = Table.getSlot(&V); // Print out the def slot taken...
-      if (Slot >= 0) *Out << ":" << Slot;
-      else *Out << ":<badref>";
+      *Out << ":" << Machine.getSlot(&V); // Print out the def slot taken.
     }
     *Out << " [#uses=" << V.use_size() << "]";  // Output # uses
   }
@@ -956,26 +1040,26 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 //===----------------------------------------------------------------------===//
 
 void Module::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  SlotCalculator SlotTable(this, false);
+  SlotMachine SlotTable(this);
   AssemblyWriter W(o, SlotTable, this, AAW);
   W.write(this);
 }
 
 void GlobalVariable::print(std::ostream &o) const {
-  SlotCalculator SlotTable(getParent(), false);
+  SlotMachine SlotTable(getParent());
   AssemblyWriter W(o, SlotTable, getParent(), 0);
   W.write(this);
 }
 
 void Function::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  SlotCalculator SlotTable(getParent(), false);
+  SlotMachine SlotTable(getParent());
   AssemblyWriter W(o, SlotTable, getParent(), AAW);
 
   W.write(this);
 }
 
 void BasicBlock::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  SlotCalculator SlotTable(getParent(), false);
+  SlotMachine SlotTable(getParent());
   AssemblyWriter W(o, SlotTable, 
                    getParent() ? getParent()->getParent() : 0, AAW);
   W.write(this);
@@ -983,7 +1067,7 @@ void BasicBlock::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
 
 void Instruction::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
   const Function *F = getParent() ? getParent()->getParent() : 0;
-  SlotCalculator SlotTable(F, false);
+  SlotMachine SlotTable(F);
   AssemblyWriter W(o, SlotTable, F ? F->getParent() : 0, AAW);
 
   W.write(this);
@@ -1030,7 +1114,7 @@ void Type::dump() const { print(std::cerr); }
 void CachedWriter::setModule(const Module *M) {
   delete SC; delete AW;
   if (M) {
-    SC = new SlotCalculator(M, false);
+    SC = new SlotMachine(M );
     AW = new AssemblyWriter(*Out, *SC, M, 0);
   } else {
     SC = 0; AW = 0;
@@ -1069,6 +1153,296 @@ CachedWriter& CachedWriter::operator<<(const Type *X) {
 void CachedWriter::setStream(std::ostream &os) {
   Out = &os;
   if (AW) AW->setStream(os);
+}
+
+//===----------------------------------------------------------------------===//
+//===--                    SlotMachine Implementation
+//===----------------------------------------------------------------------===//
+
+#if 0
+#define SC_DEBUG(X) std::cerr << X
+#else
+#define SC_DEBUG(X)
+#endif
+
+// Module level constructor. Causes the contents of the Module (sans functions)
+// to be added to the slot table.
+SlotMachine::SlotMachine(const Module *M) 
+  : TheModule(M)
+  , FunctionIncorporated(false)
+  , mMap()
+  , fMap()
+{
+  if ( M != 0 )
+    processModule();
+}
+
+// Function level constructor. Causes the contents of the Module and the one
+// function provided to be added to the slot table.
+SlotMachine::SlotMachine(const Function *F ) 
+  : TheModule( F ? F->getParent() : 0 )
+  , FunctionIncorporated(true)
+  , mMap()
+  , fMap()
+{
+  if ( TheModule ) {
+    processModule();              // Process module level stuff
+    incorporateFunction(F);       // Start out in incorporated state
+  }
+}
+
+// Iterate through all the global variables, functions, and global
+// variable initializers and create slots for them. 
+void SlotMachine::processModule() {
+  SC_DEBUG("begin processModule!\n");
+
+  // Add all of the global variables to the value table...
+  for (Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
+       I != E; ++I)
+    createSlot(I);
+
+  // Add all the functions to the table
+  for (Module::const_iterator I = TheModule->begin(), E = TheModule->end();
+       I != E; ++I)
+    createSlot(I);
+
+  // Add all of the module level constants used as initializers
+  for (Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
+       I != E; ++I)
+    if (I->hasInitializer())
+      createSlot(I->getInitializer());
+
+  SC_DEBUG("end processModule!\n");
+}
+
+
+// Incorporate the arguments, basic blocks, and instructions  of a function.
+// This is the *only* way to get the FunctionIncorporated flag set.
+void SlotMachine::incorporateFunction(const Function *F) {
+  SC_DEBUG("begin processFunction!\n");
+
+  FunctionIncorporated = true;
+
+  // Add all the function arguments
+  for(Function::const_aiterator AI = F->abegin(), 
+      AE = F->aend(); AI != AE; ++AI)
+    createSlot(AI);
+
+  SC_DEBUG("Inserting Instructions:\n");
+
+  // Add all of the basic blocks and instructions
+  for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+    createSlot(BB);
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
+      createSlot(I);
+    }
+  }
+
+  SC_DEBUG("end processFunction!\n");
+}
+
+// Clean up after incorporating a function. This is the only way
+// (other than construction) to get the FunctionIncorporated flag cleared.
+void SlotMachine::purgeFunction() {
+  SC_DEBUG("begin purgeFunction!\n");
+  fMap.clear(); // Simply discard the function level map
+  FunctionIncorporated = false;
+  SC_DEBUG("end purgeFunction!\n");
+}
+
+/// Get the slot number for a value. This function will assert if you
+/// ask for a Value that hasn't previously been inserted with createSlot.
+/// Types are forbidden because Type does not inherit from Value (any more).
+unsigned SlotMachine::getSlot(const Value *V) const {
+  assert( V && "Can't get slot for null Value" );
+  assert( !isa<Type>(V) && "Can't get slot for a type" );
+
+  // Do not number CPR's at all. They are an abomination
+  if ( const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(V) )
+    V = CPR->getValue() ;
+
+  // Get the type of the value
+  const Type* VTy = V->getType();
+
+  // Find the type plane in the module map
+  TypedPlanes::const_iterator MI = mMap.find(VTy);
+
+  if ( FunctionIncorporated ) {
+    // Lookup the type in the function map too
+    TypedPlanes::const_iterator FI = fMap.find(VTy);
+    // If there is a corresponding type plane in the function map
+    if ( FI != fMap.end() ) {
+      // Lookup the Value in the function map
+      ValueMap::const_iterator FVI = FI->second.map.find(V);
+      // If the value doesn't exist in the function map
+      if ( FVI == FI->second.map.end() ) {
+	// Look up the value in the module map
+	ValueMap::const_iterator MVI = MI->second.map.find(V);
+	// If we didn't find it, it wasn't inserted
+	assert( MVI != MI->second.map.end() && "Value not found");
+	// We found it only at the module level
+	return MVI->second; 
+
+      // else the value exists in the function map
+      } else {
+	// Return the slot number as the module's contribution to
+	// the type plane plus the index in the function's contribution
+	// to the type plane.
+	return MI->second.next_slot + FVI->second;
+      }
+
+    // else there is not a corresponding type plane in the function map
+    } else  {
+      assert( MI != mMap.end() && "No such type plane!" );
+      // Look up the value in the module's map
+      ValueMap::const_iterator MVI = MI->second.map.find(V);
+      // If we didn't find it, it wasn't inserted.
+      assert( MVI != MI->second.map.end() && "Value not found");
+      // We found it only in the module level and function level
+      // didn't even have a type plane.
+      return MVI->second; 
+    }
+  }
+
+  // N.B. Can only get here if !FunctionIncorporated
+
+  // Make sure the type plane exists
+  assert( MI != mMap.end() && "No such type plane!" );
+  // Lookup the value in the module's map
+  ValueMap::const_iterator MVI = MI->second.map.find(V);
+  // Make sure we found it.
+  assert( MVI != MI->second.map.end() && "Value not found" );
+  // Return it.
+  return MVI->second;
+}
+
+
+// Create a new slot, or return the existing slot if it is already
+// inserted. Note that the logic here parallels getSlot but instead
+// of asserting when the Value* isn't found, it inserts the value.
+unsigned SlotMachine::createSlot(const Value *V) {
+  assert( V && "Can't insert a null Value to SlotMachine");
+  assert( !isa<Type>(V) && "Can't insert a Type into SlotMachine"); 
+
+  const Type* VTy = V->getType();
+
+  // Just ignore void typed things
+  if (VTy == Type::VoidTy) return 0; // FIXME: Wrong return value!
+
+  // Look up the type plane for the Value's type from the module map
+  TypedPlanes::const_iterator MI = mMap.find(VTy);
+
+  if ( FunctionIncorporated ) {
+    // Get the type plane for the Value's type from the function map
+    TypedPlanes::const_iterator FI = fMap.find(VTy);
+    // If there is a corresponding type plane in the function map
+    if ( FI != fMap.end() ) {
+      // Lookup the Value in the function map
+      ValueMap::const_iterator FVI = FI->second.map.find(V);
+      // If the value doesn't exist in the function map
+      if ( FVI == FI->second.map.end() ) {
+	// If there is no corresponding type plane in the module map
+	if ( MI == mMap.end() )
+	  return insertValue(V);
+	// Look up the value in the module map
+	ValueMap::const_iterator MVI = MI->second.map.find(V);
+	// If we didn't find it, it wasn't inserted
+	if ( MVI == MI->second.map.end() )
+	  return insertValue(V);
+	else
+	  // We found it only at the module level
+	  return MVI->second;
+
+      // else the value exists in the function map
+      } else {
+	if ( MI == mMap.end() )
+	  return FVI->second;
+	else
+	  // Return the slot number as the module's contribution to
+	  // the type plane plus the index in the function's contribution
+	  // to the type plane.
+	  return MI->second.next_slot + FVI->second;
+      }
+
+    // else there is not a corresponding type plane in the function map
+    } else {
+      // If the type plane doesn't exists at the module level
+      if ( MI == mMap.end() ) {
+	return insertValue(V);
+      // else type plane exists at the module level, examine it
+      } else {
+	// Look up the value in the module's map
+	ValueMap::const_iterator MVI = MI->second.map.find(V);
+	// If we didn't find it there either
+	if ( MVI == MI->second.map.end() )
+	  // Return the slot number as the module's contribution to
+	  // the type plane plus the index of the function map insertion.
+	  return MI->second.next_slot + insertValue(V);
+	else
+	  return MVI->second;
+      }
+    }
+  }
+
+  // N.B. Can only get here if !FunctionIncorporated
+
+  // If the module map's type plane is not for the Value's type
+  if ( MI != mMap.end() ) {
+    // Lookup the value in the module's map
+    ValueMap::const_iterator MVI = MI->second.map.find(V);
+    if ( MVI != MI->second.map.end() ) 
+      return MVI->second;
+  }
+
+  return insertValue(V);
+}
+
+
+// Low level insert function. Minimal checking is done. This
+// function is just for the convenience of createSlot (above).
+unsigned SlotMachine::insertValue(const Value *V ) {
+  assert(V && "Can't insert a null Value into SlotMachine!");
+  assert(!isa<Type>(V) && "Can't insert a Type into SlotMachine!");
+
+  // If this value does not contribute to a plane (is void or constant)
+  // or if the value already has a name then ignore it. 
+  if (V->getType() == Type::VoidTy ||          // Ignore void type nodes
+      (V->hasName() || isa<Constant>(V)) ) {
+      SC_DEBUG("ignored value " << *V << "\n");
+      return 0;   // FIXME: Wrong return value
+  }
+
+  if (!isa<GlobalValue>(V))  // Initializers for globals are handled explicitly
+    if (const Constant *C = dyn_cast<Constant>(V)) {
+      // This makes sure that if a constant has uses (for example an array of
+      // const ints), that they are inserted also.
+      for (User::const_op_iterator I = C->op_begin(), E = C->op_end();
+	   I != E; ++I)
+	createSlot(*I);
+    }
+
+  const Type *VTy = V->getType();
+  unsigned DestSlot = 0;
+
+  if ( FunctionIncorporated ) {
+    TypedPlanes::iterator I = fMap.find( VTy );
+    if ( I == fMap.end() ) 
+      I = fMap.insert(std::make_pair(VTy,Plane())).first;
+    DestSlot = I->second.map[V] = I->second.next_slot++;
+  } else {
+    TypedPlanes::iterator I = mMap.find( VTy );
+    if ( I == mMap.end() )
+      I = mMap.insert(std::make_pair(VTy,Plane())).first;
+    DestSlot = I->second.map[V] = I->second.next_slot++;
+  }
+
+  SC_DEBUG("  Inserting value [" << VTy << "] = " << V << " slot=" << 
+	   DestSlot << " [");
+  // G = Global, C = Constant, T = Type, F = Function, o = other
+  SC_DEBUG((isa<GlobalVariable>(V) ? "G" : (isa<Constant>(V) ? "C" : 
+           (isa<Function>(V) ? "F" : "o"))));
+  SC_DEBUG("]\n");
+  return DestSlot;
 }
 
 // vim: sw=2
