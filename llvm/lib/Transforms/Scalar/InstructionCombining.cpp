@@ -497,23 +497,25 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     if (RHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op0);
 
-    if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
+    if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
+      Value *X = Op0I->getOperand(0);
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1)))
         if (Op0I->getOpcode() == Instruction::Xor) {
-          if (isOnlyUse(Op0)) {
+          if ((*RHS & *Op0CI)->isNullValue()) {
+            // (X ^ C1) & C2 --> (X & C2) iff (C1&C2) == 0
+            return BinaryOperator::create(Instruction::And, X, RHS);
+          } else if (isOnlyUse(Op0)) {
             // (X ^ C1) & C2 --> (X & C2) ^ (C1&C2)
             std::string Op0Name = Op0I->getName(); Op0I->setName("");
             Instruction *And = BinaryOperator::create(Instruction::And,
-                                                      Op0I->getOperand(0), RHS,
-                                                      Op0Name);
+                                                      X, RHS, Op0Name);
             InsertNewInstBefore(And, I);
             return BinaryOperator::create(Instruction::Xor, And, *RHS & *Op0CI);
           }
         } else if (Op0I->getOpcode() == Instruction::Or) {
           // (X | C1) & C2 --> X & C2 iff C1 & C1 == 0
           if ((*RHS & *Op0CI)->isNullValue())
-            return BinaryOperator::create(Instruction::And, Op0I->getOperand(0),
-                                          RHS);
+            return BinaryOperator::create(Instruction::And, X, RHS);
 
           Constant *Together = *RHS & *Op0CI;
           if (Together == RHS) // (X | C) & C --> C
@@ -523,14 +525,14 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
             if (Together != Op0CI) {
               // (X | C1) & C2 --> (X | (C1&C2)) & C2
               std::string Op0Name = Op0I->getName(); Op0I->setName("");
-              Instruction *Or = BinaryOperator::create(Instruction::Or,
-                                                        Op0I->getOperand(0),
-                                                        Together, Op0Name);
+              Instruction *Or = BinaryOperator::create(Instruction::Or, X,
+                                                       Together, Op0Name);
               InsertNewInstBefore(Or, I);
               return BinaryOperator::create(Instruction::And, Or, RHS);
             }
           }
         }
+    }
   }
 
   Value *Op0NotVal = dyn_castNotVal(Op0);
