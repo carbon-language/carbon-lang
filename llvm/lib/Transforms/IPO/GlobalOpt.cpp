@@ -42,15 +42,45 @@ ModulePass *llvm::createGlobalOptimizerPass() { return new GlobalOpt(); }
 
 /// GlobalStatus - As we analyze each global, keep track of some information
 /// about it.  If we find out that the address of the global is taken, none of
-/// the other info will be accurate.
+/// this info will be accurate.
 struct GlobalStatus {
+  /// isLoaded - True if the global is ever loaded.  If the global isn't ever
+  /// loaded it can be deleted.
   bool isLoaded;
+
+  /// StoredType - Keep track of what stores to the global look like.
+  ///
   enum StoredType {
-    NotStored, isInitializerStored, isMallocStored, isStored
+    /// NotStored - There is no store to this global.  It can thus be marked
+    /// constant.
+    NotStored,
+
+    /// isInitializerStored - This global is stored to, but the only thing
+    /// stored is the constant it was initialized with.  This is only tracked
+    /// for scalar globals.
+    isInitializerStored,
+
+    /// isStoredOnce - This global is stored to, but only its initializer and
+    /// one other value is ever stored to it.  If this global isStoredOnce, we
+    /// track the value stored to it in StoredOnceValue below.  This is only
+    /// tracked for scalar globals.
+    isStoredOnce,
+
+    /// isStored - This global is stored to by multiple values or something else
+    /// that we cannot track.
+    isStored
   } StoredType;
+
+  /// StoredOnceValue - If only one value (besides the initializer constant) is
+  /// ever stored to this global, keep track of what value it is.
+  Value *StoredOnceValue;
+
+  /// isNotSuitableForSRA - Keep track of whether any SRA preventing users of
+  /// the global exist.  Such users include GEP instruction with variable
+  /// indexes, and non-gep/load/store users like constant expr casts.
   bool isNotSuitableForSRA;
 
-  GlobalStatus() : isLoaded(false), StoredType(NotStored),
+  GlobalStatus() : isLoaded(false), StoredType(NotStored), StoredOnceValue(0),
                    isNotSuitableForSRA(false) {}
 };
 
@@ -72,24 +102,29 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
         // Don't allow a store OF the address, only stores TO the address.
         if (SI->getOperand(0) == V) return true;
 
-        // If this store is just storing the initializer into a global (i.e. not
-        // changing the value), ignore it.  For now we just handle direct
-        // stores, no stores to fields of aggregates.
-        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(SI->getOperand(1))) {
-          if (SI->getOperand(0) == GV->getInitializer() && 
-              GS.StoredType < GlobalStatus::isInitializerStored)
-            GS.StoredType = GlobalStatus::isInitializerStored;
-          else if (isa<MallocInst>(SI->getOperand(0)) && 
-                   GS.StoredType < GlobalStatus::isMallocStored)
-            GS.StoredType = GlobalStatus::isMallocStored;
-          else
+        // If this is a direct store to the global (i.e., the global is a scalar
+        // value, not an aggregate), keep more specific information about
+        // stores.
+        if (GS.StoredType != GlobalStatus::isStored)
+          if (GlobalVariable *GV = dyn_cast<GlobalVariable>(SI->getOperand(1))){
+            if (SI->getOperand(0) == GV->getInitializer()) {
+              if (GS.StoredType < GlobalStatus::isInitializerStored)
+                GS.StoredType = GlobalStatus::isInitializerStored;
+            } else if (GS.StoredType < GlobalStatus::isStoredOnce) {
+              GS.StoredType = GlobalStatus::isStoredOnce;
+              GS.StoredOnceValue = SI->getOperand(0);
+            } else if (GS.StoredType == GlobalStatus::isStoredOnce &&
+                       GS.StoredOnceValue == SI->getOperand(0)) {
+              // noop.
+            } else {
+              GS.StoredType = GlobalStatus::isStored;
+            }
+          } else {
             GS.StoredType = GlobalStatus::isStored;
-        } else {
-          GS.StoredType = GlobalStatus::isStored;
-        }
+          }
       } else if (I->getOpcode() == Instruction::GetElementPtr) {
         if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
-        if (!GS.isNotSuitableForSRA)
+        if (!GS.isNotSuitableForSRA)// Check to see if we have any variable idxs
           for (unsigned i = 1, e = I->getNumOperands(); i != e; ++i)
             if (!isa<Constant>(I->getOperand(i))) {
               GS.isNotSuitableForSRA = true;
