@@ -262,7 +262,7 @@ bool DAE::run(Module &M) {
           LiveArguments.insert(AI);
           break;
         case Dead:
-          DEBUG(std::cerr << "    Arg definately dead: " <<AI->getName()<<"\n");
+          DEBUG(std::cerr << "    Arg definitely dead: " <<AI->getName()<<"\n");
           DeadArguments.insert(AI);
           break;
         case MaybeLive:

@@ -85,7 +85,7 @@ void LoadVN::getAnalysisUsage(AnalysisUsage &AU) const {
 void LoadVN::getEqualNumberNodes(Value *V,
                                  std::vector<Value*> &RetVals) const {
   // If the alias analysis has any must alias information to share with us, we
-  // can definately use it.
+  // can definitely use it.
   if (isa<PointerType>(V->getType()))
     getAnalysis<AliasAnalysis>().getMustAliases(V, RetVals);
 
