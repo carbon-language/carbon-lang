@@ -63,7 +63,8 @@ static bool IsUselessCopy(const TargetMachine &target, const MachineInstr* MI) {
     return (/* both operands are allocated to the same register */
             MI->getOperand(0).getAllocatedRegNum() == 
             MI->getOperand(1).getAllocatedRegNum());
-  } else if (MI->getOpCode() == V9::ADDr || MI->getOpCode() == V9::ORr) {
+  } else if (MI->getOpCode() == V9::ADDr || MI->getOpCode() == V9::ORr ||
+             MI->getOpCode() == V9::ADDi || MI->getOpCode() == V9::ORi) {
     unsigned srcWithDestReg;
     
     for (srcWithDestReg = 0; srcWithDestReg < 2; ++srcWithDestReg)
