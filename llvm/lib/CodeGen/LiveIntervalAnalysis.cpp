@@ -17,6 +17,7 @@
 
 #define DEBUG_TYPE "liveintervals"
 #include "LiveIntervalAnalysis.h"
+#include "VirtRegMap.h"
 #include "llvm/Value.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
@@ -31,10 +32,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
-#include "VirtRegMap.h"
-#include <cmath>
 #include <algorithm>
-
+#include <cmath>
 using namespace llvm;
 
 namespace {
