@@ -105,8 +105,7 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
           }
         } 
       } else {
-        if (Vals[f].getName() == "annul" || Vals[f].getName() == "cc" ||
-            Vals[f].getName() == "predict")
+        if (Vals[f].getName() == "annul" || Vals[f].getName() == "predict")
           --Offset;
       }
     }
