@@ -553,6 +553,11 @@ static bool setValueName(Value *V, char *NameStr) {
         }
       }
     }
+
+    // Clear the symbol table so it doesn't complain when it
+    // gets destructed
+    CurFun.LocalSymtab.clear();
+
     ThrowException("Redefinition of value named '" + Name + "' in the '" +
 		   V->getType()->getDescription() + "' type plane!");
   }
