@@ -1,7 +1,6 @@
-//===-- Local.h - Functions to perform local transformations -----*- C++ -*--=//
+//===-- CriticalEdge.cpp - Functions to detect and split critical edges ---===//
 //
-// This family of functions perform various local transformations to the
-// program.
+// These functions are here to detect and split critical edges in the CFG.
 //
 //===----------------------------------------------------------------------===//
 
