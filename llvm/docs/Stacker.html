@@ -1379,8 +1379,6 @@ interested, here are some things that could be implemented better:</p>
     <li>Write an LLVM pass to optimize the use of the global stack. The code
     emitted currently is somewhat wasteful. It gets cleaned up a lot by existing
     passes but more could be done.</li>
-    <li>Add -O -O1 -O2 and -O3 optimization switches to the compiler driver to
-    allow LLVM optimization without using "opt."</li>
     <li>Make the compiler driver use the LLVM linking facilities (with IPO)
     before depending on GCC to do the final link.</li>
     <li>Clean up parsing. It doesn't handle errors very well.</li>
