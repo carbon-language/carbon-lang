@@ -508,22 +508,73 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
 
   case ISD::SELECT:
     {
-      Tmp1 = SelectExpr(N.getOperand(0)); //Cond
-      Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
-      Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
+      //Tmp1 = SelectExpr(N.getOperand(0)); //Cond
+      unsigned TV = SelectExpr(N.getOperand(1)); //Use if TRUE
+      unsigned FV = SelectExpr(N.getOperand(2)); //Use if FALSE
+
+      SDOperand CC = N.getOperand(0);
+      SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
+
+      if (CC.getOpcode() == ISD::SETCC && 
+          !MVT::isInteger(SetCC->getOperand(0).getValueType()))
+      { //FP Setcc -> Select yay!
 
 
-      // Spill the cond to memory and reload it from there.
-      unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
-      MachineFunction *F = BB->getParent();
-      int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
-      unsigned Tmp4 = MakeReg(MVT::f64);
-      BuildMI(BB, Alpha::STQ, 3).addReg(Tmp1).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-      BuildMI(BB, Alpha::LDT, 2, Tmp4).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-      //now ideally, we don't have to do anything to the flag...
-      // Get the condition into the zero flag.
-      BuildMI(BB, Alpha::FCMOVEQ, 2, Result).addReg(Tmp2).addReg(Tmp3).addReg(Tmp4);
-      return Result;
+        //for a cmp b: c = a - b;
+        //a = b: c = 0
+        //a < b: c < 0
+        //a > b: c > 0
+        
+        bool invTest = false;
+        unsigned Tmp3;
+        
+        ConstantFPSDNode *CN;
+        if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1)))
+            && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
+          Tmp3 = SelectExpr(SetCC->getOperand(0));
+        else if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(0)))
+                 && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
+        {
+          Tmp3 = SelectExpr(SetCC->getOperand(1));
+          invTest = true;
+        }
+        else
+        {
+          unsigned Tmp1 = SelectExpr(SetCC->getOperand(0));
+          unsigned Tmp2 = SelectExpr(SetCC->getOperand(1));
+          bool isD = SetCC->getOperand(0).getValueType() == MVT::f64;
+          Tmp3 = MakeReg(isD ? MVT::f64 : MVT::f32);
+          BuildMI(BB, isD ? Alpha::SUBT : Alpha::SUBS, 2, Tmp3)
+            .addReg(Tmp1).addReg(Tmp2);
+        }
+        
+        switch (SetCC->getCondition()) {
+        default: CC.Val->dump(); assert(0 && "Unknown FP comparison!");
+        case ISD::SETEQ: Opc = invTest ? Alpha::FCMOVNE : Alpha::FCMOVEQ; break;
+        case ISD::SETLT: Opc = invTest ? Alpha::FCMOVGT : Alpha::FCMOVLT; break;
+        case ISD::SETLE: Opc = invTest ? Alpha::FCMOVGE : Alpha::FCMOVLE; break;
+        case ISD::SETGT: Opc = invTest ? Alpha::FCMOVLT : Alpha::FCMOVGT; break;
+        case ISD::SETGE: Opc = invTest ? Alpha::FCMOVLE : Alpha::FCMOVGE; break;
+        case ISD::SETNE: Opc = invTest ? Alpha::FCMOVEQ : Alpha::FCMOVNE; break;
+        }
+        BuildMI(BB, Opc, 3, Result).addReg(TV).addReg(FV).addReg(Tmp3);
+        return Result;
+      }
+      else
+      {
+        Tmp1 = SelectExpr(N.getOperand(0)); //Cond
+        // Spill the cond to memory and reload it from there.
+        unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
+        MachineFunction *F = BB->getParent();
+        int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
+        unsigned Tmp4 = MakeReg(MVT::f64);
+        BuildMI(BB, Alpha::STQ, 3).addReg(Tmp1).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+        BuildMI(BB, Alpha::LDT, 2, Tmp4).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+        //now ideally, we don't have to do anything to the flag...
+        // Get the condition into the zero flag.
+        BuildMI(BB, Alpha::FCMOVEQ, 3, Result).addReg(TV).addReg(FV).addReg(Tmp4);
+        return Result;
+      }
     }
 
   case ISD::FP_ROUND:
