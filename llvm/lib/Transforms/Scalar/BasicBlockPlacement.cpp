@@ -80,8 +80,6 @@ bool BlockPlacement::runOnFunction(Function &F) {
   // Recursively place all blocks.
   PlaceBlocks(F.begin());
   
-  // If there are any unreachable blocks, move them to the end.
-
   PlacedBlocks.clear();
   NumMoved += NumMovedBlocks;
   return NumMovedBlocks != 0;
