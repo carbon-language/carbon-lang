@@ -233,12 +233,6 @@ AC_PROG_CXX(g++)
 AC_PROG_FLEX
 AC_PROG_BISON
 
-dnl Check for libtool and the library that has dlopen function (which must come
-dnl before the AC_PROG_LIBTOOL check in order to enable dlopening libraries with
-dnl libtool).
-AC_LIBTOOL_DLOPEN
-AC_PROG_LIBTOOL
-
 dnl Check for the tools that the makefiles require
 AC_CHECK_GNU_MAKE
 AC_PROG_LN_S
@@ -275,6 +269,13 @@ AC_PATH_PROG(ZIP,[zip],[true zip])
 
 dnl Determine if the linker supports the -R option.
 AC_LINK_USE_R
+
+dnl Check for libtool and the library that has dlopen function (which must come
+dnl before the AC_PROG_LIBTOOL check in order to enable dlopening libraries with
+dnl libtool).
+AC_LIBTOOL_DLOPEN
+AC_LIB_LTDL
+AC_PROG_LIBTOOL
 
 dnl Check if we know how to tell etags we are using C++:
 etags_version=`$ETAGS --version 2>&1`
@@ -383,8 +384,8 @@ dnl However, we do need some system specific header files. Generally we're
 dnl looking for POSIX headers.
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([sys/time.h sys/mman.h sys/resource.h sys/time.h sys/types.h])
-AC_CHECK_HEADERS([bzlib.h dlfcn.h execinfo.h fcntl.h limits.h link.h ltdl.h])
-AC_CHECK_HEADERS([malloc.h unistd.h windows.h zlib.h])
+AC_CHECK_HEADERS([dlfcn.h execinfo.h fcntl.h limits.h link.h])
+AC_CHECK_HEADERS([malloc.h unistd.h windows.h])
 AC_HEADER_TIME
 AC_HEADER_MMAP_ANONYMOUS
 
@@ -482,15 +483,9 @@ if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
   AC_SUBST(LLVMCC1PLUS,$llvmcc1pluspath)
 fi
 
-dnl Get libtool's idea of what the shared library suffix is.
-dnl (This is a hack; it relies on undocumented behavior.)
-AC_MSG_CHECKING([for shared library suffix])
-eval "SHLIBEXT=$shrext_cmds"
-AC_MSG_RESULT($SHLIBEXT)
-dnl Propagate it to the Makefiles and config.h (for gccld & bugpoint).
-AC_SUBST(SHLIBEXT,$SHLIBEXT)
-AC_DEFINE_UNQUOTED(SHLIBEXT,"$SHLIBEXT",
-                   [Extension that shared libraries have, e.g., ".so".])
+dnl Propagate the shared library extension that the libltdl checks did to 
+dnl the Makefiles so we can use it there too
+AC_SUBST(SHLIBEXT,$libltdl_cv_shlibext)
 
 # Translate the various configuration directories and other basic
 # information into substitutions that will end up in Makefile.config.in 
@@ -574,7 +569,6 @@ AC_CONFIG_MAKEFILE(test/Makefile.tests)
 AC_CONFIG_MAKEFILE(test/QMTest/llvm.py)
 AC_CONFIG_MAKEFILE(test/QMTest/llvmdb.py)
 AC_CONFIG_MAKEFILE(tools/Makefile)
-AC_CONFIG_MAKEFILE(tools/Makefile.JIT)
 AC_CONFIG_MAKEFILE(utils/Makefile)
 AC_CONFIG_MAKEFILE(projects/Makefile)
 
