@@ -14,7 +14,6 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Transforms/RaisePointerReferences.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "Support/CommandLine.h"
