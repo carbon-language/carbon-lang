@@ -12,6 +12,9 @@ E: vadve@cs.uiuc.edu
 W: http://www.cs.uiuc.edu/~vadve/
 D: The Sparc64 backend, provider of much wisdom, and motivator for LLVM
 
+N: Henrik Bach
+D: MingW Win32 API portability layer
+
 N: Nate Begeman
 E: natebegeman@mac.com
 D: Portions of the PowerPC backend
@@ -35,6 +38,9 @@ N: Casey Carter
 E: ccarter@uiuc.edu
 D: Fixes to the Reassociation pass, various improvement patches
 
+N: Jeff Cohen
+D: Native Win32 API portability layer
+
 N: John T. Criswell
 E: criswell@uiuc.edu
 D: Autoconf support, QMTest database, documentation improvements
@@ -48,6 +54,9 @@ D: FreeBSD/X86 compatibility fixes, the llvm-nm tool
 
 N: Louis Gerbarg
 D: Portions of the PowerPC backend
+
+N: Paolo Invernizzi
+D: Visual C++ compatibility fixes 
 
 N: Brad Jones
 E: kungfoomaster@nondot.org
