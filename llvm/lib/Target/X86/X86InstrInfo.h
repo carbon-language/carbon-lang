@@ -111,21 +111,29 @@ namespace X86II {
     //===------------------------------------------------------------------===//
     // This three-bit field describes the size of a memory operand.  Zero is
     // unused so that we can tell if we forgot to set a value.
-    ArgShift = 10,
-    ArgMask  = 7 << ArgShift,
-    Arg8     = 1 << ArgShift,
-    Arg16    = 2 << ArgShift,
-    Arg32    = 3 << ArgShift,
-    Arg64    = 4 << ArgShift,  // 64 bit int argument for FILD64
-    ArgF32   = 5 << ArgShift,
-    ArgF64   = 6 << ArgShift,
-    ArgF80   = 7 << ArgShift,
+    MemShift = 10,
+    MemMask  = 7 << MemShift,
+    Mem8     = 1 << MemShift,
+    Mem16    = 2 << MemShift,
+    Mem32    = 3 << MemShift,
+    Mem64    = 4 << MemShift,
+    Mem80    = 5 << MemShift,
+    Mem128   = 6 << MemShift,
+
+    //===------------------------------------------------------------------===//
+    // This tow-bit field describes the size of an immediate operand.  Zero is
+    // unused so that we can tell if we forgot to set a value.
+    ImmShift = 13,
+    ImmMask  = 7 << ImmShift,
+    Imm8     = 1 << ImmShift,
+    Imm16    = 2 << ImmShift,
+    Imm32    = 3 << ImmShift,
 
     //===------------------------------------------------------------------===//
     // FP Instruction Classification...  Zero is non-fp instruction.
 
     // FPTypeMask - Mask for all of the FP types...
-    FPTypeShift = 13,
+    FPTypeShift = 15,
     FPTypeMask  = 7 << FPTypeShift,
 
     // NotFP - The default, set for instructions that do not use FP registers.
@@ -151,9 +159,9 @@ namespace X86II {
     SpecialFP  = 5 << FPTypeShift,
 
     // PrintImplUses - Print out implicit uses in the assembly output.
-    PrintImplUses = 1 << 16,
+    PrintImplUses = 1 << 18,
 
-    OpcodeShift   = 17,
+    OpcodeShift   = 19,
     OpcodeMask    = 0xFF << OpcodeShift,
     // Bits 25 -> 31 are unused
   };

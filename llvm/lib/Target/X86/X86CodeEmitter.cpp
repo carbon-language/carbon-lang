@@ -453,14 +453,24 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   }
 }
 
+static unsigned sizeOfImm(const TargetInstrDescriptor &Desc) {
+  switch (Desc.TSFlags & X86II::ImmMask) {
+  case X86II::Imm8:   return 1;
+  case X86II::Imm16:  return 2;
+  case X86II::Imm32:  return 4;
+  default: assert(0 && "Immediate size not set!");
+    return 0;
+  }
+}
+
 static unsigned sizeOfPtr(const TargetInstrDescriptor &Desc) {
-  switch (Desc.TSFlags & X86II::ArgMask) {
-  case X86II::Arg8:   return 1;
-  case X86II::Arg16:  return 2;
-  case X86II::Arg32:  return 4;
-  case X86II::ArgF32: return 4;
-  case X86II::ArgF64: return 8;
-  case X86II::ArgF80: return 10;
+  switch (Desc.TSFlags & X86II::MemMask) {
+  case X86II::Mem8:   return 1;
+  case X86II::Mem16:  return 2;
+  case X86II::Mem32:  return 4;
+  case X86II::Mem64:  return 8;
+  case X86II::Mem80:  return 10;
+  case X86II::Mem128: return 16;
   default: assert(0 && "Memory size not set!");
     return 0;
   }
@@ -527,25 +537,21 @@ void Emitter::emitInstruction(MachineInstr &MI) {
     MCE.emitByte(BaseOpcode + getX86RegNum(MI.getOperand(0).getReg()));
     if (MI.getNumOperands() == 2) {
       MachineOperand &MO1 = MI.getOperand(1);
-      if (MO1.isImmediate() || MO1.getVRegValueOrNull() ||
-	  MO1.isGlobalAddress() || MO1.isExternalSymbol()) {
-	unsigned Size = sizeOfPtr(Desc);
-	if (Value *V = MO1.getVRegValueOrNull()) {
-	  assert(Size == 4 && "Don't know how to emit non-pointer values!");
-          emitGlobalAddressForPtr(cast<GlobalValue>(V));
-	} else if (MO1.isGlobalAddress()) {
-	  assert(Size == 4 && "Don't know how to emit non-pointer values!");
-          assert(!MO1.isPCRelative() && "Function pointer ref is PC relative?");
-          emitGlobalAddressForPtr(MO1.getGlobal());
-	} else if (MO1.isExternalSymbol()) {
-	  assert(Size == 4 && "Don't know how to emit non-pointer values!");
+      if (Value *V = MO1.getVRegValueOrNull()) {
+	assert(sizeOfImm(Desc) == 4 && "Don't know how to emit non-pointer values!");
+        emitGlobalAddressForPtr(cast<GlobalValue>(V));
+      } else if (MO1.isGlobalAddress()) {
+	assert(sizeOfImm(Desc) == 4 && "Don't know how to emit non-pointer values!");
+        assert(!MO1.isPCRelative() && "Function pointer ref is PC relative?");
+        emitGlobalAddressForPtr(MO1.getGlobal());
+      } else if (MO1.isExternalSymbol()) {
+	assert(sizeOfImm(Desc) == 4 && "Don't know how to emit non-pointer values!");
 
-          unsigned Address = MCE.getGlobalValueAddress(MO1.getSymbolName());
-          assert(Address && "Unknown external symbol!");
-          emitMaybePCRelativeValue(Address, MO1.isPCRelative());
-	} else {
-	  emitConstant(MO1.getImmedValue(), Size);
-	}
+        unsigned Address = MCE.getGlobalValueAddress(MO1.getSymbolName());
+        assert(Address && "Unknown external symbol!");
+        emitMaybePCRelativeValue(Address, MO1.isPCRelative());
+      } else {
+        emitConstant(MO1.getImmedValue(), sizeOfImm(Desc));
       }
     }
     break;
@@ -555,7 +561,7 @@ void Emitter::emitInstruction(MachineInstr &MI) {
     emitRegModRMByte(MI.getOperand(0).getReg(),
                      getX86RegNum(MI.getOperand(1).getReg()));
     if (MI.getNumOperands() == 3)
-      emitConstant(MI.getOperand(2).getImmedValue(), sizeOfPtr(Desc));
+      emitConstant(MI.getOperand(2).getImmedValue(), sizeOfImm(Desc));
     break;
   }
   case X86II::MRMDestMem:
@@ -569,14 +575,14 @@ void Emitter::emitInstruction(MachineInstr &MI) {
     emitRegModRMByte(MI.getOperand(1).getReg(),
                      getX86RegNum(MI.getOperand(0).getReg()));
     if (MI.getNumOperands() == 3)
-      emitConstant(MI.getOperand(2).getImmedValue(), sizeOfPtr(Desc));
+      emitConstant(MI.getOperand(2).getImmedValue(), sizeOfImm(Desc));
     break;
 
   case X86II::MRMSrcMem:
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, 1, getX86RegNum(MI.getOperand(0).getReg()));
     if (MI.getNumOperands() == 2+4)
-      emitConstant(MI.getOperand(5).getImmedValue(), sizeOfPtr(Desc));
+      emitConstant(MI.getOperand(5).getImmedValue(), sizeOfImm(Desc));
     break;
 
   case X86II::MRM0r: case X86II::MRM1r:
@@ -588,8 +594,7 @@ void Emitter::emitInstruction(MachineInstr &MI) {
                      (Desc.TSFlags & X86II::FormMask)-X86II::MRM0r);
 
     if (MI.getOperand(MI.getNumOperands()-1).isImmediate()) {
-      unsigned Size = sizeOfPtr(Desc);
-      emitConstant(MI.getOperand(MI.getNumOperands()-1).getImmedValue(), Size);
+      emitConstant(MI.getOperand(MI.getNumOperands()-1).getImmedValue(), sizeOfImm(Desc));
     }
     break;
 
@@ -601,9 +606,8 @@ void Emitter::emitInstruction(MachineInstr &MI) {
     emitMemModRMByte(MI, 0, (Desc.TSFlags & X86II::FormMask)-X86II::MRM0m);
 
     if (MI.getNumOperands() == 5) {
-      unsigned Size = sizeOfPtr(Desc);
       if (MI.getOperand(4).isImmediate())
-        emitConstant(MI.getOperand(4).getImmedValue(), Size);
+        emitConstant(MI.getOperand(4).getImmedValue(), sizeOfImm(Desc));
       else if (MI.getOperand(4).isGlobalAddress())
         emitGlobalAddressForPtr(MI.getOperand(4).getGlobal());
       else

@@ -433,16 +433,14 @@ void Printer::printOp(const MachineOperand &MO,
   }
 }
 
-static const std::string sizePtr(const TargetInstrDescriptor &Desc) {
-  switch (Desc.TSFlags & X86II::ArgMask) {
+static const char* const sizePtr(const TargetInstrDescriptor &Desc) {
+  switch (Desc.TSFlags & X86II::MemMask) {
   default: assert(0 && "Unknown arg size!");
-  case X86II::Arg8:   return "BYTE PTR"; 
-  case X86II::Arg16:  return "WORD PTR"; 
-  case X86II::Arg32:  return "DWORD PTR"; 
-  case X86II::Arg64:  return "QWORD PTR"; 
-  case X86II::ArgF32:  return "DWORD PTR"; 
-  case X86II::ArgF64:  return "QWORD PTR"; 
-  case X86II::ArgF80:  return "XWORD PTR"; 
+  case X86II::Mem8:   return "BYTE PTR"; 
+  case X86II::Mem16:  return "WORD PTR"; 
+  case X86II::Mem32:  return "DWORD PTR"; 
+  case X86II::Mem64:  return "QWORD PTR"; 
+  case X86II::Mem80:  return "XWORD PTR"; 
   }
 }
 
