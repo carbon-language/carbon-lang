@@ -61,6 +61,19 @@ namespace {
       return false;
     }
   };
+
+  struct Printer : public FunctionPass {
+    const char *getPassName() const { return "MachineFunction Printer"; }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    }
+
+    bool runOnFunction(Function &F) {
+      MachineFunction::get(&F).dump();
+      return false;
+    }
+  };
 }
 
 Pass *createMachineCodeConstructionPass(TargetMachine &Target) {
@@ -71,10 +84,43 @@ Pass *createMachineCodeDestructionPass() {
   return new DestroyMachineFunction();
 }
 
+Pass *createMachineFunctionPrinterPass() {
+  return new Printer();
+}
+
 
 //===---------------------------------------------------------------------===//
 // MachineFunction implementation
 //===---------------------------------------------------------------------===//
+
+MachineFunction::MachineFunction(const Function *F,
+                                 const TargetMachine& target)
+  : Annotation(MF_AID),
+    Fn(F), Target(target), staticStackSize(0),
+    automaticVarsSize(0), regSpillsSize(0),
+    maxOptionalArgsSize(0), maxOptionalNumArgs(0),
+    currentTmpValuesSize(0), maxTmpValuesSize(0), compiledAsLeaf(false),
+    spillsAreaFrozen(false), automaticVarsAreaFrozen(false)
+{
+}
+
+void MachineFunction::dump() const { print(std::cerr); }
+
+void MachineFunction::print(std::ostream &OS) const {
+  OS << "\n" << *(Value*)Fn->getReturnType() << " \"" << Fn->getName()<< "\"\n";
+  
+  for (const_iterator BB = begin(); BB != end(); ++BB) {
+    BasicBlock *LBB = BB->getBasicBlock();
+    OS << "\n" << LBB->getName() << " ("
+       << (const void*)BB->getBasicBlock() << "):\n";
+    for (MachineBasicBlock::const_iterator I = BB->begin(); I != BB->end();++I){
+      OS << "\t";
+      (*I)->print(OS, Target);
+    }
+  }
+  OS << "\nEnd function \"" << Fn->getName() << "\"\n\n";
+}
+
 
 // The next two methods are used to construct and to retrieve
 // the MachineCodeForFunction object for the given function.
@@ -172,17 +218,6 @@ SizeToAlignment(unsigned int size, const TargetMachine& target)
         return sz;
 }
 
-
-MachineFunction::MachineFunction(const Function *F,
-                                 const TargetMachine& target)
-  : Annotation(MF_AID),
-    Fn(F), Target(target), staticStackSize(0),
-    automaticVarsSize(0), regSpillsSize(0),
-    maxOptionalArgsSize(0), maxOptionalNumArgs(0),
-    currentTmpValuesSize(0), maxTmpValuesSize(0), compiledAsLeaf(false),
-    spillsAreaFrozen(false), automaticVarsAreaFrozen(false)
-{
-}
 
 void MachineFunction::CalculateArgSize() {
   maxOptionalArgsSize = ComputeMaxOptionalArgsSize(Target, Fn,
@@ -291,19 +326,4 @@ MachineFunction::getOffset(const Value* val) const
 {
   hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
   return (pair == offsets.end()) ? INVALID_FRAME_OFFSET : pair->second;
-}
-
-void
-MachineFunction::dump() const
-{
-  std::cerr << "\n" << Fn->getReturnType()
-            << " \"" << Fn->getName() << "\"\n";
-  
-  for (const_iterator BB = begin(); BB != end(); ++BB) {
-    std::cerr << "\n" << BB->getBasicBlock()->getName() << " ("
-              << (const void*)BB->getBasicBlock() << ")" << ":" << "\n";
-    for (MachineBasicBlock::const_iterator I = BB->begin(); I != BB->end(); ++I)
-      std::cerr << "\t" << *I;
-  }
-  std::cerr << "\nEnd function \"" << Fn->getName() << "\"\n\n";
 }

@@ -6,6 +6,7 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Value.h"
 #include "llvm/Target/MachineInstrInfo.h"  // FIXME: shouldn't need this!
+#include "llvm/Target/TargetMachine.h"
 using std::cerr;
 
 // Global variable holding an array of descriptors for machine instructions.
@@ -196,6 +197,96 @@ OutputReg(std::ostream &os, unsigned int regNum)
   return os << "%mreg(" << regNum << ")";
 }
 
+static void print(const MachineOperand &MO, std::ostream &OS,
+                  const TargetMachine &TM) {
+  bool CloseParen = true;
+  if (MO.opHiBits32())
+    OS << "%lm(";
+  else if (MO.opLoBits32())
+    OS << "%lo(";
+  else if (MO.opHiBits64())
+    OS << "%hh(";
+  else if (MO.opLoBits64())
+    OS << "%hm(";
+  else
+    CloseParen = false;
+  
+  switch (MO.getType()) {
+  case MachineOperand::MO_VirtualRegister:
+    if (MO.getVRegValue()) {
+      OS << "%reg";
+      OutputValue(OS, MO.getVRegValue());
+      if (MO.hasAllocatedReg())
+        OS << "==";
+    }
+    if (MO.hasAllocatedReg())
+      OutputReg(OS, MO.getAllocatedRegNum());
+    break;
+  case MachineOperand::MO_CCRegister:
+    OS << "%ccreg";
+    OutputValue(OS, MO.getVRegValue());
+    if (MO.hasAllocatedReg()) {
+      OS << "==";
+      OutputReg(OS, MO.getAllocatedRegNum());
+    }
+    break;
+  case MachineOperand::MO_MachineRegister:
+    OutputReg(OS, MO.getMachineRegNum());
+    break;
+  case MachineOperand::MO_SignExtendedImmed:
+    OS << (long)MO.getImmedValue();
+    break;
+  case MachineOperand::MO_UnextendedImmed:
+    OS << (long)MO.getImmedValue();
+    break;
+  case MachineOperand::MO_PCRelativeDisp: {
+    const Value* opVal = MO.getVRegValue();
+    bool isLabel = isa<Function>(opVal) || isa<BasicBlock>(opVal);
+    OS << "%disp(" << (isLabel? "label " : "addr-of-val ");
+    if (opVal->hasName())
+      OS << opVal->getName();
+    else
+      OS << (const void*) opVal;
+    OS << ")";
+    break;
+  }
+  default:
+    assert(0 && "Unrecognized operand type");
+  }
+
+  if (CloseParen)
+    OS << ")";
+}
+
+void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) {
+  OS << TM.getInstrInfo().getName(getOpcode());
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    OS << "\t";
+    ::print(getOperand(i), OS, TM);
+
+    if (operandIsDefinedAndUsed(i))
+      OS << "<def&use>";
+    else if (operandIsDefined(i))
+      OS << "<def>";
+  }
+
+  // code for printing implict references
+  if (getNumImplicitRefs()) {
+    OS << "\tImplicitRefs: ";
+    for(unsigned i = 0, e = getNumImplicitRefs(); i != e; ++i) {
+      OS << "\t";
+      OutputValue(OS, getImplicitRef(i)); 
+      if (implicitRefIsDefinedAndUsed(i))
+        OS << "<def&use>";
+      else if (implicitRefIsDefined(i))
+        OS << "<def>";
+    }
+  }
+  
+  OS << "\n";
+}
+
+
 std::ostream &operator<<(std::ostream& os, const MachineInstr& minstr)
 {
   os << TargetInstrDescriptors[minstr.opCode].Name;
@@ -234,28 +325,32 @@ std::ostream &operator<<(std::ostream &os, const MachineOperand &mop)
   else if (mop.opLoBits64())
     os << "%hm(";
   
-  switch(mop.opType)
+  switch (mop.getType())
     {
     case MachineOperand::MO_VirtualRegister:
       os << "%reg";
       OutputValue(os, mop.getVRegValue());
-      if (mop.hasAllocatedReg())
-        os << "==" << OutputReg(os, mop.getAllocatedRegNum());
+      if (mop.hasAllocatedReg()) {
+        os << "==";
+        OutputReg(os, mop.getAllocatedRegNum());
+      }
       break;
     case MachineOperand::MO_CCRegister:
       os << "%ccreg";
       OutputValue(os, mop.getVRegValue());
-      if (mop.hasAllocatedReg())
-        os << "==" << OutputReg(os, mop.getAllocatedRegNum());
+      if (mop.hasAllocatedReg()) {
+        os << "==";
+        OutputReg(os, mop.getAllocatedRegNum());
+      }
       break;
     case MachineOperand::MO_MachineRegister:
       OutputReg(os, mop.getMachineRegNum());
       break;
     case MachineOperand::MO_SignExtendedImmed:
-      os << (long)mop.immedVal;
+      os << (long)mop.getImmedValue();
       break;
     case MachineOperand::MO_UnextendedImmed:
-      os << (long)mop.immedVal;
+      os << (long)mop.getImmedValue();
       break;
     case MachineOperand::MO_PCRelativeDisp:
       {
