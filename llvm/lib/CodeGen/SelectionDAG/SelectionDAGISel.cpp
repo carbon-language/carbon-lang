@@ -254,7 +254,7 @@ public:
     std::map<const Value*, unsigned>::const_iterator VMI =
       FuncInfo.ValueMap.find(V);
     assert(VMI != FuncInfo.ValueMap.end() && "Value not in map!");
-    return N = DAG.getCopyFromReg(VMI->second, VT);
+    return N = DAG.getCopyFromReg(VMI->second, VT, DAG.getEntryNode());
   }
 
   const SDOperand &setValue(const Value *V, SDOperand NewN) {

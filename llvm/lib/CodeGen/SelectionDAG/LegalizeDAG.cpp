@@ -239,10 +239,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::FrameIndex:
   case ISD::GlobalAddress:
   case ISD::ExternalSymbol:
-  case ISD::ConstantPool:
-  case ISD::CopyFromReg:            // Nothing to do.
+  case ISD::ConstantPool:           // Nothing to do.
     assert(getTypeAction(Node->getValueType(0)) == Legal &&
            "This must be legal!");
+    break;
+  case ISD::CopyFromReg:
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    if (Tmp1 != Node->getOperand(0))
+      Result = DAG.getCopyFromReg(cast<RegSDNode>(Node)->getReg(),
+                                  Node->getValueType(0), Tmp1);
     break;
   case ISD::ImplicitDef:
     Tmp1 = LegalizeOp(Node->getOperand(0));
@@ -752,8 +757,12 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::CopyFromReg: {
     unsigned Reg = cast<RegSDNode>(Node)->getReg();
     // Aggregate register values are always in consequtive pairs.
-    Lo = DAG.getCopyFromReg(Reg, NVT);
-    Hi = DAG.getCopyFromReg(Reg+1, NVT);
+    Lo = DAG.getCopyFromReg(Reg, NVT, Node->getOperand(0));
+    Hi = DAG.getCopyFromReg(Reg+1, NVT, Lo.getValue(1));
+    
+    // Remember that we legalized the chain.
+    AddLegalizedOperand(Op.getValue(1), Hi.getValue(1));
+
     assert(isTypeLegal(NVT) && "Cannot expand this multiple times yet!");
     break;
   }

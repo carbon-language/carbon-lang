@@ -220,6 +220,29 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
                                                N->getOperand(1)),
                                 cast<SetCCSDNode>(N)->getCondition()));
     break;
+  case ISD::TRUNCSTORE: {
+    EVTStruct NN;
+    NN.Opcode = ISD::TRUNCSTORE;
+    NN.VT = N->getValueType(0);
+    NN.EVT = cast<MVTSDNode>(N)->getExtraValueType();
+    NN.Ops.push_back(N->getOperand(0));
+    NN.Ops.push_back(N->getOperand(1));
+    NN.Ops.push_back(N->getOperand(2));
+    MVTSDNodes.erase(NN);
+    break;
+  }
+  case ISD::EXTLOAD:
+  case ISD::SEXTLOAD:
+  case ISD::ZEXTLOAD: {
+    EVTStruct NN;
+    NN.Opcode = N->getOpcode();
+    NN.VT = N->getValueType(0);
+    NN.EVT = cast<MVTSDNode>(N)->getExtraValueType();
+    NN.Ops.push_back(N->getOperand(0));
+    NN.Ops.push_back(N->getOperand(1));
+    MVTSDNodes.erase(NN);
+    break;
+  }
   default:
     if (N->getNumOperands() == 1)
       UnaryOps.erase(std::make_pair(N->getOpcode(),
@@ -861,7 +884,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
 
   SDNode *&N = MVTSDNodes[NN];
   if (N) return SDOperand(N, 0);
-  N = new MVTSDNode(Opcode, VT, N1, N2, EVT);
+  N = new MVTSDNode(Opcode, VT, MVT::Other, N1, N2, EVT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
