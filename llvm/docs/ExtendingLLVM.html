@@ -50,6 +50,12 @@ different passes that you intend to use with your extension, and there are
 <em>many</em> LLVM analyses and transformations, so it may be quite a bit of
 work.</p>
 
+<p>Adding an <a href="#intrinsic">intrinsic function</a> is easier than adding
+an instruction, and is transparent to optimization passes which treat it as an
+unanalyzable function.  If your added functionality can be expressed as a
+function call, an intrinsic function is the method of choice for LLVM
+extension.</p>
+
 <p>Before you invest a significant amount of effort into a non-trivial
 extension, <span class="doc_warning">ask on the list</span> if what you are
 looking to do can be done with already-existing infrastructure, or if maybe
@@ -72,11 +78,12 @@ href="http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVM-dev</a>.</p>
 <div class="doc_text">
 
 <p><span class="doc_warning">WARNING: adding instructions changes the bytecode
-format, and will break compatibility with currently-existing LLVM
-installations.</span> Only add an instruction if it is absolutely
+format, and it will take some effort to maintain compatibility with
+the previous version.</span> Only add an instruction if it is absolutely
 necessary.</p>
 
 <ol>
+
 <li><tt>llvm/include/llvm/Instruction.def</tt>:
     add a number for your instruction and an enum name</li>
 
@@ -116,11 +123,6 @@ to understand this new instruction.</p>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
-
-<p>Adding an intrinsic function is easier than adding an instruction, and is
-transparent to optimization passes which treat it as an unanalyzable function.
-If your added functionality can be expressed as a function call, an intrinsic
-function is the method of choice for LLVM extension.</p>
 
 <ol>
 
