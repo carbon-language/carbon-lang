@@ -81,7 +81,7 @@ namespace {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-Pass *createX86CodePrinterPass(std::ostream &o, TargetMachine &tm) {
+FunctionPass *createX86CodePrinterPass(std::ostream &o,TargetMachine &tm){
   return new Printer(o, tm);
 }
 
@@ -461,10 +461,10 @@ void Printer::printOp(const MachineOperand &MO,
     }
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
-    if (MO.getReg() < MRegisterInfo::FirstVirtualRegister) {
+    if (MO.getReg() < MRegisterInfo::FirstVirtualRegister)
       // Bug Workaround: See note in Printer::doInitialization about %.
-      O << RI.get(MO.getReg()).Name;
-    } else
+      O << "%" << RI.get(MO.getReg()).Name;
+    else
       O << "%reg" << MO.getReg();
     return;
 
@@ -918,9 +918,6 @@ bool Printer::doInitialization(Module &M) {
   // before being looked up in the symbol table. This creates spurious
   // `undefined symbol' errors when linking. Workaround: Do not use `noprefix'
   // mode, and decorate all register names with percent signs.
-  //
-  // Cygwin presumably doesn't have this problem, so drop the %'s.
-  //
   O << "\t.intel_syntax\n";
   Mang = new Mangler(M, EmitCygwin);
   return false; // success
