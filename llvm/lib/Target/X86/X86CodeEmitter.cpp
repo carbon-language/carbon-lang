@@ -143,8 +143,8 @@ namespace {
   class Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
     MachineCodeEmitter  &MCE;
-    std::map<BasicBlock*, unsigned> BasicBlockAddrs;
-    std::vector<std::pair<BasicBlock*, unsigned> > BBRefs;
+    std::map<const BasicBlock*, unsigned> BasicBlockAddrs;
+    std::vector<std::pair<const BasicBlock*, unsigned> > BBRefs;
   public:
     Emitter(MachineCodeEmitter &mce) : II(0), MCE(mce) {}
 
