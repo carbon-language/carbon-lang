@@ -14,10 +14,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Support/CFG.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include <algorithm>
 
