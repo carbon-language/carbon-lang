@@ -29,7 +29,7 @@ void DSNode::dump() const { print(std::cerr, 0); }
 
 static std::string getCaption(const DSNode *N, const DSGraph *G) {
   std::stringstream OS;
-  Module *M = G && &G->getFunction() ? G->getFunction().getParent() : 0;
+  Module *M = G && G->hasFunction() ? G->getFunction().getParent() : 0;
 
   if (N->isNodeCompletelyFolded())
     OS << "FOLDED";
@@ -86,13 +86,15 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
   ///
   static void addCustomGraphFeatures(const DSGraph *G,
                                      GraphWriter<const DSGraph*> &GW) {
+    Module *CurMod = G->hasFunction() ? G->getFunction().getParent() : 0;
+
     // Add scalar nodes to the graph...
     const hash_map<Value*, DSNodeHandle> &VM = G->getScalarMap();
     for (hash_map<Value*, DSNodeHandle>::const_iterator I = VM.begin();
          I != VM.end(); ++I)
       if (!isa<GlobalValue>(I->first)) {
         std::stringstream OS;
-        WriteAsOperand(OS, I->first, false, true, G->getFunction().getParent());
+        WriteAsOperand(OS, I->first, false, true, CurMod);
         GW.emitSimpleNode(I->first, "", OS.str());
         
         // Add edge from return node to real destination
