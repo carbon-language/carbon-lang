@@ -154,7 +154,7 @@ Linker::LinkInArchive(const sys::Path &Filename) {
       verbose("  Linking in module: " + aModule->getModuleIdentifier());
 
       // Link it in
-      if (this->LinkInModule(aModule))
+      if (LinkInModule(aModule))
         return error("Cannot link in module '" + 
                      aModule->getModuleIdentifier() + "': " + Error);
     }
@@ -168,8 +168,7 @@ Linker::LinkInArchive(const sys::Path &Filename) {
     // NotDefinedByArchive which holds symbols we know the archive doesn't
     // define. There's no point searching for symbols that we won't find in the
     // archive so we subtract these sets.
-    set_subtract<std::set<std::string>,std::set<std::string> >(
-        UndefinedSymbols,NotDefinedByArchive);
+    set_subtract(UndefinedSymbols, NotDefinedByArchive);
     
     // If there's no symbols left, no point in continuing to search the
     // archive.
