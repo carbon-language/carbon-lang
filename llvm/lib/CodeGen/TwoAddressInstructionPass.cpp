@@ -7,11 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the LiveInterval analysis pass which is used
-// by the Linear Scan Register allocator. This pass linearizes the
-// basic blocks of the function in DFS order and uses the
-// LiveVariables pass to conservatively compute live intervals for
-// each virtual and physical register.
+// This file implements the TwoAddress instruction pass which is used
+// by most register allocators. Two-Address instructions are rewritten
+// from:
+//
+//     A = B op C
+//
+// to:
+//
+//     A = B
+//     A = A op C
 //
 //===----------------------------------------------------------------------===//
 
