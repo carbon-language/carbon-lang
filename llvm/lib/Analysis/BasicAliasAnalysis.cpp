@@ -159,9 +159,6 @@ static bool AddressMightEscape(const Value *V) {
         return true;
       if (AddressMightEscape(I)) return true;
       break;
-    case Instruction::PHI:
-      if (AddressMightEscape(I)) return true;
-      break;
     default:
       return true;
     }
@@ -178,7 +175,7 @@ AliasAnalysis::ModRefResult
 BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   if (!isa<Constant>(P) && !isa<GlobalValue>(P))
     if (const AllocationInst *AI =
-                  dyn_cast<AllocationInst>(getUnderlyingObject(P))) {
+                  dyn_cast_or_null<AllocationInst>(getUnderlyingObject(P))) {
       // Okay, the pointer is to a stack allocated object.  If we can prove that
       // the pointer never "escapes", then we know the call cannot clobber it,
       // because it simply can't get its address.
