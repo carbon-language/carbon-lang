@@ -754,3 +754,4 @@ void ISel::Select(SDOperand N) {
 FunctionPass *llvm::createPPC32ISelPattern(TargetMachine &TM) {
   return new ISel(TM);  
 }
+
