@@ -94,21 +94,24 @@ ZIP        := @ZIP@
 # Paths to miscellaneous programs we assume are present
 RPWD       := pwd
 ECHO       := echo
+
+# Path to location for LLVM C/C++ front-end. You can modify this if you
+# want to override the value set by configure.
+LLVMGCCDIR := @LLVMGCCDIR@
+
 # Determine the target for which LLVM should generate code.
 LLVMGCCARCH := @target@/3.4-llvm
 
 # Full pathnames of LLVM C/C++ front-end 'cc1' and 'cc1plus' binaries:
-LCC1 = @LLVMCC1@
-LCC1XX = @LLVMCC1PLUS@
+LLVMGCC  := @LLVMGCC@
+LLVMGXX  := @LLVMGXX@
+LLVMCC1  := @LLVMCC1@
+LLVMCC1PLUS := @LLVMCC1PLUS@
 
 # Path to directory where object files should be stored during a build.
 # Set OBJ_ROOT to "." if you do not want to use a separate place for
 # object files.
 OBJ_ROOT := .
-
-# Path to location for LLVM C/C++ front-end. You can modify this if you
-# want to override the value set by configure.
-LLVMGCCDIR := @LLVMGCCDIR@
 
 # These are options that can either be enabled here, or can be enabled on the
 # make command line (ie, make ENABLE_PROFILING=1):
@@ -203,7 +206,6 @@ sysconfdir = @sysconfdir@
 sharedstatedir = @sharedstatedir@ 
 localstatedir = @localstatedir@
 libdir = @libdir@
-cferuntime_libdir = $(LLVMGCCDIR)/lib
 includedir = @includedir@
 infodir = @infodir@
 mandir = @mandir@
