@@ -7,7 +7,6 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Function.h"
-#include <iostream>
 #include <fstream>
 
 namespace {
@@ -19,10 +18,6 @@ namespace {
     void finishFunction(MachineFunction &F) {
       std::cout << "\n";
     }
-    void startBasicBlock(MachineBasicBlock &BB) {
-      std::cout << "\n--- Basic Block: " << BB.getBasicBlock()->getName()<<"\n";
-    }
-
     void startFunctionStub(const Function &F, unsigned StubSize) {
       std::cout << "\n--- Function stub for function: " << F.getName() << "\n";
     }
@@ -34,20 +29,22 @@ namespace {
     void emitByte(unsigned char B) {
       std::cout << "0x" << std::hex << (unsigned int)B << std::dec << " ";
     }
-    void emitPCRelativeDisp(Value *V) {
-      std::cout << "<disp %" << V->getName() << ": 0xXX 0xXX 0xXX 0xXX> ";
-    }
-    void emitGlobalAddress(GlobalValue *V, bool isPCRelative) {
-      std::cout << "<addr %" << V->getName() << ": 0xXX 0xXX 0xXX 0xXX> ";
-    }
-    void emitGlobalAddress(const std::string &Name, bool isPCRelative) {
-      std::cout << "<addr %" << Name << ": 0xXX 0xXX 0xXX 0xXX> ";
+    void emitWord(unsigned W) {
+      std::cout << "0x" << std::hex << W << std::dec << " ";
     }
 
-    void emitFunctionConstantValueAddress(unsigned ConstantNum, int Offset) {
-      std::cout << "<addr const#" << ConstantNum;
-      if (Offset) std::cout << " + " << Offset;
-      std::cout << "> ";
+    uint64_t getGlobalValueAddress(GlobalValue *V) { return 0; }
+    uint64_t getGlobalValueAddress(const std::string &Name) { return 0; }
+    uint64_t getConstantPoolEntryAddress(unsigned Num) { return 0; }
+    uint64_t getCurrentPCValue() { return 0; }
+
+    // forceCompilationOf - Force the compilation of the specified function, and
+    // return its address, because we REALLY need the address now.
+    //
+    // FIXME: This is JIT specific!
+    //
+    virtual uint64_t forceCompilationOf(Function *F) {
+      return 0;
     }
   };
 }
@@ -57,39 +54,30 @@ namespace {
 /// code emitter, which just prints the opcodes and fields out the cout.  This
 /// can be used for debugging users of the MachineCodeEmitter interface.
 ///
-MachineCodeEmitter *MachineCodeEmitter::createDebugMachineCodeEmitter() {
+MachineCodeEmitter *MachineCodeEmitter::createDebugEmitter() {
   return new DebugMachineCodeEmitter();
 }
 
 namespace {
-  class FilePrinterMachineCodeEmitter : public MachineCodeEmitter {
+  class FilePrinterEmitter : public MachineCodeEmitter {
     std::ofstream f, actual;
     std::ostream &o;
-    MachineCodeEmitter *MCE;
+    MachineCodeEmitter &MCE;
     unsigned counter;
     bool mustClose;
     unsigned values[4];
     
   public:
-    FilePrinterMachineCodeEmitter() :
-      f("lli.out"), o(f), counter(0), mustClose(true)
-    {
-      if (! f.good()) {
+    FilePrinterEmitter(MachineCodeEmitter &M, std::ostream &os)
+      : f("lli.out"), o(os), MCE(M), counter(0), mustClose(false) {
+      if (!f.good()) {
         std::cerr << "Cannot open 'lli.out' for writing\n";
         abort();
       }
       openActual();
     }
-
-    FilePrinterMachineCodeEmitter(MachineCodeEmitter &M, std::ostream &os) :
-      o(os), MCE(&M), counter(0)
-    {
-      FilePrinterMachineCodeEmitter();
-      mustClose = false;
-      openActual();
-    }
-
-    ~FilePrinterMachineCodeEmitter() { 
+    
+    ~FilePrinterEmitter() { 
       o << "\n";
       actual.close();
       if (mustClose) f.close();
@@ -97,7 +85,7 @@ namespace {
 
     void openActual() {
       actual.open("lli.actual.obj");
-      if (! actual.good()) {
+      if (!actual.good()) {
         std::cerr << "Cannot open 'lli.actual.obj' for writing\n";
         abort();
       }
@@ -105,30 +93,22 @@ namespace {
 
     void startFunction(MachineFunction &F) {
       // resolve any outstanding calls
-      if (MCE) MCE->startFunction(F);
+      MCE.startFunction(F);
     }
     void finishFunction(MachineFunction &F) {
-      if (MCE) MCE->finishFunction(F);
-    }
-
-    void startBasicBlock(MachineBasicBlock &BB) {
-      // if any instructions were waiting for the address of this block,
-      // let them fix their addresses now
-      if (MCE) MCE->startBasicBlock(BB);
+      MCE.finishFunction(F);
     }
 
     void startFunctionStub(const Function &F, unsigned StubSize) {
-      //
-      if (MCE) MCE->startFunctionStub(F, StubSize);
+      MCE.startFunctionStub(F, StubSize);
     }
 
     void *finishFunctionStub(const Function &F) {
-      if (MCE) return MCE->finishFunctionStub(F);
-      else return 0;
+      return MCE.finishFunctionStub(F);
     }
     
     void emitByte(unsigned char B) {
-      if (MCE) MCE->emitByte(B);
+      MCE.emitByte(B);
       actual << B; actual.flush();
 
       values[counter] = (unsigned int) B;
@@ -157,29 +137,35 @@ namespace {
         counter %= 4;
       }
     }
-    void emitPCRelativeDisp(Value *V) {
-      if (MCE) MCE->emitPCRelativeDisp(V);
-    }
 
-    void emitGlobalAddress(GlobalValue *V, bool isPCRelative) {
-      if (MCE) MCE->emitGlobalAddress(V, isPCRelative);
+    void emitWord(unsigned W) {
+      MCE.emitWord(W);
+      assert(0 && "FilePrinterEmitter::emitWord not implemented!");
     }
-    void emitGlobalAddress(const std::string &Name, bool isPCRelative) {
-      if (MCE) MCE->emitGlobalAddress(Name, isPCRelative);
+    uint64_t getGlobalValueAddress(GlobalValue *V) {
+      return MCE.getGlobalValueAddress(V);
     }
-
-    void emitFunctionConstantValueAddress(unsigned ConstantNum, int Offset) {
-      if (MCE) MCE->emitFunctionConstantValueAddress(ConstantNum, Offset);
+    uint64_t getGlobalValueAddress(const std::string &Name) {
+      return MCE.getGlobalValueAddress(Name);
     }
-
-    virtual void saveBBreference(BasicBlock* BB, MachineInstr &MI) {
-      if (MCE) MCE->saveBBreference(BB, MI);
+    uint64_t getConstantPoolEntryAddress(unsigned Num) {
+      return MCE.getConstantPoolEntryAddress(Num);
     }
-
+    uint64_t getCurrentPCValue() {
+      return MCE.getCurrentPCValue();
+    }
+    // forceCompilationOf - Force the compilation of the specified function, and
+    // return its address, because we REALLY need the address now.
+    //
+    // FIXME: This is JIT specific!
+    //
+    virtual uint64_t forceCompilationOf(Function *F) {
+      return MCE.forceCompilationOf(F);
+    }
   };
 }
 
-MachineCodeEmitter *MachineCodeEmitter::createFilePrinterMachineCodeEmitter
-(MachineCodeEmitter &MCE) {
-  return new FilePrinterMachineCodeEmitter(MCE, std::cerr);
+MachineCodeEmitter *
+MachineCodeEmitter::createFilePrinterEmitter(MachineCodeEmitter &MCE) {
+  return new FilePrinterEmitter(MCE, std::cerr);
 }
