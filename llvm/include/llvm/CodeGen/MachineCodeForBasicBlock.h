@@ -1,20 +1,18 @@
 //===-- llvm/CodeGen/MachineCodeForBasicBlock.h -----------------*- C++ -*--=//
 // 
-// Purpose:
-//   Collect the sequence of machine instructions for a basic block.
+// Collect the sequence of machine instructions for a basic block.
+//
 //===---------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_MACHINECODEFORBASICBLOCK_H
 #define LLVM_CODEGEN_MACHINECODEFORBASICBLOCK_H
 
 #include "llvm/BasicBlock.h"
-#include "llvm/Annotation.h"
-#include <vector>
 class MachineInstr;
 
 extern AnnotationID MCFBB_AID;
 
-class MachineCodeForBasicBlock: public Annotation {
+class MachineCodeForBasicBlock : public Annotation {
   std::vector<MachineInstr*> Insts;
 public:
   MachineCodeForBasicBlock();
