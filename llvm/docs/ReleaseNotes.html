@@ -238,7 +238,6 @@ management functions in libc runtime to allow them to be overriden</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR204">[llvmg++] Dynamically initialized constants cannot be marked 'constant'</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR216">[llvmgcc] floating-point unary minus is incorrect for +0.0</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR221">[llvm-gcc] miscompilation of 'X = Y = Z' with aggregate values</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR244">[llvm-gcc] miscompilation when a function is re-declared as static</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR272">[llvmgcc] Invalid code created for complex division operation</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR268">[llvmgcc] Incorrect code generation for pointer subtraction</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR261">[llvmg++] Crash assigning pointers-to-members with casted types</a></li>
@@ -367,6 +366,9 @@ Initialization of global union variables can only be done
 <a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=162">with the largest
 union member</a>.
 </li>
+
+<li><a href="http://llvm.cs.uiuc.edu/PR244">[llvm-gcc] Error when an implicitly external function is re-declared as static</a></li>
+
 </ul>
 </div>
 
