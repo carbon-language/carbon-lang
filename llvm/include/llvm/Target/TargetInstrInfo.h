@@ -98,7 +98,8 @@ public:
   /// target specific assembly language.  If this method is not overridden, the
   /// default implementation uses the crummy machine independant printer.
   ///
-  virtual void print(const MachineInstr *MI, std::ostream &O) const;
+  virtual void print(const MachineInstr *MI, std::ostream &O,
+                     const TargetMachine &TM) const;
 
   const char *getName(MachineOpCode opCode) const {
     return get(opCode).Name;
