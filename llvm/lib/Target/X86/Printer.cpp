@@ -623,7 +623,7 @@ bool Printer::printImplDefsAfter(const TargetInstrDescriptor &Desc,
 ///
 void Printer::printMachineInstruction(const MachineInstr *MI) {
   unsigned Opcode = MI->getOpcode();
-  const TargetInstrInfo &TII = TM.getInstrInfo();
+  const TargetInstrInfo &TII = *TM.getInstrInfo();
   const TargetInstrDescriptor &Desc = TII.get(Opcode);
 
   ++EmittedInsts;
@@ -921,7 +921,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
         MI->getOpcode() == X86::FILD64m ||
         MI->getOpcode() == X86::FISTP64m) {
         GasBugWorkaroundEmitter gwe(O);
-        X86::emitInstruction(gwe, (X86InstrInfo&)TM.getInstrInfo(), *MI);
+        X86::emitInstruction(gwe, (X86InstrInfo&)*TM.getInstrInfo(), *MI);
     }
 
     O << TII.getName(MI->getOpcode()) << " ";

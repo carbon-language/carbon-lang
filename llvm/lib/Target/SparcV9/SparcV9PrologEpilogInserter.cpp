@@ -52,7 +52,7 @@ namespace {
 //------------------------------------------------------------------------ 
 
 static unsigned getStaticStackSize (MachineFunction &MF) {
-  const TargetFrameInfo& frameInfo = MF.getTarget().getFrameInfo();
+  const TargetFrameInfo& frameInfo = *MF.getTarget().getFrameInfo();
 
   unsigned staticStackSize = MF.getInfo()->getStaticStackSize();
 
@@ -69,7 +69,7 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
 {
   std::vector<MachineInstr*> mvec;
   const TargetMachine &TM = MF.getTarget();
-  const TargetFrameInfo& frameInfo = TM.getFrameInfo();
+  const TargetFrameInfo& frameInfo = *TM.getFrameInfo();
   
   // The second operand is the stack size. If it does not fit in the
   // immediate field, we have to use a free register to hold the size.
@@ -77,8 +77,8 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
   // 
   unsigned staticStackSize = getStaticStackSize (MF);
   int32_t C = - (int) staticStackSize;
-  int SP = TM.getRegInfo().getStackPointer();
-  if (TM.getInstrInfo().constantFitsInImmedField(V9::SAVEi,staticStackSize)) {
+  int SP = TM.getRegInfo()->getStackPointer();
+  if (TM.getInstrInfo()->constantFitsInImmedField(V9::SAVEi,staticStackSize)) {
     mvec.push_back(BuildMI(V9::SAVEi, 3).addMReg(SP).addSImm(C)
                    .addMReg(SP, MachineOperand::Def));
   } else {
@@ -87,8 +87,8 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
     // local (%l) and in (%i) registers cannot be used before the SAVE!
     // Do this by creating a code sequence equivalent to:
     //        SETSW -(stackSize), %g1
-    int uregNum = TM.getRegInfo().getUnifiedRegNum(
-			 TM.getRegInfo().getRegClassIDOfType(Type::IntTy),
+    int uregNum = TM.getRegInfo()->getUnifiedRegNum(
+			 TM.getRegInfo()->getRegClassIDOfType(Type::IntTy),
 			 SparcV9IntRegClass::g1);
 
     MachineInstr* M = BuildMI(V9::SETHI, 2).addSImm(C)
@@ -120,15 +120,16 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
   // 
   if (MF.getFunction()->getFunctionType()->isVarArg()) {
     int numFixedArgs    = MF.getFunction()->getFunctionType()->getNumParams();
-    int numArgRegs      = TM.getRegInfo().getNumOfIntArgRegs();
+    int numArgRegs      = TM.getRegInfo()->getNumOfIntArgRegs();
     if (numFixedArgs < numArgRegs) {
+      const TargetFrameInfo &FI = *TM.getFrameInfo();
       bool ignore;
-      int firstArgReg   = TM.getRegInfo().getUnifiedRegNum(
-                             TM.getRegInfo().getRegClassIDOfType(Type::IntTy),
+      int firstArgReg   = TM.getRegInfo()->getUnifiedRegNum(
+                             TM.getRegInfo()->getRegClassIDOfType(Type::IntTy),
                              SparcV9IntRegClass::i0);
-      int fpReg         = TM.getFrameInfo().getIncomingArgBaseRegNum();
-      int argSize       = TM.getFrameInfo().getSizeOfEachArgOnStack();
-      int firstArgOffset=TM.getFrameInfo().getFirstIncomingArgOffset(MF,ignore);
+      int fpReg         = FI.getIncomingArgBaseRegNum();
+      int argSize       = FI.getSizeOfEachArgOnStack();
+      int firstArgOffset= FI.getFirstIncomingArgOffset(MF,ignore);
       int nextArgOffset = firstArgOffset + numFixedArgs * argSize;
 
       for (int i=numFixedArgs; i < numArgRegs; ++i) {
@@ -145,7 +146,7 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
 void InsertPrologEpilogCode::InsertEpilogCode(MachineFunction &MF)
 {
   const TargetMachine &TM = MF.getTarget();
-  const TargetInstrInfo &MII = TM.getInstrInfo();
+  const TargetInstrInfo &MII = *TM.getInstrInfo();
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock &MBB = *I;
@@ -153,7 +154,7 @@ void InsertPrologEpilogCode::InsertEpilogCode(MachineFunction &MF)
     const Instruction *TermInst = (Instruction*)BB.getTerminator();
     if (TermInst->getOpcode() == Instruction::Ret)
     {
-      int ZR = TM.getRegInfo().getZeroRegNum();
+      int ZR = TM.getRegInfo()->getZeroRegNum();
       MachineInstr *Restore = 
         BuildMI(V9::RESTOREi, 3).addMReg(ZR).addSImm(0)
           .addMReg(ZR, MachineOperand::Def);

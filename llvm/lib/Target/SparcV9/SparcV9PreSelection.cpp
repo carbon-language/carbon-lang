@@ -41,7 +41,7 @@ namespace {
 
   public:
     PreSelection(const TargetMachine &T)
-      : instrInfo(T.getInstrInfo()) {}
+      : instrInfo(*T.getInstrInfo()) {}
 
     // runOnFunction - apply this pass to each Function
     bool runOnFunction(Function &F) {

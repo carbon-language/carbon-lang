@@ -350,7 +350,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       // We need to keep the stack aligned properly.  To do this, we round the
       // amount of space needed for the outgoing arguments up to the next
       // alignment boundary.
-      unsigned Align = MF.getTarget().getFrameInfo().getStackAlignment();
+      unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
       Amount = (Amount+Align-1)/Align*Align;
 
       MachineInstr *New;
@@ -450,7 +450,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
       // Round the size to a multiple of the alignment (don't forget the 4 byte
       // offset though).
-      unsigned Align = MF.getTarget().getFrameInfo().getStackAlignment();
+      unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
       NumBytes = ((NumBytes+4)+Align-1)/Align*Align - 4;
     }
 

@@ -74,6 +74,15 @@ namespace {
             arrayType->getElementType() == Type::SByteTy);
   }
 
+  unsigned findOptimalStorageSize(const TargetMachine &TM, const Type *Ty) {
+    // All integer types smaller than ints promote to 4 byte integers.
+    if (Ty->isIntegral() && Ty->getPrimitiveSize() < 4)
+      return 4;
+
+    return TM.getTargetData().getTypeSize(Ty);
+  }
+
+
   inline const std::string
   TypeToDataDirective(const Type* type) {
     switch(type->getPrimitiveID())
@@ -111,7 +120,7 @@ namespace {
         return 1 + CVA->getNumOperands();
     }
   
-    return target.findOptimalStorageSize(CV->getType());
+    return findOptimalStorageSize(target, CV->getType());
   }
 
   /// Align data larger than one L1 cache line on L1 cache line boundaries.
@@ -132,7 +141,7 @@ namespace {
   /// 
   inline unsigned int
   TypeToAlignment(const Type* type, const TargetMachine& target) {
-    return SizeToAlignment(target.findOptimalStorageSize(type), target);
+    return SizeToAlignment(findOptimalStorageSize(target, type), target);
   }
 
   /// Get the size of the constant and then use SizeToAlignment.
@@ -580,9 +589,9 @@ SparcV9AsmPrinter::OpIsBranchTargetLabel(const MachineInstr *MI,
 inline bool
 SparcV9AsmPrinter::OpIsMemoryAddressBase(const MachineInstr *MI,
                                        unsigned int opNum) {
-  if (Target.getInstrInfo().isLoad(MI->getOpcode()))
+  if (Target.getInstrInfo()->isLoad(MI->getOpcode()))
     return (opNum == 0);
-  else if (Target.getInstrInfo().isStore(MI->getOpcode()))
+  else if (Target.getInstrInfo()->isStore(MI->getOpcode()))
     return (opNum == 1);
   else
     return false;
@@ -639,11 +648,11 @@ SparcV9AsmPrinter::printOneOperand(const MachineOperand &mop,
       {
         int regNum = (int)mop.getReg();
         
-        if (regNum == Target.getRegInfo().getInvalidRegNum()) {
+        if (regNum == Target.getRegInfo()->getInvalidRegNum()) {
           // better to print code with NULL registers than to die
           toAsm << "<NULL VALUE>";
         } else {
-          toAsm << "%" << Target.getRegInfo().getUnifiedRegName(regNum);
+          toAsm << "%" << Target.getRegInfo()->getUnifiedRegName(regNum);
         }
         break;
       }
@@ -693,10 +702,10 @@ SparcV9AsmPrinter::printOneOperand(const MachineOperand &mop,
 void SparcV9AsmPrinter::emitMachineInst(const MachineInstr *MI) {
   unsigned Opcode = MI->getOpcode();
 
-  if (Target.getInstrInfo().isDummyPhiInstr(Opcode))
+  if (Target.getInstrInfo()->isDummyPhiInstr(Opcode))
     return;  // IGNORE PHI NODES
 
-  toAsm << "\t" << Target.getInstrInfo().getName(Opcode) << "\t";
+  toAsm << "\t" << Target.getInstrInfo()->getName(Opcode) << "\t";
 
   unsigned Mask = getOperandMask(Opcode);
   
@@ -770,7 +779,7 @@ void SparcV9AsmPrinter::printGlobalVariable(const GlobalVariable* GV) {
                                                 Target) << "\n";
     toAsm << "\t.type\t" << getID(GV) << ",#object\n";
     toAsm << "\t.reserve\t" << getID(GV) << ","
-          << Target.findOptimalStorageSize(GV->getType()->getElementType())
+          << findOptimalStorageSize(Target, GV->getType()->getElementType())
           << "\n";
   }
 }

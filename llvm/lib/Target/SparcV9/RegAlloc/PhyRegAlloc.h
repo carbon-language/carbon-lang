@@ -93,7 +93,7 @@ public:
   typedef std::map<const Function *, std::vector<AllocInfo> > SavedStateMapTy;
 
   inline PhyRegAlloc (const TargetMachine &TM_) :
-    TM (TM_), MRI (TM.getRegInfo ()),
+    TM (TM_), MRI (*TM.getRegInfo ()),
     NumOfRegClasses (MRI.getNumOfRegClasses ()) { }
   virtual ~PhyRegAlloc() { }
 

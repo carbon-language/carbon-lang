@@ -40,7 +40,7 @@ InsertCodeToLoadConstant(Function *F,
   MachineCodeForInstruction &mcfi = MachineCodeForInstruction::get(vmInstr);
   TmpInstruction* tmpReg = new TmpInstruction(mcfi, opValue);
   
-  target.getInstrInfo().CreateCodeToLoadConst(target, F, opValue, tmpReg,
+  target.getInstrInfo()->CreateCodeToLoadConst(target, F, opValue, tmpReg,
                                               loadConstVec, mcfi);
   
   // Record the mapping from the tmp VM instruction to machine instruction.
@@ -66,14 +66,14 @@ ChooseRegOrImmed(int64_t intValue,
   getImmedValue = 0;
 
   if (canUseImmed &&
-      target.getInstrInfo().constantFitsInImmedField(opCode, intValue)) {
+      target.getInstrInfo()->constantFitsInImmedField(opCode, intValue)) {
       opType = isSigned? MachineOperand::MO_SignExtendedImmed
                        : MachineOperand::MO_UnextendedImmed;
       getImmedValue = intValue;
   } else if (intValue == 0 &&
-             target.getRegInfo().getZeroRegNum() != (unsigned)-1) {
+             target.getRegInfo()->getZeroRegNum() != (unsigned)-1) {
     opType = MachineOperand::MO_MachineRegister;
-    getMachineRegNum = target.getRegInfo().getZeroRegNum();
+    getMachineRegNum = target.getRegInfo()->getZeroRegNum();
   }
 
   return opType;
@@ -95,7 +95,7 @@ ChooseRegOrImmed(Value* val,
   // TargetInstrInfo::ConvertConstantToIntType() does the right conversions:
   bool isValidConstant;
   uint64_t valueToUse =
-    target.getInstrInfo().ConvertConstantToIntType(target, val, val->getType(),
+    target.getInstrInfo()->ConvertConstantToIntType(target, val, val->getType(),
                                                    isValidConstant);
   if (! isValidConstant)
     return MachineOperand::MO_VirtualRegister;
@@ -130,7 +130,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
   std::vector<MachineInstr*> MVec;
   
   MachineOpCode opCode = minstr->getOpcode();
-  const TargetInstrInfo& instrInfo = target.getInstrInfo();
+  const TargetInstrInfo& instrInfo = *target.getInstrInfo();
   int resultPos = instrInfo.getResultPos(opCode);
   int immedPos = instrInfo.getImmedConstantPos(opCode);
 

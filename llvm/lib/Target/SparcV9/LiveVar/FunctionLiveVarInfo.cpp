@@ -295,12 +295,12 @@ void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
     // If the current machine instruction has delay slots, mark values
     // used by this instruction as live before and after each delay slot
     // instruction (After(MI) is the same as Before(MI+1) except for last MI).
-    if (unsigned DS = TM.getInstrInfo().getNumDelaySlots(MI->getOpcode())) {
+    if (unsigned DS = TM.getInstrInfo()->getNumDelaySlots(MI->getOpcode())) {
       MachineBasicBlock::const_iterator fwdMII = MII.base(); // ptr to *next* MI
       for (unsigned i = 0; i < DS; ++i, ++fwdMII) {
         assert(fwdMII != MIVec.end() && "Missing instruction in delay slot?");
         const MachineInstr* DelaySlotMI = fwdMII;
-        if (! TM.getInstrInfo().isNop(DelaySlotMI->getOpcode())) {
+        if (! TM.getInstrInfo()->isNop(DelaySlotMI->getOpcode())) {
           set_union(*MInst2LVSetBI[DelaySlotMI], *NewSet);
           if (i+1 == DS)
             set_union(*MInst2LVSetAI[DelaySlotMI], *NewSet);

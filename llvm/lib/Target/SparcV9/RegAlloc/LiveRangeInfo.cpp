@@ -29,7 +29,7 @@ unsigned LiveRange::getRegClassID() const { return getRegClass()->getID(); }
 
 LiveRangeInfo::LiveRangeInfo(const Function *F, const TargetMachine &tm,
 			     std::vector<RegClass *> &RCL)
-  : Meth(F), TM(tm), RegClassList(RCL), MRI(tm.getRegInfo()) { }
+  : Meth(F), TM(tm), RegClassList(RCL), MRI(*tm.getRegInfo()) { }
 
 
 LiveRangeInfo::~LiveRangeInfo() {
@@ -176,8 +176,8 @@ void LiveRangeInfo::constructLiveRanges() {
       // If the machine instruction is a  call/return instruction, add it to
       // CallRetInstrList for processing its args, ret value, and ret addr.
       // 
-      if(TM.getInstrInfo().isReturn(MInst->getOpcode()) ||
-	 TM.getInstrInfo().isCall(MInst->getOpcode()))
+      if(TM.getInstrInfo()->isReturn(MInst->getOpcode()) ||
+	 TM.getInstrInfo()->isCall(MInst->getOpcode()))
 	CallRetInstrList.push_back(MInst); 
  
       // iterate over explicit MI operands and create a new LR
@@ -244,9 +244,9 @@ void LiveRangeInfo::suggestRegs4CallRets() {
     MachineInstr *MInst = *It;
     MachineOpCode OpCode = MInst->getOpcode();
 
-    if ((TM.getInstrInfo()).isReturn(OpCode))
+    if (TM.getInstrInfo()->isReturn(OpCode))
       MRI.suggestReg4RetValue(MInst, *this);
-    else if ((TM.getInstrInfo()).isCall(OpCode))
+    else if (TM.getInstrInfo()->isCall(OpCode))
       MRI.suggestRegs4CallArgs(MInst, *this);
     else 
       assert( 0 && "Non call/ret instr in CallRetInstrList" );

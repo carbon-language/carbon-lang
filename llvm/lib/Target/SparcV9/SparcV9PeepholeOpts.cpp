@@ -31,7 +31,7 @@ DeleteInstruction(MachineBasicBlock& mvec,
                   const TargetMachine& target) {
   // Check if this instruction is in a delay slot of its predecessor.
   if (BBI != mvec.begin()) {
-      const TargetInstrInfo& mii = target.getInstrInfo();
+      const TargetInstrInfo& mii = *target.getInstrInfo();
       MachineBasicBlock::iterator predMI = prior(BBI);
       if (unsigned ndelay = mii.getNumDelaySlots(predMI->getOpcode())) {
         // This instruction is in a delay slot of its predecessor, so
@@ -83,7 +83,7 @@ static bool IsUselessCopy(const TargetMachine &target, const MachineInstr* MI) {
       return (// either operand otherOp is register %g0
               (MI->getOperand(otherOp).hasAllocatedReg() &&
                MI->getOperand(otherOp).getReg() ==
-               target.getRegInfo().getZeroRegNum()) ||
+               target.getRegInfo()->getZeroRegNum()) ||
               
               // or operand otherOp == 0
               (MI->getOperand(otherOp).getType()

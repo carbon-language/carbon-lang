@@ -314,7 +314,7 @@ unsigned SparcV9RegInfo::getRegClassIDOfRegType(int regType) const {
 void SparcV9RegInfo::suggestReg4RetAddr(MachineInstr *RetMI, 
 					   LiveRangeInfo& LRI) const {
 
-  assert(target.getInstrInfo().isReturn(RetMI->getOpcode()));
+  assert(target.getInstrInfo()->isReturn(RetMI->getOpcode()));
   
   // return address is always mapped to i7 so set it immediately
   RetMI->SetRegForOperand(0, getUnifiedRegNum(IntRegClassID,
@@ -482,7 +482,7 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
 	// Now the arg is coming on stack. Since the LR received a register,
 	// we just have to load the arg on stack into that register
 	//
-        const TargetFrameInfo& frameInfo = target.getFrameInfo();
+        const TargetFrameInfo& frameInfo = *target.getFrameInfo();
 	int offsetFromFP =
           frameInfo.getIncomingArgOffset(MachineFunction::get(Meth),
                                          argNo);
@@ -540,7 +540,7 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
 	// since this method is called before any other method that makes
 	// uses of the stack pos of the LR (e.g., updateMachineInstr)
         // 
-        const TargetFrameInfo& frameInfo = target.getFrameInfo();
+        const TargetFrameInfo& frameInfo = *target.getFrameInfo();
 	int offsetFromFP =
           frameInfo.getIncomingArgOffset(MachineFunction::get(Meth),
                                          argNo);
@@ -572,7 +572,7 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
 //---------------------------------------------------------------------------
 void SparcV9RegInfo::suggestRegs4CallArgs(MachineInstr *CallMI, 
 					     LiveRangeInfo& LRI) const {
-  assert ( (target.getInstrInfo()).isCall(CallMI->getOpcode()) );
+  assert ( (target.getInstrInfo())->isCall(CallMI->getOpcode()) );
 
   CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI); 
   
@@ -641,7 +641,7 @@ void SparcV9RegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
 void SparcV9RegInfo::suggestReg4RetValue(MachineInstr *RetMI, 
                                             LiveRangeInfo& LRI) const {
 
-  assert( (target.getInstrInfo()).isReturn( RetMI->getOpcode() ) );
+  assert( target.getInstrInfo()->isReturn( RetMI->getOpcode() ) );
 
   suggestReg4RetAddr(RetMI, LRI);
 
@@ -764,7 +764,7 @@ SparcV9RegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
   // Use the register allocator, PRA, to find an unused reg. at this MI.
   // 
   if (RegType != IntCCRegType)          // does not use offset below
-    if (! target.getInstrInfo().constantFitsInImmedField(V9::LDXi, Offset)) {
+    if (! target.getInstrInfo()->constantFitsInImmedField(V9::LDXi, Offset)) {
 #ifdef CAN_FIND_FREE_REGISTER_TRANSPARENTLY
       RegClass* RC = PRA.getRegClassByID(this->getRegClassIDOfRegType(RegType));
       OffReg = PRA.getUnusedUniRegAtMI(RC, RegType, MInst, LVSetBef);
@@ -779,21 +779,21 @@ SparcV9RegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
 
   switch (RegType) {
   case IntRegType:
-    if (target.getInstrInfo().constantFitsInImmedField(V9::STXi, Offset))
+    if (target.getInstrInfo()->constantFitsInImmedField(V9::STXi, Offset))
       MI = BuildMI(V9::STXi,3).addMReg(SrcReg).addMReg(PtrReg).addSImm(Offset);
     else
       MI = BuildMI(V9::STXr,3).addMReg(SrcReg).addMReg(PtrReg).addMReg(OffReg);
     break;
 
   case FPSingleRegType:
-    if (target.getInstrInfo().constantFitsInImmedField(V9::STFi, Offset))
+    if (target.getInstrInfo()->constantFitsInImmedField(V9::STFi, Offset))
       MI = BuildMI(V9::STFi, 3).addMReg(SrcReg).addMReg(PtrReg).addSImm(Offset);
     else
       MI = BuildMI(V9::STFr, 3).addMReg(SrcReg).addMReg(PtrReg).addMReg(OffReg);
     break;
 
   case FPDoubleRegType:
-    if (target.getInstrInfo().constantFitsInImmedField(V9::STDFi, Offset))
+    if (target.getInstrInfo()->constantFitsInImmedField(V9::STDFi, Offset))
       MI = BuildMI(V9::STDFi,3).addMReg(SrcReg).addMReg(PtrReg).addSImm(Offset);
     else
       MI = BuildMI(V9::STDFr,3).addMReg(SrcReg).addMReg(PtrReg).addSImm(OffReg);
@@ -815,7 +815,7 @@ SparcV9RegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
   case FloatCCRegType: {
     unsigned fsrReg =  getUnifiedRegNum(SparcV9RegInfo::SpecialRegClassID,
                                            SparcV9SpecialRegClass::fsr);
-    if (target.getInstrInfo().constantFitsInImmedField(V9::STXFSRi, Offset))
+    if (target.getInstrInfo()->constantFitsInImmedField(V9::STXFSRi, Offset))
       MI=BuildMI(V9::STXFSRi,3).addMReg(fsrReg).addMReg(PtrReg).addSImm(Offset);
     else
       MI=BuildMI(V9::STXFSRr,3).addMReg(fsrReg).addMReg(PtrReg).addMReg(OffReg);
@@ -850,7 +850,7 @@ SparcV9RegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
   // Use the register allocator, PRA, to find an unused reg. at this MI.
   // 
   if (RegType != IntCCRegType)          // does not use offset below
-    if (! target.getInstrInfo().constantFitsInImmedField(V9::LDXi, Offset)) {
+    if (! target.getInstrInfo()->constantFitsInImmedField(V9::LDXi, Offset)) {
 #ifdef CAN_FIND_FREE_REGISTER_TRANSPARENTLY
       RegClass* RC = PRA.getRegClassByID(this->getRegClassIDOfRegType(RegType));
       OffReg = PRA.getUnusedUniRegAtMI(RC, RegType, MInst, LVSetBef);
@@ -865,7 +865,7 @@ SparcV9RegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
 
   switch (RegType) {
   case IntRegType:
-    if (target.getInstrInfo().constantFitsInImmedField(V9::LDXi, Offset))
+    if (target.getInstrInfo()->constantFitsInImmedField(V9::LDXi, Offset))
       MI = BuildMI(V9::LDXi, 3).addMReg(PtrReg).addSImm(Offset)
           .addMReg(DestReg, MachineOperand::Def);
     else
@@ -874,7 +874,7 @@ SparcV9RegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
     break;
 
   case FPSingleRegType:
-    if (target.getInstrInfo().constantFitsInImmedField(V9::LDFi, Offset))
+    if (target.getInstrInfo()->constantFitsInImmedField(V9::LDFi, Offset))
       MI = BuildMI(V9::LDFi, 3).addMReg(PtrReg).addSImm(Offset)
           .addMReg(DestReg, MachineOperand::Def);
     else
@@ -883,7 +883,7 @@ SparcV9RegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
     break;
 
   case FPDoubleRegType:
-    if (target.getInstrInfo().constantFitsInImmedField(V9::LDDFi, Offset))
+    if (target.getInstrInfo()->constantFitsInImmedField(V9::LDDFi, Offset))
       MI= BuildMI(V9::LDDFi, 3).addMReg(PtrReg).addSImm(Offset)
           .addMReg(DestReg, MachineOperand::Def);
     else
@@ -906,7 +906,7 @@ SparcV9RegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
   case FloatCCRegType: {
     unsigned fsrRegNum =  getUnifiedRegNum(SparcV9RegInfo::SpecialRegClassID,
                                            SparcV9SpecialRegClass::fsr);
-    if (target.getInstrInfo().constantFitsInImmedField(V9::LDXFSRi, Offset))
+    if (target.getInstrInfo()->constantFitsInImmedField(V9::LDXFSRi, Offset))
       MI = BuildMI(V9::LDXFSRi, 3).addMReg(PtrReg).addSImm(Offset)
         .addMReg(fsrRegNum, MachineOperand::UseAndDef);
     else

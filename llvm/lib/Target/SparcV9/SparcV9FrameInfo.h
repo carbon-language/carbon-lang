@@ -72,22 +72,22 @@ public:
   // (generally FP or SP)
   // 
   virtual int getIncomingArgBaseRegNum() const {
-    return (int) target.getRegInfo().getFramePointer();
+    return (int) target.getRegInfo()->getFramePointer();
   }
   virtual int getOutgoingArgBaseRegNum() const {
-    return (int) target.getRegInfo().getStackPointer();
+    return (int) target.getRegInfo()->getStackPointer();
   }
   virtual int getOptionalOutgoingArgBaseRegNum() const {
-    return (int) target.getRegInfo().getStackPointer();
+    return (int) target.getRegInfo()->getStackPointer();
   }
   virtual int getAutomaticVarBaseRegNum() const {
-    return (int) target.getRegInfo().getFramePointer();
+    return (int) target.getRegInfo()->getFramePointer();
   }
   virtual int getRegSpillAreaBaseRegNum() const {
-    return (int) target.getRegInfo().getFramePointer();
+    return (int) target.getRegInfo()->getFramePointer();
   }
   virtual int getDynamicAreaBaseRegNum() const {
-    return (int) target.getRegInfo().getStackPointer();
+    return (int) target.getRegInfo()->getStackPointer();
   }
 
   virtual int getIncomingArgOffset(MachineFunction& mcInfo, 

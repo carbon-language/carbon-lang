@@ -228,7 +228,7 @@ bool X86TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
 }
 
 bool Emitter::runOnMachineFunction(MachineFunction &MF) {
-  II = &((X86TargetMachine&)MF.getTarget()).getInstrInfo();
+  II = ((X86TargetMachine&)MF.getTarget()).getInstrInfo();
 
   MCE.startFunction(MF);
   MCE.emitConstantPool(MF.getConstantPool());

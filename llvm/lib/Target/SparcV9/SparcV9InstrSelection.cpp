@@ -592,12 +592,12 @@ CreateCodeToConvertFloatToInt(const TargetMachine& target,
                                            castDestType));
 
   // Create the fpreg-to-intreg copy code
-  target.getInstrInfo().CreateCodeToCopyFloatToInt(target, F, destForCast,
+  target.getInstrInfo()->CreateCodeToCopyFloatToInt(target, F, destForCast,
                                                    fpToIntCopyDest, mvec, mcfi);
 
   // Create the uint64_t to uint32_t conversion, if needed
   if (destI->getType() == Type::UIntTy)
-    target.getInstrInfo().
+    target.getInstrInfo()->
       CreateZeroExtensionInstructions(target, F, fpToIntCopyDest, destI,
                                       /*numLowBits*/ 32, mvec, mcfi);
 }
@@ -743,7 +743,7 @@ static inline MachineInstr*
 CreateIntNegInstruction(const TargetMachine& target,
                         Value* vreg)
 {
-  return BuildMI(V9::SUBr, 3).addMReg(target.getRegInfo().getZeroRegNum())
+  return BuildMI(V9::SUBr, 3).addMReg(target.getRegInfo()->getZeroRegNum())
     .addReg(vreg).addRegDef(vreg);
 }
 
@@ -793,7 +793,7 @@ CreateShiftInstructions(const TargetMachine& target,
   if (shiftDest != destVal) {
     // extend the sign-bit of the result into all upper bits of dest
     assert(8*opSize <= 32 && "Unexpected type size > 4 and < IntRegSize?");
-    target.getInstrInfo().
+    target.getInstrInfo()->
       CreateSignExtensionInstructions(target, F, shiftDest, destVal,
                                       8*opSize, mvec, mcfi);
   }
@@ -811,7 +811,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
                           MachineCodeForInstruction& mcfi)
 {
   /* Use max. multiply cost, viz., cost of MULX */
-  unsigned cost = target.getInstrInfo().minLatency(V9::MULXr);
+  unsigned cost = target.getInstrInfo()->minLatency(V9::MULXr);
   unsigned firstNewInstr = mvec.size();
   
   Value* constOp = rval;
@@ -826,7 +826,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
   
   if (resultType->isInteger() || isa<PointerType>(resultType)) {
     bool isValidConst;
-    int64_t C = (int64_t) target.getInstrInfo().ConvertConstantToIntType(target,
+    int64_t C = (int64_t) target.getInstrInfo()->ConvertConstantToIntType(target,
                                      constOp, constOp->getType(), isValidConst);
     if (isValidConst) {
       unsigned pow;
@@ -837,8 +837,8 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
       }
           
       if (C == 0 || C == 1) {
-        cost = target.getInstrInfo().minLatency(V9::ADDr);
-        unsigned Zero = target.getRegInfo().getZeroRegNum();
+        cost = target.getInstrInfo()->minLatency(V9::ADDr);
+        unsigned Zero = target.getRegInfo()->getZeroRegNum();
         MachineInstr* M;
         if (C == 0)
           M =BuildMI(V9::ADDr,3).addMReg(Zero).addMReg(Zero).addRegDef(destVal);
@@ -873,7 +873,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
   if (firstNewInstr < mvec.size()) {
     cost = 0;
     for (unsigned i=firstNewInstr; i < mvec.size(); ++i)
-      cost += target.getInstrInfo().minLatency(mvec[i]->getOpcode());
+      cost += target.getInstrInfo()->minLatency(mvec[i]->getOpcode());
   }
   
   return cost;
@@ -897,7 +897,7 @@ CreateCheapestMulConstInstruction(const TargetMachine &target,
     Constant* P = ConstantExpr::get(Instruction::Mul,
                                     cast<Constant>(lval),
                                     cast<Constant>(rval));
-    target.getInstrInfo().CreateCodeToLoadConst(target,F,P,destVal,mvec,mcfi);
+    target.getInstrInfo()->CreateCodeToLoadConst(target,F,P,destVal,mvec,mcfi);
   }
   else if (isa<Constant>(rval))         // rval is constant, but not lval
     CreateMulConstInstruction(target, F, lval, rval, destVal, mvec, mcfi);
@@ -969,7 +969,7 @@ CreateDivConstInstruction(TargetMachine &target,
     return;
 
   Instruction* destVal = instrNode->getInstruction();
-  unsigned ZeroReg = target.getRegInfo().getZeroRegNum();
+  unsigned ZeroReg = target.getRegInfo()->getZeroRegNum();
   
   // Cases worth optimizing are:
   // (1) Divide by 1 for any type: replace with copy (ADD or FMOV)
@@ -980,7 +980,7 @@ CreateDivConstInstruction(TargetMachine &target,
   if (resultType->isInteger()) {
     unsigned pow;
     bool isValidConst;
-    int64_t C = (int64_t) target.getInstrInfo().ConvertConstantToIntType(target,
+    int64_t C = (int64_t) target.getInstrInfo()->ConvertConstantToIntType(target,
                                      constOp, constOp->getType(), isValidConst);
     if (isValidConst) {
       bool needNeg = false;
@@ -1089,13 +1089,13 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
   // compile time if the total size is a known constant.
   if (isa<Constant>(numElementsVal)) {
     bool isValid;
-    int64_t numElem = (int64_t) target.getInstrInfo().
+    int64_t numElem = (int64_t) target.getInstrInfo()->
       ConvertConstantToIntType(target, numElementsVal,
                                numElementsVal->getType(), isValid);
     assert(isValid && "Unexpectedly large array dimension in alloca!");
     int64_t total = numElem * tsize;
-    if (int extra= total % target.getFrameInfo().getStackFrameSizeAlignment())
-      total += target.getFrameInfo().getStackFrameSizeAlignment() - extra;
+    if (int extra= total % target.getFrameInfo()->getStackFrameSizeAlignment())
+      total += target.getFrameInfo()->getStackFrameSizeAlignment() - extra;
     totalSizeVal = ConstantSInt::get(Type::IntTy, total);
   } else {
     // The size is not a constant.  Generate code to compute it and
@@ -1133,10 +1133,10 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
   bool growUp;
   ConstantSInt* dynamicAreaOffset =
     ConstantSInt::get(Type::IntTy,
-                     target.getFrameInfo().getDynamicAreaOffset(mcInfo,growUp));
+                     target.getFrameInfo()->getDynamicAreaOffset(mcInfo,growUp));
   assert(! growUp && "Has SPARC v9 stack frame convention changed?");
 
-  unsigned SPReg = target.getRegInfo().getStackPointer();
+  unsigned SPReg = target.getRegInfo()->getStackPointer();
 
   // Instruction 2: sub %sp, totalSizeVal -> %sp
   getMvec.push_back(BuildMI(V9::SUBr, 3).addMReg(SPReg).addReg(totalSizeVal)
@@ -1180,8 +1180,8 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
                                                                 paddedSize,
                                                          tsize * numElements);
 
-  if (((int)paddedSize) > 8 * target.getFrameInfo().getSizeOfEachArgOnStack() ||
-      ! target.getInstrInfo().constantFitsInImmedField(V9::LDXi,offsetFromFP)) {
+  if (((int)paddedSize) > 8 * target.getFrameInfo()->getSizeOfEachArgOnStack() ||
+      ! target.getInstrInfo()->constantFitsInImmedField(V9::LDXi,offsetFromFP)) {
     CreateCodeForVariableSizeAlloca(target, result, tsize, 
 				    ConstantSInt::get(Type::IntTy,numElements),
 				    getMvec);
@@ -1196,7 +1196,7 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
   ConstantSInt* offsetVal = ConstantSInt::get(Type::IntTy, offsetFromFP);
   
   // Instruction 1: add %fp, offsetFromFP -> result
-  unsigned FPReg = target.getRegInfo().getFramePointer();
+  unsigned FPReg = target.getRegInfo()->getFramePointer();
   getMvec.push_back(BuildMI(V9::ADDr, 3).addMReg(FPReg).addReg(offsetVal)
                     .addRegDef(result));
 }
@@ -1408,9 +1408,9 @@ static bool CodeGenIntrinsic(Intrinsic::ID iid, CallInst &callInstr,
     bool ignore;
     Function* func = cast<Function>(callInstr.getParent()->getParent());
     int numFixedArgs   = func->getFunctionType()->getNumParams();
-    int fpReg          = target.getFrameInfo().getIncomingArgBaseRegNum();
-    int argSize        = target.getFrameInfo().getSizeOfEachArgOnStack();
-    int firstVarArgOff = numFixedArgs * argSize + target.getFrameInfo().
+    int fpReg          = target.getFrameInfo()->getIncomingArgBaseRegNum();
+    int argSize        = target.getFrameInfo()->getSizeOfEachArgOnStack();
+    int firstVarArgOff = numFixedArgs * argSize + target.getFrameInfo()->
       getFirstIncomingArgOffset(MachineFunction::get(func), ignore);
     mvec.push_back(BuildMI(V9::ADDi, 3).addMReg(fpReg).addSImm(firstVarArgOff).
                    addRegDef(&callInstr));
@@ -1423,7 +1423,7 @@ static bool CodeGenIntrinsic(Intrinsic::ID iid, CallInst &callInstr,
   case Intrinsic::vacopy:
     // Simple copy of current va_list (arg1) to new va_list (result)
     mvec.push_back(BuildMI(V9::ORr, 3).
-                   addMReg(target.getRegInfo().getZeroRegNum()).
+                   addMReg(target.getRegInfo()->getZeroRegNum()).
                    addReg(callInstr.getOperand(1)).
                    addRegDef(&callInstr));
     return true;
@@ -1539,7 +1539,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
         MachineInstr* retMI = 
           BuildMI(V9::JMPLRETi, 3).addReg(returnAddrTmp).addSImm(8)
-          .addMReg(target.getRegInfo().getZeroRegNum(), MachineOperand::Def);
+          .addMReg(target.getRegInfo()->getZeroRegNum(), MachineOperand::Def);
       
         // If there is a value to return, we need to:
         // (a) Sign-extend the value if it is smaller than 8 bytes (reg size)
@@ -1549,7 +1549,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // 
         if (retVal != NULL) {
           const SparcV9RegInfo& regInfo =
-            (SparcV9RegInfo&) target.getRegInfo();
+            (SparcV9RegInfo&) *target.getRegInfo();
           const Type* retType = retVal->getType();
           unsigned regClassID = regInfo.getRegClassIDOfType(retType);
           unsigned retRegNum = (retType->isFloatingPoint()
@@ -1567,7 +1567,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               retValToUse = new TmpInstruction(mcfi, retVal);
 
               // sign-extend retVal and put the result in the temporary reg.
-              target.getInstrInfo().CreateSignExtensionInstructions
+              target.getInstrInfo()->CreateSignExtensionInstructions
                 (target, returnInstr->getParent()->getParent(),
                  retVal, retValToUse, 8*retSize, mvec, mcfi);
             }
@@ -1637,7 +1637,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         
         if ((constVal->getType()->isInteger()
              || isa<PointerType>(constVal->getType()))
-            && target.getInstrInfo().ConvertConstantToIntType(target,
+            && target.getInstrInfo()->ConvertConstantToIntType(target,
                              constVal, constVal->getType(), isValidConst) == 0
             && isValidConst)
           {
@@ -1747,7 +1747,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Instruction* notI = subtreeRoot->getInstruction();
         Value* notArg = BinaryOperator::getNotArgument(
                            cast<BinaryOperator>(subtreeRoot->getInstruction()));
-        unsigned ZeroReg = target.getRegInfo().getZeroRegNum();
+        unsigned ZeroReg = target.getRegInfo()->getZeroRegNum();
 
         // Unconditionally set register to 0
         mvec.push_back(BuildMI(V9::SETHI, 2).addZImm(0).addRegDef(notI));
@@ -1765,7 +1765,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       { // First find the unary operand. It may be left or right, usually right.
         Value* notArg = BinaryOperator::getNotArgument(
                            cast<BinaryOperator>(subtreeRoot->getInstruction()));
-        unsigned ZeroReg = target.getRegInfo().getZeroRegNum();
+        unsigned ZeroReg = target.getRegInfo()->getZeroRegNum();
         mvec.push_back(BuildMI(V9::XNORr, 3).addReg(notArg).addMReg(ZeroReg)
                                        .addRegDef(subtreeRoot->getValue()));
         break;
@@ -1889,15 +1889,15 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                   ? new TmpInstruction(mcfi, destType, opVal)
                                   : destI);
 
-            target.getInstrInfo().CreateSignExtensionInstructions
+            target.getInstrInfo()->CreateSignExtensionInstructions
               (target, currentFunc,opVal,signExtDest,extSourceInBits,mvec,mcfi);
 
             if (signAndZeroExtend)
-              target.getInstrInfo().CreateZeroExtensionInstructions
+              target.getInstrInfo()->CreateZeroExtensionInstructions
               (target, currentFunc, signExtDest, destI, 8*destSize, mvec, mcfi);
           }
           else if (zeroExtendOnly) {
-            target.getInstrInfo().CreateZeroExtensionInstructions
+            target.getInstrInfo()->CreateZeroExtensionInstructions
               (target, currentFunc, opVal, destI, extSourceInBits, mvec, mcfi);
           }
           else
@@ -1955,7 +1955,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 MachineCodeForInstruction::get(dest);
               srcForCast = new TmpInstruction(destMCFI, tmpTypeToUse, dest);
 
-              target.getInstrInfo().CreateCodeToCopyIntToFloat(target,
+              target.getInstrInfo()->CreateCodeToCopyIntToFloat(target,
                          dest->getParent()->getParent(),
                          leftVal, cast<Instruction>(srcForCast),
                          mvec, destMCFI);
@@ -2067,12 +2067,12 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             MachineCodeForInstruction& mcfi=MachineCodeForInstruction::get(divI);
             divOp1ToUse = new TmpInstruction(mcfi, divOp1);
             divOp2ToUse = new TmpInstruction(mcfi, divOp2);
-            target.getInstrInfo().
+            target.getInstrInfo()->
               CreateSignExtensionInstructions(target,
                                               divI->getParent()->getParent(),
                                               divOp1, divOp1ToUse,
                                               8*opSize, mvec, mcfi);
-            target.getInstrInfo().
+            target.getInstrInfo()->
               CreateSignExtensionInstructions(target,
                                               divI->getParent()->getParent(),
                                               divOp2, divOp2ToUse,
@@ -2109,7 +2109,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           unsigned opSize=target.getTargetData().getTypeSize(divOp2->getType());
           if (opSize < 8) {
             divOpToUse = new TmpInstruction(mcfi, divOp2);
-            target.getInstrInfo().
+            target.getInstrInfo()->
               CreateSignExtensionInstructions(target,
                                               remI->getParent()->getParent(),
                                               divOp2, divOpToUse,
@@ -2251,7 +2251,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           
           if ((constVal->getType()->isInteger()
                || isa<PointerType>(constVal->getType()))
-              && target.getInstrInfo().ConvertConstantToIntType(target,
+              && target.getInstrInfo()->ConvertConstantToIntType(target,
                              constVal, constVal->getType(), isValidConst) == 0
               && isValidConst)
           {
@@ -2328,10 +2328,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             rightOpToUse = new TmpInstruction(mcfi, rightVal);
             
             // sign-extend each operand and put the result in the temporary reg.
-            target.getInstrInfo().CreateSignExtensionInstructions
+            target.getInstrInfo()->CreateSignExtensionInstructions
               (target, setCCInstr->getParent()->getParent(),
                leftVal, leftOpToUse, 8*opSize, mvec, mcfi);
-            target.getInstrInfo().CreateSignExtensionInstructions
+            target.getInstrInfo()->CreateSignExtensionInstructions
               (target, setCCInstr->getParent()->getParent(),
                rightVal, rightOpToUse, 8*opSize, mvec, mcfi);
           }
@@ -2342,8 +2342,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           mvec.push_back(BuildMI(V9::SUBccr, 4)
                          .addReg(leftOpToUse)
                          .addReg(rightOpToUse)
-                         .addMReg(target.getRegInfo()
-                                   .getZeroRegNum(), MachineOperand::Def)
+                         .addMReg(target.getRegInfo()->
+                                   getZeroRegNum(), MachineOperand::Def)
                          .addCCReg(tmpForCC, MachineOperand::Def));
         } else {
           // FP condition: dest of FCMP should be some FCCn register
@@ -2456,8 +2456,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           MachineCodeForInstruction& mcfi =
             MachineCodeForInstruction::get(callInstr); 
           const SparcV9RegInfo& regInfo =
-            (SparcV9RegInfo&) target.getRegInfo();
-          const TargetFrameInfo& frameInfo = target.getFrameInfo();
+            (SparcV9RegInfo&) *target.getRegInfo();
+          const TargetFrameInfo& frameInfo = *target.getFrameInfo();
 
           // Create hidden virtual register for return address with type void*
           TmpInstruction* retAddrReg =
@@ -2506,7 +2506,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                   TmpInstruction* argExtend = new TmpInstruction(mcfi, argVal);
 
                   // sign-extend argVal and put the result in the temporary reg.
-                  target.getInstrInfo().CreateSignExtensionInstructions
+                  target.getInstrInfo()->CreateSignExtensionInstructions
                     (target, currentFunc, argVal, argExtend,
                      8*argSize, mvec, mcfi);
 
@@ -2787,7 +2787,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Instruction* vaNextI = subtreeRoot->getInstruction();
         assert(target.getTargetData().getTypeSize(vaNextI->getType()) <= 8 &&
                "We assumed that all LLVM parameter types <= 8 bytes!");
-        int argSize = target.getFrameInfo().getSizeOfEachArgOnStack();
+        int argSize = target.getFrameInfo()->getSizeOfEachArgOnStack();
         mvec.push_back(BuildMI(V9::ADDi, 3).addReg(vaNextI->getOperand(0)).
                        addSImm(argSize).addRegDef(vaNextI));
         break;
@@ -2826,7 +2826,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     else {
       std::vector<MachineInstr*> minstrVec;
       Instruction* instr = subtreeRoot->getInstruction();
-      target.getInstrInfo().
+      target.getInstrInfo()->
         CreateCopyInstructionsByType(target,
                                      instr->getParent()->getParent(),
                                      instr->getOperand(forwardOperandNum),

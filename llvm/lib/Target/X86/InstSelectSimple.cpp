@@ -638,7 +638,7 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
 /// the current one.
 ///
 void ISel::SelectPHINodes() {
-  const TargetInstrInfo &TII = TM.getInstrInfo();
+  const TargetInstrInfo &TII = *TM.getInstrInfo();
   const Function &LF = *F->getFunction();  // The LLVM function...
   for (Function::const_iterator I = LF.begin(), E = LF.end(); I != E; ++I) {
     const BasicBlock *BB = I;

@@ -240,7 +240,7 @@ void PhyRegAlloc::buildInterferenceGraphs() {
 
       // get the LV set after the instruction
       const ValueSet &LVSetAI = LVI->getLiveVarSetAfterMInst(MInst, BB);
-      bool isCallInst = TM.getInstrInfo().isCall(MInst->getOpcode());
+      bool isCallInst = TM.getInstrInfo()->isCall(MInst->getOpcode());
 
       if (isCallInst) {
 	// set the isCallInterference flag of each live range which extends
@@ -265,7 +265,7 @@ void PhyRegAlloc::buildInterferenceGraphs() {
       // another.  This must be done because pseudo-instructions may be
       // expanded to multiple instructions by the assembler, so all the
       // operands must get distinct registers.
-      if (TM.getInstrInfo().isPseudoInstr(MInst->getOpcode()))
+      if (TM.getInstrInfo()->isPseudoInstr(MInst->getOpcode()))
       	addInterf4PseudoInstr(MInst);
 
       // Also add interference for any implicit definitions in a machine
@@ -453,7 +453,7 @@ void PhyRegAlloc::updateInstruction(MachineBasicBlock::iterator& MII,
   // Now insert caller-saving code before/after the call.
   // Do this before inserting spill code since some registers must be
   // used by save/restore and spill code should not use those registers.
-  if (TM.getInstrInfo().isCall(Opcode)) {
+  if (TM.getInstrInfo()->isCall(Opcode)) {
     AddedInstrns &AI = AddedInstrMap[MInst];
     insertCallerSavingCode(AI.InstrnsBefore, AI.InstrnsAfter, MInst,
                            MBB.getBasicBlock());
@@ -497,7 +497,7 @@ void PhyRegAlloc::updateMachineCode()
     // their assigned registers or insert spill code, as appropriate. 
     // Also, fix operands of call/return instructions.
     for (MachineBasicBlock::iterator MII = MBB.begin(); MII != MBB.end(); ++MII)
-      if (! TM.getInstrInfo().isDummyPhiInstr(MII->getOpcode()))
+      if (! TM.getInstrInfo()->isDummyPhiInstr(MII->getOpcode()))
         updateInstruction(MII, MBB);
 
     // Now, move code out of delay slots of branches and returns if needed.
@@ -516,15 +516,15 @@ void PhyRegAlloc::updateMachineCode()
     // If so, we need to handle spill differently but annulling is not yet used.
     for (MachineBasicBlock::iterator MII = MBB.begin(); MII != MBB.end(); ++MII)
       if (unsigned delaySlots =
-          TM.getInstrInfo().getNumDelaySlots(MII->getOpcode())) { 
+          TM.getInstrInfo()->getNumDelaySlots(MII->getOpcode())) { 
           MachineBasicBlock::iterator DelaySlotMI = next(MII);
           assert(DelaySlotMI != MBB.end() && "no instruction for delay slot");
           
           // Check the 2 conditions above:
           // (1) Does a branch need instructions added after it?
           // (2) O/w does delay slot instr. need instrns before or after?
-          bool isBranch = (TM.getInstrInfo().isBranch(MII->getOpcode()) ||
-                           TM.getInstrInfo().isReturn(MII->getOpcode()));
+          bool isBranch = (TM.getInstrInfo()->isBranch(MII->getOpcode()) ||
+                           TM.getInstrInfo()->isReturn(MII->getOpcode()));
           bool cond1 = (isBranch &&
                         AddedInstrMap.count(MII) &&
                         AddedInstrMap[MII].InstrnsAfter.size() > 0);
@@ -549,7 +549,7 @@ void PhyRegAlloc::updateMachineCode()
               // instruction out of the delay slot). On cond2 we need
               // to insert a nop in place of the moved instruction
               if (cond2) {
-                MBB.insert(MII, BuildMI(TM.getInstrInfo().getNOPOpCode(),1));
+                MBB.insert(MII, BuildMI(TM.getInstrInfo()->getNOPOpCode(),1));
               }
             }
           else {
@@ -565,7 +565,7 @@ void PhyRegAlloc::updateMachineCode()
       MachineInstr *MInst = MII; 
 
       // do not process Phis
-      if (TM.getInstrInfo().isDummyPhiInstr(MInst->getOpcode()))
+      if (TM.getInstrInfo()->isDummyPhiInstr(MInst->getOpcode()))
 	continue;
 
       // if there are any added instructions...
@@ -573,11 +573,11 @@ void PhyRegAlloc::updateMachineCode()
         AddedInstrns &CallAI = AddedInstrMap[MInst];
 
 #ifndef NDEBUG
-        bool isBranch = (TM.getInstrInfo().isBranch(MInst->getOpcode()) ||
-                         TM.getInstrInfo().isReturn(MInst->getOpcode()));
+        bool isBranch = (TM.getInstrInfo()->isBranch(MInst->getOpcode()) ||
+                         TM.getInstrInfo()->isReturn(MInst->getOpcode()));
         assert((!isBranch ||
                 AddedInstrMap[MInst].InstrnsAfter.size() <=
-                TM.getInstrInfo().getNumDelaySlots(MInst->getOpcode())) &&
+                TM.getInstrInfo()->getNumDelaySlots(MInst->getOpcode())) &&
                "Cannot put more than #delaySlots instrns after "
                "branch or return! Need to handle temps differently.");
 #endif
@@ -628,9 +628,9 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   MachineInstr *MInst = MII;
   const BasicBlock *BB = MBB.getBasicBlock();
 
-  assert((! TM.getInstrInfo().isCall(MInst->getOpcode()) || OpNum == 0) &&
+  assert((! TM.getInstrInfo()->isCall(MInst->getOpcode()) || OpNum == 0) &&
          "Outgoing arg of a call must be handled elsewhere (func arg ok)");
-  assert(! TM.getInstrInfo().isReturn(MInst->getOpcode()) &&
+  assert(! TM.getInstrInfo()->isReturn(MInst->getOpcode()) &&
 	 "Return value of a ret must be handled elsewhere");
 
   MachineOperand& Op = MInst->getOperand(OpNum);
@@ -649,7 +649,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   // trample those!  Verify that the set is included in the LV set before MInst.
   if (MII != MBB.begin()) {
     MachineBasicBlock::iterator PredMI = prior(MII);
-    if (unsigned DS = TM.getInstrInfo().getNumDelaySlots(PredMI->getOpcode()))
+    if (unsigned DS = TM.getInstrInfo()->getNumDelaySlots(PredMI->getOpcode()))
       assert(set_difference(LVI->getLiveVarSetBeforeMInst(PredMI), LVSetBef)
              .empty() && "Live-var set before branch should be included in "
              "live-var set of each delay slot instruction!");
@@ -735,7 +735,7 @@ PhyRegAlloc::insertCallerSavingCode(std::vector<MachineInstr*> &instrnsBefore,
                                     std::vector<MachineInstr*> &instrnsAfter,
                                     MachineInstr *CallMI, 
                                     const BasicBlock *BB) {
-  assert(TM.getInstrInfo().isCall(CallMI->getOpcode()));
+  assert(TM.getInstrInfo()->isCall(CallMI->getOpcode()));
   
   // hash set to record which registers were saved/restored
   hash_set<unsigned> PushedRegSet;
@@ -1326,8 +1326,8 @@ bool PhyRegAlloc::runOnFunction (Function &F) {
   // Create each RegClass for the target machine and add it to the 
   // RegClassList.  This must be done before calling constructLiveRanges().
   for (unsigned rc = 0; rc != NumOfRegClasses; ++rc)   
-    RegClassList.push_back (new RegClass (Fn, &TM.getRegInfo (), 
-					  MRI.getMachineRegClass (rc))); 
+    RegClassList.push_back (new RegClass (Fn, TM.getRegInfo(), 
+					  MRI.getMachineRegClass(rc))); 
      
   LRI->constructLiveRanges();            // create LR info
   if (DEBUG_RA >= RA_DEBUG_LiveRanges)

@@ -177,7 +177,7 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
 /// transforming FP instructions into their stack form.
 ///
 bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
-  const TargetInstrInfo &TII = MF.getTarget().getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   bool Changed = false;
   MBB = &BB;
   

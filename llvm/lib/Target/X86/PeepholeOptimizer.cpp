@@ -456,7 +456,7 @@ bool SSAPH::PeepholeOptimize(MachineBasicBlock &MBB,
 
   bool Changed = false;
 
-  const TargetInstrInfo &TII = MBB.getParent()->getTarget().getInstrInfo();
+  const TargetInstrInfo &TII = *MBB.getParent()->getTarget().getInstrInfo();
 
   // Scan the operands of this instruction.  If any operands are
   // register-register copies, replace the operand with the source.

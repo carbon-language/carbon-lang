@@ -220,8 +220,8 @@ void InstructionSelection::InsertCodeForPhis(Function &F) {
       MachineCodeForInstruction &MCforPN = MachineCodeForInstruction::get (PN);
       for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
         std::vector<MachineInstr*> mvec, CpVec;
-        Target.getRegInfo().cpValue2Value(PN->getIncomingValue(i), PhiCpRes,
-                                          mvec);
+        Target.getRegInfo()->cpValue2Value(PN->getIncomingValue(i), 
+                                           PhiCpRes, mvec);
         for (std::vector<MachineInstr*>::iterator MI=mvec.begin();
              MI != mvec.end(); ++MI) {
           std::vector<MachineInstr*> CpVec2 =
@@ -235,7 +235,7 @@ void InstructionSelection::InsertCodeForPhis(Function &F) {
       }
       // Insert a copy instruction from PhiCpRes to PN.
       std::vector<MachineInstr*> mvec;
-      Target.getRegInfo().cpValue2Value(PhiCpRes, const_cast<PHINode*>(PN),
+      Target.getRegInfo()->cpValue2Value(PhiCpRes, const_cast<PHINode*>(PN),
                                         mvec);
       BB->insert(BB->begin(), mvec.begin(), mvec.end());
       MCforPN.insert (MCforPN.end (), mvec.begin (), mvec.end ());

@@ -174,8 +174,7 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
     } else {
       // unsigned or small signed value that fits in simm13 field of OR
       assert(smallNegValue || (C & ~MAXSIMM) == 0);
-      miOR = BuildMI(V9::ORi, 3).addMReg(target.getRegInfo()
-                                        .getZeroRegNum())
+      miOR = BuildMI(V9::ORi, 3).addMReg(target.getRegInfo()->getZeroRegNum())
         .addSImm(sC).addRegDef(dest);
     }
     mvec.push_back(miOR);
@@ -588,7 +587,7 @@ SparcV9InstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
                                       mvec, mcfi);
   }
 
-  unsigned FPReg = target.getRegInfo().getFramePointer();
+  unsigned FPReg = target.getRegInfo()->getFramePointer();
   unsigned StoreOpcode = ChooseStoreInstruction(storeType);
   StoreOpcode = convertOpcodeFromRegToImm(StoreOpcode);
   mvec.push_back(BuildMI(StoreOpcode, 3)
@@ -633,7 +632,7 @@ SparcV9InstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
   // 
   int offset = MachineFunction::get(F).getInfo()->allocateLocalVar(val); 
 
-  unsigned FPReg = target.getRegInfo().getFramePointer();
+  unsigned FPReg = target.getRegInfo()->getFramePointer();
 
   // Store instruction stores `val' to [%fp+offset].
   // The store opCode is based only the source value being copied.
@@ -699,8 +698,8 @@ SparcV9InstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
   if (loadConstantToReg) { 
     // `src' is constant and cannot fit in immed field for the ADD
     // Insert instructions to "load" the constant into a register
-    target.getInstrInfo().CreateCodeToLoadConst(target, F, src, dest,
-                                                mvec, mcfi);
+    target.getInstrInfo()->CreateCodeToLoadConst(target, F, src, dest,
+                                                 mvec, mcfi);
   } else { 
     // Create a reg-to-reg copy instruction for the given type:
     // -- For FP values, create a FMOVS or FMOVD instruction

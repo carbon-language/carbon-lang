@@ -34,10 +34,10 @@ class SparcV9TargetMachine : public TargetMachine {
 public:
   SparcV9TargetMachine(IntrinsicLowering *IL);
   
-  virtual const TargetInstrInfo  &getInstrInfo() const { return instrInfo; }
-  virtual const TargetSchedInfo  &getSchedInfo() const { return schedInfo; }
-  virtual const TargetRegInfo    &getRegInfo()   const { return regInfo; }
-  virtual const TargetFrameInfo  &getFrameInfo() const { return frameInfo; }
+  virtual const TargetInstrInfo  *getInstrInfo() const { return &instrInfo; }
+  virtual const TargetSchedInfo  *getSchedInfo() const { return &schedInfo; }
+  virtual const TargetRegInfo    *getRegInfo()   const { return &regInfo; }
+  virtual const TargetFrameInfo  *getFrameInfo() const { return &frameInfo; }
   virtual       TargetJITInfo    *getJITInfo()         { return &jitInfo; }
   virtual const MRegisterInfo    *getRegisterInfo() const {
     return &instrInfo.getRegisterInfo();

@@ -474,7 +474,7 @@ void SparcV9CodeEmitter::emitWord(unsigned Val) {
 unsigned 
 SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
                                   MachineInstr &MI) {
-  const TargetRegInfo &RI = TM.getRegInfo();
+  const TargetRegInfo &RI = *TM.getRegInfo();
   unsigned regClass, regType = RI.getRegType(fakeReg);
   // At least map fakeReg into its class
   fakeReg = RI.getClassRegNum(fakeReg, regClass);
@@ -656,7 +656,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
     unsigned realRegByClass = getRealRegNum(fakeReg, MI);
     DEBUG(std::cerr << MO << ": Reg[" << std::dec << fakeReg << "] => "
                     << realRegByClass << " (LLC: " 
-                    << TM.getRegInfo().getUnifiedRegName(fakeReg) << ")\n");
+                    << TM.getRegInfo()->getUnifiedRegName(fakeReg) << ")\n");
     rv = realRegByClass;
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
