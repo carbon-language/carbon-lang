@@ -56,6 +56,11 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // FIXME: implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
 
+  PM.add(createLowerConstantExpressionsPass());
+
+  // Make sure that no unreachable blocks are instruction selected.
+  PM.add(createUnreachableBlockEliminationPass());
+
   PM.add(createSparcV8SimpleInstructionSelector(*this));
 
   // Print machine instructions as they were initially generated.
@@ -102,7 +107,12 @@ void SparcV8JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // FIXME: implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
+
+  PM.add(createLowerConstantExpressionsPass());
   
+  // Make sure that no unreachable blocks are instruction selected.
+  PM.add(createUnreachableBlockEliminationPass());
+
   PM.add(createSparcV8SimpleInstructionSelector(TM));
 
   // Print machine instructions as they were initially generated.
