@@ -215,12 +215,8 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     case X86II::ZeroArgFP:  handleZeroArgFP(I); break;
     case X86II::OneArgFP:   handleOneArgFP(I);  break;  // fstp ST(0)
     case X86II::OneArgFPRW: handleOneArgFPRW(I); break; // ST(0) = fsqrt(ST(0))
-    case X86II::TwoArgFP:
-      if (I->getOpcode() != X86::FpUCOM && I->getOpcode() != X86::FpUCOMI)
-        handleTwoArgFP(I);
-      else
-        handleCompareFP(I);
-      break;
+    case X86II::TwoArgFP:   handleTwoArgFP(I); break;
+    case X86II::CompareFP:  handleCompareFP(I); break;
     case X86II::CondMovFP:  handleCondMovFP(I); break;
     case X86II::SpecialFP:  handleSpecialFP(I); break;
     default: assert(0 && "Unknown FP Type!");

@@ -155,11 +155,15 @@ namespace X86II {
     // argument.  For example: fadd, fsub, fmul, etc...
     TwoArgFP   = 4 << FPTypeShift,
 
+    // CompareFP - 2 arg FP instructions which implicitly read ST(0) and an
+    // explicit argument, but have no destination.  Example: fucom, fucomi, ...
+    CompareFP  = 5 << FPTypeShift,
+
     // CondMovFP - "2 operand" floating point conditional move instructions.
-    CondMovFP  = 5 << FPTypeShift,
+    CondMovFP  = 6 << FPTypeShift,
 
     // SpecialFP - Special instruction forms.  Dispatch by opcode explicitly.
-    SpecialFP  = 6 << FPTypeShift,
+    SpecialFP  = 7 << FPTypeShift,
 
     // PrintImplUsesAfter - Print out implicit uses in the assembly output after
     // the normal operands.

@@ -66,8 +66,9 @@ def ZeroArgFP  : FPFormat<1>;
 def OneArgFP   : FPFormat<2>;
 def OneArgFPRW : FPFormat<3>;
 def TwoArgFP   : FPFormat<4>;
-def CondMovFP  : FPFormat<5>;
-def SpecialFP  : FPFormat<6>;
+def CompareFP  : FPFormat<5>;
+def CondMovFP  : FPFormat<6>;
+def SpecialFP  : FPFormat<7>;
 
 
 class X86Inst<string nam, bits<8> opcod, Format f, MemType m, ImmType i> : Instruction {
@@ -736,8 +737,8 @@ def FpSUB : FPI<"FSUB", 0, Pseudo, TwoArgFP>;    // f1 = fsub f2, f3
 def FpMUL : FPI<"FMUL", 0, Pseudo, TwoArgFP>;    // f1 = fmul f2, f3
 def FpDIV : FPI<"FDIV", 0, Pseudo, TwoArgFP>;    // f1 = fdiv f2, f3
 
-def FpUCOM  : FPI<"FUCOM", 0, Pseudo, TwoArgFP>;  // FPSW = fucom f1, f2
-def FpUCOMI : FPI<"FUCOMI", 0, Pseudo, TwoArgFP>;  // CC = fucomi f1, f2
+def FpUCOM  : FPI<"FUCOM", 0, Pseudo, CompareFP>;   // FPSW = fucom f1, f2
+def FpUCOMI : FPI<"FUCOMI", 0, Pseudo, CompareFP>;  // CC = fucomi f1, f2
 def FpGETRESULT : FPI<"FGETRESULT",0, Pseudo, SpecialFP>;  // FPR = ST(0)
 def FpSETRESULT : FPI<"FSETRESULT",0, Pseudo, SpecialFP>;  // ST(0) = FPR
 
