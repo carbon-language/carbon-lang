@@ -88,13 +88,15 @@ IsZero(Value* idx)
 bool
 DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI)
 {
+  // FIXME: If condition below
   MemAccessInst &MAI = cast<MemAccessInst>(*BBI);
+  // FIXME: If condition below
 
-  // If this instr two or fewer arguments and the first argument is 0,
-  // the decomposed version is identical to the instruction itself.
-  // This is common enough that it is worth checking for explicitly...
-  if (MAI.getNumIndices() == 0 ||
-      (MAI.getNumIndices() <= 2 && IsZero(*MAI.idx_begin()))) {
+  // If this instr has no indexes, then the decomposed version is identical to
+  // the instruction itself.  FIXME: this should go away once GEP is the only
+  // MAI
+  //
+  if (MAI.getNumIndices() == 0) {
     ++BBI;
     return false;
   }
