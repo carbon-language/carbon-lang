@@ -2,7 +2,7 @@
 
 set pstatus = 0
 onintr cleanup
-alias usage 'echo "USAGE: $0:t [-h] [-n] [gmake-flag...] [VAR=...] [toolname (default: opt)]"; set pstatus = 1; goto cleanup'
+alias usage 'echo "USAGE: $0:t [-h] [-n] [-obj obj-root] [gmake-flags] [VAR=...] [toolname (default: opt)]"; set pstatus = 1; goto cleanup'
 
 set EXEC = opt
 set GMAKE_OPTS = ""
@@ -19,6 +19,8 @@ while ( !( $?options_done ) && ($#argv > 0))
 	    shift argv; set MFILE = $argv[1]; shift argv; breaksw
 	case -n :
 	    set doit = 0; shift argv; breaksw
+	case -obj :
+	    set OBJROOT = $argv[1]; shift argv; shift argv; breaksw
 	case -d :
 	    set doit = 0; set DEBUG = 1; shift argv; breaksw
 	case -* :
@@ -72,10 +74,29 @@ if ($DEBUG) then
 endif
 
 if ($#LLVMDIR == 0 || ! -d "$LLVMDIR") then
-    echo "Unable to find LLVM obj-root directory or directory is invalid."
+    echo "Unable to find LLVM src-root directory or directory is invalid."
     echo "Are you within a valid LLVM directory for running gmake?"
     exit 1
 endif
+
+if ($?OBJROOT == 0) then
+    ## Check if source root is obj-root by looking for Makefile.config there
+    if (-f ${LLVMDIR}/Makefile.config) then
+	set OBJROOT = ${LLVMDIR}
+	set BUILDROOT = .
+    else ## Otherwise assume a default location for OBJROOT
+	set OBJROOT = "/localhome/$USER/llvm"
+	set SRCROOT = `sh -c "cd $LLVMDIR; pwd | sed 's/\//\\\//g'"` 
+	set CURSRCDIR = `echo $cwd | sed -e "s/${SRCROOT}//"`
+	set BUILDROOT = ${OBJROOT}/${CURSRCDIR}
+	unset SRCROOT CURSRCDIR
+    endif
+    echo "Using OBJ-ROOT = ${OBJROOT} (specify '-obj obj-root' to override)."
+endif
+if ($DEBUG) then
+    echo "DEBUG: BUILDROOT = $BUILDROOT"
+endif
+cd $BUILDROOT 
 
 set CMD = "gmake $GMAKE_OPTS && (cd $LLVMDIR/tools/$EXEC && gmake $GMAKE_OPTS)"
 
