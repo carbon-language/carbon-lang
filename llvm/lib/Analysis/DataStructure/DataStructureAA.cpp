@@ -140,8 +140,8 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
   if (N1 == 0 || N2 == 0)
     // Can't tell whether anything aliases null.
     return AliasAnalysis::alias(V1, V1Size, V2, V2Size);
-        
-  // We can only make a judgment of one of the nodes is complete...
+
+  // We can only make a judgment if one of the nodes is complete.
   if (N1->isComplete() || N2->isComplete()) {
     if (N1 != N2)
       return NoAlias;   // Completely different nodes.
