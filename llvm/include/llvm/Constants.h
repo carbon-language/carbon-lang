@@ -544,6 +544,8 @@ public:
   /// Cast constant expr
   ///
   static Constant *getCast(Constant *C, const Type *Ty);
+  static Constant *getSignExtend(Constant *C, const Type *Ty);
+  static Constant *getZeroExtend(Constant *C, const Type *Ty);
 
   /// Select constant expr
   ///

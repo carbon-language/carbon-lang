@@ -1131,6 +1131,22 @@ Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
   return ExprConstants.getOrCreate(Ty, Key);
 }
 
+Constant *ConstantExpr::getSignExtend(Constant *C, const Type *Ty) {
+  assert(C->getType()->isInteger() && Ty->isInteger() &&
+         C->getType()->getPrimitiveSize() <= Ty->getPrimitiveSize() &&
+         "This is an illegal sign extension!");
+  C = ConstantExpr::getCast(C, C->getType()->getSignedVersion());
+  return ConstantExpr::getCast(C, Ty);
+}
+
+Constant *ConstantExpr::getZeroExtend(Constant *C, const Type *Ty) {
+  assert(C->getType()->isInteger() && Ty->isInteger() &&
+         C->getType()->getPrimitiveSize() <= Ty->getPrimitiveSize() &&
+         "This is an illegal zero extension!");
+  C = ConstantExpr::getCast(C, C->getType()->getUnsignedVersion());
+  return ConstantExpr::getCast(C, Ty);
+}
+
 Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
                               Constant *C1, Constant *C2) {
   if (Opcode == Instruction::Shl || Opcode == Instruction::Shr)
