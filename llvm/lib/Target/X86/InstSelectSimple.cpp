@@ -756,7 +756,9 @@ static SetCondInst *canFoldSetCCIntoBranchOrSelect(Value *V) {
       Instruction *User = cast<Instruction>(SCI->use_back());
       if ((isa<BranchInst>(User) || isa<SelectInst>(User)) &&
           SCI->getParent() == User->getParent() &&
-          getClassB(SCI->getOperand(0)->getType()) != cLong)
+          (getClassB(SCI->getOperand(0)->getType()) != cLong ||
+           SCI->getOpcode() == Instruction::SetEQ ||
+           SCI->getOpcode() == Instruction::SetNE))
         return SCI;
     }
   return 0;
@@ -846,10 +848,35 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
         unsigned HiTmp = Op0r+1;
         if (HiCst != 0) {
           HiTmp = makeAnotherReg(Type::IntTy);
-          BuildMI(*MBB, IP, X86::XOR32rr, 2,HiTmp).addReg(Op0r+1).addImm(HiCst);
+          BuildMI(*MBB, IP, X86::XOR32ri, 2,HiTmp).addReg(Op0r+1).addImm(HiCst);
         }
         unsigned FinalTmp = makeAnotherReg(Type::IntTy);
         BuildMI(*MBB, IP, X86::OR32rr, 2, FinalTmp).addReg(LoTmp).addReg(HiTmp);
+        return OpNum;
+      } else {
+        // Emit a sequence of code which compares the high and low parts once
+        // each, then uses a conditional move to handle the overflow case.  For
+        // example, a setlt for long would generate code like this:
+        //
+        // AL = lo(op1) < lo(op2)   // Signedness depends on operands
+        // BL = hi(op1) < hi(op2)   // Always unsigned comparison
+        // dest = hi(op1) == hi(op2) ? AL : BL;
+        //
+
+        // FIXME: This would be much better if we had hierarchical register
+        // classes!  Until then, hardcode registers so that we can deal with
+        // their aliases (because we don't have conditional byte moves).
+        //
+        BuildMI(*MBB, IP, X86::CMP32ri, 2).addReg(Op0r).addImm(LowCst);
+        BuildMI(*MBB, IP, SetCCOpcodeTab[0][OpNum], 0, X86::AL);
+        BuildMI(*MBB, IP, X86::CMP32ri, 2).addReg(Op0r+1).addImm(HiCst);
+        BuildMI(*MBB, IP, SetCCOpcodeTab[CompTy->isSigned()][OpNum], 0,X86::BL);
+        BuildMI(*MBB, IP, X86::IMPLICIT_DEF, 0, X86::BH);
+        BuildMI(*MBB, IP, X86::IMPLICIT_DEF, 0, X86::AH);
+        BuildMI(*MBB, IP, X86::CMOVE16rr, 2, X86::BX).addReg(X86::BX)
+          .addReg(X86::AX);
+        // NOTE: visitSetCondInst knows that the value is dumped into the BL
+        // register at this point for long values...
         return OpNum;
       }
     }
