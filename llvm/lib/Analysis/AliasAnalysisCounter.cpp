@@ -93,6 +93,18 @@ namespace {
       case ModRef:   MR++;       return ModRef;
       }
     }
+
+    // FIXME: We could count these too...
+    bool pointsToConstantMemory(const Value *P) {
+      return getAnalysis<AliasAnalysis>().pointsToConstantMemory(P);
+    }
+    bool doesNotAccessMemory(Function *F) {
+      return getAnalysis<AliasAnalysis>().doesNotAccessMemory(F);
+    }
+    bool onlyReadsMemory(Function *F) {
+      return getAnalysis<AliasAnalysis>().onlyReadsMemory(F);
+    }
+    
     
     // Forwarding functions: just delegate to a real AA implementation, counting
     // the number of responses...
