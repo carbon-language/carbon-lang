@@ -165,12 +165,12 @@ void BytecodeWriter::outputConstants(bool isFunction) {
     if (!Plane.empty()) {              // Skip empty type planes...
       unsigned ValNo = 0;
       if (isFunction)                  // Don't re-emit module constants
-	ValNo += Table.getModuleLevel(pno);
+        ValNo += Table.getModuleLevel(pno);
       
       if (hasNullValue(pno)) {
-	// Skip zero initializer
-	if (ValNo == 0)
-	  ValNo = 1;
+        // Skip zero initializer
+        if (ValNo == 0)
+          ValNo = 1;
       }
       
       // Write out constants in the plane
