@@ -14,30 +14,32 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionInfo.h"
 
-class StackSlots : public FunctionPass {
-  const TargetMachine &Target;
-public:
-  StackSlots (const TargetMachine &T) : Target(T) {}
-
-  const char *getPassName() const {
-    return "Stack Slot Insertion for profiling code";
-  }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesCFG();
-  }
-
-  bool runOnFunction(Function &F) {
-    const Type *PtrInt = PointerType::get(Type::IntTy);
-    unsigned Size = Target.DataLayout.getTypeSize(PtrInt);
-
-    MachineFunction &mcInfo = MachineFunction::get(&F);
-    Value *V = Constant::getNullValue(Type::IntTy);
-    mcInfo.allocateLocalVar(Target, V, 2*Size);
-    return true;
-  }
-};
+namespace {
+  class StackSlots : public FunctionPass {
+    const TargetMachine &Target;
+  public:
+    StackSlots(const TargetMachine &T) : Target(T) {}
+    
+    const char *getPassName() const {
+      return "Stack Slot Insertion for profiling code";
+    }
+    
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+    }
+    
+    bool runOnFunction(Function &F) {
+      const Type *PtrInt = PointerType::get(Type::IntTy);
+      unsigned Size = Target.getTargetData().getTypeSize(PtrInt);
+      
+      Value *V = Constant::getNullValue(Type::IntTy);
+      MachineFunction::get(&F).getInfo()->allocateLocalVar(V, 2*Size);
+      return true;
+    }
+  };
+}
 
 Pass *createStackSlotsPass(const TargetMachine &Target) {
   return new StackSlots(Target);
