@@ -624,8 +624,9 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
                                             oldMain->getName(), Test);
       // Set up and remember the argument list for the main function.
       std::vector<Value*> args;
-      for (Function::aiterator I = newMain->abegin(), E = newMain->aend(),
-             OI = oldMain->abegin(); I != E; ++I, ++OI) {
+      for (Function::arg_iterator
+             I = newMain->arg_begin(), E = newMain->arg_end(),
+             OI = oldMain->arg_begin(); I != E; ++I, ++OI) {
         I->setName(OI->getName());    // Copy argument names from oldMain
         args.push_back(I);
       }
@@ -700,8 +701,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
           // Save the argument list
           std::vector<Value*> Args;
-          for (Function::aiterator i = FuncWrapper->abegin(),
-                 e = FuncWrapper->aend(); i != e; ++i)
+          for (Function::arg_iterator i = FuncWrapper->arg_begin(),
+                 e = FuncWrapper->arg_end(); i != e; ++i)
             Args.push_back(i);
 
           // Pass on the arguments to the real function, return its result
