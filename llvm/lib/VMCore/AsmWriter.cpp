@@ -224,18 +224,26 @@ static void fillTypeNameTable(const Module *M,
 
 
 
-static std::string calcTypeName(const Type *Ty, 
-                                std::vector<const Type *> &TypeStack,
-                                std::map<const Type *, std::string> &TypeNames){
-  if (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))
-    return Ty->getDescription();  // Base case
+static void calcTypeName(const Type *Ty, 
+                         std::vector<const Type *> &TypeStack,
+                         std::map<const Type *, std::string> &TypeNames,
+                         std::string & Result){
+  if (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty)) {
+    Result += Ty->getDescription();  // Base case
+    return;
+  }
 
   // Check to see if the type is named.
   std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
-  if (I != TypeNames.end()) return I->second;
+  if (I != TypeNames.end()) {
+    Result += I->second;
+    return;
+  }
 
-  if (isa<OpaqueType>(Ty))
-    return "opaque";
+  if (isa<OpaqueType>(Ty)) {
+    Result += "opaque";
+    return;
+  }
 
   // Check to see if the Type is already on the stack...
   unsigned Slot = 0, CurSize = TypeStack.size();
@@ -244,21 +252,23 @@ static std::string calcTypeName(const Type *Ty,
   // This is another base case for the recursion.  In this case, we know 
   // that we have looped back to a type that we have previously visited.
   // Generate the appropriate upreference to handle this.
-  if (Slot < CurSize)
-    return "\\" + utostr(CurSize-Slot);       // Here's the upreference
+  if (Slot < CurSize) {
+    Result += "\\" + utostr(CurSize-Slot);     // Here's the upreference
+    return;
+  }
 
   TypeStack.push_back(Ty);    // Recursive case: Add us to the stack..
   
-  std::string Result;
   switch (Ty->getPrimitiveID()) {
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
-    Result = calcTypeName(FTy->getReturnType(), TypeStack, TypeNames) + " (";
+    calcTypeName(FTy->getReturnType(), TypeStack, TypeNames, Result);
+    Result += " (";
     for (FunctionType::param_iterator I = FTy->param_begin(),
            E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
         Result += ", ";
-      Result += calcTypeName(*I, TypeStack, TypeNames);
+      calcTypeName(*I, TypeStack, TypeNames, Result);
     }
     if (FTy->isVarArg()) {
       if (FTy->getNumParams()) Result += ", ";
@@ -269,35 +279,37 @@ static std::string calcTypeName(const Type *Ty,
   }
   case Type::StructTyID: {
     const StructType *STy = cast<StructType>(Ty);
-    Result = "{ ";
+    Result += "{ ";
     for (StructType::element_iterator I = STy->element_begin(),
            E = STy->element_end(); I != E; ++I) {
       if (I != STy->element_begin())
         Result += ", ";
-      Result += calcTypeName(*I, TypeStack, TypeNames);
+      calcTypeName(*I, TypeStack, TypeNames, Result);
     }
     Result += " }";
     break;
   }
   case Type::PointerTyID:
-    Result = calcTypeName(cast<PointerType>(Ty)->getElementType(), 
-                          TypeStack, TypeNames) + "*";
+    calcTypeName(cast<PointerType>(Ty)->getElementType(), 
+                          TypeStack, TypeNames, Result);
+    Result += "*";
     break;
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
-    Result = "[" + utostr(ATy->getNumElements()) + " x ";
-    Result += calcTypeName(ATy->getElementType(), TypeStack, TypeNames) + "]";
+    Result += "[" + utostr(ATy->getNumElements()) + " x ";
+    calcTypeName(ATy->getElementType(), TypeStack, TypeNames, Result);
+    Result += "]";
     break;
   }
   case Type::OpaqueTyID:
-    Result = "opaque";
+    Result += "opaque";
     break;
   default:
-    Result = "<unrecognized-type>";
+    Result += "<unrecognized-type>";
   }
 
   TypeStack.pop_back();       // Remove self from stack...
-  return Result;
+  return;
 }
 
 
@@ -321,9 +333,10 @@ static std::ostream &printTypeInt(std::ostream &Out, const Type *Ty,
   // names.
   //
   std::vector<const Type *> TypeStack;
-  std::string TypeName = calcTypeName(Ty, TypeStack, TypeNames);
+  std::string TypeName;
+  calcTypeName(Ty, TypeStack, TypeNames, TypeName);
   TypeNames.insert(std::make_pair(Ty, TypeName));//Cache type name for later use
-  return Out << TypeName;
+  return (Out << TypeName);
 }
 
 
