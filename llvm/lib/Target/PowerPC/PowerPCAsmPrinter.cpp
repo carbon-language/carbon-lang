@@ -101,8 +101,7 @@ namespace {
       O << (unsigned short)MI->getOperand(OpNo).getImmedValue();
     }
     void printBranchOperand(const MachineInstr *MI, unsigned OpNo,
-                          MVT::ValueType VT) {
-      
+                            MVT::ValueType VT) {
       // Branches can take an immediate operand.  This is used by the branch
       // selection pass to print $+8, an eight byte displacement from the PC.
       if (MI->getOperand(OpNo).isImmediate()) {
@@ -112,19 +111,19 @@ namespace {
       }
     }
     void printPICLabel(const MachineInstr *MI, unsigned OpNo,
-                         MVT::ValueType VT) {
+                       MVT::ValueType VT) {
       // FIXME: should probably be converted to cout.width and cout.fill
       O << "\"L0000" << LabelNumber << "$pb\"\n";
       O << "\"L0000" << LabelNumber << "$pb\":";
     }
     void printSymbolHi(const MachineInstr *MI, unsigned OpNo,
-                         MVT::ValueType VT) {
+                       MVT::ValueType VT) {
       O << "ha16(";
       printOp(MI->getOperand(OpNo), true /* LoadAddrOp */);
       O << "-\"L0000" << LabelNumber << "$pb\")";
     }
     void printSymbolLo(const MachineInstr *MI, unsigned OpNo,
-                         MVT::ValueType VT) {
+                       MVT::ValueType VT) {
       // FIXME: Because LFS, LFD, and LWZ can be used either with a s16imm or
       // a lo16 of a global or constant pool operand, we must handle both here.
       // this isn't a great design, but it works for now.
