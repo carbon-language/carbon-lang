@@ -31,7 +31,7 @@ typedef vector< pair<SchedGraphNode*, unsigned int> > RefVec;
 
 // The following needs to be a class, not a typedef, so we can use
 // an opaque declaration in SchedGraph.h
-class RegToRefVecMap: public hash_map<int, RefVec> {
+struct RegToRefVecMap: public hash_map<int, RefVec> {
   typedef hash_map<int, RefVec>::      iterator iterator;
   typedef hash_map<int, RefVec>::const_iterator const_iterator;
 };
@@ -50,8 +50,8 @@ SchedGraphEdge::SchedGraphEdge(SchedGraphNode* _src,
     sink(_sink),
     depType(_depType),
     depOrderType(_depOrderType),
-    val(NULL),
-    minDelay((_minDelay >= 0)? _minDelay : _src->getLatency())
+    minDelay((_minDelay >= 0)? _minDelay : _src->getLatency()),
+    val(NULL)
 {
   src->addOutEdge(this);
   sink->addInEdge(this);
@@ -68,8 +68,8 @@ SchedGraphEdge::SchedGraphEdge(SchedGraphNode*  _src,
     sink(_sink),
     depType(DefUseDep),
     depOrderType(_depOrderType),
-    val(_val),
-    minDelay((_minDelay >= 0)? _minDelay : _src->getLatency())
+    minDelay((_minDelay >= 0)? _minDelay : _src->getLatency()),
+    val(_val)
 {
   src->addOutEdge(this);
   sink->addInEdge(this);
