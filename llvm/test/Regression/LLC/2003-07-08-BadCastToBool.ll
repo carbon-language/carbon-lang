@@ -1,3 +1,26 @@
+;; Date:     Jul 8, 2003.
+;; From:     test/Programs/MultiSource/Olden-perimeter
+;; Function: int %adj(uint %d.1, uint %ct.1)
+;;
+;; Errors: (1) cast-int-to-bool was being treated as a NOP (i.e., the int
+;;	       register was treated as effectively true if non-zero).
+;;	       This cannot be used for later boolean operations.
+;;	   (2) (A or NOT(B)) was being folded into A orn B, which is ok
+;;	       for bitwise operations but not booleans!  For booleans,
+;;	       the result has to be compared with 0.
+;; 
+;; LLC Output for the basic block (LLVM assembly is shown below):
+;; 
+;; .L_adj_7_LL_4:
+;;         sethi   0, %i0
+;;         subcc   %i1, 2, %g0
+;;         move    %icc, 1, %i0
+;;         orn     %i0, %i1, %i0
+;;         ba      .L_adj_7_LL_5
+;;         nop     
+;; 
+
+
 target endian = big
 target pointersize = 64
 
