@@ -44,7 +44,8 @@ ComponentLibs := $(Components:%=$(BUILD_OBJ_DIR)/BytecodeObj/comp_%.bc)
 
 # We build crtend.a from the four components described in the README.
 $(CRTEND_A) : $(ComponentLibs)
-	$(AR) $@ $(ComponentLibs)
+	@echo Building final crtend.a file from components
+	$(VERB) $(AR) $@ $(ComponentLibs)
 
 MainObj      := $(BUILD_OBJ_DIR)/BytecodeObj/crtend.bc \
                 $(BUILD_OBJ_DIR)/BytecodeObj/listend.bc
@@ -54,18 +55,22 @@ CXXEHObj     := $(BUILD_OBJ_DIR)/BytecodeObj/C++-Exception.bc
 
 # __main and ctor/dtor support component
 $(BUILD_OBJ_DIR)/BytecodeObj/comp_main.bc: $(MainObj)
-	$(LGCCLDPROG) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_main.lst $(MainObj) -o $@
+	@echo Linking $(notdir $@) component...
+	$(VERB) $(LGCCLDPROG) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_main.lst $(MainObj) -o $@
 
 # Generic exception handling support runtime.
 $(BUILD_OBJ_DIR)/BytecodeObj/comp_genericeh.bc: $(GenericEHObj)
-	$(LGCCLDPROG) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_genericeh.lst $(GenericEHObj) -o $@
+	@echo Linking $(notdir $@) component...
+	$(VERB) $(LGCCLDPROG) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_genericeh.lst $(GenericEHObj) -o $@
 
 # setjmp/longjmp exception handling support runtime.
 $(BUILD_OBJ_DIR)/BytecodeObj/comp_sjljeh.bc: $(SJLJEHObj)
-	$(LGCCLDPROG) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_sjljeh.lst $(SJLJEHObj) -o $@
+	@echo Linking $(notdir $@) component...
+	$(VERB) $(LGCCLDPROG) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_sjljeh.lst $(SJLJEHObj) -o $@
 
 # C++ exception handling support runtime.
 $(BUILD_OBJ_DIR)/BytecodeObj/comp_cxxeh.bc: $(CXXEHObj)
-	$(LGCCLDPROG) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_cxxeh.lst $(CXXEHObj) -o $@
+	@echo Linking $(notdir $@) component...
+	$(VERB) $(LGCCLDPROG) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_cxxeh.lst $(CXXEHObj) -o $@
 
 
