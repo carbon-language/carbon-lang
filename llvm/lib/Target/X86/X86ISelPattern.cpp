@@ -300,7 +300,31 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
 }
 
 
-
+namespace {
+  /// X86ISelAddressMode - This corresponds to X86AddressMode, but uses
+  /// SDOperand's instead of register numbers for the leaves of the matched
+  /// tree.
+  struct X86ISelAddressMode {
+    enum {
+      RegBase,
+      FrameIndexBase,
+    } BaseType;
+    
+    struct {            // This is really a union, discriminated by BaseType!
+      SDOperand Reg;
+      int FrameIndex;
+    } Base;
+    
+    unsigned Scale;
+    SDOperand IndexReg;
+    unsigned Disp;
+    GlobalValue *GV;
+    
+    X86ISelAddressMode()
+      : BaseType(RegBase), Scale(1), IndexReg(), Disp(), GV(0) {
+    }
+  };
+}
 
 
 namespace {
@@ -352,7 +376,10 @@ namespace {
     void EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
                       unsigned RTrue, unsigned RFalse, unsigned RDest);
     unsigned SelectExpr(SDOperand N);
-    bool SelectAddress(SDOperand N, X86AddressMode &AM);
+
+    X86AddressMode SelectAddrExprs(const X86ISelAddressMode &IAM);
+    bool MatchAddress(SDOperand N, X86ISelAddressMode &AM);
+    void SelectAddress(SDOperand N, X86AddressMode &AM);
     void Select(SDOperand N);
   };
 }
@@ -464,14 +491,62 @@ unsigned ISel::ComputeRegPressure(SDOperand O) {
   return Result;
 }
 
-/// SelectAddress - Add the specified node to the specified addressing mode,
-/// returning true if it cannot be done.
-bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
+X86AddressMode ISel::SelectAddrExprs(const X86ISelAddressMode &IAM) {
+  X86AddressMode Result;
+
+  // If we need to emit two register operands, emit the one with the highest
+  // register pressure first.
+  if (IAM.BaseType == X86ISelAddressMode::RegBase &&
+      IAM.Base.Reg.Val && IAM.IndexReg.Val) {
+    if (getRegPressure(IAM.Base.Reg) > getRegPressure(IAM.IndexReg)) {
+      Result.Base.Reg = SelectExpr(IAM.Base.Reg);
+      Result.IndexReg = SelectExpr(IAM.IndexReg);
+    } else {
+      Result.IndexReg = SelectExpr(IAM.IndexReg);
+      Result.Base.Reg = SelectExpr(IAM.Base.Reg);
+    }
+  } else if (IAM.BaseType == X86ISelAddressMode::RegBase && IAM.Base.Reg.Val) {
+    Result.Base.Reg = SelectExpr(IAM.Base.Reg);
+  } else if (IAM.IndexReg.Val) {
+    Result.IndexReg = SelectExpr(IAM.IndexReg);
+  }
+             
+  switch (IAM.BaseType) {
+  case X86ISelAddressMode::RegBase:
+    Result.BaseType = X86AddressMode::RegBase;
+    break;
+  case X86ISelAddressMode::FrameIndexBase:
+    Result.BaseType = X86AddressMode::FrameIndexBase;
+    Result.Base.FrameIndex = IAM.Base.FrameIndex;
+    break;
+  default:
+    assert(0 && "Unknown base type!");
+    break;
+  }
+  Result.Scale = IAM.Scale;
+  Result.Disp = IAM.Disp;
+  Result.GV = IAM.GV;
+  return Result;
+}
+
+/// SelectAddress - Pattern match the maximal addressing mode for this node and
+/// emit all of the leaf registers.
+void ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
+  X86ISelAddressMode IAM;
+  MatchAddress(N, IAM);
+  AM = SelectAddrExprs(IAM);
+}
+
+/// MatchAddress - Add the specified node to the specified addressing mode,
+/// returning true if it cannot be done.  This just pattern matches for the
+/// addressing mode, it does not cause any code to be emitted.  For that, use
+/// SelectAddress.
+bool ISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
   switch (N.getOpcode()) {
   default: break;
   case ISD::FrameIndex:
-    if (AM.BaseType == X86AddressMode::RegBase && AM.Base.Reg == 0) {
-      AM.BaseType = X86AddressMode::FrameIndexBase;
+    if (AM.BaseType == X86ISelAddressMode::RegBase && AM.Base.Reg.Val == 0) {
+      AM.BaseType = X86ISelAddressMode::FrameIndexBase;
       AM.Base.FrameIndex = cast<FrameIndexSDNode>(N)->getIndex();
       return false;
     }
@@ -490,7 +565,7 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
     // if so.
     if (ExprMap.count(N)) break;
 
-    if (AM.IndexReg == 0 && AM.Scale == 1)
+    if (AM.IndexReg.Val == 0 && AM.Scale == 1)
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1))) {
         unsigned Val = CN->getValue();
         if (Val == 1 || Val == 2 || Val == 3) {
@@ -502,12 +577,12 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
           // constant into the disp field here.
           if (ShVal.Val->getOpcode() == ISD::ADD && !ExprMap.count(ShVal) &&
               isa<ConstantSDNode>(ShVal.Val->getOperand(1))) {
-            AM.IndexReg = SelectExpr(ShVal.Val->getOperand(0));
+            AM.IndexReg = ShVal.Val->getOperand(0);
             ConstantSDNode *AddVal =
               cast<ConstantSDNode>(ShVal.Val->getOperand(1));
             AM.Disp += AddVal->getValue() << Val;
           } else {
-            AM.IndexReg = SelectExpr(ShVal);
+            AM.IndexReg = ShVal;
           }
           return false;
         }
@@ -519,26 +594,26 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
     if (ExprMap.count(N)) break;
 
     // X*[3,5,9] -> X+X*[2,4,8]
-    if (AM.IndexReg == 0 && AM.BaseType == X86AddressMode::RegBase &&
-        AM.Base.Reg == 0)
+    if (AM.IndexReg.Val == 0 && AM.BaseType == X86ISelAddressMode::RegBase &&
+        AM.Base.Reg.Val == 0)
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1)))
         if (CN->getValue() == 3 || CN->getValue() == 5 || CN->getValue() == 9) {
           AM.Scale = unsigned(CN->getValue())-1;
 
           SDOperand MulVal = N.Val->getOperand(0);
-          unsigned Reg;
+          SDOperand Reg;
 
           // Okay, we know that we have a scale by now.  However, if the scaled
           // value is an add of something and a constant, we can fold the
           // constant into the disp field here.
           if (MulVal.Val->getOpcode() == ISD::ADD && !ExprMap.count(MulVal) &&
               isa<ConstantSDNode>(MulVal.Val->getOperand(1))) {
-            Reg = SelectExpr(MulVal.Val->getOperand(0));
+            Reg = MulVal.Val->getOperand(0);
             ConstantSDNode *AddVal =
               cast<ConstantSDNode>(MulVal.Val->getOperand(1));
             AM.Disp += AddVal->getValue() * CN->getValue();
           } else {          
-            Reg = SelectExpr(N.Val->getOperand(0));
+            Reg = N.Val->getOperand(0);
           }
 
           AM.IndexReg = AM.Base.Reg = Reg;
@@ -551,13 +626,13 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
     // so.
     if (ExprMap.count(N)) break;
 
-    X86AddressMode Backup = AM;
-    if (!SelectAddress(N.Val->getOperand(0), AM) &&
-        !SelectAddress(N.Val->getOperand(1), AM))
+    X86ISelAddressMode Backup = AM;
+    if (!MatchAddress(N.Val->getOperand(0), AM) &&
+        !MatchAddress(N.Val->getOperand(1), AM))
       return false;
     AM = Backup;
-    if (!SelectAddress(N.Val->getOperand(1), AM) &&
-        !SelectAddress(N.Val->getOperand(0), AM))
+    if (!MatchAddress(N.Val->getOperand(1), AM) &&
+        !MatchAddress(N.Val->getOperand(0), AM))
       return false;
     AM = Backup;
     break;
@@ -565,10 +640,10 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
   }
 
   // Is the base register already occupied?
-  if (AM.BaseType != X86AddressMode::RegBase || AM.Base.Reg) {
+  if (AM.BaseType != X86ISelAddressMode::RegBase || AM.Base.Reg.Val) {
     // If so, check to see if the scale index register is set.
-    if (AM.IndexReg == 0) {
-      AM.IndexReg = SelectExpr(N);
+    if (AM.IndexReg.Val == 0) {
+      AM.IndexReg = N;
       AM.Scale = 1;
       return false;
     }
@@ -578,8 +653,8 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
   }
 
   // Default, generate it as a register.
-  AM.BaseType = X86AddressMode::RegBase;
-  AM.Base.Reg = SelectExpr(N);
+  AM.BaseType = X86ISelAddressMode::RegBase;
+  AM.Base.Reg = N;
   return false;
 }
 
@@ -1056,6 +1131,7 @@ bool ISel::isFoldableLoad(SDOperand Op, SDOperand OtherOp) {
 void ISel::EmitFoldedLoad(SDOperand Op, X86AddressMode &AM) {
   SDOperand Chain   = Op.getOperand(0);
   SDOperand Address = Op.getOperand(1);
+
   if (getRegPressure(Chain) > getRegPressure(Address)) {
     Select(Chain);
     SelectAddress(Address, AM);
@@ -1503,15 +1579,16 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     // See if we can codegen this as an LEA to fold operations together.
     if (N.getValueType() == MVT::i32) {
-      X86AddressMode AM;
-      if (!SelectAddress(Op0, AM) && !SelectAddress(Op1, AM)) {
+      X86ISelAddressMode AM;
+      if (!MatchAddress(Op0, AM) && !MatchAddress(Op1, AM)) {
 	// If this is not just an add, emit the LEA.  For a simple add (like
 	// reg+reg or reg+imm), we just emit an add.  It might be a good idea to
 	// leave this as LEA, then peephole it to 'ADD' after two address elim
 	// happens.
-        if (AM.Scale != 1 || AM.BaseType == X86AddressMode::FrameIndexBase ||
-            AM.GV || (AM.Base.Reg && AM.IndexReg && AM.Disp)) {
-          addFullAddress(BuildMI(BB, X86::LEA32r, 4, Result), AM);
+        if (AM.Scale != 1 || AM.BaseType == X86ISelAddressMode::FrameIndexBase||
+            AM.GV || (AM.Base.Reg.Val && AM.IndexReg.Val && AM.Disp)) {
+          X86AddressMode XAM = SelectAddrExprs(AM);
+          addFullAddress(BuildMI(BB, X86::LEA32r, 4, Result), XAM);
           return Result;
         }
       }
@@ -1646,9 +1723,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
         case 3:
         case 5:
         case 9:
-          X86AddressMode AM;
           // Remove N from exprmap so SelectAddress doesn't get confused.
           ExprMap.erase(N);
+          X86AddressMode AM;
           SelectAddress(N, AM);
           // Restore it to the map.
           ExprMap[N] = Result;
@@ -2436,12 +2513,12 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
 
   LoweredTokens.insert(TheLoad.getValue(1));
   Select(Chain);
-    
   Select(TheLoad.getOperand(0));
+
   X86AddressMode AM;
   SelectAddress(TheLoad.getOperand(1), AM);
   unsigned Reg = SelectExpr(Op1);
-  addFullAddress(BuildMI(BB, Opc, 4+1),AM).addReg(Reg);
+  addFullAddress(BuildMI(BB, Opc, 4+1), AM).addReg(Reg);
   return true;
 }
 
