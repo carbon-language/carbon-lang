@@ -14,15 +14,16 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 
-struct RawInst {       // The raw fields out of the bytecode stream...
-  unsigned NumOperands;
-  unsigned Opcode;
-  unsigned Type;
-
-  RawInst(const unsigned char *&Buf, const unsigned char *EndBuf,
-          std::vector<unsigned> &Args);
-          
-};
+namespace {
+  struct RawInst {       // The raw fields out of the bytecode stream...
+    unsigned NumOperands;
+    unsigned Opcode;
+    unsigned Type;
+    
+    RawInst(const unsigned char *&Buf, const unsigned char *EndBuf,
+            std::vector<unsigned> &Args);
+  };
+}
 
 
 
@@ -102,8 +103,9 @@ RawInst::RawInst(const unsigned char *&Buf, const unsigned char *EndBuf,
 
 
 Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
-                                              const unsigned char *EndBuf) {
-  std::vector<unsigned> Args;
+                                              const unsigned char *EndBuf,
+                                              std::vector<unsigned> &Args) {
+  Args.clear();
   RawInst RI(Buf, EndBuf, Args);
   const Type *InstTy = getType(RI.Type);
 

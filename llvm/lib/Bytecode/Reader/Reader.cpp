@@ -200,7 +200,8 @@ BasicBlock *BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
     BB = ParsedBasicBlocks[BlockNo];
 
   while (Buf < EndBuf) {
-    Instruction *Inst = ParseInstruction(Buf, EndBuf);
+    std::vector<unsigned> Args;
+    Instruction *Inst = ParseInstruction(Buf, EndBuf, Args);
     insertValue(Inst, Values);
     BB->getInstList().push_back(Inst);
     BCR_TRACE(4, Inst);

@@ -149,7 +149,8 @@ private:
                               unsigned BlockNo);
 
   Instruction *ParseInstruction(const unsigned char *&Buf,
-                                const unsigned char *End);
+                                const unsigned char *End,
+                                std::vector<unsigned> &Args);
 
   void ParseConstantPool(const unsigned char *&Buf, const unsigned char *EndBuf,
                          ValueTable &Tab, TypeValuesListTy &TypeTab);
