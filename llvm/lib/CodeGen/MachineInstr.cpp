@@ -266,17 +266,28 @@ static void print(const MachineOperand &MO, std::ostream &OS,
 }
 
 void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) {
-  OS << TM.getInstrInfo().getName(getOpcode());
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    OS << "\t";
-    ::print(getOperand(i), OS, TM);
+  unsigned StartOp = 0;
 
+   // Specialize printing if op#0 is definition
+  if (getNumOperands() && operandIsDefined(0)) {
+    ::print(getOperand(0), OS, TM);
+    OS << " = ";
+    ++StartOp;   // Don't print this operand again!
+  }
+  OS << TM.getInstrInfo().getName(getOpcode());
+  
+  for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
+    if (i != StartOp)
+      OS << ",";
+    OS << " ";
+    ::print(getOperand(i), OS, TM);
+    
     if (operandIsDefinedAndUsed(i))
       OS << "<def&use>";
     else if (operandIsDefined(i))
       OS << "<def>";
   }
-
+    
   // code for printing implict references
   if (getNumImplicitRefs()) {
     OS << "\tImplicitRefs: ";
