@@ -1475,6 +1475,41 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   // integers at the end of their ranges...
   //
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+    if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
+      if (LHSI->hasOneUse() && LHSI->getNumOperands() == 2 &&
+          isa<ConstantInt>(LHSI->getOperand(1))) {
+        // If this is: (X >> C1) & C2 != C3 (where any shift and any compare
+        // could exist), turn it into (X & (C2 << C1)) != (C3 << C1).  This
+        // happens a LOT in code produced by the C front-end, for bitfield
+        // access.
+        if (LHSI->getOpcode() == Instruction::And &&
+            LHSI->getOperand(0)->hasOneUse())
+          if (ShiftInst *Shift = dyn_cast<ShiftInst>(LHSI->getOperand(0)))
+            if (ConstantUInt *ShAmt =
+                dyn_cast<ConstantUInt>(Shift->getOperand(1))) {
+              ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
+
+              // We can fold this as long as we can't shift unknown bits into
+              // the mask.  This can only happen with signed shift rights, as
+              // they sign-extend.
+              const Type *Ty = Shift->getType();
+              if (Shift->getOpcode() != Instruction::Shr ||
+                  Shift->getType()->isUnsigned() ||
+                  // To test for the bad case of the signed shr, see if any of
+                  // the bits shifted in could be tested after the mask.
+                  ConstantExpr::getAnd(ConstantExpr::getShl(ConstantInt::getAllOnesValue(Ty), ConstantUInt::get(Type::UByteTy, Ty->getPrimitiveSize()*8-ShAmt->getValue())), AndCST)->isNullValue()) {
+                unsigned ShiftOp = Shift->getOpcode() == Instruction::Shl
+                  ? Instruction::Shr : Instruction::Shl;
+                I.setOperand(1, ConstantExpr::get(ShiftOp, CI, ShAmt));
+                LHSI->setOperand(1, ConstantExpr::get(ShiftOp, AndCST, ShAmt));
+                LHSI->setOperand(0, Shift->getOperand(0));
+                WorkList.push_back(Shift); // Shift is probably dead.
+                AddUsesToWorkList(I);
+                return &I;
+              }
+            }
+      }
+
     // Simplify seteq and setne instructions...
     if (I.getOpcode() == Instruction::SetEQ ||
         I.getOpcode() == Instruction::SetNE) {
