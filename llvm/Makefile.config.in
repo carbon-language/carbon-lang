@@ -95,6 +95,10 @@ BYTECODE_REPOSITORY := @BCR@
 SPEC_ROOT := @SPEC_ROOT@
 SPEC95_ROOT := @SPEC95_ROOT@
 
+# Path to the Povray source code.
+@USE_POVRAY@
+POVRAY_ROOT := @POVRAY_ROOT@
+
 # Path to the PAPI code.  This is used by the reoptimizer only.
 #PAPIDIR := /home/vadve/shared/papi-2.3.4.1
 PAPIDIR := @PAPIDIR@
