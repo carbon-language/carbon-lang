@@ -1222,7 +1222,7 @@ manually inserted into the <a href="#Function"><tt>Function</tt></a>.</p></li>
 <li><tt>BasicBlock::iterator</tt> - Typedef for instruction list iterator<br>
 <tt>BasicBlock::const_iterator</tt> - Typedef for const_iterator.<br>
 <tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,
-<tt>size()</tt>, <tt>empty()</tt>, <tt>rbegin()</tt>, <tt>rend()</tt> -
+<tt>size()</tt>, <tt>empty()</tt>
 STL-style functions for accessing the instruction list.
 
 <p>These methods and typedefs are forwarding functions that have the same
@@ -1410,8 +1410,8 @@ is its address (after linking) which is guaranteed to be constant.</p>
   <li><tt>Function::iterator</tt> - Typedef for basic block list iterator<br>
     <tt>Function::const_iterator</tt> - Typedef for const_iterator.<br>
 
-    <tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,
-    <tt>size()</tt>, <tt>empty()</tt>, <tt>rbegin()</tt>, <tt>rend()</tt>
+    <tt>begin()</tt>, <tt>end()</tt>
+    <tt>size()</tt>, <tt>empty()</tt>
 
     <p>These are forwarding methods that make it easy to access the contents of
     a <tt>Function</tt> object's <a href="#BasicBlock"><tt>BasicBlock</tt></a>
@@ -1427,7 +1427,7 @@ is its address (after linking) which is guaranteed to be constant.</p>
 iterator<br>
     <tt>Function::const_arg_iterator</tt> - Typedef for const_iterator.<br>
 
-    <tt>arg_begin()</tt>, <tt>arg_end()</tt>, <tt>arg_front()</tt>, <tt>arg_back()</tt>,
+    <tt>arg_begin()</tt>, <tt>arg_end()</tt>
     <tt>arg_size()</tt>, <tt>arg_empty()</tt>
 
     <p>These are forwarding methods that make it easy to access the contents of
@@ -1572,8 +1572,8 @@ provide a name for it (probably based on the name of the translation unit).</p>
   <li><tt>Module::iterator</tt> - Typedef for function list iterator<br>
     <tt>Module::const_iterator</tt> - Typedef for const_iterator.<br>
 
-    <tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,
-    <tt>size()</tt>, <tt>empty()</tt>, <tt>rbegin()</tt>, <tt>rend()</tt>
+    <tt>begin()</tt>, <tt>end()</tt>
+    <tt>size()</tt>, <tt>empty()</tt>
 
     <p>These are forwarding methods that make it easy to access the contents of
     a <tt>Module</tt> object's <a href="#Function"><tt>Function</tt></a>
@@ -1595,7 +1595,7 @@ provide a name for it (probably based on the name of the translation unit).</p>
 
     <tt>Module::const_global_iterator</tt> - Typedef for const_iterator.<br>
 
-    <tt>global_begin()</tt>, <tt>global_end()</tt>, <tt>global_front()</tt>, <tt>global_back()</tt>,
+    <tt>global_begin()</tt>, <tt>global_end()</tt>
     <tt>global_size()</tt>, <tt>global_empty()</tt>
 
     <p> These are forwarding methods that make it easy to access the contents of
