@@ -1098,6 +1098,51 @@ void ConstantPointerNull::destroyConstant() {
 }
 
 
+//---- UndefValue::get() implementation...
+//
+
+namespace llvm {
+  // UndefValue does not take extra "value" argument...
+  template<class ValType>
+  struct ConstantCreator<UndefValue, Type, ValType> {
+    static UndefValue *create(const Type *Ty, const ValType &V) {
+      return new UndefValue(Ty);
+    }
+  };
+
+  template<>
+  struct ConvertConstantType<UndefValue, Type> {
+    static void convert(UndefValue *OldC, const Type *NewTy) {
+      // Make everyone now use a constant of the new type.
+      Constant *New = UndefValue::get(NewTy);
+      assert(New != OldC && "Didn't replace constant??");
+      OldC->uncheckedReplaceAllUsesWith(New);
+      OldC->destroyConstant();     // This constant is now dead, destroy it.
+    }
+  };
+}
+
+static ValueMap<char, Type, UndefValue> UndefValueConstants;
+
+static char getValType(UndefValue *) {
+  return 0;
+}
+
+
+UndefValue *UndefValue::get(const Type *Ty) {
+  return UndefValueConstants.getOrCreate(Ty, 0);
+}
+
+// destroyConstant - Remove the constant from the constant table.
+//
+void UndefValue::destroyConstant() {
+  UndefValueConstants.remove(this);
+  destroyConstantImpl();
+}
+
+
+
+
 //---- ConstantExpr::get() implementations...
 //
 typedef std::pair<unsigned, std::vector<Constant*> > ExprMapKeyType;
