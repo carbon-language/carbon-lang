@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -tailduplicate -instcombine -simplifycfg -print -licm -disable-output
+; RUN: as < %s | opt -tailduplicate -instcombine -simplifycfg -licm -disable-output
 
 target endian = little
 target pointersize = 32
