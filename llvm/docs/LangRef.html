@@ -1,9 +1,9 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head><title>llvm Assembly Language Reference Manual</title></head>
+<html><head><title>LLVM Assembly Language Reference Manual</title></head>
 <body bgcolor=white>
 
 <table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp; <font size=+5 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>llvm Assembly Language Reference Manual</b></font></td>
+<tr><td>&nbsp; <font size=+5 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>LLVM Language Reference Manual</b></font></td>
 </tr></table>
 
 <ol>
@@ -71,11 +71,18 @@
           <li><a href="#i_phi"  >'<tt>phi</tt>'   Instruction</a>
           <li><a href="#i_cast">'<tt>cast .. to</tt>' Instruction</a>
           <li><a href="#i_call" >'<tt>call</tt>'  Instruction</a>
+          <li><a href="#i_va_arg">'<tt>va_arg</tt>' Instruction</a>
         </ol>
     </ol>
-<!--
-  <li><a href="#related">Related Work</a>
--->
+  <li><a href="#intrinsics">Intrinsic Functions</a>
+  <ol>
+    <li><a href="#int_varargs">Variable Argument Handling Intrinsics</a>
+    <ol>
+      <li><a href="#i_va_start">'<tt>llvm.va_start</tt>' Intrinsic</a>
+      <li><a href="#i_va_end"  >'<tt>llvm.va_end</tt>'   Intrinsic</a>
+      <li><a href="#i_va_copy" >'<tt>llvm.va_copy</tt>'  Intrinsic</a>
+    </ol>
+  </ol>
 
   <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a> and <A href="mailto:vadve@cs.uiuc.edu">Vikram Adve</a></b><p>
 
@@ -130,7 +137,7 @@ simple SSA value instead of a memory location.<p>
 <!-- _______________________________________________________________________ -->
 </ul><a name="wellformed"><h4><hr size=0>Well Formedness</h4><ul>
 
-It is important to note that this document describes 'well formed' llvm assembly
+It is important to note that this document describes 'well formed' LLVM assembly
 language.  There is a difference between what the parser accepts and what is
 considered 'well formed'.  For example, the following instruction is
 syntactically okay, but not well formed:<p>
@@ -139,11 +146,11 @@ syntactically okay, but not well formed:<p>
   %x = <a href="#i_add">add</a> int 1, %x
 </pre>
 
-...because the definition of %x does not dominate all of its uses.  The LLVM
-infrastructure provides a verification pass that may be used to verify that an
-LLVM module is well formed.  This pass is automatically run by the parser after
-parsing input assembly, and by the optimizer before it outputs bytecode.  The
-violations pointed out by the verifier pass indicate bugs in transformation
+...because the definition of <tt>%x</tt> does not dominate all of its uses.  The
+LLVM infrastructure provides a verification pass that may be used to verify that
+an LLVM module is well formed.  This pass is automatically run by the parser
+after parsing input assembly, and by the optimizer before it outputs bytecode.
+The violations pointed out by the verifier pass indicate bugs in transformation
 passes or input to the parser.<p>
 
 <!-- Describe the typesetting conventions here. -->
@@ -212,7 +219,7 @@ demonstrating instructions, we will follow an instruction with a comment that
 defines the type and name of value produced.  Comments are shown in italic
 text.<p>
 
-The one unintuitive notation for constants is the optional hexidecimal form of
+The one non-intuitive notation for constants is the optional hexidecimal form of
 floating point constants.  For example, the form '<tt>double
 0x432ff973cafa8000</tt>' is equivalent to (but harder to read than) '<tt>double
 4.5e+15</tt>' which is also supported by the parser.  The only time hexadecimal
@@ -1627,73 +1634,200 @@ case of the <a href="#i_invoke">invoke</a> instruction.<p>
 
 </pre>
 
-<!--
+<!-- _______________________________________________________________________ -->
+</ul><a name="i_va_arg"><h4><hr size=0>'<tt>va_arg</tt>' Instruction</h4><ul>
 
-<!x- *********************************************************************** -x>
+<h5>Syntax:</h5>
+<pre>
+  &lt;result&gt; = va_arg &lt;va_list&gt;* &lt;arglist&gt;, &lt;retty&gt;
+</pre>
+
+<h5>Overview:</h5>
+
+The '<tt>va_arg</tt>' instruction is used to access arguments passed through the
+"variable argument" area of a function call.  It corresponds directly to the
+<tt>va_arg</tt> macro in C.<p>
+
+<h5>Arguments:</h5>
+
+This instruction takes a pointer to a <tt>valist</tt> value to read a new
+argument from.  The return type of the instruction is defined by the second
+argument, a type.<p>
+
+<h5>Semantics:</h5>
+
+The '<tt>va_arg</tt>' instruction works just like the <tt>va_arg</tt> macro
+available in C.  In a target-dependent way, it reads the argument indicated by
+the value the arglist points to, updates the arglist, then returns a value of
+the specified type.  This instruction should be used in conjunction with the
+variable argument handling <a href="#int_varargs">Intrinsic Functions</a>.<p>
+
+It is legal for this instruction to be called in a function which does not take
+a variable number of arguments, for example, the <tt>vfprintf</tt> function.<p>
+
+<tt>va_arg</tt> is an LLVM instruction instead of an <a
+href="#intrinsics">intrinsic function</a> because the return type depends on an
+argument.<p>
+
+<h5>Example:</h5>
+
+See the <a href="#int_varargs">variable argument processing</a> section.<p>
+
+<!-- *********************************************************************** -->
 </ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
 <tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="related">Related Work
+<a name="intrinsics">Intrinsic Functions
 </b></font></td></tr></table><ul>
-<!x- *********************************************************************** -x>
+<!-- *********************************************************************** -->
+
+LLVM supports the notion of an "intrinsic function".  These functions have well
+known names and semantics, and are required to follow certain restrictions.
+Overall, these instructions represent an extension mechanism for the LLVM
+language that does not require changing all of the transformations in LLVM to
+add to the language (or the bytecode reader/writer, the parser, etc...).<p>
+
+Intrinsic function names must all start with an "<tt>llvm.</tt>" prefix, this
+prefix is reserved in LLVM for intrinsic names, thus functions may not be named
+this.  Intrinsic functions must always be external functions: you cannot define
+the body of intrinsic functions.  Intrinsic functions may only be used in call
+or invoke instructions: it is illegal to take the address of an intrinsic
+function.  Additionally, because intrinsic functions are part of the LLVM
+language, it is required that they all be documented here if any are added.<p>
+
+Unless an intrinsic function is target-specific, there must be a lowering pass
+to eliminate the intrinsic or all backends must support the intrinsic
+function.<p>
 
 
-Codesigned virtual machines.<p>
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="int_varargs">Variable Argument Handling Intrinsics
+</b></font></td></tr></table><ul>
 
-<dl>
-<a name="rw_safetsa">
-<dt>SafeTSA
-<DD>Description here<p>
+Variable argument support is defined in LLVM with the <a
+href="#i_va_arg"><tt>va_arg</tt></a> instruction and these three intrinsic
+functions.  These function correspond almost directly to the similarly named
+macros defined in the <tt>&lt;stdarg.h&gt;</tt> header file.<p>
 
-<a name="rw_java">
-<dt><a href="http://www.javasoft.com">Java</a>
-<DD>Desciption here<p>
+All of these functions operate on arguments that use a target-specific type
+"<tt>va_list</tt>".  The LLVM assembly language reference manual does not define
+what this type is, so all transformations should be prepared to handle
+intrinsics with any type used.<p>
 
-<a name="rw_net">
-<dt><a href="http://www.microsoft.com/net">Microsoft .net</a>
-<DD>Desciption here<p>
+This example shows how the <a href="#i_va_arg"><tt>va_arg</tt></a> instruction
+and the variable argument handling intrinsic functions are used.<p>
 
-<a name="rw_gccrtl">
-<dt><a href="http://www.math.umn.edu/systems_guide/gcc-2.95.1/gcc_15.html">GNU RTL Intermediate Representation</a>
-<DD>Desciption here<p>
+<pre>
+int %test(int %X, ...) {
+  ; Allocate two va_list items.  On this target, va_list is of type sbyte*
+  %ap = alloca sbyte*
+  %aq = alloca sbyte*
 
-<a name="rw_ia64">
-<dt><a href="http://developer.intel.com/design/ia-64/index.htm">IA64 Architecture &amp; Instruction Set</a>
-<DD>Desciption here<p>
+  ; Initialize variable argument processing
+  call void (sbyte**, ...)* %<a href="#i_va_start">llvm.va_start</a>(sbyte** %ap, int %X)
 
-<a name="rw_mmix">
-<dt><a href="http://www-cs-faculty.stanford.edu/~knuth/mmix-news.html">MMIX Instruction Set</a>
-<DD>Desciption here<p>
+  ; Read a single integer argument
+  %tmp = <a href="#i_va_arg">va_arg</a> sbyte** %ap, int 
 
-<a name="rw_stroustrup">
-<dt><a href="http://www.research.att.com/~bs/devXinterview.html">"Interview With Bjarne Stroustrup"</a>
-<DD>This interview influenced the design and thought process behind LLVM in several ways, most notably the way that derived types are written in text format. See the question that starts with "you defined the C declarator syntax as an experiment that failed".<p>
-</dl>
+  ; Demonstrate usage of llvm.va_copy and llvm_va_end
+  %apv = load sbyte** %ap
+  call void %<a href="#i_va_copy">llvm.va_copy</a>(sbyte** %aq, sbyte* %apv)
+  call void %<a href="#i_va_end">llvm.va_end</a>(sbyte** %aq)
 
-<!x- _______________________________________________________________________ -x>
-</ul><a name="rw_vectorization"><h3><hr size=0>Vectorized Architectures</h3><ul>
+  ; Stop processing of arguments.
+  call void %<a href="#i_va_end">llvm.va_end</a>(sbyte** %ap)
+  ret int %tmp
+}
+</pre>
 
-<dl>
-<a name="rw_intel_simd">
-<dt>Intel MMX, MMX2, SSE, SSE2
-<DD>Description here<p>
+<!-- _______________________________________________________________________ -->
+</ul><a name="i_va_start"><h4><hr size=0>'<tt>llvm.va_start</tt>' Intrinsic</h4><ul>
 
-<a name="rw_amd_simd">
-<dt><a href="http://www.nondot.org/~sabre/os/H1ChipFeatures/3DNow!TechnologyManual.pdf">AMD 3Dnow!, 3Dnow! 2</a>
-<DD>Desciption here<p>
+<h5>Syntax:</h5>
+<pre>
+  call void (va_list*, ...)* %llvm.va_start(&lt;va_list&gt;* &lt;arglist&gt;, &lt;argument&gt;)
+</pre>
 
-<a name="rw_sun_simd">
-<dt><a href="http://www.nondot.org/~sabre/os/H1ChipFeatures/VISInstructionSetUsersManual.pdf">Sun VIS ISA</a>
-<DD>Desciption here<p>
+<h5>Overview:</h5>
 
-<a name="rw_powerpc_simd">
-<dt>PowerPC Altivec
-<DD>Desciption here<p>
+The '<tt>llvm.va_start</tt>' intrinsic initializes <tt>*&lt;arglist&gt;</tt> for
+subsequent use by <tt><a href="#i_va_arg">va_arg</a></tt> and <tt><a
+href="#i_va_end">llvm.va_end</a></tt>, and must be called before either are
+invoked.<p>
 
-</dl>
+<h5>Arguments:</h5>
 
-more...
+The first argument is a pointer to a <tt>va_list</tt> element to initialize.
+The second argument is required to be the last LLVM argument before the
+ellipsis.  In the future, this restriction may be relaxed (to allow it to be
+other arguments).<p>
 
--->
+<h5>Semantics:</h5>
+
+The '<tt>llvm.va_start</tt>' intrinsic works just like the <tt>va_start</tt>
+macro available in C.  In a target-dependent way, it initializes the
+<tt>va_list</tt> element the first argument points to, so that the next call to
+<tt>va_arg</tt> will produce the first variable argument passed to the
+function.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="i_va_end"><h4><hr size=0>'<tt>llvm.va_end</tt>' Intrinsic</h4><ul>
+
+<h5>Syntax:</h5>
+<pre>
+  call void (va_list*)* %llvm.va_end(&lt;va_list&gt;* &lt;arglist&gt;)
+</pre>
+
+<h5>Overview:</h5>
+
+The '<tt>llvm.va_end</tt>' intrinsic destroys <tt>*&lt;arglist&gt;</tt> which
+has been initialized previously with <tt><a
+href="#i_va_begin">llvm.va_begin</a></tt>.<p>
+
+<h5>Arguments:</h5>
+
+The argument is a pointer to a <tt>va_list</tt> element to destroy.<p>
+
+<h5>Semantics:</h5>
+
+The '<tt>llvm.va_end</tt>' intrinsic works just like the <tt>va_end</tt> macro
+available in C.  In a target-dependent way, it destroys the <tt>va_list</tt>
+that the argument points to.  Calls to <a
+href="#i_va_start"><tt>llvm.va_start</tt></a> and <a
+href="#i_va_copy"><tt>llvm.va_copy</tt></a> must be matched exactly with calls
+to <tt>llvm.va_end</tt>.<p>
+
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="i_va_copy"><h4><hr size=0>'<tt>llvm.va_copy</tt>' Intrinsic</h4><ul>
+
+<h5>Syntax:</h5>
+<pre>
+  call void (va_list*, va_list)* %va_copy(&lt;va_list&gt;* &lt;destarglist&gt;,
+                                          &lt;va_list&gt; &lt;srcarglist&gt;)
+</pre>
+
+<h5>Overview:</h5>
+
+The '<tt>llvm.va_copy</tt>' intrinsic copies the current argument position from
+the source argument list to the destination argument list.<p>
+
+<h5>Arguments:</h5>
+
+The first argument is a pointer to a <tt>va_list</tt> element to initialize.
+The second argument is a <tt>va_list</tt> element to copy from.<p>
+
+
+<h5>Semantics:</h5>
+
+The '<tt>llvm.va_copy</tt>' intrinsic works just like the <tt>va_copy</tt> macro
+available in C.  In a target-dependent way, it copies the source
+<tt>va_list</tt> element into the destination list.  This intrinsic is necessary
+because the <tt><a href="i_va_begin">llvm.va_begin</a></tt> intrinsic may be
+arbitrarily complex and require memory allocation, for example.<p>
 
 
 <!-- *********************************************************************** -->
@@ -1706,7 +1840,7 @@ more...
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Fri Dec 13 00:00:57 CST 2002
+Last modified: Wed May  7 23:56:16 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
