@@ -397,30 +397,6 @@ Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
     // reassociate the expression from ((? op A) op B) to (? op (A op B))
     if (ShouldApply) {
       BasicBlock *BB = Root.getParent();
-      // All of the instructions have a single use and have no side-effects,
-      // because of this, we can pull them all into the current basic block.
-      if (LHSI->getParent() != BB) {
-        // Move all of the instructions from root to LHSI into the current
-        // block.
-        Instruction *TmpLHSI = cast<Instruction>(Root.getOperand(0));
-        Instruction *LastUse = &Root;
-        while (TmpLHSI->getParent() == BB) {
-          LastUse = TmpLHSI;
-          TmpLHSI = cast<Instruction>(TmpLHSI->getOperand(0));
-        }
-        
-        // Loop over all of the instructions in other blocks, moving them into
-        // the current one.
-        Value *TmpLHS = TmpLHSI;
-        do {
-          TmpLHSI = cast<Instruction>(TmpLHS);
-          // Remove from current block...
-          TmpLHSI->getParent()->getInstList().remove(TmpLHSI);
-          // Insert before the last instruction...
-          BB->getInstList().insert(LastUse, TmpLHSI);
-          TmpLHS = TmpLHSI->getOperand(0);
-        } while (TmpLHSI != LHSI);
-      }
       
       // Now all of the instructions are in the current basic block, go ahead
       // and perform the reassociation.
@@ -431,20 +407,27 @@ Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
 
       // Make what used to be the LHS of the root be the user of the root...
       Value *ExtraOperand = TmpLHSI->getOperand(1);
-      if (&Root != TmpLHSI)
-        Root.replaceAllUsesWith(TmpLHSI);        // Users now use TmpLHSI
-      else {
+      if (&Root == TmpLHSI) {
         Root.replaceAllUsesWith(Constant::getNullValue(TmpLHSI->getType()));
         return 0;
       }
+      Root.replaceAllUsesWith(TmpLHSI);          // Users now use TmpLHSI
       TmpLHSI->setOperand(1, &Root);             // TmpLHSI now uses the root
-      BB->getInstList().remove(&Root);           // Remove root from the BB
-      BB->getInstList().insert(TmpLHSI, &Root);  // Insert root before TmpLHSI
+      TmpLHSI->getParent()->getInstList().remove(TmpLHSI);
+      BasicBlock::iterator ARI = &Root; ++ARI;
+      BB->getInstList().insert(ARI, TmpLHSI);    // Move TmpLHSI to after Root
+      ARI = Root;
 
       // Now propagate the ExtraOperand down the chain of instructions until we
       // get to LHSI.
       while (TmpLHSI != LHSI) {
         Instruction *NextLHSI = cast<Instruction>(TmpLHSI->getOperand(0));
+        // Move the instruction to immediately before the chain we are
+        // constructing to avoid breaking dominance properties.
+        NextLHSI->getParent()->getInstList().remove(NextLHSI);
+        BB->getInstList().insert(ARI, NextLHSI);
+        ARI = NextLHSI;
+
         Value *NextOp = NextLHSI->getOperand(1);
         NextLHSI->setOperand(1, ExtraOperand);
         TmpLHSI = NextLHSI;
