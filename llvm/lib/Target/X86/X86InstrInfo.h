@@ -171,11 +171,12 @@ namespace X86II {
 
     // PrintImplDefsAfter - Print out implicit defs in the assembly output
     // after the normal operands.
-    PrintImplDefsAfter = 1 << 20,
+    PrintImplDefsBefore = 1 << 20,
+    PrintImplDefsAfter  = 1 << 21,
 
-    OpcodeShift   = 21,
+    OpcodeShift   = 22,
     OpcodeMask    = 0xFF << OpcodeShift,
-    // Bits 26 -> 31 are unused
+    // Bits 27 -> 31 are unused
   };
 }
 

@@ -105,6 +105,7 @@ namespace {
     }
 
     void printImplUsesBefore(const TargetInstrDescriptor &Desc);
+    bool printImplDefsBefore(const TargetInstrDescriptor &Desc);
     bool printImplUsesAfter(const TargetInstrDescriptor &Desc, const bool LC);
     bool printImplDefsAfter(const TargetInstrDescriptor &Desc, const bool LC);
     void printMachineInstruction(const MachineInstr *MI);
@@ -544,6 +545,30 @@ void Printer::printImplUsesBefore(const TargetInstrDescriptor &Desc) {
   }
 }
 
+/// printImplDefsBefore - Emit the implicit-def registers for the instruction
+/// described by DESC, if its PrintImplUsesBefore flag is set.  Return true if
+/// we printed any registers.
+///
+bool Printer::printImplDefsBefore(const TargetInstrDescriptor &Desc) {
+  bool Printed = false;
+  const MRegisterInfo &RI = *TM.getRegisterInfo();
+  if (Desc.TSFlags & X86II::PrintImplDefsBefore) {
+    const unsigned *p = Desc.ImplicitDefs;
+    if (*p) {
+      O << (Printed ? ", %" : "%") << RI.get (*p).Name;
+      Printed = true;
+      ++p;
+    }
+    while (*p) {
+      // Bug Workaround: See note in Printer::doInitialization about %.
+      O << ", %" << RI.get(*p).Name;
+      ++p;
+    }
+  }
+  return Printed;
+}
+
+
 /// printImplUsesAfter - Emit the implicit-use registers for the instruction
 /// described by DESC, if its PrintImplUsesAfter flag is set.
 ///
@@ -655,22 +680,25 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 
   case X86II::RawFrm:
   {
-    bool LeadingComma = false;
-
     // The accepted forms of Raw instructions are:
     //   1. nop     - No operand required
     //   2. jmp foo - PC relative displacement operand
     //   3. call bar - GlobalAddress Operand or External Symbol Operand
+    //   4. in AL, imm - Immediate operand
     //
     assert(MI->getNumOperands() == 0 ||
            (MI->getNumOperands() == 1 &&
 	    (MI->getOperand(0).isPCRelativeDisp() ||
 	     MI->getOperand(0).isGlobalAddress() ||
-	     MI->getOperand(0).isExternalSymbol())) &&
+	     MI->getOperand(0).isExternalSymbol() ||
+             MI->getOperand(0).isImmediate())) &&
            "Illegal raw instruction!");
     O << TII.getName(MI->getOpcode()) << " ";
 
+    bool LeadingComma = printImplDefsBefore(Desc);
+
     if (MI->getNumOperands() == 1) {
+      if (LeadingComma) O << ", ";
       printOp(MI->getOperand(0), true); // Don't print "OFFSET"...
       LeadingComma = true;
     }
