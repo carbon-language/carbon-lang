@@ -1,11 +1,10 @@
-//===-- llvm/Function.h - Class to represent a single VM function -*- C++ -*-=//
+//===-- llvm/Function.h - Class to represent a single function --*- C++ -*-===//
 //
 // This file contains the declaration of the Function class, which represents a 
-// single function/procedure in the VM.
+// single function/procedure in LLVM.
 //
-// Note that BasicBlock's in the Function are Value's, because they are
-// referenced by instructions like calls and can go into virtual function tables
-// and stuff.
+// A function basically consists of a list of basic blocks, a list of arguments,
+// and a symbol table.
 //
 //===----------------------------------------------------------------------===//
 
@@ -55,7 +54,7 @@ public:
 private:
 
   // Important things that make up a function!
-  BasicBlockListType  BasicBlocks;         // The basic blocks
+  BasicBlockListType  BasicBlocks;      // The basic blocks
   ArgumentListType ArgumentList;        // The formal arguments
 
   SymbolTable *SymTab, *ParentSymTab;
@@ -68,7 +67,12 @@ private:
   void setPrev(Function *N) { Prev = N; }
 
 public:
-  Function(const FunctionType *Ty, bool isInternal, const std::string &N = "");
+  /// Function ctor - If the (optional) Module argument is specified, the
+  /// function is automatically inserted into the end of the function list for
+  /// the module.
+  ///
+  Function(const FunctionType *Ty, bool isInternal, const std::string &N = "",
+           Module *M = 0);
   ~Function();
 
   // Specialize setName to handle symbol table majik...
@@ -83,8 +87,10 @@ public:
   ///
   bool isExternal() const { return BasicBlocks.empty(); }
 
-  // getNext/Prev - Return the next or previous instruction in the list.  The
-  // last node in the list is a terminator instruction.
+  // getNext/Prev - Return the next or previous function in the list.  These
+  // methods should never be used directly, and are only used to implement the
+  // function list as part of the module.
+  //
         Function *getNext()       { return Next; }
   const Function *getNext() const { return Next; }
         Function *getPrev()       { return Prev; }
@@ -156,12 +162,12 @@ public:
   reverse_aiterator       arend  ()       { return ArgumentList.rend();   }
   const_reverse_aiterator arend  () const { return ArgumentList.rend();   }
 
-  unsigned                 asize() const { return ArgumentList.size(); }
-  bool                    aempty() const { return ArgumentList.empty(); }
-  const Argument       &afront() const { return ArgumentList.front(); }
-        Argument       &afront()       { return ArgumentList.front(); }
-  const Argument        &aback() const { return ArgumentList.back(); }
-        Argument        &aback()       { return ArgumentList.back(); }
+  unsigned                  asize() const { return ArgumentList.size(); }
+  bool                     aempty() const { return ArgumentList.empty(); }
+  const Argument          &afront() const { return ArgumentList.front(); }
+        Argument          &afront()       { return ArgumentList.front(); }
+  const Argument           &aback() const { return ArgumentList.back(); }
+        Argument           &aback()       { return ArgumentList.back(); }
 
   virtual void print(std::ostream &OS) const;
 
