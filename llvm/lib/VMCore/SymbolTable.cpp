@@ -252,9 +252,8 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
       std::string UniqueName = getUniqueName(VTy, Name);
       assert(InternallyInconsistent == false &&
              "Infinite loop inserting value!");
-      InternallyInconsistent = true;
-      V->setName(UniqueName);
-      InternallyInconsistent = false;
+      V->Name = UniqueName;
+      VM->insert(VI, make_pair(UniqueName, V));
       return;
     }
   }
@@ -382,11 +381,10 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
           //
           assert(InternallyInconsistent == false &&
                  "Symbol table already inconsistent!");
-          InternallyInconsistent = true;
 
-          // Remove newM from the symtab
-          NewGV->setName("");
-          InternallyInconsistent = false;
+          // Update NewGV's name, we're about the remove it from the symbol
+          // table.
+          NewGV->Name = "";
 
           // Now we can remove this global from the module entirely...
           Module *M = NewGV->getParent();
