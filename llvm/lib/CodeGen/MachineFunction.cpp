@@ -100,10 +100,13 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
 }
 
 // Align data larger than one L1 cache line on L1 cache line boundaries.
-// Align all smaller data on the next higher 2^x boundary (4, 8, ...).
+// Align all smaller data on the next higher 2^x boundary (4, 8, ...),
+// but not higher than the alignment of the largest type we support
+// (currently a double word). -- see class TargetData).
 //
-// THIS FUNCTION HAS BEEN COPIED FROM EMITASSEMBLY.CPP AND
-// SHOULD BE USED DIRECTLY THERE
+// This function is similar to the corresponding function in EmitAssembly.cpp
+// but they are unrelated.  This one does not align at more than a
+// double-word boundary whereas that one might.
 // 
 inline unsigned int
 SizeToAlignment(unsigned int size, const TargetMachine& target)
@@ -113,10 +116,9 @@ SizeToAlignment(unsigned int size, const TargetMachine& target)
     return cacheLineSize;
   else
     for (unsigned sz=1; /*no condition*/; sz *= 2)
-      if (sz >= size)
+      if (sz >= size || sz >= target.DataLayout.getDoubleAlignment())
         return sz;
 }
-
 
 
 /*ctor*/
@@ -141,34 +143,20 @@ MachineCodeForMethod::computeOffsetforLocalVar(const TargetMachine& target,
                                                unsigned int& getPaddedSize,
                                                unsigned int  sizeToUse)
 {
-  bool growUp;
-  int firstOffset =target.getFrameInfo().getFirstAutomaticVarOffset(*this,
-                                                                    growUp);
-  unsigned char align;
   if (sizeToUse == 0)
-    {
-      sizeToUse = target.findOptimalStorageSize(val->getType());
-      // align = target.DataLayout.getTypeAlignment(val->getType());
-    }
-  
-  align = SizeToAlignment(sizeToUse, target);
-          
-  int offset = getAutomaticVarsSize();
-  if (! growUp)
-    offset += sizeToUse; 
-      
-  if (unsigned int mod = offset % align)
-    {
-      offset        += align - mod;
-      getPaddedSize  = sizeToUse + align - mod;
-    }
-  else
-    getPaddedSize  = sizeToUse;
-  
-  offset = growUp? firstOffset + offset
-    : firstOffset - offset;
-  
-  return offset;
+    sizeToUse = target.findOptimalStorageSize(val->getType());
+  unsigned int align = SizeToAlignment(sizeToUse, target);
+
+  bool growUp;
+  int firstOffset = target.getFrameInfo().getFirstAutomaticVarOffset(*this,
+                                                                     growUp);
+  int offset = growUp? firstOffset + getAutomaticVarsSize()
+                     : firstOffset - (getAutomaticVarsSize() + sizeToUse);
+
+  int aligned = target.getFrameInfo().adjustAlignment(offset, growUp, align);
+  getPaddedSize = sizeToUse + abs(aligned - offset);
+
+  return aligned;
 }
 
 int
@@ -193,7 +181,7 @@ MachineCodeForMethod::allocateLocalVar(const TargetMachine& target,
     }
   return offset;
 }
-  
+
 int
 MachineCodeForMethod::allocateSpilledValue(const TargetMachine& target,
                                            const Type* type)
@@ -208,59 +196,41 @@ MachineCodeForMethod::allocateSpilledValue(const TargetMachine& target,
   bool growUp;
   int firstOffset = target.getFrameInfo().getRegSpillAreaOffset(*this, growUp);
   
-  int offset = getRegSpillsSize();
-  if (! growUp)
-    offset += size; 
+  int offset = growUp? firstOffset + getRegSpillsSize()
+                     : firstOffset - (getRegSpillsSize() + size);
+
+  int aligned = target.getFrameInfo().adjustAlignment(offset, growUp, align);
+  size += abs(aligned - offset); // include alignment padding in size
   
-  if (unsigned int mod = offset % align)
-    {
-      offset    += align - mod;
-      size += align - mod;
-    }
-  
-  offset = growUp? firstOffset + offset
-                 : firstOffset - offset;
-  
-  incrementRegSpillsSize(size);
-  
-  return offset;
+  incrementRegSpillsSize(size);  // update size of reg. spills area
+
+  return aligned;
 }
 
 int
 MachineCodeForMethod::pushTempValue(const TargetMachine& target,
                                     unsigned int size)
 {
-  // Compute a power-of-2 alignment according to the possible sizes,
-  // but not greater than the alignment of the largest type we support
-  // (currently a double word -- see class TargetData).
-  unsigned char align = 1;
-  for (; align < size && align < target.DataLayout.getDoubleAlignment();
-         align = 2*align)
-    ;
-  
+  unsigned int align = SizeToAlignment(size, target);
+
   bool growUp;
-  int firstTmpOffset = target.getFrameInfo().getTmpAreaOffset(*this, growUp);
-  
-  int offset = currentTmpValuesSize;
-  if (! growUp)
-    offset += size; 
-  
-  if (unsigned int mod = offset % align)
-    {
-      offset += align - mod;
-      size   += align - mod;
-    }
-  
-  offset = growUp ? firstTmpOffset + offset : firstTmpOffset - offset;
-  
-  incrementTmpAreaSize(size);
-  return offset;
+  int firstOffset = target.getFrameInfo().getTmpAreaOffset(*this, growUp);
+
+  int offset = growUp? firstOffset + currentTmpValuesSize
+                     : firstOffset - (currentTmpValuesSize + size);
+
+  int aligned = target.getFrameInfo().adjustAlignment(offset, growUp, align);
+  size += abs(aligned - offset); // include alignment padding in size
+
+  incrementTmpAreaSize(size);    // update "current" size of tmp area
+
+  return aligned;
 }
 
 void
 MachineCodeForMethod::popAllTempValues(const TargetMachine& target)
 {
-  resetTmpAreaSize();
+  resetTmpAreaSize();            // clear tmp area to reuse
 }
 
 int
