@@ -618,11 +618,33 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     NumArgs = 2;
     break;
 
+  case Intrinsic::writeio:
+    Assert1(FT->getNumParams() == 2,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getParamType(0)->isFirstClassType(),
+            "First argument not a first class type!", IF);
+    Assert1(FT->getParamType(1)->getPrimitiveID() == Type::PointerTyID,
+            "Second argument not a pointer!", IF);
+    NumArgs = 2;
+    break;
+
   case Intrinsic::readport:
     Assert1(FT->getNumParams() == 1,
             "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType()->isFirstClassType(),
+            "Return type is not a first class type!", IF);
     Assert1(FT->getParamType(0)->isUnsigned(),
             "First argument not unsigned int!", IF);
+    NumArgs = 1;
+    break;
+
+  case Intrinsic:: readio:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType()->isFirstClassType(),
+            "Return type is not a first class type!", IF);
+    Assert1(FT->getParamType(0)->getPrimitiveID() == Type::PointerTyID,
+            "First argument not a pointer!", IF);
     NumArgs = 1;
     break;
 
