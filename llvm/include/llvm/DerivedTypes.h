@@ -41,6 +41,9 @@ public:
 
   static const MethodType *getMethodType(const Type *Result, 
                                          const ParamTypes &Params);
+  static const MethodType *get(const Type *Result, const ParamTypes &Params) {
+    return getMethodType(Result, Params);
+  }
 };
 
 
@@ -70,6 +73,9 @@ public:
 
   static const ArrayType *getArrayType(const Type *ElementType, 
 				       int NumElements = -1);
+  static const ArrayType *get(const Type *ElementType, int NumElements = -1) {
+    return getArrayType(ElementType, NumElements);
+  }
 };
 
 class StructType : public Type {
@@ -92,6 +98,9 @@ public:
 
   inline const ElementTypes &getElementTypes() const { return ETypes; }
   static const StructType *getStructType(const ElementTypes &Params);
+  static const StructType *get(const ElementTypes &Params) {
+    return getStructType(Params);
+  }
 };
 
 
@@ -115,6 +124,9 @@ public:
 
 
   static const PointerType *getPointerType(const Type *ElementType);
+  static const PointerType *get(const Type *ElementType) {
+    return getPointerType(ElementType);
+  }
 };
 
 #endif
