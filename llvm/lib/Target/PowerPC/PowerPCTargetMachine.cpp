@@ -32,7 +32,7 @@ TargetMachine *allocatePowerPCTargetMachine(const Module &M,
 PowerPCTargetMachine::PowerPCTargetMachine(const Module &M,
                                            IntrinsicLowering *IL)
   : TargetMachine("PowerPC", IL, true, 4, 4, 4, 4, 4),
-    FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 4) {
+    FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 4), JITInfo(*this) {
 }
 
 // addPassesToEmitAssembly - We currently use all of the same passes as the JIT
