@@ -1,9 +1,11 @@
 #include "Record.h"
 #include "Support/CommandLine.h"
+#include "CodeEmitterGen.h"
 #include <algorithm>
 
 static cl::opt<std::string> Class("class", cl::desc("Print Enum list for this class"));
 static cl::opt<bool>        Parse("parse");
+static cl::opt<bool>        GenEmitter("gen-emitter");
 
 void ParseFile();
 
@@ -289,6 +291,7 @@ static void PrintInstruction(Record *I, unsigned char *Ptr) {
 }
 
 static void ParseMachineCode() {
+  // X86 code
   unsigned char Buffer[] = {
                              0x55,             // push EBP
 			     0x89, 0xE5,       // mov EBP, ESP
@@ -307,7 +310,18 @@ static void ParseMachineCode() {
 			     0x85, 0xC0,       // test EAX, EAX
 			     0xF4,             // hlt
   };
-  
+
+#if 0
+  // SparcV9 code
+  unsigned char Buffer[] = { 0xbf, 0xe0, 0x20, 0x1f, 0x1, 0x0, 0x0, 0x1, 
+                             0x0, 0x0, 0x0, 0x0, 0xc1, 0x0, 0x20, 0x1, 0x1,
+                             0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+                             0x0, 0x0, 0x0, 0x0, 0x0, 0x40, 0x0, 0x0, 0x0, 0x1,
+                             0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+                             0x0, 0x0, 0xaf, 0xe8, 0x20, 0x17
+  };
+#endif
+
   std::vector<Record*> Insts;
 
   const std::map<std::string, Record*> &Defs = Records.getDefs();
@@ -341,6 +355,12 @@ int main(int argc, char **argv) {
 
   if (Parse) {
     ParseMachineCode();
+    return 0;
+  }
+
+  if (GenEmitter) {
+    CodeEmitterGen CEG(Records);
+    CEG.createEmitter(std::cout);
     return 0;
   }
 
