@@ -94,12 +94,10 @@ static GetElementPtrInst* getGlobalAddr(Value* ptr, Instruction& insertBefore) {
     : NULL;
 }
 
-
-// Wrapper on Constant::classof to use in find_if :-(
+// Wrapper on Constant::classof to use in find_if
 inline static bool nonConstant(const Use& U) {
   return ! isa<Constant>(U);
 }
-
 
 static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
                                           Instruction& insertBefore)
@@ -177,15 +175,15 @@ PreSelection::visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
   }
 }
 
-// visitOperands() transforms individual operands of all instructions:
-// -- Load "large" int constants into a virtual register.  What is large
-//    depends on the type of instruction and on the target architecture.
-// -- For any constants that cannot be put in an immediate field,
-//    load address into virtual register first, and then load the constant.
-// 
-// firstOp and lastOp can be used to skip leading and trailing operands.
-// If lastOp is 0, it defaults to #operands or #incoming Phi values.
-//  
+/// visitOperands - transform individual operands of all instructions:
+/// -- Load "large" int constants into a virtual register.  What is large
+///    depends on the type of instruction and on the target architecture.
+/// -- For any constants that cannot be put in an immediate field,
+///    load address into virtual register first, and then load the constant.
+/// 
+/// firstOp and lastOp can be used to skip leading and trailing operands.
+/// If lastOp is 0, it defaults to #operands or #incoming Phi values.
+///  
 inline void PreSelection::visitOperands(Instruction &I, int firstOp) {
   // For any instruction other than PHI, copies go just before the instr.
   for (unsigned i = firstOp, e = I.getNumOperands(); i != e; ++i)
@@ -205,14 +203,11 @@ void PreSelection::visitPHINode(PHINode &PN) {
   // do not call visitOperands!
 }
 
-
-
 // Common work for *all* instructions.  This needs to be called explicitly
 // by other visit<InstructionType> functions.
 inline void PreSelection::visitInstruction(Instruction &I) { 
   visitOperands(I);              // Perform operand transformations
 }
-
 
 // GetElementPtr instructions: check if pointer is a global
 void PreSelection::visitGetElementPtrInst(GetElementPtrInst &I) { 
@@ -239,10 +234,8 @@ void PreSelection::visitCallInst(CallInst &I) {
   visitOperands(I, (/*firstOp=*/ I.getCalledFunction()? 1 : 0));
 }
 
-//===----------------------------------------------------------------------===//
-// createPreSelectionPass - Public entrypoint for pre-selection pass
-// and this file as a whole...
-//
+/// createPreSelectionPass - Public entry point for the PreSelection pass
+///
 FunctionPass* createPreSelectionPass(const TargetMachine &TM) {
   return new PreSelection(TM);
 }
