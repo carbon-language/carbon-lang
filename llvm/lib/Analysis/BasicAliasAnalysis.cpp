@@ -18,7 +18,7 @@
 // Make sure that anything that uses AliasAnalysis pulls in this file...
 void BasicAAStub() {}
 
-class GetElementPtrInst;
+
 namespace {
   struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
     
