@@ -1,4 +1,4 @@
-//===- llvm/System/Unix/Unix.h - Common Unix Include File -----*- C++ -*-===//
+//===- llvm/System/Unix/Unix.h - Common Unix Include File -------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,10 +16,12 @@
 //===          is guaranteed to work on all UNIX variants.
 //===----------------------------------------------------------------------===//
 
+#include "Config/config.h"     // Get autoconf configuration settings
 #include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+#include <cerrno>
 #include <sys/types.h>
 #include <sys/param.h>
 
