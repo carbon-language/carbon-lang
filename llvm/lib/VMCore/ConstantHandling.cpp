@@ -19,64 +19,6 @@
 #include <cmath>
 using namespace llvm;
 
-// ConstantFoldInstruction - Attempt to constant fold the specified instruction.
-// If successful, the constant result is returned, if not, null is returned.
-//
-Constant *llvm::ConstantFoldInstruction(Instruction *I) {
-  if (PHINode *PN = dyn_cast<PHINode>(I)) {
-    if (PN->getNumIncomingValues() == 0)
-      return Constant::getNullValue(PN->getType());
-    
-    Constant *Result = dyn_cast<Constant>(PN->getIncomingValue(0));
-    if (Result == 0) return 0;
-
-    // Handle PHI nodes specially here...
-    for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (PN->getIncomingValue(i) != Result)
-        return 0;   // Not all the same incoming constants...
-
-    // If we reach here, all incoming values are the same constant.
-    return Result;
-  }
-
-  Constant *Op0 = 0;
-  Constant *Op1 = 0;
-
-  if (I->getNumOperands() != 0) {    // Get first operand if it's a constant...
-    Op0 = dyn_cast<Constant>(I->getOperand(0));
-    if (Op0 == 0) return 0;          // Not a constant?, can't fold
-
-    if (I->getNumOperands() != 1) {  // Get second operand if it's a constant...
-      Op1 = dyn_cast<Constant>(I->getOperand(1));
-      if (Op1 == 0) return 0;        // Not a constant?, can't fold
-    }
-  }
-
-  if (isa<BinaryOperator>(I))
-    return ConstantExpr::get(I->getOpcode(), Op0, Op1);    
-
-  switch (I->getOpcode()) {
-  case Instruction::Cast:
-    return ConstantExpr::getCast(Op0, I->getType());
-  case Instruction::Shl:
-  case Instruction::Shr:
-    return ConstantExpr::getShift(I->getOpcode(), Op0, Op1);
-  case Instruction::GetElementPtr: {
-    std::vector<Constant*> IdxList;
-    IdxList.reserve(I->getNumOperands()-1);
-    if (Op1) IdxList.push_back(Op1);
-    for (unsigned i = 2, e = I->getNumOperands(); i != e; ++i)
-      if (Constant *C = dyn_cast<Constant>(I->getOperand(i)))
-        IdxList.push_back(C);
-      else
-        return 0;  // Non-constant operand
-    return ConstantExpr::getGetElementPtr(Op0, IdxList);
-  }
-  default:
-    return 0;
-  }
-}
-
 static unsigned getSize(const Type *Ty) {
   unsigned S = Ty->getPrimitiveSize();
   return S ? S : 8;  // Treat pointers at 8 bytes
