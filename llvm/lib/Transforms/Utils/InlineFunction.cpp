@@ -175,33 +175,77 @@ bool llvm::InlineFunction(CallSite CS) {
     InvokeDest->removePredecessor(II->getParent());
   }
 
+  // If we cloned in _exactly one_ basic block, and if that block ends in a
+  // return instruction, we splice the body of the inlined callee directly into
+  // the calling basic block.
+  if (Returns.size() == 1 && std::distance(FirstNewBlock, Caller->end()) == 1) {
+    // Move all of the instructions right before the call.
+    OrigBB->getInstList().splice(TheCall, FirstNewBlock->getInstList(),
+                                 FirstNewBlock->begin(), FirstNewBlock->end());
+    // Remove the cloned basic block.
+    Caller->getBasicBlockList().pop_back();
+    
+    // If the call site was an invoke instruction, add a branch to the normal
+    // destination.
+    if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall))
+      new BranchInst(II->getNormalDest(), TheCall);
+
+    // If the return instruction returned a value, replace uses of the call with
+    // uses of the returned value.
+    if (!TheCall->use_empty())
+      TheCall->replaceAllUsesWith(Returns[0]->getReturnValue());
+
+    // Since we are now done with the Call/Invoke, we can delete it.
+    TheCall->getParent()->getInstList().erase(TheCall);
+
+    // Since we are now done with the return instruction, delete it also.
+    Returns[0]->getParent()->getInstList().erase(Returns[0]);
+
+    // We are now done with the inlining.
+    return true;
+  }
+
+  // Otherwise, we have the normal case, of more than one block to inline or
+  // multiple return sites.
+
   // We want to clone the entire callee function into the hole between the
   // "starter" and "ender" blocks.  How we accomplish this depends on whether
   // this is an invoke instruction or a call instruction.
   BasicBlock *AfterCallBB;
   if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
-
+    
     // Add an unconditional branch to make this look like the CallInst case...
     BranchInst *NewBr = new BranchInst(II->getNormalDest(), TheCall);
-
+    
     // Split the basic block.  This guarantees that no PHI nodes will have to be
     // updated due to new incoming edges, and make the invoke case more
     // symmetric to the call case.
     AfterCallBB = OrigBB->splitBasicBlock(NewBr,
                                           CalledFunc->getName()+".entry");
-
-    // Remove (unlink) the InvokeInst from the function...
-    OrigBB->getInstList().remove(TheCall);
-
+    
   } else {  // It's a call
-    // If this is a call instruction, we need to split the basic block that the
-    // call lives in.
+    // If this is a call instruction, we need to split the basic block that
+    // the call lives in.
     //
     AfterCallBB = OrigBB->splitBasicBlock(TheCall,
                                           CalledFunc->getName()+".entry");
-    // Remove (unlink) the CallInst from the function...
-    AfterCallBB->getInstList().remove(TheCall);
   }
+
+  // Change the branch that used to go to AfterCallBB to branch to the first
+  // basic block of the inlined function.
+  //
+  TerminatorInst *Br = OrigBB->getTerminator();
+  assert(Br && Br->getOpcode() == Instruction::Br && 
+         "splitBasicBlock broken!");
+  Br->setOperand(0, FirstNewBlock);
+
+
+  // Now that the function is correct, make it a little bit nicer.  In
+  // particular, move the basic blocks inserted from the end of the function
+  // into the space made by splitting the source basic block.
+  //
+  Caller->getBasicBlockList().splice(AfterCallBB, Caller->getBasicBlockList(),
+                                     FirstNewBlock, Caller->end());
 
   // Handle all of the return instructions that we just cloned in, and eliminate
   // any users of the original call/invoke instruction.
@@ -213,74 +257,60 @@ bool llvm::InlineFunction(CallSite CS) {
     if (!TheCall->use_empty()) {
       PHI = new PHINode(CalledFunc->getReturnType(),
                         TheCall->getName(), AfterCallBB->begin());
-      
+        
       // Anything that used the result of the function call should now use the
       // PHI node as their operand.
       //
       TheCall->replaceAllUsesWith(PHI);
     }
-
+      
     // Loop over all of the return instructions, turning them into unconditional
     // branches to the merge point now, and adding entries to the PHI node as
     // appropriate.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
       ReturnInst *RI = Returns[i];
-
+        
       if (PHI) {
         assert(RI->getReturnValue() && "Ret should have value!");
         assert(RI->getReturnValue()->getType() == PHI->getType() && 
                "Ret value not consistent in function!");
         PHI->addIncoming(RI->getReturnValue(), RI->getParent());
       }
-
+        
       // Add a branch to the merge point where the PHI node lives if it exists.
       new BranchInst(AfterCallBB, RI);
-      
+        
       // Delete the return instruction now
       RI->getParent()->getInstList().erase(RI);
     }
-    
+      
   } else if (!Returns.empty()) {
     // Otherwise, if there is exactly one return value, just replace anything
     // using the return value of the call with the computed value.
     if (!TheCall->use_empty())
       TheCall->replaceAllUsesWith(Returns[0]->getReturnValue());
-
+      
     // Add a branch to the merge point where the PHI node lives if it exists.
     new BranchInst(AfterCallBB, Returns[0]);
-
+      
     // Delete the return instruction now
     Returns[0]->getParent()->getInstList().erase(Returns[0]);
   }
-
+    
   // Since we are now done with the Call/Invoke, we can delete it.
-  delete TheCall;
-
-  // Change the branch that used to go to AfterCallBB to branch to the first
-  // basic block of the inlined function.
-  //
-  TerminatorInst *Br = OrigBB->getTerminator();
-  assert(Br && Br->getOpcode() == Instruction::Br && 
-	 "splitBasicBlock broken!");
-  Br->setOperand(0, FirstNewBlock);
-
-  // Now that the function is correct, make it a little bit nicer.  In
-  // particular, move the basic blocks inserted from the end of the function
-  // into the space made by splitting the source basic block.
-  //
-  Caller->getBasicBlockList().splice(AfterCallBB, Caller->getBasicBlockList(), 
-                                     FirstNewBlock, Caller->end());
+  TheCall->getParent()->getInstList().erase(TheCall);
 
   // We should always be able to fold the entry block of the function into the
   // single predecessor of the block...
-  assert(cast<BranchInst>(Br)->isUnconditional() && "splitBasicBlock broken!");
+  assert(cast<BranchInst>(Br)->isUnconditional() &&"splitBasicBlock broken!");
   BasicBlock *CalleeEntry = cast<BranchInst>(Br)->getSuccessor(0);
   SimplifyCFG(CalleeEntry);
-  
+    
   // Okay, continue the CFG cleanup.  It's often the case that there is only a
   // single return instruction in the callee function.  If this is the case,
   // then we have an unconditional branch from the return block to the
   // 'AfterCallBB'.  Check for this case, and eliminate the branch is possible.
   SimplifyCFG(AfterCallBB);
+
   return true;
 }
