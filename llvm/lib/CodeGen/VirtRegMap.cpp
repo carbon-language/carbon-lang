@@ -449,7 +449,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
         std::map<int, MachineInstr*>::iterator MDSI = MaybeDeadStores.find(SS);
         if (MDSI != MaybeDeadStores.end()) {
           if (MR & VirtRegMap::isRef)   // Previous store is not dead.
-            MaybeDeadStores.erase(SS);
+            MaybeDeadStores.erase(MDSI);
           else {
             // If we get here, the store is dead, nuke it now.
             assert(MR == VirtRegMap::isMod && "Can't be modref!");
