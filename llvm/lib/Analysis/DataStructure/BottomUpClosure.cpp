@@ -15,10 +15,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/DataStructure/DataStructure.h"
+#include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
-#include "DSCallSiteIterator.h"
 using namespace llvm;
 
 namespace {
@@ -29,8 +29,6 @@ namespace {
   RegisterAnalysis<BUDataStructures>
   X("budatastructure", "Bottom-up Data Structure Analysis");
 }
-
-using namespace DS;
 
 // run - Calculate the bottom up data structure graphs for each function in the
 // program.
@@ -125,6 +123,45 @@ DSGraph &BUDataStructures::getOrCreateGraph(Function *F) {
   return *Graph;
 }
 
+static bool isVAHackFn(const Function *F) {
+  return F->getName() == "printf"  || F->getName() == "sscanf" ||
+    F->getName() == "fprintf" || F->getName() == "open" ||
+    F->getName() == "sprintf" || F->getName() == "fputs" ||
+    F->getName() == "fscanf";
+}
+
+static bool isResolvableFunc(const Function* callee) {
+  return !callee->isExternal() || isVAHackFn(callee);
+}
+
+static void GetAllCallees(const DSCallSite &CS, 
+                          std::vector<Function*> &Callees) {
+  if (CS.isDirectCall()) {
+    if (isResolvableFunc(CS.getCalleeFunc()))
+      Callees.push_back(CS.getCalleeFunc());
+  } else if (!CS.getCalleeNode()->isIncomplete()) {
+    // Get all callees.
+    unsigned OldSize = Callees.size();
+    CS.getCalleeNode()->addFullFunctionList(Callees);
+    
+    // If any of the callees are unresolvable, remove the whole batch!
+    for (unsigned i = OldSize, e = Callees.size(); i != e; ++i)
+      if (!isResolvableFunc(Callees[i])) {
+        Callees.erase(Callees.begin()+OldSize, Callees.end());
+        return;
+      }
+  }
+}
+
+
+/// GetAllAuxCallees - Return a list containing all of the resolvable callees in
+/// the aux list for the specified graph in the Callees vector.
+static void GetAllAuxCallees(DSGraph &G, std::vector<Function*> &Callees) {
+  Callees.clear();
+  for (DSGraph::afc_iterator I = G.afc_begin(), E = G.afc_end(); I != E; ++I)
+    GetAllCallees(*I, Callees);
+}
+
 unsigned BUDataStructures::calculateGraphs(Function *F,
                                            std::vector<Function*> &Stack,
                                            unsigned &NextID, 
@@ -146,10 +183,13 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
 
   DSGraph &Graph = getOrCreateGraph(F);
 
+  // Find all callee functions.
+  std::vector<Function*> CalleeFunctions;
+  GetAllAuxCallees(Graph, CalleeFunctions);
+
   // The edges out of the current node are the call site targets...
-  for (DSCallSiteIterator I = DSCallSiteIterator::begin_aux(Graph),
-         E = DSCallSiteIterator::end_aux(Graph); I != E; ++I) {
-    Function *Callee = *I;
+  for (unsigned i = 0, e = CalleeFunctions.size(); i != e; ++i) {
+    Function *Callee = CalleeFunctions[i];
     unsigned M;
     // Have we visited the destination function yet?
     hash_map<Function*, unsigned>::iterator It = ValMap.find(Callee);
@@ -178,8 +218,10 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
 
     if (MaxSCC < 1) MaxSCC = 1;
 
-    // Should we revisit the graph?
-    if (DSCallSiteIterator::begin_aux(G) != DSCallSiteIterator::end_aux(G)) {
+    // Should we revisit the graph?  Only do it if there are now new resolvable
+    // callees.
+    GetAllAuxCallees(Graph, CalleeFunctions);
+    if (!CalleeFunctions.empty()) {
       ValMap.erase(F);
       return calculateGraphs(F, Stack, NextID, ValMap);
     } else {
@@ -278,20 +320,6 @@ void BUDataStructures::releaseMemory() {
   GlobalsGraph = 0;
 }
 
-static bool isVAHackFn(const Function *F) {
-  return F->getName() == "printf"  || F->getName() == "sscanf" ||
-    F->getName() == "fprintf" || F->getName() == "open" ||
-    F->getName() == "sprintf" || F->getName() == "fputs" ||
-    F->getName() == "fscanf";
-}
-
-// isUnresolvableFunction - Return true if this is an unresolvable
-// external function.  A direct or indirect call to this cannot be resolved.
-// 
-static bool isResolvableFunc(const Function* callee) {
-  return !callee->isExternal() || isVAHackFn(callee);
-}
-
 void BUDataStructures::calculateGraph(DSGraph &Graph) {
   // Move our call site list into TempFCs so that inline call sites go into the
   // new call site list and doesn't invalidate our iterators!
@@ -313,26 +341,12 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
     if (CS.getRetVal().isNull() && CS.getNumPtrArgs() == 0) {
       TempFCs.erase(TempFCs.begin());
       continue;
+    } else if (CS.isDirectCall() && isVAHackFn(CS.getCalleeFunc())) {
+      TempFCs.erase(TempFCs.begin());
+      continue;
     }
 
-    if (CS.isDirectCall()) {
-      Function *F = CS.getCalleeFunc();
-      if (isResolvableFunc(F))
-        if (F->isExternal()) {  // Call to fprintf, etc.
-          TempFCs.erase(TempFCs.begin());
-          continue;
-        } else {
-          CalledFuncs.push_back(F);
-        }
-    } else {
-      DSNode *Node = CS.getCalleeNode();
-
-      if (!Node->isIncomplete())
-        for (unsigned i = 0, e = Node->getGlobals().size(); i != e; ++i)
-          if (Function *CF = dyn_cast<Function>(Node->getGlobals()[i]))
-            if (isResolvableFunc(CF) && !CF->isExternal())
-              CalledFuncs.push_back(CF);
-    }
+    GetAllCallees(CS, CalledFuncs);
 
     if (CalledFuncs.empty()) {
       // Remember that we could not resolve this yet!
