@@ -100,7 +100,7 @@ public:
   /// function point to...
   ///
   ScalarMapTy &getScalarMap() { return ScalarMap; }
-  const ScalarMapTy &getScalarMap() const {return ScalarMap;}
+  const ScalarMapTy &getScalarMap() const { return ScalarMap; }
 
   /// getFunctionCalls - Return the list of call sites in the original local
   /// graph...
