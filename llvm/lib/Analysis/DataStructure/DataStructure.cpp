@@ -1039,12 +1039,29 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
 
   // Mark all nodes reachable by (non-global) scalar nodes as alive...
   for (hash_map<Value*, DSNodeHandle>::iterator I = ScalarMap.begin(),
-         E = ScalarMap.end(); I != E; ++I)
-    if (!isa<GlobalValue>(I->first))
-      I->second.getNode()->markReachableNodes(Alive);
-    else {                   // Keep track of global nodes
-      GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
+         E = ScalarMap.end(); I != E; )
+    if (isa<GlobalValue>(I->first)) {             // Keep track of global nodes
       assert(I->second.getNode() && "Null global node?");
+      GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
+      ++I;
+    } else {
+      // Check to see if this is a worthless node generated for non-pointer
+      // values, such as integers.  Consider an addition of long types: A+B.
+      // Assuming we can track all uses of the value in this context, and it is
+      // NOT used as a pointer, we can delete the node.  We will be able to
+      // detect this situation if the node pointed to ONLY has Unknown bit set
+      // in the node.  In this case, the node is not incomplete, does not point
+      // to any other nodes (no mod/ref bits set), and is therefore
+      // uninteresting for data structure analysis.  If we run across one of
+      // these, prune the scalar pointing to it.
+      //
+      DSNode *N = I->second.getNode();
+      if (N->NodeType == DSNode::UnknownNode && !isa<Argument>(I->first)) {
+        ScalarMap.erase(I++);
+      } else {
+        I->second.getNode()->markReachableNodes(Alive);
+        ++I;
+      }
     }
 
   // The return value is alive as well...
