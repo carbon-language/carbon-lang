@@ -31,7 +31,7 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
 GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   GenericValue Result;
 
-  if (ConstantExpr *CE = (ConstantExpr*)dyn_cast<ConstantExpr>(C))
+  if (ConstantExpr *CE = const_cast<ConstantExpr*>(dyn_cast<ConstantExpr>(C)))
     switch (CE->getOpcode()) {
     case Instruction::GetElementPtr: {
       Result = getConstantValue(cast<Constant>(CE->getOperand(0)));
