@@ -29,7 +29,7 @@ namespace {
 #include "llvm/Instruction.def"
 
   class InstCount : public FunctionPass, public InstVisitor<InstCount> {
-    friend struct InstVisitor<InstCount>;
+    friend class InstVisitor<InstCount>;
 
     void visitFunction  (Function &F) { ++TotalFuncs; }
     void visitBasicBlock(BasicBlock &BB) { ++TotalBlocks; }

@@ -70,12 +70,13 @@ class AllocationInst;
 
 
 template<typename SubClass, typename RetTy=void>
-struct InstVisitor {
+class InstVisitor {
   //===--------------------------------------------------------------------===//
   // Interface code - This is the public interface of the InstVisitor that you
   // use to visit instructions...
   //
 
+public:
   // Generic visit method - Allow visitation to all instructions in a range
   template<class Iterator>
   void visit(Iterator Start, Iterator End) {
