@@ -109,8 +109,11 @@ void FunctionModRefInfo::computeModRef(const Function &func)
 //
 // NOTE: Because this clones a dsgraph and returns it, the caller is responsible
 //       for deleting the returned graph!
+// NOTE: This method may return a null pointer if it is unable to determine the
+//       requested information (because the call site calls an external
+//       function or we cannot determine the complete set of functions invoked).
 //
-DSGraph *FunctionModRefInfo::ResolveCallSiteModRefInfo(const CallInst &CI,
+DSGraph *FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
                                std::map<const DSNode*, DSNodeHandle> &NodeMap) {
 
   // Step #1: Clone the top-down graph...
@@ -126,8 +129,46 @@ DSGraph *FunctionModRefInfo::ResolveCallSiteModRefInfo(const CallInst &CI,
   // Step #2: Clear Mod/Ref information...
   Result->maskNodeTypes(~(DSNode::Modified | DSNode::Read));
 
+  // Step #3: clone the bottom up graphs for the callees into the caller graph
+  if (const Function *F = CI.getCalledFunction()) {
+    if (F->isExternal()) {
+      delete Result;
+      return 0;   // We cannot compute Mod/Ref info for this callsite...
+    }
 
-  
+    // Build up a DSCallSite for our invocation point here...
+
+    // If the call returns a value, make sure to merge the nodes...
+    DSNodeHandle RetVal;
+    if (DS::isPointerType(CI.getType()))
+      RetVal = Result->getNodeForValue(&CI);
+
+    // Populate the arguments list...
+    std::vector<DSNodeHandle> Args;
+    for (unsigned i = 1, e = CI.getNumOperands(); i != e; ++i)
+      if (DS::isPointerType(CI.getOperand(i)->getType()))
+        Args.push_back(Result->getNodeForValue(CI.getOperand(i)));
+
+    // Build the call site...
+    DSCallSite CS(CI, RetVal, 0, Args);
+
+    // Perform the merging now of the graph for the callee, which will come with
+    // mod/ref bits set...
+    Result->mergeInGraph(CS, IPModRefObj.getBUDSGraph(*F),
+                         DSGraph::StripAllocaBit);
+
+  } else {
+    std::cerr << "IP Mod/Ref indirect call not implemented yet: "
+              << "Being conservative\n";
+    delete Result;
+    return 0;
+  }
+
+  // Remove trivial dead nodes... don't aggressively prune graph though... the
+  // graph is short lived anyway.
+  Result->removeTriviallyDeadNodes(false);
+
+  // Step #4: Return the clone + the mapping (by ref)
   return Result;
 }
 
@@ -145,7 +186,11 @@ FunctionModRefInfo::computeModRef(const CallInst& callInst)
 
   // Get a copy of the graph for the callee with the callee inlined
   std::map<const DSNode*, DSNodeHandle> NodeMap;
-  DSGraph* csgp = ResolveCallSiteModRefInfo(callInst, NodeMap);
+  DSGraph* csgp =
+    ResolveCallSiteModRefInfo(const_cast<CallInst&>(callInst), NodeMap);
+
+  assert(csgp && "FIXME: Cannot handle case where call site mod/ref info"
+         " is not available yet!");
 
   // For all nodes in the graph, extract the mod/ref information
   const std::vector<DSNode*>& csgNodes = csgp->getNodes();
@@ -209,7 +254,6 @@ void IPModRef::releaseMemory()
   funcToModRefInfoMap.clear();
 }
 
-
 // Run the "interprocedural" pass on each function.  This needs to do
 // NO real interprocedural work because all that has been done the
 // data structure analysis.
@@ -239,6 +283,14 @@ FunctionModRefInfo& IPModRef::getFuncInfo(const Function& func,
     }
   return *funcInfo;
 }
+
+/// getBUDSGraph - This method returns the BU data structure graph for F through
+/// the use of the BUDataStructures object.
+///
+const DSGraph &IPModRef::getBUDSGraph(const Function &F) {
+  return getAnalysis<BUDataStructures>().getDSGraph(F);
+}
+
 
 // getAnalysisUsage - This pass requires top-down data structure graphs.
 // It modifies nothing.
