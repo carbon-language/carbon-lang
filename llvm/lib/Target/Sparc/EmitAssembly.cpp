@@ -15,7 +15,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -23,7 +22,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/StringExtras.h"
-#include <iostream>
 using std::string;
 
 namespace {
@@ -110,16 +108,15 @@ public:
     toAsm << "\n";
   }
 
-  static std::string getValidSymbolName(const string &S) {
+  static string getValidSymbolName(const string &S) {
     string Result;
     
     // Symbol names in Sparc assembly language have these rules:
     // (a) Must match { letter | _ | . | $ } { letter | _ | . | $ | digit }*
     // (b) A name beginning in "." is treated as a local name.
-    // (c) Names beginning with "_" are reserved by ANSI C and shd not be used.
     // 
-    if (S[0] == '_' || isdigit(S[0]))
-      Result += "ll";
+    if (isdigit(S[0]))
+      Result = "ll";
     
     for (unsigned i = 0; i < S.size(); ++i)
       {
@@ -186,10 +183,9 @@ public:
 
   // ConstantExprToString() - Convert a ConstantExpr to an asm expression
   // and return this as a string.
-  std::string ConstantExprToString(const ConstantExpr* CE,
-                                   const TargetMachine& target) {
-    std::string S;
-
+  string ConstantExprToString(const ConstantExpr* CE,
+                              const TargetMachine& target) {
+    string S;
     switch(CE->getOpcode()) {
     case Instruction::GetElementPtr:
       { // generate a symbolic expression for the byte address
@@ -225,13 +221,13 @@ public:
   // valToExprString - Helper function for ConstantExprToString().
   // Appends result to argument string S.
   // 
-  std::string valToExprString(const Value* V, const TargetMachine& target) {
-    std::string S;
+  string valToExprString(const Value* V, const TargetMachine& target) {
+    string S;
     bool failed = false;
     if (const Constant* CV = dyn_cast<Constant>(V)) { // symbolic or known
 
       if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV))
-        S += std::string(CB == ConstantBool::True ? "1" : "0");
+        S += string(CB == ConstantBool::True ? "1" : "0");
       else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV))
         S += itostr(CI->getValue());
       else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV))
@@ -547,7 +543,7 @@ private:
   void PrintZeroBytesToPad      (int numBytes);
   void printSingleConstantValue (const Constant* CV);
   void printConstantValueOnly   (const Constant* CV, int numPadBytes = 0);
-  void printConstant            (const Constant* CV, std::string valID = "");
+  void printConstant            (const Constant* CV, string valID = "");
 
   static void FoldConstants     (const Module &M,
                                  hash_set<const Constant*> &moduleConstants);
