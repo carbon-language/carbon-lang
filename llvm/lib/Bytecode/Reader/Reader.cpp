@@ -168,7 +168,8 @@ bool BytecodeParser::ParseBasicBlock(const uchar *&Buf, const uchar *EndBuf,
 
   while (Buf < EndBuf) {
     Instruction *Inst;
-    if (ParseInstruction(Buf, EndBuf, Inst)) {
+    if (ParseInstruction(Buf, EndBuf, Inst,
+                         /*HACK*/BB)) {
       delete BB;
       return true;
     }

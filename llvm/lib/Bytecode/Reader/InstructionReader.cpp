@@ -116,7 +116,8 @@ bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf,
 
 
 bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
-				      Instruction *&Res) {
+				      Instruction *&Res,
+                                      BasicBlock *BB /*HACK*/) {
   RawInst Raw;
   if (ParseRawInst(Buf, EndBuf, Raw))
     return true;
@@ -388,9 +389,18 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     }
 
     if (Raw.Opcode == Instruction::Load) {
-      assert(MemAccessInst::getIndexedType(Raw.Ty, Idx) && 
-             "Bad indices for Load!");
-      Res = new LoadInst(getValue(Raw.Ty, Raw.Arg1), Idx);
+      Value *Src = getValue(Raw.Ty, Raw.Arg1);
+      if (!Idx.empty()) {
+        cerr << "WARNING: Bytecode contains load instruction with indices.  "
+             << "Replacing with getelementptr/load pair\n";
+        assert(MemAccessInst::getIndexedType(Raw.Ty, Idx) && 
+               "Bad indices for Load!");
+        Src = new GetElementPtrInst(Src, Idx);
+        // FIXME: Remove this compatibility code and the BB parameter to this
+        // method.
+        BB->getInstList().push_back(cast<Instruction>(Src));
+      }
+      Res = new LoadInst(Src);
     } else if (Raw.Opcode == Instruction::GetElementPtr)
       Res = new GetElementPtrInst(getValue(Raw.Ty, Raw.Arg1), Idx);
     else
@@ -429,10 +439,22 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
       break;
     }
 
-    const Type *ElType = StoreInst::getIndexedType(Raw.Ty, Idx);
-    if (ElType == 0) return true;
-    Res = new StoreInst(getValue(ElType, Raw.Arg1), getValue(Raw.Ty, Raw.Arg2),
-			Idx);
+    Value *Ptr = getValue(Raw.Ty, Raw.Arg2);
+    if (!Idx.empty()) {
+      cerr << "WARNING: Bytecode contains load instruction with indices.  "
+           << "Replacing with getelementptr/load pair\n";
+
+      const Type *ElType = StoreInst::getIndexedType(Raw.Ty, Idx);
+      if (ElType == 0) return true;
+
+      Ptr = new GetElementPtrInst(Ptr, Idx);
+      // FIXME: Remove this compatibility code and the BB parameter to this
+      // method.
+      BB->getInstList().push_back(cast<Instruction>(Ptr));
+    }
+
+    const Type *ValTy = cast<PointerType>(Ptr->getType())->getElementType();
+    Res = new StoreInst(getValue(ValTy, Raw.Arg1), Ptr);
     return false;
   }
   }  // end switch(Raw.Opcode) 

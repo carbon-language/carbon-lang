@@ -94,7 +94,8 @@ private:
   bool ParseSymbolTable   (const uchar *&Buf, const uchar *End, SymbolTable *);
   bool ParseMethod        (const uchar *&Buf, const uchar *End, Module *);
   bool ParseBasicBlock    (const uchar *&Buf, const uchar *End, BasicBlock *&);
-  bool ParseInstruction   (const uchar *&Buf, const uchar *End, Instruction *&);
+  bool ParseInstruction   (const uchar *&Buf, const uchar *End, Instruction *&,
+                           BasicBlock *BB /*HACK*/);
   bool ParseRawInst       (const uchar *&Buf, const uchar *End, RawInst &);
 
   bool ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
