@@ -88,14 +88,18 @@ ubyte *%test13(long %A) {
 }
 
 bool %test14(sbyte %A) {
-        %B = cast sbyte %A to ubyte
-        %X = setlt ubyte %B, 128   ; setge %A, 0
+        %c = cast sbyte %A to ubyte
+        %X = setlt ubyte %c, 128   ; setge %A, 0
         ret bool %X
 }
 
 bool %test15(ubyte %A) {
-        %B = cast ubyte %A to sbyte
-        %X = setlt sbyte %B, 0   ; setgt %A, 127
+        %c = cast ubyte %A to sbyte
+        %X = setlt sbyte %c, 0   ; setgt %A, 127
         ret bool %X
 }
 
+bool %test16(int* %P) {
+	%c = cast int* %P to bool  ;; setne P, null
+	ret bool %c
+}
