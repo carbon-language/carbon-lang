@@ -19,6 +19,7 @@
 #ifndef LLVM_BYTECODE_READER_H
 #define LLVM_BYTECODE_READER_H
 
+#include "llvm/System/Path.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Module.h"
 #include <string>
@@ -61,6 +62,15 @@ Module* ParseBytecodeBuffer(const unsigned char *Buffer,
 /// @brief Get the list of dependent libraries from a bytecode file.
 bool GetBytecodeDependentLibraries(const std::string &fileName, 
                                    Module::LibraryListType& deplibs);
+
+/// This function will read only the necessary parts of a bytecode file in order
+/// to obtain a list of externally visible global symbols that the bytecode
+/// module defines. This is used for archiving and linking when only the list 
+/// of symbols the module defines is needed.
+/// @returns true on success, false otherwise
+/// @brief Get a bytecode file's externally visibile defined global symbols.
+bool GetBytecodeSymbols(const sys::Path& fileName, 
+                        std::vector<std::string>& syms);
 
 /// Read bytecode files from the specfied archive (.a) file, convert them
 /// to Module* and provide them in the \p Objects argument. If an error
