@@ -36,7 +36,7 @@ ifdef ENABLE_SPARC_JIT
   JITLIBS  += sparc 
   ARCHLIBS += sched livevar instrument.a profpaths \
               bcwriter transforms.a ipo.a ipa.a datastructure.a regalloc \
-              select preopts
+              select
 endif
 
 USEDLIBS = lli-interpreter $(JITLIBS) $(ARCHLIBS) scalaropts analysis.a \
