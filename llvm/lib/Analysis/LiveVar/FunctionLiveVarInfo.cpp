@@ -114,7 +114,11 @@ bool MethodLiveVarInfo::doSingleBackwardPass()
 // performs live var anal for a method
 void MethodLiveVarInfo::analyze()        
 {
-
+  // Don't analyze the same method twice!
+  // Later, we need to add change notification here.
+  if (HasAnalyzed)
+    return;
+  
   if( DEBUG_LV) cout << "Analysing live variables ..." << endl;
 
   // create and initialize all the BBLiveVars of the CFG
