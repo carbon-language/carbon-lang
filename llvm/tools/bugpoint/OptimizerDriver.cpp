@@ -53,7 +53,7 @@ void BugDriver::EmitProgressBytecode(const std::string &ID, bool NoFlyer) {
   }
 
   std::cout << "Emitted bytecode to '" << Filename << "'\n";
-  if (NoFlyer) return;
+  if (NoFlyer || PassesToRun.empty()) return;
   std::cout << "\n*** You can reproduce the problem with: ";
 
   unsigned PassType = PassesToRun[0]->getPassType();
