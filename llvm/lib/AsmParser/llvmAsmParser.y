@@ -945,6 +945,9 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       ThrowException("Cannot make struct constant with type: '" + 
                      (*$1)->getDescription() + "'!");
 
+    if ($3->size() != STy->getNumContainedTypes())
+      ThrowException("Illegal number of initializers for structure type!");
+
     // Check to ensure that constants are compatible with the type initializer!
     for (unsigned i = 0, e = $3->size(); i != e; ++i)
       if ((*$3)[i]->getType() != STy->getElementTypes()[i])
@@ -955,6 +958,18 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     $$ = ConstantStruct::get(STy, *$3);
     delete $1; delete $3;
+  }
+  | Types '{' '}' {
+    const StructType *STy = dyn_cast<const StructType>($1->get());
+    if (STy == 0)
+      ThrowException("Cannot make struct constant with type: '" + 
+                     (*$1)->getDescription() + "'!");
+
+    if (STy->getNumContainedTypes() != 0)
+      ThrowException("Illegal number of initializers for structure type!");
+
+    $$ = ConstantStruct::get(STy, std::vector<Constant*>());
+    delete $1;
   }
   | Types NULL_TOK {
     const PointerType *PTy = dyn_cast<const PointerType>($1->get());
