@@ -218,13 +218,26 @@ that you should know about.<p>
 <a name="inspection">Basic Inspection and Traversal Routines</a>
 </b></font></td></tr></table><ul>
 
+The LLVM compiler infrastructure have many different data structures that may be
+traversed.  Following the example of the C++ standard template library, the
+techniques used to traverse these various data structures are all basically the
+same.  For a enumerable sequence of values, the <tt>XXXbegin()</tt> function (or
+method) returns an iterator to the start of the sequence, the <tt>XXXend()</tt>
+function returns an iterator pointing to one past the last valid element of the
+sequence, and there is some <tt>XXXiterator</tt> data type that is common
+between the two operations.<p>
 
-<!-- LLVM has heirarchical representation: Module, Function, BasicBlock,
-Instruction.  Common patterns for all levels. -->
+Because the pattern for iteration is common across many different aspects of the
+program representation, the standard template library algorithms may be used on
+them, and it is easier to remember how to iterate.  First we show a few common
+examples of the data structures that need to be traversed.  Other data
+structures are traversed in very similar ways.<p>
+
 
 <!-- _______________________________________________________________________ -->
-</ul><h4><a name="iterate_function"><hr size=0>Iterating over the
-<tt>BasicBlock</tt>s in a <tt>Function</tt> </h4><ul>
+</ul><h4><a name="iterate_function"><hr size=0>Iterating over the <a
+href="#BasicBlock"><tt>BasicBlock</tt></a>s in a <a
+href="#Function"><tt>Function</tt></a> </h4><ul>
 
 It's quite common to have a <tt>Function</tt> instance that you'd like
 to transform in some way; in particular, you'd like to manipulate its
@@ -253,8 +266,9 @@ classes.  In the above code, the expression <tt>i->size()</tt> is
 exactly equivalent to <tt>(*i).size()</tt> just like you'd expect.
 
 <!-- _______________________________________________________________________ -->
-</ul><h4><a name="iterate_basicblock"><hr size=0>Iterating over the
-<tt>Instruction</tt>s in a <tt>BasicBlock</tt> </h4><ul>
+</ul><h4><a name="iterate_basicblock"><hr size=0>Iterating over the <a
+href="#Instruction"><tt>Instruction</tt></a>s in a <a
+href="#BasicBlock"><tt>BasicBlock</tt></a> </h4><ul>
 
 Just like when dealing with <tt>BasicBlock</tt>s in
 <tt>Function</tt>s, it's easy to iterate over the individual
@@ -263,10 +277,10 @@ that prints out each instruction in a <tt>BasicBlock</tt>:
 
 <pre>
   // blk is a pointer to a BasicBlock instance
-  for(BasicBlock::iterator i = blk-&gt;begin(), e = blk-&gt;end(); i != e; ++i) {
+  for(BasicBlock::iterator i = blk-&gt;begin(), e = blk-&gt;end(); i != e; ++i)
      // the next statement works since operator&lt;&lt;(ostream&amp;,...) 
      // is overloaded for Instruction&amp;
-     cerr &lt;&lt; *i &lt;&lt; endl;
+     cerr &lt;&lt; *i &lt;&lt; "\n";
 </pre>
 
 However, this isn't really the best way to print out the contents of a
@@ -281,21 +295,23 @@ the pointer value you might expect.  This is a deprecated interface that will
 be removed in the future, so it's best not to depend on it.  To print out the
 pointer value for now, you must cast to <tt>void*</tt>.<p>
 
+
 <!-- _______________________________________________________________________ -->
-</ul><h4><a name="iterate_institer"><hr size=0>Iterating over the
-<tt>Instruction</tt>s in a <tt>Function</tt></h4><ul>
+</ul><h4><a name="iterate_institer"><hr size=0>Iterating over the <a
+href="#Instruction"><tt>Instruction</tt></a>s in a <a
+href="#Function"><tt>Function</tt></a></h4><ul>
 
 If you're finding that you commonly iterate over a <tt>Function</tt>'s
 <tt>BasicBlock</tt>s and then that <tt>BasicBlock</tt>'s
 <tt>Instruction</tt>s, <tt>InstIterator</tt> should be used instead.
-You'll need to include <tt>llvm/Support/InstIterator.h</tt>, and then
+You'll need to include <a href="/doxygen/InstIterator_8h-source.html"><tt>llvm/Support/InstIterator.h</tt></a>, and then
 instantiate <tt>InstIterator</tt>s explicitly in your code.  Here's a
 small example that shows how to dump all instructions in a function to
 stderr (<b>Note:</b> Dereferencing an <tt>InstIterator</tt> yields an
 <tt>Instruction*</tt>, <i>not</i> an <tt>Instruction&amp</tt>!):
 
 <pre>
-#include "llvm/Support/InstIterator.h"
+#include "<a href="/doxygen/InstIterator_8h-source.html">llvm/Support/InstIterator.h</a>"
 ...
 // Suppose F is a ptr to a function
 for(inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
@@ -352,7 +368,7 @@ still need the following in order for things to work properly:
 
 <pre>
 BasicBlock::iterator bbi = ...;
-BranchInst* b = dyn_cast&lt;BranchInst&gt;(&amp*bbi);
+<a href="#BranchInst">BranchInst</a>* b = <a href="#isa">dyn_cast</a>&lt;<a href="#BranchInst">BranchInst</a>&gt;(&amp;*bbi);
 </pre>
 
 It's also possible to turn a class pointer into the corresponding
@@ -366,7 +382,7 @@ over some structure:
 void printNextInstruction(Instruction* inst) {
     BasicBlock::iterator it(inst);
     ++it; // after this line, it refers to the instruction after *inst.
-    if(it != inst-&gt;getParent()->end()) cerr &lt;&lt *it &lt;&lt endl;
+    if(it != inst-&gt;getParent()->end()) cerr &lt;&lt; *it &lt;&lt; "\n";
 }
 </pre>
 Of course, this example is strictly pedagogical, because it'd be much
@@ -411,10 +427,10 @@ class OurFunctionPass : public FunctionPass {
   public:
     OurFunctionPass(): callCounter(0) { }
 
-    virtual runOnFunction(Function&amp F) {
+    virtual runOnFunction(Function&amp; F) {
  	for(Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
  	    for(BasicBlock::iterator i = b-&gt;begin(); ie = b-&gt;end(); i != ie; ++i) {
- 		if(CallInst* callInst = dyn_cast<CallInst>(&amp;*inst)) {
+ 		if (<a href="#CallInst">CallInst</a>* callInst = dyn_cast&lt;<a href="#CallInst">CallInst</a>&gt;(&amp;*inst)) {
  		    // we know we've encountered a call instruction, so we
  		    // need to determine if it's a call to the
 	            // function pointed to by m_func or not.
@@ -1280,6 +1296,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Mon Sep  9 11:29:35 CDT 2002
+Last modified: Mon Sep  9 14:56:55 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
