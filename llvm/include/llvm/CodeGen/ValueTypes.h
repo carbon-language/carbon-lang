@@ -49,6 +49,22 @@ namespace MVT {  // MVT = Machine Value Types
   static inline bool isFloatingPoint(ValueType VT) {
     return VT >= f32 && VT <= f128;
   }
+
+  static inline unsigned getSizeInBits(ValueType VT) {
+    switch (VT) {
+    default: assert(0 && "ValueType has no known size!");
+    case MVT::i1  : return 1;
+    case MVT::i8  : return 8;
+    case MVT::i16 : return 16;
+    case MVT::f32 :
+    case MVT::i32 : return 32;
+    case MVT::f64 :
+    case MVT::i64 : return 64;
+    case MVT::f80 : return 80;
+    case MVT::f128:
+    case MVT::i128: return 128;
+    }
+  }
 };
 
 } // End llvm namespace
