@@ -685,6 +685,7 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
           CE1->getType()->isLosslesslyConvertibleTo(CE1Op0->getType()))
         return evaluateRelation(CE1Op0,
                                 Constant::getNullValue(CE1Op0->getType()));
+      break;
 
     case Instruction::GetElementPtr:
       // Ok, since this is a getelementptr, we know that the constant has a
