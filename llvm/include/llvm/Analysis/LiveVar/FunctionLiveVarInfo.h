@@ -68,19 +68,19 @@
 static const int DEBUG_LV = 0;
 
 #include "llvm/Pass.h"
+#include "llvm/Analysis/LiveVar/ValueSet.h"
 class BBLiveVar;
 class MachineInstr;
-class LiveVarSet;
 
 class MethodLiveVarInfo : public MethodPass {
   // A map between the BasicBlock and BBLiveVar
   std::map<const BasicBlock *, BBLiveVar *> BB2BBLVMap;  
 
   // Machine Instr to LiveVarSet Map for providing LVset BEFORE each inst
-  std::map<const MachineInstr *, const LiveVarSet *> MInst2LVSetBI; 
+  std::map<const MachineInstr *, const ValueSet *> MInst2LVSetBI; 
 
   // Machine Instr to LiveVarSet Map for providing LVset AFTER each inst
-  std::map<const MachineInstr *, const LiveVarSet *> MInst2LVSetAI; 
+  std::map<const MachineInstr *, const ValueSet *> MInst2LVSetAI; 
 
 
   // --------- private methods -----------------------------------------
@@ -119,18 +119,18 @@ public:
   // --------- Functions to access analysis results -------------------
 
   // gets OutSet of a BB
-  const LiveVarSet *getOutSetOfBB(const BasicBlock *BB) const;
+  const ValueSet *getOutSetOfBB(const BasicBlock *BB) const;
 
   // gets InSet of a BB
-  const LiveVarSet *getInSetOfBB(const BasicBlock *BB) const;
+  const ValueSet *getInSetOfBB(const BasicBlock *BB) const;
 
   // gets the Live var set BEFORE an instruction
-  const LiveVarSet *getLiveVarSetBeforeMInst(const MachineInstr *MI,
-					      const BasicBlock *BB);
+  const ValueSet *getLiveVarSetBeforeMInst(const MachineInstr *MI,
+                                           const BasicBlock *BB);
 
   // gets the Live var set AFTER an instruction
-  const LiveVarSet *getLiveVarSetAfterMInst(const MachineInstr *MI,
-                                            const BasicBlock *BB);
+  const ValueSet *getLiveVarSetAfterMInst(const MachineInstr *MI,
+                                          const BasicBlock *BB);
 };
 
 #endif

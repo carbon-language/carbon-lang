@@ -39,7 +39,6 @@ cl::Enum<enum SchedDebugLevel_t> SchedDebugLevel("dsched", cl::NoFlags,
 
 class InstrSchedule;
 class SchedulingManager;
-class DelaySlotInfo;
 
 
 //----------------------------------------------------------------------

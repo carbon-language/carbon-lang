@@ -1,10 +1,3 @@
-/* Title:   ValueSet.h   -*- C++ -*-
-   Author:  Ruchira Sasanka
-   Date:    Jun 30, 01
-   Purpose: Contains a mathematical set of Values. LiveVarSet is derived from
-            this. Contains both class and method definitions.
-*/
-
 #ifndef VALUE_SET_H
 #define VALUE_SET_H
 
@@ -20,15 +13,42 @@ struct RAV {  // Register Allocator Value
 ostream &operator<<(ostream &out, RAV Val);
 
 
-//------------------- Class Definition for ValueSet --------------------------
+typedef std::set<const Value*> ValueSet;
+void printSet(const ValueSet &S);
 
-struct ValueSet : public std::set<const Value*> {
-  bool setUnion( const ValueSet *const set1);     // for performing set union
-  void setSubtract( const ValueSet *const set1);  // for performing set diff
- 
-  void setDifference( const ValueSet *const set1, const ValueSet *const set2); 
- 
-  void printSet() const;                // for printing a live variable set
-};
+
+// set_union(A, B) - Compute A := A u B, return whether A changed.
+//
+template <class E>
+bool set_union(std::set<E> &S1, const std::set<E> &S2) {   
+  bool Changed = false;
+
+  for (std::set<E>::const_iterator SI = S2.begin(), SE = S2.end();
+       SI != SE; ++SI)
+    if (S1.insert(*SI).second)
+      Changed = true;
+
+  return Changed;
+}
+
+// set_difference(A, B) - Return A - B
+//
+template <class E>
+std::set<E> set_difference(const std::set<E> &S1, const std::set<E> &S2) {
+  std::set<E> Result;
+  for (std::set<E>::const_iterator SI = S1.begin(), SE = S1.end();
+       SI != SE; ++SI)
+    if (S2.find(*SI) == S2.end())       // if the element is not in set2
+      Result.insert(*SI);
+  return Result;
+}
+
+// set_subtract(A, B) - Compute A := A - B
+//
+template <class E>
+void set_subtract(std::set<E> &S1, const std::set<E> &S2) { 
+  for (std::set<E>::const_iterator SI = S2.begin() ; SI != S2.end(); ++SI)  
+    S1.erase(*SI);
+}
 
 #endif

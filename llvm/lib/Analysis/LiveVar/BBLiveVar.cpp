@@ -126,9 +126,8 @@ bool BBLiveVar::applyTransferFunc() {
   // IMPORTANT: caller should check whether the OutSet changed 
   //           (else no point in calling)
 
-  LiveVarSet OutMinusDef;     // set to hold (Out[B] - Def[B])
-  OutMinusDef.setDifference(&OutSet, &DefSet);
-  InSetChanged = InSet.setUnion(&OutMinusDef);
+  ValueSet OutMinusDef = set_difference(OutSet, DefSet);
+  InSetChanged = set_union(InSet, OutMinusDef);
  
   OutSetChanged = false;      // no change to OutSet since transf func applied
   return InSetChanged;
@@ -139,12 +138,12 @@ bool BBLiveVar::applyTransferFunc() {
 // calculates Out set using In sets of the predecessors
 //-----------------------------------------------------------------------------
 
-bool BBLiveVar::setPropagate(LiveVarSet *OutSet, const LiveVarSet *InSet, 
+bool BBLiveVar::setPropagate(ValueSet *OutSet, const ValueSet *InSet, 
                              const BasicBlock *PredBB) {
   bool Changed = false;
 
   // for all all elements in InSet
-  for (LiveVarSet::const_iterator InIt = InSet->begin(), InE = InSet->end();
+  for (ValueSet::const_iterator InIt = InSet->begin(), InE = InSet->end();
        InIt != InE; ++InIt) {  
     const BasicBlock *PredBBOfPhiArg = PhiArgMap[*InIt];
 
@@ -194,14 +193,14 @@ bool BBLiveVar::applyFlowFunc(std::map<const BasicBlock *, BBLiveVar *> &LVMap){
 // ----------------- Methods For Debugging (Printing) -----------------
 
 void BBLiveVar::printAllSets() const {
-  cerr << "  Defs: ";   DefSet.printSet();  cerr << "\n";
-  cerr << "  In: ";   InSet.printSet();  cerr << "\n";
-  cerr << "  Out: ";   OutSet.printSet();  cerr << "\n";
+  cerr << "  Defs: "; printSet(DefSet);  cerr << "\n";
+  cerr << "  In: ";  printSet(InSet);  cerr << "\n";
+  cerr << "  Out: "; printSet(OutSet);  cerr << "\n";
 }
 
 void BBLiveVar::printInOutSets() const {
-  cerr << "  In: ";   InSet.printSet();  cerr << "\n";
-  cerr << "  Out: ";  OutSet.printSet();  cerr << "\n";
+  cerr << "  In: ";   printSet(InSet);  cerr << "\n";
+  cerr << "  Out: ";  printSet(OutSet);  cerr << "\n";
 }
 
 

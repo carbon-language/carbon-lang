@@ -20,10 +20,10 @@
 #define LIVE_RANGE_INFO_H
 
 #include "Support/HashExtras.h"
+#include "llvm/Analysis/LiveVar/ValueSet.h"
 
 class LiveRange;
 class MachineInstr;
-class LiveVarSet;
 class RegClass;
 class MachineRegInfo;
 class TargetMachine;
@@ -60,17 +60,15 @@ class LiveRangeInfo {
 
   void unionAndUpdateLRs(LiveRange *L1, LiveRange *L2);
 
-  void addInterference(const Instruction *const Inst, 
-		       const LiveVarSet *const LVSet);
+  void addInterference(const Instruction *Inst, const ValueSet *LVSet);
   
   void suggestRegs4CallRets();
 
   const Method* getMethod() { return Meth; }
 
-
 public:
   
-  LiveRangeInfo(const Method *const M, 
+  LiveRangeInfo(const Method *M, 
 		const TargetMachine& tm,
 		std::vector<RegClass *> & RCList);
 

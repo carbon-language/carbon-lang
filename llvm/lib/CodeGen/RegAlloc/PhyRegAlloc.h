@@ -98,15 +98,15 @@ private:
 
   //------- ------------------ private methods---------------------------------
 
-  void addInterference(const Value *const Def, const LiveVarSet *const LVSet, 
-		       const bool isCallInst);
+  void addInterference(const Value *Def, const ValueSet *LVSet, 
+		       bool isCallInst);
 
   void addInterferencesForArgs();
   void createIGNodeListsAndIGs();
   void buildInterferenceGraphs();
 
   void setCallInterferences(const MachineInstr *MInst, 
-			    const LiveVarSet *const LVSetAft );
+			    const ValueSet *LVSetAft );
 
   void move2DelayedInstr(const MachineInstr *OrigMI, 
 			 const MachineInstr *DelayedMI );
@@ -131,13 +131,13 @@ private:
   friend class UltraSparcRegInfo;
 
 
-  int getUsableUniRegAtMI(RegClass *RC,  const int RegType, 
+  int getUsableUniRegAtMI(RegClass *RC, int RegType, 
 			  const MachineInstr *MInst,
-			  const LiveVarSet *LVSetBef, MachineInstr *MIBef, 
+			  const ValueSet *LVSetBef, MachineInstr *MIBef, 
 			  MachineInstr *MIAft );
 
   int getUnusedUniRegAtMI(RegClass *RC,  const MachineInstr *MInst, 
-		       const LiveVarSet *LVSetBef);
+		       const ValueSet *LVSetBef);
 
   void setRelRegsUsedByThisInst(RegClass *RC, const MachineInstr *MInst );
   int getUniRegNotUsedByThisInst(RegClass *RC, const MachineInstr *MInst);

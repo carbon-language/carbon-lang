@@ -1,13 +1,9 @@
-/* Title:   MethodLiveVarInfo.cpp
-   Author:  Ruchira Sasanka
-   Date:    Jun 30, 01
-   Purpose: 
-
-   This is the interface for live variable info of a method that is required 
-   by any other part of the compiler.
-
-*/
-
+//===-- MethodLiveVarInfo.cpp - Live Variable Analysis for a Method -------===//
+//
+// This is the interface to method level live variable information that is
+// provided by live variable analysis.
+//
+//===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "BBLiveVar.h"
@@ -23,12 +19,12 @@ AnalysisID MethodLiveVarInfo::ID(AnalysisID::create<MethodLiveVarInfo>());
 //-----------------------------------------------------------------------------
 
 // gets OutSet of a BB
-const LiveVarSet *MethodLiveVarInfo::getOutSetOfBB(const BasicBlock *BB) const {
+const ValueSet *MethodLiveVarInfo::getOutSetOfBB(const BasicBlock *BB) const {
   return BB2BBLVMap.find(BB)->second->getOutSet();
 }
 
 // gets InSet of a BB
-const LiveVarSet *MethodLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
+const ValueSet *MethodLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
   return BB2BBLVMap.find(BB)->second->getInSet();
 }
 
@@ -125,16 +121,16 @@ void MethodLiveVarInfo::releaseMemory() {
 
   BB2BBLVMap.clear();
 
-  // Then delete all objects of type LiveVarSet created in calcLiveVarSetsForBB
+  // Then delete all objects of type ValueSet created in calcLiveVarSetsForBB
   // and entered into  MInst2LVSetBI and  MInst2LVSetAI (these are caches
-  // to return LiveVarSet's before/after a machine instruction quickly). It
-  // is sufficient to free up all LiveVarSet using only one cache since 
+  // to return ValueSet's before/after a machine instruction quickly). It
+  // is sufficient to free up all ValueSet using only one cache since 
   // both caches refer to the same sets
   //
-  for (std::map<const MachineInstr*, const LiveVarSet*>::iterator
+  for (std::map<const MachineInstr*, const ValueSet*>::iterator
          MI = MInst2LVSetBI.begin(),
          ME = MInst2LVSetBI.end(); MI != ME; ++MI)
-    delete MI->second;           // delete all LiveVarSets in  MInst2LVSetBI
+    delete MI->second;           // delete all ValueSets in  MInst2LVSetBI
 
   MInst2LVSetBI.clear();
   MInst2LVSetAI.clear();
@@ -158,10 +154,10 @@ void MethodLiveVarInfo::releaseMemory() {
 // Gives live variable information before a machine instruction
 //-----------------------------------------------------------------------------
 
-const LiveVarSet *
+const ValueSet *
 MethodLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MInst,
 					    const BasicBlock *BB) {
-  if (const LiveVarSet *LVSet = MInst2LVSetBI[MInst]) {
+  if (const ValueSet *LVSet = MInst2LVSetBI[MInst]) {
     return LVSet;                      // if found, just return the set
   } else { 
     calcLiveVarSetsForBB(BB);          // else, calc for all instrs in BB
@@ -173,11 +169,11 @@ MethodLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MInst,
 //-----------------------------------------------------------------------------
 // Gives live variable information after a machine instruction
 //-----------------------------------------------------------------------------
-const LiveVarSet * 
+const ValueSet * 
 MethodLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MI,
                                            const BasicBlock *BB) {
 
-  if (const LiveVarSet *LVSet = MInst2LVSetAI[MI]) {
+  if (const ValueSet *LVSet = MInst2LVSetAI[MI]) {
     return LVSet;                       // if found, just return the set
   } else { 
     calcLiveVarSetsForBB(BB);           // else, calc for all instrs in BB
@@ -185,7 +181,37 @@ MethodLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MI,
   }
 }
 
+// This function applies a machine instr to a live var set (accepts OutSet) and
+// makes necessary changes to it (produces InSet). Note that two for loops are
+// used to first kill all defs and then to add all uses. This is because there
+// can be instructions like Val = Val + 1 since we allow multipe defs to a 
+// machine instruction operand.
+//
+static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
+  for (MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done(); ++OpI) {
+    if (OpI.isDef())           // kill only if this operand is a def
+      LVS.insert(*OpI);        // this definition kills any uses
+  }
 
+  // do for implicit operands as well
+  for (unsigned i=0; i < MInst->getNumImplicitRefs(); ++i) {
+    if (MInst->implicitRefIsDefined(i))
+      LVS.erase(MInst->getImplicitRef(i));
+  }
+
+  for (MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done(); ++OpI) {
+    if (isa<BasicBlock>(*OpI)) continue; // don't process labels
+    
+    if (!OpI.isDef())      // add only if this operand is a use
+      LVS.insert(*OpI);            // An operand is a use - so add to use set
+  }
+
+  // do for implicit operands as well
+  for (unsigned i=0; i < MInst->getNumImplicitRefs(); ++i) {
+    if (!MInst->implicitRefIsDefined(i))
+      LVS.insert(MInst->getImplicitRef(i));
+  }
+}
 
 //-----------------------------------------------------------------------------
 // This method calculates the live variable information for all the 
@@ -196,9 +222,9 @@ MethodLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MI,
 void MethodLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
   const MachineCodeForBasicBlock &MIVec = BB->getMachineInstrVec();
 
-  LiveVarSet *CurSet = new LiveVarSet();
-  const LiveVarSet *SetAI = getOutSetOfBB(BB); // init SetAI with OutSet
-  CurSet->setUnion(SetAI);                     // CurSet now contains OutSet
+  ValueSet *CurSet = new ValueSet();
+  const ValueSet *SetAI = getOutSetOfBB(BB); // init SetAI with OutSet
+  set_union(*CurSet, *SetAI);                  // CurSet now contains OutSet
 
   // iterate over all the machine instructions in BB
   for (MachineCodeForBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
@@ -208,9 +234,9 @@ void MethodLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
 
     MInst2LVSetAI[MI] = SetAI;                 // record in After Inst map
 
-    CurSet->applyTranferFuncForMInst(MI);      // apply the transfer Func
-    LiveVarSet *NewSet = new LiveVarSet();     // create a new set and
-    NewSet->setUnion(CurSet);                  // copy the set after T/F to it
+    applyTranferFuncForMInst(*CurSet, MI);     // apply the transfer Func
+    ValueSet *NewSet = new ValueSet();     // create a new set and
+    set_union(*NewSet, *CurSet);               // copy the set after T/F to it
  
     MInst2LVSetBI[MI] = NewSet;                // record in Before Inst map
 

@@ -20,7 +20,7 @@
 
 #include "SchedPriorities.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
-#include "llvm/Analysis/LiveVar/LiveVarSet.h"
+#include "llvm/Analysis/LiveVar/ValueSet.h"
 #include "Support/PostOrderIterator.h"
 #include <iostream>
 using std::cerr;
@@ -265,8 +265,7 @@ SchedPriorities::findSetWithMaxDelay(std::vector<candIndex>& mcands,
 
 bool
 SchedPriorities::instructionHasLastUse(MethodLiveVarInfo& methodLiveVarInfo,
-				       const SchedGraphNode* graphNode)
-{
+				       const SchedGraphNode* graphNode) {
   const MachineInstr* minstr = graphNode->getMachineInstr();
   
   std::hash_map<const MachineInstr*, bool>::const_iterator
@@ -277,15 +276,14 @@ SchedPriorities::instructionHasLastUse(MethodLiveVarInfo& methodLiveVarInfo,
   // else check if instruction is a last use and save it in the hash_map
   bool hasLastUse = false;
   const BasicBlock* bb = graphNode->getBB();
-  const LiveVarSet* liveVars =
+  const ValueSet *liveVars =
     methodLiveVarInfo.getLiveVarSetBeforeMInst(minstr, bb);
   
   for (MachineInstr::val_const_op_iterator vo(minstr); ! vo.done(); ++vo)
-    if (liveVars->find(*vo) == liveVars->end())
-      {
-	hasLastUse = true;
-	break;
-      }
+    if (liveVars->find(*vo) == liveVars->end()) {
+      hasLastUse = true;
+      break;
+    }
   
   lastUseMap[minstr] = hasLastUse;
   return hasLastUse;

@@ -7,7 +7,7 @@
 #ifndef LIVE_VAR_BB_H
 #define LIVE_VAR_BB_H
 
-#include "llvm/Analysis/LiveVar/LiveVarSet.h"
+#include "llvm/Analysis/LiveVar/ValueSet.h"
 #include <map>
 class Method;
 class BasicBlock;
@@ -17,8 +17,8 @@ class BBLiveVar {
   const BasicBlock *BB;         // pointer to BasicBlock
   unsigned POID;                // Post-Order ID
 
-  LiveVarSet DefSet;            // Def set for LV analysis
-  LiveVarSet InSet, OutSet;     // In & Out for LV analysis
+  ValueSet DefSet;            // Def set for LV analysis
+  ValueSet InSet, OutSet;     // In & Out for LV analysis
   bool InSetChanged, OutSetChanged;   // set if the InSet/OutSet is modified
 
                                 // map that contains phi args->BB they came
@@ -26,8 +26,8 @@ class BBLiveVar {
   std::map<const Value *, const BasicBlock *> PhiArgMap;  
 
   // method to propogate an InSet to OutSet of a predecessor
-  bool setPropagate(LiveVarSet *OutSetOfPred, 
-                    const LiveVarSet *InSetOfThisBB,
+  bool setPropagate(ValueSet *OutSetOfPred, 
+                    const ValueSet *InSetOfThisBB,
                     const BasicBlock *PredBB);
 
   // To add an operand which is a def
@@ -50,8 +50,8 @@ class BBLiveVar {
   // calculates Out set using In sets of the predecessors
   bool applyFlowFunc(std::map<const BasicBlock *, BBLiveVar *> &LVMap);    
 
-  inline const LiveVarSet *getOutSet() const { return &OutSet; }
-  inline const LiveVarSet  *getInSet() const { return &InSet; }
+  inline const ValueSet *getOutSet() const { return &OutSet; }
+  inline const ValueSet  *getInSet() const { return &InSet; }
 
   void printAllSets() const;      // for printing Def/In/Out sets
   void printInOutSets() const;    // for printing In/Out sets
