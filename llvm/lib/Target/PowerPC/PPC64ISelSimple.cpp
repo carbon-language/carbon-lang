@@ -52,14 +52,14 @@ static inline TypeClass getClass(const Type *Ty) {
   case Type::ShortTyID:
   case Type::UShortTyID:  return cShort;     // Short operands are class #1
   case Type::IntTyID:
-  case Type::UIntTyID:
-  case Type::PointerTyID: return cInt;       // Ints and pointers are class #2
+  case Type::UIntTyID:    return cInt;       // Ints are class #2
 
   case Type::FloatTyID:   return cFP32;      // Single float is #3
   case Type::DoubleTyID:  return cFP64;      // Double Point is #4
 
+  case Type::PointerTyID:
   case Type::LongTyID:
-  case Type::ULongTyID:   return cLong;      // Longs are class #5
+  case Type::ULongTyID:   return cLong;      // Longs and pointers are class #5
   default:
     assert(0 && "Invalid type to getClass!");
     return cByte;  // not reached
@@ -606,9 +606,11 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     // Copy zero (null pointer) to the register.
     BuildMI(*MBB, IP, PPC::LI, 1, R).addSImm(0);
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
-    unsigned TmpReg = makeAnotherReg(GV->getType());
-    BuildMI(*MBB, IP, PPC::LD, 2, TmpReg).addGlobalAddress(GV).addReg(PPC::R2);
-    BuildMI(*MBB, IP, PPC::LWA, 2, R).addSImm(0).addReg(TmpReg);
+    static unsigned OpcodeTable[] = {
+      PPC::LBZ, PPC::LHZ, PPC::LWZ, PPC::LFS, PPC::LFD, PPC::LD
+    };
+    unsigned Opcode = OpcodeTable[getClassB(GV->getType())];
+    BuildMI(*MBB, IP, Opcode, 2, R).addGlobalAddress(GV).addReg(PPC::R2);
   } else {
     std::cerr << "Offending constant: " << *C << "\n";
     assert(0 && "Type not handled yet!");
