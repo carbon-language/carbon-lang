@@ -34,6 +34,13 @@ void __main(void) {
   /* Loop over all of the constructor records, calling each function pointer. */
   TorRec *R = __llvm_getGlobalCtors();
 
+  /* Recursively calling main is not legal C, but lots of people do it for
+   * testing stuff.  We might as well work for them.
+   */
+  static _Bool Initialized = 0;
+  if (Initialized) return;
+  Initialized = 1;
+
   /* Only register the global dtor handler if there is at least one global
    * dtor!
    */
