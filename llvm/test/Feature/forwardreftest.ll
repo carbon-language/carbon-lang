@@ -1,8 +1,8 @@
   %myty = type int 
   %myfn = type float (int,double,uint,short)
-  type int(%myfn)
+  type int(%myfn*)
   type int(int)
-  type int(int(int))
+  type int(int(int)*)
 
   %thisfuncty = type int (int) *
 implementation
