@@ -516,13 +516,13 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
     // Is there anything to check?
     if (GEP1Ops.size() > MinOperands) {
       for (unsigned i = FirstConstantOper; i != MaxOperands; ++i)
-        if (isa<Constant>(GEP1Ops[i]) && !isa<ConstantExpr>(GEP1Ops[i]) &&
+        if (isa<ConstantInt>(GEP1Ops[i]) &&
             !cast<Constant>(GEP1Ops[i])->isNullValue()) {
           // Yup, there's a constant in the tail.  Set all variables to
           // constants in the GEP instruction to make it suiteable for
           // TargetData::getIndexedOffset.
           for (i = 0; i != MaxOperands; ++i)
-            if (!isa<Constant>(GEP1Ops[i]) || isa<ConstantExpr>(GEP1Ops[i]))
+            if (!isa<ConstantInt>(GEP1Ops[i]))
               GEP1Ops[i] = Constant::getNullValue(GEP1Ops[i]->getType());
           // Okay, now get the offset.  This is the relative offset for the full
           // instruction.
