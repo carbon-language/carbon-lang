@@ -393,7 +393,7 @@ RObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(RObjs))
 #---------------------------------------------------------
 
 ifdef DIRS
-all install clean test bytecode ::
+all install clean test bytecode stripped-bytecode::
 	$(VERB) for dir in ${DIRS}; do \
 		if [ ! -f $$dir/Makefile ]; \
 		then \
@@ -411,8 +411,9 @@ install  :: $(addsuffix /.makeinstall , $(PARALLEL_DIRS))
 clean    :: $(addsuffix /.makeclean   , $(PARALLEL_DIRS))
 test     :: $(addsuffix /.maketest    , $(PARALLEL_DIRS))
 bytecode :: $(addsuffix /.makebytecode, $(PARALLEL_DIRS))
+stripped-bytecode :: $(addsuffix /.makestripped-bytecode, $(PARALLEL_DIRS))
 
-%/.makeall %/.makeinstall %/.makeclean %/.maketest %/.makebytecode:
+%/.makeall %/.makeinstall %/.makeclean %/.maketest %/.makebytecode %/.makestripped-bytecode:
 	$(VERB) if [ ! -f $(@D)/Makefile ]; \
 	then \
 		$(MKDIR) $(@D); \
@@ -423,7 +424,7 @@ endif
 
 # Handle directories that may or may not exist
 ifdef OPTIONAL_DIRS
-all install clean test bytecode ::
+all install clean test bytecode stripped-bytecode::
 	$(VERB) for dir in ${OPTIONAL_DIRS}; do \
 		if [ -d $(SourceDir)/$$dir ]; \
 		then\
