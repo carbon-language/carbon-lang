@@ -726,16 +726,25 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     } else {
       Tmp3 = LegalizeOp(Node->getOperand(2));    // memcpy/move = pointer, 
     }
-    SDOperand Tmp4, Tmp5;
-    
-    switch (getTypeAction(Node->getOperand(3).getValueType())) {  // uint
+
+    SDOperand Tmp4;
+    switch (getTypeAction(Node->getOperand(3).getValueType())) {
     case Expand: assert(0 && "Cannot expand this yet!");
     case Legal:
       Tmp4 = LegalizeOp(Node->getOperand(3));
-      Tmp5 = LegalizeOp(Node->getOperand(4));
       break;
     case Promote:
       Tmp4 = PromoteOp(Node->getOperand(3));
+      break;
+    }
+
+    SDOperand Tmp5;
+    switch (getTypeAction(Node->getOperand(4).getValueType())) {  // uint
+    case Expand: assert(0 && "Cannot expand this yet!");
+    case Legal:
+      Tmp5 = LegalizeOp(Node->getOperand(4));
+      break;
+    case Promote:
       Tmp5 = PromoteOp(Node->getOperand(4));
       break;
     }
