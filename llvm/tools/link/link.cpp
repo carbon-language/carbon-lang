@@ -18,6 +18,8 @@
 #include "Support/CommandLine.h"
 #include <fstream>
 #include <memory>
+#include <sys/types.h>     // For FileExists
+#include <sys/stat.h>
 
 
 cl::StringList InputFilenames("", "Load <arg> files, linking them together", 
@@ -28,14 +30,26 @@ cl::Flag   Verbose       ("v", "Print information about actions taken");
 cl::Flag   DumpAsm       ("d", "Print assembly as linked", cl::Hidden, false);
 cl::StringList LibPaths  ("L", "Specify a library search path", cl::ZeroOrMore);
 
+
+// FileExists - Return true if the specified string is an openable file...
+static inline bool FileExists(const string &FN) {
+  struct stat StatBuf;
+  return stat(FN.c_str(), &StatBuf) != -1;
+}
+
+// LoadFile - Read the specified bytecode file in and return it.  This routine
+// searches the link path for the specified file to try to find it...
+//
 static inline std::auto_ptr<Module> LoadFile(const string &FN) {
   string Filename = FN;
   string ErrorMessage;
 
   unsigned NextLibPathIdx = 0;
+  bool FoundAFile = false;
 
   while (1) {
     if (Verbose) cerr << "Loading '" << Filename << "'\n";
+    if (FileExists(Filename)) FoundAFile = true;
     Module *Result = ParseBytecodeFile(Filename, &ErrorMessage);
     if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
 
@@ -49,9 +63,16 @@ static inline std::auto_ptr<Module> LoadFile(const string &FN) {
     Filename = LibPaths[NextLibPathIdx++] + "/" + FN;
   }
 
-  cerr << "Could not locate bytecode file: '" << FN << "'\n";
+  if (FoundAFile)
+    cerr << "Bytecode file '" << FN << "' corrupt!  "
+         << "Use 'link -v ...' for more info.\n";
+  else
+    cerr << "Could not locate bytecode file: '" << FN << "'\n";
   return std::auto_ptr<Module>();
 }
+
+
+
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker\n",
