@@ -30,8 +30,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OPT_CONSTANTHANDLING_H
-#define LLVM_OPT_CONSTANTHANDLING_H
+#ifndef LLVM_CONSTANTHANDLING_H
+#define LLVM_CONSTANTHANDLING_H
 
 #include "llvm/ConstantVals.h"
 #include "llvm/Instruction.h"
