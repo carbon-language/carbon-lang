@@ -9,3 +9,6 @@ struct Command {
     };
 
 Command X(QChar('c'));
+
+void Foo(QChar );
+void bar() { Foo(X.c); }
