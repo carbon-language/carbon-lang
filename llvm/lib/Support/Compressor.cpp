@@ -36,6 +36,14 @@ static int getdata(char*& buffer, size_t &size,
   return result;
 }
 
+static int getdata(char*& buffer, unsigned &size, 
+                   llvm::Compressor::OutputDataCallback* cb, void* context) {
+  size_t SizeOut;
+  int Res = getdata(buffer, SizeOut, cb, context);
+  size = SizeOut;
+  return Res;
+}
+
 //===----------------------------------------------------------------------===//
 //=== NULLCOMP - a compression like set of routines that just copies data 
 //===            without doing any compression. This is provided so that if the
