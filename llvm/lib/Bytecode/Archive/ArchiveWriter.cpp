@@ -93,9 +93,16 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
   sprintf(buffer,"%-12u", unsigned(secondsSinceEpoch));
   memcpy(hdr.date,buffer,12);
 
+  // Get rid of trailing blanks in the name
+  std::string mbrPath = mbr.getPath().get();
+  size_t mbrLen = mbrPath.length();
+  while (mbrLen > 0 && mbrPath[mbrLen-1] == ' ') {
+    mbrPath.erase(mbrLen-1,1);
+    mbrLen--;
+  }
+
   // Set the name field in one of its various flavors.
   bool writeLongName = false;
-  const std::string& mbrPath = mbr.getPath().get();
   if (mbr.isStringTable()) {
     memcpy(hdr.name,ARFILE_STRTAB_NAME,16);
   } else if (mbr.isForeignSymbolTable()) {
@@ -115,12 +122,12 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
     memcpy(hdr.name,nm,len);
     hdr.name[len] = '/';
   } else if (mbrPath.length() < 16 && mbrPath.find('/') == std::string::npos) {
-    mbrPath.copy(hdr.name,mbrPath.length());
+    memcpy(hdr.name,mbrPath.c_str(),mbrPath.length());
     hdr.name[mbrPath.length()] = '/';
   } else {
     std::string nm = "#1/";
     nm += utostr(mbrPath.length());
-    nm.copy(hdr.name,nm.length());
+    memcpy(hdr.name,nm.data(),nm.length());
     if (sz < 0)
       sz -= mbrPath.length();
     else
@@ -203,8 +210,10 @@ Archive::writeMember(
   if (CreateSymbolTable && 
       (member.isBytecode() || member.isCompressedBytecode())) {
     std::vector<std::string> symbols;
+    std::string FullMemberName = archPath.get() + "(" + member.getPath().get() 
+      + ")";
     ModuleProvider* MP = GetBytecodeSymbols(
-      (const unsigned char*)data,fSize,member.getPath().get(), symbols);
+      (const unsigned char*)data,fSize,FullMemberName, symbols);
 
     // If the bytecode parsed successfully
     if ( MP ) {
@@ -270,7 +279,7 @@ Archive::writeMember(
 
   // Write the long filename if its long
   if (writeLongName) {
-    ARFile << member.getPath().c_str();
+    ARFile.write(member.getPath().get().data(),member.getPath().get().length());
   }
 
   // Make sure we write the compressed bytecode magic number if we should.
