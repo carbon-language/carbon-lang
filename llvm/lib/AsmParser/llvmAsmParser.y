@@ -2120,6 +2120,9 @@ MemoryInst : MALLOC Types {
     if (!isa<PointerType>($3->get()))
       ThrowException("Can't load from nonpointer type: " +
                      (*$3)->getDescription());
+    if (!cast<PointerType>($3->get())->getElementType()->isFirstClassType())
+      ThrowException("Can't load from pointer of non-first-class type: " +
+                     (*$3)->getDescription());
     $$ = new LoadInst(getVal(*$3, $4), "", $1);
     delete $3;
   }
