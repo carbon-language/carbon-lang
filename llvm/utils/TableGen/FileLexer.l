@@ -126,12 +126,13 @@ static void HandleInclude(const char *Buffer) {
     //
     // NOTE: Right now, there is only one directory.  We need to eventually add
     // support for more.
-    Filename = IncludeDirectory + "/" + Filename;
-    yyin = fopen(Filename.c_str(), "r");
+    std::string NextFilename = IncludeDirectory + "/" + Filename;
+    yyin = fopen(NextFilename.c_str(), "r");
     if (yyin == 0) {
       err() << "Could not find include file '" << Filename << "'!\n";
       abort();
     }
+    Filename = NextFilename;
   }
 
   // Add the file to our include stack...
