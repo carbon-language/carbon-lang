@@ -230,7 +230,6 @@ public:
   //
   virtual unsigned getReturnAddressReg() const = 0; 
   
-
   // Each register class has a separate space for register IDs. To convert
   // a regId in a register class to a common Id, or vice versa,
   // we use the folloing two methods.
@@ -286,7 +285,7 @@ public:
   virtual unsigned getFramePointer() const = 0;
   virtual unsigned getStackPointer() const = 0;
 
-  // This method gives the the number of bytes of stack spaceallocated 
+  // This method gives the the number of bytes of stack space allocated 
   // to a register when it is spilled to the stack.
   //
   virtual int getSpilledRegSize(int RegType) const = 0;
