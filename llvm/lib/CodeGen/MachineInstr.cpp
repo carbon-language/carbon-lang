@@ -84,6 +84,17 @@ MachineInstr::dump(unsigned int indent) const
   cerr << *this;
 }
 
+static inline std::ostream &OutputValue(std::ostream &os,
+                                        const Value* val)
+{
+  os << "(val ";
+  if (val && val->hasName())
+    return os << val->getName();
+  else
+    return os << (void*) val;              // print address only
+  os << ")";
+}
+
 std::ostream &operator<<(std::ostream& os, const MachineInstr& minstr)
 {
   os << TargetInstrDescriptors[minstr.opCode].opCodeString;
@@ -94,34 +105,17 @@ std::ostream &operator<<(std::ostream& os, const MachineInstr& minstr)
       os << "*";
   }
   
-#undef DEBUG_VAL_OP_ITERATOR
-#ifdef DEBUG_VAL_OP_ITERATOR
-  os << "\n\tValue operands are: ";
-  for (MachineInstr::val_const_op_iterator vo(&minstr); ! vo.done(); ++vo)
-    {
-      const Value* val = *vo;
-      os << val << (vo.isDef()? "(def), " : ", ");
-    }
-#endif
-  
- 
-
-#if 1
   // code for printing implict references
-
   unsigned NumOfImpRefs =  minstr.getNumImplicitRefs();
   if(  NumOfImpRefs > 0 ) {
-	
-    os << "\tImplicit:";
-
+    os << "\tImplicit: ";
     for(unsigned z=0; z < NumOfImpRefs; z++) {
-      os << minstr.getImplicitRef(z);
+      OutputValue(os, minstr.getImplicitRef(z)); 
       if( minstr.implicitRefIsDefined(z)) os << "*";
       os << "\t";
     }
   }
-
-#endif
+  
   return os << "\n";
 }
 
@@ -133,15 +127,9 @@ static inline std::ostream &OutputOperand(std::ostream &os,
     {
     case MachineOperand::MO_CCRegister:
     case MachineOperand::MO_VirtualRegister:
-      val = mop.getVRegValue();
-      os << "(val ";
-      if (val && val->hasName())
-        os << val->getName();
-      else
-        os << val;
-      return os << ")";
+      return OutputValue(os, mop.getVRegValue());
     case MachineOperand::MO_MachineRegister:
-      return os << "("     << mop.getMachineRegNum() << ")";
+      return os << "(" << mop.getMachineRegNum() << ")";
     default:
       assert(0 && "Unknown operand type");
       return os;
