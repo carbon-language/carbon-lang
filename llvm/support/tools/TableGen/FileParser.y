@@ -6,10 +6,10 @@
 
 %{
 #include "Record.h"
+#include "Support/StringExtras.h"
 #include <iostream>
 #include <algorithm>
-#include <string>
-#include <stdio.h>
+#include <cstdio>
 #define YYERROR_VERBOSE 1
 
 int yyerror(const char *ErrorMsg);
@@ -181,7 +181,7 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
 %type <Initializer>  Value OptValue
 %type <FieldList>    ValueList ValueListNE
 %type <BitList>      BitList OptBitList RBitList
-%type <StrVal>       Declaration
+%type <StrVal>       Declaration OptID
 
 %start File
 %%
@@ -398,7 +398,12 @@ DeclListNE : Declaration {
 TemplateArgList : '<' DeclListNE '>' {};
 OptTemplateArgList : /*empty*/ | TemplateArgList;
 
-ObjectBody : ID {
+OptID : ID { $$ = $1; } | /*empty*/ { $$ = new std::string(); };
+
+ObjectBody : OptID {
+           static unsigned AnonCounter = 0;
+           if ($1->empty())
+             *$1 = "anonymous."+utostr(AnonCounter++);
            CurRec = new Record(*$1);
            delete $1;
          } OptTemplateArgList ClassList {
