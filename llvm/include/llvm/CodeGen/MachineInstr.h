@@ -12,6 +12,7 @@
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Annotation.h"
 #include <iterator>
+#include <hash_set>
 class Instruction;
 
 //---------------------------------------------------------------------------
@@ -75,8 +76,9 @@ private:
 
   int regNum;	                // register number for an explicit register
                                 // will be set for a value after reg allocation
-  bool isDef;                   // is this a defition for the value
-  
+  bool isDef;                   // is this a definition for the value?
+  bool isDefAndUse;             // is this a both a def and a use of the value?
+                                // we assume that a non-def *must* be a use.
 public:
   /*ctor*/		MachineOperand	();
   /*ctor*/		MachineOperand	(MachineOperandType operandType,
@@ -106,6 +108,9 @@ public:
   inline bool		opIsDef		() const {
     return isDef;
   }
+  inline bool		opIsDefAndUse	() const {
+    return isDefAndUse;
+  }
   
 public:
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
@@ -123,11 +128,7 @@ private:
   void			InitializeReg	(int regNum,
                                          bool isCCReg);
 
-  friend class MachineInstr;
-
-public:
-
-  // replaces the Value with its corresponding physical register after
+  // Replaces the Value with its corresponding physical register after
   // register allocation is complete
   void setRegForValue(int reg) {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
@@ -135,6 +136,10 @@ public:
     regNum = reg;
   }
 
+  friend class MachineInstr;
+
+public:
+  
   // used to get the reg number if when one is allocted (must be
   // called only after reg alloc)
   inline int  getAllocatedRegNum() const {
@@ -142,8 +147,6 @@ public:
 	   opType == MO_MachineRegister);
     return regNum;
   }
-
- 
 };
 
 
@@ -152,7 +155,8 @@ MachineOperand::MachineOperand()
   : opType(MO_VirtualRegister),
     immedVal(0),
     regNum(-1),
-    isDef(false)
+    isDef(false),
+    isDefAndUse(false)
 {}
 
 inline
@@ -161,13 +165,15 @@ MachineOperand::MachineOperand(MachineOperandType operandType,
   : opType(operandType),
     immedVal(0),
     regNum(-1),
-    isDef(false)
+    isDef(false),
+    isDefAndUse(false)
 {}
 
 inline
 MachineOperand::MachineOperand(const MachineOperand& mo)
   : opType(mo.opType),
-    isDef(false)
+    isDef(false),
+    isDefAndUse(false)
 {
   switch(opType) {
   case MO_VirtualRegister:
@@ -235,12 +241,15 @@ MachineOperand::InitializeReg(int _regNum, bool isCCReg)
 
 class MachineInstr :  public Annotable,         // Values are annotable
                       public NonCopyableV {     // Disable copy operations
-  MachineOpCode         opCode;
-  OpCodeMask            opCodeMask;	// extra bits for variants of an opcode
-  std::vector<MachineOperand> operands;
-  std::vector<Value*>   implicitRefs;   // values implicitly referenced by this
-  std::vector<bool>     implicitIsDef;  // machine instruction (eg, call args)
-  
+  MachineOpCode    opCode;              // the opcode
+  OpCodeMask       opCodeMask;          // extra bits for variants of an opcode
+  vector<MachineOperand> operands;      // the operands
+  vector<Value*>   implicitRefs;        // values implicitly referenced by this
+  vector<bool>     implicitIsDef;       //  machine instruction (eg, call args)
+  vector<bool>     implicitIsDefAndUse; //
+  hash_set<int>    regsUsed;            // all machine registers used for this
+                                        //  instruction, including regs used
+                                        //  to save values across the instr.
 public:
   /*ctor*/		MachineInstr	(MachineOpCode _opCode,
 					 OpCodeMask    _opCodeMask = 0x0);
@@ -256,6 +265,7 @@ public:
   unsigned int		getNumOperands	() const { return operands.size(); }
   
   bool			operandIsDefined(unsigned i) const;
+  bool			operandIsDefinedAndUsed(unsigned i) const;
   
   const MachineOperand& getOperand	(unsigned i) const;
         MachineOperand& getOperand	(unsigned i);
@@ -266,16 +276,23 @@ public:
   unsigned             	getNumImplicitRefs() const{return implicitRefs.size();}
   
   bool			implicitRefIsDefined(unsigned i) const;
+  bool			implicitRefIsDefinedAndUsed(unsigned i) const;
   
   const Value*          getImplicitRef  (unsigned i) const;
         Value*          getImplicitRef  (unsigned i);
   
   //
+  // Information about registers used in this instruction
+  // 
+  const hash_set<int>&  getRegsUsed    () const { return regsUsed; }
+        hash_set<int>&  getRegsUsed    ()       { return regsUsed; }
+  
+  //
   // Debugging support
   // 
-  void			dump		(unsigned int indent = 0) const;
-  friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
-
+  void			dump		() const;
+  friend std::ostream& operator<<       (std::ostream& os,
+                                         const MachineInstr& minstr);
 
   //
   // Define iterators to access the Value operands of the Machine Instruction.
@@ -287,24 +304,39 @@ public:
 
 
   // Access to set the operands when building the machine instruction
+  // 
   void			SetMachineOperandVal(unsigned i,
-			      MachineOperand::MachineOperandType operandType,
-			      Value* _val, bool isDef=false);
-  void			SetMachineOperandConst(unsigned i,
-			      MachineOperand::MachineOperandType operandType,
-                              int64_t intValue);
-  void			SetMachineOperandReg(unsigned i,
-                                             int regNum, 
+                                             MachineOperand::MachineOperandType
+                                               operandType,
+                                             Value* _val,
                                              bool isDef=false,
+                                             bool isDefAndUse=false);
+  void			SetMachineOperandConst(unsigned i,
+                                           MachineOperand::MachineOperandType
+                                                 operandType,
+                                               int64_t intValue);
+  void			SetMachineOperandReg(unsigned i, int regNum, 
+                                             bool isDef=false,
+                                             bool isDefAndUse=false,
                                              bool isCCReg=false);
-
+  
   void                  addImplicitRef	 (Value* val, 
-                                          bool isDef=false);
+                                          bool isDef=false,
+                                          bool isDefAndUse=false);
   
   void                  setImplicitRef	 (unsigned i,
                                           Value* val, 
-                                          bool isDef=false);
-
+                                          bool isDef=false,
+                                          bool isDefAndUse=false);
+  
+  // Replaces the Value for the operand with its allocated
+  // physical register after register allocation is complete.
+  // 
+  void                  SetRegForOperand(unsigned i, int regNum);
+  
+  //
+  // Iterator to enumerate machine operands.
+  // 
   template<class MITy, class VTy>
   class ValOpIterator : public std::forward_iterator<VTy, ptrdiff_t> {
     unsigned i;
@@ -334,6 +366,7 @@ public:
     inline VTy operator->() const { return operator*(); }
     
     inline bool isDef() const { return MI->getOperand(i).opIsDef(); } 
+    inline bool isDefAndUse() const { return MI->getOperand(i).opIsDefAndUse(); } 
     
     inline _Self& operator++() { i++; skipToNextVal(); return *this; }
     inline _Self  operator++(int) { _Self tmp = *this; ++*this; return tmp; }
@@ -387,10 +420,23 @@ MachineInstr::operandIsDefined(unsigned int i) const
 }
 
 inline bool
+MachineInstr::operandIsDefinedAndUsed(unsigned int i) const
+{
+  return getOperand(i).opIsDefAndUse();
+}
+
+inline bool
 MachineInstr::implicitRefIsDefined(unsigned int i) const
 {
   assert(i < implicitIsDef.size() && "operand out of range!");
   return implicitIsDef[i];
+}
+
+inline bool
+MachineInstr::implicitRefIsDefinedAndUsed(unsigned int i) const
+{
+  assert(i < implicitIsDefAndUse.size() && "operand out of range!");
+  return implicitIsDefAndUse[i];
 }
 
 inline const Value*
@@ -409,95 +455,35 @@ MachineInstr::getImplicitRef(unsigned int i)
 
 inline void
 MachineInstr::addImplicitRef(Value* val, 
-                             bool isDef)
+                             bool isDef=false,
+                             bool isDefAndUse=false)
 {
   implicitRefs.push_back(val);
   implicitIsDef.push_back(isDef);
+  implicitIsDefAndUse.push_back(isDefAndUse);
 }
 
 inline void
 MachineInstr::setImplicitRef(unsigned int i,
                              Value* val, 
-                             bool isDef)
+                             bool isDef=false,
+                             bool isDefAndUse=false)
 {
   assert(i < implicitRefs.size() && "setImplicitRef() out of range!");
   implicitRefs[i] = val;
   implicitIsDef[i] = isDef;
+  implicitIsDefAndUse[i] = isDefAndUse;
 }
-
-
-
-//---------------------------------------------------------------------------
-// class MachineCodeForBasicBlock
-// 
-// Purpose:
-//   Representation of the sequence of machine instructions created
-//   for a basic block.
-//---------------------------------------------------------------------------
-
-
-class MachineCodeForBasicBlock {
-  std::vector<MachineInstr*> Insts;
-public:
-  ~MachineCodeForBasicBlock() {
-#if 0
-    for (unsigned i = 0, e = Insts.size(); i != e; ++i)
-      delete Insts[i];
-#endif
-  }
-
-  typedef std::vector<MachineInstr*>::iterator iterator;
-  typedef std::vector<MachineInstr*>::const_iterator const_iterator;
-  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
-  typedef std::reverse_iterator<iterator>             reverse_iterator;
-
-  unsigned size() const { return Insts.size(); }
-  bool empty() const { return Insts.empty(); }
-
-  MachineInstr * operator[](unsigned i) const { return Insts[i]; }
-  MachineInstr *&operator[](unsigned i)       { return Insts[i]; }
-
-  MachineInstr *front() const { return Insts.front(); }
-  MachineInstr *back()  const { return Insts.back(); }
-
-  iterator                begin()       { return Insts.begin();  }
-  const_iterator          begin() const { return Insts.begin();  }
-  iterator                  end()       { return Insts.end();    }
-  const_iterator            end() const { return Insts.end();    }
-  reverse_iterator       rbegin()       { return Insts.rbegin(); }
-  const_reverse_iterator rbegin() const { return Insts.rbegin(); }
-  reverse_iterator       rend  ()       { return Insts.rend();   }
-  const_reverse_iterator rend  () const { return Insts.rend();   }
-
-  void push_back(MachineInstr *MI) { Insts.push_back(MI); }
-  template<typename IT>
-  void insert(iterator I, IT S, IT E) { Insts.insert(I, S, E); }
-  iterator insert(iterator I, MachineInstr *M) { return Insts.insert(I, M); }
-
-  // erase - Remove the specified range from the instruction list.  This does
-  // not delete in instructions removed.
-  //
-  iterator erase(iterator I, iterator E) { return Insts.erase(I, E); }
-
-  MachineInstr *pop_back() {
-    MachineInstr *R = back();
-    Insts.pop_back();
-    return R;
-  }
-};
 
 
 //---------------------------------------------------------------------------
 // Debugging Support
 //---------------------------------------------------------------------------
 
-
 std::ostream& operator<<    (std::ostream& os, const MachineInstr& minstr);
-
 
 std::ostream& operator<<    (std::ostream& os, const MachineOperand& mop);
 					 
-
 void	PrintMachineInstructions(const Function *F);
 
 #endif

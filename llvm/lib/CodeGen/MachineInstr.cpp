@@ -42,13 +42,16 @@ MachineInstr::MachineInstr(MachineOpCode _opCode,
 
 void
 MachineInstr::SetMachineOperandVal(unsigned int i,
-				MachineOperand::MachineOperandType operandType,
-				Value* _val, bool isdef=false)
+                                   MachineOperand::MachineOperandType opType,
+                                   Value* _val,
+                                   bool isdef=false,
+                                   bool isDefAndUse=false)
 {
   assert(i < operands.size());
-  operands[i].Initialize(operandType, _val);
+  operands[i].Initialize(opType, _val);
   operands[i].isDef = isdef ||
     TargetInstrDescriptors[opCode].resultPos == (int) i;
+  operands[i].isDefAndUse = isDefAndUse;
 }
 
 void
@@ -61,27 +64,36 @@ MachineInstr::SetMachineOperandConst(unsigned int i,
          "immed. constant cannot be defined");
   operands[i].InitializeConst(operandType, intValue);
   operands[i].isDef = false;
+  operands[i].isDefAndUse = false;
 }
 
 void
 MachineInstr::SetMachineOperandReg(unsigned int i,
                                    int regNum,
                                    bool isdef=false,
+                                   bool isDefAndUse=false,
                                    bool isCCReg=false)
 {
   assert(i < operands.size());
   operands[i].InitializeReg(regNum, isCCReg);
   operands[i].isDef = isdef ||
     TargetInstrDescriptors[opCode].resultPos == (int) i;
+  operands[i].isDefAndUse = isDefAndUse;
+  regsUsed.insert(regNum);
 }
 
 void
-MachineInstr::dump(unsigned int indent) const 
+MachineInstr::SetRegForOperand(unsigned i, int regNum)
 {
-  for (unsigned i=0; i < indent; i++)
-    cerr << "    ";
-  
-  cerr << *this;
+  operands[i].setRegForValue(regNum);
+  regsUsed.insert(regNum);
+}
+
+
+void
+MachineInstr::dump() const 
+{
+  cerr << "  " << *this;
 }
 
 static inline std::ostream &OutputValue(std::ostream &os,
@@ -101,7 +113,9 @@ std::ostream &operator<<(std::ostream& os, const MachineInstr& minstr)
   
   for (unsigned i=0, N=minstr.getNumOperands(); i < N; i++) {
     os << "\t" << minstr.getOperand(i);
-    if( minstr.getOperand(i).opIsDef() ) 
+    if( minstr.operandIsDefined(i) ) 
+      os << "*";
+    if( minstr.operandIsDefinedAndUsed(i) ) 
       os << "*";
   }
   
@@ -112,6 +126,7 @@ std::ostream &operator<<(std::ostream& os, const MachineInstr& minstr)
     for(unsigned z=0; z < NumOfImpRefs; z++) {
       OutputValue(os, minstr.getImplicitRef(z)); 
       if( minstr.implicitRefIsDefined(z)) os << "*";
+      if( minstr.implicitRefIsDefinedAndUsed(z)) os << "*";
       os << "\t";
     }
   }
@@ -136,7 +151,6 @@ static inline std::ostream &OutputOperand(std::ostream &os,
     }
 }
 
-
 std::ostream &operator<<(std::ostream &os, const MachineOperand &mop)
 {
   switch(mop.opType)
@@ -160,7 +174,7 @@ std::ostream &operator<<(std::ostream &os, const MachineOperand &mop)
         if (opVal->hasName())
           os << opVal->getName();
         else
-          os << opVal;
+          os << (const void*) opVal;
         return os << ")";
       }
     default:
