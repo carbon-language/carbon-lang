@@ -269,7 +269,7 @@ static void WriteConstantInt(ostream &Out, const Constant *CV, bool PrintName,
           (unsigned char)cast<ConstantSInt>(CA->getOperand(i))->getValue() :
           (unsigned char)cast<ConstantUInt>(CA->getOperand(i))->getValue();
         
-        if (isprint(C)) {
+        if (isprint(C) && C != '"') {
           Out << C;
         } else {
           Out << '\\'
