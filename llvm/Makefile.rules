@@ -741,7 +741,7 @@ $(BUILD_OBJ_DIR)/Bytecode/%.bc: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Bytecode/.dir $
 	@echo "Compiling $< to bytecode"
 	$(VERB) $(LLVMGCC) $(CPPFLAGS) -c $< -o $@
 
-$(BUILD_OBJ_DIR)/Bytecode/%.bc: $(SourceDir)%.ll $(BUILD_OBJ_DIR)/Bytecode/.dir $(LCC1)
+$(BUILD_OBJ_DIR)/Bytecode/%.bc: $(SourceDir)%.ll $(BUILD_OBJ_DIR)/Bytecode/.dir $(LLVMAS)
 	@echo "Compiling $< to bytecode"
 	$(VERB) $(LLVMAS) $< -f -o $@
 
