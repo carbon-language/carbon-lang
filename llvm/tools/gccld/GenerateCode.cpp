@@ -1,4 +1,4 @@
-//===- gencode.cpp - Functions for generating executable files  -----------===//
+//===- GenerateCode.cpp - Functions for generating executable files  ------===//
 //
 // This file contains functions for generating executable files once linking
 // has finished.  This includes generating a shell script to run the JIT or
