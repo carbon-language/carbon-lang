@@ -25,18 +25,44 @@
 #include "llvm/Method.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
-#include <strstream>
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Support/HashExtras.h"
+#include <strstream>
+#include <hash_map>
+
+
+//*********************** Internal Data Structures *************************/
+
+const char* const PRINTF = "printf";
+
+
+//************************** Internal Functions ****************************/
+
 
 static inline GlobalVariable *
 GetStringRef(Module *M, const string &str)
 {
-  ConstPoolArray *Init = ConstPoolArray::get(str);
-  GlobalVariable *V = new GlobalVariable(Init->getType(), /*Const*/true, Init);
-  M->getGlobalList().push_back(V);
-
-  return V;
+  static hash_map<string, GlobalVariable*> stringRefCache;
+  static Module* lastModule = NULL;
+  
+  if (lastModule != M)
+    { // Let's make sure we create separate global references in each module
+      stringRefCache.clear();
+      lastModule = M;
+    }
+  
+  GlobalVariable* result = stringRefCache[str];
+  if (result == NULL)
+    {
+      ConstPoolArray *Init = ConstPoolArray::get(str);
+      result = new GlobalVariable(Init->getType(), /*Const*/true, Init);
+      M->getGlobalList().push_back(result);
+      stringRefCache[str] = result;
+    }
+  
+  return result;
 }
+
 
 static inline bool
 TraceThisOpCode(unsigned opCode)
@@ -62,6 +88,146 @@ FindValuesToTraceInBB(BasicBlock* bb, vector<Value*>& valuesToTraceInBB)
         valuesToTraceInBB.push_back(*II);
       }
 }
+
+
+// 
+// Let's save this code for future use; it has been tested and works:
+// 
+// The signatures of the printf methods supported are:
+//   int printf(ubyte*,  ubyte*,  ubyte*,  ubyte*,  int      intValue)
+//   int printf(ubyte*,  ubyte*,  ubyte*,  ubyte*,  unsigned uintValue)
+//   int printf(ubyte*,  ubyte*,  ubyte*,  ubyte*,  float    floatValue)
+//   int printf(ubyte*,  ubyte*,  ubyte*,  ubyte*,  double   doubleValue)
+//   int printf(ubyte*,  ubyte*,  ubyte*,  ubyte*,  char*    stringValue)
+//   int printf(ubyte*,  ubyte*,  ubyte*,  ubyte*,  void*    ptrValue)
+// 
+// The invocation should be:
+//       call "printf"(fmt, bbName, valueName, valueTypeName, value).
+// 
+Method*
+GetPrintfMethodForType(Module* module, const Type* valueType)
+{
+  static const int LASTARGINDEX = 4;
+  static PointerType* ubytePtrTy = NULL;
+  static vector<const Type*> argTypesVec(LASTARGINDEX + 1);
+  
+  if (ubytePtrTy == NULL)
+    { // create these once since they are invariant
+      ubytePtrTy = PointerType::get(ArrayType::get(Type::UByteTy));
+      argTypesVec[0] = ubytePtrTy;
+      argTypesVec[1] = ubytePtrTy;
+      argTypesVec[2] = ubytePtrTy;
+      argTypesVec[3] = ubytePtrTy;
+    }
+  
+  SymbolTable* symtab = module->getSymbolTable();
+  argTypesVec[LASTARGINDEX] = valueType;
+  MethodType* printMethodTy = MethodType::get(Type::IntTy, argTypesVec,
+                                              /*isVarArg*/ false);
+  
+  Method* printMethod =
+    cast<Method>(symtab->lookup(PointerType::get(printMethodTy), PRINTF));
+  if (printMethod == NULL)
+    { // Create a new method and add it to the module
+      printMethod = new Method(printMethodTy, PRINTF);
+      module->getMethodList().push_back(printMethod);
+      
+      // Create the argument list for the method so that the full signature
+      // can be declared.  The args can be anonymous.
+      Method::ArgumentListType &argList = printMethod->getArgumentList();
+      for (unsigned i=0; i < argTypesVec.size(); ++i)
+        argList.push_back(new MethodArgument(argTypesVec[i]));
+    }
+  
+  return printMethod;
+}
+
+
+Instruction*
+CreatePrintfInstr(Value* val,
+                  const BasicBlock* bb,
+                  Module* module,
+                  unsigned int indent,
+                  bool isMethodExit)
+{
+  strstream fmtString, scopeNameString, valNameString;
+  vector<Value*> paramList;
+  const Type* valueType = val->getType();
+  Method* printMethod = GetPrintfMethodForType(module, valueType);
+  
+  if (! valueType->isPrimitiveType() ||
+      valueType->getPrimitiveID() == Type::VoidTyID ||
+      valueType->getPrimitiveID() == Type::TypeTyID ||
+      valueType->getPrimitiveID() == Type::LabelTyID)
+    {
+      assert(0 && "Unsupported type for printing");
+      return NULL;
+    }
+  
+  const Value* scopeToUse = (isMethodExit)? (const Value*) bb->getParent()
+                                          : (const Value*) bb;
+  if (scopeToUse->hasName())
+    scopeNameString << scopeToUse->getName() << ends;
+  else
+    scopeNameString << scopeToUse << ends;
+  
+  if (val->hasName())
+    valNameString << val->getName() << ends;
+  else
+    valNameString << val << ends;
+    
+  for (unsigned i=0; i < indent; i++)
+    fmtString << " ";
+  
+  fmtString << " At exit of "
+            << ((isMethodExit)? "Method " : "BB ")
+            << "%s : val %s = %s ";
+  
+  GlobalVariable* scopeNameVal = GetStringRef(module, scopeNameString.str());
+  GlobalVariable* valNameVal   = GetStringRef(module,valNameString.str());
+  GlobalVariable* typeNameVal  = GetStringRef(module,
+                                     val->getType()->getDescription().c_str());
+  
+  switch(valueType->getPrimitiveID())
+    {
+    case Type::BoolTyID:
+    case Type::UByteTyID: case Type::UShortTyID:
+    case Type::UIntTyID:  case Type::ULongTyID:
+    case Type::SByteTyID: case Type::ShortTyID:
+    case Type::IntTyID:   case Type::LongTyID:
+      fmtString << " %d\0A";
+      break;
+      
+    case Type::FloatTyID:     case Type::DoubleTyID:
+      fmtString << " %g\0A";
+      break;
+      
+    case Type::PointerTyID:
+      fmtString << " %p\0A";
+      break;
+      
+    default:
+      assert(0 && "Should not get here.  Check the IF expression above");
+      return NULL;
+    }
+  
+  fmtString << ends;
+  GlobalVariable* fmtVal = GetStringRef(module, fmtString.str());
+  
+  paramList.push_back(fmtVal);
+  paramList.push_back(scopeNameVal);
+  paramList.push_back(valNameVal);
+  paramList.push_back(typeNameVal);
+  paramList.push_back(val);
+  
+  free(fmtString.str());
+  free(scopeNameString.str());
+  free(valNameString.str());
+  
+  return new CallInst(printMethod, paramList);
+}
+
+
 
 // The invocation should be:
 //       call "printVal"(value).
@@ -105,7 +271,8 @@ static void InsertPrintInsts(Value *Val,
   string fmtString(indent, ' ');
   
   fmtString += string(" At exit of") + scopeNameString.str();
-
+  free(scopeNameString.str());
+  
   // Turn the marker string into a global variable...
   GlobalVariable *fmtVal = GetStringRef(Mod, fmtString);
   
@@ -153,10 +320,12 @@ TraceValuesAtBBExit(const vector<Value*>& valueVec,
     InsertPrintInsts(valueVec[i], here, module, indent, isMethodExit);
 }
 
+
 static void
 InsertCodeToShowMethodEntry(BasicBlock* entryBB)
 {
 }
+
 
 static void
 InsertCodeToShowMethodExit(BasicBlock* exitBB)
@@ -164,45 +333,60 @@ InsertCodeToShowMethodExit(BasicBlock* exitBB)
 }
 
 
-bool InsertTraceCode::doInsertTraceCode(Method *M, bool traceBasicBlockExits,
-                                        bool traceMethodExits) {
+//************************** External Functions ****************************/
+
+
+bool
+InsertTraceCode::doInsertTraceCode(Method *M,
+                                   bool traceBasicBlockExits,
+                                   bool traceMethodExits)
+{
   vector<Value*> valuesToTraceInMethod;
   Module* module = M->getParent();
   BasicBlock* exitBB = NULL;
+  vector<BasicBlock*> exitBlocks;
   
   if (M->isExternal() ||
       (! traceBasicBlockExits && ! traceMethodExits))
     return false;
 
-  if (traceMethodExits) {
-    InsertCodeToShowMethodEntry(M->getEntryNode());
-    exitBB = M->getBasicBlocks().front(); //getExitNode();
-  }
-
-  for (Method::iterator BI = M->begin(); BI != M->end(); ++BI) {
-    BasicBlock* bb = *BI;
-
-    vector<Value*> valuesToTraceInBB;
-    FindValuesToTraceInBB(bb, valuesToTraceInBB);
-
-    if (traceBasicBlockExits && bb != exitBB)
-      TraceValuesAtBBExit(valuesToTraceInBB, bb, module,
-                          /*indent*/ 4, /*isMethodExit*/ false);
-
-    if (traceMethodExits) {
-      valuesToTraceInMethod.insert(valuesToTraceInMethod.end(),
-                                   valuesToTraceInBB.begin(),
-                                   valuesToTraceInBB.end());
+  if (traceMethodExits)
+    {
+      InsertCodeToShowMethodEntry(M->getEntryNode());
     }
-  }
 
-#if 0
-  // Disable this code until we have a proper exit node.
-  if (traceMethodExits) {
-    TraceValuesAtBBExit(valuesToTraceInMethod, exitBB, module,
-                        /*indent*/ 0, /*isMethodExit*/ true);
-    InsertCodeToShowMethodExit(exitBB);
-  }
-#endif
+  for (Method::iterator BI = M->begin(); BI != M->end(); ++BI)
+    {
+      BasicBlock* bb = *BI;
+      bool isExitBlock = false;
+      
+      vector<Value*> valuesToTraceInBB;
+      FindValuesToTraceInBB(bb, valuesToTraceInBB);
+      
+      if (bb->succ_begin() == bb->succ_end())
+        { // record this as an exit block
+          exitBlocks.push_back(bb);
+          isExitBlock = true;
+        }
+      
+      if (traceBasicBlockExits && (!isExitBlock || !traceMethodExits))
+        TraceValuesAtBBExit(valuesToTraceInBB, bb, module,
+                            /*indent*/ 4, /*isMethodExit*/ false);
+      
+      if (traceMethodExits) {
+        valuesToTraceInMethod.insert(valuesToTraceInMethod.end(),
+                                     valuesToTraceInBB.begin(),
+                                     valuesToTraceInBB.end());
+      }
+    }
+  
+  if (traceMethodExits)
+    for (unsigned i=0; i < exitBlocks.size(); ++i)
+      {
+        TraceValuesAtBBExit(valuesToTraceInMethod, exitBlocks[i], module,
+                            /*indent*/ 0, /*isMethodExit*/ true);
+        InsertCodeToShowMethodExit(exitBB);
+      }
+    
   return true;
 }
