@@ -486,6 +486,9 @@ public:
   /// Binary constant expr - Use with binary operators...
   static Constant *get(unsigned Opcode, Constant *C1, Constant *C2);
 
+  /// getShift - Return a shift left or shift right constant expr
+  static Constant *getShift(unsigned Opcode, Constant *C1, Constant *C2);
+
   /// Getelementptr form...
   static Constant *getGetElementPtr(Constant *C,
                                     const std::vector<Constant*> &IdxList);
