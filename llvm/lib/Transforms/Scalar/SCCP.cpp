@@ -44,6 +44,7 @@ using namespace llvm;
 //
 namespace {
   Statistic<> NumInstRemoved("sccp", "Number of instructions removed");
+  Statistic<> NumDeadBlocks ("sccp", "Number of basic blocks unreachable");
 
 class LatticeVal {
   enum { 
@@ -853,6 +854,8 @@ bool SCCP::runOnFunction(Function &F) {
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (!ExecutableBBs.count(BB)) {
       DEBUG(std::cerr << "  BasicBlock Dead:" << *BB);
+      ++NumDeadBlocks;
+
       // Delete the instructions backwards, as it has a reduced likelihood of
       // having to update as many def-use and use-def chains.
       std::vector<Instruction*> Insts;
@@ -866,6 +869,7 @@ bool SCCP::runOnFunction(Function &F) {
           I->replaceAllUsesWith(UndefValue::get(I->getType()));
         BB->getInstList().erase(I);
         MadeChanges = true;
+        ++NumInstRemoved;
       }
     }
 
