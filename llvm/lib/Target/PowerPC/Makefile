@@ -10,41 +10,34 @@ LEVEL = ../../..
 LIBRARYNAME = powerpc
 include $(LEVEL)/Makefile.common
 
+TARGET = PowerPC
+
 # Make sure that tblgen is run, first thing.
 $(SourceDepend): PowerPCGenRegisterInfo.h.inc PowerPCGenRegisterNames.inc \
                  PowerPCGenRegisterInfo.inc PowerPCGenInstrNames.inc \
                  PowerPCGenInstrInfo.inc
 
-PowerPCGenRegisterNames.inc:: $(SourceDir)/PowerPC.td \
-                              $(SourceDir)/PowerPCRegisterInfo.td \
-                              $(SourceDir)/../Target.td $(TBLGEN)
-	@echo "Building PowerPC.td register names with tblgen"
+TDFILES = $(SourceDir)/$(TARGET).td $(wildcard $(SourceDir)/*.td) \
+          $(SourceDir)/../Target.td
+
+$(TARGET)GenRegisterNames.inc:: $(TDFILES) $(TBLGEN)
+	@echo "Building $(TARGET).td register names with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-register-enums -o $@
 
-PowerPCGenRegisterInfo.h.inc:: $(SourceDir)/PowerPC.td \
-                               $(SourceDir)/PowerPCRegisterInfo.td \
-                               $(SourceDir)/../Target.td $(TBLGEN)
-	@echo "Building PowerPC.td register information header with tblgen"
+$(TARGET)GenRegisterInfo.h.inc:: $(TDFILES) $(TBLGEN)
+	@echo "Building $(TARGET).td register information header with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-register-desc-header -o $@
 
-PowerPCGenRegisterInfo.inc:: $(SourceDir)/PowerPC.td \
-                             $(SourceDir)/PowerPCRegisterInfo.td \
-                             $(SourceDir)/../Target.td $(TBLGEN)
-	@echo "Building PowerPC.td register information implementation with tblgen"
+$(TARGET)GenRegisterInfo.inc:: $(TDFILES) $(TBLGEN)
+	@echo "Building $(TARGET).td register information implementation with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-register-desc -o $@
 
-PowerPCGenInstrNames.inc:: $(SourceDir)/PowerPC.td \
-                           $(SourceDir)/PowerPCInstrInfo.td \
-                           $(SourceDir)/PowerPCInstrFormats.td \
-                           $(SourceDir)/../Target.td $(TBLGEN)
-	@echo "Building PowerPC.td instruction names with tblgen"
+$(TARGET)GenInstrNames.inc:: $(TDFILES) $(TBLGEN)
+	@echo "Building $(TARGET).td instruction names with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-enums -o $@
 
-PowerPCGenInstrInfo.inc:: $(SourceDir)/PowerPC.td \
-                          $(SourceDir)/PowerPCInstrInfo.td \
-                          $(SourceDir)/PowerPCInstrFormats.td \
-                          $(SourceDir)/../Target.td $(TBLGEN)
-	@echo "Building PowerPC.td instruction information with tblgen"
+$(TARGET)GenInstrInfo.inc:: $(TDFILES) $(TBLGEN)
+	@echo "Building $(TARGET).td instruction information with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-desc -o $@
 
 clean::
