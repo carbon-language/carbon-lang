@@ -37,9 +37,15 @@
 
 namespace llvm {
   class CallInst;
+  class Module;
   
   struct IntrinsicLowering {
     virtual ~IntrinsicLowering() {}
+
+    /// AddPrototypes - This method, if called, causes all of the prototypes
+    /// that might be needed by an intrinsic lowering implementation to be
+    /// inserted into the module specified.
+    virtual void AddPrototypes(Module &M) = 0;
 
     /// LowerIntrinsicCall - This method returns the LLVM function which should
     /// be used to implement the specified intrinsic function call.  If an
@@ -59,6 +65,7 @@ namespace llvm {
   /// implementations should pass any unhandled intrinsics to this
   /// implementation to allow for future extensibility.
   struct DefaultIntrinsicLowering : public IntrinsicLowering {
+    virtual void AddPrototypes(Module &M);
     virtual void LowerIntrinsicCall(CallInst *CI);    
   };
 }
