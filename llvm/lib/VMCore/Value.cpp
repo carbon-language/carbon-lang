@@ -66,6 +66,26 @@ void Value::replaceAllUsesWith(Value *New) {
   }
 }
 
+// uncheckedReplaceAllUsesWith - This is exactly the same as replaceAllUsesWith,
+// except that it doesn't have all of the asserts.  The asserts fail because we
+// are half-way done resolving types, which causes some types to exist as two
+// different Type*'s at the same time.  This is a sledgehammer to work around
+// this problem.
+//
+void Value::uncheckedReplaceAllUsesWith(Value *New) {
+  while (!Uses.empty()) {
+    User *Use = Uses.back();
+    // Must handle Constants specially, we cannot call replaceUsesOfWith on a
+    // constant!
+    if (Constant *C = dyn_cast<Constant>(Use)) {
+      C->replaceUsesOfWithOnConstant(this, New);
+    } else {
+      Use->replaceUsesOfWith(this, New);
+    }
+  }
+}
+
+
 // refineAbstractType - This function is implemented because we use
 // potentially abstract types, and these types may be resolved to more
 // concrete types after we are constructed.  For the value class, we simply

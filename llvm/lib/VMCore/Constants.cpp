@@ -466,26 +466,6 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV) {
 //===----------------------------------------------------------------------===//
 //                      Factory Function Implementation
 
-// ReplaceUsesOfWith - This is exactly the same as Value::replaceAllUsesWith,
-// except that it doesn't have all of the asserts.  The asserts fail because we
-// are half-way done resolving types, which causes some types to exist as two
-// different Type*'s at the same time.  This is a sledgehammer to work around
-// this problem.
-//
-static void ReplaceUsesOfWith(Value *Old, Value *New) {
-  while (!Old->use_empty()) {
-    User *Use = Old->use_back();
-    // Must handle Constants specially, we cannot call replaceUsesOfWith on a
-    // constant!
-    if (Constant *C = dyn_cast<Constant>(Use)) {
-      C->replaceUsesOfWithOnConstant(Old, New);
-    } else {
-      Use->replaceUsesOfWith(Old, New);
-    }
-  }
-}
-
-
 // ConstantCreator - A class that is used to create constants by
 // ValueMap*.  This class should be partially specialized if there is
 // something strange that needs to be done to interface to the ctor for the
@@ -596,7 +576,7 @@ void ConstantArray::refineAbstractType(const DerivedType *OldTy,
     C.push_back(cast<Constant>(getOperand(i)));
   Constant *New = ConstantArray::get(cast<ArrayType>(NewTy), C);
   if (New != this) {
-    ReplaceUsesOfWith(this, New);
+    uncheckedReplaceAllUsesWith(New);
     destroyConstant();    // This constant is now dead, destroy it.
   }
 }
@@ -665,7 +645,7 @@ void ConstantStruct::refineAbstractType(const DerivedType *OldTy,
     C.push_back(cast<Constant>(getOperand(i)));
   Constant *New = ConstantStruct::get(cast<StructType>(NewTy), C);
   if (New != this) {
-    ReplaceUsesOfWith(this, New);
+    uncheckedReplaceAllUsesWith(New);
     destroyConstant();    // This constant is now dead, destroy it.
   }
 }
@@ -706,7 +686,7 @@ void ConstantPointerNull::refineAbstractType(const DerivedType *OldTy,
   // Make everyone now use a constant of the new type...
   Constant *New = ConstantPointerNull::get(cast<PointerType>(NewTy));
   if (New != this) {
-    ReplaceUsesOfWith(this, New);
+    uncheckedReplaceAllUsesWith(New);
     
     // This constant is now dead, destroy it.
     destroyConstant();
@@ -859,7 +839,7 @@ void ConstantExpr::refineAbstractType(const DerivedType *OldTy,
     New = ConstantExpr::getGetElementPtr(getOperand(0), C);
   }
   if (New != this) {
-    ReplaceUsesOfWith(this, New);
+    uncheckedReplaceAllUsesWith(New);
     destroyConstant();    // This constant is now dead, destroy it.
   }
 }
