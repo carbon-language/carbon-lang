@@ -10,7 +10,7 @@ gram.tab.c gram.tab.h:: gram.yc
 $(SourceDir)/lex.c: gram.tab.h
 
 clean::
-	rm -ff gram.tab.h gram.tab.c core* *.aux *.log *.dvi sample sample.c tmp
+	rm -rf gram.tab.h gram.tab.c core* *.aux *.log *.dvi sample sample.c tmp
 
 #$(BUILD_OBJ_DIR)/Release/lex.o $(BUILD_OBJ_DIR)/Profile/lex.o $(BUILD_OBJ_DIR)/Debug/lex.o: gram.tab.h
 
