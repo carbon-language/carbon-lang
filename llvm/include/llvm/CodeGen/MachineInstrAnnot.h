@@ -7,7 +7,6 @@
 #ifndef MACHINE_INSTR_ANNOT_h
 #define MACHINE_INSTR_ANNOT_h
 
-#include "llvm/Annotation.h"
 #include "llvm/CodeGen/MachineInstr.h"
 
 class Value;
@@ -50,8 +49,8 @@ public:
 };
 
 
-class CallArgsDescriptor: public Annotation { // Annotation for a MachineInstr
-  static AnnotationID AID;              // AnnotationID for this class
+class CallArgsDescriptor {
+
   std::vector<CallArgInfo> argInfoVec;  // Descriptor for each argument
   const CallInst* callInstr;            // The call instruction == result value
   const Value* funcPtr;                 // Pointer for indirect calls 
@@ -68,18 +67,16 @@ public:
   unsigned int    getNumArgs() const          { return argInfoVec.size(); }
   CallArgInfo&    getArgInfo(unsigned int op) { assert(op < argInfoVec.size());
                                                 return argInfoVec[op]; }
+  const CallInst* getCallInst() const         { return callInstr; }
   const CallInst* getReturnValue() const;
   const Value*    getIndirectFuncPtr() const  { return funcPtr; }
   TmpInstruction* getReturnAddrReg() const    { return retAddrReg; }
   bool            isVarArgsFunc() const       { return isVarArgs; }
   bool            hasNoPrototype() const      { return noPrototype; }
 
-  // Annotation mechanism to annotate a MachineInstr with the descriptor.
-  // This is not demand-driven because annotations can only be created
-  // at restricted points during code generation.
-  static inline CallArgsDescriptor *get(const MachineInstr* MI) {
-    return (CallArgsDescriptor *) MI->getAnnotation(AID);
-  }
+  // Mechanism to get the descriptor for a CALL MachineInstr.
+  // 
+  static CallArgsDescriptor *get(const MachineInstr* MI);
 };
 
 

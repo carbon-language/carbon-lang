@@ -89,21 +89,38 @@ private:
                                 // will be set for a value after reg allocation
 private:
   MachineOperand()
-    : immedVal(0), opType(MO_VirtualRegister), flags(0), regNum(-1) {}
+    : immedVal(0),
+      opType(MO_VirtualRegister),
+      flags(0),
+      regNum(-1) {}
+
   MachineOperand(int64_t ImmVal, MachineOperandType OpTy)
-    : immedVal(ImmVal), opType(OpTy), flags(0), regNum(-1) {}
+    : immedVal(ImmVal),
+      opType(OpTy),
+      flags(0),
+      regNum(-1) {}
+
   MachineOperand(int Reg, MachineOperandType OpTy, bool isDef = false)
-    : immedVal(0), opType(OpTy), flags(isDef ? DEFFLAG : 0), regNum(Reg) {}
+    : immedVal(0),
+      opType(OpTy),
+      flags(isDef ? DEFFLAG : 0),
+      regNum(Reg) {}
+
   MachineOperand(Value *V, MachineOperandType OpTy,
                  bool isDef = false, bool isDNU = false)
-    : value(V), opType(OpTy), regNum(-1) {
+    : value(V),
+      opType(OpTy),
+      regNum(-1) {
     flags = (isDef ? DEFFLAG : 0) | (isDNU ? DEFUSEFLAG : 0);
   }
 
 public:
   MachineOperand(const MachineOperand &M)
-    : immedVal(M.immedVal), opType(M.opType), flags(M.flags), regNum(M.regNum) {
-  }
+    : immedVal(M.immedVal),
+      opType(M.opType),
+      flags(M.flags),
+      regNum(M.regNum) {}
+
   ~MachineOperand() {}
   
   // Accessor methods.  Caller is responsible for checking the
@@ -193,21 +210,20 @@ private:
 //      a CALL (if any), and return value of a RETURN.
 //---------------------------------------------------------------------------
 
-class MachineInstr : public Annotable,         // MachineInstrs are annotable
-                     public NonCopyable {      // Disable copy operations
+class MachineInstr: public NonCopyable {      // Disable copy operations
+
   MachineOpCode    opCode;              // the opcode
   std::vector<MachineOperand> operands; // the operands
+  unsigned numImplicitRefs;             // number of implicit operands
 
-  struct ImplicitRef {
-    Value *Val;
-    bool isDef, isDefAndUse;
-
-    ImplicitRef(Value *V, bool D, bool DU) : Val(V), isDef(D), isDefAndUse(DU){}
-  };
-
-  // implicitRefs - Values implicitly referenced by this machine instruction
-  // (eg, call args)
-  std::vector<ImplicitRef> implicitRefs;
+  MachineOperand& getImplicitOp(unsigned i) {
+    assert(i < numImplicitRefs && "implicit ref# out of range!");
+    return operands[i + operands.size() - numImplicitRefs];
+  }
+  const MachineOperand& getImplicitOp(unsigned i) const {
+    assert(i < numImplicitRefs && "implicit ref# out of range!");
+    return operands[i + operands.size() - numImplicitRefs];
+  }
 
   // regsUsed - all machine registers used for this instruction, including regs
   // used to save values across the instruction.  This is a bitset of registers.
@@ -215,6 +231,7 @@ class MachineInstr : public Annotable,         // MachineInstrs are annotable
 
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
+
 public:
   MachineInstr(MachineOpCode Opcode);
   MachineInstr(MachineOpCode Opcode, unsigned numOperands);
@@ -240,14 +257,14 @@ public:
   //
   // Information about explicit operands of the instruction
   // 
-  unsigned getNumOperands() const { return operands.size(); }
+  unsigned getNumOperands() const { return operands.size() - numImplicitRefs; }
   
   const MachineOperand& getOperand(unsigned i) const {
-    assert(i < operands.size() && "getOperand() out of range!");
+    assert(i < getNumOperands() && "getOperand() out of range!");
     return operands[i];
   }
   MachineOperand& getOperand(unsigned i) {
-    assert(i < operands.size() && "getOperand() out of range!");
+    assert(i < getNumOperands() && "getOperand() out of range!");
     return operands[i];
   }
 
@@ -262,40 +279,30 @@ public:
   bool operandIsDefinedAndUsed(unsigned i) const {
     return getOperand(i).opIsDefAndUse();
   }
-  
+
   //
   // Information about implicit operands of the instruction
   // 
-  unsigned getNumImplicitRefs() const{ return implicitRefs.size();}
+  unsigned getNumImplicitRefs() const{ return numImplicitRefs; }
   
   const Value* getImplicitRef(unsigned i) const {
-    assert(i < implicitRefs.size() && "getImplicitRef() out of range!");
-    return implicitRefs[i].Val;
+    return getImplicitOp(i).getVRegValue();
   }
   Value* getImplicitRef(unsigned i) {
-    assert(i < implicitRefs.size() && "getImplicitRef() out of range!");
-    return implicitRefs[i].Val;
+    return getImplicitOp(i).getVRegValue();
   }
 
   bool implicitRefIsDefined(unsigned i) const {
-    assert(i < implicitRefs.size() && "implicitRefIsDefined() out of range!");
-    return implicitRefs[i].isDef;
+    return getImplicitOp(i).opIsDef();
   }
   bool implicitRefIsDefinedAndUsed(unsigned i) const {
-    assert(i < implicitRefs.size() && "implicitRefIsDef&Used() out of range!");
-    return implicitRefs[i].isDefAndUse;
+    return getImplicitOp(i).opIsDefAndUse();
   }
-  
-  void addImplicitRef(Value* V, bool isDef=false, bool isDefAndUse=false) {
-    implicitRefs.push_back(ImplicitRef(V, isDef, isDefAndUse));
-  }
-  
-  void setImplicitRef(unsigned i, Value* V, bool isDef=false,
-                      bool isDefAndUse=false) {
-    assert(i < implicitRefs.size() && "setImplicitRef() out of range!");
-    implicitRefs[i] = ImplicitRef(V, isDef, isDefAndUse);
-  }
-  
+  inline void addImplicitRef    (Value* V,
+                                 bool isDef=false,bool isDefAndUse=false);
+  inline void setImplicitRef    (unsigned i, Value* V,
+                                 bool isDef=false, bool isDefAndUse=false);
+
   //
   // Information about registers used in this instruction
   // 
@@ -316,22 +323,28 @@ public:
 
   //
   // Define iterators to access the Value operands of the Machine Instruction.
+  // Note that these iterators only enumerate the explicit operands.
   // begin() and end() are defined to produce these iterators...
   //
   template<class _MI, class _V> class ValOpIterator;
   typedef ValOpIterator<const MachineInstr*,const Value*> const_val_op_iterator;
   typedef ValOpIterator<      MachineInstr*,      Value*> val_op_iterator;
 
-
   // Access to set the operands when building the machine instruction
   // 
-  void SetMachineOperandVal(unsigned i,
-                            MachineOperand::MachineOperandType operandType,
-                            Value* V, bool isDef=false, bool isDefAndUse=false);
-  void SetMachineOperandConst(unsigned i,
-                              MachineOperand::MachineOperandType operandType,
-                              int64_t intValue);
-  void SetMachineOperandReg(unsigned i, int regNum, bool isDef=false);
+  void SetMachineOperandVal     (unsigned i,
+                                 MachineOperand::MachineOperandType operandType,
+                                 Value* V,
+                                 bool isDef=false,
+                                 bool isDefAndUse=false);
+
+  void SetMachineOperandConst   (unsigned i,
+                                 MachineOperand::MachineOperandType operandType,
+                                 int64_t intValue);
+
+  void SetMachineOperandReg     (unsigned i,
+                                 int regNum,
+                                 bool isDef=false);
 
   //===--------------------------------------------------------------------===//
   // Accessors to add operands when building up machine instructions
@@ -418,9 +431,9 @@ public:
     
     void skipToNextVal() {
       while (i < MI->getNumOperands() &&
-             !((MI->getOperandType(i) == MachineOperand::MO_VirtualRegister ||
-                MI->getOperandType(i) == MachineOperand::MO_CCRegister)
-               && MI->getOperand(i).getVRegValue() != 0))
+             !( (MI->getOperandType(i) == MachineOperand::MO_VirtualRegister ||
+                 MI->getOperandType(i) == MachineOperand::MO_CCRegister)
+                && MI->getOperand(i).getVRegValue() != 0))
         ++i;
     }
   
@@ -473,14 +486,39 @@ public:
   }
 };
 
+
+// Define here to enable inlining of the functions used.
+// 
+void MachineInstr::addImplicitRef(Value* V,
+                                  bool isDef,
+                                  bool isDefAndUse)
+{
+  ++numImplicitRefs;
+  addRegOperand(V, isDef, isDefAndUse);
+}
+
+void MachineInstr::setImplicitRef(unsigned i,
+                                  Value* V,
+                                  bool isDef,
+                                  bool isDefAndUse)
+{
+  assert(i < getNumImplicitRefs() && "setImplicitRef() out of range!");
+  SetMachineOperandVal(i + getNumImplicitRefs(),
+                       MachineOperand::MO_VirtualRegister,
+                       V, isDef, isDefAndUse);
+}
+
+
 //---------------------------------------------------------------------------
 // Debugging Support
 //---------------------------------------------------------------------------
 
-std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
+std::ostream& operator<<        (std::ostream& os,
+                                 const MachineInstr& minstr);
 
-std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
+std::ostream& operator<<        (std::ostream& os,
+                                 const MachineOperand& mop);
 					 
-void PrintMachineInstructions(const Function *F);
+void PrintMachineInstructions   (const Function *F);
 
 #endif

@@ -19,24 +19,33 @@ extern const MachineInstrDescriptor *TargetInstrDescriptors;
 // Constructor for instructions with fixed #operands (nearly all)
 MachineInstr::MachineInstr(MachineOpCode _opCode)
   : opCode(_opCode),
-    operands(TargetInstrDescriptors[_opCode].numOperands, MachineOperand()) {
+    operands(TargetInstrDescriptors[_opCode].numOperands, MachineOperand()),
+    numImplicitRefs(0)
+{
   assert(TargetInstrDescriptors[_opCode].numOperands >= 0);
 }
 
 // Constructor for instructions with variable #operands
 MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands)
-  : opCode(OpCode), operands(numOperands, MachineOperand()) {
+  : opCode(OpCode),
+    operands(numOperands, MachineOperand()),
+    numImplicitRefs(0)
+{
 }
 
 MachineInstr::MachineInstr(MachineOpCode Opcode, unsigned numOperands,
-                           bool XX, bool YY) : opCode(Opcode) {
+                           bool XX, bool YY)
+  : opCode(Opcode),
+    numImplicitRefs(0)
+{
   operands.reserve(numOperands);
 }
 
 // OperandComplete - Return true if it's illegal to add a new operand
-bool MachineInstr::OperandsComplete() const {
+bool MachineInstr::OperandsComplete() const
+{
   int NumOperands = TargetInstrDescriptors[opCode].numOperands;
-  if (NumOperands >= 0 && operands.size() >= (unsigned)NumOperands)
+  if (NumOperands >= 0 && getNumOperands() >= (unsigned)NumOperands)
     return true;  // Broken!
   return false;
 }
@@ -47,7 +56,10 @@ bool MachineInstr::OperandsComplete() const {
 // This only resets the size of the operand vector and initializes it.
 // The new operands must be set explicitly later.
 // 
-void MachineInstr::replace(MachineOpCode Opcode, unsigned numOperands) {
+void MachineInstr::replace(MachineOpCode Opcode, unsigned numOperands)
+{
+  assert(getNumImplicitRefs() == 0 &&
+         "This is probably broken because implicit refs are going to be lost.");
   opCode = Opcode;
   operands.clear();
   operands.resize(numOperands, MachineOperand());
@@ -60,7 +72,7 @@ MachineInstr::SetMachineOperandVal(unsigned i,
                                    bool isdef,
                                    bool isDefAndUse)
 {
-  assert(i < operands.size());
+  assert(i < operands.size());          // may be explicit or implicit op
   operands[i].opType = opType;
   operands[i].value = V;
   operands[i].regNum = -1;
@@ -77,7 +89,7 @@ MachineInstr::SetMachineOperandConst(unsigned i,
 				MachineOperand::MachineOperandType operandType,
                                      int64_t intValue)
 {
-  assert(i < operands.size());
+  assert(i < getNumOperands());          // must be explicit op
   assert(TargetInstrDescriptors[opCode].resultPos != (int) i &&
          "immed. constant cannot be defined");
 
@@ -92,7 +104,7 @@ void
 MachineInstr::SetMachineOperandReg(unsigned i,
                                    int regNum,
                                    bool isdef) {
-  assert(i < operands.size());
+  assert(i < getNumOperands());          // must be explicit op
 
   operands[i].opType = MachineOperand::MO_MachineRegister;
   operands[i].value = NULL;
@@ -107,6 +119,7 @@ MachineInstr::SetMachineOperandReg(unsigned i,
 void
 MachineInstr::SetRegForOperand(unsigned i, int regNum)
 {
+  assert(i < getNumOperands());          // must be explicit op
   operands[i].setRegForValue(regNum);
   insertUsedReg(regNum);
 }
@@ -129,11 +142,11 @@ MachineInstr::substituteValue(const Value* oldVal, Value* newVal, bool defsOnly)
         }
 
   // Subsitute implicit refs
-  for (unsigned i=0, N=implicitRefs.size(); i < N; ++i)
+  for (unsigned i=0, N=getNumImplicitRefs(); i < N; ++i)
     if (getImplicitRef(i) == oldVal)
       if (!defsOnly || implicitRefIsDefined(i))
         {
-          implicitRefs[i].Val = newVal;
+          getImplicitOp(i).value = newVal;
           ++numSubst;
         }
 
