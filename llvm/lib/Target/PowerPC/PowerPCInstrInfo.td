@@ -44,8 +44,10 @@ def symbolLo: Operand<i32> {
 
 // Pseudo-instructions:
 def PHI : Pseudo<(ops), "; PHI">;
+let isLoad = 1 in {
 def ADJCALLSTACKDOWN : Pseudo<(ops), "; ADJCALLSTACKDOWN">;
 def ADJCALLSTACKUP : Pseudo<(ops), "; ADJCALLSTACKUP">;
+}
 def IMPLICIT_DEF : Pseudo<(ops), "; IMPLICIT_DEF">;
 def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label">;
 
@@ -82,6 +84,7 @@ let isBranch = 1, isTerminator = 1, isCall = 1,
 // D-Form instructions.  Most instructions that perform an operation on a
 // register and an immediate are of this type.
 //
+let isLoad = 1 in {
 def LBZ : DForm_1<35, 0, 0, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                   "lbz $rD, $disp($rA)">;
 def LHA : DForm_1<42, 0, 0, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
@@ -92,6 +95,7 @@ def LMW : DForm_1<46, 0, 0, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                   "lmw $rD, $disp($rA)">;
 def LWZ : DForm_1<32, 0, 0, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lwz $rD, $disp($rA)">;
+}
 def ADDI   : DForm_2<14, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addi $rD, $rA, $imm">;
 def ADDIC  : DForm_2<12, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
@@ -108,12 +112,11 @@ def MULLI  : DForm_2< 7, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "mulli $rD, $rA, $imm">;
 def SUBFIC : DForm_2< 8, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "subfic $rD, $rA, $imm">;
-def SUBI   : DForm_2<14, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
-                     "subi $rD, $rA, $imm">;
 def LI  : DForm_2_r0<14, 0, 0, (ops GPRC:$rD, s16imm:$imm),
                      "li $rD, $imm">;
 def LIS : DForm_2_r0<15, 0, 0, (ops GPRC:$rD, s16imm:$imm),
                      "lis $rD, $imm">;
+let isStore = 1 in {
 def STMW : DForm_3<47, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stmw $rS, $disp($rA)">;
 def STB  : DForm_3<38, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
@@ -128,9 +131,13 @@ def STW  : DForm_3<36, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stw $rS, $disp($rA)">;
 def STWU : DForm_3<37, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stwu $rS, $disp($rA)">;
+}
 def ANDIo : DForm_4<28, 0, 0,
                     (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "andi. $dst, $src1, $src2">;
+def ANDISo : DForm_4<29, 0, 0,
+                    (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+                    "andis. $dst, $src1, $src2">;
 def ORI   : DForm_4<24, 0, 0,
                     (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "ori $dst, $src1, $src2">;
@@ -159,30 +166,38 @@ def CMPLWI : DForm_6_ext<10, 0, 0,
 def CMPLDI : DForm_6_ext<10, 1, 0,
                          (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
                          "cmpldi $dst, $src1, $src2">;
+let isLoad = 1 in {
 def LFS : DForm_8<48, 0, 0, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lfs $rD, $disp($rA)">;
 def LFD : DForm_8<50, 0, 0, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lfd $rD, $disp($rA)">;
+}
+let isStore = 1 in {
 def STFS : DForm_9<52, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stfs $rS, $disp($rA)">;
 def STFD : DForm_9<54, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stfd $rS, $disp($rA)">;
-
+}
 
 // DS-Form instructions.  Load/Store instructions available in PPC-64
 //
+let isLoad = 1 in {
 def LWA  : DSForm_1<58, 2, 1, 0, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
                     "lwa $rT, $DS($rA)">;
 def LD   : DSForm_2<58, 0, 1, 0, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
                     "ld $rT, $DS($rA)">;
+}
+let isStore = 1 in {
 def STD  : DSForm_2<62, 0, 1, 0, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
                     "std $rT, $DS($rA)">;
 def STDU : DSForm_2<62, 1, 1, 0, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
                     "stdu $rT, $DS($rA)">;
+}
 
 // X-Form instructions.  Most instructions that perform an operation on a
 // register and another register are of this type.
 //
+let isLoad = 1 in {
 def LBZX : XForm_1<31,  87, 0, 0, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
                    "lbzx $dst, $base, $index">;
 def LHAX : XForm_1<31, 343, 0, 0, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
@@ -195,6 +210,7 @@ def LWZX : XForm_1<31,  23, 0, 0, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
                    "lwzx $dst, $base, $index">;
 def LDX  : XForm_1<31,  21, 1, 0, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
                    "ldx $dst, $base, $index">;
+}
 def MFCR : XForm_5<31,  19, 0, 0, (ops GPRC:$dst), "mfcr $dst">;
 def AND  : XForm_6<31,  28, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "and $rA, $rS, $rB">;
@@ -226,6 +242,7 @@ def SRAW : XForm_6<31, 792, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sraw $rA, $rS, $rB">;
 def XOR  : XForm_6<31, 316, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "xor $rA, $rS, $rB">;
+let isStore = 1 in {
 def STBX  : XForm_8<31, 215, 0, 0, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stbx $rS, $rA, $rB">;
 def STHX  : XForm_8<31, 407, 0, 0, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
@@ -238,6 +255,7 @@ def STDX  : XForm_8<31, 149, 1, 0, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stdx $rS, $rA, $rB">;
 def STDUX : XForm_8<31, 181, 1, 0, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stdux $rS, $rA, $rB">;
+}
 def SRAWI : XForm_10<31, 824, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, u5imm:$SH), 
                      "srawi $rA, $rS, $SH">;
 def CNTLZW : XForm_11<31,  26, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS),
@@ -268,10 +286,12 @@ def CMPLD  : XForm_16_ext<31, 32, 1, 0,
                           "cmpld $crD, $rA, $rB">;
 def FCMPU  : XForm_17<63, 0, 0, 0, (ops CRRC:$crD, FPRC:$fA, FPRC:$fB),
                       "fcmpu $crD, $fA, $fB">;
+let isLoad = 1 in {
 def LFSX   : XForm_25<31, 535, 0, 0, (ops FPRC:$dst, GPRC:$base, GPRC:$index),
                       "lfsx $dst, $base, $index">;
 def LFDX   : XForm_25<31, 599, 0, 0, (ops FPRC:$dst, GPRC:$base, GPRC:$index),
                       "lfdx $dst, $base, $index">;
+}
 def FCFID  : XForm_26<63, 846, 0, 1, 0, (ops FPRC:$frD, FPRC:$frB),
                       "fcfid $frD, $frB">;
 def FCTIDZ : XForm_26<63, 815, 0, 1, 0, (ops FPRC:$frD, FPRC:$frB),
@@ -284,10 +304,12 @@ def FNEG   : XForm_26<63, 80, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
                       "fneg $frD, $frB">;
 def FRSP   : XForm_26<63, 12, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
                       "frsp $frD, $frB">;
+let isStore = 1 in {
 def STFSX : XForm_28<31, 663, 0, 0, (ops FPRC:$frS, GPRC:$rA, GPRC:$rB),
                      "stfsx $frS, $rA, $rB">;
 def STFDX : XForm_28<31, 727, 0, 0, (ops FPRC:$frS, GPRC:$rA, GPRC:$rB),
                      "stfdx $frS, $rA, $rB">;
+}
 
 // XL-Form instructions.  condition register logical ops.
 //

@@ -1664,8 +1664,9 @@ void PPC64ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   static const unsigned OpcodeTab[] = {
     PPC::ADD, PPC::SUB, PPC::AND, PPC::OR, PPC::XOR
   };
+  // FIXME: Convert this to the version from PPC32ISel
   static const unsigned ImmOpcodeTab[] = {
-    PPC::ADDI, PPC::SUBI, PPC::ANDIo, PPC::ORI, PPC::XORI
+    PPC::ADDI, PPC::ADDI, PPC::ANDIo, PPC::ORI, PPC::XORI
   };
   static const unsigned RImmOpcodeTab[] = {
     PPC::ADDI, PPC::SUBFIC, PPC::ANDIo, PPC::ORI, PPC::XORI

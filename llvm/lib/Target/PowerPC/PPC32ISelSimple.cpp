@@ -32,6 +32,8 @@
 using namespace llvm;
 
 namespace {
+  Statistic<> ShiftedImm("ppc-codegen", "Number of shifted immediates used");
+
   /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
   /// PPC Representation.
   ///
@@ -315,8 +317,19 @@ namespace {
     void emitCastOperation(MachineBasicBlock *BB,MachineBasicBlock::iterator IP,
                            Value *Src, const Type *DestTy, unsigned TargetReg);
 
-    /// emitSimpleBinaryOperation - Common code shared between visitSimpleBinary
-    /// and constant expression support.
+
+    /// emitBinaryConstOperation - Used by several functions to emit simple
+    /// arithmetic and logical operations with constants on a register rather
+    /// than a Value.
+    ///
+    void emitBinaryConstOperation(MachineBasicBlock *MBB, 
+                                  MachineBasicBlock::iterator IP,
+                                  unsigned Op0Reg, ConstantInt *Op1, 
+                                  unsigned Opcode, unsigned DestReg);
+
+    /// emitSimpleBinaryOperation - Implement simple binary operators for 
+    /// integral types.  OperatorClass is one of: 0 for Add, 1 for Sub, 
+    /// 2 for And, 3 for Or, 4 for Xor.
     ///
     void emitSimpleBinaryOperation(MachineBasicBlock *BB,
                                    MachineBasicBlock::iterator IP,
@@ -389,13 +402,6 @@ namespace {
     void emitUCOM(MachineBasicBlock *MBB, MachineBasicBlock::iterator MBBI,
                    unsigned LHS, unsigned RHS);
 
-    /// emitAdd - A convenience function to emit the necessary code to add a
-    /// constant signed value to a register.
-    ///
-    void emitAdd(MachineBasicBlock *MBB, 
-                 MachineBasicBlock::iterator IP,
-                 unsigned Op0Reg, ConstantSInt *Op1, unsigned DestReg);
-
     /// makeAnotherReg - This method returns the next register number we haven't
     /// yet used.
     ///
@@ -434,7 +440,8 @@ namespace {
     
     /// canUseAsImmediateForOpcode - This method returns whether a ConstantInt
     /// is okay to use as an immediate argument to a certain binary operation
-    bool canUseAsImmediateForOpcode(ConstantInt *CI, unsigned Opcode);
+    bool canUseAsImmediateForOpcode(ConstantInt *CI, unsigned Opcode,
+                                    bool Shifted);
 
     /// getFixedSizedAllocaFI - Return the frame index for a fixed sized alloca
     /// that is to be statically allocated with the initial stack frame
@@ -481,34 +488,41 @@ unsigned PPC32ISel::getReg(Value *V, MachineBasicBlock *MBB,
 
 /// canUseAsImmediateForOpcode - This method returns whether a ConstantInt
 /// is okay to use as an immediate argument to a certain binary operator.
+/// The shifted argument determines if the immediate is suitable to be used with
+/// the PowerPC instructions such as addis which concatenate 16 bits of the
+/// immediate with 16 bits of zeroes.
 ///
-/// Operator is one of: 0 for Add, 1 for Sub, 2 for And, 3 for Or, 4 for Xor.
-bool PPC32ISel::canUseAsImmediateForOpcode(ConstantInt *CI, unsigned Operator) {
+bool PPC32ISel::canUseAsImmediateForOpcode(ConstantInt *CI, unsigned Opcode,
+                                           bool Shifted) {
   ConstantSInt *Op1Cs;
   ConstantUInt *Op1Cu;
+
+  // For shifted immediates, any value with the low halfword cleared may be used
+  if (Shifted) {
+    if (((int32_t)CI->getRawValue() & 0x0000FFFF) == 0) {
+      ++ShiftedImm;
+      return true;
+    }
+    return false;
+  }
       
   // ADDI, Compare, and non-indexed Load take SIMM
-  bool cond1 = (Operator == 0)
+  bool cond1 = (Opcode < 2)
     && ((int32_t)CI->getRawValue() <= 32767)
     && ((int32_t)CI->getRawValue() >= -32768);
 
-  // SUBI takes -SIMM since it is a mnemonic for ADDI
-  bool cond2 = (Operator == 1)
-    && ((int32_t)CI->getRawValue() <= 32768)
-    && ((int32_t)CI->getRawValue() >= -32767);
-      
   // ANDIo, ORI, and XORI take unsigned values
-  bool cond3 = (Operator >= 2)
+  bool cond2 = (Opcode >= 2)
     && (Op1Cs = dyn_cast<ConstantSInt>(CI))
     && (Op1Cs->getValue() >= 0)
     && (Op1Cs->getValue() <= 65535);
 
   // ANDIo, ORI, and XORI take UIMMs, so they can be larger
-  bool cond4 = (Operator >= 2)
+  bool cond3 = (Opcode >= 2)
     && (Op1Cu = dyn_cast<ConstantUInt>(CI))
     && (Op1Cu->getValue() <= 65535);
 
-  if (cond1 || cond2 || cond3 || cond4)
+  if (cond1 || cond2 || cond3)
     return true;
 
   return false;
@@ -606,7 +620,7 @@ void PPC32ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       } else {
         unsigned Temp = makeAnotherReg(Type::IntTy);
         BuildMI(*MBB, IP, PPC::LIS, 1, Temp).addSImm(uval >> 16);
-        BuildMI(*MBB, IP, PPC::ORI, 2, R).addReg(Temp).addImm(uval);
+        BuildMI(*MBB, IP, PPC::ORI, 2, R).addReg(Temp).addImm(uval & 0xFFFF);
       }
       return;
     } else if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(C)) {
@@ -616,7 +630,7 @@ void PPC32ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       } else {
         unsigned Temp = makeAnotherReg(Type::IntTy);
         BuildMI(*MBB, IP, PPC::LIS, 1, Temp).addSImm(sval >> 16);
-        BuildMI(*MBB, IP, PPC::ORI, 2, R).addReg(Temp).addImm(sval);
+        BuildMI(*MBB, IP, PPC::ORI, 2, R).addReg(Temp).addImm(sval & 0xFFFF);
       }
       return;
     }
@@ -1047,7 +1061,7 @@ unsigned PPC32ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       unsigned OpClass = (CompTy->isSigned()) ? 0 : 2;
       
       // Treat compare like ADDI for the purposes of immediate suitability
-      if (canUseAsImmediateForOpcode(CI, OpClass)) {
+      if (canUseAsImmediateForOpcode(CI, OpClass, false)) {
         BuildMI(*MBB, IP, OpcodeImm, 2, PPC::CR0).addReg(Op0r).addSImm(Op1v);
       } else {
         unsigned Op1r = getReg(Op1, MBB, IP);
@@ -2012,39 +2026,94 @@ void PPC32ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
   BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1r);
 }
 
+// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
+// returns zero when the input is not exactly a power of two.
+static unsigned ExactLog2(unsigned Val) {
+  if (Val == 0 || (Val & (Val-1))) return 0;
+  unsigned Count = 0;
+  while (Val != 1) {
+    Val >>= 1;
+    ++Count;
+  }
+  return Count;
+}
+
+/// emitBinaryConstOperation - Implement simple binary operators for integral
+/// types with a constant operand.  Opcode is one of: 0 for Add, 1 for Sub, 
+/// 2 for And, 3 for Or, 4 for Xor, and 5 for Subtract-From.
+///
+void PPC32ISel::emitBinaryConstOperation(MachineBasicBlock *MBB, 
+                                         MachineBasicBlock::iterator IP,
+                                         unsigned Op0Reg, ConstantInt *Op1, 
+                                         unsigned Opcode, unsigned DestReg) {
+  static const unsigned OpTab[] = {
+    PPC::ADD, PPC::SUB, PPC::AND, PPC::OR, PPC::XOR, PPC::SUBF
+  };
+  static const unsigned ImmOpTab[2][6] = {
+    {  PPC::ADDI,  PPC::ADDI,  PPC::ANDIo,  PPC::ORI,  PPC::XORI, PPC::SUBFIC },
+    { PPC::ADDIS, PPC::ADDIS, PPC::ANDISo, PPC::ORIS, PPC::XORIS, PPC::SUBFIC }
+  };
+
+  // Handle subtract now by inverting the constant value
+  ConstantInt *CI = Op1;
+  if (Opcode == 1) {
+    ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op1);
+    CI = ConstantSInt::get(Op1->getType(), -CSI->getValue());
+  }
+  
+  // xor X, -1 -> not X
+  if (Opcode == 4) {
+    ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op1);
+    ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op1);
+    if ((CSI && CSI->isAllOnesValue()) || (CUI && CUI->isAllOnesValue())) {
+      BuildMI(*MBB, IP, PPC::NOR, 2, DestReg).addReg(Op0Reg).addReg(Op0Reg);
+      return;
+    }
+  }
+
+  // For Add, Sub, and SubF the instruction takes a signed immediate.  For And,
+  // Or, and Xor, the instruction takes an unsigned immediate.  There is no 
+  // shifted immediate form of SubF so disallow its opcode for those constants.
+  if (canUseAsImmediateForOpcode(CI, Opcode, false)) {
+    if (Opcode < 2 || Opcode == 5)
+      BuildMI(*MBB, IP, ImmOpTab[0][Opcode], 2, DestReg).addReg(Op0Reg)
+        .addSImm(Op1->getRawValue());
+    else
+      BuildMI(*MBB, IP, ImmOpTab[0][Opcode], 2, DestReg).addReg(Op0Reg)
+        .addZImm(Op1->getRawValue());
+  } else if (canUseAsImmediateForOpcode(CI, Opcode, true) && (Opcode < 5)) {
+    if (Opcode < 2)
+      BuildMI(*MBB, IP, ImmOpTab[1][Opcode], 2, DestReg).addReg(Op0Reg)
+        .addSImm(Op1->getRawValue() >> 16);
+    else
+      BuildMI(*MBB, IP, ImmOpTab[1][Opcode], 2, DestReg).addReg(Op0Reg)
+        .addZImm(Op1->getRawValue() >> 16);
+  } else {
+    unsigned Op1Reg = getReg(Op1, MBB, IP);
+    BuildMI(*MBB, IP, OpTab[Opcode], 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
+  }
+}
+
 /// emitSimpleBinaryOperation - Implement simple binary operators for integral
 /// types...  OperatorClass is one of: 0 for Add, 1 for Sub, 2 for And, 3 for
 /// Or, 4 for Xor.
-///
-/// emitSimpleBinaryOperation - Common code shared between visitSimpleBinary
-/// and constant expression support.
 ///
 void PPC32ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
                                           MachineBasicBlock::iterator IP,
                                           Value *Op0, Value *Op1,
                                           unsigned OperatorClass, 
                                           unsigned DestReg) {
-  unsigned Class = getClassB(Op0->getType());
-
   // Arithmetic and Bitwise operators
   static const unsigned OpcodeTab[] = {
     PPC::ADD, PPC::SUB, PPC::AND, PPC::OR, PPC::XOR
   };
-  static const unsigned ImmOpcodeTab[] = {
-    PPC::ADDI, PPC::SUBI, PPC::ANDIo, PPC::ORI, PPC::XORI
-  };
-  static const unsigned RImmOpcodeTab[] = {
-    PPC::ADDI, PPC::SUBFIC, PPC::ANDIo, PPC::ORI, PPC::XORI
-  };
-
-  // Otherwise, code generate the full operation with a constant.
-  static const unsigned BottomTab[] = {
-    PPC::ADDC, PPC::SUBC, PPC::AND, PPC::OR, PPC::XOR
-  };
-  static const unsigned TopTab[] = {
-    PPC::ADDE, PPC::SUBFE, PPC::AND, PPC::OR, PPC::XOR
+  static const unsigned LongOpTab[2][5] = {
+    { PPC::ADDC,  PPC::SUBC, PPC::AND, PPC::OR, PPC::XOR },
+    { PPC::ADDE, PPC::SUBFE, PPC::AND, PPC::OR, PPC::XOR }
   };
   
+  unsigned Class = getClassB(Op0->getType());
+
   if (Class == cFP32 || Class == cFP64) {
     assert(OperatorClass < 2 && "No logical ops for FP!");
     emitBinaryFPOperation(MBB, IP, Op0, Op1, OperatorClass, DestReg);
@@ -2068,78 +2137,21 @@ void PPC32ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   }
 
   // Special case: op <const int>, Reg
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0)) {
-    // sub 0, X -> subfic
-    if (OperatorClass == 1 && canUseAsImmediateForOpcode(CI, 0)) {
-      unsigned Op1r = getReg(Op1, MBB, IP);
-      int imm = CI->getRawValue() & 0xFFFF;
-
-      if (Class == cLong) {
-        BuildMI(*MBB, IP, PPC::SUBFIC, 2, DestReg+1).addReg(Op1r+1)
-          .addSImm(imm);
-        BuildMI(*MBB, IP, PPC::SUBFZE, 1, DestReg).addReg(Op1r);
-      } else {
-        BuildMI(*MBB, IP, PPC::SUBFIC, 2, DestReg).addReg(Op1r).addSImm(imm);
-      }
-      return;
-    }
-    
-    // If it is easy to do, swap the operands and emit an immediate op
-    if (Class != cLong && OperatorClass != 1 && 
-        canUseAsImmediateForOpcode(CI, OperatorClass)) {
-      unsigned Op1r = getReg(Op1, MBB, IP);
-      int imm = CI->getRawValue() & 0xFFFF;
-    
-      if (OperatorClass < 2)
-        BuildMI(*MBB, IP, RImmOpcodeTab[OperatorClass], 2, DestReg).addReg(Op1r)
-          .addSImm(imm);
-      else
-        BuildMI(*MBB, IP, RImmOpcodeTab[OperatorClass], 2, DestReg).addReg(Op1r)
-          .addZImm(imm);
-      return;
-    }
-  }
-
-  // Special case: op Reg, <const int>
-  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
-    unsigned Op0r = getReg(Op0, MBB, IP);
-
-    // xor X, -1 -> not X
-    if (OperatorClass == 4 && Op1C->isAllOnesValue()) {
-      BuildMI(*MBB, IP, PPC::NOR, 2, DestReg).addReg(Op0r).addReg(Op0r);
-      if (Class == cLong)  // Invert the low part too
-        BuildMI(*MBB, IP, PPC::NOR, 2, DestReg+1).addReg(Op0r+1)
-          .addReg(Op0r+1);
-      return;
-    }
-    
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0))
     if (Class != cLong) {
-      if (canUseAsImmediateForOpcode(Op1C, OperatorClass)) {
-        int immediate = Op1C->getRawValue() & 0xFFFF;
-        
-        if (OperatorClass < 2)
-          BuildMI(*MBB, IP, ImmOpcodeTab[OperatorClass], 2,DestReg).addReg(Op0r)
-            .addSImm(immediate);
-        else
-          BuildMI(*MBB, IP, ImmOpcodeTab[OperatorClass], 2,DestReg).addReg(Op0r)
-            .addZImm(immediate);
-      } else {
-        unsigned Op1r = getReg(Op1, MBB, IP);
-        BuildMI(*MBB, IP, OpcodeTab[OperatorClass], 2, DestReg).addReg(Op0r)
-          .addReg(Op1r);
-      }
+      unsigned Opcode = (OperatorClass == 1) ? 5 : OperatorClass;
+      unsigned Op1r = getReg(Op1, MBB, IP);
+      emitBinaryConstOperation(MBB, IP, Op1r, CI, Opcode, DestReg);
+      return;
+    }
+  // Special case: op Reg, <const int>
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1))
+    if (Class != cLong) {
+      unsigned Op0r = getReg(Op0, MBB, IP);
+      emitBinaryConstOperation(MBB, IP, Op0r, CI, OperatorClass, DestReg);
       return;
     }
 
-    unsigned Op1r = getReg(Op1, MBB, IP);
-
-    BuildMI(*MBB, IP, BottomTab[OperatorClass], 2, DestReg+1).addReg(Op0r+1)
-      .addReg(Op1r+1);
-    BuildMI(*MBB, IP, TopTab[OperatorClass], 2, DestReg).addReg(Op0r)
-      .addReg(Op1r);
-    return;
-  }
-  
   // We couldn't generate an immediate variant of the op, load both halves into
   // registers and emit the appropriate opcode.
   unsigned Op0r = getReg(Op0, MBB, IP);
@@ -2149,24 +2161,12 @@ void PPC32ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
     unsigned Opcode = OpcodeTab[OperatorClass];
     BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1r);
   } else {
-    BuildMI(*MBB, IP, BottomTab[OperatorClass], 2, DestReg+1).addReg(Op0r+1)
+    BuildMI(*MBB, IP, LongOpTab[0][OperatorClass], 2, DestReg+1).addReg(Op0r+1)
       .addReg(Op1r+1);
-    BuildMI(*MBB, IP, TopTab[OperatorClass], 2, DestReg).addReg(Op0r)
+    BuildMI(*MBB, IP, LongOpTab[1][OperatorClass], 2, DestReg).addReg(Op0r)
       .addReg(Op1r);
   }
   return;
-}
-
-// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
-// returns zero when the input is not exactly a power of two.
-static unsigned ExactLog2(unsigned Val) {
-  if (Val == 0 || (Val & (Val-1))) return 0;
-  unsigned Count = 0;
-  while (Val != 1) {
-    Val >>= 1;
-    ++Count;
-  }
-  return Count;
 }
 
 /// doMultiply - Emit appropriate instructions to multiply together the
@@ -2258,7 +2258,7 @@ void PPC32ISel::doMultiplyConst(MachineBasicBlock *MBB,
   
   // If 32 bits or less and immediate is in right range, emit mul by immediate
   if (Class == cByte || Class == cShort || Class == cInt) {
-    if (canUseAsImmediateForOpcode(CI, 0)) {
+    if (canUseAsImmediateForOpcode(CI, 0, false)) {
       unsigned Op0r = getReg(Op0, MBB, IP);
       unsigned imm = CI->getRawValue() & 0xFFFF;
       BuildMI(*MBB, IP, PPC::MULLI, 2, DestReg).addReg(Op0r).addSImm(imm);
@@ -2423,7 +2423,7 @@ void PPC32ISel::emitDivRemOperation(MachineBasicBlock *MBB,
     unsigned TmpReg1 = makeAnotherReg(Op0->getType());
     unsigned TmpReg2 = makeAnotherReg(Op0->getType());
     emitDivRemOperation(MBB, IP, Op0, Op1, true, TmpReg1);
-    if (CI && canUseAsImmediateForOpcode(CI, 0)) {
+    if (CI && canUseAsImmediateForOpcode(CI, 0, false)) {
       BuildMI(*MBB, IP, PPC::MULLI, 2, TmpReg2).addReg(TmpReg1)
         .addSImm(CI->getRawValue());
     } else {
@@ -2639,7 +2639,7 @@ static bool LoadNeedsSignExtend(LoadInst &LI) {
       if (isa<SetCondInst>(*I))
         continue;
       if (StoreInst *SI = dyn_cast<StoreInst>(*I))
-        if (cByte == getClassB(SI->getType()))
+        if (cByte == getClassB(SI->getOperand(0)->getType()))
         continue;
       AllUsesAreStoresOrSetCC = false;
       break;
@@ -3392,21 +3392,6 @@ void PPC32ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
   emitGEPOperation(BB, BB->end(), &I, false);
 }
 
-/// emitAdd - A convenience function to emit the necessary code to add a
-/// constant signed value to a register.
-///
-void PPC32ISel::emitAdd(MachineBasicBlock *MBB, 
-                        MachineBasicBlock::iterator IP,
-                        unsigned Op0Reg, ConstantSInt *Op1, unsigned DestReg) {
-  if (canUseAsImmediateForOpcode(Op1, 0)) {
-    BuildMI(*MBB, IP, PPC::ADDI, 2, DestReg).addReg(Op0Reg)
-      .addSImm(Op1->getValue());
-  } else {
-    unsigned Op1Reg = getReg(Op1, MBB, IP);
-    BuildMI(*MBB, IP, PPC::ADD, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
-  }
-}
-
 /// emitGEPOperation - Common code shared between visitGetElementPtrInst and
 /// constant expression GEP support.
 ///
@@ -3490,7 +3475,7 @@ void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
     unsigned TmpReg1 = makeAnotherReg(Type::IntTy);
     unsigned TmpReg2 = makeAnotherReg(Type::IntTy);
     doMultiplyConst(MBB, IP, TmpReg1, cgo.index, cgo.size);
-    emitAdd(MBB, IP, TmpReg1, cgo.offset, TmpReg2);
+    emitBinaryConstOperation(MBB, IP, TmpReg1, cgo.offset, 0, TmpReg2);
     
     if (indexReg == 0)
       indexReg = TmpReg2;
@@ -3513,13 +3498,13 @@ void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
   // store can try and use it as an immediate.
   if (GEPIsFolded) {
     if (indexReg == 0) {
-      if (!canUseAsImmediateForOpcode(remainder, 0)) {
+      if (!canUseAsImmediateForOpcode(remainder, 0, false)) {
         indexReg = getReg(remainder, MBB, IP);
         remainder = 0;
       }
     } else {
       unsigned TmpReg = makeAnotherReg(Type::IntTy);
-      emitAdd(MBB, IP, indexReg, remainder, TmpReg);
+      emitBinaryConstOperation(MBB, IP, indexReg, remainder, 0, TmpReg);
       indexReg = TmpReg;
       remainder = 0;
     }
@@ -3536,7 +3521,7 @@ void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
     BuildMI(*MBB, IP, PPC::ADD, 2, TmpReg).addReg(indexReg).addReg(basePtrReg);
     basePtrReg = TmpReg;
   }
-  emitAdd(MBB, IP, basePtrReg, remainder, TargetReg);
+  emitBinaryConstOperation(MBB, IP, basePtrReg, remainder, 0, TargetReg);
 }
 
 /// visitAllocaInst - If this is a fixed size alloca, allocate space from the
@@ -3605,7 +3590,6 @@ void PPC32ISel::visitMallocInst(MallocInst &I) {
   doCall(ValueRecord(getReg(I), I.getType()), TheCall, Args, false);
   TM.CalledFunctions.insert(mallocFn);
 }
-
 
 /// visitFreeInst - Free instructions are code gen'd to call the free libc
 /// function.
