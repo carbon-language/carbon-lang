@@ -264,8 +264,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     std::vector<SDOperand> Ops;
     bool Changed = false;
     for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
-      Ops.push_back(LegalizeOp(Node->getOperand(i)));  // Legalize the operands
-      Changed |= Ops[i] != Node->getOperand(i);
+      SDOperand Op = Node->getOperand(i);
+      // Fold single-use TokenFactor nodes into this token factor as we go.
+      if (Op.getOpcode() == ISD::TokenFactor && Op.hasOneUse()) {
+        Changed = true;
+        for (unsigned j = 0, e = Op.getNumOperands(); j != e; ++j)
+          Ops.push_back(LegalizeOp(Op.getOperand(j)));
+      } else {
+        Ops.push_back(LegalizeOp(Op));  // Legalize the operands
+        Changed |= Ops[i] != Op;
+      }
     }
     if (Changed)
       Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Ops);
