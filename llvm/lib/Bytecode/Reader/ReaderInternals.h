@@ -164,8 +164,8 @@ private:
 
   bool ParseInstruction   (const unsigned char *&Buf, const unsigned char *End,
                            Instruction *&);
-  bool ParseRawInst       (const unsigned char *&Buf, const unsigned char *End,
-                           RawInst &);
+  std::auto_ptr<RawInst> ParseRawInst(const unsigned char *&Buf,
+                                      const unsigned char *End);
 
   void ParseConstantPool(const unsigned char *&Buf, const unsigned char *EndBuf,
                          ValueTable &Tab, TypeValuesListTy &TypeTab);
