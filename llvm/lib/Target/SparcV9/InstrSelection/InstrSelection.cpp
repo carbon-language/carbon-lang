@@ -209,15 +209,15 @@ void InstructionSelection::InsertCodeForPhis(Function &F) {
   for (MachineFunction::iterator BB = MF.begin(); BB != MF.end(); ++BB) {
     for (BasicBlock::const_iterator IIt = BB->getBasicBlock()->begin();
          const PHINode *PN = dyn_cast<PHINode>(IIt); ++IIt) {
-      Value *PhiCpRes = new PHINode(PN->getType(), PN->getName() + ":PhiCp");
-
+      // Create a new temporary register to hold the result of the Phi copy.
       // The leak detector shouldn't track these nodes.  They are not garbage,
       // even though their parent field is never filled in.
+      Value *PhiCpRes = new PHINode(PN->getType(), PN->getName() + ":PhiCp");
       LeakDetector::removeGarbageObject(PhiCpRes);
 
-      // for each incoming value of the phi, insert phi elimination
+      // For each of PN's incoming values, insert a copy in the corresponding
+      // predecessor block.
       for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
-        // insert the copy instruction to the predecessor BB
         std::vector<MachineInstr*> mvec, CpVec;
         Target.getRegInfo().cpValue2Value(PN->getIncomingValue(i), PhiCpRes,
                                           mvec);
@@ -228,10 +228,10 @@ void InstructionSelection::InsertCodeForPhis(Function &F) {
           CpVec2.push_back(*MI);
           CpVec.insert(CpVec.end(), CpVec2.begin(), CpVec2.end());
         }
-        
+        // Insert the copy instructions into the predecessor BB.        
         InsertPhiElimInstructions(PN->getIncomingBlock(i), CpVec);
       }
-      
+      // Insert a copy instruction from PhiCpRes to PN.
       std::vector<MachineInstr*> mvec;
       Target.getRegInfo().cpValue2Value(PhiCpRes, const_cast<PHINode*>(PN),
                                         mvec);
