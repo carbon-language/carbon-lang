@@ -20,8 +20,8 @@
 #define LLVM_BYTECODE_READER_H
 
 #include "llvm/ModuleProvider.h"
+#include "llvm/Module.h"
 #include <string>
-#include <vector>
 
 namespace llvm {
 
@@ -60,7 +60,7 @@ Module* ParseBytecodeBuffer(const unsigned char *Buffer,
 /// @returns true on success, false otherwise
 /// @brief Get the list of dependent libraries from a bytecode file.
 bool GetBytecodeDependentLibraries(const std::string &fileName, 
-                                   std::vector<std::string>& deplibs);
+                                   Module::LibraryListType& deplibs);
 
 /// Read bytecode files from the specfied archive (.a) file, convert them
 /// to Module* and provide them in the \p Objects argument. If an error
