@@ -114,7 +114,7 @@ FoldGetElemChain(InstrTreeNode* ptrNode, vector<Value*>& chainIdxVec)
 {
   InstructionNode* gepNode = dyn_cast<InstructionNode>(ptrNode);
   GetElementPtrInst* gepInst =
-    dyn_cast_or_null<GetElementPtrInst>(gepNode->getInstruction());
+    dyn_cast_or_null<GetElementPtrInst>(gepNode ? gepNode->getInstruction() :0);
 
   // ptr value is not computed in this tree or ptr value does not come from GEP
   // instruction
