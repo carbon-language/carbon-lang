@@ -73,10 +73,15 @@ InstructionNode::InstructionNode(Instruction* I)
     {
       opLabel = opLabel + 100;		 // load/getElem with index vector
     }
+  else if (opLabel == Instruction::Xor &&
+           BinaryOperator::isNot(I))
+    {
+      opLabel = (I->getType() == Type::BoolTy)?  NotOp  // boolean Not operator
+                                              : BNotOp; // bitwise Not operator
+    }
   else if (opLabel == Instruction::And ||
            opLabel == Instruction::Or ||
-           opLabel == Instruction::Xor ||
-           opLabel == Instruction::Not)
+           opLabel == Instruction::Xor)
     {
       // Distinguish bitwise operators from logical operators!
       if (I->getType() != Type::BoolTy)
