@@ -167,14 +167,15 @@ bool SimplifyCFG(BasicBlock *BB) {
       TerminatorInst *Term = OnlyPred->getTerminator();
 
       // Resolve any PHI nodes at the start of the block.  They are all
-      // guaranteed to have exactly one entry if they exist.
+      // guaranteed to have exactly one entry if they exist, unless there are
+      // multiple duplicate (but guaranteed to be equal) entries for the
+      // incoming edges.  This occurs when there are multiple edges from
+      // OnlyPred to OnlySucc.
       //
       while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
-        assert(PN->getNumIncomingValues() == 1 && "Only one pred!");
         PN->replaceAllUsesWith(PN->getIncomingValue(0));
         BB->getInstList().pop_front();  // Delete the phi node...
       }
-
 
       // Delete the unconditional branch from the predecessor...
       OnlyPred->getInstList().pop_back();
