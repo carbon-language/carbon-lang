@@ -1028,10 +1028,8 @@ MethodInfo::MethodInfo(Method *M) : Annotation(MethodInfoAID) {
   // Assign slot numbers to the method arguments...
   const Method::ArgumentListType &ArgList = M->getArgumentList();
   for (Method::ArgumentListType::const_iterator AI = ArgList.begin(), 
-	 AE = ArgList.end(); AI != AE; ++AI) {
-    MethodArgument *MA = *AI;
-    MA->addAnnotation(new SlotNumber(getValueSlot(MA)));
-  }
+	 AE = ArgList.end(); AI != AE; ++AI)
+    (*AI)->addAnnotation(new SlotNumber(getValueSlot(*AI)));
 
   // Iterate over all of the instructions...
   unsigned InstNum = 0;

@@ -38,11 +38,12 @@ private:
   unsigned getValueSlot(const Value *V);
 };
 
+
 //===----------------------------------------------------------------------===//
 // Support for the SlotNumber annotation
 //===----------------------------------------------------------------------===//
 
-// This annotation (attached only to MethodArgument & Instruction objects) is
+// This annotation (attached only to FunctionArgument & Instruction objects) is
 // used to hold the the slot number for the value in its type plane.
 //
 // Entities have this annotation attached to them when the containing
