@@ -64,8 +64,7 @@ public:
   unsigned char getTypeAlignment(const Type *Ty) const;
 
   // getIndexOffset - return the offset from the beginning of the type for the
-  // specified indices.  This is used to implement getElementPtr and load and 
-  // stores that include the implicit form of getelementptr.
+  // specified indices.  This is used to implement getelementptr.
   //
   uint64_t      getIndexedOffset(const Type *Ty, 
 				 const std::vector<Value*> &Indices) const;
