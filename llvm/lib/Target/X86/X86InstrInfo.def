@@ -56,6 +56,16 @@ I(MULrr8      , "mulb",               0, 0)           // AX   = AL*R8  F6/4
 I(MULrr16     , "mulw",               0, 0)           // DX:AX= AX*R16 F7/4
 I(MULrr32     , "mull",               0, 0)           // ED:EA= EA*R32 F7/4
 
+// unsigned division/remainder
+I(DIVrr8      , "divb",               0, 0)           // AX/r8= AL&AH  F6/6
+I(DIVrr16     , "divw",               0, 0)           // DA/r16=AX&DX  F7/6
+I(DIVrr32     , "divl",               0, 0)           // DA/r32=EAX&DX F7/6
+
+// signed division/remainder
+I(IDIVrr8     , "idivb",              0, 0)           // AX/r8= AL&AH  F6/6
+I(IDIVrr16    , "idivw",              0, 0)           // DA/r16=AX&DX  F7/6
+I(IDIVrr32    , "idivl",              0, 0)           // DA/r32=EAX&DX F7/6
+
 
 // Logical operators
 I(ANDrr8      , "andb",               0, 0)           // R8  &= R8    20/r
@@ -87,6 +97,12 @@ I(SARrr16     , "sarw",               0, 0)           // R16  >>= cl   D3/7
 I(SARir16     , "sarw",               0, 0)           // R16  >>= imm8 C1/7 ib
 I(SARrr32     , "sarl",               0, 0)           // R32  >>= cl   D3/7
 I(SARir32     , "sarl",               0, 0)           // R32  >>= imm8 C1/7 ib
+
+
+// Miscellaneous instructions...
+I(CBW         , "cbw",                0, 0)           // AH = signext(AL)  98
+I(CWD         , "cwd",                0, 0)           // DX = signext(AX)  99
+I(CWQ         , "cwq",                0, 0)           // EDX= signext(EAX) 99
 
 // At this point, I is dead, so undefine the macro
 #undef I

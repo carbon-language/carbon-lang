@@ -59,15 +59,19 @@ namespace {
     void visitBranchInst(BranchInst &BI);
 
     // Arithmetic operators
+    void visitSimpleBinary(BinaryOperator &B, unsigned OpcodeClass);
     void visitAdd(BinaryOperator &B) { visitSimpleBinary(B, 0); }
     void visitSub(BinaryOperator &B) { visitSimpleBinary(B, 1); }
     void visitMul(BinaryOperator &B);
+
+    void visitDiv(BinaryOperator &B) { visitDivRem(B); }
+    void visitRem(BinaryOperator &B) { visitDivRem(B); }
+    void visitDivRem(BinaryOperator &B);
 
     // Bitwise operators
     void visitAnd(BinaryOperator &B) { visitSimpleBinary(B, 2); }
     void visitOr (BinaryOperator &B) { visitSimpleBinary(B, 3); }
     void visitXor(BinaryOperator &B) { visitSimpleBinary(B, 4); }
-    void visitSimpleBinary(BinaryOperator &B, unsigned OpcodeClass);
 
     // Binary comparison operators
 
@@ -247,7 +251,55 @@ void ISel::visitMul(BinaryOperator &I) {
 
   // Put the result into the destination register...
   BuildMI(BB, MovOpcode[Class], 1, getReg(I)).addReg(Reg);
+}
 
+/// visitDivRem - Handle division and remainder instructions... these
+/// instruction both require the same instructions to be generated, they just
+/// select the result from a different register.  Note that both of these
+/// instructions work differently for signed and unsigned operands.
+///
+void ISel::visitDivRem(BinaryOperator &I) {
+  unsigned Class = getClass(I.getType());
+  if (Class > 2)  // FIXME: Handle longs
+    visitInstruction(I);
+
+  static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
+  static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
+  static const unsigned ExtOpcode[]={ X86::CBW   , X86::CWD    , X86::CWQ     };
+  static const unsigned ClrOpcode[]={ X86::XORrr8, X86::XORrr16, X86::XORrr32 };
+  static const unsigned ExtRegs[]  ={ X86::AH    , X86::DX     , X86::EDX     };
+
+  static const unsigned DivOpcode[][4] = {
+    { X86::DIVrr8 , X86::DIVrr16 , X86::DIVrr32 , 0 },  // Unsigned division
+    { X86::IDIVrr8, X86::IDIVrr16, X86::IDIVrr32, 0 },  // Signed division
+  };
+
+  bool isSigned   = I.getType()->isSigned();
+  unsigned Reg    = Regs[Class];
+  unsigned ExtReg = ExtRegs[Class];
+  unsigned Op0Reg = getReg(I.getOperand(1));
+  unsigned Op1Reg = getReg(I.getOperand(1));
+
+  // Put the first operand into one of the A registers...
+  BuildMI(BB, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
+
+  if (isSigned) {
+    // Emit a sign extension instruction...
+    BuildMI(BB, ExtOpcode[Class], 1, ExtReg).addReg(Reg);
+  } else {
+    // If unsigned, emit a zeroing instruction... (reg = xor reg, reg)
+    BuildMI(BB, ClrOpcode[Class], 2, ExtReg).addReg(ExtReg).addReg(ExtReg);
+  }
+
+  // Figure out which register we want to pick the result out of...
+  unsigned DestReg = (I.getOpcode() == Instruction::Div) ? Reg : ExtReg;
+  
+  // Emit the appropriate multiple instruction...
+  // FIXME: We need to mark that this modified AH, DX, or EDX also!!
+  BuildMI(BB,DivOpcode[isSigned][Class], 2, DestReg).addReg(Reg).addReg(Op1Reg);
+
+  // Put the result into the destination register...
+  BuildMI(BB, MovOpcode[Class], 1, getReg(I)).addReg(DestReg);
 }
 
 /// Shift instructions: 'shl', 'sar', 'shr' - Some special cases here
@@ -255,11 +307,9 @@ void ISel::visitMul(BinaryOperator &I) {
 /// shift values equal to 1. Even the general case is sort of special,
 /// because the shift amount has to be in CL, not just any old register.
 ///
-void
-ISel::visitShiftInst (ShiftInst & I)
-{
-  unsigned Op0r = getReg (I.getOperand (0));
-  unsigned DestReg = getReg (I);
+void ISel::visitShiftInst (ShiftInst &I) {
+  unsigned Op0r = getReg (I.getOperand(0));
+  unsigned DestReg = getReg(I);
   bool isLeftShift = I.getOpcode() == Instruction::Shl;
   bool isOperandSigned = I.getType()->isUnsigned();
   unsigned OperandClass = getClass(I.getType());
