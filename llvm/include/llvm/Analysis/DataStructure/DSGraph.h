@@ -106,6 +106,8 @@ public:
   typedef GlobalSetTy::const_iterator global_iterator;
   global_iterator global_begin() const { return GlobalSet.begin(); }
   global_iterator global_end() const { return GlobalSet.end(); }
+  unsigned global_size() const { return GlobalSet.size(); }
+  unsigned global_count(GlobalValue *GV) const { return GlobalSet.count(GV); }
 };
 
 
@@ -398,6 +400,12 @@ public:
   /// computeGGToGMapping - Compute the mapping of nodes in the global
   /// graph to nodes in this graph.
   void computeGGToGMapping(InvNodeMapTy &InvNodeMap);
+
+  /// computeCalleeCallerMapping - Given a call from a function in the current
+  /// graph to the 'Callee' function (which lives in 'CalleeGraph'), compute the
+  /// mapping of nodes from the callee to nodes in the caller.
+  void computeCalleeCallerMapping(DSCallSite CS, const Function &Callee,
+                                  DSGraph &CalleeGraph, NodeMapTy &NodeMap);
 
   /// cloneInto - Clone the specified DSGraph into the current graph.  The
   /// translated ScalarMap for the old function is filled into the OldValMap
