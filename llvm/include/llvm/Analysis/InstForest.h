@@ -142,6 +142,8 @@ template<class Payload>
 class InstForest : public std::vector<InstTreeNode<Payload> *> {
   friend class InstTreeNode<Payload>;
 
+  typedef std::vector<InstTreeNode<Payload> *>::const_iterator const_iterator;
+
   // InstMap - Map contains entries for ALL instructions in the method and the
   // InstTreeNode that they correspond to.
   //
@@ -196,7 +198,7 @@ public:
 
   // print - Called by operator<< below...
   void print(std::ostream &out) const {
-    for (typename const_iterator I = begin(), E = end(); I != E; ++I)
+    for (const_iterator I = begin(), E = end(); I != E; ++I)
       out << *I;
   }
 };
