@@ -56,6 +56,9 @@ public:
     Incomplete  = 1 << 4,   // This node may not be complete
     Modified    = 1 << 5,   // This node is modified in this context
     Read        = 1 << 6,   // This node is read in this context
+#if 1
+    DEAD        = 1 << 7,   // This node is dead and should not be pointed to
+#endif
   };
   
   /// NodeType - A union of the above bits.  "Shadow" nodes do not add any flags
@@ -208,11 +211,11 @@ private:
 //===----------------------------------------------------------------------===//
 // Define inline DSNodeHandle functions that depend on the definition of DSNode
 //
-
 inline void DSNodeHandle::setNode(DSNode *n) {
   if (N) N->removeReferrer(this);
   N = n;
   if (N) N->addReferrer(this);
+  assert(!N || ((N->NodeType & DSNode::DEAD) == 0));
 }
 
 inline bool DSNodeHandle::hasLink(unsigned Num) const {
