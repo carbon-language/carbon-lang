@@ -161,14 +161,14 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         // the spill code and restart the algorithm
         std::set<unsigned> spilledRegs;
         for (IntervalPtrs::iterator
-                 i = spilled_.begin(); i != spilled_.end(); ) {
+                 i = spilled_.begin(); i != spilled_.end(); ++i) {
             int slot = vrm_->assignVirt2StackSlot((*i)->reg);
             std::vector<LiveInterval*> added =
                 li_->addIntervalsForSpills(**i, *vrm_, slot);
             std::copy(added.begin(), added.end(), std::back_inserter(handled_));
             spilledRegs.insert((*i)->reg);
-            i = spilled_.erase(i);
         }
+        spilled_.clear();
         for (IntervalPtrs::iterator
                  i = handled_.begin(); i != handled_.end(); )
             if (spilledRegs.count((*i)->reg))
@@ -415,7 +415,6 @@ void RA::assignRegOrSpillAtInterval(IntervalPtrs::value_type cur)
     // otherwise we spill all intervals aliasing the register with
     // minimum weight, assigned the newly cleared register to the
     // current interval and continue
-    std::vector<LiveInterval*> added;
     assert(MRegisterInfo::isPhysicalRegister(minReg) &&
            "did not choose a register to spill?");
     std::vector<bool> toSpill(mri_->getNumRegs(), false);
