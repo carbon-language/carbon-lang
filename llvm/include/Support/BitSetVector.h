@@ -194,8 +194,8 @@ public:
     iterator(const iterator& I)
       : currentBit(I.currentBit),currentWord(I.currentWord),bitvec(I.bitvec) { }
     iterator& operator=(const iterator& I) {
-      currentWord == I.currentWord;
-      currentBit == I.currentBit;
+      currentWord = I.currentWord;
+      currentBit = I.currentBit;
       bitvec = I.bitvec;
       return *this;
     }
@@ -203,13 +203,13 @@ public:
     // Increment and decrement operators (pre and post)
     iterator& operator++() {
       if (++currentBit == WORDSIZE)
-        { currentBit = 0; if (currentWord < bitvec->maxSize) ++currentWord; }
+        { currentBit = 0; if (currentWord < bitvec->size()) ++currentWord; }
       return *this;
     }
     iterator& operator--() {
       if (currentBit == 0) {
         currentBit = WORDSIZE-1;
-        currentWord = (currentWord == 0)? bitvec->maxSize : --currentWord;
+        currentWord = (currentWord == 0)? bitvec->size() : --currentWord;
       }
       else
         --currentBit;
@@ -220,7 +220,7 @@ public:
 
     // Dereferencing operators
     reference operator*() {
-      assert(currentWord < bitvec->maxSize &&
+      assert(currentWord < bitvec->size() &&
              "Dereferencing iterator past the end of a BitSetVector");
       return bitvec->getWord(currentWord)[currentBit];
     }
@@ -234,7 +234,7 @@ public:
   protected:
     static iterator begin(BitSetVector& _bitvec) { return iterator(_bitvec); }
     static iterator end(BitSetVector& _bitvec)   { return iterator(0,
-                                                    _bitvec.maxSize, _bitvec); }
+                                                    _bitvec.size(), _bitvec); }
     friend class BitSetVector;
   };
 };
