@@ -25,9 +25,6 @@ namespace {
   class GCSE : public FunctionPass {
     std::set<Instruction*>  WorkList;
     DominatorSet           *DomSetInfo;
-#if 0
-    ImmediateDominators    *ImmDominator;
-#endif
     ValueNumbering         *VN;
   public:
     virtual bool runOnFunction(Function &F);
@@ -61,9 +58,6 @@ bool GCSE::runOnFunction(Function &F) {
 
   // Get pointers to the analysis results that we will be using...
   DomSetInfo = &getAnalysis<DominatorSet>();
-#if 0
-  ImmDominator = &getAnalysis<ImmediateDominators>();
-#endif
   VN = &getAnalysis<ValueNumbering>();
 
   // Step #1: Add all instructions in the function to the worklist for
@@ -254,32 +248,6 @@ Instruction *GCSE::EliminateCSE(Instruction *I, Instruction *Other) {
     // PRE than GCSE.
     //
     return 0;
-
-#if 0
-    // Handle the most general case now.  In this case, neither I dom Other nor
-    // Other dom I.  Because we are in SSA form, we are guaranteed that the
-    // operands of the two instructions both dominate the uses, so we _know_
-    // that there must exist a block that dominates both instructions (if the
-    // operands of the instructions are globals or constants, worst case we
-    // would get the entry node of the function).  Search for this block now.
-    //
-
-    // Search up the immediate dominator chain of BB1 for the shared dominator
-    BasicBlock *SharedDom = (*ImmDominator)[BB1];
-    while (!DomSetInfo->dominates(SharedDom, BB2))
-      SharedDom = (*ImmDominator)[SharedDom];
-
-    // At this point, shared dom must dominate BOTH BB1 and BB2...
-    assert(SharedDom && DomSetInfo->dominates(SharedDom, BB1) &&
-           DomSetInfo->dominates(SharedDom, BB2) && "Dominators broken!");
-
-    // Rip 'I' out of BB1, and move it to the end of SharedDom.
-    BB1->getInstList().remove(I);
-    SharedDom->getInstList().insert(--SharedDom->end(), I);
-
-    // Eliminate 'Other' now.
-    ReplaceInstWithInst(I, Other);
-#endif
   }
 
   if (isa<LoadInst>(Ret))
