@@ -19,7 +19,6 @@
 #include "Support/Debug.h"
 #include "Support/iterator"
 #include <vector>
-#include <stack>
 #include <map>
 
 //--------------------------------------------------------------------------
@@ -69,31 +68,31 @@ class TarjanSCC_iterator : public forward_iterator<SCC<GraphT, GT>, ptrdiff_t>
   // The visit counters used to detect when a complete SCC is on the stack.
   // visitNum is the global counter.
   // nodeVisitNumbers are per-node visit numbers, also used as DFS flags.
-  unsigned long visitNum;
-  std::map<NodeType *, unsigned long> nodeVisitNumbers;
+  unsigned visitNum;
+  std::map<NodeType *, unsigned> nodeVisitNumbers;
 
   // SCCNodeStack - Stack holding nodes of the SCC.
-  std::stack<NodeType *> SCCNodeStack;
+  std::vector<NodeType *> SCCNodeStack;
 
   // CurrentSCC - The current SCC, retrieved using operator*().
   SccTy CurrentSCC;
 
   // VisitStack - Used to maintain the ordering.  Top = current block
   // First element is basic block pointer, second is the 'next child' to visit
-  std::stack<std::pair<NodeType *, ChildItTy> > VisitStack;
+  std::vector<std::pair<NodeType *, ChildItTy> > VisitStack;
 
   // MinVistNumStack - Stack holding the "min" values for each node in the DFS.
   // This is used to track the minimum uplink values for all children of
   // the corresponding node on the VisitStack.
-  std::stack<unsigned long> MinVisitNumStack;
+  std::vector<unsigned> MinVisitNumStack;
 
   // A single "visit" within the non-recursive DFS traversal.
   void DFSVisitOne(NodeType* N) {
     ++visitNum;                         // Global counter for the visit order
     nodeVisitNumbers[N] = visitNum;
-    SCCNodeStack.push(N);
-    MinVisitNumStack.push(visitNum);
-    VisitStack.push(make_pair(N, GT::child_begin(N)));
+    SCCNodeStack.push_back(N);
+    MinVisitNumStack.push_back(visitNum);
+    VisitStack.push_back(make_pair(N, GT::child_begin(N)));
     //DEBUG(std::cerr << "TarjanSCC: Node " << N <<
     //      " : visitNum = " << visitNum << "\n");
   }
@@ -101,18 +100,18 @@ class TarjanSCC_iterator : public forward_iterator<SCC<GraphT, GT>, ptrdiff_t>
   // The stack-based DFS traversal; defined below.
   void DFSVisitChildren() {
     assert(!VisitStack.empty());
-    while (VisitStack.top().second != GT::child_end(VisitStack.top().first))
+    while (VisitStack.back().second != GT::child_end(VisitStack.back().first))
       { // TOS has at least one more child so continue DFS
-        NodeType *childN = *VisitStack.top().second++;
+        NodeType *childN = *VisitStack.back().second++;
         if (nodeVisitNumbers.find(childN) == nodeVisitNumbers.end())
           { // this node has never been seen
             DFSVisitOne(childN);
           }
         else
           {
-            unsigned long childNum = nodeVisitNumbers[childN];
-            if (MinVisitNumStack.top() > childNum)
-              MinVisitNumStack.top() = childNum;
+            unsigned childNum = nodeVisitNumbers[childN];
+            if (MinVisitNumStack.back() > childNum)
+              MinVisitNumStack.back() = childNum;
           }
       }
   }
@@ -125,13 +124,14 @@ class TarjanSCC_iterator : public forward_iterator<SCC<GraphT, GT>, ptrdiff_t>
       {
         DFSVisitChildren();
 
-        assert(VisitStack.top().second==GT::child_end(VisitStack.top().first));
-        NodeType* visitingN = VisitStack.top().first;
-        unsigned long minVisitNum = MinVisitNumStack.top();
-        VisitStack.pop();
-        MinVisitNumStack.pop();
-        if (! MinVisitNumStack.empty() && MinVisitNumStack.top() > minVisitNum)
-          MinVisitNumStack.top() = minVisitNum;
+        assert(VisitStack.back().second ==
+               GT::child_end(VisitStack.back().first));
+        NodeType* visitingN = VisitStack.back().first;
+        unsigned minVisitNum = MinVisitNumStack.back();
+        VisitStack.pop_back();
+        MinVisitNumStack.pop_back();
+        if (! MinVisitNumStack.empty() && MinVisitNumStack.back() > minVisitNum)
+          MinVisitNumStack.back() = minVisitNum;
 
         //DEBUG(std::cerr << "TarjanSCC: Popped node " << visitingN <<
         //      " : minVisitNum = " << minVisitNum << "; Node visit num = " <<
@@ -143,8 +143,8 @@ class TarjanSCC_iterator : public forward_iterator<SCC<GraphT, GT>, ptrdiff_t>
             // reset their minVisit values, and return (this suspends
             // the DFS traversal till the next ++).
             do {
-              CurrentSCC.push_back(SCCNodeStack.top());
-              SCCNodeStack.pop();
+              CurrentSCC.push_back(SCCNodeStack.back());
+              SCCNodeStack.pop_back();
               nodeVisitNumbers[CurrentSCC.back()] = ~0UL; 
             } while (CurrentSCC.back() != visitingN);
             return;
