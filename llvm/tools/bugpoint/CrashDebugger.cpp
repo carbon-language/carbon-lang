@@ -23,6 +23,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/ToolRunner.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "Support/FileUtilities.h"
@@ -84,13 +85,16 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
 }
 
 namespace llvm {
-  class ReduceCrashingFunctions : public ListReducer<Function*> {
+  class ReduceCrashingFunctions : public ListReducer<const Function*> {
     BugDriver &BD;
+    bool (*TestFn)(BugDriver &, Module *);
   public:
-    ReduceCrashingFunctions(BugDriver &bd) : BD(bd) {}
+    ReduceCrashingFunctions(BugDriver &bd,
+                            bool (*testFn)(BugDriver &, Module *))
+      : BD(bd), TestFn(testFn) {}
     
-    virtual TestResult doTest(std::vector<Function*> &Prefix,
-                              std::vector<Function*> &Kept) {
+    virtual TestResult doTest(std::vector<const Function*> &Prefix,
+                              std::vector<const Function*> &Kept) {
       if (!Kept.empty() && TestFuncs(Kept))
         return KeepSuffix;
       if (!Prefix.empty() && TestFuncs(Prefix))
@@ -98,11 +102,11 @@ namespace llvm {
       return NoFailure;
     }
     
-    bool TestFuncs(std::vector<Function*> &Prefix);
+    bool TestFuncs(std::vector<const Function*> &Prefix);
   };
 }
 
-bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
+bool ReduceCrashingFunctions::TestFuncs(std::vector<const Function*> &Funcs) {
   // Clone the program to try hacking it apart...
   Module *M = CloneModule(BD.getProgram());
   
@@ -131,7 +135,7 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
       DeleteFunctionBody(I);
 
   // Try running the hacked up program...
-  if (BD.runPasses(M)) {
+  if (TestFn(BD, M)) {
     BD.setNewProgram(M);        // It crashed, keep the trimmed version...
 
     // Make sure to use function pointers that point into the now-current
@@ -150,13 +154,15 @@ namespace {
   /// then running the simplify-cfg pass.  This has the effect of chopping up
   /// the CFG really fast which can reduce large functions quickly.
   ///
-  class ReduceCrashingBlocks : public ListReducer<BasicBlock*> {
+  class ReduceCrashingBlocks : public ListReducer<const BasicBlock*> {
     BugDriver &BD;
+    bool (*TestFn)(BugDriver &, Module *);
   public:
-    ReduceCrashingBlocks(BugDriver &bd) : BD(bd) {}
+    ReduceCrashingBlocks(BugDriver &bd, bool (*testFn)(BugDriver &, Module *))
+      : BD(bd), TestFn(testFn) {}
     
-    virtual TestResult doTest(std::vector<BasicBlock*> &Prefix,
-                              std::vector<BasicBlock*> &Kept) {
+    virtual TestResult doTest(std::vector<const BasicBlock*> &Prefix,
+                              std::vector<const BasicBlock*> &Kept) {
       if (!Kept.empty() && TestBlocks(Kept))
         return KeepSuffix;
       if (!Prefix.empty() && TestBlocks(Prefix))
@@ -164,11 +170,11 @@ namespace {
       return NoFailure;
     }
     
-    bool TestBlocks(std::vector<BasicBlock*> &Prefix);
+    bool TestBlocks(std::vector<const BasicBlock*> &Prefix);
   };
 }
 
-bool ReduceCrashingBlocks::TestBlocks(std::vector<BasicBlock*> &BBs) {
+bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
   // Clone the program to try hacking it apart...
   Module *M = CloneModule(BD.getProgram());
   
@@ -176,13 +182,14 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<BasicBlock*> &BBs) {
   std::set<BasicBlock*> Blocks;
   for (unsigned i = 0, e = BBs.size(); i != e; ++i) {
     // Convert the basic block from the original module to the new module...
-    Function *F = BBs[i]->getParent();
+    const Function *F = BBs[i]->getParent();
     Function *CMF = M->getFunction(F->getName(), F->getFunctionType());
     assert(CMF && "Function not in module?!");
 
     // Get the mapped basic block...
     Function::iterator CBI = CMF->begin();
-    std::advance(CBI, std::distance(F->begin(), Function::iterator(BBs[i])));
+    std::advance(CBI, std::distance(F->begin(),
+                                    Function::const_iterator(BBs[i])));
     Blocks.insert(CBI);
   }
 
@@ -235,7 +242,7 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<BasicBlock*> &BBs) {
   Passes.run(*M);
 
   // Try running on the hacked up program...
-  if (BD.runPasses(M)) {
+  if (TestFn(BD, M)) {
     BD.setNewProgram(M);      // It crashed, keep the trimmed version...
 
     // Make sure to use basic block pointers that point into the now-current
@@ -253,33 +260,16 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<BasicBlock*> &BBs) {
   return false;
 }
 
-static bool TestForOptimizerCrash(BugDriver &BD) {
-  return BD.runPasses();
-}
-
-
-/// debugOptimizerCrash - This method is called when some pass crashes on input.
-/// It attempts to prune down the testcase to something reasonable, and figure
-/// out exactly which pass is crashing.
-///
-bool BugDriver::debugOptimizerCrash() {
+/// DebugACrash - Given a predicate that determines whether a component crashes
+/// on a program, try to destructively reduce the program while still keeping
+/// the predicate true.
+static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
   bool AnyReduction = false;
-  std::cout << "\n*** Debugging optimizer crash!\n";
-
-  // Reduce the list of passes which causes the optimizer to crash...
-  unsigned OldSize = PassesToRun.size();
-  ReducePassList(*this).reduceList(PassesToRun);
-
-  std::cout << "\n*** Found crashing pass"
-            << (PassesToRun.size() == 1 ? ": " : "es: ")
-            << getPassesString(PassesToRun) << "\n";
-
-  EmitProgressBytecode("passinput");
 
   // See if we can get away with nuking all of the global variable initializers
   // in the program...
-  if (Program->gbegin() != Program->gend()) {
-    Module *M = CloneModule(Program);
+  if (BD.getProgram()->gbegin() != BD.getProgram()->gend()) {
+    Module *M = CloneModule(BD.getProgram());
     bool DeletedInit = false;
     for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
       if (I->hasInitializer()) {
@@ -293,8 +283,8 @@ bool BugDriver::debugOptimizerCrash() {
     } else {
       // See if the program still causes a crash...
       std::cout << "\nChecking to see if we can delete global inits: ";
-      if (runPasses(M)) {  // Still crashes?
-        setNewProgram(M);
+      if (TestFn(BD, M)) {  // Still crashes?
+        BD.setNewProgram(M);
         AnyReduction = true;
         std::cout << "\n*** Able to remove all global initializers!\n";
       } else {                       // No longer crashes?
@@ -305,8 +295,9 @@ bool BugDriver::debugOptimizerCrash() {
   }
   
   // Now try to reduce the number of functions in the module to something small.
-  std::vector<Function*> Functions;
-  for (Module::iterator I = Program->begin(), E = Program->end(); I != E; ++I)
+  std::vector<const Function*> Functions;
+  for (Module::const_iterator I = BD.getProgram()->begin(),
+         E = BD.getProgram()->end(); I != E; ++I)
     if (!I->isExternal())
       Functions.push_back(I);
 
@@ -314,11 +305,11 @@ bool BugDriver::debugOptimizerCrash() {
     std::cout << "\n*** Attempting to reduce the number of functions "
       "in the testcase\n";
 
-    OldSize = Functions.size();
-    ReduceCrashingFunctions(*this).reduceList(Functions);
+    unsigned OldSize = Functions.size();
+    ReduceCrashingFunctions(BD, TestFn).reduceList(Functions);
 
     if (Functions.size() < OldSize) {
-      EmitProgressBytecode("reduced-function");
+      BD.EmitProgressBytecode("reduced-function");
       AnyReduction = true;
     }
   }
@@ -329,11 +320,12 @@ bool BugDriver::debugOptimizerCrash() {
   // shrinks the code dramatically quickly
   //
   if (!DisableSimplifyCFG) {
-    std::vector<BasicBlock*> Blocks;
-    for (Module::iterator I = Program->begin(), E = Program->end(); I != E; ++I)
-      for (Function::iterator FI = I->begin(), E = I->end(); FI != E; ++FI)
+    std::vector<const BasicBlock*> Blocks;
+    for (Module::const_iterator I = BD.getProgram()->begin(),
+           E = BD.getProgram()->end(); I != E; ++I)
+      for (Function::const_iterator FI = I->begin(), E = I->end(); FI !=E; ++FI)
         Blocks.push_back(FI);
-    ReduceCrashingBlocks(*this).reduceList(Blocks);
+    ReduceCrashingBlocks(BD, TestFn).reduceList(Blocks);
   }
 
   // FIXME: This should use the list reducer to converge faster by deleting
@@ -356,20 +348,21 @@ bool BugDriver::debugOptimizerCrash() {
     
     // Loop over all of the (non-terminator) instructions remaining in the
     // function, attempting to delete them.
-    for (Module::iterator FI = Program->begin(), E = Program->end();
-         FI != E; ++FI)
+    for (Module::const_iterator FI = BD.getProgram()->begin(),
+           E = BD.getProgram()->end(); FI != E; ++FI)
       if (!FI->isExternal()) {
-        for (Function::iterator BI = FI->begin(), E = FI->end(); BI != E; ++BI)
-          for (BasicBlock::iterator I = BI->begin(), E = --BI->end();
+        for (Function::const_iterator BI = FI->begin(), E = FI->end(); BI != E;
+             ++BI)
+          for (BasicBlock::const_iterator I = BI->begin(), E = --BI->end();
                I != E; ++I) {
-            Module *M = deleteInstructionFromProgram(I, Simplification);
+            Module *M = BD.deleteInstructionFromProgram(I, Simplification);
             
             // Find out if the pass still crashes on this pass...
             std::cout << "Checking instruction '" << I->getName() << "': ";
-            if (runPasses(M)) {
+            if (TestFn(BD, M)) {
               // Yup, it does, we delete the old module, and continue trying to
               // reduce the testcase...
-              setNewProgram(M);
+              BD.setNewProgram(M);
               AnyReduction = true;
               goto TryAgain;  // I wish I had a multi-level break here!
             }
@@ -383,24 +376,57 @@ bool BugDriver::debugOptimizerCrash() {
 
   // Try to clean up the testcase by running funcresolve and globaldce...
   std::cout << "\n*** Attempting to perform final cleanups: ";
-  Module *M = CloneModule(Program);
-  M = performFinalCleanups(M, true);
+  Module *M = CloneModule(BD.getProgram());
+  M = BD.performFinalCleanups(M, true);
             
   // Find out if the pass still crashes on the cleaned up program...
-  if (runPasses(M)) {
-    setNewProgram(M);     // Yup, it does, keep the reduced version...
+  if (TestFn(BD, M)) {
+    BD.setNewProgram(M);     // Yup, it does, keep the reduced version...
     AnyReduction = true;
   } else {
     delete M;
   }
 
   if (AnyReduction)
-    EmitProgressBytecode("reduced-simplified");
+    BD.EmitProgressBytecode("reduced-simplified");
 
-  return false;
+  return false;  
 }
 
+static bool TestForOptimizerCrash(BugDriver &BD, Module *M) {
+  return BD.runPasses(M);
+}
 
+/// debugOptimizerCrash - This method is called when some pass crashes on input.
+/// It attempts to prune down the testcase to something reasonable, and figure
+/// out exactly which pass is crashing.
+///
+bool BugDriver::debugOptimizerCrash() {
+  std::cout << "\n*** Debugging optimizer crash!\n";
+
+  // Reduce the list of passes which causes the optimizer to crash...
+  unsigned OldSize = PassesToRun.size();
+  ReducePassList(*this).reduceList(PassesToRun);
+
+  std::cout << "\n*** Found crashing pass"
+            << (PassesToRun.size() == 1 ? ": " : "es: ")
+            << getPassesString(PassesToRun) << "\n";
+
+  EmitProgressBytecode("passinput");
+
+  return DebugACrash(*this, TestForOptimizerCrash);
+}
+
+static bool TestForCodeGenCrash(BugDriver &BD, Module *M) {
+  try {
+    std::cerr << "\n";
+    BD.compileProgram(M);
+    return false;
+  } catch (ToolExecutionError &TEE) {
+    std::cerr << "<crash>\n";
+    return true;  // Tool is still crashing.
+  }
+}
 
 /// debugCodeGeneratorCrash - This method is called when the code generator
 /// crashes on an input.  It attempts to reduce the input as much as possible
@@ -408,5 +434,5 @@ bool BugDriver::debugOptimizerCrash() {
 bool BugDriver::debugCodeGeneratorCrash() {
   std::cerr << "*** Debugging code generator crash!\n";
 
-  return false;
+  return DebugACrash(*this, TestForCodeGenCrash);
 }
