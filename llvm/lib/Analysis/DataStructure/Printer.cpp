@@ -39,6 +39,9 @@ void DSNode::dump() const { print(std::cerr, 0); }
 static std::string getCaption(const DSNode *N, const DSGraph *G) {
   std::stringstream OS;
   Module *M = 0;
+
+  if (G) G = N->getParentGraph();
+
   // Get the module from ONE of the functions in the graph it is available.
   if (G && !G->getReturnNodes().empty())
     M = G->getReturnNodes().begin()->first->getParent();
