@@ -17,11 +17,15 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include <memory>
 #include <fstream>
 using std::cerr;
+
+// FIXME: This should eventually be parameterized...
+static TargetData TD("opt target");
 
 static cl::opt<string>
 InputFilename(cl::Positional, cl::desc("<input llvm assembly>"), cl::Required);
@@ -74,7 +78,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   // transformation to stop right before it runs.
   if (StopAtLevelRaise) return;
 
-  addPass(PM, createRaisePointerReferencesPass());// Eliminate casts
+  addPass(PM, createRaisePointerReferencesPass(TD));// Eliminate casts
   addPass(PM, createPromoteMemoryToRegister());   // Promote alloca's to regs
   // Disabling until this is fixed -- Vikram, 7/7/02.
   // addPass(PM, createReassociatePass());           // Reassociate expressions
