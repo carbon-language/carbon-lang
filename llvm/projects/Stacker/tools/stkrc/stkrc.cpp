@@ -59,94 +59,118 @@ FlexDebug("x", cl::desc("Turn on Flex Debugging"), cl::Hidden);
 static cl::opt<bool>
 EchoSource("e", cl::desc("Print Stacker Source as parsed"), cl::Hidden);
 
+enum OptLev {
+  None = 0,
+  One = 1,
+  Two = 2,
+  Three = 3,
+  Four = 4,
+  Five = 5
+};
+
+static cl::opt<OptLev> OptLevel(
+  cl::desc("Choose optimization level to apply:"),
+  cl::init(One),
+  cl::values(
+    clEnumValN(None,"O0","An alias for the -O1 option"),
+    clEnumValN(One,"O1","Optimize for compilation speed"),
+    clEnumValN(Two,"O2","Perform simple optimizations to reduce code size"),
+    clEnumValN(Three,"O3","More aggressive optimizations"),
+    clEnumValN(Four,"O4","High level of optimization"),
+    clEnumValN(Five,"O5","An alias for the -O4 option"),
+    clEnumValEnd
+  ));
+
 int main(int argc, char **argv) 
 {
   cl::ParseCommandLineOptions(argc, argv, " stacker .st -> .bc compiler\n");
 
   std::ostream *Out = 0;
-  StackerCompiler compiler;
-  try 
-  {
-#ifdef PARSE_DEBUG
+  try {
+    StackerCompiler compiler;
+    try 
     {
-	extern int Stackerdebug;
-	Stackerdebug = ParseDebug;
-    }
+#ifdef PARSE_DEBUG
+      {
+          extern int Stackerdebug;
+          Stackerdebug = ParseDebug;
+      }
 #endif
 #ifdef FLEX_DEBUG
-    {
-	extern int Stacker_flex_debug;
-	Stacker_flex_debug = FlexDebug;
-    }
+      {
+          extern int Stacker_flex_debug;
+          Stacker_flex_debug = FlexDebug;
+      }
 #endif
-    // Parse the file now...
+      // Parse the file now...
+      
+      std::auto_ptr<Module> M ( 
+          compiler.compile(InputFilename,EchoSource,OptLevel,StackSize));
+      if (M.get() == 0) {
+        throw std::string("program didn't parse correctly.");
+      }
+
+      if (verifyModule(*M.get())) {
+        throw std::string("program parsed, but does not verify as correct!");
+      }
     
-    std::auto_ptr<Module> M ( 
-	compiler.compile(InputFilename,EchoSource, StackSize) );
-    if (M.get() == 0) {
-      std::cerr << argv[0] << ": assembly didn't read correctly.\n";
-      return 1;
-    }
+      if (DumpAsm) 
+        std::cerr << "Here's the assembly:" << M.get();
 
-    if (verifyModule(*M.get())) {
-      std::cerr << argv[0]
-                << ": assembly parsed, but does not verify as correct!\n";
-      return 1;
-    }
-  
-    if (DumpAsm) std::cerr << "Here's the assembly:\n" << M.get();
-
-    if (OutputFilename != "") {   // Specified an output filename?
-      if (OutputFilename != "-") {  // Not stdout?
-        if (!Force && std::ifstream(OutputFilename.c_str())) {
-          // If force is not specified, make sure not to overwrite a file!
-          std::cerr << argv[0] << ": error opening '" << OutputFilename
-                    << "': file exists!\n"
-                    << "Use -f command line argument to force output\n";
-          return 1;
+      if (OutputFilename != "") {   // Specified an output filename?
+        if (OutputFilename != "-") {  // Not stdout?
+          if (!Force && std::ifstream(OutputFilename.c_str())) {
+            // If force is not specified, make sure not to overwrite a file!
+            throw std::string("error opening '") + OutputFilename +
+                    "': file exists!\n" +
+                    "Use -f command line argument to force output";
+            return 1;
+          }
+          Out = new std::ofstream(OutputFilename.c_str());
+        } else {                      // Specified stdout
+          Out = &std::cout;       
         }
-        Out = new std::ofstream(OutputFilename.c_str());
-      } else {                      // Specified stdout
-	Out = &std::cout;       
-      }
-    } else {
-      if (InputFilename == "-") {
-	OutputFilename = "-";
-	Out = &std::cout;
       } else {
-	std::string IFN = InputFilename;
-	int Len = IFN.length();
-	if (IFN[Len-3] == '.' && IFN[Len-2] == 's' && IFN[Len-1] == 't') {
-	  // Source ends in .ll
-	  OutputFilename = std::string(IFN.begin(), IFN.end()-3);
+        if (InputFilename == "-") {
+          OutputFilename = "-";
+          Out = &std::cout;
         } else {
-	  OutputFilename = IFN;   // Append a .bc to it
-	}
-	OutputFilename += ".bc";
+          std::string IFN = InputFilename;
+          int Len = IFN.length();
+          if (IFN[Len-3] == '.' && IFN[Len-2] == 's' && IFN[Len-1] == 't') {
+            // Source ends in .ll
+            OutputFilename = std::string(IFN.begin(), IFN.end()-3);
+          } else {
+            OutputFilename = IFN;   // Append a .bc to it
+          }
+          OutputFilename += ".bc";
 
-        if (!Force && std::ifstream(OutputFilename.c_str())) {
-          // If force is not specified, make sure not to overwrite a file!
-          std::cerr << argv[0] << ": error opening '" << OutputFilename
-                    << "': file exists!\n"
-                    << "Use -f command line argument to force output\n";
-          return 1;
+          if (!Force && std::ifstream(OutputFilename.c_str())) {
+            // If force is not specified, make sure not to overwrite a file!
+            throw std::string("error opening '") + OutputFilename +
+                    "': file exists!\n" +
+                    "Use -f command line argument to force output\n";
+          }
+
+          Out = new std::ofstream(OutputFilename.c_str());
+          // Make sure that the Out file gets unlinked from the disk if we get a
+          // SIGINT
+          sys::RemoveFileOnSignal(OutputFilename);
         }
-
-	Out = new std::ofstream(OutputFilename.c_str());
-        // Make sure that the Out file gets unlinked from the disk if we get a
-        // SIGINT
-        sys::RemoveFileOnSignal(OutputFilename);
       }
-    }
-  
-    if (!Out->good()) {
-      std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+    
+      if (!Out->good()) {
+        throw std::string("error opening ") + OutputFilename + "!";
+      }
+     
+      WriteBytecodeToFile(M.get(), *Out);
+    } catch (const ParseException &E) {
+      std::cerr << argv[0] << ": " << E.getMessage() << "\n";
       return 1;
     }
-   
-    WriteBytecodeToFile(M.get(), *Out);
-  } catch (const ParseException &E) {
-    std::cerr << argv[0] << ": " << E.getMessage() << "\n";
+  }
+  catch (const std::string& msg ) {
+    std::cerr << argv[0] << ": " << msg << "\n";
     return 1;
   }
 
