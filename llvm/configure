@@ -476,7 +476,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LLVM_COPYRIGHT subdirs build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS ARCH ENDIAN CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT ENABLE_OPTIMIZED JIT LLVMGCCDIR CPP CXX CXXFLAGS ac_ct_CXX LEX LEXLIB LEX_OUTPUT_ROOT FLEX YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL ifGNUmake FIND GREP MKDIR MV RM SED TAR INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA DOT ETAGS PYTHON QMTEST RUNTEST ETAGSFLAGS ALLOCA MMAP_FILE LLVMGCC LLVMCC1 LLVMCC1PLUS SHLIBEXT LLVM_PREFIX LLVM_BINDIR LLVM_LIBDIR LLVM_DATADIR LLVM_DOCSDIR LLVM_ETCDIR LLVM_INCLUDEDIR LLVM_INFODIR LLVM_MANDIR LLVM_CONFIGTIME LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LLVM_COPYRIGHT subdirs build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS ARCH ENDIAN CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT ENABLE_OPTIMIZED JIT ENABLE_DOXYGEN LLVMGCCDIR CPP CXX CXXFLAGS ac_ct_CXX LEX LEXLIB LEX_OUTPUT_ROOT FLEX YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL ifGNUmake DATE FIND GREP MKDIR MV PAX RM SED TAR INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA BZIP2 DOT DOXYGEN ETAGS GROFF GZIP POD2HTML POD2MAN PYTHON QMTEST RUNTEST ZIP ETAGSFLAGS ALLOCA MMAP_FILE LLVMGCC LLVMCC1 LLVMCC1PLUS SHLIBEXT LLVM_PREFIX LLVM_BINDIR LLVM_LIBDIR LLVM_DATADIR LLVM_DOCSDIR LLVM_ETCDIR LLVM_INCLUDEDIR LLVM_INFODIR LLVM_MANDIR LLVM_CONFIGTIME LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1036,6 +1036,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-optimized
   --enable-jit            Enable Just In Time Compiling (default is YES)
+  --enable-doxygen        Build doxygen documentation (default is NO)
   --enable-shared[=PKGS]
                           build shared libraries [default=yes]
   --enable-static[=PKGS]
@@ -2956,6 +2957,23 @@ else
  ;;
   esac
 fi
+
+# Check whether --enable-doxygen or --disable-doxygen was given.
+if test "${enable_doxygen+set}" = set; then
+  enableval="$enable_doxygen"
+  enableval=yes
+else
+  enableval=no
+fi;
+case "$enableval" in
+  yes) ENABLE_DOXYGEN=1
+ ;;
+  no)  ENABLE_DOXYGEN=0
+ ;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-doxygen. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-doxygen. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 
 
 # Check whether --with-llvmgccdir or --without-llvmgccdir was given.
@@ -4989,7 +5007,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4992 "configure"' > conftest.$ac_ext
+  echo '#line 5010 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5863,7 +5881,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5866:" \
+echo "$as_me:5884:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6920,11 +6938,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6923: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6941: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6927: \$? = $ac_status" >&5
+   echo "$as_me:6945: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -7163,11 +7181,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7166: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7184: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7170: \$? = $ac_status" >&5
+   echo "$as_me:7188: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -7223,11 +7241,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7226: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7244: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7230: \$? = $ac_status" >&5
+   echo "$as_me:7248: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9408,7 +9426,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9411 "configure"
+#line 9429 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9506,7 +9524,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9509 "configure"
+#line 9527 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11699,11 +11717,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11702: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11720: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:11706: \$? = $ac_status" >&5
+   echo "$as_me:11724: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -11759,11 +11777,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11762: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11780: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:11766: \$? = $ac_status" >&5
+   echo "$as_me:11784: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -13120,7 +13138,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 13123 "configure"
+#line 13141 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13218,7 +13236,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 13221 "configure"
+#line 13239 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14055,11 +14073,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14058: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14076: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14062: \$? = $ac_status" >&5
+   echo "$as_me:14080: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -14115,11 +14133,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14118: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14136: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14122: \$? = $ac_status" >&5
+   echo "$as_me:14140: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -16154,11 +16172,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16157: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16175: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16161: \$? = $ac_status" >&5
+   echo "$as_me:16179: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -16397,11 +16415,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16400: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16418: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16404: \$? = $ac_status" >&5
+   echo "$as_me:16422: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -16457,11 +16475,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16460: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16478: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:16464: \$? = $ac_status" >&5
+   echo "$as_me:16482: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -18642,7 +18660,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18645 "configure"
+#line 18663 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18740,7 +18758,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18743 "configure"
+#line 18761 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19796,6 +19814,46 @@ else
 echo "${ECHO_T}no, using $LN_S" >&6
 fi
 
+# Extract the first word of "date", so it can be a program name with args.
+set dummy date; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_DATE+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $DATE in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_DATE="$DATE" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_DATE="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_DATE" && ac_cv_path_DATE="date"
+  ;;
+esac
+fi
+DATE=$ac_cv_path_DATE
+
+if test -n "$DATE"; then
+  echo "$as_me:$LINENO: result: $DATE" >&5
+echo "${ECHO_T}$DATE" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
 # Extract the first word of "find", so it can be a program name with args.
 set dummy find; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -19951,6 +20009,46 @@ MV=$ac_cv_path_MV
 if test -n "$MV"; then
   echo "$as_me:$LINENO: result: $MV" >&5
 echo "${ECHO_T}$MV" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+# Extract the first word of "pax", so it can be a program name with args.
+set dummy pax; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PAX+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PAX in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PAX="$PAX" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PAX="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_PAX" && ac_cv_path_PAX="pax"
+  ;;
+esac
+fi
+PAX=$ac_cv_path_PAX
+
+if test -n "$PAX"; then
+  echo "$as_me:$LINENO: result: $PAX" >&5
+echo "${ECHO_T}$PAX" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
@@ -20237,6 +20335,46 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL}'
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 
+# Extract the first word of "bzip2", so it can be a program name with args.
+set dummy bzip2; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_BZIP2+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $BZIP2 in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_BZIP2="$BZIP2" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_BZIP2="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_BZIP2" && ac_cv_path_BZIP2="true bzip2"
+  ;;
+esac
+fi
+BZIP2=$ac_cv_path_BZIP2
+
+if test -n "$BZIP2"; then
+  echo "$as_me:$LINENO: result: $BZIP2" >&5
+echo "${ECHO_T}$BZIP2" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
 # Extract the first word of "dot", so it can be a program name with args.
 set dummy dot; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -20272,6 +20410,46 @@ DOT=$ac_cv_path_DOT
 if test -n "$DOT"; then
   echo "$as_me:$LINENO: result: $DOT" >&5
 echo "${ECHO_T}$DOT" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+# Extract the first word of "doxygen", so it can be a program name with args.
+set dummy doxygen; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_DOXYGEN+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $DOXYGEN in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_DOXYGEN="$DOXYGEN" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_DOXYGEN="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_DOXYGEN" && ac_cv_path_DOXYGEN="true doxygen"
+  ;;
+esac
+fi
+DOXYGEN=$ac_cv_path_DOXYGEN
+
+if test -n "$DOXYGEN"; then
+  echo "$as_me:$LINENO: result: $DOXYGEN" >&5
+echo "${ECHO_T}$DOXYGEN" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
@@ -20317,6 +20495,165 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
+# Extract the first word of "groff", so it can be a program name with args.
+set dummy groff; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_GROFF+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $GROFF in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_GROFF="$GROFF" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_GROFF="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_GROFF" && ac_cv_path_GROFF="true groff"
+  ;;
+esac
+fi
+GROFF=$ac_cv_path_GROFF
+
+if test -n "$GROFF"; then
+  echo "$as_me:$LINENO: result: $GROFF" >&5
+echo "${ECHO_T}$GROFF" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+# Extract the first word of "gzip", so it can be a program name with args.
+set dummy gzip; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_GZIP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $GZIP in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_GZIP="$GZIP" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_GZIP="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_GZIP" && ac_cv_path_GZIP="true gzip"
+  ;;
+esac
+fi
+GZIP=$ac_cv_path_GZIP
+
+if test -n "$GZIP"; then
+  echo "$as_me:$LINENO: result: $GZIP" >&5
+echo "${ECHO_T}$GZIP" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+# Extract the first word of "pod2html", so it can be a program name with args.
+set dummy pod2html; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_POD2HTML+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $POD2HTML in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_POD2HTML="$POD2HTML" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_POD2HTML="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_POD2HTML" && ac_cv_path_POD2HTML="true pod2html"
+  ;;
+esac
+fi
+POD2HTML=$ac_cv_path_POD2HTML
+
+if test -n "$POD2HTML"; then
+  echo "$as_me:$LINENO: result: $POD2HTML" >&5
+echo "${ECHO_T}$POD2HTML" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+# Extract the first word of "pod2man", so it can be a program name with args.
+set dummy pod2man; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_POD2MAN+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $POD2MAN in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_POD2MAN="$POD2MAN" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_POD2MAN="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_POD2MAN" && ac_cv_path_POD2MAN="true pod2man"
+  ;;
+esac
+fi
+POD2MAN=$ac_cv_path_POD2MAN
+
+if test -n "$POD2MAN"; then
+  echo "$as_me:$LINENO: result: $POD2MAN" >&5
+echo "${ECHO_T}$POD2MAN" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
 
 # Extract the first word of "python", so it can be a program name with args.
 set dummy python; ac_word=$2
@@ -20433,6 +20770,46 @@ RUNTEST=$ac_cv_path_RUNTEST
 if test -n "$RUNTEST"; then
   echo "$as_me:$LINENO: result: $RUNTEST" >&5
 echo "${ECHO_T}$RUNTEST" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+# Extract the first word of "zip", so it can be a program name with args.
+set dummy zip; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_ZIP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $ZIP in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ZIP="$ZIP" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ZIP="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_ZIP" && ac_cv_path_ZIP="true zip"
+  ;;
+esac
+fi
+ZIP=$ac_cv_path_ZIP
+
+if test -n "$ZIP"; then
+  echo "$as_me:$LINENO: result: $ZIP" >&5
+echo "${ECHO_T}$ZIP" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
@@ -25428,9 +25805,9 @@ _ACEOF
 eval LLVM_PREFIX="${prefix}";
 eval LLVM_BINDIR="${prefix}/bin";
 eval LLVM_LIBDIR="${prefix}/lib";
-eval LLVM_DATADIR="${prefix}/data";
-eval LLVM_DOCSDIR="${prefix}/docs";
-eval LLVM_ETCDIR="${prefix}/etc";
+eval LLVM_DATADIR="${prefix}/share/llvm";
+eval LLVM_DOCSDIR="${prefix}/docs/llvm";
+eval LLVM_ETCDIR="${prefix}/etc/llvm";
 eval LLVM_INCLUDEDIR="${prefix}/include";
 eval LLVM_INFODIR="${prefix}/info";
 eval LLVM_MANDIR="${prefix}/man";
@@ -25518,6 +25895,9 @@ _ACEOF
 
 
                                         ac_config_files="$ac_config_files tools/llvmc/st tools/llvmc/cpp tools/llvmc/ll tools/llvmc/c"
+
+
+          ac_config_files="$ac_config_files docs/doxygen.cfg"
 
 
           ac_config_commands="$ac_config_commands Makefile"
@@ -26115,6 +26495,7 @@ do
   "tools/llvmc/cpp" ) CONFIG_FILES="$CONFIG_FILES tools/llvmc/cpp" ;;
   "tools/llvmc/ll" ) CONFIG_FILES="$CONFIG_FILES tools/llvmc/ll" ;;
   "tools/llvmc/c" ) CONFIG_FILES="$CONFIG_FILES tools/llvmc/c" ;;
+  "docs/doxygen.cfg" ) CONFIG_FILES="$CONFIG_FILES docs/doxygen.cfg" ;;
   "lib/System/platform" ) CONFIG_LINKS="$CONFIG_LINKS lib/System/platform:lib/System/$llvm_cv_platform_type" ;;
   "Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
   "Makefile.common" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile.common" ;;
@@ -26247,6 +26628,7 @@ s,@EXEEXT@,$EXEEXT,;t t
 s,@OBJEXT@,$OBJEXT,;t t
 s,@ENABLE_OPTIMIZED@,$ENABLE_OPTIMIZED,;t t
 s,@JIT@,$JIT,;t t
+s,@ENABLE_DOXYGEN@,$ENABLE_DOXYGEN,;t t
 s,@LLVMGCCDIR@,$LLVMGCCDIR,;t t
 s,@CPP@,$CPP,;t t
 s,@CXX@,$CXX,;t t
@@ -26273,21 +26655,30 @@ s,@FFLAGS@,$FFLAGS,;t t
 s,@ac_ct_F77@,$ac_ct_F77,;t t
 s,@LIBTOOL@,$LIBTOOL,;t t
 s,@ifGNUmake@,$ifGNUmake,;t t
+s,@DATE@,$DATE,;t t
 s,@FIND@,$FIND,;t t
 s,@GREP@,$GREP,;t t
 s,@MKDIR@,$MKDIR,;t t
 s,@MV@,$MV,;t t
+s,@PAX@,$PAX,;t t
 s,@RM@,$RM,;t t
 s,@SED@,$SED,;t t
 s,@TAR@,$TAR,;t t
 s,@INSTALL_PROGRAM@,$INSTALL_PROGRAM,;t t
 s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
 s,@INSTALL_DATA@,$INSTALL_DATA,;t t
+s,@BZIP2@,$BZIP2,;t t
 s,@DOT@,$DOT,;t t
+s,@DOXYGEN@,$DOXYGEN,;t t
 s,@ETAGS@,$ETAGS,;t t
+s,@GROFF@,$GROFF,;t t
+s,@GZIP@,$GZIP,;t t
+s,@POD2HTML@,$POD2HTML,;t t
+s,@POD2MAN@,$POD2MAN,;t t
 s,@PYTHON@,$PYTHON,;t t
 s,@QMTEST@,$QMTEST,;t t
 s,@RUNTEST@,$RUNTEST,;t t
+s,@ZIP@,$ZIP,;t t
 s,@ETAGSFLAGS@,$ETAGSFLAGS,;t t
 s,@ALLOCA@,$ALLOCA,;t t
 s,@MMAP_FILE@,$MMAP_FILE,;t t

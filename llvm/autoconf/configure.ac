@@ -187,6 +187,18 @@ else
   esac
 fi
 
+dnl Allow enablement of doxygen generated documentation
+AC_ARG_ENABLE(doxygen,
+              AS_HELP_STRING([--enable-doxygen],
+                             [Build doxygen documentation (default is NO)]),,
+                             enableval=default)
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_DOXYGEN,[1]) ;;
+  no)  AC_SUBST(ENABLE_DOXYGEN,[0]) ;;
+  default) AC_SUBST(ENABLE_DOXYGEN,[0]) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-doxygen. Use "yes" or "no"]) ;;
+esac
+
 dnl Find the LLVM GCC-based C/C++ front end
 AC_ARG_WITH(llvmgccdir,
   AS_HELP_STRING(--with-llvmgccdir,[Location of LLVM GCC front-end]),
@@ -230,26 +242,36 @@ AC_PROG_LIBTOOL
 dnl Check for the tools that the makefiles require
 AC_CHECK_GNU_MAKE
 AC_PROG_LN_S
+AC_PATH_PROG(DATE, [date], [date])
 AC_PATH_PROG(FIND, [find], [find])
 AC_PATH_PROG(GREP, [grep], [grep])
 AC_PATH_PROG(MKDIR,[mkdir],[mkdir])
-AC_PATH_PROG(MV,   [mv], [mv])
+AC_PATH_PROG(MV,   [mv],   [mv])
+AC_PATH_PROG(PAX,  [pax],  [pax])
 AC_PROG_RANLIB
-AC_PATH_PROG(RM,   [rm], [rm])
-AC_PATH_PROG(SED,  [sed], [sed])
-AC_PATH_PROG(TAR,  [tar],[gtar])
+AC_PATH_PROG(RM,   [rm],   [rm])
+AC_PATH_PROG(SED,  [sed],  [sed])
+AC_PATH_PROG(TAR,  [tar],  [gtar])
 
 dnl Find the install program
 AC_PROG_INSTALL
 
-dnl Checks for tools we can get away with not having:
+dnl Checks for documentation and testing tools that we can do without. If these
+dnl are not found then they are set to "true" which always succeeds but does
+dnl nothing. This just lets the build output show that we could have done 
+dnl something if the tool was available. 
+AC_PATH_PROG(BZIP2,[bzip2],[true bzip2])
 AC_PATH_PROG(DOT,[dot],[true dot])
+AC_PATH_PROG(DOXYGEN,[doxygen],[true doxygen])
 AC_PATH_PROG(ETAGS,[etags],[true etags])
-
-dnl Check for optional testing tools
+AC_PATH_PROG(GROFF,[groff],[true groff])
+AC_PATH_PROG(GZIP,[gzip],[true gzip])
+AC_PATH_PROG(POD2HTML,[pod2html],[true pod2html])
+AC_PATH_PROG(POD2MAN,[pod2man],[true pod2man])
 AC_PATH_PROG(PYTHON,[python],[true python])
 AC_PATH_PROG(QMTEST,[qmtest],[true qmtest])
 AC_PATH_PROG(RUNTEST,[runtest],[true runtest])
+AC_PATH_PROG(ZIP,[zip],[true zip])
 
 dnl Determine if the linker supports the -R option.
 AC_LINK_USE_R
@@ -476,9 +498,9 @@ AC_DEFINE_UNQUOTED(SHLIBEXT,"$SHLIBEXT",
 eval LLVM_PREFIX="${prefix}";
 eval LLVM_BINDIR="${prefix}/bin";
 eval LLVM_LIBDIR="${prefix}/lib";
-eval LLVM_DATADIR="${prefix}/data";
-eval LLVM_DOCSDIR="${prefix}/docs";
-eval LLVM_ETCDIR="${prefix}/etc";
+eval LLVM_DATADIR="${prefix}/share/llvm";
+eval LLVM_DOCSDIR="${prefix}/docs/llvm";
+eval LLVM_ETCDIR="${prefix}/etc/llvm";
 eval LLVM_INCLUDEDIR="${prefix}/include";
 eval LLVM_INFODIR="${prefix}/info";
 eval LLVM_MANDIR="${prefix}/man";
@@ -537,6 +559,9 @@ AC_CONFIG_FILES([Makefile.config])
 
 dnl Configure llvmc's configuration files
 AC_CONFIG_FILES([tools/llvmc/st tools/llvmc/cpp tools/llvmc/ll tools/llvmc/c])
+
+dnl Configure doxygen's configuration file
+AC_CONFIG_FILES([docs/doxygen.cfg])
 
 dnl Do special configuration of Makefiles
 AC_CONFIG_MAKEFILE(Makefile)
