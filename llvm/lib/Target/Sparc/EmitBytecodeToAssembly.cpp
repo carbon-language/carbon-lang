@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcInternals.h"
+#include "llvm/Pass.h"
 #include "llvm/Bytecode/Writer.h"
 #include <iostream>
 

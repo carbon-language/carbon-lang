@@ -22,6 +22,7 @@
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/SlotCalculator.h"
+#include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/StringExtras.h"
 #include "Support/HashExtras.h"
