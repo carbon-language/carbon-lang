@@ -574,7 +574,7 @@ void AssemblyWriter::printFunction(const Function *M) {
   // Print out the return type and name...
   Out << "\n" << (M->isExternal() ? "declare " : "")
       << (M->hasInternalLinkage() ? "internal " : "");
-  printType(M->getReturnType()) << " \"" << M->getName() << "\"(";
+  printType(M->getReturnType()) << " %" << M->getName() << "(";
   Table.incorporateFunction(M);
 
   // Loop over the arguments, printing them...
@@ -768,7 +768,7 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
       writeOperand(AI->getArraySize(), true);
     }
   } else if (isa<CastInst>(I)) {
-    writeOperand(Operand, true);
+    if (Operand) writeOperand(Operand, true);
     Out << " to ";
     printType(I->getType());
   } else if (Operand) {   // Print the normal way...
