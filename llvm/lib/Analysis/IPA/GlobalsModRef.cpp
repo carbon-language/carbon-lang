@@ -111,7 +111,7 @@ namespace {
           return DoesNotAccessMemory;
 	else if ((FR->FunctionEffect & Mod) == 0)
 	  return OnlyReadsMemory;
-      return AliasAnalysis::getModRefBehavior(F, CS);    
+      return AliasAnalysis::getModRefBehavior(F, CS, Info);    
     }
 
     virtual void deleteValue(Value *V);
@@ -198,11 +198,6 @@ bool GlobalsModRef::AnalyzeUsesOfGlobal(Value *V,
       // passing into the function.
       for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
         if (CI->getOperand(i) == V) return true;
-    } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
-      // Make sure that this is just the function being called, not that it is
-      // passing into the function.
-      for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
-        if (CI->getOperand(i) == V) return true;
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(*UI)) {
       // Make sure that this is just the function being called, not that it is
       // passing into the function.
@@ -279,8 +274,25 @@ void GlobalsModRef::AnalyzeSCC(std::vector<CallGraphNode *> &SCC) {
             FR.GlobalInfo[GI->first] |= GI->second;
 
         } else {
-          CallsExternal = true;
-          break;
+          // Okay, if we can't say anything about it, maybe some other alias
+          // analysis can.
+          ModRefBehavior MRB =
+            AliasAnalysis::getModRefBehavior(Callee, CallSite());
+          if (MRB != DoesNotAccessMemory) {
+            if (MRB == OnlyReadsMemory) {
+              // This reads memory, but we don't know what, just say that it
+              // reads all globals.
+              for (std::map<GlobalValue*, unsigned>::iterator
+                     GI = CalleeFR->GlobalInfo.begin(),
+                     E = CalleeFR->GlobalInfo.end();
+                   GI != E; ++GI)
+                FR.GlobalInfo[GI->first] |= Ref;
+
+            } else {
+              CallsExternal = true;
+              break;
+            }
+          }
         }
       } else {
         CallsExternal = true;
