@@ -21,6 +21,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -35,11 +36,6 @@ using namespace llvm;
 
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
-
-  // FIXME: This should be automatically picked up by autoconf from the C
-  // frontend
-  cl::opt<bool> EmitCygwin("enable-cygwin-compatible-output", cl::Hidden,
-         cl::desc("Emit X86 assembly code suitable for consumption by cygwin"));
 
   struct GasBugWorkaroundEmitter : public MachineCodeEmitter {
     GasBugWorkaroundEmitter(std::ostream& o) 
@@ -71,27 +67,8 @@ namespace {
     bool firstByte;
   };
 
-  struct X86AsmPrinter : public MachineFunctionPass {
-    /// Output stream on which we're printing assembly code.
-    ///
-    std::ostream &O;
-
-    /// Target machine description which we query for reg. names, data
-    /// layout, etc.
-    ///
-    TargetMachine &TM;
-
-    /// Name-mangler for global names.
-    ///
-    Mangler *Mang;
-
-    X86AsmPrinter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) { }
-
-    /// Cache of mangled name for current function. This is
-    /// recalculated at the beginning of each call to
-    /// runOnMachineFunction().
-    ///
-    std::string CurrentFnName;
+  struct X86AsmPrinter : public AsmPrinter {
+    X86AsmPrinter(std::ostream &O, TargetMachine &TM) : AsmPrinter(O, TM) { }
 
     virtual const char *getPassName() const {
       return "X86 Assembly Printer";
@@ -104,7 +81,7 @@ namespace {
     bool printInstruction(const MachineInstr *MI);
 
     // This method is used by the tablegen'erated instruction printer.
-    void printOperand(const MachineInstr *MI, unsigned OpNo, MVT::ValueType VT) {
+    void printOperand(const MachineInstr *MI, unsigned OpNo, MVT::ValueType VT){
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (MO.getType() == MachineOperand::MO_MachineRegister) {
         assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physref??");
@@ -115,7 +92,8 @@ namespace {
       }
     }
 
-    void printCallOperand(const MachineInstr *MI, unsigned OpNo, MVT::ValueType VT) {
+    void printCallOperand(const MachineInstr *MI, unsigned OpNo,
+                          MVT::ValueType VT) {
       printOp(MI->getOperand(OpNo), true); // Don't print "OFFSET".
     }
 
@@ -142,7 +120,6 @@ namespace {
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
     void emitGlobalConstant(const Constant* CV);
-    void emitConstantValueOnly(const Constant *CV);
   };
 } // end of anonymous namespace
 
@@ -199,79 +176,6 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA) {
     }
   }
   O << "\"";
-}
-
-// Print out the specified constant, without a storage class.  Only the
-// constants valid in constant expressions can occur here.
-void X86AsmPrinter::emitConstantValueOnly(const Constant *CV) {
-  if (CV->isNullValue())
-    O << "0";
-  else if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
-    assert(CB == ConstantBool::True);
-    O << "1";
-  } else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV))
-    if (((CI->getValue() << 32) >> 32) == CI->getValue())
-      O << CI->getValue();
-    else
-      O << (unsigned long long)CI->getValue();
-  else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV))
-    O << CI->getValue();
-  else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV))
-    // This is a constant address for a global variable or function.  Use the
-    // name of the variable or function as the address value.
-    O << Mang->getValueName(GV);
-  else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
-    const TargetData &TD = TM.getTargetData();
-    switch(CE->getOpcode()) {
-    case Instruction::GetElementPtr: {
-      // generate a symbolic expression for the byte address
-      const Constant *ptrVal = CE->getOperand(0);
-      std::vector<Value*> idxVec(CE->op_begin()+1, CE->op_end());
-      if (unsigned Offset = TD.getIndexedOffset(ptrVal->getType(), idxVec)) {
-        O << "(";
-        emitConstantValueOnly(ptrVal);
-        O << ") + " << Offset;
-      } else {
-        emitConstantValueOnly(ptrVal);
-      }
-      break;
-    }
-    case Instruction::Cast: {
-      // Support only non-converting or widening casts for now, that is, ones
-      // that do not involve a change in value.  This assertion is really gross,
-      // and may not even be a complete check.
-      Constant *Op = CE->getOperand(0);
-      const Type *OpTy = Op->getType(), *Ty = CE->getType();
-
-      // Remember, kids, pointers on x86 can be losslessly converted back and
-      // forth into 32-bit or wider integers, regardless of signedness. :-P
-      assert(((isa<PointerType>(OpTy)
-               && (Ty == Type::LongTy || Ty == Type::ULongTy
-                   || Ty == Type::IntTy || Ty == Type::UIntTy))
-              || (isa<PointerType>(Ty)
-                  && (OpTy == Type::LongTy || OpTy == Type::ULongTy
-                      || OpTy == Type::IntTy || OpTy == Type::UIntTy))
-              || (((TD.getTypeSize(Ty) >= TD.getTypeSize(OpTy))
-                   && OpTy->isLosslesslyConvertibleTo(Ty))))
-             && "FIXME: Don't yet support this kind of constant cast expr");
-      O << "(";
-      emitConstantValueOnly(Op);
-      O << ")";
-      break;
-    }
-    case Instruction::Add:
-      O << "(";
-      emitConstantValueOnly(CE->getOperand(0));
-      O << ") + (";
-      emitConstantValueOnly(CE->getOperand(1));
-      O << ")";
-      break;
-    default:
-      assert(0 && "Unsupported operator!");
-    }
-  } else {
-    assert(0 && "Unknown constant value!");
-  }
 }
 
 // Print a constant value or values, with the appropriate storage class as a
@@ -394,9 +298,8 @@ void X86AsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 /// method to print assembly for each instruction.
 ///
 bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  setupMachineFunction(MF);
   O << "\n\n";
-  // What's my mangled name?
-  CurrentFnName = Mang->getValueName(MF.getFunction());
 
   // Print out constants referenced by the function
   printConstantPool(MF.getConstantPool());
@@ -405,8 +308,7 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\t.text\n";
   O << "\t.align 16\n";
   O << "\t.globl\t" << CurrentFnName << "\n";
-  if (!EmitCygwin)
-    O << "\t.type\t" << CurrentFnName << ", @function\n";
+  O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
 
   // Print out code for the function.
@@ -586,6 +488,7 @@ void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 bool X86AsmPrinter::doInitialization(Module &M) {
+  AsmPrinter::doInitialization(M);
   // Tell gas we are outputting Intel syntax (not AT&T syntax) assembly.
   //
   // Bug: gas in `intel_syntax noprefix' mode interprets the symbol `Sp' in an
@@ -595,8 +498,7 @@ bool X86AsmPrinter::doInitialization(Module &M) {
   // `undefined symbol' errors when linking. Workaround: Do not use `noprefix'
   // mode, and decorate all register names with percent signs.
   O << "\t.intel_syntax\n";
-  Mang = new Mangler(M, EmitCygwin);
-  return false; // success
+  return false;
 }
 
 // SwitchSection - Switch to the specified section of the executable if we are
@@ -673,6 +575,6 @@ bool X86AsmPrinter::doFinalization(Module &M) {
       }
     }
 
-  delete Mang;
+  AsmPrinter::doFinalization(M);
   return false; // success
 }
