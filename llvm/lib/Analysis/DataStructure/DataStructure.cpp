@@ -502,6 +502,7 @@ Function &DSCallSite::getCaller() const {
 //===----------------------------------------------------------------------===//
 
 DSGraph::DSGraph(const DSGraph &G) : Func(G.Func), GlobalsGraph(0) {
+  PrintAuxCalls = false;
   std::map<const DSNode*, DSNodeHandle> NodeMap;
   RetNode = cloneInto(G, ScalarMap, NodeMap);
 }
@@ -509,6 +510,7 @@ DSGraph::DSGraph(const DSGraph &G) : Func(G.Func), GlobalsGraph(0) {
 DSGraph::DSGraph(const DSGraph &G,
                  std::map<const DSNode*, DSNodeHandle> &NodeMap)
   : Func(G.Func), GlobalsGraph(0) {
+  PrintAuxCalls = false;
   RetNode = cloneInto(G, ScalarMap, NodeMap);
 }
 
@@ -738,7 +740,7 @@ void DSGraph::markIncompleteNodes(bool markFormalArgs) {
     // Then the return value is certainly incomplete!
     markIncompleteNode(Call.getRetVal().getNode());
 
-    // All objects pointed to by function arguments are incomplete though!
+    // All objects pointed to by function arguments are incomplete!
     for (unsigned i = 0, e = Call.getNumPtrArgs(); i != e; ++i)
       markIncompleteNode(Call.getPtrArg(i).getNode());
   }
@@ -747,7 +749,6 @@ void DSGraph::markIncompleteNodes(bool markFormalArgs) {
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
     if (Nodes[i]->NodeType & DSNode::GlobalNode) {
       DSNode *N = Nodes[i];
-      // FIXME: Make more efficient by looking over Links directly
       for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
         if (DSNode *DSN = N->getLink(i).getNode())
           markIncompleteNode(DSN);
@@ -771,21 +772,23 @@ static void removeRefsToGlobal(DSNode* N,
 // dead.
 //
 bool DSGraph::isNodeDead(DSNode *N) {
-  // Is it a trivially dead shadow node...
-  if (N->getReferrers().empty() && (N->NodeType & ~DSNode::DEAD) == 0)
-    return true;
+  // Is it a trivially dead shadow node?
+  return N->getReferrers().empty() && (N->NodeType & ~DSNode::DEAD) == 0
+}
 
-  // Is it a function node or some other trivially unused global?
-  if ((N->NodeType & ~DSNode::GlobalNode) == 0 && N->getSize() == 0 &&
-      N->getReferrers().size() == N->getGlobals().size()) {
+static inline void killIfUselessEdge(DSNodeHandle &Edge) {
+  if (DSNode *N = Edge.getNode())  // Is there an edge?
+    if (N->getReferrers().size() == 1)  // Does it point to a lonely node?
+      if ((N->NodeType & ~DSNode::Incomplete) == 0 && // No interesting info?
+          N->getType().Ty == Type::VoidTy && !N->isNodeCompletelyFolded())
+        Edge.setNode(0);  // Kill the edge!
+}
 
-    // Remove the globals from the ScalarMap, so that the referrer count will go
-    // down to zero.
-    removeRefsToGlobal(N, ScalarMap);
-    assert(N->getReferrers().empty() && "Referrers should all be gone now!");
-    return true;
-  }
-
+static inline bool nodeContainsExternalFunction(const DSNode *N) {
+  const std::vector<GlobalValue*> &Globals = N->getGlobals();
+  for (unsigned i = 0, e = Globals.size(); i != e; ++i)
+    if (Globals[i]->isExternal())
+      return true;
   return false;
 }
 
@@ -793,7 +796,51 @@ static void removeIdenticalCalls(vector<DSCallSite> &Calls,
                                  const std::string &where) {
   // Remove trivially identical function calls
   unsigned NumFns = Calls.size();
-  std::sort(Calls.begin(), Calls.end());
+  std::sort(Calls.begin(), Calls.end());  // Sort by callee as primary key!
+
+  // Scan the call list cleaning it up as necessary...
+  DSNode *LastCalleeNode = 0;
+  unsigned NumDuplicateCalls = 0;
+  bool LastCalleeContainsExternalFunction = false;
+  for (unsigned i = 0, e = Calls.size(); i != e; ++i) {
+    DSCallSite &CS = Calls[i];
+
+    // If the return value or any arguments point to a void node with no
+    // information at all in it, and the call node is the only node to point
+    // to it, remove the edge to the node (killing the node).
+    //
+    killIfUselessEdge(CS.getRetVal());
+    for (unsigned a = 0, e = CS.getNumPtrArgs(); a != e; ++a)
+      killIfUselessEdge(CS.getPtrArg(a));
+
+    // If this call site calls the same function as the last call site, and if
+    // the function pointer contains an external function, this node will never
+    // be resolved.  Merge the arguments of the call node because no information
+    // will be lost.
+    //
+    if (CS.getCallee().getNode() == LastCalleeNode) {
+      ++NumDuplicateCalls;
+      if (NumDuplicateCalls == 1) {
+        LastCalleeContainsExternalFunction =
+          nodeContainsExternalFunction(LastCalleeNode);
+      }
+
+      if (LastCalleeContainsExternalFunction ||
+          // This should be more than enough context sensitivity!
+          // FIXME: Evaluate how many times this is tripped!
+          NumDuplicateCalls > 20) {
+        DSCallSite &OCS = Calls[i-1];
+        OCS.getRetVal().mergeWith(CS.getRetVal());
+        for (unsigned a = 0, e = CS.getNumPtrArgs(); a != e; ++a)
+          OCS.getPtrArg(a).mergeWith(CS.getPtrArg(a));
+        // The node will now be eliminated as a duplicate!
+      }
+    } else {
+      LastCalleeNode = CS.getCallee().getNode();
+      NumDuplicateCalls = 0;
+    }
+  }
+
   Calls.erase(std::unique(Calls.begin(), Calls.end()),
               Calls.end());
 
@@ -805,20 +852,21 @@ static void removeIdenticalCalls(vector<DSCallSite> &Calls,
                     << " call nodes in " << where << "\n";);
 }
 
+
 // removeTriviallyDeadNodes - After the graph has been constructed, this method
 // removes all unreachable nodes that are created because they got merged with
 // other nodes in the graph.  These nodes will all be trivially unreachable, so
 // we don't have to perform any non-trivial analysis here.
 //
 void DSGraph::removeTriviallyDeadNodes() {
-  for (unsigned i = 0; i != Nodes.size(); ++i)
-    if (!(Nodes[i]->NodeType & DSNode::GlobalNode))
-      if (isNodeDead(Nodes[i])) {               // This node is dead!
-        delete Nodes[i];                        // Free memory...
-        Nodes.erase(Nodes.begin()+i--);         // Remove from node list...
-      }
-
   removeIdenticalCalls(FunctionCalls, Func ? Func->getName() : "");
+  removeIdenticalCalls(AuxFunctionCalls, Func ? Func->getName() : "");
+
+  for (unsigned i = 0; i != Nodes.size(); ++i)
+    if (isNodeDead(Nodes[i])) {               // This node is dead!
+      delete Nodes[i];                        // Free memory...
+      Nodes.erase(Nodes.begin()+i--);         // Remove from node list...
+    }
 }
 
 
@@ -827,152 +875,65 @@ void DSGraph::removeTriviallyDeadNodes() {
 //
 static void markAlive(DSNode *N, std::set<DSNode*> &Alive) {
   if (N == 0) return;
+  std::set<DSNode*>::iterator I = Alive.lower_bound(N);
+  if (I != Alive.end() && *I == N) return;  // Already marked alive
+  Alive.insert(I, N);                       // Is alive now
 
-  Alive.insert(N);
   for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
-    if (DSNode *DSN = N->getLink(i).getNode())
-      if (!Alive.count(DSN))
-        markAlive(DSN, Alive);
+    markAlive(N->getLink(i).getNode(), Alive);
 }
 
-static bool checkGlobalAlive(DSNode *N, std::set<DSNode*> &Alive,
-                             std::set<DSNode*> &Visiting) {
+// markAliveIfCanReachAlive - Simple graph walker that recursively traverses the
+// graph looking for a node that is marked alive.  If the node is marked alive,
+// the recursive unwind marks node alive that can point to the alive node.  This
+// is basically just a post-order traversal.
+//
+// This function returns true if the specified node is alive.
+//
+static bool markAliveIfCanReachAlive(DSNode *N, std::set<DSNode*> &Alive,
+                                     std::set<DSNode*> &Visited) {
   if (N == 0) return false;
 
-  if (Visiting.count(N)) return false; // terminate recursion on a cycle
-  Visiting.insert(N);
+  // If we know that this node is alive, return so!
+  if (Alive.count(N)) return true;
 
-  // If any immediate successor is alive, N is alive
+  // Otherwise, we don't think the node is alive yet, check for infinite
+  // recursion.
+  std::set<DSNode*>::iterator VI = Visited.lower_bound(N);
+  if (VI != Visited.end() && *VI == N) return false;  // Found a cycle
+  // No recursion, insert into Visited...
+  Visited.insert(VI, N);
+
+  if (N->NodeType & DSNode::GlobalNode)
+    return false; // Global nodes will be marked on their own
+
+  bool ChildrenAreAlive = false;
+
   for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
-    if (DSNode *DSN = N->getLink(i).getNode())
-      if (Alive.count(DSN)) {
-        Visiting.erase(N);
-        return true;
-      }
+    ChildrenAreAlive |= markAliveIfCanReachAlive(N->getLink(i).getNode(),
+                                                 Alive, Visited);
+  if (ChildrenAreAlive)
+    markAlive(N, Alive);
+  return ChildrenAreAlive;
+}
 
-  // Else if any successor reaches a live node, N is alive
-  for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
-    if (DSNode *DSN = N->getLink(i).getNode())
-      if (checkGlobalAlive(DSN, Alive, Visiting)) {
-        Visiting.erase(N); return true;
-      }
-
-  Visiting.erase(N);
+static bool CallSiteUsesAliveArgs(DSCallSite &CS, std::set<DSNode*> &Alive,
+                                  std::set<DSNode*> &Visited) {
+  if (markAliveIfCanReachAlive(CS.getRetVal().getNode(), Alive, Visited) ||
+      markAliveIfCanReachAlive(CS.getCallee().getNode(), Alive, Visited))
+    return true;
+  for (unsigned j = 0, e = CS.getNumPtrArgs(); j != e; ++j)
+    if (markAliveIfCanReachAlive(CS.getPtrArg(j).getNode(), Alive, Visited))
+      return true;
   return false;
 }
 
-
-// markGlobalsIteration - Recursive helper function for markGlobalsAlive().
-// This would be unnecessary if function calls were real nodes!  In that case,
-// the simple iterative loop in the first few lines below suffice.
-// 
-static void markGlobalsIteration(std::set<DSNode*>& GlobalNodes,
-                                 vector<DSCallSite> &Calls,
-                                 std::set<DSNode*> &Alive,
-                                 bool FilterCalls) {
-
-  // Iterate, marking globals or cast nodes alive until no new live nodes
-  // are added to Alive
-  std::set<DSNode*> Visiting;           // Used to identify cycles 
-  std::set<DSNode*>::iterator I = GlobalNodes.begin(), E = GlobalNodes.end();
-  for (size_t liveCount = 0; liveCount < Alive.size(); ) {
-    liveCount = Alive.size();
-    for ( ; I != E; ++I)
-      if (Alive.count(*I) == 0) {
-        Visiting.clear();
-        if (checkGlobalAlive(*I, Alive, Visiting))
-          markAlive(*I, Alive);
-      }
-  }
-
-  // Find function calls with some dead and some live nodes.
-  // Since all call nodes must be live if any one is live, we have to mark
-  // all nodes of the call as live and continue the iteration (via recursion).
-  if (FilterCalls) {
-    bool Recurse = false;
-    for (unsigned i = 0, ei = Calls.size(); i < ei; ++i) {
-      bool CallIsDead = true, CallHasDeadArg = false;
-      DSCallSite &CS = Calls[i];
-      for (unsigned j = 0, ej = CS.getNumPtrArgs(); j != ej; ++j)
-        if (DSNode *N = CS.getPtrArg(j).getNode()) {
-          bool ArgIsDead  = !Alive.count(N);
-          CallHasDeadArg |= ArgIsDead;
-          CallIsDead     &= ArgIsDead;
-        }
-
-      if (DSNode *N = CS.getRetVal().getNode()) {
-        bool RetIsDead  = !Alive.count(N);
-        CallHasDeadArg |= RetIsDead;
-        CallIsDead     &= RetIsDead;
-      }
-
-      DSNode *N = CS.getCallee().getNode();
-      bool FnIsDead  = !Alive.count(N);
-      CallHasDeadArg |= FnIsDead;
-      CallIsDead     &= FnIsDead;
-
-      if (!CallIsDead && CallHasDeadArg) {
-        // Some node in this call is live and another is dead.
-        // Mark all nodes of call as live and iterate once more.
-        Recurse = true;
-        for (unsigned j = 0, ej = CS.getNumPtrArgs(); j != ej; ++j)
-          markAlive(CS.getPtrArg(j).getNode(), Alive);
-        markAlive(CS.getRetVal().getNode(), Alive);
-        markAlive(CS.getCallee().getNode(), Alive);
-      }
-    }
-    if (Recurse)
-      markGlobalsIteration(GlobalNodes, Calls, Alive, FilterCalls);
-  }
-}
-
-
-// markGlobalsAlive - Mark global nodes and cast nodes alive if they
-// can reach any other live node.  Since this can produce new live nodes,
-// we use a simple iterative algorithm.
-// 
-static void markGlobalsAlive(DSGraph &G, std::set<DSNode*> &Alive,
-                             bool FilterCalls) {
-  // Add global and cast nodes to a set so we don't walk all nodes every time
-  std::set<DSNode*> GlobalNodes;
-  for (unsigned i = 0, e = G.getNodes().size(); i != e; ++i)
-    if (G.getNodes()[i]->NodeType & DSNode::GlobalNode)
-      GlobalNodes.insert(G.getNodes()[i]);
-
-  // Add all call nodes to the same set
-  vector<DSCallSite> &Calls = G.getAuxFunctionCalls();
-  if (FilterCalls) {
-    for (unsigned i = 0, e = Calls.size(); i != e; ++i) {
-      for (unsigned j = 0, e = Calls[i].getNumPtrArgs(); j != e; ++j)
-        if (DSNode *N = Calls[i].getPtrArg(j).getNode())
-          GlobalNodes.insert(N);
-      if (DSNode *N = Calls[i].getRetVal().getNode())
-        GlobalNodes.insert(N);
-      if (DSNode *N = Calls[i].getCallee().getNode())
-        GlobalNodes.insert(N);
-    }
-  }
-
-  // Iterate and recurse until no new live node are discovered.
-  // This would be a simple iterative loop if function calls were real nodes!
-  markGlobalsIteration(GlobalNodes, Calls, Alive, FilterCalls);
-
-  // Free up references to dead globals from the ScalarMap
-  std::set<DSNode*>::iterator I = GlobalNodes.begin(), E = GlobalNodes.end();
-  for( ; I != E; ++I)
-    if (Alive.count(*I) == 0)
-      removeRefsToGlobal(*I, G.getScalarMap());
-
-  // Delete dead function calls
-  if (FilterCalls)
-    for (int ei = Calls.size(), i = ei-1; i >= 0; --i) {
-      bool CallIsDead = true;
-      for (unsigned j = 0, ej = Calls[i].getNumPtrArgs();
-           CallIsDead && j != ej; ++j)
-        CallIsDead = Alive.count(Calls[i].getPtrArg(j).getNode()) == 0;
-      if (CallIsDead)
-        Calls.erase(Calls.begin() + i); // remove the call entirely
-    }
+static void markAlive(DSCallSite &CS, std::set<DSNode*> &Alive) {
+  markAlive(CS.getRetVal().getNode(), Alive);
+  markAlive(CS.getCallee().getNode(), Alive);
+  
+  for (unsigned j = 0, e = CS.getNumPtrArgs(); j != e; ++j)
+    markAlive(CS.getPtrArg(j).getNode(), Alive);
 }
 
 // removeDeadNodes - Use a more powerful reachability analysis to eliminate
@@ -989,28 +950,62 @@ void DSGraph::removeDeadNodes() {
 
   // Alive - a set that holds all nodes found to be reachable/alive.
   std::set<DSNode*> Alive;
+  std::vector<std::pair<Value*, DSNode*> > GlobalNodes;
 
-  // If KeepCalls, mark all nodes reachable by call nodes as alive...
-  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
-    for (unsigned j = 0, e = FunctionCalls[i].getNumPtrArgs(); j != e; ++j)
-      markAlive(FunctionCalls[i].getPtrArg(j).getNode(), Alive);
-    markAlive(FunctionCalls[i].getRetVal().getNode(), Alive);
-    markAlive(FunctionCalls[i].getCallee().getNode(), Alive);
-  }
-  for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i) {
-    for (unsigned j = 0, e = AuxFunctionCalls[i].getNumPtrArgs(); j != e; ++j)
-      markAlive(AuxFunctionCalls[i].getPtrArg(j).getNode(), Alive);
-    markAlive(AuxFunctionCalls[i].getRetVal().getNode(), Alive);
-    markAlive(AuxFunctionCalls[i].getCallee().getNode(), Alive);
-  }
-
-  // Mark all nodes reachable by scalar nodes as alive...
+  // Mark all nodes reachable by (non-global) scalar nodes as alive...
   for (std::map<Value*, DSNodeHandle>::iterator I = ScalarMap.begin(),
          E = ScalarMap.end(); I != E; ++I)
-    markAlive(I->second.getNode(), Alive);
+    if (!isa<GlobalValue>(I->first))              // Don't mark globals!
+      markAlive(I->second.getNode(), Alive);
+    else                    // Keep track of global nodes
+      GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
 
   // The return value is alive as well...
   markAlive(RetNode.getNode(), Alive);
+
+  // If any global nodes points to a non-global that is "alive", the global is
+  // "alive" as well...
+  //
+  std::set<DSNode*> Visited;
+  for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i)
+    markAliveIfCanReachAlive(GlobalNodes[i].second, Alive, Visited);
+
+  std::vector<bool> FCallsAlive(FunctionCalls.size());
+  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
+    if (CallSiteUsesAliveArgs(FunctionCalls[i], Alive, Visited)) {
+      markAlive(FunctionCalls[i], Alive);
+      FCallsAlive[i] = true;
+    }
+
+  std::vector<bool> AuxFCallsAlive(AuxFunctionCalls.size());
+  for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
+    if (CallSiteUsesAliveArgs(AuxFunctionCalls[i], Alive, Visited)) {
+      markAlive(AuxFunctionCalls[i], Alive);
+      AuxFCallsAlive[i] = true;
+    }
+
+  // Remove all dead function calls...
+  unsigned CurIdx = 0;
+  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
+    if (FCallsAlive[i])
+      FunctionCalls[CurIdx++].swap(FunctionCalls[i]);
+  // Crop all the bad ones out...
+  FunctionCalls.erase(FunctionCalls.begin()+CurIdx, FunctionCalls.end());
+
+  // Remove all dead aux function calls...
+  CurIdx = 0;
+  for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
+    if (AuxFCallsAlive[i])
+      AuxFunctionCalls[CurIdx++].swap(AuxFunctionCalls[i]);
+  // Crop all the bad ones out...
+  AuxFunctionCalls.erase(AuxFunctionCalls.begin()+CurIdx,
+                         AuxFunctionCalls.end());
+
+
+  // Remove all unreachable globals from the ScalarMap
+  for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i)
+    if (!Alive.count(GlobalNodes[i].second))
+      ScalarMap.erase(GlobalNodes[i].first);
 
   // Loop over all unreachable nodes, dropping their references...
   vector<DSNode*> DeadNodes;
