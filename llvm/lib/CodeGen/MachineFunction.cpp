@@ -278,7 +278,7 @@ MachineCodeForMethod::dump() const
   
   for (Function::const_iterator BB = method->begin(); BB != method->end(); ++BB)
     {
-      std::cerr << endl << (*BB).getName() << " (" << (const void*) BB << ")" << ":" << endl;
+      std::cerr << std::endl << (*BB).getName() << " (" << (const void*) BB << ")" << ":" << std::endl;
       MachineCodeForBasicBlock& mvec = MachineCodeForBasicBlock::get(BB);
       for (unsigned i=0; i < mvec.size(); i++)
 	std::cerr << "\t" << *mvec[i];
