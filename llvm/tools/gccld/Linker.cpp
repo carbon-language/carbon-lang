@@ -30,39 +30,21 @@
 #include <memory>
 #include <set>
 
-/// FileExists - determines if the specified filename exists and is readable.
-///
-/// Inputs:
-///  FN - The name of the file.
-///
-/// Outputs:
-///  None.
-///
-/// Return Value:
-///  TRUE - The file exists and is readable.
-///  FALSE - The file does not exist or is unreadable.
+/// FileExists - Returns true IFF a file named FN exists and is readable.
 ///
 static inline bool FileExists(const std::string &FN) {
   return access(FN.c_str(), R_OK | F_OK) != -1;
 }
 
-/// IsArchive - determines if the specified file is an ar archive
-/// by checking the magic string at the beginning of the file.
+/// IsArchive - Returns true IFF the file named FN appears to be a "ar" library
+/// archive. The file named FN must exist.
 ///
-/// Inputs:
-///  filename - A C++ string containing the name of the file.
-///
-/// Outputs:
-///  None.
-///
-/// Return value:
-///  TRUE  - The file is an archive.
-///  FALSE - The file is not an archive.
-///
-static inline bool IsArchive(const std::string &filename) {
+static inline bool IsArchive(const std::string &FN) {
+  // Inspect the beginning of the file to see if it contains the "ar" magic
+  // string.
   std::string ArchiveMagic("!<arch>\012");
   char buf[1 + ArchiveMagic.size()];
-  std::ifstream f(filename.c_str());
+  std::ifstream f(FN.c_str());
   f.read(buf, ArchiveMagic.size());
   buf[ArchiveMagic.size()] = '\0';
   return ArchiveMagic == buf;
@@ -118,18 +100,8 @@ FindLib(const std::string &Filename, const std::vector<std::string> &Paths) {
   return std::string();
 }
 
-/// GetAllDefinedSymbols - finds all of the defined symbols in the specified 
-/// module.
-///
-/// Inputs:
-///  M - The module in which to find defined symbols.
-///
-/// Outputs:
-///  DefinedSymbols - A set of C++ strings that will contain the name of all
-///                   defined symbols.
-///
-/// Return value:
-///  None.
+/// GetAllDefinedSymbols - Modifies its parameter DefinedSymbols to contain the
+/// name of each externally-visible symbol defined in M.
 ///
 void GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols) {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
@@ -238,7 +210,7 @@ static bool LinkInArchive(Module *M,
   }
 
   // Load in the archive objects.
-  if (Verbose) std::cerr << "  Loading '" << Filename << "'\n";
+  if (Verbose) std::cerr << "  Loading archive file '" << Filename << "'\n";
   std::vector<Module*> Objects;
   if (ReadArchiveFile(Filename, Objects, &ErrorMessage))
     return true;
@@ -294,12 +266,12 @@ static bool LinkInArchive(Module *M,
   return false;
 }
 
-/// LinkInFile - opens an archive library and link in all objects which
+/// LinkInFile - opens a bytecode file and links in all objects which
 /// provide symbols that are currently undefined.
 ///
 /// Inputs:
-///  HeadModule - The module in which to link the archives.
-///  Filename   - The pathname of the archive.
+///  HeadModule - The module in which to link the bytecode file.
+///  Filename   - The pathname of the bytecode file.
 ///  Verbose    - Flags whether verbose messages should be printed.
 ///
 /// Outputs:
@@ -316,8 +288,9 @@ static bool LinkInFile(Module *HeadModule,
 {
   std::auto_ptr<Module> M(LoadObject(Filename, ErrorMessage));
   if (M.get() == 0) return true;
-  if (Verbose) std::cerr << "Linking in '" << Filename << "'\n";
-  return LinkModules(HeadModule, M.get(), &ErrorMessage);
+  bool Result = LinkModules(HeadModule, M.get(), &ErrorMessage);
+  if (Verbose) std::cerr << "Linked in bytecode file '" << Filename << "'\n";
+  return Result;
 }
 
 /// LinkFiles - takes a module and a list of files and links them all together.
@@ -354,7 +327,7 @@ bool LinkFiles(const char *progname,
   // Get the library search path from the environment
   char *SearchPath = getenv("LLVM_LIB_SEARCH_PATH");
 
-  for (unsigned i = 1; i < Files.size(); ++i) {
+  for (unsigned i = 0; i < Files.size(); ++i) {
     // Determine where this file lives.
     if (FileExists(Files[i])) {
       Pathname = Files[i];
@@ -362,6 +335,8 @@ bool LinkFiles(const char *progname,
       if (SearchPath == NULL) {
         std::cerr << progname << ": Cannot find linker input file '"
                   << Files[i] << "'\n";
+        std::cerr << progname
+                  << ": Warning: Your LLVM_LIB_SEARCH_PATH is unset.\n";
         return true;
       }
 
@@ -377,20 +352,20 @@ bool LinkFiles(const char *progname,
     // is not installed as a library. Detect that and link the library.
     if (IsArchive(Pathname)) {
       if (Verbose)
-        std::cerr << "Linking archive '" << Files[i] << "'\n";
+        std::cerr << "Trying to link archive '" << Pathname << "'\n";
 
       if (LinkInArchive(HeadModule, Pathname, ErrorMessage, Verbose)) {
         PrintAndReturn(progname, ErrorMessage,
-                       ": Error linking in '" + Files[i] + "'");
+                       ": Error linking in archive '" + Pathname + "'");
         return true;
       }
     } else {
       if (Verbose)
-        std::cerr << "Linking file '" << Files[i] << "'\n";
+        std::cerr << "Trying to link bytecode file '" << Pathname << "'\n";
 
       if (LinkInFile(HeadModule, Pathname, ErrorMessage, Verbose)) {
         PrintAndReturn(progname, ErrorMessage,
-                       ": Error linking in '" + Files[i] + "'");
+                       ": Error linking in bytecode file '" + Pathname + "'");
         return true;
       }
     }
@@ -435,7 +410,7 @@ bool LinkLibraries(const char *progname,
       // we're doing a native link and give an error if we're doing a bytecode
       // link.
       if (!Native) {
-        PrintAndReturn(progname, "Cannot find " + Libraries[i] + "\n");
+        PrintAndReturn(progname, "Cannot find library -l" + Libraries[i] + "\n");
         return true;
       }
     }
@@ -444,20 +419,20 @@ bool LinkLibraries(const char *progname,
     // is not installed as a library. Detect that and link the library.
     if (IsArchive(Pathname)) {
       if (Verbose)
-        std::cerr << "Linking archive '" << Libraries[i] << "'\n";
+        std::cerr << "Trying to link archive '" << Pathname << "' (-l" << Libraries[i] << ")\n";
 
       if (LinkInArchive(HeadModule, Pathname, ErrorMessage, Verbose)) {
         PrintAndReturn(progname, ErrorMessage,
-                       ": Error linking in '" + Libraries[i] + "'");
+                       ": Error linking in archive '" + Pathname + "' (-l" + Libraries[i] + ")");
         return true;
       }
     } else {
       if (Verbose)
-        std::cerr << "Linking file '" << Libraries[i] << "'\n";
+        std::cerr << "Trying to link bytecode file '" << Pathname << "' (-l" << Libraries[i] << ")\n";
 
       if (LinkInFile(HeadModule, Pathname, ErrorMessage, Verbose)) {
         PrintAndReturn(progname, ErrorMessage,
-                       ": error linking in '" + Libraries[i] + "'");
+                       ": error linking in bytecode file '" + Pathname + "' (-l" + Libraries[i] + ")");
         return true;
       }
     }
