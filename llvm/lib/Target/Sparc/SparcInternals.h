@@ -212,7 +212,7 @@ class UltraSparcRegInfo : public MachineRegInfo
     case FloatCCRegClassID: return FloatCCRegType ; 
 
     default: assert( 0 && "Unknown reg class ID");
-
+      return 0;
     }
 
   }
@@ -238,7 +238,7 @@ class UltraSparcRegInfo : public MachineRegInfo
     case FloatCCRegClassID: return FloatCCRegType ; 
 
     default: assert( 0 && "Unknown reg class ID");
-
+      return 0;
     }
 
   }
@@ -363,7 +363,7 @@ class UltraSparcRegInfo : public MachineRegInfo
       return InvalidRegNum;
     else  
       assert(0 && "Invalid register class or reg number");
-
+    return 0;
   }
 
   // given the unified register number, this gives the name
@@ -380,6 +380,7 @@ class UltraSparcRegInfo : public MachineRegInfo
       return "<*NoReg*>";
     else 
       assert(0 && "Invalid register number");
+    return "";
   }
 
   inline unsigned int getRegNumInCallersWindow(int reg) {
