@@ -9,6 +9,7 @@
 #include "llvm/Transforms/IPO/PoolAllocate.h"
 #include "llvm/Transforms/CloneFunction.h"
 #include "llvm/Analysis/DataStructure.h"
+#include "llvm/Analysis/DataStructureGraph.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
@@ -18,6 +19,7 @@
 #include "llvm/ConstantVals.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/InstVisitor.h"
+#include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 
@@ -38,6 +40,21 @@ namespace {
       : Val(V), AllocNode(AN), PoolHandle(PH) {}
   };
 
+  // CallArgInfo - Information on one operand for a call that got expanded.
+  struct CallArgInfo {
+    int ArgNo;              // Call argument number this corresponds to
+    AllocDSNode *AllocNode; // The allocation graph node for the pool
+    Value *PoolHandle;      // The LLVM value that is the pool pointer
+
+    CallArgInfo(int Arg, AllocDSNode *AN, Value *PH)
+      : ArgNo(Arg), AllocNode(AN), PoolHandle(PH) {
+    }
+
+    bool operator<(const CallArgInfo &CAI) const {
+      return ArgNo < CAI.ArgNo;
+    }
+  };
+
   // TransformFunctionInfo - Information about how a function eeds to be
   // transformed.
   //
@@ -49,7 +66,7 @@ namespace {
     //
     // As a special case, "argument" number -1 corresponds to the return value.
     //
-    vector<pair<int, Value*> > ArgInfo;
+    vector<CallArgInfo> ArgInfo;
 
     // Func - The function to be transformed...
     Function *Func;
@@ -57,20 +74,12 @@ namespace {
     // default ctor...
     TransformFunctionInfo() : Func(0) {}
     
-    inline bool operator<(const TransformFunctionInfo &TFI) const {
+    bool operator<(const TransformFunctionInfo &TFI) const {
       if (Func < TFI.Func) return true;
       if (Func > TFI.Func) return false;
-
-      // Loop over the arguments, checking to see if only the arg _numbers_ are
-      // less...
       if (ArgInfo.size() < TFI.ArgInfo.size()) return true;
       if (ArgInfo.size() > TFI.ArgInfo.size()) return false;
-
-      for (unsigned i = 0, e = TFI.ArgInfo.size(); i != e; ++i) {
-        if (ArgInfo[i].first < TFI.ArgInfo[i].first) return true;
-        if (ArgInfo[i].first > TFI.ArgInfo[i].first) return false;
-      }
-      return false;  // They must be equal
+      return ArgInfo < TFI.ArgInfo;
     }
 
     void finalizeConstruction() {
@@ -145,7 +154,7 @@ namespace {
     // PoolDescriptors vector.
     //
     void CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
-                     vector<AllocaInst*> &PoolDescriptors);
+                     map<AllocDSNode*, AllocaInst*> &PoolDescriptors);
 
     // processFunction - Convert a function to use pool allocation where
     // available.
@@ -153,7 +162,8 @@ namespace {
     bool processFunction(Function *F);
 
     
-    void transformFunctionBody(Function *F, vector<ScalarInfo> &Scalars);
+    void transformFunctionBody(Function *F, vector<ScalarInfo> &Scalars,
+                               map<AllocDSNode*, AllocaInst*> &PoolDescriptors);
 
     // transformFunction - Transform the specified function the specified way.
     // It we have already transformed that function that way, don't do anything.
@@ -207,10 +217,10 @@ bool PoolAllocate::processFunction(Function *F) {
 
   // Insert instructions into the function we are processing to create all of
   // the memory pool objects themselves.  This also inserts destruction code.
-  // This fills in the PoolDescriptors vector to be a array parallel with
-  // Allocs, but containing the alloca instructions that allocate the pool ptr.
+  // This fills in the PoolDescriptors map to associate the alloc node with the
+  // allocation of the memory pool corresponding to it.
   // 
-  vector<AllocaInst*> PoolDescriptors;
+  map<AllocDSNode*, AllocaInst*> PoolDescriptors;
   CreatePools(F, Allocs, PoolDescriptors);
 
 
@@ -235,13 +245,9 @@ bool PoolAllocate::processFunction(Function *F) {
         assert(PVS[i].Index == 0 && "Nonzero not handled yet!");
         
         // If the allocation is in the nonescaping set...
-        vector<AllocDSNode*>::iterator AI =
-          find(Allocs.begin(), Allocs.end(), Alloc);
-        if (AI != Allocs.end()) {
-          unsigned IDX = AI-Allocs.begin();
-          // Add it to the list of scalars we have
-          Scalars.push_back(ScalarInfo(I->first, Alloc, PoolDescriptors[IDX]));
-        }
+        map<AllocDSNode*, AllocaInst*>::iterator AI=PoolDescriptors.find(Alloc);
+        if (AI != PoolDescriptors.end()) // Add it to the list of scalars
+          Scalars.push_back(ScalarInfo(I->first, Alloc, AI->second));
       }
   }
 
@@ -250,21 +256,10 @@ bool PoolAllocate::processFunction(Function *F) {
   // either used as a scalar value (so they return a data structure), or are
   // passed one of our scalar values.
   //
-  transformFunctionBody(F, Scalars);
+  transformFunctionBody(F, Scalars, PoolDescriptors);
 
   return true;
 }
-
-static void addCallInfo(TransformFunctionInfo &TFI, CallInst *CI, int Arg, 
-                        Value *PoolHandle) {
-  assert(CI->getCalledFunction() && "Cannot handle indirect calls yet!");
-  TFI.ArgInfo.push_back(make_pair(Arg, PoolHandle));
-
-  assert(TFI.Func == 0 || TFI.Func == CI->getCalledFunction() &&
-         "Function call record should always call the same function!");
-  TFI.Func = CI->getCalledFunction();
-}
-
 
 
 class FunctionBodyTransformer : public InstVisitor<FunctionBodyTransformer> {
@@ -368,7 +363,7 @@ public:
 
     // Add all of the pool arguments...
     for (unsigned i = 0, e = TI.ArgInfo.size(); i != e; ++i)
-      Args.push_back(TI.ArgInfo[i].second);
+      Args.push_back(TI.ArgInfo[i].PoolHandle);
     
     Function *NF = PoolAllocator.getTransformedFunction(TI);
     CallInst *NewCall = new CallInst(NF, Args, I->getName());
@@ -385,6 +380,10 @@ public:
     delete I;  // Delete the old call instruction now...
   }
 
+  void visitPHINode(PHINode *PN) {
+    // Handle PHI Node
+  }
+
   void visitInstruction(Instruction *I) {
     cerr << "Unknown instruction to FunctionBodyTransformer:\n";
     I->dump();
@@ -393,8 +392,30 @@ public:
 };
 
 
+static void addCallInfo(TransformFunctionInfo &TFI, CallInst *CI, int Arg, 
+                        DSNode *AllocNode,
+                        map<AllocDSNode*, AllocaInst*> &PoolDescriptors) {
+
+  // For now, add the entire graph that is pointed to by the call argument.
+  // This graph can and should be pruned to only what the function itself will
+  // use, because often this will be a dramatically smaller subset of what we
+  // are providing.
+  //
+  for (df_iterator<DSNode*> I = df_begin(AllocNode), E = df_end(AllocNode);
+       I != E; ++I) {
+    if (AllocDSNode *AN = dyn_cast<AllocDSNode>(*I))
+      TFI.ArgInfo.push_back(CallArgInfo(Arg, AN, PoolDescriptors[AN]));
+  }
+
+  assert(CI->getCalledFunction() && "Cannot handle indirect calls yet!");
+  assert(TFI.Func == 0 || TFI.Func == CI->getCalledFunction() &&
+         "Function call record should always call the same function!");
+  TFI.Func = CI->getCalledFunction();
+}
+
 void PoolAllocate::transformFunctionBody(Function *F,
-                                         vector<ScalarInfo> &Scalars) {
+                                         vector<ScalarInfo> &Scalars,
+                             map<AllocDSNode*, AllocaInst*> &PoolDescriptors) {
   cerr << "In '" << F->getName()
        << "': Found the following values that point to poolable nodes:\n";
 
@@ -418,7 +439,7 @@ void PoolAllocate::transformFunctionBody(Function *F,
     // Check to see if the scalar _IS_ a call...
     if (CallInst *CI = dyn_cast<CallInst>(ScalarVal))
       // If so, add information about the pool it will be returning...
-      addCallInfo(CallMap[CI], CI, -1, Scalars[i].PoolHandle);
+      addCallInfo(CallMap[CI], CI, -1, Scalars[i].AllocNode, PoolDescriptors);
 
     // Check to see if the scalar is an operand to a call...
     for (Value::use_iterator UI = ScalarVal->use_begin(),
@@ -433,7 +454,8 @@ void PoolAllocate::transformFunctionBody(Function *F,
         // than once!  It will get multiple entries for the first pointer.
 
         // Add the operand number and pool handle to the call table...
-        addCallInfo(CallMap[CI], CI, OI-CI->op_begin()-1,Scalars[i].PoolHandle);
+        addCallInfo(CallMap[CI], CI, OI-CI->op_begin()-1, Scalars[i].AllocNode,
+                    PoolDescriptors);
       }
     }
   }
@@ -446,7 +468,7 @@ void PoolAllocate::transformFunctionBody(Function *F,
     I->second.finalizeConstruction();
     cerr << I->second.Func->getName() << " must pass pool pointer for arg #";
     for (unsigned i = 0; i < I->second.ArgInfo.size(); ++i)
-      cerr << I->second.ArgInfo[i].first << " ";
+      cerr << I->second.ArgInfo[i].ArgNo << " ";
     cerr << "\n";
   }
 
@@ -547,10 +569,10 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI) {
   // Now add all of the arguments corresponding to pools passed in...
   for (unsigned i = 0, e = TFI.ArgInfo.size(); i != e; ++i) {
     string Name;
-    if (TFI.ArgInfo[i].first == -1)
+    if (TFI.ArgInfo[i].ArgNo == -1)
       Name = "retpool";
     else
-      Name = ArgMap[TFI.ArgInfo[i].first]->getName();  // Get the arg name
+      Name = ArgMap[TFI.ArgInfo[i].ArgNo]->getName();  // Get the arg name
     FunctionArgument *NFA = new FunctionArgument(PoolTy, Name+".pool");
     NewFunc->getArgumentList().push_back(NFA);
   }
@@ -571,7 +593,7 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI) {
 // PoolDescriptors vector.
 //
 void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
-                               vector<AllocaInst*> &PoolDescriptors) {
+                               map<AllocDSNode*, AllocaInst*> &PoolDescriptors){
   // FIXME: This should use an IP version of the UnifyAllExits pass!
   vector<BasicBlock*> ReturnNodes;
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
@@ -585,7 +607,7 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
     // Add an allocation and a free for each pool...
     AllocaInst *PoolAlloc = new AllocaInst(PoolTy, 0, "pool");
     EntryNodeInsts.push_back(PoolAlloc);
-    PoolDescriptors.push_back(PoolAlloc);   // Keep track of pool allocas
+    PoolDescriptors[Allocs[i]] = PoolAlloc;   // Keep track of pool allocas
     AllocationInst *AI = Allocs[i]->getAllocation();
 
     // Initialize the pool.  We need to know how big each allocation is.  For
