@@ -11,7 +11,6 @@
 #include "llvm/Instruction.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "Support/HashExtras.h"
 #include "Support/GraphTraits.h"
 #include "Support/hash_map"
 #include "../InstrSched/SchedGraphCommon.h"
