@@ -88,9 +88,8 @@ public:
     // encoded more efficiently.
     CompactionTableBlockID = 0x08, ///< 1.3 identifier for compaction tables
 
-    // Dependent Libraries - blocks with this id contain strings of library 
-    // names, as they might appear on a -l option to the linker.
-    DependentLibsBlockID = 0x09,  ///< 1.3 identifier for list of dependent libs
+    // Not a block id, just used to count them
+    NumberOfBlockIDs
   };
 
 };
