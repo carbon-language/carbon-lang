@@ -302,14 +302,34 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
   }
 }
 
-void V8ISel::LoadArgumentsToVirtualRegs (Function *F) {
-  unsigned ArgOffset = 0;
+void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
+  unsigned ArgOffset;
   static const unsigned IncomingArgRegs[] = { V8::I0, V8::I1, V8::I2,
     V8::I3, V8::I4, V8::I5 };
-  assert (F->asize () < 7
+  assert (LF->asize () < 7
           && "Can't handle loading excess call args off the stack yet");
 
-  for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I) {
+  // Add IMPLICIT_DEFs of input regs.
+  ArgOffset = 0;
+  for (Function::aiterator I = LF->abegin(), E = LF->aend(); I != E; ++I) {
+    unsigned Reg = getReg(*I);
+    switch (getClassB(I->getType())) {
+    case cByte:
+    case cShort:
+    case cInt:
+    case cFloat:
+      BuildMI(BB, V8::IMPLICIT_DEF, 0, IncomingArgRegs[ArgOffset]);
+      break;
+    default:
+      // FIXME: handle cDouble, cLong
+      assert (0 && "64-bit (double, long, etc.) function args not handled");
+      return;
+    }
+    ++ArgOffset;
+  }
+
+  ArgOffset = 0;
+  for (Function::aiterator I = LF->abegin(), E = LF->aend(); I != E; ++I) {
     unsigned Reg = getReg(*I);
     switch (getClassB(I->getType())) {
     case cByte:
@@ -318,12 +338,24 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *F) {
       BuildMI(BB, V8::ORrr, 2, Reg).addReg (V8::G0)
         .addReg (IncomingArgRegs[ArgOffset]);
       break;
+    case cFloat: {
+      // Single-fp args are passed in integer registers; go through
+      // memory to get them into FP registers. (Bleh!)
+      unsigned FltAlign = TM.getTargetData().getFloatAlignment();
+      int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
+      BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0)
+        .addReg (IncomingArgRegs[ArgOffset]);
+      BuildMI (BB, V8::LDFri, 2, Reg).addFrameIndex (FI).addSImm (0);
+      break;
+    }
     default:
-      assert (0 && "Only <=32-bit, integral arguments currently handled");
+      // FIXME: handle cDouble, cLong
+      assert (0 && "64-bit (double, long, etc.) function args not handled");
       return;
     }
     ++ArgOffset;
   }
+
 }
 
 void V8ISel::SelectPHINodes() {
@@ -668,12 +700,23 @@ void V8ISel::visitCallInst(CallInst &I) {
     V8::O4, V8::O5 };
   for (unsigned i = 1; i < 7; ++i)
     if (i < I.getNumOperands ()) {
-      assert (getClassB (I.getOperand (i)->getType ()) < cLong
-              && "Can't handle long or fp function call arguments yet");
       unsigned ArgReg = getReg (I.getOperand (i));
-      // Schlep it over into the incoming arg register
-      BuildMI (BB, V8::ORrr, 2, OutgoingArgRegs[i - 1]).addReg (V8::G0)
-        .addReg (ArgReg);
+      if (getClassB (I.getOperand (i)->getType ()) < cLong) {
+        // Schlep it over into the incoming arg register
+        BuildMI (BB, V8::ORrr, 2, OutgoingArgRegs[i - 1]).addReg (V8::G0)
+          .addReg (ArgReg);
+      } else if (getClassB (I.getOperand (i)->getType ()) == cFloat) {
+        // Single-fp args are passed in integer registers; go through
+        // memory to get them out of FP registers. (Bleh!)
+        unsigned FltAlign = TM.getTargetData().getFloatAlignment();
+        int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
+        BuildMI (BB, V8::STFri, 3).addFrameIndex (FI).addSImm (0)
+          .addReg (ArgReg);
+        BuildMI (BB, V8::LD, 2, OutgoingArgRegs[i - 1]).addFrameIndex (FI)
+          .addSImm (0);
+      } else {
+        assert (0 && "64-bit (double, long, etc.) 'call' opnds not handled");
+      }
     }
 
   // Emit call instruction
@@ -716,6 +759,14 @@ void V8ISel::visitReturnInst(ReturnInst &I) {
       case cFloat:
         BuildMI (BB, V8::FMOVS, 2, V8::F0).addReg(RetValReg);
         break;
+      case cDouble: {
+        unsigned DoubleAlignment = TM.getTargetData().getDoubleAlignment();
+        int FI = F->getFrameInfo()->CreateStackObject(8, DoubleAlignment);
+        BuildMI (BB, V8::STDFri, 3).addFrameIndex (FI).addSImm (0)
+          .addReg (RetValReg);
+        BuildMI (BB, V8::LDDFri, 2, V8::F0).addFrameIndex (FI).addSImm (0);
+        break;
+      }
       case cLong:
         BuildMI (BB, V8::ORrr, 2, V8::I0).addReg(V8::G0).addReg(RetValReg);
         BuildMI (BB, V8::ORrr, 2, V8::I1).addReg(V8::G0).addReg(RetValReg+1);
