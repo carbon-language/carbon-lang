@@ -165,13 +165,6 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
       }
 
       ResolveCallSite(*Graph, CallSite);
-
-#if 0
-      // If its not a self-recursive call, merge global nodes in the inlined
-      // graph with the corresponding global nodes in the current graph
-      if (&caller != &callee)
-        MergeGlobalNodes(calleeGraph, OldValMap);
-#endif
     }
   }
   
@@ -180,9 +173,7 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   Graph->maskIncompleteMarkers();
   Graph->markIncompleteNodes(/*markFormals*/ !F.hasInternalLinkage()
                              /*&& FIXME: NEED TO CHECK IF ALL CALLERS FOUND!*/);
-#if 0
   Graph->removeDeadNodes(/*KeepAllGlobals*/ false, /*KeepCalls*/ false);
-#endif
 
   DEBUG(std::cerr << "  [TD] Done inlining callers for: " << F.getName() << " ["
         << Graph->getGraphSize() << "+" << Graph->getFunctionCalls().size()

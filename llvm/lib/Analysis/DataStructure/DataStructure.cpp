@@ -439,13 +439,24 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
     for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
       Nodes[i]->NodeType &= ~StripBits;
 
-  // Copy the value map...
+  // Copy the value map... and merge all of the global nodes...
   for (std::map<Value*, DSNodeHandle>::const_iterator I = G.ValueMap.begin(),
-         E = G.ValueMap.end(); I != E; ++I)
-    OldValMap[I->first] = DSNodeHandle(OldNodeMap[I->second.getNode()],
-                                       I->second.getOffset());
+         E = G.ValueMap.end(); I != E; ++I) {
+    DSNodeHandle &H = OldValMap[I->first];
+    H = DSNodeHandle(OldNodeMap[I->second.getNode()], I->second.getOffset());
+
+    if (isa<GlobalValue>(I->first)) {  // Is this a global?
+      std::map<Value*, DSNodeHandle>::iterator GVI = ValueMap.find(I->first);
+      if (GVI != ValueMap.end()) {   // Is the global value in this fun already?
+        GVI->second.mergeWith(H);
+      } else {
+        ValueMap[I->first] = H;      // Add global pointer to this graph
+      }
+    }
+  }
   // Copy the function calls list...
   CopyFunctionCallsList(G.FunctionCalls, FunctionCalls, OldNodeMap);
+
 
   // Return the returned node pointer...
   return DSNodeHandle(OldNodeMap[G.RetNode.getNode()], G.RetNode.getOffset());

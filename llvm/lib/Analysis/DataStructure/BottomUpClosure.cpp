@@ -71,35 +71,6 @@ static void ResolveArguments(std::vector<DSNodeHandle> &Call, Function &F,
   }
 }
 
-// MergeGlobalNodes - Merge all existing global nodes with globals
-// inlined from the callee or with globals from the GlobalsGraph.
-//
-static void MergeGlobalNodes(DSGraph &Graph,
-                             map<Value*, DSNodeHandle> &OldValMap) {
-  map<Value*, DSNodeHandle> &ValMap = Graph.getValueMap();
-  for (map<Value*, DSNodeHandle>::iterator I = ValMap.begin(), E = ValMap.end();
-       I != E; ++I)
-    if (GlobalValue *GV = dyn_cast<GlobalValue>(I->first)) {
-      map<Value*, DSNodeHandle>::iterator NHI = OldValMap.find(GV);
-      if (NHI != OldValMap.end())       // was it inlined from the callee?
-        I->second.mergeWith(NHI->second);
-#if 0
-      else                              // get it from the GlobalsGraph
-        I->second.mergeWith(Graph.cloneGlobalInto(GV));
-#endif
-    }
-
-  // Add unused inlined global nodes into the value map
-  for (map<Value*, DSNodeHandle>::iterator I = OldValMap.begin(),
-         E = OldValMap.end(); I != E; ++I)
-    if (isa<GlobalValue>(I->first)) {
-      DSNodeHandle &NH = ValMap[I->first];  // If global is not in ValMap...
-      if (NH.getNode() == 0)
-        NH = I->second;                     // Add the one just inlined.
-    }
-
-}
-
 DSGraph &BUDataStructures::calculateGraph(Function &F) {
   // Make sure this graph has not already been calculated, or that we don't get
   // into an infinite loop with mutually recursive functions.
@@ -190,11 +161,6 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 
             if (Call[0].getNode())  // Handle the return value if present
               RetVal.mergeWith(Call[0]);
-
-            // Merge global value nodes in the inlined graph with the global
-            // value nodes in the current graph if there are duplicates.
-            //
-            MergeGlobalNodes(*Graph, OldValMap);
 
             // Erase the entry in the Callees vector
             Callees.erase(Callees.begin()+c--);
