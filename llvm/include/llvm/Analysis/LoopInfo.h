@@ -1,9 +1,17 @@
 //===- llvm/Analysis/LoopInfo.h - Natural Loop Calculator --------*- C++ -*--=//
 //
 // This file defines the LoopInfo class that is used to identify natural loops
-// and determine the loop depth of various nodes of the CFG.  Note that the
-// loops identified may actually be several natural loops that share the same
-// header node... not just a single natural loop.
+// and determine the loop depth of various nodes of the CFG.  Note that natural
+// loops may actually be several loops that share the same header node...
+//
+// This analysis calculates the nesting structure of loops in a function.  For
+// each natural loop identified, this analysis identifies natural loops
+// contained entirely within the function, the basic blocks the make up the
+// loop, the nesting depth of the loop, and the successor blocks of the loop.
+//
+// It can calculate on the fly a variety of different bits of information, such
+// as whether there is a preheader for the loop, the number of back edges to the
+// header, and whether or not a particular block branches out of the loop.
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,8 +30,9 @@ class LoopInfo;
 ///
 class Loop {
   Loop *ParentLoop;
-  std::vector<BasicBlock *> Blocks;  // First entry is the header node
   std::vector<Loop*> SubLoops;       // Loops contained entirely within this one
+  std::vector<BasicBlock *> Blocks;  // First entry is the header node
+  std::vector<BasicBlock *> ExitBlocks; // Reachable blocks outside the loop
   unsigned LoopDepth;                // Nesting depth of this loop
 
   Loop(const Loop &);                  // DO NOT IMPLEMENT
@@ -39,14 +48,25 @@ public:
 
   /// getSubLoops - Return the loops contained entirely within this loop
   ///
-  inline const std::vector<Loop*> &getSubLoops() const { return SubLoops; }
-  inline const std::vector<BasicBlock*> &getBlocks() const { return Blocks; }
+  const std::vector<Loop*> &getSubLoops() const { return SubLoops; }
+
+  /// getBlocks - Get a list of the basic blocks which make up this loop.
+  ///
+  const std::vector<BasicBlock*> &getBlocks() const { return Blocks; }
+
+  /// getExitBlocks - Return all of the successor blocks of this loop.  These
+  /// are the blocks _outside of the current loop_ which are branched to.
+  ///
+  const std::vector<BasicBlock*> &getExitBlocks() const { return ExitBlocks; }
 
   /// isLoopExit - True if terminator in the block can branch to another block
-  /// that is outside of the current loop.
+  /// that is outside of the current loop.  The reached block should be in the
+  /// ExitBlocks list.
+  ///
   bool isLoopExit(const BasicBlock *BB) const;
 
-  /// Find number of back edges
+  /// getNumBackEdges - Calculate the number of back edges to the loop header
+  ///
   unsigned getNumBackEdges() const;
 
   /// getLoopPreheader - If there is a preheader for this loop, return it.  A
@@ -61,13 +81,19 @@ public:
   ///
   BasicBlock *getLoopPreheader() const;
 
-  /// addBasicBlockToLoop - This function is used by other analyses to update
-  /// loop information.  NewBB is set to be a new member of the current loop.
+  /// addBasicBlockToLoop - This method is used by other analyses to update loop
+  /// information.  NewBB is set to be a new member of the current loop.
   /// Because of this, it is added as a member of all parent loops, and is added
   /// to the specified LoopInfo object as being in the current basic block.  It
   /// is not valid to replace the loop header with this method.
   ///
   void addBasicBlockToLoop(BasicBlock *NewBB, LoopInfo &LI);
+
+  /// changeExitBlock - This method is used to update loop information.  One
+  /// instance of the specified Old basic block is removed from the exit list
+  /// and replaced with New.
+  ///
+  void changeExitBlock(BasicBlock *Old, BasicBlock *New);
 
   void print(std::ostream &O) const;
 private:
@@ -124,14 +150,10 @@ public:
     return L ? L->getLoopDepth() : 0;
   }
 
-#if 0
   // isLoopHeader - True if the block is a loop header node
   bool isLoopHeader(BasicBlock *BB) const {
     return getLoopFor(BB)->getHeader() == BB;
   }
-  // isLoopEnd - True if block jumps to loop entry
-  bool isLoopEnd(BasicBlock *BB) const;
-#endif
 
   /// runOnFunction - Calculate the natural loop information.
   ///
