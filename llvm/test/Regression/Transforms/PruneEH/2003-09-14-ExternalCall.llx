@@ -1,0 +1,11 @@
+; RUN: llvm-as < %s | opt -prune-eh | llvm-dis | grep invoke
+
+declare void %External()
+
+implementation
+
+void %foo() {
+	invoke void %External() to label %Cont except label %Cont
+Cont:
+	ret void
+}
