@@ -388,7 +388,7 @@ argument: </p>
   <p> </p>
   <pre>  $ opt &lt; a.bc &gt; /dev/null -mypass<br>    &lt;no output&gt;<br>  $ opt &lt; a.bc &gt; /dev/null -mypass -debug<br>    I am here!<br>  $<br></pre>
   <p> Using the <tt>DEBUG()</tt> macro instead of a home-brewed solution
-allows you to now have to create "yet another" command line option for
+allows you to not have to create "yet another" command line option for
 the debug output for your pass.  Note that <tt>DEBUG()</tt> macros are
 disabled for optimized builds, so they do not cause a performance impact
 at all (for the same reason, they should also not contain
