@@ -22,6 +22,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Argument.h"
 #include "llvm/iOther.h"
+#include "llvm/iMemory.h"
 #include "llvm/Constants.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
