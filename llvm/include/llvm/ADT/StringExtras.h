@@ -100,7 +100,9 @@ static inline std::string itostr(int X) {
 static inline std::string ftostr(double V) {
   char Buffer[200];
   sprintf(Buffer, "%20.6e", V);
-  return Buffer;
+  char *B = Buffer;
+  while (*B == ' ') ++B;
+  return B;
 }
 
 static inline std::string LowercaseString(const std::string &S) { 
