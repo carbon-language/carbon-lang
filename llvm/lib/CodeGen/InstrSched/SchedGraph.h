@@ -35,11 +35,16 @@ class SchedGraphNode;
 class SchedGraph; 
 class RegToRefVecMap;
 class MachineInstr;
+class MachineCodeForBasicBlock;
+
 
 /******************** Exported Data Types and Constants ********************/
 
 typedef int ResourceId;
-const ResourceId InvalidResourceId = -1;
+const ResourceId InvalidRID        = -1;
+const ResourceId MachineCCRegsRID  = -2; // use +ve numbers for actual regs
+const ResourceId MachineIntRegsRID = -3; // use +ve numbers for actual regs
+const ResourceId MachineFPRegsRID  = -4; // use +ve numbers for actual regs
 
 
 //*********************** Public Class Declarations ************************/
@@ -50,14 +55,14 @@ public:
     CtrlDep, MemoryDep, DefUseDep, MachineRegister, MachineResource
   };
   enum DataDepOrderType {
-    TrueDep, AntiDep, OutputDep, NonDataDep
+    TrueDep = 0x1, AntiDep=0x2, OutputDep=0x4, NonDataDep=0x8
   };
   
 protected:
   SchedGraphNode*	src;
   SchedGraphNode*	sink;
   SchedGraphEdgeDepType depType;
-  DataDepOrderType	depOrderType;
+  unsigned int          depOrderType;
   int			minDelay; // cached latency (assumes fixed target arch)
   
   union {
@@ -73,21 +78,21 @@ public:
   /*ctor*/		SchedGraphEdge(SchedGraphNode* _src,
 				       SchedGraphNode* _sink,
 				       SchedGraphEdgeDepType _depType,
-				       DataDepOrderType _depOrderType =TrueDep,
+				       unsigned int     _depOrderType =TrueDep,
 				       int _minDelay = -1);
   
   // constructor for explicit def-use or memory def-use edge
   /*ctor*/		SchedGraphEdge(SchedGraphNode* _src,
 				       SchedGraphNode* _sink,
 				       const Value*    _val,
-				       DataDepOrderType _depOrderType =TrueDep,
+				       unsigned int     _depOrderType =TrueDep,
 				       int _minDelay = -1);
   
   // constructor for machine register dependence
   /*ctor*/		SchedGraphEdge(SchedGraphNode* _src,
 				       SchedGraphNode* _sink,
 				       unsigned int    _regNum,
-				       DataDepOrderType _depOrderType =TrueDep,
+				       unsigned int     _depOrderType =TrueDep,
 				       int _minDelay = -1);
   
   // constructor for any other machine resource dependences.
@@ -291,7 +296,7 @@ private:
   //
   // Graph builder
   //
-  void		buildGraph		(const TargetMachine& target);
+  void  	buildGraph		(const TargetMachine& target);
   
   void          buildNodesforVMInstr    (const TargetMachine& target,
                                          const Instruction* instr);
@@ -306,6 +311,10 @@ private:
   void		addMemEdges	     (const vector<const Instruction*>& memVec,
 				      const TargetMachine& target);
   
+  void          addCallCCEdges       (const vector<const Instruction*>& memVec,
+                                      MachineCodeForBasicBlock& bbMvec,
+                                      const TargetMachine& target);
+    
   void		addMachineRegEdges	(RegToRefVecMap& regToRefVecMap,
 					 const TargetMachine& target);
   
