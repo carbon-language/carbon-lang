@@ -1,5 +1,3 @@
-* Implement new tool: analyze whose job is solely to run an analysis phase
-  and print out the results.
 * Fix DCE to elminate br <c>, %L1, %L1 so that it can optimize the main of
   fib.ll better.  Currently I have to do this to get best results:
      as < fib.ll | opt -inline -sccp -dce -sccp -dce |dis
