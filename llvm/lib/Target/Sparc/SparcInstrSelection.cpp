@@ -2105,7 +2105,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // the PC-relative address fits in the CALL address field (22 bits).
         // Use JMPL for indirect calls.
         // 
-        if (callee->getValueType() == Value::MethodVal)
+        if (isa<Function>(callee))
           { // direct function call
             M = new MachineInstr(CALL);
             M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
@@ -2133,7 +2133,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           mvec.back()->addImplicitRef(callInstr, /*isDef*/ true);
         
         // For the CALL instruction, the ret. addr. reg. is also implicit
-        if (callee->getValueType() == Value::MethodVal)
+        if (isa<Function>(callee))
           mvec.back()->addImplicitRef(retAddrReg, /*isDef*/ true);
         
         // delay slot
