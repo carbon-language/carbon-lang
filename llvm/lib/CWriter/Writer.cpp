@@ -564,7 +564,7 @@ bool CWriter::nameAllUsedStructureTypes(Module &M) {
 // generateCompilerSpecificCode - This is where we add conditional compilation
 // directives to cater to specific compilers as need be.
 //
-void generateCompilerSpecificCode(std::ostream& Out) {
+static void generateCompilerSpecificCode(std::ostream& Out) {
   // Alloca is hard to get, and we don't want to include stdlib.h here...
   Out << "/* get a declaration for alloca */\n"
       << "#ifdef sun\n"
@@ -582,6 +582,29 @@ void generateCompilerSpecificCode(std::ostream& Out) {
       << "#define __attribute__(X)\n"
       << "#endif\n";
 }
+
+// generateProcessorSpecificCode - This is where we add conditional compilation
+// directives to cater to specific processors as need be.
+//
+static void generateProcessorSpecificCode(std::ostream& Out) {
+  // According to ANSI C, longjmp'ing to a setjmp could invalidate any
+  // non-volatile variable in the scope of the setjmp.  For now, we are not
+  // doing analysis to determine which variables need to be marked volatile, so
+  // we just mark them all.
+  //
+  // HOWEVER, many targets implement setjmp by saving and restoring the register
+  // file, so they DON'T need variables to be marked volatile, and this is a
+  // HUGE pessimization for them.  For this reason, on known-good processors, we
+  // do not emit volatile qualifiers.
+  Out << "#if defined(__386__) || defined(__i386__) || \\\n"
+      << "    defined(i386) || defined(WIN32)\n"
+      << "/* setjmp does not require variables to be marked volatile */"
+      << "#define VOLATILE_FOR_SETJMP\n"
+      << "#else\n"
+      << "#define VOLATILE_FOR_SETJMP volatile\n"
+      << "#endif\n\n";
+}
+
 
 void CWriter::printModule(Module *M) {
   // Calculate which global values have names that will collide when we throw
@@ -605,10 +628,11 @@ void CWriter::printModule(Module *M) {
 
   // get declaration for alloca
   Out << "/* Provide Declarations */\n";
-  Out << "#include <stdarg.h>\n";
-  Out << "#include <setjmp.h>\n";
+  Out << "#include <stdarg.h>\n";      // Varargs support
+  Out << "#include <setjmp.h>\n";      // Unwind support
   generateCompilerSpecificCode(Out);
-  
+  generateProcessorSpecificCode(Out);
+
   // Provide a definition for `bool' if not compiling with a C++ compiler.
   Out << "\n"
       << "#ifndef __cplusplus\ntypedef unsigned char bool;\n#endif\n"
@@ -924,19 +948,30 @@ void CWriter::printFunction(Function *F) {
   printFunctionSignature(F, false);
   Out << " {\n";
 
+  // Determine whether or not the function contains any invoke instructions.
+  bool HasInvoke = false;
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+    if (isa<InvokeInst>(I->getTerminator())) {
+      HasInvoke = true;
+      break;
+    }
+
   // print local variable information for the function
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if (const AllocaInst *AI = isDirectAlloca(*I)) {
       Out << "  ";
+      if (HasInvoke) Out << "VOLATILE_FOR_SETJMP ";
       printType(Out, AI->getAllocatedType(), Mang->getValueName(AI));
       Out << ";    /* Address exposed local */\n";
     } else if ((*I)->getType() != Type::VoidTy && !isInlinableInst(**I)) {
       Out << "  ";
+      if (HasInvoke) Out << "VOLATILE_FOR_SETJMP ";
       printType(Out, (*I)->getType(), Mang->getValueName(*I));
       Out << ";\n";
       
       if (isa<PHINode>(*I)) {  // Print out PHI node temporaries as well...
         Out << "  ";
+        if (HasInvoke) Out << "VOLATILE_FOR_SETJMP ";
         printType(Out, (*I)->getType(),
                   Mang->getValueName(*I)+"__PHI_TEMPORARY");
         Out << ";\n";
