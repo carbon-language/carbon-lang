@@ -32,16 +32,20 @@ UltraSparcRegInfo::UltraSparcRegInfo(const UltraSparc &tgt)
 }
 
 
-// getZeroRegNum - returns the register that contains always zero this is the
-// unified register number
+// getZeroRegNum - returns the register that contains always zero.
+// this is the unified register number
 //
-int UltraSparcRegInfo::getZeroRegNum() const { return SparcIntRegOrder::g0; }
+int UltraSparcRegInfo::getZeroRegNum() const {
+  return this->getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+                                SparcIntRegOrder::g0);
+}
 
 // getCallAddressReg - returns the reg used for pushing the address when a
 // method is called. This can be used for other purposes between calls
 //
 unsigned UltraSparcRegInfo::getCallAddressReg() const {
-  return SparcIntRegOrder::o7;
+  return this->getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+                                SparcIntRegOrder::o7);
 }
 
 // Returns the register containing the return address.
@@ -49,7 +53,8 @@ unsigned UltraSparcRegInfo::getCallAddressReg() const {
 // value when a return instruction is reached.
 //
 unsigned UltraSparcRegInfo::getReturnAddressReg() const {
-  return SparcIntRegOrder::i7;
+  return this->getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+                                SparcIntRegOrder::i7);
 }
 
 // given the unified register number, this gives the name
@@ -71,12 +76,16 @@ const std::string UltraSparcRegInfo::getUnifiedRegName(int reg) const {
   return "";
 }
 
+// Get unified reg number for frame pointer
 unsigned UltraSparcRegInfo::getFramePointer() const {
-  return SparcIntRegOrder::i6;
+  return this->getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+                                SparcIntRegOrder::i6);
 }
 
+// Get unified reg number for stack pointer
 unsigned UltraSparcRegInfo::getStackPointer() const {
-  return SparcIntRegOrder::o6;
+  return this->getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+                                SparcIntRegOrder::o6);
 }
 
 
@@ -1037,21 +1046,21 @@ MachineInstr * UltraSparcRegInfo::cpReg2RegMI(unsigned SrcReg, unsigned DestReg,
   case IntCCRegType:
   case FloatCCRegType: 
     MI = new MachineInstr(ADD, 3);
-    MI->SetMachineOperand(0, SrcReg, false);
-    MI->SetMachineOperand(1, SparcIntRegOrder::g0, false);
-    MI->SetMachineOperand(2, DestReg, true);
+    MI->SetMachineOperandReg(0, SrcReg, false);
+    MI->SetMachineOperandReg(1, this->getZeroRegNum(), false);
+    MI->SetMachineOperandReg(2, DestReg, true);
     break;
 
   case FPSingleRegType:
     MI = new MachineInstr(FMOVS, 2);
-    MI->SetMachineOperand(0, SrcReg, false);
-    MI->SetMachineOperand(1, DestReg, true);
+    MI->SetMachineOperandReg(0, SrcReg, false);
+    MI->SetMachineOperandReg(1, DestReg, true);
     break;
 
   case FPDoubleRegType:
     MI = new MachineInstr(FMOVD, 2);
-    MI->SetMachineOperand(0, SrcReg, false);    
-    MI->SetMachineOperand(1, DestReg, true);
+    MI->SetMachineOperandReg(0, SrcReg, false);    
+    MI->SetMachineOperandReg(1, DestReg, true);
     break;
 
   default:
@@ -1076,26 +1085,26 @@ MachineInstr * UltraSparcRegInfo::cpReg2MemMI(unsigned SrcReg,
   case IntRegType:
   case FloatCCRegType: 
     MI = new MachineInstr(STX, 3);
-    MI->SetMachineOperand(0, SrcReg, false);
-    MI->SetMachineOperand(1, DestPtrReg, false);
-    MI->SetMachineOperand(2, MachineOperand:: MO_SignExtendedImmed, 
-			  (int64_t) Offset, false);
+    MI->SetMachineOperandReg(0, SrcReg, false);
+    MI->SetMachineOperandReg(1, DestPtrReg, false);
+    MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
+                               (int64_t) Offset);
     break;
 
   case FPSingleRegType:
     MI = new MachineInstr(ST, 3);
-    MI->SetMachineOperand(0, SrcReg, false);
-    MI->SetMachineOperand(1, DestPtrReg, false);
-    MI->SetMachineOperand(2, MachineOperand:: MO_SignExtendedImmed, 
-			  (int64_t) Offset, false);
+    MI->SetMachineOperandReg(0, SrcReg, false);
+    MI->SetMachineOperandReg(1, DestPtrReg, false);
+    MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
+                               (int64_t) Offset);
     break;
 
   case FPDoubleRegType:
     MI = new MachineInstr(STD, 3);
-    MI->SetMachineOperand(0, SrcReg, false);
-    MI->SetMachineOperand(1, DestPtrReg, false);
-    MI->SetMachineOperand(2, MachineOperand:: MO_SignExtendedImmed, 
-			  (int64_t) Offset, false);
+    MI->SetMachineOperandReg(0, SrcReg, false);
+    MI->SetMachineOperandReg(1, DestPtrReg, false);
+    MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
+                               (int64_t) Offset);
     break;
 
   case IntCCRegType:
@@ -1124,27 +1133,27 @@ MachineInstr * UltraSparcRegInfo::cpMem2RegMI(unsigned SrcPtrReg,
   case IntRegType:
   case FloatCCRegType: 
     MI = new MachineInstr(LDX, 3);
-    MI->SetMachineOperand(0, SrcPtrReg, false);
-    MI->SetMachineOperand(1, MachineOperand:: MO_SignExtendedImmed, 
-			  (int64_t) Offset, false);
-    MI->SetMachineOperand(2, DestReg, true);
+    MI->SetMachineOperandReg(0, SrcPtrReg, false);
+    MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
+                               (int64_t) Offset);
+    MI->SetMachineOperandReg(2, DestReg, true);
     break;
 
   case FPSingleRegType:
     MI = new MachineInstr(LD, 3);
-    MI->SetMachineOperand(0, SrcPtrReg, false);
-    MI->SetMachineOperand(1, MachineOperand:: MO_SignExtendedImmed, 
-			  (int64_t) Offset, false);
-    MI->SetMachineOperand(2, DestReg, true);
+    MI->SetMachineOperandReg(0, SrcPtrReg, false);
+    MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
+                               (int64_t) Offset);
+    MI->SetMachineOperandReg(2, DestReg, true);
 
     break;
 
   case FPDoubleRegType:
     MI = new MachineInstr(LDD, 3);
-    MI->SetMachineOperand(0, SrcPtrReg, false);
-    MI->SetMachineOperand(1, MachineOperand:: MO_SignExtendedImmed, 
-			  (int64_t) Offset, false);
-    MI->SetMachineOperand(2, DestReg, true);
+    MI->SetMachineOperandReg(0, SrcPtrReg, false);
+    MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
+                               (int64_t) Offset);
+    MI->SetMachineOperandReg(2, DestReg, true);
     break;
 
   case IntCCRegType:
@@ -1177,22 +1186,22 @@ MachineInstr *UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest) const {
   switch( RegType ) {
   case IntRegType:
     MI = new MachineInstr(ADD, 3);
-    MI->SetMachineOperand(0, MachineOperand:: MO_VirtualRegister, Src, false);
-    MI->SetMachineOperand(1, SparcIntRegOrder::g0, false);
-    MI->SetMachineOperand(2, MachineOperand:: MO_VirtualRegister, Dest, true);
+    MI->SetMachineOperandVal(0, MachineOperand:: MO_VirtualRegister, Src, false);
+    MI->SetMachineOperandReg(1, this->getZeroRegNum(), false);
+    MI->SetMachineOperandVal(2, MachineOperand:: MO_VirtualRegister, Dest, true);
     break;
 
   case FPSingleRegType:
     MI = new MachineInstr(FMOVS, 2);
-    MI->SetMachineOperand(0, MachineOperand:: MO_VirtualRegister, Src, false);
-    MI->SetMachineOperand(1, MachineOperand:: MO_VirtualRegister, Dest, true);
+    MI->SetMachineOperandVal(0, MachineOperand:: MO_VirtualRegister, Src, false);
+    MI->SetMachineOperandVal(1, MachineOperand:: MO_VirtualRegister, Dest, true);
     break;
 
 
   case FPDoubleRegType:
     MI = new MachineInstr(FMOVD, 2);
-    MI->SetMachineOperand(0, MachineOperand:: MO_VirtualRegister, Src, false);
-    MI->SetMachineOperand(1, MachineOperand:: MO_VirtualRegister, Dest, true);
+    MI->SetMachineOperandVal(0, MachineOperand:: MO_VirtualRegister, Src, false);
+    MI->SetMachineOperandVal(1, MachineOperand:: MO_VirtualRegister, Dest, true);
     break;
 
   default:
@@ -1291,9 +1300,8 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 					       getSpilledRegSize(RegType));
 
             
-	    MachineInstr *AdIBefCC, *AdIAftCC, *AdICpCC;
-	    MachineInstr *AdIBef, *AdIAft;
-
+	    MachineInstr *AdIBefCC=NULL, *AdIAftCC=NULL, *AdICpCC;
+	    MachineInstr *AdIBef=NULL, *AdIAft=NULL;
 
 	    //---- Insert code for pushing the reg on stack ----------
 		  
@@ -1307,9 +1315,9 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 
 	      // get a free INTEGER register
 	      int FreeIntReg = 
-		PRA.getUsableUniRegAtMI(LR->getRegClass(), IntRegType, MInst, 
-                                        &LVSetBef, AdIBefCC, AdIAftCC);
-
+		PRA.getUsableUniRegAtMI(PRA.getRegClassByID(IntRegClassID) /*LR->getRegClass()*/,
+                                        IntRegType, MInst, &LVSetBef, AdIBefCC, AdIAftCC);
+              
 	      // insert the instructions in reverse order since we are
 	      // adding them to the front of InstrnsBefore
 
@@ -1345,8 +1353,8 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 	      
 	      // get a free INT register
 	      int FreeIntReg = 
-		PRA.getUsableUniRegAtMI(LR->getRegClass(), IntRegType, MInst, 
-                                        &LVSetAft, AdIBefCC, AdIAftCC);
+		PRA.getUsableUniRegAtMI(PRA.getRegClassByID(IntRegClassID) /* LR->getRegClass()*/,
+                                        IntRegType, MInst, &LVSetAft, AdIBefCC, AdIAftCC);
 	      
 	      if(AdIBefCC)
 		PRA.AddedInstrMap[MInst]->InstrnsAfter.push_back(AdIBefCC);
@@ -1376,10 +1384,14 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 	    if(DEBUG_RA) {
 	      cerr << "\nFor call inst:" << *MInst;
 	      cerr << " -inserted caller saving instrs:\n\t ";
-              if( RegType == IntCCRegType )
-                cerr << *AdIBefCC << "\t" << *AdIAftCC  ;
-              else
-                cerr << *AdIBef   << "\t" << *AdIAft    ;
+              if( RegType == IntCCRegType ) {
+		if(AdIBefCC) cerr << *AdIBefCC << "\t";
+                if(AdIAftCC) cerr << *AdIAftCC;
+              }
+              else {
+		if(AdIBef) cerr << *AdIBef << "\t";
+                if(AdIAft) cerr << *AdIAft;
+              }
 	    }	    
 	  } // if not already pushed
 
@@ -1400,8 +1412,10 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 
 MachineInstr * UltraSparcRegInfo::cpCCR2IntMI(unsigned IntReg) const {
   MachineInstr * MI = new MachineInstr(RDCCR, 2);
-  MI->SetMachineOperand(0, SparcIntCCRegOrder::ccr, false);
-  MI->SetMachineOperand(1, IntReg, true);
+  MI->SetMachineOperandReg(0, this->getUnifiedRegNum(UltraSparcRegInfo::IntCCRegClassID,
+                                                     SparcIntCCRegOrder::ccr),
+                           false, true);
+  MI->SetMachineOperandReg(1, IntReg, true);
   return MI;
 }
 
@@ -1412,9 +1426,10 @@ MachineInstr * UltraSparcRegInfo::cpCCR2IntMI(unsigned IntReg) const {
 
 MachineInstr *UltraSparcRegInfo::cpInt2CCRMI(unsigned IntReg) const {
   MachineInstr *MI = new MachineInstr(WRCCR, 3);
-  MI->SetMachineOperand(0, IntReg, false);
-  MI->SetMachineOperand(1, SparcIntRegOrder::g0, false);
-  MI->SetMachineOperand(2, SparcIntCCRegOrder::ccr, true);
+  MI->SetMachineOperandReg(0, IntReg, false);
+  MI->SetMachineOperandReg(1, this->getZeroRegNum(), false);
+  MI->SetMachineOperandReg(2, this->getUnifiedRegNum(UltraSparcRegInfo::IntCCRegClassID, SparcIntCCRegOrder::ccr),
+                           true, true);
   return MI;
 }
 
