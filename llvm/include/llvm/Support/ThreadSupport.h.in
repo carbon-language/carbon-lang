@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SUPPORT_THREADSUPPORT_H
-#define SUPPORT_THREADSUPPORT_H
+#ifndef LLVM_SUPPORT_THREADSUPPORT_H
+#define LLVM_SUPPORT_THREADSUPPORT_H
 
 #undef HAVE_PTHREAD_MUTEX_LOCK
 
