@@ -9,6 +9,8 @@
 //
 // This file describes the target machine to the instruction scheduler.
 //
+// NOTE: This file is currently sparc V9 specific.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TARGET_TARGETSCHEDINFO_H
