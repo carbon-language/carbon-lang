@@ -18,6 +18,9 @@ OS=@OS@
 # Target hardware architecture
 ARCH=@ARCH@
 
+# Target triple (cpu-vendor-os) for which we should generate code
+TARGET_TRIPLE=@target@
+
 # Endian-ness of the target
 ENDIAN=@ENDIAN@
 
