@@ -16,7 +16,7 @@ echo "======== Running optimizier test on $1"
 
   $DIS < $1.bc.1 > $1.ll.1 || exit 3
   $DIS < $1.bc.2 > $1.ll.2 || exit 3
-  diff $1.ll.[12] || exit 3
+  gdiff -u $1.ll.[12] || exit 3
 
   # Try out SCCP & CleanGCC
   $AS < $1 | $OPT -q -inline -dce -cleangcc -sccp -dce \
@@ -26,7 +26,7 @@ echo "======== Running optimizier test on $1"
   $OPT -q -sccp -dce < $1.bc.3 > $1.bc.4 || exit 2
   $DIS < $1.bc.3 > $1.ll.3 || exit 3
   $DIS < $1.bc.4 > $1.ll.4 || exit 3
-  diff $1.ll.[34] || exit 3
+  gdiff -u $1.ll.[34] || exit 3
   rm $1.bc.[1234] $1.ll.[1234]
   
   touch Output/$1.opt  # Success!
