@@ -12,7 +12,6 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/Statistic.h"
-#include <set>
 
 static RegisterAnalysis<TDDataStructures>
 Y("tddatastructure", "Top-down Data Structure Analysis Closure");
@@ -21,7 +20,6 @@ Y("tddatastructure", "Top-down Data Structure Analysis Closure");
 // our memory... here...
 //
 void TDDataStructures::releaseMemory() {
-  BUMaps.clear();
   for (std::map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
          E = DSInfo.end(); I != E; ++I)
     delete I->second;
@@ -37,21 +35,14 @@ void TDDataStructures::releaseMemory() {
 bool TDDataStructures::run(Module &M) {
   BUDataStructures &BU = getAnalysis<BUDataStructures>();
 
-  // Calculate the CallSitesForFunction mapping from the BU info...
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal())
-      if (const std::vector<DSCallSite> *CS = BU.getCallSites(*I))
-        for (unsigned i = 0, e = CS->size(); i != e; ++i)
-          if (Function *F = (*CS)[i].getResolvingCaller())
-            CallSitesForFunction[F].push_back(&(*CS)[i]);
+  // Calculate top-down from main...
+  if (Function *F = M.getMainFunction())
+    calculateGraph(*F);
 
-  // Next calculate the graphs for each function...
+  // Next calculate the graphs for each function unreachable function...
   for (Module::reverse_iterator I = M.rbegin(), E = M.rend(); I != E; ++I)
     if (!I->isExternal())
       calculateGraph(*I);
-
-  // Destroy the temporary mapping...
-  CallSitesForFunction.clear();
   return false;
 }
 
@@ -81,116 +72,131 @@ void TDDataStructures::ResolveCallSite(DSGraph &Graph,
     Graph.getRetNode().mergeWith(CallSite.getRetVal());
 }
 
+DSGraph &TDDataStructures::getOrCreateDSGraph(Function &F) {
+  DSGraph *&G = DSInfo[&F];
+  if (G == 0) { // Not created yet?  Clone BU graph...
+    G = new DSGraph(getAnalysis<BUDataStructures>().getDSGraph(F));
+    G->getAuxFunctionCalls().clear();
+  }
+  return *G;
+}
 
-DSGraph &TDDataStructures::calculateGraph(Function &F) {
-  // Make sure this graph has not already been calculated, or that we don't get
+void TDDataStructures::calculateGraph(Function &F) {
+  // Make sure this graph has not already been calculated, and that we don't get
   // into an infinite loop with mutually recursive functions.
   //
-  DSGraph *&Graph = DSInfo[&F];
-  if (Graph) return *Graph;
+  if (GraphDone.count(&F)) return;
+  GraphDone.insert(&F);
 
-  BUDataStructures &BU = getAnalysis<BUDataStructures>();
-  DSGraph &BUGraph = BU.getDSGraph(F);
-  
-  // Copy the BU graph, keeping a mapping from the BUGraph to the current Graph
-  std::map<const DSNode*, DSNodeHandle> BUNodeMap;
-  Graph = new DSGraph(BUGraph, BUNodeMap);
+  // Get the current functions graph...
+  DSGraph &Graph = getOrCreateDSGraph(F);
 
-  // We only need the BUMap entries for the nodes that are used in call sites.
-  // Calculate which nodes are needed.
-  std::set<const DSNode*> NeededNodes;
-  std::map<const Function*, std::vector<const DSCallSite*> >::iterator CSFFI
-    = CallSitesForFunction.find(&F);
-  if (CSFFI == CallSitesForFunction.end()) {
-    BUNodeMap.clear();  // No nodes are neccesary
-  } else {
-    std::vector<const DSCallSite*> &CSV = CSFFI->second;
-    for (unsigned i = 0, e = CSV.size(); i != e; ++i) {
-      NeededNodes.insert(CSV[i]->getRetVal().getNode());
-      for (unsigned j = 0, je = CSV[i]->getNumPtrArgs(); j != je; ++j)
-        NeededNodes.insert(CSV[i]->getPtrArg(j).getNode());
-    }
+  const std::vector<DSCallSite> &CallSites = Graph.getFunctionCalls();
+#if 0
+  if (CallSites.empty()) {
+    DEBUG(std::cerr << "  [TD] No callees for: " << F.getName() << "\n");
+    return;  // If no call sites, the graph is the same as the BU graph!
   }
-
-  // Loop through te BUNodeMap, keeping only the nodes that are "Needed"
-  for (std::map<const DSNode*, DSNodeHandle>::iterator I = BUNodeMap.begin();
-       I != BUNodeMap.end(); )
-    if (NeededNodes.count(I->first) && I->first)  // Keep needed nodes...
-      ++I;
-    else {
-      std::map<const DSNode*, DSNodeHandle>::iterator J = I++;
-      BUNodeMap.erase(J);
-    }
-
-  NeededNodes.clear();  // We are done with this temporary data structure
-
-  // Convert the mapping from a node-to-node map into a node-to-nodehandle map
-  BUNodeMapTy &BUMap = BUMaps[&F];
-  BUMap.insert(BUNodeMap.begin(), BUNodeMap.end());
-  BUNodeMap.clear();   // We are done with the temporary map.
-
-  const std::vector<DSCallSite> *CallSitesP = BU.getCallSites(F);
-  if (CallSitesP == 0) {
-    DEBUG(std::cerr << "  [TD] No callers for: " << F.getName() << "\n");
-    return *Graph;  // If no call sites, the graph is the same as the BU graph!
-  }
-
-  // Loop over all call sites of this function, merging each one into this
-  // graph.
+#endif
+  // Loop over all of the call sites, building a multi-map from Callees to
+  // DSCallSite*'s.  With this map we can then loop over each callee, cloning
+  // this graph once into it, then resolving arguments.
   //
-  DEBUG(std::cerr << "  [TD] Inlining " << CallSitesP->size()
-                  << " callers for: " << F.getName() << "\n");
-  const std::vector<DSCallSite> &CallSites = *CallSitesP;
-  for (unsigned c = 0, ce = CallSites.size(); c != ce; ++c) {
-    const DSCallSite &CallSite = CallSites[c];
-    Function &Caller = *CallSite.getResolvingCaller();
-    assert(&Caller && !Caller.isExternal() &&
-           "Externals function cannot 'call'!");
-    
-    DEBUG(std::cerr << "\t [TD] Inlining caller #" << c << " '"
-          << Caller.getName() << "' into callee: " << F.getName() << "\n");
-    
-    // Self recursion is not tracked in BU pass...
-    assert(&Caller != &F && "This cannot happen!\n");
+  std::multimap<Function*, const DSCallSite*> CalleeSites;
+  for (unsigned i = 0, e = CallSites.size(); i != e; ++i) {
+    const DSCallSite &CS = CallSites[i];
+    const std::vector<GlobalValue*> Callees =
+      CS.getCallee().getNode()->getGlobals();
 
-    // Recursively compute the graph for the Caller.  It should be fully
-    // resolved except if there is mutual recursion...
-    //
-    DSGraph &CG = calculateGraph(Caller);  // Graph to inline
-    
-    DEBUG(std::cerr << "\t\t[TD] Got graph for " << Caller.getName()
-          << " in: " << F.getName() << "\n");
-    
-    // Translate call site from having links into the BU graph
-    DSCallSite CallSiteInCG(CallSite, BUMaps[&Caller]);
-
-    // These two maps keep track of where scalars in the old graph _used_
-    // to point to, and of new nodes matching nodes of the old graph.
-    std::map<Value*, DSNodeHandle> OldValMap;
-    std::map<const DSNode*, DSNodeHandle> OldNodeMap;
-
-    // FIXME: Eventually use DSGraph::mergeInGraph here...
-    // Graph->mergeInGraph(CallSiteInCG, CG, false);
-    
-    // Clone the Caller's graph into the current graph, keeping
-    // track of where scalars in the old graph _used_ to point...
-    // Do this here because it only needs to happens once for each Caller!
-    // Strip scalars but not allocas since they are alive in callee.
-    // 
-    DSNodeHandle RetVal = Graph->cloneInto(CG, OldValMap, OldNodeMap,
-                                           DSGraph::KeepAllocaBit);
-    ResolveCallSite(*Graph, DSCallSite(CallSiteInCG, OldNodeMap));
+    // Loop over all of the functions that this call may invoke...
+    for (unsigned c = 0, e = Callees.size(); c != e; ++c)
+      if (Function *F = dyn_cast<Function>(Callees[c]))  // If this is a fn...
+        if (!F->isExternal())                            // If it's not external
+          CalleeSites.insert(std::make_pair(F, &CS));    // Keep track of it!
   }
 
-  // Recompute the Incomplete markers and eliminate unreachable nodes.
-  Graph->maskIncompleteMarkers();
-  Graph->markIncompleteNodes(/*markFormals*/ !F.hasInternalLinkage()
+  // Now that we have information about all of the callees, propogate the
+  // current graph into the callees.
+  //
+  DEBUG(std::cerr << "  [TD] Inlining '" << F.getName() << "' into "
+                  << CalleeSites.size() << " callees.\n");
+
+  // Loop over all the callees...
+  for (std::multimap<Function*, const DSCallSite*>::iterator
+         I = CalleeSites.begin(), E = CalleeSites.end(); I != E; )
+    if (I->first == &F) {  // Bottom-up pass takes care of self loops!
+      ++I;
+    } else {
+      // For each callee...
+      Function *Callee = I->first;
+      DSGraph &CG = getOrCreateDSGraph(*Callee);  // Get the callee's graph...
+      
+      DEBUG(std::cerr << "\t [TD] Inlining into callee '" << Callee->getName()
+            << "'\n");
+      
+      // Clone our current graph into the callee...
+      std::map<Value*, DSNodeHandle> OldValMap;
+      std::map<const DSNode*, DSNodeHandle> OldNodeMap;
+      CG.cloneInto(Graph, OldValMap, OldNodeMap,
+                   DSGraph::KeepAllocaBit | DSGraph::DontCloneCallNodes);
+      OldValMap.clear();  // We don't care about the ValMap
+      
+      // Loop over all of the invocation sites of the callee, resolving
+      // arguments to our graph.  This loop may iterate multiple times if the
+      // current function calls this callee multiple times with different
+      // signatures.
+      //
+      for (; I != E && I->first == Callee; ++I) {
+        // Map call site into callee graph
+        DSCallSite NewCS(*I->second, OldNodeMap);
+        
+        // Resolve the return values...
+        NewCS.getRetVal().mergeWith(CG.getRetNode());
+        
+        // Resolve all of the arguments...
+        Function::aiterator AI = Callee->abegin();
+        for (unsigned i = 0, e = NewCS.getNumPtrArgs(); i != e; ++i, ++AI) {
+          // Advance the argument iterator to the first pointer argument...
+          while (!DS::isPointerType(AI->getType())) {
+            ++AI;
+#ifndef NDEBUG
+            if (AI == Callee->aend())
+              std::cerr << "Bad call to Function: " << Callee->getName()<< "\n";
+#endif
+            assert(AI != Callee->aend() &&
+                   "# Args provided is not # Args required!");
+          }
+          
+          // Add the link from the argument scalar to the provided value
+          DSNodeHandle &NH = CG.getNodeForValue(AI);
+          assert(NH.getNode() && "Pointer argument without scalarmap entry?");
+          NH.mergeWith(NewCS.getPtrArg(i));
+        }
+      }
+
+      // Done with the nodemap...
+      OldNodeMap.clear();
+
+      // Recompute the Incomplete markers and eliminate unreachable nodes.
+      CG.maskIncompleteMarkers();
+      CG.markIncompleteNodes(/*markFormals*/ !F.hasInternalLinkage()
                              /*&& FIXME: NEED TO CHECK IF ALL CALLERS FOUND!*/);
-  Graph->removeDeadNodes(/*KeepAllGlobals*/ false, /*KeepCalls*/ false);
+      CG.removeTriviallyDeadNodes(false);
+      CG.removeDeadNodes(false, true) ;///*KeepAllGlobals*/ false, true);
+      ///*KeepCalls*/ false);
+    }
 
-  DEBUG(std::cerr << "  [TD] Done inlining callers for: " << F.getName() << " ["
-        << Graph->getGraphSize() << "+" << Graph->getFunctionCalls().size()
-        << "]\n");
+  DEBUG(std::cerr << "  [TD] Done inlining into callees for: " << F.getName()
+        << " [" << Graph.getGraphSize() << "+"
+        << Graph.getFunctionCalls().size() << "]\n");
 
-  return *Graph;
+  
+  // Loop over all the callees... making sure they are all resolved now...
+  Function *LastFunc = 0;
+  for (std::multimap<Function*, const DSCallSite*>::iterator
+         I = CalleeSites.begin(), E = CalleeSites.end(); I != E; ++I)
+    if (I->first != LastFunc) {  // Only visit each callee once...
+      LastFunc = I->first;
+      calculateGraph(*I->first);
+    }
 }
