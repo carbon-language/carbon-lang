@@ -39,13 +39,45 @@ public:
   inline unsigned getNumOfAvailRegs() const { return NumOfAvailRegs; }
   inline unsigned getNumOfAllRegs()   const { return NumOfAllRegs; }
 
+  // This method marks the registers used for a given register number.
+  // This defaults to marking a single register but may mark multiple
+  // registers when a single number denotes paired registers.
+  // 
+  virtual void markColorsUsed(unsigned RegInClass,
+                              int UserRegType,
+                              int RegTypeWanted,
+                              std::vector<bool> &IsColorUsedArr) const {
+    assert(RegInClass < NumOfAllRegs && RegInClass < IsColorUsedArr.size());
+    assert(UserRegType == RegTypeWanted &&
+       "Default method is probably incorrect for class with multiple types.");
+    IsColorUsedArr[RegInClass] = true;
+  }
+
+  // This method finds unused registers of the specified register type,
+  // using the given "used" flag array IsColorUsedArr.  It defaults to
+  // checking a single entry in the array directly, but that can be overridden
+  // for paired registers and other such silliness.
+  // It returns -1 if no unused color is found.
+  // 
+  virtual int findUnusedColor(int RegTypeWanted,
+                          const std::vector<bool> &IsColorUsedArr) const {
+    // find first unused color in the IsColorUsedArr directly
+    unsigned NC = this->getNumOfAvailRegs();
+    assert(IsColorUsedArr.size() >= NC && "Invalid colors-used array");
+    for (unsigned c = 0; c < NC; c++)
+      if (!IsColorUsedArr[c])
+        return c;
+    return -1;
+  }
+
   // This method should find a color which is not used by neighbors
   // (i.e., a false position in IsColorUsedArr) and 
   virtual void colorIGNode(IGNode *Node,
-                           std::vector<bool> &IsColorUsedArr) const = 0;
+                           const std::vector<bool> &IsColorUsedArr) const = 0;
+
   virtual bool isRegVolatile(int Reg) const = 0;
 
-  //If any specific register needs extra information
+  // If any specific register needs extra information
   virtual bool modifiedByCall(int Reg) const {return false; }
 
   virtual const char* const getRegName(unsigned reg) const = 0;
@@ -130,14 +162,16 @@ public:
   virtual void colorMethodArgs(const Function *Func,  LiveRangeInfo &LRI,
                                AddedInstrns *FirstAI) const = 0;
 
-  virtual void colorCallArgs(MachineInstr *CalI, 
-			     LiveRangeInfo& LRI, AddedInstrns *CallAI, 
-			     PhyRegAlloc &PRA, const BasicBlock *BB) const = 0;
-
-  virtual void colorRetValue(MachineInstr *RetI, LiveRangeInfo &LRI,
-			     AddedInstrns *RetAI) const = 0;
-
-
+  // Method for inserting caller saving code. The caller must save all the
+  // volatile registers across a call based on the calling conventions of
+  // an architecture. This must insert code for saving and restoring 
+  // such registers on
+  //
+  virtual void insertCallerSavingCode(std::vector<MachineInstr*>& instrnsBefore,
+                                      std::vector<MachineInstr*>& instrnsAfter,
+                                      MachineInstr *CallMI,
+				      const BasicBlock *BB, 
+				      PhyRegAlloc &PRA) const = 0;
 
   // The following methods are used to generate "copy" machine instructions
   // for an architecture. Currently they are used in TargetRegClass 
@@ -227,26 +261,17 @@ public:
   }
 
   // Get the register type for a register identified different ways.
-  // 
-  virtual int getRegType(const Type* type) const = 0;
-  virtual int getRegType(const LiveRange *LR) const = 0;
+  // Note that getRegTypeForLR(LR) != getRegTypeForDataType(LR->getType())!
+  // The reg class of a LR depends both on the Value types in it and whether
+  // they are CC registers or not (for example).
+  virtual int getRegTypeForDataType(const Type* type) const = 0;
+  virtual int getRegTypeForLR(const LiveRange *LR) const = 0;
   virtual int getRegType(int unifiedRegNum) const = 0;
   
   // The following methods are used to get the frame/stack pointers
   // 
   virtual unsigned getFramePointer() const = 0;
   virtual unsigned getStackPointer() const = 0;
-
-  // Method for inserting caller saving code. The caller must save all the
-  // volatile registers across a call based on the calling conventions of
-  // an architecture. This must insert code for saving and restoring 
-  // such registers on
-  //
-  virtual void insertCallerSavingCode(std::vector<MachineInstr*>& instrnsBefore,
-                                      std::vector<MachineInstr*>& instrnsAfter,
-                                      MachineInstr *MInst, 
-				      const BasicBlock *BB, 
-				      PhyRegAlloc &PRA) const = 0;
 
   // This method gives the the number of bytes of stack spaceallocated 
   // to a register when it is spilled to the stack.
