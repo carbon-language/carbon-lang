@@ -422,6 +422,24 @@ void ConstantArray::destroyConstant() {
   destroyConstantImpl();
 }
 
+// getAsString - If the sub-element type of this array is either sbyte or ubyte,
+// then this method converts the array to an std::string and returns it.
+// Otherwise, it asserts out.
+//
+std::string ConstantArray::getAsString() const {
+  std::string Result;
+  if (getType()->getElementType() == Type::SByteTy)
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+      Result += (char)cast<ConstantSInt>(getOperand(i))->getValue();
+  else {
+    assert(getType()->getElementType() == Type::UByteTy && "Not a string!");
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+      Result += (char)cast<ConstantUInt>(getOperand(i))->getValue();
+  }
+  return Result;
+}
+
+
 //---- ConstantStruct::get() implementation...
 //
 static ValueMap<std::vector<Constant*>, ConstantStruct> StructConstants;
