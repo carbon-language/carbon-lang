@@ -1,4 +1,5 @@
 //===-- Support/hash_set - "Portable" wrapper around hash_set ---*- C++ -*-===//
+// vim:ft=cpp
 //
 // This file provides a wrapper around the mysterious <hash_set> header file
 // that seems to move around between GCC releases into and out of namespaces at
@@ -22,18 +23,22 @@
 
 #ifdef HAVE_GNU_EXT_HASH_SET
 
+// This is for GCC-3.1+ which puts hashset in ext/hash_set
 #include <ext/hash_set>
 #define HASH_NAMESPACE __gnu_cxx
 
 #else
 
+// This is for GCC-3.0.x which puts hashmap in the `ext' directory.
 #ifdef HAVE_STD_EXT_HASH_SET
 #include <ext/hash_set>
 #define HASH_NAMESPACE std
 
 #else
+// This handles older, pre-3.0 GCC which do not have the extentions in the `ext'
+// directory, and ignore the `std' namespace.
 #include <hash_set>
-#define HASH_NAMESPACE
+#define HASH_NAMESPACE std
 #endif
 
 #endif
@@ -48,4 +53,3 @@ using HASH_NAMESPACE::hash;
 #include <Support/HashExtras.h>
 
 #endif
-

@@ -1,5 +1,6 @@
 //===-- Support/hash_map - "Portable" wrapper around hash_map ---*- C++ -*-===//
-//
+// vim:ft=cpp
+// 
 // This file provides a wrapper around the mysterious <hash_map> header file
 // that seems to move around between GCC releases into and out of namespaces at
 // will.  #including this header will cause hash_map to be available in the
@@ -21,19 +22,22 @@
 #include "Config/config.h"
 
 #ifdef HAVE_GNU_EXT_HASH_MAP
-
+// This is for GCC-3.1+ which puts hash in ext/hash_map
 #include <ext/hash_map>
 #define HASH_NAMESPACE __gnu_cxx
 
 #else
 
+// This is for GCC-3.0.x which puts hashmap in the `ext' directory.
 #ifdef HAVE_STD_EXT_HASH_MAP
 #include <ext/hash_map>
 #define HASH_NAMESPACE std
 
 #else
+// This handles older, pre-3.0 GCC which do not have the extentions in the `ext'
+// directory, and ignore the `std' namespace.
 #include <hash_map>
-#define HASH_NAMESPACE
+#define HASH_NAMESPACE std
 #endif
 
 #endif
