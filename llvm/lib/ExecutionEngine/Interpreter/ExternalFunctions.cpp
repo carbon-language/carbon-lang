@@ -28,6 +28,7 @@
 #include "Config/dlfcn.h"
 #include "Config/link.h"
 #include <cmath>
+#include <csignal>
 #include <map>
 using std::vector;
 
@@ -142,10 +143,7 @@ GenericValue lle_X_exit(FunctionType *M, const vector<GenericValue> &Args) {
 
 // void abort(void)
 GenericValue lle_X_abort(FunctionType *M, const vector<GenericValue> &Args) {
-  std::cerr << "***PROGRAM ABORTED***!\n";
-  GenericValue GV;
-  GV.IntVal = 1;
-  TheInterpreter->exitCalled(GV);
+  raise (SIGABRT);
   return GenericValue();
 }
 
