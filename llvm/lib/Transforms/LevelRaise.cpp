@@ -15,6 +15,7 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Optimizations/ConstantHandling.h"
 #include "llvm/Optimizations/DCE.h"
+#include "llvm/Optimizations/ConstantProp.h"
 #include "llvm/Analysis/Expressions.h"
 #include <algorithm>
 
@@ -416,7 +417,8 @@ static bool DoRaisePass(Method *M) {
     BasicBlock::InstListType &BIL = BB->getInstList();
 
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
-      if (opt::DeadCodeElimination::dceInstruction(BIL, BI)) {
+      if (opt::DeadCodeElimination::dceInstruction(BIL, BI) ||
+	  opt::ConstantPropogation::doConstantPropogation(BB, BI)) {
         Changed = true; 
 #ifdef DEBUG_PEEPHOLE_INSTS
         cerr << "DeadCode Elinated!\n";
