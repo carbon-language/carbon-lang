@@ -1960,6 +1960,7 @@ bool InstCombiner::runOnFunction(Function &F) {
 
       ++NumConstProp;
       I->getParent()->getInstList().erase(I);
+      removeFromWorkList(I);
       continue;
     }
 
