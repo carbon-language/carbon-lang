@@ -217,7 +217,7 @@ ToolDir     := $(BUILD_OBJ_ROOT)/$(BuildMode)/bin
 ExmplDir    := $(BUILD_OBJ_ROOT)/$(BuildMode)/examples
 LLVMLibDir  := $(LLVM_OBJ_ROOT)/$(BuildMode)/lib
 LLVMToolDir := $(LLVM_OBJ_ROOT)/$(BuildMode)/bin
-LExmplDir   := $(LLVM_OBJ_ROOT)/$(BuildMode)/examples
+LLVMExmplDir:= $(LLVM_OBJ_ROOT)/$(BuildMode)/examples
 CFERuntimeLibDir := $(LLVMGCCDIR)/lib
 
 #--------------------------------------------------------------------
