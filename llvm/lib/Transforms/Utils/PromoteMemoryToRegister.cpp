@@ -361,7 +361,8 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
 /// of the function at all.  All allocas must be from the same function.
 ///
 void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
-                     DominanceFrontier &DF, const TargetData &TD) {
+                     DominatorTree &DT, DominanceFrontier &DF,
+                     const TargetData &TD) {
   // If there is nothing to do, bail out...
   if (Allocas.empty()) return;
   PromoteMem2Reg(Allocas, DF, TD).run();

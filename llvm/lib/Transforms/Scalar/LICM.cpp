@@ -63,6 +63,7 @@ namespace {
   private:
     LoopInfo      *LI;       // Current LoopInfo
     AliasAnalysis *AA;       // Current AliasAnalysis information
+    DominanceFrontier *DF;   // Current Dominance Frontier
     bool Changed;            // Set to true when we change anything.
     BasicBlock *Preheader;   // The preheader block of the current loop...
     Loop *CurLoop;           // The current loop we are working on...
@@ -173,6 +174,7 @@ bool LICM::runOnFunction(Function &) {
   // Get our Loop and Alias Analysis information...
   LI = &getAnalysis<LoopInfo>();
   AA = &getAnalysis<AliasAnalysis>();
+  DF = &getAnalysis<DominanceFrontier>();
   DT = &getAnalysis<DominatorTree>();
 
   // Hoist expressions out of all of the top-level loops.
@@ -405,8 +407,7 @@ void LICM::PromoteValuesInLoop() {
   PromotedAllocas.reserve(PromotedValues.size());
   for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i)
     PromotedAllocas.push_back(PromotedValues[i].first);
-  PromoteMemToReg(PromotedAllocas, getAnalysis<DominanceFrontier>(),
-                  AA->getTargetData());
+  PromoteMemToReg(PromotedAllocas, *DT, *DF, AA->getTargetData());
 }
 
 /// findPromotableValuesInLoop - Check the current loop for stores to definite

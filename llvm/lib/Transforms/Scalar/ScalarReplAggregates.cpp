@@ -38,6 +38,7 @@ namespace {
     // getAnalysisUsage - This pass does not require any passes, but we know it
     // will not alter the CFG, so say so.
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<DominatorTree>();
       AU.addRequired<DominanceFrontier>();
       AU.addRequired<TargetData>();
       AU.setPreservesCFG();
@@ -74,6 +75,8 @@ bool SROA::runOnFunction(Function &F) {
 bool SROA::performPromotion(Function &F) {
   std::vector<AllocaInst*> Allocas;
   const TargetData &TD = getAnalysis<TargetData>();
+  DominatorTree     &DT = getAnalysis<DominatorTree>();
+  DominanceFrontier &DF = getAnalysis<DominanceFrontier>();
 
   BasicBlock &BB = F.getEntryBlock();  // Get the entry node for the function
 
@@ -91,7 +94,7 @@ bool SROA::performPromotion(Function &F) {
 
     if (Allocas.empty()) break;
 
-    PromoteMemToReg(Allocas, getAnalysis<DominanceFrontier>(), TD);
+    PromoteMemToReg(Allocas, DT, DF, TD);
     NumPromoted += Allocas.size();
     Changed = true;
   }

@@ -9,6 +9,7 @@
 #define TRANSFORMS_UTILS_PROMOTEMEMTOREG_H
 
 class AllocaInst;
+class DominatorTree;
 class DominanceFrontier;
 class TargetData;
 #include <vector>
@@ -24,6 +25,7 @@ bool isAllocaPromotable(const AllocaInst *AI, const TargetData &TD);
 /// of the function at all.  All allocas must be from the same function.
 ///
 void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
-                     DominanceFrontier &DF, const TargetData &TD);
+                     DominatorTree &DT, DominanceFrontier &DF,
+                     const TargetData &TD);
 
 #endif
