@@ -7,7 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file provides the SunOS specific implementation of the TimeValue class.
+// This file provides the SunOS implementation of the TimeValue class.
 //
 //===----------------------------------------------------------------------===//
 

@@ -7,12 +7,12 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file provides the FreeBSD specific implementation of the TimeValue class.
+// This file provides the FreeBSD implementation of the TimeValue class.
 //
 //===----------------------------------------------------------------------===//
 
 // Include the generic Unix implementation
-#include "../Unix/Unix.cpp"
+#include "../Unix/TimeValue.cpp"
 
 namespace llvm {
 using namespace sys;

@@ -7,7 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file provides the Win32 specific implementation of the TimeValue class.
+// This file provides the Win32 implementation of the TimeValue class.
 //
 //===----------------------------------------------------------------------===//
 

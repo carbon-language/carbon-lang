@@ -7,7 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file provides the Linux specific implementation of the TimeValue class.
+// This file provides the Linux implementation of the TimeValue class.
 //
 //===----------------------------------------------------------------------===//
 
