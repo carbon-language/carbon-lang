@@ -12,6 +12,7 @@
 #include "Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
 #include <algorithm>
+#include <cstdarg>
 #include <map>
 
 Function *ilist_traits<Function>::createNode() {
@@ -94,6 +95,29 @@ Function *Module::getOrInsertFunction(const std::string &Name,
     return New;                    // Return the new prototype...
   }
 }
+
+// getOrInsertFunction - Look up the specified function in the module symbol
+// table.  If it does not exist, add a prototype for the function and return it.
+// This version of the method takes a null terminated list of function
+// arguments, which makes it easier for clients to use.
+//
+Function *Module::getOrInsertFunction(const std::string &Name,
+                                      const Type *RetTy, ...) {
+  va_list Args;
+  va_start(Args, RetTy);
+
+  // Build the list of argument types...
+  std::vector<const Type*> ArgTys;
+  while (const Type *ArgTy = va_arg(Args, const Type*))
+    ArgTys.push_back(ArgTy);
+
+  va_end(Args);
+
+  // Build the function type and chain to the other getOrInsertFunction...
+  return getOrInsertFunction(Name, FunctionType::get(RetTy, ArgTys, false));
+}
+
+
 
 // getFunction - Look up the specified function in the module symbol table.
 // If it does not exist, return null.
