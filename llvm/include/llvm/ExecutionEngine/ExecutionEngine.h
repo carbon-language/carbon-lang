@@ -36,9 +36,15 @@ class ExecutionEngine {
   Module &CurMod;
   const TargetData *TD;
 
-  // GlobalAddress - A mapping between LLVM global values and their actualized
-  // version...
-  std::map<const GlobalValue*, void *> GlobalAddress;
+  /// GlobalAddressMap - A mapping between LLVM global values and their
+  /// actualized version...
+  std::map<const GlobalValue*, void *> GlobalAddressMap;
+
+  /// GlobalAddressReverseMap - This is the reverse mapping of GlobalAddressMap,
+  /// used to convert raw addresses into the LLVM global value that is emitted
+  /// at the address.  This map is not computed unless getGlobalValueAtAddress
+  /// is called at some point.
+  std::map<void *, const GlobalValue*> GlobalAddressReverseMap;
 protected:
   ModuleProvider *MP;
 
@@ -74,17 +80,24 @@ public:
 
 
   void addGlobalMapping(const GlobalValue *GV, void *Addr) {
-    void *&CurVal = GlobalAddress[GV];
+    void *&CurVal = GlobalAddressMap[GV];
     assert((CurVal == 0 || Addr == 0) && "GlobalMapping already established!");
     CurVal = Addr;
+
+    // If we are using the reverse mapping, add it too
+    if (!GlobalAddressReverseMap.empty()) {
+      const GlobalValue *&V = GlobalAddressReverseMap[Addr];
+      assert((V == 0 || GV == 0) && "GlobalMapping already established!");
+      V = GV;
+    }
   }
 
   /// getPointerToGlobalIfAvailable - This returns the address of the specified
   /// global value if it is available, otherwise it returns null.
   ///
   void *getPointerToGlobalIfAvailable(const GlobalValue *GV) {
-    std::map<const GlobalValue*, void*>::iterator I = GlobalAddress.find(GV);
-    return I != GlobalAddress.end() ? I->second : 0;
+    std::map<const GlobalValue*, void*>::iterator I = GlobalAddressMap.find(GV);
+    return I != GlobalAddressMap.end() ? I->second : 0;
   }
 
   /// getPointerToGlobal - This returns the address of the specified global
@@ -106,6 +119,12 @@ public:
     // Default implementation, just codegen the function.
     return getPointerToFunction(F);
   }
+
+  /// getGlobalValueAtAddress - Return the LLVM global value object that starts
+  /// at the specified address.
+  ///
+  const GlobalValue *getGlobalValueAtAddress(void *Addr);
+
 
   void StoreValueToMemory(GenericValue Val, GenericValue *Ptr, const Type *Ty);
   void InitializeMemory(const Constant *Init, void *Addr);
