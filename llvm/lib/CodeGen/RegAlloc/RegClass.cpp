@@ -21,7 +21,7 @@ RegClass::RegClass(const Method *const M,
 
 void RegClass::colorAllRegs()
 {
-  if(DEBUG_RA) cout << "Coloring IGs ..." << endl;
+  if(DEBUG_RA) cout << "Coloring IG of reg class " << RegClassID << " ...\n";
 
   //preColorIGNodes();                    // pre-color IGNodes
   pushAllIGNodes();                     // push all IG Nodes
@@ -47,7 +47,7 @@ void RegClass::colorAllRegs()
 void RegClass::pushAllIGNodes()
 {
   bool NeedMoreSpills;          
-  IGNode *IGNodeSpill;
+
 
   IG.setCurDegreeOfIGNodes();           // calculate degree of IGNodes
 
@@ -71,8 +71,8 @@ void RegClass::pushAllIGNodes()
   do{
 
     //get node with min spill cost
-    IGNodeSpill = getIGNodeWithMinSpillCost(); 
-
+    IGNode *IGNodeSpill =  getIGNodeWithMinSpillCost(); 
+   
     //  push that node on to stack
     IGNodeStack.push( IGNodeSpill ); 
 
@@ -89,7 +89,11 @@ void RegClass::pushAllIGNodes()
 
 
 
-
+//--------------------------------------------------------------------------
+// This method goes thru all IG nodes in the IGNodeList of an IG of a 
+// register class and push any unconstrained IG node left (that is not
+// already pushed)
+//--------------------------------------------------------------------------
 
 bool  RegClass::pushUnconstrainedIGNodes()  
 {
@@ -103,9 +107,14 @@ bool  RegClass::pushUnconstrainedIGNodes()
     // get IGNode i from IGNodeList
     IGNode *IGNode = IG.getIGNodeList()[i]; 
 
-    if( ! IGNode )                      // can be null due to merging
-	continue;
-
+    if( !IGNode )                        // can be null due to merging   
+      continue;
+    
+    // if already pushed on stack, continue. This can happen since this
+    // method can be called repeatedly until all constrained nodes are
+    // pushed
+    if( IGNode->isOnStack() )
+      continue;
                                         // if the degree of IGNode is lower
     if( (unsigned) IGNode->getCurDegree()  < MRC->getNumOfAvailRegs() ) {   
       IGNodeStack.push( IGNode );       // push IGNode on to the stack
