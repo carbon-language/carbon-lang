@@ -1,6 +1,15 @@
 //===-- SparcV9CodeEmitter.cpp --------------------------------------------===//
 //
-// FIXME: document
+// SPARC-specific backend for emitting machine code to memory.
+//
+// This module also contains the code for lazily resolving the targets
+// of call instructions, including the callback used to redirect calls
+// to functions for which the code has not yet been generated into the
+// JIT compiler.
+//
+// This file #includes SparcV9CodeEmitter.inc, which contains the code
+// for getBinaryCodeForInstr(), a method that converts a MachineInstr
+// into the corresponding binary machine code word.
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,7 +35,6 @@ namespace {
   Statistic<> OverwrittenCalls("call-ovwr", "Number of over-written calls");
   Statistic<> UnmodifiedCalls("call-skip", "Number of unmodified calls");
   Statistic<> CallbackCalls("callback", "Number CompilationCallback() calls");
-  Statistic<> WordsEmitted("words-emitted", "No. of words emitted to memory");
 }
 
 bool UltraSparc::addPassesToEmitMachineCode(FunctionPassManager &PM,
@@ -442,7 +450,6 @@ SparcV9CodeEmitter::~SparcV9CodeEmitter() {
 
 void SparcV9CodeEmitter::emitWord(unsigned Val) {
   // Output the constant in big endian byte order...
-  ++WordsEmitted;
   unsigned byteVal;
   for (int i = 3; i >= 0; --i) {
     byteVal = Val >> 8*i;
