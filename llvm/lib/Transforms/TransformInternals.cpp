@@ -167,7 +167,6 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
     CompTy = cast<CompositeType>(NextTy);
 
     if (const StructType *StructTy = dyn_cast<StructType>(CompTy)) {
-      const StructLayout *SL = TD.getStructLayout(StructTy);
       unsigned ActualOffset = Offset;
       NextTy = getStructOffsetType(StructTy, ActualOffset, Indices);
       if (StructTy == NextTy && ActualOffset == 0) return 0; // No progress.  :(
