@@ -12,7 +12,9 @@
 .doc_title, .doc_section, .doc_subsection { 
   color: #ffffff; background: #330077;
   font-family: "Georgia,Palatino,Times,Roman"; font-weight: bold;
-  padding-left: 8pt
+  padding-left: 8pt;
+  padding-top: 1px;
+  padding-bottom: 2px
 }
 
 .doc_title      { text-align: left;   font-size: 25pt }
