@@ -42,7 +42,7 @@ DumpAsm("d", cl::desc("Print assembly as parsed"), cl::Hidden);
 
 static cl::opt<bool>
 DisableVerify("disable-verify", cl::Hidden,
-              cl::desc("Do not run verifier on input LLVM (dangerous!"));
+              cl::desc("Do not run verifier on input LLVM (dangerous!)"));
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .bc assembler\n");
