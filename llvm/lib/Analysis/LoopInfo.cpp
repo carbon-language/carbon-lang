@@ -14,8 +14,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Constants.h"
+#include "llvm/Instructions.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
@@ -313,15 +315,16 @@ void LoopInfo::changeTopLevelLoop(Loop *OldLoop, Loop *NewLoop) {
          "Loops already embedded into a subloop!");
 }
 
+//===----------------------------------------------------------------------===//
+// APIs for simple analysis of the loop.
+//
+
 /// getLoopPreheader - If there is a preheader for this loop, return it.  A
 /// loop has a preheader if there is only one edge to the header of the loop
 /// from outside of the loop.  If this is the case, the block branching to the
-/// header of the loop is the preheader node.  The "preheaders" pass can be
-/// "Required" to ensure that there is always a preheader node for every loop.
+/// header of the loop is the preheader node.
 ///
-/// This method returns null if there is no preheader for the loop (either
-/// because the loop is dead or because multiple blocks branch to the header
-/// node of this loop).
+/// This method returns null if there is no preheader for the loop.
 ///
 BasicBlock *Loop::getLoopPreheader() const {
   // Keep track of nodes outside the loop branching to the header...
@@ -348,6 +351,86 @@ BasicBlock *Loop::getLoopPreheader() const {
   // is still null.
   return Out;
 }
+
+/// getCanonicalInductionVariable - Check to see if the loop has a canonical
+/// induction variable: an integer recurrence that starts at 0 and increments by
+/// one each time through the loop.  If so, return the phi node that corresponds
+/// to it.
+///
+PHINode *Loop::getCanonicalInductionVariable() const {
+  BasicBlock *H = getHeader();
+
+  BasicBlock *Incoming = 0, *Backedge = 0;
+  pred_iterator PI = pred_begin(H);
+  assert(PI != pred_end(H) && "Loop must have at least one backedge!");
+  Backedge = *PI++;
+  if (PI == pred_end(H)) return 0;  // dead loop
+  Incoming = *PI++;
+  if (PI != pred_end(H)) return 0;  // multiple backedges?
+
+  if (contains(Incoming)) {
+    if (contains(Backedge))
+      return 0;
+    std::swap(Incoming, Backedge);
+  } else if (!contains(Backedge))
+    return 0;
+
+  // Loop over all of the PHI nodes, looking for a canonical indvar.
+  for (BasicBlock::iterator I = H->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ++I)
+    if (Instruction *Inc =
+        dyn_cast<Instruction>(PN->getIncomingValueForBlock(Backedge)))
+      if (Inc->getOpcode() == Instruction::Add && Inc->getOperand(0) == PN)
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(Inc->getOperand(1)))
+          if (CI->equalsInt(1))
+            return PN;
+
+  return 0;
+}
+
+/// getCanonicalInductionVariableIncrement - Return the LLVM value that holds
+/// the canonical induction variable value for the "next" iteration of the loop.
+/// This always succeeds if getCanonicalInductionVariable succeeds.
+///
+Instruction *Loop::getCanonicalInductionVariableIncrement() const {
+  if (PHINode *PN = getCanonicalInductionVariable()) {
+    bool P1InLoop = contains(PN->getIncomingBlock(1));
+    return cast<Instruction>(PN->getIncomingValue(P1InLoop));
+  }
+  return 0;
+}
+
+/// getTripCount - Return a loop-invariant LLVM value indicating the number of
+/// times the loop will be executed.  Note that this means that the backedge of
+/// the loop executes N-1 times.  If the trip-count cannot be determined, this
+/// returns null.
+///
+Value *Loop::getTripCount() const {
+  // Canonical loops will end with a 'setne I, V', where I is the incremented
+  // canonical induction variable and V is the trip count of the loop.
+  Instruction *Inc = getCanonicalInductionVariableIncrement();
+  PHINode *IV = cast<PHINode>(Inc->getOperand(0));
+  
+  BasicBlock *BackedgeBlock =
+    IV->getIncomingBlock(contains(IV->getIncomingBlock(1)));
+
+  if (BranchInst *BI = dyn_cast<BranchInst>(BackedgeBlock->getTerminator()))
+    if (SetCondInst *SCI = dyn_cast<SetCondInst>(BI->getCondition()))
+      if (SCI->getOperand(0) == Inc)
+        if (BI->getSuccessor(0) == getHeader()) {
+          if (SCI->getOpcode() == Instruction::SetNE)
+            return SCI->getOperand(1);
+        } else if (SCI->getOpcode() == Instruction::SetEQ) {
+          return SCI->getOperand(1);
+        }
+  
+  return 0;
+}
+
+
+//===-------------------------------------------------------------------===//
+// APIs for updating loop information after changing the CFG
+//
 
 /// addBasicBlockToLoop - This function is used by other analyses to update loop
 /// information.  NewBB is set to be a new member of the current loop.  Because
