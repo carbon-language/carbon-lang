@@ -77,7 +77,7 @@ occurs, it will exit with a non-zero value.
 
 =head1 SEE ALSO
 
-L<llvm-gcc>, L<gccas>, L<gccld>
+L<llvm-gcc|llvmgcc>, L<gccas>, L<gccld>
 
 =head1 AUTHORS
 
