@@ -30,6 +30,12 @@
 #include <iostream>
 using std::cerr;
 
+#if 0    // Enable this to get SCCP debug output
+#define DEBUG_SCCP(X) X
+#else
+#define DEBUG_SCCP(X)
+#endif
+
 // InstVal class - This class represents the different lattice values that an 
 // instruction may occupy.  It is a simple class with value semantics.
 //
@@ -86,7 +92,7 @@ class SCCP : public FunctionPass, public InstVisitor<SCCP> {
   std::set<BasicBlock*>     BBExecutable;// The basic blocks that are executable
   std::map<Value*, InstVal> ValueState;  // The state each value is in...
 
-  std::vector<Instruction*> InstWorkList;// The instruction work list
+  std::set<Instruction*>    InstWorkList;// The instruction work list
   std::vector<BasicBlock*>  BBWorkList;  // The BasicBlock work list
 public:
 
@@ -116,9 +122,10 @@ private:
   // the users of the instruction are updated later.
   //
   inline bool markConstant(Instruction *I, Constant *V) {
-    //cerr << "markConstant: " << V << " = " << I;
+    DEBUG_SCCP(cerr << "markConstant: " << V << " = " << I);
+
     if (ValueState[I].markConstant(V)) {
-      InstWorkList.push_back(I);
+      InstWorkList.insert(I);
       return true;
     }
     return false;
@@ -131,8 +138,8 @@ private:
   inline bool markOverdefined(Value *V) {
     if (ValueState[V].markOverdefined()) {
       if (Instruction *I = dyn_cast<Instruction>(V)) {
-	//cerr << "markOverdefined: " << V;
-	InstWorkList.push_back(I);  // Only instructions go on the work list
+	DEBUG_SCCP(cerr << "markOverdefined: " << V);
+	InstWorkList.insert(I);  // Only instructions go on the work list
       }
       return true;
     }
@@ -163,7 +170,7 @@ private:
   // 
   void markExecutable(BasicBlock *BB) {
     if (BBExecutable.count(BB)) return;
-    //cerr << "Marking BB Executable: " << BB;
+    DEBUG_SCCP(cerr << "Marking BB Executable: " << BB);
     BBExecutable.insert(BB);   // Basic block is executable!
     BBWorkList.push_back(BB);  // Add the block to the work list!
   }
@@ -178,6 +185,7 @@ private:
   // Terminators
   void visitReturnInst(ReturnInst *I) { /*does not have an effect*/ }
   void visitBranchInst(BranchInst *I);
+  void visitInvokeInst(InvokeInst *I);
   void visitSwitchInst(SwitchInst *I);
 
   void visitUnaryOperator(Instruction *I);
@@ -186,11 +194,12 @@ private:
   void visitShiftInst(ShiftInst *I) { visitBinaryOperator(I); }
 
   // Instructions that cannot be folded away...
+  void visitStoreInst     (Instruction *I) { /*returns void*/ }
   void visitMemAccessInst (Instruction *I) { markOverdefined(I); }
   void visitCallInst      (Instruction *I) { markOverdefined(I); }
   void visitInvokeInst    (Instruction *I) { markOverdefined(I); }
   void visitAllocationInst(Instruction *I) { markOverdefined(I); }
-  void visitFreeInst      (Instruction *I) { markOverdefined(I); }
+  void visitFreeInst      (Instruction *I) { /*returns void*/ }
 
   void visitInstruction(Instruction *I) {
     // If a new instruction is added to LLVM that we don't handle...
@@ -198,11 +207,21 @@ private:
     markOverdefined(I);   // Just in case
   }
 
+  // isEdgeFeasible - Return true if the control flow edge from the 'From' basic
+  // block to the 'To' basic block is currently feasible...
+  //
+  bool isEdgeFeasible(BasicBlock *From, BasicBlock *To);
+
   // OperandChangedState - This method is invoked on all of the users of an
   // instruction that was just changed state somehow....  Based on this
   // information, we need to update the specified user of this instruction.
   //
-  void OperandChangedState(User *U);
+  void OperandChangedState(User *U) {
+    // Only instructions use other variable values!
+    Instruction *I = cast<Instruction>(U);
+    if (!BBExecutable.count(I->getParent())) return;// Inst not executable yet!
+    visit(I);
+  }
 };
 } // end anonymous namespace
 
@@ -230,10 +249,10 @@ bool SCCP::runOnFunction(Function *F) {
   while (!BBWorkList.empty() || !InstWorkList.empty()) {
     // Process the instruction work list...
     while (!InstWorkList.empty()) {
-      Instruction *I = InstWorkList.back();
-      InstWorkList.pop_back();
+      Instruction *I = *InstWorkList.begin();
+      InstWorkList.erase(InstWorkList.begin());
 
-      //cerr << "\nPopped off I-WL: " << I;
+      DEBUG_SCCP(cerr << "\nPopped off I-WL: " << I);
 
       
       // "I" got into the work list because it either made the transition from
@@ -250,7 +269,7 @@ bool SCCP::runOnFunction(Function *F) {
       BasicBlock *BB = BBWorkList.back();
       BBWorkList.pop_back();
 
-      //cerr << "\nPopped off BBWL: " << BB;
+      DEBUG_SCCP(cerr << "\nPopped off BBWL: " << BB);
 
       // If this block only has a single successor, mark it as executable as
       // well... if not, terminate the do loop.
@@ -264,7 +283,7 @@ bool SCCP::runOnFunction(Function *F) {
     }
   }
 
-#if 0
+#ifdef DEBUG_SCCP
   for (Function::iterator BBI = F->begin(), BBEnd = F->end();
        BBI != BBEnd; ++BBI)
     if (!BBExecutable.count(*BBI))
@@ -283,7 +302,7 @@ bool SCCP::runOnFunction(Function *F) {
       InstVal &IV = ValueState[Inst];
       if (IV.isConstant()) {
         Constant *Const = IV.getConstant();
-        // cerr << "Constant: " << Inst << "  is: " << Const;
+        DEBUG_SCCP(cerr << "Constant: " << Inst << "  is: " << Const);
 
         // Replaces all of the uses of a variable with uses of the constant.
         Inst->replaceAllUsesWith(Const);
@@ -305,17 +324,25 @@ bool SCCP::runOnFunction(Function *F) {
     }
   }
 
-  // Reset state so that the next invokation will have empty data structures
+  // Reset state so that the next invocation will have empty data structures
   BBExecutable.clear();
   ValueState.clear();
 
-  // Merge identical constants last: this is important because we may have just
-  // introduced constants that already exist, and we don't want to pollute later
-  // stages with extraneous constants.
-  //
   return MadeChanges;
 }
 
+// isEdgeFeasible - Return true if the control flow edge from the 'From' basic
+// block to the 'To' basic block is currently feasible...
+//
+bool SCCP::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
+  assert(BBExecutable.count(To) && "Dest should always be alive!");
+
+  // Make sure the source basic block is executable!!
+  if (!BBExecutable.count(From)) return false;
+  
+  // This should check the terminator in From!
+  return true;
+}
 
 // visit Implementations - Something changed in this instruction... Either an
 // operand made a transition, or the instruction is newly executable.  Change
@@ -347,7 +374,7 @@ void SCCP::visitPHINode(PHINode *PN) {
   // If there are no executable operands, the PHI remains undefined.
   //
   for (i = 0; i < NumValues; ++i) {
-    if (BBExecutable.count(PN->getIncomingBlock(i))) {
+    if (isEdgeFeasible(PN->getIncomingBlock(i), PN->getParent())) {
       InstVal &IV = getValueState(PN->getIncomingValue(i));
       if (IV.isUndefined()) continue;  // Doesn't influence PHI node.
       if (IV.isOverdefined()) {   // PHI node becomes overdefined!
@@ -401,6 +428,11 @@ void SCCP::visitBranchInst(BranchInst *BI) {
     else
       markExecutable(BI->getSuccessor(1));
   }
+}
+
+void SCCP::visitInvokeInst(InvokeInst *II) {
+  markExecutable(II->getNormalDest());
+  markExecutable(II->getExceptionalDest());
 }
 
 void SCCP::visitSwitchInst(SwitchInst *SI) {
@@ -458,16 +490,4 @@ void SCCP::visitBinaryOperator(Instruction *I) {
     else
       markOverdefined(I);   // Don't know how to fold this instruction.  :(
   }
-}
-
-// OperandChangedState - This method is invoked on all of the users of an
-// instruction that was just changed state somehow....  Based on this
-// information, we need to update the specified user of this instruction.
-//
-void SCCP::OperandChangedState(User *U) {
-  // Only instructions use other variable values!
-  Instruction *I = cast<Instruction>(U);
-  if (!BBExecutable.count(I->getParent())) return;  // Inst not executable yet!
-
-  visit(I);
 }
