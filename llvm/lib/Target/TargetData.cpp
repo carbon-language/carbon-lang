@@ -159,14 +159,14 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
 
   for (unsigned CurIDX = 0; CurIDX < Idx.size(); ++CurIDX) {
     if (Idx[CurIDX]->getType() == Type::UIntTy) {
+      // Update Ty to refer to current element
+      Ty = cast<SequentialType>(Ty)->getElementType();
+
       // Get the array index and the size of each array element.
       // Both must be known constants, or this will fail.
       unsigned arrayIdx = cast<ConstantUInt>(Idx[CurIDX])->getValue();
       uint64_t elementSize = this->getTypeSize(Ty);
       Result += arrayIdx * elementSize;
-
-      // Update Ty to refer to current element
-      Ty = cast<SequentialType>(Ty)->getElementType();
 
     } else if (const StructType *STy = dyn_cast<const StructType>(Ty)) {
       assert(Idx[CurIDX]->getType() == Type::UByteTy && "Illegal struct idx");
