@@ -3,6 +3,10 @@
 // This file defines the very important Value class.  This is subclassed by a
 // bunch of other important classes, like Def, Method, Module, Type, etc...
 //
+// This file also defines the Use<> template for users of value.
+//
+// This file also defines the isa<X>(), cast<X>(), and dyn_cast<X>() templates.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_VALUE_H
@@ -156,6 +160,11 @@ public:
   void killUse(User *I);
 };
 
+
+//===----------------------------------------------------------------------===//
+//                                 UseTy Class
+//===----------------------------------------------------------------------===//
+
 // UseTy and it's friendly typedefs (Use) are here to make keeping the "use" 
 // list of a definition node up-to-date really easy.
 //
@@ -196,6 +205,46 @@ public:
   }
 };
 
-typedef UseTy<Value> Use;
+typedef UseTy<Value> Use;    // Provide Use as a common UseTy type
+
+
+//===----------------------------------------------------------------------===//
+//                          Type Checking Templates
+//===----------------------------------------------------------------------===//
+
+// isa<X> - Return true if the parameter to the template is an instance of the
+// template type argument.  Used like this:
+//
+//  if (isa<Type>(myVal)) { ... }
+//
+template <class X, class Y>
+bool isa(Y *Val) { return X::isa(Val); }
+
+
+// cast<X> - Return the argument parameter cast to the specified type.  This
+// casting operator asserts that the type is correct, so it does not return null
+// on failure.  Used Like this:
+//
+//  cast<      Instruction>(myVal)->getParent()
+//  cast<const Instruction>(myVal)->getParent()
+//
+template <class X, class Y>
+X *cast(Y *Val) {
+  assert(isa<X>(Val) && "Invalid cast argument type!");
+  return (X*)Val;
+}
+
+
+// dyn_cast<X> - Return the argument parameter cast to the specified type.  This
+// casting operator returns null if the argument is of the wrong type, so it can
+// be used to test for a type as well as cast if successful.  This should be
+// used in the context of an if statement like this:
+//
+//  if (const Instruction *I = dyn_cast<const Instruction>(myVal)) { ... }
+//
+template <class X, class Y>
+X *dyn_cast(Y *Val) {
+  return isa<X>(Val) ? (X*)Val : 0;
+}
 
 #endif

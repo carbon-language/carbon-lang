@@ -85,6 +85,13 @@ public:
   // and then drops all references to its operands.
   // 
   void dropAllReferences();
+
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const Instruction *I) { return true; }
+  static inline bool isa(const Value *V) {
+    return V->getValueType() == Value::InstructionVal;
+  }
   
   //----------------------------------------------------------------------
   // Exported enumerations...

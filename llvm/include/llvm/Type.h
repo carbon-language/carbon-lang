@@ -195,6 +195,12 @@ public:
     return (const DerivedType*)this;
   }
 
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const Type *T) { return true; }
+  static inline bool isa(const Value *V) {
+    return V->getValueType() == Value::TypeVal;
+  }
+
   // Methods for determining the subtype of this Type.  The cast*() methods are
   // equilivent to using dynamic_cast<>... if the cast is successful, this is
   // returned, otherwise you get a null pointer, allowing expressions like this:

@@ -163,7 +163,7 @@ public:
       // TODO: This is bad
       // Loop to ignore constant pool references
       while (It != BB->use_end() && 
-             ((!(*It)->isInstruction()) ||
+             ((!isa<Instruction>(*It)) ||
               !(((Instruction*)(*It))->isTerminator())))
         ++It;
     }
@@ -177,7 +177,7 @@ public:
     inline bool operator!=(const _Self& x) const { return !operator==(x); }
     
     inline pointer operator*() const { 
-      return (*It)->castInstructionAsserting()->getParent(); 
+      return cast<Instruction>(*It)->getParent(); 
     }
     inline pointer *operator->() const { return &(operator*()); }
     
