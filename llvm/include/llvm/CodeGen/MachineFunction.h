@@ -9,7 +9,7 @@
 #ifndef LLVM_CODEGEN_MACHINEFUNCTION_H
 #define LLVM_CODEGEN_MACHINEFUNCTION_H
 
-#include "llvm/Annotation.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "Support/NonCopyable.h"
 #include "Support/HashExtras.h"
 #include <Support/hash_set>
