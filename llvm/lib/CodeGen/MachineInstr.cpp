@@ -289,9 +289,9 @@ static void print(const MachineOperand &MO, std::ostream &OS,
     break;
   }
   case MachineOperand::MO_MachineBasicBlock:
-    OS << "bb<"
+    OS << "mbb<"
        << ((Value*)MO.getMachineBasicBlock()->getBasicBlock())->getName()
-       << "," << (void*)MO.getMachineBasicBlock()->getBasicBlock() << ">";
+       << "," << (void*)MO.getMachineBasicBlock() << ">";
     break;
   case MachineOperand::MO_FrameIndex:
     OS << "<fi#" << MO.getFrameIndex() << ">";
@@ -448,9 +448,9 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
         break;
       }
     case MachineOperand::MO_MachineBasicBlock:
-      OS << "bb<"
+      OS << "<mbb:"
          << ((Value*)MO.getMachineBasicBlock()->getBasicBlock())->getName()
-         << "," << (void*)MO.getMachineBasicBlock()->getBasicBlock() << ">";
+         << "@" << (void*)MO.getMachineBasicBlock() << ">";
       break;
     case MachineOperand::MO_FrameIndex:
       OS << "<fi#" << MO.getFrameIndex() << ">";

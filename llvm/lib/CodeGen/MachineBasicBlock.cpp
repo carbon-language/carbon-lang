@@ -101,7 +101,8 @@ void MachineBasicBlock::print(std::ostream &OS) const
   }
     const BasicBlock *LBB = getBasicBlock();
     if(LBB)
-      OS << "\n" << LBB->getName() << " (" << (const void*)LBB << "):\n";
+      OS << "\n" << LBB->getName() << " (" << (const void*)this
+         << ", LLVM BB @" << (const void*) LBB << "):\n";
     for (const_iterator I = begin(); I != end(); ++I) {
         OS << "\t";
         I->print(OS, getParent()->getTarget());
