@@ -35,6 +35,9 @@ public:
 
   virtual bool setOperand(unsigned i, Value *Val) = 0;
   virtual const Value *getOperand(unsigned i) const = 0;
+  inline Value *getOperand(unsigned i) {
+    return (Value*)((const Instruction *)this)->getOperand(i);
+  }
 
   // Additionally, they must provide a method to get at the successors of this
   // terminator instruction.  If 'idx' is out of range, a null pointer shall be
@@ -78,6 +81,9 @@ public:
   virtual string getOpcode() const = 0;
 
   virtual unsigned getNumOperands() const { return 1; }
+  inline Value *getOperand(unsigned i) {
+    return (i == 0) ? Source : 0;
+  }
   virtual const Value *getOperand(unsigned i) const {
     return (i == 0) ? Source : 0;
   }
@@ -124,6 +130,9 @@ public:
 
   virtual unsigned getNumOperands() const { return 2; }
   virtual const Value *getOperand(unsigned i) const {
+    return (i == 0) ? Source1 : ((i == 1) ? Source2 : 0);
+  }
+  inline Value *getOperand(unsigned i) {
     return (i == 0) ? Source1 : ((i == 1) ? Source2 : 0);
   }
 

@@ -46,6 +46,15 @@ public:
   virtual bool setOperand(unsigned i, Value *Val);
   virtual string getOpcode() const { return "phi"; }
 
+  // getNumIncomingValues - Return the number of incoming edges the PHI node has
+  inline unsigned getNumIncomingValues() const { return IncomingValues.size(); }
+
+  // getIncomingValue - Return incoming value #x
+  inline Value *getIncomingValue(unsigned i) const { return IncomingValues[i].first; }
+
+  // getIncomingBlock - Return incoming basic block #x
+  inline BasicBlock *getIncomingBlock(unsigned i) const { return IncomingValues[i].second; }
+
   // addIncoming - Add an incoming value to the end of the PHI list
   void addIncoming(Value *D, BasicBlock *BB);
 
