@@ -78,6 +78,7 @@ class PhyRegAlloc: public NonCopyable {
 
   
   AddedInstrMapType AddedInstrMap;      // to store instrns added in this phase
+  AddedInstrns AddedInstrAtEntry;       // to store instrns added at entry
   cfg::LoopInfo *LoopDepthCalc;         // to calculate loop depths 
   ReservedColorListType ResColList;     // A set of reserved regs if desired.
                                         // currently not used
