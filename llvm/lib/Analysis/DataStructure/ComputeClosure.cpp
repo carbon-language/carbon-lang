@@ -109,7 +109,7 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     GlobalDSNode *FGDN = cast<GlobalDSNode>(CN->getArgValues(0)[0].Node);
     Function *F = cast<Function>(FGDN->getGlobal());
 
-    if (NumInlines++ == InlineLimit) {      // CUTE hack huh?
+    if ((int)NumInlines++ == InlineLimit) {      // CUTE hack huh?
       cerr << "Infinite (?) recursion halted\n";
       cerr << "Not inlining: " << F->getName() << "\n";
       CN->dump();
