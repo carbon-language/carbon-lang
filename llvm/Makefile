@@ -7,8 +7,13 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = .
-DIRS = lib/Support utils lib tools runtime
+DIRS = lib/Support utils lib tools 
 OPTIONAL_DIRS = projects
+
+ifneq ($(MAKECMDGOALS),tools-only)
+DIRS += runtime
+endif
+
 
 include $(LEVEL)/Makefile.common
 
@@ -22,7 +27,6 @@ distclean:: clean
 	                  $(LEVEL)/config.log \
 	                  $(LEVEL)/TAGS
 
-tools-only: DIRS = $(DIRS:runtime=)
 tools-only: all
 
 configure: autoconf/configure.ac autoconf/aclocal.m4
