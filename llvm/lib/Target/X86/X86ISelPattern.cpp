@@ -1319,29 +1319,34 @@ unsigned ISel::SelectExpr(SDOperand N) {
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
   
-  if (N.getOpcode() != ISD::CALL && N.getOpcode() != ISD::ADD_PARTS &&
-      N.getOpcode() != ISD::SUB_PARTS)
+  switch (N.getOpcode()) {
+  default:
     Reg = Result = (N.getValueType() != MVT::Other) ?
-      MakeReg(N.getValueType()) : 1;
-  else {
+                            MakeReg(N.getValueType()) : 1;
+    break;
+  case ISD::CALL:
     // If this is a call instruction, make sure to prepare ALL of the result
     // values as well as the chain.
-    if (N.getOpcode() == ISD::CALL) {
-      if (Node->getNumValues() == 1)
-        Reg = Result = 1;  // Void call, just a chain.
-      else {
-        Result = MakeReg(Node->getValueType(0));
-        ExprMap[N.getValue(0)] = Result;
-        for (unsigned i = 1, e = N.Val->getNumValues()-1; i != e; ++i)
-          ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
-        ExprMap[SDOperand(Node, Node->getNumValues()-1)] = 1;
-      }
-    } else {
+    if (Node->getNumValues() == 1)
+      Reg = Result = 1;  // Void call, just a chain.
+    else {
       Result = MakeReg(Node->getValueType(0));
       ExprMap[N.getValue(0)] = Result;
-      for (unsigned i = 1, e = N.Val->getNumValues(); i != e; ++i)
+      for (unsigned i = 1, e = N.Val->getNumValues()-1; i != e; ++i)
         ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
+      ExprMap[SDOperand(Node, Node->getNumValues()-1)] = 1;
     }
+    break;
+  case ISD::ADD_PARTS:
+  case ISD::SUB_PARTS:
+  case ISD::SHL_PARTS:
+  case ISD::SRL_PARTS:
+  case ISD::SRA_PARTS:
+    Result = MakeReg(Node->getValueType(0));
+    ExprMap[N.getValue(0)] = Result;
+    for (unsigned i = 1, e = N.Val->getNumValues(); i != e; ++i)
+      ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
+    break;
   }
   
   switch (N.getOpcode()) {
@@ -2020,6 +2025,69 @@ unsigned ISel::SelectExpr(SDOperand N) {
     } else {
       BuildMI(BB, X86::SUB32rr, 2, Result).addReg(InVals[0]).addReg(InVals[2]);
       BuildMI(BB, X86::SBB32rr, 2,Result+1).addReg(InVals[1]).addReg(InVals[3]);
+    }
+    return Result+N.ResNo;
+  }
+
+  case ISD::SHL_PARTS:
+  case ISD::SRA_PARTS:
+  case ISD::SRL_PARTS: {
+    assert(N.getNumOperands() == 3 && N.getValueType() == MVT::i32 &&
+           "Not an i64 shift!");
+    unsigned ShiftOpLo = SelectExpr(N.getOperand(0));
+    unsigned ShiftOpHi = SelectExpr(N.getOperand(1));
+    unsigned TmpReg = MakeReg(MVT::i32);
+    if (N.getOpcode() == ISD::SRA_PARTS) {
+      // If this is a SHR of a Long, then we need to do funny sign extension
+      // stuff.  TmpReg gets the value to use as the high-part if we are
+      // shifting more than 32 bits.
+      BuildMI(BB, X86::SAR32ri, 2, TmpReg).addReg(ShiftOpHi).addImm(31);
+    } else {
+      // Other shifts use a fixed zero value if the shift is more than 32 bits.
+      BuildMI(BB, X86::MOV32ri, 1, TmpReg).addImm(0);
+    }
+
+    // Initialize CL with the shift amount.
+    unsigned ShiftAmountReg = SelectExpr(N.getOperand(2));
+    BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(ShiftAmountReg);
+
+    unsigned TmpReg2 = MakeReg(MVT::i32);
+    unsigned TmpReg3 = MakeReg(MVT::i32);
+    if (N.getOpcode() == ISD::SHL_PARTS) {
+      // TmpReg2 = shld inHi, inLo
+      BuildMI(BB, X86::SHLD32rrCL, 2,TmpReg2).addReg(ShiftOpHi)
+        .addReg(ShiftOpLo);
+      // TmpReg3 = shl  inLo, CL
+      BuildMI(BB, X86::SHL32rCL, 1, TmpReg3).addReg(ShiftOpLo);
+      
+      // Set the flags to indicate whether the shift was by more than 32 bits.
+      BuildMI(BB, X86::TEST8ri, 2).addReg(X86::CL).addImm(32);
+      
+      // DestHi = (>32) ? TmpReg3 : TmpReg2;
+      BuildMI(BB, X86::CMOVNE32rr, 2, 
+              Result+1).addReg(TmpReg2).addReg(TmpReg3);
+      // DestLo = (>32) ? TmpReg : TmpReg3;
+      BuildMI(BB, X86::CMOVNE32rr, 2,
+              Result).addReg(TmpReg3).addReg(TmpReg);
+    } else {
+      // TmpReg2 = shrd inLo, inHi
+      BuildMI(BB, X86::SHRD32rrCL,2,TmpReg2).addReg(ShiftOpLo)
+        .addReg(ShiftOpHi);
+      // TmpReg3 = s[ah]r  inHi, CL
+      BuildMI(BB, N.getOpcode() == ISD::SRA_PARTS ? X86::SAR32rCL 
+                                                  : X86::SHR32rCL, 1, TmpReg3)
+        .addReg(ShiftOpHi);
+      
+      // Set the flags to indicate whether the shift was by more than 32 bits.
+      BuildMI(BB, X86::TEST8ri, 2).addReg(X86::CL).addImm(32);
+      
+      // DestLo = (>32) ? TmpReg3 : TmpReg2;
+      BuildMI(BB, X86::CMOVNE32rr, 2, 
+              Result).addReg(TmpReg2).addReg(TmpReg3);
+      
+      // DestHi = (>32) ? TmpReg : TmpReg3;
+      BuildMI(BB, X86::CMOVNE32rr, 2, 
+              Result+1).addReg(TmpReg3).addReg(TmpReg);
     }
     return Result+N.ResNo;
   }
