@@ -158,9 +158,6 @@
 /* Define to 1 if the system has the type `uint64_t'. */
 #undef HAVE_UINT64_T
 
-/* Define to 1 if the system has the type `u_int64_t'. */
-#undef HAVE_U_INT64_T
-
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
@@ -219,11 +216,11 @@
 #undef SHLIBEXT
 
 /* If using the C implementation of alloca, define if you know the
-   direction of stack growth for your system; otherwise, it will be
+   direction of stack growth for your system; otherwise it will be
    automatically deduced at run-time.
-       STACK_DIRECTION > 0 => grows toward higher addresses
-       STACK_DIRECTION < 0 => grows toward lower addresses
-       STACK_DIRECTION = 0 => direction of growth unknown */
+	STACK_DIRECTION > 0 => grows toward higher addresses
+	STACK_DIRECTION < 0 => grows toward lower addresses
+	STACK_DIRECTION = 0 => direction of growth unknown */
 #undef STACK_DIRECTION
 
 /* Define to 1 if you have the ANSI C header files. */
