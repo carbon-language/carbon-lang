@@ -74,7 +74,9 @@ int main(int argc, char **argv) {
     TotalExecutions += FunctionCounts[i].second;
   
   std::cout << "===" << std::string(73, '-') << "===\n"
-            << "LLVM profiling output for:\n";
+            << "LLVM profiling output for execution";
+  if (PI.getNumExecutions() != 1) std::cout << "s";
+  std::cout << ":\n";
   
   for (unsigned i = 0, e = PI.getNumExecutions(); i != e; ++i) {
     std::cout << "  ";
