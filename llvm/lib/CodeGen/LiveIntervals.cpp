@@ -18,6 +18,7 @@
 #define DEBUG_TYPE "liveintervals"
 #include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/Function.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -32,8 +33,9 @@
 #include "Support/Debug.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/Statistic.h"
-#include <limits>
+#include <cmath>
 #include <iostream>
+#include <limits>
 
 using namespace llvm;
 
@@ -51,6 +53,7 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const
     AU.addPreservedID(PHIEliminationID);
     AU.addRequiredID(PHIEliminationID);
     AU.addRequiredID(TwoAddressInstructionPassID);
+    AU.addRequired<LoopInfo>();
     MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -251,12 +254,17 @@ void LiveIntervals::computeIntervals()
 {
     DEBUG(std::cerr << "computing live intervals:\n");
 
+    const LoopInfo& loopInfo = getAnalysis<LoopInfo>();
+
     for (MbbIndex2MbbMap::iterator
              it = mbbi2mbbMap_.begin(), itEnd = mbbi2mbbMap_.end();
          it != itEnd; ++it) {
         MachineBasicBlock* mbb = it->second;
         DEBUG(std::cerr << "machine basic block: "
               << mbb->getBasicBlock()->getName() << "\n");
+
+        unsigned loopDepth = loopInfo.getLoopDepth(mbb->getBasicBlock());
+
         for (MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
              mi != miEnd; ++mi) {
             MachineInstr* instr = *mi;
@@ -292,7 +300,7 @@ void LiveIntervals::computeIntervals()
                 Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
                 if (r2iit != r2iMap_.end() &&
                     reg >= MRegisterInfo::FirstVirtualRegister)
-                    ++intervals_[r2iit->second].weight;
+                    intervals_[r2iit->second].weight += pow(10.0F, loopDepth);
             }
         }
     }
@@ -305,7 +313,7 @@ void LiveIntervals::computeIntervals()
 LiveIntervals::Interval::Interval(unsigned r)
     : reg(r),
       weight((r < MRegisterInfo::FirstVirtualRegister ?
-              std::numeric_limits<unsigned>::max() : 0))
+              std::numeric_limits<float>::max() : 0.0F))
 {
 
 }

@@ -524,11 +524,12 @@ void RA::processInactiveIntervals(Intervals::const_iterator cur)
 }
 
 namespace {
-    void updateWeight(unsigned rw[], unsigned reg, unsigned w)
+    template <typename T>
+    void updateWeight(T rw[], int reg, T w)
     {
-        if (rw[reg] == std::numeric_limits<unsigned>::max() ||
-            w == std::numeric_limits<unsigned>::max())
-            rw[reg] = std::numeric_limits<unsigned>::max();
+        if (rw[reg] == std::numeric_limits<T>::max() ||
+            w == std::numeric_limits<T>::max())
+            rw[reg] = std::numeric_limits<T>::max();
         else
             rw[reg] += w;
     }
@@ -543,8 +544,9 @@ void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
            "a register to spill");
 
     // set all weights to zero
-    unsigned regWeight[MRegisterInfo::FirstVirtualRegister];
-    memset(regWeight, 0, sizeof(regWeight));
+    float regWeight[MRegisterInfo::FirstVirtualRegister];
+    for (unsigned i = 0; i < MRegisterInfo::FirstVirtualRegister; ++i)
+        regWeight[i] = 0.0F;
 
     for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
 //         if (!cur->overlaps(**i))
@@ -573,7 +575,7 @@ void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
             updateWeight(regWeight, *as, (*i)->weight);
     }
 
-    unsigned minWeight = std::numeric_limits<unsigned>::max();
+    float minWeight = std::numeric_limits<float>::max();
     unsigned minReg = 0;
     const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(cur->reg);
     for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_);
@@ -585,10 +587,9 @@ void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
         }
     }
 
-    DEBUG(std::cerr << "\t\t\t\tspill candidate: "
-          << mri_->getName(minReg) << '\n');
-
     if (cur->weight < minWeight) {
+        DEBUG(std::cerr << "\t\t\t\tspilling : " << mri_->getName(minReg)
+              << ", weight: " << cur->weight << '\n');
         assignVirt2StackSlot(cur->reg);
     }
     else {
@@ -602,6 +603,9 @@ void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
             unsigned reg = (*i)->reg;
             if (reg >= MRegisterInfo::FirstVirtualRegister &&
                 toSpill.find(v2pMap_[reg]) != toSpill.end()) {
+                DEBUG(std::cerr << "\t\t\t\tspilling : "
+                      << mri_->getName(minReg) << ", weight: "
+                      << (*i)->weight << '\n');
                 assignVirt2StackSlot(reg);
                 i = active_.erase(i);
             }
@@ -614,6 +618,9 @@ void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
             unsigned reg = (*i)->reg;
             if (reg >= MRegisterInfo::FirstVirtualRegister &&
                 toSpill.find(v2pMap_[reg]) != toSpill.end()) {
+                DEBUG(std::cerr << "\t\t\t\tspilling : "
+                      << mri_->getName(minReg) << ", weight: "
+                      << (*i)->weight << '\n');
                 assignVirt2StackSlot(reg);
                 i = inactive_.erase(i);
             }
