@@ -134,6 +134,12 @@ Local spiller
 
 =back
 
+=item B<--load>=F<dso_path>
+
+Dynamically load F<dso_path> (a path to a dynamically shared object) that
+implements an LLVM target. This will permit the target name to be used with the
+B<-march> option so that code can be generated for that target.
+
 =back
 
 =head2 Intel IA-32-specific Options
