@@ -92,13 +92,7 @@ public:
     return Plane < ModuleLevel.size() ? ModuleLevel[Plane] : 0; 
   }
 
-  inline const TypePlane &getPlane(unsigned Plane) const { 
-    if (CompactionTable.empty() || CompactionTable.size() <= Plane ||
-        CompactionTable[Plane].empty())
-      return Table[Plane];
-    else
-      return CompactionTable[Plane];
-  }
+  TypePlane &getPlane(unsigned Plane);
 
   /// incorporateFunction/purgeFunction - If you'd like to deal with a function,
   /// use these two methods to get its data into the SlotCalculator!
@@ -146,6 +140,7 @@ private:
 
   void buildCompactionTable(const Function *F);
   unsigned getOrCreateCompactionTableSlot(const Value *V);
+  void pruneCompactionTable();
 };
 
 } // End llvm namespace
