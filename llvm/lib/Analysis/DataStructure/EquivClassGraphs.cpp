@@ -45,13 +45,11 @@ static void CheckAllGraphs(Module *M, GT &ECGraphs) {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isExternal()) {
       DSGraph &G = ECGraphs.getDSGraph(*I);
+      if (G.getReturnNodes().begin()->first != I)
+        continue;  // Only check a graph once.
 
       DSGraph::NodeMapTy GlobalsGraphNodeMapping;
-      for (DSScalarMap::global_iterator I = G.getScalarMap().global_begin(),
-             E = G.getScalarMap().global_end(); I != E; ++I)
-        DSGraph::computeNodeMapping(G.getNodeForValue(*I),
-                                    GG.getNodeForValue(*I),
-                                    GlobalsGraphNodeMapping);
+      G.computeGlobalGraphMapping(GlobalsGraphNodeMapping);
     } 
 }
 #endif
