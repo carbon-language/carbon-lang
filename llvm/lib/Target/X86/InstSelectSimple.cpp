@@ -1379,7 +1379,7 @@ void ISel::visitBranchInst(BranchInst &BI) {
 
   if (!BI.isConditional()) {  // Unconditional branch?
     if (BI.getSuccessor(0) != NextBB)
-      BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
+      BuildMI(BB, X86::JMP, 1).addMBB(MBBMap[BI.getSuccessor(0)]);
     return;
   }
 
@@ -1392,12 +1392,12 @@ void ISel::visitBranchInst(BranchInst &BI) {
     BuildMI(BB, X86::TEST8rr, 2).addReg(condReg).addReg(condReg);
     if (BI.getSuccessor(1) == NextBB) {
       if (BI.getSuccessor(0) != NextBB)
-        BuildMI(BB, X86::JNE, 1).addPCDisp(BI.getSuccessor(0));
+        BuildMI(BB, X86::JNE, 1).addMBB(MBBMap[BI.getSuccessor(0)]);
     } else {
-      BuildMI(BB, X86::JE, 1).addPCDisp(BI.getSuccessor(1));
+      BuildMI(BB, X86::JE, 1).addMBB(MBBMap[BI.getSuccessor(1)]);
       
       if (BI.getSuccessor(0) != NextBB)
-        BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
+        BuildMI(BB, X86::JMP, 1).addMBB(MBBMap[BI.getSuccessor(0)]);
     }
     return;
   }
@@ -1429,14 +1429,16 @@ void ISel::visitBranchInst(BranchInst &BI) {
   };
   
   if (BI.getSuccessor(0) != NextBB) {
-    BuildMI(BB, OpcodeTab[isSigned][OpNum], 1).addPCDisp(BI.getSuccessor(0));
+    BuildMI(BB, OpcodeTab[isSigned][OpNum], 1)
+      .addMBB(MBBMap[BI.getSuccessor(0)]);
     if (BI.getSuccessor(1) != NextBB)
-      BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(1));
+      BuildMI(BB, X86::JMP, 1).addMBB(MBBMap[BI.getSuccessor(1)]);
   } else {
     // Change to the inverse condition...
     if (BI.getSuccessor(1) != NextBB) {
       OpNum ^= 1;
-      BuildMI(BB, OpcodeTab[isSigned][OpNum], 1).addPCDisp(BI.getSuccessor(1));
+      BuildMI(BB, OpcodeTab[isSigned][OpNum], 1)
+        .addMBB(MBBMap[BI.getSuccessor(1)]);
     }
   }
 }
