@@ -162,6 +162,8 @@ namespace llvm {
                                        MachineBasicBlock::iterator mi,
                                        unsigned reg);
 
+        bool overlapsAliases(const Interval& lhs, const Interval& rhs) const;
+
         unsigned getInstructionIndex(MachineInstr* instr) const;
 
         void printRegName(unsigned reg) const;

@@ -49,7 +49,7 @@ namespace {
     cl::opt<bool>
     join("join-liveintervals",
          cl::desc("Join compatible live intervals"),
-         cl::init(false));
+         cl::init(true));
 };
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const
@@ -387,26 +387,31 @@ void LiveIntervals::joinIntervals()
                 Intervals::iterator srcInt = r2iSrc->second;
                 Intervals::iterator dstInt = r2iDst->second;
 
+                // src is a physical register
                 if (srcInt->reg < MRegisterInfo::FirstVirtualRegister) {
                     if (dstInt->reg == srcInt->reg ||
                         (dstInt->reg >= MRegisterInfo::FirstVirtualRegister &&
-                         !dstInt->overlaps(*srcInt))) {
+                         !srcInt->overlaps(*dstInt) &&
+                         !overlapsAliases(*srcInt, *dstInt))) {
                         srcInt->join(*dstInt);
                         r2iDst->second = r2iSrc->second;
                         r2rMap_.insert(std::make_pair(dstInt->reg, srcInt->reg));
                         intervals_.erase(dstInt);
                     }
                 }
+                // dst is a physical register
                 else if (dstInt->reg < MRegisterInfo::FirstVirtualRegister) {
                     if (srcInt->reg == dstInt->reg ||
                         (srcInt->reg >= MRegisterInfo::FirstVirtualRegister &&
-                         !srcInt->overlaps(*dstInt))) {
+                         !dstInt->overlaps(*srcInt) &&
+                         !overlapsAliases(*dstInt, *srcInt))) {
                         dstInt->join(*srcInt);
                         r2iSrc->second = r2iDst->second;
                         r2rMap_.insert(std::make_pair(srcInt->reg, dstInt->reg));
                         intervals_.erase(srcInt);
                     }
                 }
+                // neither src nor dst are physical registers
                 else {
                     const TargetRegisterClass *srcRc, *dstRc;
                     srcRc = mf_->getSSARegMap()->getRegClass(srcInt->reg);
@@ -430,6 +435,22 @@ void LiveIntervals::joinIntervals()
                    e = r2rMap_.end(); i != e; ++i)
           std::cerr << i->first << " -> " << i->second << '\n';);
                
+}
+
+bool LiveIntervals::overlapsAliases(const Interval& lhs,
+                                    const Interval& rhs) const
+{
+    assert(lhs.reg < MRegisterInfo::FirstVirtualRegister &&
+           "first interval must describe a physical register");
+
+    for (const unsigned* as = mri_->getAliasSet(lhs.reg); *as; ++as) {
+        Reg2IntervalMap::const_iterator r2i = r2iMap_.find(*as);
+        assert(r2i != r2iMap_.end() && "alias does not have interval?");
+        if (rhs.overlaps(*r2i->second))
+            return true;
+    }
+
+    return false;
 }
 
 LiveIntervals::Interval::Interval(unsigned r)
