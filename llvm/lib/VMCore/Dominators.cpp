@@ -358,7 +358,7 @@ cfg::DominanceFrontier::calcPostDomFrontier(const DominatorTree &DT,
   for (DominatorTree::Node::const_iterator NI = Node->begin(), NE = Node->end();
        NI != NE; ++NI) {
     DominatorTree::Node *IDominee = *NI;
-    const DomSetType &ChildDF = calcDomFrontier(DT, IDominee);
+    const DomSetType &ChildDF = calcPostDomFrontier(DT, IDominee);
 
     DomSetType::const_iterator CDFI = ChildDF.begin(), CDFE = ChildDF.end();
     for (; CDFI != CDFE; ++CDFI) {
