@@ -10,14 +10,20 @@ begin
 	ret [[2x int]]* %array
 end
 
-
 [sbyte]* "other func"(int, double)
 begin
 	ret [sbyte]* %somestr
 end
+
+[sbyte]* "yet another func"(int, double)
+begin
+	ret [sbyte]* null            ; Test null
+end
+
 
 [sbyte]* "again"(float)
 begin
 	%cast = cast [11x sbyte]* %somestr to [sbyte]*
 	ret [sbyte]* %cast
 end
+
