@@ -83,7 +83,10 @@ void *VM::getPointerToFunction(const Function *F) {
 
   static bool isAlreadyCodeGenerating = false;
   if (isAlreadyCodeGenerating) {
-    assert(0 && "Recursive function stubs not handled yet!");
+    // Generate a function stub instead of reentering...
+    void *SAddr = emitStubForFunction(*F);
+    assert(SAddr && "Target machine doesn't support function stub generation!");
+    return SAddr;
   }
 
   // FIXME: JIT all of the functions in the module.  Eventually this will JIT

@@ -19,8 +19,11 @@ namespace {
   class Emitter : public MachineCodeEmitter {
     VM &TheVM;
 
-    unsigned char *CurBlock;
-    unsigned char *CurByte;
+    unsigned char *CurBlock, *CurByte;
+
+    // When outputting a function stub in the context of some other function, we
+    // save CurBlock and CurByte here.
+    unsigned char *SavedCurBlock, *SavedCurByte;
     
     std::vector<std::pair<BasicBlock*, unsigned *> > BBRefs;
     std::map<BasicBlock*, unsigned> BBLocations;
@@ -32,6 +35,8 @@ namespace {
     virtual void finishFunction(MachineFunction &F);
     virtual void emitConstantPool(MachineConstantPool *MCP);
     virtual void startBasicBlock(MachineBasicBlock &BB);
+    virtual void startFunctionStub(const Function &F, unsigned StubSize);
+    virtual void* finishFunctionStub(const Function &F);
     virtual void emitByte(unsigned char B);
     virtual void emitPCRelativeDisp(Value *V);
     virtual void emitGlobalAddress(GlobalValue *V, bool isPCRelative);
@@ -52,14 +57,16 @@ MachineCodeEmitter *VM::createEmitter(VM &V) {
 #include <unistd.h>
 #include <sys/mman.h>
 
-static void *getMemory() {
-  return mmap(0, 4096*8, PROT_READ|PROT_WRITE|PROT_EXEC,
+// FIXME: This should be rewritten to support a real memory manager for
+// executable memory pages!
+static void *getMemory(unsigned NumPages) {
+  return mmap(0, 4096*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
               MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
 }
 
 
 void Emitter::startFunction(MachineFunction &F) {
-  CurBlock = (unsigned char *)getMemory();
+  CurBlock = (unsigned char *)getMemory(8);
   CurByte = CurBlock;  // Start writing at the beginning of the fn.
   TheVM.addGlobalMapping(F.getFunction(), CurBlock);
 }
@@ -99,6 +106,24 @@ void Emitter::startBasicBlock(MachineBasicBlock &BB) {
   BBLocations[BB.getBasicBlock()] = (unsigned)(intptr_t)CurByte;
 }
 
+
+void Emitter::startFunctionStub(const Function &F, unsigned StubSize) {
+  SavedCurBlock = CurBlock;  SavedCurByte = CurByte;
+  // FIXME: this is a huge waste of memory.
+  CurBlock = (unsigned char *)getMemory((StubSize+4095)/4096);
+  CurByte = CurBlock;  // Start writing at the beginning of the fn.
+}
+
+void *Emitter::finishFunctionStub(const Function &F) {
+  NumBytes += CurByte-CurBlock;
+  DEBUG(std::cerr << "Finished CodeGen of [0x" << std::hex
+                  << (unsigned)(intptr_t)CurBlock
+                  << std::dec << "] Function stub for: " << F.getName()
+                  << ": " << CurByte-CurBlock << " bytes of text\n");
+  std::swap(CurBlock, SavedCurBlock);
+  CurByte = SavedCurByte;
+  return SavedCurBlock;
+}
 
 void Emitter::emitByte(unsigned char B) {
   *CurByte++ = B;   // Write the byte to memory

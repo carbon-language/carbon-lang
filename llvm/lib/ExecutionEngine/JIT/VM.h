@@ -60,6 +60,14 @@ private:
   void *getPointerToFunction(const Function *F);
 
   void registerCallback();
+
+  /// emitStubForFunction - This method is used by the JIT when it needs to emit
+  /// the address of a function for a function whose code has not yet been
+  /// generated.  In order to do this, it generates a stub which jumps to the
+  /// lazy function compiler, which will eventually get fixed to call the
+  /// function directly.
+  ///
+  void *emitStubForFunction(const Function &F);
 };
 
 #endif
