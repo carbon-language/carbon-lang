@@ -25,7 +25,7 @@ IncludeFile::IncludeFile(void*) {}
 
 static std::vector<const PassInfo*> CFGOnlyAnalyses;
 
-void RegisterPassBase::setPreservesCFG() {
+void RegisterPassBase::setOnlyUsesCFG() {
   CFGOnlyAnalyses.push_back(PIObj);
 }
 
