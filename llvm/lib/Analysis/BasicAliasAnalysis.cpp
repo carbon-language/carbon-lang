@@ -36,13 +36,55 @@ using namespace llvm;
 void llvm::BasicAAStub() {}
 
 namespace {
-  struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
-    
+  /// NoAA - This class implements the -no-aa pass, which always returns "I
+  /// don't know" for alias queries.  NoAA is unlike other alias analysis
+  /// implementations, in that it does not chain to a previous analysis.  As
+  /// such it doesn't follow many of the rules that other alias analyses must.
+  ///
+  struct NoAA : public ImmutablePass, public AliasAnalysis {
+    virtual AliasResult alias(const Value *V1, unsigned V1Size,
+                              const Value *V2, unsigned V2Size) {
+      return MayAlias;
+    }
+
+    virtual void getMustAliases(Value *P, std::vector<Value*> &RetVals) { }
+    virtual bool pointsToConstantMemory(const Value *P) { return false; }
+    virtual bool doesNotAccessMemory(Function *F) { return false; }
+    virtual bool onlyReadsMemory(Function *F) { return false; }
+    virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+      return ModRef;
+    }
+    virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
+      return ModRef;
+    }
+    virtual bool hasNoModRefInfoForCalls() const { return true; }
+
+    virtual void deleteValue(Value *V) {}
+    virtual void copyValue(Value *From, Value *To) {}
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {}
+  };
+ 
+  // Register this pass...
+  RegisterOpt<NoAA>
+  U("no-aa", "No Alias Analysis (always returns 'may' alias)");
+
+  // Declare that we implement the AliasAnalysis interface
+  RegisterAnalysisGroup<AliasAnalysis, NoAA> V;
+}  // End of anonymous namespace
+
+
+namespace {
+  /// BasicAliasAnalysis - This is the default alias analysis implementation.
+  /// Because it doesn't chain to a previous alias analysis (like -no-aa), it
+  /// derives from the NoAA class.
+  struct BasicAliasAnalysis : public NoAA {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AliasAnalysis::getAnalysisUsage(AU);
+      AU.addRequired<TargetData>();
     }
     
-    virtual void initializePass();
+    virtual void initializePass() {
+      TD = &getAnalysis<TargetData>();
+    }
 
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
@@ -78,10 +120,6 @@ namespace {
   // Declare that we implement the AliasAnalysis interface
   RegisterAnalysisGroup<AliasAnalysis, BasicAliasAnalysis, true> Y;
 }  // End of anonymous namespace
-
-void BasicAliasAnalysis::initializePass() {
-  InitializeAliasAnalysis(this);
-}
 
 // hasUniqueAddress - Return true if the specified value points to something
 // with a unique, discernable, address.
