@@ -16,6 +16,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/Target/TargetLowering.h"
 #include <iostream>
 #include <set>
 #include <cmath>
@@ -140,6 +141,11 @@ ISD::CondCode ISD::getSetCCAndOperation(ISD::CondCode Op1, ISD::CondCode Op2,
   // Combine all of the condition bits.
   return ISD::CondCode(Op1 & Op2);
 }
+
+const TargetMachine &SelectionDAG::getTarget() const {
+  return TLI.getTargetMachine();
+}
+
 
 /// RemoveDeadNodes - This method deletes all unreachable nodes in the
 /// SelectionDAG, including nodes (like loads) that have uses of their token
@@ -434,6 +440,8 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
             return getSetCC(Cond, VT, N1.getOperand(1), N2.getOperand(1));
         }
       }
+
+      // FIXME: move this stuff to the DAG Combiner when it exists!
       
       // Simplify (X+Z) == X -->  Z == 0
       if (N1.getOperand(0) == N2)
@@ -446,10 +454,9 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
         else {
           assert(N1.getOpcode() == ISD::SUB && "Unexpected operation!");
           // (Z-X) == X  --> Z == X<<1
-          if (N2.getValueType() != MVT::i64)   // FIXME: HACK HACK HACK!
           return getSetCC(Cond, VT, N1.getOperand(0),
                           getNode(ISD::SHL, N2.getValueType(), 
-                                  N2, getConstant(1, MVT::i8)));
+                                  N2, getConstant(1, TLI.getShiftAmountTy())));
         }
       }
     }
@@ -652,29 +659,35 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       if (N2C->isAllOnesValue()) // mul X, -1 -> 0-X
         return getNode(ISD::SUB, VT, getConstant(0, VT), N1);
 
-      // FIXME: This should only be done if the target supports shift
-      // operations.
+      // FIXME: Move this to the DAG combiner when it exists.
       if ((C2 & C2-1) == 0) {
-        if (N1.getValueType() != MVT::i64) {  // FIXME: HACK HACK HACK!
-          SDOperand ShAmt = getConstant(ExactLog2(C2), MVT::i8);
-          return getNode(ISD::SHL, VT, N1, ShAmt);
-        }
+        SDOperand ShAmt = getConstant(ExactLog2(C2), TLI.getShiftAmountTy());
+        return getNode(ISD::SHL, VT, N1, ShAmt);
       }
       break;
 
     case ISD::UDIV:
-      // FIXME: This should only be done if the target supports shift
-      // operations.
+      // FIXME: Move this to the DAG combiner when it exists.
       if ((C2 & C2-1) == 0 && C2) {
-        if (N1.getValueType() != MVT::i64) {   // FIXME: HACK HACK HACK!
-          SDOperand ShAmt = getConstant(ExactLog2(C2), MVT::i8);
-          return getNode(ISD::SRL, VT, N1, ShAmt);
-        }
+        SDOperand ShAmt = getConstant(ExactLog2(C2), TLI.getShiftAmountTy());
+        return getNode(ISD::SRL, VT, N1, ShAmt);
       }
       break;
 
     case ISD::SHL:
     case ISD::SRL:
+      // If the shift amount is bigger than the size of the data, simplify.
+      if (C2 >= MVT::getSizeInBits(N1.getValueType())) {
+        if (TLI.getShiftAmountFlavor() == TargetLowering::Mask) {
+          unsigned NewAmt =
+            C2 & ((1 << MVT::getSizeInBits(N1.getValueType()))-1);
+          return getNode(Opcode, VT, N1, getConstant(NewAmt,N2.getValueType()));
+        } else if (TLI.getShiftAmountFlavor() == TargetLowering::Extend) {
+          // Shifting all of the bits out?
+          return getConstant(0, N1.getValueType());
+        }
+      }
+      // FALL THROUGH.
     case ISD::SRA:
       if (C2 == 0) return N1;
       break;
