@@ -87,6 +87,27 @@ href="http://mail.cs.uiuc.edu/pipermail/llvmdev/2003-November/000554.html">moved
 into an 'llvm' C++ namespace</a>, for easier integration with third-party
 code. Note that due to a bug in GDB 5.x, to debug namespacified LLVM code,
 you will need to upgrade to GDB 6.</li>
+
+<li>
+The build system now copies Makefiles dynamically from the source tree to the
+object tree as subdirectories are built.  This means that:
+  <ol>
+  <li>
+  New directories can be added to the source tree, and the build will
+  automatically pick them up (i.e. no need to re-run <tt>configure</tt>).
+  </li>
+
+  <li>
+  You will need to build LLVM from the top of the object tree once to ensure
+  that all of the Makefiles are copied into the object tree subdirectories.
+  </li>
+  </ol>
+</li>
+
+<li>
+The <tt>configure</tt> script will now configure all projects placed in the
+<tt>llvm/projects</tt> directory.
+</li>
 </ol>
 
 <p>In this release, the following missing features were implemented:</p>
