@@ -21,12 +21,6 @@
 // Include the generated instruction selector...
 #include "X86GenInstrSelector.inc"
 
-
-//===----------------------------------------------------------------------===//
-//  User code
-//
-
-
 namespace {
   struct ISel : public FunctionPass, SelectionDAGTargetBuilder {
     TargetMachine &TM;
@@ -49,12 +43,14 @@ namespace {
   public:  // Implementation of the SelectionDAGTargetBuilder class...
     /// expandArguments - Add nodes to the DAG to indicate how to load arguments
     /// off of the X86 stack.
-    void expandArguments(SelectionDAG &SD, MachineFunction &MF);
+    void expandArguments(SelectionDAG &SD);
+    void expandCall(SelectionDAG &SD, CallInst &CI);
   };
 }
 
 
-void ISel::expandArguments(SelectionDAG &SD, MachineFunction &F) {
+void ISel::expandArguments(SelectionDAG &SD) {
+
   // Add DAG nodes to load the arguments...  On entry to a function on the X86,
   // the stack frame looks like this:
   //
@@ -63,10 +59,11 @@ void ISel::expandArguments(SelectionDAG &SD, MachineFunction &F) {
   // [ESP + 8] -- second argument, if first argument is four bytes in size
   //    ... 
   //
-  unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
+  MachineFunction &F = SD.getMachineFunction();
   MachineFrameInfo *MFI = F.getFrameInfo();
   const Function &Fn = *F.getFunction();
   
+  unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
   for (Function::const_aiterator I = Fn.abegin(), E = Fn.aend(); I != E; ++I) {
     MVT::ValueType ObjectVT = SD.getValueType(I->getType());
     unsigned ArgIncrement = 4;
@@ -84,7 +81,6 @@ void ISel::expandArguments(SelectionDAG &SD, MachineFunction &F) {
     int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
     
     // Create the SelectionDAG nodes corresponding to a load from this parameter
-    // FIXME:
     SelectionDAGNode *FIN = new SelectionDAGNode(ISD::FrameIndex, MVT::i32);
     FIN->addValue(new ReducedValue_FrameIndex_i32(FI));
 
@@ -105,6 +101,10 @@ void ISel::expandArguments(SelectionDAG &SD, MachineFunction &F) {
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (Fn.getFunctionType()->isVarArg())
     VarArgsFrameIndex = MFI->CreateFixedObject(1, ArgOffset);
+}
+
+void ISel::expandCall(SelectionDAG &SD, CallInst &CI) {
+  assert(0 && "ISel::expandCall not implemented!");
 }
 
 
