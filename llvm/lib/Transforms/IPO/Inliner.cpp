@@ -175,7 +175,6 @@ bool Inliner::doFinalization(CallGraph &CG) {
     if (F && F->hasOneUse())
       if (Function *GV = dyn_cast<Function>(F->use_back()))
         if (GV->removeDeadConstantUsers()) {
-	  delete GV;
           if (F->hasInternalLinkage()) {
             // There *MAY* be an edge from the external call node to this
             // function.  If so, remove it.
