@@ -25,7 +25,6 @@
 #include <algorithm>
 
 static Statistic<> NumInlined("inline", "Number of functions inlined");
-using std::cerr;
 
 // InlineFunction - This function forcibly inlines the called function into the
 // basic block of the caller.  This returns false if it is not possible to
@@ -46,7 +45,7 @@ bool InlineFunction(CallInst *CI) {
   if (CalledFunc == 0 ||   // Can't inline external function or indirect call!
       CalledFunc->isExternal()) return false;
 
-  //cerr << "Inlining " << CalledFunc->getName() << " into " 
+  //std::cerr << "Inlining " << CalledFunc->getName() << " into " 
   //     << CurrentMeth->getName() << "\n";
 
   BasicBlock *OrigBB = CI->getParent();
