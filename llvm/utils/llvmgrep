@@ -1,0 +1,22 @@
+#!/bin/sh
+# This is useful because it prints out all of the source files.  Useful for
+# greps.
+PATTERN=$*
+TOPDIR=`pwd | sed -e 's#(.*/llvm).*#$1#'`
+if test -d "$TOPDIR" ; then
+  cd $TOPDIR
+  find docs include lib tools utils projects -type f \
+      \( -path '*/doxygen/*' -o -path '*/Burg/*' \) -prune -o \
+      -name '*.[cdhyl]*' \
+      \! -name '*~' \
+      \! -name '#*' \
+      \! -name '*.ll' \
+      \! -name '*.d' \
+      \! -name '*.dir' \
+      \! -name 'Sparc.burm.c' \
+      \! -name 'llvmAsmParser.cpp' \
+      \! -name 'llvmAsmParser.h' \
+      \! -name 'FileParser.cpp' \
+      \! -name 'FileParser.h' \
+      -exec egrep -H -n $PATTERN {} \;
+fi
