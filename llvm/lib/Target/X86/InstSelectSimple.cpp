@@ -451,7 +451,7 @@ void ISel::visitMul(BinaryOperator &I) {
   BuildMI(BB, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
   
   // Emit the appropriate multiply instruction...
-  BuildMI(BB, MulOpcode[Class], 4)
+  BuildMI(BB, MulOpcode[Class], 3)
     .addReg(Reg, UseAndDef).addReg(Op1Reg).addClobber(Clobber);
 
   // Put the result into the destination register...
