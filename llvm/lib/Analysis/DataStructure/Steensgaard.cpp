@@ -18,7 +18,7 @@ namespace {
     DSGraph *ResultGraph;
     DSGraph *GlobalsGraph;  // FIXME: Eliminate globals graph stuff from DNE
   public:
-    Steens() : ResultGraph(0) {}
+    Steens() : ResultGraph(0), GlobalsGraph(0) {}
     ~Steens() {
       releaseMyMemory();
       assert(ResultGraph == 0 && "releaseMemory not called?");
@@ -36,6 +36,7 @@ namespace {
     virtual void releaseMyMemory() { delete ResultGraph; ResultGraph = 0; }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AliasAnalysis::getAnalysisUsage(AU);
       AU.setPreservesAll();                    // Does not transform code...
       AU.addRequired<LocalDataStructures>();   // Uses local dsgraph
       AU.addRequired<AliasAnalysis>();         // Chains to another AA impl...
@@ -52,20 +53,9 @@ namespace {
     //  
 
     // alias - This is the only method here that does anything interesting...
-    Result alias(const Value *V1, const Value *V2);
+    AliasResult alias(const Value *V1, unsigned V1Size,
+                      const Value *V2, unsigned V2Size);
     
-    /// canCallModify - Not implemented yet: FIXME
-    ///
-    Result canCallModify(const CallInst &CI, const Value *Ptr) {
-      return MayAlias;
-    }
-    
-    /// canInvokeModify - Not implemented yet: FIXME
-    ///
-    Result canInvokeModify(const InvokeInst &I, const Value *Ptr) {
-      return MayAlias;
-    }
-
   private:
     void ResolveFunctionCall(Function *F, const DSCallSite &Call,
                              DSNodeHandle &RetVal);
@@ -108,6 +98,7 @@ void Steens::ResolveFunctionCall(Function *F, const DSCallSite &Call,
 /// program.
 ///
 bool Steens::run(Module &M) {
+  InitializeAliasAnalysis(this);
   assert(ResultGraph == 0 && "Result graph already allocated!");
   LocalDataStructures &LDS = getAnalysis<LocalDataStructures>();
 
@@ -212,7 +203,9 @@ bool Steens::run(Module &M) {
 }
 
 // alias - This is the only method here that does anything interesting...
-AliasAnalysis::Result Steens::alias(const Value *V1, const Value *V2) {
+AliasAnalysis::AliasResult Steens::alias(const Value *V1, unsigned V1Size,
+                                         const Value *V2, unsigned V2Size) {
+  // FIXME: HANDLE Size argument!
   assert(ResultGraph && "Result graph has not been computed yet!");
 
   hash_map<Value*, DSNodeHandle> &GSM = ResultGraph->getScalarMap();
@@ -239,5 +232,5 @@ AliasAnalysis::Result Steens::alias(const Value *V1, const Value *V2) {
   // If we cannot determine alias properties based on our graph, fall back on
   // some other AA implementation.
   //
-  return getAnalysis<AliasAnalysis>().alias(V1, V2);
+  return getAnalysis<AliasAnalysis>().alias(V1, V1Size, V2, V2Size);
 }

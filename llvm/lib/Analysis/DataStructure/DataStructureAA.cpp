@@ -24,11 +24,13 @@ namespace {
     // program.
     //
     bool run(Module &M) {
+      InitializeAliasAnalysis(this);
       TD = &getAnalysis<TDDataStructures>();
       return false;
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AliasAnalysis::getAnalysisUsage(AU);
       AU.setPreservesAll();                    // Does not transform code...
       AU.addRequired<TDDataStructures>();      // Uses TD Datastructures
       AU.addRequired<AliasAnalysis>();         // Chains to another AA impl...
@@ -39,19 +41,8 @@ namespace {
     //  
 
     // alias - This is the only method here that does anything interesting...
-    Result alias(const Value *V1, const Value *V2);
-    
-    /// canCallModify - Not implemented yet: FIXME
-    ///
-    Result canCallModify(const CallInst &CI, const Value *Ptr) {
-      return MayAlias;
-    }
-    
-    /// canInvokeModify - Not implemented yet: FIXME
-    ///
-    Result canInvokeModify(const InvokeInst &I, const Value *Ptr) {
-      return MayAlias;
-    }
+    AliasResult alias(const Value *V1, unsigned V1Size,
+                      const Value *V2, unsigned V2Size);
   };
 
   // Register the pass...
@@ -75,7 +66,9 @@ static const Function *getValueFunction(const Value *V) {
 }
 
 // alias - This is the only method here that does anything interesting...
-AliasAnalysis::Result DSAA::alias(const Value *V1, const Value *V2) {
+AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
+                                       const Value *V2, unsigned V2Size) {
+  // FIXME: This should handle the Size argument as well!
   const Function *F1 = getValueFunction(V1);
   const Function *F2 = getValueFunction(V2);
   assert((!F1 || !F2 || F1 == F2) && "Alias query for 2 different functions?");
@@ -113,5 +106,5 @@ AliasAnalysis::Result DSAA::alias(const Value *V1, const Value *V2) {
 
   // FIXME: we could improve on this by checking the globals graph for aliased
   // global queries...
-  return getAnalysis<AliasAnalysis>().alias(V1, V2);
+  return getAnalysis<AliasAnalysis>().alias(V1, V1Size, V2, V2Size);
 }
