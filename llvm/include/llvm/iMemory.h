@@ -273,18 +273,31 @@ public:
 ///
 class GetElementPtrInst : public Instruction {
   GetElementPtrInst(const GetElementPtrInst &EPI)
-    : Instruction(reinterpret_cast<const Type*>(EPI.getType()), GetElementPtr) {
+    : Instruction((static_cast<const Instruction*>(&EPI)->getType()),
+                  GetElementPtr) {
     Operands.reserve(EPI.Operands.size());
     for (unsigned i = 0, E = EPI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(EPI.Operands[i], this));
   }
   void init(Value *Ptr, const std::vector<Value*> &Idx);
-
+  void init(Value *Ptr, Value *Idx0, Value *Idx1);
 public:
+  /// Constructors - Create a getelementptr instruction with a base pointer an
+  /// list of indices.  The first ctor can optionally insert before an existing
+  /// instruction, the second appends the new instruction to the specified
+  /// BasicBlock.
   GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 		    const std::string &Name = "", Instruction *InsertBefore =0);
   GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 		    const std::string &Name, BasicBlock *InsertAtEnd);
+
+  /// Constructors - These two constructors are convenience methods because two
+  /// index getelementptr instructions are so common.
+  GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
+		    const std::string &Name = "", Instruction *InsertBefore =0);
+  GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
+		    const std::string &Name, BasicBlock *InsertAtEnd);
+
   virtual Instruction *clone() const { return new GetElementPtrInst(*this); }
   
   // getType - Overload to return most specific pointer type...
@@ -300,6 +313,8 @@ public:
   ///
   static const Type *getIndexedType(const Type *Ptr, 
 				    const std::vector<Value*> &Indices,
+				    bool AllowStructLeaf = false);
+  static const Type *getIndexedType(const Type *Ptr, Value *Idx0, Value *Idx1,
 				    bool AllowStructLeaf = false);
   
   inline op_iterator       idx_begin()       { return op_begin()+1; }
