@@ -71,7 +71,7 @@ static void cxx_destructor(llvm_exception *LE) /* might throw */{
   
   // Run the exception object dtor if it exists. */
   if (E->ExceptionObjectDestructor)
-    E->ExceptionObjectDestructor(E);
+    E->ExceptionObjectDestructor(E+1);
 }
 
 // __llvm_cxxeh_throw - Given a pointer to memory which has an exception object
