@@ -108,10 +108,12 @@ public:
   const_pred_iterator  pred_begin() const { return Predecessors.begin (); }
   pred_iterator        pred_end()         { return Predecessors.end ();   }
   const_pred_iterator  pred_end()   const { return Predecessors.end ();   }
+  unsigned             pred_size()  const { return Predecessors.size ();  }
   succ_iterator        succ_begin()       { return Successors.begin ();   }
   const_succ_iterator  succ_begin() const { return Successors.begin ();   }
   succ_iterator        succ_end()         { return Successors.end ();     }
   const_succ_iterator  succ_end()   const { return Successors.end ();     }
+  unsigned             succ_size()  const { return Successors.size ();    }
 
   // Machine-CFG mutators
 
