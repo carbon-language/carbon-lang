@@ -66,7 +66,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
            E = UnwindingBlocks.end(); I != E; ++I) {
       BasicBlock *BB = *I;
       BB->getInstList().pop_back();  // Remove the return insn
-      new BranchInst(UnwindBlock, 0, 0, BB);
+      new BranchInst(UnwindBlock, BB);
     }
   }
 
