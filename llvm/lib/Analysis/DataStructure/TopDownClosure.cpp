@@ -241,10 +241,9 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
     for (BUDataStructures::ActualCalleesTy::const_iterator I = IP.first;
          I != IP.second; ++I) {
       DSGraph& CalleeGraph = getDSGraph(*I->second);
-      assert(&CalleeGraph != &Graph && "TD need not inline graph into self!");
-
-      CallSites.insert(std::make_pair(&CalleeGraph,
-                                      std::make_pair(I->second, &*CI)));
+      if (&CalleeGraph != &Graph)
+        CallSites.insert(std::make_pair(&CalleeGraph,
+                                        std::make_pair(I->second, &*CI)));
     }
   }
 
