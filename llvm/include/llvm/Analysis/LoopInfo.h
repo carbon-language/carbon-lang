@@ -247,14 +247,6 @@ public:
   ///
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
-  /// addBlockMapping - Add the specified basic block to the mapping from blocks
-  /// to loops.
-  void addBlockMapping(BasicBlock *BB, Loop *L) {
-    assert(!BBMap.count(BB) && "Block already in mapping!");
-    assert(L != 0 && "Cannot map to null loop!");
-    BBMap[BB] = L;
-  }
-
   /// removeLoop - This removes the specified top-level loop from this loop info
   /// object.  The loop is not deleted, as it will presumably be inserted into
   /// another loop.
