@@ -806,12 +806,12 @@ them all and their syntax.</p>
 
   <dt><b>Null pointer constants</b></dt>
 
-  <dd>The identifier '<tt>null</tt>' is recognized as a null pointer constant,
+  <dd>The identifier '<tt>null</tt>' is recognized as a null pointer constant
   and must be of <a href="#t_pointer">pointer type</a>.</dd>
 
 </dl>
 
-<p>The one non-intuitive notation for constants is the optional hexidecimal form
+<p>The one non-intuitive notation for constants is the optional hexadecimal form
 of floating point constants.  For example, the form '<tt>double
 0x432ff973cafa8000</tt>' is equivalent to (but harder to read than) '<tt>double
 4.5e+15</tt>'.  The only time hexadecimal floating point constants are required
@@ -834,7 +834,7 @@ assembly and disassembly do not cause any bits to change in the constants.</p>
 
   <dd>Structure constants are represented with notation similar to structure
   type definitions (a comma separated list of elements, surrounded by braces
-  (<tt>{}</tt>).  For example: "<tt>{ int 4, float 17.0 }</tt>".  Structure
+  (<tt>{}</tt>)).  For example: "<tt>{ int 4, float 17.0 }</tt>".  Structure
   constants must have <a href="#t_struct">structure type</a>, and the number and
   types of elements must match those specified by the type.
   </dd>
@@ -843,7 +843,7 @@ assembly and disassembly do not cause any bits to change in the constants.</p>
 
   <dd>Array constants are represented with notation similar to array type
   definitions (a comma separated list of elements, surrounded by square brackets
-  (<tt>[]</tt>).  For example: "<tt>[ int 42, int 11, int 74 ]</tt>".  Array
+  (<tt>[]</tt>)).  For example: "<tt>[ int 42, int 11, int 74 ]</tt>".  Array
   constants must have <a href="#t_array">array type</a>, and the number and
   types of elements must match those specified by the type.
   </dd>
@@ -852,7 +852,7 @@ assembly and disassembly do not cause any bits to change in the constants.</p>
 
   <dd>Packed constants are represented with notation similar to packed type
   definitions (a comma separated list of elements, surrounded by
-  less-than/greater-than's (<tt>&lt;&gt;</tt>).  For example: "<tt>&lt; int 42,
+  less-than/greater-than's (<tt>&lt;&gt;</tt>)).  For example: "<tt>&lt; int 42,
   int 11, int 74, int 100 &gt;</tt>".  Packed constants must have <a
   href="#t_packed">packed type</a>, and the number and types of elements must
   match those specified by the type.
@@ -879,8 +879,8 @@ assembly and disassembly do not cause any bits to change in the constants.</p>
 
 <p>The addresses of <a href="#globalvars">global variables</a> and <a
 href="#functionstructure">functions</a> are always implicitly valid (link-time)
-constants.  These constants explicitly referenced when the <a
-href="#identifiers">identifier for the global</a> is used, and always have <a
+constants.  These constants are explicitly referenced when the <a
+href="#identifiers">identifier for the global</a> is used and always have <a
 href="#t_pointer">pointer</a> type. For example, the following is a legal LLVM
 file:</p>
 
@@ -964,8 +964,7 @@ indicates which block should be executed after the current block is
 finished. These terminator instructions typically yield a '<tt>void</tt>'
 value: they produce control flow, not values (the one exception being
 the '<a href="#i_invoke"><tt>invoke</tt></a>' instruction).</p>
-
-<p>There are five different terminator instructions: the '<a
+<p>There are six different terminator instructions: the '<a
  href="#i_ret"><tt>ret</tt></a>' instruction, the '<a href="#i_br"><tt>br</tt></a>'
 instruction, the '<a href="#i_switch"><tt>switch</tt></a>' instruction,
 the '<a href="#i_invoke"><tt>invoke</tt></a>' instruction, the '<a
@@ -1200,7 +1199,7 @@ no-return function cannot be reached, and other facts.</p>
 <div class="doc_text">
 <p>Binary operators are used to do most of the computation in a
 program.  They require two operands, execute an operation on them, and
-produce a single value.  Although, that single value might represent 
+produce a single value.  The operands might represent 
 multiple data, as is the case with the <a href="#t_packed">packed</a> data type. 
 The result value of a binary operator is not
 necessarily the same type as its operands.</p>
@@ -1378,7 +1377,7 @@ Operations</a> </div>
 <div class="doc_text">
 <p>Bitwise binary operators are used to do various forms of
 bit-twiddling in a program.  They are generally very efficient
-instructions, and can commonly be strength reduced from other
+instructions and can commonly be strength reduced from other
 instructions.  They require two operands, execute an operation on them,
 and produce a single value.  The resulting value of the bitwise binary
 operators is always the same type as its first operand.</p>
@@ -1603,7 +1602,7 @@ Operations</a></div>
 <p>A key design point of an SSA-based representation is how it
 represents memory.  In LLVM, no memory locations are in SSA form, which
 makes things very simple.  This section describes how to read, write,
-allocate and free memory in LLVM.</p>
+allocate, and free memory in LLVM.</p>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="i_malloc">'<tt>malloc</tt>'
@@ -1651,7 +1650,7 @@ memory heap, to be reallocated in the future.</p>
 that was allocated with the '<tt><a href="#i_malloc">malloc</a></tt>'
 instruction.</p>
 <h5>Semantics:</h5>
-<p>Access to the memory pointed to by the pointer is not longer defined
+<p>Access to the memory pointed to by the pointer is no longer defined
 after this instruction executes.</p>
 <h5>Example:</h5>
 <pre>  %array  = <a href="#i_malloc">malloc</a> [4 x ubyte]                    <i>; yields {[4 x ubyte]*}:array</i>
@@ -1671,7 +1670,7 @@ Instruction</a> </div>
 stack frame of the procedure that is live until the current function
 returns to its caller.</p>
 <h5>Arguments:</h5>
-<p>The the '<tt>alloca</tt>' instruction allocates <tt>sizeof(&lt;type&gt;)*NumElements</tt>
+<p>The '<tt>alloca</tt>' instruction allocates <tt>sizeof(&lt;type&gt;)*NumElements</tt>
 bytes of memory on the runtime stack, returning a pointer of the
 appropriate type to the program.  The second form of the instruction is
 a shorter version of the first that defaults to allocating one element.</p>
@@ -2304,7 +2303,7 @@ href="GarbageCollection.html">Accurate Garbage Collection with LLVM</a>.
 
 <h5>Overview:</h5>
 
-<p>The '<tt>llvm.gcroot</tt>' intrinsic declares the existance of a GC root to
+<p>The '<tt>llvm.gcroot</tt>' intrinsic declares the existence of a GC root to
 the code generator, and allows some metadata to be associated with it.</p>
 
 <h5>Arguments:</h5>
