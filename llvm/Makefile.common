@@ -468,6 +468,10 @@ $(BUILD_ROOT)/Debug/%.o: %.c $(BUILD_ROOT)/Debug/.dir
 	$(VERB) mkdir -p $(@D)
 	@date > $@
 
+# To create postscript files from dot files...
+%.ps: %.dot
+	dot -Tps < $< > $@
+
 # 'make clean' nukes the tree
 clean::
 	$(VERB) rm -rf $(BUILD_ROOT)/Debug $(BUILD_ROOT)/Release $(BUILD_ROOT)/Profile $(BUILD_ROOT)/Depend
