@@ -834,8 +834,8 @@ void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
 ///   ret float/double : Top of FP stack
 ///
 void ISel::visitReturnInst(ReturnInst &I) {
-  BuildMI(BB, X86::FP_REG_KILL, 0);
   if (I.getNumOperands() == 0) {
+    BuildMI(BB, X86::FP_REG_KILL, 0);
     BuildMI(BB, X86::RET, 0); // Just emit a 'ret' instruction
     return;
   }
@@ -866,6 +866,7 @@ void ISel::visitReturnInst(ReturnInst &I) {
     visitInstruction(I);
   }
   // Emit a 'ret' instruction
+  BuildMI(BB, X86::FP_REG_KILL, 0);
   BuildMI(BB, X86::RET, 0);
 }
 
