@@ -2640,8 +2640,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     
     if (PromoteType) {
       unsigned TmpReg = makeAnotherReg(PromoteType);
-      unsigned Opc = SrcTy->isSigned() ? X86::MOVSX16rr8 : X86::MOVZX16rr8;
-      BuildMI(*BB, IP, Opc, 1, TmpReg).addReg(SrcReg);
+      BuildMI(*BB, IP, PromoteOpcode, 1, TmpReg).addReg(SrcReg);
       SrcTy = PromoteType;
       SrcClass = getClass(PromoteType);
       SrcReg = TmpReg;
