@@ -101,9 +101,9 @@ protected:
   ///
   inline void setAbstract(bool Val) { Abstract = Val; }
 
-  /// isTypeAbstract - This method is used to calculate the Abstract bit.
-  ///
-  bool isTypeAbstract();
+  // PromoteAbstractToConcrete - This is an internal method used to calculate
+  // change "Abstract" from true to false when types are refined.
+  bool PromoteAbstractToConcrete(void *);
 
   unsigned getRefCount() const { return RefCount; }
 
