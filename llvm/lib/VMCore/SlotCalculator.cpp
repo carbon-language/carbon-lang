@@ -174,8 +174,12 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   SC_DEBUG("Inserting Instructions:\n");
 
   // Add all of the instructions to the type planes...
-  for_each(inst_begin(F), inst_end(F),
-	   bind_obj(this, &SlotCalculator::getOrCreateSlot));
+  for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
+      getOrCreateSlot(I);
+      //if (const VANextInst *VAN = dyn_cast<VANextInst>(I))
+      //  getOrCreateSlot(VAN->getArgType());
+    }
 
   if (!IgnoreNamedNodes) {
     SC_DEBUG("Inserting SymbolTable values:\n");

@@ -268,7 +268,7 @@ ConstantStruct::ConstantStruct(const StructType *T,
   Operands.reserve(V.size());
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
     assert((V[i]->getType() == ETypes[i] ||
-            (ETypes[i]->isAbstract() &&
+            ((ETypes[i]->isAbstract() || V[i]->getType()->isAbstract()) &&
              ETypes[i]->getPrimitiveID()==V[i]->getType()->getPrimitiveID())) &&
            "Initializer for struct element doesn't match struct element type!");
     Operands.push_back(Use(V[i], this));
