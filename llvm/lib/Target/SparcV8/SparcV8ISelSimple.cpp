@@ -36,12 +36,35 @@ namespace {
     MachineBasicBlock *BB;              // The current MBB we are compiling
     int VarArgsOffset;                  // Offset from fp for start of varargs area
 
+    // External functions we may use in compiling the Module
+    Function *__div64Fn, *__mul64Fn, *__rem64Fn,
+      *__udiv64Fn, *__umul64Fn, *__urem64Fn;
+
     std::map<Value*, unsigned> RegMap;  // Mapping between Val's and SSA Regs
 
     // MBBMap - Mapping between LLVM BB -> Machine BB
     std::map<const BasicBlock*, MachineBasicBlock*> MBBMap;
 
     V8ISel(TargetMachine &tm) : TM(tm), F(0), BB(0) {}
+
+    bool doInitialization(Module &M) {
+      // Add external functions that we may call
+      Type *l = Type::LongTy;
+      Type *ul = Type::ULongTy;
+      // long __div64(long, long);
+      __div64Fn = M.getOrInsertFunction("__div64", l, l, l, 0);
+      // long __div64(long, long);
+      __mul64Fn = M.getOrInsertFunction("__mul64", l, l, l, 0);
+      // long __div64(long, long);
+      __rem64Fn = M.getOrInsertFunction("__rem64", l, l, l, 0);
+      // unsigned long __udiv64(unsigned long, unsigned long);
+      __udiv64Fn = M.getOrInsertFunction("__udiv64", ul, ul, ul, 0);
+      // unsigned long __umul64(unsigned long, unsigned long);
+      __umul64Fn = M.getOrInsertFunction("__umul64", ul, ul, ul, 0);
+      // unsigned long __urem64(unsigned long, unsigned long);
+      __urem64Fn = M.getOrInsertFunction("__urem64", ul, ul, ul, 0);
+      return true;
+    }
 
     /// runOnFunction - Top level implementation of instruction selection for
     /// the entire function.
