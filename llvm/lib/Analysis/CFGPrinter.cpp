@@ -75,10 +75,6 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
     return OutStr;
   }
 
-  static std::string getNodeAttributes(const BasicBlock *N) {
-    return "fontname=Courier";
-  }
-  
   static std::string getEdgeSourceLabel(const BasicBlock *Node,
                                         succ_const_iterator I) {
     // Label source of conditional branches with "T" or "F"
@@ -155,7 +151,8 @@ void Function::viewCFG() const {
   std::cerr << "\n";
 
   std::cerr << "Running 'dot' program... " << std::flush;
-  if (system(("dot -Tps " + Filename + " > /tmp/cfg.tempgraph.ps").c_str())) {
+  if (system(("dot -Tps -Nfontname=Courier -Gsize=7.5,10 " + Filename
+              + " > /tmp/cfg.tempgraph.ps").c_str())) {
     std::cerr << "Error running dot: 'dot' not in path?\n";
   } else {
     std::cerr << "\n";

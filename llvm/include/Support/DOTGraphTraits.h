@@ -33,11 +33,10 @@ struct DefaultDOTGraphTraits {
   static std::string getGraphName(const void *Graph) { return ""; }
 
   /// getGraphProperties - Return any custom properties that should be included
-  /// in the top level graph structure for dot.  By default, we resize the graph
-  /// to fit on a letter size page.
+  /// in the top level graph structure for dot.
   ///
   static std::string getGraphProperties(const void *Graph) {
-    return "\tsize=\"7.5,10\";\n";    // Size to fit on a page
+    return "";
   }
 
   /// getNodeLabel - Given a node and a pointer to the top level graph, return

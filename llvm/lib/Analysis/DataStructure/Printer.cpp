@@ -93,17 +93,12 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
     }
   }
 
-  static const char *getGraphProperties(const DSGraph *G) {
-    return "\tsize=\"10,7.5\";\n"
-           "\trotate=\"90\";\n";
-  }
-
   static std::string getNodeLabel(const DSNode *Node, const DSGraph *Graph) {
     return getCaption(Node, Graph);
   }
 
   static std::string getNodeAttributes(const DSNode *N) {
-    return "shape=Mrecord";//fontname=Courier";
+    return "shape=Mrecord";
   }
   
   /// addCustomGraphFeatures - Use this graph writing hook to emit call nodes
@@ -234,7 +229,7 @@ void DSGraph::viewGraph() const {
   }
   print(F);
   F.close();
-  if (system("dot -Tps /tmp/tempgraph.dot > /tmp/tempgraph.ps"))
+  if (system("dot -Tps -Gsize=10,7.5 -Grotate=90 /tmp/tempgraph.dot > /tmp/tempgraph.ps"))
     std::cerr << "Error running dot: 'dot' not in path?\n";
   system("gv /tmp/tempgraph.ps");
   system("rm /tmp/tempgraph.dot /tmp/tempgraph.ps");
