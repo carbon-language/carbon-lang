@@ -610,18 +610,46 @@ bool Andersens::AddConstraintsForExternalCall(CallSite CS, Function *F) {
   assert(F->isExternal() && "Not an external function!");
 
   // These functions don't induce any points-to constraints.
-  if (F->getName() == "printf" || F->getName() == "fprintf" ||
-      F->getName() == "sprintf" ||
-      F->getName() == "fgets" || F->getName() == "__assert_fail" ||
-      F->getName() == "open" || F->getName() == "fopen" ||
-      F->getName() == "fclose" || F->getName() == "fflush" ||
-      F->getName() == "rewind" ||
-      F->getName() == "atoi" || F->getName() == "atol" ||
-      F->getName() == "unlink" ||
-      F->getName() == "sscanf" || F->getName() == "fscanf" ||
-      F->getName() == "llvm.memset" || F->getName() == "memcmp" ||
-      F->getName() == "read" || F->getName() == "write")
+  if (F->getName() == "atoi" || F->getName() == "atof" ||
+      F->getName() == "atol" || F->getName() == "atoll" ||
+      F->getName() == "remove" || F->getName() == "unlink" ||
+      F->getName() == "rename" || F->getName() == "memcmp" ||
+      F->getName() == "llvm.memset" || 
+      F->getName() == "strcmp" || F->getName() == "strncmp" ||
+      F->getName() == "execl" || F->getName() == "execlp" ||
+      F->getName() == "execle" || F->getName() == "execv" ||
+      F->getName() == "execvp" || F->getName() == "chmod" ||
+      F->getName() == "puts" || F->getName() == "write" ||
+      F->getName() == "open" || F->getName() == "create" ||
+      F->getName() == "truncate" || F->getName() == "chdir" ||
+      F->getName() == "mkdir" || F->getName() == "rmdir" ||
+      F->getName() == "read" || F->getName() == "pipe" ||
+      F->getName() == "wait" || F->getName() == "time" ||
+      F->getName() == "stat" || F->getName() == "fstat" ||
+      F->getName() == "lstat" || F->getName() == "strtod" ||
+      F->getName() == "strtof" || F->getName() == "strtold" ||
+      F->getName() == "fopen" || F->getName() == "fdopen" ||
+      F->getName() == "freopen" ||
+      F->getName() == "fflush" || F->getName() == "feof" ||
+      F->getName() == "fileno" || F->getName() == "clearerr" ||
+      F->getName() == "rewind" || F->getName() == "ftell" ||
+      F->getName() == "ferror" || F->getName() == "fgetc" ||
+      F->getName() == "fgetc" || F->getName() == "_IO_getc" ||
+      F->getName() == "fwrite" || F->getName() == "fread" ||
+      F->getName() == "fgets" || F->getName() == "ungetc" ||
+      F->getName() == "fputc" ||
+      F->getName() == "fputs" || F->getName() == "putc" ||
+      F->getName() == "ftell" || F->getName() == "rewind" ||
+      F->getName() == "_IO_putc" || F->getName() == "fseek" ||
+      F->getName() == "fgetpos" || F->getName() == "fsetpos" ||
+      F->getName() == "printf" || F->getName() == "fprintf" ||
+      F->getName() == "sprintf" || F->getName() == "vprintf" ||
+      F->getName() == "vfprintf" || F->getName() == "vsprintf" ||
+      F->getName() == "scanf" || F->getName() == "fscanf" ||
+      F->getName() == "sscanf" || F->getName() == "__assert_fail" ||
+      F->getName() == "modf")
     return true;
+
 
   // These functions do induce points-to edges.
   if (F->getName() == "llvm.memcpy" || F->getName() == "llvm.memmove" ||
@@ -816,14 +844,18 @@ void Andersens::visitCastInst(CastInst &CI) {
                                        getNode(CI.getOperand(0))));
     } else {
       // P1 = cast int --> <Copy/P1/Univ>
+#if 0
       Constraints.push_back(Constraint(Constraint::Copy, getNodeValue(CI),
                                        &GraphNodes[UniversalSet]));
+#endif
     }
   } else if (isa<PointerType>(Op->getType())) {
     // int = cast P1 --> <Copy/Univ/P1>
+#if 0
     Constraints.push_back(Constraint(Constraint::Copy,
                                      &GraphNodes[UniversalSet],
                                      getNode(CI.getOperand(0))));
+#endif
   }
 }
 
