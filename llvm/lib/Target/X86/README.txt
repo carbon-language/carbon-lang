@@ -25,28 +25,60 @@ implementation notes, design decisions, and other stuff.
 II. Architecture / Design Decisions
 ===================================
 
-We designed the infrastructure for the machine specific representation to be as
-light-weight as possible, while also being able to support as many targets as
-possible with our framework.  This framework should allow us to share many
-common machine specific transformations (register allocation, instruction
-scheduling, etc...) among all of the backends that may eventually be supported
-by the JIT, and unify the JIT and static compiler backends.
+We designed the infrastructure into the generic LLVM machine specific
+representation, which allows us to support as many targets as possible with our
+framework.  This framework should allow us to share many common machine specific
+transformations (register allocation, instruction scheduling, etc...) among all
+of the backends that may eventually be supported by LLVM, and ensures that the
+JIT and static compiler backends are largely shared.
 
 At the high-level, LLVM code is translated to a machine specific representation
-formed out of MFunction, MBasicBlock, and MInstruction instances (defined in
-include/llvm/CodeGen).  This representation is completely target agnostic,
-representing instructions in their most abstract form: an opcode, a destination,
-and a series of operands.  This representation is designed to support both SSA
-representation for machine code, as well as a register allocated, non-SSA form.
+formed out of MachineFunction, MachineBasicBlock, and MachineInstr instances
+(defined in include/llvm/CodeGen).  This representation is completely target
+agnostic, representing instructions in their most abstract form: an opcode, a
+destination, and a series of operands.  This representation is designed to
+support both SSA representation for machine code, as well as a register
+allocated, non-SSA form.
 
-Because the M* representation must work regardless of the target machine, it
-contains very little semantic information about the program.  To get semantic
+Because the Machine* representation must work regardless of the target machine,
+it contains very little semantic information about the program.  To get semantic
 information about the program, a layer of Target description datastructures are
 used, defined in include/llvm/Target.
 
-Currently the Sparc backend and the X86 backend do not share a common
-representation.  This is an intentional decision, and will be rectified in the
-future (after the project is done).
+Note that there is some amount of complexity that the X86 backend contains due
+to the Sparc backend's legacy requirements.  These should eventually fade away
+as the project progresses.
+
+
+SSA Instruction Representation
+------------------------------
+Target machine instructions are represented as instances of MachineInstr, and
+all specific machine instruction types should have an entry in the
+InstructionInfo table defined through X86InstrInfo.def.  In the X86 backend,
+there are two particularly interesting forms of machine instruction: those that
+produce a value (such as add), and those that do not (such as a store).
+
+Instructions that produce a value use Operand #0 as the "destination" register.
+When printing the assembly code with the built-in machine instruction printer,
+these destination registers will be printed to the left side of an '=' sign, as
+in: %reg1027 = addl %reg1026, %reg1025
+
+This 'addl' MachineInstruction contains three "operands": the first is the
+destination register (#1027), the second is the first source register (#1026)
+and the third is the second source register (#1025).  Never forget the
+destination register will show up in the MachineInstr operands vector.  The code
+to generate this instruction looks like this:
+
+  BuildMI(BB, X86::ADDrr32, 2, 1027).addReg(1026).addReg(1025);
+
+The first argument to BuildMI is the basic block to append the machine
+instruction to, the second is the opcode, the third is the number of operands,
+the fourth is the destination register.  The two addReg calls specify operands
+in order.
+
+MachineInstrs that do not produce a value do not have this implicit first
+operand, they simply have #operands = #uses.  To create them, simply do not
+specify a destination register to the BuildMI call.
 
 
 =======================
@@ -57,26 +89,25 @@ The LLVM-JIT is composed of source files primarily in the following locations:
 
 include/llvm/CodeGen
 --------------------
-
 This directory contains header files that are used to represent the program in a
 machine specific representation.  It currently also contains a bunch of stuff
-used by the Sparc backend that we don't want to get mixed up in.
+used by the Sparc backend that we don't want to get mixed up in, such as
+register allocation internals.
 
 include/llvm/Target
 -------------------
-
 This directory contains header files that are used to interpret the machine
 specific representation of the program.  This allows us to write generic
 transformations that will work on any target that implements the interfaces
-defined in this directory.  Again, this also contains a bunch of stuff from the
-Sparc Backend that we don't want to deal with.
+defined in this directory.  The only classes used by the X86 backend so far are
+the TargetMachine, TargetData, MachineInstrInfo, and MRegisterInfo classes.
 
 lib/CodeGen
 -----------
 This directory will contain all of the target independant transformations (for
 example, register allocation) that we write.  These transformations should only
-use information exposed through the Target interface, it should not include any
-target specific header files.
+use information exposed through the Target interface, they should not include
+any target specific header files.
 
 lib/Target/X86
 --------------
@@ -86,7 +117,10 @@ the X86 backend, for example the instruction selector and machine code emitter.
 
 tools/jello
 -----------
-This directory contains the top-level code for the JIT compiler.
+This directory contains the top-level code for the JIT compiler.  This code
+basically boils down to a call to TargetMachine::addPassesToJITCompile.  As we
+progress with the project, this will also contain the compile-dispatch-recompile
+loop.
 
 test/Regression/Jello
 ---------------------
@@ -105,9 +139,7 @@ Critial path:
 
 0. Finish providing SSA form.  This involves keeping track of some information
    when instructions are added to the function, but should not affect that API
-   for creating new MInstructions or adding them to the program.  There are
-   also various FIXMEs in the M* files that need to get taken care of in the
-   near term.
+   for creating new MInstructions or adding them to the program.
 1. Finish dumb instruction selector
 2. Write dumb register allocator
 3. Write assembly language emitter
@@ -121,23 +153,23 @@ Next Phase:
 After this project:
 -------------------
 1. Implement lots of nifty runtime optimizations
-2. Implement a static compiler backend for x86
-3. Migrate Sparc backend to new representation
-4. Implement new spiffy targets: IA64? X86-64? M68k?  Who knows...
+2. Implement a static compiler backend for x86 (might come almost for free...)
+3. Implement new spiffy targets: IA64? X86-64? M68k?  Who knows...
 
 Infrastructure Improvements:
 ----------------------------
 
 1. Bytecode is designed to be able to read particular functions from the
    bytecode without having to read the whole program.  Bytecode reader should be
-   extended to allow on demand loading of functions.
+   extended to allow on-demand loading of functions.
 
 2. PassManager needs to be able to run just a single function through a pipeline
-   of FunctionPass's.  When this happens, all of our code will become
-   FunctionPass's for real.
+   of FunctionPass's.
 
 3. llvmgcc needs to be modified to output 32-bit little endian LLVM files.
    Preferably it will be parameterizable so that multiple binaries need not
    exist.  Until this happens, we will be restricted to using type safe
    programs (most of the Olden suite and many smaller tests), which should be
-   sufficient for our 497 project.
+   sufficient for our 497 project.  Additionally there are a few places in the
+   LLVM infrastructure where we assume Sparc TargetData layout.  These should
+   be easy to factor out and identify though.
