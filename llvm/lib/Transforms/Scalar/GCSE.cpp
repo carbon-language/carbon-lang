@@ -11,66 +11,43 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/iMemory.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Support/InstVisitor.h"
+#include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Type.h"
 #include "Support/StatisticReporter.h"
 #include <algorithm>
 using std::set;
 using std::map;
 
 
-static Statistic<> NumInstRemoved("gcse\t\t- Number of instructions removed");
-static Statistic<> NumLoadRemoved("gcse\t\t- Number of loads removed");
-
 namespace {
-  class GCSE : public FunctionPass, public InstVisitor<GCSE, bool> {
+  Statistic<> NumInstRemoved("gcse\t\t- Number of instructions removed");
+  Statistic<> NumLoadRemoved("gcse\t\t- Number of loads removed");
+  Statistic<> NumNonInsts   ("gcse\t\t- Number of instructions removed due "
+                             "to non-instruction values");
+
+  class GCSE : public FunctionPass {
     set<Instruction*>       WorkList;
     DominatorSet           *DomSetInfo;
+#if 0
     ImmediateDominators    *ImmDominator;
-    AliasAnalysis          *AA;
-
+#endif
+    ValueNumbering         *VN;
   public:
     virtual bool runOnFunction(Function &F);
 
-    // Visitation methods, these are invoked depending on the type of
-    // instruction being checked.  They should return true if a common
-    // subexpression was folded.
-    //
-    bool visitBinaryOperator(Instruction &I);
-    bool visitGetElementPtrInst(GetElementPtrInst &I);
-    bool visitCastInst(CastInst &I);
-    bool visitShiftInst(ShiftInst &I) {
-      return visitBinaryOperator((Instruction&)I);
-    }
-    bool visitLoadInst(LoadInst &LI);
-    bool visitInstruction(Instruction &) { return false; }
-
   private:
+    bool EliminateRedundancies(Instruction *I,std::vector<Value*> &EqualValues);
+    Instruction *EliminateCSE(Instruction *I, Instruction *Other);
     void ReplaceInstWithInst(Instruction *First, BasicBlock::iterator SI);
-    bool CommonSubExpressionFound(Instruction *I, Instruction *Other);
-
-    // TryToRemoveALoad - Try to remove one of L1 or L2.  The problem with
-    // removing loads is that intervening stores might make otherwise identical
-    // load's yield different values.  To ensure that this is not the case, we
-    // check that there are no intervening stores or calls between the
-    // instructions.
-    //
-    bool TryToRemoveALoad(LoadInst *L1, LoadInst *L2);
-
-    // CheckForInvalidatingInst - Return true if BB or any of the predecessors
-    // of BB (until DestBB) contain an instruction that might invalidate Ptr.
-    //
-    bool CheckForInvalidatingInst(BasicBlock *BB, BasicBlock *DestBB,
-                                  Value *Ptr, set<BasicBlock*> &VisitedSet);
 
     // This transformation requires dominator and immediate dominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
       AU.addRequired<DominatorSet>();
       AU.addRequired<ImmediateDominators>();
-      AU.addRequired<AliasAnalysis>();
+      AU.addRequired<ValueNumbering>();
     }
   };
 
@@ -89,8 +66,10 @@ bool GCSE::runOnFunction(Function &F) {
 
   // Get pointers to the analysis results that we will be using...
   DomSetInfo = &getAnalysis<DominatorSet>();
+#if 0
   ImmDominator = &getAnalysis<ImmediateDominators>();
-  AA = &getAnalysis<AliasAnalysis>();
+#endif
+  VN = &getAnalysis<ValueNumbering>();
 
   // Step #1: Add all instructions in the function to the worklist for
   // processing.  All of the instructions are considered to be our
@@ -106,13 +85,80 @@ bool GCSE::runOnFunction(Function &F) {
     Instruction &I = **WorkList.begin(); // Get an instruction from the worklist
     WorkList.erase(WorkList.begin());
 
-    // Visit the instruction, dispatching to the correct visit function based on
-    // the instruction type.  This does the checking.
+    // If this instruction computes a value, try to fold together common
+    // instructions that compute it.
     //
-    Changed |= visit(I);
+    if (I.getType() != Type::VoidTy) {
+      std::vector<Value*> EqualValues;
+      VN->getEqualNumberNodes(&I, EqualValues);
+
+      if (!EqualValues.empty())
+        Changed |= EliminateRedundancies(&I, EqualValues);
+    }
   }
 
   // When the worklist is empty, return whether or not we changed anything...
+  return Changed;
+}
+
+bool GCSE::EliminateRedundancies(Instruction *I,
+                                 std::vector<Value*> &EqualValues) {
+  // If the EqualValues set contains any non-instruction values, then we know
+  // that all of the instructions can be replaced with the non-instruction value
+  // because it is guaranteed to dominate all of the instructions in the
+  // function.  We only have to do hard work if all we have are instructions.
+  //
+  for (unsigned i = 0, e = EqualValues.size(); i != e; ++i)
+    if (!isa<Instruction>(EqualValues[i])) {
+      // Found a non-instruction.  Replace all instructions with the
+      // non-instruction.
+      //
+      Value *Replacement = EqualValues[i];
+
+      // Make sure we get I as well...
+      EqualValues[i] = I;
+
+      // Replace all instructions with the Replacement value.
+      for (i = 0; i != e; ++i)
+        if (Instruction *I = dyn_cast<Instruction>(EqualValues[i])) {
+          // Change all users of I to use Replacement.
+          I->replaceAllUsesWith(Replacement);
+
+          if (isa<LoadInst>(I))
+            ++NumLoadRemoved; // Keep track of loads eliminated
+          ++NumInstRemoved;   // Keep track of number of instructions eliminated
+          ++NumNonInsts;      // Keep track of number of insts repl with values
+
+          // Erase the instruction from the program.
+          I->getParent()->getInstList().erase(I);
+        }
+      
+      return true;
+    }
+  
+  // Remove duplicate entries from EqualValues...
+  std::sort(EqualValues.begin(), EqualValues.end());
+  EqualValues.erase(std::unique(EqualValues.begin(), EqualValues.end()),
+                    EqualValues.end());
+
+  // From this point on, EqualValues is logically a vector of instructions.
+  //
+  bool Changed = false;
+  EqualValues.push_back(I); // Make sure I is included...
+  while (EqualValues.size() > 1) {
+    // FIXME, this could be done better than simple iteration!
+    Instruction *Test = cast<Instruction>(EqualValues.back());
+    EqualValues.pop_back();
+    
+    for (unsigned i = 0, e = EqualValues.size(); i != e; ++i)
+      if (Instruction *Ret = EliminateCSE(Test,
+                                          cast<Instruction>(EqualValues[i]))) {
+        if (Ret == Test)          // Eliminated EqualValues[i]
+          EqualValues[i] = Test;  // Make sure that we reprocess I at some point
+        Changed = true;
+        break;
+      }
+  }
   return Changed;
 }
 
@@ -140,20 +186,22 @@ void GCSE::ReplaceInstWithInst(Instruction *First, BasicBlock::iterator SI) {
   Second.getParent()->getInstList().erase(SI);
 }
 
-// CommonSubExpressionFound - The two instruction I & Other have been found to
-// be common subexpressions.  This function is responsible for eliminating one
-// of them, and for fixing the worklist to be correct.
+// EliminateCSE - The two instruction I & Other have been found to be common
+// subexpressions.  This function is responsible for eliminating one of them,
+// and for fixing the worklist to be correct.  The instruction that is preserved
+// is returned from the function if the other is eliminated, otherwise null is
+// returned.
 //
-bool GCSE::CommonSubExpressionFound(Instruction *I, Instruction *Other) {
+Instruction *GCSE::EliminateCSE(Instruction *I, Instruction *Other) {
   assert(I != Other);
 
   WorkList.erase(I);
   WorkList.erase(Other); // Other may not actually be on the worklist anymore...
 
-  ++NumInstRemoved;   // Keep track of number of instructions eliminated
-
   // Handle the easy case, where both instructions are in the same basic block
   BasicBlock *BB1 = I->getParent(), *BB2 = Other->getParent();
+  Instruction *Ret = 0;
+
   if (BB1 == BB2) {
     // Eliminate the second occuring instruction.  Add all uses of the second
     // instruction to the worklist.
@@ -171,15 +219,18 @@ bool GCSE::CommonSubExpressionFound(Instruction *I, Instruction *Other) {
     BI = Second;
 
     // Destroy Second, using First instead.
-    ReplaceInstWithInst(First, BI);    
+    ReplaceInstWithInst(First, BI);
+    Ret = First;
 
     // Otherwise, the two instructions are in different basic blocks.  If one
     // dominates the other instruction, we can simply use it
     //
   } else if (DomSetInfo->dominates(BB1, BB2)) {    // I dom Other?
     ReplaceInstWithInst(I, Other);
+    Ret = I;
   } else if (DomSetInfo->dominates(BB2, BB1)) {    // Other dom I?
     ReplaceInstWithInst(Other, I);
+    Ret = Other;
   } else {
     // This code is disabled because it has several problems:
     // One, the actual assumption is wrong, as shown by this code:
@@ -207,7 +258,7 @@ bool GCSE::CommonSubExpressionFound(Instruction *I, Instruction *Other) {
     // general the problem this case is trying to solve is better addressed with
     // PRE than GCSE.
     //
-    return false;
+    return 0;
 
 #if 0
     // Handle the most general case now.  In this case, neither I dom Other nor
@@ -235,215 +286,15 @@ bool GCSE::CommonSubExpressionFound(Instruction *I, Instruction *Other) {
     ReplaceInstWithInst(I, Other);
 #endif
   }
-  return true;
-}
 
-//===----------------------------------------------------------------------===//
-//
-// Visitation methods, these are invoked depending on the type of instruction
-// being checked.  They should return true if a common subexpression was folded.
-//
-//===----------------------------------------------------------------------===//
+  if (isa<LoadInst>(Ret))
+    ++NumLoadRemoved;  // Keep track of loads eliminated
+  ++NumInstRemoved;   // Keep track of number of instructions eliminated
 
-bool GCSE::visitCastInst(CastInst &CI) {
-  Instruction &I = (Instruction&)CI;
-  Value *Op = I.getOperand(0);
-  Function *F = I.getParent()->getParent();
-  
-  for (Value::use_iterator UI = Op->use_begin(), UE = Op->use_end();
-       UI != UE; ++UI)
-    if (Instruction *Other = dyn_cast<Instruction>(*UI))
-      // Check to see if this new cast is not I, but has the same operand...
-      if (Other != &I && Other->getOpcode() == I.getOpcode() &&
-          Other->getOperand(0) == Op &&     // Is the operand the same?
-          // Is it embeded in the same function?  (This could be false if LHS
-          // is a constant or global!)
-          Other->getParent()->getParent() == F &&
+  // Add all users of Ret to the worklist...
+  for (Value::use_iterator I = Ret->use_begin(), E = Ret->use_end(); I != E;++I)
+    if (Instruction *Inst = dyn_cast<Instruction>(*I))
+      WorkList.insert(Inst);
 
-          // Check that the types are the same, since this code handles casts...
-          Other->getType() == I.getType()) {
-        
-        // These instructions are identical.  Handle the situation.
-        if (CommonSubExpressionFound(&I, Other))
-          return true;   // One instruction eliminated!
-      }
-  
-  return false;
-}
-
-// isIdenticalBinaryInst - Return true if the two binary instructions are
-// identical.
-//
-static inline bool isIdenticalBinaryInst(const Instruction &I1,
-                                         const Instruction *I2) {
-  // Is it embeded in the same function?  (This could be false if LHS
-  // is a constant or global!)
-  if (I1.getOpcode() != I2->getOpcode() ||
-      I1.getParent()->getParent() != I2->getParent()->getParent())
-    return false;
-  
-  // They are identical if both operands are the same!
-  if (I1.getOperand(0) == I2->getOperand(0) &&
-      I1.getOperand(1) == I2->getOperand(1))
-    return true;
-  
-  // If the instruction is commutative and associative, the instruction can
-  // match if the operands are swapped!
-  //
-  if ((I1.getOperand(0) == I2->getOperand(1) &&
-       I1.getOperand(1) == I2->getOperand(0)) &&
-      (I1.getOpcode() == Instruction::Add || 
-       I1.getOpcode() == Instruction::Mul ||
-       I1.getOpcode() == Instruction::And || 
-       I1.getOpcode() == Instruction::Or  ||
-       I1.getOpcode() == Instruction::Xor))
-    return true;
-
-  return false;
-}
-
-bool GCSE::visitBinaryOperator(Instruction &I) {
-  Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
-  Function *F = I.getParent()->getParent();
-  
-  for (Value::use_iterator UI = LHS->use_begin(), UE = LHS->use_end();
-       UI != UE; ++UI)
-    if (Instruction *Other = dyn_cast<Instruction>(*UI))
-      // Check to see if this new binary operator is not I, but same operand...
-      if (Other != &I && isIdenticalBinaryInst(I, Other)) {        
-        // These instructions are identical.  Handle the situation.
-        if (CommonSubExpressionFound(&I, Other))
-          return true;   // One instruction eliminated!
-      }
-  
-  return false;
-}
-
-// IdenticalComplexInst - Return true if the two instructions are the same, by
-// using a brute force comparison.
-//
-static bool IdenticalComplexInst(const Instruction *I1, const Instruction *I2) {
-  assert(I1->getOpcode() == I2->getOpcode());
-  // Equal if they are in the same function...
-  return I1->getParent()->getParent() == I2->getParent()->getParent() &&
-    // And return the same type...
-    I1->getType() == I2->getType() &&
-    // And have the same number of operands...
-    I1->getNumOperands() == I2->getNumOperands() &&
-    // And all of the operands are equal.
-    std::equal(I1->op_begin(), I1->op_end(), I2->op_begin());
-}
-
-bool GCSE::visitGetElementPtrInst(GetElementPtrInst &I) {
-  Value *Op = I.getOperand(0);
-  Function *F = I.getParent()->getParent();
-  
-  for (Value::use_iterator UI = Op->use_begin(), UE = Op->use_end();
-       UI != UE; ++UI)
-    if (GetElementPtrInst *Other = dyn_cast<GetElementPtrInst>(*UI))
-      // Check to see if this new getelementptr is not I, but same operand...
-      if (Other != &I && IdenticalComplexInst(&I, Other)) {
-        // These instructions are identical.  Handle the situation.
-        if (CommonSubExpressionFound(&I, Other))
-          return true;   // One instruction eliminated!
-      }
-  
-  return false;
-}
-
-bool GCSE::visitLoadInst(LoadInst &LI) {
-  Value *Op = LI.getOperand(0);
-  Function *F = LI.getParent()->getParent();
-  
-  for (Value::use_iterator UI = Op->use_begin(), UE = Op->use_end();
-       UI != UE; ++UI)
-    if (LoadInst *Other = dyn_cast<LoadInst>(*UI))
-      // Check to see if this new load is not LI, but has the same operands...
-      if (Other != &LI && IdenticalComplexInst(&LI, Other) &&
-          TryToRemoveALoad(&LI, Other))
-        return true;   // An instruction was eliminated!
-  
-  return false;
-}
-
-// TryToRemoveALoad - Try to remove one of L1 or L2.  The problem with removing
-// loads is that intervening stores might make otherwise identical load's yield
-// different values.  To ensure that this is not the case, we check that there
-// are no intervening stores or calls between the instructions.
-//
-bool GCSE::TryToRemoveALoad(LoadInst *L1, LoadInst *L2) {
-  // Figure out which load dominates the other one.  If neither dominates the
-  // other we cannot eliminate one...
-  //
-  if (DomSetInfo->dominates(L2, L1)) 
-    std::swap(L1, L2);   // Make L1 dominate L2
-  else if (!DomSetInfo->dominates(L1, L2))
-    return false;  // Neither instruction dominates the other one...
-
-  BasicBlock *BB1 = L1->getParent(), *BB2 = L2->getParent();
-  Value *LoadAddress = L1->getOperand(0);
-
-  // L1 now dominates L2.  Check to see if the intervening instructions between
-  // the two loads include a store or call...
-  //
-  if (BB1 == BB2) {  // In same basic block?
-    // In this degenerate case, no checking of global basic blocks has to occur
-    // just check the instructions BETWEEN L1 & L2...
-    //
-    if (AA->canInstructionRangeModify(*L1, *L2, LoadAddress))
-      return false;   // Cannot eliminate load
-
-    ++NumLoadRemoved;
-    if (CommonSubExpressionFound(L1, L2))
-      return true;
-  } else {
-    // Make sure that there are no store instructions between L1 and the end of
-    // it's basic block...
-    //
-    if (AA->canInstructionRangeModify(*L1, *BB1->getTerminator(), LoadAddress))
-      return false;   // Cannot eliminate load
-
-    // Make sure that there are no store instructions between the start of BB2
-    // and the second load instruction...
-    //
-    if (AA->canInstructionRangeModify(BB2->front(), *L2, LoadAddress))
-      return false;   // Cannot eliminate load
-
-    // Do a depth first traversal of the inverse CFG starting at L2's block,
-    // looking for L1's block.  The inverse CFG is made up of the predecessor
-    // nodes of a block... so all of the edges in the graph are "backward".
-    //
-    set<BasicBlock*> VisitedSet;
-    for (pred_iterator PI = pred_begin(BB2), PE = pred_end(BB2); PI != PE; ++PI)
-      if (CheckForInvalidatingInst(*PI, BB1, LoadAddress, VisitedSet))
-        return false;
-    
-    ++NumLoadRemoved;
-    return CommonSubExpressionFound(L1, L2);
-  }
-  return false;
-}
-
-// CheckForInvalidatingInst - Return true if BB or any of the predecessors of BB
-// (until DestBB) contain an instruction that might invalidate Ptr.
-//
-bool GCSE::CheckForInvalidatingInst(BasicBlock *BB, BasicBlock *DestBB,
-                                    Value *Ptr, set<BasicBlock*> &VisitedSet) {
-  // Found the termination point!
-  if (BB == DestBB || VisitedSet.count(BB)) return false;
-
-  // Avoid infinite recursion!
-  VisitedSet.insert(BB);
-
-  // Can this basic block modify Ptr?
-  if (AA->canBasicBlockModify(*BB, Ptr))
-    return true;
-
-  // Check all of our predecessor blocks...
-  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
-    if (CheckForInvalidatingInst(*PI, DestBB, Ptr, VisitedSet))
-      return true;
-
-  // None of our predecessor blocks contain a store, and we don't either!
-  return false;
+  return Ret;
 }
