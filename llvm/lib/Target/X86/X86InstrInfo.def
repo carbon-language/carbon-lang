@@ -88,9 +88,11 @@ I(PUSHr32     , "pushl", 0x50,             0, X86II::AddRegFrm | X86II::Void, No
 I(ADDrr8      , "addb",  0x00,             0, X86II::MRMDestReg, NoImpRegs, NoImpRegs)                 // R8  += R8
 I(ADDrr16     , "addw",  0x01,             0, X86II::MRMDestReg | X86II::OpSize, NoImpRegs, NoImpRegs) // R16 += R16
 I(ADDrr32     , "addl",  0x01,             0, X86II::MRMDestReg, NoImpRegs, NoImpRegs)                 // R32 += R32
+I(ADDri32     , "add",   0x81,             0, X86II::MRMS0r, NoImpRegs, NoImpRegs)                     // R32 += imm32
 I(SUBrr8      , "subb",  0x2A,             0, X86II::MRMDestReg, NoImpRegs, NoImpRegs)                 // R8  -= R8
 I(SUBrr16     , "subw",  0x2B,             0, X86II::MRMDestReg | X86II::OpSize, NoImpRegs, NoImpRegs) // R16 -= R16
 I(SUBrr32     , "subl",  0x2B,             0, X86II::MRMDestReg, NoImpRegs, NoImpRegs)                 // R32 -= R32
+I(SUBri32     , "sub",   0x81,             0, X86II::MRMS5r, NoImpRegs, NoImpRegs)                     // R32 -= imm32
 I(MULrr8      , "mulb",  0xF6,             0, X86II::MRMS4r     | X86II::Void, O_AL, O_AX)             // AX   = AL*R8
 I(MULrr16     , "mulw",  0xF7,             0, X86II::MRMS4r     | X86II::Void |                        // DX:AX= AX*R16
                                               X86II::OpSize, O_AX, T_AXDX)
