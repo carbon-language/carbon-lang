@@ -361,8 +361,13 @@ void ExecutionEngine::emitGlobals() {
     } else {
       // External variable reference, try to use dlsym to get a pointer to it in
       // the LLI image.
-      if (void *SymAddr = dlsym(0, I->getName().c_str()))
+#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+      if (void *SymAddr = dlsym(RTLD_SELF, I->getName().c_str()))
         GlobalAddress[I] = SymAddr;
+#else
+      if (void *SymAddr = dlsym(0, I->getName().c_str()))
+        GlobalAddress[I] = SymAddr;      
+#endif
       else {
         std::cerr << "Could not resolve external global address: "
                   << I->getName() << "\n";
