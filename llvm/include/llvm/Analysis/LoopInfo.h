@@ -275,6 +275,11 @@ public:
   /// list with the indicated loop.
   void changeTopLevelLoop(Loop *OldLoop, Loop *NewLoop);
 
+  /// removeBlock - This method completely removes BB from all data structures,
+  /// including all of the Loop objects it is nested in and our mapping from
+  /// BasicBlocks to loops.
+  void removeBlock(BasicBlock *BB);
+
   static void stub();  // Noop
 private:
   void Calculate(const DominatorSet &DS);
