@@ -18,6 +18,7 @@
 #include "Config/fcntl.h"
 #include "Config/sys/wait.h"
 #include "Config/unistd.h"
+#include "Config/config.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -47,8 +48,11 @@ bool llvm::isExecutableFile(const std::string &ExeFileName) {
 /// isStandardOutAConsole - Return true if we can tell that the standard output
 /// stream goes to a terminal window or console.
 bool llvm::isStandardOutAConsole() {
-  // FIXME: if we don't have isatty, just return false.
+#if HAVE_ISATTY
   return isatty(1);
+#endif
+  // If we don't have isatty, just return false.
+  return false;
 }
 
 
