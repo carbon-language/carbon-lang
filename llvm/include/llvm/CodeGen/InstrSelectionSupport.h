@@ -92,6 +92,133 @@ void		Set3OperandsFromInstr	(MachineInstr* minstr,
 					 int resultPosition = 2);
 
 
+//------------------------------------------------------------------------ 
+// Common machine instruction operand combinations
+// to simplify code generation.
+//------------------------------------------------------------------------ 
+
+inline MachineInstr*
+Create1OperandInstr(MachineOpCode opCode, Value* argVal1)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
+  return M;
+}
+
+inline MachineInstr*
+Create2OperandInstr(MachineOpCode opCode, Value* argVal1, Value* argVal2)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
+  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, argVal2);
+  return M;
+}
+
+inline MachineInstr*
+Create2OperandInstr_UImmed(MachineOpCode opCode,
+                           unsigned int unextendedImmed, Value* argVal2)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandConst(0, MachineOperand::MO_UnextendedImmed,
+                               unextendedImmed);
+  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, argVal2);
+  return M;
+}
+
+inline MachineInstr*
+Create2OperandInstr_SImmed(MachineOpCode opCode,
+                           int signExtendedImmed, Value* argVal2)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandConst(0, MachineOperand::MO_SignExtendedImmed,
+                               signExtendedImmed);
+  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, argVal2);
+  return M;
+}
+
+inline MachineInstr*
+Create3OperandInstr(MachineOpCode opCode,
+                    Value* argVal1, MachineOperand::MachineOperandType type1,
+                    Value* argVal2, MachineOperand::MachineOperandType type2,
+                    Value* argVal3, MachineOperand::MachineOperandType type3)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandVal(0, type1, argVal1);
+  M->SetMachineOperandVal(1, type2, argVal2);
+  M->SetMachineOperandVal(2, type3, argVal3);
+  return M;
+}
+
+inline MachineInstr*
+Create3OperandInstr(MachineOpCode opCode, Value* argVal1,
+                    Value* argVal2, Value* argVal3)
+{
+  return Create3OperandInstr(opCode,
+                             argVal1, MachineOperand::MO_VirtualRegister, 
+                             argVal2, MachineOperand::MO_VirtualRegister, 
+                             argVal3, MachineOperand::MO_VirtualRegister); 
+}
+
+inline MachineInstr*
+Create3OperandInstr_UImmed(MachineOpCode opCode, Value* argVal1,
+                           unsigned int unextendedImmed, Value* argVal3)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
+  M->SetMachineOperandConst(1, MachineOperand::MO_UnextendedImmed,
+                                 unextendedImmed);
+  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, argVal3);
+  return M;
+}
+
+inline MachineInstr*
+Create3OperandInstr_SImmed(MachineOpCode opCode, Value* argVal1,
+                           int signExtendedImmed, Value* argVal3)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
+  M->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
+                                 signExtendedImmed);
+  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, argVal3);
+  return M;
+}
+
+inline MachineInstr*
+Create3OperandInstr_Reg(MachineOpCode opCode, Value* argVal1,
+                        unsigned int regNum, Value* argVal3)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
+  M->SetMachineOperandReg(1, regNum);
+  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, argVal3);
+  return M;
+}
+
+inline MachineInstr*
+Create3OperandInstr_Reg(MachineOpCode opCode, unsigned int regNum1,
+                        unsigned int regNum2, Value* argVal3)
+                 
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandReg(0, regNum1);
+  M->SetMachineOperandReg(1, regNum2);
+  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, argVal3);
+  return M;
+}
+
+inline MachineInstr*
+Create3OperandInstr_Reg(MachineOpCode opCode, unsigned int regNum1,
+                        unsigned int regNum2, unsigned int regNum3)
+                 
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandReg(0, regNum1);
+  M->SetMachineOperandReg(1, regNum2);
+  M->SetMachineOperandReg(2, regNum3);
+  return M;
+}
+
+
 //---------------------------------------------------------------------------
 // Function: ChooseRegOrImmed
 // 
