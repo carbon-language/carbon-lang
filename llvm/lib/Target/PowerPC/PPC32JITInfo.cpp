@@ -34,16 +34,6 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 #define BUILD_MTCTR(RS)        BUILD_MTSPR(RS,9)
 #define BUILD_BCTR(LINK)       BUILD_BCCTRx(20,0,LINK)
 
-static void CompilationCallback() {
-  //JITCompilerFunction
-  assert(0 && "CompilationCallback not implemented yet!");
-}
-
-
-TargetJITInfo::LazyResolverFn 
-PPC32JITInfo::getLazyResolverFunction(JITCompilerFn Fn) {
-  return CompilationCallback;
-}
 
 static void EmitBranchToAt(void *At, void *To, bool isCall) {
   intptr_t Addr = (intptr_t)To;
@@ -55,6 +45,60 @@ static void EmitBranchToAt(void *At, void *To, bool isCall) {
   AtI[1] = BUILD_ORI(12, 12, Addr);     // ori r12, r12, low16(address)
   AtI[2] = BUILD_MTCTR(12);             // mtctr r12
   AtI[3] = BUILD_BCTR(isCall);          // bctr/bctrl
+}
+
+static void CompilationCallback() {
+  // FIXME: Should save R3-R10 and F1-F13 onto the stack, just like the Sparc
+  // version does.
+  //int IntRegs[8];
+  //uint64_t FPRegs[13];
+  unsigned *CameFromStub = (unsigned*)__builtin_return_address(0);
+  unsigned *CameFromOrig = (unsigned*)__builtin_return_address(1);
+
+  // Adjust our pointers to the branches, not the return addresses.
+  --CameFromStub; --CameFromOrig;
+
+  void *Target = JITCompilerFunction(CameFromStub);
+
+  // Check to see if CameFromOrig[-1] is a 'bl' instruction, and if we can
+  // rewrite it to branch directly to the destination.  If so, rewrite it so it
+  // does not need to go through the stub anymore.
+  unsigned CameFromOrigInst = *CameFromOrig;
+  if ((CameFromOrigInst >> 26) == 18) {     // Direct call.
+    intptr_t Offset = ((intptr_t)Target-(intptr_t)CameFromOrig) >> 2;
+    if (Offset >= -(1 << 23) && Offset < (1 << 23)) {   // In range?
+      // FIXME: hasn't been tested at all.
+      // Clear the original target out:
+      CameFromOrigInst &= (63 << 26) | 3;
+      CameFromOrigInst |= Offset << 2;
+      *CameFromOrig = CameFromOrigInst;
+    }
+  }
+  
+  // Locate the start of the stub.  If this is a short call, adjust backwards
+  // the short amount, otherwise the full amount.
+  bool isShortStub = (*CameFromStub >> 26) == 18;
+  CameFromStub -= isShortStub ? 3 : 7;
+
+  // Rewrite the stub with an unconditional branch to the target, for any users
+  // who took the address of the stub.
+  EmitBranchToAt(CameFromStub, Target, false);
+
+
+  // FIXME: Need to restore the registers from IntRegs/FPRegs.
+
+  // FIXME: Need to pop two frames off of the stack and return to a place where
+  // we magically reexecute the call, or jump directly to the caller.  This
+  // requires inline asm majik.
+  assert(0 && "CompilationCallback not finished yet!");
+}
+
+
+
+TargetJITInfo::LazyResolverFn 
+PPC32JITInfo::getLazyResolverFunction(JITCompilerFn Fn) {
+  JITCompilerFunction = Fn;
+  return CompilationCallback;
 }
 
 void *PPC32JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
