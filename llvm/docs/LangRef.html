@@ -1,4 +1,5 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
   <title>LLVM Assembly Language Reference Manual</title>
@@ -255,12 +256,12 @@ href="#rw_stroustrup">1</a></sup>.<p> --> </div>
 <div class="doc_text">
 <p>The primitive types are the fundemental building blocks of the LLVM
 system. The current set of primitive types are as follows:</p>
-<p>
-<table border="0" align="center">
+
+<table border="0" style="align: center">
   <tbody>
     <tr>
       <td>
-      <table border="1" cellspacing="0" cellpadding="4" align="center">
+      <table border="1" cellspacing="0" cellpadding="4" style="align: center">
         <tbody>
           <tr>
             <td><tt>void</tt></td>
@@ -294,7 +295,7 @@ system. The current set of primitive types are as follows:</p>
       </table>
       </td>
       <td valign="top">
-      <table border="1" cellspacing="0" cellpadding="4" align="center&quot;">
+      <table border="1" cellspacing="0" cellpadding="4">
         <tbody>
           <tr>
             <td><tt>bool</tt></td>
@@ -326,7 +327,7 @@ system. The current set of primitive types are as follows:</p>
     </tr>
   </tbody>
 </table>
-</p>
+
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_classifications">Type
@@ -334,8 +335,8 @@ Classifications</a> </div>
 <div class="doc_text">
 <p>These different primitive types fall into a few useful
 classifications:</p>
-<p>
-<table border="1" cellspacing="0" cellpadding="4" align="center">
+
+<table border="1" cellspacing="0" cellpadding="4">
   <tbody>
     <tr>
       <td><a name="t_signed">signed</a></td>
@@ -364,7 +365,7 @@ uint, int, ulong, long, float, double, <a href="#t_pointer">pointer</a></tt></td
     </tr>
   </tbody>
 </table>
-</p>
+
 <p>The <a href="#t_firstclass">first class</a> types are perhaps the
 most important.  Values of these types are the only ones which can be
 produced by instructions, passed as arguments, or used as operands to
@@ -396,7 +397,7 @@ be any type with a size.</p>
 <tt>[40 x uint]</tt>: Array of 40 unsigned integer values.</p>
 <p> </p>
 <p>Here are some examples of multidimensional arrays:</p>
-<p>
+
 <table border="0" cellpadding="0" cellspacing="0">
   <tbody>
     <tr>
@@ -413,7 +414,7 @@ be any type with a size.</p>
     </tr>
   </tbody>
 </table>
-</p>
+
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_function">Function Type</a> </div>
@@ -435,7 +436,7 @@ which indicates that the function takes a variable number of arguments.
 Variable argument functions can access their arguments with the <a
  href="#int_varargs">variable argument handling intrinsic</a> functions.</p>
 <h5>Examples:</h5>
-<p>
+
 <table border="0" cellpadding="0" cellspacing="0">
   <tbody>
     <tr>
@@ -457,7 +458,7 @@ in LLVM.</td>
     </tr>
   </tbody>
 </table>
-</p>
+
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_struct">Structure Type</a> </div>
@@ -474,7 +475,7 @@ instruction.</p>
 <h5>Syntax:</h5>
 <pre>  { &lt;type list&gt; }<br></pre>
 <h5>Examples:</h5>
-<p>
+
 <table border="0" cellpadding="0" cellspacing="0">
   <tbody>
     <tr>
@@ -490,7 +491,7 @@ an <tt>int</tt>.</td>
     </tr>
   </tbody>
 </table>
-</p>
+
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_pointer">Pointer Type</a> </div>
@@ -501,7 +502,7 @@ reference to another object, which must live in memory.</p>
 <h5>Syntax:</h5>
 <pre>  &lt;type&gt; *<br></pre>
 <h5>Examples:</h5>
-<p>
+
 <table border="0" cellpadding="0" cellspacing="0">
   <tbody>
     <tr>
@@ -517,7 +518,7 @@ an <tt>int</tt>.</td>
     </tr>
   </tbody>
 </table>
-</p>
+
 </div>
 <!-- _______________________________________________________________________ --><!--
 <div class="doc_subsubsection">
@@ -572,7 +573,7 @@ this case, a pointer to an array of char, and a pointer to a function),
 and have one of the following linkage types:</a>
 <p> </p>
 <dl>
-  <a name="linkage_internal"> <dt><tt><b>internal</b></tt> </dt>
+  <dt><tt><b><a name="linkage_internal">internal</a></b></tt> </dt>
   <dd>Global values with internal linkage are only directly accessible
 by objects in the current module.  In particular, linking code into a
 module with an internal global value may cause the internal to be
@@ -582,7 +583,7 @@ corresponds to the notion of the '<tt>static</tt>' keyword in C, or the
 idea of "anonymous namespaces" in C++.
     <p> </p>
   </dd>
-  </a><a name="linkage_linkonce"> <dt><tt><b>linkonce</b></tt>: </dt>
+  <dt><tt><b><a name="linkage_linkonce">linkonce</a></b></tt>: </dt>
   <dd>"<tt>linkonce</tt>" linkage is similar to <tt>internal</tt>
 linkage, with the twist that linking together two modules defining the
 same <tt>linkonce</tt> globals will cause one of the globals to be
@@ -590,14 +591,14 @@ discarded.  This is typically used to implement inline functions.
 Unreferenced <tt>linkonce</tt> globals are allowed to be discarded.
     <p> </p>
   </dd>
-  </a><a name="linkage_weak"> <dt><tt><b>weak</b></tt>: </dt>
+  <dt><tt><b><a name="linkage_weak">weak</a></b></tt>: </dt>
   <dd>"<tt>weak</tt>" linkage is exactly the same as <tt>linkonce</tt>
 linkage, except that unreferenced <tt>weak</tt> globals may not be
 discarded.  This is used to implement constructs in C such as "<tt>int
 X;</tt>" at global scope.
     <p> </p>
   </dd>
-  </a><a name="linkage_appending"> <dt><tt><b>appending</b></tt>: </dt>
+  <dt><tt><b><a name="linkage_appending">appending</a></b></tt>: </dt>
   <dd>"<tt>appending</tt>" linkage may only be applied to global
 variables of pointer to array type.  When two global variables with
 appending linkage are linked together, the two global arrays are
@@ -606,13 +607,12 @@ the system linker append together "sections" with identical names when
 .o files are linked.
     <p> </p>
   </dd>
-  </a><a name="linkage_external"> <dt><tt><b>externally visible</b></tt>:</dt>
+  <dt><tt><b><a name="linkage_external">externally visible</a></b></tt>:</dt>
   <dd>If none of the above identifiers are used, the global is
 externally visible, meaning that it participates in linkage and can be
 used to resolve external symbol references.
     <p> </p>
   </dd>
-  </a>
 </dl>
 <p> </p>
 <p><a name="linkage_external">For example, since the "<tt>.LC0</tt>"
@@ -1066,7 +1066,7 @@ identical types.</p>
 <h5>Semantics:</h5>
 <p>The truth table used for the '<tt>and</tt>' instruction is:</p>
 <p> </p>
-<center>
+<div style="align: center">
 <table border="1" cellspacing="0" cellpadding="4">
   <tbody>
     <tr>
@@ -1096,7 +1096,7 @@ identical types.</p>
     </tr>
   </tbody>
 </table>
-</center>
+</div>
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = and int 4, %var         <i>; yields {int}:result = 4 &amp; %var</i>
   &lt;result&gt; = and int 15, 40          <i>; yields {int}:result = 8</i>
@@ -1119,7 +1119,7 @@ identical types.</p>
 <h5>Semantics:</h5>
 <p>The truth table used for the '<tt>or</tt>' instruction is:</p>
 <p> </p>
-<center>
+<div style="align: center">
 <table border="1" cellspacing="0" cellpadding="4">
   <tbody>
     <tr>
@@ -1149,7 +1149,7 @@ identical types.</p>
     </tr>
   </tbody>
 </table>
-</center>
+</div>
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = or int 4, %var         <i>; yields {int}:result = 4 | %var</i>
   &lt;result&gt; = or int 15, 40          <i>; yields {int}:result = 47</i>
@@ -1174,7 +1174,7 @@ identical types.</p>
 <h5>Semantics:</h5>
 <p>The truth table used for the '<tt>xor</tt>' instruction is:</p>
 <p> </p>
-<center>
+<div style="align: center">
 <table border="1" cellspacing="0" cellpadding="4">
   <tbody>
     <tr>
@@ -1204,7 +1204,7 @@ identical types.</p>
     </tr>
   </tbody>
 </table>
-</center>
+</div>
 <p> </p>
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = xor int 4, %var         <i>; yields {int}:result = 4 ^ %var</i>
@@ -2050,9 +2050,15 @@ Debugging</a> document.
 
 <!-- *********************************************************************** -->
 <hr>
-<div class="doc_footer">
-<address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
-<a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a> <br>
-Last modified: $Date$ </div>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!" /></a>
+
+  <a href="mailto:sabre@nondot.org">Chris Lattner</a><br>
+  <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date$
+</address>
 </body>
 </html>
