@@ -298,10 +298,10 @@ void BytecodeParser::parseStringConstants(const unsigned char *&Buf,
     std::vector<Constant*> Elements(ATy->getNumElements());
     if (ATy->getElementType() == Type::SByteTy)
       for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
-        Elements[i] = ConstantSInt::get(Type::SByteTy, Data[i]);
+        Elements[i] = ConstantSInt::get(Type::SByteTy, (signed char)Data[i]);
     else
       for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
-        Elements[i] = ConstantUInt::get(Type::UByteTy, Data[i]);
+        Elements[i] = ConstantUInt::get(Type::UByteTy, (unsigned char)Data[i]);
 
     // Create the constant, inserting it as needed.
     Constant *C = ConstantArray::get(ATy, Elements);
