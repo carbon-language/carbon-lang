@@ -45,13 +45,23 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
     // Check to see if this type name is already in the dest module...
     const Type *Entry = cast_or_null<Type>(DestST->lookup(Type::TypeTy, Name));
     if (Entry && !isa<OpaqueType>(Entry)) {  // Yup, the value already exists...
-      if (Entry != RHS && !isa<OpaqueType>(RHS))
-        // If it's the same, noop.  Otherwise, error.
-        return Error(Err, "Type named '" + Name + 
-                     "' of different shape in modules.\n  Src='" + 
-                     Entry->getDescription() + "'.\n  Dst='" + 
-                     RHS->getDescription() + "'");
+      if (Entry != RHS) {
+        if (OpaqueType *OT = dyn_cast<OpaqueType>(const_cast<Type*>(RHS))) {
+          OT->refineAbstractTypeTo(Entry);
+        } else {
+          // If it's the same, noop.  Otherwise, error.
+          return Error(Err, "Type named '" + Name + 
+                       "' of different shape in modules.\n  Src='" + 
+                       Entry->getDescription() + "'.\n  Dst='" + 
+                       RHS->getDescription() + "'");
+        }
+      }
     } else {                       // Type not in dest module.  Add it now.
+      if (Entry) {
+        OpaqueType *OT = cast<OpaqueType>(const_cast<Type*>(Entry));
+        OT->refineAbstractTypeTo(RHS);
+      }
+
       // TODO: FIXME WHEN TYPES AREN'T CONST
       DestST->insert(Name, const_cast<Type*>(RHS));
     }
@@ -236,7 +246,7 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
     if (SGV->hasInitializer()) {      // Only process initialized GV's
       // Figure out what the initializer looks like in the dest module...
       Constant *DInit =
-        cast<Constant>(RemapOperand(SGV->getInitializer(), ValueMap));
+        cast<Constant>(RemapOperand(SGV->getInitializer(), ValueMap, 0));
 
       GlobalVariable *DGV = cast<GlobalVariable>(ValueMap[SGV]);    
       if (DGV->hasInitializer() && SGV->hasExternalLinkage() &&
