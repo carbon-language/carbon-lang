@@ -1496,16 +1496,7 @@ void PPC32ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
 
     // If this is a simple constant, just emit a load directly to avoid the copy
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
-      int TheVal = CI->getRawValue() & 0xFFFFFFFF;
-
-      if (TheVal < 32768 && TheVal >= -32768) {
-        BuildMI(BB, PPC::LI, 1, targetReg).addSImm(TheVal);
-      } else {
-        unsigned TmpReg = makeAnotherReg(Type::IntTy);
-        BuildMI(BB, PPC::LIS, 1, TmpReg).addSImm(TheVal >> 16);
-        BuildMI(BB, PPC::ORI, 2, targetReg).addReg(TmpReg)
-          .addImm(TheVal & 0xFFFF);
-      }
+      copyConstantToRegister(BB, BB->end(), CI, targetReg);
       return;
     }
   }
@@ -3330,10 +3321,11 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
     }
     
     // Make sure we're dealing with a full 32 bits
-    unsigned TmpReg = makeAnotherReg(Type::IntTy);
-    promote32(TmpReg, ValueRecord(SrcReg, SrcTy));
-
-    SrcReg = TmpReg;
+    if (SrcClass < cInt) {
+      unsigned TmpReg = makeAnotherReg(Type::IntTy);
+      promote32(TmpReg, ValueRecord(SrcReg, SrcTy));
+      SrcReg = TmpReg;
+    }
     
     // Spill the integer to memory and reload it from there.
     // Also spill room for a special conversion constant
@@ -3499,15 +3491,9 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
   if (sourceUnsigned && destUnsigned) {
     // handle long dest class now to keep switch clean
     if (DestClass == cLong) {
-      if (SrcClass == cLong) {
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg+1)
-          .addReg(SrcReg+1);
-      } else {
-        BuildMI(*MBB, IP, PPC::LI, 1, DestReg).addSImm(0);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
-          .addReg(SrcReg);
-      }
+      BuildMI(*MBB, IP, PPC::LI, 1, DestReg).addSImm(0);
+      BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
+        .addReg(SrcReg);
       return;
     }
 
@@ -3516,21 +3502,15 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
     switch (SrcClass) {
     case cByte:
     case cShort:
-      if (SrcClass == DestClass)
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-      else
-        BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
-          .addImm(0).addImm(clearBits).addImm(31);
+      BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
+        .addImm(0).addImm(clearBits).addImm(31);
       break;
     case cLong:
       ++SrcReg;
       // Fall through
     case cInt:
-      if (DestClass == cInt)
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-      else
-        BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
-          .addImm(0).addImm(clearBits).addImm(31);
+      BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
+        .addImm(0).addImm(clearBits).addImm(31);
       break;
     }
     return;
@@ -3540,15 +3520,9 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
   if (!sourceUnsigned && !destUnsigned) {
     // handle long dest class now to keep switch clean
     if (DestClass == cLong) {
-      if (SrcClass == cLong) {
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg+1)
-          .addReg(SrcReg+1);
-      } else {
-        BuildMI(*MBB, IP, PPC::SRAWI, 2, DestReg).addReg(SrcReg).addImm(31);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
-          .addReg(SrcReg);
-      }
+      BuildMI(*MBB, IP, PPC::SRAWI, 2, DestReg).addReg(SrcReg).addImm(31);
+      BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
+        .addReg(SrcReg);
       return;
     }
 
@@ -3582,15 +3556,9 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
   if (sourceUnsigned && !destUnsigned) {
     // handle long dest class now to keep switch clean
     if (DestClass == cLong) {
-      if (SrcClass == cLong) {
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg+1).
-          addReg(SrcReg+1);
-      } else {
-        BuildMI(*MBB, IP, PPC::LI, 1, DestReg).addSImm(0);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
-          .addReg(SrcReg);
-      }
+      BuildMI(*MBB, IP, PPC::LI, 1, DestReg).addSImm(0);
+      BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
+        .addReg(SrcReg);
       return;
     }
 
@@ -3627,15 +3595,9 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
   if (!sourceUnsigned && destUnsigned) {
     // handle long dest class now to keep switch clean
     if (DestClass == cLong) {
-      if (SrcClass == cLong) {
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg+1)
-          .addReg(SrcReg+1);
-      } else {
-        BuildMI(*MBB, IP, PPC::SRAWI, 2, DestReg).addReg(SrcReg).addImm(31);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
-          .addReg(SrcReg);
-      }
+      BuildMI(*MBB, IP, PPC::SRAWI, 2, DestReg).addReg(SrcReg).addImm(31);
+      BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
+        .addReg(SrcReg);
       return;
     }
 
@@ -3817,10 +3779,23 @@ void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
       cgo_e = ops.end(); cgo_i != cgo_e; ++cgo_i) {
     CollapsedGepOp& cgo = *cgo_i;
 
-    unsigned TmpReg1 = makeAnotherReg(Type::IntTy);
-    unsigned TmpReg2 = makeAnotherReg(Type::IntTy);
-    doMultiplyConst(MBB, IP, TmpReg1, cgo.index, cgo.size);
-    emitBinaryConstOperation(MBB, IP, TmpReg1, cgo.offset, 0, TmpReg2);
+    // Avoid emitting known move instructions here for the register allocator
+    // to deal with later.  val * 1 == val.  val + 0 == val.
+    unsigned TmpReg1;
+    if (cgo.size->getValue() == 1) {
+      TmpReg1 = getReg(cgo.index, MBB, IP);
+    } else {
+      TmpReg1 = makeAnotherReg(Type::IntTy);
+      doMultiplyConst(MBB, IP, TmpReg1, cgo.index, cgo.size);
+    }
+    
+    unsigned TmpReg2;
+    if (cgo.offset->isNullValue()) { 
+      TmpReg2 = TmpReg1;
+    } else {
+      TmpReg2 = makeAnotherReg(Type::IntTy);
+      emitBinaryConstOperation(MBB, IP, TmpReg1, cgo.offset, 0, TmpReg2);
+    }
     
     if (indexReg == 0)
       indexReg = TmpReg2;
