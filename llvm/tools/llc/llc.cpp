@@ -7,7 +7,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Transforms/Instrumentation/TraceValues.h"
+#include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Linker.h"
 #include "llvm/Assembly/PrintModulePass.h"
