@@ -47,18 +47,17 @@ ExecutionEngine::~ExecutionEngine() {
 /// NULL is returned. 
 ///
 ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP, 
-                                         bool ForceInterpreter,
-                                         bool TraceMode) {
+                                         bool ForceInterpreter) {
   ExecutionEngine *EE = 0;
 
-  // If there is nothing that is forcing us to use the interpreter, make a JIT.
-  if (!ForceInterpreter && !TraceMode)
+  // Unless the interpreter was explicitly selected, make a JIT.
+  if (!ForceInterpreter)
     EE = VM::create(MP);
 
   // If we can't make a JIT, make an interpreter instead.
   try {
     if (EE == 0)
-      EE = Interpreter::create(MP->materializeModule(), TraceMode);
+      EE = Interpreter::create(MP->materializeModule());
   } catch (...) {
     EE = 0;
   }
