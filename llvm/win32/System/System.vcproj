@@ -4,6 +4,7 @@
 	Version="7.10"
 	Name="System"
 	ProjectGUID="{0F8407F3-FA23-4CF1-83A9-DCBE0B361489}"
+	RootNamespace="System"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -42,7 +43,16 @@
 				Name="VCPostBuildEventTool"/>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="xcopy /I /Y ..\..\lib\System\Win32 ..\..\lib\System\platform"/>
+				CommandLine="if not exist ..\..\lib\System\platform\DynamicLibrary.cpp echo #include &quot;../win32/DynamicLibrary.cpp&quot;  &gt;..\..\lib\System\platform\DynamicLibrary.cpp
+if not exist ..\..\lib\System\platform\MappedFile.cpp echo #include &quot;../win32/MappedFile.cpp&quot;  &gt;..\..\lib\System\platform\MappedFile.cpp
+if not exist ..\..\lib\System\platform\Memory.cpp echo #include &quot;../win32/Memory.cpp&quot;  &gt;..\..\lib\System\platform\Memory.cpp
+if not exist ..\..\lib\System\platform\Path.cpp echo #include &quot;../win32/Path.cpp&quot;  &gt;..\..\lib\System\platform\Path.cpp
+if not exist ..\..\lib\System\platform\Process.cpp echo #include &quot;../win32/Process.cpp&quot;  &gt;..\..\lib\System\platform\Process.cpp
+if not exist ..\..\lib\System\platform\Program.cpp echo #include &quot;../win32/Program.cpp&quot;  &gt;..\..\lib\System\platform\Program.cpp
+if not exist ..\..\lib\System\platform\Signals.cpp echo #include &quot;../win32/Signals.cpp&quot;  &gt;..\..\lib\System\platform\Signals.cpp
+if not exist ..\..\lib\System\platform\SysConfig.cpp echo #include &quot;../win32/SysConfig.cpp&quot;  &gt;..\..\lib\System\platform\SysConfig.cpp
+if not exist ..\..\lib\System\platform\TimeValue.cpp echo #include &quot;../win32/TimeValue.cpp&quot;  &gt;..\..\lib\System\platform\TimeValue.cpp
+"/>
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
@@ -84,7 +94,17 @@
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCPreBuildEventTool"
+				CommandLine="if not exist ..\..\lib\System\platform\DynamicLibrary.cpp echo #include &quot;../win32/DynamicLibrary.cpp&quot;  &gt;..\..\lib\System\platform\DynamicLibrary.cpp
+if not exist ..\..\lib\System\platform\MappedFile.cpp echo #include &quot;../win32/MappedFile.cpp&quot;  &gt;..\..\lib\System\platform\MappedFile.cpp
+if not exist ..\..\lib\System\platform\Memory.cpp echo #include &quot;../win32/Memory.cpp&quot;  &gt;..\..\lib\System\platform\Memory.cpp
+if not exist ..\..\lib\System\platform\Path.cpp echo #include &quot;../win32/Path.cpp&quot;  &gt;..\..\lib\System\platform\Path.cpp
+if not exist ..\..\lib\System\platform\Process.cpp echo #include &quot;../win32/Process.cpp&quot;  &gt;..\..\lib\System\platform\Process.cpp
+if not exist ..\..\lib\System\platform\Program.cpp echo #include &quot;../win32/Program.cpp&quot;  &gt;..\..\lib\System\platform\Program.cpp
+if not exist ..\..\lib\System\platform\Signals.cpp echo #include &quot;../win32/Signals.cpp&quot;  &gt;..\..\lib\System\platform\Signals.cpp
+if not exist ..\..\lib\System\platform\SysConfig.cpp echo #include &quot;../win32/SysConfig.cpp&quot;  &gt;..\..\lib\System\platform\SysConfig.cpp
+if not exist ..\..\lib\System\platform\TimeValue.cpp echo #include &quot;../win32/TimeValue.cpp&quot;  &gt;..\..\lib\System\platform\TimeValue.cpp
+"/>
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
