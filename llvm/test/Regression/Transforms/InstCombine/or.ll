@@ -30,43 +30,43 @@ bool %test4(bool %A) {
 	ret bool %B
 }
 
-bool %test9(bool %A) {
+bool %test5(bool %A) {
 	%B = or bool %A, %A
 	ret bool %B
 }
 
-int %test10(int %A) {
+int %test6(int %A) {
 	%B = or int %A, %A
 	ret int %B
 }
 
-int %test12(int %A) {    ; A | ~A == -1
+int %test7(int %A) {    ; A | ~A == -1
         %NotA = xor int -1, %A
         %B = or int %A, %NotA
         ret int %B
 }
 
-ubyte %test14(ubyte %A) {
+ubyte %test8(ubyte %A) {
 	%B = or ubyte %A, 254
 	%C = or ubyte %B, 1
 	ret ubyte %C
 }
 
-ubyte %test17(ubyte %A, ubyte %B) {  ; Test that (A|c1)|(B|c2) == (A|B)|(c1|c2)
+ubyte %test9(ubyte %A, ubyte %B) {  ; Test that (A|c1)|(B|c2) == (A|B)|(c1|c2)
 	%C = or ubyte %A, 1
 	%D = or ubyte %B, 254
 	%E = or ubyte %C, %D
 	ret ubyte %E
 }
 
-ubyte %test21(ubyte %A) {
+ubyte %test10(ubyte %A) {
 	%B = or ubyte %A, 1
 	%C = and ubyte %B, 254
 	%D = or ubyte %C, 254  ; (X & C1) | C2 --> (X | C2) & (C1|C2)
 	ret ubyte %D
 }
 
-ubyte %test22(ubyte %A) {
+ubyte %test11(ubyte %A) {
 	%B = or ubyte %A, 254
 	%C = xor ubyte %B, 13
 	%D = or ubyte %C, 1    ; (X ^ C1) | C2 --> (X | C2) ^ (C1&~C2)
@@ -74,13 +74,13 @@ ubyte %test22(ubyte %A) {
 	ret ubyte %E
 }
 
-uint %test23(uint %A) {
+uint %test12(uint %A) {
 	%B = or uint %A, 4     ; Should be eliminated
 	%C = and uint %B, 8
 	ret uint %C
 }
 
-uint %test24(uint %A) {
+uint %test13(uint %A) {
 	%B = or uint %A, 12
 	%C = and uint %B, 8    ; Always equal to 8
 	ret uint %C 
