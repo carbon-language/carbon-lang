@@ -20,7 +20,7 @@
 # Define the various target sets
 #--------------------------------------------------------------------
 RecursiveTargets := all clean clean-all install uninstall install-bytecode
-LocalTargets     := all-local clean-local clean-all-local check-local \
+LocalTargets     := all-local clean-local clean-all-local \
                     install-local printvars uninstall-local \
 		    install-bytecode-local
 TopLevelTargets  := dist dist-check dist-clean tags dist-gzip dist-bzip2 \
@@ -131,12 +131,10 @@ endif
 $(UserTargets):: $(PreConditions)
 
 all:: all-local
-check:: check-local
 clean:: clean-local 
 clean-all:: clean-local clean-all-local
 install:: install-local
 uninstall:: uninstall-local
-check-local:: all-local
 install-local:: all-local 
 install-bytecode:: install-bytecode-local
 
@@ -1075,7 +1073,7 @@ dist dist-check dist-clean dist-gzip dist-bzip2 dist-zip ::
 DistCheckTop := 
 else
 
-DistCheckTop := check
+DistCheckTop := 
 
 #------------------------------------------------------------------------
 # Prevent catastrophic remove
