@@ -12,6 +12,18 @@
 #include "Config/sys/mman.h"
 
 namespace {
+  /// FDHandle - Simple handle class to make sure a file descriptor gets closed
+  /// when the object is destroyed.
+  ///
+  class FDHandle {
+    int FD;
+  public:
+    FDHandle(int fd) : FD(fd) {}
+    operator int() const { return FD; }
+    ~FDHandle() {
+      if (FD != -1) close(FD);
+    }
+  };
 
   /// BytecodeFileReader - parses a bytecode file from a file
   ///
@@ -27,34 +39,6 @@ namespace {
     BytecodeFileReader(const std::string &Filename);
     ~BytecodeFileReader();
 
-  };
-
-  /// BytecodeStdinReader - parses a bytecode file from stdin
-  /// 
-  class BytecodeStdinReader : public BytecodeParser {
-  private:
-    std::vector<unsigned char> FileData;
-    unsigned char *FileBuf;
-
-    BytecodeStdinReader(const BytecodeStdinReader&); // Do not implement
-    void operator=(const BytecodeStdinReader &BFR);  // Do not implement
-
-  public:
-    BytecodeStdinReader();
-    ~BytecodeStdinReader();
-  };
-
-  /// FDHandle - Simple handle class to make sure a file descriptor gets closed
-  /// when the object is destroyed.
-  ///
-  class FDHandle {
-    int FD;
-  public:
-    FDHandle(int fd) : FD(fd) {}
-    operator int() const { return FD; }
-    ~FDHandle() {
-      if (FD != -1) close(FD);
-    }
   };
 }
 
@@ -84,6 +68,72 @@ BytecodeFileReader::~BytecodeFileReader() {
   munmap((char*)Buffer, Length);
 }
 
+////////////////////////////////////////////////////////////////////////////
+
+namespace {
+  /// BytecodeBufferReader - parses a bytecode file from a buffer
+  ///
+  class BytecodeBufferReader : public BytecodeParser {
+  private:
+    const unsigned char *Buffer;
+    int Length;
+    bool MustDelete;
+
+    BytecodeBufferReader(const BytecodeBufferReader&); // Do not implement
+    void operator=(const BytecodeBufferReader &BFR);   // Do not implement
+
+  public:
+    BytecodeBufferReader(const unsigned char *Buf, unsigned Length,
+                         const std::string &ModuleID);
+    ~BytecodeBufferReader();
+
+  };
+}
+
+BytecodeBufferReader::BytecodeBufferReader(const unsigned char *Buf,
+                                           unsigned Len,
+                                           const std::string &ModuleID)
+{
+  // If not aligned, allocate a new buffer to hold the bytecode...
+  const unsigned char *ParseBegin = 0;
+  unsigned Offset = 0;
+  if ((intptr_t)Buf & 3) {
+    Length = Len+4;
+    Buffer = new unsigned char[Length];
+    Offset = 4 - ((intptr_t)Buf & 3);   // Make sure it's aligned
+    ParseBegin = Buffer + Offset;
+    memcpy((unsigned char*)ParseBegin, Buf, Len);    // Copy it over
+    MustDelete = true;
+  } else {
+    // If we don't need to copy it over, just use the caller's copy
+    Buffer = Buf;
+    Length = Len;
+    MustDelete = false;
+  }
+  ParseBytecode(ParseBegin, Len, ModuleID);
+}
+
+BytecodeBufferReader::~BytecodeBufferReader() {
+  if (MustDelete) delete [] Buffer;
+}
+
+
+namespace {
+  /// BytecodeStdinReader - parses a bytecode file from stdin
+  /// 
+  class BytecodeStdinReader : public BytecodeParser {
+  private:
+    std::vector<unsigned char> FileData;
+    unsigned char *FileBuf;
+
+    BytecodeStdinReader(const BytecodeStdinReader&); // Do not implement
+    void operator=(const BytecodeStdinReader &BFR);  // Do not implement
+
+  public:
+    BytecodeStdinReader();
+    ~BytecodeStdinReader();
+  };
+}
 
 #define ALIGN_PTRS 0
 
@@ -95,7 +145,7 @@ BytecodeStdinReader::BytecodeStdinReader() {
   while ((BlockSize = read(0 /*stdin*/, Buffer, 4096*4))) {
     if (BlockSize == -1)
       throw std::string("Error reading from stdin!");
-
+    
     FileData.insert(FileData.end(), Buffer, Buffer+BlockSize);
   }
 
@@ -111,19 +161,6 @@ BytecodeStdinReader::BytecodeStdinReader() {
   FileBuf = &FileData[0];
 #endif
 
-#if 0
-  // Allocate a new buffer to hold the bytecode...
-  unsigned char *ParseBegin=0;
-  unsigned Offset=0;
-  if ((intptr_t)Buffer & 3) {
-    delete [] Buffer;
-    Buffer = new unsigned char[Length+4];
-    Offset = 4-((intptr_t)Buffer & 3);  // Make sure it's aligned
-  }
-  memcpy(Buffer+Offset, Buf, Length);          // Copy it over
-  ParseBegin = Buffer+Offset;
-#endif
-
   ParseBytecode(FileBuf, FileData.size(), "<stdin>");
 }
 
@@ -133,29 +170,37 @@ BytecodeStdinReader::~BytecodeStdinReader() {
 #endif
 }
 
-///
-///
+/////////////////////////////////////////////////////////////////////////////
+//
+// Wrapper functions
+//
+/////////////////////////////////////////////////////////////////////////////
+
+/// getBytecodeBufferModuleProvider - lazy function-at-a-time loading from a
+/// buffer
 AbstractModuleProvider* 
 getBytecodeBufferModuleProvider(const unsigned char *Buffer, unsigned Length,
                                 const std::string &ModuleID) {
-  if (align32(Buffer, Buffer+Length)
-      throw std::string("Unaligned bytecode buffer.");
-  BytecodeParser *Parser = new BytecodeParser();
-  Parser->ParseBytecode(Buffer, Length, ModuleID);
-  return Parser;
+  return new BytecodeBufferReader(Buffer, Length, ModuleID);
 }
 
+/// ParseBytecodeBuffer - Parse a given bytecode buffer
+///
 Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
                             const std::string &ModuleID, std::string *ErrorStr){
-  AbstractModuleProvider *AMP = 
-    getBytecodeBufferModuleProvider(Buffer, Length, ModuleID);
-  Module *M = AMP->releaseModule();
-  delete AMP;
+  Module *M = 0;
+  try {
+    AbstractModuleProvider *AMP = 
+      getBytecodeBufferModuleProvider(Buffer, Length, ModuleID);
+    M = AMP->releaseModule();
+    delete AMP;
+  } catch (std::string &err) {
+    return 0;
+  }
   return M;
 }
 
-
-/// Parse and return a class file...
+/// getBytecodeModuleProvider - lazy function-at-a-time loading from a file
 ///
 AbstractModuleProvider*
 getBytecodeModuleProvider(const std::string &Filename) {
@@ -165,9 +210,16 @@ getBytecodeModuleProvider(const std::string &Filename) {
     return new BytecodeStdinReader();
 }
 
+/// ParseBytecodeFile - Parse the given bytecode file
+///
 Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
-  AbstractModuleProvider *AMP = getBytecodeModuleProvider(Filename);
-  Module *M = AMP->releaseModule();
-  delete AMP;
+  Module *M = 0;
+  try {
+    AbstractModuleProvider *AMP = getBytecodeModuleProvider(Filename);
+    M = AMP->releaseModule();
+    delete AMP;
+  } catch (std::string &err) {
+    return 0;
+  }
   return M;
 }
