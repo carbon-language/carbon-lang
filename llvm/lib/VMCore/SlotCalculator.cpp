@@ -34,8 +34,8 @@ using namespace llvm;
 #define SC_DEBUG(X)
 #endif
 
-SlotCalculator::SlotCalculator(const Module *M, bool IgnoreNamed) {
-  IgnoreNamedNodes = IgnoreNamed;
+SlotCalculator::SlotCalculator(const Module *M, bool buildBytecodeInfo) {
+  BuildBytecodeInfo = buildBytecodeInfo;
   TheModule = M;
 
   // Preload table... Make sure that all of the primitive types are in the table
@@ -51,8 +51,8 @@ SlotCalculator::SlotCalculator(const Module *M, bool IgnoreNamed) {
   processModule();
 }
 
-SlotCalculator::SlotCalculator(const Function *M, bool IgnoreNamed) {
-  IgnoreNamedNodes = IgnoreNamed;
+SlotCalculator::SlotCalculator(const Function *M, bool buildBytecodeInfo) {
+  BuildBytecodeInfo = buildBytecodeInfo;
   TheModule = M ? M->getParent() : 0;
 
   // Preload table... Make sure that all of the primitive types are in the table
@@ -106,7 +106,7 @@ void SlotCalculator::processModule() {
   // constants, which allows us to emit more compact modules.  This is optional,
   // and is just used to compactify the constants used by different functions
   // together.
-  if (!IgnoreNamedNodes) {
+  if (BuildBytecodeInfo) {
     SC_DEBUG("Inserting function constants:\n");
     for (Module::const_iterator F = TheModule->begin(), E = TheModule->end();
          F != E; ++F)
@@ -118,7 +118,7 @@ void SlotCalculator::processModule() {
   // Insert constants that are named at module level into the slot pool so that
   // the module symbol table can refer to them...
   //
-  if (!IgnoreNamedNodes) {
+  if (BuildBytecodeInfo) {
     SC_DEBUG("Inserting SymbolTable values:\n");
     processSymbolTable(&TheModule->getSymbolTable());
   }
@@ -132,7 +132,7 @@ void SlotCalculator::processModule() {
   // all non-value types are pushed to the end of the type table, giving nice
   // low numbers to the types that can be used by instructions, thus reducing
   // the amount of explodage we suffer.
-  if (!IgnoreNamedNodes && Table[Type::TypeTyID].size() >= 64) {
+  if (BuildBytecodeInfo && Table[Type::TypeTyID].size() >= 64) {
     // Scan through the type table moving value types to the start of the table.
     TypePlane *Types = &Table[Type::TypeTyID];
     unsigned FirstNonValueTypeID = 0;
@@ -205,7 +205,7 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   // nonconstant values.  This will be turned into the constant pool for the
   // bytecode writer.
   //
-  if (!IgnoreNamedNodes) {                // Assembly writer does not need this!
+  if (BuildBytecodeInfo) {                // Assembly writer does not need this!
     SC_DEBUG("Inserting function constants:\n";
 	     for (constant_iterator I = constant_begin(F), E = constant_end(F);
 		  I != E; ++I) {
@@ -242,7 +242,7 @@ void SlotCalculator::incorporateFunction(const Function *F) {
         getOrCreateSlot(VAN->getArgType());
     }
 
-  if (!IgnoreNamedNodes) {
+  if (BuildBytecodeInfo) {
     SC_DEBUG("Inserting SymbolTable values:\n");
     processSymbolTable(&F->getSymbolTable());
   }
@@ -327,7 +327,7 @@ int SlotCalculator::insertValue(const Value *D, bool dontIgnore) {
   //
   if (!dontIgnore)                               // Don't ignore nonignorables!
     if (D->getType() == Type::VoidTy ||          // Ignore void type nodes
-	(IgnoreNamedNodes &&                     // Ignore named and constants
+	(!BuildBytecodeInfo &&                   // Ignore named and constants
 	 (D->hasName() || isa<Constant>(D)) && !isa<Type>(D))) {
       SC_DEBUG("ignored value " << *D << "\n");
       return -1;                  // We do need types unconditionally though
@@ -398,7 +398,7 @@ int SlotCalculator::doInsertValue(const Value *D) {
 
   // If this is the first value to get inserted into the type plane, make sure
   // to insert the implicit null value...
-  if (Table[Ty].empty() && Ty >= Type::FirstDerivedTyID && !IgnoreNamedNodes) {
+  if (Table[Ty].empty() && Ty >= Type::FirstDerivedTyID && BuildBytecodeInfo) {
     Value *ZeroInitializer = Constant::getNullValue(Typ);
 
     // If we are pushing zeroinit, it will be handled below.

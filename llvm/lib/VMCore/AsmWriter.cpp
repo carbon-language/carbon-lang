@@ -60,15 +60,15 @@ static const Module *getModuleFromVal(const Value *V) {
 static SlotCalculator *createSlotCalculator(const Value *V) {
   assert(!isa<Type>(V) && "Can't create an SC for a type!");
   if (const Argument *FA = dyn_cast<Argument>(V)) {
-    return new SlotCalculator(FA->getParent(), true);
+    return new SlotCalculator(FA->getParent(), false);
   } else if (const Instruction *I = dyn_cast<Instruction>(V)) {
-    return new SlotCalculator(I->getParent()->getParent(), true);
+    return new SlotCalculator(I->getParent()->getParent(), false);
   } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
-    return new SlotCalculator(BB->getParent(), true);
+    return new SlotCalculator(BB->getParent(), false);
   } else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)){
-    return new SlotCalculator(GV->getParent(), true);
+    return new SlotCalculator(GV->getParent(), false);
   } else if (const Function *Func = dyn_cast<Function>(V)) {
-    return new SlotCalculator(Func, true);
+    return new SlotCalculator(Func, false);
   }
   return 0;
 }
@@ -1037,7 +1037,7 @@ void Value::dump() const { print(std::cerr); }
 void CachedWriter::setModule(const Module *M) {
   delete SC; delete AW;
   if (M) {
-    SC = new SlotCalculator(M, true);
+    SC = new SlotCalculator(M, false);
     AW = new AssemblyWriter(Out, *SC, M, 0);
   } else {
     SC = 0; AW = 0;

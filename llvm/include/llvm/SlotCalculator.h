@@ -32,7 +32,12 @@ class SymbolTable;
 
 class SlotCalculator {
   const Module *TheModule;
-  bool IgnoreNamedNodes;     // Shall we not count named nodes?
+
+  // BuildBytecodeInfo - If true, this is the creating information for the
+  // bytecode writer, if false, we are building information for the assembly
+  // emitter.  The assembly emitter doesn't need named objects numbered, among
+  // other differences.
+  bool BuildBytecodeInfo;
 
   typedef std::vector<const Value*> TypePlane;
   std::vector<TypePlane> Table;
@@ -44,9 +49,9 @@ class SlotCalculator {
   std::vector<unsigned> ModuleLevel;
 
 public:
-  SlotCalculator(const Module *M, bool IgnoreNamed);
+  SlotCalculator(const Module *M, bool BuildBytecodeInfo);
   // Start out in incorp state
-  SlotCalculator(const Function *M, bool IgnoreNamed);
+  SlotCalculator(const Function *M, bool BuildBytecodeInfo);
   inline ~SlotCalculator() {}
   
   // getSlot returns < 0 on error!
