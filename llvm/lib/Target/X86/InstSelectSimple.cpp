@@ -743,9 +743,9 @@ void ISel::InsertFPRegKills() {
     // If we haven't found an FP register use or def in this basic block, check
     // to see if any of our successors has an FP PHI node, which will cause a
     // copy to be inserted into this block.
-    for (succ_const_iterator SI = succ_begin(BB->getBasicBlock()),
-           E = succ_end(BB->getBasicBlock()); SI != E; ++SI) {
-      MachineBasicBlock *SBB = MBBMap[*SI];
+    for (MachineBasicBlock::const_succ_iterator SI = BB->succ_begin(),
+         SE = BB->succ_end(); SI != SE; ++SI) {
+      MachineBasicBlock *SBB = *SI;
       for (MachineBasicBlock::iterator I = SBB->begin();
            I != SBB->end() && I->getOpcode() == X86::PHI; ++I) {
         if (RegMap.getRegClass(I->getOperand(0).getReg())->getSize() == 10)
