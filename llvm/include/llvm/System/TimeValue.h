@@ -85,8 +85,7 @@ namespace sys {
     /// \p nanos argument defaults to zero for convenience.
     /// @brief Explicit constructor 
     explicit TimeValue (SecondsType seconds, NanoSecondsType nanos = 0)
-      : seconds_( seconds )
-      , nanos_( nanos ) { this->normalize(); }
+      : seconds_( seconds ), nanos_( nanos ) { this->normalize(); }
 
     /// Caller provides the exact value as a double in seconds with the
     /// fractional part representing nanoseconds.
@@ -209,7 +208,7 @@ namespace sys {
       return nanos_ / NANOSECONDS_PER_MICROSECOND;
     }
 
-    /// Returns only the fractional portion of the TimeValue rounded down to the 
+    /// Returns only the fractional portion of the TimeValue rounded down to the
     /// nearest millisecond (divide by one million).
     /// @brief Retrieve the fractional part as milliseconds;
     uint32_t milliseconds( void ) const {
