@@ -84,11 +84,11 @@ public:
   /// @returns true iff the element was inserted into the SetVector.
   /// @brief Insert a new element into the SetVector.
   bool insert( const value_type& X ) {
-    std::pair<typename set_type::iterator,bool> insertion_result = set_.insert(X);
-    if ( insertion_result.second ) {
+    bool result = set_.insert(X).second;
+    if ( result ) {
       vector_.push_back(X);
     }
-    return insertion_result.second;
+    return result;
   }
 
   /// @returns 0 if the element is not in the SetVector, 1 if it is.
