@@ -46,7 +46,14 @@ public:
   inline ConstPoolVal *getInitializer() {
     return (ConstPoolVal*)Operands[0].get();
   }
-  inline void setInitializer(ConstPoolVal *CPV) { Operands[0] = (Value*)CPV; }
+  inline void setInitializer(ConstPoolVal *CPV) {
+    if (CPV == 0) {
+      if (hasInitializer()) Operands.pop_back();
+    } else {
+      if (!hasInitializer()) Operands.push_back(Use(0, this));
+      Operands[0] = (Value*)CPV;
+    }
+  }
 
 
   // If the value is a global constant, its value is immutable throughout the

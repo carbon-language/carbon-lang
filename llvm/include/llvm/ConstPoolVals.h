@@ -217,10 +217,7 @@ protected:
   ConstPoolPointer(const PointerType *T);
   ~ConstPoolPointer() {}
 public:
-  static ConstPoolPointer *getNullPointer(const PointerType *T) {
-    // FIXME: These should all be shared!
-    return new ConstPoolPointer(T);
-  }
+  static ConstPoolPointer *getNull(const PointerType *T);
 
   virtual string getStrValue() const;
 };
