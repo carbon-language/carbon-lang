@@ -497,17 +497,17 @@ static unsigned ExactLog2(unsigned Val) {
   return Count;
 }
 
-/// canUseAsImmediateForOpcode - This method returns a value indicating whether
+/// getImmediateForOpcode - This method returns a value indicating whether
 /// the ConstantSDNode N can be used as an immediate to Opcode.  The return
 /// values are either 0, 1 or 2.  0 indicates that either N is not a
 /// ConstantSDNode, or is not suitable for use by that opcode.  A return value 
 /// of 1 indicates that the constant may be used in normal immediate form.  A
 /// return value of 2 indicates that the constant may be used in shifted
-/// immediate form.  If the return value is nonzero, the constant value is
-/// placed in Imm.
+/// immediate form.  A return value of 3 indicates that log base 2 of the
+/// constant may be used.
 ///
-static unsigned canUseAsImmediateForOpcode(SDOperand N, unsigned Opcode,
-                                           unsigned& Imm, bool U = false) {
+static unsigned getImmediateForOpcode(SDOperand N, unsigned Opcode,
+                                      unsigned& Imm, bool U = false) {
   if (N.getOpcode() != ISD::Constant) return 0;
 
   int v = (int)cast<ConstantSDNode>(N)->getSignExtended();
@@ -533,7 +533,7 @@ static unsigned canUseAsImmediateForOpcode(SDOperand N, unsigned Opcode,
     if (!U && (v <= 32767 && v >= -32768)) { Imm = v & 0xFFFF; return 1; }
     break;
   case ISD::SDIV:
-    if (0 != ExactLog2(v)) { Imm = ExactLog2(v); return 1; }
+    if ((Imm = ExactLog2(v))) { return 3; }
     break;
   }
   return 0;
@@ -619,10 +619,10 @@ unsigned ISel::SelectSetCR0(SDOperand CC) {
     Opc = getBCCForSetCC(SetCC->getCondition(), U);
     Tmp1 = SelectExpr(SetCC->getOperand(0));
 
-    // Pass the optional argument U to canUseAsImmediateForOpcode for SETCC,
+    // Pass the optional argument U to getImmediateForOpcode for SETCC,
     // so that it knows whether the SETCC immediate range is signed or not.
-    if (1 == canUseAsImmediateForOpcode(SetCC->getOperand(1), ISD::SETCC, 
-                                        Tmp2, U)) {
+    if (1 == getImmediateForOpcode(SetCC->getOperand(1), ISD::SETCC, 
+                                   Tmp2, U)) {
       if (U)
         BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(Tmp2);
       else
@@ -647,7 +647,7 @@ bool ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
   unsigned imm = 0, opcode = N.getOpcode();
   if (N.getOpcode() == ISD::ADD) {
     Reg = SelectExpr(N.getOperand(0));
-    if (1 == canUseAsImmediateForOpcode(N.getOperand(1), opcode, imm)) {
+    if (1 == getImmediateForOpcode(N.getOperand(1), opcode, imm)) {
       offset = imm;
       return false;
     } 
@@ -665,9 +665,15 @@ void ISel::SelectBranchCC(SDOperand N)
   MachineBasicBlock *Dest = 
     cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();
 
+  // Get the MBB we will fall through to so that we can hand it off to the
+  // branch selection pass as an argument to the PPC::COND_BRANCH pseudo op.
+  ilist<MachineBasicBlock>::iterator It = BB;
+  MachineBasicBlock *Fallthrough = ++It;
+  
   Select(N.getOperand(0));  //chain
   unsigned Opc = SelectSetCR0(N.getOperand(1));
-  BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(Dest);
+  BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(Opc)
+    .addMBB(Dest).addMBB(Fallthrough);
   return;
 }
 
@@ -1285,7 +1291,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::ADD:
     assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
     Tmp1 = SelectExpr(N.getOperand(0));
-    switch(canUseAsImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
+    switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
       default: assert(0 && "unhandled result code");
       case 0: // No immediate
         Tmp2 = SelectExpr(N.getOperand(1));
@@ -1303,7 +1309,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::AND:
   case ISD::OR:
     Tmp1 = SelectExpr(N.getOperand(0));
-    switch(canUseAsImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
+    switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
       default: assert(0 && "unhandled result code");
       case 0: // No immediate
         Tmp2 = SelectExpr(N.getOperand(1));
@@ -1364,7 +1370,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       return Result;
     }
     Tmp1 = SelectExpr(N.getOperand(0));
-    switch(canUseAsImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
+    switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
       default: assert(0 && "unhandled result code");
       case 0: // No immediate
         Tmp2 = SelectExpr(N.getOperand(1));
@@ -1382,7 +1388,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::SUB:
     Tmp2 = SelectExpr(N.getOperand(1));
-    if (1 == canUseAsImmediateForOpcode(N.getOperand(0), opcode, Tmp1))
+    if (1 == getImmediateForOpcode(N.getOperand(0), opcode, Tmp1))
       BuildMI(BB, PPC::SUBFIC, 2, Result).addReg(Tmp2).addSImm(Tmp1);
     else {
       Tmp1 = SelectExpr(N.getOperand(0));
@@ -1392,7 +1398,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     
   case ISD::MUL:
     Tmp1 = SelectExpr(N.getOperand(0));
-    if (1 == canUseAsImmediateForOpcode(N.getOperand(1), opcode, Tmp2))
+    if (1 == getImmediateForOpcode(N.getOperand(1), opcode, Tmp2))
       BuildMI(BB, PPC::MULLI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
     else {
       Tmp2 = SelectExpr(N.getOperand(1));
@@ -1402,7 +1408,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::SDIV:
   case ISD::UDIV:
-    if (1 == canUseAsImmediateForOpcode(N.getOperand(1), opcode, Tmp3)) {
+    if (3 == getImmediateForOpcode(N.getOperand(1), opcode, Tmp3)) {
       Tmp1 = MakeReg(MVT::i32);
       Tmp2 = SelectExpr(N.getOperand(0));
       BuildMI(BB, PPC::SRAWI, 2, Tmp1).addReg(Tmp2).addImm(Tmp3);

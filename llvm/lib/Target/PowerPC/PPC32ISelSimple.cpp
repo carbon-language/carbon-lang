@@ -1585,11 +1585,11 @@ void PPC32ISel::visitBranchInst(BranchInst &BI) {
       .addImm(0);
     if (BI.getSuccessor(1) == NextBB) {
       if (BI.getSuccessor(0) != NextBB)
-        BuildMI(BB, PPC::COND_BRANCH, 3).addReg(PPC::CR0).addImm(PPC::BNE)
+        BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(PPC::BNE)
           .addMBB(MBBMap[BI.getSuccessor(0)])
           .addMBB(MBBMap[BI.getSuccessor(1)]);
     } else {
-      BuildMI(BB, PPC::COND_BRANCH, 3).addReg(PPC::CR0).addImm(PPC::BEQ)
+      BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(PPC::BEQ)
         .addMBB(MBBMap[BI.getSuccessor(1)])
         .addMBB(MBBMap[BI.getSuccessor(0)]);
       if (BI.getSuccessor(0) != NextBB)
@@ -1604,7 +1604,7 @@ void PPC32ISel::visitBranchInst(BranchInst &BI) {
   OpNum = EmitComparison(OpNum, SCI->getOperand(0), SCI->getOperand(1), BB,MII);
   
   if (BI.getSuccessor(0) != NextBB) {
-    BuildMI(BB, PPC::COND_BRANCH, 3).addReg(PPC::CR0).addImm(Opcode)
+    BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(Opcode)
       .addMBB(MBBMap[BI.getSuccessor(0)])
       .addMBB(MBBMap[BI.getSuccessor(1)]);
     if (BI.getSuccessor(1) != NextBB)
@@ -1613,7 +1613,7 @@ void PPC32ISel::visitBranchInst(BranchInst &BI) {
     // Change to the inverse condition...
     if (BI.getSuccessor(1) != NextBB) {
       Opcode = PPC32InstrInfo::invertPPCBranchOpcode(Opcode);
-      BuildMI(BB, PPC::COND_BRANCH, 3).addReg(PPC::CR0).addImm(Opcode)
+      BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(Opcode)
         .addMBB(MBBMap[BI.getSuccessor(1)])
         .addMBB(MBBMap[BI.getSuccessor(0)]);
     }
