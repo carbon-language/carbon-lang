@@ -55,6 +55,14 @@ namespace {
   cl::opt<bool>
   NoInternalize("disable-internalize",
                 cl::desc("Do not mark all symbols as internal"));
+
+  // Compatibility options that are ignored, but support by LD
+  cl::opt<std::string>
+  CO3("soname", cl::Hidden, cl::desc("Compatibility option: ignored"));
+  cl::opt<std::string>
+  CO4("version-script", cl::Hidden, cl::desc("Compatibility option: ignored"));
+  cl::opt<bool>
+  CO5("eh-frame-hdr", cl::Hidden, cl::desc("Compatibility option: ignored"));
 }
 
 // FileExists - Return true if the specified string is an openable file...
