@@ -206,6 +206,19 @@ namespace {
                 std::cerr << mri_->getName(reg) << '\n';
             }
         }
+
+        void verifyAssignment() const {
+            for (Virt2PhysMap::const_iterator i = v2pMap_.begin(),
+                     e = v2pMap_.end(); i != e; ++i)
+                for (Virt2PhysMap::const_iterator i2 = i; i2 != e; ++i2)
+                    if (mri_->areAliases(i->second, i2->second)) {
+                        const LiveIntervals::Interval
+                            &in = li_->getInterval(i->second),
+                            &in2 = li_->getInterval(i2->second);
+                        assert(!in.overlaps(in2) &&
+                               "overlapping intervals for same register!");
+                    }
+        }
     };
 }
 
@@ -290,6 +303,8 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
 
     DEBUG(printVirtRegAssignment());
     DEBUG(std::cerr << "finished register allocation\n");
+    // this is a slow operations do not uncomment
+    // DEBUG(verifyAssignment());
 
     const TargetInstrInfo& tii = tm_->getInstrInfo();
 
