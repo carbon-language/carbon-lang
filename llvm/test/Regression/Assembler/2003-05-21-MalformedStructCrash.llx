@@ -1,3 +1,4 @@
 ; Found by inspection of the code
+; RUN: as < %s 2>&1 | grep "Illegal"
 
 global {} { int 7, float 1.0, int 7, int 8 }
