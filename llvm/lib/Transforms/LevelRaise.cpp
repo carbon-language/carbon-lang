@@ -62,6 +62,7 @@ static inline bool isReinterpretingCast(const CastInst *CI) {
 static bool HandleCastToPointer(BasicBlock::iterator BI,
                                 const PointerType *DestPTy) {
   CastInst *CI = cast<CastInst>(*BI);
+  if (CI->use_empty()) return false;
 
   // Scan all of the uses, looking for any uses that are not add
   // instructions.  If we have non-adds, do not make this transformation.
@@ -86,18 +87,36 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
   // If we have a getelementptr capability... transform all of the 
   // add instruction uses into getelementptr's.
   while (!CI->use_empty()) {
-    Instruction *I = cast<Instruction>(*CI->use_begin());
+    BinaryOperator *I = cast<BinaryOperator>(*CI->use_begin());
     assert(I->getOpcode() == Instruction::Add && I->getNumOperands() == 2 &&
            "Use is not a valid add instruction!");
     
     // Get the value added to the cast result pointer...
     Value *OtherPtr = I->getOperand((I->getOperand(0) == CI) ? 1 : 0);
 
-    GetElementPtrInst *GEP = new GetElementPtrInst(OtherPtr, Indices);
+    Instruction *GEP = new GetElementPtrInst(OtherPtr, Indices, I->getName());
     PRINT_PEEPHOLE1("cast-add-to-gep:i", I);
-    
-    // Replace the old add instruction with the shiny new GEP inst
-    ReplaceInstWithInst(I, GEP);
+
+    if (GEP->getType() == I->getType()) {
+      // Replace the old add instruction with the shiny new GEP inst
+      ReplaceInstWithInst(I, GEP);
+    } else {
+      // If the type produced by the gep instruction differs from the original
+      // add instruction type, insert a cast now.
+      //
+
+      // Insert the GEP instruction before the old add instruction... and get an
+      // iterator to point at the add instruction...
+      BasicBlock::iterator GEPI = InsertInstBeforeInst(GEP, I)+1;
+
+      PRINT_PEEPHOLE1("cast-add-to-gep:o", GEP);
+      CastInst *CI = new CastInst(GEP, I->getType());
+      GEP = CI;
+
+      // Replace the old add instruction with the shiny new GEP inst
+      ReplaceInstWithInst(I->getParent()->getInstList(), GEPI, GEP);
+    }
+
     PRINT_PEEPHOLE1("cast-add-to-gep:o", GEP);
   }
   return true;
