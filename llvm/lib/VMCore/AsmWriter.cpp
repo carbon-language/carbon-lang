@@ -26,6 +26,21 @@
 #include <algorithm>
 #include <map>
 
+static const Module *getModuleFromVal(const Value *V) {
+  if (const MethodArgument *MA =dyn_cast<const MethodArgument>(V))
+    return MA->getParent() ? MA->getParent()->getParent() : 0;
+  else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(V))
+    return BB->getParent() ? BB->getParent()->getParent() : 0;
+  else if (const Instruction *I = dyn_cast<const Instruction>(V)) {
+    const Method *M = I->getParent() ? I->getParent()->getParent() : 0;
+    return M ? M->getParent() : 0;
+  } else if (const GlobalValue *GV =dyn_cast<const GlobalValue>(V))
+    return GV->getParent();
+  else if (const Module *Mod  = dyn_cast<const Module>(V))
+    return Mod;
+  return 0;
+}
+
 static SlotCalculator *createSlotCalculator(const Value *V) {
   assert(!isa<Type>(V) && "Can't create an SC for a type!");
   if (const MethodArgument *MA =dyn_cast<const MethodArgument>(V)){
@@ -48,11 +63,8 @@ static SlotCalculator *createSlotCalculator(const Value *V) {
 // ostream.  This can be useful when you just want to print int %reg126, not the
 // whole instruction that generated it.
 //
-ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType, 
-			bool PrintName, SlotCalculator *Table) {
-  if (PrintType)
-    Out << " " << V->getType()->getDescription();
-  
+static void WriteAsOperandInternal(ostream &Out, const Value *V, bool PrintName,
+                                   SlotCalculator *Table) {
   if (PrintName && V->hasName()) {
     Out << " %" << V->getName();
   } else {
@@ -63,11 +75,13 @@ ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType,
       if (Table) {
 	Slot = Table->getValSlot(V);
       } else {
-        if (const Type *Ty = dyn_cast<const Type>(V))
-          return Out << " " << Ty;
+        if (const Type *Ty = dyn_cast<const Type>(V)) {
+          Out << " " << Ty->getDescription();
+          return;
+        }
 
         Table = createSlotCalculator(V);
-        if (Table == 0) return Out << "BAD VALUE TYPE!";
+        if (Table == 0) { Out << "BAD VALUE TYPE!"; return; }
 
 	Slot = Table->getValSlot(V);
 	delete Table;
@@ -77,6 +91,164 @@ ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType,
         Out << "<badref>";     // Not embeded into a location?
     }
   }
+}
+
+
+// If the module has a symbol table, take all global types and stuff their
+// names into the TypeNames map.
+//
+static void fillTypeNameTable(const Module *M,
+                              map<const Type *, string> &TypeNames) {
+  if (M && M->hasSymbolTable()) {
+    const SymbolTable *ST = M->getSymbolTable();
+    SymbolTable::const_iterator PI = ST->find(Type::TypeTy);
+    if (PI != ST->end()) {
+      SymbolTable::type_const_iterator I = PI->second.begin();
+      for (; I != PI->second.end(); ++I) {
+        // As a heuristic, don't insert pointer to primitive types, because
+        // they are used too often to have a single useful name.
+        //
+        const Type *Ty = cast<const Type>(I->second);
+        if (!isa<PointerType>(Ty) ||
+            !cast<PointerType>(Ty)->getValueType()->isPrimitiveType())
+          TypeNames.insert(make_pair(Ty, "%"+I->first));
+      }
+    }
+  }
+}
+
+
+
+static string calcTypeName(const Type *Ty, vector<const Type *> &TypeStack,
+                           map<const Type *, string> &TypeNames) {
+  if (Ty->isPrimitiveType()) return Ty->getDescription();  // Base case
+
+  // Check to see if the type is named.
+  map<const Type *, string>::iterator I = TypeNames.find(Ty);
+  if (I != TypeNames.end()) return I->second;
+
+  // Check to see if the Type is already on the stack...
+  unsigned Slot = 0, CurSize = TypeStack.size();
+  while (Slot < CurSize && TypeStack[Slot] != Ty) ++Slot; // Scan for type
+
+  // This is another base case for the recursion.  In this case, we know 
+  // that we have looped back to a type that we have previously visited.
+  // Generate the appropriate upreference to handle this.
+  // 
+  if (Slot < CurSize)
+    return "\\" + utostr(CurSize-Slot);       // Here's the upreference
+
+  TypeStack.push_back(Ty);    // Recursive case: Add us to the stack..
+  
+  string Result;
+  switch (Ty->getPrimitiveID()) {
+  case Type::MethodTyID: {
+    const MethodType *MTy = cast<const MethodType>(Ty);
+    Result = calcTypeName(MTy->getReturnType(), TypeStack, TypeNames) + " (";
+    for (MethodType::ParamTypes::const_iterator
+           I = MTy->getParamTypes().begin(),
+           E = MTy->getParamTypes().end(); I != E; ++I) {
+      if (I != MTy->getParamTypes().begin())
+        Result += ", ";
+      Result += calcTypeName(*I, TypeStack, TypeNames);
+    }
+    if (MTy->isVarArg()) {
+      if (!MTy->getParamTypes().empty()) Result += ", ";
+      Result += "...";
+    }
+    Result += ")";
+    break;
+  }
+  case Type::StructTyID: {
+    const StructType *STy = cast<const StructType>(Ty);
+    Result = "{ ";
+    for (StructType::ElementTypes::const_iterator
+           I = STy->getElementTypes().begin(),
+           E = STy->getElementTypes().end(); I != E; ++I) {
+      if (I != STy->getElementTypes().begin())
+        Result += ", ";
+      Result += calcTypeName(*I, TypeStack, TypeNames);
+    }
+    Result += " }";
+    break;
+  }
+  case Type::PointerTyID:
+    Result = calcTypeName(cast<const PointerType>(Ty)->getValueType(), 
+                          TypeStack, TypeNames) + " *";
+    break;
+  case Type::ArrayTyID: {
+    const ArrayType *ATy = cast<const ArrayType>(Ty);
+    int NumElements = ATy->getNumElements();
+    Result = "[";
+    if (NumElements != -1) Result += itostr(NumElements) + " x ";
+    Result += calcTypeName(ATy->getElementType(), TypeStack, TypeNames) + "]";
+    break;
+  }
+  default:
+    assert(0 && "Unhandled case in getTypeProps!");
+    Result = "<error>";
+  }
+
+  TypeStack.pop_back();       // Remove self from stack...
+  return Result;
+}
+
+
+// printTypeInt - The internal guts of printing out a type that has a
+// potentially named portion.
+//
+static ostream &printTypeInt(ostream &Out, const Type *Ty,
+                             map<const Type *, string> &TypeNames) {
+  // Primitive types always print out their description, regardless of whether
+  // they have been named or not.
+  //
+  if (Ty->isPrimitiveType()) return Out << Ty->getDescription();
+
+  // Check to see if the type is named.
+  map<const Type *, string>::iterator I = TypeNames.find(Ty);
+  if (I != TypeNames.end()) return Out << I->second;
+
+  // Otherwise we have a type that has not been named but is a derived type.
+  // Carefully recurse the type hierarchy to print out any contained symbolic
+  // names.
+  //
+  vector<const Type *> TypeStack;
+  string TypeName = calcTypeName(Ty, TypeStack, TypeNames);
+  TypeNames.insert(make_pair(Ty, TypeName));   // Cache type name for later use
+  return Out << TypeName;
+}
+
+// WriteTypeSymbolic - This attempts to write the specified type as a symbolic
+// type, iff there is an entry in the modules symbol table for the specified
+// type or one of it's component types.  This is slower than a simple x << Type;
+//
+ostream &WriteTypeSymbolic(ostream &Out, const Type *Ty, const Module *M) {
+  Out << " "; 
+
+  // If they want us to print out a type, attempt to make it symbolic if there
+  // is a symbol table in the module...
+  if (M && M->hasSymbolTable()) {
+    map<const Type *, string> TypeNames;
+    fillTypeNameTable(M, TypeNames);
+    
+    return printTypeInt(Out, V->getType(), TypeNames);
+  } else {
+    return Out << V->getType()->getDescription();
+  }
+}
+
+
+// WriteAsOperand - Write the name of the specified value out to the specified
+// ostream.  This can be useful when you just want to print int %reg126, not the
+// whole instruction that generated it.
+//
+ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType, 
+			bool PrintName, SlotCalculator *Table) {
+  if (PrintType) {
+    WriteTypeSymbolic(Ty, getModuleFromVal(V));
+  }
+
+  WriteAsOperandInternal(Out, V, PrintName, Table);
   return Out;
 }
 
@@ -94,22 +266,7 @@ public:
     // If the module has a symbol table, take all global types and stuff their
     // names into the TypeNames map.
     //
-    if (M && M->hasSymbolTable()) {
-      const SymbolTable *ST = M->getSymbolTable();
-      SymbolTable::const_iterator PI = ST->find(Type::TypeTy);
-      if (PI != ST->end()) {
-        SymbolTable::type_const_iterator I = PI->second.begin();
-        for (; I != PI->second.end(); ++I) {
-          // As a heuristic, don't insert pointer to primitive types, because
-          // they are used too often to have a single useful name.
-          //
-          const Type *Ty = cast<const Type>(I->second);
-          if (!isa<PointerType>(Ty) ||
-              !cast<PointerType>(Ty)->getValueType()->isPrimitiveType())
-            TypeNames.insert(make_pair(Ty, "%"+I->first));
-        }
-      }
-    }
+    fillTypeNameTable(M, TypeNames);
   }
 
   inline void write(const Module *M)         { printModule(M);      }
@@ -135,16 +292,13 @@ private :
   // printInfoComment - Print a little comment after the instruction indicating
   // which slot it occupies.
   void printInfoComment(const Value *V);
-
-
-  string calcTypeName(const Type *Ty, vector<const Type *> &TypeStack);
 };
 
 
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType, 
 				  bool PrintName) {
   if (PrintType) { Out << " "; printType(Operand->getType()); }
-  WriteAsOperand(Out, Operand, false, PrintName, &Table);
+  WriteAsOperandInternal(Out, Operand, PrintName, &Table);
 }
 
 
@@ -447,101 +601,11 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
 }
 
 
-string AssemblyWriter::calcTypeName(const Type *Ty,
-                                    vector<const Type *> &TypeStack) {
-  if (Ty->isPrimitiveType()) return Ty->getDescription();  // Base case
-
-  // Check to see if the type is named.
-  map<const Type *, string>::iterator I = TypeNames.find(Ty);
-  if (I != TypeNames.end()) return I->second;
-
-  // Check to see if the Type is already on the stack...
-  unsigned Slot = 0, CurSize = TypeStack.size();
-  while (Slot < CurSize && TypeStack[Slot] != Ty) ++Slot; // Scan for type
-
-  // This is another base case for the recursion.  In this case, we know 
-  // that we have looped back to a type that we have previously visited.
-  // Generate the appropriate upreference to handle this.
-  // 
-  if (Slot < CurSize)
-    return "\\" + utostr(CurSize-Slot);       // Here's the upreference
-
-  TypeStack.push_back(Ty);    // Recursive case: Add us to the stack..
-  
-  string Result;
-  switch (Ty->getPrimitiveID()) {
-  case Type::MethodTyID: {
-    const MethodType *MTy = cast<const MethodType>(Ty);
-    Result = calcTypeName(MTy->getReturnType(), TypeStack)+" (";
-    for (MethodType::ParamTypes::const_iterator
-           I = MTy->getParamTypes().begin(),
-           E = MTy->getParamTypes().end(); I != E; ++I) {
-      if (I != MTy->getParamTypes().begin())
-        Result += ", ";
-      Result += calcTypeName(*I, TypeStack);
-    }
-    if (MTy->isVarArg()) {
-      if (!MTy->getParamTypes().empty()) Result += ", ";
-      Result += "...";
-    }
-    Result += ")";
-    break;
-  }
-  case Type::StructTyID: {
-    const StructType *STy = cast<const StructType>(Ty);
-    Result = "{ ";
-    for (StructType::ElementTypes::const_iterator
-           I = STy->getElementTypes().begin(),
-           E = STy->getElementTypes().end(); I != E; ++I) {
-      if (I != STy->getElementTypes().begin())
-        Result += ", ";
-      Result += calcTypeName(*I, TypeStack);
-    }
-    Result += " }";
-    break;
-  }
-  case Type::PointerTyID:
-    Result = calcTypeName(cast<const PointerType>(Ty)->getValueType(), 
-                          TypeStack) + " *";
-    break;
-  case Type::ArrayTyID: {
-    const ArrayType *ATy = cast<const ArrayType>(Ty);
-    int NumElements = ATy->getNumElements();
-    Result = "[";
-    if (NumElements != -1) Result += itostr(NumElements) + " x ";
-    Result += calcTypeName(ATy->getElementType(), TypeStack) + "]";
-    break;
-  }
-  default:
-    assert(0 && "Unhandled case in getTypeProps!");
-    Result = "<error>";
-  }
-
-  TypeStack.pop_back();       // Remove self from stack...
-  return Result;
-}
-
 // printType - Go to extreme measures to attempt to print out a short, symbolic
 // version of a type name.
 //
 ostream &AssemblyWriter::printType(const Type *Ty) {
-  // Primitive types always print out their description, regardless of whether
-  // they have been named or not.
-  //
-  if (Ty->isPrimitiveType()) return Out << Ty->getDescription();
-
-  // Check to see if the type is named.
-  map<const Type *, string>::iterator I = TypeNames.find(Ty);
-  if (I != TypeNames.end()) return Out << I->second;
-
-  // Otherwise we have a type that has not been named but is a derived type.
-  // Carefully recurse the type hierarchy to print out any contained symbolic
-  // names.
-  //
-  vector<const Type *> TypeStack;
-  string TypeName = calcTypeName(Ty, TypeStack);
-  TypeNames.insert(make_pair(Ty, TypeName));   // Cache type name for later use
-  return Out << TypeName;
+  return printTypeInt(Out, Ty, TypeNames);
 }
 
 
