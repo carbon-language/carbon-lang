@@ -197,11 +197,12 @@ class DSGraph {
   // call, the second is the function scalar being invoked, and the rest are
   // pointer arguments to the function.
   //
+  std::vector<std::vector<DSNodeHandle> > FunctionCalls;
+
   // OrigFunctionCalls - This vector retains a copy of the original function
   // calls of the current graph.  This is needed to support top-down inlining
   // after bottom-up inlining is complete, since the latter deletes call nodes.
   // 
-  std::vector<std::vector<DSNodeHandle> > FunctionCalls;
   std::vector<std::vector<DSNodeHandle> > OrigFunctionCalls;
 
   // PendingCallers - This vector records all unresolved callers of the
@@ -224,17 +225,11 @@ private:
   // clone all the call nodes and save the copies in OrigFunctionCalls
   void saveOrigFunctionCalls() {
     assert(OrigFunctionCalls.size() == 0 && "Do this only once!");
-    OrigFunctionCalls.reserve(FunctionCalls.size());
-    for (unsigned i = 0, ei = FunctionCalls.size(); i != ei; ++i) {
-      OrigFunctionCalls.push_back(std::vector<DSNodeHandle>());
-      OrigFunctionCalls[i].reserve(FunctionCalls[i].size());
-      for (unsigned j = 0, ej = FunctionCalls[i].size(); j != ej; ++j)
-        OrigFunctionCalls[i].push_back(FunctionCalls[i][j]);
-    }
+    OrigFunctionCalls = FunctionCalls;
   }
   
   // get the saved copies of the original function call nodes
-  std::vector<std::vector<DSNodeHandle> >& getOrigFunctionCalls() {
+  std::vector<std::vector<DSNodeHandle> > &getOrigFunctionCalls() {
     return OrigFunctionCalls;
   }
 
@@ -411,7 +406,7 @@ public:
   ~TDDataStructures() { releaseMemory(); }
 
   virtual const char *getPassName() const {
-    return "Top-downData Structure Analysis Closure";
+    return "Top-down Data Structure Analysis Closure";
   }
 
   virtual bool run(Module &M);
