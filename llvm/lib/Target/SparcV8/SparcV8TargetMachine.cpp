@@ -65,9 +65,6 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // Replace malloc and free instructions with library calls.
   PM.add(createLowerAllocationsPass());
 
-  // FIXME: implement the select instruction in the instruction selector.
-  PM.add(createLowerSelectPass());
-  
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
 
@@ -79,6 +76,9 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
+  // FIXME: implement the select instruction in the instruction selector.
+  PM.add(createLowerSelectPass());
+  
   PM.add(createSparcV8SimpleInstructionSelector(*this));
 
   // Print machine instructions as they were initially generated.
@@ -118,9 +118,6 @@ void SparcV8JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // Replace malloc and free instructions with library calls.
   PM.add(createLowerAllocationsPass());
   
-  // FIXME: implement the select instruction in the instruction selector.
-  PM.add(createLowerSelectPass());
-  
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
 
@@ -132,6 +129,9 @@ void SparcV8JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
+  // FIXME: implement the select instruction in the instruction selector.
+  PM.add(createLowerSelectPass());
+  
   PM.add(createSparcV8SimpleInstructionSelector(TM));
 
   // Print machine instructions as they were initially generated.
