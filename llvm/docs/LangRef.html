@@ -541,7 +541,15 @@ or the idea of "anonymous namespaces" in C++.<p>
 <dd>"<tt>linkonce</tt>" linkage is similar to <tt>internal</tt> linkage, with
 the twist that linking together two modules defining the same <tt>linkonce</tt>
 globals will cause one of the globals to be discarded.  This is typically used
-to implement inline functions.<p>
+to implement inline functions.  Unreferenced <tt>linkonce</tt> globals are
+allowed to be discarded.<p>
+
+<a name="linkage_weak">
+<dt><tt><b>weak</b></tt>:
+
+<dd>"<tt>weak</tt>" linkage is exactly the same as <tt>linkonce</tt> linkage,
+except that unreferenced <tt>weak</tt> globals may not be discarded.  This is
+used to implement constructs in C such as "<tt>int X;</tt>" at global scope.<p>
 
 <a name="linkage_appending">
 <dt><tt><b>appending</b></tt>:
@@ -1905,7 +1913,7 @@ arbitrarily complex and require memory allocation, for example.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Mon Sep  8 13:27:14 CDT 2003
+Last modified: Thu Oct  9 23:58:41 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
