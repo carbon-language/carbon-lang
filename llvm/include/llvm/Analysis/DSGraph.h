@@ -12,14 +12,18 @@
 //===----------------------------------------------------------------------===//
 /// DSGraph - The graph that represents a function.
 ///
-class DSGraph {
+struct DSGraph {
+  // Public data-type declarations...
+  typedef hash_map<Value*, DSNodeHandle> ScalarMapTy;
+
+private:
   Function *Func;          // Func - The LLVM function this graph corresponds to
   DSGraph *GlobalsGraph;   // Pointer to the common graph of global objects
   bool PrintAuxCalls;      // Should this graph print the Aux calls vector?
 
   DSNodeHandle RetNode;    // The node that gets returned...
   std::vector<DSNode*> Nodes;
-  hash_map<Value*, DSNodeHandle> ScalarMap;
+  ScalarMapTy ScalarMap;
 
   // FunctionCalls - This vector maintains a single entry for each call
   // instruction in the current graph.  The first entry in the vector is the
@@ -80,8 +84,8 @@ public:
   /// getScalarMap - Get a map that describes what the nodes the scalars in this
   /// function point to...
   ///
-  hash_map<Value*, DSNodeHandle> &getScalarMap() { return ScalarMap; }
-  const hash_map<Value*, DSNodeHandle> &getScalarMap() const {return ScalarMap;}
+  ScalarMapTy &getScalarMap() { return ScalarMap; }
+  const ScalarMapTy &getScalarMap() const {return ScalarMap;}
 
   /// getFunctionCalls - Return the list of call sites in the original local
   /// graph...
@@ -106,7 +110,7 @@ public:
   DSNodeHandle &getNodeForValue(Value *V) { return ScalarMap[V]; }
 
   const DSNodeHandle &getNodeForValue(Value *V) const {
-    hash_map<Value*, DSNodeHandle>::const_iterator I = ScalarMap.find(V);
+    ScalarMapTy::const_iterator I = ScalarMap.find(V);
     assert(I != ScalarMap.end() &&
            "Use non-const lookup function if node may not be in the map");
     return I->second;
@@ -181,8 +185,7 @@ public:
   // 'StripAllocaBit', Alloca markers are removed from the graph as the graph is
   // being cloned.
   //
-  DSNodeHandle cloneInto(const DSGraph &G,
-                         hash_map<Value*, DSNodeHandle> &OldValMap,
+  DSNodeHandle cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
                          hash_map<const DSNode*, DSNodeHandle> &OldNodeMap,
                          unsigned CloneFlags = 0);
 
