@@ -2639,6 +2639,27 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
           if (GV->isConstant() && !GV->isExternal())
             if (Constant *V = GetGEPGlobalInitializer(GV->getInitializer(), CE))
               return ReplaceInstUsesWith(LI, V);
+
+  // load (cast X) --> cast (load X) iff safe
+  if (CastInst *CI = dyn_cast<CastInst>(Op)) {
+    const Type *DestPTy = cast<PointerType>(CI->getType())->getElementType();
+    if (const PointerType *SrcTy =
+        dyn_cast<PointerType>(CI->getOperand(0)->getType())) {
+      const Type *SrcPTy = SrcTy->getElementType();
+      if (TD->getTypeSize(SrcPTy) == TD->getTypeSize(DestPTy) &&
+          (SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
+          (DestPTy->isInteger() || isa<PointerType>(DestPTy))) {
+        // Okay, we are casting from one integer or pointer type to another of
+        // the same size.  Instead of casting the pointer before the load, cast
+        // the result of the loaded value.
+        Value *NewLoad = InsertNewInstBefore(new LoadInst(CI->getOperand(0),
+                                                          CI->getName()), LI);
+        // Now cast the result of the load.
+        return new CastInst(NewLoad, LI.getType());
+      }
+    }
+  }
+
   return 0;
 }
 
