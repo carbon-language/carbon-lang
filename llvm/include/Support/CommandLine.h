@@ -711,6 +711,9 @@ struct opt_storage<DataType, false, false> {
   void setValue(const T &V) { Value = V; }
   DataType &getValue() { return Value; }
   DataType getValue() const { return Value; }
+
+  // If the datatype is a pointer, support -> on it.
+  DataType operator->() const { return Value; }
 };
 
 
