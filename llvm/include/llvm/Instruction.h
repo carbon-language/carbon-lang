@@ -85,6 +85,9 @@ public:
     return iType >= FirstBinaryOp && iType < NumBinaryOps;
   }
 
+  // isPHINode() - This is used frequently enough to allow it to exist
+  inline bool isPHINode() const { return iType == PHINode; }
+
 
   //----------------------------------------------------------------------
   // Exported enumerations...

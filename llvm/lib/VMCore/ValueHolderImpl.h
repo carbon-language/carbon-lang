@@ -100,4 +100,21 @@ void ValueHolder<ValueSubclass,ItemParentType>::push_back(ValueSubclass *Inst) {
     Parent->getSymbolTableSure()->insert(Inst);
 }
 
+// ValueHolder::insert - This method inserts the specified value *BEFORE* the 
+// indicated iterator position, and returns an interator to the newly inserted
+// value.
+//
+template<class ValueSubclass, class ItemParentType>
+ValueHolder<ValueSubclass,ItemParentType>::iterator
+ValueHolder<ValueSubclass,ItemParentType>::insert(iterator Pos,
+							   ValueSubclass *Inst){
+  assert(Inst->getParent() == 0 && "Value already has parent!");
+  Inst->setParent(ItemParent);
+
+  iterator I = ValueList.insert(Pos, Inst);
+  if (Inst->hasName() && Parent)
+    Parent->getSymbolTableSure()->insert(Inst);
+  return I;
+}
+
 #endif

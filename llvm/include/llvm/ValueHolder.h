@@ -82,12 +82,18 @@ public:
   // specified by the iterator, and leaves the iterator pointing to the element 
   // that used to follow the element deleted.
   //
-  ValueSubclass *remove(iterator &DI);        // Defined in ValueHolderImpl.h
-  ValueSubclass *remove(const iterator &DI);  // Defined in ValueHolderImpl.h
-  void     remove(ValueSubclass *D);          // Defined in ValueHolderImpl.h
+  ValueSubclass *remove(iterator &DI);         // Defined in ValueHolderImpl.h
+  ValueSubclass *remove(const iterator &DI);   // Defined in ValueHolderImpl.h
+  void           remove(ValueSubclass *D);     // Defined in ValueHolderImpl.h
 
-  inline void push_front(ValueSubclass *Inst); // Defined in ValueHolderImpl.h
-  inline void push_back(ValueSubclass *Inst);  // Defined in ValueHolderImpl.h
+  void push_front(ValueSubclass *Inst);        // Defined in ValueHolderImpl.h
+  void push_back(ValueSubclass *Inst);         // Defined in ValueHolderImpl.h
+
+  // ValueHolder::insert - This method inserts the specified value *BEFORE* the 
+  // indicated iterator position, and returns an interator to the newly inserted
+  // value.
+  //
+  iterator insert(iterator Pos, ValueSubclass *Inst);
 };
 
 #endif

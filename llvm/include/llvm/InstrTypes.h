@@ -60,10 +60,10 @@ class UnaryOperator : public Instruction {
   Use Source;
 public:
 
-  // getUnaryOperator() - Construct a unary instruction, given the opcode
+  // create() - Construct a unary instruction, given the opcode
   // and its operand.
   //
-  static UnaryOperator *getUnaryOperator(unsigned Op, Value *Source);
+  static UnaryOperator *create(unsigned Op, Value *Source);
 
   UnaryOperator(Value *S, unsigned iType, const string &Name = "")
       : Instruction(S->getType(), iType, Name), Source(S, this) {
@@ -71,7 +71,7 @@ public:
   inline ~UnaryOperator() { dropAllReferences(); }
 
   virtual Instruction *clone() const { 
-    return getUnaryOperator(getInstType(), Source);
+    return create(getInstType(), Source);
   }
 
   virtual void dropAllReferences() {
@@ -105,10 +105,11 @@ class BinaryOperator : public Instruction {
   Use Source1, Source2;
 public:
 
-  // getBinaryOperator() - Construct a binary instruction, given the opcode
+  // create() - Construct a binary instruction, given the opcode
   // and the two operands.
   //
-  static BinaryOperator *getBinaryOperator(unsigned Op, Value *S1, Value *S2);
+  static BinaryOperator *create(unsigned Op, Value *S1, Value *S2,
+				const string &Name = "");
 
   BinaryOperator(unsigned iType, Value *S1, Value *S2, 
                  const string &Name = "") 
@@ -118,8 +119,8 @@ public:
   }
   inline ~BinaryOperator() { dropAllReferences(); }
 
-  virtual Instruction *clone() const { 
-    return getBinaryOperator(getInstType(), Source1, Source2);
+  virtual Instruction *clone() const {
+    return create(getInstType(), Source1, Source2);
   }
 
   virtual void dropAllReferences() {

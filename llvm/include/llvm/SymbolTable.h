@@ -58,6 +58,12 @@ public:
   void remove(Value *N);
   Value *type_remove(const type_iterator &It);
 
+  // getUniqueName - Given a base name, return a string that is either equal to
+  // it (or derived from it) that does not already occur in the symbol table for
+  // the specified type.
+  //
+  string getUniqueName(const Type *Ty, const string &BaseName);
+
   inline unsigned type_size(const Type *TypeID) const {
     return find(TypeID)->second.size();
   }
