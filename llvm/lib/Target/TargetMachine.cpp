@@ -20,16 +20,10 @@
 
 // function TargetMachine::findOptimalStorageSize 
 // 
-// Purpose:
-//   This default implementation assumes that all sub-word data items use
-//   space equal to optSizeForSubWordData, and all other primitive data
-//   items use space according to the type.
-//   
 unsigned TargetMachine::findOptimalStorageSize(const Type *Ty) const {
-  // Round integral values smaller than SubWordDataSize up to SubWordDataSize
-  if (Ty->isIntegral() &&
-      Ty->getPrimitiveSize() < DataLayout.getSubWordDataSize())
-    return DataLayout.getSubWordDataSize();
+  // All integer types smaller than ints promote to 4 byte integers.
+  if (Ty->isIntegral() && Ty->getPrimitiveSize() < 4)
+    return 4;
 
   return DataLayout.getTypeSize(Ty);
 }
