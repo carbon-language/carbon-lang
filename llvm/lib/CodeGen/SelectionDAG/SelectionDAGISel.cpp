@@ -741,6 +741,11 @@ TargetLowering::LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain,
   return std::make_pair(DAG.getConstant(0, getPointerTy()), Chain);
 }
 
+SDOperand TargetLowering::LowerOperation(SDOperand Op) {
+  assert(0 && "LowerOperation not implemented for this target!");
+  abort();
+}
+
 void SelectionDAGLowering::visitFrameReturnAddress(CallInst &I, bool isFrame) {
   unsigned Depth = (unsigned)cast<ConstantUInt>(I.getOperand(1))->getValue();
   std::pair<SDOperand,SDOperand> Result =
