@@ -10,17 +10,11 @@
 
 #include "LiveVarSet.h"
 #include "LiveVarMap.h"
+class Method;
 
-#include "llvm/BasicBlock.h"
-#include "llvm/Instruction.h"
-#include "llvm/Type.h"
-#include "llvm/iOther.h"
-
-
-class BBLiveVar 
-{
+class BBLiveVar {
   const BasicBlock* BaseBB;     // pointer to BasicBlock
-  unsigned int POId;            // Post-Order ID
+  unsigned POId;                // Post-Order ID
 
   LiveVarSet DefSet;            // Def set for LV analysis
   LiveVarSet InSet, OutSet;     // In & Out for LV analysis
@@ -31,9 +25,9 @@ class BBLiveVar
   std::hash_map<const Value *, const BasicBlock *> PhiArgMap;  
 
   // method to propogate an InSet to OutSet of a predecessor
-  bool setPropagate( LiveVarSet *const OutSetOfPred, 
-		     const LiveVarSet *const InSetOfThisBB,
-		     const BasicBlock *const PredBB);
+  bool setPropagate( LiveVarSet *OutSetOfPred, 
+		     const LiveVarSet *InSetOfThisBB,
+		     const BasicBlock *PredBB);
 
   // To add an operand which is a def
   void  addDef(const Value *Op); 
@@ -42,12 +36,12 @@ class BBLiveVar
   void  addUse(const Value *Op);
 
  public:
-  BBLiveVar( const BasicBlock* baseBB, unsigned int POId);
+  BBLiveVar(const BasicBlock* baseBB, unsigned POId);
 
   inline bool isInSetChanged() const { return InSetChanged; }    
   inline bool isOutSetChanged() const { return OutSetChanged; }
 
-  inline unsigned int getPOId() const { return POId; }
+  inline unsigned getPOId() const { return POId; }
 
   void calcDefUseSets() ;         // calculates the Def & Use sets for this BB
   bool  applyTransferFunc();      // calcultes the In in terms of Out 
