@@ -11,6 +11,8 @@
 //       -rdfo   - Print basic blocks in reverse depth first order
 //       -po     - Print basic blocks in post order
 //       -rpo    - Print basic blocks in reverse post order
+// 
+//       -c      - Print C code
 //
 // TODO: add -vcg which prints VCG compatible output.
 //
@@ -23,6 +25,7 @@
 #include "Support/PostOrderIterator.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
+#include "llvm/Assembly/CWriter.h"
 #include <fstream>
 #include <iostream>
 using std::cerr;
@@ -34,6 +37,8 @@ enum OutputMode {
   rdfo,                  // Reverse Depth First ordering
   po,                    // Post Order
   rpo,                   // Reverse Post Order
+
+  c,                     // Generate C code
 };
 
 cl::String InputFilename ("", "Load <arg> file, print as assembly", 0, "-");
@@ -45,6 +50,8 @@ cl::EnumFlags<enum OutputMode> WriteMode(cl::NoFlags,
   clEnumVal(rdfo   , "Write basic blocks in reverse DFO"),
   clEnumVal(po     , "Write basic blocks in postorder"),
   clEnumVal(rpo    , "Write basic blocks in reverse postorder"),
+
+  clEnumVal(c      , "Write corresponding C code"),
  0);
 
 int main(int argc, char **argv) {
@@ -77,7 +84,10 @@ int main(int argc, char **argv) {
       } else {
 	OutputFilename = IFN;   // Append a .ll to it
       }
-      OutputFilename += ".ll";
+      if (WriteMode == c)
+	OutputFilename += ".c";
+      else
+	OutputFilename += ".ll";
 
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
@@ -99,11 +109,12 @@ int main(int argc, char **argv) {
     Out = &std::cout;
   }
 
-  // All that dis does is write the assembly out to a file... which is exactly
-  // what the writer library is supposed to do...
-  //
+  // All that dis does is write the assembly or C out to a file... which is 
+  // exactly what the writer or cwriter library is supposed to do...
   if (WriteMode == Default) {
     (*Out) << M;           // Print out in list order
+  } else if (WriteMode == c) {
+    WriteToC(M, *Out);
   } else {
     // TODO: This does not print anything other than the basic blocks in the
     // functions... more should definately be printed.  It should be valid
@@ -145,3 +156,4 @@ int main(int argc, char **argv) {
   if (Out != &std::cout) delete Out;
   return 0;
 }
+
