@@ -118,7 +118,8 @@ void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
     // The new block is not the immediate dominator for any other nodes, but
     // TINode is the immediate dominator for the new node.
     //
-    DT->createNewNode(NewBB, TINode);
+    if (TINode)        // Don't break unreachable code!
+      DT->createNewNode(NewBB, TINode);
   }
 }
 
