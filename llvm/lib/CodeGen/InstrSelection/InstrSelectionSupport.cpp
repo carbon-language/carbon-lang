@@ -337,7 +337,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
 
           if (constantThatMustBeLoaded)
             { // register the value so it is emitted in the assembly
-              method->getMachineCode().addToConstantPool(
+              MachineCodeForMethod::get(method).addToConstantPool(
                                                  cast<ConstPoolVal>(opValue));
             }
         }
@@ -372,7 +372,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
         
         if (isa<ConstPoolVal>(oldVal))
           { // register the value so it is emitted in the assembly
-            method->getMachineCode().addToConstantPool(
+            MachineCodeForMethod::get(method).addToConstantPool(
                                                cast<ConstPoolVal>(oldVal));
           }
       }

@@ -20,10 +20,21 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/NonCopyable.h"
 #include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Annotation.h"
+#include "llvm/Method.h"
 #include <hash_map>
 #include <hash_set>
+#include <values.h>
 
 template<class _MI, class _V> class ValOpIterator;
+
+
+//************************** External Constants ****************************/
+
+const int INVALID_FRAME_OFFSET = MAXINT;
+
+
+//*************************** External Classes *****************************/
 
 
 //---------------------------------------------------------------------------
@@ -506,64 +517,109 @@ public:
 //---------------------------------------------------------------------------
 
 
-class MachineCodeForMethod: public NonCopyable {
+
+class MachineCodeForMethod: public NonCopyable, private Annotation {
 private:
-  Method*       method;
+  static AnnotationID AID;
+private:
+  const Method* method;
   bool          compiledAsLeaf;
   unsigned	staticStackSize;
   unsigned	automaticVarsSize;
   unsigned	regSpillsSize;
-  unsigned	optionalOutgoingArgsSize;
+  unsigned	currentOptionalArgsSize;
+  unsigned	maxOptionalArgsSize;
+  unsigned	currentTmpValuesSize;
   hash_set<const ConstPoolVal*> constantsForConstPool;
-  hash_map<const Value*, int> offsetsFromFP;
-  hash_map<const Value*, int> offsetsFromSP;
-  
-  inline void     incrementAutomaticVarsSize(int incr)
-                                                  { automaticVarsSize+= incr;
-                                                    staticStackSize += incr; }
+  hash_map<const Value*, int> offsets;
+  // hash_map<const Value*, int> offsetsFromSP;
   
 public:
-  /*ctor*/      MachineCodeForMethod(Method* _M)
-    : method(_M), compiledAsLeaf(false), staticStackSize(0),
-      automaticVarsSize(0), regSpillsSize(0), optionalOutgoingArgsSize(0) {}
+  /*ctor*/      MachineCodeForMethod(const Method* method,
+                                     const TargetMachine& target);
   
-  inline bool     isCompiledAsLeafMethod() const  { return compiledAsLeaf; }
-  inline unsigned getStaticStackSize()     const  { return staticStackSize; }
-  inline unsigned getAutomaticVarsSize()   const  { return automaticVarsSize; }
-  inline unsigned getRegSpillsSize()       const  { return regSpillsSize; }
-  inline unsigned getOptionalOutgoingArgsSize() const
-                                           { return optionalOutgoingArgsSize; }
+  // The next two methods are used to construct and to retrieve
+  // the MachineCodeForMethod object for the given method.
+  // construct() -- Allocates and initializes for a given method and target
+  // get()       -- Returns a handle to the object.
+  //                This should not be called before "construct()"
+  //                for a given Method.
+  // 
+  inline static MachineCodeForMethod& construct(const Method* method,
+                                                const TargetMachine& target)
+  {
+    assert(method->getAnnotation(MachineCodeForMethod::AID) == NULL &&
+           "Object already exists for this method!");
+    MachineCodeForMethod* mcInfo = new MachineCodeForMethod(method, target);
+    method->addAnnotation(mcInfo);
+    return *mcInfo;
+  }
+  
+  inline static MachineCodeForMethod& get(const Method* method)
+  {
+    MachineCodeForMethod* mc = (MachineCodeForMethod*)
+      method->getAnnotation(MachineCodeForMethod::AID);
+    assert(mc && "Call construct() method first to allocate the object");
+    return *mc;
+  }
+  
+  //
+  // Accessors for global information about generated code for a method.
+  // 
+  inline bool     isCompiledAsLeafMethod() const { return compiledAsLeaf; }
+  inline unsigned getStaticStackSize()     const { return staticStackSize; }
+  inline unsigned getAutomaticVarsSize()   const { return automaticVarsSize; }
+  inline unsigned getRegSpillsSize()       const { return regSpillsSize; }
+  inline unsigned getMaxOptionalArgsSize() const { return maxOptionalArgsSize;}
+  inline unsigned getCurrentOptionalArgsSize() const
+                                             { return currentOptionalArgsSize;}
   inline const hash_set<const ConstPoolVal*>&
                   getConstantPoolValues() const {return constantsForConstPool;}
+  
+  //
+  // Modifiers used during code generation
+  // 
+  void            initializeFrameLayout    (const TargetMachine& target);
   
   void            addToConstantPool        (const ConstPoolVal* constVal)
                                     { constantsForConstPool.insert(constVal); }
   
   inline void     markAsLeafMethod()              { compiledAsLeaf = true; }
   
-  inline void     incrementStackSize(int incr)    { staticStackSize += incr; }
+  int             allocateLocalVar         (const TargetMachine& target,
+                                            const Value* local);
   
-  inline void     incrementRegSpillsSize(int incr)
-                                                  { regSpillsSize+= incr;
-                                                    staticStackSize += incr; }
+  int             allocateSpilledValue     (const TargetMachine& target,
+                                            const Type* type);
   
-  inline void     incrementOptionalOutgoingArgsSize(int incr)
-                                          { optionalOutgoingArgsSize+= incr;
-                                                    staticStackSize += incr; }
+  int             allocateOptionalArg      (const TargetMachine& target,
+                                            const Type* type);
   
-  void            putLocalVarAtOffsetFromFP(const Value* local,
-                                            int offset,
+  void            resetOptionalArgs        (const TargetMachine& target);
+  
+  int             pushTempValue            (const TargetMachine& target,
                                             unsigned int size);
   
-  void            putLocalVarAtOffsetFromSP(const Value* local,
-                                            int offset,
-                                            unsigned int size);
+  void            popAllTempValues         (const TargetMachine& target);
   
-  int             getOffsetFromFP          (const Value* local) const;
+  int             getOffset                (const Value* val) const;
   
-  int             getOffsetFromSP          (const Value* local) const;
+  // int          getOffsetFromFP       (const Value* val) const;
   
   void            dump                     () const;
+
+private:
+  inline void     incrementAutomaticVarsSize(int incr) {
+    automaticVarsSize+= incr;
+    staticStackSize += incr;
+  }
+  inline void     incrementRegSpillsSize(int incr) {
+    regSpillsSize+= incr;
+    staticStackSize += incr;
+  }
+  inline void     incrementCurrentOptionalArgsSize(int incr) {
+    currentOptionalArgsSize+= incr;     // stack size already includes this!
+  }
 };
 
 

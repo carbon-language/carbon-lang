@@ -80,6 +80,15 @@ InstructionNode::InstructionNode(Instruction* I)
     {
       opLabel = opLabel + 100;		 // load/getElem with index vector
     }
+  else if (opLabel == Instruction::And ||
+           opLabel == Instruction::Or ||
+           opLabel == Instruction::Xor ||
+           opLabel == Instruction::Not)
+    {
+      // Distinguish bitwise operators from logical operators!
+      if (I->getType() != Type::BoolTy)
+        opLabel = opLabel + 100;	 // bitwise operator
+    }
   else if (opLabel == Instruction::Cast)
     {
       const Type *ITy = I->getType();

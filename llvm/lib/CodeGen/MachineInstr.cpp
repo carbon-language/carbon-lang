@@ -14,10 +14,14 @@
 
 
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Method.h"
+#include "llvm/iOther.h"
 #include "llvm/Instruction.h"
 
+AnnotationID MachineCodeForMethod::AID(
+                 AnnotationManager::getID("MachineCodeForMethodAnnotation"));
 
 
 //************************ Class Implementations **************************/
@@ -174,43 +178,169 @@ operator<<(ostream &os, const MachineOperand &mop)
   return os;
 }
 
-
-void
-MachineCodeForMethod::putLocalVarAtOffsetFromFP(const Value* local,
-                                                int offset,
-                                                unsigned int size)
+static unsigned int
+ComputeMaxOptionalArgsSize(const TargetMachine& target, const Method* method)
 {
-  offsetsFromFP[local] = offset;
-  incrementAutomaticVarsSize(size);
+  const MachineFrameInfo& frameInfo = target.getFrameInfo();
+  
+  unsigned int maxSize = 0;
+  
+  for (Method::inst_const_iterator I=method->inst_begin(),E=method->inst_end();
+       I != E; ++I)
+    if ((*I)->getOpcode() == Instruction::Call)
+      {
+        CallInst* callInst = cast<CallInst>(*I);
+        unsigned int numOperands = callInst->getNumOperands() - 1;
+        unsigned int numExtra = numOperands
+                                - frameInfo.getNumFixedOutgoingArgs();
+        
+        unsigned int sizeForThisCall;
+        if (frameInfo.argsOnStackHaveFixedSize())
+          {
+            int argSize = frameInfo.getSizeOfEachArgOnStack(); 
+            sizeForThisCall = numExtra * (unsigned) argSize;
+          }
+        else
+          {
+            assert(0 && "UNTESTED CODE: Size per stack argument is not fixed on this architecture: use actual arg sizes to compute MaxOptionalArgsSize");
+            sizeForThisCall = 0;
+            for (unsigned i=0; i < numOperands; ++i)
+              sizeForThisCall += target.findOptimalStorageSize(callInst->
+                                                    getOperand(i)->getType());
+          }
+        
+        if (maxSize < sizeForThisCall)
+          maxSize = sizeForThisCall;
+      }
+  
+  return maxSize;
 }
 
 
-void
-MachineCodeForMethod::putLocalVarAtOffsetFromSP(const Value* local,
-                                                int offset,
-                                                unsigned int size)
+/*ctor*/
+MachineCodeForMethod::MachineCodeForMethod(const Method* _M,
+                                           const TargetMachine& target)
+  : Annotation(AID),
+    method(_M), compiledAsLeaf(false), staticStackSize(0),
+    automaticVarsSize(0), regSpillsSize(0),
+    currentOptionalArgsSize(0), maxOptionalArgsSize(0),
+    currentTmpValuesSize(0)
 {
-  offsetsFromSP[local] = offset;
-  incrementAutomaticVarsSize(size);
+  maxOptionalArgsSize = ComputeMaxOptionalArgsSize(target, method);
+  staticStackSize = maxOptionalArgsSize +
+                    target.getFrameInfo().getMinStackFrameSize();
 }
-
 
 int
-MachineCodeForMethod::getOffsetFromFP(const Value* local) const
+MachineCodeForMethod::allocateLocalVar(const TargetMachine& target,
+                                       const Value* val)
 {
-  hash_map<const Value*, int>::const_iterator pair = offsetsFromFP.find(local);
-  assert(pair != offsetsFromFP.end() && "Offset from FP unknown for Value");
-  return (*pair).second;
+  // Check if we've allocated a stack slot for this value already
+  // 
+  int offset = getOffset(val);
+  if (offset == INVALID_FRAME_OFFSET)
+    {
+      bool growUp;
+      int firstOffset =target.getFrameInfo().getFirstAutomaticVarOffset(*this,
+                                                                       growUp);
+      offset = growUp? firstOffset + getAutomaticVarsSize()
+                     : firstOffset - getAutomaticVarsSize();
+      offsets[val] = offset;
+      
+      unsigned int size = target.findOptimalStorageSize(val->getType());
+      incrementAutomaticVarsSize(size);
+    }
+  return offset;
 }
-
 
 int
-MachineCodeForMethod::getOffsetFromSP(const Value* local) const
+MachineCodeForMethod::allocateSpilledValue(const TargetMachine& target,
+                                           const Type* type)
 {
-  hash_map<const Value*, int>::const_iterator pair = offsetsFromSP.find(local);
-  assert(pair != offsetsFromSP.end() && "Offset from SP unknown for Value");
-  return (*pair).second;
+  bool growUp;
+  int firstOffset = target.getFrameInfo().getRegSpillAreaOffset(*this, growUp);
+  int offset = growUp? firstOffset + getRegSpillsSize()
+                     : firstOffset - getRegSpillsSize();
+  
+  unsigned int size = target.findOptimalStorageSize(type);
+  incrementRegSpillsSize(size);
+  
+  return offset;
 }
+  
+int
+MachineCodeForMethod::allocateOptionalArg(const TargetMachine& target,
+                                          const Type* type)
+{
+  const MachineFrameInfo& frameInfo = target.getFrameInfo();
+  bool growUp;
+  int firstOffset = frameInfo.getFirstOptionalOutgoingArgOffset(*this, growUp);
+  int offset = growUp? firstOffset + getCurrentOptionalArgsSize()
+                     : firstOffset - getCurrentOptionalArgsSize();
+  
+  int size = MAXINT;
+  if (frameInfo.argsOnStackHaveFixedSize())
+    size = frameInfo.getSizeOfEachArgOnStack(); 
+  else
+    {
+      assert(0 && "UNTESTED CODE: Size per stack argument is not fixed on this architecture: use actual argument sizes for computing optional arg offsets");
+      size = target.findOptimalStorageSize(type);
+    }
+  
+  incrementCurrentOptionalArgsSize(size);
+  
+  return offset;
+}
+
+void
+MachineCodeForMethod::resetOptionalArgs(const TargetMachine& target)
+{
+  currentOptionalArgsSize = 0;
+}
+
+int
+MachineCodeForMethod::pushTempValue(const TargetMachine& target,
+                                    unsigned int size)
+{
+  bool growUp;
+  int firstTmpOffset = target.getFrameInfo().getTmpAreaOffset(*this, growUp);
+  int offset = growUp? firstTmpOffset + currentTmpValuesSize
+                     : firstTmpOffset - currentTmpValuesSize;
+  currentTmpValuesSize += size;
+  return offset;
+}
+
+void
+MachineCodeForMethod::popAllTempValues(const TargetMachine& target)
+{
+  currentTmpValuesSize = 0;
+}
+
+
+// void
+// MachineCodeForMethod::putLocalVarAtOffsetFromSP(const Value* local,
+//                                                 int offset,
+//                                                 unsigned int size)
+// {
+//   offsetsFromSP[local] = offset;
+//   incrementAutomaticVarsSize(size);
+// }
+// 
+
+int
+MachineCodeForMethod::getOffset(const Value* val) const
+{
+  hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
+  return (pair == offsets.end())? INVALID_FRAME_OFFSET : (*pair).second;
+}
+
+
+// int
+// MachineCodeForMethod::getOffsetFromSP(const Value* local) const
+// {
+//   hash_map<const Value*, int>::const_iterator pair = offsetsFromSP.find(local);
+//   return (pair == offsetsFromSP.end())? INVALID_FRAME_OFFSET : (*pair).second;
+// }
 
 
 void

@@ -130,7 +130,7 @@ SelectInstructionsForMethod(Method* method, TargetMachine &target)
     {
       cout << endl
            << "*** Machine instructions after INSTRUCTION SELECTION" << endl;
-      method->getMachineCode().dump();
+      MachineCodeForMethod::get(method).dump();
     }
   
   return false;
