@@ -192,8 +192,11 @@ public:
 
   /// runPassesOn - Carefully run the specified set of pass on the specified
   /// module, returning the transformed module on success, or a null pointer on
-  /// failure.
-  Module *runPassesOn(Module *M, const std::vector<const PassInfo*> &Passes);
+  /// failure.  If AutoDebugCrashes is set to true, then bugpoint will
+  /// automatically attempt to track down a crashing pass if one exists, and
+  /// this method will never return null.
+  Module *runPassesOn(Module *M, const std::vector<const PassInfo*> &Passes,
+                      bool AutoDebugCrashes = false);
 
   /// runPasses - Run the specified passes on Program, outputting a bytecode
   /// file and writting the filename into OutputFile if successful.  If the

@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
+#include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
@@ -166,11 +167,20 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
 /// module, returning the transformed module on success, or a null pointer on
 /// failure.
 Module *BugDriver::runPassesOn(Module *M,
-                               const std::vector<const PassInfo*> &Passes) {
+                               const std::vector<const PassInfo*> &Passes,
+                               bool AutoDebugCrashes) {
   Module *OldProgram = swapProgramIn(M);
   std::string BytecodeResult;
-  if (runPasses(Passes, BytecodeResult, false/*delete*/, true/*quiet*/))
+  if (runPasses(Passes, BytecodeResult, false/*delete*/, true/*quiet*/)) {
+    if (AutoDebugCrashes) {
+      std::cerr << " Error running this sequence of passes" 
+                << " on the input program!\n";
+      delete OldProgram;
+      EmitProgressBytecode("pass-error",  false);
+      exit(debugOptimizerCrash());
+    }
     return 0;
+  }
 
   // Restore the current program.
   swapProgramIn(OldProgram);
