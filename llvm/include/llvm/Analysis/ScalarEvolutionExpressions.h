@@ -197,10 +197,18 @@ namespace llvm {
       return true;
     }
 
+    // hasComputableLoopEvolution - Commutative expressions have computable loop
+    // evolutions iff they have at least one operand that varies with the loop,
+    // but that all varying operands are computable.
     virtual bool hasComputableLoopEvolution(const Loop *L) const {
+      bool HasVarying = false;
       for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-        if (getOperand(i)->hasComputableLoopEvolution(L)) return true;
-      return false;
+        if (!getOperand(i)->isLoopInvariant(L))
+          if (getOperand(i)->hasComputableLoopEvolution(L))
+            HasVarying = true;
+          else
+            return false;
+      return HasVarying;
     }
 
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
@@ -382,8 +390,6 @@ namespace llvm {
 
     virtual bool hasComputableLoopEvolution(const Loop *QL) const {
       if (L == QL) return true;
-      /// FIXME: What if the start or step value a recurrence for the specified
-      /// loop?
       return false;
     }
 
