@@ -545,7 +545,7 @@ static void SwitchSection(std::ostream &OS, std::string &CurSection,
   if (CurSection != NewSection) {
     CurSection = NewSection;
     if (!CurSection.empty())
-      OS << "\t" << NewSection << "\n";
+      OS << "\t.section " << NewSection << "\n";
   }
 }
 
