@@ -1,7 +1,22 @@
 //===-- LiveVariables.cpp - Live Variable Analysis for Machine Code -------===//
 // 
-// This file implements the LiveVariable analysis pass.
-//   
+// This file implements the LiveVariable analysis pass.  For each machine
+// instruction in the function, this pass calculates the set of registers that
+// are immediately dead after the instruction (i.e., the instruction calculates
+// the value, but it is never used) and the set of registers that are used by
+// the instruction, but are never used after the instruction (i.e., they are
+// killed).
+//
+// This class computes live variables using are sparse implementation based on
+// the machine code SSA form.  This class computes live variable information for
+// each virtual and _register allocatable_ physical register in a function.  It
+// uses the dominance properties of SSA form to efficiently compute live
+// variables for virtual registers, and assumes that physical registers are only
+// live within a single basic block (allowing it to do a single local analysis
+// to resolve physical register lifetimes in each basic block).  If a physical
+// register is not register allocatable, it is not tracked.  This is useful for
+// things like the stack pointer and condition codes.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/LiveVariables.h"
@@ -104,6 +119,23 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
 }
 
 bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
+  // First time though, initialize AllocatablePhysicalRegisters for the target
+  if (AllocatablePhysicalRegisters.empty()) {
+    const MRegisterInfo &MRI = *MF.getTarget().getRegisterInfo();
+    assert(&MRI && "Target doesn't have register information?");
+
+    // Make space, initializing to false...
+    AllocatablePhysicalRegisters.resize(MRegisterInfo::FirstVirtualRegister);
+
+    // Loop over all of the register classes...
+    for (MRegisterInfo::regclass_iterator RCI = MRI.regclass_begin(),
+           E = MRI.regclass_end(); RCI != E; ++RCI)
+      // Loop over all of the allocatable registers in the function...
+      for (TargetRegisterClass::iterator I = (*RCI)->allocation_order_begin(MF),
+             E = (*RCI)->allocation_order_end(MF); I != E; ++I)
+        AllocatablePhysicalRegisters[*I] = true;  // The reg is allocatable!
+  }
+
   // Build BBMap... 
   unsigned BBNum = 0;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
@@ -165,12 +197,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 	  if (MO.isVirtualRegister() && !MO.getVRegValueOrNull()) {
 	    unsigned RegIdx = MO.getReg()-MRegisterInfo::FirstVirtualRegister;
 	    HandleVirtRegUse(getVarInfo(RegIdx), MBB, MI);
-	  } else if (MO.isPhysicalRegister() && MO.getReg() != 0
-		   /// FIXME: This is a gross hack, due to us not being able to
-		   /// say that some registers are defined on entry to the
-		   /// function.  5 = ESP
-&& MO.getReg() != 5
-) {
+	  } else if (MO.isPhysicalRegister() && 
+                     AllocatablePhysicalRegisters[MO.getReg()]) {
 	    HandlePhysRegUse(MO.getReg(), MI);
 	  }
 	}
@@ -193,12 +221,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 	    VRInfo.DefBlock = MBB;                           // Created here...
 	    VRInfo.DefInst = MI;
 	    VRInfo.Kills.push_back(std::make_pair(MBB, MI)); // Defaults to dead
-	  } else if (MO.isPhysicalRegister() && MO.getReg() != 0
-		   /// FIXME: This is a gross hack, due to us not being able to
-		   /// say that some registers are defined on entry to the
-		   /// function.  5 = ESP
-&& MO.getReg() != 5
-) {
+	  } else if (MO.isPhysicalRegister() &&
+                     AllocatablePhysicalRegisters[MO.getReg()]) {
 	    HandlePhysRegDef(MO.getReg(), MI);
 	  }
 	}
