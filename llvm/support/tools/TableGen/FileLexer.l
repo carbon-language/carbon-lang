@@ -21,8 +21,12 @@
 
 %{
 #include "Record.h"
+#include "Support/CommandLine.h"
 typedef std::pair<Record*, std::vector<Init*>*> SubClassRefTy;
 #include "FileParser.h"
+
+// Global variable recording the location of the include directory
+std::string IncludeDirectory;
 
 // ParseInt - This has to handle the special case of binary numbers 0b0101
 static int ParseInt(const char *Str) {
@@ -61,7 +65,18 @@ std::ostream &err() {
 
 int Fileparse();
 
-void ParseFile(const std::string &Filename) {
+//
+// Function: ParseFile()
+//
+// Description:
+//	This function begins the parsing of the specified tablegen file.
+//
+// Inputs:
+//	Filename - A string containing the name of the file to parse.
+//	IncludeDir - A string containing the directory from which include
+//	             files can be found.
+//
+void ParseFile(const std::string &Filename, const std::string & IncludeDir) {
   FILE *F = stdin;
   if (Filename != "-") {
     F = fopen(Filename.c_str(), "r");
@@ -75,6 +90,12 @@ void ParseFile(const std::string &Filename) {
     IncludeStack.push_back(IncludeRec("<stdin>", stdin));
   }
 
+  //
+  // Record the location of the include directory so that the lexer can find
+  // it later.
+  //
+  IncludeDirectory = IncludeDir;
+ 
   Filein = F;
   Filelineno = 1;
   Fileparse();
@@ -103,8 +124,20 @@ static void HandleInclude(const char *Buffer) {
   // Open the new input file...
   yyin = fopen(Filename.c_str(), "r");
   if (yyin == 0) {
-    err() << "Could not find include file '" << Filename << "'!\n";
-    abort();
+    //
+    // If we couldn't find the file in the current directory, look for it in
+    // the include directories.
+    //
+    // NOTE:
+    //  Right now, there is only one directory.  We need to eventually add
+    //  support for more.
+    //
+    Filename = IncludeDirectory + "/" + Filename;
+    yyin = fopen(Filename.c_str(), "r");
+    if (yyin == 0) {
+      err() << "Could not find include file '" << Filename << "'!\n";
+      abort();
+    }
   }
 
   // Add the file to our include stack...
