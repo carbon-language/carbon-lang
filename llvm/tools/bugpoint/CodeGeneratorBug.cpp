@@ -144,8 +144,8 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
         ResolverArgs.push_back(GEP);
 
         // Insert code at the beginning of the function
-        for (Value::use_iterator i=F->use_begin(), e=F->use_end(); i!=e; ++i) {
-          if (Instruction* Inst = dyn_cast<Instruction>(*i)) {
+        while (!F->use_empty())
+          if (Instruction *Inst = dyn_cast<Instruction>(F->use_back())) {
             // call resolver(GetElementPtr...)
             CallInst *resolve = new CallInst(resolverFunc, ResolverArgs, 
                                              "resolver", Inst);
@@ -161,7 +161,6 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
             std::cerr << "Non-instruction is using an external function!\n";
             abort();
           }
-        }
       }
     }
   }
