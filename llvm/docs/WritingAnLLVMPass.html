@@ -40,6 +40,8 @@
         <li><a href="#doFinalization_fn">The <tt>doFinalization(Function
                                              &amp;)</tt> method</a>
         </ul>
+     <li><a href="#MachineFunctionPass">The <tt>MachineFunctionPass</tt>
+                                        class</a>
      </ul>
   <li><a href="#registration">Pass Registration</a>
      <ul>
@@ -568,6 +570,31 @@ href="#runOnBasicBlock"><tt>runOnBasicBlock</tt></a> for every BasicBlock in the
 program being compiled.  This can be used to perform per-function
 finalization.<p>
 
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; 
+<font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="MachineFunctionPass">The <tt>MachineFunctionPass</tt> class
+</b></font></td></tr></table><ul>
+
+A <tt>MachineFunctionPass</tt> executes on the machine-dependent
+representation of each LLVM function in the program,
+independent of all of the other functions in the program.
+A <tt>MachineFunctionPass</tt> is also a <tt>FunctionPass</tt>, so all
+the restrictions that apply to a <tt>FunctionPass</tt> also apply to it.
+<tt>MachineFunctionPass</tt>es also have additional restrictions. In
+particular, <tt>MachineFunctionPass</tt>es are not allowed to do any of
+the following:
+
+<ol>
+<li>Modify any LLVM Instructions, BasicBlocks or Functions.
+<li>Modify a MachineFunction other than the one currently being processed.
+<li>Add or remove MachineFunctions from the current Module.
+<li>Add or remove global variables from the current Module.
+<li>Maintain state across invocations of
+    <a href="#runOnMachineFunction"><tt>runOnMachineFunction</tt></a> (including global data)
+</ol><p>
 
 
 <!-- *********************************************************************** -->
