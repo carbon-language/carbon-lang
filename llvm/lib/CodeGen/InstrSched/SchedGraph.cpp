@@ -168,6 +168,9 @@ SchedGraphNode::SchedGraphNode(unsigned int _nodeId,
 /*dtor*/
 SchedGraphNode::~SchedGraphNode()
 {
+  // for each node, delete its out-edges
+  std::for_each(beginOutEdges(), endOutEdges(),
+                deleter<SchedGraphEdge>);
 }
 
 void SchedGraphNode::dump(int indent=0) const {
@@ -233,16 +236,9 @@ SchedGraph::SchedGraph(const BasicBlock* bb,
 SchedGraph::~SchedGraph()
 {
   for (const_iterator I = begin(); I != end(); ++I)
-    {
-      SchedGraphNode *node = I->second;
-      
-      // for each node, delete its out-edges
-      std::for_each(node->beginOutEdges(), node->endOutEdges(),
-                    deleter<SchedGraphEdge>);
-      
-      // then delete the node itself.
-      delete node;
-    }
+    delete I->second;
+  delete graphRoot;
+  delete graphLeaf;
 }
 
 
@@ -967,8 +963,8 @@ SchedGraphSet::SchedGraphSet(const Function* _function,
 SchedGraphSet::~SchedGraphSet()
 {
   // delete all the graphs
-  for (const_iterator I = begin(); I != end(); ++I)
-    delete *I;
+  for(iterator I = begin(), E = end(); I != E; ++I)
+    delete *I;  // destructor is a friend
 }
 
 
