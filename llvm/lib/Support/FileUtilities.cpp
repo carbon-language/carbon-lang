@@ -6,6 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Support/FileUtilities.h"
+#include "Config/unistd.h"
 #include <fstream>
 #include <iostream>
 #include <cstdio>
