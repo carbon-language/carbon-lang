@@ -193,7 +193,8 @@ def FBO  : FPBranchV8<0b1111, "fbo">;
 
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
-let Defs = [O0, O1, O2, O3, O4, O5], hasDelaySlot = 1, isCall = 1 in { 
+let Uses = [O0, O1, O2, O3, O4, O5], Defs = [O0, O1, O2, O3, O4, O5],
+    hasDelaySlot = 1, isCall = 1 in { 
   // pc-relative call:
   def CALL : InstV8 {
     bits<30> disp;
