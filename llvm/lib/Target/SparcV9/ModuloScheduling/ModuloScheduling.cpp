@@ -23,8 +23,10 @@
 #include "llvm/Target/TargetSchedInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Timer.h"
 #include <cmath>
 #include <algorithm>
 #include <fstream>
@@ -60,11 +62,21 @@ static void WriteGraphToFile(std::ostream &O, const std::string &GraphName,
   O << "\n";
 };
 
+
+#if 1
+#define TIME_REGION(VARNAME, DESC) \
+   NamedRegionTimer VARNAME(DESC)
+#else
+#define TIME_REGION(VARNAME, DESC)
+#endif
+
+
 //Graph Traits for printing out the dependence graph
 namespace llvm {
   Statistic<> ValidLoops("modulosched-validLoops", "Number of candidate loops modulo-scheduled");
   Statistic<> MSLoops("modulosched-schedLoops", "Number of loops successfully modulo-scheduled");
   Statistic<> IncreasedII("modulosched-increasedII", "Number of times we had to increase II");
+  Statistic<> SingleBBLoops("modulosched-singeBBLoops", "Number of single basic block loops");
 
   template<>
   struct DOTGraphTraits<MSchedGraph*> : public DefaultDOTGraphTraits {
@@ -151,25 +163,40 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
   //Iterate over the worklist and perform scheduling
   for(std::vector<MachineBasicBlock*>::iterator BI = Worklist.begin(),  
 	BE = Worklist.end(); BI != BE; ++BI) {
-    
-    CreateDefMap(*BI);
+
+    //Print out BB for debugging
+    DEBUG(std::cerr << "ModuloScheduling BB: \n"; (*BI)->print(std::cerr));
+
+    //Catch the odd case where we only have TmpInstructions and no real Value*s
+    if(!CreateDefMap(*BI)) {
+      //Clear out our maps for the next basic block that is processed
+      nodeToAttributesMap.clear();
+      partialOrder.clear();
+      recurrenceList.clear();
+      FinalNodeOrder.clear();
+      schedule.clear();
+      defMap.clear();
+      continue;
+    }
 
     MSchedGraph *MSG = new MSchedGraph(*BI, target);
     
     //Write Graph out to file
     DEBUG(WriteGraphToFile(std::cerr, F.getName(), MSG));
     
-    //Print out BB for debugging
-    DEBUG(std::cerr << "ModuloScheduling BB: \n"; (*BI)->print(std::cerr));
-    
     //Calculate Resource II
     int ResMII = calculateResMII(*BI);
     
     //Calculate Recurrence II
     int RecMII = calculateRecMII(MSG, ResMII);
+
+    DEBUG(std::cerr << "Number of reccurrences found: " << recurrenceList.size() << "\n");
+       
     
+
+
     //Our starting initiation interval is the maximum of RecMII and ResMII
-    /*II = std::max(RecMII, ResMII);
+    II = std::max(RecMII, ResMII);
     
     //Print out II, RecMII, and ResMII
     DEBUG(std::cerr << "II starts out as " << II << " ( RecMII=" << RecMII << " and ResMII=" << ResMII << ")\n");
@@ -177,10 +204,10 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     //Dump node properties if in debug mode
     DEBUG(for(std::map<MSchedGraphNode*, MSNodeAttributes>::iterator I =  nodeToAttributesMap.begin(), 
 		E = nodeToAttributesMap.end(); I !=E; ++I) {
-      std::cerr << "Node: " << *(I->first) << " ASAP: " << I->second.ASAP << " ALAP: " 
-		<< I->second.ALAP << " MOB: " << I->second.MOB << " Depth: " << I->second.depth 
-		<< " Height: " << I->second.height << "\n";
-    });
+	    std::cerr << "Node: " << *(I->first) << " ASAP: " << I->second.ASAP << " ALAP: " 
+		      << I->second.ALAP << " MOB: " << I->second.MOB << " Depth: " << I->second.depth 
+		      << " Height: " << I->second.height << "\n";
+	  });
 
     //Calculate Node Properties
     calculateNodeAttributes(MSG, ResMII);
@@ -188,10 +215,10 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     //Dump node properties if in debug mode
     DEBUG(for(std::map<MSchedGraphNode*, MSNodeAttributes>::iterator I =  nodeToAttributesMap.begin(), 
 		E = nodeToAttributesMap.end(); I !=E; ++I) {
-      std::cerr << "Node: " << *(I->first) << " ASAP: " << I->second.ASAP << " ALAP: " 
-		<< I->second.ALAP << " MOB: " << I->second.MOB << " Depth: " << I->second.depth 
-		<< " Height: " << I->second.height << "\n";
-    });
+	    std::cerr << "Node: " << *(I->first) << " ASAP: " << I->second.ASAP << " ALAP: " 
+		      << I->second.ALAP << " MOB: " << I->second.MOB << " Depth: " << I->second.depth 
+		      << " Height: " << I->second.height << "\n";
+	  });
     
     //Put nodes in order to schedule them
     computePartialOrder();
@@ -199,18 +226,18 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     //Dump out partial order
     DEBUG(for(std::vector<std::set<MSchedGraphNode*> >::iterator I = partialOrder.begin(), 
 		E = partialOrder.end(); I !=E; ++I) {
-      std::cerr << "Start set in PO\n";
-      for(std::set<MSchedGraphNode*>::iterator J = I->begin(), JE = I->end(); J != JE; ++J)
-	std::cerr << "PO:" << **J << "\n";
-    });
+	    std::cerr << "Start set in PO\n";
+	    for(std::set<MSchedGraphNode*>::iterator J = I->begin(), JE = I->end(); J != JE; ++J)
+	      std::cerr << "PO:" << **J << "\n";
+	  });
     
     //Place nodes in final order
     orderNodes();
     
     //Dump out order of nodes
     DEBUG(for(std::vector<MSchedGraphNode*>::iterator I = FinalNodeOrder.begin(), E = FinalNodeOrder.end(); I != E; ++I) {
-	  std::cerr << "FO:" << **I << "\n";
-    });
+	    std::cerr << "FO:" << **I << "\n";
+	  });
     
     //Finally schedule nodes
     bool haveSched = computeSchedule();
@@ -227,7 +254,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     }
     else
       DEBUG(std::cerr << "Max stage is 0, so no change in loop or reached cap\n");
-    */
+    
     //Clear out our maps for the next basic block that is processed
     nodeToAttributesMap.clear();
     partialOrder.clear();
@@ -249,7 +276,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
   return Changed;
 }
 
-void ModuloSchedulingPass::CreateDefMap(MachineBasicBlock *BI) {
+bool ModuloSchedulingPass::CreateDefMap(MachineBasicBlock *BI) {
   defaultInst = 0;
 
   for(MachineBasicBlock::iterator I = BI->begin(), E = BI->end(); I != E; ++I) {
@@ -257,7 +284,7 @@ void ModuloSchedulingPass::CreateDefMap(MachineBasicBlock *BI) {
       const MachineOperand &mOp = I->getOperand(opNum);
       if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isDef()) {
 	//assert if this is the second def we have seen
-	DEBUG(std::cerr << "Putting " << *(mOp.getVRegValue()) << " into map\n"); 
+	//DEBUG(std::cerr << "Putting " << *(mOp.getVRegValue()) << " into map\n"); 
 	assert(!defMap.count(mOp.getVRegValue()) && "Def already in the map");
 
 	defMap[mOp.getVRegValue()] = &*I;
@@ -272,7 +299,10 @@ void ModuloSchedulingPass::CreateDefMap(MachineBasicBlock *BI) {
     }
   }
   
-  assert(defaultInst && "We must have a default instruction to use as our main point to add to machine code for instruction\n");
+  if(!defaultInst)
+    return false;
+  
+  return true;
   
 }
 /// This function checks if a Machine Basic Block is valid for modulo
@@ -302,6 +332,10 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
   if(BI->getBasicBlock()->size() == 1)
     return false;
 
+
+  //Increase number of single basic block loops for stats
+  ++SingleBBLoops;
+
   //Get Target machine instruction info
   const TargetInstrInfo *TMI = target.getInstrInfo();
     
@@ -310,6 +344,15 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
     //Get opcode to check instruction type
     MachineOpCode OC = I->getOpcode();
     if(TMI->isCall(OC))
+      return false;
+    //Look for conditional move
+    if(OC == V9::MOVRZr || OC == V9::MOVRZi || OC == V9::MOVRLEZr || OC == V9::MOVRLEZi 
+       || OC == V9::MOVRLZr || OC == V9::MOVRLZi || OC == V9::MOVRNZr || OC == V9::MOVRNZi
+       || OC == V9::MOVRGZr || OC == V9::MOVRGZi || OC == V9::MOVRGEZr 
+       || OC == V9::MOVRGEZi || OC == V9::MOVLEr || OC == V9::MOVLEi || OC == V9::MOVLEUr
+       || OC == V9::MOVLEUi || OC == V9::MOVFLEr || OC == V9::MOVFLEi
+       || OC == V9::MOVNEr || OC == V9::MOVNEi || OC == V9::MOVNEGr || OC == V9::MOVNEGi
+       || OC == V9::MOVFNEr || OC == V9::MOVFNEi)
       return false;
   }
   return true;
@@ -321,6 +364,8 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
 //for each instruction
 int ModuloSchedulingPass::calculateResMII(const MachineBasicBlock *BI) {
   
+  TIME_REGION(X, "calculateResMII");
+
   const TargetInstrInfo *mii = target.getInstrInfo();
   const TargetSchedInfo *msi = target.getSchedInfo();
 
@@ -381,22 +426,22 @@ int ModuloSchedulingPass::calculateResMII(const MachineBasicBlock *BI) {
 /// calculateRecMII - Calculates the value of the highest recurrence
 /// By value we mean the total latency
 int ModuloSchedulingPass::calculateRecMII(MSchedGraph *graph, int MII) {
-  std::vector<MSchedGraphNode*> vNodes;
+  /*std::vector<MSchedGraphNode*> vNodes;
   //Loop over all nodes in the graph
   for(MSchedGraph::iterator I = graph->begin(), E = graph->end(); I != E; ++I) {
     findAllReccurrences(I->second, vNodes, MII);
     vNodes.clear();
-  }
+  }*/
+  
+  TIME_REGION(X, "calculateRecMII");
 
+  findAllCircuits(graph, MII);
   int RecMII = 0;
   
   for(std::set<std::pair<int, std::vector<MSchedGraphNode*> > >::iterator I = recurrenceList.begin(), E=recurrenceList.end(); I !=E; ++I) {
-    DEBUG(for(std::vector<MSchedGraphNode*>::const_iterator N = I->second.begin(), NE = I->second.end(); N != NE; ++N) {
-      std::cerr << **N << "\n";
-    });
     RecMII = std::max(RecMII, I->first);
   }
-    
+ 
   return MII;
 }
 
@@ -404,6 +449,8 @@ int ModuloSchedulingPass::calculateRecMII(MSchedGraph *graph, int MII) {
 /// each node in the dependence graph: ASAP, ALAP, Depth, Height, and
 /// MOB.
 void ModuloSchedulingPass::calculateNodeAttributes(MSchedGraph *graph, int MII) {
+
+  TIME_REGION(X, "calculateNodeAttributes");
 
   assert(nodeToAttributesMap.empty() && "Node attribute map was not cleared");
 
@@ -678,11 +725,234 @@ void ModuloSchedulingPass::addReccurrence(std::vector<MSchedGraphNode*> &recurre
   
 }
 
+int CircCount;
+
+void ModuloSchedulingPass::unblock(MSchedGraphNode *u, std::set<MSchedGraphNode*> &blocked,
+	     std::map<MSchedGraphNode*, std::set<MSchedGraphNode*> > &B) {
+
+  //Unblock u
+  DEBUG(std::cerr << "Unblocking: " << *u << "\n");
+  blocked.erase(u);
+
+  //std::set<MSchedGraphNode*> toErase;
+  while (!B[u].empty()) {
+    MSchedGraphNode *W = *B[u].begin();
+    B[u].erase(W);
+    //toErase.insert(*W);
+    DEBUG(std::cerr << "Removed: " << *W << "from B-List\n");
+    if(blocked.count(W))
+      unblock(W, blocked, B);
+  }
+
+}
+
+bool ModuloSchedulingPass::circuit(MSchedGraphNode *v, std::vector<MSchedGraphNode*> &stack, 
+	     std::set<MSchedGraphNode*> &blocked, std::vector<MSchedGraphNode*> &SCC, 
+	     MSchedGraphNode *s, std::map<MSchedGraphNode*, std::set<MSchedGraphNode*> > &B, 
+				   int II, std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes) {
+  bool f = false;
+  
+  DEBUG(std::cerr << "Finding Circuits Starting with: ( " << v << ")"<< *v << "\n");
+
+  //Push node onto the stack
+  stack.push_back(v);
+
+  //block this node
+  blocked.insert(v);
+
+  //Loop over all successors of node v that are in the scc, create Adjaceny list
+  std::set<MSchedGraphNode*> AkV;
+  for(MSchedGraphNode::succ_iterator I = v->succ_begin(), E = v->succ_end(); I != E; ++I) {
+    if((std::find(SCC.begin(), SCC.end(), *I) != SCC.end())) {
+      AkV.insert(*I);
+    }
+  }
+
+  for(std::set<MSchedGraphNode*>::iterator I = AkV.begin(), E = AkV.end(); I != E; ++I) {
+    if(*I == s) {
+      //We have a circuit, so add it to our list
+      
+      std::vector<MSchedGraphNode*> recc;
+      //Dump recurrence for now
+      DEBUG(std::cerr << "Starting Recc\n");
+	
+      int totalDelay = 0;
+      int totalDistance = 0;
+      MSchedGraphNode *lastN = 0;
+
+      //Loop over recurrence, get delay and distance
+      for(std::vector<MSchedGraphNode*>::iterator N = stack.begin(), NE = stack.end(); N != NE; ++N) {
+	totalDelay += (*N)->getLatency();
+	if(lastN) {
+	  totalDistance += (*N)->getInEdge(lastN).getIteDiff();
+	}
+
+	//Get the original node
+	lastN = *N;
+	recc.push_back(newNodes[*N]);
+
+	DEBUG(std::cerr << *lastN << "\n");
+      }
+
+      //Get the loop edge
+      totalDistance += lastN->getIteDiff(*stack.begin());
+
+      DEBUG(std::cerr << "End Recc\n");
+      f = true;
+      CircCount++;
+
+      //Insert reccurrence into the list
+      DEBUG(std::cerr << "Ignore Edge from: " << *lastN << " to " << **stack.begin() << "\n");
+      edgesToIgnore.insert(std::make_pair(newNodes[lastN], newNodes[(*stack.begin())]->getInEdgeNum(newNodes[lastN])));
+	
+      //Adjust II until we get close to the inequality delay - II*distance <= 0
+      int RecMII = II; //Starting value
+      int value = totalDelay-(RecMII * totalDistance);
+      int lastII = II;
+      while(value <= 0) {
+	  
+	lastII = RecMII;
+	RecMII--;
+	value = totalDelay-(RecMII * totalDistance);
+      }
+
+      recurrenceList.insert(std::make_pair(lastII, recc));
+
+    }
+    else if(!blocked.count(*I)) {
+      if(circuit(*I, stack, blocked, SCC, s, B, II, newNodes))
+	f = true;
+    }
+    else
+      DEBUG(std::cerr << "Blocked: " << **I << "\n");
+  }
+
+
+  if(f) {
+    unblock(v, blocked, B);
+  }
+  else {
+    for(std::set<MSchedGraphNode*>::iterator I = AkV.begin(), E = AkV.end(); I != E; ++I) 
+      B[*I].insert(v);
+
+  }
+
+  //Pop v
+  stack.pop_back();
+
+  return f;
+
+}
+
+void ModuloSchedulingPass::findAllCircuits(MSchedGraph *g, int II) {
+
+  CircCount = 0;
+
+  //Keep old to new node mapping information 
+  std::map<MSchedGraphNode*, MSchedGraphNode*> newNodes;
+
+  //copy the graph
+  MSchedGraph *MSG = new MSchedGraph(*g, newNodes);
+
+  DEBUG(std::cerr << "Finding All Circuits\n");
+
+  //Set of blocked nodes
+  std::set<MSchedGraphNode*> blocked;
+
+  //Stack holding current circuit
+  std::vector<MSchedGraphNode*> stack;
+
+  //Map for B Lists
+  std::map<MSchedGraphNode*, std::set<MSchedGraphNode*> > B;
+
+  //current node
+  MSchedGraphNode *s;
+
+
+  //Iterate over the graph until its down to one node or empty
+  while(MSG->size() > 1) {
+    
+    //Write Graph out to file
+    //WriteGraphToFile(std::cerr, "Graph" + utostr(MSG->size()), MSG);
+
+    DEBUG(std::cerr << "Graph Size: " << MSG->size() << "\n");
+    DEBUG(std::cerr << "Finding strong component Vk with least vertex\n");
+
+    //Iterate over all the SCCs in the graph
+    std::set<MSchedGraphNode*> Visited;
+    std::vector<MSchedGraphNode*> Vk;
+    MSchedGraphNode* s = 0;
+
+    //Find scc with the least vertex
+    for (MSchedGraph::iterator GI = MSG->begin(), E = MSG->end(); GI != E; ++GI)
+      if (Visited.insert(GI->second).second) {
+	for (scc_iterator<MSchedGraphNode*> SCCI = scc_begin(GI->second),
+	       E = scc_end(GI->second); SCCI != E; ++SCCI) {
+	  std::vector<MSchedGraphNode*> &nextSCC = *SCCI;
+
+	  if (Visited.insert(nextSCC[0]).second) {
+	    Visited.insert(nextSCC.begin()+1, nextSCC.end());
+
+	    DEBUG(std::cerr << "SCC size: " << nextSCC.size() << "\n");
+
+	    //Ignore self loops
+	    if(nextSCC.size() > 1) {
+	    
+	      //Get least vertex in Vk
+	      if(!s) {
+		s = nextSCC[0];
+		Vk = nextSCC;
+	      }
+
+	      for(unsigned i = 0; i < nextSCC.size(); ++i) {
+		if(nextSCC[i] < s) {
+		  s = nextSCC[i];
+		  Vk = nextSCC;
+		}
+	      }
+	    }
+	  }
+	}
+      }
+  
+  
+
+    //Process SCC
+    DEBUG(for(std::vector<MSchedGraphNode*>::iterator N = Vk.begin(), NE = Vk.end();
+	      N != NE; ++N) { std::cerr << *((*N)->getInst()); });
+    
+    //Iterate over all nodes in this scc
+    for(std::vector<MSchedGraphNode*>::iterator N = Vk.begin(), NE = Vk.end();
+	N != NE; ++N) {
+      blocked.erase(*N);
+      B[*N].clear();
+    }
+    if(Vk.size() > 1) {
+      circuit(s, stack, blocked, Vk, s, B, II, newNodes);
+      
+      //Find all nodes up to s and delete them
+      std::vector<MSchedGraphNode*> nodesToRemove;
+      nodesToRemove.push_back(s);
+      for(MSchedGraph::iterator N = MSG->begin(), NE = MSG->end(); N != NE; ++N) {
+	if(N->second < s )
+	  nodesToRemove.push_back(N->second);
+      }
+      for(std::vector<MSchedGraphNode*>::iterator N = nodesToRemove.begin(), NE = nodesToRemove.end(); N != NE; ++N) {
+	DEBUG(std::cerr << "Deleting Node: " << **N << "\n");
+	MSG->deleteNode(*N);
+      }
+    }
+    else
+      break;
+  }
+  DEBUG(std::cerr << "Num Circuits found: " << CircCount << "\n");
+}
+
+
 void ModuloSchedulingPass::findAllReccurrences(MSchedGraphNode *node, 
 					       std::vector<MSchedGraphNode*> &visitedNodes,
 					       int II) {
-  if(node)
-    DEBUG(std::cerr << *(node->getInst()) << "\n");
+  
 
   if(std::find(visitedNodes.begin(), visitedNodes.end(), node) != visitedNodes.end()) {
     std::vector<MSchedGraphNode*> recurrence;
@@ -759,6 +1029,8 @@ void ModuloSchedulingPass::findAllReccurrences(MSchedGraphNode *node,
 
 void ModuloSchedulingPass::computePartialOrder() {
 
+  TIME_REGION(X, "calculatePartialOrder");
+  
   //Only push BA branches onto the final node order, we put other branches after it
   //FIXME: Should we really be pushing branches on it a specific order instead of relying
   //on BA being there?
@@ -936,6 +1208,8 @@ void dumpIntersection(std::set<MSchedGraphNode*> &IntersectCurrent) {
 
 void ModuloSchedulingPass::orderNodes() {
   
+  TIME_REGION(X, "orderNodes");
+
   int BOTTOM_UP = 0;
   int TOP_DOWN = 1;
 
@@ -1150,6 +1424,8 @@ void ModuloSchedulingPass::orderNodes() {
 }
 
 bool ModuloSchedulingPass::computeSchedule() {
+
+  TIME_REGION(X, "computeSchedule");
 
   bool success = false;
   
@@ -1878,6 +2154,9 @@ void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vect
 
 
 void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
+
+  TIME_REGION(X, "reconstructLoop");
+
 
   DEBUG(std::cerr << "Reconstructing Loop\n");
 

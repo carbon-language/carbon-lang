@@ -67,7 +67,7 @@ namespace llvm {
     int II;
 
     //Internal functions
-    void CreateDefMap(MachineBasicBlock *BI);
+    bool CreateDefMap(MachineBasicBlock *BI);
     bool MachineBBisValid(const MachineBasicBlock *BI);
     int calculateResMII(const MachineBasicBlock *BI);
     int calculateRecMII(MSchedGraph *graph, int MII);
@@ -86,6 +86,16 @@ namespace llvm {
     void findAllReccurrences(MSchedGraphNode *node, 
 			     std::vector<MSchedGraphNode*> &visitedNodes, int II);
     void addReccurrence(std::vector<MSchedGraphNode*> &recurrence, int II, MSchedGraphNode*, MSchedGraphNode*);
+
+    void findAllCircuits(MSchedGraph *MSG, int II);
+    bool circuit(MSchedGraphNode *v, std::vector<MSchedGraphNode*> &stack, 
+		 std::set<MSchedGraphNode*> &blocked, 
+		 std::vector<MSchedGraphNode*> &SCC, MSchedGraphNode *s,
+		 std::map<MSchedGraphNode*, std::set<MSchedGraphNode*> > &B, int II,
+		 std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes);
+    
+    void unblock(MSchedGraphNode *u, std::set<MSchedGraphNode*> &blocked,
+		 std::map<MSchedGraphNode*, std::set<MSchedGraphNode*> > &B);
 
     void computePartialOrder();
     bool computeSchedule();
