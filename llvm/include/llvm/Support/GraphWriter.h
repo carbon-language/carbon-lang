@@ -78,6 +78,9 @@ public:
     else
       O << "digraph " << Name << " {\n";
 
+    if (DOTTraits::renderGraphFromBottomUp())
+      O << "\trankdir=\"BT\";\n";
+
     std::string GraphName = DOTTraits::getGraphName(G);
     if (!GraphName.empty())
       O << "\tlabel=\"" << DOT::EscapeString(GraphName) << "\";\n";
@@ -106,14 +109,17 @@ public:
       
     O << "\tNode" << reinterpret_cast<const void*>(Node) << " [shape=record,";
     if (!NodeAttributes.empty()) O << NodeAttributes << ",";
-    O << "label=\"{"
-      << DOT::EscapeString(DOTTraits::getNodeLabel(Node, G));
+    O << "label=\"{";
+
+    if (!DOTTraits::renderGraphFromBottomUp())
+      O << DOT::EscapeString(DOTTraits::getNodeLabel(Node, G));
     
     // Print out the fields of the current node...
     child_iterator EI = GTraits::child_begin(Node);
     child_iterator EE = GTraits::child_end(Node);
     if (EI != EE) {
-      O << "|{";
+      if (!DOTTraits::renderGraphFromBottomUp()) O << "|";
+      O << "{";
       
       for (unsigned i = 0; EI != EE && i != 64; ++EI, ++i) {
         if (i) O << "|";
@@ -123,7 +129,11 @@ public:
       if (EI != EE)
         O << "|<g64>truncated...";
       O << "}";
+      if (DOTTraits::renderGraphFromBottomUp()) O << "|";
     }
+    if (DOTTraits::renderGraphFromBottomUp())
+      O << DOT::EscapeString(DOTTraits::getNodeLabel(Node, G));
+      
     O << "}\"];\n";   // Finish printing the "node" line
     
     // Output all of the edges now

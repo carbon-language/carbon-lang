@@ -39,6 +39,13 @@ struct DefaultDOTGraphTraits {
     return "";
   }
 
+  /// renderGraphFromBottomUp - If this function returns true, the graph is
+  /// emitted bottom-up instead of top-down.  This requires graphviz 2.0 to work
+  /// though.
+  static bool renderGraphFromBottomUp() {
+    return false;
+  }
+
   /// getNodeLabel - Given a node and a pointer to the top level graph, return
   /// the label to print in the node.
   static std::string getNodeLabel(const void *Node, const void *Graph) {
