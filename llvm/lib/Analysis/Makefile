@@ -1,6 +1,6 @@
 LEVEL = ../..
 LIBRARYNAME = analysis
-DIRS = LiveVar IPA DataStructure
+PARALLEL_DIRS = LiveVar IPA DataStructure
 BUILD_ARCHIVE = 1
 
 include $(LEVEL)/Makefile.common
