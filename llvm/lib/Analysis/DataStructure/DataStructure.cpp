@@ -1646,15 +1646,17 @@ void DSGraph::mergeInGlobalsGraph() {
 /// the first to the second graph.
 ///
 void DSGraph::computeNodeMapping(const DSNodeHandle &NH1,
-                                 const DSNodeHandle &NH2, NodeMapTy &NodeMap) {
+                                 const DSNodeHandle &NH2, NodeMapTy &NodeMap,
+                                 bool StrictChecking) {
   DSNode *N1 = NH1.getNode(), *N2 = NH2.getNode();
   if (N1 == 0 || N2 == 0) return;
 
   DSNodeHandle &Entry = NodeMap[N1];
   if (Entry.getNode()) {
     // Termination of recursion!
-    assert(Entry.getNode() == N2 &&
-           Entry.getOffset() == (NH2.getOffset()-NH1.getOffset()) &&
+    assert(!StrictChecking ||
+           (Entry.getNode() == N2 &&
+            Entry.getOffset() == (NH2.getOffset()-NH1.getOffset())) &&
            "Inconsistent mapping detected!");
     return;
   }
