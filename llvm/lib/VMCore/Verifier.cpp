@@ -508,7 +508,7 @@ void Verifier::visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI) {
   Function *IF = CI.getCalledFunction();
   const FunctionType *FT = IF->getFunctionType();
   Assert1(IF->isExternal(), "Intrinsic functions should never be defined!", IF);
-  unsigned NumArgs;
+  unsigned NumArgs = 0;
 
   switch (ID) {
   case LLVMIntrinsic::va_start:
