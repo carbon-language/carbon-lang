@@ -106,6 +106,13 @@ public:
   virtual GenericValue run(Function *F,
 			   const std::vector<GenericValue> &ArgValues);
 
+  /// recompileAndRelinkFunction - For the interpreter, functions are always
+  /// up-to-date.
+  ///
+  virtual void *recompileAndRelinkFunction(Function *F) {
+    return getPointerToFunction(F);
+  }
+
   // Methods used to execute code:
   // Place a call on the stack
   void callFunction(Function *F, const std::vector<GenericValue> &ArgVals);
