@@ -188,66 +188,61 @@ software you will need.</p>
 
 <p>LLVM is known to work on the following platforms:</p>
 
-<ul>
+<table cellpadding="3">
+<tr>
+  <th>OS</th>
+  <th>Arch</th>
+  <th>Source code</th>
+  <th>Object code</th>
+  <th>GCC front end</th>
+  <th>Total space</th>
+</tr>
+<tr>
+  <td>Linux</td>
+  <td>x86<sup>1</sup></td>
+  <td>57 MB</td>
+  <td>2.5 GB</td>
+  <td>30 MB</td>
+  <td>2.6 GB</td>
+</tr>
+<tr>
+  <td>Solaris</td>
+  <td>V9 (Ultrasparc)</td>
+  <td>57 MB</td>
+  <td>2.5 GB</td>
+  <td>46 MB</td>
+  <td>2.6 GB</td>
+</tr>
+<tr>
+  <td>FreeBSD</td>
+  <td>x86<sup>1</sup></td>
+  <td>57 MB</td>
+  <td>850 GB</td>
+  <td>40 MB</td>
+  <td>1 GB</td>
+</tr>
+<tr>
+  <td>MacOS X</td>
+  <td>PowerPC</td>
+  <td>57 MB</td>
+  <td>1.5 GB</td>
+  <td>36 MB</td>
+  <td>1.6 GB</td>
+</tr>
+<tr>
+  <td>AIX<sup>2</sup></td>
+  <td>PowerPC</td>
+  <td>92 MB</td>
+  <td>2.8 GB</td>
+  <td>123 MB</td>
+  <td>3 GB</td>
+</tr>
+</table>
 
-  <li>Linux on x86 (Pentium and above)
-  <ul>
-    <li>Approximately 2.6 GB of Free Disk Space
-    <ul>
-      <li>Source code: 57 MB</li>
-      <li>Object code: 2.5 GB</li>
-      <li>GCC front end: 30 MB</li>
-    </ul></li>
-  </ul>
-  </li>
-
-  <li>Solaris on SparcV9 (Ultrasparc)
-  <ul>
-    <li>Approximately 2.6 GB of Free Disk Space
-      <ul>
-        <li>Source code: 57 MB</li>
-        <li>Object code: 2.5 GB</li>
-        <li>GCC front end: 46 MB</li>
-      </ul></li>
-  </ul>
-  </li>
-
-  <li>FreeBSD on x86 (Pentium and above)
-  <ul>
-    <li>Approximately 1 GB of Free Disk Space
-    <ul>
-      <li>Source code: 57 MB</li>
-      <li>Object code: 850 MB</li>
-      <li>GCC front end: 40 MB</li>
-    </ul></li>
-  </ul>
-  </li>
-
-  <li>MacOS X on PowerPC
-  <ul>
-    <li>Experimental support for static native code generation
-    <li>Approximately 1.6 GB of Free Disk Space
-      <ul>
-        <li>Source code: 57 MB</li>
-        <li>Object code: 1.5 GB</li>
-        <li>GCC front end: 36 MB</li>
-      </ul></li>
-  </ul>
-  </li>
-
-  <li>AIX on PowerPC
-  <ul>
-    <li><div class="doc_warning">No native code generation</div>
-    <li>Approximately 2 GB of Free Disk Space
-      <ul>
-        <li>Source code: 92 MB</li>
-        <li>Object code: 2.8 GB</li>
-        <li>GCC front end: 123 MB</li>
-      </ul></li>
-  </ul>
-  </li>
-
-</ul>
+<p>
+<sup>1</sup> Code generation supported for Pentium processors and up<br>
+<sup>2</sup> No native code generation
+</p>
 
 <p>The LLVM suite <i>may</i> compile on other platforms, but it is not
 guaranteed to do so.  If compilation is successful, the LLVM utilities should be
