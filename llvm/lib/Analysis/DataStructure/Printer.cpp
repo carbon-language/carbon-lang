@@ -249,7 +249,7 @@ static void printCollection(const Collection &C, std::ostream &O,
           << Gr.getGraphSize() << "+" << NumCalls << "]\n";
       }
 
-      unsigned GraphSize = std::distance(Gr.node_begin(), Gr.node_end());
+      unsigned GraphSize = Gr.getGraphSize();
       if (MaxGraphSize < GraphSize) MaxGraphSize = GraphSize;
 
       for (DSGraph::node_iterator NI = Gr.node_begin(), E = Gr.node_end();
