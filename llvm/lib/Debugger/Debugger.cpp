@@ -117,7 +117,12 @@ void Debugger::createProgram() {
 /// there is no program currently running, this just silently succeeds.
 void Debugger::killProgram() {
   // The destructor takes care of the dirty work.
-  delete Process;
+  try {
+    delete Process;
+  } catch (...) {
+    Process = 0;
+    throw;
+  }
   Process = 0;
 }
 
@@ -128,10 +133,12 @@ void Debugger::stepProgram() {
   try {
     Process->stepProgram();
   } catch (InferiorProcessDead &IPD) {
-    delete Process;
-    Process = 0;
+    killProgram();
     throw NonErrorException("The program stopped with exit code " +
                             itostr(IPD.getExitCode()));
+  } catch (...) {
+    killProgram();
+    throw;
   }
 }
 
@@ -176,10 +183,12 @@ void Debugger::nextProgram() {
     }
 
   } catch (InferiorProcessDead &IPD) {
-    delete Process;
-    Process = 0;
+    killProgram();
     throw NonErrorException("The program stopped with exit code " +
                             itostr(IPD.getExitCode()));
+  } catch (...) {
+    killProgram();
+    throw;
   }
 }
 
@@ -190,10 +199,12 @@ void Debugger::finishProgram(void *Frame) {
   try {
     Process->finishProgram(Frame);
   } catch (InferiorProcessDead &IPD) {
-    delete Process;
-    Process = 0;
+    killProgram();
     throw NonErrorException("The program stopped with exit code " +
                             itostr(IPD.getExitCode()));
+  } catch (...) {
+    killProgram();
+    throw;
   }
 }
 
@@ -204,9 +215,11 @@ void Debugger::contProgram() {
   try {
     Process->contProgram();
   } catch (InferiorProcessDead &IPD) {
-    delete Process;
-    Process = 0;
+    killProgram();
     throw NonErrorException("The program stopped with exit code " +
                             itostr(IPD.getExitCode()));
+  } catch (...) {
+    killProgram();
+    throw;
   }
 }
