@@ -18,9 +18,9 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 
-struct MachineInstrBuilder {
+class MachineInstrBuilder {
   MachineInstr *MI;
-
+public:
   MachineInstrBuilder(MachineInstr *mi) : MI(mi) {}
 
   /// Allow automatic conversion to the machine instruction we are working on.
@@ -89,6 +89,23 @@ struct MachineInstrBuilder {
 
   const MachineInstrBuilder &addFrameIndex(unsigned Idx) const {
     MI->addFrameIndexOperand(Idx);
+    return *this;
+  }
+
+  const MachineInstrBuilder &addConstantPoolIndex(unsigned Idx) const {
+    MI->addConstantPoolIndexOperand(Idx);
+    return *this;
+  }
+
+  const MachineInstrBuilder &addGlobalAddress(GlobalValue *GV,
+					      bool isPCRelative = false) const {
+    MI->addGlobalAddressOperand(GV, isPCRelative);
+    return *this;
+  }
+
+  const MachineInstrBuilder &addExternalSymbol(const std::string &Name,
+					       bool isPCRelative = false) const{
+    MI->addExternalSymbolOperand(Name, isPCRelative);
     return *this;
   }
 };
