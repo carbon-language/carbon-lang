@@ -677,29 +677,6 @@ endif
 .PRECIOUS: $(BUILD_OBJ_DIR)/Depend/.dir
 .PRECIOUS: $(BUILD_OBJ_DIR)/Debug/.dir $(BUILD_OBJ_DIR)/Release/.dir
 
-# Create .o files in the ObjectFiles directory from the .cpp and .c files...
-#$(BUILD_OBJ_DIR)/Release/%.o: $(SourceDir)%.cpp $(BUILD_OBJ_DIR)/Release/.dir
-	#@echo "Compiling $<"
-	#$(VERB) $(CompileO) $< -o $@
-
-#$(BUILD_OBJ_DIR)/Release/%.o: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Release/.dir
-	#$(VERB) $(CompileCO) $< -o $@
-
-#$(BUILD_OBJ_DIR)/Profile/%.o: $(SourceDir)%.cpp $(BUILD_OBJ_DIR)/Profile/.dir
-	#@echo "Compiling $<"
-	#$(VERB) $(CompileP) $< -o $@
-
-#$(BUILD_OBJ_DIR)/Profile/%.o: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Profile/.dir
-	#@echo "Compiling $<"
-	#$(VERB) $(CompileCP) $< -o $@
-
-#$(BUILD_OBJ_DIR)/Debug/%.o: $(SourceDir)%.cpp $(BUILD_OBJ_DIR)/Debug/.dir
-	#@echo "Compiling $<"
-	#$(VERB) $(CompileG) $< -o $@
-
-#$(BUILD_OBJ_DIR)/Debug/%.o: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Debug/.dir 
-	#$(VERB) $(CompileCG) $< -o $@
-
 # Create .lo files in the ObjectFiles directory from the .cpp and .c files...
 $(BUILD_OBJ_DIR)/Release/%.lo: $(SourceDir)%.cpp $(BUILD_OBJ_DIR)/Release/.dir
 	@echo "Compiling $<"
@@ -723,29 +700,6 @@ $(BUILD_OBJ_DIR)/Debug/%.lo: $(SourceDir)%.cpp $(BUILD_OBJ_DIR)/Debug/.dir
 
 $(BUILD_OBJ_DIR)/Debug/%.lo: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Debug/.dir 
 	@echo "Compiling $<"
-	$(VERB) $(CompileCG) $< -o $@
-
-# Create .lo files in the ObjectFiles directory from the .cpp and .c files...
-$(BUILD_OBJ_DIR)/Release/%.lo: $(SourceDir)%.cpp $(BUILD_OBJ_DIR)/Release/.dir
-	@echo "Compiling $<"
-	$(VERB) $(CompileO) $< -o $@
-
-$(BUILD_OBJ_DIR)/Release/%.lo: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Release/.dir
-	$(VERB) $(CompileCO) $< -o $@
-
-$(BUILD_OBJ_DIR)/Profile/%.lo: $(SourceDir)%.cpp $(BUILD_OBJ_DIR)/Profile/.dir
-	@echo "Compiling $<"
-	$(VERB) $(CompileP) $< -o $@
-
-$(BUILD_OBJ_DIR)/Profile/%.lo: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Profile/.dir
-	@echo "Compiling $<"
-	$(VERB) $(CompileCP) $< -o $@
-
-$(BUILD_OBJ_DIR)/Debug/%.lo: $(SourceDir)%.cpp $(BUILD_OBJ_DIR)/Debug/.dir
-	@echo "Compiling $<"
-	$(VERB) $(CompileG) $< -o $@
-
-$(BUILD_OBJ_DIR)/Debug/%.lo: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Debug/.dir 
 	$(VERB) $(CompileCG) $< -o $@
 
 #
