@@ -1938,6 +1938,29 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
   return 0;
 }
 
+enum CastType {
+  Noop     = 0,
+  Truncate = 1,
+  Signext  = 2,
+  Zeroext  = 3
+};
+
+/// getCastType - In the future, we will split the cast instruction into these
+/// various types.  Until then, we have to do the analysis here.
+static CastType getCastType(const Type *Src, const Type *Dest) {
+  assert(Src->isIntegral() && Dest->isIntegral() &&
+         "Only works on integral types!");
+  unsigned SrcSize = Src->getPrimitiveSize()*8;
+  if (Src == Type::BoolTy) SrcSize = 1;
+  unsigned DestSize = Dest->getPrimitiveSize()*8;
+  if (Dest == Type::BoolTy) DestSize = 1;
+
+  if (SrcSize == DestSize) return Noop;
+  if (SrcSize > DestSize)  return Truncate;
+  if (Src->isSigned()) return Signext;
+  return Zeroext;
+}
+
 
 // isEliminableCastOfCast - Return true if it is valid to eliminate the CI
 // instruction.
@@ -1954,50 +1977,37 @@ static inline bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
   // Allow free casting and conversion of sizes as long as the sign doesn't
   // change...
   if (SrcTy->isIntegral() && MidTy->isIntegral() && DstTy->isIntegral()) {
-    unsigned SrcSize = SrcTy->getPrimitiveSize();
-    unsigned MidSize = MidTy->getPrimitiveSize();
-    unsigned DstSize = DstTy->getPrimitiveSize();
+    CastType FirstCast = getCastType(SrcTy, MidTy);
+    CastType SecondCast = getCastType(MidTy, DstTy);
 
-    // Cases where we are monotonically decreasing the size of the type are
-    // always ok, regardless of what sign changes are going on.
-    //
-    if (SrcSize >= MidSize && MidSize >= DstSize)
+    // Capture the effect of these two casts.  If the result is a legal cast,
+    // the CastType is stored here, otherwise a special code is used.
+    static const unsigned CastResult[] = {
+      // First cast is noop
+      0, 1, 2, 3,
+      // First cast is a truncate
+      1, 1, 4, 4,         // trunc->extend is not safe to eliminate
+      // First cast is a sign ext
+      2, 5, 2, 4,         // signext->trunc always ok, signext->zeroext never ok
+      // First cast is a zero ext
+      3, 5, 3, 3,         // zeroext->trunc always ok
+    };
+
+    unsigned Result = CastResult[FirstCast*4+SecondCast];
+    switch (Result) {
+    default: assert(0 && "Illegal table value!");
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      // FIXME: in the future, when LLVM has explicit sign/zeroextends and
+      // truncates, we could eliminate more casts.
+      return (unsigned)getCastType(SrcTy, DstTy) == Result;
+    case 4:
+      return false;  // Not possible to eliminate this here.
+    case 5:
+      // Sign or zero extend followed by truncate is always ok
       return true;
-
-    // Cases where the source and destination type are the same, but the middle
-    // type is bigger are noops.
-    //
-    if (SrcSize == DstSize && MidSize > SrcSize)
-      return true;
-
-    // If we are monotonically growing, things are more complex.
-    //
-    if (SrcSize <= MidSize && MidSize <= DstSize) {
-      // We have eight combinations of signedness to worry about. Here's the
-      // table:
-      static const int SignTable[8] = {
-        // CODE, SrcSigned, MidSigned, DstSigned, Comment
-        1,     //   U          U          U       Always ok
-        1,     //   U          U          S       Always ok
-        3,     //   U          S          U       Ok iff SrcSize != MidSize
-        3,     //   U          S          S       Ok iff SrcSize != MidSize
-        0,     //   S          U          U       Never ok
-        2,     //   S          U          S       Ok iff MidSize == DstSize
-        1,     //   S          S          U       Always ok
-        1,     //   S          S          S       Always ok
-      };
-
-      // Choose an action based on the current entry of the signtable that this
-      // cast of cast refers to...
-      unsigned Row = SrcTy->isSigned()*4+MidTy->isSigned()*2+DstTy->isSigned();
-      switch (SignTable[Row]) {
-      case 0: return false;              // Never ok
-      case 1: return true;               // Always ok
-      case 2: return MidSize == DstSize; // Ok iff MidSize == DstSize
-      case 3:                            // Ok iff SrcSize != MidSize
-        return SrcSize != MidSize || SrcTy == Type::BoolTy;
-      default: assert(0 && "Bad entry in sign table!");
-      }
     }
   }
 
