@@ -17,6 +17,7 @@ class MachineRegInfo;
 class MachineFrameInfo;
 class MachineCacheInfo;
 class MachineOptInfo;
+class MRegisterInfo;
 class PassManager;
 class Pass;
 
@@ -65,6 +66,12 @@ public:
   virtual const MachineFrameInfo&       getFrameInfo() const = 0;
   virtual const MachineCacheInfo&       getCacheInfo() const = 0;
   virtual const MachineOptInfo&         getOptInfo()   const = 0;
+
+  /// getRegisterInfo - If register information is available, return it.  If
+  /// not, return null.  This is kept seperate from RegInfo until RegInfo gets
+  /// straightened out.
+  ///
+  virtual const MRegisterInfo*          getRegisterInfo() const { return 0; }
 
   // Data storage information
   // 
