@@ -20,10 +20,9 @@ namespace llvm {
 
 class Constant : public User {
 protected:
-  inline Constant(const Type *Ty, ValueTy vty = Value::SimpleConstantVal, 
-                  const std::string& Name = "")
-  : User(Ty, vty, Name) {}
-  ~Constant() {}
+  Constant(const Type *Ty, ValueTy vty, Use *Ops, unsigned NumOps,
+           const std::string& Name = "")
+    : User(Ty, vty, Ops, NumOps, Name) {}
 
   void destroyConstantImpl();
 public:
