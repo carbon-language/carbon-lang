@@ -77,7 +77,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
     DEBUG(std::cerr << "Machine Function\n");
     const TargetMachine &TM = MF.getTarget();
     const MRegisterInfo &MRI = *TM.getRegisterInfo();
-    const TargetInstrInfo &TII = TM.getInstrInfo();
+    const TargetInstrInfo &TII = *TM.getInstrInfo();
     LiveVariables* LV = getAnalysisToUpdate<LiveVariables>();
 
     bool MadeChange = false;

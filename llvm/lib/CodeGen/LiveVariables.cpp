@@ -159,7 +159,7 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
 }
 
 bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
-  const TargetInstrInfo &TII = MF.getTarget().getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   RegInfo = MF.getTarget().getRegisterInfo();
   assert(RegInfo && "Target doesn't have register information?");
 

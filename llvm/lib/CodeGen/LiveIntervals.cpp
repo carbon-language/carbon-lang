@@ -122,7 +122,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     // perform a final pass over the instructions and compute spill
     // weights, coalesce virtual registers and remove identity moves
     const LoopInfo& loopInfo = getAnalysis<LoopInfo>();
-    const TargetInstrInfo& tii = tm_->getInstrInfo();
+    const TargetInstrInfo& tii = *tm_->getInstrInfo();
 
     for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
          mbbi != mbbe; ++mbbi) {
@@ -424,7 +424,7 @@ void LiveIntervals::computeIntervals()
         for (MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
              mi != miEnd; ++mi) {
             const TargetInstrDescriptor& tid =
-                tm_->getInstrInfo().get(mi->getOpcode());
+                tm_->getInstrInfo()->get(mi->getOpcode());
             DEBUG(std::cerr << getInstructionIndex(mi) << "\t";
                   mi->print(std::cerr, *tm_));
 
@@ -455,7 +455,7 @@ void LiveIntervals::joinIntervals()
 {
     DEBUG(std::cerr << "********** JOINING INTERVALS ***********\n");
 
-    const TargetInstrInfo& tii = tm_->getInstrInfo();
+    const TargetInstrInfo& tii = *tm_->getInstrInfo();
 
     for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
          mbbi != mbbe; ++mbbi) {
@@ -464,8 +464,7 @@ void LiveIntervals::joinIntervals()
 
         for (MachineBasicBlock::iterator mi = mbb->begin(), mie = mbb->end();
              mi != mie; ++mi) {
-            const TargetInstrDescriptor& tid =
-                tm_->getInstrInfo().get(mi->getOpcode());
+            const TargetInstrDescriptor& tid = tii.get(mi->getOpcode());
             DEBUG(std::cerr << getInstructionIndex(mi) << '\t';
                   mi->print(std::cerr, *tm_););
 

@@ -66,7 +66,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
     return false;   // Quick exit for normal case...
 
   LiveVariables *LV = getAnalysisToUpdate<LiveVariables>();
-  const TargetInstrInfo &MII = MF.getTarget().getInstrInfo();
+  const TargetInstrInfo &MII = *MF.getTarget().getInstrInfo();
   const MRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
 
   // VRegPHIUseCount - Keep track of the number of times each virtual register

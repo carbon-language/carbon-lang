@@ -82,7 +82,7 @@ FunctionPass *llvm::createPrologEpilogCodeInserter() { return new PEI(); }
 ///
 void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   const MRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
-  const TargetFrameInfo &FrameInfo = Fn.getTarget().getFrameInfo();
+  const TargetFrameInfo &FrameInfo = *Fn.getTarget().getFrameInfo();
 
   // Get the callee saved register list...
   const unsigned *CSRegs = RegInfo->getCalleeSaveRegs();
@@ -170,7 +170,7 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   }
 
   // Add code to restore the callee-save registers in each exiting block.
-  const TargetInstrInfo &TII = Fn.getTarget().getInstrInfo();
+  const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator FI = Fn.begin(), E = Fn.end(); FI != E; ++FI) {
     // If last instruction is a return instruction, add an epilogue
     if (!FI->empty() && TII.isReturn(FI->back().getOpcode())) {
@@ -191,7 +191,7 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
 /// abstract stack objects...
 ///
 void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
-  const TargetFrameInfo &TFI = Fn.getTarget().getFrameInfo();
+  const TargetFrameInfo &TFI = *Fn.getTarget().getFrameInfo();
   
   bool StackGrowsDown =
     TFI.getStackGrowthDirection() == TargetFrameInfo::StackGrowsDown;
@@ -245,7 +245,7 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
   Fn.getTarget().getRegisterInfo()->emitPrologue(Fn);
 
   // Add epilogue to restore the callee-save registers in each exiting block
-  const TargetInstrInfo &TII = Fn.getTarget().getInstrInfo();
+  const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     // If last instruction is a return instruction, add an epilogue
     if (!I->empty() && TII.isReturn(I->back().getOpcode()))

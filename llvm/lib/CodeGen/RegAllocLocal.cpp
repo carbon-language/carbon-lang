@@ -520,7 +520,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
   MachineBasicBlock::iterator MI = MBB.begin();
   for (; MI != MBB.end(); ++MI) {
-    const TargetInstrDescriptor &TID = TM->getInstrInfo().get(MI->getOpcode());
+    const TargetInstrDescriptor &TID = TM->getInstrInfo()->get(MI->getOpcode());
     DEBUG(std::cerr << "\nStarting RegAlloc of: " << *MI;
           std::cerr << "  Regs have values: ";
           for (unsigned i = 0; i != RegInfo->getNumRegs(); ++i)

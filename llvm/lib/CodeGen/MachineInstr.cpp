@@ -322,7 +322,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
     OS << " = ";
     ++StartOp;   // Don't print this operand again!
   }
-  OS << TM.getInstrInfo().getName(getOpcode());
+  OS << TM.getInstrInfo()->getName(getOpcode());
   
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
     const MachineOperand& mop = getOperand(i);

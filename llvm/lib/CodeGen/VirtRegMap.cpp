@@ -191,7 +191,7 @@ namespace {
         bool runOnMachineFunction(MachineFunction& mf, const VirtRegMap& vrm) {
             mf_ = &mf;
             tm_ = &mf_->getTarget();
-            tii_ = &tm_->getInstrInfo();
+            tii_ = tm_->getInstrInfo();
             mri_ = tm_->getRegisterInfo();
             vrm_ = &vrm;
             p2vMap_.assign(mri_->getNumRegs(), 0);
