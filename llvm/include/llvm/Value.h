@@ -193,14 +193,15 @@ inline bool isa(Y Val) { return X::classof(Val); }
 
 // cast<X> - Return the argument parameter cast to the specified type.  This
 // casting operator asserts that the type is correct, so it does not return null
-// on failure.  Used Like this:
+// on failure.  But it will correctly return NULL when the input is NULL.
+// Used Like this:
 //
 //  cast<      Instruction>(myVal)->getParent()
 //  cast<const Instruction>(myVal)->getParent()
 //
 template <class X, class Y>
 inline X *cast(Y Val) {
-  assert(isa<X>(Val) && "Invalid cast argument type!");
+  assert((Val == 0 || isa<X>(Val)) && "Invalid cast argument type!");
   return (X*)(real_type<Y>::Type)Val;
 }
 
