@@ -51,19 +51,41 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   // obviously the SCC might throw.
   //
   bool SCCMightThrow = false;
-  for (unsigned i = 0, e = SCC.size(); i != e; ++i)
-    if (!DoesNotThrow.count(SCC[i]) &&          // Calls maybe throwing fn
-        // Make sure this is not one of the fn's in the SCC.
-        std::find(SCC.begin(), SCC.end(), SCC[i]) == SCC.end()) {
-      SCCMightThrow = true; break;
-    } else if (Function *F = SCC[i]->getFunction())
+  for (unsigned i = 0, e = SCC.size(); !SCCMightThrow && i != e; ++i)
+    if (Function *F = SCC[i]->getFunction())
       if (F->isExternal()) {
-        SCCMightThrow = true; break;
+        SCCMightThrow = true;
       } else {
-        for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-          if (isa<UnwindInst>(I->getTerminator())) {  // Uses unwind!
-            SCCMightThrow = true; break;
+        // Check to see if this function performs an unwind or calls an
+        // unwinding function.
+        for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+          if (isa<UnwindInst>(BB->getTerminator())) {  // Uses unwind!
+            SCCMightThrow = true;
+            break;
           }
+
+          // Invoke instructions don't allow unwinding to continue, so we are
+          // only interested in call instructions.
+          for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+            if (CallInst *CI = dyn_cast<CallInst>(I)) {
+              if (Function *Callee = CI->getCalledFunction()) {
+                CallGraphNode *CalleeNode = CG[Callee];
+                // If the callee is outside our current SCC, or if it is not
+                // known to throw, then we might throw also.
+                if (std::find(SCC.begin(), SCC.end(), CalleeNode) == SCC.end()&&
+                    !DoesNotThrow.count(CalleeNode)) {
+                  SCCMightThrow = true;
+                  break;
+                }
+                
+              } else {
+                // Indirect call, it might throw.
+                SCCMightThrow = true;
+                break;
+              }
+            }
+          if (SCCMightThrow) break;
+        }
       }
 
   bool MadeChange = false;
