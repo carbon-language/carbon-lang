@@ -40,6 +40,7 @@ SlotCalculator::SlotCalculator(const Module *M, bool IgnoreNamed) {
   // Preload table... Make sure that all of the primitive types are in the table
   // and that their Primitive ID is equal to their slot #
   //
+  SC_DEBUG("Inserting primitive types:\n");
   for (unsigned i = 0; i < Type::FirstDerivedTyID; ++i) {
     assert(Type::getPrimitiveType((Type::PrimitiveID)i));
     insertValue(Type::getPrimitiveType((Type::PrimitiveID)i), true);
@@ -56,6 +57,7 @@ SlotCalculator::SlotCalculator(const Function *M, bool IgnoreNamed) {
   // Preload table... Make sure that all of the primitive types are in the table
   // and that their Primitive ID is equal to their slot #
   //
+  SC_DEBUG("Inserting primitive types:\n");
   for (unsigned i = 0; i < Type::FirstDerivedTyID; ++i) {
     assert(Type::getPrimitiveType((Type::PrimitiveID)i));
     insertValue(Type::getPrimitiveType((Type::PrimitiveID)i), true);
