@@ -244,9 +244,7 @@ marked 'constant' if they have nontrivial ctors or dtors</a></li>
     other unix-like systems).</li>
 <li>Sun UltraSPARC workstations running Solaris 8.</li>
 <li>Intel and AMD machines running on Win32 with the Cygwin libraries.</li>
-<li>PowerPC-based Mac OS X boxes, running 10.2 and above.  Note that no JIT
-support is available yet, and LLC support is beta.  The C backend can be used
-to produce stable code for this platform.</li>
+<li>PowerPC-based Mac OS X boxes, running 10.2 and above.</li>
 </ul>
 
 <p>The core LLVM infrastructure uses
@@ -296,9 +294,6 @@ useful to some people.  In particular, if you would like to work on one of these
 components, please contact us on the llvmdev list.</p>
 
 <ul>
-<li>The PowerPC backend is incomplete and is known to miscompile several SPEC
-benchmarks. The file <tt>llvm/lib/Target/PowerPC/README.txt</tt> has
-details.</li>
 <li>The following passes are incomplete or buggy: <tt>-pgmdep, -memdep,
     -ipmodref, -cee, -branch-combine, -instloops, -paths</tt></li>
 <li>The <tt>-pre</tt> pass is incomplete (there are cases it doesn't handle that
