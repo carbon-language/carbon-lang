@@ -43,7 +43,7 @@ exit code will be returned.
 
 =head1 SEE ALSO
 
-L<llvm-ar|llvm-ar>,L<llvm-ld|llvm-ld>
+L<llvm-ar|llvm-ar>
 
 =head1 AUTHORS
 
