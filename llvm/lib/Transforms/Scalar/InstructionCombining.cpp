@@ -29,7 +29,7 @@
 //    5. add X, X is represented as (X*2) => (X << 1)
 //    6. Multiplies with a power-of-two constant argument are transformed into
 //       shifts.
-//    N. This list is incomplete
+//   ... etc.
 //
 //===----------------------------------------------------------------------===//
 
@@ -204,6 +204,11 @@ namespace {
     // PHI node as operand #0, see if we can fold the instruction into the PHI
     // (which is only possible if all operands to the PHI are constants).
     Instruction *FoldOpIntoPhi(Instruction &I);
+
+    // FoldPHIArgOpIntoPHI - If all operands to a PHI node are the same "unary"
+    // operator and they all are only used by the PHI, PHI together their
+    // inputs, and do the operation once, to the result of the PHI.
+    Instruction *FoldPHIArgOpIntoPHI(PHINode &PN);
 
     Instruction *OptAndOp(Instruction *Op, ConstantIntegral *OpRHS,
                           ConstantIntegral *AndRHS, BinaryOperator &TheAnd);
@@ -509,11 +514,13 @@ static Value *FoldOperationIntoSelectOperand(Instruction &BI, Value *SO,
 /// is only possible if all operands to the PHI are constants).
 Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   PHINode *PN = cast<PHINode>(I.getOperand(0));
-  if (!PN->hasOneUse()) return 0;
+  unsigned NumPHIValues = PN->getNumIncomingValues();
+  if (!PN->hasOneUse() || NumPHIValues == 0 ||
+      !isa<Constant>(PN->getIncomingValue(0))) return 0;
 
   // Check to see if all of the operands of the PHI are constants.  If not, we
   // cannot do the transformation.
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+  for (unsigned i = 1; i != NumPHIValues; ++i)
     if (!isa<Constant>(PN->getIncomingValue(i)))
       return 0;
 
@@ -526,7 +533,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   // Next, add all of the operands to the PHI.
   if (I.getNumOperands() == 2) {
     Constant *C = cast<Constant>(I.getOperand(1));
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    for (unsigned i = 0; i != NumPHIValues; ++i) {
       Constant *InV = cast<Constant>(PN->getIncomingValue(i));
       NewPN->addIncoming(ConstantExpr::get(I.getOpcode(), InV, C),
                          PN->getIncomingBlock(i));
@@ -534,7 +541,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   } else {
     assert(isa<CastInst>(I) && "Unary op should be a cast!");
     const Type *RetTy = I.getType();
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    for (unsigned i = 0; i != NumPHIValues; ++i) {
       Constant *InV = cast<Constant>(PN->getIncomingValue(i));
       NewPN->addIncoming(ConstantExpr::getCast(InV, RetTy),
                          PN->getIncomingBlock(i));
@@ -3408,6 +3415,63 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 }
 
 
+// FoldPHIArgOpIntoPHI - If all operands to a PHI node are the same "unary"
+// operator and they all are only used by the PHI, PHI together their
+// inputs, and do the operation once, to the result of the PHI.
+Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
+  Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
+
+  // Scan the instruction, looking for input operations that can be folded away.
+  // If all input operands to the phi are the same instruction (e.g. a cast from
+  // the same type or "+42") we can pull the operation through the PHI, reducing
+  // code size and simplifying code.
+  Constant *ConstantOp = 0;
+  const Type *CastSrcTy = 0;
+  if (isa<CastInst>(FirstInst)) {
+    CastSrcTy = FirstInst->getOperand(0)->getType();
+  } else if (isa<BinaryOperator>(FirstInst) || isa<ShiftInst>(FirstInst)) {
+    // Can fold binop or shift if the RHS is a constant.
+    ConstantOp = dyn_cast<Constant>(FirstInst->getOperand(1));
+    if (ConstantOp == 0) return 0;
+  } else {
+    return 0;  // Cannot fold this operation.
+  }
+
+  // Check to see if all arguments are the same operation.
+  for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i) {
+    if (!isa<Instruction>(PN.getIncomingValue(i))) return 0;
+    Instruction *I = cast<Instruction>(PN.getIncomingValue(i));
+    if (!I->hasOneUse() || I->getOpcode() != FirstInst->getOpcode())
+      return 0;
+    if (CastSrcTy) {
+      if (I->getOperand(0)->getType() != CastSrcTy)
+        return 0;  // Cast operation must match.
+    } else if (I->getOperand(1) != ConstantOp) {
+      return 0;
+    }
+  }
+
+  // Okay, they are all the same operation.  Create a new PHI node of the
+  // correct type, and PHI together all of the LHS's of the instructions.
+  PHINode *NewPN = new PHINode(FirstInst->getOperand(0)->getType(),
+                               PN.getName()+".in");
+  NewPN->op_reserve(PN.getNumOperands());
+  InsertNewInstBefore(NewPN, PN);
+
+  // Add all operands to the new PHI.
+  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
+    NewPN->addIncoming(cast<Instruction>(PN.getIncomingValue(i))->getOperand(0),
+                       PN.getIncomingBlock(i));
+  
+  // Insert and return the new operation.
+  if (isa<CastInst>(FirstInst))
+    return new CastInst(NewPN, PN.getType());
+  else if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
+    return BinaryOperator::create(BinOp->getOpcode(), NewPN, ConstantOp);
+  else
+    return new ShiftInst(cast<ShiftInst>(FirstInst)->getOpcode(),
+                         NewPN, ConstantOp);
+}
 
 // PHINode simplification
 //
@@ -3459,6 +3523,15 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
           return &PN;                // PN is now dead!
         }
       }
+
+  // If all PHI operands are the same operation, pull them through the PHI,
+  // reducing code size.
+  if (isa<Instruction>(PN.getIncomingValue(0)) &&
+      PN.getIncomingValue(0)->hasOneUse())
+    if (Instruction *Result = FoldPHIArgOpIntoPHI(PN))
+      return Result;
+
+  
   return 0;
 }
 
@@ -4111,7 +4184,13 @@ bool InstCombiner::runOnFunction(Function &F) {
 
         // Insert the new instruction into the basic block...
         BasicBlock *InstParent = I->getParent();
-        InstParent->getInstList().insert(I, Result);
+        BasicBlock::iterator InsertPos = I;
+
+        if (!isa<PHINode>(Result))        // If combining a PHI, don't insert
+          while (isa<PHINode>(InsertPos)) // middle of a block of PHIs.
+            ++InsertPos;
+
+        InstParent->getInstList().insert(InsertPos, Result);
 
         // Make sure that we reprocess all operands now that we reduced their
         // use counts.
