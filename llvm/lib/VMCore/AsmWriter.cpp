@@ -375,17 +375,17 @@ static void WriteAsOperandInternal(ostream &Out, const Value *V, bool PrintName,
 // whole instruction that generated it.
 //
 ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType, 
-			bool PrintName, SlotCalculator *Table) {
+			bool PrintName, const Module *Context) {
   map<const Type *, string> TypeNames;
-  const Module *M = getModuleFromVal(V);
+  if (Context == 0) Context = getModuleFromVal(V);
 
-  if (M && M->hasSymbolTable())
-    fillTypeNameTable(M, TypeNames);
+  if (Context && Context->hasSymbolTable())
+    fillTypeNameTable(Context, TypeNames);
 
   if (PrintType)
     printTypeInt(Out, V->getType(), TypeNames);
   
-  WriteAsOperandInternal(Out, V, PrintName, TypeNames, Table);
+  WriteAsOperandInternal(Out, V, PrintName, TypeNames, 0);
   return Out;
 }
 
