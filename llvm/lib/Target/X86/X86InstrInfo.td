@@ -506,18 +506,31 @@ def SHRDmri32  : I2A8 <"shrd", 0xAC, MRMDestMem>, TB;           // [mem32] >>= [
 
 // Condition code ops, incl. set if equal/not equal/...
 def SAHF     : X86Inst<"sahf" , 0x9E, RawFrm, Arg8>, Imp<[AH],[]>;  // flags = AH
+
 def SETBr    : X86Inst<"setb" , 0x92, MRMS0r, Arg8>, TB;            // R8 = <  unsign
+def SETBm    : X86Inst<"setb" , 0x92, MRMS0m, Arg8>, TB;            // [mem8] = <  unsign
 def SETAEr   : X86Inst<"setae", 0x93, MRMS0r, Arg8>, TB;            // R8 = >= unsign
+def SETAEm   : X86Inst<"setae", 0x93, MRMS0m, Arg8>, TB;            // [mem8] = >= unsign
 def SETEr    : X86Inst<"sete" , 0x94, MRMS0r, Arg8>, TB;            // R8 = ==
+def SETEm    : X86Inst<"sete" , 0x94, MRMS0m, Arg8>, TB;            // [mem8] = ==
 def SETNEr   : X86Inst<"setne", 0x95, MRMS0r, Arg8>, TB;            // R8 = !=
+def SETNEm   : X86Inst<"setne", 0x95, MRMS0m, Arg8>, TB;            // [mem8] = !=
 def SETBEr   : X86Inst<"setbe", 0x96, MRMS0r, Arg8>, TB;            // R8 = <= unsign
+def SETBEm   : X86Inst<"setbe", 0x96, MRMS0m, Arg8>, TB;            // [mem8] = <= unsign
 def SETAr    : X86Inst<"seta" , 0x97, MRMS0r, Arg8>, TB;            // R8 = >  signed
+def SETAm    : X86Inst<"seta" , 0x97, MRMS0m, Arg8>, TB;            // [mem8] = >  signed
 def SETSr    : X86Inst<"sets" , 0x98, MRMS0r, Arg8>, TB;            // R8 = <sign bit>
+def SETSm    : X86Inst<"sets" , 0x98, MRMS0m, Arg8>, TB;            // [mem8] = <sign bit>
 def SETNSr   : X86Inst<"setns", 0x99, MRMS0r, Arg8>, TB;            // R8 = !<sign bit>
+def SETNSm   : X86Inst<"setns", 0x99, MRMS0m, Arg8>, TB;            // [mem8] = !<sign bit>
 def SETLr    : X86Inst<"setl" , 0x9C, MRMS0r, Arg8>, TB;            // R8 = <  signed
+def SETLm    : X86Inst<"setl" , 0x9C, MRMS0m, Arg8>, TB;            // [mem8] = <  signed
 def SETGEr   : X86Inst<"setge", 0x9D, MRMS0r, Arg8>, TB;            // R8 = >= signed
+def SETGEm   : X86Inst<"setge", 0x9D, MRMS0m, Arg8>, TB;            // [mem8] = >= signed
 def SETLEr   : X86Inst<"setle", 0x9E, MRMS0r, Arg8>, TB;            // R8 = <= signed
+def SETLEm   : X86Inst<"setle", 0x9E, MRMS0m, Arg8>, TB;            // [mem8] = <= signed
 def SETGr    : X86Inst<"setg" , 0x9F, MRMS0r, Arg8>, TB;            // R8 = <  signed
+def SETGm    : X86Inst<"setg" , 0x9F, MRMS0m, Arg8>, TB;            // [mem8] = <  signed
 
 // Conditional moves.  These are modelled as X = cmovXX Y, Z.  Eventually
 // register allocated to cmovXX XY, Z
