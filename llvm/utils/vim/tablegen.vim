@@ -11,8 +11,9 @@ endif
 
 syn case match
 
-syn keyword tgKeyword   def let in code dag field
+syn keyword tgKeyword   def let in code dag field include
 syn keyword tgType      class int string list bit bits 
+" FIXME: this does not handle hex (0x...) or binary (0b...) constants
 syn match   tgNumber    /\<\d\+\>/
 syn match   tgNumber    /\<\d\+\.\d*\>/
 syn match   tgComment   /\/\/.*$/
