@@ -595,7 +595,7 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
     const Type *Ty = cast<Type>(I->second);
     string Name = "l_" + makeNameProper(I->first);
     Out << "typedef ";
-    printType(Ty, Name, true);
+    printType(Ty, Name);
     Out << ";\n";
   }
 
