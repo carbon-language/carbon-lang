@@ -599,7 +599,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     // Reassociate ((X op C1) op C2) if possible.
     if (N1.getOpcode() == Opcode && isAssociativeBinOp(Opcode))
       if (ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N1.Val->getOperand(1)))
-        return getNode(Opcode, VT, N3C->getOperand(0),
+        return getNode(Opcode, VT, N1.Val->getOperand(0),
                        getNode(Opcode, VT, N2, N1.Val->getOperand(1)));
   }
 
