@@ -107,6 +107,38 @@ static void		ForwardOperand	(InstructionNode* treeNode,
 
 //************************ Internal Functions ******************************/
 
+// Convenience function to get the value of an integer constant, for an
+// appropriate integer or non-integer type that can be held in an integer.
+// The type of the argument must be the following:
+//   GetConstantValueAsSignedInt: any of the above, but the value
+//				  must fit into a int64_t.
+// 
+// isValidConstant is set to true if a valid constant was found.
+// 
+
+static int64_t GetConstantValueAsSignedInt(const Value *V,
+					   bool &isValidConstant) {
+  if (!V->isConstant()) { isValidConstant = false; return 0; }
+  isValidConstant = true;
+  
+  if (V->getType() == Type::BoolTy)
+    return ((ConstPoolBool*)V)->getValue();
+  if (V->getType()->isIntegral()) {
+    if (V->getType()->isSigned())
+      return ((ConstPoolSInt*)V)->getValue();
+    
+    assert(V->getType()->isUnsigned());
+    uint64_t Val = ((ConstPoolUInt*)V)->getValue();
+
+    if (Val < INT64_MAX)     // then safe to cast to signed
+      return (int64_t)Val;
+  }
+
+  isValidConstant = false;
+  return 0;
+}
+
+
 
 //------------------------------------------------------------------------ 
 // External Function: ThisIsAChainRule
