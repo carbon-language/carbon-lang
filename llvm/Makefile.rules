@@ -594,13 +594,19 @@ ifneq ($(strip $(LibName.BCA)),)
 	-$(Verb) $(RM) -f $(LibName.BCA)
 endif
 
-DestBytecodeLib = $(bytecode_libdir)/lib$(LIBRARYNAME).a
+ifdef BYTECODE_DESTINATION
+BytecodeDestDir := $(BYTECODE_DESTINATION)
+else
+BytecodeDestDir := $(libdir)
+endif
+
+DestBytecodeLib = $(BytecodeDestDir)/lib$(LIBRARYNAME).a
 
 install-bytecode-local:: $(DestBytecodeLib)
 
 install-local:: $(DestBytecodeLib)
 
-$(DestBytecodeLib): $(bytecode_libdir) $(LibName.BCA) 
+$(DestBytecodeLib): $(BytecodeDestDir) $(LibName.BCA) 
 	$(Echo) Installing $(BuildMode) Bytecode Archive $(DestBytecodeLib)
 	$(Verb) $(INSTALL) $(LibName.BCA) $@
 
