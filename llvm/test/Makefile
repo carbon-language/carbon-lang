@@ -1,6 +1,5 @@
-LLVM := ..
-LLC  := $(LLVM)/tools/llc/llc
-AS   := $(LLVM)/tools/as/as
+LLC  := ../tools/Debug/llc
+AS   := ../tools/Debug/as
 LLCOPTS := -dsched t
 
 TESTS := $(wildcard *.ll)
