@@ -99,7 +99,7 @@ class ConstPoolSInt : public ConstPoolInt {
 protected:
   ConstPoolSInt(const Type *Ty, int64_t V);
 public:
-  static ConstPoolSInt *get(const Type *Ty,  int64_t V);
+  static ConstPoolSInt *get(const Type *Ty, int64_t V);
 
   virtual string getStrValue() const;
 
