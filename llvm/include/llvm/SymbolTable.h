@@ -207,11 +207,10 @@ public:
     return removeEntry(PI, PI->second.find(Name));
   }
 
-  /// Remove a type with the specified name from the symbol table.
+  /// Remove a type at the specified position in the symbol table.
   /// @returns the removed Type.
-  /// @brief Remove a named tyep from the symbol table.
-  inline Type* remove(const std::string& Name, Type* T ) {
-    return removeEntry( tmap.find(Name) );
+  inline Type* remove(type_iterator TI) {
+    return removeEntry(TI);
   }
 
   /// Removes a specific value from the symbol table. 
