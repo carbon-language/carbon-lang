@@ -329,17 +329,15 @@ main(int argc, char **argv)
     return 1;
   }
   
-  int failed = PreprocessModule(M.get());
+  if (PreprocessModule(M.get())) return 1;
   
-  if (!failed)
-    failed = OptimizeModule(M.get());
+  if (OptimizeModule(M.get())) return 1;
   
-  if (!failed)
-    failed = GenerateCodeForModule(M.get(), target.get());
+  if (GenerateCodeForModule(M.get(), target.get())) return 1;
   
-  if (!failed && ! DoNotEmitAssembly)
-    failed = EmitAssemblyForModule(M.get(), target.get());
+  if (!DoNotEmitAssembly)
+    if (EmitAssemblyForModule(M.get(), target.get())) return 1;
   
-  return failed;
+  return 0;
 }
 
