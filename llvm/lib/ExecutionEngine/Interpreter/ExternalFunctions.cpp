@@ -57,8 +57,8 @@ static ExFunc lookupFunction(const Function *M) {
   // composite function name should be.
   std::string ExtName = "lle_";
   const FunctionType *MT = M->getFunctionType();
-  for (unsigned i = 0; const Type *Ty = MT->getContainedType(i); ++i)
-    ExtName += getTypeID(Ty);
+  for (unsigned i = 0, e = MT->getNumContainedTypes(); i != e; ++i)
+    ExtName += getTypeID(MT->getContainedType(i));
   ExtName += "_" + M->getName();
 
   //std::cout << "Tried: '" << ExtName << "'\n";
