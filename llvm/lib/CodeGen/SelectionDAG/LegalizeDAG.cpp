@@ -1071,9 +1071,11 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       Result = PromoteOp(Node->getOperand(0));
       // The high bits are not guaranteed to be anything.  Insert an extend.
       if (Node->getOpcode() == ISD::SIGN_EXTEND)
-        Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Result, VT);
+        Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Result,
+                             Node->getOperand(0).getValueType());
       else
-        Result = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Result, VT);
+        Result = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Result,
+                             Node->getOperand(0).getValueType());
       break;
     }
     break;
