@@ -556,8 +556,20 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (Tmp1 != Node->getOperand(0))
         Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
       break;
+    case Expand:
+      // In the expand case, we must be dealing with a truncate, because
+      // otherwise the result would be larger than the source.
+      assert(Node->getOpcode() == ISD::TRUNCATE &&
+             "Shouldn't need to expand other operators here!");
+      ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
+
+      // Since the result is legal, we should just be able to truncate the low
+      // part of the source.
+      Result = DAG.getNode(ISD::TRUNCATE, Node->getValueType(0), Tmp1);
+      break;
+
     default:
-      assert(0 && "Do not know how to expand or promote this yet!");
+      assert(0 && "Do not know how to promote this yet!");
     }
     break;
   }
