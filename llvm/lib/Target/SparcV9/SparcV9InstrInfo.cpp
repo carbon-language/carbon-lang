@@ -45,10 +45,10 @@ static const uint32_t MAXSIMM = (1 << 12) - 1; // set bits in simm13 field of OR
 //---------------------------------------------------------------------------
 
 uint64_t
-SparcV9InstrInfo::ConvertConstantToIntType(const TargetMachine &target,
+ConvertConstantToIntType(const TargetMachine &target,
                                               const Value *V,
                                               const Type *destType,
-                                              bool  &isValidConstant) const
+                                              bool  &isValidConstant)
 {
   isValidConstant = false;
   uint64_t C = 0;
@@ -426,10 +426,7 @@ SparcV9InstrInfo::SparcV9InstrInfo()
   InitializeMaxConstantsTable();
 }
 
-bool
-SparcV9InstrInfo::ConstantMayNotFitInImmedField(const Constant* CV,
-                                                   const Instruction* I) const
-{
+bool ConstantMayNotFitInImmedField(const Constant* CV, const Instruction* I) {
   if (I->getOpcode() >= MaxConstantsTable.size()) // user-defined op (or bug!)
     return true;
 
@@ -457,12 +454,12 @@ SparcV9InstrInfo::ConstantMayNotFitInImmedField(const Constant* CV,
 // Any stack space required is allocated via MachineFunction.
 // 
 void
-SparcV9InstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
+CreateCodeToLoadConst(const TargetMachine& target,
                                       Function* F,
                                       Value* val,
                                       Instruction* dest,
                                       std::vector<MachineInstr*>& mvec,
-                                      MachineCodeForInstruction& mcfi) const
+                                      MachineCodeForInstruction& mcfi)
 {
   assert(isa<Constant>(val) &&
          "I only know about constant values and global addresses");
@@ -541,7 +538,6 @@ SparcV9InstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
   }
 }
 
-
 // Create an instruction sequence to copy an integer register `val'
 // to a floating point register `dest' by copying to memory and back.
 // val must be an integral type.  dest must be a Float or Double.
@@ -550,12 +546,12 @@ SparcV9InstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
 // Any stack space required is allocated via MachineFunction.
 // 
 void
-SparcV9InstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
+CreateCodeToCopyIntToFloat(const TargetMachine& target,
                                         Function* F,
                                         Value* val,
                                         Instruction* dest,
                                         std::vector<MachineInstr*>& mvec,
-                                        MachineCodeForInstruction& mcfi) const
+                                        MachineCodeForInstruction& mcfi)
 {
   assert((val->getType()->isIntegral() || isa<PointerType>(val->getType()))
          && "Source type must be integral (integer or bool) or pointer");
@@ -611,12 +607,12 @@ SparcV9InstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
 // Temporary stack space required is allocated via MachineFunction.
 // 
 void
-SparcV9InstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
+CreateCodeToCopyFloatToInt(const TargetMachine& target,
                                         Function* F,
                                         Value* val,
                                         Instruction* dest,
                                         std::vector<MachineInstr*>& mvec,
-                                        MachineCodeForInstruction& mcfi) const
+                                        MachineCodeForInstruction& mcfi)
 {
   const Type* opTy   = val->getType();
   const Type* destTy = dest->getType();
@@ -662,12 +658,12 @@ SparcV9InstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
 // Any stack space required is allocated via MachineFunction.
 // 
 void
-SparcV9InstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
+CreateCopyInstructionsByType(const TargetMachine& target,
                                              Function *F,
                                              Value* src,
                                              Instruction* dest,
                                              std::vector<MachineInstr*>& mvec,
-                                          MachineCodeForInstruction& mcfi) const
+                                          MachineCodeForInstruction& mcfi)
 {
   bool loadConstantToReg = false;
   
@@ -697,8 +693,7 @@ SparcV9InstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
   if (loadConstantToReg) { 
     // `src' is constant and cannot fit in immed field for the ADD
     // Insert instructions to "load" the constant into a register
-    target.getInstrInfo()->CreateCodeToLoadConst(target, F, src, dest,
-                                                 mvec, mcfi);
+    CreateCodeToLoadConst(target, F, src, dest, mvec, mcfi);
   } else { 
     // Create a reg-to-reg copy instruction for the given type:
     // -- For FP values, create a FMOVS or FMOVD instruction
@@ -756,14 +751,14 @@ CreateBitExtensionInstructions(bool signExtend,
 // Any stack space required is allocated via MachineFunction.
 // 
 void
-SparcV9InstrInfo::CreateSignExtensionInstructions(
+CreateSignExtensionInstructions(
                                         const TargetMachine& target,
                                         Function* F,
                                         Value* srcVal,
                                         Value* destVal,
                                         unsigned int numLowBits,
                                         std::vector<MachineInstr*>& mvec,
-                                        MachineCodeForInstruction& mcfi) const
+                                        MachineCodeForInstruction& mcfi)
 {
   CreateBitExtensionInstructions(/*signExtend*/ true, target, F, srcVal,
                                  destVal, numLowBits, mvec, mcfi);
@@ -778,14 +773,14 @@ SparcV9InstrInfo::CreateSignExtensionInstructions(
 // Any stack space required is allocated via MachineFunction.
 // 
 void
-SparcV9InstrInfo::CreateZeroExtensionInstructions(
+CreateZeroExtensionInstructions(
                                         const TargetMachine& target,
                                         Function* F,
                                         Value* srcVal,
                                         Value* destVal,
                                         unsigned int numLowBits,
                                         std::vector<MachineInstr*>& mvec,
-                                        MachineCodeForInstruction& mcfi) const
+                                        MachineCodeForInstruction& mcfi)
 {
   CreateBitExtensionInstructions(/*signExtend*/ false, target, F, srcVal,
                                  destVal, numLowBits, mvec, mcfi);

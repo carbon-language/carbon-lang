@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcV9Internals.h"
+#include "SparcV9InstrSelectionSupport.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
@@ -180,7 +181,7 @@ PreSelection::visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
     // load address of constant into a register, then load the constant
     // this is now done during instruction selection
     // the constant will live in the MachineConstantPool later on
-  } else if (instrInfo.ConstantMayNotFitInImmedField(CV, &I)) {
+  } else if (ConstantMayNotFitInImmedField(CV, &I)) {
     // put the constant into a virtual register using a cast
     CastInst* castI = new CastInst(CV, CV->getType(), "copyConst",
                                    &insertBefore);

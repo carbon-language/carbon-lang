@@ -592,14 +592,13 @@ CreateCodeToConvertFloatToInt(const TargetMachine& target,
                                            castDestType));
 
   // Create the fpreg-to-intreg copy code
-  target.getInstrInfo()->CreateCodeToCopyFloatToInt(target, F, destForCast,
-                                                   fpToIntCopyDest, mvec, mcfi);
+  CreateCodeToCopyFloatToInt(target, F, destForCast, fpToIntCopyDest, mvec,
+                             mcfi);
 
   // Create the uint64_t to uint32_t conversion, if needed
   if (destI->getType() == Type::UIntTy)
-    target.getInstrInfo()->
-      CreateZeroExtensionInstructions(target, F, fpToIntCopyDest, destI,
-                                      /*numLowBits*/ 32, mvec, mcfi);
+    CreateZeroExtensionInstructions(target, F, fpToIntCopyDest, destI,
+                                    /*numLowBits*/ 32, mvec, mcfi);
 }
 
 
@@ -793,9 +792,8 @@ CreateShiftInstructions(const TargetMachine& target,
   if (shiftDest != destVal) {
     // extend the sign-bit of the result into all upper bits of dest
     assert(8*opSize <= 32 && "Unexpected type size > 4 and < IntRegSize?");
-    target.getInstrInfo()->
-      CreateSignExtensionInstructions(target, F, shiftDest, destVal,
-                                      8*opSize, mvec, mcfi);
+    CreateSignExtensionInstructions(target, F, shiftDest, destVal, 8*opSize,
+                                    mvec, mcfi);
   }
 }
 
@@ -826,8 +824,9 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
   
   if (resultType->isInteger() || isa<PointerType>(resultType)) {
     bool isValidConst;
-    int64_t C = (int64_t) target.getInstrInfo()->ConvertConstantToIntType(target,
-                                     constOp, constOp->getType(), isValidConst);
+    int64_t C = (int64_t) ConvertConstantToIntType(target, constOp,
+                                                   constOp->getType(),
+                                                   isValidConst);
     if (isValidConst) {
       unsigned pow;
       bool needNeg = false;
@@ -897,7 +896,7 @@ CreateCheapestMulConstInstruction(const TargetMachine &target,
     Constant* P = ConstantExpr::get(Instruction::Mul,
                                     cast<Constant>(lval),
                                     cast<Constant>(rval));
-    target.getInstrInfo()->CreateCodeToLoadConst(target,F,P,destVal,mvec,mcfi);
+    CreateCodeToLoadConst (target, F, P, destVal, mvec, mcfi);
   }
   else if (isa<Constant>(rval))         // rval is constant, but not lval
     CreateMulConstInstruction(target, F, lval, rval, destVal, mvec, mcfi);
@@ -980,8 +979,9 @@ CreateDivConstInstruction(TargetMachine &target,
   if (resultType->isInteger()) {
     unsigned pow;
     bool isValidConst;
-    int64_t C = (int64_t) target.getInstrInfo()->ConvertConstantToIntType(target,
-                                     constOp, constOp->getType(), isValidConst);
+    int64_t C = (int64_t) ConvertConstantToIntType(target, constOp,
+                                                   constOp->getType(),
+                                                   isValidConst);
     if (isValidConst) {
       bool needNeg = false;
       if (C < 0) {
@@ -1089,7 +1089,7 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
   // compile time if the total size is a known constant.
   if (isa<Constant>(numElementsVal)) {
     bool isValid;
-    int64_t numElem = (int64_t) target.getInstrInfo()->
+    int64_t numElem = (int64_t)
       ConvertConstantToIntType(target, numElementsVal,
                                numElementsVal->getType(), isValid);
     assert(isValid && "Unexpectedly large array dimension in alloca!");
@@ -1567,7 +1567,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               retValToUse = new TmpInstruction(mcfi, retVal);
 
               // sign-extend retVal and put the result in the temporary reg.
-              target.getInstrInfo()->CreateSignExtensionInstructions
+              CreateSignExtensionInstructions
                 (target, returnInstr->getParent()->getParent(),
                  retVal, retValToUse, 8*retSize, mvec, mcfi);
             }
@@ -1637,7 +1637,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         
         if ((constVal->getType()->isInteger()
              || isa<PointerType>(constVal->getType()))
-            && target.getInstrInfo()->ConvertConstantToIntType(target,
+            && ConvertConstantToIntType(target,
                              constVal, constVal->getType(), isValidConst) == 0
             && isValidConst)
           {
@@ -1889,15 +1889,15 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                   ? new TmpInstruction(mcfi, destType, opVal)
                                   : destI);
 
-            target.getInstrInfo()->CreateSignExtensionInstructions
+            CreateSignExtensionInstructions
               (target, currentFunc,opVal,signExtDest,extSourceInBits,mvec,mcfi);
 
             if (signAndZeroExtend)
-              target.getInstrInfo()->CreateZeroExtensionInstructions
+              CreateZeroExtensionInstructions
               (target, currentFunc, signExtDest, destI, 8*destSize, mvec, mcfi);
           }
           else if (zeroExtendOnly) {
-            target.getInstrInfo()->CreateZeroExtensionInstructions
+            CreateZeroExtensionInstructions
               (target, currentFunc, opVal, destI, extSourceInBits, mvec, mcfi);
           }
           else
@@ -1955,7 +1955,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 MachineCodeForInstruction::get(dest);
               srcForCast = new TmpInstruction(destMCFI, tmpTypeToUse, dest);
 
-              target.getInstrInfo()->CreateCodeToCopyIntToFloat(target,
+              CreateCodeToCopyIntToFloat(target,
                          dest->getParent()->getParent(),
                          leftVal, cast<Instruction>(srcForCast),
                          mvec, destMCFI);
@@ -2067,13 +2067,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             MachineCodeForInstruction& mcfi=MachineCodeForInstruction::get(divI);
             divOp1ToUse = new TmpInstruction(mcfi, divOp1);
             divOp2ToUse = new TmpInstruction(mcfi, divOp2);
-            target.getInstrInfo()->
-              CreateSignExtensionInstructions(target,
+            CreateSignExtensionInstructions(target,
                                               divI->getParent()->getParent(),
                                               divOp1, divOp1ToUse,
                                               8*opSize, mvec, mcfi);
-            target.getInstrInfo()->
-              CreateSignExtensionInstructions(target,
+            CreateSignExtensionInstructions(target,
                                               divI->getParent()->getParent(),
                                               divOp2, divOp2ToUse,
                                               8*opSize, mvec, mcfi);
@@ -2109,8 +2107,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           unsigned opSize=target.getTargetData().getTypeSize(divOp2->getType());
           if (opSize < 8) {
             divOpToUse = new TmpInstruction(mcfi, divOp2);
-            target.getInstrInfo()->
-              CreateSignExtensionInstructions(target,
+            CreateSignExtensionInstructions(target,
                                               remI->getParent()->getParent(),
                                               divOp2, divOpToUse,
                                               8*opSize, mvec, mcfi);
@@ -2251,7 +2248,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           
           if ((constVal->getType()->isInteger()
                || isa<PointerType>(constVal->getType()))
-              && target.getInstrInfo()->ConvertConstantToIntType(target,
+              && ConvertConstantToIntType(target,
                              constVal, constVal->getType(), isValidConst) == 0
               && isValidConst)
           {
@@ -2328,10 +2325,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             rightOpToUse = new TmpInstruction(mcfi, rightVal);
             
             // sign-extend each operand and put the result in the temporary reg.
-            target.getInstrInfo()->CreateSignExtensionInstructions
+            CreateSignExtensionInstructions
               (target, setCCInstr->getParent()->getParent(),
                leftVal, leftOpToUse, 8*opSize, mvec, mcfi);
-            target.getInstrInfo()->CreateSignExtensionInstructions
+            CreateSignExtensionInstructions
               (target, setCCInstr->getParent()->getParent(),
                rightVal, rightOpToUse, 8*opSize, mvec, mcfi);
           }
@@ -2506,7 +2503,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                   TmpInstruction* argExtend = new TmpInstruction(mcfi, argVal);
 
                   // sign-extend argVal and put the result in the temporary reg.
-                  target.getInstrInfo()->CreateSignExtensionInstructions
+                  CreateSignExtensionInstructions
                     (target, currentFunc, argVal, argExtend,
                      8*argSize, mvec, mcfi);
 
@@ -2826,8 +2823,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     else {
       std::vector<MachineInstr*> minstrVec;
       Instruction* instr = subtreeRoot->getInstruction();
-      target.getInstrInfo()->
-        CreateCopyInstructionsByType(target,
+      CreateCopyInstructionsByType(target,
                                      instr->getParent()->getParent(),
                                      instr->getOperand(forwardOperandNum),
                                      instr, minstrVec,

@@ -41,8 +41,7 @@ InsertCodeToLoadConstant(Function *F,
   MachineCodeForInstruction &mcfi = MachineCodeForInstruction::get(vmInstr);
   TmpInstruction* tmpReg = new TmpInstruction(mcfi, opValue);
   
-  target.getInstrInfo()->CreateCodeToLoadConst(target, F, opValue, tmpReg,
-                                              loadConstVec, mcfi);
+  CreateCodeToLoadConst(target, F, opValue, tmpReg, loadConstVec, mcfi);
   
   // Record the mapping from the tmp VM instruction to machine instruction.
   // Do this for all machine instructions that were not mapped to any
@@ -96,8 +95,7 @@ ChooseRegOrImmed(Value* val,
   // TargetInstrInfo::ConvertConstantToIntType() does the right conversions:
   bool isValidConstant;
   uint64_t valueToUse =
-    target.getInstrInfo()->ConvertConstantToIntType(target, val, val->getType(),
-                                                   isValidConstant);
+    ConvertConstantToIntType(target, val, val->getType(), isValidConstant);
   if (! isValidConstant)
     return MachineOperand::MO_VirtualRegister;
 
