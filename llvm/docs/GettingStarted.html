@@ -2,6 +2,7 @@
                       "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>Getting Started with LLVM System</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
@@ -267,59 +268,164 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="software"><b>Software</b></a>
-</div>
-
+<div class="doc_subsection"><a name="software"><b>Software</b></a></div>
 <div class="doc_text">
+  <p>Compiling LLVM requires that you have several software packages 
+  installed. The table below lists those required packages. The Package column
+  is the usual name for the software package that LLVM depends on. The Version
+  column provides "known to work" versions of the package. The Notes column
+  describes how LLVM uses the package and provides other details.</p>
+  <table>
+    <tr><th>Package</th><th>Version</th><th>Notes</th></tr>
 
-<p>Compiling LLVM requires that you have several software packages
-installed:</p>
+    <tr>
+      <td><a href="http://savannah.gnu.org/projects/make">GNU Make</a></td>
+      <td>3.79, 3.79.1</td>
+      <td>Makefile/build processor</td>
+    </tr>
 
-<ul>
-  <li><a href="http://gcc.gnu.org">GCC 3.x with C and C++ language
-  support</a>  (See <a href="#brokengcc">below</a> for specific version info)</li>
+    <tr>
+      <td><a href="http://gcc.gnu.org">GCC</a></td>
+      <td>3.4.2</td>
+      <td>C/C++ compiler (<a href="#Note4">Note 4</a>)</td>
+    </tr>
 
-  <li><a href="http://savannah.gnu.org/projects/make">GNU Make</a></li>
+    <tr>
+      <td><a href="http://www.gnu.org/software/flex">Flex</a></td>
+      <td>2.5.4</td>
+      <td>LEX compiler</td>
+    </tr>
 
-  <li><a href="http://www.gnu.org/software/flex">Flex</a></li>
+    <tr>
+      <td><a href="http://www.gnu.org/software/bison/bison.html">Bison</a></td>
+      <td>1.35</td>
+      <td>YACC compiler</td>
+    </tr>
 
-  <li><a href="http://www.gnu.org/software/bison/bison.html">Bison</a></li>
-</ul>
+    <tr>
+      <td><a href="http://savannah.gnu.org/projects/dejagnu">DejaGnu</a></td>
+      <td>1.4.2</td>
+      <td>Automated test suite (<a href="#Note2">Note 2</a>)</td>
+    </tr>
 
-<p>There are some additional tools that you may want to have when working with
-LLVM:</p>
+    <tr>
+      <td><a href="http://www.tcl.tk/software/tcltk/">tcl</a></td>
+      <td>8.3, 8.4</td>
+      <td>Automated test suite (<a href="#Note2">Note 2</a>)</td>
+    </tr>
 
-<ul>
-  <li><A href="http://www.gnu.org/software/automake">GNU Automake</A></li>
-  <li><A href="http://www.gnu.org/software/autoconf">GNU Autoconf</A></li>
-  <li><A href="http://savannah.gnu.org/projects/m4">GNU M4</A>
+    <tr>
+      <td><a href="http://expect.nist.gov/">expect</a></td>
+      <td>5.38.0</td>
+      <td>Automated test suite (<a href="#Note2">Note 2</a>)</td>
+    </tr>
 
-      <p>If you want to make changes to the configure scripts, you will need GNU
-      autoconf (2.57 or higher), and consequently, GNU M4 (version 1.4 or
-      higher). You will also need automake. Any old version of
-      automake from 1.4p5 on should work; we only use aclocal from that
-      package.</p></li>
+    <tr>
+      <td><a href="http://savannah.gnu.org/projects/m4">GNU M4</a>
+      <td>1.4</td>
+      <td>Macro processor for configuration (<a href="#Note1">Note 1</a>)</td>
+    </tr>
 
-  <li><A href="http://www.codesourcery.com/qm/qmtest">QMTest 2.0.3</A></li>
-  <li><A href="http://www.python.org">Python</A>
+    <tr>
+      <td><a href="http://www.gnu.org/software/autoconf">GNU Autoconf</a></td>
+      <td>2.59</td>
+      <td>Configuration script builder (<a href="#Note1">Note 1</a>)</td>
+    </tr>
 
-      <p>
-      These are needed to use the LLVM test suite.  Please note that newer
-      versions of QMTest may not work with the LLVM test suite.  QMTest 2.0.3
-      can be retrieved from the QMTest CVS repository using the following
-      commands:</p>
+    <tr>
+      <td><a href="http://www.gnu.org/software/automake">GNU Automake</a></td>
+      <td>2.59</td>
+      <td>aclocal macro generator (<a href="#Note1">Note 1</a>)</td>
+    </tr>
+
+    <tr>
+      <td><a href="http://www.perl.com/download.csp">perl</a></td>
+      <td>&gt;5.6.0</td>
+      <td>Nightly tester, utilities</td>
+    </tr>
+
+    <tr>
+      <td><a href="http://savannah.gnu.org/projects/libtool">libtool</a></td>
+      <td>1.5.10</td>
+      <td>Shared library manager (<a href="#Note1">Note 1</a>)</td>
+    </tr>
+
+    <tr>
+      <td><a href="http://www.codesourcery.com/qmtest">QMTest</a></td>
+      <td>2.0.3</td>
+      <td>Automated test suite (<a href="#Note2">Note 2</a>,<a href="#Note3">
+          Note 3</a>)</td>
+    </tr>
+
+    <tr>
+      <td><a href="http://www.python.org">Python</a></td>
+      <td>2.3</td>
+      <td>Automated test suite (<a href="#Note2">Note 2</a>,<a href="#Note3">
+          Note 3</a>)</td>
+    </tr>
+
+    <tr>
+      <td><a href="https://www.cvshome.org/downloads.html">CVS</a></td>
+      <td>&gt;1.11</td>
+      <td>CVS access to LLVM (<a href="#Note5">Note 5</a>)</td>
+    </tr>
+
+  </table>
+
+  <p>Notes:</p>
+  <ol>
+    <li><a name="Note1">If you want to make changes to the configure scripts, 
+      you will need GNU autoconf (2.59), and consequently, GNU M4 (version 1.4 
+      or higher). You will also need automake. We only use aclocal from that 
+      package.</a></li>
+    <li><a name="Note2">Only needed if you want to run the automated test 
+      suite in the <tt>test</tt> directory.</a></li>
+    <li><a name="Note3">These are needed to use the LLVM test suite.</a>
+      Please note that newer versions of QMTest may not work with the LLVM 
+      test suite.  QMTest 2.0.3 can be retrieved from the QMTest CVS 
+      repository using the following commands:
       <ul>
-        <li><tt>cvs -d :pserver:anoncvs@cvs.codesourcery.com:/home/qm/Repository login</tt>
-        </li>
-        <li>When prompted, use <tt>anoncvs</tt> as the password.
-        </li>
-        <li><tt>cvs -d :pserver:anoncvs@cvs.codesourcery.com:/home/qm/Repository co -r release-2-0-3 qm</tt>
-        </li>
+        <li><tt>cvs -d :pserver:anoncvs@cvs.codesourcery.com:/home/qm/Repository login</tt></li>
+        <li>When prompted, use <tt>anoncvs</tt> as the password. </li>
+        <li><tt>cvs -d :pserver:anoncvs@cvs.codesourcery.com:/home/qm/Repository co -r release-2-0-3 qm</tt></li>
       </ul>
-      </li>
-
-</ul>
+    </li>
+    <li><a name="Note4">Only the C and C++ languages needed so there's no need
+      to build the other languages for LLVM's purposes.</a> See 
+      <a href="#brokengcc">below</a> for specific version info.
+    </li>
+    <li><a name="Note5">You only need CVS if you intend to build from the 
+      latest LLVM sources. If you're working from a release distribution, you
+      don't need CVS.</a></li>
+  </ol>
+  <p>Additionally, your compilation host is expected to have the usual 
+  plethora of Unix utilities. Specifically:</p>
+  <ul>
+    <li><b>ar</b> - archive library builder</li>
+    <li><b>bzip2*</b> - bzip2 command for distribution generation</li>
+    <li><b>bunzip2*</b> - bunzip2 command for distribution checking</li>
+    <li><b>chmod</b> - change permissions on a file</li>
+    <li><b>cat</b> - output concatentation utility</li>
+    <li><b>cp</b> - copy files</li>
+    <li><b>date</b> - print the current date/time </li>
+    <li><b>echo</b> - print to standard output</li>
+    <li><b>egrep</b> - extended regular expression search utility</li>
+    <li><b>etags</b> - C/C++ tag file creator for vim/emacs</li>
+    <li><b>find</b> - find files/dirs in a file system</li>
+    <li><b>grep</b> - regular expression search utility</li>
+    <li><b>gzip*</b> - gzip command for distribution generation</li>
+    <li><b>gunzip*</b> - gunzip command for distribution checking</li>
+    <li><b>install</b> - install directories/files </li>
+    <li><b>mkdir</b> - create a directory</li>
+    <li><b>mv</b> - move (rename) files</li>
+    <li><b>ranlib</b> - symbol table builder for archive libraries</li>
+    <li><b>sed</b> - stream editor for transforming output</li>
+    <li><b>sh</b> - Bourne shell for make build scripts</li>
+    <li><b>tar</b> - tape archive for distribution generation</li>
+    <li><b>test</b> - test things in file system</li>
+    <li><b>unzip*</b> - unzip command for distribution checking</li>
+    <li><b>zip*</b> - zip command for distribution generation</li>
+  </ul>
 </div>
 
 <!-- ======================================================================= -->
