@@ -123,6 +123,7 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock &BB) {
 
         std::string Name(CI->getName()); CI->setName("");
         BI = new MallocInst(PtrSByte, Source, Name, BI);
+        CI->replaceAllUsesWith(BI);
         BIL.erase(I);
         Changed = true;
         ++NumRaised;
