@@ -21,6 +21,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/iPHINode.h"
+#include "llvm/Constant.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
@@ -52,10 +54,15 @@ bool UnreachableBlockElim::runOnFunction(Function &F) {
   std::vector<BasicBlock*> DeadBlocks;
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     if (!Reachable.count(I)) {
-      DeadBlocks.push_back(I);
-      for (succ_iterator SI = succ_begin(&*I), E = succ_end(&*I); SI != E; ++SI)
-        (*SI)->removePredecessor(I);
-      I->dropAllReferences();
+      BasicBlock *BB = I;
+      DeadBlocks.push_back(BB);
+      while (PHINode *PN = dyn_cast<PHINode>(BB->begin())) {
+        PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
+        BB->getInstList().pop_front();
+      }
+      for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
+        (*SI)->removePredecessor(BB);
+      BB->dropAllReferences();
     }
 
   if (DeadBlocks.empty()) return false;
