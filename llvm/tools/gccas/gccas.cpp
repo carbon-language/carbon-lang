@@ -21,7 +21,6 @@
 #include "Support/Signals.h"
 #include <memory>
 #include <fstream>
-using std::cerr;
 
 namespace {
   // FIXME: This should eventually be parameterized...
@@ -42,6 +41,12 @@ namespace {
   cl::opt<bool>   
   Verify("verify", cl::desc("Verify each pass result"));
 
+
+  cl::opt<std::string>    // Be compatible with what GCC expects
+  QOption("Q", cl::desc("Compatibility option (ignored)"),
+          cl::Hidden, cl::Prefix);
+  cl::opt<bool>
+  PrintVersion("V", cl::desc("Print GCCAS version number"), cl::Hidden);
 }
 
 
@@ -103,12 +108,12 @@ int main(int argc, char **argv) {
     // Parse the file now...
     M.reset(ParseAssemblyFile(InputFilename));
   } catch (const ParseException &E) {
-    cerr << argv[0] << ": " << E.getMessage() << "\n";
+    std::cerr << argv[0] << ": " << E.getMessage() << "\n";
     return 1;
   }
 
   if (M.get() == 0) {
-    cerr << argv[0] << ": assembly didn't read correctly.\n";
+    std::cerr << argv[0] << ": assembly didn't read correctly.\n";
     return 1;
   }
   
@@ -125,12 +130,15 @@ int main(int argc, char **argv) {
 
   std::ofstream Out(OutputFilename.c_str(), std::ios::out);
   if (!Out.good()) {
-    cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+    std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
     return 1;
   }
 
   // Make sure that the Out file gets unlink'd from the disk if we get a SIGINT
   RemoveFileOnSignal(OutputFilename);
+
+  if (PrintVersion)
+    std::cerr << "LLVM GCCAS version xx\n";  /* For GNU compatibility */
 
   // In addition to just parsing the input from GCC, we also want to spiff it up
   // a little bit.  Do this now.
