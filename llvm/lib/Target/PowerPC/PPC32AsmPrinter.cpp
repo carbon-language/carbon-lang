@@ -224,10 +224,7 @@ void Printer::emitConstantValueOnly(const Constant *CV) {
 void Printer::emitGlobalConstant(const Constant *CV) {  
   const TargetData &TD = TM.getTargetData();
 
-  if (CV->isNullValue()) {
-    O << "\t.space\t " << TD.getTypeSize(CV->getType()) << "\n";      
-    return;
-  } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
+  if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     if (isStringCompatible(CVA)) {
       O << "\t.ascii ";
       printAsCString(O, CVA);
@@ -524,7 +521,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   }
 
   O << TII.getName(MI->getOpcode()) << " ";
-  if (Opcode == PPC32::LOADLoAddr) {
+  if (Opcode == PPC32::LOADLoDirect || Opcode == PPC32::LOADLoIndirect) {
     printOp(MI->getOperand(0));
     O << ", lo16(";
     printOp(MI->getOperand(2));
@@ -676,7 +673,7 @@ bool Printer::doFinalization(Module &M) {
 
   // Output stubs for external global variables
   if (GVStubs.begin() != GVStubs.end())
-    O << "\t.non_lazy_symbol_pointer\n";
+    O << ".data\n\t.non_lazy_symbol_pointer\n";
   for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end(); 
        i != e; ++i) {
     O << "L" << *i << "$non_lazy_ptr:\n";
