@@ -21,8 +21,6 @@ class UltraSparc;
 class PhyRegAlloc;
 class Pass;
 
-Pass *createPrologEpilogCodeInserter(TargetMachine &TM);
-
 // OpCodeMask definitions for the Sparc V9
 // 
 const OpCodeMask	Immed		= 0x00002000; // immed or reg operand?
@@ -88,7 +86,7 @@ struct UltraSparcInstrInfo : public MachineInstrInfo {
 
   //
   // All immediate constants are in position 1 except the
-  // store instructions.
+  // store instructions and SETxx.
   // 
   virtual int getImmedConstantPos(MachineOpCode opCode) const {
     bool ignore;
@@ -96,7 +94,11 @@ struct UltraSparcInstrInfo : public MachineInstrInfo {
       {
         assert(! this->isStore((MachineOpCode) STB - 1)); // 1st  store opcode
         assert(! this->isStore((MachineOpCode) STXFSR+1));// last store opcode
-        return (opCode >= STB && opCode <= STXFSR)? 2 : 1;
+        if (opCode==SETSW || opCode==SETUW || opCode==SETX || opCode==SETHI)
+          return 0;
+        if (opCode >= STB && opCode <= STXFSR)
+          return 2;
+        return 1;
       }
     else
       return -1;
@@ -112,6 +114,13 @@ struct UltraSparcInstrInfo : public MachineInstrInfo {
     // 2 other groups, including NOPs if necessary).
     return (opCode == FCMPS || opCode == FCMPD || opCode == FCMPQ);
   }
+
+  //-------------------------------------------------------------------------
+  // Queries about representation of LLVM quantities (e.g., constants)
+  //-------------------------------------------------------------------------
+
+  virtual bool ConstantMayNotFitInImmedField(const Constant* CV,
+                                             const Instruction* I) const;
 
   //-------------------------------------------------------------------------
   // Code generation support for creating individual machine instructions
@@ -538,13 +547,22 @@ public:
   UltraSparcFrameInfo(const TargetMachine &tgt) : MachineFrameInfo(tgt) {}
   
 public:
+  // These methods provide constant parameters of the frame layout.
+  // 
   int  getStackFrameSizeAlignment() const { return StackFrameSizeAlignment;}
   int  getMinStackFrameSize()       const { return MinStackFrameSize; }
   int  getNumFixedOutgoingArgs()    const { return NumFixedOutgoingArgs; }
   int  getSizeOfEachArgOnStack()    const { return SizeOfEachArgOnStack; }
   bool argsOnStackHaveFixedSize()   const { return true; }
 
-  //
+  // This method adjusts a stack offset to meet alignment rules of target.
+  // The fixed OFFSET (0x7ff) must be subtracted and the result aligned.
+  virtual int  adjustAlignment                  (int unalignedOffset,
+                                                 bool growUp,
+                                                 unsigned int align) const {
+    return unalignedOffset + (growUp? +1:-1)*((unalignedOffset-OFFSET) % align);
+  }
+
   // These methods compute offsets using the frame contents for a
   // particular function.  The frame contents are obtained from the
   // MachineCodeInfoForMethod object for the given function.
@@ -601,15 +619,58 @@ public:
   }
   
 private:
+  /*----------------------------------------------------------------------
+    This diagram shows the stack frame layout used by llc on Sparc V9.
+    Note that only the location of automatic variables, spill area,
+    temporary storage, and dynamically allocated stack area are chosen
+    by us.  The rest conform to the Sparc V9 ABI.
+    All stack addresses are offset by OFFSET = 0x7ff (2047).
+
+    Alignment assumpteions and other invariants:
+    (1) %sp+OFFSET and %fp+OFFSET are always aligned on 16-byte boundary
+    (2) Variables in automatic, spill, temporary, or dynamic regions
+        are aligned according to their size as in all memory accesses.
+    (3) Everything below the dynamically allocated stack area is only used
+        during a call to another function, so it is never needed when
+        the current function is active.  This is why space can be allocated
+        dynamically by incrementing %sp any time within the function.
+    
+    STACK FRAME LAYOUT:
+
+       ...
+       %fp+OFFSET+176      Optional extra incoming arguments# 1..N
+       %fp+OFFSET+168      Incoming argument #6
+       ...                 ...
+       %fp+OFFSET+128      Incoming argument #1
+       ...                 ...
+    ---%fp+OFFSET-0--------Bottom of caller's stack frame--------------------
+       %fp+OFFSET-8        Automatic variables <-- ****TOP OF STACK FRAME****
+                           Spill area
+                           Temporary storage
+       ...
+
+       %sp+OFFSET+176+8N   Bottom of dynamically allocated stack area
+       %sp+OFFSET+168+8N   Optional extra outgoing argument# N
+       ...                 ...
+       %sp+OFFSET+176      Optional extra outgoing argument# 1
+       %sp+OFFSET+168      Outgoing argument #6
+       ...                 ...
+       %sp+OFFSET+128      Outgoing argument #1
+       %sp+OFFSET+120      Save area for %i7
+       ...                 ...
+       %sp+OFFSET+0        Save area for %l0 <-- ****BOTTOM OF STACK FRAME****
+
+   *----------------------------------------------------------------------*/
+
   // All stack addresses must be offset by 0x7ff (2047) on Sparc V9.
   static const int OFFSET                                  = (int) 0x7ff;
   static const int StackFrameSizeAlignment                 =  16;
   static const int MinStackFrameSize                       = 176;
   static const int NumFixedOutgoingArgs                    =   6;
   static const int SizeOfEachArgOnStack                    =   8;
-  static const int StaticAreaOffsetFromFP                  =  0 + OFFSET;
   static const int FirstIncomingArgOffsetFromFP            = 128 + OFFSET;
   static const int FirstOptionalIncomingArgOffsetFromFP    = 176 + OFFSET;
+  static const int StaticAreaOffsetFromFP                  =   0 + OFFSET;
   static const int FirstOutgoingArgOffsetFromSP            = 128 + OFFSET;
   static const int FirstOptionalOutgoingArgOffsetFromSP    = 176 + OFFSET;
 };
@@ -655,16 +716,17 @@ public:
   virtual const MachineFrameInfo &getFrameInfo() const { return frameInfo; }
   virtual const MachineCacheInfo &getCacheInfo() const { return cacheInfo; }
 
-  //
-  // addPassesToEmitAssembly - Add passes to the specified pass manager to get
-  // assembly langage code emited.  For sparc, we have to do ...
-  //
-  virtual void addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
+  // getPrologEpilogCodeInserter - Inserts prolog/epilog code.
+  virtual Pass* getPrologEpilogInsertionPass();
 
-private:
-  Pass *getFunctionAsmPrinterPass(PassManager &PM, std::ostream &Out);
-  Pass *getModuleAsmPrinterPass(PassManager &PM, std::ostream &Out);
-  Pass *getEmitBytecodeToAsmPass(std::ostream &Out);
+  // getFunctionAsmPrinterPass - Writes out machine code for a single function
+  virtual Pass* getFunctionAsmPrinterPass(std::ostream &Out);
+
+  // getModuleAsmPrinterPass - Writes generated machine code to assembly file.
+  virtual Pass* getModuleAsmPrinterPass(std::ostream &Out);
+
+  // getEmitBytecodeToAsmPass - Emits final LLVM bytecode to assembly file.
+  virtual Pass* getEmitBytecodeToAsmPass(std::ostream &Out);
 };
 
 #endif

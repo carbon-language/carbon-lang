@@ -7,16 +7,9 @@
 
 #include "SparcInternals.h"
 #include "llvm/Target/Sparc.h"
-#include "llvm/CodeGen/InstrScheduling.h"
-#include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
-#include "llvm/CodeGen/RegisterAllocation.h"
-#include "llvm/Reoptimizer/Mapping/MappingInfo.h" 
-#include "llvm/Reoptimizer/Mapping/FInfo.h" 
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/PassManager.h"
+#include "llvm/CodeGen/MachineCodeForMethod.h"
 #include <iostream>
 using std::cerr;
 
@@ -90,6 +83,8 @@ UltraSparcFrameInfo::getDynamicAreaOffset(MachineCodeForMethod& mcInfo,
   // dynamic-size alloca.
   pos = false;
   unsigned int optArgsSize = mcInfo.getMaxOptionalArgsSize();
+  if (int extra = optArgsSize % getStackFrameSizeAlignment())
+    optArgsSize += (getStackFrameSizeAlignment() - extra);
   int offset = optArgsSize + FirstOptionalOutgoingArgOffsetFromSP;
   assert((offset - OFFSET) % getStackFrameSizeAlignment() == 0);
   return offset;
@@ -118,86 +113,5 @@ UltraSparc::UltraSparc()
   optSizeForSubWordData = 4;
   minMemOpWordSize = 8; 
   maxAtomicMemOpWordSize = 8;
-}
-
-
-
-//===---------------------------------------------------------------------===//
-// GenerateCodeForTarget Pass
-// 
-// Native code generation for a specified target.
-//===---------------------------------------------------------------------===//
-
-class ConstructMachineCodeForFunction : public FunctionPass {
-  TargetMachine &Target;
-public:
-  inline ConstructMachineCodeForFunction(TargetMachine &T) : Target(T) {}
-
-  const char *getPassName() const {
-    return "Sparc ConstructMachineCodeForFunction";
-  }
-
-  bool runOnFunction(Function &F) {
-    MachineCodeForMethod::construct(&F, Target);
-    return false;
-  }
-};
-
-struct FreeMachineCodeForFunction : public FunctionPass {
-  const char *getPassName() const { return "Sparc FreeMachineCodeForFunction"; }
-
-  static void freeMachineCode(Instruction &I) {
-    MachineCodeForInstruction::destroy(&I);
-  }
-  
-  bool runOnFunction(Function &F) {
-    for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
-      for (BasicBlock::iterator I = FI->begin(), E = FI->end(); I != E; ++I)
-        MachineCodeForInstruction::get(I).dropAllReferences();
-    
-    for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
-      for_each(FI->begin(), FI->end(), freeMachineCode);
-    
-    return false;
-  }
-};
-
-// addPassesToEmitAssembly - This method controls the entire code generation
-// process for the ultra sparc.
-//
-void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
-  // Construct and initialize the MachineCodeForMethod object for this fn.
-  PM.add(new ConstructMachineCodeForFunction(*this));
-
-  PM.add(createInstructionSelectionPass(*this));
-
-  PM.add(createInstructionSchedulingWithSSAPass(*this));
-
-  PM.add(getRegisterAllocator(*this));
-  
-  //PM.add(new OptimizeLeafProcedures());
-  //PM.add(new DeleteFallThroughBranches());
-  //PM.add(new RemoveChainedBranches());    // should be folded with previous
-  //PM.add(new RemoveRedundantOps());       // operations with %g0, NOP, etc.
-  
-  PM.add(createPrologEpilogCodeInserter(*this));
-
-  PM.add(MappingInfoForFunction(Out));  
-
-  // Output assembly language to the .s file.  Assembly emission is split into
-  // two parts: Function output and Global value output.  This is because
-  // function output is pipelined with all of the rest of code generation stuff,
-  // allowing machine code representations for functions to be free'd after the
-  // function has been emitted.
-  //
-  PM.add(getFunctionAsmPrinterPass(PM, Out));
-  PM.add(new FreeMachineCodeForFunction());  // Free stuff no longer needed
- 
-  // Emit Module level assembly after all of the functions have been processed.
-  PM.add(getModuleAsmPrinterPass(PM, Out));
-
-  // Emit bytecode to the sparc assembly file into its special section next
-  PM.add(getEmitBytecodeToAsmPass(Out));
-  PM.add(getFunctionInfo(Out)); 
 }
 

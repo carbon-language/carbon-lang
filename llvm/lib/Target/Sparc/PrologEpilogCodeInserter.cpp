@@ -162,6 +162,6 @@ void InsertPrologEpilogCode::InsertEpilogCode(Function &F)
   }
 }
 
-Pass *createPrologEpilogCodeInserter(TargetMachine &TM) {
-  return new InsertPrologEpilogCode(TM);
+Pass* UltraSparc::getPrologEpilogInsertionPass() {
+  return new InsertPrologEpilogCode(*this);
 }
