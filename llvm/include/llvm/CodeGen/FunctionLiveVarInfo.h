@@ -73,15 +73,14 @@ class BBLiveVar;
 class MachineInstr;
 
 class MethodLiveVarInfo : public MethodPass {
-  // A map between the BasicBlock and BBLiveVar
-  std::map<const BasicBlock *, BBLiveVar *> BB2BBLVMap;  
-
   // Machine Instr to LiveVarSet Map for providing LVset BEFORE each inst
   std::map<const MachineInstr *, const ValueSet *> MInst2LVSetBI; 
 
   // Machine Instr to LiveVarSet Map for providing LVset AFTER each inst
   std::map<const MachineInstr *, const ValueSet *> MInst2LVSetAI; 
 
+  // Stored Method that the data is computed with respect to
+  const Method *M;
 
   // --------- private methods -----------------------------------------
 
@@ -89,17 +88,15 @@ class MethodLiveVarInfo : public MethodPass {
   void constructBBs(const Method *M);      
     
   // do one backward pass over the CFG
-  bool  doSingleBackwardPass(const Method *M); 
+  bool doSingleBackwardPass(const Method *M); 
 
   // calculates live var sets for instructions in a BB
   void calcLiveVarSetsForBB(const BasicBlock *BB);
   
-
 public:
   static AnalysisID ID;    // We are an analysis, we must have an ID
 
   MethodLiveVarInfo(AnalysisID id = ID) { assert(id == ID); }
-  ~MethodLiveVarInfo() { releaseMemory(); }
 
   // --------- Implement the MethodPass interface ----------------------
 

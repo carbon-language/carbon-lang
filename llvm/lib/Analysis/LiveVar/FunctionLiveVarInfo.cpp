@@ -21,12 +21,12 @@ AnalysisID MethodLiveVarInfo::ID(AnalysisID::create<MethodLiveVarInfo>());
 
 // gets OutSet of a BB
 const ValueSet &MethodLiveVarInfo::getOutSetOfBB(const BasicBlock *BB) const {
-  return BB2BBLVMap.find(BB)->second->getOutSet();
+  return BBLiveVar::GetFromBB(BB)->getOutSet();
 }
 
 // gets InSet of a BB
 const ValueSet &MethodLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
-  return BB2BBLVMap.find(BB)->second->getInSet();
+  return BBLiveVar::GetFromBB(BB)->getInSet();
 }
 
 
@@ -34,13 +34,14 @@ const ValueSet &MethodLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
 // Performs live var analysis for a method
 //-----------------------------------------------------------------------------
 
-bool MethodLiveVarInfo::runOnMethod(Method *M) {
+bool MethodLiveVarInfo::runOnMethod(Method *Meth) {
+  M = Meth;
   if (DEBUG_LV) std::cerr << "Analysing live variables ...\n";
 
   // create and initialize all the BBLiveVars of the CFG
-  constructBBs(M);
+  constructBBs(Meth);
 
-  while (doSingleBackwardPass(M))
+  while (doSingleBackwardPass(Meth))
     ; // Iterate until we are done.
   
   if (DEBUG_LV) std::cerr << "Live Variable Analysis complete!\n";
@@ -62,8 +63,7 @@ void MethodLiveVarInfo::constructBBs(const Method *M) {
     if (DEBUG_LV) std::cerr << " For BB " << RAV(BB) << ":\n";
 
     // create a new BBLiveVar
-    BBLiveVar *LVBB = new BBLiveVar(BB, POId);  
-    BB2BBLVMap[BB] = LVBB;              // insert the pair to Map
+    BBLiveVar *LVBB = BBLiveVar::CreateOnBB(BB, POId);  
     
     if (DEBUG_LV)
       LVBB->printAllSets();
@@ -76,8 +76,8 @@ void MethodLiveVarInfo::constructBBs(const Method *M) {
   //
   for (Method::const_iterator BBRI = M->begin(), BBRE = M->end();
        BBRI != BBRE; ++BBRI, ++POId)
-    if (!BB2BBLVMap[*BBRI])                  // Not yet processed?
-      BB2BBLVMap[*BBRI] = new BBLiveVar(*BBRI, POId);
+    if (!BBLiveVar::GetFromBB(*BBRI))                 // Not yet processed?
+      BBLiveVar::CreateOnBB(*BBRI, POId);
 }
 
 
@@ -90,7 +90,7 @@ bool MethodLiveVarInfo::doSingleBackwardPass(const Method *M) {
 
   bool NeedAnotherIteration = false;
   for (po_iterator<const Method*> BBI = po_begin(M); BBI != po_end(M) ; ++BBI) {
-    BBLiveVar *LVBB = BB2BBLVMap[*BBI];
+    BBLiveVar *LVBB = BBLiveVar::GetFromBB(*BBI);
     assert(LVBB && "BasicBlock information not set for block!");
 
     if (DEBUG_LV) std::cerr << " For BB " << (*BBI)->getName() << ":\n";
@@ -99,7 +99,7 @@ bool MethodLiveVarInfo::doSingleBackwardPass(const Method *M) {
       LVBB->applyTransferFunc();        // apply the Tran Func to calc InSet
 
     if (LVBB->isInSetChanged())        // to calc Outsets of preds
-      NeedAnotherIteration |= LVBB->applyFlowFunc(BB2BBLVMap); 
+      NeedAnotherIteration |= LVBB->applyFlowFunc(); 
 
     if (DEBUG_LV) LVBB->printInOutSets();
   }
@@ -110,15 +110,11 @@ bool MethodLiveVarInfo::doSingleBackwardPass(const Method *M) {
 
 
 void MethodLiveVarInfo::releaseMemory() {
-  // First delete all BBLiveVar objects created in constructBBs(). A new object
-  // of type BBLiveVar is created for every BasicBlock in the method
-  //
-  for (std::map<const BasicBlock *, BBLiveVar *>::iterator
-         HMI = BB2BBLVMap.begin(),
-         HME = BB2BBLVMap.end(); HMI != HME; ++HMI)
-    delete HMI->second;                // delete all BBLiveVar in BB2BBLVMap
-
-  BB2BBLVMap.clear();
+  // First remove all BBLiveVar annotations created in constructBBs().
+  if (M)
+    for (Method::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+      BBLiveVar::RemoveFromBB(*I);
+  M = 0;
 
   // Then delete all objects of type ValueSet created in calcLiveVarSetsForBB
   // and entered into  MInst2LVSetBI and  MInst2LVSetAI (these are caches

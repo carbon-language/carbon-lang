@@ -15,8 +15,26 @@
 
 using std::cerr;
 
+static AnnotationID AID(AnnotationManager::getID("Analysis::BBLiveVar"));
+
+BBLiveVar *BBLiveVar::CreateOnBB(const BasicBlock *BB, unsigned POID) {
+  BBLiveVar *Result = new BBLiveVar(BB, POID);
+  BB->addAnnotation(Result);
+  return Result;
+}
+
+BBLiveVar *BBLiveVar::GetFromBB(const BasicBlock *BB) {
+  return (BBLiveVar*)BB->getAnnotation(AID);
+}
+
+void BBLiveVar::RemoveFromBB(const BasicBlock *BB) {
+  bool Deleted = BB->deleteAnnotation(AID);
+  assert(Deleted && "BBLiveVar annotation did not exist!");
+}
+
+
 BBLiveVar::BBLiveVar(const BasicBlock *bb, unsigned id)
-  : BB(bb), POID(id) {
+  : Annotation(AID), BB(bb), POID(id) {
   InSetChanged = OutSetChanged = false;
 
   calcDefUseSets();
@@ -152,9 +170,12 @@ bool BBLiveVar::setPropagate(ValueSet *OutSet, const ValueSet *InSet,
        InIt != InE; ++InIt) {  
     const BasicBlock *PredBBOfPhiArg = PhiArgMap[*InIt];
 
-    // if this var is not a phi arg OR 
-    // it's a phi arg and the var went down from this BB
-    if (!PredBBOfPhiArg || PredBBOfPhiArg == PredBB)
+    // Only propogate liveness of the value if it is either not an argument of
+    // a PHI node, or if it IS an argument, AND 'PredBB' is the basic block
+    // that it is coming in from.  THIS IS BROKEN because the same value can
+    // come in from multiple predecessors (and it's not a multimap)!
+    //
+    if (PredBBOfPhiArg == 0 || PredBBOfPhiArg == PredBB)
       if (OutSet->insert(*InIt).second)
         Changed = true;
   }
@@ -167,7 +188,7 @@ bool BBLiveVar::setPropagate(ValueSet *OutSet, const ValueSet *InSet,
 // propogates in set to OutSets of PREDECESSORs
 //-----------------------------------------------------------------------------
 
-bool BBLiveVar::applyFlowFunc(std::map<const BasicBlock *, BBLiveVar *> &LVMap){
+bool BBLiveVar::applyFlowFunc() {
   // IMPORTANT: caller should check whether inset changed 
   //            (else no point in calling)
 
@@ -178,7 +199,7 @@ bool BBLiveVar::applyFlowFunc(std::map<const BasicBlock *, BBLiveVar *> &LVMap){
 
   for (BasicBlock::pred_const_iterator PI = BB->pred_begin(),
          PE = BB->pred_begin(); PI != PE ; ++PI) {
-    BBLiveVar *PredLVBB = LVMap[*PI];
+    BBLiveVar *PredLVBB = BBLiveVar::GetFromBB(*PI);
 
     // do set union
     if (setPropagate(&PredLVBB->OutSet, &InSet, *PI)) {  
