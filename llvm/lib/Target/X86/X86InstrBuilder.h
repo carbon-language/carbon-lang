@@ -33,25 +33,24 @@ namespace llvm {
 /// with BP or SP and Disp being offsetted accordingly.  The displacement may
 /// also include the offset of a global value.
 struct X86AddressMode {
-    enum {
-      RegBase,
-      FrameIndexBase,
-    } BaseType;
-
-    union {
-      unsigned Reg;
-      int FrameIndex;
-    } Base;
-
-    unsigned Scale;
-    unsigned IndexReg;
-    unsigned Disp;
-    GlobalValue *GV;
-
-    X86AddressMode() : BaseType(RegBase), Scale(1), IndexReg(0), Disp(0),
-                       GV(NULL) {
-      Base.Reg = 0;
-    }
+  enum {
+    RegBase,
+    FrameIndexBase,
+  } BaseType;
+  
+  union {
+    unsigned Reg;
+    int FrameIndex;
+  } Base;
+  
+  unsigned Scale;
+  unsigned IndexReg;
+  unsigned Disp;
+  GlobalValue *GV;
+  
+  X86AddressMode() : BaseType(RegBase), Scale(1), IndexReg(0), Disp(0), GV(0) {
+    Base.Reg = 0;
+  }
 };
 
 /// addDirectMem - This function is used to add a direct memory reference to the
