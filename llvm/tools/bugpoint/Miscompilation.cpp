@@ -245,7 +245,7 @@ static bool ExtractLoops(BugDriver &BD,
     std::cout << "done.\n";
 
     std::cout << "  Checking to see if the merged program executes correctly: ";
-    bool Broken = TestMergedProgram(BD, Optimized, ToNotOptimize, true);
+    bool Broken = TestMergedProgram(BD, Optimized, ToNotOptimize, false);
     delete Optimized;
     if (!Broken) {
       std::cout << "yup: loop extraction masked the problem.  Undoing.\n";
