@@ -38,12 +38,14 @@
 #include <algorithm>
 
 namespace {
-  cl::opt<bool> DisablePromotion("disable-licm-promotion", cl::Hidden,
-                             cl::desc("Disable memory promotion in LICM pass"));
+  cl::opt<bool>
+  DisablePromotion("disable-licm-promotion", cl::Hidden,
+                   cl::desc("Disable memory promotion in LICM pass"));
 
   Statistic<> NumHoisted("licm", "Number of instructions hoisted out of loop");
   Statistic<> NumHoistedLoads("licm", "Number of load insts hoisted");
-  Statistic<> NumPromoted("licm", "Number of memory locations promoted to registers");
+  Statistic<> NumPromoted("licm",
+                          "Number of memory locations promoted to registers");
 
   struct LICM : public FunctionPass, public InstVisitor<LICM> {
     virtual bool runOnFunction(Function &F);
@@ -98,8 +100,9 @@ namespace {
     ///
     void hoist(Instruction &I);
 
-    /// SafeToHoist - Only hoist an instruction if it is not a trapping instruction
-    /// or if it is a trapping instruction and is guaranteed to execute
+    /// SafeToHoist - Only hoist an instruction if it is not a trapping
+    /// instruction or if it is a trapping instruction and is guaranteed to
+    /// execute.
     ///
     bool SafeToHoist(Instruction &I);
 
@@ -140,7 +143,8 @@ namespace {
     ///
     friend class InstVisitor<LICM>;
     void visitBinaryOperator(Instruction &I) {
-      if (isLoopInvariant(I.getOperand(0)) && isLoopInvariant(I.getOperand(1)) && SafeToHoist(I))
+      if (isLoopInvariant(I.getOperand(0)) &&
+          isLoopInvariant(I.getOperand(1)) && SafeToHoist(I))
         hoist(I);
     }
     void visitCastInst(CastInst &CI) {
