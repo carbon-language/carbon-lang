@@ -70,10 +70,9 @@ void SlotCalculator::processModule() {
   // Add all of the constants that the global variables might refer to first.
   //
   for (Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
-       I != E; ++I) {
+       I != E; ++I)
     if (I->hasInitializer())
       insertValue(I->getInitializer());
-  }
 
   // Add all of the global variables to the value table...
   //
@@ -193,7 +192,7 @@ void SlotCalculator::purgeFunction() {
   for (unsigned i = 0; i < NumModuleTypes; ++i) {
     unsigned ModuleSize = ModuleLevel[i];  // Size of plane before function came
     TypePlane &CurPlane = Table[i];
-    //SC_DEBUG("Processing Plane " <<i<< " of size " << CurPlane.size() <<endl);
+    //SC_DEBUG("Processing Plane " <<i<< " of size " << CurPlane.size() <<"\n");
 	     
     while (CurPlane.size() != ModuleSize) {
       //SC_DEBUG("  Removing [" << i << "] Value=" << CurPlane.back() << "\n");
@@ -212,7 +211,7 @@ void SlotCalculator::purgeFunction() {
   while (NumModuleTypes != Table.size()) {
     TypePlane &Plane = Table.back();
     SC_DEBUG("Removing Plane " << (Table.size()-1) << " of size "
-	     << Plane.size() << endl);
+	     << Plane.size() << "\n");
     while (Plane.size()) {
       NodeMap.erase(NodeMap.find(Plane.back()));   // Erase from nodemap
       Plane.pop_back();                            // Shrink plane
@@ -240,7 +239,7 @@ int SlotCalculator::insertValue(const Value *D) {
     // initializers.
     //
     for(User::const_op_iterator I = U->op_begin(), E = U->op_end(); I != E; ++I)
-      if (!isa<GlobalValue>(*I))  // Don't chain insert global values
+      if (!isa<GlobalValue>(*I))     // Don't chain insert global values
 	insertValue(*I);
   }
 
@@ -262,7 +261,7 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore) {
     if (D->getType() == Type::VoidTy ||          // Ignore void type nodes
 	(IgnoreNamedNodes &&                     // Ignore named and constants
 	 (D->hasName() || isa<Constant>(D)) && !isa<Type>(D))) {
-      SC_DEBUG("ignored value " << D << endl);
+      SC_DEBUG("ignored value " << D << "\n");
       return -1;                  // We do need types unconditionally though
     }
 
@@ -279,7 +278,7 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore) {
     if ((ResultSlot = getValSlot(TheTy)) == -1) {
       ResultSlot = doInsertVal(TheTy);
       SC_DEBUG("  Inserted type: " << TheTy->getDescription() << " slot=" <<
-	       ResultSlot << endl);
+	       ResultSlot << "\n");
     }
 
     // Loop over any contained types in the definition... in reverse depth first
@@ -293,10 +292,10 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore) {
 	// If we haven't seen this sub type before, add it to our type table!
 	const Type *SubTy = *I;
 	if (getValSlot(SubTy) == -1) {
-	  SC_DEBUG("  Inserting subtype: " << SubTy->getDescription() << endl);
+	  SC_DEBUG("  Inserting subtype: " << SubTy->getDescription() << "\n");
 	  int Slot = doInsertVal(SubTy);
 	  SC_DEBUG("  Inserted subtype: " << SubTy->getDescription() << 
-		   " slot=" << Slot << endl);
+		   " slot=" << Slot << "\n");
 	}
       }
     return ResultSlot;
