@@ -225,3 +225,15 @@ ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
 
   return *this;
 }
+
+/// print - Print out the bounds to a stream...
+///
+void ConstantRange::print(std::ostream &OS) const {
+  OS << "[" << Lower << "," << Upper << " )";
+}
+
+/// dump - Allow printing from a debugger easily...
+///
+void ConstantRange::dump() const {
+  print(std::cerr);
+}
