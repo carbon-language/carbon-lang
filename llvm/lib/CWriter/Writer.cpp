@@ -682,6 +682,8 @@ void CWriter::printModule(Module *M) {
         if (I->hasInternalLinkage())
           Out << "static ";
         printType(Out, I->getType()->getElementType(), getValueName(I));
+        if (I->hasLinkOnceLinkage())
+          Out << " __attribute__((common))";
         if (!I->getInitializer()->isNullValue()) {
           Out << " = " ;
           writeOperand(I->getInitializer());
