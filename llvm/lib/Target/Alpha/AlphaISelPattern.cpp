@@ -1253,8 +1253,20 @@ unsigned ISel::SelectExpr(SDOperand N) {
           case ISD::SETNE: Opc = Alpha::CMPTEQ; inv = true; break;
           }
           
-          Tmp1 = SelectExpr(N.getOperand(0));
-          Tmp2 = SelectExpr(N.getOperand(1));
+          //FIXME: check for constant 0.0
+          ConstantFPSDNode *CN;
+          if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(0)))
+              && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
+            Tmp1 = Alpha::F31;
+          else
+            Tmp1 = SelectExpr(N.getOperand(0));
+          
+          if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1)))
+          && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
+            Tmp2 = Alpha::F31;
+          else
+            Tmp2 = SelectExpr(N.getOperand(1));
+
           //Can only compare doubles, and dag won't promote for me
           if (SetCC->getOperand(0).getValueType() == MVT::f32)
           {
@@ -1280,22 +1292,24 @@ unsigned ISel::SelectExpr(SDOperand N) {
           
           //now arrange for Result (int) to have a 1 or 0
           
-          // Spill the FP to memory and reload it from there.
-          unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
-          MachineFunction *F = BB->getParent();
-          int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
-          unsigned Tmp4 = MakeReg(MVT::f64);
-          BuildMI(BB, Alpha::CVTTQ, 1, Tmp4).addReg(Tmp3);
-          BuildMI(BB, Alpha::STT, 3).addReg(Tmp4).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-          unsigned Tmp5 = MakeReg(MVT::i64);
-          BuildMI(BB, Alpha::LDQ, 2, Tmp5).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+          BuildMI(BB, Alpha::CC2INT, 1, Result).addReg(Tmp3);
+
+//           // Spill the FP to memory and reload it from there.
+//           unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
+//           MachineFunction *F = BB->getParent();
+//           int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
+//           unsigned Tmp4 = MakeReg(MVT::f64);
+//           BuildMI(BB, Alpha::CVTTQ, 1, Tmp4).addReg(Tmp3);
+//           BuildMI(BB, Alpha::STT, 3).addReg(Tmp4).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+//           unsigned Tmp5 = MakeReg(MVT::i64);
+//           BuildMI(BB, Alpha::LDQ, 2, Tmp5).addFrameIndex(FrameIdx).addReg(Alpha::F31);
 	  
-          //now, set result based on Tmp5
-          //Set Tmp6 if fp cmp was false
-          unsigned Tmp6 = MakeReg(MVT::i64);
-          BuildMI(BB, Alpha::CMPEQ, 2, Tmp6).addReg(Tmp5).addReg(Alpha::R31);
-          //and invert
-          BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Tmp6).addReg(Alpha::R31);
+//           //now, set result based on Tmp5
+//           //Set Tmp6 if fp cmp was false
+//           unsigned Tmp6 = MakeReg(MVT::i64);
+//           BuildMI(BB, Alpha::CMPEQ, 2, Tmp6).addReg(Tmp5).addReg(Alpha::R31);
+//           //and invert
+//           BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Tmp6).addReg(Alpha::R31);
           
         }
         //       else
