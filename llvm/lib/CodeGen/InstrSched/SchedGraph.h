@@ -17,264 +17,80 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/GraphTraits.h"
 #include "Support/hash_map"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/CodeGen/SchedGraphCommon.h"
 
-class Value;
-class Instruction;
-class TerminatorInst;
-class BasicBlock;
-class Function;
-class TargetMachine;
-class SchedGraphEdge; 
-class SchedGraphNode; 
-class SchedGraph; 
 class RegToRefVecMap;
 class ValueToDefVecMap;
 class RefVec;
-class MachineInstr;
-class MachineBasicBlock;
 
+class SchedGraphNode : public SchedGraphNodeCommon {
 
-/******************** Exported Data Types and Constants ********************/
-
-typedef int ResourceId;
-const ResourceId InvalidRID        = -1;
-const ResourceId MachineCCRegsRID  = -2; // use +ve numbers for actual regs
-const ResourceId MachineIntRegsRID = -3; // use +ve numbers for actual regs
-const ResourceId MachineFPRegsRID  = -4; // use +ve numbers for actual regs
-
-
-//*********************** Public Class Declarations ************************/
-
-class SchedGraphEdge {
-  SchedGraphEdge(const SchedGraphEdge &);  // DO NOT IMPLEMENT
-  void operator=(const SchedGraphEdge &);  // DO NOT IMPLEMENT
-public:
-  enum SchedGraphEdgeDepType {
-    CtrlDep, MemoryDep, ValueDep, MachineRegister, MachineResource
-  };
-  enum DataDepOrderType {
-    TrueDep = 0x1, AntiDep=0x2, OutputDep=0x4, NonDataDep=0x8
-  };
-  
-private:
-  SchedGraphNode*	src;
-  SchedGraphNode*	sink;
-  SchedGraphEdgeDepType depType;
-  unsigned int          depOrderType;
-  int			minDelay; // cached latency (assumes fixed target arch)
-  
-  union {
-    const Value* val;
-    int          machineRegNum;
-    ResourceId   resourceId;
-  };
-  
-public:	
-  // For all constructors, if minDelay is unspecified, minDelay is
-  // set to _src->getLatency().
-  // constructor for CtrlDep or MemoryDep edges, selected by 3rd argument
-  /*ctor*/		SchedGraphEdge(SchedGraphNode* _src,
-				       SchedGraphNode* _sink,
-				       SchedGraphEdgeDepType _depType,
-				       unsigned int     _depOrderType,
-				       int _minDelay = -1);
-  
-  // constructor for explicit value dependence (may be true/anti/output)
-  /*ctor*/		SchedGraphEdge(SchedGraphNode* _src,
-				       SchedGraphNode* _sink,
-				       const Value*    _val,
-				       unsigned int     _depOrderType,
-				       int _minDelay = -1);
-  
-  // constructor for machine register dependence
-  /*ctor*/		SchedGraphEdge(SchedGraphNode* _src,
-				       SchedGraphNode* _sink,
-				       unsigned int    _regNum,
-				       unsigned int     _depOrderType,
-				       int _minDelay = -1);
-  
-  // constructor for any other machine resource dependences.
-  // DataDepOrderType is always NonDataDep.  It it not an argument to
-  // avoid overloading ambiguity with previous constructor.
-  /*ctor*/		SchedGraphEdge(SchedGraphNode* _src,
-				       SchedGraphNode* _sink,
-				       ResourceId      _resourceId,
-				       int _minDelay = -1);
-  
-  /*dtor*/		~SchedGraphEdge();
-  
-  SchedGraphNode*	getSrc		() const { return src; }
-  SchedGraphNode*	getSink		() const { return sink; }
-  int			getMinDelay	() const { return minDelay; }
-  SchedGraphEdgeDepType getDepType	() const { return depType; }
-  
-  const Value*		getValue	() const {
-    assert(depType == ValueDep); return val;
-  }
-  int			getMachineReg	() const {
-    assert(depType == MachineRegister); return machineRegNum;
-  }
-  int			getResourceId	() const {
-    assert(depType == MachineResource); return resourceId;
-  }
-  
-public:
-  // 
-  // Debugging support
-  // 
-  friend std::ostream& operator<<(std::ostream& os, const SchedGraphEdge& edge);
-  
-  void		dump	(int indent=0) const;
-    
-private:
-  // disable default ctor
-  /*ctor*/		SchedGraphEdge();	// DO NOT IMPLEMENT
-};
-
-
-
-class SchedGraphNode {
-  unsigned nodeId;
-  MachineBasicBlock *MBB;
-  const MachineInstr* minstr;
-  std::vector<SchedGraphEdge*> inEdges;
-  std::vector<SchedGraphEdge*> outEdges;
   int origIndexInBB;            // original position of machine instr in BB
-  int latency;
+  MachineBasicBlock *MBB;
+  const MachineInstr *MI;
 
-  SchedGraphNode(const SchedGraphNode &);  // DO NOT IMPLEMENT
-  void operator=(const SchedGraphNode &);  // DO NOT IMPLEMENT
-public:
-  typedef std::vector<SchedGraphEdge*>::      iterator	       iterator;
-  typedef std::vector<SchedGraphEdge*>::const_iterator         const_iterator;
-  typedef std::vector<SchedGraphEdge*>::      reverse_iterator reverse_iterator;
-  typedef std::vector<SchedGraphEdge*>::const_reverse_iterator const_reverse_iterator;
-  
-public:
-  //
-  // Accessor methods
-  // 
-  unsigned              getNodeId	() const { return nodeId; }
-  const MachineInstr*   getMachineInstr	() const { return minstr; }
-  const MachineOpCode   getOpCode	() const { return minstr->getOpCode(); }
-  int                   getLatency	() const { return latency; }
-  unsigned              getNumInEdges	() const { return inEdges.size(); }
-  unsigned              getNumOutEdges	() const { return outEdges.size(); }
-  bool			isDummyNode	() const { return (minstr == NULL); }
-  MachineBasicBlock    &getMachineBasicBlock() const { return *MBB; }
-  int                   getOrigIndexInBB() const { return origIndexInBB; }
-  
-  //
-  // Iterators
-  // 
-  iterator		beginInEdges	()	 { return inEdges.begin(); }
-  iterator		endInEdges	()	 { return inEdges.end(); }
-  iterator		beginOutEdges	()	 { return outEdges.begin(); }
-  iterator		endOutEdges	()	 { return outEdges.end(); }
-  
-  const_iterator	beginInEdges	() const { return inEdges.begin(); }
-  const_iterator	endInEdges	() const { return inEdges.end(); }
-  const_iterator	beginOutEdges	() const { return outEdges.begin(); }
-  const_iterator	endOutEdges	() const { return outEdges.end(); }
-  
-public:
-  //
-  // Debugging support
-  // 
-  friend std::ostream& operator<<(std::ostream& os, const SchedGraphNode& node);
-  
-  void		dump	(int indent=0) const;
-  
-private:
+
+  SchedGraphNode (unsigned nodeId, MachineBasicBlock *mbb,
+		  int   indexInBB, const TargetMachine& Target);
+  ~SchedGraphNode	();
+
   friend class SchedGraph;		// give access for ctor and dtor
   friend class SchedGraphEdge;		// give access for adding edges
-  
-  void			addInEdge	(SchedGraphEdge* edge);
-  void			addOutEdge	(SchedGraphEdge* edge);
-  
-  void			removeInEdge	(const SchedGraphEdge* edge);
-  void			removeOutEdge	(const SchedGraphEdge* edge);
-  
-  // disable default constructor and provide a ctor for single-block graphs
-  /*ctor*/		SchedGraphNode();	// DO NOT IMPLEMENT
-  /*ctor*/		SchedGraphNode	(unsigned nodeId,
-                                         MachineBasicBlock *mbb,
-                                         int   indexInBB,
-					 const TargetMachine& Target);
-  /*dtor*/		~SchedGraphNode	();
+
+public:
+  // Accessor methods
+  const MachineInstr*   getMachineInstr	() const { return MI; }
+  const MachineOpCode   getOpCode	() const { return MI->getOpCode(); }
+  bool			isDummyNode	() const { return (MI == NULL); }
+  MachineBasicBlock    &getMachineBasicBlock() const { return *MBB; }
+
+  int               getOrigIndexInBB() const { return origIndexInBB; }
 };
 
-
-
-class SchedGraph : private hash_map<const MachineInstr*, SchedGraphNode*> {
-  MachineBasicBlock &MBB;               // basic blocks for this graph
-  SchedGraphNode* graphRoot;		// the root and leaf are not inserted
-  SchedGraphNode* graphLeaf;		//  in the hash_map (see getNumNodes())
-  
-  typedef hash_map<const MachineInstr*, SchedGraphNode*> map_base;
-  SchedGraph(const SchedGraph &);       // DO NOT IMPLEMENT
-  void operator=(const SchedGraph &);   // DO NOT IMPLEMENT
-public:
-  using map_base::iterator;
-  using map_base::const_iterator;
+class SchedGraph : public SchedGraphCommon {
+  MachineBasicBlock &MBB;
+  hash_map<const MachineInstr*, SchedGraphNode*> GraphMap;
   
 public:
-  //
-  // Accessor methods
-  //
-  MachineBasicBlock               &getBasicBlock()  const { return MBB; }
-  unsigned                         getNumNodes()    const { return size()+2; }
-  SchedGraphNode*		   getRoot()	    const { return graphRoot; }
-  SchedGraphNode*		   getLeaf()	    const { return graphLeaf; }
-  
-  SchedGraphNode* getGraphNodeForInstr(const MachineInstr* minstr) const {
-    const_iterator onePair = this->find(minstr);
-    return (onePair != this->end())? (*onePair).second : NULL;
+  typedef hash_map<const MachineInstr*, SchedGraphNode*>::const_iterator iterator;
+  typedef hash_map<const MachineInstr*, SchedGraphNode*>::const_iterator const_iterator;
+    
+  MachineBasicBlock&               getBasicBlock() const{return MBB;}
+  const unsigned int		   getNumNodes()    const { return GraphMap.size()+2; }
+  SchedGraphNode* getGraphNodeForInstr(const MachineInstr* MI) const {
+    const_iterator onePair = find(MI);
+    return (onePair != end())? onePair->second : NULL;
   }
   
-  //
-  // Delete nodes or edges from the graph.
-  // 
-  void		eraseNode		(SchedGraphNode* node);
+  // Debugging support
+  void		dump	() const;
   
-  void		eraseIncomingEdges	(SchedGraphNode* node,
-					 bool addDummyEdges = true);
-  
-  void		eraseOutgoingEdges	(SchedGraphNode* node,
-					 bool addDummyEdges = true);
-  
-  void		eraseIncidentEdges	(SchedGraphNode* node,
-					 bool addDummyEdges = true);
-  
-  //
+protected:
+  SchedGraph(MachineBasicBlock& mbb, const TargetMachine& TM);
+  ~SchedGraph();
+
   // Unordered iterators.
   // Return values is pair<const MachineIntr*,SchedGraphNode*>.
   //
-  using map_base::begin;
-  using map_base::end;
-
-  //
-  // Ordered iterators.
-  // Return values is pair<const MachineIntr*,SchedGraphNode*>.
-  //
-  // void			   postord_init();
-  // postorder_iterator	   postord_begin();
-  // postorder_iterator	   postord_end();
-  // const_postorder_iterator postord_begin() const;
-  // const_postorder_iterator postord_end() const;
+  hash_map<const MachineInstr*, SchedGraphNode*>::const_iterator begin() const {
+    return GraphMap.begin();
+  }
+  hash_map<const MachineInstr*, SchedGraphNode*>::const_iterator end() const {
+    return GraphMap.end();
+  }
+ 
+  unsigned size() { return GraphMap.size(); }
+  iterator find(const MachineInstr *MI) const { return GraphMap.find(MI); }
   
-  //
-  // Debugging support
-  // 
-  void		dump	() const;
+  SchedGraphNode *&operator[](const MachineInstr *MI) {
+    return GraphMap[MI];
+  }
   
 private:
   friend class SchedGraphSet;		// give access to ctor
   
-  // disable default constructor and provide a ctor for single-block graphs
-  /*ctor*/	SchedGraph		(MachineBasicBlock &bb,
-					 const TargetMachine& target);
-  /*dtor*/	~SchedGraph		();
+ 
   
   inline void	noteGraphNodeForInstr	(const MachineInstr* minstr,
 					 SchedGraphNode* node)
@@ -288,12 +104,13 @@ private:
   //
   void  	buildGraph		(const TargetMachine& target);
   
-  void          buildNodesForBB         (const TargetMachine& target,
+   void          buildNodesForBB         (const TargetMachine& target,
                                          MachineBasicBlock &MBB,
                                          std::vector<SchedGraphNode*>& memNV,
                                          std::vector<SchedGraphNode*>& callNV,
                                          RegToRefVecMap& regToRefVecMap,
                                          ValueToDefVecMap& valueToDefVecMap);
+
   
   void          findDefUseInfoAtInstr   (const TargetMachine& target,
                                          SchedGraphNode* node,
@@ -301,6 +118,7 @@ private:
                                          std::vector<SchedGraphNode*>& callNV,
                                          RegToRefVecMap& regToRefVecMap,
                                          ValueToDefVecMap& valueToDefVecMap);
+
                                          
   void		addEdgesForInstruction(const MachineInstr& minstr,
                                      const ValueToDefVecMap& valueToDefVecMap,
@@ -309,12 +127,15 @@ private:
   void		addCDEdges		(const TerminatorInst* term,
 					 const TargetMachine& target);
   
-  void		addMemEdges         (const std::vector<SchedGraphNode*>& memNV,
+  void		addMemEdges         (const std::vector<SchedGraphNode*>& memNod,
                                      const TargetMachine& target);
   
+  void          addCallCCEdges      (const std::vector<SchedGraphNode*>& memNod,
+                                     MachineBasicBlock& bbMvec,
+                                     const TargetMachine& target);
   void          addCallDepEdges     (const std::vector<SchedGraphNode*>& callNV,
                                      const TargetMachine& target);
-    
+  
   void		addMachineRegEdges	(RegToRefVecMap& regToRefVecMap,
 					 const TargetMachine& target);
   
@@ -324,42 +145,39 @@ private:
                                          bool  refNodeIsDef,
                                          bool  refNodeIsDefAndUse,
 					 const TargetMachine& target);
-  
-  void		addDummyEdges		();
+  void          addDummyEdges();
+
 };
 
 
-class SchedGraphSet : private std::vector<SchedGraph*> {
-private:
-  const Function* method;
 
-  SchedGraphSet(const SchedGraphSet&);    // DO NOT IMPLEMENT
-  void operator=(const SchedGraphSet&);   // DO NOT IMPLEMENT
+class SchedGraphSet {
+  const Function* function;
+  std::vector<SchedGraph*> Graphs;
+
+  // Graph builder
+  void buildGraphsForMethod (const Function *F, const TargetMachine& target);
+
+  inline void addGraph(SchedGraph* graph) {
+    assert(graph != NULL);
+    Graphs.push_back(graph);
+  }  
+
 public:
-  typedef std::vector<SchedGraph*> baseVector;
-  using baseVector::iterator;
-  using baseVector::const_iterator;
-  
-public:
-  SchedGraphSet(const Function *F, const TargetMachine &TM);
+  SchedGraphSet(const Function * function, const TargetMachine& target);
   ~SchedGraphSet();
   
-  // Iterators
-  using baseVector::begin;
-  using baseVector::end;
-  
+  //iterators
+  typedef std::vector<SchedGraph*>::const_iterator iterator;
+  typedef std::vector<SchedGraph*>::const_iterator const_iterator;
+
+  std::vector<SchedGraph*>::const_iterator begin() const { return Graphs.begin(); }
+  std::vector<SchedGraph*>::const_iterator end() const { return Graphs.end(); }
+
   // Debugging support
   void dump() const;
-  
-private:
-  inline void	addGraph(SchedGraph* graph) {
-    assert(graph != NULL);
-    this->push_back(graph);
-  }
-  
-  // Graph builder
-  void buildGraphsForMethod(const Function *F, const TargetMachine &TM);
 };
+
 
 
 //********************** Sched Graph Iterators *****************************/
@@ -381,7 +199,7 @@ public:
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
   
   // operator*() differs for pred or succ iterator
-  inline _NodeType* operator*() const { return (*oi)->getSrc(); }
+  inline _NodeType* operator*() const { return (_NodeType*)(*oi)->getSrc(); }
   inline	 _NodeType* operator->() const { return operator*(); }
   
   inline _EdgeType* getEdge() const { return *(oi); }
@@ -409,7 +227,7 @@ public:
   inline bool operator==(const _Self& x) const { return oi == x.oi; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
   
-  inline _NodeType* operator*() const { return (*oi)->getSink(); }
+  inline _NodeType* operator*() const { return (_NodeType*)(*oi)->getSink(); }
   inline	 _NodeType* operator->() const { return operator*(); }
   
   inline _EdgeType* getEdge() const { return *(oi); }
@@ -477,7 +295,7 @@ template <> struct GraphTraits<SchedGraph*> {
   typedef SchedGraphNode NodeType;
   typedef sg_succ_iterator ChildIteratorType;
 
-  static inline NodeType *getEntryNode(SchedGraph *SG) { return SG->getRoot(); }
+  static inline NodeType *getEntryNode(SchedGraph *SG) { return (NodeType*)SG->getRoot(); }
   static inline ChildIteratorType child_begin(NodeType *N) { 
     return succ_begin(N); 
   }
@@ -491,7 +309,7 @@ template <> struct GraphTraits<const SchedGraph*> {
   typedef sg_succ_const_iterator ChildIteratorType;
 
   static inline NodeType *getEntryNode(const SchedGraph *SG) {
-    return SG->getRoot();
+    return (NodeType*)SG->getRoot();
   }
   static inline ChildIteratorType child_begin(NodeType *N) { 
     return succ_begin(N); 

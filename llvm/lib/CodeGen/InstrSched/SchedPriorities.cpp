@@ -59,7 +59,7 @@ SchedPriorities::computeDelays(const SchedGraph* graph)
 	  for (SchedGraphNode::const_iterator E=node->beginOutEdges();
 	       E != node->endOutEdges(); ++E)
 	    {
-	      cycles_t sinkDelay = getNodeDelay((*E)->getSink());
+	      cycles_t sinkDelay = getNodeDelay((SchedGraphNode*)(*E)->getSink());
 	      nodeDelay = std::max(nodeDelay, sinkDelay + (*E)->getMinDelay());
 	    }
 	}
@@ -71,7 +71,7 @@ SchedPriorities::computeDelays(const SchedGraph* graph)
 void
 SchedPriorities::initializeReadyHeap(const SchedGraph* graph)
 {
-  const SchedGraphNode* graphRoot = graph->getRoot();
+  const SchedGraphNode* graphRoot = (const SchedGraphNode*)graph->getRoot();
   assert(graphRoot->getMachineInstr() == NULL && "Expect dummy root");
   
   // Insert immediate successors of dummy root, which are the actual roots
@@ -137,7 +137,7 @@ SchedPriorities::issuedReadyNodeAt(cycles_t curTime,
   for (SchedGraphNode::const_iterator E=node->beginOutEdges();
        E != node->endOutEdges(); ++E)
     {
-      cycles_t& etime = getEarliestReadyTimeForNodeRef((*E)->getSink());
+      cycles_t& etime = getEarliestReadyTimeForNodeRef((SchedGraphNode*)(*E)->getSink());
       etime = std::max(etime, curTime + (*E)->getMinDelay());
     }    
 }

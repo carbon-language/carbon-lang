@@ -1047,8 +1047,8 @@ NodeCanFillDelaySlot(const SchedulingManager& S,
   
   for (SchedGraphNode::const_iterator EI = node->beginInEdges();
        EI != node->endInEdges(); ++EI)
-    if (! (*EI)->getSrc()->isDummyNode()
-	&& mii.isLoad((*EI)->getSrc()->getOpCode())
+    if (! ((SchedGraphNode*)(*EI)->getSrc())->isDummyNode()
+	&& mii.isLoad(((SchedGraphNode*)(*EI)->getSrc())->getOpCode())
 	&& (*EI)->getDepType() == SchedGraphEdge::CtrlDep)
       return false;
   
@@ -1065,7 +1065,7 @@ NodeCanFillDelaySlot(const SchedulingManager& S,
     bool onlyCDEdgeToBranch = true;
     for (SchedGraphNode::const_iterator OEI = node->beginOutEdges();
          OEI != node->endOutEdges(); ++OEI)
-      if (! (*OEI)->getSink()->isDummyNode()
+      if (! ((SchedGraphNode*)(*OEI)->getSink())->isDummyNode()
           && ((*OEI)->getSink() != brNode
               || (*OEI)->getDepType() != SchedGraphEdge::CtrlDep))
       {

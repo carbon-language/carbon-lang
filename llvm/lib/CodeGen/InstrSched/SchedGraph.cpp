@@ -7,16 +7,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "SchedGraph.h"
-#include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/Target/TargetRegInfo.h"
+#include "llvm/CodeGen/SchedGraphCommon.h"
+#include <iostream>
+
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "Support/STLExtras.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "llvm/Target/TargetRegInfo.h"
 #include "llvm/Function.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/iOther.h"
 #include "Support/StringExtras.h"
-#include "Support/STLExtras.h"
+
 
 //*********************** Internal Data Structures *************************/
 
@@ -39,93 +44,6 @@ struct ValueToDefVecMap: public hash_map<const Value*, RefVec> {
   typedef hash_map<const Value*, RefVec>::const_iterator const_iterator;
 };
 
-// 
-// class SchedGraphEdge
-// 
-
-/*ctor*/
-SchedGraphEdge::SchedGraphEdge(SchedGraphNode* _src,
-			       SchedGraphNode* _sink,
-			       SchedGraphEdgeDepType _depType,
-			       unsigned int     _depOrderType,
-			       int _minDelay)
-  : src(_src),
-    sink(_sink),
-    depType(_depType),
-    depOrderType(_depOrderType),
-    minDelay((_minDelay >= 0)? _minDelay : _src->getLatency()),
-    val(NULL)
-{
-  assert(src != sink && "Self-loop in scheduling graph!");
-  src->addOutEdge(this);
-  sink->addInEdge(this);
-}
-
-
-/*ctor*/
-SchedGraphEdge::SchedGraphEdge(SchedGraphNode*  _src,
-			       SchedGraphNode*  _sink,
-			       const Value*     _val,
-			       unsigned int     _depOrderType,
-			       int              _minDelay)
-  : src(_src),
-    sink(_sink),
-    depType(ValueDep),
-    depOrderType(_depOrderType),
-    minDelay((_minDelay >= 0)? _minDelay : _src->getLatency()),
-    val(_val)
-{
-  assert(src != sink && "Self-loop in scheduling graph!");
-  src->addOutEdge(this);
-  sink->addInEdge(this);
-}
-
-
-/*ctor*/
-SchedGraphEdge::SchedGraphEdge(SchedGraphNode*  _src,
-			       SchedGraphNode*  _sink,
-			       unsigned int     _regNum,
-			       unsigned int     _depOrderType,
-			       int             _minDelay)
-  : src(_src),
-    sink(_sink),
-    depType(MachineRegister),
-    depOrderType(_depOrderType),
-    minDelay((_minDelay >= 0)? _minDelay : _src->getLatency()),
-    machineRegNum(_regNum)
-{
-  assert(src != sink && "Self-loop in scheduling graph!");
-  src->addOutEdge(this);
-  sink->addInEdge(this);
-}
-
-
-/*ctor*/
-SchedGraphEdge::SchedGraphEdge(SchedGraphNode* _src,
-			       SchedGraphNode* _sink,
-			       ResourceId      _resourceId,
-			       int             _minDelay)
-  : src(_src),
-    sink(_sink),
-    depType(MachineResource),
-    depOrderType(NonDataDep),
-    minDelay((_minDelay >= 0)? _minDelay : _src->getLatency()),
-    resourceId(_resourceId)
-{
-  assert(src != sink && "Self-loop in scheduling graph!");
-  src->addOutEdge(this);
-  sink->addInEdge(this);
-}
-
-/*dtor*/
-SchedGraphEdge::~SchedGraphEdge()
-{
-}
-
-void SchedGraphEdge::dump(int indent) const {
-  std::cerr << std::string(indent*2, ' ') << *this; 
-}
-
 
 // 
 // class SchedGraphNode
@@ -136,11 +54,11 @@ SchedGraphNode::SchedGraphNode(unsigned NID,
                                MachineBasicBlock *mbb,
                                int   indexInBB,
 			       const TargetMachine& Target)
-  : nodeId(NID), MBB(mbb), minstr(mbb ? (*mbb)[indexInBB] : 0),
-    origIndexInBB(indexInBB), latency(0) {
-  if (minstr)
+  : SchedGraphNodeCommon(NID), origIndexInBB(indexInBB), MBB(mbb), MI(mbb ? (*mbb)[indexInBB] : 0)
+  {
+  if (MI)
     {
-      MachineOpCode mopCode = minstr->getOpCode();
+      MachineOpCode mopCode = MI->getOpCode();
       latency = Target.getInstrInfo().hasResultInterlock(mopCode)
 	? Target.getInstrInfo().minLatency(mopCode)
 	: Target.getInstrInfo().maxLatency(mopCode);
@@ -155,51 +73,6 @@ SchedGraphNode::~SchedGraphNode()
   std::for_each(beginOutEdges(), endOutEdges(),
                 deleter<SchedGraphEdge>);
 }
-
-void SchedGraphNode::dump(int indent) const {
-  std::cerr << std::string(indent*2, ' ') << *this; 
-}
-
-
-inline void
-SchedGraphNode::addInEdge(SchedGraphEdge* edge)
-{
-  inEdges.push_back(edge);
-}
-
-
-inline void
-SchedGraphNode::addOutEdge(SchedGraphEdge* edge)
-{
-  outEdges.push_back(edge);
-}
-
-inline void
-SchedGraphNode::removeInEdge(const SchedGraphEdge* edge)
-{
-  assert(edge->getSink() == this);
-  
-  for (iterator I = beginInEdges(); I != endInEdges(); ++I)
-    if ((*I) == edge)
-      {
-	inEdges.erase(I);
-	break;
-      }
-}
-
-inline void
-SchedGraphNode::removeOutEdge(const SchedGraphEdge* edge)
-{
-  assert(edge->getSrc() == this);
-  
-  for (iterator I = beginOutEdges(); I != endOutEdges(); ++I)
-    if ((*I) == edge)
-      {
-	outEdges.erase(I);
-	break;
-      }
-}
-
 
 // 
 // class SchedGraph
@@ -242,62 +115,6 @@ SchedGraph::dump() const
   std::cerr << "\n";
 }
 
-
-void
-SchedGraph::eraseIncomingEdges(SchedGraphNode* node, bool addDummyEdges)
-{
-  // Delete and disconnect all in-edges for the node
-  for (SchedGraphNode::iterator I = node->beginInEdges();
-       I != node->endInEdges(); ++I)
-  {
-    SchedGraphNode* srcNode = (*I)->getSrc();
-    srcNode->removeOutEdge(*I);
-    delete *I;
-      
-    if (addDummyEdges &&
-        srcNode != getRoot() &&
-        srcNode->beginOutEdges() == srcNode->endOutEdges())
-    { 
-      // srcNode has no more out edges, so add an edge to dummy EXIT node
-      assert(node != getLeaf() && "Adding edge that was just removed?");
-      (void) new SchedGraphEdge(srcNode, getLeaf(),
-                        SchedGraphEdge::CtrlDep, SchedGraphEdge::NonDataDep, 0);
-    }
-  }
-  
-  node->inEdges.clear();
-}
-
-void
-SchedGraph::eraseOutgoingEdges(SchedGraphNode* node, bool addDummyEdges)
-{
-  // Delete and disconnect all out-edges for the node
-  for (SchedGraphNode::iterator I = node->beginOutEdges();
-       I != node->endOutEdges(); ++I)
-  {
-    SchedGraphNode* sinkNode = (*I)->getSink();
-    sinkNode->removeInEdge(*I);
-    delete *I;
-      
-    if (addDummyEdges &&
-        sinkNode != getLeaf() &&
-        sinkNode->beginInEdges() == sinkNode->endInEdges())
-    { //sinkNode has no more in edges, so add an edge from dummy ENTRY node
-      assert(node != getRoot() && "Adding edge that was just removed?");
-      (void) new SchedGraphEdge(getRoot(), sinkNode,
-                        SchedGraphEdge::CtrlDep, SchedGraphEdge::NonDataDep, 0);
-    }
-  }
-  
-  node->outEdges.clear();
-}
-
-void
-SchedGraph::eraseIncidentEdges(SchedGraphNode* node, bool addDummyEdges)
-{
-  this->eraseIncomingEdges(node, addDummyEdges);	
-  this->eraseOutgoingEdges(node, addDummyEdges);	
-}
 
 
 void
@@ -697,10 +514,10 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
   
   // Collect the register references and value defs. for explicit operands
   // 
-  const MachineInstr& minstr = *node->getMachineInstr();
-  for (int i=0, numOps = (int) minstr.getNumOperands(); i < numOps; i++)
+  const MachineInstr& MI = *node->getMachineInstr();
+  for (int i=0, numOps = (int) MI.getNumOperands(); i < numOps; i++)
   {
-    const MachineOperand& mop = minstr.getOperand(i);
+    const MachineOperand& mop = MI.getOperand(i);
       
     // if this references a register other than the hardwired
     // "zero" register, record the reference.
@@ -728,8 +545,8 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
     }
     
     // ignore all other non-def operands
-    if (!minstr.getOperand(i).opIsDefOnly() &&
-        !minstr.getOperand(i).opIsDefAndUse())
+    if (!MI.getOperand(i).opIsDefOnly() &&
+        !MI.getOperand(i).opIsDefAndUse())
       continue;
       
     // We must be defining a value.
@@ -745,21 +562,21 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
   // Collect value defs. for implicit operands.  They may have allocated
   // physical registers also.
   // 
-  for (unsigned i=0, N = minstr.getNumImplicitRefs(); i != N; ++i)
+  for (unsigned i=0, N = MI.getNumImplicitRefs(); i != N; ++i)
   {
-    const MachineOperand& mop = minstr.getImplicitOp(i);
+    const MachineOperand& mop = MI.getImplicitOp(i);
     if (mop.hasAllocatedReg())
     {
       int regNum = mop.getAllocatedRegNum();
       if (regNum != target.getRegInfo().getZeroRegNum())
         regToRefVecMap[mop.getAllocatedRegNum()]
-          .push_back(std::make_pair(node, i + minstr.getNumOperands()));
+          .push_back(std::make_pair(node, i + MI.getNumOperands()));
       continue;                     // nothing more to do
     }
 
     if (mop.opIsDefOnly() || mop.opIsDefAndUse()) {
-      assert(minstr.getImplicitRef(i) != NULL && "Null value being defined?");
-      valueToDefVecMap[minstr.getImplicitRef(i)].push_back(std::make_pair(node,
+      assert(MI.getImplicitRef(i) != NULL && "Null value being defined?");
+      valueToDefVecMap[MI.getImplicitRef(i)].push_back(std::make_pair(node,
                                                                           -i)); 
     }
   }
@@ -885,9 +702,9 @@ SchedGraph::buildGraph(const TargetMachine& target)
 /*ctor*/
 SchedGraphSet::SchedGraphSet(const Function* _function,
 			     const TargetMachine& target) :
-  method(_function)
+  function(_function)
 {
-  buildGraphsForMethod(method, target);
+  buildGraphsForMethod(function, target);
 }
 
 
@@ -903,13 +720,13 @@ SchedGraphSet::~SchedGraphSet()
 void
 SchedGraphSet::dump() const
 {
-  std::cerr << "======== Sched graphs for function `" << method->getName()
+  std::cerr << "======== Sched graphs for function `" << function->getName()
             << "' ========\n\n";
   
   for (const_iterator I=begin(); I != end(); ++I)
     (*I)->dump();
   
-  std::cerr << "\n====== End graphs for function `" << method->getName()
+  std::cerr << "\n====== End graphs for function `" << function->getName()
             << "' ========\n\n";
 }
 
@@ -946,7 +763,7 @@ std::ostream &operator<<(std::ostream &os, const SchedGraphEdge& edge)
 std::ostream &operator<<(std::ostream &os, const SchedGraphNode& node)
 {
   os << std::string(8, ' ')
-     << "Node " << node.nodeId << " : "
+     << "Node " << node.ID << " : "
      << "latency = " << node.latency << "\n" << std::string(12, ' ');
   
   if (node.getMachineInstr() == NULL)
