@@ -536,8 +536,11 @@ bool PPC32ISel::canUseAsImmediateForOpcode(ConstantInt *CI, unsigned Opcode,
     else
       return false;
   }
+
+  // Treat subfic like addi for the purposes of constant validation
+  if (Opcode == 5) Opcode = 0;
       
-  // ADDI, Compare, and non-indexed Load take SIMM
+  // addi, subfic, compare, and non-indexed load take SIMM
   bool cond1 = (Opcode < 2)
     && ((int32_t)CI->getRawValue() <= 32767)
     && ((int32_t)CI->getRawValue() >= -32768);
