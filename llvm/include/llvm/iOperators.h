@@ -10,17 +10,6 @@
 #include "llvm/InstrTypes.h"
 
 //===----------------------------------------------------------------------===//
-//                   Class to represent Unary operators
-//===----------------------------------------------------------------------===//
-//
-class GenericUnaryInst : public UnaryOperator {
-public:
-  GenericUnaryInst(UnaryOps Opcode, Value *S1, const std::string &Name = "")
-    : UnaryOperator(S1, Opcode, Name) {
-  }
-};
-
-//===----------------------------------------------------------------------===//
 //                 Classes to represent Binary operators
 //===----------------------------------------------------------------------===//
 //

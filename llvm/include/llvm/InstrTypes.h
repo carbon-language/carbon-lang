@@ -54,45 +54,6 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-//                            UnaryOperator Class
-//===----------------------------------------------------------------------===//
-
-class UnaryOperator : public Instruction {
-protected:
-  UnaryOperator(Value *S, UnaryOps iType, const std::string &Name = "")
-      : Instruction(S->getType(), iType, Name) {
-    Operands.reserve(1);
-    Operands.push_back(Use(S, this));
-  }
-public:
-
-  // create() - Construct a unary instruction, given the opcode
-  // and its operand.
-  //
-  static UnaryOperator *create(UnaryOps Op, Value *Source,
-                               const std::string &Name = "");
-
-  inline UnaryOps getOpcode() const { 
-    return (UnaryOps)Instruction::getOpcode();
-  }
-
-  virtual Instruction *clone() const { 
-    return create(getOpcode(), Operands[0]);
-  }
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const UnaryOperator *) { return true; }
-  static inline bool classof(const Instruction *I) {
-    return I->getOpcode() >= FirstUnaryOp && I->getOpcode() < NumUnaryOps; 
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-};
-
-
-
-//===----------------------------------------------------------------------===//
 //                           BinaryOperator Class
 //===----------------------------------------------------------------------===//
 

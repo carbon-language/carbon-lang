@@ -1,28 +1,12 @@
-//===-- iOperators.cpp - Implement the Binary & Unary Operators --*- C++ -*--=//
+//===-- iOperators.cpp - Implement binary Operators ------------*- C++ -*--===//
 //
-// This file implements the nontrivial binary & unary operator instructions.
+// This file implements the nontrivial binary operator instructions.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/iOperators.h"
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
-using std::cerr;
-
-//===----------------------------------------------------------------------===//
-//                              UnaryOperator Class
-//===----------------------------------------------------------------------===//
-
-UnaryOperator *UnaryOperator::create(UnaryOps Op, Value *Source,
-                                     const std::string &Name) {
-  switch (Op) {
-  case Not:  return new GenericUnaryInst(Op, Source, Name);
-  default:
-    cerr << "Don't know how to Create UnaryOperator " << Op << "\n";
-    return 0;
-  }
-}
-
 
 //===----------------------------------------------------------------------===//
 //                             BinaryOperator Class
