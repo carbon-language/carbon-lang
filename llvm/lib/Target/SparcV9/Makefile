@@ -23,7 +23,7 @@ endif
 SparcV9.burg.in1 : $(SourceDir)/SparcV9.burg.in
 	$(CXX) -E -I$(LLVM_SRC_ROOT)/include $(DEBUG_FLAG) -x c++ $< | $(SED) '/^#/d' | $(SED) 's/Ydefine/#define/' > $@
 
-SparcV9.burm : SparcV9.burg.in1
+SparcV9.burm : SparcV9.burg.in1 $(LLVM_SRC_ROOT)/include/llvm/Instruction.def
 	$(CXX) -E -I$(LLVM_SRC_ROOT)/include $(DEBUG_FLAG) -x c++ $< | $(SED) '/^#/d' | $(SED) 's/^Xinclude/#include/' | $(SED) 's/^Xdefine/#define/' > $@
 
 SparcV9.burm.cpp: SparcV9.burm
