@@ -30,15 +30,15 @@ namespace llvm {
 using namespace sys;
 
 // This function just uses the PATH environment variable to find the program.
-Program
+Path
 Program::FindProgramByName(const std::string& progName) {
 
   // Check some degenerate cases
   if (progName.length() == 0) // no program
-    return Program();
-  Program temp;
+    return Path();
+  Path temp;
   if (!temp.set_file(progName)) // invalid name
-    return Program();
+    return Path();
   if (temp.executable()) // already executable as is
     return temp;
 
@@ -47,7 +47,7 @@ Program::FindProgramByName(const std::string& progName) {
   // Get the path. If its empty, we can't do anything to find it.
   const char *PathStr = getenv("PATH");
   if (PathStr == 0) 
-    return Program();
+    return Path();
 
   // Now we have a colon separated list of directories to search; try them.
   unsigned PathLen = strlen(PathStr);
@@ -56,7 +56,7 @@ Program::FindProgramByName(const std::string& progName) {
     const char *Colon = std::find(PathStr, PathStr+PathLen, ':');
 
     // Check to see if this first directory contains the executable...
-    Program FilePath;
+    Path FilePath;
     if (FilePath.set_directory(std::string(PathStr,Colon))) {
       FilePath.append_file(progName);
       if (FilePath.executable())
@@ -73,21 +73,22 @@ Program::FindProgramByName(const std::string& progName) {
       PathLen--;
     }
   }
-  return Program();
+  return Path();
 }
 
 //
 int 
-Program::ExecuteAndWait(const std::vector<std::string>& args) const {
-  if (!executable())
-    throw get() + " is not executable"; 
+Program::ExecuteAndWait(const Path& path, 
+                        const std::vector<std::string>& args) {
+  if (!path.executable())
+    throw path.get() + " is not executable"; 
 
 #ifdef HAVE_SYS_WAIT_H
   // Create local versions of the parameters that can be passed into execve()
   // without creating const problems.
   const char* argv[ args.size() + 2 ];
   unsigned index = 0;
-  std::string progname(this->getLast());
+  std::string progname(path.getLast());
   argv[index++] = progname.c_str();
   for (unsigned i = 0; i < args.size(); i++)
     argv[index++] = args[i].c_str();
@@ -97,12 +98,12 @@ Program::ExecuteAndWait(const std::vector<std::string>& args) const {
   switch (fork()) {
     // An error occured:  Return to the caller.
     case -1:
-      ThrowErrno(std::string("Couldn't execute program '") + get() + "'");
+      ThrowErrno(std::string("Couldn't execute program '") + path.get() + "'");
       break;
 
     // Child process: Execute the program.
     case 0:
-      execve (get().c_str(), (char** const)argv, environ);
+      execve (path.c_str(), (char** const)argv, environ);
       // If the execve() failed, we should exit and let the parent pick up
       // our non-zero exit status.
       exit (errno);
@@ -115,13 +116,13 @@ Program::ExecuteAndWait(const std::vector<std::string>& args) const {
   // Parent process: Wait for the child process to terminate.
   int status;
   if ((::wait (&status)) == -1)
-    ThrowErrno(std::string("Failed waiting for program '") + get() + "'");
+    ThrowErrno(std::string("Failed waiting for program '") + path.get() + "'");
 
   // If the program exited normally with a zero exit status, return success!
   if (WIFEXITED (status))
     return WEXITSTATUS(status);
   else if (WIFSIGNALED(status))
-    throw std::string("Program '") + get() + "' received terminating signal.";
+    throw std::string("Program '") + path.get() + "' received terminating signal.";
   else
     return 0;
     
