@@ -41,7 +41,6 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
-
 static cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
 MArch("march", cl::desc("Architecture to generate assembly for:"));
                
@@ -97,7 +96,6 @@ int main(int argc, char **argv) {
 
   // Build up all of the passes that we want to do to the module...
   PassManager Passes;
-
   Passes.add(new TargetData("llc", TD.isLittleEndian(), TD.getPointerSize(),
                             TD.getPointerAlignment(), TD.getDoubleAlignment()));
 
@@ -107,11 +105,11 @@ int main(int argc, char **argv) {
     if (OutputFilename != "-") {
       // Specified an output filename?
       if (!Force && std::ifstream(OutputFilename.c_str())) {
-	// If force is not specified, make sure not to overwrite a file!
-	std::cerr << argv[0] << ": error opening '" << OutputFilename
-		  << "': file exists!\n"
-		  << "Use -f command line argument to force output\n";
-	return 1;
+        // If force is not specified, make sure not to overwrite a file!
+        std::cerr << argv[0] << ": error opening '" << OutputFilename
+                  << "': file exists!\n"
+                  << "Use -f command line argument to force output\n";
+        return 1;
       }
       Out = new std::ofstream(OutputFilename.c_str());
 
