@@ -253,7 +253,7 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
       if (targetReg.isVirtualRegister()) {
         physReg = getFreeReg(virtualReg);
       } else {
-        physReg = targetReg.getAllocatedRegNum();
+        physReg = virtualReg;
       }
 
       // Find the register class of the target register: should be the
@@ -293,29 +293,25 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
         ++opI; 
 
 
-        // insert the move just before the return/branch
-        if (MII.isReturn(opMI->getOpcode()) || MII.isBranch(opMI->getOpcode()))
+        // Retrieve the constant value from this op, move it to target
+        // register of the phi
+        if (opVal.getType() == MachineOperand::MO_SignExtendedImmed ||
+            opVal.getType() == MachineOperand::MO_UnextendedImmed)
         {
-          // Retrieve the constant value from this op, move it to target
-          // register of the phi
-          if (opVal.getType() == MachineOperand::MO_SignExtendedImmed ||
-              opVal.getType() == MachineOperand::MO_UnextendedImmed)
-          {
-            opI = RegInfo->moveImm2Reg(opBlock, opI, physReg,
-                                       (unsigned) opVal.getImmedValue(),
-                                       dataSize);
-            saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
-          } else {
-            // Allocate a physical register and add a move in the BB
-            unsigned opVirtualReg = (unsigned) opVal.getAllocatedRegNum();
-            unsigned opPhysReg; // = getFreeReg(opVirtualReg);
-            opI = moveUseToReg(opBlock, opI, opVirtualReg, opPhysReg);
-            opI = RegInfo->moveReg2Reg(opBlock, opI, physReg, opPhysReg,
-                                       dataSize);
-            // Save that register value to the stack of the TARGET REG
-            saveVirtRegToStack(opBlock, opI, virtualReg, opPhysReg);
-          }
-        } 
+          opI = RegInfo->moveImm2Reg(opBlock, opI, physReg,
+                                     (unsigned) opVal.getImmedValue(),
+                                     dataSize);
+          saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
+        } else {
+          // Allocate a physical register and add a move in the BB
+          unsigned opVirtualReg = (unsigned) opVal.getAllocatedRegNum();
+          unsigned opPhysReg; // = getFreeReg(opVirtualReg);
+          opI = moveUseToReg(opBlock, opI, opVirtualReg, physReg);
+          //opI = RegInfo->moveReg2Reg(opBlock, opI, physReg, opPhysReg,
+          //                           dataSize);
+          // Save that register value to the stack of the TARGET REG
+          saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
+        }
 
         // make regs available to other instructions
         clearAllRegs();
