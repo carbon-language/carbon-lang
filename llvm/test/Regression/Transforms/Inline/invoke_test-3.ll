@@ -14,10 +14,11 @@ cont:
 	ret int 0
 exc:	; This just rethrows the exception!
 	call void %llvm.exc.rethrow()
-	ret int 0
+	ret int 123  ; DEAD!
 }
 
-; caller returns true if might_throw throws an exception...
+; caller returns true if might_throw throws an exception... which gets 
+; propagated by callee.
 int %caller() {
 	%X = invoke int %callee() to label %cont 
 		except label %Handler
@@ -25,5 +26,5 @@ cont:
 	ret int %X
 Handler:
 	; This consumes an exception thrown by might_throw
-	ret int -1
+	ret int 1
 }

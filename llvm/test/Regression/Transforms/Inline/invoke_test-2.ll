@@ -16,7 +16,7 @@ exc:
 	ret int 1
 }
 
-; caller returns true if might_throw throws an exception...
+; caller returns true if might_throw throws an exception... callee cannot throw.
 int %caller() {
 	%X = invoke int %callee() to label %cont 
 		except label %UnreachableExceptionHandler
