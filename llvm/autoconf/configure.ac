@@ -103,6 +103,9 @@ case $build in
 	           AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/sparc/llvm-gcc/])
 			 fi
 	         ;;
+	*-*-cygwin*)
+             AC_SUBST(OS,[Cygwin])
+	         ;;
 
 	*-*-darwin*)
              AC_SUBST(OS,[Darwin])

@@ -1869,6 +1869,10 @@ case $build in
              OS=Darwin
 
 	         ;;
+	*-*-cygwin*)
+             OS=Cygwin
+
+	         ;;
 
 	*)       OS=Unknown
 
