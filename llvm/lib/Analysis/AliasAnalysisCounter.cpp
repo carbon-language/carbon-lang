@@ -10,10 +10,31 @@
 #include <iostream>
 
 namespace {
-  unsigned No = 0, May = 0, Must = 0;
+  class AliasAnalysisCounter : public Pass, public AliasAnalysis {
+    unsigned No, May, Must;
+    const char *Name;
+  public:
+    AliasAnalysisCounter() : No(0), May(0), Must(0) {}
+    ~AliasAnalysisCounter() {
+      unsigned Sum = No+May+Must;
+      if (Sum) {            // Print a report if any counted queries occurred...
+        std::cerr
+          << "\n===== Alias Analysis Counter Report =====\n"
+          << "  Analysis counted: " << Name << "\n"
+          << "  " << Sum << " Total Alias Queries Performed\n"
+          << "  " << No << " no alias responses (" << No*100/Sum << "%)\n"
+          << "  " << May << " may alias responses (" << May*100/Sum << "%)\n"
+          << "  " << Must << " must alias responses (" <<Must*100/Sum<<"%)\n"
+          << "  Alias Analysis Counter Summary: " << No*100/Sum << "%/"
+          << May*100/Sum << "%/" << Must*100/Sum<<"%\n\n";
+      }
+    }
 
-  struct AliasAnalysisCounter : public Pass, public AliasAnalysis {
-    bool run(Module &M) { return false; }
+    bool run(Module &M) {
+      Name = dynamic_cast<Pass*>(&getAnalysis<AliasAnalysis>())->getPassName();
+      return false;
+    }
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<AliasAnalysis>();
       AU.setPreservesAll();
@@ -44,21 +65,4 @@ namespace {
   RegisterOpt<AliasAnalysisCounter>
   X("count-aa", "Count Alias Analysis Query Responses");
   RegisterAnalysisGroup<AliasAnalysis, AliasAnalysisCounter> Y;
-
-
-  struct ResultPrinter {
-    ~ResultPrinter() {
-      unsigned Sum = No+May+Must;
-      if (Sum) {            // Print a report if any counted queries occurred...
-        std::cerr
-          << "\n===== Alias Analysis Counter Report =====\n"
-          << "  " << Sum << " Total Alias Queries Performed\n"
-          << "  " << No << " no alias responses (" << No*100/Sum << "%)\n"
-          << "  " << May << " may alias responses (" << May*100/Sum << "%)\n"
-          << "  " << Must << " must alias responses (" <<Must*100/Sum<<"%)\n"
-          << "  Alias Analysis Counter Summary: " << No*100/Sum << "%/"
-          << May*100/Sum << "%/" << Must*100/Sum<<"%\n\n";
-      }
-    }
-  } RP;
 }
