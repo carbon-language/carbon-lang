@@ -70,21 +70,29 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
   const MRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
 
   // VRegPHIUseCount - Keep track of the number of times each virtual register
-  // is used by PHI nodes in this block.
+  // is used by PHI nodes in successors of this block.
   DenseMap<unsigned, VirtReg2IndexFunctor> VRegPHIUseCount;
   VRegPHIUseCount.grow(MF.getSSARegMap()->getLastVirtReg());
 
+  unsigned BBIsSuccOfPreds = 0;  // Number of times MBB is a succ of preds
+  for (MachineBasicBlock::pred_iterator PI = MBB.pred_begin(),
+         E = MBB.pred_end(); PI != E; ++PI)
+    for (MachineBasicBlock::succ_iterator SI = (*PI)->succ_begin(),
+           E = (*PI)->succ_end(); SI != E; ++SI) {
+    BBIsSuccOfPreds += *SI == &MBB;
+    for (MachineBasicBlock::iterator BBI = (*SI)->begin(); BBI !=(*SI)->end() &&
+           BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI)
+      for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
+        VRegPHIUseCount[BBI->getOperand(i).getReg()]++;
+  }
+
   // Get an iterator to the first instruction after the last PHI node (this may
-  // allso be the end of the basic block).  While we are scanning the PHIs,
+  // also be the end of the basic block).  While we are scanning the PHIs,
   // populate the VRegPHIUseCount map.
   MachineBasicBlock::iterator AfterPHIsIt = MBB.begin();
   while (AfterPHIsIt != MBB.end() &&
-         AfterPHIsIt->getOpcode() == TargetInstrInfo::PHI) {
-    MachineInstr *PHI = AfterPHIsIt;
-    for (unsigned i = 1, e = PHI->getNumOperands(); i < e; i += 2)
-      VRegPHIUseCount[PHI->getOperand(i).getReg()]++;
+         AfterPHIsIt->getOpcode() == TargetInstrInfo::PHI)
     ++AfterPHIsIt;    // Skip over all of the PHI nodes...
-  }
 
   while (MBB.front().getOpcode() == TargetInstrInfo::PHI) {
     // Unlink the PHI node from the basic block... but don't delete the PHI yet
@@ -148,7 +156,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
     // Adjust the VRegPHIUseCount map to account for the removal of this PHI
     // node.
     for (unsigned i = 1; i != MI->getNumOperands(); i += 2)
-      VRegPHIUseCount[MI->getOperand(i).getReg()]--;
+      VRegPHIUseCount[MI->getOperand(i).getReg()] -= BBIsSuccOfPreds;
 
     // Now loop over all of the incoming arguments, changing them to copy into
     // the IncomingReg register in the corresponding predecessor basic block.
@@ -215,10 +223,10 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
           bool ValueIsLive = false;
           for (MachineBasicBlock::succ_iterator SI = opBlock.succ_begin(),
                  E = opBlock.succ_end(); SI != E && !ValueIsLive; ++SI) {
-            MachineBasicBlock *MBB = *SI;
+            MachineBasicBlock *SuccMBB = *SI;
             
             // Is it alive in this successor?
-            unsigned SuccIdx = LV->getMachineBasicBlockIndex(MBB);
+            unsigned SuccIdx = LV->getMachineBasicBlockIndex(SuccMBB);
             if (SuccIdx < InRegVI.AliveBlocks.size() &&
                 InRegVI.AliveBlocks[SuccIdx]) {
               ValueIsLive = true;
@@ -227,7 +235,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
             
             // Is it killed in this successor?
             for (unsigned i = 0, e = InRegVI.Kills.size(); i != e; ++i)
-              if (InRegVI.Kills[i].first == MBB) {
+              if (InRegVI.Kills[i].first == SuccMBB) {
                 ValueIsLive = true;
                 break;
               }
