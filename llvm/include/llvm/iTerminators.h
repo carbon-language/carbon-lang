@@ -58,6 +58,9 @@ public:
     : TerminatorInst(Instruction::Ret, InsertAtEnd) {
     init(RetVal);
   }
+  ReturnInst(BasicBlock *InsertAtEnd)
+    : TerminatorInst(Instruction::Ret, InsertAtEnd) {
+  }
 
   virtual Instruction *clone() const { return new ReturnInst(*this); }
 
