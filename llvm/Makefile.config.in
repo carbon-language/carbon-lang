@@ -143,7 +143,6 @@ PAPIDIR := @PAPIDIR@
 # It essentially prints the commands that make is executing
 #
 #VERBOSE = 1
-@ENABLE_VERBOSE@
 
 # When ENABLE_PURIFY is set to 1, the LLVM tools are linked with purify (which
 # must be locally installed) to allow for some automated memory error debugging.
