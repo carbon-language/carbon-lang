@@ -294,8 +294,7 @@ CPPFLAGS += -D_GNU_SOURCE
 # Pull in limit macros from stdint.h, even in C++:
 CPPFLAGS += -D__STDC_LIMIT_MACROS
 
-CompileWarnings  := -Wall -W  -Wwrite-strings -Wno-unused
-CompileCommonOpts := $(CompileWarnings) -fshort-enums
+CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused
 CompileOptimizeOpts := -O3 -DNDEBUG -finline-functions
 
 #
@@ -720,11 +719,11 @@ $(BUILD_OBJ_DIR)/Debug/%.lo: %.c $(BUILD_OBJ_DIR)/Debug/.dir
 
 $(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.cpp $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LCC1XX)
 	@${ECHO} "Compiling `basename $<` to bytecode"
-	$(VERB) $(LLVMGXX) $(CompileWarnings) $(CPPFLAGS) -c $< -o $@
+	$(VERB) $(LLVMGXX) $(CompileCommonOpts) $(CPPFLAGS) -c $< -o $@
 
 $(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.c $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LCC1)
 	@${ECHO} "Compiling `basename $<` to bytecode"
-	$(VERB) $(LLVMGCC) $(CompileWarnings) $(CPPFLAGS) -c $< -o $@
+	$(VERB) $(LLVMGCC) $(CompileCommonOpts) $(CPPFLAGS) -c $< -o $@
 
 $(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.ll $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LLVMAS)
 	@${ECHO} "Compiling `basename $<` to bytecode"
