@@ -1,0 +1,54 @@
+; New testcase, this contains a bunch of simple instructions that should be 
+; handled by a code generator.
+
+; RUN: llvm-as < %S | llc
+
+int %add(int %A, int %B) {
+	%R = add int %A, %B
+	ret int %R
+}
+
+int %sub(int %A, int %B) {
+	%R = sub int %A, %B
+	ret int %R
+}
+
+int %mul(int %A, int %B) {
+	%R = mul int %A, %B
+	ret int %R
+}
+
+int %sdiv(int %A, int %B) {
+	%R = div int %A, %B
+	ret int %R
+}
+
+uint %udiv(uint %A, uint %B) {
+	%R = div uint %A, %B
+	ret uint %R
+}
+
+int %srem(int %A, int %B) {
+	%R = rem int %A, %B
+	ret int %R
+}
+
+uint %urem(uint %A, uint %B) {
+	%R = rem uint %A, %B
+	ret uint %R
+}
+
+int %and(int %A, int %B) {
+	%R = and int %A, %B
+	ret int %R
+}
+
+int %or(int %A, int %B) {
+	%R = or int %A, %B
+	ret int %R
+}
+
+int %xor(int %A, int %B) {
+	%R = xor int %A, %B
+	ret int %R
+}
