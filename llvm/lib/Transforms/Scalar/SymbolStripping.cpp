@@ -26,11 +26,15 @@ static bool StripSymbolTable(SymbolTable *SymTab) {
   for (SymbolTable::iterator I = SymTab->begin(); I != SymTab->end(); ++I) {
     map<const string, Value *> &Plane = I->second;
     
-    map<const string, Value *>::iterator B;
+    SymbolTable::type_iterator B;
     while ((B = Plane.begin()) != Plane.end()) {   // Found nonempty type plane!
-      B->second->setName("");     // Set name to "", removing from symbol table!
+      Value *V = B->second;
+      if (V->isConstant() || V->isType())
+	SymTab->type_remove(B);
+      else 
+	V->setName("", SymTab);   // Set name to "", removing from symbol table!
       RemovedSymbol = true;
-      assert(Plane.begin() != B);
+      assert(Plane.begin() != B && "Symbol not removed from table!");
     }
   }
  
