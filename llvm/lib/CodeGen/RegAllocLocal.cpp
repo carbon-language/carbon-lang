@@ -487,13 +487,12 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
     assignVirtToPhysReg(VirtReg, PhysReg);
   } else {         // No registers available.
     // If we can fold this spill into this instruction, do so now.
-    MachineBasicBlock::iterator MII = MI;
-    if (RegInfo->foldMemoryOperand(MII, OpNum, FrameIndex)) {
+    if (MachineInstr* FMI = RegInfo->foldMemoryOperand(MI, OpNum, FrameIndex)){
       ++NumFolded;
       // Since we changed the address of MI, make sure to update live variables
       // to know that the new instruction has the properties of the old one.
-      LV->instructionChanged(MI, MII);
-      return MII;
+      LV->instructionChanged(MI, FMI);
+      return MBB.insert(MBB.erase(MI), FMI);
     }
 
     // It looks like we can't fold this virtual register load into this

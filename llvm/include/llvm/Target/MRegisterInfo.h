@@ -253,15 +253,16 @@ public:
                            const TargetRegisterClass *RC) const = 0;
 
 
-  /// foldMemoryOperand - If this target supports it, fold a load or store of
-  /// the specified stack slot into the specified machine instruction for the
-  /// specified operand.  If this is possible, the target should perform the
-  /// folding and return true, otherwise it should return false.  If it folds
-  /// the instruction, it is likely that the MachineInstruction the iterator
-  /// references has been changed.
-  virtual bool foldMemoryOperand(MachineBasicBlock::iterator &MI,
-                                 unsigned OpNum, int FrameIndex) const {
-    return false;
+  /// foldMemoryOperand - Attempt to fold a load or store of the
+  /// specified stack slot into the specified machine instruction for
+  /// the specified operand.  If this is possible, a new instruction
+  /// is returned with the specified operand folded, otherwise NULL is
+  /// returned. The client is responsible for removing the old
+  /// instruction and adding the new one in the instruction stream
+  virtual MachineInstr* foldMemoryOperand(MachineBasicBlock::iterator MI,
+                                          unsigned OpNum,
+                                          int FrameIndex) const {
+    return NULL;
   }
 
   /// getCallFrameSetup/DestroyOpcode - These methods return the opcode of the

@@ -48,8 +48,9 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
   /// folding and return true, otherwise it should return false.  If it folds
   /// the instruction, it is likely that the MachineInstruction the iterator
   /// references has been changed.
-  virtual bool foldMemoryOperand(MachineBasicBlock::iterator &MI,unsigned OpNum,
-                                 int FrameIndex) const;
+  virtual MachineInstr* foldMemoryOperand(MachineBasicBlock::iterator MI,
+                                          unsigned OpNum,
+                                          int FrameIndex) const;
 
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,

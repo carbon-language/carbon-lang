@@ -209,13 +209,15 @@ void LiveIntervals::updateSpilledInterval(Interval& li,
             for (unsigned i = 0; i < mi->getNumOperands(); ++i) {
                 MachineOperand& mop = mi->getOperand(i);
                 if (mop.isRegister() && mop.getReg() == li.reg) {
-                    MachineInstr* old = mi;
-                    if (mri_->foldMemoryOperand(mi, i, slot)) {
-                        lv_->instructionChanged(old, mi);
-                        vrm.virtFolded(li.reg, old, mi);
-                        mi2iMap_.erase(old);
-                        i2miMap_[index/InstrSlots::NUM] = mi;
-                        mi2iMap_[mi] = index;
+                    if (MachineInstr* fmi =
+                        mri_->foldMemoryOperand(mi, i, slot)) {
+                        lv_->instructionChanged(mi, fmi);
+                        vrm.virtFolded(li.reg, mi, fmi);
+                        mi2iMap_.erase(mi);
+                        i2miMap_[index/InstrSlots::NUM] = fmi;
+                        mi2iMap_[fmi] = index;
+                        MachineBasicBlock& mbb = *mi->getParent();
+                        mi = mbb.insert(mbb.erase(mi), fmi);
                         ++numFolded;
                         goto for_operand;
                     }
