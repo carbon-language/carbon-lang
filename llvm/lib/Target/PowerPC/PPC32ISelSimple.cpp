@@ -32,7 +32,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumHiAndLo("ppc-codegen", "Number of 32b imms not loaded");
+  Statistic<> Bitfields("ppc-codegen", "Number of bitfield inserts");
 
   /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
   /// PPC Representation.
@@ -100,6 +100,18 @@ namespace {
         base(b), index(i), offset(o) {}
     };
 
+    /// RlwimiRec - This struct is for recording the necessary information to
+    /// emit a PowerPC rlwimi instruction for a bitfield insert rather than
+    /// a sequence of shifts and ands, followed by an or.
+    struct RlwimiRec {
+      unsigned Shift;
+      unsigned MB, ME;
+      Value *Op0, *Op1;
+      RlwimiRec() : Shift(0), MB(0), ME(0), Op0(0), Op1(0) {}
+      RlwimiRec(unsigned s, unsigned b, unsigned e, Value *y, Value *z) :
+        Shift(s), MB(b), ME(e), Op0(y), Op1(z) {}
+    };
+
     // External functions used in the Module
     Function *fmodfFn, *fmodFn, *__cmpdi2Fn, *__moddi3Fn, *__divdi3Fn, 
       *__umoddi3Fn,  *__udivdi3Fn, *__fixsfdiFn, *__fixdfdiFn, *__fixunssfdiFn,
@@ -117,6 +129,11 @@ namespace {
 
     // GEPMap - Mapping between basic blocks and GEP definitions
     std::map<GetElementPtrInst*, FoldedGEP> GEPMap;
+    
+    // RlwimiMap  - Mapping between BinaryOperand (Or) instructions and info
+    // needed to properly emit a rlwimi instruction in its place.
+    std::map<BinaryOperator *, RlwimiRec> RlwimiMap;
+    std::vector<Instruction *> SkipList;
 
     // A Reg to hold the base address used for global loads and stores, and a
     // flag to set whether or not we need to emit it for this function.
@@ -199,6 +216,8 @@ namespace {
       RegMap.clear();
       MBBMap.clear();
       AllocaMap.clear();
+      RlwimiMap.clear();
+      SkipList.clear();
       F = 0;
       // We always build a machine code representation for the function
       return true;
@@ -319,6 +338,12 @@ namespace {
                            Value *Src, const Type *DestTy, unsigned TargetReg);
 
 
+    /// emitBitfieldInsert - return true if we were able to fold the sequence of
+    /// instructions starting with AndI into a bitfield insert.
+    bool PPC32ISel::emitBitfieldInsert(BinaryOperator *AndI, 
+                                       unsigned ShlAmount,
+                                       Value *InsertOp);
+
     /// emitBinaryConstOperation - Used by several functions to emit simple
     /// arithmetic and logical operations with constants on a register rather
     /// than a Value.
@@ -334,6 +359,7 @@ namespace {
     ///
     void emitSimpleBinaryOperation(MachineBasicBlock *BB,
                                    MachineBasicBlock::iterator IP,
+                                   BinaryOperator *BO,
                                    Value *Op0, Value *Op1,
                                    unsigned OperatorClass, unsigned TargetReg);
 
@@ -2000,7 +2026,18 @@ void PPC32ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
   Value *Op0 = B.getOperand(0), *Op1 = B.getOperand(1);
   unsigned Class = getClassB(B.getType());
 
-  emitSimpleBinaryOperation(BB, MI, Op0, Op1, OperatorClass, DestReg);
+  if (std::find(SkipList.begin(), SkipList.end(), &B) != SkipList.end())
+    return;
+  
+  RlwimiRec r = RlwimiMap[&B];
+  if (0 != r.Op0) {
+    unsigned Op0Reg = getReg(r.Op0, BB, MI);
+    unsigned Op1Reg = getReg(r.Op1, BB, MI);
+    BuildMI(*BB, MI, PPC::RLWIMI, 5, DestReg).addReg(Op1Reg)
+            .addReg(Op0Reg).addImm(r.Shift).addImm(r.MB).addImm(r.ME);
+  } else {
+    emitSimpleBinaryOperation(BB, MI, &B, Op0, Op1, OperatorClass, DestReg);
+  }
 }
 
 /// emitBinaryFPOperation - This method handles emission of floating point
@@ -2097,6 +2134,56 @@ static bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
   return false;
 }
 
+/// emitBitfieldInsert - return true if we were able to fold the sequence of
+/// instructions starting with AndI into a bitfield insert.
+bool PPC32ISel::emitBitfieldInsert(BinaryOperator *AndI, unsigned ShlAmount, 
+                                   Value *InsertOp) {
+  if (AndI->hasOneUse()) {
+    ConstantInt *CI_1 = dyn_cast<ConstantInt>(AndI->getOperand(1));
+    BinaryOperator *OrI = dyn_cast<BinaryOperator>(*(AndI->use_begin()));
+    if (CI_1 && OrI && OrI->getOpcode() == Instruction::Or) {
+      Value *Op0 = OrI->getOperand(0);
+      Value *Op1 = OrI->getOperand(1);
+      BinaryOperator *AndI_2;
+      // Whichever operand our initial And instruction is to the Or instruction,
+      // Look at the other operand to determine if it is also an And instruction
+      if (AndI == Op0) { 
+        AndI_2 = dyn_cast<BinaryOperator>(Op1);
+      }  else if (AndI == Op1) {
+        AndI_2 = dyn_cast<BinaryOperator>(Op0);
+        std::swap(Op0, Op1);
+      } else {
+        assert(0 && "And instruction not used in Or!");
+      }
+      // Verify that the second operand to the Or is an And with one use
+      if (AndI_2 && AndI_2->hasOneUse() 
+                 && AndI_2->getOpcode() == Instruction::And) {
+        // Check to see if this And instruction also has a constant int operand.
+        // If it does, then we can replace this sequence of instructions with an
+        // insert if the sum of the two ConstantInts has all bits set, and
+        // one is a run of ones (which implies the other is as well).
+        ConstantInt *CI_2 = dyn_cast<ConstantInt>(AndI_2->getOperand(1));
+        if (CI_2) { 
+          unsigned Imm1 = CI_1->getRawValue();
+          unsigned Imm2 = CI_2->getRawValue();
+          if (Imm1 + Imm2 == 0xFFFFFFFF) {
+            unsigned MB, ME;
+            if (isRunOfOnes(Imm1, MB, ME)) {
+              ++Bitfields;
+              SkipList.push_back(AndI);
+              SkipList.push_back(AndI_2);
+              RlwimiMap[OrI] = RlwimiRec(ShlAmount, MB, ME, 
+                InsertOp, AndI_2->getOperand(0));
+              return true;
+            }
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+
 /// emitBinaryConstOperation - Implement simple binary operators for integral
 /// types with a constant operand.  Opcode is one of: 0 for Add, 1 for Sub, 
 /// 2 for And, 3 for Or, 4 for Xor, and 5 for Subtract-From.
@@ -2164,7 +2251,6 @@ void PPC32ISel::emitBinaryConstOperation(MachineBasicBlock *MBB,
         .addZImm(Op1->getRawValue() >> 16);
   } else if ((Opcode < 2 && WontSignExtend) || Opcode == 3 || Opcode == 4) {
     unsigned TmpReg = makeAnotherReg(Op1->getType());
-    ++NumHiAndLo;
     if (Opcode < 2) {
       BuildMI(*MBB, IP, ImmOpTab[1][Opcode], 2, TmpReg).addReg(Op0Reg)
         .addSImm(Op1->getRawValue() >> 16);
@@ -2188,6 +2274,7 @@ void PPC32ISel::emitBinaryConstOperation(MachineBasicBlock *MBB,
 ///
 void PPC32ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
                                           MachineBasicBlock::iterator IP,
+                                          BinaryOperator *BO, 
                                           Value *Op0, Value *Op1,
                                           unsigned OperatorClass, 
                                           unsigned DestReg) {
@@ -2235,6 +2322,9 @@ void PPC32ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   // Special case: op Reg, <const int>
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1))
     if (Class != cLong) {
+      if (OperatorClass == 2 && emitBitfieldInsert(BO, 0, Op0))
+        return;
+
       unsigned Op0r = getReg(Op0, MBB, IP);
       emitBinaryConstOperation(MBB, IP, Op0r, CI, OperatorClass, DestReg);
       return;
@@ -2543,12 +2633,12 @@ void PPC32ISel::emitShiftOperation(MachineBasicBlock *MBB,
                                    Value *Op, Value *ShiftAmount, 
                                    bool isLeftShift, const Type *ResultTy, 
                                    unsigned DestReg) {
-  unsigned SrcReg = getReg (Op, MBB, IP);
   bool isSigned = ResultTy->isSigned ();
   unsigned Class = getClass (ResultTy);
   
   // Longs, as usual, are handled specially...
   if (Class == cLong) {
+    unsigned SrcReg = getReg (Op, MBB, IP);
     // If we have a constant shift, we can generate much more efficient code
     // than for a variable shift by using the rlwimi instruction.
     if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(ShiftAmount)) {
@@ -2685,7 +2775,22 @@ void PPC32ISel::emitShiftOperation(MachineBasicBlock *MBB,
     // The shift amount is constant, guaranteed to be a ubyte. Get its value.
     assert(CUI->getType() == Type::UByteTy && "Shift amount not a ubyte?");
     unsigned Amount = CUI->getValue();
-
+    
+    // If this is a left shift with one use, and that use is an And instruction,
+    // then attempt to emit a bitfield insert.
+    if (isLeftShift) {
+      User *U = Op->use_back();
+      if (U->hasOneUse()) {
+        Value *V = *(U->use_begin());
+        BinaryOperator *BO = dyn_cast<BinaryOperator>(V);
+        if (BO && BO->getOpcode() == Instruction::And) {
+          if (emitBitfieldInsert(BO, Amount, Op))
+            return;
+        }
+      }
+    }
+    
+    unsigned SrcReg = getReg (Op, MBB, IP);
     if (isLeftShift) {
       BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
         .addImm(Amount).addImm(0).addImm(31-Amount);
@@ -2698,6 +2803,7 @@ void PPC32ISel::emitShiftOperation(MachineBasicBlock *MBB,
       }
     }
   } else {                  // The shift amount is non-constant.
+    unsigned SrcReg = getReg (Op, MBB, IP);
     unsigned ShiftAmountReg = getReg (ShiftAmount, MBB, IP);
 
     if (isLeftShift) {
