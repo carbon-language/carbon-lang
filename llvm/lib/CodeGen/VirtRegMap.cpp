@@ -19,6 +19,7 @@
 #include "VirtRegMap.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "Support/Statistic.h"
@@ -47,6 +48,24 @@ int VirtRegMap::assignVirt2StackSlot(unsigned virtReg)
     v2ssMap_[virtReg] = frameIndex;
     ++numSpills;
     return frameIndex;
+}
+
+void VirtRegMap::virtFolded(unsigned virtReg,
+                            MachineInstr* oldMI,
+                            MachineInstr* newMI)
+{
+    // move previous memory references folded to new instruction
+    MI2VirtMap::iterator i, e;
+    std::vector<MI2VirtMap::mapped_type> regs;
+    for (tie(i, e) = mi2vMap_.equal_range(oldMI); i != e; ) {
+        regs.push_back(i->second);
+        mi2vMap_.erase(i++);
+    }
+    for (unsigned i = 0, e = regs.size(); i != e; ++i)
+        mi2vMap_.insert(std::make_pair(newMI, i));
+
+    // add new memory reference
+    mi2vMap_.insert(std::make_pair(newMI, virtReg));
 }
 
 std::ostream& llvm::operator<<(std::ostream& os, const VirtRegMap& vrm)
@@ -129,9 +148,9 @@ namespace {
                                          vrm_.getStackSlot(virtReg),
                                          mri_.getRegClass(physReg));
                 ++numStores;
-                DEBUG(std::cerr << "\t\tadded: ";
+                DEBUG(std::cerr << "added: ";
                       prior(nextLastRef)->print(std::cerr, tm_);
-                      std::cerr << "\t\tafter: ";
+                      std::cerr << "after: ";
                       lastDef->print(std::cerr, tm_));
                 lastDef_[virtReg] = 0;
             }
@@ -161,10 +180,8 @@ namespace {
                                               vrm_.getStackSlot(virtReg),
                                               mri_.getRegClass(physReg));
                     ++numLoads;
-                    DEBUG(std::cerr << "\t\tadded: ";
-                          prior(mii)->print(std::cerr,tm_);
-                          std::cerr << "\t\tbefore: ";
-                          mii->print(std::cerr, tm_));
+                    DEBUG(std::cerr << "added: ";
+                          prior(mii)->print(std::cerr,tm_));
                     lastDef_[virtReg] = mii;
                 }
             }
@@ -186,6 +203,16 @@ namespace {
         void eliminateVirtRegsInMbb(MachineBasicBlock& mbb) {
             for (MachineBasicBlock::iterator mii = mbb.begin(),
                      mie = mbb.end(); mii != mie; ++mii) {
+
+                // if we have references to memory operands make sure
+                // we clear all physical registers that may contain
+                // the value of the spilled virtual register
+                VirtRegMap::MI2VirtMap::const_iterator i, e;
+                for (tie(i, e) = vrm_.getFoldedVirts(mii); i != e; ++i) {
+                    unsigned physReg = vrm_.getPhys(i->second);
+                    if (physReg) vacateJustPhysReg(mbb, mii, physReg);
+                }
+
                 // rewrite all used operands
                 for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
                     MachineOperand& op = mii->getOperand(i);

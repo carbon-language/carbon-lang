@@ -385,7 +385,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     if (cur->weight <= minWeight) {
         DEBUG(std::cerr << "\t\t\tspilling(c): " << *cur << '\n';);
         int slot = vrm_->assignVirt2StackSlot(cur->reg);
-        li_->updateSpilledInterval(*cur, slot);
+        li_->updateSpilledInterval(*cur, *vrm_, slot);
 
         // if we didn't eliminate the interval find where to add it
         // back to unhandled. We need to scan since unhandled are
@@ -424,7 +424,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             DEBUG(std::cerr << "\t\t\tspilling(a): " << **i << '\n');
             earliestStart = std::min(earliestStart, (*i)->start());
             int slot = vrm_->assignVirt2StackSlot((*i)->reg);
-            li_->updateSpilledInterval(**i, slot);
+            li_->updateSpilledInterval(**i, *vrm_, slot);
         }
     }
     for (IntervalPtrs::iterator i = inactive_.begin();
@@ -436,7 +436,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             DEBUG(std::cerr << "\t\t\tspilling(i): " << **i << '\n');
             earliestStart = std::min(earliestStart, (*i)->start());
             int slot = vrm_->assignVirt2StackSlot((*i)->reg);
-            li_->updateSpilledInterval(**i, slot);
+            li_->updateSpilledInterval(**i, *vrm_, slot);
         }
     }
 

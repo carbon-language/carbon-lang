@@ -22,18 +22,23 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "Support/DenseMap.h"
 #include <climits>
+#include <map>
 
 namespace llvm {
+
+    class MachineInstr;
 
     class VirtRegMap {
     public:
         typedef DenseMap<unsigned, VirtReg2IndexFunctor> Virt2PhysMap;
         typedef DenseMap<int, VirtReg2IndexFunctor> Virt2StackSlotMap;
+        typedef std::multimap<MachineInstr*, unsigned> MI2VirtMap;
 
     private:
         MachineFunction* mf_;
         Virt2PhysMap v2pMap_;
         Virt2StackSlotMap v2ssMap_;
+        MI2VirtMap mi2vMap_;
 
         // do not implement
         VirtRegMap(const VirtRegMap& rhs);
@@ -88,6 +93,15 @@ namespace llvm {
         }
 
         int assignVirt2StackSlot(unsigned virtReg);
+
+        void virtFolded(unsigned virtReg,
+                        MachineInstr* oldMI,
+                        MachineInstr* newMI);
+
+        std::pair<MI2VirtMap::const_iterator, MI2VirtMap::const_iterator>
+        getFoldedVirts(MachineInstr* MI) const {
+            return mi2vMap_.equal_range(MI);
+        }
 
         friend std::ostream& operator<<(std::ostream& os, const VirtRegMap& li);
     };

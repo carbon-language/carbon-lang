@@ -31,6 +31,7 @@
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
+#include "VirtRegMap.h"
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -184,7 +185,9 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     return true;
 }
 
-void LiveIntervals::updateSpilledInterval(Interval& li, int slot)
+void LiveIntervals::updateSpilledInterval(Interval& li,
+                                          VirtRegMap& vrm,
+                                          int slot)
 {
     assert(li.weight != std::numeric_limits<float>::infinity() &&
            "attempt to spill already spilled interval!");
@@ -202,27 +205,40 @@ void LiveIntervals::updateSpilledInterval(Interval& li, int slot)
             while (!getInstructionFromIndex(index)) index += InstrSlots::NUM;
             MachineBasicBlock::iterator mi = getInstructionFromIndex(index);
 
+        for_operand:
             for (unsigned i = 0; i < mi->getNumOperands(); ++i) {
                 MachineOperand& mop = mi->getOperand(i);
                 if (mop.isRegister() && mop.getReg() == li.reg) {
-                    // This is tricky. We need to add information in
-                    // the interval about the spill code so we have to
-                    // use our extra load/store slots.
-                    //
-                    // If we have a use we are going to have a load so
-                    // we start the interval from the load slot
-                    // onwards. Otherwise we start from the def slot.
-                    unsigned start = (mop.isUse() ?
-                                      getLoadIndex(index) :
-                                      getDefIndex(index));
-                    // If we have a def we are going to have a store
-                    // right after it so we end the interval after the
-                    // use of the next instruction. Otherwise we end
-                    // after the use of this instruction.
-                    unsigned end = 1 + (mop.isDef() ?
-                                        getUseIndex(index+InstrSlots::NUM) :
-                                        getUseIndex(index));
-                    li.addRange(start, end);
+                    MachineInstr* old = mi;
+                    if (mri_->foldMemoryOperand(mi, i, slot)) {
+                        lv_->instructionChanged(old, mi);
+                        vrm.virtFolded(li.reg, old, mi);
+                        mi2iMap_.erase(old);
+                        i2miMap_[index/InstrSlots::NUM] = mi;
+                        mi2iMap_[mi] = index;
+                        ++numFolded;
+                        goto for_operand;
+                    }
+                    else {
+                        // This is tricky. We need to add information in
+                        // the interval about the spill code so we have to
+                        // use our extra load/store slots.
+                        //
+                        // If we have a use we are going to have a load so
+                        // we start the interval from the load slot
+                        // onwards. Otherwise we start from the def slot.
+                        unsigned start = (mop.isUse() ?
+                                          getLoadIndex(index) :
+                                          getDefIndex(index));
+                        // If we have a def we are going to have a store
+                        // right after it so we end the interval after the
+                        // use of the next instruction. Otherwise we end
+                        // after the use of this instruction.
+                        unsigned end = 1 + (mop.isDef() ?
+                                            getUseIndex(index+InstrSlots::NUM) :
+                                            getUseIndex(index));
+                        li.addRange(start, end);
+                    }
                 }
             }
         }

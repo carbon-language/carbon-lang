@@ -28,6 +28,7 @@ namespace llvm {
 
     class LiveVariables;
     class MRegisterInfo;
+    class VirtRegMap;
 
     class LiveIntervals : public MachineFunctionPass
     {
@@ -164,7 +165,7 @@ namespace llvm {
 
         Intervals& getIntervals() { return intervals_; }
 
-        void updateSpilledInterval(Interval& i, int slot);
+        void updateSpilledInterval(Interval& i, VirtRegMap& vrm, int slot);
 
     private:
         /// computeIntervals - compute live intervals
