@@ -435,7 +435,9 @@ void CWriter::printConstant(Constant *CPV) {
 
   case Type::PointerTyID:
     if (isa<ConstantPointerNull>(CPV)) {
-      Out << "(NULL)";
+      Out << "((";
+      printType(Out, CPV->getType());
+      Out << ")/*NULL*/0)";
       break;
     } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CPV)) {
       writeOperand(CPR->getValue());
@@ -545,9 +547,8 @@ void CWriter::printModule(Module *M) {
   Out << "#include <stdarg.h>\n";
   Out << "#include <setjmp.h>\n";
   
-  // Provide a definition for null if one does not already exist,
-  // and for `bool' if not compiling with a C++ compiler.
-  Out << "#ifndef NULL\n#define NULL 0\n#endif\n\n"
+  // Provide a definition for `bool' if not compiling with a C++ compiler.
+  Out << "\n"
       << "#ifndef __cplusplus\ntypedef unsigned char bool;\n#endif\n"
     
       << "\n\n/* Support for floating point constants */\n"
