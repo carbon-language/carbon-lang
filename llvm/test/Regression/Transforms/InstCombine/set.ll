@@ -86,3 +86,16 @@ bool %test15(sbyte %A, short %A, int %A, long %A) {
 	%D = or bool %C1, %C2
 	ret bool %D
 }
+
+bool %test16(uint %A) {
+	%B = and uint %A, 5
+	%C = seteq uint %B, 8    ; Is never true
+	ret bool %C
+}
+
+bool %test17(ubyte %A) {
+	%B = or ubyte %A, 1
+	%C = seteq ubyte %B, 2   ; Always false
+	ret bool %C
+}
+
