@@ -165,12 +165,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 	  if (MO.isVirtualRegister() && !MO.getVRegValueOrNull()) {
 	    unsigned RegIdx = MO.getReg()-MRegisterInfo::FirstVirtualRegister;
 	    HandleVirtRegUse(getVarInfo(RegIdx), MBB, MI);
-	  } else if (MO.isPhysicalRegister() && MO.getReg() != 0
-		   /// FIXME: This is a gross hack, due to us not being able to
-		   /// say that some registers are defined on entry to the
-		   /// function.  5 = ESP
-&& MO.getReg() != 5
-) {
+	  } else if (MO.isPhysicalRegister() && MO.getReg() != 0) {
 	    HandlePhysRegUse(MO.getReg(), MI);
 	  }
 	}
@@ -193,12 +188,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 	    VRInfo.DefBlock = MBB;                           // Created here...
 	    VRInfo.DefInst = MI;
 	    VRInfo.Kills.push_back(std::make_pair(MBB, MI)); // Defaults to dead
-	  } else if (MO.isPhysicalRegister() && MO.getReg() != 0
-		   /// FIXME: This is a gross hack, due to us not being able to
-		   /// say that some registers are defined on entry to the
-		   /// function.  5 = ESP
-&& MO.getReg() != 5
-) {
+	  } else if (MO.isPhysicalRegister() && MO.getReg() != 0) {
 	    HandlePhysRegDef(MO.getReg(), MI);
 	  }
 	}
