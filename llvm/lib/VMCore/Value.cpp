@@ -18,8 +18,13 @@
 //                                Value Class
 //===----------------------------------------------------------------------===//
 
+static inline const Type *checkType(const Type *Ty) {
+  assert(Ty && "Value defined with a null type: Error!");
+  return Ty;
+}
+
 Value::Value(const Type *ty, ValueTy vty, const string &name = "")
-  : Name(name), Ty(ty, this) {
+  : Name(name), Ty(checkType(ty), this) {
   VTy = vty;
 }
 
