@@ -106,6 +106,10 @@ public:
 	   opType == MO_PCRelativeDisp);
     return value;
   }
+  inline Value*		getVRegValueOrNull() const {
+    return (opType == MO_VirtualRegister || opType == MO_CCRegister || 
+            opType == MO_PCRelativeDisp)? value : NULL;
+  }
   inline int            getMachineRegNum() const {
     assert(opType == MO_MachineRegister);
     return regNum;
@@ -356,6 +360,10 @@ public:
                                           bool isDef=false,
                                           bool isDefAndUse=false);
 
+  unsigned              substituteValue  (const Value* oldVal,
+                                          Value* newVal,
+                                          bool defsOnly = true);
+
   void                  setOperandHi32   (unsigned i);
   void                  setOperandLo32   (unsigned i);
   void                  setOperandHi64   (unsigned i);
@@ -390,17 +398,18 @@ public:
   public:
     typedef ValOpIterator<MITy, VTy> _Self;
     
-    inline VTy operator*() const { return MI->getOperand(i).getVRegValue(); }
-
-    const MachineOperand &getMachineOperand() const {
-      return MI->getOperand(i);
+    inline VTy operator*() const {
+      return MI->getOperand(i).getVRegValue();
     }
 
+    const MachineOperand &getMachineOperand() const { return MI->getOperand(i);}
+          MachineOperand &getMachineOperand()       { return MI->getOperand(i);}
+
     inline VTy operator->() const { return operator*(); }
-    
-    inline bool isDef() const { return MI->getOperand(i).opIsDef(); } 
-    inline bool isDefAndUse() const { return MI->getOperand(i).opIsDefAndUse(); } 
-    
+
+    inline bool isDef()       const { return MI->getOperand(i).opIsDef(); } 
+    inline bool isDefAndUse() const { return MI->getOperand(i).opIsDefAndUse();}
+
     inline _Self& operator++() { i++; skipToNextVal(); return *this; }
     inline _Self  operator++(int) { _Self tmp = *this; ++*this; return tmp; }
 
