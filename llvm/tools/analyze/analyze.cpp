@@ -38,20 +38,20 @@ static void PrintClassifiedExprs(Method *M) {
     cout << *I;
 
     if ((*I)->getType() == Type::VoidTy) continue;
-    ExprAnalysisResult R = ClassifyExpression(*I);
+    analysis::ExprType R = analysis::ClassifyExpression(*I);
     if (R.Var == *I) continue;  // Doesn't tell us anything
 
     cout << "\t\tExpr =";
-    switch (R.ExprType) {
-    case ExprAnalysisResult::ScaledLinear:
+    switch (R.ExprTy) {
+    case analysis::ExprType::ScaledLinear:
       WriteAsOperand(cout, (Value*)R.Scale) << " *";
       // fall through
-    case ExprAnalysisResult::Linear:
+    case analysis::ExprType::Linear:
       WriteAsOperand(cout, R.Var);
       if (R.Offset == 0) break;
       else cout << " +";
       // fall through
-    case ExprAnalysisResult::Constant:
+    case analysis::ExprType::Constant:
       if (R.Offset) WriteAsOperand(cout, (Value*)R.Offset); else cout << " 0";
       break;
     }
