@@ -46,7 +46,6 @@ void VM::CompilationCallback() {
 #endif
 }
 
-
 void VM::registerCallback() {
   TheVM = this;
 }

@@ -131,11 +131,15 @@ void Emitter::emitAddress(void *Addr, bool isPCRelative) {
 
 void Emitter::emitGlobalAddress(GlobalValue *V, bool isPCRelative) {
   if (isPCRelative) { // must be a call, this is a major hack!
-    // FIXME: Try looking up the function to see if it is already compiled!
-    TheVM.addFunctionRef(CurByte, cast<Function>(V));
+    // Try looking up the function to see if it is already compiled!
+    if (void *Addr = TheVM.getPointerToGlobalIfAvailable(V)) {
+      emitAddress(Addr, isPCRelative);
+    } else {  // Function has not yet been code generated!
+      TheVM.addFunctionRef(CurByte, cast<Function>(V));
 
-    // Delayed resolution...
-    emitAddress((void*)VM::CompilationCallback, isPCRelative);
+      // Delayed resolution...
+      emitAddress((void*)VM::CompilationCallback, isPCRelative);
+    }
   } else {
     emitAddress(TheVM.getPointerToGlobal(V), isPCRelative);
   }
