@@ -134,8 +134,7 @@ bool Steens::runOnModule(Module &M) {
       {  // Scope to free NodeMap memory ASAP
         DSGraph::NodeMapTy NodeMap;
         const DSGraph &FDSG = LDS.getDSGraph(*I);
-        ResultGraph->cloneInto(FDSG, ValMap, RetValMap, NodeMap,
-                               DSGraph::UpdateInlinedGlobals);
+        ResultGraph->cloneInto(FDSG, ValMap, RetValMap, NodeMap, 0);
       }
 
       // Incorporate the inlined Function's ScalarMap into the global
