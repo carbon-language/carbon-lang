@@ -126,7 +126,7 @@ endif
 # Special tools used while building the LLVM tree.  Burg is built as part of the
 # utils directory.
 #
-BURG    := $(LEVEL)/utils/Burg/burg.$(UNAME)
+BURG    := $(TOOLDEBUG)/burg
 RunBurg := $(BURG) $(BURG_OPTS)
 
 
