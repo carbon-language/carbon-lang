@@ -21,12 +21,13 @@
 #define LLVM_CFG_H
 
 #include "llvm/CFGdecls.h"      // See this file for concise interface info
-#include <set>
-#include <stack>
-#include <iterator>
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
+#include "llvm/Type.h"
+#include <iterator>
+#include <stack>
+#include <set>
 
 namespace cfg {
 
@@ -202,6 +203,18 @@ struct ConstInverseBasicBlockGraph {
   }
 };
 
+struct TypeGraph {
+  typedef const ::Type NodeType;
+  typedef ::Type::contype_iterator ChildIteratorType;
+  
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return N->contype_begin(); 
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return N->contype_end();
+  }
+};
+
 
 //===----------------------------------------------------------------------===//
 // Depth First Iterator
@@ -345,6 +358,19 @@ inline idf_const_iterator idf_end(const BasicBlock*) {
   return idf_const_iterator();
 }
 
+
+
+
+inline tdf_iterator tdf_begin(const Type *T, bool Reverse = false) {
+  return tdf_iterator(T, Reverse);
+}
+inline tdf_iterator tdf_end  (const Type *T) {
+  return tdf_iterator();
+}
+
+
+
+
 //===----------------------------------------------------------------------===//
 // Post Order CFG iterator code
 //
@@ -358,8 +384,7 @@ class POIterator : public std::forward_iterator<BBType,	ptrdiff_t> {
 
   void traverseChild() {
     while (VisitStack.top().second != succ_end(VisitStack.top().first)) {
-      BBType *BB = *VisitStack.top().second;
-      ++ VisitStack.top().second;
+      BBType *BB = *VisitStack.top().second++;
       if (!Visited.count(BB)) {  // If the block is not visited...
 	Visited.insert(BB);
 	VisitStack.push(make_pair(BB, succ_begin(BB)));
@@ -374,16 +399,20 @@ public:
     VisitStack.push(make_pair(BB, succ_begin(BB)));
     traverseChild();
   }
+  inline POIterator() { /* End is when stack is empty */ }
+#if 0
   inline POIterator(const _Self& x)
     : Visited(x.Visited), VisitStack(x.VisitStack) {
   }
+
   inline POIterator& operator=(const _Self& x) {
     Visited = x.Visited;
     VisitStack = x.VisitStack;
     return *this;
   }
-  inline POIterator() { /* End is when stack is empty */ }
-  
+#endif
+
+
   inline bool operator==(const _Self& x) const { 
     return VisitStack == x.VisitStack;
   }
@@ -409,10 +438,6 @@ public:
   inline _Self operator++(int) { // Postincrement
     _Self tmp = *this; ++*this; return tmp; 
   }
-
-  // Provide default begin and end methods when nothing special is needed.
-  static inline _Self	 begin	(BBType *BB) { return _Self(BB); }
-  static inline _Self	 end	(BBType *BB) { return _Self(); }
 };
 
 inline po_iterator       po_begin(      Method *M) {
