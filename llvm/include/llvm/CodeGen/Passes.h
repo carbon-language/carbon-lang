@@ -35,4 +35,9 @@ FunctionPass *createLocalRegisterAllocator();
 ///
 FunctionPass *createPrologEpilogCodeInserter();
 
+
+/// getRegisterAllocator - This creates an instance of the register allocator
+/// for the Sparc.
+FunctionPass *getRegisterAllocator(TargetMachine &T);
+
 #endif
