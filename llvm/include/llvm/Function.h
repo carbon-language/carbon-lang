@@ -15,7 +15,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/ValueHolder.h"
 
-class MethodType;
+class FunctionType;
 
 class Function : public GlobalValue, public SymTabValue {
 public:
@@ -38,14 +38,14 @@ private:
   void setParent(Module *parent);
 
 public:
-  Function(const MethodType *Ty, bool isInternal, const std::string &Name = "");
+  Function(const FunctionType *Ty, bool isInternal, const std::string &N = "");
   ~Function();
 
   // Specialize setName to handle symbol table majik...
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
 
-  const Type *getReturnType() const;        // Return the return type of method
-  const MethodType *getMethodType() const;  // Return the MethodType for me
+  const Type *getReturnType() const;           // Return the type of the ret val
+  const FunctionType *getFunctionType() const; // Return the FunctionType for me
 
   // Is the body of this method unknown? (the basic block list is empty if so)
   // this is true for external methods, defined as forward "declare"ations
