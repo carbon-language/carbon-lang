@@ -80,24 +80,13 @@ void MachineInstr::replace(MachineOpCode Opcode, unsigned numOperands)
   operands.resize(numOperands, MachineOperand());
 }
 
-void
-MachineInstr::SetMachineOperandVal(unsigned i,
-                                   MachineOperand::MachineOperandType opType,
-                                   Value* V,
-                                   bool isdef,
-                                   bool isDefAndUse)
-{
+void MachineInstr::SetMachineOperandVal(unsigned i,
+                                        MachineOperand::MachineOperandType opTy,
+                                        Value* V) {
   assert(i < operands.size());          // may be explicit or implicit op
-  operands[i].opType = opType;
+  operands[i].opType = opTy;
   operands[i].value = V;
   operands[i].regNum = -1;
-
-  if (isDefAndUse)
-    operands[i].flags = MachineOperand::DEFUSEFLAG;
-  else if (isdef || TargetInstrDescriptors[opCode].resultPos == (int) i)
-    operands[i].flags = MachineOperand::DEFONLYFLAG;
-  else
-    operands[i].flags = 0;
 }
 
 void
@@ -116,22 +105,12 @@ MachineInstr::SetMachineOperandConst(unsigned i,
   operands[i].flags = 0;
 }
 
-void
-MachineInstr::SetMachineOperandReg(unsigned i,
-                                   int regNum,
-                                   bool isdef) {
+void MachineInstr::SetMachineOperandReg(unsigned i, int regNum) {
   assert(i < getNumOperands());          // must be explicit op
 
   operands[i].opType = MachineOperand::MO_MachineRegister;
   operands[i].value = NULL;
   operands[i].regNum = regNum;
-
-  if (isdef || TargetInstrDescriptors[opCode].resultPos == (int)i) {
-    assert(operands[i].flags == MachineOperand::DEFONLYFLAG &&
-           "Shouldn't be changing a register type once set!");
-    operands[i].flags = MachineOperand::DEFONLYFLAG;
-  }
-
   insertUsedReg(regNum);
 }
 

@@ -432,12 +432,10 @@ public:
     ++numImplicitRefs;
     addRegOperand(V, isDef, isDefAndUse);
   }
-  void setImplicitRef(unsigned i, Value* V, bool isDef=false,
-                      bool isDefAndUse=false) {
+  void setImplicitRef(unsigned i, Value* V) {
     assert(i < getNumImplicitRefs() && "setImplicitRef() out of range!");
     SetMachineOperandVal(i + getNumOperands(),
-                         MachineOperand::MO_VirtualRegister,
-                         V, isDef, isDefAndUse);
+                         MachineOperand::MO_VirtualRegister, V);
   }
 
   //
@@ -631,17 +629,13 @@ public:
   // 
   void SetMachineOperandVal     (unsigned i,
                                  MachineOperand::MachineOperandType operandType,
-                                 Value* V,
-                                 bool isDef=false,
-                                 bool isDefAndUse=false);
+                                 Value* V);
 
   void SetMachineOperandConst   (unsigned i,
                                  MachineOperand::MachineOperandType operandType,
                                  int64_t intValue);
 
-  void SetMachineOperandReg     (unsigned i,
-                                 int regNum,
-                                 bool isDef=false);
+  void SetMachineOperandReg(unsigned i, int regNum);
 
 
   unsigned substituteValue(const Value* oldVal, Value* newVal,
