@@ -6,8 +6,9 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../..
-DIRS = Reader Writer
+PARALLEL_DIRS = Reader Writer
 
 include $(LEVEL)/Makefile.common
 
