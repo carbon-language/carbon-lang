@@ -379,8 +379,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
           // the arguments provided, except substitute 0's for any variable
           // indexes we find...
           for (unsigned i = 0; i != GEPOperands.size(); ++i)
-            if (!isa<Constant>(GEPOperands[i]) || isa<GlobalValue>(GEPOperands[i]) ||
-                isa<ConstantExpr>(GEPOperands[i]))
+            if (!isa<ConstantInt>(GEPOperands[i]))
               GEPOperands[i] =Constant::getNullValue(GEPOperands[i]->getType());
           int64_t Offset = getTargetData().getIndexedOffset(BasePtr->getType(),
                                                             GEPOperands);
