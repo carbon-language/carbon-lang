@@ -15,7 +15,7 @@ all:: $(addprefix Output/, $(TESTS:%.ll=%.to))
 
 
 Output/%.to: Output/%.c
-	gcc -c $< -o $@ || \
+	gcc -c -W -Wall $< -o $@ || \
 		(rm -f $@; $(FAILURE) $@ )
 
 Output/%.c: %.ll Output/.dir $(LAS) $(LDIS)
