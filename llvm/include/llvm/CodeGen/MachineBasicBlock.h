@@ -20,11 +20,6 @@ public:
   MachineBasicBlock(BasicBlock *bb = 0) : Prev(0), Next(0), BB(bb) {}
   ~MachineBasicBlock() {}
   
-  // get - This deprecated static method returns the MachineBasicBlock object
-  // for the specified BasicBlock.
-  //
-  static MachineBasicBlock& get(const BasicBlock *BB);
-
   /// getBasicBlock - Return the LLVM basic block that this instance
   /// corresponded to originally.
   ///
