@@ -606,13 +606,10 @@ namespace {
     }
     
     void remove(ConstantClass *CP) {
-      // FIXME: This should not use a linear scan.  If this gets to be a
-      // performance problem, someone should look at this.
-      MapIterator I = Map.begin();
-      for (MapIterator E = Map.end(); I != E && I->second != CP; ++I)
-        /* empty */;
-      
+      MapIterator I = Map.find(MapKey((TypeClass*)CP->getRawType(),
+                                      getValType(CP)));
       assert(I != Map.end() && "Constant not found in constant table!");
+      assert(I->second == CP && "Didn't find correct element?");
 
       // Now that we found the entry, make sure this isn't the entry that
       // the AbstractTypeMap points to.
@@ -686,8 +683,6 @@ namespace {
     }
   };
 }
-
-
 
 //---- ConstantUInt::get() and ConstantSInt::get() implementations...
 //
@@ -785,6 +780,8 @@ namespace llvm {
 
 static ValueMap<char, Type, ConstantAggregateZero> AggZeroConstants;
 
+static char getValType(ConstantAggregateZero *CPZ) { return 0; }
+
 Constant *ConstantAggregateZero::get(const Type *Ty) {
   return AggZeroConstants.getOrCreate(Ty, 0);
 }
@@ -820,6 +817,14 @@ namespace llvm {
       OldC->destroyConstant();    // This constant is now dead, destroy it.
     }
   };
+}
+
+static std::vector<Constant*> getValType(ConstantArray *CA) {
+  std::vector<Constant*> Elements;
+  Elements.reserve(CA->getNumOperands());
+  for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
+    Elements.push_back(cast<Constant>(CA->getOperand(i)));
+  return Elements;
 }
 
 static ValueMap<std::vector<Constant*>, ArrayType,
@@ -914,6 +919,14 @@ namespace llvm {
 static ValueMap<std::vector<Constant*>, StructType, 
                 ConstantStruct> StructConstants;
 
+static std::vector<Constant*> getValType(ConstantStruct *CS) {
+  std::vector<Constant*> Elements;
+  Elements.reserve(CS->getNumOperands());
+  for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i)
+    Elements.push_back(cast<Constant>(CS->getOperand(i)));
+  return Elements;
+}
+
 Constant *ConstantStruct::get(const StructType *Ty,
                               const std::vector<Constant*> &V) {
   // Create a ConstantAggregateZero value if all elements are zeros...
@@ -964,6 +977,11 @@ namespace llvm {
 }
 
 static ValueMap<char, PointerType, ConstantPointerNull> NullPtrConstants;
+
+static char getValType(ConstantPointerNull *) {
+  return 0;
+}
+
 
 ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
   return NullPtrConstants.getOrCreate(Ty, 0);
@@ -1041,6 +1059,14 @@ namespace llvm {
   };
 } // end namespace llvm
 
+
+static ExprMapKeyType getValType(ConstantExpr *CE) {
+  std::vector<Constant*> Operands;
+  Operands.reserve(CE->getNumOperands());
+  for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
+    Operands.push_back(cast<Constant>(CE->getOperand(i)));
+  return ExprMapKeyType(CE->getOpcode(), Operands);
+}
 
 static ValueMap<ExprMapKeyType, Type, ConstantExpr> ExprConstants;
 
