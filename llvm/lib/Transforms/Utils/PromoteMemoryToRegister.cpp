@@ -222,13 +222,14 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
   std::vector<PHINode *> &BBPNs = NewPhiNodes[BB];
   for (unsigned k = 0; k != BBPNs.size(); ++k)
     if (PHINode *PN = BBPNs[k]) {
-      int BBI = PN->getBasicBlockIndex(Pred);
-      assert(BBI >= 0 && "Predecessor not in basic block yet!");
-
-      // At this point we can assume that the array has phi nodes.. let's update
-      // the incoming data.
-      PN->setIncomingValue(BBI, IncomingVals[k]);
-
+      // The PHI node may have multiple entries for this predecessor.  We must
+      // make sure we update all of them.
+      for (unsigned i = 0, e = PN->getNumOperands(); i != e; i += 2) {
+        if (PN->getOperand(i+1) == Pred)
+          // At this point we can assume that the array has phi nodes.. let's
+          // update the incoming data.
+          PN->setOperand(i, IncomingVals[k]);
+      }
       // also note that the active variable IS designated by the phi node
       IncomingVals[k] = PN;
     }
