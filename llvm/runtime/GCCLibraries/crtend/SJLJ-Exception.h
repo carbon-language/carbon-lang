@@ -1,4 +1,4 @@
-//===- SJLJ-exception.h - SetJmp/LongJmp Exception Handling -----*- C++ -*-===//
+//===- SJLJ-Exception.h - SetJmp/LongJmp Exception Handling -----*- C++ -*-===//
 //
 // This file defines the data structures and API used by the Setjmp/Longjmp
 // exception handling runtime library.
@@ -8,7 +8,7 @@
 #ifndef SJLJ_EXCEPTION_H
 #define SJLJ_EXCEPTION_H
 
-#include "exception.h"
+#include "Exception.h"
 #include <cassert>
 
 struct llvm_sjlj_exception {

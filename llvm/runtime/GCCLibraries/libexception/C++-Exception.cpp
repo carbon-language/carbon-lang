@@ -1,4 +1,4 @@
-//===- c++-exception.cpp - Exception handling support for C++ exceptions --===//
+//===- C++-Exception.cpp - Exception handling support for C++ exceptions --===//
 //
 // This file defines the methods used to implement C++ exception handling in
 // terms of the invoke and %llvm.unwind intrinsic.  These primitives implement
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "c++-exception.h"
+#include "C++-Exception.h"
 #include <cstdlib>
 #include <cstdarg>
 

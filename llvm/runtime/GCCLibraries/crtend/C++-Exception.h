@@ -1,4 +1,4 @@
-//===- c++-exception.h - C++ Specific exception Handling --------*- C++ -*-===//
+//===- C++-Exception.h - C++ Specific Exception Handling --------*- C++ -*-===//
 //
 // This file defines the data structures and API used by the C++ exception
 // handling runtime library.
@@ -8,7 +8,7 @@
 #ifndef CXX_EXCEPTION_H
 #define CXX_EXCEPTION_H
 
-#include "exception.h"
+#include "Exception.h"
 #include <typeinfo>
 #include <cassert>
 
