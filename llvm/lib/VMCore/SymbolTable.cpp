@@ -123,11 +123,8 @@ void SymbolTable::insertEntry(const string &Name, Value *V) {
   const Type *VTy = V->getType();
 
   // TODO: The typeverifier should catch this when its implemented
-  if (lookup(VTy, Name)) {
-    cerr << "SymbolTable ERROR: Name already in symbol table: '" 
-         << Name << "' for type '" << VTy->getDescription() << "'\n";
-    abort();  // TODO: REMOVE THIS
-  }
+  assert(lookup(VTy, Name) == 0 && 
+	 "SymbolTable::insertEntry - Name already in symbol table!");
 
 #if DEBUG_SYMBOL_TABLE
   cerr << this << " Inserting definition: " << Name << ": " 
