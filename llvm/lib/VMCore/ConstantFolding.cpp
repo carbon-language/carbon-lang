@@ -1011,8 +1011,15 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
   if (IdxList.size() == 0 ||
       (IdxList.size() == 1 && cast<Constant>(IdxList[0])->isNullValue()))
     return const_cast<Constant*>(C);
-  Constant *Idx0 = cast<Constant>(IdxList[0]);
 
+  if (isa<UndefValue>(C)) {
+    const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(), IdxList,
+                                                       true);
+    assert(Ty != 0 && "Invalid indices for GEP!");
+    return UndefValue::get(PointerType::get(Ty));
+  }
+
+  Constant *Idx0 = cast<Constant>(IdxList[0]);
   if (C->isNullValue()) {
     bool isNull = true;
     for (unsigned i = 0, e = IdxList.size(); i != e; ++i)
