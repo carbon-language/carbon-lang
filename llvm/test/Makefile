@@ -1,5 +1,7 @@
 TESTS := $(wildcard *.ll)
 
+SELECTTESTS := $(shell /bin/ls *.ll | grep -v testmemory | grep -v testswitch")
+
 test all : testasmdis testopt
 	@echo "All tests successfully completed!"
 
@@ -8,8 +10,10 @@ testasmdis : $(TESTS:%.ll=%.ll.asmdis)
 
 testopt : $(TESTS:%.ll=%.ll.opt)
 
+testselect : $(SELECTTESTS:%.ll=%.mc)
+
 clean :
-	rm -f *.[123] *.bc core
+	rm -f *.[123] *.bc *.mc core
 
 %.asmdis: %
 	@echo "Running assembler/disassembler test on $<"
@@ -18,3 +22,11 @@ clean :
 %.opt: %
 	@echo "Running optimizier test on $<"
 	@./TestOptimizer.sh $<
+
+%.bc: %.ll
+	rm -f $@
+	as $<
+
+%.mc: %.bc
+	@echo "Generating machine instructions for $<"
+	@llc -dselect i $< > $@
