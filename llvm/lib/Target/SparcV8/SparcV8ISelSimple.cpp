@@ -67,9 +67,10 @@ namespace {
     /// emitIntegerCast, emitFPToIntegerCast - Helper methods for
     /// emitCastOperation.
     ///
-    void emitIntegerCast (MachineBasicBlock *BB, MachineBasicBlock::iterator IP,
-                          const Type *oldTy, unsigned SrcReg, const Type *newTy,
-                          unsigned DestReg);
+    unsigned emitIntegerCast (MachineBasicBlock *BB,
+                              MachineBasicBlock::iterator IP,
+                              const Type *oldTy, unsigned SrcReg,
+                              const Type *newTy, unsigned DestReg);
     void emitFPToIntegerCast (MachineBasicBlock *BB,
                               MachineBasicBlock::iterator IP, const Type *oldTy,
                               unsigned SrcReg, const Type *newTy,
@@ -563,14 +564,14 @@ void V8ISel::visitCastInst(CastInst &I) {
 }
 
 
-void V8ISel::emitIntegerCast (MachineBasicBlock *BB,
+unsigned V8ISel::emitIntegerCast (MachineBasicBlock *BB,
                               MachineBasicBlock::iterator IP, const Type *oldTy,
                               unsigned SrcReg, const Type *newTy,
                               unsigned DestReg) {
   if (oldTy == newTy) {
     // No-op cast - just emit a copy; assume the reg. allocator will zap it.
     BuildMI (*BB, IP, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg(SrcReg);
-    return;
+    return SrcReg;
   }
   // Emit left-shift, then right-shift to sign- or zero-extend.
   unsigned TmpReg = makeAnotherReg (newTy);
@@ -581,6 +582,8 @@ void V8ISel::emitIntegerCast (MachineBasicBlock *BB,
   } else { // zero-extend with SRL
     BuildMI(*BB, IP, V8::SRLri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg);
   }
+  // Return the temp reg. in case this is one half of a cast to long.
+  return TmpReg;
 }
 
 void V8ISel::emitFPToIntegerCast (MachineBasicBlock *BB,
@@ -629,6 +632,10 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
     case cShort:
     case cInt:
       switch (oldTyClass) {
+      case cLong: 
+        // Treat it like a cast from the lower half of the value.
+        emitIntegerCast (BB, IP, Type::IntTy, SrcReg+1, newTy, DestReg);
+        break;
       case cFloat: 
       case cDouble:
         emitFPToIntegerCast (BB, IP, oldTy, SrcReg, newTy, DestReg);
@@ -687,13 +694,22 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
       switch (oldTyClass) {
       case cByte:
       case cShort:
-      case cInt:
-        // Just copy it to the bottom half, and put a zero in the top half.
-        BuildMI (*BB, IP, V8::ORrr, 2, DestReg).addReg (V8::G0)
-          .addReg (V8::G0);
-        BuildMI (*BB, IP, V8::ORrr, 2, DestReg+1).addReg (V8::G0)
-          .addReg (SrcReg);
+      case cInt: {
+        // Cast to (u)int in the bottom half, and sign(zero) extend in the top
+        // half.
+        const Type *OldHalfTy = oldTy->isSigned() ? Type::IntTy : Type::UIntTy;
+        const Type *NewHalfTy = newTy->isSigned() ? Type::IntTy : Type::UIntTy;
+        unsigned TempReg = emitIntegerCast (BB, IP, OldHalfTy, SrcReg,
+                                            NewHalfTy, DestReg+1);
+        if (newTy->isSigned ()) {
+          BuildMI (*BB, IP, V8::SRAri, 2, DestReg).addReg (TempReg) 
+            .addZImm (31);
+        } else {
+          BuildMI (*BB, IP, V8::ORrr, 2, DestReg).addReg (V8::G0) 
+            .addReg (V8::G0);
+        }
         break;
+      }
       case cLong:
         // Just copy both halves.
         BuildMI (*BB, IP, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
