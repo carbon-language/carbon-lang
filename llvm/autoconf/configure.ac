@@ -28,7 +28,7 @@ do
       "llvm-test")    AC_CONFIG_SUBDIRS([projects/llvm-test]) ;;
       "llvm-reopt")   AC_CONFIG_SUBDIRS([projects/llvm-reopt]);;
       "llvm-gcc")     AC_CONFIG_SUBDIRS([projects/llvm-gcc])  ;;
-      "llvm-java")    AC_CONFIG_SUBDIRS([projects/llvm-java]) ;;
+      "Java")         AC_CONFIG_SUBDIRS([projects/Java])      ;;
       "llvm-tv")      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
       "llvm-fefw")    AC_CONFIG_SUBDIRS([projects/llvm-fefw]) ;;
       *)              AC_CONFIG_SUBDIRS(${i}) ;;
