@@ -179,6 +179,7 @@ Module *BugDriver::runPassesOn(Module *M,
       EmitProgressBytecode("pass-error",  false);
       exit(debugOptimizerCrash());
     }
+    swapProgramIn(OldProgram);
     return 0;
   }
 
