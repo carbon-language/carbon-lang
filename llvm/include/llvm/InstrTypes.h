@@ -30,7 +30,7 @@ public:
 
   // Terminators must implement the methods required by Instruction...
   virtual Instruction *clone() const = 0;
-  virtual string getOpcode() const = 0;
+  virtual const char *getOpcodeName() const = 0;
 
   // Additionally, they must provide a method to get at the successors of this
   // terminator instruction.  If 'idx' is out of range, a null pointer shall be
@@ -64,10 +64,10 @@ public:
   }
 
   virtual Instruction *clone() const { 
-    return create(getInstType(), Operands[0]);
+    return create(getOpcode(), Operands[0]);
   }
 
-  virtual string getOpcode() const = 0;
+  virtual const char *getOpcodeName() const = 0;
 };
 
 
@@ -96,10 +96,10 @@ public:
   }
 
   virtual Instruction *clone() const {
-    return create(getInstType(), Operands[0], Operands[1]);
+    return create(getOpcode(), Operands[0], Operands[1]);
   }
 
-  virtual string getOpcode() const = 0;
+  virtual const char *getOpcodeName() const = 0;
 };
 
 #endif

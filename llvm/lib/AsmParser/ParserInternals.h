@@ -118,7 +118,7 @@ struct InstPlaceHolderHelper : public Instruction {
   InstPlaceHolderHelper(const Type *Ty) : Instruction(Ty, UserOp1, "") {}
 
   virtual Instruction *clone() const { abort(); }
-  virtual string getOpcode() const { return "placeholder"; }
+  virtual const char *getOpcodeName() const { return "placeholder"; }
 };
 
 struct BBPlaceHolderHelper : public BasicBlock {

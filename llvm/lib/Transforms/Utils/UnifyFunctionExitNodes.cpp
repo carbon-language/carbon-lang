@@ -25,7 +25,7 @@ BasicBlock *cfg::UnifyAllExitNodes(Method *M) {
   // return.
   //
   for(Method::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if ((*I)->getTerminator()->getInstType() == Instruction::Ret)
+    if ((*I)->getTerminator()->getOpcode() == Instruction::Ret)
       ReturningBlocks.push_back(*I);
 
   if (ReturningBlocks.size() == 0) 

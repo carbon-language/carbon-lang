@@ -63,7 +63,7 @@ static inline void RemapInstruction(Instruction *I,
 // method by one level.
 //
 bool opt::InlineMethod(BasicBlock::iterator CIIt) {
-  assert((*CIIt)->getInstType() == Instruction::Call && 
+  assert((*CIIt)->getOpcode() == Instruction::Call && 
 	 "InlineMethod only works on CallInst nodes!");
   assert((*CIIt)->getParent() && "Instruction not embedded in basic block!");
   assert((*CIIt)->getParent()->getParent() && "Instruction not in method!");
@@ -149,7 +149,7 @@ bool opt::InlineMethod(BasicBlock::iterator CIIt) {
     }
 
     // Copy over the terminator now...
-    switch (TI->getInstType()) {
+    switch (TI->getOpcode()) {
     case Instruction::Ret: {
       const ReturnInst *RI = (const ReturnInst*)TI;
 
@@ -209,7 +209,7 @@ bool opt::InlineMethod(BasicBlock::iterator CIIt) {
   // block of the inlined method.
   //
   TerminatorInst *Br = OrigBB->getTerminator();
-  assert(Br && Br->getInstType() == Instruction::Br && 
+  assert(Br && Br->getOpcode() == Instruction::Br && 
 	 "splitBasicBlock broken!");
   Br->setOperand(0, ValueMap[CalledMeth->front()]);
 
@@ -249,7 +249,7 @@ static inline bool ShouldInlineMethod(const CallInst *CI, const Method *M) {
 
 static inline bool DoMethodInlining(BasicBlock *BB) {
   for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
-    if ((*I)->getInstType() == Instruction::Call) {
+    if ((*I)->getOpcode() == Instruction::Call) {
       // Check to see if we should inline this method
       CallInst *CI = (CallInst*)*I;
       Method *M = CI->getCalledMethod();

@@ -41,7 +41,7 @@ public:
 
   virtual Instruction *clone() const { return new ReturnInst(*this); }
 
-  virtual string getOpcode() const { return "ret"; }
+  virtual const char *getOpcodeName() const { return "ret"; }
 
   inline const Value *getReturnValue() const {
     return Operands.size() ? Operands[0] : 0; 
@@ -81,7 +81,7 @@ public:
     return isUnconditional() ? 0 : Operands[2];
   }
 
-  virtual string getOpcode() const { return "br"; }
+  virtual const char *getOpcodeName() const { return "br"; }
 
   // setUnconditionalDest - Change the current branch to an unconditional branch
   // targeting the specified block.
@@ -135,7 +135,7 @@ public:
 
   void dest_push_back(ConstPoolVal *OnVal, BasicBlock *Dest);
 
-  virtual string getOpcode() const { return "switch"; }
+  virtual const char *getOpcodeName() const { return "switch"; }
 
   // Additionally, they must provide a method to get at the successors of this
   // terminator instruction.  If 'idx' is out of range, a null pointer shall be

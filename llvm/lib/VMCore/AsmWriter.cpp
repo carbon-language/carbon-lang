@@ -154,20 +154,20 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
     Out << "%" << I->getName() << " = ";
 
   // Print out the opcode...
-  Out << I->getOpcode();
+  Out << I->getOpcodeName();
 
   // Print out the type of the operands...
   const Value *Operand = I->getNumOperands() ? I->getOperand(0) : 0;
 
   // Special case conditional branches to swizzle the condition out to the front
-  if (I->getInstType() == Instruction::Br && I->getNumOperands() > 1) {
+  if (I->getOpcode() == Instruction::Br && I->getNumOperands() > 1) {
     writeOperand(I->getOperand(2), true);
     Out << ",";
     writeOperand(Operand, true);
     Out << ",";
     writeOperand(I->getOperand(1), true);
 
-  } else if (I->getInstType() == Instruction::Switch) {
+  } else if (I->getOpcode() == Instruction::Switch) {
     // Special case switch statement to get formatting nice and correct...
     writeOperand(Operand         , true); Out << ",";
     writeOperand(I->getOperand(1), true); Out << " [";
@@ -188,9 +188,9 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
       writeOperand(I->getOperand(op  ), false); Out << ",";
       writeOperand(I->getOperand(op+1), false); Out << " ]";
     }
-  } else if (I->getInstType() == Instruction::Ret && !Operand) {
+  } else if (I->getOpcode() == Instruction::Ret && !Operand) {
     Out << " void";
-  } else if (I->getInstType() == Instruction::Call) {
+  } else if (I->getOpcode() == Instruction::Call) {
     writeOperand(Operand, true);
     Out << "(";
     if (I->getNumOperands() > 1) writeOperand(I->getOperand(1), true);
@@ -200,8 +200,8 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
     }
 
     Out << " )";
-  } else if (I->getInstType() == Instruction::Malloc || 
-	     I->getInstType() == Instruction::Alloca) {
+  } else if (I->getOpcode() == Instruction::Malloc || 
+	     I->getOpcode() == Instruction::Alloca) {
     Out << " " << ((const PointerType*)I->getType())->getValueType();
     if (I->getNumOperands()) {
       Out << ",";

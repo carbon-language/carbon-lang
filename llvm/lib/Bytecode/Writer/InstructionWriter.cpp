@@ -29,7 +29,7 @@ static void outputInstructionFormat0(const Instruction *I,
 				     const SlotCalculator &Table,
 				     unsigned Type, vector<uchar> &Out) {
   // Opcode must have top two bits clear...
-  output_vbr(I->getInstType(), Out);             // Instruction Opcode ID
+  output_vbr(I->getOpcode(), Out);               // Instruction Opcode ID
   output_vbr(Type, Out);                         // Result type
 
   unsigned NumArgs = I->getNumOperands();
@@ -51,7 +51,7 @@ static void outputInstructionFormat0(const Instruction *I,
 static void outputInstructionFormat1(const Instruction *I, 
 				     const SlotCalculator &Table, int *Slots,
 				     unsigned Type, vector<uchar> &Out) {
-  unsigned IType = I->getInstType();      // Instruction Opcode ID
+  unsigned IType = I->getOpcode();      // Instruction Opcode ID
   
   // bits   Instruction format:
   // --------------------------
@@ -72,7 +72,7 @@ static void outputInstructionFormat1(const Instruction *I,
 static void outputInstructionFormat2(const Instruction *I, 
 				     const SlotCalculator &Table, int *Slots,
 				     unsigned Type, vector<uchar> &Out) {
-  unsigned IType = I->getInstType();      // Instruction Opcode ID
+  unsigned IType = I->getOpcode();      // Instruction Opcode ID
 
   // bits   Instruction format:
   // --------------------------
@@ -96,7 +96,7 @@ static void outputInstructionFormat2(const Instruction *I,
 static void outputInstructionFormat3(const Instruction *I, 
 				     const SlotCalculator &Table, int *Slots,
 				     unsigned Type, vector<uchar> &Out) {
-  unsigned IType = I->getInstType();      // Instruction Opcode ID
+  unsigned IType = I->getOpcode();      // Instruction Opcode ID
 
   // bits   Instruction format:
   // --------------------------
@@ -115,7 +115,7 @@ static void outputInstructionFormat3(const Instruction *I,
 }
 
 bool BytecodeWriter::processInstruction(const Instruction *I) {
-  assert(I->getInstType() < 64 && "Opcode too big???");
+  assert(I->getOpcode() < 64 && "Opcode too big???");
 
   unsigned NumOperands = I->getNumOperands();
   int MaxOpSlot = 0;
@@ -136,8 +136,8 @@ bool BytecodeWriter::processInstruction(const Instruction *I) {
   // we take the type of the instruction itself.  
   //
   const Type *Ty = NumOperands ? I->getOperand(0)->getType() : I->getType();
-  if (I->getInstType() == Instruction::Malloc || 
-      I->getInstType() == Instruction::Alloca)
+  if (I->getOpcode() == Instruction::Malloc || 
+      I->getOpcode() == Instruction::Alloca)
     Ty = I->getType();  // Malloc & Alloca ALWAYS want to encode the return type
 
   unsigned Type;

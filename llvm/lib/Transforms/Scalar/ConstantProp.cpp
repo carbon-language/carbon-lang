@@ -73,7 +73,7 @@ inline static bool
 ConstantFoldUnaryInst(Method *M, Method::inst_iterator &DI,
                       UnaryOperator *Op, ConstPoolVal *D) {
   ConstPoolVal *ReplaceWith = 
-    opt::ConstantFoldUnaryInstruction(Op->getInstType(), D);
+    opt::ConstantFoldUnaryInstruction(Op->getOpcode(), D);
 
   if (!ReplaceWith) return false;   // Nothing new to change...
 
@@ -100,7 +100,7 @@ ConstantFoldBinaryInst(Method *M, Method::inst_iterator &DI,
 		       BinaryOperator *Op,
 		       ConstPoolVal *D1, ConstPoolVal *D2) {
   ConstPoolVal *ReplaceWith =
-    opt::ConstantFoldBinaryInstruction(Op->getInstType(), D1, D2);
+    opt::ConstantFoldBinaryInstruction(Op->getOpcode(), D1, D2);
   if (!ReplaceWith) return false;   // Nothing new to change...
 
   // Add the new value to the constant pool...
@@ -126,7 +126,7 @@ ConstantFoldBinaryInst(Method *M, Method::inst_iterator &DI,
 //
 bool opt::ConstantFoldTerminator(TerminatorInst *T) {
   // Branch - See if we are conditional jumping on constant
-  if (T->getInstType() == Instruction::Br) {
+  if (T->getOpcode() == Instruction::Br) {
     BranchInst *BI = (BranchInst*)T;
     if (BI->isUnconditional()) return false;  // Can't optimize uncond branch
     BasicBlock *Dest1 = BI->getOperand(0)->castBasicBlockAsserting();

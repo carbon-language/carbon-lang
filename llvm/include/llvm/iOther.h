@@ -26,7 +26,7 @@ public:
   PHINode(const Type *Ty, const string &Name = "");
 
   virtual Instruction *clone() const { return new PHINode(*this); }
-  virtual string getOpcode() const { return "phi"; }
+  virtual const char *getOpcodeName() const { return "phi"; }
 
   // getNumIncomingValues - Return the number of incoming edges the PHI node has
   inline unsigned getNumIncomingValues() const { return Operands.size()/2; }
@@ -89,7 +89,7 @@ class CallInst : public Instruction {
 public:
   CallInst(Method *M, vector<Value*> &params, const string &Name = "");
 
-  virtual string getOpcode() const { return "call"; }
+  virtual const char *getOpcodeName() const { return "call"; }
 
   virtual Instruction *clone() const { return new CallInst(*this); }
   bool hasSideEffects() const { return true; }

@@ -10,25 +10,31 @@
 BinaryOperator *BinaryOperator::create(unsigned Op, Value *S1, Value *S2,
 				       const string &Name) {
   switch (Op) {
-  // Standard binary operators...
-  case Add: return new GenericBinaryInst(Op, S1, S2, "add", Name);
-  case Sub: return new GenericBinaryInst(Op, S1, S2, "sub", Name);
-  case Mul: return new GenericBinaryInst(Op, S1, S2, "mul", Name);
-  case Div: return new GenericBinaryInst(Op, S1, S2, "div", Name);
-  case Rem: return new GenericBinaryInst(Op, S1, S2, "rem", Name);
-
-  // Logical operators...
-  case And: return new GenericBinaryInst(Op, S1, S2, "and", Name);
-  case Or : return new GenericBinaryInst(Op, S1, S2, "or", Name);
-  case Xor: return new GenericBinaryInst(Op, S1, S2, "xor", Name);
-
   // Binary comparison operators...
   case SetLT: case SetGT: case SetLE:
   case SetGE: case SetEQ: case SetNE:
     return new SetCondInst((BinaryOps)Op, S1, S2, Name);
 
   default:
-    cerr << "Don't know how to GetBinaryOperator " << Op << endl;
+    return new GenericBinaryInst(Op, S1, S2, Name);
+  }
+}
+
+const char *GenericBinaryInst::getOpcodeName() const {
+  switch (getOpcode()) {
+  // Standard binary operators...
+  case Add: return "add";
+  case Sub: return "sub";
+  case Mul: return "mul";
+  case Div: return "div";
+  case Rem: return "rem";
+
+  // Logical operators...
+  case And: return "and";
+  case Or : return "or";
+  case Xor: return "xor";
+  default:
+    cerr << "Invalid binary operator type!" << getOpcode() << endl;
     return 0;
   }
 }
@@ -45,10 +51,10 @@ SetCondInst::SetCondInst(BinaryOps opType, Value *S1, Value *S2,
   setType(Type::BoolTy);   // setcc instructions always return bool type.
 
   // Make sure it's a valid type...
-  assert(getOpcode() != "Invalid opcode type to SetCondInst class!");
+  assert(getOpcodeName() != 0);
 }
 
-string SetCondInst::getOpcode() const {
+const char *SetCondInst::getOpcodeName() const {
   switch (OpType) {
   case SetLE:  return "setle";
   case SetGE:  return "setge";

@@ -78,7 +78,7 @@ static LIVType isLinearInductionVariableH(cfg::Interval *Int, Value *V,
 
   // loop variant computations must be instructions!
   Instruction *I = V->castInstructionAsserting();
-  switch (I->getInstType()) {       // Handle each instruction seperately
+  switch (I->getOpcode()) {       // Handle each instruction seperately
   case Instruction::Neg: {
     Value *SubV = ((UnaryOperator*)I)->getOperand(0);
     LIVType SubLIVType = isLinearInductionVariableH(Int, SubV, PN);
@@ -107,12 +107,12 @@ static LIVType isLinearInductionVariableH(cfg::Interval *Int, Value *V,
       // either a Loop Invariant computation, or a LIV type.
       if (SubLIVType1 == isLIC) {
 	// Loop invariant computation, we know this is a LIV then.
-	return (I->getInstType() == Instruction::Add) ? 
+	return (I->getOpcode() == Instruction::Add) ? 
 	               SubLIVType2 : neg(SubLIVType2);
       }
 
       // If the LHS is also a LIV Expression, we cannot add two LIVs together
-      if (I->getInstType() == Instruction::Add) return isOther;
+      if (I->getOpcode() == Instruction::Add) return isOther;
 
       // We can only subtract two LIVs if they are the same type, which yields
       // a LIC, because the LIVs cancel each other out.
@@ -155,7 +155,7 @@ static inline bool isSimpleInductionVar(PHINode *PN) {
 
   Value *StepExpr = PN->getIncomingValue(1);
   if (!StepExpr->isInstruction() ||
-      ((Instruction*)StepExpr)->getInstType() != Instruction::Add)
+      ((Instruction*)StepExpr)->getOpcode() != Instruction::Add)
     return false;
 
   BinaryOperator *I = (BinaryOperator*)StepExpr;

@@ -17,15 +17,13 @@
 //
 
 class GenericBinaryInst : public BinaryOperator {
-  const char *OpcodeString;
 public:
   GenericBinaryInst(unsigned Opcode, Value *S1, Value *S2, 
-		    const char *OpcodeStr, const string &Name = "")
+		    const string &Name = "")
     : BinaryOperator(Opcode, S1, S2, Name) {
-    OpcodeString = OpcodeStr;
   }
 
-  virtual string getOpcode() const { return OpcodeString; }
+  virtual const char *getOpcodeName() const;
 };
 
 class SetCondInst : public BinaryOperator {
@@ -34,7 +32,7 @@ public:
   SetCondInst(BinaryOps opType, Value *S1, Value *S2, 
 	      const string &Name = "");
 
-  virtual string getOpcode() const;
+  virtual const char *getOpcodeName() const;
 };
 
 #endif

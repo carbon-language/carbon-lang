@@ -46,7 +46,7 @@ public:
     return new MallocInst(getType(), Operands.size() ? Operands[1] : 0);
   }
 
-  virtual string getOpcode() const { return "malloc"; }
+  virtual const char *getOpcodeName() const { return "malloc"; }
 };
 
 class AllocaInst : public AllocationInst {
@@ -58,7 +58,7 @@ public:
     return new AllocaInst(getType(), Operands.size() ? Operands[1] : 0);
   }
 
-  virtual string getOpcode() const { return "alloca"; }
+  virtual const char *getOpcodeName() const { return "alloca"; }
 };
 
 
@@ -75,7 +75,7 @@ public:
 
   virtual Instruction *clone() const { return new FreeInst(Operands[0]); }
 
-  virtual string getOpcode() const { return "free"; }
+  virtual const char *getOpcodeName() const { return "free"; }
 };
 
 #endif // LLVM_IMEMORY_H

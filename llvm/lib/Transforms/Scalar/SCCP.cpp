@@ -307,7 +307,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
   if (IValue.isOverdefined())
     return; // If already overdefined, we aren't going to effect anything
 
-  switch (I->getInstType()) {
+  switch (I->getOpcode()) {
     //===-----------------------------------------------------------------===//
     // Handle PHI nodes...
     //
@@ -424,7 +424,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
   }
 
   default: break;  // Handle math operators as groups.
-  } // end switch(I->getInstType())
+  } // end switch(I->getOpcode())
 
   
   //===-------------------------------------------------------------------===//
@@ -437,7 +437,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
       markOverdefined(I);
     } else if (VState.isConstant()) {    // Propogate constant value
       ConstPoolVal *Result = 
-	opt::ConstantFoldUnaryInstruction(I->getInstType(), 
+	opt::ConstantFoldUnaryInstruction(I->getOpcode(), 
 					  VState.getConstant());
 
       if (Result) {
@@ -466,7 +466,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
       markOverdefined(I);
     } else if (V1State.isConstant() && V2State.isConstant()) {
       ConstPoolVal *Result = 
-	opt::ConstantFoldBinaryInstruction(I->getInstType(), 
+	opt::ConstantFoldBinaryInstruction(I->getOpcode(), 
 					   V1State.getConstant(),
 					   V2State.getConstant());
       if (Result) {
