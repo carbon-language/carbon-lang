@@ -208,7 +208,19 @@ bool UltraSparc::addPassesToJITCompile(PassManager &PM) {
   //so %fp+offset-8 and %fp+offset-16 are empty slots now!
   PM.add(createStackSlotsPass(*this));
 
+  // Specialize LLVM code for this target machine and then
+  // run basic dataflow optimizations on LLVM code.
+  if (!DisablePreSelect) {
+    PM.add(createPreSelectionPass(*this));
+    PM.add(createReassociatePass());
+    PM.add(createLICMPass());
+    PM.add(createGCSEPass());
+  }
+
   PM.add(createInstructionSelectionPass(*this));
+
+  if (!DisableSched)
+    PM.add(createInstructionSchedulingWithSSAPass(*this));
 
   // new pass: convert Value* in MachineOperand to an unsigned register
   // this brings it in line with what the X86 JIT's RegisterAllocator expects
@@ -216,6 +228,9 @@ bool UltraSparc::addPassesToJITCompile(PassManager &PM) {
 
   PM.add(getRegisterAllocator(*this));
   PM.add(getPrologEpilogInsertionPass());
+
+  if (!DisablePeephole)
+    PM.add(createPeepholeOptsPass(*this));
 
   return false; // success!
 }
