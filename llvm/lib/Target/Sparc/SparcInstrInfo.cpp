@@ -478,6 +478,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
     // Generate the load instruction
     int64_t zeroOffset = 0;           // to avoid ambiguity with (Value*) 0
     unsigned Opcode = ChooseLoadInstruction(val->getType());
+    Opcode = convertOpcodeFromRegToImm(Opcode);
     mvec.push_back(BuildMI(Opcode, 3).addReg(addrReg).
                    addSImm(zeroOffset).addRegDef(dest));
       
@@ -532,7 +533,9 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
   }
 
   unsigned FPReg = target.getRegInfo().getFramePointer();
-  mvec.push_back(BuildMI(ChooseStoreInstruction(storeType), 3)
+  unsigned StoreOpcode = ChooseStoreInstruction(storeType);
+  StoreOpcode = convertOpcodeFromRegToImm(StoreOpcode);
+  mvec.push_back(BuildMI(StoreOpcode, 3)
                  .addReg(storeVal).addMReg(FPReg).addSImm(offset));
 
   // Load instruction loads [%fp+offset] to `dest'.
@@ -541,7 +544,9 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
   // On SparcV9: float for int or smaller, double for long.
   // 
   const Type* loadType = (srcSize <= 4)? Type::FloatTy : Type::DoubleTy;
-  mvec.push_back(BuildMI(ChooseLoadInstruction(loadType), 3)
+  unsigned LoadOpcode = ChooseLoadInstruction(loadType);
+  LoadOpcode = convertOpcodeFromRegToImm(LoadOpcode);
+  mvec.push_back(BuildMI(LoadOpcode, 3)
                  .addMReg(FPReg).addSImm(offset).addRegDef(dest));
 }
 
@@ -577,7 +582,9 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
   // Store instruction stores `val' to [%fp+offset].
   // The store opCode is based only the source value being copied.
   // 
-  mvec.push_back(BuildMI(ChooseStoreInstruction(opTy), 3)
+  unsigned StoreOpcode = ChooseStoreInstruction(opTy);
+  StoreOpcode = convertOpcodeFromRegToImm(StoreOpcode);  
+  mvec.push_back(BuildMI(StoreOpcode, 3)
                  .addReg(val).addMReg(FPReg).addSImm(offset));
 
   // Load instruction loads [%fp+offset] to `dest'.
@@ -588,7 +595,9 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
   // ensure correct sign-extension for UByte, UShort or UInt:
   // 
   const Type* loadTy = (opTy == Type::FloatTy)? Type::IntTy : Type::LongTy;
-  mvec.push_back(BuildMI(ChooseLoadInstruction(loadTy), 3).addMReg(FPReg)
+  unsigned LoadOpcode = ChooseLoadInstruction(loadTy);
+  LoadOpcode = convertOpcodeFromRegToImm(LoadOpcode);
+  mvec.push_back(BuildMI(LoadOpcode, 3).addMReg(FPReg)
                  .addSImm(offset).addRegDef(dest));
 }
 
