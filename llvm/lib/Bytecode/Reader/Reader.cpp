@@ -218,41 +218,118 @@ bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf,
   return false;
 }
 
-// DeclareNewGlobalValue - Patch up forward references to global values in the
-// form of ConstantPointerRef.
-//
-void BytecodeParser::DeclareNewGlobalValue(GlobalValue *GV, unsigned Slot) {
-  // Check to see if there is a forward reference to this global variable...
-  // if there is, eliminate it and patch the reference to use the new def'n.
-  GlobalRefsType::iterator I = GlobalRefs.find(make_pair(GV->getType(), Slot));
-
+Value*
+ConstantFwdRefs::find(const Type* Ty, unsigned Slot) {
+  GlobalRefsType::iterator I = GlobalRefs.find(make_pair(Ty, Slot));
   if (I != GlobalRefs.end()) {
-    GlobalVariable *OldGV = I->second;   // Get the placeholder...
-    BCR_TRACE(3, "Mutating CPPR Forward Ref!\n");
-      
-    // Loop over all of the uses of the GlobalValue.  The only thing they are
-    // allowed to be at this point is ConstantPointerRef's.
-    assert(OldGV->use_size() == 1 && "Only one reference should exist!");
-    while (!OldGV->use_empty()) {
-      User *U = OldGV->use_back();  // Must be a ConstantPointerRef...
-      ConstantPointerRef *CPPR = cast<ConstantPointerRef>(U);
-      assert(CPPR->getValue() == OldGV && "Something isn't happy");
-      
-      BCR_TRACE(4, "Mutating Forward Ref!\n");
-      
-      // Change the const pool reference to point to the real global variable
-      // now.  This should drop a use from the OldGV.
-      CPPR->mutateReference(GV);
-    }
-    
-    // Remove GV from the module...
-    GV->getParent()->getGlobalList().remove(OldGV);
-    delete OldGV;                        // Delete the old placeholder
-    
-    // Remove the map entry for the global now that it has been created...
-    GlobalRefs.erase(I);
+    return I->second;
+  } else {
+    return failure<Value*>(0);
   }
 }
+
+void
+ConstantFwdRefs::insert(const Type* Ty, unsigned Slot, Value* V) {
+  // Keep track of the fact that we have a forward ref to recycle it
+  const pair<GlobalRefsType::iterator, bool>& result =
+    GlobalRefs.insert(make_pair(make_pair(Ty, Slot), V));
+  assert(result.second == true && "Entry already exists for this slot?");
+}
+
+void
+ConstantFwdRefs::erase(const Type* Ty, unsigned Slot) {
+  GlobalRefsType::iterator I = GlobalRefs.find(make_pair(Ty, Slot));
+  if (I != GlobalRefs.end())
+    GlobalRefs.erase(I);
+}
+
+// GetFwdRefToConstant - Get a forward reference to a constant value.
+//                       Create a unique one if it does not exist already.
+// 
+Constant*
+ConstantFwdRefs::GetFwdRefToConstant(const Type* Ty, unsigned Slot) {
+  
+  Constant* C = cast_or_null<Constant>(find(Ty, Slot));
+  
+  if (C) {
+    BCR_TRACE(5, "Previous forward ref found!\n");
+  } else {
+    // Create a placeholder for the constant reference and
+    // keep track of the fact that we have a forward ref to recycle it
+    BCR_TRACE(5, "Creating new forward ref to a constant!\n");
+    C = new ConstPHolder(Ty, Slot);
+    insert(Ty, Slot, C);
+  }
+  
+  return C;
+}
+
+
+// GetFwdRefToGlobal - Get a forward reference to a global value.
+//                     Create a unique one if it does not exist already.
+// 
+GlobalValue*
+ConstantFwdRefs::GetFwdRefToGlobal(const PointerType* PT, unsigned Slot) {
+  
+  GlobalValue* GV = cast_or_null<GlobalValue>(find(PT, Slot));
+
+  if (GV) {
+    BCR_TRACE(5, "Previous forward ref found!\n");
+  } else {
+    BCR_TRACE(5, "Creating new forward ref to a global variable!\n");
+
+	  // Create a placeholder for the global variable reference...
+    GlobalVariable *GVar =
+      new GlobalVariable(PT->getElementType(), false, true);
+
+	  // Keep track of the fact that we have a forward ref to recycle it
+    insert(PT, Slot, GVar);
+  
+    // Must temporarily push this value into the module table...
+    TheModule->getGlobalList().push_back(GVar);
+    GV = GVar;
+  }
+
+  return GV;
+}
+
+void
+ConstantFwdRefs::ResolveRefsToValue(Value* NewV, unsigned Slot) {
+  if (Value* vph = find(NewV->getType(), Slot)) {
+    BCR_TRACE(3, "Mutating forward refs!\n");
+
+    // Loop over all of the uses of the Value.  What they are depends
+    // on what NewV is.  Replacing a use of the old reference takes the
+    // use off the use list, so loop with !use_empty(), not the use_iterator.
+    while (!vph->use_empty()) {
+      Constant *C = cast<Constant>(vph->use_back());
+      unsigned numReplaced = C->mutateReferences(vph, NewV);
+      assert(numReplaced > 0 && "Supposed user wasn't really a user?");
+      
+      if (GlobalValue* GVal = dyn_cast<GlobalValue>(NewV)) {
+        // Remove the placeholder GlobalValue from the module...
+        GVal->getParent()->getGlobalList().remove(cast<GlobalVariable>(vph));
+      }
+    }
+
+    delete vph;                         // Delete the old placeholder
+    erase(NewV->getType(), Slot);       // Remove the map entry for it
+  }
+}
+
+// resolveRefsToGlobal - Patch up forward references to global values in the
+// form of ConstantPointerRef.
+//
+void BytecodeParser::resolveRefsToGlobal(GlobalValue *GV, unsigned Slot) {
+  fwdRefs.ResolveRefsToValue(GV, Slot);
+}
+
+// resolveRefsToConstant - Patch up forward references to constants
+//
+void BytecodeParser::resolveRefsToConstant(Constant *C, unsigned Slot) {
+  fwdRefs.ResolveRefsToValue(C, Slot);
+}
+
 
 bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf, 
 				 Module *C) {
@@ -369,7 +446,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   if (M->isExternal())
     M->getArgumentList().clear();
 
-  DeclareNewGlobalValue(M, MethSlot);
+  resolveRefsToGlobal(M, MethSlot);
 
   return false;
 }
@@ -417,7 +494,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
 
     Mod->getGlobalList().push_back(GV);
 
-    DeclareNewGlobalValue(GV, unsigned(DestSlot));
+    resolveRefsToGlobal(GV, unsigned(DestSlot));
 
     BCR_TRACE(2, "Global Variable of type: " << PTy->getDescription() 
 	      << " into slot #" << DestSlot << "\n");
@@ -492,6 +569,8 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
   BCR_TRACE(1, "FirstDerivedTyID = " << FirstDerivedTyID << "\n");
 
   TheModule = C = new Module();
+  fwdRefs.VisitingModule(TheModule);
+
   while (Buf < EndBuf) {
     const uchar *OldBuf = Buf;
     if (readBlock(Buf, EndBuf, Type, Size)) { delete C; return failure(true); }
