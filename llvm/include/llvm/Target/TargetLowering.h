@@ -53,7 +53,19 @@ class TargetLowering {
   /// each ValueType the target supports natively.
   TargetRegisterClass *RegClassForVT[MVT::LAST_VALUETYPE];
   unsigned char NumElementsForVT[MVT::LAST_VALUETYPE];
-  
+
+  /// ValueTypeActions - This is a bitvector that contains two bits for each
+  /// value type, where the two bits correspond to the LegalizeAction enum.
+  /// This can be queried with "getTypeAction(VT)".
+  unsigned ValueTypeActions;
+ 
+  /// TransformToType - For any value types we are promoting or expanding, this
+  /// contains the value type that we are changing to.  For Expanded types, this
+  /// contains one step of the expand (e.g. i64 -> i32), even if there are
+  /// multiple steps required (e.g. i64 -> i16).  For types natively supported
+  /// by the system, this holds the same type (e.g. i32 -> i32).
+  MVT::ValueType TransformToType[MVT::LAST_VALUETYPE];
+
   unsigned short UnsupportedOps[128];
   
   std::vector<double> LegalFPImmediates;
@@ -76,9 +88,29 @@ public:
     return RC;
   }
   
-  /// hasNativeSupportFor 
+  /// hasNativeSupportFor - Return true if the target has native support for the
+  /// specified value type.  This means that it has a register that directly
+  /// holds it without promotions or expansions.
   bool hasNativeSupportFor(MVT::ValueType VT) {
     return RegClassForVT[VT] != 0;
+  }
+
+  /// getTypeAction - Return how we should legalize values of this type, either
+  /// it is already legal (return 0) or we need to promote it to a larger type
+  /// (return 1), or we need to expand it into multiple registers of smaller
+  /// integer type (return 2).
+  unsigned getTypeAction(MVT::ValueType VT) const {
+    return (ValueTypeActions >> (2*VT)) & 3;
+  }
+  unsigned getValueTypeActions() const { return ValueTypeActions; }
+
+  /// getTypeToTransformTo - For types supported by the target, this is an
+  /// identity function.  For types that must be promoted to larger types, this
+  /// returns the larger type to promote to.  For types that are larger than the
+  /// largest integer register, this contains one step in the expansion to get
+  /// to the smaller register.
+  MVT::ValueType getTypeToTransformTo(MVT::ValueType VT) {
+    return TransformToType[VT];
   }
   
   typedef std::vector<double>::const_iterator legal_fpimm_iterator;
