@@ -48,11 +48,10 @@ public:
     ///
     std::vector<bool> AliveBlocks;
 
-    /// Kills - List of MachineBasicblock's which contain the last use of this
-    /// virtual register (kill it).  This also includes the specific instruction
-    /// which kills the value.
+    /// Kills - List of MachineInstruction's which are the last use of this
+    /// virtual register (kill it) in their basic block.
     ///
-    std::vector<std::pair<MachineBasicBlock*, MachineInstr*> > Kills;
+    std::vector<MachineInstr*> Kills;
 
     VarInfo() : DefInst(0) {}
 
@@ -60,13 +59,12 @@ public:
     /// machine instruction. Returns true if there was a kill
     /// corresponding to this instruction, false otherwise.
     bool removeKill(MachineInstr *MI) {
-      for (std::vector<std::pair<MachineBasicBlock*, MachineInstr*> >::iterator
-             i = Kills.begin(); i != Kills.end(); ++i) {
-        if (i->second == MI) {
+      for (std::vector<MachineInstr*>::iterator i = Kills.begin(),
+             e = Kills.end(); i != e; ++i)
+        if (*i == MI) {
           Kills.erase(i);
           return true;
         }
-      }
       return false;
     }
   };
@@ -153,7 +151,7 @@ public:
   ///
   void addVirtualRegisterKilled(unsigned IncomingReg, MachineInstr *MI) {
     RegistersKilled.insert(std::make_pair(MI, IncomingReg));
-    getVarInfo(IncomingReg).Kills.push_back(std::make_pair(MI->getParent(),MI));
+    getVarInfo(IncomingReg).Kills.push_back(MI);
   }
 
   /// removeVirtualRegisterKilled - Remove the specified virtual
@@ -189,7 +187,7 @@ public:
   ///
   void addVirtualRegisterDead(unsigned IncomingReg, MachineInstr *MI) {
     RegistersDead.insert(std::make_pair(MI, IncomingReg));
-    getVarInfo(IncomingReg).Kills.push_back(std::make_pair(MI->getParent(),MI));
+    getVarInfo(IncomingReg).Kills.push_back(MI);
   }
 
   /// removeVirtualRegisterDead - Remove the specified virtual

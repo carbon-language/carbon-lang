@@ -59,7 +59,7 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
   // Check to see if this basic block is one of the killing blocks.  If so,
   // remove it...
   for (unsigned i = 0, e = VRInfo.Kills.size(); i != e; ++i)
-    if (VRInfo.Kills[i].first == MBB) {
+    if (VRInfo.Kills[i]->getParent() == MBB) {
       VRInfo.Kills.erase(VRInfo.Kills.begin()+i);  // Erase entry
       break;
     }
@@ -83,23 +83,23 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
 void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
                                      MachineInstr *MI) {
   // Check to see if this basic block is already a kill block...
-  if (!VRInfo.Kills.empty() && VRInfo.Kills.back().first == MBB) {
+  if (!VRInfo.Kills.empty() && VRInfo.Kills.back()->getParent() == MBB) {
     // Yes, this register is killed in this basic block already.  Increase the
     // live range by updating the kill instruction.
-    VRInfo.Kills.back().second = MI;
+    VRInfo.Kills.back() = MI;
     return;
   }
 
 #ifndef NDEBUG
   for (unsigned i = 0, e = VRInfo.Kills.size(); i != e; ++i)
-    assert(VRInfo.Kills[i].first != MBB && "entry should be at end!");
+    assert(VRInfo.Kills[i]->getParent() != MBB && "entry should be at end!");
 #endif
 
   assert(MBB != VRInfo.DefInst->getParent() && 
          "Should have kill for defblock!");
 
   // Add a new kill entry for this basic block.
-  VRInfo.Kills.push_back(std::make_pair(MI->getParent(), MI));
+  VRInfo.Kills.push_back(MI);
 
   // Update all dominating blocks to mark them known live.
   const BasicBlock *BB = MBB->getBasicBlock();
@@ -234,7 +234,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
             assert(VRInfo.DefInst == 0 && "Variable multiply defined!");
             VRInfo.DefInst = MI;
             // Defaults to dead
-            VRInfo.Kills.push_back(std::make_pair(MI->getParent(), MI));
+            VRInfo.Kills.push_back(MI);
           } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
                      AllocatablePhysicalRegisters[MO.getReg()]) {
             HandlePhysRegDef(MO.getReg(), MI);
@@ -283,12 +283,12 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   //
   for (unsigned i = 0, e = VirtRegInfo.size(); i != e; ++i)
     for (unsigned j = 0, e = VirtRegInfo[i].Kills.size(); j != e; ++j) {
-      if (VirtRegInfo[i].Kills[j].second == VirtRegInfo[i].DefInst)
-        RegistersDead.insert(std::make_pair(VirtRegInfo[i].Kills[j].second,
+      if (VirtRegInfo[i].Kills[j] == VirtRegInfo[i].DefInst)
+        RegistersDead.insert(std::make_pair(VirtRegInfo[i].Kills[j],
                              i + MRegisterInfo::FirstVirtualRegister));
 
       else
-        RegistersKilled.insert(std::make_pair(VirtRegInfo[i].Kills[j].second,
+        RegistersKilled.insert(std::make_pair(VirtRegInfo[i].Kills[j],
                                i + MRegisterInfo::FirstVirtualRegister));
     }
 

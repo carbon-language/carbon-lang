@@ -311,11 +311,11 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
        // two cases we have to handle here.  The most common case is a vreg
        // whose lifetime is contained within a basic block.  In this case there
        // will be a single kill, in MBB, which comes after the definition.
-       if (vi.Kills.size() == 1 && vi.Kills[0].first == mbb) {
+       if (vi.Kills.size() == 1 && vi.Kills[0]->getParent() == mbb) {
            // FIXME: what about dead vars?
            unsigned killIdx;
-           if (vi.Kills[0].second != mi)
-               killIdx = getUseIndex(getInstructionIndex(vi.Kills[0].second))+1;
+           if (vi.Kills[0] != mi)
+               killIdx = getUseIndex(getInstructionIndex(vi.Kills[0]))+1;
            else
                killIdx = defIndex+1;
 
@@ -353,9 +353,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
        // Finally, this virtual register is live from the start of any killing
        // block to the 'use' slot of the killing instruction.
        for (unsigned i = 0, e = vi.Kills.size(); i != e; ++i) {
-           std::pair<MachineBasicBlock*, MachineInstr*> &Kill = vi.Kills[i];
-           interval.addRange(getInstructionIndex(Kill.first->begin()),
-                             getUseIndex(getInstructionIndex(Kill.second))+1);
+           MachineInstr *Kill = vi.Kills[i];
+           interval.addRange(getInstructionIndex(Kill->getParent()->begin()),
+                             getUseIndex(getInstructionIndex(Kill))+1);
        }
 
     } else {

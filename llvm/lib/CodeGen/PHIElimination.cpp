@@ -235,7 +235,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
             
             // Is it killed in this successor?
             for (unsigned i = 0, e = InRegVI.Kills.size(); i != e; ++i)
-              if (InRegVI.Kills[i].first == SuccMBB) {
+              if (InRegVI.Kills[i]->getParent() == SuccMBB) {
                 ValueIsLive = true;
                 break;
               }
