@@ -76,8 +76,8 @@ def : RegisterAliases<SP, [ESP]>;     def : RegisterAliases<BP, [EBP]>;
 // top-level register classes.  The order specified in the register list is
 // implicitly defined to be the register allocation order.
 //
-def R8  : RegisterClass<i8,  1, [AL, CL, DL, BL, AH, CH, DH, BH]>;
-def R16 : RegisterClass<i16, 2, [AX, CX, DX, BX, SI, DI, BP, SP]> {
+def R8  : RegisterClass<i8,  1, [AL, AH, CL, CH, DL, DH, BL, BH]>;
+def R16 : RegisterClass<i16, 2, [AX, CX, DX, SI, DI, BX, BP, SP]> {
   let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
@@ -88,7 +88,7 @@ def R16 : RegisterClass<i16, 2, [AX, CX, DX, BX, SI, DI, BP, SP]> {
   }];
 }
 
-def R32 : RegisterClass<i32, 4, [EAX, ECX, EDX, EBX, ESI, EDI, EBP, ESP]> {
+def R32 : RegisterClass<i32, 4, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
   let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
