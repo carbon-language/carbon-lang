@@ -55,7 +55,7 @@ SchedPriorities::computeDelays(const SchedGraph* graph) {
   po_iterator<const SchedGraph*> poIter = po_begin(graph), poEnd =po_end(graph);
   for ( ; poIter != poEnd; ++poIter) {
     const SchedGraphNode* node = *poIter;
-    cycles_t nodeDelay;
+    CycleCount_t nodeDelay;
     if (node->beginOutEdges() == node->endOutEdges())
       nodeDelay = node->getLatency();
     else {
@@ -63,7 +63,7 @@ SchedPriorities::computeDelays(const SchedGraph* graph) {
       nodeDelay = 0;
       for (SchedGraphNode::const_iterator E=node->beginOutEdges();
            E != node->endOutEdges(); ++E) {
-        cycles_t sinkDelay = getNodeDelay((SchedGraphNode*)(*E)->getSink());
+        CycleCount_t sinkDelay = getNodeDelay((SchedGraphNode*)(*E)->getSink());
         nodeDelay = std::max(nodeDelay, sinkDelay + (*E)->getMinDelay());
       }
     }
@@ -117,7 +117,7 @@ SchedPriorities::insertReady(const SchedGraphNode* node) {
 }
 
 void
-SchedPriorities::issuedReadyNodeAt(cycles_t curTime,
+SchedPriorities::issuedReadyNodeAt(CycleCount_t curTime,
 				   const SchedGraphNode* node) {
   candsAsHeap.removeNode(node);
   candsAsSet.erase(node);
@@ -138,7 +138,7 @@ SchedPriorities::issuedReadyNodeAt(cycles_t curTime,
   // Now update ready times for successors
   for (SchedGraphNode::const_iterator E=node->beginOutEdges();
        E != node->endOutEdges(); ++E) {
-    cycles_t& etime =
+    CycleCount_t& etime =
       getEarliestReadyTimeForNodeRef((SchedGraphNode*)(*E)->getSink());
     etime = std::max(etime, curTime + (*E)->getMinDelay());
   }    
@@ -187,7 +187,7 @@ SchedPriorities::chooseByRule3(std::vector<candIndex>& mcands) {
 
 const SchedGraphNode*
 SchedPriorities::getNextHighest(const SchedulingManager& S,
-				cycles_t curTime) {
+				CycleCount_t curTime) {
   int nextIdx = -1;
   const SchedGraphNode* nextChoice = NULL;
   
@@ -237,7 +237,7 @@ SchedPriorities::findSetWithMaxDelay(std::vector<candIndex>& mcands,
     { // out of choices at current maximum delay;
       // put nodes with next highest delay in mcands
       candIndex next = nextToTry;
-      cycles_t maxDelay = candsAsHeap.getDelay(next);
+      CycleCount_t maxDelay = candsAsHeap.getDelay(next);
       for (; next != candsAsHeap.end()
 	     && candsAsHeap.getDelay(next) == maxDelay; ++next)
 	mcands.push_back(next);

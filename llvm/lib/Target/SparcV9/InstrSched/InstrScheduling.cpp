@@ -142,7 +142,7 @@ class InstrSchedule {
   const unsigned int nslots;
   unsigned int numInstr;
   std::vector<InstrGroup*> groups;		// indexed by cycle number
-  std::vector<cycles_t> startTime;		// indexed by node id
+  std::vector<CycleCount_t> startTime;		// indexed by node id
 
   InstrSchedule(InstrSchedule&);   // DO NOT IMPLEMENT
   void operator=(InstrSchedule&);  // DO NOT IMPLEMENT
@@ -163,12 +163,12 @@ public: // constructors and destructor
   
 public: // accessor functions to query chosen schedule
   const SchedGraphNode* getInstr	(unsigned int slotNum,
-					 cycles_t c) const {
+					 CycleCount_t c) const {
     const InstrGroup* igroup = this->getIGroup(c);
     return (igroup == NULL)? NULL : (*igroup)[slotNum];
   }
   
-  inline InstrGroup*	getIGroup	(cycles_t c) {
+  inline InstrGroup*	getIGroup	(CycleCount_t c) {
     if ((unsigned)c >= groups.size())
       groups.resize(c+1);
     if (groups[c] == NULL)
@@ -176,12 +176,12 @@ public: // accessor functions to query chosen schedule
     return groups[c];
   }
   
-  inline const InstrGroup* getIGroup	(cycles_t c) const {
+  inline const InstrGroup* getIGroup	(CycleCount_t c) const {
     assert((unsigned)c < groups.size());
     return groups[c];
   }
   
-  inline cycles_t	getStartTime	(unsigned int nodeId) const {
+  inline CycleCount_t	getStartTime	(unsigned int nodeId) const {
     assert(nodeId < startTime.size());
     return startTime[nodeId];
   }
@@ -192,7 +192,7 @@ public: // accessor functions to query chosen schedule
   
   inline void		scheduleInstr	(const SchedGraphNode* node,
 					 unsigned int slotNum,
-					 cycles_t cycle) {
+					 CycleCount_t cycle) {
     InstrGroup* igroup = this->getIGroup(cycle);
     if (!((*igroup)[slotNum] == NULL)) {
       std::cerr << "Slot already filled?\n";
@@ -222,7 +222,7 @@ InstrSchedule::InstrSchedule(unsigned int _nslots, unsigned int _numNodes)
   : nslots(_nslots),
     numInstr(0),
     groups(2 * _numNodes / _nslots),		// 2 x lower-bound for #cycles
-    startTime(_numNodes, (cycles_t) -1)		// set all to -1
+    startTime(_numNodes, (CycleCount_t) -1)		// set all to -1
 {
 }
 
@@ -297,7 +297,7 @@ class DelaySlotInfo {
   const SchedGraphNode* brNode;
   unsigned ndelays;
   std::vector<const SchedGraphNode*> delayNodeVec;
-  cycles_t delayedNodeCycle;
+  CycleCount_t delayedNodeCycle;
   unsigned delayedNodeSlotNum;
   
   DelaySlotInfo(const DelaySlotInfo &);  // DO NOT IMPLEMENT
@@ -321,7 +321,7 @@ public:
     assert(delayNodeVec.size() <= ndelays && "Too many delay slot instrs!");
   }
   
-  inline void	recordChosenSlot	(cycles_t cycle, unsigned slotNum) {
+  inline void	recordChosenSlot	(CycleCount_t cycle, unsigned slotNum) {
     delayedNodeCycle = cycle;
     delayedNodeSlotNum = slotNum;
   }
@@ -347,13 +347,13 @@ public: // publicly accessible data members
   
 private:
   unsigned totalInstrCount;
-  cycles_t curTime;
-  cycles_t nextEarliestIssueTime;		// next cycle we can issue
+  CycleCount_t curTime;
+  CycleCount_t nextEarliestIssueTime;		// next cycle we can issue
   // indexed by slot#
   std::vector<hash_set<const SchedGraphNode*> > choicesForSlot;
   std::vector<const SchedGraphNode*> choiceVec;	// indexed by node ptr
   std::vector<int> numInClass;			// indexed by sched class
-  std::vector<cycles_t> nextEarliestStartTime;	// indexed by opCode
+  std::vector<CycleCount_t> nextEarliestStartTime;	// indexed by opCode
   hash_map<const SchedGraphNode*, DelaySlotInfo*> delaySlotInfoForBranches;
 						// indexed by branch node ptr 
   
@@ -379,21 +379,21 @@ public:
   // Interface for checking and updating the current time
   //----------------------------------------------------------------------
   
-  inline cycles_t	getTime			() const {
+  inline CycleCount_t	getTime			() const {
     return curTime;
   }
   
-  inline cycles_t	getEarliestIssueTime() const {
+  inline CycleCount_t	getEarliestIssueTime() const {
     return nextEarliestIssueTime;
   }
   
-  inline cycles_t	getEarliestStartTimeForOp(MachineOpCode opCode) const {
+  inline CycleCount_t	getEarliestStartTimeForOp(MachineOpCode opCode) const {
     assert(opCode < (int) nextEarliestStartTime.size());
     return nextEarliestStartTime[opCode];
   }
   
   // Update current time to specified cycle
-  inline void	updateTime		(cycles_t c) {
+  inline void	updateTime		(CycleCount_t c) {
     curTime = c;
     schedPrio.updateTime(c);
   }
@@ -467,7 +467,7 @@ public:
   
   inline void	scheduleInstr		(const SchedGraphNode* node,
 					 unsigned int slotNum,
-					 cycles_t cycle)
+					 CycleCount_t cycle)
   {
     assert(! isScheduled(node) && "Instruction already scheduled?");
     
@@ -509,7 +509,7 @@ public:
   
 private:
   SchedulingManager();     // DISABLED: DO NOT IMPLEMENT
-  void updateEarliestStartTimes(const SchedGraphNode* node, cycles_t schedTime);
+  void updateEarliestStartTimes(const SchedGraphNode* node, CycleCount_t schedTime);
 };
 
 
@@ -526,7 +526,7 @@ SchedulingManager::SchedulingManager(const TargetMachine& target,
     choicesForSlot(nslots),
     numInClass(target.getSchedInfo()->getNumSchedClasses(), 0),	// set all to 0
     nextEarliestStartTime(target.getInstrInfo()->getNumOpcodes(),
-			  (cycles_t) 0)				// set all to 0
+			  (CycleCount_t) 0)				// set all to 0
 {
   updateTime(0);
   
@@ -540,7 +540,7 @@ SchedulingManager::SchedulingManager(const TargetMachine& target,
 
 void
 SchedulingManager::updateEarliestStartTimes(const SchedGraphNode* node,
-					    cycles_t schedTime)
+					    CycleCount_t schedTime)
 {
   if (schedInfo.numBubblesAfter(node->getOpcode()) > 0)
     { // Update next earliest time before which *nothing* can issue.
@@ -554,7 +554,7 @@ SchedulingManager::updateEarliestStartTimes(const SchedGraphNode* node,
   for (unsigned i=0; i < conflictVec.size(); i++)
     {
       MachineOpCode toOp = conflictVec[i];
-      cycles_t est=schedTime + schedInfo.getMinIssueGap(node->getOpcode(),toOp);
+      CycleCount_t est=schedTime + schedInfo.getMinIssueGap(node->getOpcode(),toOp);
       assert(toOp < (int) nextEarliestStartTime.size());
       if (nextEarliestStartTime[toOp] < est)
         nextEarliestStartTime[toOp] = est;
@@ -569,7 +569,7 @@ AssignInstructionsToSlots(class SchedulingManager& S, unsigned maxIssue)
 {
   // find the slot to start from, in the current cycle
   unsigned int startSlot = 0;
-  cycles_t curTime = S.getTime();
+  CycleCount_t curTime = S.getTime();
   
   assert(maxIssue > 0 && maxIssue <= S.nslots - startSlot);
   
@@ -850,7 +850,7 @@ FindSlotChoices(SchedulingManager& S,
     // highest slot used.  But we just mark that for now, and
     // schedule it separately because we want to schedule the delay
     // slots for the node at the same time.
-    cycles_t dcycle = S.getTime();
+    CycleCount_t dcycle = S.getTime();
     unsigned int dslot = highestSlotUsed + 1;
     if (dslot == S.nslots) {
       dslot = 0;
@@ -934,7 +934,7 @@ ChooseOneGroup(SchedulingManager& S)
   assert(S.schedPrio.getNumReady() > 0
 	 && "Don't get here without ready instructions.");
   
-  cycles_t firstCycle = S.getTime();
+  CycleCount_t firstCycle = S.getTime();
   DelaySlotInfo* getDelaySlotInfo = NULL;
   
   // Choose up to `nslots' feasible instructions and their possible slots.
@@ -952,7 +952,7 @@ ChooseOneGroup(SchedulingManager& S)
   
   // Print trace of scheduled instructions before newly ready ones
   if (SchedDebugLevel >= Sched_PrintSchedTrace) {
-    for (cycles_t c = firstCycle; c <= S.getTime(); c++) {
+    for (CycleCount_t c = firstCycle; c <= S.getTime(); c++) {
       std::cerr << "    Cycle " << (long)c <<" : Scheduled instructions:\n";
       const InstrGroup* igroup = S.isched.getIGroup(c);
       for (unsigned int s=0; s < S.nslots; s++) {
@@ -978,7 +978,7 @@ ForwardListSchedule(SchedulingManager& S)
   S.schedPrio.initialize();
   
   while ((N = S.schedPrio.getNumReady()) > 0) {
-    cycles_t nextCycle = S.getTime();
+    CycleCount_t nextCycle = S.getTime();
       
     // Choose one group of instructions for a cycle, plus any delay slot
     // instructions (which may overflow into successive cycles).
@@ -991,7 +991,7 @@ ForwardListSchedule(SchedulingManager& S)
     // Notify the priority manager of scheduled instructions and mark
     // any successors that may now be ready
     // 
-    for (cycles_t c = nextCycle; c <= S.getTime(); c++) {
+    for (CycleCount_t c = nextCycle; c <= S.getTime(); c++) {
       const InstrGroup* igroup = S.isched.getIGroup(c);
       for (unsigned int s=0; s < S.nslots; s++)
         if ((node = (*igroup)[s]) != NULL) {
@@ -1304,7 +1304,7 @@ DelaySlotInfo::scheduleDelayedNode(SchedulingManager& S)
 	 && "Slot for branch should be empty");
   
   unsigned int nextSlot = delayedNodeSlotNum;
-  cycles_t nextTime = delayedNodeCycle;
+  CycleCount_t nextTime = delayedNodeCycle;
   
   S.scheduleInstr(brNode, nextSlot, nextTime);
   
@@ -1395,7 +1395,7 @@ ConflictsWithChoices(const SchedulingManager& S,
 static inline bool
 ViolatesMinimumGap(const SchedulingManager& S,
 		   MachineOpCode opCode,
-		   const cycles_t inCycle)
+		   const CycleCount_t inCycle)
 {
   return (inCycle < S.getEarliestStartTimeForOp(opCode));
 }

@@ -61,8 +61,8 @@ bool instrIsFeasible(const SchedulingManager &S, MachineOpCode opCode);
 
 struct NodeDelayPair {
   const SchedGraphNode* node;
-  cycles_t delay;
-  NodeDelayPair(const SchedGraphNode* n, cycles_t d) :  node(n), delay(d) {}
+  CycleCount_t delay;
+  NodeDelayPair(const SchedGraphNode* n, CycleCount_t d) :  node(n), delay(d) {}
   inline bool operator<(const NodeDelayPair& np) { return delay < np.delay; }
 };
 
@@ -85,7 +85,7 @@ public:
   inline unsigned       size() const { return _size; }
   
   const SchedGraphNode* getNode	(const_iterator i) const { return (*i)->node; }
-  cycles_t		getDelay(const_iterator i) const { return (*i)->delay;}
+  CycleCount_t		getDelay(const_iterator i) const { return (*i)->delay;}
   
   inline void		makeHeap() { 
     // make_heap(begin(), end(), NDPLessThan);
@@ -108,7 +108,7 @@ public:
       }
   };
   
-  void		  insert(const SchedGraphNode* node, cycles_t delay) {
+  void		  insert(const SchedGraphNode* node, CycleCount_t delay) {
     NodeDelayPair* ndp = new NodeDelayPair(node, delay);
     if (_size == 0 || front()->delay < delay)
       push_front(ndp);
@@ -137,36 +137,36 @@ public:
   // This must be called before scheduling begins.
   void		initialize		();
   
-  cycles_t	getTime			() const { return curTime; }
-  cycles_t	getEarliestReadyTime	() const { return earliestReadyTime; }
+  CycleCount_t	getTime			() const { return curTime; }
+  CycleCount_t	getEarliestReadyTime	() const { return earliestReadyTime; }
   unsigned	getNumReady		() const { return candsAsHeap.size(); }
   bool		nodeIsReady		(const SchedGraphNode* node) const {
     return (candsAsSet.find(node) != candsAsSet.end());
   }
   
-  void		issuedReadyNodeAt	(cycles_t curTime,
+  void		issuedReadyNodeAt	(CycleCount_t curTime,
 					 const SchedGraphNode* node);
   
   void		insertReady		(const SchedGraphNode* node);
   
-  void		updateTime		(cycles_t /*unused*/);
+  void		updateTime		(CycleCount_t /*unused*/);
   
   const SchedGraphNode* getNextHighest	(const SchedulingManager& S,
-					 cycles_t curTime);
+					 CycleCount_t curTime);
 					// choose next highest priority instr
   
 private:
   typedef NodeHeap::iterator candIndex;
   
 private:
-  cycles_t curTime;
+  CycleCount_t curTime;
   const SchedGraph* graph;
   FunctionLiveVarInfo &methodLiveVarInfo;
   hash_map<const MachineInstr*, bool> lastUseMap;
-  std::vector<cycles_t> nodeDelayVec;
-  std::vector<cycles_t> nodeEarliestUseVec;
-  std::vector<cycles_t> earliestReadyTimeForNode;
-  cycles_t earliestReadyTime;
+  std::vector<CycleCount_t> nodeDelayVec;
+  std::vector<CycleCount_t> nodeEarliestUseVec;
+  std::vector<CycleCount_t> earliestReadyTimeForNode;
+  CycleCount_t earliestReadyTime;
   NodeHeap candsAsHeap;				// candidate nodes, ready to go
   hash_set<const SchedGraphNode*> candsAsSet;   //same entries as candsAsHeap,
 						//   but as set for fast lookup
@@ -190,25 +190,25 @@ private:
   
   // NOTE: The next two return references to the actual vector entries.
   //       Use the following two if you don't need to modify the value.
-  cycles_t&	getNodeDelayRef		(const SchedGraphNode* node) {
+  CycleCount_t&	getNodeDelayRef		(const SchedGraphNode* node) {
     assert(node->getNodeId() < nodeDelayVec.size());
     return nodeDelayVec[node->getNodeId()];
   }
-  cycles_t&     getEarliestReadyTimeForNodeRef   (const SchedGraphNode* node) {
+  CycleCount_t&     getEarliestReadyTimeForNodeRef   (const SchedGraphNode* node) {
     assert(node->getNodeId() < earliestReadyTimeForNode.size());
     return earliestReadyTimeForNode[node->getNodeId()];
   }
   
-  cycles_t      getNodeDelay            (const SchedGraphNode* node) const {
+  CycleCount_t      getNodeDelay            (const SchedGraphNode* node) const {
     return ((SchedPriorities*) this)->getNodeDelayRef(node); 
   }
-  cycles_t      getEarliestReadyTimeForNode(const SchedGraphNode* node) const {
+  CycleCount_t      getEarliestReadyTimeForNode(const SchedGraphNode* node) const {
     return ((SchedPriorities*) this)->getEarliestReadyTimeForNodeRef(node);
   }
 };
 
 
-inline void SchedPriorities::updateTime(cycles_t c) {
+inline void SchedPriorities::updateTime(CycleCount_t c) {
   curTime = c;
   nextToTry = candsAsHeap.begin();
   mcands.clear();
