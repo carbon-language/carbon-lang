@@ -179,8 +179,6 @@ void Preheaders::InsertPreheaderForLoop(Loop *L) {
       if (!L->contains(*PI))           // Coming in from outside the loop?
         OutsideBlocks.push_back(*PI);  // Keep track of it...
   
-  assert(OutsideBlocks.size() != 1 && "Loop already has a preheader!");
-  
   // Split out the loop pre-header
   BasicBlock *NewBB =
     SplitBlockPredecessors(Header, ".preheader", OutsideBlocks);
@@ -281,6 +279,11 @@ void Preheaders::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   BasicBlock *NewBB =
     SplitBlockPredecessors(Exit, ".loopexit", LoopBlocks);
   
+  // Update Loop Information - we know that the new block will be in the parent
+  // loop of L.
+  if (Loop *Parent = L->getParentLoop())
+    Parent->addBasicBlockToLoop(NewBB, getAnalysis<LoopInfo>());
+
   // Update dominator information...  The blocks that dominate NewBB are the
   // intersection of the dominators of predecessors, plus the block itself.
   // The newly created basic block does not dominate anything except itself.
@@ -363,6 +366,5 @@ void Preheaders::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
         }
       }
     }
-
   }
 }
