@@ -15,7 +15,7 @@
 //===------------------------------------------------------------------------===
 
 #include "CompilerDriver.h"
-#include "ConfigData.h"
+#include "Configuration.h"
 #include "llvm/System/Signals.h"
 #include "Support/CommandLine.h"
 #include <iostream>

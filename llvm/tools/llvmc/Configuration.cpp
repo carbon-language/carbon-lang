@@ -12,7 +12,7 @@
 //
 //===------------------------------------------------------------------------===
 
-#include "ConfigData.h"
+#include "Configuration.h"
 #include "ConfigLexer.h"
 #include "CompilerDriver.h"
 #include "Support/CommandLine.h"
