@@ -41,13 +41,13 @@
 
 #include "llvm/Pass.h"
 #include "Support/BitSetVector.h"
-#include "Support/NonCopyable.h"
 
 class Module;
 class Function;
 class CallInst;
 class DSNode;
 class DSGraph;
+class DSNodeHandle;
 class ModRefInfo;               // Result of IP Mod/Ref for one entity
 class FunctionModRefInfo;       // ModRefInfo for a func and all calls in it
 class IPModRef;                 // Pass that computes IP Mod/Ref info
@@ -125,7 +125,8 @@ class FunctionModRefInfo {
 
   void          computeModRef   (const Function &func);
   void          computeModRef   (const CallInst& callInst);
-  DSGraph *ResolveCallSiteModRefInfo(const CallInst &CI);
+  DSGraph *ResolveCallSiteModRefInfo(const CallInst &CI,
+                                std::map<const DSNode*, DSNodeHandle> &NodeMap);
 
 public:
   /* ctor */    FunctionModRefInfo      (const Function& func,

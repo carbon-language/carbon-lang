@@ -104,17 +104,28 @@ void FunctionModRefInfo::computeModRef(const Function &func)
 //  2. It clears all of the mod/ref bits in the cloned graph
 //  3. It then merges the bottom-up graph(s) for the specified call-site into
 //     the clone (bringing new mod/ref bits).
-//  4. It returns the clone.
+//  4. It returns the clone, and a mapping of nodes from the original TDGraph to
+//     the cloned graph with Mod/Ref info for the callsite.
 //
 // NOTE: Because this clones a dsgraph and returns it, the caller is responsible
 //       for deleting the returned graph!
 //
-DSGraph *FunctionModRefInfo::ResolveCallSiteModRefInfo(const CallInst &CI) {
-  // Step #1: Clone the top-down graph...
-  DSGraph *Result = new DSGraph(funcTDGraph);
+DSGraph *FunctionModRefInfo::ResolveCallSiteModRefInfo(const CallInst &CI,
+                               std::map<const DSNode*, DSNodeHandle> &NodeMap) {
 
-  //const Function &F = *CI.getParent()->getParent();
-  //DSGraph &TDGraph = IPModRefObj.getAnalysis<TDDataStructures>().getDSGraph(F);
+  // Step #1: Clone the top-down graph...
+  std::map<const DSNode*, DSNode*> RawNodeMap;
+  DSGraph *Result = new DSGraph(funcTDGraph, RawNodeMap);
+
+  // Convert the NodeMap from a map to DSNode* to be a map to DSNodeHandle's
+  NodeMap.insert(RawNodeMap.begin(), RawNodeMap.end());
+
+  // We are now done with the old map... so free it's memory...
+  RawNodeMap.clear();
+
+  // Step #2: Clear Mod/Ref information...
+  Result->maskNodeTypes(~(DSNode::Modified | DSNode::Read));
+
 
   
   return Result;
@@ -133,7 +144,8 @@ FunctionModRefInfo::computeModRef(const CallInst& callInst)
   callSiteModRefInfo[&callInst] = callModRefInfo;
 
   // Get a copy of the graph for the callee with the callee inlined
-  DSGraph* csgp = ResolveCallSiteModRefInfo(callInst);
+  std::map<const DSNode*, DSNodeHandle> NodeMap;
+  DSGraph* csgp = ResolveCallSiteModRefInfo(callInst, NodeMap);
 
   // For all nodes in the graph, extract the mod/ref information
   const std::vector<DSNode*>& csgNodes = csgp->getNodes();
