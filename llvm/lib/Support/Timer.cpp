@@ -11,6 +11,7 @@
 #include <sys/unistd.h>
 #include <unistd.h>
 #include <malloc.h>
+#include <stdio.h>
 #include <iostream>
 #include <algorithm>
 #include <functional>
