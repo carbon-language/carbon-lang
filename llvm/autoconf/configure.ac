@@ -203,6 +203,7 @@ fi
 dnl Checks for other tools
 AC_PROG_FLEX
 AC_PROG_BISON
+AC_LIBTOOL_DLOPEN
 AC_PROG_LIBTOOL
 AC_PATH_PROG(TAR,[tar],[gtar])
 
@@ -252,23 +253,32 @@ dnl Checks for libraries:
 dnl libelf is for sparc only; we can ignore it if we don't have it
 AC_CHECK_LIB(elf, elf_begin)
 
-dnl Check for bzip2 and zlib compression libraries needed for archive reading/writing
-AC_CHECK_LIB(bz2,BZ2_bzCompressInit,[bzip2_found=1],[bzip2_found=0])
-AC_CHECK_HEADERS([bzlib.h],[bzlib_h_found=1],[bzlib_h_found=0],[])
+dnl Check for bzip2 and zlib compression libraries needed for archive 
+dnl and bytecode compression.
 AC_CHECK_LIB(z,gzopen,[zlib_found=1],[zlib_found=0])
-AC_CHECK_HEADERS([zlib.h],[zlib_h_found=1],[zlib_h_found=0],[])
-if test $zlib_found -eq 1 -a $zlib_h_found -eq 1; then
-  AC_DEFINE([HAVE_ZLIB],[1],[Define if zlib library is available on this platform.])
+if test $zlib_found -eq 1; then
+  AC_DEFINE([HAVE_ZLIB],[1],
+            [Define if zlib library is available on this platform.])
   AC_SUBST([HAVE_ZLIB],[1])
 else
   AC_SUBST([HAVE_ZLIB],[0])
 fi
-if test $bzip2_found -eq 1 -a $bzlib_h_found -eq 1 ; then
-  AC_DEFINE([HAVE_BZIP2],[1],[Define if bzip2 library is available on this platform.])
+
+AC_CHECK_LIB(bz2,BZ2_bzCompressInit,[bzip2_found=1],[bzip2_found=0])
+if test $bzip2_found -eq 1 ; then
+  AC_DEFINE([HAVE_BZIP2],[1],
+            [Define if bzip2 library is available on this platform.])
   AC_SUBST([HAVE_BZIP2],[1])
 else
   AC_SUBST([HAVE_BZIP2],[0])
 fi
+
+dnl lt_dlopen may be required for plugin support.
+AC_SEARCH_LIBS(lt_dlopen,ltdl,AC_DEFINE([HAVE_LT_DLOPEN],[1],
+              [Define if lt_dlopen() is available on this platform]),
+              AC_MSG_WARN([lt_dlopen() not found - plugin support might 
+                           not be available]))
+
 dnl dlopen() is required for plugin support.
 AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],[Define if dlopen() is available on this platform.]),AC_MSG_WARN([dlopen() not found - disabling plugin support]))
 
@@ -287,7 +297,7 @@ AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 
 dnl Checks for POSIX and other various system-specific header files
-AC_CHECK_HEADERS(fcntl.h limits.h sys/time.h unistd.h malloc.h sys/mman.h sys/resource.h dlfcn.h link.h execinfo.h windows.h)
+AC_CHECK_HEADERS([fcntl.h limits.h sys/time.h unistd.h malloc.h sys/mman.h sys/resource.h dlfcn.h ltdl.h link.h execinfo.h windows.h bzlib.h zlib.h])
 
 dnl Check for things that need to be included in public headers, and so
 dnl for which we may not have access to a HAVE_* preprocessor #define.
