@@ -197,8 +197,6 @@ private:
 
   // Construction methods needed for fine-grain control.
   // These must be accessed via coresponding methods in MachineInstr.
-  void markDef()       { flags |= DEFFLAG; }
-  void markDefAndUse() { flags |= DEFUSEFLAG; }
   void markHi32()      { flags |= HIFLAG32; }
   void markLo32()      { flags |= LOFLAG32; }
   void markHi64()      { flags |= HIFLAG64; }
