@@ -116,7 +116,7 @@ void BBLiveVar::calcDefUseSets() {
       assert(MI->getOpCode() != PHI && "Phi cannot have implicit opeands");
       const Value *Op = MI->getImplicitRef(i);
 
-      if (Op->getType()->isLabelType())             // don't process labels
+      if (Op->getType() == Type::LabelTy)             // don't process labels
 	continue;
 
       if (!MI->implicitRefIsDefined(i))

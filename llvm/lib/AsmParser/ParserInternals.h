@@ -170,7 +170,7 @@ struct InstPlaceHolderHelper : public Instruction {
 
 struct BBPlaceHolderHelper : public BasicBlock {
   BBPlaceHolderHelper(const Type *Ty) : BasicBlock() {
-    assert(Ty->isLabelType());
+    assert(Ty == Type::LabelTy);
   }
 };
 
