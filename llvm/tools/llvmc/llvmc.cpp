@@ -214,11 +214,14 @@ int main(int argc, char **argv) {
 
     // Deal with unimplemented options.
     if (PipeCommands)
-      std::cerr << argv[0] << ": Not implemented yet: -pipe";
+      throw "Not implemented yet: -pipe";
 
-    // Default the output file, only if we're going to try to link
-    if (OutputFilename.empty() && OptLevel == CompilerDriver::LINKING)
-      OutputFilename = "a.out";
+    if (OutputFilename.empty())
+      if (OptLevel == CompilerDriver::LINKING)
+        OutputFilename = "a.out";
+      else
+        throw "An output file must be specified. Please use the -o option";
+
 
     // Construct the ConfigDataProvider object
     LLVMC_ConfigDataProvider Provider;
@@ -283,15 +286,15 @@ int main(int argc, char **argv) {
     // Tell the driver to do its thing
     int result = CD.execute(InpList,OutputFilename);
     if (result != 0) {
-      std::cerr << argv[0] << ": Error executing actions. Terminated.\n";
+      throw "Error executing actions. Terminated.\n";
       return result;
     }
 
     // All is good, return success
     return 0;
   } catch (std::string& msg) {
-    std::cerr << msg << "\n";
+    std::cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    std::cerr << "Unexpected unknown exception occurred.\n";
+    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
 }
