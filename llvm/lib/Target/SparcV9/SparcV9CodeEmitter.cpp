@@ -527,6 +527,15 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
     DEBUG(std::cerr << "FP CC reg: " << fakeReg << "\n");
     return fakeReg;
   }
+  case SparcV9RegInfo::SpecialRegClassID: {
+    // Currently only "special" reg is %fsr, which is encoded as 1 in
+    // instructions and 0 in SparcV9SpecialRegClass.
+    static const unsigned SpecialReg[] = {  1 };
+    assert(fakeReg < sizeof(SpecialReg)/sizeof(SpecialReg[0])
+             && "Special register out of bounds for SpecialReg map");      
+    DEBUG(std::cerr << "Special reg: " << SpecialReg[fakeReg] << "\n");
+    return SpecialReg[fakeReg];
+  }
   default:
     assert(0 && "Invalid unified register number in getRealRegNum");
     return fakeReg;
