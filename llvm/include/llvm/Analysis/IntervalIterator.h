@@ -29,6 +29,7 @@
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Support/CFG.h"
 #include <stack>
 #include <set>
 #include <algorithm>
@@ -128,7 +129,7 @@ public:
       // All of the intervals on the stack have been visited.  Try visiting
       // their successors now.
       Interval::succ_iterator &SuccIt = IntStack.top().second,
-	                        EndIt = IntStack.top().first->succ_end();
+	                        EndIt = succ_end(IntStack.top().first);
       while (SuccIt != EndIt) {                 // Loop over all interval succs
 	bool Done = ProcessInterval(getSourceGraphNode(OrigContainer, *SuccIt));
 	++SuccIt;                               // Increment iterator
@@ -165,11 +166,11 @@ private:
     Visited.insert(Header);   // The header has now been visited!
 
     // Check all of our successors to see if they are in the interval...
-    for (typename NodeTy::succ_iterator I = Node->succ_begin(),
-                                        E = Node->succ_end(); I != E; ++I)
+    for (typename NodeTy::succ_iterator I = succ_begin(Node),
+                                        E = succ_end(Node); I != E; ++I)
       ProcessNode(Int, getSourceGraphNode(OrigContainer, *I));
 
-    IntStack.push(make_pair(Int, Int->succ_begin()));
+    IntStack.push(make_pair(Int, succ_begin(Int)));
     return true;
   }
   
@@ -196,8 +197,8 @@ private:
 	  Int->Successors.push_back(NodeHeader);
       }
     } else {                             // Otherwise, not in interval yet
-      for (typename NodeTy::pred_iterator I = Node->pred_begin(), 
-	                                  E = Node->pred_end(); I != E; ++I) {
+      for (typename NodeTy::pred_iterator I = pred_begin(Node), 
+	                                  E = pred_end(Node); I != E; ++I) {
 	if (!Int->contains(*I)) {        // If pred not in interval, we can't be
 	  if (!Int->isSuccessor(NodeHeader)) // Add only if not already in set
 	    Int->Successors.push_back(NodeHeader);
@@ -219,8 +220,8 @@ private:
     
       // Now that we have discovered that Node is in the interval, perhaps some
       // of its successors are as well?
-      for (typename NodeTy::succ_iterator It = Node->succ_begin(), 
-	     End = Node->succ_end(); It != End; ++It)
+      for (typename NodeTy::succ_iterator It = succ_begin(Node),
+	     End = succ_end(Node); It != End; ++It)
 	ProcessNode(Int, getSourceGraphNode(OrigContainer, *It));
     }
   }
