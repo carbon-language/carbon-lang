@@ -17,6 +17,7 @@
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Transforms/Scalar.h"
 using namespace llvm;
 
 // allocateSparcV8TargetMachine - Allocate and return a subclass of 
@@ -40,6 +41,18 @@ SparcV8TargetMachine::SparcV8TargetMachine(const Module &M,
 ///
 bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 					       std::ostream &Out) {
+  // FIXME: Implement efficient support for garbage collection intrinsics.
+  PM.add(createLowerGCPass());
+
+  // Replace malloc and free instructions with library calls.
+  PM.add(createLowerAllocationsPass());
+  
+  // FIXME: implement the switch instruction in the instruction selector.
+  PM.add(createLowerSwitchPass());
+
+  // FIXME: implement the invoke/unwind instructions!
+  PM.add(createLowerInvokePass());
+
   PM.add(createSparcV8SimpleInstructionSelector(*this));
 
   // Print machine instructions as they were initially generated.
@@ -72,6 +85,18 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 /// implement a fast dynamic compiler for this target.
 ///
 void SparcV8JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
+  // FIXME: Implement efficient support for garbage collection intrinsics.
+  PM.add(createLowerGCPass());
+
+  // Replace malloc and free instructions with library calls.
+  PM.add(createLowerAllocationsPass());
+  
+  // FIXME: implement the switch instruction in the instruction selector.
+  PM.add(createLowerSwitchPass());
+
+  // FIXME: implement the invoke/unwind instructions!
+  PM.add(createLowerInvokePass());
+  
   PM.add(createSparcV8SimpleInstructionSelector(TM));
 
   // Print machine instructions as they were initially generated.
