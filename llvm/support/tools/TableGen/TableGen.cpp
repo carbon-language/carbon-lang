@@ -193,9 +193,9 @@ static unsigned getFirstFixedBitInSequence(std::vector<Record*>::iterator IB,
 }
 
 // ParseMachineCode - Try to split the vector of instructions (which is
-// intentially taken by-copy) in half, narrowing down the possible instructions
-// that we may have found.  Eventually, this list will get pared down to zero or
-// one instruction, in which case we have a match or failure.
+// intentionally taken by-copy) in half, narrowing down the possible
+// instructions that we may have found.  Eventually, this list will get pared
+// down to zero or one instruction, in which case we have a match or failure.
 //
 static Record *ParseMachineCode(std::vector<Record*>::iterator InstsB, 
 				std::vector<Record*>::iterator InstsE,
