@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Constants.h"
 #include <iostream>
 using namespace llvm;
@@ -403,6 +404,24 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
 
+  case ISD::EXTLOAD:
+  case ISD::SEXTLOAD:
+  case ISD::ZEXTLOAD:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+    if (Tmp1 != Node->getOperand(0) ||
+        Tmp2 != Node->getOperand(1))
+      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1, Tmp2,
+                           cast<MVTSDNode>(Node)->getExtraValueType());
+    else
+      Result = SDOperand(Node, 0);
+    
+    // Since loads produce two values, make sure to remember that we legalized
+    // both of them.
+    AddLegalizedOperand(SDOperand(Node, 0), Result);
+    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+    return Result.getValue(Op.ResNo);
+
   case ISD::EXTRACT_ELEMENT:
     // Get both the low and high parts.
     ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
@@ -544,6 +563,23 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       assert(isTypeLegal(Tmp2.getValueType()) &&
              "Pointers must be legal!");
       Result = DAG.getNode(ISD::STORE, MVT::Other, Result, Hi, Tmp2);
+    }
+    break;
+  case ISD::TRUNCSTORE:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the pointer.
+
+    switch (getTypeAction(Node->getOperand(1).getValueType())) {
+    case Legal:
+      Tmp2 = LegalizeOp(Node->getOperand(1));
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
+          Tmp3 != Node->getOperand(2))
+        Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp3, Tmp2,
+                             cast<MVTSDNode>(Node)->getExtraValueType());
+      break;
+    case Promote:
+    case Expand:
+      assert(0 && "Cannot handle illegal TRUNCSTORE yet!");
     }
     break;
   case ISD::SELECT:
@@ -736,6 +772,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
     }
     break;
+  case ISD::FP_ROUND_INREG:
+  case ISD::SIGN_EXTEND_INREG:
+  case ISD::ZERO_EXTEND_INREG:
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    if (Tmp1 != Node->getOperand(0))
+      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,
+                           cast<MVTSDNode>(Node)->getExtraValueType());
+    break;
   }
 
   if (!Op.Val->hasOneUse())
@@ -759,6 +803,11 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
 
   SDOperand Result;
   SDNode *Node = Op.Val;
+
+  // Promotion needs an optimization step to clean up after it, and is not
+  // careful to avoid operations the target does not support.  Make sure that
+  // all generated operations are legalized in the next iteration.
+  NeedsAnotherIteration = true;
 
   switch (Node->getOpcode()) {
   default:
@@ -798,6 +847,23 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp2 = PromoteOp(Node->getOperand(1));
     assert(Tmp1.getValueType() == NVT && Tmp2.getValueType() == NVT);
     Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
+    break;
+
+  case ISD::ADD:
+  case ISD::MUL:
+    // The input may have strange things in the top bits of the registers, but
+    // these operations don't care.  They may have wierd bits going out, but
+    // that too is okay if they are integer operations.
+    Tmp1 = PromoteOp(Node->getOperand(0));
+    Tmp2 = PromoteOp(Node->getOperand(1));
+    assert(Tmp1.getValueType() == NVT && Tmp2.getValueType() == NVT);
+    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
+
+    // However, if this is a floating point operation, they will give excess
+    // precision that we may not be able to tolerate.  If we DO allow excess
+    // precision, just leave it, otherwise excise it.
+    if (MVT::isFloatingPoint(NVT) && NoExcessFPPrecision)
+      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result, VT);
     break;
 
   case ISD::LOAD:
