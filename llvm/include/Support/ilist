@@ -156,6 +156,18 @@ public:
   pointer getNodePtrUnchecked() const { return NodePtr; }
 };
 
+// do not implement. this is to catch errors when people try to use
+// them as random access iterators
+template<typename T>
+void operator-(int, ilist_iterator<T>);
+template<typename T>
+void operator-(ilist_iterator<T>,int);
+
+template<typename T>
+void operator+(int, ilist_iterator<T>);
+template<typename T>
+void operator+(ilist_iterator<T>,int);
+
 //===----------------------------------------------------------------------===//
 // ilist_compat_iterator<Node> - Compatibility iterator for intrusive list.
 // This makes an ilist<X> act like an std::list<X*>, where you have to
