@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = burg
-ExtraSource = gram.tab.c
+BUILT_SOURCES = gram.tab.c
 
 include $(LEVEL)/Makefile.common
 

@@ -10,7 +10,7 @@ LEVEL=..
 
 include $(LEVEL)/Makefile.config
 
-DIRS:= $(filter-out llvm-test,$(patsubst $(SourceDir)/%/Makefile,%,$(wildcard $(SourceDir)/*/Makefile)))
+DIRS:= $(filter-out llvm-test,$(patsubst $(BUILD_SRC_DIR)/%/Makefile,%,$(wildcard $(BUILD_SRC_DIR)/*/Makefile)))
 
 # Sparc cannot link shared libraries (libtool problem?) which Stacker uses
 ifeq ($(ARCH), Sparc)

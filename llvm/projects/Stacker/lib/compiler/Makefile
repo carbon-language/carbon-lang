@@ -18,3 +18,5 @@ include $(LEVEL)/Makefile.common
 ifdef PARSE_DEBUG
 INCLUDES += -DPARSE_DEBUG
 endif
+
+$(OBJDIR)/Lexer.o : StackerParser.h

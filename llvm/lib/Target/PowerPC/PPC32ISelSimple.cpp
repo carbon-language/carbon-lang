@@ -2144,7 +2144,7 @@ bool PPC32ISel::emitBitfieldInsert(BinaryOperator *AndI, unsigned ShlAmount,
     if (CI_1 && OrI && OrI->getOpcode() == Instruction::Or) {
       Value *Op0 = OrI->getOperand(0);
       Value *Op1 = OrI->getOperand(1);
-      BinaryOperator *AndI_2;
+      BinaryOperator *AndI_2 = 0;
       // Whichever operand our initial And instruction is to the Or instruction,
       // Look at the other operand to determine if it is also an And instruction
       if (AndI == Op0) { 

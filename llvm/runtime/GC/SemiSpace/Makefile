@@ -9,11 +9,9 @@
 
 LEVEL = ../../..
 BYTECODE_LIBRARY=1
-#SHARED_LIBRARY=1
-#DONT_BUILD_RELINKED=1
 LIBRARYNAME=gcsemispace
 
-EXPORTED_SYMBOL_FILE = $(SourceDir)/../gc_exported_symbols.lst
+EXPORTED_SYMBOL_FILE = $(BUILD_SRC_DIR)/../gc_exported_symbols.lst
 
 include $(LEVEL)/Makefile.common
 
