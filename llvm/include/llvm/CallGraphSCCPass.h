@@ -26,13 +26,13 @@
 namespace llvm {
 
 class CallGraphNode;
-class Module;
+class CallGraph;
 
 struct CallGraphSCCPass : public Pass {
 
   /// doInitialization - This method is called before the SCC's of the program
   /// has been processed, allowing the pass to do initialization as necessary.
-  virtual bool doInitialization(Module &M) {
+  virtual bool doInitialization(CallGraph &CG) {
     return false;
   }
 
@@ -45,7 +45,7 @@ struct CallGraphSCCPass : public Pass {
 
   /// doFinalization - This method is called after the SCC's of the program has
   /// been processed, allowing the pass to do final cleanup as necessary.
-  virtual bool doFinalization(Module &M) {
+  virtual bool doFinalization(CallGraph &CG) {
     return false;
   }
 
