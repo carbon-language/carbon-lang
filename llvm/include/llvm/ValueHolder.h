@@ -81,13 +81,6 @@ public:
   inline reverse_iterator       rend  ()       { return ValueList.rend();   }
   inline const_reverse_iterator rend  () const { return ValueList.rend();   }
   
-  void delete_all() {            // Delete all removes and deletes all elements
-    while (!empty()) {
-      iterator it = end();
-      delete remove(--it);          // Delete all instructions...
-    }
-  }
-
   // ValueHolder::remove(iterator &) this removes the element at the location 
   // specified by the iterator, and leaves the iterator pointing to the element 
   // that used to follow the element deleted.
@@ -96,6 +89,19 @@ public:
   ValueSubclass *remove(const iterator &DI);   // Defined in ValueHolderImpl.h
   void           remove(ValueSubclass *D);     // Defined in ValueHolderImpl.h
   ValueSubclass *pop_back();                   // Defined in ValueHolderImpl.h
+
+  // delete_span - Remove the elements from begin to end, deleting them as we
+  // go.  This leaves the iterator pointing to the element that used to be end.
+  //
+  iterator delete_span(iterator begin, iterator end) {
+    while (end != begin)
+      delete remove(--end);
+    return end;
+  }
+
+  void delete_all() {            // Delete all removes and deletes all elements
+    delete_span(begin(), end());
+  }
 
   void push_front(ValueSubclass *Inst);        // Defined in ValueHolderImpl.h
   void push_back(ValueSubclass *Inst);         // Defined in ValueHolderImpl.h
