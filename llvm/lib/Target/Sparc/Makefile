@@ -43,9 +43,18 @@ $(BUILD_OBJ_DIR)/Depend/Sparc.burm.d: $(BUILD_OBJ_DIR)/Depend/.dir
 
 SparcV9CodeEmitter.cpp: SparcV9CodeEmitter.inc
 
-SparcV9CodeEmitter.inc: SparcV9.td SparcV9_F2.td SparcV9_F3.td SparcV9_F4.td SparcV9_Reg.td $(TBLGEN)
-	@${ECHO} "TableGen-erating $@"
-	$(CC) -E -xc -P SparcV9.td | $(TBLGEN) -gen-emitter -o $@
+
+TARGET_NAME := SparcV9
+
+TABLEGEN_FILES := $(wildcard *.td)
+
+$(TARGET_NAME)CodeEmitter.inc.tmp: $(TABLEGEN_FILES) $(TBLGEN)
+	@${ECHO} "TableGen-erating " $(TARGET_NAME)
+	$(CC) -E -xc -P $(TARGET_NAME).td | $(TBLGEN) -gen-emitter -o $@
+
+$(TARGET_NAME)CodeEmitter.inc: $(TARGET_NAME)CodeEmitter.inc.tmp
+	$(VERB) # Only copy over the real .inc file if it has changed!
+	$(VERB) diff $@ $< > /dev/null || cp $< $@
 
 clean::
-	${RM} -f SparcV9CodeEmitter.inc
+	${RM} -f $(TARGET_NAME)CodeEmitter.inc $(TARGET_NAME)CodeEmitter.inc.tmp
