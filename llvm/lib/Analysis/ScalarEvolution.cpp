@@ -1898,6 +1898,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
     //
     // Get the initial value for the loop.
     SCEVHandle Start = getSCEVAtScope(AddRec->getStart(), L->getParentLoop());
+    if (isa<SCEVCouldNotCompute>(Start)) return UnknownValue;
     SCEVHandle Step = AddRec->getOperand(1);
 
     Step = getSCEVAtScope(Step, L->getParentLoop());
