@@ -100,6 +100,14 @@ void MachineBasicBlock::print(std::ostream &OS) const {
     OS << "\t";
     I->print(OS, &getParent()->getTarget());
   }
+
+  // Print the successors of this block according to the CFG.
+  if (!succ_empty()) {
+    OS << "    Successors according to CFG:";
+    for (const_succ_iterator SI = succ_begin(), E = succ_end(); SI != E; ++SI)
+      OS << " " << *SI;
+    OS << "\n";
+  }
 }
 
 void MachineBasicBlock::addSuccessor(MachineBasicBlock *succ) {
