@@ -117,21 +117,18 @@ void JITResolver::CompilationCallback() {
 #else
   unsigned *StackPtr = (unsigned*)__builtin_frame_address(0);
   unsigned RetAddr = (unsigned)(intptr_t)__builtin_return_address(0);
+
+  // FIXME: __builtin_frame_address doesn't work if frame pointer elimination
+  // has been performed.  Having a variable sized alloca disables frame pointer
+  // elimination currently, even if it's dead.  This is a gross hack.
+  alloca(10+(RetAddr >> 31));
+  
 #endif
   assert(StackPtr[1] == RetAddr &&
          "Could not find return address on the stack!");
 
   // It's a stub if there is an interrupt marker after the call...
   bool isStub = ((unsigned char*)(intptr_t)RetAddr)[0] == 0xCD;
-
-#ifndef _MSC_VER
-  // FIXME FIXME FIXME FIXME: __builtin_frame_address doesn't work if frame
-  // pointer elimination has been performed.  Having a variable sized alloca
-  // disables frame pointer elimination currently, even if it's dead.  This is a
-  // gross hack.
-  alloca(10+isStub);
-  // FIXME FIXME FIXME FIXME
-#endif
 
   // The call instruction should have pushed the return value onto the stack...
   RetAddr -= 4;  // Backtrack to the reference itself...
@@ -210,7 +207,7 @@ namespace {
     void emitBasicBlock(const MachineBasicBlock &MBB);
 
     void emitPCRelativeBlockAddress(const MachineBasicBlock *BB);
-    void emitMaybePCRelativeValue(unsigned Address, bool isPCRelative);
+    void emitPCRelativeValue(unsigned Address);
     void emitGlobalAddressForCall(GlobalValue *GV);
     void emitGlobalAddressForPtr(GlobalValue *GV, int Disp = 0);
 
@@ -259,7 +256,7 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
     unsigned Location = BasicBlockAddrs[BBRefs[i].first];
     unsigned Ref = BBRefs[i].second;
-    MCE.emitWordAt (Location-Ref-4, (unsigned*)(intptr_t)Ref);
+    MCE.emitWordAt(Location-Ref-4, (unsigned*)(intptr_t)Ref);
   }
   BBRefs.clear();
   BasicBlockAddrs.clear();
@@ -270,7 +267,8 @@ void Emitter::emitBasicBlock(const MachineBasicBlock &MBB) {
   if (uint64_t Addr = MCE.getCurrentPCValue())
     BasicBlockAddrs[&MBB] = Addr;
 
-  for (MachineBasicBlock::const_iterator I = MBB.begin(), E = MBB.end(); I != E; ++I)
+  for (MachineBasicBlock::const_iterator I = MBB.begin(), E = MBB.end();
+       I != E; ++I)
     emitInstruction(*I);
 }
 
@@ -285,13 +283,10 @@ void Emitter::emitPCRelativeBlockAddress(const MachineBasicBlock *MBB) {
   MCE.emitWord(0);
 }
 
-/// emitMaybePCRelativeValue - Emit a 32-bit address which may be PC relative.
+/// emitPCRelativeValue - Emit a 32-bit PC relative address.
 ///
-void Emitter::emitMaybePCRelativeValue(unsigned Address, bool isPCRelative) {
-  if (isPCRelative)
-    MCE.emitWord(Address-MCE.getCurrentPCValue()-4);
-  else
-    MCE.emitWord(Address);
+void Emitter::emitPCRelativeValue(unsigned Address) {
+  MCE.emitWord(Address-MCE.getCurrentPCValue()-4);
 }
 
 /// emitGlobalAddressForCall - Emit the specified address to the code stream
@@ -306,7 +301,7 @@ void Emitter::emitGlobalAddressForCall(GlobalValue *GV) {
     Address = getResolver(MCE).addFunctionReference(MCE.getCurrentPCValue(),
                                                     cast<Function>(GV));
   }
-  emitMaybePCRelativeValue(Address, true);
+  emitPCRelativeValue(Address);
 }
 
 /// emitGlobalAddress - Emit the specified address to the code stream assuming
@@ -325,7 +320,7 @@ void Emitter::emitGlobalAddressForPtr(GlobalValue *GV, int Disp /* = 0 */) {
     Address = getResolver(MCE).getLazyResolver((Function*)GV);
   }
 
-  emitMaybePCRelativeValue(Address + Disp, false);
+  MCE.emitWord(Address + Disp);
 }
 
 
@@ -564,7 +559,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       } else if (MO.isExternalSymbol()) {
         unsigned Address = MCE.getGlobalValueAddress(MO.getSymbolName());
         assert(Address && "Unknown external symbol!");
-        emitMaybePCRelativeValue(Address, MO.isPCRelative());
+        emitPCRelativeValue(Address);
       } else if (MO.isImmediate()) {
         emitConstant(MO.getImmedValue(), sizeOfImm(Desc));        
       } else {
@@ -591,7 +586,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
                "Don't know how to emit non-pointer values!");
         unsigned Address = MCE.getGlobalValueAddress(MO1.getSymbolName());
         assert(Address && "Unknown external symbol!");
-        emitMaybePCRelativeValue(Address, MO1.isPCRelative());
+        MCE.emitWord(Address);
       } else {
         emitConstant(MO1.getImmedValue(), sizeOfImm(Desc));
       }
