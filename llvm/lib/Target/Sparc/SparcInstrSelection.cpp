@@ -139,11 +139,11 @@ ChooseBFpccInstruction(const InstructionNode* instrNode,
 // For now, hack this using a little static cache of TmpInstructions.
 // Eventually the entire BURG instruction selection should be put
 // into a separate class that can hold such information.
-// The static cache is not too bad because that memory for these
-// TmpInstructions will be freed elsewhere in any case.
+// The static cache is not too bad because the memory for these
+// TmpInstructions will be freed along with the rest of the Method anyway.
 // 
 static TmpInstruction*
-GetTmpForCC(Value* boolVal, const Method* method)
+GetTmpForCC(Value* boolVal, const Method* method, const Type* ccType)
 {
   typedef  hash_map<const Value*, TmpInstruction*> BoolTmpCache;
   static BoolTmpCache boolToTmpCache;     // Map boolVal -> TmpInstruction*
@@ -157,11 +157,11 @@ GetTmpForCC(Value* boolVal, const Method* method)
       boolToTmpCache.clear();
     }
   
-  // Look for tmpI and create a new one otherswise.
-  // new value is directly written to map using 
+  // Look for tmpI and create a new one otherwise.  The new value is
+  // directly written to map using the ref returned by operator[].
   TmpInstruction*& tmpI = boolToTmpCache[boolVal];
   if (tmpI == NULL)
-    tmpI = new TmpInstruction(TMP_INSTRUCTION_OPCODE, boolVal, NULL);
+    tmpI = new TmpInstruction(TMP_INSTRUCTION_OPCODE, ccType, boolVal, NULL);
   
   return tmpI;
 }
@@ -259,9 +259,12 @@ ChooseConvertToFloatInstr(const InstructionNode* instrNode,
       break;
       
     case ToDoubleTy: 
-      if (opType == Type::SByteTy || opType == Type::ShortTy || opType == Type::IntTy)
-        opCode = FITOD;
-      else if (opType == Type::LongTy)
+      // Use FXTOD for all integer-to-double conversions.  This has to be
+      // consistent with the code in CreateCodeToCopyIntToFloat() since
+      // that will be used to load the integer into an FP register.
+      // 
+      if (opType == Type::SByteTy || opType == Type::ShortTy ||
+          opType == Type::IntTy || opType == Type::LongTy)
         opCode = FXTOD;
       else if (opType == Type::FloatTy)
         opCode = FSTOD;
@@ -1033,13 +1036,22 @@ GetInstructionsForProlog(BasicBlock* entryBB,
 {
   int64_t s0=0;                // used to avoid overloading ambiguity below
   
+  const MachineFrameInfo& frameInfo = target.getFrameInfo();
+  
   // The second operand is the stack size. If it does not fit in the
   // immediate field, we either have to find an unused register in the
   // caller's window or move some elements to the dynamically allocated
   // area of the stack frame (just above save area and method args).
   Method* method = entryBB->getParent();
-  MachineCodeForMethod& mcodeInfo = method->getMachineCode();
-  unsigned int staticStackSize = mcodeInfo.getStaticStackSize();
+  MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(method);
+  unsigned int staticStackSize = mcInfo.getStaticStackSize();
+  
+  if (staticStackSize < (unsigned) frameInfo.getMinStackFrameSize())
+    staticStackSize = (unsigned) frameInfo.getMinStackFrameSize();
+  
+  if (unsigned padsz = (staticStackSize %
+                        (unsigned) frameInfo.getStackFrameSizeAlignment()))
+    staticStackSize += padsz;
   
   assert(target.getInstrInfo().constantFitsInImmedField(SAVE, staticStackSize)
          && "Stack size too large for immediate field of SAVE instruction. Need additional work as described in the comment above");
@@ -1047,7 +1059,7 @@ GetInstructionsForProlog(BasicBlock* entryBB,
   mvec[0] = new MachineInstr(SAVE);
   mvec[0]->SetMachineOperand(0, target.getRegInfo().getStackPointer());
   mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,
-                                - staticStackSize);
+                                - (int) staticStackSize);
   mvec[0]->SetMachineOperand(2, target.getRegInfo().getStackPointer());
   
   return 1;
@@ -1122,7 +1134,7 @@ unsigned
 GetInstructionsByRule(InstructionNode* subtreeRoot,
                       int ruleForNode,
                       short* nts,
-                      TargetMachine &tgt,
+                      TargetMachine &target,
                       MachineInstr** mvec)
 {
   int numInstr = 1;			// initialize for common case
@@ -1133,8 +1145,6 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   int forwardOperandNum = -1;
   int64_t s0=0, s8=8;			// variables holding constants to avoid
   uint64_t u0=0;			// overloading ambiguities below
-  
-  UltraSparc& target = (UltraSparc&) tgt;
   
   for (unsigned i=0; i < MAX_INSTR_PER_VMINSTR; i++)
     mvec[i] = NULL;
@@ -1266,9 +1276,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec[0] = new MachineInstr(ChooseBccInstruction(subtreeRoot,
                                                         isFPBranch));
         
-        Value* ccValue = isFPBranch? subtreeRoot->leftChild()->getValue()
-          : GetTmpForCC(subtreeRoot->leftChild()->getValue(),
-                        brInst->getParent()->getParent());
+        Value* ccValue = GetTmpForCC(subtreeRoot->leftChild()->getValue(),
+                                     brInst->getParent()->getParent(),
+                                     isFPBranch? Type::FloatTy : Type::IntTy);
         
         mvec[0]->SetMachineOperand(0, MachineOperand::MO_CCRegister, ccValue);
         mvec[0]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
@@ -1343,7 +1353,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         assert(0 && "VRegList should never be the topmost non-chain rule");
         break;
 
-      case 21:	// reg:   Not(reg):	Implemented as reg = reg XOR-NOT 0
+      case 21:	// bool:  Not(bool):	Both these are implemented as:
+      case 321:	// reg:   BNot(reg) :	     reg = reg XOR-NOT 0
         mvec[0] = new MachineInstr(XNOR);
         mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
                                       subtreeRoot->leftChild()->getValue());
@@ -1408,7 +1419,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           }
         else
           {
-            opType = subtreeRoot->leftChild()->getValue()->getType();
+            leftVal = subtreeRoot->leftChild()->getValue();
+            opType = leftVal->getType();
             MachineOpCode opCode=ChooseConvertToFloatInstr(subtreeRoot,opType);
             if (opCode == INVALID_OPCODE)	// no conversion needed
               {
@@ -1417,8 +1429,42 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               }
             else
               {
-                mvec[0] = new MachineInstr(opCode);
-                Set2OperandsFromInstr(mvec[0], subtreeRoot, target);
+                // If the source operand is a non-FP type it must be
+                // first copied from int to float register via memory!
+                Instruction *dest = subtreeRoot->getInstruction();
+                Value* srcForCast;
+                int n = 0;
+                if (opType != Type::FloatTy && opType != Type::DoubleTy)
+                  {
+                    // Create a temporary to represent the FP register
+                    // into which the integer will be copied via memory.
+                    srcForCast = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
+                                                    dest, NULL);
+                    dest->getMachineInstrVec().addTempValue(srcForCast);
+                    
+                    vector<MachineInstr*> minstrVec;
+                    vector<TmpInstruction*> tempVec;
+                    target.getInstrInfo().CreateCodeToCopyIntToFloat(
+                         dest->getParent()->getParent(),
+                         leftVal, (TmpInstruction*) srcForCast,
+                         minstrVec, tempVec, target);
+                    
+                    for (unsigned i=0; i < minstrVec.size(); ++i)
+                      mvec[n++] = minstrVec[i];
+
+                    for (unsigned i=0; i < tempVec.size(); ++i)
+                       dest->getMachineInstrVec().addTempValue(tempVec[i]);
+                  }
+                else
+                  srcForCast = leftVal;
+                
+                MachineInstr* castI = new MachineInstr(opCode);
+                castI->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
+                                            srcForCast);
+                castI->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
+                                            dest);
+                mvec[n++] = castI;
+                numInstr = n;
               }
           }
         break;
@@ -1528,35 +1574,44 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
       
-      case  38:	// reg:   And(reg, reg)
-      case 238:	// reg:   And(reg, Constant)
+      case  38:	// bool:   And(bool, bool)
+      case 238:	// bool:   And(bool, boolconst)
+      case 338:	// reg :   BAnd(reg, reg)
+      case 538:	// reg :   BAnd(reg, Constant)
         mvec[0] = new MachineInstr(AND);
         Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
         break;
 
-      case 138:	// reg:   And(reg, not)
+      case 138:	// bool:   And(bool, not)
+      case 438:	// bool:   BAnd(bool, not)
         mvec[0] = new MachineInstr(ANDN);
         Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
         break;
 
-      case  39:	// reg:   Or(reg, reg)
-      case 239:	// reg:   Or(reg, Constant)
+      case  39:	// bool:   Or(bool, bool)
+      case 239:	// bool:   Or(bool, boolconst)
+      case 339:	// reg :   BOr(reg, reg)
+      case 539:	// reg :   BOr(reg, Constant)
         mvec[0] = new MachineInstr(ORN);
         Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
         break;
 
-      case 139:	// reg:   Or(reg, not)
+      case 139:	// bool:   Or(bool, not)
+      case 439:	// bool:   BOr(bool, not)
         mvec[0] = new MachineInstr(ORN);
         Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
         break;
 
-      case  40:	// reg:   Xor(reg, reg)
-      case 240:	// reg:   Xor(reg, Constant)
+      case  40:	// bool:   Xor(bool, bool)
+      case 240:	// bool:   Xor(bool, boolconst)
+      case 340:	// reg :   BXor(reg, reg)
+      case 540:	// reg :   BXor(reg, Constant)
         mvec[0] = new MachineInstr(XOR);
         Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
         break;
 
-      case 140:	// reg:   Xor(reg, not)
+      case 140:	// bool:   Xor(bool, not)
+      case 440:	// bool:   BXor(bool, not)
         mvec[0] = new MachineInstr(XNOR);
         Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
         break;
@@ -1617,10 +1672,28 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         bool mustClearReg;
         int valueToMove;
         MachineOpCode movOpCode = 0;
-        Value* ccValue = NULL;
+
+        // Mark the 4th operand as being a CC register, and as a def
+        // A TmpInstruction is created to represent the CC "result".
+        // Unlike other instances of TmpInstruction, this one is used
+        // by machine code of multiple LLVM instructions, viz.,
+        // the SetCC and the branch.  Make sure to get the same one!
+        // Note that we do this even for FP CC registers even though they
+        // are explicit operands, because the type of the operand
+        // needs to be a floating point condition code, not an integer
+        // condition code.  Think of this as casting the bool result to
+        // a FP condition code register.
+        // 
+        leftVal = subtreeRoot->leftChild()->getValue();
+        bool isFPCompare = (leftVal->getType() == Type::FloatTy || 
+                            leftVal->getType() == Type::DoubleTy);
         
-        if (subtreeRoot->leftChild()->getValue()->getType()->isIntegral() ||
-            subtreeRoot->leftChild()->getValue()->getType()->isPointerType())
+        TmpInstruction* tmpForCC = GetTmpForCC(setCCInstr,
+                                     setCCInstr->getParent()->getParent(),
+                                     isFPCompare? Type::FloatTy : Type::IntTy);
+        setCCInstr->getMachineInstrVec().addTempValue(tmpForCC);
+        
+        if (! isFPCompare)
           {
             // Integer condition: dest. should be %g0 or an integer register.
             // If result must be saved but condition is not SetEQ then we need
@@ -1630,16 +1703,6 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             mvec[0] = new MachineInstr(SUBcc);
             Set3OperandsFromInstr(mvec[0], subtreeRoot, target, ! keepSubVal);
             
-            // Mark the 4th operand as being a CC register, and as a def
-            // A TmpInstruction is created to represent the int CC "result".
-            // Unlike other instances of TmpInstruction, this one is used by
-            // used by machine code of multiple LLVM instructions, viz.,
-            // the SetCC and the branch.  Make sure to get the same one!
-            // 
-            TmpInstruction* tmpForCC = GetTmpForCC(setCCInstr,
-                                         setCCInstr->getParent()->getParent());
-            setCCInstr->getMachineInstrVec().addTempValue(tmpForCC);
-            
             mvec[0]->SetMachineOperand(3, MachineOperand::MO_CCRegister,
                                           tmpForCC, /*def*/true);
             
@@ -1647,7 +1710,6 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               { // recompute bool using the integer condition codes
                 movOpCode =
                   ChooseMovpccAfterSub(subtreeRoot,mustClearReg,valueToMove);
-                ccValue = tmpForCC;
               }
           }
         else
@@ -1655,7 +1717,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             // FP condition: dest of FCMP should be some FCCn register
             mvec[0] = new MachineInstr(ChooseFcmpInstruction(subtreeRoot));
             mvec[0]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
-                                          setCCInstr);
+                                          tmpForCC);
             mvec[0]->SetMachineOperand(1,MachineOperand::MO_VirtualRegister,
                                          subtreeRoot->leftChild()->getValue());
             mvec[0]->SetMachineOperand(2,MachineOperand::MO_VirtualRegister,
@@ -1666,14 +1728,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 mustClearReg = true;
                 valueToMove = 1;
                 movOpCode = ChooseMovFpccInstruction(subtreeRoot);
-                ccValue = setCCInstr;
               }
           }
         
         if (computeBoolVal)
           {
-            assert(ccValue && "Inconsistent logic above and here");
-            
             if (mustClearReg)
               {// Unconditionally set register to 0
                int n = numInstr++;
@@ -1688,7 +1747,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             int n = numInstr++;
             mvec[n] = new MachineInstr(movOpCode);
             mvec[n]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
-                                          ccValue);
+                                          tmpForCC);
             mvec[n]->SetMachineOperand(1, MachineOperand::MO_UnextendedImmed,
                                           valueToMove);
             mvec[n]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
@@ -1742,12 +1801,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         assert(tsize != 0 && "Just to check when this can happen");
         
         Method* method = instr->getParent()->getParent();
-        MachineCodeForMethod& mcode = method->getMachineCode();
-        int offsetFromFP =
-          target.getFrameInfo().getFirstAutomaticVarOffsetFromFP(method)
-          - (tsize + mcode.getAutomaticVarsSize());
-        
-        mcode.putLocalVarAtOffsetFromFP(instr, offsetFromFP, tsize);
+        MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(method);
+        int offsetFromFP = mcInfo.allocateLocalVar(target, instr);
         
         // Create a temporary Value to hold the constant offset.
         // This is needed because it may not fit in the immediate field.
@@ -1782,17 +1837,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         
         // Create a temporary Value to hold the constant offset from SP
         Method* method = instr->getParent()->getParent();
-        MachineCodeForMethod& mcode = method->getMachineCode();
-        int frameSizeBelowDynamicArea =
-          target.getFrameInfo().getFrameSizeBelowDynamicArea(method);
-        ConstPoolSInt* lowerAreaSizeVal = ConstPoolSInt::get(Type::IntTy,
-                                                  frameSizeBelowDynamicArea);
-        cerr << "***" << endl
-             << "*** Variable-size ALLOCA operation needs more work:" << endl
-             << "*** We have to precompute the size of "
-             << " optional arguments in the stack frame" << endl
-             << "***" << endl; 
-        assert(0 && "SEE MESSAGE ABOVE");
+        bool ignore;                    // we don't need this 
+        ConstPoolSInt* dynamicAreaOffset = ConstPoolSInt::get(Type::IntTy,
+          target.getFrameInfo().getDynamicAreaOffset(MachineCodeForMethod::get(method),
+                                                     ignore));
         
         // Create a temporary value to hold `tmp'
         Instruction* tmpInstr = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
@@ -1822,7 +1870,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec[2] = new MachineInstr(ADD);
         mvec[2]->SetMachineOperand(0, target.getRegInfo().getStackPointer());
         mvec[2]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
-                                      lowerAreaSizeVal);
+                                      dynamicAreaOffset);
         mvec[2]->SetMachineOperand(2,MachineOperand::MO_VirtualRegister,instr);
         break;
       }
