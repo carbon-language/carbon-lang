@@ -134,9 +134,11 @@ namespace X86II {
     FPTypeMask = 7 << 14,
 
     // PrintImplUses - Print out implicit uses in the assembly output.
-    PrintImplUses = 1 << 17
+    PrintImplUses = 1 << 17,
 
-    // Bits 18 -> 31 are unused
+    OpcodeMask    = 0xFF << 18,
+    OpcodeShift   = 18,
+    // Bits 26 -> 31 are unused
   };
 }
 
@@ -166,8 +168,9 @@ public:
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
   // specified opcode number.
   //
-  unsigned char getBaseOpcodeFor(unsigned Opcode) const;
+  unsigned char getBaseOpcodeFor(unsigned Opcode) const {
+    return get(Opcode).TSFlags >> X86II::OpcodeShift;
+  }
 };
-
 
 #endif
