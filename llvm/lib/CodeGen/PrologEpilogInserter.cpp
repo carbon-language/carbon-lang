@@ -163,7 +163,7 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
     return;   // Early exit if no caller saved registers are modified!
 
   unsigned NumFixedSpillSlots;
-  std::pair<unsigned,int> *FixedSpillSlots =
+  const std::pair<unsigned,int> *FixedSpillSlots =
     TFI->getCalleeSaveSpillSlots(NumFixedSpillSlots);
 
   // Now that we know which registers need to be saved and restored, allocate
@@ -175,7 +175,7 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
 
     // Check to see if this physreg must be spilled to a particular stack slot
     // on this target.
-    std::pair<unsigned,int> *FixedSlot = FixedSpillSlots;
+    const std::pair<unsigned,int> *FixedSlot = FixedSpillSlots;
     while (FixedSlot != FixedSpillSlots+NumFixedSpillSlots &&
            FixedSlot->first != Reg)
       ++FixedSlot;

@@ -67,7 +67,7 @@ public:
   /// spilled at.  If a register is not listed here, the code generator is
   /// allowed to spill it anywhere it chooses.
   /// 
-  virtual std::pair<unsigned, int> *
+  virtual const std::pair<unsigned, int> *
   getCalleeSaveSpillSlots(unsigned &NumEntries) const {
     NumEntries = 0;
     return 0;

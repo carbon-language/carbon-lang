@@ -33,10 +33,10 @@ public:
     LR[0].second = 8;
   }
 
-  std::pair<unsigned, int> *
+  const std::pair<unsigned, int> *
   getCalleeSaveSpillSlots(unsigned &NumEntries) const {
     NumEntries = 1;
-    return static_cast<std::pair<unsigned, int> *>(LR);
+    return static_cast<const std::pair<unsigned, int> *>(LR);
   }
 };
 
