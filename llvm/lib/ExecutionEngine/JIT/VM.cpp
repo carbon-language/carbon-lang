@@ -77,6 +77,23 @@ void *VM::getPointerToFunction(Function *F) {
   return Addr;
 }
 
+// getPointerToFunctionOrStub - If the specified function has been
+// code-gen'd, return a pointer to the function.  If not, compile it, or use
+// a stub to implement lazy compilation if available.
+//
+void *VM::getPointerToFunctionOrStub(Function *F) {
+  // If we have already code generated the function, just return the address.
+  std::map<const GlobalValue*, void *>::iterator I = GlobalAddress.find(F);
+  if (I != GlobalAddress.end()) return I->second;
+
+  // If the target supports "stubs" for functions, get a stub now.
+  if (void *Ptr = TM.getJITStubForFunction(F, *MCE))
+    return Ptr;
+
+  // Otherwise, if the target doesn't support it, just codegen the function.
+  return getPointerToFunction(F);
+}
+
 /// recompileAndRelinkFunction - This method is used to force a function
 /// which has already been compiled, to be compiled again, possibly
 /// after it has been modified. Then the entry to the old copy is overwritten

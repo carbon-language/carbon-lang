@@ -66,6 +66,12 @@ public:
   ///
   void *getPointerToFunction(Function *F);
 
+  /// getPointerToFunctionOrStub - If the specified function has been
+  /// code-gen'd, return a pointer to the function.  If not, compile it, or use
+  /// a stub to implement lazy compilation if available.
+  ///
+  void *getPointerToFunctionOrStub(Function *F);
+
   /// recompileAndRelinkFunction - This method is used to force a function
   /// which has already been compiled, to be compiled again, possibly
   /// after it has been modified. Then the entry to the old copy is overwritten
