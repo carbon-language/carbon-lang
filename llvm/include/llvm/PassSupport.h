@@ -171,6 +171,8 @@ protected:
 
 template<typename PassName>
 Pass *callDefaultCtor() { return new PassName(); }
+template<typename PassName>
+Pass *callTargetDataCtor(const TargetData &TD) { return new PassName(TD); }
 
 template<typename PassName>
 struct RegisterPass : public RegisterPassBase {
