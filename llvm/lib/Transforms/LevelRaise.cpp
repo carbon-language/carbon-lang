@@ -251,10 +251,6 @@ static bool PeepholeMallocInst(BasicBlock *BB, BasicBlock::iterator &BI) {
   // Loop over all of the uses of the malloc instruction, inspecting casts.
   for (Value::use_iterator I = MI->use_begin(), E = MI->use_end();
        I != E; ++I) {
-    if (!isa<CastInst>(*I) && !isa<BinaryOperator>(*I)) {
-      //cerr << "\tnon" << *I;
-      return false;  // A non cast user?
-    }
     if (CastInst *CI = dyn_cast<CastInst>(*I)) {
         //cerr << "\t" << CI;
     
@@ -283,11 +279,35 @@ static bool PeepholeMallocInst(BasicBlock *BB, BasicBlock::iterator &BI) {
   // that is of the same size as the malloc instruction.
   if (!ResultTy) return false;
 
-  PRINT_PEEPHOLE1("mall-refine:in ", MI);
-  ReplaceInstWithInst(BB->getInstList(), BI, 
-                      MI = new MallocInst(PointerType::get(ResultTy)));
-  PRINT_PEEPHOLE1("mall-refine:out", MI);
-  return true;
+  // Now we check to see if we can convert the return value of malloc to the
+  // specified pointer type.  All this is moot if we can't.
+  //
+  ValueTypeCache ConvertedTypes;
+  if (RetValConvertableToType(MI, PointerType::get(ResultTy), ConvertedTypes)) {
+    // Yup, it's convertable, do the transformation now!
+    PRINT_PEEPHOLE1("mall-refine:in ", MI);
+
+    // Create a new malloc instruction, and insert it into the method...
+    MallocInst *NewMI = new MallocInst(PointerType::get(ResultTy));
+    NewMI->setName(MI->getName());
+    MI->setName("");
+    BI = BB->getInstList().insert(BI, NewMI)+1;
+
+    // Create a new cast instruction to cast it to the old type...
+    CastInst *NewCI = new CastInst(NewMI, MI->getType());
+    BB->getInstList().insert(BI, NewCI);
+
+    // Move all users of the old malloc instruction over to use the new cast...
+    MI->replaceAllUsesWith(NewCI);
+
+    ValueMapCache ValueMap;
+    ConvertUsersType(NewCI, NewMI, ValueMap);  // This will delete MI!
+        
+    BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
+    PRINT_PEEPHOLE1("mall-refine:out", NewMI);
+    return true;
+  }
+  return false;
 }
 
 
