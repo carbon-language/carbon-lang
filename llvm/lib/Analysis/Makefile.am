@@ -12,8 +12,9 @@ include $(top_srcdir)/Makefile.rules.am
 SUBDIRS = IPA DataStructure
 
 lib_LIBRARIES = libLLVMAnalysis.a
+libexec_PROGRAMS = LLVMAnalysis.o
 
-libLLVMAnalysis_a_SOURCES = \
+MYSOURCES = \
   AliasAnalysisCounter.cpp \
   AliasAnalysis.cpp \
   AliasAnalysisEvaluator.cpp \
@@ -33,3 +34,7 @@ libLLVMAnalysis_a_SOURCES = \
   ScalarEvolution.cpp \
   Trace.cpp \
   ValueNumbering.cpp
+
+libLLVMAnalysis_a_SOURCES = $(MYSOURCES)
+LLVMAnalysis_o_SOURCES = $(MYSOURCES)
+LIBS=

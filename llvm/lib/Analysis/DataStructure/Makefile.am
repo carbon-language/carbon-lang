@@ -10,8 +10,9 @@
 include $(top_srcdir)/Makefile.rules.am
 
 lib_LIBRARIES = libLLVMDataStructure.a
+libexec_PROGRAMS = LLVMDataStructure.o
 
-libLLVMDataStructure_a_SOURCES = \
+MYSOURCES = \
   BottomUpClosure.cpp\
   CompleteBottomUp.cpp\
   DataStructureAA.cpp\
@@ -28,3 +29,7 @@ libLLVMDataStructure_a_SOURCES = \
   Printer.cpp\
   Steensgaard.cpp\
   TopDownClosure.cpp
+
+libLLVMDataStructure_a_SOURCES = $(MYSOURCES)
+LLVMDataStructure_o_SOURCES = $(MYSOURCES)
+LIBS=

@@ -10,8 +10,9 @@
 include $(top_srcdir)/Makefile.rules.am
 
 lib_LIBRARIES = libLLVMIPA.a
+libexec_PROGRAMS = LLVMIPA.o
 
-libLLVMIPA_a_SOURCES = \
+MYSOURCES = \
   Andersens.cpp \
   CallGraph.cpp \
   CallGraphSCCPass.cpp \
@@ -19,3 +20,6 @@ libLLVMIPA_a_SOURCES = \
   FindUsedTypes.cpp \
   GlobalsModRef.cpp \
   PrintSCC.cpp
+libLLVMIPA_a_SOURCES = $(MYSOURCES)
+LLVMIPA_o_SOURCES = $(MYSOURCES)
+LIBS=
