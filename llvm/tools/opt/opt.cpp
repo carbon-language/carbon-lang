@@ -36,6 +36,7 @@ struct {
   { "-inline"   ,"Method Inlining",       DoMethodInlining      },
   { "-strip"    ,"Strip Symbols",         DoSymbolStripping     },
   { "-mstrip"   ,"Strip Module Symbols",  DoFullSymbolStripping },
+  { "-indvars"  ,"Simplify Induction Vars", DoInductionVariableCannonicalize },
 };
 
 int main(int argc, char **argv) {
