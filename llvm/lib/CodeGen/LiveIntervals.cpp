@@ -415,7 +415,7 @@ std::ostream& llvm::operator<<(std::ostream& os,
     os << "%reg" << li.reg << ',' << li.weight << " = ";
     for (LiveIntervals::Interval::Ranges::const_iterator
              i = li.ranges.begin(), e = li.ranges.end(); i != e; ++i) {
-        os << "[" << i->first << "," << i->second << "]";
+        os << "[" << i->first << "," << i->second << ")";
     }
     return os;
 }
