@@ -106,6 +106,7 @@ public:
   void changeExitBlock(BasicBlock *Old, BasicBlock *New);
 
   void print(std::ostream &O) const;
+  void dump() const;
 private:
   friend class LoopInfo;
   inline Loop(BasicBlock *BB) : ParentLoop(0) {
