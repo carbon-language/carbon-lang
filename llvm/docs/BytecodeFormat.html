@@ -40,12 +40,13 @@
       <li><a href="#functiondefs">Function Definition</a></li>
       <li><a href="#compactiontable">Compaction Table</a></li>
       <li><a href="#instructionlist">Instruction List</a></li>
+      <li><a href="#opcodes">Instruction Opcodes</a></li>
       <li><a href="#symtab">Symbol Table</a></li>
     </ol>
   </li>
   <li><a href="#versiondiffs">Version Differences</a>
     <ol>
-<!--      <li><a href="#vers13">Version 1.3 Differences From 1.4</a></li>-->
+      <li><a href="#vers13">Version 1.3 Differences From 1.4</a></li>
       <li><a href="#vers12">Version 1.2 Differences From 1.3</a></li>
       <li><a href="#vers11">Version 1.1 Differences From 1.2</a></li>
       <li><a href="#vers10">Version 1.0 Differences From 1.1</a></li>
@@ -934,8 +935,8 @@ all functions. The format is shown in the table below:</p>
 definitions occurring in the module.</td>
     </tr>
     <tr>
-      <td><a href="#zlist">zlist</a>(<a href="#uint24_vbr">uint24_vbr</a>)</td>
-      <td class="td_left">A zero terminated list of function types
+      <td><a href="#zlist">zlist</a>(<a href="#funcfield">funcfield</a>)</td>
+      <td class="td_left">A zero terminated list of function definitions
 occurring in the module.</td>
     </tr>
     <tr>
@@ -958,6 +959,7 @@ platform independent module).<br>
   </tbody>
 </table>
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"><a name="globalvar">Global Variable Field</a>
 </div>
@@ -1011,6 +1013,36 @@ numbers of the global variable's constant initializer.</td>
   </tbody>
 </table>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="funcfield">Function Field</a>
+</div>
+<div class="doc_text">
+<p>Functions are written using an <a href="#uint32_vbr">uint32_vbr</a>
+that encodes information about the function and a set of flags.</p>
+
+<p>The table below provides the bit layout of the <a
+href="#uint32_vbr">uint32_vbr</a> that describes the function.</p>
+
+<table>
+  <tbody>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Description</b></th>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(0-4)</a></td>
+      <td class="td_left">Reserved for future use.  Currently set to 00001.</td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(5-)</a></td>
+      <td class="td_left">Type slot number of type for the function.</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="constantpool">Constant Pool</a> </div>
 <div class="doc_text">
@@ -1114,8 +1146,13 @@ element values.</li>
  href="#uint32_vbr">uint32_vbr</a> encoded value slot numbers to the constant
 field values of the structure.</li>
 </ul>
-<p>When the number of operands to the constant is non-zero, we have a
-constant expression and its field format is provided in the table below.</p>
+
+<p>When the number of operands to the constant is one, we have an 'undef' value
+of the specified type.</p>
+
+<p>When the number of operands to the constant is greater than one, we have a
+constant expression and its field format is provided in the table below, and the
+number is equal to the number of operands+1.</p>
 <table>
   <tbody>
     <tr>
@@ -1466,7 +1503,7 @@ single <a href="#uint32_vbr">uint32_vbr</a> as follows:</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="opcodes">Opcodes</a></div>
+<div class="doc_subsection"><a name="opcodes">Instruction Opcodes</a></div>
 <div class="doc_text">
   <p>Instructions encode an opcode that identifies the kind of instruction.
   Opcodes are an enumerated integer value. The specific values used depend on
@@ -1491,41 +1528,42 @@ single <a href="#uint32_vbr">uint32_vbr</a> as follows:</p>
       <tr><td>Switch</td><td>3</td><td>1</td><td>1.0</td></tr>
       <tr><td>Invoke</td><td>4</td><td>1</td><td>1.0</td></tr>
       <tr><td>Unwind</td><td>5</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Unreachable</td><td>6</td><td>1</td><td>1.4</td></tr>
       <tr><td colspan="4"><b>Binary Operators</b></td></tr>
-      <tr><td>Add</td><td>6</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Sub</td><td>7</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Mul</td><td>8</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Div</td><td>9</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Rem</td><td>10</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Add</td><td>7</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Sub</td><td>8</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Mul</td><td>9</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Div</td><td>10</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Rem</td><td>11</td><td>1</td><td>1.0</td></tr>
       <tr><td colspan="4"><b>Logical Operators</b></td></tr>
-      <tr><td>And</td><td>11</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Or</td><td>12</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Xor</td><td>13</td><td>1</td><td>1.0</td></tr>
+      <tr><td>And</td><td>12</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Or</td><td>13</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Xor</td><td>14</td><td>1</td><td>1.0</td></tr>
       <tr><td colspan="4"><b>Binary Comparison Operators</b></td></tr>
-      <tr><td>SetEQ</td><td>14</td><td>1</td><td>1.0</td></tr>
-      <tr><td>SetNE</td><td>15</td><td>1</td><td>1.0</td></tr>
-      <tr><td>SetLE</td><td>16</td><td>1</td><td>1.0</td></tr>
-      <tr><td>SetGE</td><td>17</td><td>1</td><td>1.0</td></tr>
-      <tr><td>SetLT</td><td>18</td><td>1</td><td>1.0</td></tr>
-      <tr><td>SetGT</td><td>19</td><td>1</td><td>1.0</td></tr>
+      <tr><td>SetEQ</td><td>15</td><td>1</td><td>1.0</td></tr>
+      <tr><td>SetNE</td><td>16</td><td>1</td><td>1.0</td></tr>
+      <tr><td>SetLE</td><td>17</td><td>1</td><td>1.0</td></tr>
+      <tr><td>SetGE</td><td>18</td><td>1</td><td>1.0</td></tr>
+      <tr><td>SetLT</td><td>19</td><td>1</td><td>1.0</td></tr>
+      <tr><td>SetGT</td><td>20</td><td>1</td><td>1.0</td></tr>
       <tr><td colspan="4"><b>Memory Operators</b></td></tr>
-      <tr><td>Malloc</td><td>20</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Free</td><td>21</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Alloca</td><td>22</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Load</td><td>23</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Store</td><td>24</td><td>1</td><td>1.0</td></tr>
-      <tr><td>GetElementPtr</td><td>25</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Malloc</td><td>21</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Free</td><td>22</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Alloca</td><td>23</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Load</td><td>24</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Store</td><td>25</td><td>1</td><td>1.0</td></tr>
+      <tr><td>GetElementPtr</td><td>26</td><td>1</td><td>1.0</td></tr>
       <tr><td colspan="4"><b>Other Operators</b></td></tr>
-      <tr><td>PHI</td><td>26</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Cast</td><td>27</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Call</td><td>28</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Shl</td><td>29</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Shr</td><td>30</td><td>1</td><td>1.0</td></tr>
-      <tr><td>VANext</td><td>31</td><td>1</td><td>1.0</td></tr>
-      <tr><td>VAArg</td><td>32</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Select</td><td>33</td><td>2</td><td>1.2</td></tr>
-      <tr><td>UserOp1</td><td>34</td><td>1</td><td>1.0</td></tr>
-      <tr><td>UserOp2</td><td>35</td><td>1</td><td>1.0</td></tr>
+      <tr><td>PHI</td><td>27</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Cast</td><td>28</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Call</td><td>29</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Shl</td><td>30</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Shr</td><td>31</td><td>1</td><td>1.0</td></tr>
+      <tr><td>VANext</td><td>32</td><td>1</td><td>1.0</td></tr>
+      <tr><td>VAArg</td><td>33</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Select</td><td>34</td><td>2</td><td>1.2</td></tr>
+      <tr><td>UserOp1</td><td>35</td><td>1</td><td>1.0</td></tr>
+      <tr><td>UserOp2</td><td>36</td><td>1</td><td>1.0</td></tr>
     </tbody>
   </table>
 </div>
@@ -1672,11 +1710,33 @@ section here
 describes the differences between that version and the one that <i>follows</i>.
 </p>
 </div>
+
 <!-- _______________________________________________________________________ -->
-<!--
 <div class="doc_subsection"><a name="vers13">Version 1.3 Differences From 
-    1.4</a></div> -->
+    1.4</a></div>
 <!-- _______________________________________________________________________ -->
+
+<div class="doc_subsubsection">Unreachable Instruction</div>
+<div class="doc_text">
+  <p>The LLVM <a href="LangRef.html#i_unreachable">Unreachable</a> instruction
+  was added in version 1.4 of LLVM.  This caused all instruction numbers after
+  it to shift down by one.</p>
+</div>
+
+<div class="doc_subsubsection">Function Flags</div>
+<div class="doc_text">
+  <p>LLVM bytecode versions prior to 1.4 did not include the 5 bit offset 
+     in <a href="#funcfield">the function list</a> in the <a
+     href="#globalinfo">Module Global Info</a> block.</p>
+</div>
+
+<div class="doc_subsubsection">Function Flags</div>
+<div class="doc_text">
+  <p>LLVM bytecode versions prior to 1.4 did not include the 'undef' constant
+     value, which affects the encoding of <a href="#constant">Constant
+     Fields</a>.</p>
+</div>
+
 <!--
 <div class="doc_subsubsection">Aligned Data</div>
 <div class="doc_text">
@@ -1702,10 +1762,12 @@ describes the differences between that version and the one that <i>follows</i>.
   <p>None of these constructs are aligned in version 1.4</p>
 </div>
 -->
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="vers12">Version 1.2 Differences
 From 1.3</a></div>
 <!-- _______________________________________________________________________ -->
+
 <div class="doc_subsubsection">Type Derives From Value</div>
 <div class="doc_text">
 <p>In version 1.2, the Type class in the LLVM IR derives from the Value
