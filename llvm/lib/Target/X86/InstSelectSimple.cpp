@@ -743,19 +743,20 @@ void ISel::InsertFPRegKills() {
 }
 
 
-// canFoldSetCCIntoBranch - Return the setcc instruction if we can fold it into
-// the conditional branch instruction which is the only user of the cc
-// instruction.  This is the case if the conditional branch is the only user of
-// the setcc, and if the setcc is in the same basic block as the conditional
-// branch.  We also don't handle long arguments below, so we reject them here as
-// well.
+// canFoldSetCCIntoBranchOrSelect - Return the setcc instruction if we can fold
+// it into the conditional branch or select instruction which is the only user
+// of the cc instruction.  This is the case if the conditional branch is the
+// only user of the setcc, and if the setcc is in the same basic block as the
+// conditional branch.  We also don't handle long arguments below, so we reject
+// them here as well.
 //
-static SetCondInst *canFoldSetCCIntoBranch(Value *V) {
+static SetCondInst *canFoldSetCCIntoBranchOrSelect(Value *V) {
   if (SetCondInst *SCI = dyn_cast<SetCondInst>(V))
-    if (SCI->hasOneUse() && isa<BranchInst>(SCI->use_back()) &&
-        SCI->getParent() == cast<BranchInst>(SCI->use_back())->getParent()) {
-      const Type *Ty = SCI->getOperand(0)->getType();
-      if (Ty != Type::LongTy && Ty != Type::ULongTy)
+    if (SCI->hasOneUse()) {
+      Instruction *User = cast<Instruction>(SCI->use_back());
+      if ((isa<BranchInst>(User) || isa<SelectInst>(User)) &&
+          SCI->getParent() == User->getParent() &&
+          getClassB(SCI->getOperand(0)->getType()) != cLong)
         return SCI;
     }
   return 0;
@@ -907,7 +908,8 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
 /// register, then move it to wherever the result should be. 
 ///
 void ISel::visitSetCondInst(SetCondInst &I) {
-  if (canFoldSetCCIntoBranch(&I)) return;  // Fold this into a branch...
+  if (canFoldSetCCIntoBranchOrSelect(&I))
+    return;  // Fold this into a branch or select.
 
   unsigned DestReg = getReg(I);
   MachineBasicBlock::iterator MII = BB->end();
@@ -963,28 +965,82 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
       FalseVal = ConstantExpr::getCast(F, Type::ShortTy);
   }
 
-  // Get the value being branched on, and use it to set the condition codes.
-  unsigned CondReg = getReg(Cond, MBB, IP);
-  BuildMI(*MBB, IP, X86::CMP8ri, 2).addReg(CondReg).addImm(0);
+  
+  unsigned Opcode;
+  if (SetCondInst *SCI = canFoldSetCCIntoBranchOrSelect(Cond)) {
+    // We successfully folded the setcc into the select instruction.
+    
+    unsigned OpNum = getSetCCNumber(SCI->getOpcode());
+    OpNum = EmitComparison(OpNum, SCI->getOperand(0), SCI->getOperand(1), MBB,
+                           IP);
+
+    const Type *CompTy = SCI->getOperand(0)->getType();
+    bool isSigned = CompTy->isSigned() && getClassB(CompTy) != cFP;
+  
+    // LLVM  -> X86 signed  X86 unsigned
+    // -----    ----------  ------------
+    // seteq -> cmovNE      cmovNE
+    // setne -> cmovE       cmovE
+    // setlt -> cmovGE      cmovAE
+    // setge -> cmovL       cmovB
+    // setgt -> cmovLE      cmovBE
+    // setle -> cmovG       cmovA
+    // ----
+    //          cmovNS              // Used by comparison with 0 optimization
+    //          cmovS
+    
+    switch (SelectClass) {
+    default:
+    case cFP:
+      assert(0 && "We don't support floating point selects yet, they should "
+             "have been lowered!");
+    case cByte:
+    case cShort: {
+      static const unsigned OpcodeTab[2][8] = {
+        { X86::CMOVNE16rr, X86::CMOVE16rr, X86::CMOVAE16rr, X86::CMOVB16rr,
+          X86::CMOVBE16rr, X86::CMOVA16rr, 0, 0 },
+        { X86::CMOVNE16rr, X86::CMOVE16rr, X86::CMOVGE16rr, X86::CMOVL16rr,
+          X86::CMOVLE16rr, X86::CMOVG16rr, X86::CMOVNS16rr, X86::CMOVS16rr },
+      };
+      Opcode = OpcodeTab[isSigned][OpNum];
+      break;
+    }
+    case cInt:
+    case cLong: {
+      static const unsigned OpcodeTab[2][8] = {
+        { X86::CMOVNE32rr, X86::CMOVE32rr, X86::CMOVAE32rr, X86::CMOVB32rr,
+          X86::CMOVBE32rr, X86::CMOVA32rr, 0, 0 },
+        { X86::CMOVNE32rr, X86::CMOVE32rr, X86::CMOVGE32rr, X86::CMOVL32rr,
+          X86::CMOVLE32rr, X86::CMOVG32rr, X86::CMOVNS32rr, X86::CMOVS32rr },
+      };
+      Opcode = OpcodeTab[isSigned][OpNum];
+      break;
+    }
+    }
+  } else {
+    // Get the value being branched on, and use it to set the condition codes.
+    unsigned CondReg = getReg(Cond, MBB, IP);
+    BuildMI(*MBB, IP, X86::CMP8ri, 2).addReg(CondReg).addImm(0);
+    switch (SelectClass) {
+    default:
+    case cFP:
+      assert(0 && "We don't support floating point selects yet, they should "
+             "have been lowered!");
+    case cByte:
+    case cShort:
+      Opcode = X86::CMOVE16rr;
+      break;
+    case cInt:
+    case cLong:
+      Opcode = X86::CMOVE32rr;
+      break;
+    }
+  }
 
   unsigned TrueReg  = getReg(TrueVal, MBB, IP);
   unsigned FalseReg = getReg(FalseVal, MBB, IP);
   unsigned RealDestReg = DestReg;
-  unsigned Opcode;
 
-  switch (SelectClass) {
-  case cFP:
-    assert(0 && "We don't support floating point selects yet, they should "
-           "have been lowered!");
-  case cByte:
-  case cShort:
-    Opcode = X86::CMOVE16rr;
-    break;
-  case cInt:
-  case cLong:
-    Opcode = X86::CMOVE32rr;
-    break;
-  }
 
   // Annoyingly enough, X86 doesn't HAVE 8-bit conditional moves.  Because of
   // this, we have to promote the incoming values to 16 bits, perform a 16-bit
@@ -1126,7 +1182,7 @@ void ISel::visitBranchInst(BranchInst &BI) {
   }
 
   // See if we can fold the setcc into the branch itself...
-  SetCondInst *SCI = canFoldSetCCIntoBranch(BI.getCondition());
+  SetCondInst *SCI = canFoldSetCCIntoBranchOrSelect(BI.getCondition());
   if (SCI == 0) {
     // Nope, cannot fold setcc into this branch.  Emit a branch on a condition
     // computed some other way...
