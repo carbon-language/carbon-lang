@@ -170,9 +170,9 @@ namespace {
     /// pointerInvalidatedByLoop - Return true if the body of this loop may
     /// store into the memory location pointed to by V.
     /// 
-    bool pointerInvalidatedByLoop(Value *V) {
+    bool pointerInvalidatedByLoop(Value *V, unsigned Size) {
       // Check to see if any of the basic blocks in CurLoop invalidate *V.
-      return CurAST->getAliasSetForPointer(V, 0).isMod();
+      return CurAST->getAliasSetForPointer(V, Size).isMod();
     }
 
     bool canSinkOrHoistInst(Instruction &I);
@@ -351,7 +351,10 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
       return false;        // Don't hoist volatile loads!
 
     // Don't hoist loads which have may-aliased stores in loop.
-    return !pointerInvalidatedByLoop(LI->getOperand(0));
+    unsigned Size = 0;
+    if (LI->getType()->isSized())
+      Size = AA->getTargetData().getTypeSize(LI->getType());
+    return !pointerInvalidatedByLoop(LI->getOperand(0), Size);
   } else if (CallInst *CI = dyn_cast<CallInst>(&I)) {
     // Handle obvious cases efficiently.
     if (Function *Callee = CI->getCalledFunction()) {
