@@ -45,6 +45,10 @@ E: sabre@nondot.org
 W: http://nondot.org/~sabre/
 D: Primary architect of LLVM
 
+N: Vladimir Prus
+E: ghost@cs.msu.su
+D: Made inst_iterator behave like a proper iterator
+
 N: Ruchira Sasanka
 E: sasanka@uiuc.edu
 D: Graph coloring register allocator for the Sparc64 backend
