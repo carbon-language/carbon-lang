@@ -209,13 +209,29 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
   if (Instruction *Cond = dyn_cast<Instruction>(BI->getCondition()))
     InstructionsToDelete.insert(Cond);
 
-  // The IterationCount expression contains the number of times that the
-  // backedge actually branches to the loop header.  This is one less than the
-  // number of times the loop executes, so add one to it.
-  Constant *OneC = ConstantInt::get(IterationCount->getType(), 1);
-  SCEVHandle TripCount=SCEVAddExpr::get(IterationCount, SCEVUnknown::get(OneC));
+  // If the exiting block is not the same as the backedge block, we must compare
+  // against the preincremented value, otherwise we prefer to compare against
+  // the post-incremented value.
+  BasicBlock *Header = L->getHeader();
+  pred_iterator HPI = pred_begin(Header);
+  assert(HPI != pred_end(Header) && "Loop with zero preds???");
+  if (!L->contains(*HPI)) ++HPI;
+  assert(HPI != pred_end(Header) && L->contains(*HPI) &&
+         "No backedge in loop?");
 
-  Value *IndVar = L->getCanonicalInductionVariableIncrement();
+  SCEVHandle TripCount = IterationCount;
+  Value *IndVar;
+  if (*HPI == ExitingBlock) {
+    // The IterationCount expression contains the number of times that the
+    // backedge actually branches to the loop header.  This is one less than the
+    // number of times the loop executes, so add one to it.
+    Constant *OneC = ConstantInt::get(IterationCount->getType(), 1);
+    TripCount = SCEVAddExpr::get(IterationCount, SCEVUnknown::get(OneC));
+    IndVar = L->getCanonicalInductionVariableIncrement();
+  } else {
+    // We have to use the preincremented value...
+    IndVar = L->getCanonicalInductionVariable();
+  }
 
   // Expand the code for the iteration count into the preheader of the loop.
   BasicBlock *Preheader = L->getLoopPreheader();
