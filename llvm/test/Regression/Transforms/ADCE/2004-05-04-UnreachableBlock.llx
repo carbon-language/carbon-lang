@@ -1,0 +1,16 @@
+; RUN: llvm-as < %s | opt -adce -disable-output
+
+void %test() {
+entry:
+	br label %UnifiedReturnBlock
+
+UnifiedReturnBlock:
+	ret void
+
+invoke_catch.0:		; No predecessors!
+	br bool false, label %UnifiedUnwindBlock, label %UnifiedReturnBlock
+
+UnifiedUnwindBlock:		; preds = %invoke_catch.0
+	unwind
+
+}
