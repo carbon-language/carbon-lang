@@ -2797,7 +2797,7 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
         unsigned TempReg2 = makeAnotherReg(DestTy);
         addFrameReference(BuildMI(*BB, IP, PPC::LBZ, 2, TempReg2), 
                           ValueFrameIdx, 7);
-        BuildMI(*MBB, IP, PPC::EXTSB, DestReg).addReg(TempReg2);
+        BuildMI(*BB, IP, PPC::EXTSB, 1, DestReg).addReg(TempReg2);
       } else {
         int offset = (DestClass == cShort) ? 6 : 4;
         unsigned LoadOp = (DestClass == cShort) ? PPC::LHA : PPC::LWZ;
