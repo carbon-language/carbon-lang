@@ -380,18 +380,21 @@ void JITResolver::CompilationCallback() {
   // Overwrite it
   TheJITResolver->insertJumpAtAddr(Target, CodeBegin);
 
-  RestoreRegisters(DoubleFP, FSR, FPRS, CCR);
+  // Flush the I-Cache: FLUSH clears out a doubleword at a given address
+  // Self-modifying code MUST clear out the I-Cache to be portable
+#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+  for (int i = -Offset, e = 32-((int64_t)Offset); i < e; i += 8)
+    __asm__ __volatile__ ("flush %%i7 + %0" : : "r" (i));
+#endif
 
   // Change the return address to re-execute the restore, then the jump.
-  // However, we can't just modify %i7 here, because we return to the function
-  // that will restore the floating-point registers for us. Thus, we just return
-  // the value we want it to be, and the parent will take care of setting %i7
-  // correctly.
   DEBUG(std::cerr << "Callback returning to: 0x"
                   << std::hex << (CameFrom-Offset-12) << "\n");
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
   __asm__ __volatile__ ("sub %%i7, %0, %%i7" : : "r" (Offset+12));
 #endif
+
+  RestoreRegisters(DoubleFP, FSR, FPRS, CCR);
 }
 
 /// emitStubForFunction - This method is used by the JIT when it needs to emit
