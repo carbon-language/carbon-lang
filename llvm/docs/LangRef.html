@@ -389,7 +389,8 @@ classifications:</p>
     </tr>
     <tr>
       <td><a name="t_integral">integral</a></td>
-      <td><tt>bool, ubyte, sbyte, ushort, short, uint, int, ulong, long</tt></td>
+      <td><tt>bool, ubyte, sbyte, ushort, short, uint, int, ulong, long</tt>
+      </td>
     </tr>
     <tr>
       <td><a name="t_floating">floating point</a></td>
@@ -397,8 +398,9 @@ classifications:</p>
     </tr>
     <tr>
       <td><a name="t_firstclass">first class</a></td>
-      <td><tt>bool, ubyte, sbyte, ushort, short,<br>
-uint, int, ulong, long, float, double, <a href="#t_pointer">pointer</a>, <a href="#t_packed">packed</a></tt></td>
+      <td><tt>bool, ubyte, sbyte, ushort, short, uint, int, ulong, long,<br> 
+      float, double, <a href="#t_pointer">pointer</a>, 
+      <a href="#t_packed">packed</a></tt></td>
     </tr>
   </tbody>
 </table>
@@ -467,8 +469,8 @@ The return type of a function type cannot be an aggregate type.
 </p>
 <h5>Syntax:</h5>
 <pre>  &lt;returntype&gt; (&lt;parameter list&gt;)<br></pre>
-<p>Where '<tt>&lt;parameter list&gt;</tt>' is a comma-separated list of
-type specifiers.  Optionally, the parameter list may include a type <tt>...</tt>,
+<p>Where '<tt>&lt;parameter list&gt;</tt>' is a comma-separated list of type
+specifiers.  Optionally, the parameter list may include a type <tt>...</tt>,
 which indicates that the function takes a variable number of arguments.
 Variable argument functions can access their arguments with the <a
  href="#int_varargs">variable argument handling intrinsic</a> functions.</p>
@@ -482,16 +484,16 @@ Variable argument functions can access their arguments with the <a
     </tr>
     <tr>
       <td><tt>float (int, int *) *</tt></td>
-      <td>: <a href="#t_pointer">Pointer</a> to a function that takes
-an <tt>int</tt> and a <a href="#t_pointer">pointer</a> to <tt>int</tt>,
-returning <tt>float</tt>.</td>
+      <td>: <a href="#t_pointer">Pointer</a> to a function that takes an
+      <tt>int</tt> and a <a href="#t_pointer">pointer</a> to <tt>int</tt>,
+      returning <tt>float</tt>.</td>
     </tr>
     <tr>
       <td><tt>int (sbyte *, ...)</tt></td>
       <td>: A vararg function that takes at least one <a
- href="#t_pointer">pointer</a> to <tt>sbyte</tt> (signed char in C),
-which       returns an integer.  This is the signature for <tt>printf</tt>
-in LLVM.</td>
+      href="#t_pointer">pointer</a> to <tt>sbyte</tt> (signed char in C), which
+      returns an integer.  This is the signature for <tt>printf</tt> in
+      LLVM.</td>
     </tr>
   </tbody>
 </table>
@@ -521,10 +523,10 @@ instruction.</p>
     </tr>
     <tr>
       <td><tt>{ float, int (int) * }</tt></td>
-      <td>: A pair, where the first element is a <tt>float</tt> and the
-second       element is a <a href="#t_pointer">pointer</a> to a <a
- href="#t_function">function</a> that takes an <tt>int</tt>, returning
-an <tt>int</tt>.</td>
+      <td>: A pair, where the first element is a <tt>float</tt> and the second
+      element is a <a href="#t_pointer">pointer</a> to a <a
+      href="#t_function">function</a> that takes an <tt>int</tt>, returning an
+      <tt>int</tt>.</td>
     </tr>
   </tbody>
 </table>
@@ -544,14 +546,14 @@ reference to another object, which must live in memory.</p>
   <tbody>
     <tr>
       <td><tt>[4x int]*</tt></td>
-      <td>: <a href="#t_pointer">pointer</a> to <a href="#t_array">array</a>
-of four <tt>int</tt> values</td>
+      <td>: <a href="#t_pointer">pointer</a> to <a href="#t_array">array</a> of
+      four <tt>int</tt> values</td>
     </tr>
     <tr>
       <td><tt>int (int *) *</tt></td>
       <td>: A <a href="#t_pointer">pointer</a> to a <a
- href="#t_function">function</a> that takes an <tt>int</tt>, returning
-an <tt>int</tt>.</td>
+      href="#t_function">function</a> that takes an <tt>int</tt>, returning an
+      <tt>int</tt>.</td>
     </tr>
   </tbody>
 </table>
@@ -579,8 +581,10 @@ be any integral or floating point type.</p>
 
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="highlevel">High Level Structure</a> </div>
-<!-- *********************************************************************** --><!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="modulestructure">Module Structure</a> </div>
+<!-- *********************************************************************** -->
+<!-- ======================================================================= -->
+<div class="doc_subsection"> <a name="modulestructure">Module Structure</a>
+</div>
 <div class="doc_text">
 <p>LLVM programs are composed of "Module"s, each of which is a
 translation unit of the input programs.  Each module consists of
