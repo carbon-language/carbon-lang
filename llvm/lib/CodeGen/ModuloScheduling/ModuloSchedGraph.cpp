@@ -1064,7 +1064,7 @@ ModuloSchedGraph::computeRecII(const BasicBlock *bb){
   //FIXME: only deal with circuits starting at the first node: the phi node
   //nodeId=2;
 
-  //search all elementary circuits in the dependance graph
+  //search all elementary circuits in the dependence graph
   //assume maximum number of nodes is MAXNODE
 
   unsigned path[MAXNODE];
