@@ -69,6 +69,7 @@ namespace {
   private :
     bool nameAllUsedStructureTypes(Module &M);
     void printModule(Module *M);
+    void printFloatingPointConstants(Module &M);
     void printSymbolTable(const SymbolTable &ST);
     void printContainedStructs(const Type *Ty, std::set<const StructType *> &);
     void printFunctionSignature(const Function *F, bool Prototype);
@@ -337,6 +338,10 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
 //
 static bool isFPCSafeToPrint(const ConstantFP *CFP) {
   std::string StrVal = ftostr(CFP->getValue());
+
+  while (StrVal[0] == ' ')
+    StrVal.erase(StrVal.begin());
+
   // Check to make sure that the stringized number is not some string like "Inf"
   // or NaN.  Check that the string matches the "[-+]?[0-9]" regex.
   if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
@@ -435,7 +440,7 @@ void CWriter::printConstant(Constant *CPV) {
       // Because of FP precision problems we must load from a stack allocated
       // value that holds the value in hex.
       Out << "(*(" << (FPC->getType() == Type::FloatTy ? "float" : "double")
-          << "*)&FloatConstant" << I->second << ")";
+          << "*)&FPConstant" << I->second << ")";
     } else {
       // Print out the constant as a floating point number.
       Out << ftostr(FPC->getValue());
@@ -669,6 +674,9 @@ void CWriter::printModule(Module *M) {
       }
   }
 
+  // Output all floating point constants that cannot be printed accurately...
+  printFloatingPointConstants(*M);
+  
   // Output all of the functions...
   emittedInvoke = false;
   if (!M->empty()) {
@@ -684,7 +692,55 @@ void CWriter::printModule(Module *M) {
         << "struct __llvm_jmpbuf_list_t *__llvm_jmpbuf_list "
         << "__attribute__((common)) = 0;\n";
   }
+
+  // Done with global FP constants
+  FPConstantMap.clear();
 }
+
+/// Output all floating point constants that cannot be printed accurately...
+void CWriter::printFloatingPointConstants(Module &M) {
+  union {
+    double D;
+    unsigned long long U;
+  } DBLUnion;
+
+  union {
+    float F;
+    unsigned U;
+  } FLTUnion;
+
+  // Scan the module for floating point constants.  If any FP constant is used
+  // in the function, we want to redirect it here so that we do not depend on
+  // the precision of the printed form, unless the printed form preserves
+  // precision.
+  //
+  unsigned FPCounter = 0;
+  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
+    for (constant_iterator I = constant_begin(F), E = constant_end(F);
+         I != E; ++I)
+      if (const ConstantFP *FPC = dyn_cast<ConstantFP>(*I))
+        if (!isFPCSafeToPrint(FPC) && // Do not put in FPConstantMap if safe.
+            !FPConstantMap.count(FPC)) {
+          double Val = FPC->getValue();
+          
+          FPConstantMap[FPC] = FPCounter;  // Number the FP constants
+          
+          if (FPC->getType() == Type::DoubleTy) {
+            DBLUnion.D = Val;
+            Out << "const ConstantDoubleTy FPConstant" << FPCounter++
+                << " = 0x" << std::hex << DBLUnion.U << std::dec
+                << "ULL;    /* " << Val << " */\n";
+          } else if (FPC->getType() == Type::FloatTy) {
+            FLTUnion.F = Val;
+            Out << "const ConstantFloatTy FPConstant" << FPCounter++
+                << " = 0x" << std::hex << FLTUnion.U << std::dec
+                << "U;    /* " << Val << " */\n";
+          } else
+            assert(0 && "Unknown float type!");
+        }
+  
+  Out << "\n";
+ }
 
 
 /// printSymbolTable - Run through symbol table looking for type names.  If a
@@ -840,42 +896,14 @@ void CWriter::printFunction(Function *F) {
       
       if (isa<PHINode>(*I)) {  // Print out PHI node temporaries as well...
         Out << "  ";
-        printType(Out, (*I)->getType(), Mang->getValueName(*I)+"__PHI_TEMPORARY");
+        printType(Out, (*I)->getType(),
+                  Mang->getValueName(*I)+"__PHI_TEMPORARY");
         Out << ";\n";
       }
     }
 
   Out << "\n";
 
-  // Scan the function for floating point constants.  If any FP constant is used
-  // in the function, we want to redirect it here so that we do not depend on
-  // the precision of the printed form, unless the printed form preserves
-  // precision.
-  //
-  unsigned FPCounter = 0;
-  for (constant_iterator I = constant_begin(F), E = constant_end(F); I != E;++I)
-    if (const ConstantFP *FPC = dyn_cast<ConstantFP>(*I))
-      if ((!isFPCSafeToPrint(FPC)) // Do not put in FPConstantMap if safe.
-	  && (FPConstantMap.find(FPC) == FPConstantMap.end())) {
-        double Val = FPC->getValue();
-        
-        FPConstantMap[FPC] = FPCounter;  // Number the FP constants
-
-        if (FPC->getType() == Type::DoubleTy)
-          Out << "  const ConstantDoubleTy FloatConstant" << FPCounter++
-              << " = 0x" << std::hex << *(unsigned long long*)&Val << std::dec
-              << "ULL;    /* " << Val << " */\n";
-        else if (FPC->getType() == Type::FloatTy) {
-          float fVal = Val;
-          Out << "  const ConstantFloatTy FloatConstant" << FPCounter++
-              << " = 0x" << std::hex << *(unsigned*)&fVal << std::dec
-              << "U;    /* " << Val << " */\n";
-        } else
-          assert(0 && "Unknown float type!");
-      }
-
-  Out << "\n";
- 
   // print the basic blocks
   for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     BasicBlock *Prev = BB->getPrev();
@@ -915,7 +943,6 @@ void CWriter::printFunction(Function *F) {
   }
   
   Out << "}\n\n";
-  FPConstantMap.clear();
 }
 
 // Specific Instruction type classes... note that all of the casts are
