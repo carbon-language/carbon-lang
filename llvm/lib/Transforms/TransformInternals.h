@@ -12,6 +12,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/ConstPoolVals.h"
 #include <map>
 #include <set>
 
@@ -23,11 +24,11 @@
 //
 extern const TargetData TD;
 
-// losslessCastableTypes - Return true if the types are bitwise equivalent.
-// This predicate returns true if it is possible to cast from one type to
-// another without gaining or losing precision, or altering the bits in any way.
-//
-bool losslessCastableTypes(const Type *T1, const Type *T2);
+static int getConstantValue(const ConstPoolInt *CPI) {
+  if (const ConstPoolSInt *CSI = dyn_cast<ConstPoolSInt>(CPI))
+    return CSI->getValue();
+  return cast<ConstPoolUInt>(CPI)->getValue();
+}
 
 
 // isFirstClassType - Return true if a value of the specified type can be held
@@ -37,12 +38,12 @@ static inline bool isFirstClassType(const Type *Ty) {
   return Ty->isPrimitiveType() || Ty->isPointerType();
 }
 
-// getPointedToStruct - If the argument is a pointer type, and the pointed to
-// value is a struct type, return the struct type, else return null.
+// getPointedToComposite - If the argument is a pointer type, and the pointed to
+// value is a composite type, return the composite type, else return null.
 //
-static inline const StructType *getPointedToStruct(const Type *Ty) {
+static inline const CompositeType *getPointedToComposite(const Type *Ty) {
   const PointerType *PT = dyn_cast<PointerType>(Ty);
-  return PT ? dyn_cast<StructType>(PT->getValueType()) : 0;
+  return PT ? dyn_cast<CompositeType>(PT->getValueType()) : 0;
 }
 
 
@@ -58,6 +59,19 @@ void ReplaceInstWithValue(BasicBlock::InstListType &BIL,
 //
 void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
                          BasicBlock::iterator &BI, Instruction *I);
+
+
+// ConvertableToGEP - This function returns true if the specified value V is
+// a valid index into a pointer of type Ty.  If it is valid, Idx is filled in
+// with the values that would be appropriate to make this a getelementptr
+// instruction.  The type returned is the root type that the GEP would point
+// to if it were synthesized with this operands.
+//
+// If BI is nonnull, cast instructions are inserted as appropriate for the
+// arguments of the getelementptr.
+//
+const Type *ConvertableToGEP(const Type *Ty, Value *V, vector<Value*> &Indices,
+                             BasicBlock::iterator *BI = 0);
 
 
 // ------------- Expression Conversion ---------------------
@@ -81,11 +95,11 @@ struct ValueMapCache {
 bool ExpressionConvertableToType(Value *V, const Type *Ty, ValueTypeCache &Map);
 Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC);
 
-// RetValConvertableToType - Return true if it is possible
-bool RetValConvertableToType(Value *V, const Type *Ty,
-                             ValueTypeCache &ConvertedTypes);
+// ValueConvertableToType - Return true if it is possible
+bool ValueConvertableToType(Value *V, const Type *Ty,
+                            ValueTypeCache &ConvertedTypes);
 
-void ConvertUsersType(Value *V, Value *NewVal, ValueMapCache &VMC);
+void ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC);
 
 
 //===----------------------------------------------------------------------===//
@@ -128,7 +142,7 @@ public:
 // false if you want a leaf
 //
 const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
-                                vector<ConstPoolVal*> &Offsets,
+                                vector<Value*> &Offsets,
                                 bool StopEarly = true);
 
 #endif
