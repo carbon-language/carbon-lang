@@ -521,11 +521,24 @@ else
 fi
 
 dnl Spec Benchmarks
-AC_ARG_ENABLE(spec,AC_HELP_STRING([--enable-spec],[Compile SPEC benchmarks (default is NO)]),,enableval=no)
+AC_ARG_ENABLE(spec2000,AC_HELP_STRING([--enable-spec],[Compile SPEC 2000 benchmarks (default is NO)]),,enableval=no)
 if test ${enableval} = "no"
 then
-	AC_SUBST(USE_SPEC,[[]])
+	if test -d /home/vadve/shared/benchmarks/speccpu2000/benchspec
+	then
+		AC_SUBST(SPEC_ROOT,[/home/vadve/shared/benchmarks/speccpu2000/benchspec])
+		AC_SUBST(USE_SPEC,[[USE_SPEC=1]])
+	else
+		AC_SUBST(USE_SPEC,[[]])
+		AC_SUBST(SPEC_ROOT,[])
+	fi
 else
+	if test ${enableval} = ""
+	then
+		AC_SUBST(SPEC_ROOT,[/home/vadve/shared/benchmarks/speccpu2000/benchspec])
+	else
+		AC_SUBST(SPEC_ROOT,[${enableval}])
+	fi
 	AC_SUBST(USE_SPEC,[[USE_SPEC=1]])
 fi
 
@@ -571,9 +584,6 @@ fi
 dnl **************************************************************************
 dnl * Set the location of various third-party software packages
 dnl **************************************************************************
-
-dnl Location of SPEC benchmarks
-AC_ARG_WITH(spec,AC_HELP_STRING([--with-spec],[Location of SPEC benchmarks]),AC_SUBST(SPEC_ROOT,[$withval]),AC_SUBST(SPEC_ROOT,[/home/vadve/shared/benchmarks/speccpu2000/benchspec]))
 
 dnl Location of the LLVM C front end
 AC_ARG_WITH(llvmgccdir,AC_HELP_STRING([--with-llvmgccdir],[Location of LLVM GCC front-end]),AC_SUBST(LLVMGCCDIR,[$withval]))
