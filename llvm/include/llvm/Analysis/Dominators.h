@@ -365,9 +365,9 @@ public:
   /// changeImmediateDominator - This method is used to update the dominator
   /// tree information when a node's immediate dominator changes.
   ///
-  void changeImmediateDominator(Node *Node, Node *NewIDom) {
-    assert(Node && NewIDom && "Cannot change null node pointers!");
-    Node->setIDom(NewIDom);
+  void changeImmediateDominator(Node *N, Node *NewIDom) {
+    assert(N && NewIDom && "Cannot change null node pointers!");
+    N->setIDom(NewIDom);
   }
 
   /// print - Convert to human readable form
