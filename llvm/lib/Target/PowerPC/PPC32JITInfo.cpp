@@ -48,10 +48,22 @@ static void EmitBranchToAt(void *At, void *To, bool isCall) {
 }
 
 static void CompilationCallback() {
-  // FIXME: Should save R3-R10 and F1-F13 onto the stack, just like the Sparc
-  // version does.
-  //int IntRegs[8];
-  //uint64_t FPRegs[13];
+  // Save R3-R31, since we want to restore arguments and nonvolatile regs used
+  // by the compiler.  We also save and restore the FP regs, although this is
+  // probably just paranoia (gcc is unlikely to emit code that uses them for
+  // for this function.
+#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
+  unsigned IntRegs[29];
+  double FPRegs[13];
+  __asm__ __volatile__ (
+  "stmw r3, 0(%0)\n"
+  "stfd f1, 0(%1)\n"  "stfd f2, 8(%1)\n"  "stfd f3, 16(%1)\n" 
+  "stfd f4, 24(%1)\n" "stfd f5, 32(%1)\n" "stfd f6, 40(%1)\n" 
+  "stfd f7, 48(%1)\n" "stfd f8, 56(%1)\n" "stfd f9, 64(%1)\n" 
+  "stfd f10, 72(%1)\n" "stfd f11, 80(%1)\n" "stfd f12, 88(%1)\n"
+  "stfd f13, 96(%1)\n" :: "r" (IntRegs), "r" (FPRegs) );
+#endif
+
   unsigned *CameFromStub = (unsigned*)__builtin_return_address(0);
   unsigned *CameFromOrig = (unsigned*)__builtin_return_address(1);
   unsigned *CCStackPtr   = (unsigned*)__builtin_frame_address(0);
@@ -95,16 +107,21 @@ static void CompilationCallback() {
   CCStackPtr[2] = (intptr_t)CameFromStub;
   CCStackPtr[1] = (intptr_t)CameFromOrig;
 
-  // FIXME: Need to restore the registers from IntRegs/FPRegs.
-
   // Note, this is not a standard epilog!
 #if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
-  __asm__ __volatile__ ("lwz r0,4(r1)\n"   // Get CameFromOrig (LR into stub)
-                        "mtlr r0\n"        // Put it in the LR register
-                        "lwz r0,8(r1)\n"   // Get "CameFromStub"
-                        "mtctr r0\n"       // Put it into the CTR register
-                        "lwz r1,0(r1)\n"   // Pop two frames off
-                        "bctr\n" ::);      // Return to stub!
+  __asm__ __volatile__ (
+  "lfd f1, 0(%0)\n"  "lfd f2, 8(%0)\n"  "lfd f3, 16(%0)\n" 
+  "lfd f4, 24(%0)\n" "lfd f5, 32(%0)\n" "lfd f6, 40(%0)\n" 
+  "lfd f7, 48(%0)\n" "lfd f8, 56(%0)\n" "lfd f9, 64(%0)\n" 
+  "lfd f10, 72(%0)\n" "lfd f11, 80(%0)\n" "lfd f12, 88(%0)\n"
+  "lfd f13, 96(%0)\n" "lmw r3, 0(%1)\n"
+  "lwz r0,4(r1)\n"   // Get CameFromOrig (LR into stub)
+  "mtlr r0\n"        // Put it in the LR register
+  "lwz r0,8(r1)\n"   // Get "CameFromStub"
+  "mtctr r0\n"       // Put it into the CTR register
+  "lwz r1,0(r1)\n"   // Pop two frames off
+  "bctr\n" ::        // Return to stub!
+  "r" (FPRegs), "r" (IntRegs)); 
 #endif
 }
 
