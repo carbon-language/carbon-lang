@@ -879,6 +879,9 @@ void AssemblyWriter::printFunction(const Function *F) {
   // Print out the return type and name...
   Out << "\n";
 
+  // Ensure that no local symbols conflict with global symbols.
+  const_cast<Function*>(F)->renameLocalSymbols();
+
   if (AnnotationWriter) AnnotationWriter->emitFunctionAnnot(F, Out);
 
   if (F->isExternal())
