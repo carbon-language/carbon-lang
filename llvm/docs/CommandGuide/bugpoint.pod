@@ -11,13 +11,13 @@ I<program arguments> ...
 
 =head1 DESCRIPTION
 
-The B<bugpoint> tool narrows down the source of problems in LLVM tools and passes.
-It can be used to debug three types of failures: optimizer crashes,
-miscompilations by optimizers, or bad native code generation (including problems
-in the static and JIT compilers).  It aims to reduce large test cases to small,
-useful ones.  For example, if B<gccas> crashes while optimizing a file, it will
-identify the optimization (or combination of optimizations) that causes the
-crash, and reduce the file down to a small example which triggers the crash.
+B<bugpoint> narrows down the source of problems in LLVM tools and passes.  It
+can be used to debug three types of failures: optimizer crashes, miscompilations
+by optimizers, or bad native code generation (including problems in the static
+and JIT compilers).  It aims to reduce large test cases to small, useful ones.
+For example, if B<gccas> crashes while optimizing a file, it will identify the
+optimization (or combination of optimizations) that causes the crash, and reduce
+the file down to a small example which triggers the crash.
 
 =head2 Design Philosophy
 
