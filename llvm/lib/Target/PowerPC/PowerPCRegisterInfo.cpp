@@ -196,7 +196,7 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   unsigned NumBytes = MFI->getStackSize();
 
   // If we have calls, save the LR value on the stack
-  if (MFI->hasCalls()) {
+  if (MFI->hasCalls() || true) {
     // When we have no frame pointer, we reserve argument space for call sites
     // in the function immediately on entry to the current function.  This
     // eliminates the need for add/sub brackets around call sites.
@@ -254,25 +254,35 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   // Get the number of bytes allocated from the FrameInfo...
   unsigned NumBytes = MFI->getStackSize();
 
-  // If we have calls, restore the LR value before we branch to it
-  if (MFI->hasCalls()) {
-    // Restore LR
+  if (NumBytes == 0 && (MFI->hasCalls() || true)) {
+    // Don't need to adjust the stack pointer, just gotta fix up the LR
     MI = BuildMI(PPC32::LWZ, 2,PPC32::R0).addSImm(NumBytes+8).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
     MI = BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0);
     MBB.insert(MBBI, MI);
-  }
-
-  // Do we need to adjust the stack pointer back?
-  if (NumBytes == 0) return;
-
-  // Adjust stack pointer back
-  if (NumBytes <= 32767) {
+  } else if (NumBytes <= 32767-8) {
+    // We're within range to load the return address and restore the stack
+    // pointer with immediate offsets only.
+    if (MFI->hasCalls() || true) {
+      MI = BuildMI(PPC32::LWZ,2,PPC32::R0).addSImm(NumBytes+8).addReg(PPC32::R1);
+      MBB.insert(MBBI, MI);
+      MI = BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0);
+      MBB.insert(MBBI, MI);
+    }
     MI = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1).addSImm(NumBytes);
     MBB.insert(MBBI, MI);
   } else {
     MI = BuildMI(PPC32::LWZ, 2, PPC32::R1).addSImm(0).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
+    // We're not within range to load the return address with an immediate
+    // offset before restoring the stack pointer, so do it after from its spot
+    // in the linkage area.
+    if (MFI->hasCalls() || true) {
+      MI = BuildMI(PPC32::LWZ, 2, PPC32::R0).addSImm(8).addReg(PPC32::R1);
+      MBB.insert(MBBI, MI);
+      MI = BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0);
+      MBB.insert(MBBI, MI);
+    }
   }
 }
 
