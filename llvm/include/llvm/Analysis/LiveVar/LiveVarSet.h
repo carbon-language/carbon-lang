@@ -1,4 +1,4 @@
-/* Title:   LiveVarSet.h
+/* Title:   LiveVarSet.h   -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    Jun 30, 01
    Purpose: Contains the class definition of LiveVarSet which is used for
@@ -9,19 +9,14 @@
 #define LIVE_VAR_SET_H
 
 #include "llvm/Analysis/LiveVar/ValueSet.h"
-#include "llvm/Instruction.h"
-#include "llvm/Type.h"
+class MachineInstr;
 
-class LiveVarSet : public ValueSet
-{
-
- public:
+struct LiveVarSet : public ValueSet {
 
   // This function applies a machine instr to a live var set (accepts OutSet)
   // and makes necessary changes to it (produces InSet).
-
+  //
   void applyTranferFuncForMInst(const MachineInstr *const MInst);
-
 };
 
 
