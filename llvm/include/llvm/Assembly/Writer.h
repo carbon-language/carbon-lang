@@ -20,7 +20,6 @@
 class Type;
 class Module;
 class Value;
-class SlotCalculator;
 
 
 // WriteTypeSymbolic - This attempts to write the specified type as a symbolic
@@ -32,9 +31,11 @@ std::ostream &WriteTypeSymbolic(std::ostream &, const Type *, const Module *M);
 
 // WriteAsOperand - Write the name of the specified value out to the specified
 // ostream.  This can be useful when you just want to print int %reg126, not the
-// whole instruction that generated it.
+// whole instruction that generated it.  If you specify a Module for context,
+// then even constants get pretty printed (for example the type of a null 
+// pointer is printed symbolically).
 //
 std::ostream &WriteAsOperand(std::ostream &, const Value *, bool PrintTy = true,
-                             bool PrintName = true, SlotCalculator *Table = 0);
+                             bool PrintName = true, const Module *Context = 0);
 
 #endif
