@@ -50,6 +50,8 @@ Value::~Value() {
 void Value::replaceAllUsesWith(Value *D) {
   assert(D && "Value::replaceAllUsesWith(<null>) is invalid!");
   assert(D != this && "V->replaceAllUsesWith(V) is NOT valid!");
+  assert(D->getType() == getType() &&
+         "replaceAllUses of value with new value of different type!");
   while (!Uses.empty()) {
     User *Use = Uses.back();
 #ifndef NDEBUG
