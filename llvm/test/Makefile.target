@@ -5,8 +5,8 @@
 
 .PHONY: clean default
 
-## keep %.linked.bc from being deleted
-.PRECIOUS: %.linked.bc
+## keep %.linked.bc and %.s from being deleted while we're debugging
+.PRECIOUS: %.linked.bc %.s
 
 
 TOOLS    = $(LEVEL)/tools/Debug
@@ -59,7 +59,7 @@ endif
 ## Special target to force target-dependent library to be compiled
 ## directly to native code.
 ## 
-$(LLCLIB):
+$(LLCLIB): $(LLCLIB:.o=.c)
 	cd $(LEVEL)/test; $(MAKE) $(@F)
 
 runtime.o: runtime.c
