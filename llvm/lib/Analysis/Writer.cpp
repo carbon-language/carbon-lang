@@ -10,8 +10,10 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/InductionVariable.h"
+#include "llvm/Assembly/Writer.h"
 #include <iterator>
 #include <algorithm>
+#include <string>
 using std::ostream;
 using std::set;
 using std::vector;
