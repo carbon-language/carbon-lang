@@ -147,3 +147,57 @@ MakeFileExecutable (const std::string & Filename)
   return true;
 }
 
+///
+/// Method: MakeFileReadable ()
+///
+/// Description:
+///	This method makes the specified filename readable by giving it
+///	read permission.  It respects the umask value of the process, and it
+///	does not enable any unnecessary access bits.
+///
+/// Algorithm:
+///	o Get file's current permissions.
+///	o Get the process's current umask.
+///	o Take the set of all read bits and disable those found in the umask.
+///	o Add the remaining permissions to the file's permissions.
+///
+bool
+MakeFileReadable (const std::string & Filename)
+{
+  // Permissions masking value of the user
+  mode_t mask;
+
+  // Permissions currently enabled on the file
+  struct stat fstat;
+
+  //
+  // Grab the umask value from the operating system.  We want to use it when
+  // changing the file's permissions.
+  //
+  // Note:
+  //  Umask() is one of those annoying system calls.  You have to call it
+  //  to get the current value and then set it back.
+  //
+  mask = umask (0x777);
+  umask (mask);
+
+  //
+  // Go fetch the file's current permission bits.  We want to *add* execute
+  // access to the file.
+  //
+  if ((stat (Filename.c_str(), &fstat)) == -1)
+  {
+    return false;
+  }
+
+  //
+  // Make the file executable...
+  //
+  if ((chmod(Filename.c_str(), (fstat.st_mode | (0444 & ~mask)))) == -1)
+  {
+    return false;
+  }
+
+  return true;
+}
+

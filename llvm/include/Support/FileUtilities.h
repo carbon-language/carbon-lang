@@ -51,4 +51,21 @@ std::string getUniqueFilename(const std::string &FilenameBase);
 ///	In case of failure, the file's access attributes are unspecified.
 ///
 bool MakeFileExecutable (const std::string & Filename);
+
+///
+/// Method: MakeFileReadable()
+///
+/// Description:
+///	This method turns on whatever access attributes are needed to make the
+///	specified file readable.
+///
+/// Return value:
+///	True  - The operation succeeded.
+///	False - The operation failed.
+///
+/// Notes:
+///	In case of failure, the file's access attributes are unspecified.
+///
+bool MakeFileReadable (const std::string & Filename);
+
 #endif
