@@ -44,52 +44,32 @@ namespace {
                      " program"), cl::value_desc("executable"));
 }
 
-static std::vector<std::string> makeStringVector(char * const *envp) {
-  std::vector<std::string> rv;
-  for (unsigned i = 0; envp[i]; ++i)
-    rv.push_back(envp[i]);
-  return rv;
-}
-
 static void *CreateArgv(ExecutionEngine *EE,
                         const std::vector<std::string> &InputArgv) {
-  if (EE->getTargetData().getPointerSize() == 8) {   // 64 bit target?
-    PointerTy *Result = new PointerTy[InputArgv.size()+1];
-    DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
+  unsigned PtrSize = EE->getTargetData().getPointerSize();
+  char *Result = new char[(InputArgv.size()+1)*PtrSize];
 
-    for (unsigned i = 0; i < InputArgv.size(); ++i) {
-      unsigned Size = InputArgv[i].size()+1;
-      char *Dest = new char[Size];
-      DEBUG(std::cerr << "ARGV[" << i << "] = " << (void*)Dest << "\n");
-      
-      std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
-      Dest[Size-1] = 0;
-      
-      // Endian safe: Result[i] = (PointerTy)Dest;
-      EE->StoreValueToMemory(PTOGV(Dest), (GenericValue*)(Result+i),
-                             Type::LongTy);
-    }
-    Result[InputArgv.size()] = 0;
-    return Result;
-  } else {                                      // 32 bit target?
-    int *Result = new int[InputArgv.size()+1];
-    DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
+  DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
+  const Type *SBytePtr = PointerType::get(Type::SByteTy);
 
-    for (unsigned i = 0; i < InputArgv.size(); ++i) {
-      unsigned Size = InputArgv[i].size()+1;
-      char *Dest = new char[Size];
-      DEBUG(std::cerr << "ARGV[" << i << "] = " << (void*)Dest << "\n");
+  for (unsigned i = 0; i != InputArgv.size(); ++i) {
+    unsigned Size = InputArgv[i].size()+1;
+    char *Dest = new char[Size];
+    DEBUG(std::cerr << "ARGV[" << i << "] = " << (void*)Dest << "\n");
       
-      std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
-      Dest[Size-1] = 0;
+    std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
+    Dest[Size-1] = 0;
       
-      // Endian safe: Result[i] = (PointerTy)Dest;
-      EE->StoreValueToMemory(PTOGV(Dest), (GenericValue*)(Result+i),
-                             Type::IntTy);
-    }
-    Result[InputArgv.size()] = 0;  // null terminate it
-    return Result;
+    // Endian safe: Result[i] = (PointerTy)Dest;
+    EE->StoreValueToMemory(PTOGV(Dest), (GenericValue*)(Result+i*PtrSize),
+                           SBytePtr);
   }
+
+  // Null terminate it
+  EE->StoreValueToMemory(PTOGV(0),
+                         (GenericValue*)(Result+InputArgv.size()*PtrSize),
+                         SBytePtr);
+  return Result;
 }
 
 //===----------------------------------------------------------------------===//
@@ -145,7 +125,9 @@ int main(int argc, char **argv, char * const *envp) {
   GVArgs.push_back(PTOGV(CreateArgv(EE, InputArgv))); // Arg #1 = argv.
   assert(((char **)GVTOP(GVArgs[1]))[0] && "argv[0] was null after CreateArgv");
 
-  std::vector<std::string> EnvVars = makeStringVector(envp);
+  std::vector<std::string> EnvVars;
+  for (unsigned i = 0; envp[i]; ++i)
+    EnvVars.push_back(envp[i]);
   GVArgs.push_back(PTOGV(CreateArgv(EE, EnvVars))); // Arg #2 = envp.
   GenericValue Result = EE->runFunction(Fn, GVArgs);
 
