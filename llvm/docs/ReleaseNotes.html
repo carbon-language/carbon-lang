@@ -69,21 +69,17 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 
 <div class="doc_text">
 
-<p>
-This is the fourth public release of the LLVM compiler infrastructure.  This
+<p>This is the fourth public release of the LLVM compiler infrastructure.  This
 release primarily improves the <a href="#codequality">performance of the
 code</a> produced by all aspects of the LLVM compiler and adds some <a
 href="#newfeatures">new features</a>, though it does <a href="#bugfix">fix a few
-bugs</a> as well.
-</p>
+bugs</a> as well.</p>
 
-<p>
-At this time, LLVM is known to correctly compile and run all C &amp; C++ SPEC
-CPU2000 benchmarks, the Olden benchmarks, and the Ptrdist benchmarks.  It has
-also been used to compile <b>many</b> other programs.  LLVM now also works with
-a broad variety of C++ programs, though it has still received less testing than
-the C front-end.
-</p>
+<p> At this time, LLVM is known to correctly compile and run all C &amp; C++
+SPEC CPU2000 benchmarks, the Olden benchmarks, and the Ptrdist benchmarks.  It
+has also been used to compile <b>many</b> other programs.  LLVM now also works
+with a broad variety of C++ programs, though it has still received less testing
+than the C front-end.</p>
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
@@ -134,7 +130,8 @@ issues were fixed:</a>
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR305">LLVM tools will happily spew
 bytecode onto your terminal</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR329">[llvmgcc] type names are not emitted for structure typedefs</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR329">[llvmgcc] type names are not emitted
+for structure typedefs</a></li>
 </ol>
 
 <!--=========================================================================-->
@@ -143,8 +140,10 @@ In this release, the following build problems were fixed:
 </div>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR301">Minor configure bugs with -disable/enable-povray and -disable-spec</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR289">shell scripts output by gccld don't work if you change PATH</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR301">Minor configure bugs with
+-disable/enable-povray and -disable-spec</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR289">shell scripts output by gccld don't
+work if you change PATH</a></li>
 </ol>
 
 <!--=========================================================================-->
@@ -208,17 +207,21 @@ incorrectly updates dominator information</a></li>
 breaks SSA form</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR313">[X86] JIT miscompiles unsigned short
 to floating point cast</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR332">[adce] Crash handling unreachable code that unwinds</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR333">[sparc] LLC can't emit 2 functions of
-the same name, both having constant pools</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR337">[livevar] Live variables missed physical register use of aliased definition</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR332">[adce] Crash handling unreachable
+code that unwinds</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR333">[sparc] LLC can't emit 2 functions
+of the same name, both having constant pools</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR337">[livevar] Live variables missed
+physical register use of aliased definition</a></li>
 </ol>
 
 <p>Bugs in the C/C++ front-end:</p>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR326">[llvmgcc] Crash on use of undeclared enum type</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR298">[llvmgcc] Variable length array indexing miscompiled</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR326">[llvmgcc] Crash on use of undeclared
+enum type</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR298">[llvmgcc] Variable length array
+indexing miscompiled</a></li>
 </ol>
 
 </div>
@@ -251,8 +254,10 @@ In this release, the following portability problems were fixed:
 </div>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR304">warnings compiling Stacker compiler on Mac OS X</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR308">Archive file reader doesn't understand abbreviated names in headers</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR304">warnings compiling Stacker compiler
+on Mac OS X</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR308">Archive file reader doesn't
+understand abbreviated names in headers</a></li>
 </ol>
 
 <!-- *********************************************************************** -->
@@ -278,13 +283,11 @@ there isn't already one.</p>
 
 <div class="doc_text">
 
-<p>
-The following components of this LLVM release are either untested, known to be
-broken or unreliable, or are in early development.  These components should not
-be relied on, and bugs should not be filed against them, but they may be useful
-to some people.  In particular, if you would like to work on one of these
-components, please contact us on the llvmdev list.
-</p>
+<p>The following components of this LLVM release are either untested, known to
+be broken or unreliable, or are in early development.  These components should
+not be relied on, and bugs should not be filed against them, but they may be
+useful to some people.  In particular, if you would like to work on one of these
+components, please contact us on the llvmdev list.</p>
 
 <ul>
 <li>The following passes are incomplete or buggy: <tt>-pgmdep, -memdep,
@@ -348,11 +351,9 @@ register file.</li>
     }
 </pre></li>
 
-<li>
-Initialization of global union variables can only be done
-<a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=162">with the largest
-union member</a>.
-</li>
+<li>Initialization of global union variables can only be done <a
+href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=162">with the largest union
+member</a>.</li>
 
 <li><a href="http://llvm.cs.uiuc.edu/PR244">[llvm-gcc] Error when an implicitly
 external function is re-declared as static</a></li>
