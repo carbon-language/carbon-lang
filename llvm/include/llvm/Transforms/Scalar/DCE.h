@@ -32,14 +32,6 @@ struct DeadCodeElimination : public Pass {
   //
   static bool RemoveUnusedGlobalValues(Module *M);
 
-  // RemoveUnusedGlobalValuesAfterLink - This function is only to be used after
-  // linking the application.  It removes global variables with initializers and
-  // unreachable methods.  This should only be used after an application is
-  // linked, when it is not possible for an external entity to make a global
-  // value live again.
-  //
-  // static bool RemoveUnusedGlobalValuesAfterLink(Module *M); // TODO
-
   // Pass Interface...
   virtual bool doPassInitialization(Module *M) {
     return RemoveUnusedGlobalValues(M);
@@ -61,7 +53,6 @@ struct AgressiveDCE : public Pass {
     return doADCE(M);
   }
 };
-
 
 
 // SimplifyCFG - This function is used to do simplification of a CFG.  For
