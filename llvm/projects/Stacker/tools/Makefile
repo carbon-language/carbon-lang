@@ -1,6 +1,6 @@
-##===- projects/sample/Makefile ----------------------------*- Makefile -*-===##
+##===- projects/Stacker/tools/Makefile ---------------------*- Makefile -*-===##
 #
-# This is a sample Makefile for a project that uses LLVM.
+# This is the stacker tools makefile
 #
 ##===----------------------------------------------------------------------===##
 
