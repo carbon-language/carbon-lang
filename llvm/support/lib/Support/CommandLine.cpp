@@ -230,7 +230,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
         // All of the positional arguments have been fulfulled, give the rest to
         // the consume after option... if it's specified...
         //
-        if (PositionalVals.size() == NumPositionalRequired && 
+        if (PositionalVals.size() >= NumPositionalRequired && 
             ConsumeAfterOpt != 0) {
           for (++i; i < argc; ++i)
             PositionalVals.push_back(argv[i]);
