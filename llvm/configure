@@ -2105,6 +2105,30 @@ fi
           ac_config_commands="$ac_config_commands projects/ModuleMaker/tools/ModuleMaker/Makefile"
 
 
+          ac_config_commands="$ac_config_commands projects/Stacker/Makefile"
+
+
+          ac_config_commands="$ac_config_commands projects/Stacker/lib/Makefile"
+
+
+          ac_config_commands="$ac_config_commands projects/Stacker/lib/compiler/Makefile"
+
+
+          ac_config_commands="$ac_config_commands projects/Stacker/lib/runtime/Makefile"
+
+
+          ac_config_commands="$ac_config_commands projects/Stacker/tools/Makefile"
+
+
+          ac_config_commands="$ac_config_commands projects/Stacker/tools/stkrc/Makefile"
+
+
+          ac_config_commands="$ac_config_commands projects/Stacker/test/Makefile"
+
+
+          ac_config_commands="$ac_config_commands projects/Stacker/samples/Makefile"
+
+
 
 
 # Find a good install program.  We prefer a C program (faster),
@@ -4471,7 +4495,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4474 "configure"' > conftest.$ac_ext
+  echo '#line 4498 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5312,7 +5336,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5315:" \
+echo "$as_me:5339:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6321,11 +6345,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6324: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6348: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6328: \$? = $ac_status" >&5
+   echo "$as_me:6352: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6553,11 +6577,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6556: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6580: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6560: \$? = $ac_status" >&5
+   echo "$as_me:6584: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6620,11 +6644,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6623: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6647: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6627: \$? = $ac_status" >&5
+   echo "$as_me:6651: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8632,7 +8656,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8635 "configure"
+#line 8659 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -8730,7 +8754,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8733 "configure"
+#line 8757 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10866,11 +10890,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10869: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10893: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10873: \$? = $ac_status" >&5
+   echo "$as_me:10897: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -10933,11 +10957,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10936: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10960: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10940: \$? = $ac_status" >&5
+   echo "$as_me:10964: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12176,7 +12200,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12179 "configure"
+#line 12203 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12274,7 +12298,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12277 "configure"
+#line 12301 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13096,11 +13120,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13099: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13123: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13103: \$? = $ac_status" >&5
+   echo "$as_me:13127: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13163,11 +13187,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13166: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13190: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13170: \$? = $ac_status" >&5
+   echo "$as_me:13194: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15107,11 +15131,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15110: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15134: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15114: \$? = $ac_status" >&5
+   echo "$as_me:15138: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15339,11 +15363,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15342: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15366: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15346: \$? = $ac_status" >&5
+   echo "$as_me:15370: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15406,11 +15430,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15409: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15433: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15413: \$? = $ac_status" >&5
+   echo "$as_me:15437: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17418,7 +17442,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17421 "configure"
+#line 17445 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17516,7 +17540,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17519 "configure"
+#line 17543 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -23946,6 +23970,14 @@ ${srcdir}/autoconf/mkinstalldirs `dirname projects/ModuleMaker/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname projects/ModuleMaker/Makefile.common`
 ${srcdir}/autoconf/mkinstalldirs `dirname projects/ModuleMaker/tools/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname projects/ModuleMaker/tools/ModuleMaker/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname projects/Stacker/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname projects/Stacker/lib/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname projects/Stacker/lib/compiler/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname projects/Stacker/lib/runtime/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname projects/Stacker/tools/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname projects/Stacker/tools/stkrc/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname projects/Stacker/test/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname projects/Stacker/samples/Makefile`
 
 _ACEOF
 
@@ -24143,6 +24175,14 @@ do
   "projects/ModuleMaker/Makefile.common" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/ModuleMaker/Makefile.common" ;;
   "projects/ModuleMaker/tools/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/ModuleMaker/tools/Makefile" ;;
   "projects/ModuleMaker/tools/ModuleMaker/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/ModuleMaker/tools/ModuleMaker/Makefile" ;;
+  "projects/Stacker/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Stacker/Makefile" ;;
+  "projects/Stacker/lib/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Stacker/lib/Makefile" ;;
+  "projects/Stacker/lib/compiler/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Stacker/lib/compiler/Makefile" ;;
+  "projects/Stacker/lib/runtime/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Stacker/lib/runtime/Makefile" ;;
+  "projects/Stacker/tools/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Stacker/tools/Makefile" ;;
+  "projects/Stacker/tools/stkrc/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Stacker/tools/stkrc/Makefile" ;;
+  "projects/Stacker/test/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Stacker/test/Makefile" ;;
+  "projects/Stacker/samples/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Stacker/samples/Makefile" ;;
   "include/Config/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/Config/config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
@@ -24971,6 +25011,14 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     projects/ModuleMaker/Makefile.common ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/ModuleMaker/Makefile.common projects/ModuleMaker/Makefile.common ;;
     projects/ModuleMaker/tools/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/ModuleMaker/tools/Makefile projects/ModuleMaker/tools/Makefile ;;
     projects/ModuleMaker/tools/ModuleMaker/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/ModuleMaker/tools/ModuleMaker/Makefile projects/ModuleMaker/tools/ModuleMaker/Makefile ;;
+    projects/Stacker/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/Stacker/Makefile projects/Stacker/Makefile ;;
+    projects/Stacker/lib/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/Stacker/lib/Makefile projects/Stacker/lib/Makefile ;;
+    projects/Stacker/lib/compiler/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/Stacker/lib/compiler/Makefile projects/Stacker/lib/compiler/Makefile ;;
+    projects/Stacker/lib/runtime/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/Stacker/lib/runtime/Makefile projects/Stacker/lib/runtime/Makefile ;;
+    projects/Stacker/tools/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/Stacker/tools/Makefile projects/Stacker/tools/Makefile ;;
+    projects/Stacker/tools/stkrc/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/Stacker/tools/stkrc/Makefile projects/Stacker/tools/stkrc/Makefile ;;
+    projects/Stacker/test/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/Stacker/test/Makefile projects/Stacker/test/Makefile ;;
+    projects/Stacker/samples/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/Stacker/samples/Makefile projects/Stacker/samples/Makefile ;;
   esac
 done
 _ACEOF
