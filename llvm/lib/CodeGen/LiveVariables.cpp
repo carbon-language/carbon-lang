@@ -209,15 +209,17 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
     // bottom of this basic block.  We check all of our successor blocks to see
     // if they have PHI nodes, and if so, we simulate an assignment at the end
     // of the current block.
-    for (succ_const_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I){
-      MachineBasicBlock *Succ = BBMap.find(*I)->second.first;
+    for (succ_const_iterator SI = succ_begin(BB), E = succ_end(BB);
+         SI != E; ++SI) {
+      MachineBasicBlock *Succ = BBMap.find(*SI)->second.first;
       
       // PHI nodes are guaranteed to be at the top of the block...
       for (MachineBasicBlock::iterator I = Succ->begin(), E = Succ->end();
 	   I != E && (*I)->getOpcode() == TargetInstrInfo::PHI; ++I) {
+        MachineInstr *MI = *I;
 	for (unsigned i = 1; ; i += 2)
-	  if ((*I)->getOperand(i+1).getMachineBasicBlock() == MBB) {
-	    MachineOperand &MO = (*I)->getOperand(i);
+	  if (MI->getOperand(i+1).getMachineBasicBlock() == MBB) {
+	    MachineOperand &MO = MI->getOperand(i);
 	    if (!MO.getVRegValueOrNull()) {
 	      unsigned RegIdx = MO.getReg()-MRegisterInfo::FirstVirtualRegister;
 	      VarInfo &VRInfo = getVarInfo(RegIdx);
