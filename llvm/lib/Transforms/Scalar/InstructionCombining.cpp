@@ -1369,6 +1369,15 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       if (I.getOpcode() == Instruction::SetLE)       // A <= MAX-1 -> A != MAX
         return BinaryOperator::create(Instruction::SetNE, Op0, AddOne(CI));
     }
+
+    // If we still have a setle or setge instruction, turn it into the
+    // appropriate setlt or setgt instruction.  Since the border cases have
+    // already been handled above, this requires little checking.
+    //
+    if (I.getOpcode() == Instruction::SetLE)
+      return BinaryOperator::create(Instruction::SetLT, Op0, AddOne(CI));
+    if (I.getOpcode() == Instruction::SetGE)
+      return BinaryOperator::create(Instruction::SetGT, Op0, SubOne(CI));
   }
 
   // Test to see if the operands of the setcc are casted versions of other
