@@ -162,7 +162,6 @@ class ConstPoolArray : public ConstPoolVal {
 public:
   ConstPoolArray(const ArrayType *T, vector<ConstPoolVal*> &V, 
 		 const string &Name = "");
-  inline ~ConstPoolArray() { dropAllReferences(); }
 
   virtual ConstPoolVal *clone() const { return new ConstPoolArray(*this); }
   virtual string getStrValue() const;
@@ -180,7 +179,6 @@ class ConstPoolStruct : public ConstPoolVal {
 public:
   ConstPoolStruct(const StructType *T, vector<ConstPoolVal*> &V, 
 		  const string &Name = "");
-  inline ~ConstPoolStruct() { dropAllReferences(); }
 
   virtual ConstPoolVal *clone() const { return new ConstPoolStruct(*this); }
   virtual string getStrValue() const;

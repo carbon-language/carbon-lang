@@ -38,7 +38,6 @@ public:
       Operands.push_back(Use(RetVal, this));
     }
   }
-  inline ~ReturnInst() { dropAllReferences(); }
 
   virtual Instruction *clone() const { return new ReturnInst(*this); }
 
@@ -68,7 +67,6 @@ class BranchInst : public TerminatorInst {
 public:
   // If cond = null, then is an unconditional br...
   BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse = 0, Value *cond = 0);
-  inline ~BranchInst() { dropAllReferences(); }
 
   virtual Instruction *clone() const { return new BranchInst(*this); }
 
@@ -114,27 +112,18 @@ public:
 // SwitchInst - Multiway switch
 //
 class SwitchInst : public TerminatorInst {
-  // Operand[0] = Value to switch on
-  // Operand[1] = Default basic block destination
+  // Operand[0]    = Value to switch on
+  // Operand[1]    = Default basic block destination
+  // Operand[2n  ] = Value to match
+  // Operand[2n+1] = BasicBlock to go to on match
   SwitchInst(const SwitchInst &RI);
 public:
-  //typedef vector<dest_value>::iterator       dest_iterator;
-  //typedef vector<dest_value>::const_iterator dest_const_iterator;
-
   SwitchInst(Value *Value, BasicBlock *Default);
-  inline ~SwitchInst() { dropAllReferences(); }
 
   virtual Instruction *clone() const { return new SwitchInst(*this); }
 
   // Accessor Methods for Switch stmt
   //
-  /*
-  inline dest_iterator dest_begin() { return Destinations.begin(); }
-  inline dest_iterator dest_end  () { return Destinations.end(); }
-  inline dest_const_iterator dest_begin() const { return Destinations.begin(); }
-  inline dest_const_iterator dest_end  () const { return Destinations.end(); }
-  */
-
   inline const Value *getCondition() const { return Operands[0]; }
   inline       Value *getCondition()       { return Operands[0]; }
   inline const BasicBlock *getDefaultDest() const {
@@ -161,8 +150,8 @@ public:
     return Operands[idx*2+1]->castBasicBlockAsserting();
   }
 
-  // getSuccessorValue - Return the value associated with the specified successor
-  // WARNING: This does not gracefully accept idx's out of range!
+  // getSuccessorValue - Return the value associated with the specified
+  // successor. WARNING: This does not gracefully accept idx's out of range!
   inline const ConstPoolVal *getSuccessorValue(unsigned idx) const {
     assert(idx < getNumSuccessors() && "Successor # out of range!");
     return Operands[idx*2]->castConstantAsserting();

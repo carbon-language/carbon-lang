@@ -24,7 +24,6 @@ class PHINode : public Instruction {
   PHINode(const PHINode &PN);
 public:
   PHINode(const Type *Ty, const string &Name = "");
-  inline ~PHINode() { dropAllReferences(); }
 
   virtual Instruction *clone() const { return new PHINode(*this); }
   virtual string getOpcode() const { return "phi"; }
@@ -89,7 +88,6 @@ class CallInst : public Instruction {
   CallInst(const CallInst &CI);
 public:
   CallInst(Method *M, vector<Value*> &params, const string &Name = "");
-  inline ~CallInst() { dropAllReferences(); }
 
   virtual string getOpcode() const { return "call"; }
 

@@ -62,7 +62,6 @@ public:
     Operands.reserve(1);
     Operands.push_back(Use(S, this));
   }
-  inline ~UnaryOperator() { dropAllReferences(); }
 
   virtual Instruction *clone() const { 
     return create(getInstType(), Operands[0]);
@@ -95,7 +94,6 @@ public:
     assert(Operands[0] && Operands[1] && 
 	   Operands[0]->getType() == Operands[1]->getType());
   }
-  inline ~BinaryOperator() { dropAllReferences(); }
 
   virtual Instruction *clone() const {
     return create(getInstType(), Operands[0], Operands[1]);
