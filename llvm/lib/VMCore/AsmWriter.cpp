@@ -752,11 +752,13 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   
   Out << "\n";
 
-  if (AnnotationWriter) AnnotationWriter->emitBasicBlockAnnot(BB, Out);
+  if (AnnotationWriter) AnnotationWriter->emitBasicBlockStartAnnot(BB, Out);
 
   // Output all of the instructions in the basic block...
   for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
     printInstruction(*I);
+
+  if (AnnotationWriter) AnnotationWriter->emitBasicBlockEndAnnot(BB, Out);
 }
 
 
