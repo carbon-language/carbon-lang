@@ -50,41 +50,36 @@
 using namespace llvm;
 
 inline llvm::ConfigLexerTokens 
-handleContext(const char* tokenText, llvm::ConfigLexerTokens token) {
-  if (ConfigLexerState.in_value) {
-    ConfigLexerState.StringVal = tokenText;
+handleNameContext(llvm::ConfigLexerTokens token) {
+  ConfigLexerState.StringVal = yytext;
+  if (ConfigLexerState.in_value)
     return OPTION;
-  }
   return token;
 }
 
 inline llvm::ConfigLexerTokens 
 handleSubstitution(llvm::ConfigLexerTokens token) {
-  if (ConfigLexerState.in_value) 
+  if (ConfigLexerState.in_value) {
+    ConfigLexerState.StringVal = yytext;
     return token;
+  }
   YY_FATAL_ERROR("Substitition tokens not allowed in names" ); 
   return ERRORTOK;
 };
 
-inline llvm::ConfigLexerTokens handleBoolean(llvm::ConfigLexerTokens token) {
+inline llvm::ConfigLexerTokens handleValueContext(llvm::ConfigLexerTokens token) {
+  ConfigLexerState.StringVal = yytext;
   if (ConfigLexerState.in_value)
     return token;
-  YY_FATAL_ERROR("Boolean values not allowed in names");
-  return ERRORTOK;
+  return OPTION;
 }
 
 %}
 
 ASSEMBLER       assembler|Assembler|ASSEMBLER
-BadSubst        \%[^iots][a-zA-Z]\%
 COMMAND         command|Command|COMMAND
-Comment         \#[^\r\n]*\r?\n
-NewLine         \r?\n
-Eq              \=
-EscNewLine      \\\r?\n
-GROKS_DASH_O    groks_dash_O|Groks_Dash_O|GROKS_DASH_O
 LANG            lang|Lang|LANG
-LINKER          linker|Linker|LINKER
+LINKER		linker|Linker|LINKER
 NAME            name|Name|NAME
 OPT1            opt1|Opt1|OPT1
 OPT2            opt2|Opt2|OPT2
@@ -92,25 +87,29 @@ OPT3            opt3|Opt3|OPT3
 OPT4            opt4|Opt4|OPT4
 OPT5            opt5|Opt5|OPT5
 OPTIMIZER       optimizer|Optimizer|OPTIMIZER
-OPTIMIZES       optimizes|Optimizes|OPTIMIZES
-Option          [-A-Za-z0-9_:%+/\\|,][-A-Za-z0-9_:+/\\|,@]*
-OUTPUT_IS_ASM   output_is_asm|Output_Is_Asm|OUTPUT_IS_ASM
+OUTPUT          output|Output|OUTPUT
 PREPROCESSES    preprocesses|PreProcesses|PREPROCESSES
 PREPROCESSOR    preprocessor|PreProcessor|PREPROCESSOR
 REQUIRED        required|Required|REQUIRED
-Sep             \.
-String          \"[^\"]*\"
 TRANSLATES      translates|Translates|TRANSLATES
 TRANSLATOR      translator|Translator|TRANSLATOR
 VERSION         version|Version|VERSION
+
+True            true|True|TRUE|on|On|ON|yes|Yes|YES
+False           false|False|FALSE|off|Off|OFF|no|No|NO
+Bytecode        bc|BC|bytecode|Bytecode|BYTECODE
+Assembly        asm|ASM|assembly|Assembly|ASSEMBLY
+
+BadSubst        \%[^iots][a-zA-Z]\%
+Comment         \#[^\r\n]*\r?\n
+NewLine         \r?\n
+Eq              \=
+EscNewLine      \\\r?\n
+Option          [-A-Za-z0-9_:%+/\\|,][-A-Za-z0-9_:+/\\|,@]*
+Sep             \.
+String          \"[^\"]*\"
 White           [ \t]*
 
-True            true|True|TRUE
-False           false|False|FALSE
-On              on|On|ON
-Off             off|Off|OFF
-Yes             yes|Yes|YES
-No              no|No|NO
 
 %%
 
@@ -135,27 +134,32 @@ No              no|No|NO
                   return EQUALS; 
                 }
 
-{LANG}          { return handleContext("lang",LANG); }
-{PREPROCESSOR}  { return handleContext("preprocessor",PREPROCESSOR); }
-{TRANSLATOR}    { return handleContext("translator",TRANSLATOR); }
-{OPTIMIZER}     { return handleContext("optimizer",OPTIMIZER); }
-{ASSEMBLER}     { return handleContext("assembler",ASSEMBLER); }
-{LINKER}        { return handleContext("linker",LINKER); }
-{NAME}          { return handleContext("name",NAME); }
-{REQUIRED}      { return handleContext("required",REQUIRED); }
-{COMMAND}       { return handleContext("command",COMMAND); }
-{PREPROCESSES}  { return handleContext("preprocesses",PREPROCESSES); }
-{TRANSLATES}    { return handleContext("translates",TRANSLATES); }
-{OPTIMIZES}     { return handleContext("optimizes",OPTIMIZES); }
-{GROKS_DASH_O}  { return handleContext("groks_dash_O",GROKS_DASH_O); }
-{OUTPUT_IS_ASM} { return handleContext("output_ias_asm",OUTPUT_IS_ASM); }
-{OPT1}          { return handleContext("opt1",OPT1); }
-{OPT2}          { return handleContext("opt2",OPT2); }
-{OPT3}          { return handleContext("opt3",OPT3); }
-{OPT4}          { return handleContext("opt4",OPT4); }
-{OPT5}          { return handleContext("opt5",OPT5); }
-{VERSION}       { return handleContext("version",VERSION); }
+{VERSION}       { return handleNameContext(VERSION); }
 
+{LANG}          { return handleNameContext(LANG); }
+{NAME}          { return handleNameContext(NAME); }
+{OPT1}          { return handleNameContext(OPT1); }
+{OPT2}          { return handleNameContext(OPT2); }
+{OPT3}          { return handleNameContext(OPT3); }
+{OPT4}          { return handleNameContext(OPT4); }
+{OPT5}          { return handleNameContext(OPT5); }
+
+{PREPROCESSOR}  { return handleNameContext(PREPROCESSOR); }
+{COMMAND}       { return handleNameContext(COMMAND); }
+{REQUIRED}      { return handleNameContext(REQUIRED); }
+
+{TRANSLATOR}    { return handleNameContext(TRANSLATOR); }
+{PREPROCESSES}  { return handleNameContext(PREPROCESSES); }
+{OUTPUT}        { return handleNameContext(OUTPUT); }
+
+{OPTIMIZER}     { return handleNameContext(OPTIMIZER); }
+{TRANSLATES}    { return handleNameContext(TRANSLATES); }
+
+{ASSEMBLER}     { return handleNameContext(ASSEMBLER); }
+
+{LINKER}        { return handleNameContext(LINKER); }
+
+%args%          { return handleSubstitution(ARGS_SUBST); }
 %in%            { return handleSubstitution(IN_SUBST); }
 %out%           { return handleSubstitution(OUT_SUBST); }
 %time%          { return handleSubstitution(TIME_SUBST); }
@@ -163,12 +167,11 @@ No              no|No|NO
 %opt%           { return handleSubstitution(OPT_SUBST); }
 %target%        { return handleSubstitution(TARGET_SUBST); }
 {BadSubst}      { YY_FATAL_ERROR("Invalid substitution token"); }
-{True}          { return handleBoolean(TRUETOK); }
-{On}            { return handleBoolean(TRUETOK); }
-{Yes}           { return handleBoolean(TRUETOK); }
-{False}         { return handleBoolean(FALSETOK); }
-{Off}           { return handleBoolean(FALSETOK); }
-{No}            { return handleBoolean(FALSETOK); }
+
+{Assembly}      { return handleValueContext(ASSEMBLY); }
+{Bytecode}      { return handleValueContext(BYTECODE); }
+{True}          { return handleValueContext(TRUETOK); }
+{False}         { return handleValueContext(FALSETOK); }
 
 {Option}        { ConfigLexerState.StringVal = yytext; return OPTION; }
 {String}        { ConfigLexerState.StringVal = yytext+1;  // Nuke start quote
