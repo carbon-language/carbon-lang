@@ -128,8 +128,33 @@ This directory contains regression tests for the JIT.  Initially it contains a
 bunch of really trivial testcases that we should build up to supporting.
 
 
+===================================================
+IV. Strange Things, or, Things That Should Be Known
+===================================================
+
+Representing memory in MachineInstrs
+------------------------------------
+
+The x86 has a very, uhm, flexible, way of accessing memory.  It is capable of
+addressing memory addresses of the following form directly in integer
+instructions (which use ModR/M addressing):
+
+   Base+[1,2,4,8]*IndexReg+Disp32
+
+Wow, that's crazy.  In order to represent this, LLVM tracks no less that 4
+operands for each memory operand of this form.  This means that the "load" form
+of 'mov' has the following "Operands" in this order:
+
+Index:        0     |    1        2       3           4
+Meaning:   DestReg, | BaseReg,  Scale, IndexReg, Displacement
+OperandTy: VirtReg, | VirtReg, UnsImm, VirtReg,   SignExtImm
+
+Stores and all other instructions treat the four memory operands in the same
+way, in the same order.
+
+
 ==========================
-IV. TODO / Future Projects
+V. TODO / Future Projects
 ==========================
 
 There are a large number of things remaining to do.  Here is a partial list:
