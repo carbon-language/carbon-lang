@@ -39,18 +39,18 @@
 #
 # 6. LLVM_SRC_ROOT - If specified, points to the top of the LLVM source tree.
 #
-# 8. BUILD_SRC_DIR - The directory which contains the current set of Makefiles
+# 8. PROJ_SRC_DIR - The directory which contains the current set of Makefiles
 #    and usually the source code too (unless SourceDir is set).
 #
-# 9. BUILD_SRC_ROOT - The root directory of the source code being compiled.
+# 9. PROJ_SRC_ROOT - The root directory of the source code being compiled.
 #
-# 10. BUILD_OBJ_DIR - The directory where object code should be placed.
+# 10. PROJ_OBJ_DIR - The directory where object code should be placed.
 #
-# 11. BUILD_OBJ_ROOT - The root directory for where object code should be
+# 11. PROJ_OBJ_ROOT - The root directory for where object code should be
 #     placed.
 #
 # For building,
-# 	LLVM, LLVM_SRC_ROOT = BUILD_SRC_ROOT
+# 	LLVM, LLVM_SRC_ROOT = PROJ_SRC_ROOT
 #
 #===-----------------------------------------------------------------------====
 
