@@ -3071,6 +3071,20 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
         return new SelectInst(SI->getCondition(), V1, V2);
       }
 
+      // load (select (cond, null, P)) -> load P
+      if (Constant *C = dyn_cast<Constant>(SI->getOperand(1)))
+        if (C->isNullValue()) {
+          LI.setOperand(0, SI->getOperand(2));
+          return &LI;
+        }
+
+      // load (select (cond, P, null)) -> load P
+      if (Constant *C = dyn_cast<Constant>(SI->getOperand(2)))
+        if (C->isNullValue()) {
+          LI.setOperand(0, SI->getOperand(1));
+          return &LI;
+        }
+
     } else if (PHINode *PN = dyn_cast<PHINode>(Op)) {
       // load (phi (&V1, &V2, &V3))  --> phi(load &V1, load &V2, load &V3)
       bool Safe = PN->getParent() == LI.getParent();
