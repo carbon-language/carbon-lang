@@ -23,8 +23,7 @@ namespace {
     bool runOnFunction(Function &F);
 
   private:
-    bool isSafeStructElementUse(Value *Ptr);
-    bool isSafeArrayElementUse(Value *Ptr);
+    bool isSafeElementUse(Value *Ptr);
     bool isSafeUseOfAllocation(Instruction *User);
     bool isSafeStructAllocaToPromote(AllocationInst *AI);
     bool isSafeArrayAllocaToPromote(AllocationInst *AI);
@@ -167,36 +166,10 @@ bool SROA::isSafeUseOfAllocation(Instruction *User) {
   return true;
 }
 
-/// isSafeStructElementUse - It is illegal in C to take the address of a
-/// structure sub-element, and then use pointer arithmetic to access other
-/// elements of the struct.  Despite the fact that this is illegal, some
-/// programs do this, so do at least a simple check to try to avoid breaking
-/// broken programs if possible.
-///
-bool SROA::isSafeStructElementUse(Value *Ptr) {
-  for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
-       I != E; ++I)
-    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*I)) {
-      if (GEP->getNumOperands() > 1) {
-        if (!isa<Constant>(GEP->getOperand(1)) ||
-            !cast<Constant>(GEP->getOperand(1))->isNullValue()) {
-          std::cerr << "WARNING: Undefined behavior found: " << *GEP
-                    << "   ... uses pointer arithmetic to access other struct "
-                    << "elements!\n";
-          return false;
-
-          return false;  // Using pointer arithmetic to navigate the array...
-        }
-      }
-    }
-
-  return true;
-}
-
-/// isSafeArrayElementUse - Check to see if this use is an allowed use for a
+/// isSafeElementUse - Check to see if this use is an allowed use for a
 /// getelementptr instruction of an array aggregate allocation.
 ///
-bool SROA::isSafeArrayElementUse(Value *Ptr) {
+bool SROA::isSafeElementUse(Value *Ptr) {
   for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
        I != E; ++I) {
     Instruction *User = cast<Instruction>(*I);
@@ -209,15 +182,8 @@ bool SROA::isSafeArrayElementUse(Value *Ptr) {
         if (!isa<Constant>(GEP->getOperand(1)) ||
             !cast<Constant>(GEP->getOperand(1))->isNullValue())
           return false;  // Using pointer arithmetic to navigate the array...
-        
-        // Check to see if there are any structure indexes involved in this GEP.
-        // If so, then we can safely break the array up until at least the
-        // structure.
-        for (unsigned i = 2, e = GEP->getNumOperands(); i != e; ++i)
-          if (GEP->getOperand(i)->getType()->isUnsigned())
-            break;
       }
-      return isSafeArrayElementUse(GEP);
+      return isSafeElementUse(GEP);
     }
     default:
       DEBUG(std::cerr << "  Transformation preventing inst: " << *User);
@@ -245,7 +211,7 @@ bool SROA::isSafeStructAllocaToPromote(AllocationInst *AI) {
 
     // Pedantic check to avoid breaking broken programs...
     if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*I))
-      if (GEPI->getNumOperands() == 3 && !isSafeStructElementUse(GEPI))
+      if (GEPI->getNumOperands() == 3 && !isSafeElementUse(GEPI))
         return false;
   }
   return true;
@@ -285,7 +251,7 @@ bool SROA::isSafeArrayAllocaToPromote(AllocationInst *AI) {
       //   P = &A[0];  P = P + 1
       // is legal, and should prevent promotion.
       //
-      if (!isSafeArrayElementUse(GEPI)) {
+      if (!isSafeElementUse(GEPI)) {
         DEBUG(std::cerr << "Cannot transform: " << *AI
                         << "  due to uses of user: " << *GEPI);
         return false;
