@@ -68,12 +68,12 @@ public:
   unsigned int    getNumArgs() const          { return argInfoVec.size(); }
   CallArgInfo&    getArgInfo(unsigned int op) { assert(op < argInfoVec.size());
                                                 return argInfoVec[op]; }
-  const CallInst* getReturnValue() const      { return callInstr; }
+  const CallInst* getReturnValue() const;
   const Value*    getIndirectFuncPtr() const  { return funcPtr; }
   TmpInstruction* getReturnAddrReg() const    { return retAddrReg; }
   bool            isVarArgsFunc() const       { return isVarArgs; }
   bool            hasNoPrototype() const      { return noPrototype; }
-  
+
   // Annotation mechanism to annotate a MachineInstr with the descriptor.
   // This is not demand-driven because annotations can only be created
   // at restricted points during code generation.

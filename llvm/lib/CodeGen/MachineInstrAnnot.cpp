@@ -30,3 +30,10 @@ CallArgsDescriptor::CallArgsDescriptor(const CallInst* _callInstr,
   for (unsigned int i=1; i < numArgs; ++i)
     argInfoVec.push_back(CallArgInfo(callInstr->getOperand(i)));
 }
+
+
+const CallInst*
+CallArgsDescriptor::getReturnValue() const
+{
+  return (callInstr->getType() == Type::VoidTy? NULL : callInstr);
+}
