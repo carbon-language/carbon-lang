@@ -77,6 +77,9 @@ unsigned getRealRegNum(unsigned fakeReg, unsigned regClass) {
 
 int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
                                               MachineOperand &MO) {
+  int64_t rv = 0; // Return value; defaults to 0 for unhandled cases
+                  // or things that get fixed up later by the JIT.
+
   if (MO.isPhysicalRegister()) {
     // This is necessary because the Sparc doesn't actually lay out registers
     // in the real fashion -- it skips those that it chooses not to allocate,
@@ -88,33 +91,41 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
     // Find the real register number for use in an instruction
     realReg = getRealRegNum(fakeReg, regClass);
     std::cerr << "Reg[" << fakeReg << "] = " << realReg << "\n";
-    return realReg;
+    rv = realReg;
   } else if (MO.isImmediate()) {
-    return MO.getImmedValue();
+    rv = MO.getImmedValue();
   } else if (MO.isPCRelativeDisp()) {
     std::cerr << "Saving reference to BB (PCRelDisp)\n";
     MCE->saveBBreference((BasicBlock*)MO.getVRegValue(), MI);
-    return 0;
   } else if (MO.isMachineBasicBlock()) {
     std::cerr << "Saving reference to BB (MBB)\n";
     MCE->saveBBreference(MO.getMachineBasicBlock()->getBasicBlock(), MI);
-    return 0;
   } else if (MO.isFrameIndex()) {
     std::cerr << "ERROR: Frame index unhandled.\n";
-    return 0;
   } else if (MO.isConstantPoolIndex()) {
     std::cerr << "ERROR: Constant Pool index unhandled.\n";
-    return 0;
   } else if (MO.isGlobalAddress()) {
     std::cerr << "ERROR: Global addr unhandled.\n";
-    return 0;
   } else if (MO.isExternalSymbol()) {
     std::cerr << "ERROR: External symbol unhandled.\n";
-    return 0;
   } else {
     std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
-    //abort();
-    return 0;
+  }
+
+  // Finally, deal with the various bitfield-extracting functions that
+  // are used in SPARC assembly. (Some of these make no sense in combination
+  // with some of the above; we'll trust that the instruction selector
+  // will not produce nonsense, and not check for valid combinations here.)
+  if (MO.opLoBits32()) {          // %lo(val)
+    return rv & 0x03ff;
+  } else if (MO.opHiBits32()) {   // %lm(val)
+    return (rv >> 10) & 0x03fffff;
+  } else if (MO.opLoBits64()) {   // %hm(val)
+    return (rv >> 32) & 0x03ff;
+  } else if (MO.opHiBits64()) {   // %hh(val)
+    return rv >> 42;
+  } else {                        // (unadorned) val
+    return rv;
   }
 }
 
