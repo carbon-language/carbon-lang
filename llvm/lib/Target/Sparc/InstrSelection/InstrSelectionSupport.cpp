@@ -129,7 +129,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
 {
   std::vector<MachineInstr*> MVec;
   
-  MachineOpCode opCode = minstr->getOpCode();
+  MachineOpCode opCode = minstr->getOpcode();
   const TargetInstrInfo& instrInfo = target.getInstrInfo();
   int resultPos = instrInfo.getResultPos(opCode);
   int immedPos = instrInfo.getImmedConstantPos(opCode);

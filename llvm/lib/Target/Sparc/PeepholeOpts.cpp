@@ -32,7 +32,7 @@ DeleteInstruction(MachineBasicBlock& mvec,
   if (BBI != mvec.begin()) {
       const TargetInstrInfo& mii = target.getInstrInfo();
       MachineInstr* predMI = *(BBI-1);
-      if (unsigned ndelay = mii.getNumDelaySlots(predMI->getOpCode())) {
+      if (unsigned ndelay = mii.getNumDelaySlots(predMI->getOpcode())) {
         // This instruction is in a delay slot of its predecessor, so
         // replace it with a nop. By replacing in place, we save having
         // to update the I-I maps.
@@ -61,12 +61,12 @@ DeleteInstruction(MachineBasicBlock& mvec,
 //----------------------------------------------------------------------------
 
 static bool IsUselessCopy(const TargetMachine &target, const MachineInstr* MI) {
-  if (MI->getOpCode() == V9::FMOVS || MI->getOpCode() == V9::FMOVD) {
+  if (MI->getOpcode() == V9::FMOVS || MI->getOpcode() == V9::FMOVD) {
     return (// both operands are allocated to the same register
             MI->getOperand(0).getAllocatedRegNum() == 
             MI->getOperand(1).getAllocatedRegNum());
-  } else if (MI->getOpCode() == V9::ADDr || MI->getOpCode() == V9::ORr ||
-             MI->getOpCode() == V9::ADDi || MI->getOpCode() == V9::ORi) {
+  } else if (MI->getOpcode() == V9::ADDr || MI->getOpcode() == V9::ORr ||
+             MI->getOpcode() == V9::ADDi || MI->getOpcode() == V9::ORi) {
     unsigned srcWithDestReg;
     
     for (srcWithDestReg = 0; srcWithDestReg < 2; ++srcWithDestReg)

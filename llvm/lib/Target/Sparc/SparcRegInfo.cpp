@@ -312,7 +312,7 @@ unsigned SparcRegInfo::getRegClassIDOfRegType(int regType) const {
 void SparcRegInfo::suggestReg4RetAddr(MachineInstr *RetMI, 
 					   LiveRangeInfo& LRI) const {
 
-  assert(target.getInstrInfo().isReturn(RetMI->getOpCode()));
+  assert(target.getInstrInfo().isReturn(RetMI->getOpcode()));
   
   // return address is always mapped to i7 so set it immediately
   RetMI->SetRegForOperand(0, getUnifiedRegNum(IntRegClassID,
@@ -570,7 +570,7 @@ void SparcRegInfo::colorMethodArgs(const Function *Meth,
 //---------------------------------------------------------------------------
 void SparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI, 
 					     LiveRangeInfo& LRI) const {
-  assert ( (target.getInstrInfo()).isCall(CallMI->getOpCode()) );
+  assert ( (target.getInstrInfo()).isCall(CallMI->getOpcode()) );
 
   CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI); 
   
@@ -639,7 +639,7 @@ void SparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
 void SparcRegInfo::suggestReg4RetValue(MachineInstr *RetMI, 
                                             LiveRangeInfo& LRI) const {
 
-  assert( (target.getInstrInfo()).isReturn( RetMI->getOpCode() ) );
+  assert( (target.getInstrInfo()).isReturn( RetMI->getOpcode() ) );
 
   suggestReg4RetAddr(RetMI, LRI);
 

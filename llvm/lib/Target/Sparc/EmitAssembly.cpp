@@ -566,7 +566,7 @@ namespace {
 inline bool
 SparcAsmPrinter::OpIsBranchTargetLabel(const MachineInstr *MI,
                                        unsigned int opNum) {
-  switch (MI->getOpCode()) {
+  switch (MI->getOpcode()) {
   case V9::JMPLCALLr:
   case V9::JMPLCALLi:
   case V9::JMPLRETr:
@@ -580,9 +580,9 @@ SparcAsmPrinter::OpIsBranchTargetLabel(const MachineInstr *MI,
 inline bool
 SparcAsmPrinter::OpIsMemoryAddressBase(const MachineInstr *MI,
                                        unsigned int opNum) {
-  if (Target.getInstrInfo().isLoad(MI->getOpCode()))
+  if (Target.getInstrInfo().isLoad(MI->getOpcode()))
     return (opNum == 0);
-  else if (Target.getInstrInfo().isStore(MI->getOpCode()))
+  else if (Target.getInstrInfo().isStore(MI->getOpcode()))
     return (opNum == 1);
   else
     return false;
@@ -601,15 +601,15 @@ SparcAsmPrinter::printOperands(const MachineInstr *MI,
   const MachineOperand& mop = MI->getOperand(opNum);
   
   if (OpIsBranchTargetLabel(MI, opNum)) {
-    PrintOp1PlusOp2(mop, MI->getOperand(opNum+1), MI->getOpCode());
+    PrintOp1PlusOp2(mop, MI->getOperand(opNum+1), MI->getOpcode());
     return 2;
   } else if (OpIsMemoryAddressBase(MI, opNum)) {
     toAsm << "[";
-    PrintOp1PlusOp2(mop, MI->getOperand(opNum+1), MI->getOpCode());
+    PrintOp1PlusOp2(mop, MI->getOperand(opNum+1), MI->getOpcode());
     toAsm << "]";
     return 2;
   } else {
-    printOneOperand(mop, MI->getOpCode());
+    printOneOperand(mop, MI->getOpcode());
     return 1;
   }
 }
@@ -691,7 +691,7 @@ SparcAsmPrinter::printOneOperand(const MachineOperand &mop,
 }
 
 void SparcAsmPrinter::emitMachineInst(const MachineInstr *MI) {
-  unsigned Opcode = MI->getOpCode();
+  unsigned Opcode = MI->getOpcode();
 
   if (Target.getInstrInfo().isDummyPhiInstr(Opcode))
     return;  // IGNORE PHI NODES

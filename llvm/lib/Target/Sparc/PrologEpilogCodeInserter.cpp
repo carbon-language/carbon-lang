@@ -155,7 +155,7 @@ void InsertPrologEpilogCode::InsertEpilogCode(MachineFunction &MF)
       
       // Remove the NOPs in the delay slots of the return instruction
       unsigned numNOPs = 0;
-      while (termMvec.back()->getOpCode() == V9::NOP)
+      while (termMvec.back()->getOpcode() == V9::NOP)
       {
         assert( termMvec.back() == MBB.back());
         delete MBB.pop_back();
@@ -166,7 +166,7 @@ void InsertPrologEpilogCode::InsertEpilogCode(MachineFunction &MF)
         
       // Check that we found the right number of NOPs and have the right
       // number of instructions to replace them.
-      unsigned ndelays = MII.getNumDelaySlots(termMvec.back()->getOpCode());
+      unsigned ndelays = MII.getNumDelaySlots(termMvec.back()->getOpcode());
       assert(numNOPs == ndelays && "Missing NOPs in delay slots?");
       assert(ndelays == 1 && "Cannot use epilog code for delay slots?");
         

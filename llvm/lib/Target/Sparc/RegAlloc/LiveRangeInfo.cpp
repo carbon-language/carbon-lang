@@ -176,8 +176,8 @@ void LiveRangeInfo::constructLiveRanges() {
       // If the machine instruction is a  call/return instruction, add it to
       // CallRetInstrList for processing its args, ret value, and ret addr.
       // 
-      if(TM.getInstrInfo().isReturn(MInst->getOpCode()) ||
-	 TM.getInstrInfo().isCall(MInst->getOpCode()))
+      if(TM.getInstrInfo().isReturn(MInst->getOpcode()) ||
+	 TM.getInstrInfo().isCall(MInst->getOpcode()))
 	CallRetInstrList.push_back(MInst); 
  
       // iterate over explicit MI operands and create a new LR
@@ -243,7 +243,7 @@ void LiveRangeInfo::suggestRegs4CallRets() {
   std::vector<MachineInstr*>::iterator It = CallRetInstrList.begin();
   for( ; It != CallRetInstrList.end(); ++It) {
     MachineInstr *MInst = *It;
-    MachineOpCode OpCode = MInst->getOpCode();
+    MachineOpCode OpCode = MInst->getOpcode();
 
     if ((TM.getInstrInfo()).isReturn(OpCode))
       MRI.suggestReg4RetValue(MInst, *this);

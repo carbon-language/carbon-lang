@@ -874,7 +874,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
   if (firstNewInstr < mvec.size()) {
     cost = 0;
     for (unsigned i=firstNewInstr; i < mvec.size(); ++i)
-      cost += target.getInstrInfo().minLatency(mvec[i]->getOpCode());
+      cost += target.getInstrInfo().minLatency(mvec[i]->getOpcode());
   }
   
   return cost;
@@ -1918,7 +1918,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           const MachineCodeForInstruction& mcfi =
             MachineCodeForInstruction::get(
                 cast<InstructionNode>(subtreeRoot->parent())->getInstruction());
-          if (mcfi.size() == 0 || mcfi.front()->getOpCode() == V9::FSMULD)
+          if (mcfi.size() == 0 || mcfi.front()->getOpcode() == V9::FSMULD)
             forwardOperandNum = 0;    // forward first operand to user
         }
 
