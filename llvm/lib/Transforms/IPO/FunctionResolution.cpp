@@ -65,14 +65,14 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
 
       if (!Old->use_empty() && !Concrete->use_empty())
         for (unsigned i = 0; i < NumArguments; ++i)
-          if (OldMT->getParamTypes()[i] != ConcreteMT->getParamTypes()[i]) {
-            std::cerr << "WARNING: Function [" << Old->getName()
-                      << "]: Parameter types conflict for: '" << OldMT
-                      << "' and '" << ConcreteMT << "'\n";
+          if (OldMT->getParamTypes()[i] != ConcreteMT->getParamTypes()[i])
             if (OldMT->getParamTypes()[i]->getPrimitiveID() != 
-                ConcreteMT->getParamTypes()[i]->getPrimitiveID())
+                ConcreteMT->getParamTypes()[i]->getPrimitiveID()) {
+              std::cerr << "WARNING: Function [" << Old->getName()
+                        << "]: Parameter types conflict for: '" << OldMT
+                        << "' and '" << ConcreteMT << "'\n";
               return Changed;
-          }
+            }
       
       // Attempt to convert all of the uses of the old function to the concrete
       // form of the function.  If there is a use of the fn that we don't
