@@ -72,7 +72,7 @@ GenericValue JIT::runFunction(Function *F,
   assert(FTy->getNumParams() == ArgValues.size() &&
          "This doesn't support passing arguments through varargs (yet)!");
 
-  // Handle some common cases first.  These cases correspond to common 'main'
+  // Handle some common cases first.  These cases correspond to common `main'
   // prototypes.
   if (RetTy == Type::IntTy || RetTy == Type::UIntTy || RetTy == Type::VoidTy) {
     switch (ArgValues.size()) {
@@ -83,7 +83,7 @@ GenericValue JIT::runFunction(Function *F,
           isa<PointerType>(FTy->getParamType(2))) {
         int (*PF)(int, char **, const char **) =
           (int(*)(int, char **, const char **))FPtr;
-        
+
         // Call the function.
         GenericValue rv;
         rv.IntVal = PF(ArgValues[0].IntVal, (char **)GVTOP(ArgValues[1]),
@@ -96,7 +96,7 @@ GenericValue JIT::runFunction(Function *F,
            FTy->getParamType(0) == Type::UIntTy) &&
           isa<PointerType>(FTy->getParamType(1))) {
         int (*PF)(int, char **) = (int(*)(int, char **))FPtr;
-        
+
         // Call the function.
         GenericValue rv;
         rv.IntVal = PF(ArgValues[0].IntVal, (char **)GVTOP(ArgValues[1]));
