@@ -63,8 +63,11 @@ CompileO = $(Compile) -O3 -DNDEBUG -finline-functions -felide-constructors -fnon
 # Link final executable
 
 # To enable purify, do it here:
-###Link     = $(PURIFY) $(CXX) $(Prof) -static
-Link     = $(CXX) $(Prof) 
+ifdef ENABLE_PURIFY
+Link     = $(PURIFY) $(CXX) $(Prof) -static
+else
+Link     = LD_RUN_PATH=/usr/dcs/software/evaluation/encap/gcc-3.0.4/lib $(CXX) $(Prof) 
+endif
 LinkG    = $(Link) -g  -L $(LEVEL)/lib/Debug
 LinkO    = $(Link) -O3 -L $(LEVEL)/lib/Release
 
