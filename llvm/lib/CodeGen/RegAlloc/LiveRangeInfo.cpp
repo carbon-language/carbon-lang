@@ -1,4 +1,8 @@
 #include "llvm/CodeGen/LiveRangeInfo.h"
+#include "llvm/CodeGen/RegClass.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Method.h"
 #include <iostream>
 using std::cerr;
 

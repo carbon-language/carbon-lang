@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
 #include <iostream>
@@ -36,7 +37,7 @@ bool RegisterAllocation::runOnMethod(Method *M) {
     cerr << "\n******************** Method "<< M->getName()
          << " ********************\n";
     
-  MethodLiveVarInfo LVI(M );   // Analyze live varaibles
+  MethodLiveVarInfo LVI(M);   // Analyze live varaibles
   LVI.analyze();
     
   PhyRegAlloc PRA(M, Target, &LVI); // allocate registers
