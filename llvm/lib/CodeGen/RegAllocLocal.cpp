@@ -232,7 +232,8 @@ void RA::removePhysReg(unsigned PhysReg) {
 ///
 void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                       unsigned VirtReg, unsigned PhysReg) {
-  assert((VirtReg || DisableKill) && "Spilling a physical register is illegal!"
+  if (!VirtReg && DisableKill) return;
+  assert(VirtReg && "Spilling a physical register is illegal!"
          " Must not have appropriate kill for the register or use exists beyond"
          " the intended one.");
   DEBUG(std::cerr << "  Spilling register " << RegInfo->getName(PhysReg);
@@ -606,8 +607,10 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
   // Spill all physical registers holding virtual registers now.
   while (!PhysRegsUsed.empty())
-    spillVirtReg(MBB, I, PhysRegsUsed.begin()->second,
-                 PhysRegsUsed.begin()->first);
+    if (unsigned VirtReg = PhysRegsUsed.begin()->second)
+      spillVirtReg(MBB, I, VirtReg, PhysRegsUsed.begin()->first);
+    else
+      removePhysReg(PhysRegsUsed.begin()->first);
 
   for (std::map<unsigned, unsigned>::iterator I = Virt2PhysRegMap.begin(),
          E = Virt2PhysRegMap.end(); I != E; ++I)
