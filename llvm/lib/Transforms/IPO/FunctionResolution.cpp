@@ -49,8 +49,8 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
   //
   BasicBlock::iterator BBI = CI;
   unsigned NumArgsToCopy = CI->getNumOperands()-1;
-  if (CI->getNumOperands()-1 != ParamTys.size() &&
-      !(CI->getNumOperands()-1 > ParamTys.size() &&
+  if (NumArgsToCopy != ParamTys.size() &&
+      !(NumArgsToCopy > ParamTys.size() &&
         Dest->getFunctionType()->isVarArg())) {
     std::cerr << "WARNING: Call arguments do not match expected number of"
               << " parameters.\n";
@@ -59,6 +59,8 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
     std::cerr << "Function resolved to: ";
     WriteAsOperand(std::cerr, Dest);
     std::cerr << "\n";
+    if (NumArgsToCopy > ParamTys.size())
+      NumArgsToCopy = ParamTys.size();
   }
 
   std::vector<Value*> Params;
