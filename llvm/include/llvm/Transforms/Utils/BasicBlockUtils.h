@@ -19,6 +19,7 @@
 
 #include "llvm/BasicBlock.h"
 class Instruction;
+class Pass;
 
 // ReplaceInstWithValue - Replace all uses of an instruction (specified by BI)
 // with a value, then remove and delete the original instruction.
@@ -47,5 +48,20 @@ void ReplaceInstWithInst(Instruction *From, Instruction *To);
 // suprising change in program behavior if it is not expected.
 //
 void RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum);
+
+
+/// isCriticalEdge - Return true if the specified edge is a critical edge.
+/// Critical edges are edges from a block with multiple successors to a block
+/// with multiple predecessors.
+///
+bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum);
+
+/// SplitCriticalEdge - If this edge is a critical edge, insert a new node to
+/// split the critical edge.  This will update DominatorSet, ImmediateDominator,
+/// DominatorTree, and DominatorFrontier information if it is available, thus
+/// calling this pass will not invalidate either of them.  This returns true if
+/// the edge was split, false otherwise.
+///
+bool SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P = 0);
 
 #endif
