@@ -3,15 +3,22 @@ dnl * Initialize
 dnl **************************************************************************
 AC_INIT([[[SAMPLE]]],[[[x.xx]]],[bugs@yourdomain])
 
-dnl Place all of the extra autoconf files into the config subdirectory
-AC_CONFIG_AUX_DIR(autoconf)
+dnl Tell autoconf that the auxilliary files are actually located in
+dnl the LLVM autoconf directory, not here.
+AC_CONFIG_AUX_DIR(../../autoconf)
 
-dnl Configure a header file
+dnl Tell autoconf that this is an LLVM project being configured
+dnl This provides the --with-llvmsrc and --with-llvmobj options
+LLVM_CONFIG_PROJECT
+
+dnl Verify that the source directory is valid
+AC_CONFIG_SRCDIR(["Makefile.common.in"])
+
+dnl Configure a common Makefile
 AC_CONFIG_FILES(Makefile.common)
 
-dnl Configure Makefiles
-dnl List every Makefile that ecists within your source tree
-
+dnl Configure project makefiles
+dnl List every Makefile that exists within your source tree
 AC_CONFIG_MAKEFILE(Makefile)
 AC_CONFIG_MAKEFILE(lib/Makefile)
 AC_CONFIG_MAKEFILE(lib/sample/Makefile)
@@ -25,9 +32,6 @@ dnl **************************************************************************
 dnl **************************************************************************
 dnl * Check for programs.
 dnl **************************************************************************
-
-dnl Verify that the source directory is valid
-AC_CONFIG_SRCDIR(["Makefile.common.in"])
 
 dnl **************************************************************************
 dnl * Check for libraries.
@@ -53,13 +57,9 @@ dnl **************************************************************************
 dnl * Set the location of various third-party software packages
 dnl **************************************************************************
 
-dnl Location of LLVM source code
-AC_ARG_WITH(llvmsrc,AS_HELP_STRING([--with-llvmsrc],[Location of LLVM Source Code]),AC_SUBST(LLVM_SRC,[$withval]),AC_SUBST(LLVM_SRC,[`cd ${srcdir}/../..; pwd`]))
-
-dnl Location of LLVM object code
-AC_ARG_WITH(llvmobj,AS_HELP_STRING([--with-llvmobj],[Location of LLVM Object Code]),AC_SUBST(LLVM_OBJ,[$withval]),AC_SUBST(LLVM_OBJ,[`cd ../..; pwd`]))
-
 dnl **************************************************************************
 dnl * Create the output files
 dnl **************************************************************************
+
+dnl This must be last
 AC_OUTPUT
