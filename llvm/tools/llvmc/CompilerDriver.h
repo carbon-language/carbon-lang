@@ -161,6 +161,12 @@ namespace llvm {
       virtual void setPhaseArgs(Phases phase, const StringVector& opts) = 0; 
 
       /// @brief Set Library Paths
+      virtual void setIncludePaths(const StringVector& paths) = 0;
+
+      /// @brief Set Library Paths
+      virtual void setSymbolDefines(const StringVector& paths) = 0;
+
+      /// @brief Set Library Paths
       virtual void setLibraryPaths(const StringVector& paths) = 0;
 
       /// @brief Set the list of library paths to be searched for

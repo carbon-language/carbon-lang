@@ -160,8 +160,11 @@ White           [ \t]*
 {LINKER}        { return handleNameContext(LINKER); }
 
 %args%          { return handleSubstitution(ARGS_SUBST); }
+%defs%          { return handleSubstitution(DEFS_SUBST); }
 %force%         { return handleSubstitution(FORCE_SUBST); }
 %in%            { return handleSubstitution(IN_SUBST); }
+%incls%         { return handleSubstitution(INCLS_SUBST); }
+%libs%          { return handleSubstitution(LIBS_SUBST); }
 %opt%           { return handleSubstitution(OPT_SUBST); }
 %out%           { return handleSubstitution(OUT_SUBST); }
 %stats%         { return handleSubstitution(STATS_SUBST); }

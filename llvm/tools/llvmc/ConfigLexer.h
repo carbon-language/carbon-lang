@@ -55,14 +55,17 @@ enum ConfigLexerTokens {
   ASSEMBLER,    ///< The name "assembler" (and variants)
   BYTECODE,     ///< The value "bytecode" (and variants)
   COMMAND,      ///< The name "command" (and variants)
+  DEFS_SUBST,   ///< The substitution item %defs%
   EQUALS,       ///< The equals sign, =
   FALSETOK,     ///< A boolean false value (false/no/off)
   FORCE_SUBST,  ///< The substitution item %force%
   IN_SUBST,     ///< The substitution item %in%
+  INCLS_SUBST,  ///< The substitution item %incls%
   INTEGER,      ///< An integer 
   LANG,         ///< The name "lang" (and variants)
   LIBPATHS,     ///< The name "libpaths" (and variants)
   LIBS,         ///< The name "libs" (and variants)
+  LIBS_SUBST,   ///< The substitution item %libs%
   LINKER,       ///< The name "linker" (and variants)
   NAME,         ///< The name "name" (and variants)
   OPT_SUBST,    ///< The substitution item %opt%

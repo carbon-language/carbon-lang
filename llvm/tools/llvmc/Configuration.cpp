@@ -156,13 +156,16 @@ namespace {
     bool parseSubstitution(CompilerDriver::StringVector& optList) {
       switch (token) {
         case ARGS_SUBST:        optList.push_back("%args%"); break;
-        case IN_SUBST:          optList.push_back("%in%"); break;
-        case OUT_SUBST:         optList.push_back("%out%"); break;
-        case TIME_SUBST:        optList.push_back("%time%"); break;
-        case STATS_SUBST:       optList.push_back("%stats%"); break;
-        case OPT_SUBST:         optList.push_back("%opt%"); break;
-        case TARGET_SUBST:      optList.push_back("%target%"); break;
+        case DEFS_SUBST:        optList.push_back("%defs%"); break;
         case FORCE_SUBST:       optList.push_back("%force%"); break;
+        case IN_SUBST:          optList.push_back("%in%"); break;
+        case INCLS_SUBST:       optList.push_back("%incls%"); break;
+        case LIBS_SUBST:        optList.push_back("%libs%"); break;
+        case OPT_SUBST:         optList.push_back("%opt%"); break;
+        case OUT_SUBST:         optList.push_back("%out%"); break;
+        case TARGET_SUBST:      optList.push_back("%target%"); break;
+        case STATS_SUBST:       optList.push_back("%stats%"); break;
+        case TIME_SUBST:        optList.push_back("%time%"); break;
         case VERBOSE_SUBST:     optList.push_back("%verbose%"); break;
         default:
           return false;
@@ -425,7 +428,8 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
       confFile.set_directory(conf);
       confFile.append_file(ftype);
       if (!confFile.readable())
-        throw "Configuration file for '" + ftype + "' is not available.";
+        throw std::string("Configuration file for '") + ftype + 
+                          "' is not available.";
     } else {
       // Try the user's home directory
       confFile = sys::Path::GetUserHomeDirectory();
@@ -445,7 +449,8 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
           confFile = sys::Path::GetLLVMDefaultConfigDir();
           confFile.append_file(ftype);
           if (!confFile.readable()) {
-            throw "Configuration file for '" + ftype + "' is not available.";
+            throw std::string("Configuration file for '") + ftype + 
+                              "' is not available.";
           }
         }
       }
@@ -454,11 +459,13 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
     confFile = configDir;
     confFile.append_file(ftype);
     if (!confFile.readable())
-      throw "Configuration file for '" + ftype + "' is not available.";
+      throw std::string("Configuration file for '") + ftype + 
+                        "' is not available.";
   }
   FileInputProvider fip( confFile.get() );
   if (!fip.okay()) {
-    throw "Configuration file for '" + ftype + "' is not available.";
+    throw std::string("Configuration file for '") + ftype + 
+                      "' is not available.";
   }
   result = new CompilerDriver::ConfigData();
   ParseConfigData(fip,*result);

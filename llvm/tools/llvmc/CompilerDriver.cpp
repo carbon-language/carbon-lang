@@ -123,6 +123,21 @@ namespace {
         AdditionalArgs[phase] = opts;
       }
 
+      virtual void setIncludePaths(const StringVector& paths) {
+        StringVector::const_iterator I = paths.begin();
+        StringVector::const_iterator E = paths.end();
+        while (I != E) {
+          sys::Path tmp;
+          tmp.set_directory(*I);
+          IncludePaths.push_back(tmp);
+          ++I;
+        }
+      }
+
+      virtual void setSymbolDefines(const StringVector& defs) {
+        Defines = defs;
+      }
+
       virtual void setLibraryPaths(const StringVector& paths) {
         StringVector::const_iterator I = paths.begin();
         StringVector::const_iterator E = paths.end();
@@ -193,45 +208,116 @@ namespace {
         StringVector::iterator PI = pat->args.begin();
         StringVector::iterator PE = pat->args.end();
         while (PI != PE) {
-          if ((*PI)[0] == '%') {
-            if (*PI == "%in%") {
-              action->args.push_back(input.get());
-            } else if (*PI == "%out%") {
-              action->args.push_back(output.get());
-            } else if (*PI == "%time%") {
-              if (isSet(TIME_PASSES_FLAG))
-                action->args.push_back("-time-passes");
-            } else if (*PI == "%stats%") {
-              if (isSet(SHOW_STATS_FLAG))
-                action->args.push_back("-stats");
-            } else if (*PI == "%force%") {
-              if (isSet(FORCE_FLAG))
-                action->args.push_back("-f");
-            } else if (*PI == "%verbose%") {
-              if (isSet(VERBOSE_FLAG))
-                action->args.push_back("-v");
-            } else if (*PI == "%target%") {
-              // FIXME: Ignore for now
-            } else if (*PI == "%opt%") {
-              if (!isSet(EMIT_RAW_FLAG)) {
-                if (cd->opts.size() > static_cast<unsigned>(optLevel) && 
-                    !cd->opts[optLevel].empty())
-                  action->args.insert(action->args.end(), cd->opts[optLevel].begin(),
-                      cd->opts[optLevel].end());
-                else
-                  throw std::string("Optimization options for level ") + 
-                        utostr(unsigned(optLevel)) + " were not specified";
+          if ((*PI)[0] == '%' && PI->length() >2) {
+            bool found = true;
+            switch ((*PI)[1]) {
+              case 'a':
+                if (*PI == "%args%") {
+                  if (AdditionalArgs.size() > unsigned(phase))
+                    if (!AdditionalArgs[phase].empty()) {
+                      // Get specific options for each kind of action type
+                      StringVector& addargs = AdditionalArgs[phase];
+                      // Add specific options for each kind of action type
+                      action->args.insert(action->args.end(), addargs.begin(), addargs.end());
+                    }
+                } else
+                  found = false;
+                break;
+              case 'd':
+                if (*PI == "%defs%") {
+                  StringVector::iterator I = Defines.begin();
+                  StringVector::iterator E = Defines.end();
+                  while (I != E) {
+                    action->args.push_back( std::string("-D") + *I);
+                    ++I;
+                  }
+                } else
+                  found = false;
+                break;
+              case 'f':
+                if (*PI == "%force%") {
+                  if (isSet(FORCE_FLAG))
+                    action->args.push_back("-f");
+                } else
+                  found = false;
+                break;
+              case 'i':
+                if (*PI == "%in%") {
+                  action->args.push_back(input.get());
+                } else if (*PI == "%incls%") {
+                  PathVector::iterator I = IncludePaths.begin();
+                  PathVector::iterator E = IncludePaths.end();
+                  while (I != E) {
+                    action->args.push_back( std::string("-I") + I->get() );
+                    ++I;
+                  }
+                } else
+                  found = false;
+                break;
+              case 'l':
+                if (*PI == "%libs%") {
+                  PathVector::iterator I = LibraryPaths.begin();
+                  PathVector::iterator E = LibraryPaths.end();
+                  while (I != E) {
+                    action->args.push_back( std::string("-L") + I->get() );
+                    ++I;
+                  }
+                } else
+                  found = false;
+                break;
+              case 'o':
+                if (*PI == "%out%") {
+                  action->args.push_back(output.get());
+                } else if (*PI == "%opt%") {
+                  if (!isSet(EMIT_RAW_FLAG)) {
+                    if (cd->opts.size() > static_cast<unsigned>(optLevel) && 
+                        !cd->opts[optLevel].empty())
+                      action->args.insert(action->args.end(), cd->opts[optLevel].begin(),
+                          cd->opts[optLevel].end());
+                    else
+                      throw std::string("Optimization options for level ") + 
+                            utostr(unsigned(optLevel)) + " were not specified";
+                  }
+                } else
+                  found = false;
+                break;
+              case 's':
+                if (*PI == "%stats%") {
+                  if (isSet(SHOW_STATS_FLAG))
+                    action->args.push_back("-stats");
+                } else
+                  found = false;
+                break;
+              case 't':
+                if (*PI == "%target%") {
+                  action->args.push_back(std::string("-march=") + machine);
+                } else if (*PI == "%time%") {
+                  if (isSet(TIME_PASSES_FLAG))
+                    action->args.push_back("-time-passes");
+                } else
+                  found = false;
+                break;
+              case 'v':
+                if (*PI == "%verbose%") {
+                  if (isSet(VERBOSE_FLAG))
+                    action->args.push_back("-v");
+                } else
+                  found  = false;
+                break;
+              default:
+                found = false;
+                break;
+            }
+            if (!found) {
+              // Did it even look like a substitution?
+              if (PI->length()>1 && (*PI)[0] == '%' && 
+                  (*PI)[PI->length()-1] == '%') {
+                throw std::string("Invalid substitution token: '") + *PI +
+                      "' for command '" + pat->program.get() + "'";
+              } else {
+                // It's not a legal substitution, just pass it through
+                action->args.push_back(*PI);
               }
-            } else if (*PI == "%args%") {
-              if (AdditionalArgs.size() > unsigned(phase))
-                if (!AdditionalArgs[phase].empty()) {
-                  // Get specific options for each kind of action type
-                  StringVector& addargs = AdditionalArgs[phase];
-                  // Add specific options for each kind of action type
-                  action->args.insert(action->args.end(), addargs.begin(), addargs.end());
-                }
-            } else {
-              throw "Invalid substitution name" + *PI;
             }
           } else {
             // Its not a substitution, just put it in the action
@@ -239,7 +325,6 @@ namespace {
           }
           PI++;
         }
-
 
         // Finally, we're done
         return action;
@@ -252,7 +337,7 @@ namespace {
         if (!isSet(DRY_RUN_FLAG)) {
           action->program = sys::Program::FindProgramByName(action->program.get());
           if (action->program.is_empty())
-            throw "Can't find program '" + action->program.get() + "'";
+            throw std::string("Can't find program '") + action->program.get() + "'";
 
           // Invoke the program
           return 0 == action->program.ExecuteAndWait(action->args);
@@ -571,7 +656,7 @@ namespace {
           std::vector<Action*>::iterator AE = actions.end();
           while (AI != AE) {
             if (!DoAction(*AI))
-              throw "Action failed";
+              throw std::string("Action failed");
             AI++;
           }
 
@@ -579,7 +664,8 @@ namespace {
           actions.clear();
           if (finalPhase == LINKING) {
             if (isSet(EMIT_NATIVE_FLAG)) {
-              throw "llvmc doesn't know how to link native code yet";
+              throw std::string(
+                "llvmc doesn't know how to link native code yet");
             } else {
               // First, we need to examine the files to ensure that they all contain
               // bytecode files. Since the final output is bytecode, we can only
@@ -646,6 +732,8 @@ namespace {
       unsigned Flags;               ///< The driver flags
       std::string machine;          ///< Target machine name
       PathVector LibraryPaths;      ///< -L options
+      PathVector IncludePaths;      ///< -I options
+      StringVector Defines;         ///< -D options
       sys::Path TempDir;            ///< Name of the temporary directory.
       StringTable AdditionalArgs;   ///< The -Txyz options
 
