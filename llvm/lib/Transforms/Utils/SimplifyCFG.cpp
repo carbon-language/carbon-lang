@@ -39,8 +39,8 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
     if (find(BBPreds.begin(), BBPreds.end(), *PI) != BBPreds.end()) {
       // Loop over all of the PHI nodes checking to see if there are
       // incompatible values coming in.
-      BasicBlock::iterator BBI = Succ->begin();
-      while (PHINode *PN = dyn_cast<PHINode>(&*BBI++)) {
+      for (BasicBlock::iterator I = Succ->begin();
+           PHINode *PN = dyn_cast<PHINode>(&*I); ++I) {
         // Loop up the entries in the PHI node for BB and for *PI if the values
         // coming in are non-equal, we cannot merge these two blocks (instead we
         // should insert a conditional move or something, then merge the
@@ -60,10 +60,19 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
     Value *OldVal = PN->removeIncomingValue(BB, false);
     assert(OldVal && "No entry in PHI for Pred BB!");
 
-    for (std::vector<BasicBlock*>::const_iterator PredI = BBPreds.begin(), 
-	   End = BBPreds.end(); PredI != End; ++PredI) {
-      // Add an incoming value for each of the new incoming values...
-      PN->addIncoming(OldVal, *PredI);
+    // If this incoming value is one of the PHI nodes in BB...
+    if (isa<PHINode>(OldVal) && cast<PHINode>(OldVal)->getParent() == BB) {
+      PHINode *OldValPN = cast<PHINode>(OldVal);
+      for (std::vector<BasicBlock*>::const_iterator PredI = BBPreds.begin(), 
+             End = BBPreds.end(); PredI != End; ++PredI) {
+        PN->addIncoming(OldValPN->getIncomingValueForBlock(*PredI), *PredI);
+      }
+    } else {
+      for (std::vector<BasicBlock*>::const_iterator PredI = BBPreds.begin(), 
+             End = BBPreds.end(); PredI != End; ++PredI) {
+        // Add an incoming value for each of the new incoming values...
+        PN->addIncoming(OldVal, *PredI);
+      }
     }
   }
   return false;
@@ -83,7 +92,6 @@ bool SimplifyCFG(BasicBlock *BB) {
   assert(BB && BB->getParent() && "Block not embedded in function!");
   assert(BB->getTerminator() && "Degenerate basic block encountered!");
   assert(&BB->getParent()->front() != BB && "Can't Simplify entry block!");
-
 
   // Remove basic blocks that have no predecessors... which are unreachable.
   if (pred_begin(BB) == pred_end(BB) &&
@@ -113,11 +121,16 @@ bool SimplifyCFG(BasicBlock *BB) {
     return true;
   }
 
-  // Check to see if this block has no instructions and only a single 
-  // successor.  If so, replace block references with successor.
+  // Check to see if this block has no non-phi instructions and only a single
+  // successor.  If so, replace references to this basic block with references
+  // to the successor.
   succ_iterator SI(succ_begin(BB));
   if (SI != succ_end(BB) && ++SI == succ_end(BB)) {  // One succ?
-    if (BB->front().isTerminator()) {   // Terminator is the only instruction!
+
+    BasicBlock::iterator BBI = BB->begin();  // Skip over phi nodes...
+    while (isa<PHINode>(*BBI)) ++BBI;
+
+    if (BBI->isTerminator()) {   // Terminator is the only non-phi instruction!
       BasicBlock *Succ = *succ_begin(BB); // There is exactly one successor
      
       if (Succ != BB) {   // Arg, don't hurt infinite loops!
@@ -130,6 +143,19 @@ bool SimplifyCFG(BasicBlock *BB) {
           //cerr << "Killing Trivial BB: \n" << BB;
           BB->replaceAllUsesWith(Succ);
           std::string OldName = BB->getName();
+
+          // Move all PHI nodes in BB to Succ if they are alive, otherwise
+          // delete them.
+          while (PHINode *PN = dyn_cast<PHINode>(&BB->front()))
+            if (PN->use_empty())
+              BB->getInstList().erase(BB->begin());  // Nuke instruction...
+            else {
+              // The instruction is alive, so this means that Succ must have
+              // *ONLY* had BB as a predecessor, and the PHI node is still valid
+              // now.  Simply move it into Succ.
+              BB->getInstList().remove(BB->begin());
+              Succ->getInstList().push_front(PN);
+            }
 
           // Delete the old basic block...
           M->getBasicBlockList().erase(BB);
