@@ -6,6 +6,7 @@
 // University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 // Modified by Henrik Bach to comply with at least MinGW.
+// Ported to Win32 by Jeff Cohen.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -18,18 +19,10 @@
 //===          is guaranteed to work on *all* Win32 variants.
 //===----------------------------------------------------------------------===//
 
-#include <llvm/Config/config.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <assert.h>
-#include <fcntl.h>
-#include <sys/stat.h>
+#include "Win32.h"
 #include <llvm/System/Path.h>
-
-#include <windef.h>
-#include <winbase.h>
-
-#define MAXPATHLEN PATH_MAX
+#include <fstream>
+#include <malloc.h>
 
 namespace llvm {
 namespace sys {
@@ -38,23 +31,47 @@ bool
 Path::is_valid() const {
   if (path.empty())
     return false;
-/*hb:  char pathname[MAXPATHLEN];
-  if (0 == realpath(path.c_str(), pathname))
-    if (errno != EACCES && errno != EIO && errno != ENOENT && errno != 
-ENOTDIR)
-      return false;*/
-  return true;
+
+  // On Unix, the realpath function is used, which only requires that the
+  // directories leading up the to final file name are valid.  The file itself
+  // need not exist.  To get this behavior on Windows, we must elide the file
+  // name manually.
+  Path dir(*this);
+  dir.elide_file();
+  if (dir.path.empty())
+    return true;
+
+  DWORD attr = GetFileAttributes(dir.path.c_str());
+  return (attr != INVALID_FILE_ATTRIBUTES) && (attr & FILE_ATTRIBUTE_DIRECTORY);
 }
+
+static Path *TempDirectory = NULL;
 
 Path
 Path::GetTemporaryDirectory() {
-  char pathname[MAXPATHLEN];
-  if (0 == GetTempPath(MAXPATHLEN,pathname))
-    ThrowError(std::string(pathname) + ": Can't create temporary directory");
+  if (TempDirectory)
+    return *TempDirectory;
+
+  char pathname[MAX_PATH];
+  if (!GetTempPath(MAX_PATH, pathname))
+    ThrowError("Can't determine temporary directory");
+
   Path result;
   result.set_directory(pathname);
-  assert(result.is_valid() && "GetTempPath didn't create a valid pathname!");
-  return result;
+
+  // Append a subdirectory passed on our process id so multiple LLVMs don't
+  // step on each other's toes.
+  sprintf(pathname, "LLVM_%u", GetCurrentProcessId());
+  result.append_directory(pathname);
+
+  // If there's a directory left over from a previous LLVM execution that
+  // happened to have the same process id, get rid of it.
+  result.destroy_directory(true);
+
+  // And finally (re-)create the empty directory.
+  result.create_directory(false);
+  TempDirectory = new Path(result);
+  return *TempDirectory;
 }
 
 Path::Path(std::string unverified_path)
@@ -69,10 +86,64 @@ Path::Path(std::string unverified_path)
   ThrowError(unverified_path + ": path is not valid");
 }
 
+// FIXME: the following set of functions don't map to Windows very well.
 Path
 Path::GetRootDirectory() {
   Path result;
   result.set_directory("/");
+  return result;
+}
+
+static inline bool IsLibrary(Path& path, const std::string& basename) {
+  if (path.append_file(std::string("lib") + basename)) {
+    if (path.append_suffix(Path::GetDLLSuffix()) && path.readable())
+      return true;
+    else if (path.elide_suffix() && path.append_suffix("a") && path.readable())
+      return true;
+    else if (path.elide_suffix() && path.append_suffix("o") && path.readable())
+      return true;
+    else if (path.elide_suffix() && path.append_suffix("bc") && path.readable())
+      return true;
+  } else if (path.elide_file() && path.append_file(basename)) {
+    if (path.append_suffix(Path::GetDLLSuffix()) && path.readable())
+      return true;
+    else if (path.elide_suffix() && path.append_suffix("a") && path.readable())
+      return true;
+    else if (path.elide_suffix() && path.append_suffix("o") && path.readable())
+      return true;
+    else if (path.elide_suffix() && path.append_suffix("bc") && path.readable())
+      return true;
+  }
+  path.clear();
+  return false;
+}
+
+Path 
+Path::GetLibraryPath(const std::string& basename, 
+                     const std::vector<std::string>& LibPaths) {
+  Path result;
+
+  // Try the paths provided
+  for (std::vector<std::string>::const_iterator I = LibPaths.begin(),
+       E = LibPaths.end(); I != E; ++I ) {
+    if (result.set_directory(*I) && IsLibrary(result,basename))
+      return result;
+  }
+
+  // Try the LLVM lib directory in the LLVM install area
+  //if (result.set_directory(LLVM_LIBDIR) && IsLibrary(result,basename))
+  //  return result;
+
+  // Try /usr/lib
+  if (result.set_directory("/usr/lib/") && IsLibrary(result,basename))
+    return result;
+
+  // Try /lib
+  if (result.set_directory("/lib/") && IsLibrary(result,basename))
+    return result;
+
+  // Can't find it, give up and return invalid path.
+  result.clear();
   return result;
 }
 
@@ -93,9 +164,6 @@ Path::GetLLVMDefaultConfigDir() {
 
 Path
 Path::GetLLVMConfigDir() {
-  Path result;
-  if (result.set_directory(LLVM_ETCDIR))
-    return result;
   return GetLLVMDefaultConfigDir();
 }
 
@@ -109,25 +177,80 @@ Path::GetUserHomeDirectory() {
   }
   return GetRootDirectory();
 }
+// FIXME: the above set of functions don't map to Windows very well.
+
+bool
+Path::is_file() const {
+  return (is_valid() && path[path.length()-1] != '/');
+}
+
+bool
+Path::is_directory() const {
+  return (is_valid() && path[path.length()-1] == '/');
+}
+
+std::string
+Path::get_basename() const {
+  // Find the last slash
+  size_t slash = path.rfind('/');
+  if (slash == std::string::npos)
+    slash = 0;
+  else
+    slash++;
+
+  return path.substr(slash, path.rfind('.'));
+}
+
+bool Path::has_magic_number(const std::string &Magic) const {
+  size_t len = Magic.size();
+  char *buf = reinterpret_cast<char *>(_alloca(len+1));
+  std::ifstream f(path.c_str());
+  f.read(buf, len);
+  buf[len] = '\0';
+  return Magic == buf;
+}
+
+bool 
+Path::is_bytecode_file() const {
+  if (readable()) {
+    return has_magic_number("llvm");
+  }
+  return false;
+}
+
+bool
+Path::is_archive() const {
+  if (readable()) {
+    return has_magic_number("!<arch>\012");
+  }
+  return false;
+}
 
 bool
 Path::exists() const {
-  return 0 == access(path.c_str(), F_OK );
+  DWORD attr = GetFileAttributes(path.c_str());
+  return attr != INVALID_FILE_ATTRIBUTES;
 }
 
 bool
 Path::readable() const {
-  return 0 == access(path.c_str(), F_OK | R_OK );
+  // FIXME: take security attributes into account.
+  DWORD attr = GetFileAttributes(path.c_str());
+  return attr != INVALID_FILE_ATTRIBUTES;
 }
 
 bool
 Path::writable() const {
-  return 0 == access(path.c_str(), F_OK | W_OK );
+  // FIXME: take security attributes into account.
+  DWORD attr = GetFileAttributes(path.c_str());
+  return (attr != INVALID_FILE_ATTRIBUTES) && !(attr & FILE_ATTRIBUTE_READONLY);
 }
 
 bool
 Path::executable() const {
-  return 0 == access(path.c_str(), R_OK | X_OK );
+  // FIXME: take security attributes into account.
+  DWORD attr = GetFileAttributes(path.c_str());
+  return attr != INVALID_FILE_ATTRIBUTES;
 }
 
 std::string
@@ -272,8 +395,8 @@ Path::create_directory( bool create_parents) {
   if (!is_directory()) return false;
 
   // Get a writeable copy of the path name
-  char pathname[MAXPATHLEN];
-  path.copy(pathname,MAXPATHLEN);
+  char *pathname = reinterpret_cast<char *>(_alloca(path.length()+1));
+  path.copy(pathname,path.length()+1);
 
   // Null-terminate the last component
   int lastchar = path.length() - 1 ;
@@ -290,15 +413,14 @@ Path::create_directory( bool create_parents) {
     // Loop through the directory components until we're done
     while ( next != 0 ) {
       *next = 0;
-      if (0 != access(pathname, F_OK | R_OK | W_OK))
-        if (0 != mkdir(pathname))
-          ThrowError(std::string(pathname) + ": Can't create directory");
+      if (!CreateDirectory(pathname, NULL))
+          ThrowError(std::string(pathname) + ": Can't create directory: ");
       char* save = next;
       next = strchr(pathname,'/');
       *save = '/';
     }
-  } else if (0 != mkdir(pathname)) {
-    ThrowError(std::string(pathname) + ": Can't create directory");
+  } else if (!CreateDirectory(pathname, NULL)) {
+    ThrowError(std::string(pathname) + ": Can't create directory: ");
   }
   return true;
 }
@@ -309,9 +431,12 @@ Path::create_file() {
   if (!is_file()) return false;
 
   // Create the file
-  if (0 != creat(path.c_str(), S_IRUSR | S_IWUSR))
-    ThrowError(std::string(path.c_str()) + ": Can't create file");
+  HANDLE h = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                        FILE_ATTRIBUTE_NORMAL, NULL);
+  if (h == INVALID_HANDLE_VALUE)
+    ThrowError(std::string(path.c_str()) + ": Can't create file: ");
 
+  CloseHandle(h);
   return true;
 }
 
@@ -323,20 +448,23 @@ Path::destroy_directory(bool remove_contents) {
   // If it doesn't exist, we're done.
   if (!exists()) return true;
 
+  char *pathname = reinterpret_cast<char *>(_alloca(path.length()+1));
+  path.copy(pathname,path.length()+1);
+  int lastchar = path.length() - 1 ;
+  if (pathname[lastchar] == '/')
+    pathname[lastchar] = 0;
+
   if (remove_contents) {
     // Recursively descend the directory to remove its content
-    std::string cmd("/bin/rm -rf ");
+    // FIXME: The correct way of doing this on Windows isn't pretty...
+    // but this may work if unix-like utils are present.
+    std::string cmd("rm -rf ");
     cmd += path;
     system(cmd.c_str());
   } else {
     // Otherwise, try to just remove the one directory
-    char pathname[MAXPATHLEN];
-    path.copy(pathname,MAXPATHLEN);
-    int lastchar = path.length() - 1 ;
-    if (pathname[lastchar] == '/')
-      pathname[lastchar] = 0;
-    if ( 0 != rmdir(pathname))
-      ThrowError(std::string(pathname) + ": Can't destroy directory");
+    if (!RemoveDirectory(pathname))
+      ThrowError(std::string(pathname) + ": Can't destroy directory: ");
   }
   return true;
 }
@@ -344,8 +472,22 @@ Path::destroy_directory(bool remove_contents) {
 bool
 Path::destroy_file() {
   if (!is_file()) return false;
-  if (0 != unlink(path.c_str()))
-    ThrowError(std::string(path.c_str()) + ": Can't destroy file");
+
+  DWORD attr = GetFileAttributes(path.c_str());
+
+  // If it doesn't exist, we're done.
+  if (attr == INVALID_FILE_ATTRIBUTES)
+    return true;
+
+  // Read-only files cannot be deleted on Windows.  Must remove the read-only
+  // attribute first.
+  if (attr & FILE_ATTRIBUTE_READONLY) {
+    if (!SetFileAttributes(path.c_str(), attr & ~FILE_ATTRIBUTE_READONLY))
+      ThrowError(std::string(path.c_str()) + ": Can't destroy file: ");
+  }
+
+  if (!DeleteFile(path.c_str()))
+    ThrowError(std::string(path.c_str()) + ": Can't destroy file: ");
   return true;
 }
 
