@@ -96,12 +96,14 @@ buggy or if it's one of the LLVM tools that has problems.</p>
 <tt><b>gccas</b></tt>, or <tt><b>gccld</b></tt>), run the
 <tt><b>llvm-gcc</b></tt> command line as you were when the crash occurred, but
 add a <tt>-v</tt> option to the command line.  The compiler will print out a
-bunch of stuff, and should end with telling you that one of <tt><b>cc1</b></tt>,
-<tt><b>gccas</b></tt>, or <tt><b>gccld</b></tt> crashed.</p>
+bunch of stuff, and should end with telling you that one of
+<tt><b>cc1</b>/<b>cc1plus</b></tt>, <tt><b>gccas</b></tt>, or
+<tt><b>gccld</b></tt> crashed.</p>
 
 <ul>
 
-  <li>If <tt><b>cc1</b></tt> crashed, you found a problem with the front-end.
+  <li>If <tt><b>cc1</b></tt> or <tt><b>cc1plus</b></tt> crashed, you found a
+  problem with the front-end.
   Jump ahead to the section on <a href="#front-end">front-end bugs</a>.</li>
 
   <li>If <tt><b>gccas</b></tt> crashed, you found a bug in <a href="#gccas">one
