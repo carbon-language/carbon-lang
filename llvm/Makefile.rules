@@ -321,6 +321,13 @@ endif
 # Library Build Rules: Four ways to build a library
 ###############################################################################
 
+$(libdir):
+	$(VERB) $(MKDIR) $(libdir)
+
+$(bytecode_libdir):
+	$(VERB) $(MKDIR) $(bytecode_libdir)
+
+
 
 # if we're building a library ...
 ifdef LIBRARYNAME
@@ -343,7 +350,7 @@ ifdef SHARED_LIBRARY
 all-local:: $(LIBNAME_LA)
 
 $(LIBNAME_LA): $(BUILT_SOURCES) $(ObjectsLO) $(LIBDIR)/.dir
-	@$(ECHO) Linking shared library $(notdir $@)
+	@$(ECHO) Linking $(CONFIGURATION) Shared Library $(notdir $@)
 	$(VERB) $(Link) -o $@ $(ObjectsLO)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $@ $(LIBDIR)
 
@@ -355,18 +362,17 @@ endif
 DestSharedLib = $(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
 install-local:: install-shared-library
 
-install-shared-library: $(DestSharedLib)
+install-shared-library: $(libdir) $(DestSharedLib)
 
 $(DestSharedLib): $(LIBNAME_LA)
-	@$(ECHO) Installing shared library $(DestSharedLib)
-	$(VERB) $(MKDIR) $(libdir)
+	@$(ECHO) Installing $(CONFIGURATION) Shared Library $(DestSharedLib)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_LA) $(DestSharedLib)
 	$(VERB) $(LIBTOOL) --finish $(libdir)
 
 uninstall-local:: uninstall-shared-library
 
 uninstall-shared-library:
-	@$(ECHO) Uninstalling shared library $(DestSharedLib)
+	@$(ECHO) Uninstalling $(CONFIGURATION) Shared Library $(DestSharedLib)
 	$(VERB) $(RM) -f $(DestSharedLib)
 
 endif
@@ -392,7 +398,7 @@ endif
 all-local:: $(LIBNAME_BC)
 
 $(LIBNAME_BC): $(BUILT_SOURCES) $(ObjectsBC) $(LIBDIR)/.dir
-	@$(ECHO) Linking bytecode library $(notdir $@)
+	@$(ECHO) Linking $(CONFIGURATION) Bytecode Library $(notdir $@)
 	$(VERB) $(BCLinkLib) -o $@ $(ObjectsBC)
 
 clean-local::
@@ -401,18 +407,19 @@ ifneq ($(strip $(LIBNAME_BC)),)
 endif
 
 DestBytecodeLib = $(bytecode_libdir)/lib$(LIBRARYNAME).bc
+
 install-local:: install-bytecode-library
 
-install-bytecode-library: $(DestBytecodeLib)
+install-bytecode-library: $(bytecode_libdir) $(DestBytecodeLib)
 
 $(DestBytecodeLib): $(LIBNAME_BC) $(bytecode_libdir)
-	@$(ECHO) Installing bytecode library $(DestBytecodeLib)
+	@$(ECHO) Installing $(CONFIGURATION) Bytecode Library $(DestBytecodeLib)
 	$(VERB) $(INSTALL) $< $@
 
 uninstall-local:: uninstall-bytecode-library
 
 uninstall-bytecode-library: 
-	@$(ECHO) Uninstalling bytecode library $(DestBytecodeLib)
+	@$(ECHO) Uninstalling $(CONFIGURATION) Bytecode Library $(DestBytecodeLib)
 	$(VERB) $(RM) -f $(DestBytecodeLib)
 
 endif
@@ -422,7 +429,7 @@ ifndef DONT_BUILD_RELINKED
 all-local:: $(LIBNAME_O)
 
 $(LIBNAME_O): $(BUILT_SOURCES) $(ObjectsO) $(LIBDIR)/.dir
-	@$(ECHO) Linking object library $(notdir $@)
+	@$(ECHO) Linking $(CONFIGURATION) Object Library $(notdir $@)
 	$(VERB) $(Relink) -o $@ $(ObjectsO)
 
 clean-local::
@@ -434,17 +441,17 @@ DestRelinkedLib = $(libdir)/$(LIBRARYNAME).o
 
 install-local:: install-relinked-library 
 
-install-relinked-library: $(DestRelinkedLib)
+install-relinked-library: $(libdir) $(DestRelinkedLib)
 
 $(DestRelinkedLib): $(LIBNAME_O)
-	@$(ECHO) Installing object library $(DestRelinkedLib)
+	@$(ECHO) Installing $(CONFIGURATION) Object Library $(DestRelinkedLib)
 	$(VERB) $(MKDIR) $(libdir)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_O) $(DestRelinkedLib)
 
 uninstall-local:: uninstall-relinked-library 
 
 uninstall-relinked-library: 
-	@$(ECHO) Uninstalling object library $(DestRelinkedLib)
+	@$(ECHO) Uninstalling $(CONFIGURATION) Object Library $(DestRelinkedLib)
 	$(VERB) $(RM) -f $(DestRelinkedLib)
 
 endif
@@ -454,7 +461,7 @@ ifdef BUILD_ARCHIVE
 all-local:: $(LIBNAME_A)
 
 $(LIBNAME_A): $(BUILT_SOURCES) $(ObjectsO) $(LIBDIR)/.dir
-	@$(ECHO) Building archive library $(notdir $@)
+	@$(ECHO) Building $(CONFIGURATION) Archive Library $(notdir $@)
 	$(VERB)$(RM) -f $@
 	$(VERB) $(Archive) $@ $(ObjectsO)
 	$(VERB) $(Ranlib) $@
@@ -468,17 +475,16 @@ DestArchiveLib := $(libdir)/lib$(LIBRARYNAME).a
 
 install-local:: install-archive-library
 
-install-archive-library: $(DestArchiveLib)
+install-archive-library: $(libdir) $(DestArchiveLib)
 
 $(DestArchiveLib): $(LIBNAME_A)
-	@$(ECHO) Installing archive library $(DestArchiveLib)
-	$(VERB) $(MKDIR) $(libdir)
+	@$(ECHO) Installing $(CONFIGURATION) Archive Library $(DestArchiveLib)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_A) $(DestArchiveLib)
 
 uninstall-local:: uninstall-archive-library
 
 uninstall-archive-library: 
-	@$(ECHO) Uninstalling archive library $(DestArchiveLib)
+	@$(ECHO) Uninstalling $(CONFIGURATION) Archive Library $(DestArchiveLib)
 	$(VERB) $(RM) -f $(DestArchiveLib)
 
 endif
@@ -542,22 +548,25 @@ endif
 $(TOOLEXENAME): $(BUILT_SOURCES) $(ObjectsO) $(PROJ_LIBS_PATHS) $(LLVM_LIBS_PATHS) $(TOOLDIR)/.dir
 	@$(ECHO) Linking $(CONFIGURATION) executable $(TOOLNAME) $(STRIP_WARN_MSG)
 	$(VERB) $(Link) -o $@ $(ObjectsO) $(PROJ_LIBS_OPTIONS) $(LLVM_LIBS_OPTIONS) $(LIBS)
-	@$(ECHO) ======= Finished linking $(CONFIGURATION) executable $(TOOLNAME) $(STRIP_WARN_MSG) 
-
-install-local:: install-tool
+	@$(ECHO) ======= Finished Linking $(CONFIGURATION) Executable $(TOOLNAME) $(STRIP_WARN_MSG) 
 
 DestTool = $(bindir)/$(TOOLNAME)
 
-install-tool: $(DestTool)
+install-local:: install-tool
+
+install-tool: $(bindir) $(DestTool)
 
 $(DestTool): $(TOOLEXENAME)
-	@$(ECHO) Installing $(DestTool)
-	$(VERB) $(INSTALL) $(TOOLEXENAME) $(bindir)
+	@$(ECHO) Installing $(CONFIGURATION) $(DestTool)
+	$(VERB) $(INSTALL) $(TOOLEXENAME) $(DestTool)
 
+$(bindir):
+	$(VERB) $(MKDIR) $(bindir)
+	
 uninstall-local:: uninstall-tool
 
 uninstall-tool:
-	@$(ECHO) Uninstalling $(DestTool)
+	@$(ECHO) Uninstalling $(CONFIGURATION) $(DestTool)
 	$(VERB) $(RM) -f $(DestTool)
 
 endif
@@ -568,13 +577,13 @@ ifndef DISABLE_AUTO_DEPENDENCIES
 ifdef SHARED_LIBRARY
 
 $(OBJDIR)/%.lo $(OBJDIR)/%.o: %.cpp $(OBJDIR)/.dir
-	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Shared Library"
+	@$(ECHO) "Compiling $*.cpp (PIC)"
 	$(VERB) if $(LTCompile.CXX) -MD -MT $@ -MP -MF $(OBJDIR)/$*.LACXXd $< -o $@ ; \
 	then $(MV) -f "$(OBJDIR)/$*.LACXXd" "$(OBJDIR)/$*.d"; \
 	else $(RM) -f "$(OBJDIR)/$*.LACXXd"; exit 1; fi
 
 $(OBJDIR)/%.lo $(OBJDIR)/%.o: %.c $(OBJDIR)/.dir 
-	@$(ECHO) "Compiling $(CONFIGURATION) $*.c For Shared Library"
+	@$(ECHO) "Compiling $*.c (PIC)"
 	$(VERB) if $(LTCompile.C) -MD -MT $@ -MP -MF $(OBJDIR)/$*.LACd $< -o $@ ; \
 	then $(MV) -f "$(OBJDIR)/$*.LACd" "$(OBJDIR)/$*.d"; \
 	else $(RM) -f "$(OBJDIR)/$*.LACd"; exit 1; fi
@@ -582,13 +591,13 @@ $(OBJDIR)/%.lo $(OBJDIR)/%.o: %.c $(OBJDIR)/.dir
 else
 
 $(OBJDIR)/%.o: %.cpp $(OBJDIR)/.dir
-	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Archive"
+	@$(ECHO) "Compiling $*.cpp"
 	$(VERB) if $(Compile.CXX) -MD -MT $@ -MP -MF $(OBJDIR)/$*.CXXd $< -o $@ ; \
 	then $(MV) -f "$(OBJDIR)/$*.CXXd" "$(OBJDIR)/$*.d"; \
 	else $(RM) -f "$(OBJDIR)/$*.CXXd"; exit 1; fi
 
 $(OBJDIR)/%.o: %.c $(OBJDIR)/.dir
-	@$(ECHO) "Compiling $(CONFIGURATION) $*.c For Archive"
+	@$(ECHO) "Compiling $*.c"
 	$(VERB) if $(Compile.C) -MD -MT $@ -MP -MF $(OBJDIR)/$*.Cd $< -o $@ ; \
 	then $(MV) -f "$(OBJDIR)/$*.Cd" "$(OBJDIR)/$*.d"; \
 	else $(RM) -f "$(OBJDIR)/$*.Cd"; exit 1; fi
@@ -597,13 +606,13 @@ endif
 
 # Create .bc files in the OBJDIR directory from .cpp and .c files...
 $(OBJDIR)/%.bc: %.cpp $(OBJDIR)/.dir
-	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp to bytecode"
+	@$(ECHO) "Compiling $*.cpp (bytecode)"
 	$(VERB) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(OBJDIR)/$*.BCCXXd" $< -o $@ ; \
 	then $(MV) -f "$(OBJDIR)/$*.BCCXXd" "$(OBJDIR)/$*.d"; \
 	else $(RM) -f "$(OBJDIR)/$*.BCCXXd"; exit 1; fi
 
 $(OBJDIR)/%.bc: %.c $(OBJDIR)/.dir
-	@$(ECHO) "Compiling $(CONFIGURATION) $*.c to bytecode"
+	@$(ECHO) "Compiling $*.c (bytecode)"
 	$(VERB) if $(BCCompile.C) -MD -MT $@ -MP -MF "$(OBJDIR)/$*.BCCd" $< -o $@ ; \
 	then $(MV) -f "$(OBJDIR)/$*.BCCd" "$(OBJDIR)/$*.d"; \
 	else $(RM) -f "$(OBJDIR)/$*.BCCd"; exit 1; fi
@@ -613,37 +622,37 @@ else
 ifdef SHARED_LIBRARY
 
 $(OBJDIR)/%.lo $(OBJDIR)/%.o: %.cpp $(OBJDIR)/.dir 
-	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Shared Library"
+	@$(ECHO) "Compiling $*.cpp (PIC)"
 	$(LTCompile.CXX) $< -o $@ 
 
 $(OBJDIR)/%.lo $(OBJDIR)/%.o: %.c $(OBJDIR)/.dir 
-	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Shared Library"
+	@$(ECHO) "Compiling $*.cpp (PIC)"
 	$(LTCompile.C) $< -o $@ 
 
 else
 
 $(OBJDIR)/%.o: %.cpp $(OBJDIR)/.dir
-	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Archive"
+	@$(ECHO) "Compiling $*.cpp"
 	$(Compile.CXX) $< -o $@ 
 
 $(OBJDIR)/%.o: %.c $(OBJDIR)/.dir
-	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Archive"
+	@$(ECHO) "Compiling $*.cpp"
 	$(Compile.C) $< -o $@ 
 endif
 
 # Create .bc files in the OBJDIR directory from .cpp and .c files...
 $(OBJDIR)/%.bc: %.cpp $(OBJDIR)/.dir
-	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp To Bytecode"
+	@$(ECHO) "Compiling $*.cpp (bytecode)"
 	$(BCCompileCPP) $< -o $@ 
 
 $(OBJDIR)/%.bc: %.c $(OBJDIR)/.dir
-	@$(ECHO) "Compiling $(CONFIGURATION) $*.c To Bytecode"
+	@$(ECHO) "Compiling $*.c (bytecode)"
 	$(BCCompileC) $< -o $@
 
 endif
 
 $(OBJDIR)/%.bc: %.ll $(OBJDIR)/.dir $(LLVMAS)
-	@$(ECHO) "Compiling $*.ll To Bytecode"
+	@$(ECHO) "Compiling $*.ll"
 	$(VERB) $(LLVMAS) $< -f -o $@
 
 ifdef TARGET
@@ -852,85 +861,132 @@ endif
 
 .PHONY: dist dist-chck dist-clean distdir dist-gzip dist-bzip2 dist-zip
 
-ifeq ($(BUILD_SRC_DIR),$(BUILD_OBJ_DIR))
-
-dist dist-check dist-clean dist-gzip dist-bzip2 dist-zip ::
-	@$(ECHO) ERROR: Target $@ only available with OBJ_DIR != SRC_DIR
-
-else
-
-ifeq ($(LLVM_TARBALL_NAME),)
-$(error LLVM_TARBALL_NAME is empty.  Please rerun configure)
-endif
-
-ifneq ($(LEVEL),.)
-
-dist dist-check dist-clean dist-gzip dist-bzip2 dist-zip ::
-	@$(ECHO) ERROR: You must run $@ from $(BUILD_OBJ_ROOT)
-
-DistTopCheck :=
-
-else
-
-DistTopCheck := check
-
-dist-gzip: distdir
-	@$(ECHO) Packing gzipped distribution tar file.
-	$(VERB) $(TAR) chf - "$(TopDistDir)" | gzip -c > "$(DistTarGZip)"
-
-dist-bzip2: distdir
-	@$(ECHO) Packing bzipped distribution tar file.
-	$(VERB) $(TAR) chf - $(DistName) | $(BZIP2) -c >$(DistTarBZ2)
-
-dist-zip: distdir
-	@$(ECHO) Packing zipped distribution file.
-	$(VERB) rm -f $(DistZip)
-	$(VERB) $(ZIP) -rq $(DistZip) $(DistName)
-
-dist :: distdir
-	@$(ECHO) Packing gzipped distribution tar file.
-	$(VERB) $(TAR) chf - $(DistName) | $(GZIP) -c >$(DistTarGZip)
-	@$(ECHO) Packing bzipped distribution tar file.
-	$(VERB) $(TAR) chf - $(DistName) | $(BZIP2) -c >$(DistTarBZ2)
-	@$(ECHO) Packing zipped distribution file.
-	$(VERB) rm -f $(DistZip)
-	$(VERB) $(ZIP) -rq $(DistZip) $(DistName)
-	@$(ECHO) ===== DISTRIBUTION PACKAGING SUCESSFUL =====
-
-dist-check:: dist 
-
-dist-clean::
-	@$(ECHO) Cleaning distribution files
-	$(VERB) $(RM) -rf $(DistTarGZip) $(DistTarBZ2) $(DistZip) $(DistName)
-
-endif
-
+#------------------------------------------------------------------------
+# Define distribution related variables
+#------------------------------------------------------------------------
 DistName    := $(LLVM_TARBALL_NAME)
 DistDir     := $(BUILD_OBJ_ROOT)/$(DistName)
-TopDistDir  := $(DistDir)
+TopDistDir  := $(BUILD_OBJ_ROOT)/$(DistName)
 DistTarGZip := $(BUILD_OBJ_ROOT)/$(DistName).tar.gz
 DistZip     := $(BUILD_OBJ_ROOT)/$(DistName).zip
 DistTarBZ2  := $(BUILD_OBJ_ROOT)/$(DistName).tar.bz2
 DistAlways  := CREDITS.TXT LICENSE.TXT README.txt README AUTHORS COPYING \
 	       ChangeLog INSTALL NEWS Makefile Makefile.common Makefile.rules \
-	       Makefile.config.in
-DistSources := $(filter-out projects,$(SOURCES) $(EXTRA_DIST))
-DistSubDirs := $(filter-out projects,$(SUBDIRS))
-DistFiles   := $(DistAlways) $(DistSources)
-RmDistDir   := { test ! -d $(DistDir) || { \
-	         find $(DistDir) -type d ! -perm -200 -exec chmod u+w {} ';' \
-	         && rm -rf $(DistDir); }; }
+	       Makefile.config.in configure autoconf
+DistOther   := $(notdir $(wildcard \
+               $(BUILD_SRC_DIR)/*.h \
+               $(BUILD_SRC_DIR)/*.td \
+               $(BUILD_SRC_DIR)/*.def \
+               $(BUILD_SRC_DIR)/*.ll \
+               $(BUILD_SRC_DIR)/*.in))
+DistSources := $(SOURCES) $(EXTRA_DIST)
+DistSubDirs := $(SUBDIRS)
+DistFiles   := $(DistAlways) $(DistSources) $(DistOther)
 
-distdir : $(DistTopCheck) $(DistSources)
+
+#------------------------------------------------------------------------
+# We MUST build distribution with OBJ_DIR != SRC_DIR
+#------------------------------------------------------------------------
+ifeq ($(BUILD_SRC_DIR),$(BUILD_OBJ_DIR))
+dist dist-check dist-clean dist-gzip dist-bzip2 dist-zip ::
+	@$(ECHO) ERROR: Target $@ only available with OBJ_DIR != SRC_DIR
+
+DistCheckTop := 
+else
+
+DistCheckTop := check
+#------------------------------------------------------------------------
+# Prevent catastrophic remove
+#------------------------------------------------------------------------
+ifeq ($(LLVM_TARBALL_NAME),)
+$(error LLVM_TARBALL_NAME is empty.  Please rerun configure)
+endif
+
+#------------------------------------------------------------------------
+# Prevent attempt to run dist targets from anywhere but the top level
+#------------------------------------------------------------------------
+ifneq ($(LEVEL),.)
+
+dist dist-check dist-clean dist-gzip dist-bzip2 dist-zip ::
+	@$(ECHO) ERROR: You must run $@ from $(BUILD_OBJ_ROOT)
+
+else
+
+#------------------------------------------------------------------------
+# Provide the top level targets
+#------------------------------------------------------------------------
+
+dist-gzip: $(DistTarGZip)
+
+$(DistTarGZip) : distdir
+	@$(ECHO) Packing gzipped distribution tar file.
+	$(VERB) cd $(BUILD_OBJ_ROOT) ; $(TAR) chf - "$(DistName)" | gzip -c > "$(DistTarGZip)"
+
+dist-bzip2: $(DistTarBZ2)
+
+$(DistTarBZ2) : distdir
+	@$(ECHO) Packing bzipped distribution tar file.
+	$(VERB) cd $(BUILD_OBJ_ROOT) ; $(TAR) chf - $(DistName) | $(BZIP2) -c >$(DistTarBZ2)
+
+dist-zip: $(DistZip)
+
+$(DistZip) : distdir
+	@$(ECHO) Packing zipped distribution file.
+	$(VERB) rm -f $(DistZip)
+	$(VERB) cd $(BUILD_OBJ_ROOT) ; $(ZIP) -rq $(DistZip) $(DistName)
+
+dist :: $(DistTarGZip) $(DistTarBZ2) $(DistZip) 
+	@$(ECHO) ===== DISTRIBUTION PACKAGING SUCESSFUL =====
+
+DistCheckDir := $(LLVM_OBJ_ROOT)/_distcheckdir
+
+dist-check:: $(DistTopDir) $(DistTarGZip)
+	@$(ECHO) Checking distribution tar file.
+	$(VERB) if test -d $(DistCheckDir) ; then \
+	  $(RM) -rf $(DistCheckDir) ; \
+	fi
+	$(VERB) $(MKDIR) $(DistCheckDir)
+	$(VERB) cd $(DistCheckDir) && \
+	  $(MKDIR) $(DistCheckDir)/build && \
+	  $(MKDIR) $(DistCheckDir)/install && \
+	  gunzip -c $(DistTarGZip) | $(TAR) xf - && \
+	  cd build && \
+	  ../$(DistName)/configure --prefix="$(DistCheckDir)/install" \
+	    --srcdir=../$(DistName) --with-llvmgccdir="$(LLVMGCCDIR)" && \
+	  $(MAKE) check && \
+	  $(MAKE) install && \
+	  $(MAKE) uninstall && \
+	  $(MAKE) dist && \
+	  $(MAKE) clean && \
+	  $(MAKE) dist-clean && \
+	  $(ECHO) ===== $(DistTarGZip) Ready For Distribution =====
+
+dist-clean::
+	@$(ECHO) Cleaning distribution files
+	$(VERB) $(RM) -rf $(DistTarGZip) $(DistTarBZ2) $(DistZip) $(DistName) $(DistCheckDir)
+
+endif
+
+#------------------------------------------------------------------------
+# Provide the recursive distdir target for building the distribution directory
+#------------------------------------------------------------------------
+distdir : $(DistCheckTop) $(DistSources)
 	@$(ECHO) Building Distribution Directory $(DistDir)
-	$(VERB) $(RmDistDir) 
+	$(VERB) if test "$(DistDir)" = "$(TopDistDir)" ; then \
+	  if test -d "$(DistDir)" ; then \
+	    find $(DistDir) -type d ! -perm -200 -exec chmod u+w {} ';'  || \
+	      exit 1 ; \
+	  fi ; \
+	  echo Removing $(DistDir) ; \
+	  $(RM) -rf $(DistDir); \
+	fi
 	$(VERB) $(MKDIR) $(DistDir) 
 	$(VERB) srcdirstrip=`echo "$(BUILD_SRC_DIR)" | sed 's|.|.|g'`; \
 	srcrootstrip=`echo "$(BUILD_SRC_ROOT)" | sed 's|.|.|g'`; \
 	for file in $(DistFiles) ; do \
 	  case "$$file" in \
 	    $(BUILD_SRC_DIR)/*) file=`echo "$$file" | sed "s#^$$srcdirstrip/##"`;; \
-	    $(BUILD_SRC_ROOT)/*) file=`echo "$$file" | sed "s#^$srcrootstrip/#$(BUILD_OBJ_ROOT)/#"`;; \
+	    $(BUILD_SRC_ROOT)/*) file=`echo "$$file" | sed "s#^$$srcrootstrip/#$(BUILD_OBJ_ROOT)/#"`;; \
 	  esac; \
 	  if test -f "$$file" || test -d "$$file" ; then \
 	    from_dir=. ; \
@@ -946,7 +1002,7 @@ distdir : $(DistTopCheck) $(DistSources)
 	  fi; \
 	  mid_dir=`echo "$$file" | sed -n -e 's#^\(.*\)/[^/]*$$#\1#p'`; \
 	  if test -n "$$mid_dir" ; then \
-            $(MKDIR) "$$to_dir/$$mid_dir" ; \
+            $(MKDIR) "$$to_dir/$$mid_dir" || exit 1; \
           fi ; \
 	  if test -d "$$from_dir/$$file"; then \
 	    if test -d "$(BUILD_SRC_DIR)/$$file" && \
@@ -964,14 +1020,14 @@ distdir : $(DistTopCheck) $(DistSources)
 	    $(ECHO) "Skipping non-existent $$from_dir/$$file" ; \
 	  fi; \
 	done
-	$(VERB) for subdir in $(SUBDIRS) ; do \
+	$(VERB) for subdir in $(DistSubDirs) ; do \
 	  if test "$$subdir" \!= "." ; then \
-	    test -d "$(DistDir)/$$subdir" || $(MKDIR) "$(DistDir)/$$subdir" || exit 1; \
 	    new_distdir="$(DistDir)/$$subdir" ; \
-            ( cd $$subdir && $(MAKE) DistDir="$$new_distdir" distdir ) || exit 1; \
+	    test -d "$$new_distdir" || $(MKDIR) "$$new_distdir" || exit 1; \
+	    ( cd $$subdir && $(MAKE) DistDir="$$new_distdir" distdir ) || exit 1; \
 	  fi; \
 	done
-	$(VERB) $(MAKE) DistDir="$(DistDir)" dist-hook
+	$(VERB) $(MAKE) DistDir="$(DistDir)" dist-hook || exit 1
 	-$(VERB) find $(DistDir) -type d ! -perm -777 -exec chmod a+rwx {} \; -o \
 	  ! -type d ! -perm -444 -links 1 -exec chmod a+r {} \; -o \
 	  ! -type d ! -perm -400 -exec chmod a+r {} \; -o \
