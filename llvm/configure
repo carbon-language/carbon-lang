@@ -27274,8 +27274,7 @@ done
 
 
 
-
-for ac_func in realpath setrlimit strdup strerror strerror_r strtoll strtoq
+for ac_func in realpath sbrk setrlimit strdup strerror strerror_r
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -27377,7 +27376,9 @@ fi
 done
 
 
-for ac_func in sysconf
+
+
+for ac_func in strtoll strtoq sysconf
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
