@@ -550,12 +550,11 @@ namespace {
 
     void outputLValue(Instruction *);
     void printPhiFromNextBlock(TerminatorInst *tI, int indx);
+    void printIndexingExpr(MemAccessInst *MAI);
 
   public:
     CInstPrintVisitor (CWriter &cw, SlotCalculator& table, ostream& o) 
-      : CW(cw), Table(table), Out(o) {
-      
-    }
+      : CW(cw), Table(table), Out(o) {}
     
     void visitCastInst(CastInst *I);
     void visitCallInst(CallInst *I);
@@ -728,116 +727,39 @@ void CInstPrintVisitor::visitFreeInst(FreeInst   *I) {
   Out << ");\n";
 }
 
-void CInstPrintVisitor::visitLoadInst(LoadInst   *I) {
-  outputLValue(I);
-  Operand = I->getNumOperands() ? I->getOperand(0) : 0;
-  if (I->getNumOperands() <= 1) {
-    Out << "*";
-    CW.writeOperand(Operand, Out);     
-  }
-  else {
-    //Check if it is an array type or struct type ptr!
-    int arrtype = 1;
-    const PointerType *PTy = dyn_cast<PointerType>(I->getType());
-    if (cast<const PointerType>(Operand->getType())->getElementType()->getPrimitiveID() == Type::StructTyID)
-      arrtype = 0;
-    if (arrtype && isa<GlobalValue>(Operand))
-      Out << "(&";
-    CW.writeOperand(Operand,Out);
-    for (unsigned i = 1, E = I->getNumOperands(); i != E; ++i) {
-      if (i == 1) {
-	if (arrtype || !isa<GlobalValue>(Operand)) {
-	  Out << "[";
-	  CW.writeOperand(I->getOperand(i),  Out);
-	  Out << "]";
-	}
-	if (isa<GlobalValue>(Operand) && arrtype)
-	  Out << ")";
-      }
-      else {
-	if (arrtype == 1) Out << "[";
-	else 
-	  Out << ".field";
-	CW.writeOperand(I->getOperand(i), Out);
-	if (arrtype == 1) Out << "]";
-      }
+void CInstPrintVisitor::printIndexingExpr(MemAccessInst *MAI) {
+  CW.writeOperand(MAI->getPointerOperand(), Out);
+
+  for (MemAccessInst::op_iterator I = MAI->idx_begin(), E = MAI->idx_end();
+       I != E; ++I)
+    if ((*I)->getType() == Type::UIntTy) {
+      Out << "[";
+      CW.writeOperand(*I, Out);
+      Out << "]";
+    } else {
+      Out << ".field" << cast<ConstantUInt>(*I)->getValue();
     }
-  }
+}
+
+void CInstPrintVisitor::visitLoadInst(LoadInst *I) {
+  outputLValue(I);
+  printIndexingExpr(I);
   Out << ";\n";
 }
 
-void CInstPrintVisitor::visitStoreInst(StoreInst  *I) {
-  Operand = I->getNumOperands() ? I->getOperand(0) : 0;
-  if (I->getNumOperands() <= 2) {
-    Out << "*";
-    CW.writeOperand(I->getOperand(1), Out);
-  }
-  else {
-    //Check if it is an array type or struct type ptr!
-    int arrtype = 1;
-    if (cast<const PointerType>(I->getOperand(1)->getType())->getElementType()->getPrimitiveID() == Type::StructTyID) 
-      arrtype = 0;
-    if (isa<GlobalValue>(I->getOperand(1)) && arrtype)
-      Out << "(&";
-    CW.writeOperand(I->getOperand(1), Out);
-    for (unsigned i = 2, E = I->getNumOperands(); i != E; ++i) {
-      if (i == 2) {
-	if (arrtype || !isa<GlobalValue>(I->getOperand(1))) {
-	  Out << "[";
-	  CW.writeOperand(I->getOperand(i), Out);
-	  Out << "]";
-	}
-	if (isa<GlobalValue>(I->getOperand(1)) && arrtype)
-	  Out << ")";
-      }
-      else {
-	if (arrtype == 1) Out << "[";
-	else 
-	  Out << ".field";
-	CW.writeOperand(I->getOperand(i), Out);
-	if (arrtype == 1) Out << "]";
-      }
-    }
-  }
+void CInstPrintVisitor::visitStoreInst(StoreInst *I) {
+  Out << "  ";
+  printIndexingExpr(I);
   Out << " = ";
-  CW.writeOperand(Operand, Out);
+  CW.writeOperand(I->getOperand(0), Out);
   Out << ";\n";
 }
 
 void CInstPrintVisitor::visitGetElementPtrInst(GetElementPtrInst *I) {
   outputLValue(I);
-  Operand = I->getNumOperands() ? I->getOperand(0) : 0;
-  Out << " &(";
-  if (I->getNumOperands() <= 1)
-    CW.writeOperand(Operand, Out);
-  else {
-    //Check if it is an array type or struct type ptr!
-    int arrtype = 1;
-    if ((cast<const PointerType>(Operand->getType()))->getElementType()->getPrimitiveID() == Type::StructTyID) 
-      arrtype = 0;
-    if ((isa<GlobalValue>(Operand)) && arrtype)
-      Out << "(&";    
-    CW.writeOperand(Operand, Out);
-    for (unsigned i = 1, E = I->getNumOperands(); i != E; ++i) {
-      if (i == 1) {
-	if (arrtype || !isa<GlobalValue>(Operand)){
-	  Out << "[";
-	  CW.writeOperand(I->getOperand(i), Out);
-	  Out << "]";
-	}
-	if (isa<GlobalValue>(Operand) && arrtype)
-	  Out << ")";
-      }
-      else {
-	if (arrtype == 1) Out << "[";
-	else 
-	  Out << ".field";
-	CW.writeOperand(I->getOperand(i), Out);
-	if (arrtype == 1) Out << "]";
-      }
-    }
-  }
-  Out << ");\n";
+  Out << "&";
+  printIndexingExpr(I);
+  Out << ";\n";
 }
 
 void CInstPrintVisitor::visitNot(GenericUnaryInst *I) {
@@ -888,12 +810,12 @@ void CInstPrintVisitor::visitBinaryOperator(Instruction *I) {
 
 string CWriter::getValueName(const Value *V) {
   if (V->hasName())              // Print out the label if it exists...
-    return "llvm__" + makeNameProper(V->getName()) + "_" +
+    return "l_" + makeNameProper(V->getName()) + "_" +
            utostr(V->getType()->getUniqueID());
 
   int Slot = Table.getValSlot(V);
   assert(Slot >= 0 && "Invalid value!");
-  return "llvm__tmp_" + itostr(Slot) + "_" +
+  return "ltmp_" + itostr(Slot) + "_" +
          utostr(V->getType()->getUniqueID());
 }
 
@@ -1113,25 +1035,28 @@ ostream& CWriter::printType(const Type *Ty, ostream &Out) {
 
 void CWriter::writeOperand(const Value *Operand,
                            ostream &Out, bool PrintName = true) {
+  if (isa<GlobalValue>(Operand))
+    Out << "(&";  // Global values are references as their addresses by llvm
+
   if (PrintName && Operand->hasName()) {   
     // If Operand has a name.
-    Out << "llvm__" << makeNameProper(Operand->getName()) << "_" << 
+    Out << "l_" << makeNameProper(Operand->getName()) << "_" << 
       Operand->getType()->getUniqueID();
-    return;
-  } 
-  else if (const Constant *CPV = dyn_cast<const Constant>(Operand)) {
+  } else if (const Constant *CPV = dyn_cast<const Constant>(Operand)) {
     if (isa<ConstantPointerNull>(CPV))
       Out << "NULL";
     else
       Out << getConstStrValue(CPV); 
-  }
-  else {
+  } else {
     int Slot = Table.getValSlot(Operand);
     if (Slot >= 0)  
-      Out << "llvm__tmp_" << Slot << "_" << Operand->getType()->getUniqueID();
+      Out << "ltmp_" << Slot << "_" << Operand->getType()->getUniqueID();
     else if (PrintName)
       Out << "<badref>";
   }
+
+  if (isa<GlobalValue>(Operand))
+    Out << ")";
 }
 
 
