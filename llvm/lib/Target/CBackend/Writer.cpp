@@ -27,6 +27,7 @@
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Mangler.h"
@@ -162,6 +163,8 @@ namespace {
     void outputLValue(Instruction *I) {
       Out << "  " << Mang->getValueName(I) << " = ";
     }
+    void printPHICopiesForSuccessors(BasicBlock *CurBlock, 
+                                     unsigned Indent);
     void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
                             unsigned Indent);
     void printIndexingExpression(Value *Ptr, gep_type_iterator I,
@@ -1035,6 +1038,8 @@ void CWriter::visitReturnInst(ReturnInst &I) {
 }
 
 void CWriter::visitSwitchInst(SwitchInst &SI) {
+  printPHICopiesForSuccessors(SI.getParent(), 0);
+
   Out << "  switch (";
   writeOperand(SI.getOperand(0));
   Out << ") {\n  default:\n";
@@ -1061,7 +1066,7 @@ void CWriter::visitUnwindInst(UnwindInst &I) {
   assert(0 && "Lowerinvoke pass didn't work!");
 }
 
-bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
+static bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
   // If PHI nodes need copies, we need the copy code...
   if (isa<PHINode>(To->front()) ||
       From->getNext() != To)      // Not directly successor, need goto
@@ -1071,17 +1076,23 @@ bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
   return false;
 }
 
+void CWriter::printPHICopiesForSuccessors(BasicBlock *CurBlock, 
+                                          unsigned Indent) {
+  for (succ_iterator SI = succ_begin(CurBlock), E = succ_end(CurBlock);
+       SI != E; ++SI)
+    for (BasicBlock::iterator I = SI->begin();
+         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+      //  now we have to do the printing
+      Out << std::string(Indent, ' ');
+      Out << "  " << Mang->getValueName(I) << "__PHI_TEMPORARY = ";
+      writeOperand(PN->getIncomingValue(PN->getBasicBlockIndex(CurBlock)));
+      Out << ";   /* for PHI node */\n";
+    }
+}
+
+
 void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
                                  unsigned Indent) {
-  for (BasicBlock::iterator I = Succ->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-    //  now we have to do the printing
-    Out << std::string(Indent, ' ');
-    Out << "  " << Mang->getValueName(I) << "__PHI_TEMPORARY = ";
-    writeOperand(PN->getIncomingValue(PN->getBasicBlockIndex(CurBB)));
-    Out << ";   /* for PHI node */\n";
-  }
-
   if (CurBB->getNext() != Succ ||
       isa<InvokeInst>(CurBB->getTerminator()) ||
       isa<SwitchInst>(CurBB->getTerminator())) {
@@ -1095,6 +1106,8 @@ void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
 // that immediately succeeds the current one.
 //
 void CWriter::visitBranchInst(BranchInst &I) {
+  printPHICopiesForSuccessors(I.getParent(), 0);
+
   if (I.isConditional()) {
     if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(0))) {
       Out << "  if (";
