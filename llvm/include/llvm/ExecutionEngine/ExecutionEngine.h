@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <cassert>
 class Constant;
 class Type;
 class GlobalValue;
