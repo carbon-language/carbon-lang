@@ -34,7 +34,6 @@ Register allocation must be done  as:
 
 4. Input and Preconditions
 ==========================
-
 Register allocation is done using machine instructions. The constructor
 to the class takes a pointer to a method, a target machine description and
 a live variable information for the method.
@@ -49,6 +48,15 @@ The preconditions are:
 
 5. Assumptions
 ==============
+
+   All variables (llvm Values) are defined before they are used. However, a 
+   constant may not be defined in the machine instruction stream if it can be
+   used as an immediate value within a machine instruction. However, register
+   allocation does not have to worry about immediate constants since they
+   do not require registers.
+
+   Since an llvm Value has a list of uses associated, it is sufficient to
+   record only the defs in a Live Range.
 
 
 
@@ -68,6 +76,11 @@ Registerallocation consists of the following main steps:
   6. Update instruction stream and insert spill code
 
 All the above methods are called from  PhyRegAlloc::allocateRegisters().
+
+All steps above except step 5 and suggesting colors in step 1 are indepenedent
+of a particular target architecture. Targer independent code is availble in
+../lib/CodeGen/RegAlloc. Target specific code for Sparc is available in
+../lib/Target/Sparc. 
 
 
 6.1. Construct Live-ranges & Suggest colors (machine specific) if required
@@ -159,3 +172,11 @@ instructions that have been produced for that instruction by the register
 allocation (e.g., caller saving code)
 
 
+7. Furture work
+---------------
+If it is necessary to port the register allocator to another architecture
+than Sparc, only the target specific code in ../lib/Target/Sparc needs to
+be rewritten. Methods defined in class MachineRegInfo must be provided for
+the new architecure.
+
+using  ReservedColorList in RegClass

@@ -3,8 +3,8 @@
    Date:    Jun 30, 01
    Purpose: 
 
-   This file constructs and keeps the LiveRang map which contains all the live
-   ranges used in a method.
+   This file contains the class LiveRangeInfo which constructs and keeps 
+   the LiveRangMap which contains all the live ranges used in a method.
 
    Assumptions: 
 
@@ -23,7 +23,6 @@
 #ifndef LIVE_RANGE_INFO_H
 #define LIVE_RANGE_INFO_H
 
-
 #include "llvm/Type.h"
 #include "llvm/Method.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -34,15 +33,18 @@
 #include "llvm/CodeGen/LiveRange.h"
 #include "llvm/CodeGen/RegClass.h"
 
-/*
- #ifndef size_type 
- #define size_type (unsigned int)
- #endif
-*/
-
 
 typedef hash_map <const Value *,  LiveRange *, hashFuncValue> LiveRangeMapType;
 typedef vector <const MachineInstr *> CallRetInstrListType;
+
+
+
+//----------------------------------------------------------------------------
+// Class LiveRangeInfo
+//
+// Constructs and keeps the LiveRangMap which contains all the live 
+// ranges used in a method. Also contain methods to coalesce live ranges.
+//----------------------------------------------------------------------------
 
 class LiveRangeInfo 
 {
@@ -51,14 +53,20 @@ private:
 
   const Method *const Meth;         // Method for which live range info is held
 
-  LiveRangeMapType  LiveRangeMap;   // A map from Value * to LiveRange * 
+  LiveRangeMapType  LiveRangeMap;   // A map from Value * to LiveRange * to 
+                                    // record all live ranges in a method
                                     // created by constructLiveRanges
-
+  
   const TargetMachine& TM;          // target machine description
+
   vector<RegClass *> & RegClassList;// a vector containing register classess
+
   const MachineRegInfo& MRI;        // machine reg info
 
   CallRetInstrListType  CallRetInstrList;  // a list of all call/ret instrs
+
+
+  //------------ Private methods (see LiveRangeInfo.cpp for description)-------
 
   void unionAndUpdateLRs(LiveRange *L1, LiveRange *L2);
 
@@ -67,37 +75,55 @@ private:
   
   void suggestRegs4CallRets();
 
+  const Method* getMethod() { return Meth; }
+
+
 public:
   
   LiveRangeInfo(const Method *const M, 
 		const TargetMachine& tm,
 		vector<RegClass *> & RCList);
 
+
+  // Destructor to destroy all LiveRanges in the LiveRange Map
+  ~LiveRangeInfo();
+
+  // Main entry point for live range construction
+  //
   void constructLiveRanges();
 
-  const Method* getMethod() { return Meth; }
-
+  // This method is used to add a live range created elsewhere (e.g.,
+  // in machine specific code) to the common live range map
+  //
   inline void addLRToMap(const Value *Val, LiveRange *LR) {
     assert( Val && LR && "Val/LR is NULL!\n");
     assert( (! LiveRangeMap[ Val ]) && "LR already set in map");
     LiveRangeMap[ Val ] = LR;
   }
   
-
+  // return the common live range map for this method
+  //
   inline const LiveRangeMapType *const getLiveRangeMap() const 
     { return &LiveRangeMap; }
 
+  // Method sed to get the corresponding live range of a Value
+  //
   inline LiveRange *getLiveRangeForValue( const Value *const Val) 
     { return LiveRangeMap[ Val ]; }
 
+  // Method used to get the Call and Return instruction list
+  //
   inline  CallRetInstrListType &getCallRetInstrList() {
     return CallRetInstrList;
   }
 
-
-
+  // Method for coalescing live ranges. Called only after interference info
+  // is calculated.
+  //
   void coalesceLRs();  
 
+  // debugging method to print the live ranges
+  //
   void printLiveRanges();
 
 };

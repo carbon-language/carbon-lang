@@ -14,9 +14,9 @@
    OnStack flag set (therefore, they are in the IG).
 
    The methods that modify/use the CurDegree Must be called only
-   fter all modifications to the IG are over (i.e., all neighbors are fixed).
+   after all modifications to the IG are over (i.e., all neighbors are fixed).
 
-   The vector representation the most efficient one for adj list.
+   The vector representation is the most efficient one for adj list.
    Though nodes are removed when coalsing is done, we access it in sequence
    for far many times when coloring (colorNode()).
 
@@ -29,6 +29,14 @@
 #include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/CodeGen/LiveRange.h"
 
+
+
+//----------------------------------------------------------------------------
+// Class IGNode
+//
+// Represents a node in an interference graph.
+//----------------------------------------------------------------------------
+
 class IGNode
 {
  private:
@@ -39,22 +47,33 @@ class IGNode
 
   vector<IGNode *> AdjList;   // adjacency list for this live range
 
-
+  int CurDegree;     
+  //
   // set by InterferenceGraph::setCurDegreeOfIGNodes() after calculating
   // all adjacency lists.
   // Decremented when a neighbor is pushed on to the stack. 
   // After that, never incremented/set again nor used.
-  int CurDegree;     
 
-  LiveRange *const ParentLR;            // parent LR (cannot be a const)
+
+  LiveRange *const ParentLR;  // parent LR (cannot be a const)
 
 
  public:
+
+  // constructor
+  //
+  IGNode(LiveRange *const LR, unsigned int index);
+
+  // an empty destructor
+  //
+  ~IGNode() { }                        
+
 
   inline unsigned int getIndex() const 
     { return Index; }
 
   // adjLists must be updated only once.  However, the CurDegree can be changed
+  //
   inline void addAdjIGNode( IGNode *const AdjNode) 
     { AdjList.push_back(AdjNode);  } 
 
@@ -63,6 +82,7 @@ class IGNode
 
   // delete a node in AdjList - node must be in the list
   // should not be called often
+  //
   void delAdjIGNode(const IGNode *const Node); 
 
   inline unsigned int getNumOfNeighbors() const 
@@ -73,13 +93,14 @@ class IGNode
     { return OnStack; }
 
   // remove form IG and pushes on to stack (reduce the degree of neighbors)
+  //
   void pushOnStack(); 
 
   // CurDegree is the effective number of neighbors when neighbors are
   // pushed on to the stack during the coloring phase. Must be called
   // after all modifications to the IG are over (i.e., all neighbors are
   // fixed).
-
+  //
   inline void setCurDegree() 
     { assert( CurDegree == -1);   CurDegree = AdjList.size(); }
 
@@ -87,6 +108,7 @@ class IGNode
     { return CurDegree; }
 
   // called when a neigh is pushed on to stack
+  //
   inline void decCurDegree() 
     { assert( CurDegree > 0 ); --CurDegree; }
 
@@ -118,10 +140,6 @@ class IGNode
   inline void markForSaveAcrossCalls() 
     { ParentLR->markForSaveAcrossCalls();  }
 
-  // inline void markForLoadFromStack() 
-  //  { ParentLR->markForLoadFromStack();  }
-
-
   inline unsigned int isCallInterference() const 
   { return ParentLR->isCallInterference(); } 
 
@@ -130,15 +148,6 @@ class IGNode
 
   inline Type::PrimitiveID getTypeID() const 
     { return ParentLR->getTypeID(); }
-
-
-
-  //---- constructor and destructor ----
-
-
-  IGNode(LiveRange *const LR, unsigned int index);
-
-  ~IGNode() { }                         // an empty destructor
 
 
 };

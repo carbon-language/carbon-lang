@@ -4,6 +4,7 @@
    Purpose: This is the main entry point for register allocation.
 
    Notes:
+   =====
 
  * RegisterClasses: Each RegClass accepts a 
    MachineRegClass which contains machine specific info about that register
@@ -14,18 +15,18 @@
  * Machine dependent work: All parts of the register coloring algorithm
    except coloring of an individual node are machine independent.
 
-   Register allocation must be done  as:
+   Register allocation must be done  as:	
 
-     static const MachineRegInfo MRI = MachineRegInfo();  // machine reg info 
+      MethodLiveVarInfo LVI(*MethodI );           // compute LV info
+      LVI.analyze();
 
-     MethodLiveVarInfo LVI(*MethodI );                    // compute LV info
-     LVI.analyze();
+      TargetMachine &target = ....	                        
 
-     PhyRegAlloc PRA(*MethodI, &MRI, &LVI);               // allocate regs
-     PRA.allocateRegisters();
 
-   Assumptions: 
-     All values in a live range will be of the same physical reg class.
+      PhyRegAlloc PRA(*MethodI, target, &LVI);     // allocate regs
+      PRA.allocateRegisters();
+
+
 
 */ 
 
@@ -36,6 +37,7 @@
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/LiveRangeInfo.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
+#include "llvm/Analysis/LoopDepth.h"
 
 #include <deque>
 
@@ -82,15 +84,15 @@ class PhyRegAlloc: public NonCopyable
   const MachineRegInfo &MRI;            // Machine Register information
   const unsigned NumOfRegClasses;       // recorded here for efficiency
 
-  //vector<const Instruction *> CallInstrList;  // a list of all call instrs
-  //vector<const Instruction *> RetInstrList;   // a list of all return instrs
-
   
   AddedInstrMapType AddedInstrMap;      // to store instrns added in this phase
+  LoopDepthCalculator LoopDepthCalc;    // to calculate loop depths 
+  ReservedColorListType ResColList;     // A set of reserved regs if desired.
+                                        // currently not used
 
-  //vector<const MachineInstr *> PhiInstList;   // a list of all phi instrs
 
-  //------- private methods ---------------------------------------------------
+
+  //------- ------------------ private methods---------------------------------
 
   void addInterference(const Value *const Def, const LiveVarSet *const LVSet, 
 		       const bool isCallInst);
@@ -98,8 +100,6 @@ class PhyRegAlloc: public NonCopyable
   void addInterferencesForArgs();
   void createIGNodeListsAndIGs();
   void buildInterferenceGraphs();
-  //void insertCallerSavingCode(const MachineInstr *MInst, 
-  //			      const BasicBlock *BB );
 
   void setCallInterferences(const MachineInstr *MInst, 
 			    const LiveVarSet *const LVSetAft );
@@ -147,7 +147,11 @@ class PhyRegAlloc: public NonCopyable
   PhyRegAlloc(Method *const M, const TargetMachine& TM, 
 	      MethodLiveVarInfo *const Lvi);
 
-  void allocateRegisters();             // main method called for allocatin
+  ~PhyRegAlloc(); 
+
+  // main method called for allocating registers
+  //
+  void allocateRegisters();           
 
 };
 

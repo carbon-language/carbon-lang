@@ -3,17 +3,6 @@
    Date:    Aug 20, 01
    Purpose: Contains machine independent methods for register coloring.
 
-   This is the class that contains all data structures and common algos
-   for coloring a particular register class (e.g., int class, fp class).  
-   This class is hardware independent. This class accepts a hardware 
-   dependent description of machine registers (MachineRegInfo class) to 
-   get hardware specific info and color and indidual IG node.
-
-   This class contains the InterferenceGraph (IG).
-   Also it contains an IGNode stack that can be used for coloring. 
-   The class provides some easy access methods to the IG methods, since these
-   methods are called thru a register class.
-
 */
 
 #ifndef REG_CLASS_H
@@ -28,6 +17,23 @@
 typedef vector<unsigned int> ReservedColorListType;
 
 
+//-----------------------------------------------------------------------------
+// Class RegClass
+//
+//   Implements a machine independant register class. 
+//
+//   This is the class that contains all data structures and common algos
+//   for coloring a particular register class (e.g., int class, fp class).  
+//   This class is hardware independent. This class accepts a hardware 
+//   dependent description of machine registers (MachineRegInfo class) to 
+//   get hardware specific info and to color an individual IG node.
+//
+//   This class contains the InterferenceGraph (IG).
+//   Also it contains an IGNode stack that can be used for coloring. 
+//   The class provides some easy access methods to the IG methods, since these
+//   methods are called thru a register class.
+//
+//-----------------------------------------------------------------------------
 class RegClass
 {
 
@@ -42,27 +48,36 @@ class RegClass
                                         // buildInterferenceGraph
   stack <IGNode *> IGNodeStack;         // the stack used for coloring
 
-  // for passing registered that are pre-allocated (e.g., %g's)
   const ReservedColorListType *const ReservedColorList;
-
+  //
+  // for passing registers that are pre-allocated and cannot be used by the
+  // register allocator for this method.
+  
+  bool *IsColorUsedArr;
+  //
   // An array used for coloring each node. This array must be of size 
   // MRC->getNumOfAllRegs(). Allocated once in the constructor
   // for efficiency.
-  bool *IsColorUsedArr;
 
 
-  //------------ private methods ------------------
+  //--------------------------- private methods ------------------------------
 
   void pushAllIGNodes();
+
   bool  pushUnconstrainedIGNodes();
+
   IGNode * getIGNodeWithMinSpillCost();
+
   void colorIGNode(IGNode *const Node);
+
 
  public:
 
   RegClass(const Method *const M, 
 	   const MachineRegClassInfo *const MRC, 
 	   const ReservedColorListType *const RCL = NULL);
+
+  ~RegClass() { delete[] IsColorUsedArr; };
 
   inline void createInterferenceGraph() 
     { IG.createGraph(); }
@@ -71,18 +86,16 @@ class RegClass
 
   inline const unsigned getID() const { return RegClassID; }
 
-  void colorAllRegs();                  // main method called for coloring regs
+  // main method called for coloring regs
+  //
+  void colorAllRegs();                 
 
   inline unsigned getNumOfAvailRegs() const 
     { return MRC->getNumOfAvailRegs(); }
 
-  ~RegClass() { delete[] IsColorUsedArr; };
-
-
 
   // --- following methods are provided to access the IG contained within this
   // ---- RegClass easilly.
-
 
   inline void addLRToIG(LiveRange *const LR) 
     { IG.addLRToIG(LR); }

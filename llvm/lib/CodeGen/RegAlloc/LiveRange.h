@@ -14,12 +14,16 @@
 #include "llvm/Analysis/LiveVar/ValueSet.h"
 #include "llvm/Type.h"
 
-
-
-
 class RegClass;
 class IGNode;
 
+
+//----------------------------------------------------------------------------
+// Class LiveRange
+//
+// Implements a live range using a ValueSet. A LiveRange is a simple set
+// of Values. 
+//----------------------------------------------------------------------------
 
 class LiveRange : public ValueSet
 {
@@ -27,43 +31,71 @@ class LiveRange : public ValueSet
 
   RegClass *MyRegClass;       // register classs (e.g., int, FP) for this LR
 
-  // a list of call instructions that interferes with this live range
-  //vector<const Instruction *> CallInterferenceList;  
 
-  // does this live range span across calls? 
+  bool doesSpanAcrossCalls;
+  //
+  // Does this live range span across calls? 
   // This information is used by graph
   // coloring algo to avoid allocating volatile colors to live ranges
   // that span across calls (since they have to be saved/restored)
-
-  bool doesSpanAcrossCalls;
+  
 
   IGNode *UserIGNode;         // IGNode which uses this LR
+
   int Color;                  // color assigned to this live range
+
   bool mustSpill;             // whether this LR must be spilt
 
-  // whether this LR must be saved accross calls ***TODO REMOVE this
+
   bool mustSaveAcrossCalls;        
-
-  // bool mustLoadFromStack;     // must load from stack at start of method
-
-
+  //
+  // whether this LR must be saved accross calls ***TODO REMOVE this
+  
   int SuggestedColor;        // The suggested color for this LR
-
+  //
   // if this LR has a suggested color, can it be really alloated?
   // A suggested color cannot be allocated when the suggested color is
   // volatile and when there are call interferences.
 
   bool CanUseSuggestedCol;
+  // 
+  // It is possible that a suggested color for this live range is not
+  // available before graph coloring (e.g., it can be allocated to another
+  // live range which interferes with this)
 
+  int SpilledStackOffsetFromFP;
+  //
   // if this LR is spilled, its stack offset from *FP*. The spilled offsets
   // must always be relative to the FP.
-  int SpilledStackOffsetFromFP;
+
   bool HasSpillOffset;
+  //
+  // Whether this live range has a spill offset
+
+  unsigned SpillCost;
+  //
+  // The spill cost of this live range. Calculated using loop depth of
+  // each reference to each Value in the live range
 
  public:
 
+  // constructor
+  //
+  LiveRange() : ValueSet() {
+    Color = SuggestedColor = -1;        // not yet colored 
+    mustSpill = mustSaveAcrossCalls = false;
+    MyRegClass = NULL;
+    UserIGNode = NULL;
+    doesSpanAcrossCalls = false;
+    CanUseSuggestedCol = true;
+    HasSpillOffset  = false;
+    SpillCost = 0;
+  }
 
-  ~LiveRange() {}             // empty destructor 
+  // empty destructor since there are nothing to be deleted
+  //
+  ~LiveRange() {}          
+
 
   void setRegClass(RegClass *const RC) 
     { MyRegClass = RC; }
@@ -90,7 +122,6 @@ class LiveRange : public ValueSet
     return (doesSpanAcrossCalls == 1); 
   } 
 
-  
   inline void markForSpill() { mustSpill = true; }
 
   inline bool isMarkedForSpill() { return  mustSpill; }
@@ -122,9 +153,7 @@ class LiveRange : public ValueSet
 
   inline void markForSaveAcrossCalls() { mustSaveAcrossCalls = true; }
 
-  // inline void markForLoadFromStack() { mustLoadFromStack = true; 
-
-
+  
   inline void setUserIGNode( IGNode *const IGN) 
     { assert( !UserIGNode); UserIGNode = IGN; }
 
@@ -169,22 +198,13 @@ class LiveRange : public ValueSet
     CanUseSuggestedCol = val;
   }
 
+  inline void addSpillCost(unsigned cost) {
+    SpillCost += cost;
+  }
 
-
-
-
-
-
-  inline LiveRange() : ValueSet() /* , CallInterferenceList() */
-    {
-      Color = SuggestedColor = -1;      // not yet colored 
-      mustSpill = mustSaveAcrossCalls = false;
-      MyRegClass = NULL;
-      UserIGNode = NULL;
-      doesSpanAcrossCalls = false;
-      CanUseSuggestedCol = true;
-      HasSpillOffset  = false;
-    }
+  inline unsigned getSpillCost() const {
+    return SpillCost;
+  }
 
 };
 
