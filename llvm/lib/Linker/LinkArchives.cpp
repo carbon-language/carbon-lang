@@ -151,6 +151,8 @@ Linker::LinkInArchive(const sys::Path &Filename) {
       std::auto_ptr<Module> AutoModule( (*I)->releaseModule() );
       Module* aModule = AutoModule.get();
 
+      verbose("  Linking in module: " + aModule->getModuleIdentifier());
+
       // Link it in
       if (this->LinkInModule(aModule))
         return error("Cannot link in module '" + 
