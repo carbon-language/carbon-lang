@@ -33,6 +33,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "instcombine"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
@@ -46,6 +47,7 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CallSite.h"
+#include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include <algorithm>
 using namespace llvm;
@@ -1551,7 +1553,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   if (CastInst *CI = dyn_cast<CastInst>(Op0)) {
     Value *CastOp0 = CI->getOperand(0);
     if (CastOp0->getType()->isLosslesslyConvertibleTo(CI->getType()) &&
-        !isa<Argument>(Op1) &&
+        (isa<Constant>(Op1) || isa<CastInst>(Op1)) &&
         (I.getOpcode() == Instruction::SetEQ ||
          I.getOpcode() == Instruction::SetNE)) {
       // We keep moving the cast from the left operand over to the right
@@ -2543,6 +2545,9 @@ bool InstCombiner::runOnFunction(Function &F) {
       ++NumCombined;
       // Should we replace the old instruction with a new one?
       if (Result != I) {
+        DEBUG(std::cerr << "IC: Old = " << *I
+                        << "    New = " << *Result);
+
         // Instructions can end up on the worklist more than once.  Make sure
         // we do not process an instruction that has been deleted.
         removeFromWorkList(I);
@@ -2561,6 +2566,8 @@ bool InstCombiner::runOnFunction(Function &F) {
         // Erase the old instruction.
         InstParent->getInstList().erase(I);
       } else {
+        DEBUG(std::cerr << "IC: MOD = " << *I);
+
         BasicBlock::iterator II = I;
 
         // If the instruction was modified, it's possible that it is now dead.
