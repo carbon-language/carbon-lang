@@ -95,10 +95,17 @@
           <li><a href="#i_va_copy">'<tt>llvm.va_copy</tt>'  Intrinsic</a></li>
         </ol>
       </li>
+      <li><a href="#int_codegen">Code Generator Intrinsics</a>
+        <ol>
+          <li><a href="#i_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a></li>
+          <li><a href="#i_frameaddress">'<tt>llvm.frameaddress</tt>'   Intrinsic</a></li>
+        </ol>
+      </li>
       <li><a href="#int_libc">Standard C Library Intrinsics</a>
         <ol>
           <li><a href="#i_memcpy">'<tt>llvm.memcpy</tt>' Intrinsic</a></li>
           <li><a href="#i_memmove">'<tt>llvm.memmove</tt>' Intrinsic</a></li>
+          <li><a href="#i_memset">'<tt>llvm.memset</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_debugger">Debugger intrinsics</a>
@@ -1735,12 +1742,116 @@ complex and require memory allocation, for example.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
+  <a name="int_codegen">Code Generator Intrinsics</a>
+</div>
+
+<div class="doc_text">
+<p>
+These intrinsics are provided by LLVM to expose special features that may only
+be implemented with code generator support.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  call void* ()* %llvm.returnaddress(uint &lt;level&gt;)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.returnaddress</tt>' intrinsic returns a target-specific value
+indicating the return address of the current function or one of its callers.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The argument to this intrinsic indicates which function to return the address
+for.  Zero indicates the calling function, one indicates its caller, etc.  The
+argument is <b>required</b> to be a constant integer value.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+The '<tt>llvm.returnaddress</tt>' intrinsic either returns a pointer indicating
+the return address of the specified call frame, or zero if it cannot be
+identified.  The value returned by this intrinsic is likely to be incorrect or 0
+for arguments other than zero, so it should only be used for debugging purposes.
+</p>
+
+<p>
+Note that calling this intrinsic does not prevent function inlining or other
+aggressive transformations, so the value returned may not that of the obvious
+source-language caller.
+</p>
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_frameaddress">'<tt>llvm.frameaddress</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  call void* ()* %llvm.frameaddress(uint &lt;level&gt;)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.frameaddress</tt>' intrinsic returns the target-specific frame
+pointer value for the specified stack frame.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The argument to this intrinsic indicates which function to return the frame
+pointer for.  Zero indicates the calling function, one indicates its caller,
+etc.  The argument is <b>required</b> to be a constant integer value.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+The '<tt>llvm.frameaddress</tt>' intrinsic either returns a pointer indicating
+the frame address of the specified call frame, or zero if it cannot be
+identified.  The value returned by this intrinsic is likely to be incorrect or 0
+for arguments other than zero, so it should only be used for debugging purposes.
+</p>
+
+<p>
+Note that calling this intrinsic does not prevent function inlining or other
+aggressive transformations, so the value returned may not that of the obvious
+source-language caller.
+</p>
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
   <a name="int_libc">Standard C Library Intrinsics</a>
 </div>
 
 <div class="doc_text">
 <p>
-
+LLVM provides intrinsics for a few important standard C library functions.
+These intrinsics allow source-language front-ends to pass information about the
+alignment of the pointer arguments to the code generator, providing opportunity
+for more efficient code generation.
 </p>
 
 </div>
@@ -1846,6 +1957,57 @@ location to the destination location, which may overlap.  It
 copies "len" bytes of memory over.  If the argument is known to be aligned to
 some boundary, this can be specified as the fourth argument, otherwise it should
 be set to 0 or 1.
+</p>
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_memset">'<tt>llvm.memset</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  call void (sbyte*, ubyte, uint, uint)* %llvm.memset(sbyte* &lt;dest&gt;, ubyte &lt;val&gt;,
+                                                      uint &lt;len&gt;, uint &lt;align&gt;)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.memset</tt>' intrinsic fills a block of memory with a particular
+byte value.
+</p>
+
+<p>
+Note that, unlike the standard libc function, the <tt>llvm.memset</tt> intrinsic
+does not return a value, and takes an extra alignment argument.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The first argument is a pointer to the destination to fill, the second is the
+byte value to fill it with, the third argument is an (arbitrarily sized) integer
+argument specifying the number of bytes to fill, and the fourth argument is the
+known alignment of destination location.
+</p>
+
+<p>
+If the call to this intrinisic has an alignment value that is not 0 or 1, then
+the caller guarantees that the size of the copy is a multiple of the alignment
+and that the destination pointer is aligned to that boundary.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+The '<tt>llvm.memset</tt>' intrinsic fills "len" bytes of memory starting at the
+destination location.  If the argument is known to be aligned to some boundary,
+this can be specified as the fourth argument, otherwise it should be set to 0 or
+1.
 </p>
 </div>
 
