@@ -17,24 +17,38 @@ static const uint32_t MAXLO   = (1 << 10) - 1; // set bits set by %lo(*)
 static const uint32_t MAXSIMM = (1 << 12) - 1; // set bits in simm13 field of OR
 
 
-// Set a 32-bit unsigned constant in the register `dest'.
+//----------------------------------------------------------------------------
+// Function: CreateSETUWConst
 // 
+// Set a 32-bit unsigned constant in the register `dest', using
+// SETHI, OR in the worst case.  This function correctly emulates
+// the SETUW pseudo-op for SPARC v9 (if argument isSigned == false).
+//
+// The isSigned=true case is used to implement SETSW without duplicating code.
+// 
+// Optimize some common cases:
+// (1) Small value that fits in simm13 field of OR: don't need SETHI.
+// (2) isSigned = true and C is a small negative signed value, i.e.,
+//     high bits are 1, and the remaining bits fit in simm13(OR).
+//----------------------------------------------------------------------------
+
 static inline void
 CreateSETUWConst(const TargetMachine& target, uint32_t C,
-                 Instruction* dest, vector<MachineInstr*>& mvec)
+                 Instruction* dest, vector<MachineInstr*>& mvec,
+                 bool isSigned = false)
 {
   MachineInstr *miSETHI = NULL, *miOR = NULL;
-  
+
   // In order to get efficient code, we should not generate the SETHI if
   // all high bits are 1 (i.e., this is a small signed value that fits in
   // the simm13 field of OR).  So we check for and handle that case specially.
   // NOTE: The value C = 0x80000000 is bad: sC < 0 *and* -sC < 0.
   //       In fact, sC == -sC, so we have to check for this explicitly.
   int32_t sC = (int32_t) C;
-  bool smallSignedValue = sC < 0 && sC != -sC && -sC < (int32_t) MAXSIMM;
-  
+  bool smallNegValue =isSigned && sC < 0 && sC != -sC && -sC < (int32_t)MAXSIMM;
+
   // Set the high 22 bits in dest if non-zero and simm13 field of OR not enough
-  if (!smallSignedValue && (C & ~MAXLO) && C > MAXSIMM)
+  if (!smallNegValue && (C & ~MAXLO) && C > MAXSIMM)
     {
       miSETHI = Create2OperandInstr_UImmed(SETHI, C, dest);
       miSETHI->setOperandHi32(0);
@@ -52,7 +66,7 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
         }
       else
         { // unsigned or small signed value that fits in simm13 field of OR
-          assert(smallSignedValue || (C & ~MAXSIMM) == 0);
+          assert(smallNegValue || (C & ~MAXSIMM) == 0);
           miOR = new MachineInstr(OR);
           miOR->SetMachineOperandReg(0, target.getRegInfo().getZeroRegNum());
           miOR->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
@@ -65,37 +79,27 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
   assert((miSETHI || miOR) && "Oops, no code was generated!");
 }
 
-// Set a 32-bit constant (given by a symbolic label) in the register `dest'.
-// Not needed for SPARC v9 but useful to make the two SETX functions similar
-static inline void
-CreateSETUWLabel(const TargetMachine& target, Value* val,
-                 Instruction* dest, vector<MachineInstr*>& mvec)
-{
-  MachineInstr* MI;
-  
-  // Set the high 22 bits in dest
-  MI = Create2OperandInstr(SETHI, val, dest);
-  MI->setOperandHi32(0);
-  mvec.push_back(MI);
-  
-  // Set the low 10 bits in dest
-  MI = Create3OperandInstr(OR, dest, val, dest);
-  MI->setOperandLo32(1);
-  mvec.push_back(MI);
-}
 
+//----------------------------------------------------------------------------
+// Function: CreateSETSWConst
+// 
+// Set a 32-bit signed constant in the register `dest', with sign-extension
+// to 64 bits.  This uses SETHI, OR, SRA in the worst case.
+// This function correctly emulates the SETSW pseudo-op for SPARC v9.
+//
+// Optimize the same cases as SETUWConst, plus:
+// (1) SRA is not needed for positive or small negative values.
+//----------------------------------------------------------------------------
 
-// Set a 32-bit signed constant in the register `dest', 
-// with sign-extension to 64 bits.
 static inline void
 CreateSETSWConst(const TargetMachine& target, int32_t C,
                  Instruction* dest, vector<MachineInstr*>& mvec)
 {
   MachineInstr* MI;
-  
+
   // Set the low 32 bits of dest
-  CreateSETUWConst(target, (uint32_t) C,  dest, mvec);
-  
+  CreateSETUWConst(target, (uint32_t) C,  dest, mvec, /*isSigned*/true);
+
   // Sign-extend to the high 32 bits if needed
   if (C < 0 && (-C) > (int32_t) MAXSIMM)
     {
@@ -105,7 +109,16 @@ CreateSETSWConst(const TargetMachine& target, int32_t C,
 }
 
 
+//----------------------------------------------------------------------------
+// Function: CreateSETXConst
+// 
 // Set a 64-bit signed or unsigned constant in the register `dest'.
+// Use SETUWConst for each 32 bit word, plus a left-shift-by-32 in between.
+// This function correctly emulates the SETX pseudo-op for SPARC v9.
+//
+// Optimize the same cases as SETUWConst for each 32 bit word.
+//----------------------------------------------------------------------------
+
 static inline void
 CreateSETXConst(const TargetMachine& target, uint64_t C,
                 Instruction* tmpReg, Instruction* dest,
@@ -131,7 +144,36 @@ CreateSETXConst(const TargetMachine& target, uint64_t C,
 }
 
 
+//----------------------------------------------------------------------------
+// Function: CreateSETUWLabel
+// 
+// Set a 32-bit constant (given by a symbolic label) in the register `dest'.
+//----------------------------------------------------------------------------
+
+static inline void
+CreateSETUWLabel(const TargetMachine& target, Value* val,
+                 Instruction* dest, vector<MachineInstr*>& mvec)
+{
+  MachineInstr* MI;
+  
+  // Set the high 22 bits in dest
+  MI = Create2OperandInstr(SETHI, val, dest);
+  MI->setOperandHi32(0);
+  mvec.push_back(MI);
+  
+  // Set the low 10 bits in dest
+  MI = Create3OperandInstr(OR, dest, val, dest);
+  MI->setOperandLo32(1);
+  mvec.push_back(MI);
+}
+
+
+//----------------------------------------------------------------------------
+// Function: CreateSETXLabel
+// 
 // Set a 64-bit constant (given by a symbolic label) in the register `dest'.
+//----------------------------------------------------------------------------
+
 static inline void
 CreateSETXLabel(const TargetMachine& target,
                 Value* val, Instruction* tmpReg, Instruction* dest,
@@ -166,47 +208,53 @@ CreateSETXLabel(const TargetMachine& target,
 }
 
 
-static inline void
-CreateIntSetInstruction(const TargetMachine& target,
-                        int64_t C, Instruction* dest,
-                        vector<MachineInstr*>& mvec,
-                        MachineCodeForInstruction& mcfi)
-{
-  assert(dest->getType()->isSigned() && "Use CreateUIntSetInstruction()");
-  
-  uint64_t absC = (C >= 0)? C : -C;
-  if (absC > (uint32_t) ~0)
-    { // C does not fit in 32 bits
-      TmpInstruction* tmpReg = new TmpInstruction(Type::IntTy);
-      mcfi.addTemp(tmpReg);
-      CreateSETXConst(target, (uint64_t) C, tmpReg, dest, mvec);
-    }
-  else
-    CreateSETSWConst(target, (int32_t) C, dest, mvec);
-}
-
+//----------------------------------------------------------------------------
+// Function: CreateUIntSetInstruction
+// 
+// Create code to Set an unsigned constant in the register `dest'.
+// Uses CreateSETUWConst, CreateSETSWConst or CreateSETXConst as needed.
+// CreateSETSWConst is an optimization for the case that the unsigned value
+// has all ones in the 33 high bits (so that sign-extension sets them all).
+//----------------------------------------------------------------------------
 
 static inline void
 CreateUIntSetInstruction(const TargetMachine& target,
                          uint64_t C, Instruction* dest,
-                         vector<MachineInstr*>& mvec,
+                         std::vector<MachineInstr*>& mvec,
                          MachineCodeForInstruction& mcfi)
 {
-  assert(! dest->getType()->isSigned() && "Use CreateIntSetInstruction()");
-  MachineInstr* M;
-  
-  if (C > (uint32_t) ~0)
+  static const uint64_t lo32 = (uint32_t) ~0;
+  if (C <= lo32)                        // High 32 bits are 0.  Set low 32 bits.
+    CreateSETUWConst(target, (uint32_t) C, dest, mvec);
+  else if ((C & ~lo32) == ~lo32 && (C & (1 << 31)))
+    { // All high 33 (not 32) bits are 1s: sign-extension will take care
+      // of high 32 bits, so use the sequence for signed int
+      CreateSETSWConst(target, (int32_t) C, dest, mvec);
+    }
+  else if (C > lo32)
     { // C does not fit in 32 bits
-      assert(dest->getType() == Type::ULongTy && "Sign extension problems");
-      TmpInstruction *tmpReg = new TmpInstruction(Type::IntTy);
+      TmpInstruction* tmpReg = new TmpInstruction(Type::IntTy);
       mcfi.addTemp(tmpReg);
       CreateSETXConst(target, C, tmpReg, dest, mvec);
     }
-  else
-    CreateSETUWConst(target, C, dest, mvec);
 }
 
 
+//----------------------------------------------------------------------------
+// Function: CreateIntSetInstruction
+// 
+// Create code to Set a signed constant in the register `dest'.
+// Really the same as CreateUIntSetInstruction.
+//----------------------------------------------------------------------------
+
+static inline void
+CreateIntSetInstruction(const TargetMachine& target,
+                        int64_t C, Instruction* dest,
+                        std::vector<MachineInstr*>& mvec,
+                        MachineCodeForInstruction& mcfi)
+{
+  CreateUIntSetInstruction(target, (uint64_t) C, dest, mvec, mcfi);
+}
 
 
 //---------------------------------------------------------------------------
@@ -253,27 +301,51 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
   // 
   const Type* valType = val->getType();
   
-  if (isa<GlobalValue>(val) || valType->isIntegral() || valType == Type::BoolTy)
+  if (isa<GlobalValue>(val))
     {
-      if (isa<GlobalValue>(val))
+      TmpInstruction* tmpReg =
+        new TmpInstruction(PointerType::get(val->getType()), val);
+      mcfi.addTemp(tmpReg);
+      CreateSETXLabel(target, val, tmpReg, dest, mvec);
+    }
+  else if (valType->isIntegral() || valType == Type::BoolTy)
+    {
+      bool isValidConstant;
+      unsigned opSize = target.DataLayout.getTypeSize(val->getType());
+      unsigned destSize = target.DataLayout.getTypeSize(dest->getType());
+      
+      if (! dest->getType()->isSigned())
         {
-          TmpInstruction* tmpReg =
-            new TmpInstruction(PointerType::get(val->getType()), val);
-          mcfi.addTemp(tmpReg);
-          CreateSETXLabel(target, val, tmpReg, dest, mvec);
-        }
-      else if (! dest->getType()->isSigned())
-        {
-          bool isValidConstant;
           uint64_t C = GetConstantValueAsUnsignedInt(val, isValidConstant);
           assert(isValidConstant && "Unrecognized constant");
+
+          if (opSize > destSize ||
+              (val->getType()->isSigned()
+               && destSize < target.DataLayout.getIntegerRegize()))
+            { // operand is larger than dest,
+              //    OR both are equal but smaller than the full register size
+              //       AND operand is signed, so it may have extra sign bits:
+              // mask high bits
+              C = C & ((1U << 8*destSize) - 1);
+            }
           CreateUIntSetInstruction(target, C, dest, mvec, mcfi);
         }
       else
         {
-          bool isValidConstant;
           int64_t C = GetConstantValueAsSignedInt(val, isValidConstant);
           assert(isValidConstant && "Unrecognized constant");
+
+          if (opSize > destSize)
+            // operand is larger than dest: mask high bits
+            C = C & ((1U << 8*destSize) - 1);
+
+          if (opSize > destSize ||
+              (opSize == destSize && !val->getType()->isSigned()))
+            // sign-extend from destSize to 64 bits
+            C = ((C & (1U << (8*destSize - 1)))
+                 ? C | ~((1U << 8*destSize) - 1)
+                 : C);
+          
           CreateIntSetInstruction(target, C, dest, mvec, mcfi);
         }
     }
