@@ -313,6 +313,13 @@ namespace {
                             MachineBasicBlock::iterator IP,
                             Value *Op, Value *ShiftAmount, bool isLeftShift,
                             const Type *ResultTy, unsigned DestReg);
+
+    // Emit code for a 'SHLD DestReg, Op0, Op1, Amt' operation, where Amt is a
+    // constant.
+    void doSHLDConst(MachineBasicBlock *MBB, 
+                     MachineBasicBlock::iterator MBBI,
+                     unsigned DestReg, unsigned Op0Reg, unsigned Op1Reg,
+                     unsigned Op1Val);
       
     /// emitSelectOperation - Common code shared between visitSelectInst and the
     /// constant expression support.
@@ -2893,6 +2900,41 @@ void X86ISel::visitShiftInst(ShiftInst &I) {
                       getReg (I));
 }
 
+/// Emit code for a 'SHLD DestReg, Op0, Op1, Amt' operation, where Amt is a
+/// constant.
+void X86ISel::doSHLDConst(MachineBasicBlock *MBB, 
+                          MachineBasicBlock::iterator IP,
+                          unsigned DestReg, unsigned Op0Reg, unsigned Op1Reg,
+                          unsigned Amt) {
+  // SHLD is a very inefficient operation on every processor, try to do
+  // somethign simpler for common values of 'Amt'.
+  if (Amt == 0) {
+    BuildMI(*MBB, IP, X86::MOV32rr, 1, DestReg).addReg(Op0Reg);
+  } else if (Amt == 1) {
+    unsigned Tmp = makeAnotherReg(Type::UIntTy);
+    BuildMI(*MBB, IP, X86::ADD32rr, 2, Tmp).addReg(Op1Reg).addReg(Op1Reg);
+    BuildMI(*MBB, IP, X86::ADC32rr, 2, DestReg).addReg(Op0Reg).addReg(Op0Reg);
+  } else if (Amt == 2 || Amt == 3) {
+    // On the P4 and Athlon it is cheaper to replace shld ..., 2|3 with a
+    // shift/lea pair.  NOTE: This should not be done on the P6 family!
+    unsigned Tmp = makeAnotherReg(Type::UIntTy);
+    BuildMI(*MBB, IP, X86::SHR32ri, 2, Tmp).addReg(Op1Reg).addImm(32-Amt);
+    X86AddressMode AM;
+    AM.BaseType = X86AddressMode::RegBase;
+    AM.Base.Reg = Tmp;
+    AM.Scale = 1 << Amt;
+    AM.IndexReg = Op0Reg;
+    AM.Disp = 0;
+    addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 4, DestReg), AM);
+  } else {
+    // NOTE: It is always cheaper on the P4 to emit SHLD as two shifts and an OR
+    // than it is to emit a real SHLD.
+
+    BuildMI(*MBB, IP, X86::SHLD32rri8, 3, 
+            DestReg).addReg(Op0Reg).addReg(Op1Reg).addImm(Amt);
+  }
+}
+
 /// emitShiftOperation - Common code shared between visitShiftInst and
 /// constant expression support.
 void X86ISel::emitShiftOperation(MachineBasicBlock *MBB,
@@ -2904,25 +2946,22 @@ void X86ISel::emitShiftOperation(MachineBasicBlock *MBB,
   bool isSigned = ResultTy->isSigned ();
   unsigned Class = getClass (ResultTy);
 
-  static const unsigned ConstantOperand[][4] = {
-    { X86::SHR8ri, X86::SHR16ri, X86::SHR32ri, X86::SHRD32rri8 },  // SHR
-    { X86::SAR8ri, X86::SAR16ri, X86::SAR32ri, X86::SHRD32rri8 },  // SAR
-    { X86::SHL8ri, X86::SHL16ri, X86::SHL32ri, X86::SHLD32rri8 },  // SHL
-    { X86::SHL8ri, X86::SHL16ri, X86::SHL32ri, X86::SHLD32rri8 },  // SAL = SHL
+  static const unsigned ConstantOperand[][3] = {
+    { X86::SHR8ri, X86::SHR16ri, X86::SHR32ri },  // SHR
+    { X86::SAR8ri, X86::SAR16ri, X86::SAR32ri },  // SAR
+    { X86::SHL8ri, X86::SHL16ri, X86::SHL32ri },  // SHL
+    { X86::SHL8ri, X86::SHL16ri, X86::SHL32ri },  // SAL = SHL
   };
 
-  static const unsigned NonConstantOperand[][4] = {
+  static const unsigned NonConstantOperand[][3] = {
     { X86::SHR8rCL, X86::SHR16rCL, X86::SHR32rCL },  // SHR
     { X86::SAR8rCL, X86::SAR16rCL, X86::SAR32rCL },  // SAR
     { X86::SHL8rCL, X86::SHL16rCL, X86::SHL32rCL },  // SHL
     { X86::SHL8rCL, X86::SHL16rCL, X86::SHL32rCL },  // SAL = SHL
   };
 
-  // Longs, as usual, are handled specially...
+  // Longs, as usual, are handled specially.
   if (Class == cLong) {
-    // If we have a constant shift, we can generate much more efficient code
-    // than otherwise...
-    //
     if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(ShiftAmount)) {
       unsigned Amount = CUI->getValue();
       if (Amount == 1 && isLeftShift) {   // X << 1 == X+X
@@ -2933,12 +2972,11 @@ void X86ISel::emitShiftOperation(MachineBasicBlock *MBB,
       } else if (Amount < 32) {
         const unsigned *Opc = ConstantOperand[isLeftShift*2+isSigned];
         if (isLeftShift) {
-          BuildMI(*MBB, IP, Opc[3], 3, 
-              DestReg+1).addReg(SrcReg+1).addReg(SrcReg).addImm(Amount);
+          doSHLDConst(MBB, IP, DestReg+1, SrcReg+1, SrcReg, Amount);
           BuildMI(*MBB, IP, Opc[2], 2, DestReg).addReg(SrcReg).addImm(Amount);
         } else {
-          BuildMI(*MBB, IP, Opc[3], 3,
-              DestReg).addReg(SrcReg  ).addReg(SrcReg+1).addImm(Amount);
+          BuildMI(*MBB, IP, X86::SHRD32rri8, 3,
+                  DestReg).addReg(SrcReg  ).addReg(SrcReg+1).addImm(Amount);
           BuildMI(*MBB, IP, Opc[2],2,DestReg+1).addReg(SrcReg+1).addImm(Amount);
         }
       } else {                 // Shifting more than 32 bits
