@@ -395,7 +395,7 @@ RObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(RObjs))
 ifdef DIRS
 all install clean test bytecode ::
 	$(VERB) for dir in ${DIRS}; do \
-		(cd $$dir; $(MAKE) $@) || exit 1; \
+		($(MAKE) -C $$dir $@) || exit 1; \
 	done
 endif
 
@@ -408,7 +408,7 @@ test     :: $(addsuffix /.maketest    , $(PARALLEL_DIRS))
 bytecode :: $(addsuffix /.makebytecode, $(PARALLEL_DIRS))
 
 %/.makeall %/.makeinstall %/.makeclean %/.maketest %/.makebytecode:
-	$(VERB) cd $(@D); $(MAKE) $(subst $(@D)/.make,,$@)
+	$(VERB) $(MAKE) -C $(@D) $(subst $(@D)/.make,,$@)
 endif
 
 # Handle directories that may or may not exist
@@ -417,7 +417,7 @@ all install clean test bytecode ::
 	$(VERB) for dir in ${OPTIONAL_DIRS}; do \
 		if [ -d $$dir ]; \
 		then\
-			(cd $$dir; $(MAKE) $@) || exit 1; \
+			($(MAKE) -C$$dir $@) || exit 1; \
 		fi \
 	done
 endif
