@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | lli -force-interpreter=false -disable-local-ra
+; RUN: llvm-as < %s | lli -force-interpreter=false -regalloc=simple
 
 int %main(int %B) {
 	;%B = add int 0, 1

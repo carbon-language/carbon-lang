@@ -95,11 +95,6 @@ OPTIONS
 	Disable frame pointer elimination optimization.
 	<p>
 
-	<li>-disable-local-ra    
-	<br>
-	Use Simple RA instead of Local RegAlloc.
-	<p>
-
 	<li>-disable-pattern-isel
 	<br>
 	Use the 'simple' X86 instruction selector.
@@ -146,13 +141,11 @@ OPTIONS
 	architectures are:
 
 	<dl compact>
-		<di> x86               
-		<dd>
-		IA-32 (Pentium and above)
-		<p>
+		<di> x86
+		<dd>IA-32 (Pentium and above)</dd>
 
-		<di> sparc             
-		<dd>SPARC V9
+		<di> sparc
+		<dd>SPARC V9</dd>
 	</dl>
 	<p>
 
@@ -164,6 +157,19 @@ OPTIONS
 	<li>-print-machineinstrs 
 	<br>
 	Print generated machine code.
+	<p>
+
+	<li>-regalloc=&lt;ra&gt;
+	<br>
+        Specify the register allocator to use. The default is <i>simple<i>.
+        Valid register allocators are:
+	<dl compact>
+		<di> simple
+		<dd>Very simple register allocator</dd>
+
+		<di> local
+		<dd>Local register allocator</dd>
+	</dl>
 	<p>
 
 	<li> -help

@@ -19,6 +19,8 @@ class TargetMachine;
 //
 extern const PassInfo *PHIEliminationID;
 
+enum RegAllocName { simple, local };
+
 /// SimpleRegisterAllocation Pass - This pass converts the input machine code
 /// from SSA form to use explicit registers by spilling every register.  Wow,
 /// great policy huh?

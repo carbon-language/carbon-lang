@@ -16,8 +16,15 @@
 #include "Support/Statistic.h"
 
 namespace {
-  cl::opt<bool> NoLocalRA("disable-local-ra",
-                          cl::desc("Use Simple RA instead of Local RegAlloc"));
+  cl::opt<RegAllocName>
+  RegAlloc("regalloc",
+           cl::desc("Register allocator to use: (default = simple)"),
+           cl::Prefix,
+           cl::values(clEnumVal(simple, "  simple register allocator"),
+                      clEnumVal(local,  "  local register allocator"),
+                      0),
+           cl::init(local));
+
   cl::opt<bool> PrintCode("print-machineinstrs",
 			  cl::desc("Print generated machine code"));
   cl::opt<bool> NoPatternISel("disable-pattern-isel", cl::init(true),
@@ -66,10 +73,16 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
     PM.add(createMachineFunctionPrinterPass());
 
   // Perform register allocation to convert to a concrete x86 representation
-  if (NoLocalRA)
+  switch (RegAlloc) {
+  case simple:
     PM.add(createSimpleRegisterAllocator());
-  else
+    break;
+  case local:
     PM.add(createLocalRegisterAllocator());
+    break;
+  default:
+    assert(0 && "no register allocator selected");
+  }
 
   if (PrintCode)
     PM.add(createMachineFunctionPrinterPass());
@@ -113,10 +126,16 @@ bool X86TargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
     PM.add(createMachineFunctionPrinterPass());
 
   // Perform register allocation to convert to a concrete x86 representation
-  if (NoLocalRA)
+  switch (RegAlloc) {
+  case simple:
     PM.add(createSimpleRegisterAllocator());
-  else
+    break;
+  case local:
     PM.add(createLocalRegisterAllocator());
+    break;
+  default:
+    assert(0 && "no register allocator selected");
+  }
 
   if (PrintCode)
     PM.add(createMachineFunctionPrinterPass());
