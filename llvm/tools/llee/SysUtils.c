@@ -115,7 +115,7 @@ int executeProgram(const char *filename, char *const argv[], char *const envp[])
    * Find a pointer to the *real* execve() function starting the search in the
    * next library and forward, to avoid finding the one defined in this file.
    */
-  char *error;
+  const char *error;
   execveTy execvePtr = (execveTy) dlsym(RTLD_NEXT, "execve");
   if ((error = dlerror()) != NULL) {
     fprintf(stderr, "%s\n", error);
