@@ -41,7 +41,6 @@
       <li><a href="#all">all</a></li>
       <li><a href="#all-local">all-local</a></li>
       <li><a href="#check">check</a></li>
-      <li><a href="#check-local">check-local</a></li>
       <li><a href="#clean">clean</a></li>
       <li><a href="#clean-local">clean-local</a></li>
       <li><a href="#dist">dist</a></li>
@@ -313,8 +312,8 @@
 <div class="doc_text">
   <p>This section describes each of the targets that can be built using the LLVM
   Makefile system. Any target can be invoked from any directory but not all are
-  applicable to a given directory (e.g. "dist" and "install" will always operate
-  as if invoked from the top level directory).</p>
+  applicable to a given directory (e.g. "check", "dist", and "install" will
+  always operate as if invoked from the top level directory).</p>
 
   <table style="text-align:left">
     <tr><th>Target Name</th><th>Implied Targets</th><th>Target Description</th></tr>
@@ -324,11 +323,8 @@
     <tr><td><a href="#all-local"><tt>all-local</tt></a></td><td></td>
       <td>Compile the software in the local directory only.
     </td></tr>
-    <tr><td><a href="#check"><tt>check</tt></a></td><td>all</td>
-      <td>Test the software recursively.
-    </td></tr>
-    <tr><td><a href="#check-local"><tt>check-local</tt></a></td><td>all-local</td>
-      <td>Test the software in the local directory only.
+    <tr><td><a href="#check"><tt>check</tt></a></td><td></td>
+      <td>Change to the llvm/test directory and run regression tests.
     </td></tr>
     <tr><td><a href="#clean"><tt>clean</tt></a></td><td></td>
       <td>Remove built objects recursively.
@@ -379,27 +375,6 @@
 <div class="doc_text">
   <p>This target is the same as <a href="#all">all</a> but it operates only on
   the current directory instead of recursively.</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="check">check</a></div>
-<div class="doc_text">
-  <p>This target is used to perform any functional, unit or sanity tests as the
-  software is being built. The <tt>check</tt> target depends on the 
-  <a href="#all"><tt>all</tt></a> target so the software is built in each
-  directory first and then the "check" is applied.</p>
-  <p>The definition of "check" is pretty general. It depends on the value of the
-  <a href="#TESTS"><tt>TESTS</tt></a> variable. This variable should be set to a 
-  list of executables to run in order to test the software.  If they all return 
-  0 then the check succeeds, otherwise not. The programs run can be anything but
-  they should either be local to the directory or in your path.</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="check-local">check-local</a></div>
-<div class="doc_text">
-  <p>This target does the same thing as <tt>check</tt> but only for the current
-  (local) directory.</p>
 </div>
 
 <!-- ======================================================================= -->
