@@ -97,6 +97,13 @@ static inline std::string ftostr(double V) {
   return Buffer;
 }
 
+std::string LowercaseString (const std::string &S) { 
+  std::string result (S);
+  for (unsigned i = 0; i < S.length(); ++i)
+    if (isupper (result[i]))
+      result[i] = tolower(result[i]);
+  return result;
+}
 
 /// getToken - This function extracts one token from source, ignoring any
 /// leading characters that appear in the Delimiters string, and ending the
