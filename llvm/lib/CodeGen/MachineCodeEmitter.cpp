@@ -129,6 +129,7 @@ namespace {
     
     void emitByte(unsigned char B) {
       if (MCE) MCE->emitByte(B);
+      actual << B; actual.flush();
 
       values[counter] = (unsigned int) B;
       if (++counter % 4 == 0 && counter != 0) {
@@ -136,9 +137,7 @@ namespace {
         for (unsigned i=0; i<4; ++i) {
           if (values[i] < 16) o << "0";
           o << values[i] << " ";
-          actual << values[i];
         }
-        actual.flush();
 
         o << std::dec << "\t";
         for (unsigned i=0; i<4; ++i) {
