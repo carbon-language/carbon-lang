@@ -2759,15 +2759,17 @@ void ISel::visitStoreInst(StoreInst &I) {
 void ISel::visitCastInst(CastInst &CI) {
   Value *Op = CI.getOperand(0);
 
-  // Noop casts are not even emitted.
-  if (getClassB(CI.getType()) == getClassB(Op->getType()))
+  unsigned SrcClass = getClassB(Op->getType());
+  unsigned DestClass = getClassB(CI.getType());
+  // Noop casts are not emitted: getReg will return the source operand as the
+  // register to use for any uses of the noop cast.
+  if (DestClass == SrcClass)
     return;
 
   // If this is a cast from a 32-bit integer to a Long type, and the only uses
   // of the case are GEP instructions, then the cast does not need to be
   // generated explicitly, it will be folded into the GEP.
-  if (CI.getType() == Type::LongTy &&
-      (Op->getType() == Type::IntTy || Op->getType() == Type::UIntTy)) {
+  if (DestClass == cLong && SrcClass == cInt) {
     bool AllUsesAreGEPs = true;
     for (Value::use_iterator I = CI.use_begin(), E = CI.use_end(); I != E; ++I)
       if (!isa<GetElementPtrInst>(*I)) {
@@ -2778,6 +2780,14 @@ void ISel::visitCastInst(CastInst &CI) {
     // No need to codegen this cast if all users are getelementptr instrs...
     if (AllUsesAreGEPs) return;
   }
+
+  // If this cast converts a load from a short,int, or long integer to a FP
+  // value, we will have folded this cast away.
+  if (DestClass == cFP && isa<LoadInst>(Op) && Op->hasOneUse() &&
+      (Op->getType() == Type::ShortTy || Op->getType() == Type::IntTy ||
+       Op->getType() == Type::LongTy))
+    return;
+
 
   unsigned DestReg = getReg(CI);
   MachineBasicBlock::iterator MI = BB->end();
@@ -2794,14 +2804,6 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   const Type *SrcTy = Src->getType();
   unsigned SrcClass = getClassB(SrcTy);
   unsigned DestClass = getClassB(DestTy);
-
-  // If this cast converts a load from a short,int, or long integer to a FP
-  // value, we will have folded this cast away.
-  if (DestClass == cFP && isa<LoadInst>(Src) &&
-      (Src->getType() == Type::ShortTy || Src->getType() == Type::IntTy ||
-       Src->getType() == Type::LongTy))
-    return;
-
   unsigned SrcReg = getReg(Src, BB, IP);
 
   // Implement casts to bool by using compare on the operand followed by set if
