@@ -212,7 +212,7 @@ namespace {
     /// emitGEPOperation - Common code shared between visitGetElementPtrInst and
     /// constant expression GEP support.
     ///
-    void emitGEPOperation(MachineBasicBlock *BB, MachineBasicBlock::iterator&IP,
+    void emitGEPOperation(MachineBasicBlock *BB, MachineBasicBlock::iterator IP,
                           Value *Src, User::op_iterator IdxBegin,
                           User::op_iterator IdxEnd, unsigned TargetReg);
 
@@ -2202,13 +2202,12 @@ void ISel::visitVAArgInst(VAArgInst &I) {
 
 void ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
   unsigned outputReg = getReg(I);
-  MachineBasicBlock::iterator MI = BB->end();
-  emitGEPOperation(BB, MI, I.getOperand(0),
+  emitGEPOperation(BB, BB->end(), I.getOperand(0),
                    I.op_begin()+1, I.op_end(), outputReg);
 }
 
 void ISel::emitGEPOperation(MachineBasicBlock *MBB,
-                            MachineBasicBlock::iterator &IP,
+                            MachineBasicBlock::iterator IP,
                             Value *Src, User::op_iterator IdxBegin,
                             User::op_iterator IdxEnd, unsigned TargetReg) {
   const TargetData &TD = TM.getTargetData();
