@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | llvm-dis | grep 9223372036854775808
+; RUN: llvm-as < %s -o /dev/null -f
 
-global long -9223372036854775808
+global long -9223372036854775808		; <long*>:0 [#uses=0]
 
+implementation   ; Functions:
