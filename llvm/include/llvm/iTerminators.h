@@ -178,6 +178,36 @@ public:
     return cast<BasicBlock>(Operands[1].get());
   }
 
+  /// getNumCases - return the number of 'cases' in this switch instruction.
+  /// Note that case #0 is always the default case.
+  unsigned getNumCases() const {
+    return Operands.size()/2;
+  }
+
+  /// getCaseValue - Return the specified case value.  Note that case #0, the
+  /// default destination, does not have a case value.
+  Constant *getCaseValue(unsigned i) {
+    assert(i && i < getNumCases() && "Illegal case value to get!");
+    return getSuccessorValue(i);
+  }
+
+  /// getCaseValue - Return the specified case value.  Note that case #0, the
+  /// default destination, does not have a case value.
+  const Constant *getCaseValue(unsigned i) const {
+    assert(i && i < getNumCases() && "Illegal case value to get!");
+    return getSuccessorValue(i);
+  }
+
+  /// findCaseValue - Search all of the case values for the specified constant.
+  /// If it is explicitly handled, return the case number of it, otherwise
+  /// return 0 to indicate that it is handled by the default handler.
+  unsigned findCaseValue(const Constant *C) const {
+    for (unsigned i = 1, e = getNumCases(); i != e; ++i)
+      if (getCaseValue(i) == C)
+        return i;
+    return 0;
+  }
+
   /// addCase - Add an entry to the switch instruction...
   ///
   void addCase(Constant *OnVal, BasicBlock *Dest);
