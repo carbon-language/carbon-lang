@@ -516,7 +516,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 
   // FIXME: should probably be converted to cout.width and cout.fill
   if (Opcode == PPC32::MovePCtoLR) {
-    O << "bcl 20,31,\"L0000" << labelNumber << "$pb\"\n";
+    O << "bl \"L0000" << labelNumber << "$pb\"\n";
     O << "\"L0000" << labelNumber << "$pb\":\n";
     O << "\tmflr ";
     printOp(MI->getOperand(0));
@@ -659,7 +659,7 @@ bool Printer::doFinalization(Module &M) {
     O << "L" << *i << "$stub:\n";
     O << "\t.indirect_symbol " << *i << "\n";
     O << "\tmflr r0\n";
-    O << "\tbcl 20,31,L0$" << *i << "\n";
+    O << "\tbl L0$" << *i << "\n";
     O << "L0$" << *i << ":\n";
     O << "\tmflr r11\n";
     O << "\taddis r11,r11,ha16(L" << *i << "$lazy_ptr-L0$" << *i << ")\n";
