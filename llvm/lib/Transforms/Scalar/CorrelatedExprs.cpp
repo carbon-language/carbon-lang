@@ -167,6 +167,9 @@ namespace {
     // this region.
     BasicBlock *getEntryBlock() const { return BB; }
 
+    // empty - return true if this region has no information known about it.
+    bool empty() const { return ValueMap.empty(); }
+    
     const RegionInfo &operator=(const RegionInfo &RI) {
       ValueMap = RI.ValueMap;
       return *this;
@@ -174,6 +177,7 @@ namespace {
 
     // print - Output information about this region...
     void print(std::ostream &OS) const;
+    void dump() const;
 
     // Allow external access.
     typedef ValueMapTy::iterator iterator;
@@ -190,6 +194,13 @@ namespace {
       ValueMapTy::const_iterator I = ValueMap.find(V);
       if (I != ValueMap.end()) return &I->second;
       return 0;
+    }
+    
+    /// removeValueInfo - Remove anything known about V from our records.  This
+    /// works whether or not we know anything about V.
+    ///
+    void removeValueInfo(Value *V) {
+      ValueMap.erase(V);
     }
   };
 
@@ -231,7 +242,18 @@ namespace {
 
     bool TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks);
 
-    BasicBlock *isCorrelatedBranchBlock(BasicBlock *BB, RegionInfo &RI);
+    bool ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
+                                          RegionInfo &RI);
+
+    void ForwardSuccessorTo(TerminatorInst *TI, unsigned Succ, BasicBlock *D,
+                            RegionInfo &RI);
+    void ReplaceUsesOfValueInRegion(Value *Orig, Value *New,
+                                    BasicBlock *RegionDominator);
+    void CalculateRegionExitBlocks(BasicBlock *BB, BasicBlock *OldSucc,
+                                   std::vector<BasicBlock*> &RegionExitBlocks);
+    void InsertRegionExitMerges(PHINode *NewPHI, Instruction *OldVal,
+                             const std::vector<BasicBlock*> &RegionExitBlocks);
+
     void PropogateBranchInfo(BranchInst *BI);
     void PropogateEquality(Value *Op0, Value *Op1, RegionInfo &RI);
     void PropogateRelation(Instruction::BinaryOps Opcode, Value *Op0,
@@ -313,12 +335,13 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
   // information down now.
   //
   DominatorTree::Node *BBN = (*DT)[BB];
-  for (unsigned i = 0, e = BBN->getChildren().size(); i != e; ++i) {
-    BasicBlock *Dominated = BBN->getChildren()[i]->getNode();
-    assert(RegionInfoMap.find(Dominated) == RegionInfoMap.end() &&
-           "RegionInfo should be calculated in dominanace order!");
-    getRegionInfo(Dominated) = RI;
-  }
+  if (!RI.empty())        // Time opt: only propogate if we can change something
+    for (unsigned i = 0, e = BBN->getChildren().size(); i != e; ++i) {
+      BasicBlock *Dominated = BBN->getChildren()[i]->getNode();
+      assert(RegionInfoMap.find(Dominated) == RegionInfoMap.end() &&
+             "RegionInfo should be calculated in dominanace order!");
+      getRegionInfo(Dominated) = RI;
+    }
 
   // Now that all of our successors have information if they deserve it,
   // propogate any information our terminator instruction finds to our
@@ -332,25 +355,7 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
   // region, then vector this outgoing edge directly to the known destination.
   //
   for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-    while (BasicBlock *Dest = isCorrelatedBranchBlock(TI->getSuccessor(i), RI)){
-      // If there are any PHI nodes in the Dest BB, we must duplicate the entry
-      // in the PHI node for the old successor to now include an entry from the
-      // current basic block.
-      //
-      BasicBlock *OldSucc = TI->getSuccessor(i);
-
-      // Loop over all of the PHI nodes...
-      for (BasicBlock::iterator I = Dest->begin();
-           PHINode *PN = dyn_cast<PHINode>(&*I); ++I) {
-        // Find the entry in the PHI node for OldSucc, create a duplicate entry
-        // for BB now.
-        int BlockIndex = PN->getBasicBlockIndex(OldSucc);
-        assert(BlockIndex != -1 && "Block should have entry in PHI!");
-        PN->addIncoming(PN->getIncomingValue(BlockIndex), BB);
-      }
-
-      // Actually revector the branch now...
-      TI->setSuccessor(i, Dest);
+    while (ForwardCorrelatedEdgeDestination(TI, i, RI)) {
       ++BranchRevectors;
       Changed = true;
     }
@@ -362,36 +367,373 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
   return Changed;
 }
 
-// If this block is a simple block not in the current region, which contains
-// only a conditional branch, we determine if the outcome of the branch can be
-// determined from information inside of the region.  Instead of going to this
-// block, we can instead go to the destination we know is the right target.
+// isBlockSimpleEnoughForCheck to see if the block is simple enough for us to
+// revector the conditional branch in the bottom of the block, do so now.
 //
-BasicBlock *CEE::isCorrelatedBranchBlock(BasicBlock *BB, RegionInfo &RI) {
+static bool isBlockSimpleEnough(BasicBlock *BB) {
+  assert(isa<BranchInst>(BB->getTerminator()));
+  BranchInst *BI = cast<BranchInst>(BB->getTerminator());
+  assert(BI->isConditional());
+
+  // Check the common case first: empty block, or block with just a setcc.
+  if (BB->size() == 1 ||
+      (BB->size() == 2 && &BB->front() == BI->getCondition() &&
+       BI->getCondition()->use_size() == 1))
+    return true;
+
+  // Check the more complex case now...
+  BasicBlock::iterator I = BB->begin();
+
+  // FIXME: This should be reenabled once the regression with SIM is fixed!
+#if 0
+  // PHI Nodes are ok, just skip over them...
+  while (isa<PHINode>(*I)) ++I;
+#endif
+
+  // Accept the setcc instruction...
+  if (&*I == BI->getCondition())
+    ++I;
+
+  // Nothing else is acceptable here yet.  We must not revector... unless we are
+  // at the terminator instruction.
+  if (&*I == BI)
+    return true;
+
+  return false;
+}
+
+
+bool CEE::ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
+                                           RegionInfo &RI) {
+  // If this successor is a simple block not in the current region, which
+  // contains only a conditional branch, we decide if the outcome of the branch
+  // can be determined from information inside of the region.  Instead of going
+  // to this block, we can instead go to the destination we know is the right
+  // target.
+  //
+
   // Check to see if we dominate the block. If so, this block will get the
   // condition turned to a constant anyway.
   //
   //if (DS->dominates(RI.getEntryBlock(), BB))
   // return 0;
 
-  // Check to see if this is a conditional branch...
-  if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
-    if (BI->isConditional()) {
-      // Make sure that the block is either empty, or only contains a setcc.
-      if (BB->size() == 1 || 
-          (BB->size() == 2 && &BB->front() == BI->getCondition() &&
-           BI->getCondition()->use_size() == 1))
-        if (SetCondInst *SCI = dyn_cast<SetCondInst>(BI->getCondition())) {
-          Relation::KnownResult Result = getSetCCResult(SCI, RI);
-        
-          if (Result == Relation::KnownTrue)
-            return BI->getSuccessor(0);
-          else if (Result == Relation::KnownFalse)
-            return BI->getSuccessor(1);
-        }
+  BasicBlock *BB = TI->getParent();
+
+  // Get the destination block of this edge...
+  BasicBlock *OldSucc = TI->getSuccessor(SuccNo);
+
+  // Make sure that the block ends with a conditional branch and is simple
+  // enough for use to be able to revector over.
+  BranchInst *BI = dyn_cast<BranchInst>(OldSucc->getTerminator());
+  if (BI == 0 || !BI->isConditional() || !isBlockSimpleEnough(OldSucc))
+    return false;
+
+  // We can only forward the branch over the block if the block ends with a
+  // setcc we can determine the outcome for.
+  //
+  // FIXME: we can make this more generic.  Code below already handles more
+  // generic case.
+  SetCondInst *SCI = dyn_cast<SetCondInst>(BI->getCondition());
+  if (SCI == 0) return false;
+
+  // Make a new RegionInfo structure so that we can simulate the effect of the
+  // PHI nodes in the block we are skipping over...
+  //
+  RegionInfo NewRI(RI);
+
+  // Remove value information for all of the values we are simulating... to make
+  // sure we don't have any stale information.
+  for (BasicBlock::iterator I = OldSucc->begin(), E = OldSucc->end(); I!=E; ++I)
+    if (I->getType() != Type::VoidTy)
+      NewRI.removeValueInfo(I);
+    
+  // Put the newly discovered information into the RegionInfo...
+  for (BasicBlock::iterator I = OldSucc->begin(), E = OldSucc->end(); I!=E; ++I)
+    if (PHINode *PN = dyn_cast<PHINode>(&*I)) {
+      int OpNum = PN->getBasicBlockIndex(BB);
+      assert(OpNum != -1 && "PHI doesn't have incoming edge for predecessor!?");
+      PropogateEquality(PN, PN->getIncomingValue(OpNum), NewRI);      
+    } else if (SetCondInst *SCI = dyn_cast<SetCondInst>(&*I)) {
+      Relation::KnownResult Res = getSetCCResult(SCI, NewRI);
+      if (Res == Relation::Unknown) return false;
+      PropogateEquality(SCI, ConstantBool::get(Res), NewRI);
+    } else {
+      assert(isa<BranchInst>(*I) && "Unexpected instruction type!");
     }
-  return 0;
+  
+  // Compute the facts implied by what we have discovered...
+  ComputeReplacements(NewRI);
+
+  ValueInfo &PredicateVI = NewRI.getValueInfo(BI->getCondition());
+  if (PredicateVI.getReplacement() &&
+      isa<Constant>(PredicateVI.getReplacement())) {
+    ConstantBool *CB = cast<ConstantBool>(PredicateVI.getReplacement());
+
+    // Forward to the successor that corresponds to the branch we will take.
+    ForwardSuccessorTo(TI, SuccNo, BI->getSuccessor(!CB->getValue()), NewRI);
+    return true;
+  }
+  
+  return false;
 }
+
+static Value *getReplacementOrValue(Value *V, RegionInfo &RI) {
+  if (const ValueInfo *VI = RI.requestValueInfo(V))
+    if (Value *Repl = VI->getReplacement())
+      return Repl;
+  return V;
+}
+
+/// ForwardSuccessorTo - We have found that we can forward successor # 'SuccNo'
+/// of Terminator 'TI' to the 'Dest' BasicBlock.  This method performs the
+/// mechanics of updating SSA information and revectoring the branch.
+///
+void CEE::ForwardSuccessorTo(TerminatorInst *TI, unsigned SuccNo,
+                             BasicBlock *Dest, RegionInfo &RI) {
+  // If there are any PHI nodes in the Dest BB, we must duplicate the entry
+  // in the PHI node for the old successor to now include an entry from the
+  // current basic block.
+  //
+  BasicBlock *OldSucc = TI->getSuccessor(SuccNo);
+  BasicBlock *BB = TI->getParent();
+
+  DEBUG(std::cerr << "Forwarding branch in basic block %" << BB->getName()
+        << " from block %" << OldSucc->getName() << " to block %"
+        << Dest->getName() << "\n");
+
+  DEBUG(std::cerr << "Before forwarding: " << *BB->getParent());
+
+  // Because we know that there cannot be critical edges in the flow graph, and
+  // that OldSucc has multiple outgoing edges, this means that Dest cannot have
+  // multiple incoming edges.
+  //
+#ifndef NDEBUG
+  pred_iterator DPI = pred_begin(Dest); ++DPI;
+  assert(DPI == pred_end(Dest) && "Critical edge found!!");
+#endif
+
+  // Loop over any PHI nodes in the destination, eliminating them, because they
+  // may only have one input.
+  //
+  while (PHINode *PN = dyn_cast<PHINode>(&Dest->front())) {
+    assert(PN->getNumIncomingValues() == 1 && "Crit edge found!");
+    // Eliminate the PHI node
+    PN->replaceAllUsesWith(PN->getIncomingValue(0));
+    Dest->getInstList().erase(PN);
+  }
+
+  // If there are values defined in the "OldSucc" basic block, we need to insert
+  // PHI nodes in the regions we are dealing with to emulate them.  This can
+  // insert dead phi nodes, but it is more trouble to see if they are used than
+  // to just blindly insert them.
+  //
+  if (DS->dominates(OldSucc, Dest)) {
+    // RegionExitBlocks - Find all of the blocks that are not dominated by Dest,
+    // but have predecessors that are.  Additionally, prune down the set to only
+    // include blocks that are dominated by OldSucc as well.
+    //
+    std::vector<BasicBlock*> RegionExitBlocks;
+    CalculateRegionExitBlocks(Dest, OldSucc, RegionExitBlocks);
+
+    for (BasicBlock::iterator I = OldSucc->begin(), E = OldSucc->end();
+         I != E; ++I)
+      if (I->getType() != Type::VoidTy) {
+        // Create and insert the PHI node into the top of Dest.
+        PHINode *NewPN = new PHINode(I->getType(), I->getName()+".fw_merge",
+                                     Dest->begin());
+        // There is definately an edge from OldSucc... add the edge now
+        NewPN->addIncoming(I, OldSucc);
+
+        // There is also an edge from BB now, add the edge with the calculated
+        // value from the RI.
+        NewPN->addIncoming(getReplacementOrValue(I, RI), BB);
+
+        // Make everything in the Dest region use the new PHI node now...
+        ReplaceUsesOfValueInRegion(I, NewPN, Dest);
+
+        // Make sure that exits out of the region dominated by NewPN get PHI
+        // nodes that merge the values as appropriate.
+        InsertRegionExitMerges(NewPN, I, RegionExitBlocks);
+      }
+  }
+
+  // If there were PHI nodes in OldSucc, we need to remove the entry for this
+  // edge from the PHI node, and we need to replace any references to the PHI
+  // node with a new value.
+  //
+  for (BasicBlock::iterator I = OldSucc->begin();
+       PHINode *PN = dyn_cast<PHINode>(&*I); ) {
+
+    // Get the value flowing across the old edge and remove the PHI node entry
+    // for this edge: we are about to remove the edge!  Don't remove the PHI
+    // node yet though if this is the last edge into it.
+    Value *EdgeValue = PN->removeIncomingValue(BB, false);
+
+    // Make sure that anything that used to use PN now refers to EdgeValue    
+    ReplaceUsesOfValueInRegion(PN, EdgeValue, Dest);
+
+    // If there is only one value left coming into the PHI node, replace the PHI
+    // node itself with the one incoming value left.
+    //
+    if (PN->getNumIncomingValues() == 1) {
+      assert(PN->getNumIncomingValues() == 1);
+      PN->replaceAllUsesWith(PN->getIncomingValue(0));
+      PN->getParent()->getInstList().erase(PN);
+      I = OldSucc->begin();
+    } else if (PN->getNumIncomingValues() == 0) {  // Nuke the PHI
+      // If we removed the last incoming value to this PHI, nuke the PHI node
+      // now.
+      PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
+      PN->getParent()->getInstList().erase(PN);
+      I = OldSucc->begin();
+    } else {
+      ++I;  // Otherwise, move on to the next PHI node
+    }
+  }
+  
+  // Actually revector the branch now...
+  TI->setSuccessor(SuccNo, Dest);
+
+  // If we just introduced a critical edge in the flow graph, make sure to break
+  // it right away...
+  if (isCriticalEdge(TI, SuccNo))
+    SplitCriticalEdge(TI, SuccNo, this);
+
+  // Make sure that we don't introduce critical edges from oldsucc now!
+  for (unsigned i = 0, e = OldSucc->getTerminator()->getNumSuccessors();
+       i != e; ++i)
+    if (isCriticalEdge(OldSucc->getTerminator(), i))
+      SplitCriticalEdge(OldSucc->getTerminator(), i, this);
+
+  // Since we invalidated the CFG, recalculate the dominator set so that it is
+  // useful for later processing!
+  // FIXME: This is much worse than it really should be!
+  //DS->recalculate();
+
+  DEBUG(std::cerr << "After forwarding: " << *BB->getParent());
+}
+
+/// ReplaceUsesOfValueInRegion - This method replaces all uses of Orig with uses
+/// of New.  It only affects instructions that are defined in basic blocks that
+/// are dominated by Head.
+///
+void CEE::ReplaceUsesOfValueInRegion(Value *Orig, Value *New,
+                                     BasicBlock *RegionDominator) {
+  assert(Orig != New && "Cannot replace value with itself");
+  std::vector<Instruction*> InstsToChange;
+  std::vector<PHINode*>     PHIsToChange;
+  InstsToChange.reserve(Orig->use_size());
+
+  // Loop over instructions adding them to InstsToChange vector, this allows us
+  // an easy way to avoid invalidating the use_iterator at a bad time.
+  for (Value::use_iterator I = Orig->use_begin(), E = Orig->use_end();
+       I != E; ++I)
+    if (Instruction *User = dyn_cast<Instruction>(*I))
+      if (DS->dominates(RegionDominator, User->getParent()))
+        InstsToChange.push_back(User);
+      else if (PHINode *PN = dyn_cast<PHINode>(User)) {
+        PHIsToChange.push_back(PN);
+      }
+
+  // PHIsToChange contains PHI nodes that use Orig that do not live in blocks
+  // dominated by orig.  If the block the value flows in from is dominated by
+  // RegionDominator, then we rewrite the PHI
+  for (unsigned i = 0, e = PHIsToChange.size(); i != e; ++i) {
+    PHINode *PN = PHIsToChange[i];
+    for (unsigned j = 0, e = PN->getNumIncomingValues(); j != e; ++j)
+      if (PN->getIncomingValue(j) == Orig &&
+          DS->dominates(RegionDominator, PN->getIncomingBlock(j)))
+        PN->setIncomingValue(j, New);
+  }
+
+  // Loop over the InstsToChange list, replacing all uses of Orig with uses of
+  // New.  This list contains all of the instructions in our region that use
+  // Orig.
+  for (unsigned i = 0, e = InstsToChange.size(); i != e; ++i)
+    if (PHINode *PN = dyn_cast<PHINode>(InstsToChange[i])) {
+      // PHINodes must be handled carefully.  If the PHI node itself is in the
+      // region, we have to make sure to only do the replacement for incoming
+      // values that correspond to basic blocks in the region.
+      for (unsigned j = 0, e = PN->getNumIncomingValues(); j != e; ++j)
+        if (PN->getIncomingValue(j) == Orig &&
+            DS->dominates(RegionDominator, PN->getIncomingBlock(j)))
+          PN->setIncomingValue(j, New);
+
+    } else {
+      InstsToChange[i]->replaceUsesOfWith(Orig, New);
+    }
+}
+
+static void CalcRegionExitBlocks(BasicBlock *Header, BasicBlock *BB,
+                                 std::set<BasicBlock*> &Visited,
+                                 DominatorSet &DS,
+                                 std::vector<BasicBlock*> &RegionExitBlocks) {
+  if (Visited.count(BB)) return;
+  Visited.insert(BB);
+
+  if (DS.dominates(Header, BB)) {  // Block in the region, recursively traverse
+    for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I)
+      CalcRegionExitBlocks(Header, *I, Visited, DS, RegionExitBlocks);
+  } else {
+    // Header does not dominate this block, but we have a predecessor that does
+    // dominate us.  Add ourself to the list.
+    RegionExitBlocks.push_back(BB);    
+  }
+}
+
+/// CalculateRegionExitBlocks - Find all of the blocks that are not dominated by
+/// BB, but have predecessors that are.  Additionally, prune down the set to
+/// only include blocks that are dominated by OldSucc as well.
+///
+void CEE::CalculateRegionExitBlocks(BasicBlock *BB, BasicBlock *OldSucc,
+                                    std::vector<BasicBlock*> &RegionExitBlocks){
+  std::set<BasicBlock*> Visited;  // Don't infinite loop
+
+  // Recursively calculate blocks we are interested in...
+  CalcRegionExitBlocks(BB, BB, Visited, *DS, RegionExitBlocks);
+  
+  // Filter out blocks that are not dominated by OldSucc...
+  for (unsigned i = 0; i != RegionExitBlocks.size(); ) {
+    if (DS->dominates(OldSucc, RegionExitBlocks[i]))
+      ++i;  // Block is ok, keep it.
+    else {
+      // Move to end of list...
+      std::swap(RegionExitBlocks[i], RegionExitBlocks.back());
+      RegionExitBlocks.pop_back();        // Nuke the end
+    }
+  }
+}
+
+void CEE::InsertRegionExitMerges(PHINode *BBVal, Instruction *OldVal,
+                             const std::vector<BasicBlock*> &RegionExitBlocks) {
+  assert(BBVal->getType() == OldVal->getType() && "Should be derived values!");
+  BasicBlock *BB = BBVal->getParent();
+  BasicBlock *OldSucc = OldVal->getParent();
+
+  // Loop over all of the blocks we have to place PHIs in, doing it.
+  for (unsigned i = 0, e = RegionExitBlocks.size(); i != e; ++i) {
+    BasicBlock *FBlock = RegionExitBlocks[i];  // Block on the frontier
+
+    // Create the new PHI node
+    PHINode *NewPN = new PHINode(BBVal->getType(),
+                                 OldVal->getName()+".fw_frontier",
+                                 FBlock->begin());
+
+    // Add an incoming value for every predecessor of the block...
+    for (pred_iterator PI = pred_begin(FBlock), PE = pred_end(FBlock);
+         PI != PE; ++PI) {
+      // If the incoming edge is from the region dominated by BB, use BBVal,
+      // otherwise use OldVal.
+      NewPN->addIncoming(DS->dominates(BB, *PI) ? BBVal : OldVal, *PI);
+    }
+    
+    // Now make everyone dominated by this block use this new value!
+    ReplaceUsesOfValueInRegion(OldVal, NewPN, FBlock);
+  }
+}
+
+
 
 // BuildRankMap - This method builds the rank map data structure which gives
 // each instruction/value in the function a value based on how early it appears
@@ -425,19 +767,16 @@ void CEE::BuildRankMap(Function &F) {
 //
 void CEE::PropogateBranchInfo(BranchInst *BI) {
   assert(BI->isConditional() && "Must be a conditional branch!");
-  BasicBlock *BB = BI->getParent();
-  BasicBlock *TrueBB  = BI->getSuccessor(0);
-  BasicBlock *FalseBB = BI->getSuccessor(1);
 
   // Propogate information into the true block...
   //
   PropogateEquality(BI->getCondition(), ConstantBool::True,
-                    getRegionInfo(TrueBB));
+                    getRegionInfo(BI->getSuccessor(0)));
   
   // Propogate information into the false block...
   //
   PropogateEquality(BI->getCondition(), ConstantBool::False,
-                    getRegionInfo(FalseBB));
+                    getRegionInfo(BI->getSuccessor(1)));
 }
 
 
@@ -702,7 +1041,7 @@ bool CEE::SimplifyInstruction(Instruction *I, const RegionInfo &RI) {
 }
 
 
-// SimplifySetCC - Try to simplify a setcc instruction based on information
+// getSetCCResult - Try to simplify a setcc instruction based on information
 // inherited from a dominating setcc instruction.  V is one of the operands to
 // the setcc instruction, and VI is the set of information known about it.  We
 // take two cases into consideration here.  If the comparison is against a
@@ -965,5 +1304,7 @@ void Relation::print(std::ostream &OS) const {
   OS << "\n";
 }
 
+// Don't inline these methods or else we won't be able to call them from GDB!
 void Relation::dump() const { print(std::cerr); }
 void ValueInfo::dump() const { print(std::cerr, 0); }
+void RegionInfo::dump() const { print(std::cerr); }
