@@ -600,6 +600,7 @@ def TEST32mi : Im32i32<"test", 0xF7, MRM0m     >;          // flags = [mem32] & 
 
 // Condition code ops, incl. set if equal/not equal/...
 def SAHF     : I  <"sahf" , 0x9E, RawFrm>, Imp<[AH],[]>;  // flags = AH
+def LAHF     : I  <"lahf" , 0x9F, RawFrm>, Imp<[],[AH]>;  // AH = flags
 
 def SETBr    : I  <"setb" , 0x92, MRM0r>, TB;            // R8 = <  unsign
 def SETBm    : Im8<"setb" , 0x92, MRM0m>, TB;            // [mem8] = <  unsign
