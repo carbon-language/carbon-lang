@@ -39,7 +39,7 @@ namespace {
 /// size of the type, and whether or not it is floating point.
 ///
 static inline TypeClass getClass(const Type *Ty) {
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::SByteTyID:
   case Type::UByteTyID:   return cByte;      // Byte operands are class #0
   case Type::ShortTyID:
@@ -2306,7 +2306,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
 	}
 
     unsigned TmpReg = makeAnotherReg(Type::IntTy);
-    switch (SrcTy->getPrimitiveID()) {
+    switch (SrcTy->getTypeID()) {
     case Type::BoolTyID:
     case Type::SByteTyID:
       BuildMI(*BB, IP, PPC32::EXTSB, 1, TmpReg).addReg(SrcReg);
@@ -2411,7 +2411,7 @@ void ISel::visitVANextInst(VANextInst &I) {
   unsigned DestReg = getReg(I);
 
   unsigned Size;
-  switch (I.getArgType()->getPrimitiveID()) {
+  switch (I.getArgType()->getTypeID()) {
   default:
     std::cerr << I;
     assert(0 && "Error: bad type for va_next instruction!");
@@ -2436,7 +2436,7 @@ void ISel::visitVAArgInst(VAArgInst &I) {
   unsigned VAList = getReg(I.getOperand(0));
   unsigned DestReg = getReg(I);
 
-  switch (I.getType()->getPrimitiveID()) {
+  switch (I.getType()->getTypeID()) {
   default:
     std::cerr << I;
     assert(0 && "Error: bad type for va_next instruction!");
