@@ -16,9 +16,9 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTR_H
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
-#include "Support/Annotation.h"
 #include "Support/iterator"
 #include <vector>
+#include <cassert>
 
 namespace llvm {
 
