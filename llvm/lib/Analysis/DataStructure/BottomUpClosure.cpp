@@ -18,6 +18,18 @@ X("budatastructure", "Bottom-up Data Structure Analysis Closure");
 
 using namespace DS;
 
+// run - Calculate the bottom up data structure graphs for each function in the
+// program.
+//
+bool BUDataStructures::run(Module &M) {
+  GlobalsGraph = new DSGraph();
+
+  // Simply calculate the graphs for each function...
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (!I->isExternal())
+      calculateGraph(*I);
+  return false;
+}
 
 // releaseMemory - If the pass pipeline is done with this pass, we can release
 // our memory... here...
@@ -30,17 +42,8 @@ void BUDataStructures::releaseMemory() {
   // Empty map so next time memory is released, data structures are not
   // re-deleted.
   DSInfo.clear();
-}
-
-// run - Calculate the bottom up data structure graphs for each function in the
-// program.
-//
-bool BUDataStructures::run(Module &M) {
-  // Simply calculate the graphs for each function...
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal())
-      calculateGraph(*I);
-  return false;
+  delete GlobalsGraph;
+  GlobalsGraph = 0;
 }
 
 DSGraph &BUDataStructures::calculateGraph(Function &F) {
@@ -52,6 +55,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 
   // Copy the local version into DSInfo...
   Graph = new DSGraph(getAnalysis<LocalDataStructures>().getDSGraph(F));
+  Graph->setGlobalsGraph(GlobalsGraph);
 
 #if 0
   // Populate the GlobalsGraph with globals from this one.

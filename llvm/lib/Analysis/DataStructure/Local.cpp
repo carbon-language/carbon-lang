@@ -409,6 +409,16 @@ void GraphBuilder::visitCastInst(CastInst &CI) {
 // LocalDataStructures Implementation
 //===----------------------------------------------------------------------===//
 
+bool LocalDataStructures::run(Module &M) {
+  GlobalsGraph = new DSGraph();
+
+  // Calculate all of the graphs...
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (!I->isExternal())
+      DSInfo.insert(std::make_pair(I, new DSGraph(*I, GlobalsGraph)));
+  return false;
+}
+
 // releaseMemory - If the pass pipeline is done with this pass, we can release
 // our memory... here...
 //
@@ -422,14 +432,4 @@ void LocalDataStructures::releaseMemory() {
   DSInfo.clear();
   delete GlobalsGraph;
   GlobalsGraph = 0;
-}
-
-bool LocalDataStructures::run(Module &M) {
-  GlobalsGraph = new DSGraph();
-
-  // Calculate all of the graphs...
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal())
-      DSInfo.insert(std::make_pair(I, new DSGraph(*I, GlobalsGraph)));
-  return false;
 }

@@ -16,6 +16,26 @@
 static RegisterAnalysis<TDDataStructures>
 Y("tddatastructure", "Top-down Data Structure Analysis Closure");
 
+// run - Calculate the top down data structure graphs for each function in the
+// program.
+//
+bool TDDataStructures::run(Module &M) {
+  BUDataStructures &BU = getAnalysis<BUDataStructures>();
+  GlobalsGraph = new DSGraph();
+
+  // Calculate top-down from main...
+  if (Function *F = M.getMainFunction())
+    calculateGraph(*F);
+
+  // Next calculate the graphs for each function unreachable function...
+  for (Module::reverse_iterator I = M.rbegin(), E = M.rend(); I != E; ++I)
+    if (!I->isExternal())
+      calculateGraph(*I);
+
+  GraphDone.clear();    // Free temporary memory...
+  return false;
+}
+
 // releaseMemory - If the pass pipeline is done with this pass, we can release
 // our memory... here...
 //
@@ -27,23 +47,8 @@ void TDDataStructures::releaseMemory() {
   // Empty map so next time memory is released, data structures are not
   // re-deleted.
   DSInfo.clear();
-}
-
-// run - Calculate the top down data structure graphs for each function in the
-// program.
-//
-bool TDDataStructures::run(Module &M) {
-  BUDataStructures &BU = getAnalysis<BUDataStructures>();
-
-  // Calculate top-down from main...
-  if (Function *F = M.getMainFunction())
-    calculateGraph(*F);
-
-  // Next calculate the graphs for each function unreachable function...
-  for (Module::reverse_iterator I = M.rbegin(), E = M.rend(); I != E; ++I)
-    if (!I->isExternal())
-      calculateGraph(*I);
-  return false;
+  delete GlobalsGraph;
+  GlobalsGraph = 0;
 }
 
 /// ResolveCallSite - This method is used to link the actual arguments together
@@ -77,6 +82,7 @@ DSGraph &TDDataStructures::getOrCreateDSGraph(Function &F) {
   if (G == 0) { // Not created yet?  Clone BU graph...
     G = new DSGraph(getAnalysis<BUDataStructures>().getDSGraph(F));
     G->getAuxFunctionCalls().clear();
+    G->setGlobalsGraph(GlobalsGraph);
   }
   return *G;
 }

@@ -46,6 +46,8 @@ public:
     return *I->second;
   }
 
+  DSGraph &getGlobalsGraph() const { return *GlobalsGraph; }
+
   // print - Print out the analysis results...
   void print(std::ostream &O, const Module *M) const;
 
@@ -66,6 +68,7 @@ public:
 class BUDataStructures : public Pass {
   // DSInfo, one graph for each function
   std::map<const Function*, DSGraph*> DSInfo;
+  DSGraph *GlobalsGraph;
 public:
   ~BUDataStructures() { releaseMemory(); }
 
@@ -78,7 +81,9 @@ public:
     return *I->second;
   }
 
-   // print - Print out the analysis results...
+  DSGraph &getGlobalsGraph() const { return *GlobalsGraph; }
+
+  // print - Print out the analysis results...
   void print(std::ostream &O, const Module *M) const;
 
   // If the pass pipeline is done with this pass, we can release our memory...
@@ -101,6 +106,7 @@ class TDDataStructures : public Pass {
   // DSInfo, one graph for each function
   std::map<const Function*, DSGraph*> DSInfo;
   std::set<const Function*> GraphDone;
+  DSGraph *GlobalsGraph;
 public:
   ~TDDataStructures() { releaseMemory(); }
 
@@ -112,6 +118,8 @@ public:
     assert(I != DSInfo.end() && "Function not in module!");
     return *I->second;
   }
+
+  DSGraph &getGlobalsGraph() const { return *GlobalsGraph; }
 
   // print - Print out the analysis results...
   void print(std::ostream &O, const Module *M) const;

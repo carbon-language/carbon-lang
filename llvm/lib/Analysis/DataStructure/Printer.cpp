@@ -181,6 +181,16 @@ static void printCollection(const Collection &C, std::ostream &O,
       }
     }
 
+  DSGraph &GG = C.getGlobalsGraph();
+  TotalNumNodes  += GG.getGraphSize();
+  TotalCallNodes += GG.getFunctionCalls().size();
+  if (OnlyPrintMain) {
+    GG.writeGraphToFile(O, Prefix+"GlobalsGraph");
+  } else {
+    O << "Skipped Writing '" << Prefix << "GlobalsGraph.dot'... ["
+      << GG.getGraphSize() << "+" << GG.getFunctionCalls().size() << "]\n";
+  }
+
   O << "\nGraphs contain [" << TotalNumNodes << "+" << TotalCallNodes 
     << "] nodes total" << std::endl;
 }
