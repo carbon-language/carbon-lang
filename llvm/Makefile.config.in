@@ -90,7 +90,7 @@ BYTECODE_REPOSITORY := @BCR@
 @USE_SPEC95@
 
 # Path to the SPEC benchmarks.
-SPEC_ROOT := @SPEC2000_ROOT@
+SPEC2000_ROOT := @SPEC2000_ROOT@
 SPEC95_ROOT := @SPEC95_ROOT@
 
 # Path to the Povray source code.
