@@ -76,11 +76,7 @@ void LiveIntervals::releaseMemory()
 {
     mi2iMap_.clear();
     i2miMap_.clear();
-    for (std::map<unsigned, LiveInterval*>::iterator I = r2iMap_.begin(),
-           E = r2iMap_.end(); I != E; ++I)
-      delete I->second;  // free all intervals.
     r2iMap_.clear();
-
     r2rMap_.clear();
 }
 
@@ -112,7 +108,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 #if 1
     DEBUG(std::cerr << "********** INTERVALS **********\n");
     DEBUG(for (iterator I = begin(), E = end(); I != E; ++I)
-            std::cerr << *I->second << "\n");
+            std::cerr << I->second << "\n");
 #endif
 
     // join intervals if requested
@@ -169,7 +165,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
     DEBUG(std::cerr << "********** INTERVALS **********\n");
     DEBUG (for (iterator I = begin(), E = end(); I != E; ++I)
-             std::cerr << *I->second << "\n");
+             std::cerr << I->second << "\n");
     DEBUG(std::cerr << "********** MACHINEINSTRS **********\n");
     DEBUG(
         for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
@@ -561,7 +557,6 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
       if ((TriviallyJoinable || !IntB.joinable(IntA, MIDefIdx)) &&
           !overlapsAliases(&IntA, &IntB)) {
         IntB.join(IntA, MIDefIdx);
-        delete r2iMap_[regA];   // Delete the dead interval
 
         if (!MRegisterInfo::isPhysicalRegister(regA)) {
           r2iMap_.erase(regA);
@@ -571,7 +566,7 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
           // the physreg information.
           r2rMap_[regB] = regA;
           IntB.reg = regA;
-          r2iMap_[regA] = r2iMap_[regB];
+          IntA.swap(IntB);
           r2iMap_.erase(regB);
         }
         DEBUG(std::cerr << "Joined.  Result = " << IntB << "\n");
@@ -661,8 +656,8 @@ bool LiveIntervals::overlapsAliases(const LiveInterval *LHS,
   return false;
 }
 
-LiveInterval *LiveIntervals::createInterval(unsigned reg) const {
+LiveInterval LiveIntervals::createInterval(unsigned reg) {
   float Weight = MRegisterInfo::isPhysicalRegister(reg) ?  HUGE_VAL :0.0F;
-  return new LiveInterval(reg, Weight);
+  return LiveInterval(reg, Weight);
 }
 

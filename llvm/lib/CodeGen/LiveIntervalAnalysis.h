@@ -41,10 +41,8 @@ namespace llvm {
         typedef std::vector<MachineInstr*> Index2MiMap;
         Index2MiMap i2miMap_;
 
-        /// r2iMap_ - This map OWNS the interval pointed to by the map.  When
-        /// this map is destroyed or when entries are modified, this intervals
-        /// should be destroyed or modified as well.
-        std::map<unsigned, LiveInterval*> r2iMap_;
+        typedef std::map<unsigned, LiveInterval> Reg2IntervalMap;
+        Reg2IntervalMap r2iMap_;
 
         typedef std::map<unsigned, unsigned> Reg2RegMap;
         Reg2RegMap r2rMap_;
@@ -80,16 +78,22 @@ namespace llvm {
             return getBaseIndex(index) + InstrSlots::STORE;
         }
 
-        typedef std::map<unsigned, LiveInterval*>::const_iterator iterator;
-        iterator begin() const { return r2iMap_.begin(); }
-        iterator end() const { return r2iMap_.end(); }
-      unsigned getNumIntervals() const { return r2iMap_.size(); }
+        // FIXME: this should really be a const_iterator
+        typedef Reg2IntervalMap::iterator iterator;
+        iterator begin() { return r2iMap_.begin(); }
+        iterator end() { return r2iMap_.end(); }
+        unsigned getNumIntervals() const { return r2iMap_.size(); }
 
-        LiveInterval &getInterval(unsigned reg) const {
-          std::map<unsigned, LiveInterval*>::const_iterator I =
-              r2iMap_.find(reg);
+        LiveInterval &getInterval(unsigned reg) {
+          Reg2IntervalMap::iterator I = r2iMap_.find(reg);
           assert(I != r2iMap_.end() && "Interval does not exist for register");
-          return *I->second;
+          return I->second;
+        }
+
+        const LiveInterval &getInterval(unsigned reg) const {
+          Reg2IntervalMap::const_iterator I = r2iMap_.find(reg);
+          assert(I != r2iMap_.end() && "Interval does not exist for register");
+          return I->second;
         }
 
         /// getInstructionIndex - returns the base index of instr
@@ -155,13 +159,13 @@ namespace llvm {
         bool overlapsAliases(const LiveInterval *lhs, 
                              const LiveInterval *rhs) const;
 
-        LiveInterval *createInterval(unsigned Reg) const;
+        static LiveInterval createInterval(unsigned Reg);
 
         LiveInterval &getOrCreateInterval(unsigned reg) {
-          LiveInterval *&LI = r2iMap_[reg];
-          if (LI == 0) 
-            LI = createInterval(reg);
-          return *LI;
+          Reg2IntervalMap::iterator I = r2iMap_.find(reg);
+          if (I == r2iMap_.end())
+            I = r2iMap_.insert(I, std::make_pair(reg, createInterval(reg)));
+          return I->second;
         }
 
         /// rep - returns the representative of this register

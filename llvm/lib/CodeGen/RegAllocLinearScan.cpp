@@ -224,9 +224,9 @@ void RA::initIntervalSets()
            "interval sets should be empty on initialization");
 
     for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i){
-        unhandled_.push(i->second);
-        if (MRegisterInfo::isPhysicalRegister(i->second->reg))
-            fixed_.push_back(i->second);
+        unhandled_.push(&i->second);
+        if (MRegisterInfo::isPhysicalRegister(i->second.reg))
+            fixed_.push_back(&i->second);
     }
 }
 

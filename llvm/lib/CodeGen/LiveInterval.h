@@ -76,6 +76,21 @@ namespace llvm {
       : reg(Reg), weight(Weight), NumValues(0) {
     }
 
+    LiveInterval& operator=(const LiveInterval& rhs) {
+      reg = rhs.reg;
+      weight = rhs.weight;
+      ranges = rhs.ranges;
+      NumValues = rhs.NumValues;
+      return *this;
+    }
+
+    void swap(LiveInterval& other) {
+      std::swap(reg, other.reg);
+      std::swap(weight, other.weight);
+      ranges.swap(other.ranges);
+      std::swap(NumValues, other.NumValues);
+    }
+
     bool containsOneValue() const { return NumValues == 1; }
 
     unsigned getNextValue() {
