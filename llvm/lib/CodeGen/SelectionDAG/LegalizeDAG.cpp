@@ -167,7 +167,6 @@ SelectionDAGLegalize::SelectionDAGLegalize(TargetLowering &tli,
     setValueTypeAction(MVT::f32, Promote);
 }
 
-
 void SelectionDAGLegalize::LegalizeDAG() {
   SDOperand OldRoot = DAG.getRoot();
   SDOperand NewRoot = LegalizeOp(OldRoot);
@@ -177,11 +176,7 @@ void SelectionDAGLegalize::LegalizeDAG() {
   LegalizedNodes.clear();
 
   // Remove dead nodes now.
-  if (OldRoot != NewRoot)
-    // Delete all of these efficiently first.
-    ;
-  
-  // Then scan AllNodes.
+  DAG.RemoveDeadNodes(OldRoot.Val);
 }
 
 SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
