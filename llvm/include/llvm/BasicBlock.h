@@ -67,13 +67,14 @@ public:
   typedef std::reverse_iterator<iterator>             reverse_iterator;
 
   /// BasicBlock ctor - If the function parameter is specified, the basic block
-  /// is automatically inserted at the end of the function.
+  /// is automatically inserted at either the end of the function (if
+  /// InsertBefore is null), or before the specified basic block.
   ///
-  BasicBlock(const std::string &Name = "", Function *Parent = 0);
-
   /// BasicBlock ctor - If the InsertBefore parameter is specified, the basic
   /// block is automatically inserted right before the specified block.
-  BasicBlock(const std::string &Name, BasicBlock *InsertBefore);
+  ///
+  BasicBlock(const std::string &Name = "", Function *Parent = 0,
+             BasicBlock *InsertBefore = 0);
   ~BasicBlock();
 
   // Specialize setName to take care of symbol table majik
