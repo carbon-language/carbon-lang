@@ -615,6 +615,43 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
   LatticeVal &V2State = getValueState(I.getOperand(1));
 
   if (V1State.isOverdefined() || V2State.isOverdefined()) {
+    // If this is an AND or OR with 0 or -1, it doesn't matter that the other
+    // operand is overdefined.
+    if (I.getOpcode() == Instruction::And || I.getOpcode() == Instruction::Or) {
+      LatticeVal *NonOverdefVal = 0;
+      if (!V1State.isOverdefined()) {
+        NonOverdefVal = &V1State;
+      } else if (!V2State.isOverdefined()) {
+        NonOverdefVal = &V2State;
+      }
+
+      if (NonOverdefVal) {
+        if (NonOverdefVal->isUndefined()) {
+          // Could annihilate value.
+          if (I.getOpcode() == Instruction::And)
+            markConstant(IV, &I, Constant::getNullValue(I.getType()));
+          else
+            markConstant(IV, &I, ConstantInt::getAllOnesValue(I.getType()));
+          return;
+        } else {
+          if (I.getOpcode() == Instruction::And) {
+            if (NonOverdefVal->getConstant()->isNullValue()) {
+              markConstant(IV, &I, NonOverdefVal->getConstant());
+              return;      // X or 0 = -1
+            }
+          } else {
+            if (ConstantIntegral *CI =
+                     dyn_cast<ConstantIntegral>(NonOverdefVal->getConstant()))
+              if (CI->isAllOnesValue()) {
+                markConstant(IV, &I, NonOverdefVal->getConstant());
+                return;    // X or -1 = -1
+              }
+          }
+        }
+      }
+    }
+
+
     // If both operands are PHI nodes, it is possible that this instruction has
     // a constant value, despite the fact that the PHI node doesn't.  Check for
     // this condition now.
