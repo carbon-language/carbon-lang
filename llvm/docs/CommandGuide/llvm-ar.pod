@@ -6,7 +6,7 @@ llvm-ar - LLVM archiver
 
 =head1 SYNOPSIS
 
-B<llvm-ar> [-X32_64] [-]{dmpqrtx}[Rabfikouz] [relpos] [count] <archive> [files...]
+B<llvm-ar> [-]{dmpqrtx}[Rabfikouz] [relpos] [count] <archive> [files...]
 
 
 =head1 DESCRIPTION
@@ -14,16 +14,29 @@ B<llvm-ar> [-X32_64] [-]{dmpqrtx}[Rabfikouz] [relpos] [count] <archive> [files..
 The B<llvm-ar> command is similar to the common Unix utility, C<ar>. It 
 archives several files together into a single file. The intent for this is
 to produce archive libraries by LLVM bytecode that can be linked into an
-LLVM program. However, the archive can contain any kind of file. If requested,
-B<llvm-ar> can generate a symbol table that makes linking faster because
+LLVM program. However, the archive can contain any kind of file. By default,
+B<llvm-ar> generates a symbol table that makes linking faster because
 only the symbol table needs to be consulted, not each individual file member
 of the archive. 
 
-While the B<llvm-ar> command produces files that are similar to the format
-used by older C<ar> implementations, it has several significant departures 
-in order to make the archive appropriate for LLVM. Consequently, archives 
-produced with B<llvm-ar> probably won't be readable or editable with any
-C<ar> implementation unless the archive content is very simple.
+The B<llvm-ar> command can be used to I<read> both SVR4 and BSD style archive
+files. However, it cannot be used to write them.  While the B<llvm-ar> command 
+produces files that are I<almost> identical to the format used by other C<ar> 
+implementations, it has two significant departures in order to make the 
+archive appropriate for LLVM. There are first departure is that B<llvm-ar> only
+uses BSD4.4 style long path names (stored immediately after the header) and
+never contains a string table for long names. The second departure is that the
+symbol table is formated for efficient construction of an in-memory data
+structure that permits rapid (red-black tree) lookups. Consequently, archives 
+produced with B<llvm-ar> usually won't be readable or editable with any
+C<ar> implementation or useful for linking.  Using the C<f> modifier to flatten
+file names will make the archive readable by other C<ar> implementations
+but not for linking because the symbol table format for LLVM is unique. If an
+SVR4 or BSD style archive is used with the C<r> (replace) or C<q> (quick
+update) operations, the archive will be reconstructed in LLVM format. This 
+means that the string table will be dropped (in deference to BSD 4.4 long names)
+and an LLVM symbol table will be added (by default). The system symbol table
+will be retained.
 
 Here's where B<llvm-ar> departs from previous C<ar> implementations:
 
@@ -48,10 +61,10 @@ slash (/) character.
 =item I<Compression>
 
 B<llvm-ar> can compress the members of an archive to save space. The 
-compression used depends on what's available on the platform but favors
-bzip2 and then zlib. Note that for very small files, bzip2 may increase 
-the file size but generally does about 10% better than zlib on LLVM 
-bytecode files.
+compression used depends on what's available on the platform and what choices
+the LLVM Compressor utility makes. It generally favors bzip2 but will select
+between "no compression", bzip2 or zlib depending on what makes sense for the
+file's content.
 
 =item I<Directory Recursion>
 
@@ -82,7 +95,7 @@ are used to determine how B<llvm-ar> should process the archive file.
 The Operations and Modifiers are explained in the sections below. The minimal
 set of options is at least one operator and the name of the archive. Typically
 archive files end with a C<.a> suffix, but this is not required. Following
-the F<achive-name> comes a list of F<files> that indicate the specific members
+the F<archive-name> comes a list of F<files> that indicate the specific members
 of the archive to operate on. If the F<files> option is not specified, it
 generally means either "none" or "all" members, depending on the operation.
 
@@ -117,9 +130,9 @@ settings. The F<p> operation never modifies the archive.
 
 Quickly append files to the end of the archive. The F<R>, F<f>, and F<z>
 modifiers apply to this operation.  This operation quickly adds the 
-F<files> to the archive without checking for duplicates that shoud be 
+F<files> to the archive without checking for duplicates that should be 
 removed first. If no F<files> are specified, the archive is not modified. 
-Becasue of the way that B<llvm-ar> constructs the archive file, its dubious 
+Because of the way that B<llvm-ar> constructs the archive file, its dubious 
 whether the F<q> operation is any faster than the F<r> operation.
 
 =item r[Rabfuz]
@@ -211,7 +224,7 @@ archive. Any file whose name begins with a dot will not be added.
 =item [u] 
 
 When replacing existing files in the archive, only replace those files that have
-a timestamp than the timestamp of the member in the archive.
+a time stamp than the time stamp of the member in the archive.
 
 =item [z] 
 
@@ -239,7 +252,7 @@ archive is being created. Using this modifier turns off that warning.
 This modifier requests that an archive index (or symbol table) be added to the
 archive. This is the default mode of operation. The symbol table will contain
 all the externally visible functions and global variables defined by all the
-bytecode files in the archive. Using this modifer is more efficient that using
+bytecode files in the archive. Using this modifier is more efficient that using
 L<llvm-ranlib|llvm-ranlib> which also creates the symbol table.
 
 =item [S]
@@ -251,7 +264,7 @@ occur in the options will prevail.
 =item [v]
 
 This modifier instructs B<llvm-ar> to be verbose about what it is doing. Each
-editing operation taken agains the archive will produce a line of output saying
+editing operation taken against the archive will produce a line of output saying
 what is being done.
 
 =back
@@ -264,11 +277,12 @@ operating systems should be able to read LLVM archive files. The details of the
 file format follow.
 
 Each archive begins with the archive magic number which is the eight printable
-characters !<arch>\n where \n represents the newline character (0x0A). Following
-the magic number, the file is composed of even length members that begin with an
-archive header and end with a \n padding character if necessary (to make the
-length even). Each file member is composed of a header (defined below), an
-optional null-terminated "long file name" and the contents of the file. 
+characters "!<arch>\n" where \n represents the newline character (0x0A). 
+Following the magic number, the file is composed of even length members that 
+begin with an archive header and end with a \n padding character if necessary 
+(to make the length even). Each file member is composed of a header (defined 
+below), an optional newline-terminated "long file name" and the contents of 
+the file. 
 
 The fields of the header are described in the items below. All fields of the
 header contain only ASCII characters, are left justified and are right padded 
@@ -293,28 +307,28 @@ decimal encoded number that provides the number of seconds since the epoch
 
 =item uid - char[6]
 
-This field provides the user id of the file encoded as a decimal ascii string.
+This field provides the user id of the file encoded as a decimal ASCII string.
 This field might not make much sense on non-Unix systems. On Unix, it is the
 same value as the st_uid field of the stat structure returned by the stat(2)
 operating system call.
 
 =item gid - char[6]
 
-This field provides the group id of the file encoded as a decimal ascii string.
+This field provides the group id of the file encoded as a decimal ASCII string.
 This field might not make much sense on non-Unix systems. On Unix, it is the
 same value as the st_gid field of the stat structure returned by the stat(2)
 operating system call.
 
 =item mode - char[8]
 
-This field provides the access mode of the file encoded as an octal ascii 
+This field provides the access mode of the file encoded as an octal ASCII 
 string. This field might not make much sense on non-Unix systems. On Unix, it 
 is the same value as the st_mode field of the stat structure returned by the 
 stat(2) operating system call.
 
 =item size - char[10]
 
-This field provides the size of the file, in bytes, encoded as a decimal ascii
+This field provides the size of the file, in bytes, encoded as a decimal ASCII
 string. If the size field is negative (starts with a minus sign, 0x02D), then
 the archive member is stored in compressed form. The first byte of the archive
 member's data indicates the compression type used. A value of 0 (0x30) indicates
@@ -325,10 +339,43 @@ used.
 =item fmag - char[2]
 
 This field is the archive file member magic number. Its content is always the
-two characters backtick (0x60) and newline (0x0A). This provides some measure 
+two characters back tick (0x60) and newline (0x0A). This provides some measure 
 utility in identifying archive files that have been corrupted.
 
 =back 
+
+The LLVM symbol table has the special name "#_LLVM_SYM_TAB_#". It is presumed
+that no regular archive member file will want this name. The LLVM symbol table 
+is simply composed of a sequence of triplets: byte offset, length of symbol, 
+and the symbol itself. Symbols are not null or newline terminated. Here are 
+the details on each of these items:
+
+=over
+
+=item offset - vbr encoded 32-bit integer
+
+The offset item provides the offset into the archive file where the bytecode
+member is stored that is associated with the symbol. The offset value is 0
+based at the start of the first "normal" file member. To derive the actual
+file offset of the member, you must add the number of bytes occupied by the file
+signature (8 bytes) and the symbol tables. The value of this item is encoded
+using variable bit rate encoding to reduce the size of the symbol table.
+Variable bit rate encoding uses the high bit (0x80) of each byte to indicate 
+if there are more bytes to follow. The remaining 7 bits in each byte carry bits
+from the value. The final byte does not have the high bit set.
+
+=item length - vbr encoded 32-bit integer
+
+The length item provides the length of the symbol that follows. Like this
+I<offset> item, the length is variable bit rate encoded.
+
+=item symbol - character array
+
+The symbol item provides the text of the symbol that is associated with the
+I<offset>. The symbol is not terminated by any character. Its length is provided
+by the I<length> field. Note that is allowed (but unwise) to use non-printing
+characters (even 0x00) in the symbol. This allows for multiple encodings of 
+symbol names.
 
 =head1 EXIT STATUS
 
