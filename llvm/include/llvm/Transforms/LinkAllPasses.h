@@ -18,6 +18,9 @@
 
 #ifdef _MSC_VER
 
+#include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/LoadValueNumbering.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
@@ -63,12 +66,14 @@ namespace {
       (void) llvm::createGCSEPass();
       (void) llvm::createGlobalDCEPass();
       (void) llvm::createGlobalOptimizerPass();
+      (void) llvm::createGlobalsModRefPass();
       (void) llvm::createIPConstantPropagationPass();
       (void) llvm::createIPSCCPPass();
       (void) llvm::createIndVarSimplifyPass();
       (void) llvm::createInstructionCombiningPass();
       (void) llvm::createInternalizePass();
       (void) llvm::createLICMPass();
+      (void) llvm::createLoadValueNumberingPass();
       (void) llvm::createLoopExtractorPass();
       (void) llvm::createLoopInstrumentationPass();
       (void) llvm::createLoopSimplifyPass();
@@ -100,6 +105,7 @@ namespace {
       (void) llvm::createTraceValuesPassForBasicBlocks();
       (void) llvm::createTraceValuesPassForFunction();
       (void) llvm::createUnifyFunctionExitNodesPass();
+      (void) llvm::createUnreachableBlockEliminationPass();
     }
   } X;
 };
