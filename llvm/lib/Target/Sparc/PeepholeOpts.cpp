@@ -112,7 +112,7 @@ class PeepholeOpts: public BasicBlockPass {
   bool visit(MachineBasicBlock& mvec,
              MachineBasicBlock::iterator BBI) const;
 public:
-  PeepholeOpts(const TargetMachine &T): target(T) { }
+  PeepholeOpts(const TargetMachine &TM): target(TM) { }
   bool runOnBasicBlock(BasicBlock &BB); // apply this pass to each BB
   virtual const char *getPassName() const { return "Peephole Optimization"; }
 };
@@ -160,6 +160,6 @@ bool PeepholeOpts::runOnBasicBlock(BasicBlock &BB) {
 // createPeepholeOptsPass - Public entrypoint for peephole optimization
 // and this file as a whole...
 //
-FunctionPass* createPeepholeOptsPass(TargetMachine &T) {
-  return new PeepholeOpts(T);
+FunctionPass* createPeepholeOptsPass(const TargetMachine &TM) {
+  return new PeepholeOpts(TM);
 }
