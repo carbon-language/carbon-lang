@@ -52,10 +52,9 @@ D: Linear scan register allocator, many codegen improvements, Java frontend
 N: Brian Gaeke
 E: gaeke@uiuc.edu
 W: http://www.students.uiuc.edu/~gaeke/
-D: Portions of X86 static and JIT compilers. 
+D: Portions of X86 static and JIT compilers; SparcV8 backend
 D: Dynamic trace optimizer 
 D: FreeBSD/X86 compatibility fixes, the llvm-nm tool
-D: SparcV8 backend
 
 N: Louis Gerbarg
 D: Portions of the PowerPC backend
@@ -76,6 +75,11 @@ N: Chris Lattner
 E: sabre@nondot.org
 W: http://nondot.org/~sabre/
 D: Primary architect of LLVM
+
+N: Andrew Lenharth
+E: alenhar2@cs.uiuc.edu
+W: http://www.lenharth.org/~andrewl/
+D: Alpha backend
 
 N: Michael McCracken
 E: michael.mccracken@gmail.com
