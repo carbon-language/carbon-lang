@@ -12,6 +12,7 @@
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/RegisterAllocation.h"
+#include "llvm/CodeGen/PeepholeOpts.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/Reoptimizer/Mapping/MappingInfo.h" 
@@ -31,6 +32,9 @@ static cl::opt<bool> DisablePreSelect("nopreselect",
 
 static cl::opt<bool> DisableSched("nosched",
                                   cl::desc("Disable local scheduling pass"));
+
+static cl::opt<bool> DisablePeephole("nopeephole",
+                                     cl::desc("Disable peephole optimization pass"));
 
 //---------------------------------------------------------------------------
 // class TargetMachine
@@ -132,12 +136,10 @@ TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 
   PM.add(getRegisterAllocator(*this));
 
-  //PM.add(new OptimizeLeafProcedures());
-  //PM.add(new DeleteFallThroughBranches());
-  //PM.add(new RemoveChainedBranches());    // should be folded with previous
-  //PM.add(new RemoveRedundantOps());       // operations with %g0, NOP, etc.
-
   PM.add(getPrologEpilogInsertionPass());
+
+  if (!DisablePeephole)
+    PM.add(createPeepholeOptsPass(*this));
 
   PM.add(MappingInfoForFunction(Out));  
 
