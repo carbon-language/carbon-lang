@@ -387,7 +387,6 @@ int main(int argc, char **argv) {
   // arguments).  This pass merges the two functions.
   //
   Passes.add(createFunctionResolvingPass());
-  Passes.add(createFunctionResolvingPass());
 
   if (!NoInternalize) {
     // Now that composite has been compiled, scan through the module, looking
