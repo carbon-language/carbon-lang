@@ -116,16 +116,16 @@ bool LiveInterval::joinable(const LiveInterval &other, unsigned CopyIdx) const {
     if (i->start == j->start) {
       // If this is not the allowed value merge, we cannot join.
       if (i->ValId != ThisValIdx || j->ValId != OtherValIdx)
-        return true;
+        return false;
     } else if (i->start < j->start) {
       if (i->end > j->start) {
         if (i->ValId != ThisValIdx || j->ValId != OtherValIdx)
-          return true;
+          return false;
       }
     } else {
       if (j->end > i->start) {
         if (i->ValId != ThisValIdx || j->ValId != OtherValIdx)
-          return true;
+          return false;
       }
     }
     if (i->end < j->end)
@@ -134,7 +134,7 @@ bool LiveInterval::joinable(const LiveInterval &other, unsigned CopyIdx) const {
       ++j;
   }
 
-  return false;
+  return true;
 }
 
 

@@ -577,7 +577,7 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
         IntA.containsOneValue() && IntB.containsOneValue();
 
       unsigned MIDefIdx = getDefIndex(getInstructionIndex(mi));
-      if ((TriviallyJoinable || !IntB.joinable(IntA, MIDefIdx)) &&
+      if ((TriviallyJoinable || IntB.joinable(IntA, MIDefIdx)) &&
           !overlapsAliases(&IntA, &IntB)) {
         IntB.join(IntA, MIDefIdx);
 
