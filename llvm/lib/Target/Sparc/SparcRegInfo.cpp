@@ -979,7 +979,19 @@ MachineInstr * UltraSparcRegInfo::cpMem2RegMI(const unsigned SrcPtrReg,
 }
 
 
+MachineInstr* UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest) const {
 
+  MachineInstr * MI = NULL;
+
+  MI = new MachineInstr(ADD, 3);
+  MI->SetMachineOperand(0, MachineOperand:: MO_VirtualRegister, Src, false);
+  MI->SetMachineOperand(1, SparcIntRegOrder::g0, false);
+  MI->SetMachineOperand(2, MachineOperand:: MO_VirtualRegister, Dest, true);
+  
+
+  return MI;
+
+}
 
 
 

@@ -401,6 +401,9 @@ class UltraSparcRegInfo : public MachineRegInfo
   MachineInstr * cpMem2RegMI(const unsigned SrcPtrReg, const int Offset,
 			     const unsigned DestReg, const int RegType) const;
 
+  MachineInstr* cpValue2Value(Value *Src, Value *Dest) const;
+
+
   inline bool isRegVolatile(const int RegClassID, const int Reg) const {
     return  (MachineRegClassArr[RegClassID])->isRegVolatile(Reg);
   }

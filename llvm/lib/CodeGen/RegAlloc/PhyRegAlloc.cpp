@@ -22,7 +22,7 @@ PhyRegAlloc::PhyRegAlloc(const Method *const M,
 			  Meth(M), TM(tm), LVI(Lvi), LRI(M, tm, RegClassList), 
 			  MRI( tm.getRegInfo() ),
                           NumOfRegClasses(MRI.getNumOfRegClasses()),
-			  AddedInstrMap(), StackOffsets()
+			  AddedInstrMap(), StackOffsets(), PhiInstList()
 
 {
   // **TODO: use an actual reserved color list 
@@ -227,7 +227,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
     // iterate over all the machine instructions in BB
     for( ; MInstIterator != MIVec.end(); ++MInstIterator) {  
 
-      const MachineInstr *const MInst = *MInstIterator; 
+      const MachineInstr * MInst = *MInstIterator; 
 
       // get the LV set after the instruction
       const LiveVarSet *const LVSetAI = 
@@ -267,6 +267,12 @@ void PhyRegAlloc::buildInterferenceGraphs()
 	  if( MInst->implicitRefIsDefined(z) )
 	    addInterference( MInst->getImplicitRef(z), LVSetAI, isCallInst );
       }
+
+
+      // record phi instrns in PhiInstList
+      if( TM.getInstrInfo().isDummyPhiInstr(MInst->getOpCode()) )
+	PhiInstList.push_back( MInst );
+
 
     } // for all machine instructions in BB
     
@@ -1115,6 +1121,53 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs()
 
 
 
+void PhyRegAlloc::insertPhiEleminateInstrns() {
+
+  vector< const MachineInstr *>:: const_iterator It = PhiInstList.begin();
+
+  for( ; It !=  PhiInstList.end(); ++It ) {
+
+    const MachineInstr *PhiMI = *It;
+
+    Value *Def =  (PhiMI->getOperand(0)).getVRegValue();
+    const LiveRange *LROfDef = LRI.getLiveRangeForValue( Def );
+
+    assert(LROfDef && "NO LR for a def of phi");
+
+    for(unsigned OpNum=1; OpNum < PhiMI->getNumOperands(); ++OpNum) {
+
+      if( OpNum % 2) {   // i.e., the  
+
+	Value *Use =  (PhiMI->getOperand(OpNum)).getVRegValue();
+
+	const LiveRange *LROfUse = LRI.getLiveRangeForValue( Use );
+
+	if( LROfUse != LROfDef) {
+
+	  // the result of the phi received a live range different to
+	  // that of this use, so copy it
+
+	  const BasicBlock *BB =  
+	    (BasicBlock *) (PhiMI->getOperand(OpNum+1)).getVRegValue();
+
+	  MachineCodeForBasicBlock& MIVec = (BB)->getMachineInstrVec();
+
+	  MachineInstr *AdI = MRI.cpValue2Value(Use, Def);
+
+	  MIVec.push_back( AdI );
+
+	  cerr << "\n%%% Added a phi elimination instr: " << *AdI;
+
+	} // if LRs are different
+	
+      } // if operand is an incoming Value (i.e., not a BB)
+      
+    } // for all phi operands
+
+  } // for all phi instrns in PhiInstMap
+    
+}
+
 
 
 //----------------------------------------------------------------------------
@@ -1150,6 +1203,10 @@ void PhyRegAlloc::allocateRegisters()
   
   LRI.coalesceLRs();                    // coalesce all live ranges
   
+  // coalscing could not get rid of all phi's, add phi elimination
+  // instructions
+  // insertPhiEleminateInstrns();
+
   if( DEBUG_RA) {
     // print all LRs in all reg classes
     for( unsigned int rc=0; rc < NumOfRegClasses  ; rc++)  
