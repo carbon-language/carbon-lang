@@ -119,6 +119,7 @@ ALIASLIST(A_AH      , X86::EAX, X86::AX, 0)
 ALIASLIST(A_CH      , X86::ECX, X86::CX, 0)
 ALIASLIST(A_DH      , X86::EDX, X86::DX, 0)
 ALIASLIST(A_BH      , X86::EBX, X86::BX, 0)
+#undef ALIASLIST
 
 // We are now done with the R* macros
 #undef R
