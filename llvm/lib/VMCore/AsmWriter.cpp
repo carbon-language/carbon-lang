@@ -97,9 +97,9 @@ static std::string getLLVMName(const std::string &Name) {
 }
 
 
-// If the module has a symbol table, take all global types and stuff their
-// names into the TypeNames map.
-//
+/// fillTypeNameTable - If the module has a symbol table, take all global types
+/// and stuff their names into the TypeNames map.
+///
 static void fillTypeNameTable(const Module *M,
                               std::map<const Type *, std::string> &TypeNames) {
   if (!M) return;
@@ -381,10 +381,10 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
 }
 
 
-// WriteAsOperand - Write the name of the specified value out to the specified
-// ostream.  This can be useful when you just want to print int %reg126, not the
-// whole instruction that generated it.
-//
+/// WriteAsOperand - Write the name of the specified value out to the specified
+/// ostream.  This can be useful when you just want to print int %reg126, not
+/// the whole instruction that generated it.
+///
 static void WriteAsOperandInternal(std::ostream &Out, const Value *V, 
                                    bool PrintName,
                                   std::map<const Type*, std::string> &TypeTable,
@@ -420,7 +420,6 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
     }
   }
 }
-
 
 
 /// WriteAsOperand - Write the name of the specified value out to the specified
@@ -503,9 +502,9 @@ private :
 };
 }  // end of anonymous namespace
 
-// printTypeAtLeastOneLevel - Print out one level of the possibly complex type
-// without considering any symbolic types that we may have equal to it.
-//
+/// printTypeAtLeastOneLevel - Print out one level of the possibly complex type
+/// without considering any symbolic types that we may have equal to it.
+///
 std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
   if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
     printType(FTy->getReturnType()) << " (";
@@ -602,9 +601,9 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
 }
 
 
-// printSymbolTable - Run through symbol table looking for named constants
-// if a named constant is found, emit it's declaration...
-//
+/// printSymbolTable - Run through symbol table looking for named constants
+/// if a named constant is found, emit it's declaration...
+///
 void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
   for (SymbolTable::const_iterator TI = ST.begin(); TI != ST.end(); ++TI) {
     SymbolTable::type_const_iterator I = ST.type_begin(TI->first);
@@ -628,8 +627,8 @@ void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
 }
 
 
-// printConstant - Print out a constant pool entry...
-//
+/// printConstant - Print out a constant pool entry...
+///
 void AssemblyWriter::printConstant(const Constant *CPV) {
   // Don't print out unnamed constants, they will be inlined
   if (!CPV->hasName()) return;
@@ -644,8 +643,8 @@ void AssemblyWriter::printConstant(const Constant *CPV) {
   Out << "\n";
 }
 
-// printFunction - Print all aspects of a function.
-//
+/// printFunction - Print all aspects of a function.
+///
 void AssemblyWriter::printFunction(const Function *F) {
   // Print out the return type and name...
   Out << "\n";
@@ -699,9 +698,9 @@ void AssemblyWriter::printFunction(const Function *F) {
   Table.purgeFunction();
 }
 
-// printArgument - This member is called for every argument that 
-// is passed into the function.  Simply print it out
-//
+/// printArgument - This member is called for every argument that is passed into
+/// the function.  Simply print it out
+///
 void AssemblyWriter::printArgument(const Argument *Arg) {
   // Insert commas as we go... the first arg doesn't get a comma
   if (Arg != &Arg->getParent()->afront()) Out << ", ";
@@ -716,8 +715,8 @@ void AssemblyWriter::printArgument(const Argument *Arg) {
     Out << "<badref>";
 }
 
-// printBasicBlock - This member is called for each basic block in a method.
-//
+/// printBasicBlock - This member is called for each basic block in a method.
+///
 void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
     Out << "\n" << BB->getName() << ":";
@@ -761,9 +760,9 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
 }
 
 
-// printInfoComment - Print a little comment after the instruction indicating
-// which slot it occupies.
-//
+/// printInfoComment - Print a little comment after the instruction indicating
+/// which slot it occupies.
+///
 void AssemblyWriter::printInfoComment(const Value &V) {
   if (V.getType() != Type::VoidTy) {
     Out << "\t\t; <";
@@ -778,8 +777,8 @@ void AssemblyWriter::printInfoComment(const Value &V) {
   }
 }
 
-// printInstruction - This member is called for each Instruction in a method.
-//
+/// printInstruction - This member is called for each Instruction in a method.
+///
 void AssemblyWriter::printInstruction(const Instruction &I) {
   if (AnnotationWriter) AnnotationWriter->emitInstructionAnnot(&I, Out);
 

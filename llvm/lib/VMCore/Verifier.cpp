@@ -62,8 +62,8 @@ namespace {  // Anonymous namespace for class
     bool Broken;          // Is this module found to be broken?
     bool RealPass;        // Are we not being run by a PassManager?
     bool AbortBroken;     // If broken, should it or should it not abort?
-    Module *Mod;      // Module we are verifying right now
-    DominatorSet *DS; // Dominator set, caution can be null!
+    Module *Mod;          // Module we are verifying right now
+    DominatorSet *DS;     // Dominator set, caution can be null!
 
     Verifier() : Broken(false), RealPass(true), AbortBroken(true), DS(0) {}
     Verifier(bool AB) : Broken(false), RealPass(true), AbortBroken(AB), DS(0) {}
@@ -78,7 +78,6 @@ namespace {  // Anonymous namespace for class
       // If this is a real pass, in a pass manager, we must abort before
       // returning back to the pass manager, or else the pass manager may try to
       // run other passes on the broken module.
-      //
       if (RealPass)
         abortIfBroken();
       return false;
@@ -92,7 +91,6 @@ namespace {  // Anonymous namespace for class
       // If this is a real pass, in a pass manager, we must abort before
       // returning back to the pass manager, or else the pass manager may try to
       // run other passes on the broken module.
-      //
       if (RealPass)
         abortIfBroken();
 
@@ -118,9 +116,9 @@ namespace {  // Anonymous namespace for class
         AU.addRequired<DominatorSet>();
     }
 
-    // abortIfBroken - If the module is broken and we are supposed to abort on
-    // this condition, do so.
-    //
+    /// abortIfBroken - If the module is broken and we are supposed to abort on
+    /// this condition, do so.
+    ///
     void abortIfBroken() const {
       if (Broken && AbortBroken) {
         std::cerr << "Broken module found, compilation aborted!\n";
@@ -167,7 +165,6 @@ namespace {  // Anonymous namespace for class
     // CheckFailed - A check failed, so print out the condition and the message
     // that failed.  This provides a nice place to put a breakpoint if you want
     // to see why something is not correct.
-    //
     void CheckFailed(const std::string &Message,
                      const Value *V1 = 0, const Value *V2 = 0,
                      const Value *V3 = 0, const Value *V4 = 0) {
@@ -338,15 +335,16 @@ void Verifier::visitReturnInst(ReturnInst &RI) {
   visitTerminatorInst(RI);
 }
 
-// visitUserOp1 - User defined operators shouldn't live beyond the lifetime of a
-// pass, if any exist, it's an error.
-//
+/// visitUserOp1 - User defined operators shouldn't live beyond the lifetime of
+/// a pass, if any exist, it's an error.
+///
 void Verifier::visitUserOp1(Instruction &I) {
   Assert1(0, "User-defined operators should not live outside of a pass!",
           &I);
 }
 
-// visitPHINode - Ensure that a PHI node is well formed.
+/// visitPHINode - Ensure that a PHI node is well formed.
+///
 void Verifier::visitPHINode(PHINode &PN) {
   // Ensure that the PHI nodes are all grouped together at the top of the block.
   // This can be tested by checking whether the instruction before this is
@@ -397,9 +395,9 @@ void Verifier::visitCallInst(CallInst &CI) {
   visitInstruction(CI);
 }
 
-// visitBinaryOperator - Check that both arguments to the binary operator are
-// of the same type!
-//
+/// visitBinaryOperator - Check that both arguments to the binary operator are
+/// of the same type!
+///
 void Verifier::visitBinaryOperator(BinaryOperator &B) {
   Assert1(B.getOperand(0)->getType() == B.getOperand(1)->getType(),
           "Both operands to a binary operator are not of the same type!", &B);
@@ -465,8 +463,8 @@ void Verifier::visitStoreInst(StoreInst &SI) {
 }
 
 
-// verifyInstruction - Verify that an instruction is well formed.
-//
+/// verifyInstruction - Verify that an instruction is well formed.
+///
 void Verifier::visitInstruction(Instruction &I) {
   BasicBlock *BB = I.getParent();  
   Assert1(BB, "Instruction not embedded in basic block!", &I);
@@ -486,7 +484,6 @@ void Verifier::visitInstruction(Instruction &I) {
   // Check that all uses of the instruction, if they are instructions
   // themselves, actually have parent basic blocks.  If the use is not an
   // instruction, it is an error!
-  //
   for (User::use_iterator UI = I.use_begin(), UE = I.use_end();
        UI != UE; ++UI) {
     Assert1(isa<Instruction>(*UI), "Use of instruction is not an instruction!",
@@ -507,7 +504,6 @@ void Verifier::visitInstruction(Instruction &I) {
       BasicBlock *OpBlock = Op->getParent();
 
       // Check that a definition dominates all of its uses.
-      //
       if (!isa<PHINode>(I)) {
         // Invoke results are only usable in the normal destination, not in the
         // exceptional destination.
@@ -531,6 +527,7 @@ void Verifier::visitInstruction(Instruction &I) {
 }
 
 /// visitIntrinsicFunction - Allow intrinsics to be verified in different ways.
+///
 void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   Function *IF = CI.getCalledFunction();
   const FunctionType *FT = IF->getFunctionType();
@@ -626,9 +623,9 @@ bool llvm::verifyFunction(const Function &f) {
   return V.Broken;
 }
 
-// verifyModule - Check a module for errors, printing messages on stderr.
-// Return true if the module is corrupt.
-//
+/// verifyModule - Check a module for errors, printing messages on stderr.
+/// Return true if the module is corrupt.
+///
 bool llvm::verifyModule(const Module &M) {
   PassManager PM;
   Verifier *V = new Verifier();
