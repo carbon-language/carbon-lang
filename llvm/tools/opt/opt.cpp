@@ -44,7 +44,7 @@ InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"),
-               cl::value_desc("filename"));
+               cl::value_desc("filename"), cl::init("-"));
 
 static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 
   // Figure out what stream we are supposed to write to...
   std::ostream *Out = &std::cout;  // Default to printing to stdout...
-  if (OutputFilename != "") {
+  if (OutputFilename != "-") {
     if (!Force && std::ifstream(OutputFilename.c_str())) {
       // If force is not specified, make sure not to overwrite a file!
       std::cerr << argv[0] << ": error opening '" << OutputFilename
