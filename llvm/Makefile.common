@@ -1,9 +1,9 @@
 #===-- Makefile.common - Common make rules for LLVM -------*- makefile -*--====
 #
 # This file is included by all of the LLVM makefiles.  This file defines common
-# rules to do things like compile a .cpp file or generate dependancy info.
-# These are platform dependant, so this is the file used to specify these
-# system dependant operations.
+# rules to do things like compile a .cpp file or generate dependency info.
+# These are platform dependent, so this is the file used to specify these
+# system dependent operations.
 #
 # The following functionality can be set by setting incoming variables.
 # The variable $(LEVEL) *must* be set:
@@ -398,7 +398,7 @@ ifdef TOOLNAME
 Link += -rpath $(DESTTOOLCURRENT)
 endif
 
-# Create dependancy file from CPP file, send to stdout.
+# Create dependency file from CPP file, send to stdout.
 Depend   := $(CXX) -MM -I$(LEVEL)/include $(CPPFLAGS) 
 DependC  := $(CC)  -MM -I$(LEVEL)/include $(CPPFLAGS) 
 
@@ -815,7 +815,7 @@ clean::
 ###########################################################################
 
 # If dependencies were generated for the file that included this file,
-# include the dependancies now...
+# include the dependencies now...
 #
 SourceBaseNames := $(basename $(notdir $(filter-out Debug/%, $(Source))))
 SourceDepend := $(SourceBaseNames:%=$(BUILD_OBJ_DIR)/Depend/%.d)
