@@ -25,6 +25,7 @@
 namespace llvm {
 
 struct FunctionInfo;        // Defined in ExecutionAnnotations.h
+class gep_type_iterator;
 
 // AllocaHolder - Object to track all of the blocks of memory allocated by
 // alloca.  When the function returns, this object is poped off the execution
@@ -152,8 +153,8 @@ public:
 
   //FIXME: private:
 public:
-  GenericValue executeGEPOperation(Value *Ptr, User::op_iterator I,
-				   User::op_iterator E, ExecutionContext &SF);
+  GenericValue executeGEPOperation(Value *Ptr, gep_type_iterator I,
+				   gep_type_iterator E, ExecutionContext &SF);
 
 private:  // Helper functions
   // SwitchToNewBasicBlock - Start execution in a new basic block and run any

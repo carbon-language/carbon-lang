@@ -15,16 +15,18 @@
 #include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "Support/Statistic.h"
 #include <cmath>  // For fmod
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumDynamicInsts("lli", "Number of dynamic instructions executed");
 }
 
-Interpreter *TheEE = 0;
+namespace llvm {
+  Interpreter *TheEE = 0;
+}
 
 //===----------------------------------------------------------------------===//
 //                     Value Manipulation code
@@ -42,8 +44,8 @@ GenericValue Interpreter::getOperandValue(Value *V, ExecutionContext &SF) {
     case Instruction::Cast:
       return executeCastOperation(CE->getOperand(0), CE->getType(), SF);
     case Instruction::GetElementPtr:
-      return TheEE->executeGEPOperation(CE->getOperand(0), CE->op_begin()+1,
-					CE->op_end(), SF);
+      return TheEE->executeGEPOperation(CE->getOperand(0), gep_type_begin(CE),
+					gep_type_end(CE), SF);
     case Instruction::Add:
       return executeAddInst(getOperandValue(CE->getOperand(0), SF),
                             getOperandValue(CE->getOperand(1), SF),
@@ -601,33 +603,41 @@ void Interpreter::visitFreeInst(FreeInst &I) {
 
 // getElementOffset - The workhorse for getelementptr.
 //
-GenericValue Interpreter::executeGEPOperation(Value *Ptr, User::op_iterator I,
-					      User::op_iterator E,
+GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
+					      gep_type_iterator E,
 					      ExecutionContext &SF) {
   assert(isa<PointerType>(Ptr->getType()) &&
          "Cannot getElementOffset of a nonpointer type!");
 
   PointerTy Total = 0;
-  const Type *Ty = Ptr->getType();
 
   for (; I != E; ++I) {
-    if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    if (const StructType *STy = dyn_cast<StructType>(*I)) {
       const StructLayout *SLO = TD.getStructLayout(STy);
       
       // Indices must be ubyte constants...
       const ConstantUInt *CPU = cast<ConstantUInt>(*I);
-      assert(CPU->getType() == Type::UByteTy);
       unsigned Index = CPU->getValue();
       
       Total += SLO->MemberOffsets[Index];
-      Ty = STy->getElementTypes()[Index];
-    } else if (const SequentialType *ST = cast<SequentialType>(Ty)) {
+    } else {
+      const SequentialType *ST = cast<SequentialType>(*I);
       // Get the index number for the array... which must be long type...
-      assert((*I)->getType() == Type::LongTy);
-      unsigned Idx = getOperandValue(*I, SF).LongVal;
-      Ty = ST->getElementType();
-      unsigned Size = TD.getTypeSize(Ty);
-      Total += Size*Idx;
+      GenericValue IdxGV = getOperandValue(I.getOperand(), SF);
+
+      uint64_t Idx;
+      switch (I.getOperand()->getType()->getPrimitiveID()) {
+      default: assert(0 && "Illegal getelementptr index for sequential type!");
+      case Type::SByteTyID:  Idx = IdxGV.SByteVal; break;
+      case Type::ShortTyID:  Idx = IdxGV.ShortVal; break;
+      case Type::IntTyID:    Idx = IdxGV.IntVal; break;
+      case Type::LongTyID:   Idx = IdxGV.LongVal; break;
+      case Type::UByteTyID:  Idx = IdxGV.UByteVal; break;
+      case Type::UShortTyID: Idx = IdxGV.UShortVal; break;
+      case Type::UIntTyID:   Idx = IdxGV.UIntVal; break;
+      case Type::ULongTyID:  Idx = IdxGV.ULongVal; break;
+      }
+      Total += TD.getTypeSize(ST->getElementType())*Idx;
     }
   }
 
@@ -639,7 +649,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, User::op_iterator I,
 void Interpreter::visitGetElementPtrInst(GetElementPtrInst &I) {
   ExecutionContext &SF = ECStack.back();
   SetValue(&I, TheEE->executeGEPOperation(I.getPointerOperand(),
-                                   I.idx_begin(), I.idx_end(), SF), SF);
+                                   gep_type_begin(I), gep_type_end(I), SF), SF);
 }
 
 void Interpreter::visitLoadInst(LoadInst &I) {
@@ -912,5 +922,3 @@ void Interpreter::run() {
     visit(I);   // Dispatch to one of the visit* methods...
   }
 }
-
-} // End llvm namespace
