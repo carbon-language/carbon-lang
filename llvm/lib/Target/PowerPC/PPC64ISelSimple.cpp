@@ -94,10 +94,10 @@ namespace {
     std::map<AllocaInst*, unsigned> AllocaMap;
 
     // Target configuration data
-    const unsigned ParameterSaveAreaOffset;
+    const unsigned ParameterSaveAreaOffset, MaxArgumentStackSpace;
 
     ISel(TargetMachine &tm) : TM(reinterpret_cast<PPC64TargetMachine&>(tm)), 
-      F(0), BB(0), ParameterSaveAreaOffset(24) {}
+      F(0), BB(0), ParameterSaveAreaOffset(24), MaxArgumentStackSpace(32) {}
 
     bool doInitialization(Module &M) {
       // Add external functions that we may call
@@ -1290,10 +1290,10 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       default: assert(0 && "Unknown class!");
       }
 
-    // Just to be safe, we'll always reserve the full 64 bytes worth of
-    // argument passing space in case any called code gets funky on us.
-    if (NumBytes < ParameterSaveAreaOffset + 64) 
-      NumBytes = ParameterSaveAreaOffset + 64;
+    // Just to be safe, we'll always reserve the full argument passing space in
+    // case any called code gets funky on us.
+    if (NumBytes < ParameterSaveAreaOffset + MaxArgumentStackSpace) 
+      NumBytes = ParameterSaveAreaOffset + MaxArgumentStackSpace;
 
     // Adjust the stack pointer for the new arguments...
     // These functions are automatically eliminated by the prolog/epilog pass
