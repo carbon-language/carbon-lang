@@ -22,6 +22,7 @@
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "Support/SetVector.h"
 #include "Support/Statistic.h"
 using namespace llvm;
 
@@ -40,7 +41,8 @@ namespace {
     
     bool runOnBasicBlock(BasicBlock &BB);
     
-    void DeleteDeadValueChains(Value *V, AliasSetTracker &AST);
+    void DeleteDeadInstructionChains(Instruction *I,
+                                     SetVector<Instruction*> &DeadInsts);
 
     // getAnalysisUsage - We require post dominance frontiers (aka Control
     // Dependence Graph)
@@ -67,20 +69,24 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 
   }
 
+  // PotentiallyDeadInsts - Deleting dead stores from the program can make other
+  // instructions die if they were only used as operands to stores.  Keep track
+  // of the operands to stores so that we can try deleting them at the end of
+  // the traversal.
+  SetVector<Instruction*> PotentiallyDeadInsts;
+
   bool MadeChange = false;
   for (BasicBlock::iterator BBI = BB.end(); BBI != BB.begin(); ) {
     Instruction *I = --BBI;   // Keep moving iterator backwards
     
-#if 0
-    // AST doesn't support malloc/free/alloca???
-    if (isa<FreeInst>(I)) {
+    // If this is a free instruction, it makes the free'd location dead!
+    if (FreeInst *FI = dyn_cast<FreeInst>(I)) {
       // Free instructions make any stores to the free'd location dead.
-      KillLocs.insert(I);
+      KillLocs.add(FI);
+      continue;
     }
-#endif
 
-    if (!isa<FreeInst>(I) &&
-        (!isa<StoreInst>(I) || cast<StoreInst>(I)->isVolatile())) {
+    if (!isa<StoreInst>(I) || cast<StoreInst>(I)->isVolatile()) {
       // If this is a non-store instruction, it makes everything referenced no
       // longer killed.  Remove anything aliased from the alias set tracker.
       KillLocs.remove(I);
@@ -91,59 +97,62 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     // the stored location is already in the tracker, then this is a dead
     // store.  We can just delete it here, but while we're at it, we also
     // delete any trivially dead expression chains.
-    unsigned ValSize;
-    Value *Ptr;
-    if (isa<StoreInst>(I)) {
-      Ptr = I->getOperand(1);
-      ValSize = TD.getTypeSize(I->getOperand(0)->getType());
-    } else {
-      Ptr = I->getOperand(0);
-      ValSize = ~0;
-    }
+    unsigned ValSize = TD.getTypeSize(I->getOperand(0)->getType());
+    Value *Ptr = I->getOperand(1);
 
     if (AliasSet *AS = KillLocs.getAliasSetForPointerIfExists(Ptr, ValSize))
       for (AliasSet::iterator ASI = AS->begin(), E = AS->end(); ASI != E; ++ASI)
         if (AA.alias(ASI.getPointer(), ASI.getSize(), Ptr, ValSize)
                == AliasAnalysis::MustAlias) {
           // If we found a must alias in the killed set, then this store really
-          // is dead.  Delete it now.
+          // is dead.  Remember that the various operands of the store now have
+          // fewer users.  At the end we will see if we can delete any values
+          // that are dead as part of the store becoming dead.
+          if (Instruction *Op = dyn_cast<Instruction>(I->getOperand(0)))
+            PotentiallyDeadInsts.insert(Op);
+          if (Instruction *Op = dyn_cast<Instruction>(Ptr))
+            PotentiallyDeadInsts.insert(Op);
+
+          // Delete it now.
           ++BBI;                        // Don't invalidate iterator.
-          Value *Val = I->getOperand(0);
           BB.getInstList().erase(I);    // Nuke the store!
           ++NumStores;
-          DeleteDeadValueChains(Val, KillLocs);   // Delete any now-dead instrs
-          DeleteDeadValueChains(Ptr, KillLocs);   // Delete any now-dead instrs
           MadeChange = true;
           goto BigContinue;
         }
 
     // Otherwise, this is a non-dead store just add it to the set of dead
     // locations.
-    KillLocs.add(I);
+    KillLocs.add(cast<StoreInst>(I));
   BigContinue:;
+  }
+
+  while (!PotentiallyDeadInsts.empty()) {
+    Instruction *I = PotentiallyDeadInsts.back();
+    PotentiallyDeadInsts.pop_back();
+    DeleteDeadInstructionChains(I, PotentiallyDeadInsts);
   }
   return MadeChange;
 }
 
-void DSE::DeleteDeadValueChains(Value *V, AliasSetTracker &AST) {
-  // Value must be dead.
-  if (!V->use_empty()) return;
+void DSE::DeleteDeadInstructionChains(Instruction *I,
+                                      SetVector<Instruction*> &DeadInsts) {
+  // Instruction must be dead.
+  if (!I->use_empty() || !isInstructionTriviallyDead(I)) return;
 
-  if (Instruction *I = dyn_cast<Instruction>(V))
-    if (isInstructionTriviallyDead(I)) {
-      AST.deleteValue(I);
-      getAnalysis<AliasAnalysis>().deleteValue(I);
+  // Let the alias analysis know that we have nuked a value.
+  getAnalysis<AliasAnalysis>().deleteValue(I);
 
-      // See if this made any operands dead.  We do it this way in case the
-      // instruction uses the same operand twice.  We don't want to delete a
-      // value then reference it.
-      while (unsigned NumOps = I->getNumOperands()) {
-        Value *Op = I->getOperand(NumOps-1);
-        I->op_erase(I->op_end()-1);         // Drop from the operand list.
-        DeleteDeadValueChains(Op, AST);  // Attempt to nuke it.
-      }
-
-      I->getParent()->getInstList().erase(I);
-      ++NumOther;
-    }
+  // See if this made any operands dead.  We do it this way in case the
+  // instruction uses the same operand twice.  We don't want to delete a
+  // value then reference it.
+  while (unsigned NumOps = I->getNumOperands()) {
+    Instruction *Op = dyn_cast<Instruction>(I->getOperand(NumOps-1));
+    I->op_erase(I->op_end()-1);         // Drop from the operand list.
+    
+    if (Op) DeadInsts.insert(Op);       // Attempt to nuke it later.
+  }
+  
+  I->getParent()->getInstList().erase(I);
+  ++NumOther;
 }
