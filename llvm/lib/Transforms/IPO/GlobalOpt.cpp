@@ -374,16 +374,22 @@ static bool ProcessInternalGlobal(GlobalVariable *GV, Module::giterator &GVI) {
     // Delete it now.
     if (!GS.isLoaded) {
       DEBUG(std::cerr << "GLOBAL NEVER LOADED: " << *GV);
+      unsigned NumUsers = GV->use_size();
+
       // Delete any stores we can find to the global.  We may not be able to
       // make it completely dead though.
       CleanupConstantGlobalUsers(GV, GV->getInitializer());
+
+      // Did we delete any stores?
+      bool Changed = NumUsers != GV->use_size();
 
       // If the global is dead now, delete it.
       if (GV->use_empty()) {
         GV->getParent()->getGlobalList().erase(GV);
         ++NumDeleted;
+        Changed = true;
       }
-      return true;
+      return Changed;
           
     } else if (GS.StoredType <= GlobalStatus::isInitializerStored) {
       DEBUG(std::cerr << "MARKING CONSTANT: " << *GV);
