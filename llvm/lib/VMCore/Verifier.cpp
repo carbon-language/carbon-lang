@@ -321,6 +321,9 @@ void Verifier::visitFunction(Function &F) {
 void Verifier::visitBasicBlock(BasicBlock &BB) {
   InstsInThisBlock.clear();
 
+  // Ensure that basic blocks have terminators!
+  Assert1(BB.getTerminator(), "Basic Block does not have terminator!", &BB);
+
   // Check constraints that this basic block imposes on all of the PHI nodes in
   // it.
   if (isa<PHINode>(BB.front())) {
@@ -364,9 +367,6 @@ void Verifier::visitBasicBlock(BasicBlock &BB) {
       }
     }
   }
-
-  // Ensure that basic blocks have terminators!
-  Assert1(BB.getTerminator(), "Basic Block does not have terminator!", &BB);
 }
 
 void Verifier::visitTerminatorInst(TerminatorInst &I) {
