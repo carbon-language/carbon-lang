@@ -1448,10 +1448,15 @@ void DSGraph::mergeInGraph(const DSCallSite &CS,
 
   DSScalarMap GSM = Graph.getScalarMap();
   for (DSScalarMap::global_iterator GI = GSM.global_begin(),
-         E = GSM.global_end(); GI != E; ++GI)
-    if (PathExistsToClonedNode(Graph.getNodeForValue(*GI).getNode(), RC,
-                               NodesReachCopiedNodes))
-      GlobalsToCopy.push_back(*GI);
+         E = GSM.global_end(); GI != E; ++GI) {
+    DSNode *GlobalNode = Graph.getNodeForValue(*GI).getNode();
+    for (DSNode::edge_iterator EI = GlobalNode->edge_begin(),
+           EE = GlobalNode->edge_end(); EI != EE; ++EI)
+      if (PathExistsToClonedNode(EI->getNode(), RC, NodesReachCopiedNodes)) {
+        GlobalsToCopy.push_back(*GI);
+        break;
+      }
+  }
 
   // Copy aux calls that are needed.
   for (unsigned i = 0, e = AuxCallToCopy.size(); i != e; ++i)
