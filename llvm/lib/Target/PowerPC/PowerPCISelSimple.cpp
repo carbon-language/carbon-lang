@@ -366,16 +366,11 @@ unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
     return Reg;
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     // GV is located at PC + distance
-    unsigned LRsave = makeAnotherReg(Type::IntTy);
     unsigned CurPC = makeAnotherReg(Type::IntTy);
     unsigned Reg1 = makeAnotherReg(V->getType());
     unsigned Reg2 = makeAnotherReg(V->getType());
-    // Save the old LR
-    BuildMI(*MBB, IPt, PPC32::MFLR, 0, LRsave);
     // Move PC to destination reg
     BuildMI(*MBB, IPt, PPC32::MovePCtoLR, 0, CurPC);
-    // Restore the old LR
-    BuildMI(*MBB, IPt, PPC32::MTLR, 1).addReg(LRsave);
     // Move value at PC + distance into return reg
     BuildMI(*MBB, IPt, PPC32::LOADHiAddr, 2, Reg1).addReg(CurPC)
       .addGlobalAddress(GV);
@@ -1202,10 +1197,16 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
     unsigned ArgOffset = 0;
-    unsigned GPR_remaining = 8;
-    unsigned FPR_remaining = 13;
-    unsigned GPR_idx = 3;
-    unsigned FPR_idx = 1;
+    int GPR_remaining = 8, FPR_remaining = 8;
+    unsigned GPR[] = { 
+      PPC32::R3, PPC32::R4, PPC32::R5, PPC32::R6,
+      PPC32::R7, PPC32::R8, PPC32::R9, PPC32::R10,
+    };
+    unsigned FPR[] = {
+      PPC32::F1, PPC32::F2, PPC32::F3, PPC32::F4,
+      PPC32::F5, PPC32::F6, PPC32::F7, PPC32::F8
+    };
+    unsigned GPR_idx = 0, FPR_idx = 0;
     
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
       unsigned ArgReg;
@@ -1218,7 +1219,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
           
         // Reg or stack?
         if (GPR_remaining > 0) {
-          BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg)
+          BuildMI(BB, PPC32::OR, 2, GPR[GPR_idx]).addReg(ArgReg)
             .addReg(ArgReg);
         } else {
           BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset)
@@ -1230,7 +1231,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 
         // Reg or stack?
         if (GPR_remaining > 0) {
-          BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg)
+          BuildMI(BB, PPC32::OR, 2, GPR[GPR_idx]).addReg(ArgReg)
             .addReg(ArgReg);
         } else {
           BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset)
@@ -1242,9 +1243,9 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 
         // Reg or stack?
         if (GPR_remaining > 1) {
-          BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg)
+          BuildMI(BB, PPC32::OR, 2, GPR[GPR_idx]).addReg(ArgReg)
             .addReg(ArgReg);
-          BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx + 1).addReg(ArgReg+1)
+          BuildMI(BB, PPC32::OR, 2, GPR[GPR_idx + 1]).addReg(ArgReg+1)
             .addReg(ArgReg+1);
         } else {
           BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset)
@@ -1254,17 +1255,15 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         }
 
         ArgOffset += 4;        // 8 byte entry, not 4.
-        if (GPR_remaining > 0) {
-          GPR_remaining -= 1;    // uses up 2 GPRs
-          GPR_idx += 1;
-        }
+        GPR_remaining -= 1;    // uses up 2 GPRs
+        GPR_idx += 1;
         break;
       case cFP:
         ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
         if (Args[i].Ty == Type::FloatTy) {
           // Reg or stack?
           if (FPR_remaining > 0) {
-            BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
+            BuildMI(BB, PPC32::FMR, 1, FPR[FPR_idx]).addReg(ArgReg);
             FPR_remaining--;
             FPR_idx++;
           } else {
@@ -1275,7 +1274,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
           assert(Args[i].Ty == Type::DoubleTy && "Unknown FP type!");
           // Reg or stack?
           if (FPR_remaining > 0) {
-            BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
+            BuildMI(BB, PPC32::FMR, 1, FPR[FPR_idx]).addReg(ArgReg);
             FPR_remaining--;
             FPR_idx++;
           } else {
@@ -1284,20 +1283,16 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
           }
 
           ArgOffset += 4;       // 8 byte entry, not 4.
-          if (GPR_remaining > 0) {
-            GPR_remaining--;    // uses up 2 GPRs
-            GPR_idx++;
-          }
+          GPR_remaining--;    // uses up 2 GPRs
+          GPR_idx++;
         }
         break;
 
       default: assert(0 && "Unknown class!");
       }
       ArgOffset += 4;
-      if (GPR_remaining > 0) {
-        GPR_remaining--;    // uses up 2 GPRs
-        GPR_idx++;
-      }
+      GPR_remaining--;
+      GPR_idx++;
     }
   } else {
     BuildMI(BB, PPC32::ADJCALLSTACKDOWN, 1).addImm(0);
@@ -1863,7 +1858,7 @@ void ISel::emitMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
     unsigned AHBLplusOverflowReg;
     if (OverflowReg) {
       AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
-      BuildMI(BB, IP, PPC32::ADD, 2,                // AH*BL+(AL*BL >> 32)
+      BuildMI(BB, IP, PPC32::ADD, 2,
               AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
     } else {
       AHBLplusOverflowReg = AHBLReg;
@@ -1873,10 +1868,10 @@ void ISel::emitMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
       BuildMI(BB, IP, PPC32::OR, 2, DestReg+1).addReg(AHBLplusOverflowReg)
         .addReg(AHBLplusOverflowReg);
     } else {
-      unsigned ALBHReg = makeAnotherReg(Type::UIntTy); // AL*BH
+      unsigned ALBHReg = makeAnotherReg(Type::UIntTy);
       doMultiplyConst(&BB, IP, ALBHReg, Type::UIntTy, Op0Reg, CHi);
       
-      BuildMI(BB, IP, PPC32::ADD, 2,      // AL*BH + AH*BL + (AL*BL >> 32)
+      BuildMI(BB, IP, PPC32::ADD, 2,
               DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);
     }
     return;
@@ -1886,23 +1881,23 @@ void ISel::emitMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
 
   unsigned Op1Reg  = getReg(Op1, &BB, IP);
   
-  // Multiply the two low parts... capturing carry into EDX
-  BuildMI(BB, IP, PPC32::MULLW, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);  // AL*BL
+  // Multiply the two low parts...
+  BuildMI(BB, IP, PPC32::MULLW, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
   
   unsigned OverflowReg = makeAnotherReg(Type::UIntTy);
-  BuildMI(BB, IP, PPC32::MULHW, 2, OverflowReg).addReg(Op0Reg).addReg(Op1Reg); // AL*BL >> 32
+  BuildMI(BB, IP, PPC32::MULHW, 2, OverflowReg).addReg(Op0Reg).addReg(Op1Reg);
   
-  unsigned AHBLReg = makeAnotherReg(Type::UIntTy);   // AH*BL
+  unsigned AHBLReg = makeAnotherReg(Type::UIntTy);
   BuildMI(BB, IP, PPC32::MULLW, 2, AHBLReg).addReg(Op0Reg+1).addReg(Op1Reg);
   
   unsigned AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
-  BuildMI(BB, IP, PPC32::ADD, 2,                // AH*BL+(AL*BL >> 32)
-          AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
+  BuildMI(BB, IP, PPC32::ADD, 2, AHBLplusOverflowReg).addReg(AHBLReg)
+    .addReg(OverflowReg);
   
   unsigned ALBHReg = makeAnotherReg(Type::UIntTy); // AL*BH
   BuildMI(BB, IP, PPC32::MULLW, 2, ALBHReg).addReg(Op0Reg).addReg(Op1Reg+1);
   
-  BuildMI(BB, IP, PPC32::ADD, 2,      // AL*BH + AH*BL + (AL*BL >> 32)
+  BuildMI(BB, IP, PPC32::ADD, 2,
           DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);
 }
 
@@ -2134,8 +2129,10 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
           .addReg(ShiftAmountReg);
       } else {
         if (isSigned) {
-          // FIXME: Unimplmented
+          // FIXME: Unimplemented
           // Page C-3 of the PowerPC 32bit Programming Environments Manual
+          std::cerr << "Unimplemented: signed right shift\n";
+          abort();
         } else {
           BuildMI(*MBB, IP, PPC32::SUBFIC, 2, TmpReg1).addReg(ShiftAmountReg)
             .addImm(32);
@@ -2613,7 +2610,13 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
                   gep_type_end(Src->getType(), IdxBegin, IdxEnd));
 
   // Keep emitting instructions until we consume the entire GEP instruction.
-  while (!GEPTypes.empty()) {
+  while (!GEPOps.empty()) {
+    if (GEPTypes.empty()) {
+      // Load the base pointer into a register.
+      unsigned Reg = getReg(Src, MBB, IP);
+      BuildMI(*MBB, IP, PPC32::OR, 2, TargetReg).addReg(Reg).addReg(Reg);
+      break;          // we are now done
+    }
     // It's an array or pointer access: [ArraySize x ElementType].
     const SequentialType *SqTy = cast<SequentialType>(GEPTypes.back());
     Value *idx = GEPOps.back();
@@ -2621,7 +2624,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
     GEPTypes.pop_back();
 
     // Many GEP instructions use a [cast (int/uint) to LongTy] as their
-    // operand on X86.  Handle this case directly now...
+    // operand.  Handle this case directly now...
     if (CastInst *CI = dyn_cast<CastInst>(idx))
       if (CI->getOperand(0)->getType() == Type::IntTy ||
           CI->getOperand(0)->getType() == Type::UIntTy)
@@ -2633,7 +2636,9 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
     const Type *ElTy = SqTy->getElementType();
     unsigned elementSize = TD.getTypeSize(ElTy);
 
-    if (elementSize == 1) {
+    if (idx == Constant::getNullValue(idx->getType())) {
+      // GEP with idx 0 is a no-op
+    } else if (elementSize == 1) {
       // If the element size is 1, we don't have to multiply, just add
       unsigned idxReg = getReg(idx, MBB, IP);
       unsigned Reg = makeAnotherReg(Type::UIntTy);
