@@ -30,13 +30,10 @@
 #include "Support/Debug.h"
 
 static bool isLoopInvariant(const Value *V, const Loop *L) {
-  if (isa<Constant>(V) || isa<Argument>(V) || isa<GlobalValue>(V))
-    return true;
-  
-  const Instruction *I = cast<Instruction>(V);
-  const BasicBlock *BB = I->getParent();
-
-  return !L->contains(BB);
+  if (const Instruction *I = dyn_cast<Instruction>(V))
+    return !L->contains(I->getParent());
+  // non-instructions all dominate instructions/blocks
+  return true;
 }
 
 enum InductionVariable::iType
@@ -45,7 +42,7 @@ InductionVariable::Classify(const Value *Start, const Value *Step,
   // Check for cannonical and simple linear expressions now...
   if (const ConstantInt *CStart = dyn_cast<ConstantInt>(Start))
     if (const ConstantInt *CStep = dyn_cast<ConstantInt>(Step)) {
-      if (CStart->equalsInt(0) && CStep->equalsInt(1))
+      if (CStart->isNullValue() && CStep->equalsInt(1))
         return Cannonical;
       else
         return SimpleLinear;
