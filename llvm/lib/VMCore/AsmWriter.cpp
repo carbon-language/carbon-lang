@@ -504,7 +504,7 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
     Out << "[" << ATy->getNumElements() << " x ";
     printType(ATy->getElementType()) << "]";
   } else if (const OpaqueType *OTy = dyn_cast<OpaqueType>(Ty)) {
-    Out << OTy->getDescription();
+    Out << "opaque";
   } else {
     if (!Ty->isPrimitiveType())
       Out << "<unknown derived type>";
