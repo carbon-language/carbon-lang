@@ -592,7 +592,7 @@ LIB_OPTS_P :=  $(LLVM_LIBS_OPTIONS_P) $(PROJ_LIBS_OPTIONS_P)
 
 # USED_LIB_PATHS - Compute the path of the libraries used so that tools are
 # rebuilt if libraries change.  This has to make sure to handle .a/.so and .o
-# files seperately.
+# files separately.
 #
 STATICUSEDLIBS   := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
 USED_LIB_PATHS_G := $(addprefix $(DESTLIBDEBUG)/, $(STATICUSEDLIBS))

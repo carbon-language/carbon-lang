@@ -253,7 +253,7 @@ ExprType ClassifyExpression(Value *Expr) {
   Instruction *I = cast<Instruction>(Expr);
   const Type *Ty = I->getType();
 
-  switch (I->getOpcode()) {       // Handle each instruction type seperately
+  switch (I->getOpcode()) {       // Handle each instruction type separately
   case Instruction::Add: {
     ExprType Left (ClassifyExpression(I->getOperand(0)));
     ExprType Right(ClassifyExpression(I->getOperand(1)));
