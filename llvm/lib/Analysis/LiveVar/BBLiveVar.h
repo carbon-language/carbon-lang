@@ -72,7 +72,10 @@ class BBLiveVar : public Annotation {
   bool applyFlowFunc();
 
   inline const ValueSet &getOutSet() const { return OutSet; }
+  inline       ValueSet &getOutSet()       { return OutSet; }
+
   inline const ValueSet  &getInSet() const { return InSet; }
+  inline       ValueSet  &getInSet()       { return InSet; }
 
   void printAllSets() const;      // for printing Def/In/Out sets
   void printInOutSets() const;    // for printing In/Out sets

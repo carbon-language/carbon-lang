@@ -8,6 +8,8 @@
 #include "llvm/CodeGen/FunctionLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/SetOperations.h"
@@ -40,9 +42,15 @@ clEnumValN(LV_DEBUG_Verbose, "v", "print def, use sets for every instrn also"),
 const ValueSet &FunctionLiveVarInfo::getOutSetOfBB(const BasicBlock *BB) const {
   return BBLiveVar::GetFromBB(*BB)->getOutSet();
 }
+      ValueSet &FunctionLiveVarInfo::getOutSetOfBB(const BasicBlock *BB)       {
+  return BBLiveVar::GetFromBB(*BB)->getOutSet();
+}
 
 // gets InSet of a BB
 const ValueSet &FunctionLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
+  return BBLiveVar::GetFromBB(*BB)->getInSet();
+}
+      ValueSet &FunctionLiveVarInfo::getInSetOfBB(const BasicBlock *BB)       {
   return BBLiveVar::GetFromBB(*BB)->getInSet();
 }
 
@@ -145,12 +153,13 @@ void FunctionLiveVarInfo::releaseMemory() {
   M = 0;
 
   // Then delete all objects of type ValueSet created in calcLiveVarSetsForBB
-  // and entered into  MInst2LVSetBI and  MInst2LVSetAI (these are caches
-  // to return ValueSet's before/after a machine instruction quickly). It
-  // is sufficient to free up all ValueSet using only one cache since 
-  // both caches refer to the same sets
+  // and entered into MInst2LVSetBI and MInst2LVSetAI (these are caches
+  // to return ValueSet's before/after a machine instruction quickly).
+  // We do not need to free up ValueSets in MInst2LVSetAI because it holds
+  // pointers to the same sets as in MInst2LVSetBI (for all instructions
+  // except the last one in a BB) or in BBLiveVar (for the last instruction).
   //
-  for (std::map<const MachineInstr*, const ValueSet*>::iterator
+  for (hash_map<const MachineInstr*, ValueSet*>::iterator
          MI = MInst2LVSetBI.begin(),
          ME = MInst2LVSetBI.end(); MI != ME; ++MI)
     delete MI->second;           // delete all ValueSets in  MInst2LVSetBI
@@ -178,12 +187,12 @@ void FunctionLiveVarInfo::releaseMemory() {
 //-----------------------------------------------------------------------------
 
 const ValueSet &
-FunctionLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MInst,
+FunctionLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MI,
                                               const BasicBlock *BB) {
-  const ValueSet *LVSet = MInst2LVSetBI[MInst];
+  ValueSet* &LVSet = MInst2LVSetBI[MI]; // ref. to map entry
   if (LVSet == NULL && BB != NULL) {    // if not found and BB provided
     calcLiveVarSetsForBB(BB);           // calc LVSet for all instrs in BB
-    LVSet = MInst2LVSetBI[MInst];
+    assert(LVSet != NULL);
   }
   return *LVSet;
 }
@@ -197,10 +206,10 @@ const ValueSet &
 FunctionLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MI,
                                              const BasicBlock *BB) {
 
-  const ValueSet *LVSet = MInst2LVSetAI[MI];
+  ValueSet* &LVSet = MInst2LVSetAI[MI]; // ref. to map entry
   if (LVSet == NULL && BB != NULL) {    // if not found and BB provided 
     calcLiveVarSetsForBB(BB);           // calc LVSet for all instrs in BB
-    return *MInst2LVSetAI[MI];
+    assert(LVSet != NULL);
   }
   return *LVSet;
 }
@@ -250,14 +259,15 @@ void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
   BBLiveVar *BBLV = BBLiveVar::GetFromBB(*BB);
   assert(BBLV && "BBLiveVar annotation doesn't exist?");
   const MachineBasicBlock &MIVec = BBLV->getMachineBasicBlock();
+  const MachineFunction &MF = MachineFunction::get(M);
+  const TargetMachine &TM = MF.getTarget();
 
   if (DEBUG_LV >= LV_DEBUG_Instr)
     std::cerr << "\n======For BB " << BB->getName()
               << ": Live var sets for instructions======\n";
   
-  ValueSet CurSet;
-  const ValueSet *SetAI = &getOutSetOfBB(BB);  // init SetAI with OutSet
-  set_union(CurSet, *SetAI);                   // CurSet now contains OutSet
+  ValueSet *SetAI = &getOutSetOfBB(BB);         // init SetAI with OutSet
+  ValueSet CurSet(*SetAI);                      // CurSet now contains OutSet
 
   // iterate over all the machine instructions in BB
   for (MachineBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
@@ -268,10 +278,23 @@ void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
     MInst2LVSetAI[MI] = SetAI;                 // record in After Inst map
 
     applyTranferFuncForMInst(CurSet, MI);      // apply the transfer Func
-    ValueSet *NewSet = new ValueSet();         // create a new set and
-    set_union(*NewSet, CurSet);                // copy the set after T/F to it
- 
+    ValueSet *NewSet = new ValueSet(CurSet);   // create a new set with a copy
+                                               // of the set after T/F
     MInst2LVSetBI[MI] = NewSet;                // record in Before Inst map
+
+    // If the current machine instruction has delay slots, mark values
+    // used by this instruction as live before and after each delay slot
+    // instruction (After(MI) is the same as Before(MI+1) except for last MI).
+    if (unsigned DS = TM.getInstrInfo().getNumDelaySlots(MI->getOpCode())) {
+      MachineBasicBlock::const_iterator fwdMII = MII.base(); // ptr to *next* MI
+      for (unsigned i = 0; i < DS; ++i, ++fwdMII) {
+        assert(fwdMII != MIVec.end() && "Missing instruction in delay slot?");
+        MachineInstr* DelaySlotMI = *fwdMII;
+        set_union(*MInst2LVSetBI[DelaySlotMI], *NewSet);
+        if (i+1 == DS)
+          set_union(*MInst2LVSetAI[DelaySlotMI], *NewSet);
+      }
+    }
 
     if (DEBUG_LV >= LV_DEBUG_Instr) {
       std::cerr << "\nLive var sets before/after instruction " << *MI;
