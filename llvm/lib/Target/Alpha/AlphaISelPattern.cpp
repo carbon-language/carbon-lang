@@ -679,10 +679,10 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     }
     return Result;
     
+  case ISD::SDIV:
   case ISD::MUL:
   case ISD::ADD:
   case ISD::SUB:
-  case ISD::SDIV:
     switch( opcode ) {
     case ISD::MUL: Opc = DestType == MVT::f64 ? Alpha::MULT : Alpha::MULS; break;
     case ISD::ADD: Opc = DestType == MVT::f64 ? Alpha::ADDT : Alpha::ADDS; break;
@@ -1050,9 +1050,39 @@ unsigned ISel::SelectExpr(SDOperand N) {
     
   case ISD::SIGN_EXTEND_INREG:
     {
+      //do SDIV opt for all levels of ints
+      if (N.getOperand(0).getOpcode() == ISD::SDIV)
+      {
+        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+        unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
+        MachineFunction *F = BB->getParent();
+        int FrameIdxL = F->getFrameInfo()->CreateStackObject(Size, 8);
+        int FrameIdxR = F->getFrameInfo()->CreateStackObject(Size, 8);
+        int FrameIdxF = F->getFrameInfo()->CreateStackObject(Size, 8);
+        unsigned Tmp4 = MakeReg(MVT::f64);
+        unsigned Tmp5 = MakeReg(MVT::f64);
+        unsigned Tmp6 = MakeReg(MVT::f64);
+        unsigned Tmp7 = MakeReg(MVT::f64);
+        unsigned Tmp8 = MakeReg(MVT::f64);
+        unsigned Tmp9 = MakeReg(MVT::f64);
+        
+        BuildMI(BB, Alpha::STQ, 3).addReg(Tmp1).addFrameIndex(FrameIdxL).addReg(Alpha::F31);
+        BuildMI(BB, Alpha::STQ, 3).addReg(Tmp1).addFrameIndex(FrameIdxR).addReg(Alpha::F31);
+        BuildMI(BB, Alpha::LDT, 2, Tmp4).addFrameIndex(FrameIdxL).addReg(Alpha::F31);
+        BuildMI(BB, Alpha::LDT, 2, Tmp5).addFrameIndex(FrameIdxR).addReg(Alpha::F31);
+        BuildMI(BB, Alpha::CVTQT, 1, Tmp6).addReg(Tmp4);
+        BuildMI(BB, Alpha::CVTQT, 1, Tmp7).addReg(Tmp5);
+        BuildMI(BB, Alpha::DIVT, 2, Tmp8).addReg(Tmp6).addReg(Tmp7);
+        BuildMI(BB, Alpha::CVTTQ, 1, Tmp9).addReg(Tmp8);
+        BuildMI(BB, Alpha::STT, 3).addReg(Tmp9).addFrameIndex(FrameIdxF).addReg(Alpha::F31);
+        BuildMI(BB, Alpha::LDQ, 3).addReg(Result).addFrameIndex(FrameIdxF).addReg(Alpha::F31);
+        return Result;
+      }
+      
       //Alpha has instructions for a bunch of signed 32 bit stuff
       if( dyn_cast<MVTSDNode>(Node)->getExtraValueType() == MVT::i32)
-      {     
+      {
         switch (N.getOperand(0).getOpcode()) {
         case ISD::ADD:
         case ISD::SUB:
@@ -1291,8 +1321,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
           BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
           
           //now arrange for Result (int) to have a 1 or 0
-          Opc = inv?Alpha::CC2INT_INV:Alpha::CC2INT;
-          BuildMI(BB, Opc, 1, Result).addReg(Tmp3);
+          unsigned Tmp4 = MakeReg(MVT::i64);
+          BuildMI(BB, Alpha::ADDQi, 2, Tmp4).addReg(Alpha::R31).addImm(1);
+          Opc = inv?Alpha::CMOVNEi_FP:Alpha::CMOVEQi_FP;
+          BuildMI(BB, Opc, 3, Result).addReg(Tmp4).addImm(0).addReg(Tmp3);
+//           Opc = inv?Alpha::CC2INT_INV:Alpha::CC2INT;
+//           BuildMI(BB, Opc, 1, Result).addReg(Tmp3);
 
 //           // Spill the FP to memory and reload it from there.
 //           unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
@@ -1412,9 +1446,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
       return Result;
     }
 
+  case ISD::SDIV:
   case ISD::UREM:
   case ISD::SREM:
-  case ISD::SDIV:
   case ISD::UDIV:
     //FIXME: alpha really doesn't support any of these operations, 
     // the ops are expanded into special library calls with
@@ -1470,6 +1504,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
  
   case ISD::SELECT:
     {
+      //FIXME: look at parent to decide if intCC can be folded, or if setCC(FP) and can save stack use
       Tmp1 = SelectExpr(N.getOperand(0)); //Cond
       Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
       Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE

@@ -88,10 +88,24 @@ let Uses = [R29],
 }
 
 //This is an improvement on the old style setcc (FP)
-def CC2INT_INV : PseudoInstAlpha<(ops GPRC:$RES, FPRC:$COND), 
-  "lda $RES,1($$31)\n\tfbeq $COND, 42f\n\tbis $$31,$$31,$RES\n42:\n">;
-def CC2INT : PseudoInstAlpha<(ops GPRC:$RES, FPRC:$COND), 
-  "lda $RES,1($$31)\n\tfbne $COND, 42f\n\tbis $$31,$$31,$RES\n42:\n">;
+//def CC2INT_INV : PseudoInstAlpha<(ops GPRC:$RES, FPRC:$COND), 
+//  "lda $RES,1($$31)\n\tfbeq $COND, 42f\n\tbis $$31,$$31,$RES\n42:\n">;
+//def CC2INT : PseudoInstAlpha<(ops GPRC:$RES, FPRC:$COND), 
+//  "lda $RES,1($$31)\n\tfbne $COND, 42f\n\tbis $$31,$$31,$RES\n42:\n">;
+
+//An even better improvement on the Int = SetCC(FP):  SelectCC!
+let isTwoAddress = 1 in {
+  def CMOVEQ_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, FPRC:$RCOND),
+                                  "fbne $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
+  def CMOVEQi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, FPRC:$RCOND),
+                                  "fbne $RCOND, 42f\n\taddi $$31,$L,$RDEST\n42:\n">;
+
+  def CMOVNE_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, FPRC:$RCOND),
+                                  "fbeq $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
+  def CMOVNEi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, FPRC:$RCOND),
+                                  "fbeq $RCOND, 42f\n\taddi $$31,$L,$RDEST\n42:\n">;
+
+}
 
 //***********************
 //Real instructions
