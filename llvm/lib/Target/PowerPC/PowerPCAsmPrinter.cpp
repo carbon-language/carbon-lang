@@ -423,7 +423,7 @@ void Printer::printOp(const MachineOperand &MO,
   }
   case MachineOperand::MO_PCRelativeDisp:
     std::cerr << "Shouldn't use addPCDisp() when building PPC MachineInstrs";
-    abort ();
+    abort();
     return;
   case MachineOperand::MO_GlobalAddress:
     if (!elideOffsetKeyword) {
@@ -507,7 +507,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 
   if (Opcode == PPC32::MovePCtoLR) {
     O << "mflr r0\n";
-    O << "\tbcl 20,31,L" << CurrentFnName << "$pb\n";
+    O << "\tbc 20,31,L" << CurrentFnName << "$pb\n";
     O << "L" << CurrentFnName << "$pb:\n";
     return;
   }
