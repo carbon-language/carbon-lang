@@ -246,6 +246,7 @@ public:
 	   "eliminateCallFramePseudoInstr must be implemented if using"
 	   " call frame setup/destroy pseudo instructions!");
     assert(0 && "Call Frame Pseudo Instructions do not exist on this target!");
+    return -1;
   }
 
   /// processFunctionBeforeFrameFinalized - This method is called immediately
