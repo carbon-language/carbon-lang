@@ -248,9 +248,9 @@ foreach $File (@CVSHistory) {
 
 my $UserCommitList = join "\n", keys %UsersCommitted;
 my $UserUpdateList = join "\n", keys %UsersUpdated;
-my $AddedFilesList = AddPreTag join "\n", keys %AddedFiles;
-my $ModifiedFilesList = AddPreTag join "\n", keys %ModifiedFiles;
-my $RemovedFilesList = AddPreTag join "\n", keys %RemovedFiles;
+my $AddedFilesList = AddPreTag join "\n", sort keys %AddedFiles;
+my $ModifiedFilesList = AddPreTag join "\n", sort keys %ModifiedFiles;
+my $RemovedFilesList = AddPreTag join "\n", sort keys %RemovedFiles;
 
 my $TestError = 1;
 my $ProgramsTable;
