@@ -89,6 +89,8 @@ namespace {
       if (MO.getType() == MachineOperand::MO_MachineRegister) {
         assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
         O << LowercaseString(TM.getRegisterInfo()->get(MO.getReg()).Name);
+      } else if (MO.isImmediate()) {
+        O << MO.getImmedValue();
       } else {
         printOp(MO);
       }

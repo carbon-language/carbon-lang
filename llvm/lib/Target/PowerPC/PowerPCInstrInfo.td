@@ -85,9 +85,15 @@ def CMPDI : DForm_5_ext<"cmpdi", 11, 1, 0>;
 def CMP : XForm_16<"cmp", 31, 0, 0, 0>;
 def CMPW : XForm_16_ext<"cmpw", 31, 0, 0, 0>;
 def CMPD : XForm_16_ext<"cmpd", 31, 0, 1, 0>;
-def CMPLI : DForm_6<"cmpli", 10, 0, 0>;
-def CMPLWI : DForm_6_ext<"cmplwi", 10, 0, 0>;
-def CMPLDI : DForm_6_ext<"cmpldi", 10, 1, 0>;
+def CMPLI : DForm_6<10, 0, 0,
+                    (ops CRRC:$dst, i1imm:$size, GPRC:$src1, u16imm:$src2),
+                         "cmpli $dst, $size, $src1, $src2">;
+def CMPLWI : DForm_6_ext<10, 0, 0,
+                         (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
+                         "cmplwi $dst, $src1, $src2">;
+def CMPLDI : DForm_6_ext<10, 1, 0,
+                         (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
+                         "cmpldi $dst, $src1, $src2">;
 def CMPL : XForm_16<"cmpl", 31, 32, 0, 0>;
 def CMPLW : XForm_16_ext<"cmplw", 31, 32, 0, 0>;
 def CMPLD : XForm_16_ext<"cmpld", 31, 32, 1, 0>;
@@ -144,7 +150,7 @@ def MULHWU : XOForm_2<"mulhwu", 31, 11, 0, 0, 0>;
 def NAND  : XForm_6<"nand",  31, 476, 0, 0, 0>;
 def NEG : XOForm_3<"neg", 31, 104, 0, 0, 0, 0>;
 def NOR  : XForm_6<"nor",  31, 124, 0, 0, 0>;
-def NOP : DForm_4_zero<"nop", 24, 0, 0>;
+def NOP : DForm_4_zero<"nop", 24, 0, 0, (ops), "nop">;
 def ORI  : DForm_4<24, 0, 0,
                    (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                    "ori $dst, $src1, $src2">;

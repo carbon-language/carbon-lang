@@ -18,7 +18,6 @@ def Pseudo: Format<0>;
 def Gpr : Format<1>;
 def Gpr0 : Format<2>;
 def Simm16 : Format<3>;
-def Zimm16 : Format<4>;
 def PCRelimm24 : Format<5>;
 def Imm24 : Format<6>;
 def Imm5 : Format<7>;
@@ -152,8 +151,8 @@ class DForm_4<bits<6> opcode, bit ppc64, bit vmx,
   let AsmString = asmstr;
 }
 
-class DForm_4_zero<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : DForm_1<name, opcode, ppc64, vmx> {
+class DForm_4_zero<string name, bits<6> opcode, bit ppc64, bit vmx,
+                   dag OL, string asmstr> : DForm_1<"", opcode, ppc64, vmx> {
   let ArgCount = 0;
   let Arg0Type = 0;
   let Arg1Type = 0;
@@ -161,6 +160,8 @@ class DForm_4_zero<string name, bits<6> opcode, bit ppc64, bit vmx>
   let A = 0;
   let B = 0;
   let C = 0;
+  let OperandList = OL;
+  let AsmString = asmstr;
 }
 
 class DForm_5<string name, bits<6> opcode, bit ppc64, bit vmx> 
@@ -194,13 +195,16 @@ class DForm_5_ext<string name, bits<6> opcode, bit ppc64, bit vmx>
   let Arg3Type = 0;
 }
 
-class DForm_6<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : DForm_5<name, opcode, ppc64, vmx> {
-  let Arg3Type = Zimm16.Value;
+class DForm_6<bits<6> opcode, bit ppc64, bit vmx,
+              dag OL, string asmstr> 
+  : DForm_5<"", opcode, ppc64, vmx> {
+  let OperandList = OL;
+  let AsmString = asmstr;
 }
 
-class DForm_6_ext<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : DForm_6<name, opcode, ppc64, vmx> {
+class DForm_6_ext<bits<6> opcode, bit ppc64, bit vmx,
+                  dag OL, string asmstr> 
+  : DForm_6<opcode, ppc64, vmx, OL, asmstr> {
   let L = ppc64;
   let ArgCount = 3;
   let Arg0Type = Imm3.Value;
