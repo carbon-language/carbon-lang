@@ -1,194 +1,403 @@
-//===- lib/Archive/ArchiveReader.cpp - Read LLVM archive files ------------===//
+//===-- ArchiveReader.cpp - Read LLVM archive files -------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the LLVM research group and is distributed under
-// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file was developed by Reid Spencer and is distributed under the 
+// University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements the ReadArchiveFile interface, which allows a linker to
-// read all of the LLVM bytecode files contained in a .a file.  This file
-// understands the standard system .a file format.  This can only handle the .a
-// variant prevalent on Linux systems so far, but may be extended.  See
-// information in this source file for more information:
-//   http://sources.redhat.com/cgi-bin/cvsweb.cgi/src/bfd/archive.c?cvsroot=src
+// Builds up standard unix archive files (.a) containing LLVM bytecode.
 //
 //===----------------------------------------------------------------------===//
 
+#include "ArchiveInternals.h"
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Module.h"
-#include "llvm/Support/FileUtilities.h"
-#include <cstdlib>
-#include <iostream>
+
 using namespace llvm;
 
 namespace {
-  struct ar_hdr {
-    char name[16];
-    char date[12];
-    char uid[6];
-    char gid[6];
-    char mode[8];
-    char size[10];
-    char fmag[2];          // Always equal to '`\n'
-  };
 
-  enum ObjectType {
-    UserObject,            // A user .o/.bc file
-    Unknown,               // Unknown file, just ignore it
-    SVR4LongFilename,      // a "//" section used for long file names
-    ArchiveSymbolTable,    // Symbol table produced by ranlib.
-  };
+/// Read a variable-bit-rate encoded unsigned integer
+inline unsigned readInteger(const char*&At, const char*End) {
+  unsigned Shift = 0;
+  unsigned Result = 0;
+  
+  do {
+    if (At == End) 
+      throw std::string("Ran out of data reading vbr_uint!");
+    Result |= (unsigned)((*At++) & 0x7F) << Shift;
+    Shift += 7;
+  } while (At[-1] & 0x80);
+  return Result;
 }
 
-/// getObjectType - Determine the type of object that this header represents.
-/// This is capable of parsing the variety of special sections used for various
-/// purposes.
-///
-static enum ObjectType getObjectType(ar_hdr *H, std::string MemberName,
-                                     unsigned char *MemberData, unsigned Size) {
-  // Check for sections with special names...
-  if (MemberName == "__.SYMDEF       " || MemberName == "__.SYMDEF SORTED")
-    return ArchiveSymbolTable;
-  else if (MemberName == "//              ")
-    return SVR4LongFilename;
-
-  // Check to see if it looks like an llvm object file...
-  if (Size >= 4 && !memcmp(MemberData, "llvm", 4))
-    return UserObject;
-
-  if (Size >= 4 && !memcmp(MemberData, "llvc", 4))
-    return UserObject;
-
-  return Unknown;
 }
 
-static inline bool Error(std::string *ErrorStr, const char *Message) {
-  if (ErrorStr) *ErrorStr = Message;
-  return true;
+// Completely parse the Archive's symbol table and populate symTab member var.
+void
+Archive::parseSymbolTable(const void* data, unsigned size) {
+  const char* At = (const char*) data;
+  const char* End = At + size;
+  while (At < End) {
+    unsigned offset = readInteger(At, End);
+    unsigned length = readInteger(At, End);
+    if (At + length > End)
+      throw std::string("malformed symbol table");
+    // we don't care if it can't be inserted (duplicate entry)
+    symTab.insert(std::make_pair(std::string(At,length),offset));
+    At += length;
+  }
+  symTabSize = size;
 }
 
-static bool ParseSymbolTableSection(unsigned char *Buffer, unsigned Size,
-                                    std::string *S) {
-  // Currently not supported (succeeds without doing anything)
+// This member parses an ArchiveMemberHeader that is presumed to be pointed to
+// by At. The At pointer is updated to the byte just after the header, which
+// can be variable in size. 
+ArchiveMember*
+Archive::parseMemberHeader(const char*& At, const char* End) {
+  assert(At + sizeof(ArchiveMemberHeader) < End && "Not enough data");
+
+  // Cast archive member header
+  ArchiveMemberHeader* Hdr = (ArchiveMemberHeader*)At;
+  At += sizeof(ArchiveMemberHeader);
+
+  // Instantiate the ArchiveMember to be filled
+  ArchiveMember* member = new ArchiveMember(this);
+
+  // Extract the size and determine if the file is 
+  // compressed or not (negative length).
+  int flags = 0;
+  int MemberSize = atoi(Hdr->size);
+  if (MemberSize < 0) {
+    flags |= ArchiveMember::CompressedFlag;
+    MemberSize = -MemberSize;
+  }
+
+  // Check the size of the member for sanity
+  if (At + MemberSize > End)
+    throw std::string("invalid member length in archive file");
+
+  // Check the member signature
+  if (!Hdr->checkSignature())
+    throw std::string("invalid file member signature");
+
+  // Convert and check the member name
+  // The empty name ( '/' and 15 blanks) is for a foreign (non-LLVM) symbol 
+  // table. The special name "//" and 14 blanks is for a string table, used 
+  // for long file names. This library doesn't generate either of those but
+  // it will accept them. If the name starts with #1/ and the remainder is 
+  // digits, then those digits specify the length of the name that is 
+  // stored immediately following the header. The special name 
+  // __LLVM_SYM_TAB__ identifies the symbol table for LLVM bytecode. 
+  // Anything else is a regular, short filename that is terminated with 
+  // a '/' and blanks.
+
+  std::string pathname;
+  unsigned index;
+  switch (Hdr->name[0]) {
+    case '#':
+      if (Hdr->name[1] == '1' && Hdr->name[2] == '/') {
+        if (isdigit(Hdr->name[3])) {
+          unsigned len = atoi(&Hdr->name[3]);
+          pathname.assign(At,len);
+          At += len + 1; // terminated by \n
+          flags |= ArchiveMember::HasLongFilenameFlag;
+        } else
+          throw std::string("invalid long filename");
+      } else if (Hdr->name[1] == '_' && 
+                 (0==memcmp(Hdr->name,ARFILE_LLVM_SYMTAB_NAME,16))) {
+        // The member is using a long file name (>15 chars) format.
+        // This format is standard for 4.4BSD and Mac OSX operating
+        // systems. LLVM uses it similarly. In this format, the
+        // remainder of the name field (after #1/) specifies the
+        // length of the file name which occupy the first bytes of
+        // the member's data. The pathname already has the #1/ stripped.
+        pathname.assign(ARFILE_LLVM_SYMTAB_NAME);
+        flags |= ArchiveMember::LLVMSymbolTableFlag;
+      }
+      break;
+    case '/':
+      if (Hdr->name[1]== '/') {
+        if (0==memcmp(Hdr->name,ARFILE_STRTAB_NAME,16)) {
+          pathname.assign(ARFILE_STRTAB_NAME);
+          flags |= ArchiveMember::StringTableFlag;
+        } else {
+          throw std::string("invalid string table name");
+        }
+      } else if (Hdr->name[1] == ' ') {
+        if (0==memcmp(Hdr->name,ARFILE_SYMTAB_NAME,16)) {
+          pathname.assign(ARFILE_SYMTAB_NAME);
+          flags |= ArchiveMember::ForeignSymbolTableFlag;
+        } else {
+          throw std::string("invalid foreign symbol table name");
+        }
+      } else if (isdigit(Hdr->name[1])) {
+        unsigned index = atoi(&Hdr->name[1]);
+        if (index < strtab.length()) {
+          const char* namep = strtab.c_str() + index;
+          const char* endp = strtab.c_str() + strtab.length();
+          const char* p = namep;
+          const char* last_p = p;
+          while (p < endp) {
+            if (*p == '\n' && *last_p == '/') {
+              pathname.assign(namep,last_p-namep);
+              flags |= ArchiveMember::HasLongFilenameFlag;
+              break;
+            }
+            last_p = p;
+            p++;
+          }
+          if (p >= endp)
+            throw std::string("missing name termiantor in string table");
+        } else {
+          throw std::string("name index beyond string table");
+        }
+      }
+      break;
+
+    default:
+      char* slash = (char*) memchr(Hdr->name,'/',16);
+      if (slash == 0)
+        throw std::string("missing name terminator");
+      pathname.assign(Hdr->name,slash-Hdr->name);
+      break;
+  }
+
+  // Determine if this is a bytecode file
+  switch (sys::IdentifyFileType(At,4)) {
+    case sys::BytecodeFileType:
+      flags |= ArchiveMember::BytecodeFlag;
+      break;
+    case sys::CompressedBytecodeFileType:
+      flags |= ArchiveMember::CompressedBytecodeFlag;
+      flags &= ~ArchiveMember::CompressedFlag;
+      break;
+    default:
+      flags &= ~(ArchiveMember::BytecodeFlag|
+                 ArchiveMember::CompressedBytecodeFlag);
+      break;
+  }
+
+  // Fill in fields of the ArchiveMember
+  member->next = 0;
+  member->prev = 0;
+  member->parent = this;
+  member->path.setFile(pathname);
+  member->info.fileSize = MemberSize;
+  member->info.modTime.fromEpochTime(atoi(Hdr->date));
+  sscanf(Hdr->mode,"%o",&(member->info.mode));
+  member->info.user = atoi(Hdr->uid);
+  member->info.group = atoi(Hdr->gid);
+  member->flags = flags;
+  member->data = At;
+
+  return member;
+}
+
+void
+Archive::checkSignature() {
+  // Check the magic string at file's header
+  if (mapfile->size() < 8 || memcmp(base, ARFILE_MAGIC,8))
+    throw std::string("invalid signature for an archive file");
+}
+
+// This function loads the entire archive and fully populates its ilist with 
+// the members of the archive file. This is typically used in preparation for
+// editing the contents of the archive.
+void
+Archive::loadArchive() {
+
+  // Set up parsing
+  members.clear();
+  symTab.clear();
+  const char *At = base;
+  const char *End = base + mapfile->size();
+
+  checkSignature();
+  At += 8;  // Skip the magic string.
+
+  bool seenSymbolTable = false;
+  bool foundFirstFile = false;
+  while (At < End) {
+    // parse the member header 
+    const char* Save = At;
+    ArchiveMember* mbr = parseMemberHeader(At, End);
+
+    // check if this is the foreign symbol table
+    if (mbr->isForeignSymbolTable()) {
+      // We don't do anything with this but delete it
+      At += mbr->getSize();
+      delete mbr;
+      if ((int(At) & 1) == 1)
+        At++;
+    } else if (mbr->isStringTable()) {
+      strtab.assign(At,mbr->getSize());
+      At += mbr->getSize();
+      if ((int(At) & 1) == 1)
+        At++;
+      delete mbr;
+    } else if (mbr->isLLVMSymbolTable()) { 
+      if (seenSymbolTable)
+        throw std::string("invalid archive: multiple symbol tables");
+      parseSymbolTable(mbr->getData(),mbr->getSize());
+      seenSymbolTable = true;
+      At += mbr->getSize();
+      if ((int(At) & 1) == 1)
+        At++;
+      delete mbr;
+    } else {
+      if (!foundFirstFile) {
+        firstFileOffset = Save - base;
+        foundFirstFile = true;
+      }
+      members.push_back(mbr);
+      At += mbr->getSize();
+      if ((int(At) & 1) == 1)
+        At++;
+    }
+  }
+}
+
+// Open and completely load the archive file.
+Archive*
+Archive::OpenAndLoad(const sys::Path& file) {
+
+  Archive* result = new Archive(file,true);
+
+  result->loadArchive();
+  
+  return result;
+}
+
+// Get all the bytecode modules from the archive
+bool
+Archive::getAllModules(std::vector<Module*>& Modules, std::string* ErrMessage) {
+
+  for (iterator I=begin(), E=end(); I != E; ++I) {
+    if (I->isBytecode() || I->isCompressedBytecode()) {
+      Module* M = ParseBytecodeBuffer((const unsigned char*)I->getData(), 
+          I->getSize(), I->getPath().get(), ErrMessage);
+      if (!M)
+        return true;
+
+      Modules.push_back(M);
+    }
+  }
   return false;
 }
 
-static bool ReadArchiveBuffer(const std::string &ArchiveName,
-                              unsigned char *Buffer, unsigned Length,
-                              std::vector<Module*> &Objects,
-                              std::string *ErrorStr) {
-  if (Length < 8 || memcmp(Buffer, "!<arch>\n", 8))
-    return Error(ErrorStr, "signature incorrect for an archive file!");
-  Buffer += 8;  Length -= 8; // Skip the magic string.
+// Load just the symbol table from the archive file
+void
+Archive::loadSymbolTable() {
 
-  std::vector<char> LongFilenames;
+  // Set up parsing
+  members.clear();
+  symTab.clear();
+  const char *At = base;
+  const char *End = base + mapfile->size();
 
-  while (Length >= sizeof(ar_hdr)) {
-    ar_hdr *Hdr = (ar_hdr*)Buffer;
-    unsigned SizeFromHeader = atoi(Hdr->size);
-    if (SizeFromHeader + sizeof(ar_hdr) > Length)
-      return Error(ErrorStr, "invalid record length in archive file!");
+  // Make sure we're dealing with an archive
+  checkSignature();
 
-    unsigned char *MemberData = Buffer + sizeof(ar_hdr);
-    unsigned MemberSize = SizeFromHeader;
-    // Get name of archive member.
-    char *startp = Hdr->name;
-    char *endp = (char *) memchr (startp, '/', sizeof(ar_hdr));
-    if (memcmp (Hdr->name, "#1/", 3) == 0) {
-      // 4.4BSD/MacOSX long filenames are abbreviated as "#1/L", where L is an
-      // ASCII-coded decimal number representing the length of the name buffer,
-      // which is prepended to the archive member's contents.
-      unsigned NameLength = atoi (&Hdr->name[3]);
-      startp = (char *) MemberData;
-      endp = startp + NameLength;
-      MemberData += NameLength;
-      MemberSize -= NameLength;
-    } else if (startp == endp && isdigit (Hdr->name[1])) {
-      // SVR4 long filenames are abbreviated as "/I", where I is
-      // an ASCII-coded decimal index into the LongFilenames vector.
-      unsigned NameIndex = atoi (&Hdr->name[1]);
-      assert (LongFilenames.size () > NameIndex
-              && "SVR4-style long filename for archive member not found");
-      startp = &LongFilenames[NameIndex];
-      endp = strchr (startp, '/');
-    } else if (startp == endp && Hdr->name[1] == '/') {
-      // This is for the SVR4 long filename table (there might be other
-      // names starting with // but I don't know about them). Make sure that
-      // getObjectType sees it.
-      endp = &Hdr->name[sizeof (Hdr->name)];
+  At += 8; // Skip signature
+
+  // Parse the first file member header
+  const char* FirstFile = At;
+  ArchiveMember* mbr = parseMemberHeader(At, End);
+
+  if (mbr->isForeignSymbolTable()) {
+    // Skip the foreign symbol table, we don't do anything with it
+    At += mbr->getSize();
+    delete mbr;
+
+    // See if there's a string table too
+    FirstFile = At;
+    mbr = parseMemberHeader(At,End);
+    if (mbr->isStringTable()) {
+      strtab.assign((const char*)mbr->getData(),mbr->getSize());
+      At += mbr->getSize();
+      delete mbr;
+      FirstFile = At;
+      mbr = parseMemberHeader(At,End);
     }
-    if (!endp) {
-      // 4.4BSD/MacOSX *short* filenames are not guaranteed to have a
-      // terminator. Start at the end of the field and backtrack over spaces.
-      endp = startp + sizeof(Hdr->name);
-      while (endp[-1] == ' ')
-        --endp;
-    }
-    std::string MemberName (startp, endp);
-    std::string FullMemberName = ArchiveName + "(" + MemberName + ")";
-
-    switch (getObjectType(Hdr, MemberName, MemberData, MemberSize)) {
-    case SVR4LongFilename:
-      // If this is a long filename section, read all of the file names into the
-      // LongFilenames vector.
-      LongFilenames.assign (MemberData, MemberData + MemberSize);
-      break;
-    case UserObject: {
-      Module *M = ParseBytecodeBuffer(MemberData, MemberSize,
-                                      FullMemberName, ErrorStr);
-      if (!M) return true;
-      Objects.push_back(M);
-      break;
-    }
-    case ArchiveSymbolTable:
-      if (ParseSymbolTableSection(MemberData, MemberSize, ErrorStr))
-        return true;
-      break;
-    default:
-      std::cerr << "ReadArchiveBuffer: WARNING: Skipping unknown file: "
-                << FullMemberName << "\n";
-      break;   // Just ignore unknown files.
-    }
-
-    // Round SizeFromHeader up to an even number...
-    SizeFromHeader = (SizeFromHeader+1)/2*2;
-    Buffer += sizeof(ar_hdr)+SizeFromHeader;   // Move to the next entry
-    Length -= sizeof(ar_hdr)+SizeFromHeader;
   }
 
-  return Length != 0;
+  // See if its the symbol table
+  if (mbr->isLLVMSymbolTable()) {
+    parseSymbolTable(mbr->getData(),mbr->getSize());
+    FirstFile = At + mbr->getSize();
+    if (mbr->getSize() % 2 != 0)
+      FirstFile++;
+  } else {
+    // There's no symbol table in the file. We have to rebuild it from scratch
+    // because the intent of this method is to get the symbol table loaded so 
+    // it can be searched efficiently. 
+    // Add the member to the members list
+    members.push_back(mbr);
+  }
+
+  firstFileOffset = FirstFile - base;
 }
 
+// Open the archive and load just the symbol tables
+Archive*
+Archive::OpenAndLoadSymbols(const sys::Path& file) {
+  Archive* result = new Archive(file,true);
 
-// ReadArchiveFile - Read bytecode files from the specified .a file, returning
-// true on error, or false on success.  This does not support reading files from
-// standard input.
-//
-bool llvm::ReadArchiveFile(const std::string &Filename,
-                           std::vector<Module*> &Objects,std::string *ErrorStr){
-  unsigned Length;
+  result->loadSymbolTable();
 
-    // mmap in the file all at once...
-  unsigned char *Buffer = 
-     (unsigned char*)ReadFileIntoAddressSpace(Filename, Length);
-  if (Buffer == 0) {
-    if (ErrorStr) *ErrorStr = "Error reading file '" + Filename + "'!";
-    return true;
-  }
-  
-  // Parse the archive files we mmap'ped in
-  bool Result = ReadArchiveBuffer(Filename, Buffer, Length, Objects, ErrorStr);
-  
-  // Unmmap the archive...
-  UnmapFileFromAddressSpace(Buffer, Length);
+  return result;
+}
 
-  if (Result)    // Free any loaded objects
-    while (!Objects.empty()) {
-      delete Objects.back();
-      Objects.pop_back();
+// Look up one symbol in the symbol table and return a ModuleProvider for the
+// module that defines that symbol.
+ModuleProvider* 
+Archive::findModuleDefiningSymbol(const std::string& symbol) {
+  SymTabType::iterator SI = symTab.find(symbol);
+  if (SI == symTab.end())
+    return 0;
+
+  // The symbol table was previously constructed assuming that the members were 
+  // written without the symbol table header. Because VBR encoding is used, the
+  // values could not be adjusted to account for the offset of the symbol table
+  // because that could affect the size of the symbol table due to VBR encoding.
+  // We now have to account for this by adjusting the offset by the size of the 
+  // symbol table and its header.
+  unsigned fileOffset = 
+    SI->second +                // offset in symbol-table-less file
+    firstFileOffset;            // add offset to first "real" file in archive
+
+  // See if the module is already loaded
+  ModuleMap::iterator MI = modules.find(fileOffset);
+  if (MI != modules.end())
+    return MI->second.first;
+
+  // Module hasn't been loaded yet, we need to load it
+  const char* modptr = base + fileOffset;
+  ArchiveMember* mbr = parseMemberHeader(modptr, base + mapfile->size());
+
+  // Now, load the bytecode module to get the ModuleProvider
+  ModuleProvider* mp = getBytecodeBufferModuleProvider(
+      (const unsigned char*) mbr->getData(), mbr->getSize(), 
+      mbr->getPath().get(), 0);
+
+  modules.insert(std::make_pair(fileOffset,std::make_pair(mp,mbr)));
+
+  return mp;
+}
+
+// Look up multiple symbols in the symbol table and return a set of 
+// ModuleProviders that define those symbols.
+void
+Archive::findModulesDefiningSymbols(const std::set<std::string>& symbols,
+                                    std::set<ModuleProvider*>& modules)
+{
+  for (std::set<std::string>::const_iterator I=symbols.begin(), 
+       E=symbols.end(); I != E; ++I) {
+    ModuleProvider* mp = findModuleDefiningSymbol(*I);
+    if (mp) {
+      modules.insert(mp);
     }
-  
-  return Result;
+  }
 }
