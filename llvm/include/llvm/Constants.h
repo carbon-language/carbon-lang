@@ -340,25 +340,25 @@ public:
 // Use the appropriate Constant subclass above for known constants.
 //
 class ConstantExpr : public Constant {
-protected:
   unsigned iType;      // operation type
   
 protected:
   ConstantExpr(unsigned opCode, Constant *C,  const Type *Ty);
   ConstantExpr(unsigned opCode, Constant* C1, Constant* C2, const Type *Ty);
   ConstantExpr(unsigned opCode, Constant* C,
-               const std::vector<Value*>& IdxList, const Type *Ty);
+               const std::vector<Constant*> &IdxList, const Type *Ty);
   ~ConstantExpr() {}
   
   virtual void destroyConstant();
   
 public:
   // Static methods to construct a ConstantExpr of different kinds.
-  static ConstantExpr *get(unsigned opCode, Constant *C, const Type *Ty);
-  static ConstantExpr *get(unsigned opCode,
+  static ConstantExpr *get(unsigned Opcode, Constant *C, const Type *Ty);
+  static ConstantExpr *get(unsigned Opcode,
                            Constant *C1, Constant *C2, const Type *Ty);
-  static ConstantExpr *get(unsigned opCode, Constant* C,
-                       const std::vector<Value*>& idxList, const Type *Ty);
+  static ConstantExpr *get(unsigned Opcode, Constant *C,
+                           const std::vector<Constant*> &IdxList,
+                           const Type *Ty);
   
   // isNullValue - Return true if this is the value that would be returned by
   // getNullValue.
@@ -368,8 +368,8 @@ public:
   unsigned getOpcode() const { return iType; }
 
   // getOpcodeName - Return a string representation for an opcode.
-  static const char* getOpcodeName(unsigned opCode);
-  const char* getOpcodeName() const {
+  static const char *getOpcodeName(unsigned opCode);
+  const char *getOpcodeName() const {
     return getOpcodeName(getOpcode());
   }
   
