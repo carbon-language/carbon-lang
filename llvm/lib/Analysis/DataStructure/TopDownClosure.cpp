@@ -23,7 +23,7 @@ namespace {
 
 void TDDataStructures::markReachableFunctionsExternallyAccessible(DSNode *N,
                                                    hash_set<DSNode*> &Visited) {
-  if (Visited.count(N)) return;
+  if (!N || Visited.count(N)) return;
   Visited.insert(N);
 
   for (unsigned i = 0, e = N->getNumLinks(); i != e; ++i) {
@@ -46,6 +46,7 @@ void TDDataStructures::markReachableFunctionsExternallyAccessible(DSNode *N,
 bool TDDataStructures::run(Module &M) {
   BUDataStructures &BU = getAnalysis<BUDataStructures>();
   GlobalsGraph = new DSGraph(BU.getGlobalsGraph());
+  GlobalsGraph->setPrintAuxCalls();
 
   // Figure out which functions must not mark their arguments complete because
   // they are accessible outside this compilation unit.  Currently, these
@@ -57,6 +58,17 @@ bool TDDataStructures::run(Module &M) {
        I != E; ++I)
     if (isa<GlobalValue>(I->first))
       markReachableFunctionsExternallyAccessible(I->second.getNode(), Visited);
+
+  // Loop over unresolved call nodes.  Any functions passed into (but not
+  // returned!?) from unresolvable call nodes may be invoked outside of the
+  // current module.
+  const std::vector<DSCallSite> &Calls = GlobalsGraph->getAuxFunctionCalls();
+  for (unsigned i = 0, e = Calls.size(); i != e; ++i) {
+    const DSCallSite &CS = Calls[i];
+    for (unsigned arg = 0, e = CS.getNumPtrArgs(); arg != e; ++arg)
+      markReachableFunctionsExternallyAccessible(CS.getPtrArg(arg).getNode(),
+                                                 Visited);
+  }
   Visited.clear();
 
   // Functions without internal linkage also have unknown incoming arguments!

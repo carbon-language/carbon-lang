@@ -51,7 +51,10 @@ bool BUDataStructures::run(Module &M) {
 
   // At the end of the bottom-up pass, the globals graph becomes complete.
   // FIXME: This is not the right way to do this, but it is sorta better than
-  // nothing!
+  // nothing!  In particular, externally visible globals and unresolvable call
+  // nodes at the end of the BU phase should make things that they point to
+  // incomplete in the globals graph.
+  // 
   GlobalsGraph->maskIncompleteMarkers();
   return false;
 }
