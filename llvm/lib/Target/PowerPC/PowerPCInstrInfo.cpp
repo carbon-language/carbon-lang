@@ -31,18 +31,19 @@ bool PowerPCInstrInfo::isMoveInstr(const MachineInstr& MI,
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
            MI.getOperand(2).isRegister() &&
-           "invalid register-register int move instruction");
+           "invalid PPC32 OR instruction!");
     if (MI.getOperand(1).getReg() == MI.getOperand(2).getReg()) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
       return true;
     }
   } else if (oc == PPC32::ADDI) {             // addi r1, r2, 0
-    if (MI.getNumOperands() == 3 &&
-        MI.getOperand(0).isRegister() &&
-        MI.getOperand(1).isRegister() &&
-        MI.getOperand(2).isImmediate() &&
-        MI.getOperand(2).getImmedValue() == 0) {
+    assert(MI.getNumOperands() == 3 &&
+           MI.getOperand(0).isRegister() &&
+           MI.getOperand(1).isRegister() &&
+           MI.getOperand(2).isImmediate() &&
+           "invalid PPC32 ADDI instruction!");
+    if (MI.getOperand(2).getImmedValue() == 0) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
       return true;
@@ -51,7 +52,7 @@ bool PowerPCInstrInfo::isMoveInstr(const MachineInstr& MI,
     assert(MI.getNumOperands() == 2 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
-           "invalid register-register fp move instruction");
+           "invalid PPC32 FMR instruction");
     sourceReg = MI.getOperand(1).getReg();
     destReg = MI.getOperand(0).getReg();
     return true;
