@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Reoptimizer/InstLoops.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Constants.h"
 #include "llvm/iMemory.h"
@@ -27,11 +28,26 @@ enum Color{
   BLACK
 };
 
-struct InstLoops : public FunctionPass {
-  bool runOnFunction(Function &F);
-};
-
-static RegisterOpt<InstLoops> X("instloops", "Instrument backedges for profiling");
+namespace{
+  struct InstLoops : public FunctionPass {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<DominatorSet>();
+    }
+  private:
+    DominatorSet *DS;
+    void getBackEdgesVisit(BasicBlock *u,
+			   std::map<BasicBlock *, Color > &color,
+			   std::map<BasicBlock *, int > &d, 
+			   int &time, Value *threshold, 
+			   std::map<BasicBlock *, BasicBlock *> &be);
+    void removeRedundant(std::map<BasicBlock *, BasicBlock *> &be);
+    void getBackEdges(Function &F, Value *threshold);
+  public:
+    bool runOnFunction(Function &F);
+  };
+  
+    RegisterOpt<InstLoops> X("instloops", "Instrument backedges for profiling");
+}
 
 // createInstLoopsPass - Create a new pass to add path profiling
 //
@@ -42,10 +58,11 @@ Pass *createInstLoopsPass() {
 
 //helper function to get back edges: it is called by 
 //the "getBackEdges" function below
-void getBackEdgesVisit(BasicBlock *u,
+void InstLoops::getBackEdgesVisit(BasicBlock *u,
                        std::map<BasicBlock *, Color > &color,
                        std::map<BasicBlock *, int > &d, 
-                       int &time, Value *threshold) {
+                       int &time, Value *threshold, 
+		       std::map<BasicBlock *, BasicBlock *> &be) {
   
   color[u]=GREY;
   time++;
@@ -57,98 +74,44 @@ void getBackEdgesVisit(BasicBlock *u,
     BasicBlock *BB = *vl;
 
     if(color[BB]!=GREY && color[BB]!=BLACK){
-      getBackEdgesVisit(BB, color, d, time, threshold);
+      getBackEdgesVisit(BB, color, d, time, threshold, be);
     }
     
     //now checking for d and f vals
-    if(color[BB]==GREY){
+    else if(color[BB]==GREY){
       //so v is ancestor of u if time of u > time of v
       if(d[u] >= d[BB]){
-        //insert a new basic block: modify terminator accordingly!
-        BasicBlock *newBB = new BasicBlock("", u->getParent());
-        BranchInst *ti = cast<BranchInst>(u->getTerminator());
-        unsigned char index = 1;
-        if(ti->getSuccessor(0) == BB){
-          index = 0;
-        }
-        assert(ti->getNumSuccessors() > index && "Not enough successors!");
-        ti->setSuccessor(index, newBB);
-
-        //insert global variable of type int
-        Constant *initializer = Constant::getNullValue(Type::IntTy);
-        GlobalVariable *countVar = new GlobalVariable(Type::IntTy, false, true, 
-                                                      initializer, 
-                                                      "loopCounter", 
-                                                      u->getParent()->getParent());
-        
-        //load the variable
-        Instruction *ldInst = new LoadInst(countVar,"");
-        
-        //increment
-        Instruction *addIn = 
-          BinaryOperator::create(Instruction::Add, ldInst, 
-                                 ConstantSInt::get(Type::IntTy,1), "");
-
-        //store
-        Instruction *stInst = new StoreInst(addIn, countVar);
-
-
-        Instruction *etr = new LoadInst(threshold, "threshold");
-        Instruction *cmpInst = new SetCondInst(Instruction::SetLE, etr, 
-                                               addIn, "");
-        
-        BasicBlock *callTrigger = new BasicBlock("", u->getParent());
-        //branch to calltrigger, or *vl
-        Instruction *newBr = new BranchInst(callTrigger, BB, cmpInst);
-
-        BasicBlock::InstListType &lt = newBB->getInstList();
-
-        lt.push_back(ldInst);
-        lt.push_back(addIn);
-        lt.push_back(stInst);
-        lt.push_back(etr);
-        lt.push_back(cmpInst);
-        lt.push_back(newBr);
-
-        //Now add instructions to the triggerCall BB
-        //now create a call function
-        //call llvm_first_trigger(int *x);
-        std::vector<const Type*> inCountArgs;
-        inCountArgs.push_back(PointerType::get(Type::IntTy));
- 
-        const FunctionType *cFty = FunctionType::get(Type::VoidTy, inCountArgs, 
-                                                     false);
-        Function *inCountMth = 
-          u->getParent()->getParent()->getOrInsertFunction("llvm_first_trigger", cFty);
-        
-        assert(inCountMth && "Initialize method could not be inserted!");
-
-        std::vector<Value *> iniArgs;
-        iniArgs.push_back(countVar);
-        Instruction *call = new CallInst(inCountMth, iniArgs, "");
-        callTrigger->getInstList().push_back(call);
-        callTrigger->getInstList().push_back(new BranchInst(BB));
-      
-        //now iterate over *vl, and set its Phi nodes right
-        for(BasicBlock::iterator BB2Inst = BB->begin(), BBend = BB->end(); 
-            BB2Inst != BBend; ++BB2Inst){
-        
-          if (PHINode *phiInst = dyn_cast<PHINode>(BB2Inst)){
-            int bbIndex = phiInst->getBasicBlockIndex(u);
-            if(bbIndex>=0){
-              phiInst->setIncomingBlock(bbIndex, newBB);
-          
-              Value *val = phiInst->getIncomingValue((unsigned int)bbIndex);
-              phiInst->addIncoming(val, callTrigger);
-            }
-          }
-        }
+	//u->BB is a backedge
+	be[u] = BB;
       }
     }
   }
   color[u]=BLACK;//done with visiting the node and its neighbors
 }
 
+//look at all BEs, and remove all BEs that are dominated by other BE's in the
+//set
+void InstLoops::removeRedundant(std::map<BasicBlock *, BasicBlock *> &be){
+  std::vector<BasicBlock *> toDelete;
+  for(std::map<BasicBlock *, BasicBlock *>::iterator MI = be.begin(), 
+	ME = be.end(); MI != ME; ++MI){
+    //std::cerr<<MI->first->getName()<<"\t->\t"<<MI->second->getName()<<"\n";
+    //std::cerr<<MI->first;
+    //std::cerr<<MI->second;
+    for(std::map<BasicBlock *, BasicBlock *>::iterator MMI = be.begin(), 
+	  MME = be.end(); MMI != MME; ++MMI){
+      if(DS->properlyDominates(MI->first, MMI->first)){
+	toDelete.push_back(MMI->first);
+	//std::cerr<<MI->first->getName()<<"\t Dominates\t"<<MMI->first->getName();
+      }
+    }
+  }
+
+  for(std::vector<BasicBlock *>::iterator VI = toDelete.begin(), 
+	VE = toDelete.end(); VI != VE; ++VI){
+    be.erase(*VI);
+  }
+}
 
 //getting the backedges in a graph
 //Its a variation of DFS to get the backedges in the graph
@@ -161,11 +124,57 @@ void getBackEdgesVisit(BasicBlock *u,
 //have been visited
 //So we have a back edge when we meet a successor of
 //a node with smaller time, and GREY color
-void getBackEdges(Function &F, Value *threshold){
+void InstLoops::getBackEdges(Function &F, Value *threshold){
   std::map<BasicBlock *, Color > color;
   std::map<BasicBlock *, int> d;
+  std::map<BasicBlock *, BasicBlock *> be;
   int time=0;
-  getBackEdgesVisit(F.begin(), color, d, time, threshold);
+  getBackEdgesVisit(F.begin(), color, d, time, threshold, be);
+
+  removeRedundant(be);
+
+  for(std::map<BasicBlock *, BasicBlock *>::iterator MI = be.begin(),
+	ME = be.end(); MI != ME; ++MI){
+    BasicBlock *u = MI->first;
+    BasicBlock *BB = MI->second;
+    //std::cerr<<"Edge from: "<<BB->getName()<<"->"<<u->getName()<<"\n";
+    //insert a new basic block: modify terminator accordingly!
+    BasicBlock *newBB = new BasicBlock("", u->getParent());
+    BranchInst *ti = cast<BranchInst>(u->getTerminator());
+    unsigned char index = 1;
+    if(ti->getSuccessor(0) == BB){
+      index = 0;
+    }
+    assert(ti->getNumSuccessors() > index && "Not enough successors!");
+    ti->setSuccessor(index, newBB);
+        
+    BasicBlock::InstListType &lt = newBB->getInstList();
+
+    std::vector<const Type*> inCountArgs;
+    const FunctionType *cFty = FunctionType::get(Type::VoidTy, inCountArgs, 
+						 false);
+    Function *inCountMth = 
+      u->getParent()->getParent()->getOrInsertFunction("llvm_first_trigger",
+						       cFty);
+        
+    assert(inCountMth && "Initial method could not be inserted!");
+
+    Instruction *call = new CallInst(inCountMth, "");
+    lt.push_back(call);
+    lt.push_back(new BranchInst(BB));
+      
+    //now iterate over *vl, and set its Phi nodes right
+    for(BasicBlock::iterator BB2Inst = BB->begin(), BBend = BB->end(); 
+	BB2Inst != BBend; ++BB2Inst){
+        
+      if (PHINode *phiInst = dyn_cast<PHINode>(BB2Inst)){
+	int bbIndex = phiInst->getBasicBlockIndex(u);
+	if(bbIndex>=0){
+	  phiInst->setIncomingBlock(bbIndex, newBB);
+	}
+      }
+    }
+  }
 }
 
 //Per function pass for inserting counters and call function
@@ -173,11 +182,18 @@ bool InstLoops::runOnFunction(Function &F){
   
   static GlobalVariable *threshold = NULL;
   static bool insertedThreshold = false;
-  
-   if(!insertedThreshold){
-    threshold = new GlobalVariable(Type::IntTy, false, false, 0,
-                                                   "reopt_threshold");
 
+  DS  = &getAnalysis<DominatorSet>();
+
+  if(F.isExternal()) {
+    return false;
+  }
+
+  if(!insertedThreshold){
+    threshold = new GlobalVariable(Type::IntTy, false,  
+				   GlobalValue::ExternalLinkage, 0,
+                                   "reopt_threshold");
+    
     F.getParent()->getGlobalList().push_back(threshold);
     insertedThreshold = true;
   }
@@ -199,11 +215,7 @@ bool InstLoops::runOnFunction(Function &F){
   }
 
   assert(threshold && "GlobalVariable threshold not defined!");
-
-  if(F.isExternal()) {
-    return false;
-  }
-
+  
   getBackEdges(F, threshold);
   
   return true;
