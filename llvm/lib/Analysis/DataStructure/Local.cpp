@@ -47,7 +47,9 @@ namespace {
           getValueNode(*I);
 
       visit(G.getFunction());  // Single pass over the function
-      G.removeDeadNodes();
+
+      // Not inlining, only eliminate trivially dead nodes.
+      G.removeTriviallyDeadNodes();
     }
 
   private:
