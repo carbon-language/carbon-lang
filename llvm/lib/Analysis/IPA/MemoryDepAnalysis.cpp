@@ -14,7 +14,6 @@
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "llvm/Support/InstVisitor.h"
@@ -24,7 +23,6 @@
 #include "Support/STLExtras.h"
 #include "Support/hash_map"
 #include "Support/hash_set"
-#include <iostream>
 
 
 ///--------------------------------------------------------------------------
@@ -263,10 +261,8 @@ public:
 ///     }
 ///         
 ///
-
 void MemoryDepAnalysis::ProcessSCC(SCC<Function*>& S,
-                                   ModRefTable& ModRefAfter)
-{
+                                   ModRefTable& ModRefAfter) {
   ModRefTable ModRefCurrent;
   ModRefTable::ModRefMap& mapCurrent = ModRefCurrent.modRefMap;
   ModRefTable::ModRefMap& mapAfter   = ModRefAfter.modRefMap;
@@ -417,27 +413,26 @@ void MemoryDepAnalysis::print(std::ostream &O) const
 /// 
 /// Run the pass on a function
 /// 
-bool MemoryDepAnalysis::runOnFunction(Function& func)
-{
-  assert(! func.isExternal());
+bool MemoryDepAnalysis::runOnFunction(Function &F) {
+  assert(!F.isExternal());
 
   // Get the FunctionModRefInfo holding IPModRef results for this function.
   // Use the TD graph recorded within the FunctionModRefInfo object, which
   // may not be the same as the original TD graph computed by DS analysis.
   // 
-  funcModRef = &getAnalysis<IPModRef>().getFunctionModRefInfo(func);
+  funcModRef = &getAnalysis<IPModRef>().getFunctionModRefInfo(F);
   funcGraph  = &funcModRef->getFuncGraph();
 
   // TEMPORARY: ptr to depGraph (later just becomes "this").
-  assert(funcMap.find(&func) == funcMap.end() && "Analyzing function twice?");
-  funcDepGraph = funcMap[&func] = new DependenceGraph();
+  assert(!funcMap.count(&F) && "Analyzing function twice?");
+  funcDepGraph = funcMap[&F] = new DependenceGraph();
 
   ModRefTable ModRefAfter;
 
   SCC<Function*>* nextSCC;
-  for (TarjanSCC_iterator<Function*> tarjSCCiter = tarj_begin(&func);
-       (nextSCC = *tarjSCCiter) != NULL; ++tarjSCCiter)
-    ProcessSCC(*nextSCC, ModRefAfter);
+  for (TarjanSCC_iterator<Function*> I = tarj_begin(&F), E = tarj_end(&F);
+       I != E; ++I)
+    ProcessSCC(**I, ModRefAfter);
 
   return true;
 }
