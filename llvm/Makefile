@@ -45,7 +45,7 @@ install:: install-includes
 
 TAGS: tags
 
-all:: tags
+all::
 
 tags:
 	find $(wildcard $(SourceDir)/include $(SourceDir)/lib $(SourceDir)/tools) -name '*.cpp' -o -name '*.h' | $(ETAGS) $(ETAGSFLAGS) -
