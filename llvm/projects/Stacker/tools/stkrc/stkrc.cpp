@@ -135,7 +135,7 @@ int main(int argc, char **argv)
 	Out = new std::ofstream(OutputFilename.c_str());
         // Make sure that the Out file gets unlinked from the disk if we get a
         // SIGINT
-        RemoveFileOnSignal(OutputFilename);
+        sys::RemoveFileOnSignal(OutputFilename);
       }
     }
   
