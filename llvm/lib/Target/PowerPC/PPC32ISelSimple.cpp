@@ -11,7 +11,8 @@
 #include "PowerPC.h"
 #include "PowerPCInstrBuilder.h"
 #include "PowerPCInstrInfo.h"
-#include "PowerPCTargetMachine.h"
+#include "PPC32.h"
+#include "PPC32TargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -74,7 +75,7 @@ static inline TypeClass getClassB(const Type *Ty) {
 
 namespace {
   struct ISel : public FunctionPass, InstVisitor<ISel> {
-    PowerPCTargetMachine &TM;
+    PPC32TargetMachine &TM;
     MachineFunction *F;                 // The function we are compiling into
     MachineBasicBlock *BB;              // The current MBB we are compiling
     int VarArgsFrameIndex;              // FrameIndex for start of varargs area
@@ -98,7 +99,7 @@ namespace {
     unsigned GlobalBaseReg;
     bool GlobalBaseInitialized;
     
-    ISel(TargetMachine &tm) : TM(reinterpret_cast<PowerPCTargetMachine&>(tm)), 
+    ISel(TargetMachine &tm) : TM(reinterpret_cast<PPC32TargetMachine&>(tm)), 
       F(0), BB(0) {}
 
     bool doInitialization(Module &M) {
@@ -3390,10 +3391,9 @@ void ISel::visitFreeInst(FreeInst &I) {
   TM.CalledFunctions.insert(freeFn);
 }
    
-/// createPPCSimpleInstructionSelector - This pass converts an LLVM function
-/// into a machine code representation is a very simple peep-hole fashion.  The
-/// generated code sucks but the implementation is nice and simple.
+/// createPPC32ISelSimple - This pass converts an LLVM function into a machine
+/// code representation is a very simple peep-hole fashion.
 ///
-FunctionPass *llvm::createPPCSimpleInstructionSelector(TargetMachine &TM) {
+FunctionPass *llvm::createPPC32ISelSimple(TargetMachine &TM) {
   return new ISel(TM);
 }

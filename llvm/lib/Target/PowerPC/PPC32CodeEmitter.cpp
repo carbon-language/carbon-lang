@@ -1,4 +1,4 @@
-//===-- PowerPCCodeEmitter.cpp - JIT Code Emitter for PowerPC -----*- C++ -*-=//
+//===-- PPC32CodeEmitter.cpp - JIT Code Emitter for PowerPC32 -----*- C++ -*-=//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,7 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PowerPCTargetMachine.h"
+#include "PPC32JITInfo.h"
+#include "PPC32TargetMachine.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/Passes.h"
@@ -19,12 +20,12 @@
 namespace llvm {
 
 namespace {
-  class PowerPCCodeEmitter : public MachineFunctionPass {
+  class PPC32CodeEmitter : public MachineFunctionPass {
     TargetMachine &TM;
     MachineCodeEmitter &MCE;
 
   public:
-    PowerPCCodeEmitter(TargetMachine &T, MachineCodeEmitter &M) 
+    PPC32CodeEmitter(TargetMachine &T, MachineCodeEmitter &M) 
       : TM(T), MCE(M) {}
 
     const char *getPassName() const { return "PowerPC Machine Code Emitter"; }
@@ -55,17 +56,17 @@ namespace {
 /// of functions.  This method should returns true if machine code emission is
 /// not supported.
 ///
-bool PowerPCTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                                      MachineCodeEmitter &MCE) {
+bool PPC32TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
+                                                    MachineCodeEmitter &MCE) {
   // Machine code emitter pass for PowerPC
-  PM.add(new PowerPCCodeEmitter(*this, MCE)); 
+  PM.add(new PPC32CodeEmitter(*this, MCE)); 
   // Delete machine code for this function after emitting it:
   PM.add(createMachineCodeDeleter());
   // We don't yet support machine code emission
   return true;
 }
 
-bool PowerPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
+bool PPC32CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   MCE.startFunction(MF);
   MCE.emitConstantPool(MF.getConstantPool());
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
@@ -74,24 +75,24 @@ bool PowerPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-void PowerPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
+void PPC32CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I)
     emitWord(getBinaryCodeForInstr(*I));
 }
 
-unsigned PowerPCCodeEmitter::getValueBit(int64_t Val, unsigned bit) {
+unsigned PPC32CodeEmitter::getValueBit(int64_t Val, unsigned bit) {
   Val >>= bit;
   return (Val & 1);
 }
 
-void *PowerPCJITInfo::getJITStubForFunction(Function *F,
-                                            MachineCodeEmitter &MCE) {
-  assert (0 && "PowerPCJITInfo::getJITStubForFunction not implemented");
+void *PPC32JITInfo::getJITStubForFunction(Function *F,
+                                          MachineCodeEmitter &MCE) {
+  assert (0 && "PPC32JITInfo::getJITStubForFunction not implemented");
   return 0;
 }
 
-void PowerPCJITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
-  assert (0 && "PowerPCJITInfo::replaceMachineCodeForFunction not implemented");
+void PPC32JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
+  assert (0 && "PPC32JITInfo::replaceMachineCodeForFunction not implemented");
 }
 
 //#include "PowerPCGenCodeEmitter.inc"

@@ -1,4 +1,4 @@
-//===-- PowerPCAsmPrinter.cpp - Print machine instrs to PowerPC assembly --===//
+//===-- PPC32AsmPrinter.cpp - Print machine instrs to PowerPC assembly ----===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,7 +19,7 @@
 #define DEBUG_TYPE "asmprinter"
 #include "PowerPC.h"
 #include "PowerPCInstrInfo.h"
-#include "PowerPCTargetMachine.h"
+#include "PPC32TargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -48,7 +48,7 @@ namespace {
     /// Target machine description which we query for reg. names, data
     /// layout, etc.
     ///
-    PowerPCTargetMachine &TM;
+    PPC32TargetMachine &TM;
 
     /// Name-mangler for global names.
     ///
@@ -57,7 +57,7 @@ namespace {
     std::set<std::string> Strings;
 
     Printer(std::ostream &o, TargetMachine &tm) : O(o),
-      TM(reinterpret_cast<PowerPCTargetMachine&>(tm)), LabelNumber(0) {}
+      TM(reinterpret_cast<PPC32TargetMachine&>(tm)), LabelNumber(0) {}
 
     /// Cache of mangled name for current function. This is
     /// recalculated at the beginning of each call to
@@ -70,7 +70,7 @@ namespace {
     unsigned LabelNumber;
   
     virtual const char *getPassName() const {
-      return "PowerPC Assembly Printer";
+      return "PPC32 Assembly Printer";
     }
 
     void printMachineInstruction(const MachineInstr *MI);
@@ -85,12 +85,12 @@ namespace {
   };
 } // end of anonymous namespace
 
-/// createPPCAsmPrinterPass - Returns a pass that prints the PPC
+/// createPPC32AsmPrinterPass - Returns a pass that prints the PPC
 /// assembly code for a MachineFunction to the given output stream,
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form or not.
 ///
-FunctionPass *createPPCAsmPrinterPass(std::ostream &o,TargetMachine &tm) {
+FunctionPass *createPPC32AsmPrinter(std::ostream &o,TargetMachine &tm) {
   return new Printer(o, tm);
 }
 
