@@ -44,7 +44,7 @@ namespace {
                cl::Prefix,
                cl::values(clEnumVal(simple, "  simple spiller"),
                           clEnumVal(local,  "  local spiller"),
-                          0),
+                          clEnumValEnd),
                cl::init(local));
 }
 
