@@ -8,8 +8,8 @@
 #ifndef LLVM_VALUE_H
 #define LLVM_VALUE_H
 
-#include <string>
 #include <list>
+#include "llvm/Annotation.h"
 
 class User;
 class Type;
@@ -26,7 +26,7 @@ template<class ValueSubclass, class ItemParentType, class SymTabType>
 //                                 Value Class
 //===----------------------------------------------------------------------===//
 
-class Value {
+class Value : public Annotable {   // Value's are annotable
 public:
   enum ValueTy {
     TypeVal,                // This is an instance of Type
