@@ -57,9 +57,13 @@ namespace {
     ("liveintervals", "Number of loads/stores folded into instructions");
 
     cl::opt<bool>
-    join("join-liveintervals",
-         cl::desc("Join compatible live intervals"),
-         cl::init(false));
+    EnableJoining("join-liveintervals",
+                  cl::desc("Join compatible live intervals"),
+                  cl::init(true));
+    cl::opt<bool>
+    EnableVirtVirtJoining("join-liveintervals-virtvirtjoining",
+                      cl::desc("Join live intervals for virtreg pairs (buggy)"),
+                          cl::init(false));
 };
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const
@@ -115,7 +119,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     numIntervals += intervals_.size();
 
     // join intervals if requested
-    if (join) joinIntervals();
+    if (EnableJoining) joinIntervals();
 
     numIntervalsAfter += intervals_.size();
 
@@ -494,15 +498,21 @@ void LiveIntervals::joinIntervals()
                     continue;
 
                 Reg2IntervalMap::iterator r2iA = r2iMap_.find(regA);
-                assert(r2iA != r2iMap_.end());
+                assert(r2iA != r2iMap_.end() &&
+                       "Found unknown vreg in 'isMoveInstr' instruction");
                 Reg2IntervalMap::iterator r2iB = r2iMap_.find(regB);
-                assert(r2iB != r2iMap_.end());
+                assert(r2iB != r2iMap_.end() &&
+                       "Found unknown vreg in 'isMoveInstr' instruction");
 
                 Intervals::iterator intA = r2iA->second;
                 Intervals::iterator intB = r2iB->second;
 
                 // both A and B are virtual registers
-                if (MRegisterInfo::isVirtualRegister(intA->reg) &&
+
+                // FIXME: coallescing two virtual registers together is
+                // apparently broken.
+                if (EnableVirtVirtJoining && 
+                    MRegisterInfo::isVirtualRegister(intA->reg) &&
                     MRegisterInfo::isVirtualRegister(intB->reg)) {
 
                     const TargetRegisterClass *rcA, *rcB;
@@ -519,9 +529,8 @@ void LiveIntervals::joinIntervals()
                         r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
                         intervals_.erase(intB);
                     }
-                }
-                else if (MRegisterInfo::isPhysicalRegister(intA->reg) ^
-                         MRegisterInfo::isPhysicalRegister(intB->reg)) {
+                } else if (MRegisterInfo::isPhysicalRegister(intA->reg) ^
+                           MRegisterInfo::isPhysicalRegister(intB->reg)) {
                     if (MRegisterInfo::isPhysicalRegister(intB->reg)) {
                         std::swap(regA, regB);
                         std::swap(intA, intB);
