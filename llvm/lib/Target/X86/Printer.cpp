@@ -144,7 +144,10 @@ void Printer::emitConstantValueOnly(const Constant *CV) {
     assert(CB == ConstantBool::True);
     O << "1";
   } else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV))
-    O << CI->getValue();
+    if (((CI->getValue() << 32) >> 32) == CI->getValue())
+      O << CI->getValue();
+    else
+      O << (unsigned long long)CI->getValue();
   else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV))
     O << CI->getValue();
   else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CV))
