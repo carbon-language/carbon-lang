@@ -46,7 +46,9 @@ namespace {
     std::set<std::string> Strings;
 
     PowerPCAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : AsmPrinter(O, TM), LabelNumber(0) {}
+      : AsmPrinter(O, TM), LabelNumber(0) {
+      UsesUnderscorePrefix = 1;
+    }
 
     /// Unique incrementer for label values for referencing Global values.
     ///
@@ -193,21 +195,32 @@ void PowerPCAsmPrinter::emitGlobalConstant(const Constant *CV) {
     // FP Constants are printed as integer constants to avoid losing
     // precision...
     double Val = CFP->getValue();
-    union DU {                            // Abide by C TBAA rules
-      double FVal;
-      uint64_t UVal;
-      struct {
-        uint32_t MSWord;
-        uint32_t LSWord;
-      } T;
-    } U;
-    U.FVal = Val;
-    
-    O << ".long\t" << U.T.MSWord << "\t; double most significant word " 
-      << Val << "\n";
-    O << ".long\t" << U.T.LSWord << "\t; double least significant word " 
-      << Val << "\n";
-    return;
+    if (1 || CFP->getType() == Type::DoubleTy) {
+      union DU {                            // Abide by C TBAA rules
+        double FVal;
+        uint64_t UVal;
+        struct {
+          uint32_t MSWord;
+          uint32_t LSWord;
+        } T;
+      } U;
+      U.FVal = Val;
+      
+      O << ".long\t" << U.T.MSWord << "\t; double most significant word " 
+        << Val << "\n";
+      O << ".long\t" << U.T.LSWord << "\t; double least significant word " 
+        << Val << "\n";
+      return;
+    } else {
+      union FU {                            // Abide by C TBAA rules
+        float FVal;
+        int32_t UVal;
+      } U;
+      U.FVal = Val;
+      
+      O << ".long\t" << U.UVal << "\t; float " << Val << "\n";
+      return;
+    }
   } else if (CV->getType() == Type::ULongTy || CV->getType() == Type::LongTy) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       union DU {                            // Abide by C TBAA rules
