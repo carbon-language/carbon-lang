@@ -17,6 +17,7 @@
 #include "Config/sys/types.h"
 #include "Config/sys/stat.h"
 #include "Config/fcntl.h"
+#include "Config/pagesize.h"
 #include "Config/sys/wait.h"
 #include "Config/sys/mman.h"
 #include "Config/unistd.h"
@@ -283,7 +284,7 @@ void *llvm::AllocateRWXMemory(unsigned NumBytes) {
   return P;
 
 #elif defined(HAVE_MMAP)
-  static const long pageSize = sysconf(_SC_PAGESIZE);
+  static const long pageSize = GetPageSize();
   unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
 
 /* FIXME: This should use the proper autoconf flags */
