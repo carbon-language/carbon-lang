@@ -14,6 +14,7 @@
 
 #include "CLIDebugger.h"
 #include "Support/CommandLine.h"
+#include "Support/Signals.h"
 #include <iostream>
 
 using namespace llvm;
@@ -51,6 +52,7 @@ namespace {
 int main(int argc, char **argv, char * const *envp) {
   cl::ParseCommandLineOptions(argc, argv,
                               " llvm source-level debugger\n");
+  PrintStackTraceOnErrorSignal();
 
   if (Version || !Quiet) {
     std::cout << "llvm-db: The LLVM source-level debugger\n";

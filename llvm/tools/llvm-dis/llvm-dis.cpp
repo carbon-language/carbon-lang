@@ -53,6 +53,8 @@ WriteMode(cl::desc("Specify the output format:"),
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
+  PrintStackTraceOnErrorSignal();
+
   std::ostream *Out = &std::cout;  // Default to printing to stdout...
   std::string ErrorMessage;
 

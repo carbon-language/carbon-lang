@@ -72,6 +72,7 @@ QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv,
 			      " llvm .bc -> .bc modular optimizer\n");
+  PrintStackTraceOnErrorSignal();
 
   // Allocate a full target machine description only if necessary...
   // FIXME: The choice of target should be controllable on the command line.

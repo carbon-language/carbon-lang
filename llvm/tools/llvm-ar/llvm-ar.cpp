@@ -15,6 +15,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
+#include "Support/Signals.h"
 #include <string>
 #include <fstream>
 #include <cstdio>
@@ -544,9 +545,9 @@ void parseCL() {
 }
 
 int main(int argc, char **argv) {
-
-  //Parse Command line options
   cl::ParseCommandLineOptions(argc, argv);
+  PrintStackTraceOnErrorSignal();
+
   parseCL();
 
   //Create archive!

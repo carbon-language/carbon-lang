@@ -18,6 +18,7 @@
 #include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/Bytecode/Reader.h"
 #include "Support/CommandLine.h"
+#include "Support/Signals.h"
 #include <cstdio>
 #include <map>
 #include <set>
@@ -80,6 +81,7 @@ namespace {
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm profile dump decoder\n");
+  PrintStackTraceOnErrorSignal();
 
   // Read in the bytecode file...
   std::string ErrorMessage;

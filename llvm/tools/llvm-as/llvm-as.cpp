@@ -45,6 +45,7 @@ DisableVerify("disable-verify", cl::Hidden,
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .bc assembler\n");
+  PrintStackTraceOnErrorSignal();
 
   std::ostream *Out = 0;
   try {

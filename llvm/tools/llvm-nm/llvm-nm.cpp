@@ -20,6 +20,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
+#include "Support/Signals.h"
 #include <cctype>
 #include <cstring>
 
@@ -146,6 +147,8 @@ void DumpSymbolNamesFromFile (std::string &Filename) {
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm symbol table dumper\n");
+  PrintStackTraceOnErrorSignal();
+
   ToolName = argv[0];
   if (BSDFormat) OutputFormat = bsd;
   if (POSIXFormat) OutputFormat = posix;
