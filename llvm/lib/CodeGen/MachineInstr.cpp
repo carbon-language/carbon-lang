@@ -112,14 +112,20 @@ MachineInstr::dump() const
   cerr << "  " << *this;
 }
 
-static inline std::ostream &OutputValue(std::ostream &os,
-                                        const Value* val)
+static inline std::ostream&
+OutputValue(std::ostream &os, const Value* val)
 {
   os << "(val ";
   if (val && val->hasName())
     return os << val->getName() << ")";
   else
     return os << (void*) val << ")";              // print address only
+}
+
+static inline std::ostream&
+OutputReg(std::ostream &os, unsigned int regNum)
+{
+  return os << "%mreg(" << regNum << ")";
 }
 
 std::ostream &operator<<(std::ostream& os, const MachineInstr& minstr)
@@ -165,14 +171,17 @@ std::ostream &operator<<(std::ostream &os, const MachineOperand &mop)
     case MachineOperand::MO_VirtualRegister:
       os << "%reg";
       OutputValue(os, mop.getVRegValue());
+      if (mop.hasAllocatedReg())
+        os << "==" << OutputReg(os, mop.getAllocatedRegNum());
       break;
     case MachineOperand::MO_CCRegister:
       os << "%ccreg";
       OutputValue(os, mop.getVRegValue());
+      if (mop.hasAllocatedReg())
+        os << "==" << OutputReg(os, mop.getAllocatedRegNum());
       break;
     case MachineOperand::MO_MachineRegister:
-      os << "%reg";
-      os << "(" << mop.getMachineRegNum() << ")";
+      OutputReg(os, mop.getMachineRegNum());
       break;
     case MachineOperand::MO_SignExtendedImmed:
       os << (long)mop.immedVal;
