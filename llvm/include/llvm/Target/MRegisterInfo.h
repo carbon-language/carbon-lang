@@ -129,6 +129,16 @@ public:
                     unsigned DestReg, unsigned SrcReg,
                     unsigned ImmOffset, unsigned dataSize) const = 0;
 
+  virtual MachineBasicBlock::iterator
+  emitPrologue(MachineBasicBlock *MBB,
+               MachineBasicBlock::iterator MBBI,
+               unsigned numBytes) const = 0;
+
+  virtual MachineBasicBlock::iterator
+  emitEpilogue(MachineBasicBlock *MBB,
+               MachineBasicBlock::iterator MBBI,
+               unsigned numBytes) const = 0;
+
   virtual const unsigned* getCalleeSaveRegs() const = 0;
   virtual const unsigned* getCallerSaveRegs() const = 0;
 
