@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
       cerr << "Here's the assembly:\n" << C.get();
 
     if (OutputFilename != "") {   // Specified an output filename?
-      if (!Force && !std::ifstream(OutputFilename.c_str())) {
+      if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
         cerr << "Error opening '" << OutputFilename << "': File exists!\n"
              << "Use -f command line argument to force output\n";
@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
 	}
 	OutputFilename += ".bc";
 
-        if (!Force && !std::ifstream(OutputFilename.c_str())) {
+        if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
           cerr << "Error opening '" << OutputFilename << "': File exists!\n"
                << "Use -f command line argument to force output\n";

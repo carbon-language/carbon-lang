@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
 
   std::ostream *Out = &std::cout;  // Default to printing to stdout...
   if (OutputFilename != "") {
-    if (!Force && !std::ifstream(OutputFilename.c_str())) {
+    if (!Force && std::ifstream(OutputFilename.c_str())) {
       // If force is not specified, make sure not to overwrite a file!
       cerr << "Error opening '" << OutputFilename << "': File exists!\n"
            << "Use -f command line argument to force output\n";

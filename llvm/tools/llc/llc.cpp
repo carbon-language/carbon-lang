@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
            "files on stdin not supported with tracing");
     string traceFileName = GetFileNameRoot(InputFilename) + ".trace.bc";
 
-    if (!Force && !std::ifstream(OutputFilename.c_str())) {
+    if (!Force && std::ifstream(OutputFilename.c_str())) {
       // If force is not specified, make sure not to overwrite a file!
       cerr << "Error opening '" << OutputFilename << "': File exists!\n"
            << "Use -f command line argument to force output\n";
@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
     // Figure out where we are going to send the output...
     std::ostream *Out = 0;
     if (OutputFilename != "") {   // Specified an output filename?
-      if (!Force && !std::ifstream(OutputFilename.c_str())) {
+      if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
         cerr << "Error opening '" << OutputFilename << "': File exists!\n"
              << "Use -f command line argument to force output\n";
@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
         string OutputFilename = GetFileNameRoot(InputFilename); 
         OutputFilename += ".s";
 
-        if (!Force && !std::ifstream(OutputFilename.c_str())) {
+        if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
           cerr << "Error opening '" << OutputFilename << "': File exists!\n"
                << "Use -f command line argument to force output\n";
