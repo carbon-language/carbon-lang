@@ -12,6 +12,7 @@
 
 #include "Interpreter.h"
 #include "llvm/DerivedTypes.h"
+#include "../test/Libraries/libinstr/tracelib.h"
 #include <map>
 #include <dlfcn.h>
 #include <iostream>
@@ -20,6 +21,7 @@
 #include <stdio.h>
 using std::vector;
 using std::cout;
+
 
 typedef GenericValue (*ExFunc)(FunctionType *, const vector<GenericValue> &);
 static std::map<const Function *, ExFunc> Functions;
@@ -457,6 +459,43 @@ GenericValue lle_X_fflush(FunctionType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+// unsigned int HashPointerToSeqNum(char* ptr)
+GenericValue lle_X_HashPointerToSeqNum(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+  
+  GV.UIntVal = HashPointerToSeqNum((char*) Args[0].PointerVal);
+  return GV;
+}
+
+// void ReleasePointerSeqNum(char* ptr);
+GenericValue lle_X_ReleasePointerSeqNum(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  ReleasePointerSeqNum((char*) Args[0].PointerVal);
+  return GenericValue();
+}
+
+// void RecordPointer(char* ptr);
+GenericValue lle_X_RecordPointer(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  RecordPointer((char*) Args[0].PointerVal);
+  return GenericValue();
+}
+
+// void PushPointerSet();
+GenericValue lle_X_PushPointerSet(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 0);
+  PushPointerSet();
+  return GenericValue();
+}
+
+// void ReleaseRecordedPointers();
+GenericValue lle_X_ReleasePointersPopSet(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 0);
+  ReleasePointersPopSet();
+  return GenericValue();
+}
+
 } // End extern "C"
 
 
@@ -503,4 +542,9 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_fwrite"]       = lle_X_fwrite;
   FuncNames["lle_X_fgets"]        = lle_X_fgets;
   FuncNames["lle_X_fflush"]       = lle_X_fflush;
+  FuncNames["lle_X_HashPointerToSeqNum"]   = lle_X_HashPointerToSeqNum;
+  FuncNames["lle_X_ReleasePointerSeqNum"]  = lle_X_ReleasePointerSeqNum;
+  FuncNames["lle_X_RecordPointer"]         = lle_X_RecordPointer;
+  FuncNames["lle_X_PushPointerSet"]        = lle_X_PushPointerSet;
+  FuncNames["lle_X_ReleasePointersPopSet"] = lle_X_ReleasePointersPopSet;
 }
