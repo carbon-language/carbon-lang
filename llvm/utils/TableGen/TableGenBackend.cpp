@@ -21,11 +21,7 @@ void TableGenBackend::EmitSourceFileHeader(const std::string &Desc,
   OS << "//===- TableGen'erated file -------------------------------------*-"
        " C++ -*-===//\n//\n// " << Desc << "\n//\n// Automatically generate"
        "d file, do not edit!\n//\n//===------------------------------------"
-       "----------------------------------===//\n\nnamespace llvm {\n\n";
-}
-
-void TableGenBackend::EmitSourceFileTail( std::ostream& OS ) const {
-  OS << "} // End llvm namespace \n";
+       "----------------------------------===//\n\n";
 }
 
 /// getQualifiedName - Return the name of the specified record, with a

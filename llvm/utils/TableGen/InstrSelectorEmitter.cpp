@@ -982,6 +982,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
 
   EmitSourceFileHeader("Instruction Selector for the " + Target.getName() +
                        " target", OS);
+  OS << "namespace llvm {\n\n";
 
   // Output the slot number enums...
   OS << "\nenum { // Slot numbers...\n"
@@ -1291,6 +1292,5 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
        << "  }\n\n  N->addValue(Val);  // Do not ever recalculate this\n"
        << "  return Val;\n}\n\n";
   }
-  EmitSourceFileTail(OS);
+  OS << "} // End llvm namespace \n";
 }
-

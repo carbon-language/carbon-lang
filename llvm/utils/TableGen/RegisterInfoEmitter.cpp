@@ -29,6 +29,7 @@ void RegisterInfoEmitter::runEnums(std::ostream &OS) {
   std::string Namespace = Registers[0].TheDef->getValueAsString("Namespace");
 
   EmitSourceFileHeader("Target Register Enum Values", OS);
+  OS << "namespace llvm {\n\n";
 
   if (!Namespace.empty())
     OS << "namespace " << Namespace << " {\n";
@@ -40,7 +41,7 @@ void RegisterInfoEmitter::runEnums(std::ostream &OS) {
   OS << "  };\n";
   if (!Namespace.empty())
     OS << "}\n";
-  EmitSourceFileTail(OS);
+  OS << "} // End llvm namespace \n";
 }
 
 void RegisterInfoEmitter::runHeader(std::ostream &OS) {
@@ -50,6 +51,8 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   std::string ClassName = TargetName + "GenRegisterInfo";
 
   OS << "#include \"llvm/Target/MRegisterInfo.h\"\n\n";
+
+  OS << "namespace llvm {\n\n";
 
   OS << "struct " << ClassName << " : public MRegisterInfo {\n"
      << "  " << ClassName
@@ -67,7 +70,7 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
       OS << "  extern TargetRegisterClass *" << Name << "RegisterClass;\n";
   }
   OS << "} // end of namespace " << TargetName << "\n\n";
-  EmitSourceFileTail(OS);
+  OS << "} // End llvm namespace \n";
 }
 
 // RegisterInfoEmitter::run - Main register file description emitter.
@@ -75,6 +78,8 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
 void RegisterInfoEmitter::run(std::ostream &OS) {
   CodeGenTarget Target;
   EmitSourceFileHeader("Register Information Source Fragment", OS);
+
+  OS << "namespace llvm {\n\n";
 
   // Start out by emitting each of the register classes... to do this, we build
   // a set of registers which belong to a register class, this is to ensure that
@@ -236,5 +241,5 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   for (unsigned i = 0, e = CSR.size(); i != e; ++i)
     OS << getQualifiedName(CSR[i]) << ", ";  
   OS << " 0\n  };\n  return CalleeSaveRegs;\n}\n\n";
-  EmitSourceFileTail(OS);
+  OS << "} // End llvm namespace \n";
 }

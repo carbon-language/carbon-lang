@@ -20,6 +20,7 @@ using namespace llvm;
 // runEnums - Print out enum values for all of the instructions.
 void InstrInfoEmitter::runEnums(std::ostream &OS) {
   EmitSourceFileHeader("Target Instruction Enum Values", OS);
+  OS << "namespace llvm {\n\n";
 
   CodeGenTarget Target;
 
@@ -45,7 +46,7 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
   OS << "  };\n";
   if (!Namespace.empty())
     OS << "}\n";
-  EmitSourceFileTail(OS);
+  OS << "} // End llvm namespace \n";
 }
 
 void InstrInfoEmitter::printDefList(ListInit *LI, const std::string &Name,
@@ -63,6 +64,8 @@ void InstrInfoEmitter::printDefList(ListInit *LI, const std::string &Name,
 // run - Emit the main instruction description records for the target...
 void InstrInfoEmitter::run(std::ostream &OS) {
   EmitSourceFileHeader("Target Instruction Descriptors", OS);
+  OS << "namespace llvm {\n\n";
+
   CodeGenTarget Target;
   const std::string &TargetName = Target.getName();
   Record *InstrInfo = Target.getInstructionSet();
@@ -92,7 +95,7 @@ void InstrInfoEmitter::run(std::ostream &OS) {
     if (II->second.TheDef != PHI)
       emitRecord(II->second, ++i, InstrInfo, OS);
   OS << "};\n";
-  EmitSourceFileTail(OS);
+  OS << "} // End llvm namespace \n";
 }
 
 void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,

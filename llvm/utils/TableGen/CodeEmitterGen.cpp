@@ -24,6 +24,7 @@ void CodeEmitterGen::run(std::ostream &o) {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
 
   EmitSourceFileHeader("Machine Code Emitter", o);
+  o << "namespace llvm {\n\n";
   std::string Namespace = Insts[0]->getValueAsString("Namespace") + "::";
 
   // Emit function declaration
@@ -225,5 +226,5 @@ void CodeEmitterGen::run(std::ostream &o) {
     << "  return Value;\n"
     << "}\n";
 
-  EmitSourceFileTail(o);
+  o << "} // End llvm namespace \n";
 }
