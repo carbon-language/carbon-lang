@@ -237,19 +237,7 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
       }
 
       // If we STILL cannot resolve the types, then there is something wrong.
-      // Report the warning and delete one of the names.
       if (DelayedTypesToResolve.size() == OldSize) {
-        const std::string &Name = DelayedTypesToResolve.back();
-        
-        const Type *T1 = SrcST->lookupType(Name);
-        const Type *T2 = DestST->lookupType(Name);
-        std::cerr << "WARNING: Type conflict between types named '" << Name
-                  <<  "'.\n    Src='";
-        WriteTypeSymbolic(std::cerr, T1, Src);
-        std::cerr << "'.\n   Dest='";
-        WriteTypeSymbolic(std::cerr, T2, Dest);
-        std::cerr << "'\n";
-
         // Remove the symbol name from the destination.
         DelayedTypesToResolve.pop_back();
       }
