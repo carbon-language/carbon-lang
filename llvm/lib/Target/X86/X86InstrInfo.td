@@ -163,12 +163,12 @@ def LEAr32 : X86Inst<"lea", 0x8D, MRMSrcMem, Arg32>;         // R32 = lea [mem]
 //===----------------------------------------------------------------------===//
 //  Move Instructions...
 //
-def MOVrr8  : X86Inst<"mov", 0x88, MRMDestReg, Arg8>;             // R8 = R8
-def MOVrr16 : X86Inst<"mov", 0x89, MRMDestReg, Arg16>, OpSize;    // R16 = R16
-def MOVrr32 : X86Inst<"mov", 0x89, MRMDestReg, Arg32>;            // R32 = R32
-def MOVir8  : X86Inst<"mov", 0xB0, AddRegFrm , Arg8>;             // R8 = imm8
-def MOVir16 : X86Inst<"mov", 0xB8, AddRegFrm , Arg16>, OpSize;    // R16 = imm16
-def MOVir32 : X86Inst<"mov", 0xB8, AddRegFrm , Arg32>;            // R32 = imm32
+def MOVrr8  : X86Inst<"mov", 0x88, MRMDestReg, Arg8>,          Pattern<(set R8 , R8 )>;
+def MOVrr16 : X86Inst<"mov", 0x89, MRMDestReg, Arg16>, OpSize, Pattern<(set R16, R16)>;
+def MOVrr32 : X86Inst<"mov", 0x89, MRMDestReg, Arg32>,         Pattern<(set R32, R32)>;
+def MOVir8  : X86Inst<"mov", 0xB0, AddRegFrm , Arg8>,          Pattern<(set R8 , imm8 )>;
+def MOVir16 : X86Inst<"mov", 0xB8, AddRegFrm , Arg16>, OpSize, Pattern<(set R16, imm16)>;
+def MOVir32 : X86Inst<"mov", 0xB8, AddRegFrm , Arg32>,         Pattern<(set R32, imm32)>;
 def MOVim8  : X86Inst<"mov", 0xC6, MRMS0m    , Arg8>;             // [mem] = imm8
 def MOVim16 : X86Inst<"mov", 0xC7, MRMS0m    , Arg16>, OpSize;    // [mem] = imm16
 def MOVim32 : X86Inst<"mov", 0xC7, MRMS0m    , Arg32>;            // [mem] = imm32
@@ -216,21 +216,21 @@ let isTwoAddress = 1 in {  // Define some helper classes to make defs shorter.
 }
 
 // Arithmetic...
-def ADDrr8   : I2A8 <"add", 0x00, MRMDestReg>,         Pattern<(set R8 , (plus R8 , R8))>;
+def ADDrr8   : I2A8 <"add", 0x00, MRMDestReg>,         Pattern<(set R8 , (plus R8 , R8 ))>;
 def ADDrr16  : I2A16<"add", 0x01, MRMDestReg>, OpSize, Pattern<(set R16, (plus R16, R16))>;
 def ADDrr32  : I2A32<"add", 0x01, MRMDestReg>,         Pattern<(set R32, (plus R32, R32))>;
-def ADDri8   : I2A8 <"add", 0x80, MRMS0r    >,         Pattern<(set R8 , (plus R8 , imm8))>;
+def ADDri8   : I2A8 <"add", 0x80, MRMS0r    >,         Pattern<(set R8 , (plus R8 , imm8 ))>;
 def ADDri16  : I2A16<"add", 0x81, MRMS0r    >, OpSize, Pattern<(set R16, (plus R16, imm16))>;
 def ADDri32  : I2A32<"add", 0x81, MRMS0r    >,         Pattern<(set R32, (plus R32, imm32))>;
 
 def ADCrr32  : I2A32<"adc", 0x11, MRMDestReg>;                // R32 += imm32+Carry
 
-def SUBrr8   : I2A8 <"sub", 0x28, MRMDestReg>;                // R8 -= R8
-def SUBrr16  : I2A16<"sub", 0x29, MRMDestReg>, OpSize;        // R16 -= R16
-def SUBrr32  : I2A32<"sub", 0x29, MRMDestReg>;                // R32 -= R32
-def SUBri8   : I2A8 <"sub", 0x80, MRMS5r    >;                // R8 -= imm8
-def SUBri16  : I2A16<"sub", 0x81, MRMS5r    >, OpSize;        // R16 -= imm16
-def SUBri32  : I2A32<"sub", 0x81, MRMS5r    >;                // R32 -= imm32
+def SUBrr8   : I2A8 <"sub", 0x28, MRMDestReg>,         Pattern<(set R8 , (minus R8 , R8 ))>;
+def SUBrr16  : I2A16<"sub", 0x29, MRMDestReg>, OpSize, Pattern<(set R16, (minus R16, R16))>;
+def SUBrr32  : I2A32<"sub", 0x29, MRMDestReg>,         Pattern<(set R32, (minus R32, R32))>;
+def SUBri8   : I2A8 <"sub", 0x80, MRMS5r    >,         Pattern<(set R8 , (minus R8 , imm8 ))>;
+def SUBri16  : I2A16<"sub", 0x81, MRMS5r    >, OpSize, Pattern<(set R16, (minus R16, imm16))>;
+def SUBri32  : I2A32<"sub", 0x81, MRMS5r    >,         Pattern<(set R32, (minus R32, imm32))>;
 
 def SBBrr32  : I2A32<"sbb", 0x19, MRMDestReg>;                // R32 -= R32+Carry
 
