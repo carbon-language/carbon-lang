@@ -101,10 +101,12 @@ namespace ISD {
     // state.
     SETCC,
 
-    // addc - Three input, two output operator: (X, Y, C) -> (X+Y+C,
-    // Cout).  X,Y are integer inputs of agreeing size, C is a one bit
-    // value, and two values are produced: the sum and a carry out.
-    ADDC, SUBB,
+    // ADD_PARTS/SUB_PARTS - These operators take two logical operands which are
+    // broken into a multiple pieces each, and return the resulting pieces of
+    // doing an atomic add/sub operation.  This is used to handle add/sub of
+    // expanded types.  The operation ordering is:
+    //       [Lo,Hi] = op [LoLHS,HiLHS], [LoRHS,HiRHS]
+    ADD_PARTS, SUB_PARTS,
 
     // Conversion operators.  These are all single input single output
     // operations.  For all of these, the result type must be strictly
