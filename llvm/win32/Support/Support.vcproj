@@ -171,6 +171,9 @@
 				RelativePath="..\..\lib\Support\StringExtras.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Support\SystemUtils.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Support\Timer.cpp">
 			</File>
 			<File
