@@ -18,7 +18,9 @@
 #include "JIT.h"
 #include "llvm/System/DynamicLibrary.h"
 #include <iostream>
+#if defined(__linux__)
 #include <sys/stat.h>
+#endif
 using namespace llvm;
 
 // AtExitHandlers - List of functions to call when the program exits,
