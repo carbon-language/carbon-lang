@@ -12,6 +12,7 @@
 
 class MachineFunction;
 class MachineBasicBlock;
+class Value;
 
 struct MachineCodeEmitter {
 
@@ -32,7 +33,14 @@ struct MachineCodeEmitter {
 
   /// emitByte - This callback is invoked when a byte needs to be written to the
   /// output stream.
+  ///
   virtual void emitByte(unsigned char B) {}
+
+  /// emitPCRelativeDisp - This callback is invoked when we need to write out a
+  /// PC relative displacement for the specified Value*.  This is used for call
+  /// and jump instructions typically.
+  ///
+  virtual void emitPCRelativeDisp(Value *V) {}
 };
 
 #endif
