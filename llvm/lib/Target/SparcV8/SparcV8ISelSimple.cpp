@@ -798,7 +798,7 @@ void V8ISel::visitCallInst(CallInst &I) {
   if (I.getType () == Type::VoidTy)
     return;
   unsigned DestReg = getReg (I);
-  switch (getClass (I.getType ())) {
+  switch (getClassB (I.getType ())) {
     case cByte:
     case cShort:
     case cInt:
@@ -823,7 +823,7 @@ void V8ISel::visitCallInst(CallInst &I) {
 void V8ISel::visitReturnInst(ReturnInst &I) {
   if (I.getNumOperands () == 1) {
     unsigned RetValReg = getReg (I.getOperand (0));
-    switch (getClass (I.getOperand (0)->getType ())) {
+    switch (getClassB (I.getOperand (0)->getType ())) {
       case cByte:
       case cShort:
       case cInt:
