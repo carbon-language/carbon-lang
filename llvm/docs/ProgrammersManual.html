@@ -560,9 +560,9 @@ all <tt>User</tt>s of a particular <tt>Value</tt> is called a
 Function* F = ...;
 
 for(Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i) {
-    if(Instruction* i = dyn_cast&lt;Instruction&gt;(*i)) {
-        cerr &lt;&lt; "F is used in instruction:\n\t";
-        cerr &lt;&lt; *i &lt;&lt; "\n";
+    if(Instruction* Inst = dyn_cast&lt;Instruction&gt;(*i)) {
+        cerr &lt;&lt; "F is used in instruction:\n";
+        cerr &lt;&lt; *Inst &lt;&lt; "\n";
     }
 }
 </pre>
@@ -1575,6 +1575,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Mon Sep 16 17:07:43 CDT 2002
+Last modified: Tue Sep 17 17:41:54 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
