@@ -135,8 +135,8 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
 
   for (unsigned i = ValNo; i < ValNo+NC; ++i) {
     const Value *V = Plane[i];
-    if (const Constant *CPV = dyn_cast<Constant>(V)) {
-      outputConstant(CPV);
+    if (const Constant *C = dyn_cast<Constant>(V)) {
+      outputConstant(C);
     }
   }
 }
@@ -151,13 +151,11 @@ void BytecodeWriter::outputConstants(bool isFunction) {
 
   unsigned NumPlanes = Table.getNumPlanes();
 
-  // Output the type plane before any constants!
-  if (isFunction) {
+  if (isFunction)
+    // Output the type plane before any constants!
     outputTypes( Table.getModuleTypeLevel() );
-  }
-  
-  // Output module-level string constants before any other constants.x
-  if (!isFunction)
+  else
+    // Output module-level string constants before any other constants.x
     outputConstantStrings();
 
   for (unsigned pno = 0; pno != NumPlanes; pno++) {
@@ -397,3 +395,5 @@ void llvm::WriteBytecodeToFile(const Module *C, std::ostream &Out) {
   }
   Out.flush();
 }
+
+// vim: sw=2 ai
