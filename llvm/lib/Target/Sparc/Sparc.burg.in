@@ -28,7 +28,6 @@ Xdefine PANIC		printf
 %term BrCond=102
 %term Switch=SwitchOPCODE
 		/* 4 is unused */
-%term Not=NotOPCODE
 %term Add=AddOPCODE
 %term Sub=SubOPCODE
 %term Mul=MulOPCODE
@@ -37,15 +36,22 @@ Xdefine PANIC		printf
 %term And=AndOPCODE
 %term Or=OrOPCODE
 %term Xor=XorOPCODE
-                /* Use the next 4 to distinguish bitwise operators (reg) from
-                 * logical operators (bool).  Burg will diverge otherwise.
+                /* Use the next 4 to distinguish bitwise operators from
+                 * logical operators.  This is no longer used for Sparc,
+                 * but may be useful for other target machines.
+                 * The last one is the bitwise Not(val) == XOR val, 11..1.
+                 * Note that it is also a binary operator, not unary.
                  */
 %term BAnd=111
 %term BOr=112
 %term BXor=113
-%term BNot=105
+%term BNot=213
+                /* The next one is the boolean Not(val) == bool XOR val, true
+                 * Note that it is also a binary operator, not unary.
+                 */
+%term  Not=313
 
-%term SetCC=114		/* use this to match all SetCC instructions */
+%term SetCC=114	/* use this to match all SetCC instructions */
 	/* %term SetEQ=13 */
 	/* %term SetNE=14 */
 	/* %term SetLE=15 */
@@ -55,12 +61,12 @@ Xdefine PANIC		printf
 %term Malloc=MallocOPCODE
 %term Free=FreeOPCODE
 %term Alloca=AllocaOPCODE
-%term AllocaN=122	/* alloca with arg N */
+%term AllocaN=122               /* alloca with arg N */
 %term Load=LoadOPCODE
-%term LoadIdx=123	/* load with index vector */
+%term LoadIdx=123               /* load with index vector */
 %term Store=StoreOPCODE
 %term GetElemPtr=GetElementPtrOPCODE
-%term GetElemPtrIdx=125	/* getElemPtr with index vector */
+%term GetElemPtrIdx=125         /* getElemPtr with index vector */
 
 %term Phi=PHINodeOPCODE
 
@@ -110,14 +116,13 @@ stmt:	RetValue(reg)		=   2 (30);
 stmt:	Store(reg,reg)		=   3 (10);
 stmt:	Store(reg,ptrreg)	=   4 (10);
 stmt:	BrUncond		=   5 (20);
-stmt:	BrCond(bool)		=   6 (20);
+stmt:	BrCond(setCC)		=   6 (20);     /* branch on cond. code */
 stmt:	BrCond(setCCconst)	= 206 (10);	/* may save one instruction */
-stmt:	BrCond(boolreg)		=   8 (20);	/* may avoid an extra instr */
-stmt:	BrCond(boolconst)	= 208 (20);	/* may avoid an extra instr */
+stmt:	BrCond(reg)		=   8 (20);	/* may avoid an extra instr */
+stmt:	BrCond(Constant)	= 208 (20);	/* may avoid an extra instr */
 stmt:	Switch(reg)		=   9 (30);	/* cost = load + branch */
 
 stmt:	reg			=  111 (0);
-stmt:	bool			=  113 (0);
 
 	/*
 	 * List node used for nodes with more than 2 children
@@ -128,12 +133,11 @@ reg:	VRegList(reg,reg)	=  10 (0);
 	 * Special case non-terminals to help combine unary instructions.
 	 *	Eg1:  zdouble <- todouble(xfloat) * todouble(yfloat)
 	 *	Eg2:  c       <- a AND (NOT b).
-	 * Note that the costs are counted for the special non-terminals
-	 * here, not for the bool or reg productions later.
+	 * Note that the costs are counted for the special non-terminals here,
+	 * and should not be counted again for the reg productions later.
 	 */
-not:	  Not(bool)		=   21 (10);
-tobool:	  ToBoolTy(bool)	=   22 (10);
-tobool:	  ToBoolTy(reg)		=  322 (10);
+not:	  Not(reg,reg)		=   21 (10);
+tobool:	  ToBoolTy(reg)		=   22 (10);
 toubyte:  ToUByteTy(reg)	=   23 (10);
 tosbyte:  ToSByteTy(reg)	=   24 (10);
 toushort: ToUShortTy(reg)	=   25 (10);
@@ -147,39 +151,40 @@ todouble: ToDoubleTy(reg)	=   32 (10);
 todoubleConst: ToDoubleTy(Constant) = 232 (10);
 
 	/*
-	 * All the ways to produce a boolean value:
+	 * All the ways to produce a boolean value (Not and ToBoolTy are above):
 	 * -- boolean operators: Not, And, Or, ..., ToBoolTy, SetCC
 	 * -- an existing boolean register not in the same tree
 	 * -- a boolean constant
 	 * 
-	 * We add special cases for when one operand is a constant.
-	 * We do not need the cases when all operands (one or both) are const
+	 * For And, Or, Xor, we add special cases for when:
+         * (a) one operand is a constant.
+         * (b) one operand is a NOT, to use the ANDN, ORN, and XORN instrns.
+	 * We do not need the cases when both operands are constant
 	 * because constant folding should take care of that beforehand.
 	 */
-bool:	And(bool,bool)		=   38 (10);
-bool:	And(bool,not)		=  138 (0);	/* cost is counted for not */
-bool:	And(bool,boolconst)	=  238 (10);
-bool:	Or (bool,bool)		=   39 (10);
-bool:	Or (bool,not)		=  139 (0);	/* cost is counted for not */
-bool:	Or (bool,boolconst)	=  239 (10);
-bool:	Xor(bool,bool)		=   40 (10);
-bool:	Xor(bool,not)		=  140 (0);	/* cost is counted for not */
-bool:	Xor(bool,boolconst)	=  240 (10);
+reg:	And(reg,reg)		=   38 (10);
+reg:	And(reg,not)		=  138 (0);	/* cost is counted for not */
+reg:	And(reg,Constant)	=  238 (10);
+reg:	Or (reg,reg)		=   39 (10);
+reg:	Or (reg,not)		=  139 (0);	/* cost is counted for not */
+reg:	Or (reg,Constant)	=  239 (10);
+reg:	Xor(reg,reg)		=   40 (10);
+reg:	Xor(reg,not)		=  140 (0);	/* cost is counted for not */
+reg:	Xor(reg,Constant)	=  240 (10);
 
-bool:	   not			=  221 (0);
-bool:	   tobool		=  222 (0);
-bool:	   setCCconst		=  241 (0);
-bool:	   setCC		=  242 (0);
-bool:      boolreg		=  243 (10);
-bool:      boolconst		=  244 (10);
-
+        /* Special case non-terms for BrCond(setCC) and BrCond(setCCconst) */
 setCCconst: SetCC(reg,Constant)	=   41 (5);
 setCC:	    SetCC(reg,reg)	=   42 (10);
-boolreg:    VReg		=   43 (0);
-boolconst:  Constant		=   44 (0);
+
+reg:	not			=  221 (0);
+reg:	tobool                  =  222 (0);
+reg:	setCCconst		=  241 (0);
+reg:	setCC                   =  242 (0);
 
 	/*
-	 * The unary cast operators.
+	 * Special case non-terminals for the unary cast operators.
+         * Some of these can be folded into other operations (e.g., todouble).
+         * The rest are just for uniformity.
 	 */
 reg:	toubyte			=  123 (0);
 reg:	tosbyte			=  124 (0);
@@ -193,8 +198,8 @@ reg:	tofloat			=  131 (0);
 reg:	todouble		=  132 (0);
 reg:	todoubleConst		=  133 (0);
 
-reg:	  ToArrayTy(reg)	=  19 (10);
-reg:	  ToPointerTy(reg)	=  20 (10);
+reg:	ToArrayTy(reg)          =  19 (10);
+reg:	ToPointerTy(reg)	=  20 (10);
 
 	/*
 	 * The binary arithmetic operators.
@@ -210,17 +215,18 @@ reg:	Rem(reg,reg)		=   37 (60);
 	 * The binary bitwise logical operators.
 	 */
 reg:    BAnd(reg,reg)           =  338 (10);
-reg:    BAnd(reg,bnot)          =  438 (10);
+reg:    BAnd(reg,bnot)          =  438 ( 0);	/* cost is counted for not */
 reg:    BOr( reg,reg)           =  339 (10);
-reg:    BOr( reg,bnot)          =  439 (10);
+reg:    BOr( reg,bnot)          =  439 ( 0);	/* cost is counted for not */
 reg:    BXor(reg,reg)           =  340 (10);
-reg:    BXor(reg,bnot)          =  440 (10);
+reg:    BXor(reg,bnot)          =  440 ( 0);	/* cost is counted for not */
 
 reg:    bnot                    =  321 ( 0);
-bnot:   BNot(reg)               =  421 (10);
+bnot:   BNot(reg,reg)           =  421 (10);
 
 	/*
-	 * The binary operators with one constant argument.
+	 * Special cases for the binary operators with one constant argument.
+         * Not and BNot are effectively just one argument, so not needed here.
 	 */
 reg:	Add(reg,Constant)	=  233 (10);
 reg:	Sub(reg,Constant)	=  234 (10);
@@ -255,7 +261,7 @@ reg:	Shr(reg,reg)		=   63 (20);	/* 1 for issue restrictions */
 reg:	Phi(reg,reg)		=   64 (0);
 
 	/*
-	 * Finally, leaf nodes of expression trees (other than boolreg)
+	 * Finally, leaf nodes of expression trees.
 	 */
 reg:	VReg			=   71 (0);
 reg:	Constant		=   72 (3);	/* prefer direct use */
