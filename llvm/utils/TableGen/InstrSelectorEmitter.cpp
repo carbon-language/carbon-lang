@@ -1023,7 +1023,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
      << "  class " << Target.getName() << "ISel {\n"
      << "    SelectionDAG &DAG;\n"
      << "  public:\n"
-     << "    X86ISel(SelectionDAG &D) : DAG(D) {}\n"
+     << "    " << Target.getName () << "ISel(SelectionDAG &D) : DAG(D) {}\n"
      << "    void generateCode();\n"
      << "  private:\n"
      << "    unsigned makeAnotherReg(const TargetRegisterClass *RC) {\n"
@@ -1060,7 +1060,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
   OS << "  };\n}\n\n";
 
   // Emit the generateCode entry-point...
-  OS << "void X86ISel::generateCode() {\n"
+  OS << "void " << Target.getName () << "ISel::generateCode() {\n"
      << "  SelectionDAGNode *Root = DAG.getRoot();\n"
      << "  assert(Root->getValueType() == MVT::isVoid && "
                                        "\"Root of DAG produces value??\");\n\n"
