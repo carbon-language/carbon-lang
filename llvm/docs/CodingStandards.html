@@ -173,33 +173,53 @@ It is not possible to prevent all warnings from all compilers, nor is it desirab
   }
 </pre><p>
 
-...which shuts <tt>gcc</tt> up.  Any <tt>gcc</tt> warning that annoys you can be fixed by massaging the code appropriately.<p>
+...which shuts <tt>gcc</tt> up.  Any <tt>gcc</tt> warning that annoys you can be
+fixed by massaging the code appropriately.<p>
 
-These are the <tt>gcc</tt> warnings that I prefer to enable: <tt>-Wall -Winline -W -Wwrite-strings -Wno-unused</tt><p>
+These are the <tt>gcc</tt> warnings that I prefer to enable: <tt>-Wall -Winline
+-W -Wwrite-strings -Wno-unused</tt><p>
 
 
 <!-- _______________________________________________________________________ -->
 </ul><a name="ci_cpp_features"><h4><hr size=0>Which C++ features can I use?</h4><ul>
 
-Compilers are finally catching up to the C++ standard.  Most compilers implement most features, so you can use just about any features that you would like.  In the LLVM source tree, I have chosen to not use these features:<p>
+Compilers are finally catching up to the C++ standard.  Most compilers implement
+most features, so you can use just about any features that you would like.  In
+the LLVM source tree, I have chosen to not use these features:<p>
 
 <ol>
-<li>Exceptions: Exceptions are very useful for error reporting and handling exceptional conditions.  I do not use them in LLVM because they do have an associated performance impact (by restricting restructuring of code), and parts of LLVM are designed for performance critical purposes.<p>
+<li>Exceptions: Exceptions are very useful for error reporting and handling
+exceptional conditions.  I do not use them in LLVM because they do have an
+associated performance impact (by restricting restructuring of code), and parts
+of LLVM are designed for performance critical purposes.<p>
 
-Just like most of the rules in this document, this isn't a hard and fast requirement.  Exceptions are used in the Parser, because it simplifies error reporting <b>significantly</b>, and the LLVM parser is not at all in the critical path.<p>
+Just like most of the rules in this document, this isn't a hard and fast
+requirement.  Exceptions are used in the Parser, because it simplifies error
+reporting <b>significantly</b>, and the LLVM parser is not at all in the
+critical path.<p>
 
-<li>RTTI: RTTI has a large cost in terms of executable size, and compilers are not yet very good at stomping out "dead" class information blocks.  Because of this, typeinfo and dynamic cast are not used.
+<li>RTTI: RTTI has a large cost in terms of executable size, and compilers are
+not yet very good at stomping out "dead" class information blocks.  Because of
+this, typeinfo and dynamic cast are not used.
 </ol><p>
 
-Other features, such as templates (without partial specialization) can be used freely.  The general goal is to have clear, consise, performant code... if a technique assists with that then use it.<p>
+Other features, such as templates (without partial specialization) can be used
+freely.  The general goal is to have clear, consise, performant code... if a
+technique assists with that then use it.<p>
 
 
 <!-- _______________________________________________________________________ -->
 </ul><a name="ci_portable_code"><h4><hr size=0>Write Portable Code</h4><ul>
 
-In almost all cases, it is possible and within reason to write completely portable code.  If there are cases where it isn't possible to write portable code, isolate it behind a well defined (and well documented) interface.<p>
+In almost all cases, it is possible and within reason to write completely
+portable code.  If there are cases where it isn't possible to write portable
+code, isolate it behind a well defined (and well documented) interface.<p>
 
-In practice, this means that you shouldn't assume much about the host compiler, including its support for "high tech" features like partial specialization of templates.  In fact, Visual C++ 6 could be an important target for our work in the future, and we don't want to have to rewrite all of our code to support it.<p>
+In practice, this means that you shouldn't assume much about the host compiler,
+including its support for "high tech" features like partial specialization of
+templates.  In fact, Visual C++ 6 could be an important target for our work in
+the future, and we don't want to have to rewrite all of our code to support
+it.<p>
 
 
 
@@ -219,33 +239,71 @@ In practice, this means that you shouldn't assume much about the host compiler, 
 <!-- _______________________________________________________________________ -->
 </ul><a name="hl_module"><h4><hr size=0>A Public Header File <b>is</b> a Module</h4><ul>
 
-C++ doesn't do too well in the modularity department.  There is no real encapsulation or data hiding (unless you use expensive protocol classes), but it is what we have to work with.  When you write a public header file (in the LLVM source tree, they live in the top level "include" directory), you are defining a module of functionality.<p>
+C++ doesn't do too well in the modularity department.  There is no real
+encapsulation or data hiding (unless you use expensive protocol classes), but it
+is what we have to work with.  When you write a public header file (in the LLVM
+source tree, they live in the top level "include" directory), you are defining a
+module of functionality.<p>
 
-Modules should be completely independent of each other, except for their dependence.  A module is not just a class, a function, or a namespace: <a href="http://www.cuj.com/articles/2000/0002/0002c/0002c.htm">it's a collection of these</a> that defines an interface.  This interface may be several functions, classes or data structures, but the important issue is how they work together.<p>
+Ideally, modules should be completely independent of each other, and their
+header files should only include the absolute minimum number of headers
+possible. A module is not just a class, a function, or a namespace: <a
+href="http://www.cuj.com/articles/2000/0002/0002c/0002c.htm">it's a collection
+of these</a> that defines an interface.  This interface may be several
+functions, classes or data structures, but the important issue is how they work
+together.<p>
 
-<!--One example of this is the <tt>llvm/include/llvm/CFG.h</tt> file.  It defines a collection of global functions, template classes, and member functions that are syntactically unrelated to each other.  Semantically, however, they all provide useful functionality for operating on a CFG, and so they are bound together.<p> -->
+<!--One example of this is the <tt>llvm/include/llvm/CFG.h</tt> file.  It
+defines a collection of global functions, template classes, and member functions
+that are syntactically unrelated to each other.  Semantically, however, they all
+provide useful functionality for operating on a CFG, and so they are bound
+together.<p> -->
 
-In general, a module should be implemented with one or more <tt>.cpp</tt> files.  Each of these <tt>.cpp</tt> files should include the header that defines their interface first.  This ensure that all of the dependences of the module header have been properly added to the module header itself, and are not implicit.  System headers should be included after user headers for a translation unit.<p>
+In general, a module should be implemented with one or more <tt>.cpp</tt> files.
+Each of these <tt>.cpp</tt> files should include the header that defines their
+interface first.  This ensure that all of the dependences of the module header
+have been properly added to the module header itself, and are not implicit.
+System headers should be included after user headers for a translation unit.<p>
 
 
 <!-- _______________________________________________________________________ -->
 </ul><a name="hl_dontinclude"><h4><hr size=0>#include as Little as Possible</h4><ul>
 
-<tt>#include</tt> hurts compile time performance.  Don't do it unless you have to, especially in header files.<p>
+<tt>#include</tt> hurts compile time performance.  Don't do it unless you have
+to, especially in header files.<p>
 
-But wait, sometimes you need to have the definition of a class to use it, or to inherit from it.  In these cases go ahead and #include that header file.  Be aware however that there are many cases where you don't need to have the full definition of a class.  If you are using a pointer or reference to a class, you don't need the header file.  If you are simply returning a class instance from a prototyped function or method, you don't need it.  In fact, for most cases, you simply don't need the definition of a class... and not <tt>#include</tt>'ing speeds up compilation.<p>
+But wait, sometimes you need to have the definition of a class to use it, or to
+inherit from it.  In these cases go ahead and #include that header file.  Be
+aware however that there are many cases where you don't need to have the full
+definition of a class.  If you are using a pointer or reference to a class, you
+don't need the header file.  If you are simply returning a class instance from a
+prototyped function or method, you don't need it.  In fact, for most cases, you
+simply don't need the definition of a class... and not <tt>#include</tt>'ing
+speeds up compilation.<p>
 
-It is easy to try to go too overboard on this recommendation, however.  You <b>must</b> include all of the header files that you are using, either directly or indirectly (through another header file).  To make sure that you don't accidently forget to include a header file in your module header, make sure to include your module header <b>first</b> in the implementation file (as mentioned above).  This way there won't be any hidden dependencies that you'll find out about later...<p>
+It is easy to try to go too overboard on this recommendation, however.  You
+<b>must</b> include all of the header files that you are using, either directly
+or indirectly (through another header file).  To make sure that you don't
+accidently forget to include a header file in your module header, make sure to
+include your module header <b>first</b> in the implementation file (as mentioned
+above).  This way there won't be any hidden dependencies that you'll find out
+about later...<p>
 
 
 <!-- _______________________________________________________________________ -->
 </ul><a name="hl_privateheaders"><h4><hr size=0>Keep "internal" Headers Private</h4><ul>
 
-Many modules have a complex implementation that causes them to use more than one implementation (<tt>.cpp</tt>) file.  It is often tempting to put the internal communication interface (helper classes, extra functions, etc) in the public module header file.  Don't do this.  :)<p>
+Many modules have a complex implementation that causes them to use more than one
+implementation (<tt>.cpp</tt>) file.  It is often tempting to put the internal
+communication interface (helper classes, extra functions, etc) in the public
+module header file.  Don't do this.  :)<p>
 
-If you really need to do something like this, put a private header file in the same directory as the source files, and include it locally.  This ensures that your private interface remains private and undisturbed by outsiders.<p>
+If you really need to do something like this, put a private header file in the
+same directory as the source files, and include it locally.  This ensures that
+your private interface remains private and undisturbed by outsiders.<p>
 
-Note however, that it's okay to put extra implementation methods a public class itself... just make them private (or protected), and all is well.<p>
+Note however, that it's okay to put extra implementation methods a public class
+itself... just make them private (or protected), and all is well.<p>
 
 
 <!-- ======================================================================= -->
@@ -257,9 +315,17 @@ Note however, that it's okay to put extra implementation methods a public class 
 <!-- _______________________________________________________________________ -->
 </ul><a name="hl_assert"><h4><hr size=0>Assert Liberally</h4><ul>
 
-Use the "<tt>assert</tt>" function to its fullest.  Check all of your preconditions and assumptions, you never know when a bug (not neccesarily even yours) might be caught early by an assertion, which reduces debugging time dramatically.  The "<tt>&lt;cassert&gt;</tt>" header file is probably already included by the header files you are using, so it doesn't cost anything to use it.<p>
+Use the "<tt>assert</tt>" function to its fullest.  Check all of your
+preconditions and assumptions, you never know when a bug (not neccesarily even
+yours) might be caught early by an assertion, which reduces debugging time
+dramatically.  The "<tt>&lt;cassert&gt;</tt>" header file is probably already
+included by the header files you are using, so it doesn't cost anything to use
+it.<p>
 
-To further assist with debugging, make sure to put some kind of error message in the assertion statement (which is printed if the assertion is tripped). This helps the poor debugging make sense of why an assertion is being made and enforced, and hopefully what to do about it.  Here is one complete example:<p>
+To further assist with debugging, make sure to put some kind of error message in
+the assertion statement (which is printed if the assertion is tripped). This
+helps the poor debugging make sense of why an assertion is being made and
+enforced, and hopefully what to do about it.  Here is one complete example:<p>
 
 <pre>
   inline Value *getOperand(unsigned i) { 
@@ -288,15 +354,24 @@ You get the idea...<p>
 <!-- _______________________________________________________________________ -->
 </ul><a name="hl_preincrement"><h4><hr size=0>Prefer Preincrement</h4><ul>
 
-Hard fast rule: Preincrement (++X) may be no slower than postincrement (X++) and could very well be a lot faster than it.  Use preincrementation whenever possible.<p>
+Hard fast rule: Preincrement (++X) may be no slower than postincrement (X++) and
+could very well be a lot faster than it.  Use preincrementation whenever
+possible.<p>
 
-The semantics of postincrement include making a copy of the value being incremented, returning it, and then preincrementing the "work value".  For primitive types, this isn't a big deal... but for iterators, it can be a huge issue (for example, some iterators contains stack and set objects in them... copying an iterator could invoke the copy ctor's of these as well).  In general, get in the habit of always using preincrement, and you won't have a problem.<p>
+The semantics of postincrement include making a copy of the value being
+incremented, returning it, and then preincrementing the "work value".  For
+primitive types, this isn't a big deal... but for iterators, it can be a huge
+issue (for example, some iterators contains stack and set objects in them...
+copying an iterator could invoke the copy ctor's of these as well).  In general,
+get in the habit of always using preincrement, and you won't have a problem.<p>
 
 
 <!-- _______________________________________________________________________ -->
 </ul><a name="hl_avoidendl"><h4><hr size=0>Avoid endl</h4><ul>
 
-The <tt>endl</tt> modifier, when used with iostreams outputs a newline to the output stream specified.  In addition to doing this, however, it also flushes the output stream.  In other words, these are equivalent:<p>
+The <tt>endl</tt> modifier, when used with iostreams outputs a newline to the
+output stream specified.  In addition to doing this, however, it also flushes
+the output stream.  In other words, these are equivalent:<p>
 
 <pre>
   cout << endl;
@@ -309,9 +384,15 @@ Most of the time, you probably have no reason to flush the output stream, so it'
 <!-- _______________________________________________________________________ -->
 </ul><a name="hl_exploitcpp"><h4><hr size=0>Exploit C++ to its Fullest</h4><ul>
 
-C++ is a powerful language.  With a firm grasp on its capabilities, you can make write effective, consise, readable and maintainable code all at the same time.  By staying consistent, you reduce the amount of special cases that need to be remembered.  Reducing the total number of lines of code you write is a good way to avoid documentation, and avoid giving bugs a place to hide.<p>
+C++ is a powerful language.  With a firm grasp on its capabilities, you can make
+write effective, consise, readable and maintainable code all at the same time.
+By staying consistent, you reduce the amount of special cases that need to be
+remembered.  Reducing the total number of lines of code you write is a good way
+to avoid documentation, and avoid giving bugs a place to hide.<p>
 
-For these reasons, come to know and love the contents of your local &lt;algorithm&gt; header file.  Know about &lt;functional&gt; and what it can do for you.  C++ is just a tool that wants you to master it. :)<p>
+For these reasons, come to know and love the contents of your local
+&lt;algorithm&gt; header file.  Know about &lt;functional&gt; and what it can do
+for you.  C++ is just a tool that wants you to master it. :)<p>
 
 
 
