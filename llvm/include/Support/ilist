@@ -74,11 +74,13 @@ class ilist_iterator
   typedef ilist_traits<NodeTy> Traits;
   typedef bidirectional_iterator<NodeTy, ptrdiff_t> super;
 
-  typedef typename super::pointer pointer;
-  typedef typename super::reference reference;
-  pointer NodePtr;
 public:
   typedef size_t size_type;
+  typedef typename super::pointer pointer;
+  typedef typename super::reference reference;
+private:
+  pointer NodePtr;
+public:
 
   ilist_iterator(pointer NP) : NodePtr(NP) {}
   ilist_iterator(reference NR) : NodePtr(&NR) {}
