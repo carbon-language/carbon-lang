@@ -6,16 +6,17 @@
 
 #include "X86.h"
 #include "X86InstrInfo.h"
+#include "X86InstrBuilder.h"
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOperators.h"
 #include "llvm/iOther.h"
 #include "llvm/iPHINode.h"
+#include "llvm/iMemory.h"
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Support/InstVisitor.h"
 
 namespace {
@@ -74,10 +75,14 @@ namespace {
     void visitXor(BinaryOperator &B) { visitSimpleBinary(B, 4); }
 
     // Binary comparison operators
+    void visitSetCondInst(SetCondInst &I);
+
+    // Memory Instructions
+    void visitLoadInst(LoadInst &I);
+    void visitStoreInst(StoreInst &I);
 
     // Other operators
     void visitShiftInst(ShiftInst &I);
-    void visitSetCondInst(SetCondInst &I);
     void visitPHINode(PHINode &I);
 
     void visitInstruction(Instruction &I) {
@@ -325,7 +330,7 @@ ISel::visitSetCondInst (SetCondInst & I)
 ///   ret long, ulong  : Move value into EAX/EDX (?) and return
 ///   ret float/double : ?  Top of FP stack?  XMM0?
 ///
-void ISel::visitReturnInst (ReturnInst & I) {
+void ISel::visitReturnInst (ReturnInst &I) {
   if (I.getNumOperands() == 0) {
     // Emit a 'ret' instruction
     BuildMI(BB, X86::RET, 0);
@@ -333,24 +338,22 @@ void ISel::visitReturnInst (ReturnInst & I) {
   }
 
   unsigned val = getReg(I.getOperand(0));
-  unsigned Class = getClass(I.getType());
+  unsigned Class = getClass(I.getOperand(0)->getType());
   bool isUnsigned = I.getOperand(0)->getType()->isUnsigned();
   switch (Class) {
   case cByte:
     // ret sbyte, ubyte: Extend value into EAX and return
-    if (isUnsigned) {
+    if (isUnsigned)
       BuildMI (BB, X86::MOVZXr32r8, 1, X86::EAX).addReg (val);
-    } else {
+    else
       BuildMI (BB, X86::MOVSXr32r8, 1, X86::EAX).addReg (val);
-    }
     break;
   case cShort:
     // ret short, ushort: Extend value into EAX and return
-    if (unsignedReturnValue) {
+    if (isUnsigned)
       BuildMI (BB, X86::MOVZXr32r16, 1, X86::EAX).addReg (val);
-    } else {
+    else
       BuildMI (BB, X86::MOVSXr32r16, 1, X86::EAX).addReg (val);
-    }
     break;
   case cInt:
     // ret int, uint, ptr: Move value into EAX and return
@@ -434,7 +437,7 @@ void ISel::visitMul(BinaryOperator &I) {
   static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
 
   unsigned Reg = Regs[Class];
-  unsigned Op0Reg = getReg(I.getOperand(1));
+  unsigned Op0Reg = getReg(I.getOperand(0));
   unsigned Op1Reg = getReg(I.getOperand(1));
 
   // Put the first operand into one of the A registers...
@@ -472,7 +475,7 @@ void ISel::visitDivRem(BinaryOperator &I) {
   bool isSigned   = I.getType()->isSigned();
   unsigned Reg    = Regs[Class];
   unsigned ExtReg = ExtRegs[Class];
-  unsigned Op0Reg = getReg(I.getOperand(1));
+  unsigned Op0Reg = getReg(I.getOperand(0));
   unsigned Op1Reg = getReg(I.getOperand(1));
 
   // Put the first operand into one of the A registers...
@@ -557,6 +560,36 @@ void ISel::visitShiftInst (ShiftInst &I) {
       BuildMI(BB, OpTab[OperandClass], 2, DestReg).addReg(Op0r).addReg(X86::CL);
     }
 }
+
+/// visitLoadInst - Implement LLVM load instructions in terms of the x86 'mov'
+/// instruction.
+///
+void ISel::visitLoadInst(LoadInst &I) {
+  unsigned Class = getClass(I.getType());
+  if (Class > 2)  // FIXME: Handle longs and others...
+    visitInstruction(I);
+
+  static const unsigned Opcode[] = { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32 };
+
+  unsigned AddressReg = getReg(I.getOperand(0));
+  addDirectMem(BuildMI(BB, Opcode[Class], 4, getReg(I)), AddressReg);
+}
+
+/// visitStoreInst - Implement LLVM store instructions in terms of the x86 'mov'
+/// instruction.
+///
+void ISel::visitStoreInst(StoreInst &I) {
+  unsigned Class = getClass(I.getOperand(0)->getType());
+  if (Class > 2)  // FIXME: Handle longs and others...
+    visitInstruction(I);
+
+  static const unsigned Opcode[] = { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32 };
+
+  unsigned ValReg = getReg(I.getOperand(0));
+  unsigned AddressReg = getReg(I.getOperand(1));
+  addDirectMem(BuildMI(BB, Opcode[Class], 1+4), AddressReg).addReg(ValReg);
+}
+
 
 /// visitPHINode - Turn an LLVM PHI node into an X86 PHI node...
 ///
