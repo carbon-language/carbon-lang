@@ -41,7 +41,10 @@ class SchedulingManager;
 // in a single cycle.
 //----------------------------------------------------------------------
 
-class InstrGroup: public NonCopyable {
+class InstrGroup {
+  InstrGroup(const InstrGroup&);       // DO NOT IMPLEMENT
+  void operator=(const InstrGroup&);   // DO NOT IMPLEMENT
+  
 public:
   inline const SchedGraphNode* operator[](unsigned int slotNum) const {
     assert(slotNum  < group.size());
@@ -124,12 +127,14 @@ private:
 // Represents the schedule of machine instructions for a single basic block.
 //----------------------------------------------------------------------
 
-class InstrSchedule: public NonCopyable {
-private:
+class InstrSchedule {
   const unsigned int nslots;
   unsigned int numInstr;
   std::vector<InstrGroup*> groups;		// indexed by cycle number
   std::vector<cycles_t> startTime;		// indexed by node id
+
+  InstrSchedule(InstrSchedule&);   // DO NOT IMPLEMENT
+  void operator=(InstrSchedule&);  // DO NOT IMPLEMENT
   
 public: // iterators
   typedef ScheduleIterator<SchedGraphNode> iterator;
@@ -292,14 +297,15 @@ InstrSchedule::end() const
 // Delay slots are simply indexed by slot number 1 ... numDelaySlots
 //----------------------------------------------------------------------
 
-class DelaySlotInfo: public NonCopyable {
-private:
+class DelaySlotInfo {
   const SchedGraphNode* brNode;
-  unsigned int ndelays;
+  unsigned ndelays;
   std::vector<const SchedGraphNode*> delayNodeVec;
   cycles_t delayedNodeCycle;
-  unsigned int delayedNodeSlotNum;
+  unsigned delayedNodeSlotNum;
   
+  DelaySlotInfo(const DelaySlotInfo &);  // DO NOT IMPLEMENT
+  void operator=(const DelaySlotInfo&);  // DO NOT IMPLEMENT
 public:
   /*ctor*/	DelaySlotInfo		(const SchedGraphNode* _brNode,
 					 unsigned _ndelays)
@@ -334,7 +340,9 @@ public:
 // Represents the schedule of machine instructions for a single basic block.
 //----------------------------------------------------------------------
 
-class SchedulingManager: public NonCopyable {
+class SchedulingManager {
+  SchedulingManager(SchedulingManager &);    // DO NOT IMPLEMENT
+  void operator=(const SchedulingManager &); // DO NOT IMPLEMENT
 public: // publicly accessible data members
   const unsigned nslots;
   const TargetSchedInfo& schedInfo;
@@ -342,7 +350,7 @@ public: // publicly accessible data members
   InstrSchedule isched;
   
 private:
-  unsigned int totalInstrCount;
+  unsigned totalInstrCount;
   cycles_t curTime;
   cycles_t nextEarliestIssueTime;		// next cycle we can issue
   // indexed by slot#
