@@ -382,13 +382,23 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     // question....
     assert(Offset == 0 && !isArray() &&
            "Cannot have an offset into a void node!");
+
+    // If this node would have to have an unreasonable number of fields, just
+    // collapse it.  This can occur for fortran common blocks, which have stupid
+    // things like { [100000000 x double], [1000000 x double] }.
+    unsigned NumFields = (NewTySize+DS::PointerSize-1) >> DS::PointerShift;
+    if (NumFields > 64) {
+      foldNodeCompletely();
+      return true;
+    }
+
     Ty = NewTy;
     NodeType &= ~Array;
     if (WillBeArray) NodeType |= Array;
     Size = NewTySize;
 
     // Calculate the number of outgoing links from this node.
-    Links.resize((Size+DS::PointerSize-1) >> DS::PointerShift);
+    Links.resize(NumFields);
     return false;
   }
 
@@ -418,6 +428,16 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     Ty = NewTy;
     NodeType &= ~Array;
     if (WillBeArray) NodeType |= Array;
+
+    // If this node would have to have an unreasonable number of fields, just
+    // collapse it.  This can occur for fortran common blocks, which have stupid
+    // things like { [100000000 x double], [1000000 x double] }.
+    unsigned NumFields = (NewTySize+DS::PointerSize-1) >> DS::PointerShift;
+    if (NumFields > 64) {
+      foldNodeCompletely();
+      return true;
+    }
+
     Size = NewTySize;
 
     // Must grow links to be the appropriate size...
