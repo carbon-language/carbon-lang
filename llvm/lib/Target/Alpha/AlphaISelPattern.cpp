@@ -1027,6 +1027,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
             }
             return Result;
           }
+        case ISD::SEXTLOAD:
+          //SelectionDag isn't deleting the signextend after sextloads
+          Reg = Result = SelectExpr(N.getOperand(0));
+          return Result;
         default: break; //Fall Though;
         }
       } //Every thing else fall though too, including unhandled opcodes above
@@ -1304,10 +1308,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
       }
       else if(N.getOperand(1).getOpcode() == ISD::Constant &&
-              cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 32767)
-      { //LDA  //FIXME: expand the above condition a bit
+              (cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 32767 ||
+               (long)cast<ConstantSDNode>(N.getOperand(1))->getValue() >= -32767))
+      { //LDA
         Tmp1 = SelectExpr(N.getOperand(0));
-        Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+        Tmp2 = (long)cast<ConstantSDNode>(N.getOperand(1))->getValue();
         if (!isAdd)
           Tmp2 = -Tmp2;
         BuildMI(BB, Alpha::LDA, 2, Result).addImm(Tmp2).addReg(Tmp1);
@@ -1387,7 +1392,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     {
       unsigned long val = cast<ConstantSDNode>(N)->getValue();
       if (val < 32000 && (long)val > -32000)
-        BuildMI(BB, Alpha::LOAD_IMM, 1, Result).addImm(val);
+        BuildMI(BB, Alpha::LOAD_IMM, 1, Result).addImm((long)val);
       else {
         MachineConstantPool *CP = BB->getParent()->getConstantPool();
         ConstantUInt *C = ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , val);
