@@ -17,7 +17,6 @@
 #include "ModuloScheduling.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/Passes.h"
@@ -32,6 +31,7 @@
 #include <sstream>
 #include <utility>
 #include <vector>
+#include "../../Target/SparcV9/SparcV9TmpInstr.h"
 #include "../../Target/SparcV9/SparcV9Internals.h"
 #include "../../Target/SparcV9/SparcV9RegisterInfo.h"
 using namespace llvm;
