@@ -131,10 +131,16 @@ Pass *createInstructionCombiningPass();
 
 //===----------------------------------------------------------------------===//
 //
-// LICM - This pass is a simple natural loop based loop invariant code motion
-// pass.
+// LICM - This pass is a loop invariant code motion and memory promotion pass.
 //
 FunctionPass *createLICMPass();
+
+
+//===----------------------------------------------------------------------===//
+//
+// LoopUnroll - This pass is a simple loop unrolling pass.
+//
+FunctionPass *createLoopUnrollPass();
 
 
 //===----------------------------------------------------------------------===//
