@@ -143,7 +143,6 @@ bool IA64SharedAsmPrinter::doFinalization(Module &M) {
         case GlobalValue::InternalLinkage:
           if (C->isNullValue())
             SwitchSection(O, CurSection, ".bss");
-	  // FIXME? in ia64-land .bss means "nobits" (i.e. uninitialized)
           else
             SwitchSection(O, CurSection, ".data");
           break;
