@@ -467,8 +467,12 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     Instruction *SrcI   = dyn_cast<Instruction>(Src); // Nonnull if instr source
     const Type  *DestTy = CI->getType();
 
-    // Check for a cast of the same type as the destination!
-    if (DestTy == Src->getType()) {
+    // Peephole optimize the following instruction:
+    // %V2 = cast <ty> %V to <ty>
+    //
+    // Into: <nothing>
+    //
+    if (DestTy == Src->getType()) {   // Check for a cast to same type as src!!
       PRINT_PEEPHOLE1("cast-of-self-ty", CI);
       CI->replaceAllUsesWith(Src);
       if (!Src->hasName() && CI->hasName()) {
@@ -479,7 +483,12 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       return true;
     }
 
-    // Check for a cast of cast, where no size information is lost...
+    // Peephole optimize the following instructions:
+    // %tmp = cast <ty> %V to <ty2>
+    // %V  = cast <ty2> %tmp to <ty3>     ; Where ty & ty2 are same size
+    //
+    // Into: cast <ty> %V to <ty3>
+    //
     if (SrcI)
       if (CastInst *CSrc = dyn_cast<CastInst>(SrcI))
         if (isReinterpretingCast(CI) + isReinterpretingCast(CSrc) < 2) {
@@ -504,6 +513,85 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       PRINT_PEEPHOLE2("EXPR-CONV:out", CI, CI->getOperand(0));
       return true;
     }
+
+    // Check to see if we are casting from a structure pointer to a pointer to
+    // the first element of the structure... to avoid munching other peepholes,
+    // we only let this happen if there are no add uses of the cast.
+    //
+    // Peephole optimize the following instructions:
+    // %t1 = cast {<...>} * %StructPtr to <ty> *
+    //
+    // Into: %t2 = getelementptr {<...>} * %StructPtr, <0, 0, 0, ...>
+    //       %t1 = cast <eltype> * %t1 to <ty> *
+    //
+    if (const StructType *STy = getPointedToStruct(Src->getType()))
+      if (const PointerType *DestPTy = dyn_cast<PointerType>(DestTy)) {
+
+        // Loop over uses of the cast, checking for add instructions.  If an add
+        // exists, this is probably a part of a more complex GEP, so we don't
+        // want to mess around with the cast.
+        //
+        bool HasAddUse = false;
+        for (Value::use_iterator I = CI->use_begin(), E = CI->use_end();
+             I != E; ++I)
+          if (isa<Instruction>(*I) &&
+              cast<Instruction>(*I)->getOpcode() == Instruction::Add) {
+            HasAddUse = true; break;
+          }
+
+        // If it doesn't have an add use, check to see if the dest type is
+        // losslessly convertable to one of the types in the start of the struct
+        // type.
+        //
+        if (!HasAddUse) {
+          const Type *DestPointedTy = DestPTy->getValueType();
+          unsigned Depth = 1;
+          const StructType *CurSTy = STy;
+          const Type *ElTy = 0;
+          while (CurSTy) {
+            
+            // Check for a zero element struct type... if we have one, bail.
+            if (CurSTy->getElementTypes().size() == 0) break;
+            
+            // Grab the first element of the struct type, which must lie at
+            // offset zero in the struct.
+            //
+            ElTy = CurSTy->getElementTypes()[0];
+
+            // Did we find what we're looking for?
+            if (losslessCastableTypes(ElTy, DestPointedTy)) break;
+            
+            // Nope, go a level deeper.
+            ++Depth;
+            CurSTy = dyn_cast<StructType>(ElTy);
+            ElTy = 0;
+          }
+          
+          // Did we find what we were looking for? If so, do the transformation
+          if (ElTy) {
+            PRINT_PEEPHOLE1("cast-for-first:in", CI);
+
+            // Build the index vector, full of all zeros
+            vector<ConstPoolVal *> Indices(Depth,
+                                           ConstPoolUInt::get(Type::UByteTy,0));
+
+            // Insert the new T cast instruction... stealing old T's name
+            GetElementPtrInst *GEP = new GetElementPtrInst(Src, Indices,
+                                                           CI->getName());
+            CI->setName("");
+            BI = BB->getInstList().insert(BI, GEP)+1;
+
+            // Make the old cast instruction reference the new GEP instead of
+            // the old src value.
+            //
+            CI->setOperand(0, GEP);
+            
+            PRINT_PEEPHOLE2("cast-for-first:out", GEP, CI);
+            return true;
+          }
+        }
+      }
+
 
   } else if (MallocInst *MI = dyn_cast<MallocInst>(I)) {
     if (PeepholeMallocInst(BB, BI)) return true;
