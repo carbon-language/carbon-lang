@@ -260,6 +260,8 @@ int SparcV9RegInfo::getRegType(int unifiedRegNum) const
     return FloatCCRegType;
   else if (unifiedRegNum < (64+32+4+2))  
     return IntCCRegType;             
+  else if (unifiedRegNum < (64+32+4+2+1))  
+    return SpecialRegType;             
   else 
     assert(0 && "Invalid unified register number in getRegType");
   return 0;
