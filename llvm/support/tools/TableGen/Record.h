@@ -1,5 +1,7 @@
 //===- Record.h - Classes to represent Table Records ------------*- C++ -*-===//
 //
+// This file defines the main TableGen data structures, including the TableGen
+// types, values, and high-level data structures.
 //
 //===----------------------------------------------------------------------===//
 
