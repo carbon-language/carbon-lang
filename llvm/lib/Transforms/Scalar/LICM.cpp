@@ -23,7 +23,9 @@ namespace {
   struct LICM : public FunctionPass, public InstVisitor<LICM> {
     virtual bool runOnFunction(Function &F);
 
-    // This transformation requires natural loop information...
+    /// This transformation requires natural loop information & requires that
+    /// loop preheaders be inserted into the CFG...
+    ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
       AU.addRequiredID(LoopPreheadersID);
@@ -36,13 +38,14 @@ namespace {
     bool Changed;      // Set to true when we change anything.
     AliasAnalysis *AA; // Currently AliasAnalysis information
 
-    // visitLoop - Hoist expressions out of the specified loop...    
+    /// visitLoop - Hoist expressions out of the specified loop...    
+    ///
     void visitLoop(Loop *L);
 
-    // notInCurrentLoop - Little predicate that returns true if the specified
-    // basic block is in a subloop of the current one, not the current one
-    // itself.
-    //
+    /// notInCurrentLoop - Little predicate that returns true if the specified
+    /// basic block is in a subloop of the current one, not the current one
+    /// itself.
+    ///
     bool notInCurrentLoop(BasicBlock *BB) {
       for (unsigned i = 0, e = CurLoop->getSubLoops().size(); i != e; ++i)
         if (CurLoop->getSubLoops()[i]->contains(BB))
@@ -50,29 +53,31 @@ namespace {
       return false;      
     }
 
-    // hoist - When an instruction is found to only use loop invariant operands
-    // that is safe to hoist, this instruction is called to do the dirty work.
-    //
+    /// hoist - When an instruction is found to only use loop invariant operands
+    /// that is safe to hoist, this instruction is called to do the dirty work.
+    ///
     void hoist(Instruction &I);
 
-    // pointerInvalidatedByLoop - Return true if the body of this loop may store
-    // into the memory location pointed to by V.
-    // 
+    /// pointerInvalidatedByLoop - Return true if the body of this loop may
+    /// store into the memory location pointed to by V.
+    /// 
     bool pointerInvalidatedByLoop(Value *V);
 
-    // isLoopInvariant - Return true if the specified value is loop invariant
+    /// isLoopInvariant - Return true if the specified value is loop invariant
+    ///
     inline bool isLoopInvariant(Value *V) {
       if (Instruction *I = dyn_cast<Instruction>(V))
         return !CurLoop->contains(I->getParent());
       return true;  // All non-instructions are loop invariant
     }
 
-    // visitBasicBlock - Run LICM on a particular block.
+    /// visitBasicBlock - Run LICM on a particular block.
+    ///
     void visitBasicBlock(BasicBlock *BB);
 
-    // Instruction visitation handlers... these basically control whether or not
-    // the specified instruction types are hoisted.
-    //
+    /// Instruction visitation handlers... these basically control whether or
+    /// not the specified instruction types are hoisted.
+    ///
     friend class InstVisitor<LICM>;
     void visitBinaryOperator(Instruction &I) {
       if (isLoopInvariant(I.getOperand(0)) && isLoopInvariant(I.getOperand(1)))
@@ -99,6 +104,9 @@ namespace {
 
 Pass *createLICMPass() { return new LICM(); }
 
+/// runOnFunction - For LICM, this simply traverses the loop structure of the
+/// function, hoisting expressions out of loops if possible.
+///
 bool LICM::runOnFunction(Function &) {
   // get our loop information...
   const std::vector<Loop*> &TopLevelLoops =
@@ -116,6 +124,9 @@ bool LICM::runOnFunction(Function &) {
   return Changed;
 }
 
+
+/// visitLoop - Hoist expressions out of the specified loop...    
+///
 void LICM::visitLoop(Loop *L) {
   // Recurse through all subloops before we process this loop...
   std::for_each(L->getSubLoops().begin(), L->getSubLoops().end(),
@@ -143,6 +154,8 @@ void LICM::visitLoop(Loop *L) {
   CurLoop = 0;
 }
 
+/// visitBasicBlock - Run LICM on a particular block.
+///
 void LICM::visitBasicBlock(BasicBlock *BB) {
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
     visit(*I);
@@ -155,6 +168,9 @@ void LICM::visitBasicBlock(BasicBlock *BB) {
 }
 
 
+/// hoist - When an instruction is found to only use loop invariant operands
+/// that is safe to hoist, this instruction is called to do the dirty work.
+///
 void LICM::hoist(Instruction &Inst) {
   if (Inst.use_empty()) return;  // Don't (re) hoist dead instructions!
   //cerr << "Hoisting " << Inst;
@@ -196,9 +212,9 @@ void LICM::visitLoadInst(LoadInst &LI) {
 
 }
 
-// pointerInvalidatedByLoop - Return true if the body of this loop may store
-// into the memory location pointed to by V.
-// 
+/// pointerInvalidatedByLoop - Return true if the body of this loop may store
+/// into the memory location pointed to by V.
+/// 
 bool LICM::pointerInvalidatedByLoop(Value *V) {
   // Check to see if any of the basic blocks in CurLoop invalidate V.
   for (unsigned i = 0, e = CurLoop->getBlocks().size(); i != e; ++i)
