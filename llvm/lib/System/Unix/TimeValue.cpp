@@ -18,5 +18,21 @@
 
 #include "Unix.h"
 
+#include <time.h>
+
+namespace llvm {
+  using namespace sys;
+
+
+std::string TimeValue::toString() {
+  char buffer[32];
+
+  time_t ourTime = time_t(this->toEpochTime());
+  ::asctime_r(::localtime(&ourTime), buffer);
+
+  std::string result(buffer);
+  return result.substr(0,24);
+}
+
 }
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
