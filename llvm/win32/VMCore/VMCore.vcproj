@@ -142,9 +142,6 @@
 				RelativePath="..\..\lib\VMCore\LeakDetector.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\VMCore\Linker.cpp">
-			</File>
-			<File
 				RelativePath="..\..\lib\VMCore\Mangler.cpp">
 			</File>
 			<File
