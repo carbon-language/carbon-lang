@@ -2520,10 +2520,8 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
         BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
           .addImm(0).addImm(clearBits).addImm(31);
       break;
-    case cLong:
-      ++SrcReg;
-      // Fall through
     case cInt:
+    case cLong:
       if (DestClass == cInt)
         BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
       else
@@ -2599,10 +2597,8 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
         BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg).addImm(0)
           .addImm(16).addImm(31);
       break;
-    case cLong:
-      ++SrcReg;
-      // Fall through
     case cInt:
+    case cLong:
       if (DestClass == cByte)
         BuildMI(*MBB, IP, PPC::EXTSB, 1, DestReg).addReg(SrcReg);
       else if (DestClass == cShort)
