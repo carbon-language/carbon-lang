@@ -32,13 +32,12 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/InstIterator.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
+#include "Support/DepthFirstIterator.h"
 #include "Support/Statistic.h"
 #include "Support/StringExtras.h"
 #include "Support/VectorExtras.h"
-
-#include <set>
 
 namespace {
   Statistic<> LongJmpsTransformed("lowersetjmp",
@@ -63,6 +62,11 @@ namespace {
     Function* GetLJValue;       // __llvm_sjljeh_get_longjmp_value
 
     typedef std::pair<SwitchInst*, CallInst*> SwitchValuePair;
+
+    // Keep track of those basic blocks reachable via a depth-first search of
+    // the CFG from a setjmp call. We only need to transform those "call" and
+    // "invoke" instructions that are reachable from the setjmp call site.
+    std::set<BasicBlock*> DFSBlocks;
 
     // The setjmp map is going to hold information about which setjmps
     // were called (each setjmp gets its own number) and with which
@@ -127,13 +131,24 @@ bool LowerSetJmp::run(Module& M)
   // setjmp/longjmp functions.
   doInitialization(M);
 
-  if (SetJmp)
+  if (SetJmp) {
+    std::set<BasicBlock*> BBSet;
+    
+    for (Value::use_iterator B = SetJmp->use_begin(), E = SetJmp->use_end();
+         B != E; ++B) {
+      Instruction* I = cast<Instruction>(*B);
+      BasicBlock* BB = I->getParent();
+      Function* Func = BB->getParent();
+      DFSBlocks.insert(df_begin(BB), df_end(BB));
+    }
+
     while (!SetJmp->use_empty()) {
       assert(isa<CallInst>(SetJmp->use_back()) &&
              "User of setjmp intrinsic not a call?");
       TransformSetJmpCall(cast<CallInst>(SetJmp->use_back()));
       Changed = true;
     }
+  }
 
   if (LongJmp)
     while (!LongJmp->use_empty()) {
@@ -156,6 +171,7 @@ bool LowerSetJmp::run(Module& M)
       }
   }
 
+  DFSBlocks.clear();
   SJMap.clear();
   RethrowBBMap.clear();
   PrelimBBMap.clear();
@@ -398,12 +414,16 @@ void LowerSetJmp::visitCallInst(CallInst& CI)
         CI.getCalledFunction()->isIntrinsic()) return;
 
   BasicBlock* OldBB = CI.getParent();
+  Function* Func = OldBB->getParent();
+
+  // If not reachable from a setjmp call, don't transform.
+  if (!DFSBlocks.count(OldBB)) return;
+
   BasicBlock* NewBB = OldBB->splitBasicBlock(CI);
   assert(NewBB && "Couldn't split BB of \"call\" instruction!!");
   NewBB->setName("Call2Invoke");
 
   // Reposition the split BB in the BB list to make things tidier.
-  Function* Func = OldBB->getParent();
   Func->getBasicBlockList().remove(NewBB);
   Func->getBasicBlockList().insert(++Function::iterator(OldBB), NewBB);
 
@@ -432,7 +452,11 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
     if (!IsTransformableFunction(II.getCalledFunction()->getName()) ||
         II.getCalledFunction()->isIntrinsic()) return;
 
-  Function* Func = II.getParent()->getParent();
+  BasicBlock* BB = II.getParent();
+  Function* Func = BB->getParent();
+
+  // If not reachable from a setjmp call, don't transform.
+  if (!DFSBlocks.count(BB)) return;
 
   BasicBlock* NormalBB = II.getNormalDest();
   BasicBlock* ExceptBB = II.getExceptionalDest();
