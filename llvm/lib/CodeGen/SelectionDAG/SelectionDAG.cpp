@@ -480,19 +480,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT) {
   return SDOperand(N, 0);
 }
 
-static const Type *getTypeFor(MVT::ValueType VT) {
-  switch (VT) {
-  default: assert(0 && "Unknown MVT!");
-  case MVT::i1: return Type::BoolTy;
-  case MVT::i8: return Type::UByteTy;
-  case MVT::i16: return Type::UShortTy;
-  case MVT::i32: return Type::UIntTy;
-  case MVT::i64: return Type::ULongTy;
-  case MVT::f32: return Type::FloatTy;
-  case MVT::f64: return Type::DoubleTy;
-  }
-}
-
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand Operand) {
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Operand.Val)) {
@@ -1096,17 +1083,10 @@ void SDNode::dump() const {
 
   for (unsigned i = 0, e = getNumValues(); i != e; ++i) {
     if (i) std::cerr << ",";
-    switch (getValueType(i)) {
-    default: assert(0 && "Unknown value type!");
-    case MVT::i1:    std::cerr << "i1"; break;
-    case MVT::i8:    std::cerr << "i8"; break;
-    case MVT::i16:   std::cerr << "i16"; break;
-    case MVT::i32:   std::cerr << "i32"; break;
-    case MVT::i64:   std::cerr << "i64"; break;
-    case MVT::f32:   std::cerr << "f32"; break;
-    case MVT::f64:   std::cerr << "f64"; break;
-    case MVT::Other: std::cerr << "ch"; break;
-    }
+    if (getValueType(i) == MVT::Other)
+      std::cerr << "ch";
+    else
+      std::cerr << MVT::getValueTypeString(getValueType(i));
   }
   std::cerr << " = " << getOperationName();
 
