@@ -3,8 +3,9 @@
 // This file implements the LLVM module linker.
 //
 // Specifically, this:
-//  - Merges global variables between the two modules
-//    - Uninit + Uninit = Init, Init + Uninit = Init, Init + Init = Error if !=
+//  * Merges global variables between the two modules
+//    * Uninit + Uninit = Init, Init + Uninit = Init, Init + Init = Error if !=
+//  * Merges methods between two modules
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,7 +31,7 @@ static inline bool Error(string *E, string Message) {
 // module to another.  This is somewhat sophisticated in that it can
 // automatically handle constant references correctly as well...
 //
-static Value *RemapOperand(Value *In, map<const Value*, Value*> &LocalMap,
+static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
                            const map<const Value*, Value*> *GlobalMap = 0) {
   map<const Value*,Value*>::const_iterator I = LocalMap.find(In);
   if (I != LocalMap.end()) return I->second;
@@ -40,9 +41,45 @@ static Value *RemapOperand(Value *In, map<const Value*, Value*> &LocalMap,
     if (I != GlobalMap->end()) return I->second;
   }
 
-  if (!isa<ConstPoolVal>(In))
-    cerr << "Couldn't remap value: " << In << endl;
-  return In;
+  // Check to see if it's a constant that we are interesting in transforming...
+  if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(In)) {
+    if (!isa<DerivedType>(CPV->getType()))
+      return CPV;              // Simple constants stay identical...
+
+    ConstPoolVal *Result = 0;
+
+    if (ConstPoolArray *CPA = dyn_cast<ConstPoolArray>(CPV)) {
+      const vector<Use> &Ops = CPA->getValues();
+      vector<ConstPoolVal*> Operands(Ops.size());
+      for (unsigned i = 0; i < Ops.size(); ++i)
+        Operands[i] = 
+          cast<ConstPoolVal>(RemapOperand(Ops[i], LocalMap, GlobalMap));
+      Result = ConstPoolArray::get(cast<ArrayType>(CPA->getType()), Operands);
+    } else if (ConstPoolStruct *CPS = dyn_cast<ConstPoolStruct>(CPV)) {
+      const vector<Use> &Ops = CPS->getValues();
+      vector<ConstPoolVal*> Operands(Ops.size());
+      for (unsigned i = 0; i < Ops.size(); ++i)
+        Operands[i] = 
+          cast<ConstPoolVal>(RemapOperand(Ops[i], LocalMap, GlobalMap));
+      Result = ConstPoolStruct::get(cast<StructType>(CPS->getType()), Operands);
+    } else if (isa<ConstPoolPointerNull>(CPV)) {
+      Result = CPV;
+    } else if (ConstPoolPointerReference *CPR = 
+               dyn_cast<ConstPoolPointerReference>(CPV)) {
+      Value *V = RemapOperand(CPR->getValue(), LocalMap, GlobalMap);
+      Result = ConstPoolPointerReference::get(cast<GlobalValue>(V));
+    } else {
+      assert(0 && "Unknown type of derived type constant value!");
+    }
+
+    // Cache the mapping in our local map structure...
+    LocalMap.insert(make_pair(In, CPV));
+    return Result;
+  }
+  
+  cerr << "Couldn't remap value: " << In << endl;
+  assert(0 && "Couldn't remap value!");
+  return 0;
 }
 
 
@@ -58,13 +95,13 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
   // Loop over all of the globals in the src module, mapping them over as we go
   //
   for (Module::const_giterator I = Src->gbegin(), E = Src->gend(); I != E; ++I){
-    const GlobalVariable *GV = *I;
+    const GlobalVariable *SGV = *I;
     Value *V;
 
     // If the global variable has a name, and that name is already in use in the
     // Dest module, make sure that the name is a compatible global variable...
     //
-    if (GV->hasName() && (V = ST->lookup(GV->getType(), GV->getName()))) {
+    if (SGV->hasName() && (V = ST->lookup(SGV->getType(), SGV->getName()))) {
       // The same named thing is a global variable, because the only two things
       // that may be in a module level symbol table are Global Vars and Methods,
       // and they both have distinct, nonoverlapping, possible types.
@@ -72,50 +109,64 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       GlobalVariable *DGV = cast<GlobalVariable>(V);
 
       // Check to see if the two GV's have the same Const'ness...
-      if (GV->isConstant() != DGV->isConstant())
+      if (SGV->isConstant() != DGV->isConstant())
         return Error(Err, "Global Variable Collision on '" + 
-                     GV->getType()->getDescription() + "':%" + GV->getName() +
+                     SGV->getType()->getDescription() + "':%" + SGV->getName() +
                      " - Global variables differ in const'ness");
 
-      // Check to make sure that they both have the same initializer if they are
-      // both initialized...
-      //
- // TODO: Check to see if they have DEEP equality.  For Module level constants
-      if (GV->hasInitializer() && DGV->hasInitializer() &&
-          GV->getInitializer() != DGV->getInitializer())
-        return Error(Err, "Global Variable Collision on '" + 
-                     GV->getType()->getDescription() + "':%" + GV->getName() +
-                     " - Global variables have different initializers");
-
-      // Okay, everything is cool, remember the mapping and update the
-      // initializer if neccesary...
-      //
-// TODO: We might have to map module level constants here!
-      if (GV->hasInitializer() && !DGV->hasInitializer())
-        DGV->setInitializer(GV->getInitializer());
-
-      ValueMap.insert(make_pair(GV, DGV));
+      // Okay, everything is cool, remember the mapping...
+      ValueMap.insert(make_pair(SGV, DGV));
     } else {
       // No linking to be performed, simply create an identical version of the
-      // symbol over in the dest module...
-// TODO: Provide constpoolval mapping for initializer if using module local
-// initializers!
-      GlobalVariable *NGV = 
-        new GlobalVariable(GV->getType()->getValueType(), GV->isConstant(),
-                           GV->hasInitializer() ? GV->getInitializer() : 0,
-                           GV->getName());
+      // symbol over in the dest module... the initializer will be filled in
+      // later by LinkGlobalInits...
+      //
+      GlobalVariable *DGV = 
+        new GlobalVariable(SGV->getType()->getValueType(), SGV->isConstant(),
+                           0, SGV->getName());
 
       // Add the new global to the dest module
-      Dest->getGlobalList().push_back(NGV);
+      Dest->getGlobalList().push_back(DGV);
 
       // Make sure to remember this mapping...
-      ValueMap.insert(make_pair(GV, NGV));
+      ValueMap.insert(make_pair(SGV, DGV));
     }
   }
   return false;
 }
 
 
+// LinkGlobalInits - Update the initializers in the Dest module now that all
+// globals that may be referenced are in Dest.
+//
+static bool LinkGlobalInits(Module *Dest, const Module *Src,
+                            map<const Value*, Value*> &ValueMap,
+                            string *Err = 0) {
+
+  // Loop over all of the globals in the src module, mapping them over as we go
+  //
+  for (Module::const_giterator I = Src->gbegin(), E = Src->gend(); I != E; ++I){
+    const GlobalVariable *SGV = *I;
+
+    if (SGV->hasInitializer()) {      // Only process initialized GV's
+      // Figure out what the initializer looks like in the dest module...
+      ConstPoolVal *DInit =
+        cast<ConstPoolVal>(RemapOperand(SGV->getInitializer(), ValueMap));
+
+      GlobalVariable *DGV = cast<GlobalVariable>(ValueMap[SGV]);    
+      if (DGV->hasInitializer()) {
+        if (DGV->getInitializer() != DInit)
+          return Error(Err, "Global Variable Collision on '" + 
+                       SGV->getType()->getDescription() + "':%" +SGV->getName()+
+                       " - Global variables have different initializers");
+      } else {
+        // Copy the initializer over now...
+        DGV->setInitializer(DInit);
+      }
+    }
+  }
+  return false;
+}
 
 // LinkMethodProtos - Link the methods together between the two modules, without
 // doing method bodies... this just adds external method prototypes to the Dest
@@ -268,8 +319,14 @@ bool LinkModules(Module *Dest, const Module *Src, string *ErrorMsg = 0) {
   //
   map<const Value*, Value*> ValueMap;
 
-  // Link the globals variables together between the two modules...
+  // Insert all of the globals in src into the Dest module... without
+  // initializers
   if (LinkGlobals(Dest, Src, ValueMap, ErrorMsg)) return true;
+
+  // Update the initializers in the Dest module now that all globals that may
+  // be referenced are in Dest.
+  //
+  if (LinkGlobalInits(Dest, Src, ValueMap, ErrorMsg)) return true;
 
   // Link the methods together between the two modules, without doing method
   // bodies... this just adds external method prototypes to the Dest method...
