@@ -99,4 +99,6 @@ gui::
 
 clean::
 	$(RM) -rf $(LLVM_OBJ_ROOT)/test/tmp
+	$(RM) -f $(LLVM_SRC_ROOT)/test/QMTest/*.pyo \
+		$(LLVM_OBJ_ROOT)/test/QMTest/*.pyo
 
