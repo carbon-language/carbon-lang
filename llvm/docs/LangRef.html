@@ -748,40 +748,61 @@ control flows to the '<tt>iffalse</tt>' <tt>label</tt> argument.</p>
  href="#i_ret">ret</a> int 1<br>IfUnequal:<br>  <a href="#i_ret">ret</a> int 0<br></pre>
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_switch">'<tt>switch</tt>'
-Instruction</a> </div>
+<div class="doc_subsubsection">
+   <a name="i_switch">'<tt>switch</tt>' Instruction</a>
+</div>
+
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  switch uint &lt;value&gt;, label &lt;defaultdest&gt; [ int &lt;val&gt;, label &lt;dest&gt;, ... ]<br></pre>
+
+<pre>
+  switch &lt;intty&gt; &lt;value&gt;, label &lt;defaultdest&gt; [ &lt;intty&gt; &lt;val&gt;, label &lt;dest&gt; ... ]
+</pre>
+
 <h5>Overview:</h5>
-<p>The '<tt>switch</tt>' instruction is used to transfer control flow
-to one of several different places.  It is a generalization of the '<tt>br</tt>'
+
+<p>The '<tt>switch</tt>' instruction is used to transfer control flow to one of
+several different places.  It is a generalization of the '<tt>br</tt>'
 instruction, allowing a branch to occur to one of many possible
 destinations.</p>
+
+
 <h5>Arguments:</h5>
-<p>The '<tt>switch</tt>' instruction uses three parameters: a '<tt>uint</tt>'
-comparison value '<tt>value</tt>', a default '<tt>label</tt>'
-destination, and an array of pairs of comparison value constants and '<tt>label</tt>'s.</p>
+
+<p>The '<tt>switch</tt>' instruction uses three parameters: an integer
+comparison value '<tt>value</tt>', a default '<tt>label</tt>' destination, and
+an array of pairs of comparison value constants and '<tt>label</tt>'s.  The
+table is not allowed to contain duplicate constant entries.</p>
+
 <h5>Semantics:</h5>
+
 <p>The <tt>switch</tt> instruction specifies a table of values and
 destinations. When the '<tt>switch</tt>' instruction is executed, this
 table is searched for the given value.  If the value is found, the
 corresponding destination is branched to, otherwise the default value
 it transfered to.</p>
-<h5>Implementation:</h5>
-<p>Depending on properties of the target machine and the particular <tt>switch</tt>
-instruction, this instruction may be code generated as a series of
-chained conditional branches, or with a lookup table.</p>
-<h5>Example:</h5>
-<pre>  <i>; Emulate a conditional br instruction</i>
-  %Val = <a
- href="#i_cast">cast</a> bool %value to uint<br>  switch uint %Val, label %truedest [int 0, label %falsedest ]<br><br>  <i>; Emulate an unconditional br instruction</i>
-  switch uint 0, label %dest [ ]
 
-  <i>; Implement a jump table:</i>
-  switch uint %val, label %otherwise [ int 0, label %onzero, 
-                                       int 1, label %onone, 
-                                       int 2, label %ontwo ]
+<h5>Implementation:</h5>
+
+<p>Depending on properties of the target machine and the particular
+<tt>switch</tt> instruction, this instruction may be code generated in different
+ways, for example as a series of chained conditional branches, or with a lookup
+table.</p>
+
+<h5>Example:</h5>
+
+<pre>
+ <i>; Emulate a conditional br instruction</i>
+ %Val = <a href="#i_cast">cast</a> bool %value to int
+ switch int %Val, label %truedest [int 0, label %falsedest ]
+
+ <i>; Emulate an unconditional br instruction</i>
+ switch uint 0, label %dest [ ]
+
+ <i>; Implement a jump table:</i>
+ switch uint %val, label %otherwise [ uint 0, label %onzero 
+                                      uint 1, label %onone 
+                                      uint 2, label %ontwo ]
 </pre>
 </div>
 <!-- _______________________________________________________________________ -->
