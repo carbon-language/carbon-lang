@@ -7,6 +7,7 @@
 //   LITTLE_ENDIAN: is #define'd if the host is little endian
 //   int64_t      : is a typedef for the signed 64 bit system type
 //   uint64_t     : is a typedef for the unsigned 64 bit system type
+//   INT64_MAX    : is a #define specifying the max value for int64_t's
 //
 // No library is required when using these functinons.
 //
@@ -15,22 +16,29 @@
 // TODO: This file sucks.  Not only does it not work, but this stuff should be
 // autoconfiscated anyways. Major FIXME
 
-
 #ifndef LLVM_SUPPORT_DATATYPES_H
 #define LLVM_SUPPORT_DATATYPES_H
 
+#define __STDC_LIMIT_MACROS 1
 #include <inttypes.h>
 
 #ifdef __linux__
-#define __STDC_LIMIT_MACROS 1
-#include <stdint.h>       // Defined by ISO C 99
 #include <endian.h>
+#endif
 
-#else
+#ifdef __sparc__
 #include <sys/types.h>
 #ifdef _LITTLE_ENDIAN
 #define LITTLE_ENDIAN 1
+#else
+#define BIG_ENDIAN 1
 #endif
 #endif
 
+#ifndef LITTLE_ENDIAN
+#if !defined(BIG_ENDIAN) || !defined(INT64_MAX)
+#error "include/Support/DataTypes.h could not determine endianness!"
 #endif
+#endif
+
+#endif  /* LLVM_SUPPORT_DATATYPES_H */
