@@ -102,10 +102,9 @@ bool Type::isLosslesslyConvertibleTo(const Type *Ty) const {
   case Type::ShortTyID:   return Ty == Type::UShortTy;
   case Type::UIntTyID:    return Ty == Type::IntTy;
   case Type::IntTyID:     return Ty == Type::UIntTy;
-  case Type::ULongTyID:
-  case Type::LongTyID:
-  case Type::PointerTyID:
-    return Ty == Type::ULongTy || Ty == Type::LongTy || isa<PointerType>(Ty);
+  case Type::ULongTyID:   return Ty == Type::LongTy;
+  case Type::LongTyID:    return Ty == Type::ULongTy;
+  case Type::PointerTyID: return isa<PointerType>(Ty);
   default:
     return false;  // Other types have no identity values
   }
