@@ -24,7 +24,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   memset(OpActions, 0, sizeof(OpActions));
 
   IsLittleEndian = TD.isLittleEndian();
-  PointerTy = getValueType(TD.getIntPtrType());
+  ShiftAmountTy = SetCCResultTy = PointerTy = getValueType(TD.getIntPtrType());
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
 }
 
