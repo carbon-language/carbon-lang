@@ -183,6 +183,8 @@ public:
 				    bool AllowStructLeaf = false);
   
   const vector<ConstPoolVal*>& getIndexVec() const { return indexVec; }
+
+  inline bool hasIndices() const { return !indexVec.empty(); }
   
   virtual Value* getPtrOperand() = 0;
   
@@ -203,6 +205,8 @@ class LoadInst : public MemAccessInst {
 public:
   LoadInst(Value *Ptr, const vector<ConstPoolVal*> &Idx,
 	   const string &Name = "");
+  LoadInst(Value *Ptr, const string &Name = "");
+
   virtual Instruction*	clone() const { return new LoadInst(*this); }
   virtual const char*	getOpcodeName() const { return "load"; }  
   virtual Value*	getPtrOperand() { return this->getOperand(0); }
@@ -232,7 +236,9 @@ class StoreInst : public MemAccessInst {
 public:
   StoreInst(Value *Val, Value *Ptr, const vector<ConstPoolVal*> &Idx,
 	    const string &Name = "");
+  StoreInst(Value *Val, Value *Ptr, const string &Name = "");
   virtual Instruction *clone() const { return new StoreInst(*this); }
+
   virtual const char *getOpcodeName() const { return "store"; }  
   
   virtual bool hasSideEffects() const { return true; }
@@ -272,6 +278,10 @@ public:
   inline bool isArraySelector() const { return !isStructSelector(); }
   bool isStructSelector() const;
 
+  // getType - Overload to return most specific pointer type...
+  inline const PointerType *getType() const {
+    return cast<const PointerType>(Instruction::getType());
+  }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GetElementPtrInst *) { return true; }
