@@ -665,10 +665,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
     // the ops are expanded into special library calls with
     // special calling conventions
     switch(N.getOpcode()) {
-    case UREM: Opc = Alpha::REMQU; break;
-    case SREM: Opc = Alpha::REMQ; break;
-    case UDIV: Opc = Alpha::DIVQU; break;
-    case SDIV: Opc = Alpha::DIVQ; break;
+    case ISD::UREM: Opc = Alpha::REMQU; break;
+    case ISD::SREM: Opc = Alpha::REMQ; break;
+    case ISD::UDIV: Opc = Alpha::DIVQU; break;
+    case ISD::SDIV: Opc = Alpha::DIVQ; break;
+    };
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
