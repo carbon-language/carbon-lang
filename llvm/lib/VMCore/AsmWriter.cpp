@@ -566,7 +566,7 @@ std::ostream &llvm::WriteAsOperand(std::ostream &Out, const Value *V,
 namespace llvm {
 
 class AssemblyWriter {
-  std::ostream *Out;
+  std::ostream &Out;
   SlotMachine &Machine;
   const Module *TheModule;
   std::map<const Type *, std::string> TypeNames;
@@ -574,7 +574,7 @@ class AssemblyWriter {
 public:
   inline AssemblyWriter(std::ostream &o, SlotMachine &Mac, const Module *M,
                         AssemblyAnnotationWriter *AAW)
-    : Out(&o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
+    : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
 
     // If the module has a symbol table, take all global types and stuff their
     // names into the TypeNames map.
@@ -593,7 +593,6 @@ public:
   void writeOperand(const Value *Op, bool PrintType, bool PrintName = true);
 
   const Module* getModule() { return TheModule; }
-  void setStream(std::ostream &os) { Out = &os; }
 
 private :
   void printModule(const Module *M);
@@ -609,7 +608,7 @@ private :
   // symbolic version of a type name.
   //
   std::ostream &printType(const Type *Ty) {
-    return printTypeInt(*Out, Ty, TypeNames);
+    return printTypeInt(Out, Ty, TypeNames);
   }
 
   // printTypeAtLeastOneLevel - Print out one level of the possibly complex type
@@ -632,55 +631,55 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
     for (FunctionType::param_iterator I = FTy->param_begin(),
            E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
-        *Out << ", ";
+        Out << ", ";
       printType(*I);
     }
     if (FTy->isVarArg()) {
-      if (FTy->getNumParams()) *Out << ", ";
-      *Out << "...";
+      if (FTy->getNumParams()) Out << ", ";
+      Out << "...";
     }
-    *Out << ')';
+    Out << ')';
   } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
-    *Out << "{ ";
+    Out << "{ ";
     for (StructType::element_iterator I = STy->element_begin(),
            E = STy->element_end(); I != E; ++I) {
       if (I != STy->element_begin())
-        *Out << ", ";
+        Out << ", ";
       printType(*I);
     }
-    *Out << " }";
+    Out << " }";
   } else if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
     printType(PTy->getElementType()) << '*';
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
-    *Out << '[' << ATy->getNumElements() << " x ";
+    Out << '[' << ATy->getNumElements() << " x ";
     printType(ATy->getElementType()) << ']';
   } else if (const OpaqueType *OTy = dyn_cast<OpaqueType>(Ty)) {
-    *Out << "opaque";
+    Out << "opaque";
   } else {
     if (!Ty->isPrimitiveType())
-      *Out << "<unknown derived type>";
+      Out << "<unknown derived type>";
     printType(Ty);
   }
-  return *Out;
+  return Out;
 }
 
 
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType, 
                                   bool PrintName) {
-  if (PrintType) { *Out << ' '; printType(Operand->getType()); }
-  WriteAsOperandInternal(*Out, Operand, PrintName, TypeNames, &Machine);
+  if (PrintType) { Out << ' '; printType(Operand->getType()); }
+  WriteAsOperandInternal(Out, Operand, PrintName, TypeNames, &Machine);
 }
 
 
 void AssemblyWriter::printModule(const Module *M) {
   switch (M->getEndianness()) {
-  case Module::LittleEndian: *Out << "target endian = little\n"; break;
-  case Module::BigEndian:    *Out << "target endian = big\n";    break;
+  case Module::LittleEndian: Out << "target endian = little\n"; break;
+  case Module::BigEndian:    Out << "target endian = big\n";    break;
   case Module::AnyEndianness: break;
   }
   switch (M->getPointerSize()) {
-  case Module::Pointer32:    *Out << "target pointersize = 32\n"; break;
-  case Module::Pointer64:    *Out << "target pointersize = 64\n"; break;
+  case Module::Pointer32:    Out << "target pointersize = 32\n"; break;
+  case Module::Pointer64:    Out << "target pointersize = 64\n"; break;
   case Module::AnyPointerSize: break;
   }
   
@@ -690,7 +689,7 @@ void AssemblyWriter::printModule(const Module *M) {
   for (Module::const_giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
     printGlobal(I);
 
-  *Out << "\nimplementation   ; Functions:\n";
+  Out << "\nimplementation   ; Functions:\n";
   
   // Output all of the functions...
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
@@ -698,27 +697,27 @@ void AssemblyWriter::printModule(const Module *M) {
 }
 
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
-  if (GV->hasName()) *Out << getLLVMName(GV->getName()) << " = ";
+  if (GV->hasName()) Out << getLLVMName(GV->getName()) << " = ";
 
   if (!GV->hasInitializer()) 
-    *Out << "external ";
+    Out << "external ";
   else
     switch (GV->getLinkage()) {
-    case GlobalValue::InternalLinkage:  *Out << "internal "; break;
-    case GlobalValue::LinkOnceLinkage:  *Out << "linkonce "; break;
-    case GlobalValue::WeakLinkage:      *Out << "weak "; break;
-    case GlobalValue::AppendingLinkage: *Out << "appending "; break;
+    case GlobalValue::InternalLinkage:  Out << "internal "; break;
+    case GlobalValue::LinkOnceLinkage:  Out << "linkonce "; break;
+    case GlobalValue::WeakLinkage:      Out << "weak "; break;
+    case GlobalValue::AppendingLinkage: Out << "appending "; break;
     case GlobalValue::ExternalLinkage: break;
     }
 
-  *Out << (GV->isConstant() ? "constant " : "global ");
+  Out << (GV->isConstant() ? "constant " : "global ");
   printType(GV->getType()->getElementType());
 
   if (GV->hasInitializer())
     writeOperand(GV->getInitializer(), false, false);
 
   printInfoComment(*GV);
-  *Out << "\n";
+  Out << "\n";
 }
 
 
@@ -729,7 +728,7 @@ void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
   // Print the types.
   for (SymbolTable::type_const_iterator TI = ST.type_begin();
        TI != ST.type_end(); ++TI ) {
-    *Out << "\t" << getLLVMName(TI->first) << " = type ";
+    Out << "\t" << getLLVMName(TI->first) << " = type ";
 
     // Make sure we print out at least one level of the type structure, so
     // that we do not get %FILE = type %FILE
@@ -760,40 +759,40 @@ void AssemblyWriter::printConstant(const Constant *CPV) {
   if (!CPV->hasName()) return;
 
   // Print out name...
-  *Out << "\t" << getLLVMName(CPV->getName()) << " =";
+  Out << "\t" << getLLVMName(CPV->getName()) << " =";
 
   // Write the value out now...
   writeOperand(CPV, true, false);
 
   printInfoComment(*CPV);
-  *Out << "\n";
+  Out << "\n";
 }
 
 /// printFunction - Print all aspects of a function.
 ///
 void AssemblyWriter::printFunction(const Function *F) {
   // Print out the return type and name...
-  *Out << "\n";
+  Out << "\n";
 
-  if (AnnotationWriter) AnnotationWriter->emitFunctionAnnot(F, *Out);
+  if (AnnotationWriter) AnnotationWriter->emitFunctionAnnot(F, Out);
 
   if (F->isExternal())
-    *Out << "declare ";
+    Out << "declare ";
   else
     switch (F->getLinkage()) {
-    case GlobalValue::InternalLinkage:  *Out << "internal "; break;
-    case GlobalValue::LinkOnceLinkage:  *Out << "linkonce "; break;
-    case GlobalValue::WeakLinkage:      *Out << "weak "; break;
-    case GlobalValue::AppendingLinkage: *Out << "appending "; break;
+    case GlobalValue::InternalLinkage:  Out << "internal "; break;
+    case GlobalValue::LinkOnceLinkage:  Out << "linkonce "; break;
+    case GlobalValue::WeakLinkage:      Out << "weak "; break;
+    case GlobalValue::AppendingLinkage: Out << "appending "; break;
     case GlobalValue::ExternalLinkage: break;
     }
 
   printType(F->getReturnType()) << ' ';
   if (!F->getName().empty())
-    *Out << getLLVMName(F->getName());
+    Out << getLLVMName(F->getName());
   else
-    *Out << "\"\"";
-  *Out << '(';
+    Out << "\"\"";
+  Out << '(';
   Machine.incorporateFunction(F);
 
   // Loop over the arguments, printing them...
@@ -804,21 +803,21 @@ void AssemblyWriter::printFunction(const Function *F) {
 
   // Finish printing arguments...
   if (FT->isVarArg()) {
-    if (FT->getNumParams()) *Out << ", ";
-    *Out << "...";  // Output varargs portion of signature!
+    if (FT->getNumParams()) Out << ", ";
+    Out << "...";  // Output varargs portion of signature!
   }
-  *Out << ')';
+  Out << ')';
 
   if (F->isExternal()) {
-    *Out << "\n";
+    Out << "\n";
   } else {
-    *Out << " {";
+    Out << " {";
   
     // Output all of its basic blocks... for the function
     for (Function::const_iterator I = F->begin(), E = F->end(); I != E; ++I)
       printBasicBlock(I);
 
-    *Out << "}\n";
+    Out << "}\n";
   }
 
   Machine.purgeFunction();
@@ -829,60 +828,60 @@ void AssemblyWriter::printFunction(const Function *F) {
 ///
 void AssemblyWriter::printArgument(const Argument *Arg) {
   // Insert commas as we go... the first arg doesn't get a comma
-  if (Arg != &Arg->getParent()->afront()) *Out << ", ";
+  if (Arg != &Arg->getParent()->afront()) Out << ", ";
 
   // Output type...
   printType(Arg->getType());
   
   // Output name, if available...
   if (Arg->hasName())
-    *Out << ' ' << getLLVMName(Arg->getName());
+    Out << ' ' << getLLVMName(Arg->getName());
 }
 
 /// printBasicBlock - This member is called for each basic block in a method.
 ///
 void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
-    *Out << "\n" << BB->getName() << ':';
+    Out << "\n" << BB->getName() << ':';
   } else if (!BB->use_empty()) {      // Don't print block # of no uses...
-    *Out << "\n; <label>:";
+    Out << "\n; <label>:";
     int Slot = Machine.getSlot(BB);
     if (Slot != -1)
-      *Out << Slot;
+      Out << Slot;
     else
-      *Out << "<badref>";
+      Out << "<badref>";
   }
 
   if (BB->getParent() == 0)
-    *Out << "\t\t; Error: Block without parent!";
+    Out << "\t\t; Error: Block without parent!";
   else {
     if (BB != &BB->getParent()->front()) {  // Not the entry block?
       // Output predecessors for the block...
-      *Out << "\t\t;";
+      Out << "\t\t;";
       pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
       
       if (PI == PE) {
-        *Out << " No predecessors!";
+        Out << " No predecessors!";
       } else {
-        *Out << " preds =";
+        Out << " preds =";
         writeOperand(*PI, false, true);
         for (++PI; PI != PE; ++PI) {
-          *Out << ',';
+          Out << ',';
           writeOperand(*PI, false, true);
         }
       }
     }
   }
   
-  *Out << "\n";
+  Out << "\n";
 
-  if (AnnotationWriter) AnnotationWriter->emitBasicBlockStartAnnot(BB, *Out);
+  if (AnnotationWriter) AnnotationWriter->emitBasicBlockStartAnnot(BB, Out);
 
   // Output all of the instructions in the basic block...
   for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
     printInstruction(*I);
 
-  if (AnnotationWriter) AnnotationWriter->emitBasicBlockEndAnnot(BB, *Out);
+  if (AnnotationWriter) AnnotationWriter->emitBasicBlockEndAnnot(BB, Out);
 }
 
 
@@ -891,38 +890,38 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
 ///
 void AssemblyWriter::printInfoComment(const Value &V) {
   if (V.getType() != Type::VoidTy) {
-    *Out << "\t\t; <";
+    Out << "\t\t; <";
     printType(V.getType()) << '>';
 
     if (!V.hasName()) {
       int SlotNum = Machine.getSlot(&V);
       if (SlotNum == -1)
-        *Out << ":<badref>";
+        Out << ":<badref>";
       else
-        *Out << ':' << SlotNum; // Print out the def slot taken.
+        Out << ':' << SlotNum; // Print out the def slot taken.
     }
-    *Out << " [#uses=" << V.use_size() << ']';  // Output # uses
+    Out << " [#uses=" << V.use_size() << ']';  // Output # uses
   }
 }
 
 /// printInstruction - This member is called for each Instruction in a function..
 ///
 void AssemblyWriter::printInstruction(const Instruction &I) {
-  if (AnnotationWriter) AnnotationWriter->emitInstructionAnnot(&I, *Out);
+  if (AnnotationWriter) AnnotationWriter->emitInstructionAnnot(&I, Out);
 
-  *Out << "\t";
+  Out << "\t";
 
   // Print out name if it exists...
   if (I.hasName())
-    *Out << getLLVMName(I.getName()) << " = ";
+    Out << getLLVMName(I.getName()) << " = ";
 
   // If this is a volatile load or store, print out the volatile marker
   if ((isa<LoadInst>(I)  && cast<LoadInst>(I).isVolatile()) ||
       (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile()))
-      *Out << "volatile ";
+      Out << "volatile ";
 
   // Print out the opcode...
-  *Out << I.getOpcodeName();
+  Out << I.getOpcodeName();
 
   // Print out the type of the operands...
   const Value *Operand = I.getNumOperands() ? I.getOperand(0) : 0;
@@ -930,35 +929,35 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   // Special case conditional branches to swizzle the condition out to the front
   if (isa<BranchInst>(I) && I.getNumOperands() > 1) {
     writeOperand(I.getOperand(2), true);
-    *Out << ',';
+    Out << ',';
     writeOperand(Operand, true);
-    *Out << ',';
+    Out << ',';
     writeOperand(I.getOperand(1), true);
 
   } else if (isa<SwitchInst>(I)) {
     // Special case switch statement to get formatting nice and correct...
-    writeOperand(Operand        , true); *Out << ',';
-    writeOperand(I.getOperand(1), true); *Out << " [";
+    writeOperand(Operand        , true); Out << ',';
+    writeOperand(I.getOperand(1), true); Out << " [";
 
     for (unsigned op = 2, Eop = I.getNumOperands(); op < Eop; op += 2) {
-      *Out << "\n\t\t";
-      writeOperand(I.getOperand(op  ), true); *Out << ',';
+      Out << "\n\t\t";
+      writeOperand(I.getOperand(op  ), true); Out << ',';
       writeOperand(I.getOperand(op+1), true);
     }
-    *Out << "\n\t]";
+    Out << "\n\t]";
   } else if (isa<PHINode>(I)) {
-    *Out << ' ';
+    Out << ' ';
     printType(I.getType());
-    *Out << ' ';
+    Out << ' ';
 
     for (unsigned op = 0, Eop = I.getNumOperands(); op < Eop; op += 2) {
-      if (op) *Out << ", ";
-      *Out << '[';  
-      writeOperand(I.getOperand(op  ), false); *Out << ',';
-      writeOperand(I.getOperand(op+1), false); *Out << " ]";
+      if (op) Out << ", ";
+      Out << '[';  
+      writeOperand(I.getOperand(op  ), false); Out << ',';
+      writeOperand(I.getOperand(op+1), false); Out << " ]";
     }
   } else if (isa<ReturnInst>(I) && !Operand) {
-    *Out << " void";
+    Out << " void";
   } else if (isa<CallInst>(I)) {
     const PointerType  *PTy = cast<PointerType>(Operand->getType());
     const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
@@ -971,19 +970,19 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     if (!FTy->isVarArg() &&
         (!isa<PointerType>(RetTy) || 
          !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
-      *Out << ' '; printType(RetTy);
+      Out << ' '; printType(RetTy);
       writeOperand(Operand, false);
     } else {
       writeOperand(Operand, true);
     }
-    *Out << '(';
+    Out << '(';
     if (I.getNumOperands() > 1) writeOperand(I.getOperand(1), true);
     for (unsigned op = 2, Eop = I.getNumOperands(); op < Eop; ++op) {
-      *Out << ',';
+      Out << ',';
       writeOperand(I.getOperand(op), true);
     }
 
-    *Out << " )";
+    Out << " )";
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
     const PointerType  *PTy = cast<PointerType>(Operand->getType());
     const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
@@ -996,42 +995,42 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     if (!FTy->isVarArg() &&
         (!isa<PointerType>(RetTy) || 
          !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
-      *Out << ' '; printType(RetTy);
+      Out << ' '; printType(RetTy);
       writeOperand(Operand, false);
     } else {
       writeOperand(Operand, true);
     }
 
-    *Out << '(';
+    Out << '(';
     if (I.getNumOperands() > 3) writeOperand(I.getOperand(3), true);
     for (unsigned op = 4, Eop = I.getNumOperands(); op < Eop; ++op) {
-      *Out << ',';
+      Out << ',';
       writeOperand(I.getOperand(op), true);
     }
 
-    *Out << " )\n\t\t\tto";
+    Out << " )\n\t\t\tto";
     writeOperand(II->getNormalDest(), true);
-    *Out << " unwind";
+    Out << " unwind";
     writeOperand(II->getUnwindDest(), true);
 
   } else if (const AllocationInst *AI = dyn_cast<AllocationInst>(&I)) {
-    *Out << ' ';
+    Out << ' ';
     printType(AI->getType()->getElementType());
     if (AI->isArrayAllocation()) {
-      *Out << ',';
+      Out << ',';
       writeOperand(AI->getArraySize(), true);
     }
   } else if (isa<CastInst>(I)) {
     if (Operand) writeOperand(Operand, true);   // Work with broken code
-    *Out << " to ";
+    Out << " to ";
     printType(I.getType());
   } else if (isa<VAArgInst>(I)) {
     if (Operand) writeOperand(Operand, true);   // Work with broken code
-    *Out << ", ";
+    Out << ", ";
     printType(I.getType());
   } else if (const VANextInst *VAN = dyn_cast<VANextInst>(&I)) {
     if (Operand) writeOperand(Operand, true);   // Work with broken code
-    *Out << ", ";
+    Out << ", ";
     printType(VAN->getArgType());
   } else if (Operand) {   // Print the normal way...
 
@@ -1056,18 +1055,18 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     }
     
     if (!PrintAllTypes) {
-      *Out << ' ';
+      Out << ' ';
       printType(TheType);
     }
 
     for (unsigned i = 0, E = I.getNumOperands(); i != E; ++i) {
-      if (i) *Out << ',';
+      if (i) Out << ',';
       writeOperand(I.getOperand(i), PrintAllTypes);
     }
   }
 
   printInfoComment(I);
-  *Out << "\n";
+  Out << "\n";
 }
 
 
