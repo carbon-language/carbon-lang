@@ -22,7 +22,7 @@ class ReturnInst;
 
 /// CloneModule - Return an exact copy of the specified module
 ///
-Module *CloneModule(Module *M);
+Module *CloneModule(const Module *M);
 
 /// CloneFunction - Return a copy of the specified function, but without
 /// embedding the function into another module.  Also, any references specified
