@@ -37,6 +37,7 @@ namespace llvm {
   class CallInst;
   
   struct IntrinsicLowering {
+    virtual ~IntrinsicLowering() {}
 
     /// LowerIntrinsicCall - This method returns the LLVM function which should
     /// be used to implement the specified intrinsic function call.  If an
