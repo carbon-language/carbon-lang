@@ -280,19 +280,10 @@ void GlobalsModRef::AnalyzeSCC(std::vector<CallGraphNode *> &SCC) {
           ModRefBehavior MRB =
             AliasAnalysis::getModRefBehavior(Callee, CallSite());
           if (MRB != DoesNotAccessMemory) {
-            if (MRB == OnlyReadsMemory && CalleeFR) {
-              // This reads memory, but we don't know what, just say that it
-              // reads all globals.
-              for (std::map<GlobalValue*, unsigned>::iterator
-                     GI = CalleeFR->GlobalInfo.begin(),
-                     E = CalleeFR->GlobalInfo.end();
-                   GI != E; ++GI)
-                FR.GlobalInfo[GI->first] |= Ref;
-
-            } else {
-              CallsExternal = true;
-              break;
-            }
+            // FIXME: could make this more aggressive for functions that just
+            // read memory.  We should just say they read all globals.
+            CallsExternal = true;
+            break;
           }
         }
       } else {
