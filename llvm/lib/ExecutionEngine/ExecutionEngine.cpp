@@ -5,6 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "jit"
 #include "ExecutionEngine.h"
 #include "GenericValue.h"
 #include "llvm/DerivedTypes.h"

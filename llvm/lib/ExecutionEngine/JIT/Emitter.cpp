@@ -5,6 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "jit"
 #include "VM.h"
 #include "Config/sys/mman.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
