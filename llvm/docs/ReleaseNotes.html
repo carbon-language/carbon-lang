@@ -285,7 +285,9 @@ portability patches and reports of successful builds or error messages.</p>
 <p>Note that the LLVM build system does not currently support directories with 
 spaces on them when running on Win32/cygwin.  We strongly recommend running
 LLVM and the C frontend out of a top-level directory without spaces (e.g., 
-<tt>/cygdrive/c/llvm</tt>).</p>
+<tt>/cygdrive/c/llvm</tt>).  Also, make sure to install <b>all</b> of the 
+cygwin packages.  By default, many important tools are not installed that 
+are needed by the LLVM build process or test suite (e.g., /bin/time).</p>
 
 </div>
 
