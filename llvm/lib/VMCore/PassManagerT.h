@@ -454,8 +454,12 @@ public:
     // Loop over all of the analyses used by this pass,
     for (std::vector<AnalysisID>::const_iterator I = Required.begin(),
            E = Required.end(); I != E; ++I) {
-      if (getAnalysisOrNullDown(*I) == 0)
-        add((PassClass*)(*I)->createPass());
+      if (getAnalysisOrNullDown(*I) == 0) {
+        Pass *AP = (*I)->createPass();
+        if (ImmutablePass *IP = dynamic_cast<ImmutablePass *> (AP)) { add(IP); }
+        else if (PassClass *RP = dynamic_cast<PassClass *> (AP)) { add(RP); }
+        else { assert (0 && "Wrong kind of pass for this PassManager"); }
+      }
     }
 
     // Tell the pass to add itself to this PassManager... the way it does so
@@ -477,8 +481,12 @@ public:
     // Loop over all of the analyses used by this pass,
     for (std::vector<AnalysisID>::const_iterator I = Required.begin(),
            E = Required.end(); I != E; ++I) {
-      if (getAnalysisOrNullDown(*I) == 0)
-        add((PassClass*)(*I)->createPass());
+      if (getAnalysisOrNullDown(*I) == 0) {
+        Pass *AP = (*I)->createPass();
+        if (ImmutablePass *IP = dynamic_cast<ImmutablePass *> (AP)) add(IP);
+        else if (PassClass *RP = dynamic_cast<PassClass *> (AP)) add(RP);
+        else assert (0 && "Wrong kind of pass for this PassManager");
+      }
     }
 
     // Add the ImmutablePass to this PassManager.
