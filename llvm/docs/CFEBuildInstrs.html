@@ -232,6 +232,20 @@ libgcc.a library, which you can find by running
  % setenv LLVM_LIB_SEARCH_PATH $CFEINSTALL/bytecode-libs
 </pre></li>
 
+<li><p>Optionally, build a symbol table for the newly installed runtime 
+libraries. Although this step is optional, you are encouraged to do this as the
+symbol tables will make a significant difference in your link times. Use 
+the <tt>llvm-ranlib</tt> tool to do this, as follows:</p>
+<pre>
+ % cd $CFEINSTALL/lib
+ % llvm-ranlib libiberty.a
+ % llvm-ranlib libstdc++.a
+ % llvm-ranlib libsubc++.a
+ % cd $CFEINSTALL/lib/<i>target-triplet</i>/3.4-llvm
+ % llvm-ranlib libgcc.a
+ % llvm-ranlib libgcov.a
+</pre>
+
 <li><p>Test the newly-installed C frontend by one or more of the
 following means:</p>
  <ul>
