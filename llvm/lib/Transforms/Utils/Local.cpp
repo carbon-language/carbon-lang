@@ -26,6 +26,7 @@ using namespace llvm;
 // in a big way). This is a quick fix to get things compiling, until one of
 // us has time to write a more complicated autoconf test.
 extern "C" int isnan (double d);
+namespace std { int isnan (double d) { return ::isnan (d); } }
 #endif
 
 //===----------------------------------------------------------------------===//
