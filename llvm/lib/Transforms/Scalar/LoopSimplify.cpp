@@ -1,4 +1,4 @@
-//===- LoopPreheaders.cpp - Loop Canonicalization Pass --------------------===//
+//===- LoopSimplify.cpp - Loop Canonicalization Pass ----------------------===//
 //
 // This pass performs several transformations to transform natural loops into a
 // simpler form, which makes subsequent analyses and transformations simpler and
