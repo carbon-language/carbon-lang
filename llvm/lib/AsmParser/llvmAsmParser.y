@@ -130,8 +130,6 @@ static struct PerFunctionInfo {
 
   std::map<const Type*, ValueList> Values;   // Keep track of #'d definitions
   std::map<const Type*, ValueList> LateResolveValues;
-  std::vector<PATypeHolder> Types;
-  std::map<ValID, PATypeHolder> LateResolveTypes;
   bool isDeclare;                // Is this function a forward declararation?
 
   /// BBForwardRefs - When we see forward references to basic blocks, keep
@@ -162,7 +160,6 @@ static struct PerFunctionInfo {
     ResolveDefinitions(LateResolveValues, &CurModule.LateResolveValues);
 
     Values.clear();         // Clear out function local definitions
-    Types.clear();          // Clear out function local types
     CurrentFunction = 0;
     isDeclare = false;
   }
@@ -208,18 +205,22 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   //
   if (DoNotImprovise) return 0;  // Do we just want a null to be returned?
 
-  std::map<ValID, PATypeHolder> &LateResolver = inFunctionScope() ? 
-    CurFun.LateResolveTypes : CurModule.LateResolveTypes;
-  
-  std::map<ValID, PATypeHolder>::iterator I = LateResolver.find(D);
-  if (I != LateResolver.end()) {
-    return I->second;
+
+  if (inFunctionScope()) {
+    if (D.Type == ValID::NameVal)
+      ThrowException("Reference to an undefined type: '" + D.getName() + "'");
+    else
+      ThrowException("Reference to an undefined type: #" + itostr(D.Num));
   }
 
+  std::map<ValID, PATypeHolder>::iterator I =CurModule.LateResolveTypes.find(D);
+  if (I != CurModule.LateResolveTypes.end())
+    return I->second;
+
   Type *Typ = OpaqueType::get();
-  LateResolver.insert(std::make_pair(D, Typ));
+  CurModule.LateResolveTypes.insert(std::make_pair(D, Typ));
   return Typ;
-}
+ }
 
 static Value *lookupInSymbolTable(const Type *Ty, const std::string &Name) {
   SymbolTable &SymTab = 
@@ -473,34 +474,15 @@ static void ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
 // refering to the number can be resolved.  Do this now.
 //
 static void ResolveTypeTo(char *Name, const Type *ToTy) {
-  std::vector<PATypeHolder> &Types = inFunctionScope() ? 
-     CurFun.Types : CurModule.Types;
+  ValID D;
+  if (Name) D = ValID::create(Name);
+  else      D = ValID::create((int)CurModule.Types.size());
 
-   ValID D;
-   if (Name) D = ValID::create(Name);
-   else      D = ValID::create((int)Types.size());
-
-   std::map<ValID, PATypeHolder> &LateResolver = inFunctionScope() ? 
-     CurFun.LateResolveTypes : CurModule.LateResolveTypes;
-  
-   std::map<ValID, PATypeHolder>::iterator I = LateResolver.find(D);
-   if (I != LateResolver.end()) {
-     ((DerivedType*)I->second.get())->refineAbstractTypeTo(ToTy);
-     LateResolver.erase(I);
-   }
-}
-
-// ResolveTypes - At this point, all types should be resolved.  Any that aren't
-// are errors.
-//
-static void ResolveTypes(std::map<ValID, PATypeHolder> &LateResolveTypes) {
-  if (!LateResolveTypes.empty()) {
-    const ValID &DID = LateResolveTypes.begin()->first;
-
-    if (DID.Type == ValID::NameVal)
-      ThrowException("Reference to an invalid type: '" +DID.getName() + "'");
-    else
-      ThrowException("Reference to an invalid type: #" + itostr(DID.Num));
+  std::map<ValID, PATypeHolder>::iterator I =
+    CurModule.LateResolveTypes.find(D);
+  if (I != CurModule.LateResolveTypes.end()) {
+    ((DerivedType*)I->second.get())->refineAbstractTypeTo(ToTy);
+    CurModule.LateResolveTypes.erase(I);
   }
 }
 
@@ -1457,12 +1439,18 @@ FunctionList : FunctionList Function {
   }
   | ConstPool {
     $$ = CurModule.CurrentModule;
-    // Resolve circular types before we parse the body of the module
-    ResolveTypes(CurModule.LateResolveTypes);
+    // Emit an error if there are any unresolved types left.
+    if (!CurModule.LateResolveTypes.empty()) {
+      const ValID &DID = CurModule.LateResolveTypes.begin()->first;
+      if (DID.Type == ValID::NameVal)
+        ThrowException("Reference to an undefined type: '"+DID.getName() + "'");
+      else
+        ThrowException("Reference to an undefined type: #" + itostr(DID.Num));
+    }
   };
 
 // ConstPool - Constants with optional names assigned to them.
-ConstPool : ConstPool OptAssign TYPE TypesV {  // Types can be defined in the const pool
+ConstPool : ConstPool OptAssign TYPE TypesV {
     // Eagerly resolve types.  This is not an optimization, this is a
     // requirement that is due to the fact that we could have this:
     //
@@ -1477,10 +1465,7 @@ ConstPool : ConstPool OptAssign TYPE TypesV {  // Types can be defined in the co
     if (!setTypeName(*$4, $2) && !$2) {
       // If this is a named type that is not a redefinition, add it to the slot
       // table.
-      if (inFunctionScope())
-        CurFun.Types.push_back(*$4);
-      else
-        CurModule.Types.push_back(*$4);
+      CurModule.Types.push_back(*$4);
     }
 
     delete $4;
@@ -1664,9 +1649,6 @@ FunctionHeader : OptLinkage FunctionHeaderH BEGIN {
   // Make sure that we keep track of the linkage type even if there was a
   // previous "declare".
   $$->setLinkage($1);
-
-  // Resolve circular types before we parse the body of the function.
-  ResolveTypes(CurFun.LateResolveTypes);
 };
 
 END : ENDTOK | '}';                    // Allow end of '}' to end a function
