@@ -465,7 +465,7 @@ ac_includes_default="\
 #endif"
 
 ac_unique_file=""Makefile.config.in""
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL DOT ETAGS PYTHON QMTEST ALLOCA MMAP_FILE ENABLE_OPTIMIZED SPEC_ROOT USE_SPEC UPB DISABLE_LLC_DIFFS JIT LLVMCC1 LLVMCC1PLUS BCR PAPIDIR LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL DOT ETAGS PYTHON QMTEST ALLOCA MMAP_FILE ENABLE_OPTIMIZED SPEC_ROOT USE_SPEC UPB DISABLE_LLC_DIFFS JIT LLVMCC1 LLVMCC1PLUS BCR PAPIDIR SHLIBEXT LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -21595,10 +21595,10 @@ then
 	fi
 	rm conftest.c
 	llvmcc1path=`"$LLVM_GCC_CHECK" --print-prog-name=cc1`
-    LLVMCC1=$llvmcc1path
+	LLVMCC1=$llvmcc1path
 
 	llvmcc1pluspath=`"$LLVM_GCC_CHECK" --print-prog-name=cc1plus`
-    LLVMCC1PLUS=$llvmcc1pluspath
+	LLVMCC1PLUS=$llvmcc1pluspath
 
 fi
 echo "$as_me:$LINENO: result: $LLVM_GCC_SANE" >&5
@@ -21629,6 +21629,19 @@ else
   PAPIDIR=/home/vadve/shared/Sparc/papi-2.3.4.1
 
 fi;
+
+echo "$as_me:$LINENO: checking for shared library suffix" >&5
+echo $ECHO_N "checking for shared library suffix... $ECHO_C" >&6
+eval "SHLIBEXT=$shrext"
+echo "$as_me:$LINENO: result: $SHLIBEXT" >&5
+echo "${ECHO_T}$SHLIBEXT" >&6
+SHLIBEXT=$SHLIBEXT
+
+
+cat >>confdefs.h <<_ACEOF
+#define SHLIBEXT "$SHLIBEXT"
+_ACEOF
+
 
           ac_config_files="$ac_config_files Makefile.config"
 cat >confcache <<\_ACEOF
@@ -22411,6 +22424,7 @@ s,@LLVMCC1@,$LLVMCC1,;t t
 s,@LLVMCC1PLUS@,$LLVMCC1PLUS,;t t
 s,@BCR@,$BCR,;t t
 s,@PAPIDIR@,$PAPIDIR,;t t
+s,@SHLIBEXT@,$SHLIBEXT,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
@@ -23136,3 +23150,4 @@ echo "$as_me: WARNING: ***** Runtime libraries (in llvm/runtime) will not be bui
 	{ echo "$as_me:$LINENO: WARNING: ***** but you should be able to build the llvm tools." >&5
 echo "$as_me: WARNING: ***** but you should be able to build the llvm tools." >&2;}
 fi
+

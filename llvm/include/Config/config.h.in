@@ -180,6 +180,9 @@
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
 
+/* Extension that shared libraries have, e.g., ".so". */
+#undef SHLIBEXT
+
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
    automatically deduced at run-time.
