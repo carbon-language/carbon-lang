@@ -112,8 +112,8 @@ TargetData::TargetData(const std::string &ToolName, const Module *M)
   : AID(AnnotationManager::getID("TargetData::" + ToolName)) {
   AnnotationManager::registerAnnotationFactory(AID, TypeAnFactory, this);
 
-  LittleEndian     = M->isLittleEndian();
-  PointerSize      = M->has32BitPointers() ? 4 : 8;
+  LittleEndian     = M->getEndianness() != Module::BigEndian;
+  PointerSize      = M->getPointerSize() != Module::Pointer64 ? 4 : 8;
   PointerAlignment = PointerSize;
   DoubleAlignment  = PointerSize;
   FloatAlignment   = 4;
