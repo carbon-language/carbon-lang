@@ -19,6 +19,7 @@ class FunctionRepBuilder;
 class GlobalValue;
 class FunctionDSGraph;
 class DataStructure;
+class DSNodeIterator;
 
 // FIXME: move this somewhere private
 unsigned countPointerFields(const Type *Ty);
@@ -126,6 +127,10 @@ public:
     assert(Referrers.empty() && "Referrers to dead node exist!");
   }
 
+  typedef DSNodeIterator iterator;
+  inline iterator begin();   // Defined in DataStructureGraph.h
+  inline iterator end();
+
   unsigned getNumLinks() const { return FieldLinks.size(); }
   PointerValSet &getLink(unsigned i) {
     assert(i < getNumLinks() && "Field links access out of range...");
@@ -163,6 +168,7 @@ public:
   }
 
   void print(std::ostream &O) const;
+  void dump() const;
 
   virtual std::string getCaption() const = 0;
   virtual const std::vector<PointerValSet> *getAuxLinks() const {
