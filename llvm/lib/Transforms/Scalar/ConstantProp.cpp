@@ -31,7 +31,7 @@
 #include "llvm/ConstPoolVals.h"
 
 inline static bool 
-ConstantFoldUnaryInst(Method *M, Method::inst_iterator &DI,
+ConstantFoldUnaryInst(BasicBlock *BB, BasicBlock::iterator &II,
                       UnaryOperator *Op, ConstPoolVal *D) {
   ConstPoolVal *ReplaceWith = 
     opt::ConstantFoldUnaryInstruction(Op->getOpcode(), D);
@@ -42,11 +42,11 @@ ConstantFoldUnaryInst(Method *M, Method::inst_iterator &DI,
   Op->replaceAllUsesWith(ReplaceWith);
   
   // Remove the operator from the list of definitions...
-  Op->getParent()->getInstList().remove(DI.getInstructionIterator());
+  Op->getParent()->getInstList().remove(II);
   
   // The new constant inherits the old name of the operator...
   if (Op->hasName())
-    ReplaceWith->setName(Op->getName(), M->getSymbolTableSure());
+    ReplaceWith->setName(Op->getName(), BB->getParent()->getSymbolTableSure());
   
   // Delete the operator now...
   delete Op;
@@ -54,7 +54,7 @@ ConstantFoldUnaryInst(Method *M, Method::inst_iterator &DI,
 }
 
 inline static bool 
-ConstantFoldCast(Method *M, Method::inst_iterator &DI,
+ConstantFoldCast(BasicBlock *BB, BasicBlock::iterator &II,
                  CastInst *CI, ConstPoolVal *D) {
   ConstPoolVal *ReplaceWith = 
     opt::ConstantFoldCastInstruction(D, CI->getType());
@@ -65,11 +65,11 @@ ConstantFoldCast(Method *M, Method::inst_iterator &DI,
   CI->replaceAllUsesWith(ReplaceWith);
   
   // Remove the cast from the list of definitions...
-  CI->getParent()->getInstList().remove(DI.getInstructionIterator());
+  CI->getParent()->getInstList().remove(II);
   
   // The new constant inherits the old name of the cast...
   if (CI->hasName())
-    ReplaceWith->setName(CI->getName(), M->getSymbolTableSure());
+    ReplaceWith->setName(CI->getName(), BB->getParent()->getSymbolTableSure());
   
   // Delete the cast now...
   delete CI;
@@ -77,7 +77,7 @@ ConstantFoldCast(Method *M, Method::inst_iterator &DI,
 }
 
 inline static bool 
-ConstantFoldBinaryInst(Method *M, Method::inst_iterator &DI,
+ConstantFoldBinaryInst(BasicBlock *BB, BasicBlock::iterator &II,
 		       BinaryOperator *Op,
 		       ConstPoolVal *D1, ConstPoolVal *D2) {
   ConstPoolVal *ReplaceWith =
@@ -88,11 +88,11 @@ ConstantFoldBinaryInst(Method *M, Method::inst_iterator &DI,
   Op->replaceAllUsesWith(ReplaceWith);
   
   // Remove the operator from the list of definitions...
-  Op->getParent()->getInstList().remove(DI.getInstructionIterator());
+  Op->getParent()->getInstList().remove(II);
   
   // The new constant inherits the old name of the operator...
   if (Op->hasName())
-    ReplaceWith->setName(Op->getName(), M->getSymbolTableSure());
+    ReplaceWith->setName(Op->getName(), BB->getParent()->getSymbolTableSure());
   
   // Delete the operator now...
   delete Op;
@@ -155,23 +155,23 @@ bool opt::ConstantFoldTerminator(TerminatorInst *T) {
 // ConstantFoldInstruction - If an instruction references constants, try to fold
 // them together...
 //
-inline static bool 
-ConstantFoldInstruction(Method *M, Method::inst_iterator &II) {
+bool opt::ConstantPropogation::doConstantPropogation(BasicBlock *BB,
+						     BasicBlock::iterator &II) {
   Instruction *Inst = *II;
   if (BinaryOperator *BInst = dyn_cast<BinaryOperator>(Inst)) {
     ConstPoolVal *D1 = dyn_cast<ConstPoolVal>(Inst->getOperand(0));
     ConstPoolVal *D2 = dyn_cast<ConstPoolVal>(Inst->getOperand(1));
 
     if (D1 && D2)
-      return ConstantFoldBinaryInst(M, II, cast<BinaryOperator>(Inst), D1, D2);
+      return ConstantFoldBinaryInst(BB, II, cast<BinaryOperator>(Inst), D1, D2);
 
   } else if (CastInst *CI = dyn_cast<CastInst>(Inst)) {
     ConstPoolVal *D = dyn_cast<ConstPoolVal>(CI->getOperand(0));
-    if (D) return ConstantFoldCast(M, II, CI, D);
+    if (D) return ConstantFoldCast(BB, II, CI, D);
                                          
   } else if (UnaryOperator *UInst = dyn_cast<UnaryOperator>(Inst)) {
     ConstPoolVal *D = dyn_cast<ConstPoolVal>(UInst->getOperand(0));
-    if (D) return ConstantFoldUnaryInst(M, II, UInst, D);
+    if (D) return ConstantFoldUnaryInst(BB, II, UInst, D);
   } else if (TerminatorInst *TInst = dyn_cast<TerminatorInst>(Inst)) {
     return opt::ConstantFoldTerminator(TInst);
 
@@ -183,9 +183,9 @@ ConstantFoldInstruction(Method *M, Method::inst_iterator &II) {
       Value *V = PN->getOperand(0);
       PN->replaceAllUsesWith(V);                 // Replace all uses of this PHI
                                                  // Unlink from basic block
-      PN->getParent()->getInstList().remove(II.getInstructionIterator());
+      PN->getParent()->getInstList().remove(II);
       if (PN->hasName())                         // Inherit PHINode name
-	V->setName(PN->getName(), M->getSymbolTableSure());
+	V->setName(PN->getName(), BB->getParent()->getSymbolTableSure());
       delete PN;                                 // Finally, delete the node...
       return true;
     }
@@ -199,32 +199,19 @@ ConstantFoldInstruction(Method *M, Method::inst_iterator &II) {
 static bool DoConstPropPass(Method *M) {
   bool SomethingChanged = false;
 
-#if 1
-  Method::inst_iterator It = M->inst_begin();
-  while (It != M->inst_end())
-    if (ConstantFoldInstruction(M, It)) {
-      SomethingChanged = true;  // If returned true, iter is already incremented
-
-      // Incrementing the iterator in an unchecked manner could mess up the
-      // internals of 'It'.  To make sure everything is happy, tell it we might
-      // have broken it.
-      It.resyncInstructionIterator();
-    } else {
-      ++It;
-    }
-#else
-  for (Method::iterator BBIt = M->begin(); BBIt != M->end(); ++BBIt) {
-    BasicBlock *BB = *BBIt;
-
-    reduce_apply_bool(BB->begin(), BB->end(),
-		      bind1st(ConstantFoldInstruction, M));
+  for (Method::iterator BBI = M->begin(); BBI != M->end(); ++BBI) {
+    BasicBlock *BB = *BBI;
+    for (BasicBlock::iterator I = BB->begin(); I != BB->end(); )
+      if (opt::ConstantPropogation::doConstantPropogation(BB, I))
+	SomethingChanged = true;
+      else
+	++I;
   }
-#endif
   return SomethingChanged;
 }
 
 
-// returns true on failure, false on success...
+// returns whether or not the underlying method was modified
 //
 bool opt::ConstantPropogation::doConstantPropogation(Method *M) {
   bool Modified = false;
