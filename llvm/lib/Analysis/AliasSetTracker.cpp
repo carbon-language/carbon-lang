@@ -50,6 +50,7 @@ void AliasSet::mergeSetIn(AliasSet &AS) {
 
     AS.PtrList = 0;
     AS.PtrListEnd = &AS.PtrList;
+    assert(*AS.PtrListEnd == 0 && "End of list is not null?");
   }
 }
 
@@ -70,11 +71,10 @@ void AliasSet::addPointer(AliasSetTracker &AST, HashNodePair &Entry,
                           unsigned Size, bool KnownMustAlias) {
   assert(!Entry.second.hasAliasSet() && "Entry already in set!");
 
-  AliasAnalysis &AA = AST.getAliasAnalysis();
-
   // Check to see if we have to downgrade to _may_ alias.
   if (isMustAlias() && !KnownMustAlias)
     if (HashNodePair *P = getSomePointer()) {
+      AliasAnalysis &AA = AST.getAliasAnalysis();
       AliasAnalysis::AliasResult Result =
         AA.alias(P->first, P->second.getSize(), Entry.first, Size);
       if (Result == AliasAnalysis::MayAlias)
@@ -91,6 +91,7 @@ void AliasSet::addPointer(AliasSetTracker &AST, HashNodePair &Entry,
   assert(*PtrListEnd == 0 && "End of list is not null?");
   *PtrListEnd = &Entry;
   PtrListEnd = Entry.second.setPrevInList(PtrListEnd);
+  assert(*PtrListEnd == 0 && "End of list is not null?");
   addRef();               // Entry points to alias set...
 }
 
