@@ -254,6 +254,9 @@ class UltraSparcRegInfo : public MachineRegInfo
   const unsigned getCallInstNumArgs(const MachineInstr *CallMI) const;
 
 
+  MachineInstr * cpCCR2IntMI(const unsigned IntReg) const;
+  MachineInstr * cpInt2CCRMI(const unsigned IntReg) const;
+
  public:
 
 
@@ -371,9 +374,8 @@ class UltraSparcRegInfo : public MachineRegInfo
       return SparcFloatRegOrder::getRegName( reg  - 32);                  
     else if( reg < (64+32+4) )
       return SparcFloatCCRegOrder::getRegName( reg -32 - 64);
-    else if ( reg == 64+32+4)
-      return "xcc";                     // only integer cc reg
-
+    else if( reg < (64+32+4+2) )    // two names: %xcc and %ccr
+      return SparcIntCCRegOrder::getRegName( reg -32 - 64 - 4);             
     else if (reg== InvalidRegNum)       //****** TODO: Remove */
       return "<*NoReg*>";
     else 

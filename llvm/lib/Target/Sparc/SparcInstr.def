@@ -38,6 +38,7 @@
 //						instr class flags (defined in MachineInstrInfo.h)
 
 
+
 I(NOP, "nop",		0,  -1,  0, false, 0,  1,  SPARC_NONE,  M_NOP_FLAG)
   
 // Synthetic SPARC assembly opcodes for setting a register to a constant.
@@ -429,6 +430,11 @@ I(RETURN, "return",	2, -1,   0, false, 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_RET_
 // SAVE and restore instructions
 I(SAVE  , "save",	3,  2, B12, true , 0, 1,  SPARC_SINGLE, M_INT_FLAG | M_ARITH_FLAG)
 I(RESTORE, "restore",	3,  2, B12, true , 0, 1,  SPARC_SINGLE, M_INT_FLAG | M_ARITH_FLAG)
+
+// Read and Write CCR register from/to an int reg
+I(RDCCR,  "rd",         2,   1, 0, false,  0,  1,  SPARC_IEUN,  M_INT_FLAG)
+I(WRCCR,  "wr",         3,   2, 0, false,  0,  1,  SPARC_IEUN,  M_INT_FLAG)
+
 
 // Synthetic phi operation for near-SSA form of machine code
 // Number of operands is variable, indicated by -1.  Result is the first op.

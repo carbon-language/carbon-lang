@@ -896,7 +896,6 @@ MachineInstr * UltraSparcRegInfo::cpReg2MemMI(const unsigned SrcReg,
   switch( RegType ) {
     
   case IntRegType:
-  case IntCCRegType:
   case FloatCCRegType: 
     MI = new MachineInstr(STX, 3);
     MI->SetMachineOperand(0, SrcReg, false);
@@ -921,8 +920,11 @@ MachineInstr * UltraSparcRegInfo::cpReg2MemMI(const unsigned SrcReg,
 			  (int64_t) Offset, false);
     break;
 
+  case IntCCRegType:
+    assert( 0 && "Cannot directly store %ccr to memory");
+    
   default:
-    assert(0 && "Unknow RegType");
+    assert(0 && "Unknow RegType in cpReg2MemMI");
   }
 
   return MI;
@@ -945,7 +947,6 @@ MachineInstr * UltraSparcRegInfo::cpMem2RegMI(const unsigned SrcPtrReg,
   switch( RegType ) {
     
   case IntRegType:
-  case IntCCRegType:
   case FloatCCRegType: 
     MI = new MachineInstr(LDX, 3);
     MI->SetMachineOperand(0, SrcPtrReg, false);
@@ -971,13 +972,20 @@ MachineInstr * UltraSparcRegInfo::cpMem2RegMI(const unsigned SrcPtrReg,
     MI->SetMachineOperand(2, DestReg, false);
     break;
 
+  case IntCCRegType:
+    assert( 0 && "Cannot directly load into %ccr from memory");
+
   default:
-    assert(0 && "Unknow RegType");
+    assert(0 && "Unknow RegType in cpMem2RegMI");
   }
 
   return MI;
 }
 
+
+
+
+// Following method is Not needed now
 
 MachineInstr* UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest) const {
 
@@ -1071,28 +1079,91 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 
 	    int StackOff =  PRA.StackOffsets. getNewTmpPosOffFromFP();
 
-	    /**** TODO  - Handle IntCCRegType
-		  
 
+	    MachineInstr *AdIBefCC, *AdIAftCC, *AdICpCC;
+
+
+	    //---- Insert code for pushing the reg on stack ----------
+		  
+	    if( RegType == IntCCRegType ) {
+
+	      // Handle IntCCRegType specially since we cannot directly 
+	      // push %ccr on to the stack
+
+	      const LiveVarSet *LVSetBef = 
+		PRA.LVI->getLiveVarSetBeforeMInst(MInst, BB);
+
+	      // get a free INTEGER register
+	      int FreeIntReg = 
+		PRA.getUsableRegAtMI(LR->getRegClass(), IntRegType, MInst, 
+				     LVSetBef, AdIBefCC, AdIAftCC);
+
+	      // insert the instructions in reverse order since we are
+	      // adding them to the front of InstrnsBefore
+
+	      if(AdIAftCC)
+		(PRA.AddedInstrMap[MInst]->InstrnsBefore).push_front(AdIAftCC);
+
+	      AdICpCC = cpCCR2IntMI(FreeIntReg);
+	      (PRA.AddedInstrMap[MInst]->InstrnsBefore).push_front(AdICpCC);
+
+	      if(AdIBefCC)
+		(PRA.AddedInstrMap[MInst]->InstrnsBefore).push_front(AdIBefCC);
+
+	      cerr << "\n!! Inserted caller saving (push) inst for %ccr:";
+	      if(AdIBefCC) cerr << "\t" <<  *(AdIBefCC);
+	      cerr  << "\t" << *AdICpCC;
+	      if(AdIAftCC) cerr  << "\t" << *(AdIAftCC);
+
+	    } else  {  
+	      // for any other register type, just add the push inst
+	      MachineInstr *AdIBef = 
+		cpReg2MemMI(Reg, getStackPointer(), StackOff, RegType ); 
+	      ((PRA.AddedInstrMap[MInst])->InstrnsBefore).push_front(AdIBef);
+	    }
+
+
+	    //---- Insert code for popping the reg from the stack ----------
+
+	    if( RegType == IntCCRegType ) {
+
+	      // Handle IntCCRegType specially since we cannot directly 
+	      // pop %ccr on from the stack
+	      
+	      // get a free INT register
+	      int FreeIntReg = 
+		PRA.getUsableRegAtMI(LR->getRegClass(), IntRegType, MInst, 
+				     LVSetAft, AdIBefCC, AdIAftCC);
+	      
+	      if(AdIBefCC)
+		(PRA.AddedInstrMap[MInst]->InstrnsAfter).push_back(AdIBefCC);
+
+	      AdICpCC = cpInt2CCRMI(FreeIntReg);
+	      (PRA.AddedInstrMap[MInst]->InstrnsAfter).push_back(AdICpCC);
+	    
+	      if(AdIAftCC)
+		(PRA.AddedInstrMap[MInst]->InstrnsAfter).push_back(AdIAftCC);
+
+	      cerr << "\n!! Inserted caller saving (pop) inst for %ccr:";
+	      if(AdIBefCC) cerr << "\t" <<  *(AdIBefCC);
+	      cerr  << "\t" << *AdICpCC;
+	      if(AdIAftCC) cerr  << "\t" << *(AdIAftCC);
+
+	    } else {
+	      // for any other register type, just add the pop inst
+	      MachineInstr *AdIAft = 
+		cpMem2RegMI(getStackPointer(), StackOff, Reg, RegType ); 
+
+	      ((PRA.AddedInstrMap[MInst])->InstrnsAfter).push_back(AdIAft);
 
 	    }
-	    */
-	    
-	    MachineInstr *AdIBef = 
-	      cpReg2MemMI(Reg, getStackPointer(), StackOff, RegType ); 
-
-	    MachineInstr *AdIAft = 
-	      cpMem2RegMI(getStackPointer(), StackOff, Reg, RegType ); 
-
-	    ((PRA.AddedInstrMap[MInst])->InstrnsBefore).push_front(AdIBef);
-	    ((PRA.AddedInstrMap[MInst])->InstrnsAfter).push_back(AdIAft);
 	    
 	    PushedRegSet.insert( Reg );
 
-	    if(DEBUG_RA) {
-	      cerr << "\nFor callee save call inst:" << *MInst;
+	    if(1) {
+	      cerr << "\nFor call inst:" << *MInst;
 	      cerr << "\n  -inserted caller saving instrs:\n\t ";
-	      cerr << *AdIBef << "\n\t" << *AdIAft  ;
+	      cerr << *AdIBefCC << "\n\t" << *AdIAftCC  ;
 	    }	    
 	  } // if not already pushed
 
@@ -1106,10 +1177,36 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
   
 }
 
+//---------------------------------------------------------------------------
+// Copies %ccr into an integer register. IntReg is the UNIFIED register
+// number.
+//---------------------------------------------------------------------------
 
+MachineInstr * UltraSparcRegInfo::cpCCR2IntMI(const unsigned IntReg) const {
+  MachineInstr * MI = NULL;
 
+  MI = new MachineInstr(RDCCR, 2);
+  MI->SetMachineOperand(0, SparcIntCCRegOrder::ccr, false);
+  MI->SetMachineOperand(1, IntReg, true);
 
+  return MI;
+}
 
+//---------------------------------------------------------------------------
+// Copies an integer register into  %ccr. IntReg is the UNIFIED register
+// number.
+//---------------------------------------------------------------------------
+
+MachineInstr * UltraSparcRegInfo::cpInt2CCRMI(const unsigned IntReg) const {
+  MachineInstr * MI = NULL;
+
+  MI = new MachineInstr(WRCCR, 3);
+  MI->SetMachineOperand(0, IntReg, false);
+  MI->SetMachineOperand(1, SparcIntRegOrder::g0, false);
+  MI->SetMachineOperand(2, SparcIntCCRegOrder::ccr, true);
+
+  return MI;
+}
 
 
 

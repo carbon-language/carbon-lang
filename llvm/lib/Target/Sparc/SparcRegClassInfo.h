@@ -191,8 +191,40 @@ class SparcFloatRegClass : public MachineRegClassInfo
 
 //-----------------------------------------------------------------------------
 // Int CC Register Class
-// Only one integer cc register is available
+// Only one integer cc register is available. However, this register is
+// referred to as %xcc when instructions like subcc are executed but 
+// referred to as %ccr (i.e., %xcc + %icc") when this register is moved
+// into an integer register using RD or WR instrcutions. So, two ids are
+// allocated for two names.
 //-----------------------------------------------------------------------------
+
+
+static string const IntCCRegNames[] = 
+  {    
+    "xcc",  "ccr"
+  };
+
+
+class SparcIntCCRegOrder{ 
+
+ public:
+
+  enum RegsInPrefOrder {
+
+    xcc, ccr   // only one is available - see the note above
+  };
+
+  static const string  getRegName(const unsigned reg) {
+    assert( reg < 2 );
+    return IntCCRegNames[reg];
+  }
+
+  // according to  Sparc 64 ABI,  %ccr is volatile
+  inline bool isRegVolatile(const int Reg) const { return true; }
+
+
+};
+
 
 
 class SparcIntCCRegClass : public MachineRegClassInfo
@@ -200,13 +232,13 @@ class SparcIntCCRegClass : public MachineRegClassInfo
 public:
 
   SparcIntCCRegClass(unsigned ID) 
-    : MachineRegClassInfo(ID,1, 1) {  }
+    : MachineRegClassInfo(ID, 1, 2) {  }
 
   inline void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const {
     Node->setColor(0);    // only one int cc reg is available
   }
 
-  // *** TODO: Check this
+
   inline bool isRegVolatile(const int Reg) const { return true; }
 
 };
