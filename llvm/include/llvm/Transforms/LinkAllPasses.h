@@ -16,14 +16,15 @@
 #ifndef LLVM_TRANSFORMS_LINKALLPASSES_H
 #define LLVM_TRANSFORMS_LINKALLPASSES_H
 
-#ifdef LLVM_ON_WIN32
+#ifdef _MSC_VER
 
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 
-// Trying not to include <windows.h>, though maybe we should...
+// Trying not to include <windows.h>, though maybe we should...  Problem is,
+// it pollutes the global namespace in some really nasty ways.
 extern "C" __declspec(dllimport) void* __stdcall GetCurrentProcess();
 
 namespace {
@@ -107,6 +108,6 @@ namespace {
     } X;
 };
 
-#endif // LLVM_ON_WIN32
+#endif // _MSC_VER
 
 #endif
