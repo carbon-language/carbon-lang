@@ -7,7 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements the LLVM instructions...
+// This file implements all of the non-inline methods for the LLVM instruction
+// classes.
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,13 +21,116 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
+//                            TerminatorInst Class
+//===----------------------------------------------------------------------===//
+
+TerminatorInst::TerminatorInst(Instruction::TermOps iType,
+                               Use *Ops, unsigned NumOps, Instruction *IB) 
+  : Instruction(Type::VoidTy, iType, Ops, NumOps, "", IB) {
+}
+
+TerminatorInst::TerminatorInst(Instruction::TermOps iType,
+                               Use *Ops, unsigned NumOps, BasicBlock *IAE)
+  : Instruction(Type::VoidTy, iType, Ops, NumOps, "", IAE) {
+}
+
+
+
+//===----------------------------------------------------------------------===//
+//                               PHINode Class
+//===----------------------------------------------------------------------===//
+
+PHINode::PHINode(const PHINode &PN)
+  : Instruction(PN.getType(), Instruction::PHI,
+                new Use[PN.getNumOperands()], PN.getNumOperands()),
+    ReservedSpace(PN.getNumOperands()) {
+  Use *OL = OperandList;
+  for (unsigned i = 0, e = PN.getNumOperands(); i != e; i+=2) {
+    OL[i].init(PN.getOperand(i), this);
+    OL[i+1].init(PN.getOperand(i+1), this);
+  }
+}
+
+PHINode::~PHINode() {
+  delete [] OperandList;
+}
+
+// removeIncomingValue - Remove an incoming value.  This is useful if a
+// predecessor basic block is deleted.
+Value *PHINode::removeIncomingValue(unsigned Idx, bool DeletePHIIfEmpty) {
+  unsigned NumOps = getNumOperands();
+  Use *OL = OperandList;
+  assert(Idx*2 < NumOps && "BB not in PHI node!");
+  Value *Removed = OL[Idx*2];
+
+  // Move everything after this operand down.
+  //
+  // FIXME: we could just swap with the end of the list, then erase.  However,
+  // client might not expect this to happen.  The code as it is thrashes the
+  // use/def lists, which is kinda lame.
+  for (unsigned i = (Idx+1)*2; i != NumOps; i += 2) {
+    OL[i-2] = OL[i];
+    OL[i-2+1] = OL[i+1];
+  }
+
+  // Nuke the last value.
+  OL[NumOps-2].set(0);
+  OL[NumOps-2+1].set(0);
+  NumOperands = NumOps-2;
+
+  // If the PHI node is dead, because it has zero entries, nuke it now.
+  if (NumOps == 2 && DeletePHIIfEmpty) {
+    // If anyone is using this PHI, make them use a dummy value instead...
+    replaceAllUsesWith(UndefValue::get(getType()));
+    eraseFromParent();
+  }
+  return Removed;
+}
+
+/// resizeOperands - resize operands - This adjusts the length of the operands
+/// list according to the following behavior:
+///   1. If NumOps == 0, grow the operand list in response to a push_back style
+///      of operation.  This grows the number of ops by 1.5 times.
+///   2. If NumOps > NumOperands, reserve space for NumOps operands.
+///   3. If NumOps == NumOperands, trim the reserved space.
+///
+void PHINode::resizeOperands(unsigned NumOps) {
+  if (NumOps == 0) {
+    NumOps = (getNumOperands())*3/2;
+    if (NumOps < 4) NumOps = 4;      // 4 op PHI nodes are VERY common.
+  } else if (NumOps*2 > NumOperands) {
+    // No resize needed.
+    if (ReservedSpace >= NumOps) return;
+  } else if (NumOps == NumOperands) {
+    if (ReservedSpace == NumOps) return;
+  } else {
+    return;        
+  }
+
+  ReservedSpace = NumOps;
+  Use *NewOps = new Use[NumOps];
+  Use *OldOps = OperandList;
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+      NewOps[i].init(OldOps[i], this);
+      OldOps[i].set(0);
+  }
+  delete [] OldOps;
+  OperandList = NewOps;
+}
+
+
+//===----------------------------------------------------------------------===//
 //                        CallInst Implementation
 //===----------------------------------------------------------------------===//
 
-void CallInst::init(Value *Func, const std::vector<Value*> &Params)
-{
-  Operands.reserve(1+Params.size());
-  Operands.push_back(Use(Func, this));
+CallInst::~CallInst() {
+  delete [] OperandList;
+}
+
+void CallInst::init(Value *Func, const std::vector<Value*> &Params) {
+  NumOperands = Params.size()+1;
+  Use *OL = OperandList = new Use[Params.size()+1];
+  OL[0].init(Func, this);
 
   const FunctionType *FTy = 
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
@@ -34,43 +138,43 @@ void CallInst::init(Value *Func, const std::vector<Value*> &Params)
   assert((Params.size() == FTy->getNumParams() || 
           (FTy->isVarArg() && Params.size() > FTy->getNumParams())) &&
          "Calling a function with bad signature");
-  for (unsigned i = 0; i != Params.size(); i++)
-    Operands.push_back(Use(Params[i], this));
+  for (unsigned i = 0, e = Params.size(); i != e; ++i)
+    OL[i+1].init(Params[i], this);
 }
 
-void CallInst::init(Value *Func, Value *Actual1, Value *Actual2)
-{
-  Operands.reserve(3);
-  Operands.push_back(Use(Func, this));
+void CallInst::init(Value *Func, Value *Actual1, Value *Actual2) {
+  NumOperands = 3;
+  Use *OL = OperandList = new Use[3];
+  OL[0].init(Func, this);
+  OL[1].init(Actual1, this);
+  OL[2].init(Actual2, this);
   
-  const FunctionType *MTy = 
+  const FunctionType *FTy = 
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
 
-  assert((MTy->getNumParams() == 2 ||
-          (MTy->isVarArg() && MTy->getNumParams() == 0)) &&
+  assert((FTy->getNumParams() == 2 ||
+          (FTy->isVarArg() && FTy->getNumParams() == 0)) &&
          "Calling a function with bad signature");
-  Operands.push_back(Use(Actual1, this));
-  Operands.push_back(Use(Actual2, this));
 }
 
-void CallInst::init(Value *Func, Value *Actual)
-{
-  Operands.reserve(2);
-  Operands.push_back(Use(Func, this));
+void CallInst::init(Value *Func, Value *Actual) {
+  NumOperands = 2;
+  Use *OL = OperandList = new Use[2];
+  OL[0].init(Func, this);
+  OL[1].init(Actual, this);
   
-  const FunctionType *MTy = 
+  const FunctionType *FTy = 
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
 
-  assert((MTy->getNumParams() == 1 ||
-          (MTy->isVarArg() && MTy->getNumParams() == 0)) &&
+  assert((FTy->getNumParams() == 1 ||
+          (FTy->isVarArg() && FTy->getNumParams() == 0)) &&
          "Calling a function with bad signature");
-  Operands.push_back(Use(Actual, this));
 }
 
-void CallInst::init(Value *Func)
-{
-  Operands.reserve(1);
-  Operands.push_back(Use(Func, this));
+void CallInst::init(Value *Func) {
+  NumOperands = 1;
+  Use *OL = OperandList = new Use[1];
+  OL[0].init(Func, this);
   
   const FunctionType *MTy = 
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
@@ -82,7 +186,7 @@ CallInst::CallInst(Value *Func, const std::vector<Value*> &Params,
                    const std::string &Name, Instruction *InsertBefore) 
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                  ->getElementType())->getReturnType(),
-                Instruction::Call, Name, InsertBefore) {
+                Instruction::Call, 0, 0, Name, InsertBefore) {
   init(Func, Params);
 }
 
@@ -90,7 +194,7 @@ CallInst::CallInst(Value *Func, const std::vector<Value*> &Params,
                    const std::string &Name, BasicBlock *InsertAtEnd) 
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                  ->getElementType())->getReturnType(),
-                Instruction::Call, Name, InsertAtEnd) {
+                Instruction::Call, 0, 0, Name, InsertAtEnd) {
   init(Func, Params);
 }
 
@@ -98,7 +202,7 @@ CallInst::CallInst(Value *Func, Value *Actual1, Value *Actual2,
                    const std::string &Name, Instruction  *InsertBefore)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
-                Instruction::Call, Name, InsertBefore) {
+                Instruction::Call, 0, 0, Name, InsertBefore) {
   init(Func, Actual1, Actual2);
 }
 
@@ -106,7 +210,7 @@ CallInst::CallInst(Value *Func, Value *Actual1, Value *Actual2,
                    const std::string &Name, BasicBlock  *InsertAtEnd)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
-                Instruction::Call, Name, InsertAtEnd) {
+                Instruction::Call, 0, 0, Name, InsertAtEnd) {
   init(Func, Actual1, Actual2);
 }
 
@@ -114,7 +218,7 @@ CallInst::CallInst(Value *Func, Value* Actual, const std::string &Name,
                    Instruction  *InsertBefore)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
-                Instruction::Call, Name, InsertBefore) {
+                Instruction::Call, 0, 0, Name, InsertBefore) {
   init(Func, Actual);
 }
 
@@ -122,7 +226,7 @@ CallInst::CallInst(Value *Func, Value* Actual, const std::string &Name,
                    BasicBlock  *InsertAtEnd)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
-                Instruction::Call, Name, InsertAtEnd) {
+                Instruction::Call, 0, 0, Name, InsertAtEnd) {
   init(Func, Actual);
 }
 
@@ -130,7 +234,7 @@ CallInst::CallInst(Value *Func, const std::string &Name,
                    Instruction *InsertBefore)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
-                Instruction::Call, Name, InsertBefore) {
+                Instruction::Call, 0, 0, Name, InsertBefore) {
   init(Func);
 }
 
@@ -138,15 +242,17 @@ CallInst::CallInst(Value *Func, const std::string &Name,
                    BasicBlock *InsertAtEnd)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
-                Instruction::Call, Name, InsertAtEnd) {
+                Instruction::Call, 0, 0, Name, InsertAtEnd) {
   init(Func);
 }
 
 CallInst::CallInst(const CallInst &CI) 
-  : Instruction(CI.getType(), Instruction::Call) {
-  Operands.reserve(CI.Operands.size());
-  for (unsigned i = 0; i < CI.Operands.size(); ++i)
-    Operands.push_back(Use(CI.Operands[i], this));
+  : Instruction(CI.getType(), Instruction::Call, new Use[CI.getNumOperands()],
+                CI.getNumOperands()) {
+  Use *OL = OperandList;
+  Use *InOL = CI.OperandList;
+  for (unsigned i = 0, e = CI.getNumOperands(); i != e; ++i)
+    OL[i].init(InOL[i], this);
 }
 
 
@@ -154,22 +260,26 @@ CallInst::CallInst(const CallInst &CI)
 //                        InvokeInst Implementation
 //===----------------------------------------------------------------------===//
 
+InvokeInst::~InvokeInst() {
+  delete [] OperandList;
+}
+
 void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
-                      const std::vector<Value*> &Params)
-{
-  Operands.reserve(3+Params.size());
-  Operands.push_back(Use(Fn, this));
-  Operands.push_back(Use((Value*)IfNormal, this));
-  Operands.push_back(Use((Value*)IfException, this));
-  const FunctionType *MTy = 
+                      const std::vector<Value*> &Params) {
+  NumOperands = 3+Params.size();
+  Use *OL = OperandList = new Use[3+Params.size()];
+  OL[0].init(Fn, this);
+  OL[1].init(IfNormal, this);
+  OL[2].init(IfException, this);
+  const FunctionType *FTy = 
     cast<FunctionType>(cast<PointerType>(Fn->getType())->getElementType());
   
-  assert((Params.size() == MTy->getNumParams()) || 
-         (MTy->isVarArg() && Params.size() > MTy->getNumParams()) &&
+  assert((Params.size() == FTy->getNumParams()) || 
+         (FTy->isVarArg() && Params.size() > FTy->getNumParams()) &&
          "Calling a function with bad signature");
   
-  for (unsigned i = 0; i < Params.size(); i++)
-    Operands.push_back(Use(Params[i], this));
+  for (unsigned i = 0, e = Params.size(); i != e; i++)
+    OL[i+3].init(Params[i], this);
 }
 
 InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
@@ -178,7 +288,7 @@ InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
                        const std::string &Name, Instruction *InsertBefore)
   : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
                                     ->getElementType())->getReturnType(),
-                   Instruction::Invoke, Name, InsertBefore) {
+                   Instruction::Invoke, 0, 0, Name, InsertBefore) {
   init(Fn, IfNormal, IfException, Params);
 }
 
@@ -188,118 +298,159 @@ InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
                        const std::string &Name, BasicBlock *InsertAtEnd)
   : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
                                     ->getElementType())->getReturnType(),
-                   Instruction::Invoke, Name, InsertAtEnd) {
+                   Instruction::Invoke, 0, 0, Name, InsertAtEnd) {
   init(Fn, IfNormal, IfException, Params);
 }
 
-InvokeInst::InvokeInst(const InvokeInst &CI) 
-  : TerminatorInst(CI.getType(), Instruction::Invoke) {
-  Operands.reserve(CI.Operands.size());
-  for (unsigned i = 0; i < CI.Operands.size(); ++i)
-    Operands.push_back(Use(CI.Operands[i], this));
+InvokeInst::InvokeInst(const InvokeInst &II) 
+  : TerminatorInst(II.getType(), Instruction::Invoke,
+                   new Use[II.getNumOperands()], II.getNumOperands()) {
+  Use *OL = OperandList, *InOL = II.OperandList;
+  for (unsigned i = 0, e = II.getNumOperands(); i != e; ++i)
+    OL[i].init(InOL[i], this);
 }
+
+BasicBlock *InvokeInst::getSuccessorV(unsigned idx) const {
+  return getSuccessor(idx);
+}
+unsigned InvokeInst::getNumSuccessorsV() const {
+  return getNumSuccessors();
+}
+void InvokeInst::setSuccessorV(unsigned idx, BasicBlock *B) {
+  return setSuccessor(idx, B);
+}
+
 
 //===----------------------------------------------------------------------===//
 //                        ReturnInst Implementation
 //===----------------------------------------------------------------------===//
 
-void ReturnInst::init(Value* RetVal) {
-  if (RetVal && RetVal->getType() != Type::VoidTy) {
-    assert(!isa<BasicBlock>(RetVal) && 
+void ReturnInst::init(Value *retVal) {
+  if (retVal && retVal->getType() != Type::VoidTy) {
+    assert(!isa<BasicBlock>(retVal) && 
            "Cannot return basic block.  Probably using the incorrect ctor");
-    Operands.reserve(1);
-    Operands.push_back(Use(RetVal, this));
+    NumOperands = 1;
+    RetVal.init(retVal, this);
   }
+}
+
+unsigned ReturnInst::getNumSuccessorsV() const {
+  return getNumSuccessors();
 }
 
 // Out-of-line ReturnInst method, put here so the C++ compiler can choose to
 // emit the vtable for the class in this translation unit.
-void ReturnInst::setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+void ReturnInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
   assert(0 && "ReturnInst has no successors!");
 }
+
+BasicBlock *ReturnInst::getSuccessorV(unsigned idx) const {
+  assert(0 && "ReturnInst has no successors!");
+  abort();
+  return 0;
+}
+
 
 //===----------------------------------------------------------------------===//
 //                        UnwindInst Implementation
 //===----------------------------------------------------------------------===//
 
-// Likewise for UnwindInst
-void UnwindInst::setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+unsigned UnwindInst::getNumSuccessorsV() const {
+  return getNumSuccessors();
+}
+
+void UnwindInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
   assert(0 && "UnwindInst has no successors!");
+}
+
+BasicBlock *UnwindInst::getSuccessorV(unsigned idx) const {
+  assert(0 && "UnwindInst has no successors!");
+  abort();
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//
 //                      UnreachableInst Implementation
 //===----------------------------------------------------------------------===//
 
-void UnreachableInst::setSuccessor(unsigned idx, BasicBlock *NewSucc) {
-  assert(0 && "UnreachableInst has no successors!");
+unsigned UnreachableInst::getNumSuccessorsV() const {
+  return getNumSuccessors();
+}
+
+void UnreachableInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
+  assert(0 && "UnwindInst has no successors!");
+}
+
+BasicBlock *UnreachableInst::getSuccessorV(unsigned idx) const {
+  assert(0 && "UnwindInst has no successors!");
+  abort();
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//
 //                        BranchInst Implementation
 //===----------------------------------------------------------------------===//
 
-void BranchInst::init(BasicBlock *IfTrue)
-{
-  assert(IfTrue != 0 && "Branch destination may not be null!");
-  Operands.reserve(1);
-  Operands.push_back(Use(IfTrue, this));
+void BranchInst::AssertOK() {
+  if (isConditional())
+    assert(getCondition()->getType() == Type::BoolTy && 
+           "May only branch on boolean predicates!");
 }
 
-void BranchInst::init(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond)
-{
-  assert(IfTrue && IfFalse && Cond &&
-         "Branch destinations and condition may not be null!");
-  assert(Cond && Cond->getType() == Type::BoolTy && 
-         "May only branch on boolean predicates!");
-  Operands.reserve(3);
-  Operands.push_back(Use(IfTrue, this));
-  Operands.push_back(Use(IfFalse, this));
-  Operands.push_back(Use(Cond, this));
-}
-
-BranchInst::BranchInst(const BranchInst &BI) : TerminatorInst(Instruction::Br) {
-  Operands.reserve(BI.Operands.size());
-  Operands.push_back(Use(BI.Operands[0], this));
-  if (BI.Operands.size() != 1) {
-    assert(BI.Operands.size() == 3 && "BR can have 1 or 3 operands!");
-    Operands.push_back(Use(BI.Operands[1], this));
-    Operands.push_back(Use(BI.Operands[2], this));
+BranchInst::BranchInst(const BranchInst &BI) :
+  TerminatorInst(Instruction::Br, Ops, BI.getNumOperands()) {
+  OperandList[0].init(BI.getOperand(0), this);
+  if (BI.getNumOperands() != 1) {
+    assert(BI.getNumOperands() == 3 && "BR can have 1 or 3 operands!");
+    OperandList[1].init(BI.getOperand(1), this);
+    OperandList[2].init(BI.getOperand(2), this);
   }
 }
+
+BasicBlock *BranchInst::getSuccessorV(unsigned idx) const {
+  return getSuccessor(idx);
+}
+unsigned BranchInst::getNumSuccessorsV() const {
+  return getNumSuccessors();
+}
+void BranchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
+  setSuccessor(idx, B);
+}
+
 
 //===----------------------------------------------------------------------===//
 //                        AllocationInst Implementation
 //===----------------------------------------------------------------------===//
 
-void AllocationInst::init(const Type *Ty, Value *ArraySize, unsigned iTy) {
-  assert(Ty != Type::VoidTy && "Cannot allocate void elements!");
-  // ArraySize defaults to 1.
-  if (!ArraySize) ArraySize = ConstantUInt::get(Type::UIntTy, 1);
-
-  Operands.reserve(1);
-  assert(ArraySize->getType() == Type::UIntTy &&
-         "Malloc/Allocation array size != UIntTy!");
-
-  Operands.push_back(Use(ArraySize, this));
+static Value *getAISize(Value *Amt) {
+  if (!Amt)
+    Amt = ConstantUInt::get(Type::UIntTy, 1);
+  else
+    assert(Amt->getType() == Type::UIntTy &&
+           "Malloc/Allocation array size != UIntTy!");
+  return Amt;  
 }
 
 AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
                                const std::string &Name,
                                Instruction *InsertBefore)
-  : Instruction(PointerType::get(Ty), iTy, Name, InsertBefore) {
-  init(Ty, ArraySize, iTy);
+  : UnaryInstruction(PointerType::get(Ty), iTy, getAISize(ArraySize),
+                     Name, InsertBefore) {
+  assert(Ty != Type::VoidTy && "Cannot allocate void!");
 }
 
 AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
                                const std::string &Name,
                                BasicBlock *InsertAtEnd)
-  : Instruction(PointerType::get(Ty), iTy, Name, InsertAtEnd) {
-  init(Ty, ArraySize, iTy);
+  : UnaryInstruction(PointerType::get(Ty), iTy, getAISize(ArraySize),
+                     Name, InsertAtEnd) {
+  assert(Ty != Type::VoidTy && "Cannot allocate void!");
 }
 
 bool AllocationInst::isArrayAllocation() const {
-  return getOperand(0) != ConstantUInt::get(Type::UIntTy, 1);
+  if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(getOperand(0)))
+    return CUI->getValue() != 1;
+  return true;
 }
 
 const Type *AllocationInst::getAllocatedType() const {
@@ -320,21 +471,19 @@ MallocInst::MallocInst(const MallocInst &MI)
 //                             FreeInst Implementation
 //===----------------------------------------------------------------------===//
 
-void FreeInst::init(Value *Ptr)
-{
-  assert(Ptr && isa<PointerType>(Ptr->getType()) && "Can't free nonpointer!");
-  Operands.reserve(1);
-  Operands.push_back(Use(Ptr, this));
+void FreeInst::AssertOK() {
+  assert(isa<PointerType>(getOperand(0)->getType()) &&
+         "Can not free something of nonpointer type!");
 }
 
 FreeInst::FreeInst(Value *Ptr, Instruction *InsertBefore)
-  : Instruction(Type::VoidTy, Free, "", InsertBefore) {
-  init(Ptr);
+  : UnaryInstruction(Type::VoidTy, Free, Ptr, "", InsertBefore) {
+  AssertOK();
 }
 
 FreeInst::FreeInst(Value *Ptr, BasicBlock *InsertAtEnd)
-  : Instruction(Type::VoidTy, Free, "", InsertAtEnd) {
-  init(Ptr);
+  : UnaryInstruction(Type::VoidTy, Free, Ptr, "", InsertAtEnd) {
+  AssertOK();
 }
 
 
@@ -342,37 +491,35 @@ FreeInst::FreeInst(Value *Ptr, BasicBlock *InsertAtEnd)
 //                           LoadInst Implementation
 //===----------------------------------------------------------------------===//
 
-void LoadInst::init(Value *Ptr) {
-  assert(Ptr && isa<PointerType>(Ptr->getType()) && 
+void LoadInst::AssertOK() {
+  assert(isa<PointerType>(getOperand(0)->getType()) && 
          "Ptr must have pointer type.");
-  Operands.reserve(1);
-  Operands.push_back(Use(Ptr, this));
 }
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBef)
-  : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                Load, Name, InsertBef), Volatile(false) {
-  init(Ptr);
+  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                     Load, Ptr, Name, InsertBef), Volatile(false) {
+  AssertOK();
 }
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAE)
-  : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                Load, Name, InsertAE), Volatile(false) {
-  init(Ptr);
+  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                     Load, Ptr, Name, InsertAE), Volatile(false) {
+  AssertOK();
 }
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
                    Instruction *InsertBef)
-  : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                Load, Name, InsertBef), Volatile(isVolatile) {
-  init(Ptr);
+  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                     Load, Ptr, Name, InsertBef), Volatile(isVolatile) {
+  AssertOK();
 }
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
                    BasicBlock *InsertAE)
-  : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                Load, Name, InsertAE), Volatile(isVolatile) {
-  init(Ptr);
+  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                     Load, Ptr, Name, InsertAE), Volatile(isVolatile) {
+  AssertOK();
 }
 
 
@@ -380,36 +527,46 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
 //                           StoreInst Implementation
 //===----------------------------------------------------------------------===//
 
-StoreInst::StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore)
-  : Instruction(Type::VoidTy, Store, "", InsertBefore), Volatile(false) {
-  init(Val, Ptr);
-}
-
-StoreInst::StoreInst(Value *Val, Value *Ptr, BasicBlock *InsertAtEnd)
-  : Instruction(Type::VoidTy, Store, "", InsertAtEnd), Volatile(false) {
-  init(Val, Ptr);
-}
-
-StoreInst::StoreInst(Value *Val, Value *Ptr, bool isVolatile, 
-                     Instruction *InsertBefore)
-  : Instruction(Type::VoidTy, Store, "", InsertBefore), Volatile(isVolatile) {
-  init(Val, Ptr);
-}
-
-StoreInst::StoreInst(Value *Val, Value *Ptr, bool isVolatile, 
-                     BasicBlock *InsertAtEnd)
-  : Instruction(Type::VoidTy, Store, "", InsertAtEnd), Volatile(isVolatile) {
-  init(Val, Ptr);
-}
-
-void StoreInst::init(Value *Val, Value *Ptr) {
-  assert(isa<PointerType>(Ptr->getType()) && "Ptr must have pointer type!");
-  assert(Val->getType() == cast<PointerType>(Ptr->getType())->getElementType()
+void StoreInst::AssertOK() {
+  assert(isa<PointerType>(getOperand(1)->getType()) &&
+         "Ptr must have pointer type!");
+  assert(getOperand(0)->getType() ==
+                 cast<PointerType>(getOperand(1)->getType())->getElementType()
          && "Ptr must be a pointer to Val type!");
+}
 
-  Operands.reserve(2);
-  Operands.push_back(Use(Val, this));
-  Operands.push_back(Use(Ptr, this));
+
+StoreInst::StoreInst(Value *val, Value *addr, Instruction *InsertBefore)
+  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertBefore),
+    Volatile(false) {
+  Ops[0].init(val, this);
+  Ops[1].init(addr, this);
+  AssertOK();
+}
+
+StoreInst::StoreInst(Value *val, Value *addr, BasicBlock *InsertAtEnd)
+  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertAtEnd), Volatile(false) {
+  Ops[0].init(val, this);
+  Ops[1].init(addr, this);
+  AssertOK();
+}
+
+StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile, 
+                     Instruction *InsertBefore)
+  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertBefore),
+    Volatile(isVolatile) {
+  Ops[0].init(val, this);
+  Ops[1].init(addr, this);
+  AssertOK();
+}
+
+StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile, 
+                     BasicBlock *InsertAtEnd)
+  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertAtEnd),
+    Volatile(isVolatile) {
+  Ops[0].init(val, this);
+  Ops[1].init(addr, this);
+  AssertOK();
 }
 
 //===----------------------------------------------------------------------===//
@@ -424,27 +581,28 @@ static inline const Type *checkType(const Type *Ty) {
   return Ty;
 }
 
-void GetElementPtrInst::init(Value *Ptr, const std::vector<Value*> &Idx)
-{
-  Operands.reserve(1+Idx.size());
-  Operands.push_back(Use(Ptr, this));
+void GetElementPtrInst::init(Value *Ptr, const std::vector<Value*> &Idx) {
+  NumOperands = 1+Idx.size();
+  Use *OL = OperandList = new Use[NumOperands];
+  OL[0].init(Ptr, this);
 
-  for (unsigned i = 0, E = Idx.size(); i != E; ++i)
-    Operands.push_back(Use(Idx[i], this));
+  for (unsigned i = 0, e = Idx.size(); i != e; ++i)
+    OL[i+1].init(Idx[i], this);
 }
 
 void GetElementPtrInst::init(Value *Ptr, Value *Idx0, Value *Idx1) {
-  Operands.reserve(3);
-  Operands.push_back(Use(Ptr, this));
-  Operands.push_back(Use(Idx0, this));
-  Operands.push_back(Use(Idx1, this));
+  NumOperands = 3;
+  Use *OL = OperandList = new Use[3];
+  OL[0].init(Ptr, this);
+  OL[1].init(Idx0, this);
+  OL[2].init(Idx1, this);
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 				     const std::string &Name, Instruction *InBe)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                           Idx, true))),
-                GetElementPtr, Name, InBe) {
+                GetElementPtr, 0, 0, Name, InBe) {
   init(Ptr, Idx);
 }
 
@@ -452,7 +610,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 				     const std::string &Name, BasicBlock *IAE)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                           Idx, true))),
-                GetElementPtr, Name, IAE) {
+                GetElementPtr, 0, 0, Name, IAE) {
   init(Ptr, Idx);
 }
 
@@ -460,7 +618,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
                                      const std::string &Name, Instruction *InBe)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                           Idx0, Idx1, true))),
-                GetElementPtr, Name, InBe) {
+                GetElementPtr, 0, 0, Name, InBe) {
   init(Ptr, Idx0, Idx1);
 }
 
@@ -468,8 +626,12 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
 		                     const std::string &Name, BasicBlock *IAE)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                           Idx0, Idx1, true))),
-                GetElementPtr, Name, IAE) {
+                GetElementPtr, 0, 0, Name, IAE) {
   init(Ptr, Idx0, Idx1);
+}
+
+GetElementPtrInst::~GetElementPtrInst() {
+  delete[] OperandList;
 }
 
 // getIndexedType - Returns the type of the element that would be loaded with
@@ -537,19 +699,17 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
 //                             BinaryOperator Class
 //===----------------------------------------------------------------------===//
 
-void BinaryOperator::init(BinaryOps iType, Value *S1, Value *S2)
+void BinaryOperator::init(BinaryOps iType)
 {
-  Operands.reserve(2);
-  Operands.push_back(Use(S1, this));
-  Operands.push_back(Use(S2, this));
-  assert(S1 && S2 && S1->getType() == S2->getType());
-
+  Value *LHS = getOperand(0), *RHS = getOperand(1);
+  assert(LHS->getType() == RHS->getType() &&
+         "Binary operator operand types must match!");
 #ifndef NDEBUG
   switch (iType) {
   case Add: case Sub:
   case Mul: case Div:
   case Rem:
-    assert(getType() == S1->getType() &&
+    assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
     assert((getType()->isInteger() || 
             getType()->isFloatingPoint() || 
@@ -558,7 +718,7 @@ void BinaryOperator::init(BinaryOps iType, Value *S1, Value *S2)
     break;
   case And: case Or:
   case Xor:
-    assert(getType() == S1->getType() &&
+    assert(getType() == LHS->getType() &&
            "Logical operation should return same type as operands!");
     assert(getType()->isIntegral() &&
            "Tried to create a logical operation on a non-integral type!");
@@ -696,7 +856,7 @@ bool BinaryOperator::swapOperands() {
   else
     return true;   // Can't commute operands
 
-  std::swap(Operands[0], Operands[1]);
+  std::swap(Ops[0], Ops[1]);
   return false;
 }
 
@@ -756,28 +916,41 @@ Instruction::BinaryOps SetCondInst::getSwappedCondition(BinaryOps Opcode) {
 //                        SwitchInst Implementation
 //===----------------------------------------------------------------------===//
 
-void SwitchInst::init(Value *Value, BasicBlock *Default)
-{
+void SwitchInst::init(Value *Value, BasicBlock *Default, unsigned NumCases) {
   assert(Value && Default);
-  Operands.push_back(Use(Value, this));
-  Operands.push_back(Use(Default, this));
+  ReservedSpace = 2+NumCases*2;
+  NumOperands = 2;
+  OperandList = new Use[ReservedSpace];
+
+  OperandList[0].init(Value, this);
+  OperandList[1].init(Default, this);
 }
 
 SwitchInst::SwitchInst(const SwitchInst &SI) 
-  : TerminatorInst(Instruction::Switch) {
-  Operands.reserve(SI.Operands.size());
-
-  for (unsigned i = 0, E = SI.Operands.size(); i != E; i+=2) {
-    Operands.push_back(Use(SI.Operands[i], this));
-    Operands.push_back(Use(SI.Operands[i+1], this));
+  : TerminatorInst(Instruction::Switch, new Use[SI.getNumOperands()],
+                   SI.getNumOperands()) {
+  Use *OL = OperandList, *InOL = SI.OperandList;
+  for (unsigned i = 0, E = SI.getNumOperands(); i != E; i+=2) {
+    OL[i].init(InOL[i], this);
+    OL[i+1].init(InOL[i+1], this);
   }
 }
+
+SwitchInst::~SwitchInst() {
+  delete [] OperandList;
+}
+
 
 /// addCase - Add an entry to the switch instruction...
 ///
 void SwitchInst::addCase(Constant *OnVal, BasicBlock *Dest) {
-  Operands.push_back(Use((Value*)OnVal, this));
-  Operands.push_back(Use((Value*)Dest, this));
+  unsigned OpNo = NumOperands;
+  if (OpNo+2 > ReservedSpace)
+    resizeOperands(0);  // Get more space!
+  // Initialize some new operands.
+  NumOperands = OpNo+2;
+  OperandList[OpNo].init(OnVal, this);
+  OperandList[OpNo+1].init(Dest, this);
 }
 
 /// removeCase - This method removes the specified successor from the switch
@@ -786,8 +959,66 @@ void SwitchInst::addCase(Constant *OnVal, BasicBlock *Dest) {
 ///
 void SwitchInst::removeCase(unsigned idx) {
   assert(idx != 0 && "Cannot remove the default case!");
-  assert(idx*2 < Operands.size() && "Successor index out of range!!!");
-  Operands.erase(Operands.begin()+idx*2, Operands.begin()+(idx+1)*2);  
+  assert(idx*2 < getNumOperands() && "Successor index out of range!!!");
+
+  unsigned NumOps = getNumOperands();
+  Use *OL = OperandList;
+
+  // Move everything after this operand down.
+  //
+  // FIXME: we could just swap with the end of the list, then erase.  However,
+  // client might not expect this to happen.  The code as it is thrashes the
+  // use/def lists, which is kinda lame.
+  for (unsigned i = (idx+1)*2; i != NumOps; i += 2) {
+    OL[i-2] = OL[i];
+    OL[i-2+1] = OL[i+1];
+  }
+
+  // Nuke the last value.
+  OL[NumOps-2].set(0);
+  OL[NumOps-2+1].set(0);
+  NumOperands = NumOps-2;
+}
+
+/// resizeOperands - resize operands - This adjusts the length of the operands
+/// list according to the following behavior:
+///   1. If NumOps == 0, grow the operand list in response to a push_back style
+///      of operation.  This grows the number of ops by 1.5 times.
+///   2. If NumOps > NumOperands, reserve space for NumOps operands.
+///   3. If NumOps == NumOperands, trim the reserved space.
+///
+void SwitchInst::resizeOperands(unsigned NumOps) {
+  if (NumOps == 0) {
+    NumOps = (getNumOperands())*3/2;
+  } else if (NumOps*2 > NumOperands) {
+    // No resize needed.
+    if (ReservedSpace >= NumOps) return;
+  } else if (NumOps == NumOperands) {
+    if (ReservedSpace == NumOps) return;
+  } else {
+    return;        
+  }
+
+  ReservedSpace = NumOps;
+  Use *NewOps = new Use[NumOps];
+  Use *OldOps = OperandList;
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+      NewOps[i].init(OldOps[i], this);
+      OldOps[i].set(0);
+  }
+  delete [] OldOps;
+  OperandList = NewOps;
+}
+
+
+BasicBlock *SwitchInst::getSuccessorV(unsigned idx) const {
+  return getSuccessor(idx);
+}
+unsigned SwitchInst::getNumSuccessorsV() const {
+  return getNumSuccessors();
+}
+void SwitchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
+  setSuccessor(idx, B);
 }
 
 
@@ -799,12 +1030,12 @@ GetElementPtrInst *GetElementPtrInst::clone() const {
 }
 
 BinaryOperator *BinaryOperator::clone() const {
-  return create(getOpcode(), Operands[0], Operands[1]);
+  return create(getOpcode(), Ops[0], Ops[1]);
 }
 
 MallocInst *MallocInst::clone() const { return new MallocInst(*this); }
 AllocaInst *AllocaInst::clone() const { return new AllocaInst(*this); }
-FreeInst   *FreeInst::clone()   const { return new FreeInst(Operands[0]); }
+FreeInst   *FreeInst::clone()   const { return new FreeInst(getOperand(0)); }
 LoadInst   *LoadInst::clone()   const { return new LoadInst(*this); }
 StoreInst  *StoreInst::clone()  const { return new StoreInst(*this); }
 CastInst   *CastInst::clone()   const { return new CastInst(*this); }
