@@ -5,7 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/PeepholeOpts.h"
+#include "SparcInternals.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"

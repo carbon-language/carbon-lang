@@ -654,6 +654,13 @@ Pass *createAddRegNumToValuesPass();
 /// empty slots at the top of each function stack
 Pass *createStackSlotsPass(const TargetMachine &TM);
 
+// Interface to pre-selection pass that specializes LLVM code for a target
+// machine.
+Pass *createPreSelectionPass(TargetMachine &Target);
+
+// External interface to peephole optimization pass operating on machine code.
+FunctionPass *createPeepholeOptsPass(TargetMachine &Target);
+
 
 //---------------------------------------------------------------------------
 // class UltraSparc 

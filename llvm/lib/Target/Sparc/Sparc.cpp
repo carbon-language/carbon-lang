@@ -13,8 +13,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
-#include "llvm/CodeGen/PreSelection.h"
-#include "llvm/CodeGen/PeepholeOpts.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/RegisterAllocation.h"
