@@ -1059,15 +1059,15 @@ void V8ISel::emitGEPOperation (MachineBasicBlock *MBB,
       unsigned memberOffset =
         TD.getStructLayout (StTy)->MemberOffsets[fieldIndex];
       // Emit an ADD to add memberOffset to the basePtr.
-      // We might have to copy memberOffset into a register first, if it's
-      // big.
+      // We might have to copy memberOffset into a register first, if
+      // it's big.
       if (memberOffset + 4096 < 8191) {
         BuildMI (*MBB, IP, V8::ADDri, 2,
                  nextBasePtrReg).addReg (basePtrReg).addSImm (memberOffset);
       } else {
         unsigned offsetReg = makeAnotherReg (Type::IntTy);
         copyConstantToRegister (MBB, IP,
-          ConstantInt::get(Type::IntTy, memberOffset), offsetReg);
+          ConstantSInt::get(Type::IntTy, memberOffset), offsetReg);
         BuildMI (*MBB, IP, V8::ADDrr, 2,
                  nextBasePtrReg).addReg (basePtrReg).addReg (offsetReg);
       }
@@ -1081,18 +1081,70 @@ void V8ISel::emitGEPOperation (MachineBasicBlock *MBB,
       // type is the type of the elements in the array).
       Ty = SqTy->getElementType ();
       unsigned elementSize = TD.getTypeSize (Ty);
-      unsigned idxReg = getReg (idx, MBB, IP);
-      unsigned OffsetReg = makeAnotherReg (Type::IntTy);
-      unsigned elementSizeReg = makeAnotherReg (Type::UIntTy);
-      copyConstantToRegister (MBB, IP,
-        ConstantUInt::get(Type::UIntTy, elementSize), elementSizeReg);
-      // Emit a SMUL to multiply the register holding the index by
-      // elementSize, putting the result in OffsetReg.
-      BuildMI (*MBB, IP, V8::SMULrr, 2,
-               OffsetReg).addReg (elementSizeReg).addReg (idxReg);
-      // Emit an ADD to add OffsetReg to the basePtr.
-      BuildMI (*MBB, IP, V8::ADDrr, 2,
-               nextBasePtrReg).addReg (basePtrReg).addReg (OffsetReg);
+      unsigned OffsetReg = ~0U;
+      int64_t Offset = -1;
+      bool addImmed = false;
+      if (isa<ConstantIntegral> (idx)) {
+        // If idx is a constant, we don't have to emit the multiply.
+        int64_t Val = cast<ConstantIntegral> (idx)->getRawValue ();
+        if ((Val * elementSize) + 4096 < 8191) { 
+          // (Val * elementSize) is constant and fits in an immediate field.
+          // emit: nextBasePtrReg = ADDri basePtrReg, (Val * elementSize)
+          addImmed = true;
+          Offset = Val * elementSize;
+        } else {
+          // (Val * elementSize) is constant, but doesn't fit in an immediate
+          // field.  emit: OffsetReg = (Val * elementSize)
+          //               nextBasePtrReg = ADDrr OffsetReg, basePtrReg
+          OffsetReg = makeAnotherReg (Type::IntTy);
+          copyConstantToRegister (MBB, IP,
+            ConstantSInt::get(Type::IntTy, Val * elementSize), OffsetReg);
+        }
+      } else {
+        // idx is not constant, we have to shift or multiply.
+        OffsetReg = makeAnotherReg (Type::IntTy);
+        unsigned idxReg = getReg (idx, MBB, IP);
+        switch (elementSize) {
+          case 1: 
+            BuildMI (*MBB, IP, V8::ORrr, 2, OffsetReg).addReg (V8::G0).addReg (idxReg);
+            break;
+          case 2: 
+            BuildMI (*MBB, IP, V8::SLLri, 2, OffsetReg).addReg (idxReg).addZImm (1);
+            break;
+          case 4: 
+            BuildMI (*MBB, IP, V8::SLLri, 2, OffsetReg).addReg (idxReg).addZImm (2);
+            break;
+          case 8: 
+            BuildMI (*MBB, IP, V8::SLLri, 2, OffsetReg).addReg (idxReg).addZImm (3);
+            break;
+          default: {
+            if (elementSize + 4096 < 8191) {
+              // Emit a SMUL to multiply the register holding the index by
+              // elementSize, putting the result in OffsetReg.
+              BuildMI (*MBB, IP, V8::SMULri, 2,
+                       OffsetReg).addReg (idxReg).addSImm (elementSize);
+            } else {
+              unsigned elementSizeReg = makeAnotherReg (Type::UIntTy);
+              copyConstantToRegister (MBB, IP,
+                ConstantUInt::get(Type::UIntTy, elementSize), elementSizeReg);
+              // Emit a SMUL to multiply the register holding the index by
+              // the register w/ elementSize, putting the result in OffsetReg.
+              BuildMI (*MBB, IP, V8::SMULrr, 2,
+                       OffsetReg).addReg (idxReg).addReg (elementSizeReg);
+            }
+            break;
+          }
+        }
+      }
+      if (addImmed) {
+        // Emit an ADD to add the constant immediate Offset to the basePtr.
+        BuildMI (*MBB, IP, V8::ADDri, 2,
+                 nextBasePtrReg).addReg (basePtrReg).addSImm (Offset);
+      } else {
+        // Emit an ADD to add OffsetReg to the basePtr.
+        BuildMI (*MBB, IP, V8::ADDrr, 2,
+                 nextBasePtrReg).addReg (basePtrReg).addReg (OffsetReg);
+      }
     }
     basePtrReg = nextBasePtrReg;
   }
