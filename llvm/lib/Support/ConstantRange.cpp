@@ -22,10 +22,30 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ConstantRange.h"
-#include "llvm/Type.h"
+#include "llvm/Constants.h"
 #include "llvm/Instruction.h"
-#include "llvm/ConstantHandling.h"
+#include "llvm/Type.h"
 using namespace llvm;
+
+static bool LT(ConstantIntegral *A, ConstantIntegral *B) {
+  Constant *C = ConstantExpr::get(Instruction::SetLT, A, B);
+  assert(isa<ConstantBool>(C) && "Constant folding of integrals not impl??");
+  return cast<ConstantBool>(C)->getValue();
+}
+
+static bool GT(ConstantIntegral *A, ConstantIntegral *B) {
+  Constant *C = ConstantExpr::get(Instruction::SetGT, A, B);
+  assert(isa<ConstantBool>(C) && "Constant folding of integrals not impl??");
+  return cast<ConstantBool>(C)->getValue();
+}
+
+static ConstantIntegral *Min(ConstantIntegral *A, ConstantIntegral *B) {
+  return LT(A, B) ? A : B;
+}
+static ConstantIntegral *Max(ConstantIntegral *A, ConstantIntegral *B) {
+  return GT(A, B) ? A : B;
+}
+
 
 /// Initialize a full (the default) or empty set for the specified type.
 ///
@@ -57,9 +77,8 @@ static ConstantIntegral *Next(ConstantIntegral *CI) {
   if (CI->getType() == Type::BoolTy)
     return CI == ConstantBool::True ? ConstantBool::False : ConstantBool::True;
       
-  // Otherwise use operator+ in the ConstantHandling Library.
-  Constant *Result = *ConstantInt::get(CI->getType(), 1) + *CI;
-  assert(Result && "ConstantHandling not implemented for integral plus!?");
+  Constant *Result = ConstantExpr::get(Instruction::Add, CI,
+                                       ConstantInt::get(CI->getType(), 1));
   return cast<ConstantIntegral>(Result);
 }
 
@@ -109,7 +128,7 @@ bool ConstantRange::isEmptySet() const {
 /// for example: [100, 8)
 ///
 bool ConstantRange::isWrappedSet() const {
-  return (*(Constant*)Lower > *(Constant*)Upper)->getValue();
+  return GT(Lower, Upper);
 }
 
   
@@ -132,8 +151,8 @@ uint64_t ConstantRange::getSetSize() const {
   }
   
   // Simply subtract the bounds...
-  Constant *Result = *(Constant*)Upper - *(Constant*)Lower;
-  assert(Result && "Subtraction of constant integers not implemented?");
+  Constant *Result =
+    ConstantExpr::get(Instruction::Sub, (Constant*)Upper, (Constant*)Lower);
   return cast<ConstantInt>(Result)->getRawValue();
 }
 
@@ -149,10 +168,10 @@ static ConstantRange intersect1Wrapped(const ConstantRange &LHS,
 
   // Check to see if we overlap on the Left side of RHS...
   //
-  if ((*(Constant*)RHS.getLower() < *(Constant*)LHS.getUpper())->getValue()) {
+  if (LT(RHS.getLower(), LHS.getUpper())) {
     // We do overlap on the left side of RHS, see if we overlap on the right of
     // RHS...
-    if ((*(Constant*)RHS.getUpper() > *(Constant*)LHS.getLower())->getValue()) {
+    if (GT(RHS.getUpper(), LHS.getLower())) {
       // Ok, the result overlaps on both the left and right sides.  See if the
       // resultant interval will be smaller if we wrap or not...
       //
@@ -169,7 +188,7 @@ static ConstantRange intersect1Wrapped(const ConstantRange &LHS,
   } else {
     // We don't overlap on the left side of RHS, see if we overlap on the right
     // of RHS...
-    if ((*(Constant*)RHS.getUpper() > *(Constant*)LHS.getLower())->getValue()) {
+    if (GT(RHS.getUpper(), LHS.getLower())) {
       // Simple overlap...
       return ConstantRange(LHS.getLower(), RHS.getUpper());
     } else {
@@ -179,18 +198,6 @@ static ConstantRange intersect1Wrapped(const ConstantRange &LHS,
   }
 }
 
-static ConstantIntegral *Min(ConstantIntegral *A, ConstantIntegral *B) {
-  if ((*(Constant*)A < *(Constant*)B)->getValue())
-    return A;
-  return B;
-}
-static ConstantIntegral *Max(ConstantIntegral *A, ConstantIntegral *B) {
-  if ((*(Constant*)A > *(Constant*)B)->getValue())
-    return A;
-  return B;
-}
-
-  
 /// intersect - Return the range that results from the intersection of this
 /// range with another range.
 ///
@@ -205,7 +212,7 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
       ConstantIntegral *L = Max(Lower, CR.Lower);
       ConstantIntegral *U = Min(Upper, CR.Upper);
 
-      if ((*L < *U)->getValue())  // If range isn't empty...
+      if (LT(L, U))  // If range isn't empty...
         return ConstantRange(L, U);
       else
         return ConstantRange(getType(), false);  // Otherwise, return empty set
