@@ -57,9 +57,10 @@ namespace {
       BB = MBBMap[&LLVM_BB];
     }
 
-	void visitBinaryOperator(BinaryOperator &I);
-	void visitCallInst(CallInst &I);
-	void visitReturnInst(ReturnInst &RI);
+    void visitBinaryOperator(Instruction &I);
+    void visitShiftInstruction(Instruction &I) { visitBinaryOperator(I); }
+    void visitCallInst(CallInst &I);
+    void visitReturnInst(ReturnInst &RI);
 
     void visitInstruction(Instruction &I) {
       std::cerr << "Unhandled instruction: " << I;
@@ -169,31 +170,36 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
                                     Constant *C, unsigned R) {
   if (ConstantInt *CI = dyn_cast<ConstantInt> (C)) {
     unsigned Class = getClass(C->getType());
+    uint64_t Val = CI->getRawValue ();
     switch (Class) {
       case cByte:
-        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addImm ((uint8_t) CI->getRawValue ());
+        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addImm((uint8_t)Val);
         return;
       case cShort: {
         unsigned TmpReg = makeAnotherReg (C->getType ());
-        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm (((uint16_t) CI->getRawValue ()) >> 10);
-        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg).addImm (((uint16_t) CI->getRawValue ()) & 0x03ff);
+        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg)
+          .addImm (((uint16_t) Val) >> 10);
+        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
+          .addImm (((uint16_t) Val) & 0x03ff);
         return;
       }
       case cInt: {
         unsigned TmpReg = makeAnotherReg (C->getType ());
-        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm (((uint32_t) CI->getRawValue ()) >> 10);
-        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg).addImm (((uint32_t) CI->getRawValue ()) & 0x03ff);
+        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm(((uint32_t)Val) >> 10);
+        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
+          .addImm (((uint32_t) Val) & 0x03ff);
         return;
       }
       case cLong: {
         unsigned TmpReg = makeAnotherReg (Type::UIntTy);
-        uint32_t topHalf, bottomHalf;
-        topHalf = (uint32_t) (CI->getRawValue () >> 32);
-        bottomHalf = (uint32_t) (CI->getRawValue () & 0x0ffffffffULL);
+        uint32_t topHalf = (uint32_t) (Val >> 32);
+        uint32_t bottomHalf = (uint32_t)Val;
         BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm (topHalf >> 10);
-        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg).addImm (topHalf & 0x03ff);
+        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
+          .addImm (topHalf & 0x03ff);
         BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm (bottomHalf >> 10);
-        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg).addImm (bottomHalf & 0x03ff);
+        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
+          .addImm (bottomHalf & 0x03ff);
         return;
       }
       default:
@@ -282,7 +288,7 @@ void V8ISel::visitReturnInst(ReturnInst &I) {
   return;
 }
 
-void V8ISel::visitBinaryOperator (BinaryOperator &I) {
+void V8ISel::visitBinaryOperator (Instruction &I) {
   unsigned DestReg = getReg (I);
   unsigned Op0Reg = getReg (I.getOperand (0));
   unsigned Op1Reg = getReg (I.getOperand (1));
@@ -298,6 +304,8 @@ void V8ISel::visitBinaryOperator (BinaryOperator &I) {
   case Instruction::And: OpCase = 3; break;
   case Instruction::Or:  OpCase = 4; break;
   case Instruction::Xor: OpCase = 5; break;
+  case Instruction::Shl: OpCase = 6; break;
+  case Instruction::Shr: OpCase = 7+I.getType()->isSigned(); break;
 
   case Instruction::Div:
   case Instruction::Rem: {
@@ -332,7 +340,8 @@ void V8ISel::visitBinaryOperator (BinaryOperator &I) {
 
   if (OpCase != ~0U) {
     static const unsigned Opcodes[] = {
-      V8::ADDrr, V8::SUBrr, V8::SMULrr, V8::ANDrr, V8::ORrr, V8::XORrr
+      V8::ADDrr, V8::SUBrr, V8::SMULrr, V8::ANDrr, V8::ORrr, V8::XORrr,
+      V8::SLLrr, V8::SRLrr, V8::SRArr
     };
     BuildMI (BB, Opcodes[OpCase], 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
   }
