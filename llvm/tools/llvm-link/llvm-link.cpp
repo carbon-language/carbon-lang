@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
     if (Verbose) std::cerr << "Linking in '" << InputFilenames[i] << "'\n";
 
-    if (LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
+    if (Linker::LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
       std::cerr << argv[0] << ": link error in '" << InputFilenames[i]
                 << "': " << ErrorMessage << "\n";
       return 1;

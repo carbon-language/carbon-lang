@@ -175,7 +175,7 @@ static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
     M1 = CloneModule(M1);
     M2 = CloneModule(M2);
   }
-  if (LinkModules(M1, M2, &ErrorMsg)) {
+  if (Linker::LinkModules(M1, M2, &ErrorMsg)) {
     std::cerr << BD.getToolName() << ": Error linking modules together:"
               << ErrorMsg << '\n';
     exit(1);
@@ -304,7 +304,7 @@ static bool ExtractLoops(BugDriver &BD,
     // Replace the current program with the loop extracted version, and try to
     // extract another loop.
     std::string ErrorMsg;
-    if (LinkModules(ToNotOptimize, ToOptimizeLoopExtracted, &ErrorMsg)) {
+    if (Linker::LinkModules(ToNotOptimize, ToOptimizeLoopExtracted, &ErrorMsg)){
       std::cerr << BD.getToolName() << ": Error linking modules together:"
                 << ErrorMsg << '\n';
       exit(1);
@@ -438,7 +438,7 @@ static bool ExtractBlocks(BugDriver &BD,
                                                 I->getFunctionType()));
 
   std::string ErrorMsg;
-  if (LinkModules(ProgClone, Extracted, &ErrorMsg)) {
+  if (Linker::LinkModules(ProgClone, Extracted, &ErrorMsg)) {
     std::cerr << BD.getToolName() << ": Error linking modules together:"
               << ErrorMsg << '\n';
     exit(1);
