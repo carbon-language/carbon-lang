@@ -24,7 +24,7 @@ syn keyword llvmStatement phi call cast to select shl shr vaarg vanext
 syn keyword llvmStatement ret br switch invoke unwind
 syn keyword llvmStatement malloc alloca free load store getelementptr
 
-syn keyword llvmStatement begin end true false
+syn keyword llvmStatement begin end true false zeroinitializer
 syn keyword llvmStatement declare global constant const
 syn keyword llvmStatement internal uninitialized external implementation
 syn keyword llvmStatement linkonce weak appending

@@ -25,7 +25,7 @@
    ;; Hex constants
    '("0x[0-9A-Fa-f]+" . font-lock-preprocessor-face)
    ;; Keywords
-   '("begin\\|end\\|true\\|false\\|declare\\|global\\|constant\\|const\\|internal\\|linkonce\\|weak\\|appending\\|uninitialized\\|implementation\\|\\.\\.\\.\\|null\\|to\\|except\\|not\\|target\\|endian\\|little\\|big\\|pointersize\\|volatile" . font-lock-keyword-face)
+   '("begin\\|end\\|true\\|false\\|zeroinitializer\\|declare\\|global\\|constant\\|const\\|internal\\|linkonce\\|weak\\|appending\\|uninitialized\\|implementation\\|\\.\\.\\.\\|null\\|to\\|except\\|not\\|target\\|endian\\|little\\|big\\|pointersize\\|volatile" . font-lock-keyword-face)
    ;; Types
    '("void\\|bool\\|sbyte\\|ubyte\\|u?short\\|u?int\\|u?long\\|float\\|double\\|type\\|label\\|opaque" . font-lock-type-face)
    ;; Arithmetic and Logical Operators
