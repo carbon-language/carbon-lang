@@ -192,7 +192,7 @@ struct neg_match {
         return matchIfNeg(I->getOperand(0), I->getOperand(1));
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
       if (CE->getOpcode() == Instruction::Sub)
-        return matchIfNeg(I->getOperand(0), I->getOperand(1));
+        return matchIfNeg(CE->getOperand(0), CE->getOperand(1));
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
       return L.match(ConstantExpr::getNeg(CI));
     return false;
@@ -202,7 +202,7 @@ private:
     if (!LHS->getType()->isFloatingPoint())
       return LHS == Constant::getNullValue(LHS->getType()) && L.match(RHS);
     else
-      return LHS == ConstantFP::get(Bop->getType(), -0.0) && L.match(RHS);
+      return LHS == ConstantFP::get(LHS->getType(), -0.0) && L.match(RHS);
   }
 }; 
 
