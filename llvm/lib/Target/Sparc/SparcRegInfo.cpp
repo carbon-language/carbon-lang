@@ -1081,6 +1081,7 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 
 
 	    MachineInstr *AdIBefCC, *AdIAftCC, *AdICpCC;
+	    MachineInstr *AdIBef, *AdIAft;
 
 
 	    //---- Insert code for pushing the reg on stack ----------
@@ -1117,8 +1118,7 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 
 	    } else  {  
 	      // for any other register type, just add the push inst
-	      MachineInstr *AdIBef = 
-		cpReg2MemMI(Reg, getStackPointer(), StackOff, RegType ); 
+	      AdIBef = cpReg2MemMI(Reg, getStackPointer(), StackOff, RegType );
 	      ((PRA.AddedInstrMap[MInst])->InstrnsBefore).push_front(AdIBef);
 	    }
 
@@ -1151,11 +1151,8 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 
 	    } else {
 	      // for any other register type, just add the pop inst
-	      MachineInstr *AdIAft = 
-		cpMem2RegMI(getStackPointer(), StackOff, Reg, RegType ); 
-
+	      AdIAft = cpMem2RegMI(getStackPointer(), StackOff, Reg, RegType );
 	      ((PRA.AddedInstrMap[MInst])->InstrnsAfter).push_back(AdIAft);
-
 	    }
 	    
 	    PushedRegSet.insert( Reg );
@@ -1163,7 +1160,10 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 	    if(1) {
 	      cerr << "\nFor call inst:" << *MInst;
 	      cerr << "\n  -inserted caller saving instrs:\n\t ";
-	      cerr << *AdIBefCC << "\n\t" << *AdIAftCC  ;
+              if( RegType == IntCCRegType )
+                cerr << *AdIBefCC << "\n\t" << *AdIAftCC  ;
+              else
+                cerr << *AdIBef   << "\n\t" << *AdIAft    ;
 	    }	    
 	  } // if not already pushed
 
