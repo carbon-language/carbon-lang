@@ -217,7 +217,11 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
 
     assert(calls.insert(TheCall).second &&
            "Call instruction occurs multiple times in graph??");
-      
+    
+    // Fast path for noop calls.  Note that we don't care about merging globals
+    // in the callee with nodes in the caller here.
+    if (CS.getRetVal().isNull() && CS.getNumPtrArgs() == 0)
+      continue;
 
     // Loop over all of the potentially called functions...
     // Inline direct calls as well as indirect calls because the direct

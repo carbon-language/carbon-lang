@@ -406,6 +406,9 @@ void EquivClassGraphs::processGraph(DSGraph &G) {
     assert(calls.insert(TheCall).second &&
            "Call instruction occurs multiple times in graph??");
     
+    if (CS.getRetVal().isNull() && CS.getNumPtrArgs() == 0)
+      continue;
+
     // Inline the common callee graph into the current graph, if the callee
     // graph has not changed.  Note that all callees should have the same
     // graph so we only need to do this once.

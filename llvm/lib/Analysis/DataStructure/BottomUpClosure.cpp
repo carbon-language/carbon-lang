@@ -305,6 +305,13 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
 
     CalledFuncs.clear();
 
+    // Fast path for noop calls.  Note that we don't care about merging globals
+    // in the callee with nodes in the caller here.
+    if (CS.getRetVal().isNull() && CS.getNumPtrArgs() == 0) {
+      TempFCs.erase(TempFCs.begin());
+      continue;
+    }
+
     if (CS.isDirectCall()) {
       Function *F = CS.getCalleeFunc();
       if (isResolvableFunc(F))
