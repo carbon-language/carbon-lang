@@ -36,9 +36,6 @@ class MachineCodeForInstruction;
 typedef short MachineOpCode;
 typedef unsigned InstrSchedClass;
 
-const MachineOpCode INVALID_MACHINE_OPCODE = -1;
-
-
 //---------------------------------------------------------------------------
 // struct TargetInstrDescriptor:
 //	Predefined information about each machine instruction.
@@ -49,14 +46,8 @@ const unsigned M_NOP_FLAG		= 1 << 0;
 const unsigned M_BRANCH_FLAG		= 1 << 1;
 const unsigned M_CALL_FLAG		= 1 << 2;
 const unsigned M_RET_FLAG		= 1 << 3;
-const unsigned M_ARITH_FLAG		= 1 << 4;
 const unsigned M_CC_FLAG		= 1 << 6;
-const unsigned M_LOGICAL_FLAG		= 1 << 6;
-const unsigned M_INT_FLAG		= 1 << 7;
-const unsigned M_FLOAT_FLAG		= 1 << 8;
-const unsigned M_CONDL_FLAG		= 1 << 9;
 const unsigned M_LOAD_FLAG		= 1 << 10;
-const unsigned M_PREFETCH_FLAG		= 1 << 11;
 const unsigned M_STORE_FLAG		= 1 << 12;
 const unsigned M_DUMMY_PHI_FLAG	= 1 << 13;
 const unsigned M_PSEUDO_FLAG           = 1 << 14;       // Pseudo instruction
@@ -123,15 +114,8 @@ public:
   int getNumOperands(MachineOpCode opCode) const {
     return get(opCode).numOperands;
   }
-  
-  int getResultPos(MachineOpCode opCode) const {
-    return get(opCode).resultPos;
-  }
-  
-  unsigned getNumDelaySlots(MachineOpCode opCode) const {
-    return get(opCode).numDelaySlots;
-  }
-  
+
+
   InstrSchedClass getSchedClass(MachineOpCode opCode) const {
     return get(opCode).schedClass;
   }
@@ -144,66 +128,15 @@ public:
     return get(opCode).ImplicitDefs;
   }
 
+
   //
   // Query instruction class flags according to the machine-independent
   // flags listed above.
   // 
-  bool isNop(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_NOP_FLAG;
-  }
-  bool isBranch(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_BRANCH_FLAG;
-  }
-  bool isCall(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_CALL_FLAG;
-  }
   bool isReturn(MachineOpCode opCode) const {
     return get(opCode).Flags & M_RET_FLAG;
   }
-  bool isControlFlow(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_BRANCH_FLAG
-        || get(opCode).Flags & M_CALL_FLAG
-        || get(opCode).Flags & M_RET_FLAG;
-  }
-  bool isArith(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_ARITH_FLAG;
-  }
-  bool isCCInstr(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_CC_FLAG;
-  }
-  bool isLogical(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_LOGICAL_FLAG;
-  }
-  bool isIntInstr(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_INT_FLAG;
-  }
-  bool isFloatInstr(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_FLOAT_FLAG;
-  }
-  bool isConditional(MachineOpCode opCode) const { 
-    return get(opCode).Flags & M_CONDL_FLAG;
-  }
-  bool isLoad(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_LOAD_FLAG;
-  }
-  bool isPrefetch(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_PREFETCH_FLAG;
-  }
-  bool isLoadOrPrefetch(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_LOAD_FLAG
-        || get(opCode).Flags & M_PREFETCH_FLAG;
-  }
-  bool isStore(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_STORE_FLAG;
-  }
-  bool isMemoryAccess(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_LOAD_FLAG
-        || get(opCode).Flags & M_PREFETCH_FLAG
-        || get(opCode).Flags & M_STORE_FLAG;
-  }
-  bool isDummyPhiInstr(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_DUMMY_PHI_FLAG;
-  }
+
   bool isPseudoInstr(MachineOpCode opCode) const {
     return get(opCode).Flags & M_PSEUDO_FLAG;
   }
@@ -224,6 +157,45 @@ public:
     return false;
   }
 
+
+
+
+  //-------------------------------------------------------------------------
+  // Code generation support for creating individual machine instructions
+  //
+  // WARNING: These methods are Sparc specific
+  //
+  // DO NOT USE ANY OF THESE METHODS THEY ARE DEPRECATED!
+  //
+  //-------------------------------------------------------------------------
+
+  int getResultPos(MachineOpCode opCode) const {
+    return get(opCode).resultPos;
+  }
+  unsigned getNumDelaySlots(MachineOpCode opCode) const {
+    return get(opCode).numDelaySlots;
+  }
+  bool isCCInstr(MachineOpCode opCode) const {
+    return get(opCode).Flags & M_CC_FLAG;
+  }
+  bool isNop(MachineOpCode opCode) const {
+    return get(opCode).Flags & M_NOP_FLAG;
+  }
+  bool isBranch(MachineOpCode opCode) const {
+    return get(opCode).Flags & M_BRANCH_FLAG;
+  }
+  bool isCall(MachineOpCode opCode) const {
+    return get(opCode).Flags & M_CALL_FLAG;
+  }
+  bool isLoad(MachineOpCode opCode) const {
+    return get(opCode).Flags & M_LOAD_FLAG;
+  }
+  bool isStore(MachineOpCode opCode) const {
+    return get(opCode).Flags & M_STORE_FLAG;
+  }
+  bool isDummyPhiInstr(MachineOpCode opCode) const {
+    return get(opCode).Flags & M_DUMMY_PHI_FLAG;
+  }
   // Check if an instruction can be issued before its operands are ready,
   // or if a subsequent instruction that uses its result can be issued
   // before the results are ready.
@@ -231,8 +203,7 @@ public:
   // 
   virtual bool hasOperandInterlock(MachineOpCode opCode) const {
     return true;
-  }
-  
+  }  
   virtual bool hasResultInterlock(MachineOpCode opCode) const {
     return true;
   }
@@ -291,26 +262,6 @@ public:
                                              const Instruction* I) const {
     return true;                        // safe but very conservative
   }
-
-
-  /// createNOPinstr - returns the target's implementation of NOP, which is
-  /// usually a pseudo-instruction, implemented by a degenerate version of
-  /// another instruction, e.g. X86: xchg ax, ax; SparcV9: sethi g0, 0
-  ///
-  virtual MachineInstr* createNOPinstr() const = 0;
-
-  /// isNOPinstr - not having a special NOP opcode, we need to know if a given
-  /// instruction is interpreted as an `official' NOP instr, i.e., there may be
-  /// more than one way to `do nothing' but only one canonical way to slack off.
-  ///
-  virtual bool isNOPinstr(const MachineInstr &MI) const = 0;
-
-  //-------------------------------------------------------------------------
-  // Code generation support for creating individual machine instructions
-  //
-  // WARNING: These methods are Sparc specific
-  //
-  //-------------------------------------------------------------------------
 
   // Get certain common op codes for the current target.  this and all the
   // Create* methods below should be moved to a machine code generation class
