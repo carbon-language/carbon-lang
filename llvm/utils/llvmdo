@@ -1,5 +1,33 @@
 #!/bin/sh
-# This is useful because it prints out all of the source files.  Useful for
+##===- utils/llvmdo - Counts Lines Of Code -------------------*- Script -*-===##
+# 
+#                     The LLVM Compiler Infrastructure
+#
+# This file was developed by Reid Spencer and is distributed under the 
+# University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+##===----------------------------------------------------------------------===##
+#
+# This script is a general purpose "apply" function for the source files in LLVM
+# It uses "find" to locate all the source files and then applies the user's 
+# command to them. As such, this command is often not used by itself much but
+# the other find related tools (countloc.sh,llvmgrep,getsrcs.sh) are all based 
+# on the implementation. This script defines "what is a source file" in LLVM and
+# so should be maintained if new directories, new file extensions, etc. are 
+# used in LLVM as it progresses.
+#
+# Usage:
+#  llvmdo [-dirs "DIRNAMES..." PROGRAM ARGS...
+#
+# The -dirs argument allows you to specify the set of directories that are 
+# searched. By default, everything is searched
+# (excluding certain things), runs "wc -l" on them to get the number of lines in
+# each file and then sums up and prints the total with awk. 
+#
+# The script takes no arguments but does expect to be run from the top llvm
+# source directory.
+#
+# This script is
 # greps.
 
 if test $# -lt 1 ; then
@@ -11,7 +39,7 @@ if test "$1" = "-dirs" ; then
   LLVMDO_DIRS="$2";
   shift ; shift
 elif test -z "$LLVMDO_DIRS" ; then
-  LLVMDO_DIRS="include lib tools test utils docs examples projects"
+  LLVMDO_DIRS="include lib tools utils runtime autoconf docs test examples projects"
 fi
 PROGRAM=`which $1`
 if test ! -x "$PROGRAM" ; then
@@ -35,18 +63,39 @@ if test -d "$TOPDIR" ; then
       -path 'docs/img/*' -o \
       -path '*/.libs/*' \
     \) -prune  -o \( \
-         -name '*.[cdhyltp]*' \
+      \( \
+         -name '*.cpp' -o \
+         -name '*.h' -o \
+         -name '*.def' -o \
+         -name '*.c' -o \
+         -name '*.l' -o \
+         -name '*.y' -o \
+         -name '*.td' -o \
+         -name '*.py' -o \
+         -name '*.pl' -o \
+         -name '*.sh' -o \
+         -name '*.lst' -o \
+         -name '*.pod' -o \
+         -name '*.html' -o \
+         -name '*.css' -o \
+         -name '*.cfg' -o \
+         -name '*.cc' -o \
+         -name '*.txt' -o \
+         -name '*.TXT' -o \
+         -name '*.el' -o \
+         -name '*.m4' -o \
+         -name '*.in' -o \
+         -name '*.ac' -o \
+         -name '*.tr' -o \
+         -name '*.vim' -o \
+         -name '*.gnuplot' -o \
+         -name 'Make*' -o \
+         -path 'test/*.ll' -o \
+         -path 'runtime/*.ll' \
+      \) \
       \! -name '.*' \
       \! -name '*~' \
       \! -name '#*' \
-      \! -name '*.d' \
-      \! -name '*.dir' \
-      \! -name '*.flc' \
-      \! -name '*.inc' \
-      \! -name '*.ll' \
-      \! -name '*.llx' \
-      \! -name '*.la' \
-      \! -name '*.lo' \
       \! -name 'Sparc.burm.c' \
       \! -name 'llvmAsmParser.cpp' \
       \! -name 'llvmAsmParser.h' \
