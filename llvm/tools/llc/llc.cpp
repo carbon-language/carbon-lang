@@ -37,13 +37,14 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
-enum ArchName { noarch, x86, Sparc, PowerPC };
+enum ArchName { noarch, X86, Sparc, PowerPC, CBackend };
 
 static cl::opt<ArchName>
 Arch("march", cl::desc("Architecture to generate assembly for:"), cl::Prefix,
-     cl::values(clEnumVal(x86, "  IA-32 (Pentium and above)"),
-                clEnumValN(Sparc, "sparc", "  SPARC V9"),
-                clEnumValN(PowerPC, "powerpc", "  PowerPC"),
+     cl::values(clEnumValN(X86,      "x86",     "  IA-32 (Pentium and above)"),
+                clEnumValN(Sparc,    "sparc",   "  SPARC V9"),
+                clEnumValN(PowerPC,  "powerpc", "  PowerPC"),
+                clEnumValN(CBackend, "c",       "  C backend"),
 		0),
      cl::init(noarch));
 
@@ -82,7 +83,10 @@ int main(int argc, char **argv) {
   TargetMachine* (*TargetMachineAllocator)(const Module&,
                                            IntrinsicLowering *) = 0;
   switch (Arch) {
-  case x86:
+  case CBackend:
+    TargetMachineAllocator = allocateCTargetMachine;
+    break;
+  case X86:
     TargetMachineAllocator = allocateX86TargetMachine;
     break;
   case Sparc:
@@ -116,7 +120,8 @@ int main(int argc, char **argv) {
       TargetMachineAllocator = allocatePowerPCTargetMachine;
 #else
       std::cerr << argv[0] << ": module does not specify a target to use.  "
-                << "You must use the -march option.\n";
+                << "You must use the -march option.  If no native target is "
+                << "available, use -march=c to emit C code.\n";
       return 1;
 #endif
     } 
