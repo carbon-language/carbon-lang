@@ -522,6 +522,8 @@ static bool setValueName(Value *V, char *NameStr) {
             EGV->setInitializer(GV->getInitializer());
           if (GV->isConstant())
             EGV->setConstant(true);
+          if (GV->hasInternalLinkage())
+            EGV->setInternalLinkage(true);
           
 	  delete GV;     // Destroy the duplicate!
           return true;   // They are equivalent!
@@ -1154,10 +1156,10 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
       }
     }
   }
-  | ConstPool OptAssign OptInternal EXTERNAL GlobalType Types {
-    const Type *Ty = *$6;
+  | ConstPool OptAssign EXTERNAL GlobalType Types {
+    const Type *Ty = *$5;
     // Global declarations appear in Constant Pool
-    GlobalVariable *GV = new GlobalVariable(Ty, $5, $3);
+    GlobalVariable *GV = new GlobalVariable(Ty, $4, false);
     if (!setValueName(GV, $2)) {   // If not redefining...
       CurModule.CurrentModule->getGlobalList().push_back(GV);
       int Slot = InsertValue(GV, CurModule.Values);
@@ -1170,7 +1172,7 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
 				                (char*)GV->getName().c_str()));
       }
     }
-    delete $6;
+    delete $5;
   }
   | /* empty: end of list */ { 
   };
@@ -1216,23 +1218,23 @@ ArgList : ArgListH {
 
 FuncName : VAR_ID | STRINGCONSTANT;
 
-FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
-  UnEscapeLexed($3);
-  string FunctionName($3);
+FunctionHeaderH : TypesV FuncName '(' ArgList ')' {
+  UnEscapeLexed($2);
+  string FunctionName($2);
   
   vector<const Type*> ParamTypeList;
-  if ($5) {   // If there are arguments...
-    for (vector<pair<PATypeHolder*,char*> >::iterator I = $5->begin();
-         I != $5->end(); ++I)
+  if ($4) {   // If there are arguments...
+    for (vector<pair<PATypeHolder*,char*> >::iterator I = $4->begin();
+         I != $4->end(); ++I)
       ParamTypeList.push_back(I->first->get());
   }
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
 
-  const FunctionType *FT = FunctionType::get(*$2, ParamTypeList, isVarArg);
+  const FunctionType *FT = FunctionType::get(*$1, ParamTypeList, isVarArg);
   const PointerType *PFT = PointerType::get(FT);
-  delete $2;
+  delete $1;
 
   Function *Fn = 0;
   // Is the function already in symtab?
@@ -1242,11 +1244,6 @@ FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
     if (!CurMeth.isDeclare && !Fn->isExternal())
       ThrowException("Redefinition of function '" + FunctionName + "'!");
     
-    // Make sure that we keep track of the internal marker, even if there was
-    // a previous "declare".
-    if ($1)
-      Fn->setInternalLinkage(true);
-
     // If we found a preexisting function prototype, remove it from the
     // module, so that we don't get spurious conflicts with global & local
     // variables.
@@ -1258,25 +1255,25 @@ FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
       AI->setName("");
 
   } else  {  // Not already defined?
-    Fn = new Function(FT, $1, FunctionName);
+    Fn = new Function(FT, false, FunctionName);
     InsertValue(Fn, CurModule.Values);
-    CurModule.DeclareNewGlobalValue(Fn, ValID::create($3));
+    CurModule.DeclareNewGlobalValue(Fn, ValID::create($2));
   }
-  free($3);  // Free strdup'd memory!
+  free($2);  // Free strdup'd memory!
 
   CurMeth.FunctionStart(Fn);
 
   // Add all of the arguments we parsed to the function...
-  if ($5) {                     // Is null if empty...
+  if ($4) {                     // Is null if empty...
     if (isVarArg) {  // Nuke the last entry
-      assert($5->back().first->get() == Type::VoidTy && $5->back().second == 0&&
+      assert($4->back().first->get() == Type::VoidTy && $4->back().second == 0&&
              "Not a varargs marker!");
-      delete $5->back().first;
-      $5->pop_back();  // Delete the last entry
+      delete $4->back().first;
+      $4->pop_back();  // Delete the last entry
     }
     Function::aiterator ArgIt = Fn->abegin();
-    for (vector<pair<PATypeHolder*, char*> >::iterator I = $5->begin();
-         I != $5->end(); ++I, ++ArgIt) {
+    for (vector<pair<PATypeHolder*, char*> >::iterator I = $4->begin();
+         I != $4->end(); ++I, ++ArgIt) {
       delete I->first;                          // Delete the typeholder...
 
       if (setValueName(ArgIt, I->second))       // Insert arg into symtab...
@@ -1285,14 +1282,19 @@ FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
       InsertValue(ArgIt);
     }
 
-    delete $5;                     // We're now done with the argument list
+    delete $4;                     // We're now done with the argument list
   }
 };
 
 BEGIN : BEGINTOK | '{';                // Allow BEGIN or '{' to start a function
 
-FunctionHeader : FunctionHeaderH BEGIN {
+FunctionHeader : OptInternal FunctionHeaderH BEGIN {
   $$ = CurMeth.CurrentFunction;
+
+  // Make sure that we keep track of the internal marker, even if there was
+  // a previous "declare".
+  if ($1)
+    $$->setInternalLinkage(true);
 
   // Resolve circular types before we parse the body of the function.
   ResolveTypes(CurMeth.LateResolveTypes);
