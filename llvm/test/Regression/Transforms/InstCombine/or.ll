@@ -112,3 +112,8 @@ False:
 	ret ubyte 3
 }
 
+bool %test19(ubyte %A) {
+	%B = xor ubyte %A, 123      ; xor can be eliminated
+	%C = seteq ubyte %B, 34
+	ret bool %C
+}
