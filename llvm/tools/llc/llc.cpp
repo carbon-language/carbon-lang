@@ -10,6 +10,7 @@
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Transforms/ChangeAllocations.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/Linker.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/ConstantMerge.h"
@@ -26,6 +27,7 @@ static cl::String InputFilename ("", "Input filename", cl::NoFlags, "-");
 static cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
 static cl::Flag   Force         ("f", "Overwrite output files");
 static cl::Flag   DumpAsm       ("d", "Print bytecode before native code generation", cl::Hidden);
+static cl::String TraceLibPath  ("tracelibpath", "Path to libinstr for trace code", cl::Hidden, "");
 
 enum TraceLevel {
   TraceOff, TraceFunctions, TraceBasicBlocks
@@ -51,6 +53,75 @@ static inline string GetFileNameRoot(const string &InputFilename) {
   return outputFilename;
 }
 
+static void insertTraceCodeFor(Module *M) {
+  PassManager Passes;
+
+  // Insert trace code in all functions in the module
+  switch (TraceValues) {
+  case TraceBasicBlocks:
+    Passes.add(createTraceValuesPassForBasicBlocks());
+    break;
+  case TraceFunctions:
+    Passes.add(createTraceValuesPassForFunction());
+    break;
+  default:
+    assert(0 && "Bad value for TraceValues!");
+    abort();
+  }
+  
+  // Eliminate duplication in constant pool
+  Passes.add(createDynamicConstantMergePass());
+
+  // Run passes to insert and clean up trace code...
+  Passes.run(M);
+
+  std::string ErrorMessage;
+
+  // Load the module that contains the runtime helper routines neccesary for
+  // pointer hashing and stuff...  link this module into the program if possible
+  //
+  Module *TraceModule = ParseBytecodeFile(TraceLibPath+"libinstr.bc");
+
+  // Ok, the TraceLibPath didn't contain a valid module.  Try to load the module
+  // from the current LLVM-GCC install directory.  This is kindof a hack, but
+  // allows people to not HAVE to have built the library.
+  //
+  if (TraceModule == 0)
+    TraceModule = ParseBytecodeFile("/home/vadve/lattner/cvs/gcc_install/lib/"
+                                    "gcc-lib/llvm/3.1/libinstr.bc");
+
+  // If we still didn't get it, cancel trying to link it in...
+  if (TraceModule == 0) {
+    cerr << "Warning, could not load trace routines to link into program!\n";
+  } else {
+
+    // Link in the trace routines... if the link fails, don't panic, because the
+    // compile should still succeed, just the native linker will probably fail.
+    //
+    std::auto_ptr<Module> TraceRoutines(TraceModule);
+    if (LinkModules(M, TraceRoutines.get(), &ErrorMessage))
+      cerr << "Warning: Error linking in trace routines: "
+           << ErrorMessage << "\n";
+  }
+
+
+  // Write out the module with tracing code just before code generation
+  if (InputFilename != "-") {
+    string TraceFilename = GetFileNameRoot(InputFilename) + ".trace.bc";
+
+    std::ofstream Out(TraceFilename.c_str());
+    if (!Out.good()) {
+      cerr << "Error opening '" << TraceFilename
+           << "'!: Skipping output of trace code as bytecode\n";
+    } else {
+      cerr << "Emitting trace code to '" << TraceFilename
+           << "' for comparison...\n";
+      WriteBytecodeToFile(M, Out);
+    }
+  }
+
+}
+  
 
 //===---------------------------------------------------------------------===//
 // Function main()
@@ -75,48 +146,14 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  if (TraceValues != TraceOff)    // If tracing enabled...
+    insertTraceCodeFor(M.get());  // Hack up module before using passmanager...
+
   // Build up all of the passes that we want to do to the module...
   PassManager Passes;
 
-  if (TraceValues != TraceOff) {   // If tracing enabled...
-    // Insert trace code in all functions in the module
-    if (TraceValues == TraceBasicBlocks)
-      Passes.add(createTraceValuesPassForBasicBlocks());
-    else if (TraceValues == TraceFunctions)
-      Passes.add(createTraceValuesPassForFunction());
-    else
-      assert(0 && "Bad value for TraceValues!");
-
-    // Eliminate duplication in constant pool
-    Passes.add(createDynamicConstantMergePass());
-  }
-  
   // Decompose multi-dimensional refs into a sequence of 1D refs
   Passes.add(createDecomposeMultiDimRefsPass());
-  
-  // Write out the module with tracing code just before code generation
-  if (TraceValues != TraceOff) {   // If tracing enabled...
-    assert(InputFilename != "-" &&
-           "files on stdin not supported with tracing");
-    string traceFileName = GetFileNameRoot(InputFilename) + ".trace.bc";
-
-    if (!Force && std::ifstream(OutputFilename.c_str())) {
-      // If force is not specified, make sure not to overwrite a file!
-      cerr << "Error opening '" << OutputFilename << "': File exists!\n"
-           << "Use -f command line argument to force output\n";
-      return 1;
-    }
-    
-    std::ostream *os = new std::ofstream(traceFileName.c_str());
-    if (!os->good()) {
-      cerr << "Error opening " << traceFileName
-           << "! SKIPPING OUTPUT OF TRACE CODE\n";
-      delete os;
-      return 1;
-    }
-    
-    Passes.add(new WriteBytecodePass(os, true));
-  }
   
   // Replace malloc and free instructions with library calls.
   // Do this after tracing until lli implements these lib calls.
