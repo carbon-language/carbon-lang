@@ -527,6 +527,10 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
         !SelectAddress(N.Val->getOperand(1), AM))
       return false;
     AM = Backup;
+    if (!SelectAddress(N.Val->getOperand(1), AM) &&
+        !SelectAddress(N.Val->getOperand(0), AM))
+      return false;
+    AM = Backup;
     break;
   }
   }
