@@ -109,8 +109,8 @@ private:
   // outside of the SCC) into functions in the SCC.  It is not supposed to touch
   // functions IN the SCC at all.
   //
-  DSGraph &BUDataStructures::inlineNonSCCGraphs(Function &F,
-                                             std::set<Function*> &SCCFunctions);
+  DSGraph &inlineNonSCCGraphs(Function &F,
+                              std::set<Function*> &SCCFunctions);
  
   DSGraph &calculateSCCGraph(Function &F,
                              std::set<Function*> &InlinedSCCFunctions);
