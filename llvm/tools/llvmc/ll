@@ -1,0 +1,12 @@
+# LLVM Assembly Config File For llvmc
+  lang.name=LLVM Assembly
+  preprocessor.command=
+  preprocessor.required=false
+  translator.command=llvm-as @in@ -o @out@
+  translator.groks_dash_O=no
+  translator.optimizes=no
+  translator.preprocesses=true
+  translator.required=TRUE
+  optimizer.command=opt @in@ -o @out@
+  assembler.command=llc @in@ -o @out@
+  linker.command=llvm-link @in@ -o @out@

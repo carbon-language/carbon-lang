@@ -1,0 +1,22 @@
+# Stacker CompilerDriver Configuration File
+
+  lang.name=Stacker 
+# Pre-processor definitions
+  preprocessor.command=cp @in@ @out@
+  preprocessor.required=False
+
+# Translator definitions
+  translator.command=stkrc -S 2048 @in@ -o @out@
+  translator.preprocesses=false
+  translator.optimizes=TRUE
+  translator.groks_dash_O=No
+  translator.required=no
+
+# Optimizer definitions
+  optimizer.command=opt @in@ -o @out@
+
+# Assembler definitions
+  assembler.command=llc @in@ -o @out@
+
+# Linker definitions
+  linker.command=llvm-link @in@ -o @out@
