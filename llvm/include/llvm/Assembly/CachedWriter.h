@@ -13,16 +13,9 @@
 #include "llvm/Value.h"
 #include <iostream>
 
-class GlobalVariable;
-class Function;
-class Argument;
-class BasicBlock;
-class Instruction;
-class Constant;
+class Module;
 class PointerType;
 class SlotCalculator;
-
-
 class AssemblyWriter;  // Internal private class
 
 class CachedWriter {
@@ -44,9 +37,6 @@ public:
   CachedWriter &operator<<(const Value *V);
 
   inline CachedWriter &operator<<(Value *X) {
-    return *this << (const Value*)X;
-  }
-  inline CachedWriter &operator<<(const Module *X) {
     return *this << (const Value*)X;
   }
   inline CachedWriter &operator<<(const GlobalVariable *X) {
