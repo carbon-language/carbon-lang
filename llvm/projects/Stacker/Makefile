@@ -7,13 +7,11 @@
 #
 # Indicates our relative path to the top of the project's root directory.
 #
-LEVEL = ../..
+LEVEL = .
 
 #
 # Directories that needs to be built.
 #
-# Disable the 'test' and 'samples' subdirectories until they work correctly
-#DIRS = lib tools test samples
 DIRS = lib tools
 
 #

@@ -1,17 +1,18 @@
-##===- projects/sample/lib/sample/Makefile -----------------*- Makefile -*-===##
+##===- projects/Stacker/lib/stkrc/Makefile -----------------*- Makefile -*-===##
 
 #
 # Indicate where we are relative to the top of the source tree.
 #
-LEVEL=../../../..
+LEVEL=../..
 
 #
 # Give the name of a library.  This will build a dynamic version.
 #
 TOOLNAME=stkrc
-USEDLIBS=stkr_compiler asmparser bcwriter transforms ipo.a ipa.a \
+LLVMLIBS= asmparser bcwriter transforms ipo.a ipa.a \
 	 scalaropts analysis.a target.a transformutils \
 	 vmcore support.a LLVMsystem.a 
+USEDLIBS=stkr_compiler 
 
 
 ifdef PARSE_DEBUG

@@ -1,9 +1,9 @@
-##===- projects/sample/lib/sample/Makefile -----------------*- Makefile -*-===##
+##===- projects/Stacker/lib/compiler/Makefile --------------*- Makefile -*-===##
 
 #
 # Indicate where we are relative to the top of the source tree.
 #
-LEVEL=../../../..
+LEVEL=../..
 
 #
 # Give the name of a library.  This will build a dynamic version.

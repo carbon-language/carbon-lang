@@ -7,7 +7,7 @@
 #
 # Indicates our relative path to the top of the project's root directory.
 #
-LEVEL = ../../..
+LEVEL = ..
 
 #
 # Directories that needs to be built.
