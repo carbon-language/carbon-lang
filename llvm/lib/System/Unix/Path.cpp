@@ -239,10 +239,8 @@ Path::getLast() const {
   return path.substr(pos+1);
 }
 
-bool
-Path::getStatusInfo(StatusInfo& info) {
-  if (!isFile() || !readable())
-    return false;
+void
+Path::getStatusInfo(StatusInfo& info) const {
   struct stat buf;
   if (0 != stat(path.c_str(), &buf)) {
     ThrowErrno(std::string("Can't get status: ")+path);
@@ -255,11 +253,10 @@ Path::getStatusInfo(StatusInfo& info) {
   info.isDir = S_ISDIR(buf.st_mode);
   if (info.isDir && path[path.length()-1] != '/')
     path += '/';
-  return true;
 }
 
 bool
-Path::getDirectoryContents(Vector& result) const {
+Path::getDirectoryContents(std::set<Path>& result) const {
   if (!isDirectory())
     return false;
   DIR* direntries = ::opendir(path.c_str());
@@ -276,7 +273,7 @@ Path::getDirectoryContents(Vector& result) const {
         ThrowErrno(aPath.path + ": can't get status");
       if (S_ISDIR(buf.st_mode))
         aPath.path += "/";
-      result.push_back(aPath);
+      result.insert(aPath);
     }
     de = ::readdir(direntries);
   }

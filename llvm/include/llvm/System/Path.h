@@ -14,9 +14,10 @@
 #ifndef LLVM_SYSTEM_PATH_H
 #define LLVM_SYSTEM_PATH_H
 
+#include "llvm/System/TimeValue.h"
+#include <set>
 #include <string>
 #include <vector>
-#include "llvm/System/TimeValue.h"
 
 namespace llvm {
 namespace sys {
@@ -46,8 +47,6 @@ namespace sys {
     /// @name Types
     /// @{
     public:
-      typedef std::vector<Path> Vector;
-
       /// This structure provides basic file system information about a file. It
       /// is patterned after the stat(2) Unix operating system call but made
       /// platform independent and eliminates many of the unix-specific fields.
@@ -58,7 +57,8 @@ namespace sys {
       /// filled in by the getStatusInfo method.
       /// @brief File status structure
       struct StatusInfo {
-        StatusInfo() : modTime(0,0) { fileSize=0; mode=0; user=0; group=0; }
+        StatusInfo() : fileSize(0), modTime(0,0), mode(0777), user(999), 
+                       group(999), isDir(false) { }
         size_t      fileSize;   ///< Size of the file in bytes
         TimeValue   modTime;    ///< Time of file's modification
         uint32_t    mode;       ///< Mode of the file, if applicable
@@ -345,7 +345,7 @@ namespace sys {
       /// @returns false if \p this is not a directory, true otherwise
       /// @throws std::string if the directory cannot be searched
       /// @brief Build a list of directory's contents.
-      bool getDirectoryContents(Vector& paths) const;
+      bool getDirectoryContents(std::set<Path>& paths) const;
 
       /// Obtain a 'C' string for the path name.
       /// @returns a 'C' string containing the path name.
@@ -367,11 +367,9 @@ namespace sys {
       /// of the file system. If the file does not exist, false is returned. 
       /// For other (hard I/O) errors, a std::string is throwing indicating the
       /// problem.
-      /// @returns true if the status info was obtained, false if the file does
-      /// not exist.
       /// @throws std::string if an error occurs.
       /// @brief Get file status.
-      bool getStatusInfo(StatusInfo& stat);
+      void getStatusInfo(StatusInfo& info) const;
 
       /// This method attempts to set the Path object to \p unverified_path
       /// and interpret the name as a directory name.  The \p unverified_path 
@@ -527,7 +525,7 @@ namespace sys {
     /// @name Data
     /// @{
     private:
-        std::string path; ///< Platform agnostic storage for the path name.
+        mutable std::string path;   ///< Storage for the path name.
 
     /// @}
   };
