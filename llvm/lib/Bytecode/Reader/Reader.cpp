@@ -1449,7 +1449,7 @@ Constant *BytecodeReader::ParseConstantValue(unsigned TypeID) {
     return Result;
   }
 
-  case Type::PointerTyID: {  // ConstantPointerRef value...
+  case Type::PointerTyID: {  // ConstantPointerRef value (backwards compat).
     const PointerType *PT = cast<PointerType>(Ty);
     unsigned Slot = read_vbr_uint();
     
