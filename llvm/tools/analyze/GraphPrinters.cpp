@@ -19,8 +19,7 @@
 #include "llvm/Value.h"
 #include "llvm/Analysis/CallGraph.h"
 #include <fstream>
-
-namespace llvm {
+using namespace llvm;
 
 template<typename GraphType>
 static void WriteGraphToFile(std::ostream &O, const std::string &GraphName,
@@ -41,19 +40,21 @@ static void WriteGraphToFile(std::ostream &O, const std::string &GraphName,
 //                              Call Graph Printer
 //===----------------------------------------------------------------------===//
 
-template<>
-struct DOTGraphTraits<CallGraph*> : public DefaultDOTGraphTraits {
-  static std::string getGraphName(CallGraph *F) {
-    return "Call Graph";
-  }
-
-  static std::string getNodeLabel(CallGraphNode *Node, CallGraph *Graph) {
-    if (Node->getFunction())
-      return ((Value*)Node->getFunction())->getName();
-    else
-      return "Indirect call node";
-  }
-};
+namespace llvm {
+  template<>
+  struct DOTGraphTraits<CallGraph*> : public DefaultDOTGraphTraits {
+    static std::string getGraphName(CallGraph *F) {
+      return "Call Graph";
+    }
+    
+    static std::string getNodeLabel(CallGraphNode *Node, CallGraph *Graph) {
+      if (Node->getFunction())
+        return ((Value*)Node->getFunction())->getName();
+      else
+        return "Indirect call node";
+    }
+  };
+}
 
 
 namespace {
@@ -74,5 +75,3 @@ namespace {
   RegisterAnalysis<CallGraphPrinter> P2("print-callgraph",
                                         "Print Call Graph to 'dot' file");
 };
-
-} // End llvm namespace
