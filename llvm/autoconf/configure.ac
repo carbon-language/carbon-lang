@@ -233,7 +233,7 @@ AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 
 dnl Checks for POSIX and other various system-specific header files
-AC_CHECK_HEADERS(fcntl.h limits.h sys/time.h unistd.h malloc.h sys/mman.h sys/resource.h dlfcn.h link.h execinfo.h)
+AC_CHECK_HEADERS(fcntl.h limits.h sys/time.h unistd.h malloc.h sys/mman.h sys/resource.h dlfcn.h link.h execinfo.h windows.h)
 
 dnl Check for things that need to be included in public headers, and so
 dnl for which we may not have access to a HAVE_* preprocessor #define.
