@@ -471,7 +471,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
   
   MachineOpCode opCode = minstr->getOpCode();
   const MachineInstrInfo& instrInfo = target.getInstrInfo();
-  const MachineInstrDescriptor& instrDesc = instrInfo.getDescriptor(opCode);
+  int resultPos = instrInfo.getResultPos(opCode);
   int immedPos = instrInfo.getImmedConstantPos(opCode);
 
   Function *F = vmInstr->getParent()->getParent();
@@ -482,7 +482,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
           
       // Skip the result position, preallocated machine registers, or operands
       // that cannot be constants (CC regs or PC-relative displacements)
-      if (instrDesc.resultPos == (int) op ||
+      if (resultPos == (int)op ||
           mop.getType() == MachineOperand::MO_MachineRegister ||
           mop.getType() == MachineOperand::MO_CCRegister ||
           mop.getType() == MachineOperand::MO_PCRelativeDisp)
