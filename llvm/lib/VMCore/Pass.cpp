@@ -11,6 +11,7 @@
 #include "llvm/Module.h"
 #include "Support/STLExtras.h"
 #include "Support/CommandLine.h"
+#include "Support/TypeInfo.h"
 #include <typeinfo>
 #include <iostream>
 #include <sys/time.h>
@@ -284,3 +285,95 @@ void BasicBlockPass::addToPassManager(PassManagerT<BasicBlock> *PM,
   PM->addPass(this, AU);
 }
 
+
+//===----------------------------------------------------------------------===//
+// Pass Registration mechanism
+//
+static std::map<TypeInfo, PassInfo*> *PassInfoMap = 0;
+static std::vector<PassRegistrationListener*> *Listeners = 0;
+
+// getPassInfo - Return the PassInfo data structure that corresponds to this
+// pass...
+const PassInfo *Pass::getPassInfo() const {
+  assert(PassInfoMap && "PassInfoMap not constructed yet??");
+  std::map<TypeInfo, PassInfo*>::iterator I =
+    PassInfoMap->find(typeid(*this));
+  assert(I != PassInfoMap->end() && "Pass has not been registered!");
+  return I->second;
+}
+
+void RegisterPassBase::registerPass(PassInfo *PI) {
+  if (PassInfoMap == 0)
+    PassInfoMap = new std::map<TypeInfo, PassInfo*>();
+
+  assert(PassInfoMap->find(PI->getTypeInfo()) == PassInfoMap->end() &&
+         "Pass already registered!");
+  PIObj = PI;
+  PassInfoMap->insert(std::make_pair(TypeInfo(PI->getTypeInfo()), PI));
+
+  // Notify any listeners...
+  if (Listeners)
+    for (std::vector<PassRegistrationListener*>::iterator
+           I = Listeners->begin(), E = Listeners->end(); I != E; ++I)
+      (*I)->passRegistered(PI);
+}
+
+RegisterPassBase::~RegisterPassBase() {
+  assert(PassInfoMap && "Pass registered but not in map!");
+  std::map<TypeInfo, PassInfo*>::iterator I =
+    PassInfoMap->find(PIObj->getTypeInfo());
+  assert(I != PassInfoMap->end() && "Pass registered but not in map!");
+
+  // Remove pass from the map...
+  PassInfoMap->erase(I);
+  if (PassInfoMap->empty()) {
+    delete PassInfoMap;
+    PassInfoMap = 0;
+  }
+
+  // Notify any listeners...
+  if (Listeners)
+    for (std::vector<PassRegistrationListener*>::iterator
+           I = Listeners->begin(), E = Listeners->end(); I != E; ++I)
+      (*I)->passUnregistered(PIObj);
+
+  // Delete the PassInfo object itself...
+  delete PIObj;
+}
+
+
+
+//===----------------------------------------------------------------------===//
+// PassRegistrationListener implementation
+//
+
+// PassRegistrationListener ctor - Add the current object to the list of
+// PassRegistrationListeners...
+PassRegistrationListener::PassRegistrationListener() {
+  if (!Listeners) Listeners = new std::vector<PassRegistrationListener*>();
+  Listeners->push_back(this);
+}
+
+// dtor - Remove object from list of listeners...
+PassRegistrationListener::~PassRegistrationListener() {
+  std::vector<PassRegistrationListener*>::iterator I =
+    std::find(Listeners->begin(), Listeners->end(), this);
+  assert(Listeners && I != Listeners->end() &&
+         "PassRegistrationListener not registered!");
+  Listeners->erase(I);
+
+  if (Listeners->empty()) {
+    delete Listeners;
+    Listeners = 0;
+  }
+}
+
+// enumeratePasses - Iterate over the registered passes, calling the
+// passEnumerate callback on each PassInfo object.
+//
+void PassRegistrationListener::enumeratePasses() {
+  if (PassInfoMap)
+    for (std::map<TypeInfo, PassInfo*>::iterator I = PassInfoMap->begin(),
+           E = PassInfoMap->end(); I != E; ++I)
+      passEnumerate(I->second);
+}
