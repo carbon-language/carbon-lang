@@ -35,6 +35,14 @@ def f128 : ValueType<128>;    // 128-bit floating point value
 //
 class Register {
   string Namespace = "";
+  string Name = "";
+}
+
+// NamedReg - If the name for the 'def' of the register should not become the
+// "name" of the register, you can use this to specify a custom name instead.
+//
+class NamedReg<string n> : Register {
+  set Name = n;
 }
 
 // RegisterAliases - You should define instances of this class to indicate which
