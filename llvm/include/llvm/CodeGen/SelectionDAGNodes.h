@@ -410,6 +410,10 @@ public:
   bool use_empty() const { return Uses.empty(); }
   bool hasOneUse() const { return Uses.size() == 1; }
 
+  typedef std::vector<SDNode*>::const_iterator use_iterator;
+  use_iterator use_begin() const { return Uses.begin(); }
+  use_iterator use_end() const { return Uses.end(); }
+
   /// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
   /// indicated value.  This method ignores uses of other values defined by this
   /// operation.
