@@ -436,6 +436,8 @@ public:
         DSNodeHandle &getCallee()           { return Callee; }
   const DSNodeHandle &getRetVal()     const { return RetVal; }
   const DSNodeHandle &getCallee()     const { return Callee; }
+  void setCallee(const DSNodeHandle &H) { Callee = H; }
+
   unsigned            getNumPtrArgs() const { return CallArgs.size(); }
 
   Function           *getResolvingCaller() const { return ResolvingCaller; }
