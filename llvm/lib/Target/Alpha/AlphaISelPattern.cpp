@@ -518,37 +518,21 @@ void ISel::SelectBranchCC(SDOperand N)
     SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
     if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
       //Dropping the CC is only useful if we are comparing to 0
-      bool isZero0 = false;
-      bool isZero1 = false;
+      bool LeftZero = SetCC->getOperand(0).getOpcode() == ISD::Constant &&
+        cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0;
+      bool RightZero = SetCC->getOperand(0).getOpcode() == ISD::Constant &&
+        cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0;
       bool isNE = false;
-
-      if(SetCC->getOperand(0).getOpcode() == ISD::Constant &&
-         cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0)
-        isZero0 = true;
-      if(SetCC->getOperand(1).getOpcode() == ISD::Constant &&
-         cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() == 0)
-        isZero1 = true;
-      if(SetCC->getCondition() == ISD::SETNE)
+      
+      //Fix up CC
+      ISD::CondCode cCode= SetCC->getCondition();
+      if (LeftZero && !RightZero) //Swap Operands
+        cCode = ISD::getSetCCSwappedOperands(cCode);
+      
+      if(cCode == ISD::SETNE)
         isNE = true;
 
-      if (isZero0) {
-        switch (SetCC->getCondition()) {
-        default: CC.Val->dump(); assert(0 && "Unknown integer comparison!");
-        case ISD::SETEQ:  Opc = Alpha::BEQ; break;
-        case ISD::SETLT:  Opc = Alpha::BGT; break;
-        case ISD::SETLE:  Opc = Alpha::BGE; break;
-        case ISD::SETGT:  Opc = Alpha::BLT; break;
-        case ISD::SETGE:  Opc = Alpha::BLE; break;
-        case ISD::SETULT: Opc = Alpha::BNE; break;
-        case ISD::SETUGT: assert(0 && "0 > (unsigned) x is never true"); break;
-        case ISD::SETULE: assert(0 && "0 <= (unsigned) x is always true"); break;
-        case ISD::SETUGE: Opc = Alpha::BEQ; break; //Technically you could have this CC
-        case ISD::SETNE:  Opc = Alpha::BNE; break;
-        }
-        unsigned Tmp1 = SelectExpr(SetCC->getOperand(1));
-        BuildMI(BB, Opc, 2).addReg(Tmp1).addMBB(Dest);
-        return;
-      } else if (isZero1) {
+      if (LeftZero || RightZero) {
         switch (SetCC->getCondition()) {
         default: CC.Val->dump(); assert(0 && "Unknown integer comparison!");
         case ISD::SETEQ:  Opc = Alpha::BEQ; break;
@@ -562,7 +546,11 @@ void ISel::SelectBranchCC(SDOperand N)
         case ISD::SETUGE: assert(0 && "x (unsgined >= 0 is always true"); break;
         case ISD::SETNE:  Opc = Alpha::BNE; break;
         }
-        unsigned Tmp1 = SelectExpr(SetCC->getOperand(0));
+        unsigned Tmp1;
+        if(LeftZero && !RightZero) //swap Operands
+          Tmp1 = SelectExpr(SetCC->getOperand(1)); //Cond
+        else
+          Tmp1 = SelectExpr(SetCC->getOperand(0)); //Cond
         BuildMI(BB, Opc, 2).addReg(Tmp1).addMBB(Dest);
         return;
       } else {
@@ -1571,10 +1559,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
     {
       //FIXME: look at parent to decide if intCC can be folded, or if setCC(FP) and can save stack use
       //Tmp1 = SelectExpr(N.getOperand(0)); //Cond
-      Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
-      Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
+      //Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
+      //Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
       // Get the condition into the zero flag.
       //BuildMI(BB, Alpha::CMOVEQ, 2, Result).addReg(Tmp2).addReg(Tmp3).addReg(Tmp1);
+
       SDOperand CC = N.getOperand(0);
       SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
 
@@ -1582,6 +1571,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
           !MVT::isInteger(SetCC->getOperand(0).getValueType()))
       { //FP Setcc -> Int Select
 	Tmp1 = MakeReg(MVT::f64);
+        Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
+        Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
 	bool inv = SelectFPSetCC(CC, Tmp1);
 	BuildMI(BB, inv?Alpha::CMOVNE_FP:Alpha::CMOVEQ_FP, 2, Result)
 	  .addReg(Tmp2).addReg(Tmp3).addReg(Tmp1);
@@ -1590,63 +1581,70 @@ unsigned ISel::SelectExpr(SDOperand N) {
       if (CC.getOpcode() == ISD::SETCC) {
 	//Int SetCC -> Select
 	//Dropping the CC is only useful if we are comparing to 0
-	if(SetCC->getOperand(1).getOpcode() == ISD::Constant &&
-	   cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() == 0)
-	  {
-	    bool useI = (SetCC->getOperand(1).getOpcode() == ISD::Constant &&
-			 cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() <= 255);
-	    
-	    switch (SetCC->getCondition()) {
-	    default: CC.Val->dump(); assert(0 && "Unknown integer comparison!");
-	    case ISD::SETEQ:  Opc = useI?Alpha::CMOVEQi:Alpha::CMOVEQ; break;
-	    case ISD::SETLT:  Opc = useI?Alpha::CMOVGTi:Alpha::CMOVGT; break;
-	    case ISD::SETLE:  Opc = useI?Alpha::CMOVGEi:Alpha::CMOVGE; break;
-	    case ISD::SETGT:  Opc = useI?Alpha::CMOVLTi:Alpha::CMOVLT; break;
-	    case ISD::SETGE:  Opc = useI?Alpha::CMOVLEi:Alpha::CMOVLE; break;
-	    case ISD::SETULT: Opc = useI?Alpha::CMOVNEi:Alpha::CMOVNE; break;
-	    case ISD::SETUGT: assert(0 && "0 > (unsigned) x is never true"); break;
-	    case ISD::SETULE: assert(0 && "0 <= (unsigned) x is always true"); break;
-	    case ISD::SETUGE: Opc = useI?Alpha::CMOVEQi:Alpha::CMOVEQ; break; //Technically you could have this CC
-	    case ISD::SETNE:  Opc = useI?Alpha::CMOVNEi:Alpha::CMOVNE; break;
-	    }
-	    if (useI)
-	      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(Tmp3)
-		.addImm(cast<ConstantSDNode>(SetCC->getOperand(1))->getValue());
-	    else
-	      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(Tmp3)
-		.addReg(SelectExpr(SetCC->getOperand(1)));
-	    return Result;
-	  }
-	if(SetCC->getOperand(0).getOpcode() == ISD::Constant &&
-	   cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0)
-	  {
-	    bool useI = (SetCC->getOperand(0).getOpcode() == ISD::Constant &&
-			 cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() <= 255);
+	if((SetCC->getOperand(1).getOpcode() == ISD::Constant &&
+	   cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() == 0) ||
+           (SetCC->getOperand(0).getOpcode() == ISD::Constant &&
+            cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0))
+        {
+          //figure out a few things
+          bool LeftZero = SetCC->getOperand(0).getOpcode() == ISD::Constant &&
+            cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0;
+          bool RightZero = SetCC->getOperand(0).getOpcode() == ISD::Constant &&
+            cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0;
+          bool LeftConst = N.getOperand(1).getOpcode() == ISD::Constant &&
+            cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255;
+          bool RightConst = N.getOperand(2).getOpcode() == ISD::Constant &&
+            cast<ConstantSDNode>(N.getOperand(2))->getValue() <= 255;
+          bool useImm = LeftConst || RightConst;
 
-	    switch (SetCC->getCondition()) {
-	    default: CC.Val->dump(); assert(0 && "Unknown integer comparison!");
-	    case ISD::SETEQ:  Opc = useI?Alpha::CMOVEQi:Alpha::CMOVEQ; break;
-	    case ISD::SETLT:  Opc = useI?Alpha::CMOVLTi:Alpha::CMOVLT; break;
-	    case ISD::SETLE:  Opc = useI?Alpha::CMOVLEi:Alpha::CMOVLE; break;
-	    case ISD::SETGT:  Opc = useI?Alpha::CMOVGTi:Alpha::CMOVGT; break;
-	    case ISD::SETGE:  Opc = useI?Alpha::CMOVGEi:Alpha::CMOVGE; break;
-	    case ISD::SETULT: assert(0 && "x (unsigned) < 0 is never true"); break;
-	    case ISD::SETUGT: Opc = useI?Alpha::CMOVNEi:Alpha::CMOVNE; break;
-	    case ISD::SETULE: Opc = useI?Alpha::CMOVEQi:Alpha::CMOVEQ; break; //Technically you could have this CC
-	    case ISD::SETUGE: assert(0 && "x (unsgined >= 0 is always true"); break;
-	    case ISD::SETNE:  Opc = useI?Alpha::CMOVNEi:Alpha::CMOVNE; break;
-	    }
-	    if (useI)
-	      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(Tmp3)
-		.addImm(cast<ConstantSDNode>(SetCC->getOperand(0))->getValue());
-	    else
-	      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(Tmp3)
-		.addReg(SelectExpr(SetCC->getOperand(0)));
-	    return Result;
-	  }
+          //Fix up CC
+          ISD::CondCode cCode= SetCC->getCondition();
+          if (RightConst && !LeftConst) //Invert sense to get Imm field right
+            cCode = ISD::getSetCCInverse(cCode, true);
+          if (LeftZero && !RightZero) //Swap Operands
+            cCode = ISD::getSetCCSwappedOperands(cCode);
+          
+          //Choose the CMOV
+          switch (cCode) {
+          default: CC.Val->dump(); assert(0 && "Unknown integer comparison!");
+          case ISD::SETEQ:  Opc = useImm?Alpha::CMOVEQi:Alpha::CMOVEQ;      break;
+          case ISD::SETLT:  Opc = useImm?Alpha::CMOVLTi:Alpha::CMOVLT;      break;
+          case ISD::SETLE:  Opc = useImm?Alpha::CMOVLEi:Alpha::CMOVLE;      break;
+          case ISD::SETGT:  Opc = useImm?Alpha::CMOVGTi:Alpha::CMOVGT;      break;
+          case ISD::SETGE:  Opc = useImm?Alpha::CMOVGEi:Alpha::CMOVGE;      break;
+          case ISD::SETULT: assert(0 && "x (unsigned) < 0 is never true");  break;
+          case ISD::SETUGT: Opc = useImm?Alpha::CMOVNEi:Alpha::CMOVNE;      break;
+          case ISD::SETULE: Opc = useImm?Alpha::CMOVEQi:Alpha::CMOVEQ;      break; //Technically you could have this CC
+          case ISD::SETUGE: assert(0 && "x (unsgined >= 0 is always true"); break;
+          case ISD::SETNE:  Opc = useImm?Alpha::CMOVNEi:Alpha::CMOVNE;      break;
+          }
+          if(LeftZero && !RightZero) //swap Operands
+            Tmp1 = SelectExpr(SetCC->getOperand(1)); //Cond
+          else
+            Tmp1 = SelectExpr(SetCC->getOperand(0)); //Cond
+
+          if (LeftConst) {
+            Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
+            BuildMI(BB, Opc, 2, Result).addReg(Tmp3)
+		.addImm(cast<ConstantSDNode>(N.getOperand(1))->getValue())
+                .addReg(Tmp1);
+          } else if (RightConst) {
+            Tmp3 = SelectExpr(N.getOperand(1)); //Use if FALSE
+            BuildMI(BB, Opc, 2, Result).addReg(Tmp3)
+		.addImm(cast<ConstantSDNode>(N.getOperand(2))->getValue())
+                .addReg(Tmp1);
+          } else {
+            Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
+            Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
+            BuildMI(BB, Opc, 2, Result).addReg(Tmp3).addReg(Tmp2).addReg(Tmp1);
+          }
+          return Result;
+        }
 	//Otherwise, fall though
       }
       Tmp1 = SelectExpr(N.getOperand(0)); //Cond
+      Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
+      Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
       BuildMI(BB, Alpha::CMOVEQ, 2, Result).addReg(Tmp2).addReg(Tmp3).addReg(Tmp1);
       
       return Result;
