@@ -57,7 +57,7 @@ namespace {
      clEnumValN(Select_DebugInstTrees,   "i",
                 "print debugging info for instruction selection"),
      clEnumValN(Select_DebugBurgTrees,   "b", "print burg trees"),
-                              0));
+                              clEnumValEnd));
 
 
   //===--------------------------------------------------------------------===//

@@ -40,7 +40,7 @@ clEnumValN(LV_DEBUG_Normal , "y", "enable debug output"),
 clEnumValN(LV_DEBUG_Instr,   "i", "print live-var sets before/after "
            "every machine instrn"),
 clEnumValN(LV_DEBUG_Verbose, "v", "print def, use sets for every instrn also"),
-                        0));
+                        clEnumValEnd));
 
 
 

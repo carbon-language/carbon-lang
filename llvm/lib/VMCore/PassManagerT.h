@@ -52,7 +52,7 @@ PassDebugging("debug-pass", cl::Hidden,
   clEnumVal(Structure , "print pass structure before run()"),
   clEnumVal(Executions, "print pass name before it is executed"),
   clEnumVal(Details   , "print pass details when it is executed"),
-                         0));
+                         clEnumValEnd));
 
 //===----------------------------------------------------------------------===//
 // PMDebug class - a set of debugging functions, that are not to be

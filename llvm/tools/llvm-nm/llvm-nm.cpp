@@ -35,7 +35,8 @@ namespace {
        cl::desc("Specify output format"),
          cl::values(clEnumVal(bsd,   "BSD format"),
                     clEnumVal(sysv,  "System V format"),
-                    clEnumVal(posix, "POSIX.2 format"), 0), cl::init(bsd));
+                    clEnumVal(posix, "POSIX.2 format"), 
+                    clEnumValEnd), cl::init(bsd));
   cl::alias OutputFormat2("f", cl::desc("Alias for --format"),
                           cl::aliasopt(OutputFormat));
 

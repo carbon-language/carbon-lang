@@ -63,7 +63,7 @@ DRA_opt("dregalloc", cl::Hidden, cl::location(DEBUG_RA),
   clEnumValN(RA_DEBUG_Interference,"ig","debug output for interference graphs"),
   clEnumValN(RA_DEBUG_LiveRanges , "lr","debug output for live ranges"),
   clEnumValN(RA_DEBUG_Verbose,     "v", "extra debug output"),
-                   0));
+                   clEnumValEnd));
 
 /// The reoptimizer wants to be able to grovel through the register
 /// allocator's state after it has done its job. This is a hack.

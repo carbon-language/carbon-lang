@@ -38,7 +38,7 @@ namespace {
                             clEnumValN(RunJIT, "run-jit", "Execute with JIT"),
                             clEnumValN(RunLLC, "run-llc", "Compile with LLC"),
                             clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
-                            0),
+                            clEnumValEnd),
                  cl::init(AutoPick));
 
   cl::opt<bool>
