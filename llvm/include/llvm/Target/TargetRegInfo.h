@@ -21,7 +21,6 @@ class Function;
 class LiveRange;
 class AddedInstrns;
 class MachineInstr;
-class PhyRegAlloc;
 class BasicBlock;
 
 ///----------------------------------------------------------------------------
@@ -75,9 +74,12 @@ public:
   virtual void colorIGNode(IGNode *Node,
                            const std::vector<bool> &IsColorUsedArr) const = 0;
 
+  // Check whether a specific register is volatile, i.e., whether it is not
+  // preserved across calls
   virtual bool isRegVolatile(int Reg) const = 0;
 
-  // If any specific register needs extra information
+  // Check whether a specific register is modified as a side-effect of the
+  // call instruction itself,
   virtual bool modifiedByCall(int Reg) const {return false; }
 
   virtual const char* const getRegName(unsigned reg) const = 0;
@@ -151,27 +153,18 @@ public:
   // as required. See SparcRegInfo.cpp for the implementation for Sparc.
   //
   virtual void suggestRegs4MethodArgs(const Function *Func, 
-			 LiveRangeInfo &LRI) const = 0;
+                                      LiveRangeInfo& LRI) const = 0;
 
   virtual void suggestRegs4CallArgs(MachineInstr *CallI, 
-                                    LiveRangeInfo &LRI) const = 0;
+                                    LiveRangeInfo& LRI) const = 0;
 
   virtual void suggestReg4RetValue(MachineInstr *RetI, 
-				   LiveRangeInfo &LRI) const = 0;
+				   LiveRangeInfo& LRI) const = 0;
 
-  virtual void colorMethodArgs(const Function *Func,  LiveRangeInfo &LRI,
-                               AddedInstrns *FirstAI) const = 0;
-
-  // Method for inserting caller saving code. The caller must save all the
-  // volatile registers across a call based on the calling conventions of
-  // an architecture. This must insert code for saving and restoring 
-  // such registers on
-  //
-  virtual void insertCallerSavingCode(std::vector<MachineInstr*>& instrnsBefore,
-                                      std::vector<MachineInstr*>& instrnsAfter,
-                                      MachineInstr *CallMI,
-				      const BasicBlock *BB, 
-				      PhyRegAlloc &PRA) const = 0;
+  virtual void colorMethodArgs(const Function *Func,
+                           LiveRangeInfo &LRI,
+                           std::vector<MachineInstr*>& InstrnsBefore,
+                           std::vector<MachineInstr*>& InstrnsAfter) const = 0;
 
   // The following methods are used to generate "copy" machine instructions
   // for an architecture. Currently they are used in TargetRegClass 
@@ -204,7 +197,17 @@ public:
   virtual void cpValue2Value(Value *Src, Value *Dest,
                              std::vector<MachineInstr*>& mvec) const = 0;
 
-  virtual bool isRegVolatile(int RegClassID, int Reg) const = 0;
+  // Check whether a specific register is volatile, i.e., whether it is not
+  // preserved across calls
+  inline virtual bool isRegVolatile(int RegClassID, int Reg) const {
+    return MachineRegClassArr[RegClassID]->isRegVolatile(Reg);
+  }
+
+  // Check whether a specific register is modified as a side-effect of the
+  // call instruction itself,
+  inline virtual bool modifiedByCall(int RegClassID, int Reg) const {
+    return MachineRegClassArr[RegClassID]->modifiedByCall(Reg);
+  }
   
   // Returns the reg used for pushing the address when a method is called.
   // This can be used for other purposes between calls
