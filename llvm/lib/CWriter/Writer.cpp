@@ -23,11 +23,9 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <set>
-#include <iostream>
 using std::string;
 using std::map;
 using std::ostream;
-using std::cerr;
 
 static std::string getConstStrValue(const Constant* CPV);
 
@@ -114,7 +112,7 @@ static std::string getConstStrValue(const Constant* CPV) {
   }
 
   default:
-    cerr << "Unknown constant type: " << CPV << "\n";
+    std::cerr << "Unknown constant type: " << CPV << "\n";
     abort();
   }
 }
@@ -140,7 +138,7 @@ static string calcTypeNameVar(const Type *Ty,
     case Type::FloatTyID:  return "float " + NameSoFar;
     case Type::DoubleTyID: return "double " + NameSoFar;
     default :
-      cerr << "Unknown primitive type: " << Ty << "\n";
+      std::cerr << "Unknown primitive type: " << Ty << "\n";
       abort();
     }
   
@@ -272,7 +270,7 @@ namespace {
     void visitGetElementPtrInst(GetElementPtrInst &I);
 
     void visitInstruction(Instruction &I) {
-      cerr << "C Writer does not know about " << I;
+      std::cerr << "C Writer does not know about " << I;
       abort();
     }
 
@@ -671,7 +669,7 @@ void CWriter::visitBinaryOperator(Instruction &I) {
   case Instruction::SetGT: Out << " > "; break;
   case Instruction::Shl : Out << " << "; break;
   case Instruction::Shr : Out << " >> "; break;
-  default: cerr << "Invalid operator type!" << I; abort();
+  default: std::cerr << "Invalid operator type!" << I; abort();
   }
 
   if (isa<PointerType>(I.getType())) Out << "(long long)";
