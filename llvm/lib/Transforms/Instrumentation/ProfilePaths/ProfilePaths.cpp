@@ -69,6 +69,17 @@ static Node *findBB(std::vector<Node *> &st, BasicBlock *BB){
 bool ProfilePaths::runOnFunction(Function &F){
 
   static int mn = -1;
+
+  if(F.size() <=1) {
+    return false;
+  }
+ 
+  //increment counter for instrumented functions. mn is now function#
+  mn++;
+  
+  //std::cerr<<"MN = "<<mn<<"\n";;
+  //std::cerr<<F;
+
   // Transform the cfg s.t. we have just one exit node
   BasicBlock *ExitNode = getAnalysis<UnifyFunctionExitNodes>().getExitNode();  
 
@@ -82,18 +93,10 @@ bool ProfilePaths::runOnFunction(Function &F){
   // The nodes must be uniquesly identified:
   // That is, no two nodes must hav same BB*
   
-  // First enter just nodes: later enter edges
-  //<<<<<<< ProfilePaths.cpp
-  //for (Function::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
-  //Node *nd=new Node(*BB);
-  //nodes.push_back(nd); 
-  //if(*BB==ExitNode)
-  //=======
   for (Function::iterator BB = F.begin(), BE = F.end(); BB != BE; ++BB) {
     Node *nd=new Node(BB);
     nodes.push_back(nd); 
     if(&*BB == ExitNode)
-      //>>>>>>> 1.13
       exitNode=nd;
     if(&*BB==F.begin())
       startNode=nd;
@@ -106,13 +109,6 @@ bool ProfilePaths::runOnFunction(Function &F){
 
     for(BasicBlock::succ_iterator s=succ_begin(BB), se=succ_end(BB); 
 	s!=se; ++s){
-      //tempVec.push_back(*s);
-      //}
-
-    //sort(tempVec.begin(), tempVec.end(), BBSort());
-
-    //for(vector<BasicBlock *>::iterator s=tempVec.begin(), se=tempVec.end(); 
-      //s!=se; ++s){
       Node *nd2=findBB(nodes,*s);
       assert(nd2 && "No node for this edge!");
       Edge ed(nd,nd2,0);
@@ -122,104 +118,101 @@ bool ProfilePaths::runOnFunction(Function &F){
   
   Graph g(nodes,edges, startNode, exitNode);
 
-  //#ifdef DEBUG_PATH_PROFILES  
-  //std::cerr<<"Original graph\n";
-  //printGraph(g);
-  //#endif
+#ifdef DEBUG_PATH_PROFILES  
+  std::cerr<<"Original graph\n";
+  printGraph(g);
+#endif
 
-  BasicBlock *fr=&F.front();
+  BasicBlock *fr = &F.front();
   
-  // If only one BB, don't instrument
-  if (++F.begin() == F.end()) {
-    mn++;
-    // The graph is made acyclic: this is done
-    // by removing back edges for now, and adding them later on
-    vector<Edge> be;
-    g.getBackEdges(be);
+  // The graph is made acyclic: this is done
+  // by removing back edges for now, and adding them later on
+  vector<Edge> be;
+  g.getBackEdges(be);
 
-    //std::cerr<<"BackEdges-------------\n";
-    //   for(vector<Edge>::iterator VI=be.begin(); VI!=be.end(); ++VI){
-    //printEdge(*VI);
-      //cerr<<"\n";
-    //}
-    //std::cerr<<"------\n";
+  //std::cerr<<"BackEdges-------------\n";
+  //   for(vector<Edge>::iterator VI=be.begin(); VI!=be.end(); ++VI){
+  //printEdge(*VI);
+  //cerr<<"\n";
+  //}
+  //std::cerr<<"------\n";
 
 #ifdef DEBUG_PATH_PROFILES
-    cerr<<"Backedges:"<<be.size()<<endl;
+  cerr<<"Backedges:"<<be.size()<<endl;
 #endif
-    //Now we need to reflect the effect of back edges
-    //This is done by adding dummy edges
-    //If a->b is a back edge
-    //Then we add 2 back edges for it:
-    //1. from root->b (in vector stDummy)
-    //and 2. from a->exit (in vector exDummy)
-    vector<Edge> stDummy;
-    vector<Edge> exDummy;
-    addDummyEdges(stDummy, exDummy, g, be);
+  //Now we need to reflect the effect of back edges
+  //This is done by adding dummy edges
+  //If a->b is a back edge
+  //Then we add 2 back edges for it:
+  //1. from root->b (in vector stDummy)
+  //and 2. from a->exit (in vector exDummy)
+  vector<Edge> stDummy;
+  vector<Edge> exDummy;
+  addDummyEdges(stDummy, exDummy, g, be);
 
-    //std::cerr<<"After adding dummy edges\n";
-    //printGraph(g);
+  //std::cerr<<"After adding dummy edges\n";
+  //printGraph(g);
     
-    // Now, every edge in the graph is assigned a weight
-    // This weight later adds on to assign path
-    // numbers to different paths in the graph
-    //  All paths for now are acyclic,
-    // since no back edges in the graph now
-    // numPaths is the number of acyclic paths in the graph
-    int numPaths=valueAssignmentToEdges(g);
+  // Now, every edge in the graph is assigned a weight
+  // This weight later adds on to assign path
+  // numbers to different paths in the graph
+  //  All paths for now are acyclic,
+  // since no back edges in the graph now
+  // numPaths is the number of acyclic paths in the graph
+  int numPaths=valueAssignmentToEdges(g);
 
-    //std::cerr<<"Numpaths="<<numPaths<<std::endl;
-    //printGraph(g);
-    //create instruction allocation r and count
-    //r is the variable that'll act like an accumulator
-    //all along the path, we just add edge values to r
-    //and at the end, r reflects the path number
-    //count is an array: count[x] would store
-    //the number of executions of path numbered x
+  //std::cerr<<"Numpaths="<<numPaths<<std::endl;
+  //printGraph(g);
+  //create instruction allocation r and count
+  //r is the variable that'll act like an accumulator
+  //all along the path, we just add edge values to r
+  //and at the end, r reflects the path number
+  //count is an array: count[x] would store
+  //the number of executions of path numbered x
 
-    Instruction *rVar=new 
-      AllocaInst(PointerType::get(Type::IntTy), 
-		 ConstantUInt::get(Type::UIntTy,1),"R");
+  Instruction *rVar=new 
+    AllocaInst(PointerType::get(Type::IntTy), 
+               ConstantUInt::get(Type::UIntTy,1),"R");
     
-    Instruction *countVar=new 
-      AllocaInst(PointerType::get(Type::IntTy), 
-		 ConstantUInt::get(Type::UIntTy, numPaths), "Count");
+  Instruction *countVar=new 
+    AllocaInst(PointerType::get(Type::IntTy), 
+               ConstantUInt::get(Type::UIntTy, numPaths), "Count");
     
-    // insert initialization code in first (entry) BB
-    // this includes initializing r and count
-    insertInTopBB(&F.getEntryNode(),numPaths, rVar, countVar);
+  // insert initialization code in first (entry) BB
+  // this includes initializing r and count
+  insertInTopBB(&F.getEntryNode(),numPaths, rVar, countVar);
     
-    //now process the graph: get path numbers,
-    //get increments along different paths,
-    //and assign "increments" and "updates" (to r and count)
-    //"optimally". Finally, insert llvm code along various edges
-    processGraph(g, rVar, countVar, be, stDummy, exDummy, numPaths);    
-    /*
-    //get the paths
-    static std::ofstream to("paths.sizes");
-    static std::ofstream bbs("paths.look");
-    assert(to && "Cannot open file\n");
-    assert(bbs && "Cannot open file\n");
-    for(int i=0;i<numPaths; ++i){
-    std::vector<BasicBlock *> vBB;
+  //now process the graph: get path numbers,
+  //get increments along different paths,
+  //and assign "increments" and "updates" (to r and count)
+  //"optimally". Finally, insert llvm code along various edges
+  processGraph(g, rVar, countVar, be, stDummy, exDummy, numPaths);    
+  /*
+  //get the paths
+  static std::ofstream to("paths.sizes");
+  static std::ofstream bbs("paths.look");
+  assert(to && "Cannot open file\n");
+  assert(bbs && "Cannot open file\n");
+  for(int i=0;i<numPaths; ++i){
+  std::vector<BasicBlock *> vBB;
     
-    getBBtrace(vBB, i, M);
-    //get total size of vector
-    int size=0;
-    bbs<<"Meth:"<<mn<<" Path:"<<i<<"\n-------------\n";
-    for(vector<BasicBlock *>::iterator VBI=vBB.begin(); VBI!=vBB.end();
-    ++VBI){
-    BasicBlock *BB=*VBI;
-    size+=BB->size();
-    if(BB==M->front())
-    size-=numPaths;
-    bbs<<BB->getName()<<"->";
-    }
-    bbs<<"\n--------------\n";
-    to<<"::::: "<<mn<<" "<<i<<" "<<size<<"\n";
-    }
-    */
+  getBBtrace(vBB, i, M);
+  //get total size of vector
+  int size=0;
+  bbs<<"Meth:"<<mn<<" Path:"<<i<<"\n-------------\n";
+  for(vector<BasicBlock *>::iterator VBI=vBB.begin(); VBI!=vBB.end();
+  ++VBI){
+  BasicBlock *BB=*VBI;
+  size+=BB->size();
+  if(BB==M->front())
+  size-=numPaths;
+  bbs<<BB->getName()<<"->";
   }
+  bbs<<"\n--------------\n";
+  to<<"::::: "<<mn<<" "<<i<<" "<<size<<"\n";
+  }
+  */
+  //}
   
   return true;  // Always modifies function
 }
