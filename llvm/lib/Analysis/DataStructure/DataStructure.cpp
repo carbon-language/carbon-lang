@@ -365,8 +365,8 @@ template <typename CopyFunctor>
 DSCallSite::DSCallSite(const DSCallSite &FromCall, CopyFunctor nodeCopier)
   : Inst(FromCall.Inst) {
 
-  RetVal = nodeCopier(&RetVal);
-  Callee = nodeCopier(&Callee);
+  RetVal = nodeCopier(&FromCall.RetVal);
+  Callee = nodeCopier(&FromCall.Callee);
 
   CallArgs.reserve(FromCall.CallArgs.size());
   for (unsigned j = 0, ej = FromCall.CallArgs.size(); j != ej; ++j)
