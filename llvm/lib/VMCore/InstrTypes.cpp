@@ -25,7 +25,7 @@ TerminatorInst::TerminatorInst(Instruction::TermOps iType, Instruction *IB)
 //===----------------------------------------------------------------------===//
 
 PHINode::PHINode(const PHINode &PN)
-  : Instruction(PN.getType(), Instruction::PHINode) {
+  : Instruction(PN.getType(), Instruction::PHI) {
   Operands.reserve(PN.Operands.size());
   for (unsigned i = 0; i < PN.Operands.size(); i+=2) {
     Operands.push_back(Use(PN.Operands[i], this));

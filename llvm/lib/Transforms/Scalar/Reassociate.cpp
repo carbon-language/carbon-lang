@@ -75,7 +75,7 @@ unsigned Reassociate::getRank(Value *V) {
     // for PHI nodes, we cannot have infinite recursion here, because there
     // cannot be loops in the value graph that do not go through PHI nodes.
     //
-    if (I->getOpcode() == Instruction::PHINode ||
+    if (I->getOpcode() == Instruction::PHI ||
         I->getOpcode() == Instruction::Alloca ||
         I->getOpcode() == Instruction::Malloc || isa<TerminatorInst>(I) ||
         I->mayWriteToMemory())  // Cannot move inst if it writes to memory!

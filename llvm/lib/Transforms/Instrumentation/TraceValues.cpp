@@ -180,7 +180,7 @@ static inline bool TraceThisOpCode(unsigned opCode) {
   // 
   return (opCode  < Instruction::OtherOpsBegin &&
           opCode != Instruction::Alloca &&
-          opCode != Instruction::PHINode &&
+          opCode != Instruction::PHI &&
           opCode != Instruction::Cast);
 }
 

@@ -87,7 +87,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case GetElementPtr: return "getelementptr";
     
   // Other instructions...
-  case PHINode: return "phi";
+  case PHI:     return "phi";
   case Cast:    return "cast";
   case Call:    return "call";
   case Shl:     return "shl";

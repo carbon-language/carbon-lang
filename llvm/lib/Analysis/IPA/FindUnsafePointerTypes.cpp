@@ -43,7 +43,7 @@ static inline bool isSafeInstruction(const Instruction *I) {
   case Instruction::GetElementPtr:
   case Instruction::Call:
   case Instruction::Invoke:
-  case Instruction::PHINode:
+  case Instruction::PHI:
     return true;
   }
   return false;

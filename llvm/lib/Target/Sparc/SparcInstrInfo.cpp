@@ -365,7 +365,7 @@ MaxConstantForInstr(unsigned llvmOpCode)
     case Instruction::Malloc:         
     case Instruction::Alloca:         
     case Instruction::GetElementPtr:  
-    case Instruction::PHINode:       
+    case Instruction::PHI:       
     case Instruction::Cast:
     case Instruction::Call:  modelOpCode = V9::ADDi; break;
 

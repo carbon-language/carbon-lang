@@ -23,7 +23,7 @@ class PHINode : public Instruction {
 public:
   PHINode(const Type *Ty, const std::string &Name = "",
           Instruction *InsertBefore = 0)
-    : Instruction(Ty, Instruction::PHINode, Name, InsertBefore) {
+    : Instruction(Ty, Instruction::PHI, Name, InsertBefore) {
   }
 
   virtual Instruction *clone() const { return new PHINode(*this); }
@@ -98,7 +98,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PHINode *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == Instruction::PHINode; 
+    return I->getOpcode() == Instruction::PHI; 
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));

@@ -114,7 +114,7 @@ HANDLE_MEMORY_INST(25, GetElementPtr, GetElementPtrInst)
 
 // Other operators...
  FIRST_OTHER_INST(26)
-HANDLE_OTHER_INST(26, PHINode, PHINode    )  // PHI node instruction
+HANDLE_OTHER_INST(26, PHI    , PHINode    )  // PHI node instruction
 HANDLE_OTHER_INST(27, Cast   , CastInst   )  // Type cast
 HANDLE_OTHER_INST(28, Call   , CallInst   )  // Call a function
 

@@ -299,7 +299,7 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
 	  InstrTreeNode* opTreeNode;
 	  if (isa<Instruction>(operand) && operand->hasOneUse() &&
 	      cast<Instruction>(operand)->getParent() == instr->getParent() &&
-	      instr->getOpcode() != Instruction::PHINode &&
+	      instr->getOpcode() != Instruction::PHI &&
 	      instr->getOpcode() != Instruction::Call)
 	    {
 	      // Recursively create a treeNode for it.
@@ -334,7 +334,7 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
   if (numChildren > 2)
     {
       unsigned instrOpcode = treeNode->getInstruction()->getOpcode();
-      assert(instrOpcode == Instruction::PHINode ||
+      assert(instrOpcode == Instruction::PHI ||
 	     instrOpcode == Instruction::Call ||
 	     instrOpcode == Instruction::Load ||
 	     instrOpcode == Instruction::Store ||

@@ -196,7 +196,7 @@ bool ExpressionConvertibleToType(Value *V, const Type *Ty,
       return false;
     break;                                     
   }
-  case Instruction::PHINode: {
+  case Instruction::PHI: {
     PHINode *PN = cast<PHINode>(I);
     for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
       if (!ExpressionConvertibleToType(PN->getIncomingValue(i), Ty, CTMap, TD))
@@ -402,7 +402,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC,
     break;
   }
 
-  case Instruction::PHINode: {
+  case Instruction::PHI: {
     PHINode *OldPN = cast<PHINode>(I);
     PHINode *NewPN = new PHINode(Ty, Name);
 
@@ -808,7 +808,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
     }
     return false;
 
-  case Instruction::PHINode: {
+  case Instruction::PHI: {
     PHINode *PN = cast<PHINode>(I);
     for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
       if (!ExpressionConvertibleToType(PN->getIncomingValue(i), Ty, CTMap, TD))
@@ -1141,7 +1141,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 #endif
     break;
 
-  case Instruction::PHINode: {
+  case Instruction::PHI: {
     PHINode *OldPN = cast<PHINode>(I);
     PHINode *NewPN = new PHINode(NewTy, Name);
     VMC.ExprMap[I] = NewPN;

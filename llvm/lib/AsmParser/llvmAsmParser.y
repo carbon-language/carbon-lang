@@ -785,7 +785,7 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 
 // Other Operators
 %type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI CALL CAST SHL SHR VAARG VANEXT
+%token <OtherOpVal> PHI_TOK CALL CAST SHL SHR VAARG VANEXT
 %token VA_ARG // FIXME: OBSOLETE
 
 %start Module
@@ -1747,7 +1747,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = new VANextInst($2, *$4);
     delete $4;
   }
-  | PHI PHIList {
+  | PHI_TOK PHIList {
     const Type *Ty = $2->front().first->getType();
     $$ = new PHINode(Ty);
     $$->op_reserve($2->size()*2);

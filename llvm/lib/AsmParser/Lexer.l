@@ -219,7 +219,7 @@ setgt           { RET_TOK(BinaryOpVal, SetGT, SETGT); }
 setle           { RET_TOK(BinaryOpVal, SetLE, SETLE); }
 setge           { RET_TOK(BinaryOpVal, SetGE, SETGE); }
 
-phi             { RET_TOK(OtherOpVal, PHINode, PHI); }
+phi             { RET_TOK(OtherOpVal, PHI, PHI_TOK); }
 call            { RET_TOK(OtherOpVal, Call, CALL); }
 cast            { RET_TOK(OtherOpVal, Cast, CAST); }
 shl             { RET_TOK(OtherOpVal, Shl, SHL); }

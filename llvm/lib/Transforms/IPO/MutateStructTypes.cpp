@@ -425,7 +425,7 @@ void MutateStructTypes::transformFunction(Function *m) {
       }
 
         // Miscellaneous Instructions
-      case Instruction::PHINode: {
+      case Instruction::PHI: {
         const PHINode &OldPN = cast<PHINode>(I);
         PHINode *PN = new PHINode(ConvertType(OldPN.getType()));
         for (unsigned i = 0; i < OldPN.getNumIncomingValues(); ++i)

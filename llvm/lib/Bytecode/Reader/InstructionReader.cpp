@@ -158,7 +158,7 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
   case Instruction::Cast:
     Result = new CastInst(getValue(RI.Type, Args[0]), getType(Args[1]));
     break;
-  case Instruction::PHINode: {
+  case Instruction::PHI: {
     if (Args.size() == 0 || (Args.size() & 1))
       throw std::string("Invalid phi node encountered!\n");
 
