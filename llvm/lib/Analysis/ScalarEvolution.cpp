@@ -62,9 +62,8 @@
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
-#include "llvm/Type.h"
-#include "llvm/Value.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Transforms/Scalar.h"
@@ -84,7 +83,11 @@ namespace {
 
   Statistic<>
   NumBruteForceEvaluations("scalar-evolution",
-                           "Number of brute force evaluations needed to calculate high-order polynomial exit values");
+                           "Number of brute force evaluations needed to "
+                           "calculate high-order polynomial exit values");
+  Statistic<>
+  NumArrayLenItCounts("scalar-evolution",
+                      "Number of trip counts computed with array length");
   Statistic<>
   NumTripCountsComputed("scalar-evolution",
                         "Number of loops with predictable loop counts");
@@ -1090,6 +1093,13 @@ namespace {
     /// will iterate.
     SCEVHandle ComputeIterationCount(const Loop *L);
 
+    /// ComputeLoadConstantCompareIterationCount - Given an exit condition of
+    /// 'setcc load X, cst', try to se if we can compute the trip count.
+    SCEVHandle ComputeLoadConstantCompareIterationCount(LoadInst *LI,
+                                                        Constant *RHS,
+                                                        const Loop *L,
+                                                        unsigned SetCCOpcode);
+
     /// ComputeIterationCountExhaustively - If the trip is known to execute a
     /// constant number of times (the condition evolves only from constants),
     /// try to evaluate a few iterations of the loop until we get the exit
@@ -1387,6 +1397,21 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
     return ComputeIterationCountExhaustively(L, ExitBr->getCondition(),
                                           ExitBr->getSuccessor(0) == ExitBlock);
 
+  // If the condition was exit on true, convert the condition to exit on false.
+  Instruction::BinaryOps Cond;
+  if (ExitBr->getSuccessor(1) == ExitBlock)
+    Cond = ExitCond->getOpcode();
+  else
+    Cond = ExitCond->getInverseCondition();
+
+  // Handle common loops like: for (X = "string"; *X; ++X)
+  if (LoadInst *LI = dyn_cast<LoadInst>(ExitCond->getOperand(0)))
+    if (Constant *RHS = dyn_cast<Constant>(ExitCond->getOperand(1))) {
+      SCEVHandle ItCnt =
+        ComputeLoadConstantCompareIterationCount(LI, RHS, L, Cond);
+      if (!isa<SCEVCouldNotCompute>(ItCnt)) return ItCnt;
+    }
+
   SCEVHandle LHS = getSCEV(ExitCond->getOperand(0));
   SCEVHandle RHS = getSCEV(ExitCond->getOperand(1));
 
@@ -1395,13 +1420,6 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
   if (!isa<SCEVCouldNotCompute>(Tmp)) LHS = Tmp;
   Tmp = getSCEVAtScope(RHS, L);
   if (!isa<SCEVCouldNotCompute>(Tmp)) RHS = Tmp;
-
-  // If the condition was exit on true, convert the condition to exit on false.
-  Instruction::BinaryOps Cond;
-  if (ExitBr->getSuccessor(1) == ExitBlock)
-    Cond = ExitCond->getOpcode();
-  else
-    Cond = ExitCond->getInverseCondition();
 
   // At this point, we would like to compute how many iterations of the loop the
   // predicate will return true for these inputs.
@@ -1472,6 +1490,125 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
   return ComputeIterationCountExhaustively(L, ExitCond,
                                          ExitBr->getSuccessor(0) == ExitBlock);
 }
+
+static ConstantInt *
+EvaluateConstantChrecAtConstant(const SCEVAddRecExpr *AddRec, Constant *C) {
+  SCEVHandle InVal = SCEVConstant::get(cast<ConstantInt>(C));
+  SCEVHandle Val = AddRec->evaluateAtIteration(InVal);
+  assert(isa<SCEVConstant>(Val) &&
+         "Evaluation of SCEV at constant didn't fold correctly?");
+  return cast<SCEVConstant>(Val)->getValue();
+}
+
+/// GetAddressedElementFromGlobal - Given a global variable with an initializer
+/// and a GEP expression (missing the pointer index) indexing into it, return
+/// the addressed element of the initializer or null if the index expression is
+/// invalid.
+static Constant *
+GetAddressedElementFromGlobal(GlobalVariable *GV, 
+                              const std::vector<ConstantInt*> &Indices) {
+  Constant *Init = GV->getInitializer();
+  for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
+    uint64_t Idx = Indices[i]->getRawValue();
+    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Init)) {
+      assert(Idx < CS->getNumOperands() && "Bad struct index!");
+      Init = cast<Constant>(CS->getOperand(Idx));
+    } else if (ConstantArray *CA = dyn_cast<ConstantArray>(Init)) {
+      if (Idx >= CA->getNumOperands()) return 0;  // Bogus program
+      Init = cast<Constant>(CA->getOperand(Idx));
+    } else if (isa<ConstantAggregateZero>(Init)) {
+      if (const StructType *STy = dyn_cast<StructType>(Init->getType())) {
+        assert(Idx < STy->getNumElements() && "Bad struct index!");
+        Init = Constant::getNullValue(STy->getElementType(Idx));
+      } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Init->getType())) {
+        if (Idx >= ATy->getNumElements()) return 0;  // Bogus program
+        Init = Constant::getNullValue(ATy->getElementType());
+      } else {
+        assert(0 && "Unknown constant aggregate type!");
+      }
+      return 0;
+    } else {
+      return 0; // Unknown initializer type
+    }
+  }
+  return Init;
+}
+
+/// ComputeLoadConstantCompareIterationCount - Given an exit condition of
+/// 'setcc load X, cst', try to se if we can compute the trip count.
+SCEVHandle ScalarEvolutionsImpl::
+ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS, 
+                                         const Loop *L, unsigned SetCCOpcode) {
+  if (LI->isVolatile()) return UnknownValue;
+
+  // Check to see if the loaded pointer is a getelementptr of a global.
+  GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(LI->getOperand(0));
+  if (!GEP) return UnknownValue;
+
+  // Make sure that it is really a constant global we are gepping, with an
+  // initializer, and make sure the first IDX is really 0.
+  GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0));
+  if (!GV || !GV->isConstant() || !GV->hasInitializer() ||
+      GEP->getNumOperands() < 3 || !isa<Constant>(GEP->getOperand(1)) ||
+      !cast<Constant>(GEP->getOperand(1))->isNullValue())
+    return UnknownValue;
+
+  // Okay, we allow one non-constant index into the GEP instruction.
+  Value *VarIdx = 0;
+  std::vector<ConstantInt*> Indexes;
+  unsigned VarIdxNum = 0;
+  for (unsigned i = 2, e = GEP->getNumOperands(); i != e; ++i)
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(i))) {
+      Indexes.push_back(CI);
+    } else if (!isa<ConstantInt>(GEP->getOperand(i))) {
+      if (VarIdx) return UnknownValue;  // Multiple non-constant idx's.
+      VarIdx = GEP->getOperand(i);
+      VarIdxNum = i-2;
+      Indexes.push_back(0);
+    }
+
+  // Okay, we know we have a (load (gep GV, 0, X)) comparison with a constant.
+  // Check to see if X is a loop variant variable value now.
+  SCEVHandle Idx = getSCEV(VarIdx);
+  SCEVHandle Tmp = getSCEVAtScope(Idx, L);
+  if (!isa<SCEVCouldNotCompute>(Tmp)) Idx = Tmp;
+
+  // We can only recognize very limited forms of loop index expressions, in
+  // particular, only affine AddRec's like {C1,+,C2}.
+  SCEVAddRecExpr *IdxExpr = dyn_cast<SCEVAddRecExpr>(Idx);
+  if (!IdxExpr || !IdxExpr->isAffine() || IdxExpr->isLoopInvariant(L) ||
+      !isa<SCEVConstant>(IdxExpr->getOperand(0)) ||
+      !isa<SCEVConstant>(IdxExpr->getOperand(1)))
+    return UnknownValue;
+
+  unsigned MaxSteps = MaxBruteForceIterations;
+  for (unsigned IterationNum = 0; IterationNum != MaxSteps; ++IterationNum) {
+    ConstantUInt *ItCst =
+      ConstantUInt::get(IdxExpr->getType()->getUnsignedVersion(), IterationNum);
+    ConstantInt *Val = EvaluateConstantChrecAtConstant(IdxExpr, ItCst);
+
+    // Form the GEP offset.
+    Indexes[VarIdxNum] = Val;
+
+    Constant *Result = GetAddressedElementFromGlobal(GV, Indexes);
+    if (Result == 0) break;  // Cannot compute!
+
+    // Evaluate the condition for this iteration.
+    Result = ConstantExpr::get(SetCCOpcode, Result, RHS);
+    if (!isa<ConstantBool>(Result)) break;  // Couldn't decide for sure
+    if (Result == ConstantBool::False) {
+#if 0
+      std::cerr << "\n***\n*** Computed loop count " << *ItCst
+                << "\n*** From global " << *GV << "*** BB: " << *L->getHeader()
+                << "***\n";
+#endif
+      ++NumArrayLenItCounts;
+      return SCEVConstant::get(ItCst);   // Found terminating iteration!
+    }
+  }
+  return UnknownValue;
+}
+
 
 /// CanConstantFold - Return true if we can constant fold an instruction of the
 /// specified type, assuming that all operands were constants.
@@ -1977,16 +2114,6 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToNonZero(SCEV *V, const Loop *L) {
   // this, and if they did, they would already be constant folded.
   return UnknownValue;
 }
-
-static ConstantInt *
-EvaluateConstantChrecAtConstant(const SCEVAddRecExpr *AddRec, Constant *C) {
-  SCEVHandle InVal = SCEVConstant::get(cast<ConstantInt>(C));
-  SCEVHandle Val = AddRec->evaluateAtIteration(InVal);
-  assert(isa<SCEVConstant>(Val) &&
-         "Evaluation of SCEV at constant didn't fold correctly?");
-  return cast<SCEVConstant>(Val)->getValue();
-}
-
 
 /// getNumIterationsInRange - Return the number of iterations of this loop that
 /// produce values in the specified constant range.  Another way of looking at
