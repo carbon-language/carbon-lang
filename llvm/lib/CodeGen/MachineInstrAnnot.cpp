@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "../Target/SparcV9/MachineInstrAnnot.h"
-#include "llvm/CodeGen/InstrSelection.h"
+#include "../Target/SparcV9/SparcV9TmpInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
@@ -27,8 +27,7 @@ CallArgsDescriptor::CallArgsDescriptor(CallInst* _callInstr,
             ? NULL : _callInstr->getCalledValue()),
     retAddrReg(_retAddrReg),
     isVarArgs(_isVarArgs),
-    noPrototype(_noPrototype)
-{
+    noPrototype(_noPrototype) {
   unsigned int numArgs = callInstr->getNumOperands();
   argInfoVec.reserve(numArgs);
   assert(callInstr->getOperand(0) == callInstr->getCalledValue()
@@ -41,13 +40,9 @@ CallArgsDescriptor::CallArgsDescriptor(CallInst* _callInstr,
   MachineCodeForInstruction::get(callInstr).setCallArgsDescriptor(this); 
 }
 
-
-CallInst*
-CallArgsDescriptor::getReturnValue() const
-{
+CallInst *CallArgsDescriptor::getReturnValue() const {
   return (callInstr->getType() == Type::VoidTy? NULL : callInstr);
 }
-
 
 // Mechanism to get the descriptor for a CALL MachineInstr.
 // We get the LLVM CallInstr from the ret. addr. register argument
@@ -58,8 +53,7 @@ CallArgsDescriptor::getReturnValue() const
 // This is roundabout but avoids adding a new map or annotation just
 // to keep track of CallArgsDescriptors.
 // 
-CallArgsDescriptor *CallArgsDescriptor::get(const MachineInstr* MI)
-{
+CallArgsDescriptor *CallArgsDescriptor::get(const MachineInstr* MI) {
   const TmpInstruction* retAddrReg =
     cast<TmpInstruction>(isa<Function>(MI->getOperand(0).getVRegValue())
                          ? MI->getImplicitRef(MI->getNumImplicitRefs()-1)
