@@ -1,6 +1,6 @@
 LEVEL = ../../../..
 
-DIRS = EmitFunctions 
+DIRS = 
 LIBRARYNAME = profpaths
 include $(LEVEL)/Makefile.common
 
