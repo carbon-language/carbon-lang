@@ -257,11 +257,11 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<BasicBlock*> &BBs) {
   return false;
 }
 
-/// debugCrash - This method is called when some pass crashes on input.  It
-/// attempts to prune down the testcase to something reasonable, and figure
+/// debugOptimizerCrash - This method is called when some pass crashes on input.
+/// It attempts to prune down the testcase to something reasonable, and figure
 /// out exactly which pass is crashing.
 ///
-bool BugDriver::debugCrash() {
+bool BugDriver::debugOptimizerCrash() {
   bool AnyReduction = false;
   std::cout << "\n*** Debugging optimizer crash!\n";
 
@@ -408,3 +408,12 @@ bool BugDriver::debugCrash() {
   return false;
 }
 
+
+
+/// debugCodeGeneratorCrash - This method is called when the code generator
+/// crashes on an input.  It attempts to reduce the input as much as possible
+/// while still causing the code generator to crash.
+bool BugDriver::debugCodeGeneratorCrash() {
+
+  return false;
+}

@@ -46,7 +46,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
               << " on the input program!\n";
     BD.setPassesToRun(Suffix);
     BD.EmitProgressBytecode("pass-error",  false);
-    exit(BD.debugCrash());
+    exit(BD.debugOptimizerCrash());
   }
 
   // Check to see if the finished program matches the reference output...
@@ -74,7 +74,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
               << " on the input program!\n";
     BD.setPassesToRun(Prefix);
     BD.EmitProgressBytecode("pass-error",  false);
-    exit(BD.debugCrash());
+    exit(BD.debugOptimizerCrash());
   }
 
   // If the prefix maintains the predicate by itself, only keep the prefix!
@@ -107,7 +107,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
               << " on the input program!\n";
     BD.setPassesToRun(Suffix);
     BD.EmitProgressBytecode("pass-error",  false);
-    exit(BD.debugCrash());
+    exit(BD.debugOptimizerCrash());
   }
 
   // Run the result...
@@ -225,7 +225,7 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
     std::cerr << " Error running this sequence of passes" 
               << " on the input program!\n";
     BD.EmitProgressBytecode("pass-error",  false);
-    exit(BD.debugCrash());
+    exit(BD.debugOptimizerCrash());
   }
 
   if (!EmitBytecode)

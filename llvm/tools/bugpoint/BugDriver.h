@@ -75,11 +75,16 @@ public:
   ///
   bool run();
 
-  /// debugCrash - This method is called when some pass crashes on input.  It
-  /// attempts to prune down the testcase to something reasonable, and figure
-  /// out exactly which pass is crashing.
+  /// debugOptimizerCrash - This method is called when some optimizer pass
+  /// crashes on input.  It attempts to prune down the testcase to something
+  /// reasonable, and figure out exactly which pass is crashing.
   ///
-  bool debugCrash();
+  bool debugOptimizerCrash();
+  
+  /// debugCodeGeneratorCrash - This method is called when the code generator
+  /// crashes on an input.  It attempts to reduce the input as much as possible
+  /// while still causing the code generator to crash.
+  bool debugCodeGeneratorCrash();
 
   /// debugMiscompilation - This method is used when the passes selected are not
   /// crashing, but the generated output is semantically different from the

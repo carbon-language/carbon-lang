@@ -19,6 +19,7 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Transforms/Utils/Linker.h"
+#include "llvm/Support/ToolRunner.h"
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
 #include <memory>
@@ -131,7 +132,7 @@ bool BugDriver::run() {
   if (!PassesToRun.empty()) {
     std::cout << "Running selected passes on program to test for crash: ";
     if (runPasses(PassesToRun))
-      return debugCrash();
+      return debugOptimizerCrash();
   }
 
   // Set up the execution environment, selecting a method to run LLVM bytecode.
@@ -144,9 +145,20 @@ bool BugDriver::run() {
   bool CreatedOutput = false;
   if (ReferenceOutputFile.empty()) {
     std::cout << "Generating reference output from raw program...";
-    ReferenceOutputFile = executeProgramWithCBE("bugpoint.reference.out");
-    CreatedOutput = true;
-    std::cout << "Reference output is: " << ReferenceOutputFile << "\n";
+    try {
+      ReferenceOutputFile = executeProgramWithCBE("bugpoint.reference.out");
+      CreatedOutput = true;
+      std::cout << "Reference output is: " << ReferenceOutputFile << "\n";
+    } catch (ToolExecutionError &TEE) {
+      std::cerr << TEE.getMessage();
+      if (Interpreter != cbe) {
+        std::cerr << "*** There is a bug running the C backend.  Either debug"
+                  << " it (use the -run-cbe bugpoint option), or fix the error"
+                  << " some other way.\n";
+        return 1;
+      }
+      return debugCodeGeneratorCrash();
+    }
   }
 
   // Make sure the reference output file gets deleted on exit from this
@@ -156,9 +168,14 @@ bool BugDriver::run() {
   // Diff the output of the raw program against the reference output.  If it
   // matches, then we have a miscompilation bug.
   std::cout << "*** Checking the code generator...\n";
-  if (!diffProgram()) {
-    std::cout << "\n*** Debugging miscompilation!\n";
-    return debugMiscompilation();
+  try {
+    if (!diffProgram()) {
+      std::cout << "\n*** Debugging miscompilation!\n";
+      return debugMiscompilation();
+    }
+  } catch (ToolExecutionError &TEE) {
+    std::cerr << TEE.getMessage() << "*** Debugging code generator crash!\n";
+    return debugCodeGeneratorCrash();
   }
 
   std::cout << "\n*** Input program does not match reference diff!\n";
