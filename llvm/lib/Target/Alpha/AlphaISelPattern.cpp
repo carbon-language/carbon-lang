@@ -50,6 +50,10 @@ namespace {
       setOperationAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
 
+      setOperationAction(ISD::ZERO_EXTEND_INREG, MVT::i1, Expand);
+      setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+
+
       computeRegisterProperties();
       
       //      addLegalFPImmediate(+0.0); // FLD0
@@ -654,9 +658,20 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
 
   case ISD::UREM:
+  case ISD::SREM:
+  case ISD::SDIV:
+  case ISD::UDIV:
+    //FIXME: alpha really doesn't support any of these operations, 
+    // the ops are expanded into special library calls with
+    // special calling conventions
+    switch(N.getOpcode()) {
+    case UREM: Opc = Alpha::REMQU; break;
+    case SREM: Opc = Alpha::REMQ; break;
+    case UDIV: Opc = Alpha::DIVQU; break;
+    case SDIV: Opc = Alpha::DIVQ; break;
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
-        BuildMI(BB, Alpha::REMQU, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
 
   case ISD::SELECT:

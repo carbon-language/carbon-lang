@@ -50,22 +50,28 @@ let isCall = 1,
 let isReturn = 1, isTerminator = 1 in
   def RETURN : PseudoInstAlpha<(ops ), "ret $$31,($$26),1">; //Return from subroutine
 
-def LOAD_IMM : PseudoInstAlpha<(ops GPRC:$RC, s64imm:$IMM), "ldiq $RC,$IMM">; //Load Immediate Quadword
+let Uses = [R28] in
+  def LOAD_IMM : PseudoInstAlpha<(ops GPRC:$RC, s64imm:$IMM), "ldiq $RC,$IMM">; //Load Immediate Quadword
 
-let Uses = [R29] in
+let Uses = [R29, R28] in
   def STORE : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "stq $RA,$DISP">; //Store quadword
 
-let Uses = [R29] in
+let Uses = [R29, R28] in
   def LOAD_ADDR : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lda $RA,$DISP">;  //Load address
 
-let Uses = [R29] in
+let Uses = [R29, R28] in
   def LOAD : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldq $RA,$DISP">; //Load quadword
 
 def LDW : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldw $RA,$DISP($RB)">; // Load sign-extended word
 def LDB : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldb $RA,$DISP($RB)">; //Load byte
 
 let Uses = [R28, R23, R24, R25, R26] in
+{
   def REMQU : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "remqu $RA,$RB,$RC">; //unsigned remander
+  def REMQ  : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "remq $RA,$RB,$RC">; //unsigned remander
+  def DIVQU : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "divqu $RA,$RB,$RC">; //unsigned remander
+  def DIVQ  : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "divq $RA,$RB,$RC">; //unsigned remander
+}
 
 //***********************
 //Real instructions
