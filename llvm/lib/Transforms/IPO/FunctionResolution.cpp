@@ -82,8 +82,11 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
             if (OldMT->getParamTypes()[i]->getPrimitiveID() != 
                 ConcreteMT->getParamTypes()[i]->getPrimitiveID()) {
               std::cerr << "WARNING: Function [" << Old->getName()
-                        << "]: Parameter types conflict for: '" << OldMT
-                        << "' and '" << ConcreteMT << "'\n";
+                        << "]: Parameter types conflict for: '";
+              WriteTypeSymbolic(std::cerr, OldMT, &M);
+              std::cerr << "' and '";
+              WriteTypeSymbolic(std::cerr, ConcreteMT, &M);
+              std::cerr << "'\n";
               return Changed;
             }
       
@@ -227,8 +230,9 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
     if (!DontPrintWarning) {
       std::cerr << "WARNING: Found global types that are not compatible:\n";
       for (unsigned i = 0; i < Globals.size(); ++i) {
-        std::cerr << "\t" << *Globals[i]->getType() << " %"
-                  << Globals[i]->getName() << "\n";
+        std::cerr << "\t";
+        WriteTypeSymbolic(std::cerr, Globals[i]->getType(), &M);
+        std::cerr << " %" << Globals[i]->getName() << "\n";
       }
     }
 
