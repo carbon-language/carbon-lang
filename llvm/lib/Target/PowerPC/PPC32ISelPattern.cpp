@@ -469,7 +469,7 @@ public:
   unsigned SelectExprFP(SDOperand N, unsigned Result);
   void Select(SDOperand N);
   
-  void SelectAddr(SDOperand N, unsigned& Reg, int& offset);
+  bool SelectAddr(SDOperand N, unsigned& Reg, int& offset);
   void SelectBranchCC(SDOperand N);
 };
 
@@ -529,6 +529,22 @@ static unsigned getBCCForSetCC(unsigned Condition, bool& U) {
   case ISD::SETUGE: U = true;
   case ISD::SETGE:  return PPC::BGE;
   }
+  return 0;
+}
+
+/// IndexedOpForOp - Return the indexed variant for each of the PowerPC load
+/// and store immediate instructions.
+static unsigned IndexedOpForOp(unsigned Opcode) {
+  switch(Opcode) {
+  default: assert(0 && "Unknown opcode!"); abort();
+  case PPC::LBZ: return PPC::LBZX;  case PPC::STB: return PPC::STBX;
+  case PPC::LHZ: return PPC::LHZX;  case PPC::STH: return PPC::STHX;
+  case PPC::LHA: return PPC::LHAX;  case PPC::STW: return PPC::STWX;
+  case PPC::LWZ: return PPC::LWZX;  case PPC::STFS: return PPC::STFSX;
+  case PPC::LFS: return PPC::LFSX;  case PPC::STFD: return PPC::STFDX;
+  case PPC::LFD: return PPC::LFDX;
+  }
+  return 0;
 }
 }
 
@@ -598,18 +614,21 @@ unsigned ISel::SelectSetCR0(SDOperand CC) {
 }
 
 /// Check to see if the load is a constant offset from a base register
-void ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
+bool ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
 {
   unsigned imm = 0, opcode = N.getOpcode();
-  if (N.getOpcode() == ISD::ADD)
+  if (N.getOpcode() == ISD::ADD) {
+    Reg = SelectExpr(N.getOperand(0));
     if (1 == canUseAsImmediateForOpcode(N.getOperand(1), opcode, imm)) {
-      Reg = SelectExpr(N.getOperand(0));
       offset = imm;
-      return;
-    }
+      return false;
+    } 
+    offset = SelectExpr(N.getOperand(1));
+    return true;
+  }
   Reg = SelectExpr(N);
   offset = 0;
-  return;
+  return false;
 }
 
 void ISel::SelectBranchCC(SDOperand N)
@@ -988,8 +1007,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
       addFrameReference(BuildMI(BB, Opc, 2, Result), (int)Tmp1);
     } else {
       int offset;
-      SelectAddr(Address, Tmp1, offset);
-      BuildMI(BB, Opc, 2, Result).addSImm(offset).addReg(Tmp1);
+      bool idx = SelectAddr(Address, Tmp1, offset);
+      if (idx) {
+        Opc = IndexedOpForOp(Opc);
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(offset);
+      } else {
+        BuildMI(BB, Opc, 2, Result).addSImm(offset).addReg(Tmp1);
+      }
     }
     return Result;
   }
@@ -1534,8 +1558,13 @@ void ISel::Select(SDOperand N) {
       else
       {
         int offset;
-        SelectAddr(Address, Tmp2, offset);
-        BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(offset).addReg(Tmp2);
+        bool idx = SelectAddr(Address, Tmp2, offset);
+        if (idx) { 
+          Opc = IndexedOpForOp(Opc);
+          BuildMI(BB, Opc, 3).addReg(Tmp1).addReg(Tmp2).addReg(offset);
+        } else {
+          BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(offset).addReg(Tmp2);
+        }
       }
       return;
     }
