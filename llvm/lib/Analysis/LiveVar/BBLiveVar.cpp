@@ -21,8 +21,6 @@
 /// BROKEN: Should not include sparc stuff directly into here
 #include "../../Target/Sparc/SparcInternals.h"  //  Only for PHI defn
 
-using std::cerr;
-
 static AnnotationID AID(AnnotationManager::getID("Analysis::BBLiveVar"));
 
 BBLiveVar *BBLiveVar::CreateOnBB(const BasicBlock &BB, MachineBasicBlock &MBB,
@@ -63,9 +61,9 @@ void BBLiveVar::calcDefUseSets() {
     const MachineInstr *MI = *MII;
     
     if (DEBUG_LV >= LV_DEBUG_Verbose) {
-      cerr << " *Iterating over machine instr ";
+      std::cerr << " *Iterating over machine instr ";
       MI->dump();
-      cerr << "\n";
+      std::cerr << "\n";
     }
 
     // iterate over  MI operands to find defs
@@ -105,8 +103,8 @@ void BBLiveVar::calcDefUseSets() {
 	  PredToEdgeInSetMap[PredBB].insert(ArgVal); 
 	  
 	  if (DEBUG_LV >= LV_DEBUG_Verbose)
-	    cerr << "   - phi operand " << RAV(ArgVal) << " came from BB "
-                 << RAV(PredBB) << "\n";
+	    std::cerr << "   - phi operand " << RAV(ArgVal) << " came from BB "
+                      << RAV(PredBB) << "\n";
 	} // if( IsPhi )
         else {
           // It is not a Phi use: add to regular use set and remove later defs.
@@ -139,7 +137,7 @@ void BBLiveVar::addDef(const Value *Op) {
   InSet.erase(Op);       // this definition kills any later uses
   InSetChanged = true; 
 
-  if (DEBUG_LV >= LV_DEBUG_Verbose) cerr << "  +Def: " << RAV(Op) << "\n";
+  if (DEBUG_LV >= LV_DEBUG_Verbose) std::cerr << "  +Def: " << RAV(Op) << "\n";
 }
 
 
@@ -151,7 +149,7 @@ void  BBLiveVar::addUse(const Value *Op) {
   DefSet.erase(Op);   // remove if there is a def below this use
   InSetChanged = true; 
 
-  if (DEBUG_LV >= LV_DEBUG_Verbose) cerr << "   Use: " << RAV(Op) << "\n";
+  if (DEBUG_LV >= LV_DEBUG_Verbose) std::cerr << "   Use: " << RAV(Op) << "\n";
 }
 
 
@@ -238,14 +236,14 @@ bool BBLiveVar::applyFlowFunc() {
 // ----------------- Methods For Debugging (Printing) -----------------
 
 void BBLiveVar::printAllSets() const {
-  cerr << "  Defs: "; printSet(DefSet);  cerr << "\n";
-  cerr << "  In: ";  printSet(InSet);  cerr << "\n";
-  cerr << "  Out: "; printSet(OutSet);  cerr << "\n";
+  std::cerr << "  Defs: "; printSet(DefSet);  std::cerr << "\n";
+  std::cerr << "  In: ";  printSet(InSet);  std::cerr << "\n";
+  std::cerr << "  Out: "; printSet(OutSet);  std::cerr << "\n";
 }
 
 void BBLiveVar::printInOutSets() const {
-  cerr << "  In: ";   printSet(InSet);  cerr << "\n";
-  cerr << "  Out: ";  printSet(OutSet);  cerr << "\n";
+  std::cerr << "  In: ";   printSet(InSet);  std::cerr << "\n";
+  std::cerr << "  Out: ";  printSet(OutSet);  std::cerr << "\n";
 }
 
 
