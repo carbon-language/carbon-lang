@@ -441,9 +441,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
           uint64_t C = GetConstantValueAsUnsignedInt(val, isValidConstant);
           assert(isValidConstant && "Unrecognized constant");
 
-          if (opSize > destSize ||
-              (val->getType()->isSigned()
-               && destSize < target.getTargetData().getIntegerRegSize()))
+          if (opSize > destSize || (val->getType()->isSigned() && destSize < 8))
             { // operand is larger than dest,
               //    OR both are equal but smaller than the full register size
               //       AND operand is signed, so it may have extra sign bits:
