@@ -51,6 +51,9 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   case Intrinsic::returnaddress:
   case Intrinsic::frameaddress:
+    std::cerr << "WARNING: this target does not support the llvm."
+              << (Callee->getIntrinsicID() == Intrinsic::returnaddress ? 
+                  "return" : "frame") << "address intrinsic.\n";
     CI->replaceAllUsesWith(ConstantPointerNull::get(
                                             cast<PointerType>(CI->getType())));
     break;
