@@ -451,7 +451,7 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
     "-shared",                   // `-shared' for Linux/X86, maybe others
 #endif
 
-#if defined(__ia64__)
+#if defined(__ia64__) || defined(__alpha__)
     "-fPIC",                     // IA64 requires shared objs to contain PIC
 #endif
     "-o", OutputFile.c_str(),    // Output to the right filename...
