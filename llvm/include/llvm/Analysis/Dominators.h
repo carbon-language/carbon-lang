@@ -379,9 +379,27 @@ public:
 
   // Accessor interface:
   typedef DomSetMapType::const_iterator const_iterator;
-  inline const_iterator begin() const { return Frontiers.begin(); }
-  inline const_iterator end()   const { return Frontiers.end(); }
-  inline const_iterator find(BasicBlock* B) const { return Frontiers.find(B); }
+  const_iterator begin() const { return Frontiers.begin(); }
+  const_iterator end()   const { return Frontiers.end(); }
+  const_iterator find(BasicBlock* B) const { return Frontiers.find(B); }
+
+  void addBasicBlock(BasicBlock *BB, const DomSetType &frontier) {
+    assert(find(BB) == end() && "Block already in DominanceFrontier!");
+    Frontiers.insert(std::make_pair(BB, frontier));
+  }
+
+  void addToFrontier(BasicBlock *BB, BasicBlock *Node) {
+    DomSetMapType::iterator I = Frontiers.find(BB);
+    assert(I != end() && "BB is not in DominanceFrontier!");
+    I->second.insert(Node);
+  }
+
+  void removeFromFrontier(BasicBlock *BB, BasicBlock *Node) {
+    DomSetMapType::iterator I = Frontiers.find(BB);
+    assert(I != end() && "BB is not in DominanceFrontier!");
+    assert(I->second.count(Node) && "Node is not in DominanceFrontier of BB");
+    I->second.erase(Node);
+  }
 
   // print - Convert to human readable form
   virtual void print(std::ostream &OS) const;
