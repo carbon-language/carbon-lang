@@ -18,6 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Constants.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetMachine.h"
@@ -193,15 +194,51 @@ static TypeClass getClassB(const Type *T) {
 void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
                                     MachineBasicBlock::iterator IP,
                                     Constant *C, unsigned R) {
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+    switch (CE->getOpcode()) {
+    case Instruction::GetElementPtr:
+      emitGEPOperation(MBB, IP, CE->getOperand(0),
+                       CE->op_begin()+1, CE->op_end(), R);
+      return;
+    default:
+      std::cerr << "Copying this constant expr not yet handled: " << *CE;
+      abort();
+    }
+  }
+
   if (C->getType()->isIntegral ()) {
     uint64_t Val;
+    unsigned Class = getClassB (C->getType ());
+    if (Class == cLong) {
+      unsigned TmpReg = makeAnotherReg (Type::IntTy);
+      unsigned TmpReg2 = makeAnotherReg (Type::IntTy);
+      // Copy the value into the register pair.
+      // R = top(more-significant) half, R+1 = bottom(less-significant) half
+      uint64_t Val = cast<ConstantInt>(C)->getRawValue();
+      unsigned topHalf = Val & 0xffffffffU;
+      unsigned bottomHalf = Val >> 32;
+      unsigned HH = topHalf >> 10;
+      unsigned HM = topHalf & 0x03ff;
+      unsigned LM = bottomHalf >> 10;
+      unsigned LO = bottomHalf & 0x03ff;
+      BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm(HH);
+      BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
+        .addImm (HM);
+      BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg2).addImm(LM);
+      BuildMI (*MBB, IP, V8::ORri, 2, R+1).addReg (TmpReg2)
+        .addImm (LO);
+      return;
+    }
+
+    assert(Class <= cInt && "Type not handled yet!");
+
     if (C->getType() == Type::BoolTy) {
       Val = (C == ConstantBool::True);
     } else {
       ConstantInt *CI = dyn_cast<ConstantInt> (C);
       Val = CI->getRawValue ();
     }
-    switch (getClassB (C->getType ())) {
+    switch (Class) {
       case cByte:
         BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addImm((uint8_t)Val);
         return;
@@ -220,32 +257,26 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
           .addImm (((uint32_t) Val) & 0x03ff);
         return;
       }
-      case cLong: {
-        unsigned TmpReg = makeAnotherReg (Type::UIntTy);
-        uint32_t topHalf = (uint32_t) (Val >> 32);
-        uint32_t bottomHalf = (uint32_t)Val;
-#if 0 // FIXME: This does not appear to be correct; it assigns SSA reg R twice.
-        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm (topHalf >> 10);
-        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
-          .addImm (topHalf & 0x03ff);
-        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm (bottomHalf >> 10);
-        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
-          .addImm (bottomHalf & 0x03ff);
-#else
-        std::cerr << "Offending constant: " << *C << "\n";
-        assert (0 && "Can't copy this kind of constant into register yet");
-#endif
-        return;
-      }
       default:
         std::cerr << "Offending constant: " << *C << "\n";
         assert (0 && "Can't copy this kind of constant into register yet");
         return;
     }
+  } else if (isa<ConstantPointerNull>(C)) {
+    // Copy zero (null pointer) to the register.
+    BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addImm (0);
+  } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
+    // Copy it with a SETHI/OR pair; the JIT + asmwriter should recognize
+    // that SETHI %reg,global == SETHI %reg,%hi(global) and 
+    // OR %reg,global,%reg == OR %reg,%lo(global),%reg.
+    unsigned TmpReg = makeAnotherReg (C->getType ());
+    BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addGlobalAddress (CPR->getValue());
+    BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
+      .addGlobalAddress (CPR->getValue ());
+  } else {
+    std::cerr << "Offending constant: " << *C << "\n";
+    assert (0 && "Can't copy this kind of constant into register yet");
   }
-
-  std::cerr << "Offending constant: " << *C << "\n";
-  assert (0 && "Can't copy this kind of constant into register yet");
 }
 
 void V8ISel::LoadArgumentsToVirtualRegs (Function *F) {
