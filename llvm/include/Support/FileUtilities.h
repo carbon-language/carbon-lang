@@ -104,24 +104,41 @@ bool MakeFileReadable (const std::string & Filename);
 
 
 /// FDHandle - Simple handle class to make sure a file descriptor gets closed
-/// when the object is destroyed.
+/// when the object is destroyed.  This handle acts similarly to an
+/// std::auto_ptr, in that the copy constructor and assignment operators
+/// transfer ownership of the handle.  This means that FDHandle's do not have
+/// value semantics.
 ///
 class FDHandle {
   int FD;
-  FDHandle(const FDHandle &);      // DO NOT IMPLEMENT
-  void operator=(const FDHandle&); // DO NOT IMPLEMENT
 public:
   FDHandle() : FD(-1) {}
   FDHandle(int fd) : FD(fd) {}
+  FDHandle(FDHandle &RHS) : FD(RHS.FD) {
+    RHS.FD = -1;       // Transfer ownership
+  }
+
   ~FDHandle() throw();
 
+  /// get - Get the current file descriptor, without releasing ownership of it.
+  int get() const { return FD; }
   operator int() const { return FD; }
 
   FDHandle &operator=(int fd) throw();
 
-  /// take - Take ownership of the file descriptor away from the FDHandle
+  FDHandle &operator=(FDHandle &RHS) {
+    int fd = RHS.FD;
+    RHS.FD = -1;       // Transfer ownership
+    return operator=(fd);
+  }
+
+  /// release - Take ownership of the file descriptor away from the FDHandle
   /// object, so that the file is not closed when the FDHandle is destroyed.
-  int take() throw();
+  int release() {
+    int Ret = FD;
+    FD = -1;
+    return Ret;
+  }
 };
 } // End llvm namespace
 

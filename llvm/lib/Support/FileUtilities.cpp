@@ -209,11 +209,3 @@ FDHandle &FDHandle::operator=(int fd) throw() {
   return *this;
 }
 
-
-/// take - Take ownership of the file descriptor away from the FDHandle
-/// object, so that the file is not closed when the FDHandle is destroyed.
-int FDHandle::take() throw() {
-  int Ret = FD;
-  FD = -1;
-  return Ret;
-}
