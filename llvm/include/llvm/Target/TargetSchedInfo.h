@@ -303,7 +303,7 @@ protected:
 
 
   friend class ModuloSchedGraph;
-  friend class ModuloSchedulingPass;
+  friend class ModuloScheduling;
   
 };
 
