@@ -44,7 +44,7 @@
 #  process and erased (unless -noremove is specified; see above.)
 # WEBDIR is the directory into which the test results web page will be written,
 #  AND in which the "index.html" is assumed to be a symlink to the most recent
-#  copy of the results. This directory MUST exist before the script is run.
+#  copy of the results. This directory will be created if it does not exist.
 # LLVMGCCDIR is the directory in which the LLVM GCC Front End is installed
 #  to. This is the same as you would have for a normal LLVM build.
 #
@@ -109,6 +109,18 @@ sub GetRegex {   # (Regex with ()'s, value)
   return "0";
 }
 
+sub Touch {
+  my @files = @_;
+  my $now = time;
+  foreach my $file (@files) {
+    if (! -f $file) {
+      open (FILE, ">$file") or warn "Could not create new file $file";
+      close FILE;
+    }
+    utime $now, $now, $file;
+  }
+}
+
 sub AddRecord {
   my ($Val, $Filename) = @_;
   my @Records;
@@ -118,7 +130,6 @@ sub AddRecord {
   }
   push @Records, "$DATE: $Val";
   WriteFile "$WebDir/$Filename", (join "\n", @Records) . "\n";
-  return @Records;
 }
 
 sub AddPreTag {  # Add pre tags around nonempty list, or convert to "none"
@@ -315,6 +326,10 @@ if ($VERBOSE) {
   print "BuildLog = $BuildLog\n";
 }
 
+if (! -d $WebDir) {
+  mkdir $WebDir, 0777;
+  warn "Warning: $WebDir did not exist; creating it.\n";
+}
 
 #
 # Create the CVS repository directory
@@ -744,9 +759,17 @@ if ((scalar @PrevDays) > 20) {
 my $PrevDaysList = join "\n  ", map { "<a href=\"$_.html\">$_</a><br>" } @PrevDays;
 
 #
-# Start outputing files into the web directory
+# Start outputting files into the web directory
 #
 ChangeDir( $WebDir, "Web Directory" );
+
+# Make sure we don't get errors running the nightly tester the first time
+# because of files that don't exist.
+Touch ('running_build_time.txt', 'running_Olden_llc_time.txt',
+       'running_loc.txt', 'running_Olden_machcode.txt',
+       'running_Olden_bytecode.txt', 'running_Olden_nat_time.txt',
+       'running_Olden_cbe_time.txt', 'running_Olden_opt_time.txt',
+       'running_Olden_jit_time.txt');
 
 # Add information to the files which accumulate information for graphs...
 AddRecord($LOC, "running_loc.txt");
