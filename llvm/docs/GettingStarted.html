@@ -815,26 +815,47 @@
     following is a brief introduction to the most important tools.</p>
 
     <dl compact>
+      <dt>
+
+      <dt><tt><b>analyze</b></tt><dd> <tt>analyze</tt> is used to run a specific
+      analysis on an input LLVM bytecode file and print out the results.  It is
+      primarily useful for debugging analyses, or familiarizing yourself with
+      what an analysis does.<p>
+
+      <dt><tt><b>bugpoint</b></tt><dd> <tt>bugpoint</tt> is used to debug
+      optimization passes or code generation backends by narrowing down the
+      given test case to the minimum number of passes and/or instructions that
+      still cause a problem, whether it is a crash or miscompilation. See <a
+      href="HowToSubmitABug.html">HowToSubmitABug.html</a> for more information
+      on using <tt>bugpoint</tt>.<p>
+
+      <dt><tt><b>llvm-ar</b></tt><dd>The archiver produces an archive containing
+      the given LLVM bytecode files, optionally with an index for faster
+      lookup.<p>
+      
       <dt><tt><b>llvm-as</b></tt><dd>The assembler transforms the human readable
       LLVM assembly to LLVM bytecode.<p>
 
       <dt><tt><b>llvm-dis</b></tt><dd>The disassembler transforms the LLVM
-      bytecode to human readable LLVM assembly.  Additionally it can convert
+      bytecode to human readable LLVM assembly.  Additionally, it can convert
       LLVM bytecode to C, which is enabled with the <tt>-c</tt> option.<p>
 
+      <dt><tt><b>llvm-link</b></tt><dd> <tt>llvm-link</tt>, not surprisingly,
+      links multiple LLVM modules into a single program.<p>
+      
       <dt><tt><b>lli</b></tt><dd> <tt>lli</tt> is the LLVM interpreter, which
       can directly execute LLVM bytecode (although very slowly...). In addition
-      to a simple interpreter, <tt>lli</tt> is also has debugger and tracing
-      modes (entered by specifying <tt>-debug</tt> or <tt>-trace</tt> on the
-      command line, respectively). Finally, for architectures that support it
-      (currently only x86 and Sparc), by default, <tt>lli</tt> will function as
-      a Just-In-Time compiler (if the functionality was compiled in), and will
-      execute the code <i>much</i> faster than the interpreter.<p>
+      to a simple interpreter, <tt>lli</tt> also has a tracing mode (entered by
+      specifying <tt>-trace</tt> on the command line). Finally, for
+      architectures that support it (currently only x86 and Sparc), by default,
+      <tt>lli</tt> will function as a Just-In-Time compiler (if the
+      functionality was compiled in), and will execute the code <i>much</i>
+      faster than the interpreter.<p>
 
       <dt><tt><b>llc</b></tt><dd> <tt>llc</tt> is the LLVM backend compiler,
       which translates LLVM bytecode to a SPARC or x86 assembly file.<p>
 
-      <dt><tt><b>llvmgcc</b></tt><dd> <tt>llvmgcc</tt> is a GCC based C frontend
+      <dt><tt><b>llvmgcc</b></tt><dd> <tt>llvmgcc</tt> is a GCC-based C frontend
       that has been retargeted to emit LLVM code as the machine code output.  It
       works just like any other GCC compiler, taking the typical <tt>-c, -S, -E,
       -o</tt> options that are typically used.  The source code for the
@@ -845,15 +866,14 @@
         <dt><tt><b>gccas</b></tt><dd> This tool is invoked by the
         <tt>llvmgcc</tt> frontend as the "assembler" part of the compiler.  This
         tool actually assembles LLVM assembly to LLVM bytecode,
-	    performs a variety of optimizations,
-        and outputs LLVM bytecode.  Thus when you invoke <tt>llvmgcc -c x.c -o
-        x.o</tt>, you are causing <tt>gccas</tt> to be run, which writes the
-        <tt>x.o</tt> file (which is an LLVM bytecode file that can be
-        disassembled or manipulated just like any other bytecode file).  The
-        command line interface to <tt>gccas</tt> is designed to be as close as
-        possible to the <b>system</b> `<tt>as</tt>' utility so that the gcc
-        frontend itself did not have to be modified to interface to a "weird"
-        assembler.<p>
+        performs a variety of optimizations, and outputs LLVM bytecode.  Thus
+        when you invoke <tt>llvmgcc -c x.c -o x.o</tt>, you are causing
+        <tt>gccas</tt> to be run, which writes the <tt>x.o</tt> file (which is
+        an LLVM bytecode file that can be disassembled or manipulated just like
+        any other bytecode file).  The command line interface to <tt>gccas</tt>
+        is designed to be as close as possible to the <b>system</b>
+        `<tt>as</tt>' utility so that the gcc frontend itself did not have to be
+        modified to interface to a "weird" assembler.<p>
 
         <dt><tt><b>gccld</b></tt><dd> <tt>gccld</tt> links together several LLVM
         bytecode files into one bytecode file and does some optimization.  It is
@@ -868,12 +888,6 @@
       line), and then outputs the resultant bytecode.  The '<tt>opt --help</tt>'
       command is a good way to get a list of the program transformations
       available in LLVM.<p>
-
- 
-      <dt><tt><b>analyze</b></tt><dd> <tt>analyze</tt> is used to run a specific
-      analysis on an input LLVM bytecode file and print out the results.  It is
-      primarily useful for debugging analyses, or familiarizing yourself with
-      what an analysis does.<p>
 
     </dl>
 
