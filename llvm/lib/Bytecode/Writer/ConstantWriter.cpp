@@ -13,8 +13,6 @@
 #include "llvm/Constants.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
-#include <iostream>
-using std::cerr;
 
 void BytecodeWriter::outputType(const Type *T) {
   output_vbr((unsigned)T->getPrimitiveID(), Out);
@@ -52,7 +50,7 @@ void BytecodeWriter::outputType(const Type *T) {
     int Slot = Table.getValSlot(AT->getElementType());
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
-    //cerr << "Type slot = " << Slot << " Type = " << T->getName() << endl;
+    //std::cerr << "Type slot = " << Slot << " Type = " << T->getName() << endl;
 
     output_vbr(AT->getNumElements(), Out);
     break;
@@ -89,13 +87,15 @@ void BytecodeWriter::outputType(const Type *T) {
 
   //case Type::PackedTyID:
   default:
-    cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
-	 << " Type '" << T->getDescription() << "'\n";
+    std::cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
+              << " Type '" << T->getDescription() << "'\n";
     break;
   }
 }
 
 bool BytecodeWriter::outputConstant(const Constant *CPV) {
+  assert((CPV->getType()->isPrimitiveType() || !CPV->isNullValue()) &&
+         "Shouldn't output null constants!");
 
   // We must check for a ConstantExpr before switching by type because
   // a ConstantExpr can be of any type, and has no explicit value.
@@ -121,9 +121,9 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
   switch (CPV->getType()->getPrimitiveID()) {
   case Type::BoolTyID:    // Boolean Types
     if (cast<const ConstantBool>(CPV)->getValue())
-      output_vbr((unsigned)1, Out);
+      output_vbr(1U, Out);
     else
-      output_vbr((unsigned)0, Out);
+      output_vbr(0U, Out);
     break;
 
   case Type::UByteTyID:   // Unsigned integer types...
@@ -171,17 +171,11 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
 
   case Type::PointerTyID: {
     const ConstantPointer *CPP = cast<const ConstantPointer>(CPV);
-    if (isa<ConstantPointerNull>(CPP)) {
-      output_vbr((unsigned)0, Out);
-    } else if (const ConstantPointerRef *CPR = 
-	                dyn_cast<ConstantPointerRef>(CPP)) {
-      output_vbr((unsigned)1, Out);
-      int Slot = Table.getValSlot((Value*)CPR->getValue());
-      assert(Slot != -1 && "Global used but not available!!");
-      output_vbr((unsigned)Slot, Out);
-    } else {
-      assert(0 && "Unknown ConstantPointer Subclass!");
-    }
+    assert(!isa<ConstantPointerNull>(CPP) && "Null should be already emitted!");
+    const ConstantPointerRef *CPR = cast<ConstantPointerRef>(CPP);
+    int Slot = Table.getValSlot((Value*)CPR->getValue());
+    assert(Slot != -1 && "Global used but not available!!");
+    output_vbr((unsigned)Slot, Out);
     break;
   }
 
@@ -199,8 +193,8 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
   case Type::VoidTyID: 
   case Type::LabelTyID:
   default:
-    cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
-	 << " type '" << CPV->getType()->getName() << "'\n";
+    std::cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
+              << " type '" << CPV->getType()->getName() << "'\n";
     break;
   }
   return false;

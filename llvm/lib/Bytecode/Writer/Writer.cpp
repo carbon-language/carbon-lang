@@ -43,19 +43,36 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
   // Emit the top level CLASS block.
   BytecodeBlock ModuleBlock(BytecodeFormat::Module, Out);
 
-  // Output the ID of first "derived" type:
-  output_vbr((unsigned)Type::FirstDerivedTyID, Out);
+  bool isBigEndian = true;
+  bool hasLongPointers = true;
+
+  // Output the version identifier... we are currently on bytecode version #1
+  unsigned Version = (1 << 4) | isBigEndian | (hasLongPointers << 1);
+  output_vbr(Version, Out);
   align32(Out);
 
-  // Output module level constants, including types used by the function protos
-  outputConstants(false);
+  {
+    BytecodeBlock CPool(BytecodeFormat::GlobalTypePlane, Out);
+    
+    // Write the type plane for types first because earlier planes (e.g. for a
+    // primitive type like float) may have constants constructed using types
+    // coming later (e.g., via getelementptr from a pointer type).  The type
+    // plane is needed before types can be fwd or bkwd referenced.
+    const std::vector<const Value*> &Plane = Table.getPlane(Type::TypeTyID);
+    assert(!Plane.empty() && "No types at all?");
+    unsigned ValNo = Type::FirstDerivedTyID; // Start at the derived types...
+    outputConstantsInPlane(Plane, ValNo);      // Write out the types
+  }
 
-  // The ModuleInfoBlock follows directly after the Module constant pool
+  // The ModuleInfoBlock follows directly after the type information
   outputModuleInfoBlock(M);
+
+  // Output module level constants, used for global variable initializers
+  outputConstants(false);
 
   // Do the whole module now! Process each function at a time...
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-    processMethod(I);
+    outputFunction(I);
 
   // If needed, output the symbol table for the module...
   outputSymbolTable(M->getSymbolTable());
@@ -68,8 +85,9 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
                                             &Plane, unsigned StartNo) {
   unsigned ValNo = StartNo;
   
-  // Scan through and ignore function arguments...
-  for (; ValNo < Plane.size() && isa<Argument>(Plane[ValNo]); ValNo++)
+  // Scan through and ignore function arguments/global values...
+  for (; ValNo < Plane.size() && (isa<Argument>(Plane[ValNo]) ||
+                                  isa<GlobalValue>(Plane[ValNo])); ValNo++)
     /*empty*/;
 
   unsigned NC = ValNo;              // Number of constants
@@ -98,7 +116,7 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
       //     << Out.size() << "\n";
       outputConstant(CPV);
     } else {
-      outputType(cast<const Type>(V));
+      outputType(cast<Type>(V));
     }
   }
 }
@@ -108,25 +126,20 @@ void BytecodeWriter::outputConstants(bool isFunction) {
 
   unsigned NumPlanes = Table.getNumPlanes();
   
-  // Write the type plane for types first because earlier planes
-  // (e.g. for a primitive type like float) may have constants constructed
-  // using types coming later (e.g., via getelementptr from a pointer type).
-  // The type plane is needed before types can be fwd or bkwd referenced.
-  if (!isFunction) {
-    const std::vector<const Value*> &Plane = Table.getPlane(Type::TypeTyID);
-    assert(!Plane.empty() && "No types at all?");
-    unsigned ValNo = Type::FirstDerivedTyID; // Start at the derived types...
-    outputConstantsInPlane(Plane, ValNo);      // Write out the types
-  }
-  
   for (unsigned pno = 0; pno != NumPlanes; pno++) {
     const std::vector<const Value*> &Plane = Table.getPlane(pno);
-    if (!Plane.empty()) {             // Skip empty type planes...
+    if (!Plane.empty()) {              // Skip empty type planes...
       unsigned ValNo = 0;
-      if (isFunction)                   // Don't reemit module constants
-        ValNo = Table.getModuleLevel(pno);
+      if (isFunction)                 // Don't reemit module constants
+        ValNo += Table.getModuleLevel(pno);
       else if (pno == Type::TypeTyID) // If type plane wasn't written out above
         continue;
+
+      if (pno >= Type::FirstDerivedTyID) {
+        // Skip zero initializer
+        if (ValNo == 0)
+          ValNo = 1;
+      }
 
       outputConstantsInPlane(Plane, ValNo); // Write out constants in the plane
     }
@@ -142,7 +155,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     assert(Slot != -1 && "Module global vars is broken!");
 
     // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2=InternalLinkage,
-    // bit3+ = slot#
+    // bit3+ = Slot # for type
     unsigned oSlot = ((unsigned)Slot << 3) | (I->hasInternalLinkage() << 2) |
                      (I->hasInitializer() << 1) | I->isConstant();
     output_vbr(oSlot, Out);
@@ -165,11 +178,10 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   }
   output_vbr((unsigned)Table.getValSlot(Type::VoidTy), Out);
 
-
   align32(Out);
 }
 
-void BytecodeWriter::processMethod(const Function *F) {
+void BytecodeWriter::outputFunction(const Function *F) {
   BytecodeBlock FunctionBlock(BytecodeFormat::Function, Out);
   output_vbr((unsigned)F->hasInternalLinkage(), Out);
   // Only output the constant pool and other goodies if needed...

@@ -25,8 +25,8 @@ public:
   BytecodeWriter(std::deque<unsigned char> &o, const Module *M);
 
 protected:
-  void outputConstants(bool isMethod);
-  void processMethod(const Function *F);
+  void outputConstants(bool isFunction);
+  void outputFunction(const Function *F);
   void processBasicBlock(const BasicBlock &BB);
   void processInstruction(const Instruction &I);
 
