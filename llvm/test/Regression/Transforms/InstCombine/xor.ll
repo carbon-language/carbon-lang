@@ -98,3 +98,9 @@ bool %test14(ubyte %A, ubyte %B) {
 	%E = xor bool %C, %D        ; E = true
 	ret bool %E
 }
+
+uint %test15(uint %A) {             ; ~(X-1) == -X
+	%B = add uint %A, 4294967295
+	%C = xor uint %B, 4294967295
+	ret uint %C
+}
