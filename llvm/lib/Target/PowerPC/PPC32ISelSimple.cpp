@@ -424,63 +424,6 @@ unsigned ISel::getFixedSizedAllocaFI(AllocaInst *AI) {
 void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
                                   MachineBasicBlock::iterator IP,
                                   Constant *C, unsigned R) {
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-    unsigned Class = 0;
-    switch (CE->getOpcode()) {
-    case Instruction::GetElementPtr:
-      emitGEPOperation(MBB, IP, CE->getOperand(0),
-                       CE->op_begin()+1, CE->op_end(), R);
-      return;
-    case Instruction::Cast:
-      emitCastOperation(MBB, IP, CE->getOperand(0), CE->getType(), R);
-      return;
-
-    case Instruction::Xor: ++Class; // FALL THROUGH
-    case Instruction::Or:  ++Class; // FALL THROUGH
-    case Instruction::And: ++Class; // FALL THROUGH
-    case Instruction::Sub: ++Class; // FALL THROUGH
-    case Instruction::Add:
-      emitSimpleBinaryOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
-                                Class, R);
-      return;
-
-    case Instruction::Mul:
-      emitMultiply(MBB, IP, CE->getOperand(0), CE->getOperand(1), R);
-      return;
-
-    case Instruction::Div:
-    case Instruction::Rem:
-      emitDivRemOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
-                          CE->getOpcode() == Instruction::Div, R);
-      return;
-
-    case Instruction::SetNE:
-    case Instruction::SetEQ:
-    case Instruction::SetLT:
-    case Instruction::SetGT:
-    case Instruction::SetLE:
-    case Instruction::SetGE:
-      emitSetCCOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
-                         CE->getOpcode(), R);
-      return;
-
-    case Instruction::Shl:
-    case Instruction::Shr:
-      emitShiftOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
-                         CE->getOpcode() == Instruction::Shl, CE->getType(), R);
-      return;
-
-    case Instruction::Select:
-      emitSelectOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
-                          CE->getOperand(2), R);
-      return;
-
-    default:
-      std::cerr << "Offending expr: " << C << "\n";
-      assert(0 && "Constant expression not yet handled!\n");
-    }
-  }
-
   if (C->getType()->isIntegral()) {
     unsigned Class = getClassB(C->getType());
 
@@ -852,15 +795,6 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
         //BuildMI(*MBB, IP, PPC32::CMPLI, 2, PPC32::CR0).addReg(FinalTmp).addImm(0);
         return OpNum;
       } else {
-        // Emit a sequence of code which compares the high and low parts once
-        // each, then uses a conditional move to handle the overflow case.  For
-        // example, a setlt for long would generate code like this:
-        //
-        // AL = lo(op1) < lo(op2)   // Always unsigned comparison
-        // BL = hi(op1) < hi(op2)   // Signedness depends on operands
-        // dest = hi(op1) == hi(op2) ? BL : AL;
-        //
-
         // FIXME: Not Yet Implemented
         std::cerr << "EmitComparison unimplemented: Opnum >= 2\n";
         abort();
@@ -893,15 +827,6 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       //BuildMI(*MBB, IP, PPC32::CMPLI, 2, PPC32::CR0).addReg(FinalTmp).addImm(0);
       break;  // Allow the sete or setne to be generated from flags set by OR
     } else {
-      // Emit a sequence of code which compares the high and low parts once
-      // each, then uses a conditional move to handle the overflow case.  For
-      // example, a setlt for long would generate code like this:
-      //
-      // AL = lo(op1) < lo(op2)   // Signedness depends on operands
-      // BL = hi(op1) < hi(op2)   // Always unsigned comparison
-      // dest = hi(op1) == hi(op2) ? BL : AL;
-      //
-
       // FIXME: Not Yet Implemented
       std::cerr << "EmitComparison (cLong) unimplemented: Opnum >= 2\n";
       abort();
@@ -911,34 +836,88 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   return OpNum;
 }
 
-/// SetCC instructions - Here we just emit boilerplate code to set a byte-sized
-/// register, then move it to wherever the result should be. 
+/// visitSetCondInst - 
 ///
 void ISel::visitSetCondInst(SetCondInst &I) {
-  if (canFoldSetCCIntoBranchOrSelect(&I))
-    return;  // Fold this into a branch or select.
-
+  unsigned Op0Reg = getReg(I.getOperand(0));
+  unsigned Op1Reg = getReg(I.getOperand(1));
   unsigned DestReg = getReg(I);
-  MachineBasicBlock::iterator MII = BB->end();
-  emitSetCCOperation(BB, MII, I.getOperand(0), I.getOperand(1), I.getOpcode(),
-                     DestReg);
+  const Type *Ty = I.getOperand (0)->getType();
+                   
+  assert(getClass(Ty) < cLong && "can't setcc on longs or fp yet");
+  // Compare the two values.
+  BuildMI(BB, PPC32::CMPW, 2, PPC32::CR0).addReg(Op0Reg).addReg(Op1Reg);
+  
+  unsigned BranchIdx;
+  switch (I.getOpcode()) {
+  default: assert(0 && "Unknown setcc instruction!");
+  case Instruction::SetEQ: BranchIdx = 0; break;
+  case Instruction::SetNE: BranchIdx = 1; break;
+  case Instruction::SetLT: BranchIdx = 2; break;
+  case Instruction::SetGT: BranchIdx = 3; break;
+  case Instruction::SetLE: BranchIdx = 4; break;
+  case Instruction::SetGE: BranchIdx = 5; break;
+  }
+  static unsigned OpcodeTab[] = {
+    PPC32::BEQ, PPC32::BNE, PPC32::BLT, PPC32::BGT, PPC32::BLE, PPC32::BGE
+  };
+  unsigned Opcode = OpcodeTab[BranchIdx];
+
+  MachineBasicBlock *thisMBB = BB;
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  //  thisMBB:
+  //  ...
+  //   cmpTY cr0, r1, r2
+  //   bCC copy1MBB
+  //   b copy0MBB
+
+  // FIXME: we wouldn't need copy0MBB (we could fold it into thisMBB)
+  // if we could insert other, non-terminator instructions after the
+  // bCC. But MBB->getFirstTerminator() can't understand this.
+  MachineBasicBlock *copy1MBB = new MachineBasicBlock(LLVM_BB);
+  F->getBasicBlockList().push_back(copy1MBB);
+  BuildMI(BB, Opcode, 2).addReg(PPC32::CR0).addMBB(copy1MBB);
+  MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
+  F->getBasicBlockList().push_back(copy0MBB);
+  BuildMI(BB, PPC32::B, 1).addMBB(copy0MBB);
+  // Update machine-CFG edges
+  BB->addSuccessor(copy1MBB);
+  BB->addSuccessor(copy0MBB);
+
+  //  copy0MBB:
+  //   %FalseValue = li 0
+  //   ba sinkMBB
+  BB = copy0MBB;
+  unsigned FalseValue = makeAnotherReg(I.getType());
+  BuildMI(BB, PPC32::LI, 1, FalseValue).addZImm(0);
+  MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
+  F->getBasicBlockList().push_back(sinkMBB);
+  BuildMI(BB, PPC32::B, 1).addMBB(sinkMBB);
+  // Update machine-CFG edges
+  BB->addSuccessor(sinkMBB);
+
+  DEBUG(std::cerr << "thisMBB is at " << (void*)thisMBB << "\n");
+  DEBUG(std::cerr << "copy1MBB is at " << (void*)copy1MBB << "\n");
+  DEBUG(std::cerr << "copy0MBB is at " << (void*)copy0MBB << "\n");
+  DEBUG(std::cerr << "sinkMBB is at " << (void*)sinkMBB << "\n");
+
+  //  copy1MBB:
+  //   %TrueValue = li 1
+  //   ba sinkMBB
+  BB = copy1MBB;
+  unsigned TrueValue = makeAnotherReg (I.getType ());
+  BuildMI(BB, PPC32::LI, 1, TrueValue).addZImm(1);
+  BuildMI(BB, PPC32::B, 1).addMBB(sinkMBB);
+  // Update machine-CFG edges
+  BB->addSuccessor(sinkMBB);
+
+  //  sinkMBB:
+  //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, copy1MBB ]
+  //  ...
+  BB = sinkMBB;
+  BuildMI(BB, PPC32::PHI, 4, DestReg).addReg(FalseValue)
+    .addMBB(copy0MBB).addReg(TrueValue).addMBB(copy1MBB);
 }
-
-/// emitSetCCOperation - Common code shared between visitSetCondInst and
-/// constant expression support.
-///
-/// FIXME: this is wrong.  we should figure out a way to guarantee
-/// TargetReg is a CR and then make it a no-op
-void ISel::emitSetCCOperation(MachineBasicBlock *MBB,
-                              MachineBasicBlock::iterator IP,
-                              Value *Op0, Value *Op1, unsigned Opcode,
-                              unsigned TargetReg) {
-  unsigned OpNum = getSetCCNumber(Opcode);
-  OpNum = EmitComparison(OpNum, Op0, Op1, MBB, IP);
-
-  // The value is already in CR0 at this point, do nothing.
-}
-
 
 void ISel::visitSelectInst(SelectInst &SI) {
   unsigned DestReg = getReg(SI);
@@ -1930,6 +1909,8 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     } else {               // Floating point remainder...
       unsigned Op0Reg = getReg(Op0, BB, IP);
       unsigned Op1Reg = getReg(Op1, BB, IP);
+      // FIXME: Make sure the module has external function
+      // double fmod(double, double)
       MachineInstr *TheCall =
         BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("fmod", true);
       std::vector<ValueRecord> Args;
@@ -1939,7 +1920,8 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     }
     return;
   case cLong: {
-    static const char *FnName[] =
+     // FIXME: Make sure the module has external function
+     static const char *FnName[] =
       { "__moddi3", "__divdi3", "__umoddi3", "__udivdi3" };
     unsigned Op0Reg = getReg(Op0, BB, IP);
     unsigned Op1Reg = getReg(Op1, BB, IP);
