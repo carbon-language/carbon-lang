@@ -1327,6 +1327,7 @@ ThisIsAChainRule(int eruleno)
     case 242:
     case 243:
     case 244:
+    case 321:
       return true; break;
       
     default:
@@ -1578,7 +1579,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
 
       case 21:	// bool:  Not(bool):	Both these are implemented as:
-      case 321:	// reg:   BNot(reg) :	     reg = reg XOR-NOT 0
+      case 421:	// reg:   BNot(reg) :	     reg = reg XOR-NOT 0
         M = new MachineInstr(XNOR);
         M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
                                 subtreeRoot->leftChild()->getValue());
