@@ -523,7 +523,9 @@ void CWriter::printConstant(Constant *CPV) {
       abort();
     }
   } else if (isa<UndefValue>(CPV) && CPV->getType()->isFirstClassType()) {
-    Out << "0";
+    Out << "((";
+    printType(Out, CPV->getType());
+    Out << ")/*UNDEF*/0)";
     return;
   }
 
@@ -1234,11 +1236,14 @@ void CWriter::printPHICopiesForSuccessors(BasicBlock *CurBlock,
        SI != E; ++SI)
     for (BasicBlock::iterator I = SI->begin(); isa<PHINode>(I); ++I) {
       PHINode *PN = cast<PHINode>(I);
-      //  now we have to do the printing
-      Out << std::string(Indent, ' ');
-      Out << "  " << Mang->getValueName(I) << "__PHI_TEMPORARY = ";
-      writeOperand(PN->getIncomingValue(PN->getBasicBlockIndex(CurBlock)));
-      Out << ";   /* for PHI node */\n";
+      // Now we have to do the printing.
+      Value *IV = PN->getIncomingValueForBlock(CurBlock);
+      if (!isa<UndefValue>(IV)) {
+        Out << std::string(Indent, ' ');
+        Out << "  " << Mang->getValueName(I) << "__PHI_TEMPORARY = ";
+        writeOperand(IV);
+        Out << ";   /* for PHI node */\n";
+      }
     }
 }
 
