@@ -117,14 +117,6 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF,
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
 
-  // PUSH all callee-save registers
-  const unsigned* regs = getCalleeSaveRegs();
-  while (*regs) {
-    MachineInstr *MI = BuildMI(X86::PUSHr32, 1).addReg(*regs);
-    MBBI = ++MBB.insert(MBBI, MI);
-    ++regs;
-  }
-
   // PUSH ebp
   MachineInstr *MI = BuildMI(X86::PUSHr32, 1).addReg(X86::EBP);
   MBBI = ++MBB.insert(MBBI, MI);
@@ -144,15 +136,7 @@ void X86RegisterInfo::emitEpilogue(MachineBasicBlock &MBB,
   assert((*MBBI)->getOpcode() == X86::RET &&
          "Can only insert epilog into returning blocks");
 
-  // insert LEAVE
-  MBBI = ++MBB.insert(MBBI, BuildMI(X86::LEAVE, 0));
-
-  // POP all callee-save registers in REVERSE ORDER
-  static const unsigned regs[] = { X86::EBX, X86::EDI, X86::ESI,
-                                   MRegisterInfo::NoRegister };
-  unsigned idx = 0;
-  while (regs[idx]) {
-    MachineInstr *MI = BuildMI(X86::POPr32, 0, regs[idx++]);
-    MBBI = ++(MBB.insert(MBBI, MI));
-  }
+  // insert LEAVE: mov ESP, EBP; pop EBP
+  MBBI = ++MBB.insert(MBBI, BuildMI(X86::MOVrr32, 1,X86::ESP).addReg(X86::EBP));
+  MBBI = ++MBB.insert(MBBI, BuildMI(X86::POPr32, 1).addReg(X86::EBP));
 }
