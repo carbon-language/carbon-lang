@@ -526,17 +526,36 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2) {
   return TypesEqual(Ty, Ty2, EqTypes);
 }
 
+// TypeHasCycleThrough - Return true there is a path from CurTy to TargetTy in
+// the type graph.  We know that Ty is an abstract type, so if we ever reach a
+// non-abstract type, we know that we don't need to search the subgraph.
+static bool TypeHasCycleThrough(const Type *TargetTy, const Type *CurTy,
+                                std::set<const Type*> &VisitedTypes) {
+  if (TargetTy == CurTy) return true;
+  if (!CurTy->isAbstract()) return false;
+
+  std::set<const Type*>::iterator VTI = VisitedTypes.lower_bound(CurTy);
+  if (VTI != VisitedTypes.end() && *VTI == CurTy)
+    return false;
+  VisitedTypes.insert(VTI, CurTy);
+
+  for (Type::subtype_iterator I = CurTy->subtype_begin(),
+         E = CurTy->subtype_end(); I != E; ++I)
+    if (TypeHasCycleThrough(TargetTy, *I, VisitedTypes))
+      return true;
+  return false;
+}
+
+
 /// TypeHasCycleThroughItself - Return true if the specified type has a cycle
 /// back to itself.
 static bool TypeHasCycleThroughItself(const Type *Ty) {
+  assert(Ty->isAbstract() && "This code assumes that Ty was abstract!");
   std::set<const Type*> VisitedTypes;
-  for (Type::subtype_iterator I = Ty->subtype_begin(),
-         E = Ty->subtype_end(); I != E; ++I)
-    for (df_ext_iterator<const Type *, std::set<const Type*> > 
-           DFI = df_ext_begin(I->get(), VisitedTypes),
-           E = df_ext_end(I->get(), VisitedTypes); DFI != E; ++DFI)
-      if (*DFI == Ty)
-        return true;    // Found a cycle through ty!
+  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
+       I != E; ++I)
+    if (TypeHasCycleThrough(Ty, *I, VisitedTypes))
+      return true;
   return false;
 }
 
@@ -622,7 +641,7 @@ public:
     // If there are no cycles going through this node, we can do a simple,
     // efficient lookup in the map, instead of an inefficient nasty linear
     // lookup.
-    bool TypeHasCycle = TypeHasCycleThroughItself(Ty);
+    bool TypeHasCycle = Ty->isAbstract() && TypeHasCycleThroughItself(Ty);
     if (!TypeHasCycle) {
       iterator I = Map.find(ValType::get(Ty));
       if (I != Map.end()) {
