@@ -694,7 +694,7 @@ void CWriter::printContainedStructs(const Type *Ty,
              E = STy->getElementTypes().end(); I != E; ++I) {
         const Type *Ty1 = I->get();
         if (isa<StructType>(Ty1) || isa<ArrayType>(Ty1))
-          printContainedStructs(Ty1, StructPrinted);
+          printContainedStructs(*I, StructPrinted);
       }
       
       //Print structure type out..
@@ -1121,7 +1121,7 @@ void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
     return;
   }
 
-  const Constant *CI = dyn_cast<Constant>(I->get());
+  const Constant *CI = dyn_cast<Constant>(I);
   if (HasImplicitAddress && (!CI || !CI->isNullValue()))
     Out << "(&";
 

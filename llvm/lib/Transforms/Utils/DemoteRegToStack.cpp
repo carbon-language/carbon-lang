@@ -1,21 +1,20 @@
 //===- DemoteRegToStack.cpp - Move a virtual reg. to stack ------*- C++ -*-===//
 // 
-// This file provide the function DemoteRegToStack().
-// This function takes a virtual register computed by an
-// Instruction& X and replaces it with a slot in the stack frame,
-// allocated via alloca. It returns the pointer to the AllocaInst inserted.
+// This file provide the function DemoteRegToStack().  This function takes a
+// virtual register computed by an Instruction& X and replaces it with a slot in
+// the stack frame, allocated via alloca. It returns the pointer to the
+// AllocaInst inserted.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/DemoteRegToStack.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iTerminators.h"
 #include "llvm/Type.h"
 #include "Support/hash_set"
 #include <stack>
-
 
 //---------------------------------------------------------------------------- 
 // function DemoteRegToStack()
@@ -28,11 +27,10 @@ typedef hash_set<PHINode*>::iterator PhiSetIterator;
 // Helper function to push a phi *and* all its operands to the worklist!
 // Do not push an instruction if it is already in the result set of Phis to go.
 inline void PushOperandsOnWorkList(std::stack<Instruction*>& workList,
-                                   PhiSet& phisToGo, PHINode* phiN)
-{
-  for (User::op_iterator OI=phiN->op_begin(), OE=phiN->op_end();
+                                   PhiSet& phisToGo, PHINode* phiN) {
+  for (User::op_iterator OI = phiN->op_begin(), OE = phiN->op_end();
        OI != OE; ++OI)
-    if (Instruction* opI = dyn_cast<Instruction>(OI->get()))
+    if (Instruction* opI = dyn_cast<Instruction>(OI))
       if (!isa<PHINode>(opI) ||
           phisToGo.find(cast<PHINode>(opI)) == phisToGo.end())
         workList.push(opI);

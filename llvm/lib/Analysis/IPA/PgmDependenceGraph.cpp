@@ -15,15 +15,13 @@
 // The MemoryDepAnalysis does build an explicit graph, which is used internally
 // here.  That graph could be augmented with the other dependences above if
 // desired, but for most uses there will be little need to do that.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/PgmDependenceGraph.h"
 #include "llvm/Analysis/MemoryDepAnalysis.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Instruction.h"
-
 
 
 //----------------------------------------------------------------------------
@@ -78,7 +76,7 @@ bool DepIterState::SetFirstSSADep()
   if (doIncomingDeps)
     for (Instruction::op_iterator E = depNode->getInstr().op_end();
          ssaInEdgeIter != E &&
-           (firstTarget = dyn_cast<Instruction>(ssaInEdgeIter->get()))== NULL; )
+           (firstTarget = dyn_cast<Instruction>(ssaInEdgeIter))== NULL; )
       ++ssaInEdgeIter;
   else
     for (Value::use_iterator E = depNode->getInstr().use_end();

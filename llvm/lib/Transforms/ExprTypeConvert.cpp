@@ -1257,7 +1257,7 @@ static void RecursiveDelete(ValueMapCache &Cache, Instruction *I) {
 
   for (User::op_iterator OI = I->op_begin(), OE = I->op_end(); 
        OI != OE; ++OI)
-    if (Instruction *U = dyn_cast<Instruction>(OI->get())) {
+    if (Instruction *U = dyn_cast<Instruction>(OI)) {
       *OI = 0;
       RecursiveDelete(Cache, U);
     }
