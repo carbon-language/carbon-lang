@@ -82,7 +82,8 @@ void AsmWriterEmitter::run(std::ostream &O) {
             --OpNo;
           }
 
-          O << ";  printOperand(MI->getOperand(" << OpNo << "), MVT::"
+          O << ";  " << I->second.OperandList[OpNo].PrinterMethodName 
+            << "(MI, " << I->second.OperandList[OpNo].MIOperandNo << ", MVT::"
             << getName(I->second.OperandList[OpNo].Ty) << "); O ";
           LastEmitted = VarEnd;
         }
