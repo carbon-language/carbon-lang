@@ -13,8 +13,12 @@
 #include "Support/Statistic.h"
 using std::map;
 
-static RegisterAnalysis<BUDataStructures>
-X("budatastructure", "Bottom-up Data Structure Analysis Closure");
+namespace {
+  Statistic<> MaxSCC("budatastructure", "Maximum SCC Size in Call Graph");
+  
+  RegisterAnalysis<BUDataStructures>
+  X("budatastructure", "Bottom-up Data Structure Analysis Closure");
+}
 
 using namespace DS;
 
@@ -112,9 +116,11 @@ bool BUDataStructures::run(Module &M) {
   // Calculate the graphs for any functions that are unreachable from main...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal() && DSInfo.find(I) == DSInfo.end()) {
+#ifndef NDEBUG
       if (MainFunc)
         std::cerr << "*** Function unreachable from main: "
                   << I->getName() << "\n";
+#endif
       calculateReachableGraphs(I);    // Calculate all graphs...
     }
   return false;
@@ -186,6 +192,8 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
     Stack.pop_back();
     DSGraph &G = calculateGraph(*F);
 
+    if (MaxSCC < 1) MaxSCC = 1;
+
     // Should we revisit the graph?
     if (CallSiteIterator::begin(G) != CallSiteIterator::end(G)) {
       ValMap.erase(F);
@@ -210,6 +218,10 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
 
     std::cerr << "Identified SCC #: " << MyID << " of size: "
               << (Stack.end()-FirstInSCC) << "\n";
+
+    // Compute the Max SCC Size...
+    if (MaxSCC < unsigned(Stack.end()-FirstInSCC))
+      MaxSCC = Stack.end()-FirstInSCC;
 
     std::vector<Function*>::iterator I = Stack.end();
     do {
@@ -325,10 +337,20 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
       DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
             << " in: " << F.getName() << "[" << GI.getGraphSize() << "+"
             << GI.getAuxFunctionCalls().size() << "]\n");
+
+#if 0
+      Graph.writeGraphToFile(std::cerr, "bu_" + F.getName() + "_before_" +
+                             Callee->getName());
+#endif
       
       // Handle self recursion by resolving the arguments and return value
       Graph.mergeInGraph(CS, GI, DSGraph::StripAllocaBit |
                          DSGraph::DontCloneCallNodes);
+
+#if 0
+      Graph.writeGraphToFile(std::cerr, "bu_" + F.getName() + "_after_" +
+                             Callee->getName());
+#endif
     }
   }
 
@@ -400,7 +422,7 @@ DSGraph &BUDataStructures::inlineNonSCCGraphs(Function &F,
       DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
             << " in: " << F.getName() << "[" << GI.getGraphSize() << "+"
             << GI.getAuxFunctionCalls().size() << "]\n");
-      
+
       // Handle self recursion by resolving the arguments and return value
       Graph.mergeInGraph(CS, GI, DSGraph::StripAllocaBit |
                          DSGraph::DontCloneCallNodes);
@@ -422,8 +444,6 @@ DSGraph &BUDataStructures::inlineNonSCCGraphs(Function &F,
   DEBUG(std::cerr << "  [BU] Done Non-SCC inlining: " << F.getName() << " ["
         << Graph.getGraphSize() << "+" << Graph.getAuxFunctionCalls().size()
         << "]\n");
-
-  //Graph.writeGraphToFile(std::cerr, "bu_" + F.getName());
 
   return Graph;
 }
@@ -518,7 +538,6 @@ DSGraph &BUDataStructures::calculateSCCGraph(Function &F,
   DEBUG(std::cerr << "  [BU] Done inlining: " << F.getName() << " ["
         << Graph.getGraphSize() << "+" << Graph.getAuxFunctionCalls().size()
         << "]\n");
-
   //Graph.writeGraphToFile(std::cerr, "bu_" + F.getName());
 
   return Graph;
