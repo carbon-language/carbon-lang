@@ -727,7 +727,7 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
           $(SED) 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' | \
           $(SED) 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' \
               > $@.tmp
-	$(VERB) cmp $@ $@.tmp > /dev/null || ${MV} -f $@.tmp $@
+	$(VERB) cmp -s $@ $@.tmp > /dev/null || ${MV} -f $@.tmp $@
 	@# remove the output of flex if it didn't get moved over...
 	@rm -f $@.tmp
 
@@ -737,8 +737,8 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 %.cpp %.h : %.y
 	@echo Bison\'ing $<...
 	$(VERB) $(BISON) -v -d -p $(<:%Parser.y=%) $*.y
-	$(VERB) cmp $*.tab.c $*.cpp > /dev/null || ${MV} -f $*.tab.c $*.cpp
-	$(VERB) cmp $*.tab.h $*.h > /dev/null || ${MV} -f $*.tab.h $*.h
+	$(VERB) cmp -s $*.tab.c $*.cpp > /dev/null || ${MV} -f $*.tab.c $*.cpp
+	$(VERB) cmp -s $*.tab.h $*.h   > /dev/null || ${MV} -f $*.tab.h $*.h
 	@# If the files were not updated, don't leave them lying around...
 	@rm -f $*.tab.c $*.tab.h
 
@@ -761,12 +761,6 @@ clean::
 	$(VERB) $(RM) -rf $(BUILD_OBJ_DIR)/Debug $(BUILD_OBJ_DIR)/Release $(BUILD_OBJ_DIR)/Profile $(BUILD_OBJ_DIR)/Depend
 	$(VERB) $(RM) -f core core.[0-9][0-9]* *.o *.d *.so *~ *.flc
 	$(VERB) $(RM) -f $(LEX_OUTPUT) $(YACC_OUTPUT)
-
-distclean:: clean
-	$(VERB) (cd $(LLVM_SRC_ROOT); $(RM) -rf $(LEVEL)/Makefile.config \
-	            $(LEVEL)/include/Config/config.h \
-	            $(LEVEL)/autom4te.cache \
-	            $(LEVEL)/config.log)
 
 ###########################################################################
 # C/C++ Dependencies
@@ -795,7 +789,9 @@ $(BUILD_OBJ_DIR)/Depend/%.d: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Depend/.dir
 # are cleaning (this example taken from the GNU Make Manual).
 #
 ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),distclean)
 ifneq ($(SourceDepend),)
 -include $(SourceDepend)
+endif
 endif
 endif
