@@ -15,4 +15,9 @@ MakeSharedObjectOption := -G
 #
 ExportSymbols :=
 
-
+# Path to location for LLVM front-end for this architecture.  This setting may
+# be overriden by the Makefile.config option, and should not override it if set.
+#
+ifndef LLVMGCCDIR
+LLVMGCCDIR := /home/vadve/lattner/cvs/gcc_install
+endif
