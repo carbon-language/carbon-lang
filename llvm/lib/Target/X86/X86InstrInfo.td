@@ -177,7 +177,7 @@ def JG  : IBr<0x8F, (ops i32imm:$dst), "jg $dst">, TB;
 //
 let isCall = 1 in
   // All calls clobber the non-callee saved registers...
-  let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6] in {
+  let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0] in {
     def CALLpcrel32 : I<0xE8, RawFrm, (ops calltarget:$dst), "call $dst">;
     def CALL32r     : I<0xFF, MRM2r, (ops R32:$dst), "call $dst">;
     def CALL32m     : I<0xFF, MRM2m, (ops i32mem:$dst), "call $dst">;
@@ -885,8 +885,13 @@ def FpSUB : FPI<0, Pseudo, TwoArgFP , (ops RFP, RFP, RFP), "">;    // f1 = fsub 
 def FpMUL : FPI<0, Pseudo, TwoArgFP , (ops RFP, RFP, RFP), "">;    // f1 = fmul f2, f3
 def FpDIV : FPI<0, Pseudo, TwoArgFP , (ops RFP, RFP, RFP), "">;    // f1 = fdiv f2, f3
 
-def FpGETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">;  // FPR = ST(0)
-def FpSETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">;  // ST(0) = FPR
+let Uses = [ST0] in {
+  def FpGETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">;  // FPR = ST(0)
+}
+
+let Defs = [ST0] in {
+  def FpSETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">;  // ST(0) = FPR
+}
 
 // FADD reg, mem: Before stackification, these are represented by: R1 = FADD* R2, [mem]
 def FADD32m  : FPI<0xD8, MRM0m, OneArgFPRW, (ops f32mem:$src), "fadd $src">;    // ST(0) = ST(0) + [mem32real]
