@@ -2836,7 +2836,7 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
         // PhiMBB:
         //   DestReg = phi [ IntTmp, OldMBB ], [ XorReg, XorMBB ]
         BB = PhiMBB;
-        BuildMI(BB, PPC::PHI, 2, DestReg).addReg(IntTmp).addMBB(OldMBB)
+        BuildMI(BB, PPC::PHI, 4, DestReg).addReg(IntTmp).addMBB(OldMBB)
           .addReg(XorReg).addMBB(XorMBB);
       }
     }
