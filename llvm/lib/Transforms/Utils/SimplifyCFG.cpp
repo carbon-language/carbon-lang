@@ -201,7 +201,8 @@ bool SimplifyCFG(BasicBlock *BB) {
       }
   
     BasicBlock *OnlySucc = 0;
-    if (OnlyPred && OnlyPred != BB) {   // Don't break self loops
+    if (OnlyPred && OnlyPred != BB &&    // Don't break self loops
+        OnlyPred->getTerminator()->getOpcode() != Instruction::Invoke) {
       // Check to see if there is only one distinct successor...
       succ_iterator SI(succ_begin(OnlyPred)), SE(succ_end(OnlyPred));
       OnlySucc = BB;
