@@ -301,7 +301,7 @@ void BytecodeParser::parseStringConstants(const unsigned char *&Buf,
         Elements[i] = ConstantSInt::get(Type::SByteTy, Data[i]);
     else
       for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
-        Elements[i] = ConstantSInt::get(Type::UByteTy, Data[i]);
+        Elements[i] = ConstantUInt::get(Type::UByteTy, Data[i]);
 
     // Create the constant, inserting it as needed.
     Constant *C = ConstantArray::get(ATy, Elements);
