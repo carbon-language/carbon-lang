@@ -1,8 +1,9 @@
-#! /usr/dcs/software/supported/bin/perl
-# Script to find regressions by binary-searching a time interval in the CVS tree. 
-# Written by Brian Gaeke on 2-Mar-2004
+#! /usr/bin/perl
+# Script to find regressions by binary-searching a time interval in the
+# CVS tree.  Written by Brian Gaeke on 2-Mar-2004.
 #
 
+require 5.6.0;  # NOTE: This script not tested with earlier versions.
 use Getopt::Std;
 use POSIX;
 use Time::Local;
