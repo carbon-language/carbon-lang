@@ -291,7 +291,7 @@ private:
   }
   
 public:
-  std::vector<pair<int,int> > resourceNumVector;
+  std::vector<std::pair<int,int> > resourceNumVector;
   
 protected:
   unsigned	           numSchedClasses;
