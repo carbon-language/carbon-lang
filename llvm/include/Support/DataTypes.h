@@ -23,20 +23,29 @@
 #include <inttypes.h>
 
 #ifdef __linux__
-# include <endian.h>
+#  include <endian.h>
+#  if BYTE_ORDER == LITTLE_ENDIAN
+#    undef BIG_ENDIAN
+#  else
+#    undef LITTLE_ENDIAN
+#  endif
 #else
-#if (BSD >= 199103)
-# include <machine/endian.h>
-#endif
+#  if (BSD >= 199103)
+#    include <machine/endian.h>
+#  endif
 #endif
 
 #ifdef __sparc__
-#include <sys/types.h>
-#ifdef _LITTLE_ENDIAN
-#define LITTLE_ENDIAN 1
-#else
-#define BIG_ENDIAN 1
+#  include <sys/types.h>
+#  ifdef _LITTLE_ENDIAN
+#    define LITTLE_ENDIAN 1
+#  else
+#    define BIG_ENDIAN 1
+#  endif
 #endif
+
+#if (defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN))
+#error "Cannot define both LITTLE_ENDIAN and BIG_ENDIAN!"
 #endif
 
 #if (!defined(LITTLE_ENDIAN) && !defined(BIG_ENDIAN)) || !defined(INT64_MAX)
