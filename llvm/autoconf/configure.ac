@@ -1,5 +1,5 @@
 dnl Initialize autoconf
-AC_INIT([[[LLVM]]],[[[1.1]]],[llvmbugs@cs.uiuc.edu])
+AC_INIT([[[LLVM]]],[[[1.3]]],[llvmbugs@cs.uiuc.edu])
 
 dnl Place all of the extra autoconf files into the config subdirectory
 AC_CONFIG_AUX_DIR([autoconf])
@@ -350,7 +350,7 @@ AC_ARG_ENABLE(povray,
  povray=auto)
 AC_MSG_CHECKING([for POV-Ray benchmark sources])
 case "$povray" in
-yes)
+auto|yes)
     defaultdir=/home/vadve/shared/benchmarks/povray31
 	if test -d $defaultdir
 	then
@@ -361,7 +361,7 @@ yes)
         povray=no
     fi
     ;;
-auto|no)
+no)
     AC_SUBST(POVRAY_ROOT,[])
     AC_SUBST(USE_POVRAY,[[]])
     povray=no
