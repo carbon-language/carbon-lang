@@ -487,9 +487,24 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
     return MI;
   }
 
-  unsigned PhysReg = getReg(MBB, MI, VirtReg);
-
+  // Otherwise, we need to fold it into the current instruction, or reload it.
+  // If we have registers available to hold the value, use them.
   const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
+  unsigned PhysReg = getFreeReg(RC);
+
+  if (PhysReg == 0) {  // No registers available...
+    /// If we can fold this spill into this instruction, do so now.
+    if (0) {
+      // TODO
+      return MI;
+    }
+
+    // It looks like we can't fold this virtual register load into this
+    // instruction.  Force some poor hapless value out of the register file to
+    // make room for the new register, and reload it.
+    PhysReg = getReg(MBB, MI, VirtReg);
+  }
+
   int FrameIndex = getStackSpaceFor(VirtReg, RC);
 
   markVirtRegModified(VirtReg, false);   // Note that this reg was just reloaded
