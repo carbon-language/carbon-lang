@@ -48,3 +48,9 @@ int* %foo7(int* %I, long %C, long %D) {
 	%B = getelementptr int* %A, long %D
 	ret int* %B
 }
+
+sbyte* %foo8([10 x int]* %X) {
+	%A = getelementptr [10 x int]* %X, long 0, long 0   ;; Fold into the cast.
+	%B = cast int* %A to sbyte*
+	ret sbyte * %B
+}
