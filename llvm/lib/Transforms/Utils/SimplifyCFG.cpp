@@ -804,12 +804,12 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       // If this basic block is ONLY a setcc and a branch, and if a predecessor
       // branches to us and one of our successors, fold the setcc into the
       // predecessor and use logical operations to pick the right destination.
+      BasicBlock *TrueDest  = BI->getSuccessor(0);
+      BasicBlock *FalseDest = BI->getSuccessor(1);
       if (Instruction *Cond = dyn_cast<Instruction>(BI->getCondition()))
         if (Cond->getParent() == BB && &BB->front() == Cond &&
-            Cond->getNext() == BI && Cond->hasOneUse()) {
-          BasicBlock *TrueDest  = BI->getSuccessor(0);
-          BasicBlock *FalseDest = BI->getSuccessor(1);
-
+            Cond->getNext() == BI && Cond->hasOneUse() &&
+            TrueDest != BB && FalseDest != BB)
           for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI!=E; ++PI)
             if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
               if (PBI->isConditional() && SafeToMergeTerminators(BI, PBI)) {
@@ -853,7 +853,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                   return SimplifyCFG(BB) | 1;
                 }
               }
-        }
 
       // If this block ends with a branch instruction, and if there is one
       // predecessor, see if the previous block ended with a branch on the same
