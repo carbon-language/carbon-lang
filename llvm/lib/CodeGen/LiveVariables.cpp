@@ -158,17 +158,18 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
 }
 
 bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
+  const TargetInstrInfo &TII = MF.getTarget().getInstrInfo();
+  RegInfo = MF.getTarget().getRegisterInfo();
+  assert(RegInfo && "Target doesn't have register information?");
+
   // First time though, initialize AllocatablePhysicalRegisters for the target
   if (AllocatablePhysicalRegisters.empty()) {
-    const MRegisterInfo &MRI = *MF.getTarget().getRegisterInfo();
-    assert(&MRI && "Target doesn't have register information?");
-
     // Make space, initializing to false...
-    AllocatablePhysicalRegisters.resize(MRegisterInfo::FirstVirtualRegister);
+    AllocatablePhysicalRegisters.resize(RegInfo->getNumRegs());
 
     // Loop over all of the register classes...
-    for (MRegisterInfo::regclass_iterator RCI = MRI.regclass_begin(),
-           E = MRI.regclass_end(); RCI != E; ++RCI)
+    for (MRegisterInfo::regclass_iterator RCI = RegInfo->regclass_begin(),
+           E = RegInfo->regclass_end(); RCI != E; ++RCI)
       // Loop over all of the allocatable registers in the function...
       for (TargetRegisterClass::iterator I = (*RCI)->allocation_order_begin(MF),
              E = (*RCI)->allocation_order_end(MF); I != E; ++I)
@@ -190,9 +191,6 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 	    (MachineInstr*)0);
   PhysRegInfo = PhysRegInfoA;
   PhysRegUsed = PhysRegUsedA;
-
-  const TargetInstrInfo &TII = MF.getTarget().getInstrInfo();
-  RegInfo = MF.getTarget().getRegisterInfo();
 
   /// Get some space for a respectable number of registers...
   VirtRegInfo.resize(64);
@@ -294,7 +292,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
     
     // Loop over PhysRegInfo, killing any registers that are available at the
     // end of the basic block.  This also resets the PhysRegInfo map.
-    for (unsigned i = 0, e = MRegisterInfo::FirstVirtualRegister; i != e; ++i)
+    for (unsigned i = 0, e = RegInfo->getNumRegs(); i != e; ++i)
       if (PhysRegInfo[i])
 	HandlePhysRegDef(i, 0);
   }
