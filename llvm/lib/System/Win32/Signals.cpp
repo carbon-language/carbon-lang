@@ -15,8 +15,12 @@
 #include <llvm/System/Signals.h>
 #include <vector>
 
-#include "dbghelp.h"
-#include "psapi.h"
+#ifdef __MINGW_H
+#include <imagehlp.h>
+#else
+#include <dbghelp.h>
+#endif
+#include <psapi.h>
 
 #pragma comment(lib, "psapi.lib")
 #pragma comment(lib, "dbghelp.lib")
