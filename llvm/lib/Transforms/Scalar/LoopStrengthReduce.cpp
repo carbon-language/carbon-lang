@@ -203,17 +203,18 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
                                     Preheader->getTerminator());
     }
 
-    // The next step of the strength reduction is to create a PHI that will choose
-    // between the initial GEP we created and inserted into the preheader, and 
-    // the incremented GEP that we will create below and insert into the loop body
+    // The next step of the strength reduction is to create a PHI that will
+    // choose between the initial GEP we created and inserted into the
+    // preheader, and the incremented GEP that we will create below and insert
+    // into the loop body.
     NewPHI = new PHINode(PreGEP->getType(), 
                                   GEPI->getName()+".str", InsertBefore);
     NewPHI->addIncoming(PreGEP, Preheader);
     
-    // Now, create the GEP instruction to increment by one the value selected by
-    // the PHI instruction we just created above, and add it as the second
-    // incoming Value/BasicBlock pair to the PHINode.  It is inserted before the
-    // increment of the canonical induction variable.
+    // Now, create the GEP instruction to increment by one the value selected
+    // by the PHI instruction we just created above, and add it as the second
+    // incoming Value/BasicBlock pair to the PHINode.  It is inserted before
+    // the increment of the canonical induction variable.
     Instruction *IncrInst = 
       const_cast<Instruction*>(L->getCanonicalInductionVariableIncrement());
     GetElementPtrInst *StrGEP = new GetElementPtrInst(NewPHI, inc_op_vector,
