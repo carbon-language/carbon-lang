@@ -151,9 +151,7 @@ $LOC = GetRegex "([0-9]+) +total", `wc -l \`utils/getsrcs.sh\` | grep total`;
 # Build the entire tree, saving build messages to the build log
 #
 if (!$NOCHECKOUT) {
-  system "(time -p ./configure --enable-jit) > $Prefix-Build-Log.txt 2>&1";
-  # Change the Makefile.config to not strip executables...
-  system "echo 'KEEP_SYMBOLS := 1' >> Makefile.config";
+  system "(time -p ./configure --enable-jit --with-objroot=.) > $Prefix-Build-Log.txt 2>&1";
 
   # Build the entire tree, capturing the output into $Prefix-Build-Log.txt
   system "(time -p gmake $MAKEOPTS) >> $Prefix-Build-Log.txt 2>&1";
