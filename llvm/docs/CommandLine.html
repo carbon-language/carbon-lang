@@ -493,7 +493,7 @@ enum OptLevel {
     clEnumVal(O1, "<i>Enable trivial optimizations</i>"),
     clEnumVal(O2, "<i>Enable default optimizations</i>"),
     clEnumVal(O3, "<i>Enable expensive optimizations</i>"),
-   0));
+   clEnumValEnd));
 
 ...
   if (OptimizationLevel &gt;= O2) doPartialRedundancyElimination(...);
@@ -503,7 +503,8 @@ enum OptLevel {
 <p>This declaration defines a variable "<tt>OptimizationLevel</tt>" of the
 "<tt>OptLevel</tt>" enum type.  This variable can be assigned any of the values
 that are listed in the declaration (Note that the declaration list must be
-terminated with the "<tt>0</tt>" argument!).  The CommandLine library enforces
+terminated with the "<tt>clEnumValEnd</tt>" argument!).  The CommandLine 
+library enforces
 that the user can only specify one of the options, and it ensure that only valid
 enum values can be specified.  The "<tt>clEnumVal</tt>" macros ensure that the
 command line arguments matched the enum values.  With this option added, our
@@ -540,7 +541,7 @@ enum OptLevel {
     clEnumVal(O1        , "<i>Enable trivial optimizations</i>"),
     clEnumVal(O2        , "<i>Enable default optimizations</i>"),
     clEnumVal(O3        , "<i>Enable expensive optimizations</i>"),
-   0));
+   clEnumValEnd));
 
 ...
   if (OptimizationLevel == Debug) outputDebugInfo(...);
@@ -581,7 +582,7 @@ enum DebugLev {
     clEnumValN(nodebuginfo, "none", "<i>disable debug information</i>"),
      clEnumVal(quick,               "<i>enable quick debug information</i>"),
      clEnumVal(detailed,            "<i>enable detailed debug information</i>"),
-    0));
+    clEnumValEnd));
 </pre>
 
 <p>This definition defines an enumerated command line variable of type "<tt>enum
@@ -648,7 +649,7 @@ enum Opts {
     clEnumVal(constprop         , "<i>Constant Propagation</i>"),
    clEnumValN(inlining, "<i>inline</i>", "<i>Procedure Integration</i>"),
     clEnumVal(strip             , "<i>Strip Symbols</i>"),
-  0));
+  clEnumValEnd));
 </pre>
 
 <p>This defines a variable that is conceptually of the type
@@ -998,7 +999,8 @@ for.</li>
 
 <li><a name="cl::values">The <b><tt>cl::values</tt></b></a> attribute specifies
 the string-to-value mapping to be used by the generic parser.  It takes a
-<b>null terminated</b> list of (option, value, description) triplets that
+<b>clEnumValEnd terminated</b> list of (option, value, description) triplets 
+that
 specify the option name, the value mapped to, and the description shown in the
 <tt>--help</tt> for the tool.  Because the generic parser is used most
 frequently with enum values, two macros are often useful:
