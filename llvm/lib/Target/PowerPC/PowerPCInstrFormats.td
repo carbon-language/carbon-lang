@@ -185,6 +185,11 @@ class DForm_5<string name, bits<6> opcode, bit ppc64, bit vmx>
 class DForm_5_ext<string name, bits<6> opcode, bit ppc64, bit vmx> 
   : DForm_5<name, opcode, ppc64, vmx> {
   let L = 0;
+  let ArgCount = 3;
+  let Arg0Type = Imm3.Value;
+  let Arg1Type = Gpr.Value;
+  let Arg2Type = Simm16.Value;
+  let Arg3Type = 0;
 }
 
 class DForm_6<string name, bits<6> opcode, bit ppc64, bit vmx> 
@@ -195,6 +200,11 @@ class DForm_6<string name, bits<6> opcode, bit ppc64, bit vmx>
 class DForm_6_ext<string name, bits<6> opcode, bit ppc64, bit vmx> 
   : DForm_6<name, opcode, ppc64, vmx> {
   let L = 0;
+  let ArgCount = 3;
+  let Arg0Type = Imm3.Value;
+  let Arg1Type = Gpr.Value;
+  let Arg2Type = Simm16.Value;
+  let Arg3Type = 0;
 }
 
 class DForm_7<string name, bits<6> opcode, bit ppc64, bit vmx> 
