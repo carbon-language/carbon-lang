@@ -149,6 +149,12 @@ site.exp: Makefile $(LLVM_OBJ_ROOT)/Makefile.config
 	@test ! -f site.exp || mv site.exp site.bak
 	@mv site.tmp site.exp
 
+#===------------------------------------------------------------------------===#
+# quick-test utility. Just runs TestRunner.sh on all the *.ll files in a
+# directory. Use like this: 
+#   cd llvm/test ; make quick-test QUICKTEST=Regression/Bytecode
+# where QUICKTEST specifies the directory you want to run the tests on.
+#===------------------------------------------------------------------------===#
 quick-test:
 	@if test -d "${QUICKTEST}" ; then \
 	  cd $(LLVM_SRC_ROOT)/test/$(QUICKTEST) ; \
