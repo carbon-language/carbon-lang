@@ -17,7 +17,7 @@ using namespace llvm;
 namespace {
 
 // FIXME: PassManager should allow Module passes to require FunctionPasses
-struct LoopExtraction : public FunctionPass {
+struct LoopExtractor : public FunctionPass {
 
 public:
   LoopExtractor() {}
@@ -65,5 +65,5 @@ bool LoopExtractor::runOnFunction(Function &F) {
 /// createLoopExtractorPass 
 ///
 FunctionPass* llvm::createLoopExtractorPass() {
-  return new LoopExtractor;
+  return new LoopExtractor();
 }
