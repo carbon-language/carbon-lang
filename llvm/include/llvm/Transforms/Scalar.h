@@ -10,8 +10,8 @@
 
 class Pass;
 class TargetData;
-class BasicBlock;
 class GetElementPtrInst;
+class PassInfo;
 
 //===----------------------------------------------------------------------===//
 //
@@ -162,7 +162,7 @@ Pass *createReassociatePass();
 //
 // This pass eliminates correlated conditions, such as these:
 //  if (X == 0)
-//    if (X > 2)     // Known false
+//    if (X > 2) ;   // Known false
 //    else
 //      Y = X * Z;   // = 0
 //
@@ -179,12 +179,15 @@ Pass *createCFGSimplificationPass();
 //
 // BreakCriticalEdges pass - Break all of the critical edges in the CFG by
 // inserting a dummy basic block.  This pass may be "required" by passes that
-// cannot deal with critical edges.  For this usage, the structure type is
-// forward declared.  This pass obviously invalidates the CFG, but can update
-// forward dominator (set, immediate dominators, and tree) information.
+// cannot deal with critical edges.  For this usage, a pass must call:
 //
-class BreakCriticalEdges;
+//   AU.addRequiredID(BreakCriticalEdgesID);
+//
+// This pass obviously invalidates the CFG, but can update forward dominator
+// (set, immediate dominators, and tree) information.
+//
 Pass *createBreakCriticalEdgesPass();
+extern const PassInfo *BreakCriticalEdgesID;
 
 //===----------------------------------------------------------------------===//
 // These two passes convert malloc and free instructions to and from %malloc &
