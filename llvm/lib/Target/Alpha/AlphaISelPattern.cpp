@@ -653,7 +653,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
             }
           } else if (dir == 2) {
             Tmp1 = SelectExpr(N.getOperand(1));
-            if (isConst2) {
+            if (isConst1) {
               Tmp2 = cast<ConstantSDNode>(N.getOperand(0))->getValue();
               BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
             } else {
@@ -866,9 +866,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
 void ISel::Select(SDOperand N) {
   unsigned Tmp1, Tmp2, Opc;
 
-  if(ExprMap[N])
-    return; //alread selected
-  ExprMap[N] = 1;
+  // FIXME: Disable for our current expansion model!
+  if (/*!N->hasOneUse() &&*/ !ExprMap.insert(std::make_pair(N, 1)).second)
+    return;  // Already selected.
 
   SDNode *Node = N.Val;
 
@@ -977,6 +977,7 @@ void ISel::Select(SDOperand N) {
   case ISD::CopyFromReg:
   case ISD::CALL:
 //   case ISD::DYNAMIC_STACKALLOC:
+    ExprMap.erase(N);
     SelectExpr(N);
     return;
 
