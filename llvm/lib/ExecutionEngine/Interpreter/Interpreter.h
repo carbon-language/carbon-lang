@@ -159,6 +159,9 @@ private:  // Helper functions
 
   void initializeExecutionEngine();
   void initializeExternalFunctions();
+  GenericValue getOperandValue(Value *V, ExecutionContext &SF);
+  GenericValue executeCastOperation(Value *SrcVal, const Type *Ty,
+				    ExecutionContext &SF);
 };
 
 #endif

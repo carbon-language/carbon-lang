@@ -75,14 +75,13 @@ public:
   //
   virtual void *getPointerToFunction(Function *F) = 0;
 
+  void StoreValueToMemory(GenericValue Val, GenericValue *Ptr, const Type *Ty);
+  void InitializeMemory(const Constant *Init, void *Addr);
+
 protected:
   void emitGlobals();
-
-public:   // FIXME: protected:   // API shared among subclasses
   GenericValue getConstantValue(const Constant *C);
-  void StoreValueToMemory(GenericValue Val, GenericValue *Ptr, const Type *Ty);
   GenericValue LoadValueFromMemory(GenericValue *Ptr, const Type *Ty);
-  void InitializeMemory(const Constant *Init, void *Addr);
 };
 
 #endif

@@ -77,7 +77,7 @@ static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2,
 				   const Type *Ty);
 
 
-static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
+GenericValue Interpreter::getOperandValue(Value *V, ExecutionContext &SF) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     switch (CE->getOpcode()) {
     case Instruction::Cast:
@@ -840,8 +840,8 @@ void Interpreter::visitShr(ShiftInst &I) {
    IMPLEMENT_CAST_CASE_FP_IMP(DESTTY, DESTCTY); \
    IMPLEMENT_CAST_CASE_END()
 
-static GenericValue executeCastOperation(Value *SrcVal, const Type *Ty,
-                                         ExecutionContext &SF) {
+GenericValue Interpreter::executeCastOperation(Value *SrcVal, const Type *Ty,
+					       ExecutionContext &SF) {
   const Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
 
