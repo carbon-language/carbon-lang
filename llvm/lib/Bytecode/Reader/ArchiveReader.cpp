@@ -58,6 +58,9 @@ static enum ObjectType getObjectType(ar_hdr *H, std::string MemberName,
   if (Size >= 4 && !memcmp(MemberData, "llvm", 4))
     return UserObject;
 
+  if (Size >= 4 && !memcmp(MemberData, "llvc", 4))
+    return UserObject;
+
   return Unknown;
 }
 
