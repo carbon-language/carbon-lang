@@ -2679,6 +2679,7 @@ void ISel::Select(SDOperand N) {
         return;
       }
     }
+    ExprMap.erase(N);
     SelectExpr(N);
     return;
 
@@ -2687,6 +2688,7 @@ void ISel::Select(SDOperand N) {
   case ISD::ZEXTLOAD:
   case ISD::CALL:
   case ISD::DYNAMIC_STACKALLOC:
+    ExprMap.erase(N);
     SelectExpr(N);
     return;
 
