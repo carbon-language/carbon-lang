@@ -119,13 +119,12 @@ class DSNode {
   ///
   std::vector<DSNodeHandle*> Referrers;
 
-  /// TypeEntries - As part of the merging process of this algorithm, nodes of
-  /// different types can be represented by this single DSNode.  This vector is
-  /// kept sorted.
-  ///
+  /// TypeRec - This structure is used to represent a single type that is held
+  /// in a DSNode.
   struct TypeRec {
-    const Type *Ty;
-    unsigned Offset;
+    const Type *Ty;                 // The type itself...
+    unsigned Offset;                // The offset in the node
+    bool isArray;                   // Have we accessed an array of elements?
 
     TypeRec() : Ty(0), Offset(0) {}
     TypeRec(const Type *T, unsigned O) : Ty(T), Offset(O) {}
@@ -140,6 +139,10 @@ class DSNode {
     bool operator!=(const TypeRec &TR) const { return !operator==(TR); }
   };
 
+  /// TypeEntries - As part of the merging process of this algorithm, nodes of
+  /// different types can be represented by this single DSNode.  This vector is
+  /// kept sorted.
+  ///
   std::vector<TypeRec> TypeEntries;
 
   /// Globals - The list of global values that are merged into this node.
