@@ -164,8 +164,8 @@ CompileP := $(Compile) $(CompileOptimizeOpts) -felide-constructors $(PROFILE)
 # Compile a c file, don't link...
 CompileC  := $(CC) -c $(CPPFLAGS) $(CCFLAGS) $(CompileCommonOpts)
 CompileCG := $(CompileC) -g  -D_DEBUG
-CompileCO := $(CompileC) $(CompileOptimizeOpts) -felide-constructors -fomit-frame-pointer
-CompileCP := $(CompileC) $(CompileOptimizeOpts) -felide-constructors $(PROFILE)
+CompileCO := $(CompileC) $(CompileOptimizeOpts) -fomit-frame-pointer
+CompileCP := $(CompileC) $(CompileOptimizeOpts) $(PROFILE)
 
 
 # Link final executable
