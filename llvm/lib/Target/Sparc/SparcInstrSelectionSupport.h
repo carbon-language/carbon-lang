@@ -117,6 +117,51 @@ convertOpcodeFromRegToImm(unsigned Opcode) {
   case V9::SRLXr6:  return V9::SRLXi6;
   case V9::SRAXr6:  return V9::SRAXi6;
 
+    /* Conditional move on int comparison with zero */
+  case V9::MOVRZr:   return V9::MOVRZi;
+  case V9::MOVRLEZr: return V9::MOVRLEZi;
+  case V9::MOVRLZr:  return V9::MOVRLZi;
+  case V9::MOVRNZr:  return V9::MOVRNZi;
+  case V9::MOVRGZr:  return V9::MOVRGZi;
+  case V9::MOVRGEZr: return V9::MOVRGEZi;
+
+
+    /* Conditional move on int condition code */
+  case V9::MOVAr:   return V9::MOVAi;
+  case V9::MOVNr:   return V9::MOVNi;
+  case V9::MOVNEr:  return V9::MOVNEi;
+  case V9::MOVEr:   return V9::MOVEi;
+  case V9::MOVGr:   return V9::MOVGi;
+  case V9::MOVLEr:  return V9::MOVLEi;
+  case V9::MOVGEr:  return V9::MOVGEi;
+  case V9::MOVLr:   return V9::MOVLi;
+  case V9::MOVGUr:  return V9::MOVGUi;
+  case V9::MOVLEUr: return V9::MOVLEUi;
+  case V9::MOVCCr:  return V9::MOVCCi;
+  case V9::MOVCSr:  return V9::MOVCSi;
+  case V9::MOVPOSr: return V9::MOVPOSi;
+  case V9::MOVNEGr: return V9::MOVNEGi;
+  case V9::MOVVCr:  return V9::MOVVCi;
+  case V9::MOVVSr:  return V9::MOVVSi;
+
+    /* Conditional move of int reg on fp condition code */
+  case V9::MOVFAr:   return V9::MOVFAi;
+  case V9::MOVFNr:   return V9::MOVFNi;
+  case V9::MOVFUr:   return V9::MOVFUi;
+  case V9::MOVFGr:   return V9::MOVFGi;
+  case V9::MOVFUGr:  return V9::MOVFUGi;
+  case V9::MOVFLr:   return V9::MOVFLi;
+  case V9::MOVFULr:  return V9::MOVFULi;
+  case V9::MOVFLGr:  return V9::MOVFLGi;
+  case V9::MOVFNEr:  return V9::MOVFNEi;
+  case V9::MOVFEr:   return V9::MOVFEi;
+  case V9::MOVFUEr:  return V9::MOVFUEi;
+  case V9::MOVFGEr:  return V9::MOVFGEi;
+  case V9::MOVFUGEr: return V9::MOVFUGEi;
+  case V9::MOVFLEr:  return V9::MOVFLEi;
+  case V9::MOVFULEr: return V9::MOVFULEi;
+  case V9::MOVFOr:   return V9::MOVFOi;
+
     /* load */
   case V9::LDSBr:   return V9::LDSBi;
   case V9::LDSHr:   return V9::LDSHi;
@@ -152,6 +197,11 @@ convertOpcodeFromRegToImm(unsigned Opcode) {
 
   default:
     // It's already in correct format
+    // Or, it's just not handled yet, but an assert() would break LLC
+#if 0
+    std::cerr << "Unhandled opcode in convertOpcodeFromRegToImm(): " << Opcode 
+              << "\n";
+#endif
     return Opcode;
   }
 }
