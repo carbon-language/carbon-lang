@@ -86,37 +86,8 @@ Pass *llvm::createArgumentPromotionPass() {
 bool ArgPromotion::run(Module &M) {
   bool Changed = false;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (I->hasInternalLinkage()) {
+    if (I->hasInternalLinkage())
       WorkList.insert(I);
-
-      // If there are any constant pointer refs pointing to this function,
-      // eliminate them now if possible.
-      ConstantPointerRef *CPR = 0;
-      for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
-           ++UI)
-        if ((CPR = dyn_cast<ConstantPointerRef>(*UI)))
-          break;  // Found one!
-      if (CPR) {
-        // See if we can transform all users to use the function directly.
-        while (!CPR->use_empty()) {
-          User *TheUser = CPR->use_back();
-          if (!isa<Constant>(TheUser) && !isa<GlobalVariable>(TheUser)) {
-            Changed = true;
-            TheUser->replaceUsesOfWith(CPR, I);
-          } else {
-            // We won't be able to eliminate all users.  :(
-            WorkList.erase(I);  // Minor efficiency win.
-            break;
-          }
-        }
-
-        // If we nuked all users of the CPR, kill the CPR now!
-        if (CPR->use_empty()) {
-          CPR->destroyConstant();
-          Changed = true;
-        }
-      }
-    }
   
   while (!WorkList.empty()) {
     Function *F = *WorkList.begin();
