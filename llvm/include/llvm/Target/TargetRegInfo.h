@@ -18,13 +18,9 @@ class Type;
 class Value;
 class LiveRangeInfo;
 class Function;
-class Instruction;
 class LiveRange;
 class AddedInstrns;
 class MachineInstr;
-class RegClass;
-class CallInst;
-class ReturnInst;
 class PhyRegAlloc;
 class BasicBlock;
 
