@@ -118,24 +118,28 @@ namespace {
 	std::swap(Stack[RegMap[RegOnTop]], Stack[StackTop-1]);
 
 	// Emit an fxch to update the runtime processors version of the state
-	MachineInstr *MI = BuildMI(X86::FXCH, 1).addReg(STReg);
-	MBB->insert(I, MI);
+	BuildMI(*MBB, I, X86::FXCH, 1).addReg(STReg);
 	NumFXCH++;
       }
     }
 
-    void duplicateToTop(unsigned RegNo, unsigned AsReg,
-			MachineBasicBlock::iterator &I) {
+    void duplicateToTop(unsigned RegNo, unsigned AsReg, MachineInstr *I) {
       unsigned STReg = getSTReg(RegNo);
       pushReg(AsReg);   // New register on top of stack
 
-      MachineInstr *MI = BuildMI(X86::FLDrr, 1).addReg(STReg);
-      MBB->insert(I, MI);
+      BuildMI(*MBB, I, X86::FLDrr, 1).addReg(STReg);
     }
 
     // popStackAfter - Pop the current value off of the top of the FP stack
     // after the specified instruction.
     void popStackAfter(MachineBasicBlock::iterator &I);
+
+    // freeStackSlotAfter - Free the specified register from the register stack,
+    // so that it is no longer in a register.  If the register is currently at
+    // the top of the stack, we just pop the current instruction, otherwise we
+    // store the current top-of-stack into the specified slot, then pop the top
+    // of stack.
+    void freeStackSlotAfter(MachineBasicBlock::iterator &I, unsigned Reg);
 
     bool processBasicBlock(MachineFunction &MF, MachineBasicBlock &MBB);
 
@@ -250,7 +254,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     DEBUG(
       MachineBasicBlock::iterator PrevI(PrevMI);
       if (I == PrevI) {
-        std::cerr<< "Just deleted pseudo instruction\n";
+        std::cerr << "Just deleted pseudo instruction\n";
       } else {
         MachineBasicBlock::iterator Start = I;
         // Rewind to first instruction newly inserted.
@@ -358,10 +362,33 @@ void FPS::popStackAfter(MachineBasicBlock::iterator &I) {
       I->RemoveOperand(0);
 
   } else {    // Insert an explicit pop
-    MachineInstr *MI = BuildMI(X86::FSTPrr, 1).addReg(X86::ST0);
-    I = MBB->insert(++I, MI);
+    I = BuildMI(*MBB, ++I, X86::FSTPrr, 1).addReg(X86::ST0);
   }
 }
+
+/// freeStackSlotAfter - Free the specified register from the register stack, so
+/// that it is no longer in a register.  If the register is currently at the top
+/// of the stack, we just pop the current instruction, otherwise we store the
+/// current top-of-stack into the specified slot, then pop the top of stack.
+void FPS::freeStackSlotAfter(MachineBasicBlock::iterator &I, unsigned FPRegNo) {
+  if (getStackEntry(0) == FPRegNo) {  // already at the top of stack? easy.
+    popStackAfter(I);
+    return;
+  }
+
+  // Otherwise, store the top of stack into the dead slot, killing the operand
+  // without having to add in an explicit xchg then pop.
+  //
+  unsigned STReg    = getSTReg(FPRegNo);
+  unsigned OldSlot  = getSlot(FPRegNo);
+  unsigned TopReg   = Stack[StackTop-1];
+  Stack[OldSlot]    = TopReg;
+  RegMap[TopReg]    = OldSlot;
+  RegMap[FPRegNo]   = ~0;
+  Stack[--StackTop] = ~0;
+  I = BuildMI(*MBB, ++I, X86::FSTPrr, 1).addReg(STReg);
+}
+
 
 static unsigned getFPReg(const MachineOperand &MO) {
   assert(MO.isRegister() && "Expected an FP register!");
@@ -596,8 +623,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
 
   // Replace the old instruction with a new instruction
   MBB->remove(I++);
-  BuildMI(*MBB, I, Opcode, 1).addReg(getSTReg(NotTOS));
-  --I;
+  I = BuildMI(*MBB, I, Opcode, 1).addReg(getSTReg(NotTOS));
 
   // If both operands are killed, pop one off of the stack in addition to
   // overwriting the other one.
@@ -610,25 +636,8 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   if (MI->getOpcode() == X86::FpUCOM) {
     if (KillsOp0 && !KillsOp1)
       popStackAfter(I);   // If we kill the first operand, pop it!
-    else if (KillsOp1 && Op0 != Op1) {
-      if (getStackEntry(0) == Op1) {
-	popStackAfter(I);     // If it's right at the top of stack, just pop it
-      } else {
-	// Otherwise, move the top of stack into the dead slot, killing the
-	// operand without having to add in an explicit xchg then pop.
-	//
-	unsigned STReg    = getSTReg(Op1);
-	unsigned OldSlot  = getSlot(Op1);
-	unsigned TopReg   = Stack[StackTop-1];
-	Stack[OldSlot]    = TopReg;
-	RegMap[TopReg]    = OldSlot;
-	RegMap[Op1]       = ~0;
-	Stack[--StackTop] = ~0;
-	
-	MachineInstr *MI = BuildMI(X86::FSTPrr, 1).addReg(STReg);
-	I = MBB->insert(++I, MI);
-      }
-    }
+    else if (KillsOp1 && Op0 != Op1)
+      freeStackSlotAfter(I, Op1);
   }
       
   // Update stack information so that we know the destination register is now on
@@ -663,10 +672,8 @@ void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
   for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
 	 E = LV->killed_end(MI); KI != E; ++KI)
     if (KI->second == X86::FP0+Op1) {
-      ++I;
-      moveToTop(Op1, I);  // Insert fxch if necessary
-      --I;
-      popStackAfter(I);            // Pop the top of the stack, killing value
+      // Get this value off of the register stack.
+      freeStackSlotAfter(I, Op1);
       break;
     }
 }
