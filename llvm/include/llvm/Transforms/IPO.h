@@ -130,14 +130,6 @@ Pass *createIPConstantPropagationPass();
 
 
 //===----------------------------------------------------------------------===//
-/// These passes are wrappers that can do a few simple structure mutation
-/// transformations.
-///
-Pass *createSwapElementsPass();
-Pass *createSortElementsPass();
-
-
-//===----------------------------------------------------------------------===//
 //
 /// createSingleLoopExtractorPass - This pass extracts one natural loop from the
 /// program into a function if it can.  This is used by bugpoint.
