@@ -222,8 +222,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::UNDEF: {
     MVT::ValueType VT = Op.getValueType();
     switch (TLI.getOperationAction(ISD::UNDEF, VT)) {
-    case Expand:
-    case Promote:
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Expand:
+    case TargetLowering::Promote:
       if (MVT::isInteger(VT))
         Result = DAG.getConstant(0, VT);
       else if (MVT::isFloatingPoint(VT))
@@ -231,7 +232,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       else
         assert(0 && "Unknown value type!");
       break;
-    case Legal:
+    case TargetLowering::Legal:
       break;
     }
     break;
