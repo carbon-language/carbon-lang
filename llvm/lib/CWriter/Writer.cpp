@@ -1123,32 +1123,15 @@ void CWriter::visitCallInst(CallInst &I) {
         return;
         
       case LLVMIntrinsic::setjmp:
-#ifdef HAVE_JUMP
-        Out << "setjmp(*(jmp_buf*)";
-        writeOperand(I.getOperand(1));
-        Out << ")";
-#else
-        //
-        // For right now, we don't really support non-local jumps.  So
-        // make setjmp() always evaluate to zero for now.
-        //
-        Out << "(0)";
-#endif
+        // This instrinsic should never exist in the program, but until we get
+        // setjmp/longjmp transformations going on, we should codegen it to
+        // something reasonable.  This will allow code that never calls longjmp
+        // to work.
+        Out << "0";
         return;
       case LLVMIntrinsic::longjmp:
-#ifdef HAVE_JUMP
-        Out << "longjmp(*(jmp_buf*)";
-        writeOperand(I.getOperand(1));
-        Out << ", ";
-        writeOperand(I.getOperand(2));
-        Out << ")";
-#else
-        //
-        // For right now, we don't really support non-local jumps.  So
-        // make longjmp() abort the program.
-        //
+        // Treat longjmp the same as setjmp
         Out << "abort()";
-#endif
         return;
       }
     }
