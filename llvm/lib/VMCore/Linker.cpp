@@ -382,32 +382,24 @@ static GlobalValue *FindGlobalNamed(const std::string &Name, const Type *Ty,
   // It doesn't exist exactly, scan through all of the type planes in the symbol
   // table, checking each of them for a type-compatible version.
   //
-  for (SymbolTable::plane_iterator PI = ST->plane_begin(), PE = ST->plane_end(); 
+  for (SymbolTable::plane_iterator PI = ST->plane_begin(), PE = ST->plane_end();
        PI != PE; ++PI) {
-    SymbolTable::ValueMap &VM = PI->second;
-
     // Does this type plane contain an entry with the specified name?
+    SymbolTable::ValueMap &VM = PI->second;
     SymbolTable::value_iterator VI = VM.find(Name);
-      if (VI != VM.end()) {
-        //
-        // Ensure that this type if placed correctly into the symbol table.
-        //
-        assert(VI->second->getType() == PI->first && "Type conflict!");
 
-        //
-        // Save a reference to the new type.  Resolving the type can modify the
-        // symbol table, invalidating the TI variable.
-        //
-        Value *ValPtr = VI->second;
-
-        //
-        // Determine whether we can fold the two types together, resolving them.
-        // If so, we can use this value.
-        //
-        if (!RecursiveResolveTypes(Ty, PI->first, ST, ""))
-          return cast<GlobalValue>(ValPtr);
-      }
+    if (VI != VM.end()) {
+      // Ensure that this type if placed correctly into the symbol table.
+      GlobalValue *ValPtr = cast<GlobalValue>(VI->second);
+      assert(ValPtr->getType() == PI->first && "Type conflict!");
+      
+      // Determine whether we can fold the two types together, resolving them.
+      // If so, we can use this value.
+      if (!ValPtr->hasInternalLinkage() &&
+          !RecursiveResolveTypes(Ty, PI->first, ST, ""))
+        return ValPtr;
     }
+  }
   return 0;  // Otherwise, nothing could be found.
 }
 
@@ -428,7 +420,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
   for (Module::const_giterator I = Src->gbegin(), E = Src->gend(); I != E; ++I){
     const GlobalVariable *SGV = I;
     GlobalVariable *DGV = 0;
-    if (SGV->hasName()) {
+    if (SGV->hasName() && !SGV->hasInternalLinkage()) {
       // A same named thing is a global variable, because the only two things
       // that may be in a module level symbol table are Global Vars and
       // Functions, and they both have distinct, nonoverlapping, possible types.
@@ -613,7 +605,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
     const Function *SF = I;   // SrcFunction
     Function *DF = 0;
-    if (SF->hasName())
+    if (SF->hasName() && !SF->hasInternalLinkage())
       // The same named thing is a Function, because the only two things
       // that may be in a module level symbol table are Global Vars and
       // Functions, and they both have distinct, nonoverlapping, possible types.
