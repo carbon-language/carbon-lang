@@ -13,7 +13,6 @@
 #include "Support/Statistic.h"
 #include "Support/Timer.h"
 #include <algorithm>
-#include <set>
 
 using std::vector;
 
@@ -938,17 +937,27 @@ void DSGraph::removeTriviallyDeadNodes() {
 }
 
 
-// markAlive - Simple graph walker that recursively traverses the graph, marking
-// stuff to be alive.
-//
-static void markAlive(DSNode *N, std::set<DSNode*> &Alive) {
-  if (N == 0) return;
-  std::set<DSNode*>::iterator I = Alive.lower_bound(N);
-  if (I != Alive.end() && *I == N) return;  // Already marked alive
-  Alive.insert(I, N);                       // Is alive now
+/// markReachableNodes - This method recursively traverses the specified
+/// DSNodes, marking any nodes which are reachable.  All reachable nodes it adds
+/// to the set, which allows it to only traverse visited nodes once.
+///
+void DSNode::markReachableNodes(std::set<DSNode*> &ReachableNodes) {
+  if (this == 0) return;
+  std::set<DSNode*>::iterator I = ReachableNodes.lower_bound(this);
+  if (I != ReachableNodes.end() && *I == this)
+    return;                                        // Already marked reachable
+  ReachableNodes.insert(I, this);                  // Is reachable now
 
-  for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
-    markAlive(N->getLink(i).getNode(), Alive);
+  for (unsigned i = 0, e = getSize(); i < e; i += DS::PointerSize)
+    getLink(i).getNode()->markReachableNodes(ReachableNodes);
+}
+
+void DSCallSite::markReachableNodes(std::set<DSNode*> &Nodes) {
+  getRetVal().getNode()->markReachableNodes(Nodes);
+  getCallee().getNode()->markReachableNodes(Nodes);
+  
+  for (unsigned j = 0, e = getNumPtrArgs(); j != e; ++j)
+    getPtrArg(j).getNode()->markReachableNodes(Nodes);
 }
 
 // markAliveIfCanReachAlive - Simple graph walker that recursively traverses the
@@ -981,7 +990,7 @@ static bool markAliveIfCanReachAlive(DSNode *N, std::set<DSNode*> &Alive,
     ChildrenAreAlive |= markAliveIfCanReachAlive(N->getLink(i).getNode(),
                                                  Alive, Visited);
   if (ChildrenAreAlive)
-    markAlive(N, Alive);
+    N->markReachableNodes(Alive);
   return ChildrenAreAlive;
 }
 
@@ -994,14 +1003,6 @@ static bool CallSiteUsesAliveArgs(DSCallSite &CS, std::set<DSNode*> &Alive,
     if (markAliveIfCanReachAlive(CS.getPtrArg(j).getNode(), Alive, Visited))
       return true;
   return false;
-}
-
-static void markAlive(DSCallSite &CS, std::set<DSNode*> &Alive) {
-  markAlive(CS.getRetVal().getNode(), Alive);
-  markAlive(CS.getCallee().getNode(), Alive);
-  
-  for (unsigned j = 0, e = CS.getNumPtrArgs(); j != e; ++j)
-    markAlive(CS.getPtrArg(j).getNode(), Alive);
 }
 
 // removeDeadNodes - Use a more powerful reachability analysis to eliminate
@@ -1025,12 +1026,12 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
          E = ScalarMap.end(); I != E; ++I)
     if (!(Flags & DSGraph::RemoveUnreachableGlobals) ||
         !isa<GlobalValue>(I->first))              // Don't mark globals!
-      markAlive(I->second.getNode(), Alive);
+      I->second.getNode()->markReachableNodes(Alive);
     else                    // Keep track of global nodes
       GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
 
   // The return value is alive as well...
-  markAlive(RetNode.getNode(), Alive);
+  RetNode.getNode()->markReachableNodes(Alive);
 
   // If any global nodes points to a non-global that is "alive", the global is
   // "alive" as well...
@@ -1042,14 +1043,14 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   std::vector<bool> FCallsAlive(FunctionCalls.size());
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
     if (CallSiteUsesAliveArgs(FunctionCalls[i], Alive, Visited)) {
-      markAlive(FunctionCalls[i], Alive);
+      FunctionCalls[i].markReachableNodes(Alive);
       FCallsAlive[i] = true;
     }
 
   std::vector<bool> AuxFCallsAlive(AuxFunctionCalls.size());
   for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
     if (CallSiteUsesAliveArgs(AuxFunctionCalls[i], Alive, Visited)) {
-      markAlive(AuxFunctionCalls[i], Alive);
+      AuxFunctionCalls[i].markReachableNodes(Alive);
       AuxFCallsAlive[i] = true;
     }
 
