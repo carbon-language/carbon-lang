@@ -306,8 +306,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   return ProgramResult;
 }
 
-int GCC::MakeSharedObject(const std::string &InputFile,
-                          FileType fileType,
+int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
                           std::string &OutputFile) {
   OutputFile = getUniqueFilename(InputFile+".so");
   // Compile the C/asm file into a shared object
@@ -327,10 +326,10 @@ int GCC::MakeSharedObject(const std::string &InputFile,
   };
   
   std::cout << "<gcc>" << std::flush;
-  if(RunProgramWithTimeout(GCCPath, GCCArgs, "/dev/null", "/dev/null",
-                           "/dev/null")) {
+  if (RunProgramWithTimeout(GCCPath, GCCArgs, "/dev/null", "/dev/null",
+                            "/dev/null")) {
     ProcessFailure(GCCArgs);
-    exit(1);
+    return 1;
   }
   return 0;
 }
