@@ -17,28 +17,14 @@ using std::vector;
 using std::set;
 using std::pair;
 
-// FIXME: TargetData Hack: Eventually we will have annotations given to us by
-// the backend so that we know stuff about type size and alignments.  For now
-// though, just use this, because it happens to match the model that GCC and the
-// Sparc backend use.
-//
-const TargetData TD("SimpleStructMutation Should be GCC though!");
-
 namespace {
   struct SimpleStructMutation : public MutateStructTypes {
-    enum Transform { SwapElements, SortElements } CurrentXForm;
+    enum Transform { SwapElements, SortElements };
+    const TargetData &TD;
+    SimpleStructMutation(const TargetData &td) : TD(td) {}
     
-    SimpleStructMutation(enum Transform XForm) : CurrentXForm(XForm) {}
-    
-    const char *getPassName() const { return "Simple Struct Mutation"; }
-    
-    virtual bool run(Module &M) {
-      setTransforms(getTransforms(M, CurrentXForm));
-      bool Changed = MutateStructTypes::run(M);
-      clearTransforms();
-      return Changed;
-    }
-    
+    virtual bool run(Module &M)  = 0;
+
     // getAnalysisUsage - This function needs the results of the
     // FindUsedTypes and FindUnsafePointerTypes analysis passes...
     //
@@ -48,8 +34,30 @@ namespace {
       MutateStructTypes::getAnalysisUsage(AU);
     }
     
-  private:
+  protected:
     TransformsType getTransforms(Module &M, enum Transform);
+  };
+
+  struct SwapStructElements : public SimpleStructMutation {
+    SwapStructElements(const TargetData &TD) : SimpleStructMutation(TD) {}
+
+    virtual bool run(Module &M) {
+      setTransforms(getTransforms(M, SwapElements));
+      bool Changed = MutateStructTypes::run(M);
+      clearTransforms();
+      return Changed;
+    }
+  };
+
+  struct SortStructElements : public SimpleStructMutation {
+    SortStructElements(const TargetData &TD) : SimpleStructMutation(TD) {}
+
+    virtual bool run(Module &M) {
+      setTransforms(getTransforms(M, SortElements));
+      bool Changed = MutateStructTypes::run(M);
+      clearTransforms();
+      return Changed;
+    }
   };
 }  // end anonymous namespace
 
@@ -91,7 +99,7 @@ static unsigned getIndex(const vector<pair<unsigned, unsigned> > &Vec,
     if (Vec[i].first == Field) return i;
 }
 
-static inline void GetTransformation(const StructType *ST,
+static inline void GetTransformation(const TargetData &TD, const StructType *ST,
                                      vector<int> &Transform,
                                    enum SimpleStructMutation::Transform XForm) {
   unsigned NumElements = ST->getElementTypes().size();
@@ -166,17 +174,25 @@ SimpleStructMutation::TransformsType
     const StructType *ST = *I;
 
     vector<int> &Transform = Transforms[ST];  // Fill in the map directly
-    GetTransformation(ST, Transform, XForm);
+    GetTransformation(TD, ST, Transform, XForm);
   }
   
   return Transforms;
 }
 
 
-Pass *createSwapElementsPass() {
-  return new SimpleStructMutation(SimpleStructMutation::SwapElements);
+Pass *createSwapElementsPass(const TargetData &TD) {
+  return new SwapStructElements(TD);
 }
-Pass *createSortElementsPass() {
-  return new SimpleStructMutation(SimpleStructMutation::SortElements);
+Pass *createSortElementsPass(const TargetData &TD) {
+  return new SortStructElements(TD);
 }
 
+namespace {
+  RegisterPass<SwapStructElements> X("swapstructs",
+                                     "Swap structure types around",
+                                     createSwapElementsPass);
+  RegisterPass<SortStructElements> Y("sortstructs",
+                                     "Sort structure elements by size",
+                                     createSortElementsPass);
+}
