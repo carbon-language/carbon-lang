@@ -1968,28 +1968,28 @@ fi
           ac_config_commands="$ac_config_commands tools/gccld/Makefile"
 
 
-          ac_config_commands="$ac_config_commands tools/link/Makefile"
-
-
           ac_config_commands="$ac_config_commands tools/llc/Makefile"
-
-
-          ac_config_commands="$ac_config_commands tools/lli/Makefile"
-
-
-          ac_config_commands="$ac_config_commands tools/opt/Makefile"
 
 
           ac_config_commands="$ac_config_commands tools/llee/Makefile"
 
 
-          ac_config_commands="$ac_config_commands tools/llvm-as/Makefile"
+          ac_config_commands="$ac_config_commands tools/lli/Makefile"
 
 
           ac_config_commands="$ac_config_commands tools/llvm-ar/Makefile"
 
 
+          ac_config_commands="$ac_config_commands tools/llvm-as/Makefile"
+
+
           ac_config_commands="$ac_config_commands tools/llvm-dis/Makefile"
+
+
+          ac_config_commands="$ac_config_commands tools/llvm-link/Makefile"
+
+
+          ac_config_commands="$ac_config_commands tools/opt/Makefile"
 
 
           ac_config_commands="$ac_config_commands utils/Makefile"
@@ -23429,14 +23429,14 @@ ${srcdir}/autoconf/mkinstalldirs `dirname tools/bugpoint/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/extract/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/gccas/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/gccld/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname tools/link/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/llc/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname tools/lli/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname tools/opt/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/llee/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname tools/llvm-as/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname tools/lli/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/llvm-ar/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname tools/llvm-as/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/llvm-dis/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname tools/llvm-link/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname tools/opt/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname utils/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname utils/Burg/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname utils/Burg/Doc/Makefile`
@@ -23614,14 +23614,14 @@ do
   "tools/extract/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/extract/Makefile" ;;
   "tools/gccas/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/gccas/Makefile" ;;
   "tools/gccld/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/gccld/Makefile" ;;
-  "tools/link/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/link/Makefile" ;;
   "tools/llc/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/llc/Makefile" ;;
-  "tools/lli/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/lli/Makefile" ;;
-  "tools/opt/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/opt/Makefile" ;;
   "tools/llee/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/llee/Makefile" ;;
-  "tools/llvm-as/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/llvm-as/Makefile" ;;
+  "tools/lli/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/lli/Makefile" ;;
   "tools/llvm-ar/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/llvm-ar/Makefile" ;;
+  "tools/llvm-as/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/llvm-as/Makefile" ;;
   "tools/llvm-dis/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/llvm-dis/Makefile" ;;
+  "tools/llvm-link/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/llvm-link/Makefile" ;;
+  "tools/opt/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/opt/Makefile" ;;
   "utils/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Makefile" ;;
   "utils/Burg/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Burg/Makefile" ;;
   "utils/Burg/Doc/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Burg/Doc/Makefile" ;;
@@ -24429,14 +24429,14 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     tools/extract/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/extract/Makefile tools/extract/Makefile ;;
     tools/gccas/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/gccas/Makefile tools/gccas/Makefile ;;
     tools/gccld/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/gccld/Makefile tools/gccld/Makefile ;;
-    tools/link/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/link/Makefile tools/link/Makefile ;;
     tools/llc/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/llc/Makefile tools/llc/Makefile ;;
-    tools/lli/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/lli/Makefile tools/lli/Makefile ;;
-    tools/opt/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/opt/Makefile tools/opt/Makefile ;;
     tools/llee/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/llee/Makefile tools/llee/Makefile ;;
-    tools/llvm-as/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/llvm-as/Makefile tools/llvm-as/Makefile ;;
+    tools/lli/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/lli/Makefile tools/lli/Makefile ;;
     tools/llvm-ar/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/llvm-ar/Makefile tools/llvm-ar/Makefile ;;
+    tools/llvm-as/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/llvm-as/Makefile tools/llvm-as/Makefile ;;
     tools/llvm-dis/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/llvm-dis/Makefile tools/llvm-dis/Makefile ;;
+    tools/llvm-link/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/llvm-link/Makefile tools/llvm-link/Makefile ;;
+    tools/opt/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/opt/Makefile tools/opt/Makefile ;;
     utils/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/Makefile utils/Makefile ;;
     utils/Burg/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/Burg/Makefile utils/Burg/Makefile ;;
     utils/Burg/Doc/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/Burg/Doc/Makefile utils/Burg/Doc/Makefile ;;
