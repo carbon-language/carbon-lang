@@ -28,6 +28,10 @@ class DSNodeIterator;          // Data structure graph traversal iterator
 /// graph from getting out of date.  This class represents a "pointer" in the
 /// graph, whose destination is an indexed offset into a node.
 ///
+/// Note: some functions that are marked as inline in DSNodeHandle are actually
+/// defined in DSNode.h because they need knowledge of DSNode operation. Putting
+/// them in a CPP file wouldn't help making them inlined and keeping DSNode and
+/// DSNodeHandle (and friends) in one file complicates things.
 class DSNodeHandle {
   DSNode *N;
   unsigned Offset;

@@ -1,6 +1,6 @@
-//===- DSSupport.h - Support for datastructure graphs -----------*- C++ -*-===//
+//===- DSNode.h - Node definition for datastructure graphs ------*- C++ -*-===//
 //
-// Support for graph nodes, call sites, and types.
+// Data structure graph nodes and some implementation of DSNodeHandle.
 //
 //===----------------------------------------------------------------------===//
 
