@@ -404,7 +404,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
           GlobalsByName.find(SGV->getName());
         if (EGV != GlobalsByName.end())
           DGV = dyn_cast<GlobalVariable>(EGV->second);
-        if (DGV && RecursiveResolveTypes(SGV->getType(), DGV->getType(), ST, ""))
+        if (DGV && RecursiveResolveTypes(SGV->getType(), DGV->getType(),ST, ""))
           DGV = 0;  // FIXME: gross.
       }
 
@@ -691,8 +691,7 @@ static bool LinkFunctionBody(Function *Dest, Function *Src,
           *OI = RemapOperand(*OI, GlobalMap);
 
   // There is no need to map the arguments anymore.
-  for (Function::aiterator I = Src->abegin(), E = Src->aend();
-       I != E; ++I, ++DI)
+  for (Function::aiterator I = Src->abegin(), E = Src->aend(); I != E; ++I)
     GlobalMap.erase(I);
 
   return false;
