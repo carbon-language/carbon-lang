@@ -17,6 +17,7 @@
 
 #include "llvm/Analysis/DataStructure/DSNode.h"
 #include "llvm/ADT/hash_map"
+#include "llvm/ADT/EquivalenceClasses.h"
 #include <list>
 
 namespace llvm {
@@ -40,7 +41,12 @@ class DSScalarMap {
 
   typedef hash_set<GlobalValue*> GlobalSetTy;
   GlobalSetTy GlobalSet;
+
+  EquivalenceClasses<GlobalValue*> &GlobalECs;
 public:
+  DSScalarMap(EquivalenceClasses<GlobalValue*> &ECs) : GlobalECs(ECs) {}
+
+  EquivalenceClasses<GlobalValue*> &getGlobalECs() const { return GlobalECs; }
 
   // Compatibility methods: provide an interface compatible with a map of 
   // Value* to DSNodeHandle's.
@@ -50,11 +56,44 @@ public:
   iterator end()   { return ValueMap.end(); }
   const_iterator begin() const { return ValueMap.begin(); }
   const_iterator end() const { return ValueMap.end(); }
-  iterator find(Value *V) { return ValueMap.find(V); }
-  const_iterator find(Value *V) const { return ValueMap.find(V); }
-  unsigned count(Value *V) const { return ValueMap.count(V); }
 
-  void erase(Value *V) { erase(find(V)); }
+  GlobalValue *getLeaderForGlobal(GlobalValue *GV) const {
+    EquivalenceClasses<GlobalValue*>::iterator ECI = GlobalECs.findValue(GV);
+    if (ECI == GlobalECs.end()) return GV;
+    return *GlobalECs.findLeader(ECI);
+  }
+
+
+  iterator find(Value *V) {
+    iterator I = ValueMap.find(V);
+    if (I != ValueMap.end()) return I;
+
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+      // If this is a global, check to see if it is equivalenced to something
+      // in the map.
+      GlobalValue *Leader = getLeaderForGlobal(GV);
+      if (Leader != GV)
+        I = ValueMap.find((Value*)Leader);
+    }
+    return I;
+  }
+  const_iterator find(Value *V) const {
+    const_iterator I = ValueMap.find(V);
+    if (I != ValueMap.end()) return I;
+
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+      // If this is a global, check to see if it is equivalenced to something
+      // in the map.
+      GlobalValue *Leader = getLeaderForGlobal(GV);
+      if (Leader != GV)
+        I = ValueMap.find((Value*)Leader);
+    }
+    return I;
+  }
+
+  unsigned count(Value *V) const { return ValueMap.find(V) != ValueMap.end(); }
+
+  void erase(Value *V) { erase(ValueMap.find(V)); }
 
   void eraseIfExists(Value *V) {
     iterator I = find(V);
@@ -79,14 +118,30 @@ public:
       ValueMap.insert(std::make_pair(New, I->second));
   }
 
+
+  /// operator[] - Return the DSNodeHandle for the specified value, creating a
+  /// new null handle if there is no entry yet.
   DSNodeHandle &operator[](Value *V) {
-    std::pair<iterator,bool> IP = 
-      ValueMap.insert(std::make_pair(V, DSNodeHandle()));
-    if (IP.second) {  // Inserted the new entry into the map.
-      if (GlobalValue *GV = dyn_cast<GlobalValue>(V))
-        GlobalSet.insert(GV);
+    iterator I = ValueMap.find(V);
+    if (I != ValueMap.end())
+      return I->second;   // Return value if already exists.
+
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+      // If the node doesn't exist, check to see if it's a global that is
+      // equated to another global in the program.
+      EquivalenceClasses<GlobalValue*>::iterator ECI = GlobalECs.findValue(GV);
+      if (ECI != GlobalECs.end()) {
+        GlobalValue *Leader = *GlobalECs.findLeader(ECI);
+        if (Leader != GV)
+          return operator[]((Value*)Leader);
+      }
+
+      // Okay, this is either not an equivalenced global or it is the leader, it
+      // will be inserted into the scalar map now.
+      GlobalSet.insert(GV);
     }
-    return IP.first->second;
+
+    return ValueMap.insert(std::make_pair(V, DSNodeHandle())).first->second;
   }
 
   void erase(iterator I) { 
@@ -167,14 +222,15 @@ private:
   const TargetData &TD;
 
   void operator=(const DSGraph &); // DO NOT IMPLEMENT
-
+  DSGraph(const DSGraph&);         // DO NOT IMPLEMENT
 public:
   // Create a new, empty, DSGraph.
-  DSGraph(const TargetData &td)
-    : GlobalsGraph(0), PrintAuxCalls(false), TD(td) {}
+  DSGraph(EquivalenceClasses<GlobalValue*> &ECs, const TargetData &td)
+    : GlobalsGraph(0), PrintAuxCalls(false), ScalarMap(ECs), TD(td) {}
 
   // Compute the local DSGraph
-  DSGraph(const TargetData &td, Function &F, DSGraph *GlobalsGraph);
+  DSGraph(EquivalenceClasses<GlobalValue*> &ECs, const TargetData &TD,
+          Function &F, DSGraph *GlobalsGraph);
 
   // Copy ctor - If you want to capture the node mapping between the source and
   // destination graph, you may optionally do this by specifying a map to record
@@ -184,12 +240,19 @@ public:
   // source.  You need to set a new GlobalsGraph with the setGlobalsGraph
   // method.
   //
-  DSGraph(const DSGraph &DSG);
-  DSGraph(const DSGraph &DSG, NodeMapTy &NodeMap);
+  DSGraph(const DSGraph &DSG, EquivalenceClasses<GlobalValue*> &ECs);
+  DSGraph(const DSGraph &DSG, NodeMapTy &NodeMap,
+          EquivalenceClasses<GlobalValue*> &ECs);
   ~DSGraph();
 
   DSGraph *getGlobalsGraph() const { return GlobalsGraph; }
   void setGlobalsGraph(DSGraph *G) { GlobalsGraph = G; }
+
+  /// getGlobalECs - Return the set of equivalence classes that the global
+  /// variables in the program form.
+  EquivalenceClasses<GlobalValue*> &getGlobalECs() const {
+    return ScalarMap.getGlobalECs();
+  }
 
   /// getTargetData - Return the TargetData object for the current target.
   ///
