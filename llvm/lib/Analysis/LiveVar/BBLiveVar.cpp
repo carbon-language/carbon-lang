@@ -1,7 +1,7 @@
 #include "llvm/Analysis/LiveVar/BBLiveVar.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "../../CodeGen/TargetMachine/Sparc/SparcInternals.h"  // TODO: FIXME!! Only for PHI defn
+#include "../../Target/Sparc/SparcInternals.h"  // TODO: FIXME!! Only for PHI defn
 
 
 /********************* Implementation **************************************/

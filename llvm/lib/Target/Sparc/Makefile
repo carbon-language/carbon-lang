@@ -1,7 +1,4 @@
-LEVEL = ../../../..
-
-DIRS  = 
-
+LEVEL = ../../..
 LIBRARYNAME = sparc
 
 ## List source files in link order
