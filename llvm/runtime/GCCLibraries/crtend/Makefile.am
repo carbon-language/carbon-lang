@@ -37,9 +37,13 @@ $(AggregateLib) : $(BCDIR) $(ComponentLibs)
 all-am: $(AggregateLib)
 
 clean-am: clean-crtend
+
+clean-crtend:
 	$(RM) -f $(AggregateLib) *.bc
 
 install-am: install-crtend
+
+install-crtend:
 	$(INSTALL_DATA) '$(AggregateLib)' $(DESTDIR)$(libdir)
 
 MainObj      := crtend.bc listend.bc
