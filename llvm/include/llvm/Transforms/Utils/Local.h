@@ -18,7 +18,7 @@
 // doConstantPropogation - Constant prop a specific instruction.  Returns true
 // and potentially moves the iterator if constant propogation was performed.
 //
-bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &I);
+bool doConstantPropogation(BasicBlock::iterator &I);
 
 // ConstantFoldTerminator - If a terminator instruction is predicated on a
 // constant value, convert it into an unconditional branch to the constant
@@ -42,7 +42,7 @@ bool isInstructionTriviallyDead(Instruction *I);
 // isTriviallyDead.  If so, remove the instruction and update the iterator to
 // point to the instruction that immediately succeeded the original instruction.
 //
-bool dceInstruction(BasicBlock::InstListType &BBIL, BasicBlock::iterator &BBI);
+bool dceInstruction(BasicBlock::iterator &BBI);
 
 
 //===----------------------------------------------------------------------===//
