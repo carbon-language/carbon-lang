@@ -60,6 +60,7 @@ void Loop::print(std::ostream &OS) const {
     getSubLoops()[i]->print(OS);
 }
 
+
 //===----------------------------------------------------------------------===//
 // LoopInfo implementation
 //
@@ -101,6 +102,12 @@ void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
 void LoopInfo::print(std::ostream &OS) const {
   for (unsigned i = 0; i < TopLevelLoops.size(); ++i)
     TopLevelLoops[i]->print(OS);
+#if 0
+  for (std::map<BasicBlock*, Loop*>::const_iterator I = BBMap.begin(),
+         E = BBMap.end(); I != E; ++I)
+    OS << "BB '" << I->first->getName() << "' level = "
+       << I->second->LoopDepth << "\n";
+#endif
 }
 
 Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
@@ -132,45 +139,24 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
     }
   }
 
-  // Add the basic blocks that comprise this loop to the BBMap so that this
-  // loop can be found for them.  Also check subsidary basic blocks to see if
-  // they start subloops of their own.
-  //
-  for (std::vector<BasicBlock*>::reverse_iterator I = L->Blocks.rbegin(),
-	 E = L->Blocks.rend(); I != E; ++I)
+  // If there are any loops nested within this loop, create them now!
+  for (std::vector<BasicBlock*>::iterator I = L->Blocks.begin(),
+	 E = L->Blocks.end(); I != E; ++I)
+    if (Loop *NewLoop = ConsiderForLoop(*I, DS)) {
+      L->SubLoops.push_back(NewLoop);
+      NewLoop->ParentLoop = L;
+    }
 
-    // Check to see if this block starts a new loop
-    if (*I != BB)
-      if (Loop *NewLoop = ConsiderForLoop(*I, DS)) {
-        L->SubLoops.push_back(NewLoop);
-        NewLoop->ParentLoop = L;
-      } else {
-        std::map<BasicBlock*, Loop*>::iterator BBMI = BBMap.lower_bound(*I);
-        if (BBMI == BBMap.end() || BBMI->first != *I) {  // Not in map yet...
-          BBMap.insert(BBMI, std::make_pair(*I, L));
-        } else {
-          // If this is already in the BBMap then this means that we already
-          // added a loop for it, but incorrectly added the loop to a higher
-          // level loop instead of the current loop we are creating.  Fix this
-          // now by moving the loop into the correct subloop.
-          //
-          Loop *SubLoop = BBMI->second;
-          if (SubLoop->getHeader() == *I) { // Only do this once for the loop...
-            Loop *OldSubLoopParent = SubLoop->getParentLoop();
-            if (OldSubLoopParent != L) {
-              // Remove SubLoop from OldSubLoopParent's list of subloops...
-              std::vector<Loop*>::iterator I =
-                std::find(OldSubLoopParent->SubLoops.begin(),
-                          OldSubLoopParent->SubLoops.end(), SubLoop);
-              assert(I != OldSubLoopParent->SubLoops.end()
-                     && "Loop parent doesn't contain loop?");
-              OldSubLoopParent->SubLoops.erase(I);
-              SubLoop->ParentLoop = L;
-              L->SubLoops.push_back(SubLoop);
-            }
-          }
-        }
-      }
+
+  // Add the basic blocks that comprise this loop to the BBMap so that this
+  // loop can be found for them.
+  //
+  for (std::vector<BasicBlock*>::iterator I = L->Blocks.begin(),
+	 E = L->Blocks.end(); I != E; ++I) {
+    std::map<BasicBlock*, Loop*>::iterator BBMI = BBMap.lower_bound(*I);
+    if (BBMI == BBMap.end() || BBMI->first != *I)  // Not in map yet...
+      BBMap.insert(BBMI, std::make_pair(*I, L));   // Must be at this level
+  }
 
   return L;
 }
