@@ -130,8 +130,7 @@ bool CleanupGCCOutput::PatchUpMethodReferences(Module *M) {
         }
       }
       
-      if (Methods[i] && (!Methods[i]->getMethodType()->isVarArg() ||
-                         Methods[i]->getMethodType()->getParamTypes().size())) {
+      if (Methods[i] && (!Methods[i]->getMethodType()->isVarArg())) {
         if (Concrete) {  // Found two different methods types.  Can't choose
           Concrete = 0;
           break;
@@ -158,11 +157,28 @@ bool CleanupGCCOutput::PatchUpMethodReferences(Module *M) {
         for (unsigned i = 0; i < Methods.size(); ++i)
           if (Methods[i] != Concrete) {
             Method *Old = Methods[i];
+            const MethodType *OldMT = Old->getMethodType();
+            const MethodType *ConcreteMT = Concrete->getMethodType();
+            bool Broken = false;
+
             assert(Old->getReturnType() == Concrete->getReturnType() &&
                    "Differing return types not handled yet!");
-            assert(Old->getMethodType()->getParamTypes().size() == 0 &&
-                   "Cannot handle varargs fn's with specified element types!");
-            
+            assert(OldMT->getParamTypes().size() <=
+                   ConcreteMT->getParamTypes().size() &&
+                   "Concrete type must have more specified parameters!");
+
+            // Check to make sure that if there are specified types, that they
+            // match...
+            //
+            for (unsigned i = 0; i < OldMT->getParamTypes().size(); ++i)
+              if (OldMT->getParamTypes()[i] != ConcreteMT->getParamTypes()[i]) {
+                cerr << "Parameter types conflict for" << OldMT
+                     << " and " << ConcreteMT;
+                Broken = true;
+              }
+            if (Broken) break;  // Can't process this one!
+
+
             // Attempt to convert all of the uses of the old method to the
             // concrete form of the method.  If there is a use of the method
             // that we don't understand here we punt to avoid making a bad
