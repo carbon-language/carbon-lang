@@ -612,9 +612,8 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     }
     
     if(Address.getOpcode() == ISD::FrameIndex) {
-      BuildMI(BB, Opc, 2, Result)
-      .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
-      .addReg(PPC::R1);
+      Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
+      addFrameReference(BuildMI(BB, Opc, 2, Result), (int)Tmp1);
     } else {
       int offset;
       SelectAddr(Address, Tmp1, offset);
@@ -730,7 +729,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::FrameIndex:
     Tmp1 = cast<FrameIndexSDNode>(N)->getIndex();
-    addFrameReference(BuildMI(BB, PPC::ADDI, 2, Result), (int)Tmp1);
+    addFrameReference(BuildMI(BB, PPC::ADDI, 2, Result), (int)Tmp1, 0, false);
     return Result;
   
   case ISD::GlobalAddress: {
@@ -782,9 +781,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
       Tmp3 = 0;  // Silence GCC warning.
     }
     if(Address.getOpcode() == ISD::FrameIndex) {
-      BuildMI(BB, Opc, 2, Result)
-      .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
-      .addReg(PPC::R1);
+      Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
+      addFrameReference(BuildMI(BB, Opc, 2, Result), (int)Tmp1);
     } else {
       int offset;
       SelectAddr(Address, Tmp1, offset);
@@ -1343,8 +1341,8 @@ void ISel::Select(SDOperand N) {
       }
       else if(Address.getOpcode() == ISD::FrameIndex)
       {
-        BuildMI(BB, Opc, 2).addReg(Tmp1)
-          .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex());
+        Tmp2 = cast<FrameIndexSDNode>(Address)->getIndex();
+        addFrameReference(BuildMI(BB, Opc, 3).addReg(Tmp1), (int)Tmp2);
       }
       else
       {
