@@ -140,11 +140,10 @@ table in the archive).
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="c-fe"><hr size=0>Known problems with the C front-end</h4><ul>
 
-<li>Inline assembly is not yet supported.<p>
+</ul><b>Bugs:</b><ul><p>
 
-<li>"long double" is transformed by the front-end into "double".  There is no
-    support for floating point data types of any size other than 32 and 64 bits.
-    <p>
+<li><a href="http://llvm.cs.uiuc.edu/PR6">Oversized integer bitfields cause crash</a>.<p>
+
 <li>C99 Variable sized arrays do not release stack memory when they go out of 
     scope.  Thus, the following program may run out of stack space:
 <pre>
@@ -154,6 +153,14 @@ table in the archive).
     }
 </pre><p>
 
+</ul><b>Notes:</b><ul><p>
+
+<li>Inline assembly is not yet supported.<p>
+
+<li>"long double" is transformed by the front-end into "double".  There is no
+    support for floating point data types of any size other than 32 and 64 bits.
+    <p>
+
 <li>The following Unix system functionality has not been tested and may not work:
 <ol>
    <li><tt>sigsetjmp</tt>, <tt>siglongjmp</tt> - These are not turned into the
@@ -162,10 +169,6 @@ table in the archive).
    <li><tt>getcontext</tt>, <tt>setcontext</tt>, <tt>makecontext</tt>
        - These functions have not been tested.
 </ol><p>
-
-<li>Bugs:<br>
-  <a href="http://llvm.cs.uiuc.edu/PR6">Oversized integer bitfields cause crash</a>.<br>
-<p>
 
 <li>Although many GCC extensions are supported, some are not.  In particular,
     the following extensions are known to <b>not be</b> supported:
@@ -275,8 +278,12 @@ table in the archive).
 For this release, the C++ front-end is considered to be fully functional but
 of <b>beta</b> quality.  It has been tested and works for a number of simple programs that collectively exercise most of the language.  Nevertheless, it has not been in use as long as the C front-end.  Please report any bugs or problems.<p>
 
+</ul><b>Bugs</b>:<ul><p>
+
 <li>The C++ front-end inherits all problems afflicting the <a href="#c-fe">C
     front-end</a><p>
+
+</ul><b>Notes</b>:<ul><p>
 
 <li>The C++ front-end is based on a pre-release of the GCC 3.4 C++ parser.  This
 parser is significantly more standards compliant (and picky) than prior GCC
@@ -300,8 +307,9 @@ href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.<p>
     different from the model used in the Itanium ABI, so <b>exceptions will not
     interact correctly</b> .
 
-<li><a href="http://llvm.cs.uiuc.edu/PR11">Code for executing
-destructors when unwinding is not shared</a>.
+<li><a href="http://llvm.cs.uiuc.edu/PR11">Code for executing destructors when
+    unwinding is not shared</a> (this is a quality of implementation problem,
+    which does not effect functionality).<p>
 
 
 <!-- _______________________________________________________________________ -->
@@ -370,6 +378,6 @@ via the mailing lists.<p>
 Maintained By: <a href="http://llvm.cs.uiuc.edu/">The LLVM Team</a><br>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Mon Oct 27 11:58:43 CST 2003
+Last modified: Mon Oct 27 12:29:30 CST 2003
 <!-- hhmts end -->
 </body></html>
