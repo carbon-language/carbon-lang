@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "DSCallSiteIterator.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Module.h"
 #include "Support/Statistic.h"
+#include "DSCallSiteIterator.h"
 
 namespace {
   Statistic<> MaxSCC("budatastructure", "Maximum SCC Size in Call Graph");
@@ -35,7 +35,7 @@ bool BUDataStructures::run(Module &M) {
 
   // Calculate the graphs for any functions that are unreachable from main...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal() && DSInfo.find(I) == DSInfo.end()) {
+    if (!I->isExternal() && !DSInfo.count(I)) {
 #ifndef NDEBUG
       if (MainFunc)
         std::cerr << "*** Function unreachable from main: "
@@ -233,6 +233,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
     // Resolve the current call...
     Function *Callee = *I;
     const DSCallSite &CS = I.getCallSite();
+    ActualCallees.insert(std::make_pair(&CS.getCallInst(), Callee));
 
     if (Callee->isExternal()) {
       // Ignore this case, simple varargs functions we cannot stub out!
@@ -251,8 +252,8 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
       
       DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
             << "[" << GI.getGraphSize() << "+"
-            << GI.getAuxFunctionCalls().size() << "] into [" 
-            << Graph.getGraphSize() << "+"
+            << GI.getAuxFunctionCalls().size() << "] into '"
+            << Graph.getFunctionNames() << "' [" << Graph.getGraphSize() << "+"
             << Graph.getAuxFunctionCalls().size() << "]\n");
       
       // Handle self recursion by resolving the arguments and return value
