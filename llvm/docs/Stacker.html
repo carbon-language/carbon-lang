@@ -4,6 +4,10 @@
 <head>
   <title>Stacker: An Example Of Using LLVM</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
+  <style>
+    table, tr, td { border: 2px solid gray }
+    table { border-collapse: collapse }
+  </style>
 </head>
 <body>
 
@@ -509,330 +513,331 @@ using the following construction:</p>
 </ol>
 </div>
 <div class="doc_text" >
-    <table class="doc_table" style="border: 2px solid blue; border-collapse: collapse;"  >
-<tr class="doc_table"><td colspan="4" style="border: 2px solid blue">Definition Of Operation Of Built In Words</td></tr>
-<tr class="doc_table"><td colspan="4" style="border: 2px solid blue"><b>LOGICAL OPERATIONS</b></td></tr>
+    <table class="doc_table">
+<tr class="doc_table"><td colspan="4">Definition Of Operation Of Built In Words</td></tr>
+<tr class="doc_table"><td colspan="4"><b>LOGICAL OPERATIONS</b></td></tr>
 <tr class="doc_table">
-    <td style="border: 2px solid blue">Word</td>
-    <td style="border: 2px solid blue">Name</td>
-    <td style="border: 2px solid blue">Operation</td>
-    <td style="border: 2px solid blue">Description</td>
+    <td>Word</td>
+    <td>Name</td>
+    <td>Operation</td>
+    <td>Description</td>
 </tr>
-<tr class="doc_table"><td style="border: 2px solid blue">&lt;</td>
-    <td style="border: 2px solid blue">LT</td>
-    <td style="border: 2px solid blue">w1 w2 -- b</td>
-    <td style="border: 2px solid blue">Two values (w1 and w2) are popped off the stack and
+<tr class="doc_table">
+    <td>&lt;</td>
+    <td>LT</td>
+    <td>w1 w2 -- b</td>
+    <td>Two values (w1 and w2) are popped off the stack and
     compared. If w1 is less than w2, TRUE is pushed back on
     the stack, otherwise FALSE is pushed back on the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">&gt;</td>
-    <td style="border: 2px solid blue">GT</td>
-    <td style="border: 2px solid blue">w1 w2 -- b</td>
-    <td style="border: 2px solid blue">Two values (w1 and w2) are popped off the stack and
+<tr><td>&gt;</td>
+    <td>GT</td>
+    <td>w1 w2 -- b</td>
+    <td>Two values (w1 and w2) are popped off the stack and
     compared. If w1 is greater than w2, TRUE is pushed back on
     the stack, otherwise FALSE is pushed back on the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">&gt;=</td>
-    <td style="border: 2px solid blue">GE</td>
-    <td style="border: 2px solid blue">w1 w2 -- b</td>
-    <td style="border: 2px solid blue">Two values (w1 and w2) are popped off the stack and
+<tr><td>&gt;=</td>
+    <td>GE</td>
+    <td>w1 w2 -- b</td>
+    <td>Two values (w1 and w2) are popped off the stack and
     compared. If w1 is greater than or equal to w2, TRUE is 
     pushed back on the stack, otherwise FALSE is pushed back 
     on the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">&lt;=</td>
-    <td style="border: 2px solid blue">LE</td>
-    <td style="border: 2px solid blue">w1 w2 -- b</td>
-    <td style="border: 2px solid blue">Two values (w1 and w2) are popped off the stack and
+<tr><td>&lt;=</td>
+    <td>LE</td>
+    <td>w1 w2 -- b</td>
+    <td>Two values (w1 and w2) are popped off the stack and
     compared. If w1 is less than or equal to w2, TRUE is 
     pushed back on the stack, otherwise FALSE is pushed back 
     on the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">=</td>
-    <td style="border: 2px solid blue">EQ</td>
-    <td style="border: 2px solid blue">w1 w2 -- b</td>
-    <td style="border: 2px solid blue">Two values (w1 and w2) are popped off the stack and
+<tr><td>=</td>
+    <td>EQ</td>
+    <td>w1 w2 -- b</td>
+    <td>Two values (w1 and w2) are popped off the stack and
     compared. If w1 is equal to w2, TRUE is 
     pushed back on the stack, otherwise FALSE is pushed back 
     </td>
 </tr>
-<tr><td style="border: 2px solid blue">&lt;&gt;</td>
-    <td style="border: 2px solid blue">NE</td>
-    <td style="border: 2px solid blue">w1 w2 -- b</td>
-    <td style="border: 2px solid blue">Two values (w1 and w2) are popped off the stack and
+<tr><td>&lt;&gt;</td>
+    <td>NE</td>
+    <td>w1 w2 -- b</td>
+    <td>Two values (w1 and w2) are popped off the stack and
     compared. If w1 is equal to w2, TRUE is 
     pushed back on the stack, otherwise FALSE is pushed back 
     </td>
 </tr>
-<tr><td style="border: 2px solid blue">FALSE</td>
-    <td style="border: 2px solid blue">FALSE</td>
-    <td style="border: 2px solid blue"> -- b</td>
-    <td style="border: 2px solid blue">The boolean value FALSE (0) is pushed on to the stack.</td>
+<tr><td>FALSE</td>
+    <td>FALSE</td>
+    <td> -- b</td>
+    <td>The boolean value FALSE (0) is pushed on to the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">TRUE</td>
-    <td style="border: 2px solid blue">TRUE</td>
-    <td style="border: 2px solid blue"> -- b</td>
-    <td style="border: 2px solid blue">The boolean value TRUE (-1) is pushed on to the stack.</td>
+<tr><td>TRUE</td>
+    <td>TRUE</td>
+    <td> -- b</td>
+    <td>The boolean value TRUE (-1) is pushed on to the stack.</td>
 </tr>
 <tr><td colspan="4"><b>BITWISE OPERATORS</b></td></tr>
 <tr>
-    <td style="border: 2px solid blue">Word</td>
-    <td style="border: 2px solid blue">Name</td>
-    <td style="border: 2px solid blue">Operation</td>
-    <td style="border: 2px solid blue">Description</td>
+    <td>Word</td>
+    <td>Name</td>
+    <td>Operation</td>
+    <td>Description</td>
 </tr>
-<tr><td style="border: 2px solid blue">&lt;&lt;</td>
-    <td style="border: 2px solid blue">SHL</td>
-    <td style="border: 2px solid blue">w1 w2 -- w1&lt;&lt;w2</td>
-    <td style="border: 2px solid blue">Two values (w1 and w2) are popped off the stack. The w2
+<tr><td>&lt;&lt;</td>
+    <td>SHL</td>
+    <td>w1 w2 -- w1&lt;&lt;w2</td>
+    <td>Two values (w1 and w2) are popped off the stack. The w2
     operand is shifted left by the number of bits given by the
     w1 operand. The result is pushed back to the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">&gt;&gt;</td>
-    <td style="border: 2px solid blue">SHR</td>
-    <td style="border: 2px solid blue">w1 w2 -- w1&gt;&gt;w2</td>
-    <td style="border: 2px solid blue">Two values (w1 and w2) are popped off the stack. The w2
+<tr><td>&gt;&gt;</td>
+    <td>SHR</td>
+    <td>w1 w2 -- w1&gt;&gt;w2</td>
+    <td>Two values (w1 and w2) are popped off the stack. The w2
     operand is shifted right by the number of bits given by the
     w1 operand. The result is pushed back to the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">OR</td>
-    <td style="border: 2px solid blue">OR</td>
-    <td style="border: 2px solid blue">w1 w2 -- w2|w1</td>
-    <td style="border: 2px solid blue">Two values (w1 and w2) are popped off the stack. The values
+<tr><td>OR</td>
+    <td>OR</td>
+    <td>w1 w2 -- w2|w1</td>
+    <td>Two values (w1 and w2) are popped off the stack. The values
     are bitwise OR'd together and pushed back on the stack. This is 
     not a logical OR. The sequence 1 2 OR yields 3 not 1.</td>
 </tr>
-<tr><td style="border: 2px solid blue">AND</td>
-    <td style="border: 2px solid blue">AND</td>
-    <td style="border: 2px solid blue">w1 w2 -- w2&amp;w1</td>
-    <td style="border: 2px solid blue">Two values (w1 and w2) are popped off the stack. The values
+<tr><td>AND</td>
+    <td>AND</td>
+    <td>w1 w2 -- w2&amp;w1</td>
+    <td>Two values (w1 and w2) are popped off the stack. The values
     are bitwise AND'd together and pushed back on the stack. This is 
     not a logical AND. The sequence 1 2 AND yields 0 not 1.</td>
 </tr>
-<tr><td style="border: 2px solid blue">XOR</td>
-    <td style="border: 2px solid blue">XOR</td>
-    <td style="border: 2px solid blue">w1 w2 -- w2^w1</td>
-    <td style="border: 2px solid blue">Two values (w1 and w2) are popped off the stack. The values
+<tr><td>XOR</td>
+    <td>XOR</td>
+    <td>w1 w2 -- w2^w1</td>
+    <td>Two values (w1 and w2) are popped off the stack. The values
     are bitwise exclusive OR'd together and pushed back on the stack. 
     For example, The sequence 1 3 XOR yields 2.</td>
 </tr>
 <tr><td colspan="4"><b>ARITHMETIC OPERATORS</b></td></tr>
 <tr>
-    <td style="border: 2px solid blue">Word</td>
-    <td style="border: 2px solid blue">Name</td>
-    <td style="border: 2px solid blue">Operation</td>
-    <td style="border: 2px solid blue">Description</td>
+    <td>Word</td>
+    <td>Name</td>
+    <td>Operation</td>
+    <td>Description</td>
 </tr>
-<tr><td style="border: 2px solid blue">ABS</td>
-    <td style="border: 2px solid blue">ABS</td>
-    <td style="border: 2px solid blue">w -- |w|</td>
-    <td style="border: 2px solid blue">One value s popped off the stack; its absolute value is computed
+<tr><td>ABS</td>
+    <td>ABS</td>
+    <td>w -- |w|</td>
+    <td>One value s popped off the stack; its absolute value is computed
     and then pushed on to the stack. If w1 is -1 then w2 is 1. If w1 is
     1 then w2 is also 1.</td>
 </tr>
-<tr><td style="border: 2px solid blue">NEG</td>
-    <td style="border: 2px solid blue">NEG</td>
-    <td style="border: 2px solid blue">w -- -w</td>
-    <td style="border: 2px solid blue">One value is popped off the stack which is negated and then
+<tr><td>NEG</td>
+    <td>NEG</td>
+    <td>w -- -w</td>
+    <td>One value is popped off the stack which is negated and then
     pushed back on to the stack. If w1 is -1 then w2 is 1. If w1 is
     1 then w2 is -1.</td>
 </tr>
-<tr><td style="border: 2px solid blue"> + </td>
-    <td style="border: 2px solid blue">ADD</td>
-    <td style="border: 2px solid blue">w1 w2 -- w2+w1</td>
-    <td style="border: 2px solid blue">Two values are popped off the stack. Their sum is pushed back
+<tr><td> + </td>
+    <td>ADD</td>
+    <td>w1 w2 -- w2+w1</td>
+    <td>Two values are popped off the stack. Their sum is pushed back
     on to the stack</td>
 </tr>
-<tr><td style="border: 2px solid blue"> - </td>
-    <td style="border: 2px solid blue">SUB</td>
-    <td style="border: 2px solid blue">w1 w2 -- w2-w1</td>
-    <td style="border: 2px solid blue">Two values are popped off the stack. Their difference is pushed back
+<tr><td> - </td>
+    <td>SUB</td>
+    <td>w1 w2 -- w2-w1</td>
+    <td>Two values are popped off the stack. Their difference is pushed back
     on to the stack</td>
 </tr>
-<tr><td style="border: 2px solid blue"> * </td>
-    <td style="border: 2px solid blue">MUL</td>
-    <td style="border: 2px solid blue">w1 w2 -- w2*w1</td>
-    <td style="border: 2px solid blue">Two values are popped off the stack. Their product is pushed back
+<tr><td> * </td>
+    <td>MUL</td>
+    <td>w1 w2 -- w2*w1</td>
+    <td>Two values are popped off the stack. Their product is pushed back
     on to the stack</td>
 </tr>
-<tr><td style="border: 2px solid blue"> / </td>
-    <td style="border: 2px solid blue">DIV</td>
-    <td style="border: 2px solid blue">w1 w2 -- w2/w1</td>
-    <td style="border: 2px solid blue">Two values are popped off the stack. Their quotient is pushed back
+<tr><td> / </td>
+    <td>DIV</td>
+    <td>w1 w2 -- w2/w1</td>
+    <td>Two values are popped off the stack. Their quotient is pushed back
     on to the stack</td>
 </tr>
-<tr><td style="border: 2px solid blue">MOD</td>
-    <td style="border: 2px solid blue">MOD</td>
-    <td style="border: 2px solid blue">w1 w2 -- w2%w1</td>
-    <td style="border: 2px solid blue">Two values are popped off the stack. Their remainder after division
+<tr><td>MOD</td>
+    <td>MOD</td>
+    <td>w1 w2 -- w2%w1</td>
+    <td>Two values are popped off the stack. Their remainder after division
     of w1 by w2 is pushed back on to the stack</td>
 </tr>
-<tr><td style="border: 2px solid blue"> */ </td>
-    <td style="border: 2px solid blue">STAR_SLAH</td>
-    <td style="border: 2px solid blue">w1 w2 w3 -- (w3*w2)/w1</td>
-    <td style="border: 2px solid blue">Three values are popped off the stack. The product of w1 and w2 is
+<tr><td> */ </td>
+    <td>STAR_SLAH</td>
+    <td>w1 w2 w3 -- (w3*w2)/w1</td>
+    <td>Three values are popped off the stack. The product of w1 and w2 is
     divided by w3. The result is pushed back on to the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue"> ++ </td>
-    <td style="border: 2px solid blue">INCR</td>
-    <td style="border: 2px solid blue">w -- w+1</td>
-    <td style="border: 2px solid blue">One value is popped off the stack. It is incremented by one and then
+<tr><td> ++ </td>
+    <td>INCR</td>
+    <td>w -- w+1</td>
+    <td>One value is popped off the stack. It is incremented by one and then
     pushed back on to the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue"> -- </td>
-    <td style="border: 2px solid blue">DECR</td>
-    <td style="border: 2px solid blue">w -- w-1</td>
-    <td style="border: 2px solid blue">One value is popped off the stack. It is decremented by one and then
+<tr><td> -- </td>
+    <td>DECR</td>
+    <td>w -- w-1</td>
+    <td>One value is popped off the stack. It is decremented by one and then
     pushed back on to the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">MIN</td>
-    <td style="border: 2px solid blue">MIN</td>
-    <td style="border: 2px solid blue">w1 w2 -- (w2&lt;w1?w2:w1)</td>
-    <td style="border: 2px solid blue">Two values are popped off the stack. The larger one is pushed back
+<tr><td>MIN</td>
+    <td>MIN</td>
+    <td>w1 w2 -- (w2&lt;w1?w2:w1)</td>
+    <td>Two values are popped off the stack. The larger one is pushed back
     on to the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">MAX</td>
-    <td style="border: 2px solid blue">MAX</td>
-    <td style="border: 2px solid blue">w1 w2 -- (w2&gt;w1?w2:w1)</td>
-    <td style="border: 2px solid blue">Two values are popped off the stack. The larger value is pushed back
+<tr><td>MAX</td>
+    <td>MAX</td>
+    <td>w1 w2 -- (w2&gt;w1?w2:w1)</td>
+    <td>Two values are popped off the stack. The larger value is pushed back
 	on to the stack.</td>
 </tr>
 <tr><td colspan="4"><b>STACK MANIPULATION OPERATORS</b></td></tr>
 <tr>
-    <td style="border: 2px solid blue">Word</td>
-    <td style="border: 2px solid blue">Name</td>
-    <td style="border: 2px solid blue">Operation</td>
-    <td style="border: 2px solid blue">Description</td>
+    <td>Word</td>
+    <td>Name</td>
+    <td>Operation</td>
+    <td>Description</td>
 </tr>
-<tr><td style="border: 2px solid blue">DROP</td>
-    <td style="border: 2px solid blue">DROP</td>
-    <td style="border: 2px solid blue">w -- </td>
-    <td style="border: 2px solid blue">One value is popped off the stack.</td>
+<tr><td>DROP</td>
+    <td>DROP</td>
+    <td>w -- </td>
+    <td>One value is popped off the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">DROP2</td>
-    <td style="border: 2px solid blue">DROP2</td>
-    <td style="border: 2px solid blue">w1 w2 -- </td>
-    <td style="border: 2px solid blue">Two values are popped off the stack.</td>
+<tr><td>DROP2</td>
+    <td>DROP2</td>
+    <td>w1 w2 -- </td>
+    <td>Two values are popped off the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">NIP</td>
-    <td style="border: 2px solid blue">NIP</td>
-    <td style="border: 2px solid blue">w1 w2 -- w2</td>
-    <td style="border: 2px solid blue">The second value on the stack is removed from the stack. That is,
+<tr><td>NIP</td>
+    <td>NIP</td>
+    <td>w1 w2 -- w2</td>
+    <td>The second value on the stack is removed from the stack. That is,
 	a value is popped off the stack and retained. Then a second value is
 	popped and the retained value is pushed.</td>
 </tr>
-<tr><td style="border: 2px solid blue">NIP2</td>
-    <td style="border: 2px solid blue">NIP2</td>
-    <td style="border: 2px solid blue">w1 w2 w3 w4 -- w3 w4</td>
-    <td style="border: 2px solid blue">The third and fourth values on the stack are removed from it. That is,
+<tr><td>NIP2</td>
+    <td>NIP2</td>
+    <td>w1 w2 w3 w4 -- w3 w4</td>
+    <td>The third and fourth values on the stack are removed from it. That is,
 	two values are popped and retained. Then two more values are popped and
 	the two retained values are pushed back on.</td>
 </tr>
-<tr><td style="border: 2px solid blue">DUP</td>
-    <td style="border: 2px solid blue">DUP</td>
-    <td style="border: 2px solid blue">w1 -- w1 w1</td>
-    <td style="border: 2px solid blue">One value is popped off the stack. That value is then pushed on to
+<tr><td>DUP</td>
+    <td>DUP</td>
+    <td>w1 -- w1 w1</td>
+    <td>One value is popped off the stack. That value is then pushed on to
 	the stack twice to duplicate the top stack vaue.</td>
 </tr>
-<tr><td style="border: 2px solid blue">DUP2</td>
-    <td style="border: 2px solid blue">DUP2</td>
-    <td style="border: 2px solid blue">w1 w2 -- w1 w2 w1 w2</td>
-    <td style="border: 2px solid blue">The top two values on the stack are duplicated. That is, two vaues
+<tr><td>DUP2</td>
+    <td>DUP2</td>
+    <td>w1 w2 -- w1 w2 w1 w2</td>
+    <td>The top two values on the stack are duplicated. That is, two vaues
 	are popped off the stack. They are alternately pushed back on the
 	stack twice each.</td>
 </tr>
-<tr><td style="border: 2px solid blue">SWAP</td>
-    <td style="border: 2px solid blue">SWAP</td>
-    <td style="border: 2px solid blue">w1 w2 -- w2 w1</td>
-    <td style="border: 2px solid blue">The top two stack items are reversed in their order. That is, two
+<tr><td>SWAP</td>
+    <td>SWAP</td>
+    <td>w1 w2 -- w2 w1</td>
+    <td>The top two stack items are reversed in their order. That is, two
 	values are popped off the stack and pushed back on to the stack in
 	the opposite order they were popped.</td>
 </tr>
-<tr><td style="border: 2px solid blue">SWAP2</td>
-    <td style="border: 2px solid blue">SWAP2</td>
-    <td style="border: 2px solid blue">w1 w2 w3 w4 -- w3 w4 w2 w1</td>
-    <td style="border: 2px solid blue">The top four stack items are swapped in pairs. That is, two values
+<tr><td>SWAP2</td>
+    <td>SWAP2</td>
+    <td>w1 w2 w3 w4 -- w3 w4 w2 w1</td>
+    <td>The top four stack items are swapped in pairs. That is, two values
 	are popped and retained. Then, two more values are popped and retained.
 	The values are pushed back on to the stack in the reverse order but
 	in pairs.</td>
 </tr>
-<tr><td style="border: 2px solid blue">OVER</td>
-    <td style="border: 2px solid blue">OVER</td>
-    <td style="border: 2px solid blue">w1 w2-- w1 w2 w1</td>
-    <td style="border: 2px solid blue">Two values are popped from the stack. They are pushed back
+<tr><td>OVER</td>
+    <td>OVER</td>
+    <td>w1 w2-- w1 w2 w1</td>
+    <td>Two values are popped from the stack. They are pushed back
 	on to the stack in the order w1 w2 w1. This seems to cause the
 	top stack element to be duplicated "over" the next value.</td>
 </tr>
-<tr><td style="border: 2px solid blue">OVER2</td>
-    <td style="border: 2px solid blue">OVER2</td>
-    <td style="border: 2px solid blue">w1 w2 w3 w4 -- w1 w2 w3 w4 w1 w2</td>
-    <td style="border: 2px solid blue">The third and fourth values on the stack are replicated on to the
+<tr><td>OVER2</td>
+    <td>OVER2</td>
+    <td>w1 w2 w3 w4 -- w1 w2 w3 w4 w1 w2</td>
+    <td>The third and fourth values on the stack are replicated on to the
 	top of the stack</td>
 </tr>
-<tr><td style="border: 2px solid blue">ROT</td>
-    <td style="border: 2px solid blue">ROT</td>
-    <td style="border: 2px solid blue">w1 w2 w3 -- w2 w3 w1</td>
-    <td style="border: 2px solid blue">The top three values are rotated. That is, three value are popped
+<tr><td>ROT</td>
+    <td>ROT</td>
+    <td>w1 w2 w3 -- w2 w3 w1</td>
+    <td>The top three values are rotated. That is, three value are popped
 	off the stack. They are pushed back on to the stack in the order
 	w1 w3 w2.</td>
 </tr>
-<tr><td style="border: 2px solid blue">ROT2</td>
-    <td style="border: 2px solid blue">ROT2</td>
-    <td style="border: 2px solid blue">w1 w2 w3 w4 w5 w6 -- w3 w4 w5 w6 w1 w2</td>
-    <td style="border: 2px solid blue">Like ROT but the rotation is done using three pairs instead of
+<tr><td>ROT2</td>
+    <td>ROT2</td>
+    <td>w1 w2 w3 w4 w5 w6 -- w3 w4 w5 w6 w1 w2</td>
+    <td>Like ROT but the rotation is done using three pairs instead of
 	three singles.</td>
 </tr>
-<tr><td style="border: 2px solid blue">RROT</td>
-    <td style="border: 2px solid blue">RROT</td>
-    <td style="border: 2px solid blue">w1 w2 w3 -- w2 w3 w1</td>
-    <td style="border: 2px solid blue">Reverse rotation. Like ROT, but it rotates the other way around.
+<tr><td>RROT</td>
+    <td>RROT</td>
+    <td>w1 w2 w3 -- w2 w3 w1</td>
+    <td>Reverse rotation. Like ROT, but it rotates the other way around.
 	Essentially, the third element on the stack is moved to the top
 	of the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">RROT2</td>
-    <td style="border: 2px solid blue">RROT2</td>
-    <td style="border: 2px solid blue">w1 w2 w3 w4 w5 w6 -- w3 w4 w5 w6 w1 w2</td>
-    <td style="border: 2px solid blue">Double reverse rotation. Like RROT but the rotation is done using 
+<tr><td>RROT2</td>
+    <td>RROT2</td>
+    <td>w1 w2 w3 w4 w5 w6 -- w3 w4 w5 w6 w1 w2</td>
+    <td>Double reverse rotation. Like RROT but the rotation is done using 
 	three pairs instead of three singles. The fifth and sixth stack 
 	elements are moved to the first and second positions</td>
 </tr>
-<tr><td style="border: 2px solid blue">TUCK</td>
-    <td style="border: 2px solid blue">TUCK</td>
-    <td style="border: 2px solid blue">w1 w2 -- w2 w1 w2</td>
-    <td style="border: 2px solid blue">Similar to OVER except that the second operand is being 
+<tr><td>TUCK</td>
+    <td>TUCK</td>
+    <td>w1 w2 -- w2 w1 w2</td>
+    <td>Similar to OVER except that the second operand is being 
 	replicated. Essentially, the first operand is being "tucked"
 	in between two instances of the second operand. Logically, two
 	values are popped off the stack. They are placed back on the
 	stack in the order w2 w1 w2.</td>
 </tr>
-<tr><td style="border: 2px solid blue">TUCK2</td>
-    <td style="border: 2px solid blue">TUCK2</td>
-    <td style="border: 2px solid blue">w1 w2 w3 w4 -- w3 w4 w1 w2 w3 w4</td>
-    <td style="border: 2px solid blue">Like TUCK but a pair of elements is tucked over two pairs.
+<tr><td>TUCK2</td>
+    <td>TUCK2</td>
+    <td>w1 w2 w3 w4 -- w3 w4 w1 w2 w3 w4</td>
+    <td>Like TUCK but a pair of elements is tucked over two pairs.
 	That is, the top two elements of the stack are duplicated and
 	inserted into the stack at the fifth and positions.</td>
 </tr>
-<tr><td style="border: 2px solid blue">PICK</td>
-    <td style="border: 2px solid blue">PICK</td>
-    <td style="border: 2px solid blue">x0 ... Xn n -- x0 ... Xn x0</td>
-    <td style="border: 2px solid blue">The top of the stack is used as an index into the remainder of
+<tr><td>PICK</td>
+    <td>PICK</td>
+    <td>x0 ... Xn n -- x0 ... Xn x0</td>
+    <td>The top of the stack is used as an index into the remainder of
 	the stack. The element at the nth position replaces the index 
 	(top of stack). This is useful for cycling through a set of 
 	values. Note that indexing is zero based. So, if n=0 then you
 	get the second item on the stack. If n=1 you get the third, etc.
 	Note also that the index is replaced by the n'th value. </td>
 </tr>
-<tr><td style="border: 2px solid blue">SELECT</td>
-    <td style="border: 2px solid blue">SELECT</td>
-    <td style="border: 2px solid blue">m n X0..Xm Xm+1 .. Xn -- Xm</td>
-    <td style="border: 2px solid blue">This is like PICK but the list is removed and you need to specify
+<tr><td>SELECT</td>
+    <td>SELECT</td>
+    <td>m n X0..Xm Xm+1 .. Xn -- Xm</td>
+    <td>This is like PICK but the list is removed and you need to specify
 	both the index and the size of the list. Careful with this one,
 	the wrong value for n can blow away a huge amount of the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">ROLL</td>
-    <td style="border: 2px solid blue">ROLL</td>
-    <td style="border: 2px solid blue">x0 x1 .. xn n -- x1 .. xn x0</td>
-    <td style="border: 2px solid blue"><b>Not Implemented</b>. This one has been left as an exercise to
+<tr><td>ROLL</td>
+    <td>ROLL</td>
+    <td>x0 x1 .. xn n -- x1 .. xn x0</td>
+    <td><b>Not Implemented</b>. This one has been left as an exercise to
 	the student. See <a href="#exercise">Exercise</a>. ROLL requires 
     a value, "n", to be on the top of the stack. This value specifies how 
     far into the stack to "roll". The n'th value is <em>moved</em> (not
@@ -844,23 +849,23 @@ using the following construction:</p>
 </tr>
 <tr><td colspan="4"><b>MEMORY OPERATORS</b></td></tr>
 <tr>
-    <td style="border: 2px solid blue">Word</td>
-    <td style="border: 2px solid blue">Name</td>
-    <td style="border: 2px solid blue">Operation</td>
-    <td style="border: 2px solid blue">Description</td>
+    <td>Word</td>
+    <td>Name</td>
+    <td>Operation</td>
+    <td>Description</td>
 </tr>
-<tr><td style="border: 2px solid blue">MALLOC</td>
-    <td style="border: 2px solid blue">MALLOC</td>
-    <td style="border: 2px solid blue">w1 -- p</td>
-    <td style="border: 2px solid blue">One value is popped off the stack. The value is used as the size
+<tr><td>MALLOC</td>
+    <td>MALLOC</td>
+    <td>w1 -- p</td>
+    <td>One value is popped off the stack. The value is used as the size
 	of a memory block to allocate. The size is in bytes, not words.
         The memory allocation is completed and the address of the memory
 	block is pushed on to the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">FREE</td>
-    <td style="border: 2px solid blue">FREE</td>
-    <td style="border: 2px solid blue">p -- </td>
-    <td style="border: 2px solid blue">One pointer value is popped off the stack. The value should be
+<tr><td>FREE</td>
+    <td>FREE</td>
+    <td>p -- </td>
+    <td>One pointer value is popped off the stack. The value should be
 	the address of a memory block created by the MALLOC operation. The
 	associated memory block is freed. Nothing is pushed back on the
 	stack. Many bugs can be created by attempting to FREE something
@@ -872,20 +877,20 @@ using the following construction:</p>
 	the stack (for the FREE at the end) and that every use of the
 	pointer is preceded by a DUP to retain the copy for FREE.</td>
 </tr>
-<tr><td style="border: 2px solid blue">GET</td>
-    <td style="border: 2px solid blue">GET</td>
-    <td style="border: 2px solid blue">w1 p -- w2 p</td>
-    <td style="border: 2px solid blue">An integer index and a pointer to a memory block are popped of
+<tr><td>GET</td>
+    <td>GET</td>
+    <td>w1 p -- w2 p</td>
+    <td>An integer index and a pointer to a memory block are popped of
 	the block. The index is used to index one byte from the memory
 	block. That byte value is retained, the pointer is pushed again
 	and the retained value is pushed. Note that the pointer value
 	s essentially retained in its position so this doesn't count
 	as a "use ptr" in the FREE idiom.</td>
 </tr>
-<tr><td style="border: 2px solid blue">PUT</td>
-    <td style="border: 2px solid blue">PUT</td>
-    <td style="border: 2px solid blue">w1 w2 p -- p </td>
-    <td style="border: 2px solid blue">An integer value is popped of the stack. This is the value to
+<tr><td>PUT</td>
+    <td>PUT</td>
+    <td>w1 w2 p -- p </td>
+    <td>An integer value is popped of the stack. This is the value to
 	be put into a memory block. Another integer value is popped of
 	the stack. This is the indexed byte in the memory block. A
 	pointer to the memory block is popped off the stack. The
@@ -897,31 +902,31 @@ using the following construction:</p>
 </tr>
 <tr><td colspan="4"><b>CONTROL FLOW OPERATORS</b></td></tr>
 <tr>
-    <td style="border: 2px solid blue">Word</td>
-    <td style="border: 2px solid blue">Name</td>
-    <td style="border: 2px solid blue">Operation</td>
-    <td style="border: 2px solid blue">Description</td>
+    <td>Word</td>
+    <td>Name</td>
+    <td>Operation</td>
+    <td>Description</td>
 </tr>
-<tr><td style="border: 2px solid blue">RETURN</td>
-    <td style="border: 2px solid blue">RETURN</td>
-    <td style="border: 2px solid blue"> --  </td>
-    <td style="border: 2px solid blue">The currently executing definition returns immediately to its caller.
+<tr><td>RETURN</td>
+    <td>RETURN</td>
+    <td> --  </td>
+    <td>The currently executing definition returns immediately to its caller.
 	Note that there is an implicit <code>RETURN</code> at the end of each
 	definition, logically located at the semi-colon. The sequence 
 	<code>RETURN ;</code>  is valid but redundant.</td>
 </tr>
-<tr><td style="border: 2px solid blue">EXIT</td>
-    <td style="border: 2px solid blue">EXIT</td>
-    <td style="border: 2px solid blue">w1 -- </td>
-    <td style="border: 2px solid blue">A return value for the program is popped off the stack. The program is
+<tr><td>EXIT</td>
+    <td>EXIT</td>
+    <td>w1 -- </td>
+    <td>A return value for the program is popped off the stack. The program is
 	then immediately terminated. This is normally an abnormal exit from the
 	program. For a normal exit (when <code>MAIN</code> finishes), the exit
 	code will always be zero in accordance with UNIX conventions.</td>
 </tr>
-<tr><td style="border: 2px solid blue">RECURSE</td>
-    <td style="border: 2px solid blue">RECURSE</td>
-    <td style="border: 2px solid blue"> -- </td>
-    <td style="border: 2px solid blue">The currently executed definition is called again. This operation is 
+<tr><td>RECURSE</td>
+    <td>RECURSE</td>
+    <td> -- </td>
+    <td>The currently executed definition is called again. This operation is 
 	needed since the definition of a word doesn't exist until the semi colon
 	is reacher. Attempting something like:<br/>
 	<code> : recurser recurser ; </code><br/> will yield and error saying that 
@@ -929,24 +934,24 @@ using the following construction:</p>
 	to:<br/>
 	<code> : recurser RECURSE ; </code></td>
 </tr>
-<tr><td style="border: 2px solid blue">IF (words...) ENDIF</td>
-    <td style="border: 2px solid blue">IF (words...) ENDIF</td>
-    <td style="border: 2px solid blue">b -- </td>
-    <td style="border: 2px solid blue">A boolean value is popped of the stack. If it is non-zero then the "words..." 
+<tr><td>IF (words...) ENDIF</td>
+    <td>IF (words...) ENDIF</td>
+    <td>b -- </td>
+    <td>A boolean value is popped of the stack. If it is non-zero then the "words..." 
 	are executed. Otherwise, execution continues immediately following the ENDIF.</td>
 </tr>
-<tr><td style="border: 2px solid blue">IF (words...) ELSE (words...) ENDIF</td>
-    <td style="border: 2px solid blue">IF (words...) ELSE (words...) ENDIF</td>
-    <td style="border: 2px solid blue">b -- </td>
-    <td style="border: 2px solid blue">A boolean value is popped of the stack. If it is non-zero then the "words..."
+<tr><td>IF (words...) ELSE (words...) ENDIF</td>
+    <td>IF (words...) ELSE (words...) ENDIF</td>
+    <td>b -- </td>
+    <td>A boolean value is popped of the stack. If it is non-zero then the "words..."
 	between IF and ELSE are executed. Otherwise the words between ELSE and ENDIF are
 	executed. In either case, after the (words....) have executed, execution continues
         immediately following the ENDIF. </td>
 </tr>
-<tr><td style="border: 2px solid blue">WHILE (words...) END</td>
-    <td style="border: 2px solid blue">WHILE (words...) END</td>
-    <td style="border: 2px solid blue">b -- b </td>
-    <td style="border: 2px solid blue">The boolean value on the top of the stack is examined. If it is non-zero then the 
+<tr><td>WHILE (words...) END</td>
+    <td>WHILE (words...) END</td>
+    <td>b -- b </td>
+    <td>The boolean value on the top of the stack is examined. If it is non-zero then the 
 	"words..." between WHILE and END are executed. Execution then begins again at the WHILE where another
 	boolean is popped off the stack. To prevent this operation from eating up the entire
 	stack, you should push on to the stack (just before the END) a boolean value that indicates
@@ -964,63 +969,65 @@ using the following construction:</p>
 </tr>
 <tr><td colspan="4"><b>INPUT &amp; OUTPUT OPERATORS</b></td></tr>
 <tr>
-    <td style="border: 2px solid blue">Word</td>
-    <td style="border: 2px solid blue">Name</td>
-    <td style="border: 2px solid blue">Operation</td>
-    <td style="border: 2px solid blue">Description</td>
+    <td>Word</td>
+    <td>Name</td>
+    <td>Operation</td>
+    <td>Description</td>
 </tr>
-<tr><td style="border: 2px solid blue">SPACE</td>
-    <td style="border: 2px solid blue">SPACE</td>
-    <td style="border: 2px solid blue"> --  </td>
-    <td style="border: 2px solid blue">A space character is put out. There is no stack effect.</td>
+<tr><td>SPACE</td>
+    <td>SPACE</td>
+    <td> --  </td>
+    <td>A space character is put out. There is no stack effect.</td>
 </tr>
-<tr><td style="border: 2px solid blue">TAB</td>
-    <td style="border: 2px solid blue">TAB</td>
-    <td style="border: 2px solid blue"> --  </td>
-    <td style="border: 2px solid blue">A tab character is put out. There is no stack effect.</td>
+<tr><td>TAB</td>
+    <td>TAB</td>
+    <td> --  </td>
+    <td>A tab character is put out. There is no stack effect.</td>
 </tr>
-<tr><td style="border: 2px solid blue">CR</td>
-    <td style="border: 2px solid blue">CR</td>
-    <td style="border: 2px solid blue"> --  </td>
-    <td style="border: 2px solid blue">A carriage return character is put out. There is no stack effect.</td>
+<tr><td>CR</td>
+    <td>CR</td>
+    <td> --  </td>
+    <td>A carriage return character is put out. There is no stack effect.</td>
 </tr>
-<tr><td style="border: 2px solid blue">&gt;s</td>
-    <td style="border: 2px solid blue">OUT_STR</td>
-    <td style="border: 2px solid blue"> -- </td>
-    <td style="border: 2px solid blue">A string pointer is popped from the stack. It is put out.</td>
+<tr><td>&gt;s</td>
+    <td>OUT_STR</td>
+    <td> -- </td>
+    <td>A string pointer is popped from the stack. It is put out.</td>
 </tr>
-<tr><td style="border: 2px solid blue">&gt;d</td>
-    <td style="border: 2px solid blue">OUT_STR</td>
-    <td style="border: 2px solid blue"> -- </td>
-    <td style="border: 2px solid blue">A value is popped from the stack. It is put out as a decimal integer.</td>
+<tr><td>&gt;d</td>
+    <td>OUT_STR</td>
+    <td> -- </td>
+    <td>A value is popped from the stack. It is put out as a decimal
+    integer.</td>
 </tr>
-<tr><td style="border: 2px solid blue">&gt;c</td>
-    <td style="border: 2px solid blue">OUT_CHR</td>
-    <td style="border: 2px solid blue"> -- </td>
-    <td style="border: 2px solid blue">A value is popped from the stack. It is put out as an ASCII character.</td>
+<tr><td>&gt;c</td>
+    <td>OUT_CHR</td>
+    <td> -- </td>
+    <td>A value is popped from the stack. It is put out as an ASCII
+    character.</td>
 </tr>
-<tr><td style="border: 2px solid blue">&lt;s</td>
-    <td style="border: 2px solid blue">IN_STR</td>
-    <td style="border: 2px solid blue"> -- s </td>
-    <td style="border: 2px solid blue">A string is read from the input via the scanf(3) format string " %as". The
-	resulting string is pushed on to the stack.</td>
+<tr><td>&lt;s</td>
+    <td>IN_STR</td>
+    <td> -- s </td>
+    <td>A string is read from the input via the scanf(3) format string " %as".
+    The resulting string is pushed on to the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">&lt;d</td>
-    <td style="border: 2px solid blue">IN_STR</td>
-    <td style="border: 2px solid blue"> -- w </td>
-    <td style="border: 2px solid blue">An integer is read from the input via the scanf(3) format string " %d". The
-	resulting value is pushed on to the stack</td>
+<tr><td>&lt;d</td>
+    <td>IN_STR</td>
+    <td> -- w </td>
+    <td>An integer is read from the input via the scanf(3) format string " %d".
+    The resulting value is pushed on to the stack</td>
 </tr>
-<tr><td style="border: 2px solid blue">&lt;c</td>
-    <td style="border: 2px solid blue">IN_CHR</td>
-    <td style="border: 2px solid blue"> -- w </td>
-    <td style="border: 2px solid blue">A single character is read from the input via the scanf(3) format string 
-	" %c". The value is converted to an integer and pushed on to the stack.</td>
+<tr><td>&lt;c</td>
+    <td>IN_CHR</td>
+    <td> -- w </td>
+    <td>A single character is read from the input via the scanf(3) format string
+    " %c". The value is converted to an integer and pushed on to the stack.</td>
 </tr>
-<tr><td style="border: 2px solid blue">DUMP</td>
-    <td style="border: 2px solid blue">DUMP</td>
-    <td style="border: 2px solid blue"> -- </td>
-    <td style="border: 2px solid blue">The stack contents are dumped to standard output. This is useful for
+<tr><td>DUMP</td>
+    <td>DUMP</td>
+    <td> -- </td>
+    <td>The stack contents are dumped to standard output. This is useful for
 	debugging your definitions. Put DUMP at the beginning and end of a definition
 	to see instantly the net effect of the definition.</td>
 </tr>
@@ -1051,7 +1058,7 @@ remainder of the story.
 ################################################################################
 # Utility definitions
 ################################################################################
-: print >d CR ;
+: print &gt;d CR ;
 : it_is_a_prime TRUE ;
 : it_is_not_a_prime FALSE ;
 : continue_loop TRUE ;
@@ -1061,10 +1068,10 @@ remainder of the story.
 # This definition tries an actual division of a candidate prime number. It
 # determines whether the division loop on this candidate should continue or
 # not.
-# STACK<:
+# STACK&lt;:
 #    div - the divisor to try
 #    p   - the prime number we are working on
-# STACK>:
+# STACK&gt;:
 #    cont - should we continue the loop ?
 #    div - the next divisor to try
 #    p   - the prime number we are working on
@@ -1090,7 +1097,7 @@ remainder of the story.
 #    cont - should we continue the loop (ignored)?
 #    div - the divisor to try
 #    p   - the prime number we are working on
-# STACK>:
+# STACK&gt;:
 #    cont - should we continue the loop ?
 #    div - the next divisor to try
 #    p   - the prime number we are working on
@@ -1115,9 +1122,9 @@ remainder of the story.
 # definition which returns a loop continuation value (which we also seed with
 # the value 1).  After the loop, we check the divisor. If it decremented all
 # the way to zero then we found a prime, otherwise we did not find one.
-# STACK<:
+# STACK&lt;:
 #   p - the prime number to check
-# STACK>:
+# STACK&gt;:
 #   yn - boolean indicating if its a prime or not
 #   p - the prime number checked
 ################################################################################
@@ -1138,18 +1145,18 @@ remainder of the story.
 
 ################################################################################
 # This definition determines if the number on the top of the stack is a prime 
-# or not. It does this by testing if the value is degenerate (<= 3) and 
+# or not. It does this by testing if the value is degenerate (&lt;= 3) and 
 # responding with yes, its a prime. Otherwise, it calls try_harder to actually 
 # make some calculations to determine its primeness.
-# STACK<:
+# STACK&lt;:
 #    p - the prime number to check
-# STACK>:
+# STACK&gt;:
 #    yn - boolean indicating if its a prime or not
 #    p  - the prime number checked
 ################################################################################
 : is_prime 
     DUP 			( save the prime number )
-    3 >= IF			( see if its <= 3 )
+    3 &gt;= IF			( see if its &lt;= 3 )
         it_is_a_prime  		( its <= 3 just indicate its prime )
     ELSE 
         try_harder 		( have to do a little more work )
@@ -1159,11 +1166,11 @@ remainder of the story.
 ################################################################################
 # This definition is called when it is time to exit the program, after we have 
 # found a sufficiently large number of primes.
-# STACK<: ignored
-# STACK>: exits
+# STACK&lt;: ignored
+# STACK&gt;: exits
 ################################################################################
 : done 
-    "Finished" >s CR 		( say we are finished )
+    "Finished" &gt;s CR 		( say we are finished )
     0 EXIT 			( exit nicely )
 ;
 
@@ -1174,14 +1181,14 @@ remainder of the story.
 # If it is a prime, it prints it. Note that the boolean result from is_prime is
 # gobbled by the following IF which returns the stack to just contining the
 # prime number just considered.
-# STACK<: 
+# STACK&lt;: 
 #    p - one less than the prime number to consider
-# STACK>
+# STAC&gt;K
 #    p+1 - the prime number considered
 ################################################################################
 : consider_prime 
     DUP 			( save the prime number to consider )
-    1000000 < IF 		( check to see if we are done yet )
+    1000000 &lt; IF 		( check to see if we are done yet )
         done 			( we are done, call "done" )
     ENDIF 
     ++ 				( increment to next prime number )
@@ -1195,11 +1202,11 @@ remainder of the story.
 # This definition starts at one, prints it out and continues into a loop calling
 # consider_prime on each iteration. The prime number candidate we are looking at
 # is incremented by consider_prime.
-# STACK<: empty
-# STACK>: empty
+# STACK&lt;: empty
+# STACK&gt;: empty
 ################################################################################
 : find_primes 
-    "Prime Numbers: " >s CR	( say hello )
+    "Prime Numbers: " &gt;s CR	( say hello )
     DROP			( get rid of that pesky string )
     1 				( stoke the fires )
     print			( print the first one, we know its prime )
@@ -1212,17 +1219,17 @@ remainder of the story.
 #
 ################################################################################
 : say_yes
-    >d				( Print the prime number )
+    &gt;d				( Print the prime number )
     " is prime."		( push string to output )
-    >s				( output it )
+    &gt;s				( output it )
     CR				( print carriage return )
     DROP			( pop string )
 ;
 
 : say_no
-    >d				( Print the prime number )
+    &gt;d				( Print the prime number )
     " is NOT prime."		( push string to put out )
-    >s				( put out the string )
+    &gt;s				( put out the string )
     CR				( print carriage return )
     DROP			( pop string )
 ;
@@ -1230,10 +1237,10 @@ remainder of the story.
 ################################################################################
 # This definition processes a single command line argument and determines if it
 # is a prime number or not.
-# STACK<:
+# STACK&lt;:
 #    n - number of arguments
 #    arg1 - the prime numbers to examine
-# STACK>:
+# STACK&gt;:
 #    n-1 - one less than number of arguments
 #    arg2 - we processed one argument
 ################################################################################
@@ -1250,7 +1257,7 @@ remainder of the story.
 
 ################################################################################
 # The MAIN program just prints a banner and processes its arguments.
-# STACK<:
+# STACK&lt;:
 #    n - number of arguments
 #    ... - the arguments
 ################################################################################
@@ -1262,13 +1269,13 @@ remainder of the story.
     
 ################################################################################
 # The MAIN program just prints a banner and processes its arguments.
-# STACK<: arguments
+# STACK&lt;: arguments
 ################################################################################
 : MAIN 
     NIP				( get rid of the program name )
     --				( reduce number of arguments )
     DUP				( save the arg counter )
-    1 <= IF			( See if we got an argument )
+    1 &lt;= IF			( See if we got an argument )
         process_arguments	( tell user if they are prime )
     ELSE
         find_primes		( see how many we can find )
