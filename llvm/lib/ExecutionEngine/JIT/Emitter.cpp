@@ -25,13 +25,18 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/System/Memory.h"
-
 using namespace llvm;
 
 namespace {
   Statistic<> NumBytes("jit", "Number of bytes of machine code compiled");
   JIT *TheJIT = 0;
+}
 
+
+//===----------------------------------------------------------------------===//
+// JITMemoryManager code.
+//
+namespace {
   /// JITMemoryManager - Manage memory for the JIT code generation in a logical,
   /// sane way.  This splits a large block of MAP_NORESERVE'd memory into two
   /// sections, one for function stubs, one for the functions themselves.  We
@@ -84,8 +89,100 @@ void JITMemoryManager::endFunctionBody(unsigned char *FunctionEnd) {
   CurFunctionPtr = FunctionEnd;
 }
 
+//===----------------------------------------------------------------------===//
+// JIT lazy compilation code.
+//
+namespace {
+  /// JITResolver - Keep track of, and resolve, call sites for functions that
+  /// have not yet been compiled.
+  class JITResolver {
+    /// The MCE to use to emit stubs with.
+    MachineCodeEmitter &MCE;
+
+    // FunctionToStubMap - Keep track of the stub created for a particular
+    // function so that we can reuse them if necessary.
+    std::map<Function*, void*> FunctionToStubMap;
+
+    // StubToFunctionMap - Keep track of the function that each stub corresponds
+    // to.
+    std::map<void*, Function*> StubToFunctionMap;
+
+  public:
+    JITResolver(MachineCodeEmitter &mce) : MCE(mce) {}
+
+    /// getFunctionStub - This returns a pointer to a function stub, creating
+    /// one on demand as needed.
+    void *getFunctionStub(Function *F);
+
+    /// JITCompilerFn - This function is called to resolve a stub to a compiled
+    /// address.  If the LLVM Function corresponding to the stub has not yet
+    /// been compiled, this function compiles it first.
+    static void *JITCompilerFn(void *Stub);
+  };
+}
+
+/// getJITResolver - This function returns the one instance of the JIT resolver.
+///
+static JITResolver &getJITResolver(MachineCodeEmitter *MCE = 0) {
+  static JITResolver TheJITResolver(*MCE);
+  return TheJITResolver;
+}
+
+/// getFunctionStub - This returns a pointer to a function stub, creating
+/// one on demand as needed.
+void *JITResolver::getFunctionStub(Function *F) {
+  /// Get the target-specific JIT resolver function.
+  static TargetJITInfo::LazyResolverFn LazyResolverFn =
+    TheJIT->getJITInfo().getLazyResolverFunction(JITResolver::JITCompilerFn);
+
+  // If we already have a stub for this function, recycle it.
+  void *&Stub = FunctionToStubMap[F];
+  if (Stub) return Stub;
+
+  // Otherwise, codegen a new stub.  For now, the stub will call the lazy
+  // resolver function.
+  Stub = TheJIT->getJITInfo().emitFunctionStub((void*)LazyResolverFn, MCE);
+
+  // Finally, keep track of the stub-to-Function mapping so that the
+  // JITCompilerFn knows which function to compile!
+  StubToFunctionMap[Stub] = F;
+  return Stub;
+}
+
+/// JITCompilerFn - This function is called when a lazy compilation stub has
+/// been entered.  It looks up which function this stub corresponds to, compiles
+/// it if necessary, then returns the resultant function pointer.
+void *JITResolver::JITCompilerFn(void *Stub) {
+  JITResolver &JR = getJITResolver();
+  
+  // The address given to us for the stub may not be exactly right, it might be
+  // a little bit after the stub.  As such, use upper_bound to find it.
+  std::map<void*, Function*>::iterator I =
+    JR.StubToFunctionMap.upper_bound(Stub);
+  assert(I != JR.StubToFunctionMap.begin() && "This is not a known stub!");
+  Function *F = (--I)->second;
+
+  // The target function will rewrite the stub so that the compilation callback
+  // function is no longer called from this stub.
+  JR.StubToFunctionMap.erase(I);
+
+  DEBUG(std::cerr << "Lazily resolving function '" << F->getName()
+                  << "' In stub ptr = " << Stub << " actual ptr = "
+                  << I->first << "\n");
+
+  void *Result = TheJIT->getPointerToFunction(F);
+
+  // We don't need to reuse this stub in the future, as F is now compiled.
+  JR.FunctionToStubMap.erase(F);
+
+  // FIXME: We could rewrite all references to this stub if we knew them.
+  return Result;
+}
 
 
+//===----------------------------------------------------------------------===//
+// JIT MachineCodeEmitter code.
+//
 namespace {
   /// Emitter - The JIT implementation of the MachineCodeEmitter, which is used
   /// to output functions to memory for execution.
@@ -113,8 +210,8 @@ namespace {
     virtual void startFunction(MachineFunction &F);
     virtual void finishFunction(MachineFunction &F);
     virtual void emitConstantPool(MachineConstantPool *MCP);
-    virtual void startFunctionStub(const Function &F, unsigned StubSize);
-    virtual void* finishFunctionStub(const Function &F);
+    virtual void startFunctionStub(unsigned StubSize);
+    virtual void* finishFunctionStub(const Function *F);
     virtual void emitByte(unsigned char B);
     virtual void emitWord(unsigned W);
     virtual void emitWordAt(unsigned W, unsigned *Ptr);
@@ -135,11 +232,37 @@ namespace {
     // FIXME: This is JIT specific!
     //
     virtual uint64_t forceCompilationOf(Function *F);
+
+  private:
+    void *getPointerToGlobal(GlobalValue *GV);
   };
 }
 
 MachineCodeEmitter *JIT::createEmitter(JIT &jit) {
   return new Emitter(jit);
+}
+
+void *Emitter::getPointerToGlobal(GlobalValue *V) {
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+    /// FIXME: If we straightened things out, this could actually emit the
+    /// global immediately instead of queuing it for codegen later!
+    GlobalVariable *GV = cast<GlobalVariable>(V);
+    return TheJIT->getOrEmitGlobalVariable(GV);
+  }
+
+  // If we have already compiled the function, return a pointer to its body.
+  Function *F = cast<Function>(V);
+  void *ResultPtr = TheJIT->getPointerToGlobalIfAvailable(F);
+  if (ResultPtr) return ResultPtr;
+
+  if (F->hasExternalLinkage()) {
+    // If this is an external function pointer, we can force the JIT to
+    // 'compile' it, which really just adds it to the map.
+    return TheJIT->getPointerToFunction(F);
+  }
+
+  // Otherwise, we have to emit a lazy resolving stub.
+  return getJITResolver(this).getFunctionStub(F);
 }
 
 void Emitter::startFunction(MachineFunction &F) {
@@ -157,11 +280,10 @@ void Emitter::finishFunction(MachineFunction &F) {
     for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
       MachineRelocation &MR = Relocations[i];
       void *ResultPtr;
-      if (MR.isGlobalValue()) {
-        assert(0 && "Unimplemented!\n");
-      } else {
+      if (MR.isString())
         ResultPtr = TheJIT->getPointerToNamedFunction(MR.getString());
-      }
+      else
+        ResultPtr = getPointerToGlobal(MR.getGlobalValue());
       MR.setResultPointer(ResultPtr);
     }
 
@@ -209,16 +331,15 @@ void Emitter::emitConstantPool(MachineConstantPool *MCP) {
   }
 }
 
-void Emitter::startFunctionStub(const Function &F, unsigned StubSize) {
+void Emitter::startFunctionStub(unsigned StubSize) {
   SavedCurBlock = CurBlock;  SavedCurByte = CurByte;
   CurByte = CurBlock = MemMgr.allocateStub(StubSize);
 }
 
-void *Emitter::finishFunctionStub(const Function &F) {
+void *Emitter::finishFunctionStub(const Function *F) {
   NumBytes += CurByte-CurBlock;
-  DEBUG(std::cerr << "Finished CodeGen of [0x" << std::hex
-                  << (uintptr_t)CurBlock
-                  << std::dec << "] Function stub for: " << F.getName()
+  DEBUG(std::cerr << "Finished CodeGen of [0x" << (void*)CurBlock
+                  << "] Function stub for: " << (F ? F->getName() : "")
                   << ": " << CurByte-CurBlock << " bytes of text\n");
   std::swap(CurBlock, SavedCurBlock);
   CurByte = SavedCurByte;
