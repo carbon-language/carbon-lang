@@ -165,6 +165,9 @@ static bool ExternalFunctionDoesntCallIntoProgram(const std::string &Name) {
     std::sort(Funcs.begin(), Funcs.end());
   }
 
+  if (Name.size() > 7 && !memcmp("__llvm_", Name.c_str(), 7))
+    return true;
+
   // Binary search for the function name...
   std::vector<std::string>::iterator I =
     std::lower_bound(Funcs.begin(), Funcs.end(), Name);
