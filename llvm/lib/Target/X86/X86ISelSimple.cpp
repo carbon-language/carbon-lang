@@ -2979,23 +2979,28 @@ void X86ISel::emitShiftOperation(MachineBasicBlock *MBB,
                   DestReg).addReg(SrcReg  ).addReg(SrcReg+1).addImm(Amount);
           BuildMI(*MBB, IP, Opc[2],2,DestReg+1).addReg(SrcReg+1).addImm(Amount);
         }
+      } else if (Amount == 32) {
+        if (isLeftShift) {
+          BuildMI(*MBB, IP, X86::MOV32rr, 1, DestReg+1).addReg(SrcReg);
+          BuildMI(*MBB, IP, X86::MOV32ri, 1, DestReg).addImm(0);
+        } else {
+          BuildMI(*MBB, IP, X86::MOV32rr, 1, DestReg).addReg(SrcReg);
+          if (!isSigned) {
+            BuildMI(*MBB, IP, X86::MOV32ri, 1, DestReg+1).addImm(0);
+          } else {
+            BuildMI(*MBB, IP, X86::SAR32ri, 2,
+                    DestReg+1).addReg(SrcReg).addImm(31);
+          }
+        }
       } else {                 // Shifting more than 32 bits
         Amount -= 32;
         if (isLeftShift) {
-          if (Amount != 0) {
-            BuildMI(*MBB, IP, X86::SHL32ri, 2,
-                    DestReg + 1).addReg(SrcReg).addImm(Amount);
-          } else {
-            BuildMI(*MBB, IP, X86::MOV32rr, 1, DestReg+1).addReg(SrcReg);
-          }
+          BuildMI(*MBB, IP, X86::SHL32ri, 2,
+                  DestReg + 1).addReg(SrcReg).addImm(Amount);
           BuildMI(*MBB, IP, X86::MOV32ri, 1, DestReg).addImm(0);
         } else {
-          if (Amount != 0) {
-            BuildMI(*MBB, IP, isSigned ? X86::SAR32ri : X86::SHR32ri, 2,
-                    DestReg).addReg(SrcReg+1).addImm(Amount);
-          } else {
-            BuildMI(*MBB, IP, X86::MOV32rr, 1, DestReg).addReg(SrcReg+1);
-          }
+          BuildMI(*MBB, IP, isSigned ? X86::SAR32ri : X86::SHR32ri, 2,
+                  DestReg).addReg(SrcReg+1).addImm(Amount);
           BuildMI(*MBB, IP, X86::MOV32ri, 1, DestReg+1).addImm(0);
         }
       }
