@@ -21,7 +21,7 @@
 #include "llvm/Module.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
-#include "llvm/Analysis/IPModRef.h"
+#include "IPModRef.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Support/InstVisitor.h"

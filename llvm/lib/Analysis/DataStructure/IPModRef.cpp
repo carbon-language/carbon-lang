@@ -11,7 +11,7 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/IPModRef.h"
+#include "IPModRef.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Module.h"
