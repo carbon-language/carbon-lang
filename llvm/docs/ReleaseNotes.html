@@ -142,6 +142,9 @@ benchmarks, and <b>many</b> other C and C++ programs.</p>
   </li>
   <li>zlib and libpng are <a href="http://llvm.cs.uiuc.edu/PR417">no longer
       included in the main LLVM tarball</a>.</li>
+  <li>The LLVM code generator now generates asm writers for the target from
+      an abstract target description, instead of requiring them to be hand 
+      written.</li>
 </ol>
 
 </div>
@@ -254,6 +257,8 @@ were fixed:</a>
     cannot be marked 'constant' if they have nontrivial ctors or dtors</a></li>
   <li><a href="http://llvm.cs.uiuc.edu/PR461">[llvmgcc] Crash compiling unnamed 
     bitfield which does not increase struct size</a></li>
+  <li><a href="http://llvm.cs.uiuc.edu/PR424">[llvmgcc] llvmgcc emits invalid 
+    constant exprs</a></li>
 </ol>
 
 <p>Bugs fixed in the Sparc V9 back-end:</p>
