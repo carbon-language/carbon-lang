@@ -47,15 +47,8 @@ Pass *createEmitX86CodeToMemory();
 //
 #include "X86GenRegisterNames.inc"
 
-/// X86 namespace - This namespace contains all of the register and opcode enums
-/// used by the X86 backend.
-///
-namespace X86 {
-  // This defines a large number of symbolic names for X86 instruction opcodes.
-  enum Opcode {
-#define I(ENUM, NAME, BASEOPCODE, FLAGS, TSFLAGS, IMPDEFS, IMPUSES) ENUM,
-#include "X86InstrInfo.def"
-  };
-}
+// Defines symbolic names for the X86 instructions.
+//
+#include "X86GenInstrNames.inc"
 
 #endif
