@@ -17,8 +17,8 @@
 #include "llvm/ValueHolder.h"
 class Method;
 class GlobalVariable;
-class GlobalValueRefMap;   // Used by ConstPoolVals.cpp
-class ConstPoolPointerRef;
+class GlobalValueRefMap;   // Used by ConstantVals.cpp
+class ConstantPointerRef;
 
 class Module : public Value, public SymTabValue {
 public:
@@ -44,10 +44,10 @@ private:
   GlobalValueRefMap *GVRefMap;
 
   // Accessor for the underlying GlobalValRefMap... only through the
-  // ConstPoolPointerRef class...
-  friend class ConstPoolPointerRef;
-  void mutateConstPoolPointerRef(GlobalValue *OldGV, GlobalValue *NewGV);
-  ConstPoolPointerRef *getConstPoolPointerRef(GlobalValue *GV);
+  // ConstantPointerRef class...
+  friend class ConstantPointerRef;
+  void mutateConstantPointerRef(GlobalValue *OldGV, GlobalValue *NewGV);
+  ConstantPointerRef *getConstantPointerRef(GlobalValue *GV);
 
 public:
   Module();

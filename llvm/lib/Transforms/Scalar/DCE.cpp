@@ -96,7 +96,7 @@ static bool RemoveSingularPHIs(BasicBlock *BB) {
 }
 
 static void ReplaceUsesWithConstant(Instruction *I) {
-  ConstPoolVal *CPV = ConstPoolVal::getNullConstant(I->getType());
+  Constant *CPV = Constant::getNullConstant(I->getType());
   
   // Make all users of this instruction reference the constant instead
   I->replaceAllUsesWith(CPV);
@@ -166,7 +166,7 @@ bool opt::SimplifyCFG(Method::iterator &BBIt) {
 
   // Remove basic blocks that have no predecessors... which are unreachable.
   if (BB->pred_begin() == BB->pred_end() &&
-      !BB->hasConstantPoolReferences()) {
+      !BB->hasConstantReferences()) {
     //cerr << "Removing BB: \n" << BB;
 
     // Loop through all of our successors and make sure they know that one
@@ -225,7 +225,7 @@ bool opt::SimplifyCFG(Method::iterator &BBIt) {
   // and if there is only one successor of the predecessor. 
   BasicBlock::pred_iterator PI(BB->pred_begin());
   if (PI != BB->pred_end() && *PI != BB &&    // Not empty?  Not same BB?
-      ++PI == BB->pred_end() && !BB->hasConstantPoolReferences()) {
+      ++PI == BB->pred_end() && !BB->hasConstantReferences()) {
     BasicBlock *Pred = *BB->pred_begin();
     TerminatorInst *Term = Pred->getTerminator();
     assert(Term != 0 && "malformed basic block without terminator!");

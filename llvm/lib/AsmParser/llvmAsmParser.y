@@ -58,7 +58,7 @@ static struct PerModuleInfo {
   // GlobalRefs - This maintains a mapping between <Type, ValID>'s and forward
   // references to global values.  Global values may be referenced before they
   // are defined, and if so, the temporary object that they represent is held
-  // here.  This is used for forward references of ConstPoolPointerRefs.
+  // here.  This is used for forward references of ConstantPointerRefs.
   //
   typedef map<pair<const PointerType *, ValID>, GlobalVariable*> GlobalRefsType;
   GlobalRefsType GlobalRefs;
@@ -100,11 +100,11 @@ static struct PerModuleInfo {
       I->first.second.destroy();  // Free string memory if neccesary
       
       // Loop over all of the uses of the GlobalValue.  The only thing they are
-      // allowed to be at this point is ConstPoolPointerRef's.
+      // allowed to be at this point is ConstantPointerRef's.
       assert(OldGV->use_size() == 1 && "Only one reference should exist!");
       while (!OldGV->use_empty()) {
-	User *U = OldGV->use_back();  // Must be a ConstPoolPointerRef...
-	ConstPoolPointerRef *CPPR = cast<ConstPoolPointerRef>(U);
+	User *U = OldGV->use_back();  // Must be a ConstantPointerRef...
+	ConstantPointerRef *CPPR = cast<ConstantPointerRef>(U);
 	assert(CPPR->getValue() == OldGV && "Something isn't happy");
 	
 	// Change the const pool reference to point to the real global variable
@@ -296,24 +296,24 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   // value will fit into the specified type...
   case ValID::ConstSIntVal:    // Is it a constant pool reference??
     if (Ty == Type::BoolTy) {  // Special handling for boolean data
-      return ConstPoolBool::get(D.ConstPool64 != 0);
+      return ConstantBool::get(D.ConstPool64 != 0);
     } else {
-      if (!ConstPoolSInt::isValueValidForType(Ty, D.ConstPool64))
+      if (!ConstantSInt::isValueValidForType(Ty, D.ConstPool64))
 	ThrowException("Symbolic constant pool value '" +
 		       itostr(D.ConstPool64) + "' is invalid for type '" + 
 		       Ty->getName() + "'!");
-      return ConstPoolSInt::get(Ty, D.ConstPool64);
+      return ConstantSInt::get(Ty, D.ConstPool64);
     }
 
   case ValID::ConstUIntVal:     // Is it an unsigned const pool reference?
-    if (!ConstPoolUInt::isValueValidForType(Ty, D.UConstPool64)) {
-      if (!ConstPoolSInt::isValueValidForType(Ty, D.ConstPool64)) {
+    if (!ConstantUInt::isValueValidForType(Ty, D.UConstPool64)) {
+      if (!ConstantSInt::isValueValidForType(Ty, D.ConstPool64)) {
 	ThrowException("Integral constant pool reference is invalid!");
       } else {     // This is really a signed reference.  Transmogrify.
-	return ConstPoolSInt::get(Ty, D.ConstPool64);
+	return ConstantSInt::get(Ty, D.ConstPool64);
       }
     } else {
-      return ConstPoolUInt::get(Ty, D.UConstPool64);
+      return ConstantUInt::get(Ty, D.UConstPool64);
     }
 
   case ValID::ConstStringVal:    // Is it a string const pool reference?
@@ -322,14 +322,14 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     return 0;
 
   case ValID::ConstFPVal:        // Is it a floating point const pool reference?
-    if (!ConstPoolFP::isValueValidForType(Ty, D.ConstPoolFP))
+    if (!ConstantFP::isValueValidForType(Ty, D.ConstPoolFP))
       ThrowException("FP constant invalid for type!!");
-    return ConstPoolFP::get(Ty, D.ConstPoolFP);
+    return ConstantFP::get(Ty, D.ConstPoolFP);
     
   case ValID::ConstNullVal:      // Is it a null value?
     if (!Ty->isPointerType())
       ThrowException("Cannot create a a non pointer null!");
-    return ConstPoolPointerNull::get(cast<PointerType>(Ty));
+    return ConstantPointerNull::get(cast<PointerType>(Ty));
     
   default:
     assert(0 && "Unhandled case!");
@@ -635,7 +635,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   BasicBlock                       *BasicBlockVal;
   TerminatorInst                   *TermInstVal;
   Instruction                      *InstVal;
-  ConstPoolVal                     *ConstVal;
+  Constant                         *ConstVal;
 
   const Type                       *PrimType;
   PATypeHolder<Type>               *TypeVal;
@@ -645,8 +645,8 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   vector<Value*>                   *ValueList;
   list<PATypeHolder<Type> >        *TypeList;
   list<pair<Value*, BasicBlock*> > *PHIList;   // Represent the RHS of PHI node
-  list<pair<ConstPoolVal*, BasicBlock*> > *JumpTable;
-  vector<ConstPoolVal*>            *ConstVector;
+  list<pair<Constant*, BasicBlock*> > *JumpTable;
+  vector<Constant*>                *ConstVector;
 
   int64_t                           SInt64Val;
   uint64_t                          UInt64Val;
@@ -894,7 +894,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 		       (*$3)[i]->getType()->getName() + "'.");
     }
 
-    $$ = ConstPoolArray::get(ATy, *$3);
+    $$ = ConstantArray::get(ATy, *$3);
     delete $1; delete $3;
   }
   | Types '[' ']' {
@@ -907,7 +907,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     if (NumElements != -1 && NumElements != 0) 
       ThrowException("Type mismatch: constant sized array initialized with 0"
 		     " arguments, but has size of " + itostr(NumElements) +"!");
-    $$ = ConstPoolArray::get(ATy, vector<ConstPoolVal*>());
+    $$ = ConstantArray::get(ATy, vector<Constant*>());
     delete $1;
   }
   | Types 'c' STRINGCONSTANT {
@@ -923,19 +923,19 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       ThrowException("Can't build string constant of size " + 
 		     itostr((int)(EndStr-$3)) +
 		     " when array has size " + itostr(NumElements) + "!");
-    vector<ConstPoolVal*> Vals;
+    vector<Constant*> Vals;
     if (ETy == Type::SByteTy) {
       for (char *C = $3; C != EndStr; ++C)
-	Vals.push_back(ConstPoolSInt::get(ETy, *C));
+	Vals.push_back(ConstantSInt::get(ETy, *C));
     } else if (ETy == Type::UByteTy) {
       for (char *C = $3; C != EndStr; ++C)
-	Vals.push_back(ConstPoolUInt::get(ETy, *C));
+	Vals.push_back(ConstantUInt::get(ETy, *C));
     } else {
       free($3);
       ThrowException("Cannot build string arrays of non byte sized elements!");
     }
     free($3);
-    $$ = ConstPoolArray::get(ATy, Vals);
+    $$ = ConstantArray::get(ATy, Vals);
     delete $1;
   }
   | Types '{' ConstVector '}' {
@@ -945,7 +945,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
                      (*$1)->getDescription() + "'!");
     // FIXME: TODO: Check to see that the constants are compatible with the type
     // initializer!
-    $$ = ConstPoolStruct::get(STy, *$3);
+    $$ = ConstantStruct::get(STy, *$3);
     delete $1; delete $3;
   }
   | Types NULL_TOK {
@@ -954,7 +954,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       ThrowException("Cannot make null pointer constant with type: '" + 
                      (*$1)->getDescription() + "'!");
 
-    $$ = ConstPoolPointerNull::get(PTy);
+    $$ = ConstantPointerNull::get(PTy);
     delete $1;
   }
   | Types SymbolicValueRef {
@@ -994,29 +994,29 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     }
 
     GlobalValue *GV = cast<GlobalValue>(V);
-    $$ = ConstPoolPointerRef::get(GV);
+    $$ = ConstantPointerRef::get(GV);
     delete $1;            // Free the type handle
   }
 
 
 ConstVal : SIntType EINT64VAL {     // integral constants
-    if (!ConstPoolSInt::isValueValidForType($1, $2))
+    if (!ConstantSInt::isValueValidForType($1, $2))
       ThrowException("Constant value doesn't fit in type!");
-    $$ = ConstPoolSInt::get($1, $2);
+    $$ = ConstantSInt::get($1, $2);
   } 
   | UIntType EUINT64VAL {           // integral constants
-    if (!ConstPoolUInt::isValueValidForType($1, $2))
+    if (!ConstantUInt::isValueValidForType($1, $2))
       ThrowException("Constant value doesn't fit in type!");
-    $$ = ConstPoolUInt::get($1, $2);
+    $$ = ConstantUInt::get($1, $2);
   } 
   | BOOL TRUE {                     // Boolean constants
-    $$ = ConstPoolBool::True;
+    $$ = ConstantBool::True;
   }
   | BOOL FALSE {                    // Boolean constants
-    $$ = ConstPoolBool::False;
+    $$ = ConstantBool::False;
   }
   | FPType FPVAL {                   // Float & Double constants
-    $$ = ConstPoolFP::get($1, $2);
+    $$ = ConstantFP::get($1, $2);
   }
 
 // ConstVector - A list of comma seperated constants.
@@ -1024,7 +1024,7 @@ ConstVector : ConstVector ',' ConstVal {
     ($$ = $1)->push_back($3);
   }
   | ConstVal {
-    $$ = new vector<ConstPoolVal*>();
+    $$ = new vector<Constant*>();
     $$->push_back($1);
   }
 
@@ -1066,7 +1066,7 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
   | ConstPool OptAssign OptInternal GlobalType ConstVal {
     const Type *Ty = $5->getType();
     // Global declarations appear in Constant Pool
-    ConstPoolVal *Initializer = $5;
+    Constant *Initializer = $5;
     if (Initializer == 0)
       ThrowException("Global value initializer is not a constant!");
 	 
@@ -1340,7 +1340,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
                                    cast<BasicBlock>(getVal(Type::LabelTy, $6)));
     $$ = S;
 
-    list<pair<ConstPoolVal*, BasicBlock*> >::iterator I = $8->begin(), 
+    list<pair<Constant*, BasicBlock*> >::iterator I = $8->begin(), 
                                                       end = $8->end();
     for (; I != end; ++I)
       S->dest_push_back(I->first, I->second);
@@ -1403,15 +1403,15 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
 
 JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     $$ = $1;
-    ConstPoolVal *V = cast<ConstPoolVal>(getValNonImprovising($2, $3));
+    Constant *V = cast<Constant>(getValNonImprovising($2, $3));
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");
 
     $$->push_back(make_pair(V, cast<BasicBlock>(getVal($5, $6))));
   }
   | IntType ConstValueRef ',' LABEL ValueRef {
-    $$ = new list<pair<ConstPoolVal*, BasicBlock*> >();
-    ConstPoolVal *V = cast<ConstPoolVal>(getValNonImprovising($1, $2));
+    $$ = new list<pair<Constant*, BasicBlock*> >();
+    Constant *V = cast<Constant>(getValNonImprovising($1, $2));
 
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");

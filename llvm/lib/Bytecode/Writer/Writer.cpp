@@ -27,7 +27,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
@@ -81,7 +81,7 @@ void BytecodeWriter::outputConstants(bool isMethod) {
 
     unsigned NC = ValNo;              // Number of constants
     for (; NC < Plane.size() && 
-	   (isa<ConstPoolVal>(Plane[NC]) || 
+	   (isa<Constant>(Plane[NC]) || 
             isa<Type>(Plane[NC])); NC++) /*empty*/;
     NC -= ValNo;                      // Convert from index into count
     if (NC == 0) continue;            // Skip empty type planes...
@@ -100,9 +100,9 @@ void BytecodeWriter::outputConstants(bool isMethod) {
 
     for (unsigned i = ValNo; i < ValNo+NC; ++i) {
       const Value *V = Plane[i];
-      if (const ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(V)) {
+      if (const Constant *CPV = dyn_cast<Constant>(V)) {
 	//cerr << "Serializing value: <" << V->getType() << ">: " 
-	//     << ((const ConstPoolVal*)V)->getStrValue() << ":" 
+	//     << ((const Constant*)V)->getStrValue() << ":" 
 	//     << Out.size() << "\n";
 	outputConstant(CPV);
       } else {

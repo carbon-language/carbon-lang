@@ -16,7 +16,7 @@
 #include "llvm/Method.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
@@ -69,7 +69,7 @@ static void WriteAsOperandInternal(ostream &Out, const Value *V, bool PrintName,
   if (PrintName && V->hasName()) {
     Out << " %" << V->getName();
   } else {
-    if (const ConstPoolVal *CPV = dyn_cast<const ConstPoolVal>(V)) {
+    if (const Constant *CPV = dyn_cast<const Constant>(V)) {
       Out << " " << CPV->getStrValue();
     } else {
       int Slot;
@@ -275,13 +275,13 @@ public:
   inline void write(const Method *M)         { printMethod(M);      }
   inline void write(const BasicBlock *BB)    { printBasicBlock(BB); }
   inline void write(const Instruction *I)    { printInstruction(I); }
-  inline void write(const ConstPoolVal *CPV) { printConstant(CPV);  }
+  inline void write(const Constant *CPV)     { printConstant(CPV);  }
   inline void write(const Type *Ty)          { printType(Ty);       }
 
 private :
   void printModule(const Module *M);
   void printSymbolTable(const SymbolTable &ST);
-  void printConstant(const ConstPoolVal *CPV);
+  void printConstant(const Constant *CPV);
   void printGlobal(const GlobalVariable *GV);
   void printMethod(const Method *M);
   void printMethodArgument(const MethodArgument *MA);
@@ -345,7 +345,7 @@ void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
     
     for (; I != End; ++I) {
       const Value *V = I->second;
-      if (const ConstPoolVal *CPV = dyn_cast<const ConstPoolVal>(V)) {
+      if (const Constant *CPV = dyn_cast<const Constant>(V)) {
 	printConstant(CPV);
       } else if (const Type *Ty = dyn_cast<const Type>(V)) {
 	Out << "\t%" << I->first << " = type " << Ty->getDescription() << endl;
@@ -357,7 +357,7 @@ void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
 
 // printConstant - Print out a constant pool entry...
 //
-void AssemblyWriter::printConstant(const ConstPoolVal *CPV) {
+void AssemblyWriter::printConstant(const Constant *CPV) {
   // Don't print out unnamed constants, they will be inlined
   if (!CPV->hasName()) return;
 
@@ -666,7 +666,7 @@ void WriteToAssembly(const BasicBlock *BB, ostream &o) {
   W.write(BB);
 }
 
-void WriteToAssembly(const ConstPoolVal *CPV, ostream &o) {
+void WriteToAssembly(const Constant *CPV, ostream &o) {
   if (CPV == 0) { o << "<null> constant pool value\n"; return; }
   o << " " << CPV->getType()->getDescription() << " " << CPV->getStrValue();
 }
@@ -701,7 +701,7 @@ CachedWriter &CachedWriter::operator<<(const Value *V) {
   switch (V->getValueType()) {
   case Value::ConstantVal:
     Out << " "; AW->write(V->getType());
-    Out << " " << cast<ConstPoolVal>(V)->getStrValue(); break;
+    Out << " " << cast<Constant>(V)->getStrValue(); break;
   case Value::MethodArgumentVal: 
     AW->write(V->getType()); Out << " " << V->getName(); break;
   case Value::TypeVal:           AW->write(cast<const Type>(V)); break;

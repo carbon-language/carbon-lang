@@ -19,7 +19,6 @@ class InstrForest;
 class MachineInstr;
 class InstructionNode;
 class TmpInstruction;
-class ConstPoolVal;
 class TargetMachine;
 
 

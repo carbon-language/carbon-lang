@@ -8,7 +8,6 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/SymTabValue.h"
-#include "llvm/ConstPoolVals.h"
 #include "llvm/Type.h"
 #ifndef NDEBUG      // Only in -g mode...
 #include "llvm/Assembly/Writer.h"

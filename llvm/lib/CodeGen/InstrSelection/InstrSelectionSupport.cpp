@@ -16,7 +16,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineRegInfo.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
@@ -73,7 +73,7 @@ int64_t
 GetConstantValueAsSignedInt(const Value *V,
                             bool &isValidConstant)
 {
-  if (!isa<ConstPoolVal>(V))
+  if (!isa<Constant>(V))
     {
       isValidConstant = false;
       return 0;
@@ -82,15 +82,15 @@ GetConstantValueAsSignedInt(const Value *V,
   isValidConstant = true;
   
   if (V->getType() == Type::BoolTy)
-    return (int64_t) ((ConstPoolBool*)V)->getValue();
+    return (int64_t) cast<ConstantBool>(V)->getValue();
   
   if (V->getType()->isIntegral())
     {
       if (V->getType()->isSigned())
-        return ((ConstPoolSInt*)V)->getValue();
+        return cast<ConstantSInt>(V)->getValue();
       
       assert(V->getType()->isUnsigned());
-      uint64_t Val = ((ConstPoolUInt*)V)->getValue();
+      uint64_t Val = cast<ConstantUInt>(V)->getValue();
       if (Val < INT64_MAX)     // then safe to cast to signed
         return (int64_t)Val;
     }
@@ -111,7 +111,7 @@ GetConstantValueAsSignedInt(const Value *V,
 
 Value*
 FoldGetElemChain(const InstructionNode* getElemInstrNode,
-		 vector<ConstPoolVal*>& chainIdxVec)
+		 vector<Constant*>& chainIdxVec)
 {
   MemAccessInst* getElemInst = (MemAccessInst*)
     getElemInstrNode->getInstruction();
@@ -128,7 +128,7 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
       // Child is a GetElemPtr instruction
       getElemInst = (MemAccessInst*)
 	((InstructionNode*) ptrChild)->getInstruction();
-      const vector<ConstPoolVal*>& idxVec = getElemInst->getIndicesBROKEN();
+      const vector<Constant*>& idxVec = getElemInst->getIndicesBROKEN();
       
       // Get the pointer value out of ptrChild and *prepend* its index vector
       ptrVal = getElemInst->getPointerOperand();
@@ -225,12 +225,11 @@ ChooseRegOrImmed(Value* val,
   
   // Check for the common case first: argument is not constant
   // 
-  ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(val);
+  Constant *CPV = dyn_cast<Constant>(val);
   if (!CPV) return opType;
 
-  if (CPV->getType() == Type::BoolTy)
+  if (ConstantBool *CPB = dyn_cast<ConstantBool>(CPV))
     {
-      ConstPoolBool *CPB = (ConstPoolBool*)CPV;
       if (!CPB->getValue() && target.getRegInfo().getZeroRegNum() >= 0)
 	{
 	  getMachineRegNum = target.getRegInfo().getZeroRegNum();
@@ -259,11 +258,11 @@ ChooseRegOrImmed(Value* val,
     }
   else if (CPV->getType()->isSigned())
     {
-      intValue = ((ConstPoolSInt*)CPV)->getValue();
+      intValue = cast<ConstantSInt>(CPV)->getValue();
     }
   else
     {
-      uint64_t V = ((ConstPoolUInt*)CPV)->getValue();
+      uint64_t V = cast<ConstantUInt>(CPV)->getValue();
       if (V >= INT64_MAX) return opType;
       intValue = (int64_t)V;
     }
@@ -327,8 +326,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
       Value* opValue = mop.getVRegValue();
       bool constantThatMustBeLoaded = false;
       
-      if (isa<ConstPoolVal>(opValue))
-        {
+      if (Constant *OpConst = dyn_cast<Constant>(opValue)) {
           unsigned int machineRegNum;
           int64_t immedValue;
           MachineOperand::MachineOperandType opType =
@@ -345,8 +343,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
 
           if (constantThatMustBeLoaded)
             { // register the value so it is emitted in the assembly
-              MachineCodeForMethod::get(method).addToConstantPool(
-                                                 cast<ConstPoolVal>(opValue));
+              MachineCodeForMethod::get(method).addToConstantPool(OpConst);
             }
         }
       
@@ -370,7 +367,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
   // into a register.
   // 
   for (unsigned i=0, N=minstr->getNumImplicitRefs(); i < N; ++i)
-    if (isa<ConstPoolVal>(minstr->getImplicitRef(i)) ||
+    if (isa<Constant>(minstr->getImplicitRef(i)) ||
         isa<GlobalValue>(minstr->getImplicitRef(i)))
       {
         Value* oldVal = minstr->getImplicitRef(i);
@@ -378,10 +375,9 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
           InsertCodeToLoadConstant(oldVal, vmInstr, loadConstVec, target);
         minstr->setImplicitRef(i, tmpReg);
         
-        if (isa<ConstPoolVal>(oldVal))
+        if (Constant *C = dyn_cast<Constant>(oldVal))
           { // register the value so it is emitted in the assembly
-            MachineCodeForMethod::get(method).addToConstantPool(
-                                               cast<ConstPoolVal>(oldVal));
+            MachineCodeForMethod::get(method).addToConstantPool(C);
           }
       }
   

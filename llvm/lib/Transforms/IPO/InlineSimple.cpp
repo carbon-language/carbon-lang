@@ -41,7 +41,7 @@ static inline void RemapInstruction(Instruction *I,
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     const Value *Op = I->getOperand(op);
     Value *V = ValueMap[Op];
-    if (!V && (isa<GlobalValue>(Op) || isa<ConstPoolVal>(Op)))
+    if (!V && (isa<GlobalValue>(Op) || isa<Constant>(Op)))
       continue;  // Globals and constants don't get relocated
 
     if (!V) {

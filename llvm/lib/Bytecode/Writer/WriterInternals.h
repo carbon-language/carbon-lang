@@ -39,7 +39,7 @@ private :
 
   void outputModuleInfoBlock(const Module *C);
   void outputSymbolTable(const SymbolTable &ST);
-  bool outputConstant(const ConstPoolVal *CPV);
+  bool outputConstant(const Constant *CPV);
   void outputType(const Type *T);
 };
 

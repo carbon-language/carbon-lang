@@ -12,10 +12,10 @@
 #include "llvm/Method.h"
 #include "llvm/Instruction.h"
 #include <iterator>
-class ConstPoolVal;
+class Constant;
 
 class constant_iterator
-  : public std::forward_iterator<const ConstPoolVal, ptrdiff_t> {
+  : public std::forward_iterator<const Constant, ptrdiff_t> {
   Method::inst_const_iterator InstI;        // Method instruction iterator
   unsigned OpIdx;                           // Operand index
 
@@ -24,7 +24,7 @@ class constant_iterator
   inline bool isAtConstant() const {
     assert(!InstI.atEnd() && OpIdx < InstI->getNumOperands() &&
 	   "isAtConstant called with invalid arguments!");
-    return isa<ConstPoolVal>(InstI->getOperand(OpIdx));
+    return isa<Constant>(InstI->getOperand(OpIdx));
   }
 
 public:
@@ -45,7 +45,7 @@ public:
 
   inline pointer operator*() const {
     assert(isAtConstant() && "Dereferenced an iterator at the end!");
-    return cast<ConstPoolVal>(InstI->getOperand(OpIdx));
+    return cast<Constant>(InstI->getOperand(OpIdx));
   }
   inline pointer operator->() const { return operator*(); }
 

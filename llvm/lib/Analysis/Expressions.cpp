@@ -17,7 +17,7 @@ using namespace analysis;
 
 ExprType::ExprType(Value *Val) {
   if (Val) 
-    if (ConstPoolInt *CPI = dyn_cast<ConstPoolInt>(Val)) {
+    if (ConstantInt *CPI = dyn_cast<ConstantInt>(Val)) {
       Offset = CPI;
       Var = 0;
       ExprTy = Constant;
@@ -30,8 +30,8 @@ ExprType::ExprType(Value *Val) {
   Scale = 0;
 }
 
-ExprType::ExprType(const ConstPoolInt *scale, Value *var, 
-		   const ConstPoolInt *offset) {
+ExprType::ExprType(const ConstantInt *scale, Value *var, 
+		   const ConstantInt *offset) {
   Scale = var ? scale : 0; Var = var; Offset = offset;
   ExprTy = Scale ? ScaledLinear : (Var ? Linear : Constant);
   if (Scale && Scale->equalsInt(0)) {  // Simplify 0*Var + const
@@ -50,31 +50,31 @@ const Type *ExprType::getExprType(const Type *Default) const {
 
 
 class DefVal {
-  const ConstPoolInt * const Val;
+  const ConstantInt * const Val;
   const Type * const Ty;
 protected:
-  inline DefVal(const ConstPoolInt *val, const Type *ty) : Val(val), Ty(ty) {}
+  inline DefVal(const ConstantInt *val, const Type *ty) : Val(val), Ty(ty) {}
 public:
   inline const Type *getType() const { return Ty; }
-  inline const ConstPoolInt *getVal() const { return Val; }
-  inline operator const ConstPoolInt * () const { return Val; }
-  inline const ConstPoolInt *operator->() const { return Val; }
+  inline const ConstantInt *getVal() const { return Val; }
+  inline operator const ConstantInt * () const { return Val; }
+  inline const ConstantInt *operator->() const { return Val; }
 };
 
 struct DefZero : public DefVal {
-  inline DefZero(const ConstPoolInt *val, const Type *ty) : DefVal(val, ty) {}
-  inline DefZero(const ConstPoolInt *val) : DefVal(val, val->getType()) {}
+  inline DefZero(const ConstantInt *val, const Type *ty) : DefVal(val, ty) {}
+  inline DefZero(const ConstantInt *val) : DefVal(val, val->getType()) {}
 };
 
 struct DefOne : public DefVal {
-  inline DefOne(const ConstPoolInt *val, const Type *ty) : DefVal(val, ty) {}
+  inline DefOne(const ConstantInt *val, const Type *ty) : DefVal(val, ty) {}
 };
 
 
-static ConstPoolInt *getUnsignedConstant(uint64_t V, const Type *Ty) {
+static ConstantInt *getUnsignedConstant(uint64_t V, const Type *Ty) {
   if (Ty->isPointerType()) Ty = Type::ULongTy;
-  return Ty->isSigned() ? (ConstPoolInt*)ConstPoolSInt::get(Ty, V)
-                        : (ConstPoolInt*)ConstPoolUInt::get(Ty, V);
+  return Ty->isSigned() ? (ConstantInt*)ConstantSInt::get(Ty, V)
+                        : (ConstantInt*)ConstantUInt::get(Ty, V);
 }
 
 // Add - Helper function to make later code simpler.  Basically it just adds
@@ -89,16 +89,16 @@ static ConstPoolInt *getUnsignedConstant(uint64_t V, const Type *Ty) {
 //   3. If DefOne is true, a null return value indicates a value of 1, if DefOne
 //      is false, a null return value indicates a value of 0.
 //
-static const ConstPoolInt *Add(const ConstPoolInt *Arg1,
-			       const ConstPoolInt *Arg2, bool DefOne) {
+static const ConstantInt *Add(const ConstantInt *Arg1,
+                              const ConstantInt *Arg2, bool DefOne) {
   assert(Arg1 && Arg2 && "No null arguments should exist now!");
   assert(Arg1->getType() == Arg2->getType() && "Types must be compatible!");
 
   // Actually perform the computation now!
-  ConstPoolVal *Result = *Arg1 + *Arg2;
+  Constant *Result = *Arg1 + *Arg2;
   assert(Result && Result->getType() == Arg1->getType() &&
 	 "Couldn't perform addition!");
-  ConstPoolInt *ResultI = cast<ConstPoolInt>(Result);
+  ConstantInt *ResultI = cast<ConstantInt>(Result);
 
   // Check to see if the result is one of the special cases that we want to
   // recognize...
@@ -108,13 +108,13 @@ static const ConstPoolInt *Add(const ConstPoolInt *Arg1,
   return ResultI;
 }
 
-inline const ConstPoolInt *operator+(const DefZero &L, const DefZero &R) {
+inline const ConstantInt *operator+(const DefZero &L, const DefZero &R) {
   if (L == 0) return R;
   if (R == 0) return L;
   return Add(L, R, false);
 }
 
-inline const ConstPoolInt *operator+(const DefOne &L, const DefOne &R) {
+inline const ConstantInt *operator+(const DefOne &L, const DefOne &R) {
   if (L == 0) {
     if (R == 0)
       return getUnsignedConstant(2, L.getType());
@@ -139,16 +139,16 @@ inline const ConstPoolInt *operator+(const DefOne &L, const DefOne &R) {
 //   3. If DefOne is true, a null return value indicates a value of 1, if DefOne
 //      is false, a null return value indicates a value of 0.
 //
-inline const ConstPoolInt *Mul(const ConstPoolInt *Arg1, 
-			       const ConstPoolInt *Arg2, bool DefOne) {
+inline const ConstantInt *Mul(const ConstantInt *Arg1, 
+                              const ConstantInt *Arg2, bool DefOne) {
   assert(Arg1 && Arg2 && "No null arguments should exist now!");
   assert(Arg1->getType() == Arg2->getType() && "Types must be compatible!");
 
   // Actually perform the computation now!
-  ConstPoolVal *Result = *Arg1 * *Arg2;
+  Constant *Result = *Arg1 * *Arg2;
   assert(Result && Result->getType() == Arg1->getType() && 
 	 "Couldn't perform multiplication!");
-  ConstPoolInt *ResultI = cast<ConstPoolInt>(Result);
+  ConstantInt *ResultI = cast<ConstantInt>(Result);
 
   // Check to see if the result is one of the special cases that we want to
   // recognize...
@@ -158,16 +158,16 @@ inline const ConstPoolInt *Mul(const ConstPoolInt *Arg1,
   return ResultI;
 }
 
-inline const ConstPoolInt *operator*(const DefZero &L, const DefZero &R) {
+inline const ConstantInt *operator*(const DefZero &L, const DefZero &R) {
   if (L == 0 || R == 0) return 0;
   return Mul(L, R, false);
 }
-inline const ConstPoolInt *operator*(const DefOne &L, const DefZero &R) {
+inline const ConstantInt *operator*(const DefOne &L, const DefZero &R) {
   if (R == 0) return getUnsignedConstant(0, L.getType());
   if (L == 0) return R->equalsInt(1) ? 0 : R.getVal();
   return Mul(L, R, true);
 }
-inline const ConstPoolInt *operator*(const DefZero &L, const DefOne &R) {
+inline const ConstantInt *operator*(const DefZero &L, const DefOne &R) {
   if (L == 0 || R == 0) return L.getVal();
   return Mul(R, L, false);
 }
@@ -203,9 +203,9 @@ static ExprType handleAddition(ExprType Left, ExprType Right, Value *V) {
 static inline ExprType negate(const ExprType &E, Value *V) {
   const Type *Ty = V->getType();
   const Type *ETy = E.getExprType(Ty);
-  ConstPoolInt *Zero   = getUnsignedConstant(0, ETy);
-  ConstPoolInt *One    = getUnsignedConstant(1, ETy);
-  ConstPoolInt *NegOne = cast<ConstPoolInt>(*Zero - *One);
+  ConstantInt *Zero   = getUnsignedConstant(0, ETy);
+  ConstantInt *One    = getUnsignedConstant(1, ETy);
+  ConstantInt *NegOne = cast<ConstantInt>(*Zero - *One);
   if (NegOne == 0) return V;  // Couldn't subtract values...
 
   return ExprType(DefOne (E.Scale , Ty) * NegOne, E.Var,
@@ -230,9 +230,9 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
   case Value::MethodArgumentVal:        // nothing known, return variable itself
     return Expr;
   case Value::ConstantVal:              // Constant value, just return constant
-    ConstPoolVal *CPV = cast<ConstPoolVal>(Expr);
+    Constant *CPV = cast<Constant>(Expr);
     if (CPV->getType()->isIntegral()) { // It's an integral constant!
-      ConstPoolInt *CPI = cast<ConstPoolInt>(Expr);
+      ConstantInt *CPI = cast<ConstantInt>(Expr);
       return ExprType(CPI->equalsInt(0) ? 0 : CPI);
     }
     return Expr;
@@ -264,8 +264,8 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
     if (Right.Offset == 0) return Left;   // shl x, 0 = x
     assert(Right.Offset->getType() == Type::UByteTy &&
 	   "Shift amount must always be a unsigned byte!");
-    uint64_t ShiftAmount = ((ConstPoolUInt*)Right.Offset)->getValue();
-    ConstPoolInt *Multiplier = getUnsignedConstant(1ULL << ShiftAmount, Ty);
+    uint64_t ShiftAmount = ((ConstantUInt*)Right.Offset)->getValue();
+    ConstantInt *Multiplier = getUnsignedConstant(1ULL << ShiftAmount, Ty);
     
     return ExprType(DefOne(Left.Scale, Ty) * Multiplier, Left.Var,
 		    DefZero(Left.Offset, Ty) * Multiplier);
@@ -280,7 +280,7 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
     if (Left.ExprTy != ExprType::Constant)  // RHS must be > constant
       return I;         // Quadratic eqn! :(
 
-    const ConstPoolInt *Offs = Left.Offset;
+    const ConstantInt *Offs = Left.Offset;
     if (Offs == 0) return ExprType();
     return ExprType( DefOne(Right.Scale , Ty) * Offs, Right.Var,
 		    DefZero(Right.Offset, Ty) * Offs);
@@ -299,17 +299,17 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
     }
     */
 
-    const ConstPoolInt *Offset = Src.Offset;
-    const ConstPoolInt *Scale  = Src.Scale;
+    const ConstantInt *Offset = Src.Offset;
+    const ConstantInt *Scale  = Src.Scale;
     if (Offset) {
-      const ConstPoolVal *CPV = ConstantFoldCastInstruction(Offset, DestTy);
+      const Constant *CPV = ConstantFoldCastInstruction(Offset, DestTy);
       if (!CPV) return I;
-      Offset = cast<ConstPoolInt>(CPV);
+      Offset = cast<ConstantInt>(CPV);
     }
     if (Scale) {
-      const ConstPoolVal *CPV = ConstantFoldCastInstruction(Scale, DestTy);
+      const Constant *CPV = ConstantFoldCastInstruction(Scale, DestTy);
       if (!CPV) return I;
-      Scale = cast<ConstPoolInt>(CPV);
+      Scale = cast<ConstantInt>(CPV);
     }
     return ExprType(Scale, Src.Var, Offset);
   } // end case Instruction::Cast

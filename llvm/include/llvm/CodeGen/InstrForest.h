@@ -30,7 +30,7 @@
 #include <hash_map>
 #include <hash_set>
 
-class ConstPoolVal;
+class Constant;
 class BasicBlock;
 class Method;
 class InstrTreeNode;
@@ -205,11 +205,11 @@ protected:
 
 class ConstantNode : public InstrTreeNode {
 public:
-  ConstantNode(ConstPoolVal *constVal) 
+  ConstantNode(Constant *constVal) 
     : InstrTreeNode(NTConstNode, (Value*)constVal) {
     opLabel = ConstantNodeOp;    
   }
-  ConstPoolVal *getConstVal() const { return (ConstPoolVal*) val;}
+  Constant *getConstVal() const { return (Constant*) val;}
 protected:
   virtual void dumpNode(int indent) const;
 };

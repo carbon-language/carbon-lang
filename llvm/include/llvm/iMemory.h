@@ -177,7 +177,7 @@ public:
 				    const vector<Value*> &Indices,
 				    bool AllowStructLeaf = false);
 
-  const vector<ConstPoolVal*> getIndicesBROKEN() const;
+  const vector<Constant*> getIndicesBROKEN() const;
   
 
   inline op_iterator       idx_begin()       {

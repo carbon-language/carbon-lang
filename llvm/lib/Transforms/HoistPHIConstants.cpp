@@ -51,32 +51,29 @@ bool HoistPHIConstants::doHoistPHIConstants(Method *M) {
   CachedCopyMap Cache;
   bool Changed = false;
   
-  for (Method::iterator BI = M->begin(), BE = M->end(); BI != BE; ++BI)
-    {
-      vector<PHINode*> phis;            // normalizing invalidates BB iterator
+  for (Method::iterator BI = M->begin(), BE = M->end(); BI != BE; ++BI) {
+    vector<PHINode*> phis;            // normalizing invalidates BB iterator
       
-      for (BasicBlock::iterator II = (*BI)->begin(); II != (*BI)->end(); ++II)
-        {
-          if (PHINode *PN = dyn_cast<PHINode>(*II))
-            phis.push_back(PN);
-          else
-            break;                      // All PHIs occur at top of BB!
-        }
+    for (BasicBlock::iterator II = (*BI)->begin(); II != (*BI)->end(); ++II) {
+      if (PHINode *PN = dyn_cast<PHINode>(*II))
+        phis.push_back(PN);
+      else
+        break;                      // All PHIs occur at top of BB!
+    }
       
-      for (vector<PHINode*>::iterator PI=phis.begin(); PI != phis.end(); ++PI)
-        for (unsigned i = 0; i < (*PI)->getNumIncomingValues(); ++i)
-          {
-	    Value *Op = (*PI)->getIncomingValue(i);
-
-            if (isa<ConstPoolVal>(Op)) {
-            (*PI)->setIncomingValue(i,
+    for (vector<PHINode*>::iterator PI=phis.begin(); PI != phis.end(); ++PI)
+      for (unsigned i = 0; i < (*PI)->getNumIncomingValues(); ++i) {
+        Value *Op = (*PI)->getIncomingValue(i);
+        
+        if (isa<Constant>(Op)) {
+          (*PI)->setIncomingValue(i,
                     NormalizePhiOperand((*PI),
                                         (*PI)->getIncomingValue(i),
                                         (*PI)->getIncomingBlock(i), Cache));
-            Changed = true;
-            }
-          }
-    }
+          Changed = true;
+        }
+      }
+  }
   
   return Changed;
 }

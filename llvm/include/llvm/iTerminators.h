@@ -12,7 +12,7 @@
 
 #include "llvm/InstrTypes.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 
 //===----------------------------------------------------------------------===//
 //         Classes to represent Basic Block "Terminator" instructions
@@ -151,7 +151,7 @@ public:
     return cast<BasicBlock>(Operands[1]);
   }
 
-  void dest_push_back(ConstPoolVal *OnVal, BasicBlock *Dest);
+  void dest_push_back(Constant *OnVal, BasicBlock *Dest);
 
   virtual const char *getOpcodeName() const { return "switch"; }
 
@@ -170,13 +170,13 @@ public:
 
   // getSuccessorValue - Return the value associated with the specified
   // successor. WARNING: This does not gracefully accept idx's out of range!
-  inline const ConstPoolVal *getSuccessorValue(unsigned idx) const {
+  inline const Constant *getSuccessorValue(unsigned idx) const {
     assert(idx < getNumSuccessors() && "Successor # out of range!");
-    return cast<const ConstPoolVal>(Operands[idx*2]);
+    return cast<const Constant>(Operands[idx*2]);
   }
-  inline ConstPoolVal *getSuccessorValue(unsigned idx) {
+  inline Constant *getSuccessorValue(unsigned idx) {
     assert(idx < getNumSuccessors() && "Successor # out of range!");
-    return cast<ConstPoolVal>(Operands[idx*2]);
+    return cast<Constant>(Operands[idx*2]);
   }
   virtual unsigned getNumSuccessors() const { return Operands.size()/2; }
 

@@ -22,7 +22,7 @@
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "Support/MathExtras.h"
 #include <math.h>
 
@@ -34,7 +34,7 @@ static void SetMemOperands_Internal     (MachineInstr* minstr,
                                          const InstructionNode* vmInstrNode,
                                          Value* ptrVal,
                                          Value* arrayOffsetVal,
-                                         const vector<ConstPoolVal*>& idxVec,
+                                         const vector<Constant*>& idxVec,
                                          const TargetMachine& target);
 
 
@@ -367,7 +367,7 @@ CreateAddConstInstruction(const InstructionNode* instrNode)
   MachineInstr* minstr = NULL;
   
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(isa<ConstPoolVal>(constOp));
+  assert(isa<Constant>(constOp));
   
   // Cases worth optimizing are:
   // (1) Add with 0 for float or double: use an FMOV of appropriate type,
@@ -378,7 +378,7 @@ CreateAddConstInstruction(const InstructionNode* instrNode)
   if (resultType == Type::FloatTy ||
       resultType == Type::DoubleTy)
     {
-      double dval = ((ConstPoolFP*) constOp)->getValue();
+      double dval = cast<ConstantFP>(constOp)->getValue();
       if (dval == 0.0)
         minstr = CreateMovFloatInstruction(instrNode, resultType);
     }
@@ -415,7 +415,7 @@ CreateSubConstInstruction(const InstructionNode* instrNode)
   MachineInstr* minstr = NULL;
   
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(isa<ConstPoolVal>(constOp));
+  assert(isa<Constant>(constOp));
   
   // Cases worth optimizing are:
   // (1) Sub with 0 for float or double: use an FMOV of appropriate type,
@@ -426,7 +426,7 @@ CreateSubConstInstruction(const InstructionNode* instrNode)
   if (resultType == Type::FloatTy ||
       resultType == Type::DoubleTy)
     {
-      double dval = ((ConstPoolFP*) constOp)->getValue();
+      double dval = cast<ConstantFP>(constOp)->getValue();
       if (dval == 0.0)
         minstr = CreateMovFloatInstruction(instrNode, resultType);
     }
@@ -522,7 +522,7 @@ CreateMulConstInstruction(TargetMachine &target,
   bool needNeg = false;
 
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(isa<ConstPoolVal>(constOp));
+  assert(isa<Constant>(constOp));
   
   // Cases worth optimizing are:
   // (1) Multiply by 0 or 1 for any type: replace with copy (ADD or FMOV)
@@ -578,7 +578,7 @@ CreateMulConstInstruction(TargetMachine &target,
       if (resultType == Type::FloatTy ||
           resultType == Type::DoubleTy)
         {
-          double dval = ((ConstPoolFP*) constOp)->getValue();
+          double dval = cast<ConstantFP>(constOp)->getValue();
           if (fabs(dval) == 1)
             {
               bool needNeg = (dval < 0);
@@ -638,7 +638,7 @@ CreateDivConstInstruction(TargetMachine &target,
   getMinstr2 = NULL;
   
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(isa<ConstPoolVal>(constOp));
+  assert(isa<Constant>(constOp));
   
   // Cases worth optimizing are:
   // (1) Divide by 1 for any type: replace with copy (ADD or FMOV)
@@ -691,7 +691,7 @@ CreateDivConstInstruction(TargetMachine &target,
       if (resultType == Type::FloatTy ||
           resultType == Type::DoubleTy)
         {
-          double dval = ((ConstPoolFP*) constOp)->getValue();
+          double dval = cast<ConstantFP>(constOp)->getValue();
           if (fabs(dval) == 1)
             {
               bool needNeg = (dval < 0);
@@ -742,9 +742,9 @@ SetOperandsForMemInstr(MachineInstr* minstr,
   // The major work here is to extract these for all 3 instruction types
   // and then call the common function SetMemOperands_Internal().
   // 
-  const vector<ConstPoolVal*> OLDIDXVEC = memInst->getIndicesBROKEN();
-  const vector<ConstPoolVal*>* idxVec = &OLDIDXVEC;  //FIXME
-  vector<ConstPoolVal*>* newIdxVec = NULL;
+  const vector<Constant*> OLDIDXVEC = memInst->getIndicesBROKEN();
+  const vector<Constant*>* idxVec = &OLDIDXVEC;  //FIXME
+  vector<Constant*>* newIdxVec = NULL;
   Value* ptrVal;
   Value* arrayOffsetVal = NULL;
   
@@ -765,7 +765,7 @@ SetOperandsForMemInstr(MachineInstr* minstr,
       // instruction into one single index vector.
       // Finally, we never fold for an array instruction so make that NULL.
       
-      newIdxVec = new vector<ConstPoolVal*>;
+      newIdxVec = new vector<Constant*>;
       ptrVal = FoldGetElemChain((InstructionNode*) ptrChild, *newIdxVec);
       
       newIdxVec->insert(newIdxVec->end(), idxVec->begin(), idxVec->end());
@@ -806,7 +806,7 @@ SetMemOperands_Internal(MachineInstr* minstr,
                         const InstructionNode* vmInstrNode,
                         Value* ptrVal,
                         Value* arrayOffsetVal,
-                        const vector<ConstPoolVal*>& idxVec,
+                        const vector<Constant*>& idxVec,
                         const TargetMachine& target)
 {
   MemAccessInst* memInst = (MemAccessInst*) vmInstrNode->getInstruction();
@@ -843,13 +843,13 @@ SetMemOperands_Internal(MachineInstr* minstr,
           assert(arrayOffsetVal != NULL
                  && "Expect to be given Value* for array offsets");
           
-          if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(arrayOffsetVal))
+          if (Constant *CPV = dyn_cast<Constant>(arrayOffsetVal))
             {
               isConstantOffset = true;  // always constant for structs
               assert(arrayOffsetVal->getType()->isIntegral());
               offset = (CPV->getType()->isSigned()
-                        ? ((ConstPoolSInt*)CPV)->getValue()
-                        : (int64_t) ((ConstPoolUInt*)CPV)->getValue());
+                        ? cast<ConstantSInt>(CPV)->getValue()
+                        : (int64_t) cast<ConstantUInt>(CPV)->getValue());
             }
           else
             {
@@ -860,7 +860,7 @@ SetMemOperands_Internal(MachineInstr* minstr,
       if (isConstantOffset)
         {
           // create a virtual register for the constant
-          valueForRegOffset = ConstPoolSInt::get(Type::IntTy, offset);
+          valueForRegOffset = ConstantSInt::get(Type::IntTy, offset);
         }
     }
   else
@@ -963,7 +963,7 @@ CreateCopyInstructionsByType(const TargetMachine& target,
   // a global variable (i.e., a constant address), generate a load
   // instruction instead of an add
   // 
-  if (isa<ConstPoolVal>(src))
+  if (isa<Constant>(src))
     {
       unsigned int machineRegNum;
       int64_t immedValue;
@@ -995,7 +995,7 @@ CreateCopyInstructionsByType(const TargetMachine& target,
                                                            : resultType;
       MachineInstr* minstr = new MachineInstr(opCode);
       minstr->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
-                                ConstPoolVal::getNullConstant(nullValueType));
+                                Constant::getNullConstant(nullValueType));
       minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, src);
       minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister, dest);
       minstrVec.push_back(minstr);
@@ -1159,7 +1159,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 // Mark the return value   register as an implicit ref of
                 // the machine instruction.
          	// Finally put a NOP in the delay slot.
-        ReturnInst* returnInstr = (ReturnInst*) subtreeRoot->getInstruction();
+        ReturnInst *returnInstr =
+          cast<ReturnInst>(subtreeRoot->getInstruction());
         assert(returnInstr->getOpcode() == Instruction::Ret);
         Method* method = returnInstr->getParent()->getParent();
         
@@ -1195,7 +1196,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec[0]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
                                       (Value*)NULL);
         mvec[0]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
-              ((BranchInst*) subtreeRoot->getInstruction())->getSuccessor(0));
+             cast<BranchInst>(subtreeRoot->getInstruction())->getSuccessor(0));
         
         // delay slot
         mvec[numInstr++] = new MachineInstr(NOP);
@@ -1210,7 +1211,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         InstrTreeNode* constNode = subtreeRoot->leftChild()->rightChild();
         assert(constNode &&
                constNode->getNodeType() ==InstrTreeNode::NTConstNode);
-        ConstPoolVal* constVal = (ConstPoolVal*) constNode->getValue();
+        Constant *constVal = cast<Constant>(constNode->getValue());
         bool isValidConst;
 
         if ((constVal->getType()->isIntegral()
@@ -1287,9 +1288,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 208:	// stmt:   BrCond(boolconst)
       {
         // boolconst => boolean is a constant; use BA to first or second label
-        ConstPoolVal* constVal = 
-          cast<ConstPoolVal>(subtreeRoot->leftChild()->getValue());
-        unsigned dest = ((ConstPoolBool*) constVal)->getValue()? 0 : 1;
+        Constant* constVal = 
+          cast<Constant>(subtreeRoot->leftChild()->getValue());
+        unsigned dest = cast<ConstantBool>(constVal)->getValue()? 0 : 1;
         
         mvec[0] = new MachineInstr(BA);
         mvec[0]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
@@ -1861,7 +1862,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         
         // Create a temporary Value to hold the constant offset.
         // This is needed because it may not fit in the immediate field.
-        ConstPoolSInt* offsetVal=ConstPoolSInt::get(Type::IntTy, offsetFromFP);
+        ConstantSInt* offsetVal = ConstantSInt::get(Type::IntTy, offsetFromFP);
         
         // Instruction 1: add %fp, offsetFromFP -> result
         mvec[0] = new MachineInstr(ADD);
@@ -1888,12 +1889,12 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         assert(tsize != 0 && "Just to check when this can happen");
         
         // Create a temporary Value to hold the constant type-size
-        ConstPoolSInt* tsizeVal = ConstPoolSInt::get(Type::IntTy, tsize);
+        ConstantSInt* tsizeVal = ConstantSInt::get(Type::IntTy, tsize);
         
         // Create a temporary Value to hold the constant offset from SP
         Method* method = instr->getParent()->getParent();
         bool ignore;                    // we don't need this 
-        ConstPoolSInt* dynamicAreaOffset = ConstPoolSInt::get(Type::IntTy,
+        ConstantSInt* dynamicAreaOffset = ConstantSInt::get(Type::IntTy,
           target.getFrameInfo().getDynamicAreaOffset(MachineCodeForMethod::get(method),
                                                      ignore));
         

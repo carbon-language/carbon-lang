@@ -15,17 +15,17 @@
 
 #include "llvm/GlobalValue.h"
 class Module;
-class ConstPoolVal;
+class Constant;
 class PointerType;
 
 class GlobalVariable : public GlobalValue {
   friend class ValueHolder<GlobalVariable, Module, Module>;
   void setParent(Module *parent) { Parent = parent; }
 
-  bool Constant;                   // Is this a global constant?
+  bool isConstantGlobal;               // Is this a global constant?
 public:
   GlobalVariable(const Type *Ty, bool isConstant, bool isInternal,
-		 ConstPoolVal *Initializer = 0, const string &Name = "");
+		 Constant *Initializer = 0, const string &Name = "");
   ~GlobalVariable() {}
 
   // Specialize setName to handle symbol table majik...
@@ -35,15 +35,15 @@ public:
   // an initializer is specified.
   //
   inline bool hasInitializer() const { return !Operands.empty(); }
-  inline ConstPoolVal *getInitializer() const {
+  inline Constant *getInitializer() const {
     assert(hasInitializer() && "GV doesn't have initializer!");
-    return (ConstPoolVal*)Operands[0].get();
+    return (Constant*)Operands[0].get();
   }
-  inline ConstPoolVal *getInitializer() {
+  inline Constant *getInitializer() {
     assert(hasInitializer() && "GV doesn't have initializer!");
-    return (ConstPoolVal*)Operands[0].get();
+    return (Constant*)Operands[0].get();
   }
-  inline void setInitializer(ConstPoolVal *CPV) {
+  inline void setInitializer(Constant *CPV) {
     if (CPV == 0) {
       if (hasInitializer()) Operands.pop_back();
     } else {
@@ -57,7 +57,7 @@ public:
   // runtime execution of the program.  Assigning a value into the constant
   // leads to undefined behavior.
   //
-  inline bool isConstant() const { return Constant; }
+  inline bool isConstant() const { return isConstantGlobal; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GlobalVariable *) { return true; }

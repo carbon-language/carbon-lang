@@ -14,7 +14,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/GlobalValue.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
@@ -59,9 +59,9 @@ private :
   void emitMachineInst(const MachineInstr *MI);
   
   void printGlobalVariable(   const GlobalVariable* GV);
-  void printSingleConstant(   const ConstPoolVal* CV);
-  void printConstantValueOnly(const ConstPoolVal* CV);
-  void printConstant(         const ConstPoolVal* CV, string valID=string(""));
+  void printSingleConstant(   const Constant* CV);
+  void printConstantValueOnly(const Constant* CV);
+  void printConstant(         const Constant* CV, string valID=string(""));
   
   unsigned int printOperands(const MachineInstr *MI, unsigned int opNum);
   void printOneOperand(const MachineOperand &Op);
@@ -148,7 +148,7 @@ private :
   string getID(const GlobalVariable *GV) {
     return getID(GV, "LLVMGlobal_", ".G_");
   }
-  string getID(const ConstPoolVal *CV) {
+  string getID(const Constant *CV) {
     return getID(CV, "LLVMConst_", ".C_");
   }
   
@@ -165,13 +165,13 @@ private :
 // Can we treat the specified array as a string?  Only if it is an array of
 // ubytes or non-negative sbytes.
 //
-static bool isStringCompatible(ConstPoolArray *CPA) {
+static bool isStringCompatible(ConstantArray *CPA) {
   const Type *ETy = cast<ArrayType>(CPA->getType())->getElementType();
   if (ETy == Type::UByteTy) return true;
   if (ETy != Type::SByteTy) return false;
 
   for (unsigned i = 0; i < CPA->getNumOperands(); ++i)
-    if (cast<ConstPoolSInt>(CPA->getOperand(i))->getValue() < 0)
+    if (cast<ConstantSInt>(CPA->getOperand(i))->getValue() < 0)
       return false;
 
   return true;
@@ -185,15 +185,15 @@ static inline char toOctal(int X) {
 // getAsCString - Return the specified array as a C compatible string, only if
 // the predicate isStringCompatible is true.
 //
-static string getAsCString(ConstPoolArray *CPA) {
+static string getAsCString(ConstantArray *CPA) {
   if (isStringCompatible(CPA)) {
     string Result;
     const Type *ETy = cast<ArrayType>(CPA->getType())->getElementType();
     Result = "\"";
     for (unsigned i = 0; i < CPA->getNumOperands(); ++i) {
       unsigned char C = (ETy == Type::SByteTy) ?
-        (unsigned char)cast<ConstPoolSInt>(CPA->getOperand(i))->getValue() :
-        (unsigned char)cast<ConstPoolUInt>(CPA->getOperand(i))->getValue();
+        (unsigned char)cast<ConstantSInt>(CPA->getOperand(i))->getValue() :
+        (unsigned char)cast<ConstantUInt>(CPA->getOperand(i))->getValue();
 
       if (isprint(C)) {
         Result += C;
@@ -309,7 +309,7 @@ SparcAsmPrinter::printOneOperand(const MachineOperand &op)
           toAsm << getID(M);
         else if (const GlobalVariable *GV=dyn_cast<const GlobalVariable>(Val))
           toAsm << getID(GV);
-        else if (const ConstPoolVal *CV = dyn_cast<const ConstPoolVal>(Val))
+        else if (const Constant *CV = dyn_cast<const Constant>(Val))
           toAsm << getID(CV);
         else
           toAsm << "<unknown value=" << Val << ">";
@@ -440,9 +440,9 @@ TypeToDataDirective(const Type* type)
 // If this is an unsized array, return 0.
 // 
 inline unsigned int
-ConstantToSize(const ConstPoolVal* CV, const TargetMachine& target)
+ConstantToSize(const Constant* CV, const TargetMachine& target)
 {
-  if (ConstPoolArray* CPA = dyn_cast<ConstPoolArray>(CV))
+  if (ConstantArray* CPA = dyn_cast<ConstantArray>(CV))
     {
       ArrayType *aty = cast<ArrayType>(CPA->getType());
       if (ArrayTypeIsString(aty))
@@ -493,10 +493,10 @@ TypeToAlignment(const Type* type, const TargetMachine& target)
 // Get the size of the constant and then use SizeToAlignment.
 // Handles strings as a special case;
 inline unsigned int
-ConstantToAlignment(const ConstPoolVal* CV, const TargetMachine& target)
+ConstantToAlignment(const Constant* CV, const TargetMachine& target)
 {
   unsigned int constantSize;
-  if (ConstPoolArray* CPA = dyn_cast<ConstPoolArray>(CV))
+  if (ConstantArray* CPA = dyn_cast<ConstantArray>(CV))
     if (ArrayTypeIsString(cast<ArrayType>(CPA->getType())))
       return SizeToAlignment(1 + CPA->getNumOperands(), target);
   
@@ -506,14 +506,14 @@ ConstantToAlignment(const ConstPoolVal* CV, const TargetMachine& target)
 
 // Print a single constant value.
 void
-SparcAsmPrinter::printSingleConstant(const ConstPoolVal* CV)
+SparcAsmPrinter::printSingleConstant(const Constant* CV)
 {
   assert(CV->getType() != Type::VoidTy &&
          CV->getType() != Type::TypeTy &&
          CV->getType() != Type::LabelTy &&
-         "Unexpected type for ConstPoolVal");
+         "Unexpected type for Constant");
   
-  assert((! isa<ConstPoolArray>( CV) && ! isa<ConstPoolStruct>(CV))
+  assert((! isa<ConstantArray>( CV) && ! isa<ConstantStruct>(CV))
          && "Collective types should be handled outside this function");
   
   toAsm << "\t"
@@ -525,14 +525,14 @@ SparcAsmPrinter::printSingleConstant(const ConstPoolVal* CV)
         toAsm << "0r";                  // FP constants must have this prefix
       toAsm << CV->getStrValue() << endl;
     }
-  else if (ConstPoolPointer* CPP = dyn_cast<ConstPoolPointer>(CV))
+  else if (ConstantPointer* CPP = dyn_cast<ConstantPointer>(CV))
     {
       if (! CPP->isNullValue())
         assert(0 && "Cannot yet print non-null pointer constants to assembly");
       else
         toAsm << (void*) NULL << endl;
     }
-  else if (ConstPoolPointerRef* CPRef = dyn_cast<ConstPoolPointerRef>(CV))
+  else if (ConstantPointerRef* CPRef = dyn_cast<ConstantPointerRef>(CV))
     {
       assert(0 && "Cannot yet initialize pointer refs in assembly");
     }
@@ -545,9 +545,9 @@ SparcAsmPrinter::printSingleConstant(const ConstPoolVal* CV)
 // Print a constant value or values (it may be an aggregate).
 // Uses printSingleConstant() to print each individual value.
 void
-SparcAsmPrinter::printConstantValueOnly(const ConstPoolVal* CV)
+SparcAsmPrinter::printConstantValueOnly(const Constant* CV)
 {
-  ConstPoolArray *CPA = dyn_cast<ConstPoolArray>(CV);
+  ConstantArray *CPA = dyn_cast<ConstantArray>(CV);
   
   if (CPA && isStringCompatible(CPA))
     { // print the string alone and return
@@ -557,13 +557,13 @@ SparcAsmPrinter::printConstantValueOnly(const ConstPoolVal* CV)
     { // Not a string.  Print the values in successive locations
       const vector<Use>& constValues = CPA->getValues();
       for (unsigned i=1; i < constValues.size(); i++)
-        this->printConstantValueOnly(cast<ConstPoolVal>(constValues[i].get()));
+        this->printConstantValueOnly(cast<Constant>(constValues[i].get()));
     }
-  else if (ConstPoolStruct *CPS = dyn_cast<ConstPoolStruct>(CV))
+  else if (ConstantStruct *CPS = dyn_cast<ConstantStruct>(CV))
     { // Print the fields in successive locations
       const vector<Use>& constValues = CPS->getValues();
       for (unsigned i=1; i < constValues.size(); i++)
-        this->printConstantValueOnly(cast<ConstPoolVal>(constValues[i].get()));
+        this->printConstantValueOnly(cast<Constant>(constValues[i].get()));
     }
   else
     this->printSingleConstant(CV);
@@ -573,7 +573,7 @@ SparcAsmPrinter::printConstantValueOnly(const ConstPoolVal* CV)
 // appropriate directives.  Uses printConstantValueOnly() to print the
 // value or values.
 void
-SparcAsmPrinter::printConstant(const ConstPoolVal* CV, string valID)
+SparcAsmPrinter::printConstant(const Constant* CV, string valID)
 {
   if (valID.length() == 0)
     valID = getID(CV);
@@ -582,7 +582,7 @@ SparcAsmPrinter::printConstant(const ConstPoolVal* CV, string valID)
         << endl;
   
   // Print .size and .type only if it is not a string.
-  ConstPoolArray *CPA = dyn_cast<ConstPoolArray>(CV);
+  ConstantArray *CPA = dyn_cast<ConstantArray>(CV);
   if (CPA && isStringCompatible(CPA))
     { // print it as a string and return
       toAsm << valID << ":" << endl;
@@ -622,15 +622,15 @@ SparcAsmPrinter::printGlobalVariable(const GlobalVariable* GV)
 
 
 static void
-FoldConstPools(const Module *M,
-               hash_set<const ConstPoolVal*>& moduleConstPool)
+FoldConstants(const Module *M,
+               hash_set<const Constant*>& moduleConstants)
 {
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (! (*I)->isExternal())
       {
-        const hash_set<const ConstPoolVal*>& pool =
+        const hash_set<const Constant*>& pool =
           MachineCodeForMethod::get(*I).getConstantPoolValues();
-        moduleConstPool.insert(pool.begin(), pool.end());
+        moduleConstants.insert(pool.begin(), pool.end());
       }
 }
 
@@ -644,8 +644,8 @@ SparcAsmPrinter::emitGlobalsAndConstants(const Module *M)
   // lets force these constants into the slot table so that we can get
   // unique names for unnamed constants also.
   // 
-  hash_set<const ConstPoolVal*> moduleConstPool;
-  FoldConstPools(M, moduleConstPool);
+  hash_set<const Constant*> moduleConstants;
+  FoldConstants(M, moduleConstants);
   
   // Now, emit the three data sections separately; the cost of I/O should
   // make up for the cost of extra passes over the globals list!
@@ -662,8 +662,8 @@ SparcAsmPrinter::emitGlobalsAndConstants(const Module *M)
         }
   }
   
-  for (hash_set<const ConstPoolVal*>::const_iterator I=moduleConstPool.begin(),
-         E = moduleConstPool.end();  I != E; ++I)
+  for (hash_set<const Constant*>::const_iterator I = moduleConstants.begin(),
+         E = moduleConstants.end();  I != E; ++I)
     printConstant(*I);
   
   // Initialized read-write data section

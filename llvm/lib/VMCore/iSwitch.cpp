@@ -27,7 +27,7 @@ SwitchInst::SwitchInst(const SwitchInst &SI)
   }
 }
 
-void SwitchInst::dest_push_back(ConstPoolVal *OnVal, BasicBlock *Dest) {
+void SwitchInst::dest_push_back(Constant *OnVal, BasicBlock *Dest) {
   Operands.push_back(Use(OnVal, this));
   Operands.push_back(Use(Dest, this));
 }

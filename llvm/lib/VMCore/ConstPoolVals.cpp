@@ -1,11 +1,11 @@
-//===-- iConstPool.cpp - Implement ConstPool instructions --------*- C++ -*--=//
+//===-- ConstantVals.cpp - Implement Constant nodes --------------*- C++ -*--=//
 //
-// This file implements the ConstPool* classes...
+// This file implements the Constant* classes...
 //
 //===----------------------------------------------------------------------===//
 
 #define __STDC_LIMIT_MACROS           // Get defs for INT64_MAX and friends...
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/GlobalValue.h"
@@ -15,40 +15,40 @@
 #include <algorithm>
 #include <assert.h>
 
-ConstPoolBool *ConstPoolBool::True  = new ConstPoolBool(true);
-ConstPoolBool *ConstPoolBool::False = new ConstPoolBool(false);
+ConstantBool *ConstantBool::True  = new ConstantBool(true);
+ConstantBool *ConstantBool::False = new ConstantBool(false);
 
 
 //===----------------------------------------------------------------------===//
-//                              ConstPoolVal Class
+//                              Constant Class
 //===----------------------------------------------------------------------===//
 
 // Specialize setName to take care of symbol table majik
-void ConstPoolVal::setName(const string &Name, SymbolTable *ST) {
+void Constant::setName(const string &Name, SymbolTable *ST) {
   assert(ST && "Type::setName - Must provide symbol table argument!");
 
   if (Name.size()) ST->insert(Name, this);
 }
 
 // Static constructor to create a '0' constant of arbitrary type...
-ConstPoolVal *ConstPoolVal::getNullConstant(const Type *Ty) {
+Constant *Constant::getNullConstant(const Type *Ty) {
   switch (Ty->getPrimitiveID()) {
-  case Type::BoolTyID:   return ConstPoolBool::get(false);
+  case Type::BoolTyID:   return ConstantBool::get(false);
   case Type::SByteTyID:
   case Type::ShortTyID:
   case Type::IntTyID:
-  case Type::LongTyID:   return ConstPoolSInt::get(Ty, 0);
+  case Type::LongTyID:   return ConstantSInt::get(Ty, 0);
 
   case Type::UByteTyID:
   case Type::UShortTyID:
   case Type::UIntTyID:
-  case Type::ULongTyID:  return ConstPoolUInt::get(Ty, 0);
+  case Type::ULongTyID:  return ConstantUInt::get(Ty, 0);
 
   case Type::FloatTyID:
-  case Type::DoubleTyID: return ConstPoolFP::get(Ty, 0);
+  case Type::DoubleTyID: return ConstantFP::get(Ty, 0);
 
   case Type::PointerTyID: 
-    return ConstPoolPointerNull::get(cast<PointerType>(Ty));
+    return ConstantPointerNull::get(cast<PointerType>(Ty));
   default:
     return 0;
   }
@@ -58,24 +58,24 @@ ConstPoolVal *ConstPoolVal::getNullConstant(const Type *Ty) {
 #include "llvm/Assembly/Writer.h"
 #endif
 
-void ConstPoolVal::destroyConstantImpl() {
-  // When a ConstPoolVal is destroyed, there may be lingering
+void Constant::destroyConstantImpl() {
+  // When a Constant is destroyed, there may be lingering
   // references to the constant by other constants in the constant pool.  These
   // constants are implicitly dependant on the module that is being deleted,
   // but they don't know that.  Because we only find out when the CPV is
   // deleted, we must now notify all of our users (that should only be
-  // ConstPoolVals) that they are, in fact, invalid now and should be deleted.
+  // Constants) that they are, in fact, invalid now and should be deleted.
   //
   while (!use_empty()) {
     Value *V = use_back();
 #ifndef NDEBUG      // Only in -g mode...
-    if (!isa<ConstPoolVal>(V)) {
+    if (!isa<Constant>(V)) {
       cerr << "While deleting: " << this << endl;
       cerr << "Use still stuck around after Def is destroyed: " << V << endl;
     }
 #endif
-    assert(isa<ConstPoolVal>(V) && "References remain to ConstPoolPointerRef!");
-    ConstPoolVal *CPV = cast<ConstPoolVal>(V);
+    assert(isa<Constant>(V) && "References remain to ConstantPointerRef!");
+    Constant *CPV = cast<Constant>(V);
     CPV->destroyConstant();
 
     // The constant should remove itself from our use list...
@@ -87,45 +87,43 @@ void ConstPoolVal::destroyConstantImpl() {
 }
 
 //===----------------------------------------------------------------------===//
-//                            ConstPoolXXX Classes
+//                            ConstantXXX Classes
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
 //                             Normal Constructors
 
-ConstPoolBool::ConstPoolBool(bool V) : ConstPoolVal(Type::BoolTy) {
+ConstantBool::ConstantBool(bool V) : Constant(Type::BoolTy) {
   Val = V;
 }
 
-ConstPoolInt::ConstPoolInt(const Type *Ty, uint64_t V) : ConstPoolVal(Ty) {
+ConstantInt::ConstantInt(const Type *Ty, uint64_t V) : Constant(Ty) {
   Val.Unsigned = V;
 }
 
-ConstPoolSInt::ConstPoolSInt(const Type *Ty, int64_t V) : ConstPoolInt(Ty, V) {
+ConstantSInt::ConstantSInt(const Type *Ty, int64_t V) : ConstantInt(Ty, V) {
   assert(isValueValidForType(Ty, V) && "Value too large for type!");
 }
 
-ConstPoolUInt::ConstPoolUInt(const Type *Ty, uint64_t V) : ConstPoolInt(Ty, V) {
+ConstantUInt::ConstantUInt(const Type *Ty, uint64_t V) : ConstantInt(Ty, V) {
   assert(isValueValidForType(Ty, V) && "Value too large for type!");
 }
 
-ConstPoolFP::ConstPoolFP(const Type *Ty, double V) : ConstPoolVal(Ty) {
+ConstantFP::ConstantFP(const Type *Ty, double V) : Constant(Ty) {
   assert(isValueValidForType(Ty, V) && "Value too large for type!");
   Val = V;
 }
 
-ConstPoolArray::ConstPoolArray(const ArrayType *T,
-			       const vector<ConstPoolVal*> &V)
-  : ConstPoolVal(T) {
+ConstantArray::ConstantArray(const ArrayType *T,
+                             const vector<Constant*> &V) : Constant(T) {
   for (unsigned i = 0; i < V.size(); i++) {
     assert(V[i]->getType() == T->getElementType());
     Operands.push_back(Use(V[i], this));
   }
 }
 
-ConstPoolStruct::ConstPoolStruct(const StructType *T,
-				 const vector<ConstPoolVal*> &V)
-  : ConstPoolVal(T) {
+ConstantStruct::ConstantStruct(const StructType *T,
+                               const vector<Constant*> &V) : Constant(T) {
   const StructType::ElementTypes &ETypes = T->getElementTypes();
   
   for (unsigned i = 0; i < V.size(); i++) {
@@ -134,8 +132,8 @@ ConstPoolStruct::ConstPoolStruct(const StructType *T,
   }
 }
 
-ConstPoolPointerRef::ConstPoolPointerRef(GlobalValue *GV)
-  : ConstPoolPointer(GV->getType()) {
+ConstantPointerRef::ConstantPointerRef(GlobalValue *GV)
+  : ConstantPointer(GV->getType()) {
   Operands.push_back(Use(GV, this));
 }
 
@@ -144,23 +142,23 @@ ConstPoolPointerRef::ConstPoolPointerRef(GlobalValue *GV)
 //===----------------------------------------------------------------------===//
 //                          getStrValue implementations
 
-string ConstPoolBool::getStrValue() const {
+string ConstantBool::getStrValue() const {
   return Val ? "true" : "false";
 }
 
-string ConstPoolSInt::getStrValue() const {
+string ConstantSInt::getStrValue() const {
   return itostr(Val.Signed);
 }
 
-string ConstPoolUInt::getStrValue() const {
+string ConstantUInt::getStrValue() const {
   return utostr(Val.Unsigned);
 }
 
-string ConstPoolFP::getStrValue() const {
+string ConstantFP::getStrValue() const {
   return ftostr(Val);
 }
 
-string ConstPoolArray::getStrValue() const {
+string ConstantArray::getStrValue() const {
   string Result;
   
   // As a special case, print the array as a string if it is an array of
@@ -172,7 +170,7 @@ string ConstPoolArray::getStrValue() const {
   if (ETy == Type::SByteTy) {
     for (unsigned i = 0; i < Operands.size(); ++i)
       if (ETy == Type::SByteTy &&
-          cast<ConstPoolSInt>(Operands[i])->getValue() < 0) {
+          cast<ConstantSInt>(Operands[i])->getValue() < 0) {
         isString = false;
         break;
       }
@@ -182,8 +180,8 @@ string ConstPoolArray::getStrValue() const {
     Result = "c\"";
     for (unsigned i = 0; i < Operands.size(); ++i) {
       unsigned char C = (ETy == Type::SByteTy) ?
-        (unsigned char)cast<ConstPoolSInt>(Operands[i])->getValue() :
-        (unsigned char)cast<ConstPoolUInt>(Operands[i])->getValue();
+        (unsigned char)cast<ConstantSInt>(Operands[i])->getValue() :
+        (unsigned char)cast<ConstantUInt>(Operands[i])->getValue();
 
       if (isprint(C)) {
         Result += C;
@@ -199,10 +197,10 @@ string ConstPoolArray::getStrValue() const {
     Result = "[";
     if (Operands.size()) {
       Result += " " + Operands[0]->getType()->getDescription() + 
-	        " " + cast<ConstPoolVal>(Operands[0])->getStrValue();
+	        " " + cast<Constant>(Operands[0])->getStrValue();
       for (unsigned i = 1; i < Operands.size(); i++)
         Result += ", " + Operands[i]->getType()->getDescription() + 
-                  " " + cast<ConstPoolVal>(Operands[i])->getStrValue();
+                  " " + cast<Constant>(Operands[i])->getStrValue();
     }
     Result += " ]";
   }
@@ -210,24 +208,24 @@ string ConstPoolArray::getStrValue() const {
   return Result;
 }
 
-string ConstPoolStruct::getStrValue() const {
+string ConstantStruct::getStrValue() const {
   string Result = "{";
   if (Operands.size()) {
     Result += " " + Operands[0]->getType()->getDescription() + 
-	      " " + cast<ConstPoolVal>(Operands[0])->getStrValue();
+	      " " + cast<Constant>(Operands[0])->getStrValue();
     for (unsigned i = 1; i < Operands.size(); i++)
       Result += ", " + Operands[i]->getType()->getDescription() + 
-	        " " + cast<ConstPoolVal>(Operands[i])->getStrValue();
+	        " " + cast<Constant>(Operands[i])->getStrValue();
   }
 
   return Result + " }";
 }
 
-string ConstPoolPointerNull::getStrValue() const {
+string ConstantPointerNull::getStrValue() const {
   return "null";
 }
 
-string ConstPoolPointerRef::getStrValue() const {
+string ConstantPointerRef::getStrValue() const {
   const GlobalValue *V = getValue();
   if (V->hasName()) return "%" + V->getName();
 
@@ -243,26 +241,26 @@ string ConstPoolPointerRef::getStrValue() const {
 //===----------------------------------------------------------------------===//
 //                           classof implementations
 
-bool ConstPoolInt::classof(const ConstPoolVal *CPV) {
+bool ConstantInt::classof(const Constant *CPV) {
   return CPV->getType()->isIntegral();
 }
-bool ConstPoolSInt::classof(const ConstPoolVal *CPV) {
+bool ConstantSInt::classof(const Constant *CPV) {
   return CPV->getType()->isSigned();
 }
-bool ConstPoolUInt::classof(const ConstPoolVal *CPV) {
+bool ConstantUInt::classof(const Constant *CPV) {
   return CPV->getType()->isUnsigned();
 }
-bool ConstPoolFP::classof(const ConstPoolVal *CPV) {
+bool ConstantFP::classof(const Constant *CPV) {
   const Type *Ty = CPV->getType();
   return Ty == Type::FloatTy || Ty == Type::DoubleTy;
 }
-bool ConstPoolArray::classof(const ConstPoolVal *CPV) {
+bool ConstantArray::classof(const Constant *CPV) {
   return isa<ArrayType>(CPV->getType());
 }
-bool ConstPoolStruct::classof(const ConstPoolVal *CPV) {
+bool ConstantStruct::classof(const Constant *CPV) {
   return isa<StructType>(CPV->getType());
 }
-bool ConstPoolPointer::classof(const ConstPoolVal *CPV) {
+bool ConstantPointer::classof(const Constant *CPV) {
   return isa<PointerType>(CPV->getType());
 }
 
@@ -270,7 +268,7 @@ bool ConstPoolPointer::classof(const ConstPoolVal *CPV) {
 //===----------------------------------------------------------------------===//
 //                      isValueValidForType implementations
 
-bool ConstPoolSInt::isValueValidForType(const Type *Ty, int64_t Val) {
+bool ConstantSInt::isValueValidForType(const Type *Ty, int64_t Val) {
   switch (Ty->getPrimitiveID()) {
   default:
     return false;         // These can't be represented as integers!!!
@@ -289,7 +287,7 @@ bool ConstPoolSInt::isValueValidForType(const Type *Ty, int64_t Val) {
   return false;
 }
 
-bool ConstPoolUInt::isValueValidForType(const Type *Ty, uint64_t Val) {
+bool ConstantUInt::isValueValidForType(const Type *Ty, uint64_t Val) {
   switch (Ty->getPrimitiveID()) {
   default:
     return false;         // These can't be represented as integers!!!
@@ -308,7 +306,7 @@ bool ConstPoolUInt::isValueValidForType(const Type *Ty, uint64_t Val) {
   return false;
 }
 
-bool ConstPoolFP::isValueValidForType(const Type *Ty, double Val) {
+bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
   switch (Ty->getPrimitiveID()) {
   default:
     return false;         // These can't be represented as floating point!
@@ -326,28 +324,28 @@ bool ConstPoolFP::isValueValidForType(const Type *Ty, double Val) {
 //===----------------------------------------------------------------------===//
 //                      Hash Function Implementations
 #if 0
-unsigned ConstPoolSInt::hash(const Type *Ty, int64_t V) {
+unsigned ConstantSInt::hash(const Type *Ty, int64_t V) {
   return unsigned(Ty->getPrimitiveID() ^ V);
 }
 
-unsigned ConstPoolUInt::hash(const Type *Ty, uint64_t V) {
+unsigned ConstantUInt::hash(const Type *Ty, uint64_t V) {
   return unsigned(Ty->getPrimitiveID() ^ V);
 }
 
-unsigned ConstPoolFP::hash(const Type *Ty, double V) {
+unsigned ConstantFP::hash(const Type *Ty, double V) {
   return Ty->getPrimitiveID() ^ unsigned(V);
 }
 
-unsigned ConstPoolArray::hash(const ArrayType *Ty,
-			      const vector<ConstPoolVal*> &V) {
+unsigned ConstantArray::hash(const ArrayType *Ty,
+                             const vector<Constant*> &V) {
   unsigned Result = (Ty->getUniqueID() << 5) ^ (Ty->getUniqueID() * 7);
   for (unsigned i = 0; i < V.size(); ++i)
     Result ^= V[i]->getHash() << (i & 7);
   return Result;
 }
 
-unsigned ConstPoolStruct::hash(const StructType *Ty,
-			       const vector<ConstPoolVal*> &V) {
+unsigned ConstantStruct::hash(const StructType *Ty,
+                              const vector<Constant*> &V) {
   unsigned Result = (Ty->getUniqueID() << 5) ^ (Ty->getUniqueID() * 7);
   for (unsigned i = 0; i < V.size(); ++i)
     Result ^= V[i]->getHash() << (i & 7);
@@ -358,23 +356,23 @@ unsigned ConstPoolStruct::hash(const StructType *Ty,
 //===----------------------------------------------------------------------===//
 //                      Factory Function Implementation
 
-template<class ValType, class ConstPoolClass>
+template<class ValType, class ConstantClass>
 struct ValueMap {
   typedef pair<const Type*, ValType> ConstHashKey;
-  map<ConstHashKey, ConstPoolClass *> Map;
+  map<ConstHashKey, ConstantClass *> Map;
 
-  inline ConstPoolClass *get(const Type *Ty, ValType V) {
-    map<ConstHashKey,ConstPoolClass *>::iterator I =
+  inline ConstantClass *get(const Type *Ty, ValType V) {
+    map<ConstHashKey,ConstantClass *>::iterator I =
       Map.find(ConstHashKey(Ty, V));
     return (I != Map.end()) ? I->second : 0;
   }
 
-  inline void add(const Type *Ty, ValType V, ConstPoolClass *CP) {
+  inline void add(const Type *Ty, ValType V, ConstantClass *CP) {
     Map.insert(make_pair(ConstHashKey(Ty, V), CP));
   }
 
-  inline void remove(ConstPoolClass *CP) {
-    for (map<ConstHashKey,ConstPoolClass *>::iterator I = Map.begin(),
+  inline void remove(ConstantClass *CP) {
+    for (map<ConstHashKey,ConstantClass *>::iterator I = Map.begin(),
                                                       E = Map.end(); I != E;++I)
       if (I->second == CP) {
 	Map.erase(I);
@@ -383,119 +381,119 @@ struct ValueMap {
   }
 };
 
-//---- ConstPoolUInt::get() and ConstPoolSInt::get() implementations...
+//---- ConstantUInt::get() and ConstantSInt::get() implementations...
 //
-static ValueMap<uint64_t, ConstPoolInt> IntConstants;
+static ValueMap<uint64_t, ConstantInt> IntConstants;
 
-ConstPoolSInt *ConstPoolSInt::get(const Type *Ty, int64_t V) {
-  ConstPoolSInt *Result = (ConstPoolSInt*)IntConstants.get(Ty, (uint64_t)V);
+ConstantSInt *ConstantSInt::get(const Type *Ty, int64_t V) {
+  ConstantSInt *Result = (ConstantSInt*)IntConstants.get(Ty, (uint64_t)V);
   if (!Result)   // If no preexisting value, create one now...
-    IntConstants.add(Ty, V, Result = new ConstPoolSInt(Ty, V));
+    IntConstants.add(Ty, V, Result = new ConstantSInt(Ty, V));
   return Result;
 }
 
-ConstPoolUInt *ConstPoolUInt::get(const Type *Ty, uint64_t V) {
-  ConstPoolUInt *Result = (ConstPoolUInt*)IntConstants.get(Ty, V);
+ConstantUInt *ConstantUInt::get(const Type *Ty, uint64_t V) {
+  ConstantUInt *Result = (ConstantUInt*)IntConstants.get(Ty, V);
   if (!Result)   // If no preexisting value, create one now...
-    IntConstants.add(Ty, V, Result = new ConstPoolUInt(Ty, V));
+    IntConstants.add(Ty, V, Result = new ConstantUInt(Ty, V));
   return Result;
 }
 
-ConstPoolInt *ConstPoolInt::get(const Type *Ty, unsigned char V) {
+ConstantInt *ConstantInt::get(const Type *Ty, unsigned char V) {
   assert(V <= 127 && "Can only be used with very small positive constants!");
-  if (Ty->isSigned()) return ConstPoolSInt::get(Ty, V);
-  return ConstPoolUInt::get(Ty, V);
+  if (Ty->isSigned()) return ConstantSInt::get(Ty, V);
+  return ConstantUInt::get(Ty, V);
 }
 
-//---- ConstPoolFP::get() implementation...
+//---- ConstantFP::get() implementation...
 //
-static ValueMap<double, ConstPoolFP> FPConstants;
+static ValueMap<double, ConstantFP> FPConstants;
 
-ConstPoolFP *ConstPoolFP::get(const Type *Ty, double V) {
-  ConstPoolFP *Result = FPConstants.get(Ty, V);
+ConstantFP *ConstantFP::get(const Type *Ty, double V) {
+  ConstantFP *Result = FPConstants.get(Ty, V);
   if (!Result)   // If no preexisting value, create one now...
-    FPConstants.add(Ty, V, Result = new ConstPoolFP(Ty, V));
+    FPConstants.add(Ty, V, Result = new ConstantFP(Ty, V));
   return Result;
 }
 
-//---- ConstPoolArray::get() implementation...
+//---- ConstantArray::get() implementation...
 //
-static ValueMap<vector<ConstPoolVal*>, ConstPoolArray> ArrayConstants;
+static ValueMap<vector<Constant*>, ConstantArray> ArrayConstants;
 
-ConstPoolArray *ConstPoolArray::get(const ArrayType *Ty,
-				    const vector<ConstPoolVal*> &V) {
-  ConstPoolArray *Result = ArrayConstants.get(Ty, V);
+ConstantArray *ConstantArray::get(const ArrayType *Ty,
+                                  const vector<Constant*> &V) {
+  ConstantArray *Result = ArrayConstants.get(Ty, V);
   if (!Result)   // If no preexisting value, create one now...
-    ArrayConstants.add(Ty, V, Result = new ConstPoolArray(Ty, V));
+    ArrayConstants.add(Ty, V, Result = new ConstantArray(Ty, V));
   return Result;
 }
 
-// ConstPoolArray::get(const string&) - Return an array that is initialized to
+// ConstantArray::get(const string&) - Return an array that is initialized to
 // contain the specified string.  A null terminator is added to the specified
 // string so that it may be used in a natural way...
 //
-ConstPoolArray *ConstPoolArray::get(const string &Str) {
-  vector<ConstPoolVal*> ElementVals;
+ConstantArray *ConstantArray::get(const string &Str) {
+  vector<Constant*> ElementVals;
 
   for (unsigned i = 0; i < Str.length(); ++i)
-    ElementVals.push_back(ConstPoolUInt::get(Type::UByteTy, Str[i]));
+    ElementVals.push_back(ConstantUInt::get(Type::UByteTy, Str[i]));
 
   // Add a null terminator to the string...
-  ElementVals.push_back(ConstPoolUInt::get(Type::UByteTy, 0));
+  ElementVals.push_back(ConstantUInt::get(Type::UByteTy, 0));
 
   ArrayType *ATy = ArrayType::get(Type::UByteTy/*,stringConstant.length()*/);
-  return ConstPoolArray::get(ATy, ElementVals);
+  return ConstantArray::get(ATy, ElementVals);
 }
 
 
 // destroyConstant - Remove the constant from the constant table...
 //
-void ConstPoolArray::destroyConstant() {
+void ConstantArray::destroyConstant() {
   ArrayConstants.remove(this);
   destroyConstantImpl();
 }
 
-//---- ConstPoolStruct::get() implementation...
+//---- ConstantStruct::get() implementation...
 //
-static ValueMap<vector<ConstPoolVal*>, ConstPoolStruct> StructConstants;
+static ValueMap<vector<Constant*>, ConstantStruct> StructConstants;
 
-ConstPoolStruct *ConstPoolStruct::get(const StructType *Ty,
-				      const vector<ConstPoolVal*> &V) {
-  ConstPoolStruct *Result = StructConstants.get(Ty, V);
+ConstantStruct *ConstantStruct::get(const StructType *Ty,
+                                    const vector<Constant*> &V) {
+  ConstantStruct *Result = StructConstants.get(Ty, V);
   if (!Result)   // If no preexisting value, create one now...
-    StructConstants.add(Ty, V, Result = new ConstPoolStruct(Ty, V));
+    StructConstants.add(Ty, V, Result = new ConstantStruct(Ty, V));
   return Result;
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
-void ConstPoolStruct::destroyConstant() {
+void ConstantStruct::destroyConstant() {
   StructConstants.remove(this);
   destroyConstantImpl();
 }
 
-//---- ConstPoolPointerNull::get() implementation...
+//---- ConstantPointerNull::get() implementation...
 //
-static ValueMap<char, ConstPoolPointerNull> NullPtrConstants;
+static ValueMap<char, ConstantPointerNull> NullPtrConstants;
 
-ConstPoolPointerNull *ConstPoolPointerNull::get(const PointerType *Ty) {
-  ConstPoolPointerNull *Result = NullPtrConstants.get(Ty, 0);
+ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
+  ConstantPointerNull *Result = NullPtrConstants.get(Ty, 0);
   if (!Result)   // If no preexisting value, create one now...
-    NullPtrConstants.add(Ty, 0, Result = new ConstPoolPointerNull(Ty));
+    NullPtrConstants.add(Ty, 0, Result = new ConstantPointerNull(Ty));
   return Result;
 }
 
-//---- ConstPoolPointerRef::get() implementation...
+//---- ConstantPointerRef::get() implementation...
 //
-ConstPoolPointerRef *ConstPoolPointerRef::get(GlobalValue *GV) {
+ConstantPointerRef *ConstantPointerRef::get(GlobalValue *GV) {
   assert(GV->getParent() && "Global Value must be attached to a module!");
 
   // The Module handles the pointer reference sharing...
-  return GV->getParent()->getConstPoolPointerRef(GV);
+  return GV->getParent()->getConstantPointerRef(GV);
 }
 
 
-void ConstPoolPointerRef::mutateReference(GlobalValue *NewGV) {
-  getValue()->getParent()->mutateConstPoolPointerRef(getValue(), NewGV);
+void ConstantPointerRef::mutateReference(GlobalValue *NewGV) {
+  getValue()->getParent()->mutateConstantPointerRef(getValue(), NewGV);
   Operands[0] = NewGV;
 }

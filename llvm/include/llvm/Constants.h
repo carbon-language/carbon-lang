@@ -1,6 +1,6 @@
-//===-- llvm/ConstPoolVals.h - Constant Value nodes --------------*- C++ -*--=//
+//===-- llvm/ConstantVals.h - Constant Value nodes ---------------*- C++ -*--=//
 //
-// This file contains the declarations for the ConstPoolVal class and all of
+// This file contains the declarations for the Constant class and all of
 // its subclasses, which represent the different type of constant pool values
 //
 //===----------------------------------------------------------------------===//
@@ -16,13 +16,13 @@ class StructType;
 class PointerType;
 
 //===----------------------------------------------------------------------===//
-//                            ConstPoolVal Class
+//                                Constant Class
 //===----------------------------------------------------------------------===//
 
-class ConstPoolVal : public User {
+class Constant : public User {
 protected:
-  inline ConstPoolVal(const Type *Ty) : User(Ty, Value::ConstantVal) {}
-  ~ConstPoolVal() {}
+  inline Constant(const Type *Ty) : User(Ty, Value::ConstantVal) {}
+  ~Constant() {}
 
   // destroyConstant - Called if some element of this constant is no longer
   // valid.  At this point only other constants may be on the use_list for this
@@ -41,14 +41,14 @@ public:
   virtual string getStrValue() const = 0;
 
   // Static constructor to get a '0' constant of arbitrary type...
-  static ConstPoolVal *getNullConstant(const Type *Ty);
+  static Constant *getNullConstant(const Type *Ty);
 
   // isNullValue - Return true if this is the value that would be returned by
   // getNullConstant.
   virtual bool isNullValue() const = 0;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstPoolVal *) { return true; }
+  static inline bool classof(const Constant *) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueType() == Value::ConstantVal;
   }
@@ -61,22 +61,22 @@ public:
 //===----------------------------------------------------------------------===//
 
 //===---------------------------------------------------------------------------
-// ConstPoolBool - Boolean Values
+// ConstantBool - Boolean Values
 //
-class ConstPoolBool : public ConstPoolVal {
+class ConstantBool : public Constant {
   bool Val;
-  ConstPoolBool(const ConstPoolBool &);     // DO NOT IMPLEMENT
-  ConstPoolBool(bool V);
-  ~ConstPoolBool() {}
+  ConstantBool(const ConstantBool &);     // DO NOT IMPLEMENT
+  ConstantBool(bool V);
+  ~ConstantBool() {}
 public:
-  static ConstPoolBool *True, *False;  // The True & False values
+  static ConstantBool *True, *False;  // The True & False values
 
   // Factory objects - Return objects of the specified value
-  static ConstPoolBool *get(bool Value) { return Value ? True : False; }
-  static ConstPoolBool *get(const Type *Ty, bool Value) { return get(Value); }
+  static ConstantBool *get(bool Value) { return Value ? True : False; }
+  static ConstantBool *get(const Type *Ty, bool Value) { return get(Value); }
 
   // inverted - Return the opposite value of the current value.
-  inline ConstPoolBool *inverted() const { return (this==True) ? False : True; }
+  inline ConstantBool *inverted() const { return (this==True) ? False : True; }
 
   virtual string getStrValue() const;
   inline bool getValue() const { return Val; }
@@ -86,29 +86,29 @@ public:
   virtual bool isNullValue() const { return this == False; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstPoolBool *) { return true; }
-  static bool classof(const ConstPoolVal *CPV) {
+  static inline bool classof(const ConstantBool *) { return true; }
+  static bool classof(const Constant *CPV) {
     return (CPV == True) | (CPV == False);
   }
   static inline bool classof(const Value *V) {
-    return isa<ConstPoolVal>(V) && classof(cast<ConstPoolVal>(V));
+    return isa<Constant>(V) && classof(cast<Constant>(V));
   }
 };
 
 
 //===---------------------------------------------------------------------------
-// ConstPoolInt - Superclass of ConstPoolSInt & ConstPoolUInt, to make dealing
+// ConstantInt - Superclass of ConstantSInt & ConstantUInt, to make dealing
 // with integral constants easier.
 //
-class ConstPoolInt : public ConstPoolVal {
+class ConstantInt : public Constant {
 protected:
   union {
     int64_t  Signed;
     uint64_t Unsigned;
   } Val;
-  ConstPoolInt(const ConstPoolInt &);      // DO NOT IMPLEMENT
-  ConstPoolInt(const Type *Ty, uint64_t V);
-  ~ConstPoolInt() {}
+  ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
+  ConstantInt(const Type *Ty, uint64_t V);
+  ~ConstantInt() {}
 public:
   // equalsInt - Provide a helper method that can be used to determine if the 
   // constant contained within is equal to a constant.  This only works for very
@@ -120,34 +120,34 @@ public:
     return Val.Unsigned == V;
   }
 
-  // ConstPoolInt::get static method: return a constant pool int with the
+  // ConstantInt::get static method: return a constant pool int with the
   // specified value.  as above, we work only with very small values here.
   //
-  static ConstPoolInt *get(const Type *Ty, unsigned char V);
+  static ConstantInt *get(const Type *Ty, unsigned char V);
 
   // isNullValue - Return true if this is the value that would be returned by
   // getNullConstant.
   virtual bool isNullValue() const { return Val.Unsigned == 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstPoolInt *) { return true; }
-  static bool classof(const ConstPoolVal *CPV);  // defined in CPV.cpp
+  static inline bool classof(const ConstantInt *) { return true; }
+  static bool classof(const Constant *CPV);  // defined in CPV.cpp
   static inline bool classof(const Value *V) {
-    return isa<ConstPoolVal>(V) && classof(cast<ConstPoolVal>(V));
+    return isa<Constant>(V) && classof(cast<Constant>(V));
   }
 };
 
 
 //===---------------------------------------------------------------------------
-// ConstPoolSInt - Signed Integer Values [sbyte, short, int, long]
+// ConstantSInt - Signed Integer Values [sbyte, short, int, long]
 //
-class ConstPoolSInt : public ConstPoolInt {
-  ConstPoolSInt(const ConstPoolSInt &);      // DO NOT IMPLEMENT
+class ConstantSInt : public ConstantInt {
+  ConstantSInt(const ConstantSInt &);      // DO NOT IMPLEMENT
 protected:
-  ConstPoolSInt(const Type *Ty, int64_t V);
-  ~ConstPoolSInt() {}
+  ConstantSInt(const Type *Ty, int64_t V);
+  ~ConstantSInt() {}
 public:
-  static ConstPoolSInt *get(const Type *Ty, int64_t V);
+  static ConstantSInt *get(const Type *Ty, int64_t V);
 
   virtual string getStrValue() const;
 
@@ -155,23 +155,23 @@ public:
   inline int64_t getValue() const { return Val.Signed; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstPoolSInt *) { return true; }
-  static bool classof(const ConstPoolVal *CPV);  // defined in CPV.cpp
+  static inline bool classof(const ConstantSInt *) { return true; }
+  static bool classof(const Constant *CPV);  // defined in CPV.cpp
   static inline bool classof(const Value *V) {
-    return isa<ConstPoolVal>(V) && classof(cast<ConstPoolVal>(V));
+    return isa<Constant>(V) && classof(cast<Constant>(V));
   }
 };
 
 //===---------------------------------------------------------------------------
-// ConstPoolUInt - Unsigned Integer Values [ubyte, ushort, uint, ulong]
+// ConstantUInt - Unsigned Integer Values [ubyte, ushort, uint, ulong]
 //
-class ConstPoolUInt : public ConstPoolInt {
-  ConstPoolUInt(const ConstPoolUInt &);      // DO NOT IMPLEMENT
+class ConstantUInt : public ConstantInt {
+  ConstantUInt(const ConstantUInt &);      // DO NOT IMPLEMENT
 protected:
-  ConstPoolUInt(const Type *Ty, uint64_t V);
-  ~ConstPoolUInt() {}
+  ConstantUInt(const Type *Ty, uint64_t V);
+  ~ConstantUInt() {}
 public:
-  static ConstPoolUInt *get(const Type *Ty, uint64_t V);
+  static ConstantUInt *get(const Type *Ty, uint64_t V);
 
   virtual string getStrValue() const;
 
@@ -179,25 +179,25 @@ public:
   inline uint64_t getValue() const { return Val.Unsigned; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstPoolUInt *) { return true; }
-  static bool classof(const ConstPoolVal *CPV);  // defined in CPV.cpp
+  static inline bool classof(const ConstantUInt *) { return true; }
+  static bool classof(const Constant *CPV);  // defined in CPV.cpp
   static inline bool classof(const Value *V) {
-    return isa<ConstPoolVal>(V) && classof(cast<ConstPoolVal>(V));
+    return isa<Constant>(V) && classof(cast<Constant>(V));
   }
 };
 
 
 //===---------------------------------------------------------------------------
-// ConstPoolFP - Floating Point Values [float, double]
+// ConstantFP - Floating Point Values [float, double]
 //
-class ConstPoolFP : public ConstPoolVal {
+class ConstantFP : public Constant {
   double Val;
-  ConstPoolFP(const ConstPoolFP &);      // DO NOT IMPLEMENT
+  ConstantFP(const ConstantFP &);      // DO NOT IMPLEMENT
 protected:
-  ConstPoolFP(const Type *Ty, double V);
-  ~ConstPoolFP() {}
+  ConstantFP(const Type *Ty, double V);
+  ~ConstantFP() {}
 public:
-  static ConstPoolFP *get(const Type *Ty, double V);
+  static ConstantFP *get(const Type *Ty, double V);
 
   virtual string getStrValue() const;
 
@@ -209,27 +209,27 @@ public:
   virtual bool isNullValue() const { return Val == 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstPoolFP *) { return true; }
-  static bool classof(const ConstPoolVal *CPV);  // defined in CPV.cpp
+  static inline bool classof(const ConstantFP *) { return true; }
+  static bool classof(const Constant *CPV);  // defined in CPV.cpp
   static inline bool classof(const Value *V) {
-    return isa<ConstPoolVal>(V) && classof(cast<ConstPoolVal>(V));
+    return isa<Constant>(V) && classof(cast<Constant>(V));
   }
 };
 
 
 //===---------------------------------------------------------------------------
-// ConstPoolArray - Constant Array Declarations
+// ConstantArray - Constant Array Declarations
 //
-class ConstPoolArray : public ConstPoolVal {
-  ConstPoolArray(const ConstPoolArray &);      // DO NOT IMPLEMENT
+class ConstantArray : public Constant {
+  ConstantArray(const ConstantArray &);      // DO NOT IMPLEMENT
 protected:
-  ConstPoolArray(const ArrayType *T, const vector<ConstPoolVal*> &Val);
-  ~ConstPoolArray() {}
+  ConstantArray(const ArrayType *T, const vector<Constant*> &Val);
+  ~ConstantArray() {}
 
   virtual void destroyConstant();
 public:
-  static ConstPoolArray *get(const ArrayType *T, const vector<ConstPoolVal*> &);
-  static ConstPoolArray *get(const string &Initializer);
+  static ConstantArray *get(const ArrayType *T, const vector<Constant*> &);
+  static ConstantArray *get(const string &Initializer);
   
   virtual string getStrValue() const;
 
@@ -240,27 +240,27 @@ public:
   virtual bool isNullValue() const { return false; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstPoolArray *) { return true; }
-  static bool classof(const ConstPoolVal *CPV);  // defined in CPV.cpp
+  static inline bool classof(const ConstantArray *) { return true; }
+  static bool classof(const Constant *CPV);  // defined in CPV.cpp
   static inline bool classof(const Value *V) {
-    return isa<ConstPoolVal>(V) && classof(cast<ConstPoolVal>(V));
+    return isa<Constant>(V) && classof(cast<Constant>(V));
   }
 };
 
 
 //===---------------------------------------------------------------------------
-// ConstPoolStruct - Constant Struct Declarations
+// ConstantStruct - Constant Struct Declarations
 //
-class ConstPoolStruct : public ConstPoolVal {
-  ConstPoolStruct(const ConstPoolStruct &);      // DO NOT IMPLEMENT
+class ConstantStruct : public Constant {
+  ConstantStruct(const ConstantStruct &);      // DO NOT IMPLEMENT
 protected:
-  ConstPoolStruct(const StructType *T, const vector<ConstPoolVal*> &Val);
-  ~ConstPoolStruct() {}
+  ConstantStruct(const StructType *T, const vector<Constant*> &Val);
+  ~ConstantStruct() {}
 
   virtual void destroyConstant();
 public:
-  static ConstPoolStruct *get(const StructType *T,
-			      const vector<ConstPoolVal*> &V);
+  static ConstantStruct *get(const StructType *T,
+			      const vector<Constant*> &V);
 
   virtual string getStrValue() const;
 
@@ -271,25 +271,25 @@ public:
   virtual bool isNullValue() const { return false; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstPoolStruct *) { return true; }
-  static bool classof(const ConstPoolVal *CPV);  // defined in CPV.cpp
+  static inline bool classof(const ConstantStruct *) { return true; }
+  static bool classof(const Constant *CPV);  // defined in CPV.cpp
   static inline bool classof(const Value *V) {
-    return isa<ConstPoolVal>(V) && classof(cast<ConstPoolVal>(V));
+    return isa<Constant>(V) && classof(cast<Constant>(V));
   }
 };
 
 //===---------------------------------------------------------------------------
-// ConstPoolPointer - Constant Pointer Declarations
+// ConstantPointer - Constant Pointer Declarations
 //
-// The ConstPoolPointer class represents a null pointer of a specific type. For
-// a more specific/useful instance, a subclass of ConstPoolPointer should be
+// The ConstantPointer class represents a null pointer of a specific type. For
+// a more specific/useful instance, a subclass of ConstantPointer should be
 // used.
 //
-class ConstPoolPointer : public ConstPoolVal {
-  ConstPoolPointer(const ConstPoolPointer &);      // DO NOT IMPLEMENT
+class ConstantPointer : public Constant {
+  ConstantPointer(const ConstantPointer &);      // DO NOT IMPLEMENT
 protected:
-  inline ConstPoolPointer(const PointerType *T) : ConstPoolVal((const Type*)T){}
-  ~ConstPoolPointer() {}
+  inline ConstantPointer(const PointerType *T) : Constant((const Type*)T){}
+  ~ConstantPointer() {}
 public:
   virtual string getStrValue() const = 0;
 
@@ -298,57 +298,57 @@ public:
   virtual bool isNullValue() const { return false; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstPoolPointer *) { return true; }
-  static bool classof(const ConstPoolVal *CPV);  // defined in CPV.cpp
+  static inline bool classof(const ConstantPointer *) { return true; }
+  static bool classof(const Constant *CPV);  // defined in CPV.cpp
   static inline bool classof(const Value *V) {
-    return isa<ConstPoolVal>(V) && classof(cast<ConstPoolVal>(V));
+    return isa<Constant>(V) && classof(cast<Constant>(V));
   }
 };
 
-// ConstPoolPointerNull - a constant pointer value that points to null
+// ConstantPointerNull - a constant pointer value that points to null
 //
-class ConstPoolPointerNull : public ConstPoolPointer {
-  ConstPoolPointerNull(const ConstPoolPointerNull &);      // DO NOT IMPLEMENT
+class ConstantPointerNull : public ConstantPointer {
+  ConstantPointerNull(const ConstantPointerNull &);      // DO NOT IMPLEMENT
 protected:
-  inline ConstPoolPointerNull(const PointerType *T) : ConstPoolPointer(T) {}
-  inline ~ConstPoolPointerNull() {}
+  inline ConstantPointerNull(const PointerType *T) : ConstantPointer(T) {}
+  inline ~ConstantPointerNull() {}
 public:
   virtual string getStrValue() const;
 
-  static ConstPoolPointerNull *get(const PointerType *T);
+  static ConstantPointerNull *get(const PointerType *T);
 
   // isNullValue - Return true if this is the value that would be returned by
   // getNullConstant.
   virtual bool isNullValue() const { return true; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstPoolPointerNull *) { return true; }
-  static inline bool classof(const ConstPoolPointer *P) {
+  static inline bool classof(const ConstantPointerNull *) { return true; }
+  static inline bool classof(const ConstantPointer *P) {
     return P->getNumOperands() == 0;
   }
-  static inline bool classof(const ConstPoolVal *CPV) {
-    return isa<ConstPoolPointer>(CPV) && classof(cast<ConstPoolPointer>(CPV));
+  static inline bool classof(const Constant *CPV) {
+    return isa<ConstantPointer>(CPV) && classof(cast<ConstantPointer>(CPV));
   }
   static inline bool classof(const Value *V) {
-    return isa<ConstPoolPointer>(V) && classof(cast<ConstPoolPointer>(V));
+    return isa<ConstantPointer>(V) && classof(cast<ConstantPointer>(V));
   }
 };
 
 
-// ConstPoolPointerRef - a constant pointer value that is initialized to
+// ConstantPointerRef - a constant pointer value that is initialized to
 // point to a global value, which lies at a constant, fixed address.
 //
-class ConstPoolPointerRef : public ConstPoolPointer {
+class ConstantPointerRef : public ConstantPointer {
   friend class Module;   // Modules maintain these references
-  ConstPoolPointerRef(const ConstPoolPointerRef &); // DNI!
+  ConstantPointerRef(const ConstantPointerRef &); // DNI!
 
 protected:
-  ConstPoolPointerRef(GlobalValue *GV);
-  ~ConstPoolPointerRef() {}
+  ConstantPointerRef(GlobalValue *GV);
+  ~ConstantPointerRef() {}
 
   virtual void destroyConstant() { destroyConstantImpl(); }
 public:
-  static ConstPoolPointerRef *get(GlobalValue *GV);
+  static ConstantPointerRef *get(GlobalValue *GV);
 
   virtual string getStrValue() const;
 
@@ -360,15 +360,15 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstPoolPointerRef *) { return true; }
-  static inline bool classof(const ConstPoolPointer *CPV) {
+  static inline bool classof(const ConstantPointerRef *) { return true; }
+  static inline bool classof(const ConstantPointer *CPV) {
     return CPV->getNumOperands() == 1;
   }
-  static inline bool classof(const ConstPoolVal *CPV) {
-    return isa<ConstPoolPointer>(CPV) && classof(cast<ConstPoolPointer>(CPV));
+  static inline bool classof(const Constant *CPV) {
+    return isa<ConstantPointer>(CPV) && classof(cast<ConstantPointer>(CPV));
   }
   static inline bool classof(const Value *V) {
-    return isa<ConstPoolPointer>(V) && classof(cast<ConstPoolPointer>(V));
+    return isa<ConstantPointer>(V) && classof(cast<ConstantPointer>(V));
   }
 
   // WARNING: Only to be used by Bytecode & Assembly Parsers!  USER CODE SHOULD

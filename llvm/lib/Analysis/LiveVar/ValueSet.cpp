@@ -1,6 +1,6 @@
 
 #include "llvm/Analysis/LiveVar/ValueSet.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 
 
 void printValue( const Value *const v)  // func to print a Value 
@@ -8,8 +8,8 @@ void printValue( const Value *const v)  // func to print a Value
   
   if (v->hasName())
     cerr << v << "(" << ((*v).getName()) << ") ";
-  else if (v->getValueType() == Value::ConstantVal)         // if const
-    cerr << v << "(" << ((ConstPoolVal *) v)->getStrValue() << ") ";
+  else if (Constant *C = dyn_cast<Constant>(v))
+    cerr << v << "(" << C->getStrValue() << ") ";
   else
     cerr << v  << " ";
 }

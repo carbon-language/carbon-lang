@@ -16,7 +16,6 @@ class Module;
 class Method;
 class BasicBlock;
 class Instruction;
-class ConstPoolVal;
 class MethodType;
 class MethodArgument;
 

@@ -16,7 +16,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include <sys/types.h>
@@ -217,7 +217,7 @@ bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf,
 }
 
 // DeclareNewGlobalValue - Patch up forward references to global values in the
-// form of ConstPoolPointerRef.
+// form of ConstantPointerRef.
 //
 void BytecodeParser::DeclareNewGlobalValue(GlobalValue *GV, unsigned Slot) {
   // Check to see if there is a forward reference to this global variable...
@@ -229,11 +229,11 @@ void BytecodeParser::DeclareNewGlobalValue(GlobalValue *GV, unsigned Slot) {
     BCR_TRACE(3, "Mutating CPPR Forward Ref!\n");
       
     // Loop over all of the uses of the GlobalValue.  The only thing they are
-    // allowed to be at this point is ConstPoolPointerRef's.
+    // allowed to be at this point is ConstantPointerRef's.
     assert(OldGV->use_size() == 1 && "Only one reference should exist!");
     while (!OldGV->use_empty()) {
-      User *U = OldGV->use_back();  // Must be a ConstPoolPointerRef...
-      ConstPoolPointerRef *CPPR = cast<ConstPoolPointerRef>(U);
+      User *U = OldGV->use_back();  // Must be a ConstantPointerRef...
+      ConstantPointerRef *CPPR = cast<ConstantPointerRef>(U);
       assert(CPPR->getValue() == OldGV && "Something isn't happy");
       
       BCR_TRACE(4, "Mutating Forward Ref!\n");
@@ -394,7 +394,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     const PointerType *PTy = cast<const PointerType>(Ty);
     const Type *ElTy = PTy->getValueType();
 
-    ConstPoolVal *Initializer = 0;
+    Constant *Initializer = 0;
     if (VarType & 2) { // Does it have an initalizer?
       // Do not improvise... values must have been stored in the constant pool,
       // which should have been read before now.
@@ -404,7 +404,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
       
       Value *V = getValue(ElTy, InitSlot, false);
       if (V == 0) return failure(true);
-      Initializer = cast<ConstPoolVal>(V);
+      Initializer = cast<Constant>(V);
     }
 
     // Create the global variable...

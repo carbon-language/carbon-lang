@@ -102,8 +102,8 @@ private:
 
   bool ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
 			 ValueTable &Tab, TypeValuesListTy &TypeTab);
-  bool parseConstPoolValue(const uchar *&Buf, const uchar *End,
-			   const Type *Ty, ConstPoolVal *&V);
+  bool parseConstantValue(const uchar *&Buf, const uchar *End,
+                          const Type *Ty, Constant *&V);
   bool parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
 			  TypeValuesListTy &Tab, unsigned NumEntries);
   const Type *parseTypeConstant(const uchar *&Buf, const uchar *EndBuf);
@@ -117,7 +117,7 @@ private:
   bool getTypeSlot(const Type *Ty, unsigned &Slot);
 
   // DeclareNewGlobalValue - Patch up forward references to global values in the
-  // form of ConstPoolPointerRefs.
+  // form of ConstantPointerRefs.
   //
   void DeclareNewGlobalValue(GlobalValue *GV, unsigned Slot);
 

@@ -115,12 +115,12 @@ public:
     return V->getValueType() == Value::BasicBlockVal;
   }
 
-  // hasConstantPoolReferences() - This predicate is true if there is a 
+  // hasConstantReferences() - This predicate is true if there is a 
   // reference to this basic block in the constant pool for this method.  For
   // example, if a block is reached through a switch table, that table resides
   // in the constant pool, and the basic block is reference from it.
   //
-  bool hasConstantPoolReferences() const;
+  bool hasConstantReferences() const;
 
   // dropAllReferences() - This function causes all the subinstructions to "let
   // go" of all references that they are maintaining.  This allows one to
@@ -165,7 +165,7 @@ public:
   public:
     typedef PredIterator<_Ptr,_USE_iterator> _Self;
   
-    inline void advancePastConstPool() {
+    inline void advancePastConstants() {
       // TODO: This is bad
       // Loop to ignore constant pool references
       while (It != BB->use_end() && !isa<TerminatorInst>(*It))
@@ -173,7 +173,7 @@ public:
     }
   
     inline PredIterator(_Ptr *bb) : BB(bb), It(bb->use_begin()) {
-      advancePastConstPool();
+      advancePastConstants();
     }
     inline PredIterator(_Ptr *bb, bool) : BB(bb), It(bb->use_end()) {}
     
@@ -186,7 +186,7 @@ public:
     inline pointer *operator->() const { return &(operator*()); }
     
     inline _Self& operator++() {   // Preincrement
-      ++It; advancePastConstPool();
+      ++It; advancePastConstants();
       return *this; 
     }
     

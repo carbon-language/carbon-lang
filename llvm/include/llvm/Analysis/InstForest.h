@@ -73,11 +73,11 @@ public:
   inline bool isTemporary()   const { return getNodeType() == TemporaryNode; }
 
   // Accessors for different node types...
-  inline ConstPoolVal *getConstant() {
-    return cast<ConstPoolVal>(getValue());
+  inline Constant *getConstant() {
+    return cast<Constant>(getValue());
   }
-  inline const ConstPoolVal *getConstant() const {
-    return cast<const ConstPoolVal>(getValue());
+  inline const Constant *getConstant() const {
+    return cast<const Constant>(getValue());
   }
   inline BasicBlock *getBasicBlock() {
     return cast<BasicBlock>(getValue());
@@ -230,10 +230,10 @@ InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
   getTreeData().first.first = V;   // Save tree node
  
   if (!isa<Instruction>(V)) {
-    assert((isa<ConstPoolVal>(V) || isa<BasicBlock>(V) ||
+    assert((isa<Constant>(V) || isa<BasicBlock>(V) ||
 	    isa<MethodArgument>(V) || isa<GlobalVariable>(V)) &&
 	   "Unrecognized value type for InstForest Partition!");
-    if (isa<ConstPoolVal>(V))
+    if (isa<Constant>(V))
       getTreeData().first.second = ConstNode;
     else if (isa<BasicBlock>(V))
       getTreeData().first.second = BasicBlockNode;

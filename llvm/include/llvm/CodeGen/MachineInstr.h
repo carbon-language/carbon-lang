@@ -529,7 +529,7 @@ private:
   unsigned	currentOptionalArgsSize;
   unsigned	maxOptionalArgsSize;
   unsigned	currentTmpValuesSize;
-  hash_set<const ConstPoolVal*> constantsForConstPool;
+  hash_set<const Constant*> constantsForConstPool;
   hash_map<const Value*, int> offsets;
   // hash_map<const Value*, int> offsetsFromSP;
   
@@ -572,7 +572,7 @@ public:
   inline unsigned getMaxOptionalArgsSize() const { return maxOptionalArgsSize;}
   inline unsigned getCurrentOptionalArgsSize() const
                                              { return currentOptionalArgsSize;}
-  inline const hash_set<const ConstPoolVal*>&
+  inline const hash_set<const Constant*>&
                   getConstantPoolValues() const {return constantsForConstPool;}
   
   //
@@ -580,7 +580,7 @@ public:
   // 
   void            initializeFrameLayout    (const TargetMachine& target);
   
-  void            addToConstantPool        (const ConstPoolVal* constVal)
+  void            addToConstantPool        (const Constant* constVal)
                                     { constantsForConstPool.insert(constVal); }
   
   inline void     markAsLeafMethod()              { compiledAsLeaf = true; }

@@ -27,7 +27,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/STLExtras.h"
@@ -289,7 +289,7 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
 	&& !instr->isTerminator();
     
       if (includeAddressOperand || isa<Instruction>(operand) ||
-	  isa<ConstPoolVal>(operand) || isa<MethodArgument>(operand) ||
+	  isa<Constant>(operand) || isa<MethodArgument>(operand) ||
 	  isa<GlobalVariable>(operand))
 	{
 	  // This operand is a data value
@@ -318,7 +318,7 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
 	      // Recursively create a treeNode for it.
 	      opTreeNode = buildTreeForInstruction((Instruction*)operand);
 	    }
-	  else if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(operand))
+	  else if (Constant *CPV = dyn_cast<Constant>(operand))
 	    {
 	      // Create a leaf node for a constant
 	      opTreeNode = new ConstantNode(CPV);

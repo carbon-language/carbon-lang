@@ -61,7 +61,7 @@ public:
   // stores that include the implicit form of getelementptr.
   //
   unsigned      getIndexedOffset(const Type *Ty, 
-				 const vector<ConstPoolVal*> &Indices) const;
+				 const vector<Constant*> &Indices) const;
 
   inline const StructLayout *getStructLayout(const StructType *Ty) const {
     return (const StructLayout*)((const Type*)Ty)->getOrCreateAnnotation(AID);

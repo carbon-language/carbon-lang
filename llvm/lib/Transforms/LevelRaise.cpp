@@ -11,7 +11,7 @@
 #include "llvm/Method.h"
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/Optimizations/ConstantHandling.h"
 #include "llvm/Optimizations/DCE.h"
 #include "llvm/Optimizations/ConstantProp.h"
@@ -175,7 +175,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 #endif
           ValueMapCache ValueMap;
           Value *E = ConvertExpressionToType(Src, DestTy, ValueMap);
-          if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(E))
+          if (Constant *CPV = dyn_cast<Constant>(E))
             CI->replaceAllUsesWith(CPV);
 
           BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
@@ -242,7 +242,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             }
 
             // Insert a zero to index through this type...
-            Indices.push_back(ConstPoolUInt::get(CurCTy->getIndexType(), 0));
+            Indices.push_back(ConstantUInt::get(CurCTy->getIndexType(), 0));
 
             // Did we find what we're looking for?
             if (ElTy->isLosslesslyConvertableTo(DestPointedTy)) break;
@@ -502,8 +502,7 @@ static bool DoInsertArrayCast(Value *V, BasicBlock *BB,
 
   // Insert a cast!
   CastInst *TheCast = 
-    new CastInst(ConstPoolVal::getNullConstant(V->getType()), DestTy,
-                 V->getName());
+    new CastInst(Constant::getNullConstant(V->getType()), DestTy, V->getName());
   BB->getInstList().insert(InsertBefore, TheCast);
 
   cerr << "Inserting cast for " << V << endl;

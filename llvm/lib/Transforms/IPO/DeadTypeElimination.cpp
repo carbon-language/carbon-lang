@@ -458,13 +458,13 @@ static inline void CheckIncomingValueFor(PHINode *PN, BasicBlock *BB) {
   const Type *Ty = PN->getType();
 
   if (const PointerType *PT = dyn_cast<PointerType>(Ty))
-    NewVal = ConstPoolPointerNull::get(PT);
+    NewVal = ConstantPointerNull::get(PT);
   else if (Ty == Type::BoolTy)
-    NewVal = ConstPoolBool::True;
+    NewVal = ConstantBool::True;
   else if (Ty == Type::FloatTy || Ty == Type::DoubleTy)
-    NewVal = ConstPoolFP::get(Ty, 42);
+    NewVal = ConstantFP::get(Ty, 42);
   else if (Ty->isIntegral())
-    NewVal = ConstPoolInt::get(Ty, 42);
+    NewVal = ConstantInt::get(Ty, 42);
 
   assert(NewVal && "Unknown PHI node type!");
   PN->addIncoming(NewVal, BB);

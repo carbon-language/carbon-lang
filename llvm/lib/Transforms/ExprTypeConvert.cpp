@@ -11,7 +11,7 @@
 #include "llvm/iOther.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/Optimizations/ConstantHandling.h"
 #include "llvm/Optimizations/DCE.h"
 #include "llvm/Analysis/Expressions.h"
@@ -36,7 +36,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 static bool AllIndicesZero(const MemAccessInst *MAI) {
   for (User::op_const_iterator S = MAI->idx_begin(), E = MAI->idx_end();
        S != E; ++S)
-    if (!isa<ConstPoolVal>(*S) || !cast<ConstPoolVal>(*S)->isNullValue())
+    if (!isa<Constant>(*S) || !cast<Constant>(*S)->isNullValue())
       return false;
   return true;
 }
@@ -155,7 +155,7 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
     unsigned DataSize = TD.getTypeSize(ElType);
     
     if (OffsetAmount > DataSize) // Allocate a sized array amount...
-      Expr.Var = ConstPoolUInt::get(Type::UIntTy, OffsetAmount/DataSize);
+      Expr.Var = ConstantUInt::get(Type::UIntTy, OffsetAmount/DataSize);
   }
 #endif
 
@@ -198,7 +198,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     // const prop'd in general).  We just ask the constant propogator to see if
     // it can convert the value...
     //
-    if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(V))
+    if (Constant *CPV = dyn_cast<Constant>(V))
       if (opt::ConstantFoldCastInstruction(CPV, Ty))
         return true;  // Don't worry about deallocating, it's a constant.
 
@@ -285,8 +285,8 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     const Type *BaseType = GEP->getPointerOperand()->getType();
     const Type *ElTy = 0;
 
-    while (!Indices.empty() && isa<ConstPoolUInt>(Indices.back()) &&
-           cast<ConstPoolUInt>(Indices.back())->getValue() == 0) {
+    while (!Indices.empty() && isa<ConstantUInt>(Indices.back()) &&
+           cast<ConstantUInt>(Indices.back())->getValue() == 0) {
       Indices.pop_back();
       ElTy = GetElementPtrInst::getIndexedType(BaseType, Indices,
                                                            true);
@@ -329,7 +329,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0)
-    if (ConstPoolVal *CPV = cast<ConstPoolVal>(V)) {
+    if (Constant *CPV = cast<Constant>(V)) {
       // Constants are converted by constant folding the cast that is required.
       // We assume here that all casts are implemented for constant prop.
       Value *Result = opt::ConstantFoldCastInstruction(CPV, Ty);
@@ -349,7 +349,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
   ValueHandle IHandle(VMC, I);  // Prevent I from being removed!
   
-  ConstPoolVal *Dummy = ConstPoolVal::getNullConstant(Ty);
+  Constant *Dummy = Constant::getNullConstant(Ty);
 
   //cerr << endl << endl << "Type:\t" << Ty << "\nInst: " << I << "BB Before: " << BB << endl;
 
@@ -380,8 +380,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     LoadInst *LI = cast<LoadInst>(I);
     assert(!LI->hasIndices() || AllIndicesZero(LI));
 
-    Res = new LoadInst(ConstPoolVal::getNullConstant(PointerType::get(Ty)), 
-                       Name);
+    Res = new LoadInst(Constant::getNullConstant(PointerType::get(Ty)), Name);
     VMC.ExprMap[I] = Res;
     Res->setOperand(0, ConvertExpressionToType(LI->getPointerOperand(),
                                                PointerType::get(Ty), VMC));
@@ -433,8 +432,8 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     const Type *BaseType = GEP->getPointerOperand()->getType();
     const Type *PVTy = cast<PointerType>(Ty)->getValueType();
     Res = 0;
-    while (!Indices.empty() && isa<ConstPoolUInt>(Indices.back()) &&
-           cast<ConstPoolUInt>(Indices.back())->getValue() == 0) {
+    while (!Indices.empty() && isa<ConstantUInt>(Indices.back()) &&
+           cast<ConstantUInt>(Indices.back())->getValue() == 0) {
       Indices.pop_back();
       if (GetElementPtrInst::getIndexedType(BaseType, Indices, true) == PVTy) {
         if (Indices.size() == 0) {
@@ -723,8 +722,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   ValueHandle IHandle(VMC, I);
 
   const Type *NewTy = NewVal->getType();
-  ConstPoolVal *Dummy = (NewTy != Type::VoidTy) ? 
-                  ConstPoolVal::getNullConstant(NewTy) : 0;
+  Constant *Dummy = (NewTy != Type::VoidTy) ? 
+                  Constant::getNullConstant(NewTy) : 0;
 
   switch (I->getOpcode()) {
   case Instruction::Cast:
@@ -793,12 +792,12 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   case Instruction::Store: {
     if (I->getOperand(0) == OldVal) {  // Replace the source value
       const PointerType *NewPT = PointerType::get(NewTy);
-      Res = new StoreInst(NewVal, ConstPoolVal::getNullConstant(NewPT));
+      Res = new StoreInst(NewVal, Constant::getNullConstant(NewPT));
       VMC.ExprMap[I] = Res;
       Res->setOperand(1, ConvertExpressionToType(I->getOperand(1), NewPT, VMC));
     } else {                           // Replace the source pointer
       const Type *ValTy = cast<PointerType>(NewTy)->getValueType();
-      Res = new StoreInst(ConstPoolVal::getNullConstant(ValTy), NewVal);
+      Res = new StoreInst(Constant::getNullConstant(ValTy), NewVal);
       VMC.ExprMap[I] = Res;
       Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), ValTy, VMC));
     }

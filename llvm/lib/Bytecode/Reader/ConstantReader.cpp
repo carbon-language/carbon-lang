@@ -1,4 +1,4 @@
-//===- ReadConst.cpp - Code to constants and constant pools -----------------===
+//===- ReadConst.cpp - Code to constants and constant pools ---------------===//
 //
 // This file implements functionality to deserialize constants and entire 
 // constant pools.
@@ -6,12 +6,12 @@
 // Note that this library should be as fast as possible, reentrant, and 
 // threadsafe!!
 //
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 #include "ReaderInternals.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/GlobalVariable.h"
 #include <algorithm>
 
@@ -174,15 +174,14 @@ bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
 }
 
 
-bool BytecodeParser::parseConstPoolValue(const uchar *&Buf, 
-					 const uchar *EndBuf,
-					 const Type *Ty, ConstPoolVal *&V) {
+bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
+                                        const Type *Ty, Constant *&V) {
   switch (Ty->getPrimitiveID()) {
   case Type::BoolTyID: {
     unsigned Val;
     if (read_vbr(Buf, EndBuf, Val)) return failure(true);
     if (Val != 0 && Val != 1) return failure(true);
-    V = ConstPoolBool::get(Val == 1);
+    V = ConstantBool::get(Val == 1);
     break;
   }
 
@@ -191,15 +190,15 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
   case Type::UIntTyID: {
     unsigned Val;
     if (read_vbr(Buf, EndBuf, Val)) return failure(true);
-    if (!ConstPoolUInt::isValueValidForType(Ty, Val)) return failure(true);
-    V = ConstPoolUInt::get(Ty, Val);
+    if (!ConstantUInt::isValueValidForType(Ty, Val)) return failure(true);
+    V = ConstantUInt::get(Ty, Val);
     break;
   }
 
   case Type::ULongTyID: {
     uint64_t Val;
     if (read_vbr(Buf, EndBuf, Val)) return failure(true);
-    V = ConstPoolUInt::get(Ty, Val);
+    V = ConstantUInt::get(Ty, Val);
     break;
   }
 
@@ -208,29 +207,29 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
   case Type::IntTyID: {
     int Val;
     if (read_vbr(Buf, EndBuf, Val)) return failure(true);
-    if (!ConstPoolSInt::isValueValidForType(Ty, Val)) return failure(true);
-    V = ConstPoolSInt::get(Ty, Val);
+    if (!ConstantSInt::isValueValidForType(Ty, Val)) return failure(true);
+    V = ConstantSInt::get(Ty, Val);
     break;
   }
 
   case Type::LongTyID: {
     int64_t Val;
     if (read_vbr(Buf, EndBuf, Val)) return failure(true);
-    V = ConstPoolSInt::get(Ty, Val);
+    V = ConstantSInt::get(Ty, Val);
     break;
   }
 
   case Type::FloatTyID: {
     float F;
     if (input_data(Buf, EndBuf, &F, &F+1)) return failure(true);
-    V = ConstPoolFP::get(Ty, F);
+    V = ConstantFP::get(Ty, F);
     break;
   }
 
   case Type::DoubleTyID: {
     double Val;
     if (input_data(Buf, EndBuf, &Val, &Val+1)) return failure(true);
-    V = ConstPoolFP::get(Ty, Val);
+    V = ConstantFP::get(Ty, Val);
     break;
   }
 
@@ -246,15 +245,15 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
     else                        // Unsized array, # elements stored in stream!
       if (read_vbr(Buf, EndBuf, NumElements)) return failure(true);
 
-    vector<ConstPoolVal *> Elements;
+    vector<Constant*> Elements;
     while (NumElements--) {   // Read all of the elements of the constant.
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) return failure(true);
       Value *V = getValue(AT->getElementType(), Slot, false);
-      if (!V || !isa<ConstPoolVal>(V)) return failure(true);
-      Elements.push_back(cast<ConstPoolVal>(V));
+      if (!V || !isa<Constant>(V)) return failure(true);
+      Elements.push_back(cast<Constant>(V));
     }
-    V = ConstPoolArray::get(AT, Elements);
+    V = ConstantArray::get(AT, Elements);
     break;
   }
 
@@ -262,17 +261,17 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
     const StructType *ST = cast<StructType>(Ty);
     const StructType::ElementTypes &ET = ST->getElementTypes();
 
-    vector<ConstPoolVal *> Elements;
+    vector<Constant *> Elements;
     for (unsigned i = 0; i < ET.size(); ++i) {
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) return failure(true);
       Value *V = getValue(ET[i], Slot, false);
-      if (!V || !isa<ConstPoolVal>(V))
+      if (!V || !isa<Constant>(V))
 	return failure(true);
-      Elements.push_back(cast<ConstPoolVal>(V));      
+      Elements.push_back(cast<Constant>(V));      
     }
 
-    V = ConstPoolStruct::get(ST, Elements);
+    V = ConstantStruct::get(ST, Elements);
     break;
   }    
 
@@ -281,11 +280,11 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
     unsigned SubClass;
     if (read_vbr(Buf, EndBuf, SubClass)) return failure(true);
     switch (SubClass) {
-    case 0:    // ConstPoolPointerNull value...
-      V = ConstPoolPointerNull::get(PT);
+    case 0:    // ConstantPointerNull value...
+      V = ConstantPointerNull::get(PT);
       break;
 
-    case 1: {  // ConstPoolPointerRef value...
+    case 1: {  // ConstantPointerRef value...
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) return failure(true);
       BCR_TRACE(4, "CPPR: Type: '" << Ty << "'  slot: " << Slot << "\n");
@@ -317,7 +316,7 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
 	}
       }
       
-      V = ConstPoolPointerRef::get(GV);
+      V = ConstantPointerRef::get(GV);
       break;
     }
     default:
@@ -352,8 +351,8 @@ bool BytecodeParser::ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
       if (parseTypeConstants(Buf, EndBuf, TypeTab, NumEntries)) return true;
     } else {
       for (unsigned i = 0; i < NumEntries; ++i) {
-	ConstPoolVal *I;
-	if (parseConstPoolValue(Buf, EndBuf, Ty, I)) return failure(true);
+	Constant *I;
+	if (parseConstantValue(Buf, EndBuf, Ty, I)) return failure(true);
 	BCR_TRACE(4, "Read Constant: '" << I << "'\n");
 	if (insertValue(I, Tab) == -1) return failure(true);
       }

@@ -115,7 +115,7 @@ void MutateStructTypes::AdjustIndices(const CompositeType *OldTy,
 
   if (const StructType *OldST = dyn_cast<StructType>(OldTy)) {
     // Figure out what the current index is...
-    unsigned ElNum = cast<ConstPoolUInt>(Idx[i])->getValue();
+    unsigned ElNum = cast<ConstantUInt>(Idx[i])->getValue();
     assert(ElNum < OldST->getElementTypes().size());
 
     map<const StructType*, TransformType>::iterator I = Transforms.find(OldST);
@@ -123,7 +123,7 @@ void MutateStructTypes::AdjustIndices(const CompositeType *OldTy,
       assert(ElNum < I->second.second.size());
       // Apply the XForm specified by Transforms map...
       unsigned NewElNum = I->second.second[ElNum];
-      Idx[i] = ConstPoolUInt::get(Type::UByteTy, NewElNum);
+      Idx[i] = ConstantUInt::get(Type::UByteTy, NewElNum);
     }
   }
 
@@ -140,12 +140,12 @@ Value *MutateStructTypes::ConvertValue(const Value *V) {
   // Ignore null values and simple constants..
   if (V == 0) return 0;
 
-  if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(V)) {
+  if (Constant *CPV = dyn_cast<Constant>(V)) {
     if (V->getType()->isPrimitiveType())
       return CPV;
 
-    if (isa<ConstPoolPointerNull>(CPV))
-      return ConstPoolPointerNull::get(
+    if (isa<ConstantPointerNull>(CPV))
+      return ConstantPointerNull::get(
                       cast<PointerType>(ConvertType(V->getType())));
     assert(0 && "Unable to convert constpool val of this type!");
   }

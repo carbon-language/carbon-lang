@@ -22,13 +22,13 @@
 #include "llvm/iPHINode.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Type.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 
 using analysis::ExprType;
 
 
 static bool isLoopInvariant(const Value *V, const cfg::Loop *L) {
-  if (isa<ConstPoolVal>(V) || isa<MethodArgument>(V) || isa<GlobalValue>(V))
+  if (isa<Constant>(V) || isa<MethodArgument>(V) || isa<GlobalValue>(V))
     return true;
   
   const Instruction *I = cast<Instruction>(V);
@@ -41,8 +41,8 @@ enum InductionVariable::iType
 InductionVariable::Classify(const Value *Start, const Value *Step,
 			    const cfg::Loop *L = 0) {
   // Check for cannonical and simple linear expressions now...
-  if (ConstPoolInt *CStart = dyn_cast<ConstPoolInt>(Start))
-    if (ConstPoolInt *CStep = dyn_cast<ConstPoolInt>(Step)) {
+  if (ConstantInt *CStart = dyn_cast<ConstantInt>(Start))
+    if (ConstantInt *CStep = dyn_cast<ConstantInt>(Step)) {
       if (CStart->equalsInt(0) && CStep->equalsInt(1))
 	return Cannonical;
       else
@@ -97,8 +97,8 @@ InductionVariable::InductionVariable(PHINode *P, cfg::LoopInfo *LoopInfo) {
     const Type *ETy = Phi->getType();
     if (ETy->isPointerType()) ETy = Type::ULongTy;
 
-    Start = (Value*)(E1.Offset ? E1.Offset : ConstPoolInt::get(ETy, 0));
-    Step  = (Value*)(E2.Offset ? E2.Offset : ConstPoolInt::get(ETy, 0));
+    Start = (Value*)(E1.Offset ? E1.Offset : ConstantInt::get(ETy, 0));
+    Step  = (Value*)(E2.Offset ? E2.Offset : ConstantInt::get(ETy, 0));
   } else {
     // Okay, at this point, we know that we have loop information...
 
@@ -111,7 +111,7 @@ InductionVariable::InductionVariable(PHINode *P, cfg::LoopInfo *LoopInfo) {
     Step = 0;
 
     if (V2 == Phi) {  // referencing the PHI directly?  Must have zero step
-      Step = ConstPoolVal::getNullConstant(Phi->getType());
+      Step = Constant::getNullConstant(Phi->getType());
     } else if (BinaryOperator *I = dyn_cast<BinaryOperator>(V2)) {
       // TODO: This could be much better...
       if (I->getOpcode() == Instruction::Add) {
@@ -129,7 +129,7 @@ InductionVariable::InductionVariable(PHINode *P, cfg::LoopInfo *LoopInfo) {
 
       const Type *ETy = Phi->getType();
       if (ETy->isPointerType()) ETy = Type::ULongTy;
-      Step  = (Value*)(StepE.Offset ? StepE.Offset : ConstPoolInt::get(ETy, 0));
+      Step  = (Value*)(StepE.Offset ? StepE.Offset : ConstantInt::get(ETy, 0));
     }
   }
 

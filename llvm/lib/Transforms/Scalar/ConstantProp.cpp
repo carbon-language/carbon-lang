@@ -29,12 +29,12 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 
 inline static bool 
 ConstantFoldUnaryInst(BasicBlock *BB, BasicBlock::iterator &II,
-                      UnaryOperator *Op, ConstPoolVal *D) {
-  ConstPoolVal *ReplaceWith = 
+                      UnaryOperator *Op, Constant *D) {
+  Constant *ReplaceWith = 
     opt::ConstantFoldUnaryInstruction(Op->getOpcode(), D);
 
   if (!ReplaceWith) return false;   // Nothing new to change...
@@ -56,8 +56,8 @@ ConstantFoldUnaryInst(BasicBlock *BB, BasicBlock::iterator &II,
 
 inline static bool 
 ConstantFoldCast(BasicBlock *BB, BasicBlock::iterator &II,
-                 CastInst *CI, ConstPoolVal *D) {
-  ConstPoolVal *ReplaceWith = 
+                 CastInst *CI, Constant *D) {
+  Constant *ReplaceWith = 
     opt::ConstantFoldCastInstruction(D, CI->getType());
 
   if (!ReplaceWith) return false;   // Nothing new to change...
@@ -80,8 +80,8 @@ ConstantFoldCast(BasicBlock *BB, BasicBlock::iterator &II,
 inline static bool 
 ConstantFoldBinaryInst(BasicBlock *BB, BasicBlock::iterator &II,
 		       BinaryOperator *Op,
-		       ConstPoolVal *D1, ConstPoolVal *D2) {
-  ConstPoolVal *ReplaceWith =
+		       Constant *D1, Constant *D2) {
+  Constant *ReplaceWith =
     opt::ConstantFoldBinaryInstruction(Op->getOpcode(), D1, D2);
   if (!ReplaceWith) return false;   // Nothing new to change...
 
@@ -111,7 +111,7 @@ bool opt::ConstantFoldTerminator(TerminatorInst *T) {
     BasicBlock *Dest1 = cast<BasicBlock>(BI->getOperand(0));
     BasicBlock *Dest2 = cast<BasicBlock>(BI->getOperand(1));
 
-    if (ConstPoolBool *Cond = dyn_cast<ConstPoolBool>(BI->getCondition())) {
+    if (ConstantBool *Cond = dyn_cast<ConstantBool>(BI->getCondition())) {
       // Are we branching on constant?
       // YES.  Change to unconditional branch...
       BasicBlock *Destination = Cond->getValue() ? Dest1 : Dest2;
@@ -160,18 +160,18 @@ bool opt::ConstantPropogation::doConstantPropogation(BasicBlock *BB,
 						     BasicBlock::iterator &II) {
   Instruction *Inst = *II;
   if (BinaryOperator *BInst = dyn_cast<BinaryOperator>(Inst)) {
-    ConstPoolVal *D1 = dyn_cast<ConstPoolVal>(Inst->getOperand(0));
-    ConstPoolVal *D2 = dyn_cast<ConstPoolVal>(Inst->getOperand(1));
+    Constant *D1 = dyn_cast<Constant>(Inst->getOperand(0));
+    Constant *D2 = dyn_cast<Constant>(Inst->getOperand(1));
 
     if (D1 && D2)
       return ConstantFoldBinaryInst(BB, II, cast<BinaryOperator>(Inst), D1, D2);
 
   } else if (CastInst *CI = dyn_cast<CastInst>(Inst)) {
-    ConstPoolVal *D = dyn_cast<ConstPoolVal>(CI->getOperand(0));
+    Constant *D = dyn_cast<Constant>(CI->getOperand(0));
     if (D) return ConstantFoldCast(BB, II, CI, D);
                                          
   } else if (UnaryOperator *UInst = dyn_cast<UnaryOperator>(Inst)) {
-    ConstPoolVal *D = dyn_cast<ConstPoolVal>(UInst->getOperand(0));
+    Constant *D = dyn_cast<Constant>(UInst->getOperand(0));
     if (D) return ConstantFoldUnaryInst(BB, II, UInst, D);
   } else if (TerminatorInst *TInst = dyn_cast<TerminatorInst>(Inst)) {
     return opt::ConstantFoldTerminator(TInst);

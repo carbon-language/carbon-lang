@@ -53,7 +53,7 @@ public:
   inline CachedWriter &operator<<(const Instruction *X) {
     return *this << (const Value*)X; 
   }
-  inline CachedWriter &operator<<(const ConstPoolVal *X) {
+  inline CachedWriter &operator<<(const Constant *X) {
     return *this << (const Value*)X; 
   }
   inline CachedWriter &operator<<(const Type *X) {

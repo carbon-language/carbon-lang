@@ -98,9 +98,9 @@ bool Type::isLosslesslyConvertableTo(const Type *Ty) const {
 
 
 bool StructType::indexValid(const Value *V) const {
-  if (!isa<ConstPoolVal>(V)) return false;
+  if (!isa<Constant>(V)) return false;
   if (V->getType() != Type::UByteTy) return false;
-  unsigned Idx = cast<ConstPoolUInt>(V)->getValue();
+  unsigned Idx = cast<ConstantUInt>(V)->getValue();
   return Idx < ETypes.size();
 }
 
@@ -108,9 +108,9 @@ bool StructType::indexValid(const Value *V) const {
 // element.  For a structure type, this must be a constant value...
 //
 const Type *StructType::getTypeAtIndex(const Value *V) const {
-  assert(isa<ConstPoolVal>(V) && "Structure index must be a constant!!");
+  assert(isa<Constant>(V) && "Structure index must be a constant!!");
   assert(V->getType() == Type::UByteTy && "Structure index must be ubyte!");
-  unsigned Idx = cast<ConstPoolUInt>(V)->getValue();
+  unsigned Idx = cast<ConstantUInt>(V)->getValue();
   assert(Idx < ETypes.size() && "Structure index out of range!");
   assert(indexValid(V) && "Invalid structure index!"); // Duplicate check
 

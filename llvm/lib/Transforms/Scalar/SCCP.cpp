@@ -19,7 +19,7 @@
 #include "llvm/Optimizations/ConstantHandling.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
@@ -38,28 +38,28 @@
 //
 class InstVal {
   enum { 
-    Undefined,           // This instruction has no known value
-    Constant,            // This instruction has a constant value
+    undefined,           // This instruction has no known value
+    constant,            // This instruction has a constant value
     // Range,            // This instruction is known to fall within a range
-    Overdefined          // This instruction has an unknown value
-  } LatticeValue;    // The current lattice position
-  ConstPoolVal *ConstantVal;     // If Constant value, the current value
+    overdefined          // This instruction has an unknown value
+  } LatticeValue;        // The current lattice position
+  Constant *ConstantVal; // If Constant value, the current value
 public:
-  inline InstVal() : LatticeValue(Undefined), ConstantVal(0) {}
+  inline InstVal() : LatticeValue(undefined), ConstantVal(0) {}
 
   // markOverdefined - Return true if this is a new status to be in...
   inline bool markOverdefined() {
-    if (LatticeValue != Overdefined) {
-      LatticeValue = Overdefined;
+    if (LatticeValue != overdefined) {
+      LatticeValue = overdefined;
       return true;
     }
     return false;
   }
 
   // markConstant - Return true if this is a new status for us...
-  inline bool markConstant(ConstPoolVal *V) {
-    if (LatticeValue != Constant) {
-      LatticeValue = Constant;
+  inline bool markConstant(Constant *V) {
+    if (LatticeValue != constant) {
+      LatticeValue = constant;
       ConstantVal = V;
       return true;
     } else {
@@ -68,11 +68,11 @@ public:
     return false;
   }
 
-  inline bool isUndefined()   const { return LatticeValue == Undefined; }
-  inline bool isConstant()    const { return LatticeValue == Constant; }
-  inline bool isOverdefined() const { return LatticeValue == Overdefined; }
+  inline bool isUndefined()   const { return LatticeValue == undefined; }
+  inline bool isConstant()    const { return LatticeValue == constant; }
+  inline bool isOverdefined() const { return LatticeValue == overdefined; }
 
-  inline ConstPoolVal *getConstant() const { return ConstantVal; }
+  inline Constant *getConstant() const { return ConstantVal; }
 };
 
 
@@ -113,7 +113,7 @@ private:
   // is not already a constant, add it to the instruction work list so that 
   // the users of the instruction are updated later.
   //
-  inline bool markConstant(Instruction *I, ConstPoolVal *V) {
+  inline bool markConstant(Instruction *I, Constant *V) {
     //cerr << "markConstant: " << V << " = " << I;
     if (ValueState[I].markConstant(V)) {
       InstWorkList.push_back(I);
@@ -147,7 +147,7 @@ private:
     map<Value*, InstVal>::iterator I = ValueState.find(V);
     if (I != ValueState.end()) return I->second;  // Common case, in the map
       
-    if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(V)) {//Constants are constant
+    if (Constant *CPV = dyn_cast<Constant>(V)) {  // Constants are constant
       ValueState[CPV].markConstant(CPV);
     } else if (isa<MethodArgument>(V)) {          // MethodArgs are overdefined
       ValueState[V].markOverdefined();
@@ -246,7 +246,7 @@ bool SCCP::doSCCP() {
     Instruction *Inst = *II;
     InstVal &IV = ValueState[Inst];
     if (IV.isConstant()) {
-      ConstPoolVal *Const = IV.getConstant();
+      Constant *Const = IV.getConstant();
       // cerr << "Constant: " << Inst << "  is: " << Const;
 
       // Replaces all of the uses of a variable with uses of the constant.
@@ -393,7 +393,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
       markExecutable(BI->getSuccessor(1));
     } else if (BCValue.isConstant()) {
       // Constant condition variables mean the branch can only go a single way.
-      ConstPoolBool *CPB = cast<ConstPoolBool>(BCValue.getConstant());
+      ConstantBool *CPB = cast<ConstantBool>(BCValue.getConstant());
       if (CPB->getValue())       // If the branch condition is TRUE...
         markExecutable(BI->getSuccessor(0));
       else                       // Else if the br cond is FALSE...
@@ -409,7 +409,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
       for(unsigned i = 0; BasicBlock *Succ = SI->getSuccessor(i); ++i)
         markExecutable(Succ);
     } else if (SCValue.isConstant()) {
-      ConstPoolVal *CPV = SCValue.getConstant();
+      Constant *CPV = SCValue.getConstant();
       // Make sure to skip the "default value" which isn't a value
       for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i) {
         if (SI->getSuccessorValue(i) == CPV) {// Found the right branch...
@@ -443,7 +443,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
     if (VState.isOverdefined()) {        // Inherit overdefinedness of operand
       markOverdefined(I);
     } else if (VState.isConstant()) {    // Propogate constant value
-      ConstPoolVal *Result = isa<CastInst>(I)
+      Constant *Result = isa<CastInst>(I)
         ? opt::ConstantFoldCastInstruction(VState.getConstant(), I->getType())
         : opt::ConstantFoldUnaryInstruction(I->getOpcode(),
                                             VState.getConstant());
@@ -470,7 +470,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
     if (V1State.isOverdefined() || V2State.isOverdefined()) {
       markOverdefined(I);
     } else if (V1State.isConstant() && V2State.isConstant()) {
-      ConstPoolVal *Result =
+      Constant *Result =
         opt::ConstantFoldBinaryInstruction(I->getOpcode(),
                                              V1State.getConstant(),
                                              V2State.getConstant());

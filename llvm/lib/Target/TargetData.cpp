@@ -12,7 +12,7 @@
 
 #include "llvm/Target/TargetData.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 
 static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
 			       unsigned &Size, unsigned char &Alignment);
@@ -146,7 +146,7 @@ unsigned char TargetData::getTypeAlignment(const Type *Ty) const {
 }
 
 unsigned TargetData::getIndexedOffset(const Type *ptrTy,
-				      const vector<ConstPoolVal*> &Idx) const {
+				      const vector<Constant*> &Idx) const {
   const PointerType *PtrTy = cast<const PointerType>(ptrTy);
   unsigned Result = 0;
 
@@ -156,7 +156,7 @@ unsigned TargetData::getIndexedOffset(const Type *ptrTy,
   for (unsigned CurIDX = 0; CurIDX < Idx.size(); ++CurIDX) {
     if (const StructType *STy = dyn_cast<const StructType>(Ty)) {
       assert(Idx[CurIDX]->getType() == Type::UByteTy && "Illegal struct idx");
-      unsigned FieldNo = ((ConstPoolUInt*)Idx[CurIDX])->getValue();
+      unsigned FieldNo = cast<ConstantUInt>(Idx[CurIDX])->getValue();
 
       // Get structure layout information...
       const StructLayout *Layout = getStructLayout(STy);

@@ -23,7 +23,7 @@
 //
 static inline 
 bool mergeDuplicateConstants(Module *M, unsigned &ConstantNo,
-                             map<ConstPoolVal*, GlobalVariable*> &CMap) {
+                             map<Constant*, GlobalVariable*> &CMap) {
   Module::GlobalListType &GList = M->getGlobalList();
   if (GList.size() <= ConstantNo) return false;   // No new constants
   bool MadeChanges = false;
@@ -32,10 +32,10 @@ bool mergeDuplicateConstants(Module *M, unsigned &ConstantNo,
     GlobalVariable *GV = GList[ConstantNo];
     if (GV->isConstant()) {  // Only process constants
       assert(GV->hasInitializer() && "Globals constants must have inits!");
-      ConstPoolVal *Init = GV->getInitializer();
+      Constant *Init = GV->getInitializer();
 
       // Check to see if the initializer is already known...
-      map<ConstPoolVal*, GlobalVariable*>::iterator I = CMap.find(Init);
+      map<Constant*, GlobalVariable*>::iterator I = CMap.find(Init);
 
       if (I == CMap.end()) {    // Nope, add it to the map
         CMap.insert(make_pair(Init, GV));
@@ -59,7 +59,7 @@ bool mergeDuplicateConstants(Module *M, unsigned &ConstantNo,
 // deal with passes.
 //
 bool ConstantMerge::mergeDuplicateConstants(Module *M) {
-  map<ConstPoolVal*, GlobalVariable*> Constants;
+  map<Constant*, GlobalVariable*> Constants;
   unsigned LastConstantSeen = 0;
   return ::mergeDuplicateConstants(M, LastConstantSeen, Constants);
 }

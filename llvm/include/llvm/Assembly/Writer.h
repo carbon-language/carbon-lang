@@ -35,7 +35,7 @@ void WriteToAssembly(const GlobalVariable *G, ostream &o);
 void WriteToAssembly(const Method  *Method, ostream &o);
 void WriteToAssembly(const BasicBlock  *BB, ostream &o);
 void WriteToAssembly(const Instruction *In, ostream &o);
-void WriteToAssembly(const ConstPoolVal *V, ostream &o);
+void WriteToAssembly(const Constant     *V, ostream &o);
 
 // WriteTypeSymbolic - This attempts to write the specified type as a symbolic
 // type, iff there is an entry in the modules symbol table for the specified
@@ -86,7 +86,7 @@ inline ostream &operator<<(ostream &o, const Instruction *I) {
   WriteToAssembly(I, o); return o;
 }
 
-inline ostream &operator<<(ostream &o, const ConstPoolVal *I) {
+inline ostream &operator<<(ostream &o, const Constant *I) {
   WriteToAssembly(I, o); return o;
 }
 
@@ -99,7 +99,7 @@ inline ostream &operator<<(ostream &o, const Type *T) {
 inline ostream &operator<<(ostream &o, const Value *I) {
   switch (I->getValueType()) {
   case Value::TypeVal:       return o << cast<const Type>(I);
-  case Value::ConstantVal:   WriteToAssembly(cast<ConstPoolVal>(I)  , o); break;
+  case Value::ConstantVal:   WriteToAssembly(cast<Constant>(I)      , o); break;
   case Value::MethodArgumentVal: return o << I->getType() << " "<< I->getName();
   case Value::InstructionVal:WriteToAssembly(cast<Instruction>(I)   , o); break;
   case Value::BasicBlockVal: WriteToAssembly(cast<BasicBlock>(I)    , o); break;

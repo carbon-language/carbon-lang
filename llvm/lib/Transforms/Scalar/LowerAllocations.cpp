@@ -13,7 +13,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 
 // doPassInitialization - For the lower allocations pass, this ensures that a
 // module contains a declaration for a malloc and a free function.
@@ -80,7 +80,7 @@ bool LowerAllocations::doPerMethodWork(Method *M) {
         unsigned Size = DataLayout.getTypeSize(AllocTy);
 
         // malloc(type) becomes sbyte *malloc(constint)
-        Value *MallocArg = ConstPoolUInt::get(Type::UIntTy, Size);
+        Value *MallocArg = ConstantUInt::get(Type::UIntTy, Size);
         if (MI->getNumOperands() && Size == 1) {
           MallocArg = MI->getOperand(0);         // Operand * 1 = Operand
         } else if (MI->getNumOperands()) {

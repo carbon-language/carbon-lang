@@ -17,7 +17,7 @@
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Method.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Type.h"
 
@@ -81,7 +81,7 @@ UltraSparcInstrInfo::UltraSparcInstrInfo(const TargetMachine& tgt)
 
 
 // Create an instruction sequence to put the constant `val' into
-// the virtual register `dest'.  `val' may be a ConstPoolVal or a
+// the virtual register `dest'.  `val' may be a Constant or a
 // GlobalValue, viz., the constant address of a global variable or function.
 // The generated instructions are returned in `minstrVec'.
 // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
@@ -94,7 +94,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
 {
   MachineInstr* minstr;
   
-  assert(isa<ConstPoolVal>(val) || isa<GlobalValue>(val) &&
+  assert(isa<Constant>(val) || isa<GlobalValue>(val) &&
          "I only know about constant values and global addresses");
   
   // Use a "set" instruction for known constants that can go in an integer reg.
@@ -127,7 +127,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
                            PointerType::get(val->getType()), val, NULL);
       tempVec.push_back(tmpReg);
       
-      if (isa<ConstPoolVal>(val))
+      if (isa<Constant>(val))
         {
           // Create another TmpInstruction for the hidden integer register
           TmpInstruction* addrReg =
@@ -146,7 +146,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
       minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,addrVal);
       minstrVec.push_back(minstr);
       
-      if (isa<ConstPoolVal>(val))
+      if (isa<Constant>(val))
         {
           // addrVal->addMachineInstruction(minstr);
       

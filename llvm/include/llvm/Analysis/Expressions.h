@@ -13,7 +13,7 @@
 #include <assert.h>
 class Type;
 class Value;
-class ConstPoolInt;
+class ConstantInt;
 
 namespace analysis {
 
@@ -35,16 +35,16 @@ struct ExprType {
     ScaledLinear,        // Expr is scaled linear exp, Value is Scale*Var+Offset
   } ExprTy;
 
-  const ConstPoolInt *Offset;  // Offset of expr, or null if 0
-  Value              *Var;     // Var referenced, if Linear or above (null if 0)
-  const ConstPoolInt *Scale;   // Scale of var if ScaledLinear expr (null if 1)
+  const ConstantInt *Offset;  // Offset of expr, or null if 0
+  Value             *Var;     // Var referenced, if Linear or above (null if 0)
+  const ConstantInt *Scale;   // Scale of var if ScaledLinear expr (null if 1)
 
-  inline ExprType(const ConstPoolInt *CPV = 0) {
+  inline ExprType(const ConstantInt *CPV = 0) {
     Offset = CPV; Var = 0; Scale = 0;
     ExprTy = Constant;
   }
   ExprType(Value *Val);        // Create a linear or constant expression
-  ExprType(const ConstPoolInt *scale, Value *var, const ConstPoolInt *offset);
+  ExprType(const ConstantInt *scale, Value *var, const ConstantInt *offset);
 
   // If this expression has an intrinsic type, return it.  If it is zero, return
   // the specified type.

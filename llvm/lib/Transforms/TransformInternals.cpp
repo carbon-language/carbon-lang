@@ -8,7 +8,7 @@
 #include "TransformInternals.h"
 #include "llvm/Method.h"
 #include "llvm/Type.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/Analysis/Expressions.h"
 #include "llvm/iOther.h"
 
@@ -96,7 +96,7 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
            (i == SL->MemberOffsets.size()-1 || Offset <SL->MemberOffsets[i+1]));
     
     // Make sure to save the current index...
-    Offsets.push_back(ConstPoolUInt::get(Type::UByteTy, i));
+    Offsets.push_back(ConstantUInt::get(Type::UByteTy, i));
     ThisOffset = SL->MemberOffsets[i];
     NextType = STy->getElementTypes()[i];
   } else {
@@ -106,7 +106,7 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
 
     NextType = ATy->getElementType();
     unsigned ChildSize = TD.getTypeSize(NextType);
-    Offsets.push_back(ConstPoolUInt::get(Type::UIntTy, Offset/ChildSize));
+    Offsets.push_back(ConstantUInt::get(Type::UIntTy, Offset/ChildSize));
     ThisOffset = (Offset/ChildSize)*ChildSize;
   }
 
@@ -183,7 +183,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
       if (Offset >= ElSize) {
         // Calculate the index that we are entering into the array cell with
         unsigned Index = Offset/ElSize;
-        Indices.push_back(ConstPoolUInt::get(Type::UIntTy, Index));
+        Indices.push_back(ConstantUInt::get(Type::UIntTy, Index));
         Offset -= Index*ElSize;               // Consume part of the offset
 
       } else if (Scale && Scale != 1) {
@@ -204,7 +204,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
         // Must be indexing a small amount into the first cell of the array
         // Just index into element zero of the array here.
         //
-        Indices.push_back(ConstPoolUInt::get(Type::UIntTy, 0));
+        Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
       }
       NextTy = ElTy;
     }

@@ -11,13 +11,14 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
 #include "llvm/Type.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/GlobalVariable.h"
 #include <math.h>  // For fmod
 #include <signal.h>
 #include <setjmp.h>
+
 
 // Create a TargetData structure to handle memory addressing and size/alignment
 // computations
@@ -70,24 +71,24 @@ static unsigned getOperandSlot(Value *V) {
   case Type::TY##TyID: Result.TY##Val = cast<CLASS>(CPV)->getValue(); break
 
 static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
-  if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(V)) {
+  if (Constant *CPV = dyn_cast<Constant>(V)) {
     GenericValue Result;
     switch (CPV->getType()->getPrimitiveID()) {
-      GET_CONST_VAL(Bool   , ConstPoolBool);
-      GET_CONST_VAL(UByte  , ConstPoolUInt);
-      GET_CONST_VAL(SByte  , ConstPoolSInt);
-      GET_CONST_VAL(UShort , ConstPoolUInt);
-      GET_CONST_VAL(Short  , ConstPoolSInt);
-      GET_CONST_VAL(UInt   , ConstPoolUInt);
-      GET_CONST_VAL(Int    , ConstPoolSInt);
-      GET_CONST_VAL(ULong  , ConstPoolUInt);
-      GET_CONST_VAL(Long   , ConstPoolSInt);
-      GET_CONST_VAL(Float  , ConstPoolFP);
-      GET_CONST_VAL(Double , ConstPoolFP);
+      GET_CONST_VAL(Bool   , ConstantBool);
+      GET_CONST_VAL(UByte  , ConstantUInt);
+      GET_CONST_VAL(SByte  , ConstantSInt);
+      GET_CONST_VAL(UShort , ConstantUInt);
+      GET_CONST_VAL(Short  , ConstantSInt);
+      GET_CONST_VAL(UInt   , ConstantUInt);
+      GET_CONST_VAL(Int    , ConstantSInt);
+      GET_CONST_VAL(ULong  , ConstantUInt);
+      GET_CONST_VAL(Long   , ConstantSInt);
+      GET_CONST_VAL(Float  , ConstantFP);
+      GET_CONST_VAL(Double , ConstantFP);
     case Type::PointerTyID:
-      if (isa<ConstPoolPointerNull>(CPV)) {
+      if (isa<ConstantPointerNull>(CPV)) {
         Result.PointerVal = 0;
-      } else if (ConstPoolPointerRef *CPR =dyn_cast<ConstPoolPointerRef>(CPV)) {
+      } else if (ConstantPointerRef *CPR =dyn_cast<ConstantPointerRef>(CPV)) {
         assert(0 && "Not implemented!");
       } else {
         assert(0 && "Unknown constant pointer type!");
@@ -113,7 +114,7 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
 }
 
 static void printOperandInfo(Value *V, ExecutionContext &SF) {
-  if (isa<ConstPoolVal>(V)) {
+  if (isa<Constant>(V)) {
     cout << "Constant Pool Value\n";
   } else if (isa<GlobalValue>(V)) {
     cout << "Global Value\n";
@@ -156,10 +157,10 @@ void Interpreter::initializeExecutionEngine() {
   initializeSignalHandlers();
 }
 
-// InitializeMemory - Recursive function to apply a ConstPool value into the
+// InitializeMemory - Recursive function to apply a Constant value into the
 // specified memory location...
 //
-static void InitializeMemory(ConstPoolVal *Init, char *Addr) {
+static void InitializeMemory(Constant *Init, char *Addr) {
 #define INITIALIZE_MEMORY(TYID, CLASS, TY)  \
   case Type::TYID##TyID: {                  \
     TY Tmp = cast<CLASS>(Init)->getValue(); \
@@ -167,43 +168,43 @@ static void InitializeMemory(ConstPoolVal *Init, char *Addr) {
   } return
 
   switch (Init->getType()->getPrimitiveID()) {
-    INITIALIZE_MEMORY(Bool   , ConstPoolBool, bool);
-    INITIALIZE_MEMORY(UByte  , ConstPoolUInt, unsigned char);
-    INITIALIZE_MEMORY(SByte  , ConstPoolSInt, signed   char);
-    INITIALIZE_MEMORY(UShort , ConstPoolUInt, unsigned short);
-    INITIALIZE_MEMORY(Short  , ConstPoolSInt, signed   short);
-    INITIALIZE_MEMORY(UInt   , ConstPoolUInt, unsigned int);
-    INITIALIZE_MEMORY(Int    , ConstPoolSInt, signed   int);
-    INITIALIZE_MEMORY(ULong  , ConstPoolUInt, uint64_t);
-    INITIALIZE_MEMORY(Long   , ConstPoolSInt,  int64_t);
-    INITIALIZE_MEMORY(Float  , ConstPoolFP  , float);
-    INITIALIZE_MEMORY(Double , ConstPoolFP  , double);
+    INITIALIZE_MEMORY(Bool   , ConstantBool, bool);
+    INITIALIZE_MEMORY(UByte  , ConstantUInt, unsigned char);
+    INITIALIZE_MEMORY(SByte  , ConstantSInt, signed   char);
+    INITIALIZE_MEMORY(UShort , ConstantUInt, unsigned short);
+    INITIALIZE_MEMORY(Short  , ConstantSInt, signed   short);
+    INITIALIZE_MEMORY(UInt   , ConstantUInt, unsigned int);
+    INITIALIZE_MEMORY(Int    , ConstantSInt, signed   int);
+    INITIALIZE_MEMORY(ULong  , ConstantUInt, uint64_t);
+    INITIALIZE_MEMORY(Long   , ConstantSInt,  int64_t);
+    INITIALIZE_MEMORY(Float  , ConstantFP  , float);
+    INITIALIZE_MEMORY(Double , ConstantFP  , double);
 #undef INITIALIZE_MEMORY
 
   case Type::ArrayTyID: {
-    ConstPoolArray *CPA = cast<ConstPoolArray>(Init);
+    ConstantArray *CPA = cast<ConstantArray>(Init);
     const vector<Use> &Val = CPA->getValues();
     unsigned ElementSize = 
       TD.getTypeSize(cast<ArrayType>(CPA->getType())->getElementType());
     for (unsigned i = 0; i < Val.size(); ++i)
-      InitializeMemory(cast<ConstPoolVal>(Val[i].get()), Addr+i*ElementSize);
+      InitializeMemory(cast<Constant>(Val[i].get()), Addr+i*ElementSize);
     return;
   }
 
   case Type::StructTyID: {
-    ConstPoolStruct *CPS = cast<ConstPoolStruct>(Init);
+    ConstantStruct *CPS = cast<ConstantStruct>(Init);
     const StructLayout *SL=TD.getStructLayout(cast<StructType>(CPS->getType()));
     const vector<Use> &Val = CPS->getValues();
     for (unsigned i = 0; i < Val.size(); ++i)
-      InitializeMemory(cast<ConstPoolVal>(Val[i].get()),
+      InitializeMemory(cast<Constant>(Val[i].get()),
                        Addr+SL->MemberOffsets[i]);
     return;
   }
 
   case Type::PointerTyID:
-    if (isa<ConstPoolPointerNull>(Init)) {
+    if (isa<ConstantPointerNull>(Init)) {
       *(void**)Addr = 0;
-    } else if (ConstPoolPointerRef *CPR = dyn_cast<ConstPoolPointerRef>(Init)) {
+    } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Init)) {
       GlobalAddress *Address = 
        (GlobalAddress*)CPR->getValue()->getOrCreateAnnotation(GlobalAddressAID);
       *(void**)Addr = (GenericValue*)Address->Ptr;
@@ -245,7 +246,7 @@ Annotation *GlobalAddress::Create(AnnotationID AID, const Annotable *O, void *){
     Ty = cast<const ArrayType>(Ty)->getElementType();  // Get the actual type...
 
     // Get the number of elements being allocated by the array...
-    NumElements =cast<ConstPoolArray>(GV->getInitializer())->getValues().size();
+    NumElements =cast<ConstantArray>(GV->getInitializer())->getValues().size();
   }
 
   // Allocate enough memory to hold the type...
@@ -778,7 +779,7 @@ static PointerTy getElementOffset(MemAccessInst *I, ExecutionContext &SF) {
       const StructLayout *SLO = TD.getStructLayout(STy);
       
       // Indicies must be ubyte constants...
-      const ConstPoolUInt *CPU = cast<ConstPoolUInt>(I->getOperand(ArgOff++));
+      const ConstantUInt *CPU = cast<ConstantUInt>(I->getOperand(ArgOff++));
       assert(CPU->getType() == Type::UByteTy);
       unsigned Index = CPU->getValue();
       

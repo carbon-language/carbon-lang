@@ -5,10 +5,10 @@
 //
 // Unfortunately we can't overload operators on pointer types (like this:)
 //
-//      inline bool operator==(const ConstPoolVal *V1, const ConstPoolVal *V2)
+//      inline bool operator==(const Constant *V1, const Constant *V2)
 //
 // so we must make due with references, even though it leads to some butt ugly
-// looking code downstream.  *sigh*  (ex:  ConstPoolVal *Result = *V1 + *v2; )
+// looking code downstream.  *sigh*  (ex:  Constant *Result = *V1 + *v2; )
 //
 //===----------------------------------------------------------------------===//
 //
@@ -33,7 +33,7 @@
 #ifndef LLVM_OPT_CONSTANTHANDLING_H
 #define LLVM_OPT_CONSTANTHANDLING_H
 
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
 class PointerType;
@@ -44,15 +44,15 @@ namespace opt {
 //  Implement == and != directly...
 //===----------------------------------------------------------------------===//
 
-inline ConstPoolBool *operator==(const ConstPoolVal &V1, 
-                                 const ConstPoolVal &V2) {
+inline ConstantBool *operator==(const Constant &V1, 
+                                const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstPoolBool::get(&V1 == &V2);
+  return ConstantBool::get(&V1 == &V2);
 }
 
-inline ConstPoolBool *operator!=(const ConstPoolVal &V1, 
-                                 const ConstPoolVal &V2) {
-  return ConstPoolBool::get(&V1 != &V2);
+inline ConstantBool *operator!=(const Constant &V1, 
+                                const Constant &V2) {
+  return ConstantBool::get(&V1 != &V2);
 }
 
 //===----------------------------------------------------------------------===//
@@ -66,35 +66,35 @@ public:
   static AnnotationID AID;    // AnnotationID for this class
 
   // Unary Operators...
-  virtual ConstPoolVal *op_not(const ConstPoolVal *V) const = 0;
+  virtual Constant *op_not(const Constant *V) const = 0;
 
   // Binary Operators...
-  virtual ConstPoolVal *add(const ConstPoolVal *V1, 
-                            const ConstPoolVal *V2) const = 0;
-  virtual ConstPoolVal *sub(const ConstPoolVal *V1, 
-                            const ConstPoolVal *V2) const = 0;
-  virtual ConstPoolVal *mul(const ConstPoolVal *V1, 
-			    const ConstPoolVal *V2) const = 0;
+  virtual Constant *add(const Constant *V1, 
+                        const Constant *V2) const = 0;
+  virtual Constant *sub(const Constant *V1, 
+                        const Constant *V2) const = 0;
+  virtual Constant *mul(const Constant *V1, 
+                        const Constant *V2) const = 0;
 
-  virtual ConstPoolBool *lessthan(const ConstPoolVal *V1, 
-                                  const ConstPoolVal *V2) const = 0;
+  virtual ConstantBool *lessthan(const Constant *V1, 
+                                 const Constant *V2) const = 0;
 
   // Casting operators.  ick
-  virtual ConstPoolBool *castToBool  (const ConstPoolVal *V) const = 0;
-  virtual ConstPoolSInt *castToSByte (const ConstPoolVal *V) const = 0;
-  virtual ConstPoolUInt *castToUByte (const ConstPoolVal *V) const = 0;
-  virtual ConstPoolSInt *castToShort (const ConstPoolVal *V) const = 0;
-  virtual ConstPoolUInt *castToUShort(const ConstPoolVal *V) const = 0;
-  virtual ConstPoolSInt *castToInt   (const ConstPoolVal *V) const = 0;
-  virtual ConstPoolUInt *castToUInt  (const ConstPoolVal *V) const = 0;
-  virtual ConstPoolSInt *castToLong  (const ConstPoolVal *V) const = 0;
-  virtual ConstPoolUInt *castToULong (const ConstPoolVal *V) const = 0;
-  virtual ConstPoolFP   *castToFloat (const ConstPoolVal *V) const = 0;
-  virtual ConstPoolFP   *castToDouble(const ConstPoolVal *V) const = 0;
-  virtual ConstPoolPointer *castToPointer(const ConstPoolVal *V,
-                                          const PointerType *Ty) const = 0;
+  virtual ConstantBool *castToBool  (const Constant *V) const = 0;
+  virtual ConstantSInt *castToSByte (const Constant *V) const = 0;
+  virtual ConstantUInt *castToUByte (const Constant *V) const = 0;
+  virtual ConstantSInt *castToShort (const Constant *V) const = 0;
+  virtual ConstantUInt *castToUShort(const Constant *V) const = 0;
+  virtual ConstantSInt *castToInt   (const Constant *V) const = 0;
+  virtual ConstantUInt *castToUInt  (const Constant *V) const = 0;
+  virtual ConstantSInt *castToLong  (const Constant *V) const = 0;
+  virtual ConstantUInt *castToULong (const Constant *V) const = 0;
+  virtual ConstantFP   *castToFloat (const Constant *V) const = 0;
+  virtual ConstantFP   *castToDouble(const Constant *V) const = 0;
+  virtual ConstantPointer *castToPointer(const Constant *V,
+                                         const PointerType *Ty) const = 0;
 
-  inline ConstPoolVal *castTo(const ConstPoolVal *V, const Type *Ty) const {
+  inline Constant *castTo(const Constant *V, const Type *Ty) const {
     switch (Ty->getPrimitiveID()) {
     case Type::BoolTyID:   return castToBool(V);
     case Type::UByteTyID:  return castToUByte(V);
@@ -116,7 +116,7 @@ public:
   // we just want to make sure to hit the cache instead of doing it indirectly,
   //  if possible...
   //
-  static inline ConstRules *get(const ConstPoolVal &V) {
+  static inline ConstRules *get(const Constant &V) {
     return (ConstRules*)V.getType()->getOrCreateAnnotation(AID);
   }
 private :
@@ -127,29 +127,29 @@ private :
 };
 
 
-inline ConstPoolVal *operator!(const ConstPoolVal &V) {
+inline Constant *operator!(const Constant &V) {
   return ConstRules::get(V)->op_not(&V);
 }
 
 
 
-inline ConstPoolVal *operator+(const ConstPoolVal &V1, const ConstPoolVal &V2) {
+inline Constant *operator+(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
   return ConstRules::get(V1)->add(&V1, &V2);
 }
 
-inline ConstPoolVal *operator-(const ConstPoolVal &V1, const ConstPoolVal &V2) {
+inline Constant *operator-(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
   return ConstRules::get(V1)->sub(&V1, &V2);
 }
 
-inline ConstPoolVal *operator*(const ConstPoolVal &V1, const ConstPoolVal &V2) {
+inline Constant *operator*(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
   return ConstRules::get(V1)->mul(&V1, &V2);
 }
 
-inline ConstPoolBool *operator<(const ConstPoolVal &V1, 
-                                const ConstPoolVal &V2) {
+inline ConstantBool *operator<(const Constant &V1, 
+                               const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
   return ConstRules::get(V1)->lessthan(&V1, &V2);
 }
@@ -159,18 +159,18 @@ inline ConstPoolBool *operator<(const ConstPoolVal &V1,
 //  Implement 'derived' operators based on what we already have...
 //===----------------------------------------------------------------------===//
 
-inline ConstPoolBool *operator>(const ConstPoolVal &V1, 
-                                const ConstPoolVal &V2) {
+inline ConstantBool *operator>(const Constant &V1, 
+                               const Constant &V2) {
   return V2 < V1;
 }
 
-inline ConstPoolBool *operator>=(const ConstPoolVal &V1, 
-                                 const ConstPoolVal &V2) {
+inline ConstantBool *operator>=(const Constant &V1, 
+                                const Constant &V2) {
   return (V1 < V2)->inverted();      // !(V1 < V2)
 }
 
-inline ConstPoolBool *operator<=(const ConstPoolVal &V1, 
-                                 const ConstPoolVal &V2) {
+inline ConstantBool *operator<=(const Constant &V1, 
+                                const Constant &V2) {
   return (V1 > V2)->inverted();      // !(V1 > V2)
 }
 
@@ -179,13 +179,13 @@ inline ConstPoolBool *operator<=(const ConstPoolVal &V1,
 //  Implement higher level instruction folding type instructions
 //===----------------------------------------------------------------------===//
 
-inline ConstPoolVal *ConstantFoldCastInstruction(const ConstPoolVal *V,
-                                                 const Type *DestTy) {
+inline Constant *ConstantFoldCastInstruction(const Constant *V,
+                                             const Type *DestTy) {
   return ConstRules::get(*V)->castTo(V, DestTy);
 }
 
-inline ConstPoolVal *ConstantFoldUnaryInstruction(unsigned Opcode, 
-                                                  const ConstPoolVal *V) {
+inline Constant *ConstantFoldUnaryInstruction(unsigned Opcode, 
+                                              const Constant *V) {
   switch (Opcode) {
   case Instruction::Not:  return !*V;
     // TODO: Handle get element ptr instruction here in the future? GEP null?
@@ -193,9 +193,9 @@ inline ConstPoolVal *ConstantFoldUnaryInstruction(unsigned Opcode,
   return 0;
 }
 
-inline ConstPoolVal *ConstantFoldBinaryInstruction(unsigned Opcode,
-                                                   const ConstPoolVal *V1, 
-                                                   const ConstPoolVal *V2) {
+inline Constant *ConstantFoldBinaryInstruction(unsigned Opcode,
+                                               const Constant *V1, 
+                                               const Constant *V2) {
   switch (Opcode) {
   case Instruction::Add:     return *V1 + *V2;
   case Instruction::Sub:     return *V1 - *V2;

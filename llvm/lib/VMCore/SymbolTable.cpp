@@ -26,14 +26,14 @@ SymbolTable::~SymbolTable() {
     }
   }
 
-  // TODO: FIXME: BIG ONE: This doesn't unreference abstract types for the planes
-  // that could still have entries!
+ // TODO: FIXME: BIG ONE: This doesn't unreference abstract types for the planes
+ // that could still have entries!
 
 #ifndef NDEBUG   // Only do this in -g mode...
   bool LeftoverValues = true;
   for (iterator i = begin(); i != end(); ++i) {
     for (type_iterator I = i->second.begin(); I != i->second.end(); ++I)
-      if (!isa<ConstPoolVal>(I->second) && !isa<Type>(I->second)) {
+      if (!isa<Constant>(I->second) && !isa<Type>(I->second)) {
 	cerr << "Value still in symbol table! Type = '"
 	     << i->first->getDescription() << "' Name = '" << I->first << "'\n";
 	LeftoverValues = false;

@@ -15,7 +15,7 @@
 
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
@@ -68,7 +68,7 @@ PrintMethodNameForType(const Type* type)
 }
 
 static inline GlobalVariable *GetStringRef(Module *M, const string &str) {
-  ConstPoolArray *Init = ConstPoolArray::get(str);
+  ConstantArray *Init = ConstantArray::get(str);
   GlobalVariable *GV = new GlobalVariable(Init->getType(), /*Const*/true,
 					  /*intern*/true, Init);
   M->getGlobalList().push_back(GV);

@@ -5,7 +5,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/iMemory.h"
-#include "llvm/ConstPoolVals.h"
 
 //===----------------------------------------------------------------------===//
 //                        MemAccessInst Implementation
@@ -37,20 +36,23 @@ const Type* MemAccessInst::getIndexedType(const Type *Ptr,
   return CurIDX == Idx.size() ? Ptr : 0;
 }
 
-const vector<ConstPoolVal*> MemAccessInst::getIndicesBROKEN() const {
+
+#if 1
+#include "llvm/ConstantVals.h"
+const vector<Constant*> MemAccessInst::getIndicesBROKEN() const {
   cerr << "MemAccessInst::getIndices() does not do what you want it to.  Talk"
        << " to Chris about this.  We can phase it out after the paper.\n";
 
-  vector<ConstPoolVal*> RetVal;
+  vector<Constant*> RetVal;
 
   // THIS CODE WILL FAIL IF A NON CONSTANT INDEX IS USED AS AN ARRAY INDEX
   // THIS IS WHY YOU SHOULD NOT USE THIS FUNCTION ANY MORE!!!
   for (unsigned i = getFirstIndexOperandNumber(); i < getNumOperands(); ++i)
-    RetVal.push_back(cast<ConstPoolVal>(getOperand(i)));
+    RetVal.push_back(cast<Constant>(getOperand(i)));
 
   return RetVal;
 }
-
+#endif
 
 //===----------------------------------------------------------------------===//
 //                           LoadInst Implementation

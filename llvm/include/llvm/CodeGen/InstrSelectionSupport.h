@@ -21,7 +21,7 @@ class InstrForest;
 class MachineInstr;
 class InstructionNode;
 class TmpInstruction;
-class ConstPoolVal;
+class Constant;
 class TargetMachine;
 
 //************************ Exported Functions ******************************/
@@ -54,7 +54,7 @@ int64_t         GetConstantValueAsSignedInt     (const Value *V,
 //---------------------------------------------------------------------------
 
 Value*		FoldGetElemChain    (const InstructionNode* getElemInstrNode,
-				     vector<ConstPoolVal*>& chainIdxVec);
+				     vector<Constant*>& chainIdxVec);
 
 
 //------------------------------------------------------------------------ 

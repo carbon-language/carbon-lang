@@ -11,7 +11,6 @@
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/ConstPoolVals.h"
 #include "Support/STLExtras.h"
 #include <map>
 

@@ -19,12 +19,12 @@
 
 #include "llvm/Pass.h"
 #include <map>
-class ConstPoolVal;
+class Constant;
 class GlobalVariable;
 
 class ConstantMerge : public Pass {
 protected:
-  map<ConstPoolVal*, GlobalVariable*> Constants;
+  map<Constant*, GlobalVariable*> Constants;
   unsigned LastConstantSeen;
 public:
   inline ConstantMerge() : LastConstantSeen(0) {}

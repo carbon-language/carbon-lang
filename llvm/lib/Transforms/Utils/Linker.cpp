@@ -16,7 +16,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 
 // Error - Simple wrapper function to conditionally assign to E and return true.
 // This just makes error return conditions a little bit simpler...
@@ -90,31 +90,31 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
   }
 
   // Check to see if it's a constant that we are interesting in transforming...
-  if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(In)) {
+  if (Constant *CPV = dyn_cast<Constant>(In)) {
     if (!isa<DerivedType>(CPV->getType()))
       return CPV;              // Simple constants stay identical...
 
-    ConstPoolVal *Result = 0;
+    Constant *Result = 0;
 
-    if (ConstPoolArray *CPA = dyn_cast<ConstPoolArray>(CPV)) {
+    if (ConstantArray *CPA = dyn_cast<ConstantArray>(CPV)) {
       const vector<Use> &Ops = CPA->getValues();
-      vector<ConstPoolVal*> Operands(Ops.size());
+      vector<Constant*> Operands(Ops.size());
       for (unsigned i = 0; i < Ops.size(); ++i)
         Operands[i] = 
-          cast<ConstPoolVal>(RemapOperand(Ops[i], LocalMap, GlobalMap));
-      Result = ConstPoolArray::get(cast<ArrayType>(CPA->getType()), Operands);
-    } else if (ConstPoolStruct *CPS = dyn_cast<ConstPoolStruct>(CPV)) {
+          cast<Constant>(RemapOperand(Ops[i], LocalMap, GlobalMap));
+      Result = ConstantArray::get(cast<ArrayType>(CPA->getType()), Operands);
+    } else if (ConstantStruct *CPS = dyn_cast<ConstantStruct>(CPV)) {
       const vector<Use> &Ops = CPS->getValues();
-      vector<ConstPoolVal*> Operands(Ops.size());
+      vector<Constant*> Operands(Ops.size());
       for (unsigned i = 0; i < Ops.size(); ++i)
         Operands[i] = 
-          cast<ConstPoolVal>(RemapOperand(Ops[i], LocalMap, GlobalMap));
-      Result = ConstPoolStruct::get(cast<StructType>(CPS->getType()), Operands);
-    } else if (isa<ConstPoolPointerNull>(CPV)) {
+          cast<Constant>(RemapOperand(Ops[i], LocalMap, GlobalMap));
+      Result = ConstantStruct::get(cast<StructType>(CPS->getType()), Operands);
+    } else if (isa<ConstantPointerNull>(CPV)) {
       Result = CPV;
-    } else if (ConstPoolPointerRef *CPR = dyn_cast<ConstPoolPointerRef>(CPV)) {
+    } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CPV)) {
       Value *V = RemapOperand(CPR->getValue(), LocalMap, GlobalMap);
-      Result = ConstPoolPointerRef::get(cast<GlobalValue>(V));
+      Result = ConstantPointerRef::get(cast<GlobalValue>(V));
     } else {
       assert(0 && "Unknown type of derived type constant value!");
     }
@@ -207,8 +207,8 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
 
     if (SGV->hasInitializer()) {      // Only process initialized GV's
       // Figure out what the initializer looks like in the dest module...
-      ConstPoolVal *DInit =
-        cast<ConstPoolVal>(RemapOperand(SGV->getInitializer(), ValueMap));
+      Constant *DInit =
+        cast<Constant>(RemapOperand(SGV->getInitializer(), ValueMap));
 
       GlobalVariable *DGV = cast<GlobalVariable>(ValueMap[SGV]);    
       if (DGV->hasInitializer() && SGV->hasExternalLinkage() &&

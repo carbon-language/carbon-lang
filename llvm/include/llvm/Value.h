@@ -18,7 +18,7 @@
 
 class User;
 class Type;
-class ConstPoolVal;
+class Constant;
 class MethodArgument;
 class Instruction;
 class BasicBlock;
@@ -39,7 +39,7 @@ class Value : public Annotable,         // Values are annotable
 public:
   enum ValueTy {
     TypeVal,                // This is an instance of Type
-    ConstantVal,            // This is an instance of ConstPoolVal
+    ConstantVal,            // This is an instance of Constant
     MethodArgumentVal,      // This is an instance of MethodArgument
     InstructionVal,         // This is an instance of Instruction
     BasicBlockVal,          // This is an instance of BasicBlock
@@ -250,10 +250,10 @@ template <> inline bool isa<Type, const Value*>(const Value *Val) {
 template <> inline bool isa<Type, Value*>(Value *Val) { 
   return Val->getValueType() == Value::TypeVal;
 }
-template <> inline bool isa<ConstPoolVal, const Value*>(const Value *Val) { 
+template <> inline bool isa<Constant, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::ConstantVal; 
 }
-template <> inline bool isa<ConstPoolVal, Value*>(Value *Val) { 
+template <> inline bool isa<Constant, Value*>(Value *Val) { 
   return Val->getValueType() == Value::ConstantVal; 
 }
 template <> inline bool isa<MethodArgument, const Value*>(const Value *Val) { 

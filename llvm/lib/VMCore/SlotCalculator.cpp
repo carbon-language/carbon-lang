@@ -15,7 +15,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/iOther.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
@@ -114,7 +114,7 @@ void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
   for (SymbolTable::const_iterator I = ST->begin(), E = ST->end(); I != E; ++I)
     for (SymbolTable::type_const_iterator TI = I->second.begin(), 
 	   TE = I->second.end(); TI != TE; ++TI)
-      if (isa<ConstPoolVal>(TI->second))
+      if (isa<Constant>(TI->second))
 	insertValue(TI->second);
 }
 
@@ -231,7 +231,7 @@ int SlotCalculator::getValSlot(const Value *D) const {
 
 
 int SlotCalculator::insertValue(const Value *D) {
-  if (isa<ConstPoolVal>(D) || isa<GlobalVariable>(D)) {
+  if (isa<Constant>(D) || isa<GlobalVariable>(D)) {
     const User *U = cast<const User>(D);
     // This makes sure that if a constant has uses (for example an array
     // of const ints), that they are inserted also.  Same for global variable
@@ -259,7 +259,7 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore = false) {
   if (!dontIgnore)                               // Don't ignore nonignorables!
     if (D->getType() == Type::VoidTy ||          // Ignore void type nodes
 	(IgnoreNamedNodes &&                     // Ignore named and constants
-	 (D->hasName() || isa<ConstPoolVal>(D)) && !isa<Type>(D))) {
+	 (D->hasName() || isa<Constant>(D)) && !isa<Type>(D))) {
       SC_DEBUG("ignored value " << D << endl);
       return -1;                  // We do need types unconditionally though
     }
@@ -336,8 +336,8 @@ int SlotCalculator::doInsertVal(const Value *D) {
 
   SC_DEBUG("  Inserting value [" << Ty << "] = " << D << " slot=" << 
 	   DestSlot << " [");
-  // G = Global, C = ConstPoolVal, T = Type, M = Method, o = other
-  SC_DEBUG((isa<GlobalVariable>(D) ? "G" : (isa<ConstPoolVal>(D) ? "C" : 
+  // G = Global, C = Constant, T = Type, M = Method, o = other
+  SC_DEBUG((isa<GlobalVariable>(D) ? "G" : (isa<Constant>(D) ? "C" : 
            (isa<Type>(D) ? "T" : (isa<Method>(D) ? "M" : "o")))));
   SC_DEBUG("]\n");
   return (int)DestSlot;

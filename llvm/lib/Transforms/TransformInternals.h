@@ -12,7 +12,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include <map>
 #include <set>
 
@@ -24,10 +24,10 @@
 //
 extern const TargetData TD;
 
-static int getConstantValue(const ConstPoolInt *CPI) {
-  if (const ConstPoolSInt *CSI = dyn_cast<ConstPoolSInt>(CPI))
+static int getConstantValue(const ConstantInt *CPI) {
+  if (const ConstantSInt *CSI = dyn_cast<ConstantSInt>(CPI))
     return CSI->getValue();
-  return cast<ConstPoolUInt>(CPI)->getValue();
+  return cast<ConstantUInt>(CPI)->getValue();
 }
 
 

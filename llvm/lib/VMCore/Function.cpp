@@ -85,11 +85,11 @@ void Method::dropAllReferences() {
 // GlobalVariable Implementation
 //===----------------------------------------------------------------------===//
 
-GlobalVariable::GlobalVariable(const Type *Ty, bool isConstant, bool isIntern,
-			       ConstPoolVal *Initializer = 0,
+GlobalVariable::GlobalVariable(const Type *Ty, bool constant, bool isIntern,
+			       Constant *Initializer = 0,
 			       const string &Name = "")
   : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal, isIntern, Name),
-    Constant(isConstant) {
+    isConstantGlobal(constant) {
   if (Initializer) Operands.push_back(Use((Value*)Initializer, this));
 }
 

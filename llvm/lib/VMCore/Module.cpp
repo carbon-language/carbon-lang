@@ -11,7 +11,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/ValueHolderImpl.h"
 #include "llvm/Type.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "Support/STLExtras.h"
 #include <map>
 
@@ -24,7 +24,7 @@ template class ValueHolder<Method, Module, Module>;
 // Define the GlobalValueRefMap as a struct that wraps a map so that we don't
 // have Module.h depend on <map>
 //
-struct GlobalValueRefMap : public map<GlobalValue*, ConstPoolPointerRef*>{
+struct GlobalValueRefMap : public map<GlobalValue*, ConstantPointerRef*>{
 };
 
 
@@ -63,7 +63,7 @@ void Module::dropAllReferences() {
   if (GVRefMap) {
     for (GlobalValueRefMap::iterator I = GVRefMap->begin(), E = GVRefMap->end();
 	 I != E; ++I) {
-      // Delete the ConstPoolPointerRef node...
+      // Delete the ConstantPointerRef node...
       I->second->destroyConstant();
     }
 
@@ -89,24 +89,24 @@ bool Module::reduceApply(bool (*Func)(const Method*)) const {
 }
 
 // Accessor for the underlying GlobalValRefMap...
-ConstPoolPointerRef *Module::getConstPoolPointerRef(GlobalValue *V){
+ConstantPointerRef *Module::getConstantPointerRef(GlobalValue *V){
   // Create ref map lazily on demand...
   if (GVRefMap == 0) GVRefMap = new GlobalValueRefMap();
 
   GlobalValueRefMap::iterator I = GVRefMap->find(V);
   if (I != GVRefMap->end()) return I->second;
 
-  ConstPoolPointerRef *Ref = new ConstPoolPointerRef(V);
+  ConstantPointerRef *Ref = new ConstantPointerRef(V);
   GVRefMap->insert(make_pair(V, Ref));
 
   return Ref;
 }
 
-void Module::mutateConstPoolPointerRef(GlobalValue *OldGV, GlobalValue *NewGV) {
+void Module::mutateConstantPointerRef(GlobalValue *OldGV, GlobalValue *NewGV) {
   GlobalValueRefMap::iterator I = GVRefMap->find(OldGV);
   assert(I != GVRefMap->end() && 
-	 "mutateConstPoolPointerRef; OldGV not in table!");
-  ConstPoolPointerRef *Ref = I->second;
+	 "mutateConstantPointerRef; OldGV not in table!");
+  ConstantPointerRef *Ref = I->second;
 
   // Remove the old entry...
   GVRefMap->erase(I);

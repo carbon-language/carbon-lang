@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Optimizations/InductionVars.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/SymbolTable.h"
@@ -36,7 +36,7 @@ using namespace opt;
 // an interval invariant computation.
 //
 static bool isLoopInvariant(cfg::Interval *Int, Value *V) {
-  assert(isa<ConstPoolVal>(V) || isa<Instruction>(V) || isa<MethodArgument>(V));
+  assert(isa<Constant>(V) || isa<Instruction>(V) || isa<MethodArgument>(V));
 
   if (!isa<Instruction>(V))
     return true;  // Constants and arguments are always loop invariant
@@ -132,12 +132,12 @@ static inline bool isLinearInductionVariable(cfg::Interval *Int, Value *V,
 static inline bool isSimpleInductionVar(PHINode *PN) {
   assert(PN->getNumIncomingValues() == 2 && "Must have cannonical PHI node!");
   Value *Initializer = PN->getIncomingValue(0);
-  if (!isa<ConstPoolVal>(Initializer)) return false;
+  if (!isa<Constant>(Initializer)) return false;
 
   if (Initializer->getType()->isSigned()) {  // Signed constant value...
-    if (((ConstPoolSInt*)Initializer)->getValue() != 0) return false;
+    if (((ConstantSInt*)Initializer)->getValue() != 0) return false;
   } else if (Initializer->getType()->isUnsigned()) {  // Unsigned constant value
-    if (((ConstPoolUInt*)Initializer)->getValue() != 0) return false;
+    if (((ConstantUInt*)Initializer)->getValue() != 0) return false;
   } else {
     return false;   // Not signed or unsigned?  Must be FP type or something
   }
@@ -153,12 +153,12 @@ static inline bool isSimpleInductionVar(PHINode *PN) {
 
   // Get the right hand side of the ADD node.  See if it is a constant 1.
   Value *StepSize = I->getOperand(1);
-  if (!isa<ConstPoolVal>(StepSize)) return false;
+  if (!isa<Constant>(StepSize)) return false;
 
   if (StepSize->getType()->isSigned()) {  // Signed constant value...
-    if (((ConstPoolSInt*)StepSize)->getValue() != 1) return false;
+    if (((ConstantSInt*)StepSize)->getValue() != 1) return false;
   } else if (StepSize->getType()->isUnsigned()) {  // Unsigned constant value
-    if (((ConstPoolUInt*)StepSize)->getValue() != 1) return false;
+    if (((ConstantUInt*)StepSize)->getValue() != 1) return false;
   } else {
     return false;   // Not signed or unsigned?  Must be FP type or something
   }
@@ -189,8 +189,8 @@ static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
 
   // Create the neccesary instructions...
   PHINode        *PN      = new PHINode(Type::UIntTy, PHIName);
-  ConstPoolVal   *One     = ConstPoolUInt::get(Type::UIntTy, 1);
-  ConstPoolVal   *Zero    = ConstPoolUInt::get(Type::UIntTy, 0);
+  Constant       *One     = ConstantUInt::get(Type::UIntTy, 1);
+  Constant       *Zero    = ConstantUInt::get(Type::UIntTy, 0);
   BinaryOperator *AddNode = BinaryOperator::create(Instruction::Add, 
 						   PN, One, AddName);
 

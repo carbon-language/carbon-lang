@@ -13,7 +13,7 @@
 
 #include "llvm/InstrTypes.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstPoolVals.h"
+#include "llvm/ConstantVals.h"
 #include "llvm/iOther.h"
 #include "llvm/Method.h"
 #include "llvm/DerivedTypes.h"

@@ -70,14 +70,14 @@ void BasicBlock::dropAllReferences() {
 	   std::mem_fun(&Instruction::dropAllReferences));
 }
 
-// hasConstantPoolReferences() - This predicate is true if there is a 
+// hasConstantReferences() - This predicate is true if there is a 
 // reference to this basic block in the constant pool for this method.  For
 // example, if a block is reached through a switch table, that table resides
 // in the constant pool, and the basic block is reference from it.
 //
-bool BasicBlock::hasConstantPoolReferences() const {
+bool BasicBlock::hasConstantReferences() const {
   for (use_const_iterator I = use_begin(), E = use_end(); I != E; ++I)
-    if (::isa<ConstPoolVal>(*I))
+    if (::isa<Constant>(*I))
       return true;
 
   return false;
