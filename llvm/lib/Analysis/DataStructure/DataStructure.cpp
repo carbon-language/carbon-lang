@@ -1925,11 +1925,12 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
     // The final unresolved call nodes must be handled specially at the end of
     // the BU pass (i.e., in main or other roots of the call graph).
     for (afc_iterator CI = afc_begin(), E = afc_end(); CI != E; ++CI)
-      if (AuxFCallsAlive.insert(&*CI).second &&
+      if (!AuxFCallsAlive.count(&*CI) &&
           (CI->isIndirectCall()
            || CallSiteUsesAliveArgs(*CI, Alive, Visited,
                                   Flags & DSGraph::RemoveUnreachableGlobals))) {
         CI->markReachableNodes(Alive);
+        AuxFCallsAlive.insert(&*CI);
         Iterate = true;
       }
   } while (Iterate);
