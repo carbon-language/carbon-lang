@@ -100,6 +100,8 @@ PhyRegAlloc::PhyRegAlloc(Function *F,
 PhyRegAlloc::~PhyRegAlloc() { 
   for( unsigned int rc=0; rc < NumOfRegClasses; rc++)
     delete RegClassList[rc];
+
+  AddedInstrMap.clear();
 } 
 
 //----------------------------------------------------------------------------
@@ -464,11 +466,7 @@ void PhyRegAlloc::updateMachineCode()
       if (TM.getInstrInfo().isCall(Opcode) ||
 	  TM.getInstrInfo().isReturn(Opcode)) {
 
-	AddedInstrns *AI = AddedInstrMap[ MInst];
-	if ( !AI ) { 
-	  AI = new AddedInstrns();
-	  AddedInstrMap[ MInst ] = AI;
-	}
+	AddedInstrns &AI = AddedInstrMap[MInst];
 	
 	// Tmp stack poistions are needed by some calls that have spilled args
 	// So reset it before we call each such method
@@ -476,9 +474,9 @@ void PhyRegAlloc::updateMachineCode()
 	mcInfo.popAllTempValues(TM);  
 	
 	if (TM.getInstrInfo().isCall(Opcode))
-	  MRI.colorCallArgs(MInst, LRI, AI, *this, *BBI);
+	  MRI.colorCallArgs(MInst, LRI, &AI, *this, *BBI);
 	else if (TM.getInstrInfo().isReturn(Opcode))
-	  MRI.colorRetValue(MInst, LRI, AI);
+	  MRI.colorRetValue(MInst, LRI, &AI);
       }
       
 
@@ -566,8 +564,8 @@ void PhyRegAlloc::updateMachineCode()
       // If there are instructions to be added, *before* this machine
       // instruction, add them now.
       //      
-      if( AddedInstrMap[ MInst ] ) {
-	std::deque<MachineInstr *> &IBef = AddedInstrMap[MInst]->InstrnsBefore;
+      if(AddedInstrMap.count(MInst)) {
+	std::deque<MachineInstr *> &IBef = AddedInstrMap[MInst].InstrnsBefore;
 
 	if( ! IBef.empty() ) {
 	  std::deque<MachineInstr *>::iterator AdIt; 
@@ -590,8 +588,7 @@ void PhyRegAlloc::updateMachineCode()
       // If there are instructions to be added *after* this machine
       // instruction, add them now
       //
-      if(AddedInstrMap[MInst] && 
-         !AddedInstrMap[MInst]->InstrnsAfter.empty() ) {
+      if (!AddedInstrMap[MInst].InstrnsAfter.empty()) {
 
 	// if there are delay slots for this instruction, the instructions
 	// added after it must really go after the delayed instruction(s)
@@ -611,14 +608,12 @@ void PhyRegAlloc::updateMachineCode()
 	  // Here we can add the "instructions after" to the current
 	  // instruction since there are no delay slots for this instruction
 
-	  std::deque<MachineInstr *> &IAft = AddedInstrMap[MInst]->InstrnsAfter;
+	  std::deque<MachineInstr *> &IAft = AddedInstrMap[MInst].InstrnsAfter;
 	  
-	  if( ! IAft.empty() ) {     
-	    
-	    std::deque<MachineInstr *>::iterator AdIt; 
-	    
+	  if (!IAft.empty()) {
 	    ++MInstIterator;   // advance to the next instruction
 	    
+	    std::deque<MachineInstr *>::iterator AdIt; 
 	    for( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt ) {
 	      
 	      if(DEBUG_RA) {
@@ -678,15 +673,9 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   int TmpRegU = getUsableUniRegAtMI(RC, RegType, MInst,&LVSetBef, MIBef, MIAft);
   
   // get the added instructions for this instruciton
-  AddedInstrns *AI = AddedInstrMap[ MInst ];
-  if ( !AI ) { 
-    AI = new AddedInstrns();
-    AddedInstrMap[ MInst ] = AI;
-  }
-
+  AddedInstrns &AI = AddedInstrMap[MInst];
     
-  if( !isDef ) {
-
+  if (!isDef) {
     // for a USE, we have to load the value of LR from stack to a TmpReg
     // and use the TmpReg as one operand of instruction
 
@@ -694,12 +683,12 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     AdIMid = MRI.cpMem2RegMI(MRI.getFramePointer(), SpillOff, TmpRegU,RegType);
 
     if(MIBef)
-      AI->InstrnsBefore.push_back(MIBef);
+      AI.InstrnsBefore.push_back(MIBef);
 
-    AI->InstrnsBefore.push_back(AdIMid);
+    AI.InstrnsBefore.push_back(AdIMid);
 
     if(MIAft)
-      AI->InstrnsAfter.push_front(MIAft);
+      AI.InstrnsAfter.push_front(MIAft);
     
   } else {   // if this is a Def
     // for a DEF, we have to store the value produced by this instruction
@@ -709,12 +698,12 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     AdIMid = MRI.cpReg2MemMI(TmpRegU, MRI.getFramePointer(), SpillOff,RegType);
 
     if (MIBef)
-      AI->InstrnsBefore.push_back(MIBef);
+      AI.InstrnsBefore.push_back(MIBef);
 
-    AI->InstrnsAfter.push_front(AdIMid);
+    AI.InstrnsAfter.push_front(AdIMid);
 
     if (MIAft)
-      AI->InstrnsAfter.push_front(MIAft);
+      AI.InstrnsAfter.push_front(MIAft);
 
   }  // if !DEF
 
@@ -918,22 +907,17 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC,
 // corresponding delayed instruction using the following method.
 
 //----------------------------------------------------------------------------
-void PhyRegAlloc:: move2DelayedInstr(const MachineInstr *OrigMI,
-				     const MachineInstr *DelayedMI) {
+void PhyRegAlloc::move2DelayedInstr(const MachineInstr *OrigMI,
+                                    const MachineInstr *DelayedMI) {
 
   // "added after" instructions of the original instr
-  std::deque<MachineInstr *> &OrigAft = AddedInstrMap[OrigMI]->InstrnsAfter;
+  std::deque<MachineInstr *> &OrigAft = AddedInstrMap[OrigMI].InstrnsAfter;
 
   // "added instructions" of the delayed instr
-  AddedInstrns *DelayAdI = AddedInstrMap[DelayedMI];
-
-  if(! DelayAdI )  {                // create a new "added after" if necessary
-    DelayAdI = new AddedInstrns();
-    AddedInstrMap[DelayedMI] =  DelayAdI;
-  }
+  AddedInstrns &DelayAdI = AddedInstrMap[DelayedMI];
 
   // "added after" instructions of the delayed instr
-  std::deque<MachineInstr *> &DelayedAft = DelayAdI->InstrnsAfter;
+  std::deque<MachineInstr *> &DelayedAft = DelayAdI.InstrnsAfter;
 
   // go thru all the "added after instructions" of the original instruction
   // and append them to the "addded after instructions" of the delayed
@@ -1052,21 +1036,17 @@ void PhyRegAlloc::colorCallRetArgs()
     unsigned OpCode =  CRMI->getOpCode();
  
     // get the added instructions for this Call/Ret instruciton
-    AddedInstrns *AI = AddedInstrMap[ CRMI ];
-    if ( !AI ) { 
-      AI = new AddedInstrns();
-      AddedInstrMap[ CRMI ] = AI;
-    }
+    AddedInstrns &AI = AddedInstrMap[CRMI];
 
-    // Tmp stack poistions are needed by some calls that have spilled args
+    // Tmp stack positions are needed by some calls that have spilled args
     // So reset it before we call each such method
     //mcInfo.popAllTempValues(TM);  
 
     
     if (TM.getInstrInfo().isCall(OpCode))
-      MRI.colorCallArgs(CRMI, LRI, AI, *this);
+      MRI.colorCallArgs(CRMI, LRI, &AI, *this);
     else if (TM.getInstrInfo().isReturn(OpCode)) 
-      MRI.colorRetValue( CRMI, LRI, AI );
+      MRI.colorRetValue(CRMI, LRI, &AI);
     else
       assert(0 && "Non Call/Ret instrn in CallRetInstrList\n");
   }
@@ -1083,11 +1063,7 @@ void PhyRegAlloc::colorIncomingArgs()
   const MachineInstr *FirstMI = FirstBB->getMachineInstrVec().front();
   assert(FirstMI && "No machine instruction in entry BB");
 
-  AddedInstrns *AI = AddedInstrMap[FirstMI];
-  if (!AI)
-    AddedInstrMap[FirstMI] = AI = new AddedInstrns();
-
-  MRI.colorMethodArgs(Meth, LRI, AI);
+  MRI.colorMethodArgs(Meth, LRI, &AddedInstrMap[FirstMI]);
 }
 
 

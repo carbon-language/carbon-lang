@@ -48,14 +48,12 @@ namespace cfg { class LoopInfo; }
 // to store such instructions added before and after an existing instruction.
 //----------------------------------------------------------------------------
 
-class AddedInstrns
-{
- public:
+struct AddedInstrns {
   std::deque<MachineInstr*> InstrnsBefore;// Added insts BEFORE an existing inst
   std::deque<MachineInstr*> InstrnsAfter; // Added insts AFTER an existing inst
 };
 
-typedef std::hash_map<const MachineInstr *, AddedInstrns *> AddedInstrMapType;
+typedef std::map<const MachineInstr *, AddedInstrns> AddedInstrMapType;
 
 
 
