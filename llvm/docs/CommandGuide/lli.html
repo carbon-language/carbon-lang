@@ -47,14 +47,6 @@ OPTIONS
 </h3>
 
 <ul>
-	<li> <tt>-array-checks</tt>
-	<br>
-	Enable array bound checks. If an LLVM program attempts to access an
-    element of an array which is not within the size of that array,
-    <tt>lli</tt> will print an error message and call <tt>abort(3)</tt>.
-    This is presently only applicable to the interpreter.
-	<p>
-
 	<li> <tt>-help</tt>
 	<br>
 	Print a summary of command line options.
@@ -84,12 +76,6 @@ OPTIONS
     <br>
     If set to true, use the interpreter even if a just-in-time compiler is
     available for this architecture. Defaults to false.
-    <p>
-
-    <li> <tt>-trace</tt>
-    <br>
-    Print an LLVM-instruction-level dynamic execution trace. This is
-    presently only applicable to the interpreter.
     <p>
 
     <li> <tt>-f=&lt;name&gt;</tt>
