@@ -124,8 +124,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator *I) {
   Value *LHS = I->getOperand(0), *RHS = I->getOperand(1);
 
   // Eliminate 'add int %X, 0'
-  if (I->getType()->isIntegral() &&
-      RHS == Constant::getNullValue(I->getType())) {
+  if (RHS == Constant::getNullValue(I->getType())) {
     AddUsesToWorkList(I);         // Add all modified instrs to worklist
     I->replaceAllUsesWith(LHS);
     return I;
