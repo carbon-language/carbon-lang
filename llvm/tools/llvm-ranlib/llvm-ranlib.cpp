@@ -17,24 +17,27 @@
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
-#include <algorithm>
 #include <iomanip>
 
 using namespace llvm;
 
 // llvm-ar operation code and modifier flags
-cl::opt<std::string> 
+static cl::opt<std::string> 
 ArchiveName(cl::Positional, cl::Optional, cl::desc("<archive-file>..."));
 
-cl::opt<bool>
+static cl::opt<bool>
 Verbose("verbose",cl::Optional,cl::init(false),
         cl::desc("Print the symbol table"));
 
-sys::Path TmpArchive;
-
-void cleanup() {
-  if (TmpArchive.exists())
-    TmpArchive.destroyFile();
+// printSymbolTable - print out the archive's symbol table.
+void printSymbolTable(Archive* TheArchive) {
+  std::cout << "\nArchive Symbol Table:\n";
+  const Archive::SymTabType& symtab = TheArchive->getSymbolTable();
+  for (Archive::SymTabType::const_iterator I=symtab.begin(), E=symtab.end(); 
+       I != E; ++I ) {
+    unsigned offset = TheArchive->getFirstFileOffset() + I->second;
+    std::cout << " " << std::setw(9) << offset << "\t" << I->first <<"\n";
+  }
 }
 
 int main(int argc, char **argv) {
@@ -64,14 +67,15 @@ int main(int argc, char **argv) {
     if (!ArchivePath.exists())
       throw "Archive file does not exist";
 
-    // Archive* TheArchive = Archive::OpenAndLoad(ArchivePath);
-    Archive* TheArchive = Archive::OpenAndLoad(ArchivePath);
+    std::auto_ptr<Archive> AutoArchive(Archive::OpenAndLoad(ArchivePath));
+    Archive* TheArchive = AutoArchive.get();
 
     assert(TheArchive && "Unable to instantiate the archive");
 
-    TheArchive->writeToDisk(true,false,false,Verbose);
+    TheArchive->writeToDisk(true, false, false );
 
-    delete TheArchive;
+    if (Verbose)
+      printSymbolTable(TheArchive);
 
   } catch (const char*msg) {
     std::cerr << argv[0] << ": " << msg << "\n\n";
@@ -80,9 +84,8 @@ int main(int argc, char **argv) {
     std::cerr << argv[0] << ": " << msg << "\n";
     exitCode = 2;
   } catch (...) {
-    std::cerr << argv[0] << ": An nexpected unknown exception occurred.\n";
+    std::cerr << argv[0] << ": An unexpected unknown exception occurred.\n";
     exitCode = 3;
   }
-  cleanup();
   return exitCode;
 }
