@@ -39,6 +39,7 @@
           <li><a href="#i_br"    >'<tt>br</tt>' Instruction</a>
           <li><a href="#i_switch">'<tt>switch</tt>' Instruction</a>
           <li><a href="#i_invoke">'<tt>invoke</tt>' Instruction</a>
+          <li><a href="#i_unwind"  >'<tt>unwind</tt>'  Instruction</a>
         </ol>
       <li><a href="#binaryops">Binary Operations</a>
         <ol>
@@ -81,7 +82,6 @@
       <li><a href="#i_va_start">'<tt>llvm.va_start</tt>' Intrinsic</a>
       <li><a href="#i_va_end"  >'<tt>llvm.va_end</tt>'   Intrinsic</a>
       <li><a href="#i_va_copy" >'<tt>llvm.va_copy</tt>'  Intrinsic</a>
-      <li><a href="#i_unwind"  >'<tt>llvm.unwind</tt>'  Intrinsic</a>
     </ol>
   </ol>
 
@@ -167,9 +167,17 @@ passes or input to the parser.<p>
 LLVM uses three different forms of identifiers, for different purposes:<p>
 
 <ol>
-<li>Numeric constants are represented as you would expect: 12, -3 123.421, etc.  Floating point constants have an optional hexidecimal notation.
-<li>Named values are represented as a string of characters with a '%' prefix.  For example, %foo, %DivisionByZero, %a.really.long.identifier.  The actual regular expression used is '<tt>%[a-zA-Z$._][a-zA-Z$._0-9]*</tt>'.
-<li>Unnamed values are represented as an unsigned numeric value with a '%' prefix.  For example, %12, %2, %44.
+<li>Numeric constants are represented as you would expect: 12, -3 123.421, etc.
+Floating point constants have an optional hexidecimal notation.
+
+<li>Named values are represented as a string of characters with a '%' prefix.
+For example, %foo, %DivisionByZero, %a.really.long.identifier.  The actual
+regular expression used is '<tt>%[a-zA-Z$._][a-zA-Z$._0-9]*</tt>'.  Identifiers
+which require other characters in their names can be surrounded with quotes.  In
+this way, anything except a <tt>"</tt> character can be used in a name.
+
+<li>Unnamed values are represented as an unsigned numeric value with a '%'
+prefix.  For example, %12, %2, %44.
 </ol><p>
 
 LLVM requires the values start with a '%' sign for two reasons: Compilers don't
@@ -346,7 +354,7 @@ Here are some examples of multidimensional arrays:<p>
 <ul>
 <table border=0 cellpadding=0 cellspacing=0>
 <tr><td><tt>[3 x [4 x int]]</tt></td><td>: 3x4 array integer values.</td></tr>
-<tr><td><tt>[12 x [10 x float]]</tt></td><td>: 2x10 array of single precision floating point values.</td></tr>
+<tr><td><tt>[12 x [10 x float]]</tt></td><td>: 12x10 array of single precision floating point values.</td></tr>
 <tr><td><tt>[2 x [3 x [4 x uint]]]</tt></td><td>: 2x3x4 array of unsigned integer values.</td></tr>
 </table>
 </ul>
@@ -369,10 +377,10 @@ functions), for indirect function calls, and when defining a function.<p>
 
 Where '<tt>&lt;parameter list&gt;</tt>' is a comma-separated list of type
 specifiers.  Optionally, the parameter list may include a type <tt>...</tt>,
-which indicates that the function takes a variable number of arguments.  Note
-that there currently is no way to define a function in LLVM that takes a
-variable number of arguments, but it is possible to <b>call</b> a function that
-is vararg.<p>
+which indicates that the function takes a variable number of arguments.
+Variable argument functions can access their arguments with the <a
+href="#int_varargs">variable argument handling intrinsic</a> functions.
+<p>
 
 <h5>Examples:</h5>
 <ul>
@@ -490,13 +498,13 @@ declarations, and merges symbol table entries. Here is an example of the "hello 
 
 <pre>
 <i>; Declare the string constant as a global constant...</i>
-<a href="#identifiers">%.LC0</a> = <a href="#linkage_decl">internal</a> <a href="#globalvars">constant</a> <a href="#t_array">[13 x sbyte]</a> c"hello world\0A\00"          <i>; [13 x sbyte]*</i>
+<a href="#identifiers">%.LC0</a> = <a href="#linkage_internal">internal</a> <a href="#globalvars">constant</a> <a href="#t_array">[13 x sbyte]</a> c"hello world\0A\00"          <i>; [13 x sbyte]*</i>
 
-<i>; Forward declaration of puts</i>
-<a href="#functionstructure">declare</a> int "puts"(sbyte*)                                           <i>; int(sbyte*)* </i>
+<i>; External declaration of the puts function</i>
+<a href="#functionstructure">declare</a> int %puts(sbyte*)                                            <i>; int(sbyte*)* </i>
 
 <i>; Definition of main function</i>
-int "main"() {                                                       <i>; int()* </i>
+int %main() {                                                        <i>; int()* </i>
         <i>; Convert [13x sbyte]* to sbyte *...</i>
         %cast210 = <a href="#i_getelementptr">getelementptr</a> [13 x sbyte]* %.LC0, long 0, long 0 <i>; sbyte*</i>
 
@@ -510,19 +518,56 @@ This example is made up of a <a href="#globalvars">global variable</a> named
 "<tt>.LC0</tt>", an external declaration of the "<tt>puts</tt>" function, and a
 <a href="#functionstructure">function definition</a> for "<tt>main</tt>".<p>
 
-<a name="linkage_decl">
+<a name="linkage">
 In general, a module is made up of a list of global values, where both functions
 and global variables are global values.  Global values are represented by a
 pointer to a memory location (in this case, a pointer to an array of char, and a
-pointer to a function), and can be either "internal" or externally accessible
-(which corresponds to the static keyword in C, when used at global scope).<p>
+pointer to a function), and have one of the following linkage types:<p>
+
+<dl>
+<a name="linkage_internal">
+<dt><tt><b>internal</b></tt>
+
+<dd>Global values with internal linkage are only directly accessible by objects
+in the current module.  In particular, linking code into a module with an
+internal global value may cause the internal to be renamed as necessary to avoid
+collisions.  Because the symbol is internal to the module, all references can be
+updated.  This corresponds to the notion of the '<tt>static</tt>' keyword in C,
+or the idea of "anonymous namespaces" in C++.<p>
+
+<a name="linkage_linkonce">
+<dt><tt><b>linkonce</b></tt>:
+
+<dd>"<tt>linkonce</tt>" linkage is similar to <tt>internal</tt> linkage, with
+the twist that linking together two modules defining the same <tt>linkonce</tt>
+globals will cause one of the globals to be discarded.  This is typically used
+to implement inline functions.<p>
+
+<a name="linkage_appending">
+<dt><tt><b>appending</b></tt>:
+
+<dd>"<tt>appending</tt>" linkage may only applied to global variables of pointer
+to array type.  When two global variables with appending linkage are linked
+together, the two global arrays are appended together.  This is the LLVM,
+typesafe, equivalent of having the system linker append together "sections" with
+identical names when .o files are linked.<p>
+
+<a name="linkage_external">
+<dt><tt><b>externally visible</b></tt>:
+
+<dd>If none of the above identifiers are used, the global is externally visible,
+meaning that it participates in linkage and can be used to resolve external
+symbol references.<p>
+
+</dl><p>
+
 
 For example, since the "<tt>.LC0</tt>" variable is defined to be internal, if
 another module defined a "<tt>.LC0</tt>" variable and was linked with this one,
 one of the two would be renamed, preventing a collision.  Since "<tt>main</tt>"
-and "<tt>puts</tt>" are external (i.e., lacking "<tt>internal</tt>"
-declarations), they are accessible outside of the current module.  It is illegal
-for a function declaration to be "<tt>internal</tt>".<p>
+and "<tt>puts</tt>" are external (i.e., lacking any linkage declarations), they
+are accessible outside of the current module.  It is illegal for a function
+<i>declaration</i> to have any linkage type other than "externally visible".<p>
 
 
 <!-- ======================================================================= -->
@@ -547,7 +592,7 @@ of memory, and all memory objects in LLVM are accessed through pointers.<p>
 <!-- ======================================================================= -->
 </ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
 <tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="functionstructure">Function Structure
+<a name="functionstructure">Functions
 </b></font></td></tr></table><ul>
 
 LLVM functions definitions are composed of a (possibly empty) argument list, an
@@ -564,7 +609,8 @@ return).<p>
 The first basic block in program is special in two ways: it is immediately
 executed on entrance to the function, and it is not allowed to have predecessor
 basic blocks (i.e. there can not be any branches to the entry block of a
-function).<p>
+function).  Because the block can have no predecessors, it also cannot have any
+<a href="#i_phi">PHI nodes</a>.<p>
 
 
 <!-- *********************************************************************** -->
@@ -593,11 +639,12 @@ typically yield a '<tt>void</tt>' value: they produce control flow, not values
 (the one exception being the '<a href="#i_invoke"><tt>invoke</tt></a>'
 instruction).<p>
 
-There are four different terminator instructions: the '<a
+There are five different terminator instructions: the '<a
 href="#i_ret"><tt>ret</tt></a>' instruction, the '<a
 href="#i_br"><tt>br</tt></a>' instruction, the '<a
-href="#i_switch"><tt>switch</tt></a>' instruction, and the '<a
-href="#i_invoke"><tt>invoke</tt></a>' instruction.<p>
+href="#i_switch"><tt>switch</tt></a>' instruction, the '<a
+href="#i_invoke"><tt>invoke</tt></a>' instruction, and the '<a
+href="#i_unwind"><tt>unwind</tt></a>' instruction.<p>
 
 
 <!-- _______________________________________________________________________ -->
@@ -628,8 +675,13 @@ that returns a value that does not match the return type of the function.<p>
 <h5>Semantics:</h5>
 
 When the '<tt>ret</tt>' instruction is executed, control flow returns back to
-the calling function's context.  If the instruction returns a value, that value
-shall be propagated into the calling function's data space.<p>
+the calling function's context.  If the caller is a "<a
+href="#i_call"><tt>call</tt></a> instruction, execution continues at the
+instruction after the call.  If the caller was an "<a
+href="#i_invoke"><tt>invoke</tt></a>" instruction, execution continues at the
+beginning "normal" of the destination block.  If the instruction returns a
+value, that value shall set the call or invoke instruction's return value.<p>
+
 
 <h5>Example:</h5>
 <pre>
@@ -665,8 +717,8 @@ target.<p>
 
 Upon execution of a conditional '<tt>br</tt>' instruction, the '<tt>bool</tt>'
 argument is evaluated.  If the value is <tt>true</tt>, control flows to the
-'<tt>iftrue</tt>' '<tt>label</tt>' argument.  If "cond" is <tt>false</tt>,
-control flows to the '<tt>iffalse</tt>' '<tt>label</tt>' argument.<p>
+'<tt>iftrue</tt>' <tt>label</tt> argument.  If "cond" is <tt>false</tt>,
+control flows to the '<tt>iffalse</tt>' <tt>label</tt> argument.<p>
 
 <h5>Example:</h5>
 <pre>
@@ -685,7 +737,7 @@ IfUnequal:
 
 <h5>Syntax:</h5>
 <pre>
-  switch int &lt;value&gt;, label &lt;defaultdest&gt; [ int &lt;val&gt;, label &dest&gt;, ... ]
+  switch uint &lt;value&gt;, label &lt;defaultdest&gt; [ int &lt;val&gt;, label &dest&gt;, ... ]
 
 </pre>
 
@@ -718,15 +770,15 @@ conditional branches, or with a lookup table.<p>
 <pre>
   <i>; Emulate a conditional br instruction</i>
   %Val = <a href="#i_cast">cast</a> bool %value to uint
-  switch int %Val, label %truedest [int 0, label %falsedest ]
+  switch uint %Val, label %truedest [int 0, label %falsedest ]
 
   <i>; Emulate an unconditional br instruction</i>
-  switch int 0, label %dest [ ]
+  switch uint 0, label %dest [ ]
 
   <i>; Implement a jump table:</i>
-  switch int %val, label %otherwise [ int 0, label %onzero, 
-                                      int 1, label %onone, 
-                                      int 2, label %ontwo ]
+  switch uint %val, label %otherwise [ int 0, label %onzero, 
+                                       int 1, label %onone, 
+                                       int 2, label %ontwo ]
 </pre>
 
 
@@ -744,11 +796,12 @@ conditional branches, or with a lookup table.<p>
 
 The '<tt>invoke</tt>' instruction causes control to transfer to a specified
 function, with the possibility of control flow transfer to either the
-'<tt>normal label</tt>' label or the '<tt>exception label</tt>'.  If the callee
-function invokes the "<tt><a href="#i_ret">ret</a></tt>" instruction, control
-flow will return to the "normal" label.  If the callee (or any indirect callees)
-calls the "<a href="#i_unwind"><tt>llvm.unwind</tt></a>" intrinsic, control is
-interrupted, and continued at the "except" label.<p>
+'<tt>normal</tt>' <tt>label</tt> label or the '<tt>exception</tt>'
+<tt>label</tt>.  If the callee function returns with the "<tt><a
+href="#i_ret">ret</a></tt>" instruction, control flow will return to the
+"normal" label.  If the callee (or any indirect callees) returns with the "<a
+href="#i_unwind"><tt>unwind</tt></a>" instruction, control is interrupted, and
+continued at the dynamically nearest "except" label.<p>
 
 
 <h5>Arguments:</h5>
@@ -771,8 +824,8 @@ accepts a variable number of arguments, the extra arguments can be specified.
 <li>'<tt>normal label</tt>': the label reached when the called function executes
 a '<tt><a href="#i_ret">ret</a></tt>' instruction.
 
-<li>'<tt>exception label</tt>': the label reached when a callee calls the <a
-href="#i_unwind"><tt>llvm.unwind</tt></a> intrinsic.
+<li>'<tt>exception label</tt>': the label reached when a callee returns with the
+<a href="#i_unwind"><tt>unwind</tt></a> instruction.
 </ol>
 
 <h5>Semantics:</h5>
@@ -793,6 +846,30 @@ exception.  Additionally, this is important for implementation of
               except label %TestCleanup     <i>; {int}:retval set</i>
 </pre>
 
+<!-- _______________________________________________________________________ -->
+</ul><a name="i_unwind"><h4><hr size=0>'<tt>unwind</tt>' Instruction</h4><ul>
+
+<h5>Syntax:</h5>
+<pre>
+  unwind
+</pre>
+
+<h5>Overview:</h5>
+
+The '<tt>unwind</tt>' instruction unwinds the stack, continuing control flow at
+the first callee in the dynamic call stack which used an <a
+href="#i_invoke"><tt>invoke</tt></a> instruction to perform the call.  This is
+primarily used to implement exception handling.
+
+<h5>Semantics:</h5>
+
+The '<tt>unwind</tt>' intrinsic causes execution of the current function to
+immediately halt.  The dynamic call stack is then searched for the first <a
+href="#i_invoke"><tt>invoke</tt></a> instruction on the call stack.  Once found,
+execution continues at the "exceptional" destination block specified by the
+<tt>invoke</tt> instruction.  If there is no <tt>invoke</tt> instruction in the
+dynamic call chain, undefined behavior results.
+
 
 
 <!-- ======================================================================= -->
@@ -802,7 +879,7 @@ exception.  Additionally, this is important for implementation of
 
 Binary operators are used to do most of the computation in a program.  They
 require two operands, execute an operation on them, and produce a single value.
-The result value of a binary operator is not neccesarily the same type as its
+The result value of a binary operator is not necessarily the same type as its
 operands.<p>
 
 There are several different binary operators:<p>
@@ -972,9 +1049,6 @@ href="#t_pointer">pointer</a> type (it is not possible to compare
 '<tt>label</tt>'s, '<tt>array</tt>'s, '<tt>structure</tt>' or '<tt>void</tt>'
 values, etc...).  Both arguments must have identical types.<p>
 
-The '<tt>setlt</tt>', '<tt>setgt</tt>', '<tt>setle</tt>', and '<tt>setge</tt>'
-instructions do not operate on '<tt>bool</tt>' typed arguments.<p>
-
 <h5>Semantics:</h5>
 
 The '<tt>seteq</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if
@@ -1109,7 +1183,8 @@ The truth table used for the '<tt>or</tt>' instruction is:<p>
 <h5>Overview:</h5>
 
 The '<tt>xor</tt>' instruction returns the bitwise logical exclusive or of its
-two operands.<p>
+two operands.  The <tt>xor</tt> is used to implement the "one's complement"
+operation, which is the "~" operator in C.<p>
 
 <h5>Arguments:</h5>
 
@@ -1136,6 +1211,7 @@ The truth table used for the '<tt>xor</tt>' instruction is:<p>
   &lt;result&gt; = xor int 4, %var         <i>; yields {int}:result = 4 ^ %var</i>
   &lt;result&gt; = xor int 15, 40          <i>; yields {int}:result = 39</i>
   &lt;result&gt; = xor int 4, 8            <i>; yields {int}:result = 12</i>
+  &lt;result&gt; = xor int %V, -1          <i>; yields {int}:result = ~%V</i>
 </pre>
 
 
@@ -1211,7 +1287,9 @@ argument is unsigned, zero bits shall fill the empty positions.<p>
 <a name="memoryops">Memory Access Operations
 </b></font></td></tr></table><ul>
 
-Accessing memory in SSA form is, well, sticky at best.  This section describes how to read, write, allocate and free memory in LLVM.<p>
+A key design point of an SSA-based representation is how it represents memory.
+In LLVM, no memory locations are in SSA form, which makes things very simple.
+This section describes how to read, write, allocate and free memory in LLVM.<p>
 
 
 <!-- _______________________________________________________________________ -->
@@ -1234,10 +1312,12 @@ system, and returns a pointer of the appropriate type to the program.  The
 second form of the instruction is a shorter version of the first instruction
 that defaults to allocating one element.<p>
 
-'<tt>type</tt>' must be a sized type<p>
+'<tt>type</tt>' must be a sized type.<p>
 
 <h5>Semantics:</h5>
-Memory is allocated, a pointer is returned.<p>
+
+Memory is allocated using the system "<tt>malloc</tt>" function, and a pointer
+is returned.<p>
 
 <h5>Example:</h5>
 <pre>
@@ -1308,7 +1388,9 @@ one element.<p>
 Memory is allocated, a pointer is returned.  '<tt>alloca</tt>'d memory is
 automatically released when the function returns.  The '<tt>alloca</tt>'
 instruction is commonly used to represent automatic variables that must have an
-address available, as well as spilled variables.<p>
+address available.  When the function returns (either with the <tt><a
+href="#i_ret">ret</a></tt> or <tt><a href="#i_invoke">invoke</a></tt>
+instructions), the memory is reclaimed.<p>
 
 <h5>Example:</h5>
 <pre>
@@ -1803,32 +1885,6 @@ because the <tt><a href="i_va_begin">llvm.va_begin</a></tt> intrinsic may be
 arbitrarily complex and require memory allocation, for example.<p>
 
 
-<!-- _______________________________________________________________________ -->
-</ul><a name="i_unwind"><h4><hr size=0>'<tt>llvm.unwind</tt>' Intrinsic</h4><ul>
-
-<h5>Syntax:</h5>
-<pre>
-  call void (void)* %llvm.unwind()
-</pre>
-
-<h5>Overview:</h5>
-
-The '<tt>llvm.unwind</tt>' intrinsic unwinds the stack, continuing control flow
-at the first callee in the dynamic call stack which used an <a
-href="#i_invoke"><tt>invoke</tt></a> instruction to perform the call.  This is
-primarily used to implement exception handling.
-
-<h5>Semantics:</h5>
-
-The '<tt>llvm.unwind</tt>' intrinsic causes execution of the current function to
-immediately halt.  The dynamic call stack is then searched for the first <a
-href="#i_invoke"><tt>invoke</tt></a> instruction on the call stack.  Once found,
-execution continues at the "exceptional" destination block specified by the
-invoke instruction.  If there is no <tt>invoke</tt> instruction in the dynamic
-call chain, undefined behavior results.
-
-
-
 <!-- *********************************************************************** -->
 </ul>
 <!-- *********************************************************************** -->
@@ -1839,7 +1895,7 @@ call chain, undefined behavior results.
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Tue Sep  2 18:38:09 CDT 2003
+Last modified: Tue Sep  2 19:41:01 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
