@@ -21,7 +21,102 @@ namespace {
   Statistic<> NumBytes("jello", "Number of bytes of machine code compiled");
   VM *TheVM = 0;
 
+  /// JITMemoryManager - Manage memory for the JIT code generation in a logical,
+  /// sane way.  This splits a large block of MAP_NORESERVE'd memory into two
+  /// sections, one for function stubs, one for the functions themselves.  We
+  /// have to do this because we may need to emit a function stub while in the
+  /// middle of emitting a function, and we don't know how large the function we
+  /// are emitting is.  This never bothers to release the memory, because when
+  /// we are ready to destroy the JIT, the program exits.
+  class JITMemoryManager {
+    unsigned char *MemBase;      // Base of block of memory, start of stub mem
+    unsigned char *FunctionBase; // Start of the function body area
+    unsigned char *CurStubPtr, *CurFunctionPtr;
+  public:
+    JITMemoryManager();
+    
+    inline unsigned char *allocateStub(unsigned StubSize);
+    inline unsigned char *startFunctionBody();
+    inline void endFunctionBody(unsigned char *FunctionEnd);    
+  };
+}
+
+#define _POSIX_MAPPED_FILES
+#include <unistd.h>
+#include <sys/mman.h>
+
+// getMemory - Return a pointer to the specified number of bytes, which is
+// mapped as executable readable and writable.
+static void *getMemory(unsigned NumBytes) {
+  if (NumBytes == 0) return 0;
+  static const long pageSize = sysconf(_SC_PAGESIZE);
+  unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
+
+#if defined(i386) || defined(__i386__) || defined(__x86__)
+  /* Linux and *BSD tend to have these flags named differently. */
+#if defined(MAP_ANON) && !defined(MAP_ANONYMOUS)
+# define MAP_ANONYMOUS MAP_ANON
+#endif /* defined(MAP_ANON) && !defined(MAP_ANONYMOUS) */
+#define fd  0
+#elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+#define fd -1
+#else
+  std::cerr << "This architecture is not supported by the JIT!\n";
+  abort();
+#endif
+  
+  unsigned mmapFlags = MAP_PRIVATE|MAP_ANONYMOUS;
+#ifdef MAP_NORESERVE
+  mmapFlags |= MAP_NORESERVE;
+#endif
+
+  void *pa = mmap(0, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
+                  MAP_PRIVATE|MAP_ANONYMOUS, fd, 0);
+  if (pa == MAP_FAILED) {
+    perror("mmap");
+    abort();
+  }
+  return pa;
+}
+
+JITMemoryManager::JITMemoryManager() {
+  // Allocate a 16M block of memory...
+  MemBase = (unsigned char*)getMemory(16 << 20);
+  FunctionBase = MemBase + 512*1024; // Use 512k for stubs
+
+  // Allocate stubs backwards from the function base, allocate functions forward
+  // from the function base.
+  CurStubPtr = CurFunctionPtr = FunctionBase;
+}
+
+unsigned char *JITMemoryManager::allocateStub(unsigned StubSize) {
+  CurStubPtr -= StubSize;
+  if (CurStubPtr < MemBase) {
+    std::cerr << "JIT ran out of memory for function stubs!\n";
+    abort();
+  }
+  return CurStubPtr;
+}
+
+unsigned char *JITMemoryManager::startFunctionBody() {
+  // Round up to an even multiple of 4 bytes, this should eventually be target
+  // specific.
+  return (unsigned char*)(((intptr_t)CurFunctionPtr + 3) & ~3);
+}
+
+void JITMemoryManager::endFunctionBody(unsigned char *FunctionEnd) {
+  assert(FunctionEnd > CurFunctionPtr);
+  CurFunctionPtr = FunctionEnd;
+}
+
+
+
+namespace {
+  /// Emitter - The JIT implementation of the MachineCodeEmiter, which is used
+  /// to output functions to memory for execution.
   class Emitter : public MachineCodeEmitter {
+    JITMemoryManager MemMgr;
+
     // CurBlock - The start of the current block of memory.  CurByte - The
     // current byte being emitted to.
     unsigned char *CurBlock, *CurByte;
@@ -62,47 +157,13 @@ MachineCodeEmitter *VM::createEmitter(VM &V) {
   return new Emitter(V);
 }
 
-
-#define _POSIX_MAPPED_FILES
-#include <unistd.h>
-#include <sys/mman.h>
-
-// FIXME: This should be rewritten to support a real memory manager for
-// executable memory pages!
-static void *getMemory(unsigned NumPages) {
-  void *pa;
-  if (NumPages == 0) return 0;
-  static const long pageSize = sysconf(_SC_PAGESIZE);
-
-#if defined(i386) || defined(__i386__) || defined(__x86__)
-  /* Linux and *BSD tend to have these flags named differently. */
-#if defined(MAP_ANON) && !defined(MAP_ANONYMOUS)
-# define MAP_ANONYMOUS MAP_ANON
-#endif /* defined(MAP_ANON) && !defined(MAP_ANONYMOUS) */
-#define fd  0
-#elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-#define fd -1
-#else
-  std::cerr << "This architecture is not supported by the JIT!\n";
-  abort();
-#endif
-  pa = mmap(0, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
-            MAP_PRIVATE|MAP_ANONYMOUS, fd, 0);
-  if (pa == MAP_FAILED) {
-    perror("mmap");
-    abort();
-  }
-  return pa;
-}
-
-
 void Emitter::startFunction(MachineFunction &F) {
-  CurBlock = (unsigned char *)getMemory(16);
-  CurByte = CurBlock;  // Start writing at the beginning of the fn.
+  CurByte = CurBlock = MemMgr.startFunctionBody();
   TheVM->addGlobalMapping(F.getFunction(), CurBlock);
 }
 
 void Emitter::finishFunction(MachineFunction &F) {
+  MemMgr.endFunctionBody(CurByte);
   ConstantPoolAddresses.clear();
   NumBytes += CurByte-CurBlock;
 
@@ -124,11 +185,8 @@ void Emitter::emitConstantPool(MachineConstantPool *MCP) {
 }
 
 void Emitter::startFunctionStub(const Function &F, unsigned StubSize) {
-  static const long pageSize = sysconf(_SC_PAGESIZE);
   SavedCurBlock = CurBlock;  SavedCurByte = CurByte;
-  // FIXME: this is a huge waste of memory.
-  CurBlock = (unsigned char *)getMemory((StubSize+pageSize-1)/pageSize);
-  CurByte = CurBlock;  // Start writing at the beginning of the fn.
+  CurByte = CurBlock = MemMgr.allocateStub(StubSize);
 }
 
 void *Emitter::finishFunctionStub(const Function &F) {
@@ -147,8 +205,8 @@ void Emitter::emitByte(unsigned char B) {
 }
 
 void Emitter::emitWord(unsigned W) {
-  // FIXME: This won't work if the endianness of the host and target don't
-  // agree!  (For a JIT this can't happen though.  :)
+  // This won't work if the endianness of the host and target don't agree!  (For
+  // a JIT this can't happen though.  :)
   *(unsigned*)CurByte = W;
   CurByte += sizeof(unsigned);
 }
