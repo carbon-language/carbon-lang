@@ -184,7 +184,27 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
   int64_t rv = 0; // Return value; defaults to 0 for unhandled cases
                   // or things that get fixed up later by the JIT.
 
-  if (MO.isPhysicalRegister()) {
+  if (MO.isVirtualRegister()) {
+    std::cerr << "ERROR: virtual register found in machine code.\n";
+    abort();
+  } else if (MO.isPCRelativeDisp()) {
+    Value *V = MO.getVRegValue();
+    if (BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
+      std::cerr << "Saving reference to BB (VReg)\n";
+      unsigned* CurrPC = (unsigned*)(intptr_t)MCE->getCurrentPCValue();
+      BBRefs.push_back(std::make_pair(BB, std::make_pair(CurrPC, &MI)));
+    } else if (Constant *C = dyn_cast<Constant>(V)) {
+      if (ConstantMap.find(C) != ConstantMap.end())
+        rv = (int64_t)(intptr_t)ConstantMap[C];
+      else {
+        std::cerr << "ERROR: constant not in map:" << MO << "\n";
+        abort();
+      }
+    } else {
+      std::cerr << "ERROR: PC relative disp unhandled:" << MO << "\n";
+      abort();
+    }
+  } else if (MO.isPhysicalRegister()) {
     // This is necessary because the Sparc doesn't actually lay out registers
     // in the real fashion -- it skips those that it chooses not to allocate,
     // i.e. those that are the SP, etc.
@@ -198,25 +218,33 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
     rv = realReg;
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
-  } else if (MO.isPCRelativeDisp()) { // this is not always a call!! (fp const)
-    std::cerr << "Saving reference to func (call - PCRelDisp)\n";
+  } else if (MO.isGlobalAddress()) {
     rv = (int64_t)
       (intptr_t)getGlobalAddress(cast<GlobalValue>(MO.getVRegValue()),
-                                 MI,true);
+                                 MI, MO.isPCRelative());
   } else if (MO.isMachineBasicBlock()) {
+    // Duplicate code of the above case for VirtualRegister, BasicBlock... 
+    // It should really hit this case, but Sparc backend uses VRegs instead
     std::cerr << "Saving reference to MBB\n";
-    BBRefs.push_back(std::make_pair(MO.getMachineBasicBlock()->getBasicBlock(),
-            std::make_pair((unsigned*)(intptr_t)MCE->getCurrentPCValue(),&MI)));
-  } else if (MO.isFrameIndex()) {
-    std::cerr << "ERROR: Frame index unhandled.\n";
-  } else if (MO.isConstantPoolIndex()) {
-    std::cerr << "ERROR: Constant Pool index unhandled.\n";
-  } else if (MO.isGlobalAddress()) {
-    std::cerr << "ERROR: Global addr unhandled.\n";
+    BasicBlock *BB = MO.getMachineBasicBlock()->getBasicBlock();
+    unsigned* CurrPC = (unsigned*)(intptr_t)MCE->getCurrentPCValue();
+    BBRefs.push_back(std::make_pair(BB, std::make_pair(CurrPC, &MI)));
   } else if (MO.isExternalSymbol()) {
-    std::cerr << "ERROR: External symbol unhandled.\n";
+    // Sparc backend doesn't generate this (yet...)
+    std::cerr << "ERROR: External symbol unhandled: " << MO << "\n";
+    abort();
+  } else if (MO.isFrameIndex()) {
+    // Sparc backend doesn't generate this (yet...)
+    int FrameIndex = MO.getFrameIndex();
+    std::cerr << "ERROR: Frame index unhandled.\n";
+    abort();
+  } else if (MO.isConstantPoolIndex()) {
+    // Sparc backend doesn't generate this (yet...)
+    std::cerr << "ERROR: Constant Pool index unhandled.\n";
+    abort();
   } else {
     std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
+    abort();
   }
 
   // Finally, deal with the various bitfield-extracting functions that
@@ -357,7 +385,8 @@ void* SparcV9CodeEmitter::getGlobalAddress(GlobalValue *V, MachineInstr &MI,
         TheJITResolver->addFunctionReference(MCE->getCurrentPCValue(),
                                              cast<Function>(V));
         // Delayed resolution...
-        return (void*)TheJITResolver->getLazyResolver(cast<Function>(V));
+        return 
+          (void*)(intptr_t)TheJITResolver->getLazyResolver(cast<Function>(V));
 
       } else if (Constant *C = ConstantPointerRef::get(V)) {
         if (ConstantMap.find(C) != ConstantMap.end()) {
