@@ -240,7 +240,7 @@ ISel::visitSetCondInst (SetCondInst & I)
       // Move fp status word (concodes) to ax.
       BuildMI (BB, X86::FNSTSWr8, 1, X86::AX);
       // Load real concodes from ax.
-      BuildMI (BB, X86::SAHF, 1, X86::EFLAGS).addReg(X86::AH);
+      BuildMI (BB, X86::SAHF, 1).addReg(X86::AH);
     }
   else
     {				// integer comparison
@@ -250,16 +250,13 @@ ISel::visitSetCondInst (SetCondInst & I)
       switch (comparisonWidth)
 	{
 	case 1:
-	  BuildMI (BB, X86::CMPrr8, 2,
-		   X86::EFLAGS).addReg (reg1).addReg (reg2);
+	  BuildMI (BB, X86::CMPrr8, 2).addReg (reg1).addReg (reg2);
 	  break;
 	case 2:
-	  BuildMI (BB, X86::CMPrr16, 2,
-		   X86::EFLAGS).addReg (reg1).addReg (reg2);
+	  BuildMI (BB, X86::CMPrr16, 2).addReg (reg1).addReg (reg2);
 	  break;
 	case 4:
-	  BuildMI (BB, X86::CMPrr32, 2,
-		   X86::EFLAGS).addReg (reg1).addReg (reg2);
+	  BuildMI (BB, X86::CMPrr32, 2).addReg (reg1).addReg (reg2);
 	  break;
 	case 8:
 	default:
@@ -413,7 +410,7 @@ ISel::visitBranchInst (BranchInst & BI)
       // followed by jump-if-equal to ifFalse, and jump-if-nonequal to
       // ifTrue
       unsigned int condReg = getReg (BI.getCondition ());
-      BuildMI (BB, X86::CMPri8, 2, X86::EFLAGS).addReg (condReg).addZImm (0);
+      BuildMI (BB, X86::CMPri8, 2).addReg (condReg).addZImm (0);
       BuildMI (BB, X86::JNE, 1).addPCDisp (BI.getSuccessor (0));
       BuildMI (BB, X86::JE, 1).addPCDisp (BI.getSuccessor (1));
     }
