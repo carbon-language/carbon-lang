@@ -322,7 +322,7 @@ endif
 ifndef KEEP_SYMBOLS
   Strip := $(PLATFORMSTRIPOPTS)
   StripWarnMsg := "(without symbols)"
-  Install.Flags += -s
+  Install.StripFlag += -s
 endif
 
 # Adjust linker flags for building an executable
@@ -362,8 +362,8 @@ Relink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
                 $(CompileCommonOpts)
 LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL) \
 		$(Install.Flags)
-ProgInstall   = $(INSTALL) $(Install.Flags) -m 0755 
-DataInstall   = $(INSTALL) $(Install.Flags) -m 0644
+ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755 
+DataInstall   = $(INSTALL) -m 0644
 Burg          = $(BURG) -I $(PROJ_SRC_DIR)
 TableGen      = $(TBLGEN) -I $(PROJ_SRC_DIR)
 Archive       = $(AR) $(AR.Flags)
