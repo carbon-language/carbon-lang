@@ -331,12 +331,12 @@ void LoopInfo::removeBlock(BasicBlock *BB) {
 /// getExitBlocks - Return all of the successor blocks of this loop.  These
 /// are the blocks _outside of the current loop_ which are branched to.
 ///
-void Loop::getExitBlocks(std::vector<BasicBlock*> &Blocks) const {
+void Loop::getExitBlocks(std::vector<BasicBlock*> &ExitBlocks) const {
   for (std::vector<BasicBlock*>::const_iterator BI = Blocks.begin(),
          BE = Blocks.end(); BI != BE; ++BI)
     for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I)
       if (!contains(*I))               // Not in current loop?
-        Blocks.push_back(*I);          // It must be an exit block...
+        ExitBlocks.push_back(*I);          // It must be an exit block...
 }
 
 
