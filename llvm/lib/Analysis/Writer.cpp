@@ -11,6 +11,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/InductionVariable.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Module.h"
 #include <iterator>
 #include <algorithm>
 #include <string>
@@ -74,8 +75,8 @@ void WriteToOutput(const ImmediateDominators &ID, ostream &o) {
   for (ImmediateDominators::const_iterator I = ID.begin(), E = ID.end();
        I != E; ++I) {
     o << "=============================--------------------------------\n"
-      << "\nImmediate Dominator For Basic Block\n" << I->first
-      << "is: \n" << I->second << "\n";
+      << "\nImmediate Dominator For Basic Block\n" << *I->first
+      << "is: \n" << *I->second << "\n";
   }
 }
 
