@@ -23,7 +23,7 @@
 #include "llvm/Module.h"
 #include "Support/StringExtras.h"
 #include "Support/HashExtras.h"
-#include <ostream>
+#include <iostream>
 using std::string;
 
 namespace {

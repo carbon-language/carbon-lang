@@ -8,7 +8,7 @@
 
 #include "SparcInternals.h"
 #include "llvm/Bytecode/Writer.h"
-#include <ostream>
+#include <iostream>
 
 namespace {
 
