@@ -34,7 +34,6 @@ using namespace llvm;
 
 namespace {
     Statistic<> numSpilled ("ra-linearscan", "Number of registers spilled");
-    Statistic<> numReloaded("ra-linearscan", "Number of registers reloaded");
 
     class RA : public MachineFunctionPass {
     public:
@@ -766,7 +765,6 @@ void RA::loadVirt2PhysReg(unsigned virtReg, unsigned physReg)
     const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(virtReg);
     int frameIndex = findOrCreateStackSlot(virtReg);
     DEBUG(std::cerr << " from stack slot #" << frameIndex << '\n');
-    ++numReloaded;
     instrAdded_ += mri_->loadRegFromStackSlot(*currentMbb_, currentInstr_,
                                               physReg, frameIndex, rc);
     assignVirt2PhysReg(virtReg, physReg);
