@@ -1396,10 +1396,111 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   }
 
   // (setcc1 A, B) | (setcc2 A, B) --> (setcc3 A, B)
-  if (SetCondInst *RHS = dyn_cast<SetCondInst>(I.getOperand(1)))
+  if (SetCondInst *RHS = dyn_cast<SetCondInst>(I.getOperand(1))) {
     if (Instruction *R = AssociativeOpt(I, FoldSetCCLogical(*this, RHS)))
       return R;
 
+    Value *LHSVal, *RHSVal;
+    ConstantInt *LHSCst, *RHSCst;
+    Instruction::BinaryOps LHSCC, RHSCC;
+    if (match(Op0, m_SetCond(LHSCC, m_Value(LHSVal), m_ConstantInt(LHSCst))))
+      if (match(RHS, m_SetCond(RHSCC, m_Value(RHSVal), m_ConstantInt(RHSCst))))
+        if (LHSVal == RHSVal &&    // Found (X setcc C1) | (X setcc C2)
+            // Set[GL]E X, CST is folded to Set[GL]T elsewhere.
+            LHSCC != Instruction::SetGE && LHSCC != Instruction::SetLE && 
+            RHSCC != Instruction::SetGE && RHSCC != Instruction::SetLE) {
+          // Ensure that the larger constant is on the RHS.
+          Constant *Cmp = ConstantExpr::getSetGT(LHSCst, RHSCst);
+          SetCondInst *LHS = cast<SetCondInst>(Op0);
+          if (cast<ConstantBool>(Cmp)->getValue()) {
+            std::swap(LHS, RHS);
+            std::swap(LHSCst, RHSCst);
+            std::swap(LHSCC, RHSCC);
+          }
+
+          // At this point, we know we have have two setcc instructions
+          // comparing a value against two constants and or'ing the result
+          // together.  Because of the above check, we know that we only have
+          // SetEQ, SetNE, SetLT, and SetGT here.  We also know (from the
+          // FoldSetCCLogical check above), that the two constants are not
+          // equal.
+          assert(LHSCst != RHSCst && "Compares not folded above?");
+
+          switch (LHSCC) {
+          default: assert(0 && "Unknown integer condition code!");
+          case Instruction::SetEQ:
+            switch (RHSCC) {
+            default: assert(0 && "Unknown integer condition code!");
+            case Instruction::SetEQ:
+              if (LHSCst == SubOne(RHSCst)) {// (X == 13 | X == 14) -> X-13 <u 2
+                Constant *AddCST = ConstantExpr::getNeg(LHSCst);
+                Instruction *Add = BinaryOperator::createAdd(LHSVal, AddCST,
+                                                      LHSVal->getName()+".off");
+                InsertNewInstBefore(Add, I);
+                const Type *UnsType = Add->getType()->getUnsignedVersion();
+                Value *OffsetVal = InsertCastBefore(Add, UnsType, I);
+                AddCST = ConstantExpr::getSub(AddOne(RHSCst), LHSCst);
+                AddCST = ConstantExpr::getCast(AddCST, UnsType);
+                return new SetCondInst(Instruction::SetLT, OffsetVal, AddCST);
+              }
+              break;                  // (X == 13 | X == 15) -> no change
+
+            case Instruction::SetGT:
+              if (LHSCst == SubOne(RHSCst)) // (X == 13 | X > 14) -> X > 13
+                return new SetCondInst(Instruction::SetGT, LHSVal, LHSCst);
+              break;                        // (X == 13 | X > 15) -> no change
+            case Instruction::SetNE:  // (X == 13 | X != 15) -> X != 15
+            case Instruction::SetLT:  // (X == 13 | X < 15)  -> X < 15
+              return ReplaceInstUsesWith(I, RHS);
+            }
+            break;
+          case Instruction::SetNE:
+            switch (RHSCC) {
+            default: assert(0 && "Unknown integer condition code!");
+            case Instruction::SetLT:        // (X != 13 | X < 15) -> X < 15
+              return ReplaceInstUsesWith(I, RHS);
+            case Instruction::SetEQ:        // (X != 13 | X == 15) -> X != 13
+            case Instruction::SetGT:        // (X != 13 | X > 15)  -> X != 13
+              return ReplaceInstUsesWith(I, LHS);
+            case Instruction::SetNE:        // (X != 13 | X != 15) -> true
+              return ReplaceInstUsesWith(I, ConstantBool::True);
+            }
+            break;
+          case Instruction::SetLT:
+            switch (RHSCC) {
+            default: assert(0 && "Unknown integer condition code!");
+            case Instruction::SetEQ:  // (X < 13 | X == 14) -> no change
+              break;
+            case Instruction::SetGT: {// (X < 13 | X > 15)  -> (X-13) > 2
+              Constant *AddCST = ConstantExpr::getNeg(LHSCst);
+              Instruction *Add = BinaryOperator::createAdd(LHSVal, AddCST,
+                                                      LHSVal->getName()+".off");
+              InsertNewInstBefore(Add, I);
+              // Convert to unsigned for the comparison.
+              const Type *UnsType = Add->getType()->getUnsignedVersion();
+              Value *OffsetVal = InsertCastBefore(Add, UnsType, I);
+              AddCST = ConstantExpr::getAdd(AddCST, RHSCst);
+              AddCST = ConstantExpr::getCast(AddCST, UnsType);
+              return new SetCondInst(Instruction::SetGT, OffsetVal, AddCST);
+            }
+            case Instruction::SetNE:  // (X < 13 | X != 15) -> X != 15
+            case Instruction::SetLT:  // (X < 13 | X < 15) -> X < 15
+              return ReplaceInstUsesWith(I, RHS);
+            }
+            break;
+          case Instruction::SetGT:
+            switch (RHSCC) {
+            default: assert(0 && "Unknown integer condition code!");
+            case Instruction::SetEQ:  // (X > 13 | X == 15) -> X > 13
+            case Instruction::SetGT:  // (X > 13 | X > 15)  -> X > 13
+              return ReplaceInstUsesWith(I, LHS);
+            case Instruction::SetNE:  // (X > 13 | X != 15)  -> true
+            case Instruction::SetLT:  // (X > 13 | X < 15) -> true
+              return ReplaceInstUsesWith(I, ConstantBool::True);
+            }
+          }
+        }
+  }
   return Changed ? &I : 0;
 }
 
