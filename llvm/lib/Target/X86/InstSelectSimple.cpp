@@ -405,8 +405,10 @@ unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
     BuildMI(*MBB, IPt, X86::MOV32ri, 1, Reg).addGlobalAddress(GV);
     return Reg;
   } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
-    // Do not emit noop casts at all.
-    if (getClassB(CI->getType()) == getClassB(CI->getOperand(0)->getType()))
+    // Do not emit noop casts at all, unless it's a double -> float cast.
+    if (getClassB(CI->getType()) == getClassB(CI->getOperand(0)->getType()) &&
+        (CI->getType() != Type::FloatTy || 
+         CI->getOperand(0)->getType() != Type::DoubleTy))
       return getReg(CI->getOperand(0), MBB, IPt);
   } else if (AllocaInst *AI = dyn_castFixedAlloca(V)) {
     // If the alloca address couldn't be folded into the instruction addressing,
@@ -3116,8 +3118,13 @@ void ISel::visitCastInst(CastInst &CI) {
   unsigned DestClass = getClassB(CI.getType());
   // Noop casts are not emitted: getReg will return the source operand as the
   // register to use for any uses of the noop cast.
-  if (DestClass == SrcClass)
-    return;
+  if (DestClass == SrcClass) {
+    // The only detail in this plan is that casts from double -> float are 
+    // truncating operations that we have to codegen through memory (despite
+    // the fact that the source/dest registers are the same class).
+    if (CI.getType() != Type::FloatTy || Op->getType() != Type::DoubleTy)
+      return;
+  }
 
   // If this is a cast from a 32-bit integer to a Long type, and the only uses
   // of the case are GEP instructions, then the cast does not need to be
