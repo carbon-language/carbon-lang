@@ -11,6 +11,12 @@ declare int "ArrayRef"([100 x int] * %Array, uint %I, uint %J)
 
 implementation
 
+int "test"([20 x [10 x [5 x int]]] * %A)
+begin
+	%i = load [20 x [10 x [5 x int]]] * %A, uint 1, uint 2, uint 3, uint 4
+	ret int %i
+end
+
 void "InitializeMixed"(%Mixed_struct * %M, int %base)
 begin
 bb0:					;[#uses=2]
