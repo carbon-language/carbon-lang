@@ -68,7 +68,7 @@ unsigned Reassociate::getRank(Value *V) {
     // If this is an expression, return the MAX(rank(LHS), rank(RHS)) so that we
     // can reassociate expressions for code motion!  Since we do not recurse for
     // PHI nodes, we cannot have infinite recursion here, because there cannot
-    // be loops in the value graph (except for PHI nodes).
+    // be loops in the value graph that do not go through PHI nodes.
     //
     if (I->getOpcode() == Instruction::PHINode ||
         I->getOpcode() == Instruction::Alloca ||
@@ -106,7 +106,8 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
     std::swap(LHSRank, RHSRank);
     Changed = true;
     ++NumSwapped;
-    DEBUG(std::cerr << "Transposed: " << I << " Result BB: " << I->getParent());
+    DEBUG(std::cerr << "Transposed: " << I
+          /* << " Result BB: " << I->getParent()*/);
   }
   
   // If the LHS is the same operator as the current one is, and if we are the
@@ -124,28 +125,20 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
 
         // Convert ((a + 12) + 10) into (a + (12 + 10))
         I->setOperand(0, LHSI->getOperand(TakeOp));
+        LHSI->setOperand(TakeOp, RHS);
+        I->setOperand(1, LHSI);
 
         // Move the LHS expression forward, to ensure that it is dominated by
         // its operands.
-        std::string Name = LHSI->getName();
-        LHSI->setName("");
-        BinaryOperator *NewLHS =
-          BinaryOperator::create(LHSI->getOpcode(),
-                                 LHSI->getOperand(0), LHSI->getOperand(1),
-                                 Name, I);
-
-        NewLHS->setOperand(TakeOp, RHS);
-        I->setOperand(1, NewLHS);
-
-        assert(LHSI->use_size() == 0 && "References to LHS shouldn't exist!");
-        LHSI->getParent()->getInstList().erase(LHSI);
+        LHSI->getParent()->getInstList().remove(LHSI);
+        I->getParent()->getInstList().insert(I, LHSI);
 
         ++NumChanged;
-        DEBUG(std::cerr << "Reassociated: " << I << " Result BB: "
-                        << I->getParent());
+        DEBUG(std::cerr << "Reassociated: " << I/* << " Result BB: "
+                                                   << I->getParent()*/);
 
         // Since we modified the RHS instruction, make sure that we recheck it.
-        ReassociateExpr(NewLHS);
+        ReassociateExpr(LHSI);
         return true;
       }
     }
@@ -195,6 +188,7 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
   bool Changed = false;
   for (BasicBlock::iterator BI = BB->begin(); BI != BB->end(); ++BI) {
 
+    DEBUG(std::cerr << "Processing: " << *BI);
     if (BI->getOpcode() == Instruction::Sub && !BinaryOperator::isNeg(BI)) {
       // Convert a subtract into an add and a neg instruction... so that sub
       // instructions can be commuted with other add instructions...
@@ -218,7 +212,7 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
       New->setOperand(1, NegateValue(New->getOperand(1), BI));
       
       Changed = true;
-      DEBUG(std::cerr << "Negated: " << New << " Result BB: " << BB);
+      DEBUG(std::cerr << "Negated: " << New /*<< " Result BB: " << BB*/);
     }
 
     // If this instruction is a commutative binary operator, and the ranks of
@@ -248,7 +242,7 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
           I = Tmp;
           ++NumLinear;
           Changed = true;
-          DEBUG(std::cerr << "Linearized: " << I << " Result BB: " << BB);
+          DEBUG(std::cerr << "Linearized: " << I/* << " Result BB: " << BB*/);
         }
 
         // Make sure that this expression is correctly reassociated with respect
