@@ -2224,10 +2224,10 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     } else if (SCI->getOperand(0) == FalseVal && SCI->getOperand(1) == TrueVal){
       // Transform (X == Y) ? Y : X  -> X
       if (SCI->getOpcode() == Instruction::SetEQ)
-        return ReplaceInstUsesWith(SI, TrueVal);
+        return ReplaceInstUsesWith(SI, FalseVal);
       // Transform (X != Y) ? Y : X  -> Y
       if (SCI->getOpcode() == Instruction::SetNE)
-        return ReplaceInstUsesWith(SI, FalseVal);
+        return ReplaceInstUsesWith(SI, TrueVal);
       // NOTE: if we wanted to, this is where to detect MIN/MAX/ABS/etc.
     }
   }
