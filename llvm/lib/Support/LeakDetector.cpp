@@ -17,7 +17,6 @@
 using namespace llvm;
 
 namespace {
-
   template <typename T>
   struct LeakDetectorImpl {
     LeakDetectorImpl(const char* const name) : Cache(0), Name(name) { }
@@ -64,21 +63,25 @@ namespace {
 
   private:
     std::set<const T*> Ts;
-      const T* Cache;
-      const char* const Name;
+    const T* Cache;
+    const char* const Name;
   };
 
   typedef LeakDetectorImpl<void>  Objects;
   typedef LeakDetectorImpl<Value> LLVMObjects;
 
   Objects& getObjects() {
-    static Objects o("GENERIC");
-    return o;
+    static Objects *o = 0;
+    if (o == 0)
+      o = new Objects("GENERIC");
+    return *o;
   }
 
   LLVMObjects& getLLVMObjects() {
-    static LLVMObjects o("LLVM");
-    return o;
+    static LLVMObjects *o = 0;
+    if (o == 0)
+      o = new LLVMObjects("LLVM");
+    return *o;
   }
 }
 
