@@ -1,4 +1,4 @@
-//===- ConstantMerge.cpp - Merge duplicate global constants -----------------=//
+//===- ConstantMerge.cpp - Merge duplicate global constants ---------------===//
 //
 // This file defines the interface to a pass that merges duplicate global
 // constants together into a single constant that is shared.  This is useful
@@ -36,8 +36,8 @@ bool ConstantMerge::run(Module &M) {
   bool MadeChanges = false;
   
   for (Module::giterator GV = M.gbegin(), E = M.gend(); GV != E; ++GV)
-    if (GV->isConstant()) {  // Only process constants
-      assert(GV->hasInitializer() && "Globals constants must have inits!");
+    // Only process constants with initializers
+    if (GV->isConstant() && GV->hasInitializer()) {
       Constant *Init = GV->getInitializer();
 
       // Check to see if the initializer is already known...
