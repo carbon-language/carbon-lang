@@ -682,7 +682,6 @@ void ISel::InsertFPRegKills() {
   const TargetInstrInfo &TII = TM.getInstrInfo();
 
   for (MachineFunction::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-    bool UsesFPReg = false;
     for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end(); I!=E; ++I)
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
         if (I->getOperand(i).isRegister()) {
@@ -695,16 +694,15 @@ void ISel::InsertFPRegKills() {
     // If we haven't found an FP register use or def in this basic block, check
     // to see if any of our successors has an FP PHI node, which will cause a
     // copy to be inserted into this block.
-    if (!UsesFPReg)
-      for (succ_const_iterator SI = succ_begin(BB->getBasicBlock()),
-             E = succ_end(BB->getBasicBlock()); SI != E; ++SI) {
-        MachineBasicBlock *SBB = MBBMap[*SI];
-        for (MachineBasicBlock::iterator I = SBB->begin();
-             I != SBB->end() && I->getOpcode() == X86::PHI; ++I) {
-          if (RegMap.getRegClass(I->getOperand(0).getReg())->getSize() == 10)
-            goto UsesFPReg;
-        }
+    for (succ_const_iterator SI = succ_begin(BB->getBasicBlock()),
+           E = succ_end(BB->getBasicBlock()); SI != E; ++SI) {
+      MachineBasicBlock *SBB = MBBMap[*SI];
+      for (MachineBasicBlock::iterator I = SBB->begin();
+           I != SBB->end() && I->getOpcode() == X86::PHI; ++I) {
+        if (RegMap.getRegClass(I->getOperand(0).getReg())->getSize() == 10)
+          goto UsesFPReg;
       }
+    }
     continue;
   UsesFPReg:
     // Okay, this block uses an FP register.  If the block has successors (ie,
@@ -714,7 +712,7 @@ void ISel::InsertFPRegKills() {
       // Rewind past any terminator instructions that might exist.
       MachineBasicBlock::iterator I = BB->end();
       while (I != BB->begin() && TII.isTerminatorInstr((--I)->getOpcode()));
-      ++I;
+      if (I != BB->end()) ++I;
       BMI(BB, I, X86::FP_REG_KILL, 0);
       ++NumFPKill;
     }
