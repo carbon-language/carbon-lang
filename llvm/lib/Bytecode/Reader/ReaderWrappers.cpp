@@ -21,7 +21,6 @@
 #include "Config/fcntl.h"
 #include "Config/unistd.h"
 #include "Config/sys/mman.h"
-#include <sys/stat.h>
 #include <cerrno>
 using namespace llvm;
 
@@ -51,17 +50,15 @@ static std::string ErrnoMessage (int savedErrNum, std::string descr) {
 }
 
 BytecodeFileReader::BytecodeFileReader(const std::string &Filename) {
+  Length = getFileSize(Filename);
+  if (Length == -1)
+    throw ErrnoMessage(errno, "stat '" + Filename + "'");
+
   FDHandle FD(open(Filename.c_str(), O_RDONLY));
   if (FD == -1)
     throw ErrnoMessage(errno, "open '" + Filename + "'");
 
-  // Stat the file to get its length...
-  struct stat StatBuf;
-  if (fstat(FD, &StatBuf) == -1 || StatBuf.st_size == 0)
-    throw ErrnoMessage(errno, "stat '" + Filename + "'");
-
   // mmap in the file all at once...
-  Length = StatBuf.st_size;
   Buffer = (unsigned char*)mmap(0, Length, PROT_READ, MAP_PRIVATE, FD, 0);
 
   if (Buffer == (unsigned char*)MAP_FAILED)

@@ -18,7 +18,7 @@
 
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Module.h"
-#include "Config/sys/stat.h"
+#include "Support/FileUtilities.h"
 #include "Config/sys/mman.h"
 #include "Config/fcntl.h"
 #include <cstdlib>
@@ -164,17 +164,15 @@ static bool ReadArchiveBuffer(const std::string &ArchiveName,
 //
 bool ReadArchiveFile(const std::string &Filename, std::vector<Module*> &Objects,
                      std::string *ErrorStr) {
+  int Length = getFileSize(Filename);
+  if (Length == -1)
+    return Error(ErrorStr, "Error getting file length!");
+
   int FD = open(Filename.c_str(), O_RDONLY);
   if (FD == -1)
     return Error(ErrorStr, "Error opening file!");
   
-  // Stat the file to get its length...
-  struct stat StatBuf;
-  if (fstat(FD, &StatBuf) == -1 || StatBuf.st_size == 0)
-    return Error(ErrorStr, "Error stat'ing file!");
-  
     // mmap in the file all at once...
-  int Length = StatBuf.st_size;
   unsigned char *Buffer = (unsigned char*)mmap(0, Length, PROT_READ, 
                                                MAP_PRIVATE, FD, 0);
   if (Buffer == (unsigned char*)MAP_FAILED)
