@@ -30,7 +30,8 @@ struct FunctionExtractorPass : public Pass {
   bool run(Module &M) {
     // Mark all global variables to be internal
     for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
-      I->setInternalLinkage(true);
+      if (!I->isExternal())
+        I->setInternalLinkage(true);
 
     Function *Named = 0;
 
