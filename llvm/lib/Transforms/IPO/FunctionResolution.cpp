@@ -76,6 +76,11 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
 
     Params.push_back(V);
   }
+  
+  // If the function takes extra parameters that are not being passed in, pass
+  // null values in now...
+  for (unsigned i = NumArgsToCopy; i < ParamTys.size(); ++i)
+    Params.push_back(Constant::getNullValue(ParamTys[i]));
 
   // Replace the old call instruction with a new call instruction that calls
   // the real function.
