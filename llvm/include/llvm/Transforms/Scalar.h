@@ -153,6 +153,14 @@ Pass *createReassociatePass();
 
 //===----------------------------------------------------------------------===//
 //
+// CFG Simplification - Merge basic blocks, eliminate unreachable blocks,
+// simplify terminator instructions, etc...
+//
+Pass *createCFGSimplificationPass();
+
+
+//===----------------------------------------------------------------------===//
+//
 // These functions removes symbols from functions and modules.
 //
 Pass *createSymbolStrippingPass();
