@@ -73,7 +73,8 @@ struct DefOne : public DefVal {
 
 static ConstPoolInt *getUnsignedConstant(uint64_t V, const Type *Ty) {
   if (Ty->isPointerType()) Ty = Type::ULongTy;
-  return Ty->isSigned() ? ConstPoolSInt::get(Ty, V) : ConstPoolUInt::get(Ty, V);
+  return Ty->isSigned() ? (ConstPoolInt*)ConstPoolSInt::get(Ty, V)
+                        : (ConstPoolInt*)ConstPoolUInt::get(Ty, V);
 }
 
 // Add - Helper function to make later code simpler.  Basically it just adds
