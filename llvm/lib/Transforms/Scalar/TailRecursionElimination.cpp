@@ -19,6 +19,12 @@
 //     recursive by an associative expression to use an accumulator variable,
 //     thus compiling the typical naive factorial or 'fib' implementation into
 //     efficient code.
+//  3. TRE is performed if the function returns void, if the return
+//     returns the result returned by the call, or if the function returns a
+//     run-time constant on all exits from the function.  It is possible, though
+//     unlikely, that the return returns something else (like constant 0), and
+//     can still be TRE'd.  It can be TRE'd if ALL OTHER return instructions in
+//     the function return the exact same value.
 //
 // There are several improvements that could be made:
 //
@@ -30,12 +36,7 @@
 //  2. Tail recursion is only performed if the call immediately preceeds the
 //     return instruction.  It's possible that there could be a jump between
 //     the call and the return.
-//  3. TRE is only performed if the function returns void or if the return
-//     returns the result returned by the call.  It is possible, but unlikely,
-//     that the return returns something else (like constant 0), and can still
-//     be TRE'd.  It can be TRE'd if ALL OTHER return instructions in the
-//     function return the exact same value.
-//  4. There can be intervening operations between the call and the return that
+//  3. There can be intervening operations between the call and the return that
 //     prevent the TRE from occurring.  For example, there could be GEP's and
 //     stores to memory that will not be read or written by the call.  This
 //     requires some substantial analysis (such as with DSA) to prove safe to
@@ -144,6 +145,61 @@ bool TailCallElim::CanMoveAboveCall(Instruction *I, CallInst *CI) {
   return true;
 }
 
+// isDynamicConstant - Return true if the specified value is the same when the
+// return would exit as it was when the initial iteration of the recursive
+// function was executed.
+//
+// We currently handle static constants and arguments that are not modified as
+// part of the recursion.
+//
+static bool isDynamicConstant(Value *V, CallInst *CI) {
+  if (isa<Constant>(V)) return true; // Static constants are always dyn consts
+
+  // Check to see if this is an immutable argument, if so, the value
+  // will be available to initialize the accumulator.
+  if (Argument *Arg = dyn_cast<Argument>(V)) {
+    // Figure out which argument number this is...
+    unsigned ArgNo = 0;
+    Function *F = CI->getParent()->getParent();
+    for (Function::aiterator AI = F->abegin(); &*AI != Arg; ++AI)
+      ++ArgNo;
+    
+    // If we are passing this argument into call as the corresponding
+    // argument operand, then the argument is dynamically constant.
+    // Otherwise, we cannot transform this function safely.
+    if (CI->getOperand(ArgNo+1) == Arg)
+      return true;
+  }
+  // Not a constant or immutable argument, we can't safely transform.
+  return false;
+}
+
+// getCommonReturnValue - Check to see if the function containing the specified
+// return instruction and tail call consistently returns the same
+// runtime-constant value at all exit points.  If so, return the returned value.
+//
+static Value *getCommonReturnValue(ReturnInst *TheRI, CallInst *CI) {
+  Function *F = TheRI->getParent()->getParent();
+  Value *ReturnedValue = 0;
+
+  for (Function::iterator BBI = F->begin(), E = F->end(); BBI != E; ++BBI)
+    if (ReturnInst *RI = dyn_cast<ReturnInst>(BBI->getTerminator()))
+      if (RI != TheRI) {
+        Value *RetOp = RI->getOperand(0);
+
+        // We can only perform this transformation if the value returned is
+        // evaluatable at the start of the initial invocation of the function,
+        // instead of at the end of the evaluation.
+        //
+        if (!isDynamicConstant(RetOp, CI))
+          return 0;
+
+        if (ReturnedValue && RetOp != ReturnedValue)
+          return 0;     // Cannot transform if differing values are returned.
+        ReturnedValue = RetOp;
+      }
+  return ReturnedValue;
+}
 
 /// CanTransformAccumulatorRecursion - If the specified instruction can be
 /// transformed using accumulator recursion elimination, return the constant
@@ -167,49 +223,7 @@ Value *TailCallElim::CanTransformAccumulatorRecursion(Instruction *I,
   // Ok, now we have to check all of the other return instructions in this
   // function.  If they return non-constants or differing values, then we cannot
   // transform the function safely.
-  Value *ReturnedValue = 0;
-  Function *F = CI->getParent()->getParent();
-
-  for (Function::iterator BBI = F->begin(), E = F->end(); BBI != E; ++BBI)
-    if (ReturnInst *RI = dyn_cast<ReturnInst>(BBI->getTerminator())) {
-      Value *RetOp = RI->getOperand(0);
-      if (RetOp != I) { // Ignore the one returning I.
-        // We can only perform this transformation if the value returned is
-        // evaluatable at the start of the initial invocation of the function,
-        // instead of at the end of the evaluation.
-        //
-        // We currently handle static constants and arguments that are not
-        // modified as part of the recursion.
-        if (!isa<Constant>(RetOp)) {    // Constants are always ok
-          // Check to see if this is an immutable argument, if so, the value
-          // will be available to initialize the accumulator.
-          if (Argument *Arg = dyn_cast<Argument>(RetOp)) {
-            // Figure out which argument number this is...
-            unsigned ArgNo = 0;
-            for (Function::aiterator AI = F->abegin(); &*AI != Arg; ++AI)
-              ++ArgNo;
-            
-            // If we are passing this argument into call as the corresponding
-            // argument operand, then the argument is dynamically constant.
-            // Otherwise, we cannot transform this function safely.
-            if (CI->getOperand(ArgNo+1) != Arg)
-              return 0;
-
-          } else {
-            // Not a constant or immutable argument, we can't safely transform.
-            return 0;
-          }
-        }
-        
-        if (ReturnedValue && RetOp != ReturnedValue)
-          return 0;     // Cannot transform if differing values are returned.
-        ReturnedValue = RetOp;
-      }
-    }
-  
-  // Ok, if we passed this battery of tests, we can perform accumulator
-  // recursion elimination.
-  return ReturnedValue;
+  return getCommonReturnValue(cast<ReturnInst>(I->use_back()), CI);
 }
 
 bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
@@ -263,9 +277,12 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
     }
 
   // We can only transform call/return pairs that either ignore the return value
-  // of the call and return void, or return the value returned by the tail call.
+  // of the call and return void, ignore the value of the call and return a
+  // constant, return the value returned by the tail call, or that are being
+  // accumulator recursion variable eliminated.
   if (Ret->getNumOperands() != 0 && Ret->getReturnValue() != CI &&
-      AccumulatorRecursionEliminationInitVal == 0)
+      AccumulatorRecursionEliminationInitVal == 0 &&
+      !getCommonReturnValue(Ret, CI))
     return false;
 
   // OK! We can transform this tail call.  If this is the first one found,
