@@ -33,7 +33,7 @@ Exit:
 	ret int %B
 }
 
-int %test3(bool %b) {
+int %test4(bool %b) {
 BB0:  ret int 7                                 ; Loop is unreachable
 
 Loop:
@@ -41,5 +41,15 @@ Loop:
         br bool %b, label %L2, label %Loop
 L2:
 	br label %Loop
+}
+
+int %test5(int %a, bool %b) {
+BB0: br label %Loop
+
+Loop:
+        %B = phi int [%A, %BB0], [undef, %Loop]    ; PHI has same value always.
+        br bool %b, label %Loop, label %Exit
+Exit:
+        ret int %B
 }
 
