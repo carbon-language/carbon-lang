@@ -18,10 +18,13 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
+#include "Support/Statistic.h"
 #include "Support/StringExtras.h"
 #include "Support/CommandLine.h"
 
 namespace {
+  Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
+
   // FIXME: This should be automatically picked up by autoconf from the C
   // frontend
   cl::opt<bool> EmitCygwin("enable-cygwin-compatible-output", cl::Hidden,
@@ -573,6 +576,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   const TargetInstrInfo &TII = TM.getInstrInfo();
   const TargetInstrDescriptor &Desc = TII.get(Opcode);
 
+  ++EmittedInsts;
   switch (Desc.TSFlags & X86II::FormMask) {
   case X86II::Pseudo:
     // Print pseudo-instructions as comments; either they should have been

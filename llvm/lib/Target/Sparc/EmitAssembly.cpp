@@ -21,10 +21,13 @@
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/StringExtras.h"
+#include "Support/Statistic.h"
 #include "SparcInternals.h"
 #include <string>
 
 namespace {
+
+Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
 class GlobalIdTable: public Annotation {
   static AnnotationID AnnotId;
@@ -483,7 +486,6 @@ SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &mop,
     toAsm << ")";
 }
 
-
 void
 SparcFunctionAsmPrinter::emitMachineInst(const MachineInstr *MI)
 {
@@ -507,6 +509,7 @@ SparcFunctionAsmPrinter::emitMachineInst(const MachineInstr *MI)
       N = 1;
   
   toAsm << "\n";
+  ++EmittedInsts;
 }
 
 void
