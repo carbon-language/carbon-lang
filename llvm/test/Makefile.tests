@@ -42,7 +42,7 @@ TESTRUNR = $(LEVEL)/test/TestRunner.sh
 NATGCC  = /usr/dcs/software/supported/bin/gcc
 CP	= /bin/cp -f
 
-ifndef DISABLE_LLC
+ifndef DISABLE_LLC_DIFFS
 CC      = /opt/SUNWspro/bin/cc
 AS	= /opt/SUNWspro/bin/cc
 DIS     = /usr/ccs/bin/dis
