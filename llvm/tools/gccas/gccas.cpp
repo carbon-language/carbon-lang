@@ -66,6 +66,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   if (Verify) PM.add(createVerifierPass());
 
   addPass(PM, createFunctionResolvingPass());     // Resolve (...) functions
+  addPass(PM, createGlobalDCEPass());             // Kill unused uinit g-vars
   addPass(PM, createDeadTypeEliminationPass());   // Eliminate dead types
   addPass(PM, createConstantMergePass());         // Merge dup global constants
   addPass(PM, createDeadInstEliminationPass());   // Remove Dead code/vars
