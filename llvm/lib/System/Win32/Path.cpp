@@ -308,7 +308,7 @@ static bool AddPermissionBits(const std::string& Filename, int bits) {
   // the owner writable bit.
   if ((attr & FILE_ATTRIBUTE_READONLY) && (bits & 0200)) {
     if (!SetFileAttributes(Filename.c_str(), attr & ~FILE_ATTRIBUTE_READONLY))
-	  ThrowError(Filename + ": SetFileAttributes: ");
+      ThrowError(Filename + ": SetFileAttributes: ");
   }
   return true;
 }
@@ -343,23 +343,23 @@ Path::getDirectoryContents(std::set<Path>& result) const {
   WIN32_FIND_DATA fd;
   HANDLE h = FindFirstFile(path.c_str(), &fd);
   if (h == INVALID_HANDLE_VALUE) {
-	if (GetLastError() == ERROR_NO_MORE_FILES)
+    if (GetLastError() == ERROR_NO_MORE_FILES)
       return true; // not really an error, now is it?
-	ThrowError(path + ": Can't read directory: ");
+    ThrowError(path + ": Can't read directory: ");
   }
 
   do {
-	if (fd.cFileName[0] == '.')
-	  continue;
-	Path aPath(path + &fd.cFileName[0]);
-	if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-	  aPath.path += "/";
+    if (fd.cFileName[0] == '.')
+      continue;
+    Path aPath(path + &fd.cFileName[0]);
+    if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+      aPath.path += "/";
     result.insert(aPath);
   } while (FindNextFile(h, &fd));
 
   CloseHandle(h);
   if (GetLastError() != ERROR_NO_MORE_FILES)
-	ThrowError(path + ": Can't read directory: ");
+    ThrowError(path + ": Can't read directory: ");
   return true;
 }
 
@@ -620,7 +620,7 @@ Path::renameFile(const Path& newName) {
   if (!isFile()) return false;
   if (!MoveFile(path.c_str(), newName.c_str()))
     ThrowError("Can't move '" + path + 
-	           "' to '" + newName.path + "': ");
+               "' to '" + newName.path + "': ");
   return true;
 }
 
@@ -631,17 +631,17 @@ Path::setStatusInfo(const StatusInfo& si) const {
   HANDLE h = CreateFile(path.c_str(),
                         FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES,
                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-						NULL,
-						OPEN_EXISTING,
-						FILE_ATTRIBUTE_NORMAL,
-						NULL);
+                        NULL,
+                        OPEN_EXISTING,
+                        FILE_ATTRIBUTE_NORMAL,
+                        NULL);
   if (h == INVALID_HANDLE_VALUE)
     return false;
 
   BY_HANDLE_FILE_INFORMATION bhfi;
   if (!GetFileInformationByHandle(h, &bhfi)) {
     CloseHandle(h);
-	ThrowError(path + ": GetFileInformationByHandle: ");
+    ThrowError(path + ": GetFileInformationByHandle: ");
   }
 
   FILETIME ft;
@@ -656,13 +656,13 @@ Path::setStatusInfo(const StatusInfo& si) const {
   if (si.mode & 0200) {
     if (bhfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
       if (!SetFileAttributes(path.c_str(),
-		      bhfi.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY))
+              bhfi.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY))
         ThrowError(path + ": SetFileAttributes: ");
     }
   } else {
     if (!(bhfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY)) {
       if (!SetFileAttributes(path.c_str(),
-		      bhfi.dwFileAttributes | FILE_ATTRIBUTE_READONLY))
+              bhfi.dwFileAttributes | FILE_ATTRIBUTE_READONLY))
         ThrowError(path + ": SetFileAttributes: ");
     }
   }
@@ -676,7 +676,7 @@ sys::CopyFile(const sys::Path &Dest, const sys::Path &Src) {
   // above line.  We use the expansion it would have in a non-UNICODE build.
   if (!::CopyFileA(Src.c_str(), Dest.c_str(), false))
     ThrowError("Can't copy '" + Src.toString() + 
-	           "' to '" + Dest.toString() + "': ");
+               "' to '" + Dest.toString() + "': ");
 }
 
 void 
