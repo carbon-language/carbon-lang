@@ -4,8 +4,9 @@
 // creating a tool.  It provides a simple, minimalistic interface that is easily
 // extensible and supports nonlocal (library) command line options.
 //
-// Note that rather than trying to figure out what this code does, you could try
-// reading the library documentation located in docs/CommandLine.html
+// Note that rather than trying to figure out what this code does, you should
+// read the library documentation located in docs/CommandLine.html or looks at
+// the many example usages in tools/*/*.cpp
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,45 +17,19 @@
 #include <vector>
 #include <utility>
 #include <stdarg.h>
+#include "boost/type_traits/object_traits.hpp"
 
 namespace cl {   // Short namespace to make usage concise
 
 //===----------------------------------------------------------------------===//
-// ParseCommandLineOptions - Minimalistic command line option processing entry
+// ParseCommandLineOptions - Command line option processing entry point.
 //
 void cl::ParseCommandLineOptions(int &argc, char **argv,
-				 const char *Overview = 0,
-				 int Flags = 0);
-
-// ParserOptions - This set of option is use to control global behavior of the
-// command line processor.
-//
-enum ParserOptions {
-  // DisableSingleLetterArgGrouping - With this option enabled, multiple letter
-  // options are allowed to bunch together with only a single hyphen for the
-  // whole group.  This allows emulation of the behavior that ls uses for
-  // example:  ls -la === ls -l -a    Providing this option, disables this.
-  //
-  DisableSingleLetterArgGrouping = 0x0001,
-
-  // EnableSingleLetterArgValue - This option allows arguments that are
-  // otherwise unrecognized to match single letter flags that take a value. 
-  // This is useful for cases like a linker, where options are typically of the
-  // form '-lfoo' or '-L../../include' where -l or -L are the actual flags.
-  //
-  EnableSingleLetterArgValue     = 0x0002,
-};
-
+				 const char *Overview = 0);
 
 //===----------------------------------------------------------------------===//
-// Global flags permitted to be passed to command line arguments
-
-enum FlagsOptions {
-  NoFlags         = 0x00,      // Marker to make explicit that we have no flags
-  Default         = 0x00,      // Equally, marker to use the default flags
-
-  GlobalsMask     = 0x80, 
-};
+// Flags permitted to be passed to command line arguments
+//
 
 enum NumOccurances {           // Flags for the number of occurances allowed...
   Optional        = 0x01,      // Zero or One occurance
@@ -62,11 +37,12 @@ enum NumOccurances {           // Flags for the number of occurances allowed...
   Required        = 0x03,      // One occurance required
   OneOrMore       = 0x04,      // One or more occurances required
 
-  // ConsumeAfter - Marker for a null ("") flag that can be used to indicate
-  // that anything that matches the null marker starts a sequence of options
-  // that all get sent to the null marker.  Thus, for example, all arguments
-  // to LLI are processed until a filename is found.  Once a filename is found,
-  // all of the succeeding arguments are passed, unprocessed, to the null flag.
+  // ConsumeAfter - Indicates that this option is fed anything that follows the
+  // last positional argument required by the application (it is an error if
+  // there are zero positional arguments, and a ConsumeAfter option is used).
+  // Thus, for example, all arguments to LLI are processed until a filename is
+  // found.  Once a filename is found, all of the succeeding arguments are
+  // passed, unprocessed, to the ConsumeAfter option.
   //
   ConsumeAfter    = 0x05,
 
@@ -87,14 +63,37 @@ enum OptionHidden {            // Control whether -help shows this option
   HiddenMask      = 0x60,
 };
 
+// Formatting flags - This controls special features that the option might have
+// that cause it to be parsed differently...
+//
+// Prefix - This option allows arguments that are otherwise unrecognized to be
+// matched by options that are a prefix of the actual value.  This is useful for
+// cases like a linker, where options are typically of the form '-lfoo' or
+// '-L../../include' where -l or -L are the actual flags.  When prefix is
+// enabled, and used, the value for the flag comes from the suffix of the
+// argument.
+//
+// Grouping - With this option enabled, multiple letter options are allowed to
+// bunch together with only a single hyphen for the whole group.  This allows
+// emulation of the behavior that ls uses for example: ls -la === ls -l -a
+//
+
+enum FormattingFlags {
+  NormalFormatting = 0x000,     // Nothing special
+  Positional       = 0x080,     // Is a positional argument, no '-' required
+  Prefix           = 0x100,     // Can this option directly prefix its value?
+  Grouping         = 0x180,     // Can this option group with other options?
+  FormattingMask   = 0x180,
+};
+
 
 //===----------------------------------------------------------------------===//
 // Option Base class
 //
-class Alias;
+class alias;
 class Option {
   friend void cl::ParseCommandLineOptions(int &, char **, const char *, int);
-  friend class Alias;
+  friend class alias;
 
   // handleOccurances - Overriden by subclasses to handle the value passed into
   // an argument.  Should return true if there was an error processing the
@@ -111,12 +110,16 @@ class Option {
   virtual enum OptionHidden getOptionHiddenFlagDefault() const {
     return NotHidden;
   }
+  virtual enum FormattingFlags getFormattingFlagDefault() const {
+    return NormalFormatting;
+  }
 
-  int NumOccurances;          // The number of times specified
-  const int Flags;            // Flags for the argument
+  int NumOccurances;    // The number of times specified
+  int Flags;            // Flags for the argument
 public:
-  const char * const ArgStr;  // The argument string itself (ex: "help", "o")
-  const char * const HelpStr; // The descriptive text message for --help
+  const char *ArgStr;   // The argument string itself (ex: "help", "o")
+  const char *HelpStr;  // The descriptive text message for --help
+  const char *ValueStr; // String describing what the value of this option is
 
   inline enum NumOccurances getNumOccurancesFlag() const {
     int NO = Flags & OccurancesMask;
@@ -130,19 +133,54 @@ public:
     int OH = Flags & HiddenMask;
     return OH ? (enum OptionHidden)OH : getOptionHiddenFlagDefault();
   }
+  inline enum FormattingFlags getFormattingFlag() const {
+    int OH = Flags & FormattingMask;
+    return OH ? (enum FormattingFlags)OH : getFormattingFlagDefault();
+  }
+
+  // hasArgStr - Return true if the argstr != ""
+  bool hasArgStr() const { return ArgStr[0] != 0; }
+
+  //-------------------------------------------------------------------------===
+  // Accessor functions set by OptionModifiers
+  //
+  void setArgStr(const char *S) { ArgStr = S; }
+  void setDescription(const char *S) { HelpStr = S; }
+  void setValueStr(const char *S) { ValueStr = S; }
+
+  void setFlag(unsigned Flag, unsigned FlagMask) {
+    if (Flags & FlagMask) {
+      error(": Specified two settings for the same option!");
+      exit(1);
+    }
+
+    Flags |= Flag;
+  }
+
+  void setNumOccurancesFlag(enum NumOccurances Val) {
+    setFlag(Val, OccurancesMask);
+  }
+  void setValueExpectedFlag(enum ValueExpected Val) { setFlag(Val, ValueMask); }
+  void setHiddenFlag(enum OptionHidden Val) { setFlag(Val, HiddenMask); }
+  void setFormattingFlag(enum FormattingFlags V) { setFlag(V, FormattingMask); }
 
 protected:
-  Option(const char *ArgStr, const char *Message, int Flags);
-  Option(int flags) : NumOccurances(0), Flags(flags), ArgStr(""), HelpStr("") {}
+  Option() : NumOccurances(0), Flags(0),
+             ArgStr(""), HelpStr(""), ValueStr("") {}
 
 public:
+  // addArgument - Tell the system that this Option subclass will handle all
+  // occurances of -ArgStr on the command line.
+  //
+  void addArgument(const char *ArgStr);
+
   // Return the width of the option tag for printing...
-  virtual unsigned getOptionWidth() const;
+  virtual unsigned getOptionWidth() const = 0;
 
   // printOptionInfo - Print out information about this option.  The 
   // to-be-maintained width is specified.
   //
-  virtual void printOptionInfo(unsigned GlobalWidth) const;
+  virtual void printOptionInfo(unsigned GlobalWidth) const = 0;
 
   // addOccurance - Wrapper around handleOccurance that enforces Flags
   //
@@ -158,100 +196,60 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-// Aliased command line option (alias this name to a preexisting name)
+// Command line option modifiers that can be used to modify the behavior of
+// command line option parsers...
 //
-class Alias : public Option {
-  Option &AliasFor;
-  virtual bool handleOccurance(const char *ArgName, const std::string &Arg) {
-    return AliasFor.handleOccurance(AliasFor.ArgStr, Arg);
-  }
-  virtual enum OptionHidden getOptionHiddenFlagDefault() const {return Hidden;}
-public:
-  inline Alias(const char *ArgStr, const char *Message, int Flags,
-	       Option &aliasFor) : Option(ArgStr, Message, Flags), 
-				   AliasFor(aliasFor) {}
+
+// desc - Modifier to set the description shown in the --help output...
+struct desc {
+  const char *Desc;
+  desc(const char *Str) : Desc(Str) {}
+  void apply(Option &O) const { O.setDescription(Desc); }
 };
 
-//===----------------------------------------------------------------------===//
-// Boolean/flag command line option
-//
-class Flag : public Option {
-  bool &Value;
-  bool DValue;
-  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
-public:
-  inline Flag(const char *ArgStr, const char *Message, int Flags = 0, 
-	      bool DefaultVal = false)
-    : Option(ArgStr, Message, Flags), Value(DValue) {
-    Value = DefaultVal;
-  }
-
-  inline Flag(bool &UpdateVal, const char *ArgStr, const char *Message,
-              int Flags = 0, bool DefaultVal = false)
-    : Option(ArgStr, Message, Flags), Value(UpdateVal) {
-    Value = DefaultVal;
-  }
-
-  operator const bool() const { return Value; }
-  inline bool operator=(bool Val) { Value = Val; return Val; }
+// value_desc - Modifier to set the value description shown in the --help
+// output...
+struct value_desc {
+  const char *Desc;
+  value_desc(const char *Str) : Desc(Str) {}
+  void apply(Option &O) const { O.setValueStr(Desc); }
 };
 
 
-
-//===----------------------------------------------------------------------===//
-// Integer valued command line option
+// init - Specify a default (initial) value for the command line argument, if
+// the default constructor for the argument type does not give you what you
+// want.  This is only valid on "opt" arguments, not on "list" arguments.
 //
-class Int : public Option {
-  int Value;
-  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
-  virtual enum ValueExpected getValueExpectedFlagDefault() const {
-    return ValueRequired; 
-  }
-public:
-  inline Int(const char *ArgStr, const char *Help, int Flags = 0,
-	     int DefaultVal = 0) : Option(ArgStr, Help, Flags),
-				   Value(DefaultVal) {}
-  inline operator int() const { return Value; }
-  inline int operator=(int Val) { Value = Val; return Val; }
+template<class Ty>
+struct initializer {
+  const Ty &Init;
+  initializer(const Ty &Val) : Init(Val) {}
+
+  template<class Opt>
+  void apply(Opt &O) const { O.setInitialValue(Init); }
 };
 
+template<class Ty>
+initializer<Ty> init(const Ty &Val) {
+  return initializer<Ty>(Val);
+}
 
-//===----------------------------------------------------------------------===//
-// String valued command line option
+
+// location - Allow the user to specify which external variable they want to
+// store the results of the command line argument processing into, if they don't
+// want to store it in the option itself.
 //
-class String : public Option, public std::string {
-  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
-  virtual enum ValueExpected getValueExpectedFlagDefault() const {
-    return ValueRequired; 
-  }
-public:
-  inline String(const char *ArgStr, const char *Help, int Flags = 0, 
-		const char *DefaultVal = "") 
-    : Option(ArgStr, Help, Flags), std::string(DefaultVal) {}
+template<class Ty>
+struct LocationClass {
+  Ty &Loc;
+  LocationClass(Ty &L) : Loc(L) {}
 
-  inline const std::string &operator=(const std::string &Val) { 
-    return std::string::operator=(Val);
-  }
+  template<class Opt>
+  void apply(Opt &O) const { O.setLocation(O, Loc); }
 };
 
-
-//===----------------------------------------------------------------------===//
-// String list command line option
-//
-class StringList : public Option, public std::vector<std::string> {
-
-  virtual enum NumOccurances getNumOccurancesFlagDefault() const { 
-    return ZeroOrMore;
-  }
-  virtual enum ValueExpected getValueExpectedFlagDefault() const {
-    return ValueRequired;
-  }
-  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
-
-public:
-  inline StringList(const char *ArgStr, const char *Help, int Flags = 0)
-    : Option(ArgStr, Help, Flags) {}
-};
+template<class Ty>
+LocationClass<Ty> location(Ty &L) { return LocationClass<Ty>(L); }
 
 
 //===----------------------------------------------------------------------===//
@@ -260,177 +258,712 @@ public:
 #define clEnumVal(ENUMVAL, DESC) #ENUMVAL, ENUMVAL, DESC
 #define clEnumValN(ENUMVAL, FLAGNAME, DESC) FLAGNAME, ENUMVAL, DESC
 
-// EnumBase - Base class for all enum/varargs related argument types...
-class EnumBase : public Option {
-protected:
+// values - For custom data types, allow specifying a group of values together
+// as the values that go into the mapping that the option handler uses.  Note
+// that the values list must always have a 0 at the end of the list to indicate
+// that the list has ended.
+//
+template<class DataType>
+class ValuesClass {
   // Use a vector instead of a map, because the lists should be short,
   // the overhead is less, and most importantly, it keeps them in the order
   // inserted so we can print our option out nicely.
-  std::vector<std::pair<const char *, std::pair<int, const char *> > > ValueMap;
-
-  inline EnumBase(const char *ArgStr, const char *Help, int Flags)
-    : Option(ArgStr, Help, Flags) {}
-  inline EnumBase(int Flags) : Option(Flags) {}
-
-  // processValues - Incorporate the specifed varargs arglist into the 
-  // ValueMap.
-  //
+  std::vector<std::pair<const char *, std::pair<int, const char *> > > Values;
   void processValues(va_list Vals);
-
-  // registerArgs - notify the system about these new arguments
-  void registerArgs();
-
 public:
-  // Turn an enum into the arg name that activates it
-  const char *getArgName(int ID) const;
-  const char *getArgDescription(int ID) const;
+  ValuesClass(const char *EnumName, DataType Val, const char *Desc, 
+              va_list ValueArgs) {
+    // Insert the first value, which is required.
+    Values.push_back(std::make_pair(EnumName, std::make_pair(Val, Desc)));
+
+    // Process the varargs portion of the values...
+    while (const char *EnumName = va_arg(ValueArgs, const char *)) {
+      DataType EnumVal = va_arg(ValueArgs, DataType);
+      const char *EnumDesc = va_arg(ValueArgs, const char *);
+      Values.push_back(std::make_pair(EnumName,      // Add value to value map
+                                      std::make_pair(EnumVal, EnumDesc)));
+    }
+  }
+
+  template<class Opt>
+  void apply(Opt &O) const {
+    for (unsigned i = 0, e = Values.size(); i != e; ++i)
+      O.getParser().addLiteralOption(Values[i].first, Values[i].second.first,
+                                     Values[i].second.second);
+  }
 };
 
-class EnumValueBase : public EnumBase {
-protected:
-  inline EnumValueBase(const char *ArgStr, const char *Help, int Flags)
-    : EnumBase(ArgStr, Help, Flags) {}
-  inline EnumValueBase(int Flags) : EnumBase(Flags) {}
+template<class DataType>
+ValuesClass<DataType> values(const char *Arg, DataType Val, const char *Desc,
+                             ...) {
+    va_list ValueArgs;
+    va_start(ValueArgs, Desc);
+    ValuesClass<DataType> Vals(Arg, Val, Desc, ValueArgs);
+    va_end(ValueArgs);
+    return Vals;
+}
 
-  // handleOccurance - Set Value to the enum value specified by Arg
-  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
+
+//===----------------------------------------------------------------------===//
+// parser class - Parameterizable parser for different data types.  By default,
+// known data types (string, int, bool) have specialized parsers, that do what
+// you would expect.  The default parser, used for data types that are not
+// built-in, uses a mapping table to map specific options to values, which is
+// used, among other things, to handle enum types.
+
+//--------------------------------------------------
+// generic_parser_base - This class holds all the non-generic code that we do
+// not need replicated for every instance of the generic parser.  This also
+// allows us to put stuff into CommandLine.cpp
+//
+struct generic_parser_base {
+  virtual ~generic_parser_base() {}  // Base class should have virtual-dtor
+
+  // getNumOptions - Virtual function implemented by generic subclass to
+  // indicate how many entries are in Values.
+  //
+  virtual unsigned getNumOptions() const = 0;
+
+  // getOption - Return option name N.
+  virtual const char *getOption(unsigned N) const = 0;
+  
+  // getDescription - Return description N
+  virtual const char *getDescription(unsigned N) const = 0;
 
   // Return the width of the option tag for printing...
-  virtual unsigned getOptionWidth() const;
+  virtual unsigned getOptionWidth(const Option &O) const;
 
   // printOptionInfo - Print out information about this option.  The 
   // to-be-maintained width is specified.
   //
-  virtual void printOptionInfo(unsigned GlobalWidth) const;
+  virtual void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
 
-  // setValue - Subclasses override this when they need to receive a new value
-  virtual void setValue(int Val) = 0;
+  void initialize(Option &O) {
+    // All of the modifiers for the option have been processed by now, so the
+    // argstr field should be stable, copy it down now.
+    //
+    hasArgStr = O.hasArgStr();
+
+    // If there has been no argstr specified, that means that we need to add an
+    // argument for every possible option.  This ensures that our options are
+    // vectored to us.
+    //
+    if (!hasArgStr)
+      for (unsigned i = 0, e = getNumOptions(); i != e; ++i)
+        O.addArgument(getOption(i));
+  }
+
+  enum ValueExpected getValueExpectedFlagDefault() const {
+    // If there is an ArgStr specified, then we are of the form:
+    //
+    //    -opt=O2   or   -opt O2  or  -optO2
+    //
+    // In which case, the value is required.  Otherwise if an arg str has not
+    // been specified, we are of the form:
+    //
+    //    -O2 or O2 or -la (where -l and -a are seperate options)
+    //
+    // If this is the case, we cannot allow a value.
+    //
+    if (hasArgStr)
+      return ValueRequired;
+    else
+      return ValueDisallowed;
+  }
+
+protected:
+  bool hasArgStr;
 };
 
-template <class E>  // The enum we are representing
-class Enum : public EnumValueBase {
-  virtual enum ValueExpected getValueExpectedFlagDefault() const {
+// Default parser implementation - This implementation depends on having a
+// mapping of recognized options to values of some sort.  In addition to this,
+// each entry in the mapping also tracks a help message that is printed with the
+// command line option for --help.  Because this is a simple mapping parser, the
+// data type can be any unsupported type.
+//
+template <class DataType>
+class parser : public generic_parser_base {
+  std::vector<std::pair<const char *,
+                        std::pair<DataType, const char *> > > Values;
+
+  // Implement virtual functions needed by generic_parser_base
+  unsigned getNumOptions() const { return Values.size(); }
+  const char *getOption(unsigned N) const { return Values[N].first; }
+  const char *getDescription(unsigned N) const {
+    return Values[N].second.second;
+  }
+
+public:
+  // Default implementation, requires user to populate it with values somehow.
+  template<class Opt>   // parse - Return true on error.
+  bool parse(Opt &O, const char *ArgName, const string &Arg) {
+    string ArgVal;
+    if (hasArgStr)
+      ArgVal = Arg;
+    else
+      ArgVal = ArgName;
+
+    for (unsigned i = 0, e = Values.size(); i != e; ++i)
+      if (ArgVal == Values[i].first) {
+        O.addValue(Values[i].second.first);
+        return false;
+      }
+
+    return O.error(": Cannot find option named '" + ArgVal + "'!");
+  }
+
+  // addLiteralOption - Add an entry to the mapping table...
+  template <class DT>
+  void addLiteralOption(const char *Name, const DT &V, const char *HelpStr) {
+    Values.push_back(std::make_pair(Name, std::make_pair((DataType)V,HelpStr)));
+  }
+};
+
+
+//--------------------------------------------------
+// parser<bool>
+//
+template<>
+class parser<bool> {
+  static bool parseImpl(Option &O, const string &Arg, bool &Val);
+public:
+  
+  template<class Opt>     // parse - Return true on error.
+  bool parse(Opt &O, const char *ArgName, const string &Arg) {
+    bool Val;
+    bool Error = parseImpl(O, Arg, Val);
+    if (!Error) O.addValue(Val);
+    return Error;
+  }
+
+  enum ValueExpected getValueExpectedFlagDefault() const {
+    return ValueOptional; 
+  }
+
+  void initialize(Option &O) {}
+
+  // Return the width of the option tag for printing...
+  virtual unsigned getOptionWidth(const Option &O) const;
+
+  // printOptionInfo - Print out information about this option.  The 
+  // to-be-maintained width is specified.
+  //
+  virtual void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
+};
+
+
+//--------------------------------------------------
+// parser<int>
+//
+template<>
+class parser<int> {
+  static bool parseImpl(Option &O, const string &Arg, int &Val);
+public:
+  
+  // parse - Return true on error.
+  template<class Opt>
+  bool parse(Opt &O, const char *ArgName, const string &Arg) {
+    int Val;
+    bool Error = parseImpl(O, Arg, Val);
+    if (!Error) O.addValue(Val);
+    return Error;
+  }
+
+  enum ValueExpected getValueExpectedFlagDefault() const {
+    return ValueRequired; 
+  }
+
+  void initialize(Option &O) {}
+
+  // Return the width of the option tag for printing...
+  virtual unsigned getOptionWidth(const Option &O) const;
+
+  // printOptionInfo - Print out information about this option.  The 
+  // to-be-maintained width is specified.
+  //
+  virtual void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
+};
+
+
+//--------------------------------------------------
+// parser<double>
+//
+template<>
+class parser<double> {
+  static bool parseImpl(Option &O, const string &Arg, double &Val);
+public:
+  
+  // parse - Return true on error.
+  template<class Opt>
+  bool parse(Opt &O, const char *ArgName, const string &Arg) {
+    double Val;
+    bool Error = parseImpl(O, Arg, Val);
+    if (!Error) O.addValue(Val);
+    return Error;
+  }
+
+  enum ValueExpected getValueExpectedFlagDefault() const {
+    return ValueRequired; 
+  }
+
+  void initialize(Option &O) {}
+
+  // Return the width of the option tag for printing...
+  virtual unsigned getOptionWidth(const Option &O) const;
+
+  // printOptionInfo - Print out information about this option.  The 
+  // to-be-maintained width is specified.
+  //
+  virtual void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
+};
+
+// Parser<float> is the same as parser<double>
+template<> struct parser<float> : public parser<double> {};
+
+
+
+//--------------------------------------------------
+// parser<string>
+//
+template<>
+struct parser<string> {
+  // parse - Return true on error.
+  template<class Opt>
+  bool parse(Opt &O, const char *ArgName, const string &Arg) {
+    O.addValue(Arg);
+    return false;
+  }
+  enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueRequired;
   }
-  E DVal;
-  E &Value;
 
-  // setValue - Subclasses override this when they need to receive a new value
-  virtual void setValue(int Val) { Value = (E)Val; }
-public:
-  inline Enum(const char *ArgStr, int Flags, const char *Help, ...)
-    : EnumValueBase(ArgStr, Help, Flags), Value(DVal) {
-    va_list Values;
-    va_start(Values, Help);
-    processValues(Values);
-    va_end(Values);
-    Value = (E)ValueMap.front().second.first; // Grab default value
-  }
-
-  inline Enum(E &EUpdate, const char *ArgStr, int Flags, const char *Help, ...)
-    : EnumValueBase(ArgStr, Help, Flags), Value(EUpdate) {
-    va_list Values;
-    va_start(Values, Help);
-    processValues(Values);
-    va_end(Values);
-    Value = (E)ValueMap.front().second.first; // Grab default value
-  }
-
-  inline operator E() const { return Value; }
-  inline E operator=(E Val) { Value = Val; return Val; }
-};
-
-
-//===----------------------------------------------------------------------===//
-// Enum flags command line option
-//
-class EnumFlagsBase : public EnumValueBase {
-  virtual enum ValueExpected getValueExpectedFlagDefault() const {
-    return ValueDisallowed;
-  }
-protected:
-  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
-  inline EnumFlagsBase(int Flags) : EnumValueBase(Flags) {}
+  void initialize(Option &O) {}
 
   // Return the width of the option tag for printing...
-  virtual unsigned getOptionWidth() const;
+  virtual unsigned getOptionWidth(const Option &O) const;
 
   // printOptionInfo - Print out information about this option.  The 
   // to-be-maintained width is specified.
   //
-  virtual void printOptionInfo(unsigned GlobalWidth) const;
+  virtual void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
 };
 
-template <class E>  // The enum we are representing
-class EnumFlags : public EnumFlagsBase {
-  E DVal;
-  E &Value;
 
-  // setValue - Subclasses override this when they need to receive a new value
-  virtual void setValue(int Val) { Value = (E)Val; }
+
+//===----------------------------------------------------------------------===//
+// applicator class - This class is used because we must use partial
+// specialization to handle literal string arguments specially (const char* does
+// not correctly respond to the apply method).  Because the syntax to use this
+// is a pain, we have the 'apply' method below to handle the nastiness...
+//
+template<class Mod> struct applicator {
+  template<class Opt>
+  static void opt(const Mod &M, Opt &O) { M.apply(O); }
+};
+
+// Handle const char* as a special case...
+template<unsigned n> struct applicator<char[n]> {
+  template<class Opt>
+  static void opt(const char *Str, Opt &O) { O.setArgStr(Str); }
+};
+template<> struct applicator<const char*> {
+  template<class Opt>
+  static void opt(const char *Str, Opt &O) { O.setArgStr(Str); }
+};
+
+template<> struct applicator<NumOccurances> {
+  static void opt(NumOccurances NO, Option &O) { O.setNumOccurancesFlag(NO); }
+};
+template<> struct applicator<ValueExpected> {
+  static void opt(ValueExpected VE, Option &O) { O.setValueExpectedFlag(VE); }
+};
+template<> struct applicator<OptionHidden> {
+  static void opt(OptionHidden OH, Option &O) { O.setHiddenFlag(OH); }
+};
+template<> struct applicator<FormattingFlags> {
+  static void opt(FormattingFlags FF, Option &O) { O.setFormattingFlag(FF); }
+};
+
+// apply method - Apply a modifier to an option in a type safe way.
+template<class Mod, class Opt>
+void apply(const Mod &M, Opt *O) {
+  applicator<Mod>::opt(M, *O);
+}
+
+
+//===----------------------------------------------------------------------===//
+// opt_storage class
+
+// Default storage class definition: external storage.  This implementation
+// assumes the user will specify a variable to store the data into with the
+// cl::location(x) modifier.
+//
+template<class DataType, bool ExternalStorage, bool isClass>
+class opt_storage {
+  DataType *Location;   // Where to store the object...
+
+  void check() {
+    assert(Location != 0 && "cl::location(...) not specified for a command "
+           "line option with external storage!");
+  }
 public:
-  inline EnumFlags(int Flags, ...) : EnumFlagsBase(Flags), Value(DVal) {
-    va_list Values;
-    va_start(Values, Flags);
-    processValues(Values);
-    va_end(Values);
-    registerArgs();
-    Value = (E)ValueMap.front().second.first; // Grab default value
-  }
-  inline EnumFlags(E &RV, int Flags, ...) : EnumFlagsBase(Flags), Value(RV) {
-    va_list Values;
-    va_start(Values, Flags);
-    processValues(Values);
-    va_end(Values);
-    registerArgs();
-    Value = (E)ValueMap.front().second.first; // Grab default value
+  opt_storage() : Location(0) {}
+
+  bool setLocation(Option &O, DataType &L) {
+    if (Location)
+      return O.error(": cl::location(x) specified more than once!");
+    Location = &L;
+    return false;
   }
 
-  inline operator E() const { return (E)Value; }
-  inline E operator=(E Val) { Value = Val; return Val; }
+  template<class T>
+  void setValue(const T &V) {
+    check();
+    *Location = V;
+  }
+
+  DataType &getValue() { check(); return *Location; }
+  const DataType &getValue() const { check(); return *Location; }
+};
+
+
+// Define how to hold a class type object, such as a string.  Since we can
+// inherit from a class, we do so.  This makes us exactly compatible with the
+// object in all cases that it is used.
+//
+template<class DataType>
+struct opt_storage<DataType,false,true> : public DataType {
+
+  template<class T>
+  void setValue(const T &V) { DataType::operator=(V); }
+
+  DataType &getValue() { return *this; }
+  const DataType &getValue() const { return *this; }
+};
+
+// Define a partial specialization to handle things we cannot inherit from.  In
+// this case, we store an instance through containment, and overload operators
+// to get at the value.
+//
+template<class DataType>
+struct opt_storage<DataType, false, false> {
+  DataType Value;
+
+  // Make sure we initialize the value with the default constructor for the
+  // type.
+  opt_storage() : Value(DataType()) {}
+
+  template<class T>
+  void setValue(const T &V) { Value = V; }
+  DataType &getValue() { return Value; }
+  DataType getValue() const { return Value; }
 };
 
 
 //===----------------------------------------------------------------------===//
-// Enum list command line option
+// opt - A scalar command line option.
 //
-class EnumListBase : public EnumBase {
+template <class DataType, bool ExternalStorage = false,
+          class ParserClass = parser<DataType> >
+class opt : public Option, 
+            public opt_storage<DataType, ExternalStorage,
+                               ::boost::is_class<DataType>::value>{
+  ParserClass Parser;
+
+  virtual bool handleOccurance(const char *ArgName, const std::string &Arg) {
+    return Parser.parse(*this, ArgName, Arg);
+  }
+
+  virtual enum ValueExpected getValueExpectedFlagDefault() const {
+    return Parser.getValueExpectedFlagDefault();
+  }
+
+  // Forward printing stuff to the parser...
+  virtual unsigned getOptionWidth() const {return Parser.getOptionWidth(*this);}
+  virtual void printOptionInfo(unsigned GlobalWidth) const {
+    Parser.printOptionInfo(*this, GlobalWidth);
+  }
+
+  void done() {
+    addArgument(ArgStr);
+    Parser.initialize(*this);
+  }
+public:
+  // setInitialValue - Used by the cl::init modifier...
+  void setInitialValue(const DataType &V) { setValue(V); }
+
+  // addValue - Used by the parser to add a value to the option
+  template<class T>
+  void addValue(const T &V) { setValue(V); }
+  ParserClass &getParser() { return Parser; }
+
+  operator DataType() const { return getValue(); }
+
+  template<class T>
+  DataType &operator=(const T &Val) { setValue(Val); return getValue(); }
+
+  // One option...
+  template<class M0t>
+  opt(const M0t &M0) {
+    apply(M0, this);
+    done();
+  }
+
+  // Two options...
+  template<class M0t, class M1t>
+  opt(const M0t &M0, const M1t &M1) {
+    apply(M0, this); apply(M1, this);
+    done();
+  }
+
+  // Three options...
+  template<class M0t, class M1t, class M2t>
+  opt(const M0t &M0, const M1t &M1, const M2t &M2) {
+    apply(M0, this); apply(M1, this); apply(M2, this);
+    done();
+  }
+  // Four options...
+  template<class M0t, class M1t, class M2t, class M3t>
+  opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    done();
+  }
+  // Five options...
+  template<class M0t, class M1t, class M2t, class M3t, class M4t>
+  opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
+      const M4t &M4) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    apply(M4, this);
+    done();
+  }
+  // Six options...
+  template<class M0t, class M1t, class M2t, class M3t,
+           class M4t, class M5t>
+  opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
+      const M4t &M4, const M5t &M5) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    apply(M4, this); apply(M5, this);
+    done();
+  }
+  // Seven options...
+  template<class M0t, class M1t, class M2t, class M3t,
+           class M4t, class M5t, class M6t>
+  opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
+      const M4t &M4, const M5t &M5, const M6t &M6) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    apply(M4, this); apply(M5, this); apply(M6, this);
+    done();
+  }
+  // Eight options...
+  template<class M0t, class M1t, class M2t, class M3t,
+           class M4t, class M5t, class M6t, class M7t>
+  opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
+      const M4t &M4, const M5t &M5, const M6t &M6, const M7t &M7) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    apply(M4, this); apply(M5, this); apply(M6, this); apply(M7, this);
+    done();
+  }
+};
+
+//===----------------------------------------------------------------------===//
+// list_storage class
+
+// Default storage class definition: external storage.  This implementation
+// assumes the user will specify a variable to store the data into with the
+// cl::location(x) modifier.
+//
+template<class DataType, class StorageClass>
+class list_storage {
+  StorageClass *Location;   // Where to store the object...
+
+public:
+  list_storage() : Location(0) {}
+
+  bool setLocation(Option &O, StorageClass &L) {
+    if (Location)
+      return O.error(": cl::location(x) specified more than once!");
+    Location = &L;
+    return false;
+  }
+
+  template<class T>
+  void addValue(const T &V) {
+    assert(Location != 0 && "cl::location(...) not specified for a command "
+           "line option with external storage!");
+    Location->push_back(V);
+  }
+};
+
+
+// Define how to hold a class type object, such as a string.  Since we can
+// inherit from a class, we do so.  This makes us exactly compatible with the
+// object in all cases that it is used.
+//
+template<class DataType>
+struct list_storage<DataType, bool> : public std::vector<DataType> {
+
+  template<class T>
+  void addValue(const T &V) { push_back(V); }
+};
+
+
+//===----------------------------------------------------------------------===//
+// list - A list of command line options.
+//
+template <class DataType, class Storage = bool,
+          class ParserClass = parser<DataType> >
+class list : public Option, public list_storage<DataType, Storage> {
+  ParserClass Parser;
+
   virtual enum NumOccurances getNumOccurancesFlagDefault() const { 
     return ZeroOrMore;
   }
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
-    return ValueDisallowed;
+    return Parser.getValueExpectedFlagDefault();
   }
-protected:
-  std::vector<int> Values;  // The options specified so far.
 
-  inline EnumListBase(int Flags) 
-    : EnumBase(Flags) {}
-  virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
+  virtual bool handleOccurance(const char *ArgName, const std::string &Arg) {
+    return Parser.parse(*this, ArgName, Arg);
+  }
 
-  // Return the width of the option tag for printing...
-  virtual unsigned getOptionWidth() const;
+  // Forward printing stuff to the parser...
+  virtual unsigned getOptionWidth() const {return Parser.getOptionWidth(*this);}
+  virtual void printOptionInfo(unsigned GlobalWidth) const {
+    Parser.printOptionInfo(*this, GlobalWidth);
+  }
 
-  // printOptionInfo - Print out information about this option.  The 
-  // to-be-maintained width is specified.
-  //
-  virtual void printOptionInfo(unsigned GlobalWidth) const;
+  void done() {
+    addArgument(ArgStr);
+    Parser.initialize(*this);
+  }
 public:
-  inline unsigned size() { return Values.size(); }
+  ParserClass &getParser() { return Parser; }
+
+  // One option...
+  template<class M0t>
+  list(const M0t &M0) {
+    apply(M0, this);
+    done();
+  }
+  // Two options...
+  template<class M0t, class M1t>
+  list(const M0t &M0, const M1t &M1) {
+    apply(M0, this); apply(M1, this);
+    done();
+  }
+  // Three options...
+  template<class M0t, class M1t, class M2t>
+  list(const M0t &M0, const M1t &M1, const M2t &M2) {
+    apply(M0, this); apply(M1, this); apply(M2, this);
+    done();
+  }
+  // Four options...
+  template<class M0t, class M1t, class M2t, class M3t>
+  list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    done();
+  }
+  // Five options...
+  template<class M0t, class M1t, class M2t, class M3t, class M4t>
+  list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
+       const M4t &M4) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    apply(M4, this);
+    done();
+  }
+  // Six options...
+  template<class M0t, class M1t, class M2t, class M3t,
+           class M4t, class M5t>
+  list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
+       const M4t &M4, const M5t &M5) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    apply(M4, this); apply(M5, this);
+    done();
+  }
+  // Seven options...
+  template<class M0t, class M1t, class M2t, class M3t,
+           class M4t, class M5t, class M6t>
+  list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
+      const M4t &M4, const M5t &M5, const M6t &M6) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    apply(M4, this); apply(M5, this); apply(M6, this);
+    done();
+  }
+  // Eight options...
+  template<class M0t, class M1t, class M2t, class M3t,
+           class M4t, class M5t, class M6t, class M7t>
+  list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
+      const M4t &M4, const M5t &M5, const M6t &M6, const M7t &M7) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    apply(M4, this); apply(M5, this); apply(M6, this); apply(M7, this);
+    done();
+  }
 };
 
-template <class E>  // The enum we are representing
-class EnumList : public EnumListBase {
-public:
-  inline EnumList(int Flags, ...) : EnumListBase(Flags) {
-    va_list Values;
-    va_start(Values, Flags);
-    processValues(Values);
-    va_end(Values);
-    registerArgs();
+
+
+//===----------------------------------------------------------------------===//
+// Aliased command line option (alias this name to a preexisting name)
+//
+
+class alias : public Option {
+  Option *AliasFor;
+  virtual bool handleOccurance(const char *ArgName, const std::string &Arg) {
+    return AliasFor->handleOccurance(AliasFor->ArgStr, Arg);
   }
-  inline E  operator[](unsigned i) const { return (E)Values[i]; }
-  inline E &operator[](unsigned i)       { return (E&)Values[i]; }
+  // Aliases default to be hidden...
+  virtual enum OptionHidden getOptionHiddenFlagDefault() const {return Hidden;}
+
+  // Handle printing stuff...
+  virtual unsigned getOptionWidth() const;
+  virtual void printOptionInfo(unsigned GlobalWidth) const;
+
+  void done() {
+    if (!hasArgStr())
+      error(": cl::alias must have argument name specified!");
+    if (AliasFor == 0)
+      error(": cl::alias must have an cl::aliasopt(option) specified!");
+    addArgument(ArgStr);
+  }
+public:
+  void setAliasFor(Option &O) {
+    if (AliasFor)
+      error(": cl::alias must only have one cl::aliasopt(...) specified!");
+    AliasFor = &O;
+  }
+
+  // One option...
+  template<class M0t>
+  alias(const M0t &M0) : AliasFor(0) {
+    apply(M0, this);
+    done();
+  }
+  // Two options...
+  template<class M0t, class M1t>
+  alias(const M0t &M0, const M1t &M1) : AliasFor(0) {
+    apply(M0, this); apply(M1, this);
+    done();
+  }
+  // Three options...
+  template<class M0t, class M1t, class M2t>
+  alias(const M0t &M0, const M1t &M1, const M2t &M2) : AliasFor(0) {
+    apply(M0, this); apply(M1, this); apply(M2, this);
+    done();
+  }
+  // Four options...
+  template<class M0t, class M1t, class M2t, class M3t>
+  alias(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
+    : AliasFor(0) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    done();
+  }
+};
+
+// aliasfor - Modifier to set the option an alias aliases.
+struct aliasopt {
+  Option &Opt;
+  aliasopt(Option &O) : Opt(O) {}
+  void apply(alias &A) const { A.setAliasFor(Opt); }
 };
 
 } // End namespace cl
