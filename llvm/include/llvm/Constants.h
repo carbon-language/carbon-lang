@@ -458,27 +458,29 @@ public:
 };
 
 
-// ConstantExpr - a constant value that is initialized with
-// an expression using other constant values.  This is only used
-// to represent values that cannot be evaluated at compile-time
-// (e.g., something derived from an address) because it does
-// not have a mechanism to store the actual value.
-// Use the appropriate Constant subclass above for known constants.
+// ConstantExpr - a constant value that is initialized with an expression using
+// other constant values.  This is only used to represent values that cannot be
+// evaluated at compile-time (e.g., something derived from an address) because
+// it does not have a mechanism to store the actual value.  Use the appropriate
+// Constant subclass above for known constants.
 //
 class ConstantExpr : public Constant {
   unsigned iType;      // Operation type
   
-protected:
-  ConstantExpr(unsigned Opcode, Constant *C,  const Type *Ty);
+protected: 
+  // Cast creation ctor
+  ConstantExpr(unsigned Opcode, Constant *C, const Type *Ty);
+  // Binary/Shift instruction creation ctor
   ConstantExpr(unsigned Opcode, Constant *C1, Constant *C2);
+  // GEP instruction creation ctor
   ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
                const Type *DestTy);
-  ~ConstantExpr() {}
   
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that
-  // these methods can return a constant of an arbitrary type, because they will
-  // attempt to fold the constant expression into something simple if they can.
+  // these methods may return a object that is not an instance of the
+  // ConstantExpr class, because they will attempt to fold the constant
+  // expression into something simpler if possible.
   
   /// Cast constant expr
   static Constant *getCast(Constant *C, const Type *Ty);
