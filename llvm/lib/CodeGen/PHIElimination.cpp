@@ -20,7 +20,6 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 using namespace llvm;
 
@@ -195,14 +194,12 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
           // at an appropriate point later.
           //
           bool ValueIsLive = false;
-          const BasicBlock *BB = opBlock.getBasicBlock();
-          for (succ_const_iterator SI = succ_begin(BB), E = succ_end(BB);
-               SI != E && !ValueIsLive; ++SI) {
-            const std::pair<MachineBasicBlock*, unsigned> &
-              SuccInfo = LV->getBasicBlockInfo(*SI);
+          for (MachineBasicBlock::succ_iterator SI = opBlock.succ_begin(),
+                 E = opBlock.succ_end(); SI != E && !ValueIsLive; ++SI) {
+            MachineBasicBlock *MBB = *SI;
             
             // Is it alive in this successor?
-            unsigned SuccIdx = SuccInfo.second;
+            unsigned SuccIdx = LV->getMachineBasicBlockIndex(MBB);
             if (SuccIdx < InRegVI.AliveBlocks.size() &&
                 InRegVI.AliveBlocks[SuccIdx]) {
               ValueIsLive = true;
@@ -210,7 +207,6 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
             }
             
             // Is it killed in this successor?
-            MachineBasicBlock *MBB = SuccInfo.first;
             for (unsigned i = 0, e = InRegVI.Kills.size(); i != e; ++i)
               if (InRegVI.Kills[i].first == MBB) {
                 ValueIsLive = true;

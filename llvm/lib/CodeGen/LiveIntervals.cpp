@@ -17,6 +17,7 @@
 
 #define DEBUG_TYPE "liveintervals"
 #include "LiveIntervals.h"
+#include "llvm/Value.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -26,7 +27,6 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/CFG.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
@@ -97,10 +97,9 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     unsigned miIndex = 0;
     for (MachineFunction::iterator mbb = mf_->begin(), mbbEnd = mf_->end();
          mbb != mbbEnd; ++mbb) {
-        const std::pair<MachineBasicBlock*, unsigned>& entry =
-            lv_->getMachineBasicBlockInfo(mbb);
-        bool inserted = mbbi2mbbMap_.insert(std::make_pair(entry.second,
-                                                           entry.first)).second;
+        unsigned mbbIdx = lv_->getMachineBasicBlockIndex(mbb);
+        bool inserted = mbbi2mbbMap_.insert(std::make_pair(mbbIdx,
+                                                           mbb)).second;
         assert(inserted && "multiple index -> MachineBasicBlock");
 
         for (MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
@@ -182,7 +181,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     DEBUG(
         for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
              mbbi != mbbe; ++mbbi) {
-            std::cerr << mbbi->getBasicBlock()->getName() << ":\n";
+            std::cerr << ((Value*)mbbi->getBasicBlock())->getName() << ":\n";
             for (MachineBasicBlock::iterator mii = mbbi->begin(),
                      mie = mbbi->end(); mii != mie; ++mii) {
                 std::cerr << getInstructionIndex(mii) << '\t';
@@ -404,13 +403,13 @@ void LiveIntervals::computeIntervals()
 {
     DEBUG(std::cerr << "********** COMPUTING LIVE INTERVALS **********\n");
     DEBUG(std::cerr << "********** Function: "
-          << mf_->getFunction()->getName() << '\n');
+          << ((Value*)mf_->getFunction())->getName() << '\n');
 
     for (MbbIndex2MbbMap::iterator
              it = mbbi2mbbMap_.begin(), itEnd = mbbi2mbbMap_.end();
          it != itEnd; ++it) {
         MachineBasicBlock* mbb = it->second;
-        DEBUG(std::cerr << mbb->getBasicBlock()->getName() << ":\n");
+        DEBUG(std::cerr << ((Value*)mbb->getBasicBlock())->getName() << ":\n");
 
         for (MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
              mi != miEnd; ++mi) {
@@ -451,7 +450,7 @@ void LiveIntervals::joinIntervals()
     for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
          mbbi != mbbe; ++mbbi) {
         MachineBasicBlock* mbb = mbbi;
-        DEBUG(std::cerr << mbb->getBasicBlock()->getName() << ":\n");
+        DEBUG(std::cerr << ((Value*)mbb->getBasicBlock())->getName() << ":\n");
 
         for (MachineBasicBlock::iterator mi = mbb->begin(), mie = mbb->end();
              mi != mie; ++mi) {
