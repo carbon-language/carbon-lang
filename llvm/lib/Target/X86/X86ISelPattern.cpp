@@ -1780,7 +1780,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       break;
     case MVT::i32:
       DivOpcode = isSigned ? X86::IDIV32r : X86::DIV32r;
-      LoReg =X86::EAX;
+      LoReg = X86::EAX;
       HiReg = X86::EDX;
       MovOpcode = X86::MOV32rr;
       ClrOpcode = X86::MOV32ri;
@@ -2190,7 +2190,8 @@ void ISel::Select(SDOperand N) {
 
     // Check to see if this is a load/op/store combination.
     if (N.getOperand(1).Val->hasOneUse() &&
-        isFoldableLoad(N.getOperand(0).getValue(0))) {
+        isFoldableLoad(N.getOperand(0).getValue(0)) &&
+        !MVT::isFloatingPoint(N.getOperand(0).getValue(0).getValueType())) {
       SDOperand TheLoad = N.getOperand(0).getValue(0);
       // Check to see if we are loading the same pointer that we're storing to.
       if (TheLoad.getOperand(1) == N.getOperand(2)) {
@@ -2202,35 +2203,35 @@ void ISel::Select(SDOperand N) {
           // Finally, check to see if this is one of the ops we can handle!
           static const unsigned ADDTAB[] = {
             X86::ADD8mi, X86::ADD16mi, X86::ADD32mi,
-            X86::ADD8mr, X86::ADD16mr, X86::ADD32mr, 0, 0,
+            X86::ADD8mr, X86::ADD16mr, X86::ADD32mr,
           };
           static const unsigned SUBTAB[] = {
             X86::SUB8mi, X86::SUB16mi, X86::SUB32mi,
-            X86::SUB8mr, X86::SUB16mr, X86::SUB32mr, 0, 0,
+            X86::SUB8mr, X86::SUB16mr, X86::SUB32mr,
           };
           static const unsigned ANDTAB[] = {
             X86::AND8mi, X86::AND16mi, X86::AND32mi,
-            X86::AND8mr, X86::AND16mr, X86::AND32mr, 0, 0,
+            X86::AND8mr, X86::AND16mr, X86::AND32mr,
           };
           static const unsigned ORTAB[] = {
             X86::OR8mi, X86::OR16mi, X86::OR32mi,
-            X86::OR8mr, X86::OR16mr, X86::OR32mr, 0, 0,
+            X86::OR8mr, X86::OR16mr, X86::OR32mr,
           };
           static const unsigned XORTAB[] = {
             X86::XOR8mi, X86::XOR16mi, X86::XOR32mi,
-            X86::XOR8mr, X86::XOR16mr, X86::XOR32mr, 0, 0,
+            X86::XOR8mr, X86::XOR16mr, X86::XOR32mr,
           };
           static const unsigned SHLTAB[] = {
             X86::SHL8mi, X86::SHL16mi, X86::SHL32mi,
-            /*Have to put the reg in CL*/0, 0, 0, 0, 0,
+            /*Have to put the reg in CL*/0, 0, 0,
           };
           static const unsigned SARTAB[] = {
             X86::SAR8mi, X86::SAR16mi, X86::SAR32mi,
-            /*Have to put the reg in CL*/0, 0, 0, 0, 0,
+            /*Have to put the reg in CL*/0, 0, 0,
           };
           static const unsigned SHRTAB[] = {
             X86::SHR8mi, X86::SHR16mi, X86::SHR32mi,
-            /*Have to put the reg in CL*/0, 0, 0, 0, 0,
+            /*Have to put the reg in CL*/0, 0, 0,
           };
 
           const unsigned *TabPtr = 0;
@@ -2288,8 +2289,6 @@ void ISel::Select(SDOperand N) {
               case MVT::i8:  Opc = TabPtr[3]; break;
               case MVT::i16: Opc = TabPtr[4]; break;
               case MVT::i32: Opc = TabPtr[5]; break;
-              case MVT::f32: Opc = TabPtr[6]; break;
-              case MVT::f64: Opc = TabPtr[7]; break;
               }
               
               if (Opc) {
