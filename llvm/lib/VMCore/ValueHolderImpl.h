@@ -48,7 +48,7 @@ template<class ValueSubclass, class ItemParentType, class SymTabType>
 ValueSubclass *ValueHolder<ValueSubclass,ItemParentType,SymTabType>
 ::remove(iterator &DI) {
   assert(DI != ValueList.end() && 
-         "Trying to remove the end of the def list!!!");
+         "Trying to remove the end of the value list!!!");
   
   ValueSubclass *i = *DI;
   DI = ValueList.erase(DI);
