@@ -72,8 +72,8 @@ const Type *Type::getPrimitiveType(PrimitiveID IDNumber) {
 //
 bool Type::isLosslesslyConvertableTo(const Type *Ty) const {
   if (this == Ty) return true;
-  if ((!isPrimitiveType() && !Ty->isPointerType()) ||
-      (!isPointerType()   && !Ty->isPrimitiveType())) return false;
+  if ((!isPrimitiveType()   && !isPointerType()) ||
+      (!Ty->isPointerType() && !Ty->isPrimitiveType())) return false;
 
   if (getPrimitiveID() == Ty->getPrimitiveID())
     return true;  // Handles identity cast, and cast of differing pointer types
