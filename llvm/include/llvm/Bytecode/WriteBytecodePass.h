@@ -28,8 +28,8 @@ class WriteBytecodePass : public ModulePass {
 public:
   WriteBytecodePass() 
     : Out(&std::cout), DeleteStream(false), CompressFile(true) {}
-  WriteBytecodePass(std::ostream *o, bool DS = false, bool CF = true ) 
-    : Out(o), DeleteStream(DS),  CompressFile(CF) {}
+  WriteBytecodePass(std::ostream *o, bool DS = false, bool CF = true) 
+    : Out(o), DeleteStream(DS), CompressFile(CF) {}
 
   inline ~WriteBytecodePass() {
     if (DeleteStream) delete Out;
