@@ -414,6 +414,15 @@ class Archive {
       std::set<std::string>& symbols,     ///< Symbols to be sought
       std::set<ModuleProvider*>& modules  ///< The modules matching \p symbols
     );
+    
+    /// This method determines whether the archive is a properly formed llvm 
+    /// bytecode archive.  It first makes sure the symbol table has been loaded 
+    /// and has a non-zero size.  If it does, then it is an archive.  If not, 
+    /// then it tries to load all the bytecode modules of the archive.  Finally, 
+    /// it returns whether it was successfull.
+    /// @returns true if the archive is a proper llvm bytecode archive
+    /// @brief Determine whether the archive is a proper llvm bytecode archive.
+    bool isBytecodeArchive();
 
   /// @}
   /// @name Mutators

@@ -503,3 +503,32 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
     }
   }
 }
+
+bool
+Archive::isBytecodeArchive()
+{
+  //Make sure the symTab has been loaded...
+  //in most cases this should have been done
+  //when the archive was constructed, but still, 
+  //this is just in case.
+  if ( !symTab.size() )
+    loadSymbolTable();
+
+  //Now that we know it's been loaded, return true
+  //if it has a size  
+  if ( symTab.size() ) return true;
+
+  //We still can't be sure it isn't a bytecode archive
+  loadArchive();
+
+  std::vector<Module *> Modules;
+  std::string ErrorMessage;
+
+  //If getAllModules gives an error then this isn't a proper
+  //bytecode archive
+  if ( getAllModules( Modules, &ErrorMessage ) ) return false;
+
+  //Finally, if we find any bytecode modules then this is a proper
+  //bytecode archive
+  return Modules.size();
+}
