@@ -18,9 +18,7 @@
 #include <algorithm>
 
 static Statistic<> 
-NumOversized("bytecodewriter", "Number of oversized instructions");
-static Statistic<> 
-NumNormal("bytecodewriter", "Number of normal instructions");
+NumInstrs("bytecodewriter", "Number of instructions");
 
 typedef unsigned char uchar;
 
@@ -52,7 +50,6 @@ static void outputInstructionFormat0(const Instruction *I,
   }
 
   align32(Out);    // We must maintain correct alignment!
-  ++NumOversized;
 }
 
 
@@ -102,7 +99,6 @@ static void outputInstrVarArgsCall(const Instruction *I,
     output_vbr((unsigned)Slot, Out);
   }
   align32(Out);    // We must maintain correct alignment!
-  ++NumOversized;
 }
 
 
@@ -124,7 +120,6 @@ static void outputInstructionFormat1(const Instruction *I,
   unsigned Bits = 1 | (Opcode << 2) | (Type << 8) | (Slots[0] << 20);
   //  cerr << "1 " << IType << " " << Type << " " << Slots[0] << endl;
   output(Bits, Out);
-  ++NumNormal;
 }
 
 
@@ -149,7 +144,6 @@ static void outputInstructionFormat2(const Instruction *I,
   //  cerr << "2 " << IType << " " << Type << " " << Slots[0] << " " 
   //       << Slots[1] << endl;
   output(Bits, Out);
-  ++NumNormal;
 }
 
 
@@ -175,7 +169,6 @@ static void outputInstructionFormat3(const Instruction *I,
   //cerr << "3 " << IType << " " << Type << " " << Slots[0] << " " 
   //     << Slots[1] << " " << Slots[2] << endl;
   output(Bits, Out);
-  ++NumNormal;
 }
 
 void BytecodeWriter::processInstruction(const Instruction &I) {
@@ -245,6 +238,8 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
       return;
     }
   }
+
+  ++NumInstrs;
 
   // Decide which instruction encoding to use.  This is determined primarily by
   // the number of operands, and secondarily by whether or not the max operand
