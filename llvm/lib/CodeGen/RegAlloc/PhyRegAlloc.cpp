@@ -53,7 +53,7 @@ RegAllocDebugLevel_t DEBUG_RA;
 /// allocator's state after it has done its job. This is a hack.
 ///
 PhyRegAlloc::SavedStateMapTy ExportedFnAllocState;
-const bool SaveStateToModule = false;
+const bool SaveStateToModule = true;
 
 static cl::opt<RegAllocDebugLevel_t, true>
 DRA_opt("dregalloc", cl::Hidden, cl::location(DEBUG_RA),
@@ -1286,7 +1286,7 @@ bool PhyRegAlloc::doFinalization (Module &M) {
   std::vector<Constant *> CV2;
   CV2.push_back (ConstantUInt::get (Type::UIntTy, Size));
   CV2.push_back (ConstantArray::get (AT2, allstate));
-  new GlobalVariable (ST2, true, GlobalValue::InternalLinkage,
+  new GlobalVariable (ST2, true, GlobalValue::ExternalLinkage,
                       ConstantStruct::get (ST2, CV2), "_llvm_regAllocState",
                       &M);
   return false; // No error.
