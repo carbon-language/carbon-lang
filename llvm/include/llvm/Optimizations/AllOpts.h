@@ -15,6 +15,7 @@
 #include "llvm/Tools/STLExtras.h"
 class Method;
 class CallInst;
+class TerminatorInst;
 
 //===----------------------------------------------------------------------===//
 // Helper functions
@@ -24,6 +25,7 @@ static inline bool ApplyOptToAllMethods(Module *C, bool (*Opt)(Method*)) {
   return reduce_apply_bool(C->begin(), C->end(), ptr_fun(Opt));
 }
 
+
 //===----------------------------------------------------------------------===//
 // Dead Code Elimination Pass
 //
@@ -31,6 +33,7 @@ static inline bool ApplyOptToAllMethods(Module *C, bool (*Opt)(Method*)) {
 bool DoDeadCodeElimination(Method *M);         // DCE a method
 bool DoRemoveUnusedConstants(SymTabValue *S);  // RUC a method or module
 bool DoDeadCodeElimination(Module *C);         // DCE & RUC a whole module
+
 
 //===----------------------------------------------------------------------===//
 // Constant Propogation Pass
@@ -41,6 +44,13 @@ bool DoConstantPropogation(Method *M);
 static inline bool DoConstantPropogation(Module *C) { 
   return ApplyOptToAllMethods(C, DoConstantPropogation); 
 }
+
+// ConstantFoldTerminator - If a terminator instruction is predicated on a
+// constant value, convert it into an unconditional branch to the constant
+// destination.
+//
+bool ConstantFoldTerminator(TerminatorInst *T);
+
 
 //===----------------------------------------------------------------------===//
 // Constant Pool Merging Pass
@@ -71,6 +81,7 @@ static inline bool DoSparseConditionalConstantProp(Module *M) {
 template <class Unit> bool DoSCCP(Unit *M) { 
   return DoSparseConditionalConstantProp(M); 
 }
+
 
 //===----------------------------------------------------------------------===//
 // Method Inlining Pass
