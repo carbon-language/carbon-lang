@@ -316,6 +316,7 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_CHECK_TYPES([int64_t],,AC_MSG_ERROR([Type int64_t required but not found]))
 AC_CHECK_TYPES([uint64_t],,AC_MSG_ERROR([Type uint64_t required but not found]))
+AC_CHECK_TYPES([u_int64_t])
 AC_HEADER_TIME
 AC_STRUCT_TM
 
