@@ -142,8 +142,10 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     std::swap(V1Size, V2Size);
   }
 
-  if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V1))
-    if (GEP->getOperand(0) == V2) {
+  if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V1)) {
+    AliasResult R = alias(GEP->getOperand(0), V1Size, V2, V2Size);
+    if (R == NoAlias) return NoAlias;
+    if (R == MustAlias) {
       // If there is at least one non-zero constant index, we know they cannot
       // alias.
       for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
@@ -151,6 +153,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
           if (!C->isNullValue())
             return NoAlias;
     }
+  }
 
   return MayAlias;
 }
@@ -220,8 +223,10 @@ BasicAliasAnalysis::CheckGEPInstructions(GetElementPtrInst *GEP1, unsigned G1S,
   std::vector<Value*> Indices1;
   Indices1.reserve(NumGEPOperands-1);
   for (unsigned i = 1; i != FirstConstantOper; ++i)
-    Indices1.push_back(Constant::getNullValue(GEP1->getOperand(i)
-                                              ->getType()));
+    if (GEP1->getOperand(i)->getType() == Type::UByteTy)
+      Indices1.push_back(GEP1->getOperand(i));
+    else
+      Indices1.push_back(Constant::getNullValue(Type::LongTy));
   std::vector<Value*> Indices2;
   Indices2.reserve(NumGEPOperands-1);
   Indices2 = Indices1;           // Copy the zeros prefix...
@@ -235,7 +240,7 @@ BasicAliasAnalysis::CheckGEPInstructions(GetElementPtrInst *GEP1, unsigned G1S,
   // Loop over the rest of the operands...
   for (unsigned i = FirstConstantOper+1; i!=NumGEPOperands; ++i){
     const Value *Op1 = GEP1->getOperand(i);
-    const Value *Op2 = GEP1->getOperand(i);
+    const Value *Op2 = GEP2->getOperand(i);
     if (Op1 == Op2) {   // If they are equal, use a zero index...
       Indices1.push_back(Constant::getNullValue(Op1->getType()));
       Indices2.push_back(Indices1.back());
