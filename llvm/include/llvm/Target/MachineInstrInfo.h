@@ -52,34 +52,34 @@ extern const MachineInstrDescriptor *TargetInstrDescriptors;
 //---------------------------------------------------------------------------
 
 
-const unsigned int	M_NOP_FLAG		= 1 << 0;
-const unsigned int	M_BRANCH_FLAG		= 1 << 1;
-const unsigned int	M_CALL_FLAG		= 1 << 2;
-const unsigned int	M_RET_FLAG		= 1 << 3;
-const unsigned int	M_ARITH_FLAG		= 1 << 4;
-const unsigned int	M_CC_FLAG		= 1 << 6;
-const unsigned int	M_LOGICAL_FLAG		= 1 << 6;
-const unsigned int	M_INT_FLAG		= 1 << 7;
-const unsigned int	M_FLOAT_FLAG		= 1 << 8;
-const unsigned int	M_CONDL_FLAG		= 1 << 9;
-const unsigned int	M_LOAD_FLAG		= 1 << 10;
-const unsigned int	M_PREFETCH_FLAG		= 1 << 11;
-const unsigned int	M_STORE_FLAG		= 1 << 12;
-const unsigned int	M_DUMMY_PHI_FLAG	= 1 << 13;
-const unsigned int      M_PSEUDO_FLAG           = 1 << 14;
+const unsigned	M_NOP_FLAG		= 1 << 0;
+const unsigned	M_BRANCH_FLAG		= 1 << 1;
+const unsigned	M_CALL_FLAG		= 1 << 2;
+const unsigned	M_RET_FLAG		= 1 << 3;
+const unsigned	M_ARITH_FLAG		= 1 << 4;
+const unsigned	M_CC_FLAG		= 1 << 6;
+const unsigned	M_LOGICAL_FLAG		= 1 << 6;
+const unsigned	M_INT_FLAG		= 1 << 7;
+const unsigned	M_FLOAT_FLAG		= 1 << 8;
+const unsigned	M_CONDL_FLAG		= 1 << 9;
+const unsigned	M_LOAD_FLAG		= 1 << 10;
+const unsigned	M_PREFETCH_FLAG		= 1 << 11;
+const unsigned	M_STORE_FLAG		= 1 << 12;
+const unsigned	M_DUMMY_PHI_FLAG	= 1 << 13;
+const unsigned  M_PSEUDO_FLAG           = 1 << 14;
 
 
 struct MachineInstrDescriptor {
-  std::string     opCodeString;  // Assembly language mnemonic for the opcode.
-  int	          numOperands;   // Number of args; -1 if variable #args
-  int	          resultPos;     // Position of the result; -1 if no result
-  unsigned int	  maxImmedConst; // Largest +ve constant in IMMMED field or 0.
+  const char *    opCodeString;  // Assembly language mnemonic for the opcode.
+  int             numOperands;   // Number of args; -1 if variable #args
+  int             resultPos;     // Position of the result; -1 if no result
+  unsigned        maxImmedConst; // Largest +ve constant in IMMMED field or 0.
   bool	          immedIsSignExtended; // Is IMMED field sign-extended? If so,
 				 //   smallest -ve value is -(maxImmedConst+1).
-  unsigned int    numDelaySlots; // Number of delay slots after instruction
-  unsigned int    latency;	 // Latency in machine cycles
+  unsigned        numDelaySlots; // Number of delay slots after instruction
+  unsigned        latency;	 // Latency in machine cycles
   InstrSchedClass schedClass;	 // enum  identifying instr sched class
-  unsigned int	  iclass;	 // flags identifying machine instr class
+  unsigned        iclass;	 // flags identifying machine instr class
 };
 
 
@@ -89,8 +89,8 @@ public:
 
 protected:
   const MachineInstrDescriptor* desc;	// raw array to allow static init'n
-  unsigned int descSize;		// number of entries in the desc array
-  unsigned int numRealOpCodes;		// number of non-dummy op codes
+  unsigned descSize;		// number of entries in the desc array
+  unsigned numRealOpCodes;		// number of non-dummy op codes
   
 public:
   MachineInstrInfo(const TargetMachine& tgt,
@@ -126,7 +126,7 @@ public:
   // Query instruction class flags according to the machine-independent
   // flags listed above.
   // 
-  unsigned int getIClass(MachineOpCode opCode) const {
+  unsigned getIClass(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass;
   }
   bool isNop(MachineOpCode opCode) const {
@@ -332,7 +332,7 @@ public:
                                        Function* F,
                                        Value* srcVal,
                                        Value* destVal,
-                                       unsigned int numLowBits,
+                                       unsigned numLowBits,
                                        std::vector<MachineInstr*>& mvec,
                                        MachineCodeForInstruction& mcfi) const=0;
 
@@ -346,7 +346,7 @@ public:
                                        Function* F,
                                        Value* srcVal,
                                        Value* destVal,
-                                       unsigned int srcSizeInBits,
+                                       unsigned srcSizeInBits,
                                        std::vector<MachineInstr*>& mvec,
                                        MachineCodeForInstruction& mcfi) const=0;
 };
