@@ -12,7 +12,7 @@
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
-#include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
+#include "llvm/CodeGen/FunctionLiveVarInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"

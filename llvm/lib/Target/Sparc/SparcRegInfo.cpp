@@ -15,14 +15,17 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/RegAllocCommon.h"
-#include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
+#include "llvm/CodeGen/FunctionLiveVarInfo.h"   // FIXME: Remove
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
-#include <values.h>
 using std::cerr;
 using std::vector;
+
+enum {
+  BadRegClass = ~0
+};
 
 UltraSparcRegInfo::UltraSparcRegInfo(const UltraSparc &tgt)
   : TargetRegInfo(tgt), NumOfIntArgRegs(6), 
@@ -390,7 +393,7 @@ void UltraSparcRegInfo::suggestRegs4MethodArgs(const Function *Meth,
     assert(LR && "No live range found for method arg");
     
     unsigned regType = getRegType(LR);
-    unsigned regClassIDOfArgReg = MAXINT; // reg class of chosen reg (unused)
+    unsigned regClassIDOfArgReg = BadRegClass; // reg class of chosen reg (unused)
     
     int regNum = (regType == IntRegType)
       ? regNumForIntArg(/*inCallee*/ true, isVarArgs,
@@ -434,7 +437,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
     //
     bool isArgInReg = false;
     unsigned UniArgReg = InvalidRegNum;	// reg that LR MUST be colored with
-    unsigned regClassIDOfArgReg = MAXINT; // reg class of chosen reg
+    unsigned regClassIDOfArgReg = BadRegClass; // reg class of chosen reg
     
     int regNum = (regType == IntRegType)
       ? regNumForIntArg(/*inCallee*/ true, isVarArgs,
@@ -605,7 +608,7 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
                   "all args (even consts) must be defined before");
 
     unsigned regType = getRegType( LR );
-    unsigned regClassIDOfArgReg = MAXINT; // reg class of chosen reg (unused)
+    unsigned regClassIDOfArgReg = BadRegClass; // reg class of chosen reg (unused)
 
     // Choose a register for this arg depending on whether it is
     // an INT or FP value.  Here we ignore whether or not it is a
@@ -657,7 +660,7 @@ UltraSparcRegInfo::InitializeOutgoingArg(MachineInstr* CallMI,
 {
   MachineInstr *AdMI;
   bool isArgInReg = false;
-  unsigned UniArgReg = MAXINT;          // unused unless initialized below
+  unsigned UniArgReg = BadRegClass;          // unused unless initialized below
   if (UniArgRegOrNone != InvalidRegNum)
     {
       isArgInReg = true;
@@ -847,7 +850,7 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
     //
     bool isArgInReg = false;
     unsigned UniArgReg = InvalidRegNum;	  // reg that LR MUST be colored with
-    unsigned regClassIDOfArgReg = MAXINT; // reg class of chosen reg
+    unsigned regClassIDOfArgReg = BadRegClass; // reg class of chosen reg
     
     // Find the register that must be used for this arg, depending on
     // whether it is an INT or FP value.  Here we ignore whether or not it

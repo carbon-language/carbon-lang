@@ -9,7 +9,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h" // FIXME: Remove when modularized better
+#include "llvm/CodeGen/FunctionLiveVarInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
 #include "Support/CommandLine.h"
@@ -1524,7 +1524,7 @@ bool InstructionSchedulingWithSSA::runOnFunction(Function &F)
         cerr << "\n*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
       
       // expensive!
-      SchedPriorities schedPrio(&F, graph,getAnalysis<FunctionLiveVarInfo>());
+      SchedPriorities schedPrio(&F, graph, getAnalysis<FunctionLiveVarInfo>());
       SchedulingManager S(target, graph, schedPrio);
           
       ChooseInstructionsForDelaySlots(S, MBB, graph); // modifies graph

@@ -5,14 +5,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
-#include "BBLiveVar.h"
+#include "llvm/CodeGen/FunctionLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/SetOperations.h"
 #include "Support/CommandLine.h"
+#include "BBLiveVar.h"
 
 static RegisterAnalysis<FunctionLiveVarInfo>
 X("livevar", "Live Variable Analysis");
