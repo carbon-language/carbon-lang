@@ -216,8 +216,11 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     FFI->setObjectOffset(i, -Offset);        // Set the computed offset
   }
 
-  // Align the final stack pointer offset...
-  Offset = (Offset+StackAlignment-1)/StackAlignment*StackAlignment;
+  // Align the final stack pointer offset, but only if there are calls in the
+  // function.  This ensures that any calls to subroutines have their stack
+  // frames suitable aligned.
+  if (FFI->hasCalls())
+    Offset = (Offset+StackAlignment-1)/StackAlignment*StackAlignment;
 
   // Set the final value of the stack pointer...
   FFI->setStackSize(Offset-TFI.getOffsetOfLocalArea());
