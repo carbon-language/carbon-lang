@@ -147,6 +147,7 @@ static struct PerFunctionInfo {
   std::vector<ValueList> LateResolveValues;
   std::vector<PATypeHolder> Types;
   std::map<ValID, PATypeHolder> LateResolveTypes;
+  SymbolTable LocalSymtab;
   bool isDeclare;                // Is this function a forward declararation?
 
   inline PerFunctionInfo() {
@@ -183,7 +184,8 @@ static struct PerFunctionInfo {
     CurModule.DeclareNewGlobalValue(CurrentFunction, FID);
 
     Values.clear();         // Clear out function local definitions
-    Types.clear();
+    Types.clear();          // Clear out function local types
+    LocalSymtab.clear();    // Clear out function local symbol table
     CurrentFunction = 0;
     isDeclare = false;
   }
@@ -555,7 +557,30 @@ static bool setValueName(Value *V, char *NameStr) {
 		   V->getType()->getDescription() + "' type plane!");
   }
 
+  // Set the name
   V->setName(Name, &ST);
+
+  // If we're in function scope
+  if (inFunctionScope()) {
+    // Look up the symbol in the function's local symboltable
+    Existing = CurFun.LocalSymtab.lookup(V->getType(),Name);
+
+    // If it already exists
+    if (Existing) {
+      // Clear the symbol table so it doesn't complain when it
+      // gets destructed
+      CurFun.LocalSymtab.clear();
+
+      // Bail
+      ThrowException("Redefinition of value named '" + Name + "' in the '" +
+		   V->getType()->getDescription() + "' type plane!");
+
+    // otherwise, since it doesn't exist
+    } else {
+      // Insert it.
+      CurFun.LocalSymtab.insert(V);
+    }
+  }
   return false;
 }
 
