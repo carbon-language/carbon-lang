@@ -861,10 +861,9 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
 #endif
       User->refineAbstractType(this, NewTy);
 
-      if (AbstractTypeUsers.size() == OldSize)
-        User->refineAbstractType(this, NewTy);
-
+#ifdef DEBUG_MERGE_TYPES
       if (AbstractTypeUsers.size() == OldSize) {
+        User->refineAbstractType(this, NewTy);
         if (AbstractTypeUsers.back() != User)
           cerr << "User changed!\n";
         cerr << "Top of user list is:\n";
@@ -873,7 +872,7 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
         cerr <<"\nOld User=\n";
         User->dump();
       }
-
+#endif
       assert(AbstractTypeUsers.size() != OldSize &&
 	     "AbsTyUser did not remove self from user list!");
     }
@@ -922,6 +921,7 @@ void DerivedType::typeIsRefined() {
       if (AbstractTypeUsers[i] != this) {
         // Debugging hook
         cerr << "FOUND FAILURE\n";
+        AbstractTypeUsers[i]->dump();
         AbstractTypeUsers[i]->refineAbstractType(this, this);
         assert(0 && "Type became concrete,"
                " but it still has abstract type users hanging around!");
