@@ -1,0 +1,282 @@
+%{
+#include <stdio.h>
+#include <llvm/Codegen/InstrForest.h>
+
+typedef BasicTreeNode* NODEPTR_TYPE;
+#define OP_LABEL(p)	((p)->opLabel)
+#define LEFT_CHILD(p)	((p)->leftChild)
+#define RIGHT_CHILD(p)	((p)->rightChild)
+#define STATE_LABEL(p)	((p)->state)
+#define PANIC		printf
+%}
+
+%start stmt
+
+%term Ret=1		/* return void from a function */
+%term RetValue=101	/* return a value from a function */
+%term BrUncond=2
+%term BrCond=102
+%term Switch=3 
+		/* 4 is unused */
+%term Not=4
+%term Add=5
+%term Sub=6
+%term Mul=7
+%term Div=8
+%term Rem=9
+%term And=10
+%term Or=11
+%term Xor=12
+%term SetCC=113		/* use this to match all SetCC instructions */
+	/* %term SetEQ=13 */
+	/* %term SetNE=14 */
+	/* %term SetLE=15 */
+	/* %term SetGE=16 */
+	/* %term SetLT=17 */
+	/* %term SetGT=18 */
+%term Malloc=19
+%term Free=20
+%term Alloca=21
+%term AllocaN=121	/* alloca with arg N */
+%term Load=22
+%term LoadIdx=122	/* load with index vector */
+%term Store=23
+%term GetElemPtr=24
+%term GetElemPtrIdx=124	/* getElemPtr with index vector */
+
+		/* 25 is PHINode, which is never a real tree node */
+
+%term Cast=26	/* cast that will be ignored.  others are made explicit */
+%term ToBoolTy=126
+%term ToUByteTy=127
+%term ToSByteTy=128
+%term ToUShortTy=129
+%term ToShortTy=130
+%term ToUIntTy=131
+%term ToIntTy=132
+%term ToULongTy=133
+%term ToLongTy=134
+%term ToFloatTy=135
+%term ToDoubleTy=136
+%term ToArrayTy=137
+%term ToPointerTy=138
+
+%term Call=27
+%term Shl=28
+%term Shr=29
+		/* 30...46 are unused */
+    /*
+     * The foll. values should match the constants in InstrForest.h
+     */
+%term VRegList=97
+%term VReg=98
+%term Constant=99
+%term Label=100
+		/* 50+i is a variant of i, as defined above */
+
+
+%%
+/*-----------------------------------------------------------------------*
+ * The productions of the grammar.
+ * Note that all chain rules are numbered 101 and above.
+ * Also, a special case of production X is numbered 100+X.
+ *-----------------------------------------------------------------------*/
+
+	/*
+	 * The top-level statements
+	 */
+stmt:	Ret			=   1 (3);
+stmt:	RetValue(reg)		=   2 (3);
+stmt:	Store(reg,reg)		=   3 (1);
+stmt:	Store(reg,ptrreg)	=   4 (1);
+stmt:	BrUncond		=   5 (2);
+stmt:	BrCond(boolconst)	=   6 (1);	/* may save one instruction */
+stmt:	BrCond(bool)		=   7 (2);
+stmt:	BrCond(boolreg)		=   8 (2);	
+stmt:	Switch(reg)		=   9 (3);	/* cost = load + branch */
+
+stmt:	reg			=  111 (0);
+stmt:	boolconst		=  112 (0);
+stmt:	bool			=  113 (0);
+
+	/*
+	 * List node used for nodes with more than 2 children
+	 */
+reg:	VRegList(reg,reg)	=  10 (0);
+
+	/*
+	 * The unary operators.  We encode NOT and individual casts into
+	 * separate non-terminals to combine instructions for some cases:
+	 *	Eg1:  zdouble <- todouble(xfloat) * todouble(yfloat)
+	 *	Eg2:  c       <- a AND (NOT b).
+	 * Note that the costs are counted for the individual non-terminals
+	 * below, not for reg.
+	 */
+reg:	not			=  121 (0);
+reg:	tobool			=  122 (0);
+reg:	toubyte			=  123 (0);
+reg:	tosbyte			=  124 (0);
+reg:	toushort		=  125 (0);
+reg:	toshort			=  126 (0);
+reg:	touint			=  127 (0);
+reg:	toint			=  128 (0);
+reg:	toulong			=  129 (0);
+reg:	tolong			=  130 (0);
+reg:	tofloat			=  131 (0);
+reg:	todouble		=  132 (0);
+
+not:	  Not(reg)		=  21 (1);
+tobool:	  ToBoolTy(reg)		=  22 (1);
+toubyte:  ToUByteTy(reg)	=  23 (1);
+tosbyte:  ToSByteTy(reg)	=  24 (1);
+toushort: ToUShortTy(reg)	=  25 (1);
+toshort:  ToShortTy(reg)	=  26 (1);
+touint:	  ToUIntTy(reg)		=  27 (1);
+toint:	  ToIntTy(reg)		=  28 (1);
+toulong:  ToULongTy(reg)	=  29 (1);
+tolong:	  ToLongTy(reg)		=  30 (1);
+tofloat:  ToFloatTy(reg)	=  31 (1);
+todouble: ToDoubleTy(reg)	=  32 (1);
+
+reg:	  ToArrayTy(reg)	=  19 (1);
+reg:	  ToPointerTy(reg)	=  20 (1);
+
+	/*
+	 * The binary operators.
+	 */
+reg:	Add(reg,reg)		=   33 (1);
+reg:	Sub(reg,reg)		=   34 (1);
+reg:	Mul(reg,reg)		=   35 (3);
+reg:	Mul(todouble,todouble)	=  135 (2);	/* avoids 1-2 type converts */
+reg:	Div(reg,reg)		=   36 (6);
+reg:	Rem(reg,reg)		=   37 (6);
+reg:	And(reg,reg)		=   38 (1);
+reg:	And(reg,not)		=  138 (0);	/* cost is counted for not */
+reg:	Or (reg,reg)		=   39 (1);
+reg:	Or (reg,not)		=  139 (0);	/* cost is counted for not */
+reg:	Xor(reg,reg)		=   40 (1);
+reg:	Xor(reg,not)		=  140 (0);	/* cost is counted for not */
+
+	/*
+	 * The SetCC instructions and other boolean values
+	 */
+boolconst: SetCC(reg,Constant)	=   41 (1);
+bool:	   SetCC(reg,reg)	=   42 (1);
+boolreg:   VReg			=   43 (0);
+
+	/*
+	 * Memory access instructions
+	 */
+reg:	Load(reg)		=   51 (3);
+reg:	Load(ptrreg)		=   52 (2);	/* 1 counted for ptrreg */
+reg:	LoadIdx(reg,reg)	=   53 (3);
+reg:	LoadIdx(ptrreg,reg)	=   54 (2);	/* 1 counted for ptrreg */
+reg:	ptrreg			=  155 (0);
+ptrreg:	GetElemPtr(reg)		=   55 (1);
+ptrreg:	GetElemPtrIdx(reg,reg)	=   56 (1);
+reg:	Alloca			=   57 (1);
+reg:	AllocaN(reg)		=   58 (1);
+
+	/*
+	 * Other operators producing register values
+	 */
+reg:	Call			=   61 (0);
+reg:	Shl(reg,reg)		=   62 (1);
+reg:	Shr(reg,reg)		=   63 (1);
+
+	/*
+	 * Finally, leaf nodes of expression trees (other than boolreg)
+	 */
+reg:	VReg			=   71 (0);
+reg:	Constant		=   72 (0);
+
+
+
+%%
+/*-----------------------------------------------------------------------*
+ * The rest of this file provides code to print the cover produced
+ * by BURG and information about computed tree cost and matches.
+ * This code was taken from sample.gr provided with BURG.
+ *-----------------------------------------------------------------------*/
+
+static char rcsid[] = "$Id$";
+
+#ifdef __STDC__
+void printcover(NODEPTR_TYPE p, int goalnt, int indent) {
+#else
+void printcover(p, goalnt, indent) NODEPTR_TYPE p; int goalnt; int indent; {
+#endif
+	int eruleno = burm_rule(STATE_LABEL(p), goalnt);
+	short *nts = burm_nts[eruleno];
+	NODEPTR_TYPE kids[10];
+	int i;
+	
+	if (eruleno == 0) {
+		printf("no cover\n");
+		return;
+	}
+	for (i = 0; i < indent; i++)
+		printf(".");
+	printf("%s\n", burm_string[eruleno]);
+	burm_kids(p, eruleno, kids);
+	for (i = 0; nts[i]; i++)
+		printcover(kids[i], nts[i], indent+1);
+}
+
+#ifdef __STDC__
+void printtree(NODEPTR_TYPE p) {
+#else
+void printtree(p) NODEPTR_TYPE p; {
+#endif
+	int op = burm_op_label(p);
+
+	printf("%s", burm_opname[op]);
+	switch (burm_arity[op]) {
+	case 0:
+		break;
+	case 1:
+		printf("(");
+		printtree(burm_child(p, 0));
+		printf(")");
+		break;
+	case 2:
+		printf("(");
+		printtree(burm_child(p, 0));
+		printf(", ");
+		printtree(burm_child(p, 1));
+		printf(")");
+		break;
+	}
+}
+
+#ifdef __STDC__
+int treecost(NODEPTR_TYPE p, int goalnt, int costindex) {
+#else
+int treecost(p, goalnt, costindex) NODEPTR_TYPE p; int goalnt; int costindex; {
+#endif
+	int eruleno = burm_rule(STATE_LABEL(p), goalnt);
+	int cost = burm_cost[eruleno][costindex], i;
+	short *nts = burm_nts[eruleno];
+	NODEPTR_TYPE kids[10];
+
+	burm_kids(p, eruleno, kids);
+	for (i = 0; nts[i]; i++)
+		cost += treecost(kids[i], nts[i], costindex);
+	return cost;
+}
+
+#ifdef __STDC__
+void printMatches(NODEPTR_TYPE p) {
+#else
+void printMatches(p) NODEPTR_TYPE p; {
+#endif
+	int nt;
+	int eruleno;
+
+	printf("Node 0x%lx= ", (unsigned long)p);
+	printtree(p);
+	printf(" matched rules:\n");
+	for (nt = 1; burm_ntname[nt] != (char*)NULL; nt++)
+		if ((eruleno = burm_rule(STATE_LABEL(p), nt)) != 0)
+			printf("\t%s\n", burm_string[eruleno]);
+}
