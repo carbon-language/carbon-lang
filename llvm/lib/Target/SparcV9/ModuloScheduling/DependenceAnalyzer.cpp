@@ -16,14 +16,15 @@
 #include "DependenceAnalyzer.h"
 #include "llvm/Type.h"
 #include "llvm/Support/Debug.h"
-
-namespace llvm {
+using namespace llvm;
 
 
 /// Create ModuloSchedulingPass
 ///
-FunctionPass *llvm::createDependenceAnalyzer() {
+namespace llvm {
+FunctionPass *createDependenceAnalyzer() {
   return new DependenceAnalyzer(); 
+}
 }
 
   bool DependenceAnalyzer::runOnFunction(Function &F) {
@@ -105,6 +106,4 @@ FunctionPass *llvm::createDependenceAnalyzer() {
     DependenceResult dr = DependenceResult(deps);
     return dr;
   }
-}
-  
 
