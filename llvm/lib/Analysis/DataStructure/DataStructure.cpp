@@ -69,6 +69,13 @@ void DSNode::assertOK() const {
           Ty == Type::VoidTy && (Size == 0 ||
                                  (NodeType & DSNode::Array))) &&
          "Node not OK!");
+
+  assert(ParentGraph && "Node has no parent?");
+  const DSGraph::ScalarMapTy &SM = ParentGraph->getScalarMap();
+  for (unsigned i = 0, e = Globals.size(); i != e; ++i) {
+    assert(SM.find(Globals[i]) != SM.end());
+    assert(SM.find(Globals[i])->second.getNode() == this);
+  }
 }
 
 /// forwardNode - Mark this node as being obsolete, and all references to it
@@ -1160,9 +1167,14 @@ void DSCallSite::markReachableNodes(hash_set<DSNode*> &Nodes) {
 // marked as alive...
 //
 static bool CanReachAliveNodes(DSNode *N, hash_set<DSNode*> &Alive,
-                               hash_set<DSNode*> &Visited) {
+                               hash_set<DSNode*> &Visited,
+                               bool IgnoreGlobals) {
   if (N == 0) return false;
   assert(N->getForwardNode() == 0 && "Cannot mark a forwarded node!");
+
+  // If this is a global node, it will end up in the globals graph anyway, so we
+  // don't need to worry about it.
+  if (IgnoreGlobals && N->isGlobalNode()) return false;
 
   // If we know that this node is alive, return so!
   if (Alive.count(N)) return true;
@@ -1173,7 +1185,8 @@ static bool CanReachAliveNodes(DSNode *N, hash_set<DSNode*> &Alive,
   Visited.insert(N);   // No recursion, insert into Visited...
 
   for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
-    if (CanReachAliveNodes(N->getLink(i).getNode(), Alive, Visited)) {
+    if (CanReachAliveNodes(N->getLink(i).getNode(), Alive, Visited,
+                           IgnoreGlobals)) {
       N->markReachableNodes(Alive);
       return true;
     }
@@ -1184,14 +1197,17 @@ static bool CanReachAliveNodes(DSNode *N, hash_set<DSNode*> &Alive,
 // alive nodes.
 //
 static bool CallSiteUsesAliveArgs(DSCallSite &CS, hash_set<DSNode*> &Alive,
-                                  hash_set<DSNode*> &Visited) {
-  if (CanReachAliveNodes(CS.getRetVal().getNode(), Alive, Visited))
+                                  hash_set<DSNode*> &Visited,
+                                  bool IgnoreGlobals) {
+  if (CanReachAliveNodes(CS.getRetVal().getNode(), Alive, Visited,
+                         IgnoreGlobals))
     return true;
   if (CS.isIndirectCall() &&
-      CanReachAliveNodes(CS.getCalleeNode(), Alive, Visited))
+      CanReachAliveNodes(CS.getCalleeNode(), Alive, Visited, IgnoreGlobals))
     return true;
   for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i)
-    if (CanReachAliveNodes(CS.getPtrArg(i).getNode(), Alive, Visited))
+    if (CanReachAliveNodes(CS.getPtrArg(i).getNode(), Alive, Visited,
+                           IgnoreGlobals))
       return true;
   return false;
 }
@@ -1203,6 +1219,8 @@ static bool CallSiteUsesAliveArgs(DSCallSite &CS, hash_set<DSNode*> &Alive,
 // inlining graphs.
 //
 void DSGraph::removeDeadNodes(unsigned Flags) {
+  DEBUG(AssertGraphOK(); GlobalsGraph->AssertGraphOK());
+
   // Reduce the amount of work we have to do... remove dummy nodes left over by
   // merging...
   removeTriviallyDeadNodes();
@@ -1231,7 +1249,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
       // these, prune the scalar pointing to it.
       //
       DSNode *N = I->second.getNode();
-      if (N->isUnknownNode() && !isa<Argument>(I->first)) {
+      if (N->getNodeFlags() == DSNode::UnknownNode && !isa<Argument>(I->first)){
         ScalarMap.erase(I++);
       } else {
         I->second.getNode()->markReachableNodes(Alive);
@@ -1259,7 +1277,8 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
     //
     Iterate = false;
     for (unsigned i = 0; i != GlobalNodes.size(); ++i)
-      if (CanReachAliveNodes(GlobalNodes[i].second, Alive, Visited)) {
+      if (CanReachAliveNodes(GlobalNodes[i].second, Alive, Visited, 
+                             Flags & DSGraph::RemoveUnreachableGlobals)) {
         std::swap(GlobalNodes[i--], GlobalNodes.back()); // Move to end to erase
         GlobalNodes.pop_back();                          // Erase efficiently
         Iterate = true;
@@ -1267,7 +1286,8 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
 
     for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
       if (!AuxFCallsAlive[i] &&
-          CallSiteUsesAliveArgs(AuxFunctionCalls[i], Alive, Visited)) {
+          CallSiteUsesAliveArgs(AuxFunctionCalls[i], Alive, Visited,
+                                Flags & DSGraph::RemoveUnreachableGlobals)) {
         AuxFunctionCalls[i].markReachableNodes(Alive);
         AuxFCallsAlive[i] = true;
         Iterate = true;
@@ -1347,7 +1367,8 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
     // If we are in the top-down pass, remove all unreachable globals from the
     // ScalarMap...
     for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i)
-      ScalarMap.erase(GlobalNodes[i].first);
+      if (!Alive.count(GlobalNodes[i].second))
+        ScalarMap.erase(GlobalNodes[i].first);
   }
 
   // Loop over all of the dead nodes now, deleting them since their referrer
@@ -1361,7 +1382,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
 void DSGraph::AssertGraphOK() const {
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
     Nodes[i]->assertOK();
-  return;  // FIXME: remove
+
   for (ScalarMapTy::const_iterator I = ScalarMap.begin(),
          E = ScalarMap.end(); I != E; ++I) {
     assert(I->second.getNode() && "Null node in scalarmap!");
