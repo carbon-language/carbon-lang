@@ -235,6 +235,7 @@ namespace {
     //  
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
+    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
     void getMustAliases(Value *P, std::vector<Value*> &RetVals);
     bool pointsToConstantMemory(const Value *P);
 
@@ -346,8 +347,8 @@ ModulePass *llvm::createAndersensPass() { return new Andersens(); }
 
 AliasAnalysis::AliasResult Andersens::alias(const Value *V1, unsigned V1Size,
                                             const Value *V2, unsigned V2Size) {
-  Node *N1 = getNode((Value*)V1);
-  Node *N2 = getNode((Value*)V2);
+  Node *N1 = getNode(const_cast<Value*>(V1));
+  Node *N2 = getNode(const_cast<Value*>(V2));
 
   // Check to see if the two pointers are known to not alias.  They don't alias
   // if their points-to sets do not intersect.
@@ -357,6 +358,39 @@ AliasAnalysis::AliasResult Andersens::alias(const Value *V1, unsigned V1Size,
   return AliasAnalysis::alias(V1, V1Size, V2, V2Size);
 }
 
+AliasAnalysis::ModRefResult
+Andersens::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+  // The only thing useful that we can contribute for mod/ref information is
+  // when calling external function calls: if we know that memory never escapes
+  // from the program, it cannot be modified by an external call.
+  //
+  // NOTE: This is not really safe, at least not when the entire program is not
+  // available.  The deal is that the external function could call back into the
+  // program and modify stuff.  We ignore this technical niggle for now.  This
+  // is, after all, a "research quality" implementation of Andersen's analysis.
+  if (Function *F = CS.getCalledFunction())
+    if (F->isExternal()) {
+      Node *N1 = getNode(P);
+      bool PointsToUniversalSet = false;
+
+      for (Node::iterator NI = N1->begin(), E = N1->end(); NI != E; ++NI) {
+        Node *PN = *NI;
+        if (PN->begin() == PN->end())
+          continue;  // P doesn't point to anything.
+        // Get the first pointee.
+        Node *FirstPointee = *PN->begin();
+        if (FirstPointee == &GraphNodes[UniversalSet]) {
+          PointsToUniversalSet = true;
+          break;
+        }
+      }
+
+      if (!PointsToUniversalSet)
+        return NoModRef;  // P doesn't point to the universal set.
+    }
+
+  return AliasAnalysis::getModRefInfo(CS, P, Size);
+}
 
 /// getMustAlias - We can provide must alias information if we know that a
 /// pointer can only point to a specific function or the null pointer.
@@ -604,6 +638,10 @@ bool Andersens::AddConstraintsForExternalFunction(Function *F) {
 void Andersens::CollectConstraints(Module &M) {
   // First, the universal set points to itself.
   GraphNodes[UniversalSet].addPointerTo(&GraphNodes[UniversalSet]);
+  Constraints.push_back(Constraint(Constraint::Load, &GraphNodes[UniversalSet],
+                                   &GraphNodes[UniversalSet]));
+  Constraints.push_back(Constraint(Constraint::Store, &GraphNodes[UniversalSet],
+                                   &GraphNodes[UniversalSet]));
 
   // Next, the null pointer points to the null object.
   GraphNodes[NullPtr].addPointerTo(&GraphNodes[NullObject]);
