@@ -1,12 +1,6 @@
 LEVEL = ../..
+TOOLNAME = llc
+USEDLIBS = sched select sparc target opt livevar bcreader vmcore asmwriter analysis support
+
 include $(LEVEL)/Makefile.common
 
-all:: llc
-clean::	
-	rm -f llc
-
-llc : $(ObjectsG) $(LibsG)
-	$(LinkG) -o $@ $(ObjectsG) \
-		-lsched -lselect -lsparc -ltarget \
-		-lopt -llivevar -lbcreader -lbcwriter \
-		-lvmcore -lasmwriter -lanalysis -lsupport
