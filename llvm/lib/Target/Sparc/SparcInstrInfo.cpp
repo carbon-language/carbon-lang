@@ -163,9 +163,9 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
 }
 
 
-// Create an instruction sequence to copy an integer value `val' from an
-// integer to a floating point register `dest'.  val must be an integral
-// type.  dest must be a Float or Double.
+// Create an instruction sequence to copy an integer value `val'
+// to a floating point value `dest' by copying to memory and back.
+// val must be an integral type.  dest must be a Float or Double.
 // The generated instructions are returned in `minstrVec'.
 // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
 // 
@@ -177,7 +177,8 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Method* method,
                                               vector<TmpInstruction*>& tempVec,
                                               TargetMachine& target) const
 {
-  assert(val->getType()->isIntegral() && "Source type must be integral");
+  assert((val->getType()->isIntegral() || val->getType()->isPointerType())
+         && "Source type must be integral");
   assert((dest->getType() ==Type::FloatTy || dest->getType() ==Type::DoubleTy)
          && "Dest type must be float/double");
   
@@ -186,21 +187,11 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Method* method,
   MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(method);
   int offset = mcinfo.allocateLocalVar(target, val); 
   
-  // int offset = mcinfo.getOffset(val);
-  // if (offset == MAXINT)
-  //   {
-  //     offset = frameInfo.getFirstAutomaticVarOffsetFromFP(method)
-  //              - mcinfo.getAutomaticVarsSize();
-  //     mcinfo.putLocalVarAtOffsetFromFP(val, offset,
-  //                           target.findOptimalStorageSize(val->getType()));
-  //   }
-  
   // Store instruction stores `val' to [%fp+offset].
-  // We could potentially use up to the full 64 bits of the integer register
-  // but since there are the same number of single-prec and double-prec regs,
-  // we can avoid over-using one of these types.  So we make the store type
-  // the same size as the dest type:
+  // The store and load opCodes are based on the value being copied, and
+  // they use the integer type that matches the destination type in size:
   // On SparcV9: int for float, long for double.
+  // 
   Type* tmpType = (dest->getType() == Type::FloatTy)? Type::IntTy
                                                     : Type::LongTy;
   MachineInstr* store = new MachineInstr(ChooseStoreInstruction(tmpType));
@@ -210,8 +201,51 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Method* method,
   minstrVec.push_back(store);
 
   // Load instruction loads [%fp+offset] to `dest'.
-  // The load instruction should have type of the value being loaded,
-  // not the destination register type.
+  // 
+  MachineInstr* load = new MachineInstr(ChooseLoadInstruction(tmpType));
+  load->SetMachineOperand(0, target.getRegInfo().getFramePointer());
+  load->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed, offset);
+  load->SetMachineOperand(2, MachineOperand::MO_VirtualRegister, dest);
+  minstrVec.push_back(load);
+}
+
+
+// Similarly, create an instruction sequence to copy an FP value
+// `val' to an integer value `dest' by copying to memory and back.
+// See the previous function for information about return values.
+// 
+void
+UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(Method* method,
+                                              Value* val,
+                                              Instruction* dest,
+                                              vector<MachineInstr*>& minstrVec,
+                                              vector<TmpInstruction*>& tempVec,
+                                              TargetMachine& target) const
+{
+  assert((val->getType() ==Type::FloatTy || val->getType() ==Type::DoubleTy)
+         && "Source type must be float/double");
+  assert((dest->getType()->isIntegral() || dest->getType()->isPointerType())
+         && "Dest type must be integral");
+  
+  const MachineFrameInfo& frameInfo = ((UltraSparc&) target).getFrameInfo();
+  
+  MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(method);
+  int offset = mcinfo.allocateLocalVar(target, val); 
+  
+  // Store instruction stores `val' to [%fp+offset].
+  // The store and load opCodes are based on the value being copied, and
+  // they use the integer type that matches the source type in size:
+  // On SparcV9: int for float, long for double.
+  // 
+  Type* tmpType = (val->getType() == Type::FloatTy)? Type::IntTy
+                                                   : Type::LongTy;
+  MachineInstr* store = new MachineInstr(ChooseStoreInstruction(tmpType));
+  store->SetMachineOperand(0, MachineOperand::MO_VirtualRegister, val);
+  store->SetMachineOperand(1, target.getRegInfo().getFramePointer());
+  store->SetMachineOperand(2, MachineOperand::MO_SignExtendedImmed, offset);
+  minstrVec.push_back(store);
+  
+  // Load instruction loads [%fp+offset] to `dest'.
   // 
   MachineInstr* load = new MachineInstr(ChooseLoadInstruction(tmpType));
   load->SetMachineOperand(0, target.getRegInfo().getFramePointer());
