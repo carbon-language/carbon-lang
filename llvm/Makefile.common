@@ -16,7 +16,7 @@
 # The variable $(LEVEL) *must* be set:
 #
 # 1. LEVEL - The level of the current subdirectory from the top of the 
-#    MagicStats view.  This level should be expressed as a path, for 
+#    source directory.  This level should be expressed as a path, for 
 #    example, ../.. for two levels deep.
 #
 # 2. DIRS - A list of subdirectories to be built.  Fake targets are set up
