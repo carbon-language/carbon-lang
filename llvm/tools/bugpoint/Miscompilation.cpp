@@ -347,7 +347,7 @@ static bool TestOptimizer(BugDriver &BD, Module *Test, Module *Safe) {
   delete Test;
 
   std::cout << "  Checking to see if the merged program executes correctly: ";
-  bool Broken = TestMergedProgram(BD, Test, Safe, true);
+  bool Broken = TestMergedProgram(BD, Optimized, Safe, true);
   std::cout << (Broken ? " nope.\n" : " yup.\n");
   return Broken;
 }
