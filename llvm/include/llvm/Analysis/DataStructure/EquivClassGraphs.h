@@ -58,6 +58,10 @@ namespace llvm {
     /// 
     virtual bool runOnModule(Module &M);
 
+    /// print - Print out the analysis results...
+    ///
+    void print(std::ostream &O, const Module *M) const;
+
     /// getDSGraph - Return the data structure graph for the specified function.
     /// This returns the folded graph.  The folded graph is the same as the CBU
     /// graph iff the function is in a singleton equivalence class AND all its 
@@ -67,6 +71,10 @@ namespace llvm {
       hash_map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
       assert(I != DSInfo.end() && "No graph computed for that function!");
       return *I->second;
+    }
+
+    bool hasGraph(const Function &F) const {
+      return DSInfo.find(&F) != DSInfo.end();
     }
 
     /// ContainsDSGraphFor - Return true if we have a graph for the specified
