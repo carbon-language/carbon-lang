@@ -1362,7 +1362,9 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
     // eliminate it.
     if (CS.isIndirectCall() && CS.getCalleeNode()->getNumReferrers() == 1 &&
         CS.getCalleeNode()->getNodeFlags() == 0) {  // No useful info?
+#ifndef NDEBUG
       std::cerr << "WARNING: Useless call site found??\n";
+#endif
       CS.swap(Calls.back());
       Calls.pop_back();
       --i;
@@ -1498,7 +1500,8 @@ void DSGraph::removeTriviallyDeadNodes() {
         if (Node->getNumReferrers() == Globals.size()) {
           for (unsigned j = 0, e = Globals.size(); j != e; ++j)
             ScalarMap.erase(Globals[j]);
-          Node->makeNodeDead();
+          if (Node->hasNoReferrers())
+            Node->makeNodeDead();
         }
       }
     }
