@@ -347,7 +347,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     $CONFIGUREARGS .= " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; shift; next; 
   }
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
-  if(/^-runDejagnu$/) { $RUNDEJAGNU = 1; next; }
+  if(/^-rundejagnu$/) { $RUNDEJAGNU = 1; next; }
 
   print "Unknown option: $_ : ignoring!\n";
 }
