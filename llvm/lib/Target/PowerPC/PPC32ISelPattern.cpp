@@ -595,6 +595,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
 
   case ISD::UINT_TO_FP:
   case ISD::SINT_TO_FP:
+    assert(0 && "ISD::U/SINT_TO_FP Unimplemented");
     abort();
   }
   assert(0 && "should not get here");
@@ -679,8 +680,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::FrameIndex:
-    assert(0 && "ISD::FrameIndex Unimplemented");
-    abort();
+    Tmp1 = cast<FrameIndexSDNode>(N)->getIndex();
+    addFrameReference(BuildMI(BB, PPC::ADDI, 2, Result), (int)Tmp1);
+    return Result;
   
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
@@ -978,6 +980,29 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
     return Result;
 
+  case ISD::SDIV:
+  case ISD::UDIV:
+    assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    Opc = (ISD::UDIV == opcode) ? PPC::DIVWU : PPC::DIVW;
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+
+  case ISD::UREM:
+  case ISD::SREM: {
+    assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    Tmp3 = MakeReg(MVT::i32);
+    unsigned Tmp4 = MakeReg(MVT::i32);
+    Opc = (ISD::UREM == opcode) ? PPC::DIVWU : PPC::DIVW;
+    BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+    BuildMI(BB, PPC::MULLW, 2, Tmp4).addReg(Tmp3).addReg(Tmp2);
+    BuildMI(BB, PPC::SUBF, 2, Result).addReg(Tmp4).addReg(Tmp1);
+    return Result;
+  }
+
   case ISD::ADD_PARTS:
   case ISD::SUB_PARTS: {
     assert(N.getNumOperands() == 4 && N.getValueType() == MVT::i32 &&
@@ -996,12 +1021,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result+N.ResNo;
   }
     
-  case ISD::UREM:
-  case ISD::SREM:
-  case ISD::SDIV:
-  case ISD::UDIV:
-    abort();
-
   case ISD::FP_TO_UINT:
   case ISD::FP_TO_SINT:
     abort();
