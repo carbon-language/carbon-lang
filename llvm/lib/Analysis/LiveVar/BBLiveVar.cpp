@@ -1,3 +1,9 @@
+//===-- BBLiveVar.cpp - Live Variable Analysis for a BasicBlock -----------===//
+//
+// This is a wrapper class for BasicBlock which is used by live var analysis.
+//
+//===----------------------------------------------------------------------===//
+
 #include "llvm/Analysis/LiveVar/BBLiveVar.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -7,113 +13,85 @@
 #include "../../Target/Sparc/SparcInternals.h"  //  Only for PHI defn
 
 using std::cerr;
-using std::endl;
-using std::pair;
 
-//-----------------------------------------------------------------------------
-// Constructor
-//-----------------------------------------------------------------------------
-BBLiveVar::BBLiveVar( const BasicBlock *const  baseBB, unsigned int RdfoId) 
-                      : BaseBB(baseBB), DefSet(),  InSet(), 
-			OutSet(), PhiArgMap() {  
-    BaseBB = baseBB;   
-    InSetChanged = OutSetChanged = false;
-    POId = RdfoId;
+BBLiveVar::BBLiveVar(const BasicBlock *bb, unsigned id)
+  : BB(bb), POID(id) {
+  InSetChanged = OutSetChanged = false;
 }
 
-
 //-----------------------------------------------------------------------------
-// caluculates def and use sets for each BB
+// calculates def and use sets for each BB
 // There are two passes over operands of a machine instruction. This is
 // because, we can have instructions like V = V + 1, since we no longer
 // assume single definition.
 //-----------------------------------------------------------------------------
 
-void BBLiveVar::calcDefUseSets()  
-{
+void BBLiveVar::calcDefUseSets() {
   // get the iterator for machine instructions
-  const MachineCodeForBasicBlock& MIVec = BaseBB->getMachineInstrVec();
-  MachineCodeForBasicBlock::const_reverse_iterator 
-    MInstIterator = MIVec.rbegin();
+  const MachineCodeForBasicBlock &MIVec = BB->getMachineInstrVec();
 
   // iterate over all the machine instructions in BB
-  for( ; MInstIterator != MIVec.rend(); ++MInstIterator) {  
-
-    const MachineInstr * MInst  = *MInstIterator;  // MInst is the machine inst
-    assert(MInst);
+  for (MachineCodeForBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
+         MIE = MIVec.rend(); MII != MIE; ++MII) {
+    const MachineInstr *MI = *MII;
     
-    if( DEBUG_LV > 1) {                            // debug msg
+    if (DEBUG_LV > 1) {                            // debug msg
       cerr << " *Iterating over machine instr ";
-      MInst->dump();
+      MI->dump();
       cerr << "\n";
     }
 
     // iterate over  MI operands to find defs
-    for( MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done() ; ++OpI) {
-
-      if( OpI.isDef() )      // add to Defs only if this operand is a def
-	addDef( *OpI );
-    }
+    for (MachineInstr::val_const_op_iterator OpI(MI); !OpI.done(); ++OpI)
+      if (OpI.isDef())      // add to Defs only if this operand is a def
+	addDef(*OpI);
 
     // do for implicit operands as well
-    for( unsigned i=0; i < MInst->getNumImplicitRefs(); ++i) {
-      if(  MInst->implicitRefIsDefined(i) )
-	addDef( MInst->getImplicitRef(i) );
-     }
-
+    for (unsigned i = 0; i < MI->getNumImplicitRefs(); ++i)
+      if (MI->implicitRefIsDefined(i))
+	addDef(MI->getImplicitRef(i));
     
-    bool IsPhi = ( MInst->getOpCode() == PHI );
-
+    bool IsPhi = MI->getOpCode() == PHI;
  
-    // iterate over  MI operands to find uses
-    for (MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done() ; ++OpI) {
+    // iterate over MI operands to find uses
+    for (MachineInstr::val_const_op_iterator OpI(MI); !OpI.done(); ++OpI) {
       const Value *Op = *OpI;
 
-      if ( ((Op)->getType())->isLabelType() )    
+      if (Op->getType()->isLabelType())    
 	continue;             // don't process labels
 
-      if(! OpI.isDef() ) {   // add to Defs only if this operand is a use
-	addUse( Op );
+      if (!OpI.isDef()) {   // add to Defs only if this operand is a use
+	addUse(Op);
 
-	if( IsPhi ) {         // for a phi node
+	if (IsPhi) {         // for a phi node
 	  // put args into the PhiArgMap (Val -> BB)
-	
-	  const Value * ArgVal = Op;
-	  ++OpI;              // increment to point to BB of value
-	  const Value * BBVal = *OpI; 
+          const Value *ArgVal = Op;
+	  const Value *BBVal = *++OpI; // increment to point to BB of value
 	  
+	  PhiArgMap[ArgVal] = cast<BasicBlock>(BBVal); 
 	  
-	  assert( (BBVal)->getValueType() == Value::BasicBlockVal );
-	  
-	  PhiArgMap[ ArgVal ] = (const BasicBlock *) (BBVal); 
-	  assert( PhiArgMap[ ArgVal ] );
-	  
-	  if( DEBUG_LV > 1) {   // debug msg of level 2
+	  if (DEBUG_LV > 1) {
 	    cerr << "   - phi operand "; 
-	    printValue( ArgVal ); 
+	    printValue(ArgVal); 
 	    cerr << " came from BB "; 
-	    printValue( PhiArgMap[ ArgVal ]); 
+	    printValue(PhiArgMap[ArgVal]); 
 	    cerr << "\n";
 	  }
-
 	} // if( IsPhi )
-
       } // if a use
-
     } // for all operands
 
     // do for implicit operands as well
-    for( unsigned i=0; i < MInst->getNumImplicitRefs(); ++i) {
+    for (unsigned i = 0; i < MI->getNumImplicitRefs(); ++i) {
+      assert(!IsPhi && "Phi cannot have implicit opeands");
+      const Value *Op = MI->getImplicitRef(i);
 
-      assert( !IsPhi && "Phi cannot have implicit opeands");
-      const Value *Op =  MInst->getImplicitRef(i);
+      if (Op->getType()->isLabelType())             // don't process labels
+	continue;
 
-      if ( ((Op)->getType())->isLabelType() )    
-	continue;             // don't process labels
-      if(  ! MInst->implicitRefIsDefined(i) )
-	addUse( Op );
-     }
-
+      if (!MI->implicitRefIsDefined(i))
+	addUse(Op);
+    }
   } // for all machine instructions
 } 
 
@@ -122,13 +100,12 @@ void BBLiveVar::calcDefUseSets()
 //-----------------------------------------------------------------------------
 // To add an operand which is a def
 //-----------------------------------------------------------------------------
-void  BBLiveVar::addDef(const Value *Op) 
-{
+void  BBLiveVar::addDef(const Value *Op) {
   DefSet.insert(Op);     // operand is a def - so add to def set
-  InSet.erase(Op);    // this definition kills any uses
+  InSet.erase(Op);       // this definition kills any uses
   InSetChanged = true; 
 
-  if( DEBUG_LV > 1) {   
+  if (DEBUG_LV > 1) {
     cerr << "  +Def: "; printValue( Op ); cerr << "\n";
   }
 }
@@ -137,16 +114,14 @@ void  BBLiveVar::addDef(const Value *Op)
 //-----------------------------------------------------------------------------
 // To add an operand which is a use
 //-----------------------------------------------------------------------------
-void  BBLiveVar::addUse(const Value *Op) 
-{
+void  BBLiveVar::addUse(const Value *Op) {
   InSet.insert(Op);   // An operand is a use - so add to use set
   OutSet.erase(Op);   // remove if there is a def below this use
   InSetChanged = true; 
 
-  if( DEBUG_LV > 1) {   // debug msg of level 2
-    cerr << "   Use: "; printValue( Op ); cerr << endl;
+  if (DEBUG_LV > 1) {
+    cerr << "   Use: "; printValue( Op ); cerr << "\n";
   }
-
 }
 
 
@@ -155,18 +130,15 @@ void  BBLiveVar::addUse(const Value *Op)
 // the outset. 
 //-----------------------------------------------------------------------------
 
-bool BBLiveVar::applyTransferFunc() // calculates the InSet in terms of OutSet 
-{
-
+bool BBLiveVar::applyTransferFunc() {
   // IMPORTANT: caller should check whether the OutSet changed 
   //           (else no point in calling)
 
   LiveVarSet OutMinusDef;     // set to hold (Out[B] - Def[B])
-  OutMinusDef.setDifference( &OutSet, &DefSet);
-  InSetChanged = InSet.setUnion( &OutMinusDef );
+  OutMinusDef.setDifference(&OutSet, &DefSet);
+  InSetChanged = InSet.setUnion(&OutMinusDef);
  
   OutSetChanged = false;      // no change to OutSet since transf func applied
-
   return InSetChanged;
 }
 
@@ -174,80 +146,70 @@ bool BBLiveVar::applyTransferFunc() // calculates the InSet in terms of OutSet
 //-----------------------------------------------------------------------------
 // calculates Out set using In sets of the predecessors
 //-----------------------------------------------------------------------------
-bool BBLiveVar::setPropagate( LiveVarSet *const OutSet, 
-			      const LiveVarSet *const InSet, 
-			      const BasicBlock *const PredBB) {
 
-  LiveVarSet::const_iterator InIt;
-  pair<LiveVarSet::iterator, bool> result;
-  bool changed = false;
-  const BasicBlock *PredBBOfPhiArg;
+bool BBLiveVar::setPropagate(LiveVarSet *OutSet, const LiveVarSet *InSet, 
+                             const BasicBlock *PredBB) {
+  bool Changed = false;
 
   // for all all elements in InSet
-  for( InIt = InSet->begin() ; InIt != InSet->end(); InIt++) {  
-    PredBBOfPhiArg =  PhiArgMap[ *InIt ];
+  for (LiveVarSet::const_iterator InIt = InSet->begin(), InE = InSet->end();
+       InIt != InE; ++InIt) {  
+    const BasicBlock *PredBBOfPhiArg = PhiArgMap[*InIt];
 
     // if this var is not a phi arg OR 
     // it's a phi arg and the var went down from this BB
-    if( !PredBBOfPhiArg || PredBBOfPhiArg == PredBB) {  
-      result = OutSet->insert( *InIt );               // insert to this set
-      if( result.second == true) changed = true;
-    }
+    if (!PredBBOfPhiArg || PredBBOfPhiArg == PredBB)
+      if (OutSet->insert(*InIt).second)
+        Changed = true;
   }
 
-  return changed;
+  return Changed;
 } 
 
 
 //-----------------------------------------------------------------------------
 // propogates in set to OutSets of PREDECESSORs
 //-----------------------------------------------------------------------------
-bool BBLiveVar::applyFlowFunc(BBToBBLiveVarMapType LVMap) 
-{
 
+bool BBLiveVar::applyFlowFunc(std::map<const BasicBlock *, BBLiveVar *> &LVMap){
   // IMPORTANT: caller should check whether inset changed 
   //            (else no point in calling)
 
-  bool needAnotherIt= false;  // did this BB change any OutSets of pred.s 
-                              // whose POId is lower
+  // If this BB changed any OutSets of preds whose POID is lower, than we need
+  // another iteration...
+  //
+  bool needAnotherIt = false;  
 
+  for (BasicBlock::pred_const_iterator PI = BB->pred_begin(),
+         PE = BB->pred_begin(); PI != PE ; ++PI) {
+    BBLiveVar *PredLVBB = LVMap[*PI];
 
-  BasicBlock::pred_const_iterator PredBBI = BaseBB->pred_begin();
-
-  for( ; PredBBI != BaseBB->pred_end() ; PredBBI++) {
-    assert( *PredBBI );       // assert that the predecessor is valid
-    BBLiveVar  *PredLVBB = LVMap[*PredBBI];
-
-                              // do set union
-    if(  setPropagate( &(PredLVBB->OutSet), &InSet, *PredBBI ) == true) {  
+    // do set union
+    if (setPropagate(&PredLVBB->OutSet, &InSet, *PI)) {  
       PredLVBB->OutSetChanged = true;
 
-      // if the predec POId is lower than mine
-      if( PredLVBB->getPOId() <= POId) 
+      // if the predec POID is lower than mine
+      if (PredLVBB->getPOId() <= POID)
 	needAnotherIt = true;   
     }
-
   }  // for
 
   return needAnotherIt;
-
 }
 
 
 
-/* ----------------- Methods For Debugging (Printing) ----------------- */
+// ----------------- Methods For Debugging (Printing) -----------------
 
-void BBLiveVar::printAllSets() const
-{
-  cerr << "  Defs: ";   DefSet.printSet();  cerr << endl;
-  cerr << "  In: ";   InSet.printSet();  cerr << endl;
-  cerr << "  Out: ";   OutSet.printSet();  cerr << endl;
+void BBLiveVar::printAllSets() const {
+  cerr << "  Defs: ";   DefSet.printSet();  cerr << "\n";
+  cerr << "  In: ";   InSet.printSet();  cerr << "\n";
+  cerr << "  Out: ";   OutSet.printSet();  cerr << "\n";
 }
 
-void BBLiveVar::printInOutSets() const
-{
-  cerr << "  In: ";   InSet.printSet();  cerr << endl;
-  cerr << "  Out: ";   OutSet.printSet();  cerr << endl;
+void BBLiveVar::printInOutSets() const {
+  cerr << "  In: ";   InSet.printSet();  cerr << "\n";
+  cerr << "  Out: ";  OutSet.printSet();  cerr << "\n";
 }
 
 

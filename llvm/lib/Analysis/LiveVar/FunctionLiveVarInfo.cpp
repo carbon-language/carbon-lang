@@ -10,12 +10,27 @@
 
 
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
+#include "llvm/Analysis/LiveVar/BBLiveVar.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/BasicBlock.h"
 #include "Support/PostOrderIterator.h"
 #include <iostream>
 
 AnalysisID MethodLiveVarInfo::ID(AnalysisID::create<MethodLiveVarInfo>());
+
+//-----------------------------------------------------------------------------
+// Accessor Functions
+//-----------------------------------------------------------------------------
+
+// gets OutSet of a BB
+const LiveVarSet *MethodLiveVarInfo::getOutSetOfBB(const BasicBlock *BB) const {
+  return BB2BBLVMap.find(BB)->second->getOutSet();
+}
+
+// gets InSet of a BB
+const LiveVarSet *MethodLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
+  return BB2BBLVMap.find(BB)->second->getInSet();
+}
 
 
 //-----------------------------------------------------------------------------
@@ -103,7 +118,8 @@ void MethodLiveVarInfo::releaseMemory() {
   // First delete all BBLiveVar objects created in constructBBs(). A new object
   // of type BBLiveVar is created for every BasicBlock in the method
   //
-  for (BBToBBLiveVarMapType::iterator HMI = BB2BBLVMap.begin(),
+  for (std::map<const BasicBlock *, BBLiveVar *>::iterator
+         HMI = BB2BBLVMap.begin(),
          HME = BB2BBLVMap.end(); HMI != HME; ++HMI)
     delete HMI->second;                // delete all BBLiveVar in BB2BBLVMap
 
@@ -115,7 +131,8 @@ void MethodLiveVarInfo::releaseMemory() {
   // is sufficient to free up all LiveVarSet using only one cache since 
   // both caches refer to the same sets
   //
-  for (MInstToLiveVarSetMapType::iterator MI = MInst2LVSetBI.begin(),
+  for (std::map<const MachineInstr*, const LiveVarSet*>::iterator
+         MI = MInst2LVSetBI.begin(),
          ME = MInst2LVSetBI.end(); MI != ME; ++MI)
     delete MI->second;           // delete all LiveVarSets in  MInst2LVSetBI
 
