@@ -19,7 +19,7 @@
         <ol>
           <li><a href="#scf_commenting">Commenting</a></li>
           <li><a href="#scf_commentformat">Comment Formatting</a></li>
-          <li><a href="#scf_includes">#include Style</a></li>
+          <li><a href="#scf_includes"><tt>#include</tt> Style</a></li>
           <li><a href="#scf_codewidth">Source Code Width</a></li>
           <li><a href="#scf_spacestabs">Use Spaces Instead of Tabs</a></li>
           <li><a href="#scf_indentation">Indent Code Consistently</a></li>
@@ -46,7 +46,7 @@
         <ol>
           <li><a href="#hl_assert">Assert Liberally</a></li>
           <li><a href="#hl_preincrement">Prefer Preincrement</a></li>
-          <li><a href="#hl_avoidendl">Avoid std::endl</a></li>
+          <li><a href="#hl_avoidendl">Avoid <tt>std::endl</tt></a></li>
           <li><a href="#hl_exploitcpp">Exploit C++ to its Fullest</a></li>
         </ol></li>
     </ol></li>
@@ -195,7 +195,8 @@ when it is useful to use C style (<tt>/* */</tt>) comments however:</p>
 <ol>
   <li>When writing a C code: Obviously if you are writing C code, use C style
       comments.  :)</li>
-  <li>When writing a header file that may be #included by a C source file.</li>
+  <li>When writing a header file that may be <tt>#include</tt>d by a C source
+      file.</li>
   <li>When writing a source file that is used by a tool that only accepts C
       style comments.</li>
 </ol>
@@ -207,7 +208,7 @@ These nest properly and are better behaved in general than C style comments.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="scf_includes">#include Style</a>
+  <a name="scf_includes"><tt>#include</tt> Style</a>
 </div>
 
 <div class="doc_text">
@@ -235,13 +236,13 @@ order:</p>
 <p>... and each catagory should be sorted by name.</p>
 
 <p><a name="mmheader">The "Main Module Header"</a> file applies to .cpp file
-which implement an interface defined by a .h file.  This #include should always
-be included <b>first</b> regardless of where it lives on the file system.  By
-including a header file first in the .cpp files that implement the interfaces,
-we ensure that the header does not have any hidden dependencies which are not
-explicitly #included in the header, but should be.  It is also a form of
-documentation in the .cpp file to indicate where the interfaces it implements
-are defined.</p>
+which implement an interface defined by a .h file.  This <tt>#include</tt>
+should always be included <b>first</b> regardless of where it lives on the file
+system.  By including a header file first in the .cpp files that implement the
+interfaces, we ensure that the header does not have any hidden dependencies
+which are not explicitly #included in the header, but should be.  It is also a
+form of documentation in the .cpp file to indicate where the interfaces it
+implements are defined.</p>
 
 </div>
 
@@ -432,7 +433,7 @@ translation unit.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="hl_dontinclude">#include as Little as Possible</a>
+  <a name="hl_dontinclude"><tt>#include</tt> as Little as Possible</a>
 </div>
 
 <div class="doc_text">
@@ -441,13 +442,13 @@ translation unit.</p>
 have to, especially in header files.</p>
 
 <p>But wait, sometimes you need to have the definition of a class to use it, or
-to inherit from it.  In these cases go ahead and #include that header file.  Be
-aware however that there are many cases where you don't need to have the full
-definition of a class.  If you are using a pointer or reference to a class, you
-don't need the header file.  If you are simply returning a class instance from a
-prototyped function or method, you don't need it.  In fact, for most cases, you
-simply don't need the definition of a class... and not <tt>#include</tt>'ing
-speeds up compilation.</p>
+to inherit from it.  In these cases go ahead and <tt>#include</tt> that header
+file.  Be aware however that there are many cases where you don't need to have
+the full definition of a class.  If you are using a pointer or reference to a
+class, you don't need the header file.  If you are simply returning a class
+instance from a prototyped function or method, you don't need it.  In fact, for
+most cases, you simply don't need the definition of a class... and not
+<tt>#include</tt>'ing speeds up compilation.</p>
 
 <p>It is easy to try to go too overboard on this recommendation, however.  You
 <b>must</b> include all of the header files that you are using, either directly
@@ -557,7 +558,7 @@ get in the habit of always using preincrement, and you won't have a problem.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="hl_avoidendl">Avoid std::endl</a>
+  <a name="hl_avoidendl">Avoid <tt>std::endl</tt></a>
 </div>
 
 <div class="doc_text">
