@@ -63,6 +63,12 @@ Pass *createDeadInstEliminationPass();
 //
 Pass *createDeadCodeEliminationPass();
 
+//===----------------------------------------------------------------------===//
+//
+// DeadStoreElimination - This pass deletes stores that are post-dominated by
+// must-aliased stores and are not loaded used between the stores.
+//
+Pass *createDeadStoreEliminationPass();
 
 //===----------------------------------------------------------------------===//
 //
