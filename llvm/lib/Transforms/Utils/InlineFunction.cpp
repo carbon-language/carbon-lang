@@ -47,7 +47,9 @@ bool InlineFunction(CallSite CS) {
   // this is an invoke instruction or a call instruction.
 
   BasicBlock *InvokeDest = 0;     // Exception handling destination
+  std::vector<Value*> InvokeDestPHIValues; // Values for PHI nodes in InvokeDest
   BasicBlock *AfterCallBB;
+
   if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
     AfterCallBB = II->getNormalDest();
     InvokeDest = II->getExceptionalDest();
@@ -55,8 +57,18 @@ bool InlineFunction(CallSite CS) {
     // Add an unconditional branch to make this look like the CallInst case...
     new BranchInst(AfterCallBB, TheCall);
 
+    // If there are PHI nodes in the exceptional destination block, we need to
+    // keep track of which values came into them from this invoke, then remove
+    // the entry for this block.
+    for (BasicBlock::iterator I = InvokeDest->begin();
+         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+      // Save the value to use for this edge...
+      InvokeDestPHIValues.push_back(PN->getIncomingValueForBlock(OrigBB));
+    }
+
     // Remove (unlink) the InvokeInst from the function...
     OrigBB->getInstList().remove(TheCall);
+
   } else {  // It's a call
     // If this is a call instruction, we need to split the basic block that the
     // call lives in.
@@ -178,7 +190,7 @@ bool InlineFunction(CallSite CS) {
   // If we just inlined a call due to an invoke instruction, scan the inlined
   // function checking for function calls that should now be made into invoke
   // instructions, and for unwind's which should be turned into branches.
-  if (InvokeDest)
+  if (InvokeDest) {
     for (Function::iterator BB = LastBlock, E = Caller->end(); BB != E; ++BB) {
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
         // We only need to check for function calls: inlined invoke instructions
@@ -203,6 +215,13 @@ bool InlineFunction(CallSite CS) {
           BB->getInstList().pop_back();
           Split->getInstList().pop_front();  // Delete the original call
           
+          // Update any PHI nodes in the exceptional block to indicate that
+          // there is now a new entry in them.
+          unsigned i = 0;
+          for (BasicBlock::iterator I = InvokeDest->begin();
+               PHINode *PN = dyn_cast<PHINode>(I); ++I, ++i)
+            PN->addIncoming(InvokeDestPHIValues[i], BB);
+
           // This basic block is now complete, start scanning the next one.
           break;
         } else {
@@ -222,6 +241,14 @@ bool InlineFunction(CallSite CS) {
       }
     }
 
+    // Now that everything is happy, we have one final detail.  The PHI nodes in
+    // the exception destination block still have entries due to the original
+    // invoke instruction.  Eliminate these entries (which might even delete the
+    // PHI node) now.
+    for (BasicBlock::iterator I = InvokeDest->begin();
+         PHINode *PN = dyn_cast<PHINode>(I); ++I)
+      PN->removeIncomingValue(OrigBB);
+  }
   // Now that the function is correct, make it a little bit nicer.  In
   // particular, move the basic blocks inserted from the end of the function
   // into the space made by splitting the source basic block.
