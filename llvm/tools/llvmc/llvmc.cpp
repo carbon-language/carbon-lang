@@ -323,7 +323,7 @@ int main(int argc, char **argv) {
 
     // All is good, return success
     return 0;
-  } catch (std::string& msg) {
+  } catch (const std::string& msg) {
     std::cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
     std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
