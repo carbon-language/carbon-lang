@@ -323,7 +323,7 @@ sub TestDirectory {
 
   # Run the programs tests... creating a report.nightly.html file
   if (!$NOTEST) {
-    system "gmake $MAKEOPTS report.nightly.html TEST=nightly "
+    system "gmake -k $MAKEOPTS report.nightly.html TEST=nightly "
          . "> $Prefix-$SubDir-ProgramTest.txt 2>&1";
   } else {
     system "gunzip $Prefix-$SubDir-ProgramTest.txt.gz";
@@ -422,7 +422,7 @@ if ($BuildError eq "") {
     system "gmake $MAKEOPTS clean > /dev/null 2>&1";
 
     # Run the nightly test in this directory, with LARGE_PROBLEM_SIZE enabled!
-    system "gmake $MAKEOPTS report.nightly.raw.out TEST=nightly " .
+    system "gmake -k $MAKEOPTS report.nightly.raw.out TEST=nightly " .
            " LARGE_PROBLEM_SIZE=1 > /dev/null 2>&1";
     system "cp report.nightly.raw.out $Prefix-Olden-tests.txt";
   } else {
