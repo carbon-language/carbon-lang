@@ -154,17 +154,37 @@ static bool SimplifyCommutative(BinaryOperator &I) {
   return Changed;
 }
 
-// dyn_castNegInst - Given a 'sub' instruction, return the RHS of the
-// instruction if the LHS is a constant zero (which is the 'negate' form).
+// dyn_castNegVal - Given a 'sub' instruction, return the RHS of the instruction
+// if the LHS is a constant zero (which is the 'negate' form).
 //
-static inline Value *dyn_castNegInst(Value *V) {
-  return BinaryOperator::isNeg(V) ?
-    BinaryOperator::getNegArgument(cast<BinaryOperator>(V)) : 0;
+static inline Value *dyn_castNegVal(Value *V) {
+  if (BinaryOperator::isNeg(V))
+    return BinaryOperator::getNegArgument(cast<BinaryOperator>(V));
+
+  // Constants can be considered to be negated values...
+  if (Constant *C = dyn_cast<Constant>(V)) {
+    Constant *NC = *Constant::getNullValue(V->getType()) - *C;
+    assert(NC && "Couldn't constant fold a subtract!");
+    return NC;
+  }
+  return 0;
 }
 
-static inline Value *dyn_castNotInst(Value *V) {
-  return BinaryOperator::isNot(V) ?
-    BinaryOperator::getNotArgument(cast<BinaryOperator>(V)) : 0;
+static inline Value *dyn_castNotVal(Value *V) {
+  if (BinaryOperator::isNot(V))
+    return BinaryOperator::getNotArgument(cast<BinaryOperator>(V));
+
+  // Constants can be considered to be not'ed values...
+  if (ConstantIntegral *C = dyn_cast<ConstantIntegral>(V)) {
+    Constant *NC = *ConstantIntegral::getAllOnesValue(C->getType()) ^ *C;
+    assert(NC && "Couldn't constant fold an exclusive or!");
+    return NC;
+  }
+  return 0;
+}
+
+static bool isOnlyUse(Value *V) {
+  return V->use_size() == 1 || isa<Constant>(V);
 }
 
 
@@ -200,12 +220,13 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, LHS);
 
   // -A + B  -->  B - A
-  if (Value *V = dyn_castNegInst(LHS))
+  if (Value *V = dyn_castNegVal(LHS))
     return BinaryOperator::create(Instruction::Sub, RHS, V);
 
   // A + -B  -->  A - B
-  if (Value *V = dyn_castNegInst(RHS))
-    return BinaryOperator::create(Instruction::Sub, LHS, V);
+  if (!isa<Constant>(RHS))
+    if (Value *V = dyn_castNegVal(RHS))
+      return BinaryOperator::create(Instruction::Sub, LHS, V);
 
   // X*C + X --> X * (C+1)
   if (dyn_castFoldableMul(LHS) == RHS) {
@@ -232,15 +253,8 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   if (Op0 == Op1)         // sub X, X  -> 0
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
-  // If this is a subtract instruction with a constant RHS, convert it to an add
-  // instruction of a negative constant
-  //
-  if (Constant *Op2 = dyn_cast<Constant>(Op1))
-    if (Constant *RHS = *Constant::getNullValue(I.getType()) - *Op2) // 0 - RHS
-      return BinaryOperator::create(Instruction::Add, Op0, RHS, I.getName());
-
   // If this is a 'B = x-(-A)', change to B = x+A...
-  if (Value *V = dyn_castNegInst(Op1))
+  if (Value *V = dyn_castNegVal(Op1))
     return BinaryOperator::create(Instruction::Add, Op0, V);
 
   // Replace (-1 - A) with (~A)...
@@ -424,11 +438,11 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     if (RHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op0);
 
-  Value *Op0NotVal = dyn_castNotInst(Op0);
-  Value *Op1NotVal = dyn_castNotInst(Op1);
+  Value *Op0NotVal = dyn_castNotVal(Op0);
+  Value *Op1NotVal = dyn_castNotVal(Op1);
 
   // (~A & ~B) == (~(A | B)) - Demorgan's Law
-  if (Op0->use_size() == 1 && Op1->use_size() == 1 && Op0NotVal && Op1NotVal) {
+  if (Op0NotVal && Op1NotVal && isOnlyUse(Op0) && isOnlyUse(Op1)) {
     Instruction *Or = BinaryOperator::create(Instruction::Or, Op0NotVal,
                                              Op1NotVal,I.getName()+".demorgan",
                                              &I);
@@ -456,12 +470,12 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (RHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op1);
 
-  if (Value *X = dyn_castNotInst(Op0))   // ~A | A == -1
+  if (Value *X = dyn_castNotVal(Op0))   // ~A | A == -1
     if (X == Op1)
       return ReplaceInstUsesWith(I, 
                             ConstantIntegral::getAllOnesValue(I.getType()));
 
-  if (Value *X = dyn_castNotInst(Op1))   // A | ~A == -1
+  if (Value *X = dyn_castNotVal(Op1))   // A | ~A == -1
     if (X == Op0)
       return ReplaceInstUsesWith(I, 
                             ConstantIntegral::getAllOnesValue(I.getType()));
@@ -487,7 +501,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     // Is this a "NOT" instruction?
     if (Op1C->isAllOnesValue()) {
       // xor (xor X, -1), -1 = not (not X) = X
-      if (Value *X = dyn_castNotInst(Op0))
+      if (Value *X = dyn_castNotVal(Op0))
         return ReplaceInstUsesWith(I, X);
 
       // xor (setcc A, B), true = not (setcc A, B) = setncc A, B
@@ -498,12 +512,12 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     }
   }
 
-  if (Value *X = dyn_castNotInst(Op0))   // ~A ^ A == -1
+  if (Value *X = dyn_castNotVal(Op0))   // ~A ^ A == -1
     if (X == Op1)
       return ReplaceInstUsesWith(I,
                                 ConstantIntegral::getAllOnesValue(I.getType()));
 
-  if (Value *X = dyn_castNotInst(Op1))   // A ^ ~A == -1
+  if (Value *X = dyn_castNotVal(Op1))   // A ^ ~A == -1
     if (X == Op0)
       return ReplaceInstUsesWith(I,
                                 ConstantIntegral::getAllOnesValue(I.getType()));
