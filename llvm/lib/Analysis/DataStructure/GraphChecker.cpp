@@ -133,7 +133,7 @@ void DSGC::verify(const DSGraph &G) {
       }
 
       unsigned Flags = 0;
-      for (; ColonPos != I->size(); ++ColonPos)
+      for (++ColonPos; ColonPos != I->size(); ++ColonPos)
         switch ((*I)[ColonPos]) {
         case 'S': Flags |= DSNode::AllocaNode;  break;
         case 'H': Flags |= DSNode::HeapNode;    break;
@@ -143,7 +143,7 @@ void DSGC::verify(const DSGraph &G) {
         case 'M': Flags |= DSNode::Modified;    break;
         case 'R': Flags |= DSNode::Read;        break;
         case 'A': Flags |= DSNode::Array;       break;
-        default: std::cerr << "Invalid DSNode flag!\n"; break;
+        default: std::cerr << "Invalid DSNode flag!\n"; abort();
         }
       CheckFlagsM[std::string(I->begin(), I->begin()+ColonPos)] = Flags;
     }
