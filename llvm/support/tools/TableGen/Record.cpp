@@ -517,7 +517,7 @@ std::ostream &operator<<(std::ostream &OS, const Record &R) {
 Init *Record::getValueInit(const std::string &FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record '" + R->getName() + "' does not have a field named '" +
+    throw "Record '" + getName() + "' does not have a field named '" +
       FieldName + "!\n";
   return R->getValue();
 }
@@ -530,12 +530,12 @@ Init *Record::getValueInit(const std::string &FieldName) const {
 std::string Record::getValueAsString(const std::string &FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record '" + R->getName() + "' does not have a field named '" +
+    throw "Record '" + getName() + "' does not have a field named '" +
           FieldName + "!\n";
 
   if (const StringInit *SI = dynamic_cast<const StringInit*>(R->getValue()))
     return SI->getValue();
-  throw "Record '" + R->getName() + "', field '" + FieldName +
+  throw "Record '" + getName() + "', field '" + FieldName +
         "' does not have a string initializer!";
 }
 
@@ -546,12 +546,12 @@ std::string Record::getValueAsString(const std::string &FieldName) const {
 BitsInit *Record::getValueAsBitsInit(const std::string &FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record '" + R->getName() + "' does not have a field named '" +
+    throw "Record '" + getName() + "' does not have a field named '" +
           FieldName + "!\n";
 
   if (BitsInit *BI = dynamic_cast<BitsInit*>(R->getValue()))
     return BI;
-  throw "Record '" + R->getName() + "', field '" + FieldName +
+  throw "Record '" + getName() + "', field '" + FieldName +
         "' does not have a BitsInit initializer!";
 }
 
@@ -562,12 +562,12 @@ BitsInit *Record::getValueAsBitsInit(const std::string &FieldName) const {
 ListInit *Record::getValueAsListInit(const std::string &FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record '" + R->getName() + "' does not have a field named '" +
+    throw "Record '" + getName() + "' does not have a field named '" +
           FieldName + "!\n";
 
   if (ListInit *LI = dynamic_cast<ListInit*>(R->getValue()))
     return LI;
-  throw "Record '" + R->getName() + "', field '" + FieldName +
+  throw "Record '" + getName() + "', field '" + FieldName +
         "' does not have a list initializer!";
 }
 
@@ -578,12 +578,12 @@ ListInit *Record::getValueAsListInit(const std::string &FieldName) const {
 int Record::getValueAsInt(const std::string &FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record '" + R->getName() + "' does not have a field named '" +
+    throw "Record '" + getName() + "' does not have a field named '" +
           FieldName + "!\n";
 
   if (IntInit *II = dynamic_cast<IntInit*>(R->getValue()))
     return II->getValue();
-  throw "Record '" + R->getName() + "', field '" + FieldName +
+  throw "Record '" + getName() + "', field '" + FieldName +
         "' does not have a list initializer!";
 }
 
@@ -594,12 +594,12 @@ int Record::getValueAsInt(const std::string &FieldName) const {
 Record *Record::getValueAsDef(const std::string &FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record '" + R->getName() + "' does not have a field named '" +
+    throw "Record '" + getName() + "' does not have a field named '" +
       FieldName + "!\n";
 
   if (DefInit *DI = dynamic_cast<DefInit*>(R->getValue()))
     return DI->getDef();
-  throw "Record '" + R->getName() + "', field '" + FieldName +
+  throw "Record '" + getName() + "', field '" + FieldName +
         "' does not have a list initializer!";
 }
 
@@ -610,12 +610,12 @@ Record *Record::getValueAsDef(const std::string &FieldName) const {
 bool Record::getValueAsBit(const std::string &FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record '" + R->getName() + "' does not have a field named '" +
+    throw "Record '" + getName() + "' does not have a field named '" +
       FieldName + "!\n";
 
   if (BitInit *DI = dynamic_cast<BitInit*>(R->getValue()))
     return DI->getValue();
-  throw "Record '" + R->getName() + "', field '" + FieldName +
+  throw "Record '" + getName() + "', field '" + FieldName +
         "' does not have a list initializer!";
 }
 
