@@ -59,7 +59,7 @@ public:
   inline BBIty &getBasicBlockIterator()  { return BB; }
   inline BIty  &getInstructionIterator() { return BI; }
   
-  inline IIty operator*()  const { return &*BI; }
+  inline IIty operator*()  const { return BI; }
   inline IIty operator->() const { return operator*(); }
   
   inline bool operator==(const InstIterator &y) const { 
