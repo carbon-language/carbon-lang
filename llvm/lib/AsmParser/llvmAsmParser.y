@@ -431,7 +431,7 @@ static bool ResolveType(PATypeHolder<Type> &T) {
   ValID &DID = getValIDFromPlaceHolder(Ty);
 
   const Type *TheRealType = getTypeVal(DID, true);
-  if (TheRealType == 0) return true;
+  if (TheRealType == 0 || TheRealType == Ty) return true;
 
   // Refine the opaque type we had to the new type we are getting.
   cast<DerivedType>(Ty)->refineAbstractTypeTo(TheRealType);
@@ -450,7 +450,7 @@ static void ResolveTypes(vector<PATypeHolder<Type> > &LateResolveTypes) {
       ValID &DID = getValIDFromPlaceHolder(Ty);
 
       if (DID.Type == ValID::NameVal)
-	ThrowException("Reference to an invalid type: '" +DID.getName(),
+	ThrowException("Reference to an invalid type: '" +DID.getName() + "'",
 		       getLineNumFromPlaceHolder(Ty));
       else
 	ThrowException("Reference to an invalid type: #" + itostr(DID.Num),
