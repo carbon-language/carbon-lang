@@ -62,6 +62,7 @@ namespace {
     void visitSetCondInst(Instruction &I);
     void visitCallInst(CallInst &I);
     void visitReturnInst(ReturnInst &I);
+    void visitCastInst(CastInst &I);
     void visitLoadInst(LoadInst &I);
     void visitStoreInst(StoreInst &I);
 
@@ -280,6 +281,16 @@ bool V8ISel::runOnFunction(Function &Fn) {
   F = 0;
   // We always build a machine code representation for the function
   return true;
+}
+
+void V8ISel::visitCastInst(CastInst &I) {
+  unsigned SrcReg = getReg (I.getOperand (0));
+  unsigned DestReg = getReg (I.getOperand (0));
+  const Type *oldTy = I.getOperand (0)->getType ();
+  const Type *newTy = I.getType ();
+
+  std::cerr << "Cast instruction not supported: " << I;
+  abort ();
 }
 
 void V8ISel::visitLoadInst(LoadInst &I) {
