@@ -1078,6 +1078,7 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS, bool HasOneUse) {
       BuildMI(BB, X86::FTST, 1).addReg(Reg);
       BuildMI(BB, X86::FNSTSW8r, 0);
       BuildMI(BB, X86::SAHF, 1);
+      return;
     }
   }
 
