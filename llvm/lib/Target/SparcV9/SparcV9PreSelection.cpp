@@ -48,6 +48,7 @@ namespace {
       visit(F);
       return true;
     }
+    const char *getPassName() const { return "SparcV9 Instr. Pre-selection"; }
 
     // These methods do the actual work of specializing code
     void visitInstruction(Instruction &I);   // common work for every instr. 
