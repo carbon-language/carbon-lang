@@ -266,17 +266,16 @@ void MutateStructTypes::processGlobals(Module &M) {
 
   // Remap the symbol table to refer to the types in a nice way
   //
-  if (SymbolTable *ST = M.getSymbolTable()) {    
-    SymbolTable::iterator I = ST->find(Type::TypeTy);
-    if (I != ST->end()) {    // Get the type plane for Type's
-      SymbolTable::VarMap &Plane = I->second;
-      for (SymbolTable::type_iterator TI = Plane.begin(), TE = Plane.end();
-           TI != TE; ++TI) {
-        // FIXME: This is gross, I'm reaching right into a symbol table and
-        // mucking around with it's internals... but oh well.
-        //
-        TI->second = (Value*)cast<Type>(ConvertType(cast<Type>(TI->second)));
-      }
+  SymbolTable &ST = M.getSymbolTable();
+  SymbolTable::iterator I = ST.find(Type::TypeTy);
+  if (I != ST.end()) {    // Get the type plane for Type's
+    SymbolTable::VarMap &Plane = I->second;
+    for (SymbolTable::type_iterator TI = Plane.begin(), TE = Plane.end();
+         TI != TE; ++TI) {
+      // FIXME: This is gross, I'm reaching right into a symbol table and
+      // mucking around with it's internals... but oh well.
+      //
+      TI->second = (Value*)cast<Type>(ConvertType(cast<Type>(TI->second)));
     }
   }
 }
