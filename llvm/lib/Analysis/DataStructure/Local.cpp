@@ -18,6 +18,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/Statistic.h"
+#include "Support/Timer.h"
 
 // FIXME: This should eventually be a FunctionPass that is automatically
 // aggregated into a Pass.
@@ -132,6 +133,9 @@ DSGraph::DSGraph(Function &F, DSGraph *GG) : Func(&F), GlobalsGraph(GG) {
   PrintAuxCalls = false;
   // Use the graph builder to construct the local version of the graph
   GraphBuilder B(*this, Nodes, RetNode, ScalarMap, FunctionCalls);
+#ifndef NDEBUG
+  Timer::addPeakMemoryMeasurement();
+#endif
   markIncompleteNodes();
 
   // Remove any nodes made dead due to merging...
@@ -142,7 +146,6 @@ DSGraph::DSGraph(Function &F, DSGraph *GG) : Func(&F), GlobalsGraph(GG) {
 //===----------------------------------------------------------------------===//
 // Helper method implementations...
 //
-
 
 /// getValueDest - Return the DSNode that the actual value points to.
 ///
