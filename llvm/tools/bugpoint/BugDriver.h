@@ -24,6 +24,7 @@ namespace llvm {
 class PassInfo;
 class Module;
 class Function;
+class BasicBlock;
 class AbstractInterpreter;
 class Instruction;
 
@@ -199,6 +200,14 @@ public:
   /// function.  This returns null if there are no extractable loops in the
   /// program or if the loop extractor crashes.
   Module *ExtractLoop(Module *M);
+
+  /// ExtractMappedBlocksFromModule - Extract all but the specified basic blocks
+  /// into their own functions.  The only detail is that M is actually a module
+  /// cloned from the one the BBs are in, so some mapping needs to be performed.
+  /// If this operation fails for some reason (ie the implementation is buggy),
+  /// this function should return null, otherwise it returns a new Module.
+  Module *ExtractMappedBlocksFromModule(const std::vector<BasicBlock*> &BBs,
+                                        Module *M);
 
   /// runPassesOn - Carefully run the specified set of pass on the specified
   /// module, returning the transformed module on success, or a null pointer on

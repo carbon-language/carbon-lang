@@ -29,6 +29,10 @@ using namespace llvm;
 
 namespace llvm {
   extern cl::list<std::string> InputArgv;
+  cl::opt<bool>
+  EnableBlockExtraction("enable-block-extraction",
+                        cl::desc("Enable basic block extraction for "
+                                 "miscompilation debugging (experimental)"));
 }
 
 namespace {
@@ -320,6 +324,95 @@ static bool ExtractLoops(BugDriver &BD,
   }
 }
 
+namespace {
+  class ReduceMiscompiledBlocks : public ListReducer<BasicBlock*> {
+    BugDriver &BD;
+    bool (*TestFn)(BugDriver &, Module *, Module *);
+    std::vector<Function*> FunctionsBeingTested;
+  public:
+    ReduceMiscompiledBlocks(BugDriver &bd,
+                            bool (*F)(BugDriver &, Module *, Module *),
+                            const std::vector<Function*> &Fns)
+      : BD(bd), TestFn(F), FunctionsBeingTested(Fns) {}
+    
+    virtual TestResult doTest(std::vector<BasicBlock*> &Prefix,
+                              std::vector<BasicBlock*> &Suffix) {
+      if (!Suffix.empty() && TestFuncs(Suffix))
+        return KeepSuffix;
+      if (TestFuncs(Prefix))
+        return KeepPrefix;
+      return NoFailure;
+    }
+    
+    bool TestFuncs(const std::vector<BasicBlock*> &Prefix);
+  };
+}
+
+/// TestFuncs - Extract all blocks for the miscompiled functions except for the
+/// specified blocks.  If the problem still exists, return true.
+///
+bool ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock*> &BBs) {
+  // Test to see if the function is misoptimized if we ONLY run it on the
+  // functions listed in Funcs.
+  std::cout << "Checking to see if the program is misoptimized when all but "
+            << "these " << BBs.size() << " blocks are extracted: ";
+  for (unsigned i = 0, e = BBs.size() < 10 ? BBs.size() : 10; i != e; ++i)
+    std::cout << BBs[i]->getName() << " ";
+  if (BBs.size() > 10) std::cout << "...";
+  std::cout << "\n";
+
+  // Split the module into the two halves of the program we want.
+  Module *ToNotOptimize = CloneModule(BD.getProgram());
+  Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
+                                                 FunctionsBeingTested);
+
+  // Try the extraction.  If it doesn't work, then the block extractor crashed
+  // or something, in which case bugpoint can't chase down this possibility.
+  if (Module *New = BD.ExtractMappedBlocksFromModule(BBs, ToOptimize)) {
+    delete ToOptimize;
+    // Run the predicate, not that the predicate will delete both input modules.
+    return TestFn(BD, New, ToNotOptimize);
+  }
+  delete ToOptimize;
+  delete ToNotOptimize;
+  return false;
+}
+
+
+/// ExtractBlocks - Given a reduced list of functions that still expose the bug,
+/// extract as many basic blocks from the region as possible without obscuring
+/// the bug.
+///
+static bool ExtractBlocks(BugDriver &BD,
+                          bool (*TestFn)(BugDriver &, Module *, Module *),
+                          std::vector<Function*> &MiscompiledFunctions) {
+  // Not enabled??
+  if (!EnableBlockExtraction) return false;
+
+  std::vector<BasicBlock*> Blocks;
+  for (unsigned i = 0, e = MiscompiledFunctions.size(); i != e; ++i)
+    for (Function::iterator I = MiscompiledFunctions[i]->begin(),
+           E = MiscompiledFunctions[i]->end(); I != E; ++I)
+      Blocks.push_back(I);
+
+  // Use the list reducer to identify blocks that can be extracted without
+  // obscuring the bug.  The Blocks list will end up containing blocks that must
+  // be retained from the original program.
+  unsigned OldSize = Blocks.size();
+  ReduceMiscompiledBlocks(BD, TestFn, MiscompiledFunctions).reduceList(Blocks);
+  if (Blocks.size() == OldSize)
+    return false;
+
+
+
+  // FIXME: This should actually update the module in the bugdriver!
+
+
+
+  return false;
+}
+
+
 /// DebugAMiscompilation - This is a generic driver to narrow down
 /// miscompilations, either in an optimization or a code generator.
 ///
@@ -352,6 +445,25 @@ DebugAMiscompilation(BugDriver &BD,
     // can eliminate some of the created functions from being candidates.
 
     // Loop extraction can introduce functions with the same name (foo_code).
+    // Make sure to disambiguate the symbols so that when the program is split
+    // apart that we can link it back together again.
+    DisambiguateGlobalSymbols(BD.getProgram());
+
+    // Do the reduction...
+    ReduceMiscompilingFunctions(BD, TestFn).reduceList(MiscompiledFunctions);
+    
+    std::cout << "\n*** The following function"
+              << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
+              << " being miscompiled: ";
+    PrintFunctionList(MiscompiledFunctions);
+    std::cout << "\n";
+  }
+
+  if (ExtractBlocks(BD, TestFn, MiscompiledFunctions)) {
+    // Okay, we extracted some blocks and the problem still appears.  See if we
+    // can eliminate some of the created functions from being candidates.
+
+    // Block extraction can introduce functions with the same name (foo_code).
     // Make sure to disambiguate the symbols so that when the program is split
     // apart that we can link it back together again.
     DisambiguateGlobalSymbols(BD.getProgram());
