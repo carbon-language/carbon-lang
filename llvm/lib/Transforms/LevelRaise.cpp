@@ -85,25 +85,19 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
 
   // If we have a getelementptr capability... transform all of the 
   // add instruction uses into getelementptr's.
-  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end();
-       UI != E; ++UI) {
-    Instruction *I = cast<Instruction>(*UI);
+  while (!CI->use_empty()) {
+    Instruction *I = cast<Instruction>(*CI->use_begin());
     assert(I->getOpcode() == Instruction::Add && I->getNumOperands() == 2 &&
            "Use is not a valid add instruction!");
     
     // Get the value added to the cast result pointer...
     Value *OtherPtr = I->getOperand((I->getOperand(0) == CI) ? 1 : 0);
 
-    BasicBlock *BB = I->getParent();
-    BasicBlock::iterator AddIt = find(BB->getInstList().begin(),
-                                      BB->getInstList().end(), I);
-
     GetElementPtrInst *GEP = new GetElementPtrInst(OtherPtr, Indices);
-
     PRINT_PEEPHOLE1("cast-add-to-gep:i", I);
     
     // Replace the old add instruction with the shiny new GEP inst
-    ReplaceInstWithInst(BB->getInstList(), AddIt, GEP);
+    ReplaceInstWithInst(I, GEP);
     PRINT_PEEPHOLE1("cast-add-to-gep:o", GEP);
   }
   return true;
@@ -417,7 +411,7 @@ static bool DoRaisePass(Method *M) {
       if (dceInstruction(BIL, BI) || doConstantPropogation(BB, BI)) {
         Changed = true; 
 #ifdef DEBUG_PEEPHOLE_INSTS
-        cerr << "DeadCode Elinated!\n";
+        cerr << "***\t\t^^-- DeadCode Elinated!\n";
 #endif
       } else if (PeepholeOptimize(BB, BI))
         Changed = true;
