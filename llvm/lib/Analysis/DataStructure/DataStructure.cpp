@@ -233,7 +233,8 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
       break;
     }
     default:
-      assert(0 && "Unknown type!");
+      foldNodeCompletely();
+      return true;
     }
   }
 
@@ -616,15 +617,12 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
 
   // Remove alloca markers as specified
   if (CloneFlags & (StripAllocaBit | StripModRefBits)) {
-    unsigned short clearBits =   (CloneFlags & StripAllocaBit
-                                  ? DSNode::AllocaNode : 0)
-                               | (CloneFlags & StripModRefBits
-                                  ? (DSNode::Modified | DSNode::Read) : 0);
-    for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
-      Nodes[i]->NodeType &= ~clearBits;
+    unsigned clearBits = (CloneFlags & StripAllocaBit ? DSNode::AllocaNode : 0)
+       | (CloneFlags & StripModRefBits ? (DSNode::Modified | DSNode::Read) : 0);
+    maskNodeTypes(~clearBits);
   }
 
-  // Copy the value map... and merge all of the global nodes...
+  // Copy the scalar map... merging all of the global nodes...
   for (hash_map<Value*, DSNodeHandle>::const_iterator I = G.ScalarMap.begin(),
          E = G.ScalarMap.end(); I != E; ++I) {
     DSNodeHandle &H = OldValMap[I->first];
@@ -634,11 +632,10 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
 
     if (isa<GlobalValue>(I->first)) {  // Is this a global?
       hash_map<Value*, DSNodeHandle>::iterator GVI = ScalarMap.find(I->first);
-      if (GVI != ScalarMap.end()) {   // Is the global value in this fn already?
+      if (GVI != ScalarMap.end())     // Is the global value in this fn already?
         GVI->second.mergeWith(H);
-      } else {
+      else
         ScalarMap[I->first] = H;      // Add global pointer to this graph
-      }
     }
   }
 
@@ -716,33 +713,6 @@ void DSGraph::mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
   }
 }
 
-#if 0
-// cloneGlobalInto - Clone the given global node and all its target links
-// (and all their llinks, recursively).
-// 
-DSNode *DSGraph::cloneGlobalInto(const DSNode *GNode) {
-  if (GNode == 0 || GNode->getGlobals().size() == 0) return 0;
-
-  // If a clone has already been created for GNode, return it.
-  DSNodeHandle& ValMapEntry = ScalarMap[GNode->getGlobals()[0]];
-  if (ValMapEntry != 0)
-    return ValMapEntry;
-
-  // Clone the node and update the ValMap.
-  DSNode* NewNode = new DSNode(*GNode);
-  ValMapEntry = NewNode;                // j=0 case of loop below!
-  Nodes.push_back(NewNode);
-  for (unsigned j = 1, N = NewNode->getGlobals().size(); j < N; ++j)
-    ScalarMap[NewNode->getGlobals()[j]] = NewNode;
-
-  // Rewrite the links in the new node to point into the current graph.
-  for (unsigned j = 0, e = GNode->getNumLinks(); j != e; ++j)
-    NewNode->setLink(j, cloneGlobalInto(GNode->getLink(j)));
-
-  return NewNode;
-}
-#endif
-
 
 // markIncompleteNodes - Mark the specified node as having contents that are not
 // known with the current analysis we have performed.  Because a node makes all
@@ -806,27 +776,6 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
         if (DSNode *DSN = N->getLink(i).getNode())
           markIncompleteNode(DSN);
     }
-}
-
-// removeRefsToGlobal - Helper function that removes globals from the
-// ScalarMap so that the referrer count will go down to zero.
-static void removeRefsToGlobal(DSNode* N,
-                               hash_map<Value*, DSNodeHandle> &ScalarMap) {
-  while (!N->getGlobals().empty()) {
-    GlobalValue *GV = N->getGlobals().back();
-    N->getGlobals().pop_back();      
-    ScalarMap.erase(GV);
-  }
-}
-
-
-// isNodeDead - This method checks to see if a node is dead, and if it isn't, it
-// checks to see if there are simple transformations that it can do to make it
-// dead.
-//
-bool DSGraph::isNodeDead(DSNode *N) {
-  // Is it a trivially dead shadow node?
-  return N->getReferrers().empty() && (N->NodeType & ~DSNode::DEAD) == 0;
 }
 
 static inline void killIfUselessEdge(DSNodeHandle &Edge) {
@@ -927,11 +876,32 @@ void DSGraph::removeTriviallyDeadNodes() {
   removeIdenticalCalls(FunctionCalls, Func ? Func->getName() : "");
   removeIdenticalCalls(AuxFunctionCalls, Func ? Func->getName() : "");
 
-  for (unsigned i = 0; i != Nodes.size(); ++i)
-    if (isNodeDead(Nodes[i])) {               // This node is dead!
-      delete Nodes[i];                        // Free memory...
+  for (unsigned i = 0; i != Nodes.size(); ++i) {
+    DSNode *Node = Nodes[i];
+    if (!(Node->NodeType & ~(DSNode::Composition | DSNode::Array |
+                                 DSNode::DEAD))) {
+      // This is a useless node if it has no mod/ref info (checked above),
+      // outgoing edges (which it cannot, as it is not modified in this
+      // context), and it has no incoming edges.  If it is a global node it may
+      // have all of these properties and still have incoming edges, due to the
+      // scalar map, so we check those now.
+      //
+      if (Node->getReferrers().size() == Node->getGlobals().size()) {
+        std::vector<GlobalValue*> &Globals = Node->getGlobals();
+        for (unsigned j = 0, e = Globals.size(); j != e; ++j)
+          ScalarMap.erase(Globals[j]);
+        Globals.clear();
+          
+        Node->NodeType = DSNode::DEAD;
+      }
+    }
+
+    if ((Node->NodeType & ~DSNode::DEAD) == 0 &&
+        Node->getReferrers().empty()) {   // This node is dead!
+      delete Node;                        // Free memory...
       Nodes.erase(Nodes.begin()+i--);         // Remove from node list...
     }
+  }
 }
 
 
@@ -952,8 +922,8 @@ void DSCallSite::markReachableNodes(hash_set<DSNode*> &Nodes) {
   getRetVal().getNode()->markReachableNodes(Nodes);
   getCallee().getNode()->markReachableNodes(Nodes);
   
-  for (unsigned j = 0, e = getNumPtrArgs(); j != e; ++j)
-    getPtrArg(j).getNode()->markReachableNodes(Nodes);
+  for (unsigned i = 0, e = getNumPtrArgs(); i != e; ++i)
+    getPtrArg(i).getNode()->markReachableNodes(Nodes);
 }
 
 // CanReachAliveNodes - Simple graph walker that recursively traverses the graph
@@ -989,28 +959,10 @@ static bool CallSiteUsesAliveArgs(DSCallSite &CS, hash_set<DSNode*> &Alive,
   if (CanReachAliveNodes(CS.getRetVal().getNode(), Alive, Visited) ||
       CanReachAliveNodes(CS.getCallee().getNode(), Alive, Visited))
     return true;
-  for (unsigned j = 0, e = CS.getNumPtrArgs(); j != e; ++j)
-    if (CanReachAliveNodes(CS.getPtrArg(j).getNode(), Alive, Visited))
+  for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i)
+    if (CanReachAliveNodes(CS.getPtrArg(i).getNode(), Alive, Visited))
       return true;
   return false;
-}
-
-// GlobalIsAlivenessRoot - Return true if the specified global node is
-// intrinsically alive in the context of the current graph (ie, it is a root of
-// aliveness).  For TD graphs, no globals are.  For the BU graphs all are unless
-// they are trivial globals...
-//
-static bool GlobalIsAlivenessRoot(DSNode *N, unsigned Flags) {
-  if (Flags & DSGraph::RemoveUnreachableGlobals)
-    return false;                 // If we are to remove all globals, go for it.
-
-  // Ok, we are keeping globals... hrm, we can still delete it if it has no
-  // links, and no mod/ref or other info...  If it is not modified, it can't
-  // have links...
-  //
-  if ((N->NodeType & ~(DSNode::Composition | DSNode::Array)) == 0)
-    return false;
-  return true;
 }
 
 // removeDeadNodes - Use a more powerful reachability analysis to eliminate
@@ -1020,7 +972,8 @@ static bool GlobalIsAlivenessRoot(DSNode *N, unsigned Flags) {
 // inlining graphs.
 //
 void DSGraph::removeDeadNodes(unsigned Flags) {
-  // Reduce the amount of work we have to do...
+  // Reduce the amount of work we have to do... remove dummy nodes left over by
+  // merging...
   removeTriviallyDeadNodes();
 
   // FIXME: Merge nontrivially identical call nodes...
@@ -1032,74 +985,132 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   // Mark all nodes reachable by (non-global) scalar nodes as alive...
   for (hash_map<Value*, DSNodeHandle>::iterator I = ScalarMap.begin(),
          E = ScalarMap.end(); I != E; ++I)
-    if (!isa<GlobalValue>(I->first) ||
-        GlobalIsAlivenessRoot(I->second.getNode(), Flags))
+    if (!isa<GlobalValue>(I->first))
       I->second.getNode()->markReachableNodes(Alive);
-    else                    // Keep track of global nodes
+    else {                   // Keep track of global nodes
       GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
+      assert(I->second.getNode() && "Null global node?");
+    }
 
   // The return value is alive as well...
   RetNode.getNode()->markReachableNodes(Alive);
 
-  // If any global nodes points to a non-global that is "alive", the global is
-  // "alive" as well...
-  //
+  // Mark any nodes reachable by primary calls as alive...
+  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
+    FunctionCalls[i].markReachableNodes(Alive);
+
+  bool Iterate;
   hash_set<DSNode*> Visited;
-  for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i)
-    CanReachAliveNodes(GlobalNodes[i].second, Alive, Visited);
+  std::vector<unsigned char> AuxFCallsAlive(AuxFunctionCalls.size());
+  do {
+    Visited.clear();
+    // If any global nodes points to a non-global that is "alive", the global is
+    // "alive" as well...  Remov it from the GlobalNodes list so we only have
+    // unreachable globals in the list.
+    //
+    Iterate = false;
+    for (unsigned i = 0; i != GlobalNodes.size(); ++i)
+      if (CanReachAliveNodes(GlobalNodes[i].second, Alive, Visited)) {
+        std::swap(GlobalNodes[i--], GlobalNodes.back()); // Move to end to erase
+        GlobalNodes.pop_back();                          // Erase efficiently
+        Iterate = true;
+      }
 
-  std::vector<bool> FCallsAlive(FunctionCalls.size());
-  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
-    if (!(Flags & DSGraph::RemoveUnreachableGlobals) ||
-        CallSiteUsesAliveArgs(FunctionCalls[i], Alive, Visited)) {
-      FunctionCalls[i].markReachableNodes(Alive);
-      FCallsAlive[i] = true;
-    }
-
-  std::vector<bool> AuxFCallsAlive(AuxFunctionCalls.size());
-  for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
-    if (!(Flags & DSGraph::RemoveUnreachableGlobals) ||
-        CallSiteUsesAliveArgs(AuxFunctionCalls[i], Alive, Visited)) {
-      AuxFunctionCalls[i].markReachableNodes(Alive);
-      AuxFCallsAlive[i] = true;
-    }
-
-  // Remove all dead function calls...
-  unsigned CurIdx = 0;
-  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
-    if (FCallsAlive[i])
-      FunctionCalls[CurIdx++].swap(FunctionCalls[i]);
-  // Crop all the bad ones out...
-  FunctionCalls.erase(FunctionCalls.begin()+CurIdx, FunctionCalls.end());
+    for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
+      if (!AuxFCallsAlive[i] &&
+          CallSiteUsesAliveArgs(AuxFunctionCalls[i], Alive, Visited)) {
+        AuxFunctionCalls[i].markReachableNodes(Alive);
+        AuxFCallsAlive[i] = true;
+        Iterate = true;
+      }
+  } while (Iterate);
 
   // Remove all dead aux function calls...
-  CurIdx = 0;
+  unsigned CurIdx = 0;
   for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
     if (AuxFCallsAlive[i])
       AuxFunctionCalls[CurIdx++].swap(AuxFunctionCalls[i]);
-  // Crop all the bad ones out...
+  if (!(Flags & DSGraph::RemoveUnreachableGlobals)) {
+    // Move the unreachable call nodes to the globals graph...
+    GlobalsGraph->AuxFunctionCalls.insert(GlobalsGraph->AuxFunctionCalls.end(),
+                                          AuxFunctionCalls.begin()+CurIdx,
+                                          AuxFunctionCalls.end());
+  }
+  // Crop all the useless ones out...
   AuxFunctionCalls.erase(AuxFunctionCalls.begin()+CurIdx,
                          AuxFunctionCalls.end());
 
-
-  // Remove all unreachable globals from the ScalarMap
-  for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i)
-    if (!Alive.count(GlobalNodes[i].second))
-      ScalarMap.erase(GlobalNodes[i].first);
-
-  // Loop over all unreachable nodes, dropping their references...
+  // At this point, any nodes which are visited, but not alive, are nodes which
+  // should be moved to the globals graph.  Loop over all nodes, eliminating
+  // completely unreachable nodes, and moving visited nodes to the globals graph
+  //
   for (unsigned i = 0; i != Nodes.size(); ++i)
     if (!Alive.count(Nodes[i])) {
       DSNode *N = Nodes[i];
       std::swap(Nodes[i--], Nodes.back());  // move node to end of vector
       Nodes.pop_back();                // Erase node from alive list.
-      N->dropAllReferences();          // Drop all outgoing edges
-
-      while (!N->getReferrers().empty())
-        N->getReferrers().back()->setNode(0);
-      delete N;
+      if (!(Flags & DSGraph::RemoveUnreachableGlobals) &&  // Not in TD pass
+          Visited.count(N)) {                    // Visited but not alive?
+        GlobalsGraph->Nodes.push_back(N);        // Move node to globals graph
+      } else {                                 // Otherwise, delete the node
+        assert(((N->NodeType & DSNode::GlobalNode) == 0 ||
+                (Flags & DSGraph::RemoveUnreachableGlobals))
+               && "Killing a global?");
+        while (!N->getReferrers().empty())       // Rewrite referrers
+          N->getReferrers().back()->setNode(0);
+        delete N;                                // Usecount is zero
+      }
     }
+
+  // Now that the nodes have either been deleted or moved to the globals graph,
+  // loop over the scalarmap, updating the entries for globals...
+  //
+  if (!(Flags & DSGraph::RemoveUnreachableGlobals)) {  // Not in the TD pass?
+    // In this array we start the remapping, which can cause merging.  Because
+    // of this, the DSNode pointers in GlobalNodes may be invalidated, so we
+    // must always go through the ScalarMap (which contains DSNodeHandles [which
+    // cannot be invalidated by merging]).
+    //
+    for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i) {
+      Value *G = GlobalNodes[i].first;
+      hash_map<Value*, DSNodeHandle>::iterator I = ScalarMap.find(G);
+      assert(I != ScalarMap.end() && "Global not in scalar map anymore?");
+      assert(I->second.getNode() && "Global not pointing to anything?");
+      assert(!Alive.count(I->second.getNode()) && "Node is alive??");
+      GlobalsGraph->ScalarMap[G].mergeWith(I->second);
+      assert(GlobalsGraph->ScalarMap[G].getNode() &&
+             "Global not pointing to anything?");
+      ScalarMap.erase(I);
+    }
+
+    // Merging leaves behind silly nodes, we remove them to avoid polluting the
+    // globals graph.
+    GlobalsGraph->removeTriviallyDeadNodes();
+  } else {
+    // If we are in the top-down pass, remove all unreachable globals from the
+    // ScalarMap...
+    for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i)
+      ScalarMap.erase(GlobalNodes[i].first);
+  }
+
+  DEBUG(AssertGraphOK(); GlobalsGraph->AssertGraphOK());
 }
+
+void DSGraph::AssertGraphOK() const {
+  for (hash_map<Value*, DSNodeHandle>::const_iterator I = ScalarMap.begin(),
+         E = ScalarMap.end(); I != E; ++I) {
+    assert(I->second.getNode() && "Null node in scalarmap!");
+    AssertNodeInGraph(I->second.getNode());
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(I->first)) {
+      assert((I->second.getNode()->NodeType & DSNode::GlobalNode) &&
+             "Global points to node, but node isn't global?");
+      AssertNodeContainsGlobal(I->second.getNode(), GV);
+    }
+  }
+  AssertCallNodesInGraph();
+  AssertAuxCallNodesInGraph();
+}
+
 
 #if 0
 //===----------------------------------------------------------------------===//
@@ -1110,6 +1121,30 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
 // Bits used in the next function
 static const char ExternalTypeBits = DSNode::GlobalNode | DSNode::HeapNode;
 
+// cloneGlobalInto - Clone the given global node and all its target links
+// (and all their llinks, recursively).
+// 
+DSNode *DSGraph::cloneGlobalInto(const DSNode *GNode) {
+  if (GNode == 0 || GNode->getGlobals().size() == 0) return 0;
+
+  // If a clone has already been created for GNode, return it.
+  DSNodeHandle& ValMapEntry = ScalarMap[GNode->getGlobals()[0]];
+  if (ValMapEntry != 0)
+    return ValMapEntry;
+
+  // Clone the node and update the ValMap.
+  DSNode* NewNode = new DSNode(*GNode);
+  ValMapEntry = NewNode;                // j=0 case of loop below!
+  Nodes.push_back(NewNode);
+  for (unsigned j = 1, N = NewNode->getGlobals().size(); j < N; ++j)
+    ScalarMap[NewNode->getGlobals()[j]] = NewNode;
+
+  // Rewrite the links in the new node to point into the current graph.
+  for (unsigned j = 0, e = GNode->getNumLinks(); j != e; ++j)
+    NewNode->setLink(j, cloneGlobalInto(GNode->getLink(j)));
+
+  return NewNode;
+}
 
 // GlobalDSGraph::cloneNodeInto - Clone a global node and all its externally
 // visible target links (and recursively their such links) into this graph.
