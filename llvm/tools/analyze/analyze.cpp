@@ -259,9 +259,14 @@ struct {
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm analysis printer tool\n");
 
-  CurrentModule = ParseBytecodeFile(InputFilename);
-  if (!CurrentModule && !(CurrentModule = ParseAssemblyFile(InputFilename))) {
-    std::cerr << "Input file didn't read correctly.\n";
+  try {
+    CurrentModule = ParseBytecodeFile(InputFilename);
+    if (!CurrentModule && !(CurrentModule = ParseAssemblyFile(InputFilename))){
+      std::cerr << "Input file didn't read correctly.\n";
+      return 1;
+    }
+  } catch (const ParseException &E) {
+    cerr << E.getMessage() << endl;
     return 1;
   }
 
