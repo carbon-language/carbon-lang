@@ -125,8 +125,8 @@ private:
                           SDOperand Source);
   bool ExpandShift(unsigned Opc, SDOperand Op, SDOperand Amt,
                    SDOperand &Lo, SDOperand &Hi);
-  void ExpandAddSub(bool isAdd, SDOperand Op, SDOperand Amt,
-                    SDOperand &Lo, SDOperand &Hi);
+  void ExpandByParts(unsigned NodeOp, SDOperand Op, SDOperand Amt,
+                     SDOperand &Lo, SDOperand &Hi);
 
   SDOperand getIntPtrConstant(uint64_t Val) {
     return DAG.getConstant(Val, TLI.getPointerTy());
@@ -1288,8 +1288,9 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
 
 /// ExpandAddSub - Find a clever way to expand this add operation into
 /// subcomponents.
-void SelectionDAGLegalize::ExpandAddSub(bool isAdd, SDOperand LHS,SDOperand RHS,
-                                        SDOperand &Lo, SDOperand &Hi) {
+void SelectionDAGLegalize::
+ExpandByParts(unsigned NodeOp, SDOperand LHS, SDOperand RHS,
+              SDOperand &Lo, SDOperand &Hi) {
   // Expand the subcomponents.
   SDOperand LHSL, LHSH, RHSL, RHSH;
   ExpandOp(LHS, LHSL, LHSH);
@@ -1297,13 +1298,12 @@ void SelectionDAGLegalize::ExpandAddSub(bool isAdd, SDOperand LHS,SDOperand RHS,
 
   // Convert this add to the appropriate ADDC pair.  The low part has no carry
   // in.
-  unsigned Opc = isAdd ? ISD::ADD_PARTS : ISD::SUB_PARTS;
   std::vector<SDOperand> Ops;
   Ops.push_back(LHSL);
   Ops.push_back(LHSH);
   Ops.push_back(RHSL);
   Ops.push_back(RHSH);
-  Lo = DAG.getNode(Opc, LHSL.getValueType(), Ops);
+  Lo = DAG.getNode(NodeOp, LHSL.getValueType(), Ops);
   Hi = Lo.getValue(1);
 }
 
@@ -1313,6 +1313,10 @@ void SelectionDAGLegalize::ExpandAddSub(bool isAdd, SDOperand LHS,SDOperand RHS,
 /// low-parts expanded into Lo and Hi.
 bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
                                        SDOperand &Lo, SDOperand &Hi) {
+  // FIXME: This code is buggy, disable it for now.  Note that we should at
+  // least handle the case when Amt is an immediate here.
+  return false;
+
   assert((Opc == ISD::SHL || Opc == ISD::SRA || Opc == ISD::SRL) &&
          "This is not a shift!");
   MVT::ValueType NVT = TLI.getTypeToTransformTo(Op.getValueType());
@@ -1746,6 +1750,14 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // If we can emit an efficient shift operation, do so now.
     if (ExpandShift(ISD::SHL, Node->getOperand(0), Node->getOperand(1), Lo, Hi))
       break;
+
+    // If this target supports SHL_PARTS, use it.
+    if (TLI.getOperationAction(ISD::SHL_PARTS, NVT) == TargetLowering::Legal) {
+      ExpandByParts(ISD::SHL_PARTS, Node->getOperand(0), Node->getOperand(1),
+                    Lo, Hi);
+      break;
+    }
+
     // Otherwise, emit a libcall.
     Lo = ExpandLibCall("__ashldi3", Node, Hi);
     break;
@@ -1754,6 +1766,14 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // If we can emit an efficient shift operation, do so now.
     if (ExpandShift(ISD::SRA, Node->getOperand(0), Node->getOperand(1), Lo, Hi))
       break;
+
+    // If this target supports SRA_PARTS, use it.
+    if (TLI.getOperationAction(ISD::SRA_PARTS, NVT) == TargetLowering::Legal) {
+      ExpandByParts(ISD::SRA_PARTS, Node->getOperand(0), Node->getOperand(1),
+                    Lo, Hi);
+      break;
+    }
+
     // Otherwise, emit a libcall.
     Lo = ExpandLibCall("__ashrdi3", Node, Hi);
     break;
@@ -1761,15 +1781,25 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // If we can emit an efficient shift operation, do so now.
     if (ExpandShift(ISD::SRL, Node->getOperand(0), Node->getOperand(1), Lo, Hi))
       break;
+
+    // If this target supports SRL_PARTS, use it.
+    if (TLI.getOperationAction(ISD::SRL_PARTS, NVT) == TargetLowering::Legal) {
+      ExpandByParts(ISD::SRL_PARTS, Node->getOperand(0), Node->getOperand(1),
+                    Lo, Hi);
+      break;
+    }
+
     // Otherwise, emit a libcall.
     Lo = ExpandLibCall("__lshrdi3", Node, Hi);
     break;
 
-  case ISD::ADD:
-    ExpandAddSub(true, Node->getOperand(0), Node->getOperand(1), Lo, Hi);
+  case ISD::ADD: 
+    ExpandByParts(ISD::ADD_PARTS, Node->getOperand(0), Node->getOperand(1),
+                  Lo, Hi);
     break;
   case ISD::SUB:
-    ExpandAddSub(false, Node->getOperand(0), Node->getOperand(1), Lo, Hi);
+    ExpandByParts(ISD::SUB_PARTS, Node->getOperand(0), Node->getOperand(1),
+                  Lo, Hi);
     break;
   case ISD::MUL:  Lo = ExpandLibCall("__muldi3" , Node, Hi); break;
   case ISD::SDIV: Lo = ExpandLibCall("__divdi3" , Node, Hi); break;
