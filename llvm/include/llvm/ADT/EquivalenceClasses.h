@@ -85,7 +85,7 @@ class EquivalenceClasses {
     void setNext(const ECValue *NewNext) const {
       assert(getNext() == 0 && "Already has a next pointer!");
       bool isL = isLeader();
-      Next = (const ECValue*)((intptr_t)NewNext | isLeader());
+      Next = (const ECValue*)((intptr_t)NewNext | (intptr_t)isL);
     }
   public:
     ECValue(const ECValue &RHS) : Leader(this), Next((ECValue*)(intptr_t)1),
