@@ -112,25 +112,13 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
     CleanupPasses.push_back(getPI(createDeadArgHackingPass()));
   else
     CleanupPasses.push_back(getPI(createDeadArgEliminationPass()));
-  
-  std::swap(Program, M);
-  std::string Filename;
-  bool Failed = runPasses(CleanupPasses, Filename);
-  std::swap(Program, M);
 
-  if (Failed) {
+  Module *New = runPassesOn(M, CleanupPasses);
+  if (New == 0) {
     std::cerr << "Final cleanups failed.  Sorry. :(  Please report a bug!\n";
-  } else {
-    delete M;
-    M = ParseInputFile(Filename);
-    if (M == 0) {
-      std::cerr << getToolName() << ": Error reading bytecode file '"
-                << Filename << "'!\n";
-      exit(1);
-    }
-    removeFile(Filename);
   }
-  return M;
+  delete M;
+  return New;
 }
 
 
@@ -141,32 +129,20 @@ Module *BugDriver::ExtractLoop(Module *M) {
   std::vector<const PassInfo*> LoopExtractPasses;
   LoopExtractPasses.push_back(getPI(createSingleLoopExtractorPass()));
 
-  std::swap(Program, M);
-  std::string Filename;
-  bool Failed = runPasses(LoopExtractPasses, Filename);
-  std::swap(Program, M);
-
-  if (Failed) {
+  Module *NewM = runPassesOn(M, LoopExtractPasses);
+  if (NewM == 0) {
     std::cerr << "Loop extraction failed.  Sorry. :(  Please report a bug!\n";
     return 0;
-  } else {
-    Module *NewM = ParseInputFile(Filename);
-    if (NewM == 0) {
-      std::cerr << getToolName() << ": Error reading bytecode file '"
-                << Filename << "'!\n";
-      exit(1);
-    }
-    removeFile(Filename);
-
-    // Check to see if we created any new functions.  If not, no loops were
-    // extracted and we should return null.
-    if (M->size() != NewM->size()) {
-      delete NewM;
-      return 0;
-    }
-
-    return NewM;
   }
+
+  // Check to see if we created any new functions.  If not, no loops were
+  // extracted and we should return null.
+  if (M->size() != NewM->size()) {
+    delete NewM;
+    return 0;
+  }
+  
+  return NewM;
 }
 
 
