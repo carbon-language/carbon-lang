@@ -548,7 +548,7 @@ ifdef SHARED_LIBRARY
 
 all-local:: $(LibName.LA)
 
-$(LibName.LA): $(BUILT_SOURCES) $(ObjectsLO) $(LibDir)/.dir
+$(LibName.LA): $(ObjectsLO) $(LibDir)/.dir
 	$(Echo) Linking $(BuildMode) Shared Library $(LIBRARYNAME)$(SHLIBEXT)
 	$(Verb) $(Link) -o $@ $(ObjectsLO)
 	$(Verb) $(LTInstall) $@ $(LibDir)
@@ -591,7 +591,7 @@ ifdef EXPORTED_SYMBOL_FILE
 BCLinkLib = $(LLVMGCC) -shared -nostdlib -Xlinker \
 	    -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 
-$(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD) \
+$(LibName.BCA): $(ObjectsBC) $(LibDir)/.dir $(GCCLD) \
                 $(LLVMToolDir)/llvm-ar
 	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@) \
 	  "(internalize)"
@@ -599,7 +599,7 @@ $(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD) \
 	$(Verb) $(RM) -f $@
 	$(Verb) $(LArchive) $@ $(ObjDir)/$(LIBRARYNAME).o
 else
-$(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir \
+$(LibName.BCA): $(ObjectsBC) $(LibDir)/.dir \
                 $(LLVMToolDir)/llvm-ar
 	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@)
 	$(Verb) $(RM) -f $@
@@ -643,7 +643,7 @@ ifndef DONT_BUILD_RELINKED
 
 all-local:: $(LibName.O)
 
-$(LibName.O): $(BUILT_SOURCES) $(ObjectsO) $(LibDir)/.dir
+$(LibName.O): $(ObjectsO) $(LibDir)/.dir
 	$(Echo) Linking $(BuildMode) Object Library $(notdir $@)
 	$(Verb) $(Relink) -o $@ $(ObjectsO)
 
@@ -675,7 +675,7 @@ ifdef BUILD_ARCHIVE
 
 all-local:: $(LibName.A)
 
-$(LibName.A): $(BUILT_SOURCES) $(ObjectsO) $(LibDir)/.dir
+$(LibName.A): $(ObjectsO) $(LibDir)/.dir
 	$(Echo) Building $(BuildMode) Archive Library $(notdir $@)
 	-$(Verb) $(RM) -f $@
 	$(Verb) $(Archive) $@ $(ObjectsO)
@@ -807,7 +807,7 @@ else
 $(ToolBuildPath): $(ToolDir)/.dir
 endif
 
-$(ToolBuildPath): $(BUILT_SOURCES) $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
+$(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) executable $(TOOLNAME) $(StripWarnMsg)
 	$(Verb) $(Link) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
           $(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB)
