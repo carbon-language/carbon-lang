@@ -332,7 +332,7 @@ Module* llvm::AnalyzeBytecodeBuffer(
 }
 
 bool llvm::GetBytecodeDependentLibraries(const std::string &fname, 
-                                         std::vector<std::string>& deplibs) {
+    Module::LibraryListType& deplibs) {
   try {
     std::auto_ptr<ModuleProvider> AMP( getBytecodeModuleProvider(fname));
     Module* M = AMP->releaseModule();
