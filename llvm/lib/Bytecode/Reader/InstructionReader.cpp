@@ -379,14 +379,12 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 
     if (Raw.Opcode == Instruction::Load) {
       assert(MemAccessInst::getIndexedType(Raw.Ty, Idx) && 
-             "Bad indices for GEP or Load!");
+             "Bad indices for Load!");
       Res = new LoadInst(getValue(Raw.Ty, Raw.Arg1), Idx);
     } else if (Raw.Opcode == Instruction::GetElementPtr)
       Res = new GetElementPtrInst(getValue(Raw.Ty, Raw.Arg1), Idx);
     else
       abort();
-    if (!MemAccessInst::getIndexedType(Raw.Ty, Idx))
-      cerr << Res;
     return false;
   }
   case Instruction::Store: {
