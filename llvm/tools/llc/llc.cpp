@@ -165,6 +165,9 @@ int main(int argc, char **argv) {
   if (DumpAsm)
     Passes.add(new PrintFunctionPass("Code after xformations: \n", &cerr));
 
+  // Strip all of the symbols from the bytecode so that it will be smaller...
+  Passes.add(createSymbolStrippingPass());
+
   // Figure out where we are going to send the output...
   std::ostream *Out = 0;
   if (OutputFilename != "") {   // Specified an output filename?
