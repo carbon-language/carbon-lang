@@ -220,7 +220,9 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
       I = MBB->end(); --I;
 
       for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
-        RegInfo->loadRegFromStackSlot(*MBB, I, RegsToSave[i],StackSlots[i]);
+        RegInfo->loadRegFromStackSlot(*MBB, I, RegsToSave[i], StackSlots[i]);
+        assert(I != MBB->begin() &&
+               "loadRegFromStackSlot didn't insert any code!");
         --I;  // Insert in reverse order
       }
     }
