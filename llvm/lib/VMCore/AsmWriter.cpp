@@ -346,7 +346,7 @@ static std::ostream &printTypeInt(std::ostream &Out, const Type *Ty,
 ///
 std::ostream &llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
                                       const Module *M) {
-  Out << " "; 
+  Out << ' '; 
 
   // If they want us to print out a type, attempt to make it symbolic if there
   // is a symbol table in the module...
@@ -434,9 +434,9 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
       Out << "\"";
 
     } else {                // Cannot output in string format...
-      Out << "[";
+      Out << '[';
       if (CA->getNumOperands()) {
-        Out << " ";
+        Out << ' ';
         printTypeInt(Out, ETy, TypeTable);
         WriteAsOperandInternal(Out, CA->getOperand(0),
                                PrintName, TypeTable, Machine);
@@ -450,9 +450,9 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
       Out << " ]";
     }
   } else if (const ConstantStruct *CS = dyn_cast<ConstantStruct>(CV)) {
-    Out << "{";
+    Out << '{';
     if (CS->getNumOperands()) {
-      Out << " ";
+      Out << ' ';
       printTypeInt(Out, CS->getOperand(0)->getType(), TypeTable);
 
       WriteAsOperandInternal(Out, CS->getOperand(0),
@@ -488,7 +488,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
       Out << " to ";
       printTypeInt(Out, CE->getType(), TypeTable);
     }
-    Out << ")";
+    Out << ')';
 
   } else {
     Out << "<placeholder or erroneous Constant>";
@@ -504,7 +504,7 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
                                    bool PrintName,
                                   std::map<const Type*, std::string> &TypeTable,
                                    SlotMachine *Machine) {
-  Out << " ";
+  Out << ' ';
   if (PrintName && V->hasName()) {
     Out << getLLVMName(V->getName());
   } else {
@@ -526,7 +526,7 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
         Slot = Machine->getSlot(V);
         delete Machine;
       }
-      Out << "%" << Slot;
+      Out << '%' << Slot;
     }
   }
 }
@@ -631,7 +631,7 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
       if (FTy->getNumParams()) *Out << ", ";
       *Out << "...";
     }
-    *Out << ")";
+    *Out << ')';
   } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     *Out << "{ ";
     for (StructType::element_iterator I = STy->element_begin(),
@@ -642,10 +642,10 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
     }
     *Out << " }";
   } else if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
-    printType(PTy->getElementType()) << "*";
+    printType(PTy->getElementType()) << '*';
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
-    *Out << "[" << ATy->getNumElements() << " x ";
-    printType(ATy->getElementType()) << "]";
+    *Out << '[' << ATy->getNumElements() << " x ";
+    printType(ATy->getElementType()) << ']';
   } else if (const OpaqueType *OTy = dyn_cast<OpaqueType>(Ty)) {
     *Out << "opaque";
   } else {
@@ -659,7 +659,7 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
 
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType, 
                                   bool PrintName) {
-  if (PrintType) { *Out << " "; printType(Operand->getType()); }
+  if (PrintType) { *Out << ' '; printType(Operand->getType()); }
   WriteAsOperandInternal(*Out, Operand, PrintName, TypeNames, &Machine);
 }
 
@@ -780,12 +780,12 @@ void AssemblyWriter::printFunction(const Function *F) {
     case GlobalValue::ExternalLinkage: break;
     }
 
-  printType(F->getReturnType()) << " ";
+  printType(F->getReturnType()) << ' ';
   if (!F->getName().empty())
     *Out << getLLVMName(F->getName());
   else
     *Out << "\"\"";
-  *Out << "(";
+  *Out << '(';
   Machine.incorporateFunction(F);
 
   // Loop over the arguments, printing them...
@@ -799,7 +799,7 @@ void AssemblyWriter::printFunction(const Function *F) {
     if (FT->getNumParams()) *Out << ", ";
     *Out << "...";  // Output varargs portion of signature!
   }
-  *Out << ")";
+  *Out << ')';
 
   if (F->isExternal()) {
     *Out << "\n";
@@ -828,14 +828,14 @@ void AssemblyWriter::printArgument(const Argument *Arg) {
   
   // Output name, if available...
   if (Arg->hasName())
-    *Out << " " << getLLVMName(Arg->getName());
+    *Out << ' ' << getLLVMName(Arg->getName());
 }
 
 /// printBasicBlock - This member is called for each basic block in a method.
 ///
 void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
-    *Out << "\n" << BB->getName() << ":";
+    *Out << "\n" << BB->getName() << ':';
   } else if (!BB->use_empty()) {      // Don't print block # of no uses...
     *Out << "\n; <label>:" << Machine.getSlot(BB);
   }
@@ -854,7 +854,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
         *Out << " preds =";
         writeOperand(*PI, false, true);
         for (++PI; PI != PE; ++PI) {
-          *Out << ",";
+          *Out << ',';
           writeOperand(*PI, false, true);
         }
       }
@@ -879,12 +879,12 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
 void AssemblyWriter::printInfoComment(const Value &V) {
   if (V.getType() != Type::VoidTy) {
     *Out << "\t\t; <";
-    printType(V.getType()) << ">";
+    printType(V.getType()) << '>';
 
     if (!V.hasName()) {
-      *Out << ":" << Machine.getSlot(&V); // Print out the def slot taken.
+      *Out << ':' << Machine.getSlot(&V); // Print out the def slot taken.
     }
-    *Out << " [#uses=" << V.use_size() << "]";  // Output # uses
+    *Out << " [#uses=" << V.use_size() << ']';  // Output # uses
   }
 }
 
@@ -913,31 +913,31 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   // Special case conditional branches to swizzle the condition out to the front
   if (isa<BranchInst>(I) && I.getNumOperands() > 1) {
     writeOperand(I.getOperand(2), true);
-    *Out << ",";
+    *Out << ',';
     writeOperand(Operand, true);
-    *Out << ",";
+    *Out << ',';
     writeOperand(I.getOperand(1), true);
 
   } else if (isa<SwitchInst>(I)) {
     // Special case switch statement to get formatting nice and correct...
-    writeOperand(Operand        , true); *Out << ",";
+    writeOperand(Operand        , true); *Out << ',';
     writeOperand(I.getOperand(1), true); *Out << " [";
 
     for (unsigned op = 2, Eop = I.getNumOperands(); op < Eop; op += 2) {
       *Out << "\n\t\t";
-      writeOperand(I.getOperand(op  ), true); *Out << ",";
+      writeOperand(I.getOperand(op  ), true); *Out << ',';
       writeOperand(I.getOperand(op+1), true);
     }
     *Out << "\n\t]";
   } else if (isa<PHINode>(I)) {
-    *Out << " ";
+    *Out << ' ';
     printType(I.getType());
-    *Out << " ";
+    *Out << ' ';
 
     for (unsigned op = 0, Eop = I.getNumOperands(); op < Eop; op += 2) {
       if (op) *Out << ", ";
-      *Out << "[";  
-      writeOperand(I.getOperand(op  ), false); *Out << ",";
+      *Out << '[';  
+      writeOperand(I.getOperand(op  ), false); *Out << ',';
       writeOperand(I.getOperand(op+1), false); *Out << " ]";
     }
   } else if (isa<ReturnInst>(I) && !Operand) {
@@ -954,15 +954,15 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     if (!FTy->isVarArg() &&
         (!isa<PointerType>(RetTy) || 
          !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
-      *Out << " "; printType(RetTy);
+      *Out << ' '; printType(RetTy);
       writeOperand(Operand, false);
     } else {
       writeOperand(Operand, true);
     }
-    *Out << "(";
+    *Out << '(';
     if (I.getNumOperands() > 1) writeOperand(I.getOperand(1), true);
     for (unsigned op = 2, Eop = I.getNumOperands(); op < Eop; ++op) {
-      *Out << ",";
+      *Out << ',';
       writeOperand(I.getOperand(op), true);
     }
 
@@ -979,16 +979,16 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     if (!FTy->isVarArg() &&
         (!isa<PointerType>(RetTy) || 
          !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
-      *Out << " "; printType(RetTy);
+      *Out << ' '; printType(RetTy);
       writeOperand(Operand, false);
     } else {
       writeOperand(Operand, true);
     }
 
-    *Out << "(";
+    *Out << '(';
     if (I.getNumOperands() > 3) writeOperand(I.getOperand(3), true);
     for (unsigned op = 4, Eop = I.getNumOperands(); op < Eop; ++op) {
-      *Out << ",";
+      *Out << ',';
       writeOperand(I.getOperand(op), true);
     }
 
@@ -998,10 +998,10 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     writeOperand(II->getUnwindDest(), true);
 
   } else if (const AllocationInst *AI = dyn_cast<AllocationInst>(&I)) {
-    *Out << " ";
+    *Out << ' ';
     printType(AI->getType()->getElementType());
     if (AI->isArrayAllocation()) {
-      *Out << ",";
+      *Out << ',';
       writeOperand(AI->getArraySize(), true);
     }
   } else if (isa<CastInst>(I)) {
@@ -1039,12 +1039,12 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     }
     
     if (!PrintAllTypes) {
-      *Out << " ";
+      *Out << ' ';
       printType(TheType);
     }
 
     for (unsigned i = 0, E = I.getNumOperands(); i != E; ++i) {
-      if (i) *Out << ",";
+      if (i) *Out << ',';
       writeOperand(I.getOperand(i), PrintAllTypes);
     }
   }
@@ -1101,7 +1101,7 @@ void Constant::print(std::ostream &o) const {
     return;
   }
 
-  o << " " << getType()->getDescription() << " ";
+  o << ' ' << getType()->getDescription() << ' ';
 
   std::map<const Type *, std::string> TypeTable;
   WriteConstantInt(o, this, false, TypeTable, 0);
@@ -1115,7 +1115,7 @@ void Type::print(std::ostream &o) const {
 }
 
 void Argument::print(std::ostream &o) const {
-  o << getType() << " " << getName();
+  o << getType() << ' ' << getName();
 }
 
 // Value::dump - allow easy printing of  Values from the debugger.
@@ -1134,7 +1134,7 @@ void CachedWriter::setModule(const Module *M) {
   delete SC; delete AW;
   if (M) {
     SC = new SlotMachine(M );
-    AW = new AssemblyWriter(*Out, *SC, M, 0);
+    AW = new AssemblyWriter(Out, *SC, M, 0);
   } else {
     SC = 0; AW = 0;
   }
@@ -1155,7 +1155,7 @@ CachedWriter &CachedWriter::operator<<(const Value *V) {
   case Value::BasicBlockVal:     AW->write(cast<BasicBlock>(V)); break;
   case Value::FunctionVal:       AW->write(cast<Function>(V)); break;
   case Value::GlobalVariableVal: AW->write(cast<GlobalVariable>(V)); break;
-  default: *Out << "<unknown value type: " << V->getValueType() << ">"; break;
+  default: Out << "<unknown value type: " << V->getValueType() << '>'; break;
   }
   return *this;
 }
@@ -1163,15 +1163,10 @@ CachedWriter &CachedWriter::operator<<(const Value *V) {
 CachedWriter& CachedWriter::operator<<(const Type *X) {
   if (SymbolicTypes) {
     const Module *M = AW->getModule();
-    if (M) WriteTypeSymbolic(*Out, X, M);
+    if (M) WriteTypeSymbolic(Out, X, M);
     return *this;
   } else
     return *this << (const Value*)X;
-}
-
-void CachedWriter::setStream(std::ostream &os) {
-  Out = &os;
-  if (AW) AW->setStream(os);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1455,8 +1450,8 @@ unsigned SlotMachine::insertValue(const Value *V ) {
   SC_DEBUG("  Inserting value [" << VTy << "] = " << V << " slot=" << 
            DestSlot << " [");
   // G = Global, C = Constant, T = Type, F = Function, o = other
-  SC_DEBUG((isa<GlobalVariable>(V) ? "G" : (isa<Constant>(V) ? "C" : 
-           (isa<Function>(V) ? "F" : "o"))));
+  SC_DEBUG((isa<GlobalVariable>(V) ? 'G' : (isa<Constant>(V) ? 'C' : 
+           (isa<Function>(V) ? 'F' : 'o'))));
   SC_DEBUG("]\n");
   return DestSlot;
 }
