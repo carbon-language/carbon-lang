@@ -930,6 +930,23 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
     }
   }
 
+  // If casting the result of a getelementptr instruction with no offset, turn
+  // this into a cast of the original pointer!
+  //
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(CI.getOperand(0))) {
+    bool AllZeroOperands = true;
+    for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
+      if (!isa<Constant>(GEP->getOperand(i)) ||
+          !cast<Constant>(GEP->getOperand(i))->isNullValue()) {
+        AllZeroOperands = false;
+        break;
+      }
+    if (AllZeroOperands) {
+      CI.setOperand(0, GEP->getOperand(0));
+      return &CI;
+    }
+  }
+
   return 0;
 }
 
