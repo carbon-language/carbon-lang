@@ -1,33 +1,37 @@
 //===-- RegAllocSimple.cpp - A simple generic register allocator ----------===//
 //
-// This file implements a simple register allocator. *Very* simple.
+// This file implements a simple register allocator. *Very* simple: It immediate
+// spills every value right after it is computed, and it reloads all used
+// operands from the spill area to temporary registers before each instruction.
+// It does not keep values in registers across instructions.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/FunctionFrameInfo.h"
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "Support/Statistic.h"
 #include <iostream>
-#include <set>
 
 namespace {
   Statistic<> NumSpilled ("ra-simple", "Number of registers spilled");
   Statistic<> NumReloaded("ra-simple", "Number of registers reloaded");
 
-  class RegAllocSimple : public FunctionPass {
-    TargetMachine &TM;
+  class RegAllocSimple : public MachineFunctionPass {
     MachineFunction *MF;
+    const TargetMachine *TM;
     const MRegisterInfo *RegInfo;
-    unsigned NumBytesAllocated;
     
-    // Maps SSA Regs => offsets on the stack where these values are stored
-    std::map<unsigned, unsigned> VirtReg2OffsetMap;
+    // StackSlotForVirtReg - Maps SSA Regs => frame index on the stack where
+    // these values are spilled
+    std::map<unsigned, int> StackSlotForVirtReg;
 
-    // RegsUsed - Keep track of what registers are currently in use.
-    std::set<unsigned> RegsUsed;
+    // RegsUsed - Keep track of what registers are currently in use.  This is a
+    // bitset.
+    std::vector<bool> RegsUsed;
 
     // RegClassIdx - Maps RegClass => which index we can take a register
     // from. Since this is a simple register allocator, when we need a register
@@ -35,27 +39,14 @@ namespace {
     std::map<const TargetRegisterClass*, unsigned> RegClassIdx;
 
   public:
-
-    RegAllocSimple(TargetMachine &tm)
-      : TM(tm), RegInfo(tm.getRegisterInfo()) {
-      RegsUsed.insert(RegInfo->getFramePointer());
-      RegsUsed.insert(RegInfo->getStackPointer());
-
-      cleanupAfterFunction();
-    }
-
-    bool runOnFunction(Function &Fn) {
-      return runOnMachineFunction(MachineFunction::get(&Fn));
-    }
-
     virtual const char *getPassName() const {
       return "Simple Register Allocator";
     }
 
-  private:
     /// runOnMachineFunction - Register allocate the whole function
     bool runOnMachineFunction(MachineFunction &Fn);
 
+  private:
     /// AllocateBasicBlock - Register allocate the specified basic block.
     void AllocateBasicBlock(MachineBasicBlock &MBB);
 
@@ -63,18 +54,9 @@ namespace {
     /// in predecessor basic blocks.
     void EliminatePHINodes(MachineBasicBlock &MBB);
 
-    /// EmitPrologue/EmitEpilogue - Use the register info object to add a
-    /// prologue/epilogue to the function and save/restore any callee saved
-    /// registers we are responsible for.
-    ///
-    void EmitPrologue();
-    void EmitEpilogue(MachineBasicBlock &MBB);
-
-
     /// getStackSpaceFor - This returns the offset of the specified virtual
     /// register on the stack, allocating space if neccesary.
-    unsigned getStackSpaceFor(unsigned VirtReg, 
-                              const TargetRegisterClass *regClass);
+    int getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC);
 
     /// Given a virtual register, return a compatible physical register that is
     /// currently unused.
@@ -82,30 +64,6 @@ namespace {
     /// Side effect: marks that register as being used until manually cleared
     ///
     unsigned getFreeReg(unsigned virtualReg);
-
-    /// Returns all `borrowed' registers back to the free pool
-    void clearAllRegs() {
-      RegClassIdx.clear();
-    }
-
-    /// Invalidates any references, real or implicit, to physical registers
-    ///
-    void invalidatePhysRegs(const MachineInstr *MI) {
-      unsigned Opcode = MI->getOpcode();
-      const MachineInstrDescriptor &Desc = TM.getInstrInfo().get(Opcode);
-      if (const unsigned *regs = Desc.ImplicitUses)
-        while (*regs)
-          RegsUsed.insert(*regs++);
-
-      if (const unsigned *regs = Desc.ImplicitDefs)
-        while (*regs)
-          RegsUsed.insert(*regs++);
-    }
-
-    void cleanupAfterFunction() {
-      VirtReg2OffsetMap.clear();
-      NumBytesAllocated = 4;   // FIXME: This is X86 specific
-    }
 
     /// Moves value from memory into that register
     unsigned reloadVirtReg(MachineBasicBlock &MBB,
@@ -120,69 +78,62 @@ namespace {
 
 /// getStackSpaceFor - This allocates space for the specified virtual
 /// register to be held on the stack.
-unsigned RegAllocSimple::getStackSpaceFor(unsigned VirtReg,
-                                          const TargetRegisterClass *regClass) {
+int RegAllocSimple::getStackSpaceFor(unsigned VirtReg,
+				     const TargetRegisterClass *RC) {
   // Find the location VirtReg would belong...
-  std::map<unsigned, unsigned>::iterator I =
-    VirtReg2OffsetMap.lower_bound(VirtReg);
+  std::map<unsigned, int>::iterator I =
+    StackSlotForVirtReg.lower_bound(VirtReg);
 
-  if (I != VirtReg2OffsetMap.end() && I->first == VirtReg)
+  if (I != StackSlotForVirtReg.end() && I->first == VirtReg)
     return I->second;          // Already has space allocated?
 
-  unsigned RegSize = regClass->getDataSize();
-
-  // Align NumBytesAllocated.  We should be using TargetData alignment stuff
-  // to determine this, but we don't know the LLVM type associated with the
-  // virtual register.  Instead, just align to a multiple of the size for now.
-  NumBytesAllocated += RegSize-1;
-  NumBytesAllocated = NumBytesAllocated/RegSize*RegSize;
+  // Allocate a new stack object for this spill location...
+  int FrameIdx =
+    MF->getFrameInfo()->CreateStackObject(RC->getSize(), RC->getAlignment());
   
   // Assign the slot...
-  VirtReg2OffsetMap.insert(I, std::make_pair(VirtReg, NumBytesAllocated));
-  
-  // Reserve the space!
-  NumBytesAllocated += RegSize;
-  return NumBytesAllocated-RegSize;
+  StackSlotForVirtReg.insert(I, std::make_pair(VirtReg, FrameIdx));
+
+  return FrameIdx;
 }
 
 unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
   const TargetRegisterClass* RC = MF->getSSARegMap()->getRegClass(virtualReg);
-  
-  unsigned regIdx = RegClassIdx[RC]++;
-  assert(regIdx < RC->getNumRegs() && "Not enough registers!");
-  unsigned physReg = RC->getRegister(regIdx);
+  TargetRegisterClass::iterator RI = RC->allocation_order_begin(*MF);
+  TargetRegisterClass::iterator RE = RC->allocation_order_end(*MF);
 
-  if (RegsUsed.find(physReg) == RegsUsed.end())
-    return physReg;
-  else
-    return getFreeReg(virtualReg);
+  while (1) {
+    unsigned regIdx = RegClassIdx[RC]++; 
+    assert(RI+regIdx != RE && "Not enough registers!");
+    unsigned PhysReg = *(RI+regIdx);
+    
+    if (!RegsUsed[PhysReg])
+      return PhysReg;
+  }
 }
 
 unsigned RegAllocSimple::reloadVirtReg(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator &I,
                                        unsigned VirtReg) {
   const TargetRegisterClass* RC = MF->getSSARegMap()->getRegClass(VirtReg);
-  unsigned stackOffset = getStackSpaceFor(VirtReg, RC);
+  int FrameIdx = getStackSpaceFor(VirtReg, RC);
   unsigned PhysReg = getFreeReg(VirtReg);
 
   // Add move instruction(s)
   ++NumReloaded;
-  RegInfo->loadRegOffset2Reg(MBB, I, PhysReg, RegInfo->getFramePointer(),
-			     -stackOffset, RC);
+  RegInfo->loadRegFromStackSlot(MBB, I, PhysReg, FrameIdx, RC);
   return PhysReg;
 }
 
 void RegAllocSimple::spillVirtReg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator &I,
-                                  unsigned VirtReg, unsigned PhysReg)
-{
+                                  unsigned VirtReg, unsigned PhysReg) {
   const TargetRegisterClass* RC = MF->getSSARegMap()->getRegClass(VirtReg);
-  unsigned stackOffset = getStackSpaceFor(VirtReg, RC);
+  int FrameIdx = getStackSpaceFor(VirtReg, RC);
 
   // Add move instruction(s)
   ++NumSpilled;
-  RegInfo->storeReg2RegOffset(MBB, I, PhysReg, RegInfo->getFramePointer(),
-			      -stackOffset, RC);
+  RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIdx, RC);
 }
 
 
@@ -190,7 +141,7 @@ void RegAllocSimple::spillVirtReg(MachineBasicBlock &MBB,
 /// predecessor basic blocks.
 ///
 void RegAllocSimple::EliminatePHINodes(MachineBasicBlock &MBB) {
-  const MachineInstrInfo &MII = TM.getInstrInfo();
+  const MachineInstrInfo &MII = TM->getInstrInfo();
 
   while (MBB.front()->getOpcode() == MachineInstrInfo::PHI) {
     MachineInstr *MI = MBB.front();
@@ -242,15 +193,9 @@ void RegAllocSimple::EliminatePHINodes(MachineBasicBlock &MBB) {
         const TargetRegisterClass *RC =
 	  MF->getSSARegMap()->getRegClass(virtualReg);
 
-        // Retrieve the constant value from this op, move it to target
-        // register of the phi
-        if (opVal.isImmediate()) {
-          RegInfo->moveImm2Reg(opBlock, opI, virtualReg,
-			       (unsigned) opVal.getImmedValue(), RC);
-        } else {
-          RegInfo->moveReg2Reg(opBlock, opI, virtualReg,
-			       opVal.getAllocatedRegNum(), RC);
-        }
+	assert(opVal.isVirtualRegister() &&
+	       "Machine PHI Operands must all be virtual registers!");
+	RegInfo->copyRegToReg(opBlock, opI, virtualReg, opVal.getReg(), RC);
       }
     }
     
@@ -267,10 +212,20 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
     std::map<unsigned, unsigned> Virt2PhysRegMap;
 
     MachineInstr *MI = *I;
+
+    RegsUsed.resize(MRegisterInfo::FirstVirtualRegister);
     
     // a preliminary pass that will invalidate any registers that
     // are used by the instruction (including implicit uses)
-    invalidatePhysRegs(MI);
+    unsigned Opcode = MI->getOpcode();
+    const MachineInstrDescriptor &Desc = TM->getInstrInfo().get(Opcode);
+    if (const unsigned *Regs = Desc.ImplicitUses)
+      while (*Regs)
+	RegsUsed[*Regs++] = true;
+    
+    if (const unsigned *Regs = Desc.ImplicitDefs)
+      while (*Regs)
+	RegsUsed[*Regs++] = true;
     
     // Loop over uses, move from memory into registers
     for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
@@ -280,14 +235,14 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned virtualReg = (unsigned) op.getAllocatedRegNum();
         DEBUG(std::cerr << "op: " << op << "\n");
         DEBUG(std::cerr << "\t inst[" << i << "]: ";
-              MI->print(std::cerr, TM));
+              MI->print(std::cerr, *TM));
         
         // make sure the same virtual register maps to the same physical
         // register in any given instruction
         unsigned physReg = Virt2PhysRegMap[virtualReg];
         if (physReg == 0) {
           if (op.opIsDef()) {
-            if (TM.getInstrInfo().isTwoAddrInstr(MI->getOpcode()) && i == 0) {
+            if (TM->getInstrInfo().isTwoAddrInstr(MI->getOpcode()) && i == 0) {
               // must be same register number as the first operand
               // This maps a = b + c into b += c, and saves b into a's spot
               assert(MI->getOperand(1).isRegister()  &&
@@ -312,56 +267,9 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
               ", phys: " << op.getAllocatedRegNum() << "\n");
       }
     }
-    clearAllRegs();
+    RegClassIdx.clear();
+    RegsUsed.clear();
   }
-}
-
-
-/// EmitPrologue - Use the register info object to add a prologue to the
-/// function and save any callee saved registers we are responsible for.
-///
-void RegAllocSimple::EmitPrologue() {
-  // Get a list of the callee saved registers, so that we can save them on entry
-  // to the function.
-  //
-  MachineBasicBlock &MBB = MF->front();   // Prolog goes in entry BB
-  MachineBasicBlock::iterator I = MBB.begin();
-
-  const unsigned *CSRegs = RegInfo->getCalleeSaveRegs();
-  for (unsigned i = 0; CSRegs[i]; ++i) {
-    const TargetRegisterClass *RegClass = RegInfo->getRegClass(CSRegs[i]);
-    unsigned Offset = getStackSpaceFor(CSRegs[i], RegClass);
-
-    // Insert the spill to the stack frame...
-    RegInfo->storeReg2RegOffset(MBB, I,CSRegs[i],RegInfo->getFramePointer(),
-				-Offset, RegClass);
-    ++NumSpilled;
-  }
-
-  // Add prologue to the function...
-  RegInfo->emitPrologue(*MF, NumBytesAllocated);
-}
-
-
-/// EmitEpilogue - Use the register info object to add a epilogue to the
-/// function and restore any callee saved registers we are responsible for.
-///
-void RegAllocSimple::EmitEpilogue(MachineBasicBlock &MBB) {
-  // Insert instructions before the return.
-  MachineBasicBlock::iterator I = MBB.end()-1;
-
-  const unsigned *CSRegs = RegInfo->getCalleeSaveRegs();
-  for (unsigned i = 0; CSRegs[i]; ++i) {
-    const TargetRegisterClass *RegClass = RegInfo->getRegClass(CSRegs[i]);
-    unsigned Offset = getStackSpaceFor(CSRegs[i], RegClass);
-
-    RegInfo->loadRegOffset2Reg(MBB, I, CSRegs[i],RegInfo->getFramePointer(),
-			       -Offset, RegClass);
-    --I;  // Insert in reverse order
-    ++NumReloaded;
-  }
-
-  RegInfo->emitEpilogue(MBB, NumBytesAllocated);
 }
 
 
@@ -370,6 +278,8 @@ void RegAllocSimple::EmitEpilogue(MachineBasicBlock &MBB) {
 bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   DEBUG(std::cerr << "Machine Function " << "\n");
   MF = &Fn;
+  TM = &MF->getTarget();
+  RegInfo = TM->getRegisterInfo();
 
   // First pass: eliminate PHI instructions by inserting copies into predecessor
   // blocks.
@@ -382,27 +292,10 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
        MBB != MBBe; ++MBB)
     AllocateBasicBlock(*MBB);
 
-  // Round stack allocation up to a nice alignment to keep the stack aligned
-  // FIXME: This is X86 specific!  Move to frame manager
-  NumBytesAllocated = (NumBytesAllocated + 3) & ~3;
-
-  // Emit a prologue for the function...
-  EmitPrologue();
-
-  const MachineInstrInfo &MII = TM.getInstrInfo();
-
-  // Add epilogue to restore the callee-save registers in each exiting block
-  for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
-       MBB != MBBe; ++MBB) {
-    // If last instruction is a return instruction, add an epilogue
-    if (MII.isReturn(MBB->back()->getOpcode()))
-      EmitEpilogue(*MBB);
-  }
-
-  cleanupAfterFunction();
+  StackSlotForVirtReg.clear();
   return true;
 }
 
-Pass *createSimpleRegisterAllocator(TargetMachine &TM) {
-  return new RegAllocSimple(TM);
+Pass *createSimpleRegisterAllocator() {
+  return new RegAllocSimple();
 }
