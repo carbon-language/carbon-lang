@@ -1136,6 +1136,13 @@ namespace {
     /// function as they are computed.
     std::map<const Loop*, SCEVHandle> IterationCounts;
 
+    /// ConstantEvolutionLoopExitValue - This map contains entries for all of
+    /// the PHI instructions that we attempt to compute constant evolutions for.
+    /// This allows us to avoid potentially expensive recomputation of these
+    /// properties.  An instruction maps to null if we are unable to compute its
+    /// exit value.
+    std::map<PHINode*, Constant*> ConstantEvolutionLoopExitValue;
+    
   public:
     ScalarEvolutionsImpl(Function &f, LoopInfo &li)
       : F(f), LI(li), UnknownValue(new SCEVCouldNotCompute()) {}
@@ -1197,6 +1204,13 @@ namespace {
     /// specified value for nonzero will execute.  If not computable, return
     /// UnknownValue
     SCEVHandle HowFarToNonZero(SCEV *V, const Loop *L);
+
+    /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
+    /// in the header of its containing loop, we know the loop executes a
+    /// constant number of times, and the PHI node is just a recurrence
+    /// involving constants, fold it.
+    Constant *getConstantEvolutionLoopExitValue(PHINode *PN, uint64_t Its,
+                                                const Loop *L);
   };
 }
 
@@ -1209,6 +1223,8 @@ namespace {
 /// that no dangling references are left around.
 void ScalarEvolutionsImpl::deleteInstructionFromRecords(Instruction *I) {
   Scalars.erase(I);
+  if (PHINode *PN = dyn_cast<PHINode>(I))
+    ConstantEvolutionLoopExitValue.erase(PN);
 }
 
 
@@ -1552,77 +1568,23 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
                                          ExitBr->getSuccessor(0) == ExitBlock);
 }
 
-
-/// getConstantEvolvingPHI - Given an LLVM value and a loop, return a PHI node
-/// in the loop that V is derived from.  We allow arbitrary operations along the
-/// way, but the operands of an operation must either be constants or a value
-/// derived from a constant PHI.  If this expression does not fit with these
-/// constraints, return null.
-static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
-  // If this is not an instruction, or if this is an instruction outside of the
-  // loop, it can't be derived from a loop PHI.
-  Instruction *I = dyn_cast<Instruction>(V);
-  if (I == 0 || !L->contains(I->getParent())) return 0;
-
-  if (PHINode *PN = dyn_cast<PHINode>(I))
-    if (L->getHeader() == I->getParent())
-      return PN;
-    else
-      // We don't currently keep track of the control flow needed to evaluate
-      // PHIs, so we cannot handle PHIs inside of loops.
-      return 0;
-
-  // If this is a call, and we have no hope of constant folding, bail early.
-  if (CallInst *CI = dyn_cast<CallInst>(I)) {
-    if (!CI->getCalledFunction() ||
-        !canConstantFoldCallTo(CI->getCalledFunction()))
-      return 0;
-  } else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
-    return 0;
+/// CanConstantFold - Return true if we can constant fold an instruction of the
+/// specified type, assuming that all operands were constants.
+static bool CanConstantFold(const Instruction *I) {
+  if (isa<BinaryOperator>(I) || isa<ShiftInst>(I) ||
+      isa<SelectInst>(I) || isa<CastInst>(I) || isa<GetElementPtrInst>(I))
+    return true;
   
-  // Otherwise, we can evaluate this instruction if all of its operands but one
-  // are constant, and if the remaining one is derived from a constant evolving
-  // PHI.
-  unsigned Op = 0, e = I->getNumOperands();
-  while (Op != e && (isa<Constant>(I->getOperand(Op)) ||
-                     isa<GlobalValue>(I->getOperand(Op))))
-    ++Op;          // Skip over all constant operands
-  
-  if (Op == e) return 0;  // No non-constants? Should be folded!
-  
-  // Found the first non-constant operand.
-  unsigned NonConstantOp = Op;
-
-  // Okay, all of the rest must be constants now.
-  for (++Op; Op != e; ++Op)
-    if (!(isa<Constant>(I->getOperand(Op)) ||
-          isa<GlobalValue>(I->getOperand(Op))))
-      return 0;  // Too many non-constant operands!
-
-  // This is a expression evolving from a constant PHI if the non-constant
-  // portion is!
-  return getConstantEvolvingPHI(I->getOperand(NonConstantOp), L);
+  if (const CallInst *CI = dyn_cast<CallInst>(I))
+    if (const Function *F = CI->getCalledFunction())
+      return canConstantFoldCallTo((Function*)F);  // FIXME: elim cast
+  return false;
 }
 
-/// EvaluateExpression - Given an expression that passes the
-/// getConstantEvolvingPHI predicate, evaluate its value assuming the PHI node
-/// in the loop has the value PHIVal.  If we can't fold this expression for some
-/// reason, return null.
-static Constant *EvaluateExpression(Value *V, Constant *PHIVal) {
-  if (isa<PHINode>(V)) return PHIVal;
-  if (Constant *C = dyn_cast<Constant>(V)) return C;
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(V))
-    return ConstantPointerRef::get(GV);
-  Instruction *I = cast<Instruction>(V);
-
-  std::vector<Constant*> Operands;
-  Operands.resize(I->getNumOperands());
-
-  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
-    Operands[i] = EvaluateExpression(I->getOperand(i), PHIVal);
-    if (Operands[i] == 0) return 0;
-  }
-
+/// ConstantFold - Constant fold an instruction of the specified type with the
+/// specified constant operands.  This function may modify the operands vector.
+static Constant *ConstantFold(const Instruction *I,
+                              std::vector<Constant*> &Operands) {
   if (isa<BinaryOperator>(I) || isa<ShiftInst>(I))
     return ConstantExpr::get(I->getOpcode(), Operands[0], Operands[1]);
 
@@ -1646,6 +1608,119 @@ static Constant *EvaluateExpression(Value *V, Constant *PHIVal) {
   return 0;
 }
 
+
+/// getConstantEvolvingPHI - Given an LLVM value and a loop, return a PHI node
+/// in the loop that V is derived from.  We allow arbitrary operations along the
+/// way, but the operands of an operation must either be constants or a value
+/// derived from a constant PHI.  If this expression does not fit with these
+/// constraints, return null.
+static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
+  // If this is not an instruction, or if this is an instruction outside of the
+  // loop, it can't be derived from a loop PHI.
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (I == 0 || !L->contains(I->getParent())) return 0;
+
+  if (PHINode *PN = dyn_cast<PHINode>(I))
+    if (L->getHeader() == I->getParent())
+      return PN;
+    else
+      // We don't currently keep track of the control flow needed to evaluate
+      // PHIs, so we cannot handle PHIs inside of loops.
+      return 0;
+
+  // If we won't be able to constant fold this expression even if the operands
+  // are constants, return early.
+  if (!CanConstantFold(I)) return 0;
+  
+  // Otherwise, we can evaluate this instruction if all of its operands are
+  // constant or derived from a PHI node themselves.
+  PHINode *PHI = 0;
+  for (unsigned Op = 0, e = I->getNumOperands(); Op != e; ++Op)
+    if (!(isa<Constant>(I->getOperand(Op)) ||
+          isa<GlobalValue>(I->getOperand(Op)))) {
+      PHINode *P = getConstantEvolvingPHI(I->getOperand(Op), L);
+      if (P == 0) return 0;  // Not evolving from PHI
+      if (PHI == 0)
+        PHI = P;
+      else if (PHI != P)
+        return 0;  // Evolving from multiple different PHIs.
+    }
+
+  // This is a expression evolving from a constant PHI!
+  return PHI;
+}
+
+/// EvaluateExpression - Given an expression that passes the
+/// getConstantEvolvingPHI predicate, evaluate its value assuming the PHI node
+/// in the loop has the value PHIVal.  If we can't fold this expression for some
+/// reason, return null.
+static Constant *EvaluateExpression(Value *V, Constant *PHIVal) {
+  if (isa<PHINode>(V)) return PHIVal;
+  if (Constant *C = dyn_cast<Constant>(V)) return C;
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(V))
+    return ConstantPointerRef::get(GV);
+  Instruction *I = cast<Instruction>(V);
+
+  std::vector<Constant*> Operands;
+  Operands.resize(I->getNumOperands());
+
+  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+    Operands[i] = EvaluateExpression(I->getOperand(i), PHIVal);
+    if (Operands[i] == 0) return 0;
+  }
+
+  return ConstantFold(I, Operands);
+}
+
+/// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
+/// in the header of its containing loop, we know the loop executes a
+/// constant number of times, and the PHI node is just a recurrence
+/// involving constants, fold it.
+Constant *ScalarEvolutionsImpl::
+getConstantEvolutionLoopExitValue(PHINode *PN, uint64_t Its, const Loop *L) {
+  std::map<PHINode*, Constant*>::iterator I =
+    ConstantEvolutionLoopExitValue.find(PN);
+  if (I != ConstantEvolutionLoopExitValue.end())
+    return I->second;
+
+  if (Its > MaxBruteForceIterations) 
+    return ConstantEvolutionLoopExitValue[PN] = 0;  // Not going to evaluate it.
+
+  Constant *&RetVal = ConstantEvolutionLoopExitValue[PN];
+
+  // Since the loop is canonicalized, the PHI node must have two entries.  One
+  // entry must be a constant (coming in from outside of the loop), and the
+  // second must be derived from the same PHI.
+  bool SecondIsBackedge = L->contains(PN->getIncomingBlock(1));
+  Constant *StartCST =
+    dyn_cast<Constant>(PN->getIncomingValue(!SecondIsBackedge));
+  if (StartCST == 0)
+    return RetVal = 0;  // Must be a constant.
+
+  Value *BEValue = PN->getIncomingValue(SecondIsBackedge);
+  PHINode *PN2 = getConstantEvolvingPHI(BEValue, L);
+  if (PN2 != PN)
+    return RetVal = 0;  // Not derived from same PHI.
+
+  // Execute the loop symbolically to determine the exit value.
+  unsigned IterationNum = 0;
+  unsigned NumIterations = Its;
+  if (NumIterations != Its)
+    return RetVal = 0;  // More than 2^32 iterations??
+
+  for (Constant *PHIVal = StartCST; ; ++IterationNum) {
+    if (IterationNum == NumIterations)
+      return RetVal = PHIVal;  // Got exit value!
+
+    // Compute the value of the PHI node for the next iteration.
+    Constant *NextPHI = EvaluateExpression(BEValue, PHIVal);
+    if (NextPHI == PHIVal)
+      return RetVal = NextPHI;  // Stopped evolving!
+    if (NextPHI == 0)
+      return 0;        // Couldn't evaluate!
+    PHIVal = NextPHI;
+  }
+}
 
 /// ComputeIterationCountExhaustively - If the trip is known to execute a
 /// constant number of times (the condition evolves only from constants),
@@ -1679,16 +1754,18 @@ ComputeIterationCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen) {
     ConstantBool *CondVal =
       dyn_cast_or_null<ConstantBool>(EvaluateExpression(Cond, PHIVal));
     if (!CondVal) return UnknownValue;     // Couldn't symbolically evaluate.
+
     if (CondVal->getValue() == ExitWhen) {
+      ConstantEvolutionLoopExitValue[PN] = PHIVal;
       ++NumBruteForceTripCountsComputed;
       return SCEVConstant::get(ConstantUInt::get(Type::UIntTy, IterationNum));
     }
     
-    // Otherwise, compute the value of the PHI node for the next iteration.
-    Constant *Next = EvaluateExpression(BEValue, PHIVal);
-    if (Next == 0 || Next == PHIVal)
+    // Compute the value of the PHI node for the next iteration.
+    Constant *NextPHI = EvaluateExpression(BEValue, PHIVal);
+    if (NextPHI == 0 || NextPHI == PHIVal)
       return UnknownValue;  // Couldn't evaluate or not making progress...
-    PHIVal = Next;
+    PHIVal = NextPHI;
   }
 
   // Too many iterations were needed to evaluate.
@@ -1701,7 +1778,67 @@ ComputeIterationCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen) {
 SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
   // FIXME: this should be turned into a virtual method on SCEV!
 
-  if (isa<SCEVConstant>(V) || isa<SCEVUnknown>(V)) return V;
+  if (isa<SCEVConstant>(V)) return V;
+  
+  // If this instruction is evolves from a constant-evolving PHI, compute the
+  // exit value from the loop without using SCEVs.
+  if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(V)) {
+    if (Instruction *I = dyn_cast<Instruction>(SU->getValue())) {
+      const Loop *LI = this->LI[I->getParent()];
+      if (LI && LI->getParentLoop() == L)  // Looking for loop exit value.
+        if (PHINode *PN = dyn_cast<PHINode>(I))
+          if (PN->getParent() == LI->getHeader()) {
+            // Okay, there is no closed form solution for the PHI node.  Check
+            // to see if the loop that contains it has a known iteration count.
+            // If so, we may be able to force computation of the exit value.
+            SCEVHandle IterationCount = getIterationCount(LI);
+            if (SCEVConstant *ICC = dyn_cast<SCEVConstant>(IterationCount)) {
+              // Okay, we know how many times the containing loop executes.  If
+              // this is a constant evolving PHI node, get the final value at
+              // the specified iteration number.
+              Constant *RV = getConstantEvolutionLoopExitValue(PN,
+                                               ICC->getValue()->getRawValue(),
+                                                               LI);
+              if (RV) return SCEVUnknown::get(RV);
+            }
+          }
+
+      // Okay, this is a some expression that we cannot symbolically evaluate
+      // into a SCEV.  Check to see if it's possible to symbolically evaluate
+      // the arguments into constants, and if see, try to constant propagate the
+      // result.  This is particularly useful for computing loop exit values.
+      if (CanConstantFold(I)) {
+        std::vector<Constant*> Operands;
+        Operands.reserve(I->getNumOperands());
+        for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+          Value *Op = I->getOperand(i);
+          if (Constant *C = dyn_cast<Constant>(Op)) {
+            Operands.push_back(C);
+          } else if (GlobalValue *GV = dyn_cast<GlobalValue>(Op)) {
+            Operands.push_back(ConstantPointerRef::get(GV));
+          } else {
+            SCEVHandle OpV = getSCEVAtScope(getSCEV(Op), L);
+            if (SCEVConstant *SC = dyn_cast<SCEVConstant>(OpV))
+              Operands.push_back(ConstantExpr::getCast(SC->getValue(),
+                                                       Op->getType()));
+            else if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(OpV)) {
+              if (Constant *C = dyn_cast<Constant>(SU->getValue()))
+                Operands.push_back(ConstantExpr::getCast(C, Op->getType()));
+              else
+                return V;
+            } else {
+              return V;
+            }
+          }
+        }
+        return SCEVUnknown::get(ConstantFold(I, Operands));
+      }
+    }
+
+    // This is some other type of SCEVUnknown, just return it.
+    return V;
+  }
+
   if (SCEVCommutativeExpr *Comm = dyn_cast<SCEVCommutativeExpr>(V)) {
     // Avoid performing the look-up in the common case where the specified
     // expression has no loop-variant portions.
@@ -1711,7 +1848,7 @@ SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
         if (OpAtScope == UnknownValue) return UnknownValue;
         // Okay, at least one of these operands is loop variant but might be
         // foldable.  Build a new instance of the folded commutative expression.
-        std::vector<SCEVHandle> NewOps(Comm->op_begin(), Comm->op_begin()+i-1);
+        std::vector<SCEVHandle> NewOps(Comm->op_begin(), Comm->op_begin()+i);
         NewOps.push_back(OpAtScope);
 
         for (++i; i != e; ++i) {
