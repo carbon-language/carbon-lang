@@ -6,6 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+
+
+
 #include "llvm/Transforms/HoistPHIConstants.h"
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"
@@ -18,15 +21,20 @@ typedef map<BBConstTy, CastInst *> CachedCopyMap;
 static Value *NormalizePhiOperand(PHINode *PN, Value *CPV,
                                   BasicBlock *Pred, CachedCopyMap &CopyCache) {
   
+  /* NOTE: CahedCopyMap was disabled to insert phi elimination code
+           for all phi args -- Ruchira
+  */
+
+
   // Check if we've already inserted a copy for this constant in Pred
   // Note that `copyCache[Pred]' will create an empty vector the first time
   //
-  CachedCopyMap::iterator CCI = CopyCache.find(BBConstTy(Pred, CPV));
-  if (CCI != CopyCache.end()) return CCI->second;
+  //CachedCopyMap::iterator CCI = CopyCache.find(BBConstTy(Pred, CPV));
+  //if (CCI != CopyCache.end()) return CCI->second;
   
   // Create a copy instruction and add it to the cache...
   CastInst *Inst = new CastInst(CPV, CPV->getType());
-  CopyCache.insert(make_pair(BBConstTy(Pred, CPV), Inst));
+  //CopyCache.insert(make_pair(BBConstTy(Pred, CPV), Inst));
     
   // Insert the copy just before the terminator inst of the predecessor BB
   assert(Pred->getTerminator() && "Degenerate BB encountered!");
@@ -52,11 +60,14 @@ bool HoistPHIConstants::doHoistPHIConstants(Method *M) {
       PHINode *PN = cast<PHINode>(Inst);
       for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
         Value *Op = PN->getIncomingValue(i);
-        if (isa<ConstPoolVal>(Op)) {
-          PN->setIncomingValue(i,
-                NormalizePhiOperand(PN, Op, PN->getIncomingBlock(i), Cache));
-          Changed = true;
-        }
+
+        //if (isa<ConstPoolVal>(Op)) {   --- Do for all phi args -- Ruchira
+    
+	PN->setIncomingValue(i,
+	  NormalizePhiOperand(PN, Op, PN->getIncomingBlock(i), Cache));
+        Changed = true;
+
+	//}
       }
     }
 
