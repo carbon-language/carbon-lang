@@ -29,10 +29,10 @@ bool GlobalDSNode::isEquivalentTo(DSNode *Node) const {
 }
 
 bool CallDSNode::isEquivalentTo(DSNode *Node) const {
+  return false;
   if (CallDSNode *C = dyn_cast<CallDSNode>(Node))
-    return /*C->CI == CI &&*/
-      C->CI->getCalledFunction() == CI->getCalledFunction() &&
-      C->ArgLinks == ArgLinks;
+    return C->CI->getCalledFunction() == CI->getCalledFunction() &&
+           C->ArgLinks == ArgLinks;
   return false;
 }
 
@@ -45,6 +45,7 @@ bool ArgDSNode::isEquivalentTo(DSNode *Node) const {
 // any type.
 //
 bool ShadowDSNode::isEquivalentTo(DSNode *Node) const {
+  return getType() == Node->getType();
   return !isCriticalNode();              // Must not be a critical node...
 }
 
