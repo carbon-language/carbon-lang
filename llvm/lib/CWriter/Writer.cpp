@@ -514,7 +514,7 @@ void CWriter::printModule(Module *M) {
   }
 
   // printing stdlib inclusion
-  Out << "#include <stdlib.h>\n";
+  //Out << "#include <stdlib.h>\n";
 
   // get declaration for alloca
   Out << "/* Provide Declarations */\n"
@@ -541,6 +541,8 @@ void CWriter::printModule(Module *M) {
   // Global variable declarations...
   if (!M->gempty()) {
     Out << "\n/* External Global Variable Declarations */\n";
+    // Needed for malloc to work on sun.
+    Out << "extern void * malloc(size_t);\n";
     for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
       if (I->hasExternalLinkage()) {
         Out << "extern ";
