@@ -14,7 +14,11 @@
 #ifndef SPARC_REGINFO_H
 #define SPARC_REGINFO_H
 
+#include "llvm/Target/TargetRegInfo.h"
+
 namespace llvm {
+
+class SparcTargetMachine;
 
 class SparcRegInfo : public TargetRegInfo {
 
@@ -138,7 +142,6 @@ public:
   inline int getSpilledRegSize(int RegType) const {
     return 8;
   }
-
 
   // To obtain the return value and the indirect call address (if any)
   // contained in a CALL machine instruction
