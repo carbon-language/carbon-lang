@@ -178,7 +178,13 @@
 				RelativePath="..\..\include\llvm\Argument.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\Assembly\AsmAnnotationWriter.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\BasicBlock.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Assembly\CachedWriter.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CallGraphSCCPass.h">
@@ -247,6 +253,9 @@
 				RelativePath="..\..\include\llvm\PassSupport.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\Assembly\PrintModulePass.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\SymbolTable.h">
 			</File>
 			<File
@@ -266,6 +275,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Value.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Assembly\Writer.h">
 			</File>
 		</Filter>
 	</Files>
