@@ -59,6 +59,7 @@ struct BitRecTy : public RecTy {
   Init *convertValue(BitsInit *BI);
   Init *convertValue(IntInit *II);
   Init *convertValue(VarInit *VI);
+  Init *convertValue(VarBitInit *VB) { return (Init*)VB; }
 
   void print(std::ostream &OS) const { OS << "bit"; }
 };
@@ -78,6 +79,7 @@ public:
   Init *convertValue(BitsInit *BI);
   Init *convertValue(IntInit *II);
   Init *convertValue(VarInit *VI);
+  Init *convertValue(FieldInit *VI);
 
   void print(std::ostream &OS) const { OS << "bits<" << Size << ">"; }
 };
@@ -160,7 +162,8 @@ struct Init {
 
   /// convertInitializerBitRange - This method is used to implement the bitrange
   /// selection operator.  Given an initializer, it selects the specified bits
-  /// out, returning them as a new init of bits type.
+  /// out, returning them as a new init of bits type.  If it is not legal to use
+  /// the bit subscript operator on this initializer, return null.
   ///
   virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits) {
     return 0;
@@ -308,22 +311,40 @@ public:
   virtual void print(std::ostream &OS) const;
 };
 
+
+/// TypedInit - This is the common super-class of types that have a specific,
+/// explicit, type.
+///
+class TypedInit : public Init {
+  RecTy *Ty;
+public:  
+  TypedInit(RecTy *T) : Ty(T) {}
+
+  RecTy *getType() const { return Ty; }
+
+  /// resolveBitReference - This method is used to implement
+  /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
+  /// simply return the resolved value, otherwise we return this.
+  ///
+  virtual Init *resolveBitReference(Record &R, unsigned Bit) = 0;
+};
+
 /// VarInit - 'Opcode' - Represent a reference to an entire variable object.
 ///
-class VarInit : public Init {
+class VarInit : public TypedInit {
   std::string VarName;
-  RecTy *Ty;
 public:
-  VarInit(const std::string &VN, RecTy *T) : VarName(VN), Ty(T) {}
+  VarInit(const std::string &VN, RecTy *T) : TypedInit(T), VarName(VN) {}
   
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
   }
 
   const std::string &getName() const { return VarName; }
-  RecTy *getType() const { return Ty; }
 
   virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
+
+  virtual Init *resolveBitReference(Record &R, unsigned Bit);
 
   virtual RecTy *getFieldType(const std::string &FieldName) const;
   
@@ -331,23 +352,27 @@ public:
 };
 
 
-/// VarBitInit - Opcode{0} - Represent access to one bit of a variable
+/// VarBitInit - Opcode{0} - Represent access to one bit of a variable or field.
 ///
 class VarBitInit : public Init {
-  VarInit *VI;
+  TypedInit *TI;
   unsigned Bit;
 public:
-  VarBitInit(VarInit *V, unsigned B) : VI(V), Bit(B) {}
+  VarBitInit(TypedInit *T, unsigned B) : TI(T), Bit(B) {
+    assert(T->getType() && dynamic_cast<BitsRecTy*>(T->getType()) &&
+           ((BitsRecTy*)T->getType())->getNumBits() > B &&
+           "Illegal VarBitInit expression!");
+  }
 
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
   }
 
-  VarInit *getVariable() const { return VI; }
+  TypedInit *getVariable() const { return TI; }
   unsigned getBitNum() const { return Bit; }
   
   virtual void print(std::ostream &OS) const {
-    VI->print(OS); OS << "{" << Bit << "}";
+    TI->print(OS); OS << "{" << Bit << "}";
   }
   virtual Init *resolveReferences(Record &R);
 };
@@ -374,19 +399,22 @@ public:
 
 /// FieldInit - X.Y - Represent a reference to a subfield of a variable
 ///
-class FieldInit : public Init {
+class FieldInit : public TypedInit {
   Init *Rec;                // Record we are referring to
   std::string FieldName;    // Field we are accessing
-  RecTy *Ty;                // The type of this expression
 public:
   FieldInit(Init *R, const std::string &FN)
-    : Rec(R), FieldName(FN), Ty(R->getFieldType(FN)) {
-    assert(Ty && "FieldInit with non-record type!");
+    : TypedInit(R->getFieldType(FN)), Rec(R), FieldName(FN) {
+    assert(getType() && "FieldInit with non-record type!");
   }
 
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
   }
+
+  virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
+
+  virtual Init *resolveBitReference(Record &R, unsigned Bit);
 
   virtual void print(std::ostream &OS) const {
     Rec->print(OS); OS << "." << FieldName;
