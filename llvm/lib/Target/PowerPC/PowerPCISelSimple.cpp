@@ -79,7 +79,8 @@ namespace {
     std::map<Value*, unsigned> RegMap;  // Mapping between Val's and SSA Regs
 
     // External functions used in the Module
-    Function *fmodFn, *__moddi3Fn, *__divdi3Fn, *__umoddi3Fn, *__udivdi3Fn;
+    Function *fmodFn, *__moddi3Fn, *__divdi3Fn, *__umoddi3Fn, *__udivdi3Fn,
+      *__fixdfdiFn, *__floatdisfFn, *__floatdidfFn;
 
     // MBBMap - Mapping between LLVM BB -> Machine BB
     std::map<const BasicBlock*, MachineBasicBlock*> MBBMap;
@@ -93,6 +94,7 @@ namespace {
     bool doInitialization(Module &M) {
       // Add external functions that we may call
       Type *d = Type::DoubleTy;
+      Type *f = Type::FloatTy;
       Type *l = Type::LongTy;
       Type *ul = Type::ULongTy;
       // double fmod(double, double);
@@ -105,6 +107,12 @@ namespace {
       __umoddi3Fn = M.getOrInsertFunction("__umoddi3", ul, ul, ul, 0);
       // unsigned long __udivdi3(unsigned long, unsigned long);
       __udivdi3Fn = M.getOrInsertFunction("__udivdi3", ul, ul, ul, 0);
+      // long __fixdfdi(double)
+      __fixdfdiFn = M.getOrInsertFunction("__fixdfdi", l, d, 0);
+      // float __floatdisf(long)
+      __floatdisfFn = M.getOrInsertFunction("__floatdisf", f, l, 0);
+      // double __floatdidf(long)
+      __floatdidfFn = M.getOrInsertFunction("__floatdidf", d, l, 0);
       return false;
     }
 
@@ -2487,7 +2495,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       std::vector<ValueRecord> Args;
       Args.push_back(ValueRecord(SrcReg, SrcTy));
       MachineInstr *TheCall =
-        BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("__floatdidf", true);
+        BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(__floatdidfFn, true);
       doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
       return;
     }
@@ -2580,7 +2588,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       std::vector<ValueRecord> Args;
       Args.push_back(ValueRecord(SrcReg, SrcTy));
       MachineInstr *TheCall =
-        BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("__fixdfdi", true);
+        BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(__fixdfdiFn, true);
       doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
       return;
     }
