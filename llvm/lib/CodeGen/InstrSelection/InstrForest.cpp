@@ -131,7 +131,7 @@ InstructionNode::dumpNode(int indent) const
     cerr << "\tMachine Instructions:  ";
 
   for (unsigned int i=0; i < mvec.size(); ++i) {
-    mvec[i]->dump(0);
+    mvec[i]->dump();
     if (i < mvec.size() - 1)
       cerr << ";  ";
   }
