@@ -1096,7 +1096,7 @@ UltraSparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
     break;
     
   case IntRegType:
-    MI = BuildMI(V9::ADD, 3).addMReg(SrcReg).addMReg(getZeroRegNum())
+    MI = BuildMI(V9::ADDr, 3).addMReg(SrcReg).addMReg(getZeroRegNum())
       .addMReg(DestReg, MOTy::Def);
     break;
     
@@ -1132,18 +1132,21 @@ UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
   MachineInstr * MI = NULL;
   switch (RegType) {
   case IntRegType:
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::STX, Offset));
-    MI = BuildMI(V9::STX,3).addMReg(SrcReg).addMReg(DestPtrReg).addSImm(Offset);
+    assert(target.getInstrInfo().constantFitsInImmedField(V9::STXi, Offset));
+    MI = BuildMI(V9::STXi,3).addMReg(SrcReg).addMReg(DestPtrReg)
+      .addSImm(Offset);
     break;
 
   case FPSingleRegType:
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::ST, Offset));
-    MI = BuildMI(V9::ST, 3).addMReg(SrcReg).addMReg(DestPtrReg).addSImm(Offset);
+    assert(target.getInstrInfo().constantFitsInImmedField(V9::STFi, Offset));
+    MI = BuildMI(V9::STFi, 3).addMReg(SrcReg).addMReg(DestPtrReg)
+      .addSImm(Offset);
     break;
 
   case FPDoubleRegType:
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::STD, Offset));
-    MI = BuildMI(V9::STD,3).addMReg(SrcReg).addMReg(DestPtrReg).addSImm(Offset);
+    assert(target.getInstrInfo().constantFitsInImmedField(V9::STDFi, Offset));
+    MI = BuildMI(V9::STDFi,3).addMReg(SrcReg).addMReg(DestPtrReg)
+      .addSImm(Offset);
     break;
 
   case IntCCRegType:
@@ -1158,10 +1161,10 @@ UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
     return;
     
   case FloatCCRegType: {
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::STXFSR, Offset));
+    assert(target.getInstrInfo().constantFitsInImmedField(V9::STXFSRi, Offset));
     unsigned fsrRegNum =  getUnifiedRegNum(UltraSparcRegInfo::SpecialRegClassID,
                                            SparcSpecialRegClass::fsr);
-    MI = BuildMI(V9::STXFSR, 3)
+    MI = BuildMI(V9::STXFSRi, 3)
       .addMReg(fsrRegNum).addMReg(DestPtrReg).addSImm(Offset);
     break;
   }
@@ -1188,21 +1191,21 @@ UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
   MachineInstr * MI = NULL;
   switch (RegType) {
   case IntRegType:
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::LDX, Offset));
-    MI = BuildMI(V9::LDX, 3).addMReg(SrcPtrReg).addSImm(Offset)
+    assert(target.getInstrInfo().constantFitsInImmedField(V9::LDXi, Offset));
+    MI = BuildMI(V9::LDXi, 3).addMReg(SrcPtrReg).addSImm(Offset)
       .addMReg(DestReg, MOTy::Def);
     break;
 
   case FPSingleRegType:
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::LD, Offset));
-    MI = BuildMI(V9::LD, 3).addMReg(SrcPtrReg).addSImm(Offset)
+    assert(target.getInstrInfo().constantFitsInImmedField(V9::LDFi, Offset));
+    MI = BuildMI(V9::LDFi, 3).addMReg(SrcPtrReg).addSImm(Offset)
       .addMReg(DestReg, MOTy::Def);
     break;
 
   case FPDoubleRegType:
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::LDD, Offset));
-    MI = BuildMI(V9::LDD, 3).addMReg(SrcPtrReg).addSImm(Offset).addMReg(DestReg,
-                                                                    MOTy::Def);
+    assert(target.getInstrInfo().constantFitsInImmedField(V9::LDDFi, Offset));
+    MI = BuildMI(V9::LDDFi, 3).addMReg(SrcPtrReg).addSImm(Offset)
+      .addMReg(DestReg, MOTy::Def);
     break;
 
   case IntCCRegType:
@@ -1215,10 +1218,10 @@ UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
     break;
     
   case FloatCCRegType: {
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::LDXFSR, Offset));
+    assert(target.getInstrInfo().constantFitsInImmedField(V9::LDXFSRi, Offset));
     unsigned fsrRegNum =  getUnifiedRegNum(UltraSparcRegInfo::SpecialRegClassID,
                                            SparcSpecialRegClass::fsr);
-    MI = BuildMI(V9::LDXFSR, 3).addMReg(SrcPtrReg).addSImm(Offset)
+    MI = BuildMI(V9::LDXFSRi, 3).addMReg(SrcPtrReg).addSImm(Offset)
       .addMReg(fsrRegNum, MOTy::UseAndDef);
     break;
   }
@@ -1243,7 +1246,7 @@ UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest,
 
   switch( RegType ) {
   case IntRegType:
-    MI = BuildMI(V9::ADD, 3).addReg(Src).addMReg(getZeroRegNum())
+    MI = BuildMI(V9::ADDr, 3).addReg(Src).addMReg(getZeroRegNum())
       .addRegDef(Dest);
     break;
   case FPSingleRegType:
