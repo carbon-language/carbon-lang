@@ -298,27 +298,37 @@ Ranlib        = ranlib
 endif
 
 #----------------------------------------------------------
-# Get the list of source files
+# Get the list of source files and compute object file 
+# names from them. 
 #----------------------------------------------------------
-ifndef SOURCES
-  Sources := $(notdir $(wildcard $(BUILD_SRC_DIR)/*.cpp \
-             $(BUILD_SRC_DIR)/*.cc $(BUILD_SRC_DIR)/*.c $(BUILD_SRC_DIR)/*.y \
-             $(BUILD_SRC_DIR)/*.l))
+ifdef FAKE_SOURCES
+  Sources :=
+  FakeSources := $(FAKE_SOURCES)
+  ifdef BUILT_SOURCES
+  FakeSources += $(filter %.cpp %.c %.cc %.y %.l,$(BUILT_SOURCES))
+  endif
+  BaseNameSources := $(sort $(basename $(FakeSources)))
+  ObjectsO  := $(BaseNameSources:%=$(ObjDir)/%.o)
+  ObjectsLO := $(BaseNameSources:%=$(ObjDir)/%.lo)
+  ObjectsBC := $(BaseNameSources:%=$(ObjDir)/%.bc)
 else
-  Sources := $(SOURCES)
-endif
+  ifndef SOURCES
+    Sources := $(notdir $(wildcard $(BUILD_SRC_DIR)/*.cpp \
+               $(BUILD_SRC_DIR)/*.cc $(BUILD_SRC_DIR)/*.c $(BUILD_SRC_DIR)/*.y \
+               $(BUILD_SRC_DIR)/*.l))
+  else
+    Sources := $(SOURCES)
+  endif 
 
-ifdef BUILT_SOURCES
-Sources += $(filter %.cpp %.c %.cc %.y %.l,$(BUILT_SOURCES))
-endif
+  ifdef BUILT_SOURCES
+  Sources += $(filter %.cpp %.c %.cc %.y %.l,$(BUILT_SOURCES))
+  endif
 
-#----------------------------------------------------------
-# Types of objects that can be built from sources
-#----------------------------------------------------------
-BaseNameSources := $(sort $(basename $(Sources)))
-ObjectsO  := $(BaseNameSources:%=$(ObjDir)/%.o)
-ObjectsLO := $(BaseNameSources:%=$(ObjDir)/%.lo)
-ObjectsBC := $(BaseNameSources:%=$(ObjDir)/%.bc)
+  BaseNameSources := $(sort $(basename $(Sources)))
+  ObjectsO  := $(BaseNameSources:%=$(ObjDir)/%.o)
+  ObjectsLO := $(BaseNameSources:%=$(ObjDir)/%.lo)
+  ObjectsBC := $(BaseNameSources:%=$(ObjDir)/%.bc)
+endif
 
 ###############################################################################
 # DIRECTORIES: Handle recursive descent of directory structure
@@ -396,9 +406,9 @@ install  :: $(addsuffix /.makeinstall  ,$(PARALLEL_DIRS))
 uninstall:: $(addsuffix /.makeuninstall,$(PARALLEL_DIRS))
 install-bytecode  :: $(addsuffix /.makeinstall-bytecode,$(PARALLEL_DIRS))
 
-Parallel_Targets := $(foreach T,$(RecursiveTargets),%/.make$(T))
+ParallelTargets := $(foreach T,$(RecursiveTargets),%/.make$(T))
 
-$(Parallel_Targets) :
+$(ParallelTargets) :
 	$(Verb) if [ ! -f $(@D)/Makefile ]; then \
 	  $(MKDIR) $(@D); \
 	  cp $(BUILD_SRC_DIR)/$(@D)/Makefile $(@D)/Makefile; \
@@ -525,7 +535,7 @@ $(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
 	$(Verb) $(BCLinkLib) -o $(ObjDir)/$(LIBRARYNAME).o $(ObjectsBC)
 	$(Verb) $(LArchive) $@ $(ObjDir)/$(LIBRARYNAME).o
 else
-$(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
+$(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir
 	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@)
 	$(Verb) $(LArchive) $@ $(ObjectsBC)
 
@@ -1070,10 +1080,7 @@ ifeq ($(BUILD_SRC_DIR),$(BUILD_OBJ_DIR))
 dist dist-check dist-clean dist-gzip dist-bzip2 dist-zip ::
 	$(Echo) ERROR: Target $@ only available with OBJ_DIR != SRC_DIR
 
-DistCheckTop := 
 else
-
-DistCheckTop := 
 
 #------------------------------------------------------------------------
 # Prevent catastrophic remove
@@ -1098,21 +1105,21 @@ else
 
 dist-gzip:: $(DistTarGZip)
 
-$(DistTarGZip) : distdir
+$(DistTarGZip) : $(TopDistDir)/.makedistdir
 	$(Echo) Packing gzipped distribution tar file.
 	$(Verb) cd $(BUILD_OBJ_ROOT) ; $(TAR) chf - "$(DistName)" | \
 	  $(GZIP) -c > "$(DistTarGZip)"
 
 dist-bzip2:: $(DistTarBZ2)
 
-$(DistTarBZ2) : distdir
+$(DistTarBZ2) : $(TopDistDir)/.makedistdir
 	$(Echo) Packing bzipped distribution tar file.
 	$(Verb) cd $(BUILD_OBJ_ROOT) ; $(TAR) chf - $(DistName) | \
 	  $(BZIP2) -c >$(DistTarBZ2)
 
 dist-zip:: $(DistZip)
 
-$(DistZip) : distdir
+$(DistZip) : $(TopDistDir)/.makedistdir
 	$(Echo) Packing zipped distribution file.
 	$(Verb) rm -f $(DistZip)
 	$(Verb) cd $(BUILD_OBJ_ROOT) ; $(ZIP) -rq $(DistZip) $(DistName)
@@ -1122,7 +1129,7 @@ dist :: $(DistTarGZip) $(DistTarBZ2) $(DistZip)
 
 DistCheckDir := $(LLVM_OBJ_ROOT)/_distcheckdir
 
-dist-check:: $(DistCheckTop) $(DistTarGZip)
+dist-check:: $(DistTarGZip)
 	$(Echo) Checking distribution tar file.
 	$(Verb) if test -d $(DistCheckDir) ; then \
 	  $(RM) -rf $(DistCheckDir) ; \
@@ -1135,6 +1142,7 @@ dist-check:: $(DistCheckTop) $(DistTarGZip)
 	  cd build && \
 	  ../$(DistName)/configure --prefix="$(DistCheckDir)/install" \
 	    --srcdir=../$(DistName) --with-llvmgccdir="$(LLVMGCCDIR)" && \
+	  $(MAKE) all && \
 	  $(MAKE) check && \
 	  $(MAKE) install && \
 	  $(MAKE) uninstall && \
@@ -1145,21 +1153,25 @@ dist-check:: $(DistCheckTop) $(DistTarGZip)
 
 dist-clean::
 	$(Echo) Cleaning distribution files
-	-$(Verb) $(RM) -rf $(DistTarGZip) $(DistTarBZ2) $(DistZip) $(DistName) $(DistCheckDir)
+	-$(Verb) $(RM) -rf $(DistTarGZip) $(DistTarBZ2) $(DistZip) $(DistName) \
+	  $(DistCheckDir)
 
 endif
 
 #------------------------------------------------------------------------
 # Provide the recursive distdir target for building the distribution directory
 #------------------------------------------------------------------------
-distdir : $(DistSources)
+distdir: $(DistDir)/.makedistdir
+$(DistDir)/.makedistdir: $(DistSources)
 	$(Verb) if test "$(DistDir)" = "$(TopDistDir)" ; then \
 	  if test -d "$(DistDir)" ; then \
 	    find $(DistDir) -type d ! -perm -200 -exec chmod u+w {} ';'  || \
 	      exit 1 ; \
 	  fi ; \
-	  $(EchoCmd) Removing $(DistDir) ; \
+	  $(EchoCmd) Removing old $(DistDir) ; \
 	  $(RM) -rf $(DistDir); \
+	  $(EchoCmd) Making 'all' to be sure. ; \
+	  $(MAKE) all ; \
 	fi
 	$(Echo) Building Distribution Directory $(DistDir)
 	$(Verb) $(MKDIR) $(DistDir) 
@@ -1167,15 +1179,21 @@ distdir : $(DistSources)
 	srcrootstrip=`echo "$(BUILD_SRC_ROOT)" | sed 's|.|.|g'`; \
 	for file in $(DistFiles) ; do \
 	  case "$$file" in \
-	    $(BUILD_SRC_DIR)/*) file=`echo "$$file" | sed "s#^$$srcdirstrip/##"`;; \
-	    $(BUILD_SRC_ROOT)/*) file=`echo "$$file" | sed "s#^$$srcrootstrip/#$(BUILD_OBJ_ROOT)/#"`;; \
+	    $(BUILD_SRC_DIR)/*) \
+	      file=`echo "$$file" | sed "s#^$$srcdirstrip/##"` \
+	      ;; \
+	    $(BUILD_SRC_ROOT)/*) \
+	      file=`echo "$$file" | \
+		sed "s#^$$srcrootstrip/##"` \
+	      ;; \
 	  esac; \
-	  if test -f "$$file" || test -d "$$file" ; then \
+	  if test -f "$(BUILD_SRC_DIR)/$$file" || \
+	     test -d "$(BUILD_SRC_DIR)/$$file" ; then \
+	    from_dir="$(BUILD_SRC_DIR)" ; \
+	  elif test -f "$$file" || test -d "$$file" ; then \
 	    from_dir=. ; \
-	  else \
-	    from_dir=$(BUILD_SRC_DIR); \
-	  fi; \
-	  to_dir=`echo "$$file" | sed -e 's#/[^/]*$$##'`; \
+	  fi ; \
+	  to_dir=`echo "$$file" | sed -e 's#/[^/]*$$##'` ; \
 	  if test "$$to_dir" != "$$file" && test "$$to_dir" != "."; then \
 	    to_dir="$(DistDir)/$$dir"; \
 	    $(MKDIR) "$$to_dir" ; \
@@ -1197,7 +1215,8 @@ distdir : $(DistSources)
 	  elif test -L "$$from_dir/$$file" ; then \
 	    cp -pd "$$from_dir/$$file" $(DistDir)/$$file || exit 1; \
 	  elif echo "$(DistAlways)" | grep -v "$$file" >/dev/null ; then \
-	    $(EchoCmd) "===== WARNING: Distribution Source $$from_dir/$$file Not Found!" ; \
+	    $(EchoCmd) "===== WARNING: Distribution Source " \
+	      "$$from_dir/$$file Not Found!" ; \
 	  elif test "$(Verb)" != '@' ; then \
 	    $(EchoCmd) "Skipping non-existent $$from_dir/$$file" ; \
 	  fi; \
@@ -1206,15 +1225,21 @@ distdir : $(DistSources)
 	  if test "$$subdir" \!= "." ; then \
 	    new_distdir="$(DistDir)/$$subdir" ; \
 	    test -d "$$new_distdir" || $(MKDIR) "$$new_distdir" || exit 1; \
-	    ( cd $$subdir && $(MAKE) DistDir="$$new_distdir" distdir ) || exit 1; \
+	    ( cd $$subdir && $(MAKE) DistDir="$$new_distdir" distdir ) || \
+	    exit 1; \
 	  fi; \
 	done
-	$(Verb) $(MAKE) DistDir="$(DistDir)" dist-hook || exit 1
-	-$(Verb) find $(DistDir) -type d ! -perm -777 -exec chmod a+rwx {} \; -o \
-	  ! -type d ! -perm -444 -links 1 -exec chmod a+r {} \; -o \
-	  ! -type d ! -perm -400 -exec chmod a+r {} \; -o \
-	  ! -type d ! -perm -444 -exec $(SHELL) $(INSTALL_SH) -c -m a+r {} {} \; \
-	|| chmod -R a+r $(DistDir)
+	$(Verb) if test "$(DistDir)" = "$(TopDistDir)" ; then \
+	  $(EchoCmd) Eliminating CVS directories from distribution ; \
+	  $(RM) -rf `find $(TopDistDir) -type d -name CVS -print` ;\
+	  $(MAKE) dist-hook ; \
+	  $(FIND) $(TopDistDir) -type d ! -perm -777 -exec chmod a+rwx {} \; \
+	    -o ! -type d ! -perm -444 -links 1 -exec chmod a+r {} \; \
+	    -o ! -type d ! -perm -400 -exec chmod a+r {} \; \
+	    -o ! -type d ! -perm -444 -exec \
+	      $(SHELL) $(INSTALL_SH) -c -m a+r {} {} \; \
+	    || chmod -R a+r $(DistDir) ; \
+	fi
 
 # This is invoked by distdir target, define it as a no-op to avoid errors if not
 # defined by user.
