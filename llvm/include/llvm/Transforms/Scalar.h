@@ -224,6 +224,11 @@ extern const PassInfo *LoopPreheadersID;
 Pass *createLowerAllocationsPass();
 Pass *createRaiseAllocationsPass();
 
+//===----------------------------------------------------------------------===//
+// This pass converts SwitchInst instructions into a sequence of chained binary
+// branch instructions.
+//
+Pass *createLowerSwitchPass();
 
 //===----------------------------------------------------------------------===//
 //
