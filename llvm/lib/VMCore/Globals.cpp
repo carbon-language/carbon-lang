@@ -17,7 +17,6 @@
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "Support/LeakDetector.h"
-
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -28,20 +27,19 @@ using namespace llvm;
 /// there are no non-constant uses of this GlobalValue. If there aren't then
 /// this and the transitive closure of the constants can be deleted. See the
 /// destructor for details.
-namespace {
-bool removeDeadConstantUsers(Constant* C) {
-  while (!C->use_empty()) {
+static bool removeDeadConstantUsers(Constant* C) {
+  if (isa<GlobalValue>(C)) return false; // Cannot remove this
+
+  while (!C->use_empty())
     if (Constant *User = dyn_cast<Constant>(C->use_back())) {
       if (!removeDeadConstantUsers(User)) 
         return false; // Constant wasn't dead
     } else {
       return false; // Non-constant usage;
     }
-  }
-  if (!isa<GlobalValue>(C))
-    C->destroyConstant();
+
+  C->destroyConstant();
   return true;
-}
 }
 
 /// removeDeadConstantUsers - If there are any dead constant users dangling
