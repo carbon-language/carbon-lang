@@ -161,12 +161,24 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
     int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1)+4;
 
+    if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
+      MI= BuildMI(X86::SUBri32, 2, X86::ESP).addReg(X86::ESP).addZImm(NumBytes);
+      MBBI = MBB.insert(MBBI, MI)+1;
+    }
+
+    // Save EBP into the appropriate stack slot...
     MI = addRegOffset(BuildMI(X86::MOVrm32, 5),    // mov [ESP-<offset>], EBP
-		      X86::ESP, EBPOffset).addReg(X86::EBP);
+		      X86::ESP, EBPOffset+NumBytes).addReg(X86::EBP);
     MBBI = MBB.insert(MBBI, MI)+1;
-    
-    MI = BuildMI(X86::MOVrr32, 2, X86::EBP).addReg(X86::ESP);
+
+    // Update EBP with the new base value...
+    if (NumBytes == 0)    // mov EBP, ESP
+      MI = BuildMI(X86::MOVrr32, 2, X86::EBP).addReg(X86::ESP);
+    else                  // lea EBP, [ESP+StackSize]
+      MI = addRegOffset(BuildMI(X86::LEAr32, 5, X86::EBP), X86::ESP, NumBytes);
+
     MBBI = MBB.insert(MBBI, MI)+1;
+
   } else {
     // When we have no frame pointer, we reserve argument space for call sites
     // in the function immediately on entry to the current function.  This
@@ -181,12 +193,12 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     // Update frame info to pretend that this is part of the stack...
     MFI->setStackSize(NumBytes);
-  }
 
-  if (NumBytes) {
-    // adjust stack pointer: ESP -= numbytes
-    MI  = BuildMI(X86::SUBri32, 2, X86::ESP).addReg(X86::ESP).addZImm(NumBytes);
-    MBBI = 1+MBB.insert(MBBI, MI);
+    if (NumBytes) {
+      // adjust stack pointer: ESP -= numbytes
+      MI= BuildMI(X86::SUBri32, 2, X86::ESP).addReg(X86::ESP).addZImm(NumBytes);
+      MBB.insert(MBBI, MI);
+    }
   }
 }
 
