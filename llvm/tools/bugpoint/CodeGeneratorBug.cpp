@@ -172,10 +172,6 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
     abort();
   }
 
-  // Clean up the modules, removing extra cruft that we don't need anymore...
-  SafeModule = BD.performFinalCleanups(SafeModule);
-  TestModule = BD.performFinalCleanups(TestModule);
-
   DEBUG(std::cerr << "Safe module:\n";
         typedef Module::iterator MI;
         typedef Module::giterator MGI;
@@ -200,10 +196,6 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
     exit(1);
   }
 
-  // Make a shared library
-  std::string SharedObject;
-  BD.compileSharedObject(SafeModuleBC, SharedObject);
-
   // Remove all functions from the Test module EXCEPT for the ones specified in
   // Funcs.  We know which ones these are because they are non-external in
   // ToOptimize, but external in ToNotOptimize.
@@ -222,10 +214,19 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
     std::cerr << "Bytecode file corrupted!\n";
     exit(1);
   }
+
+  // Clean up the modules, removing extra cruft that we don't need anymore...
+  SafeModule = BD.performFinalCleanups(SafeModule);
+  TestModule = BD.performFinalCleanups(TestModule);
+
   if (BD.writeProgramToFile(TestModuleBC, TestModule)) {
     std::cerr << "Error writing bytecode to `" << SafeModuleBC << "'\nExiting.";
     exit(1);
   }
+
+  // Make a shared library
+  std::string SharedObject;
+  BD.compileSharedObject(SafeModuleBC, SharedObject);
 
   delete SafeModule;
   delete TestModule;
