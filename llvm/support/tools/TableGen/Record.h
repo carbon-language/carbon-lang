@@ -245,6 +245,7 @@ public:
   }
   void setBit(unsigned Bit, Init *V) {
     assert(Bit < Bits.size() && "Bit index out of range!");
+    assert(Bits[Bit] == 0 && "Bit already set!");
     Bits[Bit] = V;
   }
 

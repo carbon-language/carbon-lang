@@ -89,14 +89,21 @@ static void setValue(const std::string &ValName,
 
     BitsInit *NewVal = new BitsInit(CurVal->getNumBits());
 
-    for (unsigned i = 0, e = CurVal->getNumBits(); i != e; ++i)
-      NewVal->setBit(i, CurVal->getBit(i));
-
-    // Loop over bits, assigning values as appopriate...
+    // Loop over bits, assigning values as appropriate...
     for (unsigned i = 0, e = BitList->size(); i != e; ++i) {
       unsigned Bit = (*BitList)[i];
+      if (NewVal->getBit(i)) {
+        err() << "Cannot set bit #" << i << " of value '" << ValName
+              << "' more than once!\n";
+        abort();
+      }
       NewVal->setBit(Bit, BInit->getBit(i));
     }
+
+    for (unsigned i = 0, e = CurVal->getNumBits(); i != e; ++i)
+      if (NewVal->getBit(i) == 0)
+        NewVal->setBit(i, CurVal->getBit(i));
+
     V = NewVal;
   }
 

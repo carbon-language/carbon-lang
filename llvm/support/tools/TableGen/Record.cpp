@@ -211,12 +211,14 @@ Init *BitsInit::resolveReferences(Record &R) {
 
   for (unsigned i = 0, e = Bits.size(); i != e; ++i) {
     Init *B;
-    New->setBit(i, getBit(i));
+    Init *CurBit = getBit(i);
+
     do {
-      B = New->getBit(i);
-      New->setBit(i, B->resolveReferences(R));
-      Changed |= B != New->getBit(i);
-    } while (B != New->getBit(i));
+      B = CurBit;
+      CurBit = CurBit->resolveReferences(R);
+      Changed |= B != CurBit;
+    } while (B != CurBit);
+    New->setBit(i, CurBit);
   }
 
   if (Changed)
