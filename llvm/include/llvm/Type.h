@@ -33,21 +33,24 @@
 #ifndef LLVM_TYPE_H
 #define LLVM_TYPE_H
 
-#include "llvm/Value.h"
+#include "AbstractTypeUser.h"
+#include "Support/Casting.h"
 #include "Support/GraphTraits.h"
 #include "Support/iterator"
 #include <vector>
 
 namespace llvm {
 
+class ArrayType;
 class DerivedType;
 class FunctionType;
-class ArrayType;
+class OpaqueType;
 class PointerType;
 class StructType;
-class OpaqueType;
+class SymbolTable;
+class Value;
 
-struct Type : public Value {
+struct Type {
   ///===-------------------------------------------------------------------===//
   /// Definitions of all of the base types for the Type system.  Based on this
   /// value, you can cast to a "DerivedType" subclass (see DerivedTypes.h)
@@ -55,16 +58,14 @@ struct Type : public Value {
   /// Type::getPrimitiveType function, or else things will break!
   ///
   enum TypeID {
+    // PrimitiveTypes .. make sure LastPrimitiveTyID stays up to date
     VoidTyID = 0  , BoolTyID,           //  0, 1: Basics...
     UByteTyID     , SByteTyID,          //  2, 3: 8 bit types...
     UShortTyID    , ShortTyID,          //  4, 5: 16 bit types...
     UIntTyID      , IntTyID,            //  6, 7: 32 bit types...
     ULongTyID     , LongTyID,           //  8, 9: 64 bit types...
-
     FloatTyID     , DoubleTyID,         // 10,11: Floating point types...
-
-    TypeTyID,                           // 12   : Type definitions
-    LabelTyID     ,                     // 13   : Labels... 
+    LabelTyID     ,                     // 12   : Labels... 
 
     // Derived types... see DerivedTypes.h file...
     // Make sure FirstDerivedTyID stays up to date!!!
@@ -75,6 +76,7 @@ struct Type : public Value {
     //...
 
     NumTypeIDs,                         // Must remain as last defined ID
+    LastPrimitiveTyID = LabelTyID,
     FirstDerivedTyID = FunctionTyID,
   };
 
@@ -93,7 +95,7 @@ private:
   const Type *getForwardedTypeInternal() const;
 protected:
   /// ctor is protected, so only subclasses can create Type objects...
-  Type(const std::string &Name, TypeID id);
+  Type(const std::string& Name, TypeID id );
   virtual ~Type() {}
 
 
@@ -193,12 +195,12 @@ public:
   /// Here are some useful little methods to query what type derived types are
   /// Note that all other types can just compare to see if this == Type::xxxTy;
   ///
-  inline bool isPrimitiveType() const { return ID < FirstDerivedTyID;  }
+  inline bool isPrimitiveType() const { return ID <= LastPrimitiveTyID; }
   inline bool isDerivedType()   const { return ID >= FirstDerivedTyID; }
 
   /// isFirstClassType - Return true if the value is holdable in a register.
   inline bool isFirstClassType() const {
-    return (ID != VoidTyID && ID < TypeTyID) || ID == PointerTyID;
+    return (ID != VoidTyID && ID <= LastPrimitiveTyID) || ID == PointerTyID;
   }
 
   /// isSized - Return true if it makes sense to take the size of this type.  To
@@ -272,13 +274,10 @@ public:
               *LongTy , *ULongTy;
   static Type *FloatTy, *DoubleTy;
 
-  static Type *TypeTy , *LabelTy;
+  static Type* LabelTy;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Type *T) { return true; }
-  static inline bool classof(const Value *V) {
-    return V->getValueType() == Value::TypeVal;
-  }
 
 #include "llvm/Type.def"
 
@@ -401,6 +400,9 @@ template <> struct GraphTraits<const Type*> {
 template <> inline bool isa_impl<PointerType, Type>(const Type &Ty) { 
   return Ty.getTypeID() == Type::PointerTyID;
 }
+
+std::ostream &operator<<(std::ostream &OS, const Type *T);
+std::ostream &operator<<(std::ostream &OS, const Type &T);
 
 } // End llvm namespace
 
