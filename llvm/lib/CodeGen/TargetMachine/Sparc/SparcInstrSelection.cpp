@@ -325,8 +325,10 @@ ChooseConvertToFloatInstr(const InstructionNode* instrNode,
 	opCode = FXTOS;
       else if (opType == Type::DoubleTy)
 	opCode = FDTOS;
+      else if (opType == Type::FloatTy)
+	;
       else
-	  assert(0 && "Cannot convert this type to FLOAT on SPARC");
+	assert(0 && "Cannot convert this type to FLOAT on SPARC");		
       break;
       
     case ToDoubleTy: 
@@ -336,8 +338,10 @@ ChooseConvertToFloatInstr(const InstructionNode* instrNode,
 	opCode = FXTOD;
       else if (opType == Type::FloatTy)
 	opCode = FSTOD;
+      else if (opType == Type::DoubleTy)
+	;
       else
-	assert(0 && "Cannot convert this type to DOUBLE on SPARC");
+	assert(0 && "Cannot convert this type to DOUBLE on SPARC");		
       break;
       
     default:
@@ -1504,8 +1508,17 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     else
       {
 	opType = subtreeRoot->leftChild()->getValue()->getType();
-	mvec[0] = new MachineInstr(ChooseConvertToFloatInstr(subtreeRoot, opType));
-	Set2OperandsFromInstr(mvec[0], subtreeRoot, target);
+	MachineOpCode opCode = ChooseConvertToFloatInstr(subtreeRoot, opType);
+	if (opCode == INVALID_OPCODE)	// no conversion needed
+	  {
+	    numInstr = 0;
+	    forwardOperandNum = 0;
+	  }
+	else
+	  {
+	    mvec[0] = new MachineInstr(opCode);
+	    Set2OperandsFromInstr(mvec[0], subtreeRoot, target);
+	  }
       }
     break;
     
