@@ -57,6 +57,10 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
   PM.add(createLowerSwitchPass());
 
   PM.add(createPPCSimpleInstructionSelector(*this));
+
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
+
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());
   PM.add(createPPCCodePrinterPass(Out, *this));
