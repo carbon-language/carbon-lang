@@ -254,14 +254,16 @@ Value* InductionVariable::getExecutionCount(LoopInfo *LoopInfo) {
           End = ConstantSInt::get(ubSigned->getType(), ubSigned->getValue()+1);
           DEBUG(std::cerr << "signed int constant\n");
         } else if (ConstantUInt *ubUnsigned = dyn_cast<ConstantUInt>(End)) {
-          End = ConstantUInt::get(ubUnsigned->getType(), ubUnsigned->getValue()+1);
+          End = ConstantUInt::get(ubUnsigned->getType(),
+                                  ubUnsigned->getValue()+1);
           DEBUG(std::cerr << "unsigned int constant\n");
         } else {
           DEBUG(std::cerr << "symbolic bound\n");
           //End = NULL;
           // new expression N+1
           End = BinaryOperator::create(Instruction::Add, End, 
-                                       ConstantUInt::get(ubUnsigned->getType(), 1));
+                                       ConstantUInt::get(ubUnsigned->getType(),
+                                                         1));
         }
         break;
       }
