@@ -232,7 +232,7 @@ renumber()
 	for (i = 1; i < globalMap->count; i++) {
 		sortedStates[i-1] = globalMap->set[i];
 	}
-	qsort(sortedStates, globalMap->count-1, sizeof(Item_Set), stateCompare);
+	qsort(sortedStates, globalMap->count-1, sizeof(Item_Set), (int(*)(const void *, const void *))stateCompare);
 	previousOp = 0;
 	for (i = 0; i < globalMap->count-1; i++) {
 		sortedStates[i]->newNum = i;
@@ -246,7 +246,7 @@ renumber()
 	sortedRules = (RuleAST*) zalloc(max_ruleAST * sizeof(RuleAST));
 	count = 0;
 	foreachList((ListFn) assignRules, ruleASTs);
-	qsort(sortedRules, max_ruleAST, sizeof(RuleAST), ruleCompare);
+	qsort(sortedRules, max_ruleAST, sizeof(RuleAST), (int(*)(const void *, const void *))ruleCompare);
 	previousLHS = 0;
 	base_counter = 0;
 	for (i = 0; i < max_ruleAST; i++) {

@@ -688,14 +688,14 @@ makeRuleDescArray2()
 		fprintf(outfile, "\t");
 		if (pVector[i]) {
 			Operator o;
-			NonTerminal t;
+			NonTerminal t1, t2;
 
 			fprintf(outfile, "{");
 			fprintf(outfile, "%5d, %5d, %5d, %5d",
 				pVector[i]->rule->lhs->num,
 				(o = pVector[i]->rule->pat->op) ? o->num : 0,
-				(t = pVector[i]->rule->pat->children[0]) ? t->num : 0,
-				(t = pVector[i]->rule->pat->children[1]) ? t->num : 0
+				(t1 = pVector[i]->rule->pat->children[0]) ? t1->num : 0,
+				(t2 = pVector[i]->rule->pat->children[1]) ? t2->num : 0
 				);
 			fprintf(outfile, "} /* ");
 			printRule(pVector[i], "0");

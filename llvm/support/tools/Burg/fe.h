@@ -58,6 +58,11 @@ struct strTable {
 };
 typedef struct strTable	*StrTable;
 
+extern void doGrammarNts ARGS((void));
+void makeRuleDescArray ARGS((void));
+void makeDeltaCostArray ARGS((void));
+void makeStateStringArray ARGS((void));
+
 extern StrTable newStrTable ARGS((void));
 extern StrTableElement addString ARGS((StrTable, char *, int, int *));
 
