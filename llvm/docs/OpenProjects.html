@@ -16,7 +16,6 @@
   <li><a href="#improving">Improving the current system</a>
   <ol>
     <li><a href="#glibc">Port glibc to LLVM</a></li>
-    <li><a href="#NightlyTest">Improving the Nightly Tester</a></li>
     <li><a href="#programs">Compile programs with the LLVM Compiler</a></li>
     <li><a href="#llvm_ir">Extend the LLVM intermediate representation</a></li>
     <li><a href="#misc_imp">Miscellaneous Improvements</a></li>
@@ -94,24 +93,6 @@ variety of interprocedural algorithms to be much more effective in the face of
 library calls.  The most important pieces to port are things like the string
 library and the <tt>stdio</tt> related functions... low-level system calls like
 '<tt>read</tt>' should stay unimplemented in LLVM.</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="NightlyTest">Improving the Nightly Tester</a>
-</div>
-
-<div class="doc_text">
-
-<p>The <a href="/testresults/">Nightly Tester</a> is a simple perl script
-(located in <tt>utils/NightlyTest.pl</tt>) which runs every night to generate a
-daily report.  It could use the following improvements:</p>
-
-<ol>
-<li>Regression tests - We should run the regression tests in addition to the
-    program tests...</li>
-</ol>
 
 </div>
 
