@@ -160,13 +160,6 @@ public:
   int getLineNum() const { return LineNum; }
 };
 
-struct TypePlaceHolderHelper : public OpaqueType {
-  TypePlaceHolderHelper(const Type *Ty) : OpaqueType() {
-    assert(Ty == Type::TypeTy);
-  }
-};
-
-
 struct InstPlaceHolderHelper : public Instruction {
   InstPlaceHolderHelper(const Type *Ty) : Instruction(Ty, UserOp1, "") {}
 
@@ -184,7 +177,6 @@ struct MethPlaceHolderHelper : public Method {
   MethPlaceHolderHelper(const Type *Ty) : Method(cast<const MethodType>(Ty)) {}
 };
 
-typedef PlaceholderValue<TypePlaceHolderHelper>  TypePlaceHolder;
 typedef PlaceholderValue<InstPlaceHolderHelper>  ValuePlaceHolder;
 typedef PlaceholderValue<BBPlaceHolderHelper>    BBPlaceHolder;
 
@@ -195,7 +187,6 @@ static inline ValID &getValIDFromPlaceHolder(const Value *Val) {
     Ty = cast<PointerType>(Ty)->getValueType();
 
   switch (Ty->getPrimitiveID()) {
-  case Type::TypeTyID:   return ((TypePlaceHolder*)Val)->getDef();
   case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getDef();
   default:               return ((ValuePlaceHolder*)Val)->getDef();
   }
@@ -208,7 +199,6 @@ static inline int getLineNumFromPlaceHolder(const Value *Val) {
     Ty = cast<PointerType>(Ty)->getValueType();
 
   switch (Ty->getPrimitiveID()) {
-  case Type::TypeTyID:   return ((TypePlaceHolder*)Val)->getLineNum();
   case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getLineNum();
   default:               return ((ValuePlaceHolder*)Val)->getLineNum();
   }

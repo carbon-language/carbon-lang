@@ -237,7 +237,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
     return I->second;
   }
 
-  Type *Typ = new TypePlaceHolder(Type::TypeTy, D);
+  Type *Typ = OpaqueType::get();
   LateResolver.insert(make_pair(D, Typ));
   return Typ;
 }
@@ -473,14 +473,12 @@ static void ResolveTypeTo(char *Name, const Type *ToTy) {
 //
 static void ResolveTypes(map<ValID, PATypeHolder<Type> > &LateResolveTypes) {
   if (!LateResolveTypes.empty()) {
-    ValID &DID = LateResolveTypes.begin()->first;
+    const ValID &DID = LateResolveTypes.begin()->first;
 
     if (DID.Type == ValID::NameVal)
-      ThrowException("Reference to an invalid type: '" +DID.getName() + "'",
-                     getLineNumFromPlaceHolder(Ty));
+      ThrowException("Reference to an invalid type: '" +DID.getName() + "'");
     else
-      ThrowException("Reference to an invalid type: #" + itostr(DID.Num),
-                     getLineNumFromPlaceHolder(Ty));
+      ThrowException("Reference to an invalid type: #" + itostr(DID.Num));
   }
 }
 
