@@ -14,6 +14,7 @@
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Transforms/ConstantMerge.h"
+#include "llvm/Transforms/CleanupGCCOutput.h"
 #include <fstream>
 
 using namespace opt;
@@ -23,7 +24,7 @@ enum Opts {
   dce, constprop, inlining, mergecons, strip, mstrip,
 
   // Miscellaneous Transformations
-  trace, tracem, print,
+  trace, tracem, print, cleangcc,
 
   // More powerful optimizations
   indvars, sccp, adce, raise,
@@ -46,6 +47,7 @@ struct {
   { trace    , new InsertTraceCode(true, true) },
   { tracem   , new InsertTraceCode(false, true) },
   { print    , new PrintModulePass("Current Method: \n",&cerr) },
+  { cleangcc , new CleanupGCCOutput() },
 };
 
 cl::String InputFilename ("", "Load <arg> file to optimize", cl::NoFlags, "-");
@@ -63,6 +65,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(indvars  , "Simplify Induction Variables"),
   clEnumVal(sccp     , "Sparse Conditional Constant Propogation"),
   clEnumVal(adce     , "Agressive DCE"),
+  clEnumVal(cleangcc , "Cleanup GCC Output"),
   clEnumVal(raise    , "Raise to Higher Level"),
   clEnumVal(trace    , "Insert BB & Method trace code"),
   clEnumVal(tracem   , "Insert Method trace code only"),
