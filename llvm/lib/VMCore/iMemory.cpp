@@ -94,7 +94,6 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                             Idx, true))),
 		  GetElementPtr, Name, InBe) {
-  assert(getIndexedType(Ptr->getType(), Idx, true) && "gep operands invalid!");
   Operands.reserve(1+Idx.size());
   Operands.push_back(Use(Ptr, this));
 
