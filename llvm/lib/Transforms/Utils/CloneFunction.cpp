@@ -31,6 +31,25 @@ static inline void RemapInstruction(Instruction *I,
   }
 }
 
+// CloneBasicBlock - See comments in Cloning.h
+BasicBlock *CloneBasicBlock(const BasicBlock *BB,
+                            std::map<const Value*, Value*> &ValueMap,
+                            const char *NameSuffix) {
+  BasicBlock *NewBB = new BasicBlock("");
+  if (BB->hasName()) NewBB->setName(BB->getName()+NameSuffix);
+
+  // Loop over all instructions copying them over...
+  for (BasicBlock::const_iterator II = BB->begin(), IE = BB->end();
+       II != IE; ++II) {
+    Instruction *NewInst = II->clone();
+    if (II->hasName())
+      NewInst->setName(II->getName()+NameSuffix);
+    NewBB->getInstList().push_back(NewInst);
+    ValueMap[II] = NewInst;                // Add instruction map to value.
+  }
+  return NewBB;
+}
+
 // Clone OldFunc into NewFunc, transforming the old arguments into references to
 // ArgMap values.
 //
@@ -54,20 +73,10 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
        BI != BE; ++BI) {
     const BasicBlock &BB = *BI;
     
-    // Create a new basic block to copy instructions into!
-    BasicBlock *CBB = new BasicBlock("", NewFunc);
-    if (BB.hasName()) CBB->setName(BB.getName()+NameSuffix);
+    // Create a new basic block and copy instructions into it!
+    BasicBlock *CBB = CloneBasicBlock(&BB, ValueMap, NameSuffix);
+    NewFunc->getBasicBlockList().push_back(CBB);
     ValueMap[&BB] = CBB;                       // Add basic block mapping.
-
-    // Loop over all instructions copying them over...
-    for (BasicBlock::const_iterator II = BB.begin(), IE = BB.end();
-         II != IE; ++II) {
-      Instruction *NewInst = II->clone();
-      if (II->hasName())
-        NewInst->setName(II->getName()+NameSuffix);     // Name is not cloned...
-      CBB->getInstList().push_back(NewInst);
-      ValueMap[II] = NewInst;                // Add instruction map to value.
-    }
 
     if (ReturnInst *RI = dyn_cast<ReturnInst>(CBB->getTerminator()))
       Returns.push_back(RI);
