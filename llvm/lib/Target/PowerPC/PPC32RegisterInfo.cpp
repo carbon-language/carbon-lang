@@ -278,12 +278,13 @@ void PPC32RegisterInfo::emitEpilogue(MachineFunction &MF,
   
   // Get the number of bytes allocated from the FrameInfo...
   unsigned NumBytes = MFI->getStackSize();
+  unsigned GPRSize = getSpillSize(PPC::R31);
 
   if (NumBytes != 0) {
     if (hasFP(MF)) {
       MI = BuildMI(PPC::OR, 2, PPC::R1).addReg(PPC::R31).addReg(PPC::R31);
       MBB.insert(MBBI, MI);
-      MI = BuildMI(PPC::LWZ, 2, PPC::R31).addSImm(4).addReg(PPC::R31);
+      MI = BuildMI(PPC::LWZ, 2, PPC::R31).addSImm(GPRSize).addReg(PPC::R31);
       MBB.insert(MBBI, MI);
     }
     MI = BuildMI(PPC::LWZ, 2, PPC::R1).addSImm(0).addReg(PPC::R1);
