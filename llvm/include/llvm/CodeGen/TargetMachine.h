@@ -64,7 +64,7 @@ const unsigned int	M_STORE_FLAG		= 1 << 12;
 
 struct MachineInstrDescriptor {
   string	opCodeString;	// Assembly language mnemonic for the opcode.
-  unsigned int	numOperands;	// Number of arguments for the instruction.
+  int		numOperands;	// Number of args; -1 if variable #args
   int		resultPos;	// Position of the result; -1 if no result
   unsigned int	maxImmedConst;	// Largest +ve constant in IMMMED field or 0.
   bool		immedIsSignExtended;	// Is IMMED field sign-extended? If so,
@@ -167,6 +167,8 @@ public:
   
   const MachineInstrInfo& getInstrInfo	() const { return *machineInstrInfo; }
   
+  // const MachineSchedInfo& getSchedInfo() const { return *machineSchedInfo; }
+  
   virtual unsigned int	findOptimalStorageSize	(const Type* ty) const;
   
   virtual unsigned int*	findOptimalMemberOffsets(const StructType* stype)const;
@@ -176,6 +178,7 @@ protected:
   // Description of machine instructions
   // Protect so that subclass can control alloc/dealloc
   MachineInstrInfo* machineInstrInfo;
+  // MachineSchedInfo* machineSchedInfo;
   
 private:
   /*ctor*/		TargetMachine	();	// disable
