@@ -6,8 +6,6 @@
 //
 // * Eliminate names for GCC types that we know can't be needed by the user.
 // * Eliminate names for types that are unused in the entire translation unit
-// * Replace calls to 'sbyte *%malloc(uint)' and 'void %free(sbyte *)' with
-//   malloc and free instructions.
 //
 // Note:  This code produces dead declarations, it is a good idea to run DCE
 //        after this pass.
@@ -242,30 +240,6 @@ bool CleanupGCCOutput::doInitialization(Module *M) {
     //
     Changed |= PatchUpMethodReferences(M);
 
-
-    // If the module has a symbol table, they might be referring to the malloc
-    // and free functions.  If this is the case, grab the method pointers that 
-    // the module is using.
-    //
-    // Lookup %malloc and %free in the symbol table, for later use.  If they
-    // don't exist, or are not external, we do not worry about converting calls
-    // to that function into the appropriate instruction.
-    //
-    const PointerType *MallocType =   // Get the type for malloc
-      PointerType::get(MethodType::get(PointerType::get(Type::SByteTy),
-                                  vector<const Type*>(1, Type::UIntTy), false));
-    Malloc = cast_or_null<Method>(ST->lookup(MallocType, "malloc"));
-    if (Malloc && !Malloc->isExternal())
-      Malloc = 0;  // Don't mess with locally defined versions of the fn
-
-    const PointerType *FreeType =     // Get the type for free
-      PointerType::get(MethodType::get(Type::VoidTy,
-               vector<const Type*>(1, PointerType::get(Type::SByteTy)), false));
-    Free = cast_or_null<Method>(ST->lookup(FreeType, "free"));
-    if (Free && !Free->isExternal())
-      Free = 0;  // Don't mess with locally defined versions of the fn
-    
-
     // Check the symbol table for superfluous type entries...
     //
     // Grab the 'type' plane of the module symbol...
@@ -285,41 +259,6 @@ bool CleanupGCCOutput::doInitialization(Module *M) {
         } else {
           ++PI;
         }
-    }
-  }
-
-  return Changed;
-}
-
-
-// doOneCleanupPass - Do one pass over the input method, fixing stuff up.
-//
-bool CleanupGCCOutput::doOneCleanupPass(Method *M) {
-  bool Changed = false;
-  for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
-    BasicBlock *BB = *MI;
-    BasicBlock::InstListType &BIL = BB->getInstList();
-
-    for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
-      Instruction *I = *BI;
-
-      if (CallInst *CI = dyn_cast<CallInst>(I)) {
-        if (CI->getCalledValue() == Malloc) {      // Replace call to malloc?
-          MallocInst *MallocI = new MallocInst(PtrSByte, CI->getOperand(1),
-                                               CI->getName());
-          CI->setName("");
-          BI = BIL.insert(BI, MallocI)+1;
-          ReplaceInstWithInst(BIL, BI, new CastInst(MallocI, PtrSByte));
-          Changed = true;
-          continue;  // Skip the ++BI
-        } else if (CI->getCalledValue() == Free) { // Replace call to free?
-          ReplaceInstWithInst(BIL, BI, new FreeInst(CI->getOperand(1)));
-          Changed = true;
-          continue;  // Skip the ++BI
-        }
-      }
-
-      ++BI;
     }
   }
 
@@ -553,7 +492,6 @@ static bool fixLocalProblems(Method *M) {
 //
 bool CleanupGCCOutput::runOnMethod(Method *M) {
   bool Changed = fixLocalProblems(M);
-  while (doOneCleanupPass(M)) Changed = true;
 
   FUT.runOnMethod(M);
   return Changed;

@@ -15,6 +15,7 @@
 #include "llvm/Transforms/LevelChange.h"
 #include "llvm/Transforms/MethodInlining.h"
 #include "llvm/Transforms/SymbolStripping.h"
+#include "llvm/Transforms/LowerAllocations.h"
 #include "llvm/Transforms/IPO/SimpleStructMutation.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/Transforms/Scalar/DCE.h"
@@ -34,7 +35,7 @@ enum Opts {
   dce, constprop, inlining, constmerge, strip, mstrip,
 
   // Miscellaneous Transformations
-  trace, tracem, print, cleangcc,
+  trace, tracem, print, raiseallocs, cleangcc,
 
   // More powerful optimizations
   indvars, instcombine, sccp, adce, raise,
@@ -61,6 +62,7 @@ struct {
   { trace      , new InsertTraceCode(true, true) },
   { tracem     , new InsertTraceCode(false, true) },
   { print      , new PrintMethodPass("Current Method: \n",&cerr) },
+  { raiseallocs, new RaiseAllocations() },
   { cleangcc   , new CleanupGCCOutput() },
   { globaldce  , new GlobalDCE() },
   { swapstructs, new SimpleStructMutation(SimpleStructMutation::SwapElements) },
@@ -88,6 +90,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(swapstructs, "Swap structure types around"),
   clEnumVal(sortstructs, "Sort structure elements"),
 
+  clEnumVal(raiseallocs, "Raise allocations from calls to instructions"),
   clEnumVal(cleangcc   , "Cleanup GCC Output"),
   clEnumVal(raise      , "Raise to Higher Level"),
   clEnumVal(trace      , "Insert BB & Method trace code"),

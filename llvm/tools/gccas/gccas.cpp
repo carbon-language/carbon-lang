@@ -12,6 +12,7 @@
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/LevelChange.h"
 #include "llvm/Transforms/ConstantMerge.h"
+#include "llvm/Transforms/LowerAllocations.h"
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
@@ -65,6 +66,7 @@ int main(int argc, char **argv) {
   //
   PassManager Passes;
   Passes.add(new DeadCodeElimination());       // Remove Dead code/vars
+  Passes.add(new RaiseAllocations());          // call %malloc -> malloc inst
   Passes.add(new CleanupGCCOutput());          // Fix gccisms
   Passes.add(new InductionVariableSimplify()); // Simplify indvars
   Passes.add(new RaisePointerReferences());    // Eliminate casts

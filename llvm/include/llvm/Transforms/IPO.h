@@ -9,11 +9,8 @@
 #include "llvm/Analysis/FindUsedTypes.h"
 
 class CleanupGCCOutput : public MethodPass {
-  Method *Malloc, *Free;  // Pointers to external declarations, or null if none
   FindUsedTypes FUT;      // Use FUT to eliminate type names that are never used
 public:
-
-  inline CleanupGCCOutput() : Malloc(0), Free(0) {}
 
   // PatchUpMethodReferences - This is a part of the functionality exported by
   // the CleanupGCCOutput pass.  This causes functions with different signatures
@@ -35,8 +32,6 @@ public:
 
   // doPassFinalization - Strip out type names that are unused by the program
   bool doFinalization(Module *M);
-private:
-  bool doOneCleanupPass(Method *M);
 };
 
 #endif
