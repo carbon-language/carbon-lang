@@ -52,30 +52,75 @@ Graph::Graph(std::vector<Node*> n, std::vector<Edge> e,
 }
 
 //sorting edgelist, called by backEdgeVist ONLY!!!
-Graph::nodeList &Graph::sortNodeList(Node *par, nodeList &nl){
+Graph::nodeList &Graph::sortNodeList(Node *par, nodeList &nl, vector<Edge> &be){
   assert(par && "null node pointer");
   BasicBlock *bbPar = par->getElement();
   
   if(nl.size()<=1) return nl;
+  if(getExit() == par) return nl;
 
   for(nodeList::iterator NLI = nl.begin(), NLE = nl.end()-1; NLI != NLE; ++NLI){
     nodeList::iterator min = NLI;
     for(nodeList::iterator LI = NLI+1, LE = nl.end(); LI!=LE; ++LI){
       //if LI < min, min = LI
-      if(min->element->getElement() == LI->element->getElement())
-        continue;
-      
+      if(min->element->getElement() == LI->element->getElement() &&
+         min->element == getExit()){
 
-      TerminatorInst *tti = par->getElement()->getTerminator();
-      BranchInst *ti =  cast<BranchInst>(tti);
-      assert(ti && "not a branch");
-      assert(ti->getNumSuccessors()==2 && "less successors!");
+        //same successors: so might be exit???
+        //if it is exit, then see which is backedge
+        //check if LI is a left back edge!
+
+        TerminatorInst *tti = par->getElement()->getTerminator();
+        BranchInst *ti =  cast<BranchInst>(tti);
+
+        assert(ti && "not a branch");
+        assert(ti->getNumSuccessors()==2 && "less successors!");
+        
+        BasicBlock *tB = ti->getSuccessor(0);
+        BasicBlock *fB = ti->getSuccessor(1);
+        //so one of LI or min must be back edge!
+        //Algo: if succ(0)!=LI (and so !=min) then succ(0) is backedge
+        //and then see which of min or LI is backedge
+        //THEN if LI is in be, then min=LI
+        if(LI->element->getElement() != tB){//so backedge must be made min!
+          for(vector<Edge>::iterator VBEI = be.begin(), VBEE = be.end();
+              VBEI != VBEE; ++VBEI){
+            if(VBEI->getRandId() == LI->randId){
+              min = LI;
+              break;
+            }
+            else if(VBEI->getRandId() == min->randId)
+              break;
+          }
+        }
+        else{// if(LI->element->getElement() != fB)
+          for(vector<Edge>::iterator VBEI = be.begin(), VBEE = be.end();
+              VBEI != VBEE; ++VBEI){
+            if(VBEI->getRandId() == min->randId){
+              min = LI;
+              break;
+            }
+            else if(VBEI->getRandId() == LI->randId)
+              break;
+          }
+        }
+      }
       
-      BasicBlock *tB = ti->getSuccessor(0);
-      BasicBlock *fB = ti->getSuccessor(1);
-      
-      if(tB == LI->element->getElement() || fB == min->element->getElement())
-        min = LI;
+      else if (min->element->getElement() != LI->element->getElement()){
+        TerminatorInst *tti = par->getElement()->getTerminator();
+        BranchInst *ti =  cast<BranchInst>(tti);
+        assert(ti && "not a branch");
+
+        if(ti->getNumSuccessors()<=1) continue;
+        
+        assert(ti->getNumSuccessors()==2 && "less successors!");
+        
+        BasicBlock *tB = ti->getSuccessor(0);
+        BasicBlock *fB = ti->getSuccessor(1);
+        
+        if(tB == LI->element->getElement() || fB == min->element->getElement())
+          min = LI;
+      }
     }
     
     graphListElement tmpElmnt = *min;
@@ -416,12 +461,6 @@ vector<Node *> Graph::reverseTopologicalSort(){
       DFS_Visit(*LI, toReturn);
   }
 
-  //print nodes
-  //std::cerr<<"Topological sort--------\n";
-  //for(vector<Node *>::iterator VI = toReturn.begin(), VE = toReturn.end(); 
-  //  VI!=VE; ++VI)
-  //std::cerr<<(*VI)->getElement()->getName()<<"->";
-  //std::cerr<<"\n----------------------\n";
   return toReturn;
 }
 
@@ -487,15 +526,9 @@ void Graph::reverseWts(){
 //a node with smaller time, and GREY color
 void Graph::getBackEdges(vector<Edge > &be, map<Node *, int> &d){
   map<Node *, Color > color;
-  //map<Node *, int > d;
-  //vector<Node *> allNodes=getAllNodes();
   int time=0;
-  //for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); 
-  //  NI!=NE; ++NI){
-  //if(color[*NI]!=GREY && color[*NI]!=BLACK)
-  //printGraph();
-  getBackEdgesVisit(getRoot(), be, color, d, time);//*NI, be, color, d, time);
-  //}
+
+  getBackEdgesVisit(getRoot(), be, color, d, time);
 }
 
 //helper function to get back edges: it is called by 
@@ -507,25 +540,14 @@ void Graph::getBackEdgesVisit(Node *u, vector<Edge > &be,
   time++;
   d[u]=time;
 
-  //std::cerr<<"Node list-----\n";
-  vector<graphListElement> succ_list = getSortedNodeList(u);
-  
-  //for(vector<graphListElement>::iterator vl=succ_list.begin(), 
-  //    ve=succ_list.end(); vl!=ve; ++vl){
-  //Node *v=vl->element;
-  //std::cerr<<v->getElement()->getName()<<"->";
-  //}
-  //std::cerr<<"\n-------- end Node list\n";
+  vector<graphListElement> &succ_list = getNodeList(u);
   
   for(vector<graphListElement>::iterator vl=succ_list.begin(), 
 	ve=succ_list.end(); vl!=ve; ++vl){
     Node *v=vl->element;
-    //  for(vector<Node *>::const_iterator v=succ_list.begin(), ve=succ_list.end(); 
-      //  v!=ve; ++v){
-      
-      if(color[v]!=GREY && color[v]!=BLACK){
-        getBackEdgesVisit(v, be, color, d, time);
-      }
+    if(color[v]!=GREY && color[v]!=BLACK){
+      getBackEdgesVisit(v, be, color, d, time);
+    }
     
     //now checking for d and f vals
     if(color[v]==GREY){

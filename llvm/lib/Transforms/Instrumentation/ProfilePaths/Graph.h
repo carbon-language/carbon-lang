@@ -149,7 +149,8 @@ struct NodeListSort{
     return name1<name2;
   }
 };
-struct EdgeCompare{
+
+struct EdgeCompare2{
   bool operator()(Edge e1, Edge e2) const {
     assert(!e1.isNull() && !e2.isNull());
     Node *x1=e1.getFirst();
@@ -158,10 +159,19 @@ struct EdgeCompare{
     Node *y2=e2.getSecond();
     int w1=e1.getWeight();
     int w2=e2.getWeight();
-    return (*x1<*y1 || (*x1==*y1 && *x2<*y2) || (*x1==*y1 && *x2==*y2 && w1<w2));
+    double r1 = e1.getRandId();
+    double r2 = e2.getRandId();
+    //return (*x1<*y1 || (*x1==*y1 && *x2<*y2) || (*x1==*y1 && *x2==*y2 && w1<w2));
+    return (*x1<*y1 || (*x1==*y1 && *x2<*y2) || (*x1==*y1 && *x2==*y2 && w1<w2) || (*x1==*y1 && *x2==*y2 && w1==w2 && r1<r2));
   }
 };
 
+//struct EdgeCompare2{
+//bool operator()(Edge e1, Edge e2) const {
+//  assert(!e1.isNull() && !e2.isNull());
+//  return (e1.getRandId()<e2.getRandId());
+//}
+//};
 
 
 //this is used to color vertices
@@ -309,7 +319,7 @@ public:
   //get a vector of back edges in the graph
   void getBackEdges(std::vector<Edge> &be, std::map<Node *, int> &d);
 
-  nodeList &sortNodeList(Node *par, nodeList &nl);
+  nodeList &sortNodeList(Node *par, nodeList &nl, std::vector<Edge> &be);
  
   //Get the Maximal spanning tree (also a graph)
   //of the graph
@@ -324,10 +334,10 @@ public:
     return nodes[nd];//sortNodeList(nd, nli->second);
   }
    
-  nodeList &getSortedNodeList(Node *nd) {
+  nodeList &getSortedNodeList(Node *nd, std::vector<Edge> &be) {
     elementIterator nli = nodes.find(nd);
     assert(nli != nodes.end() && "Node must be in nodes map");
-    return sortNodeList(nd, nodes[nd]);
+    return sortNodeList(nd, nodes[nd], be);
   }
  
   //get the root of the graph
@@ -450,7 +460,8 @@ void addDummyEdges(std::vector<Edge> &stDummy, std::vector<Edge> &exDummy, Graph
 //such that if we traverse along any path from root to exit, and
 //add up the edge values, we get a path number that uniquely
 //refers to the path we travelled
-int valueAssignmentToEdges(Graph& g, std::map<Node *, int> nodePriority);
+int valueAssignmentToEdges(Graph& g, std::map<Node *, int> nodePriority, 
+                           std::vector<Edge> &be);
 
 void getBBtrace(std::vector<BasicBlock *> &vBB, int pathNo, Function *M);
 #endif

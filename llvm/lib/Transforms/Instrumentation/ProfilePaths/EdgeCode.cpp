@@ -16,7 +16,6 @@
 #include "llvm/iOperators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Module.h"
-#include <string.h>
 #include <stdio.h>
 
 #define INSERT_LOAD_COUNT
@@ -27,11 +26,7 @@ using std::vector;
 
 static void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
                            Value *cnt, Instruction *InsertPos){ 
-  static int i=-1;
-  i++;
-  char gstr[100];
-  sprintf(gstr,"globalVar%d",i);
-  std::string globalVarName=gstr;
+  
   vector<const Type*> args;
   //args.push_back(PointerType::get(Type::SByteTy));
   args.push_back(Type::IntTy);
@@ -39,39 +34,15 @@ static void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
   args.push_back(Type::IntTy);
   const FunctionType *MTy = FunctionType::get(Type::VoidTy, args, false);
 
-  //  Function *triggerMeth = M->getOrInsertFunction("trigger", MTy);
   Function *trigMeth = M->getOrInsertFunction("trigger", MTy);
   assert(trigMeth && "trigger method could not be inserted!");
-  //if (Value *triggerMeth = ST->lookup(PointerType::get(MTy), "trigger")) {
-  //Function *trigMeth = cast<Function>(triggerMeth);
+
   vector<Value *> trargs;
 
-  //pred_iterator piter=BB->pred_begin();
-  //std::string predName = "uu";//BB->getName();
-  //Constant *bbName=ConstantArray::get(predName);//BB->getName());
-  //GlobalVariable *gbl=new GlobalVariable(ArrayType::get(Type::SByteTy, 
-  //					predName.size()+1), 
-  //				 true, true, bbName, gstr);
-  
-  //M->getGlobalList().push_back(gbl);
-
-  //vector<Value *> elargs;
-  //elargs.push_back(ConstantSInt::get(Type::LongTy, 0));
-  //elargs.push_back(ConstantSInt::get(Type::LongTy, 0));
-
-  // commented out bb name frm which its called
-  //Instruction *getElmntInst=new GetElementPtrInst(gbl,elargs,"elmntInst");
-  
-  //trargs.push_back(ConstantArray::get(BB->getName()));
-  
-  //trargs.push_back(getElmntInst);
-  //trargs.push_back(bbName);
-
   trargs.push_back(ConstantSInt::get(Type::IntTy,MethNo));
-    
-  //trargs.push_back(ConstantSInt::get(Type::IntTy,-1));//erase this
   trargs.push_back(pathNo);
   trargs.push_back(cnt);
+
   Instruction *callInst=new CallInst(trigMeth, trargs, "", InsertPos);
 }
 
@@ -83,7 +54,7 @@ void getEdgeCode::getCode(Instruction *rInst,
 			  Function *M, 
 			  BasicBlock *BB, int numPaths, int MethNo){
   
-  Instruction *InsertPos = BB->begin();
+  Instruction *InsertPos = BB->getInstList().begin();
   
   //case: r=k code to be inserted
   switch(cond){
@@ -149,10 +120,8 @@ void getEdgeCode::getCode(Instruction *rInst,
     Value *val=ConstantSInt::get(Type::IntTy,inc);
     Instruction *addIndex=BinaryOperator::
       create(Instruction::Add, ldIndex, val,"ti2", InsertPos);
-    //erase following 1 line
-    //Value *valtemp=ConstantSInt::get(Type::IntTy,999);
-    //now load count[addIndex]
     
+    //now load count[addIndex]
     Instruction *castInst=new CastInst(addIndex, 
 				       Type::LongTy,"ctin", InsertPos);
     Instruction *Idx = new GetElementPtrInst(countInst, 
@@ -162,13 +131,11 @@ void getEdgeCode::getCode(Instruction *rInst,
     Instruction *ldInst=new LoadInst(Idx, "ti3", InsertPos);
     Value *cons=ConstantSInt::get(Type::IntTy,1);
     //count[addIndex]++
-    Value *addIn = BinaryOperator::create(Instruction::Add, ldInst, cons,
-                                          "ti4", InsertPos);
+    Value *addIn = BinaryOperator::create(Instruction::Add, ldInst, 
+                                          cons,"", InsertPos);
     
 #ifdef INSERT_STORE
-    ///*
-    new StoreInst(addIn, Idx, InsertPos);
-    //*/
+    Instruction *stInst = new StoreInst(addIn, Idx, InsertPos);
 #endif
 
     //insert trigger
@@ -202,7 +169,6 @@ void getEdgeCode::getCode(Instruction *rInst,
     //insert trigger
     getTriggerCode(M->getParent(), BB, MethNo, ldIndex, addIn, InsertPos);
     //end trigger code
-    
     break;
   }
     
@@ -252,6 +218,30 @@ void insertInTopBB(BasicBlock *front,
 
   //store uint 0, uint *%R
   new StoreInst(Int0, rVar, here);
+
+  if(front->getParent()->getName() == "main"){
+    
+    //if its a main function, do the following!
+    //A global variable: %llvm_threshold
+    //%llvm_threshold = uninitialized global int
+    GlobalVariable *threshold = new GlobalVariable(Type::IntTy, false, true, 0,
+                                                   "reopt_threshold");
+
+    front->getParent()->getParent()->getGlobalList().push_back(threshold);
+
+    vector<const Type*> initialize_args;
+    initialize_args.push_back(PointerType::get(Type::IntTy));
+    
+    const FunctionType *Fty = FunctionType::get(Type::VoidTy, initialize_args,
+                                                false);
+    Function *initialMeth = front->getParent()->getParent()->getOrInsertFunction("reoptimizerInitialize", Fty);
+    assert(initialMeth && "Initialize method could not be inserted!");
+    
+    vector<Value *> trargs;
+    trargs.push_back(threshold);
+  
+    new CallInst(initialMeth, trargs, "", front->begin());
+  }
 }
 
 
@@ -262,8 +252,7 @@ void insertBB(Edge ed,
 	      Instruction *rInst, 
 	      Instruction *countInst, 
 	      int numPaths, int Methno){
-  static int i=-1;
-  i++;
+
   BasicBlock* BB1=ed.getFirst()->getElement();
   BasicBlock* BB2=ed.getSecond()->getElement();
   
@@ -274,21 +263,13 @@ void insertBB(Edge ed,
   cerr<<"########################\n";
 #endif
   
-  char counterstr[100];
-  sprintf(counterstr,"counter%d",i);
-  std::string ctr=counterstr;
-
   //We need to insert a BB between BB1 and BB2 
   TerminatorInst *TI=BB1->getTerminator();
-  BasicBlock *newBB=new BasicBlock(ctr, BB1->getParent());
+  BasicBlock *newBB=new BasicBlock("counter", BB1->getParent());
 
   //Is terminator a branch instruction?
   //then we need to change branch destinations to include new BB
 
-  //std::cerr<<"before cast!\n";
-  //std::cerr<<"Method no in Edgecode:"<<Methno<<"\n";
-  //std::cerr<<"Instruction\n";
-  //std::cerr<<*TI;
   BranchInst *BI =  cast<BranchInst>(TI);
 
   if(BI->isUnconditional()){
@@ -310,10 +291,8 @@ void insertBB(Edge ed,
   //get code for the new BB
   edgeCode->getCode(rInst, countInst, BB1->getParent(), newBB, numPaths, Methno);
 
-  
-  //std::cerr<<"After casting\n";
   //get code for the new BB
-   //now iterate over BB2, and set its Phi nodes right
+  //now iterate over BB2, and set its Phi nodes right
   for(BasicBlock::iterator BB2Inst = BB2->begin(), BBend = BB2->end(); 
       BB2Inst != BBend; ++BB2Inst){
    
