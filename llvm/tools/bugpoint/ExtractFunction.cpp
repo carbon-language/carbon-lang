@@ -64,11 +64,12 @@ Module *BugDriver::deleteInstructionFromProgram(Instruction *I,
 /// before handing it to the user...
 ///
 Module *BugDriver::performFinalCleanups() const {
+  Module *M = CloneModule(Program);
   PassManager CleanupPasses;
   CleanupPasses.add(createFunctionResolvingPass());
   CleanupPasses.add(createGlobalDCEPass());
+  CleanupPasses.add(createDeadTypeEliminationPass());
   CleanupPasses.add(createVerifierPass());
-  Module *M = CloneModule(Program);
   CleanupPasses.run(*M);
   return M;
 }
