@@ -1,0 +1,11 @@
+; The output formater prints out 1.0e100 as Inf!
+;
+; RUN: as < %s | dis | as | dis
+
+implementation
+
+float "test"()
+begin
+	%tmp = mul float 1.0e100, 1.0e1
+	ret float %tmp
+end
