@@ -53,7 +53,6 @@ namespace {
       // FIXME: Eliminate these two classes when legalize can handle promotions
       // well.
 /**/  addRegisterClass(MVT::i1, X86::R8RegisterClass);
-/**/  //addRegisterClass(MVT::f32, X86::RFPRegisterClass);
 
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
@@ -965,7 +964,6 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
     default: assert(0 && "Cannot select this type!");
     case MVT::i16: Opc = CMOVTAB16[CondCode]; break;
     case MVT::i32: Opc = CMOVTAB32[CondCode]; break;
-    case MVT::f32:
     case MVT::f64: Opc = CMOVTABFP[CondCode]; break;
     }
   }
@@ -981,7 +979,6 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
     default: assert(0 && "Cannot select this type!");
     case MVT::i16: Opc = X86::CMOVE16rr; break;
     case MVT::i32: Opc = X86::CMOVE32rr; break;
-    case MVT::f32:
     case MVT::f64: Opc = X86::FCMOVE; break;
     }
   } else {
@@ -1058,7 +1055,6 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS, bool HasOneUse) {
   case MVT::i8:  Opc = X86::CMP8rr;  break;
   case MVT::i16: Opc = X86::CMP16rr; break;
   case MVT::i32: Opc = X86::CMP32rr; break;
-  case MVT::f32:
   case MVT::f64: Opc = X86::FUCOMIr; break;
   }
   unsigned Tmp1, Tmp2;
@@ -1634,7 +1630,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i8:  Opc = X86::ADD8rr; break;
     case MVT::i16: Opc = X86::ADD16rr; break;
     case MVT::i32: Opc = X86::ADD32rr; break;
-    case MVT::f32: 
     case MVT::f64: Opc = X86::FpADD; break;
     }
 
@@ -1951,8 +1946,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
       ClrOpcode = X86::MOV32ri;
       SExtOpcode = X86::CDQ;
       break;
-    case MVT::i64: assert(0 && "FIXME: implement i64 DIV/REM libcalls!");
-    case MVT::f32: 
     case MVT::f64:
       BuildMI(BB, X86::FpDIV, 2, Result).addReg(Tmp1).addReg(Tmp2);
       return Result;
@@ -2099,7 +2092,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i8:  Opc = X86::MOV8rm; break;
     case MVT::i16: Opc = X86::MOV16rm; break;
     case MVT::i32: Opc = X86::MOV32rm; break;
-    case MVT::f32: Opc = X86::FLD32m; ContainsFPCode = true; break;
     case MVT::f64: Opc = X86::FLD64m; ContainsFPCode = true; break;
     }
 
@@ -2303,7 +2295,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
       if (Node->getValueType(1) == MVT::i32)
         BuildMI(BB, X86::MOV32rr, 1, Result+1).addReg(X86::EDX);
       break;
-    case MVT::f32:
     case MVT::f64:     // Floating-point return values live in %ST(0)
       ContainsFPCode = true;
       BuildMI(BB, X86::FpGETRESULT, 1, Result);
@@ -2574,7 +2565,6 @@ void ISel::Select(SDOperand N) {
       case MVT::i8:  Opc = X86::MOV8rr; break;
       case MVT::i16: Opc = X86::MOV16rr; break;
       case MVT::i32: Opc = X86::MOV32rr; break;
-      case MVT::f32:
       case MVT::f64: Opc = X86::FpMOV; ContainsFPCode = true; break;
       }
       BuildMI(BB, Opc, 1, Tmp2).addReg(Tmp1);
@@ -2764,7 +2754,6 @@ void ISel::Select(SDOperand N) {
       case MVT::i8:  Opc = X86::MOV8mi; break;
       case MVT::i16: Opc = X86::MOV16mi; break;
       case MVT::i32: Opc = X86::MOV32mi; break;
-      case MVT::f32:
       case MVT::f64: break;
       }
       if (Opc) {
@@ -2790,7 +2779,6 @@ void ISel::Select(SDOperand N) {
     case MVT::i8:  Opc = X86::MOV8mr; break;
     case MVT::i16: Opc = X86::MOV16mr; break;
     case MVT::i32: Opc = X86::MOV32mr; break;
-    case MVT::f32: Opc = X86::FST32m; break;
     case MVT::f64: Opc = X86::FST64m; break;
     }
     
