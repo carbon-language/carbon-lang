@@ -51,7 +51,7 @@ bool isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
 
 namespace {
   struct PromoteMem2Reg {
-    const std::vector<AllocaInst*>   &Allocas;      // the alloca instructions..
+    const std::vector<AllocaInst*> &Allocas;        // the alloca instructions..
     std::vector<unsigned> VersionNumbers;           // Current version counters
     DominanceFrontier &DF;
     const TargetData &TD;
@@ -60,33 +60,29 @@ namespace {
     
     std::vector<std::vector<BasicBlock*> > PhiNodes;// Idx corresponds 2 Allocas
     
-    // List of instructions to remove at end of pass
-    std::vector<Instruction *>        KillList;
-    
-    std::map<BasicBlock*,
-             std::vector<PHINode*> >  NewPhiNodes; // the PhiNodes we're adding
+    // NewPhiNodes - The PhiNodes we're adding.
+    std::map<BasicBlock*, std::vector<PHINode*> > NewPhiNodes;
+
+    // Visited - The set of basic blocks the renamer has already visited.
+    std::set<BasicBlock*> Visited;
 
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominanceFrontier &df,
-                   const TargetData &td)
-      : Allocas(A), DF(df), TD(td) {}
+                   const TargetData &td) : Allocas(A), DF(df), TD(td) {}
 
     void run();
 
   private:
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
-                    std::vector<Value*> &IncVals,
-                    std::set<BasicBlock*> &Visited);
+                    std::vector<Value*> &IncVals);
     bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx);
   };
 }  // end of anonymous namespace
 
 
 void PromoteMem2Reg::run() {
-  // If there is nothing to do, bail out...
-  if (Allocas.empty()) return;
-
   Function &F = *DF.getRoot()->getParent();
+
   VersionNumbers.resize(Allocas.size());
 
   for (unsigned i = 0, e = Allocas.size(); i != e; ++i) {
@@ -96,11 +92,6 @@ void PromoteMem2Reg::run() {
            "All allocas should be in the same function, which is same as DF!");
     AllocaLookup[Allocas[i]] = i;
   }
-
-
-  // Add each alloca to the KillList.  Note: KillList is destroyed MOST recently
-  // added to least recently.
-  KillList.assign(Allocas.begin(), Allocas.end());
 
   // Calculate the set of write-locations for each alloca.  This is analogous to
   // counting the number of 'redefinitions' of each variable.
@@ -153,27 +144,20 @@ void PromoteMem2Reg::run() {
   // Walks all basic blocks in the function performing the SSA rename algorithm
   // and inserting the phi nodes we marked as necessary
   //
-  std::set<BasicBlock*> Visited;      // The basic blocks we've already visited
-  RenamePass(F.begin(), 0, Values, Visited);
+  RenamePass(F.begin(), 0, Values);
+  Visited.clear();
 
-  // Remove all instructions marked by being placed in the KillList...
-  //
-  while (!KillList.empty()) {
-    Instruction *I = KillList.back();
-    KillList.pop_back();
+  // Remove the allocas themselves from the function...
+  for (unsigned i = 0, e = Allocas.size(); i != e; ++i) {
+    Instruction *A = Allocas[i];
 
-    // If there are any uses of these instructions left, they must be in
+    // If there are any uses of the alloca instructions left, they must be in
     // sections of dead code that were not processed on the dominance frontier.
     // Just delete the users now.
     //
-    while (!I->use_empty()) {
-      Instruction *U = cast<Instruction>(I->use_back());
-      if (!U->use_empty())  // If uses remain in dead code segment...
-        U->replaceAllUsesWith(Constant::getNullValue(U->getType()));
-      U->getParent()->getInstList().erase(U);
-    }
-
-    I->getParent()->getInstList().erase(I);
+    if (!A->use_empty())
+      A->replaceAllUsesWith(Constant::getNullValue(A->getType()));
+    A->getParent()->getInstList().erase(A);
   }
 }
 
@@ -215,8 +199,7 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
 }
 
 void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
-                             std::vector<Value*> &IncomingVals,
-                             std::set<BasicBlock*> &Visited) {
+                                std::vector<Value*> &IncomingVals) {
   // If this is a BB needing a phi node, lookup/create the phinode for each
   // variable we need phinodes for.
   std::vector<PHINode *> &BBPNs = NewPhiNodes[BB];
@@ -240,9 +223,9 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
   // mark as visited
   Visited.insert(BB);
 
-  // keep track of the value of each variable we're watching.. how?
-  for (BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II) {
-    Instruction *I = II; // get the instruction
+  BasicBlock::iterator II = BB->begin();
+  while (1) {
+    Instruction *I = II++; // get the instruction, increment iterator
 
     if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
       if (AllocaInst *Src = dyn_cast<AllocaInst>(LI->getPointerOperand())) {
@@ -252,7 +235,7 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
 
           // walk the use list of this load and replace all uses with r
           LI->replaceAllUsesWith(V);
-          KillList.push_back(LI); // Mark the load to be deleted
+          BB->getInstList().erase(LI);
         }
       }
     } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
@@ -263,7 +246,7 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
         if (ai != AllocaLookup.end()) {
           // what value were we writing?
           IncomingVals[ai->second] = SI->getOperand(0);
-          KillList.push_back(SI);  // Mark the store to be deleted
+          BB->getInstList().erase(SI);
         }
       }
       
@@ -271,8 +254,9 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
       // Recurse across our successors
       for (unsigned i = 0; i != TI->getNumSuccessors(); i++) {
         std::vector<Value*> OutgoingVals(IncomingVals);
-        RenamePass(TI->getSuccessor(i), BB, OutgoingVals, Visited);
+        RenamePass(TI->getSuccessor(i), BB, OutgoingVals);
       }
+      break;
     }
   }
 }
@@ -284,5 +268,7 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
 ///
 void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                      DominanceFrontier &DF, const TargetData &TD) {
+  // If there is nothing to do, bail out...
+  if (Allocas.empty()) return;
   PromoteMem2Reg(Allocas, DF, TD).run();
 }
