@@ -126,33 +126,36 @@ public:
 // DominatorTree - Calculate the immediate dominator tree for a method.
 //
 class DominatorTree : public DominatorBase {
-  class Node;
+  class Node2;
+public:
+  typedef Node2 Node;
+private:
   map<const BasicBlock*, Node*> Nodes;
   void calculate(const DominatorSet &DS);
   typedef map<const BasicBlock*, Node*> NodeMapType;
 public:
-  class Node : public vector<Node*> {
+  class Node2 : public vector<Node*> {
     friend class DominatorTree;
     const BasicBlock *TheNode;
-    Node * const IDom;
+    Node2 * const IDom;
   public:
     inline const BasicBlock *getNode() const { return TheNode; }
-    inline Node *getIDom() const { return IDom; }
+    inline Node2 *getIDom() const { return IDom; }
     inline const vector<Node*> &getChildren() const { return *this; }
 
     // dominates - Returns true iff this dominates N.  Note that this is not a 
     // constant time operation!
-    inline bool dominates(const Node *N) const {
-      const Node *IDom;
+    inline bool dominates(const Node2 *N) const {
+      const Node2 *IDom;
       while ((IDom = N->getIDom()) != 0 && IDom != this)
 	N = IDom;   // Walk up the tree
       return IDom != 0;
     }
 
   private:
-    inline Node(const BasicBlock *node, Node *iDom) 
+    inline Node2(const BasicBlock *node, Node *iDom) 
       : TheNode(node), IDom(iDom) {}
-    inline Node *addChild(Node *C) { push_back(C); return C; }
+    inline Node2 *addChild(Node *C) { push_back(C); return C; }
   };
 
 public:
@@ -177,6 +180,7 @@ public:
 // DominanceFrontier - Calculate the dominance frontiers for a method.
 //
 class DominanceFrontier : public DominatorBase {
+public:
   typedef set<const BasicBlock*>              DomSetType;    // Dom set for a bb
   typedef map<const BasicBlock *, DomSetType> DomSetMapType; // Map of dom sets
 private:
