@@ -144,6 +144,7 @@ namespace {  // Anonymous namespace for class
     void visitInstruction(Instruction &I);
     void visitTerminatorInst(TerminatorInst &I);
     void visitReturnInst(ReturnInst &RI);
+    void visitSelectInst(SelectInst &SI);
     void visitUserOp1(Instruction &I);
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
     void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
@@ -334,6 +335,16 @@ void Verifier::visitReturnInst(ReturnInst &RI) {
   // terminators...
   visitTerminatorInst(RI);
 }
+
+void Verifier::visitSelectInst(SelectInst &SI) {
+  Assert1(SI.getCondition()->getType() == Type::BoolTy,
+          "Select condition type must be bool!", &SI);
+  Assert1(SI.getTrueValue()->getType() == SI.getFalseValue()->getType(),
+          "Select values must have identical types!", &SI);
+  Assert1(SI.getTrueValue()->getType() == SI.getType(),
+          "Select values must have same type as select instruction!", &SI);
+}
+
 
 /// visitUserOp1 - User defined operators shouldn't live beyond the lifetime of
 /// a pass, if any exist, it's an error.
