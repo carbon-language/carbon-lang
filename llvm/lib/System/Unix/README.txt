@@ -7,7 +7,7 @@ structure underneath this directory could look like this:
 
 Unix           - only code that is truly generic to all UNIX platforms
   Posix        - code that is specific to Posix variants of UNIX
-  SUS          - code that is specific to the Singule Unix Specification 
+  SUS          - code that is specific to the Single Unix Specification 
   SysV         - code that is specific to System V variants of UNIX
 
 As a rule, only those directories actually needing to be created should be
