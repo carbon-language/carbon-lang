@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+use Getopt::Std;
+
 sub parse_objdump_file {
   my ($filename) = @_;
   my @result;
@@ -55,12 +57,14 @@ sub binary_diffs {
     my $d1 = $file1[$i];
     my $d2 = $file2[$i];
     if ($d1->{'bytes'} ne $d2->{'bytes'}) {
+      next if (($d1->{'instr'} eq $d2->{'instr'}) && $opt_d);
       printf "0x%08x:\t%30s \t%s\n", 0+$d1->{'addr'}, $d1->{'bytes'}, $d1->{'instr'};
       printf "0x%08x:\t%30s \t%s\n\n", 0+$d2->{'addr'}, $d2->{'bytes'}, $d2->{'instr'};
     }
   }
 }
 
+&getopts('d');
 $objdump_file = $ARGV[0];
 $gdb_file = $ARGV[1];
 binary_diffs ($objdump_file, $gdb_file);
@@ -74,7 +78,7 @@ codegen-diff
 
 =head1 SYNOPSIS
 
-codegen-diff I<OBJDUMP-OUTPUT-FILE> I<GDB-DISASSEMBLY-FILE>
+codegen-diff [-d] I<OBJDUMP-OUTPUT-FILE> I<GDB-DISASSEMBLY-FILE>
 
 =head1 DESCRIPTION
 
@@ -96,6 +100,19 @@ It's easiest to save this output by using B<script>.
 Finally, you run B<codegen-diff>, as indicated in the Synopsis section of
 this manpage. It will print out a two-line stanza for each mismatched
 instruction, with the  B<llc> version first, and the  B<lli> version second.
+
+=head1 OPTIONS
+
+=over 4
+
+=item -d
+
+Don't show instructions where the bytes are different but they
+disassemble to the same thing. This puts a lot of trust in the
+disassembler, but it might help you highlight the more egregious cases
+of misassembly.
+
+=back
 
 =head1 AUTHOR
 
