@@ -346,7 +346,7 @@ void RegAllocSimple::EmitPrologue() {
 ///
 void RegAllocSimple::EmitEpilogue(MachineBasicBlock &MBB) {
   // Insert instructions before the return.
-  MachineBasicBlock::iterator I = --MBB.end();
+  MachineBasicBlock::iterator I = MBB.end()-1;
 
   const unsigned *CSRegs = RegInfo->getCalleeSaveRegs();
   for (unsigned i = 0; CSRegs[i]; ++i) {
