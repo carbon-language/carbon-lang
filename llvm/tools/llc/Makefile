@@ -9,11 +9,9 @@ USEDLIBS = mapping \
            preopts \
            postopts.a \
            target.a \
-           instrument \
            livevar \
-           ipo.a \
-	   scalaropts.a \
            transforms.a \
+	   scalaropts.a \
            analysis.a \
            transformutils.a \
            bcreader \

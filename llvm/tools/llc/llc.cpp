@@ -7,12 +7,8 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/Linker.h"
 #include "llvm/Assembly/PrintModulePass.h"
-#include "llvm/Bytecode/WriteBytecodePass.h"
-#include "llvm/Transforms/IPO.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
@@ -57,16 +53,6 @@ static cl::opt<bool>
 DumpAsm("d", cl::desc("Print bytecode before native code generation"),
         cl::Hidden);
 
-static cl::opt<std::string>
-TraceLibPath("tracelibpath", cl::desc("Path to libinstr for trace code"),
-             cl::value_desc("directory"), cl::Hidden);
-
-
-// flags set from -tracem and -trace options to control tracing
-static bool TraceFunctions   = false;
-static bool TraceBasicBlocks = false;
-
-
 // GetFileNameRoot - Helper function to get the basename of a filename...
 static inline std::string
 GetFileNameRoot(const std::string &InputFilename)
@@ -81,81 +67,6 @@ GetFileNameRoot(const std::string &InputFilename)
   }
   return outputFilename;
 }
-
-static bool
-insertTraceCodeFor(Module &M)
-{
-  PassManager Passes;
-
-  // Insert trace code in all functions in the module
-  if (TraceBasicBlocks)
-    Passes.add(createTraceValuesPassForBasicBlocks());
-  else if (TraceFunctions)
-    Passes.add(createTraceValuesPassForFunction());
-  else
-    return false;
-
-  // Eliminate duplication in constant pool
-  Passes.add(createConstantMergePass());
-
-  // Run passes to insert and clean up trace code...
-  Passes.run(M);
-
-  std::string ErrorMessage;
-
-  // Load the module that contains the runtime helper routines neccesary for
-  // pointer hashing and stuff...  link this module into the program if possible
-  //
-  Module *TraceModule = ParseBytecodeFile(TraceLibPath+"libinstr.bc");
-
-  // Check if the TraceLibPath contains a valid module.  If not, try to load
-  // the module from the current LLVM-GCC install directory.  This is kindof
-  // a hack, but allows people to not HAVE to have built the library.
-  //
-  if (TraceModule == 0)
-    TraceModule = ParseBytecodeFile("/home/vadve/lattner/cvs/gcc_install/lib/"
-                                    "gcc-lib/llvm/3.1/libinstr.bc");
-
-  // If we still didn't get it, cancel trying to link it in...
-  if (TraceModule == 0)
-    std::cerr <<"WARNING: couldn't load trace routines to link into program!\n";
-  else
-    {
-      // Link in the trace routines... if this fails, don't panic, because the
-      // compile should still succeed, but the native linker will probably fail.
-      //
-      std::auto_ptr<Module> TraceRoutines(TraceModule);
-      if (LinkModules(&M, TraceRoutines.get(), &ErrorMessage))
-        std::cerr << "WARNING: Error linking in trace routines: "
-                  << ErrorMessage << "\n";
-    }
-
-  // Write out the module with tracing code just before code generation
-  assert (InputFilename != "-"
-          && "Cannot write out traced bytecode when reading input from stdin");
-  std::string TraceFilename = GetFileNameRoot(InputFilename) + ".trace.bc";
-
-  std::ofstream Out(TraceFilename.c_str());
-  if (!Out.good())
-    std::cerr << "Error opening '" << TraceFilename
-              << "'!: Skipping output of trace code as bytecode\n";
-  else
-    {
-      std::cerr << "Emitting trace code to '" << TraceFilename
-                << "' for comparison...\n";
-      WriteBytecodeToFile(&M, Out);
-    }
-
-  return true;
-}
-
-// Making tracing a module pass so the entire module with tracing
-// can be written out before continuing.
-struct InsertTracingCodePass: public Pass {
-  virtual bool run(Module &M) {
-    return insertTraceCodeFor(M); 
-  }
-};
 
 
 //===---------------------------------------------------------------------===//
@@ -194,36 +105,27 @@ main(int argc, char **argv)
   // Create a new optimization pass for each one specified on the command line
   // Deal specially with tracing passes, which must be run differently than opt.
   // 
-  for (unsigned i = 0; i < OptimizationList.size(); ++i)
-    {
-      const PassInfo *Opt = OptimizationList[i];
-      
-      if (std::string(Opt->getPassArgument()) == "trace")
-        TraceFunctions = !(TraceBasicBlocks = true);
-      else if (std::string(Opt->getPassArgument()) == "tracem")
-        TraceFunctions = !(TraceBasicBlocks = false);
-      else
-        { // handle other passes as normal optimization passes
-          if (Opt->getNormalCtor())
-            Passes.add(Opt->getNormalCtor()());
-          else if (Opt->getTargetCtor())
-            Passes.add(Opt->getTargetCtor()(Target));
-          else
-            std::cerr << argv[0] << ": cannot create pass: "
-                      << Opt->getPassName() << "\n";
-        }
-    }
-
-  // Run tracing passes after other optimization passes and before llc passes.
-  if (TraceFunctions || TraceBasicBlocks)
-    Passes.add(new InsertTracingCodePass);
+  for (unsigned i = 0; i < OptimizationList.size(); ++i) {
+    const PassInfo *Opt = OptimizationList[i];
+    
+    // handle other passes as normal optimization passes
+    if (Opt->getNormalCtor())
+      Passes.add(Opt->getNormalCtor()());
+    else if (Opt->getTargetCtor())
+      Passes.add(Opt->getTargetCtor()(Target));
+    else
+      std::cerr << argv[0] << ": cannot create pass: "
+                << Opt->getPassName() << "\n";
+  }
 
   // Decompose multi-dimensional refs into a sequence of 1D refs
+  // FIXME: This is sparc specific!
   Passes.add(createDecomposeMultiDimRefsPass());
 
   // Replace malloc and free instructions with library calls.
   // Do this after tracing until lli implements these lib calls.
   // For now, it will emulate malloc and free internally.
+  // FIXME: This is sparc specific!
   Passes.add(createLowerAllocationsPass());
 
   // If LLVM dumping after transformations is requested, add it to the pipeline
