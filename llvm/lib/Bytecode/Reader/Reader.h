@@ -67,6 +67,11 @@ public:
   /// @brief The type used for a vector of potentially abstract types
   typedef std::vector<PATypeHolder> TypeListTy;
 
+  /// This structure is only used when a bytecode file is compressed.
+  /// As bytecode is being decompressed, the memory buffer might need
+  /// to be reallocated. The buffer allocation is handled in a callback 
+  /// and this structure is needed to retain information across calls
+  /// to the callback.
   /// @brief An internal buffer object used for handling decompression
   struct BufferInfo {
     char* buff;
@@ -246,8 +251,7 @@ protected:
 /// @name Data
 /// @{
 private:
-  BufferInfo bi;      ///< Buffer info for decompression
-
+  BufferInfo bi;       ///< Buffer info for decompression
   BufPtr MemStart;     ///< Start of the memory buffer
   BufPtr MemEnd;       ///< End of the memory buffer
   BufPtr BlockStart;   ///< Start of current block being parsed
