@@ -1863,13 +1863,14 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
   unsigned DestReg = getReg(B);
   MachineBasicBlock::iterator MI = BB->end();
   Value *Op0 = B.getOperand(0), *Op1 = B.getOperand(1);
+  unsigned Class = getClassB(B.getType());
 
   // Special case: op Reg, load [mem]
-  if (isa<LoadInst>(Op0) && !isa<LoadInst>(Op1))
+  if (isa<LoadInst>(Op0) && !isa<LoadInst>(Op1) && Class != cLong &&
+      isSafeToFoldLoadIntoInstruction(*cast<LoadInst>(Op0), B))
     if (!B.swapOperands())
       std::swap(Op0, Op1);  // Make sure any loads are in the RHS.
 
-  unsigned Class = getClassB(B.getType());
   if (isa<LoadInst>(Op1) && Class != cLong &&
       isSafeToFoldLoadIntoInstruction(*cast<LoadInst>(Op1), B)) {
 
