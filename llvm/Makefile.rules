@@ -27,8 +27,12 @@ VPATH=$(BUILD_SRC_DIR)
 RECURSIVE_TARGETS := all clean check install uninstall
 LOCAL_TARGETS     := all-local clean-local check-local install-local printvars\
                      uninstall-local
-TOPLEV_TARGETS    := dist dist-check dist-clean
-INTERNAL_TARGETS  := preconditions
+TOPLEV_TARGETS    := dist dist-check dist-clean tags
+INTERNAL_TARGETS  := preconditions \
+  install-config-dir install-shared-library install-bytecode-library \
+  install-archive-library install-relinked-library install-tool \
+  uninstall-config-dir uninstall-shared-library uninstall-bytecode-library \
+  uninstall-archive-library uninstall-relinked-library uninstall-tool
 
 #--------------------------------------------------------------------
 # Mark all of these targets as phony to avoid implicit rule search
@@ -52,10 +56,6 @@ check-local :: all-local
 install-local :: all-local 
 printvars :: preconditions
 uninstall-local :: preconditions
-
-dist:: preconditions
-dist-check:: preconditions
-dist-clean:: preconditions
 
 ###############################################################################
 # SUFFIXES: Reset the list of suffixes we know how to build
@@ -240,7 +240,7 @@ $(RECURSIVE_TARGETS)::
 	    $(MKDIR) $$dir; \
 	    cp $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	  fi; \
-	  $(MAKE) -C $$dir $@ $(MFLAGS) || exit 0; \
+	  ($(MAKE) -C $$dir $@ $(MFLAGS)) || exit 0; \
 	done
 endif
 
@@ -289,14 +289,20 @@ endif
 #---------------------------------------------------------
 ifdef CONFIG_FILES
 
-.PHONY: install-config-dir
-
-install:: install-config-dir 
+install-local:: install-config-dir 
 
 install-config-dir: $(sysconfdir) $(CONFIG_FILES)
 	$(VERB)$(ECHO) Installing Configuration Files To $(sysconfdir)
 	$(VERB)for file in $(CONFIG_FILES); do \
 		$(INSTALL) $(BUILD_SRC_DIR)/$${file} $(sysconfdir) ; \
+	done
+
+uninstall-local:: uninstall-config-dir
+
+uninstall-config-dir:
+	$(VERB)$(ECHO) Uninstalling Configuration Files From $(sysconfdir)
+	$(VERB)for file in $(CONFIG_FILES); do \
+          $(RM) -f $(sysconfdir)/$${file} ; \
 	done
 
 $(sysconfdir):
@@ -335,15 +341,27 @@ $(LIBNAME_LA): $(BUILT_SOURCES) $(ObjectsLO) $(LIBDIR)/.dir
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $@ $(LIBDIR)
 
 clean-local::
+ifneq ($(strip $(LIBNAME_LA)),)
 	$(VERB) $(RM) -f $(LIBNAME_LA)
+endif
 
-install-local:: $(DESTDIR)$(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
+DestSharedLib = $(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
+install-local:: install-shared-library
 
-$(DESTDIR)/lib/lib$(LIBRARYNAME)$(SHLIBEXT): $(LIBNAME_LA)
-	@$(ECHO) Installing shared library $(notdir $@)
-	$(VERB) $(MKDIR) $(DESTDIR)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_LA) $(DESTDIR)$(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
-	$(VERB) $(LIBTOOL) --finish $(DESTDIR)$(libdir)
+install-shared-library: $(DestSharedLib)
+
+$(DestSharedLib): $(LIBNAME_LA)
+	@$(ECHO) Installing shared library $(DestSharedLib)
+	$(VERB) $(MKDIR) $(libdir)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_LA) $(DestSharedLib)
+	$(VERB) $(LIBTOOL) --finish $(libdir)
+
+uninstall-local:: uninstall-shared-library
+
+uninstall-shared-library:
+	@$(ECHO) Uninstalling shared library $(DestSharedLib)
+	$(VERB) $(RM) -f $(DestSharedLib)
+
 endif
 
 #---------------------------------------------------------
@@ -371,13 +389,24 @@ $(LIBNAME_BC): $(BUILT_SOURCES) $(ObjectsBC) $(LIBDIR)/.dir
 	$(VERB) $(BCLinkLib) -o $@ $(ObjectsBC)
 
 clean-local::
+ifneq ($(strip $(LIBNAME_BC)),)
 	$(VERB) $(RM) -f $(LIBNAME_BC)
+endif
 
-install-local:: $(DESTDIR)$(bytecode_libdir)/lib$(LIBRARYNAME).bc
+DestBytecodeLib = $(bytecode_libdir)/lib$(LIBRARYNAME).bc
+install-local:: install-bytecode-library
 
-$(DESTDIR)$(bytecode_libdir)/lib$(LIBRARYNAME).bc: $(LIBNAME_BC) $(DESTDIR)$(bytecode_libdir)
-	@$(ECHO) Installing bytecode library $(notdir $@)
-	$(VERB)$(INSTALL) $< $@
+install-bytecode-library: $(DestBytecodeLib)
+
+$(DestBytecodeLib): $(LIBNAME_BC) $(bytecode_libdir)
+	@$(ECHO) Installing bytecode library $(DestBytecodeLib)
+	$(VERB) $(INSTALL) $< $@
+
+uninstall-local:: uninstall-bytecode-library
+
+uninstall-bytecode-library: 
+	@$(ECHO) Uninstalling bytecode library $(DestBytecodeLib)
+	$(VERB) $(RM) -f $(DestBytecodeLib)
 
 endif
 
@@ -389,15 +418,27 @@ $(LIBNAME_O): $(BUILT_SOURCES) $(ObjectsO) $(LIBDIR)/.dir
 	@$(ECHO) Linking object library $(notdir $@)
 	$(VERB) $(Relink) -o $@ $(ObjectsO)
 
-install-local:: $(DESTDIR)$(libdir)/$(LIBRARYNAME).o
-
-$(DESTDIR)$(libdir)/$(LIBRARYNAME).o: $(LIBNAME_O)
-	@$(ECHO) Installing object library $(notdir $@)
-	$(VERB) $(MKDIR) $(DESTDIR)$(libdir)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_O) $(DESTDIR)$(libdir)/$(LIBRARYNAME).o
-
 clean-local::
+ifneq ($(strip $(LIBNAME_O)),)
 	$(VERB) $(RM) -f $(LIBNAME_O)
+endif
+
+DestRelinkedLib = $(libdir)/$(LIBRARYNAME).o
+
+install-local:: install-relinked-library 
+
+install-relinked-library: $(DestRelinkedLib)
+
+$(DestRelinkedLib): $(LIBNAME_O)
+	@$(ECHO) Installing object library $(DestRelinkedLib)
+	$(VERB) $(MKDIR) $(libdir)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_O) $(DestRelinkedLib)
+
+uninstall-local:: uninstall-relinked-library 
+
+uninstall-relinked-library: 
+	@$(ECHO) Uninstalling object library $(DestRelinkedLib)
+	$(VERB) $(RM) -f $(DestRelinkedLib)
 
 endif
 
@@ -412,17 +453,30 @@ $(LIBNAME_A): $(BUILT_SOURCES) $(ObjectsO) $(LIBDIR)/.dir
 	$(VERB) $(Ranlib) $@
 
 clean-local::
+ifneq ($(strip $(LIBNAME_A)),)
 	$(VERB) $(RM) -f $(LIBNAME_A)
-
-install-local:: $(DESTDIR)$(libdir)/lib$(LIBRARYNAME).a
-
-$(DESTDIR)$(libdir)/lib$(LIBRARYNAME).a: $(LIBNAME_A)
-	@$(ECHO) Installing archive library $(notdir $@)
-	$(MKDIR) $(DESTDIR)$(libdir)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_A) $(DESTDIR)$(libdir)/lib$(LIBRARYNAME).a
 endif
 
-# if LIBRARYNAME
+DestArchiveLib := $(libdir)/lib$(LIBRARYNAME).a
+
+install-local:: install-archive-library
+
+install-archive-library: $(DestArchiveLib)
+
+$(DestArchiveLib): $(LIBNAME_A)
+	@$(ECHO) Installing archive library $(DestArchiveLib)
+	$(VERB) $(MKDIR) $(libdir)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_A) $(DestArchiveLib)
+
+uninstall-local:: install-archive-library
+
+uninstall-archive-library: 
+	@$(ECHO) Uninstalling archive library $(DestArchiveLib)
+	$(VERB) $(RM) -f $(DestArchiveLib)
+
+endif
+
+# endif LIBRARYNAME
 endif 
 
 #------------------------------------------------------------------------
@@ -481,16 +535,31 @@ $(LIBS): $(addsuffix /.makeall, $(PARALLEL_DIRS))
 all-local::   $(TOOLEXENAME)
 
 clean-local::
+ifneq ($(strip $(TOOLEXENAME)),)
 	$(VERB) $(RM) -f $(TOOLEXENAME)
+endif
 
 $(TOOLEXENAME): $(BUILT_SOURCES) $(ObjectsO) $(PROJ_LIBS_PATHS) $(LLVM_LIBS_PATHS) $(TOOLDIR)/.dir
 	@$(ECHO) Linking $(CONFIGURATION) executable $(TOOLNAME) $(STRIP_WARN_MSG)
 	$(VERB) $(Link) -o $@ $(ObjectsO) $(PROJ_LIBS_OPTIONS) $(LLVM_LIBS_OPTIONS) $(LIBS)
 	@$(ECHO) ======= Finished linking $(CONFIGURATION) executable $(TOOLNAME) $(STRIP_WARN_MSG) 
 
-install-local:: $(TOOLEXENAME)
-	@$(ECHO) Installing $(TOOLNAME)
-	$(VERB) $(INSTALL) $(TOOLEXENAME) $(DESTDIR)/bin
+install-local:: install-tool
+
+DestTool = $(bindir)/$(TOOLNAME)
+
+install-tool: $(DestTool)
+
+$(DestTool): $(TOOLEXENAME)
+	@$(ECHO) Installing $(DestTool)
+	$(VERB) $(INSTALL) $(TOOLEXENAME) $(bindir)
+
+uninstall-local:: uninstall-tool
+
+uninstall-tool:
+	@$(ECHO) Uninstalling $(DestTool)
+	$(VERB) $(RM) -f $(DestTool)
+
 endif
 
 ifndef DISABLE_AUTO_DEPENDENCIES
@@ -694,12 +763,19 @@ endif
 
 # 'make clean' nukes the tree
 clean-local::
+ifneq ($(strip $(OBJDIR)),)
 	$(VERB) $(RM) -rf $(OBJDIR)
+endif
 	$(VERB) $(RM) -f core core.[0-9][0-9]* *.o *.d *~ *.flc
 ifneq ($(strip $(SHLIBEXT)),) # Extra paranoia - make real sure SHLIBEXT is set
 	$(VERB)	$(RM) -f *$(SHLIBEXT)
 endif
-	$(VERB) $(RM) -f $(LEX_OUTPUT) $(YACC_OUTPUT)
+ifneq ($(strip $(LEX_OUTPUT)),)
+	$(VERB) $(RM) -f $(LEX_OUTPUT) 
+endif
+ifneq ($(strip $(YACC_OUTPUT)),)
+	$(VERB) $(RM) -f $(YACC_OUTPUT)
+endif
 
 ###############################################################################
 # DEPENDENCIES: Include the dependency files if we should
@@ -738,7 +814,9 @@ preconditions: $(CONFIG_STATUS) $(MAKE_CONFIG) $(OBJMKFILE)
 all all-local check check-local dist dist-check install:: $(BUILT_SOURCES)
 
 clean-local::
+ifneq ($(strip $(BUILT_SOURCES)),)
 	$(VERB) $(RM) -f $(BUILT_SOURCES)
+endif
 
 #------------------------------------------------------------------------
 # Make sure we're not using a stale configuration
@@ -757,6 +835,7 @@ $(MAKE_CONFIG): $(MAKE_CONFIG_IN)
 	$(VERB) $(MAKE) $(MFLAGS) $(MAKECMDGOALS)
 	@exit 0;
 
+
 #------------------------------------------------------------------------
 # If the Makefile in the source tree has been updated, copy it over into the
 # build tree. But, only do this if the source and object makefiles differ
@@ -769,6 +848,61 @@ $(OBJMKFILE): $(SRCMKFILE)
 	$(VERB) cp -f $< $@
 	$(VERB) $(MAKE) $(MFLAGS) $(MAKECMDGOALS)
 	@exit 0;
+endif
+
+###############################################################################
+# TOP LEVEL - targets only to apply at the top level directory
+###############################################################################
+
+ifeq ($(LEVEL),.)
+
+#------------------------------------------------------------------------
+# Handle construction of a distribution 
+dist:: preconditions
+	@$(ECHO) Target dist is not implemented yet
+
+dist-check:: preconditions dist
+	@$(ECHO) Target dist-check is not implemented yet
+
+dist-clean:: preconditions
+	@$(ECHO) Target dist-clean is not implemented yet
+
+#------------------------------------------------------------------------
+# Install support for project's include files:
+#------------------------------------------------------------------------
+install-local::
+	@$(ECHO) Installing include files
+	$(VERB) $(MKDIR) $(includedir)
+	$(VERB) if [ -d "$(BUILD_SRC_ROOT)/include" ] ; then \
+	  cd $(BUILD_SRC_ROOT)/include && \
+	    find . -path '*/Internal' -prune -o '(' -type f \
+	      '!' '(' -name '*~' -o -name '.cvsignore' -o -name '.#*' ')' \
+	      -print ')' | grep -v CVS | pax -rwdvpe $(includedir) ; \
+	fi
+
+uninstall-local::
+	@$(ECHO) Uninstalling include files
+	$(VERB) if [ -d "$(BUILD_SRC_ROOT)/include" ] ; then \
+	  cd $(BUILD_SRC_ROOT)/include && \
+	    $(RM) -f `find . -path '*/Internal' -prune -o '(' -type f \
+	      '!' '(' -name '*~' -o -name '.cvsignore' -o -name '.#*' ')' \
+	      -print ')' | grep -v CVS | sed 's#^#$(includedir)/#'` ; \
+	fi 
+
+#------------------------------------------------------------------------
+# Build tags database for Emacs/Xemacs:
+#------------------------------------------------------------------------
+TAGS: tags
+
+tags::
+	find include lib tools examples -name '*.cpp' -o -name '*.h' | $(ETAGS) $(ETAGSFLAGS) -
+
+dist-clean:: clean
+	$(VERB) $(RM) -rf $(LEVEL)/Makefile.config \
+	                  $(LEVEL)/include/llvm/Config/config.h \
+	                  $(LEVEL)/autoconf/autom4te.cache \
+	                  $(LEVEL)/config.log \
+	                  $(LEVEL)/TAGS
 endif
 
 ###############################################################################
@@ -791,3 +925,12 @@ printvars::
 	@$(ECHO) "TDFILES:" '$(TDFILES)'
 	@$(ECHO) "Compile.CXX: " '$(Compile.CXX)'
 	@$(ECHO) "Compile.C: " '$(Compile.C)'
+
+# This frivolous target provided for Resistor who requested that the makefiles
+# be hardened and that he get a "pony" after the makefiles (accidentally) 
+# deleted his unix kernel.
+pony::
+	@wget -q \
+        http://search.cpan.org/src/ASAVIGE/Acme-EyeDrops-1.40/lib/Acme/EyeDrops/pony2.eye \
+        -O /tmp/resistor.pony
+	@cat /tmp/resistor.pony
