@@ -437,6 +437,19 @@ public:
     return *N.second;
   }
 
+  // invalidateFunction - Inform this analysis that you changed the specified
+  // function, so the graphs that depend on it are out of date.
+  //
+  void invalidateFunction(Function *F) const {
+    // FIXME: THis should invalidate all functions who have inlined the
+    // specified graph!
+    //
+    std::pair<FunctionDSGraph*, FunctionDSGraph*> &N = DSInfo[F];
+    delete N.first;
+    delete N.second;
+    N.first = N.second = 0;
+  }
+
   // print - Print out the analysis results...
   void print(std::ostream &O, Module *M) const;
 
