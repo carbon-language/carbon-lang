@@ -20,28 +20,11 @@
 //************************ Class Implementations **************************/
 
 
-bool
-MachineInstrInfo::constantFitsInImmedField(int64_t intValue) const
-{
-  // First, check if opCode has an immed field.
-  bool isSignExtended;
-  uint64_t maxImmedValue = this->maxImmedConstant(isSignExtended);
-  if (maxImmedValue != 0)
-    {
-      // Now check if the constant fits
-      if (intValue <= (int64_t) maxImmedValue &&
-	  intValue >= -((int64_t) maxImmedValue+1))
-	return true;
-    }
-  
-  return false;
-}
-
 MachineInstr::MachineInstr(MachineOpCode _opCode,
 			   OpCodeMask    _opCodeMask)
   : opCode(_opCode),
     opCodeMask(_opCodeMask),
-    operands(TargetMachineInstrInfo[_opCode].numOperands)
+    operands(TargetInstrDescriptors[_opCode].numOperands)
 {
 }
 
@@ -50,7 +33,7 @@ MachineInstr::SetMachineOperand(unsigned int i,
 				MachineOperand::MachineOperandType operandType,
 				Value* _val)
 {
-  assert(i < TargetMachineInstrInfo[opCode].numOperands);
+  assert(i < operands.size());
   operands[i].Initialize(operandType, _val);
 }
 
@@ -59,7 +42,7 @@ MachineInstr::SetMachineOperand(unsigned int i,
 				MachineOperand::MachineOperandType operandType,
 				int64_t intValue)
 {
-  assert(i < TargetMachineInstrInfo[opCode].numOperands);
+  assert(i < operands.size());
   operands[i].InitializeConst(operandType, intValue);
 }
 
@@ -67,7 +50,7 @@ void
 MachineInstr::SetMachineOperand(unsigned int i,
 				unsigned int regNum)
 {
-  assert(i < TargetMachineInstrInfo[opCode].numOperands);
+  assert(i < operands.size());
   operands[i].InitializeReg(regNum);
 }
 
@@ -83,10 +66,21 @@ MachineInstr::dump(unsigned int indent)
 ostream&
 operator<< (ostream& os, const MachineInstr& minstr)
 {
-  os << TargetMachineInstrInfo[minstr.opCode].opCodeString;
+  os << TargetInstrDescriptors[minstr.opCode].opCodeString;
   
   for (unsigned i=0, N=minstr.getNumOperands(); i < N; i++)
     os << "\t" << minstr.getOperand(i);
+  
+#undef DEBUG_VAL_OP_ITERATOR
+#ifdef DEBUG_VAL_OP_ITERATOR
+  os << endl << "\tValue operands are: ";
+  for (MachineInstr::val_op_const_iterator vo(&minstr); ! vo.done(); ++vo)
+    {
+      const Value* val = *vo;
+      os << val << (vo.isDef()? "(def), " : ", ");
+    }
+  os << endl;
+#endif
   
   return os;
 }
@@ -95,19 +89,17 @@ ostream&
 operator<< (ostream& os, const MachineOperand& mop)
 {
   strstream regInfo;
-  if (mop.machineOperandType == MachineOperand::MO_Register)
-    {
-      if (mop.vregType == MachineOperand::MO_VirtualReg)
-	regInfo << "(val " << mop.value << ")" << ends;
-      else
-	regInfo << "("       << mop.regNum << ")" << ends;
-    }
-  else if (mop.machineOperandType == MachineOperand::MO_CCRegister)
+  if (mop.opType == MachineOperand::MO_VirtualRegister)
+    regInfo << "(val " << mop.value << ")" << ends;
+  else if (mop.opType == MachineOperand::MO_MachineRegister)
+    regInfo << "("       << mop.regNum << ")" << ends;
+  else if (mop.opType == MachineOperand::MO_CCRegister)
     regInfo << "(val " << mop.value << ")" << ends;
   
-  switch(mop.machineOperandType)
+  switch(mop.opType)
     {
-    case MachineOperand::MO_Register:
+    case MachineOperand::MO_VirtualRegister:
+    case MachineOperand::MO_MachineRegister:
       os << "%reg" << regInfo.str();
       free(regInfo.str());
       break;
@@ -169,21 +161,22 @@ operator<< (ostream& os, const MachineOperand& mop)
 void
 Set2OperandsFromInstr(MachineInstr* minstr,
 		      InstructionNode* vmInstrNode,
-		      const TargetMachine& targetMachine,
+		      const TargetMachine& target,
 		      bool canDiscardResult,
 		      int op1Position,
 		      int resultPosition)
 {
-  Set3OperandsFromInstr(minstr, vmInstrNode, targetMachine,
+  Set3OperandsFromInstr(minstr, vmInstrNode, target,
 			canDiscardResult, op1Position,
 			/*op2Position*/ -1, resultPosition);
 }
 
-
+#undef REVERT_TO_EXPLICIT_CONSTANT_CHECKS
+#ifdef REVERT_TO_EXPLICIT_CONSTANT_CHECKS
 unsigned
 Set3OperandsFromInstrJUNK(MachineInstr* minstr,
 		      InstructionNode* vmInstrNode,
-		      const TargetMachine& targetMachine,
+		      const TargetMachine& target,
 		      bool canDiscardResult,
 		      int op1Position,
 		      int op2Position,
@@ -198,16 +191,16 @@ Set3OperandsFromInstrJUNK(MachineInstr* minstr,
   Value* op1Value = vmInstrNode->leftChild()->getValue();
   bool isValidConstant;
   int64_t intValue = GetConstantValueAsSignedInt(op1Value, isValidConstant);
-  if (isValidConstant && intValue == 0 && targetMachine.zeroRegNum >= 0)
-    minstr->SetMachineOperand(op1Position, /*regNum*/ targetMachine.zeroRegNum);
+  if (isValidConstant && intValue == 0 && target.zeroRegNum >= 0)
+    minstr->SetMachineOperand(op1Position, /*regNum*/ target.zeroRegNum);
   else
     {
       if (op1Value->getValueType() == Value::ConstantVal)
 	{// value is constant and must be loaded from constant pool
 	  returnFlags = returnFlags | (1 << op1Position);
 	}
-      minstr->SetMachineOperand(op1Position, MachineOperand::MO_Register,
-					     op1Value);
+      minstr->SetMachineOperand(op1Position,MachineOperand::MO_VirtualRegister,
+					    op1Value);
     }
   
   // Check if operand 2 (if any) fits in the immediate field of the instruction,
@@ -216,46 +209,45 @@ Set3OperandsFromInstrJUNK(MachineInstr* minstr,
     {
       Value* op2Value = vmInstrNode->rightChild()->getValue();
       int64_t immedValue;
-      MachineOperand::VirtualRegisterType vregType;
       unsigned int machineRegNum;
       
       MachineOperand::MachineOperandType
-	op2type = ChooseRegOrImmed(op2Value, minstr->getOpCode(),targetMachine,
+	op2type = ChooseRegOrImmed(op2Value, minstr->getOpCode(), target,
 				   /*canUseImmed*/ true,
-				   vregType, machineRegNum, immedValue);
+				   machineRegNum, immedValue);
       
-      if (op2type == MachineOperand::MO_Register)
+      if (op2type == MachineOperand::MO_MachineRegister)
+	minstr->SetMachineOperand(op2Position, machineRegNum);
+      else if (op2type == MachineOperand::MO_VirtualRegister)
 	{
-	  if (vregType == MachineOperand::MO_MachineReg)
-	    minstr->SetMachineOperand(op2Position, machineRegNum);
-	  else
-	    {
-	      if (op2Value->getValueType() == Value::ConstantVal)
-		{// value is constant and must be loaded from constant pool
-		  returnFlags = returnFlags | (1 << op2Position);
-		}
-	      minstr->SetMachineOperand(op2Position, op2type, op2Value);
+	  if (op2Value->getValueType() == Value::ConstantVal)
+	    {// value is constant and must be loaded from constant pool
+	      returnFlags = returnFlags | (1 << op2Position);
 	    }
+	  minstr->SetMachineOperand(op2Position, op2type, op2Value);
 	}
       else
-	minstr->SetMachineOperand(op2Position, op2type, immedValue);
+	{
+	  assert(op2type != MO_CCRegister);
+	  minstr->SetMachineOperand(op2Position, op2type, immedValue);
+	}
     }
   
   // If operand 3 (result) can be discarded, use a dead register if one exists
-  if (canDiscardResult && targetMachine.zeroRegNum >= 0)
-    minstr->SetMachineOperand(resultPosition, targetMachine.zeroRegNum);
+  if (canDiscardResult && target.zeroRegNum >= 0)
+    minstr->SetMachineOperand(resultPosition, target.zeroRegNum);
   else
-    minstr->SetMachineOperand(resultPosition, MachineOperand::MO_Register,
-					      vmInstrNode->getValue());
+    minstr->SetMachineOperand(resultPosition, MachineOperand::MO_VirtualRegister, vmInstrNode->getValue());
 
   return returnFlags;
 }
+#endif
 
 
 void
 Set3OperandsFromInstr(MachineInstr* minstr,
 		      InstructionNode* vmInstrNode,
-		      const TargetMachine& targetMachine,
+		      const TargetMachine& target,
 		      bool canDiscardResult,
 		      int op1Position,
 		      int op2Position,
@@ -265,34 +257,32 @@ Set3OperandsFromInstr(MachineInstr* minstr,
   assert(resultPosition >= 0);
   
   // operand 1
-  minstr->SetMachineOperand(op1Position, MachineOperand::MO_Register,
+  minstr->SetMachineOperand(op1Position, MachineOperand::MO_VirtualRegister,
 			    vmInstrNode->leftChild()->getValue());   
   
   // operand 2 (if any)
   if (op2Position >= 0)
-    minstr->SetMachineOperand(op2Position, MachineOperand::MO_Register,
+    minstr->SetMachineOperand(op2Position, MachineOperand::MO_VirtualRegister,
 			      vmInstrNode->rightChild()->getValue());   
   
   // result operand: if it can be discarded, use a dead register if one exists
-  if (canDiscardResult && targetMachine.zeroRegNum >= 0)
-    minstr->SetMachineOperand(resultPosition, targetMachine.zeroRegNum);
+  if (canDiscardResult && target.zeroRegNum >= 0)
+    minstr->SetMachineOperand(resultPosition, target.zeroRegNum);
   else
-    minstr->SetMachineOperand(resultPosition, MachineOperand::MO_Register,
-					      vmInstrNode->getValue());
+    minstr->SetMachineOperand(resultPosition, MachineOperand::MO_VirtualRegister, vmInstrNode->getValue());
 }
 
 
 MachineOperand::MachineOperandType
 ChooseRegOrImmed(Value* val,
 		 MachineOpCode opCode,
-		 const TargetMachine& targetMachine,
+		 const TargetMachine& target,
 		 bool canUseImmed,
-		 MachineOperand::VirtualRegisterType& getVRegType,
 		 unsigned int& getMachineRegNum,
 		 int64_t& getImmedValue)
 {
-  MachineOperand::MachineOperandType opType = MachineOperand::MO_Register;
-  getVRegType = MachineOperand::MO_VirtualReg;
+  MachineOperand::MachineOperandType opType =
+    MachineOperand::MO_VirtualRegister;
   getMachineRegNum = 0;
   getImmedValue = 0;
   
@@ -311,13 +301,13 @@ ChooseRegOrImmed(Value* val,
   
   if (isValidConstant)
     {
-      if (intValue == 0 && targetMachine.zeroRegNum >= 0)
+      if (intValue == 0 && target.zeroRegNum >= 0)
 	{
-	  getVRegType = MachineOperand::MO_MachineReg;
-	  getMachineRegNum = targetMachine.zeroRegNum;
+	  opType = MachineOperand::MO_MachineRegister;
+	  getMachineRegNum = target.zeroRegNum;
 	}
       else if (canUseImmed &&
-	       targetMachine.machineInstrInfo[opCode].constantFitsInImmedField(intValue))
+	       target.getInstrInfo().constantFitsInImmedField(opCode,intValue))
 	{
 	  opType = MachineOperand::MO_SignExtendedImmed;
 	  getImmedValue = intValue;

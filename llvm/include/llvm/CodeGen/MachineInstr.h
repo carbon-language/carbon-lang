@@ -15,10 +15,14 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTR_H
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
+#include <iterator>
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/NonCopyable.h"
 #include "llvm/CodeGen/TargetMachine.h"
+
+template<class _MI, class _V> class ValOpIterator;
+
 
 //---------------------------------------------------------------------------
 // class MachineOperand 
@@ -57,55 +61,77 @@
 
 class MachineOperand {
 public:
-  friend ostream& operator<<(ostream& os, const MachineOperand& mop);
-
-public:
   enum MachineOperandType {
-    MO_Register,
+    MO_VirtualRegister,		// virtual register for *value
+    MO_MachineRegister,		// pre-assigned machine register `regNum'
     MO_CCRegister,
     MO_SignExtendedImmed,
     MO_UnextendedImmed,
     MO_PCRelativeDisp,
   };
   
-  enum VirtualRegisterType {
-    MO_VirtualReg,		// virtual register for *value
-    MO_MachineReg		// pre-assigned machine register `regNum'
+private:
+  MachineOperandType opType;
+  
+  union {
+    Value*	value;		// BasicBlockVal for a label operand.
+				// ConstantVal for a non-address immediate.
+				// Virtual register for an SSA operand,
+				// including hidden operands required for
+				// the generated machine code.
+    
+    unsigned int regNum;	// register number for an explicit register
+  
+    int64_t immedVal;		// constant value for an explicit constant
   };
   
-  MachineOperandType machineOperandType;
-  
-  VirtualRegisterType vregType;
-  
-  Value*	value;		// BasicBlockVal for a label operand.
-				// ConstantVal for a non-address immediate.
-				// Virtual register for a register operand.
-  
-  unsigned int regNum;		// register number for an explicit register
-  
-  int64_t immedVal;		// constant value for an explicit constant
-  
+public:
   /*ctor*/		MachineOperand	();
   /*ctor*/		MachineOperand	(MachineOperandType operandType,
 					 Value* _val);
   /*copy ctor*/		MachineOperand	(const MachineOperand&);
   /*dtor*/		~MachineOperand	() {}
   
+  // Accessor methods.  Caller is responsible for checking the
+  // operand type before invoking the corresponding accessor.
+  // 
+  MachineOperandType	getOperandType	() const {
+    return opType;
+  }
+  Value*		getVRegValue	() const {
+    assert(opType == MO_VirtualRegister || opType == MO_CCRegister);
+    return value;
+  }
+  unsigned int		getMachineRegNum() const {
+    assert(opType == MO_MachineRegister);
+    return regNum;
+  }
+  int64_t		getImmedValue	() const {
+    assert(opType >= MO_SignExtendedImmed || opType <= MO_PCRelativeDisp);
+    return immedVal;
+  }
+  
+public:
+  friend ostream& operator<<(ostream& os, const MachineOperand& mop);
+  
+private:
   // These functions are provided so that a vector of operands can be
   // statically allocated and individual ones can be initialized later.
+  // Give class MachineInstr gets access to these functions.
   // 
   void			Initialize	(MachineOperandType operandType,
 					 Value* _val);
   void			InitializeConst	(MachineOperandType operandType,
 					 int64_t intValue);
   void			InitializeReg	(unsigned int regNum);
+
+  friend class MachineInstr;
 };
 
 
 inline
 MachineOperand::MachineOperand()
-  : machineOperandType(MO_Register),
-    vregType(MO_VirtualReg),
+  : opType(MO_VirtualRegister),
     value(NULL),
     regNum(0),
     immedVal(0)
@@ -114,8 +140,7 @@ MachineOperand::MachineOperand()
 inline
 MachineOperand::MachineOperand(MachineOperandType operandType,
 			       Value* _val)
-  : machineOperandType(operandType),
-    vregType(MO_VirtualReg),
+  : opType(operandType),
     value(_val),
     regNum(0),
     immedVal(0)
@@ -123,19 +148,24 @@ MachineOperand::MachineOperand(MachineOperandType operandType,
 
 inline
 MachineOperand::MachineOperand(const MachineOperand& mo)
-  : machineOperandType(mo.machineOperandType),
-    vregType(mo.vregType),
-    value(mo.value),
-    regNum(mo.regNum),
-    immedVal(mo.immedVal)
+  : opType(mo.opType)
 {
+  switch(opType) {
+  case MO_VirtualRegister:
+  case MO_CCRegister:		value = mo.value; break;
+  case MO_MachineRegister:	regNum = mo.regNum; break;
+  case MO_SignExtendedImmed:
+  case MO_UnextendedImmed:
+  case MO_PCRelativeDisp:	immedVal = mo.immedVal; break;
+  default: assert(0);
+  }
 }
 
 inline void
 MachineOperand::Initialize(MachineOperandType operandType,
 			   Value* _val)
 {
-  machineOperandType = operandType;
+  opType = operandType;
   value = _val;
 }
 
@@ -143,7 +173,7 @@ inline void
 MachineOperand::InitializeConst(MachineOperandType operandType,
 				int64_t intValue)
 {
-  machineOperandType = operandType;
+  opType = operandType;
   value = NULL;
   immedVal = intValue;
 }
@@ -151,8 +181,7 @@ MachineOperand::InitializeConst(MachineOperandType operandType,
 inline void
 MachineOperand::InitializeReg(unsigned int _regNum)
 {
-  machineOperandType = MO_Register;
-  vregType = MO_MachineReg;
+  opType = MO_MachineRegister;
   value = NULL;
   regNum = _regNum;
 }
@@ -166,8 +195,6 @@ MachineOperand::InitializeReg(unsigned int _regNum)
 // 
 //   MachineOpCode must be an enum, defined separately for each target.
 //   E.g., It is defined in SparcInstructionSelection.h for the SPARC.
-//   The array MachineInstrInfo TargetMachineInstrInfo[] objects
-//   (indexed by opCode) provides information about each target instruction.
 // 
 //   opCodeMask is used to record variants of an instruction.
 //   E.g., each branch instruction on SPARC has 2 flags (i.e., 4 variants):
@@ -181,12 +208,15 @@ class MachineInstr : public NonCopyable {
 private:
   MachineOpCode	opCode;
   OpCodeMask	opCodeMask;		// extra bits for variants of an opcode
-  vector<MachineOperand> operands;	// operand 0 is the result
+  vector<MachineOperand> operands;
+  
+public:
+  typedef ValOpIterator<const MachineInstr, const Value> val_op_const_iterator;
+  typedef ValOpIterator<      MachineInstr,       Value> val_op_iterator;
   
 public:
   /*ctor*/		MachineInstr	(MachineOpCode _opCode,
 					 OpCodeMask    _opCodeMask = 0x0);
-  
   inline           	~MachineInstr	() {}
   
   const MachineOpCode	getOpCode	() const;
@@ -194,11 +224,14 @@ public:
   unsigned int		getNumOperands	() const;
   
   const MachineOperand& getOperand	(unsigned int i) const;
+        MachineOperand& getOperand	(unsigned int i);
   
   void			dump		(unsigned int indent = 0);
   
 public:
   friend ostream& operator<<(ostream& os, const MachineInstr& minstr);
+  friend val_op_const_iterator;
+  friend val_op_iterator;
 
 public:
   // Access to set the operands when building the machine instruction
@@ -221,8 +254,13 @@ MachineInstr::getOpCode() const
 inline unsigned int
 MachineInstr::getNumOperands() const
 {
-  assert(operands.size() == TargetMachineInstrInfo[opCode].numOperands);
   return operands.size();
+}
+
+inline MachineOperand&
+MachineInstr::getOperand(unsigned int i)
+{
+  return operands[i];
 }
 
 inline const MachineOperand&
@@ -230,6 +268,38 @@ MachineInstr::getOperand(unsigned int i) const
 {
   return operands[i];
 }
+
+
+template<class _MI, class _V>
+class ValOpIterator : public std::forward_iterator<_V, ptrdiff_t> {
+private:
+  unsigned int i;
+  int resultPos;
+  _MI*& minstr;
+
+  inline void	skipToNextVal() {
+    while (i < minstr->getNumOperands()
+	   && minstr->getOperand(i).getOperandType() != MachineOperand::MO_VirtualRegister
+	   && minstr->getOperand(i).getOperandType() != MachineOperand::MO_CCRegister)
+      ++i;
+  }
+  
+public:
+  typedef ValOpIterator<_MI, _V> _Self;
+  
+  inline ValOpIterator(_MI* _minstr) : i(0), minstr(_minstr) {
+    resultPos = TargetInstrDescriptors[minstr->opCode].resultPos;
+    skipToNextVal();
+  };
+  
+  inline _V*	operator*()  const { return minstr->getOperand(i).getVRegValue();}
+  inline _V*	operator->() const { return operator*(); }
+  inline bool	isDef	()   const { return (((int) i) == resultPos); }
+  inline bool	done	()   const { return (i == minstr->getNumOperands()); }
+  
+  inline _Self& operator++()	   { i++; skipToNextVal(); return *this; }
+  inline _Self  operator++(int)	   { _Self tmp = *this; ++*this; return tmp; }
+};
 
 
 //---------------------------------------------------------------------------
@@ -332,12 +402,11 @@ void		Set3OperandsFromInstr	(MachineInstr* minstr,
 
 MachineOperand::MachineOperandType
 		ChooseRegOrImmed(Value* val,
-			     MachineOpCode opCode,
-			     const TargetMachine& targetMachine,
-			     bool canUseImmed,
-			     MachineOperand::VirtualRegisterType& getVRegType,
-			     unsigned int& getMachineRegNum,
-			     int64_t& getImmedValue);
+				 MachineOpCode opCode,
+				 const TargetMachine& targetMachine,
+				 bool canUseImmed,
+				 unsigned int& getMachineRegNum,
+				 int64_t& getImmedValue);
 
 ostream& operator<<(ostream& os, const MachineInstr& minstr);
 
