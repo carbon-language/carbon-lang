@@ -44,8 +44,7 @@ static std::string getStringValue(Value *V, unsigned Offset = 0) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     if (GV->hasInitializer() && isa<ConstantArray>(GV->getInitializer())) {
       ConstantArray *Init = cast<ConstantArray>(GV->getInitializer());
-      if (Init->getType()->getElementType() == Type::SByteTy ||
-          Init->getType()->getElementType() == Type::UByteTy) {
+      if (Init->isString()) {
         std::string Result = Init->getAsString();
         if (Offset < Result.size()) {
           // If we are pointing INTO The string, erase the beginning...
