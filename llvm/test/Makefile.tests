@@ -75,14 +75,14 @@ else
     endif
 endif
 ifeq ($(DOTRACING), yes)
-    TRACELIBS := -L$(LEVEL)/test/Libraries/Output -linstr64
+    TRACELIBS := -L$(LEVEL)/test/Libraries/Output -linstr.$(ARCH)
 endif
 
 
 LLCLIBS := $(LLCLIBS) -lm
 
 clean::
-	$(RM) a.out core
+	$(RM) -f a.out core
 	$(RM) -rf Output/
 
 # Compile from X.c to Output/X.ll
