@@ -12,63 +12,59 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 
-unsigned getIdx(unsigned dataSize) {
-  switch (dataSize) {
+static unsigned getIdx(const TargetRegisterClass *RC) {
+  switch (RC->getDataSize()) {
   default: assert(0 && "Invalid data size!");
-  case 1: return 0;
-  case 2: return 1;
-  case 4: return 2;
-    // FIXME: longs handled as ints
-  case 8: return 2;
+  case 1:  return 0;
+  case 2:  return 1;
+  case 4:  return 2;
+  case 10: return 3;
   }
 }
 
-MachineBasicBlock::iterator
-X86RegisterInfo::storeReg2RegOffset(MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator MBBI,
-                                    unsigned SrcReg, unsigned DestReg, 
-                                    unsigned ImmOffset, unsigned dataSize)
-  const
-{
-  static const unsigned Opcode[] = { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32 };
-  MachineInstr *MI = addRegOffset(BuildMI(Opcode[getIdx(dataSize)], 5),
+void X86RegisterInfo::storeReg2RegOffset(MachineBasicBlock &MBB,
+					 MachineBasicBlock::iterator &MBBI,
+					 unsigned SrcReg, unsigned DestReg, 
+					 unsigned ImmOffset,
+					 const TargetRegisterClass *RC) const {
+  static const unsigned Opcode[] =
+    { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32, X86::FSTPr80 };
+  MachineInstr *MI = addRegOffset(BuildMI(Opcode[getIdx(RC)], 5),
                                   DestReg, ImmOffset).addReg(SrcReg);
-  return MBB.insert(MBBI, MI)+1;
+  MBBI = MBB.insert(MBBI, MI)+1;
 }
 
-MachineBasicBlock::iterator
-X86RegisterInfo::loadRegOffset2Reg(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MBBI,
-                                   unsigned DestReg, unsigned SrcReg,
-                                   unsigned ImmOffset, unsigned dataSize)
-  const
-{
-  static const unsigned Opcode[] = { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32 };
-  MachineInstr *MI = addRegOffset(BuildMI(Opcode[getIdx(dataSize)], 4, DestReg),
+void X86RegisterInfo::loadRegOffset2Reg(MachineBasicBlock &MBB,
+					MachineBasicBlock::iterator &MBBI,
+					unsigned DestReg, unsigned SrcReg,
+					unsigned ImmOffset,
+					const TargetRegisterClass *RC) const {
+  static const unsigned Opcode[] =
+    { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FLDr80 };
+  MachineInstr *MI = addRegOffset(BuildMI(Opcode[getIdx(RC)], 4, DestReg),
                                   SrcReg, ImmOffset);
-  return MBB.insert(MBBI, MI)+1;
+  MBBI = MBB.insert(MBBI, MI)+1;
 }
 
-MachineBasicBlock::iterator
-X86RegisterInfo::moveReg2Reg(MachineBasicBlock &MBB,
-                             MachineBasicBlock::iterator MBBI,
-                             unsigned DestReg, unsigned SrcReg,
-                             unsigned dataSize) const
-{
-  static const unsigned Opcode[] = { X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
-  MachineInstr *MI = BuildMI(Opcode[getIdx(dataSize)],1,DestReg).addReg(SrcReg);
-  return MBB.insert(MBBI, MI)+1;
+void X86RegisterInfo::moveReg2Reg(MachineBasicBlock &MBB,
+				  MachineBasicBlock::iterator &MBBI,
+				  unsigned DestReg, unsigned SrcReg,
+				  const TargetRegisterClass *RC) const {
+  static const unsigned Opcode[] =
+    { X86::MOVrr8, X86::MOVrr16, X86::MOVrr32, X86::FpMOV };
+  MachineInstr *MI = BuildMI(Opcode[getIdx(RC)],1,DestReg).addReg(SrcReg);
+  MBBI = MBB.insert(MBBI, MI)+1;
 }
 
-MachineBasicBlock::iterator
-X86RegisterInfo::moveImm2Reg(MachineBasicBlock &MBB,
-                             MachineBasicBlock::iterator MBBI,
-                             unsigned DestReg, unsigned Imm, unsigned dataSize)
-  const
-{
-  static const unsigned Opcode[] = { X86::MOVir8, X86::MOVir16, X86::MOVir32 };
-  MachineInstr *MI = BuildMI(Opcode[getIdx(dataSize)], 1, DestReg).addReg(Imm);
-  return MBB.insert(MBBI, MI)+1;
+void X86RegisterInfo::moveImm2Reg(MachineBasicBlock &MBB,
+				  MachineBasicBlock::iterator &MBBI,
+				  unsigned DestReg, unsigned Imm,
+				  const TargetRegisterClass *RC) const {
+  static const unsigned Opcode[] =
+    { X86::MOVir8, X86::MOVir16, X86::MOVir32, 0 };
+  MachineInstr *MI = BuildMI(Opcode[getIdx(RC)], 1, DestReg).addReg(Imm);
+  assert(MI->getOpcode() != 0 && "Cannot move FP imm to reg yet!");
+  MBBI = MBB.insert(MBBI, MI)+1;
 }
 
 
@@ -81,15 +77,13 @@ unsigned X86RegisterInfo::getStackPointer() const {
 }
 
 const unsigned* X86RegisterInfo::getCalleeSaveRegs() const {
-  static const unsigned CalleeSaveRegs[] = { X86::ESI, X86::EDI, X86::EBX,
-                                             MRegisterInfo::NoRegister };
+  static const unsigned CalleeSaveRegs[] = { X86::ESI, X86::EDI, X86::EBX, 0 };
   return CalleeSaveRegs;
 }
 
 
 const unsigned* X86RegisterInfo::getCallerSaveRegs() const {
-  static const unsigned CallerSaveRegs[] = { X86::EAX, X86::ECX, X86::EDX,
-                                             MRegisterInfo::NoRegister };
+  static const unsigned CallerSaveRegs[] = { X86::EAX, X86::ECX, X86::EDX, 0 };
   return CallerSaveRegs;
 }
 
