@@ -37,7 +37,7 @@ namespace {
 
   class Reassociate : public FunctionPass {
     std::map<BasicBlock*, unsigned> RankMap;
-    std::map<Instruction*, unsigned> InstRankMap;
+    std::map<Value*, unsigned> ValueRankMap;
   public:
     bool runOnFunction(Function &F);
 
@@ -58,6 +58,11 @@ Pass *createReassociatePass() { return new Reassociate(); }
 
 void Reassociate::BuildRankMap(Function &F) {
   unsigned i = 2;
+
+  // Assign distinct ranks to function arguments
+  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
+    ValueRankMap[I] = ++i;
+
   ReversePostOrderTraversal<Function*> RPOT(&F);
   for (ReversePostOrderTraversal<Function*>::rpo_iterator I = RPOT.begin(),
          E = RPOT.end(); I != E; ++I)
@@ -65,7 +70,8 @@ void Reassociate::BuildRankMap(Function &F) {
 }
 
 unsigned Reassociate::getRank(Value *V) {
-  if (isa<Argument>(V)) return 1;   // Function argument...
+  if (isa<Argument>(V)) return ValueRankMap[V];   // Function argument...
+
   if (Instruction *I = dyn_cast<Instruction>(V)) {
     // If this is an expression, return the 1+MAX(rank(LHS), rank(RHS)) so that
     // we can reassociate expressions for code motion!  Since we do not recurse
@@ -78,7 +84,7 @@ unsigned Reassociate::getRank(Value *V) {
         I->mayWriteToMemory())  // Cannot move inst if it writes to memory!
       return RankMap[I->getParent()];
 
-    unsigned &CachedRank = InstRankMap[I];
+    unsigned &CachedRank = ValueRankMap[I];
     if (CachedRank) return CachedRank;    // Rank already known?
 
     // If not, compute it!
@@ -278,6 +284,6 @@ bool Reassociate::runOnFunction(Function &F) {
 
   // We are done with the rank map...
   RankMap.clear();
-  InstRankMap.clear();
+  ValueRankMap.clear();
   return Changed;
 }
