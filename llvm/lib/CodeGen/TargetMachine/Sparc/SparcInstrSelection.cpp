@@ -468,7 +468,7 @@ CreateAddConstInstruction(const InstructionNode* instrNode)
   MachineInstr* minstr = NULL;
   
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(constOp->getValueType() == Value::ConstantVal);
+  assert(constOp->isConstant());
   
   // Cases worth optimizing are:
   // (1) Add with 0 for float or double: use an FMOV of appropriate type,
@@ -476,13 +476,11 @@ CreateAddConstInstruction(const InstructionNode* instrNode)
   // 
   const Type* resultType = instrNode->getInstruction()->getType();
   
-  if (resultType == Type::FloatTy ||
-      resultType == Type::DoubleTy)
-    {
-      double dval = ((ConstPoolFP*) constOp)->getValue();
-      if (dval == 0.0)
-	minstr = CreateMovFloatInstruction(instrNode, resultType);
-    }
+  if (resultType == Type::FloatTy || resultType == Type::DoubleTy) {
+    double dval = ((ConstPoolFP*) constOp)->getValue();
+    if (dval == 0.0)
+      minstr = CreateMovFloatInstruction(instrNode, resultType);
+  }
   
   return minstr;
 }
@@ -521,7 +519,7 @@ CreateSubConstInstruction(const InstructionNode* instrNode)
   MachineInstr* minstr = NULL;
   
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(constOp->getValueType() == Value::ConstantVal);
+  assert(constOp->isConstant());
   
   // Cases worth optimizing are:
   // (1) Sub with 0 for float or double: use an FMOV of appropriate type,
@@ -628,7 +626,7 @@ CreateMulConstInstruction(const InstructionNode* instrNode,
   bool needNeg = false;
 
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(constOp->getValueType() == Value::ConstantVal);
+  assert(constOp->isConstant());
   
   // Cases worth optimizing are:
   // (1) Multiply by 0 or 1 for any type: replace with copy (ADD or FMOV)
@@ -752,7 +750,7 @@ CreateDivConstInstruction(const InstructionNode* instrNode,
   getMinstr2 = NULL;
   
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(constOp->getValueType() == Value::ConstantVal);
+  assert(constOp->isConstant());
   
   // Cases worth optimizing are:
   // (1) Divide by 1 for any type: replace with copy (ADD or FMOV)
@@ -1099,7 +1097,7 @@ FixConstantOperands(const InstructionNode* vmInstrNode,
 	  
 	  Value* opValue = mop.getVRegValue();
 	  
-	  if (opValue->getValueType() == Value::ConstantVal)
+	  if (opValue->isConstant())
 	    {
 	      unsigned int machineRegNum;
 	      int64_t immedValue;
@@ -1170,7 +1168,7 @@ MakeLoadConstInstr(Instruction* vmInstr,
 		   TmpInstruction*& tmpReg,
 		   MachineInstr*& getMinstr2)
 {
-  assert(val->getValueType() == Value::ConstantVal);
+  assert(val->isConstant());
   
   MachineInstr* minstr;
   
@@ -1700,7 +1698,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     Value* firstUse = (Value*) * result->use_begin();
     bool discardResult =
       (result->use_size() == 1
-       && firstUse->getValueType() == Value::InstructionVal
+       && firstUse->isInstruction()
        && ((Instruction*) firstUse)->getOpcode() == Instruction::Br);
     
     bool mustClearReg;
