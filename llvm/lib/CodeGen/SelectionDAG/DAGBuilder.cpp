@@ -253,10 +253,10 @@ SelectionDAG::SelectionDAG(MachineFunction &f, const TargetMachine &tm,
 
   switch (TM.getTargetData().getPointerSize()) {
   default: assert(0 && "Unknown pointer size!"); abort();
-  case 8:  PointerType = MVT::i8; break;
-  case 16: PointerType = MVT::i16; break;
-  case 32: PointerType = MVT::i32; break;
-  case 64: PointerType = MVT::i64; break;
+  case 1: PointerType = MVT::i8;  break;
+  case 2: PointerType = MVT::i16; break;
+  case 3: PointerType = MVT::i32; break;
+  case 4: PointerType = MVT::i64; break;
   }
 
   // Create all of the machine basic blocks for the function... building the
