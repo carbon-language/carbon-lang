@@ -55,6 +55,9 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
 
   PM.add(createLowerConstantExpressionsPass());
 
+  // Make sure that no unreachable blocks are instruction selected.
+  PM.add(createUnreachableBlockEliminationPass());
+
   PM.add(createPPCSimpleInstructionSelector(*this));
 
   if (PrintMachineCode)
@@ -85,6 +88,9 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createLowerSwitchPass());
 
   PM.add(createLowerConstantExpressionsPass());
+
+  // Make sure that no unreachable blocks are instruction selected.
+  PM.add(createUnreachableBlockEliminationPass());
 
   PM.add(createPPCSimpleInstructionSelector(TM));
   PM.add(createRegisterAllocator());
