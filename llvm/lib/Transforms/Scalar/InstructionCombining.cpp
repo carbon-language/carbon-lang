@@ -309,7 +309,8 @@ static inline Value *dyn_castNegVal(Value *V) {
 
   // Constants can be considered to be negated values if they can be folded...
   if (Constant *C = dyn_cast<Constant>(V))
-    return ConstantExpr::getNeg(C);
+    if (!isa<UndefValue>(C))
+      return ConstantExpr::getNeg(C);
   return 0;
 }
 
