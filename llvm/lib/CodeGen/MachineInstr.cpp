@@ -23,6 +23,7 @@ extern const TargetInstrDescriptor *TargetInstrDescriptors;
 // Constructor for instructions with variable #operands
 MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands)
   : opCode(OpCode),
+    opCodeFlags(0),
     operands(numOperands, MachineOperand()),
     numImplicitRefs(0)
 {
@@ -36,6 +37,7 @@ MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands)
 MachineInstr::MachineInstr(MachineOpCode Opcode, unsigned numOperands,
                            bool XX, bool YY)
   : opCode(Opcode),
+    opCodeFlags(0),
     numImplicitRefs(0)
 {
   operands.reserve(numOperands);
@@ -47,6 +49,7 @@ MachineInstr::MachineInstr(MachineOpCode Opcode, unsigned numOperands,
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, MachineOpCode Opcode,
                            unsigned numOperands)
   : opCode(Opcode),
+    opCodeFlags(0),
     numImplicitRefs(0)
 {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
@@ -60,7 +63,7 @@ bool MachineInstr::OperandsComplete() const
 {
   int NumOperands = TargetInstrDescriptors[opCode].numOperands;
   if (NumOperands >= 0 && getNumOperands() >= (unsigned)NumOperands)
-    return true;  // Broken!
+    return true;  // Broken: we have all the operands of this instruction!
   return false;
 }
 
@@ -138,6 +141,13 @@ MachineInstr::SetRegForOperand(unsigned i, int regNum)
 {
   assert(i < getNumOperands());          // must be explicit op
   operands[i].setRegForValue(regNum);
+  insertUsedReg(regNum);
+}
+
+void
+MachineInstr::SetRegForImplicitRef(unsigned i, int regNum)
+{
+  getImplicitOp(i).setRegForValue(regNum);
   insertUsedReg(regNum);
 }
 
