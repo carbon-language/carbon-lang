@@ -2177,7 +2177,7 @@ void ISel::doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator MBBI,
 // ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
 // returns zero when the input is not exactly a power of two.
 static unsigned ExactLog2(unsigned Val) {
-  if (Val == 0) return 0;
+  if (Val == 0 || (Val & (Val-1))) return 0;
   unsigned Count = 0;
   while (Val != 1) {
     if (Val & 1) return 0;
@@ -2488,9 +2488,61 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
   default: assert(0 && "Unknown class!");
   }
 
-  static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
   static const unsigned MovOpcode[]={ X86::MOV8rr, X86::MOV16rr, X86::MOV32rr };
-  static const unsigned SarOpcode[]={ X86::SAR8ri, X86::SAR16ri, X86::SAR32ri };
+  static const unsigned NEGOpcode[] = { X86::NEG8r, X86::NEG16r, X86::NEG32r };
+  static const unsigned SAROpcode[]={ X86::SAR8ri, X86::SAR16ri, X86::SAR32ri };
+  static const unsigned SHROpcode[]={ X86::SHR8ri, X86::SHR16ri, X86::SHR32ri };
+  static const unsigned ADDOpcode[]={ X86::ADD8rr, X86::ADD16rr, X86::ADD32rr };
+
+  // Special case signed division by power of 2.
+  if (isDiv)
+    if (ConstantSInt *CI = dyn_cast<ConstantSInt>(Op1)) {
+      assert(Class != cLong && "This doesn't handle 64-bit divides!");
+      int V = CI->getValue();
+
+      if (V == 1) {       // X /s 1 => X
+        unsigned Op0Reg = getReg(Op0, BB, IP);
+        BuildMI(*BB, IP, MovOpcode[Class], 1, ResultReg).addReg(Op0Reg);
+        return;
+      }
+
+      if (V == -1) {      // X /s -1 => -X
+        unsigned Op0Reg = getReg(Op0, BB, IP);
+        BuildMI(*BB, IP, NEGOpcode[Class], 1, ResultReg).addReg(Op0Reg);
+        return;
+      }
+
+      bool isNeg = false;
+      if (V < 0) {         // Not a positive power of 2?
+        V = -V;
+        isNeg = true;      // Maybe it's a negative power of 2.
+      }
+      if (unsigned Log = ExactLog2(V)) {
+        --Log;
+        unsigned Op0Reg = getReg(Op0, BB, IP);
+        unsigned TmpReg = makeAnotherReg(Op0->getType());
+        if (Log != 1) 
+          BuildMI(*BB, IP, SAROpcode[Class], 2, TmpReg)
+            .addReg(Op0Reg).addImm(Log-1);
+        else
+          BuildMI(*BB, IP, MovOpcode[Class], 1, TmpReg).addReg(Op0Reg);
+        unsigned TmpReg2 = makeAnotherReg(Op0->getType());
+        BuildMI(*BB, IP, SHROpcode[Class], 2, TmpReg2)
+          .addReg(TmpReg).addImm(32-Log);
+        unsigned TmpReg3 = makeAnotherReg(Op0->getType());
+        BuildMI(*BB, IP, ADDOpcode[Class], 2, TmpReg3)
+          .addReg(Op0Reg).addReg(TmpReg2);
+
+        unsigned TmpReg4 = isNeg ? makeAnotherReg(Op0->getType()) : ResultReg;
+        BuildMI(*BB, IP, SAROpcode[Class], 2, TmpReg4)
+          .addReg(Op0Reg).addImm(Log);
+        if (isNeg)
+          BuildMI(*BB, IP, NEGOpcode[Class], 1, ResultReg).addReg(TmpReg4);
+        return;
+      }
+    }
+
+  static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
   static const unsigned ClrOpcode[]={ X86::MOV8ri, X86::MOV16ri, X86::MOV32ri };
   static const unsigned ExtRegs[]  ={ X86::AH    , X86::DX     , X86::EDX     };
 
@@ -2499,7 +2551,6 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     { X86::IDIV8r, X86::IDIV16r, X86::IDIV32r, 0 },  // Signed division
   };
 
-  bool isSigned   = Ty->isSigned();
   unsigned Reg    = Regs[Class];
   unsigned ExtReg = ExtRegs[Class];
 
@@ -2508,18 +2559,21 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
   unsigned Op1Reg = getReg(Op1, BB, IP);
   BuildMI(*BB, IP, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
 
-  if (isSigned) {
+  if (Ty->isSigned()) {
     // Emit a sign extension instruction...
     unsigned ShiftResult = makeAnotherReg(Op0->getType());
-    BuildMI(*BB, IP, SarOpcode[Class], 2,ShiftResult).addReg(Op0Reg).addImm(31);
+    BuildMI(*BB, IP, SAROpcode[Class], 2,ShiftResult).addReg(Op0Reg).addImm(31);
     BuildMI(*BB, IP, MovOpcode[Class], 1, ExtReg).addReg(ShiftResult);
+
+    // Emit the appropriate divide or remainder instruction...
+    BuildMI(*BB, IP, DivOpcode[1][Class], 1).addReg(Op1Reg);
   } else {
     // If unsigned, emit a zeroing instruction... (reg = 0)
     BuildMI(*BB, IP, ClrOpcode[Class], 2, ExtReg).addImm(0);
-  }
 
-  // Emit the appropriate divide or remainder instruction...
-  BuildMI(*BB, IP, DivOpcode[isSigned][Class], 1).addReg(Op1Reg);
+    // Emit the appropriate divide or remainder instruction...
+    BuildMI(*BB, IP, DivOpcode[0][Class], 1).addReg(Op1Reg);
+  }
 
   // Figure out which register we want to pick the result out of...
   unsigned DestReg = isDiv ? Reg : ExtReg;
