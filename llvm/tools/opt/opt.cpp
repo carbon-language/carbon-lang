@@ -34,7 +34,7 @@ enum Opts {
   dce, constprop, inlining, strip, mstrip,
 
   // More powerful optimizations
-  indvars, sccp, cpm, adce, raise,
+  indvars, sccp, adce, raise,
 };
 
 struct {
@@ -48,7 +48,6 @@ struct {
   { mstrip   , DoFullSymbolStripping },
   { indvars  , DoInductionVariableCannonicalize },
   { sccp     , DoSCCP                },
-  { cpm      , DoConstantPoolMerging },
   { adce     , DoADCE                },
   { raise    , DoRaiseRepresentation },
 };
@@ -66,7 +65,6 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(mstrip   , "Strip Module Symbols"),
   clEnumVal(indvars  , "Simplify Induction Variables"),
   clEnumVal(sccp     , "Sparse Conditional Constant Propogation"),
-  clEnumVal(cpm      , "Constant Pool Merging"),
   clEnumVal(adce     , "Agressive DCE"),
   clEnumVal(raise    , "Raise to Higher Level"),
 0);
