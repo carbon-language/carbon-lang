@@ -15,6 +15,7 @@ DIRS:= $(filter-out llvm-test,$(patsubst $(SourceDir)/%/Makefile,%,$(wildcard $(
 # Sparc cannot link shared libraries (libtool problem?) which Stacker uses
 ifeq ($(ARCH), Sparc)
 DIRS := $(filter-out Stacker, $(DIRS))
+DIRS := $(filter-out sample, $(DIRS))
 endif
 
 include $(BUILD_SRC_ROOT)/Makefile.rules
