@@ -31,6 +31,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Mangler.h"
 #include "Support/StringExtras.h"
+#include "Config/config.h"
 #include <algorithm>
 #include <sstream>
 using namespace llvm;
