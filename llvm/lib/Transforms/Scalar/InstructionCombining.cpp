@@ -19,6 +19,7 @@
 #include "llvm/ConstantHandling.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
+#include "llvm/iPHINode.h"
 #include "llvm/iOperators.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
@@ -69,6 +70,7 @@ namespace {
     Instruction *visitSetCondInst(BinaryOperator *I);
     Instruction *visitShiftInst(Instruction *I);
     Instruction *visitCastInst(CastInst *CI);
+    Instruction *visitPHINode(PHINode *PN);
     Instruction *visitGetElementPtrInst(GetElementPtrInst *GEP);
     Instruction *visitMemAccessInst(MemAccessInst *MAI);
 
@@ -412,6 +414,8 @@ static inline bool isEliminableCastOfCast(const CastInst *CI,
 // CastInst simplification
 //
 Instruction *InstCombiner::visitCastInst(CastInst *CI) {
+  if (CI->use_empty()) return 0;       // Don't fix dead instructions...
+
   // If the user is casting a value to the same type, eliminate this cast
   // instruction...
   if (CI->getType() == CI->getOperand(0)->getType() && !CI->use_empty()) {
@@ -435,6 +439,21 @@ Instruction *InstCombiner::visitCastInst(CastInst *CI) {
   return 0;
 }
 
+
+// PHINode simplification
+//
+Instruction *InstCombiner::visitPHINode(PHINode *PN) {
+  if (PN->use_empty()) return 0;       // Don't fix dead instructions...
+
+  // If the PHI node only has one incoming value, eliminate the PHI node...
+  if (PN->getNumIncomingValues() == 1) {
+    AddUsesToWorkList(PN);         // Add all modified instrs to worklist
+    PN->replaceAllUsesWith(PN->getIncomingValue(0));
+    return PN;
+  }
+
+  return 0;
+}
 
 
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst *GEP) {
