@@ -35,11 +35,6 @@
 * I need to provide an option to the bytecode loader to ignore memory 
   dependance edges.  Instead, the VM would just treat memory operations 
   (load, store, getfield, putfield, call) as pinned instructions.
-* I need to have a way to prevent taking the address of a constant pool
-  reference.  You should only be able to take the address of a variable.
-  Maybe taking the address of a constant copies it?  What about virtual 
-  function tables?  Maybe a const pointer would be better... Alternatively,
-  we could alloca a local variable, copy a constant into it, and use that...
 * Need a way to attach bytecode block info at various levels of asm code.
 * Recognize and save comments in assembly and bytecode format
 * Encode line number table in bytecode (like #line), optional table
