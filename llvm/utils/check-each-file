@@ -10,7 +10,7 @@ then
 	linker=./link-$program
 	echo "Building $program with llvm-native-gcc"
 	rm -f $program
-	gmake -s $program CC=llvm-native-gcc
+	gmake -e $program CC=llvm-native-gcc CXX=llvm-native-gxx
 	echo "Erasing $program and re-linking it" 
 	rm -f $program
 	echo "rm -f $program" > $linker
@@ -113,7 +113,8 @@ files=`cat $checkfiles`
 echo "Recompiling everything with llvm-native-gcc"
 for f in $files
 do
-	rm -f $f && gmake $f CC=llvm-native-gcc
+	rm -f $f
+	gmake $f CC=llvm-native-gcc CXX=llvm-native-gxx
 done
 rm -f $program
 $linker
