@@ -7,7 +7,6 @@
 
 #include "SparcInternals.h"
 #include "SparcRegClassInfo.h"
-#include "llvm/Target/Sparc.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/InstrSelection.h"

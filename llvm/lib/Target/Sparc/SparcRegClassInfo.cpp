@@ -6,7 +6,6 @@
 
 #include "SparcRegClassInfo.h"
 #include "llvm/CodeGen/RegAllocCommon.h"
-#include "llvm/Target/Sparc.h"
 #include "llvm/Type.h"
 using std::cerr;
 using std::vector;
