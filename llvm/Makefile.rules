@@ -318,7 +318,8 @@ BCCompile.C   = $(LLVMGCCWITHPATH) $(CPP.Flags) $(CompileCommonOpts) \
                 $(C.Flags) -c
 Compile.CXX   = $(CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -c
 LTCompile.CXX = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.CXX)
-BCCompile.CXX = $(LLVMGXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -c
+BCCompile.CXX = $(LLVMGXXWITHPATH) $(CPP.Flags) $(CompileCommonOpts) \
+                $(CXX.Flags) -c
 Link          = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
 	        $(CompileCommonOpts) $(LD.Flags) $(Strip)
 Relink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
