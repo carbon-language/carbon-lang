@@ -132,7 +132,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                             Ptr->Untyped[2] = (Val.UIntVal >> 16) & 255;
                             Ptr->Untyped[3] = (Val.UIntVal >> 24) & 255;
                             break;
-    case Type::PointerTyID: if (CurMod.getPointerSize() != Module::Pointer64)
+    case Type::PointerTyID: if (getTargetData().getPointerSize() == 4)
                               goto Store4BytesLittleEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
@@ -165,7 +165,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                             Ptr->Untyped[1] = (Val.UIntVal >> 16) & 255;
                             Ptr->Untyped[0] = (Val.UIntVal >> 24) & 255;
                             break;
-    case Type::PointerTyID: if (CurMod.getPointerSize() != Module::Pointer64)
+    case Type::PointerTyID: if (getTargetData().getPointerSize() == 4)
                               goto Store4BytesBigEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
@@ -204,7 +204,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                                             ((unsigned)Ptr->Untyped[2] << 16) |
                                             ((unsigned)Ptr->Untyped[3] << 24);
                             break;
-    case Type::PointerTyID: if (CurMod.getPointerSize() != Module::Pointer64)
+    case Type::PointerTyID: if (getTargetData().getPointerSize() == 4)
                               goto Load4BytesLittleEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
@@ -238,7 +238,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                                             ((unsigned)Ptr->Untyped[1] << 16) |
                                             ((unsigned)Ptr->Untyped[0] << 24);
                             break;
-    case Type::PointerTyID: if (CurMod.getPointerSize() != Module::Pointer64)
+    case Type::PointerTyID: if (getTargetData().getPointerSize() == 4)
                               goto Load4BytesBigEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
