@@ -61,6 +61,10 @@ static inline std::string itostr(int64_t X) {
 }
 
 
+static inline std::string utostr(unsigned long X, bool isNeg = false) {
+  return utostr((unsigned long long)X, isNeg);
+}
+
 static inline std::string utostr(unsigned X, bool isNeg = false) {
   char Buffer[20];
   char *BufPtr = Buffer+19;
