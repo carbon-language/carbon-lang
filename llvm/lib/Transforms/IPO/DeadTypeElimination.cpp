@@ -74,21 +74,16 @@ bool DTE::run(Module &M) {
       // Loop over all entries in the type plane...
       SymbolTable::VarMap &Plane = STI->second;
       for (SymbolTable::VarMap::iterator PI = Plane.begin(); PI != Plane.end();)
-        if (ShouldNukeSymtabEntry(*PI)) {    // Should we remove this entry?
+        // If this entry should be unconditionally removed, or if we detect that
+        // the type is not used, remove it.
+        //
+        if (ShouldNukeSymtabEntry(*PI) ||
+            !UsedTypes.count(cast<Type>(PI->second))) {
 #if MAP_IS_NOT_BRAINDEAD
           PI = Plane.erase(PI);     // STD C++ Map should support this!
 #else
           Plane.erase(PI);          // Alas, GCC 2.95.3 doesn't  *SIGH*
           PI = Plane.begin();
-#endif
-          ++NumKilled;
-          Changed = true;
-        } else if (!UsedTypes.count(cast<Type>(PI->second))) {
-#if MAP_IS_NOT_BRAINDEAD
-          PI = Plane.erase(PI);     // STD C++ Map should support this!
-#else
-          Plane.erase(PI);          // Alas, GCC 2.95.3 doesn't  *SIGH*
-          PI = Plane.begin();       // N^2 algorithms are fun.  :(
 #endif
           ++NumKilled;
           Changed = true;
