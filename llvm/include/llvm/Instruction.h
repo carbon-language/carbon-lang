@@ -59,8 +59,11 @@ public:
   // Subclass classification... getOpcode() returns a member of 
   // one of the enums that is coming soon (down below)...
   //
-  virtual const char *getOpcodeName() const = 0;
   unsigned getOpcode() const { return iType; }
+  virtual const char *getOpcodeName() const {
+    return getOpcodeName(getOpcode());
+  }
+  static const char* getOpcodeName(unsigned OpCode);
 
   inline bool isTerminator() const {   // Instance of TerminatorInst?
     return iType >= FirstTermOp && iType < NumTermOps;

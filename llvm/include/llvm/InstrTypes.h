@@ -27,7 +27,6 @@ public:
 
   // Terminators must implement the methods required by Instruction...
   virtual Instruction *clone() const = 0;
-  virtual const char *getOpcodeName() const = 0;
 
   // Additionally, they must provide a method to get at the successors of this
   // terminator instruction.  'idx' may not be >= the number of successors
@@ -80,8 +79,6 @@ public:
     return create(getOpcode(), Operands[0]);
   }
 
-  virtual const char *getOpcodeName() const = 0;
-
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const UnaryOperator *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -125,8 +122,6 @@ public:
   virtual Instruction *clone() const {
     return create(getOpcode(), Operands[0], Operands[1]);
   }
-
-  virtual const char *getOpcodeName() const = 0;
 
   // swapOperands - Exchange the two operands to this instruction.
   // This instruction is safe to use on any binary instruction and

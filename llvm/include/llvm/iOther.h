@@ -30,7 +30,6 @@ public:
   }
 
   virtual Instruction *clone() const { return new CastInst(*this); }
-  virtual const char *getOpcodeName() const { return "cast"; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CastInst *) { return true; }
@@ -51,8 +50,6 @@ class CallInst : public Instruction {
   CallInst(const CallInst &CI);
 public:
   CallInst(Value *M, const std::vector<Value*> &Par, const std::string & = "");
-
-  virtual const char *getOpcodeName() const { return "call"; }
 
   virtual Instruction *clone() const { return new CallInst(*this); }
   bool hasSideEffects() const { return true; }
@@ -103,9 +100,6 @@ public:
   OtherOps getOpcode() const { return (OtherOps)Instruction::getOpcode(); }
 
   virtual Instruction *clone() const { return new ShiftInst(*this); }
-  virtual const char *getOpcodeName() const {
-    return getOpcode() == Shl ? "shl" : "shr"; 
-  }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ShiftInst *) { return true; }

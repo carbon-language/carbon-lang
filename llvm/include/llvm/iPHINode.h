@@ -24,7 +24,6 @@ public:
   PHINode(const Type *Ty, const std::string &Name = "");
 
   virtual Instruction *clone() const { return new PHINode(*this); }
-  virtual const char *getOpcodeName() const { return "phi"; }
 
   // getNumIncomingValues - Return the number of incoming edges the PHI node has
   inline unsigned getNumIncomingValues() const { return Operands.size()/2; }

@@ -39,8 +39,6 @@ public:
 
   virtual Instruction *clone() const { return new ReturnInst(*this); }
 
-  virtual const char *getOpcodeName() const { return "ret"; }
-
   inline const Value *getReturnValue() const {
     return Operands.size() ? Operands[0].get() : 0; 
   }
@@ -88,8 +86,6 @@ public:
   inline       Value *getCondition()       {
     return isUnconditional() ? 0 : Operands[2].get();
   }
-
-  virtual const char *getOpcodeName() const { return "br"; }
 
   // setUnconditionalDest - Change the current branch to an unconditional branch
   // targeting the specified block.
@@ -152,8 +148,6 @@ public:
   }
 
   void dest_push_back(Constant *OnVal, BasicBlock *Dest);
-
-  virtual const char *getOpcodeName() const { return "switch"; }
 
   virtual const BasicBlock *getSuccessor(unsigned idx) const {
     assert(idx < getNumSuccessors() &&"Successor idx out of range for switch!");
@@ -240,8 +234,6 @@ public:
   inline void setExceptionalDest(BasicBlock *B){
     Operands[2] = (Value*)B;
   }
-
-  virtual const char *getOpcodeName() const { return "invoke"; }
 
   virtual const BasicBlock *getSuccessor(unsigned i) const {
     assert(i < 2 && "Successor # out of range for invoke!");

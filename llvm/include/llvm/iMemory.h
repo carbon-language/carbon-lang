@@ -71,8 +71,6 @@ struct MallocInst : public AllocationInst {
     return new MallocInst((Type*)getType(), (Value*)Operands[0].get());
   }
 
-  virtual const char *getOpcodeName() const { return "malloc"; }
-
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const MallocInst *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -96,8 +94,6 @@ struct AllocaInst : public AllocationInst {
     return new AllocaInst((Type*)getType(), (Value*)Operands[0].get());
   }
 
-  virtual const char *getOpcodeName() const { return "alloca"; }
-
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const AllocaInst *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -117,8 +113,6 @@ struct FreeInst : public Instruction {
   FreeInst(Value *Ptr);
 
   virtual Instruction *clone() const { return new FreeInst(Operands[0]); }
-
-  virtual const char *getOpcodeName() const { return "free"; }
 
   virtual bool hasSideEffects() const { return true; }
 
@@ -210,7 +204,6 @@ public:
   LoadInst(Value *Ptr, const std::string &Name = "");
 
   virtual Instruction *clone() const { return new LoadInst(*this); }
-  virtual const char *getOpcodeName() const { return "load"; }  
 
   virtual unsigned getFirstIndexOperandNumber() const { return 1; }
 
@@ -240,8 +233,6 @@ public:
   StoreInst(Value *Val, Value *Ptr);
   virtual Instruction *clone() const { return new StoreInst(*this); }
 
-  virtual const char *getOpcodeName() const { return "store"; }  
-  
   virtual bool hasSideEffects() const { return true; }
   virtual unsigned getFirstIndexOperandNumber() const { return 2; }
 
@@ -271,7 +262,6 @@ public:
   GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 		    const std::string &Name = "");
   virtual Instruction *clone() const { return new GetElementPtrInst(*this); }
-  virtual const char *getOpcodeName() const { return "getelementptr"; }  
   virtual unsigned getFirstIndexOperandNumber() const { return 1; }
   
   // getType - Overload to return most specific pointer type...
