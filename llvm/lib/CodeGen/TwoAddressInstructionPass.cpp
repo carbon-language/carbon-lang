@@ -146,17 +146,11 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 LV.addVirtualRegisterDead(regB, &*mbbi, prevMi);
 
             // replace all occurences of regB with regA
-            // and mark all uses and defs of regA as def&use
             for (unsigned i = 1; i < mi->getNumOperands(); ++i) {
-                MachineOperand& op = mi->getOperand(i);
-                if (op.isRegister()) {
-                    if (op.getReg() == regB)
-                        mi->SetMachineOperandReg(i, regA);
-                    if (op.getReg() == regA)
-                        op.setDef().setUse();
-                }
+                if (mi->getOperand(i).isRegister() &&
+                    mi->getOperand(i).getReg() == regB)
+                    mi->SetMachineOperandReg(i, regA);
             }
-
             DEBUG(std::cerr << "\t\tmodified original to: ";
                   mi->print(std::cerr, TM));
             assert(mi->getOperand(0).getAllocatedRegNum() ==
