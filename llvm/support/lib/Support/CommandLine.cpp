@@ -96,9 +96,9 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
   return Handler->addOccurrence(ArgName, Value);
 }
 
-static bool ProvidePositionalOption(Option *Handler, std::string &Arg) {
+static bool ProvidePositionalOption(Option *Handler, const std::string &Arg) {
   int Dummy;
-  return ProvideOption(Handler, "", Arg.c_str(), 0, 0, Dummy);
+  return ProvideOption(Handler, Handler->ArgStr, Arg.c_str(), 0, 0, Dummy);
 }
 
 
@@ -189,9 +189,10 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
             Opt->error(" error - this positional option will never be matched, "
                        "because it does not Require a value, and a "
                        "cl::ConsumeAfter option is active!");
-      } else if (UnboundedFound) {  // This option does not "require" a value...
-        // Make sure this option is not specified after an option that eats all
-        // extra arguments, or this one will never get any!
+      } else if (UnboundedFound && !Opt->ArgStr[0]) {
+        // This option does not "require" a value...  Make sure this option is
+        // not specified after an option that eats all extra arguments, or this
+        // one will never get any!
         //
         ErrorParsing |= Opt->error(" error - option can never match, because "
                                    "another positional argument will match an "
@@ -207,6 +208,11 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
   //
   std::vector<std::string> PositionalVals;
 
+  // If the program has named positional arguments, and the name has been run
+  // across, keep track of which positional argument was named.  Otherwise put
+  // the positional args into the PositionalVals list...
+  Option *ActivePositionalArg = 0;
+
   // Loop over all of the arguments... processing them.
   bool DashDashFound = false;  // Have we read '--'?
   for (int i = 1; i < argc; ++i) {
@@ -220,7 +226,10 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     //
     if (argv[i][0] != '-' || argv[i][1] == 0 || DashDashFound) {
       // Positional argument!
-      if (!PositionalOpts.empty()) {
+      if (ActivePositionalArg) {
+        ProvidePositionalOption(ActivePositionalArg, argv[i]);
+        continue;  // We are done!
+      } else if (!PositionalOpts.empty()) {
         PositionalVals.push_back(argv[i]);
 
         // All of the positional arguments have been fulfulled, give the rest to
@@ -338,7 +347,13 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
         Pos = Val.find(',');
       }
     }
-    ErrorParsing |= ProvideOption(Handler, ArgName, Value, argc, argv, i);
+
+    // If this is a named positional argument, just remember that it is the
+    // active one...
+    if (Handler->getFormattingFlag() == cl::Positional)
+      ActivePositionalArg = Handler;
+    else 
+      ErrorParsing |= ProvideOption(Handler, ArgName, Value, argc, argv, i);
   }
 
   // Check and handle positional arguments now...
@@ -469,21 +484,22 @@ bool Option::addOccurrence(const char *ArgName, const std::string &Value) {
 void Option::addArgument(const char *ArgStr) {
   if (ArgStr[0])
     AddArgument(ArgStr, this);
-  else if (getFormattingFlag() == Positional)
+
+  if (getFormattingFlag() == Positional)
     getPositionalOpts().push_back(this);
   else if (getNumOccurrencesFlag() == ConsumeAfter) {
-    assert((getPositionalOpts().empty() ||
-            getPositionalOpts().front()->getNumOccurrencesFlag() != ConsumeAfter)
-           && "Cannot specify more than one option with cl::ConsumeAfter "
-           "specified!");
+    if (!getPositionalOpts().empty() &&
+        getPositionalOpts().front()->getNumOccurrencesFlag() == ConsumeAfter)
+      error("Cannot specify more than one option with cl::ConsumeAfter!");
     getPositionalOpts().insert(getPositionalOpts().begin(), this);
   }
 }
 
 void Option::removeArgument(const char *ArgStr) {
-  if (ArgStr[0]) {
+  if (ArgStr[0])
     RemoveArgument(ArgStr, this);
-  } else if (getFormattingFlag() == Positional) {
+
+  if (getFormattingFlag() == Positional) {
     std::vector<Option*>::iterator I =
       std::find(getPositionalOpts().begin(), getPositionalOpts().end(), this);
     assert(I != getPositionalOpts().end() && "Arg not registered!");
@@ -738,8 +754,11 @@ public:
     if (!PosOpts.empty() && PosOpts[0]->getNumOccurrencesFlag() == ConsumeAfter)
       CAOpt = PosOpts[0];
 
-    for (unsigned i = CAOpt != 0, e = PosOpts.size(); i != e; ++i)
+    for (unsigned i = CAOpt != 0, e = PosOpts.size(); i != e; ++i) {
+      if (PosOpts[i]->ArgStr[0])
+        std::cerr << " --" << PosOpts[i]->ArgStr;
       std::cerr << " " << PosOpts[i]->HelpStr;
+    }
 
     // Print the consume after option info if it exists...
     if (CAOpt) std::cerr << " " << CAOpt->HelpStr;
