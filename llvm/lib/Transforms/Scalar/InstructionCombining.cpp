@@ -1543,7 +1543,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
   // size, rewrite the allocation instruction to allocate the "right" type.
   //
   if (AllocationInst *AI = dyn_cast<AllocationInst>(Src))
-    if (AI->hasOneUse())
+    if (AI->hasOneUse() && !AI->isArrayAllocation())
       if (const PointerType *PTy = dyn_cast<PointerType>(CI.getType())) {
         // Get the type really allocated and the type casted to...
         const Type *AllocElTy = AI->getAllocatedType();
