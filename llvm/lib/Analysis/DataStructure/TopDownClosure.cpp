@@ -179,9 +179,8 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
   // If any of the functions has incomplete incoming arguments, don't mark any
   // of them as complete.
   bool HasIncompleteArgs = false;
-  const DSGraph::ReturnNodesTy &GraphReturnNodes = Graph.getReturnNodes();
-  for (DSGraph::ReturnNodesTy::const_iterator I = GraphReturnNodes.begin(),
-         E = GraphReturnNodes.end(); I != E; ++I)
+  for (DSGraph::retnodes_iterator I = Graph.retnodes_begin(),
+         E = Graph.retnodes_end(); I != E; ++I)
     if (ArgsRemainIncomplete.count(I->first)) {
       HasIncompleteArgs = true;
       break;
@@ -330,7 +329,7 @@ void TDDataStructures::copyValue(Value *From, Value *To) {
     assert(NG->getReturnNodes().size() == 1 && "Cannot copy SCC's yet!");
 
     // Change the Function* is the returnnodes map to the ToF.
-    DSNodeHandle Ret = NG->getReturnNodes().begin()->second;
+    DSNodeHandle Ret = NG->retnodes_begin()->second;
     NG->getReturnNodes().clear();
     NG->getReturnNodes()[ToF] = Ret;
     return;

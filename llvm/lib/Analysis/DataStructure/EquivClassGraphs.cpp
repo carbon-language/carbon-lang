@@ -45,7 +45,7 @@ static void CheckAllGraphs(Module *M, GT &ECGraphs) {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isExternal()) {
       DSGraph &G = ECGraphs.getDSGraph(*I);
-      if (G.getReturnNodes().begin()->first != I)
+      if (G.retnodes_begin()->first != I)
         continue;  // Only check a graph once.
 
       DSGraph::NodeMapTy GlobalsGraphNodeMapping;
@@ -181,9 +181,8 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
     // Currently, that is just the functions in the same call-graph-SCC as F.
     // 
     DSGraph& funcDSGraph = CBU->getDSGraph(*I->second);
-    const DSGraph::ReturnNodesTy &RetNodes = funcDSGraph.getReturnNodes();
-    for (DSGraph::ReturnNodesTy::const_iterator RI=RetNodes.begin(),
-           RE=RetNodes.end(); RI != RE; ++RI)
+    for (DSGraph::retnodes_iterator RI = funcDSGraph.retnodes_begin(),
+           RE = funcDSGraph.retnodes_end(); RI != RE; ++RI)
       FuncECs.unionSetsWith(FirstFunc, RI->first);
   }
 
@@ -235,10 +234,8 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
           continue;
         
         // Record the "folded" graph for the function.
-        for (DSGraph::ReturnNodesTy::iterator
-               I = CBUGraph.getReturnNodes().begin(),
-               E = CBUGraph.getReturnNodes().end();
-             I != E; ++I) {
+        for (DSGraph::retnodes_iterator I = CBUGraph.retnodes_begin(),
+               E = CBUGraph.retnodes_end(); I != E; ++I) {
           assert(DSInfo[I->first] == 0 && "Graph already exists for Fn!");
           DSInfo[I->first] = &MergedG;
         }
@@ -284,8 +281,8 @@ DSGraph &EquivClassGraphs::getOrCreateGraph(Function &F) {
   Graph->setPrintAuxCalls();
 
   // Make sure to update the DSInfo map for all functions in the graph!
-  for (DSGraph::ReturnNodesTy::iterator I = Graph->getReturnNodes().begin();
-       I != Graph->getReturnNodes().end(); ++I)
+  for (DSGraph::retnodes_iterator I = Graph->retnodes_begin();
+       I != Graph->retnodes_end(); ++I)
     if (I->first != &F) {
       DSGraph *&FG = DSInfo[I->first];
       assert(FG == 0 && "Merging function in SCC twice?");
@@ -342,8 +339,8 @@ processSCC(DSGraph &FG, std::vector<DSGraph*> &Stack, unsigned &NextID,
     FG.cloneInto(*NG, FG.getScalarMap(), FG.getReturnNodes(), NodeMap);
 
     // Update the DSInfo map and delete the old graph...
-    for (DSGraph::ReturnNodesTy::iterator I = NG->getReturnNodes().begin();
-         I != NG->getReturnNodes().end(); ++I)
+    for (DSGraph::retnodes_iterator I = NG->retnodes_begin();
+         I != NG->retnodes_end(); ++I)
       DSInfo[I->first] = &FG;
     
     // Remove NG from the ValMap since the pointer may get recycled.

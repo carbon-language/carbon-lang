@@ -228,8 +228,8 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
                               SCCGraph->getReturnNodes(), NodeMap);
         }
         // Update the DSInfo map and delete the old graph...
-        for (DSGraph::ReturnNodesTy::iterator I = G.getReturnNodes().begin(),
-               E = G.getReturnNodes().end(); I != E; ++I)
+        for (DSGraph::retnodes_iterator I = G.retnodes_begin(),
+               E = G.retnodes_end(); I != E; ++I)
           DSInfo[I->first] = SCCGraph;
         delete &G;
       }
@@ -496,7 +496,7 @@ void BUDataStructures::copyValue(Value *From, Value *To) {
     assert(NG->getReturnNodes().size() == 1 && "Cannot copy SCC's yet!");
 
     // Change the Function* is the returnnodes map to the ToF.
-    DSNodeHandle Ret = NG->getReturnNodes().begin()->second;
+    DSNodeHandle Ret = NG->retnodes_begin()->second;
     NG->getReturnNodes().clear();
     NG->getReturnNodes()[ToF] = Ret;
     return;

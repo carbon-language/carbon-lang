@@ -127,8 +127,8 @@ DSGraph &CompleteBUDataStructures::getOrCreateGraph(Function &F) {
 
   // Make sure to update the DSInfo map for all of the functions currently in
   // this graph!
-  for (DSGraph::ReturnNodesTy::iterator I = Graph->getReturnNodes().begin();
-       I != Graph->getReturnNodes().end(); ++I)
+  for (DSGraph::retnodes_iterator I = Graph->retnodes_begin();
+       I != Graph->retnodes_end(); ++I)
     DSInfo[I->first] = Graph;
 
   return *Graph;
@@ -180,8 +180,8 @@ unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
     FG.cloneInto(*NG, FG.getScalarMap(), FG.getReturnNodes(), NodeMap);
 
     // Update the DSInfo map and delete the old graph...
-    for (DSGraph::ReturnNodesTy::iterator I = NG->getReturnNodes().begin();
-         I != NG->getReturnNodes().end(); ++I)
+    for (DSGraph::retnodes_iterator I = NG->retnodes_begin();
+         I != NG->retnodes_end(); ++I)
       DSInfo[I->first] = &FG;
 
     // Remove NG from the ValMap since the pointer may get recycled.

@@ -547,8 +547,8 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
   }
 
   Module *M = 0;
-  if (getParentGraph()->getReturnNodes().size())
-    M = getParentGraph()->getReturnNodes().begin()->first->getParent();
+  if (getParentGraph()->retnodes_begin() != getParentGraph()->retnodes_end())
+    M = getParentGraph()->retnodes_begin()->first->getParent();
   DEBUG(std::cerr << "MergeTypeInfo Folding OrigTy: ";
         WriteTypeSymbolic(std::cerr, Ty, M) << "\n due to:";
         WriteTypeSymbolic(std::cerr, NewTy, M) << " @ " << Offset << "!\n"
@@ -1058,11 +1058,11 @@ void DSCallSite::InitNH(DSNodeHandle &NH, const DSNodeHandle &Src,
 std::string DSGraph::getFunctionNames() const {
   switch (getReturnNodes().size()) {
   case 0: return "Globals graph";
-  case 1: return getReturnNodes().begin()->first->getName();
+  case 1: return retnodes_begin()->first->getName();
   default:
     std::string Return;
-    for (DSGraph::ReturnNodesTy::const_iterator I = getReturnNodes().begin();
-         I != getReturnNodes().end(); ++I)
+    for (DSGraph::retnodes_iterator I = retnodes_begin();
+         I != retnodes_end(); ++I)
       Return += I->first->getName() + " ";
     Return.erase(Return.end()-1, Return.end());   // Remove last space character
     return Return;
@@ -1233,8 +1233,8 @@ void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
   }
 
   // Map the return node pointers over...
-  for (ReturnNodesTy::const_iterator I = G.getReturnNodes().begin(),
-         E = G.getReturnNodes().end(); I != E; ++I) {
+  for (retnodes_iterator I = G.retnodes_begin(),
+         E = G.retnodes_end(); I != E; ++I) {
     const DSNodeHandle &Ret = I->second;
     DSNodeHandle &MappedRet = OldNodeMap[Ret.getNode()];
     DSNode *MappedRetN = MappedRet.getNode();

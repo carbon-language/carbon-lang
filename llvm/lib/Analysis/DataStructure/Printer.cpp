@@ -44,8 +44,8 @@ static std::string getCaption(const DSNode *N, const DSGraph *G) {
   if (!G) G = N->getParentGraph();
 
   // Get the module from ONE of the functions in the graph it is available.
-  if (G && !G->getReturnNodes().empty())
-    M = G->getReturnNodes().begin()->first->getParent();
+  if (G && G->retnodes_begin() != G->retnodes_end())
+    M = G->retnodes_begin()->first->getParent();
   if (M == 0 && G) {
     // If there is a global in the graph, we can use it to find the module.
     const DSScalarMap &SM = G->getScalarMap();
@@ -126,8 +126,8 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
   static void addCustomGraphFeatures(const DSGraph *G,
                                      GraphWriter<const DSGraph*> &GW) {
     Module *CurMod = 0;
-    if (!G->getReturnNodes().empty())
-      CurMod = G->getReturnNodes().begin()->first->getParent();
+    if (G->retnodes_begin() != G->retnodes_end())
+      CurMod = G->retnodes_begin()->first->getParent();
     else {
       // If there is a global in the graph, we can use it to find the module.
       const DSScalarMap &SM = G->getScalarMap();
@@ -154,12 +154,11 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
 
 
     // Output the returned value pointer...
-    const DSGraph::ReturnNodesTy &RetNodes = G->getReturnNodes();
-    for (DSGraph::ReturnNodesTy::const_iterator I = RetNodes.begin(),
-           E = RetNodes.end(); I != E; ++I)
+    for (DSGraph::retnodes_iterator I = G->retnodes_begin(),
+           E = G->retnodes_end(); I != E; ++I)
       if (I->second.getNode()) {
         std::string Label;
-        if (RetNodes.size() == 1)
+        if (G->getReturnNodes().size() == 1)
           Label = "returning";
         else
           Label = I->first->getName() + " ret node";
@@ -276,7 +275,7 @@ static void printCollection(const Collection &C, std::ostream &O,
 
       TotalCallNodes += NumCalls;
       if (I->getName() == "main" || !OnlyPrintMain) {
-        Function *SCCFn = Gr.getReturnNodes().begin()->first;
+        Function *SCCFn = Gr.retnodes_begin()->first;
         if (&*I == SCCFn)
           Gr.writeGraphToFile(O, Prefix+I->getName());
         else
