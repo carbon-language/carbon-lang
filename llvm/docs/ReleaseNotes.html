@@ -177,15 +177,20 @@ fixed:
 
 <ol>
 
-<li><a href="http://llvm.cs.uiuc.edu/PR29">C++ front-end is not generating
-linkonce linkage type when it can</a></li>
+<li>The C++ front-end now compiles functions to 
+    <a href="http://llvm.cs.uiuc.edu/PR29">use the linkonce linkage type</a> 
+    more, giving the optimizer more freedom.</a></li>
 
-<li><a href="http://llvm.cs.uiuc.edu/PR84">C front-end generates non-type-safe code for expressions it could generate type-safe code</a></li>
+<li>The C front-end now <a href="http://llvm.cs.uiuc.edu/PR84">generates 
+    type-safe code</a> in several cases that it did not before, which prevented
+    some important optimizations.</li>
 
-<li><a href="http://llvm.cs.uiuc.edu/PR96">Bad path to the C/C++ frontend causes
-build problems</a></li>
+<li>The LLVM build system has been taught to catch some common configuration 
+    problems that <a href="http://llvm.cs.uiuc.edu/PR96">caused it to get 
+    horribly confused</a> before.</li>
 
-<li><a href="http://llvm.cs.uiuc.edu/PR114">LLVM header files should be -Wold-style-cast clean</a></li>
+<li>The LLVM header files are now 
+    <a href="http://llvm.cs.uiuc.edu/PR114">-Wold-style-cast clean</a>.</li>
 
 <li>The LLVM bytecode reader has been <a
 href="http://llvm.cs.uiuc.edu/PR127">sped up a lot</a> (up to 4x in some
