@@ -714,7 +714,21 @@ SparcModuleAsmPrinter::printSingleConstantValue(const Constant* CV)
   
   toAsm << "\t" << TypeToDataDirective(CV->getType()) << "\t";
   
-  if (CV->getType()->isPrimitiveType())
+  if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV))
+    { // This is a constant address for a global variable or method.
+      // Use the name of the variable or method as the address value.
+      assert(isa<GlobalValue>(CPR->getValue()) && "Unexpected non-global");
+      toAsm << getID(CPR->getValue()) << "\n";
+    }
+  else if (isa<ConstantPointerNull>(CV))
+    { // Null pointer value
+      toAsm << "0\n";
+    }
+  else if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
+    { // Constant expression built from operators, constants, and symbolic addrs
+      toAsm << ConstantExprToString(CE, Target) << "\n";
+    }
+  else if (CV->getType()->isPrimitiveType())     // Check primitive types last
     {
       if (CV->getType()->isFloatingPoint()) {
         // FP Constants are printed as integer constants to avoid losing
@@ -736,19 +750,6 @@ SparcModuleAsmPrinter::printSingleConstantValue(const Constant* CV)
       } else {
         WriteAsOperand(toAsm, CV, false, false) << "\n";
       }
-    }
-  else if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV))
-    { // This is a constant address for a global variable or method.
-      // Use the name of the variable or method as the address value.
-      toAsm << getID(CPR->getValue()) << "\n";
-    }
-  else if (isa<ConstantPointerNull>(CV))
-    { // Null pointer value
-      toAsm << "0\n";
-    }
-  else if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
-    { // Constant expression built from operators, constants, and symbolic addrs
-      toAsm << ConstantExprToString(CE, Target) << "\n";
     }
   else
     {
