@@ -451,6 +451,15 @@ $(BUILD_ROOT)/Debug/%.o: %.cpp $(BUILD_ROOT)/Debug/.dir
 $(BUILD_ROOT)/Debug/%.o: %.c $(BUILD_ROOT)/Debug/.dir 
 	$(VERB) $(CompileCG) $< -o $@
 
+#
+# Rules for building lex/yacc files
+#
+LEX_FILES   = $(filter %.l, $(Source))
+LEX_OUTPUT  = $(LEX_FILES:%.l=%.cpp)
+YACC_FILES  = $(filter %.y, $(Source))
+YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
+.PRECIOUS: $(LEX_OUTPUT) $(YACC_OUTPUT)
+
 # Create a .cpp source file from a flex input file... this uses sed to cut down
 # on the warnings emited by GCC...
 %.cpp: %.l
@@ -459,13 +468,13 @@ $(BUILD_ROOT)/Debug/%.o: %.c $(BUILD_ROOT)/Debug/.dir
 # Rule for building the bison parsers...
 
 %.cpp %.h : %.y
-	$(VERB) $(BISON) -v -d -p $(<:%Parser.y=%) $(basename $@).y
-	$(VERB) mv -f $(basename $@).tab.c $(basename $@).cpp
-	$(VERB) mv -f $(basename $@).tab.h $(basename $@).h
+	$(VERB) $(BISON) -v -d -p $(<:%Parser.y=%) $*.y
+	$(VERB) mv -f $*.tab.c $*.cpp
+	$(VERB) mv -f $*.tab.h $*.h
 
 # To create the directories...
 %/.dir:
-	$(VERB) mkdir -p $(@D)
+	$(VERB) mkdir -p $*
 	@date > $@
 
 # To create postscript files from dot files...
@@ -476,6 +485,7 @@ $(BUILD_ROOT)/Debug/%.o: %.c $(BUILD_ROOT)/Debug/.dir
 clean::
 	$(VERB) rm -rf $(BUILD_ROOT)/Debug $(BUILD_ROOT)/Release $(BUILD_ROOT)/Profile $(BUILD_ROOT)/Depend
 	$(VERB) rm -f core core.[0-9][0-9]* *.o *.d *.so *~ *.flc
+	$(VERB) rm -f $(LEX_OUTPUT) $(YACC_OUTPUT)
 
 # If dependancies were generated for the file that included this file,
 # include the dependancies now...
