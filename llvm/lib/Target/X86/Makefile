@@ -12,8 +12,8 @@ TARGET = X86
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = X86GenRegisterInfo.h.inc X86GenRegisterNames.inc \
                 X86GenRegisterInfo.inc X86GenInstrNames.inc \
-                X86GenInstrInfo.inc X86GenATTAsmWriter.inc \
-                X86GenIntelAsmWriter.inc
+                X86GenInstrInfo.inc X86GenAsmWriter.inc \
+                X86GenAsmWriter1.inc
 
 include $(LEVEL)/Makefile.common
 

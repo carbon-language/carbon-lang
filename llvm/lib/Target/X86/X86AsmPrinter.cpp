@@ -222,7 +222,7 @@ namespace {
 
 
 // Include the auto-generated portion of the assembly writer.
-#include "X86GenIntelAsmWriter.inc"
+#include "X86GenAsmWriter1.inc"
 
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
@@ -445,7 +445,7 @@ namespace {
 
 
 // Include the auto-generated portion of the assembly writer.
-#include "X86GenATTAsmWriter.inc"
+#include "X86GenAsmWriter.inc"
 
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
