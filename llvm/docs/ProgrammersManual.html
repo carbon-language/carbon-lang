@@ -244,7 +244,7 @@ static bool isLoopInvariant(const <a href="#Value">Value</a> *V, const Loop *L) 
     return true;
 
   <i>// Otherwise, it must be an instruction...</i>
-  return !L->contains(cast&lt;<a href="#Instruction">Instruction</a>&gt;(V)->getParent());
+  return !L-&gt;contains(cast&lt;<a href="#Instruction">Instruction</a>&gt;(V)-&gt;getParent());
 </pre><p>
 
 Note that you should <b>not</b> use an <tt>isa&lt;&gt;</tt> test followed by a
@@ -275,7 +275,7 @@ Another common example is:<p>
 
 <pre>
   <i>// Loop over all of the phi nodes in a basic block</i>
-  BasicBlock::iterator BBI = BB->begin();
+  BasicBlock::iterator BBI = BB-&gt;begin();
   for (; <a href="#PhiNode">PHINode</a> *PN = dyn_cast&lt;<a href="#PHINode">PHINode</a>&gt;(BBI); ++BBI)
     cerr &lt;&lt; *PN;
 </pre><p>
@@ -560,7 +560,7 @@ contains:
 
 <pre>
   // func is a pointer to a Function instance
-  for(Function::iterator i = func->begin(), e = func->end(); i != e; ++i) {
+  for (Function::iterator i = func-&gt;begin(), e = func-&gt;end(); i != e; ++i) {
 
       // print out the name of the basic block if it has one, and then the
       // number of instructions that it contains
@@ -573,7 +573,7 @@ contains:
 Note that i can be used as if it were a pointer for the purposes of
 invoking member functions of the <tt>Instruction</tt> class.  This is
 because the indirection operator is overloaded for the iterator
-classes.  In the above code, the expression <tt>i->size()</tt> is
+classes.  In the above code, the expression <tt>i-&gt;size()</tt> is
 exactly equivalent to <tt>(*i).size()</tt> just like you'd expect.
 
 <!-- _______________________________________________________________________ -->
@@ -588,7 +588,7 @@ that prints out each instruction in a <tt>BasicBlock</tt>:
 
 <pre>
   // blk is a pointer to a BasicBlock instance
-  for(BasicBlock::iterator i = blk-&gt;begin(), e = blk-&gt;end(); i != e; ++i)
+  for (BasicBlock::iterator i = blk-&gt;begin(), e = blk-&gt;end(); i != e; ++i)
      // the next statement works since operator&lt;&lt;(ostream&amp;,...) 
      // is overloaded for Instruction&amp;
      cerr &lt;&lt; *i &lt;&lt; "\n";
@@ -625,7 +625,7 @@ stderr (<b>Note:</b> Dereferencing an <tt>InstIterator</tt> yields an
 #include "<a href="/doxygen/InstIterator_8h-source.html">llvm/Support/InstIterator.h</a>"
 ...
 // Suppose F is a ptr to a function
-for(inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
+for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
   cerr &lt;&lt **i &lt;&lt "\n";
 </pre>
 
@@ -683,7 +683,7 @@ over some structure:
 void printNextInstruction(Instruction* inst) {
     BasicBlock::iterator it(inst);
     ++it; // after this line, it refers to the instruction after *inst.
-    if(it != inst-&gt;getParent()->end()) cerr &lt;&lt; *it &lt;&lt; "\n";
+    if (it != inst-&gt;getParent()-&gt;end()) cerr &lt;&lt; *it &lt;&lt; "\n";
 }
 </pre>
 Of course, this example is strictly pedagogical, because it'd be much
@@ -708,7 +708,7 @@ initialize callCounter to zero
 for each Function f in the Module
     for each BasicBlock b in f
       for each Instruction i in b
-        if(i is a CallInst and calls the given function)
+        if (i is a CallInst and calls the given function)
           increment callCounter
 </pre>
 
@@ -724,14 +724,14 @@ class OurFunctionPass : public FunctionPass {
     OurFunctionPass(): callCounter(0) { }
 
     virtual runOnFunction(Function&amp; F) {
- 	for(Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
- 	    for(BasicBlock::iterator i = b-&gt;begin(); ie = b-&gt;end(); i != ie; ++i) {
+ 	for (Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
+ 	    for (BasicBlock::iterator i = b-&gt;begin(); ie = b-&gt;end(); i != ie; ++i) {
  		if (<a href="#CallInst">CallInst</a>* callInst = <a href="#isa">dyn_cast</a>&lt;<a href="#CallInst">CallInst</a>&gt;(&amp;*i)) {
  		    // we know we've encountered a call instruction, so we
  		    // need to determine if it's a call to the
 	            // function pointed to by m_func or not.
   
- 		    if(callInst-&gt;getCalledFunction() == targetFunc)
+ 		    if (callInst-&gt;getCalledFunction() == targetFunc)
  			++callCounter;
  	    }
  	}
@@ -759,8 +759,8 @@ all <tt>User</tt>s of a particular <tt>Value</tt> is called a
 <pre>
 Function* F = ...;
 
-for(Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i) {
-    if(Instruction* Inst = dyn_cast&lt;Instruction&gt;(*i)) {
+for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i) {
+    if (Instruction *Inst = dyn_cast&lt;Instruction&gt;(*i)) {
         cerr &lt;&lt; "F is used in instruction:\n";
         cerr &lt;&lt; *Inst &lt;&lt; "\n";
     }
@@ -778,7 +778,7 @@ to iterate over all of the values that a particular instruction uses
 <pre>
 Instruction* pi = ...;
 
-for(User::op_iterator i = pi-&gt;op_begin(), e = pi-&gt;op_end(); i != e; ++i) {
+for (User::op_iterator i = pi-&gt;op_begin(), e = pi-&gt;op_end(); i != e; ++i) {
     Value* v = *i;
     ...
 }
@@ -861,10 +861,10 @@ that <tt>BasicBlock</tt>, and a newly-created instruction
 we wish to insert before <tt>*pi</tt>, we do the following:
 
 <pre>
-BasicBlock* pb = ...;
-Instruction* pi = ...;
-Instruction* newInst = new Instruction(...);
-pb->getInstList().insert(pi, newInst); // inserts newInst before pi in pb
+  BasicBlock *pb = ...;
+  Instruction *pi = ...;
+  Instruction *newInst = new Instruction(...);
+  pb-&gt;getInstList().insert(pi, newInst); // inserts newInst before pi in pb
 </pre>
 </p>
 
@@ -875,9 +875,9 @@ instruction list: the instruction list of the enclosing basic block.
 Thus, we could have accomplished the same thing as the above code
 without being given a <tt>BasicBlock</tt> by doing:
 <pre>
-Instruction* pi = ...;
-Instruction* newInst = new Instruction(...);
-pi->getParent()->getInstList().insert(pi, newInst);
+  Instruction *pi = ...;
+  Instruction *newInst = new Instruction(...);
+  pi-&gt;getParent()-&gt;getInstList().insert(pi, newInst);
 </pre>
 In fact, this sequence of steps occurs so frequently that the
 <tt>Instruction</tt> class and <tt>Instruction</tt>-derived classes
@@ -1689,11 +1689,11 @@ Important Subclasses of Constant<p>
 </ul>
 <li>ConstantArray : This represents a constant array.
 <ul>
-	<li><tt>const std::vector<Use> &amp;getValues() const</tt>: Returns a Vecotr of component constants that makeup this array.
+	<li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>: Returns a Vecotr of component constants that makeup this array.
 </ul>
 <li>ConstantStruct : This represents a constant struct.
 <ul>
-	<li><tt>const std::vector<Use> &amp;getValues() const</tt>: Returns a Vecotr of component constants that makeup this array.
+	<li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>: Returns a Vecotr of component constants that makeup this array.
 </ul>
 <li>ConstantPointerRef : This represents a constant pointer value that is initialized to point to a global value, which lies at a constant fixed address.
 <ul>
@@ -1789,6 +1789,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Fri Aug  1 17:26:10 CDT 2003
+Last modified: Tue Aug  5 17:53:43 CDT 2003
 <!-- hhmts end -->
 </font></body></html>
