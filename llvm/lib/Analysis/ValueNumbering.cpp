@@ -5,12 +5,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/BasicValueNumbering.h"
+#include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/iMemory.h"
-#include "llvm/InstrTypes.h"
 
 // Register the ValueNumbering interface, providing a nice name to refer to.
 static RegisterAnalysisGroup<ValueNumbering> X("Value Numbering");
@@ -23,36 +23,66 @@ static RegisterAnalysisGroup<ValueNumbering> X("Value Numbering");
 ValueNumbering::~ValueNumbering() {}
 
 //===----------------------------------------------------------------------===//
-// BasicValueNumbering Pass Implementation
+// Basic ValueNumbering Pass Implementation
 //===----------------------------------------------------------------------===//
 //
-// Because of the way .a files work, the implementation of the
-// BasicValueNumbering class MUST be in the ValueNumbering file itself, or else
-// we run the risk of ValueNumbering being used, but the default implementation
-// not being linked into the tool that uses it.  As such, we register and
-// implement the class here.
+// Because of the way .a files work, the implementation of the BasicVN class
+// MUST be in the ValueNumbering file itself, or else we run the risk of
+// ValueNumbering being used, but the default implementation not being linked
+// into the tool that uses it.  As such, we register and implement the class
+// here.
 //
 namespace {
+  /// BasicVN - This class is the default implementation of the ValueNumbering
+  /// interface.  It walks the SSA def-use chains to trivially identify
+  /// lexically identical expressions.  This does not require any ahead of time
+  /// analysis, so it is a very fast default implementation.
+  ///
+  struct BasicVN : public FunctionPass, public ValueNumbering {
+  
+    /// Pass Implementation stuff.  This isn't much of a pass.
+    ///
+    bool runOnFunction(Function &) { return false; }
+    
+    /// getAnalysisUsage - Does not modify anything.
+    ///
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    }
+  
+    /// getEqualNumberNodes - Return nodes with the same value number as the
+    /// specified Value.  This fills in the argument vector with any equal
+    /// values.
+    ///
+    /// This is where our implementation is.
+    ///
+    virtual void getEqualNumberNodes(Value *V1,
+                                     std::vector<Value*> &RetVals) const;
+  };
+
   // Register this pass...
-  RegisterOpt<BasicValueNumbering>
+  RegisterOpt<BasicVN>
   X("basicvn", "Basic Value Numbering (default GVN impl)");
 
   // Declare that we implement the ValueNumbering interface
-  RegisterAnalysisGroup<ValueNumbering, BasicValueNumbering, true> Y;
+  RegisterAnalysisGroup<ValueNumbering, BasicVN, true> Y;
 }  // End of anonymous namespace
 
 namespace {
-  /// BVNImpl - Implement BasicValueNumbering in terms of a visitor class that
+  /// BVNImpl - Implement BasicVN in terms of a visitor class that
   /// handles the different types of instructions as appropriate.
   ///
   struct BVNImpl : public InstVisitor<BVNImpl> {
     std::vector<Value*> &RetVals;
     BVNImpl(std::vector<Value*> &RV) : RetVals(RV) {}
 
-    void visitBinaryOperator(Instruction &I);
+    void handleBinaryInst(Instruction &I);
+    void visitBinaryOperator(BinaryOperator &I) {
+      handleBinaryInst((Instruction&)I);
+    }
     void visitGetElementPtrInst(GetElementPtrInst &I);
     void visitCastInst(CastInst &I);
-    void visitShiftInst(ShiftInst &I) { visitBinaryOperator((Instruction&)I); }
+    void visitShiftInst(ShiftInst &I) { handleBinaryInst((Instruction&)I); }
     void visitInstruction(Instruction &) {
       // Cannot value number calls or terminator instructions...
     }
@@ -62,8 +92,7 @@ namespace {
 // getEqualNumberNodes - Return nodes with the same value number as the
 // specified Value.  This fills in the argument vector with any equal values.
 //
-void BasicValueNumbering::getEqualNumberNodes(Value *V,
-                                           std::vector<Value*> &RetVals) const {
+void BasicVN::getEqualNumberNodes(Value *V, std::vector<Value*> &RetVals) const{
   assert(V->getType() != Type::VoidTy &&
          "Can only value number non-void values!");
   // We can only handle the case where I is an instruction!
@@ -126,7 +155,7 @@ static inline bool isIdenticalBinaryInst(const Instruction &I1,
   return false;
 }
 
-void BVNImpl::visitBinaryOperator(Instruction &I) {
+void BVNImpl::handleBinaryInst(Instruction &I) {
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
   Function *F = I.getParent()->getParent();
   
