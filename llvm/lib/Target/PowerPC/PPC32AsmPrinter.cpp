@@ -195,21 +195,24 @@ void PowerPCAsmPrinter::emitGlobalConstant(const Constant *CV) {
     // FP Constants are printed as integer constants to avoid losing
     // precision...
     double Val = CFP->getValue();
-    if (1 || CFP->getType() == Type::DoubleTy) {
+    if (CFP->getType() == Type::DoubleTy) {
       union DU {                            // Abide by C TBAA rules
         double FVal;
         uint64_t UVal;
-        struct {
-          uint32_t MSWord;
-          uint32_t LSWord;
-        } T;
       } U;
       U.FVal = Val;
-      
-      O << ".long\t" << U.T.MSWord << "\t; double most significant word " 
-        << Val << "\n";
-      O << ".long\t" << U.T.LSWord << "\t; double least significant word " 
-        << Val << "\n";
+
+      if (TD.isBigEndian()) {
+        O << ".long\t" << unsigned(U.UVal >> 32)
+          << "\t; double most significant word " << Val << "\n";
+        O << ".long\t" << unsigned(U.UVal)
+          << "\t; double least significant word " << Val << "\n";
+      } else {
+        O << ".long\t" << unsigned(U.UVal)
+          << "\t; double least significant word " << Val << "\n";
+        O << ".long\t" << unsigned(U.UVal >> 32)
+          << "\t; double most significant word " << Val << "\n";
+      }
       return;
     } else {
       union FU {                            // Abide by C TBAA rules
@@ -223,19 +226,19 @@ void PowerPCAsmPrinter::emitGlobalConstant(const Constant *CV) {
     }
   } else if (CV->getType() == Type::ULongTy || CV->getType() == Type::LongTy) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-      union DU {                            // Abide by C TBAA rules
-        int64_t UVal;
-        struct {
-          uint32_t MSWord;
-          uint32_t LSWord;
-        } T;
-      } U;
-      U.UVal = CI->getRawValue();
+      uint64_t Val = CI->getRawValue();
         
-      O << ".long\t" << U.T.MSWord << "\t; Double-word most significant word " 
-        << U.UVal << "\n";
-      O << ".long\t" << U.T.LSWord << "\t; Double-word least significant word " 
-        << U.UVal << "\n";
+      if (TD.isBigEndian()) {
+        O << ".long\t" << unsigned(Val >> 32)
+          << "\t; Double-word most significant word " << Val << "\n";
+        O << ".long\t" << unsigned(Val)
+          << "\t; Double-word least significant word " << Val << "\n";
+      } else {
+        O << ".long\t" << unsigned(Val)
+          << "\t; Double-word least significant word " << Val << "\n";
+        O << ".long\t" << unsigned(Val >> 32)
+          << "\t; Double-word most significant word " << Val << "\n";
+      }
       return;
     }
   }
