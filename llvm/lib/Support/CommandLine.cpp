@@ -94,8 +94,9 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 	continue;
       }
       break;
-    case Optional: break;
-    default: cerr << "Bad ValueMask flag! CommandLine usage error!\n"; abort();
+    case ValueOptional: break;
+    default: cerr << "Bad ValueMask flag! CommandLine usage error:" 
+		  << Handler->getValueExpectedFlag() << endl; abort();
     }
 
     // Run the handler now!
