@@ -20,17 +20,16 @@
 
 cl::String InputFilename ("", "Input filename", cl::NoFlags, "-");
 cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
-cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
-cl::Flag   DumpAsm       ("d", "Print bytecode before native code generation", cl::Hidden,false);
-cl::Flag   DoNotEmitAssembly("noasm", "Do not emit assembly code", cl::Hidden, false);
+cl::Flag   Force         ("f", "Overwrite output files");
+cl::Flag   DumpAsm       ("d", "Print bytecode before native code generation",
+                          cl::Hidden);
+cl::Flag   DoNotEmitAssembly("noasm", "Do not emit assembly code", cl::Hidden);
 cl::Flag   TraceBBValues ("trace",
-                          "Trace values at basic block and method exits",
-                          cl::NoFlags, false);
-cl::Flag   TraceMethodValues("tracem", "Trace values only at method exits",
-                             cl::NoFlags, false);
+                          "Trace values at basic block and method exits");
+cl::Flag   TraceMethodValues("tracem", "Trace values only at method exits");
 cl::Flag   DebugTrace    ("dumptrace",
                           "output trace code to a <fn>.trace.ll file",
-                          cl::Hidden, false);
+                          cl::Hidden);
 
 
 // GetFileNameRoot - Helper function to get the basename of a filename...
@@ -94,6 +93,8 @@ public:
   }
 
   ~EmitAssembly() {
+    // TODO: This should be performed as a moduleCleanup function, but we don't
+    // have one yet!
     Target.emitAssembly(TheMod, *Out);
 
     if (DeleteStream) delete Out;
@@ -107,10 +108,7 @@ public:
 // Entry point for the llc compiler.
 //===---------------------------------------------------------------------===//
 
-int
-main(int argc, char **argv)
-{
-  // Parse command line options...
+int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
   
   // Allocate a target... in the future this will be controllable on the
