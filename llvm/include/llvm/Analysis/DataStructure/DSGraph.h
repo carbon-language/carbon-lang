@@ -154,6 +154,10 @@ public:
     GlobalSet.clear();
   }
 
+  /// spliceFrom - Copy all entries from RHS, then clear RHS.
+  ///
+  void spliceFrom(DSScalarMap &RHS);
+
   // Access to the global set: the set of all globals currently in the
   // scalar map.
   typedef GlobalSetTy::const_iterator global_iterator;
@@ -454,6 +458,12 @@ public:
   /// mapping of nodes from the callee to nodes in the caller.
   void computeCalleeCallerMapping(DSCallSite CS, const Function &Callee,
                                   DSGraph &CalleeGraph, NodeMapTy &NodeMap);
+
+  /// spliceFrom - Logically perform the operation of cloning the RHS graph into
+  /// this graph, then clearing the RHS graph.  Instead of performing this as
+  /// two seperate operations, do it as a single, much faster, one.
+  ///
+  void spliceFrom(DSGraph &RHS);
 
   /// cloneInto - Clone the specified DSGraph into the current graph.
   ///
