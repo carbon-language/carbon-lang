@@ -155,7 +155,9 @@ InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo): End(0) {
 }
 
 
-Value* InductionVariable::getExecutionCount(LoopInfo *LoopInfo) {
+Value *InductionVariable::getExecutionCount(LoopInfo *LoopInfo) {
+  if (InductionType != Canonical) return 0;
+
   DEBUG(std::cerr << "entering getExecutionCount\n");
 
   // Don't recompute if already available
@@ -167,111 +169,104 @@ Value* InductionVariable::getExecutionCount(LoopInfo *LoopInfo) {
   const Loop *L = LoopInfo ? LoopInfo->getLoopFor(Phi->getParent()) : 0;
   if (!L) {
     DEBUG(std::cerr << "null loop. oops\n");
-    return NULL;
+    return 0;
   }
 
   // >1 backedge => cannot predict number of iterations
   if (Phi->getNumIncomingValues() != 2) {
     DEBUG(std::cerr << ">2 incoming values. oops\n");
-    return NULL;
+    return 0;
   }
 
   // Find final node: predecesor of the loop header that's also an exit
   BasicBlock *terminator = 0;
-  BasicBlock *header = L->getHeader();
-  for (pred_iterator PI = pred_begin(header), PE = pred_end(header);
-       PI != PE; ++PI) {
+  for (pred_iterator PI = pred_begin(L->getHeader()),
+         PE = pred_end(L->getHeader()); PI != PE; ++PI)
     if (L->isLoopExit(*PI)) {
       terminator = *PI;
       break;
     }
-  }
 
   // Break in the loop => cannot predict number of iterations
   // break: any block which is an exit node whose successor is not in loop,
   // and this block is not marked as the terminator
   //
   const std::vector<BasicBlock*> &blocks = L->getBlocks();
-  for (std::vector<BasicBlock*>::const_iterator i = blocks.begin(), e = blocks.end();
-       i != e; ++i) {
-    if (L->isLoopExit(*i) && (*i != terminator)) {
-      for (succ_iterator SI = succ_begin(*i), SE = succ_end(*i); SI != SE; ++SI) {
-        if (! L->contains(*SI)) {
+  for (std::vector<BasicBlock*>::const_iterator I = blocks.begin(),
+         e = blocks.end(); I != e; ++I)
+    if (L->isLoopExit(*I) && *I != terminator)
+      for (succ_iterator SI = succ_begin(*I), SE = succ_end(*I); SI != SE; ++SI)
+        if (!L->contains(*SI)) {
           DEBUG(std::cerr << "break found in loop");
-          return NULL;
+          return 0;
         }
-      }
-    }
-  }
 
   BranchInst *B = dyn_cast<BranchInst>(terminator->getTerminator());
   if (!B) {
-    // this really should not happen
-    DEBUG(std::cerr << "no terminator instruction!");
-    return NULL; 
+    DEBUG(std::cerr << "Terminator is not a cond branch!");
+    return 0; 
   }
   SetCondInst *SCI = dyn_cast<SetCondInst>(B->getCondition());
-
-  if (SCI && InductionType == Canonical) {
-    DEBUG(std::cerr << "sci:" << *SCI);
-    Value *condVal0 = SCI->getOperand(0);
-    Value *condVal1 = SCI->getOperand(1);
-    Value *indVar = 0;
-
-    // the induction variable is the one coming from the backedge
-    if (L->contains(Phi->getIncomingBlock(0))) {
-      indVar = Phi->getIncomingValue(0);
-    } else {
-      indVar = Phi->getIncomingValue(1);
-    }
-
-    // check to see if indVar is one of the parameters in SCI
-    // and if the other is loop-invariant, it is the UB
-    if (indVar == condVal0) {
-      if (isLoopInvariant(condVal1, L)) {
-        End = condVal1;
-      } else {
-        DEBUG(std::cerr << "not loop invariant 1\n");
-      }
-    } else if (indVar == condVal1) {
-      if (isLoopInvariant(condVal0, L)) {
-        End = condVal0;
-      } else {
-        DEBUG(std::cerr << "not loop invariant 0\n");
-      }
-    }
-
-    if (End) {
-      switch (SCI->getOpcode()) {
-      case Instruction::SetLT:
-      case Instruction::SetNE: break; // already done
-      case Instruction::SetLE: {
-        // if compared to a constant int N, then predict N+1 iterations
-        if (ConstantSInt *ubSigned = dyn_cast<ConstantSInt>(End)) {
-          End = ConstantSInt::get(ubSigned->getType(), ubSigned->getValue()+1);
-          DEBUG(std::cerr << "signed int constant\n");
-        } else if (ConstantUInt *ubUnsigned = dyn_cast<ConstantUInt>(End)) {
-          End = ConstantUInt::get(ubUnsigned->getType(),
-                                  ubUnsigned->getValue()+1);
-          DEBUG(std::cerr << "unsigned int constant\n");
-        } else {
-          DEBUG(std::cerr << "symbolic bound\n");
-          //End = NULL;
-          // new expression N+1
-          End = BinaryOperator::create(Instruction::Add, End, 
-                                       ConstantUInt::get(ubUnsigned->getType(),
-                                                         1));
-        }
-        break;
-      }
-      default: End = NULL; // cannot predict
-      }
-    }
-    return End;
-  } else {
-    DEBUG(std::cerr << "SCI null or non-canonical ind var\n");
+  if (!SCI) {
+    DEBUG(std::cerr << "Not a cond branch on setcc!\n");
+    return 0;
   }
-  return NULL;
+
+  DEBUG(std::cerr << "sci:" << *SCI);
+  Value *condVal0 = SCI->getOperand(0);
+  Value *condVal1 = SCI->getOperand(1);
+  Value *indVar = 0;
+
+  // the induction variable is the one coming from the backedge
+  indVar = Phi->getIncomingValue(L->contains(Phi->getIncomingBlock(1)));
+
+
+  // Check to see if indVar is one of the parameters in SCI and if the other is
+  // loop-invariant, it is the UB
+  if (indVar == condVal0) {
+    if (isLoopInvariant(condVal1, L))
+      End = condVal1;
+    else {
+      DEBUG(std::cerr << "not loop invariant 1\n");
+      return 0;
+    }
+  } else if (indVar == condVal1) {
+    if (isLoopInvariant(condVal0, L))
+      End = condVal0;
+    else {
+      DEBUG(std::cerr << "not loop invariant 0\n");
+      return 0;
+    }
+  } else {
+    DEBUG(std::cerr << "Loop condition doesn't directly uses indvar\n");
+    return 0;
+  }
+
+  switch (SCI->getOpcode()) {
+  case Instruction::SetLT:
+  case Instruction::SetNE: return End; // already done
+  case Instruction::SetLE:
+    // if compared to a constant int N, then predict N+1 iterations
+    if (ConstantSInt *ubSigned = dyn_cast<ConstantSInt>(End)) {
+      DEBUG(std::cerr << "signed int constant\n");
+      return ConstantSInt::get(ubSigned->getType(), ubSigned->getValue()+1);
+    } else if (ConstantUInt *ubUnsigned = dyn_cast<ConstantUInt>(End)) {
+      DEBUG(std::cerr << "unsigned int constant\n");
+      return ConstantUInt::get(ubUnsigned->getType(),
+                               ubUnsigned->getValue()+1);
+    } else {
+      DEBUG(std::cerr << "symbolic bound\n");
+      // new expression N+1, insert right before the SCI.  FIXME: If End is loop
+      // invariant, then so is this expression.  We should insert it in the loop
+      // preheader if it exists.
+      return BinaryOperator::create(Instruction::Add, End, 
+                                    ConstantInt::get(End->getType(), 1),
+                                    "tripcount", SCI);
+    }
+
+  default:
+    return 0; // cannot predict
+  }
 }
 
 
