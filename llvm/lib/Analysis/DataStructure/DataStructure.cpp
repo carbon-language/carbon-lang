@@ -825,8 +825,7 @@ DSNodeHandle ReachabilityCloner::getClonedNH(const DSNodeHandle &SrcNH) {
       unsigned MergeOffset = 0;
       DSNode *CN = NH.getNode();
       if (CN->getSize() != 1)
-        MergeOffset = ((i << DS::PointerShift)+NH.getOffset()
-                       - SrcNH.getOffset()) %CN->getSize();
+        MergeOffset = ((i << DS::PointerShift)+NH.getOffset()) % CN->getSize();
       CN->addEdgeTo(MergeOffset, DestEdge);
     }
   }
