@@ -111,7 +111,6 @@ Value *SymbolTable::removeEntry(plane_iterator Plane, value_iterator Entry) {
 
   Value *Result = Entry->second;
   assert(!isa<Type>(Result) && "Can't remove types through this interface.");
-  const Type *Ty = Result->getType();
 #if DEBUG_SYMBOL_TABLE
   dump();
   std::cerr << " Removing Value: " << Result->getName() << "\n";
