@@ -149,10 +149,9 @@ DSGraph::DSGraph(Function &F, DSGraph *GG) : GlobalsGraph(GG) {
 #endif
 
   // Remove all integral constants from the scalarmap!
-  for (hash_map<Value*, DSNodeHandle>::iterator I = ScalarMap.begin();
-       I != ScalarMap.end();)
+  for (ScalarMapTy::iterator I = ScalarMap.begin(); I != ScalarMap.end();)
     if (isa<ConstantIntegral>(I->first)) {
-      hash_map<Value*, DSNodeHandle>::iterator J = I++;
+      ScalarMapTy::iterator J = I++;
       ScalarMap.erase(J);
     } else
       ++I;
@@ -190,7 +189,7 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
         NH = getValueDest(*CE->getOperand(0));
       else if (CE->getOpcode() == Instruction::GetElementPtr) {
         visitGetElementPtrInst(*CE);
-        hash_map<Value*, DSNodeHandle>::iterator I = ScalarMap.find(CE);
+        DSGraph::ScalarMapTy::iterator I = ScalarMap.find(CE);
         assert(I != ScalarMap.end() && "GEP didn't get processed right?");
         NH = I->second;
       } else {

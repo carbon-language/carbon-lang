@@ -77,7 +77,7 @@ namespace {
 void Steens::ResolveFunctionCall(Function *F, const DSCallSite &Call,
                                  DSNodeHandle &RetVal) {
   assert(ResultGraph != 0 && "Result graph not allocated!");
-  hash_map<Value*, DSNodeHandle> &ValMap = ResultGraph->getScalarMap();
+  DSGraph::ScalarMapTy &ValMap = ResultGraph->getScalarMap();
 
   // Handle the return value of the function...
   if (Call.getRetVal().getNode() && RetVal.getNode())
@@ -87,7 +87,7 @@ void Steens::ResolveFunctionCall(Function *F, const DSCallSite &Call,
   unsigned PtrArgIdx = 0;
   for (Function::aiterator AI = F->abegin(), AE = F->aend();
        AI != AE && PtrArgIdx < Call.getNumPtrArgs(); ++AI) {
-    hash_map<Value*, DSNodeHandle>::iterator I = ValMap.find(AI);
+    DSGraph::ScalarMapTy::iterator I = ValMap.find(AI);
     if (I != ValMap.end())    // If its a pointer argument...
       I->second.mergeWith(Call.getPtrArg(PtrArgIdx++));
   }
@@ -129,7 +129,7 @@ bool Steens::run(Module &M) {
       // Incorporate the inlined Function's ScalarMap into the global
       // ScalarMap...
       DSGraph::ScalarMapTy &GVM = ResultGraph->getScalarMap();
-      for (hash_map<Value*, DSNodeHandle>::iterator I = ValMap.begin(),
+      for (DSGraph::ScalarMapTy::iterator I = ValMap.begin(),
              E = ValMap.end(); I != E; ++I)
         GVM[I->first].mergeWith(I->second);
 
@@ -202,12 +202,12 @@ AliasAnalysis::AliasResult Steens::alias(const Value *V1, unsigned V1Size,
   // FIXME: HANDLE Size argument!
   assert(ResultGraph && "Result graph has not been computed yet!");
 
-  hash_map<Value*, DSNodeHandle> &GSM = ResultGraph->getScalarMap();
+  DSGraph::ScalarMapTy &GSM = ResultGraph->getScalarMap();
 
-  hash_map<Value*, DSNodeHandle>::iterator I = GSM.find(const_cast<Value*>(V1));
+  DSGraph::ScalarMapTy::iterator I = GSM.find(const_cast<Value*>(V1));
   if (I != GSM.end() && I->second.getNode()) {
     DSNodeHandle &V1H = I->second;
-    hash_map<Value*, DSNodeHandle>::iterator J=GSM.find(const_cast<Value*>(V2));
+    DSGraph::ScalarMapTy::iterator J=GSM.find(const_cast<Value*>(V2));
     if (J != GSM.end() && J->second.getNode()) {
       DSNodeHandle &V2H = J->second;
       // If the two pointers point to different data structure graph nodes, they

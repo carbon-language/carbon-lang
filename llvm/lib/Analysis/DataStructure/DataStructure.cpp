@@ -736,7 +736,7 @@ void DSGraph::dump() const { print(std::cerr); }
 /// remapLinks - Change all of the Links in the current node according to the
 /// specified mapping.
 ///
-void DSNode::remapLinks(hash_map<const DSNode*, DSNodeHandle> &OldNodeMap) {
+void DSNode::remapLinks(DSGraph::NodeMapTy &OldNodeMap) {
   for (unsigned i = 0, e = Links.size(); i != e; ++i) {
     DSNodeHandle &H = OldNodeMap[Links[i].getNode()];
     Links[i].setNode(H.getNode());
@@ -782,7 +782,7 @@ void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
     Nodes[i]->remapLinks(OldNodeMap);
 
   // Copy the scalar map... merging all of the global nodes...
-  for (hash_map<Value*, DSNodeHandle>::const_iterator I = G.ScalarMap.begin(),
+  for (ScalarMapTy::const_iterator I = G.ScalarMap.begin(),
          E = G.ScalarMap.end(); I != E; ++I) {
     DSNodeHandle &H = OldValMap[I->first];
     DSNodeHandle &MappedNode = OldNodeMap[I->second.getNode()];
@@ -790,7 +790,7 @@ void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
     H.setNode(MappedNode.getNode());
 
     if (isa<GlobalValue>(I->first)) {  // Is this a global?
-      hash_map<Value*, DSNodeHandle>::iterator GVI = ScalarMap.find(I->first);
+      ScalarMapTy::iterator GVI = ScalarMap.find(I->first);
       if (GVI != ScalarMap.end())     // Is the global value in this fn already?
         GVI->second.mergeWith(H);
       else
@@ -1176,8 +1176,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   std::vector<std::pair<Value*, DSNode*> > GlobalNodes;
 
   // Mark all nodes reachable by (non-global) scalar nodes as alive...
-  for (hash_map<Value*, DSNodeHandle>::iterator I = ScalarMap.begin(),
-         E = ScalarMap.end(); I != E; )
+  for (ScalarMapTy::iterator I = ScalarMap.begin(), E = ScalarMap.end(); I !=E;)
     if (isa<GlobalValue>(I->first)) {             // Keep track of global nodes
       assert(I->second.getNode() && "Null global node?");
       GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
@@ -1292,7 +1291,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
     //
     for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i) {
       Value *G = GlobalNodes[i].first;
-      hash_map<Value*, DSNodeHandle>::iterator I = ScalarMap.find(G);
+      ScalarMapTy::iterator I = ScalarMap.find(G);
       assert(I != ScalarMap.end() && "Global not in scalar map anymore?");
       assert(I->second.getNode() && "Global not pointing to anything?");
       assert(!Alive.count(I->second.getNode()) && "Node is alive??");
@@ -1325,7 +1324,7 @@ void DSGraph::AssertGraphOK() const {
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
     Nodes[i]->assertOK();
   return;  // FIXME: remove
-  for (hash_map<Value*, DSNodeHandle>::const_iterator I = ScalarMap.begin(),
+  for (ScalarMapTy::const_iterator I = ScalarMap.begin(),
          E = ScalarMap.end(); I != E; ++I) {
     assert(I->second.getNode() && "Null node in scalarmap!");
     AssertNodeInGraph(I->second.getNode());
