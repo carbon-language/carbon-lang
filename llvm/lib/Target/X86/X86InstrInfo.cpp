@@ -1,4 +1,4 @@
-//===- X86InstrInfo.cpp - X86 Instruction Information ---------------===//
+//===- X86InstrInfo.cpp - X86 Instruction Information -----------*- C++ -*-===//
 //
 // This file contains the X86 implementation of the MachineInstrInfo class.
 //
