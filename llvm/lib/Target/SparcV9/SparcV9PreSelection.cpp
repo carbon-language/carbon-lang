@@ -24,12 +24,12 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Scalar.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
 
@@ -228,6 +228,23 @@ inline void PreSelection::visitInstruction(Instruction &I) {
 void PreSelection::visitGetElementPtrInst(GetElementPtrInst &I) { 
   Instruction* curI = &I;
 
+  // The Sparc backend doesn't handle array indexes that are not long types, so
+  // insert a cast from whatever it is to long, if the sequential type index is
+  // not a long already.
+  unsigned Idx = 1;
+  for (gep_type_iterator TI = gep_type_begin(I), E = gep_type_end(I); TI != E;
+       ++TI, ++Idx)
+    if (isa<SequentialType>(*TI) &&
+        I.getOperand(Idx)->getType() != Type::LongTy) {
+      Value *Op = I.getOperand(Idx);
+      if (Op->getType()->isUnsigned())    // Must sign extend!
+        Op = new CastInst(Op, Op->getType()->getSignedVersion(), "v9", &I);
+      if (Op->getType() != Type::LongTy)
+        Op = new CastInst(Op, Type::LongTy, "v9", &I);
+      I.setOperand(Idx, Op);
+    }
+
+
   // Decompose multidimensional array references
   if (I.getNumIndices() >= 2) {
     // DecomposeArrayRef() replaces I and deletes it, if successful,
@@ -251,8 +268,6 @@ void PreSelection::visitCallInst(CallInst &I) {
 
 /// createPreSelectionPass - Public entry point for the PreSelection pass
 ///
-FunctionPass* createPreSelectionPass(const TargetMachine &TM) {
+FunctionPass* llvm::createPreSelectionPass(const TargetMachine &TM) {
   return new PreSelection(TM);
 }
-
-} // End llvm namespace
