@@ -23,21 +23,34 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/StringExtras.h"
 #include <algorithm>
 #include <set>
 using namespace llvm;
 
+// Provide a command-line option to aggregate function arguments into a struct
+// for functions produced by the code extrator. This is useful when converting
+// extracted functions to pthread-based code, as only one argument (void*) can
+// be passed in to pthread_create().
+static cl::opt<bool>
+AggregateArgsOpt("aggregate-extracted-args", cl::Hidden,
+                 cl::desc("Aggregate arguments to code-extracted functions"));
+
 namespace {
   class CodeExtractor {
     typedef std::vector<Value*> Values;
     std::set<BasicBlock*> BlocksToExtract;
     DominatorSet *DS;
+    bool AggregateArgs;
   public:
-    CodeExtractor(DominatorSet *ds = 0) : DS(ds) {}
+    CodeExtractor(DominatorSet *ds = 0, bool AggArgs = false)
+      : DS(ds), AggregateArgs(AggregateArgsOpt) {}
 
     Function *ExtractCodeRegion(const std::vector<BasicBlock*> &code);
+
+    bool isEligible(const std::vector<BasicBlock*> &code);
 
   private:
     void findInputsOutputs(Values &inputs, Values &outputs,
@@ -135,15 +148,22 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   for (Values::const_iterator I = outputs.begin(), E = outputs.end();
        I != E; ++I) {
     DEBUG(std::cerr << "instr used in func: " << *I << "\n");
-    paramTy.push_back(PointerType::get((*I)->getType()));
+    if (AggregateArgs)
+      paramTy.push_back((*I)->getType());
+    else
+      paramTy.push_back(PointerType::get((*I)->getType()));
   }
 
   DEBUG(std::cerr << "Function type: " << retTy << " f(");
-  for (std::vector<const Type*>::iterator i = paramTy.begin(),
-         e = paramTy.end(); i != e; ++i)
-    DEBUG(std::cerr << *i << ", ");
+  DEBUG(for (std::vector<const Type*>::iterator i = paramTy.begin(),
+               e = paramTy.end(); i != e; ++i) std::cerr << *i << ", ");
   DEBUG(std::cerr << ")\n");
 
+  if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
+    PointerType *StructPtr = PointerType::get(StructType::get(paramTy));
+    paramTy.clear();
+    paramTy.push_back(StructPtr);
+  }
   const FunctionType *funcType = FunctionType::get(retTy, paramTy, false);
 
   // Create the new function
@@ -156,21 +176,36 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   Function::aiterator AI = newFunction->abegin();
 
   // Rewrite all users of the inputs in the extracted region to use the
-  // arguments instead.
-  for (unsigned i = 0, e = inputs.size(); i != e; ++i, ++AI) {
-    AI->setName(inputs[i]->getName());
+  // arguments (or appropriate addressing into struct) instead.
+  for (unsigned i = 0, e = inputs.size(); i != e; ++i) {
+    Value *RewriteVal;
+    if (AggregateArgs) {
+      std::vector<Value*> Indices;
+      Indices.push_back(Constant::getNullValue(Type::UIntTy));
+      Indices.push_back(ConstantUInt::get(Type::UIntTy, i));
+      std::string GEPname = "gep_" + inputs[i]->getName();
+      TerminatorInst *TI = newFunction->begin()->getTerminator();
+      GetElementPtrInst *GEP = new GetElementPtrInst(AI, Indices, GEPname, TI);
+      RewriteVal = new LoadInst(GEP, "load" + GEPname, TI);
+    } else
+      RewriteVal = AI++;
+
     std::vector<User*> Users(inputs[i]->use_begin(), inputs[i]->use_end());
     for (std::vector<User*>::iterator use = Users.begin(), useE = Users.end();
          use != useE; ++use)
       if (Instruction* inst = dyn_cast<Instruction>(*use))
         if (BlocksToExtract.count(inst->getParent()))
-          inst->replaceUsesOfWith(inputs[i], AI);
+          inst->replaceUsesOfWith(inputs[i], RewriteVal);
   }
 
-  // Set names for all of the output arguments.
-  for (unsigned i = 0, e = outputs.size(); i != e; ++i, ++AI)
-    AI->setName(outputs[i]->getName()+".out");  
-
+  // Set names for input and output arguments.
+  if (!AggregateArgs) {
+    AI = newFunction->abegin();
+    for (unsigned i = 0, e = inputs.size(); i != e; ++i, ++AI)
+      AI->setName(inputs[i]->getName());
+    for (unsigned i = 0, e = outputs.size(); i != e; ++i, ++AI)
+      AI->setName(outputs[i]->getName()+".out");  
+  }
 
   // Rewrite branches to basic blocks outside of the loop to new dummy blocks
   // within the new function. This must be done before we lose track of which
@@ -207,23 +242,84 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
                                           BasicBlock *codeReplacer,
                                           Values &inputs,
                                           Values &outputs) {
-  // Emit a call to the new function, passing allocated memory for outputs and
-  // just plain inputs for non-scalars
-  std::vector<Value*> params(inputs);
 
-  // Get an iterator to the first output argument.
-  Function::aiterator OutputArgBegin = newFunction->abegin();
-  std::advance(OutputArgBegin, inputs.size());
+  // Emit a call to the new function, passing in:
+  // *pointer to struct (if aggregating parameters), or 
+  // plan inputs and allocated memory for outputs 
+  std::vector<Value*> params, StructValues, ReloadOutputs;
 
-  for (unsigned i = 0, e = outputs.size(); i != e; ++i) {
-    Value *Output = outputs[i];
-    // Create allocas for scalar outputs
-    AllocaInst *alloca =
-      new AllocaInst(outputs[i]->getType(), 0, Output->getName()+".loc",
+  // Add inputs as params, or to be filled into the struct
+  for (Values::iterator i = inputs.begin(), e = inputs.end(); i != e; ++i)
+    if (AggregateArgs)
+      StructValues.push_back(*i);
+    else
+      params.push_back(*i);
+
+  // Create allocas for the outputs
+  for (Values::iterator i = outputs.begin(), e = outputs.end(); i != e; ++i) {
+    if (AggregateArgs) {
+      StructValues.push_back(*i);
+    } else {
+      AllocaInst *alloca =
+        new AllocaInst((*i)->getType(), 0, (*i)->getName()+".loc",
+                       codeReplacer->getParent()->begin()->begin());
+      ReloadOutputs.push_back(alloca);
+      params.push_back(alloca);
+    }
+  }
+
+  AllocaInst *Struct = 0;
+  if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
+    std::vector<const Type*> ArgTypes;
+    for (Values::iterator v = StructValues.begin(),
+           ve = StructValues.end(); v != ve; ++v)
+      ArgTypes.push_back((*v)->getType());
+
+    // Allocate a struct at the beginning of this function
+    Type *StructArgTy = StructType::get(ArgTypes);
+    Struct = 
+      new AllocaInst(StructArgTy, 0, "structArg", 
                      codeReplacer->getParent()->begin()->begin());
-    params.push_back(alloca);
-    
-    LoadInst *load = new LoadInst(alloca, Output->getName()+".reload");
+    params.push_back(Struct);
+
+    for (unsigned i = 0, e = inputs.size(); i != e; ++i) {
+      std::vector<Value*> Indices;
+      Indices.push_back(Constant::getNullValue(Type::UIntTy));
+      Indices.push_back(ConstantUInt::get(Type::UIntTy, i));
+      GetElementPtrInst *GEP =
+        new GetElementPtrInst(Struct, Indices,
+                              "gep_" + StructValues[i]->getName(), 0);
+      codeReplacer->getInstList().push_back(GEP);
+      StoreInst *SI = new StoreInst(StructValues[i], GEP);
+      codeReplacer->getInstList().push_back(SI);
+    }
+  } 
+
+  // Emit the call to the function
+  CallInst *call = new CallInst(newFunction, params, "targetBlock");
+  codeReplacer->getInstList().push_back(call);
+
+  Function::aiterator OutputArgBegin = newFunction->abegin();
+  unsigned FirstOut = inputs.size();
+  if (!AggregateArgs)
+    std::advance(OutputArgBegin, inputs.size());
+
+  // Reload the outputs passed in by reference
+  for (unsigned i = 0, e = outputs.size(); i != e; ++i) {
+    Value *Output = 0;
+    if (AggregateArgs) {
+      std::vector<Value*> Indices;
+      Indices.push_back(Constant::getNullValue(Type::UIntTy));
+      Indices.push_back(ConstantUInt::get(Type::UIntTy, FirstOut + i));
+      GetElementPtrInst *GEP 
+        = new GetElementPtrInst(Struct, Indices,
+                                "gep_reload_" + outputs[i]->getName(), 0);
+      codeReplacer->getInstList().push_back(GEP);
+      Output = GEP;
+    } else {
+      Output = ReloadOutputs[i];
+    }
+    LoadInst *load = new LoadInst(Output, outputs[i]->getName()+".reload");
     codeReplacer->getInstList().push_back(load);
     std::vector<User*> Users(outputs[i]->use_begin(), outputs[i]->use_end());
     for (unsigned u = 0, e = Users.size(); u != e; ++u) {
@@ -232,9 +328,6 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
         inst->replaceUsesOfWith(outputs[i], load);
     }
   }
-
-  CallInst *call = new CallInst(newFunction, params, "targetBlock");
-  codeReplacer->getInstList().push_front(call);
 
   // Now we can emit a switch statement using the call as a value.
   SwitchInst *TheSwitch = new SwitchInst(call, codeReplacer, codeReplacer);
@@ -268,13 +361,28 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
           TheSwitch->addCase(brVal, OldTarget);
 
           // Restore values just before we exit
-          // FIXME: Use a GetElementPtr to bunch the outputs in a struct
           Function::aiterator OAI = OutputArgBegin;
-          for (unsigned out = 0, e = outputs.size(); out != e; ++out, ++OAI)
-            if (!DS ||
-                DS->dominates(cast<Instruction>(outputs[out])->getParent(),
-                              TI->getParent()))
-              new StoreInst(outputs[out], OAI, NTRet);
+          for (unsigned out = 0, e = outputs.size(); out != e; ++out) {
+            // For an invoke, the normal destination is the only one that is
+            // dominated by the result of the invocation
+            BasicBlock *DefBlock = cast<Instruction>(outputs[out])->getParent();
+            if (InvokeInst *Invoke = dyn_cast<InvokeInst>(outputs[out]))
+              DefBlock = Invoke->getNormalDest();
+            if (!DS || DS->dominates(DefBlock, TI->getParent()))
+              if (AggregateArgs) {
+                std::vector<Value*> Indices;
+                Indices.push_back(Constant::getNullValue(Type::UIntTy));
+                Indices.push_back(ConstantUInt::get(Type::UIntTy,FirstOut+out));
+                GetElementPtrInst *GEP =
+                  new GetElementPtrInst(OAI, Indices,
+                                        "gep_" + outputs[out]->getName(), 
+                                        NTRet);
+                new StoreInst(outputs[out], GEP, NTRet);
+              } else
+                new StoreInst(outputs[out], OAI, NTRet);
+            // Advance output iterator even if we don't emit a store
+            if (!AggregateArgs) ++OAI;
+          }
         }
 
         // rewrite the original branch instruction with this new target
@@ -283,11 +391,39 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
   }
 
   // Now that we've done the deed, make the default destination of the switch
-  // instruction be one of the exit blocks of the region.
+  // instruction be a block with a call to abort() -- since this path should not
+  // be taken, this will abort sooner rather than later.
   if (TheSwitch->getNumSuccessors() > 1) {
-    // FIXME: this is broken w.r.t. PHI nodes, but the old code was more broken.
-    // This edge is not traversable.
-    TheSwitch->setSuccessor(0, TheSwitch->getSuccessor(1));
+    Function *container = codeReplacer->getParent();
+    BasicBlock *abortBB = new BasicBlock("abortBlock", container);
+    std::vector<const Type*> paramTypes;
+    FunctionType *abortTy = FunctionType::get(Type::VoidTy, paramTypes, false);
+    Function *abortFunc = 
+      container->getParent()->getOrInsertFunction("abort", abortTy);
+    abortBB->getInstList().push_back(new CallInst(abortFunc));
+    Function *ParentFunc = TheSwitch->getParent()->getParent();
+    if (ParentFunc->getReturnType() == Type::VoidTy)
+      new ReturnInst(0, abortBB);
+    else
+      new ReturnInst(Constant::getNullValue(ParentFunc->getReturnType()),
+                     abortBB);
+    TheSwitch->setSuccessor(0, abortBB);
+  } else {
+    // There is only 1 successor (the block containing the switch itself), which
+    // means that previously this was the last part of the function, and hence
+    // this should be rewritten as a `ret'
+    
+    // Check if the function should return a value
+    if (TheSwitch->getParent()->getParent()->getReturnType() != Type::VoidTy &&
+        TheSwitch->getParent()->getParent()->getReturnType() ==
+        TheSwitch->getCondition()->getType())
+      // return what we have
+      new ReturnInst(TheSwitch->getCondition(), TheSwitch);
+    else
+      // just return
+      new ReturnInst(0, TheSwitch);
+
+    TheSwitch->getParent()->getInstList().erase(TheSwitch);
   }
 }
 
@@ -310,6 +446,9 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
 ///
 Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
 {
+  if (!isEligible(code))
+    return 0;
+
   // 1) Find inputs, outputs
   // 2) Construct new function
   //  * Add allocas for defs, pass as args by reference
@@ -393,24 +532,37 @@ Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
   return newFunction;
 }
 
+bool CodeExtractor::isEligible(const std::vector<BasicBlock*> &code) {
+  // Deny code region if it contains allocas
+  for (std::vector<BasicBlock*>::const_iterator BB = code.begin(), e=code.end();
+       BB != e; ++BB)
+    for (BasicBlock::const_iterator I = (*BB)->begin(), Ie = (*BB)->end();
+         I != Ie; ++I)
+      if (isa<AllocaInst>(*I))
+        return false;
+  return true;
+}
+
+
 /// ExtractCodeRegion - slurp a sequence of basic blocks into a brand new
 /// function
 ///
 Function* llvm::ExtractCodeRegion(DominatorSet &DS,
-                                  const std::vector<BasicBlock*> &code) {
-  return CodeExtractor(&DS).ExtractCodeRegion(code);
+                                  const std::vector<BasicBlock*> &code,
+                                  bool AggregateArgs) {
+  return CodeExtractor(&DS, AggregateArgs).ExtractCodeRegion(code);
 }
 
 /// ExtractBasicBlock - slurp a natural loop into a brand new function
 ///
-Function* llvm::ExtractLoop(DominatorSet &DS, Loop *L) {
-  return CodeExtractor(&DS).ExtractCodeRegion(L->getBlocks());
+Function* llvm::ExtractLoop(DominatorSet &DS, Loop *L, bool AggregateArgs) {
+  return CodeExtractor(&DS, AggregateArgs).ExtractCodeRegion(L->getBlocks());
 }
 
 /// ExtractBasicBlock - slurp a basic block into a brand new function
 ///
-Function* llvm::ExtractBasicBlock(BasicBlock *BB) {
+Function* llvm::ExtractBasicBlock(BasicBlock *BB, bool AggregateArgs) {
   std::vector<BasicBlock*> Blocks;
   Blocks.push_back(BB);
-  return CodeExtractor().ExtractCodeRegion(Blocks);  
+  return CodeExtractor(0, AggregateArgs).ExtractCodeRegion(Blocks);  
 }
