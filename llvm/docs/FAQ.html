@@ -306,6 +306,69 @@ build.</p>
 </div>
 
 <!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="cfe">GCC Front End</a>
+</div>
+
+<div class="question">
+<p>
+When I compile software that uses a configure script, the configure script
+thinks my system has all of the header files and libraries it is testing for.
+How do I get configure to work correctly?
+</p>
+</div>
+
+<div class="answer">
+<p>
+The configure script is getting things wrong because the LLVM linker allows
+symbols to be undefined at link time (so that they can be resolved during JIT
+or translation to the C back end).  That is why configure thinks your system
+"has everything."
+</p>
+<p>
+To work around this, perform the following steps:
+</p>
+
+<ol>
+  <li>
+  Make sure the CC and CXX environment variables contains the full path to the
+  LLVM GCC front end.
+  </li>
+
+  <li>
+  Make sure that the regular C compiler is first in your PATH.
+  </li>
+
+  <li>
+  Add the string "-Wl,-native" to your CFLAGS environment variable.
+  </li>
+</ol>
+
+<p>
+This will allow the gccld linker to create a native code executable instead of
+a shell script that runs the JIT.  Creating native code requires standard
+linkage, which in turn will allow the configure script to find out if code is
+not linking on your system because the feature isn't available on your system.
+</p>
+</div>
+
+<div class="question"
+<p>
+When I compile code using the LLVM GCC front end, it complains that it cannot
+find crtend.o.
+</p>
+</div>
+
+<div class="answer"
+<p>
+In order to find crtend.o, you must have the directory in which it lives in
+your LLVM_LIB_SEARCH_PATH environment variable.  For the binary distribution of
+the LLVM GCC front end, this will be the full path of the bytecode-libs
+directory inside of the LLVM GCC distribution.
+</p>
+</div>
+<!-- *********************************************************************** -->
+<!-- *********************************************************************** -->
 
 <hr>
 <div class="doc_footer">
