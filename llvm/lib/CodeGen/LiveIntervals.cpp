@@ -390,7 +390,7 @@ void LiveIntervals::joinIntervals()
                         ++numJoined;
                     }
                 }
-                else if (MRegisterInfo::isPhysicalRegister(intA->reg) xor
+                else if (MRegisterInfo::isPhysicalRegister(intA->reg) ^
                          MRegisterInfo::isPhysicalRegister(intB->reg)) {
                     if (MRegisterInfo::isPhysicalRegister(intB->reg)) {
                         std::swap(regA, regB);
