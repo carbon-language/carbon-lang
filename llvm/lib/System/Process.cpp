@@ -1,4 +1,4 @@
-//===-- Path.cpp - Implement OS Path Concept --------------------*- C++ -*-===//
+//===-- Process.cpp - Implement OS Process Concept --------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-//  This header file implements the operating system Path concept.
+//  This header file implements the operating system Process concept.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/System/Path.h"
+#include "llvm/System/Process.h"
 
 namespace llvm {
 using namespace sys;
@@ -23,7 +23,7 @@ using namespace sys;
 
 }
 
-// Include the truly platform-specific parts of this class.
-#include "platform/Path.cpp"
+// Include the platform-specific parts of this class.
+#include "platform/Process.cpp"
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

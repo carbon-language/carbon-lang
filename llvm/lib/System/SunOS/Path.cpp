@@ -47,6 +47,11 @@ Path::GetTemporaryDirectory() {
   return result;
 }
 
+std::string
+Path::GetDLLSuffix() {
+  return "so";
+}
+
 }
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

@@ -1,4 +1,4 @@
-//===-- Path.cpp - Implement OS Path Concept --------------------*- C++ -*-===//
+//===- SunOS/Process.cpp - SunOS Process Implementation ------- -*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,23 +7,16 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-//  This header file implements the operating system Path concept.
+// This file provides the SunOS specific implementation of the Process class.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/System/Path.h"
-
-namespace llvm {
-using namespace sys;
+// Include the generic Unix implementation
+#include "../Unix/Process.cpp"
 
 //===----------------------------------------------------------------------===//
-//=== WARNING: Implementation here must contain only TRULY operating system
-//===          independent code. 
+//=== WARNING: Implementation here must contain only SunOS specific code 
+//===          and must not be generic UNIX code (see ../Unix/Process.cpp)
 //===----------------------------------------------------------------------===//
-
-}
-
-// Include the truly platform-specific parts of this class.
-#include "platform/Path.cpp"
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

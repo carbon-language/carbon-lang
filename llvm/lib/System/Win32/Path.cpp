@@ -1,4 +1,4 @@
-//===- llvm/System/Darwin/Path.cpp - Linux Path Implementation --*- C++ -*-===//
+//===- Win32/Path.cpp - Win32 Path Implementation ---------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,45 +7,25 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file provides the Darwin specific implementation of the Path class.
+// This file provides the Win32 specific implementation of the Path class.
 //
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-//=== WARNING: Implementation here must contain only Darwin specific code 
+//=== WARNING: Implementation here must contain only Win32 specific code 
 //===          and must not be generic UNIX code (see ../Unix/Path.cpp)
 //===----------------------------------------------------------------------===//
 
-// Include the generic unix implementation
+// Include the generic Unix implementation
 #include "../Unix/Path.cpp"
 
 namespace llvm {
 using namespace sys;
 
-bool 
-Path::is_valid() const {
-  if (path.empty()) 
-    return false;
-  if (path.length() >= MAXPATHLEN)
-    return false;
-  return true;
-}
-
-Path
-Path::GetTemporaryDirectory() {
-  char pathname[MAXPATHLEN];
-  strcpy(pathname,"/tmp/llvm_XXXXXX");
-  if (0 == mkdtemp(pathname))
-    ThrowErrno(std::string(pathname) + ": Can't create temporary directory");
-  Path result;
-  result.set_directory(pathname);
-  assert(result.is_valid() && "mkdtemp didn't create a valid pathname!");
-  return result;
-}
 
 std::string
 Path::GetDLLSuffix() {
-  return "dyld";
+  return "dll";
 }
 
 }

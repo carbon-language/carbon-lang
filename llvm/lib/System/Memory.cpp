@@ -1,4 +1,4 @@
-//===-- Path.cpp - Implement OS Path Concept --------------------*- C++ -*-===//
+//===- Memory.cpp - Memory Handling Support ---------------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,12 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-//  This header file implements the operating system Path concept.
+// This file defines some helpful functions for allocating memory and dealing
+// with memory mapped files
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/System/Path.h"
+#include "llvm/System/Memory.h"
 
 namespace llvm {
 using namespace sys;
@@ -23,7 +24,7 @@ using namespace sys;
 
 }
 
-// Include the truly platform-specific parts of this class.
-#include "platform/Path.cpp"
+// Include the platform-specific parts of this class.
+#include "platform/Memory.cpp"
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
