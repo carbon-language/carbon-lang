@@ -43,6 +43,7 @@ LLC      = $(TOOLS)/llc
 LAS      = $(TOOLS)/as
 LGCCAS   = $(TOOLS)/gccas
 LGCCLD   = $(TOOLS)/gccld -L$(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH) -L$(LLVMGCCDIR)/lib
+LGCCLDPROG = $(TOOLS)/gccld
 LDIS     = $(TOOLS)/dis 
 LOPT     = $(TOOLS)/opt
 LLINK    = $(TOOLS)/link
