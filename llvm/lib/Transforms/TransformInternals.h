@@ -55,6 +55,13 @@ void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
 
 void ReplaceInstWithInst(Instruction *From, Instruction *To);
 
+// InsertInstBeforeInst - Insert 'NewInst' into the basic block that 'Existing'
+// is already in, and put it right before 'Existing'.  This instruction should
+// only be used when there is no iterator to Existing already around.  The 
+// returned iterator points to the new instruction.
+//
+BasicBlock::iterator InsertInstBeforeInst(Instruction *NewInst,
+                                          Instruction *Existing);
 
 // ConvertableToGEP - This function returns true if the specified value V is
 // a valid index into a pointer of type Ty.  If it is valid, Idx is filled in
