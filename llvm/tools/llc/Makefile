@@ -16,7 +16,6 @@ USEDLIBS = cwriter \
            selectiondag \
            sparcv9regalloc \
            sched \
-           sparcv9select \
            codegen \
            target.a \
            sparcv9livevar \
