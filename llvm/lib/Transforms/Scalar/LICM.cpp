@@ -304,16 +304,18 @@ void LICM::SinkRegion(DominatorTree::Node *N) {
   // subloop (which would already have been processed).
   if (inSubLoop(BB)) return;
 
-  for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; ) {
-    Instruction &I = *II++;
+  for (BasicBlock::iterator II = BB->end(); II != BB->begin(); ) {
+    Instruction &I = *--II;
     
     // Check to see if we can sink this instruction to the exit blocks
     // of the loop.  We can do this if the all users of the instruction are
     // outside of the loop.  In this case, it doesn't even matter if the
     // operands of the instruction are loop invariant.
     //
-    if (canSinkOrHoistInst(I) && isNotUsedInLoop(I))
+    if (canSinkOrHoistInst(I) && isNotUsedInLoop(I)) {
+      ++II;
       sink(I);
+    }
   }
 }
 
@@ -403,14 +405,14 @@ bool LICM::isLoopInvariantInst(Instruction &I) {
 }
 
 /// sink - When an instruction is found to only be used outside of the loop,
-/// this function moves it to the exit blocks and patches up SSA form as
-/// needed.
+/// this function moves it to the exit blocks and patches up SSA form as needed.
+/// This method is guaranteed to remove the original instruction from its
+/// position, and may either delete it or move it to outside of the loop.
 ///
 void LICM::sink(Instruction &I) {
   DEBUG(std::cerr << "LICM sinking instruction: " << I);
 
   const std::vector<BasicBlock*> &ExitBlocks = CurLoop->getExitBlocks();
-  std::vector<Value*> Operands(I.op_begin(), I.op_end());
 
   if (isa<LoadInst>(I)) ++NumMovedLoads;
   ++NumSunk;
@@ -512,20 +514,18 @@ void LICM::sink(Instruction &I) {
         }
       }
     }
+
+    // If the instruction doesn't dominate any exit blocks, it must be dead.
+    if (InsertedBlocks.empty()) {
+      CurAST->remove(&I);
+      I.getParent()->getInstList().erase(&I);
+    }
       
     // Finally, promote the fine value to SSA form.
     std::vector<AllocaInst*> Allocas;
     Allocas.push_back(AI);
     PromoteMemToReg(Allocas, *DT, *DF, AA->getTargetData());
   }
-  
-  // Since we just sunk an instruction, check to see if any other instructions
-  // used by this instruction are now sinkable.  If so, sink them too.
-  for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-    if (Instruction *OpI = dyn_cast<Instruction>(Operands[i]))
-      if (CurLoop->contains(OpI->getParent()) && canSinkOrHoistInst(*OpI) &&
-          isNotUsedInLoop(*OpI) && isSafeToExecuteUnconditionally(*OpI))
-        sink(*OpI);
 }
 
 /// hoist - When an instruction is found to only use loop invariant operands
