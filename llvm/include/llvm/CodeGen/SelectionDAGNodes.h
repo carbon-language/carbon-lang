@@ -324,6 +324,10 @@ public:
   inline unsigned getOpcode() const;
   inline unsigned getNumOperands() const;
   inline const SDOperand &getOperand(unsigned i) const;
+
+  /// hasOneUse - Return true if there is exactly one operation using this
+  /// result value of the defining operator.
+  inline bool hasOneUse() const;
 };
 
 
@@ -481,7 +485,9 @@ inline unsigned SDOperand::getNumOperands() const {
 inline const SDOperand &SDOperand::getOperand(unsigned i) const {
   return Val->getOperand(i);
 }
-
+inline bool SDOperand::hasOneUse() const {
+  return Val->hasNUsesOfValue(1, ResNo);
+}
 
 
 class ConstantSDNode : public SDNode {
