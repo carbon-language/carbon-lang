@@ -54,9 +54,7 @@ namespace {
 char TypeCharForSymbol (GlobalValue &GV) {
   if (GV.isExternal ())                                     return 'U';
   if (GV.hasLinkOnceLinkage ())                             return 'C';
-#ifdef WEAK_LINKAGE_EVENTUALLY_IMPLEMENTED
   if (GV.hasWeakLinkage ())                                 return 'W';
-#endif
   if (isa<Function> (GV) && GV.hasInternalLinkage ())       return 't';
   if (isa<Function> (GV))                                   return 'T';
   if (isa<GlobalVariable> (GV) && GV.hasInternalLinkage ()) return 'd';
