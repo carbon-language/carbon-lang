@@ -179,12 +179,10 @@ ObjectsG = $(addprefix $(BUILD_ROOT)/Debug/,$(Objs))
 
 ifdef DIRS  # Only do this if we're using DIRS!
 
-all     :: $(addsuffix /.makeall    , $(DIRS))
-install :: $(addsuffix /.makeinstall, $(DIRS))
-clean   :: $(addsuffix /.makeclean  , $(DIRS))
-
-%/.makeall %/.makeclean %/.makeinstall:
-	$(VERB) cd $(@D); $(MAKE) $(subst $(@D)/.make,,$@)
+all install clean::
+	@for dir in ${DIRS}; do \
+		(cd $$dir; $(MAKE) $@) || exit 1; \
+	done
 endif
 
 #---------------------------------------------------------
