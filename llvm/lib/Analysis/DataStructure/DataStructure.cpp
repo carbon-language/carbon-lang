@@ -1498,13 +1498,13 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
            E = AuxFunctionCalls.end(); I != E; ++I)
       markIncomplete(*I);
 
-  // Mark all global nodes as incomplete...
-  if ((Flags & DSGraph::IgnoreGlobals) == 0)
-    for (DSScalarMap::global_iterator I = ScalarMap.global_begin(),
-           E = ScalarMap.global_end(); I != E; ++I)
-      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*I))
-        if (!GV->isConstant() || !GV->hasInitializer())
-          markIncompleteNode(ScalarMap[GV].getNode());
+  // Mark all global nodes as incomplete.
+  for (DSScalarMap::global_iterator I = ScalarMap.global_begin(),
+         E = ScalarMap.global_end(); I != E; ++I)
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*I))
+      if (!GV->hasInitializer() ||    // Always mark external globals incomp.
+          (!GV->isConstant() && (Flags & DSGraph::IgnoreGlobals) == 0))
+        markIncompleteNode(ScalarMap[GV].getNode());
 }
 
 static inline void killIfUselessEdge(DSNodeHandle &Edge) {
