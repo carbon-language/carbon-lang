@@ -412,9 +412,11 @@ def FSUBS : AForm_2<59, 20, 0, 0, 0,
 
 // M-Form instructions.  rotate and mask instructions.
 //
+let isTwoAddress = 1 in {
 def RLWIMI : MForm_2<20, 0, 0, 0,
-                     (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
-                     "rlwimi $rA, $rS, $SH, $MB, $ME">;
+                     (ops GPRC:$rA, GPRC:$rSi, GPRC:$rS, u5imm:$SH, u5imm:$MB, 
+                      u5imm:$ME), "rlwimi $rA, $rS, $SH, $MB, $ME">;
+}
 def RLWINM : MForm_2<21, 0, 0, 0,
                      (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
                      "rlwinm $rA, $rS, $SH, $MB, $ME">;

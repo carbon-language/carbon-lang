@@ -2550,25 +2550,23 @@ void PPC32ISel::emitShiftOperation(MachineBasicBlock *MBB,
   // Longs, as usual, are handled specially...
   if (Class == cLong) {
     // If we have a constant shift, we can generate much more efficient code
-    // than otherwise...
-    //
+    // than for a variable shift by using the rlwimi instruction.
     if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(ShiftAmount)) {
       unsigned Amount = CUI->getValue();
       if (Amount < 32) {
+        unsigned TempReg = makeAnotherReg(ResultTy);
         if (isLeftShift) {
-          // FIXME: RLWIMI is a use-and-def of DestReg+1, but that violates SSA
-          BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
+          BuildMI(*MBB, IP, PPC::RLWINM, 4, TempReg).addReg(SrcReg)
             .addImm(Amount).addImm(0).addImm(31-Amount);
-          BuildMI(*MBB, IP, PPC::RLWIMI, 5).addReg(DestReg).addReg(SrcReg+1)
-            .addImm(Amount).addImm(32-Amount).addImm(31);
+          BuildMI(*MBB, IP, PPC::RLWIMI, 5, DestReg).addReg(TempReg)
+            .addReg(SrcReg+1).addImm(Amount).addImm(32-Amount).addImm(31);
           BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg+1).addReg(SrcReg+1)
             .addImm(Amount).addImm(0).addImm(31-Amount);
         } else {
-          // FIXME: RLWIMI is a use-and-def of DestReg, but that violates SSA
-          BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg+1).addReg(SrcReg+1)
+          BuildMI(*MBB, IP, PPC::RLWINM, 4, TempReg).addReg(SrcReg+1)
             .addImm(32-Amount).addImm(Amount).addImm(31);
-          BuildMI(*MBB, IP, PPC::RLWIMI, 5).addReg(DestReg+1).addReg(SrcReg)
-            .addImm(32-Amount).addImm(0).addImm(Amount-1);
+          BuildMI(*MBB, IP, PPC::RLWIMI, 5, DestReg+1).addReg(TempReg)
+            .addReg(SrcReg).addImm(32-Amount).addImm(0).addImm(Amount-1);
           BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
             .addImm(32-Amount).addImm(Amount).addImm(31);
         }
