@@ -27,7 +27,6 @@ C++ tests are expected to fail.  Here are the known SingleSource failures:
 To-do
 -----
 
-* support setcc on longs
 * support shifts on longs
 * support casting 64-bit integers to FP types
 * support FP rem
