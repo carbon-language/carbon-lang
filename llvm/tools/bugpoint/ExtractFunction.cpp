@@ -98,7 +98,7 @@ static const PassInfo *getPI(Pass *P) {
 
 /// performFinalCleanups - This method clones the current Program and performs
 /// a series of cleanups intended to get rid of extra cruft on the module
-/// before handing it to the user...
+/// before handing it to the user.
 ///
 Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
   // Make all functions external, so GlobalDCE doesn't delete them...
@@ -118,6 +118,7 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
   Module *New = runPassesOn(M, CleanupPasses);
   if (New == 0) {
     std::cerr << "Final cleanups failed.  Sorry. :(  Please report a bug!\n";
+    return M;
   }
   delete M;
   return New;
