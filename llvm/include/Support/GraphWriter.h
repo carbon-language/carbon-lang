@@ -124,8 +124,7 @@ public:
 
   void writeEdge(NodeType *Node, unsigned edgeidx, child_iterator EI) {
     if (NodeType *TargetNode = *EI) {
-      O << "\tNode" << (void*)Node << ":g" << edgeidx << " -> Node"
-        << (void*)TargetNode;
+      int DestPort = -1;
       if (DOTTraits::edgeTargetsEdgeSource(Node, EI)) {
         child_iterator TargetIt = DOTTraits::getEdgeTarget(Node, EI);
 
@@ -133,14 +132,36 @@ public:
         unsigned Offset = std::distance(GTraits::child_begin(TargetNode),
                                         TargetIt);
         if (Offset > 64) Offset = 64;  // Targetting the truncated part?
-        O << ":g" << Offset;        
+        DestPort = (int)Offset;
       }
-      
-      std::string EdgeAttributes = DOTTraits::getEdgeAttributes(Node, EI);
-      if (!EdgeAttributes.empty())
-        O << "[" << EdgeAttributes << "]";
-      O << ";\n";
+
+      emitEdge((void *)Node, edgeidx, (void*)TargetNode, DestPort,
+               DOTTraits::getEdgeAttributes(Node, EI));
     }
+  }
+
+  /// emitSimpleNode - Outputs a simple (non-record) node
+  void emitSimpleNode(void *ID, const std::string &Attr,
+                      const std::string &Label) {
+    O << "\tNode" << ID << "[ ";
+    if (!Attr.empty())
+      O << Attr << ",";
+    O << " label =\"" << DOT::EscapeString(Label) << "\"];\n";
+  }
+
+  /// emitEdge - Output an edge from a simple node into the graph...
+  void emitEdge(void *SrcNodeID, int SrcNodePort,
+                void *DestNodeID, int DestNodePort, const std::string &Attrs) {
+    O << "\tNode" << SrcNodeID;
+    if (SrcNodePort >= 0)
+      O << ":g" << SrcNodePort;
+    O << " -> Node" << (void*)DestNodeID;
+    if (DestNodePort >= 0)
+      O << ":g" << DestNodePort;    
+
+    if (!Attrs.empty())
+      O << "[" << Attrs << "]";
+    O << ";\n";
   }
 };
 
