@@ -2,7 +2,7 @@
 
 ; RUN: as < %s | opt -no-aa -ds-aa -load-vn -gcse | dis | not grep load
 
-%X = global int 20
+%X = internal global int 20
 
 implementation
 
