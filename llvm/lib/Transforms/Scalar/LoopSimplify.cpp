@@ -437,7 +437,7 @@ static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorSet &DS) {
       if (!isa<Instruction>(V) || DS.dominates(cast<Instruction>(V), PN)) {
         // This is a degenerate PHI already, don't modify it!
         PN->replaceAllUsesWith(V);
-        PN->getParent()->getInstList().erase(PN);
+        PN->eraseFromParent();
         continue;
       }
 
