@@ -9,7 +9,6 @@
 #define LLVM_IOTHER_H
 
 #include "llvm/InstrTypes.h"
-#include "llvm/Function.h"
 
 //===----------------------------------------------------------------------===//
 //                                 CastInst Class
@@ -91,10 +90,10 @@ public:
   bool hasSideEffects() const { return true; }
 
   const Function *getCalledFunction() const {
-    return dyn_cast<Function>(Operands[0]);
+    return dyn_cast<Function>(Operands[0].get());
   }
   Function *getCalledFunction() {
-    return dyn_cast<Function>(Operands[0]);
+    return dyn_cast<Function>(Operands[0].get());
   }
 
   // getCalledValue - Get a pointer to a method that is invoked by this inst.
