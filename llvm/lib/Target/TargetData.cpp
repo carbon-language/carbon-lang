@@ -56,15 +56,13 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD)
     StructSize += TySize;                 // Consume space for this data item
   }
 
+  // Empty structures have alignment of 1 byte.
+  if (StructAlignment == 0) StructAlignment = 1;
+
   // Add padding to the end of the struct so that it could be put in an array
   // and all array elements would be aligned correctly.
   if (StructSize % StructAlignment != 0)
     StructSize = (StructSize/StructAlignment + 1) * StructAlignment;
-
-  if (StructSize == 0) {
-    StructSize = 1;           // Empty struct is 1 byte
-    StructAlignment = 1;
-  }
 }
 
 Annotation *TargetData::TypeAnFactory(AnnotationID AID, const Annotable *T,
