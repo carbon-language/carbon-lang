@@ -486,7 +486,8 @@ void processGraph(Graph &g,
 		  vector<Edge >& be, 
 		  vector<Edge >& stDummy, 
 		  vector<Edge >& exDummy, 
-		  int numPaths, int MethNo){
+		  int numPaths, int MethNo, 
+                  Value *threshold){
 
   //Given a graph: with exit->root edge, do the following in seq:
   //1. get back edges
@@ -648,7 +649,7 @@ void processGraph(Graph &g,
   for(map<Edge, getEdgeCode *>::iterator MI=codeInsertions.begin(), 
 	ME=codeInsertions.end(); MI!=ME; ++MI){
     Edge ed=MI->first;
-    insertBB(ed, MI->second, rInst, countInst, numPaths, MethNo);
+    insertBB(ed, MI->second, rInst, countInst, numPaths, MethNo, threshold);
   } 
 }
 

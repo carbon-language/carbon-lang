@@ -417,7 +417,7 @@ public:
   //get the code to be inserted on the edge
   //This is determined from cond (1-6)
   void getCode(Instruction *a, Instruction *b, Function *M, BasicBlock *BB, 
-	       int numPaths, int MethNo);
+               std::vector<Value *> &retVec);
 };
 
 
@@ -429,7 +429,7 @@ void printEdge(Edge ed);
 //Do graph processing: to determine minimal edge increments, 
 //appropriate code insertions etc and insert the code at
 //appropriate locations
-void processGraph(Graph &g, Instruction *rInst, Instruction *countInst, std::vector<Edge> &be, std::vector<Edge> &stDummy, std::vector<Edge> &exDummy, int n, int MethNo);
+void processGraph(Graph &g, Instruction *rInst, Instruction *countInst, std::vector<Edge> &be, std::vector<Edge> &stDummy, std::vector<Edge> &exDummy, int n, int MethNo, Value *threshold);
 
 //print the graph (for debugging)
 void printGraph(Graph &g);
@@ -438,7 +438,7 @@ void printGraph(Graph &g);
 //void printGraph(const Graph g);
 //insert a basic block with appropriate code
 //along a given edge
-void insertBB(Edge ed, getEdgeCode *edgeCode, Instruction *rInst, Instruction *countInst, int n, int Methno);
+void insertBB(Edge ed, getEdgeCode *edgeCode, Instruction *rInst, Instruction *countInst, int n, int Methno, Value *threshold);
 
 //Insert the initialization code in the top BB
 //this includes initializing r, and count
@@ -448,7 +448,7 @@ void insertBB(Edge ed, getEdgeCode *edgeCode, Instruction *rInst, Instruction *c
 //number of that path
 //Count is an array, where Count[k] represents
 //the number of executions of path k
-void insertInTopBB(BasicBlock *front, int k, Instruction *rVar, Instruction *countVar);
+void insertInTopBB(BasicBlock *front, int k, Instruction *rVar, Instruction *countVar, Value *threshold);
 
 //Add dummy edges corresponding to the back edges
 //If a->b is a backedge

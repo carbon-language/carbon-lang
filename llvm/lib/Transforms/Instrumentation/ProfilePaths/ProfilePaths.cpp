@@ -26,11 +26,13 @@
 
 #include "llvm/Transforms/Instrumentation/ProfilePaths.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
+#include "llvm/Transforms/Instrumentation/Graph.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
-#include "llvm/Transforms/Instrumentation/Graph.h"
+#include "llvm/GlobalVariable.h"
+#include "llvm/Module.h"
 #include <iostream>
 #include <fstream>
 
@@ -184,15 +186,29 @@ bool ProfilePaths::runOnFunction(Function &F){
     AllocaInst(Type::IntTy, 
                ConstantUInt::get(Type::UIntTy, numPaths), "Count");
   
+  static GlobalVariable *threshold = NULL;
+  static bool insertedThreshold = false;
+
+  if(!insertedThreshold){
+    threshold = new GlobalVariable(Type::IntTy, false, true, 0,
+                                                   "reopt_threshold");
+
+    F.getParent()->getGlobalList().push_back(threshold);
+    insertedThreshold = true;
+  }
+
+  assert(threshold && "GlobalVariable threshold not defined!");
+
   // insert initialization code in first (entry) BB
   // this includes initializing r and count
-  insertInTopBB(&F.getEntryNode(),numPaths, rVar, countVar);
+  insertInTopBB(&F.getEntryNode(),numPaths, rVar, countVar, threshold);
     
   //now process the graph: get path numbers,
   //get increments along different paths,
   //and assign "increments" and "updates" (to r and count)
   //"optimally". Finally, insert llvm code along various edges
-  processGraph(g, rVar, countVar, be, stDummy, exDummy, numPaths, mn);    
+  processGraph(g, rVar, countVar, be, stDummy, exDummy, numPaths, mn, 
+               threshold);    
    
   return true;  // Always modifies function
 }
