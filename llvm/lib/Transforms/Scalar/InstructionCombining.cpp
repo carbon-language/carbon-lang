@@ -4646,6 +4646,9 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
           }
 
       if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
+          // Do not allow turning this into a load of an integer, which is then
+          // casted to a pointer, this pessimizes pointer analysis a lot.
+          (isa<PointerType>(SrcPTy) == isa<PointerType>(LI.getType())) &&
           IC.getTargetData().getTypeSize(SrcPTy) == 
                IC.getTargetData().getTypeSize(DestPTy)) {
           
