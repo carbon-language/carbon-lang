@@ -572,7 +572,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHSC)) {
       unsigned NumBits = CI->getType()->getPrimitiveSize()*8;
       uint64_t Val = CI->getRawValue() & (1ULL << NumBits)-1;
-      if (Val == (1ULL << NumBits-1))
+      if (Val == (1ULL << (NumBits-1)))
         return BinaryOperator::createXor(LHS, RHS);
     }
 
@@ -3457,7 +3457,6 @@ static Value *InsertSignExtendToPtrTy(Value *V, const Type *DTy,
                                       InstCombiner *IC) {
   unsigned PS = IC->getTargetData().getPointerSize();
   const Type *VTy = V->getType();
-  Instruction *Cast;
   if (!VTy->isSigned() && VTy->getPrimitiveSize() < PS)
     // We must insert a cast to ensure we sign-extend.
     V = IC->InsertNewInstBefore(new CastInst(V, VTy->getSignedVersion(),
@@ -3591,7 +3590,6 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             GO1 = ConstantExpr::getCast(GO1C, SO1->getType());
           } else {
             unsigned PS = TD->getPointerSize();
-            Instruction *Cast;
             if (SO1->getType()->getPrimitiveSize() == PS) {
               // Convert GO1 to SO1's type.
               GO1 = InsertSignExtendToPtrTy(GO1, SO1->getType(), &GEP, this);
