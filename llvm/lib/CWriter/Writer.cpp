@@ -518,7 +518,6 @@ void CWriter::printModule(Module *M) {
 
   // get declaration for alloca
   Out << "/* Provide Declarations */\n"
-      << "#include <malloc.h>\n"
       << "#include <alloca.h>\n\n"
 
     // Provide a definition for null if one does not already exist,
@@ -1019,8 +1018,68 @@ void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
     }
 }
 
+
+
+
+
+/*
+void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
+                                      User::op_iterator E) {
+  bool HasImplicitAddress = false;
+  // If accessing a global value with no indexing, avoid *(&GV) syndrome
+  if (GlobalValue *V = dyn_cast<GlobalValue>(Ptr)) {
+    HasImplicitAddress = true;
+  } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Ptr)) {
+    HasImplicitAddress = true;
+    Ptr = CPR->getValue();         // Get to the global...
+  }
+
+  if (I == E) {
+    if (!HasImplicitAddress)
+      Out << "*";  // Implicit zero first argument: '*x' is equivalent to 'x[0]'
+
+    writeOperandInternal(Ptr);
+    return;
+  }
+
+  const Constant *CI = dyn_cast<Constant>(I->get());
+  if (HasImplicitAddress && (!CI || !CI->isNullValue()))
+    Out << "(&";
+
+  writeOperandInternal(Ptr);
+
+  if (HasImplicitAddress && (!CI || !CI->isNullValue())) {
+    Out << ")";
+    HasImplicitAddress = false;  // HIA is only true if we haven't addressed yet
+  }
+
+  assert(!HasImplicitAddress || (CI && CI->isNullValue()) &&
+         "Can only have implicit address with direct accessing");
+
+  if (HasImplicitAddress) {
+    ++I;
+  } else if (CI && CI->isNullValue() && I+1 != E) {
+    // Print out the -> operator if possible...
+    if ((*(I+1))->getType() == Type::UByteTy) {
+      Out << (HasImplicitAddress ? "." : "->");
+      Out << "field" << cast<ConstantUInt>(*(I+1))->getValue();
+      I += 2;
+    } 
+  }
+
+  for (; I != E; ++I)
+    if ((*I)->getType() == Type::LongTy) {
+      Out << "[";
+      writeOperand(*I);
+      Out << "]";
+    } else {
+      Out << ".field" << cast<ConstantUInt>(*I)->getValue();
+    }
+}
+*/
+
 void CWriter::visitLoadInst(LoadInst &I) {
-  Out << "*";
+  //Out << "*";
   writeOperand(I.getOperand(0));
 }
 
