@@ -453,7 +453,7 @@ void PhyRegAlloc::updateMachineCode()
       unsigned Opcode =  MInst->getOpCode();
     
       // do not process Phis
-      if (TM.getInstrInfo().isPhi(Opcode))
+      if (TM.getInstrInfo().isDummyPhiInstr(Opcode))
 	continue;
 
       // Now insert speical instructions (if necessary) for call/return
@@ -741,8 +741,8 @@ int PhyRegAlloc::getUsableUniRegAtMI(RegClass *RC,
 				  const int RegType,
 				  const MachineInstr *MInst, 
 				  const ValueSet *LVSetBef,
-				  MachineInstr *MIBef,
-				  MachineInstr *MIAft) {
+				  MachineInstr *&MIBef,
+				  MachineInstr *&MIAft) {
 
   int RegU =  getUnusedUniRegAtMI(RC, MInst, LVSetBef);
 
