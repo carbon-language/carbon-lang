@@ -120,17 +120,17 @@ void BytecodeWriter::outputConstants(bool isFunction) {
     outputConstantsInPlane(Plane, ValNo);      // Write out the types
   }
   
-  for (unsigned pno = 0; pno < NumPlanes; pno++) {
+  for (unsigned pno = 0; pno != NumPlanes; pno++) {
     const std::vector<const Value*> &Plane = Table.getPlane(pno);
-    if (Plane.empty()) continue;      // Skip empty type planes...
-    
-    unsigned ValNo = 0;
-    if (isFunction)                   // Don't reemit module constants
-      ValNo = Table.getModuleLevel(pno);
-    else if (pno == Type::TypeTyID)
-      continue;                       // Type plane was written out above
-    
-    outputConstantsInPlane(Plane, ValNo); // Write out constants in the plane
+    if (!Plane.empty()) {             // Skip empty type planes...
+      unsigned ValNo = 0;
+      if (isFunction)                   // Don't reemit module constants
+        ValNo = Table.getModuleLevel(pno);
+      else if (pno == Type::TypeTyID) // If type plane wasn't written out above
+        continue;
+
+      outputConstantsInPlane(Plane, ValNo); // Write out constants in the plane
+    }
   }
 }
 
