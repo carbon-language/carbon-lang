@@ -20,8 +20,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/System/Signals.h"
-#include "llvm/Config/unistd.h"
-//#include <sys/resource.h>
 using namespace llvm;
 
 static cl::list<std::string>
