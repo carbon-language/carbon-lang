@@ -69,6 +69,10 @@ class PhyRegAlloc {
   // AddedInstrMap - Used to store instrns added in this phase
   std::map<const MachineInstr *, AddedInstrns> AddedInstrMap;
 
+  // ScratchRegsUsed - Contains scratch register uses for a particular MI.
+  typedef std::multimap<const MachineInstr*, int> ScratchRegsUsedTy;
+  ScratchRegsUsedTy ScratchRegsUsed;
+
   AddedInstrns AddedInstrAtEntry;       // to store instrns added at entry
   LoopInfo *LoopDepthCalc;              // to calculate loop depths 
 
