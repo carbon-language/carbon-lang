@@ -81,7 +81,7 @@ namespace {
     // 
     // visitOneOperand() does all the work for one operand.
     // 
-    void visitOperands(Instruction &I, int firstOp=0, int lastOp=0);
+    void visitOperands(Instruction &I, int firstOp=0);
     void visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
                          Instruction& insertBefore);
   };
@@ -208,30 +208,21 @@ PreSelection::visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
 // firstOp and lastOp can be used to skip leading and trailing operands.
 // If lastOp is 0, it defaults to #operands or #incoming Phi values.
 //  
-inline void
-PreSelection::visitOperands(Instruction &I, int firstOp, int lastOp)
-{
+inline void PreSelection::visitOperands(Instruction &I, int firstOp) {
   // For any instruction other than PHI, copies go just before the instr.
   // For a PHI, operand copies must be before the terminator of the
   // appropriate predecessor basic block.  Remaining logic is simple
   // so just handle PHIs and other instructions separately.
   // 
-  if (PHINode* phi = dyn_cast<PHINode>(&I))
-    {
-      if (lastOp == 0)
-        lastOp = phi->getNumIncomingValues();
-      for (unsigned i=firstOp, N=lastOp; i < N; ++i)
-        this->visitOneOperand(I, phi->getIncomingValue(i),
-                              phi->getOperandNumForIncomingValue(i),
-                              * phi->getIncomingBlock(i)->getTerminator());
-    }
-  else
-    {
-      if (lastOp == 0)
-        lastOp = I.getNumOperands();
-      for (unsigned i=firstOp, N=lastOp; i < N; ++i)
-        this->visitOneOperand(I, I.getOperand(i), i, I);
-    }
+  if (PHINode* phi = dyn_cast<PHINode>(&I)) {
+    for (unsigned i=firstOp, N=phi->getNumIncomingValues(); i != N; ++i)
+      visitOneOperand(I, phi->getIncomingValue(i),
+                      phi->getOperandNumForIncomingValue(i),
+                      * phi->getIncomingBlock(i)->getTerminator());
+  } else {
+    for (unsigned i=firstOp, N=lastOp; i != I.getNumOperands(); ++i)
+      visitOneOperand(I, I.getOperand(i), i, I);
+  }
 }
 
 
