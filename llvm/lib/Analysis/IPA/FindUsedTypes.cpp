@@ -45,6 +45,7 @@ bool FindUsedTypes::run(Module &m) {
     IncorporateType(I->getType());
 
   for (Module::iterator MI = m.begin(), ME = m.end(); MI != ME; ++MI) {
+    IncorporateType(MI->getType());
     const Function &F = *MI;
   
     // Loop over all of the instructions in the function, adding their return
