@@ -131,7 +131,7 @@ class ReversePostOrderTraversal {
     copy(po_begin(BB), po_end(BB), back_inserter(Blocks));
   }
 public:
-  typedef std::vector<NodeType*>::reverse_iterator rpo_iterator;
+  typedef typename std::vector<NodeType*>::reverse_iterator rpo_iterator;
 
   inline ReversePostOrderTraversal(GraphT G) {
     Initialize(GT::getEntryNode(G));
