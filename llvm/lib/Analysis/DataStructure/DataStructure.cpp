@@ -163,8 +163,8 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
     }
 
     if (Offset) {  // We could handle this case, but we don't for now...
-      std::cerr << "UNIMP: Trying to merge a growth type into offset != 0: "
-                << "Collapsing!\n";
+      DEBUG(std::cerr << "UNIMP: Trying to merge a growth type into "
+                      << "offset != 0: Collapsing!\n");
       foldNodeCompletely();
       return true;
     }
@@ -280,10 +280,9 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
   }
 
 
-
-  std::cerr << "MergeTypeInfo Folding OrigTy: " << Ty.Ty
-            << "\n due to:" << NewTy << " @ " << Offset << "!\n";
-  std::cerr << "SubType: " << SubType << "\n\n";
+  DEBUG(std::cerr << "MergeTypeInfo Folding OrigTy: " << Ty.Ty
+                  << "\n due to:" << NewTy << " @ " << Offset << "!\n"
+                  << "SubType: " << SubType << "\n\n");
 
   foldNodeCompletely();
   return true;
@@ -366,7 +365,8 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   if (N == this) {
     // We cannot merge two pieces of the same node together, collapse the node
     // completely.
-    std::cerr << "Attempting to merge two chunks of the same node together!\n";
+    DEBUG(std::cerr << "Attempting to merge two chunks of"
+                    << " the same node together!\n");
     foldNodeCompletely();
     return;
   }
