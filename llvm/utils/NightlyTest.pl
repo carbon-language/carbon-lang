@@ -155,9 +155,9 @@ $LOC = GetRegex "([0-9]+) +total", `wc -l \`utils/getsrcs.sh\` | grep total`;
 if (!$NOCHECKOUT) {
   # Change the Makefile.config to build into the local directory...
   rename "Makefile.config", "Makefile.config.orig";
-  system "sed '/^LLVM_OBJ_DIR/d' < Makefile.config.orig > Makefile.config";
+  system "sed '/^OBJ_ROOT/d' < Makefile.config.orig > Makefile.config";
   system "echo >> Makefile.config";
-  system "echo 'LLVM_OBJ_DIR := .' >> Makefile.config";
+  system "echo 'OBJ_ROOT := .' >> Makefile.config";
 
   # Change the Makefile.config to not strip executables...
   system "echo 'KEEP_SYMBOLS := 1' >> Makefile.config";
