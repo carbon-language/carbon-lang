@@ -360,6 +360,10 @@ then
 		LLVM_GCC_SANE=yes
 	fi
 	rm conftest.c
+	llvmcc1path=`"$LLVM_GCC_CHECK" --print-prog-name=cc1`
+	AC_SUBST(LLVMCC1,$llvmcc1path)
+	llvmcc1pluspath=`"$LLVM_GCC_CHECK" --print-prog-name=cc1plus`
+	AC_SUBST(LLVMCC1PLUS,$llvmcc1pluspath)
 fi
 AC_MSG_RESULT($LLVM_GCC_SANE)
 if test "$LLVM_GCC_SANE" = "no"
