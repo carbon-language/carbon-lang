@@ -45,7 +45,7 @@ namespace {
     /// instructions will be invoked for all instructions in the basic block.
     ///
     void visitBasicBlock(BasicBlock &LLVM_BB) {
-      BB = new MachineBasicBlock();
+      BB = new MachineBasicBlock(&LLVM_BB);
       // FIXME: Use the auto-insert form when it's available
       F->getBasicBlockList().push_back(BB);
     }
