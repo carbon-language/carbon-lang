@@ -79,7 +79,7 @@ private:
 //----------------------------------------------------------------------
 
 template<class _NodeType>
-class ScheduleIterator: public std::forward_iterator<_NodeType, ptrdiff_t> {
+class ScheduleIterator : public forward_iterator<_NodeType, ptrdiff_t> {
 private:
   unsigned cycleNum;
   unsigned slotNum;
@@ -352,18 +352,18 @@ private:
   unsigned int totalInstrCount;
   cycles_t curTime;
   cycles_t nextEarliestIssueTime;		// next cycle we can issue
-  vector<std::hash_set<const SchedGraphNode*> > choicesForSlot; // indexed by slot#
+  vector<hash_set<const SchedGraphNode*> > choicesForSlot; // indexed by slot#
   vector<const SchedGraphNode*> choiceVec;	// indexed by node ptr
   vector<int> numInClass;			// indexed by sched class
   vector<cycles_t> nextEarliestStartTime;	// indexed by opCode
-  std::hash_map<const SchedGraphNode*, DelaySlotInfo*> delaySlotInfoForBranches;
+  hash_map<const SchedGraphNode*, DelaySlotInfo*> delaySlotInfoForBranches;
 						// indexed by branch node ptr 
   
 public:
   SchedulingManager(const TargetMachine& _target, const SchedGraph* graph,
                     SchedPriorities& schedPrio);
   ~SchedulingManager() {
-    for (std::hash_map<const SchedGraphNode*,
+    for (hash_map<const SchedGraphNode*,
            DelaySlotInfo*>::iterator I = delaySlotInfoForBranches.begin(),
            E = delaySlotInfoForBranches.end(); I != E; ++I)
       delete I->second;
@@ -422,7 +422,7 @@ public:
     return choiceVec[i];
   }
   
-  inline std::hash_set<const SchedGraphNode*>& getChoicesForSlot(unsigned slotNum) {
+  inline hash_set<const SchedGraphNode*>& getChoicesForSlot(unsigned slotNum) {
     assert(slotNum < nslots);
     return choicesForSlot[slotNum];
   }
@@ -497,7 +497,7 @@ public:
   inline DelaySlotInfo* getDelaySlotInfoForInstr(const SchedGraphNode* bn,
 						 bool createIfMissing=false)
   {
-    std::hash_map<const SchedGraphNode*, DelaySlotInfo*>::const_iterator
+    hash_map<const SchedGraphNode*, DelaySlotInfo*>::const_iterator
       I = delaySlotInfoForBranches.find(bn);
     if (I != delaySlotInfoForBranches.end())
       return I->second;
