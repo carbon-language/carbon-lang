@@ -1491,7 +1491,7 @@ static inline void killIfUselessEdge(DSNodeHandle &Edge) {
 static inline bool nodeContainsExternalFunction(const DSNode *N) {
   const std::vector<GlobalValue*> &Globals = N->getGlobals();
   for (unsigned i = 0, e = Globals.size(); i != e; ++i)
-    if (Globals[i]->isExternal())
+    if (Globals[i]->isExternal() && isa<Function>(Globals[i]))
       return true;
   return false;
 }
@@ -1507,6 +1507,9 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
   Function *LastCalleeFunc = 0;
   unsigned NumDuplicateCalls = 0;
   bool LastCalleeContainsExternalFunction = false;
+
+  std::vector<unsigned> CallsToDelete;
+
   for (unsigned i = 0; i != Calls.size(); ++i) {
     DSCallSite &CS = Calls[i];
 
@@ -1518,9 +1521,7 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
 #ifndef NDEBUG
       std::cerr << "WARNING: Useless call site found.\n";
 #endif
-      CS.swap(Calls.back());
-      Calls.pop_back();
-      --i;
+      CallsToDelete.push_back(i);
     } else {
       // If the return value or any arguments point to a void node with no
       // information at all in it, and the call node is the only node to point
@@ -1563,11 +1564,8 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
           DSCallSite &OCS = Calls[i-1];
           OCS.mergeWith(CS);
           
-          // The node will now be eliminated as a duplicate!
-          if (CS.getNumPtrArgs() < OCS.getNumPtrArgs())
-            CS = OCS;
-          else if (CS.getNumPtrArgs() > OCS.getNumPtrArgs())
-            OCS = CS;
+          // No need to keep this call anymore.
+          CallsToDelete.push_back(i);
         }
 #endif
       } else {
@@ -1583,6 +1581,11 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
     }
   }
 #endif
+
+  unsigned NumDeleted = 0;
+  for (unsigned i = 0, e = CallsToDelete.size(); i != e; ++i)
+    Calls.erase(Calls.begin()+CallsToDelete[i]-NumDeleted++);
+
   Calls.erase(std::unique(Calls.begin(), Calls.end()), Calls.end());
 
   // Track the number of call nodes merged away...
