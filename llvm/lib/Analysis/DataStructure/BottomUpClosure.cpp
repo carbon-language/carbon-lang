@@ -85,7 +85,7 @@ bool BUDataStructures::runOnModule(Module &M) {
   // Merge the globals variables (not the calls) from the globals graph back
   // into the main function's graph so that the main function contains all of
   // the information about global pools and GV usage in the program.
-  if (MainFunc) {
+  if (MainFunc && !MainFunc->isExternal()) {
     DSGraph &MainGraph = getOrCreateGraph(MainFunc);
     const DSGraph &GG = *MainGraph.getGlobalsGraph();
     ReachabilityCloner RC(MainGraph, GG, 
