@@ -133,24 +133,10 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
         for (MachineBasicBlock::iterator mii = mbb->begin(), mie = mbb->end();
              mii != mie; ) {
-            for (unsigned i = 0; i < mii->getNumOperands(); ++i) {
-                const MachineOperand& mop = mii->getOperand(i);
-                if (mop.isRegister() && mop.getReg()) {
-                    // replace register with representative register
-                    unsigned reg = rep(mop.getReg());
-                    mii->SetMachineOperandReg(i, reg);
-
-                    if (MRegisterInfo::isVirtualRegister(reg)) {
-                        Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
-                        assert(r2iit != r2iMap_.end());
-                        r2iit->second->weight += pow(10.0F, loopDepth);
-                    }
-                }
-            }
-
-            // if the move is now an identity move delete it
+            // if the move will be an identity move delete it
             unsigned srcReg, dstReg;
-            if (tii.isMoveInstr(*mii, srcReg, dstReg) && srcReg == dstReg) {
+            if (tii.isMoveInstr(*mii, srcReg, dstReg) &&
+                rep(srcReg) == rep(dstReg)) {
                 // remove from def list
                 Interval& interval = getOrCreateInterval(dstReg);
                 unsigned defIndex = getInstructionIndex(mii);
@@ -168,8 +154,23 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
                 mii = mbbi->erase(mii);
                 ++numPeep;
             }
-            else
+            else {
+                for (unsigned i = 0; i < mii->getNumOperands(); ++i) {
+                    const MachineOperand& mop = mii->getOperand(i);
+                    if (mop.isRegister() && mop.getReg() &&
+                        MRegisterInfo::isVirtualRegister(mop.getReg())) {
+                        // replace register with representative register
+                        unsigned reg = rep(mop.getReg());
+                        mii->SetMachineOperandReg(i, reg);
+
+                        Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
+                        assert(r2iit != r2iMap_.end());
+                        r2iit->second->weight +=
+                            (mop.isUse() + mop.isDef()) * pow(10.0F, loopDepth);
+                    }
+                }
                 ++mii;
+            }
         }
     }
 
