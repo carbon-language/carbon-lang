@@ -8,11 +8,12 @@
 #define LLVM_TARGET_SCHEDINFO_H
 
 #include "llvm/Target/InstInfo.h"
+#include <hash_map>
 
 typedef long long cycles_t; 
 const cycles_t HUGE_LATENCY = ~((unsigned long long) 1 << sizeof(cycles_t)-1);
 const cycles_t INVALID_LATENCY = -HUGE_LATENCY; 
-
+static const unsigned MAX_OPCODE_SIZE = 16;
 
 class OpCodePair {
 public:

@@ -8,9 +8,12 @@
 #define LLVM_TARGET_INSTINFO_H
 
 #include "llvm/Target/Machine.h"
+#include "llvm/Support/DataTypes.h"
+
+class MachineInstrDescriptor;
+
 
 typedef int InstrSchedClass;
-
 
 // Global variable holding an array of descriptors for machine instructions.
 // The actual object needs to be created separately for each target machine.
