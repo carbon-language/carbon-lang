@@ -28,9 +28,8 @@ static inline const Type *checkType(const Type *Ty) {
   return Ty;
 }
 
-Value::Value(const Type *ty, ValueTy vty, const std::string &name)
-  : Name(name), Ty(checkType(ty)) {
-  VTy = vty;
+Value::Value(const Type *ty, unsigned scid, const std::string &name)
+  : SubclassID(scid), Ty(checkType(ty)), Name(name) {
 }
 
 Value::~Value() {
