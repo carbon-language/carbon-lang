@@ -8,6 +8,7 @@
 #include "SparcInternals.h"
 #include "SparcRegClassInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
@@ -19,7 +20,6 @@
 #include "llvm/iOther.h"
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
-#include <iostream>
 #include <values.h>
 using std::cerr;
 using std::vector;
@@ -476,7 +476,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
                  regClassIDOfArgReg == IntRegClassID &&
                  "This should only be an Int register for an FP argument");
           
- 	  int TmpOff = MachineFunction::get(Meth).pushTempValue(target,  
+ 	  int TmpOff = MachineFunction::get(Meth).getInfo()->pushTempValue(
                                                 getSpilledRegSize(regType));
 	  cpReg2MemMI(FirstAI->InstrnsBefore,
                       UniArgReg, getFramePointer(), TmpOff, IntRegType);
@@ -493,7 +493,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
 	// Now the arg is coming on stack. Since the LR recieved a register,
 	// we just have to load the arg on stack into that register
 	//
-        const MachineFrameInfo& frameInfo = target.getFrameInfo();
+        const TargetFrameInfo& frameInfo = target.getFrameInfo();
 	int offsetFromFP =
           frameInfo.getIncomingArgOffset(MachineFunction::get(Meth),
                                          argNo);
@@ -541,7 +541,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
 	// since this method is called before any other method that makes
 	// uses of the stack pos of the LR (e.g., updateMachineInstr)
 
-        const MachineFrameInfo& frameInfo = target.getFrameInfo();
+        const TargetFrameInfo& frameInfo = target.getFrameInfo();
 	int offsetFromFP =
           frameInfo.getIncomingArgOffset(MachineFunction::get(Meth),
                                          argNo);
@@ -651,7 +651,7 @@ UltraSparcRegInfo::InitializeOutgoingArg(MachineInstr* CallMI,
                              AddedInstrns *CallAI,
                              PhyRegAlloc &PRA, LiveRange* LR,
                              unsigned regType, unsigned RegClassID,
-                             int UniArgRegOrNone, unsigned int argNo,
+                             int UniArgRegOrNone, unsigned argNo,
                              std::vector<MachineInstr *>& AddedInstrnsBefore)
   const
 {
@@ -681,7 +681,7 @@ UltraSparcRegInfo::InitializeOutgoingArg(MachineInstr* CallMI,
     }
     else {
       // Copy UniLRReg to the stack to pass the arg on stack.
-      const MachineFrameInfo& frameInfo = target.getFrameInfo();
+      const TargetFrameInfo& frameInfo = target.getFrameInfo();
       int argOffset = frameInfo.getOutgoingArgOffset(PRA.MF, argNo);
       cpReg2MemMI(CallAI->InstrnsBefore,
                   UniLRReg, getStackPointer(), argOffset, regType);
@@ -704,9 +704,9 @@ UltraSparcRegInfo::InitializeOutgoingArg(MachineInstr* CallMI,
       // Use TmpOff to save TReg, since that may have a live value.
       // 
       int TReg = PRA.getUniRegNotUsedByThisInst( LR->getRegClass(), CallMI );
-      int TmpOff = PRA.MF.pushTempValue(target,  
-                                        getSpilledRegSize(getRegType(LR)));
-      const MachineFrameInfo& frameInfo = target.getFrameInfo();
+      int TmpOff = PRA.MF.getInfo()->
+	             pushTempValue(getSpilledRegSize(getRegType(LR)));
+      const TargetFrameInfo& frameInfo = target.getFrameInfo();
       int argOffset = frameInfo.getOutgoingArgOffset(PRA.MF, argNo);
       
       MachineInstr *Ad1, *Ad2, *Ad3, *Ad4;
@@ -1411,8 +1411,8 @@ UltraSparcRegInfo::insertCallerSavingCode(vector<MachineInstr*>& instrnsBefore,
 	    // and add them to InstrnsBefore and InstrnsAfter of the
 	    // call instruction
             // 
-	    int StackOff =  PRA.MF.pushTempValue(target,  
-                                                 getSpilledRegSize(RegType));
+	    int StackOff = 
+	      PRA.MF.getInfo()->pushTempValue(getSpilledRegSize(RegType));
             
 	    vector<MachineInstr*> AdIBef, AdIAft;
             
@@ -1661,8 +1661,8 @@ void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
 
   if (DebugPrint && DEBUG_RA) {
     cerr << "\nAdded instructions were reordered to:\n";
-    for(unsigned int i=0; i < OrdVec.size(); i++)
-      cerr << *(OrdVec[i]);
+    for(unsigned i=0; i < OrdVec.size(); i++)
+      cerr << *OrdVec[i];
   }
 }
 
@@ -1711,16 +1711,15 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
 	  int RegType = getRegType(UReg);
 	  MachineInstr *AdIBef, *AdIAft;
 	      
-	  const int StackOff = PRA.MF.pushTempValue(target,
-                                                    getSpilledRegSize(RegType));
+	  int StackOff =
+	    PRA.MF.getInfo()->pushTempValue(getSpilledRegSize(RegType));
 	  
 	  // Save the UReg (%ox) on stack before it's destroyed
           vector<MachineInstr*> mvec;
 	  cpReg2MemMI(mvec, UReg, getFramePointer(), StackOff, RegType);
-          for (vector<MachineInstr*>::iterator MI=mvec.begin(); MI != mvec.end(); ++MI) {
-            OrdIt = OrdVec.insert(OrdIt, *MI);
-            ++OrdIt; // OrdIt must still point to current instr we processed
-          }
+          for (vector<MachineInstr*>::iterator MI=mvec.begin();
+	       MI != mvec.end(); ++MI)
+            OrdIt = 1+OrdVec.insert(OrdIt, *MI);
 	  
 	  // Load directly into DReg (%oy)
 	  MachineOperand&  DOp=
