@@ -26,6 +26,10 @@
 #    in the current directory.  Also, if you want to build files in addition
 #    to the local files, you can use the ExtraSource variable
 #
+# 5. SourceDir - If specified, this specifies a directory that the source files
+#    are in, if they are not in the current directory.  This should include a
+#    trailing / character.
+#
 #===-----------------------------------------------------------------------====
 
 # Configuration file to set paths specific to local installation of LLVM
@@ -211,7 +215,7 @@ ifndef Source
 Source  := $(ExtraSource) $(wildcard *.cpp *.c *.y *.l)
 endif
 
-Objs := $(sort $(patsubst Debug/%.o, %.o, $(addsuffix .o,$(basename $(Source)))))
+Objs := $(sort $(patsubst Debug/%.o, %.o, $(addsuffix .o,$(notdir $(basename $(Source))))))
 ObjectsO := $(addprefix $(BUILD_ROOT)/Release/,$(Objs))
 ObjectsP := $(addprefix $(BUILD_ROOT)/Profile/,$(Objs))
 ObjectsG := $(addprefix $(BUILD_ROOT)/Debug/,$(Objs))
@@ -399,35 +403,27 @@ endif
 .PRECIOUS: $(BUILD_ROOT)/Depend/.dir
 .PRECIOUS: $(BUILD_ROOT)/Debug/.dir $(BUILD_ROOT)/Release/.dir
 
-# Create dependencies for the *.cpp files...
-$(BUILD_ROOT)/Depend/%.d: %.cpp $(BUILD_ROOT)/Depend/.dir
-	$(VERB) $(Depend) $< | sed 's|$*\.o *|$(BUILD_ROOT)/Release/& $(BUILD_ROOT)/Profile/& $(BUILD_ROOT)/Debug/& $(BUILD_ROOT)/Depend/$(@F)|g' > $@
-
-# Create dependencies for the *.c files...
-$(BUILD_ROOT)/Depend/%.d: %.c $(BUILD_ROOT)/Depend/.dir
-	$(VERB) $(DependC) $< | sed 's|$*\.o *|Release/& Profile/& Debug/& Depend/$(@F)|g' > $@
-
 # Create .o files in the ObjectFiles directory from the .cpp and .c files...
-$(BUILD_ROOT)/Release/%.o: %.cpp $(BUILD_ROOT)/Release/.dir
+$(BUILD_ROOT)/Release/%.o: $(SourceDir)%.cpp $(BUILD_ROOT)/Release/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileO) $< -o $@
 
-$(BUILD_ROOT)/Release/%.o: %.c $(BUILD_ROOT)/Release/.dir
+$(BUILD_ROOT)/Release/%.o: $(SourceDir)%.c $(BUILD_ROOT)/Release/.dir
 	$(VERB) $(CompileCO) $< -o $@
 
-$(BUILD_ROOT)/Profile/%.o: %.cpp $(BUILD_ROOT)/Profile/.dir
+$(BUILD_ROOT)/Profile/%.o: $(SourceDir)%.cpp $(BUILD_ROOT)/Profile/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileP) $< -o $@
 
-$(BUILD_ROOT)/Profile/%.o: %.c $(BUILD_ROOT)/Profile/.dir
+$(BUILD_ROOT)/Profile/%.o: $(SourceDir)%.c $(BUILD_ROOT)/Profile/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileCP) $< -o $@
 
-$(BUILD_ROOT)/Debug/%.o: %.cpp $(BUILD_ROOT)/Debug/.dir
+$(BUILD_ROOT)/Debug/%.o: $(SourceDir)%.cpp $(BUILD_ROOT)/Debug/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileG) $< -o $@
 
-$(BUILD_ROOT)/Debug/%.o: %.c $(BUILD_ROOT)/Debug/.dir 
+$(BUILD_ROOT)/Debug/%.o: $(SourceDir)%.c $(BUILD_ROOT)/Debug/.dir 
 	$(VERB) $(CompileCG) $< -o $@
 
 #
@@ -454,8 +450,10 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
           sed 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' > $@
 
 # Rule for building the bison parsers...
-
+%.c: %.y     # Cancel built-in rules for yacc
+%.h: %.y     # Cancel built-in rules for yacc
 %.cpp %.h : %.y
+	@echo Bison\'ing $<...
 	$(VERB) $(BISON) -v -d -p $(<:%Parser.y=%) $*.y
 	$(VERB) mv -f $*.tab.c $*.cpp
 	$(VERB) mv -f $*.tab.h $*.h
@@ -475,10 +473,22 @@ clean::
 	$(VERB) rm -f core core.[0-9][0-9]* *.o *.d *.so *~ *.flc
 	$(VERB) rm -f $(LEX_OUTPUT) $(YACC_OUTPUT)
 
-# If dependancies were generated for the file that included this file,
+# If dependencies were generated for the file that included this file,
 # include the dependancies now...
 #
-SourceDepend := $(addsuffix .d,$(addprefix $(BUILD_ROOT)/Depend/,$(basename $(filter-out Debug/%, $(Source)))))
+SourceBaseNames := $(basename $(notdir $(filter-out Debug/%, $(Source))))
+SourceDepend := $(SourceBaseNames:%=$(BUILD_ROOT)/Depend/%.d)
+
+# Create dependencies for the *.cpp files...
+#$(SourceDepend): \x
+$(BUILD_ROOT)/Depend/%.d: $(SourceDir)%.cpp $(BUILD_ROOT)/Depend/.dir
+	$(VERB) $(Depend) $< | sed 's|$*\.o *|$(BUILD_ROOT)/Release/& $(BUILD_ROOT)/Profile/& $(BUILD_ROOT)/Debug/& $(BUILD_ROOT)/Depend/$(@F)|g' > $@
+
+# Create dependencies for the *.c files...
+#$(SourceDepend): \x
+$(BUILD_ROOT)/Depend/%.d: $(SourceDir)%.c $(BUILD_ROOT)/Depend/.dir
+	$(VERB) $(DependC) $< | sed 's|$*\.o *|Release/& Profile/& Debug/& Depend/$(@F)|g' > $@
+
 ifneq ($(SourceDepend),)
 -include $(SourceDepend)
 endif
