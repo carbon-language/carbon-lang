@@ -183,7 +183,8 @@ bool SROA::performScalarRepl(Function &F) {
       Instruction *User = cast<Instruction>(AI->use_back());
       GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
       // We now know that the GEP is of the form: GEP <ptr>, 0, <cst>
-      uint64_t Idx = cast<ConstantInt>(GEPI->getOperand(2))->getRawValue();
+      unsigned Idx = 
+         (unsigned)cast<ConstantInt>(GEPI->getOperand(2))->getRawValue();
       
       assert(Idx < ElementAllocas.size() && "Index out of range?");
       AllocaInst *AllocaToUse = ElementAllocas[Idx];
