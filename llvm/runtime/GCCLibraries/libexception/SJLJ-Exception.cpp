@@ -1,8 +1,16 @@
+//===- SJLJ-Exception.cpp - SetJmp/LongJmp Exception Handling -------------===//
+//
+// This file implements the API used by the Setjmp/Longjmp exception handling
+// runtime library.
+//
+//===----------------------------------------------------------------------===//
 
 #include "SJLJ-Exception.h"
 #include <cstdlib>
 #include <cassert>
 
+// get_sjlj_exception - Adjust the llvm_exception pointer to be an appropriate
+// llvm_sjlj_exception pointer.
 inline llvm_sjlj_exception *get_sjlj_exception(llvm_exception *E) {
   assert(E->ExceptionType == SJLJException);
   return (llvm_sjlj_exception*)(E+1) - 1;
@@ -16,6 +24,9 @@ struct SetJmpMapEntry {
   SetJmpMapEntry *Next;
 };
 
+// SJLJDestructor - This function is used to free the exception when
+// language-indent code needs to destroy the exception without knowing exactly
+// what type it is.
 static void SJLJDestructor(llvm_exception *E) {
   free(get_sjlj_exception(E));
 }
