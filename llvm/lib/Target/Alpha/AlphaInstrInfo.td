@@ -57,13 +57,18 @@ let Uses = [R28] in
   def LOAD_IMM : PseudoInstAlpha<(ops GPRC:$RC, s64imm:$IMM), "ldiq $RC,$IMM">; //Load Immediate Quadword
 
 let Uses = [R29, R28] in {
-  def STORE : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "stq $RA,$DISP">; //Store quadword
   def LOAD_ADDR : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lda $RA,$DISP">;  //Load address
-  def LOAD : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldq $RA,$DISP">; //Load quadword
+  def LDQ_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldq $RA,$DISP">; //Load quadword
   def LDW : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldw $RA,$DISP($RB)">; // Load sign-extended word
   def LDB : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldb $RA,$DISP($RB)">; //Load byte
   def LDS_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lds $RA,$DISP">; //Load float
   def LDT_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldt $RA,$DISP">; //Load double
+
+  def STB_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "stb $RA,$DISP">; // Store byte
+  def STW_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "stw $RA,$DISP">; // Store word
+  def STL_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "stl $RA,$DISP">; // Store longword
+  def STQ_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "stq $RA,$DISP">; //Store quadword
+
   def STS_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "sts $RA,$DISP">; //store float
   def STT_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "stt $RA,$DISP">; //store double
 }

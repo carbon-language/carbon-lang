@@ -296,7 +296,32 @@ namespace {
     unsigned SelectExpr(SDOperand N);
     unsigned SelectExprFP(SDOperand N, unsigned Result);
     void Select(SDOperand N);
+
+    void SelectAddr(SDOperand N, unsigned& Reg, long& offset);
   };
+}
+
+//Check to see if the load is a constant offset from a base register
+void ISel::SelectAddr(SDOperand N, unsigned& Reg, long& offset)
+{
+  unsigned opcode = N.getOpcode();
+  if (opcode == ISD::ADD) {
+    if(N.getOperand(1).getOpcode() == ISD::Constant && cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 32767)
+      { //Normal imm add
+        Reg = SelectExpr(N.getOperand(0));
+        offset = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+        return;
+      }
+    else if(N.getOperand(0).getOpcode() == ISD::Constant && cast<ConstantSDNode>(N.getOperand(0))->getValue() <= 32767)
+      {
+        Reg = SelectExpr(N.getOperand(1));
+        offset = cast<ConstantSDNode>(N.getOperand(0))->getValue();
+        return;
+      }
+  }
+  Reg = SelectExpr(N);
+  offset = 0;
+  return;
 }
 
 unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
@@ -373,10 +398,10 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
 
       SDOperand Chain   = N.getOperand(0);
       SDOperand Address = N.getOperand(1);
-      
+      Select(Chain);
+    
       if (Address.getOpcode() == ISD::GlobalAddress)
         {
-          Select(Chain);
           AlphaLowering.restoreGP(BB);
           Opc = DestType == MVT::f64 ? Alpha::LDT_SYM : Alpha::LDS_SYM;
           BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
@@ -388,10 +413,10 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       }
       else
         {
-          Select(Chain);
-          Tmp2 = SelectExpr(Address);
+          long offset;
+          SelectAddr(Address, Tmp1, offset);
           Opc = DestType == MVT::f64 ? Alpha::LDT : Alpha::LDS;
-          BuildMI(BB, Opc, 2, Result).addImm(0).addReg(Tmp2);
+          BuildMI(BB, Opc, 2, Result).addImm(offset).addReg(Tmp1);
         }
       return Result;
     }
@@ -423,29 +448,42 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     return Result;
 
   case ISD::EXTLOAD:
-    //include a conversion sequence for float loads to double
-    if (Result != notIn)
-      ExprMap[N.getValue(1)] = notIn;   // Generate the token
-    else
-      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-    
-    Tmp2 = MakeReg(MVT::f32);
-
-    assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::f32 && "EXTLOAD not from f32");
-    assert(Node->getValueType(0) == MVT::f64 && "EXTLOAD not to f64");
-
-    if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(1))) {
-      AlphaLowering.restoreGP(BB);
-      BuildMI(BB, Alpha::LDS_SYM, 1, Tmp2).addConstantPoolIndex(CP->getIndex());
-      BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp2);
+    {
+      //include a conversion sequence for float loads to double
+      if (Result != notIn)
+        ExprMap[N.getValue(1)] = notIn;   // Generate the token
+      else
+        Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+      
+      Tmp2 = MakeReg(MVT::f32);
+      
+      assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::f32 && "EXTLOAD not from f32");
+      assert(Node->getValueType(0) == MVT::f64 && "EXTLOAD not to f64");
+      
+      SDOperand Chain   = N.getOperand(0);
+      SDOperand Address = N.getOperand(1);
+      Select(Chain);
+      
+      if (Address.getOpcode() == ISD::GlobalAddress)
+        {
+          AlphaLowering.restoreGP(BB);
+          BuildMI(BB, Alpha::LDS_SYM, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
+        }
+      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(1))) 
+        {
+          AlphaLowering.restoreGP(BB);
+          BuildMI(BB, Alpha::LDS_SYM, 1, Tmp2).addConstantPoolIndex(CP->getIndex());
+          BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp2);
+        }
+      else
+        {
+          long offset;
+          SelectAddr(Address, Tmp1, offset);
+          BuildMI(BB, Alpha::LDS, 1, Tmp2).addImm(offset).addReg(Tmp1);
+          BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp2);
+        }
       return Result;
     }
-    Select(Node->getOperand(0)); // chain
-    Tmp1 = SelectExpr(Node->getOperand(1));
-    BuildMI(BB, Alpha::LDS, 1, Tmp2).addReg(Tmp1);
-    BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp2);
-    return Result;
-
 
   case ISD::UINT_TO_FP:
   case ISD::SINT_TO_FP:
@@ -521,7 +559,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::ConstantPool:
     Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
     AlphaLowering.restoreGP(BB);
-    BuildMI(BB, Alpha::LOAD, 1, Result).addConstantPoolIndex(Tmp1);
+    BuildMI(BB, Alpha::LDQ_SYM, 1, Result).addConstantPoolIndex(Tmp1);
     return Result;
 
   case ISD::FrameIndex:
@@ -530,91 +568,129 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
   
   case ISD::EXTLOAD:
-    // Make sure we generate both values.
-    if (Result != notIn)
-      ExprMap[N.getValue(1)] = notIn;   // Generate the token
-    else
-      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-    
-    Select(Node->getOperand(0)); // chain
-    Tmp1 = SelectExpr(Node->getOperand(1));
-    
-    switch(Node->getValueType(0)) {
-    default: Node->dump(); assert(0 && "Unknown type to sign extend to.");
-    case MVT::i64:
-      switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
-      default:
-	Node->dump();
-	assert(0 && "Bad extend load!");
+    {
+      // Make sure we generate both values.
+      if (Result != notIn)
+        ExprMap[N.getValue(1)] = notIn;   // Generate the token
+      else
+        Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+      
+      SDOperand Chain   = N.getOperand(0);
+      SDOperand Address = N.getOperand(1);
+      Select(Chain);
+      
+      switch(Node->getValueType(0)) {
+      default: Node->dump(); assert(0 && "Unknown type to sign extend to.");
       case MVT::i64:
-	BuildMI(BB, Alpha::LDQ, 2, Result).addImm(0).addReg(Tmp1);
-	break;
-      case MVT::i32:
-	BuildMI(BB, Alpha::LDL, 2, Result).addImm(0).addReg(Tmp1);
-        break;
-      case MVT::i16:
-	BuildMI(BB, Alpha::LDWU, 2, Result).addImm(0).addReg(Tmp1);
-        break;
-      case MVT::i1: //FIXME: Treat i1 as i8 since there are problems otherwise
-      case MVT::i8:
-	BuildMI(BB, Alpha::LDBU, 2, Result).addImm(0).addReg(Tmp1);
-        break;
+        switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
+        default:
+          Node->dump();
+          assert(0 && "Bad extend load!");
+        case MVT::i64: Opc = Alpha::LDQ; break;
+        case MVT::i32: Opc = Alpha::LDL; break;
+        case MVT::i16: Opc = Alpha::LDWU; break;
+        case MVT::i1: //FIXME: Treat i1 as i8 since there are problems otherwise
+        case MVT::i8: Opc = Alpha::LDBU; break;
+        }
       }
-      break;
+      
+      if (Address.getOpcode() == ISD::GlobalAddress)
+        {
+          AlphaLowering.restoreGP(BB);
+          BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
+        }
+      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) 
+        {
+          AlphaLowering.restoreGP(BB);
+          BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
+        }
+      else
+        {
+          long offset;
+          SelectAddr(Address, Tmp1, offset);
+          BuildMI(BB, Opc, 2, Result).addImm(offset).addReg(Tmp1);
+        }
+      return Result;
     }
-    return Result;
-
+      
   case ISD::SEXTLOAD:
-    // Make sure we generate both values.
-    if (Result != notIn)
-      ExprMap[N.getValue(1)] = notIn;   // Generate the token
-    else
-      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+    {
+      // Make sure we generate both values.
+      if (Result != notIn)
+        ExprMap[N.getValue(1)] = notIn;   // Generate the token
+      else
+        Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
     
-    Select(Node->getOperand(0)); // chain
-    Tmp1 = SelectExpr(Node->getOperand(1));
-    switch(Node->getValueType(0)) {
-    default: Node->dump(); assert(0 && "Unknown type to sign extend to.");
-    case MVT::i64:
-      switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
-      default:
-	Node->dump();
-	assert(0 && "Bad sign extend!");
-      case MVT::i32:
-	BuildMI(BB, Alpha::LDL, 2, Result).addImm(0).addReg(Tmp1);
-        break;
+      SDOperand Chain   = N.getOperand(0);
+      SDOperand Address = N.getOperand(1);
+      Select(Chain);
+
+      switch(Node->getValueType(0)) {
+      default: Node->dump(); assert(0 && "Unknown type to sign extend to.");
+      case MVT::i64:
+        switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
+        default: Node->dump(); assert(0 && "Bad sign extend!");
+        case MVT::i32: Opc = Alpha::LDL; break;
+        }
       }
-      break;
+
+      if (Address.getOpcode() == ISD::GlobalAddress)
+        {
+          AlphaLowering.restoreGP(BB);
+          BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
+        }
+      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
+        AlphaLowering.restoreGP(BB);
+        BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
+      }
+      else
+        {
+          long offset;
+          SelectAddr(Address, Tmp1, offset);
+          BuildMI(BB, Opc, 2, Result).addImm(offset).addReg(Tmp1);
+        }
+      return Result;
     }
-    return Result;
 
   case ISD::ZEXTLOAD:
-    // Make sure we generate both values.
-    if (Result != notIn)
-      ExprMap[N.getValue(1)] = notIn;   // Generate the token
-    else
-      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-    
-    Select(Node->getOperand(0)); // chain
-    Tmp1 = SelectExpr(Node->getOperand(1));
-    switch(Node->getValueType(0)) {
-    default: Node->dump(); assert(0 && "Unknown type to zero extend to.");
-    case MVT::i64:
-      switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
-      default:
-	Node->dump();
-	assert(0 && "Bad sign extend!");
-      case MVT::i16:
-	BuildMI(BB, Alpha::LDWU, 2, Result).addImm(0).addReg(Tmp1);
-        break;
-      case MVT::i8:
-	BuildMI(BB, Alpha::LDBU, 2, Result).addImm(0).addReg(Tmp1);
-        break;
+    {
+      // Make sure we generate both values.
+      if (Result != notIn)
+        ExprMap[N.getValue(1)] = notIn;   // Generate the token
+      else
+        Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+      
+      SDOperand Chain   = N.getOperand(0);
+      SDOperand Address = N.getOperand(1);
+      Select(Chain);
+      
+      switch(Node->getValueType(0)) {
+      default: Node->dump(); assert(0 && "Unknown type to zero extend to.");
+      case MVT::i64:
+        switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
+        default: Node->dump(); assert(0 && "Bad sign extend!");
+        case MVT::i16: Opc = Alpha::LDWU; break;
+        case MVT::i8: Opc = Alpha::LDBU; break;
+        }
       }
-      break;
-    }
-    return Result;
 
+      if (Address.getOpcode() == ISD::GlobalAddress)
+        {
+          AlphaLowering.restoreGP(BB);
+          BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
+        }
+      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
+        AlphaLowering.restoreGP(BB);
+        BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
+      }
+      else
+        {
+          long offset;
+          SelectAddr(Address, Tmp1, offset);
+          BuildMI(BB, Opc, 2, Result).addImm(offset).addReg(Tmp1);
+        }
+      return Result;
+    }
 
   case ISD::GlobalAddress:
     AlphaLowering.restoreGP(BB);
@@ -1099,19 +1175,19 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::Constant:
     {
       unsigned long val = cast<ConstantSDNode>(N)->getValue();
-      if (val < 32000 && (long)val > -32000)
-	BuildMI(BB, Alpha::LOAD_IMM, 1, Result).addImm(val);
-      else
-	{
-	  MachineConstantPool *CP = BB->getParent()->getConstantPool();
-	  ConstantUInt *C = ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , val);
-	  unsigned CPI = CP->getConstantPoolIndex(C);
-	  AlphaLowering.restoreGP(BB);
-	  BuildMI(BB, Alpha::LOAD, 1, Result).addConstantPoolIndex(CPI);
-	}
-      return Result;
+     if (val < 32000 && (long)val > -32000)
+       BuildMI(BB, Alpha::LOAD_IMM, 1, Result).addImm(val);
+     else
+       {
+         MachineConstantPool *CP = BB->getParent()->getConstantPool();
+         ConstantUInt *C = ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , val);
+         unsigned CPI = CP->getConstantPoolIndex(C);
+         AlphaLowering.restoreGP(BB);
+         BuildMI(BB, Alpha::LDQ_SYM, 1, Result).addConstantPoolIndex(CPI);
+       }
+     return Result;
     }
-
+    
   case ISD::LOAD: 
     {
       // Make sure we generate both values.
@@ -1122,24 +1198,24 @@ unsigned ISel::SelectExpr(SDOperand N) {
       
       SDOperand Chain   = N.getOperand(0);
       SDOperand Address = N.getOperand(1);
-
+      Select(Chain);
+      
       assert(N.getValue(0).getValueType() == MVT::i64 && "unknown Load dest type");
-
+      
       if (Address.getOpcode() == ISD::GlobalAddress)
         {
-          Select(Chain);
           AlphaLowering.restoreGP(BB);
-          BuildMI(BB, Alpha::LOAD, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
+          BuildMI(BB, Alpha::LDQ_SYM, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
         }
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
         AlphaLowering.restoreGP(BB);
-        BuildMI(BB, Alpha::LOAD, 1, Result).addConstantPoolIndex(CP->getIndex());
+        BuildMI(BB, Alpha::LDQ_SYM, 1, Result).addConstantPoolIndex(CP->getIndex());
       }
       else
         {
-          Select(Chain);
-          Tmp2 = SelectExpr(Address);
-          BuildMI(BB, Alpha::LDQ, 2, Result).addImm(0).addReg(Tmp2);
+          long offset;
+          SelectAddr(Address, Tmp1, offset);
+          BuildMI(BB, Alpha::LDQ, 2, Result).addImm(offset).addReg(Tmp1);
         }
      return Result;
     }
@@ -1243,36 +1319,37 @@ void ISel::Select(SDOperand N) {
 
   case ISD::STORE: 
     {
-      Select(N.getOperand(0));
-      Tmp1 = SelectExpr(N.getOperand(1)); //value
-      MVT::ValueType DestType = N.getOperand(1).getValueType();
-      if (N.getOperand(2).getOpcode() == ISD::GlobalAddress)
-	{
-	  AlphaLowering.restoreGP(BB);
-	  if (DestType == MVT::i64) Opc = Alpha::STORE;
-	  else if (DestType == MVT::f64) Opc = Alpha::STT_SYM;
-	  else if (DestType == MVT::f32) Opc = Alpha::STS_SYM;
-	  else assert(0 && "unknown Type in store");
-	  BuildMI(BB, Opc, 2).addReg(Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(N.getOperand(2))->getGlobal());
-	}
-      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(2))) 
-	{
-	  AlphaLowering.restoreGP(BB);
-	  if (DestType == MVT::i64) Opc = Alpha::STORE;
-	  else if (DestType == MVT::f64) Opc = Alpha::STT_SYM;
-	  else if (DestType == MVT::f32) Opc = Alpha::STS_SYM;
-	  else assert(0 && "unknown Type in store");
-	  BuildMI(BB, Opc, 2).addReg(Tmp1).addConstantPoolIndex(CP->getIndex());
-	}
+      SDOperand Chain   = N.getOperand(0);
+      SDOperand Value = N.getOperand(1);
+      SDOperand Address = N.getOperand(2);
+      Select(Chain);
+
+      Tmp1 = SelectExpr(Value); //value
+      MVT::ValueType DestType = Value.getValueType();
+
+      if (Address.getOpcode() == ISD::GlobalAddress)
+        {
+          AlphaLowering.restoreGP(BB);
+          switch(DestType) {
+          default: assert(0 && "unknown Type in store");
+          case MVT::i64: Opc = Alpha::STQ_SYM; break;
+          case MVT::f64: Opc = Alpha::STT_SYM; break;
+          case MVT::f32: Opc = Alpha::STS_SYM; break;
+          }
+          BuildMI(BB, Opc, 2).addReg(Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
+        }
       else
-	{
-	  Tmp2 = SelectExpr(N.getOperand(2)); //address
-	  if (DestType == MVT::i64) Opc = Alpha::STQ;
-	  else if (DestType == MVT::f64) Opc = Alpha::STT;
-	  else if (DestType == MVT::f32) Opc = Alpha::STS;
-	  else assert(0 && "unknown Type in store");
-	  BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(0).addReg(Tmp2);
-	}
+        {
+          switch(DestType) {
+          default: assert(0 && "unknown Type in store");
+          case MVT::i64: Opc = Alpha::STQ; break;
+          case MVT::f64: Opc = Alpha::STT; break;
+          case MVT::f32: Opc = Alpha::STS; break;
+          }
+          long offset;
+          SelectAddr(Address, Tmp2, offset);
+          BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(offset).addReg(Tmp2);
+        }
       return;
     }
 
@@ -1288,28 +1365,44 @@ void ISel::Select(SDOperand N) {
     return;
 
 
-  case ISD::TRUNCSTORE: {  // truncstore chain, val, ptr :storety
-    MVT::ValueType StoredTy = cast<MVTSDNode>(Node)->getExtraValueType();
-    if (StoredTy == MVT::i64) {
-      Node->dump();
-      assert(StoredTy != MVT::i64 && "Unsupported TRUNCSTORE for this target!");
+  case ISD::TRUNCSTORE: 
+    {
+      SDOperand Chain   = N.getOperand(0);
+      SDOperand Value = N.getOperand(1);
+      SDOperand Address = N.getOperand(2);
+      Select(Chain);
+
+      MVT::ValueType DestType = cast<MVTSDNode>(Node)->getExtraValueType();
+
+      Tmp1 = SelectExpr(Value); //value
+
+      if (Address.getOpcode() == ISD::GlobalAddress)
+        {
+          AlphaLowering.restoreGP(BB);
+          switch(DestType) {
+          default: assert(0 && "unknown Type in store");
+          case MVT::i1: //FIXME: DAG does not promote this load
+          case MVT::i8: Opc = Alpha::STB; break;
+          case MVT::i16: Opc = Alpha::STW; break;
+          case MVT::i32: Opc = Alpha::STL; break;
+          }
+          BuildMI(BB, Opc, 2).addReg(Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
+        }
+      else
+        {
+          switch(DestType) {
+          default: assert(0 && "unknown Type in store");
+          case MVT::i1: //FIXME: DAG does not promote this load
+          case MVT::i8: Opc = Alpha::STB; break;
+          case MVT::i16: Opc = Alpha::STW; break;
+          case MVT::i32: Opc = Alpha::STL; break;
+          }
+          long offset;
+          SelectAddr(Address, Tmp2, offset);
+          BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(offset).addReg(Tmp2);
+        }
+      return;
     }
-
-    Select(N.getOperand(0));
-    Tmp1 = SelectExpr(N.getOperand(1));
-    Tmp2 = SelectExpr(N.getOperand(2));
-
-    switch (StoredTy) {
-    default: Node->dump(); assert(0 && "Unhandled Type");
-    case MVT::i1: //FIXME: DAG does not promote this load
-    case MVT::i8: Opc = Alpha::STB; break;
-    case MVT::i16: Opc = Alpha::STW; break;
-    case MVT::i32: Opc = Alpha::STL; break;
-    }
-
-    BuildMI(BB, Opc, 2).addReg(Tmp1).addImm(0).addReg(Tmp2);
-    return;
-  }
 
   case ISD::ADJCALLSTACKDOWN:
   case ISD::ADJCALLSTACKUP:
