@@ -1,5 +1,5 @@
 LEVEL = ..
-DIRS = VMCore Analysis Assembly Bytecode Optimizations CodeGen LLC
+DIRS = VMCore Analysis Assembly Bytecode Optimizations CodeGen
 
 include $(LEVEL)/Makefile.common
 
