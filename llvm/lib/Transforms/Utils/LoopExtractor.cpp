@@ -2,7 +2,8 @@
 //
 // A pass wrapper around the ExtractLoop() scalar transformation to extract each
 // top-level loop into its own new function. If the loop is the ONLY loop in a
-// given function, it is not touched.
+// given function, it is not touched. This is a pass most useful for debugging
+// via bugpoint.
 //
 //===----------------------------------------------------------------------===//
 
@@ -57,8 +58,6 @@ bool LoopExtractor::runOnFunction(Function &F) {
 
   return Changed;
 }
-
-
 
 } // End anonymous namespace 
 
