@@ -1,4 +1,4 @@
-#===- tools/llc/Makefile ------------------------------*- Makefile -*-===##
+#===- tools/llc/Makefile -----------------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,12 +6,13 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../..
 TOOLNAME = llc
 USEDLIBS = cwriter \
            sparcv9 \
            x86 \
-           powerpc \
+           skeleton \
            selectiondag \
            sparcv9regalloc \
            sched \
