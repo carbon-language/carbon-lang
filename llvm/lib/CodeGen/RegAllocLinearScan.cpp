@@ -386,18 +386,42 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
         int slot = vrm_->assignVirt2StackSlot(cur->reg);
         std::vector<LiveInterval*> added =
             li_->addIntervalsForSpills(*cur, *vrm_, slot);
+        if (added.empty())
+          return;  // Early exit if all spills were folded.
+#ifndef NDEBUG
+        int OldStart = -1;
+#endif
 
-        // merge added with unhandled
+        // Merge added with unhandled.  Note that we know that 
+        // addIntervalsForSpills returns intervals sorted by their starting
+        // point.
         std::vector<LiveInterval*>::iterator addedIt = added.begin();
         std::vector<LiveInterval*>::iterator addedItEnd = added.end();
-        for (IntervalPtrs::iterator i = unhandled_.begin(), e = unhandled_.end();
+        for (IntervalPtrs::iterator i = unhandled_.begin(), e =unhandled_.end();
              i != e && addedIt != addedItEnd; ++i) {
-            if ((*i)->start() > (*addedIt)->start())
+            while ((*i)->start() > (*addedIt)->start() && 
+                   addedIt != addedItEnd) {
+#ifndef NDEBUG
+                // This code only works if addIntervalsForSpills retursn a
+                // sorted interval list.  Assert this is the case now.
+                assert(OldStart <= (int)(*addedIt)->start() && 
+                   "addIntervalsForSpills didn't return sorted interval list!");
+                OldStart = (*addedIt)->start();
+#endif
                 i = unhandled_.insert(i, *(addedIt++));
+            }
         }
-        while (addedIt != addedItEnd)
-            unhandled_.push_back(*(addedIt++));
 
+        while (addedIt != addedItEnd) {
+#ifndef NDEBUG
+                // This code only works if addIntervalsForSpills retursn a
+                // sorted interval list.  Assert this is the case now.
+                assert(OldStart <= (int)(*addedIt)->start() && 
+                   "addIntervalsForSpills didn't return sorted interval list!");
+                OldStart = (*addedIt)->start();
+#endif
+            unhandled_.push_back(*(addedIt++));
+        }
         return;
     }
 
