@@ -88,6 +88,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   mri_ = tm_->getRegisterInfo();
   lv_ = &getAnalysis<LiveVariables>();
   allocatableRegs_ = mri_->getAllocatableSet(fn);
+  r2rMap_.grow(mf_->getSSARegMap()->getLastVirtReg());
 
   // number MachineInstrs
   unsigned miIndex = 0;
@@ -619,8 +620,6 @@ namespace {
 
 void LiveIntervals::joinIntervals() {
   DEBUG(std::cerr << "********** JOINING INTERVALS ***********\n");
-  // reserve space for the reg2reg map
-  r2rMap_.grow(mf_->getSSARegMap()->getLastVirtReg());
 
   const LoopInfo &LI = getAnalysis<LoopInfo>();
   if (LI.begin() == LI.end()) {
