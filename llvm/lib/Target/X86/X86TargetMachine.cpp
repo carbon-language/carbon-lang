@@ -6,6 +6,7 @@
 
 #include "X86TargetMachine.h"
 #include "llvm/Target/TargetMachineImpls.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/PassManager.h"
 #include "X86.h"
 #include <iostream>
@@ -30,6 +31,9 @@ bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
   PM.add(createSimpleX86InstructionSelector(*this));
 
   // TODO: optional optimizations go here
+
+  // Print the instruction selected machine code...
+  PM.add(createMachineFunctionPrinterPass());
 
   // Perform register allocation to convert to a concrete x86 representation
   //PM.add(createSimpleX86RegisterAllocator(*this));
