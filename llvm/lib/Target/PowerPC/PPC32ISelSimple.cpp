@@ -1052,7 +1052,7 @@ void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
     break;
   case cInt:
     // Move value into target register (32->32)
-    BuildMI(BB, PPC32::ORI, 2, targetReg).addReg(Reg).addReg(Reg);
+    BuildMI(BB, PPC32::OR, 2, targetReg).addReg(Reg).addReg(Reg);
     break;
   default:
     assert(0 && "Unpromotable operand class in promote32");
