@@ -83,10 +83,20 @@ namespace {
   cl::opt<bool>    
   NativeCBE("native-cbe",
             cl::desc("Generate a native binary with the C backend and GCC"));
+            
+  cl::opt<std::string>
+  RPath("rpath",
+        cl::desc("Set runtime shared library search path (requires -native or"
+                 " -native-cbe)"), 
+        cl::Prefix, cl::value_desc("directory"));
+        
+  cl::opt<std::string>
+  SOName("soname",
+         cl::desc("Set internal name of shared library (requires -native or"
+                 " -native-cbe)"), 
+         cl::Prefix, cl::value_desc("name"));
   
   // Compatibility options that are ignored but supported by LD
-  cl::opt<std::string>
-  CO3("soname", cl::Hidden, cl::desc("Compatibility option: ignored"));
   cl::opt<std::string>
   CO4("version-script", cl::Hidden, cl::desc("Compatibility option: ignored"));
   cl::opt<bool>
@@ -237,7 +247,7 @@ int main(int argc, char **argv, char **envp ) {
 
     // Create the output file.
     std::string RealBytecodeOutput = OutputFilename;
-    if (!LinkAsLibrary) RealBytecodeOutput += ".bc";
+    if (!LinkAsLibrary || Native || NativeCBE) RealBytecodeOutput += ".bc";
     std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
                                  std::ios::binary;
     std::ofstream Out(RealBytecodeOutput.c_str(), io_mode);
@@ -266,77 +276,83 @@ int main(int argc, char **argv, char **envp ) {
     // Close the bytecode file.
     Out.close();
 
-    // If we are not linking a library, generate either a native executable
-    // or a JIT shell script, depending upon what the user wants.
-    if (!LinkAsLibrary) {
-      // If the user wants to generate a native executable, compile it from the
-      // bytecode file.
-      //
-      // Otherwise, create a script that will run the bytecode through the JIT.
-      if (Native) {
-        // Name of the Assembly Language output file
-        sys::Path AssemblyFile ( OutputFilename);
-        AssemblyFile.appendSuffix("s");
+    // Generate either a native file or a JIT shell script.  If the user wants
+    // to generate a native file, compile it from the bytecode file. Otherwise, 
+    // if the target is not a library, create a script that will run the 
+    // bytecode through the JIT.
+    if (Native) {
+      // Name of the Assembly Language output file
+      sys::Path AssemblyFile (OutputFilename);
+      AssemblyFile.appendSuffix("s");
 
-        // Mark the output files for removal if we get an interrupt.
-        sys::RemoveFileOnSignal(AssemblyFile);
-        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+      // Mark the output files for removal if we get an interrupt.
+      sys::RemoveFileOnSignal(AssemblyFile);
+      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
-        // Determine the locations of the llc and gcc programs.
-        sys::Path llc = FindExecutable("llc", argv[0]);
-        if (llc.isEmpty())
-          return PrintAndReturn(argv[0], "Failed to find llc");
+      // Determine the locations of the llc and gcc programs.
+      sys::Path llc = FindExecutable("llc", argv[0]);
+      if (llc.isEmpty())
+        return PrintAndReturn(argv[0], "Failed to find llc");
 
-        sys::Path gcc = FindExecutable("gcc", argv[0]);
-        if (gcc.isEmpty())
-          return PrintAndReturn(argv[0], "Failed to find gcc");
+      sys::Path gcc = FindExecutable("gcc", argv[0]);
+      if (gcc.isEmpty())
+        return PrintAndReturn(argv[0], "Failed to find gcc");
 
-        // Generate an assembly language file for the bytecode.
-        if (Verbose) std::cout << "Generating Assembly Code\n";
-        GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput, llc);
-        if (Verbose) std::cout << "Generating Native Code\n";
-        GenerateNative(OutputFilename, AssemblyFile.toString(), 
-                       Libraries, gcc, envp );
+      // Generate an assembly language file for the bytecode.
+      if (Verbose) std::cout << "Generating Assembly Code\n";
+      GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput, llc);
+      if (Verbose) std::cout << "Generating Native Code\n";
+      GenerateNative(OutputFilename, AssemblyFile.toString(), 
+                     LibPaths, Libraries, gcc, envp, LinkAsLibrary, RPath,
+                     SOName );
 
-        // Remove the assembly language file.
-        AssemblyFile.destroyFile();
-      } else if (NativeCBE) {
-        sys::Path CFile (OutputFilename);
-        CFile.appendSuffix("cbe.c");
-
-        // Mark the output files for removal if we get an interrupt.
-        sys::RemoveFileOnSignal(CFile);
-        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-
-        // Determine the locations of the llc and gcc programs.
-        sys::Path llc = FindExecutable("llc", argv[0]);
-        if (llc.isEmpty())
-          return PrintAndReturn(argv[0], "Failed to find llc");
-
-        sys::Path gcc = FindExecutable("gcc", argv[0]);
-        if (gcc.isEmpty())
-          return PrintAndReturn(argv[0], "Failed to find gcc");
-
-        // Generate an assembly language file for the bytecode.
-        if (Verbose) std::cout << "Generating Assembly Code\n";
-        GenerateCFile(CFile.toString(), RealBytecodeOutput, llc);
-        if (Verbose) std::cout << "Generating Native Code\n";
-        GenerateNative(OutputFilename, CFile.toString(), Libraries, gcc, envp );
-
-        // Remove the assembly language file.
-        CFile.destroyFile();
-
-      } else {
-        EmitShellScript(argv);
-      }
+      // Remove the assembly language file.
+      AssemblyFile.destroyFile();
+      // Remove the bytecode language file.
+      sys::Path(RealBytecodeOutput).destroyFile();
     
-      // Make the script executable...
-      sys::Path(OutputFilename).makeExecutable();
+    } else if (NativeCBE) {
+      sys::Path CFile (OutputFilename);
+      CFile.appendSuffix("cbe.c");
 
-      // Make the bytecode file readable and directly executable in LLEE as well
+      // Mark the output files for removal if we get an interrupt.
+      sys::RemoveFileOnSignal(CFile);
+      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+
+      // Determine the locations of the llc and gcc programs.
+      sys::Path llc = FindExecutable("llc", argv[0]);
+      if (llc.isEmpty())
+        return PrintAndReturn(argv[0], "Failed to find llc");
+
+      sys::Path gcc = FindExecutable("gcc", argv[0]);
+      if (gcc.isEmpty())
+        return PrintAndReturn(argv[0], "Failed to find gcc");
+
+      // Generate an assembly language file for the bytecode.
+      if (Verbose) std::cout << "Generating Assembly Code\n";
+      GenerateCFile(CFile.toString(), RealBytecodeOutput, llc);
+      if (Verbose) std::cout << "Generating Native Code\n";
+      GenerateNative(OutputFilename, CFile.toString(),
+                     LibPaths, Libraries, gcc, envp, LinkAsLibrary, RPath,
+                     SOName );
+
+      // Remove the assembly language file.
+      CFile.destroyFile();
+    
+      // Remove the bytecode language file.
+      sys::Path(RealBytecodeOutput).destroyFile();
+
+    } else if (!LinkAsLibrary) {
+      EmitShellScript(argv);
+      
+      // Make the bytecode file readable and directly executable in LLEE
       sys::Path(RealBytecodeOutput).makeExecutable();
       sys::Path(RealBytecodeOutput).makeReadable();
     }
+
+    // Make the output, whether native or script, executable as well...
+    sys::Path(OutputFilename).makeExecutable();
+  
   } catch (const char*msg) {
     std::cerr << argv[0] << ": " << msg << "\n";
     exitCode = 1;

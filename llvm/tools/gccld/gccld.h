@@ -31,13 +31,19 @@ GenerateAssembly (const std::string & OutputFilename,
                   const std::string & InputFilename,
                   const sys::Path & llc);
 
-int GenerateCFile(const std::string &OutputFile, const std::string &InputFile,
-                  const sys::Path &llc);
+int 
+GenerateCFile (const std::string &OutputFile, 
+               const std::string &InputFile,
+               const sys::Path &llc);
 int
 GenerateNative (const std::string & OutputFilename,
                 const std::string & InputFilename,
+                const std::vector<std::string> & LibPaths,
                 const std::vector<std::string> & Libraries,
                 const sys::Path & gcc,
-                char ** const envp);
+                char ** const envp,
+                bool Shared,
+                const std::string & RPath,
+                const std::string & SOName);
 
 } // End llvm namespace

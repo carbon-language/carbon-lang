@@ -20,6 +20,7 @@
 #include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Bytecode/Archive.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
@@ -125,6 +126,62 @@ static inline void addPass(PassManager &PM, Pass *P) {
   
   // If we are verifying all of the intermediate steps, add the verifier...
   if (Verify) PM.add(createVerifierPass());
+}
+
+static bool isBytecodeLibrary(const sys::Path &FullPath) {
+  // Check for a bytecode file
+  if (FullPath.isBytecodeFile()) return true;
+  // Check for a dynamic library file
+  if (FullPath.isDynamicLibrary()) return false;
+  // Check for a true bytecode archive file
+  if (FullPath.isArchive() ) {
+    std::string ErrorMessage;
+    Archive* ar = Archive::OpenAndLoadSymbols( FullPath, &ErrorMessage );
+    return ar->isBytecodeArchive();    
+  }
+  return false;
+}
+
+static bool isBytecodeLPath(const std::string &LibPath) {                        
+  bool isBytecodeLPath = false;
+
+  // Make sure the -L path has a '/' character
+  // because llvm-g++ passes them without the ending
+  // '/' char and sys::Path doesn't think it is a 
+  // directory (see: sys::Path::isDirectory) without it 
+  std::string dir = LibPath;
+  if ( dir[dir.length()-1] != '/' )
+  dir.append("/");
+
+  sys::Path LPath(dir);
+
+  // Grab the contents of the -L path
+  std::set<sys::Path> Files;
+  LPath.getDirectoryContents(Files);
+
+  // Iterate over the contents one by one to determine
+  // if this -L path has any bytecode shared libraries
+  // or archives
+  std::set<sys::Path>::iterator File = Files.begin();
+  for (; File != Files.end(); ++File) {
+
+    if ( File->isDirectory() )
+      continue;
+    
+    std::string path = File->toString();
+    std::string dllsuffix = sys::Path::GetDLLSuffix();
+
+    // Check for an ending '.dll,.so' or '.a' suffix as all
+    // other files are not of interest to us here
+    if ( path.find(dllsuffix, path.size()-dllsuffix.size()) == std::string::npos
+        && path.find(".a", path.size()-2) == std::string::npos )
+      continue;
+     
+    // Finally, check to see if the file is a true bytecode file
+    if (isBytecodeLibrary(*File))
+      isBytecodeLPath = true;
+  }
+  return isBytecodeLPath;
 }
 
 /// GenerateBytecode - generates a bytecode file from the specified module.
@@ -285,8 +342,12 @@ int llvm::GenerateCFile(const std::string &OutputFile,
 ///
 int llvm::GenerateNative(const std::string &OutputFilename,
                          const std::string &InputFilename,
+                         const std::vector<std::string> &LibPaths,
                          const std::vector<std::string> &Libraries,
-                         const sys::Path &gcc, char ** const envp) {
+                         const sys::Path &gcc, char ** const envp,
+                         bool Shared,
+                         const std::string &RPath,
+                         const std::string &SOName) {
   // Remove these environment variables from the environment of the
   // programs that we will execute.  It appears that GCC sets these
   // environment variables so that the programs it uses can configure
@@ -316,7 +377,33 @@ int llvm::GenerateNative(const std::string &OutputFilename,
   args.push_back("-o");
   args.push_back(OutputFilename.c_str());
   args.push_back(InputFilename.c_str());
-
+  
+  if (Shared) args.push_back("-shared");
+  if (!RPath.empty()) {
+    std::string rp = "-Wl,-rpath," + RPath;
+    args.push_back(rp.c_str());
+  }
+  if (!SOName.empty()) {
+    std::string so = "-Wl,-soname," + SOName;
+    args.push_back(so.c_str());
+  }
+  
+  // Add in the libpaths to find the libraries.
+  //
+  // Note:
+  //  When gccld is called from the llvm-gxx frontends, the -L paths for
+  //  the LLVM cfrontend install paths are appended.  We don't want the 
+  //  native linker to use these -L paths as they contain bytecode files.
+  //  Further, we don't want any -L paths that contain bytecode shared
+  //  libraries or true bytecode archive files.  We omit them in all such
+  //  cases.
+  for (unsigned index = 0; index < LibPaths.size(); index++) {
+    if (!isBytecodeLPath( LibPaths[index]) ) {
+      args.push_back("-L");
+      args.push_back(LibPaths[index].c_str());
+    }
+  }
+ 
   // Add in the libraries to link.
   for (unsigned index = 0; index < Libraries.size(); index++) {
     if (Libraries[index] != "crtend") {
