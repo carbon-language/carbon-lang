@@ -22,9 +22,12 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/FunctionUtils.h"
+#include "Support/Statistic.h"
 using namespace llvm;
 
 namespace {
+  Statistic<> NumExtracted("loop-extract", "Number of loops extracted");
+  
   // FIXME: This is not a function pass, but the PassManager doesn't allow
   // Module passes to require FunctionPasses, so we can't get loop info if we're
   // not a function pass.
@@ -72,6 +75,7 @@ bool LoopExtractor::runOnFunction(Function &F) {
       if (NumLoops == 0) return Changed;
       --NumLoops;
       Changed |= ExtractLoop(DS, *i) != 0;
+      ++NumExtracted;
     }
   } else {
     // Otherwise there is exactly one top-level loop.  If this function is more
@@ -99,6 +103,7 @@ bool LoopExtractor::runOnFunction(Function &F) {
       if (NumLoops == 0) return Changed;
       --NumLoops;
       Changed |= ExtractLoop(DS, TLL) != 0;
+      ++NumExtracted;
     } else {
       // Okay, this function is a minimal container around the specified loop.
       // If we extract the loop, we will continue to just keep extracting it
@@ -108,6 +113,7 @@ bool LoopExtractor::runOnFunction(Function &F) {
         if (NumLoops == 0) return Changed;
         --NumLoops;
         Changed |= ExtractLoop(DS, *i) != 0;
+        ++NumExtracted;
       }
     }
   }
