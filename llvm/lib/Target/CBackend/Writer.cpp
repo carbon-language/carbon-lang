@@ -1122,7 +1122,7 @@ void CWriter::printFunction(Function &F) {
     if (const AllocaInst *AI = isDirectAlloca(&*I)) {
       Out << "  ";
       printType(Out, AI->getAllocatedType(), Mang->getValueName(AI));
-      Out << ";    /* Address exposed local */\n";
+      Out << ";    /* Address-exposed local */\n";
     } else if (I->getType() != Type::VoidTy && !isInlinableInst(*I)) {
       Out << "  ";
       printType(Out, I->getType(), Mang->getValueName(&*I));
