@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86TargetMachine.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/PassManager.h"
@@ -28,6 +29,11 @@ X86TargetMachine::X86TargetMachine() : TargetMachine("X86", 1, 4, 4, 4) {
 /// not supported for this target.
 ///
 bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
+  // For the moment we have decided that malloc and free will be
+  // taken care of by converting them to calls, using the existing
+  // LLVM scalar transforms pass to do this.
+  PM.add(createLowerAllocationsPass());
+
   PM.add(createSimpleX86InstructionSelector(*this));
 
   // TODO: optional optimizations go here

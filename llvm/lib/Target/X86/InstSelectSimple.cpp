@@ -101,6 +101,7 @@ namespace {
     void visitStoreInst(StoreInst &I);
     void visitGetElementPtrInst(GetElementPtrInst &I);
     void visitMallocInst(MallocInst &I);
+    void visitFreeInst(FreeInst &I);
     void visitAllocaInst(AllocaInst &I);
     
     // Other operators
@@ -885,6 +886,20 @@ ISel::visitGetElementPtrInst (GetElementPtrInst &I)
 void
 ISel::visitMallocInst (MallocInst &I)
 {
+  // We assume that by this point, malloc instructions have been
+  // lowered to calls, and dlsym will magically find malloc for us.
+  // So we do not want to see malloc instructions here.
+  visitInstruction (I);
+}
+
+
+/// visitFreeInst - same story as MallocInst
+void
+ISel::visitFreeInst (FreeInst &I)
+{
+  // We assume that by this point, free instructions have been
+  // lowered to calls, and dlsym will magically find free for us.
+  // So we do not want to see free instructions here.
   visitInstruction (I);
 }
 
@@ -894,7 +909,18 @@ ISel::visitMallocInst (MallocInst &I)
 void
 ISel::visitAllocaInst (AllocaInst &I)
 {
-  visitInstruction (I);
+  // Find the data size of the alloca inst's getAllocatedType.
+  const Type *allocatedType = I.getAllocatedType ();
+  const TargetData &TD = TM.DataLayout;
+  unsigned allocatedTypeSize = TD.getTypeSize (allocatedType);
+  // Keep stack 32-bit aligned.
+  unsigned int allocatedTypeWords = allocatedTypeSize / 4;
+  if (allocatedTypeSize % 4 != 0) { allocatedTypeWords++; }
+  // Subtract size from stack pointer, thereby allocating some space.
+  BuildMI (BB, X86::SUBri32, 1, X86::ESP).addZImm (allocatedTypeWords * 4);
+  // Put a pointer to the space into the result register, by copying
+  // the stack pointer.
+  BuildMI (BB, X86::MOVrr32, 1, getReg (I)).addReg (X86::ESP);
 }
     
 
