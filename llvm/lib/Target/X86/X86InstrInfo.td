@@ -966,19 +966,34 @@ let isTwoAddress = 0 in {
 }
 
 def SBB32rr    : I<0x19, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
-                  "adc{l} {$src2, $dst|$dst, $src2}">;
+                  "sbb{l} {$src2, $dst|$dst, $src2}">;
+
 let isTwoAddress = 0 in {
   def SBB32mr  : I<0x19, MRMDestMem, (ops i32mem:$dst, R32:$src2), 
                    "sbb{l} {$src2, $dst|$dst, $src2}">;
+  def SBB8mi  : Ii32<0x80, MRM3m, (ops i8mem:$dst, i8imm:$src2), 
+                      "sbb{b} {$src2, $dst|$dst, $src2}">;
+  def SBB16mi  : Ii32<0x81, MRM3m, (ops i16mem:$dst, i16imm:$src2), 
+                      "sbb{w} {$src2, $dst|$dst, $src2}">, OpSize;
   def SBB32mi  : Ii32<0x81, MRM3m, (ops i32mem:$dst, i32imm:$src2), 
                       "sbb{l} {$src2, $dst|$dst, $src2}">;
+  def SBB16mi8 : Ii8<0x83, MRM3m, (ops i16mem:$dst, i8imm :$src2), 
+                     "sbb{w} {$src2, $dst|$dst, $src2}">, OpSize;
   def SBB32mi8 : Ii8<0x83, MRM3m, (ops i32mem:$dst, i8imm :$src2), 
                      "sbb{l} {$src2, $dst|$dst, $src2}">;
 }
+def SBB8ri   : Ii8<0x80, MRM3r, (ops R8:$dst, R8:$src1, i8imm:$src2),
+                    "sbb{b} {$src2, $dst|$dst, $src2}">;
+def SBB16ri  : Ii16<0x81, MRM3r, (ops R16:$dst, R16:$src1, i16imm:$src2),
+                    "sbb{w} {$src2, $dst|$dst, $src2}">, OpSize;
+
 def SBB32rm  : I<0x1B, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2),
                     "sbb{l} {$src2, $dst|$dst, $src2}">;
 def SBB32ri  : Ii32<0x81, MRM3r, (ops R32:$dst, R32:$src1, i32imm:$src2),
                     "sbb{l} {$src2, $dst|$dst, $src2}">;
+
+def SBB16ri8 : Ii16<0x83, MRM3r, (ops R16:$dst, R16:$src1, i8imm:$src2),
+                    "sbb{w} {$src2, $dst|$dst, $src2}">, OpSize;
 def SBB32ri8 : Ii8<0x83, MRM3r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "sbb{l} {$src2, $dst|$dst, $src2}">;
 
