@@ -2580,7 +2580,7 @@ void ISel::visitCastInst(CastInst &CI) {
   unsigned DestClass = getClassB(CI.getType());
 
   // If this is a cast from a 32-bit integer to a Long type, and the only uses
-  // of the case are GEP instructions, then the cast does not need to be
+  // of the cast are GEP instructions, then the cast does not need to be
   // generated explicitly, it will be folded into the GEP.
   if (DestClass == cLong && SrcClass == cInt) {
     bool AllUsesAreGEPs = true;
@@ -2589,13 +2589,31 @@ void ISel::visitCastInst(CastInst &CI) {
         AllUsesAreGEPs = false;
         break;
       }        
-
-    // No need to codegen this cast if all users are getelementptr instrs...
     if (AllUsesAreGEPs) return;
   }
-
+  
   unsigned DestReg = getReg(CI);
   MachineBasicBlock::iterator MI = BB->end();
+
+  // If this is a cast from an byte, short, or int to an integer type of equal
+  // or lesser width, and all uses of the cast are store instructions then dont
+  // emit them, as the store instruction will implicitly not store the zero or
+  // sign extended bytes.
+  if (SrcClass <= cInt && SrcClass >= DestClass) {
+    bool AllUsesAreStoresOrSetCC = true;
+    for (Value::use_iterator I = CI.use_begin(), E = CI.use_end(); I != E; ++I)
+      if (!isa<StoreInst>(*I) && !isa<SetCondInst>(*I)) {
+        AllUsesAreStoresOrSetCC = false;
+        break;
+      }        
+    // Turn this cast directly into a move instruction, which the register
+    // allocator will deal with.
+    if (AllUsesAreStoresOrSetCC) { 
+      unsigned SrcReg = getReg(Op, BB, MI);
+      BuildMI(*BB, MI, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+      return; 
+    }
+  }
   emitCastOperation(BB, MI, Op, CI.getType(), DestReg);
 }
 
