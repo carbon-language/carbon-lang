@@ -77,6 +77,7 @@ OptimizerEval:      llvm/test/Programs/MultiSource/Benchmarks/OptimizerEval
 Ptrdist:            llvm/test/Programs/MultiSource/Benchmarks/Ptrdist
 LLUBenchmark:       llvm/test/Programs/MultiSource/Benchmarks/llubenchmark
 SIM:                llvm/test/Programs/MultiSource/Benchmarks/sim
+espresso:           llvm/test/Programs/MultiSource/Benchmarks/MallocBench/espresso
 ps:                 llvm/test/Programs/MultiSource/Benchmarks/MallocBench/ps
 p2c:                llvm/test/Programs/MultiSource/Benchmarks/MallocBench/p2c
 gawk:               llvm/test/Programs/MultiSource/Benchmarks/MallocBench/gawk
