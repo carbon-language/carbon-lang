@@ -9,7 +9,6 @@
 
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/NonCopyable.h"
-#include <string>
 
 class TargetMachine;
 class MachineInstrInfo;
@@ -62,9 +61,7 @@ public:
   // -- Register information
   // 
   virtual const MachineInstrInfo&	getInstrInfo() const = 0;
-
   virtual const MachineSchedInfo&	getSchedInfo() const = 0;
-  
   virtual const MachineRegInfo&		getRegInfo()   const = 0;
   
   //
@@ -85,7 +82,7 @@ public:
   // method. The specified method must have been compiled before this may be
   // used.
   //
-  virtual void emitAssembly(Method *M, ostream &OutStr) {  /* todo */ }
+  virtual void emitAssembly(const Module *M, ostream &OutStr) = 0;
 };
 
 #endif
