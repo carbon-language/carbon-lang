@@ -12,15 +12,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Module.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
-#include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Module.h"
 using namespace llvm;
 
 namespace {
   class DSAA : public Pass, public AliasAnalysis {
     TDDataStructures *TD;
+    BUDataStructures *BU;
   public:
     DSAA() : TD(0) {}
 
@@ -34,14 +35,16 @@ namespace {
     bool run(Module &M) {
       InitializeAliasAnalysis(this);
       TD = &getAnalysis<TDDataStructures>();
+      BU = &getAnalysis<BUDataStructures>();
       return false;
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AliasAnalysis::getAnalysisUsage(AU);
-      AU.setPreservesAll();                    // Does not transform code...
-      AU.addRequired<TDDataStructures>();      // Uses TD Datastructures
-      AU.addRequired<AliasAnalysis>();         // Chains to another AA impl...
+      AU.setPreservesAll();                         // Does not transform code
+      AU.addRequiredTransitive<TDDataStructures>(); // Uses TD Datastructures
+      AU.addRequiredTransitive<BUDataStructures>(); // Uses BU Datastructures
+      AU.addRequired<AliasAnalysis>();              // Chains to another AA impl
     }
 
     //------------------------------------------------
@@ -56,6 +59,9 @@ namespace {
     bool pointsToConstantMemory(const Value *P) {
       return getAnalysis<AliasAnalysis>().pointsToConstantMemory(P);
     }
+    
+    AliasAnalysis::ModRefResult
+    getModRefInfo(CallSite CS, Value *P, unsigned Size);
 
   private:
     DSGraph *getGraphForValue(const Value *V);
@@ -150,6 +156,34 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
   // FIXME: we could improve on this by checking the globals graph for aliased
   // global queries...
   return getAnalysis<AliasAnalysis>().alias(V1, V1Size, V2, V2Size);
+}
+
+/// getModRefInfo - does a callsite modify or reference a value?
+///
+AliasAnalysis::ModRefResult
+DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+  Function *F = CS.getCalledFunction();
+  if (!F) return pointsToConstantMemory(P) ? Ref : ModRef;
+  if (F->isExternal()) return ModRef;
+
+  // Clone the function TD graph, clearing off Mod/Ref flags
+  const Function *csParent = CS.getInstruction()->getParent()->getParent();
+  DSGraph TDGraph(TD->getDSGraph(*csParent));
+  TDGraph.maskNodeTypes(0);
+  
+  // Insert the callee's BU graph into the TD graph
+  const DSGraph &BUGraph = BU->getDSGraph(*F);
+  TDGraph.mergeInGraph(TDGraph.getDSCallSiteForCallSite(CS),
+                       *F, BUGraph, 0);
+
+  // Report the flags that have been added
+  const DSNodeHandle &DSH = TDGraph.getNodeForValue(P);
+  if (const DSNode *N = DSH.getNode())
+    if (N->isModified())
+      return N->isRead() ? ModRef : Mod;
+    else
+      return N->isRead() ? Ref : NoModRef;
+  return NoModRef;
 }
 
 
