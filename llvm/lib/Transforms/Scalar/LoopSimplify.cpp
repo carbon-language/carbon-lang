@@ -366,7 +366,7 @@ void Preheaders::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
       NewBBIDomNode = DT->getNode(NewBBIDom);
     } else {
       NewBBIDomNode = DT->getNode(LoopBlocks[0]); // Random pred
-      while (!NewBBDomSet.count(NewBBIDomNode->getNode())) {
+      while (!NewBBDomSet.count(NewBBIDomNode->getBlock())) {
         NewBBIDomNode = NewBBIDomNode->getIDom();
         assert(NewBBIDomNode && "No shared dominator found??");
       }

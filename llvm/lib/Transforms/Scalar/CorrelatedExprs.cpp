@@ -338,7 +338,7 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
   DominatorTree::Node *BBN = (*DT)[BB];
   if (!RI.empty())        // Time opt: only propagate if we can change something
     for (unsigned i = 0, e = BBN->getChildren().size(); i != e; ++i) {
-      BasicBlock *Dominated = BBN->getChildren()[i]->getNode();
+      BasicBlock *Dominated = BBN->getChildren()[i]->getBlock();
       assert(RegionInfoMap.find(Dominated) == RegionInfoMap.end() &&
              "RegionInfo should be calculated in dominanace order!");
       getRegionInfo(Dominated) = RI;
@@ -363,7 +363,7 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
 
   // Now that all of our successors have information, recursively process them.
   for (unsigned i = 0, e = BBN->getChildren().size(); i != e; ++i)
-    Changed |= TransformRegion(BBN->getChildren()[i]->getNode(), VisitedBlocks);
+    Changed |= TransformRegion(BBN->getChildren()[i]->getBlock(),VisitedBlocks);
 
   return Changed;
 }

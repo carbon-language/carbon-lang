@@ -211,7 +211,7 @@ void DominatorTreeBase::reset() {
   RootNode = 0;
 }
 
-void DominatorTreeBase::Node2::setIDom(Node2 *NewIDom) {
+void DominatorTreeBase::Node::setIDom(Node *NewIDom) {
   assert(IDom && "No immediate dominator?");
   if (IDom != NewIDom) {
     std::vector<Node*>::iterator I =
@@ -279,8 +279,8 @@ void DominatorTree::calculate(const DominatorSet &DS) {
 
 static std::ostream &operator<<(std::ostream &o,
                                 const DominatorTreeBase::Node *Node) {
-  if (Node->getNode())
-    WriteAsOperand(o, Node->getNode(), false);
+  if (Node->getBlock())
+    WriteAsOperand(o, Node->getBlock(), false);
   else
     o << " <<exit node>>";
   return o << "\n";
@@ -312,7 +312,7 @@ const DominanceFrontier::DomSetType &
 DominanceFrontier::calculate(const DominatorTree &DT, 
                              const DominatorTree::Node *Node) {
   // Loop over CFG successors to calculate DFlocal[Node]
-  BasicBlock *BB = Node->getNode();
+  BasicBlock *BB = Node->getBlock();
   DomSetType &S = Frontiers[BB];       // The new set to fill in...
 
   for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);

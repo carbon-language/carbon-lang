@@ -174,7 +174,7 @@ const DominanceFrontier::DomSetType &
 PostDominanceFrontier::calculate(const PostDominatorTree &DT, 
                                  const DominatorTree::Node *Node) {
   // Loop over CFG successors to calculate DFlocal[Node]
-  BasicBlock *BB = Node->getNode();
+  BasicBlock *BB = Node->getBlock();
   DomSetType &S = Frontiers[BB];       // The new set to fill in...
   if (getRoots().empty()) return S;
 

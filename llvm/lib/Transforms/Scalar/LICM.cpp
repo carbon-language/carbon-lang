@@ -245,12 +245,12 @@ void LICM::HoistRegion(DominatorTree::Node *N) {
   assert(N != 0 && "Null dominator tree node?");
 
   // If this subregion is not in the top level loop at all, exit.
-  if (!CurLoop->contains(N->getNode())) return;
+  if (!CurLoop->contains(N->getBlock())) return;
 
   // Only need to hoist the contents of this block if it is not part of a
   // subloop (which would already have been hoisted)
-  if (!inSubLoop(N->getNode()))
-    visit(*N->getNode());
+  if (!inSubLoop(N->getBlock()))
+    visit(*N->getBlock());
 
   const std::vector<DominatorTree::Node*> &Children = N->getChildren();
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
@@ -305,7 +305,7 @@ bool LICM::SafeToHoist(Instruction &Inst) {
         IDom = IDom->getIDom();
 
         //See if we exited the loop.
-        if(!CurLoop->contains(IDom->getNode()))
+        if(!CurLoop->contains(IDom->getBlock()))
           return false;
       }
     }

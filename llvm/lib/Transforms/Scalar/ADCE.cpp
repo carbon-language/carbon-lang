@@ -344,14 +344,14 @@ bool ADCE::doADCE() {
             } else {
               PostDominatorTree::Node *NextNode = LastNode->getIDom();
 
-              while (!AliveBlocks.count(NextNode->getNode())) {
+              while (!AliveBlocks.count(NextNode->getBlock())) {
                 LastNode = NextNode;
                 NextNode = NextNode->getIDom();
               }
             
               // Get the basic blocks that we need...
-              BasicBlock *LastDead = LastNode->getNode();
-              BasicBlock *NextAlive = NextNode->getNode();
+              BasicBlock *LastDead = LastNode->getBlock();
+              BasicBlock *NextAlive = NextNode->getBlock();
 
               // Make the conditional branch now go to the next alive block...
               TI->getSuccessor(i)->removePredecessor(BB);

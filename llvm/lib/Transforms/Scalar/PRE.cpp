@@ -165,7 +165,7 @@ bool PRE::ProcessBlock(BasicBlock *BB) {
 void PRE::MarkPostDominatingBlocksAnticipatible(PostDominatorTree::Node *N,
                                                 std::vector<char> &AntBlocks,
                                                 Instruction *Occurrence) {
-  unsigned BlockNo = BlockNumbering[N->getNode()];
+  unsigned BlockNo = BlockNumbering[N->getBlock()];
 
   if (AntBlocks[BlockNo]) return;  // Already known to be anticipatible??
 
@@ -174,7 +174,7 @@ void PRE::MarkPostDominatingBlocksAnticipatible(PostDominatorTree::Node *N,
   // "transparency".
   for (unsigned i = 0, e = Occurrence->getNumOperands(); i != e; ++i)
     if (Instruction *I = dyn_cast<Instruction>(Occurrence->getOperand(i)))
-      if (I->getParent() == N->getNode())  // Operand is defined in this block!
+      if (I->getParent() == N->getBlock())  // Operand is defined in this block!
         return;
 
   if (isa<LoadInst>(Occurrence))
@@ -246,14 +246,14 @@ void PRE::MarkOccurrenceAvailableInAllDominatedBlocks(Instruction *Occurrence,
   DominatorTree::Node *N = DT->getNode(Occurrence->getParent());
   for (df_iterator<DominatorTree::Node*> DI = df_begin(N), E = df_end(N);
        DI != E; ++DI)
-    AvailableBlocks[(*DI)->getNode()] = Occurrence;
+    AvailableBlocks[(*DI)->getBlock()] = Occurrence;
 }
 
 /// ReplaceDominatedAvailableOccurrencesWith - This loops over the region
 /// dominated by N, replacing any available expressions with NewOcc.
 void PRE::ReplaceDominatedAvailableOccurrencesWith(Instruction *NewOcc,
                                                    DominatorTree::Node *N) {
-  BasicBlock *BB = N->getNode();
+  BasicBlock *BB = N->getBlock();
   Instruction *&ExistingAvailableVal = AvailableBlocks[BB];
 
   // If there isn't a definition already active in this node, make this the new
@@ -280,7 +280,7 @@ void PRE::ReplaceDominatedAvailableOccurrencesWith(Instruction *NewOcc,
     // Mark NewOCC as the Available expression in all blocks dominated by BB
     for (df_iterator<DominatorTree::Node*> DI = df_begin(N), E = df_end(N);
          DI != E; ++DI)
-      AvailableBlocks[(*DI)->getNode()] = NewOcc;
+      AvailableBlocks[(*DI)->getBlock()] = NewOcc;
   }  
 }
 
