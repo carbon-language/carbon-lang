@@ -216,6 +216,7 @@ namespace {  // Anonymous namespace for class
       WriteValue(V1);
       WriteType(T2);
       WriteValue(V3);
+      Broken = true;
     }
   };
 
