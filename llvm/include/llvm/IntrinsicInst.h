@@ -42,11 +42,37 @@ namespace llvm {
     static Value *StripPointerCasts(Value *Ptr);
   };
 
-  /// DbgStopPointInst - This represent llvm.dbg.stoppoint instructions.
+  /// DbgInfoIntrinsic - This is the common base class for debug info intrinsics
   ///
-  struct DbgStopPointInst : public IntrinsicInst {
+  struct DbgInfoIntrinsic : public IntrinsicInst {
 
     Value *getChain() const { return const_cast<Value*>(getOperand(1)); }
+
+    // Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const DbgInfoIntrinsic *) { return true; }
+    static inline bool classof(const CallInst *I) {
+      if (const Function *CF = I->getCalledFunction())
+        switch (CF->getIntrinsicID()) {
+	case Intrinsic::dbg_stoppoint:    
+	case Intrinsic::dbg_region_start: 
+	case Intrinsic::dbg_region_end:   
+	case Intrinsic::dbg_func_start:   
+	case Intrinsic::dbg_declare:      
+          return true;
+        default: break;
+        }
+      return false;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<CallInst>(V) && classof(cast<CallInst>(V));
+    }
+  };
+
+
+  /// DbgStopPointInst - This represent llvm.dbg.stoppoint instructions.
+  ///
+  struct DbgStopPointInst : public DbgInfoIntrinsic {
+
     unsigned getLineNo() const {
       return cast<ConstantInt>(getOperand(2))->getRawValue();
     }
@@ -67,8 +93,6 @@ namespace llvm {
       return isa<CallInst>(V) && classof(cast<CallInst>(V));
     }
   };
-
-
 
   /// MemIntrinsic - This is the common base class for memset/memcpy/memmove.
   ///
