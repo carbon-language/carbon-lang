@@ -15,6 +15,8 @@ class ArrayType;
 class StructType;
 class PointerType;
 
+template<class ConstantClass, class TypeClass, class ValType>
+struct ConstantCreator;
 
 //===---------------------------------------------------------------------------
 /// ConstantIntegral - Shared superclass of boolean and integer constants.
@@ -67,7 +69,6 @@ public:
 class ConstantBool : public ConstantIntegral {
   bool Val;
   ConstantBool(bool V);
-  ~ConstantBool() {}
 public:
   static ConstantBool *True, *False;  // The True & False values
 
@@ -113,7 +114,6 @@ protected:
   } Val;
   ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
   ConstantInt(const Type *Ty, uint64_t V);
-  ~ConstantInt() {}
 public:
   /// equalsInt - Provide a helper method that can be used to determine if the
   /// constant contained within is equal to a constant.  This only works for
@@ -151,9 +151,10 @@ public:
 ///
 class ConstantSInt : public ConstantInt {
   ConstantSInt(const ConstantSInt &);      // DO NOT IMPLEMENT
+  friend struct ConstantCreator<ConstantSInt, Type, int64_t>;
+
 protected:
   ConstantSInt(const Type *Ty, int64_t V);
-  ~ConstantSInt() {}
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantSInt *get(const Type *Ty, int64_t V);
@@ -199,9 +200,9 @@ public:
 ///
 class ConstantUInt : public ConstantInt {
   ConstantUInt(const ConstantUInt &);      // DO NOT IMPLEMENT
+  friend struct ConstantCreator<ConstantUInt, Type, uint64_t>;
 protected:
   ConstantUInt(const Type *Ty, uint64_t V);
-  ~ConstantUInt() {}
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantUInt *get(const Type *Ty, uint64_t V);
@@ -233,10 +234,10 @@ public:
 ///
 class ConstantFP : public Constant {
   double Val;
+  friend struct ConstantCreator<ConstantFP, Type, double>;
   ConstantFP(const ConstantFP &);      // DO NOT IMPLEMENT
 protected:
   ConstantFP(const Type *Ty, double V);
-  ~ConstantFP() {}
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantFP *get(const Type *Ty, double V);
@@ -262,11 +263,12 @@ public:
 /// ConstantArray - Constant Array Declarations
 ///
 class ConstantArray : public Constant {
+  friend struct ConstantCreator<ConstantArray, ArrayType,
+                                    std::vector<Constant*> >;
   ConstantArray(const ConstantArray &);      // DO NOT IMPLEMENT
 protected:
   ConstantArray(const ArrayType *T, const std::vector<Constant*> &Val);
-  ~ConstantArray() {}
-
+  void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantArray *get(const ArrayType *T, const std::vector<Constant*> &);
@@ -316,11 +318,12 @@ public:
 // ConstantStruct - Constant Struct Declarations
 //
 class ConstantStruct : public Constant {
+  friend struct ConstantCreator<ConstantStruct, StructType,
+                                    std::vector<Constant*> >;
   ConstantStruct(const ConstantStruct &);      // DO NOT IMPLEMENT
 protected:
   ConstantStruct(const StructType *T, const std::vector<Constant*> &Val);
-  ~ConstantStruct() {}
-
+  void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantStruct *get(const StructType *T,
@@ -367,8 +370,7 @@ public:
 class ConstantPointer : public Constant {
   ConstantPointer(const ConstantPointer &);      // DO NOT IMPLEMENT
 protected:
-  inline ConstantPointer(const PointerType *T) : Constant((const Type*)T){}
-  ~ConstantPointer() {}
+  inline ConstantPointer(const PointerType *T) : Constant((const Type*)T) {}
 public:
   inline const PointerType *getType() const {
     return (PointerType*)Value::getType();
@@ -389,10 +391,12 @@ public:
 /// ConstantPointerNull - a constant pointer value that points to null
 ///
 class ConstantPointerNull : public ConstantPointer {
+  friend struct ConstantCreator<ConstantPointerNull, PointerType, char>;
   ConstantPointerNull(const ConstantPointerNull &);      // DO NOT IMPLEMENT
 protected:
-  inline ConstantPointerNull(const PointerType *T) : ConstantPointer(T) {}
-  inline ~ConstantPointerNull() {}
+  ConstantPointerNull(const PointerType *T) : ConstantPointer(T) {}
+  void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
+
 public:
 
   /// get() - Static factory methods - Return objects of the specified value
@@ -427,7 +431,6 @@ class ConstantPointerRef : public ConstantPointer {
 
 protected:
   ConstantPointerRef(GlobalValue *GV);
-  ~ConstantPointerRef() {}
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantPointerRef *get(GlobalValue *GV);
@@ -457,7 +460,6 @@ public:
   }
 };
 
-
 // ConstantExpr - a constant value that is initialized with an expression using
 // other constant values.  This is only used to represent values that cannot be
 // evaluated at compile-time (e.g., something derived from an address) because
@@ -465,9 +467,11 @@ public:
 // Constant subclass above for known constants.
 //
 class ConstantExpr : public Constant {
-  unsigned iType;      // Operation type
+  unsigned iType;      // Operation type (an Instruction opcode)
+  friend struct ConstantCreator<ConstantExpr,Type,
+                            std::pair<unsigned, std::vector<Constant*> > >;
   
-protected: 
+protected:
   // Cast creation ctor
   ConstantExpr(unsigned Opcode, Constant *C, const Type *Ty);
   // Binary/Shift instruction creation ctor
@@ -475,6 +479,7 @@ protected:
   // GEP instruction creation ctor
   ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
                const Type *DestTy);
+  void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
   
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that
