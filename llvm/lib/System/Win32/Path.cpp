@@ -573,7 +573,7 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
 }
 
 void 
-CopyFile(const sys::Path &Dest, const sys::Path &Src) {
+sys::CopyFile(const sys::Path &Dest, const sys::Path &Src) {
   if (!::CopyFile(Src.c_str(), Dest.c_str(), false))
     ThrowError("Can't copy '" + Src.toString() + 
                "' to '" + Dest.toString() + "'");
