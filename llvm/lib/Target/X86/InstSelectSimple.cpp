@@ -1670,8 +1670,10 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     // First, determine that the size of the operand falls within the
     // acceptable range for this architecture.
     //
-    assert (((CI.getOperand(1)->getType()->getPrimitiveSize()) == 2) &&
-            "llvm.readport operand size is not a 16 bit value!");
+    if ((CI.getOperand(1)->getType()->getPrimitiveSize()) != 2) {
+      std::cerr << "llvm.readport: Address size is not 16 bits\n";
+      exit (1);
+    }
 
     //
     // Now, move the I/O port address into the DX register and use the IN
@@ -1680,13 +1682,13 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     BuildMI(BB, X86::MOV16rr, 1, X86::DX).addReg(getReg(CI.getOperand(1)));
     switch (CI.getCalledFunction()->getReturnType()->getPrimitiveSize()) {
       case 1:
-        BuildMI(BB, X86::IN8, 1);
+        BuildMI(BB, X86::IN8, 0);
         break;
       case 2:
-        BuildMI(BB, X86::IN16, 1);
+        BuildMI(BB, X86::IN16, 0);
         break;
       case 4:
-        BuildMI(BB, X86::IN32, 1);
+        BuildMI(BB, X86::IN32, 0);
         break;
       default:
         assert (0 && "Cannot do input on this data type");
@@ -1698,8 +1700,11 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     // First, determine that the size of the operand falls within the
     // acceptable range for this architecture.
     //
-    assert (((CI.getOperand(1)->getType()->getPrimitiveSize()) == 2) &&
-            "llvm.readport operand size is not a 16 bit value!");
+    //
+    if ((CI.getOperand(1)->getType()->getPrimitiveSize()) != 2) {
+      std::cerr << "llvm.writeport: Address size is not 16 bits\n";
+      exit (1);
+    }
 
     //
     // Now, move the I/O port address into the DX register and the value to
@@ -1709,15 +1714,15 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     switch (CI.getOperand(2)->getType()->getPrimitiveSize()) {
       case 1:
         BuildMI(BB, X86::MOV8rr, 1, X86::AL).addReg(getReg(CI.getOperand(2)));
-        BuildMI(BB, X86::OUT8, 1);
+        BuildMI(BB, X86::OUT8, 0);
         break;
       case 2:
         BuildMI(BB, X86::MOV16rr, 1, X86::AX).addReg(getReg(CI.getOperand(2)));
-        BuildMI(BB, X86::OUT16, 1);
+        BuildMI(BB, X86::OUT16, 0);
         break;
       case 4:
         BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(getReg(CI.getOperand(2)));
-        BuildMI(BB, X86::OUT32, 1);
+        BuildMI(BB, X86::OUT32, 0);
         break;
       default:
         assert (0 && "Cannot do input on this data type");

@@ -249,11 +249,11 @@ def REP_STOSD : I<"rep stosd", 0xAB, RawFrm>, REP,
 //  Input/Output Instructions...
 //
 def IN8  : I<"in", 0xEC, RawFrm>, Imp<[DX],[AL]>,  PrintImpUsesAfter, PrintImpDefsAfter;    // in AL  = I/O address DX
-def IN16 : I<"in", 0xED, RawFrm>, Imp<[DX],[AX]>,  PrintImpUsesAfter, PrintImpDefsAfter;    // in AX  = I/O address DX
+def IN16 : I<"in", 0xED, RawFrm>, Imp<[DX],[AX]>,  OpSize, PrintImpUsesAfter, PrintImpDefsAfter;    // in AX  = I/O address DX
 def IN32 : I<"in", 0xED, RawFrm>, Imp<[DX],[EAX]>, PrintImpUsesAfter, PrintImpDefsAfter;   // in EAX = I/O address DX
 
 def OUT8  : I<"out", 0xEE, RawFrm>, Imp<[DX, AL],  []>, PrintImpUsesAfter;
-def OUT16 : I<"out", 0xEF, RawFrm>, Imp<[DX, AX],  []>, PrintImpUsesAfter;
+def OUT16 : I<"out", 0xEF, RawFrm>, Imp<[DX, AX],  []>, OpSize, PrintImpUsesAfter;
 def OUT32 : I<"out", 0xEF, RawFrm>, Imp<[DX, EAX], []>, PrintImpUsesAfter;
 
 //===----------------------------------------------------------------------===//
