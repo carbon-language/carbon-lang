@@ -117,7 +117,7 @@ private:
 				//   the generated machine code.     
                                 // LLVM global for MO_GlobalAddress.
 
-    int64_t immedVal;		// Constant value for an explicit constant
+    int immedVal;		// Constant value for an explicit constant
 
     MachineBasicBlock *MBB;     // For MO_MachineBasicBlock type
     std::string *SymbolName;    // For MO_ExternalSymbol type
