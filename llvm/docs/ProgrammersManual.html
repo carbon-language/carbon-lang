@@ -34,9 +34,12 @@
     </ul>
     <li><a href="#simplechanges">Making simple changes</a>
     <ul>
-      <li>Creating and inserting new <tt>Instruction</tt>s
-      <li>Deleting <tt>Instruction</tt>s
-      <li>Replacing an <tt>Instruction</tt> with another <tt>Value</tt>
+      <li><a href="#schanges_creating">Creating and inserting new
+		  <tt>Instruction</tt>s</a>
+      <li><a href="#schanges_deleting">Deleting
+		  <tt>Instruction</tt>s</a> 
+      <li><a href="#schanges_replacing">Replacing an
+		  <tt>Instruction</tt> with another <tt>Value</tt></a>
     </ul>
 <!--
     <li>Working with the Control Flow Graph
@@ -269,7 +272,7 @@ dispatch over the instruction type directly.<p>
 
 <dd>The <tt>cast_or_null&lt;&gt;</tt> operator works just like the
 <tt>cast&lt;&gt;</tt> operator, except that it allows for a null pointer as an
-argument (which it then propogates).  This can sometimes be useful, allowing you
+argument (which it then propagates).  This can sometimes be useful, allowing you
 to combine several null checks into one.<p>
 
 
@@ -277,7 +280,7 @@ to combine several null checks into one.<p>
 
 <dd>The <tt>dyn_cast_or_null&lt;&gt;</tt> operator works just like the
 <tt>dyn_cast&lt;&gt;</tt> operator, except that it allows for a null pointer as
-an argument (which it then propogates).  This can sometimes be useful, allowing
+an argument (which it then propagates).  This can sometimes be useful, allowing
 you to combine several null checks into one.<p>
 
 </dl>
@@ -286,7 +289,7 @@ These five templates can be used with any classes, whether they have a v-table
 or not.  To add support for these templates, you simply need to add
 <tt>classof</tt> static methods to the class you are interested casting to.
 Describing this is currently outside the scope of this document, but there are
-lots of examples in the LLVM sourcebase.<p>
+lots of examples in the LLVM source base.<p>
 
 
 
@@ -576,7 +579,7 @@ to iterate over all of the values that a particular instruction uses
 Instruction* pi = ...;
 
 for(User::op_iterator i = pi-&gt;op_begin(), e = pi-&gt;op_end(); i != e; ++i) {
-    Value* v = i-&gt;get();
+    Value* v = *i;
     ...
 }
 </pre>
@@ -594,6 +597,116 @@ for(User::op_iterator i = pi-&gt;op_begin(), e = pi-&gt;op_end(); i != e; ++i) {
 <a name="simplechanges">Making simple changes</a>
 </b></font></td></tr></table><ul>
 
+There are some primitive transformation operations present in the LLVM
+infrastructure that are worth knowing about.  When performing
+transformations, it's fairly common to manipulate the contents of
+basic blocks.  This section describes some of the common methods for
+doing so and gives example code.
+
+<!--_______________________________________________________________________-->
+</ul><h4><a name="schanges_creating"><hr size=0>Creating and inserting
+    new <tt>Instruction</tt>s</h4><ul> 
+
+<i>Instantiating Instructions</i>
+
+<p>Creation of <tt>Instruction</tt>s is straightforward: simply call the
+constructor for the kind of instruction to instantiate and provide the
+necessary parameters.  For example, an <tt>AllocaInst</tt> only
+<i>requires</i> a (const-ptr-to) <tt>Type</tt>.  Thus:
+
+<pre>AllocaInst* ai = new AllocaInst(Type::IntTy);</pre> 
+
+will create an <tt>AllocaInst</tt> instance that represents the
+allocation of one integer in the current stack frame, at runtime.
+Each <tt>Instruction</tt> subclass is likely to have varying default
+parameters which change the semantics of the instruction, so refer to
+the <a href="/doxygen/classInstruction.h">doxygen documentation for
+the subclass of Instruction</a> that you're interested in
+instantiating.</p>
+
+<p><i>Naming values</i></p>
+
+<p>
+It is very useful to name the values of instructions when you're able
+to, as this facilitates the debugging of your transformations.  If you
+end up looking at generated LLVM machine code, you definitely want to
+have logical names associated with the results of instructions!  By
+supplying a value for the <tt>Name</tt> (default) parameter of the
+<tt>Instruction</tt> constructor, you associate a logical name with
+the result of the instruction's execution at runtime.  For example,
+say that I'm writing a transformation that dynamically allocates space
+for an integer on the stack, and that integer is going to be used as
+some kind of index by some other code.  To accomplish this, I place an
+<tt>AllocaInst</tt> at the first point in the first
+<tt>BasicBlock</tt> of some <tt>Function</tt>, and I'm intending to
+use it within the same <tt>Function</tt>.  I might do:
+
+<pre>AllocaInst* pa = new AllocaInst(Type::IntTy, 0, "indexLoc");</pre>
+
+where <tt>indexLoc</tt> is now the logical name of the instruction's
+execution value, which is a pointer to an integer on the runtime
+stack.
+</p>
+
+<p><i>Inserting instructions</i></p>
+
+<p>
+There are essentially two ways to insert an <tt>Instruction</tt> into
+an existing sequence of instructions that form a <tt>BasicBlock</tt>:
+<ul>
+<li>Insertion into an explicit instruction list
+
+<p>Given a <tt>BasicBlock* pb</tt>, an <tt>Instruction* pi</tt> within
+that <tt>BasicBlock</tt>, and a newly-created instruction
+we wish to insert before <tt>*pi</tt>, we do the following:
+
+<pre>
+BasicBlock* pb = ...;
+Instruction* pi = ...;
+Instruction* newInst = new Instruction(...);
+pb->getInstList().insert(pi, newInst); // inserts newInst before pi in pb
+</pre>
+</p>
+
+<li>Insertion into an implicit instruction list
+<p>
+<tt>Instruction</tt> instances that are already in
+<tt>BasicBlock</tt>s are implicitly associated with an existing
+instruction list: the instruction list of the enclosing basic block.
+Thus, we could have accomplished the same thing as the above code
+without being given a <tt>BasicBlock</tt> by doing:
+<pre>
+Instruction* pi = ...;
+Instruction* newInst = new Instruction(...);
+pi->getParent()->getInstList().insert(pi, newInst);
+</pre>
+In fact, this sequence of steps occurs so frequently that the
+<tt>Instruction</tt> class and <tt>Instruction</tt>-derived classes
+provide constructors which take (as a default parameter) a pointer to
+an <tt>Instruction</tt> which the newly-created <tt>Instruction</tt>
+should precede.  That is, <tt>Instruction</tt> constructors are
+capable of inserting the newly-created instance into the
+<tt>BasicBlock</tt> of a provided instruction, immediately before that
+instruction.  Using an <tt>Instruction</tt> constructor with a
+<tt>insertBefore</tt> (default) parameter, the above code becomes:
+<pre>
+Instruction* pi = ...;
+Instruction* newInst = new Instruction(..., pi);
+</pre>
+which is much cleaner, especially if you're creating a lot of
+instructions and adding them to <tt>BasicBlock</tt>s.
+</p>
+</p>
+
+
+<!--_______________________________________________________________________-->
+</ul><h4><a name="schanges_deleting"><hr size=0>Deleting
+    <tt>Instruction</tt>s</h4><ul>
+
+<!--_______________________________________________________________________-->
+</ul><h4><a name="schanges_replacing"><hr size=0>Replacing an
+    <tt>Instruction</tt> with another <tt>Value</tt></h4><ul>
+
 <!-- Value::replaceAllUsesWith
      User::replaceUsesOfWith
   Point out: include/llvm/Transforms/Utils/
@@ -601,7 +714,6 @@ for(User::op_iterator i = pi-&gt;op_begin(), e = pi-&gt;op_end(); i != e; ++i) {
          ReplaceInstWithValue, ReplaceInstWithInst
 
 -->
-
 
 <!-- *********************************************************************** -->
 </ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
@@ -1428,6 +1540,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Wed Sep 11 15:48:49 CDT 2002
+Last modified: Wed Sep 11 17:31:03 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
