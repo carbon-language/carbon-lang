@@ -86,5 +86,13 @@ def R32 : RegisterClass<i32, 32, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
 
 def RFP : RegisterClass<f80, 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 
-// Floating point stack registers.
-def RST : RegisterClass<f80, 32, [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]>;
+// Floating point stack registers (these are not allocatable by the
+// register allocator - the floating point stackifier is responsible
+// for transforming FPn allocations to STn registers)
+def RST : RegisterClass<f80, 32, [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]> {
+  let Methods = [{
+    iterator allocation_order_end(MachineFunction &MF) const {
+      return begin();
+    }
+  }];
+}
