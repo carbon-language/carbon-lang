@@ -590,6 +590,8 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 
   // Now color all args of the call instruction
 
+  vector <MachineInstr *> AddedInstrnsBefore;
+
   unsigned NumOfCallArgs =  getCallInstNumArgs( CallMI );
 
   for(unsigned argNo=0, i=0; i < NumOfCallArgs; ++i, ++argNo ) {
@@ -666,7 +668,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	AdMI = cpReg2MemMI(UniLRReg, getStackPointer(), argOffset, RegType );
       }
 
-      CallAI->InstrnsBefore.push_back( AdMI );  // Now add the instruction
+      AddedInstrnsBefore.push_back( AdMI );  // Now add the instruction
     }
 
     else {                          // LR is not colored (i.e., spilled)      
@@ -681,7 +683,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	AdMI = cpMem2RegMI(getFramePointer(), LR->getSpillOffFromFP(),
 			   UniArgReg, RegType );
         
-	CallAI->InstrnsBefore.push_back( AdMI );  // Now add the instruction
+	AddedInstrnsBefore.push_back( AdMI );  // Now add the instruction
       }
       
       else {
@@ -696,6 +698,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	// above method since we cannot find LVSetBefore without the BB 
 	
 	int TReg = PRA.getRegNotUsedByThisInst( LR->getRegClass(), CallMI );
+
 	int TmpOff = PRA.mcInfo.pushTempValue(target,
                               target.findOptimalStorageSize(LR->getType()));
                   // getStackOffsets().getNewTmpPosOffFromFP();
@@ -715,19 +718,51 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 			  TReg, RegType ); 
 	Ad3 = cpReg2MemMI(TReg, getStackPointer(), argOffset, RegType );
 	Ad4 = cpMem2RegMI(getFramePointer(), TmpOff, TReg, RegType ); 
+
+	// We directly add to CallAI->InstrnsBefore instead of adding to
+	// AddedInstrnsBefore since these instructions must not be
+	// reordered.
         
 	CallAI->InstrnsBefore.push_back( Ad1 );  
 	CallAI->InstrnsBefore.push_back( Ad2 );  
 	CallAI->InstrnsBefore.push_back( Ad3 );  
 	CallAI->InstrnsBefore.push_back( Ad4 );  
+
+	cerr << "\n Caution: Call arg moved from stack to stack";
       }
 
     }
 
   }  // for each parameter in call instruction
 
+
+  // if we added any instruction before the call instruction, verify
+  // that they are in the proper order and if not, reorder them
+
+  if( ! AddedInstrnsBefore.empty() ) {
+
+    if( DEBUG_RA) {
+      cerr << "\nCalling reorder with instrns: \n";
+      for(unsigned i=0; i < AddedInstrnsBefore.size(); i++)
+	cerr  << *(AddedInstrnsBefore[i]);
+    }
+
+    vector <MachineInstr *> TmpVec;
+    OrderAddedInstrns(AddedInstrnsBefore, TmpVec);
+
+    if( DEBUG_RA) {
+      cerr << "\nAfter reordering instrns: \n";
+      for(unsigned i=0; i < TmpVec.size(); i++)
+	cerr << *(TmpVec[i]);
+    }
+
+    // copy the results back from TmpVec to InstrnsBefore
+    for(unsigned i=0; i < TmpVec.size(); i++)
+      CallAI->InstrnsBefore.push_back( TmpVec[i] );
+  }
+
+
   // Reset optional args area again to be safe
-  // 
   PRA.mcInfo.resetOptionalArgs(target);
   
   
@@ -1264,4 +1299,202 @@ void UltraSparcRegInfo::printReg(const LiveRange *const LR) {
       cerr << "+" << SparcFloatRegOrder::getRegName(LR->getColor()+1);
     cerr << "]" << endl;
   }
+}
+
+//---------------------------------------------------------------------------
+// This method examines instructions inserted by RegAlloc code before a
+// machine instruction to detect invalid orders that destroy values before
+// they are used. If it detects such conditions, it reorders the instructions.
+//
+// The unordered instructions come in the UnordVec. These instructions are
+// instructions inserted by RegAlloc. All suhc instruction MUST have 
+// their USES BEFORE THE DEFS.
+
+// The UnordVec & OrdVec must be DISTINCT. The OrdVec must be empty when
+// this method is called.
+
+// This method uses two vectors for efficiency in accessing
+
+//---------------------------------------------------------------------------
+void UltraSparcRegInfo::OrderAddedInstrns( vector<MachineInstr *> &UnordVec, 
+					   vector<MachineInstr *> &OrdVec) const{
+
+  /*
+    Problem: We can have instructions inserted by RegAlloc like
+    1. add %ox %g0 %oy
+    2. add %oy %g0 %oz, where z!=x or z==x
+
+    This is wrong since %oy used by 2 is overwritten by 1
+  */
+
+  /* Algorithm:
+
+     Round 1:
+     For each instruction 'Inst' in UnordVec, starting from UnordVec.begin, 
+     let Def be the destination reg of instr.
+       For each use 'Use' of the following instruction
+         If Def==Use continue
+       If no use is found, push back 'Inst' to OrdVec 
+       
+     If no inst is left in UnordVec by the end of Round1, return
+
+     Round 2:
+     For each inst 'Inst' left in UnordVec
+       For each use 'Use' in Inst
+          If threre is NO Def for this Use in an inst in OrdVec
+	     push back Inst 
+	 Else 
+	     push_front a stack save instr mem location "Loc"
+	     push_back a restore inst to load to Use from Loc
+	     discard Inst (assert that one operand is %g0)
+
+  */
+
+  bool CouldMoveAll = true;
+
+
+  vector<MachineInstr *>::iterator DefIt = UnordVec.begin();
+
+  for( ; DefIt !=  UnordVec.end(); ++DefIt ) {
+
+    // for each instruction in the UnordVec do ...
+
+    MachineInstr *DefInst = *DefIt;
+
+    // cerr << "\nDefInst = " <<  *DefInst;
+
+    for(unsigned OpNumD=0; OpNumD < DefInst->getNumOperands(); ++OpNumD) {
+
+      MachineOperand& DefOp = DefInst->getOperand(OpNumD);
+
+      if( DefOp.opIsDef() &&  
+	  DefOp.getOperandType() ==  MachineOperand::MO_MachineRegister) {
+
+	// If the operand in DefInst is a def ...
+
+	bool DefEqUse = false;
+
+	vector<MachineInstr *>::iterator UseIt = DefIt;
+	UseIt++;
+
+	for( ; UseIt !=  UnordVec.end(); ++UseIt ) {
+
+	  // for each inst (UseInst) that is below the DefInst do ...
+
+	  MachineInstr *UseInst = *UseIt;
+
+	  for(unsigned OpNumU=0; OpNumU < UseInst->getNumOperands(); ++OpNumU){
+
+	    MachineOperand& UseOp = UseInst->getOperand(OpNumU);
+
+	    if( ! UseOp.opIsDef() &&  
+		UseOp.getOperandType() == MachineOperand::MO_MachineRegister) {
+
+	      // if use is a register ...
+
+	      if( DefOp.getMachineRegNum() == UseOp.getMachineRegNum() ) {
+
+		// if Def and this use are the same, it means that this use
+		// is destroyed by a def before it is used
+
+		DefEqUse = true;
+		CouldMoveAll = false;
+
+		cerr << "\nReordered Ins (Moved up): " << *UseInst;
+		break;
+
+	      } // if two registers are equal
+
+	    } // if use is a register
+
+	  } // for all uses
+
+	}// for all use instructions
+
+	if( ! DefEqUse ) {
+	  // cerr << "\nMoved Inst = " <<  *DefInst;
+	  OrdVec.push_back(DefInst);
+	  *DefIt = NULL;
+	}
+	else 
+	  break;   // exit the loop since we can't move DefInst
+
+      } // if Def is a machine register
+
+    } // for all Defs in DefInst (there should be only 1)
+
+  } // for all instructions in the UnordVec
+
+
+  if( CouldMoveAll ) { 
+    assert( (UnordVec.size() == OrdVec.size()) && 
+	    "Different Vec Sizes after reordering");
+    return;
+  }
+
+
+  // We are here because there were two instructions like:
+  // 1. add %ox %g0 %oy
+  // 2. add %oy %g0 %oz, where z!=x or z==x
+  // and hence we could not move 1 to the OrdVec
+
+  // cerr << "\nCaution: Added instructions will be RE-ORDERED !@!@!";
+
+  vector< MachineInstr *>::iterator UnordIt = UnordVec.begin();
+
+  for( ; UnordIt !=  UnordVec.end(); ++UnordIt ) {
+
+    MachineInstr *UnordInst = *UnordIt;
+    if( UnordInst == NULL ) continue;
+
+    for(unsigned OpNumU=0; OpNumU < UnordInst->getNumOperands(); ++OpNumU) {
+
+      MachineOperand& UseOp = UnordInst->getOperand(OpNumU);
+
+      if( ! UseOp.opIsDef() &&  
+	  UseOp.getOperandType() ==  MachineOperand::MO_MachineRegister) {
+
+	if( UseOp.getMachineRegNum() == getZeroRegNum() )
+	  continue;
+
+	// for all uses of UnordInst 
+	bool DefEqUse = false;
+
+	vector<MachineInstr *>::iterator OrdIt = OrdVec.begin();
+  
+	for( ; OrdIt !=  OrdVec.end(); ++OrdIt ) {
+
+	  MachineInstr *OrdInst = *OrdIt ;
+
+	  for(unsigned OpNumO=0; OpNumO < OrdInst->getNumOperands(); ++OpNumO){
+
+	    MachineOperand& DefOp = OrdInst->getOperand(OpNumO);
+
+	    if( DefOp.opIsDef() &&  
+		DefOp.getOperandType() == MachineOperand::MO_MachineRegister) {
+
+	      if( DefOp.getMachineRegNum() == UseOp.getMachineRegNum() ) {
+
+		DefEqUse = true;
+		assert(0 && "Insert save/restre code for reordering");
+
+	      } // if two registers are equal
+
+	    } // if Def is a register
+
+	  } // for all defs
+
+	} // for each instr in OrdVec
+
+	if( !DefEqUse ) {
+	  OrdVec.push_back( UnordInst );
+	  cerr << "\nReordered instr (Moved Down): " <<  *UnordInst;
+	}
+    
+      } // if the operand in UnordInst is a use
+ 
+    } // for each use in the UnordInst
+
+  } // for each UnordInst in UnordVec
+
 }

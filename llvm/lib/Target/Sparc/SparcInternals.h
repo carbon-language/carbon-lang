@@ -284,6 +284,10 @@ class UltraSparcRegInfo : public MachineRegInfo
   MachineInstr * cpCCR2IntMI(const unsigned IntReg) const;
   MachineInstr * cpInt2CCRMI(const unsigned IntReg) const;
 
+  void OrderAddedInstrns( vector<MachineInstr *> &UnordVec, 
+			  vector<MachineInstr *> &OrdVec) const;
+
+
  public:
 
 
