@@ -46,6 +46,7 @@ const unsigned M_NOP_FLAG		= 1 << 0;
 const unsigned M_BRANCH_FLAG		= 1 << 1;
 const unsigned M_CALL_FLAG		= 1 << 2;
 const unsigned M_RET_FLAG		= 1 << 3;
+const unsigned M_BARRIER_FLAG           = 1 << 4;
 const unsigned M_CC_FLAG		= 1 << 6;
 const unsigned M_LOAD_FLAG		= 1 << 10;
 const unsigned M_STORE_FLAG		= 1 << 12;
@@ -100,30 +101,30 @@ public:
   /// get - Return the machine instruction descriptor that corresponds to the
   /// specified instruction opcode.
   ///
-  const TargetInstrDescriptor& get(MachineOpCode opCode) const {
-    assert((unsigned)opCode < NumOpcodes);
-    return desc[opCode];
+  const TargetInstrDescriptor& get(MachineOpCode Opcode) const {
+    assert((unsigned)Opcode < NumOpcodes);
+    return desc[Opcode];
   }
 
-  const char *getName(MachineOpCode opCode) const {
-    return get(opCode).Name;
+  const char *getName(MachineOpCode Opcode) const {
+    return get(Opcode).Name;
   }
   
-  int getNumOperands(MachineOpCode opCode) const {
-    return get(opCode).numOperands;
+  int getNumOperands(MachineOpCode Opcode) const {
+    return get(Opcode).numOperands;
   }
 
 
-  InstrSchedClass getSchedClass(MachineOpCode opCode) const {
-    return get(opCode).schedClass;
+  InstrSchedClass getSchedClass(MachineOpCode Opcode) const {
+    return get(Opcode).schedClass;
   }
 
-  const unsigned *getImplicitUses(MachineOpCode opCode) const {
-    return get(opCode).ImplicitUses;
+  const unsigned *getImplicitUses(MachineOpCode Opcode) const {
+    return get(Opcode).ImplicitUses;
   }
 
-  const unsigned *getImplicitDefs(MachineOpCode opCode) const {
-    return get(opCode).ImplicitDefs;
+  const unsigned *getImplicitDefs(MachineOpCode Opcode) const {
+    return get(Opcode).ImplicitDefs;
   }
 
 
@@ -131,15 +132,15 @@ public:
   // Query instruction class flags according to the machine-independent
   // flags listed above.
   // 
-  bool isReturn(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_RET_FLAG;
+  bool isReturn(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_RET_FLAG;
   }
 
-  bool isPseudoInstr(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_PSEUDO_FLAG;
+  bool isPseudoInstr(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_PSEUDO_FLAG;
   }
-  bool isTwoAddrInstr(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_2_ADDR_FLAG;
+  bool isTwoAddrInstr(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_2_ADDR_FLAG;
   }
   bool isTerminatorInstr(unsigned Opcode) const {
     return get(Opcode).Flags & M_TERMINATOR_FLAG;
@@ -167,60 +168,66 @@ public:
   //
   //-------------------------------------------------------------------------
 
-  int getResultPos(MachineOpCode opCode) const {
-    return get(opCode).resultPos;
+  int getResultPos(MachineOpCode Opcode) const {
+    return get(Opcode).resultPos;
   }
-  unsigned getNumDelaySlots(MachineOpCode opCode) const {
-    return get(opCode).numDelaySlots;
+  unsigned getNumDelaySlots(MachineOpCode Opcode) const {
+    return get(Opcode).numDelaySlots;
   }
-  bool isCCInstr(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_CC_FLAG;
+  bool isCCInstr(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_CC_FLAG;
   }
-  bool isNop(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_NOP_FLAG;
+  bool isNop(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_NOP_FLAG;
   }
-  bool isBranch(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_BRANCH_FLAG;
+  bool isBranch(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_BRANCH_FLAG;
   }
-  bool isCall(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_CALL_FLAG;
+  /// isBarrier - Returns true if the specified instruction stops control flow
+  /// from executing the instruction immediately following it.  Examples include
+  /// unconditional branches and return instructions.
+  bool isBarrier(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_BARRIER_FLAG;
   }
-  bool isLoad(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_LOAD_FLAG;
+  bool isCall(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_CALL_FLAG;
   }
-  bool isStore(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_STORE_FLAG;
+  bool isLoad(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_LOAD_FLAG;
   }
-  bool isDummyPhiInstr(MachineOpCode opCode) const {
-    return get(opCode).Flags & M_DUMMY_PHI_FLAG;
+  bool isStore(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_STORE_FLAG;
+  }
+  bool isDummyPhiInstr(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_DUMMY_PHI_FLAG;
   }
 
-  virtual bool hasResultInterlock(MachineOpCode opCode) const {
+  virtual bool hasResultInterlock(MachineOpCode Opcode) const {
     return true;
   }
 
   // 
   // Latencies for individual instructions and instruction pairs
   // 
-  virtual int minLatency(MachineOpCode opCode) const {
-    return get(opCode).latency;
+  virtual int minLatency(MachineOpCode Opcode) const {
+    return get(Opcode).latency;
   }
   
-  virtual int maxLatency(MachineOpCode opCode) const {
-    return get(opCode).latency;
+  virtual int maxLatency(MachineOpCode Opcode) const {
+    return get(Opcode).latency;
   }
 
   //
   // Which operand holds an immediate constant?  Returns -1 if none
   // 
-  virtual int getImmedConstantPos(MachineOpCode opCode) const {
+  virtual int getImmedConstantPos(MachineOpCode Opcode) const {
     return -1; // immediate position is machine specific, so say -1 == "none"
   }
   
   // Check if the specified constant fits in the immediate field
   // of this machine instruction
   // 
-  virtual bool constantFitsInImmedField(MachineOpCode opCode,
+  virtual bool constantFitsInImmedField(MachineOpCode Opcode,
 					int64_t intValue) const;
   
   // Return the largest positive constant that can be held in the IMMED field
@@ -229,10 +236,10 @@ public:
   // (this is true for all immediate fields in SPARC instructions).
   // Return 0 if the instruction has no IMMED field.
   // 
-  virtual uint64_t maxImmedConstant(MachineOpCode opCode,
+  virtual uint64_t maxImmedConstant(MachineOpCode Opcode,
 				    bool &isSignExtended) const {
-    isSignExtended = get(opCode).immedIsSignExtended;
-    return get(opCode).maxImmedConst;
+    isSignExtended = get(Opcode).immedIsSignExtended;
+    return get(Opcode).maxImmedConst;
   }
 };
 
