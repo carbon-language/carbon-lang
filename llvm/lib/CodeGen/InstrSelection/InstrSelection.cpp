@@ -1,18 +1,11 @@
-// $Id$ -*-c++-*-
-//***************************************************************************
-// File:
-//	InstrSelection.cpp
-// 
-// Purpose:
-//	Machine-independent driver file for instruction selection.
-//	This file constructs a forest of BURG instruction trees and then
-//      uses the BURG-generated tree grammar (BURM) to find the optimal
-//      instruction sequences for a given machine.
+//===- InstrSelection.cpp - Machine Independant Inst Selection Driver -----===//
+//
+// Machine-independent driver file for instruction selection.  This file
+// constructs a forest of BURG instruction trees and then uses the
+// BURG-generated tree grammar (BURM) to find the optimal instruction sequences
+// for a given machine.
 //	
-// History:
-//	7/02/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
-
+//===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
@@ -22,79 +15,76 @@
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/iPHINode.h"
+#include "llvm/Pass.h"
 #include "Support/CommandLine.h"
 using std::cerr;
 using std::vector;
 
-//******************** Internal Data Declarations ************************/
-
-
-enum SelectDebugLevel_t {
-  Select_NoDebugInfo,
-  Select_PrintMachineCode, 
-  Select_DebugInstTrees, 
-  Select_DebugBurgTrees,
-};
-
-
-// Enable Debug Options to be specified on the command line
-static cl::opt<SelectDebugLevel_t>
-SelectDebugLevel("dselect", cl::Hidden,
-                 cl::desc("enable instruction selection debugging information"),
-                 cl::values(
-   clEnumValN(Select_NoDebugInfo,      "n", "disable debug output"),
-   clEnumValN(Select_PrintMachineCode, "y", "print generated machine code"),
-   clEnumValN(Select_DebugInstTrees,   "i",
-              "print debugging info for instruction selection"),
-   clEnumValN(Select_DebugBurgTrees,   "b", "print burg trees"),
-                            0));
-
-
-//******************** Forward Function Declarations ***********************/
-
-
-static bool SelectInstructionsForTree   (InstrTreeNode* treeRoot,
-                                         int goalnt,
-                                         TargetMachine &target);
-
-static void PostprocessMachineCodeForTree(InstructionNode* instrNode,
-                                          int ruleForNode,
-                                          short* nts,
-                                          TargetMachine &target);
-
-static void InsertCode4AllPhisInMeth(Function *F, TargetMachine &target);
-
-
-
-//******************* Externally Visible Functions *************************/
-
-
-//---------------------------------------------------------------------------
-// Entry point for instruction selection using BURG.
-// Returns true if instruction selection failed, false otherwise.
-//---------------------------------------------------------------------------
-
-bool
-SelectInstructionsForMethod(Function *F, TargetMachine &target)
-{
-  bool failed = false;
+namespace {
+  //===--------------------------------------------------------------------===//
+  // SelectDebugLevel - Allow command line control over debugging.
+  //
+  enum SelectDebugLevel_t {
+    Select_NoDebugInfo,
+    Select_PrintMachineCode, 
+    Select_DebugInstTrees, 
+    Select_DebugBurgTrees,
+  };
   
+  // Enable Debug Options to be specified on the command line
+  cl::opt<SelectDebugLevel_t>
+  SelectDebugLevel("dselect", cl::Hidden,
+                   cl::desc("enable instruction selection debug information"),
+                   cl::values(
+     clEnumValN(Select_NoDebugInfo,      "n", "disable debug output"),
+     clEnumValN(Select_PrintMachineCode, "y", "print generated machine code"),
+     clEnumValN(Select_DebugInstTrees,   "i",
+                "print debugging info for instruction selection"),
+     clEnumValN(Select_DebugBurgTrees,   "b", "print burg trees"),
+                              0));
+
+
+  //===--------------------------------------------------------------------===//
+  //  InstructionSelection Pass
+  //
+  // This is the actual pass object that drives the instruction selection
+  // process.
+  //
+  class InstructionSelection : public FunctionPass {
+    TargetMachine &Target;
+    void InsertCodeForPhis(Function &F);
+    void InsertPhiElimInstructions(BasicBlock *BB,
+                                   const std::vector<MachineInstr*>& CpVec);
+    void SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt);
+    void PostprocessMachineCodeForTree(InstructionNode* instrNode,
+                                       int ruleForNode, short* nts);
+  public:
+    InstructionSelection(TargetMachine &T) : Target(T) {}
+    
+    bool runOnFunction(Function &F);
+  };
+}
+
+// Register the pass...
+static RegisterLLC<InstructionSelection>
+X("instselect", "Instruction Selection", createInstructionSelectionPass);
+
+
+bool InstructionSelection::runOnFunction(Function &F)
+{
   //
   // Build the instruction trees to be given as inputs to BURG.
   // 
-  InstrForest instrForest(F);
+  InstrForest instrForest(&F);
   
   if (SelectDebugLevel >= Select_DebugInstTrees)
     {
       cerr << "\n\n*** Input to instruction selection for function "
-	   << F->getName() << "\n\n";
-      F->dump();
-      
-      cerr << "\n\n*** Instruction trees for function "
-	   << F->getName() << "\n\n";
+	   << F.getName() << "\n\n" << F
+           << "\n\n*** Instruction trees for function "
+	   << F.getName() << "\n\n";
       instrForest.dump();
     }
   
@@ -118,69 +108,29 @@ SelectInstructionsForMethod(Function *F, TargetMachine &target)
 	}
       
       // Then recursively walk the tree to select instructions
-      if (SelectInstructionsForTree(basicNode, /*goalnt*/1, target))
-	{
-	  failed = true;
-	  break;
-	}
+      SelectInstructionsForTree(basicNode, /*goalnt*/1);
     }
   
   //
   // Record instructions in the vector for each basic block
   // 
-  for (Function::iterator BI = F->begin(), BE = F->end(); BI != BE; ++BI)
+  for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI)
     for (BasicBlock::iterator II = BI->begin(); II != BI->end(); ++II) {
-      MachineCodeForInstruction &mvec =MachineCodeForInstruction::get(II);
-      for (unsigned i=0; i < mvec.size(); i++)
-        MachineCodeForBasicBlock::get(BI).push_back(mvec[i]);
+      MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(II);
+      MachineCodeForBasicBlock &MCBB = MachineCodeForBasicBlock::get(BI);
+      MCBB.insert(MCBB.end(), mvec.begin(), mvec.end());
     }
 
-  // Insert phi elimination code -- added by Ruchira
-  InsertCode4AllPhisInMeth(F, target);
-
+  // Insert phi elimination code
+  InsertCodeForPhis(F);
   
   if (SelectDebugLevel >= Select_PrintMachineCode)
     {
       cerr << "\n*** Machine instructions after INSTRUCTION SELECTION\n";
-      MachineCodeForMethod::get(F).dump();
+      MachineCodeForMethod::get(&F).dump();
     }
   
-  return false;
-}
-
-
-//*********************** Private Functions *****************************/
-
-
-//-------------------------------------------------------------------------
-// Thid method inserts a copy instruction to a predecessor BB as a result
-// of phi elimination.
-//-------------------------------------------------------------------------
-
-void
-InsertPhiElimInstructions(BasicBlock *BB, const std::vector<MachineInstr*>& CpVec)
-{ 
-  Instruction *TermInst = (Instruction*)BB->getTerminator();
-  MachineCodeForInstruction &MC4Term =MachineCodeForInstruction::get(TermInst);
-  MachineInstr *FirstMIOfTerm = *( MC4Term.begin() );
-  
-  assert( FirstMIOfTerm && "No Machine Instrs for terminator" );
-  
-  // get an iterator to machine instructions in the BB
-  MachineCodeForBasicBlock& bbMvec = MachineCodeForBasicBlock::get(BB);
-  MachineCodeForBasicBlock::iterator MCIt =  bbMvec.begin();
-  
-  // find the position of first machine instruction generated by the
-  // terminator of this BB
-  for( ; (MCIt != bbMvec.end()) && (*MCIt != FirstMIOfTerm) ; ++MCIt )
-    ;
-  assert( MCIt != bbMvec.end() && "Start inst of terminator not found");
-  
-  // insert the copy instructions just before the first machine instruction
-  // generated for the terminator
-  bbMvec.insert(MCIt, CpVec.begin(), CpVec.end());
-  
-  //cerr << "\nPhiElimination copy inst: " <<   *CopyInstVec[0];
+  return true;
 }
 
 
@@ -189,11 +139,11 @@ InsertPhiElimInstructions(BasicBlock *BB, const std::vector<MachineInstr*>& CpVe
 //-------------------------------------------------------------------------
 
 void
-InsertCode4AllPhisInMeth(Function *F, TargetMachine &target)
+InstructionSelection::InsertCodeForPhis(Function &F)
 {
   // for all basic blocks in function
   //
-  for (Function::iterator BB = F->begin(); BB != F->end(); ++BB) {
+  for (Function::iterator BB = F.begin(); BB != F.end(); ++BB) {
     BasicBlock::InstListType &InstList = BB->getInstList();
     for (BasicBlock::iterator IIt = InstList.begin();
          PHINode *PN = dyn_cast<PHINode>(&*IIt); ++IIt) {
@@ -205,12 +155,12 @@ InsertCode4AllPhisInMeth(Function *F, TargetMachine &target)
       for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
         // insert the copy instruction to the predecessor BB
         vector<MachineInstr*> mvec, CpVec;
-        target.getRegInfo().cpValue2Value(PN->getIncomingValue(i), PhiCpRes,
+        Target.getRegInfo().cpValue2Value(PN->getIncomingValue(i), PhiCpRes,
                                           mvec);
         for (vector<MachineInstr*>::iterator MI=mvec.begin();
              MI != mvec.end(); ++MI) {
           vector<MachineInstr*> CpVec2 =
-            FixConstantOperandsForInstr(PN, *MI, target);
+            FixConstantOperandsForInstr(PN, *MI, Target);
           CpVec2.push_back(*MI);
           CpVec.insert(CpVec.end(), CpVec2.begin(), CpVec2.end());
         }
@@ -219,7 +169,7 @@ InsertCode4AllPhisInMeth(Function *F, TargetMachine &target)
       }
       
       vector<MachineInstr*> mvec;
-      target.getRegInfo().cpValue2Value(PhiCpRes, PN, mvec);
+      Target.getRegInfo().cpValue2Value(PhiCpRes, PN, mvec);
       
       // get an iterator to machine instructions in the BB
       MachineCodeForBasicBlock& bbMvec = MachineCodeForBasicBlock::get(BB);
@@ -229,35 +179,35 @@ InsertCode4AllPhisInMeth(Function *F, TargetMachine &target)
   } // for all BBs in function
 }
 
+//-------------------------------------------------------------------------
+// Thid method inserts a copy instruction to a predecessor BB as a result
+// of phi elimination.
+//-------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------
-// Function PostprocessMachineCodeForTree
-// 
-// Apply any final cleanups to machine code for the root of a subtree
-// after selection for all its children has been completed.
-//---------------------------------------------------------------------------
+void
+InstructionSelection::InsertPhiElimInstructions(BasicBlock *BB,
+                                                const std::vector<MachineInstr*>& CpVec)
+{ 
+  Instruction *TermInst = (Instruction*)BB->getTerminator();
+  MachineCodeForInstruction &MC4Term = MachineCodeForInstruction::get(TermInst);
+  MachineInstr *FirstMIOfTerm = MC4Term.front();
+  
+  assert (FirstMIOfTerm && "No Machine Instrs for terminator");
+  
+  MachineCodeForBasicBlock &bbMvec = MachineCodeForBasicBlock::get(BB);
 
-static void
-PostprocessMachineCodeForTree(InstructionNode* instrNode,
-                              int ruleForNode,
-                              short* nts,
-                              TargetMachine &target)
-{
-  // Fix up any constant operands in the machine instructions to either
-  // use an immediate field or to load the constant into a register
-  // Walk backwards and use direct indexes to allow insertion before current
-  // 
-  Instruction* vmInstr = instrNode->getInstruction();
-  MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(vmInstr);
-  for (int i = (int) mvec.size()-1; i >= 0; i--)
-    {
-      std::vector<MachineInstr*> loadConstVec =
-        FixConstantOperandsForInstr(vmInstr, mvec[i], target);
-      
-      if (loadConstVec.size() > 0)
-        mvec.insert(mvec.begin()+i, loadConstVec.begin(), loadConstVec.end());
-    }
+  // find the position of first machine instruction generated by the
+  // terminator of this BB
+  MachineCodeForBasicBlock::iterator MCIt =
+    std::find(bbMvec.begin(), bbMvec.end(), FirstMIOfTerm);
+
+  assert( MCIt != bbMvec.end() && "Start inst of terminator not found");
+  
+  // insert the copy instructions just before the first machine instruction
+  // generated for the terminator
+  bbMvec.insert(MCIt, CpVec.begin(), CpVec.end());
 }
+
 
 //---------------------------------------------------------------------------
 // Function SelectInstructionsForTree 
@@ -275,20 +225,18 @@ PostprocessMachineCodeForTree(InstructionNode* instrNode,
 // may be used by multiple instructions).
 //---------------------------------------------------------------------------
 
-bool
-SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
-			  TargetMachine &target)
+void 
+InstructionSelection::SelectInstructionsForTree(InstrTreeNode* treeRoot,
+                                                int goalnt)
 {
   // Get the rule that matches this node.
   // 
   int ruleForNode = burm_rule(treeRoot->state, goalnt);
   
-  if (ruleForNode == 0)
-    {
-      cerr << "Could not match instruction tree for instr selection\n";
-      assert(0);
-      return true;
-    }
+  if (ruleForNode == 0) {
+    cerr << "Could not match instruction tree for instr selection\n";
+    abort();
+  }
   
   // Get this rule's non-terminals and the corresponding child nodes (if any)
   // 
@@ -305,7 +253,7 @@ SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
       InstructionNode* instrNode = (InstructionNode*)treeRoot;
       assert(instrNode->getNodeType() == InstrTreeNode::NTInstructionNode);
       
-      GetInstructionsByRule(instrNode, ruleForNode, nts, target, minstrVec);
+      GetInstructionsByRule(instrNode, ruleForNode, nts, Target, minstrVec);
       
       MachineCodeForInstruction &mvec = 
         MachineCodeForInstruction::get(instrNode->getInstruction());
@@ -333,16 +281,13 @@ SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
       // Now we have the first non-chain rule so we have found
       // the actual child nodes.  Recursively compile them.
       // 
-      for (int i = 0; nts[i]; i++)
+      for (unsigned i = 0; nts[i]; i++)
 	{
 	  assert(i < 2);
 	  InstrTreeNode::InstrTreeNodeType nodeType = kids[i]->getNodeType();
 	  if (nodeType == InstrTreeNode::NTVRegListNode ||
 	      nodeType == InstrTreeNode::NTInstructionNode)
-	    {
-	      if (SelectInstructionsForTree(kids[i], nts[i], target))
-		return true;			// failure
-	    }
+            SelectInstructionsForTree(kids[i], nts[i]);
 	}
     }
   
@@ -350,11 +295,43 @@ SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
   // have been translated
   // 
   if (treeRoot->opLabel != VRegListOp)
+    PostprocessMachineCodeForTree((InstructionNode*)treeRoot, ruleForNode, nts);
+}
+
+//---------------------------------------------------------------------------
+// Function PostprocessMachineCodeForTree
+// 
+// Apply any final cleanups to machine code for the root of a subtree
+// after selection for all its children has been completed.
+//
+void
+InstructionSelection::PostprocessMachineCodeForTree(InstructionNode* instrNode,
+                                                    int ruleForNode,
+                                                    short* nts) 
+{
+  // Fix up any constant operands in the machine instructions to either
+  // use an immediate field or to load the constant into a register
+  // Walk backwards and use direct indexes to allow insertion before current
+  // 
+  Instruction* vmInstr = instrNode->getInstruction();
+  MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(vmInstr);
+  for (int i = (int) mvec.size()-1; i >= 0; i--)
     {
-      InstructionNode* instrNode = (InstructionNode*)treeRoot;
-      PostprocessMachineCodeForTree(instrNode, ruleForNode, nts, target);
+      std::vector<MachineInstr*> loadConstVec =
+        FixConstantOperandsForInstr(vmInstr, mvec[i], Target);
+      
+      if (loadConstVec.size() > 0)
+        mvec.insert(mvec.begin()+i, loadConstVec.begin(), loadConstVec.end());
     }
-  
-  return false;				// success
+}
+
+
+
+//===----------------------------------------------------------------------===//
+// createInstructionSelectionPass - Public entrypoint for instruction selection
+// and this file as a whole...
+//
+Pass *createInstructionSelectionPass(TargetMachine &T) {
+  return new InstructionSelection(T);
 }
 
