@@ -39,8 +39,6 @@ namespace {
                        cl::desc("Do not run any optimization passes"));
 }
 
-namespace llvm {
-
 static inline void addPass(PassManager &PM, Pass *P) {
   // Add the pass to the pass manager...
   PM.add(P);
@@ -57,13 +55,10 @@ static inline void addPass(PassManager &PM, Pass *P) {
 ///  Internalize - Flags whether all symbols should be marked internal.
 ///  Out         - Pointer to file stream to which to write the output.
 ///
-/// Outputs:
-///  None.
-///
 /// Returns non-zero value on error.
 ///
-int
-GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
+int llvm::GenerateBytecode(Module *M, bool Strip, bool Internalize,
+                           std::ostream *Out) {
   // In addition to just linking the input from GCC, we also want to spiff it up
   // a little bit.  Do this now.
   PassManager Passes;
@@ -157,36 +152,31 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
 ///  llc            - The pathname to use for LLC.
 ///  envp           - The environment to use when running LLC.
 ///
-/// Outputs:
-///  None.
-///
 /// Return non-zero value on error.
 ///
-int
-GenerateAssembly(const std::string &OutputFilename,
-                 const std::string &InputFilename,
-                 const std::string &llc,
-                 char ** const envp)
-{
+int llvm::GenerateAssembly(const std::string &OutputFilename,
+                           const std::string &InputFilename,
+                           const std::string &llc,
+                           char ** const envp) {
   // Run LLC to convert the bytecode file into assembly code.
-  const char *cmd[8];
-
+  const char *cmd[6];
   cmd[0] = llc.c_str();
   cmd[1] = "-f";
   cmd[2] = "-o";
   cmd[3] = OutputFilename.c_str();
   cmd[4] = InputFilename.c_str();
-  cmd[5] = NULL;
+  cmd[5] = 0;
 
   return ExecWait(cmd, envp);
 }
 
 /// GenerateAssembly - generates a native assembly language source file from the
 /// specified bytecode file.
-int GenerateCFile(const std::string &OutputFile, const std::string &InputFile,
-                  const std::string &llc, char ** const envp) {
+int llvm::GenerateCFile(const std::string &OutputFile,
+                        const std::string &InputFile,
+                        const std::string &llc, char ** const envp) {
   // Run LLC to convert the bytecode file into C.
-  const char *cmd[8];
+  const char *cmd[7];
 
   cmd[0] = llc.c_str();
   cmd[1] = "-march=c";
@@ -194,7 +184,7 @@ int GenerateCFile(const std::string &OutputFile, const std::string &InputFile,
   cmd[3] = "-o";
   cmd[4] = OutputFile.c_str();
   cmd[5] = InputFile.c_str();
-  cmd[6] = NULL;
+  cmd[6] = 0;
   return ExecWait(cmd, envp);
 }
 
@@ -214,13 +204,11 @@ int GenerateCFile(const std::string &OutputFile, const std::string &InputFile,
 ///
 /// Returns non-zero value on error.
 ///
-int
-GenerateNative(const std::string &OutputFilename,
-               const std::string &InputFilename,
-               const std::vector<std::string> &Libraries,
-               const std::vector<std::string> &LibPaths,
-               const std::string &gcc,
-               char ** const envp) {
+int llvm::GenerateNative(const std::string &OutputFilename,
+                         const std::string &InputFilename,
+                         const std::vector<std::string> &Libraries,
+                         const std::vector<std::string> &LibPaths,
+                         const std::string &gcc, char ** const envp) {
   // Remove these environment variables from the environment of the
   // programs that we will execute.  It appears that GCC sets these
   // environment variables so that the programs it uses can configure
@@ -278,5 +266,3 @@ GenerateNative(const std::string &OutputFilename,
   // Run the compiler to assembly and link together the program.
   return ExecWait(&(cmd[0]), clean_env);
 }
-
-} // End llvm namespace
