@@ -84,11 +84,13 @@ BYTECODE_REPOSITORY := @BCR@
 #	Set the USE_SPEC variable to enable the use of the SPEC benchmarks.
 #	You must provide the SPEC benchmarks on your own.
 @USE_SPEC@
+@USE_SPEC95@
 
 # Path to the SPEC benchmarks.  If you have the SPEC benchmarks, place the
 # path here.
 #SPEC_ROOT := /home/vadve/shared/benchmarks/speccpu2000/benchspec
 SPEC_ROOT := @SPEC_ROOT@
+SPEC95_ROOT := @SPEC95_ROOT@
 
 # Path to the PAPI code.  This is used by the reoptimizer only.
 #PAPIDIR := /home/vadve/shared/papi-2.3.4.1

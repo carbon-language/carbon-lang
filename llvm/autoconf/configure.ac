@@ -55,6 +55,7 @@ AC_CONFIG_MAKEFILE(test/Programs/TEST.micro.Makefile)
 AC_CONFIG_MAKEFILE(test/Programs/External/Makefile)
 AC_CONFIG_MAKEFILE(test/Programs/External/SPEC/Makefile)
 AC_CONFIG_MAKEFILE(test/Programs/External/SPEC/Makefile.spec)
+AC_CONFIG_MAKEFILE(test/Programs/External/SPEC/Makefile.spec95)
 AC_CONFIG_MAKEFILE(test/Programs/MultiSource/Makefile)
 AC_CONFIG_MAKEFILE(test/Programs/MultiSource/Makefile.multisrc)
 AC_CONFIG_MAKEFILE(test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/test.in)
@@ -281,7 +282,7 @@ else
 	AC_SUBST(ENABLE_OPTIMIZED,[[ENABLE_OPTIMIZED=1]])
 fi
 
-dnl Spec Benchmarks
+dnl Spec 2000 Benchmarks
 AC_ARG_ENABLE(spec2000,AC_HELP_STRING([--enable-spec2000],[Compile SPEC 2000 benchmarks (default is NO)]),,enableval=no)
 if test ${enableval} = "no"
 then
@@ -301,6 +302,28 @@ else
 		AC_SUBST(SPEC_ROOT,[${enableval}])
 	fi
 	AC_SUBST(USE_SPEC,[[USE_SPEC=1]])
+fi
+
+dnl Spec 95 Benchmarks
+AC_ARG_ENABLE(spec95,AC_HELP_STRING([--enable-spec95],[Compile SPEC 95 benchmarks (default is NO)]),,enableval=no)
+if test ${enableval} = "no"
+then
+	if test -d /home/vadve/shared/benchmarks/spec95_sparcv9/benchspec
+	then
+		AC_SUBST(SPEC95_ROOT,[/home/vadve/shared/benchmarks/spec95_sparcv9/benchspec])
+		AC_SUBST(USE_SPEC95,[[USE_SPEC95=1]])
+	else
+		AC_SUBST(USE_SPEC95,[[]])
+		AC_SUBST(SPEC95_ROOT,[])
+	fi
+else
+	if test ${enableval} = ""
+	then
+		AC_SUBST(SPEC95_ROOT,[/home/vadve/shared/benchmarks/spec95_sparcv9/benchspec])
+	else
+		AC_SUBST(SPEC95_ROOT,[${enableval}])
+	fi
+	AC_SUBST(USE_SPEC95,[[USE_SPEC95=1]])
 fi
 
 dnl Precompiled Bytecode Option
