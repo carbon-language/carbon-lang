@@ -219,6 +219,9 @@ void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
     BCR_TRACE(3, "Plane Type: '" << *Ty << "' with " << NumEntries <<
                  " entries\n");
 
+    Function::iterator BlockIterator;
+    unsigned CurBlockIteratorIdx = ~0;
+
     for (unsigned i = 0; i < NumEntries; ++i) {
       // Symtab entry: [def slot #][name]
       unsigned slot;
@@ -231,12 +234,17 @@ void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
       if (Typ == Type::TypeTyID)
         V = (Value*)getType(slot);
       else if (Typ == Type::LabelTyID) {
-        if (CurrentFunction) {
-          // FIXME: THIS IS N^2!!!
-          Function::iterator BlockIterator = CurrentFunction->begin();
-          std::advance(BlockIterator, slot);
-          V = BlockIterator;
+        if (!CurrentFunction)
+          throw std::string("Basic blocks don't exist at global scope!");
+
+        if (slot < CurBlockIteratorIdx) {
+          CurBlockIteratorIdx = 0;
+          BlockIterator = CurrentFunction->begin();
         }
+
+        std::advance(BlockIterator, slot-CurBlockIteratorIdx);
+        CurBlockIteratorIdx = slot;
+        V = BlockIterator;
       } else
         V = getValue(Typ, slot, false); // Find mapping...
       if (V == 0) throw std::string("Failed value look-up.");
