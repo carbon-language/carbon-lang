@@ -18,7 +18,6 @@
 #include "Support/CommandLine.h"
 #include "Config/unistd.h"
 #include <sys/resource.h>
-
 using namespace llvm;
 
 static cl::list<std::string>
@@ -51,5 +50,11 @@ int main(int argc, char **argv) {
     perror("setrlimit: RLIMIT_CORE");
   }
 
-  return D.run();
+  try {
+    return D.run();
+  } catch (...) {
+    std::cerr << "Whoops, an exception leaked out of bugpoint.  "
+              << "This is a bug in bugpoint!\n";
+    return 1;
+  }
 }
