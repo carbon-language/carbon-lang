@@ -125,39 +125,34 @@ SparcV9TargetMachine::SparcV9TargetMachine(IntrinsicLowering *il)
 bool
 SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 {
-  // The following 3 passes used to be inserted specially by llc.
   // Replace malloc and free instructions with library calls.
   PM.add(createLowerAllocationsPass());
   
-  // Strip all of the symbols from the bytecode so that it will be smaller...
-  if (!DisableStrip)
-    PM.add(createSymbolStrippingPass());
-
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
-
-  PM.add(createLowerSelectPass());
 
   // FIXME: implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
   
   // decompose multi-dimensional array references into single-dim refs
   PM.add(createDecomposeMultiDimRefsPass());
-  
-  // Construct and initialize the MachineFunction object for this fn.
-  PM.add(createMachineCodeConstructionPass(*this));
 
-  //Insert empty stackslots in the stack frame of each function
-  //so %fp+offset-8 and %fp+offset-16 are empty slots now!
-  PM.add(createStackSlotsPass(*this));
-
-  // Specialize LLVM code for this target machine and then
-  // run basic dataflow optimizations on LLVM code.
+  // Lower LLVM code to the form expected by the SPARCv9 instruction selector.
   PM.add(createPreSelectionPass(*this));
+  PM.add(createLowerSelectPass());
+
+  // Run basic LLVM dataflow optimizations, to clean up after pre-selection.
   PM.add(createReassociatePass());
   PM.add(createLICMPass());
   PM.add(createGCSEPass());
 
+  // Construct and initialize the MachineFunction object for this fn.
+  PM.add(createMachineCodeConstructionPass(*this));
+
+  // Insert empty stackslots in the stack frame of each function
+  // so %fp+offset-8 and %fp+offset-16 are empty slots now!
+  PM.add(createStackSlotsPass(*this));
+  
   PM.add(createInstructionSelectionPass(*this));
 
   if (!DisableSched)
@@ -190,9 +185,13 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   PM.add(createSparcV9MachineCodeDestructionPass());
 
   // Emit bytecode to the assembly file into its special section next
-  if (EmitMappingInfo)
+  if (EmitMappingInfo) {
+    // Strip all of the symbols from the bytecode so that it will be smaller...
+    if (!DisableStrip)
+      PM.add(createSymbolStrippingPass());
     PM.add(createBytecodeAsmPrinterPass(Out));
-
+  }
+  
   return false;
 }
 
@@ -206,35 +205,40 @@ void SparcV9JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
                         TD.getPointerAlignment(), TD.getDoubleAlignment()));
 
   // Replace malloc and free instructions with library calls.
-  // Do this after tracing until lli implements these lib calls.
-  // For now, it will emulate malloc and free internally.
   PM.add(createLowerAllocationsPass());
-
+  
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
 
-  PM.add(createLowerSelectPass());
-
   // FIXME: implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
-
+  
   // decompose multi-dimensional array references into single-dim refs
   PM.add(createDecomposeMultiDimRefsPass());
-  
-  // Construct and initialize the MachineFunction object for this fn.
-  PM.add(createMachineCodeConstructionPass(TM));
 
-  // Specialize LLVM code for this target machine and then
-  // run basic dataflow optimizations on LLVM code.
+  // Lower LLVM code to the form expected by the SPARCv9 instruction selector.
   PM.add(createPreSelectionPass(TM));
+  PM.add(createLowerSelectPass());
+
+  // Run basic LLVM dataflow optimizations, to clean up after pre-selection.
   PM.add(createReassociatePass());
   // FIXME: these passes crash the FunctionPassManager when being added...
   //PM.add(createLICMPass());
   //PM.add(createGCSEPass());
 
+  // Construct and initialize the MachineFunction object for this fn.
+  PM.add(createMachineCodeConstructionPass(TM));
+
   PM.add(createInstructionSelectionPass(TM));
 
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr, "Before reg alloc:\n"));
+
   PM.add(getRegisterAllocator(TM));
+
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr, "After reg alloc:\n"));
+
   PM.add(createPrologEpilogInsertionPass());
 
   if (!DisablePeephole)
