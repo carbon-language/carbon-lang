@@ -109,17 +109,13 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
         const MachineBasicBlock* mbb = mbbi;
         unsigned loopDepth = loopInfo.getLoopDepth(mbb->getBasicBlock());
 
-        if (loopDepth) {
-            for (MachineBasicBlock::const_iterator mii = mbb->begin(),
-                     mie = mbb->end(); mii != mie; ++mii) {
-                MachineInstr* mi = *mii;
+        for (MachineBasicBlock::const_iterator mii = mbb->begin(),
+                 mie = mbb->end(); mii != mie; ++mii) {
+            MachineInstr* mi = *mii;
 
-                for (int i = mi->getNumOperands() - 1; i >= 0; --i) {
-                    MachineOperand& mop = mi->getOperand(i);
-
-                    if (!mop.isVirtualRegister())
-                        continue;
-
+            for (int i = mi->getNumOperands() - 1; i >= 0; --i) {
+                MachineOperand& mop = mi->getOperand(i);
+                if (mop.isVirtualRegister()) {
                     unsigned reg = mop.getAllocatedRegNum();
                     Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
                     assert(r2iit != r2iMap_.end());
