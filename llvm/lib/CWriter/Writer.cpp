@@ -676,7 +676,7 @@ void CWriter::printModule(Module *M) {
   // Print Malloc prototype if needed
   if (needsMalloc){
     Out << "\n/* Malloc to make sun happy */\n";
-    Out << "extern void * malloc(size_t);\n\n";
+    Out << "extern void * malloc();\n\n";
   }
 
   // Output the global variable declarations
