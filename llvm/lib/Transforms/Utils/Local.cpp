@@ -20,6 +20,7 @@
 #include <cmath>
 using namespace llvm;
 
+#if 0
 #if defined(__POWERPC__) && defined(__APPLE_CC__)
 // FIXME: Currently it seems that isnan didn't make its way into the Apple
 // C++ headers, although it IS in the C headers (which confuses autoconf
@@ -27,6 +28,8 @@ using namespace llvm;
 // us has time to write a more complicated autoconf test.
 extern "C" int isnan (double d);
 namespace std { int isnan (double d) { return ::isnan (d); } }
+#endif
+
 #endif
 
 //===----------------------------------------------------------------------===//
@@ -300,9 +303,12 @@ Constant *llvm::ConstantFoldCall(Function *F,
       if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
         double Op1V = Op1->getValue(), Op2V = Op2->getValue();
 
+#if 0
         if (Name == "llvm.isunordered")
           return ConstantBool::get(std::isnan(Op1V) | std::isnan(Op2V));
-        else if (Name == "pow") {
+        else 
+#endif
+        if (Name == "pow") {
           errno = 0;
           double V = pow(Op1V, Op2V);
           if (errno == 0)
