@@ -538,9 +538,34 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, Op0);
 
   // or X, -1 == -1
-  if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1))
+  if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1)) {
     if (RHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op1);
+
+    if (Instruction *Op0I = dyn_cast<Instruction>(Op0)) {
+      // (X & C1) | C2 --> (X | C2) & (C1|C2)
+      if (Op0I->getOpcode() == Instruction::And && isOnlyUse(Op0))
+        if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
+          std::string Op0Name = Op0I->getName(); Op0I->setName("");
+          Instruction *Or = BinaryOperator::create(Instruction::Or,
+                                                   Op0I->getOperand(0), RHS,
+                                                   Op0Name);
+          InsertNewInstBefore(Or, I);
+          return BinaryOperator::create(Instruction::And, Or, *RHS | *Op0CI);
+        }
+
+      // (X ^ C1) | C2 --> (X | C2) ^ (C1&~C2)
+      if (Op0I->getOpcode() == Instruction::Xor && isOnlyUse(Op0))
+        if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
+          std::string Op0Name = Op0I->getName(); Op0I->setName("");
+          Instruction *Or = BinaryOperator::create(Instruction::Or,
+                                                   Op0I->getOperand(0), RHS,
+                                                   Op0Name);
+          InsertNewInstBefore(Or, I);
+          return BinaryOperator::create(Instruction::Xor, Or, *Op0CI & *~*RHS);
+        }
+    }
+  }
 
   Value *Op0NotVal = dyn_castNotVal(Op0);
   Value *Op1NotVal = dyn_castNotVal(Op1);
