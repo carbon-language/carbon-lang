@@ -270,7 +270,7 @@ bool SCCP::doSCCP() {
         // Hey, we just changed something!
         MadeChanges = true;
       } else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(Inst)) {
-        MadeChanges |= ConstantFoldTerminator(TI);
+        MadeChanges |= ConstantFoldTerminator(BB, BI, TI);
       }
 
       ++BI;

@@ -23,9 +23,11 @@ bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &I);
 
 // ConstantFoldTerminator - If a terminator instruction is predicated on a
 // constant value, convert it into an unconditional branch to the constant
-// destination.
+// destination.  This is a nontrivial operation because the successors of this
+// basic block must have their PHI nodes updated.
 //
-bool ConstantFoldTerminator(TerminatorInst *T);
+bool ConstantFoldTerminator(BasicBlock *BB, BasicBlock::iterator &I,
+                            TerminatorInst *T);
 
 
 //===----------------------------------------------------------------------===//

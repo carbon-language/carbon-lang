@@ -102,7 +102,8 @@ ConstantFoldBinaryInst(BasicBlock *BB, BasicBlock::iterator &II,
 // constant value, convert it into an unconditional branch to the constant
 // destination.
 //
-bool ConstantFoldTerminator(TerminatorInst *T) {
+bool ConstantFoldTerminator(BasicBlock *BB, BasicBlock::iterator &II,
+                            TerminatorInst *T) {
   // Branch - See if we are conditional jumping on constant
   if (BranchInst *BI = dyn_cast<BranchInst>(T)) {
     if (BI->isUnconditional()) return false;  // Can't optimize uncond branch
@@ -127,6 +128,7 @@ bool ConstantFoldTerminator(TerminatorInst *T) {
       // Set the unconditional destination, and change the insn to be an
       // unconditional branch.
       BI->setUnconditionalDest(Destination);
+      II = BB->end()-1;  // Update instruction iterator!
       return true;
     }
 #if 0
@@ -171,7 +173,7 @@ bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &II) {
     Constant *D = dyn_cast<Constant>(UInst->getOperand(0));
     if (D) return ConstantFoldUnaryInst(BB, II, UInst, D);
   } else if (TerminatorInst *TInst = dyn_cast<TerminatorInst>(Inst)) {
-    return ConstantFoldTerminator(TInst);
+    return ConstantFoldTerminator(BB, II, TInst);
 
   } else if (PHINode *PN = dyn_cast<PHINode>(Inst)) {
     // If it's a PHI node and only has one operand
