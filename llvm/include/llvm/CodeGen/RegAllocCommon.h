@@ -7,8 +7,6 @@
 #ifndef LLVM_CODEGEN_REGALLOCCOMMON_H
 #define LLVM_CODEGEN_REGALLOCCOMMON_H
 
-#include "Support/CommandLine.h"
-
 enum RegAllocDebugLevel_t {
   RA_DEBUG_None         = 0,
   RA_DEBUG_Results      = 1,
