@@ -2723,8 +2723,7 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
 void ISel::Select(SDOperand N) {
   unsigned Tmp1, Tmp2, Opc;
 
-  // FIXME: Disable for our current expansion model!
-  if (/*!N->hasOneUse() &&*/ !ExprMap.insert(std::make_pair(N, 1)).second)
+  if (!ExprMap.insert(std::make_pair(N, 1)).second)
     return;  // Already selected.
 
   SDNode *Node = N.Val;

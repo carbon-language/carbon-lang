@@ -1543,8 +1543,7 @@ void ISel::Select(SDOperand N) {
   unsigned Tmp1, Tmp2, Opc;
   unsigned opcode = N.getOpcode();
 
-  // FIXME: Disable for our current expansion model!
-  if (/*!N->hasOneUse() &&*/ !ExprMap.insert(std::make_pair(N, notIn)).second)
+  if (!ExprMap.insert(std::make_pair(N, notIn)).second)
     return;  // Already selected.
 
   SDNode *Node = N.Val;
