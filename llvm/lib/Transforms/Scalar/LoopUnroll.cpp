@@ -300,10 +300,15 @@ bool LoopUnroll::visitLoop(Loop *L) {
     ChangeExitBlocksFromTo(LI->begin(), LI->end(),
                            Preheader, LoopExit);
 
+  // If the preheader was the entry block of this function, move the exit block
+  // to be the new entry of the loop.
+  Function *F = LoopExit->getParent();
+  if (Preheader == &F->front())
+    F->getBasicBlockList().splice(F->begin(), F->getBasicBlockList(), LoopExit);
 
   // Actually delete the blocks now.
-  LoopExit->getParent()->getBasicBlockList().erase(Preheader);
-  LoopExit->getParent()->getBasicBlockList().erase(BB);
+  F->getBasicBlockList().erase(Preheader);
+  F->getBasicBlockList().erase(BB);
 
   ++NumUnrolled;
   return true;
