@@ -1,6 +1,6 @@
 //===- TraceValues.cpp - Value Tracing for debugging -------------*- C++ -*--=//
 //
-// Support for inserting LLVM code to print values at basic block and method
+// Support for inserting LLVM code to print values at basic block and function
 // exits.
 //
 //===----------------------------------------------------------------------===//
@@ -38,13 +38,13 @@ namespace {
     //--------------------------------------------------------------------------
     // Function InsertCodeToTraceValues
     // 
-    // Inserts tracing code for all live values at basic block and/or method
+    // Inserts tracing code for all live values at basic block and/or function
     // exits as specified by `traceBasicBlockExits' and `traceFunctionExits'.
     //
     static bool doit(Function *M, bool traceBasicBlockExits,
                      bool traceFunctionExits, Function *Printf);
     
-    // runOnMethod - This method does the work.  Always successful.
+    // runOnFunction - This method does the work.
     //
     bool runOnMethod(Function *F) {
       return doit(F, TraceBasicBlockExits, TraceFunctionExits, PrintfFunc);
@@ -53,11 +53,11 @@ namespace {
 } // end anonymous namespace
 
 
-Pass *createTraceValuesPassForMethod() {       // Just trace methods
+Pass *createTraceValuesPassForMethod() {       // Just trace functions
   return new InsertTraceCode(false, true);
 }
 
-Pass *createTraceValuesPassForBasicBlocks() {  // Trace BB's and methods
+Pass *createTraceValuesPassForBasicBlocks() {  // Trace BB's and functions
   return new InsertTraceCode(true, true);
 }
 
@@ -123,24 +123,15 @@ static bool ShouldTraceValue(const Instruction *I) {
 
 static string getPrintfCodeFor(const Value *V) {
   if (V == 0) return "";
-  switch (V->getType()->getPrimitiveID()) {
-  case Type::BoolTyID:
-  case Type::UByteTyID: case Type::UShortTyID:
-  case Type::UIntTyID:  case Type::ULongTyID:
-  case Type::SByteTyID: case Type::ShortTyID:
-  case Type::IntTyID:   case Type::LongTyID:
+  if (V->getType()->isFloatingPoint())
+    return "%g";
+  else if (V->getType() == Type::LabelTy || isa<PointerType>(V->getType()))
+    return "0x%p";
+  else if (V->getType()->isIntegral() || V->getType() == Type::BoolTy)
     return "%d";
     
-  case Type::FloatTyID: case Type::DoubleTyID:
-    return "%g";
-
-  case Type::LabelTyID: case Type::PointerTyID:
-    return "%p";
-    
-  default:
-    assert(0 && "Illegal value to print out...");
-    return "";
-  }
+  assert(0 && "Illegal value to print out...");
+  return "";
 }
 
 
@@ -149,7 +140,7 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, BasicBlock::iterator &BBI,
   // Escape Message by replacing all % characters with %% chars.
   unsigned Offset = 0;
   while ((Offset = Message.find('%', Offset)) != string::npos) {
-    Message.replace(Offset, 2, "%%");
+    Message.replace(Offset, 1, "%%");
     Offset += 2;  // Skip over the new %'s
   }
 
@@ -188,8 +179,8 @@ static void InsertVerbosePrintInst(Value *V, BasicBlock *BB,
 // or that is stored to memory in this basic block.
 // If the value is stored to memory, we load it back before printing
 // We also return all such loaded values in the vector valuesStoredInFunction
-// for printing at the exit from the method.  (Note that in each invocation
-// of the method, this will only get the last value stored for each static
+// for printing at the exit from the function.  (Note that in each invocation
+// of the function, this will only get the last value stored for each static
 // store instruction).
 // *bb must be the block in which the value is computed;
 // this is not checked here.
@@ -232,7 +223,7 @@ static void TraceValuesAtBBExit(BasicBlock *BB, Function *Printf,
     Instruction *I = *II;
     if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
       assert(valuesStoredInFunction &&
-             "Should not be printing a store instruction at method exit");
+             "Should not be printing a store instruction at function exit");
       LoadInst *LI = new LoadInst(SI->getPointerOperand(), SI->copyIndices(),
                                   "reload");
       InsertPos = BB->getInstList().insert(InsertPos, LI) + 1;
@@ -250,7 +241,7 @@ static inline void InsertCodeToShowFunctionEntry(Function *M, Function *Printf){
 
   std::ostringstream OutStr;
   WriteAsOperand(OutStr, M, true);
-  InsertPrintInst(0, BB, BBI, "ENTERING METHOD: " + OutStr.str(), Printf);
+  InsertPrintInst(0, BB, BBI, "ENTERING FUNCTION: " + OutStr.str(), Printf);
 
   // Now print all the incoming arguments
   const Function::ArgumentListType &argList = M->getArgumentList();
@@ -271,7 +262,7 @@ static inline void InsertCodeToShowFunctionExit(BasicBlock *BB,
   
   std::ostringstream OutStr;
   WriteAsOperand(OutStr, BB->getParent(), true);
-  InsertPrintInst(0, BB, BBI, "LEAVING  METHOD: " + OutStr.str(), Printf);
+  InsertPrintInst(0, BB, BBI, "LEAVING  FUNCTION: " + OutStr.str(), Printf);
   
   // print the return value, if any
   if (BB->getParent()->getReturnType() != Type::VoidTy)
