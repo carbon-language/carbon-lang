@@ -56,17 +56,6 @@ iplist<GlobalVariable> &ilist_traits<GlobalVariable>::getList(Module *M) {
 template class SymbolTableListTraits<GlobalVariable, Module, Module>;
 template class SymbolTableListTraits<Function, Module, Module>;
 
-// Define the GlobalValueRefMap as a struct that wraps a map so that we don't
-// have Module.h depend on <map>
-//
-namespace llvm {
-  struct GlobalValueRefMap {
-    typedef std::map<GlobalValue*, ConstantPointerRef*> MapTy;
-    typedef MapTy::iterator iterator;
-    std::map<GlobalValue*, ConstantPointerRef*> Map;
-  };
-}
-
 //===----------------------------------------------------------------------===//
 // Primitive Module methods.
 //
@@ -77,7 +66,6 @@ Module::Module(const std::string &MID)
   FunctionList.setParent(this);
   GlobalList.setItemParent(this);
   GlobalList.setParent(this);
-  GVRefMap = 0;
   SymTab = new SymbolTable();
 }
 
@@ -300,38 +288,5 @@ void Module::dropAllReferences() {
 
   for(Module::giterator I = gbegin(), E = gend(); I != E; ++I)
     I->dropAllReferences();
-
-  // If there are any GlobalVariable references still out there, nuke them now.
-  // Since all references are hereby dropped, nothing could possibly reference
-  // them still.  Note that destroying all of the constant pointer refs will
-  // eventually cause the GVRefMap field to be set to null (by
-  // destroyConstantPointerRef, below).
-  //
-  while (GVRefMap)
-    // Delete the ConstantPointerRef node...  
-    GVRefMap->Map.begin()->second->destroyConstant();
 }
 
-// Accessor for the underlying GlobalValRefMap...
-ConstantPointerRef *Module::getConstantPointerRef(GlobalValue *V){
-  // Create ref map lazily on demand...
-  if (GVRefMap == 0) GVRefMap = new GlobalValueRefMap();
-
-  GlobalValueRefMap::iterator I = GVRefMap->Map.find(V);
-  if (I != GVRefMap->Map.end()) return I->second;
-
-  ConstantPointerRef *Ref = new ConstantPointerRef(V);
-  GVRefMap->Map[V] = Ref;
-  return Ref;
-}
-
-void Module::destroyConstantPointerRef(ConstantPointerRef *CPR) {
-  assert(GVRefMap && "No map allocated, but we have a CPR?");
-  if (!GVRefMap->Map.erase(CPR->getValue()))  // Remove it from the map...
-    assert(0 && "ConstantPointerRef not found in module CPR map!");
-  
-  if (GVRefMap->Map.empty()) {   // If the map is empty, delete it.
-    delete GVRefMap;
-    GVRefMap = 0;
-  }
-}
