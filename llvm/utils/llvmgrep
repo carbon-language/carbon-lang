@@ -21,7 +21,12 @@
 TOPDIR=`pwd | sed -e 's#\(.*/llvm\).*#\1#'`
 if test -d "$TOPDIR" ; then
   cd $TOPDIR
-  ./utils/llvmdo -dirs "include lib tools utils docs examples test projects" egrep -H -n "$*"
+  case `uname -s` in
+    SunOS) grep_cmd="ggrep -H -n" ;;
+    Linux) grep_cmd="egrep -H -n" ;;
+    *) grep_cmd="egrep -l -n" ;;
+  esac
+  ./utils/llvmdo -dirs "include lib tools utils docs examples test projects" $grep_cmd "$*"
 else
   echo "Can't find LLVM top directory in $TOPDIR"
 fi

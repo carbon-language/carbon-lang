@@ -47,7 +47,11 @@ ARGS="$*"
 TOPDIR=`pwd | sed -e 's#\(.*/llvm\).*#\1#'`
 if test -d "$TOPDIR" ; then
   cd $TOPDIR
-  find $LLVMDO_DIRS -type f \
+  case `uname -s` in
+    SunOS) find_prog=gfind ;;
+    *) find_prog=find ;;
+  esac
+  $find_prog $LLVMDO_DIRS -type f \
     \( \
       -path 'docs/doxygen/*' -o \
       -path 'docs/CommandGuide/html/*' -o \
