@@ -1571,8 +1571,16 @@ void BytecodeReader::ParseConstantPool(ValueTable &Tab,
 
   // After we have finished parsing the constant pool, we had better not have
   // any dangling references left.
-  if (!ConstantFwdRefs.empty())
-    error("Unresolved constant references exist!");
+  if (!ConstantFwdRefs.empty()) {
+  typedef std::map<std::pair<const Type*,unsigned>, Constant*> ConstantRefsType;
+    ConstantRefsType::const_iterator I = ConstantFwdRefs.begin();
+    const Type* missingType = I->first.first;
+    Constant* missingConst = I->second;
+    error(utostr(ConstantFwdRefs.size()) + 
+          " unresolved constant reference exist. First one is '" + 
+          missingConst->getName() + "' of type '" + 
+          missingType->getDescription() + "'.");
+  }
 
   checkPastBlockEnd("Constant Pool");
   if (Handler) Handler->handleGlobalConstantsEnd();
