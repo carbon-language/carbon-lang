@@ -15,6 +15,7 @@ all:: qmtest
 
 # QMTest option specifying the location of the QMTest database.
 QMDB= -D $(LLVM_SRC_ROOT)/test/QMTestDB
+QMCLASSES=$(LLVM_OBJ_ROOT)/test/QMTestDB/QMTest
 
 #
 # This is configuration information used by the test suite.  In QM Test, it's
@@ -33,7 +34,7 @@ CONTEXT= -c srcroot=$(LLVM_SRC_ROOT) \
 #
 # Location of the QMTest program.
 #
-QMTEST= qmtest $(QMDB)
+QMTEST= QMTEST_CLASS_PATH=$(QMCLASSES) qmtest $(QMDB)
 
 
 #
@@ -72,4 +73,10 @@ register:
 	$(QMTEST) register test llvm.AnalyzeTest
 	$(QMTEST) register test llvm.CTest
 	$(QMTEST) register resource llvm.BytecodeResource
+
+#
+# Start up the QMTest GUI
+#
+gui::
+	$(QMTEST) gui --no-browser --daemon
 
