@@ -12,9 +12,17 @@
 
 #if __GNUC__ == 3
 #include <ext/hash_map>
-using __gnu_cxx::hash_map;
+#ifndef HASH_NAMESPACE
+#define HASH_NAMESPACE __gnu_cxx
+#endif
 #else
 #include <hash_map>
+#ifndef HASH_NAMESPACE
+#define HASH_NAMESPACE std
 #endif
+#endif
+
+using HASH_NAMESPACE::hash_map;
+using HASH_NAMESPACE::hash;
 
 #endif

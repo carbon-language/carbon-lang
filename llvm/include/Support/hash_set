@@ -11,7 +11,14 @@
 #define SUPPORT_HASHSET_H
 #if __GNUC__==3
 #include <ext/hash_set>
-using __gnu_cxx::hash_set;
+#define HASH_NAMESPACE __gnu_cxx
 #else
 #include <hash_set>
+#define HASH_NAMESPACE std
 #endif
+
+using HASH_NAMESPACE::hash_set;
+using HASH_NAMESPACE::hash;
+
+#endif
+

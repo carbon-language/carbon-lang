@@ -14,10 +14,10 @@
 #include <Support/hash_map>
 
 // Cannot specialize hash template from outside of the std namespace.
-namespace std {
+namespace HASH_NAMESPACE {
 
-template <> struct hash<string> {
-  size_t operator()(string const &str) const {
+template <> struct hash<std::string> {
+  size_t operator()(std::string const &str) const {
     return hash<char const *>()(str.c_str());
   }
 };
