@@ -175,8 +175,10 @@ def MOVim16 : X86Inst<"mov", 0xC7, MRMS0m    , Arg16>, OpSize;    // [mem] = imm
 def MOVim32 : X86Inst<"mov", 0xC7, MRMS0m    , Arg32>;            // [mem] = imm32
 
 def MOVmr8  : X86Inst<"mov", 0x8A, MRMSrcMem , Arg8>;             // R8  = [mem]
-def MOVmr16 : X86Inst<"mov", 0x8B, MRMSrcMem , Arg16>, OpSize;    // R16 = [mem]
-def MOVmr32 : X86Inst<"mov", 0x8B, MRMSrcMem , Arg32>;            // R32 = [mem]
+def MOVmr16 : X86Inst<"mov", 0x8B, MRMSrcMem , Arg16>, OpSize,    // R16 = [mem]
+              Pattern<(set R16, (load (plus R32, (plus (times imm, R32), imm))))>;
+def MOVmr32 : X86Inst<"mov", 0x8B, MRMSrcMem , Arg32>,            // R32 = [mem]
+              Pattern<(set R32, (load (plus R32, (plus (times imm, R32), imm))))>;
 
 def MOVrm8  : X86Inst<"mov", 0x88, MRMDestMem, Arg8>;             // [mem] = R8
 def MOVrm16 : X86Inst<"mov", 0x89, MRMDestMem, Arg16>, OpSize;    // [mem] = R16
@@ -439,3 +441,13 @@ def FLDCWm16  : X86Inst<"fldcw"  , 0xD9, MRMS5m   , Arg16 >;                    
 def RET_R32 : Expander<(ret R32:$reg),
                        [(MOVrr32 EAX, R32:$reg),
                         (RET)]>;
+
+// FIXME: This should eventually just be implemented by defining a frameidx as a
+// value address for a load.
+def LOAD_FI16 : Expander<(set R16:$dest, (load frameidx:$fi)),
+                         [(MOVmr16 R16:$dest, frameidx:$fi, 1, 0/*NoReg*/, 0)]>;
+
+def LOAD_FI32 : Expander<(set R32:$dest, (load frameidx:$fi)),
+                         [(MOVmr32 R32:$dest, frameidx:$fi, 1, 0/*NoReg*/, 0)]>;
+
+
