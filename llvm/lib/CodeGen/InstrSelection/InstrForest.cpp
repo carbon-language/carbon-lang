@@ -1,12 +1,5 @@
-// $Id$
-//---------------------------------------------------------------------------
-// File:
-//	InstrForest.cpp
-// 
-// Purpose:
-//	Convert SSA graph to instruction trees for instruction selection.
-// 
-// Strategy:
+//===-- InstrForest.cpp - Build instruction forest for inst selection -----===//
+//
 //  The key goal is to group instructions into a single
 //  tree if one or more of them might be potentially combined into a single
 //  complex instruction in the target machine.
@@ -17,7 +10,7 @@
 //  and (2) O and I are part of the same basic block,
 //  and (3) O has only a single use, viz., I.
 // 
-//---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
@@ -28,8 +21,6 @@
 #include "llvm/Type.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/STLExtras.h"
-#include <alloca.h>
-#include <iostream>
 using std::cerr;
 using std::vector;
 
@@ -127,10 +118,10 @@ InstructionNode::dumpNode(int indent) const
   const MachineCodeForInstruction &mvec =
     MachineCodeForInstruction::get(getInstruction());
 
-  if (mvec.size() > 0)
+  if (!mvec.empty())
     cerr << "\tMachine Instructions:  ";
 
-  for (unsigned int i=0; i < mvec.size(); ++i) {
+  for (unsigned i = 0; i < mvec.size(); ++i) {
     mvec[i]->dump();
     if (i < mvec.size() - 1)
       cerr << ";  ";

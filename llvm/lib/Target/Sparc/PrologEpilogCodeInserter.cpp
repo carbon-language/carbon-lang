@@ -18,8 +18,6 @@
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Instruction.h"
 
 namespace {
   class InsertPrologEpilogCode : public FunctionPass {

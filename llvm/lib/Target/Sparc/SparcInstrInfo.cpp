@@ -1,29 +1,17 @@
-//***************************************************************************
-// File:
-//	SparcInstrInfo.cpp
-// 
-// Purpose:
-//	
-// History:
-//	10/15/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
-
+//===-- SparcInstrInfo.cpp ------------------------------------------------===//
+//
+//===----------------------------------------------------------------------===//
 
 #include "SparcInternals.h"
 #include "SparcInstrSelectionSupport.h"
-#include "llvm/Target/Sparc.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Instruction.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 using std::vector;
-
-//************************ Internal Functions ******************************/
 
 static const uint32_t MAXLO   = (1 << 10) - 1; // set bits set by %lo(*)
 static const uint32_t MAXSIMM = (1 << 12) - 1; // set bits in simm13 field of OR
@@ -33,7 +21,7 @@ static const uint32_t MAXSIMM = (1 << 12) - 1; // set bits in simm13 field of OR
 // 
 static inline void
 CreateSETUWConst(const TargetMachine& target, uint32_t C,
-                 Instruction* dest, std::vector<MachineInstr*>& mvec)
+                 Instruction* dest, vector<MachineInstr*>& mvec)
 {
   MachineInstr *miSETHI = NULL, *miOR = NULL;
   
@@ -81,7 +69,7 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
 // Not needed for SPARC v9 but useful to make the two SETX functions similar
 static inline void
 CreateSETUWLabel(const TargetMachine& target, Value* val,
-                 Instruction* dest, std::vector<MachineInstr*>& mvec)
+                 Instruction* dest, vector<MachineInstr*>& mvec)
 {
   MachineInstr* MI;
   
@@ -101,7 +89,7 @@ CreateSETUWLabel(const TargetMachine& target, Value* val,
 // with sign-extension to 64 bits.
 static inline void
 CreateSETSWConst(const TargetMachine& target, int32_t C,
-                 Instruction* dest, std::vector<MachineInstr*>& mvec)
+                 Instruction* dest, vector<MachineInstr*>& mvec)
 {
   MachineInstr* MI;
   
@@ -121,7 +109,7 @@ CreateSETSWConst(const TargetMachine& target, int32_t C,
 static inline void
 CreateSETXConst(const TargetMachine& target, uint64_t C,
                 Instruction* tmpReg, Instruction* dest,
-                std::vector<MachineInstr*>& mvec)
+                vector<MachineInstr*>& mvec)
 {
   assert(C > (unsigned int) ~0 && "Use SETUW/SETSW for 32-bit values!");
   
@@ -147,7 +135,7 @@ CreateSETXConst(const TargetMachine& target, uint64_t C,
 static inline void
 CreateSETXLabel(const TargetMachine& target,
                 Value* val, Instruction* tmpReg, Instruction* dest,
-                std::vector<MachineInstr*>& mvec)
+                vector<MachineInstr*>& mvec)
 {
   assert(isa<Constant>(val) || isa<GlobalValue>(val) &&
          "I only know about constant values and global addresses");
@@ -181,7 +169,7 @@ CreateSETXLabel(const TargetMachine& target,
 static inline void
 CreateIntSetInstruction(const TargetMachine& target,
                         int64_t C, Instruction* dest,
-                        std::vector<MachineInstr*>& mvec,
+                        vector<MachineInstr*>& mvec,
                         MachineCodeForInstruction& mcfi)
 {
   assert(dest->getType()->isSigned() && "Use CreateUIntSetInstruction()");
@@ -201,7 +189,7 @@ CreateIntSetInstruction(const TargetMachine& target,
 static inline void
 CreateUIntSetInstruction(const TargetMachine& target,
                          uint64_t C, Instruction* dest,
-                         std::vector<MachineInstr*>& mvec,
+                         vector<MachineInstr*>& mvec,
                          MachineCodeForInstruction& mcfi)
 {
   assert(! dest->getType()->isSigned() && "Use CreateIntSetInstruction()");
@@ -219,7 +207,7 @@ CreateUIntSetInstruction(const TargetMachine& target,
 }
 
 
-//************************* External Classes *******************************/
+
 
 //---------------------------------------------------------------------------
 // class UltraSparcInstrInfo 
@@ -252,7 +240,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
                                            Function* F,
                                            Value* val,
                                            Instruction* dest,
-                                           std::vector<MachineInstr*>& mvec,
+                                           vector<MachineInstr*>& mvec,
                                        MachineCodeForInstruction& mcfi) const
 {
   assert(isa<Constant>(val) || isa<GlobalValue>(val) &&
@@ -333,7 +321,7 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
                                         Function* F,
                                         Value* val,
                                         Instruction* dest,
-                                        std::vector<MachineInstr*>& mvec,
+                                        vector<MachineInstr*>& mvec,
                                         MachineCodeForInstruction& mcfi) const
 {
   assert((val->getType()->isIntegral() || isa<PointerType>(val->getType()))
@@ -378,7 +366,7 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
                                         Function* F,
                                         Value* val,
                                         Instruction* dest,
-                                        std::vector<MachineInstr*>& mvec,
+                                        vector<MachineInstr*>& mvec,
                                         MachineCodeForInstruction& mcfi) const
 {
   const Type* opTy   = val->getType();

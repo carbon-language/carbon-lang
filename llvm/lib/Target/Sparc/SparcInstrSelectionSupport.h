@@ -1,19 +1,13 @@
-// $Id$ -*-c++-*-
-//***************************************************************************
-// File:
-//	SparcInstrSelectionSupport.h
-// 
-// Purpose:
-// 
-// History:
-//	10/17/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===-- llvm/CodeGen/SparcInstrSelectionSupport.h ---------------*- C++ -*-===//
+//
+//
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef SPARC_INSTR_SELECTION_SUPPORT_h
 #define SPARC_INSTR_SELECTION_SUPPORT_h
 
 #include "llvm/DerivedTypes.h"
-#include "llvm/Value.h"
 
 inline MachineOpCode
 ChooseLoadInstruction(const Type *DestTy)
@@ -36,7 +30,6 @@ ChooseLoadInstruction(const Type *DestTy)
   
   return 0;
 }
-
 
 inline MachineOpCode
 ChooseStoreInstruction(const Type *DestTy)

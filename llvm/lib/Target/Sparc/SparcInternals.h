@@ -1,12 +1,9 @@
-//***************************************************************************
-// File:
-//	SparcInternals.h
+//===-- SparcInternals.h ----------------------------------------*- C++ -*-===//
 // 
-// Purpose:
-//       This file defines stuff that is to be private to the Sparc
-//       backend, but is shared among different portions of the backend.
-//**************************************************************************/
-
+// This file defines stuff that is to be private to the Sparc backend, but is
+// shared among different portions of the backend.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef SPARC_INTERNALS_H
 #define SPARC_INTERNALS_H
@@ -86,9 +83,8 @@ extern const MachineInstrDescriptor SparcMachineInstrDesc[];
 //   default to member functions in base class MachineInstrInfo. 
 //---------------------------------------------------------------------------
 
-class UltraSparcInstrInfo : public MachineInstrInfo {
-public:
-  /*ctor*/	UltraSparcInstrInfo(const TargetMachine& tgt);
+struct UltraSparcInstrInfo : public MachineInstrInfo {
+  UltraSparcInstrInfo(const TargetMachine& tgt);
 
   //
   // All immediate constants are in position 1 except the

@@ -1,14 +1,8 @@
-// $Id$
-//***************************************************************************
-// File:
-//	SparcInstrSelection.cpp
-// 
-// Purpose:
-//      BURS instruction selection for SPARC V9 architecture.      
-//	
-// History:
-//	7/02/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===-- SparcInstrSelection.cpp -------------------------------------------===//
+//
+//  BURS instruction selection for SPARC V9 architecture.      
+//
+//===----------------------------------------------------------------------===//
 
 #include "SparcInternals.h"
 #include "SparcInstrSelectionSupport.h"
@@ -24,7 +18,6 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/Constants.h"
 #include "Support/MathExtras.h"

@@ -1,24 +1,11 @@
-// $Id$
-//***************************************************************************
-// File:
-//	MachineInstr.cpp
+//===-- MachineInstr.cpp --------------------------------------------------===//
 // 
-// Purpose:
-//	
-// 
-// Strategy:
-// 
-// History:
-//	7/2/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Value.h"
-#include <iostream>
 using std::cerr;
 
-
-//************************ Class Implementations **************************/
 
 // Constructor for instructions with fixed #operands (nearly all)
 MachineInstr::MachineInstr(MachineOpCode _opCode,

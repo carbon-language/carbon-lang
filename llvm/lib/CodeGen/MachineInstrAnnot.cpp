@@ -1,20 +1,13 @@
-// $Id$ -*-c++-*-
-//***************************************************************************
-// File:
-//	MachineInstrAnnot.cpp
+//===-- MachineInstrAnnot.cpp ---------------------------------------------===//
 // 
-// Purpose:
-//      Annotations used to pass information between code generation phases.
+//  This file defines Annotations used to pass information between code
+//  generation phases.
 // 
-// History:
-//	5/10/02	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/Annotation.h"
 #include "llvm/iOther.h"
-#include <vector>
-
 
 AnnotationID CallArgsDescriptor::AID(AnnotationManager::
                                      getID("CodeGen::CallArgsDescriptor"));

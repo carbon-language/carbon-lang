@@ -1,14 +1,9 @@
-//***************************************************************************
-// File:
-//	InstrSelectionSupport.h
+//===-- InstrSelectionSupport.cpp -----------------------------------------===//
+//
+// Target-independent instruction selection code.  See SparcInstrSelection.cpp
+// for usage.
 // 
-// Purpose:
-//	Target-independent instruction selection code.
-//      See SparcInstrSelection.cpp for usage.
-//      
-// History:
-//	10/10/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/InstrSelection.h"
@@ -21,7 +16,6 @@
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Type.h"
 #include "llvm/iMemory.h"
 using std::vector;

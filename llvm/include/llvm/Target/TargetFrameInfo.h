@@ -1,14 +1,8 @@
-// $Id$ -*-c++-*-
-//***************************************************************************
-// File:
-//	MachineFrameInfo.h
-// 
-// Purpose:
-//	Interface to layout of stack frame on target machine.
-// 
-// History:
-//	11/6/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===-- llvm/CodeGen/MachineFrameInfo.h -------------------------*- C++ -*-===//
+//
+// Interface to layout of stack frame on target machine.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_FRAMEINFO_H
 #define LLVM_CODEGEN_FRAMEINFO_H
@@ -16,22 +10,14 @@
 #include "Support/NonCopyable.h"
 #include <vector>
 
-
-//************************* Forward Declarations **************************/
-
 class MachineCodeForMethod;
 class TargetMachine;
 
-
-//*************************** External Classes ****************************/
-
-
-class MachineFrameInfo : public NonCopyableV {
-public:
-  const TargetMachine& target;
+struct MachineFrameInfo : public NonCopyableV {
+  const TargetMachine &target;
   
 public:
-  /*ctor*/ MachineFrameInfo(const TargetMachine& tgt) : target(tgt) {}
+  MachineFrameInfo(const TargetMachine& tgt) : target(tgt) {}
   
   //
   // These methods provide constant parameters of the frame layout.
