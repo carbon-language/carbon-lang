@@ -162,7 +162,6 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
   RecTy                *Ty;
   Init                 *Initializer;
   std::vector<Init*>   *FieldList;
-  std::vector<Record*> *RecPtr;
   std::vector<unsigned>*BitList;
   Record               *Rec;
   SubClassRefTy        *SubClassRef;
@@ -174,8 +173,7 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
 %token <StrVal>      ID STRVAL CODEFRAGMENT
 
 %type <Ty>           Type
-%type <RecPtr>       DefList DefListNE
-%type <Rec>          ClassInst DefInst Object ObjectBody ClassID DefID
+%type <Rec>          ClassInst DefInst Object ObjectBody ClassID
 
 %type <SubClassRef>  SubClassRef
 %type <SubClassList> ClassList ClassListNE
@@ -197,15 +195,6 @@ ClassID : ID {
     delete $1;
   };
 
-DefID : ID {
-    $$ = Records.getDef(*$1);
-    if ($$ == 0) {
-      err() << "Couldn't find def '" << *$1 << "'!\n";
-      abort();
-    }
-    delete $1;
-  };
-
 
 // TableGen types...
 Type : STRING {                       // string type
@@ -216,7 +205,7 @@ Type : STRING {                       // string type
     $$ = new BitsRecTy($3);
   } | INT {                           // int type
     $$ = new IntRecTy();
-  } | LIST '<' ClassID '>' {          // list<x> type
+  } | LIST '<' Type '>'    {          // list<x> type
     $$ = new ListRecTy($3);
   } | CODE {                          // code type
     $$ = new CodeRecTy();
@@ -252,11 +241,7 @@ Value : INTVAL {
     $$ = Init;
     delete $2;
   } | ID {
-    if (CurRec == 0) {
-      err() << "Def/Class name '" << *$1 << "' not allowed here!\n";
-      abort();
-    }
-    if (const RecordVal *RV = CurRec->getValue(*$1)) {
+    if (const RecordVal *RV = (CurRec ? CurRec->getValue(*$1) : 0)) {
       $$ = new VarInit(*$1, RV->getType());
     } else if (Record *D = Records.getDef(*$1)) {
       $$ = new DefInit(D);
@@ -273,7 +258,7 @@ Value : INTVAL {
       abort();
     }
     delete $3;
-  } | '[' DefList ']' {
+  } | '[' ValueList ']' {
     $$ = new ListInit(*$2);
     delete $2;
   } | Value '.' ID {
@@ -284,19 +269,6 @@ Value : INTVAL {
     $$ = new FieldInit($1, *$3);
     delete $3;
   };
-
-DefList : /*empty */ {
-    $$ = new std::vector<Record*>();
-  } | DefListNE {
-    $$ = $1;
-  };
-DefListNE : DefID {
-    $$ = new std::vector<Record*>();
-    $$->push_back($1);
-  } | DefListNE ',' DefID {
-    ($$=$1)->push_back($3);
-  };
-
 
 RBitList : INTVAL {
     $$ = new std::vector<unsigned>();

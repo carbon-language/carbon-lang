@@ -14,6 +14,16 @@
 #include <iostream>
 #include <cassert>
 
+// RecTy subclasses...
+class BitRecTy;
+class BitsRecTy;
+class IntRecTy;
+class StringRecTy;
+class ListRecTy;
+class CodeRecTy;
+class RecordRecTy;
+
+// Init subclasses...
 class Init;
 class UnsetInit;
 class BitInit;
@@ -27,6 +37,8 @@ class TypedInit;
 class VarInit;
 class FieldInit;
 class VarBitInit;
+
+// Other classes...
 class Record;
 
 //===----------------------------------------------------------------------===//
@@ -36,6 +48,14 @@ class Record;
 struct RecTy {
   virtual ~RecTy() {}
 
+  virtual void print(std::ostream &OS) const = 0;
+  void dump() const;
+
+  /// typeIsConvertibleTo - Return true if all values of 'this' type can be
+  /// converted to the specified type.
+  virtual bool typeIsConvertibleTo(const RecTy *RHS) const = 0;
+
+public:   // These methods should only be called from subclasses of Init
   virtual Init *convertValue( UnsetInit *UI) { return 0; }
   virtual Init *convertValue(   BitInit *BI) { return 0; }
   virtual Init *convertValue(  BitsInit *BI) { return 0; }
@@ -53,8 +73,16 @@ struct RecTy {
     return convertValue((TypedInit*)FI);
   }
 
-  virtual void print(std::ostream &OS) const = 0;
-  void dump() const;
+public:   // These methods should only be called by subclasses of RecTy.
+  // baseClassOf - These virtual methods should be overloaded to return true iff
+  // all values of type 'RHS' can be converted to the 'this' type.
+  virtual bool baseClassOf(const BitRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const BitsRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const IntRecTy    *RHS) const { return false; }
+  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
+  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const CodeRecTy   *RHS) const { return false; }
+  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const RecTy &Ty) {
@@ -74,6 +102,13 @@ struct BitRecTy : public RecTy {
   Init *convertValue(VarBitInit *VB) { return (Init*)VB; }
 
   void print(std::ostream &OS) const { OS << "bit"; }
+
+  bool typeIsConvertibleTo(const RecTy *RHS) const {
+    return RHS->baseClassOf(this);
+  }
+  virtual bool baseClassOf(const BitRecTy *RHS) const { return true; }
+  virtual bool baseClassOf(const BitsRecTy *RHS) const;
+  virtual bool baseClassOf(const IntRecTy *RHS) const { return true; }
 };
 
 
@@ -93,6 +128,15 @@ public:
   Init *convertValue(TypedInit *VI);
 
   void print(std::ostream &OS) const { OS << "bits<" << Size << ">"; }
+
+  bool typeIsConvertibleTo(const RecTy *RHS) const {
+    return RHS->baseClassOf(this);
+  }
+  virtual bool baseClassOf(const BitRecTy *RHS) const { return Size == 1; }
+  virtual bool baseClassOf(const IntRecTy *RHS) const { return true; }
+  virtual bool baseClassOf(const BitsRecTy *RHS) const {
+    return RHS->Size == Size;
+  }
 };
 
 
@@ -105,6 +149,14 @@ struct IntRecTy : public RecTy {
   Init *convertValue(TypedInit *TI);
 
   void print(std::ostream &OS) const { OS << "int"; }
+
+  bool typeIsConvertibleTo(const RecTy *RHS) const {
+    return RHS->baseClassOf(this);
+  }
+
+  virtual bool baseClassOf(const BitRecTy *RHS) const { return true; }
+  virtual bool baseClassOf(const IntRecTy *RHS) const { return true; }
+  virtual bool baseClassOf(const BitsRecTy *RHS) const { return true; }
 };
 
 /// StringRecTy - 'string' - Represent an string value
@@ -114,25 +166,37 @@ struct StringRecTy : public RecTy {
   Init *convertValue(StringInit *SI) { return (Init*)SI; }
   Init *convertValue(TypedInit *TI);
   void print(std::ostream &OS) const { OS << "string"; }
+
+  bool typeIsConvertibleTo(const RecTy *RHS) const {
+    return RHS->baseClassOf(this);
+  }
+
+  virtual bool baseClassOf(const StringRecTy *RHS) const { return true; }
 };
 
-/// ListRecTy - 'list<class>' - Represent a list defs, all of which must be
-/// derived from the specified class.
+/// ListRecTy - 'list<Ty>' - Represent a list of values, all of which must be of
+/// the specified type.
 ///
 class ListRecTy : public RecTy {
-  Record *Class;
+  RecTy *Ty;
 public:
-  ListRecTy(Record *C) : Class(C) {}
+  ListRecTy(RecTy *T) : Ty(T) {}
 
-  /// getElementClass - Return the class that the list contains.
-  ///
-  Record *getElementClass() const { return Class; }
+  RecTy *getElementType() const { return Ty; }
 
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue(ListInit *LI);
   Init *convertValue(TypedInit *TI);
   
   void print(std::ostream &OS) const;
+
+  bool typeIsConvertibleTo(const RecTy *RHS) const {
+    return RHS->baseClassOf(this);
+  }
+
+  virtual bool baseClassOf(const ListRecTy *RHS) const {
+    return RHS->getElementType()->typeIsConvertibleTo(Ty); 
+  }
 };
 
 /// CodeRecTy - 'code' - Represent an code fragment, function or method.
@@ -142,6 +206,11 @@ struct CodeRecTy : public RecTy {
   Init *convertValue( CodeInit *CI) { return (Init*)CI; }
 
   void print(std::ostream &OS) const { OS << "code"; }
+
+  bool typeIsConvertibleTo(const RecTy *RHS) const {
+    return RHS->baseClassOf(this);
+  }
+  virtual bool baseClassOf(const CodeRecTy *RHS) const { return true; }
 };
 
 
@@ -160,6 +229,11 @@ public:
   Init *convertValue(TypedInit *VI); 
 
   void print(std::ostream &OS) const;
+
+  bool typeIsConvertibleTo(const RecTy *RHS) const {
+    return RHS->baseClassOf(this);
+  }
+  virtual bool baseClassOf(const RecordRecTy *RHS) const;
 };
 
 
@@ -347,16 +421,16 @@ public:
 /// ListInit - [AL, AH, CL] - Represent a list of defs
 ///
 class ListInit : public Init {
-  std::vector<Record*> Records;
+  std::vector<Init*> Values;
 public:
-  ListInit(std::vector<Record*> &Rs) {
-    Records.swap(Rs);
+  ListInit(std::vector<Init*> &Vs) {
+    Values.swap(Vs);
   }
 
-  unsigned getSize() const { return Records.size(); }
-  Record  *getElement(unsigned i) const {
-    assert(i < Records.size() && "List element index out of range!");
-    return Records[i];
+  unsigned getSize() const { return Values.size(); }
+  Init *getElement(unsigned i) const {
+    assert(i < Values.size() && "List element index out of range!");
+    return Values[i];
   }
 
   virtual Init *convertInitializerTo(RecTy *Ty) {

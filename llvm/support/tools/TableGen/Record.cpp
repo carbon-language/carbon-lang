@@ -16,6 +16,10 @@ Init *BitRecTy::convertValue(BitsInit *BI) {
   return BI->getBit(0);
 }
 
+bool BitRecTy::baseClassOf(const BitsRecTy *RHS) const {
+  return RHS->getNumBits() == 1;
+}
+
 Init *BitRecTy::convertValue(IntInit *II) {
   int Val = II->getValue();
   if (Val != 0 && Val != 1) return 0;  // Only accept 0 or 1 for a bit!
@@ -104,22 +108,27 @@ Init *StringRecTy::convertValue(TypedInit *TI) {
 }
 
 void ListRecTy::print(std::ostream &OS) const {
-  OS << "list<" << Class->getName() << ">";
+  OS << "list<" << *Ty << ">";
 }
 
 Init *ListRecTy::convertValue(ListInit *LI) {
+  std::vector<Init*> Elements;
+
   // Verify that all of the elements of the list are subclasses of the
-  // appopriate class!
+  // appropriate class!
   for (unsigned i = 0, e = LI->getSize(); i != e; ++i)
-    if (!LI->getElement(i)->isSubClassOf(Class))
+    if (Init *CI = LI->getElement(i)->convertInitializerTo(Ty))
+      Elements.push_back(CI);
+    else
       return 0;
-  return LI;
+
+  return new ListInit(Elements);
 }
 
 Init *ListRecTy::convertValue(TypedInit *TI) {
   // Ensure that TI is compatible with our class.
   if (ListRecTy *LRT = dynamic_cast<ListRecTy*>(TI->getType()))
-    if (LRT->getElementClass() == getElementClass())
+    if (LRT->getElementType()->typeIsConvertibleTo(getElementType()))
       return TI;
   return 0;
 }
@@ -143,6 +152,11 @@ Init *RecordRecTy::convertValue(TypedInit *TI) {
       return TI;
   return 0;
 }
+
+bool RecordRecTy::baseClassOf(const RecordRecTy *RHS) const {
+  return Rec == RHS->getRecord() || RHS->getRecord()->isSubClassOf(Rec);
+}
+
 
 //===----------------------------------------------------------------------===//
 //    Initializer implementations
@@ -263,9 +277,9 @@ Init *IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
 
 void ListInit::print(std::ostream &OS) const {
   OS << "[";
-  for (unsigned i = 0, e = Records.size(); i != e; ++i) {
+  for (unsigned i = 0, e = Values.size(); i != e; ++i) {
     if (i) OS << ", ";
-    OS << Records[i]->getName();
+    OS << *Values[i];
   }
   OS << "]";
 }
