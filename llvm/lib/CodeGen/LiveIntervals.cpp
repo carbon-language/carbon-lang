@@ -261,6 +261,8 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock* mbb,
     if (reg < MRegisterInfo::FirstVirtualRegister) {
         if (allocatableRegisters_[reg]) {
             handlePhysicalRegisterDef(mbb, mi, reg);
+            for (const unsigned* as = mri_->getAliasSet(reg); *as; ++as)
+                handlePhysicalRegisterDef(mbb, mi, *as);
         }
     }
     else {
@@ -300,10 +302,8 @@ void LiveIntervals::computeIntervals()
                   instr->print(std::cerr, *tm_););
 
             // handle implicit defs
-            for (const unsigned* id = tid.ImplicitDefs; *id; ++id) {
-                unsigned physReg = *id;
-                handlePhysicalRegisterDef(mbb, mi, physReg);
-            }
+            for (const unsigned* id = tid.ImplicitDefs; *id; ++id)
+                handleRegisterDef(mbb, mi, *id);
 
             // handle explicit defs
             for (int i = instr->getNumOperands() - 1; i >= 0; --i) {
@@ -312,14 +312,9 @@ void LiveIntervals::computeIntervals()
                 if (!mop.isRegister())
                     continue;
 
-                unsigned reg = mop.getAllocatedRegNum();
                 // handle defs - build intervals
-                if (mop.isDef()) {
-                    if (reg < MRegisterInfo::FirstVirtualRegister)
-                        handlePhysicalRegisterDef(mbb, mi, reg);
-                    else
-                        handleVirtualRegisterDef(mbb, mi, reg);
-                }
+                if (mop.isDef())
+                    handleRegisterDef(mbb, mi, mop.getAllocatedRegNum());
             }
         }
     }

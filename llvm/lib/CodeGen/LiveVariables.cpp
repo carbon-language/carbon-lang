@@ -117,14 +117,6 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
   if (PhysRegInfo[Reg]) {
     PhysRegInfo[Reg] = MI;
     PhysRegUsed[Reg] = true;
-  } else {
-    for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
-         *AliasSet; ++AliasSet) {
-      if (MachineInstr *LastUse = PhysRegInfo[*AliasSet]) {
-	PhysRegInfo[*AliasSet] = MI;
-	PhysRegUsed[*AliasSet] = true;
-      }
-    }
   }
 }
 
@@ -135,20 +127,21 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
       RegistersKilled.insert(std::make_pair(LastUse, Reg));
     else
       RegistersDead.insert(std::make_pair(LastUse, Reg));
-  } else {
-    for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
-         *AliasSet; ++AliasSet) {
-      if (MachineInstr *LastUse = PhysRegInfo[*AliasSet]) {
-	if (PhysRegUsed[*AliasSet])
-	  RegistersKilled.insert(std::make_pair(LastUse, *AliasSet));
-	else
-	  RegistersDead.insert(std::make_pair(LastUse, *AliasSet));
-	PhysRegInfo[*AliasSet] = 0;  // Kill the aliased register
-      }
-    }
   }
   PhysRegInfo[Reg] = MI;
   PhysRegUsed[Reg] = false;
+
+  for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+       *AliasSet; ++AliasSet) {
+    if (MachineInstr *LastUse = PhysRegInfo[*AliasSet]) {
+      if (PhysRegUsed[*AliasSet])
+	RegistersKilled.insert(std::make_pair(LastUse, *AliasSet));
+      else
+	RegistersDead.insert(std::make_pair(LastUse, *AliasSet));
+    }
+    PhysRegInfo[*AliasSet] = MI;
+    PhysRegUsed[*AliasSet] = false;
+  }
 }
 
 bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {

@@ -232,9 +232,8 @@ void RA::removePhysReg(unsigned PhysReg) {
 
   std::vector<unsigned>::iterator It =
     std::find(PhysRegsUseOrder.begin(), PhysRegsUseOrder.end(), PhysReg);
-  assert(It != PhysRegsUseOrder.end() &&
-         "Spilled a physical register, but it was not in use list!");
-  PhysRegsUseOrder.erase(It);
+  if (It != PhysRegsUseOrder.end())
+    PhysRegsUseOrder.erase(It);
 }
 
 
@@ -550,6 +549,11 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         spillPhysReg(MBB, I, Reg, true);  // Spill any existing value in the reg
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         PhysRegsUseOrder.push_back(Reg);
+        for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+             *AliasSet; ++AliasSet) {
+            PhysRegsUseOrder.push_back(*AliasSet);
+            PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+        }
       }
 
     // Loop over the implicit defs, spilling them as well.
@@ -559,6 +563,11 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       spillPhysReg(MBB, I, Reg);
       PhysRegsUseOrder.push_back(Reg);
       PhysRegsUsed[Reg] = 0;            // It is free and reserved now
+      for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+           *AliasSet; ++AliasSet) {
+          PhysRegsUseOrder.push_back(*AliasSet);
+          PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+      }
     }
 
     // Okay, we have allocated all of the source operands and spilled any values
