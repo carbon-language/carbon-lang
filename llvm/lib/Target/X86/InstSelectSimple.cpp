@@ -1737,7 +1737,7 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
 
 
     uint64_t Op1v = cast<ConstantInt>(Op1C)->getRawValue();
-    BuildMI(*MBB, IP, Opcode, 5, DestReg).addReg(Op0r).addImm(Op1v);
+    BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addImm(Op1v);
     return;
   }
 
