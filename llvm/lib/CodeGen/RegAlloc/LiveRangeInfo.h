@@ -32,7 +32,6 @@ class Function;
 class Instruction;
 
 typedef hash_map<const Value*, LiveRange*> LiveRangeMapType;
-typedef std::vector<MachineInstr*> CallRetInstrListType;
 
 //----------------------------------------------------------------------------
 // Class LiveRangeInfo
@@ -53,7 +52,7 @@ class LiveRangeInfo {
 
   const MachineRegInfo& MRI;        // machine reg info
 
-  CallRetInstrListType  CallRetInstrList;  // a list of all call/ret instrs
+  std::vector<MachineInstr*> CallRetInstrList;  // a list of all call/ret instrs
 
 
   //------------ Private methods (see LiveRangeInfo.cpp for description)-------
@@ -90,19 +89,13 @@ public:
   
   // return the common live range map for this method
   //
-  inline const LiveRangeMapType *const getLiveRangeMap() const 
+  inline const LiveRangeMapType *getLiveRangeMap() const 
     { return &LiveRangeMap; }
 
   // Method sed to get the corresponding live range of a Value
   //
-  inline LiveRange *getLiveRangeForValue( const Value *const Val) 
+  inline LiveRange *getLiveRangeForValue( const Value *Val) 
     { return LiveRangeMap[Val]; }
-
-  // Method used to get the Call and Return instruction list
-  //
-  inline  CallRetInstrListType &getCallRetInstrList() {
-    return CallRetInstrList;
-  }
 
   // Method for coalescing live ranges. Called only after interference info
   // is calculated.

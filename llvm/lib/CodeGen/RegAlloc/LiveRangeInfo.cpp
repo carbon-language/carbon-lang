@@ -205,24 +205,19 @@ void LiveRangeInfo::constructLiveRanges() {
 //    1) suggest colors for call and return args. 
 //    2) create new LRs for implicit defs in machine instructions
 //---------------------------------------------------------------------------
-void LiveRangeInfo::suggestRegs4CallRets()
-{
-  CallRetInstrListType::iterator It =  CallRetInstrList.begin();
-  for( ; It !=  CallRetInstrList.end(); ++It ) {
-
+void LiveRangeInfo::suggestRegs4CallRets() {
+  std::vector<MachineInstr*>::iterator It = CallRetInstrList.begin();
+  for( ; It != CallRetInstrList.end(); ++It) {
     MachineInstr *MInst = *It;
-    MachineOpCode OpCode =  MInst->getOpCode();
+    MachineOpCode OpCode = MInst->getOpCode();
 
-    if( (TM.getInstrInfo()).isReturn(OpCode)  )
-      MRI.suggestReg4RetValue( MInst, *this);
-
-    else if( (TM.getInstrInfo()).isCall( OpCode ) )
-      MRI.suggestRegs4CallArgs( MInst, *this);
-    
+    if ((TM.getInstrInfo()).isReturn(OpCode))
+      MRI.suggestReg4RetValue(MInst, *this);
+    else if ((TM.getInstrInfo()).isCall(OpCode))
+      MRI.suggestRegs4CallArgs(MInst, *this);
     else 
-      assert( 0 && "Non call/ret instr in  CallRetInstrList" );
+      assert( 0 && "Non call/ret instr in CallRetInstrList" );
   }
-
 }
 
 
