@@ -297,8 +297,8 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
         (unsigned char)cast<ConstantUInt>(CPA->getOperand(i))->getValue();
       
       if (isprint(C)) {
-        if (C == '"')
-          Out << "\\\"";
+        if (C == '"' || C == '\\')
+          Out << "\\" << C;
         else
           Out << C;
       } else {
