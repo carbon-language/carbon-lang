@@ -52,7 +52,7 @@ namespace {
     /// Name-mangler for global names.
     ///
     Mangler *Mang;
-    std::set<std::string> Stubs;
+    std::set<std::string> FnStubs, GVStubs;
     std::set<std::string> Strings;
 
     Printer(std::ostream &o, TargetMachine &tm) : O(o), TM(tm), labelNumber(0)
@@ -443,13 +443,21 @@ void Printer::printOp(const MachineOperand &MO,
 
   case MachineOperand::MO_GlobalAddress:
     if (!elideOffsetKeyword) {
+      GlobalValue *GV = MO.getGlobal();
+      std::string Name = Mang->getValueName(GV);
       // Dynamically-resolved functions need a stub for the function
-      Function *F = dyn_cast<Function>(MO.getGlobal());
+      Function *F = dyn_cast<Function>(GV);
       if (F && F->isExternal()) {
-        Stubs.insert(Mang->getValueName(MO.getGlobal()));
-        O << "L" << Mang->getValueName(MO.getGlobal()) << "$stub";
+        FnStubs.insert(Name);
+        O << "L" << Name << "$stub";
       } else {
-        O << Mang->getValueName(MO.getGlobal());
+        GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
+        // External global variables need a non-lazily-resolved stub
+        if (GVar && GVar->isExternal()) {
+          GVStubs.insert(Name);
+          O << "L" << Name << "$non_lazy_ptr";
+        } else 
+          O << Mang->getValueName(GV);
       }
     }
     return;
@@ -459,43 +467,6 @@ void Printer::printOp(const MachineOperand &MO,
     return;
   }
 }
-
-#if 0
-static inline
-unsigned int ValidOpcodes(const MachineInstr *MI, unsigned int ArgType[5]) {
-  int i;
-  unsigned int retval = 1;
-  
-  for(i = 0; i<5; i++) {
-    switch(ArgType[i]) {
-      case none:
-        break;
-      case Gpr:
-      case Gpr0:
-        Type::UIntTy
-      case Simm16:
-      case Zimm16:
-      case PCRelimm24:
-      case Imm24:
-      case Imm5:
-      case PCRelimm14:
-      case Imm14:
-      case Imm2:
-      case Crf:
-      case Imm3:
-      case Imm1:
-      case Fpr:
-      case Imm4:
-      case Imm8:
-      case Disimm16:
-      case Spr:
-      case Sgr:
-  };
-    
-    }
-  }
-}
-#endif
 
 /// printMachineInstruction -- Print out a single PPC32 LLVM instruction
 /// MI in Darwin syntax to the current output stream.
@@ -519,7 +490,6 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
          "Instruction requires VMX support");
   assert(((Desc.TSFlags & PPC32II::PPC64) == 0) &&
          "Instruction requires 64 bit support");
-  //assert ( ValidOpcodes(MI, ArgType) && "Instruction has invalid inputs");
   ++EmittedInsts;
 
   if (Opcode == PPC32::IMPLICIT_DEF) {
@@ -582,7 +552,6 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
           MI->getOperand(1).getReg() == PPC32::R0) {
         O << "0";
       } else {
-        //std::cout << "DEBUG " << (*(TM.getRegisterInfo())).get(MI->getOperand(i).getReg()).Name << "\n";
         printOp(MI->getOperand(i));
       }
       if (ArgCount - 1 == i)
@@ -666,8 +635,10 @@ bool Printer::doFinalization(Module &M) {
         emitGlobalConstant(C);
       }
     }
-        
-  for(std::set<std::string>::iterator i = Stubs.begin(); i != Stubs.end(); ++i)
+
+  // Output stubs for dynamically-linked functions
+  for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end(); 
+       i != e; ++i)
   {
     O << "\t.picsymbol_stub\n";
     O << "L" << *i << "$stub:\n";
@@ -689,6 +660,18 @@ bool Printer::doFinalization(Module &M) {
     O << ".long dyld_stub_binding_helper\n";
   }
 
+  O << "\n";
+
+  // Output stubs for external global variables
+  if (GVStubs.begin() != GVStubs.end())
+    O << "\t.non_lazy_symbol_pointer\n";
+  for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end(); 
+       i != e; ++i) {
+    O << "L" << *i << "$non_lazy_ptr:\n";
+    O << "\t.indirect_symbol " << *i << "\n";
+    O << "\t.long\t0\n";
+  }
+  
   delete Mang;
   return false; // success
 }
