@@ -10,8 +10,12 @@
 # OPTIONS may include one or more of the following:
 #     -block - Enable basic block level profiling
 #
+# Any unrecognized options are passed into the invocation of llvm-prof
+#
 
 my $ProfilePass = "-insert-function-profiling";
+
+my $LLVMProfOpts = "";
 
 # Parse arguments...
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
@@ -21,7 +25,8 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   # List command line options here...
   if (/^-block$/) { $ProfilePass = "-insert-block-profiling"; next; }
 
-  print "Unknown option: $_ : ignoring!\n";
+  # Otherwise, pass the option on to llvm-prof
+  $LLVMProfOpts .= " " . $_;
 }
 
 die "Must specify LLVM bytecode file as first argument!" if (@ARGV == 0);
@@ -39,4 +44,4 @@ my $LibProfPath = $LLIPath . "/../../lib/Debug/libprofile_rt.so";
 system "opt $ProfilePass < $BytecodeFile | lli -fake-argv0 '$BytecodeFile'" .
        " -load $LibProfPath - " . (join ' ', @ARGV);
 
-system "llvm-prof $BytecodeFile";
+system "llvm-prof $LLVMProfOpts $BytecodeFile";
