@@ -269,14 +269,14 @@ ConstantStruct::ConstantStruct(const StructType *T,
 }
 
 ConstantExpr::ConstantExpr(unsigned Opcode, Constant *C, const Type *Ty)
-  : Constant(Ty), iType(Opcode) {
+  : Constant(Ty, ConstantExprVal), iType(Opcode) {
   Operands.reserve(1);
   Operands.push_back(Use(C, this));
 }
 
 // Select instruction creation ctor
 ConstantExpr::ConstantExpr(Constant *C, Constant *V1, Constant *V2)
-  : Constant(V1->getType()), iType(Instruction::Select) {
+  : Constant(V1->getType(), ConstantExprVal), iType(Instruction::Select) {
   Operands.reserve(3);
   Operands.push_back(Use(C, this));
   Operands.push_back(Use(V1, this));
@@ -291,7 +291,8 @@ static bool isSetCC(unsigned Opcode) {
 }
 
 ConstantExpr::ConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
-  : Constant(isSetCC(Opcode) ? Type::BoolTy : C1->getType()), iType(Opcode) {
+  : Constant(isSetCC(Opcode) ? Type::BoolTy : C1->getType(), ConstantExprVal),
+    iType(Opcode) {
   Operands.reserve(2);
   Operands.push_back(Use(C1, this));
   Operands.push_back(Use(C2, this));
@@ -299,7 +300,7 @@ ConstantExpr::ConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
 
 ConstantExpr::ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
                            const Type *DestTy)
-  : Constant(DestTy), iType(Instruction::GetElementPtr) {
+  : Constant(DestTy, ConstantExprVal), iType(Instruction::GetElementPtr) {
   Operands.reserve(1+IdxList.size());
   Operands.push_back(Use(C, this));
   for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
@@ -379,44 +380,6 @@ Constant *ConstantExpr::getSShr(Constant *C1, Constant *C2) {
   if (C1->getType()->isSigned()) return getShr(C1, C2);
   return getCast(getShr(getCast(C1,
                         C1->getType()->getSignedVersion()), C2), C1->getType());
-}
-
-
-//===----------------------------------------------------------------------===//
-//                           classof implementations
-
-bool ConstantIntegral::classof(const Constant *CPV) {
-  return CPV->getType()->isIntegral() && !isa<ConstantExpr>(CPV);
-}
-
-bool ConstantInt::classof(const Constant *CPV) {
-  return CPV->getType()->isInteger() && !isa<ConstantExpr>(CPV);
-}
-bool ConstantSInt::classof(const Constant *CPV) {
-  return CPV->getType()->isSigned() && !isa<ConstantExpr>(CPV);
-}
-bool ConstantUInt::classof(const Constant *CPV) {
-  return CPV->getType()->isUnsigned() && !isa<ConstantExpr>(CPV);
-}
-bool ConstantFP::classof(const Constant *CPV) {
-  const Type *Ty = CPV->getType();
-  return ((Ty == Type::FloatTy || Ty == Type::DoubleTy) &&
-          !isa<ConstantExpr>(CPV));
-}
-bool ConstantAggregateZero::classof(const Constant *CPV) {
-  return (isa<ArrayType>(CPV->getType()) || isa<StructType>(CPV->getType())) &&
-         CPV->isNullValue();
-}
-bool ConstantArray::classof(const Constant *CPV) {
-  return isa<ArrayType>(CPV->getType()) && !CPV->isNullValue();
-}
-bool ConstantStruct::classof(const Constant *CPV) {
-  return isa<StructType>(CPV->getType()) && !CPV->isNullValue();
-}
-
-bool ConstantPointerNull::classof(const Constant *CPV) {
-  return !isa<GlobalValue>(CPV) && isa<PointerType>(CPV->getType()) && !isa<ConstantExpr>(CPV) &&
-         CPV->getNumOperands() == 0;
 }
 
 
