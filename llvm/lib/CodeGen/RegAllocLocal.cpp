@@ -38,6 +38,7 @@ namespace {
     MachineFunction *MF;
     const MRegisterInfo *RegInfo;
     LiveVariables *LV;
+    bool *PhysRegsEverUsed;
 
     // StackSlotForVirtReg - Maps virtual regs to the frame index where these
     // values are spilled.
@@ -478,6 +479,7 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   RegInfo->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex);
   ++NumLoads;    // Update statistics
 
+  PhysRegsEverUsed[PhysReg] = true;
   MI->SetMachineOperandReg(OpNum, PhysReg);  // Assign the input register
   return MI;
 }
@@ -547,6 +549,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       if (MO.isDef() && MO.isRegister() && MO.getReg() &&
           MRegisterInfo::isPhysicalRegister(MO.getReg())) {
         unsigned Reg = MO.getReg();
+        PhysRegsEverUsed[Reg] = true;
         spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in the reg
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         PhysRegsUseOrder.push_back(Reg);
@@ -554,6 +557,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
              *AliasSet; ++AliasSet) {
           PhysRegsUseOrder.push_back(*AliasSet);
           PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+          PhysRegsEverUsed[*AliasSet] = true;
         }
       }
     }
@@ -565,16 +569,19 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       spillPhysReg(MBB, MI, Reg, true);
       PhysRegsUseOrder.push_back(Reg);
       PhysRegsUsed[Reg] = 0;            // It is free and reserved now
+      PhysRegsEverUsed[Reg] = true;
+
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
            *AliasSet; ++AliasSet) {
         PhysRegsUseOrder.push_back(*AliasSet);
         PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+        PhysRegsEverUsed[*AliasSet] = true;
       }
     }
 
     // Okay, we have allocated all of the source operands and spilled any values
     // that would be destroyed by defs of this instruction.  Loop over the
-    // implicit defs and assign them to a register, spilling incoming values if
+    // explicit defs and assign them to a register, spilling incoming values if
     // we need to scavenge a register.
     //
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -587,6 +594,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         // If DestVirtReg already has a value, use it.
         if (!(DestPhysReg = getVirt2PhysRegMapSlot(DestVirtReg)))
           DestPhysReg = getReg(MBB, MI, DestVirtReg);
+        PhysRegsEverUsed[DestPhysReg] = true;
         markVirtRegModified(DestVirtReg);
         MI->SetMachineOperandReg(i, DestPhysReg);  // Assign the output register
       }
@@ -651,6 +659,10 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
   TM = &Fn.getTarget();
   RegInfo = TM->getRegisterInfo();
   LV = &getAnalysis<LiveVariables>();
+
+  PhysRegsEverUsed = new bool[RegInfo->getNumRegs()];
+  std::fill(PhysRegsEverUsed, PhysRegsEverUsed+RegInfo->getNumRegs(), false);
+  Fn.setUsedPhysRegs(PhysRegsEverUsed);
 
   PhysRegsUsed.assign(RegInfo->getNumRegs(), -1);
 
