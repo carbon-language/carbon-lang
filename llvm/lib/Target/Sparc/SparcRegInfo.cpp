@@ -11,6 +11,7 @@
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/InstrSelection.h"
+#include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/RegAllocCommon.h"
@@ -32,7 +33,7 @@ UltraSparcRegInfo::UltraSparcRegInfo(const UltraSparc &tgt)
   MachineRegClassArr.push_back(new SparcFloatRegClass(FloatRegClassID));
   MachineRegClassArr.push_back(new SparcIntCCRegClass(IntCCRegClassID));
   MachineRegClassArr.push_back(new SparcFloatCCRegClass(FloatCCRegClassID));
-
+  
   assert(SparcFloatRegOrder::StartOfNonVolatileRegs == 32 && 
          "32 Float regs are used for float arg passing");
 }
@@ -175,7 +176,7 @@ UltraSparcRegInfo::regNumForFPArg(unsigned regType,
 // Finds the return address of a call sparc specific call instruction
 //---------------------------------------------------------------------------
 
-// The following 4  methods are used to find the RegType (see enum above)
+// The following 4  methods are used to find the RegType (SparcInternals.h)
 // of a LiveRange, a Value, and for a given register unified reg number.
 //
 int UltraSparcRegInfo::getRegType(unsigned regClassID,
@@ -203,38 +204,81 @@ int UltraSparcRegInfo::getRegType(const Value *Val) const {
   return getRegType(getRegClassIDOfValue(Val), Val->getType());
 }
 
-int UltraSparcRegInfo::getRegType(int reg) const {
-  if (reg < 32) 
+int UltraSparcRegInfo::getRegType(int unifiedRegNum) const {
+  if (unifiedRegNum < 32) 
     return IntRegType;
-  else if (reg < (32 + 32))
+  else if (unifiedRegNum < (32 + 32))
     return FPSingleRegType;
-  else if (reg < (64 + 32))
+  else if (unifiedRegNum < (64 + 32))
     return FPDoubleRegType;
-  else if (reg < (64+32+4))
+  else if (unifiedRegNum < (64+32+4))
     return FloatCCRegType;
-  else if (reg < (64+32+4+2))  
+  else if (unifiedRegNum < (64+32+4+2))  
     return IntCCRegType;             
   else 
-    assert(0 && "Invalid register number in getRegType");
+    assert(0 && "Invalid unified register number in getRegType");
   return 0;
 }
 
+
+// To find the register class used for a specified Type
+//
+unsigned UltraSparcRegInfo::getRegClassIDOfType(const Type *type,
+                                                bool isCCReg = false) const {
+  Type::PrimitiveID ty = type->getPrimitiveID();
+  unsigned res;
+    
+  // FIXME: Comparing types like this isn't very safe...
+  if ((ty && ty <= Type::LongTyID) || (ty == Type::LabelTyID) ||
+      (ty == Type::FunctionTyID) ||  (ty == Type::PointerTyID) )
+    res = IntRegClassID;             // sparc int reg (ty=0: void)
+  else if (ty <= Type::DoubleTyID)
+    res = FloatRegClassID;           // sparc float reg class
+  else { 
+    //std::cerr << "TypeID: " << ty << "\n";
+    assert(0 && "Cannot resolve register class for type");
+    return 0;
+  }
+  
+  if(isCCReg)
+    return res + 2;      // corresponidng condition code regiser 
+  else 
+    return res;
+}
+
+// To find the register class to which a specified register belongs
+//
+unsigned UltraSparcRegInfo::getRegClassIDOfReg(int unifiedRegNum) const {
+  unsigned classId = 0;
+  (void) getClassRegNum(unifiedRegNum, classId);
+  return classId;
+}
+
+unsigned UltraSparcRegInfo::getRegClassIDOfRegType(int regType) const {
+  switch(regType) {
+  case IntRegType:      return IntRegClassID;
+  case FPSingleRegType:
+  case FPDoubleRegType: return FloatRegClassID;
+  case IntCCRegType:    return IntCCRegClassID;
+  case FloatCCRegType:  return FloatCCRegClassID;
+  default:
+    assert(0 && "Invalid register type in getRegClassIDOfRegType");
+    return 0;
+  }
+}
 
 //---------------------------------------------------------------------------
 // Suggests a register for the ret address in the RET machine instruction.
 // We always suggest %i7 by convention.
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::suggestReg4RetAddr(const MachineInstr *RetMI, 
+void UltraSparcRegInfo::suggestReg4RetAddr(MachineInstr *RetMI, 
 					   LiveRangeInfo& LRI) const {
 
-  assert( (RetMI->getNumOperands() >= 2)
-          && "JMPL/RETURN must have 3 and 2 operands respectively");
+  assert(target.getInstrInfo().isReturn(RetMI->getOpCode()));
   
-  MachineOperand & MO  = ( MachineOperand &) RetMI->getOperand(0);
-
-  // return address is always mapped to i7
-  //
-  MO.setRegForValue( getUnifiedRegNum( IntRegClassID, SparcIntRegOrder::i7) );
+  // return address is always mapped to i7 so set it immediately
+  RetMI->SetRegForOperand(0, getUnifiedRegNum(IntRegClassID,
+                                              SparcIntRegOrder::i7));
   
   // Possible Optimization: 
   // Instead of setting the color, we can suggest one. In that case,
@@ -242,11 +286,12 @@ void UltraSparcRegInfo::suggestReg4RetAddr(const MachineInstr *RetMI,
   // In that case, a LR has to be created at the start of method.
   // It has to be done as follows (remove the setRegVal above):
 
+  // MachineOperand & MO  = RetMI->getOperand(0);
   // const Value *RetAddrVal = MO.getVRegValue();
   // assert( RetAddrVal && "LR for ret address must be created at start");
   // LiveRange * RetAddrLR = LRI.getLiveRangeForValue( RetAddrVal);  
   // RetAddrLR->setSuggestedColor(getUnifiedRegNum( IntRegClassID, 
-  // SparcIntRegOrdr::i7) );
+  //                              SparcIntRegOrdr::i7) );
 }
 
 
@@ -254,7 +299,7 @@ void UltraSparcRegInfo::suggestReg4RetAddr(const MachineInstr *RetMI,
 // Suggests a register for the ret address in the JMPL/CALL machine instr.
 // Sparc ABI dictates that %o7 be used for this purpose.
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::suggestReg4CallAddr(const MachineInstr * CallMI,
+void UltraSparcRegInfo::suggestReg4CallAddr(MachineInstr * CallMI,
 					    LiveRangeInfo& LRI,
 					 std::vector<RegClass *> RCList) const {
   CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI); 
@@ -384,14 +429,14 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
           
  	  int TmpOff = MachineCodeForMethod::get(Meth).pushTempValue(target,  
                                                 getSpilledRegSize(regType));
-	  cpReg2MemMI(UniArgReg, getFramePointer(), TmpOff, IntRegType,
-                      FirstAI->InstrnsBefore);
+	  cpReg2MemMI(FirstAI->InstrnsBefore,
+                      UniArgReg, getFramePointer(), TmpOff, IntRegType);
           
-	  cpMem2RegMI(getFramePointer(), TmpOff, UniLRReg, regType,
-                      FirstAI->InstrnsBefore);
+	  cpMem2RegMI(FirstAI->InstrnsBefore,
+                      getFramePointer(), TmpOff, UniLRReg, regType);
 	}
 	else {	
-	  cpReg2RegMI(UniArgReg, UniLRReg, regType, FirstAI->InstrnsBefore);
+	  cpReg2RegMI(FirstAI->InstrnsBefore, UniArgReg, UniLRReg, regType);
 	}
       }
       else {
@@ -404,8 +449,8 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
           frameInfo.getIncomingArgOffset(MachineCodeForMethod::get(Meth),
                                          argNo);
         
-	cpMem2RegMI(getFramePointer(), offsetFromFP, UniLRReg, regType,
-                    FirstAI->InstrnsBefore);
+	cpMem2RegMI(FirstAI->InstrnsBefore,
+                    getFramePointer(), offsetFromFP, UniLRReg, regType);
       }
       
     } // if LR received a color
@@ -430,12 +475,12 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
           assert(isVarArgs && regClassIDOfArgReg == IntRegClassID &&
                  "This should only be an Int register for an FP argument");
           
-          cpReg2MemMI(UniArgReg, getFramePointer(), LR->getSpillOffFromFP(),
-                      IntRegType, FirstAI->InstrnsBefore);
+          cpReg2MemMI(FirstAI->InstrnsBefore, UniArgReg,
+                      getFramePointer(), LR->getSpillOffFromFP(), IntRegType);
         }
         else {
-           cpReg2MemMI(UniArgReg, getFramePointer(), LR->getSpillOffFromFP(),
-                       regType, FirstAI->InstrnsBefore);
+           cpReg2MemMI(FirstAI->InstrnsBefore, UniArgReg,
+                       getFramePointer(), LR->getSpillOffFromFP(), regType);
         }
       }
 
@@ -467,7 +512,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
 // This method is called before graph coloring to suggest colors to the
 // outgoing call args and the return value of the call.
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::suggestRegs4CallArgs(const MachineInstr *CallMI, 
+void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI, 
 					     LiveRangeInfo& LRI,
 					 std::vector<RegClass *> RCList) const {
   assert ( (UltraSparcInfo->getInstrInfo()).isCall(CallMI->getOpCode()) );
@@ -574,7 +619,7 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(const MachineInstr *CallMI,
 //---------------------------------------------------------------------------
     
 void
-UltraSparcRegInfo::InitializeOutgoingArg(const MachineInstr* CallMI,
+UltraSparcRegInfo::InitializeOutgoingArg(MachineInstr* CallMI,
                              AddedInstrns *CallAI,
                              PhyRegAlloc &PRA, LiveRange* LR,
                              unsigned regType, unsigned RegClassID,
@@ -589,6 +634,7 @@ UltraSparcRegInfo::InitializeOutgoingArg(const MachineInstr* CallMI,
     {
       isArgInReg = true;
       UniArgReg = (unsigned) UniArgRegOrNone;
+      CallMI->getRegsUsed().insert(UniArgReg); // mark the reg as used
     }
   
   if (LR->hasColor()) {
@@ -603,22 +649,22 @@ UltraSparcRegInfo::InitializeOutgoingArg(const MachineInstr* CallMI,
     // 
     if( isArgInReg ) {
       // Copy UniLRReg to UniArgReg
-      cpReg2RegMI(UniLRReg, UniArgReg, regType, AddedInstrnsBefore);
+      cpReg2RegMI(AddedInstrnsBefore, UniLRReg, UniArgReg, regType);
     }
     else {
       // Copy UniLRReg to the stack to pass the arg on stack.
       const MachineFrameInfo& frameInfo = target.getFrameInfo();
       int argOffset = frameInfo.getOutgoingArgOffset(PRA.mcInfo, argNo);
-      cpReg2MemMI(UniLRReg, getStackPointer(), argOffset, regType,
-                  CallAI->InstrnsBefore);
+      cpReg2MemMI(CallAI->InstrnsBefore,
+                  UniLRReg, getStackPointer(), argOffset, regType);
     }
 
   } else {                          // LR is not colored (i.e., spilled)      
     
     if( isArgInReg ) {
       // Insert a load instruction to load the LR to UniArgReg
-      cpMem2RegMI(getFramePointer(), LR->getSpillOffFromFP(),
-                  UniArgReg, regType, AddedInstrnsBefore);
+      cpMem2RegMI(AddedInstrnsBefore, getFramePointer(),
+                  LR->getSpillOffFromFP(), UniArgReg, regType);
                                         // Now add the instruction
     }
       
@@ -651,14 +697,14 @@ UltraSparcRegInfo::InitializeOutgoingArg(const MachineInstr* CallMI,
       // 
       // NOTE: We directly add to CallAI->InstrnsBefore instead of adding to
       // AddedInstrnsBefore since these instructions must not be reordered.
-      cpReg2MemMI(TReg, getFramePointer(), TmpOff, regType,
-                  CallAI->InstrnsBefore);
-      cpMem2RegMI(getFramePointer(), LR->getSpillOffFromFP(), TReg, regType,
-                  CallAI->InstrnsBefore); 
-      cpReg2MemMI(TReg, getStackPointer(), argOffset, regType,
-                  CallAI->InstrnsBefore);
-      cpMem2RegMI(getFramePointer(), TmpOff, TReg, regType,
-                  CallAI->InstrnsBefore); 
+      cpReg2MemMI(CallAI->InstrnsBefore,
+                  TReg, getFramePointer(), TmpOff, regType);
+      cpMem2RegMI(CallAI->InstrnsBefore,
+                  getFramePointer(), LR->getSpillOffFromFP(), TReg, regType); 
+      cpReg2MemMI(CallAI->InstrnsBefore,
+                  TReg, getStackPointer(), argOffset, regType);
+      cpMem2RegMI(CallAI->InstrnsBefore,
+                  getFramePointer(), TmpOff, TReg, regType); 
     }
   }
 }
@@ -669,7 +715,7 @@ UltraSparcRegInfo::InitializeOutgoingArg(const MachineInstr* CallMI,
 // to instert copy instructions.
 //---------------------------------------------------------------------------
 
-void UltraSparcRegInfo::colorCallArgs(const MachineInstr *CallMI,
+void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
 				      LiveRangeInfo &LRI,
 				      AddedInstrns *CallAI,
 				      PhyRegAlloc &PRA,
@@ -708,16 +754,16 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *CallMI,
       return;
     }
 
+    // Mark the register as used by this instruction
+    CallMI->getRegsUsed().insert(this->getUnifiedRegNum(RegClassID,CorrectCol));
+    
     // if the LR received the correct color, NOTHING to do
-
     if(  RetValLR->hasColor() )
       if( RetValLR->getColor() == CorrectCol )
 	recvCorrectColor = true;
 
-
     // if we didn't receive the correct color for some reason, 
     // put copy instruction
-    
     if( !recvCorrectColor ) {
 
       unsigned regType = getRegType( RetValLR );
@@ -733,7 +779,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *CallMI,
 	// the return value is coming in UniRetReg but has to go into
 	// the UniRetLRReg
 
-	cpReg2RegMI(UniRetReg, UniRetLRReg, regType, CallAI->InstrnsAfter);
+	cpReg2RegMI(CallAI->InstrnsAfter, UniRetReg, UniRetLRReg, regType);
 
       } // if LR has color
       else {
@@ -741,8 +787,8 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *CallMI,
 	// if the LR did NOT receive a color, we have to move the return
 	// value coming in UniRetReg to the stack pos of spilled LR
 	
-        cpReg2MemMI(UniRetReg, getFramePointer(),RetValLR->getSpillOffFromFP(),
-                    regType, CallAI->InstrnsAfter);
+        cpReg2MemMI(CallAI->InstrnsAfter, UniRetReg,
+                    getFramePointer(),RetValLR->getSpillOffFromFP(), regType);
       }
 
     } // the LR didn't receive the suggested color  
@@ -862,12 +908,12 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *CallMI,
 // This method is called for an LLVM return instruction to identify which
 // values will be returned from this method and to suggest colors.
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::suggestReg4RetValue(const MachineInstr *RetMI, 
+void UltraSparcRegInfo::suggestReg4RetValue(MachineInstr *RetMI, 
                                             LiveRangeInfo &LRI) const {
 
   assert( (UltraSparcInfo->getInstrInfo()).isReturn( RetMI->getOpCode() ) );
 
-    suggestReg4RetAddr(RetMI, LRI);
+  suggestReg4RetAddr(RetMI, LRI);
 
   // if there is an implicit ref, that has to be the ret value
   if(  RetMI->getNumImplicitRefs() > 0 ) {
@@ -899,7 +945,7 @@ void UltraSparcRegInfo::suggestReg4RetValue(const MachineInstr *RetMI,
 // the LR to %i0 or %f0. When the LR is spilled, instead of the copy, we 
 // have to put a load instruction.
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::colorRetValue(const MachineInstr *RetMI, 
+void UltraSparcRegInfo::colorRetValue(MachineInstr *RetMI, 
 				      LiveRangeInfo &LRI,
 				      AddedInstrns *RetAI) const {
 
@@ -932,6 +978,9 @@ void UltraSparcRegInfo::colorRetValue(const MachineInstr *RetMI,
       return;
     }
 
+    // Mark the register as used by this instruction
+    RetMI->getRegsUsed().insert(this->getUnifiedRegNum(RegClassID, CorrectCol));
+    
     // if the LR received the correct color, NOTHING to do
 
     if (LR->hasColor() && LR->getColor() == CorrectCol)
@@ -950,11 +999,11 @@ void UltraSparcRegInfo::colorRetValue(const MachineInstr *RetMI,
 
       // the LR received  UniLRReg but must be colored with UniRetReg
       // to pass as the return value
-      cpReg2RegMI(UniLRReg, UniRetReg, regType, RetAI->InstrnsBefore);
+      cpReg2RegMI(RetAI->InstrnsBefore, UniLRReg, UniRetReg, regType);
     }
     else {                              // if the LR is spilled
-      cpMem2RegMI(getFramePointer(), LR->getSpillOffFromFP(),
-                  UniRetReg, regType, RetAI->InstrnsBefore);
+      cpMem2RegMI(RetAI->InstrnsBefore, getFramePointer(),
+                  LR->getSpillOffFromFP(), UniRetReg, regType);
       cerr << "\nCopied the return value from stack\n";
     }
   
@@ -962,17 +1011,37 @@ void UltraSparcRegInfo::colorRetValue(const MachineInstr *RetMI,
 
 }
 
+//---------------------------------------------------------------------------
+// Check if a specified register type needs a scratch register to be
+// copied to/from memory.  If it does, the reg. type that must be used
+// for scratch registers is returned in scratchRegType.
+//
+// Only the int CC register needs such a scratch register.
+// The FP CC registers can (and must) be copied directly to/from memory.
+//---------------------------------------------------------------------------
+
+bool
+UltraSparcRegInfo::regTypeNeedsScratchReg(int RegType,
+                                          int& scratchRegType) const
+{
+  if (RegType == IntCCRegType)
+    {
+      scratchRegType = IntRegType;
+      return true;
+    }
+  return false;
+}
 
 //---------------------------------------------------------------------------
 // Copy from a register to register. Register number must be the unified
-// register number
+// register number.
 //---------------------------------------------------------------------------
 
 void
-UltraSparcRegInfo::cpReg2RegMI(unsigned SrcReg,
+UltraSparcRegInfo::cpReg2RegMI(vector<MachineInstr*>& mvec,
+                               unsigned SrcReg,
                                unsigned DestReg,
-                               int RegType,
-                               vector<MachineInstr*>& mvec) const {
+                               int RegType) const {
   assert( ((int)SrcReg != InvalidRegNum) && ((int)DestReg != InvalidRegNum) &&
 	  "Invalid Register");
   
@@ -981,31 +1050,39 @@ UltraSparcRegInfo::cpReg2RegMI(unsigned SrcReg,
   switch( RegType ) {
     
   case IntCCRegType:
+    if (this->getRegType(DestReg) == IntRegType)
+      { // copy intCC reg to int reg
+        // Use SrcReg+1 to get the name "%ccr" instead of "%xcc" for RDCCR
+        MI = Create2OperandInstr_Reg(RDCCR, SrcReg+1, DestReg);
+      }
+    else 
+      { // copy int reg to intCC reg
+        // Use DestReg+1 to get the name "%ccr" instead of "%xcc" for WRCCR
+        assert(this->getRegType(SrcReg) == IntRegType
+               && "Can only copy CC reg to/from integer reg");
+        MI = Create2OperandInstr_Reg(WRCCR, SrcReg, DestReg+1);
+      }
+    break;
+    
   case FloatCCRegType: 
-    assert(0 && "This code was bogus and needs to be fixed!");
+    assert(0 && "Cannot copy FPCC register to any other register");
     break;
     
   case IntRegType:
-    MI = new MachineInstr(ADD, 3);
-    MI->SetMachineOperandReg(0, SrcReg, false);
-    MI->SetMachineOperandReg(1, this->getZeroRegNum(), false);
-    MI->SetMachineOperandReg(2, DestReg, true);
+    MI = Create3OperandInstr_Reg(ADD, SrcReg, this->getZeroRegNum(), DestReg);
     break;
     
   case FPSingleRegType:
-    MI = new MachineInstr(FMOVS, 2);
-    MI->SetMachineOperandReg(0, SrcReg, false);
-    MI->SetMachineOperandReg(1, DestReg, true);
+    MI = Create2OperandInstr_Reg(FMOVS, SrcReg, DestReg);
     break;
 
   case FPDoubleRegType:
-    MI = new MachineInstr(FMOVD, 2);
-    MI->SetMachineOperandReg(0, SrcReg, false);    
-    MI->SetMachineOperandReg(1, DestReg, true);
+    MI = Create2OperandInstr_Reg(FMOVD, SrcReg, DestReg);
     break;
 
   default:
     assert(0 && "Unknown RegType");
+    break;
   }
   
   if (MI)
@@ -1019,19 +1096,20 @@ UltraSparcRegInfo::cpReg2RegMI(unsigned SrcReg,
 
 
 void
-UltraSparcRegInfo::cpReg2MemMI(unsigned SrcReg, 
+UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
+                               unsigned SrcReg, 
                                unsigned DestPtrReg,
                                int Offset, int RegType,
-                               vector<MachineInstr*>& mvec) const {
+                               int scratchReg = -1) const {
   MachineInstr * MI = NULL;
   switch( RegType ) {
   case IntRegType:
-  case FloatCCRegType: 
     MI = new MachineInstr(STX, 3);
     MI->SetMachineOperandReg(0, SrcReg, false);
     MI->SetMachineOperandReg(1, DestPtrReg, false);
     MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
+    mvec.push_back(MI);
     break;
 
   case FPSingleRegType:
@@ -1040,6 +1118,7 @@ UltraSparcRegInfo::cpReg2MemMI(unsigned SrcReg,
     MI->SetMachineOperandReg(1, DestPtrReg, false);
     MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
+    mvec.push_back(MI);
     break;
 
   case FPDoubleRegType:
@@ -1048,17 +1127,33 @@ UltraSparcRegInfo::cpReg2MemMI(unsigned SrcReg,
     MI->SetMachineOperandReg(1, DestPtrReg, false);
     MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
+    mvec.push_back(MI);
     break;
 
   case IntCCRegType:
-    assert( 0 && "Cannot directly store %ccr to memory");
+    assert(scratchReg >= 0 && "Need scratch reg to store %ccr to memory");
+    assert(this->getRegType(scratchReg) ==IntRegType && "Invalid scratch reg");
+    
+    // Use SrcReg+1 to get the name "%ccr" instead of "%xcc" for RDCCR
+    MI = Create2OperandInstr_Reg(RDCCR, SrcReg+1, scratchReg);
+    mvec.push_back(MI);
+    
+    this->cpReg2MemMI(mvec, scratchReg, DestPtrReg, Offset, IntRegType);
+    break;
+    
+  case FloatCCRegType: 
+    assert(0 && "Tell Vikram if this assertion fails: we may have to mask out the other bits here");
+    MI = new MachineInstr(STXFSR, 3);
+    MI->SetMachineOperandReg(0, SrcReg, false);
+    MI->SetMachineOperandReg(1, DestPtrReg, false);
+    MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
+                               (int64_t) Offset);
+    mvec.push_back(MI);
+    break;
     
   default:
     assert(0 && "Unknown RegType in cpReg2MemMI");
   }
-
-  if (MI)
-    mvec.push_back(MI);
 }
 
 
@@ -1069,20 +1164,21 @@ UltraSparcRegInfo::cpReg2MemMI(unsigned SrcReg,
 
 
 void
-UltraSparcRegInfo::cpMem2RegMI(unsigned SrcPtrReg,	
+UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
+                               unsigned SrcPtrReg,	
                                int Offset,
                                unsigned DestReg,
                                int RegType,
-                               vector<MachineInstr*>& mvec) const {
+                               int scratchReg = -1) const {
   MachineInstr * MI = NULL;
   switch (RegType) {
   case IntRegType:
-  case FloatCCRegType: 
     MI = new MachineInstr(LDX, 3);
     MI->SetMachineOperandReg(0, SrcPtrReg, false);
     MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
     MI->SetMachineOperandReg(2, DestReg, true);
+    mvec.push_back(MI);
     break;
 
   case FPSingleRegType:
@@ -1091,7 +1187,7 @@ UltraSparcRegInfo::cpMem2RegMI(unsigned SrcPtrReg,
     MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
     MI->SetMachineOperandReg(2, DestReg, true);
-
+    mvec.push_back(MI);
     break;
 
   case FPDoubleRegType:
@@ -1100,17 +1196,33 @@ UltraSparcRegInfo::cpMem2RegMI(unsigned SrcPtrReg,
     MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
     MI->SetMachineOperandReg(2, DestReg, true);
+    mvec.push_back(MI);
     break;
 
   case IntCCRegType:
-    assert( 0 && "Cannot directly load into %ccr from memory");
+    assert(scratchReg >= 0 && "Need scratch reg to load %ccr from memory");
+    assert(this->getRegType(scratchReg) ==IntRegType && "Invalid scratch reg");
+    this->cpMem2RegMI(mvec, SrcPtrReg, Offset, scratchReg, IntRegType);
+    
+    // Use DestReg+1 to get the name "%ccr" instead of "%xcc" for WRCCR
+    MI = Create2OperandInstr_Reg(WRCCR, scratchReg, DestReg+1);
+    mvec.push_back(MI);
+
+    break;
+    
+  case FloatCCRegType: 
+    assert(0 && "Tell Vikram if this assertion fails: we may have to mask out the other bits here");
+    MI = new MachineInstr(LDXFSR, 3);
+    MI->SetMachineOperandReg(0, SrcPtrReg, false);
+    MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
+                               (int64_t) Offset);
+    MI->SetMachineOperandReg(2, DestReg, true);
+    mvec.push_back(MI);
+    break;
 
   default:
     assert(0 && "Unknown RegType in cpMem2RegMI");
   }
-
-  if (MI)
-    mvec.push_back(MI);
 }
 
 
@@ -1178,7 +1290,7 @@ UltraSparcRegInfo::cpValue2Value(Value *Src,
 //----------------------------------------------------------------------------
 
 
-void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *CallMI, 
+void UltraSparcRegInfo::insertCallerSavingCode(MachineInstr *CallMI, 
 					       const BasicBlock *BB,
 					       PhyRegAlloc &PRA) const {
 
@@ -1233,7 +1345,7 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *CallMI,
 
 	  // if the value is in both LV sets (i.e., live before and after 
 	  // the call machine instruction)
-
+          
 	  unsigned Reg = getUnifiedRegNum(RCID, Color);
 	  
 	  if( PushedRegSet.find(Reg) == PushedRegSet.end() ) {
@@ -1245,107 +1357,84 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *CallMI,
 	    // Now get two instructions - to push on stack and pop from stack
 	    // and add them to InstrnsBefore and InstrnsAfter of the
 	    // call instruction
-
-
+            // 
 	    int StackOff =  PRA.mcInfo.pushTempValue(target,  
 					       getSpilledRegSize(RegType));
-
             
-	    MachineInstr *AdIBefCC=NULL, *AdIAftCC=NULL, *AdICpCC;
-	    MachineInstr *AdIBef=NULL, *AdIAft=NULL;
-
+            vector<MachineInstr*>& instrnsBefore =
+              PRA.AddedInstrMap[CallMI].InstrnsBefore;
+            vector<MachineInstr*>& instrnsAfter =
+              PRA.AddedInstrMap[CallMI].InstrnsAfter;
+            
+	    vector<MachineInstr*> AdIBef, AdIAft;
+            
 	    //---- Insert code for pushing the reg on stack ----------
-		  
-	    if( RegType == IntCCRegType ) {
-
-	      // Handle IntCCRegType specially since we cannot directly 
-	      // push %ccr on to the stack
-
-	      const ValueSet &LVSetBef = 
-		PRA.LVI->getLiveVarSetBeforeMInst(CallMI, BB);
-
-	      // get a free INTEGER register
-	      int FreeIntReg = 
-		PRA.getUsableUniRegAtMI(PRA.getRegClassByID(IntRegClassID) /*LR->getRegClass()*/,
-                                        IntRegType, CallMI, &LVSetBef, AdIBefCC, AdIAftCC);
-              
-	      // insert the instructions in reverse order since we are
-	      // adding them to the front of InstrnsBefore
-              AddedInstrns& addedI = PRA.AddedInstrMap[CallMI];
-	      if(AdIAftCC)
-		addedI.InstrnsBefore.insert(addedI.InstrnsBefore.begin(),
-                                            AdIAftCC);
-              
-	      AdICpCC = cpCCR2IntMI(FreeIntReg);
-	      addedI.InstrnsBefore.insert(addedI.InstrnsBefore.begin(),
-                                          AdICpCC);
-              
-	      if(AdIBefCC)
-		addedI.InstrnsBefore.insert(addedI.InstrnsBefore.begin(),
-                                            AdIBefCC);
-              
-	      if(DEBUG_RA) {
-		cerr << "\n!! Inserted caller saving (push) inst for %ccr:";
-		if(AdIBefCC) cerr << "\t" <<  *(AdIBefCC);
-		cerr  << "\t" << *AdICpCC;
-		if(AdIAftCC) cerr  << "\t" << *(AdIAftCC);
-	      }
-
-	    } else  {  
-	      // for any other register type, just add the push inst
-	      cpReg2MemMI(Reg, getFramePointer(), StackOff, RegType,
-                          PRA.AddedInstrMap[CallMI].InstrnsBefore);
-	    }
-
-
+            
+            // We may need a scratch register to copy the saved value
+            // to/from memory.  This may itself have to insert code to
+            // free up a scratch register.  Any such code should go before
+            // the save code.
+            int scratchRegType = -1;
+            int scratchReg = -1;
+            if (this->regTypeNeedsScratchReg(RegType, scratchRegType))
+              { // Find a register not live in the LVSet before CallMI
+                const ValueSet &LVSetBef =
+                  PRA.LVI->getLiveVarSetBeforeMInst(CallMI, BB);
+                scratchReg = PRA.getUsableUniRegAtMI(scratchRegType, &LVSetBef,
+                                                   CallMI, AdIBef, AdIAft);
+                assert(scratchReg != this->getInvalidRegNum());
+                CallMI->getRegsUsed().insert(scratchReg); 
+              }
+            
+            if (AdIBef.size() > 0)
+              instrnsBefore.insert(instrnsBefore.end(),
+                                   AdIBef.begin(), AdIBef.end());
+            
+            cpReg2MemMI(instrnsBefore, Reg,getFramePointer(),StackOff,RegType,
+                        scratchReg);
+            
+            if (AdIBef.size() > 0)
+              instrnsBefore.insert(instrnsBefore.end(),
+                                   AdIAft.begin(), AdIAft.end());
+            
 	    //---- Insert code for popping the reg from the stack ----------
 
-	    if (RegType == IntCCRegType) {
-
-	      // Handle IntCCRegType specially since we cannot directly 
-	      // pop %ccr on from the stack
-	      
-	      // get a free INT register
-	      int FreeIntReg = 
-		PRA.getUsableUniRegAtMI(PRA.getRegClassByID(IntRegClassID) /* LR->getRegClass()*/,
-                                        IntRegType, CallMI, &LVSetAft, AdIBefCC, AdIAftCC);
-	      
-	      if(AdIBefCC)
-		PRA.AddedInstrMap[CallMI].InstrnsAfter.push_back(AdIBefCC);
-
-	      AdICpCC = cpInt2CCRMI(FreeIntReg);
-	      PRA.AddedInstrMap[CallMI].InstrnsAfter.push_back(AdICpCC);
-	    
-	      if(AdIAftCC)
-		PRA.AddedInstrMap[CallMI].InstrnsAfter.push_back(AdIAftCC);
-
-	      if(DEBUG_RA) {
-
-		cerr << "\n!! Inserted caller saving (pop) inst for %ccr:";
-		if(AdIBefCC) cerr << "\t" <<  *(AdIBefCC);
-		cerr  << "\t" << *AdICpCC;
-		if(AdIAftCC) cerr  << "\t" << *(AdIAftCC);
-	      }
-
-	    } else {
-	      // for any other register type, just add the pop inst
-	      cpMem2RegMI(getFramePointer(), StackOff, Reg, RegType,
-                          PRA.AddedInstrMap[CallMI].InstrnsAfter);
-	    }
+            // We may need a scratch register to copy the saved value
+            // from memory.  This may itself have to insert code to
+            // free up a scratch register.  Any such code should go
+            // after the save code.
+            // 
+            scratchRegType = -1;
+            scratchReg = -1;
+            if (this->regTypeNeedsScratchReg(RegType, scratchRegType))
+              { // Find a register not live in the LVSet after CallMI
+                scratchReg = PRA.getUsableUniRegAtMI(scratchRegType, &LVSetAft,
+                                                 CallMI, AdIBef, AdIAft);
+                assert(scratchReg != this->getInvalidRegNum());
+                CallMI->getRegsUsed().insert(scratchReg); 
+              }
+            
+            if (AdIBef.size() > 0)
+              instrnsAfter.insert(instrnsAfter.end(),
+                                  AdIBef.begin(), AdIBef.end());
+            
+	    cpMem2RegMI(instrnsAfter, getFramePointer(), StackOff,Reg,RegType,
+                        scratchReg);
+            
+            if (AdIAft.size() > 0)
+              instrnsAfter.insert(instrnsAfter.end(),
+                                  AdIAft.begin(), AdIAft.end());
 	    
 	    PushedRegSet.insert(Reg);
-
+            
 	    if(DEBUG_RA) {
 	      cerr << "\nFor call inst:" << *CallMI;
-	      cerr << " -inserted caller saving instrs:\n\t ";
-              if( RegType == IntCCRegType ) {
-		if(AdIBefCC) cerr << *AdIBefCC << "\t";
-                if(AdIAftCC) cerr << *AdIAftCC;
-              }
-              else {
-		if(AdIBef) cerr << *AdIBef << "\t";
-                if(AdIAft) cerr << *AdIAft;
-              }
+	      cerr << " -inserted caller saving instrs: Before:\n\t ";
+              for_each(instrnsBefore.begin(), instrnsBefore.end(),
+                       mem_fun(&MachineInstr::dump));
+	      cerr << " -and After:\n\t ";
+              for_each(instrnsAfter.begin(), instrnsAfter.end(),
+                       mem_fun(&MachineInstr::dump));
 	    }	    
 	  } // if not already pushed
 
@@ -1356,38 +1445,7 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *CallMI,
     } // if there is a LR for Var
     
   } // for each value in the LV set after instruction
-  
 }
-
-//---------------------------------------------------------------------------
-// Copies %ccr into an integer register. IntReg is the UNIFIED register
-// number.
-//---------------------------------------------------------------------------
-
-MachineInstr * UltraSparcRegInfo::cpCCR2IntMI(unsigned IntReg) const {
-  MachineInstr * MI = new MachineInstr(RDCCR, 2);
-  MI->SetMachineOperandReg(0, this->getUnifiedRegNum(UltraSparcRegInfo::IntCCRegClassID,
-                                                     SparcIntCCRegOrder::ccr),
-                           false, true);
-  MI->SetMachineOperandReg(1, IntReg, true);
-  return MI;
-}
-
-//---------------------------------------------------------------------------
-// Copies an integer register into  %ccr. IntReg is the UNIFIED register
-// number.
-//---------------------------------------------------------------------------
-
-MachineInstr *UltraSparcRegInfo::cpInt2CCRMI(unsigned IntReg) const {
-  MachineInstr *MI = new MachineInstr(WRCCR, 3);
-  MI->SetMachineOperandReg(0, IntReg, false);
-  MI->SetMachineOperandReg(1, this->getZeroRegNum(), false);
-  MI->SetMachineOperandReg(2, this->getUnifiedRegNum(UltraSparcRegInfo::IntCCRegClassID, SparcIntCCRegOrder::ccr),
-                           true, true);
-  return MI;
-}
-
-
 
 
 //---------------------------------------------------------------------------
@@ -1434,6 +1492,7 @@ void UltraSparcRegInfo::printReg(const LiveRange *LR) {
 // 
 // Since instructions are inserted in RegAlloc, this assumes that the 
 // first operand is the source reg and the last operand is the dest reg.
+// It also does not consider operands that are both use and def.
 // 
 // All the uses are before THE def to a register
 //---------------------------------------------------------------------------
@@ -1610,7 +1669,7 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
 	  
 	  // Save the UReg (%ox) on stack before it's destroyed
           vector<MachineInstr*> mvec;
-	  cpReg2MemMI(UReg, getFramePointer(), StackOff, RegType, mvec);
+	  cpReg2MemMI(mvec, UReg, getFramePointer(), StackOff, RegType);
           for (vector<MachineInstr*>::iterator MI=mvec.begin(); MI != mvec.end(); ++MI) {
             OrdIt = OrdVec.insert(OrdIt, *MI);
             ++OrdIt; // OrdIt must still point to current instr we processed
@@ -1622,7 +1681,7 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
 	  assert(DOp.opIsDef() && "Last operand is not the def");
 	  const int DReg = DOp.getMachineRegNum();
 	  
-	  cpMem2RegMI(getFramePointer(), StackOff, DReg, RegType, OrdVec);
+	  cpMem2RegMI(OrdVec, getFramePointer(), StackOff, DReg, RegType);
 	    
 	  cerr << "\nFixed CIRCULAR references by reordering";
 
