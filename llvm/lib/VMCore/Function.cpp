@@ -68,7 +68,7 @@ Argument::Argument(const Type *Ty, const std::string &Name, Function *Par)
 void Argument::setName(const std::string &name, SymbolTable *ST) {
   Function *P;
   assert((ST == 0 || (!getParent() || ST == &getParent()->getSymbolTable())) &&
-	 "Invalid symtab argument!");
+         "Invalid symtab argument!");
   if ((P = getParent()) && hasName()) P->getSymbolTable().remove(this);
   Value::setName(name);
   if (P && hasName()) P->getSymbolTable().insert(this);
@@ -81,42 +81,6 @@ void Argument::setParent(Function *parent) {
   if (getParent())
     LeakDetector::removeGarbageObject(this);
 }
-
-static bool removeDeadConstantUsers(Constant *C) {
-  while (!C->use_empty()) {
-    if (Constant *CU = dyn_cast<Constant>(C->use_back())) {
-      if (!removeDeadConstantUsers(CU))
-        return false;  // Constant wasn't dead.
-    } else {
-      return false;    // Nonconstant user of the global.
-    }
-  }
-
-  C->destroyConstant();
-  return true;
-}
-
-
-/// removeDeadConstantUsers - If there are any dead constant users dangling
-/// off of this global value, remove them.  This method is useful for clients
-/// that want to check to see if a global is unused, but don't want to deal
-/// with potentially dead constants hanging off of the globals.
-///
-/// This function returns true if the global value is now dead.  If all 
-/// users of this global are not dead, this method may return false and
-/// leave some of them around.
-bool GlobalValue::removeDeadConstantUsers() {
-  while (!use_empty()) {
-    if (Constant *C = dyn_cast<Constant>(use_back())) {
-      if (!::removeDeadConstantUsers(C))
-        return false;  // Constant wasn't dead.
-    } else {
-      return false;    // Nonconstant user of the global.
-    }
-  }
-  return true;
-}
-
 
 //===----------------------------------------------------------------------===//
 // Function Implementation
@@ -161,7 +125,7 @@ Function::~Function() {
 void Function::setName(const std::string &name, SymbolTable *ST) {
   Module *P;
   assert((ST == 0 || (!getParent() || ST == &getParent()->getSymbolTable())) &&
-	 "Invalid symtab argument!");
+         "Invalid symtab argument!");
   if ((P = getParent()) && hasName()) P->getSymbolTable().remove(this);
   Value::setName(name);
   if (P && hasName()) P->getSymbolTable().insert(this);
@@ -294,37 +258,4 @@ unsigned Function::getIntrinsicID() const {
 }
 
 
-//===----------------------------------------------------------------------===//
-// GlobalVariable Implementation
-//===----------------------------------------------------------------------===//
-
-GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
-			       Constant *Initializer,
-			       const std::string &Name, Module *ParentModule)
-  : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal, Link, Name),
-    isConstantGlobal(constant) {
-  if (Initializer) Operands.push_back(Use((Value*)Initializer, this));
-
-  LeakDetector::addGarbageObject(this);
-
-  if (ParentModule)
-    ParentModule->getGlobalList().push_back(this);
-}
-
-void GlobalVariable::setParent(Module *parent) {
-  if (getParent())
-    LeakDetector::addGarbageObject(this);
-  Parent = parent;
-  if (getParent())
-    LeakDetector::removeGarbageObject(this);
-}
-
-// Specialize setName to take care of symbol table majik
-void GlobalVariable::setName(const std::string &name, SymbolTable *ST) {
-  Module *P;
-  assert((ST == 0 || (!getParent() || ST == &getParent()->getSymbolTable())) &&
-	 "Invalid symtab argument!");
-  if ((P = getParent()) && hasName()) P->getSymbolTable().remove(this);
-  Value::setName(name);
-  if (P && hasName()) P->getSymbolTable().insert(this);
-}
+// vim: sw=2 ai
