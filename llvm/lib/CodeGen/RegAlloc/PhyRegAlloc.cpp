@@ -539,8 +539,8 @@ void PhyRegAlloc::updateMachineCode()
       for (unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum)
         {
           MachineOperand& Op = MInst->getOperand(OpNum);
-          if (Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
-              Op.getOperandType() ==  MachineOperand::MO_CCRegister)
+          if (Op.getType() ==  MachineOperand::MO_VirtualRegister || 
+              Op.getType() ==  MachineOperand::MO_CCRegister)
             {
               const Value *const Val =  Op.getVRegValue();
           
@@ -750,7 +750,7 @@ int PhyRegAlloc::getUsableUniRegAtMI(const int RegType,
                                      std::vector<MachineInstr*>& MIBef,
                                      std::vector<MachineInstr*>& MIAft) {
   
-  RegClass* RC = this->getRegClassByID(MRI.getRegClassIDOfRegType(RegType));
+  RegClass* RC = getRegClassByID(MRI.getRegClassIDOfRegType(RegType));
   
   int RegU =  getUnusedUniRegAtMI(RC, MInst, LVSetBef);
   
@@ -766,8 +766,8 @@ int PhyRegAlloc::getUsableUniRegAtMI(const int RegType,
     int scratchRegType = -1;
     if (MRI.regTypeNeedsScratchReg(RegType, scratchRegType))
       {
-        int scratchReg = this->getUsableUniRegAtMI(scratchRegType, LVSetBef,
-                                                   MInst, MIBef, MIAft);
+        int scratchReg = getUsableUniRegAtMI(scratchRegType, LVSetBef,
+                                             MInst, MIBef, MIAft);
         assert(scratchReg != MRI.getInvalidRegNum());
         
         // We may as well hold the value in the scratch register instead
@@ -893,8 +893,8 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC,
     {
       const MachineOperand& Op = MInst->getOperand(OpNum);
       
-      if (Op.getOperandType() == MachineOperand::MO_VirtualRegister || 
-          Op.getOperandType() == MachineOperand::MO_CCRegister)
+      if (MInst->getOperandType(OpNum) == MachineOperand::MO_VirtualRegister || 
+          MInst->getOperandType(OpNum) == MachineOperand::MO_CCRegister)
         if (const Value* Val = Op.getVRegValue())
           if (MRI.getRegClassIDOfValue(Val) == RC->getID())
             if (Op.getAllocatedRegNum() == -1)
@@ -971,9 +971,9 @@ void PhyRegAlloc::printMachineCode()
       for (unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
 	MachineOperand& Op = MInst->getOperand(OpNum);
 
-	if (Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
-	    Op.getOperandType() ==  MachineOperand::MO_CCRegister /*|| 
-	    Op.getOperandType() ==  MachineOperand::MO_PCRelativeDisp*/ ) {
+	if (Op.getType() ==  MachineOperand::MO_VirtualRegister || 
+	    Op.getType() ==  MachineOperand::MO_CCRegister /*|| 
+	    Op.getType() ==  MachineOperand::MO_PCRelativeDisp*/ ) {
 
 	  const Value *const Val = Op.getVRegValue () ;
 	  // ****this code is temporary till NULL Values are fixed
@@ -1005,7 +1005,7 @@ void PhyRegAlloc::printMachineCode()
 	  }
 
 	} 
-	else if (Op.getOperandType() ==  MachineOperand::MO_MachineRegister) {
+	else if (Op.getType() ==  MachineOperand::MO_MachineRegister) {
 	  cerr << "\t" << "%" << MRI.getUnifiedRegName(Op.getMachineRegNum());
 	}
 

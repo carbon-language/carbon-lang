@@ -382,7 +382,7 @@ SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &mop)
   else
     needBitsFlag = false;
   
-  switch (mop.getOperandType())
+  switch (mop.getType())
     {
     case MachineOperand::MO_VirtualRegister:
     case MachineOperand::MO_CCRegister:

@@ -483,9 +483,9 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
       // Skip the result position, preallocated machine registers, or operands
       // that cannot be constants (CC regs or PC-relative displacements)
       if (instrDesc.resultPos == (int) op ||
-          mop.getOperandType() == MachineOperand::MO_MachineRegister ||
-          mop.getOperandType() == MachineOperand::MO_CCRegister ||
-          mop.getOperandType() == MachineOperand::MO_PCRelativeDisp)
+          mop.getType() == MachineOperand::MO_MachineRegister ||
+          mop.getType() == MachineOperand::MO_CCRegister ||
+          mop.getType() == MachineOperand::MO_PCRelativeDisp)
         continue;
 
       bool constantThatMustBeLoaded = false;
@@ -496,7 +496,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
         MachineOperand::MO_VirtualRegister;
 
       // Operand may be a virtual register or a compile-time constant
-      if (mop.getOperandType() == MachineOperand::MO_VirtualRegister)
+      if (mop.getType() == MachineOperand::MO_VirtualRegister)
         {
           assert(mop.getVRegValue() != NULL);
           opValue = mop.getVRegValue();
@@ -510,10 +510,10 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
         }
       else
         {
-          assert(mop.getOperandType() == MachineOperand::MO_SignExtendedImmed ||
-                 mop.getOperandType() == MachineOperand::MO_UnextendedImmed);
+          assert(mop.getType() == MachineOperand::MO_SignExtendedImmed ||
+                 mop.getType() == MachineOperand::MO_UnextendedImmed);
 
-          bool isSigned = (mop.getOperandType() ==
+          bool isSigned = (mop.getType() ==
                            MachineOperand::MO_SignExtendedImmed);
 
           // Bit-selection flags indicate an instruction that is extracting
@@ -526,7 +526,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
                                     opCode, target, (immedPos == (int)op), 
                                     machineRegNum, immedValue);
 
-          if (opType == mop.getOperandType()) 
+          if (opType == mop.getType()) 
             continue;           // no change: this is the most common case
 
           if (opType == MachineOperand::MO_VirtualRegister)

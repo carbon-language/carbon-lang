@@ -1599,11 +1599,10 @@ void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
       // last operand is the def (unless for a store which has no def reg)
       MachineOperand& DefOp = DefInst->getOperand(DefInst->getNumOperands()-1);
       
-      if( DefOp.opIsDef() &&  
-	  DefOp.getOperandType() ==  MachineOperand::MO_MachineRegister) {
+      if (DefOp.opIsDef() &&
+          DefOp.getType() == MachineOperand::MO_MachineRegister) {
 	
 	// If the operand in DefInst is a def ...
-	
 	bool DefEqUse = false;
 	
 	std::vector<MachineInstr *>::iterator UseIt = DefIt;
@@ -1617,8 +1616,8 @@ void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
 	  // for each inst (UseInst) that is below the DefInst do ...
 	  MachineOperand& UseOp = UseInst->getOperand(0);
 	  
-	  if( ! UseOp.opIsDef() &&  
-	      UseOp.getOperandType() == MachineOperand::MO_MachineRegister) {
+	  if (!UseOp.opIsDef() &&  
+	      UseOp.getType() == MachineOperand::MO_MachineRegister) {
 	    
 	    // if use is a register ...
 	    
@@ -1678,8 +1677,8 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
 					PhyRegAlloc &PRA) const {
   MachineOperand& UseOp = UnordInst->getOperand(0);
 
-  if( ! UseOp.opIsDef() &&  
-      UseOp.getOperandType() ==  MachineOperand::MO_MachineRegister) {
+  if (!UseOp.opIsDef() &&
+      UseOp.getType() ==  MachineOperand::MO_MachineRegister) {
 
     // for the use of UnordInst, see whether there is a defining instr
     // before in the OrdVec
@@ -1695,7 +1694,7 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
 	OrdInst->getOperand(OrdInst->getNumOperands()-1);
 
       if( DefOp.opIsDef() &&  
-	  DefOp.getOperandType() == MachineOperand::MO_MachineRegister) {
+	  DefOp.getType() == MachineOperand::MO_MachineRegister) {
 
 	//cerr << "\nDefining Ord Inst: " <<  *OrdInst;
 	  

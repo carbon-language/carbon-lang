@@ -623,31 +623,30 @@ SchedGraph::addEdgesForValue(SchedGraphNode* refNode,
 
 
 void
-SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
+SchedGraph::addEdgesForInstruction(const MachineInstr& MI,
                                    const ValueToDefVecMap& valueToDefVecMap,
 				   const TargetMachine& target)
 {
-  SchedGraphNode* node = this->getGraphNodeForInstr(&minstr);
+  SchedGraphNode* node = getGraphNodeForInstr(&MI);
   if (node == NULL)
     return;
   
   // Add edges for all operands of the machine instruction.
   // 
-  for (unsigned i=0, numOps=minstr.getNumOperands(); i < numOps; i++)
+  for (unsigned i = 0, numOps = MI.getNumOperands(); i != numOps; ++i)
     {
-      const MachineOperand& mop = minstr.getOperand(i);
-      switch(mop.getOperandType())
+      switch (MI.getOperandType(i))
 	{
 	case MachineOperand::MO_VirtualRegister:
 	case MachineOperand::MO_CCRegister:
 	  if (const Instruction* srcI =
-              dyn_cast_or_null<Instruction>(mop.getVRegValue()))
+              dyn_cast_or_null<Instruction>(MI.getOperand(i).getVRegValue()))
             {
               ValueToDefVecMap::const_iterator I = valueToDefVecMap.find(srcI);
               if (I != valueToDefVecMap.end())
-                addEdgesForValue(node, (*I).second, mop.getVRegValue(),
-                                 minstr.operandIsDefined(i),
-                                 minstr.operandIsDefinedAndUsed(i), target);
+                addEdgesForValue(node, I->second, srcI,
+                                 MI.operandIsDefined(i),
+                                 MI.operandIsDefinedAndUsed(i), target);
             }
 	  break;
 	  
@@ -669,17 +668,17 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
   // Examples include function arguments to a Call instructions or the return
   // value of a Ret instruction.
   // 
-  for (unsigned i=0, N=minstr.getNumImplicitRefs(); i < N; ++i)
-    if (! minstr.implicitRefIsDefined(i) ||
-        minstr.implicitRefIsDefinedAndUsed(i))
-      if (const Instruction* srcI =
-          dyn_cast_or_null<Instruction>(minstr.getImplicitRef(i)))
+  for (unsigned i=0, N=MI.getNumImplicitRefs(); i < N; ++i)
+    if (! MI.implicitRefIsDefined(i) ||
+        MI.implicitRefIsDefinedAndUsed(i))
+      if (const Instruction *srcI =
+          dyn_cast_or_null<Instruction>(MI.getImplicitRef(i)))
         {
           ValueToDefVecMap::const_iterator I = valueToDefVecMap.find(srcI);
           if (I != valueToDefVecMap.end())
-            addEdgesForValue(node, (*I).second, minstr.getImplicitRef(i),
-                             minstr.implicitRefIsDefined(i),
-                             minstr.implicitRefIsDefinedAndUsed(i), target);
+            addEdgesForValue(node, I->second, srcI,
+                             MI.implicitRefIsDefined(i),
+                             MI.implicitRefIsDefinedAndUsed(i), target);
         }
 }
 
@@ -700,14 +699,14 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
   
   // Collect the register references and value defs. for explicit operands
   // 
-  const MachineInstr& minstr = * node->getMachineInstr();
+  const MachineInstr& minstr = *node->getMachineInstr();
   for (int i=0, numOps = (int) minstr.getNumOperands(); i < numOps; i++)
     {
       const MachineOperand& mop = minstr.getOperand(i);
       
       // if this references a register other than the hardwired
       // "zero" register, record the reference.
-      if (mop.getOperandType() == MachineOperand::MO_MachineRegister)
+      if (mop.getType() == MachineOperand::MO_MachineRegister)
         {
           int regNum = mop.getMachineRegNum();
 	  if (regNum != target.getRegInfo().getZeroRegNum())
@@ -721,8 +720,8 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
 	continue;
       
       // We must be defining a value.
-      assert((mop.getOperandType() == MachineOperand::MO_VirtualRegister ||
-              mop.getOperandType() == MachineOperand::MO_CCRegister)
+      assert((mop.getType() == MachineOperand::MO_VirtualRegister ||
+              mop.getType() == MachineOperand::MO_CCRegister)
              && "Do not expect any other kind of operand to be defined!");
       
       const Instruction* defInstr = cast<Instruction>(mop.getVRegValue());

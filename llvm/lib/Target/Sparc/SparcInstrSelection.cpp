@@ -1106,7 +1106,7 @@ ForwardOperand(InstructionNode* treeNode,
           for (unsigned i=0, numOps=minstr->getNumOperands(); i < numOps; ++i)
             {
               const MachineOperand& mop = minstr->getOperand(i);
-              if (mop.getOperandType() == MachineOperand::MO_VirtualRegister &&
+              if (mop.getType() == MachineOperand::MO_VirtualRegister &&
                   mop.getVRegValue() == unusedOp)
                 minstr->SetMachineOperandVal(i,
                                 MachineOperand::MO_VirtualRegister, fwdOp);

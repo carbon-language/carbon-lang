@@ -110,7 +110,7 @@ LiveRangeInfo::createOrAddToLiveRange(const Value* Def, bool isCC /* = false*/)
 
   // check if the LR is already there (because of multiple defs)
   if (!DefRange) { 
-    DefRange = this->createNewLiveRange(Def, isCC);
+    DefRange = createNewLiveRange(Def, isCC);
   } else {                          // live range already exists
     DefRange->insert(Def);          // add the operand to the range
     LiveRangeMap[Def] = DefRange;   // make operand point to merged set
@@ -134,7 +134,7 @@ void LiveRangeInfo::constructLiveRanges() {
   // first find the live ranges for all incoming args of the function since
   // those LRs start from the start of the function
   for (Function::const_aiterator AI = Meth->abegin(); AI != Meth->aend(); ++AI)
-    this->createNewLiveRange(AI, /*isCC*/ false);
+    createNewLiveRange(AI, /*isCC*/ false);
 
   // Now suggest hardware registers for these function args 
   MRI.suggestRegs4MethodArgs(Meth, *this);
@@ -160,7 +160,7 @@ void LiveRangeInfo::constructLiveRanges() {
       // 
       if(TM.getInstrInfo().isReturn(MInst->getOpCode()) ||
 	 TM.getInstrInfo().isCall(MInst->getOpCode()))
-	CallRetInstrList.push_back( MInst ); 
+	CallRetInstrList.push_back(MInst); 
  
       // iterate over explicit MI operands and create a new LR
       // for each operand that is defined by the instruction
@@ -168,9 +168,9 @@ void LiveRangeInfo::constructLiveRanges() {
              OpE = MInst->end(); OpI != OpE; ++OpI)
 	if (OpI.isDef()) {     
 	  const Value *Def = *OpI;
-          bool isCC = (OpI.getMachineOperand().getOperandType()
+          bool isCC = (OpI.getMachineOperand().getType()
                        == MachineOperand::MO_CCRegister);
-          this->createOrAddToLiveRange(Def, isCC);
+          createOrAddToLiveRange(Def, isCC);
 	}
 
       // iterate over implicit MI operands and create a new LR
@@ -178,7 +178,7 @@ void LiveRangeInfo::constructLiveRanges() {
       for (unsigned i = 0; i < MInst->getNumImplicitRefs(); ++i) 
 	if (MInst->implicitRefIsDefined(i)) {     
 	  const Value *Def = MInst->getImplicitRef(i);
-          this->createOrAddToLiveRange(Def, /*isCC*/ false);
+          createOrAddToLiveRange(Def, /*isCC*/ false);
 	}
 
     } // for all machine instructions in the BB

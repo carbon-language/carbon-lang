@@ -101,7 +101,7 @@ public:
   // Accessor methods.  Caller is responsible for checking the
   // operand type before invoking the corresponding accessor.
   // 
-  MachineOperandType getOperandType() const { return opType; }
+  MachineOperandType getType() const { return opType; }
 
   inline Value*		getVRegValue	() const {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
@@ -248,7 +248,7 @@ public:
   }
 
   MachineOperand::MachineOperandType getOperandType(unsigned i) const {
-    return getOperand(i).getOperandType();
+    return getOperand(i).getType();
   }
 
   bool operandIsDefined(unsigned i) const {
