@@ -61,7 +61,8 @@ static bool isMem(const MachineInstr *MI, unsigned Op) {
   if (MI->getOperand(Op).isConstantPoolIndex()) return true;
   return Op+4 <= MI->getNumOperands() &&
     MI->getOperand(Op  ).isRegister() && isScale(MI->getOperand(Op+1)) &&
-    MI->getOperand(Op+2).isRegister() && MI->getOperand(Op+3).isImmediate();
+    MI->getOperand(Op+2).isRegister() && (MI->getOperand(Op+3).isImmediate() ||
+        MI->getOperand(Op+3).isGlobalAddress());
 }
 
 // SwitchSection - Switch to the specified section of the executable if we are
@@ -289,11 +290,17 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     std::cerr << "Shouldn't use addPCDisp() when building X86 MachineInstrs";
     abort ();
     return;
-  case MachineOperand::MO_GlobalAddress:
+  case MachineOperand::MO_GlobalAddress: {
     if (!elideOffsetKeyword)
       O << "OFFSET ";
     O << Mang->getValueName(MO.getGlobal());
+    int Offset = MO.getOffset();
+    if (Offset > 0)
+      O << " + " << Offset;
+    else if (Offset < 0)
+      O << " - " << -Offset;
     return;
+  }
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
     return;
@@ -323,12 +330,12 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   const MachineOperand &BaseReg  = MI->getOperand(Op);
   int ScaleVal                   = MI->getOperand(Op+1).getImmedValue();
   const MachineOperand &IndexReg = MI->getOperand(Op+2);
-  int DispVal                    = MI->getOperand(Op+3).getImmedValue();
+  const MachineOperand &DispSpec = MI->getOperand(Op+3);
 
   O << "[";
   bool NeedPlus = false;
   if (BaseReg.getReg()) {
-    printOp(BaseReg);
+    printOp(BaseReg, true);
     NeedPlus = true;
   }
 
@@ -340,15 +347,22 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
     NeedPlus = true;
   }
 
-  if (DispVal) {
+  if (DispSpec.isGlobalAddress()) {
     if (NeedPlus)
-      if (DispVal > 0)
-        O << " + ";
-      else {
-        O << " - ";
-        DispVal = -DispVal;
-      }
-    O << DispVal;
+      O << " + ";
+    printOp(DispSpec, true);
+  } else {
+    int DispVal = DispSpec.getImmedValue();
+    if (DispVal) {
+      if (NeedPlus)
+        if (DispVal > 0)
+          O << " + ";
+        else {
+          O << " - ";
+          DispVal = -DispVal;
+        }
+      O << DispVal;
+    }
   }
   O << "]";
 }
@@ -484,10 +498,16 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
     std::cerr << "Shouldn't use addPCDisp() when building X86 MachineInstrs";
     abort ();
     return;
-  case MachineOperand::MO_GlobalAddress:
+  case MachineOperand::MO_GlobalAddress: {
     if (!isCallOp) O << '$';
     O << Mang->getValueName(MO.getGlobal());
+    int Offset = MO.getOffset();
+    if (Offset > 0)
+      O << "+" << Offset;
+    else if (Offset < 0)
+      O << Offset;
     return;
+  }
   case MachineOperand::MO_ExternalSymbol:
     if (!isCallOp) O << '$';
     O << MO.getSymbolName();
@@ -517,22 +537,30 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   const MachineOperand &BaseReg  = MI->getOperand(Op);
   int ScaleVal                   = MI->getOperand(Op+1).getImmedValue();
   const MachineOperand &IndexReg = MI->getOperand(Op+2);
-  int DispVal                    = MI->getOperand(Op+3).getImmedValue();
+  const MachineOperand &DispSpec = MI->getOperand(Op+3);
 
-  if (DispVal) O << DispVal;
-
-  O << "(";
-  if (BaseReg.getReg())
-    printOp(BaseReg);
-
-  if (IndexReg.getReg()) {
-    O << ",";
-    printOp(IndexReg);
-    if (ScaleVal != 1)
-      O << "," << ScaleVal;
+  if (DispSpec.isGlobalAddress()) {
+    printOp(DispSpec, true);
+  } else {
+    int DispVal = DispSpec.getImmedValue();
+    if (DispVal)
+      O << DispVal;
   }
 
-  O << ")";
+  if (IndexReg.getReg() || BaseReg.getReg()) {
+    O << "(";
+    if (BaseReg.getReg())
+      printOp(BaseReg);
+
+    if (IndexReg.getReg()) {
+      O << ",";
+      printOp(IndexReg);
+      if (ScaleVal != 1)
+        O << "," << ScaleVal;
+    }
+
+    O << ")";
+  }
 }
 
 
