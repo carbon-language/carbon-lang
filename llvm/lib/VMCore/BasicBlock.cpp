@@ -100,8 +100,26 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
   for (max_idx = 0; PI != EI && max_idx < 3; ++PI, ++max_idx) /*empty*/;
 
   // If there are exactly two predecessors, then we want to nuke the PHI nodes
-  // altogether.
+  // altogether.  We cannot do this, however if this in this case however:
+  //
+  //  Loop:
+  //    %x = phi [X, Loop]
+  //    %x2 = add %x, 1         ;; This would become %x2 = add %x2, 1
+  //    br Loop                 ;; %x2 does not dominate all uses
+  //
+  // This is because the PHI node input is actually taken from the predecessor
+  // basic block.  The only case this can happen is with a self loop, so we 
+  // check for this case explicitly now.
+  // 
   assert(max_idx != 0 && "PHI Node in block with 0 predecessors!?!?!");
+  if (max_idx == 2) {
+    PI = pred_begin(this);
+    BasicBlock *Other = *PI == Pred ? *++PI : *PI;
+
+    // Disable PHI elimination!
+    if (this == Other) max_idx = 3;
+  }
+
   if (max_idx <= 2) {                // <= Two predecessors BEFORE I remove one?
     // Yup, loop through and nuke the PHI nodes
     while (PHINode *PN = dyn_cast<PHINode>(front())) {
@@ -118,9 +136,8 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
   } else {
     // Okay, now we know that we need to remove predecessor #pred_idx from all
     // PHI nodes.  Iterate over each PHI node fixing them up
-    iterator II(begin());
-    for (; isa<PHINode>(*II); ++II)
-      cast<PHINode>(*II)->removeIncomingValue(Pred);
+    for (iterator II = begin(); PHINode *PN = dyn_cast<PHINode>(*II); ++II)
+      PN->removeIncomingValue(Pred);
   }
 }
 
