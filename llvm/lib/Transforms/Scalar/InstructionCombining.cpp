@@ -17,6 +17,7 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
@@ -73,7 +74,6 @@ namespace {
     Instruction *visitCastInst(CastInst &CI);
     Instruction *visitPHINode(PHINode &PN);
     Instruction *visitGetElementPtrInst(GetElementPtrInst &GEP);
-    Instruction *visitMemAccessInst(MemAccessInst &MAI);
 
     // visitInstruction - Specify what to return for unhandled instructions...
     Instruction *visitInstruction(Instruction &I) { return 0; }
@@ -84,8 +84,6 @@ namespace {
 
 
 Instruction *InstCombiner::visitNot(UnaryOperator &I) {
-  if (I.use_empty()) return 0;       // Don't fix dead instructions...
-
   // not (not X) = X
   if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(0)))
     if (Op->getOpcode() == Instruction::Not) {
@@ -119,7 +117,6 @@ static inline Value *dyn_castNegInst(Value *V) {
 }
 
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
-  if (I.use_empty()) return 0;       // Don't fix dead add instructions...
   bool Changed = SimplifyBinOp(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
@@ -162,7 +159,6 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 }
 
 Instruction *InstCombiner::visitSub(BinaryOperator &I) {
-  if (I.use_empty()) return 0;       // Don't fix dead add instructions...
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   if (Op0 == Op1) {         // sub X, X  -> 0
@@ -199,7 +195,6 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 }
 
 Instruction *InstCombiner::visitMul(BinaryOperator &I) {
-  if (I.use_empty()) return 0;       // Don't fix dead instructions...
   bool Changed = SimplifyBinOp(I);
   Value *Op1 = I.getOperand(0);
 
@@ -229,8 +224,6 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
 
 Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
-  if (I.use_empty()) return 0;       // Don't fix dead instructions...
-
   // div X, 1 == X
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(I.getOperand(1)))
     if (RHS->equalsInt(1)) {
@@ -243,8 +236,6 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
 
 
 Instruction *InstCombiner::visitRem(BinaryOperator &I) {
-  if (I.use_empty()) return 0;       // Don't fix dead instructions...
-
   // rem X, 1 == 0
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(I.getOperand(1)))
     if (RHS->equalsInt(1)) {
@@ -274,7 +265,6 @@ static Constant *getMaxValue(const Type *Ty) {
 
 
 Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
-  if (I.use_empty()) return 0;       // Don't fix dead instructions...
   bool Changed = SimplifyBinOp(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -299,7 +289,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
 
 Instruction *InstCombiner::visitOr(BinaryOperator &I) {
-  if (I.use_empty()) return 0;       // Don't fix dead instructions...
   bool Changed = SimplifyBinOp(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -324,7 +313,6 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
 
 Instruction *InstCombiner::visitXor(BinaryOperator &I) {
-  if (I.use_empty()) return 0;       // Don't fix dead instructions...
   bool Changed = SimplifyBinOp(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -355,7 +343,6 @@ static bool isTrueWhenEqual(Instruction &I) {
 }
 
 Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
-  if (I.use_empty()) return 0;       // Don't fix dead instructions...
   bool Changed = SimplifyBinOp(I);
 
   // setcc X, X
@@ -379,7 +366,6 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
 
 
 Instruction *InstCombiner::visitShiftInst(Instruction &I) {
-  if (I.use_empty()) return 0;       // Don't fix dead instructions...
   assert(I.getOperand(1)->getType() == Type::UByteTy);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -438,11 +424,9 @@ static inline bool isEliminableCastOfCast(const CastInst &CI,
 // CastInst simplification
 //
 Instruction *InstCombiner::visitCastInst(CastInst &CI) {
-  if (CI.use_empty()) return 0;       // Don't fix dead instructions...
-
   // If the user is casting a value to the same type, eliminate this cast
   // instruction...
-  if (CI.getType() == CI.getOperand(0)->getType() && !CI.use_empty()) {
+  if (CI.getType() == CI.getOperand(0)->getType()) {
     AddUsesToWorkList(CI);         // Add all modified instrs to worklist
     CI.replaceAllUsesWith(CI.getOperand(0));
     return &CI;
@@ -467,8 +451,6 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
 // PHINode simplification
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
-  if (PN.use_empty()) return 0;       // Don't fix dead instructions...
-
   // If the PHI node only has one incoming value, eliminate the PHI node...
   if (PN.getNumIncomingValues() == 1) {
     AddUsesToWorkList(PN);         // Add all modified instrs to worklist
@@ -481,60 +463,43 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
 
 
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
-  // Is it getelementptr %P, uint 0
+  // Is it 'getelementptr %P, uint 0'  or 'getelementptr %P'
   // If so, eliminate the noop.
-  if (GEP.getNumOperands() == 2 && !GEP.use_empty() &&
-      GEP.getOperand(1) == Constant::getNullValue(Type::UIntTy)) {
+  if ((GEP.getNumOperands() == 2 &&
+       GEP.getOperand(1) == Constant::getNullValue(Type::UIntTy)) ||
+      GEP.getNumOperands() == 1) {
     AddUsesToWorkList(GEP);         // Add all modified instrs to worklist
     GEP.replaceAllUsesWith(GEP.getOperand(0));
     return &GEP;
   }
 
-  return visitMemAccessInst(GEP);
-}
-
-
-// Combine Indices - If the source pointer to this mem access instruction is a
-// getelementptr instruction, combine the indices of the GEP into this
-// instruction
-//
-Instruction *InstCombiner::visitMemAccessInst(MemAccessInst &MAI) {
-  return 0;   // DISABLE FOLDING.  GEP is now the only MAI!
-
-  GetElementPtrInst *Src =
-    dyn_cast<GetElementPtrInst>(MAI.getPointerOperand());
-  if (!Src) return 0;
-
-  std::vector<Value *> Indices;
+  // Combine Indices - If the source pointer to this getelementptr instruction
+  // is a getelementptr instruction, combine the indices of the two
+  // getelementptr instructions into a single instruction.
+  //
+  if (GetElementPtrInst *Src =
+      dyn_cast<GetElementPtrInst>(GEP.getPointerOperand())) {
+    std::vector<Value *> Indices;
   
-  // Only special case we have to watch out for is pointer arithmetic on the
-  // 0th index of MAI. 
-  unsigned FirstIdx = MAI.getFirstIndexOperandNumber();
-  if (FirstIdx == MAI.getNumOperands() || 
-      (FirstIdx == MAI.getNumOperands()-1 &&
-       MAI.getOperand(FirstIdx) == ConstantUInt::get(Type::UIntTy, 0))) { 
-    // Replace the index list on this MAI with the index on the getelementptr
-    Indices.insert(Indices.end(), Src->idx_begin(), Src->idx_end());
-  } else if (*MAI.idx_begin() == ConstantUInt::get(Type::UIntTy, 0)) { 
-    // Otherwise we can do the fold if the first index of the GEP is a zero
-    Indices.insert(Indices.end(), Src->idx_begin(), Src->idx_end());
-    Indices.insert(Indices.end(), MAI.idx_begin()+1, MAI.idx_end());
+    // Can we combine the two pointer arithmetics offsets?
+    if (Src->getNumOperands() == 2 && isa<Constant>(Src->getOperand(1)) &&
+        isa<Constant>(GEP.getOperand(1))) {
+      // Replace the index list on this GEP with the index on the getelementptr
+      Indices.insert(Indices.end(), GEP.idx_begin(), GEP.idx_end());
+      Indices[0] = *cast<Constant>(Src->getOperand(1)) +
+                   *cast<Constant>(GEP.getOperand(1));
+      assert(Indices[0] != 0 && "Constant folding of uint's failed!?");
+
+    } else if (*GEP.idx_begin() == ConstantUInt::get(Type::UIntTy, 0)) { 
+      // Otherwise we can do the fold if the first index of the GEP is a zero
+      Indices.insert(Indices.end(), Src->idx_begin(), Src->idx_end());
+      Indices.insert(Indices.end(), GEP.idx_begin()+1, GEP.idx_end());
+    }
+
+    if (!Indices.empty())
+      return new GetElementPtrInst(Src->getOperand(0), Indices, GEP.getName());
   }
 
-  if (Indices.empty()) return 0;  // Can't do the fold?
-
-  switch (MAI.getOpcode()) {
-  case Instruction::GetElementPtr:
-    return new GetElementPtrInst(Src->getOperand(0), Indices, MAI.getName());
-  case Instruction::Load:
-    return new LoadInst(Src->getOperand(0), Indices, MAI.getName());
-  case Instruction::Store:
-    return new StoreInst(MAI.getOperand(0), Src->getOperand(0), Indices);
-  default:
-    assert(0 && "Unknown memaccessinst!");
-    break;
-  }
-  abort();
   return 0;
 }
 
@@ -549,31 +514,34 @@ bool InstCombiner::runOnFunction(Function &F) {
     WorkList.pop_back();
 
     // Now that we have an instruction, try combining it to simplify it...
-    Instruction *Result = visit(*I);
-    if (Result) {
+    if (Instruction *Result = visit(*I)) {
       ++NumCombined;
       // Should we replace the old instruction with a new one?
       if (Result != I) {
         // Instructions can end up on the worklist more than once.  Make sure
         // we do not process an instruction that has been deleted.
-        std::vector<Instruction*>::iterator It = std::find(WorkList.begin(),
-                                                           WorkList.end(), I);
-        while (It != WorkList.end()) {
-          It = WorkList.erase(It);
-          It = std::find(It, WorkList.end(), I);
-        }
+        WorkList.erase(std::remove(WorkList.begin(), WorkList.end(), I),
+                       WorkList.end());
 
         ReplaceInstWithInst(I, Result);
       } else {
-        // FIXME:
-        // FIXME:
-        // FIXME: This should DCE the instruction to simplify the cases above.
-        // FIXME:
-        // FIXME:
+        BasicBlock::iterator II = I;
+
+        // If the instruction was modified, it's possible that it is now dead.
+        // if so, remove it.
+        if (dceInstruction(II)) {
+          // Instructions may end up in the worklist more than once.  Erase them
+          // all.
+          WorkList.erase(std::remove(WorkList.begin(), WorkList.end(), I),
+                         WorkList.end());
+          Result = 0;
+        }
       }
 
-      WorkList.push_back(Result);
-      AddUsesToWorkList(*Result);
+      if (Result) {
+        WorkList.push_back(Result);
+        AddUsesToWorkList(*Result);
+      }
       Changed = true;
     }
   }
