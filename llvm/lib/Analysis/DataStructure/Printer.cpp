@@ -210,9 +210,22 @@ struct DOTGraphTraits<DSGraph*> : public DefaultDOTGraphTraits {
       GW.emitEdge((void*)1, -1, G->getRetNode().getNode(),
                   RetEdgeDest, "arrowtail=tee,color=gray63");
     }
+
+    // Output all of the call nodes...
+    const std::vector<std::vector<DSNodeHandle> > &FCs = G->getFunctionCalls();
+    for (unsigned i = 0, e = FCs.size(); i != e; ++i) {
+      const std::vector<DSNodeHandle> &Call = FCs[i];
+      GW.emitSimpleNode(&Call, "shape=record", "call", Call.size());
+
+      for (unsigned j = 0, e = Call.size(); j != e; ++j)
+        if (Call[j].getNode()) {
+          int EdgeDest = Call[j].getOffset();
+          if (EdgeDest == 0) EdgeDest = -1;
+          GW.emitEdge(&Call, j, Call[j].getNode(), EdgeDest, "color=gray63");
+        }
+    }
   }
 };
-
 
 
 void DSGraph::writeGraphToFile(std::ostream &O, const string &GraphName) {
