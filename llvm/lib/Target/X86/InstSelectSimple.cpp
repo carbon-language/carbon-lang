@@ -138,6 +138,8 @@ namespace {
       } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
         // Move the address of the global into the register
         BuildMI(BB, X86::MOVir32, 1, Reg).addReg(GV);
+      } else if (Argument *A = dyn_cast<Argument>(V)) {
+        std::cerr << "ERROR: Arguments not implemented in SimpleInstSel\n";
       } else {
         assert(0 && "Don't know how to handle a value of this type!");
       }
