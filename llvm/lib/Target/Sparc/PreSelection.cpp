@@ -150,13 +150,13 @@ namespace {
     void visitOneOperand(Instruction &I, Constant* CV, unsigned opNum,
                          Instruction& insertBefore); // iworks on one operand
   };
+
+  // Register the pass...
+  RegisterOpt<PreSelection> X("preselect",
+                              "Specialize LLVM code for a target machine",
+                              createPreSelectionPass);
 }  // end anonymous namespace
 
-
-// Register the pass...
-static RegisterOpt<PreSelection> X("preselect",
-                                   "Specialize LLVM code for a target machine",
-                                   createPreSelectionPass);
 
 //------------------------------------------------------------------------------
 // Helper functions used by methods of class PreSelection
