@@ -5,7 +5,7 @@ set output "running_loc.png"
 set xlabel "Date" 
 set ylabel "Lines of Code"
 set xdata time
-set timefmt "%Y-%m-%d:"
+set timefmt "%Y-%m-%d-%H:%M:%S:"
 set format x "%b %d, %Y"
 
 ## Various labels for the graph
