@@ -93,7 +93,7 @@ bool ArgPromotion::run(Module &M) {
         // See if we can transform all users to use the function directly.
         while (!CPR->use_empty()) {
           User *TheUser = CPR->use_back();
-          if (!isa<Constant>(TheUser)) {
+          if (!isa<Constant>(TheUser) && !isa<GlobalVariable>(TheUser)) {
             Changed = true;
             TheUser->replaceUsesOfWith(CPR, I);
           } else {
@@ -312,7 +312,7 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
       // Otherwise, if we promoted this argument, then all users are load
       // instructions, and all loads should be using the new argument that we
       // added.
-      /*DEBUG*/(std::cerr << "*** Promoted argument '" << I->getName()
+      DEBUG(std::cerr << "*** Promoted argument '" << I->getName()
                       << "' of function '" << F->getName() << "'\n");
       I2->setName(I->getName()+".val");
       while (!I->use_empty()) {
