@@ -154,7 +154,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
       inc_op_vector.push_back(ConstantInt::get(Ty, 1));
       indvar = op;
       break;
-    } else if (isa<Constant>(operand)) {
+    } else if (isa<Constant>(operand) || isa<Argument>(operand)) {
       pre_op_vector.push_back(operand);
     } else if (Instruction *inst = dyn_cast<Instruction>(operand)) {
       if (!DS->dominates(inst, Preheader->getTerminator()))
