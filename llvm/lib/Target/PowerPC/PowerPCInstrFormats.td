@@ -37,6 +37,7 @@ def Spr : Format<19>;
 def Sgr : Format<20>;
 def Imm15 : Format<21>;
 def Vpr : Format<22>;
+def Imm6 : Format<23>;
 
 //===----------------------------------------------------------------------===//
 //
@@ -266,6 +267,7 @@ class XForm_base_r3xo<string name, bits<6> opcode, bits<10> xo, bit rc,
   let Inst{31}    = rc;
 }
 
+
 class XForm_1<string name, bits<6> opcode, bits<10> xo, bit ppc64, 
               bit vmx> : XForm_base_r3xo<name, opcode, xo, 0, ppc64, vmx>;
 
@@ -448,6 +450,28 @@ class XFXForm_7_ext<string name, bits<6> opcode, bits<10> xo, bits<10> spr,
   let SPR = spr;
 }
 
+// 1.7.10 XS-Form
+class XSForm_1<string name, bits<6> opcode, bits<9> xo, bit rc, 
+                      bit ppc64, bit vmx> : I<name, opcode, ppc64, vmx> {
+  field bits<5> RS;
+  field bits<5> A;
+  field bits<6> SH;
+
+  let ArgCount = 3;
+  let Arg0Type = Gpr.Value;
+  let Arg1Type = Gpr.Value;
+  let Arg2Type = Imm6.Value;
+  let Arg3Type = 0;
+  let Arg4Type = 0;
+
+  let Inst{6-10}  = RS;
+  let Inst{11-15} = A;
+  let Inst{16-20} = SH{1-5};
+  let Inst{21-29} = xo;
+  let Inst{30}    = SH{0};
+  let Inst{31}    = rc;
+}
+
 // 1.7.11 XO-Form
 class XOForm_1<string name, bits<6> opcode, bits<9> xo, bit oe, bit rc, 
                bit ppc64, bit vmx> : I<name, opcode, ppc64, vmx> {
@@ -561,6 +585,30 @@ class MForm_1<string name, bits<6> opcode, bit rc, bit ppc64, bit vmx>
 class MForm_2<string name, bits<6> opcode, bit rc, bit ppc64, bit vmx> 
   : MForm_1<name, opcode, rc, ppc64, vmx> {
   let Arg2Type = Imm5.Value;
+}
+
+// 1.7.14 MD-Form
+class MDForm_1<string name, bits<6> opcode, bits<3> xo, bit rc, bit ppc64, bit vmx> 
+  : I<name, opcode, ppc64, vmx> {
+  let ArgCount = 4;
+  field bits<5>  RS;
+  field bits<5>  RA;
+  field bits<6>  SH;
+  field bits<6>  MBE;
+
+  let Arg0Type = Gpr.Value;
+  let Arg1Type = Gpr.Value;
+  let Arg2Type = Imm6.Value;
+  let Arg3Type = Imm6.Value;
+  let Arg4Type = 0;
+
+  let Inst{6-10}  = RS;
+  let Inst{11-15} = RA;
+  let Inst{16-20} = SH{1-5};
+  let Inst{21-26} = MBE;
+  let Inst{27-29} = xo;
+  let Inst{30}    = SH{0};
+  let Inst{31}    = rc;
 }
 
 //===----------------------------------------------------------------------===//
