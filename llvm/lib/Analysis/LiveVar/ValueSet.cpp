@@ -1,11 +1,14 @@
 
 #include "llvm/Analysis/LiveVar/ValueSet.h"
+#include "llvm/ConstPoolVals.h"
 
 
 void printValue( const Value *const v)  // func to print a Value 
 {
   if( (*v).hasName() ) cout << v << "(" << ((*v).getName()) << ") ";
   //if( (*v).hasName() ) cout <<  ((*v).getName()) << " ";
+  else if (v->getValueType() == Value::ConstantVal) // if const
+    cout << v << "(" << ((ConstPoolVal *) v)->getStrValue() << ") ";
   else  cout << v  << " ";
 }
 
