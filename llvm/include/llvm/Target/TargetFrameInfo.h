@@ -18,6 +18,13 @@ namespace llvm {
 
 class MachineFunction;
 
+/// Information about stack frame layout on the target.  It holds the direction
+/// of stack growth, the known stack alignment on entry to each function, and
+/// the offset to the locals area.
+///
+/// The offset to the local area is the offset from the stack pointer on
+/// function entry to the first location where function data (local variables,
+/// spill locations) can be stored.
 struct TargetFrameInfo {
   enum StackDirection {
     StackGrowsUp,        // Adding to the stack increases the stack address
