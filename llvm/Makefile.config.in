@@ -84,15 +84,13 @@ LLVMGCCDIR := @LLVMGCCDIR@
 BYTECODE_REPOSITORY := @BCR@
 
 # SPEC benchmarks:
-#	Set the USE_SPEC variable to enable the use of the SPEC benchmarks.
+#	If these are set then run the SPEC benchmarks.
 #	You must provide the SPEC benchmarks on your own.
-@USE_SPEC@
+@USE_SPEC2000@
 @USE_SPEC95@
 
-# Path to the SPEC benchmarks.  If you have the SPEC benchmarks, place the
-# path here.
-#SPEC_ROOT := /home/vadve/shared/benchmarks/speccpu2000/benchspec
-SPEC_ROOT := @SPEC_ROOT@
+# Path to the SPEC benchmarks.
+SPEC_ROOT := @SPEC2000_ROOT@
 SPEC95_ROOT := @SPEC95_ROOT@
 
 # Path to the Povray source code.
