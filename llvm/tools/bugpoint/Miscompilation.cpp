@@ -124,8 +124,11 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
 namespace {
   class ReduceMiscompilingFunctions : public ListReducer<Function*> {
     BugDriver &BD;
+    bool (*TestFn)(BugDriver &, Module *, Module *);
   public:
-    ReduceMiscompilingFunctions(BugDriver &bd) : BD(bd) {}
+    ReduceMiscompilingFunctions(BugDriver &bd,
+                                bool (*F)(BugDriver &, Module *, Module *))
+      : BD(bd), TestFn(F) {}
     
     virtual TestResult doTest(std::vector<Function*> &Prefix,
                               std::vector<Function*> &Suffix) {
@@ -183,25 +186,15 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
   Module *ToNotOptimize = CloneModule(BD.getProgram());
   Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize, Funcs);
 
-  // Run the optimization passes on ToOptimize, producing a transformed version
-  // of the functions being tested.
-  std::cout << "  Optimizing functions being tested: ";
-  Module *Optimized = BD.runPassesOn(ToOptimize, BD.getPassesToRun(),
-                                     /*AutoDebugCrashes*/true);
-  std::cout << "done.\n";
-  delete ToOptimize;
-
-
-  std::cout << "  Checking to see if the merged program executes correctly: ";
-  bool Broken = TestMergedProgram(BD, Optimized, ToNotOptimize, true);
-  std::cout << (Broken ? " nope.\n" : " yup.\n");
-  return Broken;
+  // Run the predicate, not that the predicate will delete both input modules.
+  return TestFn(BD, ToOptimize, ToNotOptimize);
 }
 
 /// ExtractLoops - Given a reduced list of functions that still exposed the bug,
 /// check to see if we can extract the loops in the region without obscuring the
 /// bug.  If so, it reduces the amount of code identified.
-static bool ExtractLoops(BugDriver &BD, 
+static bool ExtractLoops(BugDriver &BD,
+                         bool (*TestFn)(BugDriver &, Module *, Module *),
                          std::vector<Function*> &MiscompiledFunctions) {
   bool MadeChange = false;
   while (1) {
@@ -235,27 +228,22 @@ static bool ExtractLoops(BugDriver &BD,
       return MadeChange;
     }
     
-    // Okay, the loop extractor didn't break the program.  Run the series of
-    // optimizations on the loop extracted portion and see if THEY still break
-    // the program.  If so, it was safe to extract these loops!
-    std::cout << "  Running optimizations on loop extracted portion: ";
-    Module *Optimized = BD.runPassesOn(ToOptimizeLoopExtracted,
-                                       BD.getPassesToRun(),
-                                       /*AutoDebugCrashes*/true);
-    std::cout << "done.\n";
-
-    std::cout << "  Checking to see if the merged program executes correctly: ";
-    bool Broken = TestMergedProgram(BD, Optimized, ToNotOptimize, false);
-    delete Optimized;
-    if (!Broken) {
-      std::cout << "yup: loop extraction masked the problem.  Undoing.\n";
+    std::cout << "  Testing after loop extraction:\n";
+    // Clone modules, the tester function will free them.
+    Module *TOLEBackup = CloneModule(ToOptimizeLoopExtracted);
+    Module *TNOBackup  = CloneModule(ToNotOptimize);
+    if (!TestFn(BD, ToOptimizeLoopExtracted, ToNotOptimize)) {
+      std::cout << "*** Loop extraction masked the problem.  Undoing.\n";
       // If the program is not still broken, then loop extraction did something
       // that masked the error.  Stop loop extraction now.
-      delete ToNotOptimize;
-      delete ToOptimizeLoopExtracted;
+      delete TOLEBackup;
+      delete TNOBackup;
       return MadeChange;
     }
-    std::cout << "nope: loop extraction successful!\n";
+    ToOptimizeLoopExtracted = TOLEBackup;
+    ToNotOptimize = TNOBackup;
+
+    std::cout << "*** Loop extraction successful!\n";
 
     // Okay, great!  Now we know that we extracted a loop and that loop
     // extraction both didn't break the program, and didn't mask the problem.
@@ -288,6 +276,65 @@ static bool ExtractLoops(BugDriver &BD,
   }
 }
 
+/// DebugAMiscompilation - This is a generic driver to narrow down
+/// miscompilations, either in an optimization or a code generator.
+static std::vector<Function*>
+DebugAMiscompilation(BugDriver &BD,
+                     bool (*TestFn)(BugDriver &, Module *, Module *)) {
+  // Okay, now that we have reduced the list of passes which are causing the
+  // failure, see if we can pin down which functions are being
+  // miscompiled... first build a list of all of the non-external functions in
+  // the program.
+  std::vector<Function*> MiscompiledFunctions;
+  Module *Prog = BD.getProgram();
+  for (Module::iterator I = Prog->begin(), E = Prog->end(); I != E; ++I)
+    if (!I->isExternal())
+      MiscompiledFunctions.push_back(I);
+
+  // Do the reduction...
+  ReduceMiscompilingFunctions(BD, TestFn).reduceList(MiscompiledFunctions);
+
+  std::cout << "\n*** The following function"
+            << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
+            << " being miscompiled: ";
+  PrintFunctionList(MiscompiledFunctions);
+  std::cout << "\n";
+
+  // See if we can rip any loops out of the miscompiled functions and still
+  // trigger the problem.
+  if (ExtractLoops(BD, TestFn, MiscompiledFunctions)) {
+    // Okay, we extracted some loops and the problem still appears.  See if we
+    // can eliminate some of the created functions from being candidates.
+
+    // Do the reduction...
+    ReduceMiscompilingFunctions(BD, TestFn).reduceList(MiscompiledFunctions);
+    
+    std::cout << "\n*** The following function"
+              << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
+              << " being miscompiled: ";
+    PrintFunctionList(MiscompiledFunctions);
+    std::cout << "\n";
+  }
+
+  return MiscompiledFunctions;
+}
+
+static bool TestOptimizer(BugDriver &BD, Module *Test, Module *Safe) {
+  // Run the optimization passes on ToOptimize, producing a transformed version
+  // of the functions being tested.
+  std::cout << "  Optimizing functions being tested: ";
+  Module *Optimized = BD.runPassesOn(Test, BD.getPassesToRun(),
+                                     /*AutoDebugCrashes*/true);
+  std::cout << "done.\n";
+  delete Test;
+
+  std::cout << "  Checking to see if the merged program executes correctly: ";
+  bool Broken = TestMergedProgram(BD, Test, Safe, true);
+  std::cout << (Broken ? " nope.\n" : " yup.\n");
+  return Broken;
+}
+
+
 /// debugMiscompilation - This method is used when the passes selected are not
 /// crashing, but the generated output is semantically different from the
 /// input.
@@ -305,39 +352,8 @@ bool BugDriver::debugMiscompilation() {
             << getPassesString(getPassesToRun()) << "\n";
   EmitProgressBytecode("passinput");
 
-  // Okay, now that we have reduced the list of passes which are causing the
-  // failure, see if we can pin down which functions are being
-  // miscompiled... first build a list of all of the non-external functions in
-  // the program.
-  std::vector<Function*> MiscompiledFunctions;
-  for (Module::iterator I = Program->begin(), E = Program->end(); I != E; ++I)
-    if (!I->isExternal())
-      MiscompiledFunctions.push_back(I);
-
-  // Do the reduction...
-  ReduceMiscompilingFunctions(*this).reduceList(MiscompiledFunctions);
-
-  std::cout << "\n*** The following function"
-            << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
-            << " being miscompiled: ";
-  PrintFunctionList(MiscompiledFunctions);
-  std::cout << "\n";
-
-  // See if we can rip any loops out of the miscompiled functions and still
-  // trigger the problem.
-  if (ExtractLoops(*this, MiscompiledFunctions)) {
-    // Okay, we extracted some loops and the problem still appears.  See if we
-    // can eliminate some of the created functions from being candidates.
-
-    // Do the reduction...
-    ReduceMiscompilingFunctions(*this).reduceList(MiscompiledFunctions);
-    
-    std::cout << "\n*** The following function"
-              << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
-              << " being miscompiled: ";
-    PrintFunctionList(MiscompiledFunctions);
-    std::cout << "\n";
-  }
+  std::vector<Function*> MiscompiledFunctions =
+    DebugAMiscompilation(*this, TestOptimizer);
 
   // Output a bunch of bytecode files for the user...
   std::cout << "Outputting reduced bytecode files which expose the problem:\n";
@@ -346,12 +362,12 @@ bool BugDriver::debugMiscompilation() {
                                                  MiscompiledFunctions);
 
   std::cout << "  Non-optimized portion: ";
-  std::swap(Program, ToNotOptimize);
+  ToNotOptimize = swapProgramIn(ToNotOptimize);
   EmitProgressBytecode("tonotoptimize", true);
   setNewProgram(ToNotOptimize);   // Delete hacked module.
   
   std::cout << "  Portion that is input to optimizer: ";
-  std::swap(Program, ToOptimize);
+  ToOptimize = swapProgramIn(ToOptimize);
   EmitProgressBytecode("tooptimize");
   setNewProgram(ToOptimize);      // Delete hacked module.
 
