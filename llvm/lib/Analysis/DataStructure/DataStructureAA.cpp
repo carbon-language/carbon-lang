@@ -138,7 +138,8 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
   DSNode  *N1 = I->second.getNode(),  *N2 = J->second.getNode();
   unsigned O1 = I->second.getOffset(), O2 = J->second.getOffset();
   if (N1 == 0 || N2 == 0)
-    return MayAlias;  // Can't tell whether anything aliases null.
+    // Can't tell whether anything aliases null.
+    return AliasAnalysis::alias(V1, V1Size, V2, V2Size);
         
   // We can only make a judgment of one of the nodes is complete...
   if (N1->isComplete() || N2->isComplete()) {
