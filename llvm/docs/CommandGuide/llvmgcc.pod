@@ -1,0 +1,88 @@
+
+=pod
+
+=head1 NAME
+
+llvmgcc - LLVM C front-end
+
+=head1 SYNOPSIS
+
+llvmgcc [options] filename
+
+=head1 DESCRIPTION
+
+The B<llvmgcc> command is the LLVM C front end.  It is a modified
+version of gcc that takes C programs and compiles them into LLVM
+bytecode or assembly language, depending upon the options.
+
+Unless the B<-S> option is specified, B<llvmgcc> will use the
+L<gccas|gccas> program to perform some optimizations and create an
+LLVM bytecode file. Unless the B<-c> option is specified, B<llvmgcc>
+will also use the L<gccld|gccld> program to perform further
+optimizations and link the resulting bytecode file(s) with support
+libraries to create an executable program.
+
+Being derived from the GNU Compiler Collection, B<llvmgcc> has many
+of gcc's features and accepts most of gcc's options.  It handles a
+number of gcc's extensions to the C programming language.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--help>
+
+Print a summary of command line options.
+
+=item B<-S>
+
+Do not generate an LLVM bytecode file.  Rather, compile the source
+file into an LLVM assembly language file.
+
+=item B<-c>
+
+Do not generate a linked executable.  Rather, compile the source
+file into an LLVM bytecode file.  This bytecode file can then be
+linked with other bytecode files later on to generate a full LLVM
+executable.
+
+=item B<-o> I<filename>
+
+Specify the output file to be I<filename>.
+
+=item B<-I> I<directory>
+
+Add a directory to the header file search path.  This option can be
+repeated.
+
+=item B<-L> I<directory>
+
+Add I<directory> to the library search path.  This option can be
+repeated.
+
+=item B<-l>I<name>
+
+Link in the library libI<name>.[bc | a | so].  This library should
+be a bytecode library.
+
+=item B<-Wl,>I<option>
+
+Pass I<option> to the linker (usually gccld).
+
+=back
+
+=head1 EXIT STATUS
+
+If B<llvmgcc> succeeds, it will exit with 0.  Otherwise, if an error
+occurs, it will exit with a non-zero value.
+
+=head1 SEE ALSO
+
+L<llvmgxx>, L<gccas>, L<gccld>
+
+=head1 AUTHORS
+
+Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
+
+=cut
+
