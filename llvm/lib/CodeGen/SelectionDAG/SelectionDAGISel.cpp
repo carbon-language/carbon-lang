@@ -37,7 +37,8 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// FunctionLoweringInfo - This contains information that is global to a
   /// function that is used when lowering a region of the function.
-  struct FunctionLoweringInfo {
+  class FunctionLoweringInfo {
+  public:
     TargetLowering &TLI;
     Function &Fn;
     MachineFunction &MF;
@@ -119,11 +120,11 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
         unsigned Align = TLI.getTargetData().getTypeAlignment(Ty);
         TySize *= CUI->getValue();   // Get total allocated size.
         StaticAllocaMap[AI] =
-          MF.getFrameInfo()->CreateStackObject(TySize, Align);
+          MF.getFrameInfo()->CreateStackObject((unsigned)TySize, Align);
       }
 
   for (; BB != E; ++BB)
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+    for (BasicBlock::iterator I = BB->begin(), e = BB->end(); I != e; ++I)
       if (!I->use_empty() && isUsedOutsideOfDefiningBlock(I))
         if (!isa<AllocaInst>(I) ||
             !StaticAllocaMap.count(cast<AllocaInst>(I)))

@@ -269,7 +269,8 @@ namespace ISD {
 /// computes it as well as which return value to use from that node.  This pair
 /// of information is represented with the SDOperand value type.
 ///
-struct SDOperand {
+class SDOperand {
+public:
   SDNode *Val;        // The node defining the value we are using.
   unsigned ResNo;     // Which return value of the node we are using.
 
@@ -463,7 +464,7 @@ public:
 
   int64_t getSignExtended() const {
     unsigned Bits = MVT::getSizeInBits(getValueType(0));
-    return ((int64_t)Value << 64-Bits) >> 64-Bits;
+    return ((int64_t)Value << (64-Bits)) >> (64-Bits);
   }
 
   bool isNullValue() const { return Value == 0; }

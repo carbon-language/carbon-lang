@@ -233,7 +233,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
   SDOperand Result = Op;
   SDNode *Node = Op.Val;
-  LegalizeAction Action;
 
   switch (Node->getOpcode()) {
   default:
@@ -658,7 +657,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   NeedsAnotherIteration = true;
   const char *LibCallName = 0;
 
-  LegalizeAction Action;
   switch (Node->getOpcode()) {
   default:
     std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
