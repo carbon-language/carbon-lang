@@ -979,7 +979,8 @@ bool ISel::isFoldableLoad(SDOperand Op) {
   // If this load has already been emitted, we clearly can't fold it.
   if (ExprMap.count(Op)) return false;
 
-  return Op.Val->use_size() == 2;
+  // Finally, there can only be one use of its value.
+  return Op.Val->hasNUsesOfValue(1, 0);
 }
 
 /// EmitFoldedLoad - Ensure that the arguments of the load are code generated,
