@@ -42,7 +42,10 @@ namespace {
                                       "Live Interval Analysis");
 
     Statistic<> numIntervals("liveintervals", "Number of intervals");
-    Statistic<> numJoined   ("liveintervals", "Number of joined intervals");
+    Statistic<> numJoined   ("liveintervals", "Number of intervals after "
+                             "coalescing");
+    Statistic<> numJoins    ("liveintervals", "Number of interval joins "
+                             "performed");
     Statistic<> numPeep     ("liveintervals", "Number of identity moves "
                              "eliminated after coalescing");
     Statistic<> numFolded   ("liveintervals", "Number of register operands "
@@ -636,8 +639,8 @@ void LiveIntervals::Interval::join(const LiveIntervals::Interval& other)
         cur = mergeRangesForward(cur);
         cur = mergeRangesBackward(cur);
     }
-    if (MRegisterInfo::isVirtualRegister(reg))
-        weight += other.weight;
+    weight += other.weight;
+    ++numJoins;
 }
 
 LiveIntervals::Interval::Ranges::iterator
