@@ -468,12 +468,16 @@ SparcV9CodeEmitter::~SparcV9CodeEmitter() {
 }
 
 void SparcV9CodeEmitter::emitWord(unsigned Val) {
+#if 0 // I think this was used when the Sparc JIT was being tested on X86:
   // Output the constant in big endian byte order...
   unsigned byteVal;
   for (int i = 3; i >= 0; --i) {
     byteVal = Val >> 8*i;
     MCE.emitByte(byteVal & 255);
   }
+#else
+  MCE.emitWord(Val);
+#endif
 }
 
 unsigned 
@@ -763,7 +767,7 @@ bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
         else if (hiBits64) { MI->setOperandHi64(ii); }
         DEBUG(std::cerr << "Rewrote BB ref: ");
         unsigned fixedInstr = SparcV9CodeEmitter::getBinaryCodeForInstr(*MI);
-        *Ref = fixedInstr;
+        MCE.emitWordAt (fixedInstr, Ref);
         break;
       }
     }
