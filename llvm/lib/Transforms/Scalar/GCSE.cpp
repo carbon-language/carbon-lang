@@ -160,11 +160,14 @@ void GCSE::ReplaceInstructionWith(Instruction *I, Value *V) {
     ++NumCallRemoved; // Keep track of calls eliminated
   ++NumInstRemoved;   // Keep track of number of insts eliminated
 
+  // Update value numbering
+  getAnalysis<ValueNumbering>().deleteInstruction(I);
+
   // If we are not replacing the instruction with a constant, we cannot do
   // anything special.
   if (!isa<Constant>(V)) {
     I->replaceAllUsesWith(V);
-
+    
     // Erase the instruction from the program.
     I->getParent()->getInstList().erase(I);
     return;
