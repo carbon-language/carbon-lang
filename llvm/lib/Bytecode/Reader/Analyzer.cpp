@@ -22,6 +22,7 @@
 #include "llvm/Module.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/BytecodeHandler.h"
+#include "llvm/Assembly/Writer.h"
 #include <iomanip>
 #include <sstream>
 
@@ -32,7 +33,7 @@ namespace {
 /// @brief Bytecode reading handler for analyzing bytecode.
 class AnalyzerHandler : public BytecodeHandler {
   BytecodeAnalysis& bca;     ///< The structure in which data is recorded
-  std::ostringstream dump;   ///< A convenience for dumping data.
+  std::ostream* os;        ///< A convenience for osing data.
   /// @brief Keeps track of current function
   BytecodeAnalysis::BytecodeFunctionInfo* currFunc; 
   Module* M; ///< Keeps track of current module
@@ -43,24 +44,25 @@ public:
   /// The only way to construct an AnalyzerHandler. All that is needed is a
   /// reference to the BytecodeAnalysis structure where the output will be
   /// placed.
-  AnalyzerHandler(BytecodeAnalysis& TheBca) 
+  AnalyzerHandler(BytecodeAnalysis& TheBca, std::ostream* output) 
     : bca(TheBca) 
-    , dump()
+    , os(output)
     , currFunc(0)
-    { }  
+    { }
 
 /// @}
 /// @name BytecodeHandler Implementations
 /// @{
 public:
   virtual void handleError(const std::string& str ) { 
-    dump << "ERROR: " << str << "\n";
-    bca.BytecodeDump = dump.str() ;
+    if (os)
+      *os << "ERROR: " << str << "\n";
   }
 
   virtual void handleStart( Module* Mod, unsigned theSize ) {
     M = Mod;
-    dump << "Bytecode {\n";
+    if (os)
+      *os << "Bytecode {\n";
     bca.byteSize = theSize;
     bca.ModuleId.clear();
     bca.numBlocks = 0;
@@ -74,6 +76,8 @@ public:
     bca.numOperands = 0;
     bca.numCmpctnTables = 0;
     bca.numSymTab = 0;
+    bca.numLibraries = 0;
+    bca.libSize = 0;
     bca.maxTypeSlot = 0;
     bca.maxValueSlot = 0;
     bca.numAlignment = 0;
@@ -87,30 +91,29 @@ public:
     bca.vbrCompBytes = 0;
     bca.vbrExpdBytes = 0;
     bca.FunctionInfo.clear();
-    bca.BytecodeDump.clear();
-    bca.BlockSizes[BytecodeFormat::Module] = 0;
-    bca.BlockSizes[BytecodeFormat::Function] = 0;
-    bca.BlockSizes[BytecodeFormat::ConstantPool] = 0;
-    bca.BlockSizes[BytecodeFormat::SymbolTable] = 0;
-    bca.BlockSizes[BytecodeFormat::ModuleGlobalInfo] = 0;
-    bca.BlockSizes[BytecodeFormat::GlobalTypePlane] = 0;
-    bca.BlockSizes[BytecodeFormat::BasicBlock] = 0;
-    bca.BlockSizes[BytecodeFormat::InstructionList] = 0;
-    bca.BlockSizes[BytecodeFormat::CompactionTable] = 0;
+    bca.BlockSizes[BytecodeFormat::Reserved_DoNotUse] = 0;
+    bca.BlockSizes[BytecodeFormat::ModuleBlockID] = theSize;
+    bca.BlockSizes[BytecodeFormat::FunctionBlockID] = 0;
+    bca.BlockSizes[BytecodeFormat::ConstantPoolBlockID] = 0;
+    bca.BlockSizes[BytecodeFormat::SymbolTableBlockID] = 0;
+    bca.BlockSizes[BytecodeFormat::ModuleGlobalInfoBlockID] = 0;
+    bca.BlockSizes[BytecodeFormat::GlobalTypePlaneBlockID] = 0;
+    bca.BlockSizes[BytecodeFormat::InstructionListBlockID] = 0;
+    bca.BlockSizes[BytecodeFormat::CompactionTableBlockID] = 0;
   }
 
   virtual void handleFinish() {
-    dump << "} End Bytecode\n"; 
-    bca.BytecodeDump = dump.str() ;
+    if (os)
+      *os << "} End Bytecode\n"; 
 
     bca.fileDensity = double(bca.byteSize) / double( bca.numTypes + bca.numValues );
     double globalSize = 0.0;
-    globalSize += double(bca.BlockSizes[BytecodeFormat::ConstantPool]);
-    globalSize += double(bca.BlockSizes[BytecodeFormat::ModuleGlobalInfo]);
-    globalSize += double(bca.BlockSizes[BytecodeFormat::GlobalTypePlane]);
+    globalSize += double(bca.BlockSizes[BytecodeFormat::ConstantPoolBlockID]);
+    globalSize += double(bca.BlockSizes[BytecodeFormat::ModuleGlobalInfoBlockID]);
+    globalSize += double(bca.BlockSizes[BytecodeFormat::GlobalTypePlaneBlockID]);
     bca.globalsDensity = globalSize / double( bca.numTypes + bca.numConstants + 
       bca.numGlobalVars );
-    bca.functionDensity = double(bca.BlockSizes[BytecodeFormat::Function]) / 
+    bca.functionDensity = double(bca.BlockSizes[BytecodeFormat::FunctionBlockID]) / 
       double(bca.numFunctions);
 
     if ( bca.progressiveVerify ) {
@@ -123,12 +126,14 @@ public:
   }
 
   virtual void handleModuleBegin(const std::string& id) {
-    dump << "  Module " << id << " {\n";
+    if (os)
+      *os << "  Module " << id << " {\n";
     bca.ModuleId = id;
   }
 
   virtual void handleModuleEnd(const std::string& id) { 
-    dump << "  } End Module " << id << "\n";
+    if (os)
+      *os << "  } End Module " << id << "\n";
     if ( bca.progressiveVerify ) {
       try {
         verifyModule(*M, ThrowExceptionAction);
@@ -143,13 +148,16 @@ public:
     Module::Endianness Endianness,    ///< Endianness indicator
     Module::PointerSize PointerSize   ///< PointerSize indicator
   ) { 
-    dump << "    RevisionNum: " << int(RevisionNum) 
+    if (os)
+      *os << "    RevisionNum: " << int(RevisionNum) 
          << " Endianness: " << Endianness
          << " PointerSize: " << PointerSize << "\n";
+    bca.version = RevisionNum;
   }
 
   virtual void handleModuleGlobalsBegin() { 
-    dump << "    BLOCK: ModuleGlobalInfo {\n";
+    if (os)
+      *os << "    BLOCK: ModuleGlobalInfo {\n";
   }
 
   virtual void handleGlobalVariable( 
@@ -159,21 +167,36 @@ public:
     unsigned SlotNum,
     unsigned initSlot
   ) {
+    if (os) {
+      *os << "      GV: "
+          << ( initSlot == 0 ? "Uni" : "I" ) << "nitialized, "
+          << ( isConstant? "Constant, " : "Variable, ")
+          << " Linkage=" << Linkage << " Type=";
+      WriteTypeSymbolic(*os, ElemType, M);
+      *os << " Slot=" << SlotNum << " InitSlot=" << initSlot 
+          << "\n";
+    }
+
     bca.numGlobalVars++;
     bca.numValues++;
+    if (SlotNum > bca.maxValueSlot)
+      bca.maxValueSlot = SlotNum;
+    if (initSlot > bca.maxValueSlot)
+      bca.maxValueSlot = initSlot;
 
-    dump << "      GV: "
-         << ( initSlot == 0 ? "Uni" : "I" ) << "nitialized, "
-         << ( isConstant? "Constant, " : "Variable, ")
-         << " Linkage=" << Linkage << " Type=" 
-         << ElemType->getDescription() 
-         << " Slot=" << SlotNum << " InitSlot=" << initSlot 
-         << "\n";
+  }
+
+  virtual void handleTypeList(unsigned numEntries) {
+    bca.maxTypeSlot = numEntries - 1;
   }
 
   virtual void handleType( const Type* Ty ) { 
     bca.numTypes++; 
-    dump << "      Type: " << Ty->getDescription() << "\n";
+    if (os) {
+      *os << "      Type: ";
+      WriteTypeSymbolic(*os,Ty,M);
+      *os << "\n";
+    }
   }
 
   virtual void handleFunctionDeclaration( 
@@ -181,19 +204,31 @@ public:
   ) {
     bca.numFunctions++;
     bca.numValues++;
-    dump << "      Function Decl: " << Func->getType()->getDescription() << "\n";
+    if (os) {
+      *os << "      Function Decl: ";
+      WriteTypeSymbolic(*os,Func->getType(),M);
+      *os << "\n";
+    }
   }
 
   virtual void handleGlobalInitializer(GlobalVariable* GV, Constant* CV) {
-    dump << "    Initializer: GV=";
-    GV->print(dump);
-    dump << "      CV=";
-    CV->print(dump);
-    dump << "\n";
+    if (os) {
+      *os << "    Initializer: GV=";
+      GV->print(*os);
+      *os << "      CV=";
+      CV->print(*os);
+      *os << "\n";
+    }
+  }
+
+  virtual void handleDependentLibrary(const std::string& libName) {
+    bca.numLibraries++;
+    bca.libSize += libName.size() + (libName.size() < 128 ? 1 : 2);
   }
 
   virtual void handleModuleGlobalsEnd() { 
-    dump << "    } END BLOCK: ModuleGlobalInfo\n";
+    if (os)
+      *os << "    } END BLOCK: ModuleGlobalInfo\n";
     if ( bca.progressiveVerify ) {
       try {
         verifyModule(*M, ThrowExceptionAction);
@@ -204,65 +239,88 @@ public:
   }
 
   virtual void handleCompactionTableBegin() { 
-    dump << "      BLOCK: CompactionTable {\n";
+    if (os)
+      *os << "      BLOCK: CompactionTable {\n";
   }
 
   virtual void handleCompactionTablePlane( unsigned Ty, unsigned NumEntries) {
     bca.numCmpctnTables++;
-    dump << "        Plane: Ty=" << Ty << " Size=" << NumEntries << "\n";
+    if (os)
+      *os << "        Plane: Ty=" << Ty << " Size=" << NumEntries << "\n";
   }
 
   virtual void handleCompactionTableType( unsigned i, unsigned TypSlot, 
       const Type* Ty ) {
-    dump << "          Type: " << i << " Slot:" << TypSlot 
-              << " is " << Ty->getDescription() << "\n"; 
+    if (os) {
+      *os << "          Type: " << i << " Slot:" << TypSlot << " is ";
+      WriteTypeSymbolic(*os,Ty,M);
+      *os << "\n"; 
+    }
   }
 
   virtual void handleCompactionTableValue(unsigned i, unsigned TypSlot,
                                           unsigned ValSlot) { 
-    dump << "          Value: " << i << " TypSlot: " << TypSlot 
+    if (os)
+      *os << "          Value: " << i << " TypSlot: " << TypSlot 
          << " ValSlot:" << ValSlot << "\n";
+    if (ValSlot > bca.maxValueSlot)
+      bca.maxValueSlot = ValSlot;
   }
 
   virtual void handleCompactionTableEnd() { 
-    dump << "      } END BLOCK: CompactionTable\n";
+    if (os)
+      *os << "      } END BLOCK: CompactionTable\n";
   }
 
   virtual void handleSymbolTableBegin(Function* CF, SymbolTable* ST) { 
     bca.numSymTab++; 
-    dump << "    BLOCK: SymbolTable {\n";
+    if (os)
+      *os << "    BLOCK: SymbolTable {\n";
   }
 
   virtual void handleSymbolTablePlane(unsigned Ty, unsigned NumEntries, 
     const Type* Typ) { 
-    dump << "      Plane: Ty=" << Ty << " Size=" << NumEntries
-         << " Type: " << Typ->getDescription() << "\n"; 
+    if (os) {
+      *os << "      Plane: Ty=" << Ty << " Size=" << NumEntries << " Type: ";
+      WriteTypeSymbolic(*os,Typ,M);
+      *os << "\n"; 
+    }
   }
 
-  virtual void handleSymbolTableType(unsigned i, unsigned slot, 
+  virtual void handleSymbolTableType(unsigned i, unsigned TypSlot, 
     const std::string& name ) { 
-    dump << "        Type " << i << " Slot=" << slot
-              << " Name: " << name << "\n"; 
+    if (os)
+      *os << "        Type " << i << " Slot=" << TypSlot
+         << " Name: " << name << "\n"; 
   }
 
-  virtual void handleSymbolTableValue(unsigned i, unsigned slot, 
+  virtual void handleSymbolTableValue(unsigned i, unsigned ValSlot, 
     const std::string& name ) { 
-    dump << "        Value " << i << " Slot=" << slot
-              << " Name: " << name << "\n";
+    if (os)
+      *os << "        Value " << i << " Slot=" << ValSlot
+         << " Name: " << name << "\n";
+    if (ValSlot > bca.maxValueSlot)
+      bca.maxValueSlot = ValSlot;
   }
 
   virtual void handleSymbolTableEnd() { 
-    dump << "    } END BLOCK: SymbolTable\n";
+    if (os)
+      *os << "    } END BLOCK: SymbolTable\n";
   }
 
   virtual void handleFunctionBegin(Function* Func, unsigned Size) {
-    dump << "    BLOCK: Function {\n";
-    dump << "      Linkage: " << Func->getLinkage() << "\n";
-    dump << "      Type: " << Func->getType()->getDescription() << "\n";
-    const FunctionType* FType = 
-      cast<FunctionType>(Func->getType()->getElementType());
+    if (os) {
+      *os << "    BLOCK: Function {\n"
+          << "      Linkage: " << Func->getLinkage() << "\n"
+          << "      Type: "; 
+      WriteTypeSymbolic(*os,Func->getType(),M);
+      *os << "\n";
+    }
+
     currFunc = &bca.FunctionInfo[Func];
-    currFunc->description = FType->getDescription();
+    std::ostringstream tmp;
+    WriteTypeSymbolic(tmp,Func->getType(),M);
+    currFunc->description = tmp.str();
     currFunc->name = Func->getName();
     currFunc->byteSize = Size;
     currFunc->numInstructions = 0;
@@ -280,7 +338,8 @@ public:
   }
 
   virtual void handleFunctionEnd( Function* Func) {
-    dump << "    } END BLOCK: Function\n";
+    if (os)
+      *os << "    } END BLOCK: Function\n";
     currFunc->density = double(currFunc->byteSize) /
       double(currFunc->numInstructions+currFunc->numBasicBlocks);
 
@@ -294,7 +353,8 @@ public:
   }
 
   virtual void handleBasicBlockBegin( unsigned blocknum) {
-    dump << "      BLOCK: BasicBlock #" << blocknum << "{\n";
+    if (os)
+      *os << "      BLOCK: BasicBlock #" << blocknum << "{\n";
     bca.numBasicBlocks++;
     bca.numValues++;
     if ( currFunc ) currFunc->numBasicBlocks++;
@@ -302,18 +362,24 @@ public:
 
   virtual bool handleInstruction( unsigned Opcode, const Type* iType, 
                                 std::vector<unsigned>& Operands, unsigned Size){
-    dump << "        INST: OpCode=" 
-         << Instruction::getOpcodeName(Opcode) << " Type=\"" 
-         << iType->getDescription() << "\"";
-    for ( unsigned i = 0; i < Operands.size(); ++i ) 
-      dump << " Op(" << i << ")=Slot(" << Operands[i] << ")";
-    dump << "\n";
+    if (os) {
+      *os << "        INST: OpCode=" 
+         << Instruction::getOpcodeName(Opcode) << " Type=\"";
+      WriteTypeSymbolic(*os,iType,M);
+      *os << "\"";
+      for ( unsigned i = 0; i < Operands.size(); ++i ) 
+        *os << " Op(" << i << ")=Slot(" << Operands[i] << ")";
+      *os << "\n";
+    }
 
     bca.numInstructions++;
     bca.numValues++;
     bca.instructionSize += Size;
     if (Size > 4 ) bca.longInstructions++;
     bca.numOperands += Operands.size();
+    for (unsigned i = 0; i < Operands.size(); ++i )
+      if (Operands[i] > bca.maxValueSlot)
+        bca.maxValueSlot = Operands[i];
     if ( currFunc ) {
       currFunc->numInstructions++;
       currFunc->instructionSize += Size;
@@ -324,30 +390,37 @@ public:
   }
 
   virtual void handleBasicBlockEnd(unsigned blocknum) { 
-    dump << "      } END BLOCK: BasicBlock #" << blocknum << "{\n";
+    if (os)
+      *os << "      } END BLOCK: BasicBlock #" << blocknum << "{\n";
   }
 
   virtual void handleGlobalConstantsBegin() { 
-    dump << "    BLOCK: GlobalConstants {\n";
+    if (os)
+      *os << "    BLOCK: GlobalConstants {\n";
   }
 
   virtual void handleConstantExpression( unsigned Opcode, 
       std::vector<Constant*> ArgVec, Constant* C ) {
-    dump << "      EXPR: " << Instruction::getOpcodeName(Opcode) << "\n";
-    for ( unsigned i = 0; i < ArgVec.size(); ++i )  {
-      dump << "        Arg#" << i << " "; ArgVec[i]->print(dump); dump << "\n";
+    if (os) {
+      *os << "      EXPR: " << Instruction::getOpcodeName(Opcode) << "\n";
+      for ( unsigned i = 0; i < ArgVec.size(); ++i ) {
+        *os << "        Arg#" << i << " "; ArgVec[i]->print(*os); 
+        *os << "\n";
+      }
+      *os << "        Value=";
+      C->print(*os);
+      *os << "\n";
     }
-    dump << "        Value=";
-    C->print(dump);
-    dump << "\n";
     bca.numConstants++;
     bca.numValues++;
   }
 
   virtual void handleConstantValue( Constant * c ) {
-    dump << "      VALUE: ";
-    c->print(dump);
-    dump << "\n";
+    if (os) {
+      *os << "      VALUE: ";
+      c->print(*os);
+      *os << "\n";
+    }
     bca.numConstants++;
     bca.numValues++;
   }
@@ -356,16 +429,19 @@ public:
           std::vector<Constant*>& Elements,
           unsigned TypeSlot,
           Constant* ArrayVal ) {
-    dump << "      ARRAY: " << AT->getDescription() 
-         << " TypeSlot=" << TypeSlot << "\n";
-    for ( unsigned i = 0; i < Elements.size(); ++i ) {
-      dump << "        #" << i;
-      Elements[i]->print(dump);
-      dump << "\n";
+    if (os) {
+      *os << "      ARRAY: ";
+      WriteTypeSymbolic(*os,AT,M); 
+      *os << " TypeSlot=" << TypeSlot << "\n";
+      for ( unsigned i = 0; i < Elements.size(); ++i ) {
+        *os << "        #" << i;
+        Elements[i]->print(*os);
+        *os << "\n";
+      }
+      *os << "        Value=";
+      ArrayVal->print(*os);
+      *os << "\n";
     }
-    dump << "        Value=";
-    ArrayVal->print(dump);
-    dump << "\n";
 
     bca.numConstants++;
     bca.numValues++;
@@ -376,13 +452,18 @@ public:
         std::vector<Constant*>& Elements,
         Constant* StructVal)
   {
-    dump << "      STRUC: " << ST->getDescription() << "\n";
-    for ( unsigned i = 0; i < Elements.size(); ++i ) {
-      dump << "        #" << i << " "; Elements[i]->print(dump); dump << "\n";
+    if (os) {
+      *os << "      STRUC: ";
+      WriteTypeSymbolic(*os,ST,M);
+      *os << "\n";
+      for ( unsigned i = 0; i < Elements.size(); ++i ) {
+        *os << "        #" << i << " "; Elements[i]->print(*os); 
+        *os << "\n";
+      }
+      *os << "        Value=";
+      StructVal->print(*os);
+      *os << "\n";
     }
-    dump << "        Value=";
-    StructVal->print(dump);
-    dump << "\n";
     bca.numConstants++;
     bca.numValues++;
   }
@@ -393,16 +474,19 @@ public:
     unsigned TypeSlot,                  
     Constant* PackedVal) 
   {
-    dump << "      PACKD: " << PT->getDescription() 
-         << " TypeSlot=" << TypeSlot << "\n";
-    for ( unsigned i = 0; i < Elements.size(); ++i ) {
-      dump << "        #" << i;
-      Elements[i]->print(dump);
-      dump << "\n";
+    if (os) {
+      *os << "      PACKD: ";
+      WriteTypeSymbolic(*os,PT,M);
+      *os << " TypeSlot=" << TypeSlot << "\n";
+      for ( unsigned i = 0; i < Elements.size(); ++i ) {
+        *os << "        #" << i;
+        Elements[i]->print(*os);
+        *os << "\n";
+      }
+      *os << "        Value=";
+      PackedVal->print(*os);
+      *os << "\n";
     }
-    dump << "        Value=";
-    PackedVal->print(dump);
-    dump << "\n";
 
     bca.numConstants++;
     bca.numValues++;
@@ -410,24 +494,31 @@ public:
 
   virtual void handleConstantPointer( const PointerType* PT, 
       unsigned Slot, GlobalValue* GV ) {
-    dump << "       PNTR: " << PT->getDescription() 
-         << " Slot=" << Slot << " GlobalValue=";
-    GV->print(dump);
-    dump << "\n";
+    if (os) {
+      *os << "       PNTR: ";
+      WriteTypeSymbolic(*os,PT,M);
+      *os << " Slot=" << Slot << " GlobalValue=";
+      GV->print(*os);
+      *os << "\n";
+    }
     bca.numConstants++;
     bca.numValues++;
   }
 
   virtual void handleConstantString( const ConstantArray* CA ) {
-    dump << "      STRNG: ";
-    CA->print(dump); 
-    dump << "\n";
+    if (os) {
+      *os << "      STRNG: ";
+      CA->print(*os); 
+      *os << "\n";
+    }
     bca.numConstants++;
     bca.numValues++;
   }
 
   virtual void handleGlobalConstantsEnd() { 
-    dump << "    } END BLOCK: GlobalConstants\n";
+    if (os)
+      *os << "    } END BLOCK: GlobalConstants\n";
+
     if ( bca.progressiveVerify ) {
       try {
         verifyModule(*M, ThrowExceptionAction);
@@ -444,7 +535,15 @@ public:
   virtual void handleBlock(
     unsigned BType, const unsigned char* StartPtr, unsigned Size) {
     bca.numBlocks++;
-    bca.BlockSizes[llvm::BytecodeFormat::FileBlockIDs(BType)] += Size;
+    assert(BType >= BytecodeFormat::ModuleBlockID);
+    assert(BType < BytecodeFormat::NumberOfBlockIDs);
+    bca.BlockSizes[
+      llvm::BytecodeFormat::CompressedBytecodeBlockIdentifiers(BType)] += Size;
+
+    if (bca.version < 3) // Check for long block headers versions
+      bca.BlockSizes[llvm::BytecodeFormat::Reserved_DoNotUse] += 8;
+    else
+      bca.BlockSizes[llvm::BytecodeFormat::Reserved_DoNotUse] += 4;
   }
 
   virtual void handleVBR32(unsigned Size ) {
@@ -518,27 +617,60 @@ namespace llvm {
 /// @brief Print BytecodeAnalysis structure to an ostream
 void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
 {
+  Out << "\nSummary Analysis Of " << bca.ModuleId << ": \n\n";
   print(Out, "Bytecode Analysis Of Module",     bca.ModuleId);
+  print(Out, "Bytecode Version Number",         bca.version);
   print(Out, "File Size",                       bca.byteSize);
+  print(Out, "Module Bytes",
+        double(bca.BlockSizes[BytecodeFormat::ModuleBlockID]),
+        double(bca.byteSize));
+  print(Out, "Function Bytes", 
+        double(bca.BlockSizes[BytecodeFormat::FunctionBlockID]),
+        double(bca.byteSize));
+  print(Out, "Global Types Bytes", 
+        double(bca.BlockSizes[BytecodeFormat::GlobalTypePlaneBlockID]),
+        double(bca.byteSize));
+  print(Out, "Constant Pool Bytes", 
+        double(bca.BlockSizes[BytecodeFormat::ConstantPoolBlockID]),
+        double(bca.byteSize));
+  print(Out, "Module Globals Bytes", 
+        double(bca.BlockSizes[BytecodeFormat::ModuleGlobalInfoBlockID]),
+        double(bca.byteSize));
+  print(Out, "Instruction List Bytes", 
+        double(bca.BlockSizes[BytecodeFormat::InstructionListBlockID]),
+        double(bca.byteSize));
+  print(Out, "Compaction Table Bytes", 
+        double(bca.BlockSizes[BytecodeFormat::CompactionTableBlockID]),
+        double(bca.byteSize));
+  print(Out, "Symbol Table Bytes", 
+        double(bca.BlockSizes[BytecodeFormat::SymbolTableBlockID]),
+        double(bca.byteSize));
+  print(Out, "Alignment Bytes", 
+        double(bca.numAlignment), double(bca.byteSize));
+  print(Out, "Block Header Bytes", 
+        double(bca.BlockSizes[BytecodeFormat::Reserved_DoNotUse]),
+        double(bca.byteSize));
+  print(Out, "Dependent Libraries Bytes", double(bca.libSize), 
+        double(bca.byteSize));
   print(Out, "Number Of Bytecode Blocks",       bca.numBlocks);
+  print(Out, "Number Of Functions",             bca.numFunctions);
   print(Out, "Number Of Types",                 bca.numTypes);
-  print(Out, "Number Of Values",                bca.numValues);
   print(Out, "Number Of Constants",             bca.numConstants);
   print(Out, "Number Of Global Variables",      bca.numGlobalVars);
-  print(Out, "Number Of Functions",             bca.numFunctions);
+  print(Out, "Number Of Values",                bca.numValues);
   print(Out, "Number Of Basic Blocks",          bca.numBasicBlocks);
   print(Out, "Number Of Instructions",          bca.numInstructions);
+  print(Out, "Number Of Long Instructions",     bca.longInstructions);
   print(Out, "Number Of Operands",              bca.numOperands);
   print(Out, "Number Of Compaction Tables",     bca.numCmpctnTables);
   print(Out, "Number Of Symbol Tables",         bca.numSymTab);
-  print(Out, "Long Instructions", bca.longInstructions);
-  print(Out, "Instruction Size", bca.instructionSize);
+  print(Out, "Number Of Dependent Libs",        bca.numLibraries);
+  print(Out, "Total Instruction Size",          bca.instructionSize);
   print(Out, "Average Instruction Size", 
-    double(bca.instructionSize)/double(bca.numInstructions));
+        double(bca.instructionSize)/double(bca.numInstructions));
+
   print(Out, "Maximum Type Slot Number",        bca.maxTypeSlot);
   print(Out, "Maximum Value Slot Number",       bca.maxValueSlot);
-  print(Out, "Bytes Thrown To Alignment",       double(bca.numAlignment), 
-    double(bca.byteSize));
   print(Out, "File Density (bytes/def)",        bca.fileDensity);
   print(Out, "Globals Density (bytes/def)",     bca.globalsDensity);
   print(Out, "Function Density (bytes/func)",   bca.functionDensity);
@@ -547,37 +679,11 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
   print(Out, "Number of VBR Compressed Bytes",  bca.vbrCompBytes);
   print(Out, "Number of VBR Expanded Bytes",    bca.vbrExpdBytes);
   print(Out, "VBR Savings", 
-    double(bca.vbrExpdBytes)-double(bca.vbrCompBytes),
-    double(bca.vbrExpdBytes));
+        double(bca.vbrExpdBytes)-double(bca.vbrCompBytes),
+        double(bca.vbrExpdBytes));
 
-  if ( bca.detailedResults ) {
-    print(Out, "Module Bytes",
-        double(bca.BlockSizes[BytecodeFormat::Module]),
-        double(bca.byteSize));
-    print(Out, "Function Bytes", 
-        double(bca.BlockSizes[BytecodeFormat::Function]),
-        double(bca.byteSize));
-    print(Out, "Constant Pool Bytes", 
-        double(bca.BlockSizes[BytecodeFormat::ConstantPool]),
-        double(bca.byteSize));
-    print(Out, "Symbol Table Bytes", 
-        double(bca.BlockSizes[BytecodeFormat::SymbolTable]),
-        double(bca.byteSize));
-    print(Out, "Module Global Info Bytes", 
-        double(bca.BlockSizes[BytecodeFormat::ModuleGlobalInfo]),
-        double(bca.byteSize));
-    print(Out, "Global Type Plane Bytes", 
-        double(bca.BlockSizes[BytecodeFormat::GlobalTypePlane]),
-        double(bca.byteSize));
-    print(Out, "Basic Block Bytes", 
-        double(bca.BlockSizes[BytecodeFormat::BasicBlock]),
-        double(bca.byteSize));
-    print(Out, "Instruction List Bytes", 
-        double(bca.BlockSizes[BytecodeFormat::InstructionList]),
-        double(bca.byteSize));
-    print(Out, "Compaction Table Bytes", 
-        double(bca.BlockSizes[BytecodeFormat::CompactionTable]),
-        double(bca.byteSize));
+  if (bca.detailedResults) {
+    Out << "\nDetailed Analysis Of " << bca.ModuleId << " Functions:\n";
 
     std::map<const Function*,BytecodeAnalysis::BytecodeFunctionInfo>::iterator I = 
       bca.FunctionInfo.begin();
@@ -586,14 +692,14 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
 
     while ( I != E ) {
       Out << std::left << std::setw(0);
-      Out << "Function: " << I->second.name << "\n";
+      Out << "\nFunction: " << I->second.name << "\n";
       print(Out, "Type:", I->second.description);
       print(Out, "Byte Size", I->second.byteSize);
       print(Out, "Instructions", I->second.numInstructions);
       print(Out, "Long Instructions", I->second.longInstructions);
       print(Out, "Instruction Size", I->second.instructionSize);
       print(Out, "Average Instruction Size", 
-        double(I->second.instructionSize)/double(I->second.numInstructions));
+            double(I->second.instructionSize)/double(I->second.numInstructions));
       print(Out, "Basic Blocks", I->second.numBasicBlocks);
       print(Out, "Operand", I->second.numOperands);
       print(Out, "Function Density", I->second.density);
@@ -602,22 +708,20 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
       print(Out, "Number of VBR Compressed Bytes",  I->second.vbrCompBytes);
       print(Out, "Number of VBR Expanded Bytes",    I->second.vbrExpdBytes);
       print(Out, "VBR Savings", 
-        double(I->second.vbrExpdBytes)-double(I->second.vbrCompBytes),
-        double(I->second.vbrExpdBytes));
+            double(I->second.vbrExpdBytes)-double(I->second.vbrCompBytes),
+            double(I->second.vbrExpdBytes));
       ++I;
     }
   }
-
-  if ( bca.dumpBytecode )
-    Out << bca.BytecodeDump;
 
   if ( bca.progressiveVerify )
     Out << bca.VerifyInfo;
 }
 
-BytecodeHandler* createBytecodeAnalyzerHandler(BytecodeAnalysis& bca)
+BytecodeHandler* createBytecodeAnalyzerHandler(BytecodeAnalysis& bca,
+                                               std::ostream* output)
 {
-  return new AnalyzerHandler(bca);
+  return new AnalyzerHandler(bca,output);
 }
 
 }
