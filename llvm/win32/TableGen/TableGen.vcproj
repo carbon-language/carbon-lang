@@ -138,7 +138,7 @@
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Performing flex"
+						Description="Flexing $(InputFileName)"
 						CommandLine="..\tools\flex -t &gt;$(InputDir)$(InputName).cpp $(InputPath)
 "
 						Outputs="$(InputDir)$(InputName).cpp"/>
@@ -147,7 +147,7 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Performing flex"
+						Description="Flexing $(InputFileName)"
 						CommandLine="..\tools\flex -t &gt;$(InputDir)$(InputName).cpp $(InputPath)
 "
 						Outputs="$(InputDir)$(InputName).cpp"/>
@@ -159,7 +159,7 @@
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Performing bison"
+						Description="Bisoning $(InputFileName)"
 						CommandLine="..\tools\bison -pFile -tvdo$(InputDir)$(InputName).cpp $(InputPath)
 move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
 "
@@ -169,7 +169,7 @@ move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
 					Name="Release|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Performing bison"
+						Description="Bisoning $(InputFileName)"
 						CommandLine="..\tools\bison -pFile -vdo$(InputDir)$(InputName).cpp $(InputPath)
 move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
 "
