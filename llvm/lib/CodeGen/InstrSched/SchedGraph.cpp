@@ -18,6 +18,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Support/StringExtras.h"
@@ -543,15 +544,11 @@ CreateSSAEdge(SchedGraph* graph,
 
 
 void
-SchedGraph::addSSAEdge(SchedGraphNode* node,
-		       const Value* val,
+SchedGraph::addSSAEdge(SchedGraphNode* destNode,
+                       const Instruction* defVMInstr,
+                       const Value* defValue,
 		       const TargetMachine& target)
 {
-  if (!isa<Instruction>(val)) return;
-  
-  const Instruction* thisVMInstr = node->getInstr();
-  const Instruction* defVMInstr  = cast<const Instruction>(val);
-  
   // Phi instructions are the only ones that produce a value but don't get
   // any non-dummy machine instructions.  Return here as an optimization.
   // 
@@ -577,9 +574,9 @@ SchedGraph::addSSAEdge(SchedGraphNode* node,
           if (defOp.opIsDef()
               && (defOp.getOperandType() == MachineOperand::MO_VirtualRegister
                   || defOp.getOperandType() == MachineOperand::MO_CCRegister)
-              && (defOp.getVRegValue() == val))
+              && (defOp.getVRegValue() == defValue))
             {
-              CreateSSAEdge(this, defMvec[i], node, val);
+              CreateSSAEdge(this, defMvec[i], destNode, defValue);
               edgeAddedForInstr = true;
               break;
             }
@@ -589,9 +586,10 @@ SchedGraph::addSSAEdge(SchedGraphNode* node,
       if (! edgeAddedForInstr)
         {
           for (unsigned o=0, N=defMvec[i]->getNumImplicitRefs(); o < N; ++o)
-            if (defMvec[i]->implicitRefIsDefined(o))
+            if (defMvec[i]->implicitRefIsDefined(o) &&
+                defMvec[i]->getImplicitRef(o) == defValue)
               {
-                CreateSSAEdge(this, defMvec[i], node, val);
+                CreateSSAEdge(this, defMvec[i], destNode, defValue);
                 edgeAddedForInstr = true;
                 break;
               }
@@ -610,7 +608,7 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
     return;
   
   assert(node->getInstr() && "Should be no dummy nodes here!");
-  const Instruction& instr = * node->getInstr();
+  const Instruction* instr = node->getInstr();
   
   // Add edges for all operands of the machine instruction.
   // Also, record all machine register references to add reg. deps. later.
@@ -636,8 +634,13 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
 	{
 	case MachineOperand::MO_VirtualRegister:
 	case MachineOperand::MO_CCRegister:
-	  if (mop.getVRegValue())
-	    addSSAEdge(node, mop.getVRegValue(), target);
+	  if (const Instruction* srcI =
+              dyn_cast_or_null<Instruction>(mop.getVRegValue()))
+            {
+              if (srcI->getOpcode() == TMP_INSTRUCTION_OPCODE)
+                srcI = instr;
+              addSSAEdge(node, srcI, mop.getVRegValue(), target);
+            }
 	  break;
 	  
 	case MachineOperand::MO_MachineRegister:
@@ -660,7 +663,13 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
   // 
   for (unsigned i=0, N=minstr.getNumImplicitRefs(); i < N; ++i)
     if (! minstr.implicitRefIsDefined(i))
-      addSSAEdge(node, minstr.getImplicitRef(i), target);
+      if (const Instruction* srcI =
+          dyn_cast_or_null<Instruction>(minstr.getImplicitRef(i)))
+        {
+          if (srcI->getOpcode() == TMP_INSTRUCTION_OPCODE)
+            srcI = instr;
+          addSSAEdge(node, srcI, minstr.getImplicitRef(i), target);
+        }
 }
 
 
