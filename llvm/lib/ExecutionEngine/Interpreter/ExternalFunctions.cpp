@@ -501,6 +501,15 @@ GenericValue lle_X_fclose(FunctionType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+// int feof(FILE *stream);
+GenericValue lle_X_feof(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+
+  GV.IntVal = feof(getFILE(Args[0].PointerVal));
+  return GV;
+}
+
 // size_t fread(void *ptr, size_t size, size_t nitems, FILE *stream);
 GenericValue lle_X_fread(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 4);
@@ -631,6 +640,7 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_i_clock"]        = lle_i_clock;
   FuncNames["lle_X_fopen"]        = lle_X_fopen;
   FuncNames["lle_X_fclose"]       = lle_X_fclose;
+  FuncNames["lle_X_feof"]         = lle_X_feof;
   FuncNames["lle_X_fread"]        = lle_X_fread;
   FuncNames["lle_X_fwrite"]       = lle_X_fwrite;
   FuncNames["lle_X_fgets"]        = lle_X_fgets;
