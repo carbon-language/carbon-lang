@@ -83,14 +83,20 @@ endif
 
 ifneq ($(BUILD_OBJ_ROOT),$(BUILD_SRC_ROOT))
 spotless:
-	$(Echo) Wiping out $(BUILD_OBJ_ROOT) and rebuilding configuration.
 	$(Verb) if test -x config.status ; then \
-	  $(MV) config.status .. ; \
-	  $(MV) mklib  .. ; \
+	  $(EchoCmd) Wiping out $(BUILD_OBJ_ROOT) ; \
+	  $(MKDIR) .spotless.save ; \
+	  $(MV) config.status .spotless.save ; \
+	  $(MV) mklib  .spotless.save ; \
+	  $(MV) projects  .spotless.save ; \
 	  $(RM) -rf * ; \
-	  $(MV) ../config.status . ; \
-	  $(MV) ../mklib . ; \
-	  ./config.status ; \
+	  $(MV) .spotless.save/config.status . ; \
+	  $(MV) .spotless.save/mklib . ; \
+	  $(MV) .spotless.save/projects . ; \
+	  $(RM) -rf .spotless.save ; \
+	  $(EchoCmd) Rebuilding configuration of $(BUILD_OBJ_ROOT) ; \
+	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
+	  $(ConfigStatusScript) ; \
 	else \
 	  $(EchoCmd) "make spotless" can only be run from $(BUILD_OBJ_ROOT); \
 	fi
