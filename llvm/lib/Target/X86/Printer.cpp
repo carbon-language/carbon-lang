@@ -67,10 +67,99 @@ bool Printer::runOnFunction (Function & F)
   return false;
 }
 
+static void printOp(std::ostream &O, const MachineOperand &MO,
+                    const MRegisterInfo &RI) {
+  switch (MO.getType()) {
+  case MachineOperand::MO_VirtualRegister:
+    if (MO.getReg() < MRegisterInfo::FirstVirtualRegister)
+      O << RI.get(MO.getReg()).Name;
+    else
+      O << "%reg" << MO.getReg();
+    return;
+    
+  default:
+    O << "<unknown op ty>"; return;    
+  }
+}
+
+static inline void toHexDigit(std::ostream &O, unsigned char V) {
+  if (V >= 10)
+    O << (char)('A'+V-10);
+  else
+    O << (char)('0'+V);
+}
+
+static std::ostream &toHex(std::ostream &O, unsigned char V) {
+  toHexDigit(O, V >> 4);
+  toHexDigit(O, V & 0xF);
+  return O;
+}
+
 
 // print - Print out an x86 instruction in intel syntax
 void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
                          const TargetMachine &TM) const {
-  // FIXME: This sucks.
-  O << getName(MI->getOpCode()) << "\n";
+  unsigned Opcode = MI->getOpcode();
+  const MachineInstrDescriptor &Desc = get(Opcode);
+
+  if (Desc.TSFlags & X86II::TB)
+    O << "0F ";
+
+  switch (Desc.TSFlags & X86II::FormMask) {
+  case X86II::OtherFrm:
+    O << "\t";
+    O << "-"; MI->print(O, TM);
+    break;
+  case X86II::RawFrm:
+    toHex(O, getBaseOpcodeFor(Opcode)) << "\t";
+    O << getName(MI->getOpCode()) << " ";
+
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      if (i) O << ", ";
+      printOp(O, MI->getOperand(i), RI);
+    }
+    O << "\n";
+    return;
+
+
+  case X86II::AddRegFrm:
+    O << "\t-"; MI->print(O, TM); break;
+
+  case X86II::MRMDestReg:
+    // There are two acceptable forms of MRMDestReg instructions, those with 3
+    // and 2 operands:
+    //
+    // 3 Operands: in this form, the first two registers (the destination, and
+    // the first operand) should be the same, post register allocation.  The 3rd
+    // operand is an additional input.  This should be for things like add
+    // instructions.
+    //
+    // 2 Operands: this is for things like mov that do not read a second input
+    //
+    assert(((MI->getNumOperands() == 3 && 
+             (MI->getOperand(0).getType()==MachineOperand::MO_VirtualRegister&&
+             MI->getOperand(1).getType()==MachineOperand::MO_VirtualRegister))||
+            (MI->getNumOperands() == 2 && 
+             (MI->getOperand(0).getType()==MachineOperand::MO_VirtualRegister)))
+           && MI->getOperand(MI->getNumOperands()-1).getType() ==
+                             MachineOperand::MO_VirtualRegister &&
+           "Bad format for MRMDestReg!");
+
+    if (MI->getNumOperands() == 3 &&
+        MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
+      O << "**";
+
+    O << "\t";
+    O << getName(MI->getOpCode()) << " ";
+    printOp(O, MI->getOperand(0), RI);
+    O << ", ";
+    printOp(O, MI->getOperand(MI->getNumOperands()-1), RI);
+    O << "\n";
+    return;
+  case X86II::MRMDestMem:
+  case X86II::MRMSrcReg:
+  case X86II::MRMSrcMem:
+  default:
+    O << "\t-"; MI->print(O, TM); break;
+  }
 }
