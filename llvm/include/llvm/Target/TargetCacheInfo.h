@@ -1,4 +1,4 @@
-//===-- llvm/Target/MachineCacheInfo.h ---------------------------*- C++ -*-==//
+//===-- llvm/Target/MachineCacheInfo.h --------------------------*- C++ -*-===//
 //
 //  Describes properties of the target cache architecture.
 //
@@ -19,7 +19,9 @@ protected:
   std::vector<unsigned short> cacheAssoc;
   
 public:
-  MachineCacheInfo(const TargetMachine& tgt);
+  MachineCacheInfo(const TargetMachine& tgt) : target(tgt) {
+    Initialize();
+  }
   
   // Default parameters are:
   //    NumLevels    = 2
