@@ -34,7 +34,7 @@ sub GetRegex {   # (Regex with ()'s, value)
 
 sub AddPreTag {  # Add pre tags around nonempty list, or convert to "none"
   $_ = shift;
-  if (length) { return "<pre>  $_</pre>"; } else { "<b>none</b><br>"; }
+  if (length) { return "<ul><pre>$_</pre></ul>"; } else { "<b>none</b><br>"; }
 }
 
 sub GetDir {
@@ -59,8 +59,8 @@ sub DiffFiles {
   my @Diffs = split "\n", `diff $WebDir/$DATE$Suffix $WebDir/$Others[0]`;
   my $Added   = join "\n", grep /^</, @Diffs;
   my $Removed = join "\n", grep /^>/, @Diffs;
-  $Added =~ s/^< /  /gm;
-  $Removed =~ s/^> /  /gm;
+  $Added =~ s/^< //gm;
+  $Removed =~ s/^> //gm;
   return ($Added, $Removed);
 }
 
@@ -165,8 +165,9 @@ foreach $Warning (@Warn) {
     push @Warnings, "$CurDir/$Warning";     # Add directory to warning...
   }
 }
-my $WarningsList = AddPreTag join "\n  ", @Warnings;
-my $WarningsFile = join "\n", @Warnings; $WarningsFile =~ s/:[0-9]+:/::/g;
+my $WarningsFile =  join "\n", @Warnings;
+my $WarningsList = AddPreTag $WarningsFile;
+$WarningsFile =~ s/:[0-9]+:/::/g;
 
 # Emit the warnings file, so we can diff...
 WriteFile "$WebDir/$DATE-Warnings.txt", $WarningsFile . "\n";
@@ -207,11 +208,11 @@ foreach $File (@CVSHistory) {
   }
 }
 
-my $UserCommitList = join "\n  ", keys %UsersCommitted;
-my $UserUpdateList = join "\n  ", keys %UsersUpdated;
-my $AddedFilesList = AddPreTag join "\n  ", keys %AddedFiles;
-my $ModifiedFilesList = AddPreTag join "\n  ", keys %ModifiedFiles;
-my $RemovedFilesList = AddPreTag join "\n  ", keys %RemovedFiles;
+my $UserCommitList = join "\n", keys %UsersCommitted;
+my $UserUpdateList = join "\n", keys %UsersUpdated;
+my $AddedFilesList = AddPreTag join "\n", keys %AddedFiles;
+my $ModifiedFilesList = AddPreTag join "\n", keys %ModifiedFiles;
+my $RemovedFilesList = AddPreTag join "\n", keys %RemovedFiles;
 
 # Get a list of the previous days that we can link to...
 my @PrevDays = map {s/.html//; $_} GetDir ".html";
