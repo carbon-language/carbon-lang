@@ -188,6 +188,40 @@
 		code for executables.  For each program that you build, you
 		will have one directory in <b>tools</b> that will contain that
 		program's source code.
+		<p>
+
+		<dt><b>test</b>
+		<dd>
+		This subdirectory should contain tests that verify that your code
+		works correctly.  Automated tests are especially useful.
+		<p>
+		Currently, the LLVM build system provides little support for tests,
+		although some exists.  Expanded support for tests will hopefully
+		occur in the future.  In the meantime, the LLVM system does provide the
+		following:
+		<ul>
+			<li>
+			LLVM provides several QMTest test classes that can be used to
+			create tests.  They can be found in
+			<tt>llvm/test/QMTest/llvm.py</tt>.  These test classes perform a
+			variety of functions, including code optimization tests, assembly
+			tests,  and code analysis tests.  The Makefile in
+			<tt>llvm/test</tt> provides the QMTest context needed by LLVM test
+			classes.
+			<p>
+
+			<li>
+			The LLVM source tree provides benchmarks and programs which are
+			known to compile with the LLVM GCC front ends.  You can use these
+			programs to test your code, gather statistics information, and
+			compare it to the current LLVM performance statistics.  These
+			programs are found in the <tt>llvm/test/Programs</tt> directory.
+			<p>
+			Currently, there is no way to hook your tests directly into the
+			<tt>llvm/test/Programs</tt> testing harness.  You will simply
+			need to find a way to use the source provided within that directory
+			on your own.
+		</ul>
 	</dl>
 
 	Typically, you will want to build your <b>lib</b> directory first
