@@ -11,8 +11,8 @@
 //
 //----------------------------------------------------------------------------
 
-#ifndef SPARC_REGINFO_H
-#define SPARC_REGINFO_H
+#ifndef SPARCV9REGINFO_H
+#define SPARCV9REGINFO_H
 
 #include "llvm/Target/TargetRegInfo.h"
 
@@ -21,9 +21,7 @@ namespace llvm {
 class SparcV9TargetMachine;
 
 class SparcV9RegInfo : public TargetRegInfo {
-
 private:
-
   // Number of registers used for passing int args (usually 6: %o0 - %o5)
   //
   unsigned const NumOfIntArgRegs;
