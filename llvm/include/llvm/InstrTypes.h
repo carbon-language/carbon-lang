@@ -29,34 +29,45 @@ namespace llvm {
 ///
 class TerminatorInst : public Instruction {
 protected:
-  TerminatorInst(Instruction::TermOps iType, Instruction *InsertBefore = 0);
+  TerminatorInst(Instruction::TermOps iType, Use *Ops, unsigned NumOps,
+                 Instruction *InsertBefore = 0);
   TerminatorInst(const Type *Ty, Instruction::TermOps iType,
+                  Use *Ops, unsigned NumOps,
                  const std::string &Name = "", Instruction *InsertBefore = 0)
-    : Instruction(Ty, iType, Name, InsertBefore) {}
+    : Instruction(Ty, iType, Ops, NumOps, Name, InsertBefore) {}
 
-  TerminatorInst(Instruction::TermOps iType, BasicBlock *InsertAtEnd);
+  TerminatorInst(Instruction::TermOps iType, Use *Ops, unsigned NumOps,
+                 BasicBlock *InsertAtEnd);
   TerminatorInst(const Type *Ty, Instruction::TermOps iType,
+                  Use *Ops, unsigned NumOps,
                  const std::string &Name, BasicBlock *InsertAtEnd)
-    : Instruction(Ty, iType, Name, InsertAtEnd) {}
+    : Instruction(Ty, iType, Ops, NumOps, Name, InsertAtEnd) {}
 
+  /// Virtual methods - Terminators should overload these and provide inline
+  /// overrides of non-V methods.
+  virtual BasicBlock *getSuccessorV(unsigned idx) const = 0;
+  virtual unsigned getNumSuccessorsV() const = 0;
+  virtual void setSuccessorV(unsigned idx, BasicBlock *B) = 0;
 public:
 
-  /// Terminators must implement the methods required by Instruction...
   virtual Instruction *clone() const = 0;
 
-  /// Additionally, they must provide a method to get at the successors of this
-  /// terminator instruction.  'idx' may not be >= the number of successors
-  /// returned by getNumSuccessors()!
-  ///
-  virtual const BasicBlock *getSuccessor(unsigned idx) const = 0;
-  virtual unsigned getNumSuccessors() const = 0;
-  
-  /// Set a successor at a given index
-  virtual void setSuccessor(unsigned idx, BasicBlock *B) = 0;
+  /// getNumSuccessors - Return the number of successors that this terminator
+  /// has.
+  unsigned getNumSuccessors() const {
+    return getNumSuccessorsV();
+  }
 
-  inline BasicBlock *getSuccessor(unsigned idx) {
-    const TerminatorInst *TI = this;
-    return const_cast<BasicBlock*>(TI->getSuccessor(idx));
+  /// getSuccessor - Return the specified successor.
+  ///
+  BasicBlock *getSuccessor(unsigned idx) const {
+    return getSuccessorV(idx);
+  }
+
+  /// setSuccessor - Update the specified successor to point at the provided
+  /// block.
+  void setSuccessor(unsigned idx, BasicBlock *B) {
+    setSuccessorV(idx, B);
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -69,26 +80,70 @@ public:
   }
 };
 
+//===----------------------------------------------------------------------===//
+//                          UnaryInstruction Class
+//===----------------------------------------------------------------------===//
+
+class UnaryInstruction : public Instruction {
+  Use Op;
+protected:
+  UnaryInstruction(const Type *Ty, unsigned iType, Value *V,
+                   const std::string &Name = "", Instruction *IB = 0)
+    : Instruction(Ty, iType, &Op, 1, Name, IB), Op(V, this) {
+  }
+  UnaryInstruction(const Type *Ty, unsigned iType, Value *V,
+                   const std::string &Name, BasicBlock *IAE)
+    : Instruction(Ty, iType, &Op, 1, Name, IAE), Op(V, this) {
+  }
+public:
+
+  // Transparently provide more efficient getOperand methods.
+  Value *getOperand(unsigned i) const {
+    assert(i == 0 && "getOperand() out of range!");
+    return Op;
+  }
+  void setOperand(unsigned i, Value *Val) {
+    assert(i == 0 && "setOperand() out of range!");
+    Op = Val;
+  }
+  unsigned getNumOperands() const { return 1; }
+};
 
 //===----------------------------------------------------------------------===//
 //                           BinaryOperator Class
 //===----------------------------------------------------------------------===//
 
 class BinaryOperator : public Instruction {
+  Use Ops[2];
 protected:
-  void init(BinaryOps iType, Value *S1, Value *S2);
+  void init(BinaryOps iType);
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, const Type *Ty,
                  const std::string &Name, Instruction *InsertBefore)
-    : Instruction(Ty, iType, Name, InsertBefore) {
-    init(iType, S1, S2);
+    : Instruction(Ty, iType, Ops, 2, Name, InsertBefore) {
+      Ops[0].init(S1, this);
+      Ops[1].init(S2, this);
+    init(iType);
   }
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, const Type *Ty,
                  const std::string &Name, BasicBlock *InsertAtEnd)
-    : Instruction(Ty, iType, Name, InsertAtEnd) {
-    init(iType, S1, S2);
+    : Instruction(Ty, iType, Ops, 2, Name, InsertAtEnd) {
+    Ops[0].init(S1, this);
+    Ops[1].init(S2, this);
+    init(iType);
   }
 
 public:
+
+  /// Transparently provide more efficient getOperand methods.
+  Value *getOperand(unsigned i) const {
+    assert(i < 2 && "getOperand() out of range!");
+    return Ops[i];
+  }
+  void setOperand(unsigned i, Value *Val) {
+    assert(i < 2 && "setOperand() out of range!");
+    Ops[i] = Val;
+  }
+  unsigned getNumOperands() const { return 2; }
 
   /// create() - Construct a binary instruction, given the opcode and the two
   /// operands.  Optionally (if InstBefore is specified) insert the instruction
