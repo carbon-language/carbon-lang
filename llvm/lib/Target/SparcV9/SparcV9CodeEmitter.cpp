@@ -596,14 +596,9 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
       DEBUG(std::cerr << "Saving reference to BB (VReg)\n");
       unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
       BBRefs.push_back(std::make_pair(BB, std::make_pair(CurrPC, &MI)));
-    } else if (const Constant *C = dyn_cast<Constant>(V)) {
-      if (const ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
-        rv = CI->getRawValue() - MCE.getCurrentPCValue();
-      } else {
-        std::cerr << "Cannot have non-integral const in instruction: "
-                  << *C;
-        abort();
-      }
+    } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+      // Make constant PC-relative by subtracting the PC from it.
+      rv = CI->getRawValue() - MCE.getCurrentPCValue();
     } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
       // same as MO.isGlobalAddress()
       DEBUG(std::cerr << "GlobalValue: ");
@@ -777,7 +772,7 @@ void SparcV9CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     if (binCode == (1 << 30)) {
       // this is an invalid call: the addr is out of bounds. that means a code
       // sequence has already been emitted, and this is a no-op
-      DEBUG(std::cerr << "Call supressed: already emitted far call.\n");
+      DEBUG(std::cerr << "Call suppressed: already emitted far call.\n");
     } else {
       emitWord(binCode);
     }
