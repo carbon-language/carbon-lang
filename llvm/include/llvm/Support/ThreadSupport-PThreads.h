@@ -32,11 +32,34 @@ namespace llvm {
     void operator=(const Mutex &);  // DO NOT IMPLEMENT
   public:
     Mutex() {
+      // Initialize the mutex as a recursive mutex
       pthread_mutexattr_t Attr;
-      pthread_mutex_init(&mutex, &Attr);
+      int errorcode = pthread_mutexattr_init(&Attr);
+      assert(errorcode == 0);
+
+      errorcode = pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE);
+      assert(errorcode == 0);
+      
+      errorcode = pthread_mutex_init(&mutex, &Attr);
+      assert(errorcode == 0);
+
+      errorcode = pthread_mutexattr_destroy(&Attr);
+      assert(errorcode == 0);
     }
-    ~Mutex() { pthread_mutex_destroy(&mutex); }
-    void acquire () { pthread_mutex_lock (&mutex); }
-    void release () { pthread_mutex_unlock (&mutex); }
+
+    ~Mutex() {
+      int errorcode = pthread_mutex_destroy(&mutex);
+      assert(errorcode == 0);
+    }
+
+    void acquire () {
+      int errorcode = pthread_mutex_lock(&mutex);
+      assert(errorcode == 0);
+    }
+
+    void release () {
+      int errorcode = pthread_mutex_unlock(&mutex);
+      assert(errorcode == 0);
+    }
   };
 } // end namespace llvm
