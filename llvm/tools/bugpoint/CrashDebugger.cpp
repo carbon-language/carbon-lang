@@ -329,7 +329,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
   do {
     --Simplification;
     std::cout << "\n*** Attempting to reduce testcase by deleting instruc"
-              << "tions: Simplification Level #" << Simplification << "\n";
+              << "tions: Simplification Level #" << Simplification << '\n';
 
     // Now that we have deleted the functions that are unnecessary for the
     // program, try to remove instructions that are not necessary to cause the
@@ -416,7 +416,7 @@ bool BugDriver::debugOptimizerCrash() {
 
   std::cout << "\n*** Found crashing pass"
             << (PassesToRun.size() == 1 ? ": " : "es: ")
-            << getPassesString(PassesToRun) << "\n";
+            << getPassesString(PassesToRun) << '\n';
 
   EmitProgressBytecode("passinput");
 
@@ -425,8 +425,9 @@ bool BugDriver::debugOptimizerCrash() {
 
 static bool TestForCodeGenCrash(BugDriver &BD, Module *M) {
   try {
-    std::cerr << "\n";
+    std::cerr << '\n';
     BD.compileProgram(M);
+    std::cerr << '\n';
     return false;
   } catch (ToolExecutionError &TEE) {
     std::cerr << "<crash>\n";

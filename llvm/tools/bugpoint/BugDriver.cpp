@@ -79,7 +79,7 @@ Module *llvm::ParseInputFile(const std::string &InputFilename) {
                 << InputFilename << "'!\n";
     }
   } catch (const ParseException &E) {
-    std::cerr << "bugpoint: " << E.getMessage() << "\n";
+    std::cerr << "bugpoint: " << E.getMessage() << '\n';
     Result = 0;
   }
   return Result;
@@ -107,7 +107,7 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
     std::string ErrorMessage;
     if (LinkModules(Program, M.get(), &ErrorMessage)) {
       std::cerr << ToolName << ": error linking in '" << Filenames[i] << "': "
-                << ErrorMessage << "\n";
+                << ErrorMessage << '\n';
       return true;
     }
   }
@@ -143,7 +143,7 @@ bool BugDriver::run() {
   std::cout << "Running the code generator to test for a crash: ";
   try {
     compileProgram(Program);
-    std::cout << "\n";
+    std::cout << '\n';
   } catch (ToolExecutionError &TEE) {
     std::cout << TEE.what();
     return debugCodeGeneratorCrash();
@@ -160,7 +160,7 @@ bool BugDriver::run() {
     try {
       ReferenceOutputFile = executeProgramWithCBE("bugpoint.reference.out");
       CreatedOutput = true;
-      std::cout << "Reference output is: " << ReferenceOutputFile << "\n";
+      std::cout << "Reference output is: " << ReferenceOutputFile << '\n';
     } catch (ToolExecutionError &TEE) {
       std::cerr << TEE.what();
       if (Interpreter != cbe) {

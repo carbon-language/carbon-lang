@@ -42,7 +42,7 @@ namespace {
 
   cl::opt<bool>
   CheckProgramExitCode("check-exit-code",
-                       cl::desc("Assume nonzero exit code is failure (default on)"),
+                   cl::desc("Assume nonzero exit code is failure (default on)"),
                        cl::init(true));
 
   cl::opt<std::string>
@@ -279,7 +279,7 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
   bool FilesDifferent = false;
   if (DiffFiles(ReferenceOutputFile, Output, &Error)) {
     if (!Error.empty()) {
-      std::cerr << "While diffing output: " << Error << "\n";
+      std::cerr << "While diffing output: " << Error << '\n';
       exit(1);
     }
     FilesDifferent = true;

@@ -174,7 +174,7 @@ static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
   if (!DeleteInputs) M1 = CloneModule(M1);
   if (LinkModules(M1, M2, &ErrorMsg)) {
     std::cerr << BD.getToolName() << ": Error linking modules together:"
-              << ErrorMsg << "\n";
+              << ErrorMsg << '\n';
     exit(1);
   }
   if (DeleteInputs) delete M2;  // We are done with this module...
@@ -203,7 +203,7 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
             << " run through the pass"
             << (BD.getPassesToRun().size() == 1 ? "" : "es") << ":";
   PrintFunctionList(Funcs);
-  std::cout << "\n";
+  std::cout << '\n';
 
   // Split the module into the two halves of the program we want.
   Module *ToNotOptimize = CloneModule(BD.getProgram());
@@ -296,7 +296,7 @@ static bool ExtractLoops(BugDriver &BD,
     std::string ErrorMsg;
     if (LinkModules(ToNotOptimize, ToOptimizeLoopExtracted, &ErrorMsg)) {
       std::cerr << BD.getToolName() << ": Error linking modules together:"
-                << ErrorMsg << "\n";
+                << ErrorMsg << '\n';
       exit(1);
     }
 
@@ -359,7 +359,7 @@ bool ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock*> &BBs) {
   } else {
     std::cout << "blocks are extracted.";
   }
-  std::cout << "\n";
+  std::cout << '\n';
 
   // Split the module into the two halves of the program we want.
   Module *ToNotOptimize = CloneModule(BD.getProgram());
@@ -426,7 +426,7 @@ static bool ExtractBlocks(BugDriver &BD,
   std::string ErrorMsg;
   if (LinkModules(ProgClone, Extracted, &ErrorMsg)) {
     std::cerr << BD.getToolName() << ": Error linking modules together:"
-              << ErrorMsg << "\n";
+              << ErrorMsg << '\n';
     exit(1);
   }
 
@@ -473,7 +473,7 @@ DebugAMiscompilation(BugDriver &BD,
             << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
             << " being miscompiled: ";
   PrintFunctionList(MiscompiledFunctions);
-  std::cout << "\n";
+  std::cout << '\n';
 
   // See if we can rip any loops out of the miscompiled functions and still
   // trigger the problem.
@@ -493,7 +493,7 @@ DebugAMiscompilation(BugDriver &BD,
               << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
               << " being miscompiled: ";
     PrintFunctionList(MiscompiledFunctions);
-    std::cout << "\n";
+    std::cout << '\n';
   }
 
   if (ExtractBlocks(BD, TestFn, MiscompiledFunctions)) {
@@ -512,7 +512,7 @@ DebugAMiscompilation(BugDriver &BD,
               << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
               << " being miscompiled: ";
     PrintFunctionList(MiscompiledFunctions);
-    std::cout << "\n";
+    std::cout << '\n';
   }
 
   return MiscompiledFunctions;
@@ -552,7 +552,7 @@ bool BugDriver::debugMiscompilation() {
 
   std::cout << "\n*** Found miscompiling pass"
             << (getPassesToRun().size() == 1 ? "" : "es") << ": "
-            << getPassesString(getPassesToRun()) << "\n";
+            << getPassesString(getPassesToRun()) << '\n';
   EmitProgressBytecode("passinput");
 
   std::vector<Function*> MiscompiledFunctions =
@@ -807,7 +807,7 @@ bool BugDriver::debugCodeGenerator() {
   }
   for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
     std::cout << " " << InputArgv[i];
-  std::cout << "\n";
+  std::cout << '\n';
   std::cout << "The shared object was created with:\n  llc -march=c "
             << SafeModuleBC << " -o temporary.c\n"
             << "  gcc -xc temporary.c -O2 -o " << SharedObject
