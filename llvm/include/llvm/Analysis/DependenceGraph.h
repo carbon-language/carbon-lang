@@ -11,15 +11,14 @@
 // of the dependence.  This saves space and is important because dep. graphs
 // can grow quickly.  It works just fine because the standard idiom is to
 // start with a known node and enumerate the dependences to or from that node.
+//
 //===----------------------------------------------------------------------===//
 
 
 #ifndef LLVM_ANALYSIS_DEPENDENCEGRAPH_H
 #define LLVM_ANALYSIS_DEPENDENCEGRAPH_H
 
-
-#include <Support/NonCopyable.h>
-#include <Support/hash_map>
+#include "Support/hash_map"
 #include <iosfwd>
 #include <vector>
 #include <utility>
@@ -44,12 +43,6 @@ enum DependenceType {
   IncomingFlag       = 0x10         // is this an incoming or outgoing dep?
 };
 
-#undef SUPPORTING_LOOP_DEPENDENCES
-#ifdef SUPPORTING_LOOP_DEPENDENCES
-typedef int   DependenceDistance;       // negative means unknown distance
-typedef short DependenceLevel;          // 0 means global level outside loops
-#endif
-
 
 //----------------------------------------------------------------------------
 // class Dependence:
@@ -62,9 +55,7 @@ class Dependence {
   unsigned char  depType;
 
 public:
-  /*ctor*/      Dependence      (DepGraphNode* toOrFromN,
-                                 DependenceType type,
-                                 bool isIncoming)
+  Dependence(DepGraphNode* toOrFromN, DependenceType type, bool isIncoming)
     : toOrFromNode(toOrFromN),
       depType(type | (isIncoming? IncomingFlag : 0x0)) { }
 
@@ -72,7 +63,7 @@ public:
     : toOrFromNode(D.toOrFromNode),
       depType(D.depType) { }
 
-  bool operator==(const Dependence& D) {
+  bool operator==(const Dependence& D) const {
     return toOrFromNode == D.toOrFromNode && depType == D.depType;
   }
 
@@ -111,8 +102,8 @@ public:
 #ifdef SUPPORTING_LOOP_DEPENDENCES
 struct LoopDependence: public Dependence {
   DependenceDirection dir;
-  DependenceDistance  distance;
-  DependenceLevel     level;
+  int                 distance;
+  short               level;
   LoopInfo*           enclosingLoop;
 };
 #endif
@@ -166,7 +157,10 @@ public:
 // for the node.
 //----------------------------------------------------------------------------
 
-class DependenceGraph: public NonCopyable {
+class DependenceGraph {
+  DependenceGraph(const DependenceGraph&); // DO NOT IMPLEMENT
+  void operator=(const DependenceGraph&);  // DO NOT IMPLEMENT
+
   typedef hash_map<Instruction*, DepGraphNode*> DepNodeMapType;
   typedef DepNodeMapType::      iterator       map_iterator;
   typedef DepNodeMapType::const_iterator const_map_iterator;
@@ -204,17 +198,33 @@ public:
       ->getNodeInternal(const_cast<Instruction&>(inst));
   }
 
-        iterator inDepBegin (      DepGraphNode& T)       { return T.inDeps.begin(); }
-  const_iterator inDepBegin (const DepGraphNode& T) const { return T.inDeps.begin(); }
+  iterator inDepBegin(DepGraphNode& T) {
+    return T.inDeps.begin();
+  }
+  const_iterator inDepBegin (const DepGraphNode& T) const {
+    return T.inDeps.begin();
+  }
 
-        iterator inDepEnd   (      DepGraphNode& T)       { return T.inDeps.end(); }
-  const_iterator inDepEnd   (const DepGraphNode& T) const { return T.inDeps.end(); }
+  iterator inDepEnd(DepGraphNode& T) {
+    return T.inDeps.end();
+  }
+  const_iterator inDepEnd(const DepGraphNode& T) const {
+    return T.inDeps.end();
+  }
 
-        iterator outDepBegin(      DepGraphNode& F)       { return F.outDeps.begin();}
-  const_iterator outDepBegin(const DepGraphNode& F) const { return F.outDeps.begin();}
+  iterator outDepBegin(DepGraphNode& F) {
+    return F.outDeps.begin();
+  }
+  const_iterator outDepBegin(const DepGraphNode& F) const {
+    return F.outDeps.begin();
+  }
 
-        iterator outDepEnd  (      DepGraphNode& F)       { return F.outDeps.end(); }
-  const_iterator outDepEnd  (const DepGraphNode& F) const { return F.outDeps.end(); }
+  iterator outDepEnd(DepGraphNode& F) {
+    return F.outDeps.end();
+  }
+  const_iterator outDepEnd(const DepGraphNode& F) const {
+    return F.outDeps.end();
+  }
 
   /// Debugging support methods
   /// 
@@ -239,8 +249,8 @@ public:
                          Instruction&  toI,
                          DependenceType      depType,
                          DependenceDirection dir,
-                         DependenceDistance  distance,
-                         DependenceLevel     level,
+                         int                 distance,
+                         short               level,
                          LoopInfo*           enclosingLoop);
 #endif // SUPPORTING_LOOP_DEPENDENCES
 };
