@@ -227,7 +227,7 @@ namespace llvm {
     /// getLanguageCache - This method is used to build per-program caches of
     /// information, such as the functions or types visible to the program.
     /// This can be used by SourceLanguage implementations because it requires
-    /// an accessible <sl>::CacheType typedef, where <sl> is the C++ type of the
+    /// an accessible [sl]::CacheType typedef, where [sl] is the C++ type of the
     /// source-language subclass.
     template<typename SL>
     typename SL::CacheType &getLanguageCache(const SL *L) {
