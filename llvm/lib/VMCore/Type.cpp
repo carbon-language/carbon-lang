@@ -18,7 +18,7 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 
-namespace llvm {
+using namespace llvm;
 
 // DEBUG_MERGE_TYPES - Enable this #define to see how and when derived types are
 // created and later destroyed, all in an effort to make sure that there is only
@@ -560,6 +560,7 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2) {
 // created on any given run of the compiler... note that this involves updating
 // our map if an abstract type gets refined somehow...
 //
+namespace llvm {
 template<class ValType, class TypeClass>
 class TypeMap {
   typedef std::map<ValType, TypeClass *> MapTy;
@@ -647,7 +648,7 @@ public:
 
   void dump() const { print("dump output"); }
 };
-
+}
 
 
 //===----------------------------------------------------------------------===//
@@ -656,6 +657,7 @@ public:
 
 // FunctionValType - Define a class to hold the key that goes into the TypeMap
 //
+namespace llvm {
 class FunctionValType {
   const Type *RetTy;
   std::vector<const Type*> ArgTypes;
@@ -684,6 +686,7 @@ public:
     return ArgTypes == MTV.ArgTypes && isVarArg < MTV.isVarArg;
   }
 };
+}
 
 // Define the actual map itself now...
 static TypeMap<FunctionValType, FunctionType> FunctionTypes;
@@ -717,6 +720,7 @@ FunctionType *FunctionType::get(const Type *ReturnType,
 //===----------------------------------------------------------------------===//
 // Array Type Factory...
 //
+namespace llvm {
 class ArrayValType {
   const Type *ValTy;
   unsigned Size;
@@ -738,7 +742,7 @@ public:
     return Size == MTV.Size && ValTy < MTV.ValTy;
   }
 };
-
+}
 static TypeMap<ArrayValType, ArrayType> ArrayTypes;
 
 
@@ -762,6 +766,7 @@ ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
 // Struct Type Factory...
 //
 
+namespace llvm {
 // StructValType - Define a class to hold the key that goes into the TypeMap
 //
 class StructValType {
@@ -788,6 +793,7 @@ public:
     return ElTypes < STV.ElTypes;
   }
 };
+}
 
 static TypeMap<StructValType, StructType> StructTypes;
 
@@ -813,6 +819,7 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes) {
 
 // PointerValType - Define a class to hold the key that goes into the TypeMap
 //
+namespace llvm {
 class PointerValType {
   const Type *ValTy;
 public:
@@ -832,6 +839,7 @@ public:
     return ValTy < MTV.ValTy;
   }
 };
+}
 
 static TypeMap<PointerValType, PointerType> PointerTypes;
 
@@ -851,13 +859,14 @@ PointerType *PointerType::get(const Type *ValueType) {
   return PT;
 }
 
+namespace llvm {
 void debug_type_tables() {
   FunctionTypes.dump();
   ArrayTypes.dump();
   StructTypes.dump();
   PointerTypes.dump();
 }
-
+}
 
 //===----------------------------------------------------------------------===//
 //                     Derived Type Refinement Functions
@@ -1115,5 +1124,3 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
 void PointerType::typeBecameConcrete(const DerivedType *AbsTy) {
   refineAbstractType(AbsTy, AbsTy);
 }
-
-} // End llvm namespace
