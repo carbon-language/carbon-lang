@@ -7,16 +7,8 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/InstrTypes.h"
 #include "Support/StringExtras.h"
-#include <iostream>
 #include <algorithm>
-
-using std::string;
-using std::pair;
-using std::make_pair;
-using std::map;
-using std::cerr;
 
 #define DEBUG_SYMBOL_TABLE 0
 #define DEBUG_ABSTYPE 0
@@ -41,9 +33,9 @@ SymbolTable::~SymbolTable() {
   for (iterator i = begin(); i != end(); ++i) {
     for (type_iterator I = i->second.begin(); I != i->second.end(); ++I)
       if (!isa<Constant>(I->second) && !isa<Type>(I->second)) {
-	cerr << "Value still in symbol table! Type = '"
-             << i->first->getDescription() << "' Name = '"
-             << I->first << "'\n";
+	std::cerr << "Value still in symbol table! Type = '"
+                  << i->first->getDescription() << "' Name = '"
+                  << I->first << "'\n";
 	LeftoverValues = false;
       }
   }
@@ -56,11 +48,12 @@ SymbolTable::~SymbolTable() {
 // it (or derived from it) that does not already occur in the symbol table for
 // the specified type.
 //
-string SymbolTable::getUniqueName(const Type *Ty, const string &BaseName) {
+std::string SymbolTable::getUniqueName(const Type *Ty,
+                                       const std::string &BaseName) {
   iterator I = find(Ty);
   if (I == end()) return BaseName;
 
-  string TryName = BaseName;
+  std::string TryName = BaseName;
   unsigned Counter = 0;
   type_iterator End = I->second.end();
 
@@ -72,7 +65,7 @@ string SymbolTable::getUniqueName(const Type *Ty, const string &BaseName) {
 
 
 // lookup - Returns null on failure...
-Value *SymbolTable::lookup(const Type *Ty, const string &Name) {
+Value *SymbolTable::lookup(const Type *Ty, const std::string &Name) {
   iterator I = find(Ty);
   if (I != end()) {                      // We have symbols in that plane...
     type_iterator J = I->second.find(Name);
@@ -117,8 +110,8 @@ Value *SymbolTable::removeEntry(iterator Plane, type_iterator Entry) {
     //
     if (Plane->first->isAbstract()) {
 #if DEBUG_ABSTYPE
-      cerr << "Plane Empty: Removing type: " << Plane->first->getDescription()
-           << "\n";
+      std::cerr << "Plane Empty: Removing type: "
+                << Plane->first->getDescription() << "\n";
 #endif
       cast<DerivedType>(Plane->first)->removeAbstractTypeUser(this);
     }
@@ -132,7 +125,7 @@ Value *SymbolTable::removeEntry(iterator Plane, type_iterator Entry) {
     const Type *T = cast<const Type>(Result);
     if (T->isAbstract()) {
 #if DEBUG_ABSTYPE
-      cerr << "Removing abs type from symtab" << T->getDescription() << "\n";
+      std::cerr << "Removing abs type from symtab" << T->getDescription()<<"\n";
 #endif
       cast<DerivedType>(T)->removeAbstractTypeUser(this);
     }
@@ -144,11 +137,12 @@ Value *SymbolTable::removeEntry(iterator Plane, type_iterator Entry) {
 // insertEntry - Insert a value into the symbol table with the specified
 // name...
 //
-void SymbolTable::insertEntry(const string &Name, const Type *VTy, Value *V) {
+void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
+                              Value *V) {
 
   // Check to see if there is a naming conflict.  If so, rename this value!
   if (lookup(VTy, Name)) {
-    string UniqueName = getUniqueName(VTy, Name);
+    std::string UniqueName = getUniqueName(VTy, Name);
     assert(InternallyInconsistent == false && "Infinite loop inserting entry!");
     InternallyInconsistent = true;
     V->setName(UniqueName, this);
@@ -158,8 +152,8 @@ void SymbolTable::insertEntry(const string &Name, const Type *VTy, Value *V) {
 
 #if DEBUG_SYMBOL_TABLE
   dump();
-  cerr << " Inserting definition: " << Name << ": " 
-       << VTy->getDescription() << "\n";
+  std::cerr << " Inserting definition: " << Name << ": " 
+            << VTy->getDescription() << "\n";
 #endif
 
   iterator I = find(VTy);
@@ -175,7 +169,8 @@ void SymbolTable::insertEntry(const string &Name, const Type *VTy, Value *V) {
     if (VTy->isAbstract()) {
       cast<DerivedType>(VTy)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
-      cerr << "Added abstract type value: " << VTy->getDescription() << "\n";
+      std::cerr << "Added abstract type value: " << VTy->getDescription()
+                << "\n";
 #endif
     }
   }
@@ -188,7 +183,7 @@ void SymbolTable::insertEntry(const string &Name, const Type *VTy, Value *V) {
     if (T->isAbstract()) {
       cast<DerivedType>(T)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
-      cerr << "Added abstract type to ST: " << T->getDescription() << "\n";
+      std::cerr << "Added abstract type to ST: " << T->getDescription() << "\n";
 #endif
     }
   }
@@ -212,7 +207,8 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
       if (NewType->isAbstract()) {
         cast<DerivedType>(NewType)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
-        cerr << "[Added] refined to abstype: "<<NewType->getDescription()<<"\n";
+        std::cerr << "[Added] refined to abstype: " << NewType->getDescription()
+                  << "\n";
 #endif
       }
     }
@@ -220,7 +216,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
     VarMap &NewPlane = NewTypeIt->second;
     VarMap &OldPlane = TPI->second;
     while (!OldPlane.empty()) {
-      pair<const string, Value*> V = *OldPlane.begin();
+      std::pair<const std::string, Value*> V = *OldPlane.begin();
 
       // Check to see if there is already a value in the symbol table that this
       // would collide with.
@@ -281,7 +277,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
     // Ok, now we are not referencing the type anymore... take me off your user
     // list please!
 #if DEBUG_ABSTYPE
-    cerr << "Removing type " << OldType->getDescription() << "\n";
+    std::cerr << "Removing type " << OldType->getDescription() << "\n";
 #endif
     OldType->removeAbstractTypeUser(this);
 
@@ -290,7 +286,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
   } else if (TPI != end()) {
     assert(OldType == NewType);
 #if DEBUG_ABSTYPE
-    cerr << "Removing SELF type " << OldType->getDescription() << "\n";
+    std::cerr << "Removing SELF type " << OldType->getDescription() << "\n";
 #endif
     OldType->removeAbstractTypeUser(this);
   }
@@ -306,14 +302,14 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
     for (VarMap::iterator I = TyPlane.begin(), E = TyPlane.end(); I != E; ++I)
       if (I->second == (Value*)OldType) {  // FIXME when Types aren't const.
 #if DEBUG_ABSTYPE
-        cerr << "Removing type " << OldType->getDescription() << "\n";
+        std::cerr << "Removing type " << OldType->getDescription() << "\n";
 #endif
         OldType->removeAbstractTypeUser(this);
         
         I->second = (Value*)NewType;  // TODO FIXME when types aren't const
         if (NewType->isAbstract()) {
 #if DEBUG_ABSTYPE
-          cerr << "Added type " << NewType->getDescription() << "\n";
+          std::cerr << "Added type " << NewType->getDescription() << "\n";
 #endif
           cast<const DerivedType>(NewType)->addAbstractTypeUser(this);
         }
@@ -321,13 +317,14 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
   }
 }
 
-static void DumpVal(const pair<const string, Value *> &V) {
+static void DumpVal(const std::pair<const std::string, Value *> &V) {
   std::cout << "  '" << V.first << "' = ";
   V.second->dump();
   std::cout << "\n";
 }
 
-static void DumpPlane(const pair<const Type *, map<const string, Value *> >&P) {
+static void DumpPlane(const std::pair<const Type *,
+                                      std::map<const std::string, Value *> >&P){
   std::cout << "  Plane: ";
   P.first->dump();
   std::cout << "\n";

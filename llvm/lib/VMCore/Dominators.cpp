@@ -12,7 +12,6 @@
 #include "llvm/Assembly/Writer.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/SetOperations.h"
-using std::set;
 
 //===----------------------------------------------------------------------===//
 //  DominatorSet Implementation
@@ -127,8 +126,9 @@ void DominatorSet::recalculate() {
 }
 
 
-static std::ostream &operator<<(std::ostream &o, const set<BasicBlock*> &BBs) {
-  for (set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
+static std::ostream &operator<<(std::ostream &o,
+                                const std::set<BasicBlock*> &BBs) {
+  for (std::set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
        I != E; ++I) {
     o << "  ";
     WriteAsOperand(o, *I, false);
