@@ -1,7 +1,7 @@
 ; Test that GCSE uses ds-aa to do alias analysis, which is capable of 
 ; disambiguating some cases.
 
-; RUN: as < %s | opt -ds-aa -load-vn -gcse -instcombine -dce | dis | not grep ELIM
+; RUN: as < %s | opt -no-aa -ds-aa -load-vn -gcse -instcombine -dce | dis | not grep ELIM
 
 %intpair = type {int*, int*}
 implementation
