@@ -234,6 +234,7 @@ unsigned Function::getIntrinsicID() const {
     break;
   case 'p':
     if (getName() == "llvm.prefetch")  return Intrinsic::prefetch; 
+    if (getName() == "llvm.pcmarker")  return Intrinsic::pcmarker; 
     break;
   case 'r':
     if (getName() == "llvm.returnaddress")  return Intrinsic::returnaddress;

@@ -749,6 +749,11 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::memset:          NumArgs = 4; break;
 
   case Intrinsic::prefetch:        NumArgs = 3; break;
+  case Intrinsic::pcmarker:        
+    NumArgs = 1; 
+    Assert1(isa<Constant>(CI.getOperand(1)),
+            "First argument to llvm.pcmarker must be a constant!", &CI);
+    break;
  
   case Intrinsic::not_intrinsic: 
     assert(0 && "Invalid intrinsic!"); NumArgs = 0; break;

@@ -126,6 +126,7 @@
           <li><a href="#i_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a></li>
           <li><a href="#i_frameaddress">'<tt>llvm.frameaddress</tt>'   Intrinsic</a></li>
           <li><a href="#i_prefetch">'<tt>llvm.prefetch</tt>' Intrinsic</a></li>
+          <li><a href="#i_pcmarker">'<tt>llvm.pcmarker</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_os">Operating System Intrinsics</a>
@@ -2544,6 +2545,46 @@ This intrinsic does not modify the behavior of the program.  In particular,
 prefetches cannot trap and do not produce a value.  On targets that support this
 intrinsic, the prefetch can provide hints to the processor cache for better
 performance.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_pcmarker">'<tt>llvm.pcmarker</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  call void (uint)* %llvm.pcmarker( uint &lt;id&gt; )
+</pre>
+
+<h5>Overview:</h5>
+
+
+<p>
+The '<tt>llvm.pcmarker</tt>' intrinsic is a method to export a PC in a region of 
+code to simulators and other tools.  The method is target specific, but it is 
+expected that the marker will use exported symbols to transmit the PC of the marker.
+The marker makes no guaranties that it will remain with any specific instruction 
+after optimizations.  It is possible that the presense of a marker will inhibit 
+optimizations.  The intended use is to be inserted after optmizations to allow
+corrolations of simulation runs.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+<tt>id</tt> is a numerical id identifying the marker.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+This intrinsic does not modify the behavior of the program.  Backends that do not 
+support this intrinisic may ignore it.
 </p>
 
 </div>

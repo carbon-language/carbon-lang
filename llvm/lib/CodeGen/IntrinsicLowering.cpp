@@ -172,6 +172,9 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::prefetch:
     break;    // Simply strip out prefetches on unsupported architectures
 
+  case Intrinsic::pcmarker:
+    break;    // Simply strip out pcmarker on unsupported architectures
+
   case Intrinsic::dbg_stoppoint:
   case Intrinsic::dbg_region_start:
   case Intrinsic::dbg_region_end:
