@@ -530,9 +530,9 @@ TypeToDataDirective(const Type* type)
     case Type::ULongTyID: case Type::LongTyID: case Type::PointerTyID:
       return ".xword";
     case Type::FloatTyID:
-      return ".single";
+      return ".word";
     case Type::DoubleTyID:
-      return ".double";
+      return ".xword";
     case Type::ArrayTyID:
       if (ArrayTypeIsString((ArrayType*) type))
         return ".ascii";
@@ -606,16 +606,33 @@ SparcModuleAsmPrinter::printSingleConstant(const Constant* CV)
          CV->getType() != Type::LabelTy &&
          "Unexpected type for Constant");
   
-  assert((! isa<ConstantArray>( CV) && ! isa<ConstantStruct>(CV))
-         && "Collective types should be handled outside this function");
+  assert((!isa<ConstantArray>(CV) && ! isa<ConstantStruct>(CV))
+         && "Aggregate types should be handled outside this function");
   
   toAsm << "\t" << TypeToDataDirective(CV->getType()) << "\t";
   
   if (CV->getType()->isPrimitiveType())
     {
-      if (CV->getType()->isFloatingPoint())
-        toAsm << "0r";                  // FP constants must have this prefix
-      toAsm << CV->getStrValue() << "\n";
+      if (CV->getType()->isFloatingPoint()) {
+        // FP Constants are printed as integer constants to avoid losing
+        // precision...
+        double Val = cast<ConstantFP>(CV)->getValue();
+        if (CV->getType() == Type::FloatTy) {
+          float FVal = (float)Val;
+          char *ProxyPtr = (char*)&FVal;        // Abide by C TBAA rules
+          toAsm << *(unsigned int*)ProxyPtr;            
+        } else if (CV->getType() == Type::DoubleTy) {
+          char *ProxyPtr = (char*)&Val;         // Abide by C TBAA rules
+          toAsm << *(uint64_t*)ProxyPtr;            
+        } else {
+          assert(0 && "Unknown floating point type!");
+        }
+        
+        toAsm << "\t! " << CV->getType()->getDescription()
+              << " value: " << Val << "\n";
+      } else {
+        toAsm << CV->getStrValue() << "\n";
+      }
     }
   else if (ConstantPointer* CPP = dyn_cast<ConstantPointer>(CV))
     {
