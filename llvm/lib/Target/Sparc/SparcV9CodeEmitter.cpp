@@ -660,7 +660,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
       std::cerr << "ERROR: PC relative disp unhandled:" << MO << "\n";
       abort();
     }
-  } else if (MO.isPhysicalRegister() ||
+  } else if (MO.getType() == MachineOperand::MO_MachineRegister ||
              MO.getType() == MachineOperand::MO_CCRegister)
   {
     // This is necessary because the Sparc backend doesn't actually lay out
