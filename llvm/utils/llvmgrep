@@ -1,7 +1,7 @@
 #!/bin/sh
 # This is useful because it prints out all of the source files.  Useful for
 # greps.
-PATTERN=$*
+PATTERN="$*"
 TOPDIR=`pwd | sed -e 's#(.*/llvm).*#$1#'`
 if test -d "$TOPDIR" ; then
   cd $TOPDIR
@@ -18,5 +18,7 @@ if test -d "$TOPDIR" ; then
       \! -name 'llvmAsmParser.h' \
       \! -name 'FileParser.cpp' \
       \! -name 'FileParser.h' \
-      -exec egrep -H -n $PATTERN {} \;
+      -exec egrep -H -n "$PATTERN" {} \;
+else
+  echo "Can't find LLVM top directory in $TOPDIR"
 fi
