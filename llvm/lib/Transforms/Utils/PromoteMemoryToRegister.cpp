@@ -400,25 +400,38 @@ void PromoteMem2Reg::MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
 //
 void PromoteMem2Reg::PromoteLocallyUsedAlloca(AllocaInst *AI) {
   assert(!AI->use_empty() && "There are no uses of the alloca!");
-
-  // Uses of the uninitialized memory location shall get zero...
-  Value *CurVal = Constant::getNullValue(AI->getAllocatedType());
-  
   BasicBlock *BB = cast<Instruction>(AI->use_back())->getParent();
 
-  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
-    Instruction *Inst = I++;
-    if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
-      if (LI->getOperand(0) == AI) {
-        // Loads just return the "current value"...
-        LI->replaceAllUsesWith(CurVal);
-        BB->getInstList().erase(LI);
-      }
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-      if (SI->getOperand(1) == AI) {
-        // Loads just update the "current value"...
-        CurVal = SI->getOperand(0);
-        BB->getInstList().erase(SI);
+
+  // Handle degenerate cases quickly.
+  if (AI->hasOneUse()) {
+    Instruction *U = cast<Instruction>(AI->use_back());
+    if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
+      // Must be a load of uninitialized value.
+      LI->replaceAllUsesWith(Constant::getNullValue(AI->getAllocatedType()));
+    } else {
+      // Otherwise it must be a store which is never read.
+      assert(isa<StoreInst>(U));
+    }
+    BB->getInstList().erase(U);
+  } else {
+    // Uses of the uninitialized memory location shall get zero...
+    Value *CurVal = Constant::getNullValue(AI->getAllocatedType());
+  
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
+      Instruction *Inst = I++;
+      if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
+        if (LI->getOperand(0) == AI) {
+          // Loads just return the "current value"...
+          LI->replaceAllUsesWith(CurVal);
+          BB->getInstList().erase(LI);
+        }
+      } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+        if (SI->getOperand(1) == AI) {
+          // Loads just update the "current value"...
+          CurVal = SI->getOperand(0);
+          BB->getInstList().erase(SI);
+        }
       }
     }
   }
