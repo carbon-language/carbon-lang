@@ -1,367 +1,101 @@
 //===- ModuloSchedGraph.h - Modulo Scheduling Graph and Set -*- C++ -*-----===//
-//
-// This header defines the primative classes that make up a data structure
-// graph.
+// 
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_MODULO_SCHED_GRAPH_H
-#define LLVM_CODEGEN_MODULO_SCHED_GRAPH_H
+#ifndef LLVM_MODULO_SCHED_GRAPH_H
+#define LLVM_MODULO_SCHED_GRAPH_H
 
 #include "llvm/Instruction.h"
+#include "llvm/CodeGen/SchedGraphCommon.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "Support/GraphTraits.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/Function.h"
 #include "Support/hash_map"
-#include "../InstrSched/SchedGraphCommon.h"
-#include <iostream>
+#include <vector>
 
-//===----------------------------------------------------------------------===//
-// ModuloSchedGraphNode - Implement a data structure based on the
-// SchedGraphNodeCommon this class stores informtion needed later to order the
-// nodes in modulo scheduling
-//
-class ModuloSchedGraphNode:public SchedGraphNodeCommon {
-private:
-  // the corresponding instruction 
-  const Instruction *inst;
 
-  // whether this node's property(ASAP,ALAP, ...) has been computed
-  bool propertyComputed;
+class ModuloSchedGraphNode : public SchedGraphNodeCommon {
 
-  // ASAP: the earliest time the node could be scheduled
-  // ALAP: the latest time the node couldbe scheduled
-  // depth: the depth of the node
-  // height: the height of the node
-  // mov: the mobility function, computed as ALAP - ASAP
-  // scheTime: the scheduled time if this node has been scheduled 
-  // earlyStart: the earliest time to be tried to schedule the node
-  // lateStart: the latest time to be tried to schedule the node
-  int ASAP, ALAP, depth, height, mov;
-  int schTime;
-  int earlyStart, lateStart;
+  const Instruction *Inst;  //Node's Instruction
+  unsigned Earliest;        //ASAP, or earliest time to be scheduled
+  unsigned Latest;          //ALAP, or latested time to be scheduled
+  unsigned Depth;           //Max Distance from node to the root
+  unsigned Height;          //Max Distance from node to leaf
+  unsigned Mobility;        //MOB, number of time slots it can be scheduled
+  const TargetMachine &Target; //Target information.
 
 public:
-
-  //get the instruction
-  const Instruction *getInst() const {
-    return inst;
-  }
-  //get the instruction op-code name
-  const char *getInstOpcodeName() const {
-    return inst->getOpcodeName();
-  }
-  //get the instruction op-code
-  const unsigned getInstOpcode() const {
-    return inst->getOpcode();
-  }
-
-  //return whether the node is NULL
-  bool isNullNode() const {
-    return (inst == NULL);
-  }
-  //return whether the property of the node has been computed
-  bool getPropertyComputed() {
-    return propertyComputed;
-  }
-  //set the propertyComputed
-  void setPropertyComputed(bool _propertyComputed) {
-    propertyComputed = _propertyComputed;
-  }
+  ModuloSchedGraphNode(unsigned ID, int index, const Instruction *inst, 
+		       const TargetMachine &target);
   
-  //get the corresponding property
-  int getASAP() {
-    return ASAP;
-  }
-  int getALAP() {
-    return ALAP;
-  }
-  int getMov() {
-    return mov;
-  }
-  int getDepth() {
-    return depth;
-  }
-  int getHeight() {
-    return height;
-  }
-  int getSchTime() {
-    return schTime;
-  }
-  int getEarlyStart() {
-    return earlyStart;
-  }
-  int getLateStart() {
-    return lateStart;
-  }
-  void setEarlyStart(int _earlyStart) {
-    earlyStart = _earlyStart;
-  }
-  void setLateStart(int _lateStart) {
-    lateStart = _lateStart;
-  }
-  void setSchTime(int _time) {
-    schTime = _time;
-  }
-
-private:
-  friend class ModuloSchedGraph;
-  friend class SchedGraphNode;
-
-  //constructor:
-  //nodeId: the node id, unique within the each BasicBlock
-  //_bb: which BasicBlock the corresponding instruction belongs to 
-  //_inst: the corresponding instruction
-  //indexInBB: the corresponding instruction's index in the BasicBlock
-  //target: the targetMachine
-  ModuloSchedGraphNode(unsigned int _nodeId,
-                       const BasicBlock * _bb,
-                       const Instruction * _inst,
-                       int indexInBB, const TargetMachine &target);
-
+  void print(std::ostream &os) const;
+  const Instruction* getInst() { return Inst; }
+  unsigned getEarliest() { return Earliest; }
+  unsigned getLatest() { return Latest; }
+  unsigned getDepth() { return Depth; }
+  unsigned getHeight() { return Height; }
+  unsigned getMobility() { return Mobility; }
   
-  friend std::ostream & operator<<(std::ostream & os,
-                                   const ModuloSchedGraphNode & edge);
+  void setEarliest(unsigned early) { Earliest = early; }
+  void setLatest(unsigned late) { Latest = late; }
+  void setDepth(unsigned depth) { Depth = depth; }
+  void setHeight(unsigned height) { Height = height; }
+  void setMobility(unsigned mob) { Mobility = mob; }
+
 
 };
 
-//FIXME: these two value should not be used
-#define MAXNODE 100
-#define MAXCC   100
-
-//===----------------------------------------------------------------------===//
-/// ModuloSchedGraph- the data structure to store dependence between nodes
-/// it catches data dependence and constrol dependence
-/// 
-class ModuloSchedGraph :
-  public SchedGraphCommon,
-  protected hash_map<const Instruction*,ModuloSchedGraphNode*> {
-
-private:
-
-  BasicBlock* bb;
+class ModuloSchedGraph : public SchedGraphCommon {
   
-  //iteration Interval
-  int MII;
+  const BasicBlock *BB; //The Basic block this graph represents
+  const TargetMachine &Target;
+  hash_map<const Instruction*, ModuloSchedGraphNode*> GraphMap;
 
-  //target machine
-  const TargetMachine & target;
-
-  //the circuits in the dependence graph
-  unsigned circuits[MAXCC][MAXNODE];
-
-  //the order nodes
-  std::vector<ModuloSchedGraphNode*> oNodes;
-
-  typedef std::vector<ModuloSchedGraphNode*> NodeVec;
-
-  //the function to compute properties
-  void computeNodeASAP(const BasicBlock * in_bb);
-  void computeNodeALAP(const BasicBlock * in_bb);
-  void computeNodeMov(const BasicBlock *  in_bb);
-  void computeNodeDepth(const BasicBlock * in_bb);
-  void computeNodeHeight(const BasicBlock * in_bb);
-
-  //the function to compute node property
-  void computeNodeProperty(const BasicBlock * in_bb);
-
-  //the function to sort nodes
-  void orderNodes();
-
-  //add the resource usage 
-void addResourceUsage(std::vector<std::pair<int,int> > &, int);
-
-  //debug functions:
-  //dump circuits
-  void dumpCircuits();
-  //dump the input set of nodes
-  void dumpSet(std::vector<ModuloSchedGraphNode*> set);
-  //dump the input resource usage table  
-  void dumpResourceUsage(std::vector<std::pair<int,int> > &);
+  void buildNodesForBB();
 
 public:
-  //help functions
-
-  //get the maxium the delay between two nodes
-  SchedGraphEdge *getMaxDelayEdge(unsigned srcId, unsigned sinkId);
-
-  //FIXME:
-  //get the predessor Set of the set
-  NodeVec predSet(NodeVec set, unsigned, unsigned);
-  NodeVec predSet(NodeVec set);
-
-  //get the predessor set of the node
-  NodeVec predSet(ModuloSchedGraphNode *node, unsigned, unsigned);
-  NodeVec predSet(ModuloSchedGraphNode *node);
-
-  //get the successor set of the set
-  NodeVec succSet(NodeVec set, unsigned, unsigned);
-  NodeVec succSet(NodeVec set);
-
-  //get the succssor set of the node
-  NodeVec succSet(ModuloSchedGraphNode *node, unsigned, unsigned);
-  NodeVec succSet(ModuloSchedGraphNode *node);
-
-  //return the uniton of the two vectors
-  NodeVec vectorUnion(NodeVec set1, NodeVec set2);
-  
-  //return the consjuction of the two vectors
-  NodeVec vectorConj(NodeVec set1, NodeVec set2);
-
-  //return all nodes in  set1 but not  set2
-  NodeVec vectorSub(NodeVec set1, NodeVec set2);
-
-  typedef hash_map<const Instruction*,ModuloSchedGraphNode*> map_base;
-
-public:
-  using map_base::iterator;
-  using map_base::const_iterator;
-
-public:
-
-  //get target machine
-  const TargetMachine & getTarget() {
-    return target;
-  }
-
-  //get the basic block
-  BasicBlock* getBasicBlock() const {
-    return bb;
-  }
+  typedef hash_map<const Instruction*, 
+		   ModuloSchedGraphNode*>::iterator iterator;
+  typedef hash_map<const Instruction*, 
+		   ModuloSchedGraphNode*>::const_iterator const_iterator;
 
 
-  //get the iteration interval
-  const int getMII() {
-    return MII;
-  }
+  ModuloSchedGraph(const BasicBlock *bb, const TargetMachine &targ);
 
-  //get the ordered nodes
-  const NodeVec & getONodes() {
-    return oNodes;
-  }
-
-  //get the number of nodes (including the root and leaf)
-  //note: actually root and leaf is not used
-  const unsigned int getNumNodes() const {
-    return size() + 2;
-  }
-
-  //return wether the BasicBlock 'bb' contains a loop
-  bool isLoop(const BasicBlock *bb);
-
-  //return the node for the input instruction
-  ModuloSchedGraphNode *getGraphNodeForInst(const Instruction *inst) const {
-    const_iterator onePair = this->find(inst);
-    return (onePair != this->end()) ? (*onePair).second : NULL;
-  }
-
-  // Debugging support
-  //dump the graph
-  void dump() const;
-
-  // dump the basicBlock
-  void dump(const BasicBlock *bb);
-
-  //dump the basicBlock into 'os' stream
-  void dump(const BasicBlock *bb, std::ostream &os);
-
-  //dump the node property
-  void dumpNodeProperty() const;
-  
-private:
-  friend class ModuloSchedGraphSet;     //give access to ctor
-
-public:
-  ModuloSchedGraph(BasicBlock * in_bb, 
-		   const TargetMachine & in_target)
-    :SchedGraphCommon(), bb(in_bb),target(in_target)
-  {
-    buildGraph(target);
-  }
-
-  ~ModuloSchedGraph() {
-    for (const_iterator I = begin(); I != end(); ++I)
-      delete I->second;
-  }
-
-  // Unorder iterators
-  // return values are pair<const Instruction*, ModuloSchedGraphNode*>
-  using map_base::begin;
-  using map_base::end;
-
-  void addHash(const Instruction *inst,
-	       ModuloSchedGraphNode *node){
-    
-    assert((*this)[inst] == NULL);
-    (*this)[inst] = node;
-    
-  }
-
-  // Graph builder
-  ModuloSchedGraphNode *getNode(const unsigned nodeId) const;
-
-  // Build the graph from the basicBlock
-  void buildGraph(const TargetMachine &target);
-
-  // Build nodes for BasicBlock
-  void buildNodesforBB(const TargetMachine &target,
-                       const BasicBlock *bb);
-
-  //find definitiona and use information for all nodes
-  void findDefUseInfoAtInstr(const TargetMachine &target,
-                             ModuloSchedGraphNode *node,
-                             NodeVec &memNode,
-                             RegToRefVecMap &regToRefVecMap,
-                             ValueToDefVecMap &valueToDefVecMap);
-
-  //add def-use edge
-  void addDefUseEdges(const BasicBlock *bb);
-
-  //add control dependence edges
-  void addCDEdges(const BasicBlock *bb);
-
-  //add memory dependence dges
-  void addMemEdges(const BasicBlock *bb);
-
-  //computer source restrictoin II
-  int computeResII(const BasicBlock *bb);
-
-  //computer recurrence II
-  int computeRecII(const BasicBlock *bb);
+  const BasicBlock* getBB() { return BB; }
+  void setBB(BasicBlock *bb) { BB = bb; }
+  unsigned size() { return GraphMap.size(); }
+  void addNode(const Instruction *I, ModuloSchedGraphNode *node);
+  void ASAP(); //Calculate earliest schedule time for all nodes in graph.
+  void ALAP(); //Calculate latest schedule time for all nodes in graph.
+  void MOB(); //Calculate mobility for all nodes in the graph.
+  void ComputeDepth(); //Compute depth of each node in graph
+  void ComputeHeight(); //Computer height of each node in graph
+  void addDepEdges(); //Add Dependencies
+  iterator find(const Instruction *I) { return GraphMap.find(I); }
 };
 
-//==================================-
-// Graph set
 
-class ModuloSchedGraphSet : public std::vector<ModuloSchedGraph*> {
-private:
-  const Function *method;
-
-public:
-  typedef std::vector<ModuloSchedGraph*> baseVector;
-  using baseVector::iterator;
-  using baseVector::const_iterator;
+class ModuloSchedGraphSet {
+  
+  const Function *function; //Function this set of graphs represent.
+  std::vector<ModuloSchedGraph*> Graphs;
 
 public:
-  ModuloSchedGraphSet(const Function *function, const TargetMachine &target);
+  typedef std::vector<ModuloSchedGraph*>::iterator iterator;
+  typedef std::vector<ModuloSchedGraph*>::const_iterator const_iterator;
+ 
+  iterator begin() { return Graphs.begin(); }
+  iterator end() { return Graphs.end(); }
+ 
+  ModuloSchedGraphSet(const Function *func, const TargetMachine &target);
   ~ModuloSchedGraphSet();
 
-  // Iterators
-  using baseVector::begin;
-  using baseVector::end;
-
-  // Debugging support
+  void addGraph(ModuloSchedGraph *graph);
   void dump() const;
 
-private:
-  void addGraph(ModuloSchedGraph *graph) {
-    assert(graph != NULL);
-    this->push_back(graph);
-  }
 
-  // Graph builder
-  void buildGraphsForMethod(const Function *F,
-                            const TargetMachine &target);
 };
 
 #endif
