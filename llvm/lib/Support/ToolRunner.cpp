@@ -23,15 +23,16 @@ public:
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
-                             const std::string &SharedLib = "");
+                             const std::vector<std::string> &SharedLibs = 
+                               std::vector<std::string>());
 };
 
 int LLI::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
-                        const std::string &SharedLib) {
-  if (!SharedLib.empty()) {
+                        const std::vector<std::string> &SharedLibs) {
+  if (!SharedLibs.empty()) {
     std::cerr << "LLI currently does not support loading shared libraries.\n"
               << "Exiting.\n";
     exit(1);
@@ -99,7 +100,8 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
-                        const std::string &SharedLib) {
+                        const std::vector<std::string> &SharedLibs) {
+
   std::string OutputAsmFile;
   if (OutputAsm(Bytecode, OutputAsmFile)) {
     std::cerr << "Could not generate asm code with `llc', exiting.\n";
@@ -108,7 +110,7 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
 
   // Assuming LLC worked, compile the result with GCC and run it.
   int Result = gcc->ExecuteProgram(OutputAsmFile, Args, GCC::AsmFile,
-                                   InputFile, OutputFile, SharedLib);
+                                   InputFile, OutputFile, SharedLibs);
   removeFile(OutputAsmFile);
   return Result;
 }
@@ -145,22 +147,24 @@ public:
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
-                             const std::string &SharedLib = "");
+                             const std::vector<std::string> &SharedLibs = 
+                               std::vector<std::string>());
 };
 
 int JIT::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
-                        const std::string &SharedLib) {
+                        const std::vector<std::string> &SharedLibs) {
   // Construct a vector of parameters, incorporating those from the command-line
   std::vector<const char*> JITArgs;
   JITArgs.push_back(LLIPath.c_str());
   JITArgs.push_back("-quiet");
   JITArgs.push_back("-force-interpreter=false");
-  if (!SharedLib.empty()) {
+
+  for (unsigned i = 0, e = SharedLibs.size(); i != e; ++i) {
     JITArgs.push_back("-load");
-    JITArgs.push_back(SharedLib.c_str());
+    JITArgs.push_back(SharedLibs[i].c_str());
   }
   JITArgs.push_back(Bytecode.c_str());
   // Add optional parameters to the running program from Argv
@@ -220,7 +224,7 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
-                        const std::string &SharedLib) {
+                        const std::vector<std::string> &SharedLibs) {
   std::string OutputCFile;
   if (OutputC(Bytecode, OutputCFile)) {
     std::cerr << "Could not generate C code with `llvm-dis', exiting.\n";
@@ -228,7 +232,7 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
   }
 
   int Result = gcc->ExecuteProgram(OutputCFile, Args, GCC::CFile, 
-                                   InputFile, OutputFile, SharedLib);
+                                   InputFile, OutputFile, SharedLibs);
   removeFile(OutputCFile);
 
   return Result;
@@ -257,21 +261,21 @@ CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
 //===---------------------------------------------------------------------===//
 // GCC abstraction
 //
-// This is not a *real* AbstractInterpreter as it does not accept bytecode
-// files, but only input acceptable to GCC, i.e. C, C++, and assembly files
-//
 int GCC::ExecuteProgram(const std::string &ProgramFile,
                         const std::vector<std::string> &Args,
                         FileType fileType,
                         const std::string &InputFile,
                         const std::string &OutputFile,
-                        const std::string &SharedLib) {
-  std::string OutputBinary = getUniqueFilename(ProgramFile+".gcc.exe");
+                        const std::vector<std::string> &SharedLibs) {
   std::vector<const char*> GCCArgs;
 
   GCCArgs.push_back(GCCPath.c_str());
-  if (!SharedLib.empty()) // Specify the shared library to link in...
-    GCCArgs.push_back(SharedLib.c_str());
+
+  // Specify the shared libraries to link in...
+  for (unsigned i = 0, e = SharedLibs.size(); i != e; ++i)
+    GCCArgs.push_back(SharedLibs[i].c_str());
+  
+  // Specify -x explicitly in case the extension is wonky
   GCCArgs.push_back("-x");
   if (fileType == CFile) {
     GCCArgs.push_back("c");
@@ -281,6 +285,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   }
   GCCArgs.push_back(ProgramFile.c_str());  // Specify the input filename...
   GCCArgs.push_back("-o");
+  std::string OutputBinary = getUniqueFilename(ProgramFile+".gcc.exe");
   GCCArgs.push_back(OutputBinary.c_str()); // Output to the right file...
   GCCArgs.push_back("-lm");                // Hard-code the math library...
   GCCArgs.push_back("-O2");                // Optimize the program a bit...

@@ -27,18 +27,28 @@ public:
 
   static GCC* create(const std::string &ProgramPath, std::string &Message);
 
-
+  /// ExecuteProgram - Execute the program specified by "ProgramFile" (which is
+  /// either a .s file, or a .c file, specified by FileType), with the specified
+  /// arguments.  Standard input is specified with InputFile, and standard
+  /// Output is captured to the specified OutputFile location.  The SharedLibs
+  /// option specifies optional native shared objects that can be loaded into
+  /// the program for execution.
+  ///
   int ExecuteProgram(const std::string &ProgramFile,
                      const std::vector<std::string> &Args,
                      FileType fileType,
                      const std::string &InputFile,
                      const std::string &OutputFile,
-                     const std::string &SharedLib = "");
+                     const std::vector<std::string> &SharedLibs = 
+                         std::vector<std::string>());
 
-  int MakeSharedObject(const std::string &InputFile,
-                       FileType fileType,
+  /// MakeSharedObject - This compiles the specified file (which is either a .c
+  /// file or a .s file) into a shared object.
+  ///
+  int MakeSharedObject(const std::string &InputFile, FileType fileType,
                        std::string &OutputFile);
   
+private:
   void ProcessFailure(const char **Args);
 };
 
@@ -68,7 +78,8 @@ struct AbstractInterpreter {
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
-                             const std::string &SharedLib = "") = 0;
+                             const std::vector<std::string> &SharedLibs = 
+                               std::vector<std::string>()) = 0;
 };
 
 //===---------------------------------------------------------------------===//
@@ -85,7 +96,8 @@ public:
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
-                             const std::string &SharedLib = "");
+                             const std::vector<std::string> &SharedLibs = 
+                               std::vector<std::string>());
 
   // Sometimes we just want to go half-way and only generate the .c file,
   // not necessarily compile it with GCC and run the program.
@@ -109,7 +121,8 @@ public:
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
-                             const std::string &SharedLib = "");
+                             const std::vector<std::string> &SharedLibs = 
+                                std::vector<std::string>());
 
   // Sometimes we just want to go half-way and only generate the .s file,
   // not necessarily compile it all the way and run the program.
