@@ -577,6 +577,8 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   case X86II::MRMDestMem:
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, 0, getX86RegNum(MI.getOperand(4).getReg()));
+    if (MI.getNumOperands() == 6)
+      emitConstant(MI.getOperand(5).getImmedValue(), sizeOfImm(Desc));
     break;
 
   case X86II::MRMSrcReg:
