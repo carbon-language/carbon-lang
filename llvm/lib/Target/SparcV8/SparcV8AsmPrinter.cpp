@@ -270,6 +270,11 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
     unsigned size = TD.getTypeSize (CV->getType ());
     O << "\t.skip\t " << size << "\n";      
     return;
+  } else if (isa<ConstantAggregateZero> (CV)) {
+    unsigned size = TD.getTypeSize (CV->getType ());
+    for (unsigned i = 0; i < size; ++i)
+	  O << "\t.byte 0\n";
+    return;
   }
 
   const Type *type = CV->getType();
