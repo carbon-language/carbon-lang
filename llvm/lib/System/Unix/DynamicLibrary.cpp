@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Unix.h"
+#include "sys/stat.h"
 
 namespace llvm {
 using namespace sys;
