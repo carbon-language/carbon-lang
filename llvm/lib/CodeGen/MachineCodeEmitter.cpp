@@ -40,6 +40,10 @@ namespace {
     void emitWord(unsigned W) {
       std::cout << "0x" << std::hex << W << std::dec << " ";
     }
+    void emitWordAt(unsigned W, unsigned *Ptr) {
+      std::cout << "0x" << std::hex << W << std::dec << " (at "
+                << (void*) Ptr << ") ";
+    }
 
     uint64_t getGlobalValueAddress(GlobalValue *V) { return 0; }
     uint64_t getGlobalValueAddress(const std::string &Name) { return 0; }
@@ -135,6 +139,9 @@ namespace {
 
     void emitWord(unsigned W) {
       MCE.emitWord(W);
+    }
+    void emitWordAt(unsigned W, unsigned *Ptr) {
+      MCE.emitWordAt(W, Ptr);
     }
     uint64_t getGlobalValueAddress(GlobalValue *V) {
       return MCE.getGlobalValueAddress(V);
