@@ -11,8 +11,6 @@
 #include "llvm/Module.h"
 #include "Support/CommandLine.h"
 
-#include "Config/stdlib.h"
-
 // FIXME: REMOVE THIS
 #include "llvm/PassManager.h"
 
@@ -103,36 +101,29 @@ VM::VM(Module *M, TargetMachine *tm) : ExecutionEngine(M), TM(*tm) {
   emitGlobals();
 }
 
-//
-// Method: run()
-//
-// Description:
-//	This method begins the execution of a program beginning at the
-//	specified function name.  The function is called with the
-//	specified arguments and array of environment variables (a la main()).
-//
-// Inputs:
-//	FnName - The name of the function as a C++ string.
-//	Args   - A vector of C++ strings containing the arguments.
-//	envp   - An array of C strings containing the environment.
-//
-// Outputs:
-//	None.
-//
-// Return value:
-//	1 - An error occurred.
-//	Otherwise, the return value from the specified function is returned.
-//
-int VM::run(const std::string &FnName,
-            const std::vector<std::string> &Args,
-            const char ** envp) {
+/// VM::run - This method begins the execution of a program beginning at the
+/// specified function name.  The function is called with the specified
+/// arguments and array of environment variables (a la main()).
+///
+/// Inputs:
+///	FnName - The name of the function as a C++ string.
+///	Args   - A vector of C++ strings containing the arguments.
+///	envp   - An array of C strings containing the environment.
+///
+/// Return value:
+///	1 - An error occurred.
+///	Otherwise, the return value from the specified function is returned.
+///
+int VM::run(const std::string &FnName, const std::vector<std::string> &Args,
+            const char **envp) {
   Function *F = getModule().getNamedFunction(FnName);
   if (F == 0) {
     std::cerr << "Could not find function '" << FnName << "' in module!\n";
     return 1;
   }
 
-  int(*PF)(int, char**, const char**) = (int(*)(int, char**, const char**))getPointerToFunction(F);
+  int (*PF)(int, char**, const char**) =
+    (int(*)(int, char**, const char**))getPointerToFunction(F);
   assert(PF != 0 && "Null pointer to function?");
 
   // Build an argv vector...
