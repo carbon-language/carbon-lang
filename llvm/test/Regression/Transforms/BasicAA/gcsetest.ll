@@ -2,7 +2,7 @@
 ; disambiguating some obvious cases.  All loads should be removable in 
 ; this testcase.
 
-; RUN: if as < %s | opt -basicaa -gcse -instcombine -dce | dis | grep load
+; RUN: if as < %s | opt -basicaa -load-vn -gcse -instcombine -dce | dis | grep load
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi
