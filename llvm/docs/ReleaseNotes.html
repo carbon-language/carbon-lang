@@ -130,6 +130,12 @@ details of the bytecode format.</li>
 for efficient implementation of unordered floating point comparisons.</li>
 <li>The llvmgcc front-end now supports the GCC builtins for ISO C99 floating
 point comparison macros (e.g., <tt>__builtin_islessequal</tt>).</li>
+<li>Now that there are more source files than can fit on a 32Kbyte command
+line (Linux's limit), there's a new utility for searching the sources. The
+llvmgrep tool in the utils directory combines an egrep and a find without
+passing filenames through the command line. This improves performance 
+slightly. Simply run llvmgrep like you might egrep but leave off the file
+names.</li>
 </ol>
 
 </div>
