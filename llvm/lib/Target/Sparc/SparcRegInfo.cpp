@@ -12,7 +12,7 @@
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
-#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/CodeGen/FunctionLiveVarInfo.h"   // FIXME: Remove
@@ -1100,14 +1100,14 @@ UltraSparcRegInfo::cpReg2RegMI(vector<MachineInstr*>& mvec,
     if (getRegType(DestReg) == IntRegType)
       { // copy intCC reg to int reg
         // Use SrcReg+1 to get the name "%ccr" instead of "%xcc" for RDCCR
-        MI = Create2OperandInstr_Reg(RDCCR, SrcReg+1, DestReg);
+        MI = BuildMI(RDCCR, 2).addMReg(SrcReg+1).addMReg(DestReg, MOTy::Def);
       }
     else 
       { // copy int reg to intCC reg
         // Use DestReg+1 to get the name "%ccr" instead of "%xcc" for WRCCR
         assert(getRegType(SrcReg) == IntRegType
                && "Can only copy CC reg to/from integer reg");
-        MI = Create2OperandInstr_Reg(WRCCR, SrcReg, DestReg+1);
+        MI = BuildMI(WRCCR, 2).addMReg(SrcReg).addMReg(DestReg+1, MOTy::Def);
       }
     break;
     
@@ -1116,15 +1116,16 @@ UltraSparcRegInfo::cpReg2RegMI(vector<MachineInstr*>& mvec,
     break;
     
   case IntRegType:
-    MI = Create3OperandInstr_Reg(ADD, SrcReg, getZeroRegNum(), DestReg);
+    MI = BuildMI(ADD, 3).addMReg(SrcReg).addMReg(getZeroRegNum())
+                        .addMReg(DestReg, MOTy::Def);
     break;
     
   case FPSingleRegType:
-    MI = Create2OperandInstr_Reg(FMOVS, SrcReg, DestReg);
+    MI = BuildMI(FMOVS, 2).addMReg(SrcReg).addMReg(DestReg, MOTy::Def);
     break;
 
   case FPDoubleRegType:
-    MI = Create2OperandInstr_Reg(FMOVD, SrcReg, DestReg);
+    MI = BuildMI(FMOVD, 2).addMReg(SrcReg).addMReg(DestReg, MOTy::Def);
     break;
 
   default:
@@ -1149,35 +1150,20 @@ UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
                                int Offset, int RegType,
                                int scratchReg) const {
   MachineInstr * MI = NULL;
-  switch( RegType ) {
+  switch (RegType) {
   case IntRegType:
     assert(target.getInstrInfo().constantFitsInImmedField(STX, Offset));
-    MI = new MachineInstr(STX, 3);
-    MI->SetMachineOperandReg(0, SrcReg);
-    MI->SetMachineOperandReg(1, DestPtrReg);
-    MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
-                               (int64_t) Offset);
-    mvec.push_back(MI);
+    MI = BuildMI(STX, 3).addMReg(SrcReg).addMReg(DestPtrReg).addSImm(Offset);
     break;
 
   case FPSingleRegType:
     assert(target.getInstrInfo().constantFitsInImmedField(ST, Offset));
-    MI = new MachineInstr(ST, 3);
-    MI->SetMachineOperandReg(0, SrcReg);
-    MI->SetMachineOperandReg(1, DestPtrReg);
-    MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
-                               (int64_t) Offset);
-    mvec.push_back(MI);
+    MI = BuildMI(ST, 3).addMReg(SrcReg).addMReg(DestPtrReg).addSImm(Offset);
     break;
 
   case FPDoubleRegType:
     assert(target.getInstrInfo().constantFitsInImmedField(STD, Offset));
-    MI = new MachineInstr(STD, 3);
-    MI->SetMachineOperandReg(0, SrcReg);
-    MI->SetMachineOperandReg(1, DestPtrReg);
-    MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
-                               (int64_t) Offset);
-    mvec.push_back(MI);
+    MI = BuildMI(STD, 3).addMReg(SrcReg).addMReg(DestPtrReg).addSImm(Offset);
     break;
 
   case IntCCRegType:
@@ -1185,26 +1171,22 @@ UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
     assert(getRegType(scratchReg) ==IntRegType && "Invalid scratch reg");
     
     // Use SrcReg+1 to get the name "%ccr" instead of "%xcc" for RDCCR
-    MI = Create2OperandInstr_Reg(RDCCR, SrcReg+1, scratchReg);
+    MI = BuildMI(RDCCR, 2).addMReg(SrcReg+1).addMReg(scratchReg, MOTy::Def);
     mvec.push_back(MI);
     
     cpReg2MemMI(mvec, scratchReg, DestPtrReg, Offset, IntRegType);
-    break;
+    return;
     
   case FloatCCRegType: 
     assert(0 && "Tell Vikram if this assertion fails: we may have to mask out the other bits here");
     assert(target.getInstrInfo().constantFitsInImmedField(STXFSR, Offset));
-    MI = new MachineInstr(STXFSR, 3);
-    MI->SetMachineOperandReg(0, SrcReg);
-    MI->SetMachineOperandReg(1, DestPtrReg);
-    MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
-                               (int64_t) Offset);
-    mvec.push_back(MI);
+    MI = BuildMI(STXFSR, 3).addMReg(SrcReg).addMReg(DestPtrReg).addSImm(Offset);
     break;
     
   default:
     assert(0 && "Unknown RegType in cpReg2MemMI");
   }
+  mvec.push_back(MI);
 }
 
 
@@ -1225,32 +1207,20 @@ UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
   switch (RegType) {
   case IntRegType:
     assert(target.getInstrInfo().constantFitsInImmedField(LDX, Offset));
-    MI = new MachineInstr(LDX, 3);
-    MI->SetMachineOperandReg(0, SrcPtrReg);
-    MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
-                               (int64_t) Offset);
-    MI->SetMachineOperandReg(2, DestReg, true);
-    mvec.push_back(MI);
+    MI = BuildMI(LDX, 3).addMReg(SrcPtrReg).addSImm(Offset)
+                        .addMReg(DestReg, MOTy::Def);
     break;
 
   case FPSingleRegType:
     assert(target.getInstrInfo().constantFitsInImmedField(LD, Offset));
-    MI = new MachineInstr(LD, 3);
-    MI->SetMachineOperandReg(0, SrcPtrReg);
-    MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
-                               (int64_t) Offset);
-    MI->SetMachineOperandReg(2, DestReg, true);
-    mvec.push_back(MI);
+    MI = BuildMI(LD, 3).addMReg(SrcPtrReg).addSImm(Offset)
+                       .addMReg(DestReg, MOTy::Def);
     break;
 
   case FPDoubleRegType:
     assert(target.getInstrInfo().constantFitsInImmedField(LDD, Offset));
-    MI = new MachineInstr(LDD, 3);
-    MI->SetMachineOperandReg(0, SrcPtrReg);
-    MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
-                               (int64_t) Offset);
-    MI->SetMachineOperandReg(2, DestReg, true);
-    mvec.push_back(MI);
+    MI = BuildMI(LDD, 3).addMReg(SrcPtrReg).addSImm(Offset).addMReg(DestReg,
+                                                                    MOTy::Def);
     break;
 
   case IntCCRegType:
@@ -1259,25 +1229,21 @@ UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
     cpMem2RegMI(mvec, SrcPtrReg, Offset, scratchReg, IntRegType);
     
     // Use DestReg+1 to get the name "%ccr" instead of "%xcc" for WRCCR
-    MI = Create2OperandInstr_Reg(WRCCR, scratchReg, DestReg+1);
-    mvec.push_back(MI);
-
+    MI = BuildMI(WRCCR, 2).addMReg(scratchReg).addMReg(DestReg+1, MOTy::Def);
     break;
     
   case FloatCCRegType: 
-    assert(0 && "Tell Vikram if this assertion fails: we may have to mask out the other bits here");
+    assert(0 && "Tell Vikram if this assertion fails: we may have to mask "
+           "out the other bits here");
     assert(target.getInstrInfo().constantFitsInImmedField(LDXFSR, Offset));
-    MI = new MachineInstr(LDXFSR, 3);
-    MI->SetMachineOperandReg(0, SrcPtrReg);
-    MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
-                               (int64_t) Offset);
-    MI->SetMachineOperandReg(2, DestReg, true);
-    mvec.push_back(MI);
+    MI = BuildMI(LDXFSR, 3).addMReg(SrcPtrReg).addSImm(Offset)
+                           .addMReg(DestReg, MOTy::Def);
     break;
 
   default:
     assert(0 && "Unknown RegType in cpMem2RegMI");
   }
+  mvec.push_back(MI);
 }
 
 
@@ -1288,8 +1254,7 @@ UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
 
 
 void
-UltraSparcRegInfo::cpValue2Value(Value *Src,
-                                 Value *Dest,
+UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest,
                                  vector<MachineInstr*>& mvec) const {
   int RegType = getRegType( Src );
 
@@ -1299,25 +1264,14 @@ UltraSparcRegInfo::cpValue2Value(Value *Src,
 
   switch( RegType ) {
   case IntRegType:
-    MI = new MachineInstr(ADD, 3);
-    MI->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, Src);
-    MI->SetMachineOperandReg(1, getZeroRegNum());
-    MI->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, Dest, true);
+    MI = BuildMI(ADD, 3).addReg(Src).addMReg(getZeroRegNum()).addRegDef(Dest);
     break;
-
   case FPSingleRegType:
-    MI = new MachineInstr(FMOVS, 2);
-    MI->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, Src);
-    MI->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, Dest, true);
+    MI = BuildMI(FMOVS, 2).addReg(Src).addRegDef(Dest);
     break;
-
-
   case FPDoubleRegType:
-    MI = new MachineInstr(FMOVD, 2);
-    MI->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, Src);
-    MI->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, Dest, true);
+    MI = BuildMI(FMOVD, 2).addReg(Src).addRegDef(Dest);
     break;
-
   default:
     assert(0 && "Unknow RegType in CpValu2Value");
   }

@@ -53,7 +53,7 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
   // Set the high 22 bits in dest if non-zero and simm13 field of OR not enough
   if (!smallNegValue && (C & ~MAXLO) && C > MAXSIMM)
     {
-      miSETHI = Create2OperandInstr_UImmed(SETHI, C, dest);
+      miSETHI = BuildMI(SETHI, 2).addZImm(C).addRegDef(dest);
       miSETHI->setOperandHi32(0);
       mvec.push_back(miSETHI);
     }
@@ -64,7 +64,7 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
     {
       if (miSETHI)
         { // unsigned value with high-order bits set using SETHI
-          miOR = BuildMI(OR, 3).addReg(dest).addZImm(C).addReg(dest, MOTy::Def);
+          miOR = BuildMI(OR, 3).addReg(dest).addZImm(C).addRegDef(dest);
           miOR->setOperandLo32(1);
         }
       else
@@ -103,8 +103,7 @@ CreateSETSWConst(const TargetMachine& target, int32_t C,
 
   // Sign-extend to the high 32 bits if needed
   if (C < 0 && (-C) > (int32_t) MAXSIMM)
-    mvec.push_back(BuildMI(SRA, 3).addReg(dest).addZImm(0).addReg(dest,
-                                                                  MOTy::Def));
+    mvec.push_back(BuildMI(SRA, 3).addReg(dest).addZImm(0).addRegDef(dest));
 }
 
 
@@ -131,15 +130,13 @@ CreateSETXConst(const TargetMachine& target, uint64_t C,
   CreateSETUWConst(target, (C >> 32), tmpReg, mvec);
   
   // Shift tmpReg left by 32 bits
-  mvec.push_back(BuildMI(SLLX, 3).addReg(tmpReg).addZImm(32).addReg(tmpReg,
-                                                                    MOTy::Def));
+  mvec.push_back(BuildMI(SLLX, 3).addReg(tmpReg).addZImm(32).addRegDef(tmpReg));
   
   // Code to set the low 32 bits of the value in register `dest'
   CreateSETUWConst(target, C, dest, mvec);
   
   // dest = OR(tmpReg, dest)
-  mvec.push_back(BuildMI(OR, 3).addReg(dest).addReg(tmpReg).addReg(dest,
-                                                                   MOTy::Def));
+  mvec.push_back(BuildMI(OR, 3).addReg(dest).addReg(tmpReg).addRegDef(dest));
 }
 
 
@@ -156,12 +153,12 @@ CreateSETUWLabel(const TargetMachine& target, Value* val,
   MachineInstr* MI;
   
   // Set the high 22 bits in dest
-  MI = Create2OperandInstr(SETHI, val, dest);
+  MI = BuildMI(SETHI, 2).addReg(val).addRegDef(dest);
   MI->setOperandHi32(0);
   mvec.push_back(MI);
   
   // Set the low 10 bits in dest
-  MI = BuildMI(OR, 3).addReg(dest).addReg(val).addReg(dest, MOTy::Def);
+  MI = BuildMI(OR, 3).addReg(dest).addReg(val).addRegDef(dest);
   MI->setOperandLo32(1);
   mvec.push_back(MI);
 }
@@ -183,24 +180,23 @@ CreateSETXLabel(const TargetMachine& target,
   
   MachineInstr* MI;
   
-  MI = Create2OperandInstr_Addr(SETHI, val, tmpReg);
+  MI = BuildMI(SETHI, 2).addReg(val).addRegDef(tmpReg);
   MI->setOperandHi64(0);
   mvec.push_back(MI);
   
-  MI = BuildMI(OR, 3).addReg(tmpReg).addPCDisp(val).addReg(tmpReg, MOTy::Def);
+  MI = BuildMI(OR, 3).addReg(tmpReg).addPCDisp(val).addRegDef(tmpReg);
   MI->setOperandLo64(1);
   mvec.push_back(MI);
   
-  mvec.push_back(BuildMI(SLLX, 3).addReg(tmpReg).addZImm(32).addReg(tmpReg,
-                                                                    MOTy::Def));
-  MI = Create2OperandInstr_Addr(SETHI, val, dest);
+  mvec.push_back(BuildMI(SLLX, 3).addReg(tmpReg).addZImm(32).addRegDef(tmpReg));
+  MI = BuildMI(SETHI, 2).addPCDisp(val).addRegDef(dest);
   MI->setOperandHi32(0);
   mvec.push_back(MI);
   
-  MI = BuildMI(OR, 3).addReg(dest).addReg(tmpReg).addReg(dest, MOTy::Def);
+  MI = BuildMI(OR, 3).addReg(dest).addReg(tmpReg).addRegDef(dest);
   mvec.push_back(MI);
   
-  MI = BuildMI(OR, 3).addReg(dest).addPCDisp(val).addReg(dest, MOTy::Def);
+  MI = BuildMI(OR, 3).addReg(dest).addPCDisp(val).addRegDef(dest);
   MI->setOperandLo32(1);
   mvec.push_back(MI);
 }
@@ -454,7 +450,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
       int64_t zeroOffset = 0;           // to avoid ambiguity with (Value*) 0
       unsigned Opcode = ChooseLoadInstruction(val->getType());
       mvec.push_back(BuildMI(Opcode, 3).addReg(addrReg).
-                     addSImm(zeroOffset).addReg(dest, MOTy::Def));
+                     addSImm(zeroOffset).addRegDef(dest));
       
       // Make sure constant is emitted to constant pool in assembly code.
       MachineFunction::get(F).getInfo()->addToConstantPool(cast<Constant>(val));
@@ -628,7 +624,7 @@ UltraSparcInstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
       const Type* Ty =isa<PointerType>(resultType) ? Type::ULongTy : resultType;
       MachineInstr* MI =
         BuildMI(opCode, 3).addReg(Constant::getNullValue(Ty))
-                          .addReg(src).addReg(dest, MOTy::Def);
+                          .addReg(src).addRegDef(dest);
       mvec.push_back(MI);
     }
 }
@@ -656,12 +652,12 @@ CreateBitExtensionInstructions(bool signExtend,
                                                 srcVal, destVal, "make32");
       mcfi.addTemp(tmpI);
       mvec.push_back(BuildMI(SLLX, 3).addReg(srcVal).addZImm(32-numLowBits)
-                                     .addReg(tmpI, MOTy::Def));
+                                     .addRegDef(tmpI));
       srcVal = tmpI;
     }
 
   mvec.push_back(BuildMI(signExtend? SRA : SRL, 3).addReg(srcVal)
-                         .addZImm(32-numLowBits).addReg(destVal, MOTy::Def));
+                         .addZImm(32-numLowBits).addRegDef(destVal));
 }
 
 

@@ -303,11 +303,7 @@ CreateConvertFPToIntInstr(Type::PrimitiveID destTID,
 {
   MachineOpCode opCode = ChooseConvertFPToIntInstr(destTID, srcVal->getType());
   assert(opCode != INVALID_OPCODE && "Expected to need conversion!");
-  
-  MachineInstr* M = new MachineInstr(opCode);
-  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, srcVal);
-  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, destVal);
-  return M;
+  return BuildMI(opCode, 2).addReg(srcVal).addRegDef(destVal);
 }
 
 // CreateCodeToConvertFloatToInt: Convert FP value to signed or unsigned integer
@@ -367,13 +363,9 @@ static inline MachineInstr*
 CreateMovFloatInstruction(const InstructionNode* instrNode,
                           const Type* resultType)
 {
-  MachineInstr* minstr = new MachineInstr((resultType == Type::FloatTy)
-                                          ? FMOVS : FMOVD);
-  minstr->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                               instrNode->leftChild()->getValue());
-  minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
-                               instrNode->getValue());
-  return minstr;
+  return BuildMI((resultType == Type::FloatTy) ? FMOVS : FMOVD, 2)
+                   .addReg(instrNode->leftChild()->getValue())
+                   .addRegDef(instrNode->getValue());
 }
 
 static inline MachineInstr* 
@@ -501,11 +493,8 @@ static inline MachineInstr*
 CreateIntNegInstruction(const TargetMachine& target,
                         Value* vreg)
 {
-  MachineInstr* minstr = new MachineInstr(SUB);
-  minstr->SetMachineOperandReg(0, target.getRegInfo().getZeroRegNum());
-  minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, vreg);
-  minstr->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, vreg);
-  return minstr;
+  return BuildMI(SUB, 3).addMReg(target.getRegInfo().getZeroRegNum())
+                        .addReg(vreg).addRegDef(vreg);
 }
 
 
@@ -600,15 +589,16 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
               C = -C;
             }
           
-          if (C == 0 || C == 1)
-            {
-              cost = target.getInstrInfo().minLatency(ADD);
-              unsigned ZeroReg = target.getRegInfo().getZeroRegNum();
-              MachineInstr* M = (C == 0)
-                ? Create3OperandInstr_Reg(ADD, ZeroReg, ZeroReg, destVal)
-                : Create3OperandInstr_Reg(ADD, lval, ZeroReg, destVal);
-              mvec.push_back(M);
-            }
+          if (C == 0 || C == 1) {
+            cost = target.getInstrInfo().minLatency(ADD);
+            unsigned Zero = target.getRegInfo().getZeroRegNum();
+            MachineInstr* M;
+            if (C == 0)
+              M = BuildMI(ADD,3).addMReg(Zero).addMReg(Zero).addRegDef(destVal);
+            else
+              M = BuildMI(ADD,3).addReg(lval).addMReg(Zero).addRegDef(destVal);
+            mvec.push_back(M);
+          }
           else if (isPowerOf2(C, pow))
             {
               unsigned opSize = target.getTargetData().getTypeSize(resultType);
@@ -634,8 +624,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
               MachineOpCode opCode =  (dval < 0)
                 ? (resultType == Type::FloatTy? FNEGS : FNEGD)
                 : (resultType == Type::FloatTy? FMOVS : FMOVD);
-              MachineInstr* M = Create2OperandInstr(opCode, lval, destVal);
-              mvec.push_back(M);
+              mvec.push_back(BuildMI(opCode,2).addReg(lval).addRegDef(destVal));
             } 
         }
     }
@@ -695,11 +684,8 @@ CreateMulInstruction(const TargetMachine &target, Function* F,
       MachineOpCode mulOp = ((forceMulOp != INVALID_MACHINE_OPCODE)
                              ? forceMulOp 
                              : ChooseMulInstructionByType(destVal->getType()));
-      MachineInstr* M = new MachineInstr(mulOp);
-      M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, lval);
-      M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, rval);
-      M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, destVal);
-      mvec.push_back(M);
+      mvec.push_back(BuildMI(mulOp, 3).addReg(lval).addReg(rval)
+                                      .addRegDef(destVal));
     }
 }
 
@@ -1438,9 +1424,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       { // First find the unary operand. It may be left or right, usually right.
         Value* notArg = BinaryOperator::getNotArgument(
                            cast<BinaryOperator>(subtreeRoot->getInstruction()));
-        mvec.push_back(Create3OperandInstr_Reg(XNOR, notArg,
-                                          target.getRegInfo().getZeroRegNum(),
-                                          subtreeRoot->getValue()));
+        unsigned ZeroReg = target.getRegInfo().getZeroRegNum();
+        mvec.push_back(BuildMI(XNOR, 3).addReg(notArg).addMReg(ZeroReg)
+                                       .addRegDef(subtreeRoot->getValue()));
         break;
       }
 
@@ -2010,7 +1996,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // Use JMPL for indirect calls.
         // 
         if (isa<Function>(callee))      // direct function call
-          M = Create1OperandInstr_Addr(CALL, callee);
+          M = BuildMI(CALL, 1).addPCDisp(callee);
         else                            // indirect function call
           M = BuildMI(JMPLCALL,
                       3).addReg(callee).addSImm((int64_t)0).addReg(retAddrReg);
