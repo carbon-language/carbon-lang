@@ -16,6 +16,9 @@
 #include <sys/unistd.h>
 #include <set>
 
+// IncludeFile - Stub function used to help linking out.
+IncludeFile::IncludeFile(void*) {}
+
 //===----------------------------------------------------------------------===//
 //   AnalysisID Class Implementation
 //
