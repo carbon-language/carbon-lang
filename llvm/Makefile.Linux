@@ -10,10 +10,10 @@
 #
 MakeSharedObjectOption := -shared
 
-# ExportSymbols - This is used by tools that need to make sure that all of their
-# symbols are exported for use at runtime by dlsym.
+# PLATFORMLINKOPTS - On Linux, we must specify this linker option so that all
+# symbols are exported by tools for runtime use by dlsym.
 #
-ExportSymbols := -Wl,--export-dynamic
+PLATFORMLINKOPTS := -Wl,--export-dynamic
 
 # Path to location for LLVM front-end for this architecture.  This setting may
 # be overriden by the Makefile.config option, and should not override it if set.

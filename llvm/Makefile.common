@@ -393,6 +393,7 @@ STATICUSEDLIBS   := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
 USED_LIB_PATHS_G := $(addprefix $(LIBDEBUG)/, $(STATICUSEDLIBS))
 USED_LIB_PATHS_O := $(addprefix $(LIBRELEASE)/, $(STATICUSEDLIBS))
 USED_LIB_PATHS_P := $(addprefix $(LIBPROFILE)/, $(STATICUSEDLIBS))
+LINK_OPTS        := $(TOOLLINKOPTS) $(PLATFORMLINKOPTS)
 
 all::   $(TOOLEXENAMES)
 clean::
@@ -400,15 +401,15 @@ clean::
 
 $(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(BUILD_ROOT_TOP)/tools/Debug/.dir
 	@echo ======= Linking $(TOOLNAME) debug executable $(WARN_MSG) =======
-	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_G) $(TOOLLINKOPTS)
+	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_G) $(LINK_OPTS)
 
 $(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(BUILD_ROOT_TOP)/tools/Release/.dir
 	@echo ======= Linking $(TOOLNAME) release executable =======
-	$(VERB) $(LinkO) -o $@ $(ObjectsO) $(USED_LIBS_OPTIONS_O) $(TOOLLINKOPTS)
+	$(VERB) $(LinkO) -o $@ $(ObjectsO) $(USED_LIBS_OPTIONS_O) $(LINK_OPTS)
 
 $(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(BUILD_ROOT_TOP)/tools/Profile/.dir
 	@echo ======= Linking $(TOOLNAME) profile executable =======
-	$(VERB) $(LinkP) -o $@ $(ObjectsP) $(USED_LIBS_OPTIONS_P) $(TOOLLINKOPTS)
+	$(VERB) $(LinkP) -o $@ $(ObjectsP) $(USED_LIBS_OPTIONS_P) $(LINK_OPTS)
 
 endif
 
