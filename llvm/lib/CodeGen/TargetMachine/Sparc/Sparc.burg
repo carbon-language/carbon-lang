@@ -1,4 +1,4 @@
-%{
+%{               // -*- C++ -*-
 #include <stdio.h>
 #include <llvm/CodeGen/InstrForest.h>
 
@@ -222,11 +222,7 @@ reg:	Constant		=   72 (3);	/* prefer direct use */
 
 static char rcsid[] = "$Id$";
 
-#ifdef __STDC__
 void printcover(NODEPTR_TYPE p, int goalnt, int indent) {
-#else
-void printcover(p, goalnt, indent) NODEPTR_TYPE p; int goalnt; int indent; {
-#endif
 	int eruleno = burm_rule(STATE_LABEL(p), goalnt);
 	short *nts = burm_nts[eruleno];
 	NODEPTR_TYPE kids[10];
@@ -244,11 +240,7 @@ void printcover(p, goalnt, indent) NODEPTR_TYPE p; int goalnt; int indent; {
 		printcover(kids[i], nts[i], indent+1);
 }
 
-#ifdef __STDC__
 void printtree(NODEPTR_TYPE p) {
-#else
-void printtree(p) NODEPTR_TYPE p; {
-#endif
 	int op = burm_op_label(p);
 
 	printf("%s", burm_opname[op]);
@@ -270,11 +262,7 @@ void printtree(p) NODEPTR_TYPE p; {
 	}
 }
 
-#ifdef __STDC__
 int treecost(NODEPTR_TYPE p, int goalnt, int costindex) {
-#else
-int treecost(p, goalnt, costindex) NODEPTR_TYPE p; int goalnt; int costindex; {
-#endif
 	int eruleno = burm_rule(STATE_LABEL(p), goalnt);
 	int cost = burm_cost[eruleno][costindex], i;
 	short *nts = burm_nts[eruleno];
@@ -286,11 +274,7 @@ int treecost(p, goalnt, costindex) NODEPTR_TYPE p; int goalnt; int costindex; {
 	return cost;
 }
 
-#ifdef __STDC__
 void printMatches(NODEPTR_TYPE p) {
-#else
-void printMatches(p) NODEPTR_TYPE p; {
-#endif
 	int nt;
 	int eruleno;
 
