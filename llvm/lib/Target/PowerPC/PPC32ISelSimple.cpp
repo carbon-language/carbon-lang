@@ -1535,7 +1535,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
             .addReg(PPC::R1);
             if (GPR_remaining > 0) {
               BuildMI(BB, PPC::LWZ, 2, GPR[GPR_idx])
-              .addSImm(ArgOffset).addReg(ArgReg);
+              .addSImm(ArgOffset).addReg(PPC::R1);
               CallMI->addRegOperand(GPR[GPR_idx], MachineOperand::Use);
             }
           }
