@@ -76,7 +76,10 @@ void MappedFile::unmap() {
 void* MappedFile::map() {
   if (!isMapped()) {
     int prot = PROT_NONE;
-    int flags = MAP_FILE;
+    int flags = 0;
+#ifdef MAP_FILE
+    flags |= MAP_FILE;
+#endif
     if (options_ == 0) {
       prot = PROT_READ;
       flags = MAP_PRIVATE;
