@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Internal/SlotTable.h"
+#include "SlotTable.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
 #include "llvm/GlobalValue.h"
