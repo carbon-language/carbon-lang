@@ -107,8 +107,6 @@ void DSNode::addGlobal(GlobalValue *GV) {
 /// single byte with a single TypeEntry of "void".
 ///
 void DSNode::foldNodeCompletely() {
-  assert(!hasNoReferrers() &&
-         "Why would we collapse a node with no referrers?");
   if (isNodeCompletelyFolded()) return;  // If this node is already folded...
 
   ++NumFolds;
