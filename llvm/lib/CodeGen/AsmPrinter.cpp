@@ -275,13 +275,13 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
 
   const Type *type = CV->getType();
   switch (type->getTypeID()) {
+  case Type::BoolTyID: 
   case Type::UByteTyID: case Type::SByteTyID:
     O << Data8bitsDirective;
     break;
   case Type::UShortTyID: case Type::ShortTyID:
     O << Data16bitsDirective;
     break;
-  case Type::BoolTyID: 
   case Type::PointerTyID:
   case Type::UIntTyID: case Type::IntTyID:
     O << Data32bitsDirective;
