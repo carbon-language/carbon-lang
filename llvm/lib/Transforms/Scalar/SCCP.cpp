@@ -381,17 +381,46 @@ bool SCCP::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
   if (!BBExecutable.count(From)) return false;
   
   // Check to make sure this edge itself is actually feasible now...
-  TerminatorInst *FT = From->getTerminator();
-  std::vector<bool> SuccFeasible;
-  getFeasibleSuccessors(*FT, SuccFeasible);
-
-  // Check all edges from From to To.  If any are feasible, return true.
-  for (unsigned i = 0, e = SuccFeasible.size(); i != e; ++i)
-    if (FT->getSuccessor(i) == To && SuccFeasible[i])
+  TerminatorInst *TI = From->getTerminator();
+  if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+    if (BI->isUnconditional())
       return true;
-    
-  // Otherwise, none of the edges are actually feasible at this time...
-  return false;
+    else {
+      InstVal &BCValue = getValueState(BI->getCondition());
+      if (BCValue.isOverdefined()) {
+        // Overdefined condition variables mean the branch could go either way.
+        return true;
+      } else if (BCValue.isConstant()) {
+        // Constant condition variables mean the branch can only go a single way
+        return BI->getSuccessor(BCValue.getConstant() == 
+                                       ConstantBool::False) == To;
+      }
+      return false;
+    }
+  } else if (InvokeInst *II = dyn_cast<InvokeInst>(TI)) {
+    // Invoke instructions successors are always executable.
+    return true;
+  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+    InstVal &SCValue = getValueState(SI->getCondition());
+    if (SCValue.isOverdefined()) {  // Overdefined condition?
+      // All destinations are executable!
+      return true;
+    } else if (SCValue.isConstant()) {
+      Constant *CPV = SCValue.getConstant();
+      // Make sure to skip the "default value" which isn't a value
+      for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i)
+        if (SI->getSuccessorValue(i) == CPV) // Found the taken branch...
+          return SI->getSuccessor(i) == To;
+
+      // Constant value not equal to any of the branches... must execute
+      // default branch then...
+      return SI->getDefaultDest() == To;
+    }
+    return false;
+  } else {
+    std::cerr << "Unknown terminator instruction: " << *TI;
+    abort();
+  }
 }
 
 // visit Implementations - Something changed in this instruction... Either an
