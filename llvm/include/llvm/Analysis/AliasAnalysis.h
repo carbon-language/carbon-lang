@@ -101,7 +101,8 @@ public:
   virtual bool pointsToConstantMemory(const Value *P) { return false; }
 
   /// doesNotAccessMemory - If the specified function is known to never read or
-  /// write memory, return true.
+  /// write memory, return true.  If the function only reads from known-constant
+  /// memory, it is also legal to return true.
   ///
   /// Many optimizations (such as CSE and LICM) can be performed on calls to it,
   /// without worrying about aliasing properties, and many functions have this
@@ -139,11 +140,7 @@ public:
   /// a particular call site modifies or reads the memory specified by the
   /// pointer.
   ///
-  virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size) {
-    // If P points to a constant memory location, the call definitely could not
-    // modify the memory location.
-    return pointsToConstantMemory(P) ? Ref : ModRef;
-  }
+  virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
 
   /// getModRefInfo - Return information about whether two call sites may refer
   /// to the same set of memory locations.  This function returns NoModRef if
@@ -151,17 +148,15 @@ public:
   /// some of the same memory, Mod if they both write to some of the same
   /// memory, and ModRef if they read and write to the same memory.
   ///
-  virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
-    return ModRef;
-  }
+  virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
 
   /// Convenience functions...
   ModRefResult getModRefInfo(LoadInst *L, Value *P, unsigned Size);
-  ModRefResult getModRefInfo(StoreInst*S, Value *P, unsigned Size);
-  ModRefResult getModRefInfo(CallInst  *C, Value *P, unsigned Size) {
+  ModRefResult getModRefInfo(StoreInst *S, Value *P, unsigned Size);
+  ModRefResult getModRefInfo(CallInst *C, Value *P, unsigned Size) {
     return getModRefInfo(CallSite(C), P, Size);
   }
-  ModRefResult getModRefInfo(InvokeInst*I, Value *P, unsigned Size) {
+  ModRefResult getModRefInfo(InvokeInst *I, Value *P, unsigned Size) {
     return getModRefInfo(CallSite(I), P, Size);
   }
   ModRefResult getModRefInfo(Instruction *I, Value *P, unsigned Size) {
