@@ -336,7 +336,7 @@ GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
       case '%':
         sprintf(Buffer, FmtBuf); break;
       case 'c':
-        sprintf(Buffer, FmtBuf, Args[ArgNo++].SByteVal); break;
+        sprintf(Buffer, FmtBuf, Args[ArgNo++].IntVal); break;
       case 'd': case 'i':
       case 'u': case 'o':
       case 'x': case 'X':
