@@ -153,6 +153,13 @@ public:
   ///
   void Solve();
 
+  /// ResolveBranchesIn - While solving the dataflow for a function, we assume
+  /// that branches on undef values cannot reach any of their successors.
+  /// However, this is not a safe assumption.  After we solve dataflow, this
+  /// method should be use to handle this.  If this returns true, the solver
+  /// should be rerun.
+  bool ResolveBranchesIn(Function &F);
+
   /// getExecutableBlocks - Once we have solved for constants, return the set of
   /// blocks that is known to be executable.
   std::set<BasicBlock*> &getExecutableBlocks() {
@@ -869,6 +876,36 @@ void SCCPSolver::Solve() {
   }
 }
 
+/// ResolveBranchesIn - While solving the dataflow for a function, we assume
+/// that branches on undef values cannot reach any of their successors.
+/// However, this is not a safe assumption.  After we solve dataflow, this
+/// method should be use to handle this.  If this returns true, the solver
+/// should be rerun.
+bool SCCPSolver::ResolveBranchesIn(Function &F) {
+  bool BranchesResolved = false;
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    TerminatorInst *TI = BB->getTerminator();
+    if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+      if (BI->isConditional()) {
+        LatticeVal &BCValue = getValueState(BI->getCondition());
+        if (BCValue.isUndefined()) {
+          BI->setCondition(ConstantBool::True);
+          BranchesResolved = true;
+          visit(BI);
+        }
+      }
+    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+      LatticeVal &SCValue = getValueState(SI->getCondition());
+      if (SCValue.isUndefined()) {
+        SI->setCondition(Constant::getNullValue(SI->getCondition()->getType()));
+        BranchesResolved = true;
+        visit(SI);
+      }
+    }
+  }
+  return BranchesResolved;
+}
+
 
 namespace {
   Statistic<> NumInstRemoved("sccp", "Number of instructions removed");
@@ -916,7 +953,11 @@ bool SCCP::runOnFunction(Function &F) {
     Values[AI].markOverdefined();
 
   // Solve for constants.
-  Solver.Solve();
+  bool ResolvedBranches = true;
+  while (ResolvedBranches) {
+    Solver.Solve();
+    ResolvedBranches = Solver.ResolveBranchesIn(F);
+  }
 
   bool MadeChanges = false;
 
@@ -1037,7 +1078,14 @@ bool IPSCCP::runOnModule(Module &M) {
     }
 
   // Solve for constants.
-  Solver.Solve();
+  bool ResolvedBranches = true;
+  while (ResolvedBranches) {
+    Solver.Solve();
+
+    ResolvedBranches = false;
+    for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
+      ResolvedBranches |= Solver.ResolveBranchesIn(*F);
+  }
 
   bool MadeChanges = false;
 
@@ -1065,7 +1113,7 @@ bool IPSCCP::runOnModule(Module &M) {
       if (!ExecutableBBs.count(BB)) {
         DEBUG(std::cerr << "  BasicBlock Dead:" << *BB);
         ++IPNumDeadBlocks;
-        
+
         // Delete the instructions backwards, as it has a reduced likelihood of
         // having to update as many def-use and use-def chains.
         std::vector<Instruction*> Insts;
