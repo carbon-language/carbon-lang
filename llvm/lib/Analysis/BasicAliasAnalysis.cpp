@@ -175,12 +175,22 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
         // If there is at least one non-zero constant index, we know they cannot
         // alias.
         bool ConstantFound = false;
+        bool AllZerosFound = true;
         for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
-          if (const Constant *C = dyn_cast<Constant>(GEP->getOperand(i)))
+          if (const Constant *C = dyn_cast<Constant>(GEP->getOperand(i))) {
             if (!C->isNullValue()) {
               ConstantFound = true;
               break;
+            }
+          } else {
+            AllZerosFound = false;
           }
+
+        // If we have getelementptr <ptr>, 0, 0, 0, 0, ... and V2 must aliases
+        // the ptr, the end result is a must alias also.
+        if (AllZerosFound)
+          return MustAlias;
+
         if (ConstantFound) {
           if (V2Size <= 1 && V1Size <= 1)  // Just pointer check?
             return NoAlias;
