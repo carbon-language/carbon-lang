@@ -9,7 +9,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
-#include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h" // FIXME: Remove when AnalysisUsage sets can be symbolic!
+#include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h" // FIXME: Remove when modularized better
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
@@ -1487,7 +1487,7 @@ namespace {
   
     // getAnalysisUsage - We use LiveVarInfo...
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired(MethodLiveVarInfo::ID);
+      AU.addRequired(FunctionLiveVarInfo::ID);
     }
     
     bool runOnFunction(Function *F);
@@ -1521,7 +1521,7 @@ InstructionSchedulingWithSSA::runOnFunction(Function *M)
         cerr << "\n*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
       
       // expensive!
-      SchedPriorities schedPrio(M, graph,getAnalysis<MethodLiveVarInfo>());
+      SchedPriorities schedPrio(M, graph,getAnalysis<FunctionLiveVarInfo>());
       SchedulingManager S(target, graph, schedPrio);
           
       ChooseInstructionsForDelaySlots(S, bb, graph); // modifies graph

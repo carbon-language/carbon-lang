@@ -18,7 +18,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/MethodInlining.h"
+#include "llvm/Transforms/FunctionInlining.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"

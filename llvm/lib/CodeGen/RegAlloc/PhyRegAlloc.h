@@ -17,13 +17,13 @@
 
    Register allocation must be done  as:	
 
-      MethodLiveVarInfo LVI(*MethodI );           // compute LV info
+      FunctionLiveVarInfo LVI(*FunctionI );           // compute LV info
       LVI.analyze();
 
       TargetMachine &target = ....	                        
 
 
-      PhyRegAlloc PRA(*MethodI, target, &LVI);     // allocate regs
+      PhyRegAlloc PRA(*FunctionI, target, &LVI);     // allocate regs
       PRA.allocateRegisters();
 */ 
 
@@ -35,7 +35,7 @@
 #include <deque>
 class MachineCodeForMethod;
 class MachineRegInfo;
-class MethodLiveVarInfo;
+class FunctionLiveVarInfo;
 class MachineInstr;
 namespace cfg { class LoopInfo; }
 
@@ -70,7 +70,7 @@ class PhyRegAlloc: public NonCopyable {
   const TargetMachine &TM;              // target machine
   const Function *Meth;                 // name of the function we work on
   MachineCodeForMethod &mcInfo;         // descriptor for method's native code
-  MethodLiveVarInfo *const LVI;         // LV information for this method 
+  FunctionLiveVarInfo *const LVI;         // LV information for this method 
                                         // (already computed for BBs) 
   LiveRangeInfo LRI;                    // LR info  (will be computed)
   const MachineRegInfo &MRI;            // Machine Register information
@@ -84,7 +84,7 @@ class PhyRegAlloc: public NonCopyable {
                                         // currently not used
 
 public:
-  PhyRegAlloc(Function *F, const TargetMachine& TM, MethodLiveVarInfo *Lvi,
+  PhyRegAlloc(Function *F, const TargetMachine& TM, FunctionLiveVarInfo *Lvi,
               cfg::LoopInfo *LoopDepthCalc);
   ~PhyRegAlloc();
 

@@ -7,7 +7,7 @@
 #include "llvm/Instruction.h"
 #include <map>
 
-// FIXME: This should be merged with MethodInlining
+// FIXME: This should be merged with FunctionInlining
 
 // RemapInstruction - Convert the instruction operands from referencing the 
 // current values into those specified by ValueMap.

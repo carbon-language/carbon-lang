@@ -19,14 +19,14 @@
 //**************************************************************************/
 
 #include "SchedPriorities.h"
-#include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
+#include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
 #include <iostream>
 using std::cerr;
 
 SchedPriorities::SchedPriorities(const Function *, const SchedGraph *G,
-                                 MethodLiveVarInfo &LVI)
+                                 FunctionLiveVarInfo &LVI)
   : curTime(0), graph(G), methodLiveVarInfo(LVI),
     nodeDelayVec(G->getNumNodes(), INVALID_LATENCY), // make errors obvious
     earliestForNode(G->getNumNodes(), 0),
@@ -266,7 +266,7 @@ SchedPriorities::findSetWithMaxDelay(std::vector<candIndex>& mcands,
 
 
 bool
-SchedPriorities::instructionHasLastUse(MethodLiveVarInfo& methodLiveVarInfo,
+SchedPriorities::instructionHasLastUse(FunctionLiveVarInfo &LVI,
 				       const SchedGraphNode* graphNode) {
   const MachineInstr *MI = graphNode->getMachineInstr();
   
@@ -278,7 +278,7 @@ SchedPriorities::instructionHasLastUse(MethodLiveVarInfo& methodLiveVarInfo,
   // else check if instruction is a last use and save it in the hash_map
   bool hasLastUse = false;
   const BasicBlock* bb = graphNode->getBB();
-  const ValueSet &LVs = methodLiveVarInfo.getLiveVarSetBeforeMInst(MI, bb);
+  const ValueSet &LVs = LVI.getLiveVarSetBeforeMInst(MI, bb);
   
   for (MachineInstr::const_val_op_iterator OI = MI->begin(), OE = MI->end();
        OI != OE; ++OI)

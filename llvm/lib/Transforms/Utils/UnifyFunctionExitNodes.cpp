@@ -5,7 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/UnifyMethodExitNodes.h"
+#include "llvm/Transforms/UnifyFunctionExitNodes.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
@@ -13,7 +13,7 @@
 #include "llvm/Type.h"
 using std::vector;
 
-AnalysisID UnifyMethodExitNodes::ID(AnalysisID::create<UnifyMethodExitNodes>());
+AnalysisID UnifyFunctionExitNodes::ID(AnalysisID::create<UnifyFunctionExitNodes>());
 
 
 // UnifyAllExitNodes - Unify all exit nodes of the CFG by creating a new
@@ -22,7 +22,7 @@ AnalysisID UnifyMethodExitNodes::ID(AnalysisID::create<UnifyMethodExitNodes>());
 //
 // If there are no return stmts in the Function, a null pointer is returned.
 //
-bool UnifyMethodExitNodes::doit(Function *M, BasicBlock *&ExitNode) {
+bool UnifyFunctionExitNodes::doit(Function *M, BasicBlock *&ExitNode) {
   // Loop over all of the blocks in a function, tracking all of the blocks that
   // return.
   //

@@ -31,7 +31,7 @@
 class Function;
 class MachineInstr;
 class SchedulingManager;
-class MethodLiveVarInfo;
+class FunctionLiveVarInfo;
 
 //---------------------------------------------------------------------------
 // Debug option levels for instruction scheduling
@@ -127,7 +127,7 @@ private:
 class SchedPriorities: public NonCopyable {
 public:
   SchedPriorities(const Function *F, const SchedGraph *G,
-                  MethodLiveVarInfo &LVI);
+                  FunctionLiveVarInfo &LVI);
                   
   
   // This must be called before scheduling begins.
@@ -157,7 +157,7 @@ private:
 private:
   cycles_t curTime;
   const SchedGraph* graph;
-  MethodLiveVarInfo &methodLiveVarInfo;
+  FunctionLiveVarInfo &methodLiveVarInfo;
   std::hash_map<const MachineInstr*, bool> lastUseMap;
   std::vector<cycles_t> nodeDelayVec;
   std::vector<cycles_t> earliestForNode;
@@ -180,7 +180,7 @@ private:
   
   void		initializeReadyHeap	(const SchedGraph* graph);
   
-  bool		instructionHasLastUse	(MethodLiveVarInfo& methodLiveVarInfo,
+  bool		instructionHasLastUse	(FunctionLiveVarInfo& LVI,
 					 const SchedGraphNode* graphNode);
   
   // NOTE: The next two return references to the actual vector entries.

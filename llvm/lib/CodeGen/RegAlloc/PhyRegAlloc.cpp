@@ -14,7 +14,7 @@
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
-#include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
+#include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
@@ -50,7 +50,7 @@ namespace {
         cerr << "\n******************** Function "<< F->getName()
              << " ********************\n";
       
-      PhyRegAlloc PRA(F, Target, &getAnalysis<MethodLiveVarInfo>(),
+      PhyRegAlloc PRA(F, Target, &getAnalysis<FunctionLiveVarInfo>(),
                       &getAnalysis<cfg::LoopInfo>());
       PRA.allocateRegisters();
       
@@ -60,7 +60,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired(cfg::LoopInfo::ID);
-      AU.addRequired(MethodLiveVarInfo::ID);
+      AU.addRequired(FunctionLiveVarInfo::ID);
     }
   };
 }
@@ -74,7 +74,7 @@ Pass *getRegisterAllocator(TargetMachine &T) {
 //----------------------------------------------------------------------------
 PhyRegAlloc::PhyRegAlloc(Function *F, 
 			 const TargetMachine& tm, 
-			 MethodLiveVarInfo *Lvi,
+			 FunctionLiveVarInfo *Lvi,
                          cfg::LoopInfo *LDC) 
                        :  TM(tm), Meth(F),
                           mcInfo(MachineCodeForMethod::get(F)),

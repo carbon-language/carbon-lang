@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Transforms/UnifyMethodExitNodes.h"
+#include "llvm/Transforms/UnifyFunctionExitNodes.h"
 #include "llvm/Function.h"
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
@@ -85,7 +85,7 @@ void cfg::DominatorSet::calcPostDominatorSet(Function *M) {
   // that there can be at most one return instruction in the function left.
   // Get it.
   //
-  Root = getAnalysis<UnifyMethodExitNodes>().getExitNode();
+  Root = getAnalysis<UnifyFunctionExitNodes>().getExitNode();
 
   if (Root == 0) {  // No exit node for the function?  Postdomsets are all empty
     for (Function::const_iterator MI = M->begin(), ME = M->end(); MI!=ME; ++MI)
@@ -136,7 +136,7 @@ void cfg::DominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   if (isPostDominator()) {
     AU.addProvided(PostDomID);
-    AU.addRequired(UnifyMethodExitNodes::ID);
+    AU.addRequired(UnifyFunctionExitNodes::ID);
   } else {
     AU.addProvided(ID);
   }

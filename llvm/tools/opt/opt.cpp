@@ -12,11 +12,11 @@
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Transforms/UnifyMethodExitNodes.h"
+#include "llvm/Transforms/UnifyFunctionExitNodes.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/LevelChange.h"
-#include "llvm/Transforms/MethodInlining.h"
+#include "llvm/Transforms/FunctionInlining.h"
 #include "llvm/Transforms/SymbolStripping.h"
 #include "llvm/Transforms/ChangeAllocations.h"
 #include "llvm/Transforms/IPO/SimpleStructMutation.h"
@@ -77,7 +77,7 @@ struct {
   { constmerge , createConstantMergePass        },
   { strip      , createSymbolStrippingPass      },
   { mstrip     , createFullSymbolStrippingPass  },
-  { mergereturn, createUnifyMethodExitNodesPass },
+  { mergereturn, createUnifyFunctionExitNodesPass },
 
   { indvars    , createIndVarSimplifyPass         },
   { instcombine, createInstructionCombiningPass   },

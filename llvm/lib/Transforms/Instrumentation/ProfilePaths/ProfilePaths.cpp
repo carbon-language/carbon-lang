@@ -25,7 +25,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Instrumentation/ProfilePaths.h"
-#include "llvm/Transforms/UnifyMethodExitNodes.h"
+#include "llvm/Transforms/UnifyFunctionExitNodes.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
@@ -45,7 +45,7 @@ class ProfilePaths: public FunctionPass {
   // entry and only one exit node for the function in the CFG of the function
   //
   void ProfilePaths::getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired(UnifyMethodExitNodes::ID);
+    AU.addRequired(UnifyFunctionExitNodes::ID);
   }
 };
 
@@ -67,20 +67,19 @@ static Node *findBB(std::set<Node *> &st, BasicBlock *BB){
 
 //Per function pass for inserting counters and trigger code
 bool ProfilePaths::runOnFunction(Function *M){
-  //Transform the cfg s.t. we have just one exit node
-  BasicBlock *ExitNode = 
-    getAnalysis<UnifyMethodExitNodes>().getExitNode();  
+  // Transform the cfg s.t. we have just one exit node
+  BasicBlock *ExitNode = getAnalysis<UnifyFunctionExitNodes>().getExitNode();  
   
-  //iterating over BBs and making graph
+  // iterating over BBs and making graph
   std::set<Node *> nodes;
   std::set<Edge> edges;
   Node *tmp;
   Node *exitNode, *startNode;
 
-  //The nodes must be uniquesly identified:
-  //That is, no two nodes must hav same BB*
+  // The nodes must be uniquesly identified:
+  // That is, no two nodes must hav same BB*
   
-  //First enter just nodes: later enter edges
+  // First enter just nodes: later enter edges
   for (Function::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
     Node *nd=new Node(*BB);
     nodes.insert(nd); 
@@ -90,7 +89,7 @@ bool ProfilePaths::runOnFunction(Function *M){
       startNode=nd;
   }
 
-  //now do it againto insert edges
+  // now do it againto insert edges
   for (Function::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
     Node *nd=findBB(nodes, *BB);
     assert(nd && "No node for this edge!");
@@ -111,39 +110,39 @@ bool ProfilePaths::runOnFunction(Function *M){
 
   BasicBlock *fr=M->front();
   
-  //If only one BB, don't instrument
+  // If only one BB, don't instrument
   if (M->getBasicBlocks().size() == 1) {    
-    //The graph is made acyclic: this is done
-    //by removing back edges for now, and adding them later on
+    // The graph is made acyclic: this is done
+    // by removing back edges for now, and adding them later on
     vector<Edge> be;
     g.getBackEdges(be);
 #ifdef DEBUG_PATH_PROFILES
     cerr<<"Backedges:"<<be.size()<<endl;
 #endif
-    //Now we need to reflect the effect of back edges
-    //This is done by adding dummy edges
-    //If a->b is a back edge
-    //Then we add 2 back edges for it:
-    //1. from root->b (in vector stDummy)
-    //and 2. from a->exit (in vector exDummy)
+    // Now we need to reflect the effect of back edges
+    // This is done by adding dummy edges
+    // If a->b is a back edge
+    // Then we add 2 back edges for it:
+    // 1. from root->b (in vector stDummy)
+    // and 2. from a->exit (in vector exDummy)
     vector<Edge> stDummy;
     vector<Edge> exDummy;
     addDummyEdges(stDummy, exDummy, g, be);
     
-    //Now, every edge in the graph is assigned a weight
-    //This weight later adds on to assign path
-    //numbers to different paths in the graph
-    // All paths for now are acyclic,
-    //since no back edges in the graph now
-    //numPaths is the number of acyclic paths in the graph
+    // Now, every edge in the graph is assigned a weight
+    // This weight later adds on to assign path
+    // numbers to different paths in the graph
+    //  All paths for now are acyclic,
+    // since no back edges in the graph now
+    // numPaths is the number of acyclic paths in the graph
     int numPaths=valueAssignmentToEdges(g);
     
-    //create instruction allocation r and count
-    //r is the variable that'll act like an accumulator
-    //all along the path, we just add edge values to r
-    //and at the end, r reflects the path number
-    //count is an array: count[x] would store
-    //the number of executions of path numbered x
+    // create instruction allocation r and count
+    // r is the variable that'll act like an accumulator
+    // all along the path, we just add edge values to r
+    // and at the end, r reflects the path number
+    // count is an array: count[x] would store
+    // the number of executions of path numbered x
     Instruction *rVar=new 
       AllocaInst(PointerType::get(Type::IntTy), 
 		 ConstantUInt::get(Type::UIntTy,1),"R");
@@ -152,14 +151,14 @@ bool ProfilePaths::runOnFunction(Function *M){
       AllocaInst(PointerType::get(Type::IntTy), 
 		 ConstantUInt::get(Type::UIntTy, numPaths), "Count");
     
-    //insert initialization code in first (entry) BB
-    //this includes initializing r and count
+    // insert initialization code in first (entry) BB
+    // this includes initializing r and count
     insertInTopBB(M->getEntryNode(),numPaths, rVar, countVar);
     
-    //now process the graph: get path numbers,
-    //get increments along different paths,
-    //and assign "increments" and "updates" (to r and count)
-    //"optimally". Finally, insert llvm code along various edges
+    // now process the graph: get path numbers,
+    // get increments along different paths,
+    // and assign "increments" and "updates" (to r and count)
+    // "optimally". Finally, insert llvm code along various edges
     processGraph(g, rVar, countVar, be, stDummy, exDummy);
   }
 

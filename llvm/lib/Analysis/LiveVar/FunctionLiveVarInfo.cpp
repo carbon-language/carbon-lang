@@ -5,7 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
+#include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "BBLiveVar.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/BasicBlock.h"
@@ -14,7 +14,7 @@
 #include "Support/SetOperations.h"
 #include <iostream>
 
-AnalysisID MethodLiveVarInfo::ID(AnalysisID::create<MethodLiveVarInfo>());
+AnalysisID FunctionLiveVarInfo::ID(AnalysisID::create<FunctionLiveVarInfo>());
 
 cl::Enum<LiveVarDebugLevel_t> DEBUG_LV("dlivevar", cl::NoFlags,
   "enable live-variable debugging information",
@@ -28,12 +28,12 @@ cl::Enum<LiveVarDebugLevel_t> DEBUG_LV("dlivevar", cl::NoFlags,
 //-----------------------------------------------------------------------------
 
 // gets OutSet of a BB
-const ValueSet &MethodLiveVarInfo::getOutSetOfBB(const BasicBlock *BB) const {
+const ValueSet &FunctionLiveVarInfo::getOutSetOfBB(const BasicBlock *BB) const {
   return BBLiveVar::GetFromBB(BB)->getOutSet();
 }
 
 // gets InSet of a BB
-const ValueSet &MethodLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
+const ValueSet &FunctionLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
   return BBLiveVar::GetFromBB(BB)->getInSet();
 }
 
@@ -42,7 +42,7 @@ const ValueSet &MethodLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
 // Performs live var analysis for a function
 //-----------------------------------------------------------------------------
 
-bool MethodLiveVarInfo::runOnFunction(Function *Meth) {
+bool FunctionLiveVarInfo::runOnFunction(Function *Meth) {
   M = Meth;
   if (DEBUG_LV) std::cerr << "Analysing live variables ...\n";
 
@@ -62,7 +62,7 @@ bool MethodLiveVarInfo::runOnFunction(Function *Meth) {
 // constructs BBLiveVars and init Def and In sets
 //-----------------------------------------------------------------------------
 
-void MethodLiveVarInfo::constructBBs(const Function *M) {
+void FunctionLiveVarInfo::constructBBs(const Function *M) {
   unsigned int POId = 0;                // Reverse Depth-first Order ID
   
   for(po_iterator<const Function*> BBI = po_begin(M), BBE = po_end(M);
@@ -94,7 +94,8 @@ void MethodLiveVarInfo::constructBBs(const Function *M) {
 // do one backward pass over the CFG (for iterative analysis)
 //-----------------------------------------------------------------------------
 
-bool MethodLiveVarInfo::doSingleBackwardPass(const Function *M, unsigned iter) {
+bool FunctionLiveVarInfo::doSingleBackwardPass(const Function *M,
+                                               unsigned iter) {
   if (DEBUG_LV) std::cerr << "\n After Backward Pass " << iter << "...\n";
 
   bool NeedAnotherIteration = false;
@@ -122,7 +123,7 @@ bool MethodLiveVarInfo::doSingleBackwardPass(const Function *M, unsigned iter) {
 }
 
 
-void MethodLiveVarInfo::releaseMemory() {
+void FunctionLiveVarInfo::releaseMemory() {
   // First remove all BBLiveVar annotations created in constructBBs().
   if (M)
     for (Function::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
@@ -163,8 +164,8 @@ void MethodLiveVarInfo::releaseMemory() {
 //-----------------------------------------------------------------------------
 
 const ValueSet &
-MethodLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MInst,
-					    const BasicBlock *BB) {
+FunctionLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MInst,
+                                              const BasicBlock *BB) {
   if (const ValueSet *LVSet = MInst2LVSetBI[MInst]) {
     return *LVSet;                      // if found, just return the set
   } else { 
@@ -178,8 +179,8 @@ MethodLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MInst,
 // Gives live variable information after a machine instruction
 //-----------------------------------------------------------------------------
 const ValueSet & 
-MethodLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MI,
-                                           const BasicBlock *BB) {
+FunctionLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MI,
+                                             const BasicBlock *BB) {
 
   if (const ValueSet *LVSet = MInst2LVSetAI[MI]) {
     return *LVSet;                      // if found, just return the set
@@ -227,7 +228,7 @@ static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
 // variable sets into a the caches (MInst2LVSetAI, MInst2LVSetBI)
 //-----------------------------------------------------------------------------
 
-void MethodLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
+void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
   const MachineCodeForBasicBlock &MIVec = BB->getMachineInstrVec();
 
   if (DEBUG_LV >= LV_DEBUG_Instr)

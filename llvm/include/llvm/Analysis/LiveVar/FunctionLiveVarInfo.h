@@ -79,7 +79,7 @@ enum LiveVarDebugLevel_t {
 extern cl::Enum<LiveVarDebugLevel_t> DEBUG_LV;
 
 
-class MethodLiveVarInfo : public FunctionPass {
+class FunctionLiveVarInfo : public FunctionPass {
   // Machine Instr to LiveVarSet Map for providing LVset BEFORE each inst
   std::map<const MachineInstr *, const ValueSet *> MInst2LVSetBI; 
 
@@ -103,7 +103,7 @@ class MethodLiveVarInfo : public FunctionPass {
 public:
   static AnalysisID ID;    // We are an analysis, we must have an ID
 
-  MethodLiveVarInfo(AnalysisID id = ID) { assert(id == ID); }
+  FunctionLiveVarInfo(AnalysisID id = ID) { assert(id == ID); }
 
   // --------- Implement the FunctionPass interface ----------------------
 
