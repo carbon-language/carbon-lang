@@ -318,7 +318,8 @@ void GraphBuilder::visitPHINode(PHINode &PN) {
 
 void GraphBuilder::visitGetElementPtrInst(User &GEP) {
   DSNodeHandle Value = getValueDest(*GEP.getOperand(0));
-  if (Value.isNull()) return;
+  if (Value.isNull())
+    Value = createNode();
 
   // As a special case, if all of the index operands of GEP are constant zeros,
   // handle this just like we handle casts (ie, don't do much).
