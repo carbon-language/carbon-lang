@@ -165,21 +165,17 @@ bool Steens::runOnModule(Module &M) {
     DSCallSite &CurCall = *CI++;
     
     // Loop over the called functions, eliminating as many as possible...
-    std::vector<GlobalValue*> CallTargets;
+    std::vector<Function*> CallTargets;
     if (CurCall.isDirectCall())
       CallTargets.push_back(CurCall.getCalleeFunc());
     else 
-      CallTargets = CurCall.getCalleeNode()->getGlobals();
+      CurCall.getCalleeNode()->addFullFunctionList(CallTargets);
 
     for (unsigned c = 0; c != CallTargets.size(); ) {
       // If we can eliminate this function call, do so!
-      bool Eliminated = false;
-      if (Function *F = dyn_cast<Function>(CallTargets[c]))
-        if (!F->isExternal()) {
-          ResolveFunctionCall(F, CurCall, RetValMap[F]);
-          Eliminated = true;
-        }
-      if (Eliminated) {
+      Function *F = CallTargets[c];
+      if (!F->isExternal()) {
+        ResolveFunctionCall(F, CurCall, RetValMap[F]);
         CallTargets[c] = CallTargets.back();
         CallTargets.pop_back();
       } else

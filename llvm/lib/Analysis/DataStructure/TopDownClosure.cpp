@@ -37,11 +37,9 @@ void TDDataStructures::markReachableFunctionsExternallyAccessible(DSNode *N,
   for (unsigned i = 0, e = N->getNumLinks(); i != e; ++i) {
     DSNodeHandle &NH = N->getLink(i*N->getPointerSize());
     if (DSNode *NN = NH.getNode()) {
-      const std::vector<GlobalValue*> &Globals = NN->getGlobals();
-      for (unsigned G = 0, e = Globals.size(); G != e; ++G)
-        if (Function *F = dyn_cast<Function>(Globals[G]))
-          ArgsRemainIncomplete.insert(F);
-
+      std::vector<Function*> Functions;
+      NN->addFullFunctionList(Functions);
+      ArgsRemainIncomplete.insert(Functions.begin(), Functions.end());
       markReachableFunctionsExternallyAccessible(NN, Visited);
     }
   }
