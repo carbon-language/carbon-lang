@@ -17,8 +17,6 @@ PhyRegAlloc::PhyRegAlloc(const Method *const M,
 			  Meth(M), TM(tm), LVI(Lvi), LRI(M, tm, RegClassList), 
 			  MRI( tm.getRegInfo() ),
                           NumOfRegClasses(MRI.getNumOfRegClasses()),
-			  CallInstrList(),
-			  RetInstrList(),
 			  AddedInstrMap()
 
 {
@@ -47,10 +45,18 @@ void PhyRegAlloc::createIGNodeListsAndIGs()
   LiveRangeMapType::const_iterator HMIEnd = (LRI.getLiveRangeMap())->end();   
 
     for(  ; HMI != HMIEnd ; ++HMI ) {
+      
+      if( (*HMI).first ) { 
 
-     LiveRange *L = (*HMI).second;      // get the LiveRange
+	LiveRange *L = (*HMI).second;      // get the LiveRange
 
-     if( (*HMI).first ) { 
+	if( !L) { 
+	  if( DEBUG_RA) {
+	    cout << "\n*?!?Warning: Null liver range found for: ";
+	    printValue( (*HMI).first) ; cout << endl;
+	  }
+	  continue;
+	}
                                         // if the Value * is not null, and LR  
                                         // is not yet written to the IGNodeList
        if( !(L->getUserIGNode())  ) {  
@@ -155,7 +161,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
     // iterate over all the machine instructions in BB
     for( ; MInstIterator != MIVec.end(); ++MInstIterator) {  
-      
+
       const MachineInstr *const MInst = *MInstIterator; 
 
       // get the LV set after the instruction
@@ -178,6 +184,8 @@ void PhyRegAlloc::buildInterferenceGraphs()
     } // for all machine instructions in BB
 
 
+#if 0
+
     // go thru LLVM instructions in the basic block and record all CALL
     // instructions and Return instructions in the CallInstrList
     // This is done because since there are no reverse pointers in machine
@@ -194,6 +202,9 @@ void PhyRegAlloc::buildInterferenceGraphs()
       else if( OpCode == Instruction::Ret )
 	RetInstrList.push_back( *InstIt );
    }
+
+#endif
+
     
   } // for all BBs in method
 
@@ -257,7 +268,38 @@ void PhyRegAlloc::updateMachineCode()
     // iterate over all the machine instructions in BB
     for( ; MInstIterator != MIVec.end(); ++MInstIterator) {  
       
-      MachineInstr *const MInst = *MInstIterator; 
+      MachineInstr *MInst = *MInstIterator; 
+
+
+      // If there are instructions before to be added, add them now
+      // ***TODO: Add InstrnsAfter as well
+      if( AddedInstrMap[ MInst ] ) {
+
+	vector<MachineInstr *> &IBef =
+	  (AddedInstrMap[MInst])->InstrnsBefore;
+
+	if( ! IBef.empty() ) {
+
+	  vector<MachineInstr *>::iterator AdIt; 
+
+	  for( AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt ) {
+
+	    cout << "*ADDED instr opcode: ";
+	    cout << TargetInstrDescriptors[(*AdIt)->getOpCode()].opCodeString;
+	    cout << endl;
+	    
+	    MInstIterator = MIVec.insert( MInstIterator, *AdIt );
+	    ++MInstIterator;
+	  }
+
+	}
+
+	// restart from the topmost instruction added
+	//MInst = *MInstIterator;
+
+      }
+
+
 
       //for(MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done();++OpI) {
 
@@ -289,8 +331,9 @@ void PhyRegAlloc::updateMachineCode()
               cout << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
             }
 
-	    Op.setRegForValue( -1 );  // mark register as invalid
+	    Op.setRegForValue( 1000 ); // mark register as invalid
 	    
+#if 0
 	    if(  ((Val->getType())->isLabelType()) || 
 		 (Val->getValueType() == Value::ConstantVal)  )
 	      ;                         // do nothing
@@ -308,13 +351,15 @@ void PhyRegAlloc::updateMachineCode()
  	      Op.setRegForValue( MRI.getReturnAddressReg() );
 
 	    }
-	    
-	    else
+
+	    if (Val->getValueType() == Value::InstructionVal)
 	    {
 	      cout << "!Warning: No LiveRange for: ";
 	      printValue( Val); cout << " Type: " << Val->getValueType();
 	      cout << " RegVal=" <<  Op.getAllocatedRegNum() << endl;
 	    }
+
+#endif
 
 	    continue;
 	  }
@@ -376,8 +421,6 @@ void PhyRegAlloc::printMachineCode()
 	    Op.getOperandType() ==  MachineOperand::MO_CCRegister || 
 	    Op.getOperandType() ==  MachineOperand::MO_PCRelativeDisp ) {
 
-
-
 	  const Value *const Val = Op.getVRegValue () ;
 	  // ****this code is temporary till NULL Values are fixed
 	  if( ! Val ) {
@@ -386,8 +429,7 @@ void PhyRegAlloc::printMachineCode()
 	  }
 
 	  // if a label or a constant
-	  if( (Val->getValueType() == Value::BasicBlockVal) || 
-	      (Val->getValueType() == Value::ConstantVal) ) {
+	  if( (Val->getValueType() == Value::BasicBlockVal)  ) {
 
 	    cout << "\t"; printLabel(	Op.getVRegValue	() );
 	  }
@@ -395,7 +437,10 @@ void PhyRegAlloc::printMachineCode()
 	    // else it must be a register value
 	    const int RegNum = Op.getAllocatedRegNum();
 
+	    //if( RegNum != 1000)
+
 	      cout << "\t" << "%" << MRI.getUnifiedRegName( RegNum );
+	    // else cout << "\t<*NoReg*>";
 
 	  }
 
@@ -418,6 +463,67 @@ void PhyRegAlloc::printMachineCode()
 }
 
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+
+void PhyRegAlloc::colorCallRetArgs()
+{
+
+  CallRetInstrListType &CallRetInstList = LRI.getCallRetInstrList();
+  CallRetInstrListType::const_iterator It = CallRetInstList.begin();
+
+  for( ; It != CallRetInstList.end(); ++It ) {
+
+    const Instruction *const CallRetI = *It;
+    unsigned OpCode =  (CallRetI)->getOpcode();
+ 
+    const MachineInstr *CRMI = *((CallRetI->getMachineInstrVec()).begin());
+
+    
+    assert( (TM.getInstrInfo().isReturn(CRMI->getOpCode()) ||  
+	     TM.getInstrInfo().isCall(CRMI->getOpCode()) )
+	    && "First Machine Instruction is not a Call/Retrunr" );
+    
+    // get the added instructions for this Call/Ret instruciton
+    AddedInstrns *AI = AddedInstrMap[ CRMI ];
+    if ( !AI ) { 
+      AI = new AddedInstrns();
+      AddedInstrMap[ CRMI ] = AI;
+    }
+
+    if( (OpCode == Instruction::Call) )
+        MRI.colorCallArgs( (CallInst *) CallRetI, LRI, AI );
+    
+
+    else if (OpCode == Instruction::Ret ) 
+      MRI.colorRetValue( (ReturnInst *) CallRetI, LRI, AI	);
+    
+
+    else assert( 0 && "Non Call/Ret instrn in CallRetInstrList\n" );
+
+  }
+
+}
+
+//----------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------
+void PhyRegAlloc::colorIncomingArgs()
+{
+  const BasicBlock *const FirstBB = Meth->front();
+  const MachineInstr *FirstMI = *((FirstBB->getMachineInstrVec()).begin());
+  assert( FirstMI && "No machine instruction in entry BB");
+
+  AddedInstrns *AI = AddedInstrMap[ FirstMI ];
+  if ( !AI ) { 
+    AI = new AddedInstrns();
+    AddedInstrMap[ FirstMI  ] = AI;
+  }
+
+  MRI.colorMethodArgs(Meth, LRI, AI );
+}
+
 
 //----------------------------------------------------------------------------
 // Used to generate a label for a basic block
@@ -437,56 +543,56 @@ void PhyRegAlloc::printLabel(const Value *const Val)
 
 void PhyRegAlloc::allocateRegisters()
 {
+
+  // make sure that we put all register classes into the RegClassList 
+  // before we call constructLiveRanges (now done in the constructor of 
+  // PhyRegAlloc class).
+
   constructLiveRanges();                // create LR info
 
-  if( DEBUG_RA)
+  if( DEBUG_RA )
     LRI.printLiveRanges();
-
+  
   createIGNodeListsAndIGs();            // create IGNode list and IGs
 
   buildInterferenceGraphs();            // build IGs in all reg classes
-
   
-  if( DEBUG_RA) {
+  
+  if( DEBUG_RA ) {
     // print all LRs in all reg classes
     for( unsigned int rc=0; rc < NumOfRegClasses  ; rc++)  
       RegClassList[ rc ]->printIGNodeList(); 
-
+    
     // print IGs in all register classes
     for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
       RegClassList[ rc ]->printIG();       
   }
-
+  
   LRI.coalesceLRs();                    // coalesce all live ranges
-
+  
   if( DEBUG_RA) {
     // print all LRs in all reg classes
     for( unsigned int rc=0; rc < NumOfRegClasses  ; rc++)  
       RegClassList[ rc ]->printIGNodeList(); 
-
+    
     // print IGs in all register classes
     for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
       RegClassList[ rc ]->printIG();       
   }
 
-
-  // the following three calls must be made in that order since
-  // coloring or definitions must come before their uses
-  MRI.colorArgs(Meth, LRI);             // color method args
-                                        // color call args of call instrns
-  MRI.colorCallArgs(CallInstrList, LRI, AddedInstrMap); 
-                                        // color return args
-  MRI.colorRetArg(CallInstrList, LRI, AddedInstrMap);
-
-  
-
-                                        // color all register classes
+  // color all register classes
   for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
     RegClassList[ rc ]->colorAllRegs();    
 
+
+  // color incoming args and call args
+  colorIncomingArgs();
+  colorCallRetArgs();
+
+
   updateMachineCode(); 
   if (DEBUG_RA) {
-    PrintMachineInstructions(Meth);
+    // PrintMachineInstructions(Meth);
     printMachineCode();                   // only for DEBUGGING
   }
 }

@@ -4,12 +4,15 @@ LiveRangeInfo::LiveRangeInfo(const Method *const M,
 			     const TargetMachine& tm,
 			     vector<RegClass *> &RCL) 
                              : Meth(M), LiveRangeMap(), 
-			       TM(tm), RegClassList(RCL)
+			       TM(tm), RegClassList(RCL),
+			       MRI( tm.getRegInfo()),
+			       CallRetInstrList()
 { }
 
 
 // union two live ranges into one. The 2nd LR is deleted. Used for coalescing.
-// Note: the caller must make sure that L1 and L2 are distinct
+// Note: the caller must make sure that L1 and L2 are distinct and both
+// LRs don't have suggested colors
 
 void LiveRangeInfo::unionAndUpdateLRs(LiveRange *const L1, LiveRange *L2)
 {
@@ -24,6 +27,15 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *const L1, LiveRange *L2)
     L1->add( *L2It );            // add the var in L2 to L1
     LiveRangeMap[ *L2It ] = L1;  // now the elements in L2 should map to L1    
   }
+
+
+  // Now if LROfDef(L1) has a suggested color, it will remain.
+  // But, if LROfUse(L2) has a suggested color, the new range
+  // must have the same color.
+
+  if(L2->hasSuggestedColor())
+    L1->setSuggestedColor( L2->getSuggestedColor() );
+
   delete ( L2 );                 // delete L2 as it is no longer needed
 }
 
@@ -58,7 +70,7 @@ void LiveRangeInfo::constructLiveRanges()
     // create a temp machine op to find the register class of value
     //const MachineOperand Op(MachineOperand::MO_VirtualRegister);
 
-    unsigned rcid = (TM.getRegInfo()).getRegClassIDOfValue( Val );
+    unsigned rcid = MRI.getRegClassIDOfValue( Val );
     ArgRange->setRegClass(RegClassList[ rcid ] );
 
     			   
@@ -68,15 +80,23 @@ void LiveRangeInfo::constructLiveRanges()
     }
   }
 
+  // Now suggest hardware registers for these method args 
+  MRI.suggestRegs4MethodArgs(Meth, *this);
 
-  // Now find all LRs for machine the instructions. A new LR will be created 
-  // only for defs in the machine instr since, we assume that all Values are
-  // defined before they are used. However, there can be multiple defs for
-  // the same Value in machine instructions.
+
+
+  // Now find speical LLVM instructions (CALL, RET) and LRs in machine
+  // instructions.
+
 
   Method::const_iterator BBI = Meth->begin();    // random iterator for BBs   
 
   for( ; BBI != Meth->end(); ++BBI) {            // go thru BBs in random order
+
+    // Now find all LRs for machine the instructions. A new LR will be created 
+    // only for defs in the machine instr since, we assume that all Values are
+    // defined before they are used. However, there can be multiple defs for
+    // the same Value in machine instructions.
 
     // get the iterator for machine instructions
     const MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
@@ -87,12 +107,20 @@ void LiveRangeInfo::constructLiveRanges()
     for( ; MInstIterator != MIVec.end(); MInstIterator++) {  
       
       const MachineInstr * MInst = *MInstIterator; 
+
+      // Now if the machine instruction has special operands that must be
+      // set with a "suggested color", do it here.
+
+
+      if(  MRI.handleSpecialMInstr(MInst, *this, RegClassList) )
+	continue;
+       
       
       // iterate over  MI operands to find defs
-      for( MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done(); OpI++) {
+      for( MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done(); ++OpI) {
 	
 
-	// delete later from here ************
+      	// delete later from here ************
 	MachineOperand::MachineOperandType OpTyp = 
 	  OpI.getMachineOperand().getOperandType();
 
@@ -104,11 +132,21 @@ void LiveRangeInfo::constructLiveRanges()
 	// ************* to here
 
 
-
 	// create a new LR iff this operand is a def
 	if( OpI.isDef() ) {     
 	  
 	  const Value *const Def = *OpI;
+
+
+	  // Only instruction values are accepted for live ranges here
+
+	  if( Def->getValueType() != Value::InstructionVal ) {
+	    cout << "\n**%%Error: Def is not an instruction val. Def=";
+	    printValue( Def ); cout << endl;
+	    continue;
+	  }
+
+
 	  LiveRange *DefRange = LiveRangeMap[Def]; 
 
 	  // see LR already there (because of multiple defs)
@@ -130,7 +168,7 @@ void LiveRangeInfo::constructLiveRanges()
 	      OpI.getMachineOperand().getOperandType();
 
 	    bool isCC = ( OpTy == MachineOperand::MO_CCRegister);
-	    unsigned rcid = (TM.getRegInfo()).getRegClassIDOfValue( 
+	    unsigned rcid = MRI.getRegClassIDOfValue( 
 			    OpI.getMachineOperand().getVRegValue(), isCC );
 
 
@@ -163,6 +201,42 @@ void LiveRangeInfo::constructLiveRanges()
 
     } // for all machine instructions in the BB
 
+
+  } // for all BBs in method
+  
+  // go thru LLVM instructions in the basic block and suggest colors
+  // for their args. Also  record all CALL 
+  // instructions and Return instructions in the CallRetInstrList
+  // This is done because since there are no reverse pointers in machine
+  // instructions to find the llvm instruction, when we encounter a call
+  // or a return whose args must be specailly colored (e.g., %o's for args)
+  // We have to makes sure that all LRs of call/ret args are added before 
+  // doing this. But return value of call will not have a LR.
+
+  BBI = Meth->begin();                  // random iterator for BBs   
+
+  for( ; BBI != Meth->end(); ++BBI) {   // go thru BBs in random order
+
+    BasicBlock::const_iterator InstIt = (*BBI)->begin();
+
+    for( ; InstIt != (*BBI)->end() ; ++InstIt) {
+
+      const Instruction *const CallRetI = *InstIt;
+      unsigned OpCode =  (CallRetI)->getOpcode();
+      
+      if( (OpCode == Instruction::Call) ) {
+	CallRetInstrList.push_back(CallRetI );      
+	MRI.suggestRegs4CallArgs( (CallInst *) CallRetI, *this, RegClassList );
+      }
+
+      else if (OpCode == Instruction::Ret ) {
+	CallRetInstrList.push_back( CallRetI );  
+	MRI.suggestReg4RetValue( (ReturnInst *) CallRetI, *this);
+      }
+
+
+    } // for each llvm instr in BB
+
   } // for all BBs in method
 
   if( DEBUG_RA) 
@@ -183,7 +257,8 @@ void LiveRangeInfo::coalesceLRs()
            if the def and op are of the same type
 	     if the def and op do not interfere //i.e., not simultaneously live
 	       if (degree(LR of def) + degree(LR of op)) <= # avail regs
-		 merge2IGNodes(def, op) // i.e., merge 2 LRs 
+	         if both LRs do not have suggested colors
+		    merge2IGNodes(def, op) // i.e., merge 2 LRs 
 
 */
 
@@ -253,8 +328,14 @@ void LiveRangeInfo::coalesceLRs()
 
 		if( CombinedDegree <= RCOfDef->getNumOfAvailRegs() ) {
 
-		  RCOfDef->mergeIGNodesOfLRs(LROfDef, LROfUse);
-		  unionAndUpdateLRs(LROfDef, LROfUse);
+		  // if both LRs do not have suggested colors
+		  if( ! (LROfDef->hasSuggestedColor() &&  
+		         LROfUse->hasSuggestedColor() ) ) {
+		    
+		    RCOfDef->mergeIGNodesOfLRs(LROfDef, LROfUse);
+		    unionAndUpdateLRs(LROfDef, LROfUse);
+		  }
+
 
 		} // if combined degree is less than # of regs
 
@@ -289,7 +370,7 @@ void LiveRangeInfo::printLiveRanges()
   LiveRangeMapType::iterator HMI = LiveRangeMap.begin();   // hash map iterator
   cout << endl << "Printing Live Ranges from Hash Map:" << endl;
   for( ; HMI != LiveRangeMap.end() ; HMI ++ ) {
-    if( (*HMI).first ) {
+    if( (*HMI).first && (*HMI).second ) {
       cout <<" "; printValue((*HMI).first);  cout  << "\t: "; 
       ((*HMI).second)->printSet(); cout << endl;
     }
