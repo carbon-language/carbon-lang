@@ -13,6 +13,12 @@
 
 class User;
 class Type;
+class ConstPoolVal;
+class MethodArgument;
+class Instruction;
+class BasicBlock;
+class Method;
+class Module;
 template<class ValueSubclass, class ItemParentType> class ValueHolder;
 
 //===----------------------------------------------------------------------===//
@@ -46,12 +52,64 @@ public:
   virtual ~Value();
 
   inline const Type *getType() const { return Ty; }
-  inline ValueTy getValueType() const { return VTy; }
 
+  // All values can potentially be named...
   inline bool hasName() const { return Name != ""; }
   inline const string &getName() const { return Name; }
   virtual void setName(const string &name) { Name = name; }
 
+  // Methods for determining the subtype of this Value.  The getValueType()
+  // method returns the type of the value directly.  The cast*() methods are
+  // equilivent to using dynamic_cast<>... if the cast is successful, this is
+  // returned, otherwise you get a null pointer, allowing expressions like this:
+  //
+  // if (Instruction *I = Val->castInstruction()) { ... }
+  //
+  // This section also defines a family of isType, isConstant, isMethodArgument,
+  // etc functions...
+  //
+  // The family of functions Val->cast<type>Asserting() is used in the same
+  // way as the Val->cast<type>() instructions, but they assert the expected
+  // type instead of checking it at runtime.
+  //
+  inline ValueTy getValueType() const { return VTy; }
+
+  // Use a macro to define the functions, otherwise these definitions are just
+  // really long and ugly.
+#define CAST_FN(NAME, CLASS)                                              \
+  inline bool is##NAME() const { return VTy == NAME##Val; }               \
+  inline const CLASS *cast##NAME() const { /*const version */             \
+    return is##NAME() ? (const CLASS*)this : 0;                           \
+  }                                                                       \
+  inline CLASS *cast##NAME() {         /* nonconst version */             \
+    return is##NAME() ? (CLASS*)this : 0;                                 \
+  }                                                                       \
+  inline const CLASS *cast##NAME##Asserting() const { /*const version */  \
+    assert(is##NAME() && "Expected Value Type: " #NAME);                  \
+    return (const CLASS*)this;                                            \
+  }                                                                       \
+  inline CLASS *cast##NAME##Asserting() {         /* nonconst version */  \
+    assert(is##NAME() && "Expected Value Type: " #NAME);                  \
+    return (CLASS*)this;                                                  \
+  }                                                                       \
+
+  CAST_FN(Constant      ,       ConstPoolVal  )
+  CAST_FN(MethodArgument,       MethodArgument)
+  CAST_FN(Instruction   ,       Instruction   )
+  CAST_FN(BasicBlock    ,       BasicBlock    )
+  CAST_FN(Method        ,       Method        )
+  CAST_FN(Module        ,       Module        )
+#undef CAST_FN
+
+  // Type value is special, because there is no nonconst version of functions!
+  inline bool isType() const { return VTy == TypeVal; }
+  inline const Type *castType() const {
+    return (VTy == TypeVal) ? (const Type*)this : 0;
+  }
+  inline const Type *castTypeAsserting() const {
+    assert(isType() && "Expected Value Type: Type");
+    return (const Type*)this;
+  }
 
   // replaceAllUsesWith - Go through the uses list for this definition and make
   // each use point to "D" instead of "this".  After this completes, 'this's 
