@@ -285,9 +285,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
   DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
   LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
 
-  // Virtual registers may be defined multiple times (due to phi 
-  // elimination and 2-addr elimination).  Much of what we do only has to be 
-  // done once for the vreg.  We use an empty interval to detect the first 
+  // Virtual registers may be defined multiple times (due to phi
+  // elimination and 2-addr elimination).  Much of what we do only has to be
+  // done once for the vreg.  We use an empty interval to detect the first
   // time we see a vreg.
   if (interval.empty()) {
     // Get the Idx of the defining instructions.
@@ -312,7 +312,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
       // If the kill happens after the definition, we have an intra-block
       // live range.
       if (killIdx > defIndex) {
-        assert(vi.AliveBlocks.empty() && 
+        assert(vi.AliveBlocks.empty() &&
                "Shouldn't be alive across any blocks!");
         LiveRange LR(defIndex, killIdx, ValNum);
         interval.addRange(LR);
@@ -361,7 +361,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
     // must be due to phi elimination or two addr elimination.  If this is
     // the result of two address elimination, then the vreg is the first
     // operand, and is a def-and-use.
-    if (mi->getOperand(0).isRegister() && 
+    if (mi->getOperand(0).isRegister() &&
         mi->getOperand(0).getReg() == interval.reg &&
         mi->getOperand(0).isDef() && mi->getOperand(0).isUse()) {
       // If this is a two-address definition, then we have already processed
@@ -375,7 +375,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
       // Delete the initial value, which should be short and continuous,
       // becuase the 2-addr copy must be in the same MBB as the redef.
       interval.removeRange(DefIndex, RedefIndex);
-         
+
       LiveRange LR(DefIndex, RedefIndex, interval.getNextValue());
       DEBUG(std::cerr << " replace range with " << LR);
       interval.addRange(LR);
@@ -419,7 +419,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
       // live until the end of the block.  We've already taken care of the
       // rest of the live range.
       unsigned defIndex = getDefIndex(getInstructionIndex(mi));
-      LiveRange LR(defIndex, 
+      LiveRange LR(defIndex,
                    getInstructionIndex(&mbb->back()) + InstrSlots::NUM,
                    interval.getNextValue());
       interval.addRange(LR);
@@ -501,7 +501,7 @@ void LiveIntervals::computeIntervals()
   DEBUG(std::cerr << "********** Function: "
         << ((Value*)mf_->getFunction())->getName() << '\n');
 
-  for (MachineFunction::iterator I = mf_->begin(), E = mf_->end(); 
+  for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
        I != E; ++I) {
     MachineBasicBlock* mbb = I;
     DEBUG(std::cerr << ((Value*)mbb->getBasicBlock())->getName() << ":\n");
@@ -545,17 +545,17 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
          lv_->getAllocatablePhysicalRegisters()[regA]) &&
         (MRegisterInfo::isVirtualRegister(regB) ||
          lv_->getAllocatablePhysicalRegisters()[regB])) {
-      
+
       // Get representative registers.
       regA = rep(regA);
       regB = rep(regB);
-      
+
       // If they are already joined we continue.
       if (regA == regB)
         continue;
-            
+
       // If they are both physical registers, we cannot join them.
-      if (MRegisterInfo::isPhysicalRegister(regA) && 
+      if (MRegisterInfo::isPhysicalRegister(regA) &&
           MRegisterInfo::isPhysicalRegister(regB))
         continue;
 
@@ -607,7 +607,7 @@ namespace {
     typedef std::pair<unsigned, MachineBasicBlock*> DepthMBBPair;
     bool operator()(const DepthMBBPair &LHS, const DepthMBBPair &RHS) const {
       if (LHS.first > RHS.first) return true;   // Deeper loops first
-      return LHS.first == RHS.first && 
+      return LHS.first == RHS.first &&
         LHS.second->getNumber() < RHS.second->getNumber();
     }
   };
@@ -634,7 +634,7 @@ void LiveIntervals::joinIntervals() {
     // Sort by loop depth.
     std::sort(MBBs.begin(), MBBs.end(), DepthMBBCompare());
 
-    // Finally, join intervals in loop nest order. 
+    // Finally, join intervals in loop nest order.
     for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
       joinIntervalsInMachineBB(MBBs[i].second);
   }
@@ -687,4 +687,3 @@ LiveInterval LiveIntervals::createInterval(unsigned reg) {
   float Weight = MRegisterInfo::isPhysicalRegister(reg) ?  HUGE_VAL :0.0F;
   return LiveInterval(reg, Weight);
 }
-
