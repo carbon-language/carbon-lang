@@ -100,15 +100,10 @@ At link-time, the following optimizations are run:<p>
 <li>Interprocedural dead code elimination (-globaldce)
 </ol><p>
 
-
-TODO: Works on: SPEC CPU 2000<p>
-TODO: Works on: Olden/Ptrdist benchmarks<p>
-
-The What's New section should give a bulletted list of what is
-included, perhaps a couple of lists (Stable, Beta).<p>
- 
-It would be useful to give a pointer to a list of the available passes (at least
-for the standard compiler techniques).<p>
+At this time, LLVM is known to work properly with SPEC CPU 2000, the Olden
+benchmarks, and the Ptrdist benchmarks among many other programs.  Note however
+that the Sparc and X86 backends do not currently support exception throwing or
+long jumping.  For these programs you must use the C backend.<p>
 
 
 <!-- *********************************************************************** -->
@@ -163,7 +158,8 @@ sections.
 
 <li>It is not possible to <tt>dlopen</tt> an LLVM bytecode file in the JIT.<p>
 
-<li>Linking in static archive files (.a files) is very slow.
+<li>Linking in static archive files (.a files) is very slow (there is no symbol
+table in the archive).
 
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="c-fe"><hr size=0>Known problems with the C front-end</h4><ul>
@@ -192,7 +188,6 @@ sections.
 
 <li>Bugs:<br>
   <a href="http://llvm.cs.uiuc.edu/PR6">Oversized integer bitfields cause crash</a>.<br>
-  <a href="http://llvm.cs.uiuc.edu/PR9">LLVM needs explicit support for weak variables</a>.<br>
 <p>
 
 <li>Although many GCC extensions are supported, some are not.  In particular,
@@ -341,10 +336,6 @@ href="http://llvm.cs.uiuc.edu/PR16">does not currently
 support the <tt>unwind</tt> instruction</a>, so code that throws a C++ exception
 or calls the C <tt>longjmp</tt> function will abort.<p>
 
-<li><a href="http://llvm.cs.uiuc.edu/PR4">Some executables
-produced by LLC seem to intermittently crash (extremely infrequently)</a>.  The
-cause of the problem has not been diagnosed, and does not affect the JIT.<p>
-
 
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="sparc-be"><hr size=0>Known problems with the Sparc back-end</h4><ul>
@@ -363,10 +354,8 @@ Analysis rules.  As such, special options may be necessary to compile the code
 (for example, GCC requires the <tt>-fno-strict-aliasing</tt> option).  This
 problem probably cannot be fixed.<p>
 
-<li>Initializers for global variables that include floating point numbers may
-not be initialized with exactly the right floating point number, if the number
-is not accurately representable in decimal.  This prevents the Olden "power"
-benchmark from producing exactly the right results with the C back-end.<p>
+<li><a href="http://llvm.cs.uiuc.edu/PR33">Initializers for global variables</a>
+cannot include special floating point numbers like Not-A-Number or Infinity.<p>
 
 <li>The code produces by the C back-end has only been tested with the Sun CC and
 GCC compilers.  It is possible that it will have to be adjusted to support other
@@ -386,7 +375,7 @@ including mailing lists publications describing algorithms and components
 implemented in LLVM.  The web page also contains versions of the API
 documentation which is up-to-date with the CVS version of the source code.  You
 can access versions of these documents specific to this release by going into
-the "<tt>llvm/www/doc/</tt>" directory in the LLVM tree.<p>
+the "<tt>llvm/doc/</tt>" directory in the LLVM tree.<p>
 
 If you have any questions or comments about LLVM, please feel free to contact us
 via the mailing lists.<p>
@@ -401,6 +390,6 @@ via the mailing lists.<p>
 Maintained By: <a href="http://llvm.cs.uiuc.edu/">The LLVM Team</a><br>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Sun Oct 12 16:51:06 CDT 2003
+Last modified: Mon Oct 20 14:04:51 CDT 2003
 <!-- hhmts end -->
 </body></html>
