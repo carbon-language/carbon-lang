@@ -175,6 +175,10 @@ namespace {
     virtual bool runOnFunction(Function *F) {
       return doDecomposeMultiDimRefs(F);
     }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.preservesCFG();
+    }
   };
 }
 

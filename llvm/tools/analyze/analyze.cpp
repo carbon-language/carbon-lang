@@ -110,6 +110,7 @@ public:
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequired(ID);
+    AU.setPreservesAll();
   }
 };
 
@@ -137,6 +138,10 @@ struct InstForest : public FunctionPass {
   void doit(Function *F) {
     std::cout << analysis::InstForest<char>(F);
   }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+  }
 };
 
 struct IndVars : public FunctionPass {
@@ -152,6 +157,7 @@ struct IndVars : public FunctionPass {
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequired(LoopInfo::ID);
+    AU.setPreservesAll();
   }
 };
 
@@ -182,6 +188,9 @@ struct Exprs : public FunctionPass {
       }
       std::cout << "\n\n";
     }
+  }
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
   }
 };
 

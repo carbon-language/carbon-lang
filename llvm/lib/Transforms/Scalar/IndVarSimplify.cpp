@@ -203,6 +203,7 @@ namespace {
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired(LoopInfo::ID);
+      AU.preservesCFG();
     }
   };
 }

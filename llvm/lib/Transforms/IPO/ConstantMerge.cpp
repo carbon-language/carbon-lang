@@ -82,6 +82,10 @@ namespace {
       Constants.clear();
       return false;
     }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    }
   };
   
   struct DynamicConstantMerge : public ConstantMerge {

@@ -51,7 +51,7 @@ namespace {
 
     // This transformation requires dominator and immediate dominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      //preservesCFG(AU);
+      AU.preservesCFG();
       AU.addRequired(DominatorSet::ID);
       AU.addRequired(ImmediateDominators::ID); 
     }

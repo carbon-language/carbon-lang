@@ -53,6 +53,7 @@ namespace {
     //
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired(DominanceFrontier::ID);
+      AU.preservesCFG();
     }
 
   private:

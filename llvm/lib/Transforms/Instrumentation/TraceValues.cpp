@@ -49,6 +49,10 @@ namespace {
     bool runOnFunction(Function *F) {
       return doit(F, TraceBasicBlockExits, TraceFunctionExits, PrintfFunc);
     }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.preservesCFG();
+    }
   };
 } // end anonymous namespace
 

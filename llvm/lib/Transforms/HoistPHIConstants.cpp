@@ -76,6 +76,10 @@ static bool doHoistPHIConstants(Function *M) {
 namespace {
   struct HoistPHIConstants : public FunctionPass {
     virtual bool runOnFunction(Function *F) { return doHoistPHIConstants(F); }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.preservesCFG();
+    }
   };
 }
 

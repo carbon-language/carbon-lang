@@ -64,6 +64,9 @@ namespace {
     virtual bool runOnFunction(Function *F) {
       return doSymbolStripping(F);
     }
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    }
   };
 
   struct FullSymbolStripping : public SymbolStripping {

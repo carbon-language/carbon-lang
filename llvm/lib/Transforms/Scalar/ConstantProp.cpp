@@ -219,6 +219,12 @@ namespace {
       
       return Modified;
     }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      // FIXME: This pass does not preserve the CFG because it folds terminator
+      // instructions!
+      //AU.preservesCFG();
+    }
   };
 }
 

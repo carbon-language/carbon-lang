@@ -470,6 +470,10 @@ namespace {
       SCCP S(F);
       return S.doSCCP();
     }
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      // FIXME: SCCP does not preserve the CFG because it folds terminators!
+      //AU.preservesCFG();
+    }
   };
 }
 

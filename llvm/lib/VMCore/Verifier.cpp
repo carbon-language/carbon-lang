@@ -81,6 +81,10 @@ namespace {  // Anonymous namespace for class
       return false;
     }
 
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    }
+
     // Verification methods...
     void verifySymbolTable(SymbolTable *ST);
     void visitFunction(Function *F);

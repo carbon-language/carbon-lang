@@ -209,6 +209,10 @@ struct SparcFunctionAsmPrinter : public FunctionPass, public AsmPrinter {
     return false;
   }
 
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+  }
+
   void emitFunction(const Function *F);
 private :
   void emitBasicBlock(const BasicBlock *BB);
@@ -427,6 +431,11 @@ public:
     return false;
   }
 
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+  }
+
+private:
   void emitGlobalsAndConstants(const Module *M);
 
   void printGlobalVariable(const GlobalVariable *GV);
@@ -436,7 +445,6 @@ public:
 
   static void FoldConstants(const Module *M,
                             std::hash_set<const Constant*> &moduleConstants);
-
 };
 
 

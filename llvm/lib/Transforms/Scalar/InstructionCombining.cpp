@@ -42,9 +42,11 @@ namespace {
     }
 
   public:
-
-
     virtual bool runOnFunction(Function *F);
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.preservesCFG();
+    }
 
     // Visitation implementation - Implement instruction combining for different
     // instruction types.  The semantics are as follows:
