@@ -39,6 +39,64 @@ bool llvm::doConstantPropagation(BasicBlock::iterator &II) {
   return false;
 }
 
+/// ConstantFoldInstruction - Attempt to constant fold the specified
+/// instruction.  If successful, the constant result is returned, if not, null
+/// is returned.  Note that this function can only fail when attempting to fold
+/// instructions like loads and stores, which have no constant expression form.
+///
+Constant *llvm::ConstantFoldInstruction(Instruction *I) {
+  if (PHINode *PN = dyn_cast<PHINode>(I)) {
+    if (PN->getNumIncomingValues() == 0)
+      return Constant::getNullValue(PN->getType());
+    
+    Constant *Result = dyn_cast<Constant>(PN->getIncomingValue(0));
+    if (Result == 0) return 0;
+
+    // Handle PHI nodes specially here...
+    for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (PN->getIncomingValue(i) != Result && PN->getIncomingValue(i) != PN)
+        return 0;   // Not all the same incoming constants...
+    
+    // If we reach here, all incoming values are the same constant.
+    return Result;
+  }
+
+  Constant *Op0 = 0, *Op1 = 0;
+  switch (I->getNumOperands()) {
+  default:
+  case 2:
+    Op1 = dyn_cast<Constant>(I->getOperand(1));
+    if (Op1 == 0) return 0;        // Not a constant?, can't fold
+  case 1:
+    Op0 = dyn_cast<Constant>(I->getOperand(0));
+    if (Op0 == 0) return 0;        // Not a constant?, can't fold
+    break;
+  case 0: return 0;
+  }
+
+  if (isa<BinaryOperator>(I))
+    return ConstantExpr::get(I->getOpcode(), Op0, Op1);    
+
+  switch (I->getOpcode()) {
+  default: return 0;
+  case Instruction::Cast:
+    return ConstantExpr::getCast(Op0, I->getType());
+  case Instruction::Shl:
+  case Instruction::Shr:
+    return ConstantExpr::getShift(I->getOpcode(), Op0, Op1);
+  case Instruction::GetElementPtr:
+    std::vector<Constant*> IdxList;
+    IdxList.reserve(I->getNumOperands()-1);
+    if (Op1) IdxList.push_back(Op1);
+    for (unsigned i = 2, e = I->getNumOperands(); i != e; ++i)
+      if (Constant *C = dyn_cast<Constant>(I->getOperand(i)))
+        IdxList.push_back(C);
+      else
+        return 0;  // Non-constant operand
+    return ConstantExpr::getGetElementPtr(Op0, IdxList);
+  }
+}
+
 // ConstantFoldTerminator - If a terminator instruction is predicated on a
 // constant value, convert it into an unconditional branch to the constant
 // destination.
