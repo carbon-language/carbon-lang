@@ -270,17 +270,21 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     if (C->getType() == Type::BoolTy) {
       Val = (C == ConstantBool::True);
     } else {
-      ConstantInt *CI = cast<ConstantInt> (C);
+      ConstantIntegral *CI = cast<ConstantIntegral> (C);
       Val = CI->getRawValue ();
     }
-    switch (Class) {
-      case cByte:  Val =  (int8_t) Val; break;
-      case cShort: Val = (int16_t) Val; break;
-      case cInt:   Val = (int32_t) Val; break;
-      default:
-        std::cerr << "Offending constant: " << *C << "\n";
-        assert (0 && "Can't copy this kind of constant into register yet");
-        return;
+    if (C->getType()->isSigned()) {
+      switch (Class) {
+        case cByte:  Val =  (int8_t) Val; break;
+        case cShort: Val = (int16_t) Val; break;
+        case cInt:   Val = (int32_t) Val; break;
+      }
+    } else {
+      switch (Class) {
+        case cByte:  Val =  (uint8_t) Val; break;
+        case cShort: Val = (uint16_t) Val; break;
+        case cInt:   Val = (uint32_t) Val; break;
+      }
     }
     if (Val == 0) {
       BuildMI (*MBB, IP, V8::ORrr, 2, R).addReg (V8::G0).addReg(V8::G0);
@@ -1015,7 +1019,7 @@ static inline BasicBlock *getBlockAfter(BasicBlock *BB) {
 /// This is the case if the conditional branch is the only user of the setcc.
 ///
 static SetCondInst *canFoldSetCCIntoBranch(Value *V) {
-  return 0; // disable.
+  //return 0; // disable.
   if (SetCondInst *SCI = dyn_cast<SetCondInst>(V))
     if (SCI->hasOneUse()) {
       BranchInst *User = dyn_cast<BranchInst>(SCI->use_back());
@@ -1039,14 +1043,66 @@ void V8ISel::visitBranchInst(BranchInst &I) {
     MachineBasicBlock *notTakenSuccMBB = MBBMap[notTakenSucc];
     BB->addSuccessor (notTakenSuccMBB);
 
-    // CondReg=(<condition>);
-    // If (CondReg==0) goto notTakenSuccMBB;
-    unsigned CondReg = getReg (I.getCondition ());
-    BuildMI (BB, V8::CMPri, 2).addSImm (0).addReg (CondReg);
-    BuildMI (BB, V8::BE, 1).addMBB (notTakenSuccMBB);
+    // See if we can fold a previous setcc instr into this branch.
+    SetCondInst *SCI = canFoldSetCCIntoBranch(I.getCondition());
+    if (SCI == 0) {
+      // The condition did not come from a setcc which we could fold.
+      // CondReg=(<condition>);
+      // If (CondReg==0) goto notTakenSuccMBB;
+      unsigned CondReg = getReg (I.getCondition ());
+      BuildMI (BB, V8::CMPri, 2).addSImm (0).addReg (CondReg);
+      BuildMI (BB, V8::BE, 1).addMBB (notTakenSuccMBB);
+      BuildMI (BB, V8::BA, 1).addMBB (takenSuccMBB);
+      return;
+    }
+
+    // Fold the setCC instr into the branch.
+    unsigned Op0Reg = getReg (SCI->getOperand (0));
+    unsigned Op1Reg = getReg (SCI->getOperand (1));
+    const Type *Ty = SCI->getOperand (0)->getType ();
+
+    // Compare the two values.
+    if (getClass (Ty) < cLong) {
+      BuildMI(BB, V8::SUBCCrr, 2, V8::G0).addReg(Op0Reg).addReg(Op1Reg);
+    } else if (getClass (Ty) == cLong) {
+      assert (0 && "Can't fold setcc long/ulong into branch");
+    } else if (getClass (Ty) == cFloat) {
+      BuildMI(BB, V8::FCMPS, 2).addReg(Op0Reg).addReg(Op1Reg);
+    } else if (getClass (Ty) == cDouble) {
+      BuildMI(BB, V8::FCMPD, 2).addReg(Op0Reg).addReg(Op1Reg);
+    }
+
+    unsigned BranchIdx;
+    switch (SCI->getOpcode()) {
+    default: assert(0 && "Unknown setcc instruction!");
+    case Instruction::SetEQ: BranchIdx = 0; break;
+    case Instruction::SetNE: BranchIdx = 1; break;
+    case Instruction::SetLT: BranchIdx = 2; break;
+    case Instruction::SetGT: BranchIdx = 3; break;
+    case Instruction::SetLE: BranchIdx = 4; break;
+    case Instruction::SetGE: BranchIdx = 5; break;
+    }
+
+    unsigned Column = 0;
+    if (Ty->isSigned() && !Ty->isFloatingPoint()) Column = 1;
+    if (Ty->isFloatingPoint()) Column = 2;
+    static unsigned OpcodeTab[3*6] = {
+                                   // LLVM            SparcV8
+                                   //        unsigned signed  fp
+      V8::BE,   V8::BE,  V8::FBE,  // seteq = be      be      fbe
+      V8::BNE,  V8::BNE, V8::FBNE, // setne = bne     bne     fbne
+      V8::BCS,  V8::BL,  V8::FBL,  // setlt = bcs     bl      fbl
+      V8::BGU,  V8::BG,  V8::FBG,  // setgt = bgu     bg      fbg
+      V8::BLEU, V8::BLE, V8::FBLE, // setle = bleu    ble     fble
+      V8::BCC,  V8::BGE, V8::FBGE  // setge = bcc     bge     fbge
+    };
+    unsigned Opcode = OpcodeTab[3*BranchIdx + Column];
+    BuildMI (BB, Opcode, 1).addMBB (takenSuccMBB);
+    BuildMI (BB, V8::BA, 1).addMBB (notTakenSuccMBB);
+  } else {
+    // goto takenSuccMBB;
+    BuildMI (BB, V8::BA, 1).addMBB (takenSuccMBB);
   }
-  // goto takenSuccMBB;
-  BuildMI (BB, V8::BA, 1).addMBB (takenSuccMBB);
 }
 
 /// emitGEPOperation - Common code shared between visitGetElementPtrInst and
