@@ -402,6 +402,8 @@ FunctionType::FunctionType(const Type *Result,
                            const std::vector<const Type*> &Params, 
                            bool IsVarArgs) : DerivedType(FunctionTyID), 
                                              isVarArgs(IsVarArgs) {
+  assert((Result->isFirstClassType() || Result == Type::VoidTy) && 
+         "LLVM functions cannot return aggregates");
   bool isAbstract = Result->isAbstract();
   ContainedTys.reserve(Params.size()+1);
   ContainedTys.push_back(PATypeHandle(Result, this));
