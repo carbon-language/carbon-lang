@@ -52,6 +52,10 @@ enum {
 extern "C" {
   bool __llvm_eh_has_uncaught_exception() throw();
   void *__llvm_eh_current_uncaught_exception_type(unsigned HandlerType) throw();
+  void __llvm_eh_add_uncaught_exception(llvm_exception *E) throw();
+
+  llvm_exception *__llvm_eh_get_uncaught_exception() throw();
+  llvm_exception *__llvm_eh_pop_from_uncaught_stack() throw();
 }
 
 #endif

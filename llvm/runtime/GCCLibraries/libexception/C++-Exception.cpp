@@ -17,44 +17,14 @@
 #include <stdio.h>
 #endif
 
-//===----------------------------------------------------------------------===//
-// Generic exception support
-//
-
-// Thread local state for exception handling.
-// FIXME: This should really be made thread-local!
-//
-
 // LastCaughtException - The last exception caught by this handler.  This is for
 // implementation of _rethrow and _get_last_caught.
 //
+// FIXME: This should be thread-local!
+//
 static llvm_exception *LastCaughtException = 0;
 
-// UncaughtExceptionStack - The stack of exceptions currently being thrown.
-static llvm_exception *UncaughtExceptionStack = 0;
 
-// __llvm_eh_has_uncaught_exception - This is used to implement
-// std::uncaught_exception.
-//
-bool __llvm_eh_has_uncaught_exception() throw() {
-  return UncaughtExceptionStack != 0;
-}
-
-// __llvm_eh_current_uncaught_exception - This function checks to see if the
-// current uncaught exception is of the specified language type.  If so, it
-// returns a pointer to the exception area data.
-//
-void *__llvm_eh_current_uncaught_exception_type(unsigned HandlerType) throw() {
-  assert(UncaughtExceptionStack && "No uncaught exception!");
-  if (UncaughtExceptionStack->ExceptionType == HandlerType)
-    return UncaughtExceptionStack+1;
-  return 0;
-}
-
-
-//===----------------------------------------------------------------------===//
-// C++ Specific exception handling support...
-//
 using namespace __cxxabiv1;
 
 // __llvm_cxxeh_allocate_exception - This function allocates space for the
@@ -113,8 +83,6 @@ void __llvm_cxxeh_throw(void *ObjectPtr, void *TypeInfoPtr,
   llvm_cxx_exception *E = (llvm_cxx_exception *)ObjectPtr - 1;
   E->BaseException.ExceptionDestructor = cxx_destructor;
   E->BaseException.ExceptionType = CXXException;
-  E->BaseException.Next = UncaughtExceptionStack;
-  UncaughtExceptionStack = &E->BaseException;
   E->BaseException.HandlerCount = 0;
   E->BaseException.isRethrown = 0;
 
@@ -122,6 +90,8 @@ void __llvm_cxxeh_throw(void *ObjectPtr, void *TypeInfoPtr,
   E->ExceptionObjectDestructor = DtorPtr;
   E->UnexpectedHandler = __unexpected_handler;
   E->TerminateHandler = __terminate_handler;
+
+  __llvm_eh_add_uncaught_exception(&E->BaseException);
 }
 
 
@@ -163,16 +133,15 @@ static void *CXXExceptionISA(llvm_cxx_exception *E,
 // appropriate, otherwise it returns null.
 //
 void *__llvm_cxxeh_current_uncaught_exception_isa(void *CatchType) throw() {
-  assert(UncaughtExceptionStack && "No uncaught exception!");
-  if (UncaughtExceptionStack->ExceptionType != CXXException)
-    return 0;     // If it's not a c++ exception, it doesn't match!
+  void *EPtr = __llvm_eh_current_uncaught_exception_type(CXXException);
+  if (EPtr == 0) return 0;  // If it's not a c++ exception, it doesn't match!
 
   // If it is a C++ exception, use the type info object stored in the exception
   // to see if TypeID matches and, if so, to adjust the exception object
   // pointer.
   //
   const std::type_info *Info = (const std::type_info *)CatchType;
-  return CXXExceptionISA(get_cxx_exception(UncaughtExceptionStack), Info);
+  return CXXExceptionISA((llvm_cxx_exception*)EPtr - 1, Info);
 }
 
 
@@ -182,12 +151,8 @@ void *__llvm_cxxeh_current_uncaught_exception_isa(void *CatchType) throw() {
 // function must work with foreign exceptions.
 //
 void *__llvm_cxxeh_begin_catch() throw() {
-  llvm_exception *E = UncaughtExceptionStack;
-  assert(UncaughtExceptionStack && "There are no uncaught exceptions!?!?");
+  llvm_exception *E = __llvm_eh_pop_from_uncaught_stack();
 
-  // The exception is now no longer uncaught.
-  UncaughtExceptionStack = E->Next;
-  
   // The exception is now caught.
   LastCaughtException = E;
   E->Next = 0;
@@ -254,9 +219,9 @@ void __llvm_cxxeh_end_catch(void *Ex) /* might throw */ {
 // time.
 void __llvm_cxxeh_call_terminate() throw() {
   void (*Handler)(void) = __terminate_handler;
-  if (UncaughtExceptionStack)
-    if (UncaughtExceptionStack->ExceptionType == CXXException)
-      Handler = get_cxx_exception(UncaughtExceptionStack)->TerminateHandler;
+  if (__llvm_eh_has_uncaught_exception())
+    if (void *EPtr = __llvm_eh_current_uncaught_exception_type(CXXException))
+      Handler = ((llvm_cxx_exception*)EPtr - 1)->TerminateHandler;
   __terminate(Handler);
 }
 
@@ -279,8 +244,7 @@ void __llvm_cxxeh_rethrow() throw() {
 
   // Add the exception to the top of the uncaught stack, to preserve the
   // invariant that the top of the uncaught stack is the current exception.
-  E->Next = UncaughtExceptionStack;
-  UncaughtExceptionStack = E;
+  __llvm_eh_add_uncaught_exception(E);
 
   // Return to the caller, which should perform the unwind now.
 }
@@ -320,8 +284,6 @@ static bool ExceptionSpecificationPermitsException(llvm_exception *E,
 //
 void __llvm_cxxeh_check_eh_spec(void *Info, ...) {
   const std::type_info *TypeInfo = (const std::type_info *)Info;
-  llvm_exception *E = UncaughtExceptionStack;
-  assert(E && "No uncaught exceptions!");
 
   if (TypeInfo == 0) {   // Empty exception specification
     // Whatever exception this is, it is not allowed by the (empty) spec, call
@@ -336,6 +298,9 @@ void __llvm_cxxeh_check_eh_spec(void *Info, ...) {
       __terminate(__terminate_handler);
     }
   }
+
+  llvm_exception *E = __llvm_eh_get_uncaught_exception();
+  assert(E && "No uncaught exceptions!");
 
   // Check to see if the exception matches one of the types allowed by the
   // exception specification.  If so, return to the caller to have the
@@ -369,8 +334,7 @@ void __llvm_cxxeh_check_eh_spec(void *Info, ...) {
   
   // Grab the newly caught exception.  If this exception is permitted by the
   // specification, allow it to be thrown.
-  E = UncaughtExceptionStack;
-  assert(E && "No uncaught exceptions!");
+  E = __llvm_eh_get_uncaught_exception();
 
   va_start(Args, Info);
   Ok = ExceptionSpecificationPermitsException(E, TypeInfo, Args);
@@ -385,8 +349,7 @@ void __llvm_cxxeh_check_eh_spec(void *Info, ...) {
   }
 
   // Grab the new bad_exception...
-  E = UncaughtExceptionStack;
-  assert(E && "No uncaught exceptions!");
+  E = __llvm_eh_get_uncaught_exception();
 
   // If it's permitted, allow it to be thrown instead.
   va_start(Args, Info);
