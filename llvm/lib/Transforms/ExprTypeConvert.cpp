@@ -317,6 +317,8 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
 
 
 Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
+  if (V->getType() == Ty) return V;  // Already where we need to be?
+
   ValueMapCache::ExprMapTy::iterator VMCI = VMC.ExprMap.find(V);
   if (VMCI != VMC.ExprMap.end()) {
     assert(VMCI->second->getType() == Ty);
@@ -623,17 +625,17 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       return ExpressionConvertableToType(I->getOperand(1), PointerType::get(Ty),
                                          CTMap);
     } else if (const PointerType *PT = dyn_cast<PointerType>(Ty)) {
-      if (isa<ArrayType>(PT->getElementType()))
-        return false;  // Avoid getDataSize on unsized array type!
+      const Type *ElTy = PT->getElementType();
+      if (ArrayType *AT = dyn_cast<ArrayType>(ElTy))
+        ElTy = AT->getElementType(); // Avoid getDataSize on unsized array type!
       assert(V == I->getOperand(1));
 
       // Must move the same amount of data...
-      if (TD.getTypeSize(PT->getElementType()) != 
-          TD.getTypeSize(I->getOperand(0)->getType())) return false;
+      if (TD.getTypeSize(ElTy) != TD.getTypeSize(I->getOperand(0)->getType()))
+        return false;
 
       // Can convert store if the incoming value is convertable...
-      return ExpressionConvertableToType(I->getOperand(0), PT->getElementType(),
-                                         CTMap);
+      return ExpressionConvertableToType(I->getOperand(0), ElTy, CTMap);
     }
     return false;
   }
@@ -794,7 +796,13 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       Res->setOperand(1, ConvertExpressionToType(I->getOperand(1), NewPT, VMC));
     } else {                           // Replace the source pointer
       const Type *ValTy = cast<PointerType>(NewTy)->getElementType();
-      Res = new StoreInst(Constant::getNullConstant(ValTy), NewVal);
+      vector<Value*> Indices;
+      while (ArrayType *AT = dyn_cast<ArrayType>(ValTy)) {
+        Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+        ValTy = AT->getElementType();
+      }
+
+      Res = new StoreInst(Constant::getNullConstant(ValTy), NewVal, Indices);
       VMC.ExprMap[I] = Res;
       Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), ValTy, VMC));
     }
