@@ -73,7 +73,7 @@ class EquivalenceClasses {
 
     const ECValue *getLeader() const {
       if (isLeader()) return this;
-      if (Leader->isLeader() == 0) return Leader;
+      if (Leader->isLeader()) return Leader;
       // Path compression.
       return Leader = Leader->getLeader();
     }
@@ -146,6 +146,30 @@ public:
     return member_iterator(0);
   }
 
+  /// findValue - Return an iterator to the specified value.  If it does not
+  /// exist, end() is returned.
+  iterator findValue(const ElemTy &V) const {
+    return TheMapping.find(V);
+  }
+
+  /// getLeaderValue - Return the leader for the specified value that is in the
+  /// set.  It is an error to call this method for a value that is not yet in
+  /// the set.  For that, call getOrInsertLeaderValue(V).
+  const ElemTy &getLeaderValue(const ElemTy &V) const {
+    member_iterator MI = findLeader(V);
+    assert(MI != member_end() && "Value is not in the set!");
+    return *MI;
+  }
+
+  /// getOrInsertLeaderValue - Return the leader for the specified value that is
+  /// in the set.  If the member is not in the set, it is inserted, then
+  /// returned.
+  const ElemTy &getOrInsertLeaderValue(const ElemTy &V) const {
+    member_iterator MI = findLeader(insert(V));
+    assert(MI != member_end() && "Value is not in the set!");
+    return *MI;
+  }
+
   /// getNumClasses - Return the number of equivalence classes in this set.
   /// Note that this is a linear time operation.
   unsigned getNumClasses() const {
@@ -154,7 +178,6 @@ public:
       if (I->isLeader()) ++NC;
     return NC;
   }
-
 
 
   //===--------------------------------------------------------------------===//
@@ -183,7 +206,8 @@ public:
   /// union - Merge the two equivalence sets for the specified values, inserting
   /// them if they do not already exist in the equivalence set.
   member_iterator unionSets(const ElemTy &V1, const ElemTy &V2) {
-    return unionSets(findLeader(insert(V1)), findLeader(insert(V2)));
+    iterator V1I = insert(V1), V2I = insert(V2);
+    return unionSets(findLeader(V1I), findLeader(V2I));
   }
   member_iterator unionSets(member_iterator L1, member_iterator L2) {
     assert(L1 != member_end() && L2 != member_end() && "Illegal inputs!");
