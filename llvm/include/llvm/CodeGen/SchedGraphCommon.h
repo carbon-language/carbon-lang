@@ -9,6 +9,7 @@
 #define LLVM_CODEGEN_SCHEDGRAPHCOMMON_H
 
 #include "llvm/Value.h"
+#include <vector>
 
 class SchedGraphEdge;
 class SchedGraphNode;
