@@ -28,15 +28,15 @@ namespace cl {
 //===----------------------------------------------------------------------===//
 // ParseCommandLineOptions - Command line option processing entry point.
 //
-void cl::ParseCommandLineOptions(int &argc, char **argv,
-				 const char *Overview = 0);
+void ParseCommandLineOptions(int &argc, char **argv,
+                             const char *Overview = 0);
 
 //===----------------------------------------------------------------------===//
 // ParseEnvironmentOptions - Environment variable option processing alternate
 //                           entry point.
 //
-void cl::ParseEnvironmentOptions (char *progName, char *envvar,
-				  const char *Overview = 0);
+void ParseEnvironmentOptions(char *progName, char *envvar,
+                             const char *Overview = 0);
 
 //===----------------------------------------------------------------------===//
 // Flags permitted to be passed to command line arguments
