@@ -305,7 +305,7 @@ void V8Printer::printConstantPool(MachineConstantPool *MCP) {
   if (CP.empty()) return;
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    O << "\t.section .rodata\n";
+    O << "\t.section \".rodata\"\n";
     O << "\t.align " << (unsigned)TD.getTypeAlignment(CP[i]->getType())
       << "\n";
     O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t!"
@@ -561,7 +561,7 @@ static void SwitchSection(std::ostream &OS, std::string &CurSection,
   if (CurSection != NewSection) {
     CurSection = NewSection;
     if (!CurSection.empty())
-      OS << "\t.section " << NewSection << "\n";
+      OS << "\t.section \"" << NewSection << "\"\n";
   }
 }
 
@@ -597,7 +597,7 @@ bool V8Printer::doFinalization(Module &M) {
           // Nonnull linkonce -> weak
           O << "\t.weak " << name << "\n";
           SwitchSection(O, CurSection, "");
-          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
+          O << "\t.section\t\".llvm.linkonce.d." << name << "\",\"aw\",@progbits\n";
           break;
         
         case GlobalValue::AppendingLinkage:
