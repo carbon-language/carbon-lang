@@ -1,0 +1,21 @@
+; RUN: llvm-as < %s | llc -march=x86
+
+implementation
+
+declare int  %llvm.readio (int *)
+declare void %llvm.writeio (int, int *)
+
+int %in(int * %p1) {
+  %p2 = alloca int
+  %i1 = call int %llvm.readio (int* %p1)
+  %i2 = call int %llvm.readio (int* %p2)
+  %r = add int %i1, %i2
+  ret int %r
+}
+
+
+void %out(int* %p) {
+  call void(int, int*)* %llvm.writeio (int 1, int * %p)
+  ret void
+}
+
