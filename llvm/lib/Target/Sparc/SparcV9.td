@@ -98,7 +98,7 @@ set op2 = 0b101 in {
 }
 
 // Section A.5: Branch on FP condition codes with prediction - p143
-// Not used in the Sparc backend
+// Not used in the Sparc backend (directly)
 #if 0
 set op2 = 0b101 in {
   def FBPA     : F2_3<0b1000, "fba">;              // Branch always
@@ -121,7 +121,7 @@ set op2 = 0b101 in {
 #endif
 
 // Section A.6: Branch on Integer condition codes (Bicc) - p146
-#if 0 /* instead of using deprecated version, use the predicted version below */
+#if 0
 set isDeprecated = 1 in {
   set op2 = 0b010 in {
     def BA     : F2_2<0b1000, "ba">;              // Branch always
@@ -146,7 +146,7 @@ set isDeprecated = 1 in {
 
 // Using the format of A.7 instructions...
 set op2 = 0b001 in {
-  set cc = 0 in {   // BA and BN don't read condition codes
+  set cc = 0 in { // BA and BN don't read condition codes
     def BA   : F2_3<0b1000, "ba">;              // Branch always
     def BN   : F2_3<0b0000, "bn">;              // Branch never
   }
@@ -226,13 +226,13 @@ set isPrivileged = 1 in {
 }
 #endif
 
-// Section A.12: Floating-Point Add and Subtract - p182
-def FADDS : F3_16<2, 0b110100, 0x41, "fadds">;    // fadds f, f, f
-def FADDD : F3_16<2, 0b110100, 0x42, "faddd">;    // faddd f, f, f
-def FADDQ : F3_16<2, 0b110100, 0x43, "faddq">;    // faddq f, f, f
-def FSUBS : F3_16<2, 0b110100, 0x45, "fsubs">;    // fsubs f, f, f
-def FSUBD : F3_16<2, 0b110100, 0x46, "fsubd">;    // fsubd f, f, f
-def FSUBQ : F3_16<2, 0b110100, 0x47, "fsubq">;    // fsubq f, f, f
+// Section A.12: Floating-Point Add and Subtract - p156
+def FADDS : F3_16<2, 0b110100, 0x41, "fadds">;    // fadds frs1, frs2, frd
+def FADDD : F3_16<2, 0b110100, 0x42, "faddd">;    // faddd frs1, frs2, frd
+def FADDQ : F3_16<2, 0b110100, 0x43, "faddq">;    // faddq frs1, frs2, frd
+def FSUBS : F3_16<2, 0b110100, 0x45, "fsubs">;    // fsubs frs1, frs2, frd
+def FSUBD : F3_16<2, 0b110100, 0x46, "fsubd">;    // fsubd frs1, frs2, frd
+def FSUBQ : F3_16<2, 0b110100, 0x47, "fsubq">;    // fsubq frs1, frs2, frd
 
 // Section A.13: Floating-point compare - p159
 def FCMPS  : F3_15<2, 0b110101, 0b001010001, "fcmps">;   // fcmps  %fcc, r1, r2
@@ -590,7 +590,7 @@ def MOVFULEi : F4_4<2, 0b101100, 0b1110, "movfule">;   // movfule i/xcc, imm, rd
 def MOVFOr   : F4_3<2, 0b101100, 0b1111, "movfo">;     // movfo   i/xcc, rs2, rd
 def MOVFOi   : F4_4<2, 0b101100, 0b1111, "movfo">;     // movfo   i/xcc, imm, rd
 
-// Section A.36: Move Integer Register on Register Condition (MOVR)
+// Section A.36: Move Integer Register on Register Condition (MOVR) - p198
 def MOVRZr   : F3_5<2, 0b101111, 0b001, "movrz">;      // movrz   rs1, rs2, rd
 def MOVRZi   : F3_6<2, 0b101111, 0b001, "movrz">;      // movrz   rs1, imm, rd
 def MOVRLEZr : F3_5<2, 0b101111, 0b010, "movrlez">;    // movrlez rs1, rs2, rd
@@ -737,9 +737,9 @@ set isDeprecated = 1 in {
   def STFSRr : F3_1<3, 0b100101, "st">;                   // st  %fsr, [r+r]
   def STFSRi : F3_2<3, 0b100101, "st">;                   // st  %fsr, [r+i]
 }
+#endif
 def STXFSRr : F3_1<3, 0b100101, "stx">;                   // stx %fsr, [r+r]
 def STXFSRi : F3_2<3, 0b100101, "stx">;                   // stx %fsr, [r+i]
-#endif
 
 // Section A.53: Store Floating-Point into Alternate Space - p227
 // Not currently used in the Sparc backend
@@ -748,12 +748,12 @@ def STXFSRi : F3_2<3, 0b100101, "stx">;                   // stx %fsr, [r+i]
 // Store instructions all want their rd register first
 def STBr : F3_1rd<3, 0b000101, "stb">;                     // stb r, [r+r]
 def STBi : F3_2rd<3, 0b000101, "stb">;                     // stb r, [r+i]
-def STHr : F3_1rd<3, 0b000110, "sth">;                     // stb r, [r+r]
-def STHi : F3_2rd<3, 0b000110, "sth">;                     // stb r, [r+i]
-def STWr : F3_1rd<3, 0b000100, "stw">;                     // stb r, [r+r]
-def STWi : F3_2rd<3, 0b000100, "stw">;                     // stb r, [r+i]
-def STXr : F3_1rd<3, 0b001110, "stx">;                     // stb r, [r+r]
-def STXi : F3_2rd<3, 0b001110, "stx">;                     // stb r, [r+i]
+def STHr : F3_1rd<3, 0b000110, "sth">;                     // sth r, [r+r]
+def STHi : F3_2rd<3, 0b000110, "sth">;                     // sth r, [r+i]
+def STWr : F3_1rd<3, 0b000100, "stw">;                     // stw r, [r+r]
+def STWi : F3_2rd<3, 0b000100, "stw">;                     // stw r, [r+i]
+def STXr : F3_1rd<3, 0b001110, "stx">;                     // stx r, [r+r]
+def STXi : F3_2rd<3, 0b001110, "stx">;                     // stx r, [r+i]
 
 // Section A.55: Store Integer into Alternate Space - p231
 // Not currently used in the Sparc backend
