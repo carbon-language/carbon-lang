@@ -31,6 +31,9 @@ static inline const Type *checkType(const Type *Ty) {
 
 Value::Value(const Type *ty, unsigned scid, const std::string &name)
   : SubclassID(scid), Ty(checkType(ty)), Name(name) {
+  if (!isa<Constant>(this) && !isa<BasicBlock>(this))
+    assert((Ty->isFirstClassType() || Ty == Type::VoidTy) &&
+           "Cannot create non-first-class values except for constants!");
 }
 
 Value::~Value() {

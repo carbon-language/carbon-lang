@@ -130,17 +130,11 @@ void BasicBlock::dropAllReferences() {
 void BasicBlock::removePredecessor(BasicBlock *Pred) {
   assert(find(pred_begin(this), pred_end(this), Pred) != pred_end(this) &&
 	 "removePredecessor: BB is not a predecessor!");
-  if (!isa<PHINode>(front())) return;   // Quick exit.
-
-  pred_iterator PI(pred_begin(this)), EI(pred_end(this));
-  unsigned max_idx;
-
-  // Loop over the rest of the predecessors until we run out, or until we find
-  // out that there are more than 2 predecessors.
-  for (max_idx = 0; PI != EI && max_idx < 3; ++PI, ++max_idx) /*empty*/;
+  PHINode *APN = dyn_cast<PHINode>(&front());
+  if (!APN) return;   // Quick exit.
 
   // If there are exactly two predecessors, then we want to nuke the PHI nodes
-  // altogether.  We cannot do this, however if this in this case however:
+  // altogether.  However, we cannot do this, if this in this case:
   //
   //  Loop:
   //    %x = phi [X, Loop]
@@ -151,10 +145,10 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
   // basic block.  The only case this can happen is with a self loop, so we 
   // check for this case explicitly now.
   // 
+  unsigned max_idx = APN->getNumIncomingValues();
   assert(max_idx != 0 && "PHI Node in block with 0 predecessors!?!?!");
   if (max_idx == 2) {
-    PI = pred_begin(this);
-    BasicBlock *Other = *PI == Pred ? *++PI : *PI;
+    BasicBlock *Other = APN->getIncomingBlock(APN->getIncomingBlock(0) == Pred);
 
     // Disable PHI elimination!
     if (this == Other) max_idx = 3;
