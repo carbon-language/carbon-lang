@@ -58,17 +58,9 @@ FunctionPass *createLowerAllocationsPass() {
 // This function is always successful.
 //
 bool LowerAllocations::doInitialization(Module &M) {
-  const FunctionType *MallocType = 
-    FunctionType::get(PointerType::get(Type::SByteTy),
-                      std::vector<const Type*>(1, Type::UIntTy), false);
-  const FunctionType *FreeType = 
-    FunctionType::get(Type::VoidTy,
-                      std::vector<const Type*>(1,
-                                               PointerType::get(Type::SByteTy)),
-                      false);
-
-  MallocFunc = M.getOrInsertFunction("malloc", MallocType);
-  FreeFunc   = M.getOrInsertFunction("free"  , FreeType);
+  const Type *SBPTy = PointerType::get(Type::SByteTy);
+  MallocFunc = M.getOrInsertFunction("malloc", SBPTy, Type::UIntTy, 0);
+  FreeFunc   = M.getOrInsertFunction("free"  , Type::VoidTy, SBPTy, 0);
 
   return true;
 }
