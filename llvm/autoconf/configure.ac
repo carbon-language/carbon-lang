@@ -37,7 +37,7 @@ for i in `ls ${srcdir}/projects`
 do
   if test ${i} != "CVS"
   then
-    if test -d ${srcdir}/projects/${i}
+    if test -f ${srcdir}/projects/${i}/configure
     then
       AC_CONFIG_SUBDIRS(projects/${i})
     fi
