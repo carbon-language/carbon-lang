@@ -479,7 +479,7 @@ void V8Printer::printMachineInstruction(const MachineInstr *MI) {
   
   // Printing memory instructions is a special case.
   // for loads:  %dest = op %base, offset --> op [%base + offset], %dest
-  // for stores: op %src, %base, offset   --> op %src, [%base + offset]
+  // for stores: op %base, offset, %src   --> op %src, [%base + offset]
   if (isLoadInstruction (MI)) {
     printBaseOffsetPair (MI, 1);
     O << ", ";
@@ -487,9 +487,9 @@ void V8Printer::printMachineInstruction(const MachineInstr *MI) {
     O << "\n";
     return;
   } else if (isStoreInstruction (MI)) {
-    printOperand (MI, 0);
+    printOperand (MI, 2);
     O << ", ";
-    printBaseOffsetPair (MI, 1);
+    printBaseOffsetPair (MI, 0);
     O << "\n";
     return;
   }
