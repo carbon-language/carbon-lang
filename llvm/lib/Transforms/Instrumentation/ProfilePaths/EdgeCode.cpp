@@ -7,7 +7,7 @@
 //top block of cfg
 //===----------------------------------------------------------------------===//
 
-#include "Graph.h"
+#include "llvm/Transforms/Instrumentation/Graph.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -16,15 +16,89 @@
 #include "llvm/iOther.h"
 #include "llvm/iOperators.h"
 #include "llvm/iPHINode.h"
+#include "llvm/Module.h"
+#include "llvm/SymbolTable.h"
+#include "llvm/GlobalVariable.h"
+#include "llvm/Constants.h"//llvm/ConstantVals.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/Function.h"
+#include <string.h>
+#include <stdio.h>
+#include <iostream>
+
+#define INSERT_LOAD_COUNT
+#define INSERT_STORE
 
 using std::vector;
+
+
+void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo, 
+		    Value *cnt){
+  //  return;
+  //cerr<<"In trigger code"<<endl;
+  static int i=-1;
+  i++;
+  char gstr[100];
+  sprintf(gstr,"globalVar%d",i);
+  std::string globalVarName=gstr;
+  SymbolTable *ST = M->getSymbolTable();
+  vector<const Type*> args;
+  args.push_back(PointerType::get(Type::SByteTy));
+  args.push_back(Type::IntTy);
+  args.push_back(Type::IntTy);
+  args.push_back(Type::IntTy);
+  const FunctionType *MTy =
+    FunctionType::get(Type::VoidTy, args, false);
+
+  //  Function *triggerMeth = M->getOrInsertFunction("trigger", MTy);
+  Function *trigMeth = M->getOrInsertFunction("trigger", MTy);
+  assert(trigMeth && "trigger method could not be inserted!");
+  //if (Value *triggerMeth = ST->lookup(PointerType::get(MTy), "trigger")) {
+  //Function *trigMeth = cast<Function>(triggerMeth);
+  vector<Value *> trargs;
+
+  //pred_iterator piter=BB->pred_begin();
+  std::string predName=BB->getName();
+  Constant *bbName=ConstantArray::get(predName);//BB->getName());
+  GlobalVariable *gbl=new GlobalVariable(ArrayType::get(Type::SByteTy, 
+							predName.size()+1), 
+					 true, true, bbName, gstr);
+  M->getGlobalList().push_back(gbl);
+
+  vector<Value *> elargs;
+  elargs.push_back(ConstantUInt::get(Type::UIntTy, 0));
+  elargs.push_back(ConstantUInt::get(Type::UIntTy, 0));
+
+  Instruction *getElmntInst=new GetElementPtrInst(gbl,elargs,"elmntInst");
+
+  //trargs.push_back(ConstantArray::get(BB->getName()));
+  trargs.push_back(getElmntInst);
+  trargs.push_back(ConstantSInt::get(Type::IntTy,MethNo));
+    
+  //trargs.push_back(ConstantSInt::get(Type::IntTy,-1));//erase this
+  trargs.push_back(pathNo);
+  trargs.push_back(cnt);
+  Instruction *callInst=new CallInst(trigMeth,trargs);
+
+  BasicBlock::InstListType& instList=BB->getInstList();
+  BasicBlock::iterator here=instList.begin();
+  here = ++instList.insert(here, getElmntInst);
+  instList.insert(here,callInst);
+  //}
+  //else{
+  //insert trigger method
+    
+  //assert(0&&"No method trigger");
+  //}
+}
+
 
 //get the code to be inserted on the edge
 //This is determined from cond (1-6)
 void getEdgeCode::getCode(Instruction *rInst, 
 			  Instruction *countInst, 
 			  Function *M, 
-			  BasicBlock *BB){
+			  BasicBlock *BB, int numPaths, int MethNo){
   
   BasicBlock::InstListType& instList=BB->getInstList();
   BasicBlock::iterator here=instList.begin();
@@ -33,35 +107,46 @@ void getEdgeCode::getCode(Instruction *rInst,
   switch(cond){
   case 1:{
     Value *val=ConstantSInt::get(Type::IntTy,inc);
+#ifdef INSERT_STORE
     Instruction *stInst=new StoreInst(val, rInst);
-    here=++instList.insert(here,stInst);
+    here = ++instList.insert(here,stInst);
+#endif
     break;
     }
 
   //case: r=0 to be inserted
   case 2:{
     Value *val=ConstantSInt::get(Type::IntTy,0);
+#ifdef INSERT_STORE
     Instruction *stInst=new StoreInst(val, rInst);
-    here=++instList.insert(here,stInst);
+    here = ++instList.insert(here,stInst);
+#endif
     break;
   }
     
   //r+=k
   case 3:{
+    
     Instruction *ldInst=new LoadInst(rInst, "ti1");
     Value *val=ConstantSInt::get(Type::IntTy,inc);
     Instruction *addIn=BinaryOperator::
       create(Instruction::Add, ldInst, val,"ti2");
-    
+#ifdef INSERT_STORE
     Instruction *stInst=new StoreInst(addIn, rInst);
-    here=++instList.insert(here,ldInst);
-    here=++instList.insert(here,addIn);
-    here=++instList.insert(here,stInst);
+#endif
+    here = ++instList.insert(here,ldInst);
+    here = ++instList.insert(here,addIn);
+#ifdef INSERT_STORE
+    here = ++instList.insert(here,stInst);
+#endif
     break;
   }
 
   //count[inc]++
   case 4:{
+    
+    assert(inc>=0 && inc<=numPaths && "inc out of bound!");
+   
     Instruction *ldInst=new 
       LoadInst(countInst,vector<Value *>
 	       (1,ConstantUInt::get(Type::UIntTy, inc)), "ti1");
@@ -69,53 +154,76 @@ void getEdgeCode::getCode(Instruction *rInst,
     Instruction *addIn=BinaryOperator::
       create(Instruction::Add, ldInst, val,"ti2");
 
+    //insert trigger
+    getTriggerCode(M->getParent(), BB, MethNo, 
+		   ConstantSInt::get(Type::IntTy,inc), addIn);
+    here=instList.begin();
+    //end trigger code
+
     assert(inc>=0 && "IT MUST BE POSITIVE NOW");
+#ifdef INSERT_STORE
     Instruction *stInst=new 
       StoreInst(addIn, countInst, vector<Value *>
 		(1, ConstantUInt::get(Type::UIntTy,inc)));
-    
-    here=++instList.insert(here,ldInst);
-    here=++instList.insert(here,addIn);
-    here=++instList.insert(here,stInst);
+#endif
+    here = ++instList.insert(here,ldInst);
+    here = ++instList.insert(here,addIn);
+#ifdef INSERT_STORE
+    here = ++instList.insert(here,stInst);
+#endif
     break;
   }
 
   //case: count[r+inc]++
   case 5:{
+    
     //ti1=inc+r
     Instruction *ldIndex=new LoadInst(rInst, "ti1");
     Value *val=ConstantSInt::get(Type::IntTy,inc);
     Instruction *addIndex=BinaryOperator::
       create(Instruction::Add, ldIndex, val,"ti2");
-    
+    //erase following 1 line
+    //Value *valtemp=ConstantSInt::get(Type::IntTy,999);
     //now load count[addIndex]
+    
     Instruction *castInst=new CastInst(addIndex, 
 				       Type::UIntTy,"ctin");
     Instruction *ldInst=new 
       LoadInst(countInst, vector<Value *>(1,castInst), "ti3");
     Value *cons=ConstantSInt::get(Type::IntTy,1);
-    
     //count[addIndex]++
     Instruction *addIn=BinaryOperator::
       create(Instruction::Add, ldInst, cons,"ti4");
+    
+    //insert trigger
+    getTriggerCode(M->getParent(), BB, MethNo, addIndex, addIn);
+    here=instList.begin();
+    //end trigger code
+    
+#ifdef INSERT_STORE
+    ///*
     Instruction *stInst=new 
       StoreInst(addIn, countInst, 
 		vector<Value *>(1,castInst));
-    
-    here=++instList.insert(here,ldIndex);
-    here=++instList.insert(here,addIndex);
-    here=++instList.insert(here,castInst);
-    here=++instList.insert(here,ldInst);
-    here=++instList.insert(here,addIn);
-    here=++instList.insert(here,stInst);
+    //*/
+#endif
+    here = ++instList.insert(here,ldIndex);
+    here = ++instList.insert(here,addIndex);
+    here = ++instList.insert(here,castInst);
+    here = ++instList.insert(here,ldInst);
+    here = ++instList.insert(here,addIn);
+#ifdef INSERT_STORE
+    here = ++instList.insert(here,stInst);
+#endif
     break;
   }
 
     //case: count[r]+
   case 6:{
+    
     //ti1=inc+r
     Instruction *ldIndex=new LoadInst(rInst, "ti1");
-
+    
     //now load count[addIndex]
     Instruction *castInst2=new 
       CastInst(ldIndex, Type::UIntTy,"ctin");
@@ -126,27 +234,34 @@ void getEdgeCode::getCode(Instruction *rInst,
     //count[addIndex]++
     Instruction *addIn=BinaryOperator::
       create(Instruction::Add, ldInst, cons,"ti3"); 
+
+    //insert trigger
+    getTriggerCode(M->getParent(), BB, MethNo, ldIndex, addIn);
+    here=instList.begin();
+    //end trigger code
+#ifdef INSERT_STORE
     Instruction *stInst=new 
       StoreInst(addIn, countInst, vector<Value *>(1,castInst2));
-    
-    here=++instList.insert(here,ldIndex);
-    here=++instList.insert(here,castInst2);
-    here=++instList.insert(here,ldInst);
-    here=++instList.insert(here,addIn);
-    here=++instList.insert(here,stInst);
+#endif
+    here = ++instList.insert(here,ldIndex);
+    here = ++instList.insert(here,castInst2);
+    here = instList.insert(here,ldInst);
+    here = instList.insert(here,addIn);
+#ifdef INSERT_STORE
+    here = instList.insert(here,stInst);
+#endif
     break;
   }
     
   }
   //now check for cdIn and cdOut
   //first put cdOut
-  if(cdOut!=NULL){
-    cdOut->getCode(rInst, countInst, M, BB);
-  }
   if(cdIn!=NULL){
-    cdIn->getCode(rInst, countInst, M, BB);
+    cdIn->getCode(rInst, countInst, M, BB, numPaths, MethNo);
   }
-
+  if(cdOut!=NULL){
+    cdOut->getCode(rInst, countInst, M, BB, numPaths, MethNo);
+  }
 }
 
 
@@ -179,6 +294,7 @@ void insertInTopBB(BasicBlock *front,
   here=++front->getInstList().insert(here,countVar);
   
   //Initialize Count[...] with 0
+
   for(int i=0;i<k; i++){
     Instruction *stInstrC=new 
       StoreInst(ConstantInt::get(Type::IntTy, 0), 
@@ -186,8 +302,8 @@ void insertInTopBB(BasicBlock *front,
 		(1,ConstantUInt::get(Type::UIntTy, i))); 
     here=++front->getInstList().insert(here,stInstrC);
   }
-  
-  here=++front->getInstList().insert(here,stInstr);
+
+  here = ++front->getInstList().insert(here,stInstr);
 }
 
 
@@ -196,21 +312,30 @@ void insertInTopBB(BasicBlock *front,
 void insertBB(Edge ed,
 	      getEdgeCode *edgeCode, 
 	      Instruction *rInst, 
-	      Instruction *countInst){
-
+	      Instruction *countInst, 
+	      int numPaths, int Methno){
+  static int i=-1;
+  i++;
   BasicBlock* BB1=ed.getFirst()->getElement();
   BasicBlock* BB2=ed.getSecond()->getElement();
   
-  DEBUG(cerr << "Edges with codes ######################\n";
-        cerr << BB1->getName() << "->" << BB2->getName() << "\n";
-        cerr << "########################\n");
+#ifdef DEBUG_PATH_PROFILES
+  //debugging info
+  cerr<<"Edges with codes ######################\n";
+  cerr<<BB1->getName()<<"->"<<BB2->getName()<<"\n";
+  cerr<<"########################\n";
+#endif
+  
+  char counterstr[100];
+  sprintf(counterstr,"counter%d",i);
+  std::string ctr=counterstr;
 
   //We need to insert a BB between BB1 and BB2 
   TerminatorInst *TI=BB1->getTerminator();
-  BasicBlock *newBB=new BasicBlock("counter", BB1->getParent());
+  BasicBlock *newBB=new BasicBlock(ctr, BB1->getParent());
 
   //get code for the new BB
-  edgeCode->getCode(rInst, countInst, BB1->getParent(), newBB);
+  edgeCode->getCode(rInst, countInst, BB1->getParent(), newBB, numPaths, Methno);
  
   //Is terminator a branch instruction?
   //then we need to change branch destinations to include new BB
@@ -223,32 +348,26 @@ void insertBB(Edge ed,
     newBB->getInstList().push_back(newBI2);
   }
   else{
-    Value *cond=BI->getCondition();
-    BasicBlock *fB, *tB;
-   
-    if (BI->getSuccessor(0) == BB2){
-      tB=newBB;
-      fB=BI->getSuccessor(1);
-    } else {
-      fB=newBB;
-      tB=BI->getSuccessor(0);
-    }
-   
-    BB1->getInstList().pop_back();
-    BB1->getInstList().push_back(new BranchInst(tB,fB,cond));
-    newBB->getInstList().push_back(new BranchInst(BB2));
+      if(BI->getSuccessor(0)==BB2)
+      BI->setSuccessor(0, newBB);
+    
+    if(BI->getSuccessor(1)==BB2)
+      BI->setSuccessor(1, newBB);
+
+    Instruction *newBI2=new BranchInst(BB2);
+    newBB->getInstList().push_back(newBI2);
   }
   
-  //now iterate over BB2, and set its Phi nodes right
+  //get code for the new BB
+   //now iterate over BB2, and set its Phi nodes right
   for(BasicBlock::iterator BB2Inst = BB2->begin(), BBend = BB2->end(); 
       BB2Inst != BBend; ++BB2Inst){
    
     if(PHINode *phiInst=dyn_cast<PHINode>(&*BB2Inst)){
-      DEBUG(cerr<<"YYYYYYYYYYYYYYYYY\n");
-
       int bbIndex=phiInst->getBasicBlockIndex(BB1);
-      if(bbIndex>=0)
-	phiInst->setIncomingBlock(bbIndex, newBB);
+      assert(bbIndex>=0);
+      phiInst->setIncomingBlock(bbIndex, newBB);
     }
   }
 }
+
