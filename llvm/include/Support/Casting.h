@@ -207,7 +207,7 @@ inline typename cast_retty<X, Y*>::ret_type cast_or_null(Y *Val) {
 // be used to test for a type as well as cast if successful.  This should be
 // used in the context of an if statement like this:
 //
-//  if (const Instruction *I = dyn_cast<const Instruction>(myVal)) { ... }
+//  if (const Instruction *I = dyn_cast<Instruction>(myVal)) { ... }
 //
 
 template <class X, class Y>
@@ -219,8 +219,8 @@ inline typename cast_retty<X, Y>::ret_type dyn_cast(Y Val) {
 // value is accepted.
 //
 template <class X, class Y>
-inline typename cast_retty<X, Y*>::ret_type dyn_cast_or_null(Y *Val) {
-  return (Val && isa<X>(Val)) ? cast<X, Y*>(Val) : 0;
+inline typename cast_retty<X, Y>::ret_type dyn_cast_or_null(Y Val) {
+  return (Val && isa<X>(Val)) ? cast<X, Y>(Val) : 0;
 }
 
 
