@@ -93,6 +93,13 @@ public:
     }
   }
 
+  /// FIXME: I have no idea if this is right, I just implemented it to get
+  /// the build to compile because it is called by JIT/Emitter.cpp.
+  void updateGlobalMapping(const GlobalValue *GV, void*Addr) {
+    GlobalAddressMap[GV] = Addr;
+    GlobalAddressReverseMap[Addr] = GV;
+  }
+
   /// getPointerToGlobalIfAvailable - This returns the address of the specified
   /// global value if it is available, otherwise it returns null.
   ///
