@@ -49,6 +49,37 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
   return UnknownFileType;
 }
 
+bool
+Path::isArchive() const {
+  if (readable())
+    return hasMagicNumber("!<arch>\012");
+  return false;
+}
+
+bool
+Path::isDynamicLibrary() const {
+  if (readable()) 
+    return hasMagicNumber("\177ELF");
+  return false;
+}
+
+Path
+Path::FindLibrary(std::string& name) {
+  std::vector<sys::Path> LibPaths;
+  GetSystemLibraryPaths(LibPaths);
+  for (unsigned i = 0; i < LibPaths.size(); ++i) {
+    sys::Path FullPath(LibPaths[i]);
+    FullPath.appendFile("lib" + name + LTDL_SHLIB_EXT);
+    if (FullPath.isDynamicLibrary())
+      return FullPath;
+    FullPath.elideSuffix();
+    FullPath.appendSuffix("a");
+    if (FullPath.isArchive())
+      return FullPath;
+  }
+  return sys::Path();
+}
+
 }
 
 // Include the truly platform-specific parts of this class.
