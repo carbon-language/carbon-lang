@@ -373,8 +373,8 @@ void PhyRegAlloc::updateMachineCode()
 
 	  for( AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt ) {
 
-	    if( DEBUG_RA)
-	      cerr << " *$* PREPENDed instr " << *AdIt << endl;
+	    if( DEBUG_RA )
+	      cerr << " PREPENDed instr: " << **AdIt << endl;
 	  	    
 	    MInstIterator = MIVec.insert( MInstIterator, *AdIt );
 	    ++MInstIterator;
@@ -481,7 +481,7 @@ void PhyRegAlloc::updateMachineCode()
 	    for( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt ) {
 	      
 	      if(DEBUG_RA) 
-		cerr << " *#* APPENDed instr opcode: "  << *AdIt << endl;
+		cerr << " APPENDed instr: "  << **AdIt << endl;
 	      
 	      MInstIterator = MIVec.insert( MInstIterator, *AdIt );
 	      ++MInstIterator;
