@@ -61,8 +61,7 @@ static inline bool FileExists(const std::string &FN) {
 //  TRUE  - The file is an archive.
 //  FALSE - The file is not an archive.
 //
-static inline bool IsArchive(const std::string &filename)
-{
+static inline bool IsArchive(const std::string &filename) {
   std::string ArchiveMagic("!<arch>\012");
   char buf[1 + ArchiveMagic.size()];
   std::ifstream f(filename.c_str());
@@ -90,8 +89,7 @@ static inline bool IsArchive(const std::string &filename)
 //  If the file is not found, an empty string is returned.
 //
 static std::string
-FindLib(const std::string &Filename, const std::vector<std::string> &Paths)
-{
+FindLib(const std::string &Filename, const std::vector<std::string> &Paths) {
   // Determine if the pathname can be found as it stands.
   if (FileExists(Filename))
     return Filename;
@@ -142,9 +140,7 @@ FindLib(const std::string &Filename, const std::vector<std::string> &Paths)
 // Return value:
 //  None.
 //
-void
-GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols)
-{
+void GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols) {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
       DefinedSymbols.insert(I->getName());
@@ -173,8 +169,7 @@ GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols)
 //  None.
 //
 void
-GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols)
-{
+GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
   std::set<std::string> DefinedSymbols;
   UndefinedSymbols.clear();   // Start out empty
   
@@ -253,11 +248,9 @@ static bool LinkInArchive(Module *M,
                           std::string &ErrorMessage,
                           bool Verbose)
 {
-  //
   // Find all of the symbols currently undefined in the bytecode program.
   // If all the symbols are defined, the program is complete, and there is
   // no reason to link in any archive files.
-  //
   std::set<std::string> UndefinedSymbols;
   GetAllUndefinedSymbols(M, UndefinedSymbols);
   if (UndefinedSymbols.empty()) {
@@ -265,17 +258,13 @@ static bool LinkInArchive(Module *M,
     return false;  // No need to link anything in!
   }
 
-  //
   // Load in the archive objects.
-  //
   if (Verbose) std::cerr << "  Loading '" << Filename << "'\n";
   std::vector<Module*> Objects;
   if (ReadArchiveFile(Filename, Objects, &ErrorMessage))
     return true;
 
-  //
   // Figure out which symbols are defined by all of the modules in the archive.
-  //
   std::vector<std::set<std::string> > DefinedSymbols;
   DefinedSymbols.resize(Objects.size());
   for (unsigned i = 0; i != Objects.size(); ++i) {
