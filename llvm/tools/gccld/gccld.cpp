@@ -68,6 +68,8 @@ namespace {
   CO4("version-script", cl::Hidden, cl::desc("Compatibility option: ignored"));
   cl::opt<bool>
   CO5("eh-frame-hdr", cl::Hidden, cl::desc("Compatibility option: ignored"));
+  cl::opt<bool>
+  CO6("r", cl::Hidden, cl::desc("Compatibility option: ignored"));
 }
 
 // FileExists - Return true if the specified string is an openable file...
