@@ -2766,7 +2766,12 @@ void PPC32ISel::emitShiftOperation(MachineBasicBlock *MBB,
     // than for a variable shift by using the rlwimi instruction.
     if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(ShiftAmount)) {
       unsigned Amount = CUI->getValue();
-      if (Amount < 32) {
+      if (Amount == 0) {
+        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1)
+          .addReg(SrcReg+1).addReg(SrcReg+1);
+
+      } else if (Amount < 32) {
         unsigned TempReg = makeAnotherReg(ResultTy);
         if (isLeftShift) {
           BuildMI(*MBB, IP, PPC::RLWINM, 4, TempReg).addReg(SrcReg)
