@@ -8,6 +8,8 @@
 #include "llvm/Analysis/Writer.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/InductionVariable.h"
 #include <iterator>
 #include <algorithm>
 
@@ -95,3 +97,52 @@ void cfg::WriteToOutput(const DominanceFrontier &DF, ostream &o) {
   }
 }
 
+
+//===----------------------------------------------------------------------===//
+//  Loop Printing Routines
+//===----------------------------------------------------------------------===//
+
+void cfg::WriteToOutput(const Loop *L, ostream &o) {
+  o << string(L->getLoopDepth()*2, ' ') << "Loop Containing: ";
+
+  for (unsigned i = 0; i < L->getBlocks().size(); ++i) {
+    if (i) o << ",";
+    WriteAsOperand(o, (const Value*)L->getBlocks()[i]);
+  }
+  o << endl;
+
+  copy(L->getSubLoops().begin(), L->getSubLoops().end(),
+       ostream_iterator<const Loop*>(o, "\n"));
+}
+
+void cfg::WriteToOutput(const LoopInfo &LI, ostream &o) {
+  copy(LI.getTopLevelLoops().begin(), LI.getTopLevelLoops().end(),
+       ostream_iterator<const Loop*>(o, "\n"));
+}
+
+
+
+//===----------------------------------------------------------------------===//
+//  Induction Variable Printing Routines
+//===----------------------------------------------------------------------===//
+
+void WriteToOutput(const InductionVariable &IV, ostream &o) {
+  switch (IV.InductionType) {
+  case InductionVariable::Cannonical:   o << "Cannonical ";   break;
+  case InductionVariable::SimpleLinear: o << "SimpleLinear "; break;
+  case InductionVariable::Linear:       o << "Linear ";       break;
+  case InductionVariable::Unknown:      o << "Unrecognized "; break;
+  }
+  o << "Induction Variable";
+  if (IV.Phi) {
+    WriteAsOperand(o, (const Value*)IV.Phi);
+    o << ":\n" << (const Value*)IV.Phi;
+  } else {
+    o << endl;
+  }
+  if (IV.InductionType == InductionVariable::Unknown) return;
+
+  o << "  Start ="; WriteAsOperand(o, IV.Start);
+  o << "  Step =" ; WriteAsOperand(o, IV.Step);
+  o << endl;
+}
