@@ -186,12 +186,9 @@ DSNodeHandle &GraphBuilder::getGlobalNode(GlobalValue &V) {
 //
 DSNodeHandle GraphBuilder::getValueNode(Value &V) {
   assert(isPointerType(V.getType()) && "Should only use pointer scalars!");
-  // Do not share the pointer value to globals... this would cause way too much
-  // false merging.
-  //
+
   DSNodeHandle &NH = ValueMap[&V];
-  if (!isa<GlobalValue>(V) && NH.getNode())
-    return NH;     // Already have a node?  Just return it...
+  if (NH.getNode()) return NH;     // Already have a node?  Just return it...
   
   // Otherwise we need to create a new scalar node...
   DSNode *N = createNode(DSNode::ScalarNode, V.getType());
