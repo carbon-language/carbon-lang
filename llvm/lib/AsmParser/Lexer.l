@@ -71,7 +71,6 @@ static double HexToFP(const char *Buffer) {
   assert(sizeof(double) == sizeof(Result) &&
          "Data sizes incompatible on this target!");
   void *ProxyPointer = &Result;  // Break TBAA correctly
-  cerr << "VALUE: " << *(double*)ProxyPointer << "\n";
   return *(double*)ProxyPointer;   // Cast Hex constant to double
 }
 
