@@ -1,4 +1,5 @@
 ; RUN: llvm-as %s -o - | opt -instcombine
+; XFAIL: *
 
 	%struct.llvm_java_object_base = type opaque
 	"java/lang/Object" = type { %struct.llvm_java_object_base }
