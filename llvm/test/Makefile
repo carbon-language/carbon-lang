@@ -123,7 +123,7 @@ EXPECT = expect
 RUNTEST = runtest
 
 check-dejagnu: site.exp
-	$(RUNTEST)
+	$(RUNTEST) --tool $(TEST)
 
 dejagnu-clean:
 	$(RM) -rf `find $(LLVM_OBJ_ROOT)/test/Regression -name Output -type d -print`
