@@ -142,23 +142,27 @@ Constant *ConstantFoldGetElementPtr(const Constant *C,
   // FIXME: Implement folding of GEP constant exprs the same as instcombine does
 
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-    // Implement folding of:
-    //    void ()** getelementptr (%struct..TorRec* getelementptr
-    //              ([N x %struct..TorRec]* %llvm.global_dtors, long 0, long 0),
-    //                 long 0, ubyte 1)
-    // Into:
-    //    %struct..TorRec* getelementptr ([N x %struct..TorRec]*
-    //                      %llvm.global_dtors, long 0, long 0, ubyte 1)
+    // Combine Indices - If the source pointer to this getelementptr instruction
+    // is a getelementptr instruction, combine the indices of the two
+    // getelementptr instructions into a single instruction.
     //
-    if (CE->getOpcode() == Instruction::GetElementPtr)
-      if (IdxList[0] == Constant::getNullValue(Type::LongTy)) {
+    if (CE->getOpcode() == Instruction::GetElementPtr) {
+      if (CE->getOperand(CE->getNumOperands()-1)->getType() == Type::LongTy) {
         std::vector<Constant*> NewIndices;
         NewIndices.reserve(IdxList.size() + CE->getNumOperands());
-        for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+        for (unsigned i = 1, e = CE->getNumOperands()-1; i != e; ++i)
           NewIndices.push_back(cast<Constant>(CE->getOperand(i)));
+
+        // Add the last index of the source with the first index of the new GEP.
+        Constant *Combined =
+          ConstantExpr::get(Instruction::Add, IdxList[0],
+                            CE->getOperand(CE->getNumOperands()-1));
+                            
+        NewIndices.push_back(Combined);
         NewIndices.insert(NewIndices.end(), IdxList.begin()+1, IdxList.end());
         return ConstantExpr::getGetElementPtr(CE->getOperand(0), NewIndices);
       }
+    }
 
     // Implement folding of:
     //    int* getelementptr ([2 x int]* cast ([3 x int]* %X to [2 x int]*),
