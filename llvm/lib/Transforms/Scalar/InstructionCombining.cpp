@@ -12,10 +12,10 @@
 // simplification happens.
 //
 // This pass combines things like:
-//    %Y = add int 1, %X
-//    %Z = add int 1, %Y
+//    %Y = add int %X, 1
+//    %Z = add int %Y, 1
 // into:
-//    %Z = add int 2, %X
+//    %Z = add int %X, 2
 //
 // This is a simple worklist driven algorithm.
 //
@@ -887,7 +887,7 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
     // if so, convert to a bitwise and.
     if (ConstantUInt *C = dyn_cast<ConstantUInt>(RHS))
       if (uint64_t Val = C->getValue())    // Don't break X % 0 (divide by zero)
-        if (Log2(Val))
+        if (!(Val & Val-1))                // Power of 2
           return BinaryOperator::create(Instruction::And, I.getOperand(0),
                                         ConstantUInt::get(I.getType(), Val-1));
   }
