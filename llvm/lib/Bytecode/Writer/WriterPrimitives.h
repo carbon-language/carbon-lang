@@ -62,7 +62,7 @@ static inline void output_vbr(uint64_t i, std::deque<unsigned char> &out) {
     
     // Nope, we are bigger than a character, output the next 7 bits and set the
     // high bit to say that there is more coming...
-    out.push_back(0x80 | (i & 0x7F));
+    out.push_back(0x80 | ((unsigned char)i & 0x7F));
     i >>= 7;  // Shift out 7 bits now...
   }
 }
@@ -76,7 +76,7 @@ static inline void output_vbr(unsigned i, std::deque<unsigned char> &out) {
     
     // Nope, we are bigger than a character, output the next 7 bits and set the
     // high bit to say that there is more coming...
-    out.push_back(0x80 | (i & 0x7F));
+    out.push_back(0x80 | ((unsigned char)i & 0x7F));
     i >>= 7;  // Shift out 7 bits now...
   }
 }
