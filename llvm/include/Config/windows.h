@@ -11,8 +11,8 @@
  *	on the system).
  */
 
-#ifndef _CONFIG_DLFCN_H
-#define _CONFIG_DLFCN_H
+#ifndef LLVM_CONFIG_WINDOWS_H
+#define LLVM_CONFIG_WINDOWS_H
 
 #include "Config/config.h"
 
