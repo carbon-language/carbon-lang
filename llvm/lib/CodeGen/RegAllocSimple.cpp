@@ -172,7 +172,8 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
       MachineOperand &op = MI->getOperand(i);
       
-      if (op.isRegister() && MRegisterInfo::isVirtualRegister(op.getReg())) {
+      if (op.isRegister() && op.getReg() &&
+          MRegisterInfo::isVirtualRegister(op.getReg())) {
         unsigned virtualReg = (unsigned) op.getReg();
         DEBUG(std::cerr << "op: " << op << "\n");
         DEBUG(std::cerr << "\t inst[" << i << "]: ";
