@@ -1146,7 +1146,7 @@ CreateLoadConstInstr(const TargetMachine &target,
 TmpInstruction*
 InsertCodeToLoadConstant(ConstPoolVal* opValue,
                          Instruction* vmInstr,
-                         vector<MachineInstr*> loadConstVec,
+                         vector<MachineInstr*>& loadConstVec,
                          TargetMachine& target)
 {
   // value is constant and must be loaded into a register.
@@ -1244,7 +1244,7 @@ FixConstantOperands(const InstructionNode* vmInstrNode,
       // have no immediate fields, so the constant always needs to be loaded
       // into a register.
       // 
-      for (unsigned i=1, N=minstr->getNumImplicitRefs(); i < N; ++i)
+      for (unsigned i=0, N=minstr->getNumImplicitRefs(); i < N; ++i)
         if (isa<ConstPoolVal>(minstr->getImplicitRef(i)))
           {
             TmpInstruction* tmpReg = InsertCodeToLoadConstant((ConstPoolVal*)
