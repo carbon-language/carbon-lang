@@ -73,11 +73,11 @@ namespace {
       if (Reg == 0)
         Reg = CurReg++;
 
+      // If this operand is a constant, emit the code to copy the constant into
+      // the register here...
+      //
       if (Constant *C = dyn_cast<Constant>(V))
         copyConstantToRegister(C, Reg);
-
-      // FIXME: Constants should be thrown into registers here and appended to
-      // the end of the current basic block!
 
       return Reg;
     }
