@@ -587,7 +587,8 @@ public:
   inline void     markAsLeafMethod()              { compiledAsLeaf = true; }
   
   int             allocateLocalVar         (const TargetMachine& target,
-                                            const Value* local);
+                                            const Value* local,
+                                            unsigned int size = 0);
   
   int             allocateSpilledValue     (const TargetMachine& target,
                                             const Type* type);
