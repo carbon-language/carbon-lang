@@ -748,7 +748,7 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 %.c: %.y     # Cancel built-in rules for yacc
 %.h: %.y     # Cancel built-in rules for yacc
 %.cpp %.h : %.y
-	@${ECHO} Bisoning $<
+	@${ECHO} "Bisoning `basename $<`"
 	$(VERB) $(BISON) -v -d -p $(<F:%Parser.y=%) -o $*.tab.c  $<
 	$(VERB) cmp -s $*.tab.c $*.cpp > /dev/null || ${MV} -f $*.tab.c $*.cpp
 	$(VERB) cmp -s $*.tab.h $*.h   > /dev/null || ${MV} -f $*.tab.h $*.h
