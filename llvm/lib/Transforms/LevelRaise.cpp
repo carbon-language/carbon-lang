@@ -21,7 +21,6 @@
 #include "llvm/Pass.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/Analysis/Expressions.h"
-#include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
@@ -295,8 +294,6 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
                           << BB->getParent());
         }
 
-        DEBUG(assert(verifyFunction(*BB->getParent()) == false &&
-                     "Function broken!"));
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         ++NumExprTreesConv;
         return true;
@@ -320,8 +317,6 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         PRINT_PEEPHOLE1("CAST-DEST-EXPR-CONV:out", Src);
         DEBUG(std::cerr << "DONE CONVERTING EXPR TYPE: \n\n" << BB->getParent());
 
-        DEBUG(assert(verifyFunction(*BB->getParent()) == false &&
-                     "Function broken!"));
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         ++NumExprTreesConv;
         return true;
