@@ -7,7 +7,7 @@
 //	
 // History:
 //	7/02/01	 -  Vikram Adve  -  Created
-//***************************************************************************
+//**************************************************************************/
 
 
 #include "llvm/CodeGen/InstrSelection.h"
@@ -21,16 +21,18 @@
 
 enum DebugLev {
   NoDebugInfo,
+  PrintInstTrees, 
   DebugInstTrees, 
   DebugBurgTrees,
 };
 
 // Enable Debug Options to be specified on the command line
-cl::Enum<enum DebugLev> DebugLevel("debug_select", cl::NoFlags, // cl::Hidden
+cl::Enum<enum DebugLev> DebugLevel("dselect", cl::NoFlags, // cl::Hidden
    "enable instruction selection debugging information",
-   clEnumVal(NoDebugInfo   , "disable debug output"),
-   clEnumVal(DebugInstTrees, "print instruction trees"),
-   clEnumVal(DebugBurgTrees, "print burg trees"), 0);
+   clEnumValN(NoDebugInfo,    "n", "disable debug output"),
+   clEnumValN(PrintInstTrees, "y", "print generated instruction trees"),
+   clEnumValN(DebugInstTrees, "i", "print instr. selection debugging info"),
+   clEnumValN(DebugBurgTrees, "b", "print burg trees"), 0);
 
 //************************* Forward Declarations ***************************/
 
@@ -92,7 +94,7 @@ bool SelectInstructionsForMethod(Method* method, TargetMachine &Target) {
 	  instrForest.dump();
 	}
       
-      if (DebugLevel > NoDebugInfo)
+      if (DebugLevel >= PrintInstTrees)
 	PrintMachineInstructions(method);
     }
   
