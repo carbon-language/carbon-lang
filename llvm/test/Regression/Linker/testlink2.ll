@@ -1,3 +1,6 @@
+; This file is used by testlink1.ll, so it doesn't actually do anything itself
+;
+; RUN: echo
 
 %MyVar     = global int 4
 %MyIntList = uninitialized global { \2 *, int }
