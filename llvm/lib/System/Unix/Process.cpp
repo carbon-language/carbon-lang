@@ -57,7 +57,7 @@ Process::GetMallocUsage()
 #elif defined(HAVE_SBRK)
   // Note this is only an approximation and more closely resembles
   // the value returned by mallinfo in the arena field.
-  char * eom = sbrk(0);
+  char * eom = (char*) sbrk(0);
   if (eom != ((char*)-1) && som != ((char*)-1))
     return eom - som;
   else
