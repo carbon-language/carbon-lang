@@ -274,9 +274,15 @@ static void printCollection(const Collection &C, std::ostream &O,
         Gr.getAuxFunctionCalls().size() : Gr.getFunctionCalls().size();
 
       TotalCallNodes += NumCalls;
-      if (I->getName() == "main" || !OnlyPrintMain)
-        Gr.writeGraphToFile(O, Prefix+I->getName());
-      else {
+      if (I->getName() == "main" || !OnlyPrintMain) {
+        Function *SCCFn = Gr.getReturnNodes().begin()->first;
+        if (&*I == SCCFn)
+          Gr.writeGraphToFile(O, Prefix+I->getName());
+        else
+          O << "Didn't write '" << Prefix+I->getName()
+            << ".dot' - Graph already emitted to '" << Prefix+SCCFn->getName()
+            << "\n";
+      } else {
         O << "Skipped Writing '" << Prefix+I->getName() << ".dot'... ["
           << Gr.getGraphSize() << "+" << NumCalls << "]\n";
       }
