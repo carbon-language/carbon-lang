@@ -182,9 +182,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
   // Check to see if the type is named.
   if (!IgnoreName || isa<OpaqueType>(Ty)) {
     std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
-    if (I != TypeNames.end()) {
-      return Out << I->second << " " << NameSoFar;
-    }
+    if (I != TypeNames.end()) return Out << I->second << " " << NameSoFar;
   }
 
   switch (Ty->getPrimitiveID()) {
