@@ -1,68 +1,75 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head><title>LLVM Programmer's Manual</title></head>
-
-<body bgcolor=white>
-
-<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp; <font size=+3 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>LLVM Programmer's Manual</b></font></td>
-</tr></table>
- 
+<html>
+<head>
+  <title>LLVM Programmer's Manual</title>
+</head>
+<body style="background-color: white;">
+<table width="100%" bgcolor="#330077" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp; <font size="+3" color="#eeeeff"
+ face="Georgia,Palatino,Times,Roman"><b>LLVM Programmer's Manual</b></font></td>
+    </tr>
+  </tbody>
+</table>
 <ol>
-  <li><a href="#introduction">Introduction</a>
+  <li><a href="#introduction">Introduction</a> </li>
   <li><a href="#general">General Information</a>
-  <ul>
-    <li><a href="#stl">The C++ Standard Template Library</a>
-<!--
+    <ul>
+      <li><a href="#stl">The C++ Standard Template Library</a><!--
     <li>The <tt>-time-passes</tt> option
     <li>How to use the LLVM Makefile system
     <li>How to write a regression test
--->
-  </ul>
-  <li><a href="#apis">Important and useful LLVM APIs</a>
-  <ul>
-    <li><a href="#isa">The <tt>isa&lt;&gt;</tt>, <tt>cast&lt;&gt;</tt> and
-                       <tt>dyn_cast&lt;&gt;</tt> templates</a>
-    <li><a href="#DEBUG">The <tt>DEBUG()</tt> macro &amp;
-                       <tt>-debug</tt> option</a>
-    <ul>
-      <li><a href="#DEBUG_TYPE">Fine grained debug info with 
-          <tt>DEBUG_TYPE</tt> and the <tt>-debug-only</tt> option</a/>
+--> </li>
     </ul>
-    <li><a href="#Statistic">The <tt>Statistic</tt> template &amp;
-                       <tt>-stats</tt> option</a>
-<!--
+  </li>
+  <li><a href="#apis">Important and useful LLVM APIs</a>
+    <ul>
+      <li><a href="#isa">The <tt>isa&lt;&gt;</tt>, <tt>cast&lt;&gt;</tt>
+and <tt>dyn_cast&lt;&gt;</tt> templates</a> </li>
+      <li><a href="#DEBUG">The <tt>DEBUG()</tt> macro &amp; <tt>-debug</tt>
+option</a>
+        <ul>
+          <li><a href="#DEBUG_TYPE">Fine grained debug info with <tt>DEBUG_TYPE</tt>
+and the <tt>-debug-only</tt> option</a> </li>
+        </ul>
+      </li>
+      <li><a href="#Statistic">The <tt>Statistic</tt> template &amp; <tt>-stats</tt>
+option</a><!--
     <li>The <tt>InstVisitor</tt> template
     <li>The general graph API
--->
-  </ul>
+--> </li>
+    </ul>
+  </li>
   <li><a href="#common">Helpful Hints for Common Operations</a>
-  <ul>
-    <li><a href="#inspection">Basic Inspection and Traversal Routines</a>
     <ul>
-      <li><a href="#iterate_function">Iterating over the <tt>BasicBlock</tt>s
-                                       in a <tt>Function</tt></a>
-      <li><a href="#iterate_basicblock">Iterating over the <tt>Instruction</tt>s
-                                       in a <tt>BasicBlock</tt></a>
-      <li><a href="#iterate_institer">Iterating over the <tt>Instruction</tt>s
-                                       in a <tt>Function</tt></a>
-      <li><a href="#iterate_convert">Turning an iterator into a class
-                                        pointer</a>
-      <li><a href="#iterate_complex">Finding call sites: a more complex
-                                        example</a>
-      <li><a href="#calls_and_invokes">Treating calls and invokes the
-                                        same way</a>
-      <li><a href="#iterate_chains">Iterating over def-use &amp; use-def
-                                    chains</a>
-    </ul>
-    <li><a href="#simplechanges">Making simple changes</a>
-    <ul>
-      <li><a href="#schanges_creating">Creating and inserting new
-		  <tt>Instruction</tt>s</a>
-      <li><a href="#schanges_deleting">Deleting
-		  <tt>Instruction</tt>s</a> 
-      <li><a href="#schanges_replacing">Replacing an
-		  <tt>Instruction</tt> with another <tt>Value</tt></a>
-    </ul>
+      <li><a href="#inspection">Basic Inspection and Traversal Routines</a>
+        <ul>
+          <li><a href="#iterate_function">Iterating over the <tt>BasicBlock</tt>s
+in a <tt>Function</tt></a> </li>
+          <li><a href="#iterate_basicblock">Iterating over the <tt>Instruction</tt>s
+in a <tt>BasicBlock</tt></a> </li>
+          <li><a href="#iterate_institer">Iterating over the <tt>Instruction</tt>s
+in a <tt>Function</tt></a> </li>
+          <li><a href="#iterate_convert">Turning an iterator into a
+class pointer</a> </li>
+          <li><a href="#iterate_complex">Finding call sites: a more
+complex example</a> </li>
+          <li><a href="#calls_and_invokes">Treating calls and invokes
+the same way</a> </li>
+          <li><a href="#iterate_chains">Iterating over def-use &amp;
+use-def chains</a> </li>
+        </ul>
+      </li>
+      <li><a href="#simplechanges">Making simple changes</a>
+        <ul>
+          <li><a href="#schanges_creating">Creating and inserting new
+		 <tt>Instruction</tt>s</a> </li>
+          <li><a href="#schanges_deleting">Deleting 		 <tt>Instruction</tt>s</a> </li>
+          <li><a href="#schanges_replacing">Replacing an 		 <tt>Instruction</tt>
+with another <tt>Value</tt></a> </li>
+        </ul>
 <!--
     <li>Working with the Control Flow Graph
     <ul>
@@ -70,1769 +77,1606 @@
       <li>
       <li>
     </ul>
--->
-  </ul>
+--> </li>
+    </ul>
+  </li>
   <li><a href="#coreclasses">The Core LLVM Class Hierarchy Reference</a>
-  <ul>
-    <li><a href="#Value">The <tt>Value</tt> class</a>
     <ul>
-      <li><a href="#User">The <tt>User</tt> class</a>
-      <ul>
-        <li><a href="#Instruction">The <tt>Instruction</tt> class</a>
+      <li><a href="#Value">The <tt>Value</tt> class</a>
         <ul>
-        <li>
+          <li><a href="#User">The <tt>User</tt> class</a>
+            <ul>
+              <li><a href="#Instruction">The <tt>Instruction</tt> class</a>
+                <ul>
+                  <li> <a href="#GetElementPtrInst">The <span
+ style="font-family: monospace;">GetElementPtrInst</span> class</a><br>
+                  </li>
+                </ul>
+              </li>
+              <li><a href="#GlobalValue">The <tt>GlobalValue</tt> class</a>
+                <ul>
+                  <li><a href="#BasicBlock">The <tt>BasicBlock</tt>
+class</a> </li>
+                  <li><a href="#Function">The <tt>Function</tt> class</a> </li>
+                  <li><a href="#GlobalVariable">The <tt>GlobalVariable</tt>
+class</a> </li>
+                </ul>
+              </li>
+              <li><a href="#Module">The <tt>Module</tt> class</a> </li>
+              <li><a href="#Constant">The <tt>Constant</tt> class</a>
+                <ul>
+                  <li> <br>
+                  </li>
+                  <li> <br>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li><a href="#Type">The <tt>Type</tt> class</a> </li>
+          <li><a href="#Argument">The <tt>Argument</tt> class</a> </li>
         </ul>
-        <li><a href="#GlobalValue">The <tt>GlobalValue</tt> class</a>
+      </li>
+      <li>The <tt>SymbolTable</tt> class </li>
+      <li>The <tt>ilist</tt> and <tt>iplist</tt> classes
         <ul>
-          <li><a href="#BasicBlock">The <tt>BasicBlock</tt> class</a>
-          <li><a href="#Function">The <tt>Function</tt> class</a>
-          <li><a href="#GlobalVariable">The <tt>GlobalVariable</tt> class</a>
+          <li>Creating, inserting, moving and deleting from LLVM lists </li>
         </ul>
-        <li><a href="#Module">The <tt>Module</tt> class</a>
-        <li><a href="#Constant">The <tt>Constant</tt> class</a>
-        <ul>
-        <li>
-        <li>
-        </ul>
-      </ul>
-      <li><a href="#Type">The <tt>Type</tt> class</a>
-      <li><a href="#Argument">The <tt>Argument</tt> class</a>
+      </li>
+      <li>Important iterator invalidation semantics to be aware of </li>
     </ul>
-    <li>The <tt>SymbolTable</tt> class
-    <li>The <tt>ilist</tt> and <tt>iplist</tt> classes
-    <ul>
-      <li>Creating, inserting, moving and deleting from LLVM lists
-    </ul>
-    <li>Important iterator invalidation semantics to be aware of
-  </ul>
-
-  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>,
-        <a href="mailto:dhurjati@cs.uiuc.edu">Dinakar Dhurjati</a>, and
-      <a href="mailto:jstanley@cs.uiuc.edu">Joel Stanley</a></b><p>
+    <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>,<a
+ href="mailto:dhurjati@cs.uiuc.edu">Dinakar Dhurjati</a>, and <a
+ href="mailto:jstanley@cs.uiuc.edu">Joel Stanley</a></b></p>
+    <p> </p>
+  </li>
 </ol>
-
-
 <!-- *********************************************************************** -->
-<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="introduction">Introduction
-</b></font></td></tr></table><ul>
+<table width="100%" bgcolor="#330077" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="center"><font color="#eeeeff" size="+2"
+ face="Georgia,Palatino"><b> <a name="introduction">Introduction </a></b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
 <!-- *********************************************************************** -->
-
-This document is meant to highlight some of the important classes and interfaces
-available in the LLVM source-base.  This manual is not intended to explain what
-LLVM is, how it works, and what LLVM code looks like.  It assumes that you know
-the basics of LLVM and are interested in writing transformations or otherwise
-analyzing or manipulating the code.<p>
-
-This document should get you oriented so that you can find your way in the
-continuously growing source code that makes up the LLVM infrastructure.  Note
-that this manual is not intended to serve as a replacement for reading the
-source code, so if you think there should be a method in one of these classes to
-do something, but it's not listed, check the source.  Links to the <a
-href="/doxygen/">doxygen</a> sources are provided to make this as easy as
-possible.<p>
-
-The first section of this document describes general information that is useful
-to know when working in the LLVM infrastructure, and the second describes the
-Core LLVM classes.  In the future this manual will be extended with information
-describing how to use extension libraries, such as dominator information, CFG
-traversal routines, and useful utilities like the <tt><a
-href="/doxygen/InstVisitor_8h-source.html">InstVisitor</a></tt> template.<p>
-
-
+This document is meant to highlight some of the important classes and
+interfaces available in the LLVM source-base.  This manual is not
+intended to explain what LLVM is, how it works, and what LLVM code looks
+like.  It assumes that you know the basics of LLVM and are interested
+in writing transformations or otherwise analyzing or manipulating the
+code.
+  <p> This document should get you oriented so that you can find your
+way in the continuously growing source code that makes up the LLVM
+infrastructure. Note that this manual is not intended to serve as a
+replacement for reading the source code, so if you think there should be
+a method in one of these classes to do something, but it's not listed,
+check the source.  Links to the <a href="/doxygen/">doxygen</a> sources
+are provided to make this as easy as possible.</p>
+  <p> The first section of this document describes general information
+that is useful to know when working in the LLVM infrastructure, and the
+second describes the Core LLVM classes.  In the future this manual will
+be extended with information describing how to use extension libraries,
+such as dominator information, CFG traversal routines, and useful
+utilities like the <tt><a href="/doxygen/InstVisitor_8h-source.html">InstVisitor</a></tt>
+template.</p>
+  <p><!-- *********************************************************************** --> </p>
+</ul>
+<table width="100%" bgcolor="#330077" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="center"><font color="#eeeeff" size="+2"
+ face="Georgia,Palatino"><b> <a name="general">General Information </a></b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="general">General Information
-</b></font></td></tr></table><ul>
+This section contains general information that is useful if you are
+working in the LLVM source-base, but that isn't specific to any
+particular API.
+  <p><!-- ======================================================================= --> </p>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="stl">The C++ Standard Template
+Library</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+LLVM makes heavy use of the C++ Standard Template Library (STL),
+perhaps much more than you are used to, or have seen before.  Because of
+this, you might want to do a little background reading in the
+techniques used and capabilities of the library.  There are many good
+pages that discuss the STL, and several books on the subject that you
+can get, so it will not be discussed in this document.
+  <p> Here are some useful links:</p>
+  <p> </p>
+  <ol>
+    <li><a href="http://www.dinkumware.com/refxcpp.html">Dinkumware C++
+Library reference</a> - an excellent reference for the STL and other
+parts of the standard C++ library. </li>
+    <li><a href="http://www.tempest-sw.com/cpp/">C++ In a Nutshell</a> -
+This is an O'Reilly book in the making.  It has a decent <a
+ href="http://www.tempest-sw.com/cpp/ch13-libref.html">Standard Library
+Reference</a> that rivals Dinkumware's, and is actually free until the
+book is published. </li>
+    <li><a href="http://www.parashift.com/c++-faq-lite/">C++ Frequently
+Asked Questions</a> </li>
+    <li><a href="http://www.sgi.com/tech/stl/">SGI's STL Programmer's
+Guide</a> - Contains a useful <a
+ href="http://www.sgi.com/tech/stl/stl_introduction.html">Introduction
+to the STL</a>. </li>
+    <li><a href="http://www.research.att.com/%7Ebs/C++.html">Bjarne
+Stroustrup's C++ Page</a> </li>
+  </ol>
+  <p> You are also encouraged to take a look at the <a
+ href="CodingStandards.html">LLVM Coding Standards</a> guide which
+focuses on how to write maintainable code more than where to put your
+curly braces.</p>
+  <p><!-- ======================================================================= --> </p>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="stl">Other useful references</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+LLVM is currently using CVS as its source versioning system. You may
+find this reference handy:
+  <p> </p>
+  <ol>
+    <li><a href="http://www.psc.edu/%7Esemke/cvs_branches.html">CVS
+Branch and Tag Primer</a></li>
+  </ol>
+  <p><!-- *********************************************************************** --> </p>
+</ul>
+<table width="100%" bgcolor="#330077" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="center"><font color="#eeeeff" size="+2"
+ face="Georgia,Palatino"><b> <a name="apis">Important and useful LLVM
+APIs </a></b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
 <!-- *********************************************************************** -->
-
-This section contains general information that is useful if you are working in
-the LLVM source-base, but that isn't specific to any particular API.<p>
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="stl">The C++ Standard Template Library</a>
-</b></font></td></tr></table><ul>
-
-LLVM makes heavy use of the C++ Standard Template Library (STL), perhaps much
-more than you are used to, or have seen before.  Because of this, you might want
-to do a little background reading in the techniques used and capabilities of the
-library.  There are many good pages that discuss the STL, and several books on
-the subject that you can get, so it will not be discussed in this document.<p>
-
-Here are some useful links:<p>
-
-<ol>
-<li><a href="http://www.dinkumware.com/refxcpp.html">Dinkumware C++
-Library reference</a> - an excellent reference for the STL and other parts of
-the standard C++ library.
-
-<li><a href="http://www.tempest-sw.com/cpp/">C++ In a Nutshell</a> - This is an
-O'Reilly book in the making.  It has a decent <a
-href="http://www.tempest-sw.com/cpp/ch13-libref.html">Standard Library
-Reference</a> that rivals Dinkumware's, and is actually free until the book is
-published.
-
-<li><a href="http://www.parashift.com/c++-faq-lite/">C++ Frequently Asked
-Questions</a>
-
-<li><a href="http://www.sgi.com/tech/stl/">SGI's STL Programmer's Guide</a> -
-Contains a useful <a
-href="http://www.sgi.com/tech/stl/stl_introduction.html">Introduction to the
-STL</a>.
-
-<li><a href="http://www.research.att.com/~bs/C++.html">Bjarne Stroustrup's C++
-Page</a>
-
-</ol><p>
-
-You are also encouraged to take a look at the <a
-href="CodingStandards.html">LLVM Coding Standards</a> guide which focuses on how
-to write maintainable code more than where to put your curly braces.<p>
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="stl">Other useful references</a>
-</b></font></td></tr></table><ul>
-
-LLVM is currently using CVS as its source versioning system. You may find this
-reference handy:<p>
-
-<ol>
-<li><a href="http://www.psc.edu/~semke/cvs_branches.html">CVS Branch and Tag
-Primer</a></li>
-</ol><p>
-
-<!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="apis">Important and useful LLVM APIs
-</b></font></td></tr></table><ul>
-<!-- *********************************************************************** -->
-
-Here we highlight some LLVM APIs that are generally useful and good to know
-about when writing transformations.<p>
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="isa">The isa&lt;&gt;, cast&lt;&gt; and dyn_cast&lt;&gt; templates</a>
-</b></font></td></tr></table><ul>
-
-The LLVM source-base makes extensive use of a custom form of RTTI.  These
-templates have many similarities to the C++ <tt>dynamic_cast&lt;&gt;</tt>
-operator, but they don't have some drawbacks (primarily stemming from the fact
-that <tt>dynamic_cast&lt;&gt;</tt> only works on classes that have a v-table).
-Because they are used so often, you must know what they do and how they work.
-All of these templates are defined in the <a
-href="/doxygen/Casting_8h-source.html"><tt>Support/Casting.h</tt></a> file (note
-that you very rarely have to include this file directly).<p>
-
-<dl>
-
-<dt><tt>isa&lt;&gt;</tt>:
-
-<dd>The <tt>isa&lt;&gt;</tt> operator works exactly like the Java
-"<tt>instanceof</tt>" operator.  It returns true or false depending on whether a
-reference or pointer points to an instance of the specified class.  This can be
-very useful for constraint checking of various sorts (example below).<p>
-
-
-<dt><tt>cast&lt;&gt;</tt>:
-
-<dd>The <tt>cast&lt;&gt;</tt> operator is a "checked cast" operation.  It
-converts a pointer or reference from a base class to a derived cast, causing an
-assertion failure if it is not really an instance of the right type.  This
-should be used in cases where you have some information that makes you believe
-that something is of the right type.  An example of the <tt>isa&lt;&gt;</tt> and
-<tt>cast&lt;&gt;</tt> template is:<p>
-
-<pre>
-static bool isLoopInvariant(const <a href="#Value">Value</a> *V, const Loop *L) {
-  if (isa&lt;<a href="#Constant">Constant</a>&gt;(V) || isa&lt;<a href="#Argument">Argument</a>&gt;(V) || isa&lt;<a href="#GlobalValue">GlobalValue</a>&gt;(V))
-    return true;
-
-  <i>// Otherwise, it must be an instruction...</i>
-  return !L-&gt;contains(cast&lt;<a href="#Instruction">Instruction</a>&gt;(V)-&gt;getParent());
-</pre><p>
-
-Note that you should <b>not</b> use an <tt>isa&lt;&gt;</tt> test followed by a
-<tt>cast&lt;&gt;</tt>, for that use the <tt>dyn_cast&lt;&gt;</tt> operator.<p>
-
-
-<dt><tt>dyn_cast&lt;&gt;</tt>:
-
-<dd>The <tt>dyn_cast&lt;&gt;</tt> operator is a "checking cast" operation.  It
-checks to see if the operand is of the specified type, and if so, returns a
-pointer to it (this operator does not work with references).  If the operand is
-not of the correct type, a null pointer is returned.  Thus, this works very much
-like the <tt>dynamic_cast</tt> operator in C++, and should be used in the same
-circumstances.  Typically, the <tt>dyn_cast&lt;&gt;</tt> operator is used in an
-<tt>if</tt> statement or some other flow control statement like this:<p>
-
-<pre>
-  if (<a href="#AllocationInst">AllocationInst</a> *AI = dyn_cast&lt;<a href="#AllocationInst">AllocationInst</a>&gt;(Val)) {
-    ...
-  }
-</pre><p>
-
-This form of the <tt>if</tt> statement effectively combines together a call to
-<tt>isa&lt;&gt;</tt> and a call to <tt>cast&lt;&gt;</tt> into one statement,
-which is very convenient.<p>
-
-Another common example is:<p>
-
-<pre>
-  <i>// Loop over all of the phi nodes in a basic block</i>
-  BasicBlock::iterator BBI = BB-&gt;begin();
-  for (; <a href="#PhiNode">PHINode</a> *PN = dyn_cast&lt;<a href="#PHINode">PHINode</a>&gt;(BBI); ++BBI)
-    cerr &lt;&lt; *PN;
-</pre><p>
-
-Note that the <tt>dyn_cast&lt;&gt;</tt> operator, like C++'s
-<tt>dynamic_cast</tt> or Java's <tt>instanceof</tt> operator, can be abused.  In
-particular you should not use big chained <tt>if/then/else</tt> blocks to check
-for lots of different variants of classes.  If you find yourself wanting to do
-this, it is much cleaner and more efficient to use the InstVisitor class to
-dispatch over the instruction type directly.<p>
-
-
-<dt><tt>cast_or_null&lt;&gt;</tt>:
-
-<dd>The <tt>cast_or_null&lt;&gt;</tt> operator works just like the
-<tt>cast&lt;&gt;</tt> operator, except that it allows for a null pointer as an
-argument (which it then propagates).  This can sometimes be useful, allowing you
-to combine several null checks into one.<p>
-
-
-<dt><tt>dyn_cast_or_null&lt;&gt;</tt>:
-
-<dd>The <tt>dyn_cast_or_null&lt;&gt;</tt> operator works just like the
-<tt>dyn_cast&lt;&gt;</tt> operator, except that it allows for a null pointer as
-an argument (which it then propagates).  This can sometimes be useful, allowing
-you to combine several null checks into one.<p>
-
-</dl>
-
-These five templates can be used with any classes, whether they have a v-table
-or not.  To add support for these templates, you simply need to add
-<tt>classof</tt> static methods to the class you are interested casting to.
-Describing this is currently outside the scope of this document, but there are
-lots of examples in the LLVM source base.<p>
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="DEBUG">The <tt>DEBUG()</tt> macro &amp; <tt>-debug</tt> option</a>
-</b></font></td></tr></table><ul>
-
-Often when working on your pass you will put a bunch of debugging printouts and
-other code into your pass.  After you get it working, you want to remove
-it... but you may need it again in the future (to work out new bugs that you run
-across).<p>
-
-Naturally, because of this, you don't want to delete the debug printouts, but
-you don't want them to always be noisy.  A standard compromise is to comment
-them out, allowing you to enable them if you need them in the future.<p>
-
-The "<tt><a href="/doxygen/Debug_8h-source.html">Support/Debug.h</a></tt>" file
-provides a macro named <tt>DEBUG()</tt> that is a much nicer solution to this
-problem.  Basically, you can put arbitrary code into the argument of the
-<tt>DEBUG</tt> macro, and it is only executed if '<tt>opt</tt>' (or any other
-tool) is run with the '<tt>-debug</tt>' command line argument:
-
-<pre>
-     ... 
-     DEBUG(std::cerr &lt;&lt; "I am here!\n");
-     ...
-</pre><p>
-
-Then you can run your pass like this:<p>
-
-<pre>
-  $ opt &lt; a.bc &gt; /dev/null -mypass
-    &lt;no output&gt;
-  $ opt &lt; a.bc &gt; /dev/null -mypass -debug
-    I am here!
-  $
-</pre><p>
-
-Using the <tt>DEBUG()</tt> macro instead of a home-brewed solution allows you to
-now have to create "yet another" command line option for the debug output for
-your pass.  Note that <tt>DEBUG()</tt> macros are disabled for optimized builds,
-so they do not cause a performance impact at all (for the same reason, they
-should also not contain side-effects!).<p>
-
-One additional nice thing about the <tt>DEBUG()</tt> macro is that you can
-enable or disable it directly in gdb.  Just use "<tt>set DebugFlag=0</tt>" or
-"<tt>set DebugFlag=1</tt>" from the gdb if the program is running.  If the
-program hasn't been started yet, you can always just run it with
-<tt>-debug</tt>.<p>
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="DEBUG_TYPE"><hr size=0>Fine grained debug info with 
-          <tt>DEBUG_TYPE()</tt> and the <tt>-debug-only</tt> option</a> </h4><ul>
-
+Here we highlight some LLVM APIs that are generally useful and good to
+know about when writing transformations.
+  <p><!-- ======================================================================= --> </p>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="isa">The isa&lt;&gt;,
+cast&lt;&gt; and dyn_cast&lt;&gt; templates</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+The LLVM source-base makes extensive use of a custom form of RTTI.
+These templates have many similarities to the C++ <tt>dynamic_cast&lt;&gt;</tt>
+operator, but they don't have some drawbacks (primarily stemming from
+the fact that <tt>dynamic_cast&lt;&gt;</tt> only works on classes that
+have a v-table). Because they are used so often, you must know what they
+do and how they work. All of these templates are defined in the <a
+ href="/doxygen/Casting_8h-source.html"><tt>Support/Casting.h</tt></a>
+file (note that you very rarely have to include this file directly).
+  <p> </p>
+  <dl>
+    <dt><tt>isa&lt;&gt;</tt>: </dt>
+    <dd>The <tt>isa&lt;&gt;</tt> operator works exactly like the Java "<tt>instanceof</tt>"
+operator.  It returns true or false depending on whether a reference or
+pointer points to an instance of the specified class.  This can be very
+useful for constraint checking of various sorts (example below).
+      <p> </p>
+    </dd>
+    <dt><tt>cast&lt;&gt;</tt>: </dt>
+    <dd>The <tt>cast&lt;&gt;</tt> operator is a "checked cast"
+operation. It converts a pointer or reference from a base class to a
+derived cast, causing an assertion failure if it is not really an
+instance of the right type.  This should be used in cases where you have
+some information that makes you believe that something is of the right
+type.  An example of the <tt>isa&lt;&gt;</tt> and <tt>cast&lt;&gt;</tt>
+template is:
+      <p> </p>
+      <pre>static bool isLoopInvariant(const <a href="#Value">Value</a> *V, const Loop *L) {<br>  if (isa&lt;<a
+ href="#Constant">Constant</a>&gt;(V) || isa&lt;<a href="#Argument">Argument</a>&gt;(V) || isa&lt;<a
+ href="#GlobalValue">GlobalValue</a>&gt;(V))<br>    return true;<br><br>  <i>// Otherwise, it must be an instruction...</i><br>  return !L-&gt;contains(cast&lt;<a
+ href="#Instruction">Instruction</a>&gt;(V)-&gt;getParent());<br></pre>
+      <p> Note that you should <b>not</b> use an <tt>isa&lt;&gt;</tt>
+test followed by a <tt>cast&lt;&gt;</tt>, for that use the <tt>dyn_cast&lt;&gt;</tt>
+operator.</p>
+      <p> </p>
+    </dd>
+    <dt><tt>dyn_cast&lt;&gt;</tt>: </dt>
+    <dd>The <tt>dyn_cast&lt;&gt;</tt> operator is a "checking cast"
+operation. It checks to see if the operand is of the specified type, and
+if so, returns a pointer to it (this operator does not work with
+references). If the operand is not of the correct type, a null pointer
+is returned.  Thus, this works very much like the <tt>dynamic_cast</tt>
+operator in C++, and should be used in the same circumstances.
+Typically, the <tt>dyn_cast&lt;&gt;</tt> operator is used in an <tt>if</tt>
+statement or some other flow control statement like this:
+      <p> </p>
+      <pre>  if (<a href="#AllocationInst">AllocationInst</a> *AI = dyn_cast&lt;<a
+ href="#AllocationInst">AllocationInst</a>&gt;(Val)) {<br>    ...<br>  }<br></pre>
+      <p> This form of the <tt>if</tt> statement effectively combines
+together a call to <tt>isa&lt;&gt;</tt> and a call to <tt>cast&lt;&gt;</tt>
+into one statement, which is very convenient.</p>
+      <p> Another common example is:</p>
+      <p> </p>
+      <pre>  <i>// Loop over all of the phi nodes in a basic block</i><br>  BasicBlock::iterator BBI = BB-&gt;begin();<br>  for (; <a
+ href="#PhiNode">PHINode</a> *PN = dyn_cast&lt;<a href="#PHINode">PHINode</a>&gt;(BBI); ++BBI)<br>    cerr &lt;&lt; *PN;<br></pre>
+      <p> Note that the <tt>dyn_cast&lt;&gt;</tt> operator, like C++'s <tt>dynamic_cast</tt>
+or Java's <tt>instanceof</tt> operator, can be abused.  In particular
+you should not use big chained <tt>if/then/else</tt> blocks to check for
+lots of different variants of classes.  If you find yourself wanting to
+do this, it is much cleaner and more efficient to use the InstVisitor
+class to dispatch over the instruction type directly.</p>
+      <p> </p>
+    </dd>
+    <dt><tt>cast_or_null&lt;&gt;</tt>: </dt>
+    <dd>The <tt>cast_or_null&lt;&gt;</tt> operator works just like the <tt>cast&lt;&gt;</tt>
+operator, except that it allows for a null pointer as an argument (which
+it then propagates).  This can sometimes be useful, allowing you to
+combine several null checks into one.
+      <p> </p>
+    </dd>
+    <dt><tt>dyn_cast_or_null&lt;&gt;</tt>: </dt>
+    <dd>The <tt>dyn_cast_or_null&lt;&gt;</tt> operator works just like
+the <tt>dyn_cast&lt;&gt;</tt> operator, except that it allows for a null
+pointer as an argument (which it then propagates).  This can sometimes
+be useful, allowing you to combine several null checks into one.
+      <p> </p>
+    </dd>
+  </dl>
+These five templates can be used with any classes, whether they have a
+v-table or not.  To add support for these templates, you simply need to
+add <tt>classof</tt> static methods to the class you are interested
+casting to. Describing this is currently outside the scope of this
+document, but there are lots of examples in the LLVM source base.
+  <p><!-- ======================================================================= --> </p>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="DEBUG">The <tt>DEBUG()</tt> macro
+&amp; <tt>-debug</tt> option</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+Often when working on your pass you will put a bunch of debugging
+printouts and other code into your pass.  After you get it working, you
+want to remove it... but you may need it again in the future (to work
+out new bugs that you run across).
+  <p> Naturally, because of this, you don't want to delete the debug
+printouts, but you don't want them to always be noisy.  A standard
+compromise is to comment them out, allowing you to enable them if you
+need them in the future.</p>
+  <p> The "<tt><a href="/doxygen/Debug_8h-source.html">Support/Debug.h</a></tt>"
+file provides a macro named <tt>DEBUG()</tt> that is a much nicer
+solution to this problem.  Basically, you can put arbitrary code into
+the argument of the <tt>DEBUG</tt> macro, and it is only executed if '<tt>opt</tt>'
+(or any other tool) is run with the '<tt>-debug</tt>' command line
+argument: </p>
+  <pre>     ... <br>     DEBUG(std::cerr &lt;&lt; "I am here!\n");<br>     ...<br></pre>
+  <p> Then you can run your pass like this:</p>
+  <p> </p>
+  <pre>  $ opt &lt; a.bc &gt; /dev/null -mypass<br>    &lt;no output&gt;<br>  $ opt &lt; a.bc &gt; /dev/null -mypass -debug<br>    I am here!<br>  $<br></pre>
+  <p> Using the <tt>DEBUG()</tt> macro instead of a home-brewed solution
+allows you to now have to create "yet another" command line option for
+the debug output for your pass.  Note that <tt>DEBUG()</tt> macros are
+disabled for optimized builds, so they do not cause a performance impact
+at all (for the same reason, they should also not contain
+side-effects!).</p>
+  <p> One additional nice thing about the <tt>DEBUG()</tt> macro is that
+you can enable or disable it directly in gdb.  Just use "<tt>set
+DebugFlag=0</tt>" or "<tt>set DebugFlag=1</tt>" from the gdb if the
+program is running.  If the program hasn't been started yet, you can
+always just run it with <tt>-debug</tt>.</p>
+  <p><!-- _______________________________________________________________________ --> </p>
+</ul>
+<h4><a name="DEBUG_TYPE">
+<hr size="1">Fine grained debug info with <tt>DEBUG_TYPE()</tt> and the <tt>-debug-only</tt>
+option</a> </h4>
+<ul>
 Sometimes you may find yourself in a situation where enabling <tt>-debug</tt>
-just turns on <b>too much</b> information (such as when working on the code
-generator).  If you want to enable debug information with more fine-grained
-control, you define the <tt>DEBUG_TYPE</tt> macro and the <tt>-debug</tt> only
-option as follows:<p>
-
-<pre>
-     ...
-     DEBUG(std::cerr &lt;&lt; "No debug type\n");
-     #undef  DEBUG_TYPE
-     #define DEBUG_TYPE "foo"
-     DEBUG(std::cerr &lt;&lt; "'foo' debug type\n");
-     #undef  DEBUG_TYPE
-     #define DEBUG_TYPE "bar"
-     DEBUG(std::cerr &lt;&lt; "'bar' debug type\n");
-     #undef  DEBUG_TYPE
-     #define DEBUG_TYPE ""
-     DEBUG(std::cerr &lt;&lt; "No debug type (2)\n");
-     ...
-</pre><p>
-
-Then you can run your pass like this:<p>
-
-<pre>
-  $ opt &lt; a.bc &gt; /dev/null -mypass
-    &lt;no output&gt;
-  $ opt &lt; a.bc &gt; /dev/null -mypass -debug
-    No debug type
-    'foo' debug type
-    'bar' debug type
-    No debug type (2)
-  $ opt &lt; a.bc &gt; /dev/null -mypass -debug-only=foo
-    'foo' debug type
-  $ opt &lt; a.bc &gt; /dev/null -mypass -debug-only=bar
-    'bar' debug type
-  $
-</pre><p>
-
-Of course, in practice, you should only set <tt>DEBUG_TYPE</tt> at the top of a
-file, to specify the debug type for the entire module (if you do this before you
-<tt>#include "Support/Debug.h"</tt>, you don't have to insert the ugly
-<tt>#undef</tt>'s).  Also, you should use names more meaningful that "foo" and
-"bar", because there is no system in place to ensure that names do not conflict:
-if two different modules use the same string, they will all be turned on when
-the name is specified.  This allows all, say, instruction scheduling, debug
-information to be enabled with <tt>-debug-type=InstrSched</tt>, even if the
-source lives in multiple files.<p>
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="Statistic">The <tt>Statistic</tt> template &amp; <tt>-stats</tt>
-option</a>
-</b></font></td></tr></table><ul>
-
-The "<tt><a
-href="/doxygen/Statistic_8h-source.html">Support/Statistic.h</a></tt>"
-file provides a template named <tt>Statistic</tt> that is used as a unified way
-to keeping track of what the LLVM compiler is doing and how effective various
-optimizations are.  It is useful to see what optimizations are contributing to
-making a particular program run faster.<p>
-
-Often you may run your pass on some big program, and you're interested to see
-how many times it makes a certain transformation.  Although you can do this with
-hand inspection, or some ad-hoc method, this is a real pain and not very useful
-for big programs.  Using the <tt>Statistic</tt> template makes it very easy to
-keep track of this information, and the calculated information is presented in a
-uniform manner with the rest of the passes being executed.<p>
-
-There are many examples of <tt>Statistic</tt> users, but this basics of using it
-are as follows:<p>
-
-<ol>
-<li>Define your statistic like this:<p>
-
-<pre>
-static Statistic&lt;&gt; NumXForms("mypassname", "The # of times I did stuff");
-</pre><p>
-
-The <tt>Statistic</tt> template can emulate just about any data-type, but if you
-do not specify a template argument, it defaults to acting like an unsigned int
-counter (this is usually what you want).<p>
-
-<li>Whenever you make a transformation, bump the counter:<p>
-
-<pre>
-   ++NumXForms;   // I did stuff
-</pre><p>
-
-</ol><p>
-
-That's all you have to do.  To get '<tt>opt</tt>' to print out the statistics
-gathered, use the '<tt>-stats</tt>' option:<p>
-
-<pre>
-   $ opt -stats -mypassname &lt; program.bc &gt; /dev/null
-    ... statistic output ...
-</pre><p>
-
-When running <tt>gccas</tt> on a C file from the SPEC benchmark suite, it gives
-a report that looks like this:<p>
-
-<pre>
-   7646 bytecodewriter  - Number of normal instructions
-    725 bytecodewriter  - Number of oversized instructions
- 129996 bytecodewriter  - Number of bytecode bytes written
-   2817 raise           - Number of insts DCEd or constprop'd
-   3213 raise           - Number of cast-of-self removed
-   5046 raise           - Number of expression trees converted
-     75 raise           - Number of other getelementptr's formed
-    138 raise           - Number of load/store peepholes
-     42 deadtypeelim    - Number of unused typenames removed from symtab
-    392 funcresolve     - Number of varargs functions resolved
-     27 globaldce       - Number of global variables removed
-      2 adce            - Number of basic blocks removed
-    134 cee             - Number of branches revectored
-     49 cee             - Number of setcc instruction eliminated
-    532 gcse            - Number of loads removed
-   2919 gcse            - Number of instructions removed
-     86 indvars         - Number of canonical indvars added
-     87 indvars         - Number of aux indvars removed
-     25 instcombine     - Number of dead inst eliminate
-    434 instcombine     - Number of insts combined
-    248 licm            - Number of load insts hoisted
-   1298 licm            - Number of insts hoisted to a loop pre-header
-      3 licm            - Number of insts hoisted to multiple loop preds (bad, no loop pre-header)
-     75 mem2reg         - Number of alloca's promoted
-   1444 cfgsimplify     - Number of blocks simplified
-</pre><p>
-
-Obviously, with so many optimizations, having a unified framework for this stuff
-is very nice.  Making your pass fit well into the framework makes it more
-maintainable and useful.<p>
-
-
-<!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="common">Helpful Hints for Common Operations
-</b></font></td></tr></table><ul> <!--
+just turns on <b>too much</b> information (such as when working on the
+code generator).  If you want to enable debug information with more
+fine-grained control, you define the <tt>DEBUG_TYPE</tt> macro and the <tt>-debug</tt>
+only option as follows:
+  <p> </p>
+  <pre>     ...<br>     DEBUG(std::cerr &lt;&lt; "No debug type\n");<br>     #undef  DEBUG_TYPE<br>     #define DEBUG_TYPE "foo"<br>     DEBUG(std::cerr &lt;&lt; "'foo' debug type\n");<br>     #undef  DEBUG_TYPE<br>     #define DEBUG_TYPE "bar"<br>     DEBUG(std::cerr &lt;&lt; "'bar' debug type\n");<br>     #undef  DEBUG_TYPE<br>     #define DEBUG_TYPE ""<br>     DEBUG(std::cerr &lt;&lt; "No debug type (2)\n");<br>     ...<br></pre>
+  <p> Then you can run your pass like this:</p>
+  <p> </p>
+  <pre>  $ opt &lt; a.bc &gt; /dev/null -mypass<br>    &lt;no output&gt;<br>  $ opt &lt; a.bc &gt; /dev/null -mypass -debug<br>    No debug type<br>    'foo' debug type<br>    'bar' debug type<br>    No debug type (2)<br>  $ opt &lt; a.bc &gt; /dev/null -mypass -debug-only=foo<br>    'foo' debug type<br>  $ opt &lt; a.bc &gt; /dev/null -mypass -debug-only=bar<br>    'bar' debug type<br>  $<br></pre>
+  <p> Of course, in practice, you should only set <tt>DEBUG_TYPE</tt> at
+the top of a file, to specify the debug type for the entire module (if
+you do this before you <tt>#include "Support/Debug.h"</tt>, you don't
+have to insert the ugly <tt>#undef</tt>'s).  Also, you should use names
+more meaningful than "foo" and "bar", because there is no system in
+place to ensure that names do not conflict. If two different modules
+use the same string, they will all be turned on when the name is
+specified. This allows, for example, all debug information for
+instruction scheduling to be enabled with <tt>-debug-type=InstrSched</tt>,
+even if the source lives in multiple files.</p>
+  <p><!-- ======================================================================= --> </p>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="Statistic">The <tt>Statistic</tt>
+template &amp; <tt>-stats</tt> option</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+The "<tt><a href="/doxygen/Statistic_8h-source.html">Support/Statistic.h</a></tt>"
+file provides a template named <tt>Statistic</tt> that is used as a
+unified way to keep track of what the LLVM compiler is doing and how
+effective various optimizations are.  It is useful to see what
+optimizations are contributing to making a particular program run
+faster.
+  <p> Often you may run your pass on some big program, and you're
+interested to see how many times it makes a certain transformation.
+Although you can do this with hand inspection, or some ad-hoc method,
+this is a real pain and not very useful for big programs.  Using the <tt>Statistic</tt>
+template makes it very easy to keep track of this information, and the
+calculated information is presented in a uniform manner with the rest of
+the passes being executed.</p>
+  <p> There are many examples of <tt>Statistic</tt> uses, but the basics
+of using it are as follows:</p>
+  <p> </p>
+  <ol>
+    <li>Define your statistic like this:
+      <p> </p>
+      <pre>static Statistic&lt;&gt; NumXForms("mypassname", "The # of times I did stuff");<br></pre>
+      <p> The <tt>Statistic</tt> template can emulate just about any
+data-type, but if you do not specify a template argument, it defaults to
+acting like an unsigned int counter (this is usually what you want).</p>
+      <p> </p>
+    </li>
+    <li>Whenever you make a transformation, bump the counter:
+      <p> </p>
+      <pre>   ++NumXForms;   // I did stuff<br></pre>
+      <p> </p>
+    </li>
+  </ol>
+  <p> That's all you have to do.  To get '<tt>opt</tt>' to print out the
+statistics gathered, use the '<tt>-stats</tt>' option:</p>
+  <p> </p>
+  <pre>   $ opt -stats -mypassname &lt; program.bc &gt; /dev/null<br>    ... statistic output ...<br></pre>
+  <p> When running <tt>gccas</tt> on a C file from the SPEC benchmark
+suite, it gives a report that looks like this:</p>
+  <p> </p>
+  <pre>   7646 bytecodewriter  - Number of normal instructions<br>    725 bytecodewriter  - Number of oversized instructions<br> 129996 bytecodewriter  - Number of bytecode bytes written<br>   2817 raise           - Number of insts DCEd or constprop'd<br>   3213 raise           - Number of cast-of-self removed<br>   5046 raise           - Number of expression trees converted<br>     75 raise           - Number of other getelementptr's formed<br>    138 raise           - Number of load/store peepholes<br>     42 deadtypeelim    - Number of unused typenames removed from symtab<br>    392 funcresolve     - Number of varargs functions resolved<br>     27 globaldce       - Number of global variables removed<br>      2 adce            - Number of basic blocks removed<br>    134 cee             - Number of branches revectored<br>     49 cee             - Number of setcc instruction eliminated<br>    532 gcse            - Number of loads removed<br>   2919 gcse            - Number of instructions removed<br>     86 indvars         - Number of canonical indvars added<br>     87 indvars         - Number of aux indvars removed<br>     25 instcombine     - Number of dead inst eliminate<br>    434 instcombine     - Number of insts combined<br>    248 licm            - Number of load insts hoisted<br>   1298 licm            - Number of insts hoisted to a loop pre-header<br>      3 licm            - Number of insts hoisted to multiple loop preds (bad, no loop pre-header)<br>     75 mem2reg         - Number of alloca's promoted<br>   1444 cfgsimplify     - Number of blocks simplified<br></pre>
+  <p> Obviously, with so many optimizations, having a unified framework
+for this stuff is very nice.  Making your pass fit well into the
+framework makes it more maintainable and useful.</p>
+  <p><!-- *********************************************************************** --> </p>
+</ul>
+<table width="100%" bgcolor="#330077" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="center"><font color="#eeeeff" size="+2"
+ face="Georgia,Palatino"><b> <a name="common">Helpful Hints for Common
+Operations </a></b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+<!--
 *********************************************************************** -->
-
-This section describes how to perform some very simple transformations of LLVM
-code.  This is meant to give examples of common idioms used, showing the
-practical side of LLVM transformations.<p>
-
-Because this is a "how-to" section, you should also read about the main classes
-that you will be working with.  The <a href="#coreclasses">Core LLVM Class
-Hierarchy Reference</a> contains details and descriptions of the main classes
-that you should know about.<p>
-
-<!-- NOTE: this section should be heavy on example code -->
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="inspection">Basic Inspection and Traversal Routines</a>
-</b></font></td></tr></table><ul>
-
-The LLVM compiler infrastructure have many different data structures that may be
-traversed.  Following the example of the C++ standard template library, the
-techniques used to traverse these various data structures are all basically the
-same.  For a enumerable sequence of values, the <tt>XXXbegin()</tt> function (or
-method) returns an iterator to the start of the sequence, the <tt>XXXend()</tt>
-function returns an iterator pointing to one past the last valid element of the
-sequence, and there is some <tt>XXXiterator</tt> data type that is common
-between the two operations.<p>
-
-Because the pattern for iteration is common across many different aspects of the
-program representation, the standard template library algorithms may be used on
-them, and it is easier to remember how to iterate.  First we show a few common
-examples of the data structures that need to be traversed.  Other data
-structures are traversed in very similar ways.<p>
-
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="iterate_function"><hr size=0>Iterating over the <a
-href="#BasicBlock"><tt>BasicBlock</tt></a>s in a <a
-href="#Function"><tt>Function</tt></a> </h4><ul>
-
+This section describes how to perform some very simple transformations
+of LLVM code.  This is meant to give examples of common idioms used,
+showing the practical side of LLVM transformations.
+  <p> Because this is a "how-to" section, you should also read about the
+main classes that you will be working with.  The <a href="#coreclasses">Core
+LLVM Class Hierarchy Reference</a> contains details and descriptions of
+the main classes that you should know about.</p>
+  <p><!-- NOTE: this section should be heavy on example code --><!-- ======================================================================= --> </p>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="inspection">Basic Inspection and
+Traversal Routines</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+The LLVM compiler infrastructure have many different data structures
+that may be traversed.  Following the example of the C++ standard
+template library, the techniques used to traverse these various data
+structures are all basically the same.  For a enumerable sequence of
+values, the <tt>XXXbegin()</tt> function (or method) returns an iterator
+to the start of the sequence, the <tt>XXXend()</tt> function returns an
+iterator pointing to one past the last valid element of the sequence,
+and there is some <tt>XXXiterator</tt> data type that is common between
+the two operations.
+  <p> Because the pattern for iteration is common across many different
+aspects of the program representation, the standard template library
+algorithms may be used on them, and it is easier to remember how to
+iterate. First we show a few common examples of the data structures that
+need to be traversed.  Other data structures are traversed in very
+similar ways.</p>
+  <p><!-- _______________________________________________________________________ --> </p>
+</ul>
+<h4>
+<hr size="1"><a name="iterate_function">Iterating over the </a><a
+ href="#BasicBlock"><tt>BasicBlock</tt></a>s in a <a href="#Function"><tt>Function</tt></a> </h4>
+<ul>
 It's quite common to have a <tt>Function</tt> instance that you'd like
-to transform in some way; in particular, you'd like to manipulate its
-<tt>BasicBlock</tt>s.  To facilitate this, you'll need to iterate over
-all of the <tt>BasicBlock</tt>s that constitute the <tt>Function</tt>.
-The following is an example that prints the name of a
-<tt>BasicBlock</tt> and the number of <tt>Instruction</tt>s it
-contains:
-
-<pre>
-  // func is a pointer to a Function instance
-  for (Function::iterator i = func-&gt;begin(), e = func-&gt;end(); i != e; ++i) {
-
-      // print out the name of the basic block if it has one, and then the
-      // number of instructions that it contains
-
-      cerr &lt;&lt "Basic block (name=" &lt;&lt i-&gt;getName() &lt;&lt; ") has " 
-           &lt;&lt i-&gt;size() &lt;&lt " instructions.\n";
-  }
-</pre>
-
+to transform in some way; in particular, you'd like to manipulate its <tt>BasicBlock</tt>s.
+To facilitate this, you'll need to iterate over all of the <tt>BasicBlock</tt>s
+that constitute the <tt>Function</tt>. The following is an example
+that prints the name of a <tt>BasicBlock</tt> and the number of <tt>Instruction</tt>s
+it contains:
+  <pre>  // func is a pointer to a Function instance<br>  for (Function::iterator i = func-&gt;begin(), e = func-&gt;end(); i != e; ++i) {<br><br>      // print out the name of the basic block if it has one, and then the<br>      // number of instructions that it contains<br><br>      cerr &lt;&lt; "Basic block (name=" &lt;&lt; i-&gt;getName() &lt;&lt; ") has " <br>           &lt;&lt; i-&gt;size() &lt;&lt; " instructions.\n";<br>  }<br></pre>
 Note that i can be used as if it were a pointer for the purposes of
 invoking member functions of the <tt>Instruction</tt> class.  This is
 because the indirection operator is overloaded for the iterator
 classes.  In the above code, the expression <tt>i-&gt;size()</tt> is
-exactly equivalent to <tt>(*i).size()</tt> just like you'd expect.
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="iterate_basicblock"><hr size=0>Iterating over the <a
-href="#Instruction"><tt>Instruction</tt></a>s in a <a
-href="#BasicBlock"><tt>BasicBlock</tt></a> </h4><ul>
-
-Just like when dealing with <tt>BasicBlock</tt>s in
-<tt>Function</tt>s, it's easy to iterate over the individual
-instructions that make up <tt>BasicBlock</tt>s.  Here's a code snippet
-that prints out each instruction in a <tt>BasicBlock</tt>:
-
-<pre>
-  // blk is a pointer to a BasicBlock instance
-  for (BasicBlock::iterator i = blk-&gt;begin(), e = blk-&gt;end(); i != e; ++i)
-     // the next statement works since operator&lt;&lt;(ostream&amp;,...) 
-     // is overloaded for Instruction&amp;
-     cerr &lt;&lt; *i &lt;&lt; "\n";
-</pre>
-
-However, this isn't really the best way to print out the contents of a
-<tt>BasicBlock</tt>!  Since the ostream operators are overloaded for
-virtually anything you'll care about, you could have just invoked the
-print routine on the basic block itself: <tt>cerr &lt;&lt; *blk &lt;&lt;
-"\n";</tt>.<p>
-
-Note that currently operator&lt;&lt; is implemented for <tt>Value*</tt>, so it 
-will print out the contents of the pointer, instead of 
-the pointer value you might expect.  This is a deprecated interface that will
-be removed in the future, so it's best not to depend on it.  To print out the
-pointer value for now, you must cast to <tt>void*</tt>.<p>
-
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="iterate_institer"><hr size=0>Iterating over the <a
-href="#Instruction"><tt>Instruction</tt></a>s in a <a
-href="#Function"><tt>Function</tt></a></h4><ul>
-
-If you're finding that you commonly iterate over a <tt>Function</tt>'s
-<tt>BasicBlock</tt>s and then that <tt>BasicBlock</tt>'s
-<tt>Instruction</tt>s, <tt>InstIterator</tt> should be used instead.
-You'll need to include <a href="/doxygen/InstIterator_8h-source.html"><tt>llvm/Support/InstIterator.h</tt></a>, and then
-instantiate <tt>InstIterator</tt>s explicitly in your code.  Here's a
-small example that shows how to dump all instructions in a function to
-stderr (<b>Note:</b> Dereferencing an <tt>InstIterator</tt> yields an
-<tt>Instruction*</tt>, <i>not</i> an <tt>Instruction&amp</tt>!):
-
-<pre>
-#include "<a href="/doxygen/InstIterator_8h-source.html">llvm/Support/InstIterator.h</a>"
-...
-// Suppose F is a ptr to a function
-for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
-  cerr &lt;&lt **i &lt;&lt "\n";
-</pre>
-
+exactly equivalent to <tt>(*i).size()</tt> just like you'd expect.<!-- _______________________________________________________________________ -->
+</ul>
+<h4>
+<hr size="1"><a name="iterate_basicblock">Iterating over the </a><a
+ href="#Instruction"><tt>Instruction</tt></a>s in a <a
+ href="#BasicBlock"><tt>BasicBlock</tt></a> </h4>
+<ul>
+Just like when dealing with <tt>BasicBlock</tt>s in <tt>Function</tt>s,
+it's easy to iterate over the individual instructions that make up <tt>BasicBlock</tt>s.
+Here's a code snippet that prints out each instruction in a <tt>BasicBlock</tt>:
+  <pre>  // blk is a pointer to a BasicBlock instance<br>  for (BasicBlock::iterator i = blk-&gt;begin(), e = blk-&gt;end(); i != e; ++i)<br>     // the next statement works since operator&lt;&lt;(ostream&amp;,...) <br>     // is overloaded for Instruction&amp;<br>     cerr &lt;&lt; *i &lt;&lt; "\n";<br></pre>
+However, this isn't really the best way to print out the contents of a <tt>BasicBlock</tt>!
+Since the ostream operators are overloaded for virtually anything
+you'll care about, you could have just invoked the print routine on the
+basic block itself: <tt>cerr &lt;&lt; *blk &lt;&lt; "\n";</tt>.
+  <p> Note that currently operator&lt;&lt; is implemented for <tt>Value*</tt>,
+so it will print out the contents of the pointer, instead of the
+pointer value you might expect.  This is a deprecated interface that
+will be removed in the future, so it's best not to depend on it.  To
+print out the pointer value for now, you must cast to <tt>void*</tt>.</p>
+  <p><!-- _______________________________________________________________________ --> </p>
+</ul>
+<h4>
+<hr size="1"><a name="iterate_institer">Iterating over the </a><a
+ href="#Instruction"><tt>Instruction</tt></a>s in a <a href="#Function"><tt>Function</tt></a></h4>
+<ul>
+If you're finding that you commonly iterate over a <tt>Function</tt>'s <tt>BasicBlock</tt>s
+and then that <tt>BasicBlock</tt>'s <tt>Instruction</tt>s, <tt>InstIterator</tt>
+should be used instead. You'll need to include <a
+ href="/doxygen/InstIterator_8h-source.html"><tt>llvm/Support/InstIterator.h</tt></a>,
+and then instantiate <tt>InstIterator</tt>s explicitly in your code.
+Here's a small example that shows how to dump all instructions in a
+function to stderr (<b>Note:</b> Dereferencing an <tt>InstIterator</tt>
+yields an <tt>Instruction*</tt>, <i>not</i> an <tt>Instruction&amp;</tt>!):
+  <pre>#include "<a href="/doxygen/InstIterator_8h-source.html">llvm/Support/InstIterator.h</a>"<br>...<br>// Suppose F is a ptr to a function<br>for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)<br>  cerr &lt;&lt; **i &lt;&lt; "\n";<br></pre>
 Easy, isn't it?  You can also use <tt>InstIterator</tt>s to fill a
 worklist with its initial contents.  For example, if you wanted to
-initialize a worklist to contain all instructions in a
-<tt>Function</tt> F, all you would need to do is something like:
-
-<pre>
-std::set&lt;Instruction*&gt worklist;
-worklist.insert(inst_begin(F), inst_end(F));
-</pre>
-
-The STL set <tt>worklist</tt> would now contain all instructions in
-the <tt>Function</tt> pointed to by F.
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="iterate_convert"><hr size=0>Turning an iterator into a class
-pointer (and vice-versa) </h4><ul>
-
+initialize a worklist to contain all instructions in a <tt>Function</tt>
+F, all you would need to do is something like:
+  <pre>std::set&lt;Instruction*&gt; worklist;<br>worklist.insert(inst_begin(F), inst_end(F));<br></pre>
+The STL set <tt>worklist</tt> would now contain all instructions in the <tt>Function</tt>
+pointed to by F.<!-- _______________________________________________________________________ -->
+</ul>
+<h4>
+<hr size="1"><a name="iterate_convert">Turning an iterator into a class
+pointer (and vice-versa) </a></h4>
+<ul>
 Sometimes, it'll be useful to grab a reference (or pointer) to a class
 instance when all you've got at hand is an iterator.  Well, extracting
 a reference or a pointer from an iterator is very straightforward.
-Assuming that <tt>i</tt> is a <tt>BasicBlock::iterator</tt> and
-<tt>j</tt> is a <tt>BasicBlock::const_iterator</tt>:
-
-<pre>
-    Instruction&amp; inst = *i;   // grab reference to instruction reference
-    Instruction* pinst = &amp;*i; // grab pointer to instruction reference
-    const Instruction&amp; inst = *j;
-</pre>
-However, the iterators you'll be working with in the LLVM framework
-are special: they will automatically convert to a ptr-to-instance type
+Assuming that <tt>i</tt> is a <tt>BasicBlock::iterator</tt> and <tt>j</tt>
+is a <tt>BasicBlock::const_iterator</tt>:
+  <pre>    Instruction&amp; inst = *i;   // grab reference to instruction reference<br>    Instruction* pinst = &amp;*i; // grab pointer to instruction reference<br>    const Instruction&amp; inst = *j;<br></pre>
+However, the iterators you'll be working with in the LLVM framework are
+special: they will automatically convert to a ptr-to-instance type
 whenever they need to.  Instead of dereferencing the iterator and then
-taking the address of the result, you can simply assign the iterator
-to the proper pointer type and you get the dereference and address-of
+taking the address of the result, you can simply assign the iterator to
+the proper pointer type and you get the dereference and address-of
 operation as a result of the assignment (behind the scenes, this is a
 result of overloading casting mechanisms).  Thus the last line of the
 last example,
-
-<pre>Instruction* pinst = &amp;*i;</pre>
-
+  <pre>Instruction* pinst = &amp;*i;</pre>
 is semantically equivalent to
-
-<pre>Instruction* pinst = i;</pre>
-
+  <pre>Instruction* pinst = i;</pre>
 It's also possible to turn a class pointer into the corresponding
 iterator.  Usually, this conversion is quite inexpensive.  The
 following code snippet illustrates use of the conversion constructors
 provided by LLVM iterators.  By using these, you can explicitly grab
 the iterator of something without actually obtaining it via iteration
 over some structure:
-
-<pre>
-void printNextInstruction(Instruction* inst) {
-    BasicBlock::iterator it(inst);
-    ++it; // after this line, it refers to the instruction after *inst.
-    if (it != inst-&gt;getParent()-&gt;end()) cerr &lt;&lt; *it &lt;&lt; "\n";
-}
-</pre>
+  <pre>void printNextInstruction(Instruction* inst) {<br>    BasicBlock::iterator it(inst);<br>    ++it; // after this line, it refers to the instruction after *inst.<br>    if (it != inst-&gt;getParent()-&gt;end()) cerr &lt;&lt; *it &lt;&lt; "\n";<br>}<br></pre>
 Of course, this example is strictly pedagogical, because it'd be much
-better to explicitly grab the next instruction directly from inst.
-
-
-<!--_______________________________________________________________________-->
-</ul><h4><a name="iterate_complex"><hr size=0>Finding call sites: a slightly
-more complex example </h4><ul>
-
+better to explicitly grab the next instruction directly from inst.<!--_______________________________________________________________________-->
+</ul>
+<h4>
+<hr size="1"><a name="iterate_complex">Finding call sites: a slightly
+more complex example </a></h4>
+<ul>
 Say that you're writing a FunctionPass and would like to count all the
-locations in the entire module (that is, across every
-<tt>Function</tt>) where a certain function (i.e., some
-<tt>Function</tt>*) is already in scope.  As you'll learn later, you may
-want to use an <tt>InstVisitor</tt> to accomplish this in a much more
-straightforward manner, but this example will allow us to explore how
-you'd do it if you didn't have <tt>InstVisitor</tt> around.  In
-pseudocode, this is what we want to do:
-
-<pre>
-initialize callCounter to zero
-for each Function f in the Module
-    for each BasicBlock b in f
-      for each Instruction i in b
-        if (i is a CallInst and calls the given function)
-          increment callCounter
-</pre>
-
-And the actual code is (remember, since we're writing a
-<tt>FunctionPass</tt>, our <tt>FunctionPass</tt>-derived class simply
-has to override the <tt>runOnFunction</tt> method...):
-
-<pre>
-Function* targetFunc = ...;
-
-class OurFunctionPass : public FunctionPass {
-  public:
-    OurFunctionPass(): callCounter(0) { }
-
-    virtual runOnFunction(Function&amp; F) {
- 	for (Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
- 	    for (BasicBlock::iterator i = b-&gt;begin(); ie = b-&gt;end(); i != ie; ++i) {
- 		if (<a href="#CallInst">CallInst</a>* callInst = <a href="#isa">dyn_cast</a>&lt;<a href="#CallInst">CallInst</a>&gt;(&amp;*i)) {
- 		    // we know we've encountered a call instruction, so we
- 		    // need to determine if it's a call to the
-	            // function pointed to by m_func or not.
-  
- 		    if (callInst-&gt;getCalledFunction() == targetFunc)
- 			++callCounter;
- 	    }
- 	}
-    }
-    
-  private:
-    unsigned  callCounter;
-};
-</pre>
-
-
+locations in the entire module (that is, across every <tt>Function</tt>)
+where a certain function (i.e., some <tt>Function</tt>*) is already in
+scope.  As you'll learn later, you may want to use an <tt>InstVisitor</tt>
+to accomplish this in a much more straightforward manner, but this
+example will allow us to explore how you'd do it if you didn't have <tt>InstVisitor</tt>
+around. In pseudocode, this is what we want to do:
+  <pre>initialize callCounter to zero<br>for each Function f in the Module<br>    for each BasicBlock b in f<br>      for each Instruction i in b<br>        if (i is a CallInst and calls the given function)<br>          increment callCounter<br></pre>
+And the actual code is (remember, since we're writing a <tt>FunctionPass</tt>,
+our <tt>FunctionPass</tt>-derived class simply has to override the <tt>runOnFunction</tt>
+method...):
+  <pre>Function* targetFunc = ...;<br><br>class OurFunctionPass : public FunctionPass {<br>  public:<br>    OurFunctionPass(): callCounter(0) { }<br><br>    virtual runOnFunction(Function&amp; F) {<br> 	for (Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {<br> 	    for (BasicBlock::iterator i = b-&gt;begin(); ie = b-&gt;end(); i != ie; ++i) {<br> 		if (<a
+ href="#CallInst">CallInst</a>* callInst = <a href="#isa">dyn_cast</a>&lt;<a
+ href="#CallInst">CallInst</a>&gt;(&amp;*i)) {<br> 		    // we know we've encountered a call instruction, so we<br> 		    // need to determine if it's a call to the<br>	            // function pointed to by m_func or not.<br>  <br> 		    if (callInst-&gt;getCalledFunction() == targetFunc)<br> 			++callCounter;<br> 	    }<br> 	}<br>    }<br>    <br>  private:<br>    unsigned  callCounter;<br>};<br></pre>
 <!--_______________________________________________________________________-->
-</ul><h4><a name="calls_and_invokes"><hr size=0>Treating calls and
-invokes the same way</h4><ul>
-
-<p>You may have noticed that the previous example was a bit
+</ul>
+<h4>
+<hr size="1"><a name="calls_and_invokes">Treating calls and invokes the
+same way</a></h4>
+<ul>
+  <p>You may have noticed that the previous example was a bit
 oversimplified in that it did not deal with call sites generated by
 'invoke' instructions. In this, and in other situations, you may find
-that you want to treat <tt>CallInst</tt>s and <tt>InvokeInst</tt>s the
-same way, even though their most-specific common base class is
-<tt>Instruction</tt>, which includes lots of less closely-related
-things. For these cases, LLVM provides a handy wrapper class called <a
-href="http://llvm.cs.uiuc.edu/doxygen/classCallSite.html"><tt>CallSite
-</tt></a>.  It is essentially a wrapper around an <tt>Instruction</tt>
-pointer, with some methods that provide functionality common to
-<tt>CallInst</tt>s and <tt>InvokeInst</tt>s.</p>
-
-<p>This class is supposed to have "value semantics". So it should be
+that you want to treat <tt>CallInst</tt>s and <tt>InvokeInst</tt>s
+the same way, even though their most-specific common base class is <tt>Instruction</tt>,
+which includes lots of less closely-related things. For these cases,
+LLVM provides a handy wrapper class called <a
+ href="http://llvm.cs.uiuc.edu/doxygen/classCallSite.html"><tt>CallSite </tt></a>.
+It is essentially a wrapper around an <tt>Instruction</tt> pointer,
+with some methods that provide functionality common to <tt>CallInst</tt>s
+and <tt>InvokeInst</tt>s.</p>
+  <p>This class is supposed to have "value semantics". So it should be
 passed by value, not by reference; it should not be dynamically
 allocated or deallocated using <tt>operator new</tt> or <tt>operator
 delete</tt>. It is efficiently copyable, assignable and constructable,
 with costs equivalents to that of a bare pointer. (You will notice, if
 you look at its definition, that it has only a single data member.)</p>
-
-
 <!--_______________________________________________________________________-->
-</ul><h4><a name="iterate_chains"><hr size=0>Iterating over def-use &amp;
-use-def chains</h4><ul>
-
+</ul>
+<h4>
+<hr size="1"><a name="iterate_chains">Iterating over def-use &amp;
+use-def chains</a></h4>
+<ul>
 Frequently, we might have an instance of the <a
-href="/doxygen/classValue.html">Value Class</a> and we want to
+ href="/doxygen/classValue.html">Value Class</a> and we want to
 determine which <tt>User</tt>s use the <tt>Value</tt>.  The list of
-all <tt>User</tt>s of a particular <tt>Value</tt> is called a
-<i>def-use</i> chain.  For example, let's say we have a
-<tt>Function*</tt> named <tt>F</tt> to a particular function
-<tt>foo</tt>. Finding all of the instructions that <i>use</i>
-<tt>foo</tt> is as simple as iterating over the <i>def-use</i> chain of
-<tt>F</tt>:
-
-<pre>
-Function* F = ...;
-
-for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i) {
-    if (Instruction *Inst = dyn_cast&lt;Instruction&gt;(*i)) {
-        cerr &lt;&lt; "F is used in instruction:\n";
-        cerr &lt;&lt; *Inst &lt;&lt; "\n";
-    }
-}
-</pre>
-
+all <tt>User</tt>s of a particular <tt>Value</tt> is called a <i>def-use</i>
+chain. For example, let's say we have a <tt>Function*</tt> named <tt>F</tt>
+to a particular function <tt>foo</tt>. Finding all of the instructions
+that <i>use</i> <tt>foo</tt> is as simple as iterating over the <i>def-use</i>
+chain of <tt>F</tt>:
+  <pre>Function* F = ...;<br><br>for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i) {<br>    if (Instruction *Inst = dyn_cast&lt;Instruction&gt;(*i)) {<br>        cerr &lt;&lt; "F is used in instruction:\n";<br>        cerr &lt;&lt; *Inst &lt;&lt; "\n";<br>    }<br>}<br></pre>
 Alternately, it's common to have an instance of the <a
-href="/doxygen/classUser.html">User Class</a> and need to know what
-<tt>Value</tt>s are used by it.  The list of all <tt>Value</tt>s used
-by a <tt>User</tt> is known as a <i>use-def</i> chain.  Instances of
-class <tt>Instruction</tt> are common <tt>User</tt>s, so we might want
-to iterate over all of the values that a particular instruction uses
-(that is, the operands of the particular <tt>Instruction</tt>):
-
-<pre>
-Instruction* pi = ...;
-
-for (User::op_iterator i = pi-&gt;op_begin(), e = pi-&gt;op_end(); i != e; ++i) {
-    Value* v = *i;
-    ...
-}
-</pre>
-    
-
+ href="/doxygen/classUser.html">User Class</a> and need to know what <tt>Value</tt>s
+are used by it.  The list of all <tt>Value</tt>s used by a <tt>User</tt>
+is known as a <i>use-def</i> chain.  Instances of class <tt>Instruction</tt>
+are common <tt>User</tt>s, so we might want to iterate over all of the
+values that a particular instruction uses (that is, the operands of the
+particular <tt>Instruction</tt>):
+  <pre>Instruction* pi = ...;<br><br>for (User::op_iterator i = pi-&gt;op_begin(), e = pi-&gt;op_end(); i != e; ++i) {<br>    Value* v = *i;<br>    ...<br>}<br></pre>
 <!--
   def-use chains ("finding all users of"): Value::use_begin/use_end
   use-def chains ("finding all values used"): User::op_begin/op_end [op=operand]
--->
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="simplechanges">Making simple changes</a>
-</b></font></td></tr></table><ul>
-
+--><!-- ======================================================================= -->
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="simplechanges">Making simple
+changes</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
 There are some primitive transformation operations present in the LLVM
 infrastructure that are worth knowing about.  When performing
-transformations, it's fairly common to manipulate the contents of
-basic blocks.  This section describes some of the common methods for
-doing so and gives example code.
-
-<!--_______________________________________________________________________-->
-</ul><h4><a name="schanges_creating"><hr size=0>Creating and inserting
-    new <tt>Instruction</tt>s</h4><ul> 
-
-<i>Instantiating Instructions</i>
-
-<p>Creation of <tt>Instruction</tt>s is straightforward: simply call the
-constructor for the kind of instruction to instantiate and provide the
-necessary parameters.  For example, an <tt>AllocaInst</tt> only
-<i>requires</i> a (const-ptr-to) <tt>Type</tt>.  Thus:
-
-<pre>AllocaInst* ai = new AllocaInst(Type::IntTy);</pre> 
-
+transformations, it's fairly common to manipulate the contents of basic
+blocks. This section describes some of the common methods for doing so
+and gives example code.<!--_______________________________________________________________________-->
+</ul>
+<h4>
+<hr size="1"><a name="schanges_creating">Creating and inserting     new <tt>Instruction</tt>s</a></h4>
+<ul>
+  <i>Instantiating Instructions</i>
+  <p>Creation of <tt>Instruction</tt>s is straightforward: simply call
+the constructor for the kind of instruction to instantiate and provide
+the necessary parameters.  For example, an <tt>AllocaInst</tt> only <i>requires</i>
+a (const-ptr-to) <tt>Type</tt>. Thus: </p>
+  <pre>AllocaInst* ai = new AllocaInst(Type::IntTy);</pre>
 will create an <tt>AllocaInst</tt> instance that represents the
-allocation of one integer in the current stack frame, at runtime.
-Each <tt>Instruction</tt> subclass is likely to have varying default
-parameters which change the semantics of the instruction, so refer to
-the <a href="/doxygen/classInstruction.html">doxygen documentation for
-the subclass of Instruction</a> that you're interested in
-instantiating.</p>
-
-<p><i>Naming values</i></p>
-
-<p>
-It is very useful to name the values of instructions when you're able
-to, as this facilitates the debugging of your transformations.  If you
-end up looking at generated LLVM machine code, you definitely want to
-have logical names associated with the results of instructions!  By
-supplying a value for the <tt>Name</tt> (default) parameter of the
-<tt>Instruction</tt> constructor, you associate a logical name with
-the result of the instruction's execution at runtime.  For example,
-say that I'm writing a transformation that dynamically allocates space
-for an integer on the stack, and that integer is going to be used as
-some kind of index by some other code.  To accomplish this, I place an
-<tt>AllocaInst</tt> at the first point in the first
-<tt>BasicBlock</tt> of some <tt>Function</tt>, and I'm intending to
-use it within the same <tt>Function</tt>.  I might do:
-
-<pre>AllocaInst* pa = new AllocaInst(Type::IntTy, 0, "indexLoc");</pre>
-
+allocation of one integer in the current stack frame, at runtime. Each <tt>Instruction</tt>
+subclass is likely to have varying default parameters which change the
+semantics of the instruction, so refer to the <a
+ href="/doxygen/classInstruction.html">doxygen documentation for the
+subclass of Instruction</a> that you're interested in instantiating.
+  <p><i>Naming values</i></p>
+  <p> It is very useful to name the values of instructions when you're
+able to, as this facilitates the debugging of your transformations.  If
+you end up looking at generated LLVM machine code, you definitely want
+to have logical names associated with the results of instructions!  By
+supplying a value for the <tt>Name</tt> (default) parameter of the <tt>Instruction</tt>
+constructor, you associate a logical name with the result of the
+instruction's execution at runtime.  For example, say that I'm writing a
+transformation that dynamically allocates space for an integer on the
+stack, and that integer is going to be used as some kind of index by
+some other code.  To accomplish this, I place an <tt>AllocaInst</tt> at
+the first point in the first <tt>BasicBlock</tt> of some <tt>Function</tt>,
+and I'm intending to use it within the same <tt>Function</tt>.  I
+might do: </p>
+  <pre>AllocaInst* pa = new AllocaInst(Type::IntTy, 0, "indexLoc");</pre>
 where <tt>indexLoc</tt> is now the logical name of the instruction's
-execution value, which is a pointer to an integer on the runtime
-stack.
-</p>
-
-<p><i>Inserting instructions</i></p>
-
-<p>
-There are essentially two ways to insert an <tt>Instruction</tt> into
-an existing sequence of instructions that form a <tt>BasicBlock</tt>:
-<ul>
-<li>Insertion into an explicit instruction list
-
-<p>Given a <tt>BasicBlock* pb</tt>, an <tt>Instruction* pi</tt> within
-that <tt>BasicBlock</tt>, and a newly-created instruction
-we wish to insert before <tt>*pi</tt>, we do the following:
-
-<pre>
-  BasicBlock *pb = ...;
-  Instruction *pi = ...;
-  Instruction *newInst = new Instruction(...);
-  pb-&gt;getInstList().insert(pi, newInst); // inserts newInst before pi in pb
-</pre>
-</p>
-
-<li>Insertion into an implicit instruction list
-<p><tt>Instruction</tt> instances that are already in
-<tt>BasicBlock</tt>s are implicitly associated with an existing
-instruction list: the instruction list of the enclosing basic block.
-Thus, we could have accomplished the same thing as the above code
-without being given a <tt>BasicBlock</tt> by doing:
-<pre>
-  Instruction *pi = ...;
-  Instruction *newInst = new Instruction(...);
-  pi-&gt;getParent()-&gt;getInstList().insert(pi, newInst);
-</pre>
-In fact, this sequence of steps occurs so frequently that the
-<tt>Instruction</tt> class and <tt>Instruction</tt>-derived classes
-provide constructors which take (as a default parameter) a pointer to
-an <tt>Instruction</tt> which the newly-created <tt>Instruction</tt>
-should precede.  That is, <tt>Instruction</tt> constructors are
-capable of inserting the newly-created instance into the
-<tt>BasicBlock</tt> of a provided instruction, immediately before that
-instruction.  Using an <tt>Instruction</tt> constructor with a
-<tt>insertBefore</tt> (default) parameter, the above code becomes:
-<pre>
-Instruction* pi = ...;
-Instruction* newInst = new Instruction(..., pi);
-</pre>
+execution value, which is a pointer to an integer on the runtime stack. 
+  <p><i>Inserting instructions</i></p>
+  <p> There are essentially two ways to insert an <tt>Instruction</tt>
+into an existing sequence of instructions that form a <tt>BasicBlock</tt>:</p>
+  <ul>
+    <li>Insertion into an explicit instruction list
+      <p>Given a <tt>BasicBlock* pb</tt>, an <tt>Instruction* pi</tt>
+within that <tt>BasicBlock</tt>, and a newly-created instruction we
+wish to insert before <tt>*pi</tt>, we do the following: </p>
+      <pre>  BasicBlock *pb = ...;<br>  Instruction *pi = ...;<br>  Instruction *newInst = new Instruction(...);<br>  pb-&gt;getInstList().insert(pi, newInst); // inserts newInst before pi in pb<br></pre>
+    </li>
+    <li>Insertion into an implicit instruction list
+      <p><tt>Instruction</tt> instances that are already in <tt>BasicBlock</tt>s
+are implicitly associated with an existing instruction list: the
+instruction list of the enclosing basic block. Thus, we could have
+accomplished the same thing as the above code without being given a <tt>BasicBlock</tt>
+by doing: </p>
+      <pre>  Instruction *pi = ...;<br>  Instruction *newInst = new Instruction(...);<br>  pi-&gt;getParent()-&gt;getInstList().insert(pi, newInst);<br></pre>
+In fact, this sequence of steps occurs so frequently that the <tt>Instruction</tt>
+class and <tt>Instruction</tt>-derived classes provide constructors
+which take (as a default parameter) a pointer to an <tt>Instruction</tt>
+which the newly-created <tt>Instruction</tt> should precede.  That is, <tt>Instruction</tt>
+constructors are capable of inserting the newly-created instance into
+the <tt>BasicBlock</tt> of a provided instruction, immediately before
+that instruction.  Using an <tt>Instruction</tt> constructor with a <tt>insertBefore</tt>
+(default) parameter, the above code becomes:
+      <pre>Instruction* pi = ...;<br>Instruction* newInst = new Instruction(..., pi);<br></pre>
 which is much cleaner, especially if you're creating a lot of
-instructions and adding them to <tt>BasicBlock</tt>s.
- </p>
-</p>
+instructions and adding them to <tt>BasicBlock</tt>s. </li>
+  </ul>
+<!--_______________________________________________________________________-->
 </ul>
-
-<!--_______________________________________________________________________-->
-</ul><h4><a name="schanges_deleting"><hr size=0>Deleting
-<tt>Instruction</tt>s</h4><ul>
-
-Deleting an instruction from an existing sequence of instructions that form a <a
-href="#BasicBlock"><tt>BasicBlock</tt></a> is very straightforward. First, you
-must have a pointer to the instruction that you wish to delete.  Second, you
-need to obtain the pointer to that instruction's basic block. You use the
-pointer to the basic block to get its list of instructions and then use the
-erase function to remove your instruction.<p>
-
-For example:<p>
-
-<pre>
-  <a href="#Instruction">Instruction</a> *I = .. ;
-  <a href="#BasicBlock">BasicBlock</a> *BB = I-&gt;getParent();
-  BB-&gt;getInstList().erase(I);
-</pre><p>
-
-<!--_______________________________________________________________________-->
-</ul><h4><a name="schanges_replacing"><hr size=0>Replacing an
-    <tt>Instruction</tt> with another <tt>Value</tt></h4><ul>
-
-<p><i>Replacing individual instructions</i></p>
-<p>
-Including "<a
-href="/doxygen/BasicBlockUtils_8h-source.html">llvm/Transforms/Utils/BasicBlockUtils.h</a>" permits use of two very useful replace functions:
-<tt>ReplaceInstWithValue</tt> and <tt>ReplaceInstWithInst</tt>.  
-
+<h4>
+<hr size="1"><a name="schanges_deleting">Deleting <tt>Instruction</tt>s</a></h4>
 <ul>
-
-<li><tt>ReplaceInstWithValue</tt>
-
-<p>This function replaces all uses (within a basic block) of a given
-instruction with a value, and then removes the original instruction.
-The following example illustrates the replacement of the result of a
-particular <tt>AllocaInst</tt> that allocates memory for a single
-integer with an null pointer to an integer.</p>
-
-<pre>
-AllocaInst* instToReplace = ...;
-BasicBlock::iterator ii(instToReplace);
-ReplaceInstWithValue(instToReplace-&gt;getParent()-&gt;getInstList(), ii,
-                     Constant::getNullValue(PointerType::get(Type::IntTy)));
-</pre>
-
-<li><tt>ReplaceInstWithInst</tt>
-
-<p>This function replaces a particular instruction with another
-instruction.  The following example illustrates the replacement of one
-<tt>AllocaInst</tt> with another.<p>
-
-<pre>
-AllocaInst* instToReplace = ...;
-BasicBlock::iterator ii(instToReplace);
-ReplaceInstWithInst(instToReplace-&gt;getParent()-&gt;getInstList(), ii,
-                    new AllocaInst(Type::IntTy, 0, "ptrToReplacedInt"));
-</pre>
-
+Deleting an instruction from an existing sequence of instructions that
+form a <a href="#BasicBlock"><tt>BasicBlock</tt></a> is very
+straightforward. First, you must have a pointer to the instruction that
+you wish to delete.  Second, you need to obtain the pointer to that
+instruction's basic block. You use the pointer to the basic block to
+get its list of instructions and then use the erase function to remove
+your instruction.
+  <p> For example:</p>
+  <p> </p>
+  <pre>  <a href="#Instruction">Instruction</a> *I = .. ;<br>  <a
+ href="#BasicBlock">BasicBlock</a> *BB = I-&gt;getParent();<br>  BB-&gt;getInstList().erase(I);<br></pre>
+  <p><!--_______________________________________________________________________--> </p>
 </ul>
-<p><i>Replacing multiple uses of <tt>User</tt>s and
-		    <tt>Value</tt>s</i></p>
-  
-You can use <tt>Value::replaceAllUsesWith</tt> and
-<tt>User::replaceUsesOfWith</tt> to change more than one use at a
-time.  See the doxygen documentation for the <a
-href="/doxygen/classValue.html">Value Class</a> and <a
-href="/doxygen/classUser.html">User Class</a>, respectively, for more
-information.
-
-<!-- Value::replaceAllUsesWith User::replaceUsesOfWith Point out:
+<h4>
+<hr size="1"><a name="schanges_replacing">Replacing an <tt>Instruction</tt>
+with another <tt>Value</tt></a></h4>
+<ul>
+  <p><i>Replacing individual instructions</i></p>
+  <p> Including "<a href="/doxygen/BasicBlockUtils_8h-source.html">llvm/Transforms/Utils/BasicBlockUtils.h</a>"
+permits use of two very useful replace functions: <tt>ReplaceInstWithValue</tt>
+and <tt>ReplaceInstWithInst</tt>. </p>
+</ul>
+<h4><a name="schanges_deleting">Deleting <tt>Instruction</tt>s</a></h4>
+<ul>
+  <ul>
+    <li><tt>ReplaceInstWithValue</tt>
+      <p>This function replaces all uses (within a basic block) of a
+given instruction with a value, and then removes the original
+instruction. The following example illustrates the replacement of the
+result of a particular <tt>AllocaInst</tt> that allocates memory for a
+single integer with an null pointer to an integer.</p>
+      <pre>AllocaInst* instToReplace = ...;<br>BasicBlock::iterator ii(instToReplace);<br>ReplaceInstWithValue(instToReplace-&gt;getParent()-&gt;getInstList(), ii,<br>                     Constant::getNullValue(PointerType::get(Type::IntTy)));<br></pre>
+    </li>
+    <li><tt>ReplaceInstWithInst</tt>
+      <p>This function replaces a particular instruction with another
+instruction. The following example illustrates the replacement of one <tt>AllocaInst</tt>
+with another.</p>
+      <p> </p>
+      <pre>AllocaInst* instToReplace = ...;<br>BasicBlock::iterator ii(instToReplace);<br>ReplaceInstWithInst(instToReplace-&gt;getParent()-&gt;getInstList(), ii,<br>                    new AllocaInst(Type::IntTy, 0, "ptrToReplacedInt"));<br></pre>
+    </li>
+  </ul>
+  <p><i>Replacing multiple uses of <tt>User</tt>s and 		 <tt>Value</tt>s</i></p>
+You can use <tt>Value::replaceAllUsesWith</tt> and <tt>User::replaceUsesOfWith</tt>
+to change more than one use at a time.  See the doxygen documentation
+for the <a href="/doxygen/classValue.html">Value Class</a> and <a
+ href="/doxygen/classUser.html">User Class</a>, respectively, for more
+information.<!-- Value::replaceAllUsesWith User::replaceUsesOfWith Point out:
 include/llvm/Transforms/Utils/ especially BasicBlockUtils.h with:
 ReplaceInstWithValue, ReplaceInstWithInst
--->
-
+--><!-- *********************************************************************** -->
+</ul>
+<table width="100%" bgcolor="#330077" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="center"><font color="#eeeeff" size="+2"
+ face="Georgia,Palatino"><b> <a name="coreclasses">The Core LLVM Class
+Hierarchy Reference </a></b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="coreclasses">The Core LLVM Class Hierarchy Reference
-</b></font></td></tr></table><ul>
-<!-- *********************************************************************** -->
-
-The Core LLVM classes are the primary means of representing the program being
-inspected or transformed.  The core LLVM classes are defined in header files in
-the <tt>include/llvm/</tt> directory, and implemented in the <tt>lib/VMCore</tt>
-directory.<p>
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="Value">The <tt>Value</tt> class</a>
-</b></font></td></tr></table><ul>
-
-<tt>#include "<a href="/doxygen/Value_8h-source.html">llvm/Value.h</a>"</tt></b><br>
-doxygen info: <a href="/doxygen/classValue.html">Value Class</a><p>
-
-
-The <tt>Value</tt> class is the most important class in LLVM Source base.  It
-represents a typed value that may be used (among other things) as an operand to
-an instruction.  There are many different types of <tt>Value</tt>s, such as <a
-href="#Constant"><tt>Constant</tt></a>s, <a
-href="#Argument"><tt>Argument</tt></a>s, and even <a
-href="#Instruction"><tt>Instruction</tt></a>s and <a
-href="#Function"><tt>Function</tt></a>s are <tt>Value</tt>s.<p>
-
-A particular <tt>Value</tt> may be used many times in the LLVM representation
-for a program.  For example, an incoming argument to a function (represented
-with an instance of the <a href="#Argument">Argument</a> class) is "used" by
-every instruction in the function that references the argument.  To keep track
-of this relationship, the <tt>Value</tt> class keeps a list of all of the <a
-href="#User"><tt>User</tt></a>s that is using it (the <a
-href="#User"><tt>User</tt></a> class is a base class for all nodes in the LLVM
-graph that can refer to <tt>Value</tt>s).  This use list is how LLVM represents
-def-use information in the program, and is accessible through the <tt>use_</tt>*
-methods, shown below.<p>
-
-Because LLVM is a typed representation, every LLVM <tt>Value</tt> is typed, and
-this <a href="#Type">Type</a> is available through the <tt>getType()</tt>
-method.  <a name="#nameWarning">In addition, all LLVM values can be named.  The
-"name" of the <tt>Value</tt> is symbolic string printed in the LLVM code:<p>
-
-<pre>
-   %<b>foo</b> = add int 1, 2
-</pre>
-
-The name of this instruction is "foo".  <b>NOTE</b> that the name of any value
-may be missing (an empty string), so names should <b>ONLY</b> be used for
-debugging (making the source code easier to read, debugging printouts), they
-should not be used to keep track of values or map between them.  For this
-purpose, use a <tt>std::map</tt> of pointers to the <tt>Value</tt> itself
-instead.<p>
-
-One important aspect of LLVM is that there is no distinction between an SSA
-variable and the operation that produces it.  Because of this, any reference to
-the value produced by an instruction (or the value available as an incoming
-argument, for example) is represented as a direct pointer to the class that
-represents this value.  Although this may take some getting used to, it
-simplifies the representation and makes it easier to manipulate.<p>
-
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="m_Value"><hr size=0>Important Public Members of
-the <tt>Value</tt> class</h4><ul>
-
-<li><tt>Value::use_iterator</tt> - Typedef for iterator over the use-list<br>
-    <tt>Value::use_const_iterator</tt>
-                 - Typedef for const_iterator over the use-list<br>
-    <tt>unsigned use_size()</tt> - Returns the number of users of the value.<br>
+The Core LLVM classes are the primary means of representing the program
+being inspected or transformed.  The core LLVM classes are defined in
+header files in the <tt>include/llvm/</tt> directory, and implemented in
+the <tt>lib/VMCore</tt> directory.
+  <p><!-- ======================================================================= --> </p>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="Value">The <tt>Value</tt> class</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+  <tt>#include "<a href="/doxygen/Value_8h-source.html">llvm/Value.h</a>"</tt><br>
+doxygen info: <a href="/doxygen/classValue.html">Value Class</a>
+  <p> The <tt>Value</tt> class is the most important class in the LLVM
+Source base.  It represents a typed value that may be used (among other
+things) as an operand to an instruction.  There are many different types
+of <tt>Value</tt>s, such as <a href="#Constant"><tt>Constant</tt></a>s,<a
+ href="#Argument"><tt>Argument</tt></a>s. Even <a href="#Instruction"><tt>Instruction</tt></a>s
+and <a href="#Function"><tt>Function</tt></a>s are <tt>Value</tt>s.</p>
+  <p> A particular <tt>Value</tt> may be used many times in the LLVM
+representation for a program.  For example, an incoming argument to a
+function (represented with an instance of the <a href="#Argument">Argument</a>
+class) is "used" by every instruction in the function that references
+the argument.  To keep track of this relationship, the <tt>Value</tt>
+class keeps a list of all of the <a href="#User"><tt>User</tt></a>s
+that is using it (the <a href="#User"><tt>User</tt></a> class is a base
+class for all nodes in the LLVM graph that can refer to <tt>Value</tt>s).
+This use list is how LLVM represents def-use information in the
+program, and is accessible through the <tt>use_</tt>* methods, shown
+below.</p>
+  <p> Because LLVM is a typed representation, every LLVM <tt>Value</tt>
+is typed, and this <a href="#Type">Type</a> is available through the <tt>getType()</tt>
+method. In addition, all LLVM values can be named.  The "name" of the <tt>Value</tt>
+is a symbolic string printed in the LLVM code:</p>
+  <p> </p>
+  <pre>   %<b>foo</b> = add int 1, 2<br></pre>
+  <a name="#nameWarning">The name of this instruction is "foo". <b>NOTE</b>
+that the name of any value may be missing (an empty string), so names
+should <b>ONLY</b> be used for debugging (making the source code easier
+to read, debugging printouts), they should not be used to keep track of
+values or map between them.  For this purpose, use a <tt>std::map</tt>
+of pointers to the <tt>Value</tt> itself instead.</a>
+  <p> One important aspect of LLVM is that there is no distinction
+between an SSA variable and the operation that produces it.  Because of
+this, any reference to the value produced by an instruction (or the
+value available as an incoming argument, for example) is represented as
+a direct pointer to the class that represents this value.  Although
+this may take some getting used to, it simplifies the representation
+and makes it easier to manipulate.</p>
+  <p><!-- _______________________________________________________________________ --> </p>
+</ul>
+<h4>
+<hr size="1"><a name="m_Value">Important Public Members of the <tt>Value</tt>
+class</a></h4>
+<ul>
+  <li><tt>Value::use_iterator</tt> - Typedef for iterator over the
+use-list<br>
+    <tt>Value::use_const_iterator</tt> - Typedef for const_iterator over
+the use-list<br>
+    <tt>unsigned use_size()</tt> - Returns the number of users of the
+value.<br>
     <tt>bool use_empty()</tt> - Returns true if there are no users.<br>
-    <tt>use_iterator use_begin()</tt>
-                 - Get an iterator to the start of the use-list.<br>
-    <tt>use_iterator use_end()</tt>
-                 - Get an iterator to the end of the use-list.<br>
-    <tt><a href="#User">User</a> *use_back()</tt>
-                 - Returns the last element in the list.<p>
-
-These methods are the interface to access the def-use information in LLVM.  As with all other iterators in LLVM, the naming conventions follow the conventions defined by the <a href="#stl">STL</a>.<p>
-
-<li><tt><a href="#Type">Type</a> *getType() const</tt><p>
-This method returns the Type of the Value.
-
-<li><tt>bool hasName() const</tt><br>
+    <tt>use_iterator use_begin()</tt> - Get an iterator to the start of
+the use-list.<br>
+    <tt>use_iterator use_end()</tt> - Get an iterator to the end of the
+use-list.<br>
+    <tt><a href="#User">User</a> *use_back()</tt> - Returns the last
+element in the list.
+    <p> These methods are the interface to access the def-use
+information in LLVM.  As with all other iterators in LLVM, the naming
+conventions follow the conventions defined by the <a href="#stl">STL</a>.</p>
+    <p> </p>
+  </li>
+  <li><tt><a href="#Type">Type</a> *getType() const</tt>
+    <p> This method returns the Type of the Value. </p>
+  </li>
+  <li><tt>bool hasName() const</tt><br>
     <tt>std::string getName() const</tt><br>
-    <tt>void setName(const std::string &amp;Name)</tt><p>
-
-This family of methods is used to access and assign a name to a <tt>Value</tt>,
-be aware of the <a href="#nameWarning">precaution above</a>.<p>
-
-
-<li><tt>void replaceAllUsesWith(Value *V)</tt><p>
-
-This method traverses the use list of a <tt>Value</tt> changing all <a
-href="#User"><tt>User</tt>s</a> of the current value to refer to "<tt>V</tt>"
-instead.  For example, if you detect that an instruction always produces a
-constant value (for example through constant folding), you can replace all uses
-of the instruction with the constant like this:<p>
-
-<pre>
-  Inst-&gt;replaceAllUsesWith(ConstVal);
-</pre><p>
-
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="User">The <tt>User</tt> class</a>
-</b></font></td></tr></table><ul>
-
-<tt>#include "<a href="/doxygen/User_8h-source.html">llvm/User.h</a>"</tt></b><br>
+    <tt>void setName(const std::string &amp;Name)</tt>
+    <p> This family of methods is used to access and assign a name to a <tt>Value</tt>,
+be aware of the <a href="#nameWarning">precaution above</a>.</p>
+    <p> </p>
+  </li>
+  <li><tt>void replaceAllUsesWith(Value *V)</tt>
+    <p> This method traverses the use list of a <tt>Value</tt> changing
+all <a href="#User"><tt>User</tt>s</a> of the current value to refer to "<tt>V</tt>"
+instead.  For example, if you detect that an instruction always
+produces a constant value (for example through constant folding), you
+can replace all uses of the instruction with the constant like this:</p>
+    <p> </p>
+    <pre>  Inst-&gt;replaceAllUsesWith(ConstVal);<br></pre>
+    <p><!-- ======================================================================= --> </p>
+  </li>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="User">The <tt>User</tt> class</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+  <tt>#include "<a href="/doxygen/User_8h-source.html">llvm/User.h</a>"</tt><br>
 doxygen info: <a href="/doxygen/classUser.html">User Class</a><br>
-Superclass: <a href="#Value"><tt>Value</tt></a><p>
-
-
-The <tt>User</tt> class is the common base class of all LLVM nodes that may
-refer to <a href="#Value"><tt>Value</tt></a>s.  It exposes a list of "Operands"
-that are all of the <a href="#Value"><tt>Value</tt></a>s that the User is
-referring to.  The <tt>User</tt> class itself is a subclass of
-<tt>Value</tt>.<p>
-
-The operands of a <tt>User</tt> point directly to the LLVM <a
-href="#Value"><tt>Value</tt></a> that it refers to.  Because LLVM uses Static
-Single Assignment (SSA) form, there can only be one definition referred to,
-allowing this direct connection.  This connection provides the use-def
-information in LLVM.<p>
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="m_User"><hr size=0>Important Public Members of
-the <tt>User</tt> class</h4><ul>
-
-The <tt>User</tt> class exposes the operand list in two ways: through an index
-access interface and through an iterator based interface.<p>
-
-<li><tt>Value *getOperand(unsigned i)</tt><br>
-    <tt>unsigned getNumOperands()</tt><p>
-
-These two methods expose the operands of the <tt>User</tt> in a convenient form
-for direct access.<p>
-
-<li><tt>User::op_iterator</tt> - Typedef for iterator over the operand list<br>
-    <tt>User::op_const_iterator</tt>
-    <tt>use_iterator op_begin()</tt>
-                 - Get an iterator to the start of the operand list.<br>
-    <tt>use_iterator op_end()</tt>
-                 - Get an iterator to the end of the operand list.<p>
-
-Together, these methods make up the iterator based interface to the operands of
-a <tt>User</tt>.<p>
-
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="Instruction">The <tt>Instruction</tt> class</a>
-</b></font></td></tr></table><ul>
-
-<tt>#include "<a
-href="/doxygen/Instruction_8h-source.html">llvm/Instruction.h</a>"</tt></b><br>
-doxygen info: <a href="/doxygen/classInstruction.html">Instruction Class</a><br>
-Superclasses: <a href="#User"><tt>User</tt></a>, <a
-href="#Value"><tt>Value</tt></a><p>
-
-The <tt>Instruction</tt> class is the common base class for all LLVM
-instructions.  It provides only a few methods, but is a very commonly used
-class.  The primary data tracked by the <tt>Instruction</tt> class itself is the
-opcode (instruction type) and the parent <a
-href="#BasicBlock"><tt>BasicBlock</tt></a> the <tt>Instruction</tt> is embedded
-into.  To represent a specific type of instruction, one of many subclasses of
-<tt>Instruction</tt> are used.<p>
-
-Because the <tt>Instruction</tt> class subclasses the <a
-href="#User"><tt>User</tt></a> class, its operands can be accessed in the same
-way as for other <a href="#User"><tt>User</tt></a>s (with the
-<tt>getOperand()</tt>/<tt>getNumOperands()</tt> and
-<tt>op_begin()</tt>/<tt>op_end()</tt> methods).<p>
-
-An important file for the <tt>Instruction</tt> class is the
-<tt>llvm/Instruction.def</tt> file.  This file contains some meta-data about the
-various different types of instructions in LLVM.  It describes the enum values
-that are used as opcodes (for example <tt>Instruction::Add</tt> and
-<tt>Instruction::SetLE</tt>), as well as the concrete sub-classes of
-<tt>Instruction</tt> that implement the instruction (for example <tt><a
-href="#BinaryOperator">BinaryOperator</a></tt> and <tt><a
-href="#SetCondInst">SetCondInst</a></tt>).  Unfortunately, the use of macros in
-this file confused doxygen, so these enum values don't show up correctly in the
-<a href="/doxygen/classInstruction.html">doxygen output</a>.<p>
-
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="m_Instruction"><hr size=0>Important Public Members of
-the <tt>Instruction</tt> class</h4><ul>
-
-<li><tt><a href="#BasicBlock">BasicBlock</a> *getParent()</tt><p>
-
-Returns the <a href="#BasicBlock"><tt>BasicBlock</tt></a> that this
-<tt>Instruction</tt> is embedded into.<p>
-
-<li><tt>bool mayWriteToMemory()</tt><p>
-
-Returns true if the instruction writes to memory, i.e. it is a <tt>call</tt>,
-<tt>free</tt>, <tt>invoke</tt>, or <tt>store</tt>.<p>
-
-<li><tt>unsigned getOpcode()</tt><p>
-
-Returns the opcode for the <tt>Instruction</tt>.<p>
-
-<li><tt><a href="#Instruction">Instruction</a> *clone() const</tt><p>
-
-Returns another instance of the specified instruction, identical in all ways to
-the original except that the instruction has no parent (ie it's not embedded
-into a <a href="#BasicBlock"><tt>BasicBlock</tt></a>), and it has no name.<p>
-
-
-
-<!--
-
-\subsection{Subclasses of Instruction :} 
-\begin{itemize}
-<li>BinaryOperator : This subclass of Instruction defines a general interface to the all the instructions involvong  binary operators in LLVM.
-	\begin{itemize}
-	<li><tt>bool swapOperands()</tt>: Exchange the two operands to this instruction. If the instruction cannot be reversed (i.e. if it's a Div), it returns true. 
-	\end{itemize}
-<li>TerminatorInst : This subclass of Instructions defines an interface for all instructions that can terminate a BasicBlock.
-	\begin{itemize}
-	 <li> <tt>unsigned getNumSuccessors()</tt>: Returns the number of successors for this terminator instruction.
-	<li><tt>BasicBlock *getSuccessor(unsigned i)</tt>: As the name suggests returns the ith successor BasicBlock.
-	<li><tt>void setSuccessor(unsigned i, BasicBlock *B)</tt>: sets BasicBlock B as the ith succesor to this terminator instruction.
-	\end{itemize}
-
-<li>PHINode : This represents the PHI instructions in the SSA form. 
-	\begin{itemize}
-	<li><tt> unsigned getNumIncomingValues()</tt>: Returns the number of incoming edges to this PHI node.
-	<li><tt> Value *getIncomingValue(unsigned i)</tt>: Returns the ith incoming Value.
-	<li><tt>void setIncomingValue(unsigned i, Value *V)</tt>: Sets the ith incoming Value as V 
-	<li><tt>BasicBlock *getIncomingBlock(unsigned i)</tt>: Returns the Basic Block corresponding to the ith incoming Value.
-	<li><tt> void addIncoming(Value *D, BasicBlock *BB)</tt>: 
-	Add an incoming value to the end of the PHI list
-	<li><tt> int getBasicBlockIndex(const BasicBlock *BB) const</tt>: 
-	Returns the first index of the specified basic block in the value list for this PHI.  Returns -1 if no instance.
-	\end{itemize}
-<li>CastInst : In LLVM all casts have to be done through explicit cast instructions. CastInst defines the interface to the cast instructions.
-<li>CallInst : This defines an interface to the call instruction in LLVM. ARguments to the function are nothing but operands of the instruction.
-	\begin{itemize}
-	<li>: <tt>Function *getCalledFunction()</tt>: Returns a handle to the function that is being called by this Function. 
-	\end{itemize}
-<li>LoadInst, StoreInst, GetElemPtrInst : These subclasses represent load, store and getelementptr instructions in LLVM.
-	\begin{itemize}
-	<li><tt>Value * getPointerOperand()</tt>: Returns the Pointer Operand which is typically the 0th operand.
-	\end{itemize}
-<li>BranchInst : This is a subclass of TerminatorInst and defines the interface for conditional and unconditional branches in LLVM.
-	\begin{itemize}
-	<li><tt>bool isConditional()</tt>: Returns true if the branch is a conditional branch else returns false
-	<li> <tt>Value *getCondition()</tt>: Returns the condition if it is a conditional branch else returns null.
-	<li> <tt>void setUnconditionalDest(BasicBlock *Dest)</tt>: Changes the current branch to an unconditional one targetting the specified block.
-	\end{itemize}
-
-\end{itemize}
-
--->
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="BasicBlock">The <tt>BasicBlock</tt> class</a>
-</b></font></td></tr></table><ul>
-
-<tt>#include "<a
-href="/doxygen/BasicBlock_8h-source.html">llvm/BasicBlock.h</a>"</tt></b><br>
+Superclass: <a href="#Value"><tt>Value</tt></a>
+  <p> The <tt>User</tt> class is the common base class of all LLVM nodes
+that may refer to <a href="#Value"><tt>Value</tt></a>s.  It exposes a
+list of "Operands" that are all of the <a href="#Value"><tt>Value</tt></a>s
+that the User is referring to.  The <tt>User</tt> class itself is a
+subclass of <tt>Value</tt>.</p>
+  <p> The operands of a <tt>User</tt> point directly to the LLVM <a
+ href="#Value"><tt>Value</tt></a> that it refers to.  Because LLVM uses
+Static Single Assignment (SSA) form, there can only be one definition
+referred to, allowing this direct connection.  This connection provides
+the use-def information in LLVM.</p>
+  <p><!-- _______________________________________________________________________ --> </p>
+</ul>
+<h4>
+<hr size="1"><a name="m_User">Important Public Members of the <tt>User</tt>
+class</a></h4>
+<ul>
+The <tt>User</tt> class exposes the operand list in two ways: through
+an index access interface and through an iterator based interface.
+  <p> </p>
+  <li><tt>Value *getOperand(unsigned i)</tt><br>
+    <tt>unsigned getNumOperands()</tt>
+    <p> These two methods expose the operands of the <tt>User</tt> in a
+convenient form for direct access.</p>
+    <p> </p>
+  </li>
+  <li><tt>User::op_iterator</tt> - Typedef for iterator over the operand
+list<br>
+    <tt>User::op_const_iterator</tt> <tt>use_iterator op_begin()</tt> -
+Get an iterator to the start of the operand list.<br>
+    <tt>use_iterator op_end()</tt> - Get an iterator to the end of the
+operand list.
+    <p> Together, these methods make up the iterator based interface to
+the operands of a <tt>User</tt>.</p>
+    <p><!-- ======================================================================= --> </p>
+  </li>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="Instruction">The <tt>Instruction</tt>
+class</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+  <tt>#include "</tt><tt><a href="/doxygen/Instruction_8h-source.html">llvm/Instruction.h</a>"</tt><br>
+doxygen info: <a href="/doxygen/classInstruction.html">Instruction
+Class</a><br>
+Superclasses: <a href="#User"><tt>User</tt></a>, <a href="#Value"><tt>Value</tt></a>
+  <p> The <tt>Instruction</tt> class is the common base class for all
+LLVM instructions.  It provides only a few methods, but is a very
+commonly used class.  The primary data tracked by the <tt>Instruction</tt>
+class itself is the opcode (instruction type) and the parent <a
+ href="#BasicBlock"><tt>BasicBlock</tt></a> the <tt>Instruction</tt> is
+embedded into.  To represent a specific type of instruction, one of many
+subclasses of <tt>Instruction</tt> are used.</p>
+  <p> Because the <tt>Instruction</tt> class subclasses the <a
+ href="#User"><tt>User</tt></a> class, its operands can be accessed in
+the same way as for other <a href="#User"><tt>User</tt></a>s (with the <tt>getOperand()</tt>/<tt>getNumOperands()</tt>
+and <tt>op_begin()</tt>/<tt>op_end()</tt> methods).</p>
+  <p> An important file for the <tt>Instruction</tt> class is the <tt>llvm/Instruction.def</tt>
+file. This file contains some meta-data about the various different
+types of instructions in LLVM.  It describes the enum values that are
+used as opcodes (for example <tt>Instruction::Add</tt> and <tt>Instruction::SetLE</tt>),
+as well as the concrete sub-classes of <tt>Instruction</tt> that
+implement the instruction (for example <tt><a href="#BinaryOperator">BinaryOperator</a></tt>
+and <tt><a href="#SetCondInst">SetCondInst</a></tt>).  Unfortunately,
+the use of macros in this file confuses doxygen, so these enum values
+don't show up correctly in the <a href="/doxygen/classInstruction.html">doxygen
+output</a>.</p>
+  <p><!-- _______________________________________________________________________ --> </p>
+</ul>
+<h4>
+<hr size="1"><a name="m_Instruction">Important Public Members of the <tt>Instruction</tt>
+class</a></h4>
+<ul>
+  <li><tt><a href="#BasicBlock">BasicBlock</a> *getParent()</tt>
+    <p> Returns the <a href="#BasicBlock"><tt>BasicBlock</tt></a> that
+this <tt>Instruction</tt> is embedded into.</p>
+    <p> </p>
+  </li>
+  <li><tt>bool mayWriteToMemory()</tt>
+    <p> Returns true if the instruction writes to memory, i.e. it is a <tt>call</tt>,<tt>free</tt>,<tt>invoke</tt>,
+or <tt>store</tt>.</p>
+    <p> </p>
+  </li>
+  <li><tt>unsigned getOpcode()</tt>
+    <p> Returns the opcode for the <tt>Instruction</tt>.</p>
+    <p> </p>
+  </li>
+  <li><tt><a href="#Instruction">Instruction</a> *clone() const</tt>
+    <p> Returns another instance of the specified instruction, identical
+in all ways to the original except that the instruction has no parent
+(ie it's not embedded into a <a href="#BasicBlock"><tt>BasicBlock</tt></a>),
+and it has no name</p>
+  </li>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="BasicBlock">The <tt>BasicBlock</tt>
+class</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+  <tt>#include "<a href="/doxygen/BasicBlock_8h-source.html">llvm/BasicBlock.h</a>"</tt><br>
 doxygen info: <a href="/doxygen/classBasicBlock.html">BasicBlock Class</a><br>
-Superclass: <a href="#Value"><tt>Value</tt></a><p>
-
-
-This class represents a single entry multiple exit section of the code, commonly
-known as a basic block by the compiler community.  The <tt>BasicBlock</tt> class
-maintains a list of <a href="#Instruction"><tt>Instruction</tt></a>s, which form
-the body of the block.  Matching the language definition, the last element of
-this list of instructions is always a terminator instruction (a subclass of the
-<a href="#TerminatorInst"><tt>TerminatorInst</tt></a> class).<p>
-
-In addition to tracking the list of instructions that make up the block, the
-<tt>BasicBlock</tt> class also keeps track of the <a
-href="#Function"><tt>Function</tt></a> that it is embedded into.<p>
-
-Note that <tt>BasicBlock</tt>s themselves are <a
-href="#Value"><tt>Value</tt></a>s, because they are referenced by instructions
-like branches and can go in the switch tables.  <tt>BasicBlock</tt>s have type
-<tt>label</tt>.<p>
-
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="m_BasicBlock"><hr size=0>Important Public Members of
-the <tt>BasicBlock</tt> class</h4><ul>
-
-<li><tt>BasicBlock(const std::string &amp;Name = "", <a 
-href="#Function">Function</a> *Parent = 0)</tt><p>
-
-The <tt>BasicBlock</tt> constructor is used to create new basic blocks for
-insertion into a function.  The constructor simply takes a name for the new
-block, and optionally a <a href="#Function"><tt>Function</tt></a> to insert it
-into.  If the <tt>Parent</tt> parameter is specified, the new
-<tt>BasicBlock</tt> is automatically inserted at the end of the specified <a
-href="#Function"><tt>Function</tt></a>, if not specified, the BasicBlock must be
-manually inserted into the <a href="#Function"><tt>Function</tt></a>.<p>
-
-<li><tt>BasicBlock::iterator</tt> - Typedef for instruction list iterator<br>
+Superclass: <a href="#Value"><tt>Value</tt></a>
+  <p> This class represents a single entry multiple exit section of the
+code, commonly known as a basic block by the compiler community.  The <tt>BasicBlock</tt>
+class maintains a list of <a href="#Instruction"><tt>Instruction</tt></a>s,
+which form the body of the block.  Matching the language definition,
+the last element of this list of instructions is always a terminator
+instruction (a subclass of the <a href="#TerminatorInst"><tt>TerminatorInst</tt></a>
+class).</p>
+  <p> In addition to tracking the list of instructions that make up the
+block, the <tt>BasicBlock</tt> class also keeps track of the <a
+ href="#Function"><tt>Function</tt></a> that it is embedded into.</p>
+  <p> Note that <tt>BasicBlock</tt>s themselves are <a href="#Value"><tt>Value</tt></a>s,
+because they are referenced by instructions like branches and can go in
+the switch tables. <tt>BasicBlock</tt>s have type <tt>label</tt>.</p>
+  <p><!-- _______________________________________________________________________ --> </p>
+</ul>
+<h4>
+<hr size="1"><a name="m_BasicBlock">Important Public Members of the <tt>BasicBlock</tt>
+class</a></h4>
+<ul>
+  <li><tt>BasicBlock(const std::string &amp;Name = "", </tt><tt><a
+ href="#Function">Function</a> *Parent = 0)</tt>
+    <p> The <tt>BasicBlock</tt> constructor is used to create new basic
+blocks for insertion into a function.  The constructor optionally takes
+a name for the new block, and a <a href="#Function"><tt>Function</tt></a>
+to insert it into.  If the <tt>Parent</tt> parameter is specified, the
+new <tt>BasicBlock</tt> is automatically inserted at the end of the
+specified <a href="#Function"><tt>Function</tt></a>, if not specified,
+the BasicBlock must be manually inserted into the <a href="#Function"><tt>Function</tt></a>.</p>
+    <p> </p>
+  </li>
+  <li><tt>BasicBlock::iterator</tt> - Typedef for instruction list
+iterator<br>
     <tt>BasicBlock::const_iterator</tt> - Typedef for const_iterator.<br>
-    <tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,
-    <tt>size()</tt>, <tt>empty()</tt>, <tt>rbegin()</tt>, <tt>rend()</tt><p>
-
-These methods and typedefs are forwarding functions that have the same semantics
-as the standard library methods of the same names.  These methods expose the
-underlying instruction list of a basic block in a way that is easy to
-manipulate.  To get the full complement of container operations (including
-operations to update the list), you must use the <tt>getInstList()</tt>
-method.<p>
-
-<li><tt>BasicBlock::InstListType &amp;getInstList()</tt><p>
-
-This method is used to get access to the underlying container that actually
-holds the Instructions.  This method must be used when there isn't a forwarding
-function in the <tt>BasicBlock</tt> class for the operation that you would like
-to perform.  Because there are no forwarding functions for "updating"
-operations, you need to use this if you want to update the contents of a
-<tt>BasicBlock</tt>.<p>
-
-<li><tt><A href="#Function">Function</a> *getParent()</tt><p>
-
-Returns a pointer to <a href="#Function"><tt>Function</tt></a> the block is
-embedded into, or a null pointer if it is homeless.<p>
-
-<li><tt><a href="#TerminatorInst">TerminatorInst</a> *getTerminator()</tt><p>
-
-Returns a pointer to the terminator instruction that appears at the end of the
-<tt>BasicBlock</tt>.  If there is no terminator instruction, or if the last
-instruction in the block is not a terminator, then a null pointer is
-returned.<p>
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="GlobalValue">The <tt>GlobalValue</tt> class</a>
-</b></font></td></tr></table><ul>
-
-<tt>#include "<a
-href="/doxygen/GlobalValue_8h-source.html">llvm/GlobalValue.h</a>"</tt></b><br>
-doxygen info: <a href="/doxygen/classGlobalValue.html">GlobalValue Class</a><br>
-Superclasses: <a href="#User"><tt>User</tt></a>, <a
-href="#Value"><tt>Value</tt></a><p>
-
-Global values (<A href="#GlobalVariable"><tt>GlobalVariable</tt></a>s or <a
-href="#Function"><tt>Function</tt></a>s) are the only LLVM values that are
-visible in the bodies of all <a href="#Function"><tt>Function</tt></a>s.
-Because they are visible at global scope, they are also subject to linking with
-other globals defined in different translation units.  To control the linking
-process, <tt>GlobalValue</tt>s know their linkage rules.  Specifically,
-<tt>GlobalValue</tt>s know whether they have internal or external linkage.<p>
-
-If a <tt>GlobalValue</tt> has internal linkage (equivalent to being
-<tt>static</tt> in C), it is not visible to code outside the current translation
-unit, and does not participate in linking.  If it has external linkage, it is
-visible to external code, and does participate in linking.  In addition to
-linkage information, <tt>GlobalValue</tt>s keep track of which <a
-href="#Module"><tt>Module</tt></a> they are currently part of.<p>
-
-Because <tt>GlobalValue</tt>s are memory objects, they are always referred to by
-their address.  As such, the <a href="#Type"><tt>Type</tt></a> of a global is
-always a pointer to its contents.  This is explained in the LLVM Language
-Reference Manual.<p>
-
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="m_GlobalValue"><hr size=0>Important Public Members of
-the <tt>GlobalValue</tt> class</h4><ul>
-
-<li><tt>bool hasInternalLinkage() const</tt><br>
+    <tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,<tt>size()</tt>,<tt>empty()</tt>,<tt>rbegin()</tt>,<tt>rend()
+- </tt>STL style functions for accessing the instruction list.
+    <p> These methods and typedefs are forwarding functions that have
+the same semantics as the standard library methods of the same names.
+These methods expose the underlying instruction list of a basic block in
+a way that is easy to manipulate.  To get the full complement of
+container operations (including operations to update the list), you must
+use the <tt>getInstList()</tt> method.</p>
+    <p> </p>
+  </li>
+  <li><tt>BasicBlock::InstListType &amp;getInstList()</tt>
+    <p> This method is used to get access to the underlying container
+that actually holds the Instructions.  This method must be used when
+there isn't a forwarding function in the <tt>BasicBlock</tt> class for
+the operation that you would like to perform.  Because there are no
+forwarding functions for "updating" operations, you need to use this if
+you want to update the contents of a <tt>BasicBlock</tt>.</p>
+    <p> </p>
+  </li>
+  <li><tt><a href="#Function">Function</a> *getParent()</tt>
+    <p> Returns a pointer to <a href="#Function"><tt>Function</tt></a>
+the block is embedded into, or a null pointer if it is homeless.</p>
+    <p> </p>
+  </li>
+  <li><tt><a href="#TerminatorInst">TerminatorInst</a> *getTerminator()</tt>
+    <p> Returns a pointer to the terminator instruction that appears at
+the end of the <tt>BasicBlock</tt>.  If there is no terminator
+instruction, or if the last instruction in the block is not a
+terminator, then a null pointer is returned.</p>
+    <p><!-- ======================================================================= --> </p>
+  </li>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="GlobalValue">The <tt>GlobalValue</tt>
+class</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+  <tt>#include "<a href="/doxygen/GlobalValue_8h-source.html">llvm/GlobalValue.h</a>"</tt><br>
+doxygen info: <a href="/doxygen/classGlobalValue.html">GlobalValue
+Class</a><br>
+Superclasses: <a href="#User"><tt>User</tt></a>, <a href="#Value"><tt>Value</tt></a>
+  <p> Global values (<a href="#GlobalVariable"><tt>GlobalVariable</tt></a>s
+or <a href="#Function"><tt>Function</tt></a>s) are the only LLVM
+values that are visible in the bodies of all <a href="#Function"><tt>Function</tt></a>s.
+Because they are visible at global scope, they are also subject to
+linking with other globals defined in different translation units.  To
+control the linking process, <tt>GlobalValue</tt>s know their linkage
+rules. Specifically, <tt>GlobalValue</tt>s know whether they have
+internal or external linkage, as defined by the <span
+ style="font-family: monospace;">LinkageTypes</span> enumerator.</p>
+  <p> If a <tt>GlobalValue</tt> has internal linkage (equivalent to
+being <tt>static</tt> in C), it is not visible to code outside the
+current translation unit, and does not participate in linking.  If it
+has external linkage, it is visible to external code, and does
+participate in linking.  In addition to linkage information, <tt>GlobalValue</tt>s
+keep track of which <a href="#Module"><tt>Module</tt></a> they are
+currently part of.</p>
+  <p> Because <tt>GlobalValue</tt>s are memory objects, they are always
+referred to by their <span style="font-weight: bold;">address</span><span
+ style="font-weight: bold;">.</span> As such, the <a href="#Type"><tt>Type</tt></a>
+of a global is always a pointer to its contents. It is important to
+remember this when using the <span style="font-family: monospace;">GetElementPtrInst</span>
+instruction because this pointer must be dereferenced first. For
+example, if you have a <span style="font-family: monospace;">GlobalVariable</span>
+(a subclass of <span style="font-family: monospace;">GlobalValue)</span>
+that is an array of 24 ints, type <span style="font-family: monospace;">[24
+x int]</span>, then the <span style="font-family: monospace;">GlobalVariable</span>
+is a pointer to that array. Although the address of the first element of
+this array and the value of the <span style="font-family: monospace;">GlobalVariable</span>
+are the same, they have different types. The <span
+ style="font-family: monospace;">GlobalVariable</span>'s type is <span
+ style="font-family: monospace;">[24 x int]</span>. The first element's
+type is <span style="font-family: monospace;">int.</span> Because of
+this, accessing a global value requires you to dereference the pointer
+with <span style="font-family: monospace;">GetElementPtrInst</span>
+first, then its elements can be accessed.&nbsp;  This is explained in
+the <a href="LangRef.html#globalvars">LLVM Language Reference Manual</a>.</p>
+  <p><!-- _______________________________________________________________________ --> </p>
+</ul>
+<h4>
+<hr size="1"><a name="m_GlobalValue">Important Public Members of the <tt>GlobalValue</tt>
+class</a></h4>
+<ul>
+  <li><tt>bool hasInternalLinkage() const</tt><br>
     <tt>bool hasExternalLinkage() const</tt><br>
-    <tt>void setInternalLinkage(bool HasInternalLinkage)</tt><p>
-
-These methods manipulate the linkage characteristics of the
-<tt>GlobalValue</tt>.<p>
-
-<li><tt><a href="#Module">Module</a> *getParent()</tt><p>
-
-This returns the <a href="#Module"><tt>Module</tt></a> that the GlobalValue is
-currently embedded into.<p>
-
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="Function">The <tt>Function</tt> class</a>
-</b></font></td></tr></table><ul>
-
-<tt>#include "<a
-href="/doxygen/Function_8h-source.html">llvm/Function.h</a>"</tt></b><br>
+    <tt>void setInternalLinkage(bool HasInternalLinkage)</tt>
+    <p> These methods manipulate the linkage characteristics of the <tt>GlobalValue</tt>.</p>
+    <p> </p>
+  </li>
+  <li><tt><a href="#Module">Module</a> *getParent()</tt>
+    <p> This returns the <a href="#Module"><tt>Module</tt></a> that the
+GlobalValue is currently embedded into.</p>
+    <p><!-- ======================================================================= --> </p>
+  </li>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="Function">The <tt>Function</tt>
+class</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+  <tt>#include "<a href="/doxygen/Function_8h-source.html">llvm/Function.h</a>"</tt><br>
 doxygen info: <a href="/doxygen/classFunction.html">Function Class</a><br>
 Superclasses: <a href="#GlobalValue"><tt>GlobalValue</tt></a>, <a
-href="#User"><tt>User</tt></a>, <a href="#Value"><tt>Value</tt></a><p>
-
-The <tt>Function</tt> class represents a single procedure in LLVM.  It is
-actually one of the more complex classes in the LLVM heirarchy because it must
-keep track of a large amount of data.  The <tt>Function</tt> class keeps track
-of a list of <a href="#BasicBlock"><tt>BasicBlock</tt></a>s, a list of formal <a
-href="#Argument"><tt>Argument</tt></a>s, and a <a
-href="#SymbolTable"><tt>SymbolTable</tt></a>.<p>
-
-The list of <a href="#BasicBlock"><tt>BasicBlock</tt></a>s is the most commonly
-used part of <tt>Function</tt> objects.  The list imposes an implicit ordering
-of the blocks in the function, which indicate how the code will be layed out by
-the backend.  Additionally, the first <a
-href="#BasicBlock"><tt>BasicBlock</tt></a> is the implicit entry node for the
-<tt>Function</tt>.  It is not legal in LLVM explicitly branch to this initial
-block.  There are no implicit exit nodes, and in fact there may be multiple exit
-nodes from a single <tt>Function</tt>.  If the <a
-href="#BasicBlock"><tt>BasicBlock</tt></a> list is empty, this indicates that
-the <tt>Function</tt> is actually a function declaration: the actual body of the
-function hasn't been linked in yet.<p>
-
-In addition to a list of <a href="#BasicBlock"><tt>BasicBlock</tt></a>s, the
-<tt>Function</tt> class also keeps track of the list of formal <a
-href="#Argument"><tt>Argument</tt></a>s that the function receives.  This
-container manages the lifetime of the <a href="#Argument"><tt>Argument</tt></a>
-nodes, just like the <a href="#BasicBlock"><tt>BasicBlock</tt></a> list does for
-the <a href="#BasicBlock"><tt>BasicBlock</tt></a>s.<p>
-
-The <a href="#SymbolTable"><tt>SymbolTable</tt></a> is a very rarely used LLVM
-feature that is only used when you have to look up a value by name.  Aside from
-that, the <a href="#SymbolTable"><tt>SymbolTable</tt></a> is used internally to
-make sure that there are not conflicts between the names of <a
-href="#Instruction"><tt>Instruction</tt></a>s, <a
-href="#BasicBlock"><tt>BasicBlock</tt></a>s, or <a
-href="#Argument"><tt>Argument</tt></a>s in the function body.<p>
-
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="m_Function"><hr size=0>Important Public Members of
-the <tt>Function</tt> class</h4><ul>
-
-<li><tt>Function(const <a href="#FunctionType">FunctionType</a> *Ty, bool isInternal, const std::string &amp;N = "")</tt><p>
-
-Constructor used when you need to create new <tt>Function</tt>s to add the the
-program.  The constructor must specify the type of the function to create and
-whether or not it should start out with internal or external linkage.<p>
-
-<li><tt>bool isExternal()</tt><p>
-
-Return whether or not the <tt>Function</tt> has a body defined.  If the function
-is "external", it does not have a body, and thus must be resolved by linking
-with a function defined in a different translation unit.<p>
-
-
-<li><tt>Function::iterator</tt> - Typedef for basic block list iterator<br>
+ href="#User"><tt>User</tt></a>, <a href="#Value"><tt>Value</tt></a>
+  <p> The <tt>Function</tt> class represents a single procedure in LLVM.
+It is actually one of the more complex classes in the LLVM heirarchy
+because it must keep track of a large amount of data.  The <tt>Function</tt>
+class keeps track of a list of <a href="#BasicBlock"><tt>BasicBlock</tt></a>s,
+a list of formal <a href="#Argument"><tt>Argument</tt></a>s, and a <a
+ href="#SymbolTable"><tt>SymbolTable</tt></a>.</p>
+  <p> The list of <a href="#BasicBlock"><tt>BasicBlock</tt></a>s is the
+most commonly used part of <tt>Function</tt> objects.  The list imposes
+an implicit ordering of the blocks in the function, which indicate how
+the code will be layed out by the backend.  Additionally, the first <a
+ href="#BasicBlock"><tt>BasicBlock</tt></a> is the implicit entry node
+for the <tt>Function</tt>.  It is not legal in LLVM to explicitly
+branch to this initial block.  There are no implicit exit nodes, and in
+fact there may be multiple exit nodes from a single <tt>Function</tt>.
+If the <a href="#BasicBlock"><tt>BasicBlock</tt></a> list is empty,
+this indicates that the <tt>Function</tt> is actually a function
+declaration: the actual body of the function hasn't been linked in yet.</p>
+  <p> In addition to a list of <a href="#BasicBlock"><tt>BasicBlock</tt></a>s,
+the <tt>Function</tt> class also keeps track of the list of formal <a
+ href="#Argument"><tt>Argument</tt></a>s that the function receives.
+This container manages the lifetime of the <a href="#Argument"><tt>Argument</tt></a>
+nodes, just like the <a href="#BasicBlock"><tt>BasicBlock</tt></a> list
+does for the <a href="#BasicBlock"><tt>BasicBlock</tt></a>s.</p>
+  <p> The <a href="#SymbolTable"><tt>SymbolTable</tt></a> is a very
+rarely used LLVM feature that is only used when you have to look up a
+value by name.  Aside from that, the <a href="#SymbolTable"><tt>SymbolTable</tt></a>
+is used internally to make sure that there are not conflicts between the
+names of <a href="#Instruction"><tt>Instruction</tt></a>s, <a
+ href="#BasicBlock"><tt>BasicBlock</tt></a>s, or <a href="#Argument"><tt>Argument</tt></a>s
+in the function body.</p>
+  <p><!-- _______________________________________________________________________ --> </p>
+</ul>
+<h4>
+<hr size="1"><a name="m_Function">Important Public Members of the <tt>Function</tt>
+class</a></h4>
+<ul>
+  <li><tt>Function(const </tt><tt><a href="#FunctionType">FunctionType</a>
+*Ty, bool isInternal, const std::string &amp;N = "", Module* Parent = 0)</tt>
+    <p> Constructor used when you need to create new <tt>Function</tt>s
+to add the the program.  The constructor must specify the type of the
+function to create and whether or not it should start out with internal
+or external linkage. The&nbsp;<a href="#FunctionType"
+ style="font-family: monospace;">FunctionType</a> argument specifies the
+formal arguments and return value for the function. The same <a
+ href="#FunctionTypel" style="font-family: monospace;">FunctionType</a>
+value can be used to create multiple functions. The <span
+ style="font-family: monospace;">Parent</span> argument specifies the
+Module in which the function is defined. If this argument is provided,
+the function will automatically be inserted into that module's list of
+functions.</p>
+    <p> </p>
+  </li>
+  <li><tt>bool isExternal()</tt>
+    <p> Return whether or not the <tt>Function</tt> has a body defined.
+If the function is "external", it does not have a body, and thus must be
+resolved by linking with a function defined in a different translation
+unit.</p>
+    <p> </p>
+  </li>
+  <li><tt>Function::iterator</tt> - Typedef for basic block list iterator<br>
     <tt>Function::const_iterator</tt> - Typedef for const_iterator.<br>
-    <tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,
-    <tt>size()</tt>, <tt>empty()</tt>, <tt>rbegin()</tt>, <tt>rend()</tt><p>
-
-These are forwarding methods that make it easy to access the contents of a
-<tt>Function</tt> object's <a href="#BasicBlock"><tt>BasicBlock</tt></a>
-list.<p>
-
-<li><tt>Function::BasicBlockListType &amp;getBasicBlockList()</tt><p>
-
-Returns the list of <a href="#BasicBlock"><tt>BasicBlock</tt></a>s.  This is
-necessary to use when you need to update the list or perform a complex action
-that doesn't have a forwarding method.<p>
-
-
-<li><tt>Function::aiterator</tt> - Typedef for the argument list iterator<br>
+    <tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,<tt>size()</tt>,<tt>empty()</tt>,<tt>rbegin()</tt>,<tt>rend()</tt>
+    <p> These are forwarding methods that make it easy to access the
+contents of a <tt>Function</tt> object's <a href="#BasicBlock"><tt>BasicBlock</tt></a>
+list.</p>
+    <p> </p>
+  </li>
+  <li><tt>Function::BasicBlockListType &amp;getBasicBlockList()</tt>
+    <p> Returns the list of <a href="#BasicBlock"><tt>BasicBlock</tt></a>s.
+This is necessary to use when you need to update the list or perform a
+complex action that doesn't have a forwarding method.</p>
+    <p> </p>
+  </li>
+  <li><tt>Function::aiterator</tt> - Typedef for the argument list
+iterator<br>
     <tt>Function::const_aiterator</tt> - Typedef for const_iterator.<br>
-    <tt>abegin()</tt>, <tt>aend()</tt>, <tt>afront()</tt>, <tt>aback()</tt>,
-    <tt>asize()</tt>, <tt>aempty()</tt>, <tt>arbegin()</tt>, <tt>arend()</tt><p>
-
-These are forwarding methods that make it easy to access the contents of a
-<tt>Function</tt> object's <a href="#Argument"><tt>Argument</tt></a> list.<p>
-
-<li><tt>Function::ArgumentListType &amp;getArgumentList()</tt><p>
-
-Returns the list of <a href="#Argument"><tt>Argument</tt></a>s.  This is
-necessary to use when you need to update the list or perform a complex action
-that doesn't have a forwarding method.<p>
-
-
-
-<li><tt><a href="#BasicBlock">BasicBlock</a> &getEntryBlock()</tt><p>
-
-Returns the entry <a href="#BasicBlock"><tt>BasicBlock</tt></a> for the
-function.  Because the entry block for the function is always the first block,
-this returns the first block of the <tt>Function</tt>.<p>
-
-<li><tt><a href="#Type">Type</a> *getReturnType()</tt><br>
-    <tt><a href="#FunctionType">FunctionType</a> *getFunctionType()</tt><p>
-
-This traverses the <a href="#Type"><tt>Type</tt></a> of the <tt>Function</tt>
+    <tt>abegin()</tt>, <tt>aend()</tt>, <tt>afront()</tt>, <tt>aback()</tt>,<tt>asize()</tt>,<tt>aempty()</tt>,<tt>arbegin()</tt>,<tt>arend()</tt>
+    <p> These are forwarding methods that make it easy to access the
+contents of a <tt>Function</tt> object's <a href="#Argument"><tt>Argument</tt></a>
+list.</p>
+    <p> </p>
+  </li>
+  <li><tt>Function::ArgumentListType &amp;getArgumentList()</tt>
+    <p> Returns the list of <a href="#Argument"><tt>Argument</tt></a>s.
+This is necessary to use when you need to update the list or perform a
+complex action that doesn't have a forwarding method.</p>
+    <p> </p>
+  </li>
+  <li><tt><a href="#BasicBlock">BasicBlock</a> &amp;getEntryBlock()</tt>
+    <p> Returns the entry <a href="#BasicBlock"><tt>BasicBlock</tt></a>
+for the function.  Because the entry block for the function is always
+the first block, this returns the first block of the <tt>Function</tt>.</p>
+    <p> </p>
+  </li>
+  <li><tt><a href="#Type">Type</a> *getReturnType()</tt><br>
+    <tt><a href="#FunctionType">FunctionType</a> *getFunctionType()</tt>
+    <p> This traverses the <a href="#Type"><tt>Type</tt></a> of the <tt>Function</tt>
 and returns the return type of the function, or the <a
-href="#FunctionType"><tt>FunctionType</tt></a> of the actual function.<p>
-
-<li><tt><a href="#SymbolTable">SymbolTable</a> *getSymbolTable()</tt><p>
-
-Return a pointer to the <a href="#SymbolTable"><tt>SymbolTable</tt></a> for this
-<tt>Function</tt>.<p>
-
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="GlobalVariable">The <tt>GlobalVariable</tt> class</a>
-</b></font></td></tr></table><ul>
-
-<tt>#include "<a
-href="/doxygen/GlobalVariable_8h-source.html">llvm/GlobalVariable.h</a>"</tt></b><br>
-doxygen info: <a href="/doxygen/classGlobalVariable.html">GlobalVariable Class</a><br>
+ href="#FunctionType"><tt>FunctionType</tt></a> of the actual function.</p>
+    <p> </p>
+  </li>
+  <li><tt><a href="#SymbolTable">SymbolTable</a> *getSymbolTable()</tt>
+    <p> Return a pointer to the <a href="#SymbolTable"><tt>SymbolTable</tt></a>
+for this <tt>Function</tt>.</p>
+    <p><!-- ======================================================================= --> </p>
+  </li>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="GlobalVariable">The <tt>GlobalVariable</tt>
+class</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+  <tt>#include "<a href="/doxygen/GlobalVariable_8h-source.html">llvm/GlobalVariable.h</a>"</tt><br>
+doxygen info: <a href="/doxygen/classGlobalVariable.html">GlobalVariable
+Class</a><br>
 Superclasses: <a href="#GlobalValue"><tt>GlobalValue</tt></a>, <a
-href="#User"><tt>User</tt></a>, <a href="#Value"><tt>Value</tt></a><p>
-
-Global variables are represented with the (suprise suprise)
-<tt>GlobalVariable</tt> class.  Like functions, <tt>GlobalVariable</tt>s are
-also subclasses of <a href="#GlobalValue"><tt>GlobalValue</tt></a>, and as such
-are always referenced by their address (global values must live in memory, so
-their "name" refers to their address).  Global variables may have an initial
-value (which must be a <a href="#Constant"><tt>Constant</tt></a>), and if they
-have an initializer, they may be marked as "constant" themselves (indicating
-that their contents never change at runtime).<p>
-
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="m_GlobalVariable"><hr size=0>Important Public Members of the
-<tt>GlobalVariable</tt> class</h4><ul>
-
-<li><tt>GlobalVariable(const <a href="#Type">Type</a> *Ty, bool isConstant, bool
-isInternal, <a href="#Constant">Constant</a> *Initializer = 0, const std::string
-&amp;Name = "")</tt><p>
-
-Create a new global variable of the specified type.  If <tt>isConstant</tt> is
-true then the global variable will be marked as unchanging for the program, and
-if <tt>isInternal</tt> is true the resultant global variable will have internal
-linkage.  Optionally an initializer and name may be specified for the global variable as well.<p>
-
-
-<li><tt>bool isConstant() const</tt><p>
-
-Returns true if this is a global variable is known not to be modified at
-runtime.<p>
-
-
-<li><tt>bool hasInitializer()</tt><p>
-
-Returns true if this <tt>GlobalVariable</tt> has an intializer.<p>
-
-
-<li><tt><a href="#Constant">Constant</a> *getInitializer()</tt><p>
-
-Returns the intial value for a <tt>GlobalVariable</tt>.  It is not legal to call
-this method if there is no initializer.<p>
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="Module">The <tt>Module</tt> class</a>
-</b></font></td></tr></table><ul>
-
-<tt>#include "<a
-href="/doxygen/Module_8h-source.html">llvm/Module.h</a>"</tt></b><br>
-doxygen info: <a href="/doxygen/classModule.html">Module Class</a><p>
-
-The <tt>Module</tt> class represents the top level structure present in LLVM
-programs.  An LLVM module is effectively either a translation unit of the
-original program or a combination of several translation units merged by the
-linker.  The <tt>Module</tt> class keeps track of a list of <a
-href="#Function"><tt>Function</tt></a>s, a list of <a
-href="#GlobalVariable"><tt>GlobalVariable</tt></a>s, and a <a
-href="#SymbolTable"><tt>SymbolTable</tt></a>.  Additionally, it contains a few
-helpful member functions that try to make common operations easy.<p>
-
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="m_Module"><hr size=0>Important Public Members of the
-<tt>Module</tt> class</h4><ul>
-
-<li><tt>Module::iterator</tt> - Typedef for function list iterator<br>
+ href="#User"><tt>User</tt></a>, <a href="#Value"><tt>Value</tt></a>
+  <p> Global variables are represented with the (suprise suprise) <tt>GlobalVariable</tt>
+class. Like functions, <tt>GlobalVariable</tt>s are also subclasses of <a
+ href="#GlobalValue"><tt>GlobalValue</tt></a>, and as such are always
+referenced by their address (global values must live in memory, so their
+"name" refers to their address). See <a href="#GlobalValue"><span
+ style="font-family: monospace;">GlobalValue</span></a> for more on
+this. Global variables may have an initial value (which must be a <a
+ href="#Constant"><tt>Constant</tt></a>), and if they have an
+initializer, they may be marked as "constant" themselves (indicating
+that their contents never change at runtime). &nbsp;</p>
+  <p><!-- _______________________________________________________________________ --> </p>
+</ul>
+<h4>
+<hr size="1"><a name="m_GlobalVariable">Important Public Members of the <tt>GlobalVariable</tt>
+class</a></h4>
+<ul>
+  <li><tt>GlobalVariable(const </tt><tt><a href="#Type">Type</a> *Ty,
+bool isConstant, LinkageTypes&amp; Linkage, <a href="#Constant">Constant</a>
+*Initializer = 0, const std::string &amp;Name = "", Module* Parent = 0)</tt>
+    <p> Create a new global variable of the specified type.  If <tt>isConstant</tt>
+is true then the global variable will be marked as unchanging for the
+program. The Linkage parameter specifies the type of linkage (internal,
+external, weak, linkonce, appending) for the variable. If the linkage
+is InternalLinkage, WeakLinkage, or LinkOnceLinkage,&nbsp; then the
+resultant global variable will have internal linkage.  AppendingLinkage
+concatenates together all instances (in different translation units) of
+the variable into a single variable but is only applicable to arrays.
+&nbsp;See the <a href="LangRef.html#modulestructure">LLVM Language
+Reference</a> for further details on linkage types. Optionally an
+initializer, a name, and the module to put the variable into may be
+specified for the global variable as well.</p>
+    <p> </p>
+  </li>
+  <li><tt>bool isConstant() const</tt>
+    <p> Returns true if this is a global variable that is known not to
+be modified at runtime.</p>
+    <p> </p>
+  </li>
+  <li><tt>bool hasInitializer()</tt>
+    <p> Returns true if this <tt>GlobalVariable</tt> has an intializer.</p>
+    <p> </p>
+  </li>
+  <li><tt><a href="#Constant">Constant</a> *getInitializer()</tt>
+    <p> Returns the intial value for a <tt>GlobalVariable</tt>.  It is
+not legal to call this method if there is no initializer.</p>
+    <p><!-- ======================================================================= --> </p>
+  </li>
+</ul>
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="Module">The <tt>Module</tt> class</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+  <tt>#include "<a href="/doxygen/Module_8h-source.html">llvm/Module.h</a>"</tt><br>
+doxygen info: <a href="/doxygen/classModule.html">Module Class</a>
+  <p> The <tt>Module</tt> class represents the top level structure
+present in LLVM programs.  An LLVM module is effectively either a
+translation unit of the original program or a combination of several
+translation units merged by the linker.  The <tt>Module</tt> class keeps
+track of a list of <a href="#Function"><tt>Function</tt></a>s, a list
+of <a href="#GlobalVariable"><tt>GlobalVariable</tt></a>s, and a <a
+ href="#SymbolTable"><tt>SymbolTable</tt></a>.  Additionally, it
+contains a few helpful member functions that try to make common
+operations easy.</p>
+  <p><!-- _______________________________________________________________________ --> </p>
+</ul>
+<h4>
+<hr size="1"><a name="m_Module">Important Public Members of the <tt>Module</tt>
+class<span style="font-family: monospace;"></span></a></h4>
+<ul>
+  <li><span style="font-family: monospace;">Module::Module( std::string
+name = "" ) </span></li>
+</ul>
+<p style="margin-left: 40px;">Constructing a <a href="#Module">Module</a>
+is easy. You can optionally provide a name for it (probably based on the
+name of the translation unit).</p>
+<ul>
+  <li><tt>Module::iterator</tt> - Typedef for function list iterator<br>
     <tt>Module::const_iterator</tt> - Typedef for const_iterator.<br>
-    <tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,
-    <tt>size()</tt>, <tt>empty()</tt>, <tt>rbegin()</tt>, <tt>rend()</tt><p>
-
-These are forwarding methods that make it easy to access the contents of a
-<tt>Module</tt> object's <a href="#Function"><tt>Function</tt></a>
-list.<p>
-
-<li><tt>Module::FunctionListType &amp;getFunctionList()</tt><p>
-
-Returns the list of <a href="#Function"><tt>Function</tt></a>s.  This is
-necessary to use when you need to update the list or perform a complex action
-that doesn't have a forwarding method.<p>
-
-<!--  Global Variable -->
-<hr size=0>
-
-<li><tt>Module::giterator</tt> - Typedef for global variable list iterator<br>
+    <tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,<tt>size()</tt>,<tt>empty()</tt>,<tt>rbegin()</tt>,<tt>rend()</tt>
+    <p> These are forwarding methods that make it easy to access the
+contents of a <tt>Module</tt> object's <a href="#Function"><tt>Function</tt></a>
+list.</p>
+    <p> </p>
+  </li>
+  <li><tt>Module::FunctionListType &amp;getFunctionList()</tt>
+    <p> Returns the list of <a href="#Function"><tt>Function</tt></a>s.
+This is necessary to use when you need to update the list or perform a
+complex action that doesn't have a forwarding method.</p>
+    <p><!--  Global Variable --> </p>
+    <hr size="1"> </li>
+  <li><tt>Module::giterator</tt> - Typedef for global variable list
+iterator<br>
     <tt>Module::const_giterator</tt> - Typedef for const_iterator.<br>
-    <tt>gbegin()</tt>, <tt>gend()</tt>, <tt>gfront()</tt>, <tt>gback()</tt>,
-    <tt>gsize()</tt>, <tt>gempty()</tt>, <tt>grbegin()</tt>, <tt>grend()</tt><p>
-
-These are forwarding methods that make it easy to access the contents of a
-<tt>Module</tt> object's <a href="#GlobalVariable"><tt>GlobalVariable</tt></a>
-list.<p>
-
-<li><tt>Module::GlobalListType &amp;getGlobalList()</tt><p>
-
-Returns the list of <a href="#GlobalVariable"><tt>GlobalVariable</tt></a>s.
-This is necessary to use when you need to update the list or perform a complex
-action that doesn't have a forwarding method.<p>
-
-
-<!--  Symbol table stuff -->
-<hr size=0>
-
-<li><tt><a href="#SymbolTable">SymbolTable</a> *getSymbolTable()</tt><p>
-
-Return a reference to the <a href="#SymbolTable"><tt>SymbolTable</tt></a> for
-this <tt>Module</tt>.<p>
-
-
-<!--  Convenience methods -->
-<hr size=0>
-
-<li><tt><a href="#Function">Function</a> *getFunction(const std::string &amp;Name, const <a href="#FunctionType">FunctionType</a> *Ty)</tt><p>
-
-Look up the specified function in the <tt>Module</tt> <a
-href="#SymbolTable"><tt>SymbolTable</tt></a>. If it does not exist, return
-<tt>null</tt>.<p>
-
-
-<li><tt><a href="#Function">Function</a> *getOrInsertFunction(const std::string
-         &amp;Name, const <a href="#FunctionType">FunctionType</a> *T)</tt><p>
-
-Look up the specified function in the <tt>Module</tt> <a
-href="#SymbolTable"><tt>SymbolTable</tt></a>. If it does not exist, add an
-external declaration for the function and return it.<p>
-
-
-<li><tt>std::string getTypeName(const <a href="#Type">Type</a> *Ty)</tt><p>
-
-If there is at least one entry in the <a
-href="#SymbolTable"><tt>SymbolTable</tt></a> for the specified <a
-href="#Type"><tt>Type</tt></a>, return it.  Otherwise return the empty
-string.<p>
-
-
-<li><tt>bool addTypeName(const std::string &Name, const <a href="#Type">Type</a>
-*Ty)</tt><p>
-
-Insert an entry in the <a href="#SymbolTable"><tt>SymbolTable</tt></a> mapping
-<tt>Name</tt> to <tt>Ty</tt>. If there is already an entry for this name, true
-is returned and the <a href="#SymbolTable"><tt>SymbolTable</tt></a> is not
-modified.<p>
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="Constant">The <tt>Constant</tt> class and subclasses</a>
-</b></font></td></tr></table><ul>
-
-Constant represents a base class for different types of constants. It is
-subclassed by ConstantBool, ConstantInt, ConstantSInt, ConstantUInt,
-ConstantArray etc for representing the various types of Constants.<p>
-
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="m_Value"><hr size=0>Important Public Methods</h4><ul>
-
-<li><tt>bool isConstantExpr()</tt>: Returns true if it is a ConstantExpr
-
-
-<hr>
-Important Subclasses of Constant<p>
-
-<ul>
-<li>ConstantSInt : This subclass of Constant represents a signed integer constant.
-<ul>
-	<li><tt>int64_t getValue() const</tt>: Returns the underlying value of this constant.
+    <tt>gbegin()</tt>, <tt>gend()</tt>, <tt>gfront()</tt>, <tt>gback()</tt>,<tt>gsize()</tt>,<tt>gempty()</tt>,<tt>grbegin()</tt>,<tt>grend()</tt>
+    <p> These are forwarding methods that make it easy to access the
+contents of a <tt>Module</tt> object's <a href="#GlobalVariable"><tt>GlobalVariable</tt></a>
+list.</p>
+    <p> </p>
+  </li>
+  <li><tt>Module::GlobalListType &amp;getGlobalList()</tt>
+    <p> Returns the list of <a href="#GlobalVariable"><tt>GlobalVariable</tt></a>s.
+This is necessary to use when you need to update the list or perform a
+complex action that doesn't have a forwarding method.</p>
+    <p><!--  Symbol table stuff --> </p>
+    <hr size="1"> </li>
+  <li><tt><a href="#SymbolTable">SymbolTable</a> *getSymbolTable()</tt>
+    <p> Return a reference to the <a href="#SymbolTable"><tt>SymbolTable</tt></a>
+for this <tt>Module</tt>.</p>
+    <p><!--  Convenience methods --> </p>
+    <hr size="1"> </li>
+  <li><tt><a href="#Function">Function</a> *getFunction(const
+std::string &amp;Name, const <a href="#FunctionType">FunctionType</a>
+*Ty)</tt>
+    <p> Look up the specified function in the <tt>Module</tt> <a
+ href="#SymbolTable"><tt>SymbolTable</tt></a>. If it does not exist,
+return <tt>null</tt>.</p>
+    <p> </p>
+  </li>
+  <li><tt><a href="#Function">Function</a> *getOrInsertFunction(const
+std::string &amp;Name, const <a href="#FunctionType">FunctionType</a> *T)</tt>
+    <p> Look up the specified function in the <tt>Module</tt> <a
+ href="#SymbolTable"><tt>SymbolTable</tt></a>. If it does not exist,
+add an external declaration for the function and return it.</p>
+    <p> </p>
+  </li>
+  <li><tt>std::string getTypeName(const <a href="#Type">Type</a> *Ty)</tt>
+    <p> If there is at least one entry in the <a href="#SymbolTable"><tt>SymbolTable</tt></a>
+for the specified <a href="#Type"><tt>Type</tt></a>, return it.
+Otherwise return the empty string.</p>
+    <p> </p>
+  </li>
+  <li><tt>bool addTypeName(const std::string &amp;Name, const <a
+ href="#Type">Type</a> *Ty)</tt>
+    <p> Insert an entry in the <a href="#SymbolTable"><tt>SymbolTable</tt></a>
+mapping <tt>Name</tt> to <tt>Ty</tt>. If there is already an entry for
+this name, true is returned and the <a href="#SymbolTable"><tt>SymbolTable</tt></a>
+is not modified.</p>
+    <p><!-- ======================================================================= --> </p>
+  </li>
 </ul>
-<li>ConstantUInt : This class represents an unsigned integer.
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="Constant">The <tt>Constant</tt>
+class and subclasses</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
 <ul>
-	<li><tt>uint64_t getValue() const</tt>: Returns the underlying value of this constant.
+Constant represents a base class for different types of constants. It
+is subclassed by ConstantBool, ConstantInt, ConstantSInt, ConstantUInt,
+ConstantArray etc for representing the various types of Constants.
+  <p><!-- _______________________________________________________________________ --> </p>
 </ul>
-<li>ConstantFP : This class represents a floating point constant.
+<h4>
+<hr size="1"><a name="m_Value">Important Public Methods</a></h4>
 <ul>
-	<li><tt>double getValue() const</tt>: Returns the underlying value of this constant.
+  <li><tt>bool isConstantExpr()</tt>: Returns true if it is a
+ConstantExpr
+    <hr> Important Subclasses of Constant
+    <p> </p>
+    <ul>
+      <li>ConstantSInt : This subclass of Constant represents a signed
+integer constant.
+        <ul>
+	<li><tt>int64_t getValue() const</tt>: Returns the underlying value of
+this constant. </li>
+        </ul>
+      </li>
+      <li>ConstantUInt : This class represents an unsigned integer.
+        <ul>
+	<li><tt>uint64_t getValue() const</tt>: Returns the underlying value
+of this constant. </li>
+        </ul>
+      </li>
+      <li>ConstantFP : This class represents a floating point constant.
+        <ul>
+	<li><tt>double getValue() const</tt>: Returns the underlying value of
+this constant. </li>
+        </ul>
+      </li>
+      <li>ConstantBool : This represents a boolean constant.
+        <ul>
+	<li><tt>bool getValue() const</tt>: Returns the underlying value of
+this constant. </li>
+        </ul>
+      </li>
+      <li>ConstantArray : This represents a constant array.
+        <ul>
+	<li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>:
+Returns a Vecotr of component constants that makeup this array. </li>
+        </ul>
+      </li>
+      <li>ConstantStruct : This represents a constant struct.
+        <ul>
+	<li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>:
+Returns a Vecotr of component constants that makeup this array. </li>
+        </ul>
+      </li>
+      <li>ConstantPointerRef : This represents a constant pointer value
+that is initialized to point to a global value, which lies at a
+constant fixed address.
+        <ul>
+          <li><tt>GlobalValue *getValue()</tt>: Returns the global
+value to which this pointer is pointing to. </li>
+        </ul>
+      </li>
+    </ul>
+<!-- ======================================================================= --> </li>
 </ul>
-<li>ConstantBool : This represents a boolean constant.
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="Type">The <tt>Type</tt> class and
+Derived Types</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
 <ul>
-	<li><tt>bool getValue() const</tt>: Returns the underlying value of this constant.
+Type as noted earlier is also a subclass of a Value class.  Any
+primitive type (like int, short etc) in LLVM is an instance of Type
+Class.  All other types are instances of subclasses of type like
+FunctionType, ArrayType etc. DerivedType is the interface for all such
+dervied types including FunctionType, ArrayType, PointerType,
+StructType. Types can have names. They can be recursive (StructType).
+There exists exactly one instance of any type structure at a time. This
+allows using pointer equality of Type *s for comparing types.<!-- _______________________________________________________________________ -->
 </ul>
-<li>ConstantArray : This represents a constant array.
+<h4>
+<hr size="1"><a name="m_Value">Important Public Methods</a></h4>
 <ul>
-	<li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>: Returns a Vecotr of component constants that makeup this array.
+  <li><tt>PrimitiveID getPrimitiveID() const</tt>: Returns the base
+type of the type. </li>
+  <li><tt> bool isSigned() const</tt>: Returns whether an integral
+numeric type is signed. This is true for SByteTy, ShortTy, IntTy,
+LongTy. Note that this is not true for Float and Double. </li>
+  <li><tt>bool isUnsigned() const</tt>: Returns whether a numeric type
+is unsigned. This is not quite the complement of isSigned... nonnumeric
+types return false as they do with isSigned. This returns true for
+UByteTy, UShortTy, UIntTy, and ULongTy. </li>
+  <li><tt> bool isInteger() const</tt>: Equilivent to isSigned() ||
+isUnsigned(), but with only a single virtual function invocation. </li>
+  <li><tt>bool isIntegral() const</tt>: Returns true if this is an
+integral type, which is either Bool type or one of the Integer types. </li>
+  <li><tt>bool isFloatingPoint()</tt>: Return true if this is one of
+the two floating point types. </li>
+  <li><tt>bool isRecursive() const</tt>: Returns rue if the type graph
+contains a cycle. </li>
+  <li><tt>isLosslesslyConvertableTo (const Type *Ty) const</tt>: Return
+true if this type can be converted to 'Ty' without any reinterpretation
+of bits. For example, uint to int. </li>
+  <li><tt>bool isPrimitiveType() const</tt>: Returns true if it is a
+primitive type. </li>
+  <li><tt>bool isDerivedType() const</tt>: Returns true if it is a
+derived type. </li>
+  <li><tt>const Type * getContainedType (unsigned i) const</tt>: This
+method is used to implement the type iterator. For derived types, this
+returns the types 'contained' in the derived type, returning 0 when 'i'
+becomes invalid. This allows the user to iterate over the types in a
+struct, for example, really easily. </li>
+  <li><tt>unsigned getNumContainedTypes() const</tt>: Return the number
+of types in the derived type.
+    <p> </p>
+    <hr> Derived Types
+    <p> </p>
+    <ul>
+      <li>SequentialType : This is subclassed by ArrayType and
+PointerType
+        <ul>
+	<li><tt>const Type * getElementType() const</tt>: Returns the type of
+each of the elements in the sequential type. </li>
+        </ul>
+      </li>
+      <li>ArrayType : This is a subclass of SequentialType and defines
+interface for array types.
+        <ul>
+	<li><tt>unsigned getNumElements() const</tt>: Returns the number of
+elements in the array. </li>
+        </ul>
+      </li>
+      <li>PointerType : Subclass of SequentialType for  pointer types. </li>
+      <li>StructType : subclass of DerivedTypes for struct types </li>
+      <li>FunctionType : subclass of DerivedTypes for function types.
+        <ul>
+	 	<li><tt>bool isVarArg() const</tt>: Returns true if its a vararg
+function 	</li>
+          <li><tt> const Type * getReturnType() const</tt>: Returns the
+return type of the function. 	</li>
+          <li><tt> const ParamTypes &amp;getParamTypes() const</tt>:
+Returns a vector of parameter types. 	</li>
+          <li><tt>const Type * getParamType (unsigned i)</tt>: Returns
+the type of the ith parameter. 	</li>
+          <li><tt> const unsigned getNumParams() const</tt>: Returns the
+number of formal parameters. </li>
+        </ul>
+      </li>
+    </ul>
+<!-- ======================================================================= --> </li>
 </ul>
-<li>ConstantStruct : This represents a constant struct.
+<table width="100%" bgcolor="#441188" border="0" cellpadding="4"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td>&nbsp;</td>
+      <td width="100%">&nbsp; <font color="#eeeeff"
+ face="Georgia,Palatino"><b> <a name="Argument">The <tt>Argument</tt>
+class</a> </b></font></td>
+    </tr>
+  </tbody>
+</table>
 <ul>
-	<li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>: Returns a Vecotr of component constants that makeup this array.
+This subclass of Value defines the interface for incoming formal
+arguments to a function. A Function maitanis a list of its formal
+arguments. An argument has a pointer to the parent Function.<!-- *********************************************************************** -->
 </ul>
-<li>ConstantPointerRef : This represents a constant pointer value that is initialized to point to a global value, which lies at a constant fixed address.
-<ul>
-<li><tt>GlobalValue *getValue()</tt>: Returns the global value to which this pointer is pointing to.
-</ul>
-</ul>
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="Type">The <tt>Type</tt> class and Derived Types</a>
-</b></font></td></tr></table><ul>
-
-Type as noted earlier is also a subclass of a Value class.  Any primitive
-type (like int, short etc) in LLVM is an instance of Type Class.  All
-other types are instances of subclasses of type like FunctionType,
-ArrayType etc. DerivedType is the interface for all such dervied types
-including FunctionType, ArrayType, PointerType, StructType. Types can have
-names. They can be recursive (StructType). There exists exactly one instance 
-of any type structure at a time. This allows using pointer equality of Type *s for comparing types. 
-
-<!-- _______________________________________________________________________ -->
-</ul><h4><a name="m_Value"><hr size=0>Important Public Methods</h4><ul>
-
-<li><tt>PrimitiveID getPrimitiveID() const</tt>: Returns the base type of the type.
-<li><tt> bool isSigned() const</tt>: Returns whether an integral numeric type is signed. This is true for SByteTy, ShortTy, IntTy, LongTy. Note that this is not true for Float and Double.
-<li><tt>bool isUnsigned() const</tt>: Returns whether a numeric type is unsigned. This is not quite the complement of isSigned... nonnumeric types return false as they do with isSigned. This returns true for UByteTy, UShortTy, UIntTy, and ULongTy. 
-<li><tt> bool isInteger() const</tt>: Equilivent to isSigned() || isUnsigned(), but with only a single virtual function invocation. 
-<li><tt>bool isIntegral() const</tt>: Returns true if this is an integral type, which is either Bool type or one of the Integer types.
-
-<li><tt>bool isFloatingPoint()</tt>: Return true if this is one of the two floating point types.
-<li><tt>bool isRecursive() const</tt>: Returns rue if the type graph contains a cycle.
-<li><tt>isLosslesslyConvertableTo (const Type *Ty) const</tt>: Return true if this type can be converted to 'Ty' without any reinterpretation of bits. For example, uint to int.
-<li><tt>bool isPrimitiveType() const</tt>: Returns true if it is a primitive type.
-<li><tt>bool isDerivedType() const</tt>: Returns true if it is a derived type.
-<li><tt>const Type * getContainedType (unsigned i) const</tt>: 
-This method is used to implement the type iterator. For derived types, this returns the types 'contained' in the derived type, returning 0 when 'i' becomes invalid. This allows the user to iterate over the types in a struct, for example, really easily.
-<li><tt>unsigned getNumContainedTypes() const</tt>: Return the number of types in the derived type. 
-
-<p>
-
-<hr>
-Derived Types<p>
-
-<ul>
-<li>SequentialType : This is subclassed by ArrayType and PointerType 
-<ul>
-	<li><tt>const Type * getElementType() const</tt>: Returns the type of each of the elements in the sequential type.
-</ul>
-<li>ArrayType : This is a subclass of SequentialType and defines interface for array types.
-<ul>
-	<li><tt>unsigned getNumElements() const</tt>: Returns the number of elements in the array.
-</ul>
-<li>PointerType : Subclass of SequentialType for  pointer types.
-<li>StructType : subclass of DerivedTypes for struct types
-<li>FunctionType : subclass of DerivedTypes for function types.
-
-<ul>
-	
-	<li><tt>bool isVarArg() const</tt>: Returns true if its a vararg function
-	<li><tt> const Type * getReturnType() const</tt>: Returns the return type of the function.
-	<li><tt> const ParamTypes &amp;getParamTypes() const</tt>: Returns a vector of parameter types.
-	<li><tt>const Type * getParamType (unsigned i)</tt>: Returns the type of the ith parameter.
-	<li><tt> const unsigned getNumParams() const</tt>: Returns the number of formal parameters.
-</ul>
-</ul>
-
-
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; 
-<font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="Argument">The <tt>Argument</tt> class</a>
-</b></font></td></tr></table><ul>
-
-This subclass of Value defines the interface for incoming formal arguments to a
-function. A Function maitanis a list of its formal arguments. An argument has a
-pointer to the parent Function.
-
-
-
-
 <!-- *********************************************************************** -->
-</ul>
-<!-- *********************************************************************** -->
-
-<hr><font size-1>
-<address>By: <a href="mailto:dhurjati@cs.uiuc.edu">Dinakar Dhurjati</a> and
-<a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
-<a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
-<br>
-<!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
-<!-- hhmts start -->
-Last modified: Fri Nov  7 13:24:22 CST 2003
-<!-- hhmts end -->
-</font></body></html>
+<hr><font size-1="">
+<address>By: <a href="mailto:dhurjati@cs.uiuc.edu">Dinakar Dhurjati</a>
+and <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
+</font><font size-1=""><a href="http://llvm.cs.uiuc.edu">The LLVM
+Compiler Infrastructure</a> <br>
+<!-- Created: Tue Aug  6 15:00:33 CDT 2002 --><!-- hhmts start --> Last
+modified: Fri Nov  7 13:24:22 CST 2003<!-- hhmts end --> </font>
+</body>
+</html>
