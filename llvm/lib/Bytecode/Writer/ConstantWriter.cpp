@@ -80,6 +80,11 @@ void BytecodeWriter::outputType(const Type *T) {
     break;
   }
 
+  case Type::OpaqueTyID: {
+    // No need to emit anything, just the count of opaque types is enough.
+    break;
+  }
+
   //case Type::PackedTyID:
   default:
     cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"

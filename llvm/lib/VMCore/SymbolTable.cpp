@@ -10,6 +10,9 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Method.h"
 
+#define DEBUG_SYMBOL_TABLE 0
+#define DEBUG_ABSTYPE 0
+
 SymbolTable::~SymbolTable() {
   // Drop all abstract type references in the type plane...
   iterator TyPlane = find(Type::TypeTy);
@@ -34,25 +37,6 @@ SymbolTable::~SymbolTable() {
   
   assert(LeftoverValues && "Values remain in symbol table!");
 #endif
-}
-
-SymbolTable::type_iterator SymbolTable::type_find(const Value *D) {
-  assert(D->hasName() && "type_find(Value*) only works on named nodes!");
-  return type_find(D->getType(), D->getName());
-}
-
-
-// find - returns end(Ty->getIDNumber()) on failure...
-SymbolTable::type_iterator SymbolTable::type_find(const Type *Ty, 
-                                                  const string &Name) {
-  iterator I = find(Ty);
-  if (I == end()) {      // Not in collection yet... insert dummy entry
-    (*this)[Ty] = VarMap();
-    I = find(Ty);
-    assert(I != end() && "How did insert fail?");
-  }
-
-  return I->second.find(Name);
 }
 
 // getUniqueName - Given a base name, return a string that is either equal to
@@ -88,30 +72,52 @@ Value *SymbolTable::lookup(const Type *Ty, const string &Name) {
 
 void SymbolTable::remove(Value *N) {
   assert(N->hasName() && "Value doesn't have name!");
-  assert(type_find(N) != type_end(N->getType()) && 
-         "Value not in symbol table!");
-  type_remove(type_find(N));
+
+  iterator I = find(N->getType());
+  removeEntry(I, I->second.find(N->getName()));
 }
 
+// removeEntry - Remove a value from the symbol table...
+//
+Value *SymbolTable::removeEntry(iterator Plane, type_iterator Entry) {
+  assert(Plane != super::end() &&
+         Entry != Plane->second.end() && "Invalid entry to remove!");
 
-#define DEBUG_SYMBOL_TABLE 0
-
-Value *SymbolTable::type_remove(const type_iterator &It) {
-  Value *Result = It->second;
+  Value *Result = Entry->second;
   const Type *Ty = Result->getType();
 #if DEBUG_SYMBOL_TABLE
   cerr << this << " Removing Value: " << Result->getName() << endl;
 #endif
 
   // Remove the value from the plane...
-  find(Ty)->second.erase(It);
+  Plane->second.erase(Entry);
+
+  // If the plane is empty, remove it now!
+  if (Plane->second.empty()) {
+    // If the plane represented an abstract type that we were interested in,
+    // unlink ourselves from this plane.
+    //
+    if (Plane->first->isAbstract()) {
+#if DEBUG_ABSTYPE
+      cerr << "Plane Empty: Removing type: " << Plane->first->getDescription()
+           << endl;
+#endif
+      cast<DerivedType>(Plane->first)->removeAbstractTypeUser(this);
+    }
+
+    erase(Plane);
+  }
 
   // If we are removing an abstract type, remove the symbol table from it's use
   // list...
   if (Ty == Type::TypeTy) {
     const Type *T = cast<const Type>(Result);
-    if (T->isAbstract())
+    if (T->isAbstract()) {
+#if DEBUG_ABSTYPE
+      cerr << "Removing abs type from symtab" << T->getDescription() << endl;
+#endif
       cast<DerivedType>(T)->removeAbstractTypeUser(this);
+    }
   }
 
   return Result;
@@ -140,8 +146,12 @@ void SymbolTable::insertEntry(const string &Name, const Type *VTy, Value *V) {
     // future, which would cause the plane of the old type to get merged into
     // a new type plane.
     //
-    if (VTy->isAbstract())
+    if (VTy->isAbstract()) {
       cast<DerivedType>(VTy)->addAbstractTypeUser(this);
+#if DEBUG_ABSTYPE
+      cerr << "Added abstract type value: " << VTy->getDescription() << endl;
+#endif
+    }
   }
 
   I->second.insert(make_pair(Name, V));
@@ -149,8 +159,12 @@ void SymbolTable::insertEntry(const string &Name, const Type *VTy, Value *V) {
   // If we are adding an abstract type, add the symbol table to it's use list.
   if (VTy == Type::TypeTy) {
     const Type *T = cast<const Type>(V);
-    if (T->isAbstract())
+    if (T->isAbstract()) {
       cast<DerivedType>(T)->addAbstractTypeUser(this);
+#if DEBUG_ABSTYPE
+      cerr << "Added abstract type to ST: " << T->getDescription() << endl;
+#endif
+    }
   }
 }
 
@@ -161,8 +175,16 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
 
   // Get a handle to the new type plane...
   iterator NewTypeIt = find(NewType);
-  if (NewTypeIt == super::end())       // If no plane exists, add one
+  if (NewTypeIt == super::end()) {      // If no plane exists, add one
     NewTypeIt = super::insert(make_pair(NewType, VarMap())).first;
+
+    if (NewType->isAbstract()) {
+      cast<DerivedType>(NewType)->addAbstractTypeUser(this);
+#if DEBUG_ABSTYPE
+      cerr << "refined to abstype: " << NewType->getDescription() <<endl;
+#endif
+    }
+  }
 
   VarMap &NewPlane = NewTypeIt->second;
 
@@ -225,7 +247,13 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
 
     // Ok, now we are not referencing the type anymore... take me off your user
     // list please!
+#if DEBUG_ABSTYPE
+    cerr << "Removing type " << OldType->getDescription() << endl;
+#endif
     OldType->removeAbstractTypeUser(this);
+
+    // Remove the plane that is no longer used
+    erase(TPI);
   }
 
   TPI = find(Type::TypeTy);
@@ -239,10 +267,18 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
   VarMap &TyPlane = TPI->second;
   for (VarMap::iterator I = TyPlane.begin(), E = TyPlane.end(); I != E; ++I)
     if (I->second == (Value*)OldType) {  // FIXME when Types aren't const.
+#if DEBUG_ABSTYPE
+      cerr << "Removing type " << OldType->getDescription() << endl;
+#endif
       OldType->removeAbstractTypeUser(this);
+
       I->second = (Value*)NewType;  // TODO FIXME when types aren't const
-      if (NewType->isAbstract())
+      if (NewType->isAbstract()) {
+#if DEBUG_ABSTYPE
+        cerr << "Added type " << NewType->getDescription() << endl;
+#endif
 	cast<const DerivedType>(NewType)->addAbstractTypeUser(this);
+      }
     }
 }
 
@@ -252,7 +288,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
 #include <algorithm>
 
 static void DumpVal(const pair<const string, Value *> &V) {
-  cout << "  '%" << V.first << "' = " << V.second << endl;
+  cout << "  '" << V.first << "' = " << V.second << endl;
 }
 
 static void DumpPlane(const pair<const Type *, map<const string, Value *> >&P) {
