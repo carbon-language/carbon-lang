@@ -399,7 +399,7 @@ fi
 dnl Get libtool's idea of what the shared library suffix is.
 dnl (This is a hack; it relies on undocumented behavior.)
 AC_MSG_CHECKING([for shared library suffix])
-eval "SHLIBEXT=$shrext"
+eval "SHLIBEXT=$shrext_cmds"
 AC_MSG_RESULT($SHLIBEXT)
 dnl Propagate it to the Makefiles and config.h (for gccld & bugpoint).
 AC_SUBST(SHLIBEXT,$SHLIBEXT)
