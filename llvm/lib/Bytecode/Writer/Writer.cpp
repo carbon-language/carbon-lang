@@ -923,8 +923,8 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   output_typeid((unsigned)Table.getSlot(Type::VoidTy));
 
   // Put out the list of dependent libraries for the Module
-  Module::const_literator LI = M->lbegin();
-  Module::const_literator LE = M->lend();
+  Module::lib_iterator LI = M->lib_begin();
+  Module::lib_iterator LE = M->lib_end();
   output_vbr( unsigned(LE - LI) ); // Put out the number of dependent libraries
   for ( ; LI != LE; ++LI ) {
     output(*LI, /*aligned=*/false);
