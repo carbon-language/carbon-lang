@@ -9,24 +9,28 @@
 #ifndef LLVM_ANALYSIS_SLOTCALCULATOR_H
 #define LLVM_ANALYSIS_SLOTCALCULATOR_H
 
-#include "llvm/Analysis/ModuleAnalyzer.h"
 #include "llvm/SymTabValue.h"
 #include <vector>
 #include <map>
 class Value;
+class Module;
+class Method;
+class MethodArgument;
+class BasicBlock;
+class Instruction;
 
-class SlotCalculator : public ModuleAnalyzer {
+class SlotCalculator {
   const Module *TheModule;
   bool IgnoreNamedNodes;     // Shall we not count named nodes?
 
   typedef vector<const Value*> TypePlane;
-  vector <TypePlane> Table;
+  vector<TypePlane> Table;
   map<const Value *, unsigned> NodeMap;
 
   // ModuleLevel - Used to keep track of which values belong to the module,
   // and which values belong to the currently incorporated method.
   //
-  vector <unsigned> ModuleLevel;
+  vector<unsigned> ModuleLevel;
 
 public:
   SlotCalculator(const Module *M, bool IgnoreNamed);
@@ -52,46 +56,30 @@ public:
   void purgeMethod();
 
 protected:
-  // insertVal - Insert a value into the value table...
+  // insertVal - Insert a value into the value table... Return the slot that it
+  // occupies, or -1 if the declaration is to be ignored because of the
+  // IgnoreNamedNodes flag.
   //
-  void insertVal(const Value *D, bool dontIgnore = false);
+  int insertVal(const Value *D, bool dontIgnore = false);
 
-  // visitMethod - This member is called after the constant pool has been 
-  // processed.  The default implementation of this is a noop.
+  // insertValue - Values can be crammed into here at will... if they haven't
+  // been inserted already, they get inserted, otherwise they are ignored.
   //
-  virtual bool visitMethod(const Method *M);
+  int insertValue(const Value *D);
 
-  // processConstant is called once per each constant in the constant pool.  It
-  // traverses the constant pool such that it visits each constant in the
-  // order of its type.  Thus, all 'int' typed constants shall be visited 
-  // sequentially, etc...
-  //
-  virtual bool processConstant(const ConstPoolVal *CPV);
+  // doInsertVal - Small helper function to be called only be insertVal.
+  int doInsertVal(const Value *D);
 
-  // processType - This callback occurs when an derived type is discovered
-  // at the class level. This activity occurs when processing a constant pool.
+  // processModule - Process all of the module level method declarations and
+  // types that are available.
   //
-  virtual bool processType(const Type *Ty);
+  void processModule();
 
-  // processMethods - The default implementation of this method loops through 
-  // all of the methods in the module and processModule's them.  We don't want
-  // this (we want to explicitly visit them with incorporateMethod), so we 
-  // disable it.
+  // processSymbolTable - Insert all of the values in the specified symbol table
+  // into the values table...
   //
-  virtual bool processMethods(const Module *M) { return false; }
-
-  // processMethodArgument - This member is called for every argument that 
-  // is passed into the method.
-  //
-  virtual bool processMethodArgument(const MethodArgument *MA);
-
-  // processBasicBlock - This member is called for each basic block in a methd.
-  //
-  virtual bool processBasicBlock(const BasicBlock *BB);
-
-  // processInstruction - This member is called for each Instruction in a methd.
-  //
-  virtual bool processInstruction(const Instruction *I);
+  void processSymbolTable(const SymbolTable *ST);
+  void processSymbolTableConstants(const SymbolTable *ST);
 };
 
 #endif
