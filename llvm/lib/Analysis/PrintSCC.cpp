@@ -2,9 +2,10 @@
 //
 // This file provides passes to print out SCCs in a CFG or a CallGraph.
 // Normally, you would not use these passes; instead, you would use the
-// TarjanSCCIterator directly to enumerate SCCs and process them in some way.
-// These passes serve three purposes:
-// (1) As a reference for how to use the TarjanSCCIterator.
+// scc_iterator directly to enumerate SCCs and process them in some way.  These
+// passes serve three purposes:
+//
+// (1) As a reference for how to use the scc_iterator.
 // (2) To print out the SCCs for a CFG or a CallGraph:
 //       analyze -cfgscc            to print the SCCs in each CFG of a module.
 //       analyze -cfgscc -stats     to print the #SCCs and the maximum SCC size.
@@ -13,7 +14,7 @@
 //     and similarly:
 //       analyze -callscc [-stats] [-debug] to print SCCs in the CallGraph
 // 
-// (3) To test the TarjanSCCIterator.
+// (3) To test the scc_iterator.
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,7 +22,7 @@
 #include "llvm/Module.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CFG.h"
-#include "Support/TarjanSCCIterator.h"
+#include "Support/SCCIterator.h"
 
 namespace {
   struct CFGSCC : public FunctionPass {
@@ -57,8 +58,8 @@ namespace {
 bool CFGSCC::runOnFunction(Function &F) {
   unsigned sccNum = 0;
   std::cout << "SCCs for Function " << F.getName() << " in PostOrder:";
-  for (TarjanSCC_iterator<Function*> SCCI = tarj_begin(&F),
-         E = tarj_end(&F); SCCI != E; ++SCCI) {
+  for (scc_iterator<Function*> SCCI = scc_begin(&F),
+         E = scc_end(&F); SCCI != E; ++SCCI) {
     std::vector<BasicBlock*> &nextSCC = *SCCI;
     std::cout << "\nSCC #" << ++sccNum << " : ";
     for (std::vector<BasicBlock*>::const_iterator I = nextSCC.begin(),
@@ -78,8 +79,8 @@ bool CallGraphSCC::run(Module &M) {
   CallGraphNode* rootNode = getAnalysis<CallGraph>().getRoot();
   unsigned sccNum = 0;
   std::cout << "SCCs for the program in PostOrder:";
-  for (TarjanSCC_iterator<CallGraphNode*> SCCI = tarj_begin(rootNode),
-         E = tarj_end(rootNode); SCCI != E; ++SCCI) {
+  for (scc_iterator<CallGraphNode*> SCCI = scc_begin(rootNode),
+         E = scc_end(rootNode); SCCI != E; ++SCCI) {
     const std::vector<CallGraphNode*> &nextSCC = *SCCI;
     std::cout << "\nSCC #" << ++sccNum << " : ";
     for (std::vector<CallGraphNode*>::const_iterator I = nextSCC.begin(),

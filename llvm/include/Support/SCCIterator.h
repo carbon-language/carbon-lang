@@ -1,19 +1,18 @@
-//===-- Support/TarjanSCCIterator.h - Tarjan SCC iterator -------*- C++ -*-===//
+//===-- Support/SCCIterator.h - SCC iterator --------------------*- C++ -*-===//
 //
-// This builds on the Support/GraphTraits.h file to find the strongly 
-// connected components (SCCs) of a graph in O(N+E) time using
-// Tarjan's DFS algorithm.
+// This builds on the Support/GraphTraits.h file to find the strongly connected
+// components (SCCs) of a graph in O(N+E) time using Tarjan's DFS algorithm.
 //
-// The SCC iterator has the important property that if a node in SCC S1
-// has an edge to a node in SCC S2, then it visits S1 *after* S2.
+// The SCC iterator has the important property that if a node in SCC S1 has an
+// edge to a node in SCC S2, then it visits S1 *after* S2.
 // 
-// To visit S1 *before* S2, use the TarjanSCCIterator on the Inverse graph.
+// To visit S1 *before* S2, use the scc_iterator on the Inverse graph.
 // (NOTE: This requires some simple wrappers and is not supported yet.)
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SUPPORT_TARJANSCCITERATOR_H
-#define SUPPORT_TARJANSCCITERATOR_H
+#ifndef SUPPORT_SCCITERATOR_H
+#define SUPPORT_SCCITERATOR_H
 
 #include "Support/GraphTraits.h"
 #include "Support/iterator"
@@ -22,11 +21,11 @@
 
 //===----------------------------------------------------------------------===//
 ///
-/// TarjanSCC_iterator - Enumerate the SCCs of a directed graph, in
+/// scc_iterator - Enumerate the SCCs of a directed graph, in
 /// reverse topological order of the SCC DAG.
 ///
 template<class GraphT, class GT = GraphTraits<GraphT> >
-class TarjanSCC_iterator
+class scc_iterator
   : public forward_iterator<std::vector<typename GT::NodeType>, ptrdiff_t> {
   typedef typename GT::NodeType          NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
@@ -122,14 +121,14 @@ class TarjanSCC_iterator
       }
   }
 
-  inline TarjanSCC_iterator(NodeType *entryN) : visitNum(0) {
+  inline scc_iterator(NodeType *entryN) : visitNum(0) {
     DFSVisitOne(entryN);
     GetNextSCC();
   }
-  inline TarjanSCC_iterator() { /* End is when DFS stack is empty */ }
+  inline scc_iterator() { /* End is when DFS stack is empty */ }
 
 public:
-  typedef TarjanSCC_iterator<GraphT, GT> _Self;
+  typedef scc_iterator<GraphT, GT> _Self;
 
   // Provide static "constructors"...
   static inline _Self begin(GraphT& G) { return _Self(GT::getEntryNode(G)); }
@@ -180,15 +179,15 @@ public:
 };
 
 
-// Global constructor for the Tarjan SCC iterator.
+// Global constructor for the SCC iterator.
 template <class T>
-TarjanSCC_iterator<T> tarj_begin(T G) {
-  return TarjanSCC_iterator<T>::begin(G);
+scc_iterator<T> scc_begin(T G) {
+  return scc_iterator<T>::begin(G);
 }
 
 template <class T>
-TarjanSCC_iterator<T> tarj_end(T G) {
-  return TarjanSCC_iterator<T>::end(G);
+scc_iterator<T> scc_end(T G) {
+  return scc_iterator<T>::end(G);
 }
 
 #endif

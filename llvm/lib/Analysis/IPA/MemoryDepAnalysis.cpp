@@ -18,7 +18,7 @@
 #include "llvm/iOther.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CFG.h"
-#include "Support/TarjanSCCIterator.h"
+#include "Support/SCCIterator.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include "Support/hash_map"
@@ -208,7 +208,7 @@ void MemoryDepAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 
-/// Basic dependence gathering algorithm, using TarjanSCCIterator on CFG:
+/// Basic dependence gathering algorithm, using scc_iterator on CFG:
 /// 
 /// for every SCC S in the CFG in PostOrder on the SCC DAG
 ///     {
@@ -290,7 +290,7 @@ void MemoryDepAnalysis::ProcessSCC(std::vector<BasicBlock*> &S,
   ModRefInfoBuilder builder(*funcGraph, *funcModRef, ModRefCurrent);
   for (std::vector<BasicBlock*>::iterator BI = S.begin(), BE = S.end();
        BI != BE; ++BI)
-    // Note: BBs in the SCC<> created by TarjanSCCIterator are in postorder.
+    // Note: BBs in the SCC<> created by scc_iterator are in postorder.
     for (BasicBlock::reverse_iterator II=(*BI)->rbegin(), IE=(*BI)->rend();
          II != IE; ++II)
       builder.visit(*II);
@@ -438,8 +438,7 @@ bool MemoryDepAnalysis::runOnFunction(Function &F) {
 
   ModRefTable ModRefAfter;
 
-  for (TarjanSCC_iterator<Function*> I = tarj_begin(&F), E = tarj_end(&F);
-       I != E; ++I)
+  for (scc_iterator<Function*> I = scc_begin(&F), E = scc_end(&F); I != E; ++I)
     ProcessSCC(*I, ModRefAfter, I.hasLoop());
 
   return true;

@@ -10,7 +10,7 @@
 
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "Support/TarjanSCCIterator.h"
+#include "Support/SCCIterator.h"
 
 /// getAnalysisUsage - For this class, we declare that we require and preserve
 /// the call graph.  If the derived class implements this method, it should
@@ -23,7 +23,7 @@ void CallGraphSCCPass::getAnalysisUsage(AnalysisUsage &AU) const {
 bool CallGraphSCCPass::run(Module &M) {
   CallGraph &CG = getAnalysis<CallGraph>();
   bool Changed = false;
-  for (TarjanSCC_iterator<CallGraph*> I = tarj_begin(&CG), E = tarj_end(&CG);
+  for (scc_iterator<CallGraph*> I = scc_begin(&CG), E = scc_end(&CG);
        I != E; ++I)
     Changed = runOnSCC(*I);
   return Changed;
