@@ -144,8 +144,10 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   // Test to see if the function is misoptimized if we ONLY run it on the
   // functions listed in Funcs.
   if (!EmitBytecode) {
-    std::cout << "Checking to see if the program is misoptimized when these "
-              << "functions are run\nthrough the passes: ";
+    std::cout << "Checking to see if the program is misoptimized when "
+              << (Funcs.size()==1 ? "this function is" : "these functions are")
+              << " run through the pass"
+              << (BD.PassesToRun.size() == 1 ? "" : "es") << ": ";
     BD.PrintFunctionList(Funcs);
     std::cout << "\n";
   } else {
@@ -267,7 +269,7 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   delete BD.Program;  // Delete the hacked up program
   BD.Program = OldProgram;   // Restore the original
 
-  std::cout << (Broken ? "nope.\n" : "yup.\n");
+  std::cout << (Broken ? " nope.\n" : " yup.\n");
   return Broken;
 }
 
@@ -301,7 +303,9 @@ bool BugDriver::debugMiscompilation() {
   // Do the reduction...
   ReduceMiscompilingFunctions(*this).reduceList(MiscompiledFunctions);
 
-  std::cout << "\n*** The following functions are being miscompiled: ";
+  std::cout << "\n*** The following function"
+            << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
+            << " being miscompiled: ";
   PrintFunctionList(MiscompiledFunctions);
   std::cout << "\n";
 
