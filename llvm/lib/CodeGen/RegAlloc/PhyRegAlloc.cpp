@@ -4,11 +4,11 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/RegisterAllocation.h"
 #include "PhyRegAlloc.h"
 #include "RegAllocCommon.h"
 #include "RegClass.h"
 #include "IGNode.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -16,7 +16,6 @@
 #include "llvm/CodeGen/FunctionLiveVarInfo.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Type.h"
@@ -1168,6 +1167,7 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
     }
   } // for all LR's in hash map
 }
+
 
 //----------------------------------------------------------------------------
 // The entry point to Register Allocation
