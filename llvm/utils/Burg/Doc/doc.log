@@ -1,0 +1,157 @@
+This is TeX, Version 3.14159 (Web2C 7.3.2) (format=latex 2000.8.30)  4 JUN 2001 13:20
+**doc
+(doc.tex
+LaTeX2e <2000/06/01>
+(/usr/dcs/software/supported/encap/TeX/share/texmf/tex/latex/base/latex209.def
+File: latex209.def 1998/05/13 v0.52 Standard LaTeX file
+
+
+          Entering LaTeX 2.09 COMPATIBILITY MODE
+ *************************************************************
+    !!WARNING!!    !!WARNING!!    !!WARNING!!    !!WARNING!!   
+ 
+ This mode attempts to provide an emulation of the LaTeX 2.09
+ author environment so that OLD documents can be successfully
+ processed. It should NOT be used for NEW documents!
+ 
+ New documents should use Standard LaTeX conventions and start
+ with the \documentclass command.
+ 
+ Compatibility mode is UNLIKELY TO WORK with LaTeX 2.09 style
+ files that change any internal macros, especially not with
+ those that change the FONT SELECTION or OUTPUT ROUTINES.
+ 
+ Therefore such style files MUST BE UPDATED to use
+          Current Standard LaTeX: LaTeX2e.
+ If you suspect that you may be using such a style file, which
+ is probably very, very old by now, then you should attempt to
+ get it updated by sending a copy of this error message to the
+ author of that file.
+ *************************************************************
+
+\footheight=\dimen102
+\@maxsep=\dimen103
+\@dblmaxsep=\dimen104
+\@cla=\count79
+\@clb=\count80
+\mscount=\count81
+(/usr/dcs/software/supported/encap/TeX/share/texmf/tex/latex/base/tracefnt.sty
+Package: tracefnt 1997/05/29 v3.0j Standard LaTeX package (font tracing)
+\tracingfonts=\count82
+LaTeX Info: Redefining \selectfont on input line 96.
+)
+\symbold=\mathgroup4
+\symsans=\mathgroup5
+\symtypewriter=\mathgroup6
+\symitalic=\mathgroup7
+\symsmallcaps=\mathgroup8
+\symslanted=\mathgroup9
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 288.
+LaTeX Font Info:    Redeclaring math alphabet \mathsf on input line 289.
+LaTeX Font Info:    Redeclaring math alphabet \mathtt on input line 290.
+LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 296.
+LaTeX Info: Redefining \em on input line 306.
+(/usr/dcs/software/supported/encap/TeX/share/texmf/tex/latex/base/latexsym.sty
+Package: latexsym 1998/08/17 v2.2e Standard LaTeX package (lasy symbols)
+\symlasy=\mathgroup10
+LaTeX Font Info:    Overwriting symbol font `lasy' in version `bold'
+(Font)                  U/lasy/m/n --> U/lasy/b/n on input line 42.
+)
+LaTeX Font Info:    Redeclaring math delimiter \lgroup on input line 370.
+LaTeX Font Info:    Redeclaring math delimiter \rgroup on input line 372.
+LaTeX Font Info:    Redeclaring math delimiter \bracevert on input line 374.
+
+(/usr/dcs/software/supported/encap/TeX/share/texmf/tex/latex/config/latex209.cf
+g
+(/usr/dcs/software/supported/encap/TeX/share/texmf/tex/latex/tools/rawfonts.sty
+Compatibility mode: package `' requested, but `rawfonts' provided.
+Package: rawfonts 1994/05/08 Low-level LaTeX 2.09 font compatibility
+
+(/usr/dcs/software/supported/encap/TeX/share/texmf/tex/latex/tools/somedefs.sty
+Package: somedefs 1994/06/01 Toolkit for optional definitions
+)
+LaTeX Font Info:    Try loading font information for U+lasy on input line 44.
+ (/usr/dcs/software/supported/encap/TeX/share/texmf/tex/latex/base/ulasy.fd
+File: ulasy.fd 1998/08/17 v2.2eLaTeX symbol font definitions
+)))) (/usr/dcs/software/supported/encap/TeX/share/texmf/tex/latex/base/article.
+cls
+Document Class: article 2000/05/19 v1.4b Standard LaTeX document class
+(/usr/dcs/software/supported/encap/TeX/share/texmf/tex/latex/base/size11.clo
+File: size11.clo 2000/05/19 v1.4b Standard LaTeX file (size option)
+)
+\c@part=\count83
+\c@section=\count84
+\c@subsection=\count85
+\c@subsubsection=\count86
+\c@paragraph=\count87
+\c@subparagraph=\count88
+\c@figure=\count89
+\c@table=\count90
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+Compatibility mode: definition of \rm ignored.
+Compatibility mode: definition of \sf ignored.
+Compatibility mode: definition of \tt ignored.
+Compatibility mode: definition of \bf ignored.
+Compatibility mode: definition of \it ignored.
+Compatibility mode: definition of \sl ignored.
+Compatibility mode: definition of \sc ignored.
+LaTeX Info: Redefining \cal on input line 501.
+LaTeX Info: Redefining \mit on input line 502.
+\bibindent=\dimen105
+)
+(/usr/dcs/software/supported/encap/TeX/share/texmf/tex/latex/pstex/fullpage.sty
+) (doc.aux)
+\openout1 = `doc.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 2.
+LaTeX Font Info:    ... okay on input line 2.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 2.
+LaTeX Font Info:    ... okay on input line 2.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 2.
+LaTeX Font Info:    ... okay on input line 2.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 2.
+LaTeX Font Info:    ... okay on input line 2.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 2.
+LaTeX Font Info:    ... okay on input line 2.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 2.
+LaTeX Font Info:    ... okay on input line 2.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 33.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 33.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 33.
+LaTeX Font Info:    Try loading font information for OMS+cmtt on input line 100
+.
+LaTeX Font Info:    No file OMScmtt.fd. on input line 100.
+LaTeX Font Warning: Font shape `OMS/cmtt/m/n' undefined
+(Font)              using `OMS/cmsy/m/n' instead
+(Font)              for symbol `textbraceleft' on input line 100.
+ [1
+
+]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <10.95> on input line 150.
+ [2] [3] [4] [5] [6]
+Overfull \hbox (1.38191pt too wide) in paragraph at lines 480--484
+[]\OT1/cmr/m/n/10.95 Emit code for \OT1/cmtt/m/n/10.95 burm[]arity\OT1/cmr/m/n/
+10.95 , \OT1/cmtt/m/n/10.95 burm[]child\OT1/cmr/m/n/10.95 , \OT1/cmtt/m/n/10.95
+ burm[]cost\OT1/cmr/m/n/10.95 , \OT1/cmtt/m/n/10.95 burm[]ntname\OT1/cmr/m/n/10
+.95 , \OT1/cmtt/m/n/10.95 burm[]op[]label\OT1/cmr/m/n/10.95 , \OT1/cmtt/m/n/10.
+95 burm[]opname\OT1/cmr/m/n/10.95 ,
+ []
+
+[7] [8] [9] (doc.aux)
+LaTeX Font Warning: Some font shapes were not available, defaults substituted.
+ ) 
+Here is how much of TeX's memory you used:
+ 543 strings out of 12968
+ 6147 string characters out of 289029
+ 446019 words of memory out of 1453895
+ 3433 multiletter control sequences out of 10000+10000
+ 23403 words of font info for 87 fonts, out of 400000 for 2000
+ 14 hyphenation exceptions out of 1000
+ 21i,6n,20p,308b,283s stack positions out of 300i,100n,500p,50000b,4000s
+
+Output written on doc.dvi (9 pages, 29856 bytes).
