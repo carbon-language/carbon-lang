@@ -9,7 +9,9 @@
 #include "llvm/Support/StringExtras.h"  // itostr
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/GlobalVariable.h"   // TODO make this GlobalValue.h
+#include "llvm/GlobalValue.h"
+#include "llvm/Module.h"
+#include "llvm/Analysis/SlotCalculator.h"
 #include <algorithm>
 #include <assert.h>
 
@@ -46,14 +48,42 @@ ConstPoolVal *ConstPoolVal::getNullConstant(const Type *Ty) {
   case Type::DoubleTyID: return ConstPoolFP::get(Ty, 0);
 
   case Type::PointerTyID: 
-    return ConstPoolPointer::getNull(cast<PointerType>(Ty));
+    return ConstPoolPointerNull::get(cast<PointerType>(Ty));
   default:
     return 0;
   }
 }
 
-bool ConstPoolInt::classof(const ConstPoolVal *CPV) {
-  return CPV->getType()->isIntegral();
+#ifndef NDEBUG
+#include "llvm/Assembly/Writer.h"
+#endif
+
+void ConstPoolVal::destroyConstantImpl() {
+  // When a ConstPoolVal is destroyed, there may be lingering
+  // references to the constant by other constants in the constant pool.  These
+  // constants are implicitly dependant on the module that is being deleted,
+  // but they don't know that.  Because we only find out when the CPV is
+  // deleted, we must now notify all of our users (that should only be
+  // ConstPoolVals) that they are, in fact, invalid now and should be deleted.
+  //
+  while (!use_empty()) {
+    Value *V = use_back();
+#ifndef NDEBUG      // Only in -g mode...
+    if (!isa<ConstPoolVal>(V)) {
+      cerr << "While deleting: " << this << endl;
+      cerr << "Use still stuck around after Def is destroyed: " << V << endl;
+    }
+#endif
+    assert(isa<ConstPoolVal>(V) && "References remain to ConstPoolPointerRef!");
+    ConstPoolVal *CPV = cast<ConstPoolVal>(V);
+    CPV->destroyConstant();
+
+    // The constant should remove itself from our use list...
+    assert((use_empty() || use_back() == V) && "Constant not removed!");
+  }
+
+  // Value has no outstanding references it is safe to delete it now...
+  delete this;
 }
 
 //===----------------------------------------------------------------------===//
@@ -103,8 +133,6 @@ ConstPoolStruct::ConstPoolStruct(const StructType *T,
     Operands.push_back(Use(V[i], this));
   }
 }
-
-ConstPoolPointer::ConstPoolPointer(const PointerType *T) : ConstPoolVal(T) {}
 
 ConstPoolPointerReference::ConstPoolPointerReference(GlobalValue *GV)
   : ConstPoolPointer(GV->getType()) {
@@ -158,13 +186,49 @@ string ConstPoolStruct::getStrValue() const {
   return Result + " }";
 }
 
-string ConstPoolPointer::getStrValue() const {
+string ConstPoolPointerNull::getStrValue() const {
   return "null";
 }
 
 string ConstPoolPointerReference::getStrValue() const {
-  return "<pointer reference>";
+  const GlobalValue *V = getValue();
+  if (V->hasName()) return "%" + V->getName();
+
+  SlotCalculator *Table = new SlotCalculator(V->getParent(), true);
+  int Slot = Table->getValSlot(V);
+  delete Table;
+
+  if (Slot >= 0) return string(" %") + itostr(Slot);
+  else return "<pointer reference badref>";
 }
+
+
+//===----------------------------------------------------------------------===//
+//                           classof implementations
+
+bool ConstPoolInt::classof(const ConstPoolVal *CPV) {
+  return CPV->getType()->isIntegral();
+}
+bool ConstPoolSInt::classof(const ConstPoolVal *CPV) {
+  return CPV->getType()->isSigned();
+}
+bool ConstPoolUInt::classof(const ConstPoolVal *CPV) {
+  return CPV->getType()->isUnsigned();
+}
+bool ConstPoolFP::classof(const ConstPoolVal *CPV) {
+  const Type *Ty = CPV->getType();
+  return Ty == Type::FloatTy || Ty == Type::DoubleTy;
+}
+bool ConstPoolArray::classof(const ConstPoolVal *CPV) {
+  return isa<ArrayType>(CPV->getType());
+}
+bool ConstPoolStruct::classof(const ConstPoolVal *CPV) {
+  return isa<StructType>(CPV->getType());
+}
+bool ConstPoolPointer::classof(const ConstPoolVal *CPV) {
+  return isa<PointerType>(CPV->getType());
+}
+
 
 //===----------------------------------------------------------------------===//
 //                      isValueValidForType implementations
@@ -271,6 +335,15 @@ struct ValueMap {
   inline void add(const Type *Ty, ValType V, ConstPoolClass *CP) {
     Map.insert(make_pair(ConstHashKey(Ty, V), CP));
   }
+
+  inline void remove(ConstPoolClass *CP) {
+    for (map<ConstHashKey,ConstPoolClass *>::iterator I = Map.begin(),
+                                                      E = Map.end(); I != E;++I)
+      if (I->second == CP) {
+	Map.erase(I);
+	return;
+      }
+  }
 };
 
 //---- ConstPoolUInt::get() and ConstPoolSInt::get() implementations...
@@ -320,6 +393,13 @@ ConstPoolArray *ConstPoolArray::get(const ArrayType *Ty,
   return Result;
 }
 
+// destroyConstant - Remove the constant from the constant table...
+//
+void ConstPoolArray::destroyConstant() {
+  ArrayConstants.remove(this);
+  destroyConstantImpl();
+}
+
 //---- ConstPoolStruct::get() implementation...
 //
 static ValueMap<vector<ConstPoolVal*>, ConstPoolStruct> StructConstants;
@@ -332,21 +412,35 @@ ConstPoolStruct *ConstPoolStruct::get(const StructType *Ty,
   return Result;
 }
 
-//---- ConstPoolPointer::get() implementation...
+// destroyConstant - Remove the constant from the constant table...
 //
-static ValueMap<char, ConstPoolPointer> NullPtrConstants;
+void ConstPoolStruct::destroyConstant() {
+  StructConstants.remove(this);
+  destroyConstantImpl();
+}
 
-ConstPoolPointer *ConstPoolPointer::getNull(const PointerType *Ty) {
-  ConstPoolPointer *Result = NullPtrConstants.get(Ty, 0);
+//---- ConstPoolPointerNull::get() implementation...
+//
+static ValueMap<char, ConstPoolPointerNull> NullPtrConstants;
+
+ConstPoolPointerNull *ConstPoolPointerNull::get(const PointerType *Ty) {
+  ConstPoolPointerNull *Result = NullPtrConstants.get(Ty, 0);
   if (!Result)   // If no preexisting value, create one now...
-    NullPtrConstants.add(Ty, 0, Result = new ConstPoolPointer(Ty));
+    NullPtrConstants.add(Ty, 0, Result = new ConstPoolPointerNull(Ty));
   return Result;
 }
 
 //---- ConstPoolPointerReference::get() implementation...
 //
 ConstPoolPointerReference *ConstPoolPointerReference::get(GlobalValue *GV) {
-  assert(GV->getParent());
-  // FIXME: These should all be shared!
-  return new ConstPoolPointerReference(GV);
+  assert(GV->getParent() && "Global Value must be attached to a module!");
+
+  // The Module handles the pointer reference sharing...
+  return GV->getParent()->getConstPoolPointerReference(GV);
+}
+
+
+void ConstPoolPointerReference::mutateReference(GlobalValue *NewGV) {
+  getValue()->getParent()->mutateConstPoolPointerReference(getValue(), NewGV);
+  Operands[0] = NewGV;
 }
