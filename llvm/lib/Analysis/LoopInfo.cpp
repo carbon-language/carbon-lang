@@ -200,6 +200,13 @@ BasicBlock *Loop::getLoopPreheader() const {
         return 0;             // Multiple predecessors outside the loop
       Out = *PI;
     }
+  
+  // Make sure there is only one exit out of the preheader...
+  succ_iterator SI = succ_begin(Out);
+  ++SI;
+  if (SI != succ_end(Out))
+    return 0;  // Multiple exits from the block, must not be a preheader.
+
 
   // If there is exactly one preheader, return it.  If there was zero, then Out
   // is still null.
