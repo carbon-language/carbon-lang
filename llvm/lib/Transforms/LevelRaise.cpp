@@ -221,8 +221,48 @@ static bool ExpressionConvertableToType(Value *V, const Type *Ty) {
     return ExpressionConvertableToType(I->getOperand(0), Ty) &&
            ExpressionConvertableToType(I->getOperand(1), Ty);
   case Instruction::Shl:
-  case Instruction::Shr:
     return ExpressionConvertableToType(I->getOperand(0), Ty);
+  case Instruction::Shr:
+    if (Ty->isSigned() != V->getType()->isSigned()) return false;
+    return ExpressionConvertableToType(I->getOperand(0), Ty);
+
+  case Instruction::Load: {
+    LoadInst *LI = cast<LoadInst>(I);
+    if (LI->hasIndices()) return false;
+    return ExpressionConvertableToType(LI->getPtrOperand(),
+                                       PointerType::get(Ty));
+  }
+  case Instruction::GetElementPtr: {
+    // GetElementPtr's are directly convertable to a pointer type if they have
+    // a number of zeros at the end.  Because removing these values does not
+    // change the logical offset of the GEP, it is okay and fair to remove them.
+    // This can change this:
+    //   %t1 = getelementptr %Hosp * %hosp, ubyte 4, ubyte 0  ; <%List **>
+    //   %t2 = cast %List * * %t1 to %List *
+    // into
+    //   %t2 = getelementptr %Hosp * %hosp, ubyte 4           ; <%List *>
+    // 
+    GetElementPtrInst *GEP = cast<GetElementPtrInst>(I);
+    const PointerType *PTy = dyn_cast<PointerType>(Ty);
+    if (!PTy) return false;
+
+    // Check to see if there are zero elements that we can remove from the
+    // index array.  If there are, check to see if removing them causes us to
+    // get to the right type...
+    //
+    vector<ConstPoolVal*> Indices = GEP->getIndexVec();
+    const Type *BaseType = GEP->getPtrOperand()->getType();
+
+    while (Indices.size() &&
+           cast<ConstPoolUInt>(Indices.back())->getValue() == 0) {
+      Indices.pop_back();
+      const Type *ElTy = GetElementPtrInst::getIndexedType(BaseType, Indices,
+                                                           true);
+      if (ElTy == PTy->getValueType())
+        return true;  // Found a match!!
+    }
+    break;   // No match, maybe next time.
+  }
   }
   return false;
 }
@@ -268,6 +308,50 @@ static Value *ConvertExpressionToType(Value *V, const Type *Ty) {
                         ConvertExpressionToType(I->getOperand(0), Ty),
                         I->getOperand(1), Name);
     break;
+
+  case Instruction::Load: {
+    LoadInst *LI = cast<LoadInst>(I);
+    assert(!LI->hasIndices());
+    Res = new LoadInst(ConvertExpressionToType(LI->getPtrOperand(),
+                                               PointerType::get(Ty)), Name);
+    break;
+  }
+
+  case Instruction::GetElementPtr: {
+    // GetElementPtr's are directly convertable to a pointer type if they have
+    // a number of zeros at the end.  Because removing these values does not
+    // change the logical offset of the GEP, it is okay and fair to remove them.
+    // This can change this:
+    //   %t1 = getelementptr %Hosp * %hosp, ubyte 4, ubyte 0  ; <%List **>
+    //   %t2 = cast %List * * %t1 to %List *
+    // into
+    //   %t2 = getelementptr %Hosp * %hosp, ubyte 4           ; <%List *>
+    // 
+    GetElementPtrInst *GEP = cast<GetElementPtrInst>(I);
+
+    // Check to see if there are zero elements that we can remove from the
+    // index array.  If there are, check to see if removing them causes us to
+    // get to the right type...
+    //
+    vector<ConstPoolVal*> Indices = GEP->getIndexVec();
+    const Type *BaseType = GEP->getPtrOperand()->getType();
+    const Type *PVTy = cast<PointerType>(Ty)->getValueType();
+    Res = 0;
+    while (Indices.size() &&
+           cast<ConstPoolUInt>(Indices.back())->getValue() == 0) {
+      Indices.pop_back();
+      if (GetElementPtrInst::getIndexedType(BaseType, Indices, true) == PVTy) {
+        if (Indices.size() == 0) {
+          Res = new CastInst(GEP->getPtrOperand(), BaseType); // NOOP
+        } else {
+          Res = new GetElementPtrInst(GEP->getPtrOperand(), Indices, Name);
+        }
+        break;
+      }
+    }
+    assert(Res && "Didn't find match!");
+    break;   // No match, maybe next time.
+  }
 
   default:
     assert(0 && "Expression convertable, but don't know how to convert?");
@@ -458,6 +542,18 @@ static bool PeepholeMallocInst(BasicBlock *BB, BasicBlock::iterator &BI) {
 }
 
 
+// Peephole optimize the following instructions:
+//   %t1 = cast int (uint) * %reg111 to uint (...) *
+//   %t2 = call uint (...) * %cast111( uint %key )
+//
+// Into: %t3 = call int (uint) * %reg111( uint %key )
+//       %t2 = cast int %t3 to uint
+//
+static bool PeepholeCallInst(BasicBlock *BB, BasicBlock::iterator &BI) {
+  CallInst *CI = cast<CallInst>(*BI);
+  return false;
+}
+
 
 static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
   Instruction *I = *BI;
@@ -595,6 +691,9 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
   } else if (MallocInst *MI = dyn_cast<MallocInst>(I)) {
     if (PeepholeMallocInst(BB, BI)) return true;
+
+  } else if (CallInst *CI = dyn_cast<CallInst>(I)) {
+    if (PeepholeCallInst(BB, BI)) return true;
 
   } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
     Value *Val     = SI->getOperand(0);
