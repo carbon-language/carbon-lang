@@ -102,7 +102,8 @@ public:
     return opType;
   }
   inline Value*		getVRegValue	() const {
-    assert(opType == MO_VirtualRegister || opType == MO_CCRegister);
+    assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
+	   opType == MO_PCRelativeDisp);
     return value;
   }
   inline unsigned int		getMachineRegNum() const {
@@ -377,8 +378,8 @@ public:
   // and inlining it avoids a serious circurality in link order.
   inline void dropAllReferences() {
     for (unsigned i=0, N=tempVec.size(); i < N; i++)
-    if (tempVec[i]->getValueType() == Value::InstructionVal)
-      ((Instruction*) tempVec[i])->dropAllReferences();
+      if (Instruction *I = tempVec[i]->castInstruction())
+	I->dropAllReferences();
   }
 };
 
