@@ -12,7 +12,6 @@
 #include "Support/STLExtras.h"
 #include "Support/TypeInfo.h"
 #include <typeinfo>
-#include <iostream>
 #include <sys/time.h>
 #include <stdio.h>
 

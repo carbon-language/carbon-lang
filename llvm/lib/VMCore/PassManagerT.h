@@ -18,6 +18,7 @@
 #include "llvm/Pass.h"
 #include "Support/CommandLine.h"
 #include <algorithm>
+#include <iostream>
 class Annotable;
 
 //===----------------------------------------------------------------------===//
