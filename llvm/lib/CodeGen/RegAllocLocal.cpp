@@ -400,19 +400,27 @@ unsigned RA::getReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
              "Couldn't find a register of the appropriate class!");
       
       unsigned R = PhysRegsUseOrder[i];
-      // If the current register is compatible, use it.
-      if (RegInfo->getRegClass(R) == RC) {
-	PhysReg = R;
-	break;
-      } else {
-	// If one of the registers aliased to the current register is
-	// compatible, use it.
-	if (const unsigned *AliasSet = RegInfo->getAliasSet(R))
-	  for (unsigned a = 0; AliasSet[a]; ++a)
-	    if (RegInfo->getRegClass(AliasSet[a]) == RC) {
-	      PhysReg = AliasSet[a];    // Take an aliased register
-	      break;
-	    }
+
+      // We can only use this register if it holds a virtual register (ie, it
+      // can be spilled).  Do not use it if it is an explicitly allocated
+      // physical register!
+      assert(PhysRegsUsed.count(R) &&
+             "PhysReg in PhysRegsUseOrder, but is not allocated?");
+      if (PhysRegsUsed[R]) {
+        // If the current register is compatible, use it.
+        if (RegInfo->getRegClass(R) == RC) {
+          PhysReg = R;
+          break;
+        } else {
+          // If one of the registers aliased to the current register is
+          // compatible, use it.
+          if (const unsigned *AliasSet = RegInfo->getAliasSet(R))
+            for (unsigned a = 0; AliasSet[a]; ++a)
+              if (RegInfo->getRegClass(AliasSet[a]) == RC) {
+                PhysReg = AliasSet[a];    // Take an aliased register
+                break;
+              }
+        }
       }
     }
 
