@@ -91,7 +91,7 @@ namespace {
     void visitSetCondInst(SetCondInst &SCI) {}  // SetEQ & friends are ignored
     void visitFreeInst(FreeInst &FI);
     void visitCastInst(CastInst &CI);
-    void visitInstruction(Instruction &I) {}
+    void visitInstruction(Instruction &I);
 
   private:
     // Helper functions used to implement the visitation functions...
@@ -410,6 +410,21 @@ void GraphBuilder::visitCastInst(CastInst &CI) {
     }
 }
 
+
+// visitInstruction - For all other instruction types, if we have any arguments
+// that are of pointer type, make them have unknown composition bits, and merge
+// the nodes together.
+void GraphBuilder::visitInstruction(Instruction &Inst) {
+  DSNodeHandle CurNode;
+  if (isPointerType(Inst.getType()))
+    CurNode = getValueDest(Inst);
+  for (User::op_iterator I = Inst.op_begin(), E = Inst.op_end(); I != E; ++I)
+    if (isPointerType((*I)->getType()))
+      CurNode.mergeWith(getValueDest(**I));
+
+  if (CurNode.getNode())
+    CurNode.getNode()->NodeType |= DSNode::UnknownNode;
+}
 
 
 
