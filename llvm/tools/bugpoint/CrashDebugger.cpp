@@ -244,6 +244,36 @@ bool BugDriver::debugCrash() {
             << getPassesString(PassesToRun) << "\n";
 
   EmitProgressBytecode("passinput");
+
+  // See if we can get away with nuking all of the global variable initializers
+  // in the program...
+  if (Program->gbegin() != Program->gend()) {
+    Module *M = CloneModule(Program);
+    bool DeletedInit = false;
+    for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+      if (I->hasInitializer()) {
+        I->setInitializer(0);
+        I->setLinkage(GlobalValue::ExternalLinkage);
+        DeletedInit = true;
+      }
+    
+    if (!DeletedInit) {
+      delete M;  // No change made...
+    } else {
+      // See if the program still causes a crash...
+      std::cout << "\nChecking to see if we can delete global inits: ";
+      std::swap(Program, M);
+      if (runPasses(PassesToRun)) {  // Still crashes?
+        AnyReduction = true;
+        delete M;
+        std::cout << "\n*** Able to remove all global initializers!\n";
+      } else {                       // No longer crashes?
+        delete Program;              // Restore program.
+        Program = M;
+        std::cout << "  - Removing all global inits hides problem!\n";
+      }
+    }
+  }
   
   // Now try to reduce the number of functions in the module to something small.
   std::vector<Function*> Functions;
