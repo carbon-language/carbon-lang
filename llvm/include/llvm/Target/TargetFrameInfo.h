@@ -14,6 +14,8 @@
 #ifndef LLVM_TARGET_TARGETFRAMEINFO_H
 #define LLVM_TARGET_TARGETFRAMEINFO_H
 
+#include <cstdlib>
+
 namespace llvm {
 
 class MachineFunction;
