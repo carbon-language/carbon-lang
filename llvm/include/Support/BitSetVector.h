@@ -38,7 +38,6 @@ class BitSetVector {
   // Types used internal to the representation
   typedef std::bitset<BITSET_WORDSIZE> bitword;
   typedef bitword::reference reference;
-  class iterator;
 
   // Data used in the representation
   std::vector<bitword> bitsetVec;
@@ -67,6 +66,7 @@ private:
   BitSetVector();                       // do not implement!
 
 public:
+  class iterator;
   /// 
   /// Constructor: create a set of the maximum size maxSetSize.
   /// The set is initialized to empty.
