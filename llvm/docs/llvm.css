@@ -5,6 +5,9 @@
 /* Common styles */
 .body { color: black; background: white; margin: 0 0 0 0 }
 
+/* No borders on image links */
+a:link img, a:visited img {border-style: none}
+
 /* 
  * Documentation 
  */
@@ -37,7 +40,7 @@
 
 .doc_text       { text-align: left; padding-left: 20pt }
 
-.doc_footer     { text-align: left; padding: 0 0 0 0; font-size 12pt }
+.doc_footer     { text-align: left; padding: 0 0 0 0 }
 
 .doc_red        { color: red }
 
