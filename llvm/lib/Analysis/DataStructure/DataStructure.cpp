@@ -785,8 +785,22 @@ DSNodeHandle ReachabilityCloner::getClonedNH(const DSNodeHandle &SrcNH) {
   if (!NH.isNull())    // Node already mapped?
     return DSNodeHandle(NH.getNode(), NH.getOffset()+SrcNH.getOffset());
 
-  // FIXME if SrcNH has globals and the dest graph contains the same globals, we
-  // could use 'merge' to do this work more efficiently!
+  // If SrcNH has globals and the destination graph has one of the same globals,
+  // merge this node with the destination node, which is much more efficient.
+  if (SN->global_begin() != SN->global_end()) {
+    DSScalarMap &DestSM = Dest.getScalarMap();
+    for (DSNode::global_iterator I = SN->global_begin(), E = SN->global_end();
+         I != E; ++I) {
+      GlobalValue *GV = *I;
+      DSScalarMap::iterator GI = DestSM.find(GV);
+      if (GI != DestSM.end() && !GI->second.isNull()) {
+        // We found one, use merge instead!
+        merge(GI->second, Src.getNodeForValue(GV));
+        assert(!NH.isNull() && "Didn't merge node!");
+        return DSNodeHandle(NH.getNode(), NH.getOffset()+SrcNH.getOffset());
+      }
+    }
+  }
 
   DSNode *DN = new DSNode(*SN, &Dest, true /* Null out all links */);
   DN->maskNodeTypes(BitsToKeep);
