@@ -6,7 +6,8 @@ AC_INIT([[[Stacker]]],[[[1.0]]],[rspencer@x10sys.com])
 dnl Place all of the extra autoconf files into the config subdirectory
 AC_CONFIG_AUX_DIR([autoconf])
 
-dnl Configure a header file
+dnl Verify that the source directory is valid
+AC_CONFIG_SRCDIR([Makefile.common.in])
 
 dnl Configure Makefiles
 dnl List every Makefile that ecists within your source tree
@@ -26,9 +27,19 @@ dnl **************************************************************************
 dnl **************************************************************************
 dnl * Check for programs.
 dnl **************************************************************************
+AC_PROG_LIBTOOL
+dnl Get libtool's idea of what the shared library suffix is.
+dnl (This is a hack; it relies on undocumented behavior.)
+AC_MSG_CHECKING([for shared library suffix])
+eval "SHLIBEXT=$shrext"
+AC_MSG_RESULT($SHLIBEXT)
+dnl Propagate it to the Makefiles and config.h (for gccld & bugpoint).
+AC_SUBST(SHLIBEXT,$SHLIBEXT)
+AC_DEFINE_UNQUOTED(SHLIBEXT,"$SHLIBEXT",
+                   [Extension that shared libraries have,
+                   e.g., ".so".])
+                                                                                                                                            
 
-dnl Verify that the source directory is valid
-AC_CONFIG_SRCDIR([Makefile.common.in])
 
 dnl **************************************************************************
 dnl * Check for libraries.
