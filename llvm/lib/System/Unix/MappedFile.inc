@@ -51,6 +51,7 @@ void MappedFile::initialize() {
     else if (options_&WRITE_ACCESS)
       mode = O_WRONLY;
     info_->fd_ = ::open(path_.c_str(),mode);
+
     if (info_->fd_ < 0) {
       delete info_;
       info_ = 0;
