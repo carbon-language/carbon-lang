@@ -11,6 +11,8 @@
 #include "llvm/Method.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Type.h"
+#include "llvm/CFG.h"
+#include "llvm/iOther.h"
 
 // Instantiate Templates - This ugliness is the price we have to pay
 // for having a ValueHolderImpl.h file seperate from ValueHolder.h!  :(
@@ -77,6 +79,52 @@ bool BasicBlock::hasConstantPoolReferences() const {
       return true;
 
   return false;
+}
+
+// removePredecessor - This method is used to notify a BasicBlock that the
+// specified Predecessor of the block is no longer able to reach it.  This is
+// actually not used to update the Predecessor list, but is actually used to 
+// update the PHI nodes that reside in the block.  Note that this should be
+// called while the predecessor still refers to this block.
+//
+void BasicBlock::removePredecessor(BasicBlock *Pred) {
+  using cfg::pred_begin; using cfg::pred_end; using cfg::pred_iterator;
+  assert(find(pred_begin(this), pred_end(this), Pred) != pred_end(this) &&
+	 "removePredecessor: BB is not a predecessor!");
+  if (!front()->isPHINode()) return;   // Quick exit.
+
+  pred_iterator PI(pred_begin(this)), EI(pred_end(this));
+  unsigned max_idx;
+
+  // Loop over the rest of the predecessors until we run out, or until we find
+  // out that there are more than 2 predecessors.
+  for (max_idx = 0; PI != EI && max_idx < 3; ++PI, ++max_idx) /*empty*/;
+
+  // If there are exactly two predecessors, then we want to nuke the PHI nodes
+  // altogether.
+  assert(max_idx != 0 && "PHI Node in block with 0 predecessors!?!?!");
+  if (max_idx <= 2) {                // <= Two predecessors BEFORE I remove one?
+    while (front()->isPHINode()) {   // Yup, loop through and nuke the PHI nodes
+      PHINode *PN = (PHINode*)front();
+      PN->removeIncomingValue(Pred); // Remove the predecessor first...
+      
+      assert(PN->getNumIncomingValues() == max_idx-1 && 
+	     "PHI node shouldn't have this many values!!!");
+
+      // If the PHI _HAD_ two uses, replace PHI node with its now *single* value
+      if (max_idx == 2)
+	PN->replaceAllUsesWith(PN->getOperand(0));
+      delete getInstList().remove(begin());  // Remove the PHI node
+    }
+  } else {
+    // Okay, now we know that we need to remove predecessor #pred_idx from all
+    // PHI nodes.  Iterate over each PHI node fixing them up
+    iterator II(begin());
+    for (; (*II)->isPHINode(); ++II) {
+      PHINode *PN = (PHINode*)*II;
+      PN->removeIncomingValue(Pred);
+    }
+  }
 }
 
 
