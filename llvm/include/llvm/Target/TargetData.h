@@ -14,6 +14,7 @@
 #define LLVM_TARGET_TARGETDATA_H
 
 #include "llvm/Annotation.h"
+#include "llvm/Pass.h"
 #include "Support/DataTypes.h"
 #include <vector>
 class Value;
@@ -21,7 +22,7 @@ class Type;
 class StructType;
 class StructLayout;
 
-class TargetData {
+class TargetData : public ImmutablePass {
   unsigned char ByteAlignment;         // Defaults to 1 bytes
   unsigned char ShortAlignment;        // Defaults to 2 bytes
   unsigned char IntAlignment;          // Defaults to 4 bytes
@@ -35,7 +36,7 @@ class TargetData {
  
   static Annotation *TypeAnFactory(AnnotationID, const Annotable *, void *);
 public:
-  TargetData(const std::string &TargetName,
+  TargetData(const std::string &TargetName = "SparcV9",
              unsigned char IntRegSize = 8,
              unsigned char PtrSize = 8,
 	     unsigned char PtrAl = 8, unsigned char DoubleAl = 8,
