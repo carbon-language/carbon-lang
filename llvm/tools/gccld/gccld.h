@@ -22,7 +22,7 @@ namespace llvm {
 
 int
 GenerateBytecode (Module * M,
-                  bool Strip,
+                  int StripLevel,
                   bool Internalize,
                   std::ostream * Out);
 

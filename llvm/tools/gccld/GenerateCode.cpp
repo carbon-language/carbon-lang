@@ -130,13 +130,14 @@ static inline void addPass(PassManager &PM, Pass *P) {
 ///
 /// Inputs:
 ///  M           - The module for which bytecode should be generated.
-///  Strip       - Flags whether symbols should be stripped from the output.
+///  StripLevel  - 2 if we should strip all symbols, 1 if we should strip
+///                debug info.
 ///  Internalize - Flags whether all symbols should be marked internal.
 ///  Out         - Pointer to file stream to which to write the output.
 ///
 /// Returns non-zero value on error.
 ///
-int llvm::GenerateBytecode(Module *M, bool Strip, bool Internalize,
+int llvm::GenerateBytecode(Module *M, int StripLevel, bool Internalize,
                            std::ostream *Out) {
   // In addition to just linking the input from GCC, we also want to spiff it up
   // a little bit.  Do this now.
@@ -208,11 +209,11 @@ int llvm::GenerateBytecode(Module *M, bool Strip, bool Internalize,
     addPass(Passes, createGlobalDCEPass());
   }
 
-  // If the -s command line option was specified, strip the symbols out of the
-  // resulting program to make it smaller.  -s is a GCC option that we are
-  // supporting.
-  if (Strip)
-    addPass(Passes, createSymbolStrippingPass());
+  // If the -s or -S command line options were specified, strip the symbols out
+  // of the resulting program to make it smaller.  -s and -S are GLD options
+  // that we are supporting.
+  if (StripLevel)
+    addPass(Passes, createStripSymbolsPass(StripLevel == 1));
 
   // Make sure everything is still good.
   Passes.add(createVerifierPass());

@@ -58,7 +58,10 @@ namespace {
             cl::value_desc("library prefix"));
 
   cl::opt<bool>
-  Strip("s", cl::desc("Strip symbol info from executable"));
+  Strip("strip-all", cl::desc("Strip all symbol info from executable"));
+  cl::opt<bool>
+  StripDebug("strip-debug",
+             cl::desc("Strip debugger symbol info from executable"));
 
   cl::opt<bool>
   NoInternalize("disable-internalize",
@@ -90,6 +93,11 @@ namespace {
   CO5("eh-frame-hdr", cl::Hidden, cl::desc("Compatibility option: ignored"));
   cl::opt<std::string>
   CO6("h", cl::Hidden, cl::desc("Compatibility option: ignored"));
+
+  cl::alias A0("s", cl::desc("Alias for --strip-all"),
+               cl::aliasopt(Strip));
+  cl::alias A1("S", cl::desc("Alias for --strip-debug"),
+               cl::aliasopt(StripDebug));
 }
 
 /// PrintAndReturn - Prints a message to standard error and returns true.
@@ -199,7 +207,8 @@ int main(int argc, char **argv, char **envp) {
     sys::RemoveFileOnSignal(sys::Path(RealBytecodeOutput));
 
     // Generate the bytecode file.
-    if (GenerateBytecode(Composite.get(), Strip, !NoInternalize, &Out)) {
+    int StripLevel = Strip ? 2 : (StripDebug ? 1 : 0);
+    if (GenerateBytecode(Composite.get(), StripLevel, !NoInternalize, &Out)) {
       Out.close();
       return PrintAndReturn(argv[0], "error generating bytecode");
     }
