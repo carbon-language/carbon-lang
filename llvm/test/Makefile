@@ -43,9 +43,9 @@ clean :
 %.bc: %.ll
 	$(AS) $< -f
 
-%.mc: %.bc $(LLC) $(AS)
+%.mc: %.ll $(LLC) $(AS)
 	@echo "Generating machine instructions for $<"
-	$(LLC) $(LLCOPTS) $< > $@
+	$(AS) < $< | $(LLC) $(LLCOPTS) > $@
 
 %.s: %.ll $(LLC) $(AS)
 	$(AS) < $<  | $(LLC) > $@
