@@ -21,8 +21,8 @@ class TargetMachine;
 
 
 class MachineCodeForMethod : private Annotation {
-  std::hash_set<const Constant*> constantsForConstPool;
-  std::hash_map<const Value*, int> offsets;
+  hash_set<const Constant*> constantsForConstPool;
+  hash_map<const Value*, int> offsets;
   const         Function* method;
   unsigned	staticStackSize;
   unsigned	automaticVarsSize;
@@ -60,7 +60,7 @@ public:
   inline unsigned getRegSpillsSize()       const { return regSpillsSize; }
   inline unsigned getMaxOptionalArgsSize() const { return maxOptionalArgsSize;}
   inline unsigned getMaxOptionalNumArgs()  const { return maxOptionalNumArgs;}
-  inline const std::hash_set<const Constant*>&
+  inline const hash_set<const Constant*>&
                   getConstantPoolValues() const {return constantsForConstPool;}
   
   //

@@ -247,7 +247,7 @@ protected:
 // 
 //------------------------------------------------------------------------ 
 
-class InstrForest : private std::hash_map<const Instruction *, InstructionNode*> {
+class InstrForest : private hash_map<const Instruction *, InstructionNode*> {
 public:
   // Use a vector for the root set to get a deterministic iterator
   // for stable code generation.  Even though we need to erase nodes
