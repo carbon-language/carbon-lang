@@ -1592,13 +1592,6 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
 
   // Handle casts from integer to floating point now...
   if (DestClass == cFP) {
-    // unsigned int -> load as 64 bit int.
-    // unsigned long long -> more complex
-    if (SrcTy->isUnsigned() && SrcTy != Type::UByteTy) {
-      assert(0 && "Cannot handle this type of cast!");
-      abort();  // don't handle unsigned src yet!
-    }
-
     // Promote the integer to a type supported by FLD.  We do this because there
     // are no unsigned FLD instructions, so we must promote an unsigned value to
     // a larger signed value, then use FLD on the larger value.
