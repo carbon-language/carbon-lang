@@ -2287,6 +2287,14 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
       return &FI;
     }
 
+  // If we have 'free null' delete the instruction.  This can happen in stl code
+  // when lots of inlining happens.
+  if (isa<ConstantPointerNull>(Op)) {
+    FI.getParent()->getInstList().erase(&FI);
+    removeFromWorkList(&FI);
+    return 0;  // Don't do anything with FI
+  }
+
   return 0;
 }
 
