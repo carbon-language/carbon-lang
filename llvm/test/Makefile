@@ -21,16 +21,16 @@ QMCLASSES=$(LLVM_OBJ_ROOT)/test/QMTest
 # This is configuration information used by the test suite.  In QM Test, it's
 # called a 'context.'
 #
-CONTEXT= -c srcroot=$(LLVM_SRC_ROOT) \
-         -c buildroot=$(LLVM_OBJ_ROOT) \
-         -c buildtype=$(CONFIGURATION) \
-         -c tmpdir=$(LLVM_OBJ_ROOT)/test/tmp \
-         -c coresize=0 \
-         -c cc=$(CC) \
-         -c cxx=$(CXX) \
+CONTEXT= -c "srcroot=$(LLVM_SRC_ROOT)" \
+         -c "buildroot=$(LLVM_OBJ_ROOT)" \
+         -c "buildtype=$(CONFIGURATION)" \
+         -c "tmpdir=$(LLVM_OBJ_ROOT)/test/tmp" \
+         -c "coresize=0" \
+         -c "cc=$(CC)" \
+         -c "cxx=$(CXX)" \
          -c "llvmgcc=$(LLVMGCC)" \
          -c "llvmgxx=$(LLVMGXX)" \
-         -c make=$(MAKE)
+         -c "make=$(MAKE)"
 
 #
 # Location of the QMTest program.
