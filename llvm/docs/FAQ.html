@@ -1,214 +1,318 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>LLVM: Frequently Asked Questions</title>
+  <style>
+    @import url("llvm.css");
+    .question { font-weight: bold }
+    .answer   { margin-left: 2em  }
+  </style>
+</head>
+<body>
 
-<h1>
-<center>
-LLVM: Frequently Asked Questions
-</center>
-</h1>
+<div class="doc_title">
+  LLVM: Frequently Asked Questions
+</div>
+
+<ol>
+  <li><a href="#license">License</a>
+  <ol>
+  <li>Why are the LLVM source code and the front-end distributed under different
+  licenses?</li>
+  <li>Does the University of Illinois Open Source License really qualify as an
+  "open source" license?</li>
+  <li>Can I modify LLVM source code and redistribute the modified source?</li>
+  <li>Can I modify LLVM source code and redistribute binaries or other tools
+  based on it, without redistributing the source?</li>
+  </ol></li>
+
+  <li><a href="#source">Source code</a>
+  <ol>
+  <li>In what language is LLVM written?</li>
+  <li>How portable is the LLVM source code?</li>
+  </ol></li>
+
+  <li><a href="#build">Build Problems</a>
+  <ol>
+  <li>When I run configure, it finds the wrong C compiler.</li>
+  <li>I compile the code, and I get some error about <tt>/localhome</tt>.</li>
+  <li>The <tt>configure</tt> script finds the right C compiler, but it uses the
+  LLVM linker from a previous build.  What do I do?</li>
+  <li>When creating a dynamic library, I get a strange GLIBC error.</li>
+  <li>I've updated my source tree from CVS, and now my build is trying to use a
+  file/directory that doesn't exist.</li>
+  <li>I've modified a Makefile in my source tree, but my build tree keeps using
+  the old version.  What do I do?</li>
+  <li>I've upgraded to a new version of LLVM, and I get strange build
+  errors.</li>
+  <li>I've built LLVM and am testing it, but the tests freeze.</li>
+  <li>Why do test results differ when I perform different types of builds?</li>
+  </ol></li>
+</ol>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="license">License</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="question">
+<p>Why are the LLVM source code and the front-end distributed under different
+licenses?</p>
+</div>
+	
+<div class="answer">
+<p>The C/C++ front-ends are based on GCC and must be distributed under the GPL.
+Our aim is to distribute LLVM source code under a <em>much less restrictive</em>
+license, in particular one that does not compel users who distribute tools based
+on modifying the source to redistribute the modified source code as well.</p>
+</div>
+
+<div class="question">
+<p>Does the University of Illinois Open Source License really qualify as an
+"open source" license?</p>
+</div>
+
+<div class="answer">
+<p>Yes, the license is <a
+href="http://www.opensource.org/licenses/UoI-NCSA.php">certified</a> by the Open
+Source Initiative (OSI).</p>
+</div>
+
+<div class="question">
+<p>Can I modify LLVM source code and redistribute the modified source?</p>
+</div>
+
+<div class="answer">
+<p>Yes.  The modified source distribution must retain the copyright notice and
+follow the three bulletted conditions listed in the <a
+href="http://llvm.cs.uiuc.edu/releases/1.0/LICENSE.TXT">LLVM license</a>.</p>
+</div>
+
+<div class="question">
+<p>Can I modify LLVM source code and redistribute binaries or other tools based
+on it, without redistributing the source?</p>
+</div>
+
+<div class="answer">
+<p>Yes, this is why we distribute LLVM under a less restrictive license than
+GPL, as explained in the first question above.</p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="source">Source Code</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="question">
+<p>In what language is LLVM written?</p>
+</div>
+
+<div class="answer">
+<p>All of the LLVM tools and libraries are written in C++ with extensive use of
+the STL.</p>
+</div>
+
+<div class="question">
+<p>How portable is the LLVM source code?</p>
+</div>
+
+<div class="answer">
+<p>The LLVM source code should be portable to most modern UNIX-like operating
+systems.  Most of the code is written in standard C++ with operating system
+services abstracted to a support library.  The tools required to build and test
+LLVM have been ported to a plethora of platforms.</p>
+
+<p>Some porting problems may exist in the following areas:</p>
+
+<ul>
+
+  <li>The GCC front end code is not as portable as the LLVM suite, so it may not
+  compile as well on unsupported platforms.</li>
+
+  <li>The Python test classes are more UNIX-centric than they should be, so
+  porting to non-UNIX like platforms (i.e. Windows, MacOS 9) will require some
+  effort.</li>
+
+  <li>The LLVM build system relies heavily on UNIX shell tools, like the Bourne
+  Shell and sed.  Porting to systems without these tools (MacOS 9, Plan 9) will
+  require more effort.</li>
+
+</ul>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="build">Build Problems</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="question">
+<p>When I run configure, it finds the wrong C compiler.</p>
+</div>
+
+<div class="answer">
+
+<p>The <tt>configure</tt> script attempts to locate first <tt>gcc</tt> and then
+<tt>cc</tt>, unless it finds compiler paths set in <tt>CC</tt> and <tt>CXX</tt>
+for the C and C++ compiler, respectively.</p>
+
+<p>If <tt>configure</tt> finds the wrong compiler, either adjust your
+<tt>PATH</tt> environment variable or set <tt>CC</tt> and <tt>CXX</tt>
+explicitly.</p>
+
+</div>
+
+<div class="question">
+<p>I compile the code, and I get some error about <tt>/localhome</tt>.</p>
+</div>
+
+<div class="answer">
+
+<p>There are several possible causes for this.  The first is that you didn't set
+a pathname properly when using <tt>configure</tt>, and it defaulted to a
+pathname that we use on our research machines.</p>
+
+<p>Another possibility is that we hardcoded a path in our Makefiles.  If you see
+this, please email the LLVM bug mailing list with the name of the offending
+Makefile and a description of what is wrong with it.</p>
+
+</div>
+
+<div class="question">
+<p>The <tt>configure</tt> script finds the right C compiler, but it uses the
+LLVM linker from a previous build.  What do I do?</p>
+</div>
+
+<div class="answer">
+<p>The <tt>configure</tt> script uses the <tt>PATH</tt> to find executables, so
+if it's grabbing the wrong linker/assembler/etc, there are two ways to fix
+it:</p>
+
+<ol>
+		
+  <li><p>Adjust your <tt>PATH</tt> environment variable so that the correct
+  program appears first in the <tt>PATH</tt>.  This may work, but may not be
+  convenient when you want them <i>first</i> in your path for other
+  work.</p></li>
+
+  <li><p>Run <tt>configure</tt> with an alternative <tt>PATH</tt> that is
+  correct. In a Borne compatible shell, the syntax would be:</p>
+		
+      <p><tt>PATH=<the path without the bad program> ./configure ...</tt></p>
+
+      <p>This is still somewhat inconvenient, but it allows <tt>configure</tt>
+      to do its work without having to adjust your <tt>PATH</tt>
+      permanently.</p></li>
+	
+</ol>
+
+</div>
+
+<div class="question">
+<p>When creating a dynamic library, I get a strange GLIBC error.</p>
+</div>
+
+<div class="answer">
+<p>Under some operating systems (i.e. Linux), libtool does not work correctly if
+GCC was compiled with the --disable-shared option.  To work around this, install
+your own version of GCC that has shared libraries enabled by default.</p>
+</div>
+
+<div class="question">
+<p>I've updated my source tree from CVS, and now my build is trying to use a
+file/directory that doesn't exist.</p>
+</div>
+
+<div class="answer">
+<p>You need to re-run configure in your object directory.  When new Makefiles
+are added to the source tree, they have to be copied over to the object tree in
+order to be used by the build.</p>
+</div>
+
+<div class="question">
+<p>I've modified a Makefile in my source tree, but my build tree keeps using the
+old version.  What do I do?</p>
+</div>
+
+<div class="answer">
+
+<p>If the Makefile already exists in your object tree, you
+can just run the following command in the top level directory of your object
+tree:</p>
+
+<p><tt>./config.status &lt;relative path to Makefile&gt;</tt><p>
+
+<p>If the Makefile is new, you will have to modify the configure script to copy
+it over.</p>
+
+</div>
+
+<div class="question">
+<p>I've upgraded to a new version of LLVM, and I get strange build errors.</p>
+</div>
+
+<div class="answer">
+
+<p>Sometimes, changes to the LLVM source code alters how the build system works.
+Changes in libtool, autoconf, or header file dependencies are especially prone
+to this sort of problem.</p>
+
+<p>The best thing to try is to remove the old files and re-build.  In most
+cases, this takes care of the problem.  To do this, just type <tt>make
+clean</tt> and then <tt>make</tt> in the directory that fails to build.</p>
+
+</div>
+
+<div class="question">
+<p>I've built LLVM and am testing it, but the tests freeze.</p>
+</div>
+
+<div class="answer">
+
+<p>This is most likely occurring because you built a profile or release
+(optimized) build of LLVM and have not specified the same information on the
+<tt>gmake</tt> command line.</p>
+
+<p>For example, if you built LLVM with the command:</p>
+
+<p><tt>gmake ENABLE_PROFILING=1</tt>
+
+<p>...then you must run the tests with the following commands:</p>
+
+<p><tt>cd llvm/test<br>gmake  ENABLE_PROFILING=1</tt></p>
+
+</div>
+
+<div class="question">
+<p>Why do test results differ when I perform different types of builds?</p>
+</div>
+
+<div class="answer">
+
+<p>The LLVM test suite is dependent upon several features of the LLVM tools and
+libraries.</p>
+
+<p>First, the debugging assertions in code are not enabled in optimized or
+profiling builds.  Hence, tests that used to fail may pass.</p>
+	
+<p>Second, some tests may rely upon debugging options or behavior that is only
+available in the debug build.  These tests will fail in an optimized or profile
+build.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
 
 <hr>
-
-<!--=====================================================================-->
-<h2>
-<a name="license">Licenses</a>
-</h2>
-<!--=====================================================================-->
-
-<dl compact>
-	<dt> <b>Why are the LLVM source code and the front-end distributed
-	under different licenses?</b>
-	<dd>
-	The C/C++ front-ends are based on GCC and must be distributed under
-	the GPL.  Our aim is to distribute LLVM source code under a <em>much
-	less restrictive</em> license, in particular one that does not
-	compel users who distribute tools based on modifying the source to
-	redistribute the modified source code as well.
-	<p>
-	<dt><b>Does the University of Illinois Open Source License really qualify 
-	  as an "open source" license?</b>
-	<dd>Yes, the license is 
-	<a href="http://www.opensource.org/licenses/UoI-NCSA.php">certified</a>
-	by the Open Source Initiative (OSI).
-	<p>
-	<dt> <b>Can I modify LLVM source code and redistribute the modified
-	  source?</b>
-	<dd>
-	Yes.  The modified source distribution must retain the
-	copyright notice and follow the three bulletted conditions listed in
-	the <a href="http://llvm.cs.uiuc.edu/releases/1.0/LICENSE.TXT">LLVM license</a>.
-	<p>
-	<dt> <b>Can I modify LLVM source code and redistribute binaries or
-	  other tools based on it, without redistributing the source?</b>
-	<dd>
-	Yes, this is why we distribute LLVM under a less restrictive license
-	than GPL, as explained in the first question above.
-	<p>
-</dl>
-<hr>
-
-<!--=====================================================================-->
-<h2>
-<a name="source">Source Code</a>
-</h2>
-<!--=====================================================================-->
-
-<dl compact>
-	<dt> <b>In what language is LLVM written?</b>
-	<dd>
-	All of the LLVM tools and libraries are written in C++ with extensive use
-	of the STL.
-	<p>
-
-	<dt><b>How portable is the LLVM source code?</b>
-	<dd>
-	The LLVM source code should be portable to most modern UNIX-like operating
-	systems.  Most of the code is written in standard C++ with operating
-	system services abstracted to a support library.  The tools required to
-	build and test LLVM have been ported to a plethora of platforms.
-	<p>
-	Some porting problems may exist in the following areas:
-	<ul>
-		<li>The GCC front end code is not as portable as the LLVM suite, so it
-		may not compile as well on unsupported platforms.
-
-		<p>
-
-		<li>The Python test classes are more UNIX-centric than they should be,
-		so porting to non-UNIX like platforms (i.e. Windows, MacOS 9) will
-		require some effort.
-		<p>
-
-		<li>The LLVM build system relies heavily on UNIX shell tools, like the
-		Bourne Shell and sed.  Porting to systems without these tools (MacOS 9,
-		Plan 9) will require more effort.
-	</ul>
-</dl>
-
-<hr>
-
-<!--=====================================================================-->
-<h2>
-<a name="build">Build Problems</a>
-</h2>
-<!--=====================================================================-->
-
-<dl compact>
-	<dt><b>When I run configure, it finds the wrong C compiler.</b>
-	<dd>
-	The <tt>configure</tt> script attempts to locate first <tt>gcc</tt> and
-	then <tt>cc</tt>, unless it finds compiler paths set in <tt>CC</tt> and
-	<tt>CXX</tt> for the C and C++ compiler, respectively.
-
-	If <tt>configure</tt> finds the wrong compiler, either adjust your
-	<tt>PATH</tt> environment variable or set <tt>CC</tt> and <tt>CXX</tt>
-	explicitly.
-	<p>
-
-	<dt><b>I compile the code, and I get some error about /localhome</b>.
-	<dd>
-	There are several possible causes for this.  The first is that you
-	didn't set a pathname properly when using <tt>configure</tt>, and it
-	defaulted to a pathname that we use on our research machines.
-	<p>
-	Another possibility is that we hardcoded a path in our Makefiles.  If
-	you see this, please email the LLVM bug mailing list with the name of
-	the offending Makefile and a description of what is wrong with it.
-
-	<dt><b>The <tt>configure</tt> script finds the right C compiler, but it
-	uses the LLVM linker from a previous build.  What do I do?</b>
-	<dd>
-	The <tt>configure</tt> script uses the <tt>PATH</tt> to find
-	executables, so if it's grabbing the wrong linker/assembler/etc, there
-	are two ways to fix it:
-	<ol>
-		<li>Adjust your <tt>PATH</tt> environment variable so that the
-		correct program appears first in the <tt>PATH</tt>.  This may work,
-		but may not be convenient when you want them <i>first</i> in your
-		path for other work.
-		<p>
-
-		<li>Run <tt>configure</tt> with an alternative <tt>PATH</tt> that
-		is correct.  In a Borne compatible shell, the syntax would be:
-		<p>
-		<tt>PATH=<the path without the bad program> ./configure ...</tt>
-		<p>
-		This is still somewhat inconvenient, but it allows
-		<tt>configure</tt> to do its work without having to adjust your
-		<tt>PATH</tt> permanently.
-	</ol>
-
-	<dt><b>When creating a dynamic library, I get a strange GLIBC error.</b>
-	<dd>
-	Under some operating systems (i.e. Linux), libtool does not work correctly
-	if GCC was compiled with the --disable-shared option.  To work around this,
-	install your own version of GCC that has shared libraries enabled by
-	default.
-	<p>
-
-	<dt><b>I've updated my source tree from CVS, and now my build is trying to
-	use a file/directory that doesn't exist.</b>
-	<dd>
-	You need to re-run configure in your object directory.  When new Makefiles
-	are added to the source tree, they have to be copied over to the object
-	tree in order to be used by the build.
-	<p>
-
-	<dt><b>I've modified a Makefile in my source tree, but my build tree keeps
-	using the old version.  What do I do?</b>
-	<dd>
-	If the Makefile already exists in your object tree, you can just run the
-	following command in the top level directory of your object tree:
-	<p>
-	<tt>./config.status &lt;relative path to Makefile&gt;</tt>
-	<p>
-	If the Makefile is new, you will have to modify the configure script to copy
-	it over.
-	<p>
-
-	<dt><b>I've upgraded to a new version of LLVM, and I get strange build
-	errors.</b>
-	<dd>
-	Sometimes changes to the LLVM source code alters how the build system
-	works.  Changes in libtool, autoconf, or header file dependencies are
-	especially prone to this sort of problem.
-	<p>
-	The best thing to try is to remove the old files and re-build.  In most
-	cases, this takes care of the problem.  To do this, just type <tt>make
-	clean</tt> and then <tt>make</tt> in the directory that fails to build.
-	<p>
-
-	<dt><b>I've built LLVM and am testing it, but the tests freeze.</b>
-	<dd>
-	This is most likely occurring because you built a profile or release
-	(optimized) build of LLVM and have not specified the same information on
-	the <tt>gmake</tt> command line.
-	<p>
-	For example, if you built LLVM with the command:
-	<p>
-	<tt>gmake ENABLE_PROFILING=1</tt>
-	<p>
-	...then you must run the tests with the following commands:
-	<p>
-	<tt>cd llvm/test<br>gmake  ENABLE_PROFILING=1</tt>
-	<p>
-
-	<dt><b>Why do test results differ when I perform different types of
-	builds?</b>
-	<dd>
-	The LLVM test suite is dependent upon several features of the LLVM tools
-	and libraries.
-	<p>
-	First, the debugging assertions in code are not enabled in optimized or
-	profiling builds.  Hence, tests that used to fail may pass.
-	<p>
-	Second, some tests may rely upon debugging options or behavior that is
-	only available in the debug build.  These tests will fail in an optimized
-	or profile build.
-</dl>
-<hr>
-
-<a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
-<br>
+<div class="doc_footer">
+  <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
+  <br>
+  Last modified: $Date$
+</div>
 
 </body>
 </html>
