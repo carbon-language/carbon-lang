@@ -1571,9 +1571,6 @@ done
           ac_config_commands="$ac_config_commands test/Programs/TEST.dsgraph.report"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/TEST.micro.report"
-
-
           ac_config_commands="$ac_config_commands test/Programs/TEST.aa.report"
 
 
@@ -1604,9 +1601,6 @@ done
           ac_config_commands="$ac_config_commands test/Programs/TEST.dsgraph.gnuplot"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/TEST.micro.Makefile"
-
-
           ac_config_commands="$ac_config_commands test/Programs/TEST.vtl.Makefile"
 
 
@@ -1617,6 +1611,9 @@ done
 
 
           ac_config_commands="$ac_config_commands test/Programs/External/SPEC/Makefile.spec"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/External/SPEC/Makefile.spec2000"
 
 
           ac_config_commands="$ac_config_commands test/Programs/External/SPEC/Makefile.spec95"
@@ -1671,6 +1668,9 @@ done
 
 
           ac_config_commands="$ac_config_commands test/Programs/SingleSource/Makefile.singlesrc"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/SingleSource/UnitTests/SetjmpLongjmp/Makefile"
 
 
           ac_config_commands="$ac_config_commands tools/Makefile"
@@ -22611,7 +22611,6 @@ ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/Makefile.programs`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/TEST.aa.Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/TEST.dsgraph.report`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/TEST.micro.report`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/TEST.aa.report`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/TEST.example.Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/TEST.nightly.Makefile`
@@ -22622,11 +22621,11 @@ ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/TEST.dsgraph.Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/TEST.jit.report`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/TEST.typesafe.Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/TEST.dsgraph.gnuplot`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/TEST.micro.Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/TEST.vtl.Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/Makefile.spec`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/Makefile.spec2000`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/Makefile.spec95`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Makefile.multisrc`
@@ -22645,6 +22644,7 @@ ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/F
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/pifft/test.in`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/Makefile.singlesrc`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/UnitTests/SetjmpLongjmp/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname utils/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname projects/Makefile`
@@ -22676,7 +22676,6 @@ do
   "test/Programs/Makefile.programs" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/Makefile.programs" ;;
   "test/Programs/TEST.aa.Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/TEST.aa.Makefile" ;;
   "test/Programs/TEST.dsgraph.report" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/TEST.dsgraph.report" ;;
-  "test/Programs/TEST.micro.report" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/TEST.micro.report" ;;
   "test/Programs/TEST.aa.report" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/TEST.aa.report" ;;
   "test/Programs/TEST.example.Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/TEST.example.Makefile" ;;
   "test/Programs/TEST.nightly.Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/TEST.nightly.Makefile" ;;
@@ -22687,11 +22686,11 @@ do
   "test/Programs/TEST.jit.report" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/TEST.jit.report" ;;
   "test/Programs/TEST.typesafe.Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/TEST.typesafe.Makefile" ;;
   "test/Programs/TEST.dsgraph.gnuplot" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/TEST.dsgraph.gnuplot" ;;
-  "test/Programs/TEST.micro.Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/TEST.micro.Makefile" ;;
   "test/Programs/TEST.vtl.Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/TEST.vtl.Makefile" ;;
   "test/Programs/External/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/Makefile" ;;
   "test/Programs/External/SPEC/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/Makefile" ;;
   "test/Programs/External/SPEC/Makefile.spec" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/Makefile.spec" ;;
+  "test/Programs/External/SPEC/Makefile.spec2000" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/Makefile.spec2000" ;;
   "test/Programs/External/SPEC/Makefile.spec95" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/Makefile.spec95" ;;
   "test/Programs/MultiSource/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Makefile" ;;
   "test/Programs/MultiSource/Makefile.multisrc" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Makefile.multisrc" ;;
@@ -22710,6 +22709,7 @@ do
   "test/Programs/MultiSource/Benchmarks/FreeBench/pifft/test.in" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/pifft/test.in" ;;
   "test/Programs/SingleSource/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/SingleSource/Makefile" ;;
   "test/Programs/SingleSource/Makefile.singlesrc" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/SingleSource/Makefile.singlesrc" ;;
+  "test/Programs/SingleSource/UnitTests/SetjmpLongjmp/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/SingleSource/UnitTests/SetjmpLongjmp/Makefile" ;;
   "tools/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/Makefile" ;;
   "utils/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Makefile" ;;
   "projects/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Makefile" ;;
@@ -23381,7 +23381,6 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     test/Programs/Makefile.programs ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/Makefile.programs test/Programs/Makefile.programs ;;
     test/Programs/TEST.aa.Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/TEST.aa.Makefile test/Programs/TEST.aa.Makefile ;;
     test/Programs/TEST.dsgraph.report ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/TEST.dsgraph.report test/Programs/TEST.dsgraph.report ;;
-    test/Programs/TEST.micro.report ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/TEST.micro.report test/Programs/TEST.micro.report ;;
     test/Programs/TEST.aa.report ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/TEST.aa.report test/Programs/TEST.aa.report ;;
     test/Programs/TEST.example.Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/TEST.example.Makefile test/Programs/TEST.example.Makefile ;;
     test/Programs/TEST.nightly.Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/TEST.nightly.Makefile test/Programs/TEST.nightly.Makefile ;;
@@ -23392,11 +23391,11 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     test/Programs/TEST.jit.report ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/TEST.jit.report test/Programs/TEST.jit.report ;;
     test/Programs/TEST.typesafe.Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/TEST.typesafe.Makefile test/Programs/TEST.typesafe.Makefile ;;
     test/Programs/TEST.dsgraph.gnuplot ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/TEST.dsgraph.gnuplot test/Programs/TEST.dsgraph.gnuplot ;;
-    test/Programs/TEST.micro.Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/TEST.micro.Makefile test/Programs/TEST.micro.Makefile ;;
     test/Programs/TEST.vtl.Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/TEST.vtl.Makefile test/Programs/TEST.vtl.Makefile ;;
     test/Programs/External/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/Makefile test/Programs/External/Makefile ;;
     test/Programs/External/SPEC/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/Makefile test/Programs/External/SPEC/Makefile ;;
     test/Programs/External/SPEC/Makefile.spec ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/Makefile.spec test/Programs/External/SPEC/Makefile.spec ;;
+    test/Programs/External/SPEC/Makefile.spec2000 ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/Makefile.spec2000 test/Programs/External/SPEC/Makefile.spec2000 ;;
     test/Programs/External/SPEC/Makefile.spec95 ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/Makefile.spec95 test/Programs/External/SPEC/Makefile.spec95 ;;
     test/Programs/MultiSource/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Makefile test/Programs/MultiSource/Makefile ;;
     test/Programs/MultiSource/Makefile.multisrc ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Makefile.multisrc test/Programs/MultiSource/Makefile.multisrc ;;
@@ -23415,6 +23414,7 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     test/Programs/MultiSource/Benchmarks/FreeBench/pifft/test.in ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/pifft/test.in test/Programs/MultiSource/Benchmarks/FreeBench/pifft/test.in ;;
     test/Programs/SingleSource/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/Makefile test/Programs/SingleSource/Makefile ;;
     test/Programs/SingleSource/Makefile.singlesrc ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/Makefile.singlesrc test/Programs/SingleSource/Makefile.singlesrc ;;
+    test/Programs/SingleSource/UnitTests/SetjmpLongjmp/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/UnitTests/SetjmpLongjmp/Makefile test/Programs/SingleSource/UnitTests/SetjmpLongjmp/Makefile ;;
     tools/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/Makefile tools/Makefile ;;
     utils/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/Makefile utils/Makefile ;;
     projects/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/Makefile projects/Makefile ;;
