@@ -1,3 +1,5 @@
+// RUN: %llvmgxx -S %s -o - | llvm-as -f -o /dev/null
+
 // There is a HOLE in the derived2 object due to not wanting to place the two 
 // baseclass instances at the same offset!
 
