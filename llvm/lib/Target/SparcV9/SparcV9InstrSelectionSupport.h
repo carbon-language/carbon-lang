@@ -222,6 +222,11 @@ convertOpcodeFromRegToImm(unsigned Opcode) {
   }
 }
 
+MachineOperand::MachineOperandType
+ChooseRegOrImmed(Value* val, MachineOpCode opCode,
+                 const TargetMachine& targetMachine, bool canUseImmed,
+                 unsigned& getMachineRegNum, int64_t& getImmedValue);
+
 } // End llvm namespace
 
 #endif
