@@ -138,6 +138,7 @@ reg:	VRegList(reg,reg)	=  10 (0);
 	 */
 not:	  Not(reg,reg)		=   21 (10);
 tobool:	  ToBoolTy(reg)		=   22 (10);
+not:      Not(tobool, reg)      =  322 (10); // fold cast-to-bool into not
 toubyte:  ToUByteTy(reg)	=   23 (10);
 tosbyte:  ToSByteTy(reg)	=   24 (10);
 toushort: ToUShortTy(reg)	=   25 (10);
