@@ -376,6 +376,10 @@ public:
     // Handle PHI Node
   }
 
+  void visitReturnInst(ReturnInst *I) {
+    // Nothing of interest
+  }
+
   void visitInstruction(Instruction *I) {
     cerr << "Unknown instruction to FunctionBodyTransformer:\n";
     I->dump();
@@ -425,9 +429,14 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
   map<Value*, PointerValSet> &ValMap = IPFGraph.getValueMap();
   vector<ScalarInfo> Scalars;
 
+  cerr << "Building scalar map:\n";
+
   for (map<Value*, PointerValSet>::iterator I = ValMap.begin(),
          E = ValMap.end(); I != E; ++I) {
     const PointerValSet &PVS = I->second;  // Set of things pointed to by scalar
+
+    cerr << "Scalar Mapping from:"; I->first->dump();
+    cerr << "\nScalar Mapping to: "; PVS.print(cerr);
 
     assert(PVS.size() == 1 &&
            "Only handle scalars that point to one thing so far!");
@@ -445,7 +454,7 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
 
 
 
-  cerr << "In '" << F->getName()
+  cerr << "\nIn '" << F->getName()
        << "': Found the following values that point to poolable nodes:\n";
 
   for (unsigned i = 0, e = Scalars.size(); i != e; ++i)
@@ -589,7 +598,7 @@ static void addNodeMapping(DSNode *SrcNode, const PointerValSet &PVS,
 //
 // The NodeMapping calculated maps from the callers graph to the called graph.
 //
-static void CalculateNodeMapping(TransformFunctionInfo &TFI,
+static void CalculateNodeMapping(Function *F, TransformFunctionInfo &TFI,
                                  FunctionDSGraph &CallerGraph,
                                  FunctionDSGraph &CalledGraph, 
                                  map<DSNode*, PointerValSet> &NodeMapping) {
@@ -609,7 +618,7 @@ static void CalculateNodeMapping(TransformFunctionInfo &TFI,
                        NodeMapping);
       } else {
         // Figure out which node argument # ArgNo points to in the called graph.
-        Value *Arg = TFI.Func->getArgumentList()[TFI.ArgInfo[i].ArgNo];     
+        Value *Arg = F->getArgumentList()[TFI.ArgInfo[i].ArgNo];     
         addNodeMapping(TFI.ArgInfo[i].Node, CalledGraph.getValueMap()[Arg],
                        NodeMapping);
       }
@@ -685,17 +694,17 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
   // data structure graph for the function we are replacing, and figure out how
   // our graph nodes map to the graph nodes in the dest function.
   //
-  FunctionDSGraph &DSGraph = DS->getClosedDSGraph(TFI.Func);  
+  FunctionDSGraph &DSGraph = DS->getClosedDSGraph(NewFunc);  
 
   // NodeMapping - Multimap from callers graph to called graph.
   //
   map<DSNode*, PointerValSet> NodeMapping;
 
-  CalculateNodeMapping(TFI, CallerIPGraph, DSGraph, 
+  CalculateNodeMapping(NewFunc, TFI, CallerIPGraph, DSGraph, 
                        NodeMapping);
 
   // Print out the node mapping...
-  cerr << "\nNode mapping for call of " << TFI.Func->getName() << "\n";
+  cerr << "\nNode mapping for call of " << NewFunc->getName() << "\n";
   for (map<DSNode*, PointerValSet>::iterator I = NodeMapping.begin();
        I != NodeMapping.end(); ++I) {
     cerr << "Map: "; I->first->print(cerr);
@@ -709,39 +718,57 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
   //
   map<DSNode*, Value*> PoolDescriptors;
 
-  cerr << "FIXME: PoolDescriptors not built!\n";
+  cerr << "\nCalculating the pool descriptor map:\n";
 
-#if 0
-  // First add the incoming arguments to the scalar map...
-  for (unsigned i = 0, e = TFI.ArgInfo.size(); i != e; ++i)
-    if (TFI.ArgInfo[i].ArgNo == -1) {
+  // All of the pool descriptors must be passed in as arguments...
+  for (unsigned i = 0, e = TFI.ArgInfo.size(); i != e; ++i) {
+    DSNode *CallerNode = TFI.ArgInfo[i].Node;
+    Value  *CallerPool = TFI.ArgInfo[i].PoolHandle;
 
-    } else {
-      Value *Arg = TFI.Func->getArgumentList()[TFI.ArgInfo[i].ArgNo];
+    cerr << "Mapped caller node: "; CallerNode->print(cerr);
+    cerr << "Mapped caller pool: "; CallerPool->dump();
 
-      // Find out what nodes the argument points to in the called functions data
-      // structure graph...
-      //
-      PointerValSet &ArgNodes = DSGraph.getValueMap()[Arg];
+    // Calculate the argument number that the pool is to the function call...
+    // The call instruction should not have the pool operands added yet.
+    unsigned ArgNo = TFI.Call->getNumOperands()-1+i;
+    cerr << "Should be argument #: " << ArgNo << "[i = " << i << "]\n";
+    assert(ArgNo < NewFunc->getArgumentList().size() &&
+           "Call already has pool arguments added??");
 
-      // Add mappings for all of the arguments of this function...
-      for (unsigned ArgVal = 0, AVE = ArgNodes.size(); ArgVal != AVE; ++ArgVal){
-        assert(ArgNodes[ArgVal].Index == 0 &&
-               "Arg that points into an object not handled yet!");
-        DSNode *ArgNode = ArgNodes[ArgVal].Node;
-        Scalars.push_back(ScalarInfo(Arg, ArgNode, PoolDescriptors[ArgNode]));
-      }
-      ArgOffset++;
+    // Map the pool argument into the called function...
+    Value *CalleePool = NewFunc->getArgumentList()[ArgNo];
+
+    // Map the DSNode into the callee's DSGraph
+    const PointerValSet &CalleeNodes = NodeMapping[CallerNode];
+    for (unsigned n = 0, ne = CalleeNodes.size(); n != ne; ++n) {
+      assert(CalleeNodes[n].Index == 0 && "Indexed node not handled yet!");
+      DSNode *CalleeNode = CalleeNodes[n].Node;
+
+      cerr << "*** to callee node: "; CalleeNode->print(cerr);
+      cerr << "*** to callee pool: "; CalleePool->dump();
+      cerr << "\n";
+      
+      assert(CalleeNode && CalleePool && "Invalid nodes!");
+      Value *&PV = PoolDescriptors[CalleeNode];
+      //assert((PV == 0 || PV == CalleePool) && "Invalid node remapping!");
+      PV = CalleePool;         // Update the pool descriptor map!
     }
+  }
+
+  // We must destroy the node mapping so that we don't have latent references
+  // into the data structure graph for the new function.  Otherwise we get
+  // assertion failures when transformFunctionBody tries to invalidate the
+  // graph.
+  //
+  NodeMapping.clear();
 
   // Now that we know everything we need about the function, transform the body
   // now!
   //
-  transformFunctionBody(TFI.Func, DSGraph, PoolDescriptors);
+  transformFunctionBody(NewFunc, DSGraph, PoolDescriptors);
 
   cerr << "Function after transformation:\n";
-  TFI.Func->dump();
-#endif
+  NewFunc->dump();
 }
 
 
