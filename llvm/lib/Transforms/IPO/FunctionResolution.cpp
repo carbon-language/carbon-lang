@@ -17,7 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Pass.h"
 #include "llvm/iOther.h"
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "Support/Statistic.h"
 #include <algorithm>
 
@@ -27,6 +27,7 @@ using std::cerr;
 
 namespace {
   Statistic<>NumResolved("funcresolve", "Number of varargs functions resolved");
+  Statistic<> NumGlobals("funcresolve", "Number of global variables resolved");
 
   struct FunctionResolvingPass : public Pass {
     bool run(Module &M);
@@ -111,144 +112,234 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
 }
 
 
+static bool ResolveFunctions(Module &M, vector<GlobalValue*> &Globals,
+                             Function *Concrete) {
+  bool Changed = false;
+  for (unsigned i = 0; i != Globals.size(); ++i)
+    if (Globals[i] != Concrete) {
+      Function *Old = cast<Function>(Globals[i]);
+      const FunctionType *OldMT = Old->getFunctionType();
+      const FunctionType *ConcreteMT = Concrete->getFunctionType();
+      
+      assert(OldMT->getParamTypes().size() <=
+             ConcreteMT->getParamTypes().size() &&
+             "Concrete type must have more specified parameters!");
+      
+      // Check to make sure that if there are specified types, that they
+      // match...
+      //
+      for (unsigned i = 0; i < OldMT->getParamTypes().size(); ++i)
+        if (OldMT->getParamTypes()[i] != ConcreteMT->getParamTypes()[i]) {
+          cerr << "Parameter types conflict for" << OldMT
+               << " and " << ConcreteMT;
+          return Changed;
+        }
+      
+      // Attempt to convert all of the uses of the old function to the
+      // concrete form of the function.  If there is a use of the fn that
+      // we don't understand here we punt to avoid making a bad
+      // transformation.
+      //
+      // At this point, we know that the return values are the same for
+      // our two functions and that the Old function has no varargs fns
+      // specified.  In otherwords it's just <retty> (...)
+      //
+      for (unsigned i = 0; i < Old->use_size(); ) {
+        User *U = *(Old->use_begin()+i);
+        if (CastInst *CI = dyn_cast<CastInst>(U)) {
+          // Convert casts directly
+          assert(CI->getOperand(0) == Old);
+          CI->setOperand(0, Concrete);
+          Changed = true;
+          ++NumResolved;
+        } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
+          // Can only fix up calls TO the argument, not args passed in.
+          if (CI->getCalledValue() == Old) {
+            ConvertCallTo(CI, Concrete);
+            Changed = true;
+            ++NumResolved;
+          } else {
+            cerr << "Couldn't cleanup this function call, must be an"
+                 << " argument or something!" << CI;
+            ++i;
+          }
+        } else {
+          cerr << "Cannot convert use of function: " << U << "\n";
+          ++i;
+        }
+      }
+    }
+  return Changed;
+}
+
+
+static bool ResolveGlobalVariables(Module &M, vector<GlobalValue*> &Globals,
+                                   GlobalVariable *Concrete) {
+  bool Changed = false;
+  assert(isa<ArrayType>(Concrete->getType()->getElementType()) &&
+         "Concrete version should be an array type!");
+
+  // Get the type of the things that may be resolved to us...
+  const Type *AETy =
+    cast<ArrayType>(Concrete->getType()->getElementType())->getElementType();
+
+  std::vector<Constant*> Args;
+  Args.push_back(Constant::getNullValue(Type::LongTy));
+  Args.push_back(Constant::getNullValue(Type::LongTy));
+  ConstantExpr *Replacement =
+    ConstantExpr::getGetElementPtr(ConstantPointerRef::get(Concrete), Args);
+  
+  for (unsigned i = 0; i != Globals.size(); ++i)
+    if (Globals[i] != Concrete) {
+      GlobalVariable *Old = cast<GlobalVariable>(Globals[i]);
+      if (Old->getType()->getElementType() != AETy) {
+        std::cerr << "WARNING: Two global variables exist with the same name "
+                  << "that cannot be resolved!\n";
+        return false;
+      }
+
+      // In this case, Old is a pointer to T, Concrete is a pointer to array of
+      // T.  Because of this, replace all uses of Old with a constantexpr
+      // getelementptr that returns the address of the first element of the
+      // array.
+      //
+      Old->replaceAllUsesWith(Replacement);
+      // Since there are no uses of Old anymore, remove it from the module.
+      M.getGlobalList().erase(Old);
+
+      ++NumGlobals;
+      Changed = true;
+    }
+  return Changed;
+}
+
+static bool ProcessGlobalsWithSameName(Module &M,
+                                       vector<GlobalValue*> &Globals) {
+  assert(!Globals.empty() && "Globals list shouldn't be empty here!");
+
+  bool isFunction = isa<Function>(Globals[0]);   // Is this group all functions?
+  bool Changed = false;
+  GlobalValue *Concrete = 0;  // The most concrete implementation to resolve to
+
+  assert((isFunction ^ isa<GlobalVariable>(Globals[0])) &&
+         "Should either be function or gvar!");
+
+  for (unsigned i = 0; i != Globals.size(); ) {
+    if (isa<Function>(Globals[i]) != isFunction) {
+      std::cerr << "WARNING: Found function and global variable with the "
+                << "same name: '" << Globals[i]->getName() << "'.\n";
+      return false;                 // Don't know how to handle this, bail out!
+    }
+
+    // Ignore globals that are never used so they don't cause spurious
+    // warnings... here we will actually DCE the function so that it isn't used
+    // later.
+    //
+    if (Globals[i]->isExternal() && Globals[i]->use_empty()) {
+      if (isFunction)
+        M.getFunctionList().erase(cast<Function>(Globals[i]));
+      else
+        M.getGlobalList().erase(cast<GlobalVariable>(Globals[i]));
+
+      Globals.erase(Globals.begin()+i);
+      Changed = true;
+      ++NumResolved;
+    } else if (isFunction) {
+      // For functions, we look to merge functions definitions of "int (...)"
+      // to 'int (int)' or 'int ()' or whatever else is not completely generic.
+      //
+      Function *F = cast<Function>(Globals[i]);
+      if (!F->getFunctionType()->isVarArg() ||
+          F->getFunctionType()->getNumParams()) {
+        if (Concrete)
+          return false;   // Found two different functions types.  Can't choose!
+        
+        Concrete = Globals[i];
+      }
+      ++i;
+    } else {
+      // For global variables, we have to merge C definitions int A[][4] with
+      // int[6][4]
+      GlobalVariable *GV = cast<GlobalVariable>(Globals[i]);
+      if (Concrete == 0) {
+        if (isa<ArrayType>(GV->getType()->getElementType()))
+          Concrete = GV;
+      } else {    // Must have different types... one is an array of the other?
+        const ArrayType *AT =
+          dyn_cast<ArrayType>(GV->getType()->getElementType());
+
+        // If GV is an array of Concrete, then GV is the array.
+        if (AT && AT->getElementType() == Concrete->getType()->getElementType())
+          Concrete = GV;
+        else {
+          // Concrete must be an array type, check to see if the element type of
+          // concrete is already GV.
+          AT = cast<ArrayType>(Concrete->getType()->getElementType());
+          if (AT->getElementType() != GV->getType()->getElementType())
+            Concrete = 0;           // Don't know how to handle it!
+        }
+      }
+      
+      ++i;
+    }
+  }
+
+  if (Globals.size() > 1) {         // Found a multiply defined global...
+    // We should find exactly one concrete function definition, which is
+    // probably the implementation.  Change all of the function definitions and
+    // uses to use it instead.
+    //
+    if (!Concrete) {
+      cerr << "WARNING: Found function types that are not compatible:\n";
+      for (unsigned i = 0; i < Globals.size(); ++i) {
+        cerr << "\t" << Globals[i]->getType()->getDescription() << " %"
+             << Globals[i]->getName() << "\n";
+      }
+      cerr << "  No linkage of globals named '" << Globals[0]->getName()
+           << "' performed!\n";
+      return Changed;
+    }
+
+    if (isFunction)
+      return Changed | ResolveFunctions(M, Globals, cast<Function>(Concrete));
+    else
+      return Changed | ResolveGlobalVariables(M, Globals,
+                                              cast<GlobalVariable>(Concrete));
+  }
+  return Changed;
+}
+
 bool FunctionResolvingPass::run(Module &M) {
   SymbolTable *ST = M.getSymbolTable();
   if (!ST) return false;
 
-  std::map<string, vector<Function*> > Functions;
+  std::map<string, vector<GlobalValue*> > Globals;
 
   // Loop over the entries in the symbol table. If an entry is a func pointer,
   // then add it to the Functions map.  We do a two pass algorithm here to avoid
   // problems with iterators getting invalidated if we did a one pass scheme.
   //
   for (SymbolTable::iterator I = ST->begin(), E = ST->end(); I != E; ++I)
-    if (const PointerType *PT = dyn_cast<PointerType>(I->first))
-      if (isa<FunctionType>(PT->getElementType())) {
-        SymbolTable::VarMap &Plane = I->second;
-        for (SymbolTable::type_iterator PI = Plane.begin(), PE = Plane.end();
-             PI != PE; ++PI) {
-          Function *F = cast<Function>(PI->second);
-          assert(PI->first == F->getName() &&
-                 "Function name and symbol table do not agree!");
-          if (F->hasExternalLinkage())  // Only resolve decls to external fns
-            Functions[PI->first].push_back(F);
-        }
+    if (const PointerType *PT = dyn_cast<PointerType>(I->first)) {
+      SymbolTable::VarMap &Plane = I->second;
+      for (SymbolTable::type_iterator PI = Plane.begin(), PE = Plane.end();
+           PI != PE; ++PI) {
+        GlobalValue *GV = cast<GlobalValue>(PI->second);
+        assert(PI->first == GV->getName() &&
+               "Global name and symbol table do not agree!");
+        if (GV->hasExternalLinkage())  // Only resolve decls to external fns
+          Globals[PI->first].push_back(GV);
       }
+    }
 
   bool Changed = false;
 
   // Now we have a list of all functions with a particular name.  If there is
   // more than one entry in a list, merge the functions together.
   //
-  for (std::map<string, vector<Function*> >::iterator I = Functions.begin(), 
-         E = Functions.end(); I != E; ++I) {
-    vector<Function*> &Functions = I->second;
-    Function *Implementation = 0;     // Find the implementation
-    Function *Concrete = 0;
-    for (unsigned i = 0; i < Functions.size(); ) {
-      if (!Functions[i]->isExternal()) {  // Found an implementation
-        if (Implementation != 0)
-        assert(Implementation == 0 && "Multiple definitions of the same"
-               " function. Case not handled yet!");
-        Implementation = Functions[i];
-      } else {
-        // Ignore functions that are never used so they don't cause spurious
-        // warnings... here we will actually DCE the function so that it isn't
-        // used later.
-        //
-        if (Functions[i]->use_empty()) {
-          M.getFunctionList().erase(Functions[i]);
-          Functions.erase(Functions.begin()+i);
-          Changed = true;
-          ++NumResolved;
-          continue;
-        }
-      }
-      
-      if (Functions[i] && (!Functions[i]->getFunctionType()->isVarArg())) {
-        if (Concrete) {  // Found two different functions types.  Can't choose
-          Concrete = 0;
-          break;
-        }
-        Concrete = Functions[i];
-      }
-      ++i;
-    }
-
-    if (Functions.size() > 1) {         // Found a multiply defined function...
-      // We should find exactly one non-vararg function definition, which is
-      // probably the implementation.  Change all of the function definitions
-      // and uses to use it instead.
-      //
-      if (!Concrete) {
-        cerr << "Warning: Found functions types that are not compatible:\n";
-        for (unsigned i = 0; i < Functions.size(); ++i) {
-          cerr << "\t" << Functions[i]->getType()->getDescription() << " %"
-               << Functions[i]->getName() << "\n";
-        }
-        cerr << "  No linkage of functions named '" << Functions[0]->getName()
-             << "' performed!\n";
-      } else {
-        for (unsigned i = 0; i < Functions.size(); ++i)
-          if (Functions[i] != Concrete) {
-            Function *Old = Functions[i];
-            const FunctionType *OldMT = Old->getFunctionType();
-            const FunctionType *ConcreteMT = Concrete->getFunctionType();
-            bool Broken = false;
-
-            assert(OldMT->getParamTypes().size() <=
-                   ConcreteMT->getParamTypes().size() &&
-                   "Concrete type must have more specified parameters!");
-
-            // Check to make sure that if there are specified types, that they
-            // match...
-            //
-            for (unsigned i = 0; i < OldMT->getParamTypes().size(); ++i)
-              if (OldMT->getParamTypes()[i] != ConcreteMT->getParamTypes()[i]) {
-                cerr << "Parameter types conflict for" << OldMT
-                     << " and " << ConcreteMT;
-                Broken = true;
-              }
-            if (Broken) break;  // Can't process this one!
-
-
-            // Attempt to convert all of the uses of the old function to the
-            // concrete form of the function.  If there is a use of the fn that
-            // we don't understand here we punt to avoid making a bad
-            // transformation.
-            //
-            // At this point, we know that the return values are the same for
-            // our two functions and that the Old function has no varargs fns
-            // specified.  In otherwords it's just <retty> (...)
-            //
-            for (unsigned i = 0; i < Old->use_size(); ) {
-              User *U = *(Old->use_begin()+i);
-              if (CastInst *CI = dyn_cast<CastInst>(U)) {
-                // Convert casts directly
-                assert(CI->getOperand(0) == Old);
-                CI->setOperand(0, Concrete);
-                Changed = true;
-                ++NumResolved;
-              } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
-                // Can only fix up calls TO the argument, not args passed in.
-                if (CI->getCalledValue() == Old) {
-                  ConvertCallTo(CI, Concrete);
-                  Changed = true;
-                  ++NumResolved;
-                } else {
-                  cerr << "Couldn't cleanup this function call, must be an"
-                       << " argument or something!" << CI;
-                  ++i;
-                }
-              } else {
-                cerr << "Cannot convert use of function: " << U << "\n";
-                ++i;
-              }
-            }
-          }
-        }
-    }
-  }
+  for (std::map<string, vector<GlobalValue*> >::iterator I = Globals.begin(), 
+         E = Globals.end(); I != E; ++I)
+    Changed |= ProcessGlobalsWithSameName(M, I->second);
 
   return Changed;
 }
