@@ -72,11 +72,6 @@ static string makeNameProper(string x) {
   return tmp;
 }
 
-static string getConstantName(const Constant *CPV) {
-  return CPV->getName();
-}
-
-
 static std::string getConstArrayStrValue(const Constant* CPV) {
   std::string Result;
   
@@ -94,10 +89,17 @@ static std::string getConstArrayStrValue(const Constant* CPV) {
         break;
       }
   }
+  if (isString) {
+    // Make sure the last character is a null char, as automatically added by C
+    if (CPV->getNumOperands() == 0 ||
+        !cast<Constant>(*(CPV->op_end()-1))->isNullValue())
+      isString = false;
+  }
   
   if (isString) {
     Result = "\"";
-    for (unsigned i = 0; i < CPV->getNumOperands(); ++i) {
+    // Do not include the last character, which we know is null
+    for (unsigned i = 0, e = CPV->getNumOperands()-1; i != e; ++i) {
       unsigned char C = (ETy == Type::SByteTy) ?
         (unsigned char)cast<ConstantSInt>(CPV->getOperand(i))->getValue() :
         (unsigned char)cast<ConstantUInt>(CPV->getOperand(i))->getValue();
@@ -105,9 +107,18 @@ static std::string getConstArrayStrValue(const Constant* CPV) {
       if (isprint(C)) {
         Result += C;
       } else {
-        Result += "\\x";
-        Result += ( C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A');
-        Result += ((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A');
+        switch (C) {
+        case '\n': Result += "\\n"; break;
+        case '\t': Result += "\\t"; break;
+        case '\r': Result += "\\r"; break;
+        case '\v': Result += "\\v"; break;
+        case '\a': Result += "\\a"; break;
+        default:
+          Result += "\\x";
+          Result += ( C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A');
+          Result += ((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A');
+          break;
+        }
       }
     }
     Result += "\"";
