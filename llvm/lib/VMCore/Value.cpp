@@ -72,6 +72,19 @@ bool Value::hasNUses(unsigned N) const {
   return UI == E;
 }
 
+/// hasNUsesOrMore - Return true if this value has N users or more.  This is
+/// logically equivalent to getNumUses() >= N.
+///
+bool Value::hasNUsesOrMore(unsigned N) const {
+  use_const_iterator UI = use_begin(), E = use_end();
+
+  for (; N; --N, ++UI)
+    if (UI == E) return false;  // Too few.
+
+  return true;
+}
+
+
 /// getNumUses - This method computes the number of uses of this Value.  This
 /// is a linear time operation.  Use hasOneUse or hasNUses to check for specific
 /// values.
