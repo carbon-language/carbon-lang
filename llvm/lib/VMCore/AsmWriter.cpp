@@ -151,17 +151,17 @@ static string calcTypeName(const Type *Ty, vector<const Type *> &TypeStack,
   string Result;
   switch (Ty->getPrimitiveID()) {
   case Type::FunctionTyID: {
-    const FunctionType *MTy = cast<const FunctionType>(Ty);
-    Result = calcTypeName(MTy->getReturnType(), TypeStack, TypeNames) + " (";
+    const FunctionType *FTy = cast<const FunctionType>(Ty);
+    Result = calcTypeName(FTy->getReturnType(), TypeStack, TypeNames) + " (";
     for (FunctionType::ParamTypes::const_iterator
-           I = MTy->getParamTypes().begin(),
-           E = MTy->getParamTypes().end(); I != E; ++I) {
-      if (I != MTy->getParamTypes().begin())
+           I = FTy->getParamTypes().begin(),
+           E = FTy->getParamTypes().end(); I != E; ++I) {
+      if (I != FTy->getParamTypes().begin())
         Result += ", ";
       Result += calcTypeName(*I, TypeStack, TypeNames);
     }
-    if (MTy->isVarArg()) {
-      if (!MTy->getParamTypes().empty()) Result += ", ";
+    if (FTy->isVarArg()) {
+      if (!FTy->getParamTypes().empty()) Result += ", ";
       Result += "...";
     }
     Result += ")";
@@ -186,9 +186,7 @@ static string calcTypeName(const Type *Ty, vector<const Type *> &TypeStack,
     break;
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<const ArrayType>(Ty);
-    int NumElements = ATy->getNumElements();
-    Result = "[";
-    if (NumElements != -1) Result += itostr(NumElements) + " x ";
+    Result = "[" + itostr(ATy->getNumElements()) + " x ";
     Result += calcTypeName(ATy->getElementType(), TypeStack, TypeNames) + "]";
     break;
   }
@@ -294,7 +292,18 @@ private :
   void printArgument(const Argument *FA);
   void printBasicBlock(const BasicBlock *BB);
   void printInstruction(const Instruction *I);
-  ostream &printType(const Type *Ty);
+
+  // printType - Go to extreme measures to attempt to print out a short,
+  // symbolic version of a type name.
+  //
+  ostream &printType(const Type *Ty) {
+    return printTypeInt(Out, Ty, TypeNames);
+  }
+
+  // printTypeAtLeastOneLevel - Print out one level of the possibly complex type
+  // without considering any symbolic types that we may have equal to it.
+  //
+  ostream &printTypeAtLeastOneLevel(const Type *Ty);
 
   void writeOperand(const Value *Op, bool PrintType, bool PrintName = true);
 
@@ -302,6 +311,47 @@ private :
   // which slot it occupies.
   void printInfoComment(const Value *V);
 };
+
+
+// printTypeAtLeastOneLevel - Print out one level of the possibly complex type
+// without considering any symbolic types that we may have equal to it.
+//
+ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
+  if (FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
+    printType(FTy->getReturnType()) << " (";
+    for (FunctionType::ParamTypes::const_iterator
+           I = FTy->getParamTypes().begin(),
+           E = FTy->getParamTypes().end(); I != E; ++I) {
+      if (I != FTy->getParamTypes().begin())
+        Out << ", ";
+      Out << printType(*I);
+    }
+    if (FTy->isVarArg()) {
+      if (!FTy->getParamTypes().empty()) Out << ", ";
+      Out << "...";
+    }
+    Out << ")";
+  } else if (StructType *STy = dyn_cast<StructType>(Ty)) {
+    Out << "{ ";
+    for (StructType::ElementTypes::const_iterator
+           I = STy->getElementTypes().begin(),
+           E = STy->getElementTypes().end(); I != E; ++I) {
+      if (I != STy->getElementTypes().begin())
+        Out << ", ";
+      printType(*I);
+    }
+    Out << " }";
+  } else if (PointerType *PTy = dyn_cast<PointerType>(Ty)) {
+    printType(PTy->getElementType()) << "*";
+  } else if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    Out << "[" << ATy->getNumElements() << " x ";
+    printType(ATy->getElementType()) << "]";
+  } else {
+    assert(Ty->isPrimitiveType() && "Unknown derived type!");
+    printType(Ty);
+  }
+  return Out;
+}
 
 
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType, 
@@ -355,7 +405,12 @@ void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
       if (const Constant *CPV = dyn_cast<const Constant>(V)) {
 	printConstant(CPV);
       } else if (const Type *Ty = dyn_cast<const Type>(V)) {
-	Out << "\t%" << I->first << " = type " << Ty->getDescription() << "\n";
+	Out << "\t%" << I->first << " = type ";
+
+        // Make sure we print out at least one level of the type structure, so
+        // that we do not get %FILE = type %FILE
+        //
+        printTypeAtLeastOneLevel(Ty) << "\n";
       }
     }
   }
@@ -622,14 +677,6 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
 
   printInfoComment(I);
   Out << "\n";
-}
-
-
-// printType - Go to extreme measures to attempt to print out a short, symbolic
-// version of a type name.
-//
-ostream &AssemblyWriter::printType(const Type *Ty) {
-  return printTypeInt(Out, Ty, TypeNames);
 }
 
 
