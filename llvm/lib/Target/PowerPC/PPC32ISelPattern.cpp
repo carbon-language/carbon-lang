@@ -54,10 +54,7 @@ namespace {
       setOperationAction(ISD::SEXTLOAD, MVT::i1, Expand);
       setOperationAction(ISD::SEXTLOAD, MVT::i8, Expand);
 
-      // We don't support these yet.
-      setOperationAction(ISD::FNEG             , MVT::f64  , Expand);
-      setOperationAction(ISD::FABS             , MVT::f64  , Expand);
-      
+      setShiftAmountFlavor(Extend);   // shl X, 32 == 0
       addLegalFPImmediate(+0.0); // Necessary for FSEL
       addLegalFPImmediate(-0.0); // 
 
@@ -762,7 +759,22 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       .addMBB(copy0MBB).addReg(TrueValue).addMBB(thisMBB);
     return Result;
   }
+
+  case ISD::FNEG:
+    if (ISD::FABS == N.getOperand(0).getOpcode()) {
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+      BuildMI(BB, PPC::FNABS, 1, Result).addReg(Tmp1);
+    } else {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      BuildMI(BB, PPC::FNEG, 1, Result).addReg(Tmp1);
+    }
+    return Result;
     
+  case ISD::FABS:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, PPC::FABS, 1, Result).addReg(Tmp1);
+    return Result;
+
   case ISD::FP_ROUND:
     assert (DestType == MVT::f32 && 
             N.getOperand(0).getValueType() == MVT::f64 && 
@@ -874,29 +886,34 @@ unsigned ISel::SelectExpr(SDOperand N) {
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
 
-  if (N.getOpcode() != ISD::CALL && N.getOpcode() != ISD::ADD_PARTS &&
-      N.getOpcode() != ISD::SUB_PARTS)
+  switch (N.getOpcode()) {
+  default:
     Reg = Result = (N.getValueType() != MVT::Other) ?
-      MakeReg(N.getValueType()) : 1;
-  else {
+                            MakeReg(N.getValueType()) : 1;
+    break;
+  case ISD::CALL:
     // If this is a call instruction, make sure to prepare ALL of the result
     // values as well as the chain.
-    if (N.getOpcode() == ISD::CALL) {
-      if (Node->getNumValues() == 1)
-        Reg = Result = 1;  // Void call, just a chain.
-      else {
-        Result = MakeReg(Node->getValueType(0));
-        ExprMap[N.getValue(0)] = Result;
-        for (unsigned i = 1, e = N.Val->getNumValues()-1; i != e; ++i)
-          ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
-        ExprMap[SDOperand(Node, Node->getNumValues()-1)] = 1;
-      }
-    } else {
+    if (Node->getNumValues() == 1)
+      Reg = Result = 1;  // Void call, just a chain.
+    else {
       Result = MakeReg(Node->getValueType(0));
       ExprMap[N.getValue(0)] = Result;
-      for (unsigned i = 1, e = N.Val->getNumValues(); i != e; ++i)
+      for (unsigned i = 1, e = N.Val->getNumValues()-1; i != e; ++i)
         ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
+      ExprMap[SDOperand(Node, Node->getNumValues()-1)] = 1;
     }
+    break;
+  case ISD::ADD_PARTS:
+  case ISD::SUB_PARTS:
+  case ISD::SHL_PARTS:
+  case ISD::SRL_PARTS:
+  case ISD::SRA_PARTS:
+    Result = MakeReg(Node->getValueType(0));
+    ExprMap[N.getValue(0)] = Result;
+    for (unsigned i = 1, e = N.Val->getNumValues(); i != e; ++i)
+      ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
+    break;
   }
 
   if (DestType == MVT::f64 || DestType == MVT::f32)
@@ -1265,11 +1282,71 @@ unsigned ISel::SelectExpr(SDOperand N) {
     for (unsigned i = 0, e = N.getNumOperands(); i != e; ++i)
       InVals.push_back(SelectExpr(N.getOperand(i)));
     if (N.getOpcode() == ISD::ADD_PARTS) {
-      BuildMI(BB, PPC::ADDC, 2, Result+1).addReg(InVals[0]).addReg(InVals[2]);
-      BuildMI(BB, PPC::ADDE, 2, Result).addReg(InVals[1]).addReg(InVals[3]);
+      BuildMI(BB, PPC::ADDC, 2, Result).addReg(InVals[0]).addReg(InVals[2]);
+      BuildMI(BB, PPC::ADDE, 2, Result+1).addReg(InVals[1]).addReg(InVals[3]);
     } else {
-      BuildMI(BB, PPC::SUBFC, 2, Result+1).addReg(InVals[2]).addReg(InVals[0]);
-      BuildMI(BB, PPC::SUBFE, 2, Result).addReg(InVals[3]).addReg(InVals[1]);
+      BuildMI(BB, PPC::SUBFC, 2, Result).addReg(InVals[2]).addReg(InVals[0]);
+      BuildMI(BB, PPC::SUBFE, 2, Result+1).addReg(InVals[3]).addReg(InVals[1]);
+    }
+    return Result+N.ResNo;
+  }
+
+  case ISD::SHL_PARTS:
+  case ISD::SRA_PARTS:
+  case ISD::SRL_PARTS: {
+    assert(N.getNumOperands() == 3 && N.getValueType() == MVT::i32 &&
+           "Not an i64 shift!");
+    unsigned ShiftOpLo = SelectExpr(N.getOperand(0));
+    unsigned ShiftOpHi = SelectExpr(N.getOperand(1));
+    unsigned SHReg = SelectExpr(N.getOperand(2));
+    Tmp1 = MakeReg(MVT::i32);  
+    Tmp2 = MakeReg(MVT::i32);  
+    Tmp3 = MakeReg(MVT::i32);
+    unsigned Tmp4 = MakeReg(MVT::i32);
+    unsigned Tmp5 = MakeReg(MVT::i32);
+    unsigned Tmp6 = MakeReg(MVT::i32);
+    BuildMI(BB, PPC::SUBFIC, 2, Tmp1).addReg(SHReg).addSImm(32);
+    if (ISD::SHL_PARTS == opcode) {
+      BuildMI(BB, PPC::SLW, 2, Tmp2).addReg(ShiftOpHi).addReg(SHReg);
+      BuildMI(BB, PPC::SRW, 2, Tmp3).addReg(ShiftOpLo).addReg(Tmp1);
+      BuildMI(BB, PPC::OR, 2, Tmp4).addReg(Tmp2).addReg(Tmp3);
+      BuildMI(BB, PPC::ADDI, 2, Tmp5).addReg(SHReg).addSImm(-32);
+      BuildMI(BB, PPC::SLW, 2, Tmp6).addReg(ShiftOpHi).addReg(Tmp5);
+      BuildMI(BB, PPC::OR, 2, Result+1).addReg(Tmp4).addReg(Tmp6);
+      BuildMI(BB, PPC::SLW, 2, Result).addReg(ShiftOpLo).addReg(SHReg);
+    } else if (ISD::SRL_PARTS == opcode) {
+      BuildMI(BB, PPC::SRW, 2, Tmp2).addReg(ShiftOpLo).addReg(SHReg);
+      BuildMI(BB, PPC::SLW, 2, Tmp3).addReg(ShiftOpHi).addReg(Tmp1);
+      BuildMI(BB, PPC::OR, 2, Tmp4).addReg(Tmp2).addReg(Tmp3);
+      BuildMI(BB, PPC::ADDI, 2, Tmp5).addReg(SHReg).addSImm(-32);
+      BuildMI(BB, PPC::SRW, 2, Tmp6).addReg(ShiftOpHi).addReg(Tmp5);
+      BuildMI(BB, PPC::OR, 2, Result).addReg(Tmp4).addReg(Tmp6);
+      BuildMI(BB, PPC::SRW, 2, Result+1).addReg(ShiftOpHi).addReg(SHReg);
+    } else {
+      MachineBasicBlock *TmpMBB = new MachineBasicBlock(BB->getBasicBlock());
+      MachineBasicBlock *PhiMBB = new MachineBasicBlock(BB->getBasicBlock());
+      MachineBasicBlock *OldMBB = BB;
+      MachineFunction *F = BB->getParent();
+      ilist<MachineBasicBlock>::iterator It = BB; ++It;
+      F->getBasicBlockList().insert(It, TmpMBB);
+      F->getBasicBlockList().insert(It, PhiMBB);
+      BB->addSuccessor(TmpMBB);
+      BB->addSuccessor(PhiMBB);
+      BuildMI(BB, PPC::SRW, 2, Tmp2).addReg(ShiftOpLo).addReg(SHReg);
+      BuildMI(BB, PPC::SLW, 2, Tmp3).addReg(ShiftOpHi).addReg(Tmp1);
+      BuildMI(BB, PPC::OR, 2, Tmp4).addReg(Tmp2).addReg(Tmp3);
+      BuildMI(BB, PPC::ADDICo, 2, Tmp5).addReg(SHReg).addSImm(-32);
+      BuildMI(BB, PPC::SRAW, 2, Tmp6).addReg(ShiftOpHi).addReg(Tmp5);
+      BuildMI(BB, PPC::SRAW, 2, Result+1).addReg(ShiftOpHi).addReg(SHReg);
+      BuildMI(BB, PPC::BLE, 2).addReg(PPC::CR0).addMBB(PhiMBB);
+      // Select correct least significant half if the shift amount > 32
+      BB = TmpMBB;
+      unsigned Tmp7 = MakeReg(MVT::i32);
+      BuildMI(BB, PPC::OR, 2, Tmp7).addReg(Tmp6).addReg(Tmp6);
+      TmpMBB->addSuccessor(PhiMBB);
+      BB = PhiMBB;
+      BuildMI(BB, PPC::PHI, 4, Result).addReg(Tmp4).addMBB(OldMBB)
+        .addReg(Tmp7).addMBB(TmpMBB);
     }
     return Result+N.ResNo;
   }

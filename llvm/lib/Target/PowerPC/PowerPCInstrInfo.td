@@ -308,8 +308,12 @@ def FCTIDZ : XForm_26<63, 815, 0, 1, 0, (ops FPRC:$frD, FPRC:$frB),
                       "fctidz $frD, $frB">;
 def FCTIWZ : XForm_26<63, 15, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
                       "fctiwz $frD, $frB">;
+def FABS   : XForm_26<63, 264, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
+                      "fabs $frD, $frB">;
 def FMR    : XForm_26<63, 72, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
                       "fmr $frD, $frB">;
+def FNABS  : XForm_26<63, 136, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
+                      "fnabs $frD, $frB">;
 def FNEG   : XForm_26<63, 40, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
                       "fneg $frD, $frB">;
 def FRSP   : XForm_26<63, 12, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
