@@ -530,8 +530,6 @@ void PhyRegAlloc::updateMachineCode()
                          AddedInstrMap[DelaySlotMI].InstrnsAfter.size()  > 0));
 
           if (cond1 || cond2) {
-              assert((MII->getOpCodeFlags() & AnnulFlag) == 0 &&
-                     "FIXME: Moving an annulled delay slot instruction!"); 
               assert(delaySlots==1 &&
                      "InsertBefore does not yet handle >1 delay slots!");
 
