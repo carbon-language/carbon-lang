@@ -186,7 +186,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
           
           // If no prototype was provided for free, we may need to cast the
           // source pointer.  This should be really uncommon, but it's necessary
-          // just in case we are dealing with wierd code like this:
+          // just in case we are dealing with weird code like this:
           //   free((long)ptr);
           //
           Value *Source = *CS.arg_begin();

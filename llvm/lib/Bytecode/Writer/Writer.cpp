@@ -424,7 +424,7 @@ void BytecodeWriter::outputConstantStrings() {
 //===----------------------------------------------------------------------===//
 typedef unsigned char uchar;
 
-// outputInstructionFormat0 - Output those wierd instructions that have a large
+// outputInstructionFormat0 - Output those weird instructions that have a large
 // number of operands or have large operands themselves...
 //
 // Format: [opcode] [type] [numargs] [arg0] [arg1] ... [arg<numargs-1>]

@@ -1549,7 +1549,7 @@ def FADDPrST0  : FPrST0PInst<0xC0, (ops RST:$op),
 
 // NOTE: GAS and apparently all other AT&T style assemblers have a broken notion
 // of some of the 'reverse' forms of the fsub and fdiv instructions.  As such,
-// we have to put some 'r's in and take them out of wierd places.
+// we have to put some 'r's in and take them out of weird places.
 def FSUBRST0r  : FPST0rInst <0xE8, (ops RST:$op),
                              "fsubr $op">;
 def FSUBrST0   : FPrST0Inst <0xE8, (ops RST:$op),

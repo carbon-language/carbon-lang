@@ -196,7 +196,7 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
   if (!I) return true;    // Non-instructions all dominate instructions.
   BasicBlock *PBB = I->getParent();
 
-  // We don't want to allow wierd loops that might have the "if condition" in
+  // We don't want to allow weird loops that might have the "if condition" in
   // the bottom of this block.
   if (PBB == BB) return false;
 

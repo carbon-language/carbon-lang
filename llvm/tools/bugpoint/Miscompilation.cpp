@@ -425,7 +425,7 @@ static bool ExtractBlocks(BugDriver &BD,
                                                 MiscompiledFunctions);
   Module *Extracted = BD.ExtractMappedBlocksFromModule(Blocks, ToExtract);
   if (Extracted == 0) {
-    // Wierd, extraction should have worked.
+    // Weird, extraction should have worked.
     std::cerr << "Nondeterministic problem extracting blocks??\n";
     delete ProgClone;
     delete ToExtract;
