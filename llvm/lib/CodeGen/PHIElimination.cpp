@@ -71,8 +71,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
 
   while (MBB.front().getOpcode() == TargetInstrInfo::PHI) {
     // Unlink the PHI node from the basic block... but don't delete the PHI yet
-    MachineBasicBlock::iterator begin = MBB.begin();
-    MachineInstr *MI = MBB.remove(begin);
+    MachineInstr *MI = MBB.remove(MBB.begin());
     
     assert(MRegisterInfo::isVirtualRegister(MI->getOperand(0).getReg()) &&
            "PHI node doesn't write virt reg?");
