@@ -35,7 +35,6 @@
 #include "Graph.h"
 #include <fstream>
 #include "Config/stdio.h"
-using std::vector;
 
 struct ProfilePaths : public FunctionPass {
   bool runOnFunction(Function &F);
@@ -72,7 +71,8 @@ bool ProfilePaths::runOnFunction(Function &F){
   mn++;
   
   // Transform the cfg s.t. we have just one exit node
-  BasicBlock *ExitNode = getAnalysis<UnifyFunctionExitNodes>().getExitNode();  
+  BasicBlock *ExitNode = 
+    getAnalysis<UnifyFunctionExitNodes>().getReturnBlock();  
 
   //iterating over BBs and making graph
   std::vector<Node *> nodes;
@@ -118,13 +118,13 @@ bool ProfilePaths::runOnFunction(Function &F){
   
   // The graph is made acyclic: this is done
   // by removing back edges for now, and adding them later on
-  vector<Edge> be;
+  std::vector<Edge> be;
   std::map<Node *, int> nodePriority; //it ranks nodes in depth first order traversal
   g.getBackEdges(be, nodePriority);
   
 #ifdef DEBUG_PATH_PROFILES
   std::cerr<<"BackEdges-------------\n";
-  for(vector<Edge>::iterator VI=be.begin(); VI!=be.end(); ++VI){
+  for (std::vector<Edge>::iterator VI=be.begin(); VI!=be.end(); ++VI){
     printEdge(*VI);
     cerr<<"\n";
   }
@@ -140,8 +140,8 @@ bool ProfilePaths::runOnFunction(Function &F){
   //Then we add 2 back edges for it:
   //1. from root->b (in vector stDummy)
   //and 2. from a->exit (in vector exDummy)
-  vector<Edge> stDummy;
-  vector<Edge> exDummy;
+  std::vector<Edge> stDummy;
+  std::vector<Edge> exDummy;
   addDummyEdges(stDummy, exDummy, g, be);
 
 #ifdef DEBUG_PATH_PROFILES
@@ -183,7 +183,7 @@ bool ProfilePaths::runOnFunction(Function &F){
       F.getParent()->getOrInsertFunction("reoptimizerInitialize", Type::VoidTy,
                                          PointerType::get(Type::IntTy), 0);
     
-    vector<Value *> trargs;
+    std::vector<Value *> trargs;
     trargs.push_back(threshold);
     new CallInst(initialize, trargs, "", fr->begin());
   }
