@@ -205,7 +205,7 @@ namespace {
   };
 }
 
-// This function is required by Printer.cpp to workaround gas bugs
+// This function is required by X86AsmPrinter.cpp to work around GAS bugs
 void llvm::X86::emitInstruction(MachineCodeEmitter& mce,
                                 const X86InstrInfo& ii,
                                 const MachineInstr& mi)
