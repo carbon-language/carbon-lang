@@ -118,40 +118,40 @@ short %test18(sbyte %tmp3) {
 }
 
 bool %test19(int %X) {
-	%Y = cast int %X to long
-	%Z = setlt long %Y, 12345
+	%c = cast int %X to long
+	%Z = setlt long %c, 12345
 	ret bool %Z
 }
 
 bool %test20(bool %B) {
-	%C = cast bool %B to int
-	%D = setlt int %C, -1
+	%c = cast bool %B to int
+	%D = setlt int %c, -1
 	ret bool %D                ;; false
 }
 
 uint %test21(uint %X) {
-	%Y = cast uint %X to sbyte
-	%Z = cast sbyte %Y to uint ;; sext -> zext -> and -> nop
-	%RV = and uint %Z, 255
+	%c1 = cast uint %X to sbyte
+	%c2 = cast sbyte %c1 to uint ;; sext -> zext -> and -> nop
+	%RV = and uint %c2, 255
 	ret uint %RV
 }
 
 uint %test22(uint %X) {
-	%Y = cast uint %X to sbyte
-	%Z = cast sbyte %Y to uint ;; sext -> zext -> and -> nop
-	%RV = shl uint %Z, ubyte 24
+	%c1 = cast uint %X to sbyte
+	%c2 = cast sbyte %c1 to uint ;; sext -> zext -> and -> nop
+	%RV = shl uint %c2, ubyte 24
 	ret uint %RV
 }
 
 int %test23(int %X) {
-	%Y = cast int %X to ushort  ;; Turn into an AND even though X
-	%Z = cast ushort %Y to int  ;; and Z are signed.
-	ret int %Z
+	%c1 = cast int %X to ushort  ;; Turn into an AND even though X
+	%c2 = cast ushort %c1 to int  ;; and Z are signed.
+	ret int %c2
 }
 
 bool %test24(bool %C) {
         %X = select bool %C, uint 14, uint 1234
-        %Y = cast uint %X to bool                  ;; Fold cast into select
-        ret bool %Y
+        %c = cast uint %X to bool                  ;; Fold cast into select
+        ret bool %c
 }
 
