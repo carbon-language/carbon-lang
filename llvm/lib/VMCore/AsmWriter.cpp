@@ -508,14 +508,14 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
   const Value *Operand = I->getNumOperands() ? I->getOperand(0) : 0;
 
   // Special case conditional branches to swizzle the condition out to the front
-  if (I->getOpcode() == Instruction::Br && I->getNumOperands() > 1) {
+  if (isa<BranchInst>(I) && I->getNumOperands() > 1) {
     writeOperand(I->getOperand(2), true);
     Out << ",";
     writeOperand(Operand, true);
     Out << ",";
     writeOperand(I->getOperand(1), true);
 
-  } else if (I->getOpcode() == Instruction::Switch) {
+  } else if (isa<SwitchInst>(I)) {
     // Special case switch statement to get formatting nice and correct...
     writeOperand(Operand         , true); Out << ",";
     writeOperand(I->getOperand(1), true); Out << " [";
@@ -548,8 +548,9 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
     // only do this if the first argument is a pointer to a nonvararg function,
     // and if the value returned is not a pointer to a function.
     //
-    if (RetTy && !MTy->isVarArg() &&
-        (!isa<PointerType>(RetTy)||!isa<FunctionType>(cast<PointerType>(RetTy)))){
+    if (RetTy && MTy && !MTy->isVarArg() &&
+        (!isa<PointerType>(RetTy) || 
+         !isa<FunctionType>(cast<PointerType>(RetTy)))) {
       Out << " "; printType(RetTy);
       writeOperand(Operand, false);
     } else {
@@ -578,13 +579,12 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
     Out << " except";
     writeOperand(II->getExceptionalDest(), true);
 
-  } else if (I->getOpcode() == Instruction::Malloc || 
-	     I->getOpcode() == Instruction::Alloca) {
+  } else if (const AllocationInst *AI = dyn_cast<AllocationInst>(I)) {
     Out << " ";
-    printType(cast<const PointerType>(I->getType())->getElementType());
-    if (I->getNumOperands()) {
+    printType(AI->getType()->getElementType());
+    if (AI->isArrayAllocation()) {
       Out << ",";
-      writeOperand(I->getOperand(0), true);
+      writeOperand(AI->getArraySize(), true);
     }
   } else if (isa<CastInst>(I)) {
     writeOperand(Operand, true);
