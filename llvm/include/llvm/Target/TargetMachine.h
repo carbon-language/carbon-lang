@@ -8,7 +8,6 @@
 #define LLVM_TARGET_TARGETMACHINE_H
 
 #include "llvm/Target/TargetData.h"
-#include "Support/NonCopyable.h"
 
 class TargetInstrInfo;
 class TargetInstrDescriptor;
