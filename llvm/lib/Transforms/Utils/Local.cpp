@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Constants.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOperators.h"
 #include "llvm/iPHINode.h"
-#include "llvm/ConstantHandling.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
