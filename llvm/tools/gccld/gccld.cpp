@@ -120,7 +120,8 @@ static inline bool LoadLibraryFromDirectory(const std::string &LibName,
                                             bool &isArchive) {
   if (FileExists(Directory + "lib" + LibName + ".a")) {
     std::string ErrorMessage;
-    if (Verbose) std::cerr << "Loading '" << Directory << LibName << ".a'\n";
+    if (Verbose) std::cerr << "  Loading '" << Directory << "lib"
+                           << LibName << ".a'\n";
     if (!ReadArchiveFile(Directory + "lib" + LibName + ".a", Objects,
                          &ErrorMessage)) {   // Read the archive file
       isArchive = true;
@@ -128,7 +129,7 @@ static inline bool LoadLibraryFromDirectory(const std::string &LibName,
     }
 
     if (Verbose) {
-      std::cerr << "Error loading archive '" + Directory + "lib"+LibName+".a'";
+      std::cerr << "  Error loading archive '" + Directory +"lib"+LibName+".a'";
       if (!ErrorMessage.empty()) std::cerr << ": " << ErrorMessage;
       std::cerr << "\n";
     }
@@ -304,6 +305,10 @@ int main(int argc, char **argv) {
       return PrintAndReturn(argv[0], ErrorMessage,
                             ": error linking in '" + InputFilenames[i] + "'");
   }
+
+  // Remove any consecutive duplicates of the same library...
+  Libraries.erase(std::unique(Libraries.begin(), Libraries.end()),
+                  Libraries.end());
 
   // Link in all of the libraries next...
   for (unsigned i = 0; i != Libraries.size(); ++i) {
