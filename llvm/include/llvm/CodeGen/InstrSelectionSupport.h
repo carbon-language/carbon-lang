@@ -21,17 +21,22 @@ class TargetMachine;
 
 
 //---------------------------------------------------------------------------
+// Function GetConstantValueAsUnsignedInt
 // Function GetConstantValueAsSignedInt
 // 
-// Convenience function to get the value of an integer constant, for an
-// appropriate integer or non-integer type that can be held in an integer.
-// The type of the argument must be the following:
+// Convenience functions to get the value of an integer constant, for an
+// appropriate integer or non-integer type that can be held in a signed
+// or unsigned integer respectively.  The type of the argument must be
+// the following:
 //      Signed or unsigned integer
 //      Boolean
 //      Pointer
 // 
 // isValidConstant is set to true if a valid constant was found.
 //---------------------------------------------------------------------------
+
+uint64_t        GetConstantValueAsUnsignedInt   (const Value *V,
+                                                 bool &isValidConstant);
 
 int64_t         GetConstantValueAsSignedInt     (const Value *V,
                                                  bool &isValidConstant);
