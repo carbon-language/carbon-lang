@@ -306,7 +306,7 @@ def FCTIWZ : XForm_26<63, 15, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
                       "fctiwz $frD, $frB">;
 def FMR    : XForm_26<63, 72, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
                       "fmr $frD, $frB">;
-def FNEG   : XForm_26<63, 80, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
+def FNEG   : XForm_26<63, 40, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
                       "fneg $frD, $frB">;
 def FRSP   : XForm_26<63, 12, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
                       "frsp $frD, $frB">;
