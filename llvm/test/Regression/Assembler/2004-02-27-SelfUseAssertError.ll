@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s -o /dev/null -f
+
 ; %inc2 uses it's own value, but that's ok, as it's unreachable!
 
 void %test() {

@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s -o /dev/null -f
+
 ; There should be absolutely no problem with this testcase.
 
 implementation

@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s -o /dev/null -f
+
 
 
 int %test(bool %C, int %V1, int %V2) {

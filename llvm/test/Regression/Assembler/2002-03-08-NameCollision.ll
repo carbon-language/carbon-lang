@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s -o /dev/null -f
+
 ; Method arguments were being checked for collisions at the global scope before
 ; the method object was created by the parser.  Because of this, false collisions
 ; could occur that would cause the following error message to be produced:

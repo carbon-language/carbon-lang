@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s -o /dev/null -f
+
 ; Dominance relationships is not calculated correctly for unreachable blocks,
 ; which causes the verifier to barf on this input.
 

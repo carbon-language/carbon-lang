@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s -o /dev/null -f
+
 ; This testcase comes from the following really simple c file:
 ;
 ; int foo[30000];

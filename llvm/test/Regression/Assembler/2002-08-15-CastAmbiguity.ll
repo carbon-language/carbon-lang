@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s -o /dev/null -f
+
 
 
 
