@@ -5,6 +5,9 @@
 
 %AConst    = constant int 123
 
+; Initialized to point to external %MyVar
+%MyVarPtr  = global { int * }  { int * %MyVar }
+
 declare int "foo"(int %blah)      ;; Declared in testlink2.ll
 
 declare void "print"(int %Value)
