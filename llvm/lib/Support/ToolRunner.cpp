@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "toolrunner"
 #include "llvm/Support/ToolRunner.h"
 #include "llvm/Config/config.h"   // for HAVE_LINK_R
+#include "llvm/System/Program.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
 #include <fstream>
@@ -21,6 +22,26 @@
 using namespace llvm;
 
 ToolExecutionError::~ToolExecutionError() throw() { }
+
+/// RunProgramWithTimeout - This function provides an alternate interface to the
+/// sys::Program::ExecuteAndWait interface.
+/// @see sys:Program::ExecuteAndWait
+static int RunProgramWithTimeout(const sys::Path &ProgramPath,
+                                 const char **Args,
+                                 const sys::Path &StdInFile,
+                                 const sys::Path &StdOutFile,
+                                 const sys::Path &StdErrFile,
+                                 unsigned NumSeconds = 0) {
+  const sys::Path* redirects[3];
+  redirects[0] = &StdInFile;
+  redirects[1] = &StdOutFile;
+  redirects[2] = &StdErrFile;
+  
+  return 
+    sys::Program::ExecuteAndWait(ProgramPath, Args, 0, redirects, NumSeconds);
+}
+
+
 
 static void ProcessFailure(sys::Path ProgPath, const char** Args) {
   std::ostringstream OS;
@@ -370,6 +391,10 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   sys::Path OutputBinary (ProgramFile+".gcc.exe");
   OutputBinary.makeUnique();
   GCCArgs.push_back(OutputBinary.c_str()); // Output to the right file...
+  GCCArgs.push_back("-L/home/vadve/shared/localtools/x86/lib");
+  GCCArgs.push_back("-lf2c");                // Hard-code the math library...
+  GCCArgs.push_back("-lpng");                // Hard-code the math library...
+  GCCArgs.push_back("-lz");                // Hard-code the math library...
   GCCArgs.push_back("-lm");                // Hard-code the math library...
   GCCArgs.push_back("-O2");                // Optimize the program a bit...
 #if defined (HAVE_LINK_R)
@@ -385,6 +410,9 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   }
 
   std::vector<const char*> ProgramArgs;
+  //ProgramArgs.push_back("valgrind");
+  //ProgramArgs.push_back("--tool=memcheck");
+
   ProgramArgs.push_back(OutputBinary.c_str());
   // Add optional parameters to the running program from Argv
   for (unsigned i=0, e = Args.size(); i != e; ++i)
