@@ -39,11 +39,11 @@ static bool isLoopInvariant(const Value *V, const Loop *L) {
 enum InductionVariable::iType
 InductionVariable::Classify(const Value *Start, const Value *Step,
                             const Loop *L) {
-  // Check for cannonical and simple linear expressions now...
+  // Check for canonical and simple linear expressions now...
   if (const ConstantInt *CStart = dyn_cast<ConstantInt>(Start))
     if (const ConstantInt *CStep = dyn_cast<ConstantInt>(Step)) {
       if (CStart->isNullValue() && CStep->equalsInt(1))
-        return Cannonical;
+        return Canonical;
       else
         return SimpleLinear;
     }
@@ -212,7 +212,7 @@ Value* InductionVariable::getExecutionCount(LoopInfo *LoopInfo) {
   }
   SetCondInst *SCI = dyn_cast<SetCondInst>(B->getCondition());
 
-  if (SCI && InductionType == Cannonical) {
+  if (SCI && InductionType == Canonical) {
     DEBUG(std::cerr << "sci:" << *SCI);
     Value *condVal0 = SCI->getOperand(0);
     Value *condVal1 = SCI->getOperand(1);
@@ -269,7 +269,7 @@ Value* InductionVariable::getExecutionCount(LoopInfo *LoopInfo) {
     }
     return End;
   } else {
-    DEBUG(std::cerr << "SCI null or non-cannonical ind var\n");
+    DEBUG(std::cerr << "SCI null or non-canonical ind var\n");
   }
   return NULL;
 }
@@ -277,7 +277,7 @@ Value* InductionVariable::getExecutionCount(LoopInfo *LoopInfo) {
 
 void InductionVariable::print(std::ostream &o) const {
   switch (InductionType) {
-  case InductionVariable::Cannonical:   o << "Cannonical ";   break;
+  case InductionVariable::Canonical:    o << "Canonical ";    break;
   case InductionVariable::SimpleLinear: o << "SimpleLinear "; break;
   case InductionVariable::Linear:       o << "Linear ";       break;
   case InductionVariable::Unknown:      o << "Unrecognized "; break;

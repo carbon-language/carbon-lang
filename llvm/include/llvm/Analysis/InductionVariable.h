@@ -1,4 +1,4 @@
-//===- llvm/Analysis/InductionVariable.h - Induction variable ----*- C++ -*--=//
+//===- llvm/Analysis/InductionVariable.h - Induction variables --*- C++ -*-===//
 //
 // This interface is used to identify and classify induction variables that
 // exist in the program.  Induction variables must contain a PHI node that
@@ -28,7 +28,7 @@ class LoopInfo; class Loop;
 class InductionVariable {
 public:
   enum iType {               // Identify the type of this induction variable
-    Cannonical,              // Starts at 0, counts by 1
+    Canonical,               // Starts at 0, counts by 1
     SimpleLinear,            // Simple linear: Constant start, constant step
     Linear,                  // General linear:  loop invariant start, and step
     Unknown,                 // Unknown type.  Start & Step are null
