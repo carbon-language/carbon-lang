@@ -162,7 +162,7 @@ private:
       // can be rechecked.
       for (BasicBlock::iterator I = BB->begin();
            PHINode *PN = dyn_cast<PHINode>(I); ++I)
-        InstWorkList.push_back(PN);
+        visitPHINode(*PN);
 
     } else {
       DEBUG(std::cerr << "Marking BB Executable: " << *BB);
