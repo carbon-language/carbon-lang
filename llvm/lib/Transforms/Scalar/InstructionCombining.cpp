@@ -2997,6 +2997,8 @@ bool InstCombiner::runOnFunction(Function &F) {
         BasicBlock *InstParent = I->getParent();
         InstParent->getInstList().insert(I, Result);
 
+        // Make sure that we reprocess all operands now that we reduced their
+        // use counts.
         for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
           if (Instruction *OpI = dyn_cast<Instruction>(I->getOperand(i)))
             WorkList.push_back(OpI);
@@ -3009,14 +3011,19 @@ bool InstCombiner::runOnFunction(Function &F) {
       } else {
         DEBUG(std::cerr << "IC: MOD = " << *I);
 
-        BasicBlock::iterator II = I;
-
         // If the instruction was modified, it's possible that it is now dead.
         // if so, remove it.
-        if (dceInstruction(II)) {
-          // Instructions may end up in the worklist more than once.  Erase them
-          // all.
+        if (isInstructionTriviallyDead(I)) {
+          // Make sure we process all operands now that we are reducing their
+          // use counts.
+          for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+            if (Instruction *OpI = dyn_cast<Instruction>(I->getOperand(i)))
+              WorkList.push_back(OpI);
+          
+          // Instructions may end up in the worklist more than once.  Erase all
+          // occurrances of this instruction.
           removeFromWorkList(I);
+          I->getParent()->getInstList().erase(I);
           Result = 0;
         }
       }
