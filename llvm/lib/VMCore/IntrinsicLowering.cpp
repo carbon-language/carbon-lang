@@ -69,7 +69,14 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
 
   std::string Name = CI->getName(); CI->setName("");
   if (FT->getReturnType() == Type::VoidTy) Name.clear();
-  return new CallInst(FCache, Operands, Name, CI);
+  CallInst *NewCI = new CallInst(FCache, Operands, Name, CI);
+  if (!CI->use_empty()) {
+    Value *V = NewCI;
+    if (CI->getType() != NewCI->getType())
+      V = new CastInst(NewCI, CI->getType(), Name, CI);
+    CI->replaceAllUsesWith(V);
+  }
+  return NewCI;
 }
 
 void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
@@ -98,7 +105,9 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
         EnsureFunctionExists(M, "memset", I->abegin(), --I->aend(),
                              I->abegin()->getType());
         break;
-
+      case Intrinsic::isnan:
+        EnsureFunctionExists(M, "isnan", I->abegin(), I->aend(), Type::BoolTy);
+        break;
       }
 
 }
@@ -196,7 +205,7 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     // multiple isnans for different FP arguments.
     static Function *isnanFCache = 0;
     ReplaceCallWith("isnan", CI, CI->op_begin()+1, CI->op_end(),
-                    (*(CI->op_begin()+1))->getType(), isnanFCache);
+                    Type::BoolTy, isnanFCache);
     break;
   }
   }
