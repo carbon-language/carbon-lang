@@ -25,8 +25,8 @@ VPATH=$(BUILD_SRC_DIR)
 # Define the various target sets
 #--------------------------------------------------------------------
 RECURSIVE_TARGETS := all clean check install uninstall
-LOCAL_TARGETS     := all-local clean-local check-local install-local printvars\
-	             uninstall-local
+LOCAL_TARGETS     := all-local clean-local check-local install-local \
+	             printvars uninstall-local
 TOPLEV_TARGETS    := dist dist-check dist-clean tags
 USER_TARGETS      := $(RECURSIVE_TARGETS) $(LOCAL_TARGETS) $(TOPLEV_TARGETS)
 INTERNAL_TARGETS  := preconditions \
@@ -35,31 +35,103 @@ INTERNAL_TARGETS  := preconditions \
   uninstall-config-dir uninstall-shared-library uninstall-bytecode-library \
   uninstall-archive-library uninstall-relinked-library uninstall-tool
 
+###############################################################################
+# INITIALIZATION: Basic things the makefile needs
+###############################################################################
+
+#--------------------------------------------------------------------
+# Reset the list of suffixes we know how to build
+#--------------------------------------------------------------------
+.SUFFIXES:
+.SUFFIXES: .c .cpp .h .hpp .y .l .lo .o .a $(SHLIBEXT) .bc .td .ps .dot $(SUFFIXES)
+
 #--------------------------------------------------------------------
 # Mark all of these targets as phony to avoid implicit rule search
 #--------------------------------------------------------------------
 .PHONY: $(USER_TARGETS) $(INTERNAL_TARGETS)
 
 #--------------------------------------------------------------------
-# Make sure all the user-target rules are double colon rules and that
-# the preconditions are run first.
+# Make sure all the user-target rules are double colon rules and 
+# they are defined first.
 #--------------------------------------------------------------------
 
-$(USER_TARGETS) :: preconditions
+$(USER_TARGETS)::
 
-all :: all-local
+################################################################################
+# PRECONDITIONS: that which must be built/checked first
+################################################################################
+
+SRCMKFILES    := $(wildcard $(BUILD_SRC_DIR)/Makefile*)
+OBJMKFILES    := $(subst $(BUILD_SRC_DIR),$(BUILD_OBJ_DIR),$(SRCMKFILES))
+CONFIGURE     := $(LLVM_SRC_ROOT)/configure
+CONFIG_STATUS := $(LLVM_OBJ_ROOT)/config.status
+MAKE_CONFIG_IN:= $(LLVM_SRC_ROOT)/Makefile.config.in
+MAKE_CONFIG   := $(LLVM_OBJ_ROOT)/Makefile.config
+PRECONDITIONS := $(CONFIG_STATUS) $(MAKE_CONFIG) $(OBJMKFILES)
+
+preconditions : $(PRECONDITIONS)
+
+#------------------------------------------------------------------------
+# Make sure the BUILT_SOURCES are built first
+#------------------------------------------------------------------------
+$(filter-out clean clean-local,USER_TARGETS):: $(BUILT_SOURCES)
+
+clean-local::
+ifneq ($(strip $(BUILT_SOURCES)),)
+	$(VERB) $(RM) -f $(BUILT_SOURCES)
+endif
+
+#------------------------------------------------------------------------
+# Make sure we're not using a stale configuration
+#------------------------------------------------------------------------
+.PRECIOUS: $(CONFIG_STATUS)
+$(CONFIG_STATUS): $(CONFIGURE)
+	@$(ECHO) Reconfiguring with $<
+	$(VERB) $(CONFIG_STATUS) --recheck $(CONFIGUREFLAGS)
+
+#------------------------------------------------------------------------
+# Make sure the configuration makefile is up to date
+#------------------------------------------------------------------------
+$(MAKE_CONFIG): $(MAKE_CONFIG_IN) $(CONFIG_STATUS)
+	@$(ECHO) Regenerating $@
+	$(VERB) cd $(LLVM_OBJ_ROOT) ; $(CONFIG_STATUS) Makefile.config
+
+#------------------------------------------------------------------------
+# If the Makefile in the source tree has been updated, copy it over into the
+# build tree. But, only do this if the source and object makefiles differ
+#------------------------------------------------------------------------
+ifneq ($(BUILD_OBJ_DIR),$(BUILD_SRC_DIR))
+
+$(BUILD_OBJ_DIR)/Makefile : $(BUILD_SRC_DIR)/Makefile
+	@$(ECHO) "Updating Makefile"
+	$(VERB) $(MKDIR) $(@D)
+	$(VERB) cp -f $< $@
+	$(VERB) $(MAKE) $(MAKECMDGOALS)
+
+# Copy the Makefile.* files unless we're in the root directory which avoids
+# the copying of Makefile.config.in or other things that should be explicitly
+# taken care of.
+ifneq ($(BUILD_OBJ_DIR),$(BUILD_OBJ_ROOT))
+$(BUILD_OBJ_DIR)/Makefile% : $(BUILD_SRC_DIR)/Makefile%
+	@$(ECHO) "Updating $(@F)"
+	$(VERB) $(MKDIR) $(@D)
+	$(VERB) cp -f $< $@
+	$(VERB) $(MAKE) $(MAKECMDGOALS)
+endif
+endif
+
+#------------------------------------------------------------------------
+# Set up the basic dependencies
+#------------------------------------------------------------------------
+$(USER_TARGETS):: $(PRECONDITIONS)
+
+all:: all-local
 check:: check-local
 clean:: clean-local 
-install :: install-local
-uninstall :: uninstall-local
-check-local :: all-local
-install-local :: all-local 
-
-###############################################################################
-# SUFFIXES: Reset the list of suffixes we know how to build
-###############################################################################
-.SUFFIXES:
-.SUFFIXES: .c .cpp .h .hpp .y .l .lo .o .a $(SHLIBEXT) .bc .td .ps .dot $(SUFFIXES)
+install:: install-local
+uninstall:: uninstall-local
+check-local:: all-local
+install-local:: all-local 
 
 ###############################################################################
 # VARIABLES: Set up various variables based on configuration data
@@ -313,7 +385,7 @@ uninstall-config-dir:
 	done
 
 $(sysconfdir):
-	$(MKDIR) $(sysconfdir)
+	$(VERB) $(MKDIR) $(sysconfdir)
 
 endif
 
@@ -804,57 +876,6 @@ endif
 
 endif  # ifndef DISABLE_AUTO_DEPENDENCIES
 
-################################################################################
-# PRECONDITIONS - that which must be built/checked first
-################################################################################
-
-OBJMKFILE := $(BUILD_OBJ_DIR)/Makefile
-SRCMKFILE := $(BUILD_SRC_DIR)/Makefile
-CONFIGURE := $(LLVM_SRC_ROOT)/configure
-CONFIG_STATUS := $(LLVM_OBJ_ROOT)/config.status
-MAKE_CONFIG_IN := $(LLVM_SRC_ROOT)/Makefile.config.in
-MAKE_CONFIG := $(LLVM_OBJ_ROOT)/Makefile.config
-
-#------------------------------------------------------------------------
-# List of the preconditions
-#------------------------------------------------------------------------
-
-preconditions: $(CONFIG_STATUS) $(MAKE_CONFIG) $(OBJMKFILE) 
-
-$(filter-out clean clean-local,USER_TARGETS):: $(BUILT_SOURCES)
-
-clean-local::
-ifneq ($(strip $(BUILT_SOURCES)),)
-	$(VERB) $(RM) -f $(BUILT_SOURCES)
-endif
-
-#------------------------------------------------------------------------
-# Make sure we're not using a stale configuration
-#------------------------------------------------------------------------
-.PRECIOUS: $(CONFIG_STATUS)
-$(CONFIG_STATUS): $(CONFIGURE)
-	@$(ECHO) Reconfiguring with $<
-	$(VERB) $(CONFIG_STATUS) --recheck $(CONFIGUREFLAGS)
-
-#------------------------------------------------------------------------
-# Make sure the configuration makefile is up to date
-#------------------------------------------------------------------------
-$(MAKE_CONFIG): $(MAKE_CONFIG_IN) $(CONFIG_STATUS)
-	@$(ECHO) Regenerating $@
-	$(VERB) cd $(LLVM_OBJ_ROOT) ; $(CONFIG_STATUS) Makefile.config
-
-#------------------------------------------------------------------------
-# If the Makefile in the source tree has been updated, copy it over into the
-# build tree. But, only do this if the source and object makefiles differ
-#------------------------------------------------------------------------
-ifneq ($(OBJMKFILE),$(SRCMKFILE))
-.PRECIOUS: $(OBJMKFILE)
-$(OBJMKFILE): $(SRCMKFILE)
-	@$(ECHO) "Updating Makefile from: $(dir $<)"
-	$(VERB) $(MKDIR) $(@D)
-	$(VERB) cp -f $< $@
-endif
-
 ###############################################################################
 # Handle construction of a distribution tarball
 ###############################################################################
@@ -940,7 +961,7 @@ dist :: $(DistTarGZip) $(DistTarBZ2) $(DistZip)
 
 DistCheckDir := $(LLVM_OBJ_ROOT)/_distcheckdir
 
-dist-check:: $(DistTopDir) $(DistTarGZip)
+dist-check:: $(DistCheckTop) $(DistTarGZip)
 	@$(ECHO) Checking distribution tar file.
 	$(VERB) if test -d $(DistCheckDir) ; then \
 	  $(RM) -rf $(DistCheckDir) ; \
@@ -970,7 +991,7 @@ endif
 #------------------------------------------------------------------------
 # Provide the recursive distdir target for building the distribution directory
 #------------------------------------------------------------------------
-distdir : $(DistCheckTop) $(DistSources)
+distdir : $(DistSources)
 	@$(ECHO) Building Distribution Directory $(DistDir)
 	$(VERB) if test "$(DistDir)" = "$(TopDistDir)" ; then \
 	  if test -d "$(DistDir)" ; then \
@@ -1084,13 +1105,20 @@ endif
 #------------------------------------------------------------------------
 # Print out the directories used for building
 printvars::
+	@$(ECHO) "CONFIGURATION : " $(CONFIGURATION)
 	@$(ECHO) "BUILD_SRC_ROOT: " $(BUILD_SRC_ROOT)
 	@$(ECHO) "BUILD_SRC_DIR : " $(BUILD_SRC_DIR)
 	@$(ECHO) "BUILD_OBJ_ROOT: " $(BUILD_OBJ_ROOT)
 	@$(ECHO) "BUILD_OBJ_DIR : " $(BUILD_OBJ_DIR)
 	@$(ECHO) "LLVM_SRC_ROOT : " $(LLVM_SRC_ROOT)
 	@$(ECHO) "LLVM_OBJ_ROOT : " $(LLVM_OBJ_ROOT)
-	@$(ECHO) "CONFIGURATION : " $(CONFIGURATION)
+	@$(ECHO) "libdir : " $(libdir)
+	@$(ECHO) "bindir : " $(bindir)
+	@$(ECHO) "sysconfdir : " $(sysconfdir)
+	@$(ECHO) "bytecode_libdir : " $(bytecode_libdir)
+	@$(ECHO) "USER_TARGETS : " $(USER_TARGETS)
+	@$(ECHO) "OBJMKFILES: $(OBJMKFILES)"
+	@$(ECHO) "SRCMKFILES: $(SRCMKFILES)"
 	@$(ECHO) "OBJDIR: " $(OBJDIR)
 	@$(ECHO) "LIBDIR: " $(LIBDIR)
 	@$(ECHO) "TOOLDIR: " $(TOOLDIR)
