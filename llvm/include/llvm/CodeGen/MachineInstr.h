@@ -65,6 +65,15 @@ public:
   };
   
 private:
+  // Bit fields of the flags variable used for different operand properties
+  static const char DEFFLAG    = 0x1;  // this is a def of the operand
+  static const char DEFUSEFLAG = 0x2;  // this is both a def and a use
+  static const char HIFLAG32   = 0x4;  // operand is %hi32(value_or_immedVal)
+  static const char LOFLAG32   = 0x8;  // operand is %lo32(value_or_immedVal)
+  static const char HIFLAG64   = 0x10; // operand is %hi64(value_or_immedVal)
+  static const char LOFLAG64   = 0x20; // operand is %lo64(value_or_immedVal)
+  
+private:
   MachineOperandType opType;
   
   union {
@@ -78,9 +87,8 @@ private:
 
   int regNum;	                // register number for an explicit register
                                 // will be set for a value after reg allocation
-  bool isDef;                   // is this a definition for the value?
-  bool isDefAndUse;             // is this a both a def and a use of the value?
-                                // we assume that a non-def *must* be a use.
+  char flags;                   // see bit field definitions above
+  
 public:
   /*ctor*/		MachineOperand	();
   /*ctor*/		MachineOperand	(MachineOperandType operandType,
@@ -108,20 +116,39 @@ public:
     return immedVal;
   }
   inline bool		opIsDef		() const {
-    return isDef;
+    return flags & DEFFLAG;
   }
   inline bool		opIsDefAndUse	() const {
-    return isDefAndUse;
+    return flags & DEFUSEFLAG;
+  }
+  inline bool           opHiBits32      () const {
+    return flags & HIFLAG32;
+  }
+  inline bool           opLoBits32      () const {
+    return flags & LOFLAG32;
+  }
+  inline bool           opHiBits64      () const {
+    return flags & HIFLAG64;
+  }
+  inline bool           opLoBits64      () const {
+    return flags & LOFLAG64;
+  }
+  
+  // used to get the reg number if when one is allocated (must be
+  // called only after reg alloc)
+  inline int  getAllocatedRegNum() const {
+    assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
+	   opType == MO_MachineRegister);
+    return regNum;
   }
   
 public:
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
 
-  
 private:
   // These functions are provided so that a vector of operands can be
   // statically allocated and individual ones can be initialized later.
-  // Give class MachineInstr gets access to these functions.
+  // Give class MachineInstr access to these functions.
   // 
   void			Initialize	(MachineOperandType operandType,
 					 Value* _val);
@@ -130,6 +157,15 @@ private:
   void			InitializeReg	(int regNum,
                                          bool isCCReg);
 
+  // Construction methods needed for fine-grain control.
+  // These must be accessed via coresponding methods in MachineInstr.
+  void markDef()       { flags |= DEFFLAG; }
+  void markDefAndUse() { flags |= DEFUSEFLAG; }
+  void markHi32()      { flags |= HIFLAG32; }
+  void markLo32()      { flags |= LOFLAG32; }
+  void markHi64()      { flags |= HIFLAG64; }
+  void markLo64()      { flags |= LOFLAG64; }
+  
   // Replaces the Value with its corresponding physical register after
   // register allocation is complete
   void setRegForValue(int reg) {
@@ -137,18 +173,8 @@ private:
 	   opType == MO_MachineRegister);
     regNum = reg;
   }
-
-  friend class MachineInstr;
-
-public:
   
-  // used to get the reg number if when one is allocted (must be
-  // called only after reg alloc)
-  inline int  getAllocatedRegNum() const {
-    assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
-	   opType == MO_MachineRegister);
-    return regNum;
-  }
+  friend class MachineInstr;
 };
 
 
@@ -157,8 +183,7 @@ MachineOperand::MachineOperand()
   : opType(MO_VirtualRegister),
     immedVal(0),
     regNum(-1),
-    isDef(false),
-    isDefAndUse(false)
+    flags(0)
 {}
 
 inline
@@ -167,15 +192,13 @@ MachineOperand::MachineOperand(MachineOperandType operandType,
   : opType(operandType),
     immedVal(0),
     regNum(-1),
-    isDef(false),
-    isDefAndUse(false)
+    flags(0)
 {}
 
 inline
 MachineOperand::MachineOperand(const MachineOperand& mo)
   : opType(mo.opType),
-    isDef(false),
-    isDefAndUse(false)
+    flags(mo.flags)
 {
   switch(opType) {
   case MO_VirtualRegister:
@@ -195,6 +218,7 @@ MachineOperand::Initialize(MachineOperandType operandType,
   opType = operandType;
   value = _val;
   regNum = -1;
+  flags = 0;
 }
 
 inline void
@@ -205,6 +229,7 @@ MachineOperand::InitializeConst(MachineOperandType operandType,
   value = NULL;
   immedVal = intValue;
   regNum = -1;
+  flags = 0;
 }
 
 inline void
@@ -213,6 +238,7 @@ MachineOperand::InitializeReg(int _regNum, bool isCCReg)
   opType = isCCReg? MO_CCRegister : MO_MachineRegister;
   value = NULL;
   regNum = (int) _regNum;
+  flags = 0;
 }
 
 
@@ -330,6 +356,12 @@ public:
                                           Value* val, 
                                           bool isDef=false,
                                           bool isDefAndUse=false);
+
+  void                  setOperandHi32   (unsigned i);
+  void                  setOperandLo32   (unsigned i);
+  void                  setOperandHi64   (unsigned i);
+  void                  setOperandLo64   (unsigned i);
+  
   
   // Replaces the Value for the operand with its allocated
   // physical register after register allocation is complete.
@@ -475,6 +507,30 @@ MachineInstr::setImplicitRef(unsigned int i,
   implicitRefs[i] = val;
   implicitIsDef[i] = isDef;
   implicitIsDefAndUse[i] = isDefAndUse;
+}
+
+inline void
+MachineInstr::setOperandHi32(unsigned i)
+{
+  operands[i].markHi32();
+}
+
+inline void
+MachineInstr::setOperandLo32(unsigned i)
+{
+  operands[i].markLo32();
+}
+
+inline void
+MachineInstr::setOperandHi64(unsigned i)
+{
+  operands[i].markHi64();
+}
+
+inline void
+MachineInstr::setOperandLo64(unsigned i)
+{
+  operands[i].markLo64();
 }
 
 
