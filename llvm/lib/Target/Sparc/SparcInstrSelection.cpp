@@ -774,7 +774,7 @@ CreateShiftInstructions(const TargetMachine& target,
 // create a cheaper instruction.
 // This returns the approximate cost of the instructions generated,
 // which is used to pick the cheapest when both operands are constant.
-static inline unsigned
+static unsigned
 CreateMulConstInstruction(const TargetMachine &target, Function* F,
                           Value* lval, Value* rval, Instruction* destVal,
                           std::vector<MachineInstr*>& mvec,
@@ -927,7 +927,7 @@ ChooseDivInstruction(TargetMachine &target,
 
 
 // Return if we cannot exploit constant to create a cheaper instruction
-static inline void
+static void
 CreateDivConstInstruction(TargetMachine &target,
                           const InstructionNode* instrNode,
                           std::vector<MachineInstr*>& mvec)
@@ -937,7 +937,7 @@ CreateDivConstInstruction(TargetMachine &target,
   if (!isa<Constant>(constOp))
     return;
 
-  Value* DestVal = instrNode->getValue();
+  Instruction* destVal = instrNode->getInstruction();
   unsigned ZeroReg = target.getRegInfo().getZeroRegNum();
   
   // Cases worth optimizing are:
@@ -960,18 +960,55 @@ CreateDivConstInstruction(TargetMachine &target,
           
       if (C == 1) {
         mvec.push_back(BuildMI(V9::ADD, 3).addReg(LHS).addMReg(ZeroReg)
-                       .addRegDef(DestVal));
+                       .addRegDef(destVal));
       } else if (isPowerOf2(C, pow)) {
-        unsigned opCode= ((resultType->isSigned())
-                          ? (resultType==Type::LongTy) ? V9::SRAX : V9::SRA
-                          : (resultType==Type::LongTy) ? V9::SRLX : V9::SRL);
-        mvec.push_back(BuildMI(opCode, 3).addReg(LHS).addZImm(pow)
-                       .addRegDef(DestVal));
+        unsigned opCode;
+        Value* shiftOperand;
+
+        if (resultType->isSigned()) {
+          // The result may be negative and we need to add one before shifting 
+          // a negative value.  Use:
+          //      srl i0, 31, x0; add x0, i0, i1         (if i0 is <= 32 bits)
+          // or
+          //      srlx i0, 63, x0; add x0, i0, i1         (if i0 is 64 bits)
+          // to compute i1=i0+1 if i0 < 0 and i1=i0 otherwise.  
+          // 
+          TmpInstruction *srlTmp, *addTmp;
+          MachineCodeForInstruction& mcfi
+            = MachineCodeForInstruction::get(destVal);
+          srlTmp = new TmpInstruction(resultType, LHS, 0, "getSign");
+          addTmp = new TmpInstruction(resultType, LHS, srlTmp, "incIfNeg");
+          mcfi.addTemp(srlTmp);
+          mcfi.addTemp(addTmp);
+
+          // Create the SRL or SRLX instruction to get the sign bit
+          mvec.push_back(BuildMI((resultType==Type::LongTy)? V9::SRLX:V9::SRL,3)
+                         .addReg(LHS)
+                         .addSImm((resultType==Type::LongTy)? 63 : 31)
+                         .addRegDef(srlTmp));
+
+          // Create the ADD instruction to add 1 for negative values
+          mvec.push_back(BuildMI(V9::ADD, 3).addReg(LHS).addReg(srlTmp)
+                         .addRegDef(addTmp));
+
+          // Get the shift operand and "right-shift" opcode to do the divide
+          shiftOperand = addTmp;
+          opCode = (resultType==Type::LongTy) ? V9::SRAX : V9::SRA;
+        }
+        else {
+          // Get the shift operand and "right-shift" opcode to do the divide
+          shiftOperand = LHS;
+          opCode = (resultType==Type::LongTy) ? V9::SRLX : V9::SRL;
+        }
+
+        // Now do the actual shift!
+        mvec.push_back(BuildMI(opCode, 3).addReg(shiftOperand).addZImm(pow)
+                       .addRegDef(destVal));
       }
           
       if (needNeg && (C == 1 || isPowerOf2(C, pow))) {
         // insert <reg = SUB 0, reg> after the instr to flip the sign
-        mvec.push_back(CreateIntNegInstruction(target, DestVal));
+        mvec.push_back(CreateIntNegInstruction(target, destVal));
       }
     }
   } else {
@@ -982,7 +1019,7 @@ CreateDivConstInstruction(TargetMachine &target,
           (dval < 0) ? (resultType == Type::FloatTy? V9::FNEGS : V9::FNEGD)
           : (resultType == Type::FloatTy? V9::FMOVS : V9::FMOVD);
               
-        mvec.push_back(BuildMI(opCode, 2).addReg(LHS).addRegDef(DestVal));
+        mvec.push_back(BuildMI(opCode, 2).addReg(LHS).addRegDef(destVal));
       } 
     }
   }
