@@ -31,10 +31,10 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
 GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   GenericValue Result;
 
-  if (ConstantExpr *CE = const_cast<ConstantExpr*>(dyn_cast<ConstantExpr>(C)))
+  if (ConstantExpr *CE = const_cast<ConstantExpr*>(dyn_cast<ConstantExpr>(C))) {
     switch (CE->getOpcode()) {
     case Instruction::GetElementPtr: {
-      Result = getConstantValue(cast<Constant>(CE->getOperand(0)));
+      Result = getConstantValue(CE->getOperand(0));
       std::vector<Value*> Indexes(CE->op_begin()+1, CE->op_end());
       uint64_t Offset =
         TD->getIndexedOffset(CE->getOperand(0)->getType(), Indexes);
@@ -42,13 +42,42 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       Result.LongVal += Offset;
       return Result;
     }
+    case Instruction::Cast: {
+      // We only need to handle a few cases here.  Almost all casts will
+      // automatically fold, just the ones involving pointers won't.
+      //
+      Constant *Op = CE->getOperand(0);
 
-    default:
-      std::cerr << "ConstantExpr not handled as global var init: " << *CE
-                << "\n";
-      abort();
+      // Handle cast of pointer to pointer...
+      if (Op->getType()->getPrimitiveID() == C->getType()->getPrimitiveID())
+        return getConstantValue(Op);
+
+      // Handle cast of long to pointer or pointer to long...
+      if ((isa<PointerType>(Op->getType()) && (C->getType() == Type::LongTy ||
+                                               C->getType() == Type::ULongTy))||
+          (isa<PointerType>(C->getType()) && (Op->getType() == Type::LongTy ||
+                                              Op->getType() == Type::ULongTy))){
+        return getConstantValue(Op);
+      }
+      break;
     }
 
+    case Instruction::Add:
+      if (C->getOperand(0)->getType() == Type::LongTy ||
+          C->getOperand(0)->getType() == Type::ULongTy)
+        Result.LongVal = getConstantValue(C->getOperand(0)).LongVal +
+                         getConstantValue(C->getOperand(1)).LongVal;
+      else
+        break;
+      return Result;
+
+    default:
+      break;
+    }
+    std::cerr << "ConstantExpr not handled as global var init: " << *CE << "\n";
+    abort();
+  }
+  
   switch (C->getType()->getPrimitiveID()) {
 #define GET_CONST_VAL(TY, CLASS) \
   case Type::TY##TyID: Result.TY##Val = cast<CLASS>(C)->getValue(); break
