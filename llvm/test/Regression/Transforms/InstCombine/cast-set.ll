@@ -1,4 +1,4 @@
-; RUN: if as < %s | opt -instcombine -dce | dis | grep cast
+; RUN: if as < %s | opt -instcombine | dis | grep cast
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi
