@@ -34,6 +34,11 @@ namespace {
   cl::opt<bool>
   NoFusing("disable-spill-fusing",
            cl::desc("Disable fusing of spill code into instructions"));
+  cl::opt<bool>
+  PrintFailedFusing("print-failed-fuse-candidates",
+                    cl::desc("Print instructions that the allocator wants to"
+                             " fuse, but the X86 backend currently can't"),
+                    cl::Hidden);
 }
 
 X86RegisterInfo::X86RegisterInfo()
@@ -135,7 +140,7 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
     case X86::ANDri8:  NI = MakeMIInst(X86::ANDmi8 , FrameIndex, MI); break;
     case X86::ANDri16: NI = MakeMIInst(X86::ANDmi16, FrameIndex, MI); break;
     case X86::ANDri32: NI = MakeMIInst(X86::ANDmi32, FrameIndex, MI); break;
-    default: return false; // Cannot fold
+    default: break; // Cannot fold
     }
   } else if (i == 1) {
     switch(MI->getOpcode()) {
@@ -150,16 +155,19 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
     case X86::ANDrr32: NI = MakeRMInst(X86::ANDrm32, FrameIndex, MI); break;
     case X86::IMULrr16:NI = MakeRMInst(X86::IMULrm16, FrameIndex, MI); break;
     case X86::IMULrr32:NI = MakeRMInst(X86::IMULrm32, FrameIndex, MI); break;
-    case X86::IMULrri16: NI = MakeRMIInst(X86::IMULrmi16, FrameIndex, MI); break;
-    case X86::IMULrri32: NI = MakeRMIInst(X86::IMULrmi32, FrameIndex, MI); break;
-    default: return false;  // cannot fold.
+    case X86::IMULrri16: NI = MakeRMIInst(X86::IMULrmi16, FrameIndex, MI);break;
+    case X86::IMULrri32: NI = MakeRMIInst(X86::IMULrmi32, FrameIndex, MI);break;
+    default: break;
     }
-  } else {
-    return false; // cannot fold.
   }
-  
-  MI = MBB.insert(MBB.erase(MI), NI);
-  return true;
+  if (NI) {
+    MI = MBB.insert(MBB.erase(MI), NI);
+    return true;
+  } else {
+    if (PrintFailedFusing)
+      std::cerr << "We failed to fuse: " << *MI;
+    return false;
+  }
 }
 
 //===----------------------------------------------------------------------===//
