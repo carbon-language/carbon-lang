@@ -12,7 +12,7 @@
 %Intern2   = internal constant int 792
 
 ; Initialized to point to external %MyVar
-%MyVarPtr  = global { int * }  { int * %MyVar }
+%MyVarPtr  = linkonce global { int * }  { int * %MyVar }
 
 declare int "foo"(int %blah)      ;; Declared in testlink2.ll
 

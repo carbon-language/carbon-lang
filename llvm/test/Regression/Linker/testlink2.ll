@@ -11,7 +11,7 @@
 %Intern2   = constant int 12345       ;; Intern in one but not in other
 
 %MyIntListPtr = constant { {\2,int}* } { {\2,int}* %MyIntList }
-%MyVarPtr  = global { int * }  { int * %MyVar }
+%MyVarPtr  = linkonce global { int * }  { int * %MyVar }
 
 constant int 412
 
