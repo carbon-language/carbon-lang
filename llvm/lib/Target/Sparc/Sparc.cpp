@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcInternals.h"
-#include "llvm/Target/Sparc.h"
+#include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Function.h"
 #include "llvm/PassManager.h"
 #include "llvm/Transforms/Scalar.h"
