@@ -20,14 +20,43 @@ lli
 SYNOPSIS
 </h3>
 
-lli [options] &lt; filename&gt;
+lli [options] [filename] [args ...]
 <h3>
 DESCRIPTION
 </h3>
 
 The lli command is the LLVM interpreter.  It takes a program in LLVM bytecode
-format and executes it, either using an interpreter or a Just In Time (JIT)
-compiler.
+format and executes it using an interpreter or a Just In Time (JIT) compiler.
+<p>
+
+If filename is not specified, then lli reads its input from standard input.
+<p>
+The optional arguments specified on the command line are passed to the executed
+program as arguments.
+<p>
+
+<h3>
+MAIN FUNCTION
+</h3>
+
+The main() function of the bytecode program is where execution starts.  It
+is passed three arguments:
+
+<ul>
+    <li>
+    int argc - The number of command line arguments.
+    <p>
+
+    <li>
+    char ** argv - The arguments to the program.
+    <p>
+
+    <li>
+    char ** envp - An array of environment variables used by the program.
+</ul>
+
+The first argument to the program is the name of the executed bytecode file
+(with the .bc suffix removed).
 
 <h3>
 OPTIONS
