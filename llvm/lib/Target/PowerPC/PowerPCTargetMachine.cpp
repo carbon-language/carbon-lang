@@ -86,6 +86,8 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   PM.add(createPrologEpilogCodeInserter());
+  // Must run branch selection immediately preceding the printer
+  PM.add(createPPCBranchSelectionPass());
   PM.add(createPPCCodePrinterPass(Out, *this));
   PM.add(createMachineCodeDeleter());
   return false;
