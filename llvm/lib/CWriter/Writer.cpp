@@ -303,8 +303,8 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
       // Print it out literally if it is a printable character.  The only thing
       // to be careful about is when the last letter output was a hex escape
       // code, in which case we have to be careful not to print out hex digits
-      // explicitly (the C compiler things it is a continuation of the previous
-      // character, arg...)
+      // explicitly (the C compiler thinks it is a continuation of the previous
+      // character, sheesh...)
       //
       if (isprint(C) && (!LastWasHex || !isxdigit(C))) {
         LastWasHex = false;
