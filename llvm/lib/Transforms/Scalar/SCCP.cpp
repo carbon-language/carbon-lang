@@ -500,6 +500,13 @@ void SCCP::visitPHINode(PHINode &PN) {
     return;  // Quick exit
   }
 
+  // Super-extra-high-degree PHI nodes are unlikely to ever be marked constant,
+  // and slow us down a lot.  Just mark them overdefined.
+  if (PN.getNumIncomingValues() > 64) {
+    markOverdefined(PNIV, &PN);
+    return;
+  }
+
   // Look at all of the executable operands of the PHI node.  If any of them
   // are overdefined, the PHI becomes overdefined as well.  If they are all
   // constant, and they agree with each other, the PHI becomes the identical
