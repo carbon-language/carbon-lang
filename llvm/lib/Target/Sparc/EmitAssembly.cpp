@@ -139,9 +139,9 @@ public:
   //
   string getID(const Value *V, const char *Prefix, const char *FPrefix = 0) {
     string Result = FPrefix ? FPrefix : "";  // "Forced prefix"
-    
+
     Result +=  V->hasName() ? V->getName() : string(Prefix);
-    
+
     // Qualify all internal names with a unique id.
     if (!isExternal(V)) {
       int valId = idTable->Table.getValSlot(V);
@@ -153,9 +153,12 @@ public:
           valId = I->second;
       }
       Result = Result + "_" + itostr(valId);
+
+      // Replace or prefix problem characters in the name
+      Result = getValidSymbolName(Result);
     }
-    
-    return getValidSymbolName(Result);
+
+    return Result;
   }
   
   // getID Wrappers - Ensure consistent usage...
