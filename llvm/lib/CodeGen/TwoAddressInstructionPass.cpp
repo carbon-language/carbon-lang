@@ -43,8 +43,12 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> numTwoAddressInstrs("twoaddressinstruction",
+  Statistic<> NumTwoAddressInstrs("twoaddressinstruction",
                                   "Number of two-address instructions");
+  Statistic<> NumCommuted("twoaddressinstruction",
+                          "Number of instructions commuted to coallesce");
+  Statistic<> NumConvertedTo3Addr("twoaddressinstruction",
+                                "Number of instructions promoted to 3-address");
 
   struct TwoAddressInstructionPass : public MachineFunctionPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -60,6 +64,7 @@ namespace {
 const PassInfo *llvm::TwoAddressInstructionPassID = X.getPassInfo();
 
 void TwoAddressInstructionPass::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<LiveVariables>();
   AU.addPreserved<LiveVariables>();
   AU.addPreservedID(PHIEliminationID);
   MachineFunctionPass::getAnalysisUsage(AU);
@@ -73,7 +78,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   const TargetMachine &TM = MF.getTarget();
   const MRegisterInfo &MRI = *TM.getRegisterInfo();
   const TargetInstrInfo &TII = *TM.getInstrInfo();
-  LiveVariables* LV = getAnalysisToUpdate<LiveVariables>();
+  LiveVariables &LV = getAnalysis<LiveVariables>();
 
   bool MadeChange = false;
 
@@ -91,7 +96,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
       if (!TII.isTwoAddrInstr(opcode))
         continue;
 
-      ++numTwoAddressInstrs;
+      ++NumTwoAddressInstrs;
       DEBUG(std::cerr << '\t'; mi->print(std::cerr, &TM));
       assert(mi->getOperand(1).isRegister() && mi->getOperand(1).getReg() &&
              mi->getOperand(1).isUse() && "two address instruction invalid");
@@ -111,34 +116,73 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                MRegisterInfo::isVirtualRegister(regB) &&
                "cannot update physical register live information");
 
-        // first make sure we do not have a use of a in the
-        // instruction (a = b + a for example) because our
-        // transformation will not work. This should never occur
-        // because we are in SSA form.
 #ifndef NDEBUG
+        // First, verify that we do not have a use of a in the instruction (a =
+        // b + a for example) because our transformation will not work. This
+        // should never occur because we are in SSA form.
         for (unsigned i = 1; i != mi->getNumOperands(); ++i)
           assert(!mi->getOperand(i).isRegister() ||
                  mi->getOperand(i).getReg() != regA);
 #endif
 
+        // If this instruction is not the killing user of B, see if we can
+        // rearrange the code to make it so.  Making it the killing user will
+        // allow us to coallesce A and B together, eliminating the copy we are
+        // about to insert.
+        if (!LV.KillsRegister(mi, regB)) {
+          const TargetInstrDescriptor &TID = TII.get(opcode);
+
+          // If this instruction is commutative, check to see if C dies.  If so,
+          // swap the B and C operands.  This makes the live ranges of A and C
+          // joinable.
+          if (TID.Flags & M_COMMUTABLE) {
+            assert(mi->getOperand(2).isRegister() &&
+                   "Not a proper commutative instruction!");
+            unsigned regC = mi->getOperand(2).getReg();
+            if (LV.KillsRegister(mi, regC)) {
+              DEBUG(std::cerr << "2addr: COMMUTING  : " << *mi);
+              mi->SetMachineOperandReg(2, regB);
+              mi->SetMachineOperandReg(1, regC);
+              DEBUG(std::cerr << "2addr: COMMUTED TO: " << *mi);
+              ++NumCommuted;
+              regB = regC;
+              goto InstructionRearranged;
+            }
+          }
+          // If this instruction is potentially convertible to a true
+          // three-address instruction, 
+          if (TID.Flags & M_CONVERTIBLE_TO_3_ADDR)
+            if (MachineInstr *New = TII.convertToThreeAddress(mi)) {
+              DEBUG(std::cerr << "2addr: CONVERTING 2-ADDR: " << *mi);
+              DEBUG(std::cerr << "2addr:         TO 3-ADDR: " << *New);
+              LV.instructionChanged(mi, New);  // Update live variables
+              mbbi->insert(mi, New);           // Insert the new inst
+              mbbi->erase(mi);                 // Nuke the old inst.
+              mi = New;
+              ++NumConvertedTo3Addr;
+              assert(!TII.isTwoAddrInstr(New->getOpcode()) &&
+                     "convertToThreeAddress returned a 2-addr instruction??");
+              // Done with this instruction.
+              continue;
+            }
+        }
+      InstructionRearranged:
         const TargetRegisterClass* rc = MF.getSSARegMap()->getRegClass(regA);
         MRI.copyRegToReg(*mbbi, mi, regA, regB, rc);
 
         MachineBasicBlock::iterator prevMi = prior(mi);
         DEBUG(std::cerr << "\t\tprepend:\t"; prevMi->print(std::cerr, &TM));
 
-        if (LV) {
-          // update live variables for regA
-          LiveVariables::VarInfo& varInfo = LV->getVarInfo(regA);
-          varInfo.DefInst = prevMi;
+        // Update live variables for regA
+        LiveVariables::VarInfo& varInfo = LV.getVarInfo(regA);
+        varInfo.DefInst = prevMi;
 
-          // update live variables for regB
-          if (LV->removeVirtualRegisterKilled(regB, mbbi, mi))
-            LV->addVirtualRegisterKilled(regB, prevMi);
+        // update live variables for regB
+        if (LV.removeVirtualRegisterKilled(regB, mbbi, mi))
+          LV.addVirtualRegisterKilled(regB, prevMi);
 
-          if (LV->removeVirtualRegisterDead(regB, mbbi, mi))
-            LV->addVirtualRegisterDead(regB, prevMi);
-        }
+        if (LV.removeVirtualRegisterDead(regB, mbbi, mi))
+          LV.addVirtualRegisterDead(regB, prevMi);
 
         // replace all occurences of regB with regA
         for (unsigned i = 1, e = mi->getNumOperands(); i != e; ++i) {
