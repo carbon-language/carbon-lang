@@ -27,6 +27,15 @@ static inline bool Error(string *E, string Message) {
 
 #include "llvm/Assembly/Writer.h" // TODO: REMOVE
 
+static void PrintMap(const map<const Value*, Value*> &M) {
+  for (map<const Value*, Value*>::const_iterator I = M.begin(), E = M.end();
+       I != E; ++I) {
+    cerr << " Fr: " << (void*)I->first << " " << I->first 
+         << " To: " << (void*)I->second << " " << I->second << endl;
+  }
+}
+
+
 // RemapOperand - Use LocalMap and GlobalMap to convert references from one
 // module to another.  This is somewhat sophisticated in that it can
 // automatically handle constant references correctly as well...
@@ -75,8 +84,16 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
     LocalMap.insert(make_pair(In, CPV));
     return Result;
   }
-  
-  cerr << "Couldn't remap value: " << In << endl;
+
+  cerr << "XXX LocalMap: \n";
+  PrintMap(LocalMap);
+
+  if (GlobalMap) {
+    cerr << "XXX GlobalMap: \n";
+    PrintMap(*GlobalMap);
+  }
+
+  cerr << "Couldn't remap value: " << (void*)In << " " << In << endl;
   assert(0 && "Couldn't remap value!");
   return 0;
 }
