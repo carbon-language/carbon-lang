@@ -25,7 +25,6 @@ class TargetJITInfo;
 class TargetSchedInfo;
 class TargetRegInfo;
 class TargetFrameInfo;
-class TargetCacheInfo;
 class MachineCodeEmitter;
 class MRegisterInfo;
 class FunctionPassManager;
@@ -75,7 +74,6 @@ public:
   virtual const TargetSchedInfo&        getSchedInfo() const = 0;
   virtual const TargetRegInfo&          getRegInfo()   const = 0;
   virtual const TargetFrameInfo&        getFrameInfo() const = 0;
-  virtual const TargetCacheInfo&        getCacheInfo() const = 0;
   const TargetData &getTargetData() const { return DataLayout; }
 
   /// getRegisterInfo - If register information is available, return it.  If

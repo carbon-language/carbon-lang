@@ -42,7 +42,6 @@ public:
 
   virtual const TargetSchedInfo &getSchedInfo()  const { abort(); }
   virtual const TargetRegInfo   &getRegInfo()    const { abort(); }
-  virtual const TargetCacheInfo  &getCacheInfo() const { abort(); }
 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a MachineCodeEmitter object to handle

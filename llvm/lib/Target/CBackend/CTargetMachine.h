@@ -27,7 +27,6 @@ struct CTargetMachine : public TargetMachine {
   virtual const TargetFrameInfo &getFrameInfo() const { abort(); }
   virtual const TargetSchedInfo &getSchedInfo() const { abort(); }
   virtual const TargetRegInfo   &getRegInfo()   const { abort(); }
-  virtual const TargetCacheInfo &getCacheInfo() const { abort(); }
 
   // This is the only thing that actually does anything here.
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);

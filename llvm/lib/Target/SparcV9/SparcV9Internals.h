@@ -19,7 +19,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSchedInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include "llvm/Target/TargetCacheInfo.h"
 #include "llvm/Target/TargetRegInfo.h"
 #include "llvm/Type.h"
 #include "SparcV9RegClassInfo.h"
@@ -88,19 +87,6 @@ public:
 protected:
   virtual void initializeResources();
 };
-
-//---------------------------------------------------------------------------
-// class SparcV9CacheInfo 
-// 
-// Purpose:
-//   Interface to cache parameters for the UltraSPARC.
-//   Just use defaults for now.
-//---------------------------------------------------------------------------
-
-struct SparcV9CacheInfo: public TargetCacheInfo {
-  SparcV9CacheInfo(const TargetMachine &T) : TargetCacheInfo(T) {} 
-};
-
 
 /// createStackSlotsPass - External interface to stack-slots pass that enters 2
 /// empty slots at the top of each function stack

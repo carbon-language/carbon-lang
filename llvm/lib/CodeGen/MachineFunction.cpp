@@ -22,7 +22,6 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include "llvm/Target/TargetCacheInfo.h"
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
 using namespace llvm;
@@ -273,7 +272,7 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
 inline unsigned
 SizeToAlignment(unsigned size, const TargetMachine& target)
 {
-  unsigned short cacheLineSize = target.getCacheInfo().getCacheLineSize(1); 
+  const unsigned short cacheLineSize = 16;
   if (size > (unsigned) cacheLineSize / 2)
     return cacheLineSize;
   else

@@ -116,7 +116,6 @@ SparcV9TargetMachine::SparcV9TargetMachine(IntrinsicLowering *il)
     schedInfo(*this),
     regInfo(*this),
     frameInfo(*this),
-    cacheInfo(*this),
     jitInfo(*this) {
 }
 

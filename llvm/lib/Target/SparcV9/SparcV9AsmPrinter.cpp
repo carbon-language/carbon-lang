@@ -119,7 +119,7 @@ namespace {
   /// 
   inline unsigned int
   SizeToAlignment(unsigned int size, const TargetMachine& target) {
-    unsigned short cacheLineSize = target.getCacheInfo().getCacheLineSize(1); 
+    const unsigned short cacheLineSize = 16;
     if (size > (unsigned) cacheLineSize / 2)
       return cacheLineSize;
     else

@@ -30,7 +30,6 @@ class SparcV9TargetMachine : public TargetMachine {
   SparcV9SchedInfo schedInfo;
   SparcV9RegInfo   regInfo;
   SparcV9FrameInfo frameInfo;
-  SparcV9CacheInfo cacheInfo;
   SparcV9JITInfo   jitInfo;
 public:
   SparcV9TargetMachine(IntrinsicLowering *IL);
@@ -39,7 +38,6 @@ public:
   virtual const TargetSchedInfo  &getSchedInfo() const { return schedInfo; }
   virtual const TargetRegInfo    &getRegInfo()   const { return regInfo; }
   virtual const TargetFrameInfo  &getFrameInfo() const { return frameInfo; }
-  virtual const TargetCacheInfo  &getCacheInfo() const { return cacheInfo; }
   virtual       TargetJITInfo    *getJITInfo()         { return &jitInfo; }
 
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
