@@ -79,8 +79,9 @@ support. Relatively weak optimization support.</p>
 <p>GNU lightning: C integer types and "void *" are supported. No type checking
 is performed. Explicit type casts are not typically necessary unless the
 underlying machine-specific types are distinct (e.g., sign- or zero-extension is
-apparently necessary, but casting "int" to "void *" would not be.) No floating
-point (?!)</p>
+apparently necessary, but casting "int" to "void *" would not be.)
+Floating-point support may not work on all platforms (it does not appear to be
+documented in the latest release).</p>
 
 <p>LLVM: Compositional type system based on C types, supporting structures,
 opaque types, and C integer and floating point types.</p>
