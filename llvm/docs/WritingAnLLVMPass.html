@@ -89,7 +89,6 @@
   <li><a href="#future">Future extensions planned</a>
     <ul>
     <li><a href="#SMP">Multithreaded LLVM</a></li>
-    <li><a href="#ModuleSource">A new <tt>ModuleSource</tt> interface</a></li>
     <li><a href="#PassFunctionPass"><tt>Pass</tt>es requiring 
                                     <tt>FunctionPass</tt>es</a></li>
     </ul></li>
@@ -1534,33 +1533,6 @@ multithreaded constructs, requiring only the LLVM core to have locking in a few
 places (for global resources).  Although this is a simple extension, we simply
 haven't had time (or multiprocessor machines, thus a reason) to implement this.
 Despite that, we have kept the LLVM passes SMP ready, and you should too.</p>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="ModuleSource">A new <tt>ModuleSource</tt> interface</a>
-</div>
-
-<div class="doc_text">
-
-<p>Currently, the <tt>PassManager</tt>'s <tt>run</tt> method takes a <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1Module.html">Module</a></tt>
-as input, and runs all of the passes on this module.  The problem with this
-approach is that none of the <tt>PassManager</tt> features can be used for
-timing and debugging the actual <b>loading</b> of the module from disk or
-standard input.</p>
-
-<p>To solve this problem, eventually the <tt>PassManager</tt> class will accept
-a <tt>ModuleSource</tt> object instead of a Module itself.  When complete, this
-will also allow for streaming of functions out of the bytecode representation,
-allowing us to avoid holding the entire program in memory at once if we only are
-dealing with <a href="#FunctionPass">FunctionPass</a>es.</p>
-
-<p>As part of a different issue, eventually the bytecode loader will be extended
-to allow on-demand loading of functions from the bytecode representation, in
-order to better support the runtime reoptimizer.  The bytecode format is already
-capable of this, the loader just needs to be reworked a bit.</p>
 
 </div>
 
