@@ -1580,9 +1580,26 @@ void ISel::visitStoreInst(StoreInst &I) {
 /// visitCastInst - Here we have various kinds of copying with or without
 /// sign extension going on.
 void ISel::visitCastInst(CastInst &CI) {
+  Value *Op = CI.getOperand(0);
+  // If this is a cast from a 32-bit integer to a Long type, and the only uses
+  // of the case are GEP instructions, then the cast does not need to be
+  // generated explicitly, it will be folded into the GEP.
+  if (CI.getType() == Type::LongTy &&
+      (Op->getType() == Type::IntTy || Op->getType() == Type::UIntTy)) {
+    bool AllUsesAreGEPs = true;
+    for (Value::use_iterator I = CI.use_begin(), E = CI.use_end(); I != E; ++I)
+      if (!isa<GetElementPtrInst>(*I)) {
+        AllUsesAreGEPs = false;
+        break;
+      }        
+
+    // No need to codegen this cast if all users are getelementptr instrs...
+    if (AllUsesAreGEPs) return;
+  }
+
   unsigned DestReg = getReg(CI);
   MachineBasicBlock::iterator MI = BB->end();
-  emitCastOperation(BB, MI, CI.getOperand(0), CI.getType(), DestReg);
+  emitCastOperation(BB, MI, Op, CI.getType(), DestReg);
 }
 
 /// emitCastOperation - Common code shared between visitCastInst and
@@ -1936,6 +1953,13 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       // indices, we may not know its actual value at code-generation
       // time.
       assert(idx->getType() == Type::LongTy && "Bad GEP array index!");
+
+      // Most GEP instructions use a [cast (int/uint) to LongTy] as their
+      // operand on X86.  Handle this case directly now...
+      if (CastInst *CI = dyn_cast<CastInst>(idx))
+        if (CI->getOperand(0)->getType() == Type::IntTy ||
+            CI->getOperand(0)->getType() == Type::UIntTy)
+          idx = CI->getOperand(0);
 
       // We want to add BaseReg to(idxReg * sizeof ElementType). First, we
       // must find the size of the pointed-to type (Not coincidentally, the next
