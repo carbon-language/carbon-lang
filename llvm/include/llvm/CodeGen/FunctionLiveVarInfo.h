@@ -61,16 +61,23 @@
 #ifndef METH_LIVE_VAR_INFO_H
 #define METH_LIVE_VAR_INFO_H
 
-// set DEBUG_LV for printing out debug messages
-// if DEBUG_LV is 1 normal output messages
-// if DEBUG_LV is 2 extensive debug info for each instr
-
-static const int DEBUG_LV = 0;
-
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LiveVar/ValueSet.h"
+#include "Support/CommandLine.h"
+
 class BBLiveVar;
 class MachineInstr;
+
+
+enum LiveVarDebugLevel_t {
+  LV_DEBUG_None,
+  LV_DEBUG_Normal,
+  LV_DEBUG_Instr,
+  LV_DEBUG_Verbose
+};
+
+extern cl::Enum<LiveVarDebugLevel_t> DEBUG_LV;
+
 
 class MethodLiveVarInfo : public MethodPass {
   // Machine Instr to LiveVarSet Map for providing LVset BEFORE each inst
@@ -88,7 +95,7 @@ class MethodLiveVarInfo : public MethodPass {
   void constructBBs(const Method *M);      
     
   // do one backward pass over the CFG
-  bool doSingleBackwardPass(const Method *M); 
+  bool doSingleBackwardPass(const Method *M, unsigned int iter); 
 
   // calculates live var sets for instructions in a BB
   void calcLiveVarSetsForBB(const BasicBlock *BB);
