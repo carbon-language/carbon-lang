@@ -1,7 +1,7 @@
 ; This bug was caused by two CPR's existing for the same global variable, 
 ; colliding in the Module level CPR map.
 
-; RUN: as < %s -o /dev/null -f
+; RUN: llvm-as < %s -o /dev/null -f
 
 void %test() {
         call void (...)* cast (void (short*, int)* %AddString to void (...)*)(short* null, int 0)

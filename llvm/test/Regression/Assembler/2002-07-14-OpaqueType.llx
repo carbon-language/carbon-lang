@@ -1,5 +1,5 @@
 ; Test that opaque types are preserved correctly
-; RUN: as < %s | dis | as | dis
+; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis
 ;
 
 %Ty = type opaque

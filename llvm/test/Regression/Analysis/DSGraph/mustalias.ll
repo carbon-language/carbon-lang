@@ -1,6 +1,6 @@
 ; Test that ds-aa is returning must-alias information when it can.
 
-; RUN: as < %s | opt -no-aa -ds-aa -load-vn -gcse | dis | not grep load
+; RUN: llvm-as < %s | opt -no-aa -ds-aa -load-vn -gcse | llvm-dis | not grep load
 
 %X = internal global int 20
 

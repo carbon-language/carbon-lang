@@ -8,7 +8,7 @@
 ; reader should NEVER produce a program "successfully" with placeholders still
 ; around!
 
-; RUN: as < %s | dis | as
+; RUN: llvm-as < %s | llvm-dis | llvm-as
 
 %.LC0 = internal global [4 x sbyte] c"foo\00"		; <[4 x sbyte]*> [#uses=1]
 

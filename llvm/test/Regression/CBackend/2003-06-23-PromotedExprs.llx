@@ -1,5 +1,5 @@
 
-; RUN: as < %s | dis -c > f1.cbe.c
+; RUN: llvm-as < %s | llvm-dis -c > f1.cbe.c
 ; RUN: gcc -B/usr/bin/ f1.cbe.c -o f1.cbe
 ; RUN: ./f1.cbe
 

@@ -1,7 +1,7 @@
 ; This file takes about 48 __MINUTES__ to assemble using as.  This is WAY too
 ; long.  The type resolution code needs to be sped up a lot.	
 
-; RUN: ulimit -t 20; as < %s
+; RUN: ulimit -t 20; llvm-as < %s
 
 	%ALL_INTERSECTIONS_METHOD = type int (%OBJECT*, %RAY*, %ISTACK*)*
 	%BBOX = type { %BBOX_VECT, %BBOX_VECT }

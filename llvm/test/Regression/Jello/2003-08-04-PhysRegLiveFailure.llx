@@ -1,4 +1,4 @@
-; RUN: as < %s | llc -march=x86 
+; RUN: llvm-as < %s | llc -march=x86 
 
 target endian = big         ; We need the byteswaps for this test!
 target pointersize = 64

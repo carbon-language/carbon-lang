@@ -3,7 +3,7 @@
 ; it makes a ton of annoying overlapping live ranges.  This code should not
 ; cause spills!
 ;
-; RUN: as < %s | lli -stats 2>&1 | not grep spilled
+; RUN: llvm-as < %s | lli -stats 2>&1 | not grep spilled
 
 target endian = little
 target pointersize = 32

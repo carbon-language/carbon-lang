@@ -1,5 +1,5 @@
 ; Test double quotes in strings work correctly!
-; RUN: as < %s | dis | as | dis
+; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis
 ;
 
 %str = internal global [6 x sbyte] c"\22foo\22\00"

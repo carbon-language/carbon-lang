@@ -1,7 +1,7 @@
 ; This tests to make sure that G ends up in the globals graph of the BU pass.
 ; If it is not, then %G will get converted to a 'constant' from a 'global'
 ;
-; RUN: as < %s | opt -ds-opt -globaldce | dis | grep %G
+; RUN: llvm-as < %s | opt -ds-opt -globaldce | llvm-dis | grep %G
 
 
 %G = internal global int 0		; <int*> [#uses=2]

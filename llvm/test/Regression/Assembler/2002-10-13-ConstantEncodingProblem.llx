@@ -1,4 +1,4 @@
-; RUN: as < %s | dis
+; RUN: llvm-as < %s | llvm-dis
 
 %Domain = type { %Domain**, %Domain* }
 

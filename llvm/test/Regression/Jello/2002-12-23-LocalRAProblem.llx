@@ -1,4 +1,4 @@
-; RUN: as < %s | lli -force-interpreter=false -disable-local-ra=false
+; RUN: llvm-as < %s | lli -force-interpreter=false -disable-local-ra=false
 ;-print-machineinstrs 
 
 int %main() {

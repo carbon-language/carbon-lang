@@ -1,4 +1,4 @@
-; RUN: as < %s | dis
+; RUN: llvm-as < %s | llvm-dis
 void %test() {
    invoke void %test() to label %Next except label %Next
 Next:
