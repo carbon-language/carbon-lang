@@ -226,6 +226,12 @@ void CodeExtractor::findInputsOutputs(Values &inputs, Values &outputs) {
   } // for: basic blocks
 
   NumExitBlocks = ExitBlocks.size();
+
+  // Eliminate duplicates.
+  std::sort(inputs.begin(), inputs.end());
+  inputs.erase(std::unique(inputs.begin(), inputs.end()), inputs.end());
+  std::sort(outputs.begin(), outputs.end());
+  outputs.erase(std::unique(outputs.begin(), outputs.end()), outputs.end());
 }
 
 /// constructFunction - make a function based on inputs and outputs, as follows:
@@ -284,7 +290,8 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   // Create the new function
   Function *newFunction = new Function(funcType,
                                        GlobalValue::InternalLinkage,
-                                       oldFunction->getName() + "_code", M);
+                                       oldFunction->getName() + "_" +
+                                       header->getName(), M);
   newFunction->getBasicBlockList().push_back(newRootNode);
 
   // Create an iterator to name all of the arguments we inserted.
