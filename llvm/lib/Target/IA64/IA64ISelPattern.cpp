@@ -554,11 +554,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
       Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
       Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
 
-      // a temporary predicate register to hold the complement of the
-      // condition:
-      unsigned CondComplement=MakeReg(MVT::i1);
-      unsigned bogusTemp=MakeReg(MVT::i1);
-
       unsigned bogoResult;
       
       switch (N.getOperand(1).getValueType()) {
@@ -571,16 +566,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
 	  bogoResult=MakeReg(MVT::f64);
 	  break;
       }
-      // set up the complement predicate reg (CondComplement = NOT Tmp1)
-      BuildMI(BB, IA64::CMPEQ, 2, bogusTemp).addReg(IA64::r0).addReg(IA64::r0);
-      BuildMI(BB, IA64::TPCMPNE, 3, CondComplement).addReg(bogusTemp)
-	.addReg(IA64::r0).addReg(IA64::r0).addReg(Tmp1);
-	
-      // and do a 'conditional move'
-      BuildMI(BB, IA64::PMOV, 2, bogoResult).addReg(Tmp2).addReg(Tmp1);
-      BuildMI(BB, IA64::CMOV, 2, Result).addReg(bogoResult).addReg(Tmp3)
-	.addReg(CondComplement);
- 
+
+      BuildMI(BB, IA64::MOV, 1, bogoResult).addReg(Tmp3);
+      BuildMI(BB, IA64::CMOV, 2, Result).addReg(bogoResult).addReg(Tmp2)
+	.addReg(Tmp1); // FIXME: should be FMOV/FCMOV sometimes,
+                       // though this will work for now (no JIT)
       return Result;
   }
   
