@@ -12,7 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Assembly/CWriter.h"
+#include "CTargetMachine.h"
+#include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -42,7 +43,6 @@ namespace {
 
     std::map<const Type *, std::string> TypeNames;
     std::set<const Value*> MangledGlobals;
-    bool needsMalloc;
 
     std::map<const ConstantFP *, unsigned> FPConstantMap;
   public:
@@ -669,7 +669,6 @@ bool CWriter::doInitialization(Module &M) {
   // Function declarations
   if (!M.empty()) {
     Out << "\n/* Function Declarations */\n";
-    needsMalloc = true;
     for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
       // If the function is external and the name collides don't print it.
       // Sometimes the bytecode likes to have multiple "declarations" for
@@ -682,12 +681,6 @@ bool CWriter::doInitialization(Module &M) {
         Out << ";\n";
       }
     }
-  }
-
-  // Print Malloc prototype if needed
-  if (needsMalloc) {
-    Out << "\n/* Malloc to make sun happy */\n";
-    Out << "extern void * malloc();\n\n";
   }
 
   // Output the global variable declarations
@@ -873,11 +866,6 @@ void CWriter::printContainedStructs(const Type *Ty,
 
 
 void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
-  // If the program provides its own malloc prototype we don't need
-  // to include the general one.  
-  if (Mang->getValueName(F) == "malloc")
-    needsMalloc = false;
-
   if (F->hasInternalLinkage()) Out << "static ";
   if (F->hasLinkOnceLinkage()) Out << "inline ";
   
@@ -1264,17 +1252,7 @@ void CWriter::visitCallSite(CallSite CS) {
 }  
 
 void CWriter::visitMallocInst(MallocInst &I) {
-  Out << "(";
-  printType(Out, I.getType());
-  Out << ")malloc(sizeof(";
-  printType(Out, I.getType()->getElementType());
-  Out << ")";
-
-  if (I.isArrayAllocation()) {
-    Out << " * " ;
-    writeOperand(I.getOperand(0));
-  }
-  Out << ")";
+  assert(0 && "lowerallocations pass didn't work!");
 }
 
 void CWriter::visitAllocaInst(AllocaInst &I) {
@@ -1291,9 +1269,7 @@ void CWriter::visitAllocaInst(AllocaInst &I) {
 }
 
 void CWriter::visitFreeInst(FreeInst &I) {
-  Out << "free((char*)";
-  writeOperand(I.getOperand(0));
-  Out << ")";
+  assert(0 && "lowerallocations pass didn't work!");
 }
 
 void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
@@ -1394,8 +1370,14 @@ void CWriter::visitVAArgInst(VAArgInst &I) {
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
 
-void llvm::AddPassesToWriteC(PassManager &PM, std::ostream &o) {
+bool CTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &o) {
+  PM.add(createLowerAllocationsPass());
   PM.add(createLowerInvokePass());
-  //PM.add(createLowerAllocationsPass());
   PM.add(new CWriter(o));
+  return false;
+}
+
+TargetMachine *llvm::allocateCTargetMachine(const Module &M,
+                                            IntrinsicLowering *IL) {
+  return new CTargetMachine(M, IL);
 }
