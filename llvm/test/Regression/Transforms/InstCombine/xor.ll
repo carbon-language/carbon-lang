@@ -84,3 +84,17 @@ bool %test12(ubyte %A) {
 	%c = setne ubyte %B, 0
 	ret bool %c
 }
+
+bool %test13(ubyte %A, ubyte %B) {
+	%C = setlt ubyte %A, %B
+	%D = setgt ubyte %A, %B
+	%E = xor bool %C, %D        ; E = setne %A, %B
+	ret bool %E
+}
+
+bool %test14(ubyte %A, ubyte %B) {
+	%C = seteq ubyte %A, %B
+	%D = setne ubyte %B, %A
+	%E = xor bool %C, %D        ; E = true
+	ret bool %E
+}
