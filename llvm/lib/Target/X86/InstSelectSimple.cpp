@@ -641,10 +641,10 @@ ISel::visitCastInst (CastInst &CI)
 //the former is that the register allocator could use any register it wants,
 //but for now this obviously doesn't matter.  :)
 
-  Type *targetType = CI.getType ();
+  const Type *targetType = CI.getType ();
   Value *operand = CI.getOperand (0);
   unsigned int operandReg = getReg (operand);
-  Type *sourceType = operand->getType ();
+  const Type *sourceType = operand->getType ();
   unsigned int destReg = getReg (CI);
 
   // cast to bool:
