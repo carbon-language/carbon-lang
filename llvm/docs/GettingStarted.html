@@ -285,14 +285,7 @@ up</a></li>
 <li><a name="pf_6">The port is done using the MSYS shell. 
 <a href="http://www.mingw.org/MinGWiki/">Download</a> and install 
 bison (excl. M4.exe) and flex in that order.  Build binutils-2.15 from source,
-if necessary.  If you need to create a library for an MS DLL, do the following:
-<ul>
-<li><tt>pexports /C/WINNT/SYSTEM32/file.dll | sed "s/^_//" &gt;
-/C/MinGW/lib/file.def</tt></li>
-<li>Edit file and append @&lt;ordinal&gt; to the missing function name</li>
-<li><tt>dlltool.exe -k -d /C/MinGW/lib/file.def -l
-/C/MinGW/lib/libfile.a.</tt></li>
-</ul></li>
+if necessary.</li>
 </ol>
 </div>
 
