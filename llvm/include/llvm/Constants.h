@@ -557,8 +557,9 @@ public:
     return getSelectTy(V1->getType(), C, V1, V2);
   }
 
-  /// getSizeOf constant expr - computes the size of a type in a
-  /// target independent way
+  /// getSizeOf constant expr - computes the size of a type in a target
+  /// independent way (Note: the return type UInt but the object is is not
+  /// necessarily a ConstantUInt).
   ///
   static Constant *getSizeOf(const Type *Ty);
 
