@@ -59,7 +59,8 @@ private :
   void emitMachineInst(const MachineInstr *MI);
   
   void printGlobalVariable(const GlobalVariable* GV);
-  void printConstant(const ConstPoolVal* CV, string valID = string(""));
+  void printSingleConstant(const ConstPoolVal* CV, string valID = string(""));
+  void printConstant(      const ConstPoolVal* CV, string valID = string(""));
   
   unsigned int printOperands(const MachineInstr *MI, unsigned int opNum);
   void printOneOperand(const MachineOperand &Op);
@@ -187,8 +188,9 @@ SparcAsmPrinter::OpIsMemoryAddressBase(const MachineInstr *MI,
 
 
 #define PrintOp1PlusOp2(Op1, Op2) \
-  printOneOperand(Op1); toAsm << "+"; printOneOperand(Op2);
-
+  printOneOperand(Op1); \
+  toAsm << "+"; \
+  printOneOperand(Op2);
 
 unsigned int
 SparcAsmPrinter::printOperands(const MachineInstr *MI,
@@ -347,7 +349,8 @@ ArrayTypeIsString(ArrayType* arrayType)
           arrayType->getElementType() == Type::SByteTy);
 }
 
-inline const string TypeToDataDirective(const Type* type)
+inline const string
+TypeToDataDirective(const Type* type)
 {
   switch(type->getPrimitiveID())
     {
@@ -373,8 +376,9 @@ inline const string TypeToDataDirective(const Type* type)
     }
 }
 
-inline unsigned int ConstantToSize(const ConstPoolVal* CV,
-                                   const TargetMachine& target) {
+inline unsigned int
+ConstantToSize(const ConstPoolVal* CV, const TargetMachine& target)
+{
   if (ConstPoolArray* AV = dyn_cast<ConstPoolArray>(CV))
     if (ArrayTypeIsString((ArrayType*) CV->getType()))
       return 1 + AV->getNumOperands();
@@ -390,19 +394,25 @@ unsigned int TypeToSize(const Type* type, const TargetMachine& target)
 }
 
 
+// Align data larger than one L1 cache line on L1 cache line boundaries.
+// Align all smaller types on the next higher 2^x boundary (4, 8, ...).
+// 
 inline unsigned int
 TypeToAlignment(const Type* type, const TargetMachine& target)
 {
-  if (type->getPrimitiveID() == Type::ArrayTyID &&
-      ArrayTypeIsString((ArrayType*) type))
-    return target.findOptimalStorageSize(Type::LongTy);
-  
-  return target.findOptimalStorageSize(type);
+  unsigned int typeSize = target.findOptimalStorageSize(type);
+  unsigned short cacheLineSize = target.getCacheInfo().getCacheLineSize(1); 
+  if (typeSize > (int) cacheLineSize / 2)
+    return cacheLineSize;
+  else
+    for (unsigned sz=1; /*no condition*/; sz *= 2)
+      if (sz >= typeSize)
+        return sz;
 }
 
 
 void
-SparcAsmPrinter::printConstant(const ConstPoolVal* CV, string valID)
+SparcAsmPrinter::printSingleConstant(const ConstPoolVal* CV,string valID)
 {
   if (valID.length() == 0)
     valID = getID(CV);
@@ -412,20 +422,11 @@ SparcAsmPrinter::printConstant(const ConstPoolVal* CV, string valID)
          CV->getType() != Type::LabelTy &&
          "Unexpected type for ConstPoolVal");
   
-  toAsm << "\t.align\t" << TypeToAlignment(CV->getType(), Target)
-        << endl;
-  
-  toAsm << valID << ":" << endl;
+  assert((! isa<ConstPoolArray>( CV) && ! isa<ConstPoolStruct>(CV))
+         && "Collective types should be handled outside this function");
   
   toAsm << "\t"
         << TypeToDataDirective(CV->getType()) << "\t";
-  
-  if (ConstPoolArray *CPA = dyn_cast<ConstPoolArray>(CV))
-    if (isStringCompatible(CPA))
-      {
-        toAsm << getAsCString(CPA) << endl;
-        return;
-      }
   
   if (CV->getType()->isPrimitiveType())
     {
@@ -446,13 +447,54 @@ SparcAsmPrinter::printConstant(const ConstPoolVal* CV, string valID)
     }
   else
     {
-      assert(0 && "Cannot yet print non-primitive constants to assembly");
-      // toAsm << CV->getStrValue() << endl;
+      assert(0 && "Unknown elementary type for constant");
     }
-   
+}
+
+void
+SparcAsmPrinter::printConstant(const ConstPoolVal* CV, string valID)
+{
+  if (valID.length() == 0)
+    valID = getID(CV);
+  
+  assert(CV->getType() != Type::VoidTy &&
+         CV->getType() != Type::TypeTy &&
+         CV->getType() != Type::LabelTy &&
+         "Unexpected type for ConstPoolVal");
+  
+  toAsm << "\t.align\t" << TypeToAlignment(CV->getType(), Target)
+        << endl;
+  
+  // Print .size and .type only if it is not a string.
+  ConstPoolArray *CPA = dyn_cast<ConstPoolArray>(CV);
+  
+  if (CPA && isStringCompatible(CPA))
+    { // print it as a string and return
+      toAsm << valID << ":" << endl;
+      toAsm << "\t" << TypeToDataDirective(CV->getType()) << "\t"
+            << getAsCString(CPA) << endl;
+      return;
+    }
+      
   toAsm << "\t.type" << "\t" << valID << ",#object" << endl;
   toAsm << "\t.size" << "\t" << valID << ","
         << ConstantToSize(CV, Target) << endl;
+  toAsm << valID << ":" << endl;
+  
+  if (CPA)
+    { // Not a string.  Print the values in successive locations
+      const vector<Use>& constValues = CPA->getValues();
+      for (unsigned i=1; i < constValues.size(); i++)
+        this->printSingleConstant(cast<ConstPoolVal>(constValues[i].get()));
+    }
+  else if (ConstPoolStruct *CPS = dyn_cast<ConstPoolStruct>(CV))
+    { // Print the fields in successive locations
+      const vector<Use>& constValues = CPA->getValues();
+      for (unsigned i=1; i < constValues.size(); i++)
+        this->printSingleConstant(cast<ConstPoolVal>(constValues[i].get()));
+    }
+  else
+    this->printSingleConstant(CV, valID);
 }
 
 
