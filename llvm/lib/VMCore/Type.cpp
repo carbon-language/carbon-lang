@@ -401,7 +401,7 @@ StructType::StructType(const std::vector<const Type*> &Types)
   setAbstract(isAbstract);
 }
 
-ArrayType::ArrayType(const Type *ElType, unsigned NumEl)
+ArrayType::ArrayType(const Type *ElType, uint64_t NumEl)
   : SequentialType(ArrayTyID, ElType) {
   NumElements = NumEl;
 
@@ -894,16 +894,16 @@ FunctionType *FunctionType::get(const Type *ReturnType,
 namespace llvm {
 class ArrayValType {
   const Type *ValTy;
-  unsigned Size;
+  uint64_t Size;
 public:
-  ArrayValType(const Type *val, int sz) : ValTy(val), Size(sz) {}
+  ArrayValType(const Type *val, uint64_t sz) : ValTy(val), Size(sz) {}
 
   static ArrayValType get(const ArrayType *AT) {
     return ArrayValType(AT->getElementType(), AT->getNumElements());
   }
 
   static unsigned hashTypeStructure(const ArrayType *AT) {
-    return AT->getNumElements();
+    return (unsigned)AT->getNumElements();
   }
 
   // Subclass should override this... to update self as usual
@@ -921,7 +921,7 @@ public:
 static TypeMap<ArrayValType, ArrayType> ArrayTypes;
 
 
-ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
+ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
   assert(ElementType && "Can't get array of null types!");
 
   ArrayValType AVT(ElementType, NumElements);
