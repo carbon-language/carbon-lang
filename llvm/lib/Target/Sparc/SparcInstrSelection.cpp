@@ -1858,7 +1858,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         
         Method* method = instr->getParent()->getParent();
         MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(method);
-        int offsetFromFP = mcInfo.allocateLocalVar(target, instr);
+        int offsetFromFP = mcInfo.allocateLocalVar(target, instr, (unsigned int) tsize);
         
         // Create a temporary Value to hold the constant offset.
         // This is needed because it may not fit in the immediate field.
