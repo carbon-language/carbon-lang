@@ -21,15 +21,24 @@ namespace {
   Statistic<> NumTDInlines("tddatastructures", "Number of graphs inlined");
 }
 
-/// FunctionHasCompleteArguments - This function returns true if it is safe not
-/// to mark arguments to the function complete.
-///
-/// FIXME: Need to check if all callers have been found, or rather if a
-/// funcpointer escapes!
-///
-static bool FunctionHasCompleteArguments(Function &F) {
-  return F.hasInternalLinkage();
+void TDDataStructures::markReachableFunctionsExternallyAccessible(DSNode *N,
+                                                   hash_set<DSNode*> &Visited) {
+  if (Visited.count(N)) return;
+  Visited.insert(N);
+
+  for (unsigned i = 0, e = N->getNumLinks(); i != e; ++i) {
+    DSNodeHandle &NH = N->getLink(i*N->getPointerSize());
+    if (DSNode *NN = NH.getNode()) {
+      const std::vector<GlobalValue*> &Globals = NN->getGlobals();
+      for (unsigned G = 0, e = Globals.size(); G != e; ++G)
+        if (Function *F = dyn_cast<Function>(Globals[G]))
+          ArgsRemainIncomplete.insert(F);
+
+      markReachableFunctionsExternallyAccessible(NN, Visited);
+    }
+  }
 }
+
 
 // run - Calculate the top down data structure graphs for each function in the
 // program.
@@ -39,9 +48,20 @@ bool TDDataStructures::run(Module &M) {
   GlobalsGraph = new DSGraph(BU.getGlobalsGraph());
 
   // Figure out which functions must not mark their arguments complete because
-  // they are accessible outside this compilation unit.
+  // they are accessible outside this compilation unit.  Currently, these
+  // arguments are functions which are reachable by global variables in the
+  // globals graph.
+  const DSGraph::ScalarMapTy &GGSM = GlobalsGraph->getScalarMap();
+  hash_set<DSNode*> Visited;
+  for (DSGraph::ScalarMapTy::const_iterator I = GGSM.begin(), E = GGSM.end();
+       I != E; ++I)
+    if (isa<GlobalValue>(I->first))
+      markReachableFunctionsExternallyAccessible(I->second.getNode(), Visited);
+  Visited.clear();
+
+  // Functions without internal linkage also have unknown incoming arguments!
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!FunctionHasCompleteArguments(*I))
+    if (!I->isExternal() && !I->hasInternalLinkage())
       ArgsRemainIncomplete.insert(I);
 
   // We want to traverse the call graph in reverse post-order.  To do this, we
