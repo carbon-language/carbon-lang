@@ -78,9 +78,9 @@ MakeLib   = $(AR)
 
 # Source includes all of the cpp files, and objects are derived from the
 # source files...
-ifndef Source
-Source   = $(wildcard *.cpp *.c *.y *.l)
-endif
+# The local Makefile can list other Source files via Source = ...
+# 
+Source  := $(Source) $(wildcard *.cpp *.c *.y *.l)
 
 Objs = $(sort $(addsuffix .o,$(basename $(Source))))
 ObjectsO = $(addprefix Release/,$(Objs))
