@@ -3,7 +3,7 @@
  */
 
 /* Common styles */
-.body { text: black; background: white; margin: 0 0 0 0 }
+.body { color: black; background: white; margin: 0 0 0 0 }
 
 /* 
  * Documentation 
@@ -16,12 +16,27 @@
 }
 
 .doc_title      { text-align: left;   font-size: 25pt }
-.doc_section    { text-align: center; font-size: 22pt }
+.doc_section    { text-align: center; font-size: 22pt; }
 .doc_subsection { background: #441188; width: 50%;
-                  text-align: left;   font-size: 12pt; padding: 4 4 4 22 }
+                  text-align: left;   font-size: 12pt; padding: 4pt 4pt 4pt 4pt;
+                  margin: 1.5em 0.5em 1.5em 0.5em }
+
+/* In the future, the 2nd level subsection style may want to become this:
+.doc_subsubsection { margin: 1.5em 0.5em 1.5 0.5em;
+                     font-weight: bold; font-style: oblique;
+                     border-bottom: 2px dotted #999999 }
+*/
+
+/* However, to be consistent with the rest of current documentation which is not
+   all yet using stylesheets, we try to emulate the former layout. */
+.doc_subsubsection { margin: 1.5em 0.5em 1.5em 0.5em;
+                     font-weight: bold;
+                     border-top: 2px solid #cecece }
+
 .doc_text       { text-align: left;   padding-left: 20pt }
 
 /* Publications */
-.pub_title  { font-family: "Georgia,Palatino,Times,Roman"; font-size: 24pt; 
+.pub_title  { font-family: "Georgia,Palatino,Times,Roman";
+              font-size: 24pt; 
               text-align: center }
 .pub_author { font-size: 14pt; text-align: center }
