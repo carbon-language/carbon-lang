@@ -14,6 +14,7 @@
 
 #include "PPC32JITInfo.h"
 #include "PPC32TargetMachine.h"
+#include "PowerPC.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -199,8 +200,14 @@ bool PPC32CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void PPC32CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
-  for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I)
+  BBLocations[MBB.getBasicBlock()] = MCE.getCurrentPCValue();
+  for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
+    MachineInstr &MI = *I;
+    unsigned Opcode = MI.getOpcode();
+    if (Opcode == PPC::IMPLICIT_DEF) continue;
+
     emitWord(getBinaryCodeForInstr(*I));
+  }
 }
 
 unsigned PPC32CodeEmitter::getAddressOfExternalFunction(Function *F) {
@@ -212,12 +219,52 @@ unsigned PPC32CodeEmitter::getAddressOfExternalFunction(Function *F) {
   return ExternalFn2Addr[F];
 }
 
+static unsigned enumRegToMachineReg(unsigned enumReg) {
+  switch (enumReg) {
+  case PPC::R0 :  case PPC::F0 :  return  0;  
+  case PPC::R1 :  case PPC::F1 :  return  1; 
+  case PPC::R2 :  case PPC::F2 :  return  2;
+  case PPC::R3 :  case PPC::F3 :  return  3; 
+  case PPC::R4 :  case PPC::F4 :  return  4; 
+  case PPC::R5 :  case PPC::F5 :  return  5;
+  case PPC::R6 :  case PPC::F6 :  return  6; 
+  case PPC::R7 :  case PPC::F7 :  return  7; 
+  case PPC::R8 :  case PPC::F8 :  return  8;
+  case PPC::R9 :  case PPC::F9 :  return  9; 
+  case PPC::R10:  case PPC::F10:  return 10; 
+  case PPC::R11:  case PPC::F11:  return 11;
+  case PPC::R12:  case PPC::F12:  return 12; 
+  case PPC::R13:  case PPC::F13:  return 13; 
+  case PPC::R14:  case PPC::F14:  return 14;
+  case PPC::R15:  case PPC::F15:  return 15; 
+  case PPC::R16:  case PPC::F16:  return 16; 
+  case PPC::R17:  case PPC::F17:  return 17;
+  case PPC::R18:  case PPC::F18:  return 18; 
+  case PPC::R19:  case PPC::F19:  return 19; 
+  case PPC::R20:  case PPC::F20:  return 20;
+  case PPC::R21:  case PPC::F21:  return 21;
+  case PPC::R22:  case PPC::F22:  return 22; 
+  case PPC::R23:  case PPC::F23:  return 23; 
+  case PPC::R24:  case PPC::F24:  return 24;
+  case PPC::R25:  case PPC::F25:  return 25; 
+  case PPC::R26:  case PPC::F26:  return 26; 
+  case PPC::R27:  case PPC::F27:  return 27;
+  case PPC::R28:  case PPC::F28:  return 28; 
+  case PPC::R29:  case PPC::F29:  return 29; 
+  case PPC::R30:  case PPC::F30:  return 30;
+  case PPC::R31:  case PPC::F31:  return 31;
+  default:
+    std::cerr << "Unhandled reg in enumRegToRealReg!\n";
+    abort();
+  }
+}
+
 int64_t PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, 
                                             MachineOperand &MO) {
   int64_t rv = 0; // Return value; defaults to 0 for unhandled cases
                   // or things that get fixed up later by the JIT.
   if (MO.isRegister()) {
-    rv = MO.getReg();
+    rv = enumRegToMachineReg(MO.getReg());
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
   } else if (MO.isGlobalAddress()) {
@@ -234,11 +281,15 @@ int64_t PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI,
           return (intptr_t)getResolver(MCE).getLazyResolver(F);
         }
       } else if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-        if (GVar->isExternal())
+        if (GVar->isExternal()) {
           rv = MCE.getGlobalValueAddress(MO.getSymbolName());
-        else {
-          std::cerr << "PPC32CodeEmitter: External global addr not found: " 
-                    << *GVar;
+          if (!rv) {
+            std::cerr << "PPC32CodeEmitter: External global addr not found: " 
+                      << *GVar;
+            abort();
+          }
+        } else {
+          std::cerr << "PPC32CodeEmitter: global addr not found: " << *GVar;
           abort();
         }
       }
@@ -259,6 +310,20 @@ int64_t PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI,
   } else {
     std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
     abort();
+  }
+
+  // Special treatment for global symbols: constants and vars
+  if (MO.isConstantPoolIndex() || MO.isGlobalAddress()) {
+    unsigned Opcode = MI.getOpcode();
+    int64_t MBBLoc = BBLocations[MI.getParent()->getBasicBlock()];
+    if (Opcode == PPC::LOADHiAddr) {
+      // LoadHiAddr wants hi16(addr - mbb)
+      rv = (rv - MBBLoc) >> 16;
+    } else if (Opcode == PPC::LWZ || Opcode == PPC::LA ||
+               Opcode == PPC::LFS || Opcode == PPC::LFD) {
+      // These load opcodes want lo16(addr - mbb)
+      rv = (rv - MBBLoc) & 0xffff;
+    }
   }
 
   return rv;
