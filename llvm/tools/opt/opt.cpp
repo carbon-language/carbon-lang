@@ -76,11 +76,16 @@ int main(int argc, char **argv) {
   std::auto_ptr<TargetMachine> target;
 
   TargetMachine* TM = NULL;
+  std::string ErrorMessage;
 
   // Load the input module...
-  std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
+  std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
   if (M.get() == 0) {
-    cerr << argv[0] << ": bytecode didn't read correctly.\n";
+    cerr << argv[0] << ": ";
+    if (ErrorMessage.size())
+      cerr << ErrorMessage << "\n";
+    else
+      cerr << "bytecode didn't read correctly.\n";
     return 1;
   }
 

@@ -48,10 +48,15 @@ WriteMode(cl::desc("Specify the output format:"),
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
   std::ostream *Out = &std::cout;  // Default to printing to stdout...
+  std::string ErrorMessage;
 
-  std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
+  std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
   if (M.get() == 0) {
-    cerr << argv[0] << ": bytecode didn't read correctly.\n";
+    cerr << argv[0] << ": ";
+    if (ErrorMessage.size())
+      cerr << ErrorMessage << "\n";
+    else
+      cerr << "bytecode didn't read correctly.\n";
     return 1;
   }
   
