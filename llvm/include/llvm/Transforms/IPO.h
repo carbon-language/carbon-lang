@@ -66,10 +66,11 @@ Pass *createGlobalDCEPass();
 
 
 //===----------------------------------------------------------------------===//
-/// createFunctionExtractionPass - This pass deletes as much of the module as
-/// possible, except for the function specified.
+/// createFunctionExtractionPass - If isolateFn is true, this pass deletes as 
+/// much of the module as possible, except for the function specified.
+/// Otherwise, it deletes the given function, leaving everything else intact.
 ///
-Pass *createFunctionExtractionPass(Function *F);
+Pass *createFunctionExtractionPass(Function *F, bool isolateFn = true);
 
 
 //===----------------------------------------------------------------------===//
