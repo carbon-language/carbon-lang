@@ -808,7 +808,22 @@ into an existing sequence of instructions that form a <tt>BasicBlock</tt>:</p>
     <tt>BasicBlock</tt>, and a newly-created instruction we wish to insert
     before <tt>*pi</tt>, we do the following: </p>
 
-      <pre>  BasicBlock *pb = ...;<br>  Instruction *pi = ...;<br>  Instruction *newInst = new Instruction(...);<br>  pb-&gt;getInstList().insert(pi, newInst); // inserts newInst before pi in pb<br></pre></li>
+      <pre>  BasicBlock *pb = ...;<br>  Instruction *pi = ...;<br>  Instruction *newInst = new Instruction(...);<br>  pb-&gt;getInstList().insert(pi, newInst); // inserts newInst before pi in pb<br></pre>
+
+    <p>Appending to the end of a <tt>BasicBlock</tt> is so common that
+    the <tt>Instruction</tt> class and <tt>Instruction</tt>-derived
+    classes provide constructors which take a pointer to a
+    <tt>BasicBlock</tt> to be appended to. For example code that
+    looked like: </p>
+
+      <pre>  BasicBlock *pb = ...;<br>  Instruction *newInst = new Instruction(...);<br>  pb-&gt;getInstList().push_back(newInst); // appends newInst to pb<br></pre>
+
+    <p>becomes: </p>
+
+      <pre>  BasicBlock *pb = ...;<br>  Instruction *newInst = new Instruction(..., pb);<br></pre>
+
+    <p>which is much cleaner, especially if you are creating
+    long instruction streams.</p></li>
 
   <li>Insertion into an implicit instruction list
 
