@@ -10,15 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ReaderInternals.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Format.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/ConstPoolVals.h"
+#include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
-#include "ReaderInternals.h"
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>

@@ -6,10 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-
-
 #include "llvm/Transforms/HoistPHIConstants.h"
+#include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"

@@ -20,7 +20,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
-#include "llvm/iOther.h"
+#include "llvm/iPHINode.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "Support/CommandLine.h"
 #include <string.h>

@@ -10,7 +10,7 @@
 #include "llvm/Method.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Type.h"
-#include "llvm/iOther.h"
+#include "llvm/iPHINode.h"
 #include "llvm/CodeGen/MachineInstr.h"
 
 // Instantiate Templates - This ugliness is the price we have to pay

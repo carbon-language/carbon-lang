@@ -8,12 +8,11 @@
 //
 //===------------------------------------------------------------------------===
 
+#include "ReaderInternals.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstPoolVals.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
-#include "ReaderInternals.h"
 #include <algorithm>
 
 

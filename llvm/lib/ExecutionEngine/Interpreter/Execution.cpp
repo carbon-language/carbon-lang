@@ -6,6 +6,7 @@
 
 #include "Interpreter.h"
 #include "ExecutionAnnotations.h"
+#include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"

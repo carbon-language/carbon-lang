@@ -12,7 +12,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/Writer.h"
 #include "llvm/iTerminators.h"
-#include "llvm/iOther.h"
+#include "llvm/iPHINode.h"
 #include "Support/STLExtras.h"
 #include "Support/DepthFirstIterator.h"
 #include <set>

@@ -11,11 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/iOther.h"
+#include "ReaderInternals.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
-#include "llvm/DerivedTypes.h"
-#include "ReaderInternals.h"
+#include "llvm/iPHINode.h"
+#include "llvm/iOther.h"
 
 bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf, 
 				  RawInst &Result) {

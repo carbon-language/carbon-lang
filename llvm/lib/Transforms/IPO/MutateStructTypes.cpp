@@ -16,9 +16,10 @@
 #include "llvm/Method.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/iOther.h"
+#include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
+#include "llvm/iOther.h"
 #include <algorithm>
 
 // To enable debugging, uncomment this...

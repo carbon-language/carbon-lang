@@ -9,6 +9,7 @@
 #include "TransformInternals.h"
 #include "llvm/Method.h"
 #include "llvm/iOther.h"
+#include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Optimizations/ConstantHandling.h"

@@ -9,7 +9,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/iTerminators.h"
-#include "llvm/iOther.h"
+#include "llvm/iPHINode.h"
 #include "llvm/Type.h"
 
 // UnifyAllExitNodes - Unify all exit nodes of the CFG by creating a new

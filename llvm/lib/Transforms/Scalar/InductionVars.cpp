@@ -24,7 +24,7 @@
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/iOther.h"
+#include "llvm/iPHINode.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 

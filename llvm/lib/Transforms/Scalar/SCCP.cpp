@@ -21,9 +21,10 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/InstrTypes.h"
-#include "llvm/iOther.h"
+#include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
+#include "llvm/iOther.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/STLExtras.h"
 #include <algorithm>

@@ -19,7 +19,8 @@
 #include "llvm/Analysis/InductionVariable.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Expressions.h"
-#include "llvm/iOther.h"
+#include "llvm/iPHINode.h"
+#include "llvm/InstrTypes.h"
 #include "llvm/Type.h"
 #include "llvm/ConstPoolVals.h"
 

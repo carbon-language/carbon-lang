@@ -29,7 +29,7 @@
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
-#include "llvm/iOther.h"
+#include "llvm/iPHINode.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/STLExtras.h"
 #include <algorithm>

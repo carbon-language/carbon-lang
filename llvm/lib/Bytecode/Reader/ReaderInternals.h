@@ -11,6 +11,7 @@
 #include "llvm/SymTabValue.h"
 #include "llvm/Method.h"
 #include "llvm/Instruction.h"
+#include "llvm/DerivedTypes.h"
 #include <map>
 #include <utility>
 #include <list>

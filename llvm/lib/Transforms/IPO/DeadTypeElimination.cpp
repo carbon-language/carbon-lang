@@ -18,9 +18,10 @@
 #include "TransformInternals.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/iOther.h"
+#include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
+#include "llvm/iOther.h"
 #include <algorithm>
 
 static const Type *PtrArrSByte = 0; // '[sbyte]*' type

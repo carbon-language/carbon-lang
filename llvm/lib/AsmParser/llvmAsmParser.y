@@ -4,12 +4,6 @@
 //
 //===------------------------------------------------------------------------=//
 
-//
-// TODO: Parse comments and add them to an internal node... so that they may
-// be saved in the bytecode format as well as everything else.  Very important
-// for a general IR format.
-//
-
 %{
 #include "ParserInternals.h"
 #include "llvm/Assembly/Parser.h"
@@ -21,6 +15,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
+#include "llvm/iPHINode.h"
 #include "Support/STLExtras.h"
 #include "Support/DepthFirstIterator.h"
 #include <list>

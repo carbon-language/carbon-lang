@@ -27,6 +27,7 @@
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
+#include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/ConstPoolVals.h"
 
