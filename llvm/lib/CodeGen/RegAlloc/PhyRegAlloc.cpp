@@ -526,11 +526,20 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   int TmpOff = 
     mcInfo.pushTempValue(TM, TM.findOptimalStorageSize(LR->getType()));
   
-  MachineInstr *MIBef,  *AdIMid, *MIAft;
+  MachineInstr *MIBef=NULL,  *AdIMid=NULL, *MIAft=NULL;
   int TmpReg;
 
   TmpReg = getUsableRegAtMI(RC, RegType, MInst,LVSetBef, MIBef, MIAft);
   TmpReg = MRI.getUnifiedRegNum( RC->getID(), TmpReg );
+
+
+  // get the added instructions for this instruciton
+  AddedInstrns *AI = AddedInstrMap[ MInst ];
+  if ( !AI ) { 
+    AI = new AddedInstrns();
+    AddedInstrMap[ MInst ] = AI;
+  }
+
   
   
   if( !isDef ) {
@@ -542,13 +551,13 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     AdIMid = MRI.cpMem2RegMI(MRI.getFramePointer(), SpillOff, TmpReg, RegType);
 
     if( MIBef )
-      ((AddedInstrMap[MInst])->InstrnsBefore).push_back(MIBef);
+      (AI->InstrnsBefore).push_back(MIBef);
 
-    ((AddedInstrMap[MInst])->InstrnsBefore).push_back(AdIMid);
+    (AI->InstrnsBefore).push_back(AdIMid);
 
     if( MIAft)
-      ((AddedInstrMap[MInst])->InstrnsAfter).push_front(MIAft);
-
+      (AI->InstrnsAfter).push_front(MIAft);
+    
     
   } 
   else {   // if this is a Def
@@ -560,12 +569,12 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     AdIMid = MRI.cpReg2MemMI(TmpReg, MRI.getFramePointer(), SpillOff, RegType);
 
     if( MIBef )
-      ((AddedInstrMap[MInst])->InstrnsBefore).push_back(MIBef);
+      (AI->InstrnsBefore).push_back(MIBef);
 
-    ((AddedInstrMap[MInst])->InstrnsBefore).push_back(AdIMid);
+    (AI->InstrnsBefore).push_back(AdIMid);
 
     if( MIAft)
-      ((AddedInstrMap[MInst])->InstrnsAfter).push_front(MIAft);
+      (AI->InstrnsAfter).push_front(MIAft);
 
   }  // if !DEF
 
