@@ -1,6 +1,11 @@
 ; Test that: extern int X[]  and int X[] = { 1, 2, 3, 4 } are resolved 
 ; correctly.
 ;
+; RUN: if as < %s | opt -funcresolve > /dev/null
+; RUN: then echo "opt ok"
+; RUN: else exit 1   # Make sure opt doesn't abort!
+; RUN: fi
+;
 ; RUN: if as < %s | opt -funcresolve | dis | grep external
 ; RUN: then exit 1
 ; RUN: else exit 0
