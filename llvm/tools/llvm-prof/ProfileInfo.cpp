@@ -14,12 +14,7 @@
 
 #include "ProfileInfo.h"
 #include "llvm/Module.h"
-#include <iostream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdio.h>
-
+#include <cstdio>
 using namespace llvm;
 
 enum ProfilingType {
