@@ -25,7 +25,6 @@ class MachineCodeForInstruction;
 //---------------------------------------------------------------------------
 
 typedef int MachineOpCode;
-typedef int OpCodeMask;
 typedef unsigned InstrSchedClass;
 
 const MachineOpCode INVALID_MACHINE_OPCODE = -1;

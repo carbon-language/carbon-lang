@@ -52,14 +52,12 @@ I(SETX,  "setx",	3,   2,  0, true,  0,  2,  SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_
 I(SETHI, "sethi",	2,  1, B22, false, 0,  1,  SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG | M_ARITH_FLAG)
 
 // Add or add with carry.
-// Immed bit specifies if second operand is immediate(1) or register(0)
 I(ADD   , "add",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
 I(ADDcc , "addcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG | M_CC_FLAG )
 I(ADDC  , "addc",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
 I(ADDCcc, "addccc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG | M_CC_FLAG )
 
 // Subtract or subtract with carry.
-// Immed bit specifies if second operand is immediate(1) or register(0)
 I(SUB   , "sub",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
 I(SUBcc , "subcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG | M_CC_FLAG )
 I(SUBC  , "subc",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
@@ -157,8 +155,6 @@ I(FITOD, "fitod",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLA
 I(FITOQ, "fitoq",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
 
 // Branch on integer comparison with zero.
-// Annul bit specifies if intruction in delay slot is annulled(1) or not(0).
-// PredictTaken bit hints if branch should be predicted taken(1) or not(0).
 // Latency excludes the delay slot since it can be issued in same cycle.
 I(BRZ  , "brz", 	2, -1, B15, true , 1, 1,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
 I(BRLEZ, "brlez",	2, -1, B15, true , 1, 1,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
@@ -170,8 +166,6 @@ I(BRGEZ, "brgez",	2, -1, B15, true , 1, 1,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FL
 // Branch on integer condition code.
 // The first argument specifies the ICC register: %icc or %xcc
 // Latency includes the delay slot.
-// Annul bit specifies if intruction in delay slot is annulled(1) or not(0).
-// PredictTaken bit hints if branch should be predicted taken(1) or not(0).
 I(BA  , "ba",		1, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
 I(BN  , "bn",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
 I(BNE , "bne",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
@@ -190,8 +184,6 @@ I(BVC , "bvc",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
 I(BVS , "bvs",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
 
 // Branch on floating point condition code.
-// Annul bit specifies if intruction in delay slot is annulled(1) or not(0).
-// PredictTaken bit hints if branch should be predicted taken(1) or not(0).
 // The first argument is the FCCn register (0 <= n <= 3).
 // Latency includes the delay slot.
 I(FBA  , "fba",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)

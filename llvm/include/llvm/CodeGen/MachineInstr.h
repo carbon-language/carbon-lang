@@ -17,7 +17,6 @@ class Value;
 class Function;
 
 typedef int MachineOpCode;
-typedef int OpCodeMask;
 
 //---------------------------------------------------------------------------
 // class MachineOperand 
@@ -185,13 +184,6 @@ private:
 //   MachineOpCode must be an enum, defined separately for each target.
 //   E.g., It is defined in SparcInstructionSelection.h for the SPARC.
 // 
-//   opCodeMask is used to record variants of an instruction.
-//   E.g., each branch instruction on SPARC has 2 flags (i.e., 4 variants):
-//	ANNUL:		   if 1: Annul delay slot instruction.
-//	PREDICT-NOT-TAKEN: if 1: predict branch not taken.
-//   Instead of creating 4 different opcodes for BNZ, we create a single
-//   opcode and set bits in opCodeMask for each of these flags.
-//
 //  There are 2 kinds of operands:
 // 
 //  (1) Explicit operands of the machine instruction in vector operands[] 
@@ -204,7 +196,6 @@ private:
 class MachineInstr : public Annotable,         // MachineInstrs are annotable
                      public NonCopyable {      // Disable copy operations
   MachineOpCode    opCode;              // the opcode
-  OpCodeMask       opCodeMask;          // extra bits for variants of an opcode
   std::vector<MachineOperand> operands; // the operands
 
   struct ImplicitRef {

@@ -10,18 +10,18 @@ using std::cerr;
 
 // Constructor for instructions with fixed #operands (nearly all)
 MachineInstr::MachineInstr(MachineOpCode _opCode)
-  : opCode(_opCode), opCodeMask(0),
+  : opCode(_opCode),
     operands(TargetInstrDescriptors[_opCode].numOperands, MachineOperand()) {
   assert(TargetInstrDescriptors[_opCode].numOperands >= 0);
 }
 
 // Constructor for instructions with variable #operands
 MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands)
-  : opCode(OpCode), opCodeMask(0), operands(numOperands, MachineOperand()) {
+  : opCode(OpCode), operands(numOperands, MachineOperand()) {
 }
 
 MachineInstr::MachineInstr(MachineOpCode Opcode, unsigned numOperands,
-                           bool XX, bool YY) : opCode(Opcode), opCodeMask(0) {
+                           bool XX, bool YY) : opCode(Opcode) {
   operands.reserve(numOperands);
 }
 
@@ -41,7 +41,6 @@ bool MachineInstr::OperandsComplete() const {
 // 
 void MachineInstr::replace(MachineOpCode Opcode, unsigned numOperands) {
   opCode = Opcode;
-  opCodeMask = 0;
   operands.clear();
   operands.resize(numOperands, MachineOperand());
 }

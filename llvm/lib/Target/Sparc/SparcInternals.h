@@ -22,13 +22,6 @@ class UltraSparc;
 class PhyRegAlloc;
 class Pass;
 
-// OpCodeMask definitions for the Sparc V9
-// 
-const OpCodeMask	Immed		= 0x00002000; // immed or reg operand?
-const OpCodeMask	Annul		= 0x20000000; // annul delay instr?
-const OpCodeMask	PredictTaken	= 0x00080000; // predict branch taken?
-
-
 enum SparcInstrSchedClass {
   SPARC_NONE,		/* Instructions with no scheduling restrictions */
   SPARC_IEUN,		/* Integer class that can use IEU0 or IEU1 */
