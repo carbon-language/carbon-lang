@@ -85,7 +85,10 @@ struct AnalysisResolver {
     return getAnalysisOrNullUp(ID);
   }
 
+  // Methods for introspecting into pass manager objects...
   virtual unsigned getDepth() const = 0;
+  virtual unsigned getNumContainedPasses() const = 0;
+  virtual const Pass *getContainedPass(unsigned N) const = 0;
 
   virtual void markPassUsed(AnalysisID P, Pass *User) = 0;
 
