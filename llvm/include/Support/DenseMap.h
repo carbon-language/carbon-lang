@@ -24,39 +24,45 @@
 
 namespace llvm {
 
-template <typename T, typename ToIndexT>
-class DenseMap {
+  struct IdentityFunctor : std::unary_function<unsigned, unsigned> {
+    unsigned operator()(unsigned Index) const {
+      return Index;
+    }
+  };
+
+  template <typename T, typename ToIndexT = IdentityFunctor>
+  class DenseMap {
     typedef typename ToIndexT::argument_type IndexT;
     typedef std::vector<T> StorageT;
     StorageT storage_;
     T nullVal_;
     ToIndexT toIndex_;
 
-public:
+  public:
     DenseMap() : nullVal_(T()) { }
 
     explicit DenseMap(const T& val) : nullVal_(val) { }
 
     typename StorageT::reference operator[](IndexT n) {
-        assert(toIndex_(n) < storage_.size() && "index out of bounds!");
-        return storage_[toIndex_(n)];
+      assert(toIndex_(n) < storage_.size() && "index out of bounds!");
+      return storage_[toIndex_(n)];
     }
 
     typename StorageT::const_reference operator[](IndexT n) const {
-        assert(toIndex_(n) < storage_.size() && "index out of bounds!");
-        return storage_[toIndex_(n)];
+      assert(toIndex_(n) < storage_.size() && "index out of bounds!");
+      return storage_[toIndex_(n)];
     }
 
     void clear() {
-        storage_.clear();
+      storage_.clear();
     }
 
     void grow(IndexT n) {
-        unsigned NewSize = toIndex_(n) + 1;
-        if (NewSize > storage_.size())
-            storage_.resize(NewSize, nullVal_);
+      unsigned NewSize = toIndex_(n) + 1;
+      if (NewSize > storage_.size())
+        storage_.resize(NewSize, nullVal_);
     }
-};
+  };
 
 } // End llvm namespace
 
