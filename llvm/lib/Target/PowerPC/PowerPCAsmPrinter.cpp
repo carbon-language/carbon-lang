@@ -367,8 +367,8 @@ void PowerPCAsmPrinter::printOp(const MachineOperand &MO,
     }
     
     // External or weakly linked global variables need non-lazily-resolved stubs
-    if ((GV->isExternal() || GV->hasWeakLinkage()) && 
-        getTM().AddressTaken.count(GV)) {
+    if ((GV->isExternal() || GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) 
+         && getTM().AddressTaken.count(GV)) {
       GVStubs.insert(Name);
       O << "L" << Name << "$non_lazy_ptr";
       return;
@@ -472,7 +472,8 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       unsigned Align = TD.getTypeAlignmentShift(C->getType());
 
       if (C->isNullValue() && /* FIXME: Verify correct */
-          (I->hasInternalLinkage() || I->hasWeakLinkage())) {
+          (I->hasInternalLinkage() || I->hasWeakLinkage() || 
+           I->hasLinkOnceLinkage())) {
         SwitchSection(O, CurSection, ".data");
         if (I->hasInternalLinkage())
           O << ".lcomm " << name << "," << TD.getTypeSize(C->getType())
