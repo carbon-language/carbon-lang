@@ -31,8 +31,23 @@ static inline bool Error(std::string *E, const std::string &Message) {
   return true;
 }
 
-// ResolveTypes - Attempt to link the two specified types together.  Return true
-// if there is an error and they cannot yet be linked.
+//
+// Function: ResolveTypes()
+//
+// Description:
+//  Attempt to link the two specified types together.
+//
+// Inputs:
+//  DestTy - The type to which we wish to resolve.
+//  SrcTy  - The original type which we want to resolve.
+//  Name   - The name of the type.
+//
+// Outputs:
+//  DestST - The symbol table in which the new type should be placed.
+//
+// Return value:
+//  true  - There is an error and the types cannot yet be linked.
+//  false - No errors.
 //
 static bool ResolveTypes(const Type *DestTy, const Type *SrcTy,
                          SymbolTable *DestST, const std::string &Name) {
@@ -356,13 +371,27 @@ static GlobalValue *FindGlobalNamed(const std::string &Name, const Type *Ty,
   for (SymbolTable::iterator I = ST->begin(), E = ST->end(); I != E; ++I)
     if (I->first != Type::TypeTy) {
       SymbolTable::VarMap &VM = I->second;
+
       // Does this type plane contain an entry with the specified name?
       SymbolTable::type_iterator TI = VM.find(Name);
       if (TI != VM.end()) {
+        //
+        // Ensure that this type if placed correctly into the symbol table.
+        //
+        assert(TI->second->getType() == I->first && "Type conflict!");
+
+        //
+        // Save a reference to the new type.  Resolving the type can modify the
+        // symbol table, invalidating the TI variable.
+        //
+        Value *ValPtr = TI->second;
+
+        //
         // Determine whether we can fold the two types together, resolving them.
         // If so, we can use this value.
+        //
         if (!RecursiveResolveTypes(Ty, I->first, ST, ""))
-          return cast<GlobalValue>(TI->second);
+          return cast<GlobalValue>(ValPtr);
       }
     }
   return 0;  // Otherwise, nothing could be found.
