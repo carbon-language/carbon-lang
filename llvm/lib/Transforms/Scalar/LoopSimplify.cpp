@@ -484,19 +484,43 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
 /// dominators, dominator trees, and dominance frontiers) after a new block has
 /// been added to the CFG.
 ///
-/// This only supports the case when an existing block (known as "Exit"), had
-/// some of its predecessors factored into a new basic block.  This
+/// This only supports the case when an existing block (known as "NewBBSucc"),
+/// had some of its predecessors factored into a new basic block.  This
 /// transformation inserts a new basic block ("NewBB"), with a single
-/// unconditional branch to Exit, and moves some predecessors of "Exit" to now
-/// branch to NewBB.  These predecessors are listed in PredBlocks, even though
-/// they are the same as pred_begin(NewBB)/pred_end(NewBB).
+/// unconditional branch to NewBBSucc, and moves some predecessors of
+/// "NewBBSucc" to now branch to NewBB.  These predecessors are listed in
+/// PredBlocks, even though they are the same as
+/// pred_begin(NewBB)/pred_end(NewBB).
 ///
 void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
                                          std::vector<BasicBlock*> &PredBlocks) {
+  assert(!PredBlocks.empty() && "No predblocks??");
   assert(succ_begin(NewBB) != succ_end(NewBB) &&
          ++succ_begin(NewBB) == succ_end(NewBB) &&
          "NewBB should have a single successor!");
+  BasicBlock *NewBBSucc = *succ_begin(NewBB);
   DominatorSet &DS = getAnalysis<DominatorSet>();
+
+  // The newly inserted basic block will dominate existing basic blocks iff the
+  // PredBlocks dominate all of the non-pred blocks.  If all predblocks dominate
+  // the non-pred blocks, then they all must be the same block!
+  bool NewBBDominatesNewBBSucc = true;
+  {
+    BasicBlock *OnePred = PredBlocks[0];
+    for (unsigned i = 1, e = PredBlocks.size(); i != e; ++i)
+      if (PredBlocks[i] != OnePred) {
+        NewBBDominatesNewBBSucc = false;
+        break;
+      }
+
+    if (NewBBDominatesNewBBSucc)
+      for (pred_iterator PI = pred_begin(NewBBSucc), E = pred_end(NewBBSucc);
+           PI != E; ++PI)
+        if (*PI != NewBB && !DS.dominates(OnePred, *PI)) {
+          NewBBDominatesNewBBSucc = false;
+          break;
+        }
+  }
 
   // Update dominator information...  The blocks that dominate NewBB are the
   // intersection of the dominators of predecessors, plus the block itself.
@@ -508,13 +532,22 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
   NewBBDomSet.insert(NewBB);  // All blocks dominate themselves...
   DS.addBasicBlock(NewBB, NewBBDomSet);
 
+  // If NewBB dominates some blocks, then it will dominate all blocks that
+  // PredBlocks[0] used to except for PredBlocks[0] itself.
+  if (NewBBDominatesNewBBSucc) {
+    BasicBlock *PredBlock = PredBlocks[0];
+    Function *F = NewBB->getParent();
+    for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+      if (DS.properlyDominates(PredBlock, I))
+        DS.addDominator(I, NewBB);
+  }
+
   // Update immediate dominator information if we have it...
   BasicBlock *NewBBIDom = 0;
   if (ImmediateDominators *ID = getAnalysisToUpdate<ImmediateDominators>()) {
-    // This block does not strictly dominate anything, so it is not an immediate
-    // dominator.  To find the immediate dominator of the new exit node, we
-    // trace up the immediate dominators of a predecessor until we find a basic
-    // block that dominates the exit block.
+    // To find the immediate dominator of the new exit node, we trace up the
+    // immediate dominators of a predecessor until we find a basic block that
+    // dominates the exit block.
     //
     BasicBlock *Dom = PredBlocks[0];  // Some random predecessor...
     while (!NewBBDomSet.count(Dom)) {  // Loop until we find a dominator...
@@ -525,13 +558,21 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
     // Set the immediate dominator now...
     ID->addNewBlock(NewBB, Dom);
     NewBBIDom = Dom;   // Reuse this if calculating DominatorTree info...
+
+    // If NewBB strictly dominates other blocks, we need to update their idom's
+    // now.  The only block that need adjustment is the NewBBSucc block, whose
+    // idom should currently be set to PredBlocks[0].
+    if (NewBBDominatesNewBBSucc) {
+      assert(ID->get(NewBBSucc) == PredBlocks[0] &&
+             "Immediate dominator update code broken!");
+      ID->setImmediateDominator(NewBBSucc, NewBB);
+    }
   }
 
   // Update DominatorTree information if it is active.
   if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>()) {
-    // NewBB doesn't dominate anything, so just create a node and link it into
-    // its immediate dominator.  If we don't have ImmediateDominator info
-    // around, calculate the idom as above.
+    // If we don't have ImmediateDominator info around, calculate the idom as
+    // above.
     DominatorTree::Node *NewBBIDomNode;
     if (NewBBIDom) {
       NewBBIDomNode = DT->getNode(NewBBIDom);
@@ -543,27 +584,58 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
       }
     }
 
-    // Create the new dominator tree node...
-    DT->createNewNode(NewBB, NewBBIDomNode);
+    // Create the new dominator tree node... and set the idom of NewBB.
+    DominatorTree::Node *NewBBNode = DT->createNewNode(NewBB, NewBBIDomNode);
+
+    // If NewBB strictly dominates other blocks, then it is now the immediate
+    // dominator of NewBBSucc.  Update the dominator tree as appropriate.
+    if (NewBBDominatesNewBBSucc) {
+      DominatorTree::Node *NewBBSuccNode = DT->getNode(NewBBSucc);
+      assert(NewBBSuccNode->getIDom()->getBlock() == PredBlocks[0] &&
+             "Immediate tree update code broken!");
+      DT->changeImmediateDominator(NewBBSuccNode, NewBBNode);
+    }
   }
 
   // Update dominance frontier information...
   if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>()) {
-    // DF(NewBB) is {Exit} because NewBB does not strictly dominate Exit, but it
-    // does dominate itself (and there is an edge (NewBB -> Exit)).  Exit is the
-    // single successor of NewBB.
-    DominanceFrontier::DomSetType NewDFSet;
-    BasicBlock *Exit = *succ_begin(NewBB);
-    NewDFSet.insert(Exit);
-    DF->addBasicBlock(NewBB, NewDFSet);
+    // If NewBB dominates NewBBSucc, then the global dominance frontiers are not
+    // changed.  DF(NewBB) is now going to be the DF(PredBlocks[0]) without the
+    // stuff that the new block does not dominate a predecessor of.
+    if (NewBBDominatesNewBBSucc) {
+      DominanceFrontier::iterator DFI = DF->find(PredBlocks[0]);
+      if (DFI != DF->end()) {
+        DominanceFrontier::DomSetType Set = DFI->second;
+        // Filter out stuff in Set that we do not dominate a predecessor of.
+        for (DominanceFrontier::DomSetType::iterator SetI = Set.begin(),
+               E = Set.end(); SetI != E;) {
+          bool DominatesPred = false;
+          for (pred_iterator PI = pred_begin(*SetI), E = pred_end(*SetI);
+               PI != E; ++PI)
+            if (DS.dominates(NewBB, *PI))
+              DominatesPred = true;
+          if (!DominatesPred)
+            Set.erase(SetI++);
+          else
+            ++SetI;
+        }
 
-    // Now we must loop over all of the dominance frontiers in the function,
-    // replacing occurrences of Exit with NewBB in some cases.  All blocks that
-    // dominate a block in PredBlocks and contained Exit in their dominance
-    // frontier must be updated to contain NewBB instead.  This only occurs if
-    // there is more than one block in PredBlocks.
-    //
-    if (PredBlocks.size() > 1) {
+        DF->addBasicBlock(NewBB, Set);
+      }
+
+    } else {
+      // DF(NewBB) is {NewBBSucc} because NewBB does not strictly dominate
+      // NewBBSucc, but it does dominate itself (and there is an edge (NewBB ->
+      // NewBBSucc)).  NewBBSucc is the single successor of NewBB.
+      DominanceFrontier::DomSetType NewDFSet;
+      NewDFSet.insert(NewBBSucc);
+      DF->addBasicBlock(NewBB, NewDFSet);
+      
+      // Now we must loop over all of the dominance frontiers in the function,
+      // replacing occurrences of NewBBSucc with NewBB in some cases.  All
+      // blocks that dominate a block in PredBlocks and contained NewBBSucc in
+      // their dominance frontier must be updated to contain NewBB instead.
+      //
       for (unsigned i = 0, e = PredBlocks.size(); i != e; ++i) {
         BasicBlock *Pred = PredBlocks[i];
         // Get all of the dominators of the predecessor...
@@ -572,13 +644,13 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
                PDE = PredDoms.end(); PDI != PDE; ++PDI) {
           BasicBlock *PredDom = *PDI;
 
-          // If the Exit node is in DF(PredDom), then PredDom didn't dominate
-          // Exit but did dominate a predecessor of it.  Now we change this
-          // entry to include NewBB in the DF instead of Exit.
+          // If the NewBBSucc node is in DF(PredDom), then PredDom didn't
+          // dominate NewBBSucc but did dominate a predecessor of it.  Now we
+          // change this entry to include NewBB in the DF instead of NewBBSucc.
           DominanceFrontier::iterator DFI = DF->find(PredDom);
           assert(DFI != DF->end() && "No dominance frontier for node?");
-          if (DFI->second.count(Exit)) {
-            DF->removeFromFrontier(DFI, Exit);
+          if (DFI->second.count(NewBBSucc)) {
+            DF->removeFromFrontier(DFI, NewBBSucc);
             DF->addToFrontier(DFI, NewBB);
           }
         }
