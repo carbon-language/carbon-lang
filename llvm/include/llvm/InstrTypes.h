@@ -77,11 +77,27 @@ public:
   static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
 				const std::string &Name = "");
 
-  // createNeg, createNot - Helper constructors that create the "neg" and "not"
-  // instructions out of "sub" and "xor" instructions.
+  // Helper functions to construct and inspect unary operations (NEG and NOT)
+  // via binary operators SUB and XOR:
+  // 
+  // createNeg, createNot - Create the NEG and NOT
+  //     instructions out of SUB and XOR instructions.
   //
+  // isNeg, isNot - Check if the given Value is a NEG or NOT instruction.
+  //
+  // getNegArgument, getNotArgument - Helper functions to extract the
+  //     unary argument of a NEG or NOT operation implemented via Sub or Xor.
+  // 
   static BinaryOperator *createNeg(Value *Op, const std::string &Name = "");
   static BinaryOperator *createNot(Value *Op, const std::string &Name = "");
+
+  static bool            isNeg(const Value *V);
+  static bool            isNot(const Value *V);
+
+  static const Value*    getNegArgument(const BinaryOperator* Bop);
+  static       Value*    getNegArgument(      BinaryOperator* Bop);
+  static const Value*    getNotArgument(const BinaryOperator* Bop);
+  static       Value*    getNotArgument(      BinaryOperator* Bop);
 
   BinaryOps getOpcode() const { 
     return (BinaryOps)Instruction::getOpcode();

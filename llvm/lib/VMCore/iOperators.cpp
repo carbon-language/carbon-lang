@@ -37,6 +37,71 @@ BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name) {
 }
 
 
+// isConstantZero - Helper function for several functions below
+inline bool isConstantZero(const Value* V) {
+  return isa<Constant>(V) && dyn_cast<Constant>(V)->isNullValue();
+}
+
+// isConstantAllOnes - Helper function for several functions below
+inline bool isConstantAllOnes(const Value* V) {
+  return (isa<ConstantIntegral>(V) &&
+          dyn_cast<ConstantIntegral>(V)->isAllOnesValue());
+}
+
+bool BinaryOperator::isNeg(const Value *V) {
+  if (const BinaryOperator* Bop = dyn_cast<BinaryOperator>(V))
+    return (Bop->getOpcode() == Instruction::Sub &&
+            isConstantZero(Bop->getOperand(0)));
+  return false;
+}
+
+bool BinaryOperator::isNot(const Value *V) {
+  if (const BinaryOperator* Bop = dyn_cast<BinaryOperator>(V))
+    return (Bop->getOpcode() == Instruction::Xor &&
+            (isConstantAllOnes(Bop->getOperand(1)) ||
+             isConstantAllOnes(Bop->getOperand(0))));
+  return false;
+}
+
+// getNegArg -- Helper function for getNegArgument operations.
+// Note: This function requires that Bop is a Neg operation.
+// 
+inline Value* getNegArg(BinaryOperator* Bop) {
+  assert(BinaryOperator::isNeg(Bop));
+  return Bop->getOperand(1);
+}
+
+// getNotArg -- Helper function for getNotArgument operations.
+// Note: This function requires that Bop is a Not operation.
+// 
+inline Value* getNotArg(BinaryOperator* Bop) {
+  assert(Bop->getOpcode() == Instruction::Xor);
+  Value* notArg   = Bop->getOperand(0);
+  Value* constArg = Bop->getOperand(1);
+  if (! isConstantAllOnes(constArg)) {
+    assert(isConstantAllOnes(notArg));
+    notArg = constArg;
+  }
+  return notArg;
+}
+
+const Value* BinaryOperator::getNegArgument(const BinaryOperator* Bop) {
+  return getNegArg((BinaryOperator*) Bop);
+}
+
+Value* BinaryOperator::getNegArgument(BinaryOperator* Bop) {
+  return getNegArg(Bop);
+}
+
+const Value* BinaryOperator::getNotArgument(const BinaryOperator* Bop) {
+  return getNotArg((BinaryOperator*) Bop);
+}
+
+Value* BinaryOperator::getNotArgument(BinaryOperator* Bop) {
+  return getNotArg(Bop);
+}
+
+
 // swapOperands - Exchange the two operands to this instruction.  This
 // instruction is safe to use on any binary instruction and does not
 // modify the semantics of the instruction.  If the instruction is
