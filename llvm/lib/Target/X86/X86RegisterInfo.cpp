@@ -33,7 +33,7 @@ X86RegisterInfo::storeReg2RegOffset(MachineBasicBlock &MBB,
   static const unsigned Opcode[] = { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32 };
   MachineInstr *MI = addRegOffset(BuildMI(Opcode[getIdx(dataSize)], 5),
                                   DestReg, ImmOffset).addReg(SrcReg);
-  return ++MBB.insert(MBBI, MI);
+  return MBB.insert(MBBI, MI)+1;
 }
 
 MachineBasicBlock::iterator
@@ -46,7 +46,7 @@ X86RegisterInfo::loadRegOffset2Reg(MachineBasicBlock &MBB,
   static const unsigned Opcode[] = { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32 };
   MachineInstr *MI = addRegOffset(BuildMI(Opcode[getIdx(dataSize)], 4, DestReg),
                                   SrcReg, ImmOffset);
-  return ++MBB.insert(MBBI, MI);
+  return MBB.insert(MBBI, MI)+1;
 }
 
 MachineBasicBlock::iterator
@@ -57,7 +57,7 @@ X86RegisterInfo::moveReg2Reg(MachineBasicBlock &MBB,
 {
   static const unsigned Opcode[] = { X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
   MachineInstr *MI = BuildMI(Opcode[getIdx(dataSize)],1,DestReg).addReg(SrcReg);
-  return ++MBB.insert(MBBI, MI);
+  return MBB.insert(MBBI, MI)+1;
 }
 
 MachineBasicBlock::iterator
@@ -68,7 +68,7 @@ X86RegisterInfo::moveImm2Reg(MachineBasicBlock &MBB,
 {
   static const unsigned Opcode[] = { X86::MOVir8, X86::MOVir16, X86::MOVir32 };
   MachineInstr *MI = BuildMI(Opcode[getIdx(dataSize)], 1, DestReg).addReg(Imm);
-  return ++MBB.insert(MBBI, MI);
+  return MBB.insert(MBBI, MI)+1;
 }
 
 
@@ -103,24 +103,24 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF,
 
   // PUSH ebp
   MachineInstr *MI = BuildMI(X86::PUSHr32, 1).addReg(X86::EBP);
-  MBBI = ++MBB.insert(MBBI, MI);
+  MBBI = MBB.insert(MBBI, MI)+1;
 
   // MOV ebp, esp
   MI = BuildMI(X86::MOVrr32, 1, X86::EBP).addReg(X86::ESP);
-  MBBI = ++MBB.insert(MBBI, MI);
+  MBBI = MBB.insert(MBBI, MI)+1;
 
   // adjust stack pointer: ESP -= numbytes
   MI  = BuildMI(X86::SUBri32, 2, X86::ESP).addReg(X86::ESP).addZImm(NumBytes);
-  MBBI = ++MBB.insert(MBBI, MI);
+  MBBI = 1+MBB.insert(MBBI, MI);
 }
 
 void X86RegisterInfo::emitEpilogue(MachineBasicBlock &MBB,
                                    unsigned numBytes) const {
-  MachineBasicBlock::iterator MBBI = --MBB.end();
+  MachineBasicBlock::iterator MBBI = MBB.end()-1;
   assert((*MBBI)->getOpcode() == X86::RET &&
          "Can only insert epilog into returning blocks");
 
   // insert LEAVE: mov ESP, EBP; pop EBP
-  MBBI = ++MBB.insert(MBBI, BuildMI(X86::MOVrr32, 1,X86::ESP).addReg(X86::EBP));
-  MBBI = ++MBB.insert(MBBI, BuildMI(X86::POPr32, 1).addReg(X86::EBP));
+  MBBI = 1+MBB.insert(MBBI, BuildMI(X86::MOVrr32, 1,X86::ESP).addReg(X86::EBP));
+  MBBI = 1+MBB.insert(MBBI, BuildMI(X86::POPr32, 1).addReg(X86::EBP));
 }
