@@ -193,9 +193,14 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       // If there are any more uses that we could not resolve, force them to use
       // a casted pointer now.
       if (!Old->use_empty()) {
+        NumResolved += Old->use_size();
         Constant *NewCPR = ConstantPointerRef::get(Concrete);
         Old->replaceAllUsesWith(ConstantExpr::getCast(NewCPR, Old->getType()));
+        Changed = true;
       }
+
+      // Since there are no uses of Old anymore, remove it from the module.
+      M.getFunctionList().erase(Old);
     }
   return Changed;
 }
@@ -345,8 +350,7 @@ bool FunctionResolvingPass::run(Module &M) {
         GlobalValue *GV = cast<GlobalValue>(PI->second);
         assert(PI->first == GV->getName() &&
                "Global name and symbol table do not agree!");
-        if (!GV->hasInternalLinkage())  // Only resolve decls to external fns
-          Globals[PI->first].push_back(GV);
+        Globals[PI->first].push_back(GV);
       }
     }
 
