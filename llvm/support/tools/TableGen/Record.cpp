@@ -53,10 +53,19 @@ Init *BitsRecTy::convertValue(BitInit *UI) {
 //
 Init *BitsRecTy::convertValue(IntInit *II) {
   int Value = II->getValue();
+  // Make sure this bitfield is large enough to hold the integer value...
+  if (Value >= 0) {
+    if (Value & ~((1 << Size)-1))
+      return 0;
+  } else {
+    if ((Value >> Size) != -1 || ((Value & (1 << Size-1)) == 0))
+      return 0;
+  }
 
   BitsInit *Ret = new BitsInit(Size);
   for (unsigned i = 0; i != Size; ++i)
     Ret->setBit(i, new BitInit(Value & (1 << i)));
+
   return Ret;
 }
 
