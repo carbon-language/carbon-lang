@@ -17,6 +17,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/ConstPoolVals.h"
+#include "llvm/Method.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
 #include "llvm/iMemory.h"
@@ -299,6 +301,8 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
   const MachineInstrDescriptor& instrDesc =
     target.getInstrInfo().getDescriptor(minstr->getOpCode());
   
+  Method* method = vmInstr->getParent()->getParent();
+  
   for (unsigned op=0; op < minstr->getNumOperands(); op++)
     {
       const MachineOperand& mop = minstr->getOperand(op);
@@ -330,8 +334,14 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
             constantThatMustBeLoaded = true; // load is generated below
           else
             minstr->SetMachineOperand(op, opType, immedValue);
-        }
 
+          if (constantThatMustBeLoaded)
+            { // register the value so it is emitted in the assembly
+              method->getMachineCode().addToConstantPool(
+                                                 cast<ConstPoolVal>(opValue));
+            }
+        }
+      
       if (constantThatMustBeLoaded || isa<GlobalValue>(opValue))
         { // opValue is a constant that must be explicitly loaded into a reg.
           TmpInstruction* tmpReg = InsertCodeToLoadConstant(opValue, vmInstr,
@@ -355,50 +365,19 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
     if (isa<ConstPoolVal>(minstr->getImplicitRef(i)) ||
         isa<GlobalValue>(minstr->getImplicitRef(i)))
       {
+        Value* oldVal = minstr->getImplicitRef(i);
         TmpInstruction* tmpReg =
-          InsertCodeToLoadConstant(minstr->getImplicitRef(i), vmInstr,
-                                   loadConstVec, target);
+          InsertCodeToLoadConstant(oldVal, vmInstr, loadConstVec, target);
         minstr->setImplicitRef(i, tmpReg);
+        
+        if (isa<ConstPoolVal>(oldVal))
+          { // register the value so it is emitted in the assembly
+            method->getMachineCode().addToConstantPool(
+                                               cast<ConstPoolVal>(oldVal));
+          }
       }
   
   return loadConstVec;
 }
-
-
-#undef SAVE_TO_MOVE_BACK_TO_SPARCISSCPP
-#ifdef SAVE_TO_MOVE_BACK_TO_SPARCISSCPP
-unsigned
-FixConstantOperands(const InstructionNode* vmInstrNode,
-                    TargetMachine& target)
-{
-  Instruction* vmInstr = vmInstrNode->getInstruction();
-  MachineCodeForVMInstr& mvec = vmInstr->getMachineInstrVec();
-  
-  for (unsigned i=0; i < mvec.size(); i++)
-    {
-      vector<MachineInsr*> loadConstVec =
-        FixConstantOperandsForInstr(mvec[i], target);
-    }
-  
-  // 
-  // Finally, inserted the generated instructions in the vector
-  // to be returned.
-  // 
-  unsigned numNew = loadConstVec.size();
-  if (numNew > 0)
-    {
-      // Insert the new instructions *before* the old ones by moving
-      // the old ones over `numNew' positions (last-to-first, of course!).
-      // We do check *after* returning that we did not exceed the vector mvec.
-      for (int i=numInstr-1; i >= 0; i--)
-        mvec[i+numNew] = mvec[i];
-      
-      for (unsigned i=0; i < numNew; i++)
-        mvec[i] = loadConstVec[i];
-    }
-  
-  return (numInstr + numNew);
-}
-#endif SAVE_TO_MOVE_BACK_TO_SPARCISSCPP
 
 
