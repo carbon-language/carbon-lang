@@ -1,6 +1,6 @@
 ; The %A getelementptr instruction should be eliminated here
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep getelementptr | not grep '%A '
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep -v '%B' | not grep getelementptr
 
 %Global = constant [10 x sbyte] c"helloworld"
 
@@ -27,10 +27,11 @@ int* %foo4({int} *%I) { ; Test that two getelementptr insts fold
 	ret int* %B
 }
 
-sbyte * %foo5() {
+void %foo5(sbyte %B) {
 	; This should be turned into a constexpr instead of being an instruction
 	%A = getelementptr [10 x sbyte]* %Global, long 0, long 4
-	ret sbyte* %A
+	store sbyte %B, sbyte* %A
+	ret void
 }
 
 int* %foo6() {
@@ -50,4 +51,10 @@ sbyte* %foo8([10 x int]* %X) {
 	%A = getelementptr [10 x int]* %X, long 0, long 0   ;; Fold into the cast.
 	%B = cast int* %A to sbyte*
 	ret sbyte * %B
+}
+
+int %test9() {
+	%A = getelementptr {int, double}* null, int 0, uint 1
+	%B = cast double* %A to int
+	ret int %B
 }
