@@ -489,6 +489,7 @@ public:
   
   unsigned getGlobalBaseReg();
   unsigned getConstDouble(double floatVal, unsigned Result);
+  bool SelectBitfieldInsert(SDOperand OR, unsigned Result);
   unsigned SelectSetCR0(SDOperand CC);
   unsigned SelectExpr(SDOperand N);
   unsigned SelectExprFP(SDOperand N, unsigned Result);
@@ -508,6 +509,61 @@ static unsigned ExactLog2(unsigned Val) {
     ++Count;
   }
   return Count;
+}
+
+// IsRunOfOnes - returns true if Val consists of one contiguous run of 1's with
+// any number of 0's on either side.  the 1's are allowed to wrap from LSB to
+// MSB.  so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
+// not, since all 1's are not contiguous.
+static bool IsRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
+  bool isRun = true;
+  MB = 0; 
+  ME = 0;
+
+  // look for first set bit
+  int i = 0;
+  for (; i < 32; i++) {
+    if ((Val & (1 << (31 - i))) != 0) {
+      MB = i;
+      ME = i;
+      break;
+    }
+  }
+  
+  // look for last set bit
+  for (; i < 32; i++) {
+    if ((Val & (1 << (31 - i))) == 0)
+      break;
+    ME = i;
+  }
+
+  // look for next set bit
+  for (; i < 32; i++) {
+    if ((Val & (1 << (31 - i))) != 0)
+      break;
+  }
+  
+  // if we exhausted all the bits, we found a match at this point for 0*1*0*
+  if (i == 32)
+    return true;
+
+  // since we just encountered more 1's, if it doesn't wrap around to the
+  // most significant bit of the word, then we did not find a match to 1*0*1* so
+  // exit.
+  if (MB != 0)
+    return false;
+
+  // look for last set bit
+  for (MB = i; i < 32; i++) {
+    if ((Val & (1 << (31 - i))) == 0)
+      break;
+  }
+  
+  // if we exhausted all the bits, then we found a match for 1*0*1*, otherwise,
+  // the value is not a run of ones.
+  if (i == 32)
+    return true;
+  return false;
 }
 
 /// getImmediateForOpcode - This method returns a value indicating whether
@@ -767,6 +823,78 @@ unsigned ISel::getConstDouble(double doubleVal, unsigned Result=0) {
     .addConstantPoolIndex(CPI);
   BuildMI(BB, PPC::LFD, 2, Result).addConstantPoolIndex(CPI).addReg(Tmp1);
   return Result;
+}
+
+/// SelectBitfieldInsert - turn an or of two masked values into 
+/// the rotate left word immediate then mask insert (rlwimi) instruction.
+/// Returns true on success, false if the caller still needs to select OR.
+///
+/// Patterns matched:
+/// 1. or shl, and   5. or and, and
+/// 2. or and, shl   6. or shl, shr
+/// 3. or shr, and   7. or shr, shl
+/// 4. or and, shr
+bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
+  unsigned TgtMask = 0xFFFFFFFF, InsMask = 0xFFFFFFFF, Amount = 0;
+  unsigned Op0Opc = OR.getOperand(0).getOpcode();
+  unsigned Op1Opc = OR.getOperand(1).getOpcode();
+  
+  // Verify that we have the correct opcodes
+  if (ISD::SHL != Op0Opc && ISD::SRL != Op0Opc && ISD::AND != Op0Opc)
+    return false;
+  if (ISD::SHL != Op1Opc && ISD::SRL != Op1Opc && ISD::AND != Op1Opc)
+    return false;
+    
+  // Generate Mask value for Target
+  if (ConstantSDNode *CN = 
+      dyn_cast<ConstantSDNode>(OR.getOperand(0).getOperand(1).Val)) {
+    switch(Op0Opc) {
+    case ISD::SHL: TgtMask <<= (unsigned)CN->getValue(); break;
+    case ISD::SRL: TgtMask >>= (unsigned)CN->getValue(); break;
+    case ISD::AND: TgtMask &= (unsigned)CN->getValue(); break;
+    }
+  } else {
+    return false;
+  }
+  
+  // Generate Mask value for Insert
+  if (ConstantSDNode *CN = 
+      dyn_cast<ConstantSDNode>(OR.getOperand(1).getOperand(1).Val)) {
+    switch(Op1Opc) {
+    case ISD::SHL: 
+      Amount = CN->getValue(); 
+      InsMask <<= Amount; 
+      break;
+    case ISD::SRL: 
+      Amount = CN->getValue(); 
+      InsMask >>= Amount; 
+      Amount = 32-Amount;
+      break;
+    case ISD::AND: 
+      InsMask &= (unsigned)CN->getValue();
+      break;
+    }
+  } else {
+    return false;
+  }
+  
+  // Verify that the Target mask and Insert mask together form a full word mask
+  // and that the Insert mask is a run of set bits (which implies both are runs
+  // of set bits).  Given that, Select the arguments and generate the rlwimi
+  // instruction.
+  unsigned MB, ME;
+  if (((TgtMask ^ InsMask) == 0xFFFFFFFF) && IsRunOfOnes(InsMask, MB, ME)) {
+    unsigned Tmp1, Tmp2;
+    if (Op0Opc == ISD::AND)
+      Tmp1 = SelectExpr(OR.getOperand(0).getOperand(0));
+    else
+      Tmp1 = SelectExpr(OR.getOperand(0));
+    Tmp2 = SelectExpr(OR.getOperand(1).getOperand(0));
+    BuildMI(BB, PPC::RLWIMI, 5, Result).addReg(Tmp1).addReg(Tmp2)
+      .addImm(Amount).addImm(MB).addImm(ME);
+    return true;
+  }
+  return false;
 }
 
 unsigned ISel::SelectSetCR0(SDOperand CC) {
@@ -1476,31 +1604,40 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::AND:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    // FIXME: should add check in getImmediateForOpcode to return a value
+    // indicating the immediate is a run of set bits so we can emit a bitfield
+    // clear with RLWINM instead.
+    switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
+      default: assert(0 && "unhandled result code");
+      case 0: // No immediate
+        Tmp2 = SelectExpr(N.getOperand(1));
+        BuildMI(BB, PPC::AND, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case 1: // Low immediate
+        BuildMI(BB, PPC::ANDIo, 2, Result).addReg(Tmp1).addImm(Tmp2);
+        break;
+      case 2: // Shifted immediate
+        BuildMI(BB, PPC::ANDISo, 2, Result).addReg(Tmp1).addImm(Tmp2);
+        break;
+    }
+    return Result;
+  
   case ISD::OR:
+    if (SelectBitfieldInsert(N, Result))
+      return Result;
     Tmp1 = SelectExpr(N.getOperand(0));
     switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
       default: assert(0 && "unhandled result code");
       case 0: // No immediate
         Tmp2 = SelectExpr(N.getOperand(1));
-        switch (opcode) {
-        case ISD::AND: Opc = PPC::AND; break;
-        case ISD::OR:  Opc = PPC::OR;  break;
-        }
-        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        BuildMI(BB, PPC::OR, 2, Result).addReg(Tmp1).addReg(Tmp2);
         break;
       case 1: // Low immediate
-        switch (opcode) {
-        case ISD::AND: Opc = PPC::ANDIo; break;
-        case ISD::OR:  Opc = PPC::ORI;   break;
-        }
-        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+        BuildMI(BB, PPC::ORI, 2, Result).addReg(Tmp1).addImm(Tmp2);
         break;
       case 2: // Shifted immediate
-        switch (opcode) {
-        case ISD::AND: Opc = PPC::ANDISo;  break;
-        case ISD::OR:  Opc = PPC::ORIS;    break;
-        }
-        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+        BuildMI(BB, PPC::ORIS, 2, Result).addReg(Tmp1).addImm(Tmp2);
         break;
     }
     return Result;
