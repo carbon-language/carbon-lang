@@ -36,8 +36,7 @@ namespace {
     void InsertPreheaderForLoop(Loop *L);
   };
 
-  RegisterOpt<Preheaders> X("preheaders",
-                         "Insert a pre-header node for every loop in the CFG");
+  RegisterOpt<Preheaders> X("preheaders", "Natural loop pre-header insertion");
 }
 
 // Publically exposed interface to pass...
