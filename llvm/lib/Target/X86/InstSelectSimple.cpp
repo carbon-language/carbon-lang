@@ -2180,7 +2180,6 @@ static unsigned ExactLog2(unsigned Val) {
   if (Val == 0 || (Val & (Val-1))) return 0;
   unsigned Count = 0;
   while (Val != 1) {
-    if (Val & 1) return 0;
     Val >>= 1;
     ++Count;
   }
