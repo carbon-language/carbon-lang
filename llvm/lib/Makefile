@@ -8,7 +8,8 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ..
 
-PARALLEL_DIRS = VMCore Analysis Transforms AsmParser Bytecode CodeGen Target ExecutionEngine Debugger
+PARALLEL_DIRS = VMCore Analysis Transforms AsmParser Bytecode CodeGen Target \
+                ExecutionEngine Debugger
 
 include $(LEVEL)/Makefile.common
 
