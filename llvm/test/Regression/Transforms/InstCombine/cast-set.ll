@@ -41,4 +41,9 @@ short %test5(short %A) {
 	%D = cast uint %C to short
 	ret short %D
 }
-                          
+
+bool %test6(bool %A) {
+	%B = cast bool %A to int
+	%C = setne int %B, 0
+	ret bool %C
+}
