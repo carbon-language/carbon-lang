@@ -504,7 +504,8 @@ static bool NodeTransitivelyUsesValue(SDOperand N, SDOperand Op,
                                       std::set<SDNode*> &Visited) {
   if (N == Op) return true;                        // Found it.
   SDNode *Node = N.Val;
-  if (Node->getNumOperands() == 0) return false;   // Leaf?
+  if (Node->getNumOperands() == 0 ||      // Leaf?
+      Node->getNodeDepth() <= Op.getNodeDepth()) return false; // Can't find it?
   if (!Visited.insert(Node).second) return false;  // Already visited?
 
   // Recurse for the first N-1 operands.
