@@ -231,7 +231,7 @@ AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 
 dnl Checks for POSIX and other various system-specific header files
-AC_CHECK_HEADERS(fcntl.h limits.h sys/time.h unistd.h malloc.h sys/mman.h sys/resource.h dlfcn.h link.h)
+AC_CHECK_HEADERS(fcntl.h limits.h sys/time.h unistd.h malloc.h sys/mman.h sys/resource.h dlfcn.h link.h execinfo.h)
 
 dnl Check for types
 AC_TYPE_PID_T
@@ -269,7 +269,7 @@ then
 fi
 AC_HEADER_MMAP_ANONYMOUS
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(getcwd gettimeofday strdup strtoq strtoll)
+AC_CHECK_FUNCS(getcwd gettimeofday strdup strtoq strtoll backtrace)
 AC_CHECK_FUNC(mprotect,,AC_MSG_ERROR([Function mprotect() required but not found]))
 
 dnl Determine if the linker supports the -R option.
