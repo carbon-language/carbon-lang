@@ -95,13 +95,13 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
     ++AfterPHIsIt;    // Skip over all of the PHI nodes...
 
   while (MBB.front().getOpcode() == TargetInstrInfo::PHI) {
-    // Unlink the PHI node from the basic block... but don't delete the PHI yet
-    MachineInstr *MI = MBB.remove(MBB.begin());
+    // Unlink the PHI node from the basic block, but don't delete the PHI yet.
+    MachineInstr *MPhi = MBB.remove(MBB.begin());
     
-    assert(MRegisterInfo::isVirtualRegister(MI->getOperand(0).getReg()) &&
+    assert(MRegisterInfo::isVirtualRegister(MPhi->getOperand(0).getReg()) &&
            "PHI node doesn't write virt reg?");
 
-    unsigned DestReg = MI->getOperand(0).getReg();
+    unsigned DestReg = MPhi->getOperand(0).getReg();
     
     // Create a new register for the incoming PHI arguments
     const TargetRegisterClass *RC = MF.getSSARegMap()->getRegClass(DestReg);
@@ -126,10 +126,10 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
 
       // Since we are going to be deleting the PHI node, if it is the last use
       // of any registers, or if the value itself is dead, we need to move this
-      // information over to the new copy we just inserted...
+      // information over to the new copy we just inserted.
       //
       std::pair<LiveVariables::killed_iterator, LiveVariables::killed_iterator> 
-        RKs = LV->killed_range(MI);
+        RKs = LV->killed_range(MPhi);
       std::vector<std::pair<MachineInstr*, unsigned> > Range;
       if (RKs.first != RKs.second) {
         // Copy the range into a vector...
@@ -143,7 +143,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
           LV->addVirtualRegisterKilled(Range[i].second, PHICopy);
       }
 
-      RKs = LV->dead_range(MI);
+      RKs = LV->dead_range(MPhi);
       if (RKs.first != RKs.second) {
         // Works as above...
         Range.assign(RKs.first, RKs.second);
@@ -155,18 +155,18 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
 
     // Adjust the VRegPHIUseCount map to account for the removal of this PHI
     // node.
-    for (unsigned i = 1; i != MI->getNumOperands(); i += 2)
-      VRegPHIUseCount[MI->getOperand(i).getReg()] -= BBIsSuccOfPreds;
+    for (unsigned i = 1; i != MPhi->getNumOperands(); i += 2)
+      VRegPHIUseCount[MPhi->getOperand(i).getReg()] -= BBIsSuccOfPreds;
 
     // Now loop over all of the incoming arguments, changing them to copy into
     // the IncomingReg register in the corresponding predecessor basic block.
     //
-    for (int i = MI->getNumOperands() - 1; i >= 2; i-=2) {
-      MachineOperand &opVal = MI->getOperand(i-1);
+    for (int i = MPhi->getNumOperands() - 1; i >= 2; i-=2) {
+      MachineOperand &opVal = MPhi->getOperand(i-1);
       
       // Get the MachineBasicBlock equivalent of the BasicBlock that is the
       // source path the PHI.
-      MachineBasicBlock &opBlock = *MI->getOperand(i).getMachineBasicBlock();
+      MachineBasicBlock &opBlock = *MPhi->getOperand(i).getMachineBasicBlock();
 
       MachineBasicBlock::iterator I = opBlock.getFirstTerminator();
       
@@ -257,8 +257,8 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       }
     }
     
-    // really delete the PHI instruction now!
-    delete MI;
+    // Really delete the PHI instruction now!
+    delete MPhi;
   }
   return true;
 }
