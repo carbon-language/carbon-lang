@@ -259,7 +259,7 @@ public:
   /// is returned with the specified operand folded, otherwise NULL is
   /// returned. The client is responsible for removing the old
   /// instruction and adding the new one in the instruction stream
-  virtual MachineInstr* foldMemoryOperand(MachineBasicBlock::iterator MI,
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
                                           unsigned OpNum,
                                           int FrameIndex) const {
     return NULL;
