@@ -479,12 +479,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 	mvec[0] = new MachineInstr(SUBcc);
 	Set3OperandsFromInstr(mvec[0], subtreeRoot, target, discardResult);
 	
-	if (discardResult)
-	  {// mark the "result" operand as being a CC register
-	    mvec[0]->SetMachineOperand(2, MachineOperand::MO_CCRegister,
-				          subtreeRoot->getValue());
-	  }
-	else
+	// mark the 4th operand as being a CC register, and a "result"
+	mvec[0]->SetMachineOperand(3, MachineOperand::MO_CCRegister,
+				      subtreeRoot->getValue(), /*def*/ true);
+	
+	if (!discardResult) 
 	  { // recompute bool if needed, using the integer condition codes
 	    if (result->getOpcode() == Instruction::SetNE)
 	      discardResult = true;
