@@ -120,6 +120,8 @@ public:
     assert(Index < Links.size() && "Link index is out of range!");
     return Links[Index].getNode();
   }
+
+  /// getLink - Return the link at the specified offset.
   DSNodeHandle &getLink(unsigned Offset) {
     assert((Offset & ((1 << DS::PointerShift)-1)) == 0 &&
            "Pointer offset not aligned correctly!");
@@ -134,6 +136,10 @@ public:
     assert(Index < Links.size() && "Link index is out of range!");
     return Links[Index];
   }
+
+  /// getNumLinks - Return the number of links in a node...
+  ///
+  unsigned getNumLinks() const { return Links.size(); }
 
   /// mergeTypeInfo - This method merges the specified type into the current
   /// node at the specified offset.  This may update the current node's type
@@ -171,6 +177,10 @@ public:
     assert(Index < Links.size() && "Link index is out of range!");
     Links[Index] = NH;
   }
+
+  /// getPointerSize - Return the size of a pointer for the current target.
+  ///
+  unsigned getPointerSize() const { return DS::PointerSize; }
 
   /// addEdgeTo - Add an edge from the current node to the specified node.  This
   /// can cause merging of nodes in the graph.
