@@ -198,9 +198,8 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     // that they may be loaded by dereferencing va_next
     SDOperand FIN = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
     SDOperand Val = DAG.getCopyFromReg(PPC::R4, MVT::i32, DAG.getRoot());
-    SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val, Val, FIN);
-    DAG.setRoot(Val.getValue(1));
-    ArgValues.push_back(Store);
+    SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1), Val, FIN);
+    DAG.setRoot(Store);
   }
 
   return ArgValues;
