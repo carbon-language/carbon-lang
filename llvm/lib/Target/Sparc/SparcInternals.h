@@ -415,9 +415,11 @@ public:
   }
 
 
-  // To obtain the return value contained in a CALL machine instruction
+  // To obtain the return value and the indirect call address (if any)
+  // contained in a CALL machine instruction
   //
   const Value * getCallInstRetVal(const MachineInstr *CallMI) const;
+  const Value * getCallInstIndirectAddrVal(const MachineInstr *CallMI) const;
 
 
   // The following methods are used to generate "copy" machine instructions

@@ -93,6 +93,7 @@ unsigned UltraSparcRegInfo::getStackPointer() const {
 //---------------------------------------------------------------------------
 // Finds the return value of a sparc specific call instruction
 //---------------------------------------------------------------------------
+
 const Value * 
 UltraSparcRegInfo::getCallInstRetVal(const MachineInstr *CallMI) const {
   unsigned OpCode = CallMI->getOpCode();
@@ -120,6 +121,13 @@ UltraSparcRegInfo::getCallInstRetVal(const MachineInstr *CallMI) const {
   return NULL;
 }
 
+
+const Value * 
+UltraSparcRegInfo::getCallInstIndirectAddrVal(const MachineInstr *CallMI) const
+{
+  return (CallMI->getOpCode() == JMPLCALL)?
+    CallMI->getOperand(0).getVRegValue() : NULL;
+}
 
 
 //---------------------------------------------------------------------------
