@@ -21,14 +21,14 @@ syn keyword llvmStatement and or xor
 syn keyword llvmStatement setne seteq setlt setgt setle setge
 
 syn keyword llvmStatement phi call cast to select shl shr vaarg vanext
-syn keyword llvmStatement ret br switch invoke unwind
+syn keyword llvmStatement ret br switch invoke unwind unreachable
 syn keyword llvmStatement malloc alloca free load store getelementptr
 
 syn keyword llvmStatement begin end true false zeroinitializer
 syn keyword llvmStatement declare global constant const
 syn keyword llvmStatement internal uninitialized external implementation
 syn keyword llvmStatement linkonce weak appending
-syn keyword llvmStatement null to except target endian pointersize deplibs
+syn keyword llvmStatement undef null to except target endian pointersize deplibs
 syn keyword llvmStatement big little volatile
 
 "syn match llvmFunction /%[a-zA-Z\$._\-][a-zA-Z\$._\-0-9]*/

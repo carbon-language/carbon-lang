@@ -25,7 +25,7 @@
    ;; Hex constants
    '("0x[0-9A-Fa-f]+" . font-lock-preprocessor-face)
    ;; Keywords
-   '("begin\\|end\\|true\\|false\\|zeroinitializer\\|declare\\|global\\|constant\\|const\\|internal\\|linkonce\\|weak\\|appending\\|uninitialized\\|implementation\\|\\.\\.\\.\\|null\\|to\\|except\\|not\\|target\\|endian\\|little\\|big\\|pointersize\\|deplibs\\|volatile" . font-lock-keyword-face)
+   '("begin\\|end\\|true\\|false\\|zeroinitializer\\|declare\\|global\\|constant\\|const\\|internal\\|linkonce\\|weak\\|appending\\|uninitialized\\|implementation\\|\\.\\.\\.\\|null\\|undef\\|to\\|except\\|not\\|target\\|endian\\|little\\|big\\|pointersize\\|deplibs\\|volatile" . font-lock-keyword-face)
    ;; Types
    '("void\\|bool\\|sbyte\\|ubyte\\|u?short\\|u?int\\|u?long\\|float\\|double\\|type\\|label\\|opaque" . font-lock-type-face)
    ;; Arithmetic and Logical Operators
@@ -33,7 +33,7 @@
    ;; Special instructions
    '("phi\\|call\\|cast\\|select\\|to\\|shl\\|shr\\|vaarg\\|vanext" . font-lock-keyword-face)
    ;; Control instructions
-   '("ret\\|br\\|switch\\|invoke\\|unwind" . font-lock-keyword-face)
+   '("ret\\|br\\|switch\\|invoke\\|unwind\\|unreachable" . font-lock-keyword-face)
    ;; Memory operators
    '("malloc\\|alloca\\|free\\|load\\|store\\|getelementptr" . font-lock-keyword-face)
    )
