@@ -71,7 +71,7 @@ struct BytecodeAnalysis {
 };
 
 /// This function is the main entry point into the bytecode analysis library. It
-/// allows you to simply provide a \P filename and storage for the \P Results 
+/// allows you to simply provide a \p filename and storage for the \p Results 
 /// that will be filled in with the analysis results.
 /// @brief Analyze contents of a bytecode File
 void AnalyzeBytecodeFile(
@@ -82,8 +82,8 @@ void AnalyzeBytecodeFile(
 
 /// This function is an alternate entry point into the bytecode analysis
 /// library. It allows you to provide an arbitrary memory buffer which is
-/// assumed to contain a complete bytecode file. The \P Buffer is analyzed and
-/// the \P Results are filled in.
+/// assumed to contain a complete bytecode file. The \p Buffer is analyzed and
+/// the \p Results are filled in.
 /// @brief Analyze contents of a bytecode buffer.
 void AnalyzeBytecodeBuffer(
        const unsigned char* Buffer, ///< Pointer to start of bytecode buffer
