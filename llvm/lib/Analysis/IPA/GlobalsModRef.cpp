@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "globalsmodref-aa"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
@@ -24,7 +23,6 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/InstIterator.h"
 #include "Support/CommandLine.h"
-#include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Support/SCCIterator.h"
 #include <set>
@@ -229,8 +227,6 @@ bool GlobalsModRef::AnalyzeUsesOfGlobal(Value *V,
 /// graph to all callers and compute the mod/ref info for all memory for each
 /// function.  
 void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
-  DEBUG(std::cerr << "GlobalsModRef: Analyze Call Graph\n");
-
   // We do a bottom-up SCC traversal of the call graph.  In other words, we
   // visit all callees before callers (leaf-first).
   for (scc_iterator<CallGraph*> I = scc_begin(&CG), E = scc_end(&CG); I!=E; ++I)
