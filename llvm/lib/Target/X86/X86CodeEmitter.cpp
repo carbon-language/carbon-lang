@@ -278,9 +278,19 @@ void Emitter::emitBasicBlock(const MachineBasicBlock &MBB) {
 /// necessary to resolve this address later (and emits a dummy value).
 ///
 void Emitter::emitPCRelativeBlockAddress(const MachineBasicBlock *MBB) {
-  // FIXME: Emit backward branches directly
-  BBRefs.push_back(std::make_pair(MBB, MCE.getCurrentPCValue()));
-  MCE.emitWord(0);
+  // If this is a backwards branch, we already know the address of the target,
+  // so just emit the value.
+  std::map<const MachineBasicBlock*, unsigned>::iterator I =
+    BasicBlockAddrs.find(MBB);
+  if (I != BasicBlockAddrs.end()) {
+    unsigned Location = I->second;
+    MCE.emitWord(Location-MCE.getCurrentPCValue()-4);
+  } else {
+    // Otherwise, remember where this reference was and where it is to so we can
+    // deal with it later.
+    BBRefs.push_back(std::make_pair(MBB, MCE.getCurrentPCValue()));
+    MCE.emitWord(0);
+  }
 }
 
 /// emitPCRelativeValue - Emit a 32-bit PC relative address.
