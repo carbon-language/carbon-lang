@@ -170,7 +170,7 @@ my $BuildTimeS = GetRegex "([0-9.]+)", `grep '^sys' $Prefix-Build-Log.txt`;
 my $BuildWallTime = GetRegex "([0-9.]+)", `grep '^real' $Prefix-Build-Log.txt`;
 my $BuildTime  = $BuildTimeU+$BuildTimeS;  # BuildTime = User+System
 my $BuildError = "";
-if (`grep '^gmake: .*Error' $Prefix-Build-Log.txt | wc -l` + 0) {
+if (`grep '^gmake[^:]*: .*Error' $Prefix-Build-Log.txt | wc -l` + 0) {
   $BuildError = "<h3>Build error: compilation <a href=\"$DATE-Build-Log.txt\">"
               . "aborted</a></h3>";
 }
