@@ -5,7 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ConstantHandling.h"
-#include "llvm/Instruction.h"
+#include "llvm/iPHINode.h"
 #include <cmath>
 
 AnnotationID ConstRules::AID(AnnotationManager::getID("opt::ConstRules",
@@ -15,6 +15,22 @@ AnnotationID ConstRules::AID(AnnotationManager::getID("opt::ConstRules",
 // If successful, the constant result is returned, if not, null is returned.
 //
 Constant *ConstantFoldInstruction(Instruction *I) {
+  if (PHINode *PN = dyn_cast<PHINode>(I)) {
+    if (PN->getNumIncomingValues() == 0)
+      return Constant::getNullValue(PN->getType());
+    
+    Constant *Result = dyn_cast<Constant>(PN->getIncomingValue(0));
+    if (Result == 0) return 0;
+
+    // Handle PHI nodes specially here...
+    for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (PN->getIncomingValue(i) != Result)
+        return 0;   // Not all the same incoming constants...
+
+    // If we reach here, all incoming values are the same constant.
+    return Result;
+  }
+
   Constant *Op0 = 0;
   Constant *Op1 = 0;
 
