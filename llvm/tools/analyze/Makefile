@@ -6,5 +6,5 @@ clean ::
 	rm -f opt
 
 analyze : $(ObjectsG) Debug/.dir Depend/.dir
-	$(LinkG) -o $@ $(ObjectsG) -lvmcore -lanalysis -lbcreader \
-                               -lopt -lasmwriter -lasmparser
+	$(LinkG) -o $@ $(ObjectsG) -lopt -lasmparser \
+				   -lbcreader -lvmcore -lasmwriter -lanalysis

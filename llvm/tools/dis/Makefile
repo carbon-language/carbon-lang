@@ -6,5 +6,5 @@ clean ::
 	rm -f dis
 
 dis : $(ObjectsG)
-	$(LinkG) -o $@ $(ObjectsG) -lvmcore -lasmwriter -lanalysis \
-				               -lbcreader
+	$(LinkG) -o $@ $(ObjectsG) -lbcreader -lasmwriter -lanalysis -lvmcore
+

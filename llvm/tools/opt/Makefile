@@ -6,5 +6,5 @@ clean ::
 	rm -f opt
 
 opt : $(ObjectsG)
-	$(LinkG) -o $@ $(ObjectsG) -lvmcore -lanalysis -lbcreader -lbcwriter \
-                               -lopt -lasmwriter
+	$(LinkG) -o $@ $(ObjectsG) -lopt -lbcreader -lbcwriter \
+                               -lasmwriter -lanalysis -lvmcore 

@@ -6,4 +6,4 @@ clean::
 	rm -f as
 
 as : $(ObjectsG)
-	$(LinkG) -o as $(ObjectsG) -lvmcore -lasmparser -lbcwriter -lanalysis -lasmwriter
+	$(LinkG) -o as $(ObjectsG) -lasmparser -lbcwriter -lasmwriter -lanalysis -lvmcore 
