@@ -29,8 +29,6 @@ static void copyEdgesFromTo(PointerVal Val, DSNode *N) {
       if (PVS[j].Node == Val.Node && PVS[j].Index >= ValIdx && 
           PVS[j].Index < ValIdx+NLinks)
         PVS.add(PointerVal(N, PVS[j].Index-ValIdx));
-                
-      //PVS.add(PointerVal(N, Val.Index));  // TODO: support index
     }
   }
 }
@@ -39,21 +37,17 @@ static void ResolveNodesTo(const PointerVal &FromPtr,
                            const PointerValSet &ToVals) {
   assert(FromPtr.Index == 0 &&
          "Resolved node return pointer should be index 0!");
-  assert(isa<ShadowDSNode>(FromPtr.Node) &&
-         "Resolved node should be a shadow!");
-  ShadowDSNode *Shadow = cast<ShadowDSNode>(FromPtr.Node);
-  assert(Shadow->isCriticalNode() && "Shadow node should be a critical node!");
-  Shadow->resetCriticalMark();
+  DSNode *N = FromPtr.Node;
 
   // Make everything that pointed to the shadow node also point to the values in
   // ToVals...
   //
   for (unsigned i = 0, e = ToVals.size(); i != e; ++i)
-    copyEdgesFromTo(ToVals[i], Shadow);
+    copyEdgesFromTo(ToVals[i], N);
 
   // Make everything that pointed to the shadow node now also point to the
   // values it is equivalent to...
-  const vector<PointerValSet*> &PVSToUpdate(Shadow->getReferrers());
+  const vector<PointerValSet*> &PVSToUpdate(N->getReferrers());
   for (unsigned i = 0, e = PVSToUpdate.size(); i != e; ++i)
     PVSToUpdate[i]->add(ToVals);
 }
@@ -108,7 +102,7 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     CallDSNode *CN = *NI;
     Function *F = CN->getCall()->getCalledFunction();
 
-    if (NumInlines++ == 40) {      // CUTE hack huh?
+    if (NumInlines++ == 100) {      // CUTE hack huh?
       cerr << "Infinite (?) recursion halted\n";
       return;
     }
