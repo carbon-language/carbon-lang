@@ -126,6 +126,7 @@ void CallGraph::destroy() {
     delete I->second;
   FunctionMap.clear();
   delete CallsExternalNode;
+  CallsExternalNode = 0;
 }
 
 static void WriteToOutput(const CallGraphNode *CGN, std::ostream &o) {
