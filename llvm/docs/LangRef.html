@@ -1045,6 +1045,7 @@ Memory is allocated, a pointer is returned.  '<tt>alloca</tt>'d memory is automa
 <pre>
   &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt;                 <i>; yields {ty}:result</i>
   &lt;result&gt; = load &lt;ty&gt;* &lt;arrayptr&gt;, uint &lt;idx&gt;    <i>; yields {ty}:result</i>
+  &lt;result&gt; = load &lt;ty&gt;* &lt;structptr&gt;{, &lt;idx&gt;}*     <i>; yields field type</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -1052,9 +1053,9 @@ The '<tt>load</tt>' instruction is used to read from memory.<p>
 
 <h5>Arguments:</h5>
 
-There are two forms of the '<tt>load</tt>' instruction: one for reading from a general pointer, and one for reading from a pointer to an array.<p>
+There are three forms of the '<tt>load</tt>' instruction: one for reading from a general pointer, one for reading from a pointer to an array, and one for reading from a pointer to a structure.<p>
 
-In the first form, '<tt>&lt;ty&gt;</tt>' may be any pointer type.  If it is a pointer to an array, the first (zeroth) element is read from).  In the second form, '<tt>&lt;ty&gt;</tt>' must be a pointer to an array.  No bounds checking is performed on array reads.<p>
+In the first form, '<tt>&lt;ty&gt;</tt>' may be any pointer type.  If it is a pointer to an array, the first (zeroth) element is read from).  In the second form, '<tt>&lt;ty&gt;</tt>' must be a pointer to an array.  No bounds checking is performed on array reads.  In the third form, the pointer must point to a (possibly nested) structure.  There shall be one ubyte argument for each level of dereferencing involved.<p>
 
 
 <h5>Semantics:</h5>
@@ -1070,7 +1071,7 @@ In the first form, '<tt>&lt;ty&gt;</tt>' may be any pointer type.  If it is a po
            <a href="#i_store">store</a> [4 x ubyte]* %array, 
                  uint 4, ubyte 124
   %val   = load [4 x ubyte]* %array, uint 4       <i>; yields {ubyte}:val = ubyte 124</i>
-  
+  %val   = load {{int, float}}* %stptr, 0, 1      <i>; yields {float}:val</i>
 </pre>
 
 
@@ -1370,7 +1371,7 @@ more...
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Thu May 31 17:36:39 CDT 2001
+Last modified: Mon Jun 11 09:30:45 CDT 2001
 <!-- hhmts end -->
 </font>
 </body></html>

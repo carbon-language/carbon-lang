@@ -1,7 +1,7 @@
-* Must update PHI node to have a pair between predecessor and value.
+* pred/succ iterators on basic blocks don't handle switch statements correctly
 * Enhance BB to make predecessor handling easier (to update PHI nodes)
 * Provide a pass that eliminates critical edges from the CFG
-* Provide a print hook to print out xvcg format files for vis
+* Provide a print pass to print out xvcg format files for vis
 * I need to provide an option to the bytecode loader to ignore memory 
   dependance edges.  Instead, the VM would just treat memory operations 
   (load, store, getfield, putfield, call) as pinned instructions.
@@ -13,8 +13,8 @@
   structure size to 256 members.  This can be fixed later by either: 
     1. adding varient that takes ushort
     2. Splitting structures into nested structures each of half size
-  <float> %f = loadfield *{int, {float}} Str, ubyte 1, ubyte 0
-  storefield float %f, *{int, {float}} Str, ubyte 1, ubyte 0
+  <float> %f = load *{int, {float}} Str, 1, 0
+  store float %f, *{int, {float}} Str, 1, 0
 * I'm noticing me writing a lot of code that looks like this (dtor material here):
   ConstPool.dropAllReferences();
   ConstPool.delete_all();
@@ -42,8 +42,6 @@
   * pointer                          int *
   * "packed format", like this:    [4 x sbyte]: Packed SIMD datatype
 * Maybe 'tailcall' also?
-* It might be nice to support enumerations of some sort... especially for use
-  as a compiler IR
 * Include a method level bytecode block that defines a mapping between values 
   and registers that defines a minimally register allocated code.  This can
   make me finally address how to encode extensions in assembly.
