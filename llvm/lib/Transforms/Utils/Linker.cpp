@@ -294,12 +294,20 @@ static bool LinkMethodBodies(Module *Dest, const Module *Src,
   // Loop over all of the methods in the src module, mapping them over as we go
   //
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
-    const Method *SM = *I;                   // Source Method
-    Method *DM = cast<Method>(ValueMap[SM]); // Destination method
+    const Method *SM = *I;                     // Source Method
+    if (!SM->isExternal()) {                   // No body if method is external
+      Method *DM = cast<Method>(ValueMap[SM]); // Destination method
 
-    assert(DM && DM->isExternal() && "LinkMethodProtos failed!");
-    if (!SM->isExternal())  // External methods are already done
+      // DM not external SM external?
+      if (!DM->isExternal()) {
+        if (Err)
+          *Err = "Method '" + (SM->hasName() ? SM->getName() : string("")) +
+                 "' body multiply defined!";
+        return true;
+      }
+
       if (LinkMethodBody(DM, SM, ValueMap, Err)) return true;
+    }
   }
   return false;
 }
