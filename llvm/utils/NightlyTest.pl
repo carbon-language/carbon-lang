@@ -299,10 +299,10 @@ sub TestDirectory {
   }
 
   my $ProgramsTable;
-  if (`grep '^gmake: .*Error' $Prefix-$SubDir-ProgramTest.txt | wc -l` + 0) {
+  if (`grep '^gmake[^:]: .*Error' $Prefix-$SubDir-ProgramTest.txt | wc -l` + 0){
     $TestError = 1;
     $ProgramsTable = "<font color=white><h2>Error running tests!</h2></font>";
-  } elsif (`grep '^gmake: .*No rule to make target' $Prefix-$SubDir-ProgramTest.txt | wc -l` + 0) {
+  } elsif (`grep '^gmake[^:]: .*No rule to make target' $Prefix-$SubDir-ProgramTest.txt | wc -l` + 0) {
     $TestError = 1;
     $ProgramsTable =
       "<font color=white><h2>Makefile error running tests!</h2></font>";
