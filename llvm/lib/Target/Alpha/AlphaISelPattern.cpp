@@ -424,7 +424,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       else
 	Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
 
-      //DestType = N.getValue(0).getValueType();
+      DestType = N.getValue(0).getValueType();
 
       SDOperand Chain   = N.getOperand(0);
       SDOperand Address = N.getOperand(1);
@@ -503,27 +503,24 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
         {
           AlphaLowering.restoreGP(BB);
           BuildMI(BB, Alpha::LDS_SYM, 1, Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
-          BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
          }
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(1))) 
         {
           AlphaLowering.restoreGP(BB);
           BuildMI(BB, Alpha::LDS_SYM, 1, Tmp1).addConstantPoolIndex(CP->getIndex());
-          BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
         }
       else if(Address.getOpcode() == ISD::FrameIndex)
         {
           Tmp2 = cast<FrameIndexSDNode>(Address)->getIndex();
           BuildMI(BB, Alpha::LDS, 2, Tmp1).addFrameIndex(Tmp2).addReg(Alpha::F31);
-          BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
         }
       else
         {
           long offset;
           SelectAddr(Address, Tmp2, offset);
           BuildMI(BB, Alpha::LDS, 1, Tmp1).addImm(offset).addReg(Tmp2);
-          BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
         }
+      BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
       return Result;
     }
 
@@ -1222,7 +1219,10 @@ void ISel::Select(SDOperand N) {
     Tmp2 = cast<RegSDNode>(N)->getReg();
     
     if (Tmp1 != Tmp2) {
-      BuildMI(BB, Alpha::BIS, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
+      if (N.getOperand(1).getValueType() == MVT::f64 || N.getOperand(1).getValueType() == MVT::f32)
+        BuildMI(BB, Alpha::CPYS, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
+      else
+        BuildMI(BB, Alpha::BIS, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
     }
     return;
 
