@@ -1,4 +1,4 @@
-//===-- SparcV9InstrInfo.h - Define TargetInstrInfo for SparcV9 -----*- C++ -*-===//
+//===-- SparcV9InstrInfo.h - Define TargetInstrInfo for SparcV9 -*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,17 +14,26 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARC_INSTRINFO_H
-#define SPARC_INSTRINFO_H
+#ifndef SPARCV9INSTRINFO_H
+#define SPARCV9INSTRINFO_H
 
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "SparcV9Internals.h"
+#include "SparcV9RegisterInfo.h"
 
 namespace llvm {
 
 struct SparcV9InstrInfo : public TargetInstrInfo {
+  const SparcV9RegisterInfo RI;
+public:
   SparcV9InstrInfo();
+
+  /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
+  /// such, whenever a client has an instance of instruction info, it should
+  /// always be able to get register info as well (through this method).
+  ///
+  virtual const MRegisterInfo &getRegisterInfo() const { return RI; }
 
   // All immediate constants are in position 1 except the
   // store instructions and SETxx.
