@@ -167,7 +167,7 @@ PowerPCRegisterInfo::eliminateFrameIndex(MachineFunction &MF,
   if (!hasFP(MF))
     Offset += MF.getFrameInfo()->getStackSize();
 
-  MI.SetMachineOperandConst(i-1, MachineOperand::MO_SignExtendedImmed, Offset);
+  MI.SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed, Offset);
   DEBUG(std::cerr << "offset = " << Offset << std::endl);
 }
 
@@ -200,9 +200,10 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     NumBytes = ((NumBytes+4)+Align-1)/Align*Align - 4;
 
     // Store the incoming LR so it is preserved across calls
-    MI = BuildMI(PPC32::MovePCtoLR, 0, PPC32::LR).addReg(PPC32::LR);
+    MI = BuildMI(PPC32::MFLR, 0, PPC32::R0);
     MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC32::MFSPR, 1, PPC32::R0).addImm(8);
+    MI = BuildMI(PPC32::STW, 3).addReg(PPC32::R31).addSImm(-4)
+           .addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
     MI = BuildMI(PPC32::STW, 3).addReg(PPC32::R0).addSImm(8).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
@@ -229,17 +230,21 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   // Get the number of bytes allocated from the FrameInfo...
   unsigned NumBytes = MFI->getStackSize();
 
-  // adjust stack pointer back: r1 += numbytes
+  // Read old LR from stack into R0
+  MI = BuildMI(PPC32::LWZ, 2, PPC32::R0).addSImm(8+NumBytes).addReg(PPC32::R1);
+  MBB.insert(MBBI, MI);
+
+  // Adjust stack pointer back: r1 += numbytes
   if (NumBytes) {
-    MI =BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1).addSImm(NumBytes);
+    MI = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1).addSImm(NumBytes);
     MBB.insert(MBBI, MI);
   }
  
   // If we have calls, restore the LR value before we branch to it
   if (MFI->hasCalls()) {
-    MI = BuildMI(PPC32::LWZ, 2, PPC32::R0).addSImm(8).addReg(PPC32::R1);
-    MBB.insert(MBBI, MI);
     MI = BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0);
+    MBB.insert(MBBI, MI);
+    MI = BuildMI(PPC32::LWZ, 2, PPC32::R31).addSImm(-4).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
   }
 }
