@@ -32,8 +32,7 @@
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Support/StringExtras.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumReplaced("scalarrepl", "Number of allocas broken up");
@@ -65,7 +64,7 @@ namespace {
 }
 
 // Public interface to the ScalarReplAggregates pass
-Pass *createScalarReplAggregatesPass() { return new SROA(); }
+Pass *llvm::createScalarReplAggregatesPass() { return new SROA(); }
 
 
 bool SROA::runOnFunction(Function &F) {
@@ -234,7 +233,7 @@ bool SROA::isSafeUseOfAllocation(Instruction *User) {
     return false;
 
   ++I;
-  if (I != E || !isa<ConstantInt>(I.getOperand()))
+  if (I == E || !isa<ConstantInt>(I.getOperand()))
     return false;
 
   // If this is a use of an array allocation, do a bit more checking for sanity.
@@ -301,5 +300,3 @@ bool SROA::isSafeAllocaToPromote(AllocationInst *AI) {
     }
   return true;
 }
-
-} // End llvm namespace
