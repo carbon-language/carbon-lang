@@ -179,9 +179,9 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     return false;
 
 #if 0
-  case X86::MOVir32: Size++;
-  case X86::MOVir16: Size++;
-  case X86::MOVir8:
+  case X86::MOVri32: Size++;
+  case X86::MOVri16: Size++;
+  case X86::MOVri8:
     // FIXME: We can only do this transformation if we know that flags are not
     // used here, because XOR clobbers the flags!
     if (MI->getOperand(1).isImmediate()) {         // avoid mov EAX, <value>
@@ -373,7 +373,7 @@ bool SSAPH::OptimizeAddress(MachineInstr *MI, unsigned OpNo) {
   // Attempt to fold instructions used by the base register into the instruction
   if (MachineInstr *DefInst = getDefiningInst(BaseRegOp)) {
     switch (DefInst->getOpcode()) {
-    case X86::MOVir32:
+    case X86::MOVri32:
       // If there is no displacement set for this instruction set one now.
       // FIXME: If we can fold two immediates together, we should do so!
       if (DisplacementOp.isImmediate() && !DisplacementOp.getImmedValue()) {
@@ -461,14 +461,14 @@ bool SSAPH::PeepholeOptimize(MachineBasicBlock &MBB,
 
     // Register to memory stores.  Format: <base,scale,indexreg,immdisp>, srcreg
   case X86::MOVrm32: case X86::MOVrm16: case X86::MOVrm8:
-  case X86::MOVim32: case X86::MOVim16: case X86::MOVim8:
+  case X86::MOVmi32: case X86::MOVmi16: case X86::MOVmi8:
     // Check to see if we can fold the source instruction into this one...
     if (MachineInstr *SrcInst = getDefiningInst(MI->getOperand(4))) {
       switch (SrcInst->getOpcode()) {
         // Fold the immediate value into the store, if possible.
-      case X86::MOVir8:  return Propagate(MI, 4, SrcInst, 1, X86::MOVim8);
-      case X86::MOVir16: return Propagate(MI, 4, SrcInst, 1, X86::MOVim16);
-      case X86::MOVir32: return Propagate(MI, 4, SrcInst, 1, X86::MOVim32);
+      case X86::MOVri8:  return Propagate(MI, 4, SrcInst, 1, X86::MOVmi8);
+      case X86::MOVri16: return Propagate(MI, 4, SrcInst, 1, X86::MOVmi16);
+      case X86::MOVri32: return Propagate(MI, 4, SrcInst, 1, X86::MOVmi32);
       default: break;
       }
     }

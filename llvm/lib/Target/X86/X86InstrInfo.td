@@ -195,12 +195,12 @@ def REP_STOSD : X86Inst<"rep stosd", 0xAB, RawFrm, NoArg>, REP,
 def MOVrr8  : X86Inst<"mov", 0x88, MRMDestReg, Arg8>,          Pattern<(set R8 , R8 )>;
 def MOVrr16 : X86Inst<"mov", 0x89, MRMDestReg, Arg16>, OpSize, Pattern<(set R16, R16)>;
 def MOVrr32 : X86Inst<"mov", 0x89, MRMDestReg, Arg32>,         Pattern<(set R32, R32)>;
-def MOVir8  : X86Inst<"mov", 0xB0, AddRegFrm , Arg8>,          Pattern<(set R8 , imm )>;
-def MOVir16 : X86Inst<"mov", 0xB8, AddRegFrm , Arg16>, OpSize, Pattern<(set R16, imm)>;
-def MOVir32 : X86Inst<"mov", 0xB8, AddRegFrm , Arg32>,         Pattern<(set R32, imm)>;
-def MOVim8  : X86Inst<"mov", 0xC6, MRMS0m    , Arg8>;             // [mem] = imm8
-def MOVim16 : X86Inst<"mov", 0xC7, MRMS0m    , Arg16>, OpSize;    // [mem] = imm16
-def MOVim32 : X86Inst<"mov", 0xC7, MRMS0m    , Arg32>;            // [mem] = imm32
+def MOVri8  : X86Inst<"mov", 0xB0, AddRegFrm , Arg8>,          Pattern<(set R8 , imm )>;
+def MOVri16 : X86Inst<"mov", 0xB8, AddRegFrm , Arg16>, OpSize, Pattern<(set R16, imm)>;
+def MOVri32 : X86Inst<"mov", 0xB8, AddRegFrm , Arg32>,         Pattern<(set R32, imm)>;
+def MOVmi8  : X86Inst<"mov", 0xC6, MRMS0m    , Arg8>;             // [mem] = imm8
+def MOVmi16 : X86Inst<"mov", 0xC7, MRMS0m    , Arg16>, OpSize;    // [mem] = imm16
+def MOVmi32 : X86Inst<"mov", 0xC7, MRMS0m    , Arg32>;            // [mem] = imm32
 
 def MOVmr8  : X86Inst<"mov", 0x8A, MRMSrcMem , Arg8>;             // R8  = [mem]
 def MOVmr16 : X86Inst<"mov", 0x8B, MRMSrcMem , Arg16>, OpSize,    // R16 = [mem]

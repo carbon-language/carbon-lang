@@ -306,7 +306,7 @@ namespace {
         RegMap.erase(V);  // Assign a new name to this constant if ref'd again
       } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
         // Move the address of the global into the register
-        BMI(MBB, IPt, X86::MOVir32, 1, Reg).addGlobalAddress(GV);
+        BMI(MBB, IPt, X86::MOVri32, 1, Reg).addGlobalAddress(GV);
         RegMap.erase(V);  // Assign a new name to this address if ref'd again
       }
 
@@ -423,19 +423,19 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     if (Class == cLong) {
       // Copy the value into the register pair.
       uint64_t Val = cast<ConstantInt>(C)->getRawValue();
-      BMI(MBB, IP, X86::MOVir32, 1, R).addZImm(Val & 0xFFFFFFFF);
-      BMI(MBB, IP, X86::MOVir32, 1, R+1).addZImm(Val >> 32);
+      BMI(MBB, IP, X86::MOVri32, 1, R).addZImm(Val & 0xFFFFFFFF);
+      BMI(MBB, IP, X86::MOVri32, 1, R+1).addZImm(Val >> 32);
       return;
     }
 
     assert(Class <= cInt && "Type not handled yet!");
 
     static const unsigned IntegralOpcodeTab[] = {
-      X86::MOVir8, X86::MOVir16, X86::MOVir32
+      X86::MOVri8, X86::MOVri16, X86::MOVri32
     };
 
     if (C->getType() == Type::BoolTy) {
-      BMI(MBB, IP, X86::MOVir8, 1, R).addZImm(C == ConstantBool::True);
+      BMI(MBB, IP, X86::MOVri8, 1, R).addZImm(C == ConstantBool::True);
     } else {
       ConstantInt *CI = cast<ConstantInt>(C);
       BMI(MBB, IP, IntegralOpcodeTab[Class], 1, R).addZImm(CI->getRawValue());
@@ -458,7 +458,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
 
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
-    BMI(MBB, IP, X86::MOVir32, 1, R).addZImm(0);
+    BMI(MBB, IP, X86::MOVri32, 1, R).addZImm(0);
   } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
     unsigned SrcReg = getReg(CPR->getValue(), MBB, IP);
     BMI(MBB, IP, X86::MOVrr32, 1, R).addReg(SrcReg);
@@ -1211,7 +1211,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
       }
     } else {
       // Values other than zero are not implemented yet.
-      BuildMI(BB, X86::MOVir32, 1, TmpReg1).addZImm(0);
+      BuildMI(BB, X86::MOVri32, 1, TmpReg1).addZImm(0);
     }
     return;
 
@@ -1287,7 +1287,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
           CountReg = makeAnotherReg(Type::IntTy);
           BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(1);
         }
-        BuildMI(BB, X86::MOVir16, 1, X86::AX).addZImm((Val << 8) | Val);
+        BuildMI(BB, X86::MOVri16, 1, X86::AX).addZImm((Val << 8) | Val);
         Opcode = X86::REP_STOSW;
         break;
       case 0:   // DWORD aligned
@@ -1298,13 +1298,13 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
           BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(2);
         }
         Val = (Val << 8) | Val;
-        BuildMI(BB, X86::MOVir32, 1, X86::EAX).addZImm((Val << 16) | Val);
+        BuildMI(BB, X86::MOVri32, 1, X86::EAX).addZImm((Val << 16) | Val);
         Opcode = X86::REP_STOSD;
         break;
       case 1:   // BYTE aligned
       case 3:   // BYTE aligned
         CountReg = getReg(CI.getOperand(3));
-        BuildMI(BB, X86::MOVir8, 1, X86::AL).addZImm(Val);
+        BuildMI(BB, X86::MOVri8, 1, X86::AL).addZImm(Val);
         Opcode = X86::REP_STOSB;
         break;
       }
@@ -1532,12 +1532,12 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
   }
 
   // Most general case, emit a normal multiply...
-  static const unsigned MOVirTab[] = {
-    X86::MOVir8, X86::MOVir16, X86::MOVir32
+  static const unsigned MOVriTab[] = {
+    X86::MOVri8, X86::MOVri16, X86::MOVri32
   };
 
   unsigned TmpReg = makeAnotherReg(DestTy);
-  BMI(MBB, IP, MOVirTab[Class], 1, TmpReg).addZImm(ConstRHS);
+  BMI(MBB, IP, MOVriTab[Class], 1, TmpReg).addZImm(ConstRHS);
   
   // Emit a MUL to multiply the register holding the index by
   // elementSize, putting the result in OffsetReg.
@@ -1647,7 +1647,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
   static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
   static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
   static const unsigned SarOpcode[]={ X86::SARir8, X86::SARir16, X86::SARir32 };
-  static const unsigned ClrOpcode[]={ X86::MOVir8, X86::MOVir16, X86::MOVir32 };
+  static const unsigned ClrOpcode[]={ X86::MOVri8, X86::MOVri16, X86::MOVri32 };
   static const unsigned ExtRegs[]  ={ X86::AH    , X86::DX     , X86::EDX     };
 
   static const unsigned DivOpcode[][4] = {
@@ -1742,12 +1742,12 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
         if (isLeftShift) {
           BMI(MBB, IP, X86::SHLir32, 2,
               DestReg + 1).addReg(SrcReg).addZImm(Amount);
-          BMI(MBB, IP, X86::MOVir32, 1,
+          BMI(MBB, IP, X86::MOVri32, 1,
               DestReg).addZImm(0);
         } else {
           unsigned Opcode = isSigned ? X86::SARir32 : X86::SHRir32;
           BMI(MBB, IP, Opcode, 2, DestReg).addReg(SrcReg+1).addZImm(Amount);
-          BMI(MBB, IP, X86::MOVir32, 1, DestReg+1).addZImm(0);
+          BMI(MBB, IP, X86::MOVri32, 1, DestReg+1).addZImm(0);
         }
       }
     } else {
@@ -1761,7 +1761,7 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
       } else {
         // Other shifts use a fixed zero value if the shift is more than 32
         // bits.
-        BMI(MBB, IP, X86::MOVir32, 1, TmpReg).addZImm(0);
+        BMI(MBB, IP, X86::MOVri32, 1, TmpReg).addZImm(0);
       }
 
       // Initialize CL with the shift amount...
@@ -1989,7 +1989,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
 
     if (isLong) {  // Handle upper 32 bits as appropriate...
       if (isUnsigned)     // Zero out top bits...
-        BMI(BB, IP, X86::MOVir32, 1, DestReg+1).addZImm(0);
+        BMI(BB, IP, X86::MOVri32, 1, DestReg+1).addZImm(0);
       else                // Sign extend bottom half...
         BMI(BB, IP, X86::SARir32, 2, DestReg+1).addReg(DestReg).addZImm(31);
     }
@@ -2040,7 +2040,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       // Make a 64 bit temporary... and zero out the top of it...
       unsigned TmpReg = makeAnotherReg(Type::LongTy);
       BMI(BB, IP, X86::MOVrr32, 1, TmpReg).addReg(SrcReg);
-      BMI(BB, IP, X86::MOVir32, 1, TmpReg+1).addZImm(0);
+      BMI(BB, IP, X86::MOVri32, 1, TmpReg+1).addZImm(0);
       SrcTy = Type::LongTy;
       SrcClass = cLong;
       SrcReg = TmpReg;
@@ -2093,7 +2093,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     addFrameReference(BMI(BB, IP, X86::MOVmr8, 4, HighPartOfCW), CWFrameIdx, 1);
 
     // Set the high part to be round to zero...
-    addFrameReference(BMI(BB, IP, X86::MOVim8, 5), CWFrameIdx, 1).addZImm(12);
+    addFrameReference(BMI(BB, IP, X86::MOVmi8, 5), CWFrameIdx, 1).addZImm(12);
 
     // Reload the modified control word now...
     addFrameReference(BMI(BB, IP, X86::FLDCWm16, 4), CWFrameIdx);

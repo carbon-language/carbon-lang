@@ -642,13 +642,19 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     // These instructions are the same as MRMDestReg, but instead of having a
     // register reference for the mod/rm field, it's a memory reference.
     //
-    assert(isMem(MI, 0) && MI->getNumOperands() == 4+1 &&
-           MI->getOperand(4).isRegister() && "Bad format for MRMDestMem!");
+    assert(isMem(MI, 0) && 
+           (MI->getNumOperands() == 4+1 ||
+            (MI->getNumOperands() == 4+2 && MI->getOperand(5).isImmediate()))
+           && "Bad format for MRMDestMem!");
 
     O << TII.getName(MI->getOpcode()) << " " << sizePtr(Desc) << " ";
     printMemReference(MI, 0);
     O << ", ";
     printOp(MI->getOperand(4));
+    if (MI->getNumOperands() == 4+2) {
+      O << ", ";
+      printOp(MI->getOperand(5));
+    }
     O << "\n";
     return;
   }
