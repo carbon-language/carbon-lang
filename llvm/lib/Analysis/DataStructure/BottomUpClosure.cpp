@@ -14,6 +14,7 @@
 
 namespace {
   Statistic<> MaxSCC("budatastructure", "Maximum SCC Size in Call Graph");
+  Statistic<> NumBUInlines("budatastructures", "Number of graphs inlined");
   
   RegisterAnalysis<BUDataStructures>
   X("budatastructure", "Bottom-up Data Structure Analysis");
@@ -264,6 +265,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
       Graph.mergeInGraph(CS, *Callee, GI,
                          DSGraph::KeepModRefBits | 
                          DSGraph::StripAllocaBit | DSGraph::DontCloneCallNodes);
+      ++NumBUInlines;
 
 #if 0
       Graph.writeGraphToFile(std::cerr, "bu_" + F.getName() + "_after_" +
