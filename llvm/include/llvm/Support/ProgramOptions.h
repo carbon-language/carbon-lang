@@ -19,20 +19,17 @@
 #ifndef LLVM_SUPPORT_PROGRAMOPTIONS_H
 #define LLVM_SUPPORT_PROGRAMOPTIONS_H
 
-//************************** System Include Files **************************/
-
-#include <iostream.h>
-
-//*************************** User Include Files ***************************/
-
 #include "llvm/Support/Unique.h"
-#include "llvm/Support/StringUtils.h"
+#include <vector>
+#include <hash_map>
 
-//************************ Forward Declarations ****************************/
+template <> struct hash<string> {
+  size_t operator()(string const &str) const {
+    return hash<char const *>()(str.c_str());
+  }
+};
 
 class ProgramOption;
-
-//************************* Main Driver Routine ****************************/
 
 //---------------------------------------------------------------------------
 //
@@ -99,7 +96,7 @@ public:
   // the option and entry 3n + 2 contains the ascii value of the option.
   // All entries are allocated using malloc and can be freed with 'free'.
   //--------------------------------------------------------------------
-  virtual vector<char*> GetDescription	() const;
+  virtual vector<string> GetDescription	() const;
   
 protected:
   //--------------------------------------------------------------------
@@ -115,16 +112,16 @@ protected:
 			 const char* argv[],
 			 const char* envp[]);
   
-  inline ProgramOption* OptionHandler(const char* optString) {
-     ProgramOption** poPtr = optionRegistry.query(optString);
-     return poPtr? *poPtr : NULL;
+  inline ProgramOption* OptionHandler(const string &optString) {
+    hash_map<string, ProgramOption*>::iterator hp = 
+      optionRegistry.find(optString);
+    return (hp != optionRegistry.end()) ? hp->second : 0;
   }
-
-  inline const ProgramOption* OptionHandler(const char* optString) const {
-     const ProgramOption* const* poPtr = optionRegistry.query(optString);
-     return poPtr? *poPtr : NULL;
+  inline const ProgramOption* OptionHandler(const string &optString) const {
+    hash_map<string, ProgramOption*>::const_iterator hp = 
+      optionRegistry.find(optString);
+    return (hp != optionRegistry.end()) ? hp->second : 0;
   }
-  
 protected:
   //--------------------------------------------------------------------
   // Functions that must be overridden by the subclass.
@@ -135,7 +132,7 @@ protected:
   virtual void	PrintUsage	(ostream& stream) const = 0;
   
 protected:
-  StringMap<ProgramOption*> optionRegistry;
+  hash_map<string, ProgramOption*> optionRegistry;
   int			argc;
   const char**		argv;
   const char**		envp;
