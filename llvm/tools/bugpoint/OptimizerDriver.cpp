@@ -135,13 +135,12 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
     exit(1);
   }
 
-  // If we are supposed to delete the bytecode file, remove it now
-  // unconditionally...  this may fail if the file was never created, but that's
-  // ok.
-  if (DeleteOutput)
-    removeFile(OutputFilename);
-
   bool ExitedOK = WIFEXITED(Status) && WEXITSTATUS(Status) == 0;
+
+  // If we are supposed to delete the bytecode file or if the passes crashed,
+  // remove it now.  This may fail if the file was never created, but that's ok.
+  if (DeleteOutput || !ExitedOK)
+    removeFile(OutputFilename);
   
   if (!Quiet) {
     if (ExitedOK)
