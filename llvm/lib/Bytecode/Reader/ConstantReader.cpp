@@ -186,43 +186,43 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
   unsigned isExprNumArgs;               // 0 if not expr; numArgs if is expr
   if (read_vbr(Buf, EndBuf, isExprNumArgs)) return failure(true);
   if (isExprNumArgs) {
-    unsigned opCode;
-    std::vector<Constant*> argVec;
-    argVec.reserve(isExprNumArgs);
-    
-    if (read_vbr(Buf, EndBuf, opCode)) return failure(true);
-    
+    // FIXME: Encoding of constant exprs could be much more compact!
+    unsigned Opcode;
+    std::vector<Constant*> ArgVec;
+    ArgVec.reserve(isExprNumArgs);
+    if (read_vbr(Buf, EndBuf, Opcode)) return failure(true);    
+
     // Read the slot number and types of each of the arguments
-    for (unsigned i=0; i < isExprNumArgs; ++i) {
-      unsigned argValSlot, argTypeSlot;
-      if (read_vbr(Buf, EndBuf, argValSlot)) return failure(true);
-      if (read_vbr(Buf, EndBuf, argTypeSlot)) return failure(true);
-      const Type *argTy = getType(argTypeSlot);
-      if (argTy == 0) return failure(true);
+    for (unsigned i = 0; i != isExprNumArgs; ++i) {
+      unsigned ArgValSlot, ArgTypeSlot;
+      if (read_vbr(Buf, EndBuf, ArgValSlot)) return failure(true);
+      if (read_vbr(Buf, EndBuf, ArgTypeSlot)) return failure(true);
+      const Type *ArgTy = getType(ArgTypeSlot);
+      if (ArgTy == 0) return failure(true);
       
-      BCR_TRACE(4, "CE Arg " << i << ": Type: '" << argTy << "'  slot: "
-                << argValSlot << "\n");
+      BCR_TRACE(4, "CE Arg " << i << ": Type: '" << ArgTy << "'  slot: "
+                << ArgValSlot << "\n");
       
       // Get the arg value from its slot if it exists, otherwise a placeholder
-      Value *Val = getValue(argTy, argValSlot, false);
+      Value *Val = getValue(ArgTy, ArgValSlot, false);
       Constant *C;
       if (Val) {
         if (!(C = dyn_cast<Constant>(Val))) return failure(true);
         BCR_TRACE(5, "Constant Found in ValueTable!\n");
       } else {         // Nope... find or create a forward ref. for it
-        C = fwdRefs.GetFwdRefToConstant(argTy, argValSlot);
+        C = fwdRefs.GetFwdRefToConstant(ArgTy, ArgValSlot);
       }
-      argVec.push_back(C);
+      ArgVec.push_back(C);
     }
     
     // Construct a ConstantExpr of the appropriate kind
     if (isExprNumArgs == 1) {           // All one-operand expressions
-      V = ConstantExpr::get(opCode, argVec[0], Ty);
-    } else if (opCode == Instruction::GetElementPtr) { // GetElementPtr
-      std::vector<Constant*> IdxList(argVec.begin()+1, argVec.end());
-      V = ConstantExpr::get(opCode, argVec[0], IdxList, Ty);
+      V = ConstantExpr::get(Opcode, ArgVec[0], Ty);
+    } else if (Opcode == Instruction::GetElementPtr) { // GetElementPtr
+      std::vector<Constant*> IdxList(ArgVec.begin()+1, ArgVec.end());
+      V = ConstantExpr::getGetElementPtr(ArgVec[0], IdxList);
     } else {                            // All other 2-operand expressions
-      V = ConstantExpr::get(opCode, argVec[0], argVec[1], Ty);
+      V = ConstantExpr::get(Opcode, ArgVec[0], ArgVec[1]);
     }
     return false;
   }

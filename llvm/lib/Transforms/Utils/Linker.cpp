@@ -11,15 +11,10 @@
 
 #include "llvm/Transforms/Utils/Linker.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
 #include "llvm/Constants.h"
-#include "llvm/Argument.h"
-#include <iostream>
 using std::cerr;
 using std::string;
 using std::map;
@@ -134,7 +129,7 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
         Value *V2 = RemapOperand(CE->getOperand(1), LocalMap, GlobalMap);
 
         Result = ConstantExpr::get(CE->getOpcode(), cast<Constant>(V1),
-                                   cast<Constant>(V2), CE->getType());        
+                                   cast<Constant>(V2));        
       } else {
         // GetElementPtr Expression
         assert(CE->getOpcode() == Instruction::GetElementPtr);
@@ -145,8 +140,7 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
           Indices.push_back(cast<Constant>(RemapOperand(CE->getOperand(i),
                                                         LocalMap, GlobalMap)));
 
-        Result = ConstantExpr::get(CE->getOpcode(), cast<Constant>(Ptr),
-                                   Indices, CE->getType());
+        Result = ConstantExpr::getGetElementPtr(cast<Constant>(Ptr), Indices);
       }
 
     } else {

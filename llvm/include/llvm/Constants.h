@@ -11,11 +11,9 @@
 #include "llvm/Constant.h"
 #include "Support/DataTypes.h"
 
-
 class ArrayType;
 class StructType;
 class PointerType;
-class ConstantExpr;
 
 //===---------------------------------------------------------------------------
 // ConstantBool - Boolean Values
@@ -340,25 +338,29 @@ public:
 // Use the appropriate Constant subclass above for known constants.
 //
 class ConstantExpr : public Constant {
-  unsigned iType;      // operation type
+  unsigned iType;      // Operation type
   
 protected:
-  ConstantExpr(unsigned opCode, Constant *C,  const Type *Ty);
-  ConstantExpr(unsigned opCode, Constant* C1, Constant* C2, const Type *Ty);
-  ConstantExpr(unsigned opCode, Constant* C,
-               const std::vector<Constant*> &IdxList, const Type *Ty);
+  ConstantExpr(unsigned Opcode, Constant *C,  const Type *Ty);
+  ConstantExpr(unsigned Opcode, Constant *C1, Constant *C2);
+  ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
+               const Type *DestTy);
   ~ConstantExpr() {}
   
   virtual void destroyConstant();
   
 public:
   // Static methods to construct a ConstantExpr of different kinds.
+  
+  // Unary constant expr - Use with unary operators and casts
   static ConstantExpr *get(unsigned Opcode, Constant *C, const Type *Ty);
-  static ConstantExpr *get(unsigned Opcode,
-                           Constant *C1, Constant *C2, const Type *Ty);
-  static ConstantExpr *get(unsigned Opcode, Constant *C,
-                           const std::vector<Constant*> &IdxList,
-                           const Type *Ty);
+
+  // Binary constant expr - Use with binary operators...
+  static ConstantExpr *get(unsigned Opcode, Constant *C1, Constant *C2);
+
+  // Getelementptr form...
+  static ConstantExpr *getGetElementPtr(Constant *C,
+                                        const std::vector<Constant*> &IdxList);
   
   // isNullValue - Return true if this is the value that would be returned by
   // getNullValue.
@@ -368,10 +370,7 @@ public:
   unsigned getOpcode() const { return iType; }
 
   // getOpcodeName - Return a string representation for an opcode.
-  static const char *getOpcodeName(unsigned opCode);
-  const char *getOpcodeName() const {
-    return getOpcodeName(getOpcode());
-  }
+  const char *getOpcodeName() const;
   
   // isConstantExpr - Return true if this is a ConstantExpr
   virtual bool isConstantExpr() const { return true; }
