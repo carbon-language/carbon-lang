@@ -236,14 +236,15 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
       // size of 0, and the concrete global is an array with a real size, don't
       // warn.  This occurs due to declaring 'extern int A[];'.
       if (GlobalVariable *ConcreteGV = dyn_cast<GlobalVariable>(Concrete))
-        if (GlobalVariable *OtherGV = dyn_cast<GlobalVariable>(Other))
-          if (const ArrayType *OtherAT =
-              dyn_cast<ArrayType>(OtherGV->getType()->getElementType()))
-            if (const ArrayType *ConcreteAT =
-                dyn_cast<ArrayType>(ConcreteGV->getType()->getElementType()))
-              if (OtherAT->getElementType() == ConcreteAT->getElementType() &&
-                  OtherAT->getNumElements() == 0)
-                DontPrintWarning = true;
+        if (GlobalVariable *OtherGV = dyn_cast<GlobalVariable>(Other)) {
+          const Type *CTy = ConcreteGV->getType();
+          const Type *OTy = OtherGV->getType();
+
+          if (CTy->isSized())
+            if (!OTy->isSized() || !TD.getTypeSize(OTy) ||
+                TD.getTypeSize(OTy) == TD.getTypeSize(CTy))
+              DontPrintWarning = true;
+        }
     }
 
     if (!DontPrintWarning) {
