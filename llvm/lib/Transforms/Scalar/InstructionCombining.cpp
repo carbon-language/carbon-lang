@@ -48,8 +48,7 @@
 #include "llvm/Support/CallSite.h"
 #include "Support/Statistic.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumCombined ("instcombine", "Number of insts combined");
@@ -104,6 +103,7 @@ namespace {
     Instruction *visitPHINode(PHINode &PN);
     Instruction *visitGetElementPtrInst(GetElementPtrInst &GEP);
     Instruction *visitAllocationInst(AllocationInst &AI);
+    Instruction *visitFreeInst(FreeInst &FI);
     Instruction *visitLoadInst(LoadInst &LI);
     Instruction *visitBranchInst(BranchInst &BI);
 
@@ -2044,6 +2044,20 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
   return 0;
 }
 
+Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
+  Value *Op = FI.getOperand(0);
+
+  // Change free <ty>* (cast <ty2>* X to <ty>*) into free <ty2>* X
+  if (CastInst *CI = dyn_cast<CastInst>(Op))
+    if (isa<PointerType>(CI->getOperand(0)->getType())) {
+      FI.setOperand(0, CI->getOperand(0));
+      return &FI;
+    }
+
+  return 0;
+}
+
+
 /// GetGEPGlobalInitializer - Given a constant, and a getelementptr
 /// constantexpr, return the constant value being addressed by the constant
 /// expression, or null if something is funny.
@@ -2196,8 +2210,7 @@ bool InstCombiner::runOnFunction(Function &F) {
   return Changed;
 }
 
-Pass *createInstructionCombiningPass() {
+Pass *llvm::createInstructionCombiningPass() {
   return new InstCombiner();
 }
 
-} // End llvm namespace
