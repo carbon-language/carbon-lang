@@ -60,9 +60,9 @@ SchedGraphNode::SchedGraphNode(unsigned NID, MachineBasicBlock *mbb,
     MI = I;
 
     MachineOpCode mopCode = MI->getOpcode();
-    latency = Target.getInstrInfo().hasResultInterlock(mopCode)
-      ? Target.getInstrInfo().minLatency(mopCode)
-      : Target.getInstrInfo().maxLatency(mopCode);
+    latency = Target.getInstrInfo()->hasResultInterlock(mopCode)
+      ? Target.getInstrInfo()->minLatency(mopCode)
+      : Target.getInstrInfo()->maxLatency(mopCode);
   }
 }
 
@@ -138,7 +138,7 @@ void SchedGraph::addDummyEdges() {
 
 void SchedGraph::addCDEdges(const TerminatorInst* term,
 			    const TargetMachine& target) {
-  const TargetInstrInfo& mii = target.getInstrInfo();
+  const TargetInstrInfo& mii = *target.getInstrInfo();
   MachineCodeForInstruction &termMvec = MachineCodeForInstruction::get(term);
   
   // Find the first branch instr in the sequence of machine instrs for term
@@ -240,7 +240,7 @@ static const unsigned int SG_DepOrderArray[][3] = {
 // 
 void SchedGraph::addMemEdges(const std::vector<SchedGraphNode*>& memNodeVec,
 			     const TargetMachine& target) {
-  const TargetInstrInfo& mii = target.getInstrInfo();
+  const TargetInstrInfo& mii = *target.getInstrInfo();
   
   // Instructions in memNodeVec are in execution order within the basic block,
   // so simply look at all pairs <memNodeVec[i], memNodeVec[j: j > i]>.
@@ -272,7 +272,7 @@ void SchedGraph::addMemEdges(const std::vector<SchedGraphNode*>& memNodeVec,
 // 
 void SchedGraph::addCallDepEdges(const std::vector<SchedGraphNode*>& callDepNodeVec,
 				 const TargetMachine& target) {
-  const TargetInstrInfo& mii = target.getInstrInfo();
+  const TargetInstrInfo& mii = *target.getInstrInfo();
   
   // Instructions in memNodeVec are in execution order within the basic block,
   // so simply look at all pairs <memNodeVec[i], memNodeVec[j: j > i]>.
@@ -471,7 +471,7 @@ void SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
 				       std::vector<SchedGraphNode*>& callDepNodeVec,
 				       RegToRefVecMap& regToRefVecMap,
 				       ValueToDefVecMap& valueToDefVecMap) {
-  const TargetInstrInfo& mii = target.getInstrInfo();
+  const TargetInstrInfo& mii = *target.getInstrInfo();
   
   MachineOpCode opCode = node->getOpcode();
   
@@ -493,7 +493,7 @@ void SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
       unsigned regNum = mop.getReg();
       
       // If this is not a dummy zero register, record the reference in order
-      if (regNum != target.getRegInfo().getZeroRegNum())
+      if (regNum != target.getRegInfo()->getZeroRegNum())
         regToRefVecMap[mop.getReg()]
           .push_back(std::make_pair(node, i));
 
@@ -502,8 +502,8 @@ void SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
       if (callDepNodeVec.size() == 0 || callDepNodeVec.back() != node)
         {
           unsigned rcid;
-          int regInClass = target.getRegInfo().getClassRegNum(regNum, rcid);
-          if (target.getRegInfo().getMachineRegClass(rcid)
+          int regInClass = target.getRegInfo()->getClassRegNum(regNum, rcid);
+          if (target.getRegInfo()->getMachineRegClass(rcid)
               ->isRegVolatile(regInClass))
             callDepNodeVec.push_back(node);
         }
@@ -532,7 +532,7 @@ void SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
     const MachineOperand& mop = MI.getImplicitOp(i);
     if (mop.hasAllocatedReg()) {
       unsigned regNum = mop.getReg();
-      if (regNum != target.getRegInfo().getZeroRegNum())
+      if (regNum != target.getRegInfo()->getZeroRegNum())
         regToRefVecMap[mop.getReg()]
           .push_back(std::make_pair(node, i + MI.getNumOperands()));
       continue;                     // nothing more to do
@@ -553,7 +553,7 @@ void SchedGraph::buildNodesForBB(const TargetMachine& target,
 				 std::vector<SchedGraphNode*>& callDepNodeVec,
 				 RegToRefVecMap& regToRefVecMap,
 				 ValueToDefVecMap& valueToDefVecMap) {
-  const TargetInstrInfo& mii = target.getInstrInfo();
+  const TargetInstrInfo& mii = *target.getInstrInfo();
   
   // Build graph nodes for each VM instruction and gather def/use info.
   // Do both those together in a single pass over all machine instructions.

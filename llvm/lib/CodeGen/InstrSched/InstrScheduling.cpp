@@ -512,15 +512,15 @@ private:
 SchedulingManager::SchedulingManager(const TargetMachine& target,
 				     const SchedGraph* graph,
 				     SchedPriorities& _schedPrio)
-  : nslots(target.getSchedInfo().getMaxNumIssueTotal()),
-    schedInfo(target.getSchedInfo()),
+  : nslots(target.getSchedInfo()->getMaxNumIssueTotal()),
+    schedInfo(*target.getSchedInfo()),
     schedPrio(_schedPrio),
     isched(nslots, graph->getNumNodes()),
     totalInstrCount(graph->getNumNodes() - 2),
     nextEarliestIssueTime(0),
     choicesForSlot(nslots),
-    numInClass(target.getSchedInfo().getNumSchedClasses(), 0),	// set all to 0
-    nextEarliestStartTime(target.getInstrInfo().getNumOpcodes(),
+    numInClass(target.getSchedInfo()->getNumSchedClasses(), 0),	// set all to 0
+    nextEarliestStartTime(target.getInstrInfo()->getNumOpcodes(),
 			  (cycles_t) 0)				// set all to 0
 {
   updateTime(0);
