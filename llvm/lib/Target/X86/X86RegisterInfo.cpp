@@ -254,14 +254,14 @@ X86RegisterInfo::getRegClassForType(const Type* Ty) const {
   default:              assert(0 && "Invalid type to getClass!");
   case Type::BoolTyID:
   case Type::SByteTyID:
-  case Type::UByteTyID:   return &r8Instance;
+  case Type::UByteTyID:   return &R8Instance;
   case Type::ShortTyID:
-  case Type::UShortTyID:  return &r16Instance;
+  case Type::UShortTyID:  return &R16Instance;
   case Type::IntTyID:
   case Type::UIntTyID:
-  case Type::PointerTyID: return &r32Instance;
+  case Type::PointerTyID: return &R32Instance;
     
   case Type::FloatTyID:
-  case Type::DoubleTyID: return &rFPInstance;
+  case Type::DoubleTyID: return &RFPInstance;
   }
 }
