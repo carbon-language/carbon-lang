@@ -83,6 +83,7 @@ let Uses = [R28, R23, R24, R25, R26] in
 //Operation Form:
 
 let isTwoAddress = 1 in {
+//conditional moves, int
  def CMOVEQ   : OForm<  0x11, 0x24, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND), "cmoveq $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND =  zero
  def CMOVEQi  : OFormL< 0x11, 0x24, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),   "cmoveq $RCOND,$L,$RDEST">; //CMOVE if RCOND =  zero
  def CMOVGE   : OForm<  0x11, 0x46, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND), "CMOVGE $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND >= zero
@@ -99,6 +100,15 @@ let isTwoAddress = 1 in {
  def CMOVLTi  : OFormL< 0x11, 0x44, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),   "CMOVLT $RCOND,$L,$RDEST">; //CMOVE if RCOND < zero
  def CMOVNE   : OForm<  0x11, 0x26, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND), "cmovne $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND != zero
  def CMOVNEi  : OFormL< 0x11, 0x26, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),   "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND != zero
+
+//conditional moves, fp
+ def FCMOVEQ  : FPForm<0x17, 0x02A, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), "fcmoveq $RCOND,$RSRC,$RDEST">; //FCMOVE if = zero
+ def FCMOVGE  : FPForm<0x17, 0x02D, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), "fcmovge $RCOND,$RSRC,$RDEST">; //FCMOVE if >= zero
+ def FCMOVGT  : FPForm<0x17, 0x02F, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), "fcmovge $RCOND,$RSRC,$RDEST">; //FCMOVE if > zero
+ def FCMOVLE  : FPForm<0x17, 0x02E, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), "fcmovle $RCOND,$RSRC,$RDEST">; //FCMOVE if <= zero
+ def FCMOVLT  : FPForm<0x17, 0x02, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), "fcmovlt $RCOND,$RSRC,$RDEST">; // FCMOVE if < zero
+ def FCMOVNE : FPForm<0x17, 0x02B, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), "fcmovne $RCOND,$RSRC,$RDEST">; //FCMOVE if != zero
+
 }
 
 def ADDL     : OForm< 0x10, 0x00, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "addl $RA,$RB,$RC">; //Add longword
@@ -368,12 +378,6 @@ def CVTTS : FPForm<0x16, 0x2AC, (ops FPRC:$RC, FPRC:$RA), "cvtts $RA,$RC">; //Co
 //WH64 Mfc 18.F800 Write hint  64 bytes
 //WMB Mfc 18.4400 Write memory barrier
 
-//FCMOVEQ F-P 17.02A FCMOVE if = zero
-//FCMOVGE F-P 17.02D FCMOVE if >= zero
-//FCMOVGT F-P 17.02F FCMOVE if > zero
-//FCMOVLE F-P 17.02E FCMOVE if <= zero
-//FCMOVLT F-P 17.02C FCMOVE if < zero
-//FCMOVNE F-P 17.02B FCMOVE if != zero
 
 //MF_FPCR F-P 17.025 Move from FPCR
 //MT_FPCR F-P 17.024 Move to FPCR

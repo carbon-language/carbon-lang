@@ -65,8 +65,6 @@ namespace {
       setOperationAction(ISD::MEMSET           , MVT::Other, Expand);
       setOperationAction(ISD::MEMCPY           , MVT::Other, Expand);
 
-      setOperationAction(ISD::SETCC            , MVT::f32  ,   Promote);
-
      computeRegisterProperties();
       
      addLegalFPImmediate(+0.0); //F31
@@ -319,8 +317,18 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       Tmp1 = SelectExpr(N.getOperand(0)); //Cond
       Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
       Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
+
+
+      // Spill the cond to memory and reload it from there.
+      unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
+      MachineFunction *F = BB->getParent();
+      int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
+      unsigned Tmp4 = MakeReg(MVT::f64);
+      BuildMI(BB, Alpha::STQ, 3).addReg(Tmp1).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+      BuildMI(BB, Alpha::LDT, 2, Tmp4).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+      //now ideally, we don't have to do anything to the flag...
       // Get the condition into the zero flag.
-      BuildMI(BB, Alpha::CMOVEQ, 2, Result).addReg(Tmp2).addReg(Tmp3).addReg(Tmp1);
+      BuildMI(BB, Alpha::FCMOVEQ, 2, Result).addReg(Tmp2).addReg(Tmp3).addReg(Tmp4);
       return Result;
     }
 
@@ -367,27 +375,27 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       SDOperand Address = N.getOperand(1);
       
       if (Address.getOpcode() == ISD::GlobalAddress)
-	{
-	  Select(Chain);
-	  AlphaLowering.restoreGP(BB);
-	  Opc = DestType == MVT::f64 ? Alpha::LDT_SYM : Alpha::LDS_SYM;
-	  BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
-	}
+        {
+          Select(Chain);
+          AlphaLowering.restoreGP(BB);
+          Opc = DestType == MVT::f64 ? Alpha::LDT_SYM : Alpha::LDS_SYM;
+          BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
+        }
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
-	AlphaLowering.restoreGP(BB);
-	if (DestType == MVT::f64) {
-	  BuildMI(BB, Alpha::LDT_SYM, 1, Result).addConstantPoolIndex(CP->getIndex());
-	} else {
-	  BuildMI(BB, Alpha::LDS_SYM, 1, Result).addConstantPoolIndex(CP->getIndex());
-	}
+        AlphaLowering.restoreGP(BB);
+        if (DestType == MVT::f64) {
+          BuildMI(BB, Alpha::LDT_SYM, 1, Result).addConstantPoolIndex(CP->getIndex());
+        } else {
+          BuildMI(BB, Alpha::LDS_SYM, 1, Result).addConstantPoolIndex(CP->getIndex());
+        }
       }
       else
-	{
-	  Select(Chain);
-	  Tmp2 = SelectExpr(Address);
-	  Opc = DestType == MVT::f64 ? Alpha::LDT : Alpha::LDS;
-	  BuildMI(BB, Opc, 2, Result).addImm(0).addReg(Tmp2);
-	}
+        {
+          Select(Chain);
+          Tmp2 = SelectExpr(Address);
+          Opc = DestType == MVT::f64 ? Alpha::LDT : Alpha::LDS;
+          BuildMI(BB, Opc, 2, Result).addImm(0).addReg(Tmp2);
+        }
       return Result;
     }
   case ISD::ConstantFP:
@@ -874,53 +882,68 @@ unsigned ISel::SelectExpr(SDOperand N) {
               Tmp2 = SelectExpr(N.getOperand(1));
               BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Tmp1).addReg(Tmp2);
             }
-	  }
-	} else {
- 	  bool rev = false;
- 	  bool inv = false;
-  
-	  switch (SetCC->getCondition()) {
-	  default: Node->dump(); assert(0 && "Unknown FP comparison!");
-	  case ISD::SETEQ: Opc = Alpha::CMPTEQ; break;
-	  case ISD::SETLT: Opc = Alpha::CMPTLT; break;
-	  case ISD::SETLE: Opc = Alpha::CMPTLE; break;
-	  case ISD::SETGT: Opc = Alpha::CMPTLT; rev = true; break;
-	  case ISD::SETGE: Opc = Alpha::CMPTLE; rev = true; break;
-	  case ISD::SETNE: Opc = Alpha::CMPTEQ; inv = true; break;
- 	  }
+          }
+        } else {
+          //assert(SetCC->getOperand(0).getValueType() != MVT::f32 && "SetCC f32 should have been promoted");
+          bool rev = false;
+          bool inv = false;
+          
+          switch (SetCC->getCondition()) {
+          default: Node->dump(); assert(0 && "Unknown FP comparison!");
+          case ISD::SETEQ: Opc = Alpha::CMPTEQ; break;
+          case ISD::SETLT: Opc = Alpha::CMPTLT; break;
+          case ISD::SETLE: Opc = Alpha::CMPTLE; break;
+          case ISD::SETGT: Opc = Alpha::CMPTLT; rev = true; break;
+          case ISD::SETGE: Opc = Alpha::CMPTLE; rev = true; break;
+          case ISD::SETNE: Opc = Alpha::CMPTEQ; inv = true; break;
+          }
+          
+          Tmp1 = SelectExpr(N.getOperand(0));
+          Tmp2 = SelectExpr(N.getOperand(1));
+          //Can only compare doubles, and dag won't promote for me
+          if (SetCC->getOperand(0).getValueType() == MVT::f32)
+            {
+              Tmp3 = MakeReg(MVT::f64);
+              BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp1);
+              Tmp1 = Tmp3;
+            }
+          if (SetCC->getOperand(1).getValueType() == MVT::f32)
+            {
+              Tmp3 = MakeReg(MVT::f64);
+              BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp2);
+              Tmp1 = Tmp2;
+            }
 
- 	  Tmp1 = SelectExpr(N.getOperand(0));
- 	  Tmp2 = SelectExpr(N.getOperand(1));
- 	  if (rev) std::swap(Tmp1, Tmp2);
- 	  Tmp3 = MakeReg(MVT::f64);
- 	  //do the comparison
- 	  BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-
- 	  //now arrange for Result (int) to have a 1 or 0
-
- 	  // Spill the FP to memory and reload it from there.
- 	  unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
- 	  MachineFunction *F = BB->getParent();
- 	  int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
- 	  unsigned Tmp4 = MakeReg(MVT::f64);
- 	  BuildMI(BB, Alpha::CVTTQ, 1, Tmp4).addReg(Tmp3);
- 	  BuildMI(BB, Alpha::STT, 3).addReg(Tmp4).addFrameIndex(FrameIdx).addReg(Alpha::F31);
- 	  unsigned Tmp5 = MakeReg(MVT::i64);
- 	  BuildMI(BB, Alpha::LDQ, 2, Tmp5).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+          if (rev) std::swap(Tmp1, Tmp2);
+          Tmp3 = MakeReg(MVT::f64);
+          //do the comparison
+          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+          
+          //now arrange for Result (int) to have a 1 or 0
+          
+          // Spill the FP to memory and reload it from there.
+          unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
+          MachineFunction *F = BB->getParent();
+          int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
+          unsigned Tmp4 = MakeReg(MVT::f64);
+          BuildMI(BB, Alpha::CVTTQ, 1, Tmp4).addReg(Tmp3);
+          BuildMI(BB, Alpha::STT, 3).addReg(Tmp4).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+          unsigned Tmp5 = MakeReg(MVT::i64);
+          BuildMI(BB, Alpha::LDQ, 2, Tmp5).addFrameIndex(FrameIdx).addReg(Alpha::F31);
 	  
- 	  //now, set result based on Tmp5
-	  //Set Tmp6 if fp cmp was false
-	  unsigned Tmp6 = MakeReg(MVT::i64);
-	  BuildMI(BB, Alpha::CMPEQ, 2, Tmp6).addReg(Tmp5).addReg(Alpha::R31);
-	  //and invert
-	  BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Tmp6).addReg(Alpha::R31);
-
-      }
-//       else
-//         {
-//           Node->dump();
-//           assert(0 && "Not a setcc in setcc");
-//         }
+          //now, set result based on Tmp5
+          //Set Tmp6 if fp cmp was false
+          unsigned Tmp6 = MakeReg(MVT::i64);
+          BuildMI(BB, Alpha::CMPEQ, 2, Tmp6).addReg(Tmp5).addReg(Alpha::R31);
+          //and invert
+          BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Tmp6).addReg(Alpha::R31);
+          
+        }
+        //       else
+        //         {
+        //           Node->dump();
+        //           assert(0 && "Not a setcc in setcc");
+        //         }
       }
       return Result;
     }
