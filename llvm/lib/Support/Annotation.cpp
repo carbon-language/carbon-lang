@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <map>
 #include "llvm/Support/Annotation.h"
+#include <map>
 using namespace llvm;
 
 Annotation::~Annotation() {}  // Designed to be subclassed
@@ -25,7 +25,6 @@ Annotable::~Annotable() {   // Virtual because it's designed to be subclassed...
     A = Next;
   }
 }
-
 
 typedef std::map<const std::string, unsigned> IDMapType;
 static unsigned IDCounter = 0;  // Unique ID counter
@@ -65,12 +64,11 @@ AnnotationID AnnotationManager::getID(const std::string &Name) {  // Name -> ID
 // getID - Name -> ID + registration of a factory function for demand driven
 // annotation support.
 AnnotationID AnnotationManager::getID(const std::string &Name, Factory Fact,
-				      void *Data) {
+                                      void *Data) {
   AnnotationID Result(getID(Name));
   registerAnnotationFactory(Result, Fact, Data);
-  return Result;		      
+  return Result;                      
 }
-
 
 // getName - This function is especially slow, but that's okay because it should
 // only be used for debugging.
@@ -83,14 +81,12 @@ const std::string &AnnotationManager::getName(AnnotationID ID) {  // ID -> Name
   }
 }
 
-
 // registerAnnotationFactory - This method is used to register a callback
 // function used to create an annotation on demand if it is needed by the 
 // Annotable::findOrCreateAnnotation method.
 //
-void AnnotationManager::registerAnnotationFactory(AnnotationID ID, 
-						  AnnFactory F,
-						  void *ExtraData) {
+void AnnotationManager::registerAnnotationFactory(AnnotationID ID, AnnFactory F,
+                                                  void *ExtraData) {
   if (F)
     getFactMap()[ID.ID] = std::make_pair(F, ExtraData);
   else
@@ -101,7 +97,7 @@ void AnnotationManager::registerAnnotationFactory(AnnotationID ID,
 // specified object, using a register annotation creation function.
 //
 Annotation *AnnotationManager::createAnnotation(AnnotationID ID, 
-						const Annotable *Obj) {
+                                                const Annotable *Obj) {
   FactMapType::iterator I = getFactMap().find(ID.ID);
   if (I == getFactMap().end()) return 0;
   return I->second.first(ID, Obj, I->second.second);
