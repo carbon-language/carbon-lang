@@ -187,7 +187,7 @@ CreateIntSetInstruction(const TargetMachine& target,
   assert(dest->getType()->isSigned() && "Use CreateUIntSetInstruction()");
   
   uint64_t absC = (C >= 0)? C : -C;
-  if (absC > (unsigned int) ~0)
+  if (absC > (uint32_t) ~0)
     { // C does not fit in 32 bits
       TmpInstruction* tmpReg = new TmpInstruction(Type::IntTy);
       mcfi.addTemp(tmpReg);
@@ -207,7 +207,7 @@ CreateUIntSetInstruction(const TargetMachine& target,
   assert(! dest->getType()->isSigned() && "Use CreateIntSetInstruction()");
   MachineInstr* M;
   
-  if (C > (unsigned int) ~0)
+  if (C > (uint32_t) ~0)
     { // C does not fit in 32 bits
       assert(dest->getType() == Type::ULongTy && "Sign extension problems");
       TmpInstruction *tmpReg = new TmpInstruction(Type::IntTy);
@@ -215,31 +215,7 @@ CreateUIntSetInstruction(const TargetMachine& target,
       CreateSETXConst(target, C, tmpReg, dest, mvec);
     }
   else
-    {
-#undef SIGN_EXTEND_FOR_UNSIGNED_DEST
-#ifdef SIGN_EXTEND_FOR_UNSIGNED_DEST
-      // If dest is smaller than the standard integer reg. size
-      // and the high-order bit of dest will be 1, then we have to
-      // extend the sign-bit into upper bits of the dest register.
-      // 
-      unsigned destSize = target.DataLayout.getTypeSize(dest->getType());
-      if (destSize < target.DataLayout.getIntegerRegize())
-        {
-          assert(destSize <= 4 && "Unexpected type size of 5-7 bytes");
-          uint32_t signBit = C & (1 << (8*destSize-1));
-          if (signBit)
-            { // Sign-bit is 1 so convert C to a sign-extended 64-bit value
-              // and use CreateSETSWConst.  CreateSETSWConst will correctly
-              // generate efficient code for small signed values.
-              int32_t simmC = C | ~(signBit-1);
-              CreateSETSWConst(target, simmC, dest, mvec);
-              return;
-            }
-        }
-#endif /*SIGN_EXTEND_FOR_UNSIGNED_DEST*/
-      
-      CreateSETUWConst(target, C, dest, mvec);
-    }
+    CreateSETUWConst(target, C, dest, mvec);
 }
 
 
@@ -298,9 +274,11 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
           mcfi.addTemp(tmpReg);
           CreateSETXLabel(target, val, tmpReg, dest, mvec);
         }
-      else if (! val->getType()->isSigned())
+      else if (! dest->getType()->isSigned())
         {
-          uint64_t C = cast<ConstantUInt>(val)->getValue();
+          bool isValidConstant;
+          uint64_t C = GetConstantValueAsUnsignedInt(val, isValidConstant);
+          assert(isValidConstant && "Unrecognized constant");
           CreateUIntSetInstruction(target, C, dest, mvec, mcfi);
         }
       else
