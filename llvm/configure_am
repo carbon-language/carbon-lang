@@ -4110,7 +4110,222 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 if test -n "$ac_tool_prefix"; then
-  for ac_prog in gcc
+  # Extract the first word of "${ac_tool_prefix}gcc", so it can be a program name with args.
+set dummy ${ac_tool_prefix}gcc; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_CC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$CC"; then
+  ac_cv_prog_CC="$CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_CC="${ac_tool_prefix}gcc"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+CC=$ac_cv_prog_CC
+if test -n "$CC"; then
+  echo "$as_me:$LINENO: result: $CC" >&5
+echo "${ECHO_T}$CC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$ac_cv_prog_CC"; then
+  ac_ct_CC=$CC
+  # Extract the first word of "gcc", so it can be a program name with args.
+set dummy gcc; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_CC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_CC"; then
+  ac_cv_prog_ac_ct_CC="$ac_ct_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_CC="gcc"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+ac_ct_CC=$ac_cv_prog_ac_ct_CC
+if test -n "$ac_ct_CC"; then
+  echo "$as_me:$LINENO: result: $ac_ct_CC" >&5
+echo "${ECHO_T}$ac_ct_CC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  CC=$ac_ct_CC
+else
+  CC="$ac_cv_prog_CC"
+fi
+
+if test -z "$CC"; then
+  if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}cc", so it can be a program name with args.
+set dummy ${ac_tool_prefix}cc; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_CC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$CC"; then
+  ac_cv_prog_CC="$CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_CC="${ac_tool_prefix}cc"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+CC=$ac_cv_prog_CC
+if test -n "$CC"; then
+  echo "$as_me:$LINENO: result: $CC" >&5
+echo "${ECHO_T}$CC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$ac_cv_prog_CC"; then
+  ac_ct_CC=$CC
+  # Extract the first word of "cc", so it can be a program name with args.
+set dummy cc; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_CC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_CC"; then
+  ac_cv_prog_ac_ct_CC="$ac_ct_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_CC="cc"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+ac_ct_CC=$ac_cv_prog_ac_ct_CC
+if test -n "$ac_ct_CC"; then
+  echo "$as_me:$LINENO: result: $ac_ct_CC" >&5
+echo "${ECHO_T}$ac_ct_CC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  CC=$ac_ct_CC
+else
+  CC="$ac_cv_prog_CC"
+fi
+
+fi
+if test -z "$CC"; then
+  # Extract the first word of "cc", so it can be a program name with args.
+set dummy cc; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_CC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$CC"; then
+  ac_cv_prog_CC="$CC" # Let the user override the test.
+else
+  ac_prog_rejected=no
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    if test "$as_dir/$ac_word$ac_exec_ext" = "/usr/ucb/cc"; then
+       ac_prog_rejected=yes
+       continue
+     fi
+    ac_cv_prog_CC="cc"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+if test $ac_prog_rejected = yes; then
+  # We found a bogon in the path, so make sure we never use it.
+  set dummy $ac_cv_prog_CC
+  shift
+  if test $# != 0; then
+    # We chose a different compiler from the bogus one.
+    # However, it has the same basename, so the bogon will be chosen
+    # first if we set CC to just the basename; use the full file name.
+    shift
+    ac_cv_prog_CC="$as_dir/$ac_word${1+' '}$@"
+  fi
+fi
+fi
+fi
+CC=$ac_cv_prog_CC
+if test -n "$CC"; then
+  echo "$as_me:$LINENO: result: $CC" >&5
+echo "${ECHO_T}$CC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$CC"; then
+  if test -n "$ac_tool_prefix"; then
+  for ac_prog in cl
   do
     # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
 set dummy $ac_tool_prefix$ac_prog; ac_word=$2
@@ -4152,7 +4367,7 @@ fi
 fi
 if test -z "$CC"; then
   ac_ct_CC=$CC
-  for ac_prog in gcc
+  for ac_prog in cl
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -4193,6 +4408,8 @@ fi
 done
 
   CC=$ac_ct_CC
+fi
+
 fi
 
 
@@ -5862,7 +6079,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5865 "configure"' > conftest.$ac_ext
+  echo '#line 6082 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -6736,7 +6953,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:6739:" \
+echo "$as_me:6956:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -7793,11 +8010,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7796: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8013: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7800: \$? = $ac_status" >&5
+   echo "$as_me:8017: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -8036,11 +8253,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8039: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8256: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8043: \$? = $ac_status" >&5
+   echo "$as_me:8260: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -8096,11 +8313,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8099: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8316: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8103: \$? = $ac_status" >&5
+   echo "$as_me:8320: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10281,7 +10498,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10284 "configure"
+#line 10501 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10379,7 +10596,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10382 "configure"
+#line 10599 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12572,11 +12789,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12575: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12792: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12579: \$? = $ac_status" >&5
+   echo "$as_me:12796: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -12632,11 +12849,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12635: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12852: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12639: \$? = $ac_status" >&5
+   echo "$as_me:12856: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -13993,7 +14210,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 13996 "configure"
+#line 14213 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14091,7 +14308,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 14094 "configure"
+#line 14311 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14928,11 +15145,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14931: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15148: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14935: \$? = $ac_status" >&5
+   echo "$as_me:15152: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -14988,11 +15205,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14991: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15208: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14995: \$? = $ac_status" >&5
+   echo "$as_me:15212: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17027,11 +17244,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17030: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17247: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:17034: \$? = $ac_status" >&5
+   echo "$as_me:17251: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -17270,11 +17487,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17273: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17490: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:17277: \$? = $ac_status" >&5
+   echo "$as_me:17494: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -17330,11 +17547,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17333: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17550: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:17337: \$? = $ac_status" >&5
+   echo "$as_me:17554: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -19515,7 +19732,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 19518 "configure"
+#line 19735 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19613,7 +19830,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 19616 "configure"
+#line 19833 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -26228,8 +26445,6 @@ _ACEOF
 
           ac_config_files="$ac_config_files lib/CodeGen/Makefile"
 
-          ac_config_files="$ac_config_files lib/CodeGen/ModuloScheduling/Makefile"
-
           ac_config_files="$ac_config_files lib/CodeGen/SelectionDAG/Makefile"
 
           ac_config_files="$ac_config_files lib/Debugger/Makefile"
@@ -26255,6 +26470,8 @@ _ACEOF
           ac_config_files="$ac_config_files lib/Target/SparcV9/InstrSched/Makefile"
 
           ac_config_files="$ac_config_files lib/Target/SparcV9/LiveVar/Makefile"
+
+          ac_config_files="$ac_config_files lib/Target/SparcV9/ModuloScheduling/Makefile"
 
           ac_config_files="$ac_config_files lib/Target/SparcV9/RegAlloc/Makefile"
 
@@ -26325,6 +26542,50 @@ _ACEOF
           ac_config_files="$ac_config_files tools/llvm-ld/Makefile"
 
           ac_config_files="$ac_config_files tools/llvm-stub/Makefile"
+
+          ac_config_files="$ac_config_files runtime/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GC/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GC/SemiSpace/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/crtend/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/libc/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/libcurses/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/libg/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/libgcc/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/libgdbm/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/libm/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/libmalloc/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/libpthread/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/libtermcap/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/libucb/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/libutempter/Makefile"
+
+          ac_config_files="$ac_config_files runtime/GCCLibraries/libutil/Makefile"
+
+          ac_config_files="$ac_config_files runtime/libdummy/Makefile"
+
+          ac_config_files="$ac_config_files runtime/libpng/Makefile"
+
+          ac_config_files="$ac_config_files runtime/libprofile/Makefile"
+
+          ac_config_files="$ac_config_files runtime/libtrace/Makefile"
+
+          ac_config_files="$ac_config_files runtime/zlib/Makefile"
 
 
           ac_config_links="$ac_config_links lib/System/platform:lib/System/$llvm_platform_type"
@@ -26980,7 +27241,6 @@ do
   "lib/Bytecode/Writer/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Bytecode/Writer/Makefile" ;;
   "lib/Bytecode/Archive/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Bytecode/Archive/Makefile" ;;
   "lib/CodeGen/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/CodeGen/Makefile" ;;
-  "lib/CodeGen/ModuloScheduling/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/CodeGen/ModuloScheduling/Makefile" ;;
   "lib/CodeGen/SelectionDAG/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/CodeGen/SelectionDAG/Makefile" ;;
   "lib/Debugger/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Debugger/Makefile" ;;
   "lib/ExecutionEngine/Interpreter/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/ExecutionEngine/Interpreter/Makefile" ;;
@@ -26994,6 +27254,7 @@ do
   "lib/Target/SparcV9/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Target/SparcV9/Makefile" ;;
   "lib/Target/SparcV9/InstrSched/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Target/SparcV9/InstrSched/Makefile" ;;
   "lib/Target/SparcV9/LiveVar/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Target/SparcV9/LiveVar/Makefile" ;;
+  "lib/Target/SparcV9/ModuloScheduling/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Target/SparcV9/ModuloScheduling/Makefile" ;;
   "lib/Target/SparcV9/RegAlloc/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Target/SparcV9/RegAlloc/Makefile" ;;
   "lib/Target/X86/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Target/X86/Makefile" ;;
   "lib/Transforms/Hello/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Transforms/Hello/Makefile" ;;
@@ -27029,6 +27290,28 @@ do
   "tools/opt/Makefile" ) CONFIG_FILES="$CONFIG_FILES tools/opt/Makefile" ;;
   "tools/llvm-ld/Makefile" ) CONFIG_FILES="$CONFIG_FILES tools/llvm-ld/Makefile" ;;
   "tools/llvm-stub/Makefile" ) CONFIG_FILES="$CONFIG_FILES tools/llvm-stub/Makefile" ;;
+  "runtime/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/Makefile" ;;
+  "runtime/GC/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GC/Makefile" ;;
+  "runtime/GC/SemiSpace/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GC/SemiSpace/Makefile" ;;
+  "runtime/GCCLibraries/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/Makefile" ;;
+  "runtime/GCCLibraries/crtend/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/crtend/Makefile" ;;
+  "runtime/GCCLibraries/libc/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/libc/Makefile" ;;
+  "runtime/GCCLibraries/libcurses/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/libcurses/Makefile" ;;
+  "runtime/GCCLibraries/libg/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/libg/Makefile" ;;
+  "runtime/GCCLibraries/libgcc/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/libgcc/Makefile" ;;
+  "runtime/GCCLibraries/libgdbm/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/libgdbm/Makefile" ;;
+  "runtime/GCCLibraries/libm/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/libm/Makefile" ;;
+  "runtime/GCCLibraries/libmalloc/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/libmalloc/Makefile" ;;
+  "runtime/GCCLibraries/libpthread/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/libpthread/Makefile" ;;
+  "runtime/GCCLibraries/libtermcap/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/libtermcap/Makefile" ;;
+  "runtime/GCCLibraries/libucb/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/libucb/Makefile" ;;
+  "runtime/GCCLibraries/libutempter/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/libutempter/Makefile" ;;
+  "runtime/GCCLibraries/libutil/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/GCCLibraries/libutil/Makefile" ;;
+  "runtime/libdummy/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/libdummy/Makefile" ;;
+  "runtime/libpng/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/libpng/Makefile" ;;
+  "runtime/libprofile/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/libprofile/Makefile" ;;
+  "runtime/libtrace/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/libtrace/Makefile" ;;
+  "runtime/zlib/Makefile" ) CONFIG_FILES="$CONFIG_FILES runtime/zlib/Makefile" ;;
   "lib/System/platform" ) CONFIG_LINKS="$CONFIG_LINKS lib/System/platform:lib/System/$llvm_platform_type" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   "include/llvm/Config/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/Config/config.h" ;;
