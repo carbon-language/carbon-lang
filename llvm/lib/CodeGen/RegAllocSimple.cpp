@@ -50,13 +50,15 @@ namespace {
 
     RegAllocSimple(TargetMachine &tm) : TM(tm), CurrMBB(0), maxOffset(0), 
                                         RegInfo(tm.getRegisterInfo()),
-                                        NumBytesAllocated(0), ByteAlignment(4)
+                                        ByteAlignment(4)
     {
       // build reverse mapping for physReg -> register class
       RegInfo->buildReg2RegClassMap(PhysReg2RegClassMap);
 
       RegsUsed[RegInfo->getFramePointer()] = 1;
       RegsUsed[RegInfo->getStackPointer()] = 1;
+
+      cleanupAfterFunction();
     }
 
     bool isAvailableReg(unsigned Reg) {
@@ -80,7 +82,7 @@ namespace {
     void cleanupAfterFunction() {
       RegMap.clear();
       SSA2PhysRegMap.clear();
-      NumBytesAllocated = 0;
+      NumBytesAllocated = 4;
     }
 
     /// Moves value from memory into that register
@@ -112,6 +114,7 @@ unsigned RegAllocSimple::allocateStackSpaceFor(unsigned VirtReg,
                                             const TargetRegisterClass *regClass)
 {
   if (RegMap.find(VirtReg) == RegMap.end()) {
+#if 0
     unsigned size = regClass->getDataSize();
     unsigned over = NumBytesAllocated - (NumBytesAllocated % ByteAlignment);
     if (size >= ByteAlignment - over) {
@@ -120,6 +123,10 @@ unsigned RegAllocSimple::allocateStackSpaceFor(unsigned VirtReg,
     }
     RegMap[VirtReg] = NumBytesAllocated;
     NumBytesAllocated += size;
+#endif
+    // FIXME: forcing each arg to take 4 bytes on the stack
+    RegMap[VirtReg] = NumBytesAllocated;
+    NumBytesAllocated += 4;
   }
   return RegMap[VirtReg];
 }
