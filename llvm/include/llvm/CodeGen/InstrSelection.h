@@ -29,6 +29,8 @@ class TargetMachine;
 
 const unsigned MAX_INSTR_PER_VMINSTR = 8;
 
+const Instruction::OtherOps TMP_INSTRUCTION_OPCODE = Instruction::UserOp1;
+
 extern unsigned	GetInstructionsByRule	(InstructionNode* subtreeRoot,
 					 int ruleForNode,
 					 short* nts,
@@ -74,7 +76,8 @@ public:
   TmpInstruction(OtherOps Opcode, Value *S1, Value* S2, const string &Name = "")
     : Instruction(S1->getType(), Opcode, Name)
   {
-    assert(Opcode == UserOp1 && "Tmp instruction opcode invalid!");
+    assert(Opcode == TMP_INSTRUCTION_OPCODE &&
+           "Tmp instruction opcode invalid!");
     Operands.reserve(S2? 2 : 1);
     Operands.push_back(Use(S1, this));
     if (S2)

@@ -28,6 +28,23 @@ class TargetMachine;
 
 
 //---------------------------------------------------------------------------
+// Function GetConstantValueAsSignedInt
+// 
+// Convenience function to get the value of an integer constant, for an
+// appropriate integer or non-integer type that can be held in an integer.
+// The type of the argument must be the following:
+//      Signed or unsigned integer
+//      Boolean
+//      Pointer
+// 
+// isValidConstant is set to true if a valid constant was found.
+//---------------------------------------------------------------------------
+
+int64_t         GetConstantValueAsSignedInt     (const Value *V,
+                                                 bool &isValidConstant);
+
+
+//---------------------------------------------------------------------------
 // Function: FoldGetElemChain
 // 
 // Purpose:
@@ -96,6 +113,27 @@ MachineOperand::MachineOperandType
                                          bool canUseImmed,
                                          unsigned int& getMachineRegNum,
                                          int64_t& getImmedValue);
+
+
+//---------------------------------------------------------------------------
+// Function: FixConstantOperandsForInstr
+// 
+// Purpose:
+// Special handling for constant operands of a machine instruction
+// -- if the constant is 0, use the hardwired 0 register, if any;
+// -- if the constant fits in the IMMEDIATE field, use that field;
+// -- else create instructions to put the constant into a register, either
+//    directly or by loading explicitly from the constant pool.
+// 
+// In the first 2 cases, the operand of `minstr' is modified in place.
+// Returns a vector of machine instructions generated for operands that
+// fall under case 3; these must be inserted before `minstr'.
+//---------------------------------------------------------------------------
+
+vector<MachineInstr*> FixConstantOperandsForInstr (Instruction* vmInstr,
+                                                   MachineInstr* minstr,
+                                                   TargetMachine& target);
+
 
 //**************************************************************************/
 
