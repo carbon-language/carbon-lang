@@ -62,7 +62,7 @@ GenericValue JIT::runFunction(Function *F,
   GenericValue rv;
 
   void *FPtr = getPointerToFunction(F);
-  assert(PFtr && "Pointer to fn's code was null after getPointerToFunction");
+  assert(FPtr && "Pointer to fn's code was null after getPointerToFunction");
 
   if (ArgValues.size() == 3) {
     int (*PF)(int, char **, const char **) =
@@ -75,6 +75,10 @@ GenericValue JIT::runFunction(Function *F,
   } else if (ArgValues.size() == 1) {
     int (*PF)(int) = (int(*)(int))FPtr;
     rv.IntVal = PF(ArgValues[0].IntVal);
+    return rv;
+  } else if (ArgValues.size() == 0) {
+    int (*PF)() = (int(*)())FPtr;
+    rv.IntVal = PF();
     return rv;
   }
 
