@@ -141,12 +141,30 @@ Constant *ConstantFoldGetElementPtr(const Constant *C,
 
   // FIXME: Implement folding of GEP constant exprs the same as instcombine does
 
-  // Implement folding of:
-  //    int* getelementptr ([2 x int]* cast ([3 x int]* %X to [2 x int]*),
-  //                        long 0, long 0)
-  // To: int* getelementptr ([3 x int]* %X, long 0, long 0)
-  //
-  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+    // Implement folding of:
+    //    void ()** getelementptr (%struct..TorRec* getelementptr
+    //              ([N x %struct..TorRec]* %llvm.global_dtors, long 0, long 0),
+    //                 long 0, ubyte 1)
+    // Into:
+    //    %struct..TorRec* getelementptr ([N x %struct..TorRec]*
+    //                      %llvm.global_dtors, long 0, long 0, ubyte 1)
+    //
+    if (CE->getOpcode() == Instruction::GetElementPtr)
+      if (IdxList[0] == Constant::getNullValue(Type::LongTy)) {
+        std::vector<Constant*> NewIndices;
+        NewIndices.reserve(IdxList.size() + CE->getNumOperands());
+        for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+          NewIndices.push_back(cast<Constant>(CE->getOperand(i)));
+        NewIndices.insert(NewIndices.end(), IdxList.begin()+1, IdxList.end());
+        return ConstantExpr::getGetElementPtr(CE->getOperand(0), NewIndices);
+      }
+
+    // Implement folding of:
+    //    int* getelementptr ([2 x int]* cast ([3 x int]* %X to [2 x int]*),
+    //                        long 0, long 0)
+    // To: int* getelementptr ([3 x int]* %X, long 0, long 0)
+    //
     if (CE->getOpcode() == Instruction::Cast && IdxList.size() > 1 &&
         IdxList[0]->isNullValue())
       if (const PointerType *SPT = 
@@ -157,6 +175,7 @@ Constant *ConstantFoldGetElementPtr(const Constant *C,
             if (CAT->getElementType() == SAT->getElementType())
               return ConstantExpr::getGetElementPtr(
                       (Constant*)CE->getOperand(0), IdxList);
+  }
   return 0;
 }
 
