@@ -102,10 +102,24 @@ public:
     AU.addRequired<LocalDataStructures>();
   }
 private:
-  DSGraph &calculateGraph(Function &F, unsigned Indent);
+  DSGraph &calculateGraph(Function &F);
+  DSGraph &calculateSCCGraph(Function &F,
+                             std::set<Function*> &InlinedSCCFunctions);
+  void calculateReachableGraphs(Function *F);
+
+
+  DSGraph &getOrCreateGraph(Function *F);
+
+  unsigned calculateGraphs(Function *F, std::vector<Function*> &Stack,
+                           unsigned &NextID, 
+                           std::map<Function*, unsigned> &ValMap);
+
+
+  /*
   bool ResolveFunctionCalls(DSGraph &G, unsigned &FirstResolvableCall,
                             std::map<Function*, DSCallSite> &InProcess,
                             unsigned Indent);
+  */
 };
 
 
