@@ -32,8 +32,16 @@
 #error "Cannot define both ENDIAN_LITTLE and ENDIAN_BIG!"
 #endif
 
-#if (!defined(ENDIAN_LITTLE) && !defined(ENDIAN_BIG)) || !defined(INT64_MAX)
+#if (!defined(ENDIAN_LITTLE) && !defined(ENDIAN_BIG))
 #error "include/Support/DataTypes.h could not determine endianness!"
+#endif
+
+#if !defined(INT64_MAX)
+/* We couldn't determine INT64_MAX; default it. */
+#define INT64_MAX 9223372036854775807LL
+#endif
+#if !defined(UINT64_MAX)
+#define UINT64_MAX 0xffffffffffffffffULL
 #endif
 
 #endif  /* SUPPORT_DATATYPES_H */
