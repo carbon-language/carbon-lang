@@ -112,6 +112,7 @@ namespace {
       WorkList.push_back(New);              // Add to worklist
     }
 
+  public:
     // ReplaceInstUsesWith - This method is to be used when an instruction is
     // found to be dead, replacable with another preexisting expression.  Here
     // we add all uses of I to the worklist, replace all uses of I with the new
@@ -123,7 +124,7 @@ namespace {
       I.replaceAllUsesWith(V);
       return &I;
     }
-
+  private:
     /// InsertOperandCastBefore - This inserts a cast of V to DestTy before the
     /// InsertBefore instruction.  This is specialized a bit to avoid inserting
     /// casts that are known to not do anything...
@@ -638,6 +639,86 @@ static bool isMinValuePlusOne(const ConstantInt *C) {
   return CS->getValue() == Val+1;
 }
 
+/// getSetCondCode - Encode a setcc opcode into a three bit mask.  These bits
+/// are carefully arranged to allow folding of expressions such as:
+///
+///      (A < B) | (A > B) --> (A != B)
+///
+/// Bit value '4' represents that the comparison is true if A > B, bit value '2'
+/// represents that the comparison is true if A == B, and bit value '1' is true
+/// if A < B.
+///
+static unsigned getSetCondCode(const SetCondInst *SCI) {
+  switch (SCI->getOpcode()) {
+    // False -> 0
+  case Instruction::SetGT: return 1;
+  case Instruction::SetEQ: return 2;
+  case Instruction::SetGE: return 3;
+  case Instruction::SetLT: return 4;
+  case Instruction::SetNE: return 5;
+  case Instruction::SetLE: return 6;
+    // True -> 7
+  default:
+    assert(0 && "Invalid SetCC opcode!");
+    return 0;
+  }
+}
+
+/// getSetCCValue - This is the complement of getSetCondCode, which turns an
+/// opcode and two operands into either a constant true or false, or a brand new
+/// SetCC instruction.
+static Value *getSetCCValue(unsigned Opcode, Value *LHS, Value *RHS) {
+  switch (Opcode) {
+  case 0: return ConstantBool::False;
+  case 1: return new SetCondInst(Instruction::SetGT, LHS, RHS);
+  case 2: return new SetCondInst(Instruction::SetEQ, LHS, RHS);
+  case 3: return new SetCondInst(Instruction::SetGE, LHS, RHS);
+  case 4: return new SetCondInst(Instruction::SetLT, LHS, RHS);
+  case 5: return new SetCondInst(Instruction::SetNE, LHS, RHS);
+  case 6: return new SetCondInst(Instruction::SetLE, LHS, RHS);
+  case 7: return ConstantBool::True;
+  default: assert(0 && "Illegal SetCCCode!"); return 0;
+  }
+}
+
+// FoldSetCCLogical - Implements (setcc1 A, B) & (setcc2 A, B) --> (setcc3 A, B)
+struct FoldSetCCLogical {
+  InstCombiner &IC;
+  Value *LHS, *RHS;
+  FoldSetCCLogical(InstCombiner &ic, SetCondInst *SCI)
+    : IC(ic), LHS(SCI->getOperand(0)), RHS(SCI->getOperand(1)) {}
+  bool shouldApply(Value *V) const {
+    if (SetCondInst *SCI = dyn_cast<SetCondInst>(V))
+      return (SCI->getOperand(0) == LHS && SCI->getOperand(1) == RHS ||
+              SCI->getOperand(0) == RHS && SCI->getOperand(1) == LHS);
+    return false;
+  }
+  Instruction *apply(BinaryOperator &Log) const {
+    SetCondInst *SCI = cast<SetCondInst>(Log.getOperand(0));
+    if (SCI->getOperand(0) != LHS) {
+      assert(SCI->getOperand(1) == LHS);
+      SCI->swapOperands();  // Swap the LHS and RHS of the SetCC
+    }
+
+    unsigned LHSCode = getSetCondCode(SCI);
+    unsigned RHSCode = getSetCondCode(cast<SetCondInst>(Log.getOperand(1)));
+    unsigned Code;
+    switch (Log.getOpcode()) {
+    case Instruction::And: Code = LHSCode & RHSCode; break;
+    case Instruction::Or:  Code = LHSCode | RHSCode; break;
+    case Instruction::Xor: Code = LHSCode ^ RHSCode; break;
+    default: assert(0 && "Illegal logical opcode!");
+    }
+
+    Value *RV = getSetCCValue(Code, LHS, RHS);
+    if (Instruction *I = dyn_cast<Instruction>(RV))
+      return I;
+    // Otherwise, it's a constant boolean value...
+    return IC.ReplaceInstUsesWith(Log, RV);
+  }
+};
+
+
 
 Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
@@ -703,6 +784,11 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
   if (Op0NotVal == Op1 || Op1NotVal == Op0)  // A & ~A  == ~A & A == 0
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+
+  // (setcc1 A, B) & (setcc2 A, B) --> (setcc3 A, B)
+  if (SetCondInst *RHS = dyn_cast<SetCondInst>(I.getOperand(1)))
+    if (Instruction *R = AssociativeOpt(I, FoldSetCCLogical(*this, RHS)))
+      return R;
 
   return Changed ? &I : 0;
 }
@@ -775,6 +861,11 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     WorkList.push_back(And);
     return BinaryOperator::createNot(And);
   }
+
+  // (setcc1 A, B) | (setcc2 A, B) --> (setcc3 A, B)
+  if (SetCondInst *RHS = dyn_cast<SetCondInst>(I.getOperand(1)))
+    if (Instruction *R = AssociativeOpt(I, FoldSetCCLogical(*this, RHS)))
+      return R;
 
   return Changed ? &I : 0;
 }
@@ -852,6 +943,11 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (Constant *C2 = dyn_castMaskingAnd(Op1))
       if (ConstantExpr::get(Instruction::And, C1, C2)->isNullValue())
         return BinaryOperator::create(Instruction::Or, Op0, Op1);
+
+  // (setcc1 A, B) ^ (setcc2 A, B) --> (setcc3 A, B)
+  if (SetCondInst *RHS = dyn_cast<SetCondInst>(I.getOperand(1)))
+    if (Instruction *R = AssociativeOpt(I, FoldSetCCLogical(*this, RHS)))
+      return R;
 
   return Changed ? &I : 0;
 }
