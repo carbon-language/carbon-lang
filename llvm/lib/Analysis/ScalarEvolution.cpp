@@ -495,25 +495,6 @@ static SCEVHandle getMinusSCEV(const SCEVHandle &LHS, const SCEVHandle &RHS) {
 }
 
 
-/// Binomial - Evaluate N!/((N-M)!*M!)  .  Note that N is often large and M is
-/// often very small, so we try to reduce the number of N! terms we need to
-/// evaluate by evaluating this as  (N!/(N-M)!)/M!
-static ConstantInt *Binomial(ConstantInt *N, unsigned M) {
-  uint64_t NVal = N->getRawValue();
-  uint64_t FirstTerm = 1;
-  for (unsigned i = 0; i != M; ++i)
-    FirstTerm *= NVal-i;
-
-  unsigned MFactorial = 1;
-  for (; M; --M)
-    MFactorial *= M;
-
-  Constant *Result = ConstantUInt::get(Type::ULongTy, FirstTerm/MFactorial);
-  Result = ConstantExpr::getCast(Result, N->getType());
-  assert(isa<ConstantInt>(Result) && "Cast of integer not folded??");
-  return cast<ConstantInt>(Result);
-}
-
 /// PartialFact - Compute V!/(V-NumSteps)!
 static SCEVHandle PartialFact(SCEVHandle V, unsigned NumSteps) {
   // Handle this case efficiently, it is common to have constant iteration
