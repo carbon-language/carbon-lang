@@ -451,10 +451,10 @@ static struct mu magicu(uint64_t d)
   magu.a = 0;               // initialize "add" indicator
   nc = - 1 - (-d)%d;
   p = 31;                   // initialize p
-  q1 = 0x8000000000000000/nc;       // initialize q1 = 2p/nc
-  r1 = 0x8000000000000000 - q1*nc;  // initialize r1 = rem(2p,nc)
-  q2 = 0x7FFFFFFFFFFFFFFF/d;        // initialize q2 = (2p-1)/d
-  r2 = 0x7FFFFFFFFFFFFFFF - q2*d;   // initialize r2 = rem((2p-1),d)
+  q1 = 0x8000000000000000ll/nc;       // initialize q1 = 2p/nc
+  r1 = 0x8000000000000000ll - q1*nc;  // initialize r1 = rem(2p,nc)
+  q2 = 0x7FFFFFFFFFFFFFFFll/d;        // initialize q2 = (2p-1)/d
+  r2 = 0x7FFFFFFFFFFFFFFFll - q2*d;   // initialize r2 = rem((2p-1),d)
   do {
     p = p + 1;
     if (r1 >= nc - r1 ) {
@@ -466,12 +466,12 @@ static struct mu magicu(uint64_t d)
       r1 = 2*r1; // update r1
     }
     if (r2 + 1 >= d - r2) {
-      if (q2 >= 0x7FFFFFFFFFFFFFFF) magu.a = 1;
+      if (q2 >= 0x7FFFFFFFFFFFFFFFll) magu.a = 1;
       q2 = 2*q2 + 1;     // update q2
       r2 = 2*r2 + 1 - d; // update r2
     }
     else {
-      if (q2 >= 0x8000000000000000) magu.a = 1;
+      if (q2 >= 0x8000000000000000ll) magu.a = 1;
       q2 = 2*q2;     // update q2
       r2 = 2*r2 + 1; // update r2
     }
