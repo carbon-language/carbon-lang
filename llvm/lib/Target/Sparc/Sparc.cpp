@@ -99,6 +99,7 @@ namespace {
       for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
         for_each(FI->begin(), FI->end(), freeMachineCode);
       
+      MachineFunction::destruct(&F);
       return false;
     }
   };
