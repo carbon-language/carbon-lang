@@ -128,3 +128,30 @@ bool %test20(bool %B) {
 	%D = setlt int %C, -1
 	ret bool %D                ;; false
 }
+
+uint %test21(uint %X) {
+	%Y = cast uint %X to sbyte
+	%Z = cast sbyte %Y to uint ;; sext -> zext -> and -> nop
+	%RV = and uint %Z, 255
+	ret uint %RV
+}
+
+uint %test22(uint %X) {
+	%Y = cast uint %X to sbyte
+	%Z = cast sbyte %Y to uint ;; sext -> zext -> and -> nop
+	%RV = shl uint %Z, ubyte 24
+	ret uint %RV
+}
+
+int %test23(int %X) {
+	%Y = cast int %X to ushort  ;; Turn into an AND even though X
+	%Z = cast ushort %Y to int  ;; and Z are signed.
+	ret int %Z
+}
+
+bool %test24(bool %C) {
+        %X = select bool %C, uint 14, uint 1234
+        %Y = cast uint %X to bool                  ;; Fold cast into select
+        ret bool %Y
+}
+
