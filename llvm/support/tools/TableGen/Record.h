@@ -34,6 +34,7 @@ class StringInit;
 class CodeInit;
 class ListInit;
 class DefInit;
+class DagInit;
 class TypedInit;
 class VarInit;
 class FieldInit;
@@ -66,6 +67,7 @@ public:   // These methods should only be called from subclasses of Init
   virtual Init *convertValue(  CodeInit *CI) { return 0; }
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
+  virtual Init *convertValue(   DagInit *DI) { return 0; }
   virtual Init *convertValue( TypedInit *TI) { return 0; }
   virtual Init *convertValue(   VarInit *VI) {
     return convertValue((TypedInit*)VI);
@@ -221,7 +223,7 @@ struct CodeRecTy : public RecTy {
 ///
 struct DagRecTy : public RecTy {
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
-  //Init *convertValue( DagInit *CI) { return (Init*)CI; }
+  Init *convertValue( DagInit *CI) { return (Init*)CI; }
   Init *convertValue(TypedInit *TI);
 
   void print(std::ostream &OS) const { OS << "dag"; }
@@ -582,6 +584,26 @@ public:
   }
 };
 
+/// DagInit - (def a, b) - Represent a DAG tree value.  DAG inits are required
+/// to have Records for their first value, after that, any legal Init is
+/// possible.
+///
+class DagInit : public Init {
+  Record *NodeTypeDef;
+  std::vector<Init*> Args;
+public:
+  DagInit(Record *D, std::vector<Init*> &a) : NodeTypeDef(D) {
+    Args.swap(a);  // DESTRUCTIVELY take the arguments
+  }
+  
+  virtual Init *convertInitializerTo(RecTy *Ty) {
+    return Ty->convertValue(this);
+  }
+
+  Record *getNodeType() const { return NodeTypeDef; }
+
+  virtual void print(std::ostream &OS) const;
+};
 
 //===----------------------------------------------------------------------===//
 //  High-Level Classes

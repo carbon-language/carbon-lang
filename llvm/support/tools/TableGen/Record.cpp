@@ -434,6 +434,17 @@ Init *FieldInit::resolveReferences(Record &R) {
 }
 
 
+void DagInit::print(std::ostream &OS) const {
+  OS << "(" << NodeTypeDef->getName();
+  if (Args.size()) {
+    OS << " " << *Args[0];
+    for (unsigned i = 1, e = Args.size(); i != e; ++i)
+      OS << ", " << *Args[i];
+  }
+  OS << ")";
+}
+
+
 //===----------------------------------------------------------------------===//
 //    Other implementations
 //===----------------------------------------------------------------------===//
