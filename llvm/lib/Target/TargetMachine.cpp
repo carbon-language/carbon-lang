@@ -50,6 +50,7 @@ MachineInstrInfo::MachineInstrInfo(const MachineInstrDescriptor* _desc,
 				   unsigned int _numRealOpCodes)
   : desc(_desc), descSize(_descSize), numRealOpCodes(_numRealOpCodes)
 {
+  // FIXME: TargetInstrDescriptors should not be global
   assert(TargetInstrDescriptors == NULL && desc != NULL);
   TargetInstrDescriptors = desc;	// initialize global variable
 }  
