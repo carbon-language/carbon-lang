@@ -66,7 +66,7 @@ my $WebDir     = $ENV{'WEBDIR'};
 @TIME = localtime;
 my $DATE = sprintf "%4d-%02d-%02d", $TIME[5]+1900, $TIME[4]+1, $TIME[3];
 my $DateString = strftime "%B %d, %Y", localtime;
-my $TestStartTime = gmtime;
+my $TestStartTime = gmtime() . "GMT<br>" . localtime() . " (local)";
 
 # Command line argument settings...
 my $NOCHECKOUT = 0;
@@ -798,7 +798,8 @@ if ( $VERBOSE ) {
 }
 # Main HTML file...
 my $Output;
-my $TestFinishTime = gmtime;
+my $TestFinishTime = gmtime() . " GMT<br>" . localtime() . " (local)";
+
 my $TestPlatform = `uname -a`;
 eval "\$Output = <<ENDOFFILE;$TemplateContents\nENDOFFILE\n";
 WriteFile "$DATE.html", $Output;
