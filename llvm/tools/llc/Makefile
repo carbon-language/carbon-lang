@@ -11,20 +11,16 @@ USEDLIBS = mapping \
            target.a \
            instrument \
            livevar \
+           ipo.a \
+	   scalaropts.a \
+           transforms.a \
+           analysis.a \
+           transformutils.a \
            bcreader \
-           bcwriter \
-           ipo \
-	   scalaropts \
-           transforms \
-           analysis \
-           ipa \
-           datastructure \
-           transformutils \
+	   bcwriter \
            vmcore \
            support
 TOOLLINKOPTS = -ldl
-
-KEEP_SYMBOLS = 1
 
 include $(LEVEL)/Makefile.common
 
