@@ -337,7 +337,7 @@ bool V8Printer::runOnMachineFunction(MachineFunction &MF) {
   O << "\t.text\n";
   O << "\t.align 16\n";
   O << "\t.globl\t" << CurrentFnName << "\n";
-  O << "\t.type\t" << CurrentFnName << ", @function\n";
+  O << "\t.type\t" << CurrentFnName << ", #function\n";
   O << CurrentFnName << ":\n";
 
   // Number each basic block so that we can consistently refer to them
@@ -513,7 +513,7 @@ bool V8Printer::doFinalization(Module &M) {
         }
 
         O << "\t.align " << Align << "\n";
-        O << "\t.type " << name << ",@object\n";
+        O << "\t.type " << name << ",#object\n";
         O << "\t.size " << name << "," << Size << "\n";
         O << name << ":\t\t\t\t! ";
         WriteAsOperand(O, I, true, true, &M);
