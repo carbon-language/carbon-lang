@@ -29,6 +29,10 @@ using namespace llvm;
 
 using namespace cl;
 
+// Globals for name and overview of program
+static const char *ProgramName = "<unknown>";
+static const char *ProgramOverview = 0;
+
 //===----------------------------------------------------------------------===//
 // Basic, shared command line option processing machinery...
 //
@@ -57,8 +61,8 @@ static std::vector<Option*> &getPositionalOpts() {
 
 static void AddArgument(const char *ArgName, Option *Opt) {
   if (getOption(ArgName)) {
-    std::cerr << "CommandLine Error: Argument '" << ArgName
-              << "' defined more than once!\n";
+    std::cerr << ProgramName << ": CommandLine Error: Argument '" 
+              << ArgName << "' defined more than once!\n";
   } else {
     // Add argument to the argument map!
     getOpts()[ArgName] = Opt;
@@ -83,9 +87,6 @@ static void RemoveArgument(const char *ArgName, Option *Opt) {
   }
 }
 
-static const char *ProgramName = 0;
-static const char *ProgramOverview = 0;
-
 static inline bool ProvideOption(Option *Handler, const char *ArgName,
                                  const char *Value, int argc, char **argv,
                                  int &i) {
@@ -105,9 +106,14 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
       return Handler->error(" does not allow a value! '" + 
                             std::string(Value) + "' specified.");
     break;
-  case ValueOptional: break;
-  default: std::cerr << "Bad ValueMask flag! CommandLine usage error:" 
-                     << Handler->getValueExpectedFlag() << "\n"; abort();
+  case ValueOptional: 
+    break;
+  default: 
+    std::cerr << ProgramName 
+              << ": Bad ValueMask flag! CommandLine usage error:" 
+              << Handler->getValueExpectedFlag() << "\n"; 
+    abort();
+    break;
   }
 
   // Run the handler now!
@@ -432,8 +438,8 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     }
 
     if (Handler == 0) {
-      std::cerr << "Unknown command line argument '" << argv[i] << "'.  Try: '"
-                << argv[0] << " --help'\n";
+      std::cerr << ProgramName << ": Unknown command line argument '" << argv[i]
+                << "'.  Try: '" << argv[0] << " --help'\n";
       ErrorParsing = true;
       continue;
     }
@@ -469,7 +475,8 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
   // Check and handle positional arguments now...
   if (NumPositionalRequired > PositionalVals.size()) {
-    std::cerr << "Not enough positional command line arguments specified!\n"
+    std::cerr << ProgramName 
+              << ": Not enough positional command line arguments specified!\n"
               << "Must specify at least " << NumPositionalRequired
               << " positional arguments: See: " << argv[0] << " --help\n";
     ErrorParsing = true;
@@ -575,8 +582,8 @@ bool Option::error(std::string Message, const char *ArgName) {
   if (ArgName[0] == 0)
     std::cerr << HelpStr;  // Be nice for positional arguments
   else
-    std::cerr << "-" << ArgName;
-  std::cerr << " option" << Message << "\n";
+    std::cerr << ProgramName << ": for the -" << ArgName;
+  std::cerr << " option: " << Message << "\n";
   return true;
 }
 
