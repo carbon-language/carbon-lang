@@ -53,6 +53,12 @@ struct bitwise_or : public std::binary_function<Ty, Ty, bool> {
   }
 };
 
+template<class Ty>
+struct less_ptr : public std::binary_function<Ty, Ty, bool> {
+  bool operator()(const Ty* left, const Ty* right) const {
+    return *left < *right;
+  }
+};
 
 // deleter - Very very very simple method that is used to invoke operator
 // delete on something.  It is used like this: 
