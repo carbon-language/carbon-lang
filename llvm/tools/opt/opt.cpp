@@ -24,6 +24,7 @@
 #include "llvm/Transforms/Scalar/ConstantProp.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
+#include "llvm/Transforms/Scalar/PromoteMemoryToRegister.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "Support/CommandLine.h"
 #include <fstream>
@@ -38,7 +39,7 @@ enum Opts {
   trace, tracem, print, raiseallocs, cleangcc,
 
   // More powerful optimizations
-  indvars, instcombine, sccp, adce, raise,
+  indvars, instcombine, sccp, adce, raise, mem2reg,
 
   // Interprocedural optimizations...
   globaldce, swapstructs, sortstructs,
@@ -87,6 +88,8 @@ struct {
   { sccp       , New<SCCPPass> },
   { adce       , New<AgressiveDCE> },
   { raise      , New<RaisePointerReferences> },
+  { mem2reg    , newPromoteMemoryToRegister },
+
   { trace      , New<InsertTraceCode, bool, true, bool, true> },
   { tracem     , New<InsertTraceCode, bool, false, bool, true> },
   { print      , NewPrintMethodPass },
@@ -120,6 +123,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(instcombine, "Combine redundant instructions"),
   clEnumVal(sccp       , "Sparse Conditional Constant Propogation"),
   clEnumVal(adce       , "Agressive DCE"),
+  clEnumVal(mem2reg    , "Promote alloca locations to registers"),
 
   clEnumVal(globaldce  , "Remove unreachable globals"),
   clEnumVal(swapstructs, "Swap structure types around"),
