@@ -172,6 +172,7 @@ public:
       contents.SymbolName = new std::string(M.getSymbolName());
   }
 
+ 
   ~MachineOperand() {
     if (isExternalSymbol())
       delete contents.SymbolName;
@@ -367,7 +368,9 @@ class MachineInstr {
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
 
-  MachineInstr(const MachineInstr &);  // DO NOT IMPLEMENT
+  //Constructor used by clone() method
+  MachineInstr(const MachineInstr&);
+
   void operator=(const MachineInstr&); // DO NOT IMPLEMENT
 
   // Intrusive list support
@@ -394,6 +397,9 @@ public:
 
   const MachineBasicBlock* getParent() const { return parent; }
   MachineBasicBlock* getParent() { return parent; }
+
+  //void setParent(const MachineBasicBlock *MBB) { parent = MBB; } 
+  void setParent(MachineBasicBlock *MBB) { parent = MBB; } 
 
   /// getOpcode - Returns the opcode of this MachineInstr.
   ///
@@ -454,6 +460,12 @@ public:
     SetMachineOperandVal(i + getNumOperands(),
                          MachineOperand::MO_VirtualRegister, V);
   }
+
+  //Clone Instruction 
+  //Create a copy of 'this' instruction that is
+  //identical in all ways except the following: The instruction has no
+  //parent The instruction has no name
+  MachineInstr* clone();
 
   //
   // Debugging support

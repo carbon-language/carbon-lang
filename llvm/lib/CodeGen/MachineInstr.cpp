@@ -69,9 +69,27 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, short opcode,
   MBB->push_back(this);  // Add instruction to end of basic block!
 }
 
+///MachineInstr ctor - Copies MachineInstr arg exactly
+MachineInstr::MachineInstr(const MachineInstr &MI) {
+  Opcode = MI.getOpcode();
+  numImplicitRefs = MI.getNumImplicitRefs();
+ 
+  //Add operands
+  for(unsigned i=0; i < MI.getNumOperands(); ++i)
+    operands.push_back(MachineOperand(MI.getOperand(i)));
+}
+
+
 MachineInstr::~MachineInstr()
 {
   LeakDetector::removeGarbageObject(this);
+}
+
+///clone - Create a copy of 'this' instruction that is identical in
+///all ways except the following: The instruction has no parent The
+///instruction has no name
+MachineInstr* MachineInstr::clone() {
+  MachineInstr* newInst = new MachineInstr(*this);
 }
 
 /// OperandComplete - Return true if it's illegal to add a new operand
@@ -93,6 +111,7 @@ void MachineInstr::replace(short opcode, unsigned numOperands) {
   Opcode = opcode;
   operands.clear();
   operands.resize(numOperands, MachineOperand());
+
 }
 
 void MachineInstr::SetMachineOperandVal(unsigned i,
