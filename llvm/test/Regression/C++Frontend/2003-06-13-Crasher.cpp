@@ -6,3 +6,5 @@ void foo() {
 	  } TESTOBJ;
 
 }
+
+int main() { return 0; }
