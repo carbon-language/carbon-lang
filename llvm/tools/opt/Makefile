@@ -1,7 +1,7 @@
 LEVEL = ../..
 TOOLNAME = opt
-USEDLIBS = bcreader bcwriter asmwriter analysis instrument transforms \
-           scalaropts ipo target analysis vmcore support
+USEDLIBS = bcreader bcwriter asmwriter instrument scalaropts \
+           ipo target analysis transforms vmcore support
 
 include $(LEVEL)/Makefile.common
 
