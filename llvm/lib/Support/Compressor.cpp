@@ -26,12 +26,6 @@
 #include <zlib.h>
 #endif
 
-#ifndef HAVE_BZIP2
-# ifndef HAVE_ZLIB
-#  warning No compression library is available!!
-# endif
-#endif
-
 namespace {
 
 inline int getdata(char*& buffer, unsigned& size, 
@@ -45,19 +39,13 @@ inline int getdata(char*& buffer, unsigned& size,
 }
 
 //===----------------------------------------------------------------------===//
-//=== RLCOMP - very simple run length compression scheme
-//===   The code below transforms the input into blocks that are either 
-//===   compressed or not. Each block starts with a header byte that provides
-//===   the length of the block. Values < 128 are uncompressed, values >128
-//===   are compressed. The value 128 is illegal. Currently, the algorithm is
-//===   not completed and is #if'd out.
+//=== NULLCOMP - a compression like set of routines that just copies data 
+//===            without doing any compression. This is provided so that if the
+//===            configured environment doesn't have a compression library the
+//===            program can still work, albeit using more data/memory.
 //===----------------------------------------------------------------------===//
 
-enum {
-  MAX_RLCOMP_OUT = 32768
-};
-
-struct RLCOMP_stream {
+struct NULLCOMP_stream {
   // User provided fields
   char* next_in;
   unsigned avail_in;
@@ -66,110 +54,19 @@ struct RLCOMP_stream {
 
   // Information fields
   uint64_t output_count; // Total count of output bytes
-
-#if 0
-  // Algorithm fields
-  unsigned block_len;    // Length of current block
-  unsigned compression;  // State of compression 0=no, 1=yes, 2=indeterminate
-  char buffer[128];      // compression buffer (not used for decompress)
-  unsigned buflen;       // bytes in compression buffer
-  bool pending;          // is data pending to be written
-  char pending_data;     // the pending data
-  unsigned clen;         // length of the compressed block
-#endif
 };
 
-void RLCOMP_init(RLCOMP_stream* s) {
+void NULLCOMP_init(NULLCOMP_stream* s) {
   s->output_count = 0;
-#if 0
-  s->block_len = 0;
-  s->compression = 2;
-  s->buflen = 0;
-  s->pending = false;
-  s->pending_data = 0;
-  s->clen = 0;
-#endif
 }
 
-inline bool RLCOMP_getchar(RLCOMP_stream* s, unsigned& data) {
-#if 0
-  if (s->avail_in) {
-    data = *s->next_in++;
-    s->avail_in--;
-    return true;
-  }
-#endif
-  return false;
-}
-
-inline bool RLCOMP_putchar(RLCOMP_stream* s, unsigned data) {
-#if 0
-  if (s->avail_out) {
-    *s->next_out++ = data;
-    s->avail_out--;
-    s->output_count++;
-    return true;
-  } else {
-    s->pending = true;
-    s->pending_data = data;
-    return false;
-  }
-#else
-  return false;
-#endif
-}
-
-bool RLCOMP_compress(RLCOMP_stream* s) {
-  assert(s && "Invalid RLCOMP_stream");
+bool NULLCOMP_compress(NULLCOMP_stream* s) {
+  assert(s && "Invalid NULLCOMP_stream");
   assert(s->next_in != 0);
   assert(s->next_out != 0);
   assert(s->avail_in >= 1);
   assert(s->avail_out >= 1);
 
-#if 0
-
-  // Handle pending data from the last time in
-  if (s->pending) {
-    RLCOMP_putchar(s,s->pending_data);
-    s->pending = false;
-  }
-
-  unsigned c = 0;
-  unsigned lastc = 0;
-  // Handle the degenerate len=1 case
-  if (!RLCOMP_getchar(s,lastc)) {
-    RLCOMP_putchar(s,1);
-    return RLCOMP_putchar(s,lastc);
-  }
-
-  while (RLCOMP_getchar(s,c)) {
-    switch(s->compression) {
-      case 0:
-        if (lastc == c) {
-          s->compression = 1;
-          s->clen = 2 ;
-        } else {
-          if (!RLCOMP_putchar(s, c))
-            return false;
-        }
-        break;
-
-      case 1:
-        if (lastc != c) {
-          s->compression = 2;
-          if (!RLCOMP_putchar(s, s->clen))
-            return false;
-        } else {
-          s->clen++;
-        }
-        break;
-
-      case 2:
-        break;
-    }
-    lastc = c;
-  }
-#endif
   if (s->avail_out >= s->avail_in) {
     ::memcpy(s->next_out, s->next_in, s->avail_in);
     s->output_count += s->avail_in;
@@ -187,49 +84,13 @@ bool RLCOMP_compress(RLCOMP_stream* s) {
   }
 }
 
-bool RLCOMP_decompress(RLCOMP_stream* s) {
-  assert(s && "Invalid RLCOMP_stream");
+bool NULLCOMP_decompress(NULLCOMP_stream* s) {
+  assert(s && "Invalid NULLCOMP_stream");
   assert(s->next_in != 0);
   assert(s->next_out != 0);
   assert(s->avail_in >= 1);
   assert(s->avail_out >= 1);
 
-#if 0
-  unsigned c = 0;
-  while (RLCOMP_getchar(s,c)) {
-    switch(s->compression) {
-      case 0: // This is not a compressed block
-        s->block_len--;
-        if (!RLCOMP_putchar(s,c))
-          return false;
-        break;
-
-      case 1: // This is a comperssed block
-        while (s->block_len-- > 0)
-          if (!RLCOMP_putchar(s,c))
-            return false;
-        break;
-
-      case 2: // This is the length field
-        if (c < 128) {
-          s->compression = 0;
-          s->block_len = c;
-        } else {
-          s->compression = 1;
-          s->block_len = c - 128;
-        }
-        continue;
-
-      default: // oops!
-        throw std::string("Invalid compression state");
-    }
-    if (s->block_len <= 0)
-      s->compression = 2;
-  }
-
-  if (s->repeat > 0)
-    throw std::string("Invalid compression state");
-#endif
   if (s->avail_out >= s->avail_in) {
     ::memcpy(s->next_out, s->next_in, s->avail_in);
     s->output_count += s->avail_in;
@@ -247,7 +108,7 @@ bool RLCOMP_decompress(RLCOMP_stream* s) {
   }
 }
 
-void RLCOMP_end(RLCOMP_stream* strm) {
+void NULLCOMP_end(NULLCOMP_stream* strm) {
 }
 
 }
@@ -275,7 +136,7 @@ uint64_t Compressor::compress(char* in, unsigned size, OutputDataCallback* cb,
       bzdata.avail_in = size;
       bzdata.next_out = 0;
       bzdata.avail_out = 0;
-      switch ( BZ2_bzCompressInit(&bzdata, 9, 0, 0) ) {
+      switch ( BZ2_bzCompressInit(&bzdata, 9, 0, 100) ) {
         case BZ_CONFIG_ERROR: throw std::string("bzip2 library mis-compiled");
         case BZ_PARAM_ERROR:  throw std::string("Compressor internal error");
         case BZ_MEM_ERROR:    throw std::string("Out of memory");
@@ -365,10 +226,10 @@ uint64_t Compressor::compress(char* in, unsigned size, OutputDataCallback* cb,
     }
 
     case COMP_TYPE_SIMPLE: {
-      RLCOMP_stream sdata;
+      NULLCOMP_stream sdata;
       sdata.next_in = in;
       sdata.avail_in = size;
-      RLCOMP_init(&sdata);
+      NULLCOMP_init(&sdata);
 
       if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
         throw std::string("Can't allocate output buffer");
@@ -377,14 +238,14 @@ uint64_t Compressor::compress(char* in, unsigned size, OutputDataCallback* cb,
       *(sdata.next_out++) = COMP_TYPE_SIMPLE;
       sdata.avail_out--;
 
-      while (!RLCOMP_compress(&sdata)) {
+      while (!NULLCOMP_compress(&sdata)) {
         if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
           throw std::string("Can't allocate output buffer");
         }
       }
 
       result = sdata.output_count + 1;
-      RLCOMP_end(&sdata);
+      NULLCOMP_end(&sdata);
       break;
     }
     default:
@@ -494,23 +355,23 @@ uint64_t Compressor::decompress(char *in, unsigned size,
     }
 
     case COMP_TYPE_SIMPLE: {
-      RLCOMP_stream sdata;
+      NULLCOMP_stream sdata;
       sdata.next_in = in;
       sdata.avail_in = size - 1;
-      RLCOMP_init(&sdata);
+      NULLCOMP_init(&sdata);
 
       if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
         throw std::string("Can't allocate output buffer");
       }
 
-      while (!RLCOMP_decompress(&sdata)) {
+      while (!NULLCOMP_decompress(&sdata)) {
         if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
           throw std::string("Can't allocate output buffer");
         }
       }
 
       result = sdata.output_count;
-      RLCOMP_end(&sdata);
+      NULLCOMP_end(&sdata);
       break;
     }
 
