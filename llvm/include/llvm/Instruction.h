@@ -97,7 +97,13 @@ public:
   bool isCommutative() const { return isCommutative(getOpcode()); }
   static bool isCommutative(unsigned op);
 
-
+  /// isTrappingInstruction - Return true if the instruction may trap.
+  ///
+  bool isTrappingInstruction() const {
+    return isTrappingInstruction(getOpcode()); 
+  }
+  static bool isTrappingInstruction(unsigned op);
+  
   virtual void print(std::ostream &OS) const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
