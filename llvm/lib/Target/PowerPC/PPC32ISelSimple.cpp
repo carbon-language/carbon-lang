@@ -1439,9 +1439,9 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       default: assert(0 && "Unknown class!");
       }
 
-    // Just to be safe, we'll always reserve the full 32 bytes worth of
-    // argument passing space in case any called code gets funky on us.
-    if (NumBytes < 24 + 32) NumBytes = 24 + 32;
+    // Just to be safe, we'll always reserve the full 24 bytes of linkage area 
+    // plus 32 bytes of argument space in case any called code gets funky on us.
+    if (NumBytes < 56) NumBytes = 56;
 
     // Adjust the stack pointer for the new arguments...
     // These functions are automatically eliminated by the prolog/epilog pass
@@ -1586,7 +1586,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       GPR_idx++;
     }
   } else {
-    BuildMI(BB, PPC::ADJCALLSTACKDOWN, 1).addImm(0);
+    BuildMI(BB, PPC::ADJCALLSTACKDOWN, 1).addImm(NumBytes);
   }
   
   BuildMI(BB, PPC::IMPLICIT_DEF, 0, PPC::LR);
