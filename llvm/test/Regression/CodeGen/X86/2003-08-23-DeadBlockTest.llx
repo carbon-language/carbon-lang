@@ -2,11 +2,12 @@
 
 implementation
 
-void %test() {
-entry:   ret void 
+int %test() {
+entry:   ret int 7 
 Test:   ; dead block!
-	call void %test()
-	call void %test()
-	ret void
+	%A = call int %test()
+	%B = call int %test()
+	%C = add int %A, %B
+    	ret int %C
 }
 
