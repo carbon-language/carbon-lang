@@ -103,6 +103,8 @@ private:
   ValueTable Values, LateResolveValues;
   ValueTable ModuleValues;
 
+  std::vector<BasicBlock*> ParsedBasicBlocks;
+
   // GlobalRefs - This maintains a mapping between <Type, Slot #>'s and forward
   // references to global values or constants.  Such values may be referenced
   // before they are defined, and if so, the temporary object that they
@@ -153,15 +155,16 @@ private:
   void ParseVersionInfo   (const unsigned char *&Buf, const unsigned char *End);
   void ParseModuleGlobalInfo(const unsigned char *&Buf, const unsigned char *E);
   void ParseSymbolTable(const unsigned char *&Buf, const unsigned char *End,
-                        SymbolTable *);
+                        SymbolTable *, Function *CurrentFunction);
   void ParseFunction(const unsigned char *&Buf, const unsigned char *End);
   void ParseGlobalTypes(const unsigned char *&Buf, const unsigned char *EndBuf);
 
-  std::auto_ptr<BasicBlock>
-  ParseBasicBlock(const unsigned char *&Buf, const unsigned char *End);
+  BasicBlock *ParseBasicBlock(const unsigned char *&Buf,
+                              const unsigned char *End,
+                              unsigned BlockNo);
 
-  bool ParseInstruction   (const unsigned char *&Buf, const unsigned char *End,
-                           Instruction *&);
+  bool ParseInstruction(const unsigned char *&Buf, const unsigned char *End,
+                        Instruction *&);
   std::auto_ptr<RawInst> ParseRawInst(const unsigned char *&Buf,
                                       const unsigned char *End);
 
@@ -179,6 +182,7 @@ private:
   Value      *getValue(const Type *Ty, unsigned num, bool Create = true);
   Value      *getValue(unsigned TypeID, unsigned num, bool Create = true);
   const Type *getType(unsigned ID);
+  BasicBlock *getBasicBlock(unsigned ID);
   Constant   *getConstantValue(const Type *Ty, unsigned num);
 
   int insertValue(Value *V, ValueTable &Table);  // -1 = Failure
@@ -207,12 +211,6 @@ struct InstPlaceHolderHelper : public Instruction {
   virtual Instruction *clone() const { abort(); return 0; }
 };
 
-struct BBPlaceHolderHelper : public BasicBlock {
-  BBPlaceHolderHelper(const Type *Ty) : BasicBlock() {
-    assert(Ty == Type::LabelTy);
-  }
-};
-
 struct ConstantPlaceHolderHelper : public Constant {
   ConstantPlaceHolderHelper(const Type *Ty)
     : Constant(Ty) {}
@@ -220,7 +218,6 @@ struct ConstantPlaceHolderHelper : public Constant {
 };
 
 typedef PlaceholderDef<InstPlaceHolderHelper>  ValPHolder;
-typedef PlaceholderDef<BBPlaceHolderHelper>    BBPHolder;
 typedef PlaceholderDef<ConstantPlaceHolderHelper>  ConstPHolder;
 
 // Some common errors we find
@@ -232,12 +229,7 @@ static const std::string Error_DestSlot  = "No destination slot found.";
 static inline unsigned getValueIDNumberFromPlaceHolder(Value *Val) {
   if (isa<Constant>(Val))
     return ((ConstPHolder*)Val)->getID();
-  
-  // else discriminate by type
-  switch (Val->getType()->getPrimitiveID()) {
-  case Type::LabelTyID:    return ((BBPHolder*)Val)->getID();
-  default:                 return ((ValPHolder*)Val)->getID();
-  }
+  return ((ValPHolder*)Val)->getID();
 }
 
 static inline void readBlock(const unsigned char *&Buf,

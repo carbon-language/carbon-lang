@@ -161,12 +161,11 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
             delete PN; 
 	    return true;
     case 2: PN->addIncoming(getValue(Raw->Ty, Raw->Arg1),
-			    cast<BasicBlock>(getValue(Type::LabelTyID,
-                                                      Raw->Arg2)));
+                            getBasicBlock(Raw->Arg2));
       break;
     default:
-      PN->addIncoming(getValue(Raw->Ty, Raw->Arg1), 
-		      cast<BasicBlock>(getValue(Type::LabelTyID, Raw->Arg2)));
+      PN->addIncoming(getValue(Raw->Ty, Raw->Arg1),
+		      getBasicBlock(Raw->Arg2));
       if (Raw->VarArgs->size() & 1) {
 	std::cerr << "PHI Node with ODD number of arguments!\n";
 	delete PN;
@@ -174,8 +173,7 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       } else {
         std::vector<unsigned> &args = *Raw->VarArgs;
         for (unsigned i = 0; i < args.size(); i+=2)
-          PN->addIncoming(getValue(Raw->Ty, args[i]),
-                       cast<BasicBlock>(getValue(Type::LabelTyID, args[i+1])));
+          PN->addIncoming(getValue(Raw->Ty, args[i]), getBasicBlock(args[i+1]));
       }
       delete Raw->VarArgs; 
       break;
@@ -200,20 +198,18 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
 
   case Instruction::Br:
     if (Raw->NumOperands == 1) {
-      Res = new BranchInst(cast<BasicBlock>(getValue(Type::LabelTyID,Raw->Arg1)));
+      Res = new BranchInst(getBasicBlock(Raw->Arg1));
       return false;
     } else if (Raw->NumOperands == 3) {
-      Res = new BranchInst(cast<BasicBlock>(getValue(Type::LabelTyID, Raw->Arg1)),
-			   cast<BasicBlock>(getValue(Type::LabelTyID, Raw->Arg2)),
-                                            getValue(Type::BoolTyID , Raw->Arg3));
+      Res = new BranchInst(getBasicBlock(Raw->Arg1), getBasicBlock(Raw->Arg2),
+                           getValue(Type::BoolTyID , Raw->Arg3));
       return false;
     }
     break;
     
   case Instruction::Switch: {
     SwitchInst *I = 
-      new SwitchInst(getValue(Raw->Ty, Raw->Arg1), 
-                     cast<BasicBlock>(getValue(Type::LabelTyID, Raw->Arg2)));
+      new SwitchInst(getValue(Raw->Ty, Raw->Arg1), getBasicBlock(Raw->Arg2));
     Res = I;
     if (Raw->NumOperands < 3) return false;  // No destinations?  Weird.
 
@@ -226,7 +222,7 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     std::vector<unsigned> &args = *Raw->VarArgs;
     for (unsigned i = 0; i < args.size(); i += 2)
       I->addCase(cast<Constant>(getValue(Raw->Ty, args[i])),
-                 cast<BasicBlock>(getValue(Type::LabelTyID, args[i+1])));
+                 getBasicBlock(args[i+1]));
 
     delete Raw->VarArgs;
     return false;
@@ -311,11 +307,11 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     if (!FTy->isVarArg()) {
       if (Raw->NumOperands < 3) return true;
 
-      Normal = cast<BasicBlock>(getValue(Type::LabelTyID, Raw->Arg2));
+      Normal = getBasicBlock(Raw->Arg2);
       if (Raw->NumOperands == 3)
-        Except = cast<BasicBlock>(getValue(Type::LabelTyID, Raw->Arg3));
+        Except = getBasicBlock(Raw->Arg3);
       else {
-        Except = cast<BasicBlock>(getValue(Type::LabelTyID, args[0]));
+        Except = getBasicBlock(args[0]);
 
         FunctionType::ParamTypes::const_iterator It = PL.begin();
         for (unsigned i = 1; i < args.size(); i++) {
@@ -327,10 +323,11 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       }
     } else {
       if (args.size() < 4) return true;
-      if (getType(args[0]) != Type::LabelTy || 
-          getType(args[2]) != Type::LabelTy) return true;
-      Normal = cast<BasicBlock>(getValue(Type::LabelTyID, args[1]));
-      Except = cast<BasicBlock>(getValue(Type::LabelTyID, args[3]));
+      if (args[0] != Type::LabelTyID || args[2] != Type::LabelTyID)
+        return true;
+          
+      Normal = getBasicBlock(args[1]);
+      Except = getBasicBlock(args[3]);
 
       if ((args.size() & 1) != 0)
 	return true;  // Must be pairs of type/value

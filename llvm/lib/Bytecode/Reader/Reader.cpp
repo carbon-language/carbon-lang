@@ -119,6 +119,7 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
 
 Value *BytecodeParser::getValue(unsigned type, unsigned oNum, bool Create) {
   assert(type != Type::TypeTyID && "getValue() cannot get types!");
+  assert(type != Type::LabelTyID && "getValue() cannot get blocks!");
   unsigned Num = oNum;
 
   if (HasImplicitZeroInitializer && type >= FirstDerivedTyID) {
@@ -138,13 +139,28 @@ Value *BytecodeParser::getValue(unsigned type, unsigned oNum, bool Create) {
 
   if (!Create) return 0;  // Do not create a placeholder?
 
-  const Type *Ty = getType(type);
-  Value *Val = type == Type::LabelTyID ? (Value*)new BBPHolder(Ty, oNum) : 
-                                         (Value*)new ValPHolder(Ty, oNum);
-
-  assert(Val != 0 && "How did we not make something?");
+  Value *Val = new ValPHolder(getType(type), oNum);
   if (insertValue(Val, LateResolveValues) == -1) return 0;
   return Val;
+}
+
+/// getBasicBlock - Get a particular numbered basic block, which might be a
+/// forward reference.  This works together with ParseBasicBlock to handle these
+/// forward references in a clean manner.
+///
+BasicBlock *BytecodeParser::getBasicBlock(unsigned ID) {
+  // Make sure there is room in the table...
+  if (ParsedBasicBlocks.size() <= ID) ParsedBasicBlocks.resize(ID+1);
+
+  // First check to see if this is a backwards reference, i.e., ParseBasicBlock
+  // has already created this block, or if the forward reference has already
+  // been created.
+  if (ParsedBasicBlocks[ID])
+    return ParsedBasicBlocks[ID];
+
+  // Otherwise, the basic block has not yet been created.  Do so and add it to
+  // the ParsedBasicBlocks list.
+  return ParsedBasicBlocks[ID] = new BasicBlock();
 }
 
 /// getConstantValue - Just like getValue, except that it returns a null pointer
@@ -176,10 +192,16 @@ Constant *BytecodeParser::getConstantValue(const Type *Ty, unsigned Slot) {
 }
 
 
-std::auto_ptr<BasicBlock>
-BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
-                                const unsigned char *EndBuf) {
-  std::auto_ptr<BasicBlock> BB(new BasicBlock());
+BasicBlock *BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
+                                            const unsigned char *EndBuf,
+                                            unsigned BlockNo) {
+  BasicBlock *BB;
+  if (ParsedBasicBlocks.size() == BlockNo)
+    ParsedBasicBlocks.push_back(BB = new BasicBlock());
+  else if (ParsedBasicBlocks[BlockNo] == 0)
+    BB = ParsedBasicBlocks[BlockNo] = new BasicBlock();
+  else
+    BB = ParsedBasicBlocks[BlockNo];
 
   while (Buf < EndBuf) {
     Instruction *Inst;
@@ -199,7 +221,8 @@ BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
 
 void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
                                       const unsigned char *EndBuf,
-                                      SymbolTable *ST) {
+                                      SymbolTable *ST,
+                                      Function *CurrentFunction) {
   while (Buf < EndBuf) {
     // Symtab block header: [num entries][type id number]
     unsigned NumEntries, Typ;
@@ -219,10 +242,17 @@ void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
       if (read(Buf, EndBuf, Name, false))  // Not aligned...
         throw std::string("Buffer not aligned.");
 
-      Value *V;
+      Value *V = 0;
       if (Typ == Type::TypeTyID)
         V = (Value*)getType(slot);
-      else
+      else if (Typ == Type::LabelTyID) {
+        if (CurrentFunction) {
+          // FIXME: THIS IS N^2!!!
+          Function::iterator BlockIterator = CurrentFunction->begin();
+          std::advance(BlockIterator, slot);
+          V = BlockIterator;
+        }
+      } else
         V = getValue(Typ, slot, false); // Find mapping...
       if (V == 0) throw std::string("Failed value look-up.");
       BCR_TRACE(4, "Map: '" << Name << "' to #" << slot << ":" << *V;
@@ -254,9 +284,8 @@ void BytecodeParser::ResolveReferencesToValue(Value *NewV, unsigned Slot) {
   GlobalRefs.erase(I);                // Remove the map entry for it
 }
 
-void
-BytecodeParser::ParseFunction(const unsigned char *&Buf,
-                              const unsigned char *EndBuf) {
+void BytecodeParser::ParseFunction(const unsigned char *&Buf,
+                                   const unsigned char *EndBuf) {
   if (FunctionSignatureList.empty())
     throw std::string("FunctionSignatureList empty!");
 
@@ -312,6 +341,9 @@ void BytecodeParser::materializeFunction(Function* F) {
       throw std::string("Error reading function arguments!");
   }
 
+  // Keep track of how many basic blocks we have read in...
+  unsigned BlockNum = 0;
+
   while (Buf < EndBuf) {
     unsigned Type, Size;
     const unsigned char *OldBuf = Buf;
@@ -326,17 +358,14 @@ void BytecodeParser::materializeFunction(Function* F) {
 
     case BytecodeFormat::BasicBlock: {
       BCR_TRACE(2, "BLOCK BytecodeFormat::BasicBlock: {\n");
-      std::auto_ptr<BasicBlock> BB = ParseBasicBlock(Buf, Buf+Size);
-      if (!BB.get() || insertValue(BB.get(), Values) == -1)
-        throw std::string("Parse error: BasicBlock");
-
-      F->getBasicBlockList().push_back(BB.release());
+      BasicBlock *BB = ParseBasicBlock(Buf, Buf+Size, BlockNum++);
+      F->getBasicBlockList().push_back(BB);
       break;
     }
 
     case BytecodeFormat::SymbolTable: {
       BCR_TRACE(2, "BLOCK BytecodeFormat::SymbolTable: {\n");
-      ParseSymbolTable(Buf, Buf+Size, &F->getSymbolTable());
+      ParseSymbolTable(Buf, Buf+Size, &F->getSymbolTable(), F);
       break;
     }
 
@@ -352,6 +381,12 @@ void BytecodeParser::materializeFunction(Function* F) {
     // Malformed bc file if read past end of block.
     ALIGN32(Buf, EndBuf);
   }
+
+  // Make sure there were no references to non-existant basic blocks.
+  if (BlockNum != ParsedBasicBlocks.size())
+    throw std::string("Illegal basic block operand reference");
+  ParsedBasicBlocks.clear();
+
 
   // Check for unresolvable references
   while (!LateResolveValues.empty()) {
@@ -582,7 +617,7 @@ void BytecodeParser::ParseModule(const unsigned char *Buf,
 
     case BytecodeFormat::SymbolTable:
       BCR_TRACE(1, "BLOCK BytecodeFormat::SymbolTable: {\n");
-      ParseSymbolTable(Buf, Buf+Size, &TheModule->getSymbolTable());
+      ParseSymbolTable(Buf, Buf+Size, &TheModule->getSymbolTable(), 0);
       break;
 
     default:
