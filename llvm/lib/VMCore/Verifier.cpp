@@ -123,8 +123,6 @@ namespace {  // Anonymous namespace for class
       for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
         visitGlobalValue(*I);
 
-      
-
       // If the module is broken, abort at this time.
       abortIfBroken();
       return false;
@@ -709,8 +707,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::gcroot:
     Assert1(FT->getNumParams() == 2,
             "Illegal # arguments for intrinsic function!", IF);
-    Assert1(isa<Constant>(CI.getOperand(2)) ||
-            isa<GlobalValue>(CI.getOperand(2)),
+    Assert1(isa<Constant>(CI.getOperand(2)),
             "Second argument to llvm.gcroot must be a constant!", &CI);
     NumArgs = 2;
     break;
