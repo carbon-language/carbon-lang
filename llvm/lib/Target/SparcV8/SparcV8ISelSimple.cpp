@@ -834,9 +834,9 @@ void V8ISel::visitCallInst(CallInst &I) {
     }
   }
 
-  unsigned extraStack = 0;
   // How much extra call stack will we need?
-  for (unsigned i = 7; i < I.getNumOperands (); ++i) {
+  int extraStack = 0;
+  for (unsigned i = 0; i < I.getNumOperands (); ++i) {
     switch (getClassB (I.getOperand (i)->getType ())) {
       case cLong: extraStack += 8; break;
       case cFloat: extraStack += 4; break;
@@ -844,8 +844,13 @@ void V8ISel::visitCallInst(CallInst &I) {
       default: extraStack += 4; break;
     }
   }
-  // Round up extra stack size to the nearest doubleword.
-  if (extraStack) { extraStack = (extraStack + 7) & ~7; }
+  extraStack -= 24;
+  if (extraStack < 0) {
+    extraStack = 0;
+  } else {
+    // Round up extra stack size to the nearest doubleword.
+    extraStack = (extraStack + 7) & ~7;
+  }
 
   // Deal with args
   static const unsigned OutgoingArgRegs[] = { V8::O0, V8::O1, V8::O2, V8::O3,
@@ -1321,7 +1326,8 @@ void V8ISel::visitAllocaInst(AllocaInst &I) {
   unsigned TmpReg2 = makeAnotherReg (Type::UIntTy);
   unsigned StackAdjReg = makeAnotherReg (Type::UIntTy);
 
-  // StackAdjReg = (ArraySize * TySize) rounded up to nearest doubleword boundary
+  // StackAdjReg = (ArraySize * TySize) rounded up to nearest
+  // doubleword boundary.
   BuildMI (BB, V8::UMULrr, 2, TmpReg1).addReg (ArraySizeReg).addReg (TySizeReg);
 
   // Round up TmpReg1 to nearest doubleword boundary:
@@ -1417,11 +1423,18 @@ void V8ISel::visitVAArgInst (VAArgInst &I) {
 	BuildMI (BB, V8::LD, 2, DestReg+1).addReg (VAList).addSImm (4);
     return;
 
-  case Type::FloatTyID:
-    BuildMI (BB, V8::LDFri, 2, DestReg).addReg (VAList).addSImm (0);
+  case Type::DoubleTyID: {
+    unsigned DblAlign = TM.getTargetData().getDoubleAlignment();
+    unsigned TempReg = makeAnotherReg (Type::IntTy);
+    unsigned TempReg2 = makeAnotherReg (Type::IntTy);
+    int FI = F->getFrameInfo()->CreateStackObject(8, DblAlign);
+    BuildMI (BB, V8::LD, 2, TempReg).addReg (VAList).addSImm (0);
+    BuildMI (BB, V8::LD, 2, TempReg2).addReg (VAList).addSImm (4);
+    BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0).addReg (TempReg);
+    BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (4).addReg (TempReg2);
+    BuildMI (BB, V8::LDDFri, 2, DestReg).addFrameIndex (FI).addSImm (0);
     return;
-
-  case Type::DoubleTyID:
+  }
 
   default:
     std::cerr << "Sorry, vaarg instruction of this type still unsupported:\n"
