@@ -110,7 +110,7 @@ namespace llvm {
     }
 
     bool expiredAt(unsigned index) const {
-      return endNumber() <= (index + 1);
+      return index >= endNumber();
     }
 
     bool liveAt(unsigned index) const;
