@@ -566,11 +566,13 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
   unsigned Align = TLI.getTargetData().getTypeAlignment(Ty);
 
   SDOperand AllocSize = getValue(I.getArraySize());
+  MVT::ValueType IntPtr = TLI.getPointerTy();
+  if (IntPtr < AllocSize.getValueType())
+    AllocSize = DAG.getNode(ISD::TRUNCATE, IntPtr, AllocSize);
+  else if (IntPtr > AllocSize.getValueType())
+    AllocSize = DAG.getNode(ISD::ZERO_EXTEND, IntPtr, AllocSize);
 
-  assert(AllocSize.getValueType() == TLI.getPointerTy() &&
-         "FIXME: should extend or truncate to pointer size!");
-
-  AllocSize = DAG.getNode(ISD::MUL, TLI.getPointerTy(), AllocSize,
+  AllocSize = DAG.getNode(ISD::MUL, IntPtr, AllocSize,
                           getIntPtrConstant(TySize));
 
   // Handle alignment.  If the requested alignment is less than or equal to the
@@ -679,8 +681,11 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   SDOperand Src = getValue(I.getOperand(0));
 
   MVT::ValueType IntPtr = TLI.getPointerTy();
-  // FIXME: Extend or truncate to the intptr size.
-  assert(Src.getValueType() == IntPtr && "Need to adjust the amount!");
+
+  if (IntPtr < Src.getValueType())
+    Src = DAG.getNode(ISD::TRUNCATE, IntPtr, Src);
+  else if (IntPtr > Src.getValueType())
+    Src = DAG.getNode(ISD::ZERO_EXTEND, IntPtr, Src);
 
   // Scale the source by the type size.
   uint64_t ElementSize = TD.getTypeSize(I.getType()->getElementType());
