@@ -311,7 +311,7 @@ case "$etags_version" in
 esac
 AC_SUBST(ETAGSFLAGS,$ETAGSFLAGS)
 
-if test "$WITH_LLVMGCCDIR" != "default" ; then
+if test "$WITH_LLVMGCCDIR" = "default" ; then
   AC_PATH_PROG(LLVMGCC, [llvm-gcc], [llvm-gcc])
   AC_PATH_PROG(LLVMGXX, [llvm-g++], [llvm-g++])
 else
