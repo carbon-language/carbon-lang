@@ -13,13 +13,23 @@
 
 #define DONT_GET_PLUGIN_LOADER_OPTION
 #include "llvm/Support/PluginLoader.h"
-#include "llvm/Support/DynamicLinker.h"
+#include "llvm/System/DynamicLibrary.h"
 #include <iostream>
+
 using namespace llvm;
 
 void PluginLoader::operator=(const std::string &Filename) {
   std::string ErrorMessage;
-  if (LinkDynamicObject(Filename.c_str(), &ErrorMessage))
+  try {
+    sys::DynamicLibrary::LoadLibraryPermanently(Filename.c_str());
+  } catch (const std::string& errmsg) {
+    if (errmsg.empty()) {
+      ErrorMessage = "Unknown";
+    } else {
+      ErrorMessage = errmsg;
+    }
+  }
+  if (!ErrorMessage.empty())
     std::cerr << "Error opening '" << Filename << "': " << ErrorMessage
               << "\n  -load request ignored.\n";	
 }
