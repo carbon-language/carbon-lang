@@ -677,7 +677,7 @@ public:
   virtual bool addPassesToJITCompile(FunctionPassManager &PM);
   virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                           MachineCodeEmitter &MCE);
-  virtual bool replaceMachineCodeForFunction(void *Old, void *New);
+  virtual void replaceMachineCodeForFunction(void *Old, void *New);
 
   // getPrologEpilogInsertionPass - Inserts prolog/epilog code.
   FunctionPass* getPrologEpilogInsertionPass();
