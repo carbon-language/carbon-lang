@@ -1,6 +1,6 @@
 ; Test CFG simplify removal of branch instructions...
 ;
-; RUN: if as < %s | opt -dce | dis | grep br
+; RUN: if as < %s | opt -simplifycfg | dis | grep br
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi
