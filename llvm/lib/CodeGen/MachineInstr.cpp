@@ -94,7 +94,7 @@ MachineInstr::SetMachineOperandVal(unsigned i,
   if (isDefAndUse)
     operands[i].flags = MachineOperand::DEFUSEFLAG;
   else if (isdef || TargetInstrDescriptors[opCode].resultPos == (int) i)
-    operands[i].flags = MachineOperand::DEFFLAG;
+    operands[i].flags = MachineOperand::DEFONLYFLAG;
   else
     operands[i].flags = 0;
 }
@@ -126,7 +126,7 @@ MachineInstr::SetMachineOperandReg(unsigned i,
   operands[i].regNum = regNum;
 
   if (isdef || TargetInstrDescriptors[opCode].resultPos == (int) i)
-    operands[i].flags = MachineOperand::DEFFLAG;
+    operands[i].flags = MachineOperand::DEFONLYFLAG;
   else
     operands[i].flags = 0;
 
@@ -152,7 +152,7 @@ MachineInstr::substituteValue(const Value* oldVal, Value* newVal, bool defsOnly)
   // Subsitute operands
   for (MachineInstr::val_op_iterator O = begin(), E = end(); O != E; ++O)
     if (*O == oldVal)
-      if (!defsOnly || O.isDef())
+      if (!defsOnly || !O.isUseOnly())
         {
           O.getMachineOperand().value = newVal;
           ++numSubst;
@@ -161,7 +161,7 @@ MachineInstr::substituteValue(const Value* oldVal, Value* newVal, bool defsOnly)
   // Subsitute implicit refs
   for (unsigned i=0, N=getNumImplicitRefs(); i < N; ++i)
     if (getImplicitRef(i) == oldVal)
-      if (!defsOnly || implicitRefIsDefined(i))
+      if (!defsOnly || !getImplicitOp(i).opIsUse())
         {
           getImplicitOp(i).value = newVal;
           ++numSubst;
@@ -281,7 +281,8 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
   unsigned StartOp = 0;
 
    // Specialize printing if op#0 is definition
-  if (getNumOperands() && operandIsDefined(0)) {
+  if (getNumOperands() &&
+      (getOperand(0).opIsDefOnly() || getOperand(0).opIsDefAndUse())) {
     ::print(getOperand(0), OS, TM);
     OS << " = ";
     ++StartOp;   // Don't print this operand again!
@@ -289,14 +290,15 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
   OS << TM.getInstrInfo().getName(getOpcode());
   
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
+    const MachineOperand& mop = getOperand(i);
     if (i != StartOp)
       OS << ",";
     OS << " ";
-    ::print(getOperand(i), OS, TM);
+    ::print(mop, OS, TM);
     
-    if (operandIsDefinedAndUsed(i))
+    if (mop.opIsDefAndUse())
       OS << "<def&use>";
-    else if (operandIsDefined(i))
+    else if (mop.opIsDefOnly())
       OS << "<def>";
   }
     
@@ -305,10 +307,10 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
     OS << "\tImplicitRefs: ";
     for(unsigned i = 0, e = getNumImplicitRefs(); i != e; ++i) {
       OS << "\t";
-      OutputValue(OS, getImplicitRef(i)); 
-      if (implicitRefIsDefinedAndUsed(i))
+      OutputValue(OS, getImplicitRef(i));
+      if (getImplicitOp(i).opIsDefAndUse())
         OS << "<def&use>";
-      else if (implicitRefIsDefined(i))
+      else if (getImplicitOp(i).opIsDefOnly())
         OS << "<def>";
     }
   }
@@ -323,9 +325,9 @@ std::ostream &operator<<(std::ostream& os, const MachineInstr& MI)
   
   for (unsigned i=0, N=MI.getNumOperands(); i < N; i++) {
     os << "\t" << MI.getOperand(i);
-    if (MI.operandIsDefined(i))
+    if (MI.getOperand(i).opIsDefOnly())
       os << "<d>";
-    if (MI.operandIsDefinedAndUsed(i))
+    if (MI.getOperand(i).opIsDefAndUse())
       os << "<d&u>";
   }
   
@@ -335,8 +337,8 @@ std::ostream &operator<<(std::ostream& os, const MachineInstr& MI)
     os << "\tImplicit: ";
     for (unsigned z=0; z < NumOfImpRefs; z++) {
       OutputValue(os, MI.getImplicitRef(z)); 
-      if (MI.implicitRefIsDefined(z)) os << "<d>";
-      if (MI.implicitRefIsDefinedAndUsed(z)) os << "<d&u>";
+      if (MI.getImplicitOp(z).opIsDefOnly()) os << "<d>";
+      if (MI.getImplicitOp(z).opIsDefAndUse()) os << "<d&u>";
       os << "\t";
     }
   }

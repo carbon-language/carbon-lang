@@ -302,7 +302,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
       //
       for (MachineInstr::const_val_op_iterator OpI = MInst->begin(),
              OpE = MInst->end(); OpI != OpE; ++OpI) {
-       	if (OpI.isDef())    // create a new LR iff this operand is a def
+       	if (OpI.isDefOnly() || OpI.isDefAndUse()) // create a new LR since def
 	  addInterference(*OpI, &LVSetAI, isCallInst);
 
 	// Calculate the spill cost of each live range
@@ -322,12 +322,10 @@ void PhyRegAlloc::buildInterferenceGraphs()
       // instr (currently, only calls have this).
       //
       unsigned NumOfImpRefs =  MInst->getNumImplicitRefs();
-      if ( NumOfImpRefs > 0 ) {
-	for (unsigned z=0; z < NumOfImpRefs; z++) 
-	  if (MInst->implicitRefIsDefined(z) )
-	    addInterference( MInst->getImplicitRef(z), &LVSetAI, isCallInst );
-      }
-
+      for (unsigned z=0; z < NumOfImpRefs; z++) 
+        if (MInst->getImplicitOp(z).opIsDefOnly() ||
+	    MInst->getImplicitOp(z).opIsDefAndUse())
+	  addInterference( MInst->getImplicitRef(z), &LVSetAI, isCallInst );
 
     } // for all machine instructions in BB
   } // for all BBs in function
@@ -359,7 +357,7 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
   for (MachineInstr::const_val_op_iterator It1 = MInst->begin(),
          ItE = MInst->end(); It1 != ItE; ++It1) {
     const LiveRange *LROfOp1 = LRI.getLiveRangeForValue(*It1); 
-    assert((LROfOp1 || !It1.isDef()) && "No LR for Def in PSEUDO insruction");
+    assert((LROfOp1 || !It1.isUseOnly())&& "No LR for Def in PSEUDO insruction");
 
     MachineInstr::const_val_op_iterator It2 = It1;
     for (++It2; It2 != ItE; ++It2) {
@@ -652,8 +650,8 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
 	 "Return value of a ret must be handled elsewhere");
 
   MachineOperand& Op = MInst->getOperand(OpNum);
-  bool isDef =  MInst->operandIsDefined(OpNum);
-  bool isDefAndUse =  MInst->operandIsDefinedAndUsed(OpNum);
+  bool isDef =  Op.opIsDefOnly();
+  bool isDefAndUse = Op.opIsDefAndUse();
   unsigned RegType = MRI.getRegType(LR);
   int SpillOff = LR->getSpillOffFromFP();
   RegClass *RC = LR->getRegClass();
@@ -885,8 +883,8 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC,
     {
       const MachineOperand& Op = MInst->getOperand(OpNum);
       
-      if (MInst->getOperandType(OpNum) == MachineOperand::MO_VirtualRegister || 
-          MInst->getOperandType(OpNum) == MachineOperand::MO_CCRegister)
+      if (Op.getType() == MachineOperand::MO_VirtualRegister || 
+          Op.getType() == MachineOperand::MO_CCRegister)
         if (const Value* Val = Op.getVRegValue())
           if (MRI.getRegClassIDOfType(Val->getType()) == RC->getID())
             if (Op.getAllocatedRegNum() == -1)
@@ -987,7 +985,7 @@ void PhyRegAlloc::printMachineCode()
 	    else 
 	      cerr << "(" << Val << ")";
 
-	    if (Op.opIsDef() )
+	    if (Op.opIsDefOnly() || Op.opIsDefAndUse())
 	      cerr << "*";
 
 	    const LiveRange *LROfVal = LRI.getLiveRangeForValue(Val);

@@ -525,18 +525,18 @@ SchedGraph::addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
     for (unsigned i=0; i < regRefVec.size(); ++i) {
       SchedGraphNode* node = regRefVec[i].first;
       unsigned int opNum   = regRefVec[i].second;
-      bool isDef = node->getMachineInstr()->operandIsDefined(opNum);
+      bool isDef = node->getMachineInstr()->getOperand(opNum).opIsDefOnly();
       bool isDefAndUse =
-        node->getMachineInstr()->operandIsDefinedAndUsed(opNum);
+        node->getMachineInstr()->getOperand(opNum).opIsDefAndUse();
           
       for (unsigned p=0; p < i; ++p) {
         SchedGraphNode* prevNode = regRefVec[p].first;
         if (prevNode != node) {
           unsigned int prevOpNum = regRefVec[p].second;
           bool prevIsDef =
-            prevNode->getMachineInstr()->operandIsDefined(prevOpNum);
+            prevNode->getMachineInstr()->getOperand(prevOpNum).opIsDefOnly();
           bool prevIsDefAndUse =
-            prevNode->getMachineInstr()->operandIsDefinedAndUsed(prevOpNum);
+            prevNode->getMachineInstr()->getOperand(prevOpNum).opIsDefAndUse();
           if (isDef) {
             if (prevIsDef)
               new SchedGraphEdge(prevNode, node, regNum,
@@ -612,7 +612,7 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& MI,
   // 
   for (unsigned i = 0, numOps = MI.getNumOperands(); i != numOps; ++i)
   {
-    switch (MI.getOperandType(i))
+    switch (MI.getOperand(i).getType())
     {
     case MachineOperand::MO_VirtualRegister:
     case MachineOperand::MO_CCRegister:
@@ -622,8 +622,8 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& MI,
         ValueToDefVecMap::const_iterator I = valueToDefVecMap.find(srcI);
         if (I != valueToDefVecMap.end())
           addEdgesForValue(node, I->second, srcI,
-                           MI.operandIsDefined(i),
-                           MI.operandIsDefinedAndUsed(i), target);
+                           MI.getOperand(i).opIsDefOnly(),
+                           MI.getOperand(i).opIsDefAndUse(), target);
       }
       break;
 	  
@@ -646,16 +646,15 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& MI,
   // value of a Ret instruction.
   // 
   for (unsigned i=0, N=MI.getNumImplicitRefs(); i < N; ++i)
-    if (! MI.implicitRefIsDefined(i) ||
-        MI.implicitRefIsDefinedAndUsed(i))
+    if (MI.getImplicitOp(i).opIsUse() || MI.getImplicitOp(i).opIsDefAndUse())
       if (const Instruction *srcI =
           dyn_cast_or_null<Instruction>(MI.getImplicitRef(i)))
       {
         ValueToDefVecMap::const_iterator I = valueToDefVecMap.find(srcI);
         if (I != valueToDefVecMap.end())
           addEdgesForValue(node, I->second, srcI,
-                           MI.implicitRefIsDefined(i),
-                           MI.implicitRefIsDefinedAndUsed(i), target);
+                           MI.getImplicitOp(i).opIsDefOnly(),
+                           MI.getImplicitOp(i).opIsDefAndUse(), target);
       }
 }
 
@@ -693,7 +692,8 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
     }
       
     // ignore all other non-def operands
-    if (! minstr.operandIsDefined(i))
+    if (!minstr.getOperand(i).opIsDefOnly() &&
+        !minstr.getOperand(i).opIsDefAndUse())
       continue;
       
     // We must be defining a value.
@@ -710,7 +710,8 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
   // them assumes they must be virtual registers!
   // 
   for (unsigned i=0, N = minstr.getNumImplicitRefs(); i != N; ++i)
-    if (minstr.implicitRefIsDefined(i))
+    if (minstr.getImplicitOp(i).opIsDefOnly() ||
+        minstr.getImplicitOp(i).opIsDefAndUse())
       if (const Instruction* defInstr =
           dyn_cast_or_null<Instruction>(minstr.getImplicitRef(i)))
         valueToDefVecMap[defInstr].push_back(std::make_pair(node, -i)); 

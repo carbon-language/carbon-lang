@@ -231,7 +231,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       // Process all explicit defs...
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
 	MachineOperand &MO = MI->getOperand(i);
-	if (MO.opIsDef() || MO.opIsDefAndUse()) {
+	if (MO.opIsDefOnly() || MO.opIsDefAndUse()) {
 	  if (MO.isVirtualRegister()) {
 	    VarInfo &VRInfo = getVarInfo(MO.getReg());
 

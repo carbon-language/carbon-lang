@@ -173,7 +173,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
         // register in any given instruction
         unsigned physReg = Virt2PhysRegMap[virtualReg];
         if (physReg == 0) {
-          if (op.opIsDef()) {
+          if (op.opIsDefOnly() || op.opIsDefAndUse()) {
             if (TM->getInstrInfo().isTwoAddrInstr(MI->getOpcode()) && i == 0) {
               // must be same register number as the first operand
               // This maps a = b + c into b += c, and saves b into a's spot

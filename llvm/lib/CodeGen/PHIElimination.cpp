@@ -165,7 +165,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
         for (unsigned i = 0, e = PrevInst->getNumOperands(); i != e; ++i) {
           MachineOperand &MO = PrevInst->getOperand(i);
           if (MO.isVirtualRegister() && MO.getReg() == IncomingReg)
-            if (MO.opIsDef() || MO.opIsDefAndUse()) {
+            if (MO.opIsDefOnly() || MO.opIsDefAndUse()) {
               HaveNotEmitted = false;
               break;
             }             
