@@ -14,6 +14,7 @@
 	<ol>
           <li><a href="#scf_commenting">Commenting</a>
           <li><a href="#scf_commentformat">Comment Formatting</a>
+          <li><a href="#scf_includes">#include Style</a>
           <li><a href="#scf_codewidth">Source Code Width</a>
           <li><a href="#scf_spacestabs">Use Spaces Instead of Tabs</a>
           <li><a href="#scf_indentation">Indent Code Consistently</a>
@@ -122,6 +123,39 @@ In general, prefer C++ style (<tt>//</tt>) comments.  They take less space, requ
 </ol><p>
 
 To comment out a large block of code, use <tt>#if 0</tt> and <tt>#endif</tt>.  These nest properly and are better behaved in general than C style comments.<p>
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="scf_includes"><h4><hr size=0>#include Style</h4><ul>
+
+Immediately after the <a href="#scf_commenting">header file comment</a> (and
+include guards if working on a header file), the <a
+href="hl_dontinclude">minimal</a> list of #includes required by the file should
+be listed.  We prefer these #includes to be listed in this order:<p>
+
+<ol>
+<li><a href="#mmheader">Main Module header</a>
+<li><a href="#hl_privateheaders">Local/Private Headers</a>
+<li>llvm/*
+<li>llvm/Analysis/*
+<li>llvm/Assembly/*
+<li>llvm/Bytecode/*
+<li>llvm/CodeGen/*
+<li>...
+<li>Support/*
+<li>Config/*
+<li>System #includes
+</ol>
+
+... and each catagory should be sorted by name.<p>
+
+<a name="mmheader">The "Main Module Header" file applies to .cpp file which
+implement an interface defined by a .h file.  This #include should always be
+included <b>first</b> regardless of where it lives on the file system.  By
+including a header file first in the .cpp files that implement the interfaces,
+we ensure that the header does not have any hidden dependencies which are not
+explicitly #included in the header, but should be.  It is also a form of
+documentation in the .cpp file to indicate where the interfaces it implements
+are defined.<p>
 
 
 <!-- _______________________________________________________________________ -->
@@ -252,12 +286,6 @@ href="http://www.cuj.com/articles/2000/0002/0002c/0002c.htm">it's a collection
 of these</a> that defines an interface.  This interface may be several
 functions, classes or data structures, but the important issue is how they work
 together.<p>
-
-<!--One example of this is the <tt>llvm/include/llvm/CFG.h</tt> file.  It
-defines a collection of global functions, template classes, and member functions
-that are syntactically unrelated to each other.  Semantically, however, they all
-provide useful functionality for operating on a CFG, and so they are bound
-together.<p> -->
 
 In general, a module should be implemented with one or more <tt>.cpp</tt> files.
 Each of these <tt>.cpp</tt> files should include the header that defines their
@@ -450,13 +478,13 @@ rather than a set of member functions, which leaves some leeway in how
 you actually implement it. Typically it looks something like this
 (I'll start with the const-iterator-only situation):
 
-  #include <iterator>
+  #include &lt;iterator&gt;
 
   class container {
     public:
       typedef something_or_other value_type;
       class const_iterator:
-        public std::iterator<std::forward_iterator_tag, value_type> {
+        public std::iterator&lt;std::forward_iterator_tag, value_type&gt; {
           friend class container;
           public:
             const value_type&amp; operator*() const;
@@ -568,7 +596,7 @@ the simple addition of a second class.
       typedef something_or_other value_type;
       class const_iterator;
       class iterator:
-        public std::iterator<std::forward_iterator_tag, value_type> {
+        public std::iterator&lt;std::forward_iterator_tag, value_type&gt; {
           friend class container;
           friend class container::const_iterator;
           public:
@@ -582,7 +610,7 @@ the simple addition of a second class.
             //...
         };
       class const_iterator:
-        public std::iterator<std::forward_iterator_tag, value_type> {
+        public std::iterator&lt;std::forward_iterator_tag, value_type&gt; {
           friend class container;
           public:
             const_iterator();
@@ -615,7 +643,7 @@ Bidirectional iterators add just two member functions to forward
 iterators:
 
   class iterator:
-    public std::iterator<std::bidirectional_iterator_tag, value_type> {
+    public std::iterator&lt;std::bidirectional_iterator_tag, value_type&gt; {
       public:
         //...
         iterator&amp; operator--();
@@ -629,7 +657,7 @@ operator++().
 Random access iterators add several more member and friend functions:
 
   class iterator:
-    public std::iterator<std::random_access_iterator_tag, value_type> {
+    public std::iterator&lt;std::random_access_iterator_tag, value_type&gt; {
       public:
         //...
         iterator&amp; operator+=(difference_type rhs);
@@ -638,10 +666,10 @@ Random access iterators add several more member and friend functions:
         friend iterator operator+(difference_type lhs, iterator rhs);
         friend iterator operator-(iterator lhs, difference_type rhs);
         friend difference_type operator-(iterator lhs, iterator rhs);
-        friend bool operator<(iterator lhs, iterator rhs);
-        friend bool operator>(iterator lhs, iterator rhs);
-        friend bool operator<=(iterator lhs, iterator rhs);
-        friend bool operator>=(iterator lhs, iterator rhs);
+        friend bool operator&lt;(iterator lhs, iterator rhs);
+        friend bool operator&gt;(iterator lhs, iterator rhs);
+        friend bool operator&lt;=(iterator lhs, iterator rhs);
+        friend bool operator&gt;=(iterator lhs, iterator rhs);
         //...
     };
 
@@ -677,24 +705,24 @@ Random access iterators add several more member and friend functions:
     // calculate distance between iterators
   }
 
-  bool operator<(container::iterator lhs, container::iterator rhs) {
+  bool operator&lt;(container::iterator lhs, container::iterator rhs) {
     // perform less-than comparison
   }
 
-  bool operator>(container::iterator lhs, container::iterator rhs) {
-    return rhs < lhs;
+  bool operator&gt;(container::iterator lhs, container::iterator rhs) {
+    return rhs &lt; lhs;
   }
 
-  bool operator<=(container::iterator lhs, container::iterator rhs) {
-    return !(rhs < lhs);
+  bool operator&lt;=(container::iterator lhs, container::iterator rhs) {
+    return !(rhs &lt; lhs);
   }
 
-  bool operator>=(container::iterator lhs, container::iterator rhs) {
-    return !(lhs < rhs);
+  bool operator&gt;=(container::iterator lhs, container::iterator rhs) {
+    return !(lhs &lt; rhs);
   }
 
 Four of the functions (operator+=(), operator-=(), the second
-operator-(), and operator<()) are nontrivial; the rest are
+operator-(), and operator&lt;()) are nontrivial; the rest are
 boilerplate.
 
 One feature of the above code that some experts may disapprove of is
@@ -712,7 +740,7 @@ I hope all this is some help to anyone who needs to write their own
 STL-like containers and iterators.
 
 -- 
-Ross Smith <ross.s@ihug.co.nz> The Internet Group, Auckland, New Zealand
+Ross Smith &lt;ross.s@ihug.co.nz&gt; The Internet Group, Auckland, New Zealand
 </pre>
 
 
@@ -741,7 +769,7 @@ If you get some free time, and you haven't read them: do so, you might learn som
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Fri Jul 25 12:29:52 CDT 2003
+Last modified: Thu Aug  7 16:44:33 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
