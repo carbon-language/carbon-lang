@@ -259,47 +259,60 @@ SparcFunctionAsmPrinter::OpIsMemoryAddressBase(const MachineInstr *MI,
 }
 
 
-#define PrintOp1PlusOp2(Op1, Op2) \
-  printOneOperand(Op1); \
+#define PrintOp1PlusOp2(mop1, mop2) \
+  printOneOperand(mop1); \
   toAsm << "+"; \
-  printOneOperand(Op2);
+  printOneOperand(mop2);
 
 unsigned int
 SparcFunctionAsmPrinter::printOperands(const MachineInstr *MI,
                                unsigned int opNum)
 {
-  const MachineOperand& Op = MI->getOperand(opNum);
+  const MachineOperand& mop = MI->getOperand(opNum);
   
   if (OpIsBranchTargetLabel(MI, opNum))
     {
-      PrintOp1PlusOp2(Op, MI->getOperand(opNum+1));
+      PrintOp1PlusOp2(mop, MI->getOperand(opNum+1));
       return 2;
     }
   else if (OpIsMemoryAddressBase(MI, opNum))
     {
       toAsm << "[";
-      PrintOp1PlusOp2(Op, MI->getOperand(opNum+1));
+      PrintOp1PlusOp2(mop, MI->getOperand(opNum+1));
       toAsm << "]";
       return 2;
     }
   else
     {
-      printOneOperand(Op);
+      printOneOperand(mop);
       return 1;
     }
 }
 
 
 void
-SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &op)
+SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &mop)
 {
-  switch (op.getOperandType())
+  bool needBitsFlag = true;
+  
+  if (mop.opHiBits32())
+    toAsm << "%lm(";
+  else if (mop.opLoBits32())
+    toAsm << "%lo(";
+  else if (mop.opHiBits64())
+    toAsm << "%hh(";
+  else if (mop.opLoBits64())
+    toAsm << "%hm(";
+  else
+    needBitsFlag = false;
+  
+  switch (mop.getOperandType())
     {
     case MachineOperand::MO_VirtualRegister:
     case MachineOperand::MO_CCRegister:
     case MachineOperand::MO_MachineRegister:
       {
-        int RegNum = (int)op.getAllocatedRegNum();
+        int RegNum = (int)mop.getAllocatedRegNum();
         
         // better to print code with NULL registers than to die
         if (RegNum == Target.getRegInfo().getInvalidRegNum()) {
@@ -312,7 +325,7 @@ SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &op)
     
     case MachineOperand::MO_PCRelativeDisp:
       {
-        const Value *Val = op.getVRegValue();
+        const Value *Val = mop.getVRegValue();
         assert(Val && "\tNULL Value in SparcFunctionAsmPrinter");
         
         if (const BasicBlock *BB = dyn_cast<const BasicBlock>(Val))
@@ -329,17 +342,20 @@ SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &op)
       }
     
     case MachineOperand::MO_SignExtendedImmed:
-      toAsm << op.getImmedValue();
+      toAsm << mop.getImmedValue();
       break;
 
     case MachineOperand::MO_UnextendedImmed:
-      toAsm << (uint64_t) op.getImmedValue();
+      toAsm << (uint64_t) mop.getImmedValue();
       break;
     
     default:
-      toAsm << op;      // use dump field
+      toAsm << mop;      // use dump field
       break;
     }
+  
+  if (needBitsFlag)
+    toAsm << ")";
 }
 
 
