@@ -18,6 +18,49 @@
 #include "llvm/iOther.h"
 using namespace llvm;
 
+/// ReplaceCallWith - This function is used when we want to lower an intrinsic
+/// call to a call of an external function.  This handles hard cases such as
+/// when there was already a prototype for the external function, and if that
+/// prototype doesn't match the arguments we expect to pass in.
+template <class ArgIt>
+static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
+                                 ArgIt ArgBegin, ArgIt ArgEnd,
+                                 const Type *RetTy, Function *&FCache) {
+  if (!FCache) {
+    // If we haven't already looked up this function, check to see if the
+    // program already contains a function with this name.
+    Module *M = CI->getParent()->getParent()->getParent();
+    FCache = M->getNamedFunction(NewFn);
+    if (!FCache) {
+      // It doesn't already exist in the program, insert a new definition now.
+      std::vector<const Type *> ParamTys;
+      for (ArgIt I = ArgBegin; I != ArgEnd; ++I)
+        ParamTys.push_back((*I)->getType());
+      FCache = M->getOrInsertFunction(NewFn,
+                                     FunctionType::get(RetTy, ParamTys, false));
+    }
+  }
+
+  const FunctionType *FT = FCache->getFunctionType();
+  std::vector<Value*> Operands;
+  unsigned ArgNo = 0;
+  for (ArgIt I = ArgBegin; I != ArgEnd && ArgNo != FT->getNumParams();
+       ++I, ++ArgNo) {
+    Value *Arg = *I;
+    if (Arg->getType() != FT->getParamType(ArgNo))
+      Arg = new CastInst(Arg, FT->getParamType(ArgNo), Arg->getName(), CI);
+    Operands.push_back(Arg);
+  }
+  // Pass nulls into any additional arguments...
+  for (; ArgNo != FT->getNumParams(); ++ArgNo)
+    Operands.push_back(Constant::getNullValue(FT->getParamType(ArgNo)));
+
+  std::string Name = CI->getName(); CI->setName("");
+  if (FT->getReturnType() == Type::VoidTy) Name.clear();
+  return new CallInst(FCache, Operands, Name, CI);
+}
+
+
 void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   Function *Callee = CI->getCalledFunction();
   assert(Callee && "Cannot lower an indirect call!");
@@ -34,9 +77,10 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
               << Callee->getName() << "'!\n";
     abort();
 
-    // The default implementation of setjmp/longjmp transforms setjmp into a
-    // noop that always returns zero and longjmp into a call to abort.  This
-    // allows code that never longjmps to work correctly.
+    // The setjmp/longjmp intrinsics should only exist in the code if it was
+    // never optimized (ie, right out of the CFE), or if it has been hacked on
+    // by the lowerinvoke pass.  In both cases, the right thing to do is to
+    // convert the call to an explicit setjmp or longjmp call.
   case Intrinsic::setjmp:
   case Intrinsic::sigsetjmp:
     if (CI->getType() != Type::VoidTy)
@@ -46,7 +90,9 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::longjmp:
   case Intrinsic::siglongjmp:
     // Insert the call to abort
-    new CallInst(M->getOrInsertFunction("abort", Type::VoidTy, 0), "", CI);
+    static Function *AbortFCache = 0;
+    ReplaceCallWith("abort", CI, CI->op_end(), CI->op_end(), Type::VoidTy,
+                    AbortFCache);
     break;
 
   case Intrinsic::returnaddress:
@@ -67,47 +113,29 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
       CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
     break;    // Simply strip out debugging intrinsics
 
-  case Intrinsic::memcpy: {
+  case Intrinsic::memcpy:
     // The memcpy intrinsic take an extra alignment argument that the memcpy
     // libc function does not.
-    const FunctionType *CFT = Callee->getFunctionType();
-    FunctionType *FT =
-      FunctionType::get(*CFT->param_begin(), 
-           std::vector<const Type*>(CFT->param_begin(), CFT->param_end()-1),
-                        false);
-    Function *MemCpy = M->getOrInsertFunction("memcpy", FT);
-    new CallInst(MemCpy, std::vector<Value*>(CI->op_begin()+1, CI->op_end()-1),
-                 CI->getName(), CI);
+    static Function *MemcpyFCache = 0;
+    ReplaceCallWith("memcpy", CI, CI->op_begin()+1, CI->op_end()-1,
+                    (*(CI->op_begin()+1))->getType(), MemcpyFCache);
     break;
-  }
-  case Intrinsic::memmove: {
+  case Intrinsic::memmove:
     // The memmove intrinsic take an extra alignment argument that the memmove
     // libc function does not.
-    const FunctionType *CFT = Callee->getFunctionType();
-    FunctionType *FT =
-      FunctionType::get(*CFT->param_begin(), 
-           std::vector<const Type*>(CFT->param_begin(), CFT->param_end()-1),
-                        false);
-    Function *MemMove = M->getOrInsertFunction("memmove", FT);
-    new CallInst(MemMove, std::vector<Value*>(CI->op_begin()+1, CI->op_end()-1),
-                 CI->getName(), CI);
+    static Function *MemmoveFCache = 0;
+    ReplaceCallWith("memmove", CI, CI->op_begin()+1, CI->op_end()-1,
+                    (*(CI->op_begin()+1))->getType(), MemmoveFCache);
     break;
-  }
-  case Intrinsic::memset: {
+  case Intrinsic::memset:
     // The memset intrinsic take an extra alignment argument that the memset
     // libc function does not.
-    const FunctionType *CFT = Callee->getFunctionType();
-    FunctionType *FT =
-      FunctionType::get(*CFT->param_begin(), 
-           std::vector<const Type*>(CFT->param_begin(), CFT->param_end()-1),
-                        false);
-    Function *MemSet = M->getOrInsertFunction("memset", FT);
-    new CallInst(MemSet, std::vector<Value*>(CI->op_begin()+1, CI->op_end()-1),
-                 CI->getName(), CI);
+    static Function *MemsetFCache = 0;
+    ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
+                    (*(CI->op_begin()+1))->getType(), MemsetFCache);
     break;
   }
-  }
-
+  
   assert(CI->use_empty() &&
          "Lowering should have eliminated any uses of the intrinsic call!");
   CI->getParent()->getInstList().erase(CI);
