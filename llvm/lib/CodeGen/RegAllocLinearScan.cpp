@@ -503,8 +503,8 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // scan the rest and undo each interval that expired after t and
   // insert it in active (the next iteration of the algorithm will
   // put it in inactive if required)
-  IntervalPtrs::iterator i = handled_.begin(), e = handled_.end();
-  for (; i != e; ++i) {
+  for (IntervalPtrs::iterator i = handled_.begin(), e = handled_.end(); 
+       i != e; ++i) {
     if (!(*i)->expiredAt(earliestStart) && (*i)->expiredAt(cur->start())) {
       DEBUG(std::cerr << "\t\t\tundo changes for: " << **i << '\n');
       active_.push_back(*i);
