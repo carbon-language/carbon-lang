@@ -2053,29 +2053,37 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       {
         maskUnsignedResult = true;
 
-        // If second operand of divide is smaller than 64 bits, we have
+        // If either operand of divide is smaller than 64 bits, we have
         // to make sure the unused top bits are correct because they affect
         // the result.  These bits are already correct for unsigned values.
         // They may be incorrect for signed values, so sign extend to fill in.
         Instruction* divI = subtreeRoot->getInstruction();
+        Value* divOp1 = subtreeRoot->leftChild()->getValue();
         Value* divOp2 = subtreeRoot->rightChild()->getValue();
-        Value* divOpToUse = divOp2;
-        if (divOp2->getType()->isSigned()) {
-          unsigned opSize=target.getTargetData().getTypeSize(divOp2->getType());
+        Value* divOp1ToUse = divOp1;
+        Value* divOp2ToUse = divOp2;
+        if (divI->getType()->isSigned()) {
+          unsigned opSize=target.getTargetData().getTypeSize(divI->getType());
           if (opSize < 8) {
             MachineCodeForInstruction& mcfi=MachineCodeForInstruction::get(divI);
-            divOpToUse = new TmpInstruction(mcfi, divOp2);
+            divOp1ToUse = new TmpInstruction(mcfi, divOp1);
+            divOp2ToUse = new TmpInstruction(mcfi, divOp2);
             target.getInstrInfo().
               CreateSignExtensionInstructions(target,
                                               divI->getParent()->getParent(),
-                                              divOp2, divOpToUse,
+                                              divOp1, divOp1ToUse,
+                                              8*opSize, mvec, mcfi);
+            target.getInstrInfo().
+              CreateSignExtensionInstructions(target,
+                                              divI->getParent()->getParent(),
+                                              divOp2, divOp2ToUse,
                                               8*opSize, mvec, mcfi);
           }
         }
 
         mvec.push_back(BuildMI(ChooseDivInstruction(target, subtreeRoot), 3)
-                       .addReg(subtreeRoot->leftChild()->getValue())
-                       .addReg(divOpToUse)
+                       .addReg(divOp1ToUse)
+                       .addReg(divOp2ToUse)
                        .addRegDef(divI));
 
         break;
