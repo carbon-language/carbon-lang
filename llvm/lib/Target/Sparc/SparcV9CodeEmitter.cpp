@@ -8,6 +8,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -22,31 +23,41 @@ bool UltraSparc::addPassesToEmitMachineCode(PassManager &PM,
   //PM.add(new SparcV9CodeEmitter(MCE));
   //MachineCodeEmitter *M = MachineCodeEmitter::createDebugMachineCodeEmitter();
   MachineCodeEmitter *M = MachineCodeEmitter::createFilePrinterEmitter(MCE);
-  PM.add(new SparcV9CodeEmitter(this, *M));
+  PM.add(new SparcV9CodeEmitter(*this, *M));
   PM.add(createMachineCodeDestructionPass()); // Free stuff no longer needed
   return false;
 }
 
 namespace {
   class JITResolver {
+    SparcV9CodeEmitter &SparcV9;
     MachineCodeEmitter &MCE;
 
     // LazyCodeGenMap - Keep track of call sites for functions that are to be
     // lazily resolved.
-    std::map<unsigned, Function*> LazyCodeGenMap;
+    std::map<uint64_t, Function*> LazyCodeGenMap;
 
     // LazyResolverMap - Keep track of the lazy resolver created for a
     // particular function so that we can reuse them if necessary.
-    std::map<Function*, unsigned> LazyResolverMap;
+    std::map<Function*, uint64_t> LazyResolverMap;
   public:
-    JITResolver(MachineCodeEmitter &mce) : MCE(mce) {}
-    unsigned getLazyResolver(Function *F);
-    unsigned addFunctionReference(unsigned Address, Function *F);
-    
+    JITResolver(SparcV9CodeEmitter &V9,
+                MachineCodeEmitter &mce) : SparcV9(V9), MCE(mce) {}
+    uint64_t getLazyResolver(Function *F);
+    uint64_t addFunctionReference(uint64_t Address, Function *F);
+
+    // Utility functions for accessing data from static callback
+    uint64_t getCurrentPCValue() {
+      return MCE.getCurrentPCValue();
+    }
+    unsigned getBinaryCodeForInstr(MachineInstr &MI) {
+      return SparcV9.getBinaryCodeForInstr(MI);
+    }
+
   private:
-    unsigned emitStubForFunction(Function *F);
+    uint64_t emitStubForFunction(Function *F);
     static void CompilationCallback();
-    unsigned resolveFunctionReference(unsigned RetAddr);
+    uint64_t resolveFunctionReference(uint64_t RetAddr);
   };
 
   JITResolver *TheJITResolver;
@@ -57,26 +68,26 @@ namespace {
 /// address.  Instead, we emit a call to the CompilationCallback method, and
 /// keep track of where we are.
 ///
-unsigned JITResolver::addFunctionReference(unsigned Address, Function *F) {
+uint64_t JITResolver::addFunctionReference(uint64_t Address, Function *F) {
   LazyCodeGenMap[Address] = F;  
   return (intptr_t)&JITResolver::CompilationCallback;
 }
 
-unsigned JITResolver::resolveFunctionReference(unsigned RetAddr) {
-  std::map<unsigned, Function*>::iterator I = LazyCodeGenMap.find(RetAddr);
+uint64_t JITResolver::resolveFunctionReference(uint64_t RetAddr) {
+  std::map<uint64_t, Function*>::iterator I = LazyCodeGenMap.find(RetAddr);
   assert(I != LazyCodeGenMap.end() && "Not in map!");
   Function *F = I->second;
   LazyCodeGenMap.erase(I);
   return MCE.forceCompilationOf(F);
 }
 
-unsigned JITResolver::getLazyResolver(Function *F) {
-  std::map<Function*, unsigned>::iterator I = LazyResolverMap.lower_bound(F);
+uint64_t JITResolver::getLazyResolver(Function *F) {
+  std::map<Function*, uint64_t>::iterator I = LazyResolverMap.lower_bound(F);
   if (I != LazyResolverMap.end() && I->first == F) return I->second;
   
 //std::cerr << "Getting lazy resolver for : " << ((Value*)F)->getName() << "\n";
 
-  unsigned Stub = emitStubForFunction(F);
+  uint64_t Stub = emitStubForFunction(F);
   LazyResolverMap.insert(I, std::make_pair(F, Stub));
   return Stub;
 }
@@ -85,26 +96,23 @@ void JITResolver::CompilationCallback() {
   uint64_t *StackPtr = (uint64_t*)__builtin_frame_address(0);
   uint64_t RetAddr = (uint64_t)(intptr_t)__builtin_return_address(0);
 
-#if 0  
   std::cerr << "In callback! Addr=0x" << std::hex << RetAddr
-            << " SP=0x" << (unsigned)StackPtr << std::dec
-            << ": Resolving call to function: "
-            << TheVM->getFunctionReferencedName((void*)RetAddr) << "\n";
-#endif
+            << " SP=0x" << (uint64_t)(intptr_t)StackPtr << std::dec << "\n";
 
-  std::cerr << "Sparc's JIT Resolver not implemented!\n";
-  abort();
-
-#if 0
-  unsigned NewVal = TheJITResolver->resolveFunctionReference((void*)RetAddr);
+  int64_t NewVal = (int64_t)TheJITResolver->resolveFunctionReference(RetAddr);
 
   // Rewrite the call target... so that we don't fault every time we execute
   // the call.
-  *(unsigned*)RetAddr = NewVal;
+  int64_t RealCallTarget = (int64_t)
+    ((NewVal - TheJITResolver->getCurrentPCValue()) >> 4);
+  MachineInstr *MI = BuildMI(V9::CALL, 1);
+  MI->addSignExtImmOperand(RealCallTarget);
+  // FIXME: this could be in the wrong byte order!!
+  *((unsigned*)(intptr_t)RetAddr) = TheJITResolver->getBinaryCodeForInstr(*MI);
+  delete MI;
   
   // Change the return address to reexecute the call instruction...
   StackPtr[1] -= 4;
-#endif
 }
 
 /// emitStubForFunction - This method is used by the JIT when it needs to emit
@@ -113,28 +121,52 @@ void JITResolver::CompilationCallback() {
 /// function compiler, which will eventually get fixed to call the function
 /// directly.
 ///
-unsigned JITResolver::emitStubForFunction(Function *F) {
+uint64_t JITResolver::emitStubForFunction(Function *F) {
 #if 0
   MCE.startFunctionStub(*F, 6);
   MCE.emitByte(0xE8);   // Call with 32 bit pc-rel destination...
 
-  unsigned Address = addFunctionReference(MCE.getCurrentPCValue(), F);
+  uint64_t Address = addFunctionReference(MCE.getCurrentPCValue(), F);
   MCE.emitWord(Address-MCE.getCurrentPCValue()-4);
 
   MCE.emitByte(0xCD);   // Interrupt - Just a marker identifying the stub!
   return (intptr_t)MCE.finishFunctionStub(*F);
 #endif
-  std::cerr << "Sparc's JITResolver::emitStubForFunction() not implemented!\n";
-  abort();
+  MCE.startFunctionStub(*F, 6);
+
+  int64_t CurrPC = MCE.getCurrentPCValue();
+  int64_t Addr = (int64_t)addFunctionReference(CurrPC, F);
+  int64_t CallTarget = (Addr-CurrPC) >> 2;
+  MachineInstr *Call = BuildMI(V9::CALL, 1);
+  Call->addSignExtImmOperand(CallTarget);
+  SparcV9.emitWord(SparcV9.getBinaryCodeForInstr(*Call));
+  delete Call;
+  
+  MachineInstr *Nop = BuildMI(V9::NOP, 0);
+  SparcV9.emitWord(SparcV9.getBinaryCodeForInstr(*Nop));
+  delete Nop;
+
+  SparcV9.emitWord(0xDEADBEEF); // marker so that we know it's really a stub
+  return (intptr_t)MCE.finishFunctionStub(*F);
 }
 
 
-void SparcV9CodeEmitter::emitConstant(unsigned Val, unsigned Size) {
+SparcV9CodeEmitter::SparcV9CodeEmitter(TargetMachine &tm,
+                                       MachineCodeEmitter &M): TM(tm), MCE(M)
+{
+  TheJITResolver = new JITResolver(*this, M);
+}
+
+SparcV9CodeEmitter::~SparcV9CodeEmitter() {
+  delete TheJITResolver;
+}
+
+void SparcV9CodeEmitter::emitWord(unsigned Val) {
   // Output the constant in big endian byte order...
   unsigned byteVal;
-  for (int i = Size-1; i >= 0; --i) {
+  for (int i = 3; i >= 0; --i) {
     byteVal = Val >> 8*i;
-    MCE->emitByte(byteVal & 255);
+    MCE.emitByte(byteVal & 255);
   }
 }
 
@@ -188,17 +220,59 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
     std::cerr << "ERROR: virtual register found in machine code.\n";
     abort();
   } else if (MO.isPCRelativeDisp()) {
+    std::cerr << "PCRelativeDisp: ";
     Value *V = MO.getVRegValue();
     if (BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
       std::cerr << "Saving reference to BB (VReg)\n";
-      unsigned* CurrPC = (unsigned*)(intptr_t)MCE->getCurrentPCValue();
+      unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
       BBRefs.push_back(std::make_pair(BB, std::make_pair(CurrPC, &MI)));
-    } else if (Constant *C = dyn_cast<Constant>(V)) {
-      if (ConstantMap.find(C) != ConstantMap.end())
-        rv = (int64_t)(intptr_t)ConstantMap[C] - MCE->getCurrentPCValue();
-      else {
+    } else if (const Constant *C = dyn_cast<Constant>(V)) {
+      if (ConstantMap.find(C) != ConstantMap.end()) {
+        rv = (int64_t)MCE.getConstantPoolEntryAddress(ConstantMap[C]);
+        std::cerr << "const: 0x" << std::hex << rv
+                  << "\n" << std::dec;
+      } else {
         std::cerr << "ERROR: constant not in map:" << MO << "\n";
         abort();
+      }
+    } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+      // same as MO.isGlobalAddress()
+      std::cerr << "GlobalValue: ";
+      // external function calls, etc.?
+      if (Function *F = dyn_cast<Function>(GV)) {
+        std::cerr << "Function: ";
+        if (F->isExternal()) {
+          // Sparc backend broken: this MO should be `ExternalSymbol'
+          rv = (int64_t)MCE.getGlobalValueAddress(F->getName());
+        } else {
+          rv = (int64_t)MCE.getGlobalValueAddress(F);
+        }
+        if (rv == 0) {
+          std::cerr << "not yet generated\n";
+          // Function has not yet been code generated!
+          TheJITResolver->addFunctionReference(MCE.getCurrentPCValue(), F);
+          // Delayed resolution...
+          rv = TheJITResolver->getLazyResolver(F);
+        } else {
+          std::cerr << "already generated: 0x" << std::hex << rv << "\n" 
+                    << std::dec;
+        }
+      } else {
+        std::cerr << "not a function: " << *GV << "\n";
+        abort();
+      }
+      // The real target of the call is Addr = PC + (rv * 4)
+      // So undo that: give the instruction (Addr - PC) / 4
+      if (MI.getOpcode() == V9::CALL) {
+        int64_t CurrPC = MCE.getCurrentPCValue();
+        std::cerr << "rv addr: 0x" << std::hex << rv << "\n";
+        std::cerr << "curr PC: 0x" << CurrPC << "\n";
+        rv = (rv - CurrPC) >> 2;
+        if (rv >= (1<<29) || rv <= -(1<<29)) {
+          std::cerr << "addr out of bounds for the 30-bit call: " << rv << "\n";
+          abort();
+        }
+        std::cerr << "returning addr: 0x" << rv << "\n" << std::dec;
       }
     } else {
       std::cerr << "ERROR: PC relative disp unhandled:" << MO << "\n";
@@ -209,16 +283,18 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
     // in the real fashion -- it skips those that it chooses not to allocate,
     // i.e. those that are the SP, etc.
     unsigned fakeReg = MO.getReg(), realReg, regClass, regType;
-    regType = TM->getRegInfo().getRegType(fakeReg);
+    regType = TM.getRegInfo().getRegType(fakeReg);
     // At least map fakeReg into its class
-    fakeReg = TM->getRegInfo().getClassRegNum(fakeReg, regClass);
+    fakeReg = TM.getRegInfo().getClassRegNum(fakeReg, regClass);
     // Find the real register number for use in an instruction
     realReg = getRealRegNum(fakeReg, regClass);
     std::cerr << "Reg[" << std::dec << fakeReg << "] = " << realReg << "\n";
     rv = realReg;
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
+    std::cerr << "immed: " << rv << "\n";
   } else if (MO.isGlobalAddress()) {
+    std::cerr << "GlobalAddress: not PC-relative\n";
     rv = (int64_t)
       (intptr_t)getGlobalAddress(cast<GlobalValue>(MO.getVRegValue()),
                                  MI, MO.isPCRelative());
@@ -227,7 +303,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
     // It should really hit this case, but Sparc backend uses VRegs instead
     std::cerr << "Saving reference to MBB\n";
     BasicBlock *BB = MO.getMachineBasicBlock()->getBasicBlock();
-    unsigned* CurrPC = (unsigned*)(intptr_t)MCE->getCurrentPCValue();
+    unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
     BBRefs.push_back(std::make_pair(BB, std::make_pair(CurrPC, &MI)));
   } else if (MO.isExternalSymbol()) {
     // Sparc backend doesn't generate this (yet...)
@@ -269,45 +345,30 @@ unsigned SparcV9CodeEmitter::getValueBit(int64_t Val, unsigned bit) {
   return (Val & 1);
 }
 
-void* SparcV9CodeEmitter::convertAddress(intptr_t Addr, bool isPCRelative) {
-  if (isPCRelative) {
-    return (void*)(Addr - (intptr_t)MCE->getCurrentPCValue());
-  } else {
-    return (void*)Addr;
-  }
-}
-
-
-
 bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
+  MCE.startFunction(MF);
   std::cerr << "Starting function " << MF.getFunction()->getName()
             << ", address: " << "0x" << std::hex 
-            << (long)MCE->getCurrentPCValue() << "\n";
+            << (long)MCE.getCurrentPCValue() << "\n";
 
-  MCE->startFunction(MF);
-
-  // FIXME: the Sparc backend does not use the ConstantPool!!
-  //MCE->emitConstantPool(MF.getConstantPool());
-
-  // Instead, the Sparc backend has its own constant pool implementation:
+  // The Sparc backend does not use MachineConstantPool;
+  // instead, it has its own constant pool implementation.
+  // We create a new MachineConstantPool here to be compatible with the emitter.
+  MachineConstantPool MCP;
   const hash_set<const Constant*> &pool = MF.getInfo()->getConstantPoolValues();
   for (hash_set<const Constant*>::const_iterator I = pool.begin(),
          E = pool.end();  I != E; ++I)
   {
-    const Constant *C = *I;
-    // For now we just allocate some memory on the heap, this can be
-    // dramatically improved.
-    const Type *Ty = ((Value*)C)->getType();
-    void *Addr = malloc(TM->getTargetData().getTypeSize(Ty));
-    //FIXME
-    //TheVM.InitializeMemory(C, Addr);
-    std::cerr << "Adding ConstantMap[" << C << "]=" << std::dec << Addr << "\n";
-    ConstantMap[C] = Addr;
+    Constant *C = (Constant*)*I;
+    unsigned idx = MCP.getConstantPoolIndex(C);
+    std::cerr << "Mapping constant 0x" << (intptr_t)C << " to " << idx << "\n";
+    ConstantMap[C] = idx;
   }  
+  MCE.emitConstantPool(&MCP);
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
     emitBasicBlock(*I);
-  MCE->finishFunction(MF);
+  MCE.finishFunction(MF);
 
   std::cerr << "Finishing function " << MF.getFunction()->getName() << "\n";
   ConstantMap.clear();
@@ -360,13 +421,9 @@ bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
 
 void SparcV9CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   currBB = MBB.getBasicBlock();
-  BBLocations[currBB] = MCE->getCurrentPCValue();
+  BBLocations[currBB] = MCE.getCurrentPCValue();
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I)
-    emitInstruction(**I);
-}
-
-void SparcV9CodeEmitter::emitInstruction(MachineInstr &MI) {
-  emitConstant(getBinaryCodeForInstr(MI), 4);
+    emitWord(getBinaryCodeForInstr(**I));
 }
 
 void* SparcV9CodeEmitter::getGlobalAddress(GlobalValue *V, MachineInstr &MI,
@@ -374,15 +431,15 @@ void* SparcV9CodeEmitter::getGlobalAddress(GlobalValue *V, MachineInstr &MI,
 {
   if (isPCRelative) { // must be a call, this is a major hack!
     // Try looking up the function to see if it is already compiled!
-    if (void *Addr = (void*)(intptr_t)MCE->getGlobalValueAddress(V)) {
-      intptr_t CurByte = MCE->getCurrentPCValue();
+    if (void *Addr = (void*)(intptr_t)MCE.getGlobalValueAddress(V)) {
+      intptr_t CurByte = MCE.getCurrentPCValue();
       // The real target of the call is Addr = PC + (target * 4)
       // CurByte is the PC, Addr we just received
       return (void*) (((long)Addr - (long)CurByte) >> 2);
     } else {
       if (Function *F = dyn_cast<Function>(V)) {
         // Function has not yet been code generated!
-        TheJITResolver->addFunctionReference(MCE->getCurrentPCValue(),
+        TheJITResolver->addFunctionReference(MCE.getCurrentPCValue(),
                                              cast<Function>(V));
         // Delayed resolution...
         return 
@@ -390,36 +447,20 @@ void* SparcV9CodeEmitter::getGlobalAddress(GlobalValue *V, MachineInstr &MI,
 
       } else if (Constant *C = ConstantPointerRef::get(V)) {
         if (ConstantMap.find(C) != ConstantMap.end()) {
-          return ConstantMap[C];
+          return (void*)
+            (intptr_t)MCE.getConstantPoolEntryAddress(ConstantMap[C]);
         } else {
           std::cerr << "Constant: 0x" << std::hex << &*C << std::dec
                     << ", " << *V << " not found in ConstantMap!\n";
           abort();
         }
-
-#if 0
-      } else if (const GlobalVariable *G = dyn_cast<GlobalVariable>(V)) {
-        if (G->isConstant()) {
-          const Constant* C = G->getInitializer();
-          if (ConstantMap.find(C) != ConstantMap.end()) {
-            return ConstantMap[C];
-          } else {
-            std::cerr << "Constant: " << *G << " not found in ConstantMap!\n";
-            abort();
-          }
-        } else {
-          std::cerr << "Variable: " << *G << " address not found!\n";
-          abort();          
-        }
-#endif
       } else {
         std::cerr << "Unhandled global: " << *V << "\n";
         abort();
       }
     }
   } else {
-    return convertAddress((intptr_t)MCE->getGlobalValueAddress(V),
-                          isPCRelative);
+    return (void*)(intptr_t)MCE.getGlobalValueAddress(V);
   }
 }
 
