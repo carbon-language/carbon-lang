@@ -24,6 +24,7 @@ using namespace llvm;
 namespace llvm {
   bool PrintMachineCode;
   bool NoFramePointerElim;
+  bool NoExcessFPPrecision;
 };
 namespace {
   cl::opt<bool, true> PrintCode("print-machineinstrs",
@@ -35,6 +36,11 @@ namespace {
                   cl::desc("Disable frame pointer elimination optimization"),
                   cl::location(NoFramePointerElim),
                   cl::init(false));
+  cl::opt<bool, true>
+  DisableExcessPrecision("disable-excess-fp-precision",
+                         cl::desc("Disable optimizations that may increase FP precision"),
+                         cl::location(NoExcessFPPrecision),
+                         cl::init(false));
 };
 
 //---------------------------------------------------------------------------

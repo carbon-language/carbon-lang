@@ -25,6 +25,15 @@ namespace llvm {
   /// specified on the command line.  If the target supports the frame pointer
   /// elimination optimization, this option should disable it.
   extern bool NoFramePointerElim;
+
+  /// NoExcessFPPrecision - This flag is enabled when the
+  /// -disable-excess-fp-precision flag is specified on the command line.  When
+  /// this flag is off (the default), the code generator is allowed to produce
+  /// results that are "more precise" than IEEE allows.  This includes use of
+  /// FMA-like operations and use of the X86 FP registers without rounding all
+  /// over the place.
+  extern bool NoExcessFPPrecision;
+
 } // End llvm namespace
 
 #endif
