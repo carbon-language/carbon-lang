@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <Support/iterator>
+#include <cassert>
 
 template<typename NodeTy, typename Traits> class iplist;
 template<typename NodeTy> class ilist_iterator;
