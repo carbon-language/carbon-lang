@@ -125,15 +125,14 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
   const DSGraph::ScalarMapTy &GSM = G.getScalarMap();
   DSGraph::ScalarMapTy::const_iterator I = GSM.find((Value*)V1);
   if (I == GSM.end()) return NoAlias;
-
-  assert(I->second.getNode() && "Scalar map points to null node?");
+    
   DSGraph::ScalarMapTy::const_iterator J = GSM.find((Value*)V2);
   if (J == GSM.end()) return NoAlias;
 
-  assert(J->second.getNode() && "Scalar map points to null node?");
-
   DSNode  *N1 = I->second.getNode(),  *N2 = J->second.getNode();
   unsigned O1 = I->second.getOffset(), O2 = J->second.getOffset();
+  if (N1 == 0 || N2 == 0)
+    return MayAlias;  // Can't tell whether anything aliases null.
         
   // We can only make a judgment of one of the nodes is complete...
   if (N1->isComplete() || N2->isComplete()) {
@@ -181,32 +180,56 @@ DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   if (!F || F->isExternal() || Result == NoModRef)
     return Result;
 
-  // Clone the function TD graph, clearing off Mod/Ref flags
-  const Function *csParent = CS.getInstruction()->getParent()->getParent();
-  DSGraph TDGraph(TD->getDSGraph(*csParent));
-  TDGraph.maskNodeTypes(~(DSNode::Modified|DSNode::Read));
-  
-  // Insert the callee's BU graph into the TD graph
-  const DSGraph &BUGraph = BU->getDSGraph(*F);
-  TDGraph.mergeInGraph(TDGraph.getDSCallSiteForCallSite(CS),
-                       *F, BUGraph, 0);
+  // Get the graphs for the callee and caller.  Note that we want the BU graph
+  // for the callee because we don't want all caller's effects incorporated!
+  const Function *Caller = CS.getInstruction()->getParent()->getParent();
+  DSGraph &CallerTDGraph = TD->getDSGraph(*Caller);
+  DSGraph &CalleeBUGraph = BU->getDSGraph(*F);
 
-  // Report the flags that have been added
-  const DSNodeHandle &DSH = TDGraph.getNodeForValue(P);
-  if (const DSNode *N = DSH.getNode()) {
-    if (!N->isModified())   // We proved it was not modified.
-      Result = ModRefResult(Result & ~Mod);
-    if (!N->isRead())       // We proved it was not read.
-      Result = ModRefResult(Result & ~Ref);
-  } else {
+  // Figure out which node in the TD graph this pointer corresponds to.
+  DSScalarMap &CallerSM = CallerTDGraph.getScalarMap();
+  DSScalarMap::iterator NI = CallerSM.find(P);
+  if (NI == CallerSM.end()) {
     if (isa<ConstantPointerNull>(P))
-      Result = NoModRef;
-    else
+      Result = NoModRef;                 // null is never modified :)
+    else {
       assert(isa<GlobalVariable>(P) &&
     cast<GlobalVariable>(P)->getType()->getElementType()->isFirstClassType() &&
              "This isn't a global that DSA inconsiderately dropped "
              "from the graph?");
+    }
+    return Result;
   }
+
+  const DSNode *N = NI->second.getNode();
+  assert(N && "Null pointer in scalar map??");
+
+  // Compute the mapping from nodes in the callee graph to the nodes in the
+  // caller graph for this call site.
+  DSGraph::NodeMapTy CalleeCallerMap;
+  DSCallSite DSCS = CallerTDGraph.getDSCallSiteForCallSite(CS);
+  CallerTDGraph.computeCalleeCallerMapping(DSCS, *F, CalleeBUGraph,
+                                           CalleeCallerMap);
+
+  // Loop over all of the nodes in the callee that correspond to "N", keeping
+  // track of aggregate mod/ref info.
+  bool NeverReads = true, NeverWrites = true;
+  for (DSGraph::NodeMapTy::iterator I = CalleeCallerMap.begin(),
+         E = CalleeCallerMap.end(); I != E; ++I)
+    if (I->second.getNode() == N) {
+      if (I->first->isModified())
+        NeverWrites = false;
+      if (I->first->isRead())
+        NeverReads = false;
+      if (NeverReads == false && NeverWrites == false)
+        return Result;
+    }
+
+  if (NeverWrites)      // We proved it was not modified.
+    Result = ModRefResult(Result & ~Mod);
+  if (NeverReads)       // We proved it was not read.
+    Result = ModRefResult(Result & ~Ref);
+
   return Result;
 }
 
