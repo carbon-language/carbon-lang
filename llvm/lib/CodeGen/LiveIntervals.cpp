@@ -285,6 +285,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
     // done once for the vreg.  We use an empty interval to detect the first 
     // time we see a vreg.
     if (interval.empty()) {
+       // Assume this interval is singly defined until we find otherwise.
+       interval.isDefinedOnce = true;
+
        // Get the Idx of the defining instructions.
        unsigned defIndex = getDefIndex(getInstructionIndex(mi));
 
@@ -357,6 +360,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
          interval.addRange(defIndex, 
                            getInstructionIndex(&mbb->back()) + InstrSlots::NUM);
        }
+       interval.isDefinedOnce = false;
     }
 
     DEBUG(std::cerr << '\n');
@@ -524,6 +528,9 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
             Intervals::iterator intA = r2iA->second;
             Intervals::iterator intB = r2iB->second;
 
+            DEBUG(std::cerr << "\t\tInspecting " << *intA << " and " << *intB 
+                            << ": ");
+
             // both A and B are virtual registers
             if (MRegisterInfo::isVirtualRegister(intA->reg) &&
                 MRegisterInfo::isVirtualRegister(intB->reg)) {
@@ -531,19 +538,26 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
                 const TargetRegisterClass *rcA, *rcB;
                 rcA = mf_->getSSARegMap()->getRegClass(intA->reg);
                 rcB = mf_->getSSARegMap()->getRegClass(intB->reg);
+
                 // if they are not of the same register class we continue
-                if (rcA != rcB)
+                if (rcA != rcB) {
+                    DEBUG(std::cerr << "Differing reg classes.\n");
                     continue;
+                }
 
                 // if their intervals do not overlap we join them
-                if (!intB->overlaps(*intA)) {
+                if ((intA->isDefinedOnce && intB->isDefinedOnce) ||
+                    !intB->overlaps(*intA)) {
                     intA->join(*intB);
+                    DEBUG(std::cerr << "Joined.  Result = " << *intA << "\n");
                     r2iB->second = r2iA->second;
                     r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
                     intervals_.erase(intB);
+                } else {
+                    DEBUG(std::cerr << "Interference!\n");
                 }
-            } else if (MRegisterInfo::isPhysicalRegister(intA->reg) ^
-                       MRegisterInfo::isPhysicalRegister(intB->reg)) {
+            } else if (!MRegisterInfo::isPhysicalRegister(intA->reg) ||
+                       !MRegisterInfo::isPhysicalRegister(intB->reg)) {
                 if (MRegisterInfo::isPhysicalRegister(intB->reg)) {
                     std::swap(regA, regB);
                     std::swap(intA, intB);
@@ -558,16 +572,23 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
                 rcA = mri_->getRegClass(intA->reg);
                 rcB = mf_->getSSARegMap()->getRegClass(intB->reg);
                 // if they are not of the same register class we continue
-                if (rcA != rcB)
+                if (rcA != rcB) {
+                    DEBUG(std::cerr << "Differing reg classes.\n");
                     continue;
+                }
 
                 if (!intA->overlaps(*intB) &&
                     !overlapsAliases(*intA, *intB)) {
                     intA->join(*intB);
+                    DEBUG(std::cerr << "Joined.  Result = " << *intA << "\n");
                     r2iB->second = r2iA->second;
                     r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
                     intervals_.erase(intB);
+                } else {
+                    DEBUG(std::cerr << "Interference!\n");
                 }
+            } else {
+                DEBUG(std::cerr << "Cannot join physregs.\n");
             }
         }
     }
@@ -642,8 +663,8 @@ LiveInterval& LiveIntervals::getOrCreateInterval(unsigned reg)
 
 LiveInterval::LiveInterval(unsigned r)
     : reg(r),
-      weight((MRegisterInfo::isPhysicalRegister(r) ?  HUGE_VAL : 0.0F))
-{
+      weight((MRegisterInfo::isPhysicalRegister(r) ?  HUGE_VAL : 0.0F)),
+      isDefinedOnce(false) {
 }
 
 bool LiveInterval::spilled() const
@@ -740,8 +761,8 @@ void LiveInterval::addRange(unsigned start, unsigned end)
 
 void LiveInterval::join(const LiveInterval& other)
 {
-    DEBUG(std::cerr << "\t\tjoining " << *this << " with " << other);
     Ranges::iterator cur = ranges.begin();
+    isDefinedOnce &= other.isDefinedOnce;
 
     for (Ranges::const_iterator i = other.ranges.begin(),
              e = other.ranges.end(); i != e; ++i) {
@@ -751,7 +772,6 @@ void LiveInterval::join(const LiveInterval& other)
     }
     weight += other.weight;
     ++numJoins;
-    DEBUG(std::cerr << ".  Result = " << *this << "\n");
 }
 
 LiveInterval::Ranges::iterator LiveInterval::

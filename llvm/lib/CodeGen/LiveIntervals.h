@@ -36,6 +36,7 @@ namespace llvm {
         float weight;   // weight of this interval:
                         //     (number of uses *10^loopDepth)
         Ranges ranges;  // the ranges in which this register is live
+        bool isDefinedOnce;  // True if there is one def of this register
 
         explicit LiveInterval(unsigned r);
 
