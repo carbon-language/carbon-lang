@@ -147,27 +147,23 @@ public:
     return get(Opcode).Flags & M_TERMINATOR_FLAG;
   }
 
-  //
-  // Return true if the instruction is a register to register move and
-  // leave the source and dest operands in the passed parameters.
-  //
+  /// Return true if the instruction is a register to register move
+  /// and leave the source and dest operands in the passed parameters.
   virtual bool isMoveInstr(const MachineInstr& MI,
                            unsigned& sourceReg,
                            unsigned& destReg) const {
     return false;
   }
 
-  //
-  // Insert a goto (unconditional branch) sequence to MBB, right
-  // before MBBI
+  /// Insert a goto (unconditional branch) sequence to MBB, right
+  /// before MBBI
   virtual void insertGoto(const MachineBasicBlock& MBB,
                           MachineBasicBlock::iterator MBBI) const {
     assert(0 && "Target didn't implement insertGoto!");
   }
 
-  //
-  // Reverses the branch condition of the MachineInstr pointed by
-  // MI. The instruction is replaced and the new MI is returned.
+  /// Reverses the branch condition of the MachineInstr pointed by
+  /// MI. The instruction is replaced and the new MI is returned.
   virtual MachineBasicBlock::iterator
   reverseBranchCondition(MachineBasicBlock::iterator MI) const {
     assert(0 && "Target didn't implement reverseBranchCondition!");
