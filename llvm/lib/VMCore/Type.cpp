@@ -187,7 +187,7 @@ Type *Type::VoidTy   = new            Type("void"  , VoidTyID),
 //===----------------------------------------------------------------------===//
 
 MethodType::MethodType(const Type *Result, const vector<const Type*> &Params, 
-                       bool IsVarArgs) : DerivedType("", MethodTyID), 
+                       bool IsVarArgs) : DerivedType(MethodTyID), 
     ResultType(PATypeHandle<Type>(Result, this)),
     isVarArgs(IsVarArgs) {
   ParamTys.reserve(Params.size());
@@ -197,14 +197,8 @@ MethodType::MethodType(const Type *Result, const vector<const Type*> &Params,
   setDerivedTypeProperties();
 }
 
-ArrayType::ArrayType(const Type *ElType, int NumEl)
-  : CompositeType("", ArrayTyID), ElementType(PATypeHandle<Type>(ElType, this)){
-  NumElements = NumEl;
-  setDerivedTypeProperties();
-}
-
 StructType::StructType(const vector<const Type*> &Types)
-  : CompositeType("", StructTyID) {
+  : CompositeType(StructTyID) {
   ETypes.reserve(Types.size());
   for (unsigned i = 0; i < Types.size(); ++i) {
     assert(Types[i] != Type::VoidTy && "Void type in method prototype!!");
@@ -213,12 +207,17 @@ StructType::StructType(const vector<const Type*> &Types)
   setDerivedTypeProperties();
 }
 
-PointerType::PointerType(const Type *E) : DerivedType("", PointerTyID),
-			  ValueType(PATypeHandle<Type>(E, this)) {
+ArrayType::ArrayType(const Type *ElType, unsigned NumEl)
+  : SequentialType(ArrayTyID, ElType) {
+  NumElements = NumEl;
   setDerivedTypeProperties();
 }
 
-OpaqueType::OpaqueType() : DerivedType("", OpaqueTyID) {
+PointerType::PointerType(const Type *E) : SequentialType(PointerTyID, E) {
+  setDerivedTypeProperties();
+}
+
+OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
   setAbstract(true);
   setDescription("opaque"+utostr(getUniqueID()));
 #ifdef DEBUG_MERGE_TYPES
@@ -303,9 +302,9 @@ static string getTypeProps(const Type *Ty, vector<const Type *> &TypeStack,
       }
       case Type::ArrayTyID: {
 	const ArrayType *ATy = cast<const ArrayType>(Ty);
-	int NumElements = ATy->getNumElements();
+	unsigned NumElements = ATy->getNumElements();
 	Result = "[";
-	if (NumElements != -1) Result += itostr(NumElements) + " x ";
+	Result += utostr(NumElements) + " x ";
 	Result += getTypeProps(ATy->getElementType(), TypeStack,
 			       isAbstract, isRecursive) + "]";
 	break;
@@ -591,7 +590,7 @@ MethodType *MethodType::get(const Type *ReturnType,
 //
 class ArrayValType : public ValTypeBase<ArrayValType, ArrayType> {
   PATypeHandle<Type> ValTy;
-  int Size;
+  unsigned Size;
 public:
   ArrayValType(const Type *val, int sz, TypeMap<ArrayValType, ArrayType> &Tab)
     : ValTypeBase<ArrayValType, ArrayType>(Tab), ValTy(val, this), Size(sz) {}
@@ -622,7 +621,7 @@ public:
 
 static TypeMap<ArrayValType, ArrayType> ArrayTypes;
 
-ArrayType *ArrayType::get(const Type *ElementType, int NumElements = -1) {
+ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
   assert(ElementType && "Can't get array of null types!");
 
   ArrayValType AVT(ElementType, NumElements, ArrayTypes);
@@ -947,7 +946,7 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
 #endif
 
   if (!OldType->isAbstract()) {
-    assert(ElementType == OldType);
+    assert(getElementType() == OldType);
     ElementType.removeUserFromConcrete();
   }
 
@@ -1008,11 +1007,11 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
 #endif
 
   if (!OldType->isAbstract()) {
-    assert(ValueType == OldType);
-    ValueType.removeUserFromConcrete();
+    assert(ElementType == OldType);
+    ElementType.removeUserFromConcrete();
   }
 
-  ValueType = NewType;
+  ElementType = NewType;
   const PointerType *PT = PointerTypes.containsEquivalent(this);
 
   if (PT && PT != this) {
