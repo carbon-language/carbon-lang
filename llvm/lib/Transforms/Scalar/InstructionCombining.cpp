@@ -1739,7 +1739,17 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   if (Caller->getType() != NV->getType() && !Caller->use_empty()) {
     if (NV->getType() != Type::VoidTy) {
       NV = NC = new CastInst(NC, Caller->getType(), "tmp");
-      InsertNewInstBefore(NC, *Caller);
+
+      // If this is an invoke instruction, we should insert it after the first
+      // non-phi, instruction in the normal successor block.
+      if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
+        BasicBlock::iterator I = II->getNormalDest()->begin();
+        while (isa<PHINode>(I)) ++I;
+        InsertNewInstBefore(NC, *I);
+      } else {
+        // Otherwise, it's a call, just insert cast right after the call instr
+        InsertNewInstBefore(NC, *Caller);
+      }
       AddUsesToWorkList(*Caller);
     } else {
       NV = Constant::getNullValue(Caller->getType());
