@@ -276,7 +276,7 @@ bool DAE::isMaybeLiveArgumentNowLive(Argument *Arg) {
     CallSite CS = CallSite::get(*I);
 
     // We know that this can only be used for direct calls...
-    Function *Callee = cast<Function>(CS.getCalledValue());
+    Function *Callee = CS.getCalledFunction();
 
     // Loop over all of the arguments (because Arg may be passed into the call
     // multiple times) and check to see if any are now alive...
