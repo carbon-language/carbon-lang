@@ -107,8 +107,9 @@ enum FormattingFlags {
 };
 
 enum MiscFlags {                // Miscellaneous flags to adjust argument
-  CommaSeparated   = 0x200,     // Should this cl::list split between commas?
-  MiscMask         = 0x200,
+  CommaSeparated     = 0x200,   // Should this cl::list split between commas?
+  PositionalEatsArgs = 0x400,   // Should this positional cl::list eat -args?
+  MiscMask           = 0x600,
 };
 
 
