@@ -45,8 +45,8 @@ CreateIntSetInstruction(int64_t C, Value* dest,
   else
     {
       minstr = new MachineInstr(SETSW);
-      minstr->SetMachineOperandConst(0, MachineOperand::MO_SignExtendedImmed, C);
-      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, dest);
+      minstr->SetMachineOperandConst(0,MachineOperand::MO_SignExtendedImmed,C);
+      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,dest);
     }
   
   return minstr;
@@ -59,20 +59,50 @@ CreateUIntSetInstruction(uint64_t C, Value* dest,
   MachineInstr* minstr;
   if (C > (unsigned int) ~0)
     { // C does not fit in 32 bits
+      assert(dest->getType() == Type::ULongTy && "Sign extension problems");
       TmpInstruction *tmpReg = new TmpInstruction(Type::IntTy);
       tempVec.push_back(tmpReg);
       
       minstr = new MachineInstr(SETX);
-      minstr->SetMachineOperandConst(0, MachineOperand::MO_SignExtendedImmed, C);
-      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, tmpReg,
-                                   /*isdef*/ true);
+      minstr->SetMachineOperandConst(0,MachineOperand::MO_SignExtendedImmed,C);
+      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
+                                   tmpReg, /*isdef*/ true);
       minstr->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,dest);
     }
-  else
+  else if (dest->getType() == Type::ULongTy)
     {
       minstr = new MachineInstr(SETUW);
       minstr->SetMachineOperandConst(0, MachineOperand::MO_UnextendedImmed, C);
-      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, dest);
+      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,dest);
+    }
+  else
+    { // cast to signed type of the right length and use signed op (SETSW)
+      // to get correct sign extension
+      // 
+      minstr = new MachineInstr(SETSW);
+      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,dest);
+      
+      switch (dest->getType()->getPrimitiveID())
+        {
+        case Type::UIntTyID:
+          minstr->SetMachineOperandConst(0,
+                                         MachineOperand::MO_SignExtendedImmed,
+                                         (int) C);
+          break;
+        case Type::UShortTyID:
+          minstr->SetMachineOperandConst(0,
+                                         MachineOperand::MO_SignExtendedImmed,
+                                         (short) C);
+          break;
+        case Type::UByteTyID:
+          minstr->SetMachineOperandConst(0,
+                                         MachineOperand::MO_SignExtendedImmed,
+                                         (char) C);
+          break;
+        default:
+          assert(0 && "Unexpected unsigned type");
+          break;
+        }
     }
   
   return minstr;
