@@ -205,12 +205,15 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
     const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(li.reg);
 
     for (LiveInterval::Ranges::const_iterator
-             i = li.ranges.begin(), e = li.ranges.end(); i != e; ++i) {
+              i = li.ranges.begin(), e = li.ranges.end(); i != e; ++i) {
         unsigned index = getBaseIndex(i->first);
         unsigned end = getBaseIndex(i->second-1) + InstrSlots::NUM;
-        for (; index < end; index += InstrSlots::NUM) {
+        for (; index != end; index += InstrSlots::NUM) {
             // skip deleted instructions
-            while (!getInstructionFromIndex(index)) index += InstrSlots::NUM;
+            while (index != end && !getInstructionFromIndex(index))
+                index += InstrSlots::NUM;
+            if (index == end) break;
+
             MachineBasicBlock::iterator mi = getInstructionFromIndex(index);
 
         for_operand:
