@@ -1153,7 +1153,7 @@ bool Interpreter::executeInstruction() {
   if (int SigNo = sigsetjmp(SignalRecoverBuffer, 1)) {
     --SF.CurInst;   // Back up to erroring instruction
     if (SigNo != SIGINT) {
-      cout << "EXCEPTION OCCURRED [" << _sys_siglistp[SigNo] << "]:\n";
+      cout << "EXCEPTION OCCURRED [" << strsignal(SigNo) << "]:\n";
       printStackTrace();
       // If -abort-on-exception was specified, terminate LLI instead of trying
       // to debug it.
