@@ -170,7 +170,8 @@ int llvm::GenerateBytecode(Module *M, int StripLevel, bool Internalize,
     addPass(Passes, createConstantMergePass());
 
     // Propagate constants at call sites into the functions they call.
-    addPass(Passes, createIPConstantPropagationPass());
+    addPass(Passes, createIPSCCPPass());
+    addPass(Passes, createCFGSimplificationPass());
 
     // Remove unused arguments from functions...
     addPass(Passes, createDeadArgEliminationPass());
