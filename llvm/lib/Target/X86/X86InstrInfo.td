@@ -893,7 +893,8 @@ def MOVZX32rm16: I<0xB7, MRMSrcMem, (ops R32:$dst, i16mem:$src), "movzx $dst, $s
 class FPInst<string n, bits<8> o, Format F, FPFormat fp, MemType m, ImmType i>
   : X86Inst<n, o, F, m, i> { let FPForm = fp; let FPFormBits = FPForm.Value; }
 
-class FPI<bits<8> o, Format F, FPFormat fp> : FPInst<"", o, F, fp, NoMem, NoImm>;
+class FPI<bits<8> o, Format F, FPFormat fp, dag ops, string asm>
+  : FPInst<"", o, F, fp, NoMem, NoImm>, II<ops, asm>;
 
 class FPIM<string n, bits<8> o, Format F, FPFormat fp, MemType m> : FPInst<n, o, F, fp, m, NoImm>;
 
@@ -906,14 +907,14 @@ class FPI80m<string n, bits<8> o, Format F, FPFormat fp> : FPIM<n, o, F, fp, Mem
 // because they can be expanded by the fp spackifier into one of many different
 // forms of instructions for doing these operations.  Until the stackifier runs,
 // we prefer to be abstract.
-def FpMOV : FPI<0, Pseudo, SpecialFP>;   // f1 = fmov f2
-def FpADD : FPI<0, Pseudo, TwoArgFP>;    // f1 = fadd f2, f3
-def FpSUB : FPI<0, Pseudo, TwoArgFP>;    // f1 = fsub f2, f3
-def FpMUL : FPI<0, Pseudo, TwoArgFP>;    // f1 = fmul f2, f3
-def FpDIV : FPI<0, Pseudo, TwoArgFP>;    // f1 = fdiv f2, f3
+def FpMOV : FPI<0, Pseudo, SpecialFP, (ops RFP, RFP), "">;   // f1 = fmov f2
+def FpADD : FPI<0, Pseudo, TwoArgFP , (ops RFP, RFP, RFP), "">;    // f1 = fadd f2, f3
+def FpSUB : FPI<0, Pseudo, TwoArgFP , (ops RFP, RFP, RFP), "">;    // f1 = fsub f2, f3
+def FpMUL : FPI<0, Pseudo, TwoArgFP , (ops RFP, RFP, RFP), "">;    // f1 = fmul f2, f3
+def FpDIV : FPI<0, Pseudo, TwoArgFP , (ops RFP, RFP, RFP), "">;    // f1 = fdiv f2, f3
 
-def FpGETRESULT : FPI<0, Pseudo, SpecialFP>;  // FPR = ST(0)
-def FpSETRESULT : FPI<0, Pseudo, SpecialFP>;  // ST(0) = FPR
+def FpGETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">;  // FPR = ST(0)
+def FpSETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">;  // ST(0) = FPR
 
 // FADD reg, mem: Before stackification, these are represented by: R1 = FADD* R2, [mem]
 def FADD32m  : FPI32m<"fadd",  0xD8, MRM0m, OneArgFPRW>;    // ST(0) = ST(0) + [mem32real]
@@ -956,23 +957,23 @@ def FIDIVR32m : FPI32m<"fidivr", 0xDA, MRM7m, OneArgFPRW>;  // ST(0) = [mem32int
 
 // Floating point cmovs...
 let isTwoAddress = 1, Uses = [ST0], Defs = [ST0] in {
-  def FCMOVB  : FPI<0xC0, AddRegFrm, CondMovFP>, DA,    // fcmovb  ST(i) -> ST(0)
-                 II<(ops RST:$op), "fcmovb %ST(0), $op">;
-  def FCMOVBE : FPI<0xD0, AddRegFrm, CondMovFP>, DA,     // fcmovbe ST(i) -> ST(0)
-                 II<(ops RST:$op), "fcmovbe %ST(0), $op">;
-  def FCMOVE  : FPI<0xC8, AddRegFrm, CondMovFP>, DA,    // fcmove  ST(i) -> ST(0)
-                 II<(ops RST:$op), "fcmove %ST(0), $op">;
-  def FCMOVAE : FPI<0xC0, AddRegFrm, CondMovFP>, DB,     // fcmovae ST(i) -> ST(0)
-                 II<(ops RST:$op), "fcmovae %ST(0), $op">;
-  def FCMOVA  : FPI<0xD0, AddRegFrm, CondMovFP>, DB,    // fcmova  ST(i) -> ST(0)
-                 II<(ops RST:$op), "fcmova %ST(0), $op">;
-  def FCMOVNE : FPI<0xC8, AddRegFrm, CondMovFP>, DB,     // fcmovne ST(i) -> ST(0)
-                 II<(ops RST:$op), "fcmovne %ST(0), $op">;
+  def FCMOVB  : FPI<0xC0, AddRegFrm, CondMovFP,
+                    (ops RST:$op), "fcmovb %ST(0), $op">, DA;
+  def FCMOVBE : FPI<0xD0, AddRegFrm, CondMovFP,
+                    (ops RST:$op), "fcmovbe %ST(0), $op">, DA;
+  def FCMOVE  : FPI<0xC8, AddRegFrm, CondMovFP,
+                    (ops RST:$op), "fcmove %ST(0), $op">, DA;
+  def FCMOVAE : FPI<0xC0, AddRegFrm, CondMovFP,
+                    (ops RST:$op), "fcmovae %ST(0), $op">, DB;
+  def FCMOVA  : FPI<0xD0, AddRegFrm, CondMovFP,
+                    (ops RST:$op), "fcmova %ST(0), $op">, DB;
+  def FCMOVNE : FPI<0xC8, AddRegFrm, CondMovFP,
+                    (ops RST:$op), "fcmovne %ST(0), $op">, DB;
 }
 
 // Floating point loads & stores...
 let Name = "fld" in
-def FLDrr   : FPI<0xC0, AddRegFrm, NotFP>, D9;        // push(ST(i))
+def FLDrr   : FPI<0xC0, AddRegFrm, NotFP, (ops RST:$op), "fld $op">, D9;
 def FLD32m  : FPI32m <"fld"   , 0xD9, MRM0m    , ZeroArgFP>;        // load float
 def FLD64m  : FPI64m <"fld"   , 0xDD, MRM0m    , ZeroArgFP>;        // load double
 def FLD80m  : FPI80m <"fld"   , 0xDB, MRM5m    , ZeroArgFP>;        // load extended
@@ -980,10 +981,8 @@ def FILD16m : FPI16m <"fild"  , 0xDF, MRM0m    , ZeroArgFP>;        // load sign
 def FILD32m : FPI32m <"fild"  , 0xDB, MRM0m    , ZeroArgFP>;        // load signed int
 def FILD64m : FPI64m <"fild"  , 0xDF, MRM5m    , ZeroArgFP>;        // load signed long
 
-let Name = "fst" in
-  def FSTrr  : FPI<0xD0, AddRegFrm, NotFP   >, DD;      // ST(i) = ST(0)
-let Name = "fstp" in
-  def FSTPrr : FPI<0xD8, AddRegFrm, NotFP   >, DD;      // ST(i) = ST(0), pop
+def FSTrr  : FPI<0xD0, AddRegFrm, NotFP, (ops RST:$op), "fst $op">, DD;      // ST(i) = ST(0)
+def FSTPrr : FPI<0xD8, AddRegFrm, NotFP, (ops RST:$op), "fstp $op">, DD;     // ST(i) = ST(0), pop
 def FST32m   : FPI32m <"fst" , 0xD9, MRM2m    , OneArgFP>;          // store float
 def FST64m   : FPI64m <"fst" , 0xDD, MRM2m    , OneArgFP>;          // store double
 def FSTP32m  : FPI32m <"fstp", 0xD9, MRM3m    , OneArgFP>;          // store float, pop
@@ -996,21 +995,16 @@ def FISTP16m : FPI16m <"fistp",   0xDF, MRM3m , NotFP   >;          // store sig
 def FISTP32m : FPI32m <"fistp",   0xDB, MRM3m , NotFP   >;          // store signed int, pop
 def FISTP64m : FPI64m <"fistpll", 0xDF, MRM7m , OneArgFP>;          // store signed long, pop
 
-def FXCH     : FPI<0xC8, AddRegFrm, NotFP>,
-               II<(ops RST:$op), "fxch $op">, D9;      // fxch ST(i), ST(0)
+def FXCH     : FPI<0xC8, AddRegFrm, NotFP, (ops RST:$op), "fxch $op">, D9;      // fxch ST(i), ST(0)
 
 // Floating point constant loads...
-def FLD0 : FPI<0xEE, RawFrm, ZeroArgFP>, D9,
-               II<(ops), "fldz">;
-def FLD1 : FPI<0xE8, RawFrm, ZeroArgFP>, D9,
-               II<(ops), "fld1">;
+def FLD0 : FPI<0xEE, RawFrm, ZeroArgFP, (ops), "fldz">, D9;
+def FLD1 : FPI<0xE8, RawFrm, ZeroArgFP, (ops), "fld1">, D9;
 
 
 // Unary operations...
-def FCHS : FPI<0xE0, RawFrm, OneArgFPRW>,           // f1 = fchs f2
-               II<(ops), "fchs">, D9;
-def FTST : FPI<0xE4, RawFrm, OneArgFP>,             // ftst ST(0)
-               II<(ops), "ftst">, D9;
+def FCHS : FPI<0xE0, RawFrm, OneArgFPRW, (ops), "fchs">, D9;           // f1 = fchs f2
+def FTST : FPI<0xE4, RawFrm, OneArgFP, (ops), "ftst">, D9;             // ftst ST(0)
 
 // Binary arithmetic operations...
 class FPST0rInst<bits<8> o, dag ops, string asm> : I<o, AddRegFrm, ops, asm>, D8 {
@@ -1049,15 +1043,15 @@ def FDIVRrST0  : FPrST0Inst <0xF0, (ops RST:$op), "fdivr $op, %ST(0)">;  // ST(i
 def FDIVRPrST0 : FPrST0PInst<0xF0, (ops RST:$op), "fdivrp $op">;         // ST(i) = ST(0) / ST(i), pop
 
 // Floating point compares
-def FUCOMr    : FPI<0xE0, AddRegFrm, CompareFP>,                         // FPSW = compare ST(0) with ST(i)
-                II<(ops RST:$reg), "fucom $reg">, DD, Imp<[ST0],[]>;
+def FUCOMr    : FPI<0xE0, AddRegFrm, CompareFP, (ops RST:$reg),
+                    "fucom $reg">, DD, Imp<[ST0],[]>;          // FPSW = compare ST(0) with ST(i)
 def FUCOMPr   : I<0xE8, AddRegFrm, (ops RST:$reg),
                   "fucomp $reg">, DD, Imp<[ST0],[]>;  // FPSW = compare ST(0) with ST(i), pop
 def FUCOMPPr  : I<0xE9, RawFrm, (ops),
                   "fucompp">, DA, Imp<[ST0],[]>;  // compare ST(0) with ST(1), pop, pop
 
-def FUCOMIr  : FPI<0xE8, AddRegFrm, CompareFP>, // CC = compare ST(0) with ST(i)
-               II<(ops RST:$reg), "fucomi %ST(0), $reg">, DB, Imp<[ST0],[]>;
+def FUCOMIr  : FPI<0xE8, AddRegFrm, CompareFP, (ops RST:$reg),
+                   "fucomi %ST(0), $reg">, DB, Imp<[ST0],[]>; // CC = compare ST(0) with ST(i)
 def FUCOMIPr : I<0xE8, AddRegFrm, (ops RST:$reg),
                  "fucomip %ST(0), $reg">, DF, Imp<[ST0],[]>;  // CC = compare ST(0) with ST(i), pop
 
