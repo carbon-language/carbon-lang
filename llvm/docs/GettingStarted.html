@@ -315,14 +315,14 @@
     <tt>.cshrc</tt> or <tt>.profile</tt>.
 
     <dl compact>
-        <dt><tt>LLVM_LIB_SEARCH_PATH</tt>=<tt><i>LLVMGCCDIR</i>/llvm-gcc/bytecode-libs</tt>
+        <dt><tt>LLVM_LIB_SEARCH_PATH</tt>=<tt><i>LLVMGCCDIR</i>/bytecode-libs</tt>
         <dd>
         This environment variable helps the LLVM GCC front end find bytecode
         libraries that it will need for compilation.
         <p>
 
-        <dt>alias llvmgcc <i>LLVMGCCDIR</i><tt>/llvm-gcc/bin/gcc</tt>
-        <dt>alias llvmg++ <i>LLVMGCCDIR</i><tt>/llvm-gcc/bin/g++</tt>
+        <dt>alias llvmgcc <i>LLVMGCCDIR</i><tt>/bin/gcc</tt>
+        <dt>alias llvmg++ <i>LLVMGCCDIR</i><tt>/bin/g++</tt>
         <dd>
         This alias allows you to use the LLVM C and C++ front ends without putting
         them in your <tt>PATH</tt> or typing in their complete pathnames.
@@ -515,7 +515,7 @@
     This environment variable is used to locate "system" libraries like
     "<tt>-lc</tt>" and "<tt>-lm</tt>" when linking.  This variable should be set
     to the absolute path for the bytecode-libs subdirectory of the GCC front end
-    install, or <i>LLVMGCCDIR</i>/llvm-gcc/bytecode-libs.  For example, one might
+    install, or <i>LLVMGCCDIR</i>/bytecode-libs.  For example, one might
     set <tt>LLVM_LIB_SEARCH_PATH</tt> to
     <tt>/home/vadve/lattner/local/x86/llvm-gcc/bytecode-libs</tt> for the X86
     version of the GCC front end on our research machines.<p>
@@ -1043,7 +1043,7 @@
 
 	<!-- Created: Mon Jul  1 02:29:02 CDT 2002 -->
 	<!-- hhmts start -->
-    Last modified: Mon Oct 27 12:00:00 CDT 2003
-    <!-- hhmts end -->
+Last modified: Thu Nov  6 14:50:33 CST 2003
+<!-- hhmts end -->
   </body>
 </html>
