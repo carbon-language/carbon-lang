@@ -100,10 +100,9 @@ private:
 
 private:   // Intermediate data structures
 
-  /// BBMap - Maps LLVM basic blocks to their corresponding machine basic block.
-  /// This also provides a numbering of the basic blocks in the function.
-  std::map<const BasicBlock*, std::pair<MachineBasicBlock*, unsigned> > BBMap;
-
+  /// BBMap - This provides a numbering of the basic blocks in the function.
+  ///
+  std::map<MachineBasicBlock*, unsigned> BBMap;
 
   /// BBIdxMap - This contains the inverse mapping of BBMap, going from block ID
   /// numbers to the corresponding MachineBasicBlock.  This is lazily computed
@@ -125,11 +124,8 @@ public:
   /// getMachineBasicBlockIndex - Turn a MachineBasicBlock into an index number
   /// suitable for use with VarInfo's.
   ///
-  const std::pair<MachineBasicBlock*, unsigned>
-      &getMachineBasicBlockInfo(MachineBasicBlock *MBB) const;
-  const std::pair<MachineBasicBlock*, unsigned>
-      &getBasicBlockInfo(const BasicBlock *BB) const {
-    return BBMap.find(BB)->second;
+  unsigned getMachineBasicBlockIndex(MachineBasicBlock *MBB) const {
+    return BBMap.find(MBB)->second;
   }
 
   /// getIndexMachineBasicBlock() - Given a block index, return the
@@ -269,7 +265,7 @@ public:
     return AllocatablePhysicalRegisters;
   }
 
-  void MarkVirtRegAliveInBlock(VarInfo &VRInfo, const BasicBlock *BB);
+  void MarkVirtRegAliveInBlock(VarInfo &VRInfo, MachineBasicBlock *BB);
   void HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
                        	MachineInstr *MI);
 };
