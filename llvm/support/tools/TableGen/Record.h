@@ -335,6 +335,8 @@ class CodeInit : public Init {
 public:
   CodeInit(const std::string &V) : Value(V) {}
 
+  const std::string getValue() const { return Value; }
+
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
   }
@@ -600,6 +602,11 @@ public:
   //===--------------------------------------------------------------------===//
   // High-level methods useful to tablegen back-ends
   //
+
+  /// getValueInit - Return the initializer for a value with the specified name,
+  /// or throw an exception if the field does not exist.
+  ///
+  Init *getValueInit(const std::string &FieldName) const;
 
   /// getValueAsString - This method looks up the specified field and returns
   /// its value as a string, throwing an exception if the field does not exist

@@ -460,6 +460,18 @@ std::ostream &operator<<(std::ostream &OS, const Record &R) {
   return OS << "}\n";
 }
 
+/// getValueInit - Return the initializer for a value with the specified name,
+/// or throw an exception if the field does not exist.
+///
+Init *Record::getValueInit(const std::string &FieldName) const {
+  const RecordVal *R = getValue(FieldName);
+  if (R == 0 || R->getValue() == 0)
+    throw "Record '" + R->getName() + "' does not have a field named '" +
+      FieldName + "!\n";
+  return R->getValue();
+}
+
+
 /// getValueAsString - This method looks up the specified field and returns its
 /// value as a string, throwing an exception if the field does not exist or if
 /// the value is not a string.

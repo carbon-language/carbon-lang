@@ -8,6 +8,7 @@
 
 #include "RegisterInfoEmitter.h"
 #include "Record.h"
+#include "Support/StringExtras.h"
 #include <set>
 
 static void EmitSourceHeader(const std::string &Desc, std::ostream &o) {
@@ -59,6 +60,12 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
      << "};\n\n";
 }
 
+static std::string getQualifiedRecordName(Record *R) {
+  std::string Namespace = R->getValueAsString("Namespace");
+  if (Namespace.empty()) return R->getName();
+  return Namespace + "::" + R->getName();
+}
+
 // RegisterInfoEmitter::run - Main register file description emitter.
 //
 void RegisterInfoEmitter::run(std::ostream &OS) {
@@ -71,6 +78,9 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   std::vector<Record*> RegisterClasses =
     Records.getAllDerivedDefinitions("RegisterClass");
 
+  std::vector<Record*> Registers = Records.getAllDerivedDefinitions("Register");
+  Record *RegisterClass = Records.getClass("Register");
+
   std::set<Record*> RegistersFound;
 
   // Loop over all of the register classes... emitting each one.
@@ -79,7 +89,40 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     Record *RC = RegisterClasses[rc];
     std::string Name = RC->getName();
-    //if (Name[
+    if (Name[9] == '.') {
+      static unsigned AnonCounter = 0;
+      Name = "AnonRegClass_"+utostr(AnonCounter++);
+    }
+
+    // Emit the register list now...
+    OS << "  // " << Name << " Register Class...\n  const unsigned " << Name
+       << "[] = {\n    ";
+    ListInit *RegList = RC->getValueAsListInit("MemberList");
+    for (unsigned i = 0, e = RegList->getSize(); i != e; ++i) {
+      Record *Reg = RegList->getElement(i);
+      if (!Reg->isSubClassOf(RegisterClass))
+        throw "Register Class member '" + Reg->getName() +
+              " does not derive from the Register class!";
+      if (RegistersFound.count(Reg))
+        throw "Register '" + Reg->getName() +
+              "' included in multiple register classes!";
+      OS << getQualifiedRecordName(Reg) << ", ";
+    }
+    OS << "\n  };\n\n";
+
+    OS << "  struct " << Name << "Class : public TargetRegisterClass {\n"
+       << "    " << Name << "Class() : TargetRegisterClass("
+       << RC->getValueAsInt("Size")/8 << ", " << RC->getValueAsInt("Alignment")
+       << ", " << Name << ", " << Name << " + " << RegList->getSize()
+       << ") {}\n";
+    
+    if (CodeInit *CI = dynamic_cast<CodeInit*>(RC->getValueInit("Methods")))
+      OS << CI->getValue();
+    else
+      throw "Expected 'code' fragment for 'Methods' value in register class '"+
+            RC->getName() + "'!";
+
+    OS << "  } " << Name << "Instance;\n\n";
 
   }
 
