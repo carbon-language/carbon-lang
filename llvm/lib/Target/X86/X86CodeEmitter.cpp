@@ -12,8 +12,12 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Value.h"
+#include "Support/Statistic.h"
 
 namespace {
+  Statistic<>
+  NumEmitted("x86-emitter", "Number of machine instructions emitted");
+
   class JITResolver {
     MachineCodeEmitter &MCE;
 
@@ -71,10 +75,16 @@ unsigned JITResolver::getLazyResolver(Function *F) {
 void JITResolver::CompilationCallback() {
   unsigned *StackPtr = (unsigned*)__builtin_frame_address(0);
   unsigned RetAddr = (unsigned)(intptr_t)__builtin_return_address(0);
-
   assert(StackPtr[1] == RetAddr &&
          "Could not find return address on the stack!");
   bool isStub = ((unsigned char*)RetAddr)[0] == 0xCD;  // Interrupt marker?
+
+  // FIXME FIXME FIXME FIXME: __builtin_frame_address doesn't work if frame
+  // pointer elimination has been performed.  Having a variable sized alloca
+  // disables frame pointer elimination currently, even if it's dead.  This is a
+  // gross hack.
+  alloca(10+isStub);
+  // FIXME FIXME FIXME FIXME
 
   // The call instruction should have pushed the return value onto the stack...
   RetAddr -= 4;  // Backtrack to the reference itself...
@@ -429,6 +439,8 @@ static unsigned sizeOfPtr(const TargetInstrDescriptor &Desc) {
 }
 
 void Emitter::emitInstruction(MachineInstr &MI) {
+  NumEmitted++;  // Keep track of the # of mi's emitted
+
   unsigned Opcode = MI.getOpcode();
   const TargetInstrDescriptor &Desc = II->get(Opcode);
 
