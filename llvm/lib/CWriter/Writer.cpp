@@ -896,7 +896,7 @@ static bool isGotoCodeNeccessary(BasicBlock *From, BasicBlock *To) {
 void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
                                            unsigned Indent) {
   for (BasicBlock::iterator I = Succ->begin();
-       PHINode *PN = dyn_cast<PHINode>(&*I); ++I) {
+       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
     //  now we have to do the printing
     Out << string(Indent, ' ');
     outputLValue(PN);

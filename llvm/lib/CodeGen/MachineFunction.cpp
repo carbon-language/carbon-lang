@@ -247,7 +247,7 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
   
   for (Function::const_iterator BB = F->begin(), BBE = F->end(); BB !=BBE; ++BB)
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-      if (const CallInst *callInst = dyn_cast<CallInst>(&*I))
+      if (const CallInst *callInst = dyn_cast<CallInst>(I))
         {
           unsigned numOperands = callInst->getNumOperands() - 1;
           int numExtra = (int)numOperands-frameInfo.getNumFixedOutgoingArgs();

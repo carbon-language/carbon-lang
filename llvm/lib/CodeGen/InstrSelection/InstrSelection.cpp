@@ -182,7 +182,7 @@ InstructionSelection::InsertCodeForPhis(Function &F)
   MachineFunction &MF = MachineFunction::get(&F);
   for (MachineFunction::iterator BB = MF.begin(); BB != MF.end(); ++BB) {
     for (BasicBlock::iterator IIt = BB->getBasicBlock()->begin();
-         PHINode *PN = dyn_cast<PHINode>(&*IIt); ++IIt) {
+         PHINode *PN = dyn_cast<PHINode>(IIt); ++IIt) {
       // FIXME: This is probably wrong...
       Value *PhiCpRes = new PHINode(PN->getType(), "PhiCp:");
 

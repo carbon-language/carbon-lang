@@ -213,7 +213,7 @@ Value* InductionVariable::getExecutionCount(LoopInfo *LoopInfo) {
     DEBUG(std::cerr << "no terminator instruction!");
     return NULL; 
   }
-  SetCondInst *SCI = dyn_cast<SetCondInst>(&*B->getCondition());
+  SetCondInst *SCI = dyn_cast<SetCondInst>(B->getCondition());
 
   if (SCI && InductionType == Cannonical) {
     DEBUG(std::cerr << "sci:" << *SCI);
