@@ -328,10 +328,18 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (Op1C->isNullValue())
       return ReplaceInstUsesWith(I, Op0);
 
-    // xor (xor X, -1), -1 = not (not X) = X
-    if (Op1C->isAllOnesValue())
+    // Is this a "NOT" instruction?
+    if (Op1C->isAllOnesValue()) {
+      // xor (xor X, -1), -1 = not (not X) = X
       if (Value *X = dyn_castNotInst(Op0))
         return ReplaceInstUsesWith(I, X);
+
+      // xor (setcc A, B), true = not (setcc A, B) = setncc A, B
+      if (SetCondInst *SCI = dyn_cast<SetCondInst>(Op0))
+        if (SCI->use_size() == 1)
+          return new SetCondInst(SCI->getInverseCondition(),
+                                 SCI->getOperand(0), SCI->getOperand(1));
+    }
   }
 
   return Changed ? &I : 0;
