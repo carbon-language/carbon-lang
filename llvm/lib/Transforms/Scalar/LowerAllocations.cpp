@@ -165,8 +165,7 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock *BB) {
         MallocInst *MallocI = new MallocInst(PtrSByte, CI->getOperand(1),
                                              CI->getName());
         CI->setName("");
-        BI = BIL.insert(BI, MallocI)+1;
-        ReplaceInstWithInst(BIL, BI, new CastInst(MallocI, PtrSByte));
+        ReplaceInstWithInst(BIL, BI, MallocI);
         Changed = true;
         continue;  // Skip the ++BI
       } else if (CI->getCalledValue() == FreeMeth) { // Replace call to free?
