@@ -1,8 +1,10 @@
 //===-- llvm/CodeGen/MachineFunction.h --------------------------*- C++ -*-===//
 // 
-// Collect native machine code information for a method.  This allows
-// target-specific information about the generated code to be stored with each
-// method.
+// Collect native machine code for a function.  This class contains a list of
+// MachineBasicBlock instances that make up the current compiled function.
+//
+// This class also contains pointers to various classes which hold
+// target-specific information about the generated code.
 //   
 //===----------------------------------------------------------------------===//
 
@@ -11,17 +13,14 @@
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Annotation.h"
-#include "Support/HashExtras.h"
-#include "Support/hash_set"
 #include "Support/ilist"
 
-class Value;
 class Function;
-class Constant;
-class Type;
 class TargetMachine;
 class Pass;
 class SSARegMap;
+class MachineFunctionInfo;
+class FunctionFrameInfo;
 
 Pass *createMachineCodeConstructionPass(TargetMachine &Target);
 Pass *createMachineCodeDestructionPass();
@@ -37,19 +36,11 @@ class MachineFunction : private Annotation {
   // Keeping track of mapping from SSA values to registers
   SSARegMap *SSARegMapping;
 
-  // FIXME: State should be held elsewhere...
-  hash_set<const Constant*> constantsForConstPool;
-  hash_map<const Value*, int> offsets;
-  unsigned	staticStackSize;
-  unsigned	automaticVarsSize;
-  unsigned	regSpillsSize;
-  unsigned	maxOptionalArgsSize;
-  unsigned	maxOptionalNumArgs;
-  unsigned	currentTmpValuesSize;
-  unsigned	maxTmpValuesSize;
-  bool          compiledAsLeaf;
-  bool          spillsAreaFrozen;
-  bool          automaticVarsAreaFrozen;
+  // Used to keep track of frame and constant area information for sparc be
+  MachineFunctionInfo *MFInfo;
+
+  // Keep track of objects allocated on the stack.
+  FunctionFrameInfo *FrameInfo;
 
 public:
   MachineFunction(const Function *Fn, const TargetMachine& target);
@@ -62,6 +53,24 @@ public:
   /// getTarget - Return the target machine this machine code is compiled with
   ///
   const TargetMachine &getTarget() const { return Target; }
+
+  /// SSARegMap Interface... Keep track of information about each SSA virtual
+  /// register, such as which register class it belongs to.
+  ///
+  SSARegMap *getSSARegMap() const { return SSARegMapping; }
+  void clearSSARegMap();
+
+  /// getFrameInfo - Return the frame info object for the current function.
+  /// This object contains information about objects allocated on the stack
+  /// frame of the current function in an abstract way.
+  ///
+  FunctionFrameInfo *getFrameInfo() const { return FrameInfo; }
+
+  /// MachineFunctionInfo - Keep track of various per-function pieces of
+  /// information for the sparc backend.
+  ///
+  MachineFunctionInfo *getInfo() const { return MFInfo; }
+
 
   /// print - Print out the MachineFunction in a format suitable for debugging
   /// to the specified stream.
@@ -116,91 +125,6 @@ public:
         MachineBasicBlock &front()       { return BasicBlocks.front(); }
   const MachineBasicBlock & back() const { return BasicBlocks.back(); }
         MachineBasicBlock & back()       { return BasicBlocks.back(); }
-
-  //===--------------------------------------------------------------------===//
-  // SSARegMap Interface... Keep track of information about each SSA virtual
-  // register, such as which register class it belongs to.
-  //
-
-  SSARegMap *getSSARegMap() const { return SSARegMapping; }
-  void clearSSARegMap();
-
-
-  //===--------------------------------------------------------------------===//
-  //
-  // FIXME: Most of the following state should be moved into another class!
-  //
-
-  /// CalculateArgSize - Call this method to fill in the maxOptionalArgsSize &
-  /// staticStackSize fields...
-  ///
-  void CalculateArgSize();
-
-  //
-  // Accessors for global information about generated code for a method.
-  // 
-  inline bool     isCompiledAsLeafMethod() const { return compiledAsLeaf; }
-  inline unsigned getStaticStackSize()     const { return staticStackSize; }
-  inline unsigned getAutomaticVarsSize()   const { return automaticVarsSize; }
-  inline unsigned getRegSpillsSize()       const { return regSpillsSize; }
-  inline unsigned getMaxOptionalArgsSize() const { return maxOptionalArgsSize;}
-  inline unsigned getMaxOptionalNumArgs()  const { return maxOptionalNumArgs;}
-  inline const hash_set<const Constant*>&
-                  getConstantPoolValues() const {return constantsForConstPool;}
-  
-  //
-  // Modifiers used during code generation
-  // 
-  void            initializeFrameLayout    (const TargetMachine& target);
-  
-  void            addToConstantPool        (const Constant* constVal)
-                                    { constantsForConstPool.insert(constVal); }
-  
-  inline void     markAsLeafMethod()              { compiledAsLeaf = true; }
-  
-  int             computeOffsetforLocalVar (const TargetMachine& target,
-                                            const Value*  local,
-                                            unsigned int& getPaddedSize,
-                                            unsigned int  sizeToUse = 0);
-  int             allocateLocalVar         (const TargetMachine& target,
-                                            const Value* local,
-                                            unsigned int sizeToUse = 0);
-  
-  int             allocateSpilledValue     (const TargetMachine& target,
-                                            const Type* type);
-  
-  int             pushTempValue            (const TargetMachine& target,
-                                            unsigned int size);
-  
-  void            popAllTempValues         (const TargetMachine& target);
-  
-  void            freezeSpillsArea         () { spillsAreaFrozen = true; } 
-  void            freezeAutomaticVarsArea  () { automaticVarsAreaFrozen=true; }
-  
-  int             getOffset                (const Value* val) const;
-  
-private:
-  inline void     incrementAutomaticVarsSize(int incr) {
-    automaticVarsSize+= incr;
-    staticStackSize += incr;
-  }
-  inline void     incrementRegSpillsSize(int incr) {
-    regSpillsSize+= incr;
-    staticStackSize += incr;
-  }
-  inline void     incrementTmpAreaSize(int incr) {
-    currentTmpValuesSize += incr;
-    if (maxTmpValuesSize < currentTmpValuesSize)
-      {
-        staticStackSize += currentTmpValuesSize - maxTmpValuesSize;
-        maxTmpValuesSize = currentTmpValuesSize;
-      }
-  }
-  inline void     resetTmpAreaSize() {
-    currentTmpValuesSize = 0;
-  }
-  int             allocateOptionalArg      (const TargetMachine& target,
-                                            const Type* type);
 };
 
 #endif
