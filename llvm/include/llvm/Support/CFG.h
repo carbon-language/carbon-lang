@@ -26,7 +26,14 @@ public:
   typedef PredIterator<_Ptr,_USE_iterator> _Self;
   typedef typename super::pointer pointer;
   
+  inline void advancePastConstants() {
+    // Loop to ignore non terminator uses (for example PHI nodes)...
+    while (It != BB->use_end() && !isa<TerminatorInst>(*It))
+      ++It;
+  }
+  
   inline PredIterator(_Ptr *bb) : BB(bb), It(bb->use_begin()) {
+    advancePastConstants();
   }
   inline PredIterator(_Ptr *bb, bool) : BB(bb), It(bb->use_end()) {}
     
@@ -41,7 +48,7 @@ public:
   
   inline _Self& operator++() {   // Preincrement
     assert(It != BB->use_end() && "pred_iterator out of range!");
-    ++It;
+    ++It; advancePastConstants();
     return *this; 
   }
   
