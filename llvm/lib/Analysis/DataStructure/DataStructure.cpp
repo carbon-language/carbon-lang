@@ -81,10 +81,11 @@ DSNode::DSNode(const Type *T, DSGraph *G)
 // DSNode copy constructor... do not copy over the referrers list!
 DSNode::DSNode(const DSNode &N, DSGraph *G, bool NullLinks)
   : NumReferrers(0), Size(N.Size), ParentGraph(G),
-    Ty(N.Ty), Globals(N.Globals), NodeType(N.NodeType) {
-  if (!NullLinks)
+    Ty(N.Ty), NodeType(N.NodeType) {
+  if (!NullLinks) {
     Links = N.Links;
-  else
+    Globals = N.Globals;
+  } else
     Links.resize(N.Links.size()); // Create the appropriate number of null links
   G->addNode(this);
   ++NumNodeAllocated;
@@ -631,6 +632,8 @@ void DSNode::mergeGlobals(const std::vector<GlobalValue*> &RHS) {
 void DSNode::MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH) {
   assert(CurNodeH.getOffset() >= NH.getOffset() &&
          "This should have been enforced in the caller.");
+  assert(CurNodeH.getNode()->getParentGraph()==NH.getNode()->getParentGraph() &&
+         "Cannot merge two nodes that are not in the same graph!");
 
   // Now we know that Offset >= NH.Offset, so convert it so our "Offset" (with
   // respect to NH.Offset) is now zero.  NOffset is the distance from the base
@@ -782,6 +785,9 @@ DSNodeHandle ReachabilityCloner::getClonedNH(const DSNodeHandle &SrcNH) {
   if (!NH.isNull())    // Node already mapped?
     return DSNodeHandle(NH.getNode(), NH.getOffset()+SrcNH.getOffset());
 
+  // FIXME if SrcNH has globals and the dest graph contains the same globals, we
+  // could use 'merge' to do this work more efficiently!
+
   DSNode *DN = new DSNode(*SN, &Dest, true /* Null out all links */);
   DN->maskNodeTypes(BitsToKeep);
   NH = DN;
@@ -824,6 +830,7 @@ DSNodeHandle ReachabilityCloner::getClonedNH(const DSNodeHandle &SrcNH) {
     if (CloneFlags & DSGraph::UpdateInlinedGlobals)
       Dest.getInlinedGlobals().insert(GV);
   }
+  NH.getNode()->mergeGlobals(SN->getGlobals());
 
   return DSNodeHandle(NH.getNode(), NH.getOffset()+SrcNH.getOffset());
 }
@@ -913,6 +920,7 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
         if (CloneFlags & DSGraph::UpdateInlinedGlobals)
           Dest.getInlinedGlobals().insert(GV);
       }
+      NH.getNode()->mergeGlobals(SN->getGlobals());
     }
   } else {
     // We cannot handle this case without allocating a temporary node.  Fall
@@ -964,19 +972,25 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
       // wrapping), but if the current node gets collapsed due to
       // recursive merging, we must make sure to merge in all remaining
       // links at offset zero.
-      unsigned MergeOffset = 0;
       DSNode *CN = SCNH.getNode();
-      if (CN->getSize() != 1)
-        MergeOffset = ((i << DS::PointerShift)+SCNH.getOffset()) %CN->getSize();
+      unsigned MergeOffset =
+        ((i << DS::PointerShift)+SCNH.getOffset()) % CN->getSize();
       
-      DSNodeHandle &Link = CN->getLink(MergeOffset);
-      if (!Link.isNull()) {
+      DSNodeHandle Tmp = CN->getLink(MergeOffset);
+      if (!Tmp.isNull()) {
         // Perform the recursive merging.  Make sure to create a temporary NH,
         // because the Link can disappear in the process of recursive merging.
-        DSNodeHandle Tmp = Link;
         merge(Tmp, SrcEdge);
       } else {
-        merge(Link, SrcEdge);
+        Tmp.mergeWith(getClonedNH(SrcEdge));
+        // Merging this could cause all kinds of recursive things to happen,
+        // culminating in the current node being eliminated.  Since this is
+        // possible, make sure to reaquire the link from 'CN'.
+
+        unsigned MergeOffset = 0;
+        CN = SCNH.getNode();
+        MergeOffset = ((i << DS::PointerShift)+SCNH.getOffset()) %CN->getSize();
+        CN->getLink(MergeOffset).mergeWith(Tmp);
       }
     }
   }
@@ -1240,7 +1254,7 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
     // Map the return node pointer over.
     if (!CS.getRetVal().isNull())
       RC.merge(CS.getRetVal(), Graph.getReturnNodeFor(F));
-    
+
     // If requested, copy all of the calls.
     if (!(CloneFlags & DontCloneCallNodes)) {
       // Copy the function calls list...
