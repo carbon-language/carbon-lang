@@ -8,13 +8,16 @@
 LEVEL = ../../../..
 include $(LEVEL)/test/Makefile.tests
 
+## Get absolute pathname for analyze
+LANALYZE_ABS := $(shell cd `dirname $(LANALYZE)`; pwd)/analyze
+
 TESTS := $(wildcard *.ll)
 FTESTS := $(wildcard *.llx)   # Freeform tests
 
 all:: $(addprefix Output/, $(TESTS:%.ll=%.out))
 
 Output/%.out: %.ll $(LANALYZE) Output/.dir
-	(cd Output/; $(LANALYZE) -datastructure ../$< || \
+	(cd Output/; $(LANALYZE_ABS) -datastructure ../$< || \
                  ( rm -f ../$@; ../$(FAILURE) ../$@ ))
 
 all:: $(addprefix Output/, $(FTESTS:%.llx=%.llx.out))
