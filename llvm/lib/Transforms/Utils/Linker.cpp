@@ -761,9 +761,16 @@ static bool LinkAppendingVars(Module *M,
 // shouldn't be relied on to be consistent.
 //
 bool LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
-  if (Dest->getEndianness() != Src->getEndianness())
+  if (Dest->getEndianness() == Module::AnyEndianness)
+    Dest->setEndianness(Src->getEndianness());
+  if (Dest->getPointerSize() == Module::AnyPointerSize)
+    Dest->setPointerSize(Src->getPointerSize());
+
+  if (Src->getEndianness() != Module::AnyEndianness &&
+      Dest->getEndianness() != Src->getEndianness())
     std::cerr << "WARNING: Linking two modules of different endianness!\n";
-  if (Dest->getPointerSize() != Src->getPointerSize())
+  if (Src->getPointerSize() != Module::AnyPointerSize &&
+      Dest->getPointerSize() != Src->getPointerSize())
     std::cerr << "WARNING: Linking two modules of different pointer size!\n";
 
   // LinkTypes - Go through the symbol table of the Src module and see if any
