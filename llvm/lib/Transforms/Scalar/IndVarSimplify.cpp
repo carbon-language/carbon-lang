@@ -45,6 +45,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/Statistic.h"
@@ -135,9 +136,9 @@ namespace {
                 while (isa<PHINode>(It)) ++It;
                 if (It != BasicBlock::iterator(CI)) {
                   // Splice the cast immediately after the operand in question.
-                  I->getParent()->getInstList().splice(It,
-                                                       CI->getParent()->getInstList(),
-                                                       CI);
+                  BasicBlock::InstListType &InstList =
+                    I->getParent()->getInstList();
+                  InstList.splice(It, InstList, CI);
                 }
                 return CI;
               }
@@ -345,7 +346,7 @@ DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
         if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
           Insts.insert(U);
       SE->deleteInstructionFromRecords(I);
-      I->getParent()->getInstList().erase(I);
+      I->eraseFromParent();
       Changed = true;
     }
   }
@@ -386,6 +387,34 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
           
       // Update the GEP to use the new recurrence we just inserted.
       GEPI->setOperand(1, NewAdd);
+
+      // If the incoming value is a constant expr GEP, try peeling out the array
+      // 0 index if possible to make things simpler.
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GEPI->getOperand(0)))
+        if (CE->getOpcode() == Instruction::GetElementPtr) {
+          unsigned NumOps = CE->getNumOperands();
+          assert(NumOps > 1 && "CE folding didn't work!");
+          if (CE->getOperand(NumOps-1)->isNullValue()) {
+            // Check to make sure the last index really is an array index.
+            gep_type_iterator GTI = gep_type_begin(GEPI);
+            for (unsigned i = 1, e = GEPI->getNumOperands()-1;
+                 i != e; ++i, ++GTI)
+              /*empty*/;
+            if (isa<SequentialType>(*GTI)) {
+              // Pull the last index out of the constant expr GEP.
+              std::vector<Value*> CEIdxs(CE->op_begin()+1, CE->op_end()-1);
+              Constant *NCE = ConstantExpr::getGetElementPtr(CE->getOperand(0),
+                                                             CEIdxs);
+              GetElementPtrInst *NGEPI =
+                new GetElementPtrInst(NCE, Constant::getNullValue(Type::IntTy),
+                                      NewAdd, GEPI->getName(), GEPI);
+              GEPI->replaceAllUsesWith(NGEPI);
+              GEPI->eraseFromParent();
+              GEPI = NGEPI;
+            }
+          }
+        }
+
 
       // Finally, if there are any other users of the PHI node, we must
       // insert a new GEP instruction that uses the pre-incremented version
