@@ -23,6 +23,12 @@
 
 #include "llvm/Config/config.h"
 
+#undef HAVE_SYS_TYPES_H
+#undef HAVE_INTTYPES_H
+#undef HAVE_STDINT_H
+
+#ifndef _MSC_VER
+
 // Note that this header's correct operation depends on __STDC_LIMIT_MACROS
 // being defined.  We would define it here, but in order to prevent Bad Things
 // happening when system headers or C++ STL headers include stdint.h before
@@ -31,11 +37,6 @@
 # error "Must #define __STDC_LIMIT_MACROS before #including Support/DataTypes.h"
 #endif
 
-#undef HAVE_SYS_TYPES_H
-#undef HAVE_INTTYPES_H
-#undef HAVE_STDINT_H
-
-#ifndef _MSC_VER
 // Note that <inttypes.h> includes <stdint.h>, if this is a C99 system.
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
