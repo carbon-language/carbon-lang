@@ -18,20 +18,19 @@
 */
 
 
-#ifndef  INTERFERENCE_GRAPH_H
-#define  INTERFERENCE_GRAPH_H
+#ifndef INTERFERENCE_GRAPH_H
+#define INTERFERENCE_GRAPH_H
 
-
-#include "llvm/CodeGen/IGNode.h"
-
-typedef std::vector <IGNode *> IGNodeListType;
-
+#include <vector>
+class LiveRange;
+class RegClass;
+class IGNode;
 
 class InterferenceGraph {
   char **IG;                            // a poiner to the interference graph
   unsigned int Size;                    // size of a side of the IG
   RegClass *const RegCl;                // RegCl contains this IG
-  IGNodeListType IGNodeList;            // a list of all IGNodes in a reg class
+  std::vector<IGNode *> IGNodeList;     // a list of all IGNodes in a reg class
                             
  public:
   // the matrix is not yet created by the constructor. Call createGraph() 
@@ -51,8 +50,8 @@ class InterferenceGraph {
 
   void mergeIGNodesOfLRs(const LiveRange *LR1, LiveRange *LR2);
 
-  IGNodeListType &getIGNodeList() { return IGNodeList; } 
-  const IGNodeListType &getIGNodeList() const { return IGNodeList; } 
+  std::vector<IGNode *> &getIGNodeList() { return IGNodeList; } 
+  const std::vector<IGNode *> &getIGNodeList() const { return IGNodeList; } 
 
   void setCurDegreeOfIGNodes();
 
