@@ -57,6 +57,9 @@ public:
   bool operator==(const DSNode *Node) const { return N == Node; }
   bool operator!=(const DSNode *Node) const { return N != Node; }
 
+  // Avoid having comparisons to null cause errors...
+  bool operator==(int X) const { return operator==((DSNode*)X); }
+
   // Allow explicit conversion to DSNode...
   DSNode *get() { return N; }
   const DSNode *get() const { return N; }
