@@ -95,6 +95,7 @@ TargetData::~TargetData() {
 
 static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
 			       unsigned &Size, unsigned char &Alignment) {
+  assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
   switch (Ty->getPrimitiveID()) {
   case Type::VoidTyID:
   case Type::BoolTyID:
@@ -114,7 +115,6 @@ static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
     return;
   case Type::ArrayTyID: {
     const ArrayType *ATy = (const ArrayType *)Ty;
-    assert(ATy->isSized() && "Can't get TypeInfo of an unsized array!");
     getTypeInfo(ATy->getElementType(), TD, Size, Alignment);
     Size *= ATy->getNumElements();
     return;
