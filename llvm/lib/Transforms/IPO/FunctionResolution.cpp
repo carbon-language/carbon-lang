@@ -128,7 +128,7 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       const FunctionType *OldMT = Old->getFunctionType();
       const FunctionType *ConcreteMT = Concrete->getFunctionType();
       
-      if (OldMT->getParamTypes().size() < ConcreteMT->getParamTypes().size() &&
+      if (OldMT->getParamTypes().size() > ConcreteMT->getParamTypes().size() &&
           !ConcreteMT->isVarArg())
         if (!Old->use_empty()) {
           std::cerr << "WARNING: Linking function '" << Old->getName()
@@ -155,14 +155,13 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
             return Changed;
           }
       
-      // Attempt to convert all of the uses of the old function to the
-      // concrete form of the function.  If there is a use of the fn that
-      // we don't understand here we punt to avoid making a bad
-      // transformation.
+      // Attempt to convert all of the uses of the old function to the concrete
+      // form of the function.  If there is a use of the fn that we don't
+      // understand here we punt to avoid making a bad transformation.
       //
-      // At this point, we know that the return values are the same for
-      // our two functions and that the Old function has no varargs fns
-      // specified.  In otherwords it's just <retty> (...)
+      // At this point, we know that the return values are the same for our two
+      // functions and that the Old function has no varargs fns specified.  In
+      // otherwords it's just <retty> (...)
       //
       for (unsigned i = 0; i < Old->use_size(); ) {
         User *U = *(Old->use_begin()+i);
@@ -181,6 +180,18 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
           } else {
             std::cerr << "Couldn't cleanup this function call, must be an"
                       << " argument or something!" << CI;
+            ++i;
+          }
+        } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(U)) {
+          if (CPR->use_size() == 1 && isa<ConstantExpr>(CPR->use_back()) &&
+              cast<ConstantExpr>(CPR->use_back())->getOpcode() == 
+                Instruction::Cast) {
+            ConstantExpr *CE = cast<ConstantExpr>(CPR->use_back());
+            Constant *NewCPR = ConstantPointerRef::get(Concrete);
+            CE->replaceAllUsesWith(ConstantExpr::getCast(NewCPR,CE->getType()));
+            CPR->destroyConstant();
+          } else {
+            std::cerr << "Cannot convert use of function: " << CPR << "\n";
             ++i;
           }
         } else {
@@ -337,7 +348,7 @@ bool FunctionResolvingPass::run(Module &M) {
         GlobalValue *GV = cast<GlobalValue>(PI->second);
         assert(PI->first == GV->getName() &&
                "Global name and symbol table do not agree!");
-        if (GV->hasExternalLinkage())  // Only resolve decls to external fns
+        if (!GV->hasInternalLinkage())  // Only resolve decls to external fns
           Globals[PI->first].push_back(GV);
       }
     }
