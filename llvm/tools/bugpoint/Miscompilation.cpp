@@ -209,7 +209,6 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
                    true/*quiet*/)) {
     std::cerr << " Error running this sequence of passes" 
               << " on the input program!\n";
-    BD.setPassesToRun(Suffix);
     BD.EmitProgressBytecode("pass-error",  false);
     exit(1);
   }
