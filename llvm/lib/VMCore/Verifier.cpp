@@ -72,7 +72,7 @@ namespace {  // Anonymous namespace for class
       // Scan through, checking all of the external function's linkage now...
       for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
         if ((*I)->isExternal() && (*I)->hasInternalLinkage())
-          CheckFailed("", "Function Declaration has Internal Linkage!", (*I));
+          CheckFailed("Function Declaration has Internal Linkage!", (*I));
 
       if (Broken) {
         cerr << "Broken module found, compilation aborted!\n";
@@ -97,7 +97,7 @@ namespace {  // Anonymous namespace for class
     // that failed.  This provides a nice place to put a breakpoint if you want
     // to see why something is not correct.
     //
-    inline void CheckFailed(const char *Cond, const std::string &Message,
+    inline void CheckFailed(const std::string &Message,
                             const Value *V1 = 0, const Value *V2 = 0) {
       std::cerr << Message << "\n";
       if (V1) { std::cerr << V1 << "\n"; }
@@ -109,11 +109,11 @@ namespace {  // Anonymous namespace for class
 
 // Assert - We know that cond should be true, if not print an error message.
 #define Assert(C, M) \
-  do { if (!(C)) { CheckFailed(#C, M); return; } } while (0)
+  do { if (!(C)) { CheckFailed(M); return; } } while (0)
 #define Assert1(C, M, V1) \
-  do { if (!(C)) { CheckFailed(#C, M, V1); return; } } while (0)
+  do { if (!(C)) { CheckFailed(M, V1); return; } } while (0)
 #define Assert2(C, M, V1, V2) \
-  do { if (!(C)) { CheckFailed(#C, M, V1, V2); return; } } while (0)
+  do { if (!(C)) { CheckFailed(M, V1, V2); return; } } while (0)
 
 
 // verifySymbolTable - Verify that a function or module symbol table is ok
@@ -131,7 +131,7 @@ void Verifier::verifySymbolTable(SymbolTable *ST) {
       // with a void type cannot be put into symbol tables because they cannot
       // have names!
       Assert1(V->getType() != Type::VoidTy,
-              "Values with void type are not allowed to have names!\n", V);
+              "Values with void type are not allowed to have names!", V);
     }
 }
 
@@ -170,7 +170,7 @@ void Verifier::visitFunction(Function *F) {
 // verifyBasicBlock - Verify that a basic block is well formed...
 //
 void Verifier::visitBasicBlock(BasicBlock *BB) {
-  Assert1(BB->getTerminator(), "Basic Block does not have terminator!\n", BB);
+  Assert1(BB->getTerminator(), "Basic Block does not have terminator!", BB);
 
   // Check that the terminator is ok as well...
   if (isa<ReturnInst>(BB->getTerminator())) {
@@ -242,7 +242,7 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst *GEP) {
                                                   GEP->copyIndices(), true);
   Assert1(ElTy, "Invalid indices for GEP pointer type!", GEP);
   Assert2(PointerType::get(ElTy) == GEP->getType(),
-          "GEP is not of right type for indices!\n", GEP, ElTy);
+          "GEP is not of right type for indices!", GEP, ElTy);
   visitInstruction(GEP);
 }
 
@@ -251,7 +251,7 @@ void Verifier::visitLoadInst(LoadInst *LI) {
                                               LI->copyIndices());
   Assert1(ElTy, "Invalid indices for load pointer type!", LI);
   Assert2(ElTy == LI->getType(),
-          "Load is not of right type for indices!\n", LI, ElTy);
+          "Load is not of right type for indices!", LI, ElTy);
   visitInstruction(LI);
 }
 
@@ -260,7 +260,7 @@ void Verifier::visitStoreInst(StoreInst *SI) {
                                                SI->copyIndices());
   Assert1(ElTy, "Invalid indices for store pointer type!", SI);
   Assert2(ElTy == SI->getOperand(0)->getType(),
-          "Stored value is not of right type for indices!\n", SI, ElTy);
+          "Stored value is not of right type for indices!", SI, ElTy);
   visitInstruction(SI);
 }
 
