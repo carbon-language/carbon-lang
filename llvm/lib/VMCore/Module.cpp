@@ -38,7 +38,10 @@ template SymbolTableListTraits<Function, Module, Module>;
 // Define the GlobalValueRefMap as a struct that wraps a map so that we don't
 // have Module.h depend on <map>
 //
-struct GlobalValueRefMap : public std::map<GlobalValue*, ConstantPointerRef*>{
+struct GlobalValueRefMap {
+  typedef std::map<GlobalValue*, ConstantPointerRef*> MapTy;
+  typedef MapTy::iterator iterator;
+  std::map<GlobalValue*, ConstantPointerRef*> Map;
 };
 
 
@@ -165,8 +168,8 @@ void Module::dropAllReferences() {
   // Since all references are hereby dropped, nothing could possibly reference
   // them still.
   if (GVRefMap) {
-    for (GlobalValueRefMap::iterator I = GVRefMap->begin(), E = GVRefMap->end();
-	 I != E; ++I) {
+    for (GlobalValueRefMap::iterator I = GVRefMap->Map.begin(),
+           E = GVRefMap->Map.end(); I != E; ++I) {
       // Delete the ConstantPointerRef node...
       I->second->destroyConstant();
     }
@@ -181,24 +184,24 @@ ConstantPointerRef *Module::getConstantPointerRef(GlobalValue *V){
   // Create ref map lazily on demand...
   if (GVRefMap == 0) GVRefMap = new GlobalValueRefMap();
 
-  GlobalValueRefMap::iterator I = GVRefMap->find(V);
-  if (I != GVRefMap->end()) return I->second;
+  GlobalValueRefMap::iterator I = GVRefMap->Map.find(V);
+  if (I != GVRefMap->Map.end()) return I->second;
 
   ConstantPointerRef *Ref = new ConstantPointerRef(V);
-  GVRefMap->insert(std::make_pair(V, Ref));
+  GVRefMap->Map.insert(std::make_pair(V, Ref));
 
   return Ref;
 }
 
 void Module::mutateConstantPointerRef(GlobalValue *OldGV, GlobalValue *NewGV) {
-  GlobalValueRefMap::iterator I = GVRefMap->find(OldGV);
-  assert(I != GVRefMap->end() && 
+  GlobalValueRefMap::iterator I = GVRefMap->Map.find(OldGV);
+  assert(I != GVRefMap->Map.end() && 
 	 "mutateConstantPointerRef; OldGV not in table!");
   ConstantPointerRef *Ref = I->second;
 
   // Remove the old entry...
-  GVRefMap->erase(I);
+  GVRefMap->Map.erase(I);
 
   // Insert the new entry...
-  GVRefMap->insert(std::make_pair(NewGV, Ref));
+  GVRefMap->Map.insert(std::make_pair(NewGV, Ref));
 }
