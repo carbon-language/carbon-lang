@@ -199,7 +199,7 @@ inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
 
 static void emitRegModRMByte(std::ostream &O, unsigned ModRMReg,
                              unsigned RegOpcodeField) {
-  toHex(O, ModRMByte(3, RegOpcodeField, getX86RegNum(ModRMReg)));
+  toHex(O, ModRMByte(3, RegOpcodeField, getX86RegNum(ModRMReg))) << " ";
 }
 
 inline static void emitSIBByte(std::ostream &O, unsigned SS, unsigned Index,
@@ -460,38 +460,41 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
   case X86II::MRMS2r: case X86II::MRMS3r:
   case X86II::MRMS4r: case X86II::MRMS5r:
   case X86II::MRMS6r: case X86II::MRMS7r: {
-    unsigned ExtraField = (Desc.TSFlags & X86II::FormMask)-X86II::MRMS0r;
-
     // In this form, the following are valid formats:
     //  1. sete r
+    //  2. cmp reg, immediate
     //  2. shl rdest, rinput  <implicit CL or 1>
     //  3. sbb rdest, rinput, immediate   [rdest = rinput]
     //    
     assert(MI->getNumOperands() > 0 && MI->getNumOperands() < 4 &&
            isReg(MI->getOperand(0)) && "Bad MRMSxR format!");
-    assert((MI->getNumOperands() < 2 || isReg(MI->getOperand(1))) &&
+    assert((MI->getNumOperands() != 2 ||
+            isReg(MI->getOperand(1)) || isImmediate(MI->getOperand(1))) &&
            "Bad MRMSxR format!");
-    assert((MI->getNumOperands() < 3 || isImmediate(MI->getOperand(2))) &&
+    assert((MI->getNumOperands() < 3 ||
+            (isReg(MI->getOperand(1)) && isImmediate(MI->getOperand(2)))) &&
            "Bad MRMSxR format!");
 
-    if (MI->getNumOperands() > 1 &&
+    if (MI->getNumOperands() > 1 && isReg(MI->getOperand(1)) && 
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 
     toHex(O, getBaseOpcodeFor(Opcode)) << " ";
+    unsigned ExtraField = (Desc.TSFlags & X86II::FormMask)-X86II::MRMS0r;
     emitRegModRMByte(O, MI->getOperand(0).getReg(), ExtraField);
 
-    if (MI->getNumOperands() == 3) {
+    if (isImmediate(MI->getOperand(MI->getNumOperands()-1))) {
       unsigned Size = 4;
-      emitConstant(O, MI->getOperand(2).getImmedValue(), Size);
+      emitConstant(O, MI->getOperand(MI->getNumOperands()-1).getImmedValue(),
+                   Size);
     }
 
     O << "\n\t\t\t\t";
     O << getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
-    if (MI->getNumOperands() == 3) {
+    if (isImmediate(MI->getOperand(MI->getNumOperands()-1))) {
       O << ", ";
-      printOp(O, MI->getOperand(2), RI);
+      printOp(O, MI->getOperand(MI->getNumOperands()-1), RI);
     }
     O << "\n";
 
