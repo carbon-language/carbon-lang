@@ -36,7 +36,7 @@ public:
   const std::pair<unsigned, int> *
   getCalleeSaveSpillSlots(unsigned &NumEntries) const {
     NumEntries = 1;
-    return static_cast<const std::pair<unsigned, int> *>(LR);
+    return &LR[0];
   }
 };
 
