@@ -33,6 +33,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
+#include "Support/STLExtras.h"
 using namespace llvm;
 
 static RegisterAnalysis<LiveVariables> X("livevars", "Live Variable Analysis");
@@ -312,4 +313,37 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
     }
   
   return false;
+}
+
+/// instructionChanged - When the address of an instruction changes, this
+/// method should be called so that live variables can update its internal
+/// data structures.  This removes the records for OldMI, transfering them to
+/// the records for NewMI.
+void LiveVariables::instructionChanged(MachineInstr *OldMI,
+                                       MachineInstr *NewMI) {
+  // If the instruction defines any virtual registers, update the VarInfo for
+  // the instruction.
+  for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = NewMI->getOperand(i);
+    if (MO.isRegister() && MO.isDef() &&
+        MRegisterInfo::isVirtualRegister(MO.getReg())) {
+      unsigned Reg = MO.getReg();
+      VarInfo &VI = getVarInfo(Reg);
+      if (VI.DefInst == OldMI)
+        VI.DefInst = NewMI; 
+    }
+  }
+
+  // Move the killed information over...
+  killed_iterator I, E;
+  tie(I, E) = killed_range(OldMI);
+  for (killed_iterator A = I; A != E; ++A)
+    RegistersKilled.insert(std::make_pair(NewMI, A->second));
+  RegistersKilled.erase(I, E);
+
+  // Move the dead information over...
+  tie(I, E) = dead_range(OldMI);
+  for (killed_iterator A = I; A != E; ++A)
+    RegistersDead.insert(std::make_pair(NewMI, A->second));
+  RegistersDead.erase(I, E);
 }
