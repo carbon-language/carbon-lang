@@ -98,7 +98,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\hash_map"
-						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(ProjectDir)..\llvm\ADT\hash_map &quot;s/#undef HAVE_GLOBAL_HASH_MAP/#define HAVE_GLOBAL_HASH_MAP 1/;/using HASH_NAMESPACE\:\:hash;.*$/{D};/#include.*HashExtras.*$/{D};s/define HASH_NAMESPACE std/define HASH_NAMESPACE stdext\nusing std::_Distance;/&quot;
+						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(ProjectDir)..\llvm\ADT\hash_map &quot;s/#undef HAVE_GLOBAL_HASH_MAP/#define HAVE_GLOBAL_HASH_MAP 1/;/using HASH_NAMESPACE\:\:hash;.*$/{D};s/define HASH_NAMESPACE std/define HASH_NAMESPACE stdext\nusing std::_Distance;/&quot;
 "
 						Outputs="$(ProjectDir)..\llvm\ADT\hash_map"/>
 				</FileConfiguration>
