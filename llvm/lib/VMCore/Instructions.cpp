@@ -948,6 +948,7 @@ void SwitchInst::addCase(Constant *OnVal, BasicBlock *Dest) {
   if (OpNo+2 > ReservedSpace)
     resizeOperands(0);  // Get more space!
   // Initialize some new operands.
+  assert(OpNo+1 < ReservedSpace && "Growing didn't work!");
   NumOperands = OpNo+2;
   OperandList[OpNo].init(OnVal, this);
   OperandList[OpNo+1].init(Dest, this);
@@ -989,14 +990,14 @@ void SwitchInst::removeCase(unsigned idx) {
 ///
 void SwitchInst::resizeOperands(unsigned NumOps) {
   if (NumOps == 0) {
-    NumOps = (getNumOperands())*3/2;
+    NumOps = getNumOperands()/2*6;
   } else if (NumOps*2 > NumOperands) {
     // No resize needed.
     if (ReservedSpace >= NumOps) return;
   } else if (NumOps == NumOperands) {
     if (ReservedSpace == NumOps) return;
   } else {
-    return;        
+    return;
   }
 
   ReservedSpace = NumOps;
