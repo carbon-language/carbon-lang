@@ -647,7 +647,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   Value                            *ValueVal;
 
   list<MethodArgument*>            *MethodArgList;
-  list<Value*>                     *ValueList;
+  vector<Value*>                   *ValueList;
   list<PATypeHolder<Type> >        *TypeList;
   list<pair<Value*, BasicBlock*> > *PHIList;   // Represent the RHS of PHI node
   list<pair<ConstPoolVal*, BasicBlock*> > *JumpTable;
@@ -676,11 +676,12 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type <TermInstVal>   BBTerminatorInst
 %type <InstVal>       Inst InstVal MemoryInst
 %type <ConstVal>      ConstVal
-%type <ConstVector>   ConstVector UByteList
+%type <ConstVector>   ConstVector
 %type <MethodArgList> ArgList ArgListH
 %type <MethArgVal>    ArgVal
 %type <PHIList>       PHIList
 %type <ValueList>     ValueRefList ValueRefListE  // For call param lists
+%type <ValueList>     IndexList                   // For GEP derived indices
 %type <TypeList>      TypeListI ArgTypeListI
 %type <JumpTable>     JumpTable
 %type <BoolVal>       GlobalType                  // GLOBAL or CONSTANT?
@@ -1357,7 +1358,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       // Pull out the types of all of the arguments...
       vector<const Type*> ParamTypes;
       if ($5) {
-        for (list<Value*>::iterator I = $5->begin(), E = $5->end(); I != E; ++I)
+        for (vector<Value*>::iterator I = $5->begin(), E = $5->end(); I!=E; ++I)
           ParamTypes.push_back((*I)->getType());
       }
 
@@ -1386,7 +1387,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       //
       MethodType::ParamTypes::const_iterator I = Ty->getParamTypes().begin();
       MethodType::ParamTypes::const_iterator E = Ty->getParamTypes().end();
-      list<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
+      vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
 	if ((*ArgI)->getType() != *I)
@@ -1396,8 +1397,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
 	ThrowException("Invalid number of parameters detected!");
 
-      $$ = new InvokeInst(V, Normal, Except,
-			  vector<Value*>($5->begin(), $5->end()));
+      $$ = new InvokeInst(V, Normal, Except, *$5);
     }
     delete $5;
   }
@@ -1443,7 +1443,7 @@ PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
 
 
 ValueRefList : ResolvedVal {    // Used for call statements, and memory insts...
-    $$ = new list<Value*>();
+    $$ = new vector<Value*>();
     $$->push_back($1);
   }
   | ValueRefList ',' ResolvedVal {
@@ -1494,7 +1494,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
       // Pull out the types of all of the arguments...
       vector<const Type*> ParamTypes;
       if ($5) {
-        for (list<Value*>::iterator I = $5->begin(), E = $5->end(); I != E; ++I)
+        for (vector<Value*>::iterator I = $5->begin(), E = $5->end(); I!=E; ++I)
           ParamTypes.push_back((*I)->getType());
       }
 
@@ -1517,7 +1517,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
       //
       MethodType::ParamTypes::const_iterator I = Ty->getParamTypes().begin();
       MethodType::ParamTypes::const_iterator E = Ty->getParamTypes().end();
-      list<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
+      vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
 	if ((*ArgI)->getType() != *I)
@@ -1527,7 +1527,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
 	ThrowException("Invalid number of parameters detected!");
 
-      $$ = new CallInst(V, vector<Value*>($5->begin(), $5->end()));
+      $$ = new CallInst(V, *$5);
     }
     delete $5;
   }
@@ -1535,11 +1535,12 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     $$ = $1;
   }
 
-// UByteList - List of ubyte values for load and store instructions
-UByteList : ',' ConstVector { 
+
+// IndexList - List of indices for GEP based instructions...
+IndexList : ',' ValueRefList { 
   $$ = $2; 
 } | /* empty */ { 
-  $$ = new vector<ConstPoolVal*>(); 
+  $$ = new vector<Value*>(); 
 }
 
 MemoryInst : MALLOC Types {
@@ -1574,7 +1575,7 @@ MemoryInst : MALLOC Types {
     $$ = new FreeInst($2);
   }
 
-  | LOAD Types ValueRef UByteList {
+  | LOAD Types ValueRef IndexList {
     if (!(*$2)->isPointerType())
       ThrowException("Can't load from nonpointer type: " +
 		     (*$2)->getDescription());
@@ -1585,7 +1586,7 @@ MemoryInst : MALLOC Types {
     delete $4;   // Free the vector...
     delete $2;
   }
-  | STORE ResolvedVal ',' Types ValueRef UByteList {
+  | STORE ResolvedVal ',' Types ValueRef IndexList {
     if (!(*$4)->isPointerType())
       ThrowException("Can't store to a nonpointer type: " + (*$4)->getName());
     const Type *ElTy = StoreInst::getIndexedType(*$4, *$6);
@@ -1597,7 +1598,7 @@ MemoryInst : MALLOC Types {
     $$ = new StoreInst($2, getVal(*$4, $5), *$6);
     delete $4; delete $6;
   }
-  | GETELEMENTPTR Types ValueRef UByteList {
+  | GETELEMENTPTR Types ValueRef IndexList {
     if (!(*$2)->isPointerType())
       ThrowException("getelementptr insn requires pointer operand!");
     if (!GetElementPtrInst::getIndexedType(*$2, *$4, true))
