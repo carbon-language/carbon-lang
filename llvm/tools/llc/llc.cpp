@@ -220,7 +220,7 @@ main(int argc, char **argv)
   // Replace malloc and free instructions with library calls.
   // Do this after tracing until lli implements these lib calls.
   // For now, it will emulate malloc and free internally.
-  Passes.add(createLowerAllocationsPass(Target.DataLayout));
+  Passes.add(createLowerAllocationsPass());
 
   // If LLVM dumping after transformations is requested, add it to the pipeline
   if (DumpAsm)

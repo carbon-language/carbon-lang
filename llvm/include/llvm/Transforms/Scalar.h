@@ -9,7 +9,6 @@
 #define LLVM_TRANSFORMS_SCALAR_H
 
 class Pass;
-class TargetData;
 class GetElementPtrInst;
 class PassInfo;
 
@@ -191,11 +190,9 @@ extern const PassInfo *BreakCriticalEdgesID;
 
 //===----------------------------------------------------------------------===//
 // These two passes convert malloc and free instructions to and from %malloc &
-// %free function calls.  The LowerAllocations transformation is a target
-// dependant tranformation because it depends on the size of data types and
-// alignment constraints.
+// %free function calls.
 //
-Pass *createLowerAllocationsPass(const TargetData &TD);
+Pass *createLowerAllocationsPass();
 Pass *createRaiseAllocationsPass();
 
 
