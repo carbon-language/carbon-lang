@@ -46,6 +46,15 @@ std::string Mangler::makeNameProper(const std::string &X) {
   return Result;
 }
 
+/// getTypeID - Return a unique ID for the specified LLVM type.
+///
+unsigned Mangler::getTypeID(const Type *Ty) {
+  unsigned &E = TypeMap[Ty];
+  if (E == 0) E = ++TypeCounter;
+  return E;
+}
+
+
 std::string Mangler::getValueName(const Value *V) {
   // Check to see whether we've already named V.
   ValueMap::iterator VI = Memo.find(V);
@@ -71,12 +80,11 @@ std::string Mangler::getValueName(const Value *V) {
     } else {
       // Non-global, or global with internal linkage / colliding name
       // -> mangle.
-      unsigned TypeUniqueID = V->getType()->getUniqueID();
+      unsigned TypeUniqueID = getTypeID(V->getType());
       name = "l" + utostr(TypeUniqueID) + "_" + makeNameProper(V->getName());
     }
   } else {
-    name = "ltmp_" + utostr(Count++) + "_"
-      + utostr(V->getType()->getUniqueID());
+    name = "ltmp_" + utostr(Count++) + "_" + utostr(getTypeID(V->getType()));
   }
   
   Memo[V] = name;
@@ -108,7 +116,7 @@ void Mangler::InsertName(GlobalValue *GV,
 
 
 Mangler::Mangler(Module &m, bool addUnderscorePrefix)
-  : M(m), AddUnderscorePrefix(addUnderscorePrefix), Count(0) {
+  : M(m), AddUnderscorePrefix(addUnderscorePrefix), TypeCounter(0), Count(0) {
   // Calculate which global values have names that will collide when we throw
   // away type information.
   std::map<std::string, GlobalValue*> Names;
