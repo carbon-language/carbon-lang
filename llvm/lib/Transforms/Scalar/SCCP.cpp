@@ -165,10 +165,19 @@ private:
     BBWorkList.push_back(BB);  // Add the block to the work list!
   }
 
-  void OperandChangedState(User *U);
-  void UpdateInstruction(Instruction *I);
-};
 
+  // UpdateInstruction - Something changed in this instruction... Either an 
+  // operand made a transition, or the instruction is newly executable.  Change
+  // the value type of I to reflect these changes if appropriate.
+  //
+  void UpdateInstruction(Instruction *I);
+
+  // OperandChangedState - This method is invoked on all of the users of an
+  // instruction that was just changed state somehow....  Based on this
+  // information, we need to update the specified user of this instruction.
+  //
+  void OperandChangedState(User *U);
+};
 
 
 //===----------------------------------------------------------------------===//
@@ -259,9 +268,12 @@ bool SCCP::doSCCP() {
 
       // Hey, we just changed something!
       MadeChanges = true;
-    } else {
-      ++II;
+      continue;   // Skip the ++II at the end of the loop here...
+    } else if (Inst->isTerminator()) {
+      MadeChanges |= ConstantFoldTerminator((TerminatorInst*)Inst);
     }
+
+    ++II;
   }
 
   // Merge identical constants last: this is important because we may have just
@@ -489,7 +501,6 @@ void SCCP::OperandChangedState(User *U) {
 
   UpdateInstruction(I);
 }
-
 
 
 // DoSparseConditionalConstantProp - Use Sparse Conditional Constant Propogation
