@@ -24,7 +24,7 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-// Stuff to implement the globals and functions lists.
+// Methods to implement the globals and functions lists.
 //
 
 Function *ilist_traits<Function>::createNode() {
