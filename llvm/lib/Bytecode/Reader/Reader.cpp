@@ -1,4 +1,4 @@
-//===- Reader.cpp - Code to read bytecode files -----------------------------===
+//===- Reader.cpp - Code to read bytecode files ---------------------------===//
 //
 // This library implements the functionality defined in llvm/Bytecode/Reader.h
 //
@@ -8,7 +8,7 @@
 // TODO: Make error message outputs be configurable depending on an option?
 // TODO: Allow passing in an option to ignore the symbol table
 //
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Format.h"
@@ -256,7 +256,10 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 				 Module *C) {
   // Clear out the local values table...
   Values.clear();
-  if (MethodSignatureList.empty()) return failure(true);  // Unexpected method!
+  if (MethodSignatureList.empty()) {
+    Error = "Method found, but MethodSignatureList empty!";
+    return failure(true);  // Unexpected method!
+  }
 
   const PointerType *PMTy = MethodSignatureList.front().first; // PtrMeth
   const MethodType  *MTy  = dyn_cast<const MethodType>(PMTy->getValueType());
@@ -272,14 +275,20 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   for (MethodType::ParamTypes::const_iterator It = Params.begin();
        It != Params.end(); ++It) {
     MethodArgument *MA = new MethodArgument(*It);
-    if (insertValue(MA, Values) == -1) { delete M; return failure(true); }
+    if (insertValue(MA, Values) == -1) {
+      Error = "Error reading method arguments!\n";
+      delete M; return failure(true); 
+    }
     M->getArgumentList().push_back(MA);
   }
 
   while (Buf < EndBuf) {
     unsigned Type, Size;
     const uchar *OldBuf = Buf;
-    if (readBlock(Buf, EndBuf, Type, Size)) { delete M; return failure(true); }
+    if (readBlock(Buf, EndBuf, Type, Size)) {
+      Error = "Error reading Method level block!";
+      delete M; return failure(true); 
+    }
 
     switch (Type) {
     case BytecodeFormat::ConstantPool:
@@ -317,6 +326,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
     BCR_TRACE(2, "} end block\n");
 
     if (align32(Buf, EndBuf)) {
+      Error = "Error aligning Method level block!";
       delete M;    // Malformed bc file, read past end of block.
       return failure(true);
     }
@@ -324,6 +334,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
   if (postResolveValues(LateResolveValues) ||
       postResolveValues(LateResolveModuleValues)) {
+    Error = "Error resolving method values!";
     delete M; return failure(true);     // Unresolvable references!
   }
 
@@ -360,8 +371,10 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
 bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
 					   Module *Mod) {
-  if (!MethodSignatureList.empty()) 
+  if (!MethodSignatureList.empty()) {
+    Error = "Two ModuleGlobalInfo packets found!";
     return failure(true);  // Two ModuleGlobal blocks?
+  }
 
   // Read global variables...
   unsigned VarType;
@@ -370,7 +383,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     // VarType Fields: bit0 = isConstant, bit1 = hasInitializer, bit2+ = slot#
     const Type *Ty = getType(VarType >> 2);
     if (!Ty || !Ty->isPointerType()) { 
-      cerr << "Global not pointer type!  Ty = " << Ty << endl;
+      Error = "Global not pointer type!  Ty = " + Ty->getDescription();
       return failure(true); 
     }
 
@@ -413,7 +426,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     const Type *Ty = getType(MethSignature);
     if (!Ty || !isa<PointerType>(Ty) ||
         !isa<MethodType>(cast<PointerType>(Ty)->getValueType())) { 
-      cerr << "Method not ptr to meth type!  Ty = " << Ty << endl;
+      Error = "Method not ptr to meth type!  Ty = " + Ty->getDescription();
       return failure(true); 
     }
     
@@ -458,8 +471,10 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
 
   unsigned Type, Size;
   if (readBlock(Buf, EndBuf, Type, Size)) return failure(true);
-  if (Type != BytecodeFormat::Module || Buf+Size != EndBuf)
+  if (Type != BytecodeFormat::Module || Buf+Size != EndBuf) {
+    Error = "Expected Module packet!";
     return failure(true);                      // Hrm, not a class?
+  }
 
   BCR_TRACE(0, "BLOCK BytecodeFormat::Module: {\n");
   MethodSignatureList.clear();                 // Just in case...
@@ -505,7 +520,7 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
       break;
 
     default:
-      cerr << "  Unknown class block: " << Type << endl;
+      Error = "Expected Module Block!";
       Buf += Size;
       if (OldBuf > Buf) return failure(true); // Wrap around!
       break;
@@ -514,8 +529,10 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
     if (align32(Buf, EndBuf)) { delete C; return failure(true); }
   }
 
-  if (!MethodSignatureList.empty())      // Expected more methods!
+  if (!MethodSignatureList.empty()) {     // Expected more methods!
+    Error = "Method expected, but bytecode stream at end!";
     return failure(true);
+  }
 
   BCR_TRACE(0, "} end block\n\n");
   return false;
@@ -526,8 +543,10 @@ Module *BytecodeParser::ParseBytecode(const uchar *Buf, const uchar *EndBuf) {
   unsigned Sig;
   // Read and check signature...
   if (read(Buf, EndBuf, Sig) ||
-      Sig != ('l' | ('l' << 8) | ('v' << 16) | 'm' << 24))
+      Sig != ('l' | ('l' << 8) | ('v' << 16) | 'm' << 24)) {
+    Error = "Invalid bytecode signature!";
     return failure<Module*>(0);                          // Invalid signature!
+  }
 
   Module *Result;
   if (ParseModule(Buf, EndBuf, Result)) return 0;
@@ -542,27 +561,37 @@ Module *ParseBytecodeBuffer(const uchar *Buffer, unsigned Length) {
 
 // Parse and return a class file...
 //
-Module *ParseBytecodeFile(const string &Filename) {
+Module *ParseBytecodeFile(const string &Filename, string *ErrorStr) {
   struct stat StatBuf;
   Module *Result = 0;
 
   if (Filename != string("-")) {        // Read from a file...
     int FD = open(Filename.c_str(), O_RDONLY);
-    if (FD == -1) return failure<Module*>(0);
+    if (FD == -1) {
+      if (ErrorStr) *ErrorStr = "Error opening file!";
+      return failure<Module*>(0);
+    }
 
     if (fstat(FD, &StatBuf) == -1) { close(FD); return failure<Module*>(0); }
 
     int Length = StatBuf.st_size;
-    if (Length == 0) { close(FD); return failure<Module*>(0); }
+    if (Length == 0) { 
+      if (ErrorStr) *ErrorStr = "Error stat'ing file!";
+      close(FD); return failure<Module*>(0); 
+    }
     uchar *Buffer = (uchar*)mmap(0, Length, PROT_READ, 
 				MAP_PRIVATE, FD, 0);
-    if (Buffer == (uchar*)-1) { close(FD); return failure<Module*>(0); }
+    if (Buffer == (uchar*)-1) {
+      if (ErrorStr) *ErrorStr = "Error mmapping file!";
+      close(FD); return failure<Module*>(0);
+    }
 
     BytecodeParser Parser;
     Result  = Parser.ParseBytecode(Buffer, Buffer+Length);
 
     munmap((char*)Buffer, Length);
     close(FD);
+    if (ErrorStr) *ErrorStr = Parser.getError();
   } else {                              // Read from stdin
     size_t FileSize = 0;
     int BlockSize;
@@ -575,7 +604,10 @@ Module *ParseBytecodeFile(const string &Filename) {
       FileSize += BlockSize;
     }
 
-    if (FileSize == 0) { free(FileData); return failure<Module*>(0); }
+    if (FileSize == 0) {
+      if (ErrorStr) *ErrorStr = "Standard Input empty!";
+      free(FileData); return failure<Module*>(0);
+    }
 
 #define ALIGN_PTRS 1
 #if ALIGN_PTRS
@@ -596,6 +628,8 @@ Module *ParseBytecodeFile(const string &Filename) {
 #else
     free(FileData);          // Free realloc'd block of memory
 #endif
+
+    if (ErrorStr) *ErrorStr = Parser.getError();
   }
 
   return Result;

@@ -18,7 +18,8 @@ class Module;
 
 // Parse and return a class...
 //
-Module *ParseBytecodeFile(const string &Filename);
-Module *ParseBytecodeBuffer(const char *Buffer, unsigned BufferSize);
+Module *ParseBytecodeFile(const string &Filename, string *ErrorStr = 0);
+Module *ParseBytecodeBuffer(const char *Buffer, unsigned BufferSize,
+                            string *ErrorStr = 0);
 
 #endif

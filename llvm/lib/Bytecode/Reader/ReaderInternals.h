@@ -16,7 +16,7 @@
 #include <list>
 
 // Enable to trace to figure out what the heck is going on when parsing fails
-#define TRACE_LEVEL 0
+#define TRACE_LEVEL 10
 
 #if TRACE_LEVEL    // ByteCodeReading_TRACEer
 #include "llvm/Assembly/Writer.h"
@@ -45,6 +45,7 @@ struct RawInst {       // The raw fields out of the bytecode stream...
 };
 
 class BytecodeParser : public AbstractTypeUser {
+  string Error;     // Error message string goes here...
 public:
   BytecodeParser() {
     // Define this in case we don't see a ModuleGlobalInfo block.
@@ -52,6 +53,9 @@ public:
   }
 
   Module *ParseBytecode(const uchar *Buf, const uchar *EndBuf);
+
+  string getError() const { return Error; }
+
 private:          // All of this data is transient across calls to ParseBytecode
   Module *TheModule;   // Current Module being read into...
   

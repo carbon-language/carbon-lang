@@ -33,26 +33,30 @@ int main(int argc, char **argv) {
   assert(InputFilenames.size() > 0 && "OneOrMore is not working");
 
   // TODO: TEST argv[0]
-  
-
+  string ErrorMessage;
+    
   if (Verbose) cerr << "Loading '" << InputFilenames[0] << "'\n";
-  std::auto_ptr<Module> Composite(ParseBytecodeFile(InputFilenames[0]));
+  std::auto_ptr<Module> Composite(ParseBytecodeFile(InputFilenames[0],
+                                                    &ErrorMessage));
   if (Composite.get() == 0) {
-    cerr << "Error opening bytecode file: '" << InputFilenames[0] << "'\n";
+    cerr << "Error opening bytecode file: '" << InputFilenames[0] << "'";
+    if (ErrorMessage.size()) cerr << ": " << ErrorMessage;
+    cerr << endl;
     return 1;
   }
 
   for (unsigned i = 1; i < InputFilenames.size(); ++i) {
   if (Verbose) cerr << "Loading '" << InputFilenames[i] << "'\n";
-    auto_ptr<Module> M(ParseBytecodeFile(InputFilenames[i]));
+    auto_ptr<Module> M(ParseBytecodeFile(InputFilenames[i], &ErrorMessage));
     if (M.get() == 0) {
-      cerr << "Error opening bytecode file: '" << InputFilenames[i] << "'\n";
+      cerr << "Error opening bytecode file: '" << InputFilenames[i] << "'";
+      if (ErrorMessage.size()) cerr << ": " << ErrorMessage;
+      cerr << endl;
       return 1;
     }
 
     if (Verbose) cerr << "Linking in '" << InputFilenames[i] << "'\n";
 
-    string ErrorMessage;
     if (LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
       cerr << "Error linking in '" << InputFilenames[i] << "': "
 	   << ErrorMessage << endl;
