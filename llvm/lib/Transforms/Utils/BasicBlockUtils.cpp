@@ -34,9 +34,9 @@ void llvm::ReplaceInstWithValue(BasicBlock::InstListType &BIL,
   // Delete the unnecessary instruction now...
   BI = BIL.erase(BI);
 
-  // Make sure to propagate a name if there is one already...
-  if (OldName.size() && !V->hasName())
-    V->setName(OldName, &BIL.getParent()->getSymbolTable());
+  // Make sure to propagate a name if there is one already.
+  if (!OldName.empty() && !V->hasName())
+    V->setName(OldName);
 }
 
 

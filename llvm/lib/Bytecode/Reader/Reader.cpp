@@ -1063,7 +1063,7 @@ void BytecodeReader::ParseSymbolTable(Function *CurrentFunction,
         }
         if (V == 0)
           error("Failed value look-up for name '" + Name + "'");
-        V->setName(Name, ST);
+        V->setName(Name);
       }
     }
   }
