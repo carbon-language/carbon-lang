@@ -1120,7 +1120,6 @@ void ISel::visitBranchInst(BranchInst &BI) {
     return;
   }
 
-
   unsigned OpNum = getSetCCNumber(SCI->getOpcode());
   MachineBasicBlock::iterator MII = BB->end();
   OpNum = EmitComparison(OpNum, SCI->getOperand(0), SCI->getOperand(1), BB,MII);
@@ -1128,15 +1127,6 @@ void ISel::visitBranchInst(BranchInst &BI) {
   const Type *CompTy = SCI->getOperand(0)->getType();
   bool isSigned = CompTy->isSigned() && getClassB(CompTy) != cFP;
   
-  // LLVM  -> X86 signed  X86 unsigned
-  // -----    ----------  ------------
-  // seteq -> je          je
-  // setne -> jne         jne
-  // setlt -> jl          jb
-  // setge -> jge         jae
-  // setgt -> jg          ja
-  // setle -> jle         jbe
-
   static const unsigned BITab[6] = { 2, 2, 0, 0, 1, 1 };
   unsigned BO_true = (OpNum % 2 == 0) ? 12 : 4;
   unsigned BO_false = (OpNum % 2 == 0) ? 4 : 12;
