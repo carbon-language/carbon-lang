@@ -71,11 +71,42 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
       if (!isa<LoadInst>(UI) || cast<LoadInst>(UI)->isVolatile()) return false;
       
       // Scan looking for memory accesses.
+      // FIXME: this should REALLY use alias analysis.
       for (--UI; !isa<PHINode>(UI); --UI)
         if (isa<LoadInst>(UI) || isa<StoreInst>(UI) || isa<CallInst>(UI))
           return false;
 
       // If we got this far, we can promote the PHI use.
+    } else if (const SelectInst *SI = dyn_cast<SelectInst>(*UI)) {
+      // We only support selects in a few simple cases.  The select is only
+      // allowed to have one use, which must be a load instruction, and can only
+      // use alloca instructions (no random pointers).  Also, there cannot be
+      // any accesses to AI between the PHI node and the use of the PHI.
+      if (!SI->hasOneUse()) return false;
+
+      // Our transformation causes the unconditional loading of all pointer
+      // operands of the select.  Because this could cause a fault if there is a
+      // critical edge in the CFG and if one of the pointers is illegal, we
+      // refuse to promote the select unless it is obviously safe.  For now,
+      // obviously safe means that all of the operands are allocas.
+      //
+      if (!isa<AllocaInst>(SI->getOperand(1)) ||
+          !isa<AllocaInst>(SI->getOperand(2)))
+        return false;
+      
+      // Now make sure the one user instruction is in the same basic block as
+      // the PHI, and that there are no loads or stores between the PHI node and
+      // the access.
+      BasicBlock::const_iterator UI = cast<Instruction>(SI->use_back());
+      if (!isa<LoadInst>(UI) || cast<LoadInst>(UI)->isVolatile()) return false;
+      
+      // Scan looking for memory accesses.
+      // FIXME: this should REALLY use alias analysis.
+      for (--UI; &*UI != SI; --UI)
+        if (isa<LoadInst>(UI) || isa<StoreInst>(UI) || isa<CallInst>(UI))
+          return false;
+
+      // If we got this far, we can promote the select use.
     } else {
       return false;   // Not a load, store, or promotable PHI?
     }
@@ -170,6 +201,28 @@ void PromoteMem2Reg::run() {
       } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
         // Otherwise it must be a load instruction, keep track of variable reads
         UsingBlocks.push_back(LI->getParent());
+      } else if (SelectInst *SI = dyn_cast<SelectInst>(User)) {
+        // Because of the restrictions we placed on Select instruction uses
+        // above things are very simple.  Transform the PHI of addresses into a
+        // select of loaded values.
+        LoadInst *Load = cast<LoadInst>(SI->use_back());
+        std::string LoadName = Load->getName(); Load->setName("");
+
+        Value *TrueVal = new LoadInst(SI->getOperand(1), 
+                                      SI->getOperand(1)->getName()+".val", SI);
+        Value *FalseVal = new LoadInst(SI->getOperand(2), 
+                                       SI->getOperand(2)->getName()+".val", SI);
+
+        Value *NewSI = new SelectInst(SI->getOperand(0), TrueVal,
+                                      FalseVal, Load->getName(), SI);
+        Load->replaceAllUsesWith(NewSI);
+        Load->getParent()->getInstList().erase(Load);
+        SI->getParent()->getInstList().erase(SI);
+
+        // Restart our scan of uses...
+        DefiningBlocks.clear();
+        UsingBlocks.clear();
+        goto RestartUseScan;
       } else {
         // Because of the restrictions we placed on PHI node uses above, the PHI
         // node reads the block in any using predecessors.  Transform the PHI of
