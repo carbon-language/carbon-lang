@@ -180,14 +180,14 @@ void *JITResolver::getFunctionStub(Function *F) {
   // Call the lazy resolver function unless we already KNOW it is an external
   // function, in which case we just skip the lazy resolution step.
   void *Actual = (void*)LazyResolverFn;
-  if (F->hasExternalLinkage())
+  if (F->isExternal() && F->hasExternalLinkage())
     Actual = TheJIT->getPointerToFunction(F);
     
   // Otherwise, codegen a new stub.  For now, the stub will call the lazy
   // resolver function.
   Stub = TheJIT->getJITInfo().emitFunctionStub(Actual, MCE);
 
-  if (F->hasExternalLinkage()) {
+  if (Actual != (void*)LazyResolverFn) {
     // If we are getting the stub for an external function, we really want the
     // address of the stub in the GlobalAddressMap for the JIT, not the address
     // of the external function.
