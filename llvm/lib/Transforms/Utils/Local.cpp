@@ -300,7 +300,7 @@ Constant *llvm::ConstantFoldCall(Function *F,
         double Op1V = Op1->getValue(), Op2V = Op2->getValue();
 
         if (Name == "llvm.isunordered")
-          return ConstantBool::get(isnan(Op1V) | isnan(Op2V));
+          return ConstantBool::get(std::isnan(Op1V) | std::isnan(Op2V));
         else if (Name == "pow") {
           errno = 0;
           double V = pow(Op1V, Op2V);
