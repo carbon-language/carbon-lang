@@ -20,16 +20,19 @@
 #include "llvm/Value.h"
 #include <iostream>
 
+namespace {
+class SlotMachine;     // Internal private class
+}
+
 namespace llvm {
 
 class Module;
 class PointerType;
-class SlotCalculator;
 class AssemblyWriter;  // Internal private class
 
 class CachedWriter {
   AssemblyWriter *AW;
-  SlotCalculator *SC;
+  SlotMachine *SC;
   bool SymbolicTypes;
   std::ostream *Out;
 

@@ -32,8 +32,7 @@ using namespace llvm;
 #define SC_DEBUG(X)
 #endif
 
-SlotCalculator::SlotCalculator(const Module *M, bool buildBytecodeInfo) {
-  BuildBytecodeInfo = buildBytecodeInfo;
+SlotCalculator::SlotCalculator(const Module *M ) {
   ModuleContainsAllFunctionConstants = false;
   TheModule = M;
 
@@ -50,8 +49,7 @@ SlotCalculator::SlotCalculator(const Module *M, bool buildBytecodeInfo) {
   processModule();
 }
 
-SlotCalculator::SlotCalculator(const Function *M, bool buildBytecodeInfo) {
-  BuildBytecodeInfo = buildBytecodeInfo;
+SlotCalculator::SlotCalculator(const Function *M ) {
   ModuleContainsAllFunctionConstants = false;
   TheModule = M ? M->getParent() : 0;
 
@@ -137,31 +135,29 @@ void SlotCalculator::processModule() {
   // that contain constant strings so that the strings occur at the start of the
   // plane, not somewhere in the middle.
   //
-  if (BuildBytecodeInfo) {
-    TypePlane &Types = Table[Type::TypeTyID];
-    for (unsigned plane = 0, e = Table.size(); plane != e; ++plane) {
-      if (const ArrayType *AT = dyn_cast<ArrayType>(Types[plane]))
-        if (AT->getElementType() == Type::SByteTy ||
-            AT->getElementType() == Type::UByteTy) {
-          TypePlane &Plane = Table[plane];
-          unsigned FirstNonStringID = 0;
-          for (unsigned i = 0, e = Plane.size(); i != e; ++i)
-            if (isa<ConstantAggregateZero>(Plane[i]) ||
-                cast<ConstantArray>(Plane[i])->isString()) {
-              // Check to see if we have to shuffle this string around.  If not,
-              // don't do anything.
-              if (i != FirstNonStringID) {
-                // Swap the plane entries....
-                std::swap(Plane[i], Plane[FirstNonStringID]);
-                
-                // Keep the NodeMap up to date.
-                NodeMap[Plane[i]] = i;
-                NodeMap[Plane[FirstNonStringID]] = FirstNonStringID;
-              }
-              ++FirstNonStringID;
-            }
-        }
-    }
+  TypePlane &Types = Table[Type::TypeTyID];
+  for (unsigned plane = 0, e = Table.size(); plane != e; ++plane) {
+    if (const ArrayType *AT = dyn_cast<ArrayType>(Types[plane]))
+      if (AT->getElementType() == Type::SByteTy ||
+	  AT->getElementType() == Type::UByteTy) {
+	TypePlane &Plane = Table[plane];
+	unsigned FirstNonStringID = 0;
+	for (unsigned i = 0, e = Plane.size(); i != e; ++i)
+	  if (isa<ConstantAggregateZero>(Plane[i]) ||
+	      cast<ConstantArray>(Plane[i])->isString()) {
+	    // Check to see if we have to shuffle this string around.  If not,
+	    // don't do anything.
+	    if (i != FirstNonStringID) {
+	      // Swap the plane entries....
+	      std::swap(Plane[i], Plane[FirstNonStringID]);
+	      
+	      // Keep the NodeMap up to date.
+	      NodeMap[Plane[i]] = i;
+	      NodeMap[Plane[FirstNonStringID]] = FirstNonStringID;
+	    }
+	    ++FirstNonStringID;
+	  }
+      }
   }
   
   // If we are emitting a bytecode file, scan all of the functions for their
@@ -175,31 +171,26 @@ void SlotCalculator::processModule() {
   // the fly.  For now, however, it is unconditionally enabled when building
   // bytecode information.
   //
-  if (BuildBytecodeInfo) {
-    ModuleContainsAllFunctionConstants = true;
+  ModuleContainsAllFunctionConstants = true;
 
-    SC_DEBUG("Inserting function constants:\n");
-    for (Module::const_iterator F = TheModule->begin(), E = TheModule->end();
-         F != E; ++F) {
-      for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I){
-        for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
-          if (isa<Constant>(I->getOperand(op)))
-            getOrCreateSlot(I->getOperand(op));
-        getOrCreateSlot(I->getType());
-        if (const VANextInst *VAN = dyn_cast<VANextInst>(&*I))
-          getOrCreateSlot(VAN->getArgType());
-      }
-      processSymbolTableConstants(&F->getSymbolTable());
+  SC_DEBUG("Inserting function constants:\n");
+  for (Module::const_iterator F = TheModule->begin(), E = TheModule->end();
+       F != E; ++F) {
+    for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I){
+      for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
+	if (isa<Constant>(I->getOperand(op)))
+	  getOrCreateSlot(I->getOperand(op));
+      getOrCreateSlot(I->getType());
+      if (const VANextInst *VAN = dyn_cast<VANextInst>(&*I))
+	getOrCreateSlot(VAN->getArgType());
     }
+    processSymbolTableConstants(&F->getSymbolTable());
   }
 
   // Insert constants that are named at module level into the slot pool so that
   // the module symbol table can refer to them...
-  //
-  if (BuildBytecodeInfo) {
-    SC_DEBUG("Inserting SymbolTable values:\n");
-    processSymbolTable(&TheModule->getSymbolTable());
-  }
+  SC_DEBUG("Inserting SymbolTable values:\n");
+  processSymbolTable(&TheModule->getSymbolTable());
 
   // Now that we have collected together all of the information relevant to the
   // module, compactify the type table if it is particularly big and outputting
@@ -210,7 +201,7 @@ void SlotCalculator::processModule() {
   // all non-value types are pushed to the end of the type table, giving nice
   // low numbers to the types that can be used by instructions, thus reducing
   // the amount of explodage we suffer.
-  if (BuildBytecodeInfo && Table[Type::TypeTyID].size() >= 64) {
+  if (Table[Type::TypeTyID].size() >= 64) {
     // Scan through the type table moving value types to the start of the table.
     TypePlane *Types = &Table[Type::TypeTyID];
     unsigned FirstNonValueTypeID = 0;
@@ -283,7 +274,7 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   SC_DEBUG("begin processFunction!\n");
 
   // If we emitted all of the function constants, build a compaction table.
-  if (BuildBytecodeInfo && ModuleContainsAllFunctionConstants)
+  if ( ModuleContainsAllFunctionConstants)
     buildCompactionTable(F);
 
   // Update the ModuleLevel entries to be accurate.
@@ -295,8 +286,7 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   for(Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
     getOrCreateSlot(I);
 
-  if (BuildBytecodeInfo &&              // Assembly writer does not need this!
-      !ModuleContainsAllFunctionConstants) {
+  if ( !ModuleContainsAllFunctionConstants ) {
     // Iterate over all of the instructions in the function, looking for
     // constant values that are referenced.  Add these to the value pools
     // before any nonconstant values.  This will be turned into the constant
@@ -652,11 +642,10 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
       assert(CompactionNodeMap.empty() &&
              "All needed constants should be in the compaction map already!");
 
-      // If we are emitting a bytecode file, do not index the characters that
-      // make up constant strings.  We emit constant strings as special
-      // entities that don't require their individual characters to be emitted.
-      if (!BuildBytecodeInfo || !isa<ConstantArray>(C) ||
-          !cast<ConstantArray>(C)->isString()) {
+      // Do not index the characters that make up constant strings.  We emit 
+      // constant strings as special entities that don't require their 
+      // individual characters to be emitted.
+      if (!isa<ConstantArray>(C) || !cast<ConstantArray>(C)->isString()) {
         // This makes sure that if a constant has uses (for example an array of
         // const ints), that they are inserted also.
         //
@@ -700,9 +689,7 @@ int SlotCalculator::insertValue(const Value *D, bool dontIgnore) {
   // do need slot numbers so that we can keep track of where other values land.
   //
   if (!dontIgnore)                               // Don't ignore nonignorables!
-    if (D->getType() == Type::VoidTy ||          // Ignore void type nodes
-	(!BuildBytecodeInfo &&                   // Ignore named and constants
-	 (D->hasName() || isa<Constant>(D)) && !isa<Type>(D))) {
+    if (D->getType() == Type::VoidTy ) {         // Ignore void type nodes
       SC_DEBUG("ignored value " << *D << "\n");
       return -1;                  // We do need types unconditionally though
     }
@@ -775,7 +762,7 @@ int SlotCalculator::doInsertValue(const Value *D) {
 
   // If this is the first value to get inserted into the type plane, make sure
   // to insert the implicit null value...
-  if (Table[Ty].empty() && BuildBytecodeInfo && hasNullValue(Ty)) {
+  if (Table[Ty].empty() &&  hasNullValue(Ty)) {
     Value *ZeroInitializer = Constant::getNullValue(Typ);
 
     // If we are pushing zeroinit, it will be handled below.

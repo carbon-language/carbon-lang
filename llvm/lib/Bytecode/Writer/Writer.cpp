@@ -40,7 +40,7 @@ static Statistic<>
 BytesWritten("bytecodewriter", "Number of bytecode bytes written");
 
 BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M) 
-  : Out(o), Table(M, true) {
+  : Out(o), Table(M) {
 
   // Emit the signature...
   static const unsigned char *Sig =  (const unsigned char*)"llvm";

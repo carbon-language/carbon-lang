@@ -34,12 +34,6 @@ class ConstantArray;
 class SlotCalculator {
   const Module *TheModule;
 
-  /// BuildBytecodeInfo - If true, this is the creating information for the
-  /// bytecode writer, if false, we are building information for the assembly
-  /// emitter.  The assembly emitter doesn't need named objects numbered, among
-  /// other differences.
-  bool BuildBytecodeInfo;
-
   typedef std::vector<const Value*> TypePlane;
   std::vector<TypePlane> Table;
   std::map<const Value*, unsigned> NodeMap;
@@ -68,9 +62,9 @@ class SlotCalculator {
   SlotCalculator(const SlotCalculator &);  // DO NOT IMPLEMENT
   void operator=(const SlotCalculator &);  // DO NOT IMPLEMENT
 public:
-  SlotCalculator(const Module *M, bool BuildBytecodeInfo);
+  SlotCalculator(const Module *M );
   // Start out in incorp state
-  SlotCalculator(const Function *F, bool BuildBytecodeInfo);
+  SlotCalculator(const Function *F );
   
   /// getSlot - Return the slot number of the specified value in it's type
   /// plane.  This returns < 0 on error!
