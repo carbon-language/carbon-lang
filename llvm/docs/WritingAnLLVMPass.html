@@ -1159,9 +1159,8 @@ want:<p>
 <pre>
 (gdb) <b>break PassManager::run</b>
 Breakpoint 1 at 0x2413bc: file Pass.cpp, line 70.
-(gdb) <b>run test.bc -load /shared/lattner/cvs/llvm/lib/Debug/[libname].so -[passoption]</b>
-Starting program: /shared/lattner/cvs/llvm/tools/Debug/opt test.bc 
-    -load /shared/lattner/cvs/llvm/lib/Debug/[libname].so -[passoption]
+(gdb) <b>run test.bc -load $(LLVMTOP)/llvm/lib/Debug/[libname].so -[passoption]</b>
+Starting program: opt test.bc -load $(LLVMTOP)/llvm/lib/Debug/[libname].so -[passoption]
 Breakpoint 1, PassManager::run (this=0xffbef174, M=@0x70b298) at Pass.cpp:70
 70      bool PassManager::run(Module &amp;M) { return PM-&gt;run(M); }
 (gdb)
