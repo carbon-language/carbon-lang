@@ -255,6 +255,10 @@ public:
     assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
     return contents.MBB;
   }
+  void setMachineBasicBlock(MachineBasicBlock *MBB) {
+    assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
+    contents.MBB = MBB;
+  }
   int getFrameIndex() const {
     assert(isFrameIndex() && "Wrong MachineOperand accessor");
     return contents.immedVal;

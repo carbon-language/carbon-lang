@@ -115,30 +115,42 @@ public:
   pred_iterator        pred_end()         { return Predecessors.end ();   }
   const_pred_iterator  pred_end()   const { return Predecessors.end ();   }
   unsigned             pred_size()  const { return Predecessors.size ();  }
+  bool                 pred_empty() const { return Predecessors.empty();  }
   succ_iterator        succ_begin()       { return Successors.begin ();   }
   const_succ_iterator  succ_begin() const { return Successors.begin ();   }
   succ_iterator        succ_end()         { return Successors.end ();     }
   const_succ_iterator  succ_end()   const { return Successors.end ();     }
   unsigned             succ_size()  const { return Successors.size ();    }
+  bool                 succ_empty() const { return Successors.empty();    }
 
   // Machine-CFG mutators
 
   /// addSuccessor - Add succ as a successor of this MachineBasicBlock.
   /// The Predecessors list of succ is automatically updated.
   ///
-  void addSuccessor (MachineBasicBlock *succ) {
-    Successors.push_back (succ);
-    succ->addPredecessor (this);
+  void addSuccessor(MachineBasicBlock *succ) {
+    Successors.push_back(succ);
+    succ->addPredecessor(this);
   }
 
-  /// removeSuccessor - Remove succ from the successors list of this
+  /// removeSuccessor - Remove successor from the successors list of this
   /// MachineBasicBlock. The Predecessors list of succ is automatically updated.
   ///
-  void removeSuccessor (MachineBasicBlock *succ) {
-    succ->removePredecessor (this);
-    std::vector<MachineBasicBlock *>::iterator goner =
-      std::find (Successors.begin(), Successors.end (), succ);
-    Successors.erase (goner);
+  void removeSuccessor(MachineBasicBlock *succ) {
+    succ->removePredecessor(this);
+    succ_iterator I = std::find(Successors.begin(), Successors.end(), succ);
+    assert(I != Successors.end() && "Not a current successor!");
+    Successors.erase(I);
+  }
+
+  /// removeSuccessor - Remove specified successor from the successors list of
+  /// this MachineBasicBlock. The Predecessors list of succ is automatically
+  /// updated.
+  ///
+  void removeSuccessor(succ_iterator I) {
+    assert(I != Successors.end() && "Not a current successor!");
+    (*I)->removePredecessor(this);
+    Successors.erase(I);
   }
 
   /// getFirstTerminator - returns an iterator to the first terminator
