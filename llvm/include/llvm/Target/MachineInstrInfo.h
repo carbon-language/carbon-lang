@@ -299,15 +299,31 @@ public:
 
   // Create instruction sequence to produce a sign-extended register value
   // from an arbitrary sized value (sized in bits, not bytes).
+  // The generated instructions are appended to `mvec'.
+  // Any temp. registers (TmpInstruction) created are recorded in mcfi.
   // Any stack space required is allocated via mcff.
   // 
   virtual void CreateSignExtensionInstructions(const TargetMachine& target,
                                        Function* F,
-                                       Value* unsignedSrcVal,
+                                       Value* srcVal,
                                        unsigned int srcSizeInBits,
                                        Value* dest,
                                        std::vector<MachineInstr*>& mvec,
-                                       MachineCodeForInstruction& mcfi)const=0;
+                                       MachineCodeForInstruction& mcfi) const=0;
+
+  // Create instruction sequence to produce a zero-extended register value
+  // from an arbitrary sized value (sized in bits, not bytes).
+  // The generated instructions are appended to `mvec'.
+  // Any temp. registers (TmpInstruction) created are recorded in mcfi.
+  // Any stack space required is allocated via mcff.
+  // 
+  virtual void CreateZeroExtensionInstructions(const TargetMachine& target,
+                                       Function* F,
+                                       Value* srcVal,
+                                       unsigned int srcSizeInBits,
+                                       Value* dest,
+                                       std::vector<MachineInstr*>& mvec,
+                                       MachineCodeForInstruction& mcfi) const=0;
 };
 
 #endif
