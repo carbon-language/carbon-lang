@@ -1,12 +1,14 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-    <title>Stacker: An Example Of Using LLVM</title>
+  <title>Stacker: An Example Of Using LLVM</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
 <body>
+
 <div class="doc_title">Stacker: An Example Of Using LLVM</div>
-<hr>
+
 <ol>
   <li><a href="#abstract">Abstract</a></li>
   <li><a href="#introduction">Introduction</a></li>
@@ -19,19 +21,17 @@
       <li><a href="#gep">The Wily GetElementPtrInst</a></li>
       <li><a href="#linkage">Getting Linkage Types Right</a></li>
       <li><a href="#constants">Constants Are Easier Than That!</a></li>
-    </ol>
-  </li>
+    </ol></li>
   <li><a href="#lexicon">The Stacker Lexicon</a>
     <ol>
-      <li><a href="#stack">The Stack</a>
-      <li><a href="#punctuation">Punctuation</a>
-      <li><a href="#comments">Comments</a>
-      <li><a href="#literals">Literals</a>
-      <li><a href="#words">Words</a>
-      <li><a href="style">Standard Style</a>
-      <li><a href="#builtins">Built-Ins</a>
-    </ol>
-  </li>
+      <li><a href="#stack">The Stack</a></li>
+      <li><a href="#punctuation">Punctuation</a></li>
+      <li><a href="#comments">Comments</a></li>
+      <li><a href="#literals">Literals</a></li>
+      <li><a href="#words">Words</a></li>
+      <li><a href="style">Standard Style</a></li>
+      <li><a href="#builtins">Built-Ins</a></li>
+    </ol></li>
   <li><a href="#example">Prime: A Complete Example</a></li>
   <li><a href="#internal">Internal Code Details</a>
     <ol>
@@ -44,16 +44,15 @@
       <li><a href="#tests">Test Programs</a></li>
       <li><a href="#exercise">Exercise</a></li>
       <li><a href="#todo">Things Remaining To Be Done</a></li>
-    </ol>
-  </li>
+    </ol></li>
 </ol>
+
 <div class="doc_text">
-<p><b>Written by <a href="mailto:rspencer@x10sys.com">Reid Spencer</a> </b></p>
-<p> </p>
+<p><b>Written by <a href="mailto:rspencer@x10sys.com">Reid Spencer</a></b></p>
 </div>
-<hr>
+
 <!-- ======================================================================= -->
-<div class="doc_section"> <a name="abstract">Abstract </a></div>
+<div class="doc_section"><a name="abstract">Abstract</a></div>
 <div class="doc_text">
 <p>This document is another way to learn about LLVM. Unlike the 
 <a href="LangRef.html">LLVM Reference Manual</a> or 
@@ -222,11 +221,11 @@ should be constructed. In general, here's what I learned:
     before. This makes for some very clean compiler design.</li>
 </ol>
 <p>The foregoing is such an important principal, its worth making an idiom:</p>
-<pre><code>
-BasicBlock* bb = new BasicBlock();</li>
+<pre>
+BasicBlock* bb = new BasicBlock();
 bb->getInstList().push_back( new Branch( ... ) );
 new Instruction(..., bb->getTerminator() );
-</code></pre>
+</pre>
 <p>To make this clear, consider the typical if-then-else statement
 (see StackerCompiler::handle_if() method).  We can set this up
 in a single function using LLVM in the following way: </p>
@@ -301,20 +300,21 @@ read the Language Reference and Programmer's Manual a couple times each, I still
 missed a few <em>very</em> key points:
 </p>
 <ul>
-    <li>GetElementPtrInst gives you back a Value for the last thing indexed.</em>
-    <li>All global variables in LLVM  are <em>pointers</em>.
-    <li>Pointers must also be dereferenced with the GetElementPtrInst instruction.
+<li>GetElementPtrInst gives you back a Value for the last thing indexed.</li>
+<li>All global variables in LLVM  are <em>pointers</em>.</li>
+<li>Pointers must also be dereferenced with the GetElementPtrInst
+instruction.</li>
 </ul>
 <p>This means that when you look up an element in the global variable (assuming
 it's a struct or array), you <em>must</em> deference the pointer first! For many
 things, this leads to the idiom:
 </p>
-<pre><code>
-std::vector<Value*> index_vector;
+<pre>
+std::vector&lt;Value*&gt; index_vector;
 index_vector.push_back( ConstantSInt::get( Type::LongTy, 0 );
 // ... push other indices ...
 GetElementPtrInst* gep = new GetElementPtrInst( ptr, index_vector );
-</code></pre>
+</pre>
 <p>For example, suppose we have a global variable whose type is [24 x int]. The
 variable itself represents a <em>pointer</em> to that array. To subscript the
 array, we need two indices, not just one. The first index (0) dereferences the
@@ -513,10 +513,10 @@ using the following construction:</p>
 <tr class="doc_table"><td colspan="4" style="border: 2px solid blue">Definition Of Operation Of Built In Words</td></tr>
 <tr class="doc_table"><td colspan="4" style="border: 2px solid blue"><b>LOGICAL OPERATIONS</b></td></tr>
 <tr class="doc_table">
-    <td style="border: 2px solid blue"><u>Word</u></td>
-    <td style="border: 2px solid blue"><u>Name</u></td>
-    <td style="border: 2px solid blue"><u>Operation</u></td>
-    <td style="border: 2px solid blue"><u>Description</u></td>
+    <td style="border: 2px solid blue">Word</td>
+    <td style="border: 2px solid blue">Name</td>
+    <td style="border: 2px solid blue">Operation</td>
+    <td style="border: 2px solid blue">Description</td>
 </tr>
 <tr class="doc_table"><td style="border: 2px solid blue">&lt;</td>
     <td style="border: 2px solid blue">LT</td>
@@ -576,10 +576,10 @@ using the following construction:</p>
 </tr>
 <tr><td colspan="4"><b>BITWISE OPERATORS</b></td></tr>
 <tr>
-    <td style="border: 2px solid blue"><u>Word</u></td>
-    <td style="border: 2px solid blue"><u>Name</u></td>
-    <td style="border: 2px solid blue"><u>Operation</u></td>
-    <td style="border: 2px solid blue"><u>Description</u></td>
+    <td style="border: 2px solid blue">Word</td>
+    <td style="border: 2px solid blue">Name</td>
+    <td style="border: 2px solid blue">Operation</td>
+    <td style="border: 2px solid blue">Description</td>
 </tr>
 <tr><td style="border: 2px solid blue">&lt;&lt;</td>
     <td style="border: 2px solid blue">SHL</td>
@@ -618,10 +618,10 @@ using the following construction:</p>
 </tr>
 <tr><td colspan="4"><b>ARITHMETIC OPERATORS</b></td></tr>
 <tr>
-    <td style="border: 2px solid blue"><u>Word</u></td>
-    <td style="border: 2px solid blue"><u>Name</u></td>
-    <td style="border: 2px solid blue"><u>Operation</u></td>
-    <td style="border: 2px solid blue"><u>Description</u></td>
+    <td style="border: 2px solid blue">Word</td>
+    <td style="border: 2px solid blue">Name</td>
+    <td style="border: 2px solid blue">Operation</td>
+    <td style="border: 2px solid blue">Description</td>
 </tr>
 <tr><td style="border: 2px solid blue">ABS</td>
     <td style="border: 2px solid blue">ABS</td>
@@ -699,10 +699,10 @@ using the following construction:</p>
 </tr>
 <tr><td colspan="4"><b>STACK MANIPULATION OPERATORS</b></td></tr>
 <tr>
-    <td style="border: 2px solid blue"><u>Word</u></td>
-    <td style="border: 2px solid blue"><u>Name</u></td>
-    <td style="border: 2px solid blue"><u>Operation</u></td>
-    <td style="border: 2px solid blue"><u>Description</u></td>
+    <td style="border: 2px solid blue">Word</td>
+    <td style="border: 2px solid blue">Name</td>
+    <td style="border: 2px solid blue">Operation</td>
+    <td style="border: 2px solid blue">Description</td>
 </tr>
 <tr><td style="border: 2px solid blue">DROP</td>
     <td style="border: 2px solid blue">DROP</td>
@@ -754,7 +754,7 @@ using the following construction:</p>
     <td style="border: 2px solid blue">The top four stack items are swapped in pairs. That is, two values
 	are popped and retained. Then, two more values are popped and retained.
 	The values are pushed back on to the stack in the reverse order but
-	in pairs.</p>
+	in pairs.</td>
 </tr>
 <tr><td style="border: 2px solid blue">OVER</td>
     <td style="border: 2px solid blue">OVER</td>
@@ -844,10 +844,10 @@ using the following construction:</p>
 </tr>
 <tr><td colspan="4"><b>MEMORY OPERATORS</b></td></tr>
 <tr>
-    <td style="border: 2px solid blue"><u>Word</u></td>
-    <td style="border: 2px solid blue"><u>Name</u></td>
-    <td style="border: 2px solid blue"><u>Operation</u></td>
-    <td style="border: 2px solid blue"><u>Description</u></td>
+    <td style="border: 2px solid blue">Word</td>
+    <td style="border: 2px solid blue">Name</td>
+    <td style="border: 2px solid blue">Operation</td>
+    <td style="border: 2px solid blue">Description</td>
 </tr>
 <tr><td style="border: 2px solid blue">MALLOC</td>
     <td style="border: 2px solid blue">MALLOC</td>
@@ -897,10 +897,10 @@ using the following construction:</p>
 </tr>
 <tr><td colspan="4"><b>CONTROL FLOW OPERATORS</b></td></tr>
 <tr>
-    <td style="border: 2px solid blue"><u>Word</u></td>
-    <td style="border: 2px solid blue"><u>Name</u></td>
-    <td style="border: 2px solid blue"><u>Operation</u></td>
-    <td style="border: 2px solid blue"><u>Description</u></td>
+    <td style="border: 2px solid blue">Word</td>
+    <td style="border: 2px solid blue">Name</td>
+    <td style="border: 2px solid blue">Operation</td>
+    <td style="border: 2px solid blue">Description</td>
 </tr>
 <tr><td style="border: 2px solid blue">RETURN</td>
     <td style="border: 2px solid blue">RETURN</td>
@@ -964,10 +964,10 @@ using the following construction:</p>
 </tr>
 <tr><td colspan="4"><b>INPUT &amp; OUTPUT OPERATORS</b></td></tr>
 <tr>
-    <td style="border: 2px solid blue"><u>Word</u></td>
-    <td style="border: 2px solid blue"><u>Name</u></td>
-    <td style="border: 2px solid blue"><u>Operation</u></td>
-    <td style="border: 2px solid blue"><u>Description</u></td>
+    <td style="border: 2px solid blue">Word</td>
+    <td style="border: 2px solid blue">Name</td>
+    <td style="border: 2px solid blue">Operation</td>
+    <td style="border: 2px solid blue">Description</td>
 </tr>
 <tr><td style="border: 2px solid blue">SPACE</td>
     <td style="border: 2px solid blue">SPACE</td>
@@ -1311,32 +1311,32 @@ directory contains everything, as follows:</p>
 <div class="doc_subsection"><a name="lexer"></a>The Lexer</div>
 <div class="doc_text">
 <p>See projects/Stacker/lib/compiler/Lexer.l</p>
-</p></div>
+</div>
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="parser"></a>The Parser</div>
 <div class="doc_text">
 <p>See projects/Stacker/lib/compiler/StackerParser.y</p>
-</p></div>
+</div>
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="compiler"></a>The Compiler</div>
 <div class="doc_text">
 <p>See projects/Stacker/lib/compiler/StackerCompiler.cpp</p>
-</p></div>
+</div>
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="runtime"></a>The Runtime</div>
 <div class="doc_text">
 <p>See projects/Stacker/lib/runtime/stacker_rt.c</p>
-</p></div>
+</div>
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="driver"></a>Compiler Driver</div>
 <div class="doc_text">
 <p>See projects/Stacker/tools/stkrc/stkrc.cpp</p>
-</p></div>
+</div>
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="tests"></a>Test Programs</div>
 <div class="doc_text">
 <p>See projects/Stacker/test/*.st</p>
-</p></div>
+</div>
 <!-- ======================================================================= -->
 <div class="doc_subsection"> <a name="exercise">Exercise</a></div>
 <div class="doc_text">
@@ -1390,11 +1390,20 @@ interested, here are some things that could be implemented better:</p>
     <a href="#lessons">Lessons I Learned About LLVM</a> section.</li>
 </ol>
 </div>
-<!-- ======================================================================= -->
+
+<!-- *********************************************************************** -->
+
 <hr>
-<div class="doc_footer">
-<address><a href="mailto:rspencer@x10sys.com">Reid Spencer</a></address>
-<a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a> 
-<br>Last modified: $Date$ </div>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a>
+
+  <a href="mailto:rspencer@x10sys.com">Reid Spencer</a><br>
+  <a href="http://llvm.cs.uiuc.edu">LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date$
+</address>
+
 </body>
 </html>
