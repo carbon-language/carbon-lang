@@ -55,6 +55,11 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
   unsigned Dest = MI->getOperand(0).getReg();
   unsigned Src = MI->getOperand(1).getReg();
 
+  // FIXME: None of these instructions are promotable to LEAs without 
+  // additional information.  In particular, LEA doesn't set the flags that 
+  // add and inc do.  :(
+  return 0;
+
   // FIXME: 16-bit LEA's are really slow on Athlons, but not bad on P4's.  When
   // we have subtarget support, enable the 16-bit LEA generation here.
   bool DisableLEA16 = true;
