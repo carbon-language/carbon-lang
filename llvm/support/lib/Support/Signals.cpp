@@ -24,8 +24,10 @@ static const int *IntSigsEnd = IntSigs + sizeof(IntSigs)/sizeof(IntSigs[0]);
 // KillSigs - Signals that are synchronous with the program that will cause it
 // to die.
 static const int KillSigs[] = {
-  SIGILL, SIGTRAP, SIGABRT, SIGEMT, SIGFPE,
-  SIGBUS, SIGSEGV, SIGSYS, SIGXCPU, SIGXFSZ
+  SIGILL, SIGTRAP, SIGABRT, SIGFPE, SIGBUS, SIGSEGV, SIGSYS, SIGXCPU, SIGXFSZ
+#ifdef SIGEMT
+  , SIGEMT
+#endif
 };
 static const int *KillSigsEnd = KillSigs + sizeof(KillSigs)/sizeof(KillSigs[0]);
 
