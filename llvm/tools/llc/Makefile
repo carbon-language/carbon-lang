@@ -17,7 +17,6 @@ USEDLIBS = \
 	LLVMSparcV9 \
 	LLVMX86 \
 	LLVMSkeleton \
-	LLVMSelectionDAG \
 	LLVMSparcV9RegAlloc \
 	LLVMSparcV9InstrSched \
 	LLVMCodeGen \
