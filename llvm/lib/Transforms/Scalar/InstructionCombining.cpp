@@ -88,33 +88,52 @@ static bool SimplifyBinOp(BinaryOperator *I) {
   return false;
 }
 
+// dyn_castNegInst - Given a 'sub' instruction, return the RHS of the
+// instruction if the LHS is a constant zero (which is the 'negate' form).
+//
+static inline Value *dyn_castNegInst(Value *V) {
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I || I->getOpcode() != Instruction::Sub) return 0;
+
+  if (I->getOperand(0) == Constant::getNullValue(I->getType()))
+    return I->getOperand(1);
+  return 0;
+}
+
 Instruction *InstCombiner::visitAdd(BinaryOperator *I) {
   if (I->use_empty()) return 0;       // Don't fix dead add instructions...
   bool Changed = SimplifyBinOp(I);
-  Value *Op1 = I->getOperand(0);
+  Value *LHS = I->getOperand(0), *RHS = I->getOperand(1);
+
+  // Eliminate 'add int %X, 0'
+  if (I->getType()->isIntegral() &&
+      RHS == Constant::getNullValue(I->getType())) {
+    AddUsesToWorkList(I);         // Add all modified instrs to worklist
+    I->replaceAllUsesWith(LHS);
+    return I;
+  }
+
+  // -B + A  -->  A - B
+  if (Value *V = dyn_castNegInst(LHS))
+    return BinaryOperator::create(Instruction::Sub, RHS, LHS);
+
+  // A + -B  -->  A - B
+  if (Value *V = dyn_castNegInst(RHS))
+    return BinaryOperator::create(Instruction::Sub, LHS, RHS);
 
   // Simplify add instructions with a constant RHS...
-  if (Constant *Op2 = dyn_cast<Constant>(I->getOperand(1))) {
-    // Eliminate 'add int %X, 0'
-    if (I->getType()->isIntegral() && Op2->isNullValue()) {
-      AddUsesToWorkList(I);         // Add all modified instrs to worklist
-      I->replaceAllUsesWith(Op1);
-      return I;
-    }
- 
-    if (BinaryOperator *IOp1 = dyn_cast<BinaryOperator>(Op1)) {
-      Changed |= SimplifyBinOp(IOp1);
-      
-      if (IOp1->getOpcode() == Instruction::Add &&
-          isa<Constant>(IOp1->getOperand(1))) {
+  if (Constant *Op2 = dyn_cast<Constant>(RHS)) {
+    if (BinaryOperator *ILHS = dyn_cast<BinaryOperator>(LHS)) {
+      if (ILHS->getOpcode() == Instruction::Add &&
+          isa<Constant>(ILHS->getOperand(1))) {
         // Fold:
         //    %Y = add int %X, 1
         //    %Z = add int %Y, 1
         // into:
         //    %Z = add int %X, 2
         //
-        if (Constant *Val = *Op2 + *cast<Constant>(IOp1->getOperand(1))) {
-          I->setOperand(0, IOp1->getOperand(0));
+        if (Constant *Val = *Op2 + *cast<Constant>(ILHS->getOperand(1))) {
+          I->setOperand(0, ILHS->getOperand(0));
           I->setOperand(1, Val);
           return I;
         }
@@ -141,6 +160,14 @@ Instruction *InstCombiner::visitSub(BinaryOperator *I) {
   if (Constant *Op2 = dyn_cast<Constant>(Op1))
     if (Constant *RHS = *Constant::getNullValue(I->getType()) - *Op2) // 0 - RHS
       return BinaryOperator::create(Instruction::Add, Op0, RHS, I->getName());
+
+  // If this is a 'C = -B', check to see if 'B = -A', so that C = A...
+  if (Op0 == Constant::getNullValue(I->getType())) 
+    if (Value *V = dyn_castNegInst(Op1)) {
+      AddUsesToWorkList(I);         // Add all modified instrs to worklist
+      I->replaceAllUsesWith(V);
+      return I;
+    }
 
   return 0;
 }
