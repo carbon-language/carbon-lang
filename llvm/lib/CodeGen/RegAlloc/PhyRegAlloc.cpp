@@ -350,7 +350,7 @@ void PhyRegAlloc::insertCallerSavingCode(const MachineInstr *MInst,
 	    
 	    PushedRegSet.insert( Reg );
 	    StackOff -= 8; // ****TODO: Correct ??????
-	    cout << "\n $$$ Inserted caller saving instr";
+	    cerr << "\n $$$ Inserted caller saving instr";
 	    
 	  } // if not already pushed
 
@@ -405,9 +405,9 @@ void PhyRegAlloc::updateMachineCode()
 
 	  for( AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt ) {
 
-	    cout << " *$* PREPENDed instr opcode: ";
-	    cout << TargetInstrDescriptors[(*AdIt)->getOpCode()].opCodeString;
-	    cout << endl;
+	    cerr << " *$* PREPENDed instr opcode: ";
+	    cerr << TargetInstrDescriptors[(*AdIt)->getOpCode()].opCodeString;
+	    cerr << endl;
 	    
 	    MInstIterator = MIVec.insert( MInstIterator, *AdIt );
 	    ++MInstIterator;
@@ -445,8 +445,9 @@ void PhyRegAlloc::updateMachineCode()
 	    // nothing to worry if it's a const or a label
 
             if (DEBUG_RA) {
-              cout << "*NO LR for inst opcode: ";
-              cout << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
+              cout << "*NO LR for operand : " << Op ;
+	      cout << " [reg:" <<  Op.getAllocatedRegNum() << "]";
+	      cout << " in inst:\t" << *MInst << endl;
             }
 
 	    // if register is not allocated, mark register as invalid
@@ -474,9 +475,11 @@ void PhyRegAlloc::updateMachineCode()
 
 	    if (Val->getValueType() == Value::InstructionVal)
 	    {
-	      cout << "!Warning: No LiveRange for: ";
-	      printValue( Val); cout << " Type: " << Val->getValueType();
-	      cout << " RegVal=" <<  Op.getAllocatedRegNum() << endl;
+	      if( DEBUG_RA ) {
+		cout << "!Warning: No LiveRange for: ";
+		printValue( Val); cout << " Type: " << Val->getValueType();
+		cout << " RegVal=" <<  Op.getAllocatedRegNum() << endl;
+	      }
 	    }
 
 #endif
@@ -510,9 +513,9 @@ void PhyRegAlloc::updateMachineCode()
 
 	  for( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt ) {
 
-	    cout << " *#* APPENDed instr opcode: ";
-	    cout << TargetInstrDescriptors[(*AdIt)->getOpCode()].opCodeString;
-	    cout << endl;
+	    cerr << " *#* APPENDed instr opcode: ";
+	    cerr << TargetInstrDescriptors[(*AdIt)->getOpCode()].opCodeString;
+	    cerr << endl;
 	    
 	    MInstIterator = MIVec.insert( MInstIterator, *AdIt );
 	    ++MInstIterator;
@@ -751,7 +754,7 @@ void PhyRegAlloc::allocateRegisters()
 
   updateMachineCode(); 
   if (DEBUG_RA) {
-    // PrintMachineInstructions(Meth);
+    PrintMachineInstructions(Meth);
     printMachineCode();                   // only for DEBUGGING
   }
 }
