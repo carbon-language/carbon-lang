@@ -816,7 +816,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         if (BranchInst *PBI = dyn_cast<BranchInst>(OnlyPred->getTerminator()))
           if (PBI->isConditional() &&
               PBI->getCondition() == BI->getCondition() &&
-              PBI->getSuccessor(0) != BB || PBI->getSuccessor(1) != BB) {
+              (PBI->getSuccessor(0) != BB || PBI->getSuccessor(1) != BB)) {
             // Okay, the outcome of this conditional branch is statically
             // knowable.  Delete the outgoing CFG edge that is impossible to
             // execute.
