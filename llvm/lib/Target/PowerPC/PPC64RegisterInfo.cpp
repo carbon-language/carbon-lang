@@ -78,7 +78,7 @@ PPC64RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   const TargetRegisterClass *RC = getRegClass(SrcReg);
   unsigned OC = Opcode[getIdx(RC)];
   if (SrcReg == PPC::LR) {
-    BuildMI(MBB, MI, PPC::MFLR, 0, PPC::R11);
+    BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11).addReg(PPC::LR);
     BuildMI(MBB, MI, PPC::IMPLICIT_DEF, 0, PPC::R0);
     addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(PPC::R11),FrameIdx);
   } else {

@@ -557,7 +557,7 @@ void PPC32ISel::copyGlobalBaseToRegister(MachineBasicBlock *MBB,
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
     GlobalBaseReg = makeAnotherReg(Type::IntTy);
     BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, PPC::LR);
-    BuildMI(FirstMBB, MBBI, PPC::MFLR, 0, GlobalBaseReg).addReg(PPC::LR);
+    BuildMI(FirstMBB, MBBI, PPC::MFLR, 1, GlobalBaseReg).addReg(PPC::LR);
     GlobalBaseInitialized = true;
   }
   // Emit our copy of GlobalBaseReg to the destination register in the
