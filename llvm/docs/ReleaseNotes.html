@@ -88,7 +88,8 @@ the C front-end.
 
 <ol>
 <li>The LLVM <a href="LangRef.html#i_select"><tt>select</tt></a> instruction is
-now fully implemented and supported by all targets.</li>
+now fully implemented and supported by all targets, including
+<a href="http://llvm.cs.uiuc.edu/PR322">interpreter support.</a></li>
 <li>Bugpoint can now narrow down code-generation bugs to a loop nest, where
 before it could only narrow them down to a function being miscompiled.</li>
 </ol>
@@ -126,7 +127,7 @@ In this release, the following build problems were fixed:
 </div>
 
 <ol>
-<li></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR301">Minor configure bugs with -disable/enable-povray and -disable-spec</a></li>
 </ol>
 
 <!--=========================================================================-->
@@ -210,6 +211,16 @@ missed something and that minor porting is required to get LLVM to work on new
 platforms.  We welcome portability patches and error messages.</p>
 
 </div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+In this release, the following portability problems were fixed:
+</div>
+
+<ol>
+<li><a href="http://llvm.cs.uiuc.edu/PR304">warnings compiling Stacker compiler on Mac OS X</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR308">getObjectType doesn't understand abbreviated names in headers</a></li>
+</ol>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
