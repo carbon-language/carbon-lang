@@ -1295,6 +1295,11 @@ static inline BasicBlock *getBlockAfter(BasicBlock *BB) {
 /// just make a fall-through (but we don't currently).
 ///
 void ISel::visitBranchInst(BranchInst &BI) {
+  // Update machine-CFG edges
+  BB->addSuccessor (MBBMap[BI.getSuccessor(0)]);
+  if (BI.isConditional())
+    BB->addSuccessor (MBBMap[BI.getSuccessor(1)]);
+
   BasicBlock *NextBB = getBlockAfter(BI.getParent());  // BB after current one
 
   if (!BI.isConditional()) {  // Unconditional branch?
