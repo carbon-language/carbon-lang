@@ -272,27 +272,52 @@ sub GetQMTestResults { # (filename)
   if (open SRCHFILE, $filename) {
     # Skip stuff before ---TEST RESULTS
     while ( <SRCHFILE> ) {
-      if ( m/^--- TEST RESULTS/ ) { 
-	  push(@lines, $_); last; 
-      }
+      if ( m/^--- TEST RESULTS/ ) { last; }
     }
     # Process test results
+    push(@lines,"<h3>TEST RESULTS</h3><ol><li>\n");
+    my $first_list = 1;
+    my $should_break = 1;
     while ( <SRCHFILE> ) {
       if ( length($_) > 1 ) { 
-	  if ( ! m/: PASS[ ]*$/ &&
-	       ! m/^    qmtest.target:/ && 
-	       ! m/^      local/ &&
-	       ! m/^gmake:/ ) {
-	  push(@lines,$_); 
+	chomp($_);
+	if ( ! m/: PASS[ ]*$/ &&
+	     ! m/^    qmtest.target:/ && 
+	     ! m/^      local/ &&
+	     ! m/^gmake:/ ) {
+	  if ( m/: XFAIL/ || m/: XPASS/ || m/: FAIL/ ) {
+	    if ( $first_list ) {
+	      $first_list = 0;
+	      $should_break = 1;
+	      push(@lines,"<b>$_</b><br/>\n");
+	    } else {
+	      push(@lines,"</li><li><b>$_</b><br/>\n");
+	    }
+	  } elsif ( m/^--- STATISTICS/ ) {
+	    if ( $first_list ) { push(@lines,"<b>PERFECT!</b>"); }
+	    push(@lines,"</li></ol><h3>STATISTICS</h3><pre>\n");
+	    $should_break = 0;
+	  } elsif ( m/^--- TESTS WITH/ ) {
+	    $should_break = 1;
+	    $first_list = 1;
+	    push(@lines,"</pre><h3>TESTS WITH UNEXPECTED RESULTS</h3><ol><li>\n");
+	  } elsif ( m/^real / ) {
+	    last;
+	  } else {
+	    if ( $should_break ) {
+	      push(@lines,"$_<br/>\n");
+	    } else {
+	      push(@lines,"$_\n");
+	    }
+	  }
 	}
       }
     }
     close SRCHFILE;
   }
   my $content = join("",@lines);
-  return "<pre>\n@lines</pre>\n";
+  return "$content</pre>\n";
 }
-
 
 # Get results of feature tests.
 my $FeatureTestResults; # String containing the results of the feature tests
