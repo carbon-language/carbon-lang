@@ -190,7 +190,9 @@ Archive::parseMemberHeader(const char*& At, const char* End) {
   member->path.setFile(pathname);
   member->info.fileSize = MemberSize;
   member->info.modTime.fromEpochTime(atoi(Hdr->date));
-  sscanf(Hdr->mode, "%o", &(member->info.mode));
+  unsigned int mode;
+  sscanf(Hdr->mode, "%o", &mode);
+  member->info.mode = mode;
   member->info.user = atoi(Hdr->uid);
   member->info.group = atoi(Hdr->gid);
   member->flags = flags;
