@@ -12,10 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/FindUsedTypes.h"
-#include "llvm/Assembly/CachedWriter.h"
-#include "llvm/SymbolTable.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/SymbolTable.h"
+#include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Support/InstIterator.h"
 
 static RegisterAnalysis<FindUsedTypes>
@@ -50,6 +51,18 @@ void FindUsedTypes::IncorporateSymbolTable(const SymbolTable &ST) {
     IncorporateType(cast<Type>(I->second));
 }
 
+void FindUsedTypes::IncorporateValue(const Value *V) {
+  IncorporateType(V->getType());
+  
+  // If this is a constant, it could be using other types...
+  if (const Constant *C = dyn_cast<Constant>(V)) {
+    for (User::const_op_iterator OI = C->op_begin(), OE = C->op_end();
+         OI != OE; ++OI)
+      IncorporateValue(*OI);
+  }
+}
+
+
 // run - This incorporates all types used by the specified module
 //
 bool FindUsedTypes::run(Module &m) {
@@ -58,8 +71,11 @@ bool FindUsedTypes::run(Module &m) {
   IncorporateSymbolTable(m.getSymbolTable());
 
   // Loop over global variables, incorporating their types
-  for (Module::const_giterator I = m.gbegin(), E = m.gend(); I != E; ++I)
+  for (Module::const_giterator I = m.gbegin(), E = m.gend(); I != E; ++I) {
     IncorporateType(I->getType());
+    if (I->hasInitializer())
+      IncorporateValue(I->getInitializer());
+  }
 
   for (Module::iterator MI = m.begin(), ME = m.end(); MI != ME; ++MI) {
     IncorporateType(MI->getType());
@@ -77,8 +93,7 @@ bool FindUsedTypes::run(Module &m) {
       IncorporateType(Ty);  // Incorporate the type of the instruction
       for (User::const_op_iterator OI = I->op_begin(), OE = I->op_end();
            OI != OE; ++OI)
-        if ((*OI)->getType() != Ty)         // Avoid set lookup in common case
-          IncorporateType((*OI)->getType());// Insert inst operand types as well
+        IncorporateValue(*OI);  // Insert inst operand types as well
     }
   }
  
