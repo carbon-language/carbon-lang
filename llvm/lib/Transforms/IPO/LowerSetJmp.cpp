@@ -352,7 +352,7 @@ LowerSetJmp::SwitchValuePair LowerSetJmp::GetSJSwitch(Function* Func,
     CallInst(TryCatchLJ, make_vector<Value*>(GetSetJmpMap(Func), 0), "SJNum");
   DecisionBBIL.push_back(SJNum);
 
-  SwitchInst* SI = new SwitchInst(SJNum, Rethrow, DecisionBB);
+  SwitchInst* SI = new SwitchInst(SJNum, Rethrow, 0, DecisionBB);
   return SwitchValMap[Func] = SwitchValuePair(SI, LJVal);
 }
 
