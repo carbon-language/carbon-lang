@@ -60,13 +60,17 @@ public:
     for_each(SubPasses.begin(), SubPasses.end(), deleter<MethodPass>);
   }
 
+  void add(BasicBlockPass *BBP) {
+    if (BBPBatcher == 0) {
+      BBPBatcher = new BasicBlockPassBatcher();
+      SubPasses.push_back(BBPBatcher);
+    }
+    BBPBatcher->add(BBP);
+  }
+
   void add(MethodPass *P) {
     if (BasicBlockPass *BBP = dynamic_cast<BasicBlockPass*>(P)) {
-      if (BBPBatcher == 0) {
-        BBPBatcher = new BasicBlockPassBatcher();
-        SubPasses.push_back(BBPBatcher);
-      }
-      BBPBatcher->add(BBP);
+      add(BBP);
     } else {
       BBPBatcher = 0;  // Ensure that passes don't get accidentally reordered
       SubPasses.push_back(P);
@@ -92,7 +96,15 @@ public:
   }
 };
 
-
+// add(BasicBlockPass*) - If we know it's a BasicBlockPass, we don't have to do
+// any checking...
+//
+void PassManager::add(BasicBlockPass *BBP) {
+  if (Batcher == 0)         // If we don't have a batcher yet, make one now.
+    add((MethodPass*)BBP);
+  else
+    Batcher->add(BBP);
+}
 
 
 // add(MethodPass*) - MethodPass's must be batched together... make sure this
