@@ -74,7 +74,7 @@ namespace {
     }
 
     void printMachineInstruction(const MachineInstr *MI);
-    void printOp(const MachineOperand &MO, bool elideOffsetKeyword = false);
+    void printOp(const MachineOperand &MO, bool LoadAddrOp = false);
     void printImmOp(const MachineOperand &MO, unsigned ArgType);
     void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);    
@@ -401,7 +401,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void Printer::printOp(const MachineOperand &MO,
-                      bool elideOffsetKeyword /* = false */) {
+                      bool LoadAddrOp /* = false */) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   int new_symbol;
   
@@ -444,31 +444,32 @@ void Printer::printOp(const MachineOperand &MO,
     O << MO.getSymbolName();
     return;
 
-  case MachineOperand::MO_GlobalAddress:
-    if (!elideOffsetKeyword) {
-      GlobalValue *GV = MO.getGlobal();
-      std::string Name = Mang->getValueName(GV);
+  case MachineOperand::MO_GlobalAddress: {
+    GlobalValue *GV = MO.getGlobal();
+    std::string Name = Mang->getValueName(GV);
 
-      // Dynamically-resolved functions need a stub for the function
-      Function *F = dyn_cast<Function>(GV);
-      if (F && F->isExternal() &&
-          TM.CalledFunctions.find(F) != TM.CalledFunctions.end()) {
-        FnStubs.insert(Name);
-        O << "L" << Name << "$stub";
-        return;
-      }
-            
-      // External global variables need a non-lazily-resolved stub
-      if (!GV->hasInternalLinkage() &&
-          TM.AddressTaken.find(GV) != TM.AddressTaken.end()) {
-        GVStubs.insert(Name);
-        O << "L" << Name << "$non_lazy_ptr";
-        return;
-      }
-            
-      O << Mang->getValueName(GV);
+    // Dynamically-resolved functions need a stub for the function.  Be
+    // wary however not to output $stub for external functions whose addresses
+    // are taken.  Those should be emitted as $non_lazy_ptr below.
+    Function *F = dyn_cast<Function>(GV);
+    if (F && F->isExternal() && !LoadAddrOp &&
+        TM.CalledFunctions.find(F) != TM.CalledFunctions.end()) {
+      FnStubs.insert(Name);
+      O << "L" << Name << "$stub";
+      return;
     }
+            
+    // External global variables need a non-lazily-resolved stub
+    if (!GV->hasInternalLinkage() &&
+        TM.AddressTaken.find(GV) != TM.AddressTaken.end()) {
+      GVStubs.insert(Name);
+      O << "L" << Name << "$non_lazy_ptr";
+      return;
+    }
+            
+    O << Mang->getValueName(GV);
     return;
+  }
     
   default:
     O << "<unknown operand type: " << MO.getType() << ">";
@@ -548,7 +549,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   if (Opcode == PPC::LOADLoDirect || Opcode == PPC::LOADLoIndirect) {
     printOp(MI->getOperand(0));
     O << ", lo16(";
-    printOp(MI->getOperand(2));
+    printOp(MI->getOperand(2), true /* LoadAddrOp */);
     O << "-\"L0000" << LabelNumber << "$pb\")";
     O << "(";
     if (MI->getOperand(1).getReg() == PPC::R0)
@@ -564,7 +565,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     else
       printOp(MI->getOperand(1));
     O << ", ha16(" ;
-    printOp(MI->getOperand(2));
+    printOp(MI->getOperand(2), true /* LoadAddrOp */);
      O << "-\"L0000" << LabelNumber << "$pb\")\n";
   } else if (ArgCount == 3 && ArgType[1] == PPCII::Disimm16) {
     printOp(MI->getOperand(0));

@@ -68,7 +68,7 @@ static inline TypeClass getClass(const Type *Ty) {
 
 // getClassB - Just like getClass, but treat boolean values as ints.
 static inline TypeClass getClassB(const Type *Ty) {
-  if (Ty == Type::BoolTy) return cInt;
+  if (Ty == Type::BoolTy) return cByte;
   return getClass(Ty);
 }
 
