@@ -37,6 +37,7 @@
         <ol>
           <li><a href="#hl_assert">Assert Liberally</a>
           <li><a href="#hl_preincrement">Prefer Preincrement</a>
+          <li><a href="#hl_avoidendl">Avoid endl</a>
           <li><a href="#hl_exploitcpp">Exploit C++ to its Fullest</a>
         </ol>
       <li><a href="#iterators">Writing Iterators</a>
@@ -290,6 +291,19 @@ You get the idea...<p>
 Hard fast rule: Preincrement (++X) may be no slower than postincrement (X++) and could very well be a lot faster than it.  Use preincrementation whenever possible.<p>
 
 The semantics of postincrement include making a copy of the value being incremented, returning it, and then preincrementing the "work value".  For primitive types, this isn't a big deal... but for iterators, it can be a huge issue (for example, some iterators contains stack and set objects in them... copying an iterator could invoke the copy ctor's of these as well).  In general, get in the habit of always using preincrement, and you won't have a problem.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="hl_avoidendl"><h4><hr size=0>Avoid endl</h4><ul>
+
+The <tt>endl</tt> modifier, when used with iostreams outputs a newline to the output stream specified.  In addition to doing this, however, it also flushes the output stream.  In other words, these are equivalent:<p>
+
+<pre>
+  cout << endl;
+  cout << "\n" << flush;
+</pre>
+
+Most of the time, you probably have no reason to flush the output stream, so it's better to use a literal <tt>"\n"</tt>.<p>
 
 
 <!-- _______________________________________________________________________ -->
@@ -646,7 +660,7 @@ If you get some free time, and you haven't read them: do so, you might learn som
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Mon Oct  1 15:33:40 CDT 2001
+Last modified: Sun Jan 20 13:01:02 CST 2002
 <!-- hhmts end -->
 </font>
 </body></html>
