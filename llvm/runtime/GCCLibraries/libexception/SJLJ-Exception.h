@@ -9,7 +9,6 @@
 #define SJLJ_EXCEPTION_H
 
 #include "Exception.h"
-#include <cassert>
 
 struct llvm_sjlj_exception {
   // JmpBuffer - This is the buffer which was longjmp'd with.
