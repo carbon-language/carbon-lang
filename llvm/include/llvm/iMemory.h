@@ -30,8 +30,12 @@ class PointerType;
 ///
 class AllocationInst : public Instruction {
 protected:
+  void init(const Type *Ty, Value *ArraySize, unsigned iTy);
   AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
 		 const std::string &Name = "", Instruction *InsertBefore = 0);
+  AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
+		 const std::string &Name, BasicBlock *InsertAtEnd);
+
 public:
 
   /// isArrayAllocation - Return true if there is an allocation size parameter
@@ -79,9 +83,13 @@ public:
 class MallocInst : public AllocationInst {
   MallocInst(const MallocInst &MI);
 public:
-  MallocInst(const Type *Ty, Value *ArraySize = 0, const std::string &Name = "",
-             Instruction *InsertBefore = 0)
+  explicit MallocInst(const Type *Ty, Value *ArraySize = 0,
+                      const std::string &Name = "",
+                      Instruction *InsertBefore = 0)
     : AllocationInst(Ty, ArraySize, Malloc, Name, InsertBefore) {}
+  MallocInst(const Type *Ty, Value *ArraySize, const std::string &Name,
+             BasicBlock *InsertAtEnd)
+    : AllocationInst(Ty, ArraySize, Malloc, Name, InsertAtEnd) {}
 
   virtual Instruction *clone() const { 
     return new MallocInst(*this);
@@ -107,9 +115,13 @@ public:
 class AllocaInst : public AllocationInst {
   AllocaInst(const AllocaInst &);
 public:
-  AllocaInst(const Type *Ty, Value *ArraySize = 0, const std::string &Name = "",
-             Instruction *InsertBefore = 0)
+  explicit AllocaInst(const Type *Ty, Value *ArraySize = 0,
+                      const std::string &Name = "",
+                      Instruction *InsertBefore = 0)
     : AllocationInst(Ty, ArraySize, Alloca, Name, InsertBefore) {}
+  AllocaInst(const Type *Ty, Value *ArraySize, const std::string &Name,
+             BasicBlock *InsertAtEnd)
+    : AllocationInst(Ty, ArraySize, Alloca, Name, InsertAtEnd) {}
 
   virtual Instruction *clone() const { 
     return new AllocaInst(*this);
@@ -132,8 +144,12 @@ public:
 
 /// FreeInst - an instruction to deallocate memory
 ///
-struct FreeInst : public Instruction {
-  FreeInst(Value *Ptr, Instruction *InsertBefore = 0);
+class FreeInst : public Instruction {
+  void init(Value *Ptr);
+
+public:
+  explicit FreeInst(Value *Ptr, Instruction *InsertBefore = 0);
+  FreeInst(Value *Ptr, BasicBlock *InsertAfter);
 
   virtual Instruction *clone() const { return new FreeInst(Operands[0]); }
 
@@ -169,8 +185,11 @@ class LoadInst : public Instruction {
   }
 public:
   LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBefore);
+  LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAtEnd);
   LoadInst(Value *Ptr, const std::string &Name = "", bool isVolatile = false,
            Instruction *InsertBefore = 0);
+  LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
+           BasicBlock *InsertAtEnd);
 
   /// isVolatile - Return true if this is a load from a volatile memory
   /// location.
@@ -221,8 +240,10 @@ class StoreInst : public Instruction {
   }
 public:
   StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore);
+  StoreInst(Value *Val, Value *Ptr, BasicBlock *InsertAtEnd);
   StoreInst(Value *Val, Value *Ptr, bool isVolatile = false,
             Instruction *InsertBefore = 0);
+  StoreInst(Value *Val, Value *Ptr, bool isVolatile, BasicBlock *InsertAtEnd);
 
 
   /// isVolatile - Return true if this is a load from a volatile memory
@@ -272,6 +293,8 @@ class GetElementPtrInst : public Instruction {
 public:
   GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 		    const std::string &Name = "", Instruction *InsertBefore =0);
+  GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
+		    const std::string &Name, BasicBlock *InsertAtEnd);
   virtual Instruction *clone() const { return new GetElementPtrInst(*this); }
   
   // getType - Overload to return most specific pointer type...

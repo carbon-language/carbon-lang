@@ -16,10 +16,8 @@
 #include "llvm/DerivedTypes.h"
 using namespace llvm;
 
-AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
-                               const std::string &Name, Instruction *InsertBef)
-  : Instruction(PointerType::get(Ty), iTy, Name, InsertBef) {
-
+void AllocationInst::init(const Type *Ty, Value *ArraySize, unsigned iTy)
+{
   // ArraySize defaults to 1.
   if (!ArraySize) ArraySize = ConstantUInt::get(Type::UIntTy, 1);
 
@@ -28,6 +26,20 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
          "Malloc/Allocation array size != UIntTy!");
 
   Operands.push_back(Use(ArraySize, this));
+}
+
+AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
+                               const std::string &Name,
+                               Instruction *InsertBefore)
+  : Instruction(PointerType::get(Ty), iTy, Name, InsertBefore) {
+  init(Ty, ArraySize, iTy);
+}
+
+AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
+                               const std::string &Name,
+                               BasicBlock *InsertAtEnd)
+  : Instruction(PointerType::get(Ty), iTy, Name, InsertAtEnd) {
+  init(Ty, ArraySize, iTy);
 }
 
 bool AllocationInst::isArrayAllocation() const {
@@ -52,11 +64,21 @@ MallocInst::MallocInst(const MallocInst &MI)
 //                             FreeInst Implementation
 //===----------------------------------------------------------------------===//
 
-FreeInst::FreeInst(Value *Ptr, Instruction *InsertBefore)
-  : Instruction(Type::VoidTy, Free, "", InsertBefore) {
-  assert(isa<PointerType>(Ptr->getType()) && "Can't free nonpointer!");
+void FreeInst::init(Value *Ptr)
+{
+  assert(Ptr && isa<PointerType>(Ptr->getType()) && "Can't free nonpointer!");
   Operands.reserve(1);
   Operands.push_back(Use(Ptr, this));
+}
+
+FreeInst::FreeInst(Value *Ptr, Instruction *InsertBefore)
+  : Instruction(Type::VoidTy, Free, "", InsertBefore) {
+  init(Ptr);
+}
+
+FreeInst::FreeInst(Value *Ptr, BasicBlock *InsertAtEnd)
+  : Instruction(Type::VoidTy, Free, "", InsertAtEnd) {
+  init(Ptr);
 }
 
 
@@ -70,10 +92,23 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBef)
   init(Ptr);
 }
 
+LoadInst::LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAE)
+  : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                Load, Name, InsertAE), Volatile(false) {
+  init(Ptr);
+}
+
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
                    Instruction *InsertBef)
   : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
                 Load, Name, InsertBef), Volatile(isVolatile) {
+  init(Ptr);
+}
+
+LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
+                   BasicBlock *InsertAE)
+  : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                Load, Name, InsertAE), Volatile(isVolatile) {
   init(Ptr);
 }
 
@@ -86,9 +121,20 @@ StoreInst::StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore)
   init(Val, Ptr);
 }
 
+StoreInst::StoreInst(Value *Val, Value *Ptr, BasicBlock *InsertAtEnd)
+  : Instruction(Type::VoidTy, Store, "", InsertAtEnd), Volatile(false) {
+  init(Val, Ptr);
+}
+
 StoreInst::StoreInst(Value *Val, Value *Ptr, bool isVolatile, 
                      Instruction *InsertBefore)
   : Instruction(Type::VoidTy, Store, "", InsertBefore), Volatile(isVolatile) {
+  init(Val, Ptr);
+}
+
+StoreInst::StoreInst(Value *Val, Value *Ptr, bool isVolatile, 
+                     BasicBlock *InsertAtEnd)
+  : Instruction(Type::VoidTy, Store, "", InsertAtEnd), Volatile(isVolatile) {
   init(Val, Ptr);
 }
 
@@ -119,6 +165,14 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                           Idx, true))),
                 GetElementPtr, Name, InBe) {
+  init(Ptr, Idx);
+}
+
+GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
+				     const std::string &Name, BasicBlock *IAE)
+  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
+                                                          Idx, true))),
+                GetElementPtr, Name, IAE) {
   init(Ptr, Idx);
 }
 

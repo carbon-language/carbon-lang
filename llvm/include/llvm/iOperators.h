@@ -26,6 +26,8 @@ class SetCondInst : public BinaryOperator {
 public:
   SetCondInst(BinaryOps Opcode, Value *LHS, Value *RHS,
 	      const std::string &Name = "", Instruction *InsertBefore = 0);
+  SetCondInst(BinaryOps Opcode, Value *LHS, Value *RHS,
+	      const std::string &Name, BasicBlock *InsertAtEnd);
 
   /// getInverseCondition - Return the inverse of the current condition opcode.
   /// For example seteq -> setne, setgt -> setle, setlt -> setge, etc...

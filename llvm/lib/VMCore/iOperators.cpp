@@ -21,11 +21,8 @@ using namespace llvm;
 //                             BinaryOperator Class
 //===----------------------------------------------------------------------===//
 
-BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2, 
-                               const Type *Ty, const std::string &Name,
-                               Instruction *InsertBefore)
-  : Instruction(Ty, iType, Name, InsertBefore) {
-
+void BinaryOperator::init(BinaryOps iType, Value *S1, Value *S2)
+{
   Operands.reserve(2);
   Operands.push_back(Use(S1, this));
   Operands.push_back(Use(S2, this));
@@ -36,29 +33,26 @@ BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2,
   case Add: case Sub:
   case Mul: case Div:
   case Rem:
-    assert(Ty == S1->getType() &&
+    assert(getType() == S1->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((Ty->isInteger() || Ty->isFloatingPoint()) && 
+    assert((getType()->isInteger() || getType()->isFloatingPoint()) && 
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case And: case Or:
   case Xor:
-    assert(Ty == S1->getType() &&
+    assert(getType() == S1->getType() &&
            "Logical operation should return same type as operands!");
-    assert(Ty->isIntegral() &&
+    assert(getType()->isIntegral() &&
            "Tried to create an logical operation on a non-integral type!");
     break;
   case SetLT: case SetGT: case SetLE:
   case SetGE: case SetEQ: case SetNE:
-    assert(Ty == Type::BoolTy && "Setcc must return bool!");
+    assert(getType() == Type::BoolTy && "Setcc must return bool!");
   default:
     break;
   }
 #endif
 }
-
-
-
 
 BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
 				       const std::string &Name,
@@ -76,6 +70,22 @@ BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
   }
 }
 
+BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
+				       const std::string &Name,
+                                       BasicBlock *InsertAtEnd) {
+  assert(S1->getType() == S2->getType() &&
+         "Cannot create binary operator with two operands of differing type!");
+  switch (Op) {
+  // Binary comparison operators...
+  case SetLT: case SetGT: case SetLE:
+  case SetGE: case SetEQ: case SetNE:
+    return new SetCondInst(Op, S1, S2, Name, InsertAtEnd);
+
+  default:
+    return new BinaryOperator(Op, S1, S2, S1->getType(), Name, InsertAtEnd);
+  }
+}
+
 BinaryOperator *BinaryOperator::createNeg(Value *Op, const std::string &Name,
                                           Instruction *InsertBefore) {
   if (!Op->getType()->isFloatingPoint())
@@ -88,11 +98,30 @@ BinaryOperator *BinaryOperator::createNeg(Value *Op, const std::string &Name,
                               Op->getType(), Name, InsertBefore);
 }
 
+BinaryOperator *BinaryOperator::createNeg(Value *Op, const std::string &Name,
+                                          BasicBlock *InsertAtEnd) {
+  if (!Op->getType()->isFloatingPoint())
+    return new BinaryOperator(Instruction::Sub,
+                              Constant::getNullValue(Op->getType()), Op,
+                              Op->getType(), Name, InsertAtEnd);
+  else
+    return new BinaryOperator(Instruction::Sub,
+                              ConstantFP::get(Op->getType(), -0.0), Op,
+                              Op->getType(), Name, InsertAtEnd);
+}
+
 BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
                                           Instruction *InsertBefore) {
   return new BinaryOperator(Instruction::Xor, Op,
                             ConstantIntegral::getAllOnesValue(Op->getType()),
                             Op->getType(), Name, InsertBefore);
+}
+
+BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
+                                          BasicBlock *InsertAtEnd) {
+  return new BinaryOperator(Instruction::Xor, Op,
+                            ConstantIntegral::getAllOnesValue(Op->getType()),
+                            Op->getType(), Name, InsertAtEnd);
 }
 
 
@@ -168,6 +197,14 @@ bool BinaryOperator::swapOperands() {
 SetCondInst::SetCondInst(BinaryOps Opcode, Value *S1, Value *S2, 
                          const std::string &Name, Instruction *InsertBefore)
   : BinaryOperator(Opcode, S1, S2, Type::BoolTy, Name, InsertBefore) {
+
+  // Make sure it's a valid type... getInverseCondition will assert out if not.
+  assert(getInverseCondition(Opcode));
+}
+
+SetCondInst::SetCondInst(BinaryOps Opcode, Value *S1, Value *S2, 
+                         const std::string &Name, BasicBlock *InsertAtEnd)
+  : BinaryOperator(Opcode, S1, S2, Type::BoolTy, Name, InsertAtEnd) {
 
   // Make sure it's a valid type... getInverseCondition will assert out if not.
   assert(getInverseCondition(Opcode));

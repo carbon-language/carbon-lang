@@ -36,6 +36,10 @@ public:
     : Instruction(Ty, Instruction::PHI, Name, InsertBefore) {
   }
 
+  PHINode(const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd)
+    : Instruction(Ty, Instruction::PHI, Name, InsertAtEnd) {
+  }
+
   virtual Instruction *clone() const { return new PHINode(*this); }
 
   /// getNumIncomingValues - Return the number of incoming edges

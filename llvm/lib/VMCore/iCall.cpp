@@ -23,43 +23,23 @@ using namespace llvm;
 //                        CallInst Implementation
 //===----------------------------------------------------------------------===//
 
-CallInst::CallInst(Value *Func, const std::vector<Value*> &params, 
-                   const std::string &Name, Instruction *InsertBefore) 
-  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
-				 ->getElementType())->getReturnType(),
-		Instruction::Call, Name, InsertBefore) {
-  Operands.reserve(1+params.size());
+void CallInst::init(Value *Func, const std::vector<Value*> &Params)
+{
+  Operands.reserve(1+Params.size());
   Operands.push_back(Use(Func, this));
 
   const FunctionType *FTy = 
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
 
-  assert((params.size() == FTy->getNumParams() || 
-          (FTy->isVarArg() && params.size() > FTy->getNumParams())) &&
+  assert((Params.size() == FTy->getNumParams() || 
+          (FTy->isVarArg() && Params.size() > FTy->getNumParams())) &&
 	 "Calling a function with bad signature");
-  for (unsigned i = 0; i != params.size(); i++)
-    Operands.push_back(Use(params[i], this));
+  for (unsigned i = 0; i != Params.size(); i++)
+    Operands.push_back(Use(Params[i], this));
 }
 
-CallInst::CallInst(Value *Func, const std::string &Name,
-                   Instruction *InsertBefore)
-  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
-                                   ->getElementType())->getReturnType(),
-                Instruction::Call, Name, InsertBefore) {
-  Operands.reserve(1);
-  Operands.push_back(Use(Func, this));
-  
-  const FunctionType *MTy = 
-    cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
-
-  assert(MTy->getNumParams() == 0 && "Calling a function with bad signature");
-}
-
-CallInst::CallInst(Value *Func, Value* A, const std::string &Name,
-                   Instruction  *InsertBefore)
-  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
-                                   ->getElementType())->getReturnType(),
-                Instruction::Call, Name, InsertBefore) {
+void CallInst::init(Value *Func, Value *Actual)
+{
   Operands.reserve(2);
   Operands.push_back(Use(Func, this));
   
@@ -69,7 +49,66 @@ CallInst::CallInst(Value *Func, Value* A, const std::string &Name,
   assert((MTy->getNumParams() == 1 ||
           (MTy->isVarArg() && MTy->getNumParams() == 0)) &&
 	 "Calling a function with bad signature");
-  Operands.push_back(Use(A, this));
+  Operands.push_back(Use(Actual, this));
+}
+
+void CallInst::init(Value *Func)
+{
+  Operands.reserve(1);
+  Operands.push_back(Use(Func, this));
+  
+  const FunctionType *MTy = 
+    cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
+
+  assert(MTy->getNumParams() == 0 && "Calling a function with bad signature");
+}
+
+CallInst::CallInst(Value *Func, const std::vector<Value*> &Params, 
+                   const std::string &Name, Instruction *InsertBefore) 
+  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+				 ->getElementType())->getReturnType(),
+		Instruction::Call, Name, InsertBefore) {
+  init(Func, Params);
+}
+
+CallInst::CallInst(Value *Func, const std::vector<Value*> &Params, 
+                   const std::string &Name, BasicBlock *InsertAtEnd) 
+  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+				 ->getElementType())->getReturnType(),
+		Instruction::Call, Name, InsertAtEnd) {
+  init(Func, Params);
+}
+
+CallInst::CallInst(Value *Func, Value* Actual, const std::string &Name,
+                   Instruction  *InsertBefore)
+  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                   ->getElementType())->getReturnType(),
+                Instruction::Call, Name, InsertBefore) {
+  init(Func, Actual);
+}
+
+CallInst::CallInst(Value *Func, Value* Actual, const std::string &Name,
+                   BasicBlock  *InsertAtEnd)
+  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                   ->getElementType())->getReturnType(),
+                Instruction::Call, Name, InsertAtEnd) {
+  init(Func, Actual);
+}
+
+CallInst::CallInst(Value *Func, const std::string &Name,
+                   Instruction *InsertBefore)
+  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                   ->getElementType())->getReturnType(),
+                Instruction::Call, Name, InsertBefore) {
+  init(Func);
+}
+
+CallInst::CallInst(Value *Func, const std::string &Name,
+                   BasicBlock *InsertAtEnd)
+  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                   ->getElementType())->getReturnType(),
+                Instruction::Call, Name, InsertAtEnd) {
+  init(Func);
 }
 
 CallInst::CallInst(const CallInst &CI) 

@@ -76,8 +76,17 @@ public:
 
 class BinaryOperator : public Instruction {
 protected:
+  void init(BinaryOps iType, Value *S1, Value *S2);
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, const Type *Ty,
-                 const std::string &Name, Instruction *InsertBefore);
+                 const std::string &Name, Instruction *InsertBefore)
+    : Instruction(Ty, iType, Name, InsertBefore) {
+    init(iType, S1, S2);
+  }
+  BinaryOperator(BinaryOps iType, Value *S1, Value *S2, const Type *Ty,
+                 const std::string &Name, BasicBlock *InsertAtEnd)
+    : Instruction(Ty, iType, Name, InsertAtEnd) {
+    init(iType, S1, S2);
+  }
 
 public:
 
@@ -90,6 +99,14 @@ public:
 				const std::string &Name = "",
                                 Instruction *InsertBefore = 0);
                                
+  /// create() - Construct a binary instruction, given the opcode and the two
+  /// operands.  Also automatically insert this instruction to the end of the
+  /// BasicBlock specified.
+  ///
+  static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
+				const std::string &Name,
+                                BasicBlock *InsertAtEnd);
+                               
 
   /// Helper functions to construct and inspect unary operations (NEG and NOT)
   /// via binary operators SUB and XOR:
@@ -99,8 +116,12 @@ public:
   ///
   static BinaryOperator *createNeg(Value *Op, const std::string &Name = "",
                                    Instruction *InsertBefore = 0);
+  static BinaryOperator *createNeg(Value *Op, const std::string &Name,
+                                   BasicBlock *InsertAtEnd);
   static BinaryOperator *createNot(Value *Op, const std::string &Name = "",
                                    Instruction *InsertBefore = 0);
+  static BinaryOperator *createNot(Value *Op, const std::string &Name,
+                                   BasicBlock *InsertAtEnd);
 
   /// isNeg, isNot - Check if the given Value is a NEG or NOT instruction.
   ///
