@@ -1,0 +1,16 @@
+; RUN: as < %s | lli -force-interpreter=false - test
+
+target endian = little
+target pointersize = 32
+
+implementation  
+
+declare int %puts(sbyte*)
+
+int %main(int %argc.1, sbyte** %argv.1) {
+	%tmp.5 = getelementptr sbyte** %argv.1, long 1		; <sbyte**> [#uses=1]
+	%tmp.6 = load sbyte** %tmp.5		; <sbyte*> [#uses=1]
+	%tmp.0 = call int %puts( sbyte* %tmp.6 )		; <int> [#uses=0]
+	ret int 0
+}
+
