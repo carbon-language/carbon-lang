@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 ;; Date: May 27, 2003.
 ;; From: test/Programs/MultiSource/McCat-05-eks/QRfact.c
 ;; Function: Matrix QRiterate(Matrix A, Matrix U)

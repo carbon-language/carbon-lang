@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 ;; Date:     May 27, 2003.
 ;; From:     Variant of 2003-05-27-usefsubasbool.ll
 ;; 

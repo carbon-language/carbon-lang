@@ -1,3 +1,5 @@
+; RUN: not llvm-as -f %s -o /dev/null
+
 ; Test that self referential instructions are not allowed
 
 implementation

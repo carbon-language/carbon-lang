@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 target endian = big
 target pointersize = 64
 

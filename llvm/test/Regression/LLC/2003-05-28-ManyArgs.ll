@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 ;; Date:     May 28, 2003.
 ;; From:     test/Programs/External/SPEC/CINT2000/175.vpr.llvm.bc
 ;; Function: int %main(int %argc.1, sbyte** %argv.1)

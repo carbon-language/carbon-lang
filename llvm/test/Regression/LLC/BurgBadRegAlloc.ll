@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 ;; Register allocation is doing a very poor job on this routine from yyparse
 ;; in Burg:
 ;; -- at least two long-lived values are being allocated to %o? registers

@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 ;; Date: May 28, 2003.
 ;; From: test/Programs/MultiSource/Olden-perimeter/maketree.c
 ;; Function: int CheckOutside(int x, int y)

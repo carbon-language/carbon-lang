@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 ;; GetMemInstArgs() folded the two getElementPtr instructions together,
 ;; producing an illegal getElementPtr.  That's because the type generated
 ;; by the last index for the first one is a structure field, not an array

@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 ; Test that a negative constant smaller than 64 bits (e.g., int)
 ; is correctly implemented with sign-extension.
 ; In particular, the current code generated is:

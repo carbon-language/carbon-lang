@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 ; Test that a sequence of constant indices are folded correctly
 ; into the equivalent offset at compile-time.
 

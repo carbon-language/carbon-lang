@@ -1,3 +1,5 @@
+; RUN: not llvm-as -f %s -o /dev/null
+
 
 
 int %main() {  

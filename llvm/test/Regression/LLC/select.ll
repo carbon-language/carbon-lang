@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 %AConst    = constant int 123
 
 %Domain = type { sbyte*, int, int*, int, int, int*, %Domain* }

@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 ;; Date:     Jul 29, 2003.
 ;; From:     test/Programs/MultiSource/Ptrdist-bc
 ;; Function: ---

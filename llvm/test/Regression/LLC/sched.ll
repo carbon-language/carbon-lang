@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 implementation
 declare int "printf"(sbyte*, int, float)
 

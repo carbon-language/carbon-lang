@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 ; Compiling this file produces:
 ; Sparc.cpp:91: failed assertion `(offset - OFFSET) % getStackFrameSizeAlignment() == 0'
 ;

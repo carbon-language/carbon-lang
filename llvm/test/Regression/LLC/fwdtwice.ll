@@ -1,3 +1,5 @@
+; RUN: llvm-as -f %s -o - | llc
+
 ;;
 ;; Test the sequence:
 ;;	cast -> setle 0, %cast -> br %cond

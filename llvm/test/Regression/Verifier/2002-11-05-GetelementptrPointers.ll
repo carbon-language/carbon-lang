@@ -1,3 +1,5 @@
+; RUN: not llvm-as -f %s -o /dev/null
+
 ; This testcase is invalid because we are indexing into a pointer that is 
 ; contained WITHIN a structure.
 
