@@ -561,7 +561,7 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2) {
 namespace llvm {
 template<class ValType, class TypeClass>
 class TypeMap {
-  typedef std::map<ValType, TypeClass *> MapTy;
+  typedef std::map<ValType, PATypeHolder> MapTy;
   MapTy Map;
 public:
   typedef typename MapTy::iterator iterator;
@@ -569,7 +569,7 @@ public:
 
   inline TypeClass *get(const ValType &V) {
     iterator I = Map.find(V);
-    return I != Map.end() ? I->second : 0;
+    return I != Map.end() ? cast<TypeClass>((Type*)I->second.get()) : 0;
   }
 
   inline void add(const ValType &V, TypeClass *T) {
@@ -581,7 +581,7 @@ public:
     iterator I = Map.find(ValType::get(Ty));
     if (I == Map.end()) print("ERROR!");
     assert(I != Map.end() && "Didn't find type entry!");
-    assert(I->second == Ty && "Type entry wrong?");
+    assert(I->second.get() == (const Type*)Ty && "Type entry wrong?");
     return I;
   }
 
@@ -590,7 +590,10 @@ public:
   /// some other type or reinstall it in the map with it's new configuration.
   /// The specified iterator tells us what the type USED to look like.
   void finishRefinement(iterator TyIt) {
-    TypeClass *Ty = TyIt->second;
+    // Make a temporary type holder for the type so that it doesn't disappear on
+    // us when we erase the entry from the map.
+    PATypeHolder TyHolder = TyIt->second;
+    TypeClass *Ty = cast<TypeClass>((Type*)TyHolder.get());
 
     // The old record is now out-of-date, because one of the children has been
     // updated.  Remove the obsolete entry from the map.
@@ -625,7 +628,7 @@ public:
         // We already have this type in the table.  Get rid of the newly refined
         // type.
         assert(Ty->isAbstract() && "Replacing a non-abstract type?");
-        TypeClass *NewTy = I->second;
+        TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
         
         // Refined to a different type altogether?
         Ty->refineAbstractTypeTo(NewTy);
@@ -640,7 +643,7 @@ public:
       for (iterator I = Map.begin(), E = Map.end(); I != E; ++I)
         if (TypesEqual(Ty, I->second)) {
           assert(Ty->isAbstract() && "Replacing a non-abstract type?");
-          TypeClass *NewTy = I->second;
+          TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
           
           // Refined to a different type altogether?
           Ty->refineAbstractTypeTo(NewTy);
@@ -680,8 +683,8 @@ public:
     unsigned i = 0;
     for (typename MapTy::const_iterator I = Map.begin(), E = Map.end();
          I != E; ++I)
-      std::cerr << " " << (++i) << ". " << (void*)I->second << " " 
-                << *I->second << "\n";
+      std::cerr << " " << (++i) << ". " << (void*)I->second.get() << " " 
+                << *I->second.get() << "\n";
 #endif
   }
 
