@@ -20,6 +20,7 @@
 #include "llvm/Type.h"
 
 class Module;
+class GlobalVariable;
 class Method;
 class BasicBlock;
 class Instruction;
@@ -30,6 +31,7 @@ class SlotCalculator;
 // understand later... (the parser only understands whole classes though)
 //
 void WriteToAssembly(const Module  *Module, ostream &o);
+void WriteToAssembly(const GlobalVariable *G, ostream &o);
 void WriteToAssembly(const Method  *Method, ostream &o);
 void WriteToAssembly(const BasicBlock  *BB, ostream &o);
 void WriteToAssembly(const Instruction *In, ostream &o);
@@ -59,6 +61,10 @@ void WriteToVCG(const Method *Method, const string &Filename);
 //
 inline ostream &operator<<(ostream &o, const Module *C) {
   WriteToAssembly(C, o); return o;
+}
+
+inline ostream &operator<<(ostream &o, const GlobalVariable *G) {
+  WriteToAssembly(G, o); return o;
 }
 
 inline ostream &operator<<(ostream &o, const Method *M) {
@@ -91,6 +97,7 @@ inline ostream &operator<<(ostream &o, const Value *I) {
   case Value::InstructionVal: WriteToAssembly((const Instruction *)I, o); break;
   case Value::BasicBlockVal:  WriteToAssembly((const BasicBlock  *)I, o); break;
   case Value::MethodVal:      WriteToAssembly((const Method      *)I, o); break;
+  case Value::GlobalVal:      WriteToAssembly((const GlobalVariable*)I,o);break;
   case Value::ModuleVal:      WriteToAssembly((const Module      *)I, o); break;
   default: return o << "<unknown value type: " << I->getValueType() << ">";
   }
