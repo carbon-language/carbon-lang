@@ -1,0 +1,8 @@
+; RUN: llvm-as < %s | llc -march=x86
+
+implementation   ; Functions:
+
+double %test(double %d) {
+	%X = select bool false, double %d, double %d		; <double> [#uses=0]
+	ret double %X
+}
