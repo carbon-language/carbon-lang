@@ -33,7 +33,7 @@ _stacker_dump_stack_()
     printf("Stack Dump:\n");
     for (i = _index_; i > 0; i-- )
     {
-	printf("#%03lld: %lld\n", i, _stack_[i] );
+	printf("#%03lld: %lld\n", (long long int) i, (long long int) _stack_[i] );
     }
 }
 
@@ -56,7 +56,7 @@ main ( int argc, char** argv )
 	}
 	else
 	{
-	    _stack_[_index_++] = (int) argv[a];
+	    _stack_[_index_++] = (int64_t) (intptr_t) argv[a];
 	}
     }
 
