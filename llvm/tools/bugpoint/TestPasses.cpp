@@ -44,7 +44,7 @@ namespace {
 
 namespace {
   /// DeleteCalls - This pass is used to test bugpoint.  It intentionally
-  /// deletes all call instructions, "misoptimizing" the program.
+  /// deletes some call instructions, "misoptimizing" the program.
   class DeleteCalls : public BasicBlockPass {
     bool runOnBasicBlock(BasicBlock &BB) {
       for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I)
@@ -52,6 +52,7 @@ namespace {
           if (!CI->use_empty())
             CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
           CI->getParent()->getInstList().erase(CI);
+          break;
         }
       return false;
     }
