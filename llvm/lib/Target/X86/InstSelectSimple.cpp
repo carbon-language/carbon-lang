@@ -599,7 +599,7 @@ ISel::visitCallInst (CallInst & CI)
 
   // Adjust the stack by `bytesPushed' amount if non-zero
   if (bytesPushed > 0)
-    BuildMI (BB, X86::ADDri32, 2).addReg(X86::ESP).addZImm(bytesPushed);
+    BuildMI (BB, X86::ADDri32,2,X86::ESP).addReg(X86::ESP).addZImm(bytesPushed);
 
   // If there is a return value, scavenge the result from the location the call
   // leaves it in...
