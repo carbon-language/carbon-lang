@@ -1,26 +1,11 @@
 LEVEL = ../../..
 
-include $(LEVEL)/Makefile.common
+LIBNAME = instr
 
-LIB32 = ../Output/libinstr32.a
-LIB64 = ../Output/libinstr64.a 
-all:: $(LIB32) $(LIB64)
+# We use assert and memset here... and we are linked into the program AFTER final
+# link.  Because of this, we have to play funny games here. :(
+LDFLAGS = /home/vadve/lattner/cvs/gcc_install/lib/gcc-lib/llvm/3.1/libgcc.bc \
+          /home/vadve/lattner/cvs/gcc_install/lib/gcc-lib/llvm/3.1/libc.bc
 
-tracelib: tracelib.c
-	g++ -g -DTEST_INSTRLIB $< -o $@
+include ../Makefile.libs
 
-Debug/tracelib32.o: tracelib.c Debug/.dir
-	g++ -c -g $< -o $@
-
-Debug/tracelib64.o: tracelib.c Debug/.dir
-	cc -c -xarch=v9 -g $< -o $@
-
-$(LIB32): Debug/tracelib32.o ../Output/.dir
-	ar r $@ $<
-
-$(LIB64): Debug/tracelib64.o ../Output/.dir
-	ar r $@ $<
-
-test: tracelib
-
-tracelib.c: tracelib.h
