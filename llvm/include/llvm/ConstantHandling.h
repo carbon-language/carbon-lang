@@ -39,6 +39,8 @@
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
 
+namespace opt {
+
 //===----------------------------------------------------------------------===//
 //  Implement == directly...
 //===----------------------------------------------------------------------===//
@@ -174,4 +176,5 @@ inline ConstPoolVal *ConstantFoldBinaryInstruction(unsigned Opcode,
   return 0;
 }
 
+} // end namespace opt
 #endif
