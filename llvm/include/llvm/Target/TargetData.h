@@ -119,6 +119,11 @@ public:
   std::vector<uint64_t> MemberOffsets;
   uint64_t StructSize;
   unsigned StructAlignment;
+
+  /// getElementContainingOffset - Given a valid offset into the structure,
+  /// return the structure index that contains it.
+  unsigned getElementContainingOffset(uint64_t Offset) const;
+
 private:
   friend class TargetData;   // Only TargetData can create this class
   StructLayout(const StructType *ST, const TargetData &TD);
