@@ -51,7 +51,7 @@ ifdef PROG
 
   $(PROG).linked.bc: $(BCOBJS)
 	$(LLINK) -f $(BCOBJS) -o $(PROG).tmp.bc
-	$(LOPT) -cleangcc -raise -constprop -dce $(PROG).tmp.bc -o $@
+	$(LOPT) -cleangcc -raise -constprop -dce $(PROG).tmp.bc -o $@ -f
 	$(RM) $(PROG).tmp.bc
 
   $(PROG).native: $(OBJS:.o=.c)
@@ -68,7 +68,7 @@ runtime.o: runtime.c
 	$(CC) -c $(CCFLAGS) $<
 
 clean :
-	$(RM) *.[123] *.bc *.mc *.s *.o a.out core $(PROG) 
+	$(RM) *.[123] *.bc *.mc *.s *.o a.out core $(PROG) $(PROG).native
 
 %.mc: %.bc $(LLC) $(AS)
 	@echo "Generating machine instructions for $<"
