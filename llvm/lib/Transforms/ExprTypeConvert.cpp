@@ -14,10 +14,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "TransformInternals.h"
+#include "llvm/Constants.h"
 #include "llvm/iOther.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
-#include "llvm/ConstantHandling.h"
+
 #include "llvm/Analysis/Expressions.h"
 #include "Support/STLExtras.h"
 #include "Support/Debug.h"
@@ -151,11 +152,10 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
   if (CTMI != CTMap.end()) return CTMI->second == Ty;
 
   // If it's a constant... all constants can be converted to a different
-  // type. We just ask the constant propagator to see if it can convert the
-  // value...
+  // type.
   //
   if (Constant *CPV = dyn_cast<Constant>(V))
-    return ConstantFoldCastInstruction(CPV, Ty);
+    return true;
   
   CTMap[V] = Ty;
   if (V->getType() == Ty) return true;  // Expression already correct type!
@@ -352,10 +352,7 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
     Constant *CPV = cast<Constant>(V);
     // Constants are converted by constant folding the cast that is required.
     // We assume here that all casts are implemented for constant prop.
-    Value *Result = ConstantFoldCastInstruction(CPV, Ty);
-    assert(Result && "ConstantFoldCastInstruction Failed!!!");
-    assert(Result->getType() == Ty && "Const prop of cast failed!");
-
+    Value *Result = ConstantExpr::getCast(CPV, Ty);
     // Add the instruction to the expression map
     //VMC.ExprMap[V] = Result;
     return Result;

@@ -19,7 +19,6 @@
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
 #include "llvm/Pass.h"
-#include "llvm/ConstantHandling.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
