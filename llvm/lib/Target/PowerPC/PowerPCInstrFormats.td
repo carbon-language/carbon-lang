@@ -586,8 +586,8 @@ class AForm_3<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx, dag OL,
 class MForm_1<bits<6> opcode, bit rc, bit ppc64, bit vmx,
               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   let ArgCount = 5;
-  bits<5> RS;
   bits<5> RA;
+  bits<5> RS;
   bits<5> RB;
   bits<5> MB;
   bits<5> ME;
