@@ -18,6 +18,7 @@
 #include "llvm/ConstantHandling.h"
 #include "llvm/Function.h"
 #include "llvm/iMemory.h"
+#include "llvm/iOther.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
@@ -138,6 +139,13 @@ static bool CombineInstruction(Instruction *I) {
     Result = CombineBinOp(BOP);
   else if (MemAccessInst *MAI = dyn_cast<MemAccessInst>(I))
     Result = CombineIndicies(MAI);
+  else if (CastInst *CI = dyn_cast<CastInst>(I)) {
+    if (CI->getType() == CI->getOperand(0)->getType() && !CI->use_empty()) {
+      CI->replaceAllUsesWith(CI->getOperand(0));
+      return true;
+    }
+      
+  }
 
   if (!Result) return false;
   if (Result == I) return true;
