@@ -329,8 +329,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
     // of the defining block, potentially live across some blocks, then is
     // live into some number of blocks, but gets killed.  Start by adding a
     // range that goes from this definition to the end of the defining block.
-    LiveRange NewLR(defIndex, getInstructionIndex(&mbb->back()) +
-                    InstrSlots::NUM, ValNum);
+    LiveRange NewLR(defIndex,
+                    getInstructionIndex(&mbb->back()) + InstrSlots::NUM,
+                    ValNum);
     DEBUG(std::cerr << " +" << NewLR);
     interval.addRange(NewLR);
 
@@ -342,7 +343,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
         MachineBasicBlock* mbb = mf_->getBlockNumbered(i);
         if (!mbb->empty()) {
           LiveRange LR(getInstructionIndex(&mbb->front()),
-                       getInstructionIndex(&mbb->back())+InstrSlots::NUM,
+                       getInstructionIndex(&mbb->back()) + InstrSlots::NUM,
                        ValNum);
           interval.addRange(LR);
           DEBUG(std::cerr << " +" << LR);
@@ -355,7 +356,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
     for (unsigned i = 0, e = vi.Kills.size(); i != e; ++i) {
       MachineInstr *Kill = vi.Kills[i];
       LiveRange LR(getInstructionIndex(Kill->getParent()->begin()),
-                   getUseIndex(getInstructionIndex(Kill))+1, ValNum);
+                   getUseIndex(getInstructionIndex(Kill))+1,
+                   ValNum);
       interval.addRange(LR);
       DEBUG(std::cerr << " +" << LR);
     }
