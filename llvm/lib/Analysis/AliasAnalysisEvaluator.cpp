@@ -91,10 +91,8 @@ bool AAEval::runOnFunction(Function &F) {
   }
 
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
-    if (CallInst *CI = dyn_cast<CallInst>(*I))
-      CallSites.insert(CallSite(CI));
-    else if (InvokeInst *II = dyn_cast<InvokeInst>(*I)) 
-      CallSites.insert(CallSite(II));
+    CallSite CS = CallSite::get(*I);
+    if (CS.getInstruction()) CallSites.insert(CS);
   }
 
   if (PrintNoAlias || PrintMayAlias || PrintMustAlias ||
