@@ -342,13 +342,10 @@ void UltraSparcRegInfo::suggestRegs4MethodArgs(const Function *Meth,
                                                  // get the argument list
   const Function::ArgumentListType& ArgList = Meth->getArgumentList();
                                                  // get an iterator to arg list
-  Function::ArgumentListType::const_iterator ArgIt = ArgList.begin(); 
-
   // for each argument
-  for( unsigned argNo=0; ArgIt != ArgList.end() ; ++ArgIt, ++argNo) {    
-
+  for( unsigned argNo=0; argNo != ArgList.size(); ++argNo) {    
     // get the LR of arg
-    LiveRange *const LR = LRI.getLiveRangeForValue((const Value *) *ArgIt); 
+    LiveRange *LR = LRI.getLiveRangeForValue((const Value *)ArgList[argNo]); 
     assert( LR && "No live range found for method arg");
 
     unsigned RegType = getRegType( LR );
@@ -391,15 +388,12 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
                                                  // get the argument list
   const Function::ArgumentListType& ArgList = Meth->getArgumentList();
                                                  // get an iterator to arg list
-  Function::ArgumentListType::const_iterator ArgIt = ArgList.begin(); 
   MachineInstr *AdMI;
 
-
   // for each argument
-  for( unsigned argNo=0; ArgIt != ArgList.end() ; ++ArgIt, ++argNo) {    
-
+  for( unsigned argNo=0; argNo != ArgList.size(); ++argNo) {    
     // get the LR of arg
-    LiveRange *LR = LRI.getLiveRangeForValue(*ArgIt); 
+    LiveRange *LR = LRI.getLiveRangeForValue((Value*)ArgList[argNo]); 
     assert( LR && "No live range found for method arg");
 
 
