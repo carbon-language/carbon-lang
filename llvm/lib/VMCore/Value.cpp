@@ -9,11 +9,6 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/SymTabValue.h"
 #include "llvm/DerivedTypes.h"
-#ifndef NDEBUG      // Only in -g mode...
-#include "llvm/Assembly/Writer.h"
-#include <iostream>
-using std::cerr;
-#endif
 #include <algorithm>
 
 //===----------------------------------------------------------------------===//
@@ -39,9 +34,13 @@ Value::~Value() {
   // a <badref>
   //
   if (Uses.begin() != Uses.end()) {
-    cerr << "While deleting: " << this;
-    for (use_const_iterator I = Uses.begin(); I != Uses.end(); ++I)
-      cerr << "Use still stuck around after Def is destroyed:" << *I << "\n";
+    std::cerr << "While deleting: ";
+    dump();
+    for (use_const_iterator I = Uses.begin(); I != Uses.end(); ++I) {
+      std::cerr << "Use still stuck around after Def is destroyed:";
+      (*I)->dump();
+      std::cerr << "\n";
+    }
   }
 #endif
   assert(Uses.begin() == Uses.end());
@@ -60,8 +59,12 @@ void Value::replaceAllUsesWith(Value *D) {
     Use->replaceUsesOfWith(this, D);
 
 #ifndef NDEBUG      // only in -g mode...
-    if (Uses.size() == NumUses)
-      cerr << "Use: " << Use << "replace with: " << D; 
+    if (Uses.size() == NumUses) {
+      std::cerr << "Use: ";
+      Use->dump();
+      std::cerr << "replace with: ";
+      D->dump(); 
+    }
 #endif
     assert(Uses.size() != NumUses && "Didn't remove definition!");
   }
@@ -92,10 +95,6 @@ User *Value::use_remove(use_iterator &I) {
   User *i = *I;
   I = Uses.erase(I);
   return i;
-}
-
-void Value::dump() const {
-  cerr << this;
 }
 
 //===----------------------------------------------------------------------===//

@@ -17,7 +17,6 @@ using std::pair;
 using std::make_pair;
 using std::map;
 using std::cerr;
-using std::cout;
 
 #define DEBUG_SYMBOL_TABLE 0
 #define DEBUG_ABSTYPE 0
@@ -111,7 +110,8 @@ Value *SymbolTable::removeEntry(iterator Plane, type_iterator Entry) {
   Value *Result = Entry->second;
   const Type *Ty = Result->getType();
 #if DEBUG_SYMBOL_TABLE
-  cerr << this << " Removing Value: " << Result->getName() << endl;
+  dump();
+  std::cerr << " Removing Value: " << Result->getName() << "\n";
 #endif
 
   // Remove the value from the plane...
@@ -125,7 +125,7 @@ Value *SymbolTable::removeEntry(iterator Plane, type_iterator Entry) {
     if (Plane->first->isAbstract()) {
 #if DEBUG_ABSTYPE
       cerr << "Plane Empty: Removing type: " << Plane->first->getDescription()
-           << endl;
+           << "\n";
 #endif
       cast<DerivedType>(Plane->first)->removeAbstractTypeUser(this);
     }
@@ -139,7 +139,7 @@ Value *SymbolTable::removeEntry(iterator Plane, type_iterator Entry) {
     const Type *T = cast<const Type>(Result);
     if (T->isAbstract()) {
 #if DEBUG_ABSTYPE
-      cerr << "Removing abs type from symtab" << T->getDescription() << endl;
+      cerr << "Removing abs type from symtab" << T->getDescription() << "\n";
 #endif
       cast<DerivedType>(T)->removeAbstractTypeUser(this);
     }
@@ -164,8 +164,9 @@ void SymbolTable::insertEntry(const string &Name, const Type *VTy, Value *V) {
   }
 
 #if DEBUG_SYMBOL_TABLE
-  cerr << this << " Inserting definition: " << Name << ": " 
-       << VTy->getDescription() << endl;
+  dump();
+  cerr << " Inserting definition: " << Name << ": " 
+       << VTy->getDescription() << "\n";
 #endif
 
   iterator I = find(VTy);
@@ -181,7 +182,7 @@ void SymbolTable::insertEntry(const string &Name, const Type *VTy, Value *V) {
     if (VTy->isAbstract()) {
       cast<DerivedType>(VTy)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
-      cerr << "Added abstract type value: " << VTy->getDescription() << endl;
+      cerr << "Added abstract type value: " << VTy->getDescription() << "\n";
 #endif
     }
   }
@@ -194,7 +195,7 @@ void SymbolTable::insertEntry(const string &Name, const Type *VTy, Value *V) {
     if (T->isAbstract()) {
       cast<DerivedType>(T)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
-      cerr << "Added abstract type to ST: " << T->getDescription() << endl;
+      cerr << "Added abstract type to ST: " << T->getDescription() << "\n";
 #endif
     }
   }
@@ -218,7 +219,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
       if (NewType->isAbstract()) {
         cast<DerivedType>(NewType)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
-        cerr << "[Added] refined to abstype: "<<NewType->getDescription()<<endl;
+        cerr << "[Added] refined to abstype: "<<NewType->getDescription()<<"\n";
 #endif
       }
     }
@@ -282,7 +283,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
     // Ok, now we are not referencing the type anymore... take me off your user
     // list please!
 #if DEBUG_ABSTYPE
-    cerr << "Removing type " << OldType->getDescription() << endl;
+    cerr << "Removing type " << OldType->getDescription() << "\n";
 #endif
     OldType->removeAbstractTypeUser(this);
 
@@ -291,30 +292,30 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
   } else if (TPI != end()) {
     assert(OldType == NewType);
 #if DEBUG_ABSTYPE
-    cerr << "Removing SELF type " << OldType->getDescription() << endl;
+    cerr << "Removing SELF type " << OldType->getDescription() << "\n";
 #endif
     OldType->removeAbstractTypeUser(this);
   }
 
   TPI = find(Type::TypeTy);
   if (TPI != end()) {  
-    // Loop over all of the types in the symbol table, replacing any references to
-    // OldType with references to NewType.  Note that there may be multiple
-    // occurances, and although we only need to remove one at a time, it's faster
-    // to remove them all in one pass.
+    // Loop over all of the types in the symbol table, replacing any references
+    // to OldType with references to NewType.  Note that there may be multiple
+    // occurances, and although we only need to remove one at a time, it's
+    // faster to remove them all in one pass.
     //
     VarMap &TyPlane = TPI->second;
     for (VarMap::iterator I = TyPlane.begin(), E = TyPlane.end(); I != E; ++I)
       if (I->second == (Value*)OldType) {  // FIXME when Types aren't const.
 #if DEBUG_ABSTYPE
-        cerr << "Removing type " << OldType->getDescription() << endl;
+        cerr << "Removing type " << OldType->getDescription() << "\n";
 #endif
         OldType->removeAbstractTypeUser(this);
         
         I->second = (Value*)NewType;  // TODO FIXME when types aren't const
         if (NewType->isAbstract()) {
 #if DEBUG_ABSTYPE
-          cerr << "Added type " << NewType->getDescription() << endl;
+          cerr << "Added type " << NewType->getDescription() << "\n";
 #endif
           cast<const DerivedType>(NewType)->addAbstractTypeUser(this);
         }
@@ -324,24 +325,27 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
 
 
 #ifndef NDEBUG
-#include "llvm/Assembly/Writer.h"
 #include <algorithm>
 
 static void DumpVal(const pair<const string, Value *> &V) {
-  cout << "  '" << V.first << "' = " << V.second << "\n";
+  std::cout << "  '" << V.first << "' = ";
+  V.second->dump();
+  std::cout << "\n";
 }
 
 static void DumpPlane(const pair<const Type *, map<const string, Value *> >&P) {
-  cout << "  Plane: " << P.first << "\n";
+  std::cout << "  Plane: ";
+  P.first->dump();
+  std::cout << "\n";
   for_each(P.second.begin(), P.second.end(), DumpVal);
 }
 
 void SymbolTable::dump() const {
-  cout << "Symbol table dump:\n";
+  std::cout << "Symbol table dump:\n";
   for_each(begin(), end(), DumpPlane);
 
   if (ParentSymTab) {
-    cout << "Parent ";
+    std::cout << "Parent ";
     ParentSymTab->dump();
   }
 }

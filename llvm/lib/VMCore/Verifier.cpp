@@ -33,7 +33,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
@@ -70,8 +69,8 @@ static long ValidTypes[Type::FirstDerivedTyID] = {
 static inline void CheckFailed(const char *Cond, const std::string &Message,
                                const Value *V1 = 0, const Value *V2 = 0) {
   std::cerr << Message << "\n";
-  if (V1) std::cerr << V1 << "\n";
-  if (V2) std::cerr << V2 << "\n";
+  if (V1) { V1->dump(); std::cerr << "\n"; }
+  if (V2) { V2->dump(); std::cerr << "\n"; }
 }
 
 // Assert - We know that cond should be true, if not print an error message.

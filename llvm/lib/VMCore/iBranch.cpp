@@ -9,7 +9,6 @@
 #include "llvm/BasicBlock.h"
 #ifndef NDEBUG
 #include "llvm/Type.h"       // Only used for assertions...
-#include "llvm/Assembly/Writer.h"
 #include <iostream>
 #endif
 
@@ -27,8 +26,11 @@ BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond)
 	 "Either both cond and false or neither can be specified!");
 
 #ifndef NDEBUG
-  if (Cond != 0 && Cond->getType() != Type::BoolTy)
-    std::cerr << "Bad Condition: " << Cond << "\n";
+  if (Cond != 0 && Cond->getType() != Type::BoolTy) {
+    std::cerr << "Bad Condition: ";
+    Cond->dump();
+    std::cerr << "\n";
+  }
 #endif
   assert((Cond == 0 || Cond->getType() == Type::BoolTy) && 
          "May only branch on boolean predicates!!!!");
