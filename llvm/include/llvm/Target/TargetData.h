@@ -71,19 +71,23 @@ public:
   unsigned char getPointerSize()      const { return      PointerSize; }
   AnnotationID  getStructLayoutAID()  const { return AID; }
 
-  // getTypeSize - Return the number of bytes necessary to hold the specified
-  // type
-  uint64_t      getTypeSize     (const Type *Ty) const;
+  /// getTypeSize - Return the number of bytes necessary to hold the specified
+  /// type
+  uint64_t getTypeSize(const Type *Ty) const;
 
-  // getTypeAlignment - Return the minimum required alignment for the specified
-  // type
+  /// getTypeAlignment - Return the minimum required alignment for the specified
+  /// type
   unsigned char getTypeAlignment(const Type *Ty) const;
 
-  // getIndexOffset - return the offset from the beginning of the type for the
-  // specified indices.  This is used to implement getelementptr.
-  //
-  uint64_t      getIndexedOffset(const Type *Ty, 
-				 const std::vector<Value*> &Indices) const;
+  /// getIntPtrType - Return an unsigned integer type that is the same size or
+  /// greater to the host pointer size.
+  const Type *getIntPtrType() const;
+
+  /// getIndexOffset - return the offset from the beginning of the type for the
+  /// specified indices.  This is used to implement getelementptr.
+  ///
+  uint64_t getIndexedOffset(const Type *Ty, 
+                            const std::vector<Value*> &Indices) const;
   
   inline const StructLayout *getStructLayout(const StructType *Ty) const {
     return (const StructLayout*)
