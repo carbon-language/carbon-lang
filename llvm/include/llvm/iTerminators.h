@@ -202,13 +202,13 @@ public:
 
   virtual Instruction *clone() const { return new InvokeInst(*this); }
 
-  // getCalledMethod - Return the method called, or null if this is an indirect
-  // method invocation...
+  // getCalledFunction - Return the function called, or null if this is an
+  // indirect function invocation...
   //
-  inline const Function *getCalledMethod() const {
+  inline const Function *getCalledFunction() const {
     return dyn_cast<Function>(Operands[0].get());
   }
-  inline Method *getCalledMethod() {
+  inline Method *getCalledFunction() {
     return dyn_cast<Method>(Operands[0].get());
   }
 
