@@ -303,12 +303,9 @@ void Verifier::visitBasicBlock(BasicBlock &BB) {
       Assert1(PN->getNumIncomingValues() != 0,
               "PHI nodes must have at least one entry.  If the block is dead, "
               "the PHI should be removed!", PN);
-      Assert1(PN->getNumIncomingValues() >= Preds.size(),
-              "PHINode has more entries than the basic block has predecessors!",
-              PN);
-      Assert1(PN->getNumIncomingValues() <= Preds.size(),
-              "PHINode has less entries than the basic block has predecessors!",
-              PN);
+      Assert1(PN->getNumIncomingValues() == Preds.size(),
+              "PHINode should have one entry for each predecessor of its "
+              "parent basic block!", PN);
       
       // Get and sort all incoming values in the PHI node...
       std::vector<std::pair<BasicBlock*, Value*> > Values;
