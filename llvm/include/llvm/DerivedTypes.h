@@ -120,11 +120,10 @@ public:
 
 
 
-struct FunctionType : public DerivedType {
-  typedef std::vector<PATypeHandle> ParamTypes;
+class FunctionType : public DerivedType {
   friend class TypeMap<FunctionValType, FunctionType>;
-private:
   PATypeHandle ResultType;
+  typedef std::vector<PATypeHandle> ParamTypes;
   ParamTypes ParamTys;
   bool isVarArgs;
 
@@ -153,7 +152,10 @@ public:
 
   inline bool isVarArg() const { return isVarArgs; }
   inline const Type *getReturnType() const { return ResultType; }
-  inline const ParamTypes &getParamTypes() const { return ParamTys; }
+
+  typedef ParamTypes::const_iterator param_iterator;
+  param_iterator param_begin() const { return ParamTys.begin(); }
+  param_iterator param_end() const { return ParamTys.end(); }
 
   // Parameter type accessors...
   const Type *getParamType(unsigned i) const { return ParamTys[i]; }
