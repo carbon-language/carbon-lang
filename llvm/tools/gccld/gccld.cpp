@@ -396,6 +396,10 @@ int main(int argc, char **argv) {
     Passes.add(createInternalizePass());
   }
 
+  // Remove unused arguments from functions...
+  //
+  Passes.add(createDeadArgEliminationPass());
+
   // Now that we have optimized the program, discard unreachable functions...
   //
   Passes.add(createGlobalDCEPass());
