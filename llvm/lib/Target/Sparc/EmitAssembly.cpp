@@ -164,7 +164,8 @@ void SparcAsmPrinter::emitMachineInst(const MachineInstr *MI) {
   Out << "\t" << TargetInstrDescriptors[Opcode].opCodeString << "\t";
 
   switch (Opcode) {   // Some opcodes have special syntax...
-  case JMPL:
+  case JMPLCALL:
+  case JMPLRET:
     assert(MI->getNumOperands() == 3 && "Unexpected JMPL instr!");
     printOperand(MI->getOperand(0));
     Out << "+";
