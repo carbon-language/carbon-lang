@@ -65,7 +65,7 @@ static char *BackupNumber(char *Pos, char *FirstChar) {
 
 static void CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End) {
   char *F1NumEnd, *F2NumEnd;
-  double V1, V2; 
+  double V1 = 0.0, V2 = 0.0; 
   // If we stop on numbers, compare their difference.
   if (isNumberChar(*F1P) && isNumberChar(*F2P)) {
     V1 = strtod(F1P, &F1NumEnd);
