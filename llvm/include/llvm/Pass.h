@@ -247,7 +247,7 @@ private:
 ///      instruction at a time.
 ///   2. Optimizations do not modify the CFG of the contained function, or any
 ///      other basic block in the function.
-///   3. Optimizations conform to all of the contstraints of FunctionPass's.
+///   3. Optimizations conform to all of the constraints of FunctionPass's.
 ///
 struct BasicBlockPass : public FunctionPass {
   /// doInitialization - Virtual method overridden by subclasses to do
