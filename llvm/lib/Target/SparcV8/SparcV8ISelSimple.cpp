@@ -789,10 +789,9 @@ void V8ISel::visitCallInst(CallInst &I) {
   const unsigned *OAREnd = &OutgoingArgRegs[6];
   const unsigned *OAR = &OutgoingArgRegs[0];
   unsigned ArgOffset = 68;
+  if (extraStack) BuildMI (BB, V8::ADJCALLSTACKDOWN, 1).addImm (extraStack);
   for (unsigned i = 1; i < I.getNumOperands (); ++i) {
     unsigned ArgReg = getReg (I.getOperand (i));
-    if (i == 7 && extraStack)
-      BuildMI (BB, V8::ADJCALLSTACKDOWN, 1).addImm (extraStack);
     if (getClassB (I.getOperand (i)->getType ()) < cLong) {
       // Schlep it over into the incoming arg register
       if (ArgOffset < 92) {
