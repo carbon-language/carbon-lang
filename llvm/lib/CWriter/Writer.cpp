@@ -517,8 +517,19 @@ void CInstPrintVisitor::visitFreeInst(FreeInst   *I) {
 void CInstPrintVisitor::printIndexingExpr(MemAccessInst *MAI) {
   CW.writeOperand(MAI->getPointerOperand());
 
-  for (MemAccessInst::op_iterator I = MAI->idx_begin(), E = MAI->idx_end();
-       I != E; ++I)
+  MemAccessInst::op_iterator I = MAI->idx_begin(), E = MAI->idx_end();
+  if (I == E) return;
+
+  // Print out the -> operator if possible...
+  Constant *CI = dyn_cast<Constant>(*I);
+  if (CI && CI->isNullValue() && I+1 != E &&
+      (*(I+1))->getType() == Type::UByteTy) {
+    ++I;
+    Out << "->field" << cast<ConstantUInt>(*I)->getValue();
+    ++I;
+  }
+    
+  for (; I != E; ++I)
     if ((*I)->getType() == Type::UIntTy) {
       Out << "[";
       CW.writeOperand(*I);
