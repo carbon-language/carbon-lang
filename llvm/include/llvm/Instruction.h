@@ -36,7 +36,6 @@ class Instruction : public User {
   friend class SymbolTableListTraits<Instruction, BasicBlock, Function,
                                      ilist_traits<Instruction> >;
   void setParent(BasicBlock *P);
-  void init();
 
 private:
   // FIXME: This is a dirty hack.  Setcc instructions shouldn't encode the CC
@@ -44,10 +43,11 @@ private:
   void setOpcode(unsigned NewOpcode);
   friend class BinaryOperator;
 protected:
-  Instruction(const Type *Ty, unsigned iType, const std::string &Name = "",
+  Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
+              const std::string &Name = "",
               Instruction *InsertBefore = 0);
-  Instruction(const Type *Ty, unsigned iType, const std::string &Name,
-              BasicBlock *InsertAtEnd);
+  Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
+              const std::string &Name, BasicBlock *InsertAtEnd);
 public:
 
   ~Instruction() {

@@ -36,9 +36,9 @@ public:
     GhostLinkage       // Stand-in functions for streaming fns from BC files
   };
 protected:
-  GlobalValue(const Type *Ty, ValueTy vty, LinkageTypes linkage,
-	      const std::string &name = "")
-    : Constant(Ty, vty, name), Linkage(linkage), Parent(0) { }
+  GlobalValue(const Type *Ty, ValueTy vty, Use *Ops, unsigned NumOps,
+              LinkageTypes linkage, const std::string &name = "")
+    : Constant(Ty, vty, Ops, NumOps, name), Linkage(linkage), Parent(0) { }
 
   LinkageTypes Linkage;   // The linkage of this global
   Module *Parent;

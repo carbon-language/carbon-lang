@@ -319,7 +319,7 @@ class ConstantAggregateZero : public Constant {
   ConstantAggregateZero(const ConstantAggregateZero &);      // DO NOT IMPLEMENT
 protected:
   ConstantAggregateZero(const Type *Ty)
-    : Constant(Ty, ConstantAggregateZeroVal) {}
+    : Constant(Ty, ConstantAggregateZeroVal, 0, 0) {}
 public:
   /// get() - static factory method for creating a null aggregate.  It is
   /// illegal to call this method with a non-aggregate type.
@@ -351,6 +351,7 @@ class ConstantArray : public Constant {
   ConstantArray(const ConstantArray &);      // DO NOT IMPLEMENT
 protected:
   ConstantArray(const ArrayType *T, const std::vector<Constant*> &Val);
+  ~ConstantArray();
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const ArrayType *T, const std::vector<Constant*> &);
@@ -399,6 +400,7 @@ class ConstantStruct : public Constant {
   ConstantStruct(const ConstantStruct &);      // DO NOT IMPLEMENT
 protected:
   ConstantStruct(const StructType *T, const std::vector<Constant*> &Val);
+  ~ConstantStruct();
 public:
   /// get() - Static factory methods - Return objects of the specified value
   ///
@@ -439,6 +441,7 @@ class ConstantPacked : public Constant {
   ConstantPacked(const ConstantPacked &);      // DO NOT IMPLEMENT
 protected:
   ConstantPacked(const PackedType *T, const std::vector<Constant*> &Val);
+  ~ConstantPacked();
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const PackedType *T, const std::vector<Constant*> &);
@@ -476,7 +479,8 @@ class ConstantPointerNull : public Constant {
   ConstantPointerNull(const ConstantPointerNull &);      // DO NOT IMPLEMENT
 protected:
   ConstantPointerNull(const PointerType *T)
-    : Constant(reinterpret_cast<const Type*>(T)) {}
+    : Constant(reinterpret_cast<const Type*>(T),
+               Value::SimpleConstantVal, 0, 0) {}
 
 public:
 
@@ -518,10 +522,9 @@ class ConstantExpr : public Constant {
   friend struct ConvertConstantType<ConstantExpr, Type>;
   
 protected:
-  // Cast creation ctor
-  ConstantExpr(unsigned Opcode, Constant *C, const Type *Ty);
-  // Binary/Shift instruction creation ctor
-  ConstantExpr(unsigned Opcode, Constant *C1, Constant *C2);
+  ConstantExpr(const Type *Ty, unsigned Opcode, Use *Ops, unsigned NumOps)
+    : Constant(Ty, ConstantExprVal, Ops, NumOps), iType(Opcode) {}
+
   // Select instruction creation ctor
   ConstantExpr(Constant *C, Constant *V1, Constant *V2);
   // GEP instruction creation ctor
@@ -642,7 +645,7 @@ class UndefValue : public Constant {
   friend struct ConstantCreator<UndefValue, Type, char>;
   UndefValue(const UndefValue &);      // DO NOT IMPLEMENT
 protected:
-  UndefValue(const Type *T) : Constant(T, UndefValueVal) {}
+  UndefValue(const Type *T) : Constant(T, UndefValueVal, 0, 0) {}
 public:
   /// get() - Static factory methods - Return an 'undef' object of the specified
   /// type.

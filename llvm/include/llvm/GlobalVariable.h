@@ -41,6 +41,8 @@ class GlobalVariable : public GlobalValue {
   void setPrev(GlobalVariable *N) { Prev = N; }
 
   bool isConstantGlobal;               // Is this a global constant?
+  Use Initializer;
+
 public:
   /// GlobalVariable ctor - If a parent module is specified, the global is
   /// automatically inserted into the end of the specified modules global list.
@@ -56,11 +58,11 @@ public:
   /// global variable is defined in some other translation unit, and is thus
   /// externally defined here.
   ///
-  virtual bool isExternal() const { return Operands.empty(); }
+  virtual bool isExternal() const { return getNumOperands() == 0; }
 
   /// hasInitializer - Unless a global variable isExternal(), it has an
   /// initializer.  The initializer for the global variable/constant is held by
-  /// Operands[0] if an initializer is specified.
+  /// Initializer if an initializer is specified.
   ///
   inline bool hasInitializer() const { return !isExternal(); }
 
@@ -70,18 +72,22 @@ public:
   ///
   inline Constant *getInitializer() const {
     assert(hasInitializer() && "GV doesn't have initializer!");
-    return reinterpret_cast<Constant*>(Operands[0].get());
+    return reinterpret_cast<Constant*>(Initializer.get());
   }
   inline Constant *getInitializer() {
     assert(hasInitializer() && "GV doesn't have initializer!");
-    return reinterpret_cast<Constant*>(Operands[0].get());
+    return reinterpret_cast<Constant*>(Initializer.get());
   }
   inline void setInitializer(Constant *CPV) {
     if (CPV == 0) {
-      if (hasInitializer()) Operands.pop_back();
+      if (hasInitializer()) {
+        Initializer.set(0);
+        NumOperands = 0;
+      }
     } else {
-      if (!hasInitializer()) Operands.push_back(Use(0, this));
-      Operands[0] = reinterpret_cast<Value*>(CPV);
+      if (!hasInitializer())
+        NumOperands = 1;
+      Initializer.set(CPV);
     }
   }
 
