@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/Pass.h"
 
 static bool StripSymbolTable(SymbolTable *SymTab) {
   if (SymTab == 0) return false;    // No symbol table?  No problem.
@@ -44,16 +45,38 @@ static bool StripSymbolTable(SymbolTable *SymTab) {
 
 // DoSymbolStripping - Remove all symbolic information from a method
 //
-bool SymbolStripping::doSymbolStripping(Method *M) {
+static bool doSymbolStripping(Method *M) {
   return StripSymbolTable(M->getSymbolTable());
 }
 
 // doStripGlobalSymbols - Remove all symbolic information from all methods 
 // in a module, and all module level symbols. (method names, etc...)
 //
-bool FullSymbolStripping::doStripGlobalSymbols(Module *M) {
+static bool doStripGlobalSymbols(Module *M) {
   // Remove all symbols from methods in this module... and then strip all of the
   // symbols in this module...
   //  
   return StripSymbolTable(M->getSymbolTable());
+}
+
+namespace {
+  struct SymbolStripping : public MethodPass {
+    virtual bool runOnMethod(Method *M) {
+      return doSymbolStripping(M);
+    }
+  };
+
+  struct FullSymbolStripping : public SymbolStripping {
+    virtual bool doInitialization(Module *M) {
+      return doStripGlobalSymbols(M);
+    }
+  };
+}
+
+Pass *createSymbolStrippingPass() {
+  return new SymbolStripping();
+}
+
+Pass *createFullSymbolStrippingPass() {
+  return new FullSymbolStripping();
 }

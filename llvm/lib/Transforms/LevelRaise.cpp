@@ -12,6 +12,7 @@
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
 #include "llvm/ConstantVals.h"
+#include "llvm/Pass.h"
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Transforms/Scalar/ConstantHandling.h"
 #include "llvm/Transforms/Scalar/ConstantProp.h"
@@ -413,8 +414,7 @@ static bool DoRaisePass(Method *M) {
 #if DEBUG_PEEPHOLE_INSTS
       cerr << "Processing: " << *BI;
 #endif
-      if (DeadCodeElimination::dceInstruction(BIL, BI) ||
-	  ConstantPropogation::doConstantPropogation(BB, BI)) {
+      if (dceInstruction(BIL, BI) || doConstantPropogation(BB, BI)) {
         Changed = true; 
 #ifdef DEBUG_PEEPHOLE_INSTS
         cerr << "DeadCode Elinated!\n";
@@ -429,12 +429,10 @@ static bool DoRaisePass(Method *M) {
 }
 
 
-
-
 // RaisePointerReferences::doit - Raise a method representation to a higher
 // level.
 //
-bool RaisePointerReferences::doit(Method *M) {
+static bool doRPR(Method *M) {
 #ifdef DEBUG_PEEPHOLE_INSTS
   cerr << "\n\n\nStarting to work on Method '" << M->getName() << "'\n";
 #endif
@@ -459,3 +457,15 @@ bool RaisePointerReferences::doit(Method *M) {
 
   return Changed;
 }
+
+namespace {
+  struct RaisePointerReferences : public MethodPass {
+    virtual bool runOnMethod(Method *M) { return doRPR(M); }
+  };
+}
+
+Pass *createRaisePointerReferencesPass() {
+  return new RaisePointerReferences();
+}
+
+

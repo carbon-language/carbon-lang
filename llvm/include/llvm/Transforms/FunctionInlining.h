@@ -4,23 +4,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OPT_METHOD_INLINING_H
-#define LLVM_OPT_METHOD_INLINING_H
+#ifndef LLVM_TRANSFORMS_METHOD_INLINING_H
+#define LLVM_TRANSFORMS_METHOD_INLINING_H
 
-#include "llvm/Pass.h"
 #include "llvm/BasicBlock.h"
 class CallInst;
+class Pass;
 
-struct MethodInlining : public MethodPass {
-  // DoMethodInlining - Use a heuristic based approach to inline methods that
-  // seem to look good.
-  //
-  static bool doMethodInlining(Method *M);
-
-  virtual bool runOnMethod(Method *M) {
-    return doMethodInlining(M);
-  }
-};
+Pass *createMethodInliningPass();
 
 // InlineMethod - This function forcibly inlines the called method into the
 // basic block of the caller.  This returns true if it is not possible to inline

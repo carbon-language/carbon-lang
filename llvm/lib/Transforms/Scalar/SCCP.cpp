@@ -25,6 +25,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
+#include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -503,11 +504,18 @@ void SCCP::OperandChangedState(User *U) {
   UpdateInstruction(I);
 }
 
+namespace {
+  // SCCPPass - Use Sparse Conditional Constant Propogation
+  // to prove whether a value is constant and whether blocks are used.
+  //
+  struct SCCPPass : public MethodPass {
+    inline bool runOnMethod(Method *M) {
+      SCCP S(M);
+      return S.doSCCP();
+    }
+  };
+}
 
-// DoSparseConditionalConstantProp - Use Sparse Conditional Constant Propogation
-// to prove whether a value is constant and whether blocks are used.
-//
-bool SCCPPass::doSCCP(Method *M) {
-  SCCP S(M);
-  return S.doSCCP();
+Pass *createSCCPPass() {
+  return new SCCPPass();
 }

@@ -8,6 +8,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "llvm/Pass.h"
 #include "Support/DepthFirstIterator.h"
 #include <set>
 
@@ -45,18 +46,27 @@ static bool RemoveUnreachableMethods(Module *M, cfg::CallGraph &CallGraph) {
   return true;
 }
 
-bool GlobalDCE::run(Module *M) {
-  return RemoveUnreachableMethods(M, getAnalysis<cfg::CallGraph>());
+namespace {
+  struct GlobalDCE : public Pass {
+    // run - Do the GlobalDCE pass on the specified module, optionally updating
+    // the specified callgraph to reflect the changes.
+    //
+    bool run(Module *M) {
+      return RemoveUnreachableMethods(M, getAnalysis<cfg::CallGraph>());
+    }
+
+    // getAnalysisUsageInfo - This function works on the call graph of a module.
+    // It is capable of updating the call graph to reflect the new state of the
+    // module.
+    //
+    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                      Pass::AnalysisSet &Destroyed,
+                                      Pass::AnalysisSet &Provided) {
+      Required.push_back(cfg::CallGraph::ID);
+      // FIXME: This should update the callgraph, not destroy it!
+      Destroyed.push_back(cfg::CallGraph::ID);
+    }
+  };
 }
 
-// getAnalysisUsageInfo - This function works on the call graph of a module.
-// It is capable of updating the call graph to reflect the new state of the
-// module.
-//
-void GlobalDCE::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                     Pass::AnalysisSet &Destroyed,
-                                     Pass::AnalysisSet &Provided) {
-  Required.push_back(cfg::CallGraph::ID);
-  // FIXME: This should update the callgraph, not destroy it!
-  Destroyed.push_back(cfg::CallGraph::ID);
-}
+Pass *createGlobalDCEPass() { return new GlobalDCE(); }

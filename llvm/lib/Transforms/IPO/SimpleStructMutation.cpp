@@ -19,6 +19,37 @@ using std::pair;
 
 #include "llvm/Assembly/Writer.h"
 
+namespace {
+  class SimpleStructMutation : public MutateStructTypes {
+  public:
+    enum Transform { SwapElements, SortElements } CurrentXForm;
+    
+    SimpleStructMutation(enum Transform XForm) : CurrentXForm(XForm) {}
+    
+    virtual bool run(Module *M) {
+      setTransforms(getTransforms(M, CurrentXForm));
+      bool Changed = MutateStructTypes::run(M);
+      clearTransforms();
+      return Changed;
+    }
+    
+    // getAnalysisUsageInfo - This function needs the results of the
+    // FindUsedTypes and FindUnsafePointerTypes analysis passes...
+    //
+    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                      Pass::AnalysisSet &Destroyed,
+                                      Pass::AnalysisSet &Provided) {
+      Required.push_back(FindUsedTypes::ID);
+      Required.push_back(FindUnsafePointerTypes::ID);
+      MutateStructTypes::getAnalysisUsageInfo(Required, Destroyed, Provided);
+    }
+    
+  private:
+    TransformsType getTransforms(Module *M, enum Transform);
+  };
+}  // end anonymous namespace
+
+
 
 // PruneTypes - Given a type Ty, make sure that neither it, or one of its
 // subtypes, occur in TypesToModify.
@@ -87,6 +118,7 @@ static inline void GetTransformation(const StructType *ST,
   }
 }
 
+
 SimpleStructMutation::TransformsType
   SimpleStructMutation::getTransforms(Module *M, enum Transform XForm) {
   // We need to know which types to modify, and which types we CAN'T modify
@@ -137,13 +169,10 @@ SimpleStructMutation::TransformsType
 }
 
 
-// getAnalysisUsageInfo - This function needs the results of the
-// FindUsedTypes and FindUnsafePointerTypes analysis passes...
-//
-void SimpleStructMutation::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                                Pass::AnalysisSet &Destroyed,
-                                                Pass::AnalysisSet &Provided){
-  Required.push_back(FindUsedTypes::ID);
-  Required.push_back(FindUnsafePointerTypes::ID);
-  MutateStructTypes::getAnalysisUsageInfo(Required, Destroyed, Provided);
+Pass *createSwapElementsPass() {
+  return new SimpleStructMutation(SimpleStructMutation::SwapElements);
 }
+Pass *createSortElementsPass() {
+  return new SimpleStructMutation(SimpleStructMutation::SortElements);
+}
+

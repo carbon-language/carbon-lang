@@ -7,26 +7,19 @@
 #ifndef LLVM_TRANSFORMS_SCALAR_CONSTANT_PROPOGATION_H
 #define LLVM_TRANSFORMS_SCALAR_CONSTANT_PROPOGATION_H
 
-#include "llvm/Pass.h"
 #include "llvm/BasicBlock.h"
 class TerminatorInst;
+class Pass;
 
-struct ConstantPropogation : public MethodPass {
-  // doConstantPropogation - Do trivial constant propogation and expression
-  // folding
-  static bool doConstantPropogation(Method *M);
+//===----------------------------------------------------------------------===//
+// Normal Constant Propogation Pass
+//
+Pass *createConstantPropogationPass();
 
-  // doConstantPropogation - Constant prop a specific instruction.  Returns true
-  // and potentially moves the iterator if constant propogation was performed.
-  //
-  static bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &I);
-
-  inline bool runOnMethod(Method *M) {
-    return doConstantPropogation(M);
-  }
-};
-
-
+// doConstantPropogation - Constant prop a specific instruction.  Returns true
+// and potentially moves the iterator if constant propogation was performed.
+//
+bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &I);
 
 // ConstantFoldTerminator - If a terminator instruction is predicated on a
 // constant value, convert it into an unconditional branch to the constant
@@ -38,12 +31,6 @@ bool ConstantFoldTerminator(TerminatorInst *T);
 //===----------------------------------------------------------------------===//
 // Sparse Conditional Constant Propogation Pass
 //
-struct SCCPPass : public MethodPass {
-  static bool doSCCP(Method *M);
-
-  inline bool runOnMethod(Method *M) {
-    return doSCCP(M);
-  }
-};
+Pass *createSCCPPass();
 
 #endif

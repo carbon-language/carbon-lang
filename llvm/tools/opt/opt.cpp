@@ -53,27 +53,7 @@ enum Opts {
   globaldce, swapstructs, sortstructs,
 };
 
-
-// New template functions - Provide functions that return passes of specified
-// types, with specified arguments...
-//
-template<class PassClass>
-Pass *New() {
-  return new PassClass();
-}
-
-template<class PassClass, typename ArgTy1, ArgTy1 Arg1>
-Pass *New() {
-  return new PassClass(Arg1);
-}
-
-template<class PassClass, typename ArgTy1, ArgTy1 Arg1, 
-                          typename ArgTy2, ArgTy1 Arg2>
-Pass *New() {
-  return new PassClass(Arg1, Arg2);
-}
-
-static Pass *NewPrintMethodPass() {
+static Pass *createPrintMethodPass() {
   return new PrintMethodPass("Current Method: \n", &cerr);
 }
 
@@ -83,35 +63,33 @@ struct {
   enum Opts OptID;
   Pass * (*PassCtor)();
 } OptTable[] = {
-  { dce        , New<DeadCodeElimination> },
-  { constprop  , New<ConstantPropogation> }, 
-  { inlining   , New<MethodInlining> },
-  { constmerge , New<ConstantMerge> },
-  { strip      , New<SymbolStripping> },
-  { mstrip     , New<FullSymbolStripping> },
-  { mergereturn, New<UnifyMethodExitNodes> },
+  { dce        , createDeadCodeEliminationPass },
+  { constprop  , createConstantPropogationPass }, 
+  { inlining   , createMethodInliningPass },
+  { constmerge , createConstantMergePass },
+  { strip      , createSymbolStrippingPass },
+  { mstrip     , createFullSymbolStrippingPass },
+  { mergereturn, createUnifyMethodExitNodesPass },
 
-  { indvars    , New<InductionVariableSimplify> },
-  { instcombine, New<InstructionCombining> },
-  { sccp       , New<SCCPPass> },
-  { adce       , New<AgressiveDCE> },
-  { raise      , New<RaisePointerReferences> },
+  { indvars    , createIndVarSimplifyPass },
+  { instcombine, createInstructionCombiningPass },
+  { sccp       , createSCCPPass },
+  { adce       , createAgressiveDCEPass },
+  { raise      , createRaisePointerReferencesPass },
   { mem2reg    , newPromoteMemoryToRegister },
 
-  { trace      , New<InsertTraceCode, bool, true, bool, true> },
-  { tracem     , New<InsertTraceCode, bool, false, bool, true> },
+  { trace      , createTraceValuesPassForBasicBlocks },
+  { tracem     , createTraceValuesPassForMethod },
   { paths      , createProfilePathsPass },
 
-  { print      , NewPrintMethodPass },
+  { print      , createPrintMethodPass },
   { verify     , createVerifierPass },
 
-  { raiseallocs, New<RaiseAllocations> },
-  { cleangcc   , New<CleanupGCCOutput> },
-  { globaldce  , New<GlobalDCE> },
-  { swapstructs, New<SimpleStructMutation, SimpleStructMutation::Transform,
-                     SimpleStructMutation::SwapElements>},
-  { sortstructs, New<SimpleStructMutation, SimpleStructMutation::Transform,
-                     SimpleStructMutation::SortElements>},
+  { raiseallocs, createRaiseAllocationsPass },
+  { cleangcc   , createCleanupGCCOutputPass },
+  { globaldce  , createGlobalDCEPass },
+  { swapstructs, createSwapElementsPass },
+  { sortstructs, createSortElementsPass },
 };
 
 // Command line option handling code...

@@ -32,6 +32,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Pass.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 
@@ -40,8 +41,8 @@
 // to point to the instruction that immediately succeeded the original
 // instruction.
 //
-bool DeadCodeElimination::dceInstruction(BasicBlock::InstListType &BBIL,
-                                         BasicBlock::iterator &BBI) {
+bool dceInstruction(BasicBlock::InstListType &BBIL,
+                    BasicBlock::iterator &BBI) {
   // Look for un"used" definitions...
   if ((*BBI)->use_empty() && !(*BBI)->hasSideEffects() && 
       !isa<TerminatorInst>(*BBI)) {
@@ -55,15 +56,21 @@ static inline bool RemoveUnusedDefs(BasicBlock::InstListType &Vals) {
   bool Changed = false;
   for (BasicBlock::InstListType::iterator DI = Vals.begin(); 
        DI != Vals.end(); )
-    if (DeadCodeElimination::dceInstruction(Vals, DI))
+    if (dceInstruction(Vals, DI))
       Changed = true;
     else
       ++DI;
   return Changed;
 }
 
-bool DeadInstElimination::runOnBasicBlock(BasicBlock *BB) {
-  return RemoveUnusedDefs(BB->getInstList());
+struct DeadInstElimination : public BasicBlockPass {
+  virtual bool runOnBasicBlock(BasicBlock *BB) {
+    return RemoveUnusedDefs(BB->getInstList());
+  }
+};
+
+Pass *createDeadInstEliminationPass() {
+  return new DeadInstElimination();
 }
 
 // RemoveSingularPHIs - This removes PHI nodes from basic blocks that have only
@@ -297,17 +304,11 @@ static bool DoDCEPass(Method *M) {
   return Changed;
 }
 
-
-// It is possible that we may require multiple passes over the code to fully
-// eliminate dead code.  Iterate until we are done.
+// Remove unused global values - This removes unused global values of no
+// possible value.  This currently includes unused method prototypes and
+// unitialized global variables.
 //
-bool DeadCodeElimination::doDCE(Method *M) {
-  bool Changed = false;
-  while (DoDCEPass(M)) Changed = true;
-  return Changed;
-}
-
-bool DeadCodeElimination::RemoveUnusedGlobalValues(Module *Mod) {
+static bool RemoveUnusedGlobalValues(Module *Mod) {
   bool Changed = false;
 
   for (Module::iterator MI = Mod->begin(); MI != Mod->end(); ) {
@@ -337,4 +338,31 @@ bool DeadCodeElimination::RemoveUnusedGlobalValues(Module *Mod) {
   }
 
   return Changed;
+}
+
+namespace {
+  struct DeadCodeElimination : public MethodPass {
+
+    // Pass Interface...
+    virtual bool doInitialization(Module *M) {
+      return RemoveUnusedGlobalValues(M);
+    }
+    
+    // It is possible that we may require multiple passes over the code to fully
+    // eliminate dead code.  Iterate until we are done.
+    //
+    virtual bool runOnMethod(Method *M) {
+      bool Changed = false;
+      while (DoDCEPass(M)) Changed = true;
+      return Changed;
+    }
+    
+    virtual bool doFinalization(Module *M) {
+      return RemoveUnusedGlobalValues(M);
+    }
+  };
+}
+
+Pass *createDeadCodeEliminationPass() {
+  return new DeadCodeElimination();
 }

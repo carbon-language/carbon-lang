@@ -15,14 +15,7 @@
 #ifndef LLVM_TRANSFORMS_SCALAR_INSTRUCTIONCOMBINING_H
 #define LLVM_TRANSFORMS_SCALAR_INSTRUCTIONCOMBINING_H
 
-#include "llvm/Pass.h"
-class Instruction;
-
-struct InstructionCombining : public MethodPass {
-  static bool doit(Method *M);
-  static bool CombineInstruction(Instruction *I);
-
-  virtual bool runOnMethod(Method *M) { return doit(M); }
-};
+class Pass;
+Pass *createInstructionCombiningPass();
 
 #endif

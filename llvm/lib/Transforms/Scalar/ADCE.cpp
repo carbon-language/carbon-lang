@@ -288,21 +288,24 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
   }
 }
 
-
-
-// doADCE - Execute the Agressive Dead Code Elimination Algorithm
-//
-bool AgressiveDCE::runOnMethod(Method *M) {
-  return ADCE(M).doADCE(
-       getAnalysis<cfg::DominanceFrontier>(cfg::DominanceFrontier::PostDomID));
+namespace {
+  struct AgressiveDCE : public MethodPass {
+    // doADCE - Execute the Agressive Dead Code Elimination Algorithm
+    //
+    virtual bool runOnMethod(Method *M) {
+      return ADCE(M).doADCE(
+   getAnalysis<cfg::DominanceFrontier>(cfg::DominanceFrontier::PostDomID));
+    }
+    // getAnalysisUsageInfo - We require post dominance frontiers (aka Control
+    // Dependence Graph)
+    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
+                                      Pass::AnalysisSet &Destroyed,
+                                      Pass::AnalysisSet &Provided) {
+      Requires.push_back(cfg::DominanceFrontier::PostDomID);
+    }
+  };
 }
 
-
-// getAnalysisUsageInfo - We require post dominance frontiers (aka Control
-// Dependence Graph)
-//
-void AgressiveDCE::getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-                                        Pass::AnalysisSet &Destroyed,
-                                        Pass::AnalysisSet &Provided) {
-  Requires.push_back(cfg::DominanceFrontier::PostDomID);
+Pass *createAgressiveDCEPass() {
+  return new AgressiveDCE();
 }

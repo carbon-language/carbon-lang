@@ -11,6 +11,7 @@
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
+#include "llvm/Pass.h"
 #include <map>
 #include <vector>
 
@@ -19,12 +20,6 @@ typedef std::map<BBConstTy, CastInst *> CachedCopyMap;
 
 static Value *NormalizePhiOperand(PHINode *PN, Value *CPV,
                                   BasicBlock *Pred, CachedCopyMap &CopyCache) {
-  
-  /* NOTE: CahedCopyMap was disabled to insert phi elimination code
-           for all phi args -- Ruchira
-  */
-
-
   // Check if we've already inserted a copy for this constant in Pred
   // Note that `copyCache[Pred]' will create an empty vector the first time
   //
@@ -47,7 +42,7 @@ static Value *NormalizePhiOperand(PHINode *PN, Value *CPV,
 // Entry point for normalizing constant args in PHIs
 //---------------------------------------------------------------------------
 
-bool HoistPHIConstants::doHoistPHIConstants(Method *M) {
+static bool doHoistPHIConstants(Method *M) {
   CachedCopyMap Cache;
   bool Changed = false;
   
@@ -77,3 +72,11 @@ bool HoistPHIConstants::doHoistPHIConstants(Method *M) {
   
   return Changed;
 }
+
+namespace {
+  struct HoistPHIConstants : public MethodPass {
+    virtual bool runOnMethod(Method *M) { return doHoistPHIConstants(M); }
+  };
+}
+
+Pass *createHoistPHIConstantsPass() { return new HoistPHIConstants(); }

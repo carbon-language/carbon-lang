@@ -5,21 +5,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OPT_DCE_H
-#define LLVM_OPT_DCE_H
+#ifndef LLVM_TRANSFORMS_SCALAR_DCE_H
+#define LLVM_TRANSFORMS_SCALAR_DCE_H
 
-#include "llvm/Pass.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
+class Pass;
 
 //===----------------------------------------------------------------------===//
 // DeadInstElimination - This pass quickly removes trivially dead instructions
 // without modifying the CFG of the function.  It is a BasicBlockPass, so it
 // runs efficiently when queued next to other BasicBlockPass's.
 //
-struct DeadInstElimination : public BasicBlockPass {
-  virtual bool runOnBasicBlock(BasicBlock *BB);
-};
+Pass *createDeadInstEliminationPass();
 
 
 //===----------------------------------------------------------------------===//
@@ -32,34 +30,16 @@ struct DeadInstElimination : public BasicBlockPass {
 // otherwise simplifies control flow.  This should be factored out of this pass
 // eventually into it's own pass.
 //
-struct DeadCodeElimination : public MethodPass {
-  // External Interface:
-  //
-  static bool doDCE(Method *M);
 
-  // dceInstruction - Inspect the instruction at *BBI and figure out if it's
-  // [trivially] dead.  If so, remove the instruction and update the iterator
-  // to point to the instruction that immediately succeeded the original
-  // instruction.
-  //
-  static bool dceInstruction(BasicBlock::InstListType &BBIL,
-                             BasicBlock::iterator &BBI);
+Pass *createDeadCodeEliminationPass();
 
-  // Remove unused global values - This removes unused global values of no
-  // possible value.  This currently includes unused method prototypes and
-  // unitialized global variables.
-  //
-  static bool RemoveUnusedGlobalValues(Module *M);
-
-  // Pass Interface...
-  virtual bool doInitialization(Module *M) {
-    return RemoveUnusedGlobalValues(M);
-  }
-  virtual bool runOnMethod(Method *M) { return doDCE(M); }
-  virtual bool doFinalization(Module *M) {
-    return RemoveUnusedGlobalValues(M);
-  }
-};
+// dceInstruction - Inspect the instruction at *BBI and figure out if it's
+// [trivially] dead.  If so, remove the instruction and update the iterator
+// to point to the instruction that immediately succeeded the original
+// instruction.
+//
+bool dceInstruction(BasicBlock::InstListType &BBIL,
+                    BasicBlock::iterator &BBI);
 
 
 
@@ -68,15 +48,7 @@ struct DeadCodeElimination : public MethodPass {
 // algorithm assumes instructions are dead until proven otherwise, which makes
 // it more successful are removing non-obviously dead instructions.
 //
-struct AgressiveDCE : public MethodPass {
-  virtual bool runOnMethod(Method *M);
-
-  // getAnalysisUsageInfo - We require post dominance frontiers (aka Control
-  // Dependence Graph)
-  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-                                    Pass::AnalysisSet &Destroyed,
-                                    Pass::AnalysisSet &Provided);
-};
+Pass *createAgressiveDCEPass();
 
 
 // SimplifyCFG - This function is used to do simplification of a CFG.  For

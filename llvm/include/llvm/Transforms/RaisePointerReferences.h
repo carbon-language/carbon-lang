@@ -9,27 +9,12 @@
 #ifndef LLVM_TRANSFORMS_LEVELCHANGE_H
 #define LLVM_TRANSFORMS_LEVELCHANGE_H
 
-#include "llvm/Pass.h"
+class Pass;
 
 // RaisePointerReferences - Try to eliminate as many pointer arithmetic
 // expressions as possible, by converting expressions to use getelementptr and
 // friends.
 //
-struct RaisePointerReferences : public MethodPass {
-  static bool doit(Method *M);
-
-  virtual bool runOnMethod(Method *M) { return doit(M); }
-};
-
-
-// EliminateAuxillaryInductionVariables - Eliminate all aux indvars.  This
-// converts all induction variables to reference a cannonical induction
-// variable (which starts at 0 and counts by 1).
-//
-struct EliminateAuxillaryInductionVariables : public MethodPass {
-  static bool doit(Method *M) { return false; } // TODO!
-
-  virtual bool runOnMethod(Method *M) { return doit(M); }
-};
+Pass *createRaisePointerReferencesPass();
 
 #endif

@@ -21,6 +21,7 @@
 #include "llvm/Transforms/MethodInlining.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "llvm/Pass.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
@@ -249,7 +250,10 @@ static inline bool DoMethodInlining(BasicBlock *BB) {
   return false;
 }
 
-bool MethodInlining::doMethodInlining(Method *M) {
+// doMethodInlining - Use a heuristic based approach to inline methods that
+// seem to look good.
+//
+static bool doMethodInlining(Method *M) {
   bool Changed = false;
 
   // Loop through now and inline instructions a basic block at a time...
@@ -264,3 +268,13 @@ bool MethodInlining::doMethodInlining(Method *M) {
 
   return Changed;
 }
+
+namespace {
+  struct MethodInlining : public MethodPass {
+    virtual bool runOnMethod(Method *M) {
+      return doMethodInlining(M);
+    }
+  };
+}
+
+Pass *createMethodInliningPass() { return new MethodInlining(); }

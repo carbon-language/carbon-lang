@@ -23,6 +23,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Pass.h"
 #include <algorithm>
 #include <iostream>
 using std::vector;
@@ -30,6 +31,36 @@ using std::string;
 using std::cerr;
 
 static const Type *PtrSByte = 0;    // 'sbyte*' type
+
+namespace {
+  struct CleanupGCCOutput : public MethodPass {
+    // doPassInitialization - For this pass, it removes global symbol table
+    // entries for primitive types.  These are never used for linking in GCC and
+    // they make the output uglier to look at, so we nuke them.
+    //
+    // Also, initialize instance variables.
+    //
+    bool doInitialization(Module *M);
+    
+    // doPerMethodWork - This method simplifies the specified method hopefully.
+    //
+    bool runOnMethod(Method *M);
+    
+    // doPassFinalization - Strip out type names that are unused by the program
+    bool doFinalization(Module *M);
+    
+    // getAnalysisUsageInfo - This function needs FindUsedTypes to do its job...
+    //
+    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                      Pass::AnalysisSet &Destroyed,
+                                      Pass::AnalysisSet &Provided) {
+      // FIXME: Invalidates the CFG
+      Required.push_back(FindUsedTypes::ID);
+    }
+  };
+}
+
+
 
 // ConvertCallTo - Convert a call to a varargs function with no arg types
 // specified to a concrete nonvarargs method.
@@ -79,7 +110,7 @@ static void ConvertCallTo(CallInst *CI, Method *Dest) {
 // because of the way things are declared in C.  If this is the case, patch
 // things up.
 //
-bool CleanupGCCOutput::PatchUpMethodReferences(Module *M) {
+static bool PatchUpMethodReferences(Module *M) {
   SymbolTable *ST = M->getSymbolTable();
   if (!ST) return false;
 
@@ -545,12 +576,7 @@ bool CleanupGCCOutput::doFinalization(Module *M) {
   return Changed;
 }
 
-// getAnalysisUsageInfo - This function needs the results of the
-// FindUsedTypes and FindUnsafePointerTypes analysis passes...
-//
-void CleanupGCCOutput::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                            Pass::AnalysisSet &Destroyed,
-                                            Pass::AnalysisSet &Provided) {
-  // FIXME: Invalidates the CFG
-  Required.push_back(FindUsedTypes::ID);
+Pass *createCleanupGCCOutputPass() {
+  return new CleanupGCCOutput();
 }
+

@@ -40,4 +40,8 @@ public:
   }
 };
 
+static inline Pass *createUnifyMethodExitNodesPass() {
+  return new UnifyMethodExitNodes();
+}
+
 #endif

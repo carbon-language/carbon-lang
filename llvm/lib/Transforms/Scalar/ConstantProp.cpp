@@ -29,6 +29,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
+#include "llvm/Pass.h"
 #include "llvm/ConstantVals.h"
 
 inline static bool 
@@ -153,8 +154,7 @@ bool ConstantFoldTerminator(TerminatorInst *T) {
 // ConstantFoldInstruction - If an instruction references constants, try to fold
 // them together...
 //
-bool ConstantPropogation::doConstantPropogation(BasicBlock *BB,
-                                                BasicBlock::iterator &II) {
+bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &II) {
   Instruction *Inst = *II;
   if (isa<BinaryOperator>(Inst)) {
     Constant *D1 = dyn_cast<Constant>(Inst->getOperand(0));
@@ -200,7 +200,7 @@ static bool DoConstPropPass(Method *M) {
   for (Method::iterator BBI = M->begin(); BBI != M->end(); ++BBI) {
     BasicBlock *BB = *BBI;
     for (BasicBlock::iterator I = BB->begin(); I != BB->end(); )
-      if (ConstantPropogation::doConstantPropogation(BB, I))
+      if (doConstantPropogation(BB, I))
 	SomethingChanged = true;
       else
 	++I;
@@ -208,14 +208,20 @@ static bool DoConstPropPass(Method *M) {
   return SomethingChanged;
 }
 
+namespace {
+  struct ConstantPropogation : public MethodPass {
+    inline bool runOnMethod(Method *M) {
+      bool Modified = false;
 
-// returns whether or not the underlying method was modified
-//
-bool ConstantPropogation::doConstantPropogation(Method *M) {
-  bool Modified = false;
-
-  // Fold constants until we make no progress...
-  while (DoConstPropPass(M)) Modified = true;
-
-  return Modified;
+      // Fold constants until we make no progress...
+      while (DoConstPropPass(M)) Modified = true;
+      
+      return Modified;
+    }
+  };
 }
+
+Pass *createConstantPropogationPass() {
+  return new ConstantPropogation();
+}
+

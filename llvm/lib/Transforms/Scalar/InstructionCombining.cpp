@@ -19,6 +19,7 @@
 #include "llvm/Method.h"
 #include "llvm/iMemory.h"
 #include "llvm/InstrTypes.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
 #include "../TransformInternals.h"
 
@@ -37,7 +38,15 @@ static Instruction *CombineBinOp(BinaryOperator *I) {
     LocalChange = false;
     Value *Op1 = I->getOperand(0);
     if (Constant *Op2 = dyn_cast<Constant>(I->getOperand(1))) {
-      if (I->getOpcode() == Instruction::Add) {
+      switch (I->getOpcode()) {
+      case Instruction::Add:
+        if (I->getType()->isIntegral() && cast<ConstantInt>(Op2)->equalsInt(0)){
+          // Eliminate 'add int %X, 0'
+          I->replaceAllUsesWith(Op1);       // FIXME: This breaks the worklist
+          LocalChange = true;
+          break;
+        }
+
         if (Instruction *IOp1 = dyn_cast<Instruction>(Op1)) {
           if (IOp1->getOpcode() == Instruction::Add &&
               isa<Constant>(IOp1->getOperand(1))) {
@@ -54,10 +63,23 @@ static Instruction *CombineBinOp(BinaryOperator *I) {
               I->setOperand(0, IOp1->getOperand(0));
               I->setOperand(1, Val);
               LocalChange = true;
+              break;
             }
           }
           
         }
+        break;
+
+      case Instruction::Mul:
+        if (I->getType()->isIntegral() && cast<ConstantInt>(Op2)->equalsInt(1)){
+          // Eliminate 'mul int %X, 1'
+          I->replaceAllUsesWith(Op1);      // FIXME: This breaks the worklist
+          LocalChange = true;
+          break;
+        }
+
+      default:
+        break;
       }
     }
     Changed |= LocalChange;
@@ -110,7 +132,7 @@ static Instruction *CombineIndicies(MemAccessInst *MAI) {
   return 0;
 }
 
-bool InstructionCombining::CombineInstruction(Instruction *I) {
+static bool CombineInstruction(Instruction *I) {
   Instruction *Result = 0;
   if (BinaryOperator *BOP = dyn_cast<BinaryOperator>(I))
     Result = CombineBinOp(BOP);
@@ -125,8 +147,7 @@ bool InstructionCombining::CombineInstruction(Instruction *I) {
   return true;
 }
 
-
-bool InstructionCombining::doit(Method *M) {
+static bool doInstCombining(Method *M) {
   // Start the worklist out with all of the instructions in the method in it.
   std::vector<Instruction*> WorkList(inst_begin(M), inst_end(M));
 
@@ -147,4 +168,14 @@ bool InstructionCombining::doit(Method *M) {
   }
 
   return false;
+}
+
+namespace {
+  struct InstructionCombining : public MethodPass {
+    virtual bool runOnMethod(Method *M) { return doInstCombining(M); }
+  };
+}
+
+Pass *createInstructionCombiningPass() {
+  return new InstructionCombining();
 }

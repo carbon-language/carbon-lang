@@ -13,6 +13,7 @@
 #include "llvm/Type.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstantVals.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 
@@ -186,19 +187,29 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
   return Changed;
 }
 
-bool InductionVariableSimplify::doit(Method *M, cfg::LoopInfo &Loops) {
+static bool doit(Method *M, cfg::LoopInfo &Loops) {
   // Induction Variables live in the header nodes of the loops of the method...
   return reduce_apply_bool(Loops.getTopLevelLoops().begin(),
                            Loops.getTopLevelLoops().end(),
                            std::bind1st(std::ptr_fun(TransformLoop), &Loops));
 }
 
-bool InductionVariableSimplify::runOnMethod(Method *M) {
-  return doit(M, getAnalysis<cfg::LoopInfo>());
+
+namespace {
+  struct InductionVariableSimplify : public MethodPass {
+    virtual bool runOnMethod(Method *M) {
+      return doit(M, getAnalysis<cfg::LoopInfo>());
+    }
+    
+    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                      Pass::AnalysisSet &Destroyed,
+                                      Pass::AnalysisSet &Provided) {
+      Required.push_back(cfg::LoopInfo::ID);
+    }
+  };
 }
 
-void InductionVariableSimplify::getAnalysisUsageInfo(Pass::AnalysisSet &Req,
-                                                     Pass::AnalysisSet &Dest,
-                                                     Pass::AnalysisSet &Prov) {
-  Req.push_back(cfg::LoopInfo::ID);
+Pass *createIndVarSimplifyPass() {
+  return new InductionVariableSimplify();
 }
+
