@@ -943,6 +943,17 @@ bool Printer::doInitialization(Module &M)
   return false; // success
 }
 
+static const Function *isConstantFunctionPointerRef (const Constant *C) {
+  const ConstantPointerRef *R = dyn_cast<ConstantPointerRef>(C);
+  if (R) {
+    const Function *F = dyn_cast<Function>(R->getValue());
+    if (F) {
+      return F;
+    }
+  }
+  return NULL;
+}
+
 bool Printer::doFinalization(Module &M)
 {
   // Print out module-level global variables here.
@@ -956,7 +967,17 @@ bool Printer::doFinalization(Module &M)
       O << "\t.size " << name << ","
 	<< (unsigned)TD->getTypeSize(I->getType()) << "\n";
       O << "\t.align " << (unsigned)TD->getTypeAlignment(C->getType()) << "\n";
-      O << name << ":\t\t\t\t\t#" << *C << "\n";
+      O << name << ":\t\t\t\t\t#";
+      // If this is a constant function pointer, we only print out the
+      // name of the function in the comment (because printing the
+      // function means calling AsmWriter to print the whole LLVM
+      // assembly, which would corrupt the X86 assembly output.)
+      // Otherwise we print out the whole llvm value as a comment.
+      if (const Function *F = isConstantFunctionPointerRef (C)) {
+	O << " %" << F->getName() << "()\n";
+      } else {
+	O << *C << "\n";
+      }
       printConstantValueOnly (C);
     } else {
       O << "\t.globl " << name << "\n";
