@@ -1002,7 +1002,14 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                                  SCI->getOperand(0), SCI->getOperand(1));
           
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1)))
-        if (Op0I->getOpcode() == Instruction::And) {
+        if (Op0I->getOpcode() == Instruction::Add) {
+          // ~(X-c) --> (-c-1)-X
+          if (RHS->isAllOnesValue()) 
+            return BinaryOperator::create(Instruction::Sub,
+                                          *-*Op0CI -
+                                              *ConstantInt::get(I.getType(), 1),
+                                          Op0I->getOperand(0));
+        } else if (Op0I->getOpcode() == Instruction::And) {
           // (X & C1) ^ C2 --> (X & C1) | C2 iff (C1&C2) == 0
           if ((*RHS & *Op0CI)->isNullValue())
             return BinaryOperator::create(Instruction::Or, Op0, RHS);
