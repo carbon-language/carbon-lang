@@ -491,6 +491,7 @@ Andersens::Node *Andersens::getNodeForConstantPointer(Constant *C) {
   } else {
     assert(0 && "Unknown constant pointer!");
   }
+  return 0;
 }
 
 /// getNodeForConstantPointerTarget - Return the node POINTED TO by the
@@ -518,6 +519,7 @@ Andersens::Node *Andersens::getNodeForConstantPointerTarget(Constant *C) {
   } else {
     assert(0 && "Unknown constant pointer!");
   }
+  return 0;
 }
 
 /// AddGlobalInitializerConstraints - Add inclusion constraints for the memory
