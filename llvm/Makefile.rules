@@ -339,7 +339,7 @@ endif
 
 CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused
 
-LD.Flags  += -L$(LibDir) -L$(LLVMLibDir) $(LIBS)
+LD.Flags  += -L$(LibDir) -L$(LLVMLibDir) 
 CPP.Flags += -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
 	     -I$(PROJ_OBJ_ROOT)/include \
 	     -I$(PROJ_SRC_ROOT)/include \
@@ -555,6 +555,9 @@ endif
 #---------------------------------------------------------
 
 ifdef MODULE_NAME
+ifeq ($(strip $(LLVMGCC)),)
+$(warning Modules require llvm-gcc but no llvm-gcc is available)
+else
 
 Module     := $(LibDir)/$(MODULE_NAME).bc
 LinkModule := $(LLVMGCCWITHPATH) -shared -nostdlib
@@ -593,6 +596,7 @@ uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Bytecode Module $(DestModule)
 	-$(Verb) $(RM) -f $(DestModule)
 
+endif
 endif
 
 # if we're building a library ...
@@ -651,6 +655,9 @@ endif
 #   targets for building them.
 #---------------------------------------------------------
 ifdef BYTECODE_LIBRARY
+ifeq ($(strip $(LLVMGCC)),)
+$(warning Bytecode libraries require llvm-gcc which could not be found)
+else
 
 # make the C and C++ compilers strip debug info out of bytecode libraries.
 BCCompile.C += -Wa,-strip-debug
@@ -703,6 +710,7 @@ uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Bytecode Archive $(DestBytecodeLib)
 	-$(Verb) $(RM) -f $(DestBytecodeLib)
 
+endif
 endif
 
 #---------------------------------------------------------
@@ -881,7 +889,7 @@ endif
 $(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) executable $(TOOLNAME) $(StripWarnMsg)
 	$(Verb) $(Link) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
-          $(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB)
+          $(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB) $(LIBS)
 	$(Echo) ======= Finished Linking $(BuildMode) Executable $(TOOLNAME) $(StripWarnMsg) 
 
 DestTool = $(PROJ_bindir)/$(TOOLNAME)
