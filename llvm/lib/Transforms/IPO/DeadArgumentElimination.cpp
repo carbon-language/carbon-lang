@@ -79,7 +79,13 @@ static ArgumentLiveness getArgumentLiveness(const Argument &A) {
     Function *Callee = CS.getCalledFunction();
     if (!Callee) return Alive;
 
-    // FIXME: check to see if it's passed through a va_arg area
+    // Check to see if it's passed through a va_arg area: if so, we cannot
+    // remove it.
+    unsigned NumFixedArgs = Callee->getFunctionType()->getNumParams();
+    for (CallSite::arg_iterator AI = CS.arg_begin()+NumFixedArgs;
+         AI != CS.arg_end(); ++AI)
+      if (AI->get() == &A) // If passed through va_arg area, we cannot remove it
+        return Alive;
   }
 
   return MaybeLive;  // It must be used, but only as argument to a function
