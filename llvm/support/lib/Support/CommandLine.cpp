@@ -16,6 +16,7 @@
 #include <map>
 #include <set>
 #include <iostream>
+
 using namespace cl;
 using std::map;
 using std::pair;
@@ -354,7 +355,7 @@ bool EnumValueBase::handleOccurance(const char *ArgName, const string &Arg) {
 unsigned EnumValueBase::getOptionWidth() const {
   unsigned BaseSize = Option::getOptionWidth();
   for (unsigned i = 0; i < ValueMap.size(); ++i)
-    BaseSize = std::max(BaseSize, std::strlen(ValueMap[i].first)+8);
+    BaseSize = std::max(BaseSize, (unsigned)std::strlen(ValueMap[i].first)+8);
   return BaseSize;
 }
 
@@ -384,7 +385,7 @@ bool EnumFlagsBase::handleOccurance(const char *ArgName, const string &Arg) {
 unsigned EnumFlagsBase::getOptionWidth() const {
   unsigned BaseSize = 0;
   for (unsigned i = 0; i < ValueMap.size(); ++i)
-    BaseSize = std::max(BaseSize, std::strlen(ValueMap[i].first)+6);
+    BaseSize = std::max(BaseSize, (unsigned)std::strlen(ValueMap[i].first)+6);
   return BaseSize;
 }
 
@@ -417,7 +418,7 @@ bool EnumListBase::handleOccurance(const char *ArgName, const string &Arg) {
 unsigned EnumListBase::getOptionWidth() const {
   unsigned BaseSize = 0;
   for (unsigned i = 0; i < ValueMap.size(); ++i)
-    BaseSize = std::max(BaseSize, std::strlen(ValueMap[i].first)+6);
+    BaseSize = std::max(BaseSize, (unsigned)std::strlen(ValueMap[i].first)+6);
   return BaseSize;
 }
 
