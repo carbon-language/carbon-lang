@@ -1401,5 +1401,32 @@ void V8ISel::visitVANextInst (VANextInst &I) {
 }
 
 void V8ISel::visitVAArgInst (VAArgInst &I) {
-  std::cerr << "Sorry, vaarg instruction still unsupported:\n" << I; abort ();
+  unsigned VAList = getReg (I.getOperand (0));
+  unsigned DestReg = getReg (I);
+
+  switch (I.getType ()->getTypeID ()) {
+  case Type::PointerTyID:
+  case Type::UIntTyID:
+  case Type::IntTyID:
+	BuildMI (BB, V8::LD, 2, DestReg).addReg (VAList).addSImm (0);
+    return;
+
+  case Type::ULongTyID:
+  case Type::LongTyID:
+	BuildMI (BB, V8::LD, 2, DestReg).addReg (VAList).addSImm (0);
+	BuildMI (BB, V8::LD, 2, DestReg+1).addReg (VAList).addSImm (4);
+    return;
+
+  case Type::FloatTyID:
+    BuildMI (BB, V8::LDFri, 2, DestReg).addReg (VAList).addSImm (0);
+    return;
+
+  case Type::DoubleTyID:
+
+  default:
+    std::cerr << "Sorry, vaarg instruction of this type still unsupported:\n"
+              << I;
+    abort ();
+    return;
+  }
 }
