@@ -191,16 +191,6 @@ struct TargetSchedInfo {
   unsigned maxNumIssueTotal;
   int	longestIssueConflict;
   
-  int	branchMispredictPenalty;	// 4 for SPARC IIi
-  int	branchTargetUnknownPenalty;	// 2 for SPARC IIi
-  int   l1DCacheMissPenalty;		// 7 or 9 for SPARC IIi
-  int   l1ICacheMissPenalty;		// ? for SPARC IIi
-  
-  bool	inOrderLoads;			// true for SPARC IIi
-  bool	inOrderIssue;			// true for SPARC IIi
-  bool	inOrderExec;			// false for most architectures
-  bool	inOrderRetire;			// true for most architectures
-  
 protected:
   inline const InstrRUsage& getInstrRUsage(MachineOpCode opCode) const {
     assert(opCode >= 0 && opCode < (int) instrRUsages.size());

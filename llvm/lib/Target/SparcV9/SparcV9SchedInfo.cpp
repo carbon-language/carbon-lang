@@ -749,16 +749,6 @@ SparcV9SchedInfo::SparcV9SchedInfo(const TargetMachine& tgt)
   maxNumIssueTotal = 4;
   longestIssueConflict = 0;		// computed from issuesGaps[]
   
-  branchMispredictPenalty = 4;		// 4 for SPARC IIi
-  branchTargetUnknownPenalty = 2;	// 2 for SPARC IIi
-  l1DCacheMissPenalty = 8;		// 7 or 9 for SPARC IIi
-  l1ICacheMissPenalty = 8;		// ? for SPARC IIi
-  
-  inOrderLoads = true;			// true for SPARC IIi
-  inOrderIssue = true;			// true for SPARC IIi
-  inOrderExec  = false;			// false for most architectures
-  inOrderRetire= true;			// true for most architectures
-  
   // must be called after above parameters are initialized.
   initializeResources();
 }
