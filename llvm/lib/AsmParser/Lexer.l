@@ -32,7 +32,7 @@
 
 
 // TODO: All of the static identifiers are figured out by the lexer, 
-// these should be hashed.
+// these should be hashed to reduce the lexer size
 
 
 // atoull - Convert an ascii string of decimal digits into the unsigned long
@@ -80,7 +80,6 @@ char *UnEscapeLexed(char *Buffer, bool AllowNull = false) {
   return BOut;
 }
 
-
 #define YY_NEVER_INTERACTIVE 1
 %}
 
@@ -127,22 +126,26 @@ implementation  { return IMPLEMENTATION; }
 \.\.\.          { return DOTDOTDOT; }
 string          { return STRING; }
 
-void            { llvmAsmlval.TypeVal = Type::VoidTy  ; return VOID;   }
-bool            { llvmAsmlval.TypeVal = Type::BoolTy  ; return BOOL;   }
-sbyte           { llvmAsmlval.TypeVal = Type::SByteTy ; return SBYTE;  }
-ubyte           { llvmAsmlval.TypeVal = Type::UByteTy ; return UBYTE;  }
-short           { llvmAsmlval.TypeVal = Type::ShortTy ; return SHORT;  }
-ushort          { llvmAsmlval.TypeVal = Type::UShortTy; return USHORT; }
-int             { llvmAsmlval.TypeVal = Type::IntTy   ; return INT;    }
-uint            { llvmAsmlval.TypeVal = Type::UIntTy  ; return UINT;   }
-long            { llvmAsmlval.TypeVal = Type::LongTy  ; return LONG;   }
-ulong           { llvmAsmlval.TypeVal = Type::ULongTy ; return ULONG;  }
-float           { llvmAsmlval.TypeVal = Type::FloatTy ; return FLOAT;  }
-double          { llvmAsmlval.TypeVal = Type::DoubleTy; return DOUBLE; }
+void            { llvmAsmlval.PrimType = Type::VoidTy  ; return VOID;   }
+bool            { llvmAsmlval.PrimType = Type::BoolTy  ; return BOOL;   }
+sbyte           { llvmAsmlval.PrimType = Type::SByteTy ; return SBYTE;  }
+ubyte           { llvmAsmlval.PrimType = Type::UByteTy ; return UBYTE;  }
+short           { llvmAsmlval.PrimType = Type::ShortTy ; return SHORT;  }
+ushort          { llvmAsmlval.PrimType = Type::UShortTy; return USHORT; }
+int             { llvmAsmlval.PrimType = Type::IntTy   ; return INT;    }
+uint            { llvmAsmlval.PrimType = Type::UIntTy  ; return UINT;   }
+long            { llvmAsmlval.PrimType = Type::LongTy  ; return LONG;   }
+ulong           { llvmAsmlval.PrimType = Type::ULongTy ; return ULONG;  }
+float           { llvmAsmlval.PrimType = Type::FloatTy ; return FLOAT;  }
+double          { llvmAsmlval.PrimType = Type::DoubleTy; return DOUBLE; }
 
-type            { llvmAsmlval.TypeVal = Type::TypeTy  ; return TYPE;   }
+type            { llvmAsmlval.PrimType = Type::TypeTy  ; return TYPE;   }
 
-label           { llvmAsmlval.TypeVal = Type::LabelTy ; return LABEL;  }
+label           { llvmAsmlval.PrimType = Type::LabelTy ; return LABEL;  }
+opaque          { llvmAsmlval.TypeVal = 
+		    new PATypeHolder<Type>(OpaqueType::get());
+                  return OPAQUE; 
+                }
 
 
 not             { RET_TOK(UnaryOpVal, Not, NOT); }
@@ -226,6 +229,6 @@ getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
 {FPConstant}    { llvmAsmlval.FPVal = atof(yytext); return FPVAL; }
 
 [ \t\n]         { /* Ignore whitespace */ }
-.               { /*printf("'%s'", yytext);*/ return yytext[0]; }
+.               { return yytext[0]; }
 
 %%
