@@ -529,10 +529,9 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     if (DestTy == Type::BoolTy)
       // FIXME: When we support 'external weak' references, we have to prevent
-      // this transformation from happening.  In the meantime we avoid folding
-      // any cast of an external symbol.
-      if (!GV->isExternal())
-        return ConstantBool::True;
+      // this transformation from happening.  This code will need to be updated
+      // to ignore external weak symbols when we support it.
+      return ConstantBool::True;
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (CE->getOpcode() == Instruction::Cast) {
       Constant *Op = const_cast<Constant*>(CE->getOperand(0));
