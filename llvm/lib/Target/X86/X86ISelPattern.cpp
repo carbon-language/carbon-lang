@@ -1224,10 +1224,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, X86::MOV32ri, 1, Result).addExternalSymbol(Sym);
     return Result;
   }
-  case ISD::FP_EXTEND:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, X86::FpMOV, 1, Result).addReg(Tmp1);
-    return Result;
   case ISD::ZERO_EXTEND: {
     int DestIs16 = N.getValueType() == MVT::i16;
     int SrcIs16  = N.getOperand(0).getValueType() == MVT::i16;
@@ -1287,6 +1283,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   }
   case ISD::TRUNCATE:
     // Fold TRUNCATE (LOAD P) into a smaller load from P.
+    // FIXME: This should be performed by the DAGCombiner.
     if (isFoldableLoad(N.getOperand(0), SDOperand())) {
       switch (N.getValueType()) {
       default: assert(0 && "Unknown truncate!");
