@@ -131,21 +131,6 @@ if not exist ..\..\lib\System\platform\TimeValue.cpp echo #include &quot;../win3
 				RelativePath="..\..\lib\System\DynamicLibrary.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\System\ltdl.c">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="__WINDOWS__"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="__WINDOWS__"/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\lib\System\MappedFile.cpp">
 			</File>
 			<File
@@ -176,9 +161,6 @@ if not exist ..\..\lib\System\platform\TimeValue.cpp echo #include &quot;../win3
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
 				RelativePath="..\..\include\llvm\System\DynamicLibrary.h">
-			</File>
-			<File
-				RelativePath="..\..\lib\System\ltdl.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\System\MappedFile.h">

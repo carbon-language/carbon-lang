@@ -2,50 +2,105 @@
 // 
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Jeff Cohen and is distributed under the 
 // University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file provides the Win32 specific implementation of the DynamicLibrary
+// This file provides the Win32 specific implementation of  DynamicLibrary.
 //
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
+#include <dbghelp.h>
+
+#pragma comment(lib, "dbghelp.lib")
 
 namespace llvm {
 using namespace sys;
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only Win32 specific code 
-//===          and must not be UNIX code
+//===          and must not be UNIX code.
 //===----------------------------------------------------------------------===//
 
+static std::vector<HMODULE> OpenedHandles;
+
+BOOL CALLBACK ELM_Callback(PSTR  ModuleName,
+                           ULONG ModuleBase,
+                           ULONG ModuleSize,
+                           PVOID UserContext)
+{
+  OpenedHandles.push_back((HMODULE)ModuleBase);
+  return TRUE;
+}
+
 DynamicLibrary::DynamicLibrary() : handle(0) {
-  handle = (void*) GetModuleHandle(NULL);
-  
-  if (handle == 0) {
-    ThrowError("Can't GetModuleHandle: ");
-  }
+  handle = GetModuleHandle(NULL);
+  OpenedHandles.push_back((HMODULE)handle);
 }
 
 DynamicLibrary::DynamicLibrary(const char*filename) : handle(0) {
-  handle = LoadLibrary(filename);
+  HMODULE a_handle = LoadLibrary(filename);
 
-  if (handle == 0) {
-    ThrowError("Can't LoadLibrary: ");
-  }
+  if (a_handle == 0)
+    ThrowError(std::string(filename) + ": Can't open : ");
+
+  handle = a_handle;
+  OpenedHandles.push_back(a_handle);
 }
 
 DynamicLibrary::~DynamicLibrary() {
-  assert(handle !=0 && "Invalid DynamicLibrary handle");
-  if (handle)
-    FreeLibrary((HMODULE*)handle);
+  if (handle == 0)
+    return;
+
+  // GetModuleHandle() does not increment the ref count, so we must not free
+  // the handle to the executable.
+  if (handle != GetModuleHandle(NULL))
+    FreeLibrary((HMODULE)handle);
+  handle = 0;
+
+  for (std::vector<HMODULE>::iterator I = OpenedHandles.begin(),
+       E = OpenedHandles.end(); I != E; ++I) {
+    if (*I == handle) {
+      // Note: don't use the swap/pop_back trick here. Order is important.
+      OpenedHandles.erase(I);
+    }
+  }
+}
+
+void DynamicLibrary::LoadLibraryPermanently(const char* filename) {
+  if (filename) {
+    HMODULE a_handle = LoadLibrary(filename);
+
+	if (a_handle == 0)
+		ThrowError(std::string(filename) + ": Can't open : ");
+
+	OpenedHandles.push_back(a_handle);
+  } else {
+	// When no file is specified, enumerate all DLLs and EXEs in the
+    // process.
+    EnumerateLoadedModules(GetCurrentProcess(), ELM_Callback, 0);
+  }
+
+  // Because we don't remember the handles, we will never free them; hence,
+  // it is loaded permanently.
+}
+
+void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
+  for (std::vector<HMODULE>::iterator I = OpenedHandles.begin(),
+       E = OpenedHandles.end(); I != E; ++I) {
+    FARPROC ptr = GetProcAddress((HMODULE)*I, symbolName);
+    if (ptr)
+      return ptr;
+  }
+
+  return 0;
 }
 
 void *DynamicLibrary::GetAddressOfSymbol(const char *symbolName) {
-  assert(handle !=0 && "Invalid DynamicLibrary handle");
-  return (void*) GetProcAddress((HMODULE*)handle, symbolName);
+  assert(handle != 0 && "Invalid DynamicLibrary handle");
+  return GetProcAddress((HMODULE)handle, symbolName);
 }
 
 }

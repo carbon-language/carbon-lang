@@ -12,6 +12,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/DynamicLibrary.h"
+
+// It is not possible to use ltdl.c on VC++ builds as the terms of its LGPL
+// license and special exception would cause all of LLVM to be placed under
+// the LGPL.  This is because the exception applies only when libtool is
+// used, and obviously libtool is not used with Visual Studio.  An entirely
+// separate implementation is provided in win32/DynamicLibrary.cpp.
+
+#ifdef _WIN32
+
+#include "win32/DynamicLibrary.cpp"
+
+#else
+
 #include "ltdl.h"
 #include <cassert>
 using namespace llvm;
@@ -135,3 +148,4 @@ void *DynamicLibrary::GetAddressOfSymbol(const char *symbolName) {
   return lt_dlsym((lt_dlhandle) handle, symbolName);
 }
 
+#endif // _WIN32
