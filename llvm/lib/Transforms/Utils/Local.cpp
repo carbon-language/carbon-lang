@@ -238,6 +238,7 @@ bool llvm::canConstantFoldCallTo(Function *F) {
 
   switch (F->getIntrinsicID()) {
   case Intrinsic::isnan: return true;
+  case Intrinsic::isunordered: return true;
   default: break;
   }
 
@@ -293,7 +294,9 @@ Constant *llvm::ConstantFoldCall(Function *F,
       if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
         double Op1V = Op1->getValue(), Op2V = Op2->getValue();
 
-        if (Name == "pow") {
+        if (Name == "llvm.isunordered")
+          return ConstantBool::get(isnan(Op1V) | isnan(Op2V));
+        else if (Name == "pow") {
           errno = 0;
           double V = pow(Op1V, Op2V);
           if (errno == 0)
