@@ -1,5 +1,6 @@
 #include "llvm/CodeGen/IGNode.h"
 #include "SparcRegInfo.h"
+#include "SparcInternals.h"
 
 #include "llvm/Target/Sparc.h"
 

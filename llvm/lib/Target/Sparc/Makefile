@@ -5,7 +5,8 @@ LIBRARYNAME = sparc
 Source  = \
 	  Sparc.o \
 	  Sparc.burm.o \
-	  SparcInstrSelection.o
+	  SparcInstrSelection.o \
+	  SparcRegInfo.o
 
 include $(LEVEL)/Makefile.common
 

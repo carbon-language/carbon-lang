@@ -853,20 +853,34 @@ public:
 
 };
 
+
 //---------------------------------------------------------------------------
-// class UltraSparcInstrInfo 
+// class UltraSparcRegInfo 
 // 
 // Purpose:
 //   This class provides info about sparc register classes.
 //---------------------------------------------------------------------------
 
 class LiveRange;
+class UltraSparc;
+
 
 class UltraSparcRegInfo : public MachineRegInfo
 {
 
  private:
-  enum RegClassIDs { IntRegClassID, FloatRegClassID, FloatCCREgClassID };
+
+  enum RegClassIDs { 
+    IntRegClassID, 
+    FloatRegClassID, 
+    IntCCRegClassID,
+    FloatCCRegClassID 
+  };
+
+  // WARNING: If the above enum order must be changed, also modify 
+  // getRegisterClassOfValue method below since it assumes this particular 
+  // order for efficiency.
+
 
   // reverse pointer to get info about the ultra sparc machine
   const UltraSparc *const UltraSparcInfo;
@@ -883,37 +897,70 @@ class UltraSparcRegInfo : public MachineRegInfo
 
  public:
 
-  UltraSparcRegInfo(const UltraSparc *USI ) : UltraSparcInfo(USI), 
-					      NumOfIntArgRegs(6), 
-					      NumOfFloatArgRegs(6) 
-  {    
 
+  UltraSparcRegInfo(const UltraSparc *const USI ) : UltraSparcInfo(USI), 
+						    NumOfIntArgRegs(6), 
+						    NumOfFloatArgRegs(6) 
+  {    
     MachineRegClassArr.push_back( new SparcIntRegClass(IntRegClassID) );
     MachineRegClassArr.push_back( new SparcFloatRegClass(FloatRegClassID) );
+    MachineRegClassArr.push_back( new SparcIntCCRegClass(IntCCRegClassID) );
+    MachineRegClassArr.push_back( new SparcFloatCCRegClass(FloatCCRegClassID));
 
     assert( SparcFloatRegOrder::StartOfNonVolatileRegs == 6 && 
 	    "6 Float regs are used for float arg passing");
-
   }
+
+  // ***** TODO  Delete
+  ~UltraSparcRegInfo(void) { }              // empty destructor 
+
 
   inline const UltraSparc & getUltraSparcInfo() const { 
     return *UltraSparcInfo;
   }
 
-  inline unsigned getRegClassIDOfValue (const Value *const Val) const {
+
+
+  inline unsigned getRegClassIDOfValue (const Value *const Val,
+					bool isCCReg = false) const {
+
     Type::PrimitiveID ty = (Val->getType())->getPrimitiveID();
+
+    unsigned res;
     
     if( ty && ty <= Type::LongTyID || (ty == Type::PointerTyID) )  
-      return IntRegClassID;             // sparc int reg (ty=0: void)
+      res =  IntRegClassID;             // sparc int reg (ty=0: void)
     else if( ty <= Type::DoubleTyID)
-      return FloatRegClassID;           // sparc float reg class
+      res = FloatRegClassID;           // sparc float reg class
     else { 
       cout << "TypeID: " << ty << endl;
       assert(0 && "Cannot resolve register class for type");
 
     }
+
+    if(isCCReg)
+      return res + 2;      // corresponidng condition code regiser 
+
+    else 
+      return res;
+
   }
- 
+                   
+
+#if 0
+  unsigned getRCIDOfMachineOp (const MachineOperand & Op) const {
+
+    unsigned Type = getRegClassIDOfValue( Op.getVRegValue() );
+
+    if( Op.getOperandType() == MachineOperand::MO_CCRegister ) 
+      return Type + 2;               // because of the order of CC classes
+    else return Type;
+  }
+
+#endif
+
+
+
   void colorArgs(const Method *const Meth, LiveRangeInfo& LRI) const;
 
   static void printReg(const LiveRange *const LR)  ;
@@ -929,9 +976,11 @@ class UltraSparcRegInfo : public MachineRegInfo
       return reg;
     else if ( RegClassID == FloatRegClassID && reg < 64)
       return reg + 32;                  // we have 32 int regs
-    else if( RegClassID == FloatCCREgClassID && reg < 4)
+    else if( RegClassID == FloatCCRegClassID && reg < 4)
       return reg + 32 + 64;             // 32 int, 64 float
-    else 
+    else if( RegClassID == IntCCRegClassID ) 
+      return 4+ 32 + 64;                // only int cc reg
+    else  
       assert(0 && "Invalid register class or reg number");
 
   }
@@ -944,17 +993,15 @@ class UltraSparcRegInfo : public MachineRegInfo
     else if ( reg < (64 + 32) )
       return SparcFloatRegOrder::getRegName( reg  - 32);                  
     else if( reg < (64+32+4) )
-      assert( 0 && "no float condition reg class yet");
-      // return reg + 32 + 64;             
+      return SparcFloatCCRegOrder::getRegName( reg -32 - 64);
+    else if ( reg == 64+32+4)
+      return "xcc";                     // only integer cc reg
     else 
       assert(0 && "Invalid register number");
   }
 
 
 };
-
-
-
 
 
 
@@ -1667,11 +1714,14 @@ protected:
 class UltraSparc : public TargetMachine {
   UltraSparcInstrInfo InstInfo;
   UltraSparcSchedInfo InstSchedulingInfo;
+  UltraSparcRegInfo RegInfo;
 public:
   UltraSparc();
   virtual ~UltraSparc() {}
 
   virtual const MachineInstrInfo& getInstrInfo() const { return InstInfo; }
+
+  virtual const MachineRegInfo& getRegInfo() const { return RegInfo; }
 
   // compileMethod - For the sparc, we do instruction selection, followed by
   // delay slot scheduling, then register allocation.

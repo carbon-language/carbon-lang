@@ -4,17 +4,20 @@
    Purpose: Contains the description of integer register class of Sparc
 */
 
-#ifndef SPARC_INT_REG_CLASS_H
-#define SPARC_INT_REG_CLASS_H
+
+#ifndef SPARC_REG_INFO_CLASS_H
+#define SPARC_REG_INFO_CLASS_H
 
 #include "llvm/Target/RegInfo.h"
+#include "llvm/CodeGen/IGNode.h"
 
 //-----------------------------------------------------------------------------
 // Integer Register Class
 //-----------------------------------------------------------------------------
 
+
 // Int register names in same order as enum in class SparcIntRegOrder
-//
+
 static string const IntRegNames[] = 
   {       "g1", "g2", "g3", "g4", "g5", "g6", "g7",
     "o0", "o1", "o2", "o3", "o4", "o5",       "o7",
@@ -80,7 +83,7 @@ class SparcIntRegClass : public MachineRegClassInfo
  public:
 
   SparcIntRegClass(unsigned ID) 
-    : MachineRegClassInfo(0, 
+    : MachineRegClassInfo(ID, 
 			  SparcIntRegOrder::NumOfAvailRegs,
 			  SparcIntRegOrder::NumOfAllRegs)
     {  }
@@ -141,6 +144,7 @@ class SparcFloatRegOrder{
 };
 
 
+
 class SparcFloatRegClass : public MachineRegClassInfo
 {
  private:
@@ -151,7 +155,7 @@ class SparcFloatRegClass : public MachineRegClassInfo
  public:
 
   SparcFloatRegClass(unsigned ID) 
-    : MachineRegClassInfo(1, 
+    : MachineRegClassInfo(ID, 
 			  SparcFloatRegOrder::NumOfAvailRegs,
 			  SparcFloatRegOrder::NumOfAllRegs)
     {  }
@@ -159,6 +163,77 @@ class SparcFloatRegClass : public MachineRegClassInfo
   void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const;
 
 };
+
+
+
+
+//-----------------------------------------------------------------------------
+// Int CC Register Class
+// Only one integer cc register is available
+//-----------------------------------------------------------------------------
+
+
+class SparcIntCCRegClass : public MachineRegClassInfo
+{
+public:
+
+  SparcIntCCRegClass(unsigned ID) 
+    : MachineRegClassInfo(ID,1, 1) {  }
+
+  inline void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const {
+    Node->setColor(0);    // only one int cc reg is available
+  }
+
+};
+
+
+
+//-----------------------------------------------------------------------------
+// Float CC Register Class
+// Only 4 Float CC registers are available
+//-----------------------------------------------------------------------------
+
+
+static string const FloatCCRegNames[] = 
+  {    
+    "fcc0",  "fcc1",  "fcc2",  "fcc3"
+  };
+
+
+class SparcFloatCCRegOrder{ 
+
+ public:
+
+  enum RegsInPrefOrder {
+
+    fcc0, fcc1, fcc2, fcc3
+  };
+
+  static const string  getRegName(const unsigned reg) {
+    assert( reg < 4 );
+    return FloatCCRegNames[reg];
+  }
+
+};
+
+
+
+class SparcFloatCCRegClass : public MachineRegClassInfo
+{
+public:
+
+  SparcFloatCCRegClass(unsigned ID) 
+    : MachineRegClassInfo(ID, 4, 4) {  }
+
+  void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const {
+    int c;
+    for(c=0; c < 4  && IsColorUsedArr[c] ; ++c) ; // find color
+    assert( (c < 4)  && "Can allocate only 4 float cc registers");
+    Node->setColor(c);   
+  }
+
+};
+
 
 
 
