@@ -690,6 +690,27 @@ aggressive local analysis that "knows" many important facts:</p>
 
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="globalsmodref">The <tt>-globalsmodref-aa</tt> pass</a>
+</div>
+
+<div class="doc_text">
+
+<p>This pass implements a simple context-sensitive mod/ref and alias analysis
+for internal global variables that don't "have their address taken".  If a 
+global does not have its address taken, the pass knows that no pointers alias 
+the global.
+</p>
+
+<p>The real power of this pass is that it provides context-sensitive mod/ref 
+information for call instructions.  This allows the optimizer to know that 
+calls to a function do not clobber or read the value of the global, allowing 
+loads and stores to be eliminated.</p>
+
+<p>Note that this pass is somewhat limited in its scope (only support 
+non-address taken globals), but is very quick analysis.</p>
+</div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
