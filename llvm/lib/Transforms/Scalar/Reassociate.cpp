@@ -14,6 +14,9 @@
 // (starting at 2), which effectively gives values in deep loops higher rank
 // than values not in loops.
 //
+// This code was originally written by Chris Lattner, and was then cleaned up
+// and perfected by Casey Carter.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
@@ -86,24 +89,6 @@ unsigned Reassociate::getRank(Value *V) {
 }
 
 
-// isCommutativeOperator - Return true if the specified instruction is
-// commutative and associative.  If the instruction is not commutative and
-// associative, we can not reorder its operands!
-//
-static inline BinaryOperator *isCommutativeOperator(Instruction *I) {
-  // Floating point operations do not commute!
-  if (I->getType()->isFloatingPoint()) return 0;
-
-  if (I->getOpcode() == Instruction::Add || 
-      I->getOpcode() == Instruction::Mul ||
-      I->getOpcode() == Instruction::And || 
-      I->getOpcode() == Instruction::Or  ||
-      I->getOpcode() == Instruction::Xor)
-    return cast<BinaryOperator>(I);
-  return 0;    
-}
-
-
 bool Reassociate::ReassociateExpr(BinaryOperator *I) {
   Value *LHS = I->getOperand(0);
   Value *RHS = I->getOperand(1);
@@ -114,7 +99,9 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
 
   // Make sure the LHS of the operand always has the greater rank...
   if (LHSRank < RHSRank) {
-    I->swapOperands();
+    bool Success = !I->swapOperands();
+    assert(Success && "swapOperands failed");
+
     std::swap(LHS, RHS);
     std::swap(LHSRank, RHSRank);
     Changed = true;
@@ -137,15 +124,28 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
 
         // Convert ((a + 12) + 10) into (a + (12 + 10))
         I->setOperand(0, LHSI->getOperand(TakeOp));
-        LHSI->setOperand(TakeOp, RHS);
-        I->setOperand(1, LHSI);
+
+        // Move the LHS expression forward, to ensure that it is dominated by
+        // its operands.
+        std::string Name = LHSI->getName();
+        LHSI->setName("");
+        BinaryOperator *NewLHS =
+          BinaryOperator::create(LHSI->getOpcode(),
+                                 LHSI->getOperand(0), LHSI->getOperand(1),
+                                 Name, I);
+
+        NewLHS->setOperand(TakeOp, RHS);
+        I->setOperand(1, NewLHS);
+
+        assert(LHSI->use_size() == 0 && "References to LHS shouldn't exist!");
+        LHSI->getParent()->getInstList().erase(LHSI);
 
         ++NumChanged;
         DEBUG(std::cerr << "Reassociated: " << I << " Result BB: "
                         << I->getParent());
 
         // Since we modified the RHS instruction, make sure that we recheck it.
-        ReassociateExpr(LHSI);
+        ReassociateExpr(NewLHS);
         return true;
       }
     }
@@ -159,7 +159,7 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
 // version of the value is returned, and BI is left pointing at the instruction
 // that should be processed next by the reassociation pass.
 //
-static Value *NegateValue(Value *V, BasicBlock *BB, BasicBlock::iterator &BI) {
+static Value *NegateValue(Value *V, BasicBlock::iterator &BI) {
   // We are trying to expose opportunity for reassociation.  One of the things
   // that we want to do to achieve this is to push a negation as deep into an
   // expression chain as possible, to expose the add instructions.  In practice,
@@ -171,8 +171,8 @@ static Value *NegateValue(Value *V, BasicBlock *BB, BasicBlock::iterator &BI) {
   //
   if (Instruction *I = dyn_cast<Instruction>(V))
     if (I->getOpcode() == Instruction::Add && I->use_size() == 1) {
-      Value *RHS = NegateValue(I->getOperand(1), BB, BI);
-      Value *LHS = NegateValue(I->getOperand(0), BB, BI);
+      Value *RHS = NegateValue(I->getOperand(1), BI);
+      Value *LHS = NegateValue(I->getOperand(0), BI);
 
       // We must actually insert a new add instruction here, because the neg
       // instructions do not dominate the old add instruction in general.  By
@@ -187,12 +187,7 @@ static Value *NegateValue(Value *V, BasicBlock *BB, BasicBlock::iterator &BI) {
   // Insert a 'neg' instruction that subtracts the value from zero to get the
   // negation.
   //
-  Instruction *Neg =
-    BinaryOperator::create(Instruction::Sub,
-                           Constant::getNullValue(V->getType()), V,
-                           V->getName()+".neg", BI);
-  --BI;
-  return Neg;
+  return BI = BinaryOperator::createNeg(V, V->getName() + ".neg", BI);
 }
 
 
@@ -200,10 +195,37 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
   bool Changed = false;
   for (BasicBlock::iterator BI = BB->begin(); BI != BB->end(); ++BI) {
 
+    if (BI->getOpcode() == Instruction::Sub && !BinaryOperator::isNeg(BI)) {
+      // Convert a subtract into an add and a neg instruction... so that sub
+      // instructions can be commuted with other add instructions...
+      //
+      // Calculate the negative value of Operand 1 of the sub instruction...
+      // and set it as the RHS of the add instruction we just made...
+      //
+      std::string Name = BI->getName();
+      BI->setName("");
+      Instruction *New =
+        BinaryOperator::create(Instruction::Add, BI->getOperand(0),
+                               BI->getOperand(1), Name, BI);
+
+      // Everyone now refers to the add instruction...
+      BI->replaceAllUsesWith(New);
+
+      // Put the new add in the place of the subtract... deleting the subtract
+      BB->getInstList().erase(BI);
+
+      BI = New;
+      New->setOperand(1, NegateValue(New->getOperand(1), BI));
+      
+      Changed = true;
+      DEBUG(std::cerr << "Negated: " << New << " Result BB: " << BB);
+    }
+
     // If this instruction is a commutative binary operator, and the ranks of
     // the two operands are sorted incorrectly, fix it now.
     //
-    if (BinaryOperator *I = isCommutativeOperator(BI)) {
+    if (BI->isAssociative()) {
+      BinaryOperator *I = cast<BinaryOperator>(&*BI);
       if (!I->use_empty()) {
         // Make sure that we don't have a tree-shaped computation.  If we do,
         // linearize it.  Convert (A+B)+(C+D) into ((A+B)+C)+D
@@ -234,31 +256,6 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
         //
         Changed |= ReassociateExpr(I);
       }
-
-    } else if (BI->getOpcode() == Instruction::Sub &&
-               BI->getOperand(0) != Constant::getNullValue(BI->getType())) {
-      // Convert a subtract into an add and a neg instruction... so that sub
-      // instructions can be commuted with other add instructions...
-      //
-      Instruction *New = BinaryOperator::create(Instruction::Add,
-                                                BI->getOperand(0),
-                                                BI->getOperand(1),
-                                                BI->getName());
-      Value *NegatedValue = BI->getOperand(1);
-
-      // Everyone now refers to the add instruction...
-      BI->replaceAllUsesWith(New);
-
-      // Put the new add in the place of the subtract... deleting the subtract
-      BI = BB->getInstList().erase(BI);
-      BI = ++BB->getInstList().insert(BI, New);
-
-      // Calculate the negative value of Operand 1 of the sub instruction...
-      // and set it as the RHS of the add instruction we just made...
-      New->setOperand(1, NegateValue(NegatedValue, BB, BI));
-      --BI;
-      Changed = true;
-      DEBUG(std::cerr << "Negated: " << New << " Result BB: " << BB);
     }
   }
 
