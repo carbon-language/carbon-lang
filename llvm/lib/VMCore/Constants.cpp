@@ -1306,7 +1306,7 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::Xor:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
     assert(C1->getType()->isIntegral() &&
-           "Tried to create an logical operation on a non-integral type!");
+           "Tried to create a logical operation on a non-integral type!");
     break;
   case Instruction::SetLT: case Instruction::SetGT: case Instruction::SetLE:
   case Instruction::SetGE: case Instruction::SetEQ: case Instruction::SetNE:

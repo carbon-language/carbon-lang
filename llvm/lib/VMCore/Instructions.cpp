@@ -561,7 +561,7 @@ void BinaryOperator::init(BinaryOps iType, Value *S1, Value *S2)
     assert(getType() == S1->getType() &&
            "Logical operation should return same type as operands!");
     assert(getType()->isIntegral() &&
-           "Tried to create an logical operation on a non-integral type!");
+           "Tried to create a logical operation on a non-integral type!");
     break;
   case SetLT: case SetGT: case SetLE:
   case SetGE: case SetEQ: case SetNE:
