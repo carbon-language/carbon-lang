@@ -140,6 +140,11 @@ ifdef SHARED_LIBRARY
 all:: dynamic
 endif
 
+ifdef BYTECODE_LIBRARY
+# if BYTECODE_LIBRARY is specified, the default is to build the bytecode lib
+all:: bytecodelib
+endif
+
 # Default Rule:  Make sure it's also a :: rule
 all ::
 
@@ -167,7 +172,7 @@ prdirs::
 # slightly since GNU Make will not try to find implicit rules for targets
 # which are marked as Phony.
 #
-.PHONY: all dynamic clean distclean install test bytecode prdirs
+.PHONY: all dynamic bytecodelib clean distclean install test bytecode prdirs
 
 ###########################################################################
 # Miscellaneous paths and commands:
@@ -184,8 +189,6 @@ prdirs::
 #DocInstDir=/usr/doc/xxx
 
 BURG_OPTS = -I
-
-PURIFY := $(PURIFY) -cache-dir="$(BUILD_OBJ_ROOT)/../purifycache" -chain-length="30" -messages=all 
 
 ifdef ENABLE_PROFILING
   ENABLE_OPTIMIZED = 1
@@ -265,11 +268,7 @@ PROJTOOLCURRENT := $(BUILD_OBJ_ROOT)/tools/$(CONFIGURATION)
 #
 # Libtool is found in the current directory.
 #
-ifdef VERBOSE
-LIBTOOL=$(LLVM_SRC_ROOT)/mklib
-else
-LIBTOOL=$(LLVM_SRC_ROOT)/mklib --silent
-endif
+LIBTOOL := $(LLVM_SRC_ROOT)/mklib
 
 #
 # If we're not building a shared library, use the disable-shared tag with
@@ -283,7 +282,7 @@ endif
 # versions of libtool.
 #
 ifndef SHARED_LIBRARY
-LIBTOOL := $(LIBTOOL) --tag=disable-shared
+LIBTOOL += --tag=disable-shared
 endif
 
 #
@@ -291,6 +290,7 @@ endif
 #
 ifndef VERBOSE
 VERB := @
+LIBTOOL += --silent
 endif
 
 ###########################################################################
@@ -328,7 +328,6 @@ endif
 # Allow gnu extensions...
 CPPFLAGS += -D_GNU_SOURCE
 
-# -Wno-unused-parameter
 CompileCommonOpts := -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
 CompileOptimizeOpts := -O3 -DNDEBUG -finline-functions -fshort-enums
 
@@ -356,11 +355,7 @@ CompileCP := $(CompileC) $(CompileOptimizeOpts) $(PROFILE)
 # Link final executable
 #	(Note that we always link with the C++ compiler).
 #
-ifdef ENABLE_PURIFY # To enable purify, build with 'gmake ENABLE_PURIFY=1'
-Link     := $(PURIFY) $(LIBTOOL) --mode=link $(CXX) -static
-else
 Link     := $(LIBTOOL) --mode=link $(CXX)
-endif
 
 # link both projlib and llvmlib libraries
 LinkG    := $(Link) -g -L$(PROJLIBDEBUGSOURCE)  -L$(LLVMLIBDEBUGSOURCE) $(STRIP)
@@ -368,26 +363,20 @@ LinkO    := $(Link) -O3 -L$(PROJLIBRELEASESOURCE) -L$(LLVMLIBRELEASESOURCE)
 LinkP    := $(Link) -O3 -L$(PROJLIBPROFILESOURCE) -L$(LLVMLIBPROFILESOURCE) $(PROFILE)
 
 # Create one .o file from a bunch of .o files...
-#ifdef SHARED_LIBRARY
-Relink = ${LIBTOOL} --mode=link $(CXX)
-#else
-Relink = ${LIBTOOL} --mode=link $(CXX) -only-static
-#endif
-
-# MakeSO - Create a .so file from a .o files...
-#MakeSO   := $(LIBTOOL) --mode=link $(CXX) $(MakeSharedObjectOption)
-#MakeSOO  := $(MakeSO) -O3
-#MakeSOP  := $(MakeSOO) $(PROFILE)
+Relink := ${LIBTOOL} --mode=link $(CXX)
+ifndef SHARED_LIBRARY
+Relink += -only-static
+endif
 
 #
 # Configure where the item being compiled should go.
 #
 ifdef SHARED_LIBRARY
-Link := $(Link) -rpath $(DESTLIBCURRENT)
+Link += -rpath $(DESTLIBCURRENT)
 endif
 
 ifdef TOOLNAME
-Link := $(Link) -rpath $(DESTTOOLCURRENT)
+Link += -rpath $(DESTTOOLCURRENT)
 endif
 
 # Create dependancy file from CPP file, send to stdout.
