@@ -11,7 +11,6 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/LevelChange.h"
-#include "llvm/Optimizations/ConstantProp.h"
 #include "llvm/Optimizations/DCE.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
@@ -64,10 +63,11 @@ int main(int argc, char **argv) {
   // a little bit.  Do this now.
   //
   vector<Pass*> Passes;
-  Passes.push_back(new CleanupGCCOutput());        // Fix gccisms
+  Passes.push_back(new opt::DeadCodeElimination());  // Remove Dead code/vars
+  Passes.push_back(new CleanupGCCOutput());          // Fix gccisms
   Passes.push_back(new InductionVariableSimplify()); // Simplify indvars
-  Passes.push_back(new RaisePointerReferences());  // Fix general low level code
-  Passes.push_back(new ConstantMerge());           // Merge dup global constants
+  Passes.push_back(new RaisePointerReferences());    // Fix general low level code
+  Passes.push_back(new ConstantMerge());             // Merge dup global constants
 
   // Run our queue of passes all at once now, efficiently.  This form of
   // runAllPasses frees the Pass objects after runAllPasses completes.
