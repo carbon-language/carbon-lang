@@ -47,14 +47,14 @@ LibPathsO = -L $(LEVEL)/lib/Support/Release \
             -L $(LEVEL)/lib/Assembly/Parser/Release \
             -L $(LEVEL)/lib/Assembly/Writer/Release \
             -L $(LEVEL)/lib/Analysis/Release \
+            -L $(LEVEL)/lib/Analysis/LiveVar/Release \
             -L $(LEVEL)/lib/Bytecode/Writer/Release \
             -L $(LEVEL)/lib/Bytecode/Reader/Release \
             -L $(LEVEL)/lib/Optimizations/Release \
+            -L $(LEVEL)/lib/CodeGen/InstrSched/Release \
             -L $(LEVEL)/lib/CodeGen/InstrSelection/Release \
             -L $(LEVEL)/lib/CodeGen/TargetMachine/Release \
-            -L $(LEVEL)/lib/CodeGen/TargetMachine/Sparc/Release
-
-##            -L $(LEVEL)/lib/CodeGen/InstrSched/Release \
+            -L $(LEVEL)/lib/CodeGen/TargetMachine/Sparc/Release \
 
 
 LibPathsG = $(LibPathsO:Release=Debug)
