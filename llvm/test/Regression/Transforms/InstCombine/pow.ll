@@ -1,4 +1,7 @@
 ; Testcase for calls to the standard C "pow" function
+;
+; Equivalent to: http://gcc.gnu.org/ml/gcc-patches/2003-02/msg01786.html
+
 ; RUN: if as < %s | opt -instcombine | dis | grep 'call double %pow'
 ; RUN: then exit 1
 ; RUN: else exit 0
