@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Support/Timer.h"
+#include "Support/CommandLine.h"
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/unistd.h>
@@ -14,6 +15,13 @@
 #include <iostream>
 #include <algorithm>
 #include <functional>
+
+namespace {
+  cl::opt<bool>
+  TrackSpace("track-memory", cl::desc("Enable -time-passes memory "
+                                      "tracking (this may be slow)"),
+             cl::Hidden);
+}
 
 // getNumBytesToNotCount - This function is supposed to return the number of
 // bytes that are to be considered not allocated, even though malloc thinks they
@@ -65,8 +73,12 @@ Timer::~Timer() {
 }
 
 static long getMemUsage() {
-  struct mallinfo MI = mallinfo();
-  return MI.uordblks/*+MI.hblkhd-getNumBytesToNotCount()*/;
+  if (TrackSpace) {
+    struct mallinfo MI = mallinfo();
+    return MI.uordblks/*+MI.hblkhd-getNumBytesToNotCount()*/;
+  } else {
+    return 0;
+  }
 }
 
 struct TimeRecord {
