@@ -23,6 +23,7 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <set>
+#include <sstream>
 using std::string;
 using std::map;
 using std::ostream;
@@ -64,7 +65,7 @@ namespace {
       return false;
     }
 
-    ostream &printType(const Type *Ty, const string &VariableName = "",
+    ostream &printType(std::ostream &Out, const Type *Ty, const string &VariableName = "",
                        bool IgnoreName = false, bool namedContext = true);
 
     void writeOperand(Value *Operand);
@@ -176,7 +177,7 @@ inline bool ptrTypeNameNeedsParens(const string &NameSoFar) {
 // Pass the Type* and the variable name and this prints out the variable
 // declaration.
 //
-ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
+ostream &CWriter::printType(std::ostream &Out, const Type *Ty, const string &NameSoFar,
                             bool IgnoreName, bool namedContext) {
   if (Ty->isPrimitiveType())
     switch (Ty->getPrimitiveID()) {
@@ -208,22 +209,24 @@ ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
   switch (Ty->getPrimitiveID()) {
   case Type::FunctionTyID: {
     const FunctionType *MTy = cast<FunctionType>(Ty);
-    printType(MTy->getReturnType(), "");
-    Out << " (" << NameSoFar << ") (";
-
+    std::stringstream FunctionInards; 
+    FunctionInards << " (" << NameSoFar << ") (";
     for (FunctionType::ParamTypes::const_iterator
            I = MTy->getParamTypes().begin(),
            E = MTy->getParamTypes().end(); I != E; ++I) {
       if (I != MTy->getParamTypes().begin())
-        Out << ", ";
-      printType(*I, "");
+        FunctionInards << ", ";
+      printType(FunctionInards, *I, "");
     }
     if (MTy->isVarArg()) {
       if (!MTy->getParamTypes().empty()) 
-	Out << ", ";
-      Out << "...";
+    	FunctionInards << ", ";
+      FunctionInards << "...";
     }
-    return Out << ")";
+    FunctionInards << ")";
+    string tstr = FunctionInards.str();
+    printType(Out, MTy->getReturnType(), tstr);
+    return Out;
   }
   case Type::StructTyID: {
     const StructType *STy = cast<StructType>(Ty);
@@ -233,7 +236,7 @@ ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
            I = STy->getElementTypes().begin(),
            E = STy->getElementTypes().end(); I != E; ++I) {
       Out << "  ";
-      printType(*I, "field" + utostr(Idx++));
+      printType(Out, *I, "field" + utostr(Idx++));
       Out << ";\n";
     }
     return Out << "}";
@@ -250,13 +253,13 @@ ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
         PTy->getElementType()->getPrimitiveID() == Type::ArrayTyID)
       ptrName = "(" + ptrName + ")";    // 
 
-    return printType(PTy->getElementType(), ptrName);
-  }
+    return printType(Out, PTy->getElementType(), ptrName);
+  }Out <<"--";
 
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
     unsigned NumElements = ATy->getNumElements();
-    return printType(ATy->getElementType(),
+    return printType(Out, ATy->getElementType(),
                      NameSoFar + "[" + utostr(NumElements) + "]");
   }
 
@@ -340,7 +343,7 @@ void CWriter::printConstant(Constant *CPV) {
     switch (CE->getOpcode()) {
     case Instruction::Cast:
       Out << "((";
-      printType(CPV->getType());
+      printType(Out, CPV->getType());
       Out << ")";
       printConstant(cast<Constant>(CPV->getOperand(0)));
       Out << ")";
@@ -553,7 +556,7 @@ void CWriter::printModule(Module *M) {
     for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
       if (I->hasExternalLinkage()) {
         Out << "extern ";
-        printType(I->getType()->getElementType(), getValueName(I));
+        printType(Out, I->getType()->getElementType(), getValueName(I));
         Out << ";\n";
       }
     }
@@ -581,7 +584,7 @@ void CWriter::printModule(Module *M) {
     for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
       if (!I->isExternal()) {
         Out << "extern ";
-        printType(I->getType()->getElementType(), getValueName(I));
+        printType(Out, I->getType()->getElementType(), getValueName(I));
       
         Out << ";\n";
       }
@@ -595,7 +598,7 @@ void CWriter::printModule(Module *M) {
       if (!I->isExternal()) {
         if (I->hasInternalLinkage())
           Out << "static ";
-        printType(I->getType()->getElementType(), getValueName(I));
+        printType(Out, I->getType()->getElementType(), getValueName(I));
       
         Out << " = " ;
         writeOperand(I->getInitializer());
@@ -641,7 +644,7 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
     const Type *Ty = cast<Type>(I->second);
     string Name = "l_" + makeNameProper(I->first);
     Out << "typedef ";
-    printType(Ty, Name);
+    printType(Out, Ty, Name);
     Out << ";\n";
   }
 
@@ -678,7 +681,7 @@ void CWriter::printContainedStructs(const Type *Ty,
       //Print structure type out..
       StructPrinted.insert(STy);
       string Name = TypeNames[STy];  
-      printType(STy, Name, true);
+      printType(Out, STy, Name, true);
       Out << ";\n\n";
     }
 
@@ -696,31 +699,29 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   // to include the general one.  
   if (getValueName(F) == "malloc")
     needsMalloc = false;
-  if (F->hasInternalLinkage()) Out << "static ";
-  
+  if (F->hasInternalLinkage()) Out << "static ";  
   // Loop over the arguments, printing them...
   const FunctionType *FT = cast<FunctionType>(F->getFunctionType());
   
-  // Print out the return type and name...
-  printType(F->getReturnType());
-  Out << getValueName(F) << "(";
+  std::stringstream FunctionInards; 
+    
+  // Print out the name...
+  FunctionInards << getValueName(F) << "(";
     
   if (!F->isExternal()) {
     if (!F->aempty()) {
       string ArgName;
       if (F->abegin()->hasName() || !Prototype)
         ArgName = getValueName(F->abegin());
-
-      printType(F->afront().getType(), ArgName);
-
+      printType(FunctionInards, F->afront().getType(), ArgName);
       for (Function::const_aiterator I = ++F->abegin(), E = F->aend();
            I != E; ++I) {
-        Out << ", ";
+        FunctionInards << ", ";
         if (I->hasName() || !Prototype)
           ArgName = getValueName(I);
         else 
           ArgName = "";
-        printType(I->getType(), ArgName);
+        printType(FunctionInards, I->getType(), ArgName);
       }
     }
   } else {
@@ -728,8 +729,8 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
     for (FunctionType::ParamTypes::const_iterator I = 
 	   FT->getParamTypes().begin(),
 	   E = FT->getParamTypes().end(); I != E; ++I) {
-      if (I != FT->getParamTypes().begin()) Out << ", ";
-      printType(*I);
+      if (I != FT->getParamTypes().begin()) FunctionInards << ", ";
+      printType(FunctionInards, *I);
     }
   }
 
@@ -737,10 +738,13 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   // unless there are no known types, in which case, we just emit ().
   //
   if (FT->isVarArg() && !FT->getParamTypes().empty()) {
-    if (FT->getParamTypes().size()) Out << ", ";
-    Out << "...";  // Output varargs portion of signature!
+    if (FT->getParamTypes().size()) FunctionInards << ", ";
+    FunctionInards << "...";  // Output varargs portion of signature!
   }
-  Out << ")";
+  FunctionInards << ")";
+  // Print out the return type and the entire signature for that matter
+  printType(Out, F->getReturnType(), FunctionInards.str());
+  
 }
 
 
@@ -756,7 +760,7 @@ void CWriter::printFunction(Function *F) {
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if ((*I)->getType() != Type::VoidTy && !isInlinableInst(**I)) {
       Out << "  ";
-      printType((*I)->getType(), getValueName(*I));
+      printType(Out, (*I)->getType(), getValueName(*I));
       Out << ";\n";
     }
 
@@ -914,7 +918,7 @@ void CWriter::visitBinaryOperator(Instruction &I) {
   // binary instructions, shift instructions, setCond instructions.
   if (isa<PointerType>(I.getType())) {
     Out << "(";
-    printType(I.getType());
+    printType(Out, I.getType());
     Out << ")";
   }
       
@@ -947,7 +951,7 @@ void CWriter::visitBinaryOperator(Instruction &I) {
 
 void CWriter::visitCastInst(CastInst &I) {
   Out << "(";
-  printType(I.getType(), string(""),/*ignoreName*/false, /*namedContext*/false);
+  printType(Out, I.getType(), string(""),/*ignoreName*/false, /*namedContext*/false);
   Out << ")";
   writeOperand(I.getOperand(0));
 }
@@ -973,9 +977,9 @@ void CWriter::visitCallInst(CallInst &I) {
 
 void CWriter::visitMallocInst(MallocInst &I) {
   Out << "(";
-  printType(I.getType());
+  printType(Out, I.getType());
   Out << ")malloc(sizeof(";
-  printType(I.getType()->getElementType());
+  printType(Out, I.getType()->getElementType());
   Out << ")";
 
   if (I.isArrayAllocation()) {
@@ -987,9 +991,9 @@ void CWriter::visitMallocInst(MallocInst &I) {
 
 void CWriter::visitAllocaInst(AllocaInst &I) {
   Out << "(";
-  printType(I.getType());
+  printType(Out, I.getType());
   Out << ") alloca(sizeof(";
-  printType(I.getType()->getElementType());
+  printType(Out, I.getType()->getElementType());
   Out << ")";
   if (I.isArrayAllocation()) {
     Out << " * " ;
