@@ -17,7 +17,6 @@
 #include "llvm/iTerminators.h"
 #include "Support/Debug.h"
 #include <algorithm>
-#include <iostream>
 #include "Graph.h"
 
 //using std::list;

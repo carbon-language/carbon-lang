@@ -18,12 +18,10 @@
 #include "llvm/iOther.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
-
 #include "llvm/Analysis/Expressions.h"
 #include "Support/STLExtras.h"
 #include "Support/Debug.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,

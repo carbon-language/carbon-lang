@@ -28,7 +28,6 @@
 #include "Support/Debug.h"
 #include "Support/StringExtras.h"
 #include <algorithm>
-#include <iostream>
 #include <set>
 using namespace llvm;
 

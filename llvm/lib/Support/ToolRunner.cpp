@@ -16,7 +16,6 @@
 #include "Config/config.h"   // for HAVE_LINK_R
 #include "Support/Debug.h"
 #include "Support/FileUtilities.h"
-#include <iostream>
 #include <fstream>
 #include <sstream>
 using namespace llvm;

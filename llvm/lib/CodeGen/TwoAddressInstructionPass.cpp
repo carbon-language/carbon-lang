@@ -40,7 +40,6 @@
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {

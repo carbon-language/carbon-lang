@@ -24,7 +24,6 @@
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/Timer.h"
-#include <iostream>
 
 // FIXME: This should eventually be a FunctionPass that is automatically
 // aggregated into a Pass.

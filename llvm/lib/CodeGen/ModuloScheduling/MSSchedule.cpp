@@ -15,7 +15,6 @@
 #include "MSSchedule.h"
 #include "Support/Debug.h"
 #include "llvm/Target/TargetSchedInfo.h"
-#include <iostream>
 
 using namespace llvm;
 

@@ -33,7 +33,6 @@
 #include "Support/STLExtras.h"
 #include "VirtRegMap.h"
 #include <cmath>
-#include <iostream>
 
 using namespace llvm;
 

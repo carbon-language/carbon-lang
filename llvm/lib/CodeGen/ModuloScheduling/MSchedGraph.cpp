@@ -17,7 +17,6 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "Support/Debug.h"
-#include <iostream>
 using namespace llvm;
 
 MSchedGraphNode::MSchedGraphNode(const MachineInstr* inst, 

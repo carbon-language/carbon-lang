@@ -25,7 +25,6 @@
 #include "Support/Debug.h"
 #include "Support/DenseMap.h"
 #include "Support/Statistic.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {

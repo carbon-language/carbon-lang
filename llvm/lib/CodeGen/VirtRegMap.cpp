@@ -27,7 +27,6 @@
 #include "Support/DenseMap.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
-#include <iostream>
 
 using namespace llvm;
 

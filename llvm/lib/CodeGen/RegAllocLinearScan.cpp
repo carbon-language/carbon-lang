@@ -28,7 +28,6 @@
 #include "VirtRegMap.h"
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 #include <set>
 
 using namespace llvm;
