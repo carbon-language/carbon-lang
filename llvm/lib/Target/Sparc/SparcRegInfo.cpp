@@ -663,7 +663,7 @@ UltraSparcRegInfo::InitializeOutgoingArg(MachineInstr* CallMI,
     {
       isArgInReg = true;
       UniArgReg = (unsigned) UniArgRegOrNone;
-      CallMI->getRegsUsed().insert(UniArgReg); // mark the reg as used
+      CallMI->insertUsedReg(UniArgReg); // mark the reg as used
     }
   
   if (LR->hasColor()) {
@@ -788,7 +788,7 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
     UniRetReg = getUnifiedRegNum(RegClassID, CorrectCol);	
 
     // Mark the register as used by this instruction
-    CallMI->getRegsUsed().insert(UniRetReg);
+    CallMI->insertUsedReg(UniRetReg);
     
     // if the LR received the correct color, NOTHING to do
     recvCorrectColor = RetValLR->hasColor()? RetValLR->getColor() == CorrectCol
@@ -1026,7 +1026,7 @@ void UltraSparcRegInfo::colorRetValue(MachineInstr *RetMI,
     unsigned UniRetReg = getUnifiedRegNum(RegClassID, CorrectCol);
 
     // Mark the register as used by this instruction
-    RetMI->getRegsUsed().insert(UniRetReg);
+    RetMI->insertUsedReg(UniRetReg);
     
     // if the LR received the correct color, NOTHING to do
     
@@ -1433,7 +1433,7 @@ UltraSparcRegInfo::insertCallerSavingCode(vector<MachineInstr*>& instrnsBefore,
                 scratchReg = PRA.getUsableUniRegAtMI(scratchRegType, &LVSetBef,
                                                    CallMI, AdIBef, AdIAft);
                 assert(scratchReg != getInvalidRegNum());
-                CallMI->getRegsUsed().insert(scratchReg); 
+                CallMI->insertUsedReg(scratchReg); 
               }
             
             if (AdIBef.size() > 0)
@@ -1461,7 +1461,7 @@ UltraSparcRegInfo::insertCallerSavingCode(vector<MachineInstr*>& instrnsBefore,
                 scratchReg = PRA.getUsableUniRegAtMI(scratchRegType, &LVSetAft,
                                                  CallMI, AdIBef, AdIAft);
                 assert(scratchReg != getInvalidRegNum());
-                CallMI->getRegsUsed().insert(scratchReg); 
+                CallMI->insertUsedReg(scratchReg); 
               }
             
             if (AdIBef.size() > 0)

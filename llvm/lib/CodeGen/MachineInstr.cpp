@@ -82,14 +82,14 @@ MachineInstr::SetMachineOperandReg(unsigned int i,
     operands[i].markDef();
   if (isDefAndUse)
     operands[i].markDefAndUse();
-  regsUsed.insert(regNum);
+  insertUsedReg(regNum);
 }
 
 void
 MachineInstr::SetRegForOperand(unsigned i, int regNum)
 {
   operands[i].setRegForValue(regNum);
-  regsUsed.insert(regNum);
+  insertUsedReg(regNum);
 }
 
 
@@ -111,10 +111,10 @@ MachineInstr::substituteValue(const Value* oldVal, Value* newVal, bool defsOnly)
 
   // Subsitute implicit refs
   for (unsigned i=0, N=implicitRefs.size(); i < N; ++i)
-    if (implicitRefs[i] == oldVal)
+    if (getImplicitRef(i) == oldVal)
       if (!defsOnly || implicitRefIsDefined(i))
         {
-          implicitRefs[i] = newVal;
+          implicitRefs[i].Val = newVal;
           ++numSubst;
         }
 

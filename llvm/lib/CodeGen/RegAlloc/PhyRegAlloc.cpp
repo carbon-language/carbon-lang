@@ -691,10 +691,10 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   int scratchReg = -1;
   if (MRI.regTypeNeedsScratchReg(RegType, scratchRegType))
     {
-      scratchReg = this->getUsableUniRegAtMI(scratchRegType, &LVSetBef,
-                                             MInst, MIBef, MIAft);
+      scratchReg = getUsableUniRegAtMI(scratchRegType, &LVSetBef,
+                                       MInst, MIBef, MIAft);
       assert(scratchReg != MRI.getInvalidRegNum());
-      MInst->getRegsUsed().insert(scratchReg); 
+      MInst->insertUsedReg(scratchReg); 
     }
   
   if (!isDef || isDefAndUse) {
@@ -774,7 +774,7 @@ int PhyRegAlloc::getUsableUniRegAtMI(const int RegType,
         // of copying it to memory and back.  But we have to mark the
         // register as used by this instruction, so it does not get used
         // as a scratch reg. by another operand or anyone else.
-        MInst->getRegsUsed().insert(scratchReg); 
+        MInst->insertUsedReg(scratchReg); 
         MRI.cpReg2RegMI(MIBef, RegU, scratchReg, RegType);
         MRI.cpReg2RegMI(MIAft, scratchReg, RegU, RegType);
       }
@@ -874,12 +874,11 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC,
   // Add the registers already marked as used by the instruction. 
   // This should include any scratch registers that are used to save
   // values across the instruction (e.g., for saving state register values).
-  const hash_set<int>& regsUsed = MInst->getRegsUsed();
-  for (hash_set<int>::const_iterator SI=regsUsed.begin(), SE=regsUsed.end();
-       SI != SE; ++SI)
-    {
+  const vector<bool> &regsUsed = MInst->getRegsUsed();
+  for (unsigned i = 0, e = regsUsed.size(); i != e; ++i)
+    if (regsUsed[i]) {
       unsigned classId = 0;
-      int classRegNum = MRI.getClassRegNum(*SI, classId);
+      int classRegNum = MRI.getClassRegNum(i, classId);
       if (RC->getID() == classId)
         {
           assert(classRegNum < (int) IsColorUsedArr.size() &&

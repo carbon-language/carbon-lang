@@ -12,7 +12,6 @@
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Annotation.h"
 #include <Support/iterator>
-#include <Support/hash_set>
 class Instruction;
 
 //---------------------------------------------------------------------------
@@ -267,17 +266,26 @@ MachineOperand::InitializeReg(int _regNum, bool isCCReg)
 //      a CALL (if any), and return value of a RETURN.
 //---------------------------------------------------------------------------
 
-class MachineInstr :  public Annotable,         // MachineInstrs are annotable
-                      public NonCopyable {      // Disable copy operations
+class MachineInstr : public Annotable,         // MachineInstrs are annotable
+                     public NonCopyable {      // Disable copy operations
   MachineOpCode    opCode;              // the opcode
   OpCodeMask       opCodeMask;          // extra bits for variants of an opcode
   std::vector<MachineOperand> operands; // the operands
-  std::vector<Value*>   implicitRefs;   // values implicitly referenced by this
-  std::vector<bool>     implicitIsDef;  //  machine instruction (eg, call args)
-  std::vector<bool>     implicitIsDefAndUse;
-  hash_set<int>    regsUsed;            // all machine registers used for this
-                                        //  instruction, including regs used
-                                        //  to save values across the instr.
+
+  struct ImplicitRef {
+    Value *Val;
+    bool isDef, isDefAndUse;
+
+    ImplicitRef(Value *V, bool D, bool DU) : Val(V), isDef(D), isDefAndUse(DU){}
+  };
+
+  // implicitRefs - Values implicitly referenced by this machine instruction
+  // (eg, call args)
+  std::vector<ImplicitRef> implicitRefs;
+
+  // regsUsed - all machine registers used for this instruction, including regs
+  // used to save values across the instruction.  This is a bitset of registers.
+  std::vector<bool> regsUsed;
 public:
   /*ctor*/		MachineInstr	(MachineOpCode _opCode,
 					 OpCodeMask    _opCodeMask = 0x0);
@@ -313,7 +321,7 @@ public:
   //
   // Information about implicit operands of the instruction
   // 
-  unsigned             	getNumImplicitRefs() const{return implicitRefs.size();}
+  unsigned             	getNumImplicitRefs() const{ return implicitRefs.size();}
   
   bool			implicitRefIsDefined(unsigned i) const;
   bool			implicitRefIsDefinedAndUsed(unsigned i) const;
@@ -324,9 +332,15 @@ public:
   //
   // Information about registers used in this instruction
   // 
-  const hash_set<int>&  getRegsUsed    () const { return regsUsed; }
-        hash_set<int>&  getRegsUsed    ()       { return regsUsed; }
+  const std::vector<bool> &getRegsUsed    () const { return regsUsed; }
   
+  // insertUsedReg - Add a register to the Used registers set...
+  void insertUsedReg(unsigned Reg) {
+    if (Reg >= regsUsed.size())
+      regsUsed.resize(Reg+1);
+    regsUsed[Reg] = true;
+  }
+
   //
   // Debugging support
   // 
@@ -477,41 +491,38 @@ MachineInstr::operandIsDefinedAndUsed(unsigned int i) const
 }
 
 inline bool
-MachineInstr::implicitRefIsDefined(unsigned int i) const
+MachineInstr::implicitRefIsDefined(unsigned i) const
 {
-  assert(i < implicitIsDef.size() && "operand out of range!");
-  return implicitIsDef[i];
+  assert(i < implicitRefs.size() && "operand out of range!");
+  return implicitRefs[i].isDef;
 }
 
 inline bool
-MachineInstr::implicitRefIsDefinedAndUsed(unsigned int i) const
+MachineInstr::implicitRefIsDefinedAndUsed(unsigned i) const
 {
-  assert(i < implicitIsDefAndUse.size() && "operand out of range!");
-  return implicitIsDefAndUse[i];
+  assert(i < implicitRefs.size() && "operand out of range!");
+  return implicitRefs[i].isDefAndUse;
 }
 
 inline const Value*
-MachineInstr::getImplicitRef(unsigned int i) const
+MachineInstr::getImplicitRef(unsigned i) const
 {
   assert(i < implicitRefs.size() && "getImplicitRef() out of range!");
-  return implicitRefs[i];
+  return implicitRefs[i].Val;
 }
 
 inline Value*
-MachineInstr::getImplicitRef(unsigned int i)
+MachineInstr::getImplicitRef(unsigned i)
 {
   assert(i < implicitRefs.size() && "getImplicitRef() out of range!");
-  return implicitRefs[i];
+  return implicitRefs[i].Val;
 }
 
 inline void
 MachineInstr::addImplicitRef(Value* val, 
                              bool isDef,
-                             bool isDefAndUse)
-{
-  implicitRefs.push_back(val);
-  implicitIsDef.push_back(isDef);
-  implicitIsDefAndUse.push_back(isDefAndUse);
+                             bool isDefAndUse) {
+  implicitRefs.push_back(ImplicitRef(val, isDef, isDefAndUse));
 }
 
 inline void
@@ -521,9 +532,9 @@ MachineInstr::setImplicitRef(unsigned int i,
                              bool isDefAndUse)
 {
   assert(i < implicitRefs.size() && "setImplicitRef() out of range!");
-  implicitRefs[i] = val;
-  implicitIsDef[i] = isDef;
-  implicitIsDefAndUse[i] = isDefAndUse;
+  implicitRefs[i].Val = val;
+  implicitRefs[i].isDef = isDef;
+  implicitRefs[i].isDefAndUse = isDefAndUse;
 }
 
 inline void
