@@ -24,15 +24,11 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
-
+using namespace llvm;
 
 namespace llvm {
-
-bool DisableSimplifyCFG = false;
-
+  bool DisableSimplifyCFG = false;
 } // End llvm namespace
-
-using namespace llvm;
 
 namespace {
   cl::opt<bool>
@@ -45,8 +41,6 @@ namespace {
   NoSCFG("disable-simplifycfg", cl::location(DisableSimplifyCFG),
          cl::desc("Do not use the -simplifycfg pass to reduce testcases"));
 }
-
-namespace llvm {
 
 /// deleteInstructionFromProgram - This method clones the current Program and
 /// deletes the specified instruction from the cloned module.  It then runs a
@@ -114,8 +108,12 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
   CleanupPasses.push_back(getPI(createFunctionResolvingPass()));
   CleanupPasses.push_back(getPI(createGlobalDCEPass()));
   CleanupPasses.push_back(getPI(createDeadTypeEliminationPass()));
-  CleanupPasses.push_back(getPI(createDeadArgHackingPass()));
 
+  if (MayModifySemantics)
+    CleanupPasses.push_back(getPI(createDeadArgHackingPass()));
+  else
+    CleanupPasses.push_back(getPI(createDeadArgEliminationPass()));
+  
   std::swap(Program, M);
   std::string Filename;
   bool Failed = runPasses(CleanupPasses, Filename);
@@ -134,5 +132,3 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
   }
   return M;
 }
-
-} // End llvm namespace
