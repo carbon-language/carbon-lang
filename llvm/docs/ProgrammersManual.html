@@ -1441,26 +1441,10 @@ This traverses the <a href="#Type"><tt>Type</tt></a> of the <tt>Function</tt>
 and returns the return type of the function, or the <a
 href="#FunctionType"><tt>FunctionType</tt></a> of the actual function.<p>
 
-
-<li><tt>bool hasSymbolTable() const</tt><p>
-
-Return true if the <tt>Function</tt> has a symbol table allocated to it and if
-there is at least one entry in it.<p>
-
 <li><tt><a href="#SymbolTable">SymbolTable</a> *getSymbolTable()</tt><p>
 
 Return a pointer to the <a href="#SymbolTable"><tt>SymbolTable</tt></a> for this
-<tt>Function</tt> or a null pointer if one has not been allocated (because there
-are no named values in the function).<p>
-
-<li><tt><a href="#SymbolTable">SymbolTable</a> *getSymbolTableSure()</tt><p>
-
-Return a pointer to the <a href="#SymbolTable"><tt>SymbolTable</tt></a> for this
-<tt>Function</tt> or allocate a new <a
-href="#SymbolTable"><tt>SymbolTable</tt></a> if one is not already around.  This
-should only be used when adding elements to the <a
-href="#SymbolTable"><tt>SymbolTable</tt></a>, so that empty symbol tables are
-not left laying around.<p>
+<tt>Function</tt>.<p>
 
 
 
@@ -1580,25 +1564,10 @@ action that doesn't have a forwarding method.<p>
 <!--  Symbol table stuff -->
 <hr size=0>
 
-<li><tt>bool hasSymbolTable() const</tt><p>
-
-Return true if the <tt>Module</tt> has a symbol table allocated to it and if
-there is at least one entry in it.<p>
-
 <li><tt><a href="#SymbolTable">SymbolTable</a> *getSymbolTable()</tt><p>
 
-Return a pointer to the <a href="#SymbolTable"><tt>SymbolTable</tt></a> for this
-<tt>Module</tt> or a null pointer if one has not been allocated (because there
-are no named values in the function).<p>
-
-<li><tt><a href="#SymbolTable">SymbolTable</a> *getSymbolTableSure()</tt><p>
-
-Return a pointer to the <a href="#SymbolTable"><tt>SymbolTable</tt></a> for this
-<tt>Module</tt> or allocate a new <a
-href="#SymbolTable"><tt>SymbolTable</tt></a> if one is not already around.  This
-should only be used when adding elements to the <a
-href="#SymbolTable"><tt>SymbolTable</tt></a>, so that empty symbol tables are
-not left laying around.<p>
+Return a reference to the <a href="#SymbolTable"><tt>SymbolTable</tt></a> for
+this <tt>Module</tt>.<p>
 
 
 <!--  Convenience methods -->
@@ -1776,6 +1745,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Fri Nov  8 00:48:37 CST 2002
+Last modified: Wed Nov 20 12:21:34 CST 2002
 <!-- hhmts end -->
 </font></body></html>

@@ -113,10 +113,8 @@ public:
 
   /// getSymbolTable() - Return the symbol table...
   ///
-  inline       SymbolTable *getSymbolTable()       { return SymTab; }
-  inline const SymbolTable *getSymbolTable() const { return SymTab; }
-  SymbolTable *getSymbolTableSure() { return SymTab; }
-  bool hasSymbolTable() const { return true; }
+  inline       SymbolTable &getSymbolTable()       { return *SymTab; }
+  inline const SymbolTable &getSymbolTable() const { return *SymTab; }
 
   
   //===--------------------------------------------------------------------===//

@@ -28,7 +28,7 @@ void ReplaceInstWithValue(BasicBlock::InstListType &BIL,
 
   // Make sure to propagate a name if there is one already...
   if (OldName.size() && !V->hasName())
-    V->setName(OldName, BIL.getParent()->getSymbolTable());
+    V->setName(OldName, &BIL.getParent()->getSymbolTable());
 }
 
 

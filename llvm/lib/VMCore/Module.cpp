@@ -57,7 +57,7 @@ Module::Module() {
   GlobalList.setItemParent(this);
   GlobalList.setParent(this);
   GVRefMap = 0;
-  SymTab = 0;
+  SymTab = new SymbolTable();
 }
 
 Module::~Module() {
@@ -74,26 +74,6 @@ void Module::dump() const {
   print(std::cerr);
 }
 
-SymbolTable *Module::getSymbolTableSure() {
-  if (!SymTab) SymTab = new SymbolTable();
-  return SymTab;
-}
-
-// hasSymbolTable() - Returns true if there is a symbol table allocated to
-// this object AND if there is at least one name in it!
-//
-bool Module::hasSymbolTable() const {
-  if (!SymTab) return false;
-
-  for (SymbolTable::const_iterator I = SymTab->begin(), E = SymTab->end();
-       I != E; ++I)
-    if (I->second.begin() != I->second.end())
-      return true;                                // Found nonempty type plane!
-  
-  return false;
-}
-
-
 // getOrInsertFunction - Look up the specified function in the module symbol
 // table.  If it does not exist, add a prototype for the function and return
 // it.  This is nice because it allows most passes to get away with not handling
@@ -101,10 +81,10 @@ bool Module::hasSymbolTable() const {
 //
 Function *Module::getOrInsertFunction(const std::string &Name,
                                       const FunctionType *Ty) {
-  SymbolTable *SymTab = getSymbolTableSure();
+  SymbolTable &SymTab = getSymbolTable();
 
   // See if we have a definitions for the specified function already...
-  if (Value *V = SymTab->lookup(PointerType::get(Ty), Name)) {
+  if (Value *V = SymTab.lookup(PointerType::get(Ty), Name)) {
     return cast<Function>(V);      // Yup, got it
   } else {                         // Nope, add one
     Function *New = new Function(Ty, false, Name);
@@ -117,10 +97,8 @@ Function *Module::getOrInsertFunction(const std::string &Name,
 // If it does not exist, return null.
 //
 Function *Module::getFunction(const std::string &Name, const FunctionType *Ty) {
-  SymbolTable *SymTab = getSymbolTable();
-  if (SymTab == 0) return 0;  // No symtab, no symbols...
-
-  return cast_or_null<Function>(SymTab->lookup(PointerType::get(Ty), Name));
+  SymbolTable &SymTab = getSymbolTable();
+  return cast_or_null<Function>(SymTab.lookup(PointerType::get(Ty), Name));
 }
 
 // addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
@@ -128,13 +106,13 @@ Function *Module::getFunction(const std::string &Name, const FunctionType *Ty) {
 // table is not modified.
 //
 bool Module::addTypeName(const std::string &Name, const Type *Ty) {
-  SymbolTable *ST = getSymbolTableSure();
+  SymbolTable &ST = getSymbolTable();
 
-  if (ST->lookup(Type::TypeTy, Name)) return true;  // Already in symtab...
+  if (ST.lookup(Type::TypeTy, Name)) return true;  // Already in symtab...
   
   // Not in symbol table?  Set the name with the Symtab as an argument so the
   // type knows what to update...
-  ((Value*)Ty)->setName(Name, ST);
+  ((Value*)Ty)->setName(Name, &ST);
 
   return false;
 }
@@ -204,13 +182,12 @@ Function *Module::getNamedFunction(const std::string &Name) {
 // specified type, return it.
 //
 std::string Module::getTypeName(const Type *Ty) {
-  const SymbolTable *ST = getSymbolTable();
-  if (ST == 0) return "";  // No symbol table, must not have an entry...
-  if (ST->find(Type::TypeTy) == ST->end())
+  const SymbolTable &ST = getSymbolTable();
+  if (ST.find(Type::TypeTy) == ST.end())
     return ""; // No names for types...
 
-  SymbolTable::type_const_iterator TI = ST->type_begin(Type::TypeTy);
-  SymbolTable::type_const_iterator TE = ST->type_end(Type::TypeTy);
+  SymbolTable::type_const_iterator TI = ST.type_begin(Type::TypeTy);
+  SymbolTable::type_const_iterator TE = ST.type_end(Type::TypeTy);
 
   while (TI != TE && TI->second != (const Value*)Ty)
     ++TI;

@@ -74,20 +74,19 @@ static SlotCalculator *createSlotCalculator(const Value *V) {
 //
 static void fillTypeNameTable(const Module *M,
                               map<const Type *, string> &TypeNames) {
-  if (M && M->hasSymbolTable()) {
-    const SymbolTable *ST = M->getSymbolTable();
-    SymbolTable::const_iterator PI = ST->find(Type::TypeTy);
-    if (PI != ST->end()) {
-      SymbolTable::type_const_iterator I = PI->second.begin();
-      for (; I != PI->second.end(); ++I) {
-        // As a heuristic, don't insert pointer to primitive types, because
-        // they are used too often to have a single useful name.
-        //
-        const Type *Ty = cast<const Type>(I->second);
-        if (!isa<PointerType>(Ty) ||
-            !cast<PointerType>(Ty)->getElementType()->isPrimitiveType())
-          TypeNames.insert(std::make_pair(Ty, "%"+I->first));
-      }
+  if (!M) return;
+  const SymbolTable &ST = M->getSymbolTable();
+  SymbolTable::const_iterator PI = ST.find(Type::TypeTy);
+  if (PI != ST.end()) {
+    SymbolTable::type_const_iterator I = PI->second.begin();
+    for (; I != PI->second.end(); ++I) {
+      // As a heuristic, don't insert pointer to primitive types, because
+      // they are used too often to have a single useful name.
+      //
+      const Type *Ty = cast<const Type>(I->second);
+      if (!isa<PointerType>(Ty) ||
+          !cast<PointerType>(Ty)->getElementType()->isPrimitiveType())
+        TypeNames.insert(std::make_pair(Ty, "%"+I->first));
     }
   }
 }
@@ -200,7 +199,7 @@ ostream &WriteTypeSymbolic(ostream &Out, const Type *Ty, const Module *M) {
 
   // If they want us to print out a type, attempt to make it symbolic if there
   // is a symbol table in the module...
-  if (M && M->hasSymbolTable()) {
+  if (M) {
     map<const Type *, string> TypeNames;
     fillTypeNameTable(M, TypeNames);
     
@@ -406,7 +405,7 @@ ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType,
   map<const Type *, string> TypeNames;
   if (Context == 0) Context = getModuleFromVal(V);
 
-  if (Context && Context->hasSymbolTable())
+  if (Context)
     fillTypeNameTable(Context, TypeNames);
 
   if (PrintType)
@@ -524,8 +523,7 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType,
 
 void AssemblyWriter::printModule(const Module *M) {
   // Loop over the symbol table, emitting all named constants...
-  if (M->hasSymbolTable())
-    printSymbolTable(*M->getSymbolTable());
+  printSymbolTable(M->getSymbolTable());
   
   for (Module::const_giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
     printGlobal(I);

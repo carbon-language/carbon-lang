@@ -124,7 +124,7 @@ namespace {  // Anonymous namespace for class
     }
 
     // Verification methods...
-    void verifySymbolTable(SymbolTable *ST);
+    void verifySymbolTable(SymbolTable &ST);
     void visitFunction(Function &F);
     void visitBasicBlock(BasicBlock &BB);
     void visitPHINode(PHINode &PN);
@@ -172,11 +172,9 @@ namespace {  // Anonymous namespace for class
 
 // verifySymbolTable - Verify that a function or module symbol table is ok
 //
-void Verifier::verifySymbolTable(SymbolTable *ST) {
-  if (ST == 0) return;   // No symbol table to process
-
+void Verifier::verifySymbolTable(SymbolTable &ST) {
   // Loop over all of the types in the symbol table...
-  for (SymbolTable::iterator TI = ST->begin(), TE = ST->end(); TI != TE; ++TI)
+  for (SymbolTable::iterator TI = ST.begin(), TE = ST.end(); TI != TE; ++TI)
     for (SymbolTable::type_iterator I = TI->second.begin(),
            E = TI->second.end(); I != E; ++I) {
       Value *V = I->second;

@@ -113,22 +113,11 @@ public:
   //===--------------------------------------------------------------------===//
   // Symbol table support functions...
   
-  /// hasSymbolTable() - Returns true if there is a symbol table allocated to
-  /// this object AND if there is at least one name in it!
+  /// getSymbolTable() - Get access to the symbol table for the module, where
+  /// global variables and functions are identified.
   ///
-  bool hasSymbolTable() const;
-
-  /// getSymbolTable() - CAUTION: The current symbol table may be null if there
-  /// are no names (ie, the symbol table is empty)
-  ///
-  inline       SymbolTable *getSymbolTable()       { return SymTab; }
-  inline const SymbolTable *getSymbolTable() const { return SymTab; }
-  
-  /// getSymbolTableSure is guaranteed to not return a null pointer, because if
-  /// the method does not already have a symtab, one is created.  Use this if
-  /// you intend to put something into the symbol table for the method.
-  ///
-  SymbolTable *getSymbolTableSure();
+  inline       SymbolTable &getSymbolTable()       { return *SymTab; }
+  inline const SymbolTable &getSymbolTable() const { return *SymTab; }
 
 
   //===--------------------------------------------------------------------===//

@@ -40,12 +40,12 @@ void Instruction::setParent(BasicBlock *P) {
 void Instruction::setName(const std::string &name, SymbolTable *ST) {
   BasicBlock *P = 0; Function *PP = 0;
   assert((ST == 0 || !getParent() || !getParent()->getParent() || 
-	  ST == getParent()->getParent()->getSymbolTable()) &&
+	  ST == &getParent()->getParent()->getSymbolTable()) &&
 	 "Invalid symtab argument!");
   if ((P = getParent()) && (PP = P->getParent()) && hasName())
-    PP->getSymbolTable()->remove(this);
+    PP->getSymbolTable().remove(this);
   Value::setName(name);
-  if (PP && hasName()) PP->getSymbolTableSure()->insert(this);
+  if (PP && hasName()) PP->getSymbolTable().insert(this);
 }
 
 

@@ -20,20 +20,20 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass,SymTabClass,SubClass>
 
   // Remove all of the items from the old symtab..
   if (SymTabObject && !List.empty()) {
-    SymbolTable *SymTab = SymTabObject->getSymbolTable();
+    SymbolTable &SymTab = SymTabObject->getSymbolTable();
     for (typename iplist<ValueSubClass>::iterator I = List.begin();
          I != List.end(); ++I)
-      if (I->hasName()) SymTab->remove(I);
+      if (I->hasName()) SymTab.remove(I);
   }
 
   SymTabObject = STO;
 
   // Add all of the items to the new symtab...
   if (SymTabObject && !List.empty()) {
-    SymbolTable *SymTab = SymTabObject->getSymbolTableSure();
+    SymbolTable &SymTab = SymTabObject->getSymbolTable();
     for (typename iplist<ValueSubClass>::iterator I = List.begin();
          I != List.end(); ++I)
-      if (I->hasName()) SymTab->insert(I);
+      if (I->hasName()) SymTab.insert(I);
   }
 }
 
@@ -44,7 +44,7 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass,SymTabClass,SubClass>
   assert(V->getParent() == 0 && "Value already in a container!!");
   V->setParent(ItemParent);
   if (V->hasName() && SymTabObject)
-    SymTabObject->getSymbolTableSure()->insert(V);
+    SymTabObject->getSymbolTable().insert(V);
 }
 
 template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
@@ -53,7 +53,7 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass,SymTabClass,SubClass>
 ::removeNodeFromList(ValueSubClass *V) {
   V->setParent(0);
   if (V->hasName() && SymTabObject)
-    SymTabObject->getSymbolTable()->remove(V);
+    SymTabObject->getSymbolTable().remove(V);
 }
 
 template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
@@ -74,10 +74,10 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass,SymTabClass,SubClass>
       ValueSubClass &V = *first;
       bool HasName = V.hasName();
       if (OldSTO && HasName)
-        OldSTO->getSymbolTable()->remove(&V);
+        OldSTO->getSymbolTable().remove(&V);
       V.setParent(NewIP);
       if (NewSTO && HasName)
-        NewSTO->getSymbolTableSure()->insert(&V);
+        NewSTO->getSymbolTable().insert(&V);
     }
   } else {
     // Just transfering between blocks in the same function, simply update the

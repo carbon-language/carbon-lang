@@ -338,7 +338,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
     case BytecodeFormat::SymbolTable:
       BCR_TRACE(2, "BLOCK BytecodeFormat::SymbolTable: {\n");
-      if (ParseSymbolTable(Buf, Buf+Size, M->getSymbolTableSure())) {
+      if (ParseSymbolTable(Buf, Buf+Size, &M->getSymbolTable())) {
 	delete M; return true;
       }
       break;
@@ -543,7 +543,7 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
 
     case BytecodeFormat::SymbolTable:
       BCR_TRACE(1, "BLOCK BytecodeFormat::SymbolTable: {\n");
-      if (ParseSymbolTable(Buf, Buf+Size, Mod->getSymbolTableSure())) {
+      if (ParseSymbolTable(Buf, Buf+Size, &Mod->getSymbolTable())) {
 	delete Mod; return true;
       }
       break;

@@ -437,16 +437,15 @@ static FILE *getFILE(PointerTy Ptr) {
 
     // Check to see if the currently loaded module contains an __iob symbol...
     GlobalVariable *IOB = 0;
-    if (SymbolTable *ST = M->getSymbolTable()) {
-      for (SymbolTable::iterator I = ST->begin(), E = ST->end(); I != E; ++I) {
-        SymbolTable::VarMap &M = I->second;
-        for (SymbolTable::VarMap::iterator J = M.begin(), E = M.end();
-             J != E; ++J)
-          if (J->first == "__iob")
-            if ((IOB = dyn_cast<GlobalVariable>(J->second)))
-              break;
-        if (IOB) break;
-      }
+    SymbolTable &ST = M->getSymbolTable();
+    for (SymbolTable::iterator I = ST.begin(), E = ST.end(); I != E; ++I) {
+      SymbolTable::VarMap &M = I->second;
+      for (SymbolTable::VarMap::iterator J = M.begin(), E = M.end();
+           J != E; ++J)
+        if (J->first == "__iob")
+          if ((IOB = dyn_cast<GlobalVariable>(J->second)))
+            break;
+      if (IOB) break;
     }
 
     // If we found an __iob symbol now, find out what the actual address it's

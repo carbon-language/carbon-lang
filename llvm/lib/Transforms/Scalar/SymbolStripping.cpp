@@ -19,20 +19,19 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Pass.h"
 
-static bool StripSymbolTable(SymbolTable *SymTab) {
-  if (SymTab == 0) return false;    // No symbol table?  No problem.
+static bool StripSymbolTable(SymbolTable &SymTab) {
   bool RemovedSymbol = false;
 
-  for (SymbolTable::iterator I = SymTab->begin(); I != SymTab->end(); ++I) {
+  for (SymbolTable::iterator I = SymTab.begin(); I != SymTab.end(); ++I) {
     std::map<const std::string, Value *> &Plane = I->second;
     
     SymbolTable::type_iterator B;
     while ((B = Plane.begin()) != Plane.end()) {   // Found nonempty type plane!
       Value *V = B->second;
       if (isa<Constant>(V) || isa<Type>(V))
-	SymTab->type_remove(B);
+	SymTab.type_remove(B);
       else 
-	V->setName("", SymTab);   // Set name to "", removing from symbol table!
+	V->setName("", &SymTab);  // Set name to "", removing from symbol table!
       RemovedSymbol = true;
       assert(Plane.begin() != B && "Symbol not removed from table!");
     }

@@ -209,7 +209,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       if (!Src->hasName() && CI->hasName()) {
         std::string Name = CI->getName();
         CI->setName("");
-        Src->setName(Name, BB->getParent()->getSymbolTable());
+        Src->setName(Name, &BB->getParent()->getSymbolTable());
       }
 
       // DCE the instruction now, to avoid having the iterative version of DCE

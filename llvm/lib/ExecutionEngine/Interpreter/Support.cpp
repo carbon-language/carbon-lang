@@ -15,13 +15,10 @@ using std::cout;
 // LookupMatchingNames helper - Search a symbol table for values matching Name.
 //
 static inline void LookupMatchingNames(const std::string &Name,
-                                       SymbolTable *SymTab,
+                                       SymbolTable &SymTab,
 				       std::vector<Value*> &Results) {
-  if (SymTab == 0) return;                         // No symbolic values :(
-
   // Loop over all of the type planes in the symbol table...
-  for (SymbolTable::iterator I = SymTab->begin(), E = SymTab->end();
-       I != E; ++I) {
+  for (SymbolTable::iterator I = SymTab.begin(), E = SymTab.end(); I != E; ++I){
     SymbolTable::VarMap &Plane = I->second;
     
     // Search the symbol table plane for this name...

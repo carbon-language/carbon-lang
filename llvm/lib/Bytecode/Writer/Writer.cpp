@@ -58,8 +58,7 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
     processMethod(I);
 
   // If needed, output the symbol table for the module...
-  if (M->hasSymbolTable())
-    outputSymbolTable(*M->getSymbolTable());
+  outputSymbolTable(M->getSymbolTable());
 }
 
 // Helper function for outputConstants().
@@ -187,8 +186,7 @@ void BytecodeWriter::processMethod(const Function *F) {
       processBasicBlock(*I);
     
     // If needed, output the symbol table for the function...
-    if (F->hasSymbolTable())
-      outputSymbolTable(*F->getSymbolTable());
+    outputSymbolTable(F->getSymbolTable());
     
     Table.purgeFunction();
   }

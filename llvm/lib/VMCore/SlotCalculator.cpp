@@ -90,9 +90,9 @@ void SlotCalculator::processModule() {
   // Insert constants that are named at module level into the slot pool so that
   // the module symbol table can refer to them...
   //
-  if (TheModule->hasSymbolTable() && !IgnoreNamedNodes) {
+  if (!IgnoreNamedNodes) {
     SC_DEBUG("Inserting SymbolTable values:\n");
-    processSymbolTable(TheModule->getSymbolTable());
+    processSymbolTable(&TheModule->getSymbolTable());
   }
 
   SC_DEBUG("end processModule!\n");
@@ -156,8 +156,7 @@ void SlotCalculator::incorporateFunction(const Function *M) {
     // symboltable references to constants not in the output.  Scan for these
     // constants now.
     //
-    if (M->hasSymbolTable())
-      processSymbolTableConstants(M->getSymbolTable());
+    processSymbolTableConstants(&M->getSymbolTable());
   }
 
   SC_DEBUG("Inserting Labels:\n");
@@ -174,9 +173,9 @@ void SlotCalculator::incorporateFunction(const Function *M) {
   for_each(inst_begin(M), inst_end(M),
 	   bind_obj(this, &SlotCalculator::insertValue));
 
-  if (M->hasSymbolTable() && !IgnoreNamedNodes) {
+  if (!IgnoreNamedNodes) {
     SC_DEBUG("Inserting SymbolTable values:\n");
-    processSymbolTable(M->getSymbolTable());
+    processSymbolTable(&M->getSymbolTable());
   }
 
   SC_DEBUG("end processFunction!\n");

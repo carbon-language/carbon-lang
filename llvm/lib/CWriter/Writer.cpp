@@ -485,10 +485,10 @@ bool CWriter::nameAllUsedStructureTypes(Module &M) {
   // Loop over the module symbol table, removing types from UT that are already
   // named.
   //
-  SymbolTable *MST = M.getSymbolTableSure();
-  if (MST->find(Type::TypeTy) != MST->end())
-    for (SymbolTable::type_iterator I = MST->type_begin(Type::TypeTy),
-           E = MST->type_end(Type::TypeTy); I != E; ++I)
+  SymbolTable &MST = M.getSymbolTable();
+  if (MST.find(Type::TypeTy) != MST.end())
+    for (SymbolTable::type_iterator I = MST.type_begin(Type::TypeTy),
+           E = MST.type_end(Type::TypeTy); I != E; ++I)
       UT.erase(cast<Type>(I->second));
 
   // UT now contains types that are not named.  Loop over it, naming structure
@@ -498,7 +498,7 @@ bool CWriter::nameAllUsedStructureTypes(Module &M) {
   for (std::set<const Type *>::const_iterator I = UT.begin(), E = UT.end();
        I != E; ++I)
     if (const StructType *ST = dyn_cast<StructType>(*I)) {
-      ((Value*)ST)->setName("unnamed", MST);
+      ((Value*)ST)->setName("unnamed", &MST);
       Changed = true;
     }
   return Changed;
@@ -547,8 +547,7 @@ void CWriter::printModule(Module *M) {
   //
 
   // Loop over the symbol table, emitting all named constants...
-  if (M->hasSymbolTable())
-    printSymbolTable(*M->getSymbolTable());
+  printSymbolTable(M->getSymbolTable());
 
   // Global variable declarations...
   if (!M->gempty()) {

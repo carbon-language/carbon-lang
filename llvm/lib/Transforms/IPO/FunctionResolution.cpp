@@ -304,8 +304,7 @@ static bool ProcessGlobalsWithSameName(Module &M,
 }
 
 bool FunctionResolvingPass::run(Module &M) {
-  SymbolTable *ST = M.getSymbolTable();
-  if (!ST) return false;
+  SymbolTable &ST = M.getSymbolTable();
 
   std::map<string, vector<GlobalValue*> > Globals;
 
@@ -313,7 +312,7 @@ bool FunctionResolvingPass::run(Module &M) {
   // then add it to the Functions map.  We do a two pass algorithm here to avoid
   // problems with iterators getting invalidated if we did a one pass scheme.
   //
-  for (SymbolTable::iterator I = ST->begin(), E = ST->end(); I != E; ++I)
+  for (SymbolTable::iterator I = ST.begin(), E = ST.end(); I != E; ++I)
     if (const PointerType *PT = dyn_cast<PointerType>(I->first)) {
       SymbolTable::VarMap &Plane = I->second;
       for (SymbolTable::type_iterator PI = Plane.begin(), PE = Plane.end();

@@ -211,16 +211,18 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   case ValID::NameVal: {                // Is it a named definition?
     string Name(D.Name);
     SymbolTable *SymTab = 0;
-    if (inFunctionScope()) SymTab = CurMeth.CurrentFunction->getSymbolTable();
-    Value *N = SymTab ? SymTab->lookup(Type::TypeTy, Name) : 0;
+    Value *N = 0;
+    if (inFunctionScope()) {
+      SymTab = &CurMeth.CurrentFunction->getSymbolTable();
+      N = SymTab->lookup(Type::TypeTy, Name);
+    }
 
     if (N == 0) {
       // Symbol table doesn't automatically chain yet... because the function
       // hasn't been added to the module...
       //
-      SymTab = CurModule.CurrentModule->getSymbolTable();
-      if (SymTab)
-        N = SymTab->lookup(Type::TypeTy, Name);
+      SymTab = &CurModule.CurrentModule->getSymbolTable();
+      N = SymTab->lookup(Type::TypeTy, Name);
       if (N == 0) break;
     }
 
@@ -251,10 +253,10 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
 }
 
 static Value *lookupInSymbolTable(const Type *Ty, const string &Name) {
-  SymbolTable *SymTab = 
+  SymbolTable &SymTab = 
     inFunctionScope() ? CurMeth.CurrentFunction->getSymbolTable() :
                         CurModule.CurrentModule->getSymbolTable();
-  return SymTab ? SymTab->lookup(Ty, Name) : 0;
+  return SymTab.lookup(Ty, Name);
 }
 
 // getValNonImprovising - Look up the value specified by the provided type and
@@ -481,11 +483,11 @@ static bool setValueName(Value *V, char *NameStr) {
     ThrowException("Can't assign name '" + Name + 
 		   "' to a null valued instruction!");
 
-  SymbolTable *ST = inFunctionScope() ? 
-    CurMeth.CurrentFunction->getSymbolTableSure() : 
-    CurModule.CurrentModule->getSymbolTableSure();
+  SymbolTable &ST = inFunctionScope() ? 
+    CurMeth.CurrentFunction->getSymbolTable() : 
+    CurModule.CurrentModule->getSymbolTable();
 
-  Value *Existing = ST->lookup(V->getType(), Name);
+  Value *Existing = ST.lookup(V->getType(), Name);
   if (Existing) {    // Inserting a name that is already defined???
     // There is only one case where this is allowed: when we are refining an
     // opaque type.  In this case, Existing will be an opaque type.
@@ -528,7 +530,7 @@ static bool setValueName(Value *V, char *NameStr) {
 		   V->getType()->getDescription() + "' type plane!");
   }
 
-  V->setName(Name, ST);
+  V->setName(Name, &ST);
   return false;
 }
 

@@ -32,11 +32,8 @@ static inline bool Error(string *E, string Message) {
 // Make sure there are no type name conflicts.
 //
 static bool LinkTypes(Module *Dest, const Module *Src, string *Err = 0) {
-  // No symbol table?  Can't have named types.
-  if (!Src->hasSymbolTable()) return false;
-
-  SymbolTable       *DestST = Dest->getSymbolTableSure();
-  const SymbolTable *SrcST  = Src->getSymbolTable();
+  SymbolTable       *DestST = &Dest->getSymbolTable();
+  const SymbolTable *SrcST  = &Src->getSymbolTable();
 
   // Look for a type plane for Type's...
   SymbolTable::const_iterator PI = SrcST->find(Type::TypeTy);
@@ -176,7 +173,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
                         map<const Value*, Value*> &ValueMap, string *Err = 0) {
   // We will need a module level symbol table if the src module has a module
   // level symbol table...
-  SymbolTable *ST = Src->getSymbolTable() ? Dest->getSymbolTableSure() : 0;
+  SymbolTable *ST = (SymbolTable*)&Src->getSymbolTable();
   
   // Loop over all of the globals in the src module, mapping them over as we go
   //
@@ -266,7 +263,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                                string *Err = 0) {
   // We will need a module level symbol table if the src module has a module
   // level symbol table...
-  SymbolTable *ST = Src->getSymbolTable() ? Dest->getSymbolTableSure() : 0;
+  SymbolTable *ST = (SymbolTable*)&Src->getSymbolTable();
   
   // Loop over all of the functions in the src module, mapping them over as we
   // go
