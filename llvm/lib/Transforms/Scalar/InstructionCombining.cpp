@@ -2317,32 +2317,47 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
   // Eliminate unneeded casts for indices.
   bool MadeChange = false;
-  for (unsigned i = 1, e = GEP.getNumOperands(); i != e; ++i)
-    if (CastInst *CI = dyn_cast<CastInst>(GEP.getOperand(i))) {
-      Value *Src = CI->getOperand(0);
-      const Type *SrcTy = Src->getType();
-      const Type *DestTy = CI->getType();
-      if (Src->getType()->isInteger()) {
-        if (SrcTy->getPrimitiveSize() == DestTy->getPrimitiveSize()) {
-          // We can always eliminate a cast from ulong or long to the other.  We
-          // can always eliminate a cast from uint to int or the other on 32-bit
-          // pointer platforms.
-          if (DestTy->getPrimitiveSize() >= TD->getPointerSize()) {
-            MadeChange = true;
-            GEP.setOperand(i, Src);
-          }
-        } else if (SrcTy->getPrimitiveSize() < DestTy->getPrimitiveSize() &&
-                   SrcTy->getPrimitiveSize() == 4) {
-          // We can always eliminate a cast from int to [u]long.  We can
-          // eliminate a cast from uint to [u]long iff the target is a 32-bit
-          // pointer target.
-          if (SrcTy->isSigned() || 
-              SrcTy->getPrimitiveSize() >= TD->getPointerSize()) {
-            MadeChange = true;
-            GEP.setOperand(i, Src);
+  gep_type_iterator GTI = gep_type_begin(GEP);
+  for (unsigned i = 1, e = GEP.getNumOperands(); i != e; ++i, ++GTI)
+    if (isa<SequentialType>(*GTI)) {
+      if (CastInst *CI = dyn_cast<CastInst>(GEP.getOperand(i))) {
+        Value *Src = CI->getOperand(0);
+        const Type *SrcTy = Src->getType();
+        const Type *DestTy = CI->getType();
+        if (Src->getType()->isInteger()) {
+          if (SrcTy->getPrimitiveSize() == DestTy->getPrimitiveSize()) {
+            // We can always eliminate a cast from ulong or long to the other.
+            // We can always eliminate a cast from uint to int or the other on
+            // 32-bit pointer platforms.
+            if (DestTy->getPrimitiveSize() >= TD->getPointerSize()) {
+              MadeChange = true;
+              GEP.setOperand(i, Src);
+            }
+          } else if (SrcTy->getPrimitiveSize() < DestTy->getPrimitiveSize() &&
+                     SrcTy->getPrimitiveSize() == 4) {
+            // We can always eliminate a cast from int to [u]long.  We can
+            // eliminate a cast from uint to [u]long iff the target is a 32-bit
+            // pointer target.
+            if (SrcTy->isSigned() || 
+                SrcTy->getPrimitiveSize() >= TD->getPointerSize()) {
+              MadeChange = true;
+              GEP.setOperand(i, Src);
+            }
           }
         }
       }
+      // If we are using a wider index than needed for this platform, shrink it
+      // to what we need.  If the incoming value needs a cast instruction,
+      // insert it.  This explicit cast can make subsequent optimizations more
+      // obvious.
+      Value *Op = GEP.getOperand(i);
+      if (Op->getType()->getPrimitiveSize() > TD->getPointerSize())
+        if (!isa<Constant>(Op)) {
+          Op = InsertNewInstBefore(new CastInst(Op, TD->getIntPtrType(),
+                                                Op->getName()), GEP);
+          GEP.setOperand(i, Op);
+          MadeChange = true;
+        }
     }
   if (MadeChange) return &GEP;
 
