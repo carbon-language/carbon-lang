@@ -32,24 +32,28 @@ namespace {
   // datastructure we are processing.
   //
   struct ScalarInfo {
-    Value       *Val;            // Scalar value in Current Function
-    AllocDSNode *AllocNode;      // Allocation node it points to
-    Value       *PoolHandle;     // PoolTy* LLVM value
+    Value  *Val;            // Scalar value in Current Function
+    DSNode *Node;           // DataStructure node it points to
+    Value  *PoolHandle;     // PoolTy* LLVM value
     
-    ScalarInfo(Value *V, AllocDSNode *AN, Value *PH)
-      : Val(V), AllocNode(AN), PoolHandle(PH) {}
+    ScalarInfo(Value *V, DSNode *N, Value *PH)
+      : Val(V), Node(N), PoolHandle(PH) {
+      assert(V && N && PH && "Null value passed to ScalarInfo ctor!");
+    }
   };
 
   // CallArgInfo - Information on one operand for a call that got expanded.
   struct CallArgInfo {
-    int ArgNo;              // Call argument number this corresponds to
-    AllocDSNode *AllocNode; // The allocation graph node for the pool
-    Value *PoolHandle;      // The LLVM value that is the pool pointer
+    int ArgNo;          // Call argument number this corresponds to
+    DSNode *Node;       // The graph node for the pool
+    Value *PoolHandle;  // The LLVM value that is the pool pointer
 
-    CallArgInfo(int Arg, AllocDSNode *AN, Value *PH)
-      : ArgNo(Arg), AllocNode(AN), PoolHandle(PH) {
+    CallArgInfo(int Arg, DSNode *N, Value *PH)
+      : ArgNo(Arg), Node(N), PoolHandle(PH) {
+      assert(Arg >= -1 && N && PH && "Illegal values to CallArgInfo ctor!");
     }
 
+    // operator< when sorting, sort by argument number.
     bool operator<(const CallArgInfo &CAI) const {
       return ArgNo < CAI.ArgNo;
     }
@@ -71,8 +75,12 @@ namespace {
     // Func - The function to be transformed...
     Function *Func;
 
+    // The call instruction that is used to map CallArgInfo PoolHandle values
+    // into the new function values.
+    CallInst *Call;
+
     // default ctor...
-    TransformFunctionInfo() : Func(0) {}
+    TransformFunctionInfo() : Func(0), Call(0) {}
     
     bool operator<(const TransformFunctionInfo &TFI) const {
       if (Func < TFI.Func) return true;
@@ -84,8 +92,10 @@ namespace {
 
     void finalizeConstruction() {
       // Sort the vector so that the return value is first, followed by the
-      // argument records, in order.
-      sort(ArgInfo.begin(), ArgInfo.end());
+      // argument records, in order.  Note that this must be a stable sort so
+      // that the entries with the same sorting criteria (ie they are multiple
+      // pool entries for the same argument) are kept in depth first order.
+      stable_sort(ArgInfo.begin(), ArgInfo.end());
     }
   };
 
@@ -128,7 +138,10 @@ namespace {
     // Prototypes that we add to support pool allocation...
     Function *PoolInit, *PoolDestroy, *PoolAlloc, *PoolFree;
 
-    // The map of already transformed functions...
+    // The map of already transformed functions... note that the keys of this
+    // map do not have meaningful values for 'Call' or the 'PoolHandle' elements
+    // of the ArgInfo elements.
+    //
     map<TransformFunctionInfo, Function*> TransformedFunctions;
 
     // getTransformedFunction - Get a transformed function, or return null if
@@ -151,24 +164,31 @@ namespace {
     // CreatePools - Insert instructions into the function we are processing to
     // create all of the memory pool objects themselves.  This also inserts
     // destruction code.  Add an alloca for each pool that is allocated to the
-    // PoolDescriptors vector.
+    // PoolDescriptors map.
     //
     void CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
-                     map<AllocDSNode*, AllocaInst*> &PoolDescriptors);
+                     map<DSNode*, Value*> &PoolDescriptors);
 
     // processFunction - Convert a function to use pool allocation where
     // available.
     //
     bool processFunction(Function *F);
 
-    
-    void transformFunctionBody(Function *F, vector<ScalarInfo> &Scalars,
-                               map<AllocDSNode*, AllocaInst*> &PoolDescriptors);
+    // transformFunctionBody - This transforms the instruction in 'F' to use the
+    // pools specified in PoolDescriptors when modifying data structure nodes
+    // specified in the PoolDescriptors map.  IPFGraph is the closed data
+    // structure graph for F, of which the PoolDescriptor nodes come from.
+    //
+    void transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
+                               map<DSNode*, Value*> &PoolDescriptors);
 
     // transformFunction - Transform the specified function the specified way.
     // It we have already transformed that function that way, don't do anything.
+    // The nodes in the TransformFunctionInfo come out of callers data structure
+    // graph.
     //
-    void transformFunction(TransformFunctionInfo &TFI);
+    void transformFunction(TransformFunctionInfo &TFI,
+                           FunctionDSGraph &CallerIPGraph);
 
   };
 }
@@ -220,43 +240,15 @@ bool PoolAllocate::processFunction(Function *F) {
   // This fills in the PoolDescriptors map to associate the alloc node with the
   // allocation of the memory pool corresponding to it.
   // 
-  map<AllocDSNode*, AllocaInst*> PoolDescriptors;
+  map<DSNode*, Value*> PoolDescriptors;
   CreatePools(F, Allocs, PoolDescriptors);
-
-
-  // Loop through the value map looking for scalars that refer to nonescaping
-  // allocations.  Add them to the Scalars vector.  Note that we may have
-  // multiple entries in the Scalars vector for each value if it points to more
-  // than one object.
-  //
-  map<Value*, PointerValSet> &ValMap = IPGraph.getValueMap();
-  vector<ScalarInfo> Scalars;
-
-  for (map<Value*, PointerValSet>::iterator I = ValMap.begin(),
-         E = ValMap.end(); I != E; ++I) {
-    const PointerValSet &PVS = I->second;  // Set of things pointed to by scalar
-
-    assert(PVS.size() == 1 &&
-           "Only handle scalars that point to one thing so far!");
-
-    // Check to see if the scalar points to anything that is an allocation...
-    for (unsigned i = 0, e = PVS.size(); i != e; ++i)
-      if (AllocDSNode *Alloc = dyn_cast<AllocDSNode>(PVS[i].Node)) {
-        assert(PVS[i].Index == 0 && "Nonzero not handled yet!");
-        
-        // If the allocation is in the nonescaping set...
-        map<AllocDSNode*, AllocaInst*>::iterator AI=PoolDescriptors.find(Alloc);
-        if (AI != PoolDescriptors.end()) // Add it to the list of scalars
-          Scalars.push_back(ScalarInfo(I->first, Alloc, AI->second));
-      }
-  }
 
   // Now we need to figure out what called methods we need to transform, and
   // how.  To do this, we look at all of the scalars, seeing which functions are
   // either used as a scalar value (so they return a data structure), or are
   // passed one of our scalar values.
   //
-  transformFunctionBody(F, Scalars, PoolDescriptors);
+  transformFunctionBody(F, IPGraph, PoolDescriptors);
 
   return true;
 }
@@ -393,29 +385,66 @@ public:
 
 
 static void addCallInfo(TransformFunctionInfo &TFI, CallInst *CI, int Arg, 
-                        DSNode *AllocNode,
-                        map<AllocDSNode*, AllocaInst*> &PoolDescriptors) {
+                        DSNode *GraphNode,
+                        map<DSNode*, Value*> &PoolDescriptors) {
 
   // For now, add the entire graph that is pointed to by the call argument.
   // This graph can and should be pruned to only what the function itself will
   // use, because often this will be a dramatically smaller subset of what we
   // are providing.
   //
-  for (df_iterator<DSNode*> I = df_begin(AllocNode), E = df_end(AllocNode);
+  for (df_iterator<DSNode*> I = df_begin(GraphNode), E = df_end(GraphNode);
        I != E; ++I) {
-    if (AllocDSNode *AN = dyn_cast<AllocDSNode>(*I))
-      TFI.ArgInfo.push_back(CallArgInfo(Arg, AN, PoolDescriptors[AN]));
+    TFI.ArgInfo.push_back(CallArgInfo(Arg, *I, PoolDescriptors[*I]));
   }
 
   assert(CI->getCalledFunction() && "Cannot handle indirect calls yet!");
   assert(TFI.Func == 0 || TFI.Func == CI->getCalledFunction() &&
          "Function call record should always call the same function!");
+  assert(TFI.Call == 0 || TFI.Call == CI &&
+         "Call element already filled in with different value!");
   TFI.Func = CI->getCalledFunction();
+  TFI.Call = CI;
 }
 
-void PoolAllocate::transformFunctionBody(Function *F,
-                                         vector<ScalarInfo> &Scalars,
-                             map<AllocDSNode*, AllocaInst*> &PoolDescriptors) {
+
+// transformFunctionBody - This transforms the instruction in 'F' to use the
+// pools specified in PoolDescriptors when modifying data structure nodes
+// specified in the PoolDescriptors map.  Specifically, scalar values specified
+// in the Scalars vector must be remapped.  IPFGraph is the closed data
+// structure graph for F, of which the PoolDescriptor nodes come from.
+//
+void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
+                                       map<DSNode*, Value*> &PoolDescriptors) {
+
+  // Loop through the value map looking for scalars that refer to nonescaping
+  // allocations.  Add them to the Scalars vector.  Note that we may have
+  // multiple entries in the Scalars vector for each value if it points to more
+  // than one object.
+  //
+  map<Value*, PointerValSet> &ValMap = IPFGraph.getValueMap();
+  vector<ScalarInfo> Scalars;
+
+  for (map<Value*, PointerValSet>::iterator I = ValMap.begin(),
+         E = ValMap.end(); I != E; ++I) {
+    const PointerValSet &PVS = I->second;  // Set of things pointed to by scalar
+
+    assert(PVS.size() == 1 &&
+           "Only handle scalars that point to one thing so far!");
+
+    // Check to see if the scalar points to a data structure node...
+    for (unsigned i = 0, e = PVS.size(); i != e; ++i) {
+      assert(PVS[i].Index == 0 && "Nonzero not handled yet!");
+        
+      // If the allocation is in the nonescaping set...
+      map<DSNode*, Value*>::iterator AI = PoolDescriptors.find(PVS[i].Node);
+      if (AI != PoolDescriptors.end()) // Add it to the list of scalars
+        Scalars.push_back(ScalarInfo(I->first, PVS[i].Node, AI->second));
+    }
+  }
+
+
+
   cerr << "In '" << F->getName()
        << "': Found the following values that point to poolable nodes:\n";
 
@@ -439,7 +468,7 @@ void PoolAllocate::transformFunctionBody(Function *F,
     // Check to see if the scalar _IS_ a call...
     if (CallInst *CI = dyn_cast<CallInst>(ScalarVal))
       // If so, add information about the pool it will be returning...
-      addCallInfo(CallMap[CI], CI, -1, Scalars[i].AllocNode, PoolDescriptors);
+      addCallInfo(CallMap[CI], CI, -1, Scalars[i].Node, PoolDescriptors);
 
     // Check to see if the scalar is an operand to a call...
     for (Value::use_iterator UI = ScalarVal->use_begin(),
@@ -454,7 +483,7 @@ void PoolAllocate::transformFunctionBody(Function *F,
         // than once!  It will get multiple entries for the first pointer.
 
         // Add the operand number and pool handle to the call table...
-        addCallInfo(CallMap[CI], CI, OI-CI->op_begin()-1, Scalars[i].AllocNode,
+        addCallInfo(CallMap[CI], CI, OI-CI->op_begin()-1, Scalars[i].Node,
                     PoolDescriptors);
       }
     }
@@ -466,9 +495,9 @@ void PoolAllocate::transformFunctionBody(Function *F,
     cerr << "\nFor call: ";
     I->first->dump();
     I->second.finalizeConstruction();
-    cerr << I->second.Func->getName() << " must pass pool pointer for arg #";
+    cerr << I->second.Func->getName() << " must pass pool pointer for args #";
     for (unsigned i = 0; i < I->second.ArgInfo.size(); ++i)
-      cerr << I->second.ArgInfo[i].ArgNo << " ";
+      cerr << I->second.ArgInfo[i].ArgNo << ", ";
     cerr << "\n";
   }
 
@@ -480,7 +509,10 @@ void PoolAllocate::transformFunctionBody(Function *F,
          E = CallMap.end(); I != E; ++I) {
     // Make sure the entries are sorted.
     I->second.finalizeConstruction();
-    transformFunction(I->second);
+
+    // Transform all of the functions we need, or at least ensure there is a
+    // cached version available.
+    transformFunction(I->second, IPFGraph);
   }
 
   // Now that all of the functions that we want to call are available, transform
@@ -519,15 +551,83 @@ void PoolAllocate::transformFunctionBody(Function *F,
   DS->invalidateFunction(F);
 }
 
+static void addNodeMapping(DSNode *SrcNode, const PointerValSet &PVS,
+                           map<DSNode*, PointerValSet> &NodeMapping) {
+  for (unsigned i = 0, e = PVS.size(); i != e; ++i)
+    if (NodeMapping[SrcNode].add(PVS[i])) {  // Not in map yet?
+      assert(PVS[i].Index == 0 && "Node indexing not supported yet!");
+      DSNode *DestNode = PVS[i].Node;
 
-// transformFunction - Transform the specified function the specified way.
-// It we have already transformed that function that way, don't do anything.
+      // Loop over all of the outgoing links in the mapped graph
+      for (unsigned l = 0, le = DestNode->getNumOutgoingLinks(); l != le; ++l) {
+        PointerValSet &SrcSet = SrcNode->getOutgoingLink(l);
+        const PointerValSet &DestSet = DestNode->getOutgoingLink(l);
+        assert((!SrcSet.empty() || DestSet.empty()) &&
+               "Dest graph should be a proper subset of the src graph!");
+
+        // Add all of the node mappings now!
+        for (unsigned si = 0, se = SrcSet.size(); si != se; ++si) {
+          assert(SrcSet[si].Index == 0 && "Can't handle node offset!");
+          addNodeMapping(SrcSet[si].Node, DestSet, NodeMapping);
+        }
+      }
+    }
+}
+
+// CalculateNodeMapping - There is a partial isomorphism between the graph
+// passed in and the graph that is actually used by the function.  We need to
+// figure out what this mapping is so that we can transformFunctionBody the
+// instructions in the function itself.  Note that every node in the graph that
+// we are interested in must be both in the local graph of the called function,
+// and in the local graph of the calling function.  Because of this, we only
+// define the mapping for these nodes [conveniently these are the only nodes we
+// CAN define a mapping for...]
 //
-void PoolAllocate::transformFunction(TransformFunctionInfo &TFI) {
+// The roots of the graph that we are transforming is rooted in the arguments
+// passed into the function from the caller.  This is where we start our
+// mapping calculation.
+//
+// The NodeMapping calculated maps from the callers graph to the called graph.
+//
+static void CalculateNodeMapping(TransformFunctionInfo &TFI,
+                                 FunctionDSGraph &CallerGraph,
+                                 FunctionDSGraph &CalledGraph, 
+                                 map<DSNode*, PointerValSet> &NodeMapping) {
+  int LastArgNo = -2;
+  for (unsigned i = 0, e = TFI.ArgInfo.size(); i != e; ++i) {
+    // Figure out what nodes in the called graph the TFI.ArgInfo[i].Node node
+    // corresponds to...
+    //
+    // Only consider first node of sequence.  Extra nodes may may be added
+    // to the TFI if the data structure requires more nodes than just the
+    // one the argument points to.  We are only interested in the one the
+    // argument points to though.
+    //
+    if (TFI.ArgInfo[i].ArgNo != LastArgNo) {
+      if (TFI.ArgInfo[i].ArgNo == -1) {
+        addNodeMapping(TFI.ArgInfo[i].Node, CalledGraph.getRetNodes(),
+                       NodeMapping);
+      } else {
+        // Figure out which node argument # ArgNo points to in the called graph.
+        Value *Arg = TFI.Func->getArgumentList()[TFI.ArgInfo[i].ArgNo];     
+        addNodeMapping(TFI.ArgInfo[i].Node, CalledGraph.getValueMap()[Arg],
+                       NodeMapping);
+      }
+      LastArgNo = TFI.ArgInfo[i].ArgNo;
+    }
+  }
+}
+
+
+// transformFunction - Transform the specified function the specified way.  It
+// we have already transformed that function that way, don't do anything.  The
+// nodes in the TransformFunctionInfo come out of callers data structure graph.
+//
+void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
+                                     FunctionDSGraph &CallerIPGraph) {
   if (getTransformedFunction(TFI)) return;  // Function xformation already done?
 
-  Function *FuncToXForm = TFI.Func;
-  const FunctionType *OldFuncType = FuncToXForm->getFunctionType();
+  const FunctionType *OldFuncType = TFI.Func->getFunctionType();
 
   assert(!OldFuncType->isVarArg() && "Vararg functions not handled yet!");
 
@@ -549,7 +649,7 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI) {
   // pointers. [in the future when they are implemented].
   //
   Function *NewFunc = new Function(NewFuncType, true,
-                                   FuncToXForm->getName()+".poolxform");
+                                   TFI.Func->getName()+".poolxform");
   CurModule->getFunctionList().push_back(NewFunc);
 
   // Add the newly formed function to the TransformedFunctions table so that
@@ -559,8 +659,8 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI) {
 
   // Add arguments to the function... starting with all of the old arguments
   vector<Value*> ArgMap;
-  for (unsigned i = 0, e = FuncToXForm->getArgumentList().size(); i != e; ++i) {
-    const FunctionArgument *OFA = FuncToXForm->getArgumentList()[i];
+  for (unsigned i = 0, e = TFI.Func->getArgumentList().size(); i != e; ++i) {
+    const FunctionArgument *OFA = TFI.Func->getArgumentList()[i];
     FunctionArgument *NFA = new FunctionArgument(OFA->getType(),OFA->getName());
     NewFunc->getArgumentList().push_back(NFA);
     ArgMap.push_back(NFA);  // Keep track of the arguments 
@@ -578,12 +678,70 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI) {
   }
 
   // Now clone the body of the old function into the new function...
-  CloneFunctionInto(NewFunc, FuncToXForm, ArgMap);
+  CloneFunctionInto(NewFunc, TFI.Func, ArgMap);
   
   // Okay, now we have a function that is identical to the old one, except that
-  // it has extra arguments for the pools coming in.  
+  // it has extra arguments for the pools coming in.  Now we have to get the 
+  // data structure graph for the function we are replacing, and figure out how
+  // our graph nodes map to the graph nodes in the dest function.
+  //
+  FunctionDSGraph &DSGraph = DS->getClosedDSGraph(TFI.Func);  
 
+  // NodeMapping - Multimap from callers graph to called graph.
+  //
+  map<DSNode*, PointerValSet> NodeMapping;
 
+  CalculateNodeMapping(TFI, CallerIPGraph, DSGraph, 
+                       NodeMapping);
+
+  // Print out the node mapping...
+  cerr << "\nNode mapping for call of " << TFI.Func->getName() << "\n";
+  for (map<DSNode*, PointerValSet>::iterator I = NodeMapping.begin();
+       I != NodeMapping.end(); ++I) {
+    cerr << "Map: "; I->first->print(cerr);
+    cerr << "To:  "; I->second.print(cerr);
+    cerr << "\n";
+  }
+
+  // Fill in the PoolDescriptor information for the transformed function so that
+  // it can determine which value holds the pool descriptor for each data
+  // structure node that it accesses.
+  //
+  map<DSNode*, Value*> PoolDescriptors;
+
+  cerr << "FIXME: PoolDescriptors not built!\n";
+
+#if 0
+  // First add the incoming arguments to the scalar map...
+  for (unsigned i = 0, e = TFI.ArgInfo.size(); i != e; ++i)
+    if (TFI.ArgInfo[i].ArgNo == -1) {
+
+    } else {
+      Value *Arg = TFI.Func->getArgumentList()[TFI.ArgInfo[i].ArgNo];
+
+      // Find out what nodes the argument points to in the called functions data
+      // structure graph...
+      //
+      PointerValSet &ArgNodes = DSGraph.getValueMap()[Arg];
+
+      // Add mappings for all of the arguments of this function...
+      for (unsigned ArgVal = 0, AVE = ArgNodes.size(); ArgVal != AVE; ++ArgVal){
+        assert(ArgNodes[ArgVal].Index == 0 &&
+               "Arg that points into an object not handled yet!");
+        DSNode *ArgNode = ArgNodes[ArgVal].Node;
+        Scalars.push_back(ScalarInfo(Arg, ArgNode, PoolDescriptors[ArgNode]));
+      }
+      ArgOffset++;
+    }
+
+  // Now that we know everything we need about the function, transform the body
+  // now!
+  //
+  transformFunctionBody(TFI.Func, DSGraph, PoolDescriptors);
+
+  cerr << "Function after transformation:\n";
+  TFI.Func->dump();
+#endif
 }
 
 
@@ -593,7 +751,7 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI) {
 // PoolDescriptors vector.
 //
 void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
-                               map<AllocDSNode*, AllocaInst*> &PoolDescriptors){
+                               map<DSNode*, Value*> &PoolDescriptors) {
   // FIXME: This should use an IP version of the UnifyAllExits pass!
   vector<BasicBlock*> ReturnNodes;
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
