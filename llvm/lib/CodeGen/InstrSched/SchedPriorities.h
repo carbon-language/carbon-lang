@@ -1,22 +1,22 @@
-/* -*-C++-*-
- ****************************************************************************
- * File:
- *	SchedPriorities.h
- * 
- * Purpose:
- *	Encapsulate heuristics for instruction scheduling.
- * 
- * Strategy:
- *    Priority ordering rules:
- *    (1) Max delay, which is the order of the heap S.candsAsHeap.
- *    (2) Instruction that frees up a register.
- *    (3) Instruction that has the maximum number of dependent instructions.
- *    Note that rules 2 and 3 are only used if issue conflicts prevent
- *    choosing a higher priority instruction by rule 1.
- * 
- * History:
- *	7/30/01	 -  Vikram Adve  -  Created
- ***************************************************************************/
+// -*-C++-*-
+//***************************************************************************
+// File:
+//	SchedPriorities.h
+// 
+// Purpose:
+//	Encapsulate heuristics for instruction scheduling.
+// 
+// Strategy:
+//    Priority ordering rules:
+//    (1) Max delay, which is the order of the heap S.candsAsHeap.
+//    (2) Instruction that frees up a register.
+//    (3) Instruction that has the maximum number of dependent instructions.
+//    Note that rules 2 and 3 are only used if issue conflicts prevent
+//    choosing a higher priority instruction by rule 1.
+// 
+// History:
+//	7/30/01	 -  Vikram Adve  -  Created
+//**************************************************************************/
 
 #ifndef LLVM_CODEGEN_SCHEDPRIORITIES_H
 #define LLVM_CODEGEN_SCHEDPRIORITIES_H
@@ -24,7 +24,7 @@
 #include "SchedGraph.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
-#include "llvm/Target/SchedInfo.h"
+#include "llvm/Target/MachineSchedInfo.h"
 
 class Method;
 class MachineInstr;
