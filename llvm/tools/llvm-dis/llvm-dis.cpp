@@ -50,15 +50,15 @@ int main(int argc, char **argv) {
 
   Module *M = ParseBytecodeFile(InputFilename);
   if (M == 0) {
-    cerr << "bytecode didn't read correctly.\n";
+    cerr << argv[0] << ": bytecode didn't read correctly.\n";
     return 1;
   }
   
   if (OutputFilename != "") {   // Specified an output filename?
     if (!Force && std::ifstream(OutputFilename.c_str())) {
       // If force is not specified, make sure not to overwrite a file!
-      cerr << "Error opening '" << OutputFilename
-           << "': File exists! Sending to standard output.\n";
+      cerr << argv[0] << ": error opening '" << OutputFilename
+           << "': file exists! Sending to standard output.\n";
     } else {
       Out = new std::ofstream(OutputFilename.c_str());
     }
@@ -81,8 +81,8 @@ int main(int argc, char **argv) {
 
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
-        cerr << "Error opening '" << OutputFilename
-             << "': File exists! Sending to standard output.\n";
+        cerr << argv[0] << ": error opening '" << OutputFilename
+             << "': file exists! Sending to standard output.\n";
       } else {
         Out = new std::ofstream(OutputFilename.c_str());
 
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
   }
 
   if (!Out->good()) {
-    cerr << "Error opening " << OutputFilename
+    cerr << argv[0] << ": error opening " << OutputFilename
 	 << ": sending to stdout instead!\n";
     Out = &std::cout;
   }
