@@ -14,6 +14,7 @@
 #include "llvm/Optimizations/ConstantProp.h"
 #include "llvm/Optimizations/DCE.h"
 #include "llvm/Transforms/ConstantMerge.h"
+#include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Bytecode/Writer.h"
 #include "Support/CommandLine.h"
 #include <memory>
@@ -64,6 +65,7 @@ int main(int argc, char **argv) {
   //
   vector<Pass*> Passes;
   Passes.push_back(new CleanupGCCOutput());        // Fix gccisms
+  Passes.push_back(new InductionVariableSimplify()); // Simplify indvars
   Passes.push_back(new RaisePointerReferences());  // Fix general low level code
   Passes.push_back(new ConstantMerge());           // Merge dup global constants
 
