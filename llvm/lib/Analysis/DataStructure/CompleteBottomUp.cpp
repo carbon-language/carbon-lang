@@ -71,7 +71,8 @@ bool CompleteBUDataStructures::run(Module &M) {
   unsigned NextID = 1;
 
   if (Function *Main = M.getMainFunction()) {
-    calculateSCCGraphs(getOrCreateGraph(*Main), Stack, NextID, ValMap);
+    if (!Main->isExternal())
+      calculateSCCGraphs(getOrCreateGraph(*Main), Stack, NextID, ValMap);
   } else {
     std::cerr << "CBU-DSA: No 'main' function found!\n";
   }
