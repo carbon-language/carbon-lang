@@ -136,20 +136,8 @@ struct InstVisitor {
   //
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
     RetTy visit##OPCODE(CLASS &I) { DELEGATE(CLASS); }
-#define HANDLE_OTHER_INST(NUM, OPCODE, CLASS)  // Handle "other" insts specially
 #include "llvm/Instruction.def"
 
-  // Implement all "other" instructions, except for PHINode
-  RetTy visitCast(CastInst &I)       { DELEGATE(CastInst);    }
-  RetTy visitCall(CallInst &I)       { DELEGATE(CallInst);    }
-  RetTy visitShr(ShiftInst &I)       { DELEGATE(ShiftInst);   }
-  RetTy visitShl(ShiftInst &I)       { DELEGATE(ShiftInst);   }
-  RetTy visitVANext(VANextInst &I)   { DELEGATE(VANextInst);  }
-  RetTy visitVAArg (VAArgInst &I)    { DELEGATE(VAArgInst);  }
-  RetTy visitUserOp1(Instruction &I) { DELEGATE(Instruction); }
-  RetTy visitUserOp2(Instruction &I) { DELEGATE(Instruction); }
-
-  
   // Specific Instruction type classes... note that all of the casts are
   // necessary because we use the instruction classes as opaque types...
   //
