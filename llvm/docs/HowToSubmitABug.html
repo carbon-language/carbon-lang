@@ -230,9 +230,15 @@ from producing invalid LLVM code (i.e., code not in SSA form, using values
 before defining them, etc.) which the verifier will check for after a pass
 finishes its run.</p>
 
-<p>To debug a miscompilation, you should choose which program you wish to run
-the output through, e.g. C backend, the JIT, or LLC, and a selection of passes,
-one of which may be causing the error, and run, for example:</p>
+<p>If it looks like the LLVM compiler is miscompiling a program, the very first
+thing to check is to make sure it is not using undefined behavior.  In 
+particular, check to see if the program valgrinds clean, passes purify, or some
+other memory checker tool.  Many of the "LLVM bugs" that we have chased down
+ended up being bugs in the program being compiled, not LLVM.</p>
+
+<p>Once you determine that the program itself is not buggy, you should choose 
+which code generator you wish to compile the program with (e.g. C backend, the 
+JIT, or LLC) and optionally a series of LLVM passes to run.  For example:</p>
 
 <div class="doc_code">
 <p><tt><b>bugpoint</b> -run-cbe [... optimization passes ...] file-to-test.bc
