@@ -52,7 +52,7 @@ void Printer::printConstantPool(MachineConstantPool *MCP, const TargetData &TD){
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << "\t.section .rodata\n";
     O << "\t.align " << (unsigned)TD.getTypeAlignment(CP[i]->getType()) << "\n";
-    O << ".CPI" << i+ConstIdx << ":\t\t\t\t\t;" << *CP[i] << "\n";
+    O << ".CPI" << i+ConstIdx << ":\t\t\t\t\t#" << *CP[i] << "\n";
     O << "\t*Constant output not implemented yet!*\n\n";
   }
   ConstIdx += CP.size();  // Don't recycle constant pool index numbers
