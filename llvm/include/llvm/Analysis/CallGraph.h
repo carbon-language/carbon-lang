@@ -42,6 +42,7 @@
 #define LLVM_ANALYSIS_CALLGRAPH_H
 
 #include "Support/GraphTraits.h"
+#include "Support/STLExtras.h"
 #include "llvm/Pass.h"
 class Function;
 class Module;
@@ -242,11 +243,25 @@ template <> struct GraphTraits<const CallGraphNode*> {
   static inline ChildIteratorType child_end  (NodeType *N) { return N->end(); }
 };
 
-
-template<> struct GraphTraits<CallGraph*> :
-  public GraphTraits<CallGraphNode*> {
+template<> struct GraphTraits<CallGraph*> : public GraphTraits<CallGraphNode*> {
   static NodeType *getEntryNode(CallGraph *CGN) {
     return CGN->getExternalNode();  // Start at the external node!
+  }
+  typedef std::pair<const Function*, CallGraphNode*> PairTy;
+  typedef std::pointer_to_unary_function<PairTy, CallGraphNode&> DerefFun;
+
+  // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
+  typedef mapped_iterator<CallGraph::iterator, DerefFun> nodes_iterator;
+  static nodes_iterator nodes_begin(CallGraph *CG) {
+    return map_iterator(CG->begin(), DerefFun(CGdereference));
+  }
+  static nodes_iterator nodes_end  (CallGraph *CG) {
+    return map_iterator(CG->end(), DerefFun(CGdereference));
+  }
+
+  static CallGraphNode &CGdereference (std::pair<const Function*,
+                                       CallGraphNode*> P) {
+    return *P.second;
   }
 };
 template<> struct GraphTraits<const CallGraph*> :
@@ -254,6 +269,10 @@ template<> struct GraphTraits<const CallGraph*> :
   static NodeType *getEntryNode(const CallGraph *CGN) {
     return CGN->getExternalNode();
   }
+  // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
+  typedef CallGraph::const_iterator nodes_iterator;
+  static nodes_iterator nodes_begin(const CallGraph *CG) { return CG->begin(); }
+  static nodes_iterator nodes_end  (const CallGraph *CG) { return CG->end(); }
 };
 
 #endif
