@@ -401,6 +401,43 @@ OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
 }
 
 
+// getAlwaysOpaqueTy - This function returns an opaque type.  It doesn't matter
+// _which_ opaque type it is, but the opaque type must never get resolved.
+//
+static Type *getAlwaysOpaqueTy() {
+  static Type *AlwaysOpaqueTy = OpaqueType::get();
+  static PATypeHolder Holder(AlwaysOpaqueTy);
+  return AlwaysOpaqueTy;
+}
+
+
+//===----------------------------------------------------------------------===//
+// dropAllTypeUses methods - These methods eliminate any possibly recursive type
+// references from a derived type.  The type must remain abstract, so we make
+// sure to use an always opaque type as an argument.
+//
+
+void FunctionType::dropAllTypeUses() {
+  ResultType = getAlwaysOpaqueTy();
+  ParamTys.clear();
+}
+
+void ArrayType::dropAllTypeUses() {
+  ElementType = getAlwaysOpaqueTy();
+}
+
+void StructType::dropAllTypeUses() {
+  ETypes.clear();
+  ETypes.push_back(PATypeHandle(getAlwaysOpaqueTy(), this));
+}
+
+void PointerType::dropAllTypeUses() {
+  ElementType = getAlwaysOpaqueTy();
+}
+
+
+
+
 // isTypeAbstract - This is a recursive function that walks a type hierarchy
 // calculating whether or not a type is abstract.  Worst case it will have to do
 // a lot of traversing if you have some whacko opaque types, but in most cases,
@@ -651,12 +688,6 @@ FunctionType *FunctionType::get(const Type *ReturnType,
   return MT;
 }
 
-void FunctionType::dropAllTypeUses() {
-  ResultType = OpaqueType::get();
-  ParamTys.clear();
-}
-
-
 //===----------------------------------------------------------------------===//
 // Array Type Factory...
 //
@@ -700,13 +731,6 @@ ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
 #endif
   return AT;
 }
-
-void ArrayType::dropAllTypeUses() {
-  ElementType = OpaqueType::get();
-}
-
-
-
 
 //===----------------------------------------------------------------------===//
 // Struct Type Factory...
@@ -755,11 +779,6 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes) {
   return ST;
 }
 
-void StructType::dropAllTypeUses() {
-  ETypes.clear();
-  ETypes.push_back(PATypeHandle(OpaqueType::get(), this));
-}
-
 
 
 //===----------------------------------------------------------------------===//
@@ -804,10 +823,6 @@ PointerType *PointerType::get(const Type *ValueType) {
   std::cerr << "Derived new type: " << *PT << "\n";
 #endif
   return PT;
-}
-
-void PointerType::dropAllTypeUses() {
-  ElementType = OpaqueType::get();
 }
 
 void debug_type_tables() {
