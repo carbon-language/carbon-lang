@@ -14,19 +14,24 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/SlotCalculator.h"
+#include "SlotCalculator.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
+#include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/Type.h"
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+#include <functional>
+
 using namespace llvm;
 
 #if 0
+#include <iostream>
 #define SC_DEBUG(X) std::cerr << X
 #else
 #define SC_DEBUG(X)
@@ -34,6 +39,7 @@ using namespace llvm;
 
 SlotCalculator::SlotCalculator(const Module *M ) {
   ModuleContainsAllFunctionConstants = false;
+  ModuleTypeLevel = 0;
   TheModule = M;
 
   // Preload table... Make sure that all of the primitive types are in the table
@@ -42,7 +48,7 @@ SlotCalculator::SlotCalculator(const Module *M ) {
   SC_DEBUG("Inserting primitive types:\n");
   for (unsigned i = 0; i < Type::FirstDerivedTyID; ++i) {
     assert(Type::getPrimitiveType((Type::TypeID)i));
-    insertValue(Type::getPrimitiveType((Type::TypeID)i), true);
+    insertType(Type::getPrimitiveType((Type::TypeID)i), true);
   }
 
   if (M == 0) return;   // Empty table...
@@ -59,7 +65,7 @@ SlotCalculator::SlotCalculator(const Function *M ) {
   SC_DEBUG("Inserting primitive types:\n");
   for (unsigned i = 0; i < Type::FirstDerivedTyID; ++i) {
     assert(Type::getPrimitiveType((Type::TypeID)i));
-    insertValue(Type::getPrimitiveType((Type::TypeID)i), true);
+    insertType(Type::getPrimitiveType((Type::TypeID)i), true);
   }
 
   if (TheModule == 0) return;   // Empty table...
@@ -78,8 +84,13 @@ unsigned SlotCalculator::getGlobalSlot(const Value *V) const {
   return I->second;
 }
 
+unsigned SlotCalculator::getGlobalSlot(const Type* T) const {
+  std::map<const Type*, unsigned>::const_iterator I = TypeMap.find(T);
+  assert(I != TypeMap.end() && "Didn't find global slot entry!");
+  return I->second;
+}
+
 SlotCalculator::TypePlane &SlotCalculator::getPlane(unsigned Plane) {
-  unsigned PIdx = Plane;
   if (CompactionTable.empty()) {                // No compaction table active?
     // fall out
   } else if (!CompactionTable[Plane].empty()) { // Compaction table active.
@@ -89,21 +100,20 @@ SlotCalculator::TypePlane &SlotCalculator::getPlane(unsigned Plane) {
     // Final case: compaction table active, but this plane is not
     // compactified.  If the type plane is compactified, unmap back to the
     // global type plane corresponding to "Plane".
-    if (!CompactionTable[Type::TypeTyID].empty()) {
-      const Type *Ty = cast<Type>(CompactionTable[Type::TypeTyID][Plane]);
-      std::map<const Value*, unsigned>::iterator It = NodeMap.find(Ty);
-      assert(It != NodeMap.end() && "Type not in global constant map?");
-      PIdx = It->second;
+    if (!CompactionTypes.empty()) {
+      const Type *Ty = CompactionTypes[Plane];
+      TypeMapType::iterator It = TypeMap.find(Ty);
+      assert(It != TypeMap.end() && "Type not in global constant map?");
+      Plane = It->second;
     }
   }
 
   // Okay we are just returning an entry out of the main Table.  Make sure the
   // plane exists and return it.
-  if (PIdx >= Table.size())
-    Table.resize(PIdx+1);
-  return Table[PIdx];
+  if (Plane >= Table.size())
+    Table.resize(Plane+1);
+  return Table[Plane];
 }
-
 
 // processModule - Process all of the module level function declarations and
 // types that are available.
@@ -135,28 +145,27 @@ void SlotCalculator::processModule() {
   // that contain constant strings so that the strings occur at the start of the
   // plane, not somewhere in the middle.
   //
-  TypePlane &Types = Table[Type::TypeTyID];
   for (unsigned plane = 0, e = Table.size(); plane != e; ++plane) {
     if (const ArrayType *AT = dyn_cast<ArrayType>(Types[plane]))
       if (AT->getElementType() == Type::SByteTy ||
-	  AT->getElementType() == Type::UByteTy) {
-	TypePlane &Plane = Table[plane];
-	unsigned FirstNonStringID = 0;
-	for (unsigned i = 0, e = Plane.size(); i != e; ++i)
-	  if (isa<ConstantAggregateZero>(Plane[i]) ||
-	      cast<ConstantArray>(Plane[i])->isString()) {
-	    // Check to see if we have to shuffle this string around.  If not,
-	    // don't do anything.
-	    if (i != FirstNonStringID) {
-	      // Swap the plane entries....
-	      std::swap(Plane[i], Plane[FirstNonStringID]);
-	      
-	      // Keep the NodeMap up to date.
-	      NodeMap[Plane[i]] = i;
-	      NodeMap[Plane[FirstNonStringID]] = FirstNonStringID;
-	    }
-	    ++FirstNonStringID;
-	  }
+          AT->getElementType() == Type::UByteTy) {
+        TypePlane &Plane = Table[plane];
+        unsigned FirstNonStringID = 0;
+        for (unsigned i = 0, e = Plane.size(); i != e; ++i)
+          if (isa<ConstantAggregateZero>(Plane[i]) ||
+              cast<ConstantArray>(Plane[i])->isString()) {
+            // Check to see if we have to shuffle this string around.  If not,
+            // don't do anything.
+            if (i != FirstNonStringID) {
+              // Swap the plane entries....
+              std::swap(Plane[i], Plane[FirstNonStringID]);
+              
+              // Keep the NodeMap up to date.
+              NodeMap[Plane[i]] = i;
+              NodeMap[Plane[FirstNonStringID]] = FirstNonStringID;
+            }
+            ++FirstNonStringID;
+          }
       }
   }
   
@@ -178,11 +187,11 @@ void SlotCalculator::processModule() {
        F != E; ++F) {
     for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I){
       for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
-	if (isa<Constant>(I->getOperand(op)))
-	  getOrCreateSlot(I->getOperand(op));
+        if (isa<Constant>(I->getOperand(op)))
+          getOrCreateSlot(I->getOperand(op));
       getOrCreateSlot(I->getType());
       if (const VANextInst *VAN = dyn_cast<VANextInst>(&*I))
-	getOrCreateSlot(VAN->getArgType());
+        getOrCreateSlot(VAN->getArgType());
     }
     processSymbolTableConstants(&F->getSymbolTable());
   }
@@ -201,31 +210,24 @@ void SlotCalculator::processModule() {
   // all non-value types are pushed to the end of the type table, giving nice
   // low numbers to the types that can be used by instructions, thus reducing
   // the amount of explodage we suffer.
-  if (Table[Type::TypeTyID].size() >= 64) {
-    // Scan through the type table moving value types to the start of the table.
-    TypePlane *Types = &Table[Type::TypeTyID];
+  if (Types.size() >= 64) {
     unsigned FirstNonValueTypeID = 0;
-    for (unsigned i = 0, e = Types->size(); i != e; ++i)
-      if (cast<Type>((*Types)[i])->isFirstClassType() ||
-          cast<Type>((*Types)[i])->isPrimitiveType()) {
+    for (unsigned i = 0, e = Types.size(); i != e; ++i)
+      if (Types[i]->isFirstClassType() || Types[i]->isPrimitiveType()) {
         // Check to see if we have to shuffle this type around.  If not, don't
         // do anything.
         if (i != FirstNonValueTypeID) {
-          assert(i != Type::TypeTyID && FirstNonValueTypeID != Type::TypeTyID &&
-                 "Cannot move around the type plane!");
-
           // Swap the type ID's.
-          std::swap((*Types)[i], (*Types)[FirstNonValueTypeID]);
+          std::swap(Types[i], Types[FirstNonValueTypeID]);
 
-          // Keep the NodeMap up to date.
-          NodeMap[(*Types)[i]] = i;
-          NodeMap[(*Types)[FirstNonValueTypeID]] = FirstNonValueTypeID;
+          // Keep the TypeMap up to date.
+          TypeMap[Types[i]] = i;
+          TypeMap[Types[FirstNonValueTypeID]] = FirstNonValueTypeID;
 
           // When we move a type, make sure to move its value plane as needed.
           if (Table.size() > FirstNonValueTypeID) {
             if (Table.size() <= i) Table.resize(i+1);
             std::swap(Table[i], Table[FirstNonValueTypeID]);
-            Types = &Table[Type::TypeTyID];
           }
         }
         ++FirstNonValueTypeID;
@@ -248,7 +250,7 @@ void SlotCalculator::processSymbolTable(const SymbolTable *ST) {
   for (SymbolTable::plane_const_iterator PI = ST->plane_begin(), 
        PE = ST->plane_end(); PI != PE; ++PI)
     for (SymbolTable::value_const_iterator VI = PI->second.begin(),
-	   VE = PI->second.end(); VI != VE; ++VI)
+           VE = PI->second.end(); VI != VE; ++VI)
       getOrCreateSlot(VI->second);
 }
 
@@ -262,14 +264,15 @@ void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
   for (SymbolTable::plane_const_iterator PI = ST->plane_begin(), 
        PE = ST->plane_end(); PI != PE; ++PI)
     for (SymbolTable::value_const_iterator VI = PI->second.begin(),
-	   VE = PI->second.end(); VI != VE; ++VI)
+           VE = PI->second.end(); VI != VE; ++VI)
       if (isa<Constant>(VI->second))
-	getOrCreateSlot(VI->second);
+        getOrCreateSlot(VI->second);
 }
 
 
 void SlotCalculator::incorporateFunction(const Function *F) {
-  assert(ModuleLevel.size() == 0 && "Module already incorporated!");
+  assert((ModuleLevel.size() == 0 ||
+          ModuleTypeLevel == 0) && "Module already incorporated!");
 
   SC_DEBUG("begin processFunction!\n");
 
@@ -281,6 +284,7 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   ModuleLevel.resize(getNumPlanes());
   for (unsigned i = 0, e = getNumPlanes(); i != e; ++i)
     ModuleLevel[i] = getPlane(i).size();
+  ModuleTypeLevel = Types.size();
 
   // Iterate over function arguments, adding them to the value table...
   for(Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
@@ -295,8 +299,12 @@ void SlotCalculator::incorporateFunction(const Function *F) {
     
     // Emit all of the constants that are being used by the instructions in
     // the function...
-    for_each(constant_begin(F), constant_end(F),
-             bind_obj(this, &SlotCalculator::getOrCreateSlot));
+    constant_iterator CI = constant_begin(F);
+    constant_iterator CE = constant_end(F);
+    while ( CI != CE ) {
+      this->getOrCreateSlot(*CI);
+      ++CI;
+    }
     
     // If there is a symbol table, it is possible that the user has names for
     // constants that are not being used.  In this case, we will have problems
@@ -328,13 +336,15 @@ void SlotCalculator::incorporateFunction(const Function *F) {
 }
 
 void SlotCalculator::purgeFunction() {
-  assert(ModuleLevel.size() != 0 && "Module not incorporated!");
+  assert((ModuleLevel.size() != 0 ||
+          ModuleTypeLevel != 0) && "Module not incorporated!");
   unsigned NumModuleTypes = ModuleLevel.size();
 
   SC_DEBUG("begin purgeFunction!\n");
 
   // First, free the compaction map if used.
   CompactionNodeMap.clear();
+  CompactionTypeMap.clear();
 
   // Next, remove values from existing type planes
   for (unsigned i = 0; i != NumModuleTypes; ++i) {
@@ -355,8 +365,10 @@ void SlotCalculator::purgeFunction() {
 
   // We don't need this state anymore, free it up.
   ModuleLevel.clear();
+  ModuleTypeLevel = 0;
 
   // Finally, remove any type planes defined by the function...
+  CompactionTypes.clear();
   if (!CompactionTable.empty()) {
     CompactionTable.clear();
   } else {
@@ -379,8 +391,7 @@ void SlotCalculator::purgeFunction() {
 }
 
 static inline bool hasNullValue(unsigned TyID) {
-  return TyID != Type::LabelTyID && TyID != Type::TypeTyID &&
-         TyID != Type::VoidTyID;
+  return TyID != Type::LabelTyID && TyID != Type::VoidTyID;
 }
 
 /// getOrCreateCompactionTableSlot - This method is used to build up the initial
@@ -395,14 +406,12 @@ unsigned SlotCalculator::getOrCreateCompactionTableSlot(const Value *V) {
 
   // Make sure the type is in the table.
   unsigned Ty;
-  if (!CompactionTable[Type::TypeTyID].empty())
+  if (!CompactionTypes.empty())
     Ty = getOrCreateCompactionTableSlot(V->getType());
   else    // If the type plane was decompactified, use the global plane ID
     Ty = getSlot(V->getType());
   if (CompactionTable.size() <= Ty)
     CompactionTable.resize(Ty+1);
-
-  assert(!isa<Type>(V) || ModuleLevel.empty());
 
   TypePlane &TyPlane = CompactionTable[Ty];
 
@@ -422,6 +431,20 @@ unsigned SlotCalculator::getOrCreateCompactionTableSlot(const Value *V) {
   return SlotNo;
 }
 
+/// getOrCreateCompactionTableSlot - This method is used to build up the initial
+/// approximation of the compaction table.
+unsigned SlotCalculator::getOrCreateCompactionTableSlot(const Type *T) {
+  std::map<const Type*, unsigned>::iterator I =
+    CompactionTypeMap.lower_bound(T);
+  if (I != CompactionTypeMap.end() && I->first == T)
+    return I->second;  // Already exists?
+
+  unsigned SlotNo = CompactionTypes.size();
+  SC_DEBUG("Inserting Compaction Type #" << SlotNo << ": " << T << "\n");
+  CompactionTypes.push_back(T);
+  CompactionTypeMap.insert(std::make_pair(T, SlotNo));
+  return SlotNo;
+}
 
 /// buildCompactionTable - Since all of the function constants and types are
 /// stored in the module-level constant table, we don't need to emit a function
@@ -432,12 +455,13 @@ unsigned SlotCalculator::getOrCreateCompactionTableSlot(const Value *V) {
 /// identifiers.
 void SlotCalculator::buildCompactionTable(const Function *F) {
   assert(CompactionNodeMap.empty() && "Compaction table already built!");
+  assert(CompactionTypeMap.empty() && "Compaction types already built!");
   // First step, insert the primitive types.
-  CompactionTable.resize(Type::TypeTyID+1);
-  for (unsigned i = 0; i != Type::FirstDerivedTyID; ++i) {
+  CompactionTable.resize(Type::LastPrimitiveTyID+1);
+  for (unsigned i = 0; i <= Type::LastPrimitiveTyID; ++i) {
     const Type *PrimTy = Type::getPrimitiveType((Type::TypeID)i);
-    CompactionTable[Type::TypeTyID].push_back(PrimTy);
-    CompactionNodeMap[PrimTy] = i;
+    CompactionTypes.push_back(PrimTy);
+    CompactionTypeMap[PrimTy] = i;
   }
 
   // Next, include any types used by function arguments.
@@ -445,7 +469,7 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
     getOrCreateCompactionTableSlot(I->getType());
 
   // Next, find all of the types and values that are referred to by the
-  // instructions in the program.
+  // instructions in the function.
   for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     getOrCreateCompactionTableSlot(I->getType());
     for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
@@ -466,19 +490,22 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
   for (SymbolTable::plane_const_iterator PI = ST.plane_begin(), 
        PE = ST.plane_end(); PI != PE; ++PI)
     for (SymbolTable::value_const_iterator VI = PI->second.begin(),
-	   VE = PI->second.end(); VI != VE; ++VI)
+           VE = PI->second.end(); VI != VE; ++VI)
       if (isa<Constant>(VI->second) || isa<GlobalValue>(VI->second))
-	getOrCreateCompactionTableSlot(VI->second);
+        getOrCreateCompactionTableSlot(VI->second);
 
   // Now that we have all of the values in the table, and know what types are
   // referenced, make sure that there is at least the zero initializer in any
   // used type plane.  Since the type was used, we will be emitting instructions
   // to the plane even if there are no constants in it.
-  CompactionTable.resize(CompactionTable[Type::TypeTyID].size());
+  CompactionTable.resize(CompactionTypes.size());
   for (unsigned i = 0, e = CompactionTable.size(); i != e; ++i)
-    if (CompactionTable[i].empty() && i != Type::VoidTyID &&
+    if (CompactionTable[i].empty() && (i != Type::VoidTyID) &&
         i != Type::LabelTyID) {
-      const Type *Ty = cast<Type>(CompactionTable[Type::TypeTyID][i]);
+      const Type *Ty = CompactionTypes[i];
+      SC_DEBUG("Getting Null Value #" << i << " for Type " << Ty << "\n");
+      assert(Ty->getTypeID() != Type::VoidTyID);
+      assert(Ty->getTypeID() != Type::LabelTyID);
       getOrCreateCompactionTableSlot(Constant::getNullValue(Ty));
     }
   
@@ -487,13 +514,13 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
   // it will not save us anything.  Because we have not yet incorporated the
   // function body itself yet, we don't know whether or not it's a good idea to
   // compactify other planes.  We will defer this decision until later.
-  TypePlane &GlobalTypes = Table[Type::TypeTyID];
+  TypeList &GlobalTypes = Types;
   
   // All of the values types will be scrunched to the start of the types plane
   // of the global table.  Figure out just how many there are.
   assert(!GlobalTypes.empty() && "No global types???");
   unsigned NumFCTypes = GlobalTypes.size()-1;
-  while (!cast<Type>(GlobalTypes[NumFCTypes])->isFirstClassType())
+  while (!GlobalTypes[NumFCTypes]->isFirstClassType())
     --NumFCTypes;
 
   // If there are fewer that 64 types, no instructions will be exploded due to
@@ -506,29 +533,27 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
     // CompactionNodeMap for non-types though.
     std::vector<TypePlane> TmpCompactionTable;
     std::swap(CompactionTable, TmpCompactionTable);
-    TypePlane Types;
-    std::swap(Types, TmpCompactionTable[Type::TypeTyID]);
+    TypeList TmpTypes;
+    std::swap(TmpTypes, CompactionTypes);
     
     // Move each plane back over to the uncompactified plane
-    while (!Types.empty()) {
-      const Type *Ty = cast<Type>(Types.back());
-      Types.pop_back();
-      CompactionNodeMap.erase(Ty);  // Decompactify type!
+    while (!TmpTypes.empty()) {
+      const Type *Ty = TmpTypes.back();
+      TmpTypes.pop_back();
+      CompactionTypeMap.erase(Ty);  // Decompactify type!
 
-      if (Ty != Type::TypeTy) {
-        // Find the global slot number for this type.
-        int TySlot = getSlot(Ty);
-        assert(TySlot != -1 && "Type doesn't exist in global table?");
-        
-        // Now we know where to put the compaction table plane.
-        if (CompactionTable.size() <= unsigned(TySlot))
-          CompactionTable.resize(TySlot+1);
-        // Move the plane back into the compaction table.
-        std::swap(CompactionTable[TySlot], TmpCompactionTable[Types.size()]);
+      // Find the global slot number for this type.
+      int TySlot = getSlot(Ty);
+      assert(TySlot != -1 && "Type doesn't exist in global table?");
+      
+      // Now we know where to put the compaction table plane.
+      if (CompactionTable.size() <= unsigned(TySlot))
+        CompactionTable.resize(TySlot+1);
+      // Move the plane back into the compaction table.
+      std::swap(CompactionTable[TySlot], TmpCompactionTable[TmpTypes.size()]);
 
-        // And remove the empty plane we just moved in.
-        TmpCompactionTable.pop_back();
-      }
+      // And remove the empty plane we just moved in.
+      TmpCompactionTable.pop_back();
     }
   }
 }
@@ -544,9 +569,9 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
 /// Note that the type plane has already been compactified if possible.
 ///
 void SlotCalculator::pruneCompactionTable() {
-  TypePlane &TyPlane = CompactionTable[Type::TypeTyID];
+  TypeList &TyPlane = CompactionTypes;
   for (unsigned ctp = 0, e = CompactionTable.size(); ctp != e; ++ctp)
-    if (ctp != Type::TypeTyID && !CompactionTable[ctp].empty()) {
+    if (!CompactionTable[ctp].empty()) {
       TypePlane &CPlane = CompactionTable[ctp];
       unsigned GlobalSlot = ctp;
       if (!TyPlane.empty())
@@ -603,7 +628,6 @@ void SlotCalculator::pruneCompactionTable() {
     }
 }
 
-
 int SlotCalculator::getSlot(const Value *V) const {
   // If there is a CompactionTable active...
   if (!CompactionNodeMap.empty()) {
@@ -626,6 +650,23 @@ int SlotCalculator::getSlot(const Value *V) const {
   return -1;
 }
 
+int SlotCalculator::getSlot(const Type*T) const {
+  // If there is a CompactionTable active...
+  if (!CompactionTypeMap.empty()) {
+    std::map<const Type*, unsigned>::const_iterator I =
+      CompactionTypeMap.find(T);
+    if (I != CompactionTypeMap.end())
+      return (int)I->second;
+    // Otherwise, if it's not in the compaction table, it must be in a
+    // non-compactified plane.
+  }
+
+  std::map<const Type*, unsigned>::const_iterator I = TypeMap.find(T);
+  if (I != TypeMap.end())
+    return (int)I->second;
+
+  return -1;
+}
 
 int SlotCalculator::getOrCreateSlot(const Value *V) {
   if (V->getType() == Type::VoidTy) return -1;
@@ -665,6 +706,11 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
   return insertValue(V);
 }
 
+int SlotCalculator::getOrCreateSlot(const Type* T) {
+  int SlotNo = getSlot(T);        // Check to see if it's already in!
+  if (SlotNo != -1) return SlotNo;
+  return insertType(T);
+}
 
 int SlotCalculator::insertValue(const Value *D, bool dontIgnore) {
   assert(D && "Can't insert a null value!");
@@ -674,7 +720,7 @@ int SlotCalculator::insertValue(const Value *D, bool dontIgnore) {
   // insert the value into the compaction map, not into the global map.
   if (!CompactionNodeMap.empty()) {
     if (D->getType() == Type::VoidTy) return -1;  // Do not insert void values
-    assert(!isa<Type>(D) && !isa<Constant>(D) && !isa<GlobalValue>(D) &&
+    assert(!isa<Constant>(D) && !isa<GlobalValue>(D) &&
            "Types, constants, and globals should be in global SymTab!");
 
     int Plane = getSlot(D->getType());
@@ -694,41 +740,46 @@ int SlotCalculator::insertValue(const Value *D, bool dontIgnore) {
       return -1;                  // We do need types unconditionally though
     }
 
-  // If it's a type, make sure that all subtypes of the type are included...
-  if (const Type *TheTy = dyn_cast<Type>(D)) {
-
-    // Insert the current type before any subtypes.  This is important because
-    // recursive types elements are inserted in a bottom up order.  Changing
-    // this here can break things.  For example:
-    //
-    //    global { \2 * } { { \2 }* null }
-    //
-    int ResultSlot = doInsertValue(TheTy);
-    SC_DEBUG("  Inserted type: " << TheTy->getDescription() << " slot=" <<
-             ResultSlot << "\n");
-
-    // Loop over any contained types in the definition... in post
-    // order.
-    //
-    for (po_iterator<const Type*> I = po_begin(TheTy), E = po_end(TheTy);
-         I != E; ++I) {
-      if (*I != TheTy) {
-        const Type *SubTy = *I;
-	// If we haven't seen this sub type before, add it to our type table!
-        if (getSlot(SubTy) == -1) {
-          SC_DEBUG("  Inserting subtype: " << SubTy->getDescription() << "\n");
-          SC_DEBUG(int Slot = );
-          doInsertValue(SubTy);
-          SC_DEBUG("  Inserted subtype: " << SubTy->getDescription() << 
-                   " slot=" << Slot << "\n");
-        }
-      }
-    }
-    return ResultSlot;
-  }
-
   // Okay, everything is happy, actually insert the silly value now...
   return doInsertValue(D);
+}
+
+int SlotCalculator::insertType(const Type *Ty, bool dontIgnore) {
+  assert(Ty && "Can't insert a null type!");
+  assert(getSlot(Ty) == -1 && "Type is already in the table!");
+
+  // If we are building a compaction map, and if this plane is being compacted,
+  // insert the value into the compaction map, not into the global map.
+  if (!CompactionTypeMap.empty()) {
+    getOrCreateCompactionTableSlot(Ty);
+  }
+
+  // Insert the current type before any subtypes.  This is important because
+  // recursive types elements are inserted in a bottom up order.  Changing
+  // this here can break things.  For example:
+  //
+  //    global { \2 * } { { \2 }* null }
+  //
+  int ResultSlot = doInsertType(Ty);
+  SC_DEBUG("  Inserted type: " << Ty->getDescription() << " slot=" <<
+           ResultSlot << "\n");
+
+  // Loop over any contained types in the definition... in post
+  // order.
+  for (po_iterator<const Type*> I = po_begin(Ty), E = po_end(Ty);
+       I != E; ++I) {
+    if (*I != Ty) {
+      const Type *SubTy = *I;
+      // If we haven't seen this sub type before, add it to our type table!
+      if (getSlot(SubTy) == -1) {
+        SC_DEBUG("  Inserting subtype: " << SubTy->getDescription() << "\n");
+        int Slot = doInsertType(SubTy);
+        SC_DEBUG("  Inserted subtype: " << SubTy->getDescription() << 
+                 " slot=" << Slot << "\n");
+      }
+    }
+  }
+  return ResultSlot;
 }
 
 // doInsertValue - This is a small helper function to be called only
@@ -750,7 +801,7 @@ int SlotCalculator::doInsertValue(const Value *D) {
       ValSlot = getGlobalSlot(Typ);
     if (ValSlot == -1) {                // Have we already entered this type?
       // Nope, this is the first we have seen the type, process it.
-      ValSlot = insertValue(Typ, true);
+      ValSlot = insertType(Typ, true);
       assert(ValSlot != -1 && "ProcessType returned -1 for a type?");
     }
     Ty = (unsigned)ValSlot;
@@ -778,10 +829,25 @@ int SlotCalculator::doInsertValue(const Value *D) {
   Table[Ty].push_back(D);
 
   SC_DEBUG("  Inserting value [" << Ty << "] = " << D << " slot=" << 
-	   DestSlot << " [");
+           DestSlot << " [");
   // G = Global, C = Constant, T = Type, F = Function, o = other
   SC_DEBUG((isa<GlobalVariable>(D) ? "G" : (isa<Constant>(D) ? "C" : 
-           (isa<Type>(D) ? "T" : (isa<Function>(D) ? "F" : "o")))));
+           (isa<Function>(D) ? "F" : "o"))));
   SC_DEBUG("]\n");
   return (int)DestSlot;
 }
+
+// doInsertType - This is a small helper function to be called only
+// be insertType.
+//
+int SlotCalculator::doInsertType(const Type *Ty) {
+
+  // Insert node into table and NodeMap...
+  unsigned DestSlot = TypeMap[Ty] = Types.size();
+  Types.push_back(Ty);
+
+  SC_DEBUG("  Inserting type [" << DestSlot << "] = " << Ty << "\n" );
+  return (int)DestSlot;
+}
+
+// vim: sw=2 ai

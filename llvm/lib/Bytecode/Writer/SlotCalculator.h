@@ -26,6 +26,7 @@
 namespace llvm {
 
 class Value;
+class Type;
 class Module;
 class Function;
 class SymbolTable;
@@ -34,9 +35,15 @@ class ConstantArray;
 class SlotCalculator {
   const Module *TheModule;
 
+  typedef std::vector<const Type*> TypeList;
   typedef std::vector<const Value*> TypePlane;
   std::vector<TypePlane> Table;
-  std::map<const Value*, unsigned> NodeMap;
+  TypeList Types;
+  typedef std::map<const Value*, unsigned> NodeMapType;
+  NodeMapType NodeMap;
+
+  typedef std::map<const Type*, unsigned> TypeMapType;
+  TypeMapType TypeMap;
 
   /// ConstantStrings - If we are indexing for a bytecode file, this keeps track
   /// of all of the constants strings that need to be emitted.
@@ -46,6 +53,7 @@ class SlotCalculator {
   /// and which values belong to the currently incorporated function.
   ///
   std::vector<unsigned> ModuleLevel;
+  unsigned ModuleTypeLevel;
 
   /// ModuleContainsAllFunctionConstants - This flag is set to true if all
   /// function constants are incorporated into the module constant table.  This
@@ -57,7 +65,11 @@ class SlotCalculator {
   /// instructions in a function body.  The 'getSlot()' method automatically
   /// returns these entries if applicable, or the global entries if not.
   std::vector<TypePlane> CompactionTable;
-  std::map<const Value*, unsigned> CompactionNodeMap;
+  TypeList CompactionTypes;
+  typedef std::map<const Value*, unsigned> CompactionNodeMapType;
+  CompactionNodeMapType CompactionNodeMap;
+  typedef std::map<const Type*, unsigned> CompactionTypeMapType;
+  CompactionTypeMapType CompactionTypeMap;
 
   SlotCalculator(const SlotCalculator &);  // DO NOT IMPLEMENT
   void operator=(const SlotCalculator &);  // DO NOT IMPLEMENT
@@ -70,10 +82,12 @@ public:
   /// plane.  This returns < 0 on error!
   ///
   int getSlot(const Value *V) const;
+  int getSlot(const Type* T) const;
 
   /// getGlobalSlot - Return a slot number from the global table.  This can only
   /// be used when a compaction table is active.
   unsigned getGlobalSlot(const Value *V) const;
+  unsigned getGlobalSlot(const Type *V) const;
 
   inline unsigned getNumPlanes() const {
     if (CompactionTable.empty())
@@ -81,11 +95,29 @@ public:
     else
       return CompactionTable.size();
   }
+
+  inline unsigned getNumTypes() const {
+    if (CompactionTypes.empty())
+      return Types.size();
+    else
+      return CompactionTypes.size();
+  }
+
   inline unsigned getModuleLevel(unsigned Plane) const { 
     return Plane < ModuleLevel.size() ? ModuleLevel[Plane] : 0; 
   }
 
+  /// Returns the number of types in the type list that are at module level
+  inline unsigned getModuleTypeLevel() const {
+    return ModuleTypeLevel;
+  }
+
   TypePlane &getPlane(unsigned Plane);
+  TypeList& getTypes() { 
+    if (!CompactionTypes.empty())
+      return CompactionTypes;
+    return Types;
+  }
 
   /// incorporateFunction/purgeFunction - If you'd like to deal with a function,
   /// use these two methods to get its data into the SlotCalculator!
@@ -104,21 +136,26 @@ public:
     return CompactionTable;
   }
 
+  const TypeList& getCompactionTypes() const { return CompactionTypes; }
+
 private:
   // getOrCreateSlot - Values can be crammed into here at will... if
   // they haven't been inserted already, they get inserted, otherwise
   // they are ignored.
   //
   int getOrCreateSlot(const Value *D);
+  int getOrCreateSlot(const Type* T);
 
   // insertValue - Insert a value into the value table... Return the
   // slot that it occupies, or -1 if the declaration is to be ignored
   // because of the IgnoreNamedNodes flag.
   //
   int insertValue(const Value *D, bool dontIgnore = false);
+  int insertType(const Type* T, bool dontIgnore = false );
 
   // doInsertValue - Small helper function to be called only be insertVal.
   int doInsertValue(const Value *D);
+  int doInsertType(const Type*T);
 
   // processModule - Process all of the module level function declarations and
   // types that are available.
@@ -133,6 +170,7 @@ private:
 
   void buildCompactionTable(const Function *F);
   unsigned getOrCreateCompactionTableSlot(const Value *V);
+  unsigned getOrCreateCompactionTableSlot(const Type *V);
   void pruneCompactionTable();
 };
 
