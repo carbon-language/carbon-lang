@@ -806,6 +806,9 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     case GlobalValue::WeakLinkage:      Out << "weak "; break;
     case GlobalValue::AppendingLinkage: Out << "appending "; break;
     case GlobalValue::ExternalLinkage: break;
+    case GlobalValue::GhostLinkage:
+      std::cerr << "GhostLinkage not allowed in AsmWriter!\n";
+      abort();
     }
 
   Out << (GV->isConstant() ? "constant " : "global ");
@@ -887,6 +890,9 @@ void AssemblyWriter::printFunction(const Function *F) {
     case GlobalValue::WeakLinkage:      Out << "weak "; break;
     case GlobalValue::AppendingLinkage: Out << "appending "; break;
     case GlobalValue::ExternalLinkage: break;
+    case GlobalValue::GhostLinkage:
+      std::cerr << "GhostLinkage not allowed in AsmWriter!\n";
+      abort();
     }
 
   printType(F->getReturnType()) << ' ';
