@@ -1556,7 +1556,7 @@ void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
 
   } while(!CouldMoveAll);
 
-  if (DebugPrint) {
+  if (DebugPrint && DEBUG_RA) {
     cerr << "\nAdded instructions were reordered to:\n";
     for(unsigned int i=0; i < OrdVec.size(); i++)
       cerr << *(OrdVec[i]);
