@@ -46,6 +46,9 @@ namespace {
   cl::opt<bool>
   DisableOptimizations("disable-opt",
                        cl::desc("Do not run any optimization passes"));
+
+  cl::opt<bool>
+  DisableDSE("disable-dse", cl::desc("Do not run dead store elimination"));
 }
 
 
@@ -99,11 +102,12 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createLoadValueNumberingPass());   // GVN for load instructions
   addPass(PM, createGCSEPass());                 // Remove common subexprs
   addPass(PM, createSCCPPass());                 // Constant prop with SCCP
-  addPass(PM, createSCCPPass());                 // Constant prop with SCCP
 
   // Run instcombine after redundancy elimination to exploit opportunities
   // opened up by them.
   addPass(PM, createInstructionCombiningPass());
+  if (!DisableDSE)
+    addPass(PM, createDeadStoreEliminationPass()); // Delete dead stores
   addPass(PM, createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createDeadTypeEliminationPass());  // Eliminate dead types
