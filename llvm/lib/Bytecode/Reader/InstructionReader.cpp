@@ -215,8 +215,8 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     
     std::vector<unsigned> &args = *Raw.VarArgs;
     for (unsigned i = 0; i < args.size(); i += 2)
-      I->dest_push_back(cast<Constant>(getValue(Raw.Ty, args[i])),
-                        cast<BasicBlock>(getValue(Type::LabelTy, args[i+1])));
+      I->addCase(cast<Constant>(getValue(Raw.Ty, args[i])),
+                 cast<BasicBlock>(getValue(Type::LabelTy, args[i+1])));
 
     delete Raw.VarArgs;
     return false;

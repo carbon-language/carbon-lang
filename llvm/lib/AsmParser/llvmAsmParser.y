@@ -1482,7 +1482,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     std::vector<std::pair<Constant*,BasicBlock*> >::iterator I = $8->begin(),
       E = $8->end();
     for (; I != E; ++I)
-      S->dest_push_back(I->first, I->second);
+      S->addCase(I->first, I->second);
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' ']' {
     SwitchInst *S = new SwitchInst(getVal($2, $3), 
