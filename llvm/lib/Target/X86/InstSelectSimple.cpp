@@ -174,11 +174,11 @@ namespace {
     void visitSimpleBinary(BinaryOperator &B, unsigned OpcodeClass);
     void visitAdd(BinaryOperator &B) { visitSimpleBinary(B, 0); }
     void visitSub(BinaryOperator &B) { visitSimpleBinary(B, 1); }
-    void doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator &MBBI,
+    void doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator MBBI,
                     unsigned DestReg, const Type *DestTy,
                     unsigned Op0Reg, unsigned Op1Reg);
     void doMultiplyConst(MachineBasicBlock *MBB, 
-                         MachineBasicBlock::iterator &MBBI,
+                         MachineBasicBlock::iterator MBBI,
                          unsigned DestReg, const Type *DestTy,
                          unsigned Op0Reg, unsigned Op1Val);
     void visitMul(BinaryOperator &B);
@@ -196,7 +196,7 @@ namespace {
     void visitSetCondInst(SetCondInst &I);
     unsigned EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
                             MachineBasicBlock *MBB,
-                            MachineBasicBlock::iterator &MBBI);
+                            MachineBasicBlock::iterator MBBI);
     
     // Memory Instructions
     void visitLoadInst(LoadInst &I);
@@ -231,32 +231,32 @@ namespace {
 
     /// emitCastOperation - Common code shared between visitCastInst and
     /// constant expression cast support.
-    void emitCastOperation(MachineBasicBlock *BB,MachineBasicBlock::iterator&IP,
+    void emitCastOperation(MachineBasicBlock *BB,MachineBasicBlock::iterator IP,
                            Value *Src, const Type *DestTy, unsigned TargetReg);
 
     /// emitSimpleBinaryOperation - Common code shared between visitSimpleBinary
     /// and constant expression support.
     void emitSimpleBinaryOperation(MachineBasicBlock *BB,
-                                   MachineBasicBlock::iterator &IP,
+                                   MachineBasicBlock::iterator IP,
                                    Value *Op0, Value *Op1,
                                    unsigned OperatorClass, unsigned TargetReg);
 
     void emitDivRemOperation(MachineBasicBlock *BB,
-                             MachineBasicBlock::iterator &IP,
+                             MachineBasicBlock::iterator IP,
                              unsigned Op0Reg, unsigned Op1Reg, bool isDiv,
                              const Type *Ty, unsigned TargetReg);
 
     /// emitSetCCOperation - Common code shared between visitSetCondInst and
     /// constant expression support.
     void emitSetCCOperation(MachineBasicBlock *BB,
-                            MachineBasicBlock::iterator &IP,
+                            MachineBasicBlock::iterator IP,
                             Value *Op0, Value *Op1, unsigned Opcode,
                             unsigned TargetReg);
 
     /// emitShiftOperation - Common code shared between visitShiftInst and
     /// constant expression support.
     void emitShiftOperation(MachineBasicBlock *MBB,
-                            MachineBasicBlock::iterator &IP,
+                            MachineBasicBlock::iterator IP,
                             Value *Op, Value *ShiftAmount, bool isLeftShift,
                             const Type *ResultTy, unsigned DestReg);
       
@@ -265,7 +265,7 @@ namespace {
     /// specified constant into the specified register.
     ///
     void copyConstantToRegister(MachineBasicBlock *MBB,
-                                MachineBasicBlock::iterator &MBBI,
+                                MachineBasicBlock::iterator MBBI,
                                 Constant *C, unsigned Reg);
 
     /// makeAnotherReg - This method returns the next register number we haven't
@@ -305,7 +305,7 @@ namespace {
       return getReg(V, BB, It);
     }
     unsigned getReg(Value *V, MachineBasicBlock *MBB,
-                    MachineBasicBlock::iterator &IPt) {
+                    MachineBasicBlock::iterator IPt) {
       unsigned &Reg = RegMap[V];
       if (Reg == 0) {
         Reg = makeAnotherReg(V->getType());
@@ -371,7 +371,7 @@ static inline TypeClass getClassB(const Type *Ty) {
 /// specified constant into the specified register.
 ///
 void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
-                                  MachineBasicBlock::iterator &IP,
+                                  MachineBasicBlock::iterator IP,
                                   Constant *C, unsigned R) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     unsigned Class = 0;
@@ -765,7 +765,7 @@ static const unsigned SetCCOpcodeTab[2][8] = {
 // returning the extended setcc code to use.
 unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
                               MachineBasicBlock *MBB,
-                              MachineBasicBlock::iterator &IP) {
+                              MachineBasicBlock::iterator IP) {
   // The arguments are already supposed to be of the same type.
   const Type *CompTy = Op0->getType();
   unsigned Class = getClassB(CompTy);
@@ -885,7 +885,7 @@ void ISel::visitSetCondInst(SetCondInst &I) {
 /// emitSetCCOperation - Common code shared between visitSetCondInst and
 /// constant expression support.
 void ISel::emitSetCCOperation(MachineBasicBlock *MBB,
-                              MachineBasicBlock::iterator &IP,
+                              MachineBasicBlock::iterator IP,
                               Value *Op0, Value *Op1, unsigned Opcode,
                               unsigned TargetReg) {
   unsigned OpNum = getSetCCNumber(Opcode);
@@ -1400,7 +1400,7 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
 /// and constant expression support.
 ///
 void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
-                                     MachineBasicBlock::iterator &IP,
+                                     MachineBasicBlock::iterator IP,
                                      Value *Op0, Value *Op1,
                                      unsigned OperatorClass, unsigned DestReg) {
   unsigned Class = getClassB(Op0->getType());
@@ -1514,7 +1514,7 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
 /// registers op0Reg and op1Reg, and put the result in DestReg.  The type of the
 /// result should be given as DestTy.
 ///
-void ISel::doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator &MBBI,
+void ISel::doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator MBBI,
                       unsigned DestReg, const Type *DestTy,
                       unsigned op0Reg, unsigned op1Reg) {
   unsigned Class = getClass(DestTy);
@@ -1552,7 +1552,7 @@ static unsigned ExactLog2(unsigned Val) {
 }
 
 void ISel::doMultiplyConst(MachineBasicBlock *MBB,
-                           MachineBasicBlock::iterator &IP,
+                           MachineBasicBlock::iterator IP,
                            unsigned DestReg, const Type *DestTy,
                            unsigned op0Reg, unsigned ConstRHS) {
   unsigned Class = getClass(DestTy);
@@ -1658,7 +1658,7 @@ void ISel::visitDivRem(BinaryOperator &I) {
 }
 
 void ISel::emitDivRemOperation(MachineBasicBlock *BB,
-                               MachineBasicBlock::iterator &IP,
+                               MachineBasicBlock::iterator IP,
                                unsigned Op0Reg, unsigned Op1Reg, bool isDiv,
                                const Type *Ty, unsigned ResultReg) {
   unsigned Class = getClass(Ty);
@@ -1748,7 +1748,7 @@ void ISel::visitShiftInst(ShiftInst &I) {
 /// emitShiftOperation - Common code shared between visitShiftInst and
 /// constant expression support.
 void ISel::emitShiftOperation(MachineBasicBlock *MBB,
-                              MachineBasicBlock::iterator &IP,
+                              MachineBasicBlock::iterator IP,
                               Value *Op, Value *ShiftAmount, bool isLeftShift,
                               const Type *ResultTy, unsigned DestReg) {
   unsigned SrcReg = getReg (Op, MBB, IP);
@@ -1951,7 +1951,7 @@ void ISel::visitCastInst(CastInst &CI) {
 /// emitCastOperation - Common code shared between visitCastInst and
 /// constant expression cast support.
 void ISel::emitCastOperation(MachineBasicBlock *BB,
-                             MachineBasicBlock::iterator &IP,
+                             MachineBasicBlock::iterator IP,
                              Value *Src, const Type *DestTy,
                              unsigned DestReg) {
   unsigned SrcReg = getReg(Src, BB, IP);
@@ -2070,6 +2070,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     //
     const Type *PromoteType = 0;
     unsigned PromoteOpcode;
+    unsigned RealDestReg = DestReg;
     switch (SrcTy->getPrimitiveID()) {
     case Type::BoolTyID:
     case Type::SByteTyID:
@@ -2097,23 +2098,24 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       break;
     }
     case Type::ULongTyID:
-      assert(0 && "FIXME: not implemented: cast ulong X to fp type!");
+      // Don't fild into the read destination.
+      DestReg = makeAnotherReg(Type::DoubleTy);
+      break;
     default:  // No promotion needed...
       break;
     }
     
     if (PromoteType) {
       unsigned TmpReg = makeAnotherReg(PromoteType);
-      BMI(BB, IP, SrcTy->isSigned() ? X86::MOVSXr16r8 : X86::MOVZXr16r8,
-          1, TmpReg).addReg(SrcReg);
+      unsigned Opc = SrcTy->isSigned() ? X86::MOVSXr16r8 : X86::MOVZXr16r8;
+      BMI(BB, IP, Opc, 1, TmpReg).addReg(SrcReg);
       SrcTy = PromoteType;
       SrcClass = getClass(PromoteType);
       SrcReg = TmpReg;
     }
 
     // Spill the integer to memory and reload it from there...
-    int FrameIdx =
-      F->getFrameInfo()->CreateStackObject(SrcTy, TM.getTargetData());
+    int FrameIdx = F->getFrameInfo()->CreateStackObject(SrcTy, TM.getTargetData());
 
     if (SrcClass == cLong) {
       addFrameReference(BMI(BB, IP, X86::MOVmr32, 5), FrameIdx).addReg(SrcReg);
@@ -2127,6 +2129,34 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     static const unsigned Op2[] =
       { 0/*byte*/, X86::FILDr16, X86::FILDr32, 0/*FP*/, X86::FILDr64 };
     addFrameReference(BMI(BB, IP, Op2[SrcClass], 5, DestReg), FrameIdx);
+
+    // We need special handling for unsigned 64-bit integer sources.  If the
+    // input number has the "sign bit" set, then we loaded it incorrectly as a
+    // negative 64-bit number.  In this case, add an offset value.
+    if (SrcTy == Type::ULongTy) {
+      // Emit a test instruction to see if the dynamic input value was signed.
+      BMI(BB, IP, X86::TESTrr32, 2).addReg(SrcReg+1).addReg(SrcReg+1);
+
+      // If the sign bit is set, get a pointer to an offset, otherwise get a pointer to a zero.
+      MachineConstantPool *CP = F->getConstantPool();
+      unsigned Zero = makeAnotherReg(Type::IntTy);
+      addConstantPoolReference(BMI(BB, IP, X86::LEAr32, 5, Zero), 
+                               CP->getConstantPoolIndex(Constant::getNullValue(Type::UIntTy)));
+      unsigned Offset = makeAnotherReg(Type::IntTy);
+      addConstantPoolReference(BMI(BB, IP, X86::LEAr32, 5, Offset),
+                               CP->getConstantPoolIndex(ConstantUInt::get(Type::UIntTy,
+                                                                          0x5f800000)));
+      unsigned Addr = makeAnotherReg(Type::IntTy);
+      BMI(BB, IP, X86::CMOVSrr32, 2, Addr).addReg(Zero).addReg(Offset);
+
+      // Load the constant for an add.  FIXME: this could make an 'fadd' that
+      // reads directly from memory, but we don't support these yet.
+      unsigned ConstReg = makeAnotherReg(Type::DoubleTy);
+      addDirectMem(BMI(BB, IP, X86::FLDr32, 4, ConstReg), Addr);
+
+      BMI(BB, IP, X86::FpADD, 2, RealDestReg).addReg(ConstReg).addReg(DestReg);
+    }
+
     return;
   }
 
