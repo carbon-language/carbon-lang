@@ -218,7 +218,9 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
   case ISD::SETCC:
     SetCCs.erase(std::make_pair(std::make_pair(N->getOperand(0),
                                                N->getOperand(1)),
-                                cast<SetCCSDNode>(N)->getCondition()));
+                                std::make_pair(
+                                     cast<SetCCSDNode>(N)->getCondition(),
+                                     N->getValueType(0))));
     break;
   case ISD::TRUNCSTORE:
   case ISD::SIGN_EXTEND_INREG:
@@ -463,7 +465,8 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
     }
   }
 
-  SetCCSDNode *&N = SetCCs[std::make_pair(std::make_pair(N1, N2), Cond)];
+  SetCCSDNode *&N = SetCCs[std::make_pair(std::make_pair(N1, N2),
+                                          std::make_pair(Cond, VT))];
   if (N) return SDOperand(N, 0);
   N = new SetCCSDNode(Cond, N1, N2);
   N->setValueTypes(VT);
