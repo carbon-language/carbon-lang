@@ -103,6 +103,15 @@ void TDDataStructures::calculateGraph(Function &F) {
   // Get the current functions graph...
   DSGraph &Graph = getOrCreateDSGraph(F);
 
+  // Recompute the Incomplete markers and eliminate unreachable nodes.
+  Graph.maskIncompleteMarkers();
+  // FIXME: Need to check if all callers have been found, or rather if a
+  // funcpointer escapes!
+  unsigned Flags = F.hasInternalLinkage() ?
+    DSGraph::IgnoreFormalArgs : DSGraph::MarkFormalArgs;
+  Graph.markIncompleteNodes(Flags | DSGraph::IgnoreGlobals);
+  Graph.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
+
   const std::vector<DSCallSite> &CallSites = Graph.getFunctionCalls();
   if (CallSites.empty()) {
     DEBUG(std::cerr << "  [TD] No callees for: " << F.getName() << "\n");
@@ -153,7 +162,8 @@ void TDDataStructures::calculateGraph(Function &F) {
         hash_map<const DSNode*, DSNodeHandle> OldNodeMap;
         CG.cloneInto(Graph, OldValMap, OldNodeMap,
                      DSGraph::StripModRefBits |
-                     DSGraph::KeepAllocaBit | DSGraph::DontCloneCallNodes);
+                     DSGraph::KeepAllocaBit | DSGraph::DontCloneCallNodes |
+                     DSGraph::DontCloneAuxCallNodes);
         OldValMap.clear();  // We don't care about the ValMap
 
         // Loop over all of the invocation sites of the callee, resolving
@@ -194,8 +204,9 @@ void TDDataStructures::calculateGraph(Function &F) {
         OldNodeMap.clear();
 
         // Recompute the Incomplete markers and eliminate unreachable nodes.
+        CG.removeTriviallyDeadNodes();
         CG.maskIncompleteMarkers();
-        CG.markIncompleteNodes(DSGraph::MarkFormalArgs);
+        CG.markIncompleteNodes(DSGraph::MarkFormalArgs |DSGraph::IgnoreGlobals);
         CG.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
       }
 
@@ -212,14 +223,5 @@ void TDDataStructures::calculateGraph(Function &F) {
         calculateGraph(*I->first);
       }
   }
-
-  // Recompute the Incomplete markers and eliminate unreachable nodes.
-  Graph.maskIncompleteMarkers();
-  // FIXME: Need to check if all callers have been found, or rather if a
-  // funcpointer escapes!
-  unsigned Flags = F.hasInternalLinkage() ?
-    DSGraph::IgnoreFormalArgs : DSGraph::MarkFormalArgs;
-  Graph.markIncompleteNodes(Flags | DSGraph::IgnoreGlobals);
-  Graph.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
 }
 
