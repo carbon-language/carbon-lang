@@ -90,6 +90,7 @@ namespace {
     void visitCallInst(CallInst &I);
     void visitReturnInst(ReturnInst &I);
     void visitBranchInst(BranchInst &I);
+    void visitUnreachableInst(UnreachableInst &I) {}
     void visitCastInst(CastInst &I);
     void visitLoadInst(LoadInst &I);
     void visitStoreInst(StoreInst &I);
@@ -230,6 +231,11 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       std::cerr << "Copying this constant expr not yet handled: " << *CE;
       abort();
     }
+  } else if (isa<UndefValue>(C)) {
+    BuildMI(*MBB, IP, V8::IMPLICIT_DEF, 0, R);
+    if (getClassB (C->getType ()) == cLong)
+      BuildMI(*MBB, IP, V8::IMPLICIT_DEF, 0, R+1);
+    return;
   }
 
   if (C->getType()->isIntegral ()) {
