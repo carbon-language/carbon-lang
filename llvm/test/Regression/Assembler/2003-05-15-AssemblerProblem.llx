@@ -1,0 +1,12 @@
+; RUN: as < %s -o /dev/null -f
+
+void %test() {
+        call void (...)* cast (void (short*, int)* %AddString to void (...)*)(short* null, int 0)
+        ret void
+}
+
+void %AddString(short* %tmp.124, int %tmp.127) {
+	call void (...)* cast (void (short*, int)* %AddString to void (...)*)(short* %tmp.124, int %tmp.127)
+	ret void
+}
+
