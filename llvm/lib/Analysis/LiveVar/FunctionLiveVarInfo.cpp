@@ -16,6 +16,13 @@
 
 AnalysisID MethodLiveVarInfo::ID(AnalysisID::create<MethodLiveVarInfo>());
 
+cl::Enum<LiveVarDebugLevel_t> DEBUG_LV("dlivevar", cl::NoFlags,
+  "enable live-variable debugging information",
+  clEnumValN(LV_DEBUG_None   , "n", "disable debug output"),
+  clEnumValN(LV_DEBUG_Normal , "y", "enable debug output"),
+  clEnumValN(LV_DEBUG_Instr,   "i", "print live-var sets before/after every machine instrn"),
+  clEnumValN(LV_DEBUG_Verbose, "v", "print def, use sets for every instrn also"), 0);
+
 //-----------------------------------------------------------------------------
 // Accessor Functions
 //-----------------------------------------------------------------------------
@@ -42,7 +49,8 @@ bool MethodLiveVarInfo::runOnMethod(Method *Meth) {
   // create and initialize all the BBLiveVars of the CFG
   constructBBs(Meth);
 
-  while (doSingleBackwardPass(Meth))
+  unsigned int iter=0;
+  while (doSingleBackwardPass(Meth, iter++))
     ; // Iterate until we are done.
   
   if (DEBUG_LV) std::cerr << "Live Variable Analysis complete!\n";
@@ -86,8 +94,8 @@ void MethodLiveVarInfo::constructBBs(const Method *M) {
 // do one backward pass over the CFG (for iterative analysis)
 //-----------------------------------------------------------------------------
 
-bool MethodLiveVarInfo::doSingleBackwardPass(const Method *M) {
-  if (DEBUG_LV) std::cerr << "\n After Backward Pass ...\n";
+bool MethodLiveVarInfo::doSingleBackwardPass(const Method *M, unsigned int iter) {
+  if (DEBUG_LV) std::cerr << "\n After Backward Pass " << iter << "...\n";
 
   bool NeedAnotherIteration = false;
   for (po_iterator<const Method*> BBI = po_begin(M); BBI != po_end(M) ; ++BBI) {
@@ -96,12 +104,14 @@ bool MethodLiveVarInfo::doSingleBackwardPass(const Method *M) {
 
     if (DEBUG_LV) std::cerr << " For BB " << (*BBI)->getName() << ":\n";
 
+    // InSets are initialized to "GenSet". Recompute only if OutSet changed.
     if(LVBB->isOutSetChanged()) 
       LVBB->applyTransferFunc();        // apply the Tran Func to calc InSet
-
-    if (LVBB->isInSetChanged())        // to calc Outsets of preds
-      NeedAnotherIteration |= LVBB->applyFlowFunc(); 
-
+    
+    // OutSets are initialized to EMPTY.  Recompute on first iter or if InSet changed.
+    if (iter == 0 || LVBB->isInSetChanged())        // to calc Outsets of preds
+      NeedAnotherIteration = LVBB->applyFlowFunc() || NeedAnotherIteration; 
+    
     if (DEBUG_LV) LVBB->printInOutSets();
   }
 
@@ -187,7 +197,7 @@ static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
   for (MachineInstr::const_val_op_iterator OpI = MInst->begin(),
          OpE = MInst->end(); OpI != OpE; ++OpI) {
     if (OpI.isDef())           // kill only if this operand is a def
-      LVS.insert(*OpI);        // this definition kills any uses
+      LVS.erase(*OpI);         // this definition kills any uses
   }
 
   // do for implicit operands as well
@@ -220,6 +230,10 @@ static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
 void MethodLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
   const MachineCodeForBasicBlock &MIVec = BB->getMachineInstrVec();
 
+  if (DEBUG_LV >= LV_DEBUG_Instr) {
+    std::cerr << endl << "======For BB " << BB->getName() << ": Live var sets for instructions======" << endl;
+  }
+  
   ValueSet *CurSet = new ValueSet();
   const ValueSet *SetAI = &getOutSetOfBB(BB);  // init SetAI with OutSet
   set_union(*CurSet, *SetAI);                  // CurSet now contains OutSet
@@ -237,6 +251,12 @@ void MethodLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
     set_union(*NewSet, *CurSet);               // copy the set after T/F to it
  
     MInst2LVSetBI[MI] = NewSet;                // record in Before Inst map
+
+    if (DEBUG_LV >= LV_DEBUG_Instr) {
+      std::cerr << endl << "Live var sets before/after instruction " << *MI;
+      cerr << "  Before: ";   printSet(*NewSet);  cerr << endl;
+      cerr << "  After : ";   printSet(*SetAI);   cerr << endl;
+    }
 
     // SetAI will be used in the next iteration
     SetAI = NewSet;                 
