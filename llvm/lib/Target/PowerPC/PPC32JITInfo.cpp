@@ -62,6 +62,7 @@ static void CompilationCallback() {
   "stfd f7, 48(%1)\n" "stfd f8, 56(%1)\n" "stfd f9, 64(%1)\n" 
   "stfd f10, 72(%1)\n" "stfd f11, 80(%1)\n" "stfd f12, 88(%1)\n"
   "stfd f13, 96(%1)\n" :: "b" (IntRegs), "b" (FPRegs) );
+  /// FIXME: Need to safe and restore the rest of the FP regs!
 #endif
 
   unsigned *CameFromStub = (unsigned*)__builtin_return_address(0);
@@ -104,24 +105,27 @@ static void CompilationCallback() {
 
   // Put the address of the stub and the LR value that originally came into the
   // stub in a place that is easy to get on the stack after we restore all regs.
-  CCStackPtr[2] = (intptr_t)CameFromStub;
+  CCStackPtr[2] = (intptr_t)Target;
   CCStackPtr[1] = (intptr_t)CameFromOrig;
 
   // Note, this is not a standard epilog!
 #if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
+  register unsigned *IRR asm ("r2") = IntRegs;
+  register double   *FRR asm ("r3") = FPRegs;
   __asm__ __volatile__ (
   "lfd f1, 0(%0)\n"  "lfd f2, 8(%0)\n"  "lfd f3, 16(%0)\n" 
   "lfd f4, 24(%0)\n" "lfd f5, 32(%0)\n" "lfd f6, 40(%0)\n" 
   "lfd f7, 48(%0)\n" "lfd f8, 56(%0)\n" "lfd f9, 64(%0)\n" 
   "lfd f10, 72(%0)\n" "lfd f11, 80(%0)\n" "lfd f12, 88(%0)\n"
-  "lfd f13, 96(%0)\n" "lmw r3, 0(%1)\n"
+  "lfd f13, 96(%0)\n"
+  "lmw r3, 0(%1)\n"  // Load all integer regs
   "lwz r0,4(r1)\n"   // Get CameFromOrig (LR into stub)
   "mtlr r0\n"        // Put it in the LR register
-  "lwz r0,8(r1)\n"   // Get "CameFromStub"
+  "lwz r0,8(r1)\n"   // Get target function pointer
   "mtctr r0\n"       // Put it into the CTR register
   "lwz r1,0(r1)\n"   // Pop two frames off
   "bctr\n" ::        // Return to stub!
-  "b" (FPRegs), "b" (IntRegs)); 
+  "b" (FRR), "b" (IRR)); 
 #endif
 }
 
