@@ -8,11 +8,11 @@
 #ifndef LLVM_CODEGEN_INSTR_SCHEDULING_H
 #define LLVM_CODEGEN_INSTR_SCHEDULING_H
 
-class Method;
+class MethodPass;
 class TargetMachine;
 
 //---------------------------------------------------------------------------
-// Function: ScheduleInstructionsWithSSA
+// Function: createScheduleInstructionsWithSSAPass(..)
 // 
 // Purpose:
 //   Entry point for instruction scheduling on SSA form.
@@ -21,7 +21,7 @@ class TargetMachine;
 //   are still in SSA form.
 //---------------------------------------------------------------------------
 
-bool ScheduleInstructionsWithSSA(Method *M, const TargetMachine &Target);
+MethodPass *createInstructionSchedulingWithSSAPass(const TargetMachine &Target);
 
 
 //---------------------------------------------------------------------------
@@ -34,6 +34,6 @@ bool ScheduleInstructionsWithSSA(Method *M, const TargetMachine &Target);
 //---------------------------------------------------------------------------
 
 // Not implemented yet.
-bool ScheduleInstructions(Method *M, const TargetMachine &Target);
+//bool ScheduleInstructions(Method *M, const TargetMachine &Target);
 
 #endif
