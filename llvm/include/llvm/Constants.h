@@ -304,9 +304,12 @@ public:
     return reinterpret_cast<const ArrayType*>(Value::getType());
   }
 
-  /// getAsString - If the sub-element type of this array is either sbyte or
-  /// ubyte, then this method converts the array to an std::string and returns
-  /// it.  Otherwise, it asserts out.
+  /// isString - This method returns true if the array is an array of sbyte or
+  /// ubyte, and if the elements of the array are all ConstantInt's.
+  bool isString() const;
+
+  /// getAsString - If this array is isString(), then this method converts the
+  /// array to an std::string and returns it.  Otherwise, it asserts out.
   ///
   std::string getAsString() const;
 
@@ -319,9 +322,13 @@ public:
   virtual bool isNullValue() const {
     // FIXME: This should be made to be MUCH faster.  Just check against well
     // known null value!
-    for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-      if (!cast<Constant>(getOperand(i))->isNullValue())
-        return false; 
+    if (getNumOperands()) {
+      const Constant *First = cast<Constant>(getOperand(0));
+      if (!First->isNullValue()) return false;
+      for (unsigned i = 1, e = getNumOperands(); i != e; ++i)
+        if (cast<Constant>(getOperand(i)) != First)
+          return false; 
+    }
     return true;
   }
 
