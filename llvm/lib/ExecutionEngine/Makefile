@@ -2,6 +2,9 @@ LEVEL = ../..
 TOOLNAME = lli
 PARALLEL_DIRS = Interpreter JIT
 
+# Get the config name...
+include $(LEVEL)/Makefile.config
+
 # Generic JIT libraries
 JITLIBS   = lli-jit codegen
 ARCHLIBS  =
@@ -9,6 +12,8 @@ ARCHLIBS  =
 # What the X86 JIT requires
 JITLIBS  += x86
 # X86 doesn't require any ARCHLIBS
+
+
 
 # What the Sparc JIT requires
 ifeq ($(ARCH),Sparc)
