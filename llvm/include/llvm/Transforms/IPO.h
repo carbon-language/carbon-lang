@@ -147,6 +147,11 @@ ModulePass *createIPSCCPPass();
 
 //===----------------------------------------------------------------------===//
 //
+/// createLoopExtractorPass - This pass extracts all natural loops from the
+/// program into a function if it can.
+///
+ModulePass *createLoopExtractorPass();
+
 /// createSingleLoopExtractorPass - This pass extracts one natural loop from the
 /// program into a function if it can.  This is used by bugpoint.
 ///

@@ -102,6 +102,7 @@ namespace {
   RegisterOpt<PRE> Z("pre", "Partial Redundancy Elimination");
 }
 
+FunctionPass* llvm::createPREPass() { return new PRE(); }
 
 bool PRE::runOnFunction(Function &F) {
   VN  = &getAnalysis<ValueNumbering>();

@@ -31,6 +31,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Transforms/Scalar.h"
 #include <set>
 using namespace llvm;
 
@@ -70,6 +71,8 @@ namespace {
   RegisterOpt<BlockPlacement> X("block-placement",
                                 "Profile Guided Basic Block Placement");
 }
+
+FunctionPass *llvm::createBlockPlacementPass() { return new BlockPlacement(); }
 
 bool BlockPlacement::runOnFunction(Function &F) {
   PI = &getAnalysis<ProfileInfo>();

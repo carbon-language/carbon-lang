@@ -42,6 +42,7 @@ namespace {
 
       (void) llvm::createAggressiveDCEPass();
       (void) llvm::createArgumentPromotionPass();
+      (void) llvm::createBlockPlacementPass();
       (void) llvm::createBlockProfilerPass();
       (void) llvm::createBreakCriticalEdgesPass();
       (void) llvm::createCFGSimplificationPass();
@@ -68,6 +69,7 @@ namespace {
       (void) llvm::createInstructionCombiningPass();
       (void) llvm::createInternalizePass();
       (void) llvm::createLICMPass();
+      (void) llvm::createLoopExtractorPass();
       (void) llvm::createLoopInstrumentationPass();
       (void) llvm::createLoopSimplifyPass();
       (void) llvm::createLoopStrengthReducePass();
@@ -78,8 +80,10 @@ namespace {
       (void) llvm::createLowerGCPass();
       (void) llvm::createLowerInvokePass();
       (void) llvm::createLowerPackedPass();
+      (void) llvm::createLowerSelectPass();
       (void) llvm::createLowerSetJmpPass();
       (void) llvm::createLowerSwitchPass();
+      (void) llvm::createPREPass();
       (void) llvm::createProfilePathsPass();
       (void) llvm::createPromoteMemoryToRegister();
       (void) llvm::createPruneEHPass();
@@ -89,11 +93,13 @@ namespace {
       (void) llvm::createSCCPPass();
       (void) llvm::createScalarReplAggregatesPass();
       (void) llvm::createSingleLoopExtractorPass();
+      (void) llvm::createStripSymbolsPass();
       (void) llvm::createTailCallEliminationPass();
       (void) llvm::createTailDuplicationPass();
       (void) llvm::createTraceBasicBlockPass();
       (void) llvm::createTraceValuesPassForBasicBlocks();
       (void) llvm::createTraceValuesPassForFunction();
+      (void) llvm::createUnifyFunctionExitNodesPass();
     }
   } X;
 };

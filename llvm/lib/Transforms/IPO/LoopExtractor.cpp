@@ -58,6 +58,11 @@ namespace {
   Y("loop-extract-single", "Extract at most one loop into a new function");
 } // End anonymous namespace 
 
+// createLoopExtractorPass - This pass extracts all natural loops from the
+// program into a function if it can.
+//
+ModulePass *llvm::createLoopExtractorPass() { return new LoopExtractor(); }
+
 bool LoopExtractor::runOnFunction(Function &F) {
   LoopInfo &LI = getAnalysis<LoopInfo>();
 
