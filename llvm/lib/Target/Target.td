@@ -188,6 +188,14 @@ class AsmWriter {
   // InstFormatName - AsmWriters can specify the name of the format string to
   // print instructions with.
   string InstFormatName = "AsmString";
+
+  // Variant - AsmWriters can be of multiple different variants.  Variants are
+  // used to support targets that need to emit assembly code in ways that are
+  // mostly the same for different targets, but have minor differences in
+  // syntax.  If the asmstring contains {|} characters in them, this integer
+  // will specify which alternative to use.  For example "{x|y|z}" with Variant
+  // == 1, will expand to "y".
+  int Variant = 0;
 }
 def DefaultAsmWriter : AsmWriter;
 
@@ -207,8 +215,8 @@ class Target {
   // InstructionSet - Instruction set description for this target.
   InstrInfo InstructionSet;
 
-  // AssemblyWriter - The AsmWriter instance to use for this target.
-  AsmWriter AssemblyWriter = DefaultAsmWriter;
+  // AssemblyWriters - The AsmWriter instances available for this target.
+  list<AsmWriter> AssemblyWriters = [DefaultAsmWriter];
 }
 
 
