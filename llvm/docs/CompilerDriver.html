@@ -138,9 +138,9 @@
     llvmc -O2 x.c y.c z.c -o xyz</code>
   <p>must produce <i>exactly</i> the same results as:</p>
   <pre><tt>
-    llvmc -O2 x.c
-    llvmc -O2 y.c
-    llvmc -O2 z.c
+    llvmc -O2 x.c -o x.o
+    llvmc -O2 y.c -o y.o
+    llvmc -O2 z.c -o z.o
     llvmc -O2 x.o y.o z.o -o xyz</tt></pre>
   <p>To accomplish this, <tt>llvmc</tt> uses a very simple goal oriented
   procedure to do its work. The overall goal is to produce a functioning
@@ -446,6 +446,16 @@ optimization.</p>
         <th>Description</th>
         <th>Default</th>
       </tr>
+      <tr><td colspan="4"><h4>LLVMC ITEMS</h4></td></tr>
+      <tr>
+        <td><b>version</b></td>
+        <td>string</td>
+        <td class="td_left">Provides the version string for the contents of this
+          configuration file. What is accepted as a legal configuration file
+          will change over time and this item tells <tt>llvmc</tt> which version
+          should be expected.</td>
+        <td><i>b</i></td>
+      </tr>
       <tr><td colspan="4"><h4>LANG ITEMS</h4></td></tr>
       <tr>
         <td><b>lang.name</b></td>
@@ -520,7 +530,7 @@ optimization.</p>
       </tr>
       <tr>
         <td><b>translator.output</b></td>
-        <td><tt>native</tt>, <tt>bytecode</tt> or <tt>assembly</tt></td>
+        <td><tt>bytecode</tt> or <tt>assembly</tt></td>
         <td class="td_left">This item specifies the kind of output the language's 
           translator generates.</td>
         <td><tt>bytecode</tt></td>
@@ -531,24 +541,6 @@ optimization.</p>
         <td class="td_left">Indicates that the translator also preprocesses. If
           this is true, then <tt>llvmc</tt> will skip the pre-processing phase
           whenever the final phase is not pre-processing.</td>
-        <td><tt>false</tt></td>
-      </tr>
-      <tr>
-        <td><b>translator.optimizes</b></td>
-        <td>boolean</td>
-        <td class="td_left">Indicates that the translator also optimizes. If
-          this is true, then <tt>llvmc</tt> will skip the optimization phase
-          whenever the final phase is optimization or later.</td>
-        <td><tt>false</tt></td>
-      </tr>
-      <tr>
-        <td><b>translator.groks_dash_o</b></td>
-        <td>boolean</td>
-        <td class="td_left">Indicates that the translator understands the
-          <i>intent</i> of the various <tt>-O</tt><i>n</i> options to
-          <tt>llvmc</tt>. This will cause the <tt>-O</tt><i>n</i> option to be
-          given to the translator instead of the equivalent options provided by
-          <tt>lang.opt</tt><i>n</i>.</td>
         <td><tt>false</tt></td>
       </tr>
       <tr><td colspan="4"><h4>OPTIMIZER ITEMS</h4></td></tr>
@@ -562,9 +554,9 @@ optimization.</p>
       </tr>
       <tr>
         <td><b>optimizer.output</b></td>
-        <td><tt>native</tt>, <tt>bytecode</tt> or <tt>assembly</tt></td>
+        <td><tt>bytecode</tt> or <tt>assembly</tt></td>
         <td class="td_left">This item specifies the kind of output the language's 
-          optimizer generates.</td>
+          optimizer generates. Valid values are "assembly" and "bytecode"<td>
         <td><tt>bytecode</tt></td>
       </tr>
       <tr>
@@ -583,16 +575,6 @@ optimization.</p>
           whenever the final phase is optimization or later.</td>
         <td><tt>false</tt></td>
       </tr>
-      <tr>
-        <td><b>optimizer.groks_dash_o</b></td>
-        <td>boolean</td>
-        <td class="td_left">Indicates that the translator understands the
-          <i>intent</i> of the various <tt>-O</tt><i>n</i> options to
-          <tt>llvmc</tt>. This will cause the <tt>-O</tt><i>n</i> option to be
-          given to the translator instead of the equivalent options provided by
-          <tt>lang.opt</tt><i>n</i>.</td>
-        <td><tt>false</tt></td>
-      </tr>
       <tr><td colspan="4"><h4>ASSEMBLER ITEMS</h4></td></tr>
       <tr>
         <td><b>assembler.command</b></td>
@@ -601,36 +583,6 @@ optimization.</p>
           to run the assembler. Valid substitutions are <tt>%in%</tt> for the 
           input file and <tt>%out%</tt> for the output file.</td>
         <td>&lt;blank&gt;</td>
-      </tr>
-      <tr><td colspan="4"><h4>LINKER ITEMS</h4></td></tr>
-      <tr>
-        <td><b>linker.libs</b></td>
-        <td>library names</td>
-        <td class="td_left">This provides the list of runtime libraries that the
-          source language <i>could</i> link with. In general, the libraries
-          needed will be encoded into the LLVM Assembly or bytecode file.
-          However, this list tells <tt>llvmc</tt> the names of the ones that
-          apply to this source language. The names provided here should be 
-          unadorned with no suffix and no "lib" prefix.
-        </td>
-        <td>&lt;blank&gt;</td>
-      </tr>
-      <tr>
-        <td><b>linker.lib_paths</b></td>
-        <td>Fully qualifed local path names</td>
-        <td class="td_left">This item provides a list of potential directories
-          in which the source language's runtime libraries might be located. If
-          a given object file compiled with this language's translator is linked
-          then those libraries will be given as <tt>-L</tt> options to the
-          linker.</td>
-        <td><tt>&lt;blank&gt;</tt></td>
-      </tr>
-      <tr>
-        <td><b>linker.output</b></td>
-        <td><tt>native</tt>, <tt>bytecode</tt> or <tt>assembly</tt></td>
-        <td class="td_left">This item specifies the kind of output the language's 
-          translator generates.</td>
-        <td><tt>bytecode</tt></td>
       </tr>
     </tbody>
   </table>
@@ -661,6 +613,13 @@ optimization.</p>
           then you are explicitly disallowing the <tt>-T</tt> option for your 
           tool.
         </td>
+      <tr>
+        <td><tt>%force%</tt></td>
+        <td class="td_left">Replaced with the <tt>-f</tt> option if it was
+          specified on the <tt>llvmc</tt> command line. This is intended to tell
+          the compiler tool to force the overwrite of output files. 
+        </td>
+      </tr>
       <tr>
         <td><tt>%in%</tt></td>
         <td class="td_left">Replaced with the full path of the input file. You
@@ -753,7 +712,7 @@ optimization.</p>
   # To compile stacker source, we just run the stacker
   # compiler with a default stack size of 2048 entries.
   translator.command=stkrc -s 2048 %in% -o %out% %time% \
-    %stats% %args%
+    %stats% %force% %args%
 
   # stkrc doesn't preprocess but we set this to true so
   # that we don't run the cp command by default.
@@ -762,11 +721,8 @@ optimization.</p>
   # The translator is required to run.
   translator.required=true
 
-  # stkrc doesn't do any optimization, it just translates
-  translator.optimizes=no
-
   # stkrc doesn't handle the -On options
-  translator.groks_dash_O=no
+  translator.output=bytecode
 
 ##########################################################
 # Optimizer definitions
@@ -774,10 +730,9 @@ optimization.</p>
   
   # For optimization, we use the LLVM "opt" program
   optimizer.command=opt %in% -o %out% %opt% %time% %stats% \
-    %args%
+    %force% %args%
 
-  # opt doesn't (yet) grok -On
-  optimizer.groks_dash_O=no
+  optimizer.required = true
 
   # opt doesn't translate
   optimizer.translates = no
@@ -785,17 +740,13 @@ optimization.</p>
   # opt doesn't preprocess
   optimizer.preprocesses=no
 
+  # opt produces bytecode
+  optimizer.output = bc
+
 ##########################################################
 # Assembler definitions
 ##########################################################
-  assembler.command=llc %in% -o %out% %target% \
-    "-regalloc=linearscan" %time% %stats%
-
-##########################################################
-# Linker definitions
-##########################################################
-  linker.libs=stkr_runtime
-  linker.paths=
+  assembler.command=llc %in% -o %out% %target% %time% %stats%
 </tt></pre>
   
 
