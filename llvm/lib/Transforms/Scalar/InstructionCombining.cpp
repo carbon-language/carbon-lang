@@ -1766,9 +1766,9 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       case Instruction::Cast: {       // (setcc (cast X to larger), CI)
         const Type *SrcTy = LHSI->getOperand(0)->getType();
         if (SrcTy->isIntegral() && LHSI->getType()->isIntegral()) {
-          unsigned SrcBits = SrcTy->getPrimitiveSize();
+          unsigned SrcBits = SrcTy->getPrimitiveSize()*8;
           if (SrcTy == Type::BoolTy) SrcBits = 1;
-          unsigned DestBits = LHSI->getType()->getPrimitiveSize();
+          unsigned DestBits = LHSI->getType()->getPrimitiveSize()*8;
           if (LHSI->getType() == Type::BoolTy) DestBits = 1;
           if (SrcBits < DestBits) {
             // Check to see if the comparison is always true or false.
