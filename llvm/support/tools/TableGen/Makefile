@@ -9,14 +9,13 @@ clean::
 	-rm -f FileParser.output
 
 
-dump::
+dump:: $(TOOLEXENAME_G)
 	$(TOOLEXENAME_G) < X86.td
 
-parse:
+parse: $(TOOLEXENAME_G)
 	$(TOOLEXENAME_G) < X86.td -parse
 
-test::
-
+test:: $(TOOLEXENAME_G)
 	@echo "enum {"
 	@$(TOOLEXENAME_G) < X86.td -class=Register
 	@echo 
