@@ -27,20 +27,46 @@ class FunctionPass;
 class Module;
 class Function;
 
-// createVerifierPass - Check a module or function for validity.  If errors are
-// detected, error messages corresponding to the problem are printed to stderr.
-//
-FunctionPass *createVerifierPass();
+/// @brief An enumeration to specify the action to be taken if errors found.
+/// 
+/// This enumeration is used in the functions below to indicate what should
+/// happen if the verifier finds errors. Each of the functions that uses
+/// this enumeration as an argument provides a default value for it. The
+/// actions are listed below.
+enum VerifierFailureAction { 
+  AbortProcessAction,   ///< verifyModule will print to stderr and abort()
+  ThrowExceptionAction, ///< verifyModule will throw errors as std::string
+  PrintMessageAction,   ///< verifyModule will print to stderr and return true
+  ReturnStatusAction 	///< verifyModule will just return true
+};
 
-// verifyModule - Check a module for errors, printing messages on stderr.
-// Return true if the module is corrupt.  This should only be used for
-// debugging, because it plays games with PassManagers and stuff.
-//
-bool verifyModule(const Module &M);
+/// @brief Create a verifier pass.
+///
+/// Check a module or function for validity.  When the pass is used, the
+/// action indicated by the \p action argument will be used if errors are
+/// found.
+FunctionPass *createVerifierPass( 
+  VerifierFailureAction action = AbortProcessAction ///< Action to take
+);
+
+/// @brief Check a module for errors. 
+///
+/// If there are no errors, the function returns false. If an error is found, 
+/// the action taken depends on the \p action parameter.
+/// This should only be used for debugging, because it plays games with 
+/// PassManagers and stuff.
+
+bool verifyModule(
+  const Module &M,  ///< The module to be verified
+  VerifierFailureAction action = AbortProcessAction ///< Action to take
+);
 
 // verifyFunction - Check a function for errors, useful for use when debugging a
 // pass.
-bool verifyFunction(const Function &F);
+bool verifyFunction(
+  const Function &F,  ///< The function to be verified
+  VerifierFailureAction action = AbortProcessAction ///< Action to take
+);
 
 } // End llvm namespace
 
