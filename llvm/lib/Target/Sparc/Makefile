@@ -36,7 +36,7 @@ SparcV9CodeEmitter.cpp: SparcV9CodeEmitter.inc
 
 TEMP_EMITTER_INC = _temp_emitter.inc
 
-SparcV9CodeEmitter.inc: SparcV9.td SparcV9_F2.td SparcV9_F3.td SparcV9_F4.td SparcV9_Reg.td
+SparcV9CodeEmitter.inc: SparcV9.td SparcV9_F2.td SparcV9_F3.td SparcV9_F4.td SparcV9_Reg.td $(TBLGEN)
 	@echo "TableGen-erating $@"
 	cpp -P SparcV9.td | $(TBLGEN) -gen-emitter > $(TEMP_EMITTER_INC) 
 	mv -f $(TEMP_EMITTER_INC) SparcV9CodeEmitter.inc
