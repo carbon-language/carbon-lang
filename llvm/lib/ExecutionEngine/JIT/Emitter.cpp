@@ -96,8 +96,12 @@ namespace {
   /// JITResolver - Keep track of, and resolve, call sites for functions that
   /// have not yet been compiled.
   class JITResolver {
-    /// The MCE to use to emit stubs with.
+    /// MCE - The MachineCodeEmitter to use to emit stubs with.
     MachineCodeEmitter &MCE;
+
+    /// LazyResolverFn - The target lazy resolver function that we actually
+    /// rewrite instructions to use.
+    TargetJITInfo::LazyResolverFn LazyResolverFn;
 
     // FunctionToStubMap - Keep track of the stub created for a particular
     // function so that we can reuse them if necessary.
@@ -108,11 +112,23 @@ namespace {
     std::map<void*, Function*> StubToFunctionMap;
 
   public:
-    JITResolver(MachineCodeEmitter &mce) : MCE(mce) {}
+    JITResolver(MachineCodeEmitter &mce) : MCE(mce) {
+      LazyResolverFn =
+        TheJIT->getJITInfo().getLazyResolverFunction(JITCompilerFn);
+    }
 
     /// getFunctionStub - This returns a pointer to a function stub, creating
     /// one on demand as needed.
     void *getFunctionStub(Function *F);
+
+    /// AddCallbackAtLocation - If the target is capable of rewriting an
+    /// instruction without the use of a stub, record the location of the use so
+    /// we know which function is being used at the location.
+    void *AddCallbackAtLocation(Function *F, void *Location) {
+      /// Get the target-specific JIT resolver function.
+      StubToFunctionMap[Location] = F;
+      return (void*)LazyResolverFn;
+    }
 
     /// JITCompilerFn - This function is called to resolve a stub to a compiled
     /// address.  If the LLVM Function corresponding to the stub has not yet
@@ -131,10 +147,6 @@ static JITResolver &getJITResolver(MachineCodeEmitter *MCE = 0) {
 /// getFunctionStub - This returns a pointer to a function stub, creating
 /// one on demand as needed.
 void *JITResolver::getFunctionStub(Function *F) {
-  /// Get the target-specific JIT resolver function.
-  static TargetJITInfo::LazyResolverFn LazyResolverFn =
-    TheJIT->getJITInfo().getLazyResolverFunction(JITResolver::JITCompilerFn);
-
   // If we already have a stub for this function, recycle it.
   void *&Stub = FunctionToStubMap[F];
   if (Stub) return Stub;
@@ -234,7 +246,7 @@ namespace {
     virtual uint64_t forceCompilationOf(Function *F);
 
   private:
-    void *getPointerToGlobal(GlobalValue *GV);
+    void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
   };
 }
 
@@ -242,7 +254,8 @@ MachineCodeEmitter *JIT::createEmitter(JIT &jit) {
   return new Emitter(jit);
 }
 
-void *Emitter::getPointerToGlobal(GlobalValue *V) {
+void *Emitter::getPointerToGlobal(GlobalValue *V, void *Reference,
+                                  bool DoesntNeedStub) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     /// FIXME: If we straightened things out, this could actually emit the
     /// global immediately instead of queuing it for codegen later!
@@ -260,6 +273,12 @@ void *Emitter::getPointerToGlobal(GlobalValue *V) {
     // 'compile' it, which really just adds it to the map.
     return TheJIT->getPointerToFunction(F);
   }
+
+  // Okay, the function has not been compiled yet, if the target callback
+  // mechanism is capable of rewriting the instruction directly, prefer to do
+  // that instead of emitting a stub.
+  if (DoesntNeedStub)
+    return getJITResolver(this).AddCallbackAtLocation(F, Reference);
 
   // Otherwise, we have to emit a lazy resolving stub.
   return getJITResolver(this).getFunctionStub(F);
@@ -283,7 +302,9 @@ void Emitter::finishFunction(MachineFunction &F) {
       if (MR.isString())
         ResultPtr = TheJIT->getPointerToNamedFunction(MR.getString());
       else
-        ResultPtr = getPointerToGlobal(MR.getGlobalValue());
+        ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
+                                       CurBlock+MR.getMachineCodeOffset(),
+                                       MR.doesntNeedFunctionStub());
       MR.setResultPointer(ResultPtr);
     }
 
