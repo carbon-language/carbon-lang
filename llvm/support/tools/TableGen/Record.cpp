@@ -579,6 +579,22 @@ Record *Record::getValueAsDef(const std::string &FieldName) const {
         "' does not have a list initializer!";
 }
 
+/// getValueAsBit - This method looks up the specified field and returns its
+/// value as a bit, throwing an exception if the field does not exist or if
+/// the value is not the right type.
+///
+bool Record::getValueAsBit(const std::string &FieldName) const {
+  const RecordVal *R = getValue(FieldName);
+  if (R == 0 || R->getValue() == 0)
+    throw "Record '" + R->getName() + "' does not have a field named '" +
+      FieldName + "!\n";
+
+  if (BitInit *DI = dynamic_cast<BitInit*>(R->getValue()))
+    return DI->getValue();
+  throw "Record '" + R->getName() + "', field '" + FieldName +
+        "' does not have a list initializer!";
+}
+
 
 void RecordKeeper::dump() const { std::cerr << *this; }
 

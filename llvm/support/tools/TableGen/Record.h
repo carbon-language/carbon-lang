@@ -707,6 +707,12 @@ public:
   ///
   Record *getValueAsDef(const std::string &FieldName) const;
 
+  /// getValueAsBit - This method looks up the specified field and returns its
+  /// value as a bit, throwing an exception if the field does not exist or if
+  /// the value is not the right type.
+  ///
+  bool getValueAsBit(const std::string &FieldName) const;
+
   /// getValueAsInt - This method looks up the specified field and returns its
   /// value as an int, throwing an exception if the field does not exist or if
   /// the value is not the right type.
