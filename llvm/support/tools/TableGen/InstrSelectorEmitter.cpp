@@ -1064,8 +1064,9 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
        << "    return N->getCostFor(" << SlotName << "_Slot);\n\n"
        << "  unsigned Cost;\n"
        << "  switch (N->getNodeType()) {\n"
-       << "  default: assert(0 && \"Unhandled node type for " << SlotName
-       << "!\");\n";
+       << "  default: Cost = ~0U >> 1;   // Match failed\n"
+       << "           N->setPatternCostFor(" << SlotName << "_Slot, NoMatchPattern, Cost, NumSlots);\n"
+       << "           break;\n";
 
     for (PatternOrganizer::NodesForSlot::iterator J = I->second.begin(),
            E = I->second.end(); J != E; ++J)
