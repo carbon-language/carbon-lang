@@ -101,10 +101,9 @@ reproducing the problem.  The code generator debugger assumes that the C
 backend produces good code.<p>
 
 If you are using the code generator debugger and get an error message that
-says "Non-instruction
-is using an external function!", try using the <tt>-run-llc</tt> option instead
-of the <tt>-run-jit</tt> option.  This is due to an unimplemented feature in the
-code generator debugger.<p>
+says "UNSUPPORTED: external function used as a global initializer!", try using
+the <tt>-run-llc</tt> option instead of the <tt>-run-jit</tt> option.  This is
+due to an unimplemented feature in the code generator debugger.<p>
 
 <a name="miscompilationdebug">
 <h4>Miscompilation debugger</h4>
