@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Bytecode/Reader.h"
 #include "ReaderInternals.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
@@ -20,8 +21,7 @@
 #include <sys/stat.h>
 #include "Config/unistd.h"
 #include "Config/sys/mman.h"
-
-namespace llvm {
+using namespace llvm;
 
 //===----------------------------------------------------------------------===//
 // BytecodeFileReader - Read from an mmap'able file descriptor.
@@ -258,15 +258,17 @@ static ModuleProvider *CheckVarargs(ModuleProvider *MP) {
 /// getBytecodeBufferModuleProvider - lazy function-at-a-time loading from a
 /// buffer
 ModuleProvider* 
-getBytecodeBufferModuleProvider(const unsigned char *Buffer, unsigned Length,
-                                const std::string &ModuleID) {
+llvm::getBytecodeBufferModuleProvider(const unsigned char *Buffer,
+                                      unsigned Length,
+                                      const std::string &ModuleID) {
   return CheckVarargs(new BytecodeBufferReader(Buffer, Length, ModuleID));
 }
 
 /// ParseBytecodeBuffer - Parse a given bytecode buffer
 ///
-Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
-                            const std::string &ModuleID, std::string *ErrorStr){
+Module *llvm::ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
+                                  const std::string &ModuleID,
+                                  std::string *ErrorStr){
   try {
     std::auto_ptr<ModuleProvider>
       AMP(getBytecodeBufferModuleProvider(Buffer, Length, ModuleID));
@@ -279,7 +281,7 @@ Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
 
 /// getBytecodeModuleProvider - lazy function-at-a-time loading from a file
 ///
-ModuleProvider *getBytecodeModuleProvider(const std::string &Filename) {
+ModuleProvider *llvm::getBytecodeModuleProvider(const std::string &Filename) {
   if (Filename != std::string("-"))        // Read from a file...
     return CheckVarargs(new BytecodeFileReader(Filename));
   else                                     // Read from stdin
@@ -288,7 +290,8 @@ ModuleProvider *getBytecodeModuleProvider(const std::string &Filename) {
 
 /// ParseBytecodeFile - Parse the given bytecode file
 ///
-Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
+Module *llvm::ParseBytecodeFile(const std::string &Filename,
+                                std::string *ErrorStr) {
   try {
     std::auto_ptr<ModuleProvider> AMP(getBytecodeModuleProvider(Filename));
     return AMP->releaseModule();
@@ -298,4 +301,3 @@ Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
   }
 }
 
-} // End llvm namespace
