@@ -9,13 +9,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_INST_ITERATOR_H
-#define LLVM_INST_ITERATOR_H
+#ifndef LLVM_SUPPORT_INSTITERATOR_H
+#define LLVM_SUPPORT_INSTITERATOR_H
 
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 
-// This class is implements inst_begin() & inst_end() for
+// This class implements inst_begin() & inst_end() for
 // inst_iterator and const_inst_iterator's.
 //
 template <class _BB_t, class _BB_i_t, class _BI_t, class _II_t>
