@@ -17,6 +17,7 @@
 #include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Assembly/PrintModulePass.h"
+#include "llvm/Assembly/AsmAnnotationWriter.h"
 #include "llvm/SlotCalculator.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
@@ -466,9 +467,11 @@ class AssemblyWriter {
   SlotCalculator &Table;
   const Module *TheModule;
   std::map<const Type *, std::string> TypeNames;
+  AssemblyAnnotationWriter *AnnotationWriter;
 public:
-  inline AssemblyWriter(std::ostream &o, SlotCalculator &Tab, const Module *M)
-    : Out(o), Table(Tab), TheModule(M) {
+  inline AssemblyWriter(std::ostream &o, SlotCalculator &Tab, const Module *M,
+                        AssemblyAnnotationWriter *AAW)
+    : Out(o), Table(Tab), TheModule(M), AnnotationWriter(AAW) {
 
     // If the module has a symbol table, take all global types and stuff their
     // names into the TypeNames map.
@@ -662,6 +665,8 @@ void AssemblyWriter::printFunction(const Function *F) {
   // Print out the return type and name...
   Out << "\n";
 
+  if (AnnotationWriter) AnnotationWriter->emitFunctionAnnot(F, Out);
+
   if (F->isExternal())
     Out << "declare ";
   else
@@ -757,6 +762,8 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   
   Out << "\n";
 
+  if (AnnotationWriter) AnnotationWriter->emitBasicBlockAnnot(BB, Out);
+
   // Output all of the instructions in the basic block...
   for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
     printInstruction(*I);
@@ -783,6 +790,8 @@ void AssemblyWriter::printInfoComment(const Value &V) {
 // printInstruction - This member is called for each Instruction in a method.
 //
 void AssemblyWriter::printInstruction(const Instruction &I) {
+  if (AnnotationWriter) AnnotationWriter->emitInstructionAnnot(&I, Out);
+
   Out << "\t";
 
   // Print out name if it exists...
@@ -947,37 +956,36 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 //                       External Interface declarations
 //===----------------------------------------------------------------------===//
 
-
-void Module::print(std::ostream &o) const {
+void Module::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
   SlotCalculator SlotTable(this, true);
-  AssemblyWriter W(o, SlotTable, this);
+  AssemblyWriter W(o, SlotTable, this, AAW);
   W.write(this);
 }
 
 void GlobalVariable::print(std::ostream &o) const {
   SlotCalculator SlotTable(getParent(), true);
-  AssemblyWriter W(o, SlotTable, getParent());
+  AssemblyWriter W(o, SlotTable, getParent(), 0);
   W.write(this);
 }
 
-void Function::print(std::ostream &o) const {
+void Function::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
   SlotCalculator SlotTable(getParent(), true);
-  AssemblyWriter W(o, SlotTable, getParent());
+  AssemblyWriter W(o, SlotTable, getParent(), AAW);
 
   W.write(this);
 }
 
-void BasicBlock::print(std::ostream &o) const {
+void BasicBlock::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
   SlotCalculator SlotTable(getParent(), true);
   AssemblyWriter W(o, SlotTable, 
-                   getParent() ? getParent()->getParent() : 0);
+                   getParent() ? getParent()->getParent() : 0, AAW);
   W.write(this);
 }
 
-void Instruction::print(std::ostream &o) const {
+void Instruction::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
   const Function *F = getParent() ? getParent()->getParent() : 0;
   SlotCalculator SlotTable(F, true);
-  AssemblyWriter W(o, SlotTable, F ? F->getParent() : 0);
+  AssemblyWriter W(o, SlotTable, F ? F->getParent() : 0, AAW);
 
   W.write(this);
 }
@@ -1018,7 +1026,7 @@ void CachedWriter::setModule(const Module *M) {
   delete SC; delete AW;
   if (M) {
     SC = new SlotCalculator(M, true);
-    AW = new AssemblyWriter(Out, *SC, M);
+    AW = new AssemblyWriter(Out, *SC, M, 0);
   } else {
     SC = 0; AW = 0;
   }
