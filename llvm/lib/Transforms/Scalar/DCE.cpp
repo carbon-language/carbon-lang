@@ -34,20 +34,30 @@
 #include "llvm/Assembly/Writer.h"
 #include <algorithm>
 
-static bool RemoveUnusedDefs(BasicBlock::InstListType &Vals) {
+// dceInstruction - Inspect the instruction at *BBI and figure out if it's
+// [trivially] dead.  If so, remove the instruction and update the iterator
+// to point to the instruction that immediately succeeded the original
+// instruction.
+//
+bool opt::DeadCodeElimination::dceInstruction(BasicBlock::InstListType &BBIL,
+                                              BasicBlock::iterator &BBI) {
+  // Look for un"used" definitions...
+  if ((*BBI)->use_empty() && !(*BBI)->hasSideEffects() && 
+      !isa<TerminatorInst>(*BBI)) {
+    delete BBIL.remove(BBI);   // Bye bye
+    return true;
+  }
+  return false;
+}
+
+static inline bool RemoveUnusedDefs(BasicBlock::InstListType &Vals) {
   bool Changed = false;
   for (BasicBlock::InstListType::iterator DI = Vals.begin(); 
-       DI != Vals.end()-1; ) {
-    // Look for un"used" definitions...
-    if ((*DI)->use_empty() && !(*DI)->hasSideEffects()) {
-      // Bye bye
-      //cerr << "Removing: " << *DI;
-      delete Vals.remove(DI);
+       DI != Vals.end(); )
+    if (opt::DeadCodeElimination::dceInstruction(Vals, DI))
       Changed = true;
-    } else {
+    else
       ++DI;
-    }
-  }
   return Changed;
 }
 
