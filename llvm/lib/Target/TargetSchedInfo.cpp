@@ -108,7 +108,7 @@ MachineSchedInfo::initializeResources()
   for (InstrSchedClass sc = 0; sc < numSchedClasses; sc++) {
     // instrRUForClasses.push_back(new InstrRUsage);
     instrRUForClasses[sc].setMaxSlots(getMaxNumIssueTotal());
-    instrRUForClasses[sc] = classRUsages[sc];
+    instrRUForClasses[sc].setTo(classRUsages[sc]);
   }
   
   computeInstrResources(instrRUForClasses);
@@ -192,3 +192,68 @@ MachineSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
       }
 }
 
+
+void InstrRUsage::setTo(const InstrClassRUsage& classRU) {
+  sameAsClass	= true;
+  isSingleIssue = classRU.isSingleIssue;
+  breaksGroup   = classRU.breaksGroup; 
+  numBubbles    = classRU.numBubbles;
+  
+  for (unsigned i=0; i < classRU.numSlots; i++)
+    {
+      unsigned slot = classRU.feasibleSlots[i];
+      assert(slot < feasibleSlots.size() && "Invalid slot specified!");
+      this->feasibleSlots[slot] = true;
+    }
+  
+  numCycles   = classRU.totCycles;
+  resourcesByCycle.resize(this->numCycles);
+  
+  for (unsigned i=0; i < classRU.numRUEntries; i++)
+    for (unsigned c=classRU.V[i].startCycle, NC = c + classRU.V[i].numCycles;
+	 c < NC; c++)
+      this->resourcesByCycle[c].push_back(classRU.V[i].resourceId);
+  
+  // Sort each resource usage vector by resourceId_t to speed up conflict checking
+  for (unsigned i=0; i < this->resourcesByCycle.size(); i++)
+    sort(resourcesByCycle[i].begin(), resourcesByCycle[i].end());
+  
+}
+
+// Add the extra resource usage requirements specified in the delta.
+// Note that a negative value of `numCycles' means one entry for that
+// resource should be deleted for each cycle.
+// 
+void InstrRUsage::addUsageDelta(const InstrRUsageDelta &delta) {
+  int NC = delta.numCycles;
+  sameAsClass = false;
+  
+  // resize the resources vector if more cycles are specified
+  unsigned maxCycles = this->numCycles;
+  maxCycles = std::max(maxCycles, delta.startCycle + abs(NC) - 1);
+  if (maxCycles > this->numCycles)
+    {
+      this->resourcesByCycle.resize(maxCycles);
+      this->numCycles = maxCycles;
+    }
+    
+  if (NC >= 0)
+    for (unsigned c=delta.startCycle, last=c+NC-1; c <= last; c++)
+      this->resourcesByCycle[c].push_back(delta.resourceId);
+  else
+    // Remove the resource from all NC cycles.
+    for (unsigned c=delta.startCycle, last=(c-NC)-1; c <= last; c++)
+      {
+	// Look for the resource backwards so we remove the last entry
+	// for that resource in each cycle.
+	std::vector<resourceId_t>& rvec = this->resourcesByCycle[c];
+	int r;
+	for (r = (int) rvec.size(); r >= 0; r--)
+	  if (rvec[r] == delta.resourceId)
+	    {// found last entry for the resource
+	      rvec.erase(rvec.begin() + r);
+	      break;
+	    }
+	assert(r >= 0 && "Resource to remove was unused in cycle c!");
+      }
+}
