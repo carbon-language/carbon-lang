@@ -43,13 +43,14 @@ test_each: $(TESTS)
 	@$(ECHO) "Compiling And Optimizing $< to $*.bc"
 	$(VERB)$(STKRC_EXEC) -f -O4 -s 2048 -o $*.bc $(BUILD_SRC_DIR)/$*.st
 
-%.s : %.bc
+%.s : %.bc testing.bc
 	@$(ECHO) "Assembling $< to $*.s"
-	$(VERB)$(LLC) -f -o $*.s $*.bc
+	$(VERB)$(LLINK) $*.bc testing.bc -o $*.bcl
+	$(VERB)$(LLC) -f -o $*.s $*.bcl
 
-% : %.s testing.s
+% : %.s
 	@$(ECHO) "Linking $*"
-	$(VERB)$(CC) -ggdb -L$(BUILD_OBJ_ROOT)/lib/$(CONFIGURATION) testing.s -lstkr_runtime -o $* $*.s
+	$(VERB)$(CC) -ggdb -L$(BUILD_OBJ_ROOT)/lib/$(CONFIGURATION) -lstkr_runtime -o $* $*.s
 
 %.ll : %.bc
 	@$(ECHO) "Disassembling $< to $*.ll"
