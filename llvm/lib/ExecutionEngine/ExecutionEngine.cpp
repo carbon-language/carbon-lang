@@ -63,10 +63,10 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     }
 
     case Instruction::Add:
-      if (C->getOperand(0)->getType() == Type::LongTy ||
-          C->getOperand(0)->getType() == Type::ULongTy)
-        Result.LongVal = getConstantValue(C->getOperand(0)).LongVal +
-                         getConstantValue(C->getOperand(1)).LongVal;
+      if (CE->getOperand(0)->getType() == Type::LongTy ||
+          CE->getOperand(0)->getType() == Type::ULongTy)
+        Result.LongVal = getConstantValue(CE->getOperand(0)).LongVal +
+                         getConstantValue(CE->getOperand(1)).LongVal;
       else
         break;
       return Result;
