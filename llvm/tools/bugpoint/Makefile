@@ -2,7 +2,7 @@ LEVEL = ../..
 
 TOOLNAME = bugpoint
 
-#OPTLIBS  = instrument profpaths 
+OPTLIBS  = transforms instrument profpaths 
 ANALIBS  = datastructure ipa target.a 
 
 USEDLIBS = ipo scalaropts analysis $(OPTLIBS) $(ANALIBS) \
