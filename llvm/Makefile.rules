@@ -1,0 +1,170 @@
+#                                 Makefile.common
+#
+# This file is included by all of the LLVM makefiles.  This file defines common
+# rules to do things like compile a .cpp file or generate dependancy info.
+# These are platform dependant, so this is the file used to specify these
+# system dependant operations.
+#
+# The following functionality may be set by setting incoming variables:
+#
+# 1. LEVEL - The level of the current subdirectory from the top of the 
+#    MagicStats view.  This level should be expressed as a path, for 
+#    example, ../.. for two levels deep.
+#
+# 2. DIRS - A list of subdirectories to be built.  Fake targets are set up
+#    so that each of the targets "all", "install", and "clean" each build.
+#    the subdirectories before the local target.
+#
+# 3. Source - If specified, this sets the source code filenames.  If this
+#    is not set, it defaults to be all of the .cpp, .c, .y, and .l files 
+#    in the current directory.
+#
+
+# Default Rule:
+all ::
+
+# Default for install is to at least build everything...
+install ::
+
+#--------------------------------------------------------------------
+# Installation configuration options... 
+#--------------------------------------------------------------------
+
+#BinInstDir=/usr/local/bin
+#LibInstDir=/usrl/local/lib/xxx
+#DocInstDir=/usr/doc/xxx
+
+#---------------------------------------------------------
+# Compilation options...
+#---------------------------------------------------------
+
+# Add -L options to the link command lines...
+LibPathsO = -L $(LEVEL)/lib/VMCore/Release \
+            -L $(LEVEL)/lib/Assembly/Parser/Release \
+            -L $(LEVEL)/lib/Assembly/Writer/Release \
+            -L $(LEVEL)/lib/Analysis/Release \
+            -L $(LEVEL)/lib/Bytecode/Writer/Release \
+            -L $(LEVEL)/lib/Bytecode/Reader/Release \
+            -L $(LEVEL)/lib/Optimizations/Release
+
+LibPathsG = $(LibPathsO:Release=Debug)
+
+# Enable this for profiling support with 'gprof'
+#Prof = -pg
+
+# TODO: Get rid of exceptions! : -fno-exceptions -fno-rtti
+CompileCommonOpts = $(Prof) -Wall -Winline -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
+
+# Compile a file, don't link...
+Compile  = $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts)
+CompileG = $(Compile) -g  -D_DEBUG
+# Add This for DebugMalloc: -fno-defer-pop
+CompileO = $(Compile) -O3 -DNDEBUG -finline-functions -felide-constructors -fnonnull-objects -freg-struct-return -fshort-enums
+
+# Link final executable
+Link     = $(CXX) $(Prof) 
+LinkG    = $(Link) -g $(LibPathsG)
+LinkO    = $(Link) -O3 $(LibPathsO)
+
+# Create a .so file from a .cpp file...
+#MakeSO   = $(CXX) -shared $(Prof)
+MakeSO   = $(CXX) -G $(Prof)
+MakeSOG  = $(MakeSO) -g
+MakeSOO  = $(MakeSO) -O3
+
+# Create dependancy file from CPP file, send to stdout.
+Depend   = $(CXX) -MM -I$(LEVEL)/include $(CPPFLAGS) 
+
+# Archive a bunch of .o files into a .a file...
+AR       = ar cq 
+
+#----------------------------------------------------------
+
+# Source includes all of the cpp files, and objects are derived from the
+# source files...
+ifndef Source
+Source   = $(wildcard *.cpp *.c *.y *.l)
+endif
+Objs = $(sort $(addsuffix .o,$(basename $(Source))))
+ObjectsO = $(addprefix Release/,$(Objs))
+ObjectsG = $(addprefix Debug/,$(Objs))
+
+#---------------------------------------------------------
+# Handle the DIRS option
+#---------------------------------------------------------
+
+ifdef DIRS  # Only do this if we're using DIRS!
+
+all     :: $(addsuffix /.makeall    , $(DIRS))
+install :: $(addsuffix /.makeinstall, $(DIRS))
+clean   :: $(addsuffix /.makeclean  , $(DIRS))
+
+%/.makeall %/.makeclean %/.makeinstall:
+	cd $(@D); $(MAKE) $(subst $(@D)/.make,,$@)
+endif
+
+#---------------------------------------------------------
+# Handle the LIBRARYNAME option - used when building libs...
+#---------------------------------------------------------
+
+ifdef LIBRARYNAME
+LIBNAME_O := Release/lib$(LIBRARYNAME).so
+LIBNAME_G := Debug/lib$(LIBRARYNAME).so
+
+all:: $(LIBNAME_G)
+#$(LIBNAME_O)
+# TODO: Enable optimized builds
+
+$(LIBNAME_O): $(ObjectsO) $(LibSubDirs) Release/.dir
+	@echo ======= Linking $(LIBRARYNAME) release library =======
+	$(MakeSOO) -o $@ $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
+
+$(LIBNAME_G): $(ObjectsG) $(LibSubDirs) Debug/.dir
+	@echo ======= Linking $(LIBRARYNAME) debug library =======
+	$(MakeSOG) -o $@ $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
+
+endif
+
+
+#---------------------------------------------------------
+
+# Create dependacies for the cpp files...
+Depend/%.d: %.cpp Depend/.dir
+	$(Depend) $< | sed 's|$*\.o *|Release/& Debug/& Depend/$(@F)|g' > $@
+
+# Create .o files in the ObjectFiles directory from the .cpp files...
+Release/%.o: %.cpp Release/.dir Depend/.dir
+	$(CompileO) $< -o $@
+
+Debug/%.o: %.cpp Debug/.dir Depend/.dir
+	$(CompileG) $< -o $@
+
+# Create a .cpp source file from a flex input file... this uses sed to cut down
+# on the warnings emited by GCC...
+%.cpp: %.l
+	flex -t $< | sed '/^find_rule/d' | sed 's/void yyunput/inline void yyunput/' | sed 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' > $@
+
+# Rule for building the bison parsers...
+
+%.cpp %.h : %.y
+	bison -d -p $(<:%Parser.y=%) $(basename $@).y
+	mv -f $(basename $@).tab.c $(basename $@).cpp
+	mv -f $(basename $@).tab.h $(basename $@).h
+
+# To create the directories...
+%/.dir:
+	mkdir -p $(@D)
+	@date > $@
+
+# Clean does not remove the output files... just the temporaries
+clean::
+	rm -rf Debug Release Depend
+	rm -f core *.o *.d *.so *~ *.flc
+
+# If dependancies were generated for the file that included this file,
+# include the dependancies now...
+#
+SourceDepend = $(addsuffix .d,$(addprefix Depend/,$(basename $(Source))))
+ifneq ($(SourceDepend),)
+include $(SourceDepend)
+endif

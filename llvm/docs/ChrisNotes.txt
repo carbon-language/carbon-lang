@@ -1,0 +1,50 @@
+* Provide a pass that eliminates critical edges from the CFG
+* Provide a print hook to print out xvcg format files for vis
+* I need to provide an option to the bytecode loader to ignore memory 
+  dependance edges.  Instead, the VM would just treat memory operations 
+  (load, store, getfield, putfield, call) as pinned instructions.
+* I need to have a way to prevent taking the address of a constant pool
+  reference.  You should only be able to take the address of a variable.
+  Maybe taking the address of a constant copies it?  What about virtual 
+  function tables?  Maybe a const pointer would be better...
+* Structures should be accessed something like this: ubyte is ok.  Limits 
+  structure size to 256 members.  This can be fixed later by either: 
+    1. adding varient that takes ushort
+    2. Splitting structures into nested structures each of half size
+  <float> %f = loadfield *{int, {float}} Str, ubyte 1, ubyte 0
+  storefield float %f, *{int, {float}} Str, ubyte 1, ubyte 0
+* I'm noticing me writing a lot of code that looks like this (dtor material here):
+  ConstPool.dropAllReferences();
+  ConstPool.delete_all();
+  ConstPool.setParent(0);
+  ~ConstPool
+
+* Need a way to attach bytecode block info at various levels of asm code.
+* Rename "ConstantPool" to "ConstPool"
+* Maybe ConstantPool objects should keep themselves sorted as things are 
+  inserted.
+* Need to be able to inflate recursive types.  %x = { *%x }, %x = %x ()
+* Recognize and save comments in assembly and bytecode format
+* Encode line number table in bytecode (like #line), optional table
+
+* Encode negative relative offsets in the bytecode file
+
+* Implement switch to switch on a constant pool array of type: 
+  [{ label, int }] or [label]   (lookup vs index switch)
+* Apparently bison has a %pure_parser option.  Maybe useful for Assembly/Parser
+
+* Implement a header file that can read either assembly or bytecode, implement 
+  a writer that can output either based on what is read with this reader..
+* Implement the following derived types:
+  * structure/record               { int %foo, int %bar} or { %foo = int, int }
+  * pointer                          int *
+  * "packed format", like this:    [4 x sbyte]: Packed SIMD datatype
+* Maybe 'tailcall' also?
+* It might be nice to support enumerations of some sort... especially for use
+  as a compiler IR
+* Include a method level bytecode block that defines a mapping between values 
+  and registers that defines a minimally register allocated code.  This can
+  make me finally address how to encode extensions in assembly.
+* Bytecode reader should use extensions that may or may not be linked into the
+  application to read blocks.  Thus an easy way to ignore symbol table info
+  would be to not link in that reader into the app.
