@@ -112,6 +112,14 @@ public:
   //
   void dropAllReferences();
 
+  // removePredecessor - This method is used to notify a BasicBlock that the
+  // specified Predecessor of the block is no longer able to reach it.  This is
+  // actually not used to update the Predecessor list, but is actually used to 
+  // update the PHI nodes that reside in the block.  Note that this should be
+  // called while the predecessor still refers to this block.
+  //
+  void removePredecessor(BasicBlock *Pred);
+
   // splitBasicBlock - This splits a basic block into two at the specified
   // instruction.  Note that all instructions BEFORE the specified iterator stay
   // as part of the original basic block, an unconditional branch is added to 
