@@ -6,16 +6,16 @@
 ;; Test constant cast expressions
 ;;-------------------------------
 
-%t2 = global int* %t1                  ;; Forward reference without cast
-%t3 = global uint* cast int* %t1       ;; Forward reference with cast
-%t1 = global int 4                     ;; int* %0
-%t4 = global int** cast uint** %t3     ;; Cast of a previous cast
-%t5 = global uint** %t3                ;; Reference to a previous cast
-%t6 = global int*** %t4                ;; Different ref. to a previous cast
-%t7 = global float* cast int 12345678  ;; Cast ordinary value to ptr
-%t9 = global int cast float cast int 8 ;; Nested cast expression
+%t2 = global int* %t1                           ;; Forward reference without cast
+%t3 = global uint* cast int* %t1 to uint*       ;; Forward reference with cast
+%t1 = global int 4                              ;; int* %0
+%t4 = global int** cast uint** %t3 to int**     ;; Cast of a previous cast
+%t5 = global uint** %t3                         ;; Reference to a previous cast
+%t6 = global int*** %t4                         ;; Different ref. to a previous cast
+%t7 = global float* cast int 12345678 to float* ;; Cast ordinary value to ptr
+%t9 = global int cast float cast int 8 to float to int ;; Nested cast expression
 
-global int* cast float* %0             ;; Forward numeric reference
+global int* cast float* %0 to int*     ;; Forward numeric reference
 global float* %0                       ;; Duplicate forward numeric reference
 global float 0.0
 
@@ -31,9 +31,11 @@ global float 0.0
 %somestr = constant [11x sbyte] c"hello world"
 %char5  = global sbyte* getelementptr([11x sbyte]* %somestr, uint 0, uint 5)
 
-%char8a = global int* cast sbyte* getelementptr([11x sbyte]* %somestr, uint 0, uint 8)					;; cast of getelementptr
+;; cast of getelementptr
+%char8a = global int* cast sbyte* getelementptr([11x sbyte]* %somestr, uint 0, uint 8) to int*
 
-%char8b = global sbyte* getelementptr([11x sbyte]* %somestr, uint cast ubyte 0, uint cast sbyte 8)			;; getelementptr containing casts
+;; getelementptr containing casts
+%char8b = global sbyte* getelementptr([11x sbyte]* %somestr, uint cast ubyte 0 to uint, uint cast sbyte 8 to uint)
 
 ;;-------------------------------------------------------
 ;; TODO: Test constant getelementpr expressions for structures
@@ -73,9 +75,9 @@ global float 0.0
 ;; Test duplicate constant expressions
 ;;---------------------------------------------------
 
-%t4 = global int** cast uint** %t3
+%t4 = global int** cast uint** %t3 to int**
 
-%char8a = global int* cast sbyte* getelementptr([11x sbyte]* %somestr, uint 0, uint 8)
+%char8a = global int* cast sbyte* getelementptr([11x sbyte]* %somestr, uint 0, uint 8) to int*
 
 %S3fld3 = global float* getelementptr (%SAType** %S3, uint 0, uint 0, ubyte 1, ubyte 0, uint 0) 
 
