@@ -90,7 +90,7 @@ public:
   /// @see ParseAllFunctionBodies
   /// @see ParseBytecode
   /// @brief Parse the next function of specific type
-  void ParseNextFunction       (Type* FType) ;
+  void ParseNextFunction       (Function* Func) ;
 
 /// @}
 /// @name Parsing Units For Subclasses
@@ -116,7 +116,7 @@ protected:
   void ParseFunctionLazily     ();
 
   ///  @brief Parse a function body
-  void ParseFunctionBody       (const Type* FType);
+  void ParseFunctionBody       (Function* Func);
 
   /// @brief Parse a compaction table
   void ParseCompactionTable    ();
@@ -205,7 +205,7 @@ private:
   // for each function in the module. When the function is loaded, this type is
   // used to instantiate the actual function object.
 
-  std::vector<const Type*> FunctionSignatureList;
+  std::vector<Function*> FunctionSignatureList;
 
   // Constant values are read in after global variables.  Because of this, we
   // must defer setting the initializers on global variables until after module
@@ -233,7 +233,7 @@ private:
     LazyFunctionInfo(const unsigned char *B = 0, const unsigned char *EB = 0)
       : Buf(B), EndBuf(EB) {}
   };
-  typedef std::map<const Type*, LazyFunctionInfo> LazyFunctionMap;
+  typedef std::map<Function*, LazyFunctionInfo> LazyFunctionMap;
   LazyFunctionMap LazyFunctionLoadMap;
 
 private:
@@ -394,7 +394,8 @@ public:
   /// This method is called when the function prototype for a function is
   /// encountered in the module globals block.
   virtual void handleFunctionDeclaration( 
-    const Type* FuncType      ///< The type of the function
+    Function* Func,
+    const FunctionType* FuncType      ///< The type of the function
   );
 
   /// This method is called at the end of the module globals block.
@@ -458,13 +459,12 @@ public:
 
   /// @brief Handle the beginning of a function body
   virtual void handleFunctionBegin(
-    const Type* FType, 
-    GlobalValue::LinkageTypes linkage 
+    Function* Func, unsigned Size
   );
 
   /// @brief Handle the end of a function body
   virtual void handleFunctionEnd(
-    const Type* FType
+    Function* Func
   );
 
   /// @brief Handle the beginning of a basic block

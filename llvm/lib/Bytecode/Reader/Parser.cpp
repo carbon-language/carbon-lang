@@ -312,37 +312,51 @@ void AbstractBytecodeParser::ParseFunctionLazily() {
   if (FunctionSignatureList.empty())
     throw std::string("FunctionSignatureList empty!");
 
-  const Type *FType = FunctionSignatureList.back();
+  Function *Func = FunctionSignatureList.back();
   FunctionSignatureList.pop_back();
 
   // Save the information for future reading of the function
-  LazyFunctionLoadMap[FType] = LazyFunctionInfo(BlockStart, BlockEnd);
+  LazyFunctionLoadMap[Func] = LazyFunctionInfo(BlockStart, BlockEnd);
 
   // Pretend we've `parsed' this function
   At = BlockEnd;
 }
 
-void AbstractBytecodeParser::ParseNextFunction(Type* FType) {
+void AbstractBytecodeParser::ParseNextFunction(Function* Func) {
   // Find {start, end} pointers and slot in the map. If not there, we're done.
-  LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.find(FType);
+  LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.find(Func);
 
   // Make sure we found it
   if ( Fi == LazyFunctionLoadMap.end() ) {
-    PARSE_ERROR("Unrecognized function of type " << FType->getDescription());
+    PARSE_ERROR("Unrecognized function of type " << Func->getType()->getDescription());
     return;
   }
 
   BlockStart = At = Fi->second.Buf;
   BlockEnd = Fi->second.Buf;
-  assert(Fi->first == FType);
+  assert(Fi->first == Func);
 
   LazyFunctionLoadMap.erase(Fi);
 
-  this->ParseFunctionBody( FType );
+  this->ParseFunctionBody( Func );
 }
 
-void AbstractBytecodeParser::ParseFunctionBody(const Type* FType ) {
+void AbstractBytecodeParser::ParseAllFunctionBodies() {
+  LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.begin();
+  LazyFunctionMap::iterator Fe = LazyFunctionLoadMap.end();
 
+  while ( Fi != Fe ) {
+    Function* Func = Fi->first;
+    BlockStart = At = Fi->second.Buf;
+    BlockEnd = Fi->second.EndBuf;
+    this->ParseFunctionBody(Func);
+    ++Fi;
+  }
+}
+
+void AbstractBytecodeParser::ParseFunctionBody(Function* Func ) {
+
+  unsigned FuncSize = BlockEnd - At;
   GlobalValue::LinkageTypes Linkage = GlobalValue::ExternalLinkage;
 
   unsigned LinkageType = read_vbr_uint();
@@ -358,7 +372,8 @@ void AbstractBytecodeParser::ParseFunctionBody(const Type* FType ) {
     break;
   }
 
-  handler->handleFunctionBegin(FType,Linkage);
+  Func->setLinkage( Linkage );
+  handler->handleFunctionBegin(Func,FuncSize);
 
   // Keep track of how many basic blocks we have read in...
   unsigned BlockNum = 0;
@@ -405,24 +420,11 @@ void AbstractBytecodeParser::ParseFunctionBody(const Type* FType ) {
     align32();
   }
 
-  handler->handleFunctionEnd(FType);
+  handler->handleFunctionEnd(Func);
 
   // Clear out function-level types...
   FunctionTypes.clear();
   CompactionTypeTable.clear();
-}
-
-void AbstractBytecodeParser::ParseAllFunctionBodies() {
-  LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.begin();
-  LazyFunctionMap::iterator Fe = LazyFunctionLoadMap.end();
-
-  while ( Fi != Fe ) {
-    const Type* FType = Fi->first;
-    BlockStart = At = Fi->second.Buf;
-    BlockEnd = Fi->second.EndBuf;
-    this->ParseFunctionBody(FType);
-    ++Fi;
-  }
 }
 
 void AbstractBytecodeParser::ParseCompactionTable() {
@@ -819,12 +821,14 @@ void AbstractBytecodeParser::ParseModuleGlobalInfo() {
     }
 
     // We create functions by passing the underlying FunctionType to create...
-    Ty = cast<PointerType>(Ty)->getElementType();
+    const FunctionType* FTy = 
+      cast<FunctionType>(cast<PointerType>(Ty)->getElementType());
+    Function* Func = new Function(FTy, GlobalValue::ExternalLinkage);
 
     // Save this for later so we know type of lazily instantiated functions
-    FunctionSignatureList.push_back(Ty);
+    FunctionSignatureList.push_back(Func);
 
-    handler->handleFunctionDeclaration(Ty);
+    handler->handleFunctionDeclaration(Func, FTy);
 
     // Get Next function signature
     FnSignature = read_vbr_uint();
@@ -1010,7 +1014,7 @@ void BytecodeHandler::handleInitializedGV(
   unsigned initSlot) {}
 void BytecodeHandler::handleType( const Type* Ty ) {}
 void BytecodeHandler::handleFunctionDeclaration( 
-  const Type* FuncType) {}
+  Function* Func, const FunctionType* FuncType) {}
 void BytecodeHandler::handleModuleGlobalsEnd() { } 
 void BytecodeHandler::handleCompactionTableBegin() { } 
 void BytecodeHandler::handleCompactionTablePlane( unsigned Ty, 
@@ -1028,9 +1032,9 @@ void BytecodeHandler::handleSymbolTableType( unsigned i, unsigned slot,
 void BytecodeHandler::handleSymbolTableValue( unsigned i, unsigned slot, 
   const std::string& name ) { }
 void BytecodeHandler::handleSymbolTableEnd() { }
-void BytecodeHandler::handleFunctionBegin( const Type* FType, 
-  GlobalValue::LinkageTypes linkage ) { }
-void BytecodeHandler::handleFunctionEnd( const Type* FType) { }
+void BytecodeHandler::handleFunctionBegin( Function* Func, 
+  unsigned Size ) {}
+void BytecodeHandler::handleFunctionEnd( Function* Func) { }
 void BytecodeHandler::handleBasicBlockBegin( unsigned blocknum) { } 
 bool BytecodeHandler::handleInstruction( unsigned Opcode, const Type* iType,
   std::vector<unsigned>& Operands, unsigned Size) { 
