@@ -249,16 +249,15 @@ static Constant *getMaxValue(const Type *Ty) {
   if (Ty == Type::BoolTy)
     return ConstantBool::True;
 
-  // Calculate -1 casted to the right type...
-  unsigned TypeBits = Ty->getPrimitiveSize()*8;
-  uint64_t Val = (uint64_t)-1LL;       // All ones
-  Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
-
   if (Ty->isSigned())
-    return ConstantSInt::get(Ty, (int64_t)Val);
-  else if (Ty->isUnsigned())
+    return ConstantSInt::get(Ty, -1);
+  else if (Ty->isUnsigned()) {
+    // Calculate -1 casted to the right type...
+    unsigned TypeBits = Ty->getPrimitiveSize()*8;
+    uint64_t Val = (uint64_t)-1LL;       // All ones
+    Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
     return ConstantUInt::get(Ty, Val);
-
+  }
   return 0;
 }
 
