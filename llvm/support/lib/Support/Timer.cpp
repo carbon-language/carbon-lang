@@ -221,8 +221,9 @@ void TimerGroup::removeTimer() {
       std::cerr << "===" << std::string(73, '-') << "===\n"
                 << std::string(Padding, ' ') << Name << "\n"
                 << "===" << std::string(73, '-')
-                << "===\n  Total Execution Time: " << Total.getProcessTime()
-                << " seconds (" << Total.getWallTime()
+                << "===\n  Total Execution Time: " << std::fixed
+                << Total.getProcessTime()
+                << " seconds (" << Total.getWallTime() << std::scientific
                 << " wall clock)\n\n";
 
       if (Total.UserTime)
