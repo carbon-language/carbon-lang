@@ -22,8 +22,8 @@ distclean:: clean
 	                  $(LEVEL)/config.log \
 	                  $(LEVEL)/TAGS
 
-tools-only:
-	@for dir in lib/Support utils lib tools; do $(MAKE) -C $$dir; done
+tools-only: DIRS = $(DIRS:runtime=)
+tools-only: all
 
 configure: autoconf/configure.ac autoconf/aclocal.m4
 	cd autoconf && aclocal && autoconf -o ../configure configure.ac
