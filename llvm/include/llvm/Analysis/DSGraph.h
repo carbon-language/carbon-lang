@@ -211,7 +211,7 @@ public:
   /// the graph.  If the StripAlloca's argument is 'StripAllocaBit' then Alloca
   /// markers are removed from nodes.
   ///
-  void mergeInGraph(DSCallSite &CS, Function &F, const DSGraph &Graph,
+  void mergeInGraph(const DSCallSite &CS, Function &F, const DSGraph &Graph,
                     unsigned CloneFlags);
 
   // Methods for checking to make sure graphs are well formed...
