@@ -646,6 +646,8 @@ bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1) {
       BuildMI(BB, SetCCOpcodeTab[0][OpNum], 0, X86::AL);
       BuildMI(BB, X86::CMPrr32, 2).addReg(Op0r+1).addReg(Op1r+1);
       BuildMI(BB, SetCCOpcodeTab[isSigned][OpNum], 0, X86::BL);
+      BuildMI(BB, X86::IMPLICIT_DEF, 0, X86::BH);
+      BuildMI(BB, X86::IMPLICIT_DEF, 0, X86::AH);
       BuildMI(BB, X86::CMOVErr16, 2, X86::BX).addReg(X86::BX).addReg(X86::AX);
       // NOTE: visitSetCondInst knows that the value is dumped into the BL
       // register at this point for long values...

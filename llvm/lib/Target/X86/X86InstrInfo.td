@@ -107,6 +107,7 @@ def NOOP : X86Inst<"nop", 0x90, RawFrm, NoArg>;    // nop
 def ADJCALLSTACKDOWN : X86Inst<"ADJCALLSTACKDOWN", 0, Pseudo, NoArg>;
 def ADJCALLSTACKUP   : X86Inst<"ADJCALLSTACKUP",   0, Pseudo, NoArg>;
 def IMPLICIT_USE     : X86Inst<"IMPLICIT_USE",     0, Pseudo, NoArg>;
+def IMPLICIT_DEF     : X86Inst<"IMPLICIT_DEF",     0, Pseudo, NoArg>;
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
