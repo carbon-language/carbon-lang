@@ -9,7 +9,7 @@
 //
 // This pass promotes "by reference" arguments to be "by value" arguments.  In
 // practice, this means looking for internal functions that have pointer
-// arguments.  If we can prove, through the use of alias analysis, that that an
+// arguments.  If we can prove, through the use of alias analysis, that an
 // argument is *only* loaded, then we can pass the value into the function
 // instead of the address of the value.  This can cause recursive simplification
 // of code and lead to the elimination of allocas (especially in C++ template
