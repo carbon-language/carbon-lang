@@ -1994,14 +1994,42 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
 }
 
 Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
-  if (ConstantBool *C = dyn_cast<ConstantBool>(SI.getCondition()))
+  Value *CondVal = SI.getCondition();
+  Value *TrueVal = SI.getTrueValue();
+  Value *FalseVal = SI.getFalseValue();
+
+  // select true, X, Y  -> X
+  // select false, X, Y -> Y
+  if (ConstantBool *C = dyn_cast<ConstantBool>(CondVal))
     if (C == ConstantBool::True)
-      return ReplaceInstUsesWith(SI, SI.getTrueValue());
+      return ReplaceInstUsesWith(SI, TrueVal);
     else {
       assert(C == ConstantBool::False);
-      return ReplaceInstUsesWith(SI, SI.getFalseValue());
+      return ReplaceInstUsesWith(SI, FalseVal);
     }
-  // Other transformations are possible!
+
+  // select C, X, X -> X
+  if (TrueVal == FalseVal)
+    return ReplaceInstUsesWith(SI, TrueVal);
+
+  // Selecting between two constants?
+  if (Constant *TrueValC = dyn_cast<Constant>(TrueVal))
+    if (Constant *FalseValC = dyn_cast<Constant>(FalseVal)) {
+      if (SI.getType() == Type::BoolTy &&
+          isa<ConstantBool>(TrueValC) && isa<ConstantBool>(FalseValC)) {
+        // select C, true, false -> C
+        if (TrueValC == ConstantBool::True)
+          return ReplaceInstUsesWith(SI, CondVal);
+        // select C, false, true -> !C
+        return BinaryOperator::createNot(CondVal);
+      }
+      
+      // If the true constant is a 1 and the false is a zero, turn this into a
+      // cast from bool.
+      if (FalseValC->isNullValue() && isa<ConstantInt>(TrueValC) &&
+          cast<ConstantInt>(TrueValC)->getRawValue() == 1)
+        return new CastInst(CondVal, SI.getType());
+    }
 
   return 0;
 }
