@@ -141,6 +141,12 @@ FunctionPass *createInstructionCombiningPass();
 //
 FunctionPass *createLICMPass();
 
+//===----------------------------------------------------------------------===//
+//
+// LoopStrengthReduce - This pass is strength reduces GEP instructions that use
+// a loop's canonical induction variable as one of their indices.
+//
+FunctionPass *createLoopStrengthReducePass();
 
 //===----------------------------------------------------------------------===//
 //
@@ -154,7 +160,6 @@ FunctionPass *createLoopUnswitchPass();
 // LoopUnroll - This pass is a simple loop unrolling pass.
 //
 FunctionPass *createLoopUnrollPass();
-
 
 //===----------------------------------------------------------------------===//
 //
