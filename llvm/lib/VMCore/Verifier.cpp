@@ -64,7 +64,7 @@ static long ValidTypes[Type::FirstDerivedTyID] = {
 // failed.  This provides a nice place to put a breakpoint if you want to see
 // why something is not correct.
 //
-static inline void CheckFailed(const char *Cond, const string &Message,
+static inline void CheckFailed(const char *Cond, const std::string &Message,
                                const Value *V1 = 0, const Value *V2 = 0) {
   std::cerr << Message << "\n";
   if (V1) std::cerr << V1 << "\n";
@@ -100,14 +100,14 @@ static bool verifyInstruction(const Instruction *I) {
 
   // Check that PHI nodes look ok
   if (const PHINode *PN = dyn_cast<PHINode>(I)) {
-    vector<const BasicBlock*> Preds(pred_begin(I->getParent()),
-                                    pred_end(I->getParent()));
+    std::vector<const BasicBlock*> Preds(pred_begin(I->getParent()),
+                                         pred_end(I->getParent()));
     // Loop over all of the incoming values, make sure that there are
     // predecessors for each one...
     //
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
       const BasicBlock *BB = PN->getIncomingBlock(i);
-      vector<const BasicBlock*>::iterator PI =
+      std::vector<const BasicBlock*>::iterator PI =
         find(Preds.begin(), Preds.end(), BB);
       Assert2(PI != Preds.end(), "PHI node has entry for basic block that"
               " is not a predecessor!", PN, BB);
@@ -115,8 +115,8 @@ static bool verifyInstruction(const Instruction *I) {
     }
 
     // There should be no entries left in the predecessor list...
-    for (vector<const BasicBlock*>::iterator I = Preds.begin(), E = Preds.end();
-         I != E; ++I)
+    for (std::vector<const BasicBlock*>::iterator I = Preds.begin(),
+           E = Preds.end(); I != E; ++I)
       Assert2(0, "PHI node does not have entry for a predecessor basic block!",
               PN, *I);
   }

@@ -10,6 +10,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Support/CFG.h"
 #include "Support/SetOperations.h"
+#include <iostream>
 
 /// BROKEN: Should not include sparc stuff directly into here
 #include "../../Target/Sparc/SparcInternals.h"  //  Only for PHI defn

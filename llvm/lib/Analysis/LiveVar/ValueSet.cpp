@@ -5,7 +5,7 @@
 #include "llvm/ConstantVals.h"
 #include <iostream>
 
-ostream &operator<<(ostream &O, RAV V) { // func to print a Value 
+std::ostream &operator<<(std::ostream &O, RAV V) { // func to print a Value 
   const Value *v = V.V;
   if (v->hasName())
     return O << v << "(" << v->getName() << ") ";

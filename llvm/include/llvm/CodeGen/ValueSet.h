@@ -10,7 +10,7 @@ struct RAV {  // Register Allocator Value
   const Value *V;
   RAV(const Value *v) : V(v) {}
 };
-ostream &operator<<(ostream &out, RAV Val);
+std::ostream &operator<<(std::ostream &out, RAV Val);
 
 
 typedef std::set<const Value*> ValueSet;
