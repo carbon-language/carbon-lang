@@ -60,8 +60,8 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
     const Type *RetTy = ConvertType(FT->getReturnType());
     std::vector<const Type*> ArgTypes;
 
-    for (FunctionType::ParamTypes::const_iterator I = FT->getParamTypes().begin(),
-           E = FT->getParamTypes().end(); I != E; ++I)
+    for (FunctionType::param_iterator I = FT->param_begin(),
+           E = FT->param_end(); I != E; ++I)
       ArgTypes.push_back(ConvertType(*I));
     
     DestTy = FunctionType::get(RetTy, ArgTypes, FT->isVarArg());

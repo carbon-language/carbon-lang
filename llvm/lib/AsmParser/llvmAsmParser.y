@@ -1668,8 +1668,8 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       // Loop through FunctionType's arguments and ensure they are specified
       // correctly!
       //
-      FunctionType::ParamTypes::const_iterator I = Ty->getParamTypes().begin();
-      FunctionType::ParamTypes::const_iterator E = Ty->getParamTypes().end();
+      FunctionType::param_iterator I = Ty->param_begin();
+      FunctionType::param_iterator E = Ty->param_end();
       std::vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
@@ -1869,8 +1869,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       // Loop through FunctionType's arguments and ensure they are specified
       // correctly!
       //
-      FunctionType::ParamTypes::const_iterator I = Ty->getParamTypes().begin();
-      FunctionType::ParamTypes::const_iterator E = Ty->getParamTypes().end();
+      FunctionType::param_iterator I = Ty->param_begin();
+      FunctionType::param_iterator E = Ty->param_end();
       std::vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)

@@ -58,7 +58,7 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       const FunctionType *OldMT = Old->getFunctionType();
       const FunctionType *ConcreteMT = Concrete->getFunctionType();
       
-      if (OldMT->getParamTypes().size() > ConcreteMT->getParamTypes().size() &&
+      if (OldMT->getNumParams() > ConcreteMT->getNumParams() &&
           !ConcreteMT->isVarArg())
         if (!Old->use_empty()) {
           std::cerr << "WARNING: Linking function '" << Old->getName()
@@ -73,14 +73,14 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       // Check to make sure that if there are specified types, that they
       // match...
       //
-      unsigned NumArguments = std::min(OldMT->getParamTypes().size(),
-                                       ConcreteMT->getParamTypes().size());
+      unsigned NumArguments = std::min(OldMT->getNumParams(),
+                                       ConcreteMT->getNumParams());
 
       if (!Old->use_empty() && !Concrete->use_empty())
         for (unsigned i = 0; i < NumArguments; ++i)
-          if (OldMT->getParamTypes()[i] != ConcreteMT->getParamTypes()[i])
-            if (OldMT->getParamTypes()[i]->getPrimitiveID() != 
-                ConcreteMT->getParamTypes()[i]->getPrimitiveID()) {
+          if (OldMT->getParamType(i) != ConcreteMT->getParamType(i))
+            if (OldMT->getParamType(i)->getPrimitiveID() != 
+                ConcreteMT->getParamType(i)->getPrimitiveID()) {
               std::cerr << "WARNING: Function [" << Old->getName()
                         << "]: Parameter types conflict for: '";
               WriteTypeSymbolic(std::cerr, OldMT, &M);
@@ -231,7 +231,7 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
           if ((ConcreteF->getReturnType() == OtherF->getReturnType() ||
                CallersAllIgnoreReturnValue(*OtherF)) &&
               OtherF->getFunctionType()->isVarArg() &&
-              OtherF->getFunctionType()->getParamTypes().empty())
+              OtherF->getFunctionType()->getNumParams() == 0)
             DontPrintWarning = true;
       
       // Otherwise, if the non-concrete global is a global array variable with a

@@ -34,12 +34,12 @@ void BytecodeWriter::outputType(const Type *T) {
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
 
-    // Output the number of arguments to method (+1 if varargs):
-    output_vbr((unsigned)MT->getParamTypes().size()+MT->isVarArg(), Out);
+    // Output the number of arguments to function (+1 if varargs):
+    output_vbr((unsigned)MT->getNumParams()+MT->isVarArg(), Out);
 
     // Output all of the arguments...
-    FunctionType::ParamTypes::const_iterator I = MT->getParamTypes().begin();
-    for (; I != MT->getParamTypes().end(); ++I) {
+    FunctionType::param_iterator I = MT->param_begin();
+    for (; I != MT->param_end(); ++I) {
       Slot = Table.getSlot(*I);
       assert(Slot != -1 && "Type used but not available!!");
       output_vbr((unsigned)Slot, Out);

@@ -201,17 +201,16 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     const FunctionType *MTy = cast<FunctionType>(Ty);
     std::stringstream FunctionInnards; 
     FunctionInnards << " (" << NameSoFar << ") (";
-    for (FunctionType::ParamTypes::const_iterator
-           I = MTy->getParamTypes().begin(),
-           E = MTy->getParamTypes().end(); I != E; ++I) {
-      if (I != MTy->getParamTypes().begin())
+    for (FunctionType::param_iterator I = MTy->param_begin(),
+           E = MTy->param_end(); I != E; ++I) {
+      if (I != MTy->param_begin())
         FunctionInnards << ", ";
       printType(FunctionInnards, *I, "");
     }
     if (MTy->isVarArg()) {
-      if (!MTy->getParamTypes().empty()) 
+      if (MTy->getNumParams()) 
     	FunctionInnards << ", ...";
-    } else if (MTy->getParamTypes().empty()) {
+    } else if (!MTy->getNumParams()) {
       FunctionInnards << "void";
     }
     FunctionInnards << ")";
@@ -948,10 +947,9 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
     }
   } else {
     // Loop over the arguments, printing them...
-    for (FunctionType::ParamTypes::const_iterator I = 
-	   FT->getParamTypes().begin(),
-	   E = FT->getParamTypes().end(); I != E; ++I) {
-      if (I != FT->getParamTypes().begin()) FunctionInnards << ", ";
+    for (FunctionType::param_iterator I = FT->param_begin(),
+	   E = FT->param_end(); I != E; ++I) {
+      if (I != FT->param_begin()) FunctionInnards << ", ";
       printType(FunctionInnards, *I);
     }
   }
@@ -959,10 +957,10 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   // Finish printing arguments... if this is a vararg function, print the ...,
   // unless there are no known types, in which case, we just emit ().
   //
-  if (FT->isVarArg() && !FT->getParamTypes().empty()) {
-    if (FT->getParamTypes().size()) FunctionInnards << ", ";
+  if (FT->isVarArg() && FT->getNumParams()) {
+    if (FT->getNumParams()) FunctionInnards << ", ";
     FunctionInnards << "...";  // Output varargs portion of signature!
-  } else if (!FT->isVarArg() && FT->getParamTypes().empty()) {
+  } else if (!FT->isVarArg() && FT->getNumParams() == 0) {
     FunctionInnards << "void"; // ret() -> ret(void) in C.
   }
   FunctionInnards << ")";

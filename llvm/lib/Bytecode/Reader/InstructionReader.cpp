@@ -218,16 +218,16 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     if (FTy == 0) throw std::string("Call to non function pointer value!");
 
     std::vector<Value *> Params;
-    const FunctionType::ParamTypes &PL = FTy->getParamTypes();
-
     if (!FTy->isVarArg()) {
-      FunctionType::ParamTypes::const_iterator It = PL.begin();
+      FunctionType::param_iterator It = FTy->param_begin();
 
       for (unsigned i = 1, e = Args.size(); i != e; ++i) {
-        if (It == PL.end()) throw std::string("Invalid call instruction!");
+        if (It == FTy->param_end())
+          throw std::string("Invalid call instruction!");
         Params.push_back(getValue(getTypeSlot(*It++), Args[i]));
       }
-      if (It != PL.end()) throw std::string("Invalid call instruction!");
+      if (It != FTy->param_end())
+        throw std::string("Invalid call instruction!");
     } else {
       Args.erase(Args.begin(), Args.begin()+1+hasVarArgCallPadding);
 
@@ -268,18 +268,18 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     std::vector<Value *> Params;
     BasicBlock *Normal, *Except;
 
-    const FunctionType::ParamTypes &PL = FTy->getParamTypes();
-
     if (!FTy->isVarArg()) {
       Normal = getBasicBlock(Args[1]);
       Except = getBasicBlock(Args[2]);
 
-      FunctionType::ParamTypes::const_iterator It = PL.begin();
+      FunctionType::param_iterator It = FTy->param_begin();
       for (unsigned i = 3, e = Args.size(); i != e; ++i) {
-        if (It == PL.end()) throw std::string("Invalid invoke instruction!");
+        if (It == FTy->param_end())
+          throw std::string("Invalid invoke instruction!");
         Params.push_back(getValue(getTypeSlot(*It++), Args[i]));
       }
-      if (It != PL.end()) throw std::string("Invalid invoke instruction!");
+      if (It != FTy->param_end())
+        throw std::string("Invalid invoke instruction!");
     } else {
       Args.erase(Args.begin(), Args.begin()+1+hasVarArgCallPadding);
 

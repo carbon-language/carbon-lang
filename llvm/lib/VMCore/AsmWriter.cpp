@@ -153,15 +153,14 @@ static std::string calcTypeName(const Type *Ty,
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
     Result = calcTypeName(FTy->getReturnType(), TypeStack, TypeNames) + " (";
-    for (FunctionType::ParamTypes::const_iterator
-           I = FTy->getParamTypes().begin(),
-           E = FTy->getParamTypes().end(); I != E; ++I) {
-      if (I != FTy->getParamTypes().begin())
+    for (FunctionType::param_iterator I = FTy->param_begin(),
+           E = FTy->param_end(); I != E; ++I) {
+      if (I != FTy->param_begin())
         Result += ", ";
       Result += calcTypeName(*I, TypeStack, TypeNames);
     }
     if (FTy->isVarArg()) {
-      if (!FTy->getParamTypes().empty()) Result += ", ";
+      if (FTy->getNumParams()) Result += ", ";
       Result += "...";
     }
     Result += ")";
@@ -517,15 +516,14 @@ private :
 std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
   if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
     printType(FTy->getReturnType()) << " (";
-    for (FunctionType::ParamTypes::const_iterator
-           I = FTy->getParamTypes().begin(),
-           E = FTy->getParamTypes().end(); I != E; ++I) {
-      if (I != FTy->getParamTypes().begin())
+    for (FunctionType::param_iterator I = FTy->param_begin(),
+           E = FTy->param_end(); I != E; ++I) {
+      if (I != FTy->param_begin())
         Out << ", ";
       printType(*I);
     }
     if (FTy->isVarArg()) {
-      if (!FTy->getParamTypes().empty()) Out << ", ";
+      if (FTy->getNumParams()) Out << ", ";
       Out << "...";
     }
     Out << ")";
@@ -689,7 +687,7 @@ void AssemblyWriter::printFunction(const Function *F) {
 
   // Finish printing arguments...
   if (FT->isVarArg()) {
-    if (FT->getParamTypes().size()) Out << ", ";
+    if (FT->getNumParams()) Out << ", ";
     Out << "...";  // Output varargs portion of signature!
   }
   Out << ")";

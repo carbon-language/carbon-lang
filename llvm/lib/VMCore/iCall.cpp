@@ -31,14 +31,13 @@ CallInst::CallInst(Value *Func, const std::vector<Value*> &params,
   Operands.reserve(1+params.size());
   Operands.push_back(Use(Func, this));
 
-  const FunctionType *MTy = 
+  const FunctionType *FTy = 
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
 
-  const FunctionType::ParamTypes &PL = MTy->getParamTypes();
-  assert(params.size() == PL.size() || 
-	 (MTy->isVarArg() && params.size() > PL.size()) &&
+  assert((params.size() == FTy->getNumParams() || 
+          (FTy->isVarArg() && params.size() > FTy->getNumParams())) &&
 	 "Calling a function with bad signature");
-  for (unsigned i = 0; i < params.size(); i++)
+  for (unsigned i = 0; i != params.size(); i++)
     Operands.push_back(Use(params[i], this));
 }
 
@@ -53,8 +52,7 @@ CallInst::CallInst(Value *Func, const std::string &Name,
   const FunctionType *MTy = 
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
 
-  const FunctionType::ParamTypes &PL = MTy->getParamTypes();
-  assert(PL.empty() && "Calling a function with bad signature");
+  assert(MTy->getNumParams() == 0 && "Calling a function with bad signature");
 }
 
 CallInst::CallInst(Value *Func, Value* A, const std::string &Name,
@@ -68,8 +66,8 @@ CallInst::CallInst(Value *Func, Value* A, const std::string &Name,
   const FunctionType *MTy = 
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
 
-  const FunctionType::ParamTypes &PL = MTy->getParamTypes();
-  assert(PL.size() == 1 || (MTy->isVarArg() && PL.empty()) &&
+  assert((MTy->getNumParams() == 1 ||
+          (MTy->isVarArg() && MTy->getNumParams() == 0)) &&
 	 "Calling a function with bad signature");
   Operands.push_back(Use(A, this));
 }
@@ -115,9 +113,8 @@ InvokeInst::InvokeInst(Value *Func, BasicBlock *IfNormal,
   const FunctionType *MTy = 
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
   
-  const FunctionType::ParamTypes &PL = MTy->getParamTypes();
-  assert((params.size() == PL.size()) || 
-	 (MTy->isVarArg() && params.size() > PL.size()) &&
+  assert((params.size() == MTy->getNumParams()) || 
+	 (MTy->isVarArg() && params.size() > MTy->getNumParams()) &&
 	 "Calling a function with bad signature");
   
   for (unsigned i = 0; i < params.size(); i++)
@@ -138,9 +135,8 @@ InvokeInst::InvokeInst(Value *Func, BasicBlock *IfNormal,
   const FunctionType *MTy = 
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
   
-  const FunctionType::ParamTypes &PL = MTy->getParamTypes();
-  assert((params.size() == PL.size()) || 
-	 (MTy->isVarArg() && params.size() > PL.size()) &&
+  assert((params.size() == MTy->getNumParams()) || 
+	 (MTy->isVarArg() && params.size() > MTy->getNumParams()) &&
 	 "Calling a function with bad signature");
   
   for (unsigned i = 0; i < params.size(); i++)

@@ -304,8 +304,7 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
     //
     const PointerType *PT = cast<PointerType>(I->getOperand(0)->getType());
     const FunctionType *FT = cast<FunctionType>(PT->getElementType());
-    std::vector<const Type *> ArgTys(FT->getParamTypes().begin(),
-                                     FT->getParamTypes().end());
+    std::vector<const Type *> ArgTys(FT->param_begin(), FT->param_end());
     const FunctionType *NewTy =
       FunctionType::get(Ty, ArgTys, FT->isVarArg());
     if (!ExpressionConvertibleToType(I->getOperand(0),
@@ -513,8 +512,7 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
     //
     const PointerType *PT = cast<PointerType>(I->getOperand(0)->getType());
     const FunctionType *FT = cast<FunctionType>(PT->getElementType());
-    std::vector<const Type *> ArgTys(FT->getParamTypes().begin(),
-                                     FT->getParamTypes().end());
+    std::vector<const Type *> ArgTys(FT->param_begin(), FT->param_end());
     const FunctionType *NewTy =
       FunctionType::get(Ty, ArgTys, FT->isVarArg());
     const PointerType *NewPTy = PointerType::get(NewTy);
@@ -862,9 +860,8 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
       // reason for this is that we prefer to have resolved functions but casted
       // arguments if possible.
       //
-      const FunctionType::ParamTypes &PTs = FTy->getParamTypes();
-      for (unsigned i = 0, NA = PTs.size(); i < NA; ++i)
-        if (!PTs[i]->isLosslesslyConvertibleTo(I->getOperand(i+1)->getType()))
+      for (unsigned i = 0, NA = FTy->getNumParams(); i < NA; ++i)
+        if (!FTy->getParamType(i)->isLosslesslyConvertibleTo(I->getOperand(i+1)->getType()))
           return false;   // Operands must have compatible types!
 
       // Okay, at this point, we know that all of the arguments can be
@@ -878,7 +875,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
     const FunctionType *FTy = cast<FunctionType>(MPtr->getElementType());
     if (!FTy->isVarArg()) return false;
 
-    if ((OpNum-1) < FTy->getParamTypes().size())
+    if ((OpNum-1) < FTy->getNumParams())
       return false;  // It's not in the varargs section...
 
     // If we get this far, we know the value is in the varargs section of the
@@ -1175,7 +1172,6 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     if (Meth == OldVal) {   // Changing the function pointer?
       const PointerType *NewPTy = cast<PointerType>(NewVal->getType());
       const FunctionType *NewTy = cast<FunctionType>(NewPTy->getElementType());
-      const FunctionType::ParamTypes &PTs = NewTy->getParamTypes();
 
       if (NewTy->getReturnType() == Type::VoidTy)
         Name = "";  // Make sure not to name a void call!
@@ -1191,12 +1187,13 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       // Convert over all of the call operands to their new types... but only
       // convert over the part that is not in the vararg section of the call.
       //
-      for (unsigned i = 0; i < PTs.size(); ++i)
-        if (Params[i]->getType() != PTs[i]) {
+      for (unsigned i = 0; i != NewTy->getNumParams(); ++i)
+        if (Params[i]->getType() != NewTy->getParamType(i)) {
           // Create a cast to convert it to the right type, we know that this
           // is a lossless cast...
           //
-          Params[i] = new CastInst(Params[i], PTs[i],  "callarg.cast." +
+          Params[i] = new CastInst(Params[i], NewTy->getParamType(i),
+                                   "callarg.cast." +
                                    Params[i]->getName(), It);
         }
       Meth = NewVal;  // Update call destination to new value

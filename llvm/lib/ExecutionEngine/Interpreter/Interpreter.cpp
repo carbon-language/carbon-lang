@@ -89,9 +89,9 @@ GenericValue Interpreter::runFunction(Function *F,
   // take into account gratuitous differences in declared types,
   // though.
   std::vector<GenericValue> ActualArgs;
-  const unsigned ArgCount = F->getFunctionType()->getParamTypes().size();
+  const unsigned ArgCount = F->getFunctionType()->getNumParams();
   for (unsigned i = 0; i < ArgCount; ++i)
-    ActualArgs.push_back (ArgValues[i]);
+    ActualArgs.push_back(ArgValues[i]);
   
   // Set up the function call.
   callFunction(F, ActualArgs);

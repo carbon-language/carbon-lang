@@ -381,11 +381,10 @@ void BytecodeParser::materializeFunction(Function* F) {
         // Insert arguments into the value table before we parse the first basic
         // block in the function, but after we potentially read in the
         // compaction table.
-        const FunctionType::ParamTypes &Params =
-          F->getFunctionType()->getParamTypes();
+        const FunctionType *FT = F->getFunctionType();
         Function::aiterator AI = F->abegin();
-        for (FunctionType::ParamTypes::const_iterator It = Params.begin();
-             It != Params.end(); ++It, ++AI)
+        for (FunctionType::param_iterator It = FT->param_begin();
+             It != FT->param_end(); ++It, ++AI)
           insertValue(AI, getTypeSlot(AI->getType()), Values);
         InsertedArguments = true;
       }
@@ -404,11 +403,10 @@ void BytecodeParser::materializeFunction(Function* F) {
         // Insert arguments into the value table before we parse the first basic
         // block in the function, but after we potentially read in the
         // compaction table.
-        const FunctionType::ParamTypes &Params =
-          F->getFunctionType()->getParamTypes();
+        const FunctionType *FT = F->getFunctionType();
         Function::aiterator AI = F->abegin();
-        for (FunctionType::ParamTypes::const_iterator It = Params.begin();
-             It != Params.end(); ++It, ++AI)
+        for (FunctionType::param_iterator It = FT->param_begin();
+             It != FT->param_end(); ++It, ++AI)
           insertValue(AI, getTypeSlot(AI->getType()), Values);
         InsertedArguments = true;
       }
@@ -424,11 +422,10 @@ void BytecodeParser::materializeFunction(Function* F) {
       // list for the function, but after we potentially read in the compaction
       // table.
       if (!InsertedArguments) {
-        const FunctionType::ParamTypes &Params =
-          F->getFunctionType()->getParamTypes();
+        const FunctionType *FT = F->getFunctionType();
         Function::aiterator AI = F->abegin();
-        for (FunctionType::ParamTypes::const_iterator It = Params.begin();
-             It != Params.end(); ++It, ++AI)
+        for (FunctionType::param_iterator It = FT->param_begin();
+             It != FT->param_end(); ++It, ++AI)
           insertValue(AI, getTypeSlot(AI->getType()), Values);
         InsertedArguments = true;
       }

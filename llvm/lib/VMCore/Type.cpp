@@ -190,15 +190,14 @@ static std::string getTypeDescription(const Type *Ty,
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
     Result = getTypeDescription(FTy->getReturnType(), TypeStack) + " (";
-    for (FunctionType::ParamTypes::const_iterator
-           I = FTy->getParamTypes().begin(),
-           E = FTy->getParamTypes().end(); I != E; ++I) {
-      if (I != FTy->getParamTypes().begin())
+    for (FunctionType::param_iterator I = FTy->param_begin(),
+           E = FTy->param_end(); I != E; ++I) {
+      if (I != FTy->param_begin())
         Result += ", ";
       Result += getTypeDescription(*I, TypeStack);
     }
     if (FTy->isVarArg()) {
-      if (!FTy->getParamTypes().empty()) Result += ", ";
+      if (FTy->getNumParams()) Result += ", ";
       Result += "...";
     }
     Result += ")";
@@ -528,13 +527,11 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   } else if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
     const FunctionType *FTy2 = cast<FunctionType>(Ty2);
     if (FTy->isVarArg() != FTy2->isVarArg() ||
-        FTy->getParamTypes().size() != FTy2->getParamTypes().size() ||
+        FTy->getNumParams() != FTy2->getNumParams() ||
         !TypesEqual(FTy->getReturnType(), FTy2->getReturnType(), EqTypes))
       return false;
-    const FunctionType::ParamTypes &FTyP = FTy->getParamTypes();
-    const FunctionType::ParamTypes &FTy2P = FTy2->getParamTypes();
-    for (unsigned i = 0, e = FTyP.size(); i != e; ++i)
-      if (!TypesEqual(FTyP[i], FTy2P[i], EqTypes))
+    for (unsigned i = 0, e = FTy2->getNumParams(); i != e; ++i)
+      if (!TypesEqual(FTy->getParamType(i), FTy2->getParamType(i), EqTypes))
         return false;
     return true;
   } else {
@@ -736,8 +733,8 @@ static TypeMap<FunctionValType, FunctionType> FunctionTypes;
 FunctionValType FunctionValType::get(const FunctionType *FT) {
   // Build up a FunctionValType
   std::vector<const Type *> ParamTypes;
-  ParamTypes.reserve(FT->getParamTypes().size());
-  for (unsigned i = 0, e = FT->getParamTypes().size(); i != e; ++i)
+  ParamTypes.reserve(FT->getNumParams());
+  for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i)
     ParamTypes.push_back(FT->getParamType(i));
   return FunctionValType(FT->getReturnType(), ParamTypes, FT->isVarArg());
 }
