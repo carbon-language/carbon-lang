@@ -93,7 +93,7 @@ static unsigned getOperandSlot(Value *V) {
 static GenericValue executeCastOperation(Value *Src, const Type *DestTy,
                                          ExecutionContext &SF);
 static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty, ExecutionContext &SF);
+				   const Type *Ty);
 
 
 static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
@@ -107,7 +107,7 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
     case Instruction::Add:
       return executeAddInst(getOperandValue(CE->getOperand(0), SF),
                             getOperandValue(CE->getOperand(1), SF),
-                            CE->getType(), SF);
+                            CE->getType());
     default:
       cerr << "Unhandled ConstantExpr: " << CE << "\n";
       abort();
@@ -177,7 +177,7 @@ void Interpreter::initializeExecutionEngine() {
    case Type::TY##TyID: Dest.TY##Val = Src1.TY##Val OP Src2.TY##Val; break
 
 static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty, ExecutionContext &SF) {
+				   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_BINARY_OPERATOR(+, UByte);
@@ -198,7 +198,7 @@ static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2,
 }
 
 static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty, ExecutionContext &SF) {
+				   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_BINARY_OPERATOR(-, UByte);
@@ -219,7 +219,7 @@ static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2,
 }
 
 static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty, ExecutionContext &SF) {
+				   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_BINARY_OPERATOR(*, UByte);
@@ -240,7 +240,7 @@ static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2,
 }
 
 static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty, ExecutionContext &SF) {
+				   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_BINARY_OPERATOR(/, UByte);
@@ -261,7 +261,7 @@ static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2,
 }
 
 static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty, ExecutionContext &SF) {
+				   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_BINARY_OPERATOR(%, UByte);
@@ -286,7 +286,7 @@ static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2,
 }
 
 static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty, ExecutionContext &SF) {
+				   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_BINARY_OPERATOR(&, UByte);
@@ -306,7 +306,7 @@ static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2,
 
 
 static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2, 
-                                  const Type *Ty, ExecutionContext &SF) {
+                                  const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_BINARY_OPERATOR(|, UByte);
@@ -326,7 +326,7 @@ static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2,
 
 
 static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2, 
-                                   const Type *Ty, ExecutionContext &SF) {
+                                   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_BINARY_OPERATOR(^, UByte);
@@ -349,7 +349,7 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
    case Type::TY##TyID: Dest.BoolVal = Src1.TY##Val OP Src2.TY##Val; break
 
 static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2, 
-				     const Type *Ty, ExecutionContext &SF) {
+				     const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_SETCC(==, UByte);
@@ -370,7 +370,7 @@ static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2,
 }
 
 static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2, 
-				     const Type *Ty, ExecutionContext &SF) {
+				     const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_SETCC(!=, UByte);
@@ -392,7 +392,7 @@ static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2,
 }
 
 static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2, 
-				     const Type *Ty, ExecutionContext &SF) {
+				     const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_SETCC(<=, UByte);
@@ -413,7 +413,7 @@ static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2,
 }
 
 static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2, 
-				     const Type *Ty, ExecutionContext &SF) {
+				     const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_SETCC(>=, UByte);
@@ -434,7 +434,7 @@ static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2,
 }
 
 static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2, 
-				     const Type *Ty, ExecutionContext &SF) {
+				     const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_SETCC(<, UByte);
@@ -455,7 +455,7 @@ static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2,
 }
 
 static GenericValue executeSetGTInst(GenericValue Src1, GenericValue Src2, 
-				     const Type *Ty, ExecutionContext &SF) {
+				     const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_SETCC(>, UByte);
@@ -482,20 +482,20 @@ static void executeBinaryInst(BinaryOperator &I, ExecutionContext &SF) {
   GenericValue R;   // Result
 
   switch (I.getOpcode()) {
-  case Instruction::Add:   R = executeAddInst  (Src1, Src2, Ty, SF); break;
-  case Instruction::Sub:   R = executeSubInst  (Src1, Src2, Ty, SF); break;
-  case Instruction::Mul:   R = executeMulInst  (Src1, Src2, Ty, SF); break;
-  case Instruction::Div:   R = executeDivInst  (Src1, Src2, Ty, SF); break;
-  case Instruction::Rem:   R = executeRemInst  (Src1, Src2, Ty, SF); break;
-  case Instruction::And:   R = executeAndInst  (Src1, Src2, Ty, SF); break;
-  case Instruction::Or:    R = executeOrInst   (Src1, Src2, Ty, SF); break;
-  case Instruction::Xor:   R = executeXorInst  (Src1, Src2, Ty, SF); break;
-  case Instruction::SetEQ: R = executeSetEQInst(Src1, Src2, Ty, SF); break;
-  case Instruction::SetNE: R = executeSetNEInst(Src1, Src2, Ty, SF); break;
-  case Instruction::SetLE: R = executeSetLEInst(Src1, Src2, Ty, SF); break;
-  case Instruction::SetGE: R = executeSetGEInst(Src1, Src2, Ty, SF); break;
-  case Instruction::SetLT: R = executeSetLTInst(Src1, Src2, Ty, SF); break;
-  case Instruction::SetGT: R = executeSetGTInst(Src1, Src2, Ty, SF); break;
+  case Instruction::Add:   R = executeAddInst  (Src1, Src2, Ty); break;
+  case Instruction::Sub:   R = executeSubInst  (Src1, Src2, Ty); break;
+  case Instruction::Mul:   R = executeMulInst  (Src1, Src2, Ty); break;
+  case Instruction::Div:   R = executeDivInst  (Src1, Src2, Ty); break;
+  case Instruction::Rem:   R = executeRemInst  (Src1, Src2, Ty); break;
+  case Instruction::And:   R = executeAndInst  (Src1, Src2, Ty); break;
+  case Instruction::Or:    R = executeOrInst   (Src1, Src2, Ty); break;
+  case Instruction::Xor:   R = executeXorInst  (Src1, Src2, Ty); break;
+  case Instruction::SetEQ: R = executeSetEQInst(Src1, Src2, Ty); break;
+  case Instruction::SetNE: R = executeSetNEInst(Src1, Src2, Ty); break;
+  case Instruction::SetLE: R = executeSetLEInst(Src1, Src2, Ty); break;
+  case Instruction::SetGE: R = executeSetGEInst(Src1, Src2, Ty); break;
+  case Instruction::SetLT: R = executeSetLTInst(Src1, Src2, Ty); break;
+  case Instruction::SetGT: R = executeSetGTInst(Src1, Src2, Ty); break;
   default:
     cout << "Don't know how to handle this binary operator!\n-->" << I;
     R = Src1;
@@ -644,7 +644,7 @@ static void executeSwitch(SwitchInst &I, ExecutionContext &SF) {
   // Check to see if any of the cases match...
   for (unsigned i = 2, e = I.getNumOperands(); i != e; i += 2) {
     if (executeSetEQInst(CondVal,
-                         getOperandValue(I.getOperand(i), SF),ElTy,SF).BoolVal){
+                         getOperandValue(I.getOperand(i), SF), ElTy).BoolVal) {
       Dest = cast<BasicBlock>(I.getOperand(i+1));
       break;
     }
