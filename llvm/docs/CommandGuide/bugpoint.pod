@@ -1,0 +1,250 @@
+=pod
+
+=head1 NAME
+
+bugpoint - automatic test case reduction tool
+
+=head1 SYNOPSIS
+
+bugpoint [options] [input LLVM ll/bc files] [LLVM passes] --args
+I<program arguments> ...
+
+=head1 DESCRIPTION
+
+The B<bugpoint> tool narrows down the source of problems in LLVM tools and passes.
+It can be used to debug three types of failures: optimizer crashes,
+miscompilations by optimizers, or bad native code generation (including problems
+in the static and JIT compilers).  It aims to reduce large test cases to small,
+useful ones.  For example, if B<gccas> crashes while optimizing a file, it will
+identify the optimization (or combination of optimizations) that causes the
+crash, and reduce the file down to a small example which triggers the crash.
+
+=head2 Design Philosophy
+
+B<bugpoint> is designed to be a useful tool without requiring any hooks into the
+LLVM infrastructure at all.  It works with any and all LLVM passes and code
+generators, and does not need to "know" how they work.  Because of this, it may
+appear to do stupid things or miss obvious simplifications.  B<bugpoint> is also
+designed to trade off programmer time for computer time in the
+compiler-debugging process; consequently, it may take a long period of
+(unattended) time to reduce a test case, but we feel it is still worth it. Note
+that B<bugpoint> is generally very quick unless debugging a miscompilation where
+each test of the program (which requires executing it) takes a long time.
+
+=head2 Automatic Debugger Selection
+
+B<bugpoint> reads each F<.bc> or F<.ll> file specified on the command line and
+links them together into a single module, called the test program.  If any LLVM
+passes are specified on the command line, it runs these passes on the test
+program.  If any of the passes crash, or if they produce malformed output (which
+causes the verifier to abort), B<bugpoint> starts the crash debugger.
+
+Otherwise, if the B<-output> option was not specified, B<bugpoint> runs the test
+program with the C backend (which is assumed to generate good code) to generate
+a reference output.  Once B<bugpoint> has a reference output for the test
+program, it tries executing it with the selected code generator.  If the
+selected code generator crashes, B<bugpoint> starts the L</Crash debugger> on
+the code generator.  Otherwise, if the resulting output differs from the
+reference output, it assumes the difference resulted from a code generator
+failure, and starts the L</Code generator debugger>.
+
+Finally, if the output of the selected code generator matches the reference
+output, B<bugpoint> runs the test program after all of the LLVM passes have been
+applied to it.  If its output differs from the reference output, it assumes the
+difference resulted from a failure in one of the LLVM passes, and enters the
+miscompilation debugger. Otherwise, there is no problem B<bugpoint> can debug.
+
+=head2 Crash debugger
+
+If an optimizer or code generator crashes, B<bugpoint> will try as hard as it
+can to reduce the list of passes (for optimizer crashes) and the size of the
+test program.  First, B<bugpoint> figures out which combination of optimizer
+passes triggers the bug. This is useful when debugging a problem exposed by
+B<gccas>, for example, because it runs over 38 passes.
+
+Next, B<bugpoint> tries removing functions from the test program, to reduce its
+size.  Usually it is able to reduce a test program to a single function, when
+debugging intraprocedural optimizations.  Once the number of functions has been
+reduced, it attempts to delete various edges in the control flow graph, to
+reduce the size of the function as much as possible.  Finally, B<bugpoint>
+deletes any individual LLVM instructions whose absence does not eliminate the
+failure.  At the end, B<bugpoint> should tell you what passes crash, give you a
+bytecode file, and give you instructions on how to reproduce the failure with
+B<opt>, B<analyze>, or B<llc>.
+
+=head2 Code generator debugger
+
+The code generator debugger attempts to narrow down the amount of code that is
+being miscompiled by the selected code generator.  To do this, it takes the test
+program and partitions it into two pieces: one piece which it compiles with the
+C backend (into a shared object), and one piece which it runs with either the
+JIT or the static compiler (B<llc>).  It uses several techniques to reduce the
+amount of code pushed through the LLVM code generator, to reduce the potential
+scope of the problem.  After it is finished, it emits two bytecode files (called
+"test" [to be compiled with the code generator] and "safe" [to be compiled with
+the C backend], respectively), and instructions for reproducing the problem.
+The code generator debugger assumes that the C backend produces good code.
+
+=head2 Miscompilation debugger
+
+The miscompilation debugger works similarly to the code generator debugger.  It
+works by splitting the test program into two pieces, running the optimizations
+specified on one piece, linking the two pieces back together, and then executing
+the result.  It attempts to narrow down the list of passes to the one (or few)
+which are causing the miscompilation, then reduce the portion of the test
+program which is being miscompiled.  The miscompilation debugger assumes that
+the selected code generator is working properly.
+
+=head2 Advice for using bugpoint
+
+B<bugpoint> can be a remarkably useful tool, but it sometimes works in
+non-obvious ways.  Here are some hints and tips:
+
+=over
+
+=item *
+
+In the code generator and miscompilation debuggers, B<bugpoint> only
+works with programs that have deterministic output.  Thus, if the program
+outputs C<argv[0]>, the date, time, or any other "random" data, B<bugpoint> may
+misinterpret differences in these data, when output, as the result of a
+miscompilation.  Programs should be temporarily modified to disable outputs that
+are likely to vary from run to run.
+
+=item *
+
+In the code generator and miscompilation debuggers, debugging will go faster if
+you manually modify the program or its inputs to reduce the runtime, but still
+exhibit the problem.
+
+=item *
+
+B<bugpoint> is extremely useful when working on a new optimization: it helps
+track down regressions quickly.  To avoid having to relink B<bugpoint> every
+time you change your optimization, make B<bugpoint> dynamically load
+your optimization by using the B<-load> option.
+
+=item *
+
+B<bugpoint> can generate a lot of output and run for a long period of time.  It
+is often useful to capture the output of the program to file.  For example, in
+the C shell, you can type:
+
+    bugpoint ... |& tee bugpoint.log
+
+to get a copy of B<bugpoint>'s output in the file F<bugpoint.log>, as well as on
+your terminal.
+
+=item *
+
+B<bugpoint> cannot debug problems with the LLVM linker. If B<bugpoint> crashes
+before you see its C<All input ok> message, you might try running C<llvm-link
+-v> on the same set of input files. If that also crashes, you may be
+experiencing a linker bug.
+
+=item *
+
+If your program is supposed to crash, B<bugpoint> will be confused. One way to
+deal with this is to cause B<bugpoint> to ignore the exit code from your
+program, by giving it the B<-check-exit-code=false> option.
+
+=back
+
+=head1 OPTIONS
+
+=over 
+
+=item B<--additional-so> F<library>
+
+Load the dynamic shared object F<library> into the test program whenever it is
+run.  This is useful if you are debugging programs which depend on non-LLVM
+libraries (such as the X or curses libraries) to run.
+
+=item B<--args> I<program args>
+
+Pass all arguments specified after -args to the test program whenever it runs.
+Note that if any of the I<program args> start with a '-', you should use:
+
+    bugpoint [bugpoint args] --args -- [program args]
+
+The "--" right after the B<--args> option tells B<bugpoint> to consider any
+options starting with C<-> to be part of the B<--args> option, not as options to
+B<bugpoint> itself.
+
+=item B<--tool-args> I<tool args>
+
+Pass all arguments specified after --tool-args to the LLVM tool under test
+(B<llc>, B<lli>, etc.) whenever it runs.  You should use this option in the
+following way:
+
+    bugpoint [bugpoint args] --tool-args -- [tool args]
+
+The "--" right after the B<--tool-args> option tells B<bugpoint> to consider any
+options starting with C<-> to be part of the B<--tool-args> option, not as
+options to B<bugpoint> itself. (See B<--args>, above.)
+
+=item B<--check-exit-code>=I<{true,false}>
+
+Assume a non-zero exit code or core dump from the test program is a failure.
+Defaults to true.
+
+=item B<--disable-{dce,simplifycfg}>
+
+Do not run the specified passes to clean up and reduce the size of the test
+program. By default, B<bugpoint> uses these passes internally when attempting to
+reduce test programs.  If you're trying to find a bug in one of these passes,
+B<bugpoint> may crash.
+
+=item B<--help>
+
+Print a summary of command line options.
+
+=item B<--input> F<filename>
+
+Open F<filename> and redirect the standard input of the test program, whenever
+it runs, to come from that file.
+
+=item B<--load> F<plugin>
+
+Load the dynamic object F<plugin> into B<bugpoint> itself.  This object should
+register new optimization passes.  Once loaded, the object will add new command
+line options to enable various optimizations.  To see the new complete list of
+optimizations, use the B<--help> and B<--load> options together; for example:
+
+    bugpoint --load myNewPass.so --help
+
+=item B<--output> F<filename>
+
+Whenever the test program produces output on its standard output stream, it
+should match the contents of F<filename> (the "reference output"). If you
+do not use this option, B<bugpoint> will attempt to generate a reference output
+by compiling the program with the C backend and running it.
+
+=item B<--profile-info-file> F<filename>
+
+Profile file loaded by B<--profile-loader>.
+
+=item B<--run-{int,jit,llc,cbe}>
+
+Whenever the test program is compiled, B<bugpoint> should generate code for it
+using the specified code generator.  These options allow you to choose the
+interpreter, the JIT compiler, the static native code compiler, or the C
+backend, respectively.
+
+=back
+
+=head1 EXIT STATUS
+
+If B<bugpoint> succeeds in finding a problem, it will exit with 0.  Otherwise,
+if an error occurs, it will exit with a non-zero value.
+
+=head1 SEE ALSO
+
+L<opt>, L<analyze>
+
+=head1 AUTHOR
+
+Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
+
+=cut
+
