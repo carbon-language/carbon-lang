@@ -192,7 +192,7 @@ public:
   virtual int getClassRegNum(int unifiedRegNum, unsigned& regClassID) const =0;
   
   // Returns the assembly-language name of the specified machine register.
-  virtual const std::string getUnifiedRegName(int UnifiedRegNum) const = 0;
+  virtual const char * const getUnifiedRegName(int UnifiedRegNum) const = 0;
 
   // The following 4 methods are used to find the RegType (a target-specific
   // enum) for a reg class and a given primitive type, a LiveRange, a Value,
