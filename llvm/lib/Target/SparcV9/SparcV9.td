@@ -23,6 +23,7 @@ include "SparcV9_Reg.td"
 class InstV9 : Instruction {          // SparcV9 instruction baseline
   field bits<32> Inst;
 
+  let Name = "SparcV9";
   let Namespace = "V9";
 
   bits<2> op;
