@@ -29,7 +29,7 @@
 namespace {
   Statistic<> NumSpilled ("ra-local", "Number of registers spilled");
   Statistic<> NumReloaded("ra-local", "Number of registers reloaded");
-  cl::opt<bool> DisableKill("no-kill", cl::Hidden, 
+  cl::opt<bool> DisableKill("disable-kill", cl::Hidden, 
                             cl::desc("Disable register kill in local-ra"));
 
   class RA : public MachineFunctionPass {
