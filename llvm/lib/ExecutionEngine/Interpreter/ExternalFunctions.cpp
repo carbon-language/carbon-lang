@@ -481,18 +481,33 @@ GenericValue lle_X_strcpy(FunctionType *M, const vector<GenericValue> &Args) {
   return PTOGV(strcpy((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1])));
 }
 
+static GenericValue size_t_to_GV (size_t n) {
+  GenericValue Ret;
+  if (sizeof (size_t) == sizeof (uint64_t)) {
+    Ret.ULongVal = n;
+  } else {
+    assert (sizeof (size_t) == sizeof (unsigned int));
+    Ret.UIntVal = n;
+  }
+  return Ret;
+}
+
+static size_t GV_to_size_t (GenericValue GV) { 
+  size_t count;
+  if (sizeof (size_t) == sizeof (uint64_t)) {
+    count = GV.ULongVal;
+  } else {
+    assert (sizeof (size_t) == sizeof (unsigned int));
+    count = GV.UIntVal;
+  }
+  return count;
+}
+
 // size_t strlen(const char *src);
 GenericValue lle_X_strlen(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   size_t strlenResult = strlen ((char *) GVTOP (Args[0]));
-  GenericValue Ret;
-  if (sizeof (size_t) == sizeof (uint64_t)) {
-    Ret.ULongVal = strlenResult;
-  } else {
-    assert (sizeof (size_t) == sizeof (unsigned int));
-    Ret.UIntVal = strlenResult;
-  }
-  return Ret;
+  return size_t_to_GV (strlenResult);
 }
 
 // char *strdup(const char *src);
@@ -510,14 +525,15 @@ GenericValue lle_X___strdup(FunctionType *M, const vector<GenericValue> &Args) {
 // void *memset(void *S, int C, size_t N)
 GenericValue lle_X_memset(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 3);
-  return PTOGV(memset(GVTOP(Args[0]), Args[1].IntVal, Args[2].UIntVal));
+  size_t count = GV_to_size_t (Args[2]);
+  return PTOGV(memset(GVTOP(Args[0]), Args[1].IntVal, count));
 }
 
 // void *memcpy(void *Dest, void *src, size_t Size);
 GenericValue lle_X_memcpy(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 3);
-  return PTOGV(memcpy((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1]),
-                      Args[2].UIntVal));
+  size_t count = GV_to_size_t (Args[2]);
+  return PTOGV(memcpy((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1]), count));
 }
 
 //===----------------------------------------------------------------------===//
@@ -594,21 +610,21 @@ GenericValue lle_X_feof(FunctionType *M, const vector<GenericValue> &Args) {
 // size_t fread(void *ptr, size_t size, size_t nitems, FILE *stream);
 GenericValue lle_X_fread(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 4);
-  GenericValue GV;
+  size_t result;
 
-  GV.UIntVal = fread((void*)GVTOP(Args[0]), Args[1].UIntVal,
-                     Args[2].UIntVal, getFILE(GVTOP(Args[3])));
-  return GV;
+  result = fread((void*)GVTOP(Args[0]), GV_to_size_t (Args[1]),
+                 GV_to_size_t (Args[2]), getFILE(GVTOP(Args[3])));
+  return size_t_to_GV (result);
 }
 
 // size_t fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
 GenericValue lle_X_fwrite(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 4);
-  GenericValue GV;
+  size_t result;
 
-  GV.UIntVal = fwrite((void*)GVTOP(Args[0]), Args[1].UIntVal,
-                      Args[2].UIntVal, getFILE(GVTOP(Args[3])));
-  return GV;
+  result = fwrite((void*)GVTOP(Args[0]), GV_to_size_t (Args[1]),
+                  GV_to_size_t (Args[2]), getFILE(GVTOP(Args[3])));
+  return size_t_to_GV (result);
 }
 
 // char *fgets(char *s, int n, FILE *stream);
