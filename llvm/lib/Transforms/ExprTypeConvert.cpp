@@ -274,6 +274,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     //
     if (GEP->getNumOperands() == 2 && 
         GEP->getOperand(1)->getType() == Type::LongTy &&
+        PTy->getElementType()->isSized() &&
         TD.getTypeSize(PTy->getElementType()) == 
         TD.getTypeSize(GEP->getType()->getElementType())) {
       const PointerType *NewSrcTy = PointerType::get(PVTy);
