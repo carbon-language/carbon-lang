@@ -74,7 +74,6 @@ else
 PROFILE =
 endif
 
-# TODO: Get rid of exceptions! : -fno-exceptions -fno-rtti
 # -Wno-unused-parameter
 CompileCommonOpts = $(PROFILE) -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
 
@@ -85,18 +84,17 @@ CompileO = $(Compile) -O3 -DNDEBUG -finline-functions -felide-constructors -fnon
 
 # Link final executable
 
-# To enable purify, do it here:
-ifdef ENABLE_PURIFY
-Link     = $(PURIFY) $(CXX) $(Prof) -static
+ifdef ENABLE_PURIFY # To enable purify, build with 'gmake ENABLE_PURIFY=1'
+Link     = $(PURIFY) $(CXX) $(PROFILE) -static
 else
-Link     = LD_RUN_PATH=/usr/dcs/software/evaluation/encap/gcc-3.0.4/lib $(CXX) $(PROFILE)
+Link     = $(CXX) $(PROFILE)
 endif
 LinkG    = $(Link) -g  -L $(LIBDEBUG)
 LinkO    = $(Link) -O3 -L $(LIBRELEASE)
 
 # Create a .so file from a .o files...
-#MakeSO   = $(CXX) -shared $(Prof)
-MakeSO   = $(CXX) -G $(Prof)
+#MakeSO   = $(CXX) -shared $(PROFILE)
+MakeSO   = $(CXX) -G $(PROFILE)
 MakeSOO  = $(MakeSO) -O3
 
 # Create one .o file from a bunch of .o files...
@@ -149,7 +147,7 @@ endif
 #  BUILD_ARCHIVE instead.
 #
 #  Some libraries must be built as .a files (libscalar for example) because if
-#  it's built as a .o file, then all of the constitent .o files in it will be
+#  it's built as a .o file, then all of the constituent .o files in it will be
 #  linked into tools (for example gccas) even if they only use one of the parts
 #  of it.  For this reason, sometimes it's useful to use libraries as .a files.
 
@@ -216,12 +214,9 @@ endif
 #------------------------------------------------------------------------
 
 ifeq ($(LEVEL), .)
-
 tags:
 	etags -l c++ `find include lib tools -name '*.cpp' -o -name '*.h'`
-
 all:: tags
-
 endif
 
 #------------------------------------------------------------------------
@@ -295,10 +290,6 @@ Debug/%.o: %.cpp Debug/.dir Depend/.dir
 #Debug/%.o: %.c Debug/.dir Depend/.dir
 #	$(CompileGC) $< -o $@
 
-# Create a .cpp source file from a burg input file
-#Debug/%.cpp: Debug/% Debug/.dir
-#	$(RunBurg) $< -o $@
-
 # Create a .cpp source file from a flex input file... this uses sed to cut down
 # on the warnings emited by GCC...
 %.cpp: %.l
@@ -316,7 +307,7 @@ Debug/%.o: %.cpp Debug/.dir Depend/.dir
 	mkdir -p $(@D)
 	@date > $@
 
-# Clean does not remove the output files... just the temporaries
+# Clean nukes the tree
 clean::
 	rm -rf Debug Release Depend
 	rm -f core *.o *.d *.so *~ *.flc
