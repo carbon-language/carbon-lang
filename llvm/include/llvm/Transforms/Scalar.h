@@ -197,7 +197,7 @@ Pass *createTailDuplicationPass();
 // CFG Simplification - Merge basic blocks, eliminate unreachable blocks,
 // simplify terminator instructions, etc...
 //
-Pass *createCFGSimplificationPass();
+FunctionPass *createCFGSimplificationPass();
 
 
 //===----------------------------------------------------------------------===//
@@ -260,6 +260,15 @@ FunctionPass *createLowerAllocationsPass();
 // branch instructions.
 //
 FunctionPass *createLowerSwitchPass();
+
+
+//===----------------------------------------------------------------------===//
+// This pass converts 'invoke' instructions calls, and 'unwind' instructions
+// into calls to abort().
+//
+FunctionPass *createLowerInvokePass();
+
+
 
 //===----------------------------------------------------------------------===//
 //
