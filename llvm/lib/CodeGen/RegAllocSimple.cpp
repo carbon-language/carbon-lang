@@ -25,8 +25,7 @@
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include <iostream>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumSpilled ("ra-simple", "Number of registers spilled");
@@ -183,7 +182,9 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned physReg = Virt2PhysRegMap[virtualReg];
         if (physReg == 0) {
           if (op.isDef()) {
-            if (TM->getInstrInfo().isTwoAddrInstr(MI->getOpcode()) && i == 0) {
+            if (!TM->getInstrInfo().isTwoAddrInstr(MI->getOpcode()) || i) {
+              physReg = getFreeReg(virtualReg);
+            } else {
               // must be same register number as the first operand
               // This maps a = b + c into b += c, and saves b into a's spot
               assert(MI->getOperand(1).isRegister()  &&
@@ -192,8 +193,13 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
                      "Two address instruction invalid!");
 
               physReg = MI->getOperand(1).getReg();
-            } else {
-              physReg = getFreeReg(virtualReg);
+
+              ++MI;
+              spillVirtReg(MBB, MI, virtualReg, physReg);
+              --MI;
+              MI->getOperand(1).setDef();
+              MI->RemoveOperand(0);
+              break; // This is the last operand to process
             }
             ++MI;
             spillVirtReg(MBB, MI, virtualReg, physReg);
@@ -231,8 +237,6 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   return true;
 }
 
-FunctionPass *createSimpleRegisterAllocator() {
+FunctionPass *llvm::createSimpleRegisterAllocator() {
   return new RegAllocSimple();
 }
-
-} // End llvm namespace
