@@ -350,8 +350,6 @@ namespace {
       // registers required to compute each node.
       ComputeRegPressure(DAG.getRoot());
 
-      //DAG.viewGraph();
-
       // Codegen the basic block.
       Select(DAG.getRoot());
 
@@ -1244,7 +1242,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     default: break; // No promotion required.
     }
 
-    if (Node->getOpcode() == ISD::UINT_TO_FP && SrcTy == MVT::i32) {
+    if (Node->getOpcode() == ISD::UINT_TO_FP && Result != RealDestReg) {
       // If this is a cast from uint -> double, we need to be careful when if
       // the "sign" bit is set.  If so, we don't want to make a negative number,
       // we want to make a positive number.  Emit code to add an offset if the
