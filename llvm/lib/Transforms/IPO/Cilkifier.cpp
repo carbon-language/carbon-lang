@@ -6,12 +6,10 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "llvm/Support/Cilkifier.h"
+#include "Cilkifier.h"
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "llvm/DerivedTypes.h"
-#include <vector>
-
 
 //---------------------------------------------------------------------------- 
 // Global constants used in marking Cilk functions and function calls.

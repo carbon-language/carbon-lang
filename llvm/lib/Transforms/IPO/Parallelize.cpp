@@ -31,6 +31,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Cilkifier.h"
 #include "llvm/Transforms/Utils/DemoteRegToStack.h"
 #include "llvm/Analysis/PgmDependenceGraph.h"
 #include "llvm/Analysis/Dominators.h"
@@ -41,7 +42,6 @@
 #include "llvm/iTerminators.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/InstVisitor.h"
-#include "llvm/Support/Cilkifier.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include "Support/hash_set"
