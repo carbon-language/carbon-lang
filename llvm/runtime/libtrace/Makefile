@@ -10,6 +10,7 @@
 LEVEL = ../..
 BYTECODE_LIBRARY = 1
 LIBRARYNAME = trace
+BYTECODE_DESTINATION = $(cferuntime_libdir)
 
 include $(LEVEL)/Makefile.common
 

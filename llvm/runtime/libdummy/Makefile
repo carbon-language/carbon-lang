@@ -11,5 +11,7 @@ LEVEL = ../..
 BYTECODE_LIBRARY = 1
 DONT_BUILD_RELINKED = 1
 LIBRARYNAME = dummy
+BYTECODE_DESTINATION = $(cferuntime_libdir)
 
 include $(LEVEL)/Makefile.common
+

@@ -13,5 +13,6 @@ SHARED_LIBRARY = 1
 LIBRARYNAME = profile_rt
 EXTRA_DIST = exported_symbols.lst
 EXPORTED_SYMBOL_FILE = $(BUILD_SRC_DIR)/exported_symbols.lst
+BYTECODE_DESTINATION = $(cferuntime_libdir)
 
 include $(LEVEL)/Makefile.common
