@@ -33,8 +33,7 @@ namespace {
     void *MovePCtoLROffset;
 
     // Tracks which instruction references which BasicBlock
-    std::vector<std::pair<const BasicBlock*,
-                          std::pair<unsigned*,MachineInstr*> > > BBRefs;
+    std::vector<std::pair<const BasicBlock*, unsigned*> > BBRefs;
     // Tracks where each BasicBlock starts
     std::map<const BasicBlock*, long> BBLocations;
 
@@ -98,24 +97,20 @@ bool PPC32CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   // Resolve branches to BasicBlocks for the entire function
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
     intptr_t Location = BBLocations[BBRefs[i].first];
-    unsigned *Ref = BBRefs[i].second.first;
-    MachineInstr *MI = BBRefs[i].second.second;
+    unsigned *Ref = BBRefs[i].second;
     DEBUG(std::cerr << "Fixup @ " << (void*)Ref << " to " << (void*)Location
-                    << " in instr: " << *MI);
-    for (unsigned ii = 0, ee = MI->getNumOperands(); ii != ee; ++ii) {
-      MachineOperand &op = MI->getOperand(ii);
-      if (op.isPCRelativeDisp()) {
-        // the instruction's branch target is made such that it branches to
-        // PC + (branchTarget * 4), so undo that arithmetic here:
-        // Location is the target of the branch
-        // Ref is the location of the instruction, and hence the PC
-        int64_t branchTarget = (Location - (long)Ref) >> 2;
-        MI->SetMachineOperandConst(ii, MachineOperand::MO_SignExtendedImmed,
-                                   branchTarget);
-        unsigned fixedInstr = PPC32CodeEmitter::getBinaryCodeForInstr(*MI);
-        MCE.emitWordAt(fixedInstr, Ref);
-        break;
-      }
+                    << "\n");
+    unsigned Instr = *Ref;
+    intptr_t BranchTargetDisp = (Location - (intptr_t)Ref) >> 2;
+    
+    switch (Instr >> 26) {
+    default: assert(0 && "Unknown branch user!");
+    case 18:  // This is B or BL
+      *Ref |= (BranchTargetDisp & ((1 << 24)-1)) << 2;
+      break;
+    case 16:  // This is BLT,BLE,BEQ,BGE,BGT,BNE, or other bcx instruction
+      *Ref |= (BranchTargetDisp & ((1 << 14)-1)) << 2;
+      break;
     }
   }
   BBRefs.clear();
@@ -210,7 +205,7 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   } else if (MO.isMachineBasicBlock()) {
     const BasicBlock *BB = MO.getMachineBasicBlock()->getBasicBlock();
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
-    BBRefs.push_back(std::make_pair(BB, std::make_pair(CurrPC, &MI)));
+    BBRefs.push_back(std::make_pair(BB, CurrPC));
   } else if (MO.isConstantPoolIndex()) {
     unsigned index = MO.getConstantPoolIndex();
     rv = MCE.getConstantPoolEntryAddress(index);
