@@ -111,8 +111,6 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
       FrameSetupOpcode == -1 && FrameDestroyOpcode == -1)
     return;
 
-  // This bitset contains an entry for each physical register for the target...
-  std::vector<char> ModifiedRegs(RegInfo->getNumRegs());
   unsigned MaxCallFrameSize = 0;
   bool HasCalls = false;
 
@@ -127,19 +125,6 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
         HasCalls = true;
         RegInfo->eliminateCallFramePseudoInstr(Fn, *BB, I++);
       } else {
-        for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
-          MachineOperand &MO = I->getOperand(i);
-          if (MO.isRegister() && MO.isDef()) {
-            assert(MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
-                   "Register allocation must be performed!");
-            ModifiedRegs[MO.getReg()] = true;         // Register is modified
-          }
-
-          // Mark any implicitly defined registers as being modified.
-          for (const unsigned *ImpDefs = TII.getImplicitDefs(I->getOpcode());
-               *ImpDefs; ++ImpDefs)
-            ModifiedRegs[*ImpDefs] = true;
-        }
         ++I;
       }
 
@@ -150,14 +135,15 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
   // Now figure out which *callee saved* registers are modified by the current
   // function, thus needing to be saved and restored in the prolog/epilog.
   //
+  const bool *PhysRegsUsed = Fn.getUsedPhysregs();
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
-    if (ModifiedRegs[Reg]) {
-      RegsToSave.push_back(Reg);  // If modified register...
+    if (PhysRegsUsed[Reg]) {
+      RegsToSave.push_back(Reg);  // If the reg is modified, save it!
     } else {
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
-           *AliasSet; ++AliasSet) {  // Check alias registers too...
-        if (ModifiedRegs[*AliasSet]) {
+           *AliasSet; ++AliasSet) {  // Check alias registers too.
+        if (PhysRegsUsed[*AliasSet]) {
           RegsToSave.push_back(Reg);
           break;
         }
