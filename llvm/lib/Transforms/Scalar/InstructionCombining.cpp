@@ -2064,6 +2064,8 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
 
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
+  if (LI.isVolatile()) return 0;
+
   if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Op))
     Op = CPR->getValue();
 
