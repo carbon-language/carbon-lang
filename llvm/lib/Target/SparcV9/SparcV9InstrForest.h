@@ -1,4 +1,4 @@
-//===- SparcV9InstrForest.cpp - SparcV9 BURG Instruction Selector Trees ---===//
+//===- SparcV9InstrForest.h - SparcV9 BURG Instruction Selector Trees -----===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
