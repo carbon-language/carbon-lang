@@ -426,7 +426,8 @@ void PhyRegAlloc::updateMachineCode()
 
       // reset the stack offset for temporary variables since we may
       // need that to spill
-      mcInfo.popAllTempValues(TM);
+      //mcInfo.popAllTempValues(TM);
+      // TODO ** : do later
       
       //for(MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done();++OpI) {
 
@@ -1026,7 +1027,9 @@ void PhyRegAlloc::colorCallRetArgs()
 
     // Tmp stack poistions are needed by some calls that have spilled args
     // So reset it before we call each such method
-    mcInfo.popAllTempValues(TM);  
+    //mcInfo.popAllTempValues(TM);  
+
+
     
     if( (TM.getInstrInfo()).isCall( OpCode ) )
       MRI.colorCallArgs( CRMI, LRI, AI, *this );
@@ -1200,6 +1203,8 @@ void PhyRegAlloc::allocateRegisters()
   // a poistion for such spilled LRs
   allocateStackSpace4SpilledLRs();
 
+  mcInfo.popAllTempValues(TM);  // TODO **Check
+
   // color incoming args and call args
   colorIncomingArgs();
   colorCallRetArgs();
@@ -1211,13 +1216,16 @@ void PhyRegAlloc::allocateRegisters()
     printMachineCode();                   // only for DEBUGGING
   }
 
-  /*  
+
+  
+  /*
   printMachineCode();                   // only for DEBUGGING
 
   cout << "\nAllocted for method " <<  Meth->getName();
   char ch;
   cin >> ch;
   */
+  
 
 }
 
