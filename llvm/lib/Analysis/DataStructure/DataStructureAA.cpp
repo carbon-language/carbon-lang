@@ -166,9 +166,8 @@ void DSAA::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
     
     // The only must alias information we can currently determine occurs when
     // the node for P is a global node with only one entry.
-    const DSGraph::ScalarMapTy &GSM = G->getScalarMap();
-    DSGraph::ScalarMapTy::const_iterator I = GSM.find(P);
-    if (I != GSM.end()) {
+    DSGraph::ScalarMapTy::const_iterator I = G->getScalarMap().find(P);
+    if (I != G->getScalarMap().end()) {
       DSNode *N = I->second.getNode();
       if (N->isComplete() && isSinglePhysicalObject(N))
         RetVals.push_back(N->getGlobals()[0]);

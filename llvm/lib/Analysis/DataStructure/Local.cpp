@@ -172,10 +172,9 @@ DSGraph::DSGraph(const TargetData &td, Function &F, DSGraph *GG)
 
   // Remove all integral constants from the scalarmap!
   for (ScalarMapTy::iterator I = ScalarMap.begin(); I != ScalarMap.end();)
-    if (isa<ConstantIntegral>(I->first)) {
-      ScalarMapTy::iterator J = I++;
-      ScalarMap.erase(J);
-    } else
+    if (isa<ConstantIntegral>(I->first))
+      ScalarMap.erase(I++);
+    else
       ++I;
 
   markIncompleteNodes(DSGraph::MarkFormalArgs);
