@@ -82,7 +82,7 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 
   // Print LLVM code input to instruction selector:
   if (PrintMachineCode)
-    PM.add(new PrintModulePass());
+    PM.add(new PrintFunctionPass());
   
   PM.add(createSparcV8SimpleInstructionSelector(*this));
 
