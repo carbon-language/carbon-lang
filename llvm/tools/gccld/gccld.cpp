@@ -194,7 +194,41 @@ void RemoveEnv(const char * name, char ** const envp) {
   return;
 }
 
-} // End llvm namespace
+} // end LLVM namespace
+
+/// EmitShellScript - Output the wrapper file that invokes the JIT on the LLVM
+/// bytecode file for the program.
+static void EmitShellScript(char **argv) {
+  // Output the script to start the program...
+  std::ofstream Out2(OutputFilename.c_str());
+  if (!Out2.good())
+    exit(PrintAndReturn(argv[0], "error opening '" + OutputFilename +
+                                 "' for writing!"));
+
+  Out2 << "#!/bin/sh\n";
+  // Allow user to setenv LLVMINTERP if lli is not in their PATH.
+  Out2 << "lli=${LLVMINTERP-lli}\n";
+  Out2 << "exec $lli \\\n";
+  // gcc accepts -l<lib> and implicitly searches /lib and /usr/lib.
+  LibPaths.push_back("/lib");
+  LibPaths.push_back("/usr/lib");
+  LibPaths.push_back("/usr/X11R6/lib");
+  // We don't need to link in libc! In fact, /usr/lib/libc.so may not be a
+  // shared object at all! See RH 8: plain text.
+  std::vector<std::string>::iterator libc = 
+    std::find(Libraries.begin(), Libraries.end(), "c");
+  if (libc != Libraries.end()) Libraries.erase(libc);
+  // List all the shared object (native) libraries this executable will need
+  // on the command line, so that we don't have to do this manually!
+  for (std::vector<std::string>::iterator i = Libraries.begin(), 
+         e = Libraries.end(); i != e; ++i) {
+    std::string FullLibraryPath = FindLib(*i, LibPaths, true);
+    if (!FullLibraryPath.empty() && IsSharedObject(FullLibraryPath))
+      Out2 << "    -load=" << FullLibraryPath << " \\\n";
+  }
+  Out2 << "    $0.bc ${1+\"$@\"}\n";
+  Out2.close();
+}
 
 int main(int argc, char **argv, char **envp) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
@@ -304,34 +338,7 @@ int main(int argc, char **argv, char **envp) {
       removeFile(CFile);
 
     } else {
-      // Output the script to start the program...
-      std::ofstream Out2(OutputFilename.c_str());
-      if (!Out2.good())
-        return PrintAndReturn(argv[0], "error opening '" + OutputFilename +
-                                       "' for writing!");
-      Out2 << "#!/bin/sh\n";
-      // Allow user to setenv LLVMINTERP if lli is not in their PATH.
-      Out2 << "lli=${LLVMINTERP-lli}\n";
-      Out2 << "exec $lli \\\n";
-      // gcc accepts -l<lib> and implicitly searches /lib and /usr/lib.
-      LibPaths.push_back("/lib");
-      LibPaths.push_back("/usr/lib");
-      LibPaths.push_back("/usr/X11R6/lib");
-      // We don't need to link in libc! In fact, /usr/lib/libc.so may not be a
-      // shared object at all! See RH 8: plain text.
-      std::vector<std::string>::iterator libc = 
-        std::find(Libraries.begin(), Libraries.end(), "c");
-      if (libc != Libraries.end()) Libraries.erase(libc);
-      // List all the shared object (native) libraries this executable will need
-      // on the command line, so that we don't have to do this manually!
-      for (std::vector<std::string>::iterator i = Libraries.begin(), 
-             e = Libraries.end(); i != e; ++i) {
-        std::string FullLibraryPath = FindLib(*i, LibPaths, true);
-        if (!FullLibraryPath.empty() && IsSharedObject(FullLibraryPath))
-          Out2 << "    -load=" << FullLibraryPath << " \\\n";
-      }
-      Out2 << "    $0.bc ${1+\"$@\"}\n";
-      Out2.close();
+      EmitShellScript(argv);
     }
   
     // Make the script executable...
