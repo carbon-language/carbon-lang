@@ -82,7 +82,8 @@ namespace {
         FunctionCalls(&fc) {
 
       // Create scalar nodes for all pointer arguments...
-      for (Function::arg_iterator I = f.arg_begin(), E = f.arg_end(); I != E; ++I)
+      for (Function::arg_iterator I = f.arg_begin(), E = f.arg_end();
+           I != E; ++I)
         if (isPointerType(I->getType()))
           getValueDest(*I);
 
@@ -177,13 +178,6 @@ DSGraph::DSGraph(EquivalenceClasses<GlobalValue*> &ECs, const TargetData &td,
   Timer::addPeakMemoryMeasurement();
 #endif
 
-  // Remove all integral constants from the scalarmap!
-  for (DSScalarMap::iterator I = ScalarMap.begin(); I != ScalarMap.end();)
-    if (isa<ConstantIntegral>(I->first))
-      ScalarMap.erase(I++);
-    else
-      ++I;
-
   // If there are any constant globals referenced in this function, merge their
   // initializers into the local graph from the globals graph.
   if (ScalarMap.global_begin() != ScalarMap.global_end()) {
@@ -228,9 +222,12 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
     N->addGlobal(GV);
   } else if (Constant *C = dyn_cast<Constant>(V)) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-      if (CE->getOpcode() == Instruction::Cast)
-        NH = getValueDest(*CE->getOperand(0));
-      else if (CE->getOpcode() == Instruction::GetElementPtr) {
+      if (CE->getOpcode() == Instruction::Cast) {
+        if (isa<PointerType>(CE->getOperand(0)->getType()))
+          NH = getValueDest(*CE->getOperand(0));
+        else
+          NH = createNode()->setUnknownNodeMarker();
+      } else if (CE->getOpcode() == Instruction::GetElementPtr) {
         visitGetElementPtrInst(*CE);
         DSScalarMap::iterator I = ScalarMap.find(CE);
         assert(I != ScalarMap.end() && "GEP didn't get processed right?");
@@ -244,10 +241,6 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
         return 0;
       }
       return NH;
-
-    } else if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(C)) {
-      // Random constants are unknown mem
-      return NH = createNode()->setUnknownNodeMarker();
     } else if (isa<UndefValue>(C)) {
       ScalarMap.erase(V);
       return 0;
