@@ -153,14 +153,18 @@ void Preheaders::InsertPreheaderForLoop(Loop *L) {
   
   // Update dominator information if it is around...
   if (DominatorSet *DS = getAnalysisToUpdate<DominatorSet>()) {
-    // We need to add information about the fact that NewBB dominates Header.
-    DS->addDominator(Header, NewBB);
-    
     // The blocks that dominate NewBB are the blocks that dominate Header,
     // minus Header, plus NewBB.
     DominatorSet::DomSetType DomSet = DS->getDominators(Header);
+    DomSet.insert(NewBB);  // We dominate ourself
     DomSet.erase(Header);  // Header does not dominate us...
     DS->addBasicBlock(NewBB, DomSet);
+
+    // The newly created basic block dominates all nodes dominated by Header.
+    for (Function::iterator I = Header->getParent()->begin(),
+           E = Header->getParent()->end(); I != E; ++I)
+      if (DS->dominates(Header, I))
+        DS->addDominator(I, NewBB);
   }
   
   // Update immediate dominator information if we have it...
@@ -178,11 +182,10 @@ void Preheaders::InsertPreheaderForLoop(Loop *L) {
     // the old header.
     //
     DominatorTree::Node *HeaderNode = DT->getNode(Header);
-    DominatorTree::Node *PHNode = DT->createNewNode(NewBB, HeaderNode);
+    DominatorTree::Node *PHNode = DT->createNewNode(NewBB,
+                                                    HeaderNode->getIDom());
     
     // Change the header node so that PNHode is the new immediate dominator
     DT->changeImmediateDominator(HeaderNode, PHNode);
   }
 }
-
-
