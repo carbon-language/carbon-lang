@@ -366,8 +366,8 @@ static void TraceValuesAtBBExit(BasicBlock *BB,
       if (StoreInst *SI = dyn_cast<StoreInst>(&*II)) {
         assert(valuesStoredInFunction &&
                "Should not be printing a store instruction at function exit");
-        LoadInst *LI = new LoadInst(SI->getPointerOperand(), SI->copyIndices(),
-                                  "reload."+SI->getPointerOperand()->getName());
+        LoadInst *LI = new LoadInst(SI->getPointerOperand(), "reload." +
+                                    SI->getPointerOperand()->getName());
         InsertPos = ++BB->getInstList().insert(InsertPos, LI);
         valuesStoredInFunction->push_back(LI);
       }

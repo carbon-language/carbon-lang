@@ -393,8 +393,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       if (Value *CastSrc = CI->getOperand(0)) // CSPT = CastSrcPointerType
         if (const PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
           // convertable types?
-          if (Val->getType()->isLosslesslyConvertableTo(CSPT->getElementType()) &&
-              !SI->hasIndices()) {      // No subscripts yet!
+          if (Val->getType()->isLosslesslyConvertableTo(CSPT->getElementType())) {
             PRINT_PEEPHOLE3("st-src-cast:in ", Pointer, Val, SI);
 
             // Insert the new T cast instruction... stealing old T's name
@@ -433,8 +432,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       if (Value *CastSrc = CI->getOperand(0)) // CSPT = CastSrcPointerType
         if (const PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
           // convertable types?
-          if (PtrElType->isLosslesslyConvertableTo(CSPT->getElementType()) &&
-              !LI->hasIndices()) {      // No subscripts yet!
+          if (PtrElType->isLosslesslyConvertableTo(CSPT->getElementType())) {
             PRINT_PEEPHOLE2("load-src-cast:in ", Pointer, LI);
 
             // Create the new load instruction... loading the pre-casted value

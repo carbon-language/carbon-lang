@@ -216,12 +216,6 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
 
   case Instruction::Load: {
     LoadInst *LI = cast<LoadInst>(I);
-    if (LI->hasIndices() && !AllIndicesZero(LI)) {
-      // We can't convert a load expression if it has indices... unless they are
-      // all zero.
-      return false;
-    }
-
     if (!ExpressionConvertableToType(LI->getPointerOperand(),
                                      PointerType::get(Ty), CTMap))
       return false;
@@ -403,7 +397,6 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
   case Instruction::Load: {
     LoadInst *LI = cast<LoadInst>(I);
-    assert(!LI->hasIndices() || AllIndicesZero(LI));
 
     Res = new LoadInst(Constant::getNullValue(PointerType::get(Ty)), Name);
     VMC.ExprMap[I] = Res;
@@ -666,9 +659,6 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     if (const PointerType *PT = dyn_cast<PointerType>(Ty)) {
       LoadInst *LI = cast<LoadInst>(I);
       
-      if (LI->hasIndices() && !AllIndicesZero(LI))
-        return false;
-
       const Type *LoadedTy = PT->getElementType();
 
       // They could be loading the first element of a composite type...
@@ -691,7 +681,6 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
 
   case Instruction::Store: {
     StoreInst *SI = cast<StoreInst>(I);
-    if (SI->hasIndices()) return false;
 
     if (V == I->getOperand(0)) {
       ValueTypeCache::iterator CTMI = CTMap.find(I->getOperand(1));
