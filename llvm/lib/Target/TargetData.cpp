@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/Data.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ConstPoolVals.h"
 

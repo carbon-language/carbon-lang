@@ -5,7 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/InstInfo.h"
+#include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/DerivedTypes.h"
 
 //---------------------------------------------------------------------------
@@ -16,6 +16,7 @@
 // 
 //---------------------------------------------------------------------------
 
+
 // function TargetMachine::findOptimalStorageSize 
 // 
 // Purpose:
@@ -23,18 +24,21 @@
 //   space equal to optSizeForSubWordData, and all other primitive data
 //   items use space according to the type.
 //   
-unsigned int TargetMachine::findOptimalStorageSize(const Type* ty) const {
-  switch(ty->getPrimitiveID()) {
-  case Type::BoolTyID:
-  case Type::UByteTyID:
-  case Type::SByteTyID:     
-  case Type::UShortTyID:
-  case Type::ShortTyID:     
-    return optSizeForSubWordData;
+unsigned int
+TargetMachine::findOptimalStorageSize(const Type* ty) const
+{
+  switch(ty->getPrimitiveID())
+    {
+    case Type::BoolTyID:
+    case Type::UByteTyID:
+    case Type::SByteTyID:     
+    case Type::UShortTyID:
+    case Type::ShortTyID:     
+      return optSizeForSubWordData;
     
-  default:
-    return DataLayout.getTypeSize(ty);
-  }
+    default:
+      return DataLayout.getTypeSize(ty);
+    }
 }
 
 
@@ -56,7 +60,8 @@ MachineInstrInfo::MachineInstrInfo(const MachineInstrDescriptor* _desc,
 }  
 
 
-MachineInstrInfo::~MachineInstrInfo() {
+MachineInstrInfo::~MachineInstrInfo()
+{
   TargetInstrDescriptors = NULL;	// reset global variable
 }
 
@@ -68,12 +73,13 @@ MachineInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
   // First, check if opCode has an immed field.
   bool isSignExtended;
   uint64_t maxImmedValue = maxImmedConstant(opCode, isSignExtended);
-  if (maxImmedValue != 0) {
-    // Now check if the constant fits
-    if (intValue <= (int64_t) maxImmedValue &&
-	intValue >= -((int64_t) maxImmedValue+1))
-      return true;
-  }
+  if (maxImmedValue != 0)
+    {
+      // Now check if the constant fits
+      if (intValue <= (int64_t) maxImmedValue &&
+	  intValue >= -((int64_t) maxImmedValue+1))
+	return true;
+    }
   
   return false;
 }
