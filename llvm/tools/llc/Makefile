@@ -10,6 +10,7 @@
 LEVEL = ../..
 TOOLNAME = llc
 USEDLIBS = \
+	LLVMSparcV9ModuloSched \
 	LLVMCBackend \
 	LLVMPowerPC \
 	LLVMSparcV9 \

@@ -66,6 +66,9 @@ namespace {
   cl::opt<bool> DisableStrip("disable-strip",
                       cl::desc("Do not strip the LLVM bytecode in executable"));
 
+  
+  cl::opt<bool> EnableModSched("enable-ModSched", cl::desc("Enable modulo scheduling pass instead of local scheduling"));
+
   // Register the target.
   RegisterTarget<SparcV9TargetMachine> X("sparcv9", "  SPARC V9");
 }
@@ -192,9 +195,17 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   
   PM.add(createSparcV9BurgInstSelector(*this));
 
-  if (!DisableSched)
-    PM.add(createInstructionSchedulingWithSSAPass(*this));
+  if(PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr, "Before modulo scheduling:\n"));
 
+  //Use ModuloScheduling if enabled, otherwise use local scheduling if not disabled.
+  if(EnableModSched)
+    PM.add(createModuloSchedulingPass(*this));
+  else {
+    if (!DisableSched)
+      PM.add(createInstructionSchedulingWithSSAPass(*this));
+  }
+  
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr, "Before reg alloc:\n"));
 

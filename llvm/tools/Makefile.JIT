@@ -44,7 +44,7 @@ endif
 # What the Sparc JIT requires
 ifdef ENABLE_SPARCV9_JIT
   JITLIBS  += LLVMSparcV9
-  ARCHLIBS += LLVMSparcV9InstrSched LLVMSparcV9LiveVar LLVMInstrumentation.a \
+  ARCHLIBS += LLVMSparcV9ModuloSched LLVMSparcV9InstrSched LLVMSparcV9LiveVar LLVMInstrumentation.a \
               LLVMProfilePaths LLVMBCWriter LLVMTransforms.a LLVMipo.a \
               LLVMipa.a LLVMDataStructure.a LLVMSparcV9RegAlloc
 endif
