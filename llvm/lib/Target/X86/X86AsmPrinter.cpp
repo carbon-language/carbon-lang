@@ -134,7 +134,6 @@ namespace {
       printMemReference(MI, OpNo);
     }
 
-    bool printImplUsesAfter(const TargetInstrDescriptor &Desc, const bool LC);
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool elideOffsetKeyword = false);
     void printMemReference(const MachineInstr *MI, unsigned Op);
@@ -541,37 +540,6 @@ void X86AsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op) {
   O << "]";
 }
 
-/// printImplUsesAfter - Emit the implicit-use registers for the instruction
-/// described by DESC, if its PrintImplUsesAfter flag is set.
-///
-/// Inputs:
-///   Comma - List of registers will need a leading comma.
-///   Desc  - Description of the Instruction.
-///
-/// Return value:
-///   true  - Emitted one or more registers.
-///   false - Emitted no registers.
-///
-bool X86AsmPrinter::printImplUsesAfter(const TargetInstrDescriptor &Desc,
-                                       const bool Comma = true) {
-  const MRegisterInfo &RI = *TM.getRegisterInfo();
-  if (Desc.TSFlags & X86II::PrintImplUsesAfter) {
-    bool emitted = false;
-    const unsigned *p = Desc.ImplicitUses;
-    if (*p) {
-      O << (Comma ? ", %" : "%") << RI.get (*p).Name;
-      emitted = true;
-      ++p;
-    }
-    while (*p) {
-      // Bug Workaround: See note in X86AsmPrinter::doInitialization about %.
-      O << ", %" << RI.get(*p).Name;
-      ++p;
-    }
-    return emitted;
-  }
-  return false;
-}
 
 /// printMachineInstruction -- Print out a single X86 LLVM instruction
 /// MI in Intel syntax to the current output stream.
