@@ -31,3 +31,6 @@ inline void ThrowError(const std::string& msg) {
   throw s;
 }
 
+inline void ThrowErrno(const std::string& prefix) {
+    ThrowError(prefix + ": " + strerror(errno));
+}
