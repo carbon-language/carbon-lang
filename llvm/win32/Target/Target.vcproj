@@ -119,6 +119,9 @@
 				RelativePath="..\..\lib\Target\TargetInstrInfo.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\TargetLowering.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\TargetMachine.cpp">
 			</File>
 			<File
@@ -146,6 +149,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Target\TargetJITInfo.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\TargetLowering.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Target\TargetMachine.h">

@@ -166,6 +166,19 @@
 			<File
 				RelativePath="..\..\lib\CodeGen\VirtRegMap.cpp">
 			</File>
+			<Filter
+				Name="SelectionDAG"
+				Filter="">
+				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeDAG.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\SelectionDAG.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\SelectionDAGISel.cpp">
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -227,6 +240,12 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\SelectionDAG.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\SelectionDAGISel.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\SelectionDAGNodes.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\SSARegMap.h">
