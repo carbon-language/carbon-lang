@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <utime.h>
 #include <dirent.h>
+#include <time.h>
 
 namespace llvm {
 using namespace sys;
@@ -36,11 +37,99 @@ Path::Path(const std::string& unverified_path) : path(unverified_path) {
   ThrowErrno(unverified_path + ": path is not valid");
 }
 
+bool 
+Path::isValid() const {
+  if (path.empty()) 
+    return false;
+  else if (path.length() >= MAXPATHLEN)
+    return false;
+#if defined(HAVE_REALPATH)
+  char pathname[MAXPATHLEN];
+  if (0 == realpath(path.c_str(), pathname))
+    if (errno != EACCES && errno != EIO && errno != ENOENT && errno != ENOTDIR)
+      return false;
+#endif
+  return true;
+}
+
 Path
 Path::GetRootDirectory() {
   Path result;
   result.setDirectory("/");
   return result;
+}
+
+Path
+Path::GetTemporaryDirectory() {
+#if defined(HAVE_MKDTEMP)
+  // The best way is with mkdtemp but that's not available on many systems, 
+  // Linux and FreeBSD have it. Others probably won't.
+  char pathname[MAXPATHLEN];
+  strcpy(pathname,"/tmp/llvm_XXXXXX");
+  if (0 == mkdtemp(pathname))
+    ThrowErrno(std::string(pathname) + ": Can't create temporary directory");
+  Path result;
+  result.setDirectory(pathname);
+  assert(result.isValid() && "mkdtemp didn't create a valid pathname!");
+  return result;
+#elif defined(HAVE_MKSTEMP)
+  // If no mkdtemp is available, mkstemp can be used to create a temporary file
+  // which is then removed and created as a directory. We prefer this over
+  // mktemp because of mktemp's inherent security and threading risks. We still
+  // have a slight race condition from the time the temporary file is created to
+  // the time it is re-created as a directoy. 
+  char pathname[MAXPATHLEN];
+  strcpy(pathname, "/tmp/llvm_XXXXXX");
+  int fd = 0;
+  if (-1 == (fd = mkstemp(pathname)))
+    ThrowErrno(std::string(pathname) + ": Can't create temporary directory");
+  ::close(fd);
+  ::unlink(pathname); // start race condition, ignore errors
+  if (-1 == ::mkdir(pathname, S_IRWXU)) // end race condition
+    ThrowErrno(std::string(pathname) + ": Can't create temporary directory");
+  Path result;
+  result.setDirectory(pathname);
+  assert(result.isValid() && "mkstemp didn't create a valid pathname!");
+  return result;
+#elif defined(HAVE_MKTEMP)
+  // If a system doesn't have mkdtemp(3) or mkstemp(3) but it does have
+  // mktemp(3) then we'll assume that system (e.g. AIX) has a reasonable
+  // implementation of mktemp(3) and doesn't follow BSD 4.3's lead of replacing
+  // the XXXXXX with the pid of the process and a letter. That leads to only
+  // twenty six temporary files that can be generated.
+  char pathname[MAXPATHLEN];
+  strcpy(pathname, "/tmp/llvm_XXXXXX");
+  char *TmpName = ::mktemp(pathname);
+  if (TmpName == 0)
+    throw std::string(TmpName) + ": Can't create unique directory name";
+  if (-1 == ::mkdir(TmpName, S_IRWXU))
+    ThrowErrno(std::string(TmpName) + ": Can't create temporary directory");
+  Path result;
+  result.setDirectory(TmpName);
+  assert(result.isValid() && "mktemp didn't create a valid pathname!");
+  return result;
+#else
+  // This is the worst case implementation. tempnam(3) leaks memory unless its
+  // on an SVID2 (or later) system. On BSD 4.3 it leaks. tmpnam(3) has thread
+  // issues. The mktemp(3) function doesn't have enough variability in the
+  // temporary name generated. So, we provide our own implementation that 
+  // increments an integer from a random number seeded by the current time. This
+  // should be sufficiently unique that we don't have many collisions between
+  // processes. Generally LLVM processes don't run very long and don't use very
+  // many temporary files so this shouldn't be a big issue for LLVM.
+  static time_t num = ::time(0);
+  char pathname[MAXPATHLEN];
+  do {
+    num++;
+    sprintf(pathname, "/tmp/llvm_%010u", unsigned(num));
+  } while ( 0 == access(pathname, F_OK ) );
+  if (-1 == ::mkdir(pathname, S_IRWXU))
+    ThrowErrno(std::string(pathname) + ": Can't create temporary directory");
+  Path result;
+  result.setDirectory(pathname);
+  assert(result.isValid() && "mkstemp didn't create a valid pathname!");
+  return result;
+#endif
 }
 
 static void getPathList(const char*path, std::vector<sys::Path>& Paths) {
