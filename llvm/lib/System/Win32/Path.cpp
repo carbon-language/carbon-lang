@@ -20,7 +20,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
-#include <fstream>
 #include <malloc.h>
 
 // We need to undo a macro defined in Windows.h, otherwise we won't compile:
@@ -205,23 +204,18 @@ Path::getBasename() const {
 }
 
 bool Path::hasMagicNumber(const std::string &Magic) const {
-  size_t len = Magic.size();
-  char *buf = reinterpret_cast<char *>(_alloca(len+1));
-  std::ifstream f(path.c_str());
-  f.read(buf, len);
-  buf[len] = '\0';
-  return Magic == buf;
+  std::string actualMagic;
+  if (getMagicNumber(actualMagic, Magic.size()))
+    return Magic == actualMagic;
+  return false;
 }
 
 bool 
 Path::isBytecodeFile() const {
-  char buffer[ 4];
-  buffer[0] = 0;
-  std::ifstream f(path.c_str());
-  f.read(buffer, 4);
-  if (f.bad())
-    ThrowErrno("can't read file signature");
-  return 0 == memcmp(buffer,"llvc",4) || 0 == memcmp(buffer,"llvm",4);
+  std::string actualMagic;
+  if (!getMagicNumber(actualMagic, 4))
+    return false;
+  return actualMagic == "llvc" || actualMagic == "llvm";
 }
 
 bool
@@ -357,9 +351,12 @@ Path::getDirectoryContents(std::set<Path>& result) const {
     result.insert(aPath);
   } while (FindNextFile(h, &fd));
 
-  CloseHandle(h);
-  if (GetLastError() != ERROR_NO_MORE_FILES)
+  DWORD err = GetLastError();
+  FindClose(h);
+  if (err != ERROR_NO_MORE_FILES) {
+    SetLastError(err);
     ThrowError(path + ": Can't read directory: ");
+  }
   return true;
 }
 
@@ -539,7 +536,7 @@ Path::createFile() {
   HANDLE h = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW,
                         FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE)
-    ThrowError(std::string(path.c_str()) + ": Can't create file: ");
+    ThrowError(path + ": Can't create file: ");
 
   CloseHandle(h);
   return true;
@@ -560,17 +557,49 @@ Path::destroyDirectory(bool remove_contents) const {
     pathname[lastchar] = 0;
 
   if (remove_contents) {
-    // Recursively descend the directory to remove its content
-    // FIXME: The correct way of doing this on Windows isn't pretty...
-    // but this may work if unix-like utils are present.
-    std::string cmd("rm -rf ");
-    cmd += path;
-    system(cmd.c_str());
-  } else {
-    // Otherwise, try to just remove the one directory
-    if (!RemoveDirectory(pathname))
-      ThrowError(std::string(pathname) + ": Can't destroy directory: ");
+    WIN32_FIND_DATA fd;
+    HANDLE h = FindFirstFile(path.c_str(), &fd);
+
+    // It's a bad idea to alter the contents of a directory while enumerating
+    // its contents.  So build a list of its contents first, then destroy them.
+
+    if (h != INVALID_HANDLE_VALUE) {
+      std::vector<Path> list;
+
+      do {
+        if (strcmp(fd.cFileName, ".") == 0)
+          continue;
+        if (strcmp(fd.cFileName, "..") == 0)
+          continue;
+
+        Path aPath(path + &fd.cFileName[0]);
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+          aPath.path += "/";
+        list.push_back(aPath);
+      } while (FindNextFile(h, &fd));
+
+      DWORD err = GetLastError();
+      FindClose(h);
+      if (err != ERROR_NO_MORE_FILES) {
+        SetLastError(err);
+        ThrowError(path + ": Can't read directory: ");
+      }
+
+	  for (std::vector<Path>::iterator I = list.begin(); I != list.end(); ++I) {
+        Path &aPath = *I;
+        if (aPath.isDirectory())
+          aPath.destroyDirectory(true);
+        else
+          aPath.destroyFile();
+      }
+    } else {
+      if (GetLastError() != ERROR_NO_MORE_FILES)
+        ThrowError(path + ": Can't read directory: ");
+    }
   }
+
+  if (!RemoveDirectory(pathname))
+    ThrowError(std::string(pathname) + ": Can't destroy directory: ");
   return true;
 }
 
@@ -588,11 +617,11 @@ Path::destroyFile() const {
   // attribute first.
   if (attr & FILE_ATTRIBUTE_READONLY) {
     if (!SetFileAttributes(path.c_str(), attr & ~FILE_ATTRIBUTE_READONLY))
-      ThrowError(std::string(path.c_str()) + ": Can't destroy file: ");
+      ThrowError(path + ": Can't destroy file: ");
   }
 
   if (!DeleteFile(path.c_str()))
-    ThrowError(std::string(path.c_str()) + ": Can't destroy file: ");
+    ThrowError(path + ": Can't destroy file: ");
   return true;
 }
 
@@ -601,15 +630,24 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
     return false;
   assert(len < 1024 && "Request for magic string too long");
   char* buf = (char*) alloca(1 + len);
-  std::ofstream ofs(path.c_str(),std::ofstream::in);
-  if (!ofs.is_open())
+
+  HANDLE h = CreateFile(path.c_str(),
+                        GENERIC_READ,
+                        FILE_SHARE_READ,
+                        NULL,
+                        OPEN_EXISTING,
+                        FILE_ATTRIBUTE_NORMAL,
+                        NULL);
+  if (h == INVALID_HANDLE_VALUE)
     return false;
-  std::ifstream ifs(path.c_str());
-  if (!ifs.is_open())
+
+  DWORD nRead = 0;
+  BOOL ret = ReadFile(h, buf, len, &nRead, NULL);
+  CloseHandle(h);
+
+  if (!ret || nRead != len)
     return false;
-  ifs.read(buf, len);
-  ofs.close();
-  ifs.close();
+
   buf[len] = '\0';
   Magic = buf;
   return true;
@@ -640,16 +678,21 @@ Path::setStatusInfo(const StatusInfo& si) const {
 
   BY_HANDLE_FILE_INFORMATION bhfi;
   if (!GetFileInformationByHandle(h, &bhfi)) {
+    DWORD err = GetLastError();
     CloseHandle(h);
+    SetLastError(err);
     ThrowError(path + ": GetFileInformationByHandle: ");
   }
 
   FILETIME ft;
   (uint64_t&)ft = si.modTime.toWin32Time();
   BOOL ret = SetFileTime(h, NULL, &ft, &ft);
+  DWORD err = GetLastError();
   CloseHandle(h);
-  if (!ret)
+  if (!ret) {
+    SetLastError(err);
     ThrowError(path + ": SetFileTime: ");
+  }
 
   // Best we can do with Unix permission bits is to interpret the owner
   // writable bit.
@@ -690,7 +733,7 @@ Path::makeUnique(bool reuse_current) {
 
   char newName[MAX_PATH + 1];
   if (!GetTempFileName(dir.c_str(), fname.c_str(), 0, newName))
-    ThrowError("Cannot make unique filename for '" + path + "'");
+    ThrowError("Cannot make unique filename for '" + path + "': ");
 
   path = newName;
 }
