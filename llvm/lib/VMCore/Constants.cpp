@@ -372,7 +372,17 @@ Constant *ConstantExpr::getShr(Constant *C1, Constant *C2) {
   return get(Instruction::Shr, C1, C2);
 }
 
+Constant *ConstantExpr::getUShr(Constant *C1, Constant *C2) {
+  if (C1->getType()->isUnsigned()) return getShr(C1, C2);
+  return getCast(getShr(getCast(C1,
+                    C1->getType()->getUnsignedVersion()), C2), C1->getType());
+}
 
+Constant *ConstantExpr::getSShr(Constant *C1, Constant *C2) {
+  if (C1->getType()->isSigned()) return getShr(C1, C2);
+  return getCast(getShr(getCast(C1,
+                        C1->getType()->getSignedVersion()), C2), C1->getType());
+}
 
 
 //===----------------------------------------------------------------------===//
