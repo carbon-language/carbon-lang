@@ -283,10 +283,34 @@ void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
   for (unsigned i = 1, e = GEP.getNumOperands(); i != e; ++i)
     if (GEP.getOperand(i)->getType() == Type::LongTy) {
-      if (GEP.getOperand(i) != Constant::getNullValue(Type::LongTy)) {
-        std::cerr << "Array indexing not handled yet!\n";
+      // Get the type indexing into...
+      const SequentialType *STy = cast<SequentialType>(CurTy);
+      CurTy = STy->getElementType();
+      if (ConstantSInt *CS = dyn_cast<ConstantSInt>(GEP.getOperand(i))) {
+        if (isa<PointerType>(STy))
+          std::cerr << "Pointer indexing not handled yet!\n";
+        else 
+          Offset += CS->getValue()*TD.getTypeSize(CurTy);
+      } else {
+        // Variable index into a node.  We must merge all of the elements of the
+        // sequential type here.
+        if (isa<PointerType>(STy))
+          std::cerr << "Pointer indexing not handled yet!\n";
+        else {
+          const ArrayType *ATy = cast<ArrayType>(STy);
+          unsigned ElSize = TD.getTypeSize(CurTy);
+          DSNode *N = Value.getNode();
+          assert(N && "Value must have a node!");
+          unsigned RawOffset = Offset+Value.getOffset();
+
+          // Loop over all of the elements of the array, merging them into the
+          // zero'th element.
+          for (unsigned i = 1, e = ATy->getNumElements(); i != e; ++i)
+            // Merge all of the byte components of this array element
+            for (unsigned j = 0; j != ElSize; ++j)
+              N->mergeIndexes(RawOffset+j, RawOffset+i*ElSize+j);
+        }
       }
-      CurTy = cast<SequentialType>(CurTy)->getElementType();
     } else if (GEP.getOperand(i)->getType() == Type::UByteTy) {
       unsigned FieldNo = cast<ConstantUInt>(GEP.getOperand(i))->getValue();
       const StructType *STy = cast<StructType>(CurTy);
