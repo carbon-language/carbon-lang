@@ -17,7 +17,7 @@ namespace {
   Statistic<> MaxSCC("budatastructure", "Maximum SCC Size in Call Graph");
   
   RegisterAnalysis<BUDataStructures>
-  X("budatastructure", "Bottom-up Data Structure Analysis Closure");
+  X("budatastructure", "Bottom-up Data Structure Analysis");
 }
 
 using namespace DS;
@@ -120,7 +120,8 @@ public:
 // program.
 //
 bool BUDataStructures::run(Module &M) {
-  GlobalsGraph = new DSGraph();
+  LocalDataStructures &LocalDSA = getAnalysis<LocalDataStructures>();
+  GlobalsGraph = new DSGraph(LocalDSA.getGlobalsGraph());
   GlobalsGraph->setPrintAuxCalls();
 
   Function *MainFunc = M.getMainFunction();

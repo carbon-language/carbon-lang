@@ -15,7 +15,7 @@
 
 namespace {
   RegisterAnalysis<TDDataStructures>   // Register the pass
-  Y("tddatastructure", "Top-down Data Structure Analysis Closure");
+  Y("tddatastructure", "Top-down Data Structure Analysis");
 }
 
 // run - Calculate the top down data structure graphs for each function in the
@@ -23,7 +23,7 @@ namespace {
 //
 bool TDDataStructures::run(Module &M) {
   BUDataStructures &BU = getAnalysis<BUDataStructures>();
-  GlobalsGraph = new DSGraph();
+  GlobalsGraph = new DSGraph(BU.getGlobalsGraph());
 
   // Calculate top-down from main...
   if (Function *F = M.getMainFunction())
