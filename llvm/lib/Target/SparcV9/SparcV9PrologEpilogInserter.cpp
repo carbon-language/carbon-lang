@@ -7,12 +7,12 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// Insert SAVE/RESTORE instructions for the function
-//
-// Insert prolog code at the unique function entry point.
-// Insert epilog code at each function exit point.
-// InsertPrologEpilog invokes these only if the function is not compiled
-// with the leaf function optimization.
+// This is the SparcV9 target's own PrologEpilogInserter. It creates prolog and
+// epilog instructions for functions which have not been compiled using "leaf
+// function optimizations". These instructions include the SAVE and RESTORE
+// instructions used to rotate the SPARC register windows. Prologs are
+// attached to the unique function entry, and epilogs are attached to each
+// function exit.
 //
 //===----------------------------------------------------------------------===//
 
@@ -49,21 +49,14 @@ namespace {
 
 }  // End anonymous namespace
 
-//------------------------------------------------------------------------ 
-//   Create prolog and epilog code for procedure entry and exit
-//------------------------------------------------------------------------ 
-
 static unsigned getStaticStackSize (MachineFunction &MF) {
   const TargetFrameInfo& frameInfo = *MF.getTarget().getFrameInfo();
-
   unsigned staticStackSize = MF.getInfo()->getStaticStackSize();
-
   if (staticStackSize < (unsigned)SparcV9FrameInfo::MinStackFrameSize)
     staticStackSize = SparcV9FrameInfo::MinStackFrameSize;
   if (unsigned padsz = staticStackSize % 
                        SparcV9FrameInfo::StackFrameSizeAlignment)
     staticStackSize += SparcV9FrameInfo::StackFrameSizeAlignment - padsz;
-
   return staticStackSize;
 }
 
@@ -76,7 +69,6 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
   // The second operand is the stack size. If it does not fit in the
   // immediate field, we have to use a free register to hold the size.
   // See the comments below for the choice of this register.
-  // 
   unsigned staticStackSize = getStaticStackSize (MF);
   int32_t C = - (int) staticStackSize;
   int SP = TM.getRegInfo()->getStackPointer();
@@ -119,7 +111,6 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
   // (%i0 ... %i5 if K=6) .
   // By copying the varargs arguments to the stack, va_arg() then can
   // simply assume that all vararg arguments are in an array on the stack. 
-  // 
   if (MF.getFunction()->getFunctionType()->isVarArg()) {
     int numFixedArgs    = MF.getFunction()->getFunctionType()->getNumParams();
     int numArgRegs      = TM.getRegInfo()->getNumOfIntArgRegs();
