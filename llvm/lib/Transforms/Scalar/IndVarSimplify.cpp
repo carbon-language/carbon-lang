@@ -1,9 +1,9 @@
 //===- IndVarSimplify.cpp - Induction Variable Elimination ----------------===//
 //
 // Guarantees that all loops with identifiable, linear, induction variables will
-// be transformed to have a single, cannonical, induction variable.  After this
+// be transformed to have a single, canonical, induction variable.  After this
 // pass runs, it guarantees the the first PHI node of the header block in the
-// loop is the cannonical induction variable if there is one.
+// loop is the canonical induction variable if there is one.
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,7 +21,7 @@
 
 namespace {
   Statistic<> NumRemoved ("indvars", "Number of aux indvars removed");
-  Statistic<> NumInserted("indvars", "Number of cannonical indvars added");
+  Statistic<> NumInserted("indvars", "Number of canonical indvars added");
 }
 
 // InsertCast - Cast Val to Ty, setting a useful name on the cast if Val has a
@@ -40,7 +40,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   // Get the header node for this loop.  All of the phi nodes that could be
   // induction variables must live in this basic block.
   //
-  BasicBlock *Header = Loop->getBlocks().front();
+  BasicBlock *Header = Loop->getHeader();
   
   // Loop over all of the PHI nodes in the basic block, calculating the
   // induction variables that they represent... stuffing the induction variable
@@ -55,26 +55,26 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   // If there are no phi nodes in this basic block, there can't be indvars...
   if (IndVars.empty()) return Changed;
   
-  // Loop over the induction variables, looking for a cannonical induction
+  // Loop over the induction variables, looking for a canonical induction
   // variable, and checking to make sure they are not all unknown induction
   // variables.
   //
   bool FoundIndVars = false;
-  InductionVariable *Cannonical = 0;
+  InductionVariable *Canonical = 0;
   for (unsigned i = 0; i < IndVars.size(); ++i) {
-    if (IndVars[i].InductionType == InductionVariable::Cannonical &&
+    if (IndVars[i].InductionType == InductionVariable::Canonical &&
         !isa<PointerType>(IndVars[i].Phi->getType()))
-      Cannonical = &IndVars[i];
+      Canonical = &IndVars[i];
     if (IndVars[i].InductionType != InductionVariable::Unknown)
       FoundIndVars = true;
   }
 
-  // No induction variables, bail early... don't add a cannonnical indvar
+  // No induction variables, bail early... don't add a canonical indvar
   if (!FoundIndVars) return Changed;
 
-  // Okay, we want to convert other induction variables to use a cannonical
+  // Okay, we want to convert other induction variables to use a canonical
   // indvar.  If we don't have one, add one now...
-  if (!Cannonical) {
+  if (!Canonical) {
     // Create the PHI node for the new induction variable, and insert the phi
     // node at the end of the other phi nodes...
     PHINode *PN = new PHINode(Type::UIntTy, "cann-indvar", AfterPHIIt);
@@ -103,9 +103,9 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
 
     // Analyze the new induction variable...
     IndVars.push_back(InductionVariable(PN, Loops));
-    assert(IndVars.back().InductionType == InductionVariable::Cannonical &&
-           "Just inserted cannonical indvar that is not cannonical!");
-    Cannonical = &IndVars.back();
+    assert(IndVars.back().InductionType == InductionVariable::Canonical &&
+           "Just inserted canonical indvar that is not canonical!");
+    Canonical = &IndVars.back();
     ++NumInserted;
     Changed = true;
   }
@@ -113,12 +113,12 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   DEBUG(std::cerr << "Induction variables:\n");
 
   // Get the current loop iteration count, which is always the value of the
-  // cannonical phi node...
+  // canonical phi node...
   //
-  PHINode *IterCount = Cannonical->Phi;
+  PHINode *IterCount = Canonical->Phi;
 
-  // Loop through and replace all of the auxillary induction variables with
-  // references to the primary induction variable...
+  // Loop through and replace all of the auxiliary induction variables with
+  // references to the canonical induction variable...
   //
   for (unsigned i = 0; i < IndVars.size(); ++i) {
     InductionVariable *IV = &IndVars[i];
@@ -129,8 +129,8 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
     const Type *IVTy = IV->Phi->getType();
     if (isa<PointerType>(IVTy)) IVTy = Type::ULongTy;
 
-    // Don't modify the cannonical indvar or unrecognized indvars...
-    if (IV != Cannonical && IV->InductionType != InductionVariable::Unknown) {
+    // Don't modify the canonical indvar or unrecognized indvars...
+    if (IV != Canonical && IV->InductionType != InductionVariable::Unknown) {
       Instruction *Val = IterCount;
       if (!isa<ConstantInt>(IV->Step) ||   // If the step != 1
           !cast<ConstantInt>(IV->Step)->equalsInt(1)) {
@@ -197,7 +197,7 @@ namespace {
     }
   };
   RegisterOpt<InductionVariableSimplify> X("indvars",
-                                           "Cannonicalize Induction Variables");
+                                           "Canonicalize Induction Variables");
 }
 
 Pass *createIndVarSimplifyPass() {
