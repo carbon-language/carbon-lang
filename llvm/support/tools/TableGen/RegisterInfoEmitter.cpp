@@ -34,7 +34,7 @@ void RegisterInfoEmitter::runEnums(std::ostream &OS) {
   OS << "  enum {\n    NoRegister,\n";
 
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    OS << "    " << Registers[i]->getName() << ",\t// " << i+1 << "\n";
+    OS << "    " << Registers[i]->getName() << ", \t// " << i+1 << "\n";
   
   OS << "  };\n";
   if (!Namespace.empty())
