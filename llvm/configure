@@ -1591,7 +1591,7 @@ subdirs="$subdirs projects/llvm-reopt"
 
 subdirs="$subdirs projects/llvm-gcc"
   ;;
-      "Java")
+      "llvm-java")
 
 subdirs="$subdirs projects/llvm-java"
  ;;
