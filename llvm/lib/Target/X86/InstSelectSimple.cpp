@@ -1691,72 +1691,105 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     return;
   }
 
-  case Intrinsic::readport:
+  case Intrinsic::readport: {
+    // First, determine that the size of the operand falls within the acceptable
+    // range for this architecture.
     //
-    // First, determine that the size of the operand falls within the
-    // acceptable range for this architecture.
-    //
-    if ((CI.getOperand(1)->getType()->getPrimitiveSize()) != 2) {
+    if (getClassB(CI.getOperand(1)->getType()) != cShort) {
       std::cerr << "llvm.readport: Address size is not 16 bits\n";
-      exit (1);
+      exit(1);
     }
 
-    //
     // Now, move the I/O port address into the DX register and use the IN
     // instruction to get the input data.
     //
-    BuildMI(BB, X86::MOV16rr, 1, X86::DX).addReg(getReg(CI.getOperand(1)));
-    switch (CI.getCalledFunction()->getReturnType()->getPrimitiveSize()) {
-      case 1:
-        BuildMI(BB, X86::IN8, 0);
-        break;
-      case 2:
-        BuildMI(BB, X86::IN16, 0);
-        break;
-      case 4:
-        BuildMI(BB, X86::IN32, 0);
-        break;
-      default:
-        std::cerr << "Cannot do input on this data type";
-        exit (1);
-    }
-    return;
+    unsigned Class = getClass(CI.getCalledFunction()->getReturnType());
+    unsigned DestReg = getReg(CI);
 
-  case Intrinsic::writeport:
-    //
-    // First, determine that the size of the operand falls within the
-    // acceptable range for this architecture.
-    //
-    //
-    if ((CI.getOperand(2)->getType()->getPrimitiveSize()) != 2) {
-      std::cerr << "llvm.writeport: Address size is not 16 bits\n";
+    // If the port is a single-byte constant, use the immediate form.
+    if (ConstantInt *C = dyn_cast<ConstantInt>(CI.getOperand(1)))
+      if ((C->getRawValue() & 255) == C->getRawValue()) {
+        switch (Class) {
+        case cByte:
+          BuildMI(BB, X86::IN8ri, 1).addImm((unsigned char)C->getRawValue());
+          BuildMI(BB, X86::MOV8rr, 1, DestReg).addReg(X86::AL);
+          return;
+        case cShort:
+          BuildMI(BB, X86::IN16ri, 1).addImm((unsigned char)C->getRawValue());
+          BuildMI(BB, X86::MOV8rr, 1, DestReg).addReg(X86::AX);
+          return;
+        case cInt:
+          BuildMI(BB, X86::IN32ri, 1).addImm((unsigned char)C->getRawValue());
+          BuildMI(BB, X86::MOV8rr, 1, DestReg).addReg(X86::EAX);
+          return;
+        }
+      }
+
+    unsigned Reg = getReg(CI.getOperand(1));
+    BuildMI(BB, X86::MOV16rr, 1, X86::DX).addReg(Reg);
+    switch (Class) {
+    case cByte:
+      BuildMI(BB, X86::IN8rr, 0);
+      BuildMI(BB, X86::MOV8rr, 1, DestReg).addReg(X86::AL);
+      break;
+    case cShort:
+      BuildMI(BB, X86::IN16rr, 0);
+      BuildMI(BB, X86::MOV8rr, 1, DestReg).addReg(X86::AX);
+      break;
+    case cInt:
+      BuildMI(BB, X86::IN32rr, 0);
+      BuildMI(BB, X86::MOV8rr, 1, DestReg).addReg(X86::EAX);
+      break;
+    default:
+      std::cerr << "Cannot do input on this data type";
       exit (1);
     }
-
-    //
-    // Now, move the I/O port address into the DX register and the value to
-    // write into the AL/AX/EAX register.
-    //
-    BuildMI(BB, X86::MOV16rr, 1, X86::DX).addReg(getReg(CI.getOperand(2)));
-    switch (CI.getOperand(1)->getType()->getPrimitiveSize()) {
-      case 1:
-        BuildMI(BB, X86::MOV8rr, 1, X86::AL).addReg(getReg(CI.getOperand(1)));
-        BuildMI(BB, X86::OUT8, 0);
-        break;
-      case 2:
-        BuildMI(BB, X86::MOV16rr, 1, X86::AX).addReg(getReg(CI.getOperand(1)));
-        BuildMI(BB, X86::OUT16, 0);
-        break;
-      case 4:
-        BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(getReg(CI.getOperand(1)));
-        BuildMI(BB, X86::OUT32, 0);
-        break;
-      default:
-        std::cerr << "Cannot do output on this data type";
-        exit (1);
-    }
     return;
+  }
 
+  case Intrinsic::writeport: {
+    // First, determine that the size of the operand falls within the
+    // acceptable range for this architecture.
+    if (getClass(CI.getOperand(2)->getType()) != cShort) {
+      std::cerr << "llvm.writeport: Address size is not 16 bits\n";
+      exit(1);
+    }
+
+    unsigned Class = getClassB(CI.getOperand(1)->getType());
+    unsigned ValReg = getReg(CI.getOperand(1));
+    switch (Class) {
+    case cByte:
+      BuildMI(BB, X86::MOV8rr, 1, X86::AL).addReg(ValReg);
+      break;
+    case cShort:
+      BuildMI(BB, X86::MOV16rr, 1, X86::AX).addReg(ValReg);
+      break;
+    case cInt:
+      BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(ValReg);
+      break;
+    default:
+      std::cerr << "llvm.writeport: invalid data type for X86 target";
+      exit(1);
+    }
+
+
+    // If the port is a single-byte constant, use the immediate form.
+    if (ConstantInt *C = dyn_cast<ConstantInt>(CI.getOperand(2)))
+      if ((C->getRawValue() & 255) == C->getRawValue()) {
+        static const unsigned O[] = { X86::OUT8ir, X86::OUT16ir, X86::OUT32ir };
+        BuildMI(BB, O[Class], 1).addImm((unsigned char)C->getRawValue());
+        return;
+      }
+
+    // Otherwise, move the I/O port address into the DX register and the value
+    // to write into the AL/AX/EAX register.
+    static const unsigned Opc[] = { X86::OUT8rr, X86::OUT16rr, X86::OUT32rr };
+    unsigned Reg = getReg(CI.getOperand(2));
+    BuildMI(BB, X86::MOV16rr, 1, X86::DX).addReg(Reg);
+    BuildMI(BB, Opc[Class], 0);
+    return;
+  }
+    
   default: assert(0 && "Error: unknown intrinsics should have been lowered!");
   }
 }
