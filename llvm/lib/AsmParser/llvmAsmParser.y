@@ -330,6 +330,9 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
   Value *V = getValNonImprovising(Ty, ID);
   if (V) return V;
 
+  if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty))
+    ThrowException("Invalid use of a composite type!");
+
   // If we reached here, we referenced either a symbol that we don't know about
   // or an id number that hasn't been read yet.  We may be referencing something
   // forward, so just create an entry to be resolved later and get to it...
