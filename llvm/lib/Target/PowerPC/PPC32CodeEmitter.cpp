@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PPC32JITInfo.h"
 #include "PPC32TargetMachine.h"
+#include "PPC32Relocations.h"
 #include "PowerPC.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
@@ -28,6 +28,10 @@ namespace {
     TargetMachine &TM;
     MachineCodeEmitter &MCE;
 
+    /// MovePCtoLROffset - When/if we see a MovePCtoLR instruction, we record
+    /// its address in the function into this pointer.
+    void *MovePCtoLROffset;
+
     // Tracks which instruction references which BasicBlock
     std::vector<std::pair<const BasicBlock*,
                           std::pair<unsigned*,MachineInstr*> > > BBRefs;
@@ -36,9 +40,7 @@ namespace {
 
     /// getMachineOpValue - evaluates the MachineOperand of a given MachineInstr
     ///
-    int64_t getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
-
-    unsigned getAddressOfExternalFunction(Function *F);
+    int getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
 
   public:
     PPC32CodeEmitter(TargetMachine &T, MachineCodeEmitter &M) 
@@ -78,9 +80,6 @@ namespace {
 ///
 bool PPC32TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
                                                     MachineCodeEmitter &MCE) {
-  // Keep as `true' until this is a functional JIT to allow llvm-gcc to build
-  return true;
-
   // Machine code emitter pass for PowerPC
   PM.add(new PPC32CodeEmitter(*this, MCE)); 
   // Delete machine code for this function after emitting it
@@ -89,6 +88,7 @@ bool PPC32TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
 }
 
 bool PPC32CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
+  MovePCtoLROffset = 0;
   MCE.startFunction(MF);
   MCE.emitConstantPool(MF.getConstantPool());
   for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
@@ -97,11 +97,11 @@ bool PPC32CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
 
   // Resolve branches to BasicBlocks for the entire function
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    long Location = BBLocations[BBRefs[i].first];
+    intptr_t Location = BBLocations[BBRefs[i].first];
     unsigned *Ref = BBRefs[i].second.first;
     MachineInstr *MI = BBRefs[i].second.second;
-    DEBUG(std::cerr << "Fixup @ " << std::hex << Ref << " to 0x" << Location
-                    << " in instr: " << std::dec << *MI);
+    DEBUG(std::cerr << "Fixup @ " << (void*)Ref << " to " << (void*)Location
+                    << " in instr: " << *MI);
     for (unsigned ii = 0, ee = MI->getNumOperands(); ii != ee; ++ii) {
       MachineOperand &op = MI->getOperand(ii);
       if (op.isPCRelativeDisp()) {
@@ -129,26 +129,20 @@ void PPC32CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
     MachineInstr &MI = *I;
     unsigned Opcode = MI.getOpcode();
-    if (Opcode == PPC::IMPLICIT_DEF) 
-      continue; // pseudo opcode, no side effects
-    else if (Opcode == PPC::MovePCtoLR) {
-      // This can be simplified: the resulting 32-bit code is 0x48000005
-      MachineInstr *MI = BuildMI(PPC::BL, 1).addImm(1);
-      emitWord(getBinaryCodeForInstr(*MI));
-      delete MI;
-    } else
+    switch (MI.getOpcode()) {
+    default:
       emitWord(getBinaryCodeForInstr(*I));
+      break;
+    case PPC::IMPLICIT_DEF:
+      break; // pseudo opcode, no side effects
+    case PPC::MovePCtoLR:
+      assert(MovePCtoLROffset == 0 &&
+             "Multiple MovePCtoLR instructions in the function?");
+      MovePCtoLROffset = (void*)(intptr_t)MCE.getCurrentPCValue();
+      emitWord(0x48000005);    // bl 1
+      break;
+    }
   }
-}
-
-unsigned PPC32CodeEmitter::getAddressOfExternalFunction(Function *F) {
-  static std::map<Function*, unsigned> ExternalFn2Addr;
-  std::map<Function*, unsigned>::iterator Addr = ExternalFn2Addr.find(F);
-
-  // FIXME: this needs to be rewritten.
-  if (Addr == ExternalFn2Addr.end())
-    ExternalFn2Addr[F] = 0; //MCE.forceCompilationOf(F);
-  return ExternalFn2Addr[F];
 }
 
 static unsigned enumRegToMachineReg(unsigned enumReg) {
@@ -191,18 +185,28 @@ static unsigned enumRegToMachineReg(unsigned enumReg) {
   }
 }
 
-int64_t PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, 
-                                            MachineOperand &MO) {
-  int64_t rv = 0; // Return value; defaults to 0 for unhandled cases
+int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
+                                        
+  int rv = 0; // Return value; defaults to 0 for unhandled cases
                   // or things that get fixed up later by the JIT.
   if (MO.isRegister()) {
     rv = enumRegToMachineReg(MO.getReg());
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
   } else if (MO.isGlobalAddress()) {
-    //GlobalValue *GV = MO.getGlobal();
-    // FIXME: Emit a relocation here.
-    rv = 0;
+    unsigned Reloc;
+    if (MI.getOpcode() == PPC::CALLpcrel)
+      Reloc = PPC::reloc_pcrel_bx;
+    else if (MI.getOpcode() == PPC::LOADHiAddr) {
+      Reloc = PPC::reloc_absolute_loadhi;
+    } else if (MI.getOpcode() == PPC::LA) {
+      Reloc = PPC::reloc_absolute_la;
+    } else {
+      assert(0 && "Unknown instruction for relocation!");
+    }
+    MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
+                                        Reloc, MO.getGlobal(),
+                                        -((intptr_t)MovePCtoLROffset+4)));
   } else if (MO.isMachineBasicBlock()) {
     const BasicBlock *BB = MO.getMachineBasicBlock()->getBasicBlock();
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
@@ -210,9 +214,6 @@ int64_t PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI,
   } else if (MO.isConstantPoolIndex()) {
     unsigned index = MO.getConstantPoolIndex();
     rv = MCE.getConstantPoolEntryAddress(index);
-  } else if (MO.isFrameIndex()) {
-    std::cerr << "PPC32CodeEmitter: error: Frame index unhandled!\n";
-    abort();
   } else {
     std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
     abort();
@@ -221,23 +222,18 @@ int64_t PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI,
   // Special treatment for global symbols: constants and vars
   if (MO.isConstantPoolIndex() || MO.isGlobalAddress()) {
     unsigned Opcode = MI.getOpcode();
-    int64_t MBBLoc = BBLocations[MI.getParent()->getBasicBlock()];
+    assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
+
     if (Opcode == PPC::LOADHiAddr) {
-      // LoadHiAddr wants hi16(addr - mbb)
-      rv = (rv - MBBLoc) >> 16;
+      // LoadHiAddr wants hi16(addr - &MovePCtoLR)
+      rv >>= 16;
     } else if (Opcode == PPC::LWZ || Opcode == PPC::LA ||
                Opcode == PPC::LFS || Opcode == PPC::LFD) {
-      // These load opcodes want lo16(addr - mbb)
-      rv = (rv - MBBLoc) & 0xffff;
+      // These load opcodes want lo16(addr - &MovePCtoLR)
+      rv &= 0xffff;
     }
   }
-
   return rv;
-}
-
-void PPC32JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
-  std::cerr << "PPC32JITInfo::replaceMachineCodeForFunction not implemented\n";
-  abort();
 }
 
 #include "PPC32GenCodeEmitter.inc"
