@@ -10,17 +10,17 @@
 //**************************************************************************/
 
 
-//************************* User Include Files *****************************/
-
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/Analysis/LiveVar/BBLiveVar.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Instruction.h"
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/Target/TargetMachine.h"
 #include "Support/CommandLine.h"
 #include "SchedPriorities.h"
+#include <ext/hash_set>
 #include <algorithm>
 #include <iterator>
-#include <ext/hash_set>
 #include <iostream>
 using std::cerr;
 using std::vector;
@@ -1284,12 +1284,12 @@ ReplaceNopsWithUsefulInstr(SchedulingManager& S,
 // 
 static void
 ChooseInstructionsForDelaySlots(SchedulingManager& S,
-				const BasicBlock* bb,
-				SchedGraph* graph)
+				const BasicBlock *bb,
+				SchedGraph *graph)
 {
   const MachineInstrInfo& mii = S.getInstrInfo();
-  const TerminatorInst* termInstr = bb->getTerminator();
-  MachineCodeForVMInstr& termMvec = termInstr->getMachineInstrVec();
+  const TerminatorInst *termInstr = bb->getTerminator();
+  MachineCodeForInstruction &termMvec=MachineCodeForInstruction::get(termInstr);
   vector<SchedGraphNode*> delayNodeVec;
   const MachineInstr* brInstr = NULL;
   
@@ -1507,7 +1507,7 @@ ScheduleInstructionsWithSSA(Method* method,
   for (SchedGraphSet::const_iterator GI=graphSet.begin();
        GI != graphSet.end(); ++GI)
     {
-      SchedGraph* graph = (*GI).second;
+      SchedGraph* graph = GI->second;
       const vector<const BasicBlock*>& bbvec = graph->getBasicBlocks();
       assert(bbvec.size() == 1 && "Cannot schedule multiple basic blocks");
       const BasicBlock* bb = bbvec[0];
@@ -1522,7 +1522,7 @@ ScheduleInstructionsWithSSA(Method* method,
       
       ForwardListSchedule(S);			     // computes schedule in S
       
-      RecordSchedule((*GI).first, S);		     // records schedule in BB
+      RecordSchedule(GI->first, S);		     // records schedule in BB
     }
   
   if (SchedDebugLevel >= Sched_PrintMachineCode)
