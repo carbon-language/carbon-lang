@@ -10,10 +10,7 @@
 
 bool CodeEmitterGen::run(std::ostream &o) {
   std::vector<Record*> Insts;
-
-  const std::map<std::string, Record*> &Defs = Records.getDefs();
-
-  Records.getAllDerivedDefinitions("Instruction", Insts);
+  if (Records.getAllDerivedDefinitions("Instruction", Insts)) return true;
 
   std::string Namespace = "V9::";
   std::string ClassName = "SparcV9CodeEmitter::";
@@ -25,8 +22,7 @@ bool CodeEmitterGen::run(std::ostream &o) {
     << "  DEBUG(std::cerr << MI);\n"
     << "  switch (MI.getOpcode()) {\n";
   for (std::vector<Record*>::iterator I = Insts.begin(), E = Insts.end();
-       I != E; ++I)
-  {
+       I != E; ++I) {
     Record *R = *I;
     o << "    case " << Namespace << R->getName() << ": {\n"
       << "      DEBUG(std::cerr << \"Emitting " << R->getName() << "\\n\");\n";
