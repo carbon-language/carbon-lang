@@ -544,6 +544,91 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
   return Changed;
 }
 
+/// HoistThenElseCodeToIf - Given a conditional branch that codes to BB1 and
+/// BB2, hoist any common code in the two blocks up into the branch block.  The
+/// caller of this function guarantees that BI's block dominates BB1 and BB2.
+static bool HoistThenElseCodeToIf(BranchInst *BI) {
+  // This does very trivial matching, with limited scanning, to find identical
+  // instructions in the two blocks.  In particular, we don't want to get into
+  // O(M*N) situations here where M and N are the sizes of BB1 and BB2.  As
+  // such, we currently just scan for obviously identical instructions in an
+  // identical order.
+  BasicBlock *BB1 = BI->getSuccessor(0);  // The true destination.
+  BasicBlock *BB2 = BI->getSuccessor(1);  // The false destination
+
+  Instruction *I1 = BB1->begin(), *I2 = BB2->begin();
+  if (I1->getOpcode() != I2->getOpcode() || !I1->isIdenticalTo(I2))
+    return false;
+
+  // If we get here, we can hoist at least one instruction.
+  BasicBlock *BIParent = BI->getParent();
+  bool Hoisted = false;
+
+  do {
+    // If we are hoisting the terminator instruction, don't move one (making a
+    // broken BB), instead clone it, and remove BI.
+    if (isa<TerminatorInst>(I1))
+      goto HoistTerminator;
+   
+    // For a normal instruction, we just move one to right before the branch,
+    // then replace all uses of the other with the first.  Finally, we remove
+    // the now redundant second instruction.
+    BIParent->getInstList().splice(BI, BB1->getInstList(), I1);
+    if (!I2->use_empty())
+      I2->replaceAllUsesWith(I1);
+    BB2->getInstList().erase(I2);
+    
+    I1 = BB1->begin();
+    I2 = BB2->begin();
+    Hoisted = true;
+  } while (I1->getOpcode() == I2->getOpcode() && I1->isIdenticalTo(I2));
+
+  return true;
+
+HoistTerminator:
+  // Okay, it is safe to hoist the terminator.
+  Instruction *NT = I1->clone();
+  BIParent->getInstList().insert(BI, NT);
+  if (NT->getType() != Type::VoidTy) {
+    I1->replaceAllUsesWith(NT);
+    I2->replaceAllUsesWith(NT);
+    NT->setName(I1->getName());
+  }
+
+  // Hoisting one of the terminators from our successor is a great thing.
+  // Unfortunately, the successors of the if/else blocks may have PHI nodes in
+  // them.  If they do, all PHI entries for BB1/BB2 must agree for all PHI
+  // nodes, so we insert select instruction to compute the final result.
+  std::map<std::pair<Value*,Value*>, SelectInst*> InsertedSelects;
+  for (succ_iterator SI = succ_begin(BB1), E = succ_end(BB1); SI != E; ++SI) {
+    PHINode *PN;
+    for (BasicBlock::iterator BBI = SI->begin();
+         PN = dyn_cast<PHINode>(BBI); ++BBI) {
+      Value *BB1V = PN->getIncomingValueForBlock(BB1);
+      Value *BB2V = PN->getIncomingValueForBlock(BB2);
+      if (BB1V != BB2V) {
+        // These values do not agree.  Insert a select instruction before NT
+        // that determines the right value.
+        SelectInst *&SI = InsertedSelects[std::make_pair(BB1V, BB2V)];
+        if (SI == 0)
+          SI = new SelectInst(BI->getCondition(), BB1V, BB2V,
+                              BB1V->getName()+"."+BB2V->getName(), NT);
+        // Make the PHI node use the select for all incoming values for BB1/BB2
+        for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+          if (PN->getIncomingBlock(i) == BB1 || PN->getIncomingBlock(i) == BB2)
+            PN->setIncomingValue(i, SI);
+      }
+    }
+  }
+
+  // Update any PHI nodes in our new successors.
+  for (succ_iterator SI = succ_begin(BB1), E = succ_end(BB1); SI != E; ++SI)
+    AddPredecessorToBlock(*SI, BIParent, BB1);
+  
+  BI->eraseFromParent();
+  return true;
+}
+
 namespace {
   /// ConstantIntOrdering - This class implements a stable ordering of constant
   /// integers that does not depend on their address.  This is important for
@@ -1076,6 +1161,26 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       
     return true;
   }
+
+  // Otherwise, if this block only has a single predecessor, and if that block
+  // is a conditional branch, see if we can hoist any code from this block up
+  // into our predecessor.
+  if (OnlyPred)
+    if (BranchInst *BI = dyn_cast<BranchInst>(OnlyPred->getTerminator())) {
+      // This is guaranteed to be a condbr at this point.
+      assert(BI->isConditional() && "Should have folded bb into pred!");
+      // Get the other block.
+      BasicBlock *OtherBB = BI->getSuccessor(BI->getSuccessor(0) == BB);
+      PI = pred_begin(OtherBB);
+      ++PI;
+      if (PI == pred_end(OtherBB)) {
+        // We have a conditional branch to two blocks that are only reachable
+        // from the condbr.  We know that the condbr dominates the two blocks,
+        // so see if there is any identical code in the "then" and "else"
+        // blocks.  If so, we can hoist it up to the branching block.
+        Changed |= HoistThenElseCodeToIf(BI);
+      }
+    }
 
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
     if (BranchInst *BI = dyn_cast<BranchInst>((*PI)->getTerminator()))
