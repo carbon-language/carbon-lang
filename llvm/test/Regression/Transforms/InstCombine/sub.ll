@@ -105,3 +105,9 @@ int %test16(int %A) {
 	%Y = sub int 0, %X
 	ret int %Y
 }
+
+int %test17(int %A) {
+	%B = sub int 0, %A
+	%C = div int %B, 1234
+	ret int %C
+}
