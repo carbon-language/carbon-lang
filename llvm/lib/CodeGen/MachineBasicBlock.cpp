@@ -97,6 +97,6 @@ void MachineBasicBlock::print(std::ostream &OS) const
     OS << "\n" << LBB->getName() << " (" << (const void*)LBB << "):\n";
     for (const_iterator I = begin(); I != end(); ++I) {
         OS << "\t";
-        I->print(OS, MachineFunction::get(LBB->getParent()).getTarget());
+        I->print(OS, getParent()->getTarget());
     }
 }
