@@ -20,7 +20,6 @@
 namespace llvm {
   class Function;
   class GlobalValue;
-  class ConstantPointerRef;
   class BasicBlock;
 
   void InsertProfilingInitCall(Function *MainFn, const char *FnName,
