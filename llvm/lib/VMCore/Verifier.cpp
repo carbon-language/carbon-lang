@@ -17,6 +17,7 @@
 //  * Only phi nodes can be self referential: 'add int %0, %0 ; <int>:0' is bad
 //  * PHI nodes must have an entry for each predecessor, with no extras.
 //  * PHI nodes must be the first thing in a basic block, all grouped together
+//  * PHI nodes must have at least one entry
 //  * All basic blocks should only end with terminator insts, not contain them
 //  * The entry node to a function must not have predecessors
 //  * All Instructions must be embeded into a basic block
@@ -257,6 +258,12 @@ void Verifier::visitPHINode(PHINode &PN) {
   Assert2(PN.getPrev() == 0 || isa<PHINode>(PN.getPrev()),
           "PHI nodes not grouped at top of basic block!",
           &PN, PN.getParent());
+
+  // Ensure that PHI nodes have at least one entry!
+  Assert1(PN.getNumIncomingValues() != 0,
+          "PHI nodes must have at least one entry.  If the block is dead, "
+          "the PHI should be removed!",
+          &PN);
 
   std::vector<BasicBlock*> Preds(pred_begin(PN.getParent()),
                                  pred_end(PN.getParent()));
