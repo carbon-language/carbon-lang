@@ -91,16 +91,16 @@ public:
   /*ctor*/	UltraSparcInstrInfo(const TargetMachine& tgt);
 
   //
-  // All immediate constants are in position 0 except the
+  // All immediate constants are in position 1 except the
   // store instructions.
   // 
-  virtual int getImmmedConstantPos(MachineOpCode opCode) const {
+  virtual int getImmedConstantPos(MachineOpCode opCode) const {
     bool ignore;
     if (this->maxImmedConstant(opCode, ignore) != 0)
       {
         assert(! this->isStore((MachineOpCode) STB - 1)); // first store is STB
         assert(! this->isStore((MachineOpCode) STD + 1)); // last  store is STD
-        return (opCode >= STB || opCode <= STD)? 2 : 1;
+        return (opCode >= STB && opCode <= STD)? 2 : 1;
       }
     else
       return -1;
@@ -126,7 +126,8 @@ public:
   // returned in `minstrVec'.  Any temporary registers (TmpInstruction)
   // created are returned in `tempVec'.
   // 
-  virtual void  CreateCodeToLoadConst(Value* val,
+  virtual void  CreateCodeToLoadConst(Method* method,
+                                      Value* val,
                                       Instruction* dest,
                                       std::vector<MachineInstr*>& minstrVec,
                                       std::vector<TmpInstruction*>& tmp) const;
@@ -157,11 +158,11 @@ public:
                                            TargetMachine& target) const;
 
  // create copy instruction(s)
-  virtual void
-  CreateCopyInstructionsByType(const TargetMachine& target,
-                             Value* src,
-                             Instruction* dest,
-                             std::vector<MachineInstr*>& minstr) const;
+  virtual void CreateCopyInstructionsByType(const TargetMachine& target,
+                                            Method* method,
+                                            Value* src,
+                                            Instruction* dest,
+                                            std::vector<MachineInstr*>& minstr) const;
 };
 
 
@@ -296,12 +297,11 @@ public:
     return *UltraSparcInfo;
   }
 
-  // To find the register class of a Value
+  // To find the register class used for a specified Type
   //
-  inline unsigned getRegClassIDOfValue(const Value *Val,
-                                       bool isCCReg = false) const {
-
-    Type::PrimitiveID ty = Val->getType()->getPrimitiveID();
+  inline unsigned getRegClassIDOfType(const Type *type,
+                                      bool isCCReg = false) const {
+    Type::PrimitiveID ty = type->getPrimitiveID();
     unsigned res;
     
     if ((ty && ty <= Type::LongTyID) || (ty == Type::LabelTyID) ||
@@ -321,6 +321,14 @@ public:
       return res;
   }
 
+  // To find the register class of a Value
+  //
+  inline unsigned getRegClassIDOfValue(const Value *Val,
+                                       bool isCCReg = false) const {
+    return getRegClassIDOfType(Val->getType(), isCCReg);
+  }
+
+  
 
   // getZeroRegNum - returns the register that contains always zero this is the
   // unified register number
@@ -382,7 +390,7 @@ public:
     else if( RegClassID == FloatCCRegClassID && reg < 4)
       return reg + 32 + 64;             // 32 int, 64 float
     else if( RegClassID == IntCCRegClassID ) 
-      return 4+ 32 + 64;                // only int cc reg
+      return reg + 4+ 32 + 64;                // only int cc reg
     else if (reg==InvalidRegNum)                
       return InvalidRegNum;
     else  
