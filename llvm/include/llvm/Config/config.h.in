@@ -270,6 +270,12 @@
 /* Define to 1 if you have the `strdup' function. */
 #undef HAVE_STRDUP
 
+/* Define to 1 if you have the `strerror' function. */
+#undef HAVE_STRERROR
+
+/* Define to 1 if you have the `strerror_r' function. */
+#undef HAVE_STRERROR_R
+
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
 
@@ -384,6 +390,10 @@
 
 /* Define to the system default library search path. */
 #undef LTDL_SYSSEARCHPATH
+
+/* Define if /dev/zero should be used when mapping RWX memory, or undefine if
+   its not necessary */
+#undef NEED_DEV_ZERO_FOR_MMAP
 
 /* Define if dlsym() requires a leading underscore in symbol names. */
 #undef NEED_USCORE

@@ -443,7 +443,8 @@ dnl===-----------------------------------------------------------------------===
 
 AC_CHECK_FUNCS([backtrace getcwd getpagesize getrusage gettimeofday isatty ])
 AC_CHECK_FUNCS([mkdtemp mkstemp mktemp ])
-AC_CHECK_FUNCS([realpath setrlimit strdup strtoq strtoll sysconf ])
+AC_CHECK_FUNCS([realpath setrlimit strdup strerror strerror_r strtoll strtoq ])
+AC_CHECK_FUNCS([sysconf])
 AC_C_PRINTF_A
 AC_FUNC_ALLOCA
 AC_FUNC_RAND48
@@ -459,9 +460,11 @@ AC_FUNC_ISNAN
 AC_FUNC_ISINF
 
 dnl Check for mmap and mprotect support. We need both to do the JIT and for
-dnl bytecode loading, etc.
+dnl bytecode loading, etc. We also need to know if /dev/zero is required to
+dnl be opened for allocating RWX memory.
 AC_FUNC_MMAP
 AC_FUNC_MMAP_FILE
+AC_NEED_DEV_ZERO_FOR_MMAP
 AC_CHECK_FUNC(mprotect,,
               AC_MSG_ERROR([Function mprotect() required but not found]))
 
