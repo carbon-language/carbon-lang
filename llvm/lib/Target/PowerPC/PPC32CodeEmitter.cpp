@@ -199,6 +199,7 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     } else {
       assert(0 && "Unknown instruction for relocation!");
     }
+    assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
     MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
                                         Reloc, MO.getGlobal(),
                                         -((intptr_t)MovePCtoLROffset+4)));
@@ -208,27 +209,26 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     BBRefs.push_back(std::make_pair(BB, CurrPC));
   } else if (MO.isConstantPoolIndex()) {
     unsigned index = MO.getConstantPoolIndex();
-    rv = MCE.getConstantPoolEntryAddress(index);
-  } else {
-    std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
-    abort();
-  }
-
-  // Special treatment for global symbols: constants and vars
-  if ((MO.isConstantPoolIndex() || MO.isGlobalAddress()) &&
-      MI.getOpcode() != PPC::CALLpcrel) {
-    unsigned Opcode = MI.getOpcode();
     assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
+    rv = MCE.getConstantPoolEntryAddress(index) - (intptr_t)MovePCtoLROffset-4;
 
+    unsigned Opcode = MI.getOpcode();
     if (Opcode == PPC::LOADHiAddr) {
       // LoadHiAddr wants hi16(addr - &MovePCtoLR)
+      if ((short)rv < 0) rv += 1 << 16;
       rv >>= 16;
     } else if (Opcode == PPC::LWZ || Opcode == PPC::LA ||
                Opcode == PPC::LFS || Opcode == PPC::LFD) {
       // These load opcodes want lo16(addr - &MovePCtoLR)
       rv &= 0xffff;
+    } else {
+      assert(0 && "Unknown constant pool using instruction!");
     }
+  } else {
+    std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
+    abort();
   }
+
   return rv;
 }
 
