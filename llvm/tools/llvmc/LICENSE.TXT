@@ -1,0 +1,6 @@
+LLVM Compiler Driver (llvmc)
+-------------------------------------------------------------------------------
+The LLVM Compiler Driver (llvmc) is licensed under the Illinois Open Source 
+License and has the following additional copyright:
+
+Copyright (C) 2004 eXtensible Systems, Inc.
