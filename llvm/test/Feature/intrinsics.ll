@@ -8,6 +8,6 @@ implementation
 ;
 void %libm() {
         call bool %llvm.isunordered(float 0.0, float 1.0)
-        call bool %llvm.isunordered(double 0.0, double double 0x7FF8000000000000)
+        call bool %llvm.isunordered(double 0.0, double 0x7FF8000000000000)
 	ret void
 }
