@@ -221,14 +221,6 @@ namespace {
   };
 }
 
-// This function is required by X86AsmPrinter.cpp to work around GAS bugs
-void llvm::X86::emitInstruction(MachineCodeEmitter& mce,
-                                const X86InstrInfo& ii,
-                                const MachineInstr& mi)
-{
-    Emitter(mce, ii).emitInstruction(mi);
-}
-
 /// addPassesToEmitMachineCode - Add passes to the specified pass manager to get
 /// machine code emitted.  This uses a MachineCodeEmitter object to handle
 /// actually outputting the machine code and resolving things like the address

@@ -51,14 +51,6 @@ public:
   static unsigned getModuleMatchQuality(const Module &M);
   static unsigned getJITMatchQuality();
 };
-
-  // this is implemented in X86CodeEmitter.cpp
-  namespace X86 {
-    void emitInstruction(MachineCodeEmitter& mce,
-                         const X86InstrInfo& ii,
-                         const MachineInstr& MI);
-  }
-
 } // End llvm namespace
 
 #endif
