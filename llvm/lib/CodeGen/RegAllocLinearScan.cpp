@@ -459,7 +459,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             }
             else {
                 prt_->delRegUse(vrm_->getPhys(i->reg));
-                vrm_->clearVirtReg(i->reg);
+                vrm_->clearVirt(i->reg);
                 if (i->spilled()) {
                     if (!i->empty()) {
                         IntervalPtrs::iterator it = unhandled_.begin();
@@ -479,7 +479,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             if (MRegisterInfo::isPhysicalRegister(i->reg))
                 fixed_.push_front(i);
             else {
-                vrm_->clearVirtReg(i->reg);
+                vrm_->clearVirt(i->reg);
                 if (i->spilled()) {
                     if (!i->empty()) {
                         IntervalPtrs::iterator it = unhandled_.begin();
@@ -497,7 +497,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             if (MRegisterInfo::isPhysicalRegister(i->reg))
                 fixed_.push_front(i);
             else {
-                vrm_->clearVirtReg(i->reg);
+                vrm_->clearVirt(i->reg);
                 unhandled_.push_front(i);
             }
         }

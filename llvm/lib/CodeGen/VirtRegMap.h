@@ -71,7 +71,7 @@ namespace llvm {
             v2pMap_[virtReg] = physReg;
         }
 
-        void clearVirtReg(unsigned virtReg) {
+        void clearVirt(unsigned virtReg) {
             assert(MRegisterInfo::isVirtualRegister(virtReg));
             assert(v2pMap_[virtReg] != NO_PHYS_REG &&
                    "attempt to clear a not assigned virtual register");
