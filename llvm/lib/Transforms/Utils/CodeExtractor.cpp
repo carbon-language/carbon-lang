@@ -78,8 +78,7 @@ namespace {
 void CodeExtractor::processPhiNodeInputs(PHINode *Phi,
                                          Values &inputs,
                                          BasicBlock *codeReplacer,
-                                         BasicBlock *newFuncRoot)
-{
+                                         BasicBlock *newFuncRoot) {
   // Separate incoming values and BasicBlocks as internal/external. We ignore
   // the case where both the value and BasicBlock are internal, because we don't
   // need to do a thing.
@@ -99,11 +98,6 @@ void CodeExtractor::processPhiNodeInputs(PHINode *Phi,
         else
           EValEBB.push_back(i);
       }
-    } else if (Constant *Const = dyn_cast<Constant>(phiVal)) {
-      // Constants are internal, but considered `external' if they are coming
-      // from an external block.
-      if (!BlocksToExtract.count(Phi->getIncomingBlock(i)))
-        EValEBB.push_back(i);
     } else if (Argument *Arg = dyn_cast<Argument>(phiVal)) {
       // arguments are external
       if (BlocksToExtract.count(Phi->getIncomingBlock(i)))
@@ -111,20 +105,21 @@ void CodeExtractor::processPhiNodeInputs(PHINode *Phi,
       else
         EValEBB.push_back(i);
     } else {
-      phiVal->dump();
-      assert(0 && "Unhandled input in a Phi node");
+      // Globals/Constants are internal, but considered `external' if they are
+      // coming from an external block.
+      if (!BlocksToExtract.count(Phi->getIncomingBlock(i)))
+        EValEBB.push_back(i);
     }
   }
 
-  // Both value and block are external. Need to group all of
-  // these, have an external phi, pass the result as an
-  // argument, and have THIS phi use that result.
+  // Both value and block are external. Need to group all of these, have an
+  // external phi, pass the result as an argument, and have THIS phi use that
+  // result.
   if (EValEBB.size() > 0) {
     if (EValEBB.size() == 1) {
       // Now if it's coming from the newFuncRoot, it's that funky input
       unsigned phiIdx = EValEBB[0];
-      if (!dyn_cast<Constant>(Phi->getIncomingValue(phiIdx)))
-      {
+      if (!isa<Constant>(Phi->getIncomingValue(phiIdx))) {
         PhiVal2Arg[Phi].push_back(std::make_pair(phiIdx, inputs.size()));
         // We can just pass this value in as argument
         inputs.push_back(Phi->getIncomingValue(phiIdx));
@@ -134,8 +129,7 @@ void CodeExtractor::processPhiNodeInputs(PHINode *Phi,
       PHINode *externalPhi = new PHINode(Phi->getType(), "extPhi");
       codeReplacer->getInstList().insert(codeReplacer->begin(), externalPhi);
       for (std::vector<unsigned>::iterator i = EValEBB.begin(),
-             e = EValEBB.end(); i != e; ++i)
-      {
+             e = EValEBB.end(); i != e; ++i) {
         externalPhi->addIncoming(Phi->getIncomingValue(*i),
                                  Phi->getIncomingBlock(*i));
 
@@ -152,21 +146,19 @@ void CodeExtractor::processPhiNodeInputs(PHINode *Phi,
     }
   }
 
-  // When the value is external, but block internal...
-  // just pass it in as argument, no change to phi node
+  // When the value is external, but block internal...  just pass it in as
+  // argument, no change to phi node
   for (std::vector<unsigned>::iterator i = EValIBB.begin(),
-         e = EValIBB.end(); i != e; ++i)
-  {
+         e = EValIBB.end(); i != e; ++i) {
     // rewrite the phi input node to be an argument
     PhiVal2Arg[Phi].push_back(std::make_pair(*i, inputs.size()));
     inputs.push_back(Phi->getIncomingValue(*i));
   }
 
-  // Value internal, block external
-  // this can happen if we are extracting a part of a loop
+  // Value internal, block external this can happen if we are extracting a part
+  // of a loop.
   for (std::vector<unsigned>::iterator i = IValEBB.begin(),
-         e = IValEBB.end(); i != e; ++i)
-  {
+         e = IValEBB.end(); i != e; ++i) {
     assert(0 && "Cannot (YET) handle internal values via external blocks");
   }
 }
@@ -190,10 +182,8 @@ void CodeExtractor::findInputsOutputs(Values &inputs, Values &outputs,
              op != opE; ++op)
           if (Instruction *opI = dyn_cast<Instruction>(*op)) {
             // Check if definition of this operand is within the loop
-            if (!BlocksToExtract.count(opI->getParent())) {
-              // add this operand to the inputs
+            if (!BlocksToExtract.count(opI->getParent()))
               inputs.push_back(opI);
-            }
           } else if (isa<Argument>(*op)) {
             inputs.push_back(*op);
           }
@@ -212,10 +202,9 @@ void CodeExtractor::rewritePhiNodes(Function *F,
                                     BasicBlock *newFuncRoot) {
   // Write any changes that were saved before: use function arguments as inputs
   for (PhiVal2ArgTy::iterator i = PhiVal2Arg.begin(), e = PhiVal2Arg.end();
-       i != e; ++i)
-  {
-    PHINode *phi = (*i).first;
-    PhiValChangesTy &values = (*i).second;
+       i != e; ++i) {
+    PHINode *phi = i->first;
+    PhiValChangesTy &values = i->second;
     for (unsigned cIdx = 0, ce = values.size(); cIdx != ce; ++cIdx)
     {
       unsigned phiValueIdx = values[cIdx].first, argNum = values[cIdx].second;
@@ -228,9 +217,8 @@ void CodeExtractor::rewritePhiNodes(Function *F,
 
   // Delete any invalid Phi node inputs that were marked as NULL previously
   for (PhiVal2ArgTy::iterator i = PhiVal2Arg.begin(), e = PhiVal2Arg.end();
-       i != e; ++i)
-  {
-    PHINode *phi = (*i).first;
+       i != e; ++i) {
+    PHINode *phi = i->first;
     for (unsigned idx = 0, end = phi->getNumIncomingValues(); idx != end; ++idx)
     {
       if (phi->getIncomingValue(idx) == 0 && phi->getIncomingBlock(idx) == 0) {
@@ -287,7 +275,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   DEBUG(std::cerr << "Function type: " << retTy << " f(");
   for (std::vector<const Type*>::iterator i = paramTy.begin(),
          e = paramTy.end(); i != e; ++i)
-    DEBUG(std::cerr << (*i) << ", ");
+    DEBUG(std::cerr << *i << ", ");
   DEBUG(std::cerr << ")\n");
 
   const FunctionType *funcType = FunctionType::get(retTy, paramTy, false);
