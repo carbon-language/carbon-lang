@@ -158,9 +158,9 @@ bool RaiseAllocations::run(Module &M) {
           Changed = true;
           ++NumRaised;
         }
-      } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(U)) {
-        Users.insert(Users.end(), CPR->use_begin(), CPR->use_end());
-        EqPointers.push_back(CPR);
+      } else if (GlobalValue *GV = dyn_cast<GlobalValue>(U)) {
+        Users.insert(Users.end(), GV->use_begin(), GV->use_end());
+        EqPointers.push_back(GV);
       } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
         if (CE->getOpcode() == Instruction::Cast) {
           Users.insert(Users.end(), CE->use_begin(), CE->use_end());
@@ -207,9 +207,9 @@ bool RaiseAllocations::run(Module &M) {
           Changed = true;
           ++NumRaised;
         }
-      } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(U)) {
-        Users.insert(Users.end(), CPR->use_begin(), CPR->use_end());
-        EqPointers.push_back(CPR);
+      } else if (GlobalValue *GV = dyn_cast<GlobalValue>(U)) {
+        Users.insert(Users.end(), GV->use_begin(), GV->use_end());
+        EqPointers.push_back(GV);
       } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
         if (CE->getOpcode() == Instruction::Cast) {
           Users.insert(Users.end(), CE->use_begin(), CE->use_end());

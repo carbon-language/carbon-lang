@@ -243,7 +243,7 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
   GlobalVariable *fmtVal = getStringRef(Mod, Message+getPrintfCodeFor(V)+"\n");
 
   // Turn the format string into an sbyte *
-  Constant *GEP =ConstantExpr::getGetElementPtr(ConstantPointerRef::get(fmtVal),
+  Constant *GEP=ConstantExpr::getGetElementPtr(fmtVal,
                 std::vector<Constant*>(2,Constant::getNullValue(Type::LongTy)));
   
   // Insert a call to the hash function if this is a pointer value

@@ -42,8 +42,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   std::vector<Constant*> GEPIndices(2, Constant::getNullValue(Type::IntTy));
   unsigned NumElements = 0;
   if (Array) {
-    ConstantPointerRef *ArrayCPR = ConstantPointerRef::get(Array);
-    Args[2] = ConstantExpr::getGetElementPtr(ArrayCPR, GEPIndices);
+    Args[2] = ConstantExpr::getGetElementPtr(Array, GEPIndices);
     NumElements =
       cast<ArrayType>(Array->getType()->getElementType())->getNumElements();
   } else {
@@ -87,7 +86,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
 }
 
 void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
-                                   ConstantPointerRef *CounterArray) {
+                                   GlobalValue *CounterArray) {
   // Insert the increment after any alloca or PHI instructions...
   BasicBlock::iterator InsertPos = BB->begin();
   while (isa<AllocaInst>(InsertPos) || isa<PHINode>(InsertPos))

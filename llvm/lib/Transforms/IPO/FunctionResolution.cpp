@@ -101,8 +101,7 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       if (!Old->use_empty()) {  // Avoid making the CPR unless we really need it
         Value *Replacement = Concrete;
         if (Concrete->getType() != Old->getType())
-          Replacement = ConstantExpr::getCast(ConstantPointerRef::get(Concrete),
-                                              Old->getType());
+          Replacement = ConstantExpr::getCast(Concrete,Old->getType());
         NumResolved += Old->use_size();
         Old->replaceAllUsesWith(Replacement);
       }
@@ -118,11 +117,10 @@ static bool ResolveGlobalVariables(Module &M,
                                    std::vector<GlobalValue*> &Globals,
                                    GlobalVariable *Concrete) {
   bool Changed = false;
-  Constant *CCPR = ConstantPointerRef::get(Concrete);
 
   for (unsigned i = 0; i != Globals.size(); ++i)
     if (Globals[i] != Concrete) {
-      Constant *Cast = ConstantExpr::getCast(CCPR, Globals[i]->getType());
+      Constant *Cast = ConstantExpr::getCast(Concrete, Globals[i]->getType());
       Globals[i]->replaceAllUsesWith(Cast);
 
       // Since there are no uses of Old anymore, remove it from the module.
@@ -138,8 +136,8 @@ static bool ResolveGlobalVariables(Module &M,
 static bool CallersAllIgnoreReturnValue(Function &F) {
   if (F.getReturnType() == Type::VoidTy) return true;
   for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I) {
-    if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(*I)) {
-      for (Value::use_iterator I = CPR->use_begin(), E = CPR->use_end();
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(*I)) {
+      for (Value::use_iterator I = GV->use_begin(), E = GV->use_end();
            I != E; ++I) {
         CallSite CS = CallSite::get(*I);
         if (!CS.getInstruction() || !CS.getInstruction()->use_empty())

@@ -61,8 +61,8 @@ static std::string getStringValue(Value *V, unsigned Offset = 0) {
       }
     }
   } else if (Constant *C = dyn_cast<Constant>(V)) {
-    if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C))
-      return getStringValue(CPR->getValue(), Offset);
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
+      return getStringValue(GV, Offset);
     else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
         // Turn a gep into the specified offset.
@@ -108,8 +108,6 @@ static const GlobalVariable *getNextStopPoint(const Value *V, unsigned &LineNo,
           if (const ConstantInt *C = dyn_cast<ConstantInt>(CI->getOperand(3)))
             CurColNo = C->getRawValue();
           const Value *Op = CI->getOperand(4);
-          if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Op))
-            Op = CPR->getValue();
           
           if ((CurDesc = dyn_cast<GlobalVariable>(Op)) &&
               (LineNo < LastLineNo ||
@@ -192,11 +190,9 @@ SourceFunctionInfo::SourceFunctionInfo(ProgramInfo &PI,
     if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Desc->getInitializer()))
       if (CS->getNumOperands() > 2) {
         // Entry #1 is the file descriptor.
-        if (const ConstantPointerRef *CPR =
-            dyn_cast<ConstantPointerRef>(CS->getOperand(1)))
-          if (const GlobalVariable *GV =
-              dyn_cast<GlobalVariable>(CPR->getValue()))
-            SourceFile = &PI.getSourceFile(GV);
+        if (const GlobalVariable *GV = 
+            dyn_cast<GlobalVariable>(CS->getOperand(1)))
+          SourceFile = &PI.getSourceFile(GV);
 
         // Entry #2 is the function name.
         Name = getStringValue(CS->getOperand(2));
@@ -366,9 +362,9 @@ ProgramInfo::getFunction(const GlobalVariable *Desc) {
   if (Desc && Desc->hasInitializer())
     if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Desc->getInitializer()))
       if (CS->getNumOperands() > 0)
-        if (const ConstantPointerRef *CPR =
-            dyn_cast<ConstantPointerRef>(CS->getOperand(1)))
-          SourceFileDesc = dyn_cast<GlobalVariable>(CPR->getValue());
+        if (const GlobalVariable *GV =
+            dyn_cast<GlobalVariable>(CS->getOperand(1)))
+          SourceFileDesc = GV;
 
   const SourceLanguage &Lang = getSourceFile(SourceFileDesc).getLanguage();
   return *(Result = Lang.createSourceFunctionInfo(Desc, *this));

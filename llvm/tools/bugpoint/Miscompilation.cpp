@@ -654,8 +654,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
         // GetElementPtr *funcName, ulong 0, ulong 0
         std::vector<Constant*> GEPargs(2,Constant::getNullValue(Type::IntTy));
         Value *GEP =
-          ConstantExpr::getGetElementPtr(ConstantPointerRef::get(funcName),
-                                         GEPargs);
+          ConstantExpr::getGetElementPtr(funcName, GEPargs);
         std::vector<Value*> ResolverArgs;
         ResolverArgs.push_back(GEP);
 

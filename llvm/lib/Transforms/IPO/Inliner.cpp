@@ -14,7 +14,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Inliner.h"
-#include "llvm/Constants.h"   // ConstantPointerRef should die
 #include "llvm/Module.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
@@ -174,9 +173,9 @@ bool Inliner::doFinalization(CallGraph &CG) {
     // If the only remaining use of the function is a dead constant
     // pointer ref, remove it.
     if (F && F->hasOneUse())
-      if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(F->use_back()))
-        if (CPR->use_empty()) {
-          CPR->destroyConstant();
+      if (Function *GV = dyn_cast<Function>(F->use_back()))
+        if (GV->removeDeadConstantUsers()) {
+	  delete GV;
           if (F->hasInternalLinkage()) {
             // There *MAY* be an edge from the external call node to this
             // function.  If so, remove it.

@@ -14,6 +14,7 @@
 
 #include "ValueMapper.h"
 #include "llvm/Constants.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/Instruction.h"
 #include <iostream>
 
@@ -32,9 +33,8 @@ Value *llvm::MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
     if (isa<ConstantIntegral>(C) || isa<ConstantFP>(C) ||
         isa<ConstantPointerNull>(C) || isa<ConstantAggregateZero>(C))
       return VMSlot = C;           // Primitive constants map directly
-    else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
-      GlobalValue *MV = cast<GlobalValue>(MapValue((Value*)CPR->getValue(),VM));
-      return VMSlot = ConstantPointerRef::get(MV);
+    else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
+      return VMSlot = GV;
     } else if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
       const std::vector<Use> &Vals = CA->getValues();
       for (unsigned i = 0, e = Vals.size(); i != e; ++i) {

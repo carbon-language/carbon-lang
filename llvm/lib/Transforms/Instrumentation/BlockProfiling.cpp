@@ -55,14 +55,12 @@ bool FunctionProfiler::run(Module &M) {
     new GlobalVariable(ATy, false, GlobalValue::InternalLinkage,
                        Constant::getNullValue(ATy), "FuncProfCounters", &M);
 
-  ConstantPointerRef *CounterCPR = ConstantPointerRef::get(Counters);
-
   // Instrument all of the functions...
   unsigned i = 0;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) 
     if (!I->isExternal())
       // Insert counter at the start of the function
-      IncrementCounterInBlock(I->begin(), i++, CounterCPR);
+      IncrementCounterInBlock(I->begin(), i++, Counters);
 
   // Add the initialization call to main.
   InsertProfilingInitCall(Main, "llvm_start_func_profiling", Counters);
@@ -96,14 +94,12 @@ bool BlockProfiler::run(Module &M) {
     new GlobalVariable(ATy, false, GlobalValue::InternalLinkage,
                        Constant::getNullValue(ATy), "BlockProfCounters", &M);
 
-  ConstantPointerRef *CounterCPR = ConstantPointerRef::get(Counters);
-
   // Instrument all of the blocks...
   unsigned i = 0;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) 
     for (Function::iterator BB = I->begin(), E = I->end(); BB != E; ++BB)
       // Insert counter at the start of the block
-      IncrementCounterInBlock(BB, i++, CounterCPR);
+      IncrementCounterInBlock(BB, i++, Counters);
 
   // Add the initialization call to main.
   InsertProfilingInitCall(Main, "llvm_start_block_profiling", Counters);

@@ -135,7 +135,7 @@ bool LowerInvoke::doInitialization(Module &M) {
     if (MsgGV) {
       std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::LongTy));
       AbortMessage = 
-        ConstantExpr::getGetElementPtr(ConstantPointerRef::get(MsgGV), GEPIdx);
+        ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
     }
 
   } else {
@@ -154,7 +154,7 @@ bool LowerInvoke::doInitialization(Module &M) {
     if (MsgGV) {
       std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::LongTy));
       AbortMessage =
-        ConstantExpr::getGetElementPtr(ConstantPointerRef::get(MsgGV), GEPIdx);
+        ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
     }
   }
 
@@ -191,7 +191,7 @@ void LowerInvoke::writeAbortMessage(Instruction *IB) {
                                                  WriteFn->getParent());
       std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::LongTy));
       AbortMessage = 
-        ConstantExpr::getGetElementPtr(ConstantPointerRef::get(MsgGV), GEPIdx);
+        ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
     }
 
     // These are the arguments we WANT...

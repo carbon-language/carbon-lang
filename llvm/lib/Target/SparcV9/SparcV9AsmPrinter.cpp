@@ -317,11 +317,8 @@ void AsmPrinter::printSingleConstantValue(const Constant* CV) {
   
   toAsm << "\t" << TypeToDataDirective(CV->getType()) << "\t";
   
-  if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV)) {
-    // This is a constant address for a global variable or method.
-    // Use the name of the variable or method as the address value.
-    assert(isa<GlobalValue>(CPR->getValue()) && "Unexpected non-global");
-    toAsm << getID(CPR->getValue()) << "\n";
+  if (const GlobalValue* GV = dyn_cast<GlobalValue>(CV)) {
+    toAsm << getID(GV) << "\n";
   } else if (isa<ConstantPointerNull>(CV)) {
     // Null pointer value
     toAsm << "0\n";
@@ -480,7 +477,9 @@ std::string AsmPrinter::valToExprString(const Value* V,
                                         const TargetMachine& target) {
   std::string S;
   bool failed = false;
-  if (const Constant* CV = dyn_cast<Constant>(V)) { // symbolic or known
+  if (const GlobalValue* GV = dyn_cast<GlobalValue>(V)) {
+    S += getID(GV);
+  } else if (const Constant* CV = dyn_cast<Constant>(V)) { // symbolic or known
     if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV))
       S += std::string(CB == ConstantBool::True ? "1" : "0");
     else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV))
@@ -491,14 +490,10 @@ std::string AsmPrinter::valToExprString(const Value* V,
       S += ftostr(CFP->getValue());
     else if (isa<ConstantPointerNull>(CV))
       S += "0";
-    else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CV))
-      S += valToExprString(CPR->getValue(), target);
     else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV))
       S += ConstantExprToString(CE, target);
     else
       failed = true;
-  } else if (const GlobalValue* GV = dyn_cast<GlobalValue>(V)) {
-    S += getID(GV);
   } else
     failed = true;
 

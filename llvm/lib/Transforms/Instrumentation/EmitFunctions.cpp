@@ -77,7 +77,7 @@ bool EmitFunctionTable::run(Module &M){
     
       //std::cerr<<MI;
 
-      vConsts.push_back(ConstantPointerRef::get(MI));
+      vConsts.push_back(MI);
       sBCons.push_back(ConstantInt::get(Type::SByteTy, hasBackEdge(MI)));
       
       counter++;

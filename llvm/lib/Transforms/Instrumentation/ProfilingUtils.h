@@ -26,7 +26,7 @@ namespace llvm {
   void InsertProfilingInitCall(Function *MainFn, const char *FnName,
                                GlobalValue *Arr = 0);
   void IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
-                               ConstantPointerRef *CounterArray);
+                               GlobalValue *CounterArray);
 }
 
 #endif

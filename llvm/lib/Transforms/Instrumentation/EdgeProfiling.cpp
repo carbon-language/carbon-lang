@@ -60,8 +60,6 @@ bool EdgeProfiler::run(Module &M) {
     new GlobalVariable(ATy, false, GlobalValue::InternalLinkage,
                        Constant::getNullValue(ATy), "EdgeProfCounters", &M);
 
-  ConstantPointerRef *CounterCPR = ConstantPointerRef::get(Counters);
-
   // Instrument all of the edges...
   unsigned i = 0;
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
@@ -80,10 +78,10 @@ bool EdgeProfiler::run(Module &M) {
           // otherwise insert it in the successor block.
           if (TI->getNumSuccessors() == 0) {
             // Insert counter at the start of the block
-            IncrementCounterInBlock(BB, i++, CounterCPR);
+            IncrementCounterInBlock(BB, i++, Counters);
           } else {
             // Insert counter at the start of the block
-            IncrementCounterInBlock(TI->getSuccessor(s), i++, CounterCPR);
+            IncrementCounterInBlock(TI->getSuccessor(s), i++, Counters);
           }
         }
       }

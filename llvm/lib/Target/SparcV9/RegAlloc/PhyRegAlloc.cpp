@@ -1289,7 +1289,7 @@ void PhyRegAlloc::finishSavingState (Module &M) {
 
       // Have: { uint, [Size x { uint, int, uint, int }] } *
       // Cast it to: { uint, [0 x { uint, int, uint, int }] } *
-      Constant *CE = ConstantExpr::getCast (ConstantPointerRef::get (GV), PT);
+      Constant *CE = ConstantExpr::getCast (GV, PT);
       allstate.push_back (CE);
     }
   }

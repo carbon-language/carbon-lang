@@ -620,8 +620,8 @@ void CWriter::printConstant(Constant *CPV) {
       printType(Out, CPV->getType());
       Out << ")/*NULL*/0)";
       break;
-    } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CPV)) {
-      writeOperand(CPR->getValue());
+    } else if (GlobalValue *GV = dyn_cast<GlobalValue>(CPV)) {
+      writeOperand(GV);
       break;
     }
     // FALL THROUGH
@@ -641,7 +641,8 @@ void CWriter::writeOperandInternal(Value *Operand) {
       return;
     }
   
-  if (Constant *CPV = dyn_cast<Constant>(Operand)) {
+  Constant* CPV = dyn_cast<Constant>(Operand);
+  if (CPV && !isa<GlobalValue>(CPV)) {
     printConstant(CPV); 
   } else {
     Out << Mang->getValueName(Operand);
@@ -1412,9 +1413,6 @@ void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
   // If accessing a global value with no indexing, avoid *(&GV) syndrome
   if (GlobalValue *V = dyn_cast<GlobalValue>(Ptr)) {
     HasImplicitAddress = true;
-  } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Ptr)) {
-    HasImplicitAddress = true;
-    Ptr = CPR->getValue();         // Get to the global...
   } else if (isDirectAlloca(Ptr)) {
     HasImplicitAddress = true;
   }

@@ -42,7 +42,7 @@ static void maybeAddInternalValueToVector (GVVectorTy &Vector, GlobalValue &GV){
   // add a null.
   if (GV.hasInternalLinkage () && GV.hasName ())
     Vector.push_back (ConstantExpr::getCast
-      (ConstantPointerRef::get (&GV), PointerType::get (Type::SByteTy)));
+      (&GV, PointerType::get (Type::SByteTy)));
   else
     Vector.push_back (ConstantPointerNull::get (PointerType::get
                                                 (Type::SByteTy)));

@@ -48,8 +48,8 @@ static bool isStoredThrough(Value *V) {
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
         if (isStoredThrough(CE))
           return true;
-      } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
-        if (isStoredThrough(CPR)) return true;
+      } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
+        if (isStoredThrough(GV)) return true;
       } else {
         // Must be an element of a constant array or something.
         return true;
