@@ -15,6 +15,7 @@
 #include "AsmWriterEmitter.h"
 #include "CodeGenTarget.h"
 #include "Record.h"
+#include <algorithm>
 #include <ostream>
 using namespace llvm;
 
