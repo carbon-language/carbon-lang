@@ -201,12 +201,9 @@ void insertBB(Edge ed,
   BasicBlock* BB1=ed.getFirst()->getElement();
   BasicBlock* BB2=ed.getSecond()->getElement();
   
-#ifdef DEBUG_PATH_PROFILES
-  //debugging info
-  cerr<<"Edges with codes ######################\n";
-  cerr<<BB1->getName()<<"->"<<BB2->getName()<<"\n";
-  cerr<<"########################\n";
-#endif
+  DEBUG(cerr << "Edges with codes ######################\n";
+        cerr << BB1->getName() << "->" << BB2->getName() << "\n";
+        cerr << "########################\n");
 
   //We need to insert a BB between BB1 and BB2 
   TerminatorInst *TI=BB1->getTerminator();
@@ -250,10 +247,8 @@ void insertBB(Edge ed,
       BB2Inst!=BBend; ++BB2Inst){
    
     if(PHINode *phiInst=dyn_cast<PHINode>(*BB2Inst)){
-#ifdef DEBUG_PATH_PROFILES
-      cerr<<"YYYYYYYYYYYYYYYYY\n";
-#endif
-     
+      DEBUG(cerr<<"YYYYYYYYYYYYYYYYY\n");
+
       int bbIndex=phiInst->getBasicBlockIndex(BB1);
       if(bbIndex>=0)
 	phiInst->setIncomingBlock(bbIndex, newBB);

@@ -239,17 +239,15 @@ Graph* Graph::getMaxSpanningTree(){
   //keep pulling out vertex of min wt from vt
   while(!vt.empty()){
     Node *u=*(min_element(vt.begin(), vt.end(), compare_nodes()));
-#ifdef DEBUG_PATH_PROFILES
-    cerr<<"popped wt"<<(u)->getWeight()<<"\n";
-    printNode(u);
-#endif
+    DEBUG(cerr<<"popped wt"<<(u)->getWeight()<<"\n";
+          printNode(u));
+
     if(parent[u]!=NULL){ //so not root
       Edge edge(parent[u],u, ed_weight[u]); //assign edge in spanning tree
       st->addEdge(edge,ed_weight[u]);
-#ifdef DEBUG_PATH_PROFILES
-      cerr<<"added:\n";
-      printEdge(edge);
-#endif
+
+      DEBUG(cerr<<"added:\n";
+            printEdge(edge));
     }
 
     //vt.erase(u);
@@ -276,21 +274,19 @@ Graph* Graph::getMaxSpanningTree(){
 	  break;
 	}
       }
-#ifdef DEBUG_PATH_PROFILES
-      cerr<<"wt:v->wt"<<weight<<":"<<v->getWeight()<<"\n";
-      printNode(v);cerr<<"node wt:"<<(*v).weight<<"\n";
-#endif
+      DEBUG(cerr<<"wt:v->wt"<<weight<<":"<<v->getWeight()<<"\n";
+            printNode(v);cerr<<"node wt:"<<(*v).weight<<"\n");
+
       //so if v in in vt, change wt(v) to wt(u->v)
       //only if wt(u->v)<wt(v)
       if(contains && weight<v->getWeight()){
 	parent[v]=u;
 	ed_weight[v]=weight;
 	v->setWeight(weight);
-#ifdef DEBUG_PATH_PROFILES
-	cerr<<v->getWeight()<<":Set weight------\n";
-	printGraph();
-	printEdge(Edge(u,v,weight));
-#endif
+
+	DEBUG(cerr<<v->getWeight()<<":Set weight------\n";
+              printGraph();
+              printEdge(Edge(u,v,weight)));
       }
     }
   }
@@ -352,10 +348,8 @@ void Graph::makeUnDirectional(){
     for(nodeList::iterator NLI=nl.begin(), NLE=nl.end(); NLI!=NLE; ++NLI){
       Edge ed(NLI->element, *NI, NLI->weight);
       if(!hasEdgeAndWt(ed)){
-#ifdef DEBUG_PATH_PROFILES
-	cerr<<"######doesn't hv\n";
-	printEdge(ed);
-#endif
+	DEBUG(cerr<<"######doesn't hv\n";
+              printEdge(ed));
 	addEdgeForce(ed);
       }
     }

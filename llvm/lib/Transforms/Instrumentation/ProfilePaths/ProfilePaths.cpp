@@ -102,9 +102,7 @@ bool ProfilePaths::runOnFunction(Function *M){
   
   Graph g(nodes,edges, startNode, exitNode);
 
-#ifdef DEBUG_PATH_PROFILES  
-  printGraph(g);
-#endif
+  DEBUG(printGraph(g));
 
   BasicBlock *fr=M->front();
   
@@ -114,9 +112,8 @@ bool ProfilePaths::runOnFunction(Function *M){
     // by removing back edges for now, and adding them later on
     vector<Edge> be;
     g.getBackEdges(be);
-#ifdef DEBUG_PATH_PROFILES
-    cerr<<"Backedges:"<<be.size()<<endl;
-#endif
+    DEBUG(cerr << "Backedges:" << be.size() << "\n");
+
     // Now we need to reflect the effect of back edges
     // This is done by adding dummy edges
     // If a->b is a back edge

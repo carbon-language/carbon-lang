@@ -355,19 +355,17 @@ static void moveDummyCode(const vector<Edge> &stDummy,
                           map<Edge, getEdgeCode *> &insertions){
   typedef vector<Edge >::const_iterator vec_iter;
   
-#ifdef DEBUG_PATH_PROFILES
-  //print all back, st and ex dummy
-  cerr<<"BackEdges---------------\n";
-  for(vec_iter VI=be.begin(); VI!=be.end(); ++VI)
-    printEdge(*VI);
-  cerr<<"StEdges---------------\n";
-  for(vec_iter VI=stDummy.begin(); VI!=stDummy.end(); ++VI)
-    printEdge(*VI);
-  cerr<<"ExitEdges---------------\n";
-  for(vec_iter VI=exDummy.begin(); VI!=exDummy.end(); ++VI)
-    printEdge(*VI);
-  cerr<<"------end all edges\n";
-#endif
+  DEBUG( //print all back, st and ex dummy
+        cerr<<"BackEdges---------------\n";
+        for(vec_iter VI=be.begin(); VI!=be.end(); ++VI)
+        printEdge(*VI);
+        cerr<<"StEdges---------------\n";
+        for(vec_iter VI=stDummy.begin(); VI!=stDummy.end(); ++VI)
+        printEdge(*VI);
+        cerr<<"ExitEdges---------------\n";
+        for(vec_iter VI=exDummy.begin(); VI!=exDummy.end(); ++VI)
+        printEdge(*VI);
+        cerr<<"------end all edges\n");
 
   std::vector<Edge> toErase;
   for(map<Edge,getEdgeCode *>::iterator MI=insertions.begin(), 
@@ -375,17 +373,16 @@ static void moveDummyCode(const vector<Edge> &stDummy,
     Edge ed=MI->first;
     getEdgeCode *edCd=MI->second;
     bool dummyHasIt=false;
-#ifdef DEBUG_PATH_PROFILES
-    cerr<<"Current edge considered---\n";
-    printEdge(ed);
-#endif
+
+    DEBUG(cerr<<"Current edge considered---\n";
+          printEdge(ed));
+
     //now check if stDummy has ed
     for(vec_iter VI=stDummy.begin(), VE=stDummy.end(); VI!=VE && !dummyHasIt; 
 	++VI){
       if(*VI==ed){
-#ifdef DEBUG_PATH_PROFILES
-	cerr<<"Edge matched with stDummy\n";
-#endif
+	DEBUG(cerr<<"Edge matched with stDummy\n");
+
 	dummyHasIt=true;
 	bool dummyInBe=false;
 	//dummy edge with code
@@ -395,10 +392,9 @@ static void moveDummyCode(const vector<Edge> &stDummy,
 	  Node *dm=ed.getSecond();
 	  if(*dm==*st){
 	    //so this is the back edge to use
-#ifdef DEBUG_PATH_PROFILES
-	    cerr<<"Moving to backedge\n";
-	    printEdge(backEdge);
-#endif
+	    DEBUG(cerr<<"Moving to backedge\n";
+                  printEdge(backEdge));
+
 	    getEdgeCode *ged=new getEdgeCode();
 	    ged->setCdIn(edCd);
 	    toErase.push_back(ed);
@@ -416,9 +412,7 @@ static void moveDummyCode(const vector<Edge> &stDummy,
 	  ++VI){
 	if(*VI==ed){
 	  inExDummy=true;
-#ifdef DEBUG_PATH_PROFILES
-	  cerr<<"Edge matched with exDummy\n";
-#endif
+	  DEBUG(cerr<<"Edge matched with exDummy\n");
 	  bool dummyInBe2=false;
 	  //dummy edge with code
 	  for(vec_iter BE=be.begin(), BEE=be.end(); BE!=BEE && !dummyInBe2; 
@@ -445,17 +439,13 @@ static void moveDummyCode(const vector<Edge> &stDummy,
     }
   }
 
-#ifdef DEBUG_PATH_PROFILES
-  cerr<<"size of deletions: "<<toErase.size()<<"\n";
-#endif
+  DEBUG(cerr<<"size of deletions: "<<toErase.size()<<"\n");
 
   for(vector<Edge >::iterator vmi=toErase.begin(), vme=toErase.end(); vmi!=vme; 
       ++vmi)
     insertions.erase(*vmi);
 
-#ifdef DEBUG_PATH_PROFILES
-  cerr<<"SIZE OF INSERTIONS AFTER DEL "<<insertions.size()<<"\n";
-#endif
+  DEBUG(cerr<<"SIZE OF INSERTIONS AFTER DEL "<<insertions.size()<<"\n");
 }
 
 //Do graph processing: to determine minimal edge increments, 
@@ -490,9 +480,8 @@ void processGraph(Graph &g,
 
 
   //step 1-3 are already done on the graph when this function is called
-#ifdef DEBUG_PATH_PROFILES 
-  printGraph(g);
-#endif
+  DEBUG(printGraph(g));
+
   //step 4: Get Max spanning tree of graph
 
   //now insert exit to root edge
@@ -510,13 +499,11 @@ void processGraph(Graph &g,
   //make g2 undirectional: this gives a better
   //maximal spanning tree
   g2.makeUnDirectional();
-#ifdef DEBUG_PATH_PROFILES
-  printGraph(g2);
-#endif
+  DEBUG(printGraph(g2));
+
   Graph *t=g2.getMaxSpanningTree();
-#ifdef DEBUG_PATH_PROFILES
-  printGraph(*t);
-#endif
+  DEBUG(printGraph(*t));
+
   //now edges of tree t have weights reversed
   //(negative) because the algorithm used
   //to find max spanning tree is 
@@ -539,11 +526,11 @@ void processGraph(Graph &g,
   //the tree so that now, all edge directions in the tree match
   //the edge directions of corresponding edges in the directed graph
   removeTreeEdges(g, *t);
-#ifdef DEBUG_PATH_PROFILES
-  cerr<<"Spanning tree---------\n";
-  printGraph(*t);
-  cerr<<"-------end spanning tree\n";
-#endif
+
+  DEBUG(cerr<<"Spanning tree---------\n";
+        printGraph(*t);
+        cerr<<"-------end spanning tree\n");
+
   //now remove the exit->root node
   //and re-add it with weight 0
   //since infinite weight is kinda confusing
@@ -555,10 +542,9 @@ void processGraph(Graph &g,
     t->addEdge(edNew,0);
   }
 
-#ifdef DEBUG_PATH_PROFILES
-  printGraph(g);
-  printGraph(*t);
-#endif
+  DEBUG(printGraph(g);
+        printGraph(*t));
+
   //step 5: Get edge increments
 
   //Now we select a subset of all edges
@@ -566,14 +552,13 @@ void processGraph(Graph &g,
   //if we consider just this subset, it still represents
   //the path sum along any path in the graph
   map<Edge, int> increment=getEdgeIncrements(g,*t);
-#ifdef DEBUG_PATH_PROFILES
-  //print edge increments for debugging
-  for(map<Edge, int>::iterator M_I=increment.begin(), M_E=increment.end(); 
-      M_I!=M_E; ++M_I){
-    printEdge(M_I->first);
-    cerr<<"Increment for above:"<<M_I->second<<"\n";
-  }
-#endif
+
+  DEBUG(//print edge increments for debugging
+        for(map<Edge, int>::iterator MI=increment.begin(), ME = increment.end();
+            MI != ME; ++MI) {
+          printEdge(MI->first);
+          cerr << "Increment for above:" << MI->second << "\n";
+        });
  
   //step 6: Get code insertions
   
@@ -587,33 +572,30 @@ void processGraph(Graph &g,
   map<Edge, getEdgeCode *> codeInsertions;
   getCodeInsertions(g, codeInsertions, chords,increment);
   
-#ifdef DEBUG_PATH_PROFILES
-  //print edges with code for debugging
-  cerr<<"Code inserted in following---------------\n";
-  for(map<Edge, getEdgeCode *>::iterator cd_i=codeInsertions->begin(), 
-	cd_e=codeInsertions->end(); cd_i!=cd_e; ++cd_i){
-    printEdge(cd_i->first);
-    cerr<<cd_i->second->getCond()<<":"<<cd_i->second->getInc()<<"\n";
-  }
-  cerr<<"-----end insertions\n";
-#endif
+  DEBUG (//print edges with code for debugging
+         cerr<<"Code inserted in following---------------\n";
+         for(map<Edge, getEdgeCode *>::iterator cd_i=codeInsertions.begin(), 
+               cd_e=codeInsertions.end(); cd_i!=cd_e; ++cd_i){
+           printEdge(cd_i->first);
+           cerr<<cd_i->second->getCond()<<":"<<cd_i->second->getInc()<<"\n";
+         }
+         cerr<<"-----end insertions\n");
+
   //step 7: move code on dummy edges over to the back edges
 
   //Move the incoming dummy edge code and outgoing dummy
   //edge code over to the corresponding back edge
   moveDummyCode(stDummy, exDummy, be, codeInsertions);
   
-#ifdef DEBUG_PATH_PROFILES
-  //debugging info
-  cerr<<"After moving dummy code\n";
-  for(map<Edge, getEdgeCode *>::iterator cd_i=codeInsertions.begin(), 
-	cd_e=codeInsertions.end(); cd_i != cd_e; ++cd_i){
-    printEdge(cd_i->first);
-    cerr<<cd_i->second->getCond()<<":"
-	<<cd_i->second->getInc()<<"\n";
-  }
-  cerr<<"Dummy end------------\n";
-#endif
+  DEBUG(//debugging info
+        cerr<<"After moving dummy code\n";
+        for(map<Edge, getEdgeCode *>::iterator cd_i=codeInsertions.begin(), 
+              cd_e=codeInsertions.end(); cd_i != cd_e; ++cd_i){
+          printEdge(cd_i->first);
+          cerr<<cd_i->second->getCond()<<":"
+              <<cd_i->second->getInc()<<"\n";
+        }
+        cerr<<"Dummy end------------\n");
 
   //see what it looks like...
   //now insert code along edges which have codes on them
