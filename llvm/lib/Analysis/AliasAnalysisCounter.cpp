@@ -13,16 +13,24 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Assembly/Writer.h"
+#include "llvm/Support/CommandLine.h"
 #include <iostream>
 using namespace llvm;
 
 namespace {
+  cl::opt<bool>
+  PrintAll("count-aa-print-all-queries", cl::ReallyHidden);
+  cl::opt<bool>
+  PrintAllFailures("count-aa-print-all-failed-queries", cl::ReallyHidden);
+
   class AliasAnalysisCounter : public ModulePass, public AliasAnalysis {
     unsigned No, May, Must;
     unsigned NoMR, JustRef, JustMod, MR;
     const char *Name;
+    Module *M;
   public:
     AliasAnalysisCounter() {
       No = May = Must = 0;
@@ -66,6 +74,7 @@ namespace {
     }
 
     bool runOnModule(Module &M) {
+      this->M = &M;
       InitializeAliasAnalysis(this);
       Name = dynamic_cast<Pass*>(&getAnalysis<AliasAnalysis>())->getPassName();
       return false;
@@ -75,24 +84,6 @@ namespace {
       AliasAnalysis::getAnalysisUsage(AU);
       AU.addRequired<AliasAnalysis>();
       AU.setPreservesAll();
-    }
-
-    AliasResult count(AliasResult R) {
-      switch (R) {
-      default: assert(0 && "Unknown alias type!");
-      case NoAlias:   No++; return NoAlias;
-      case MayAlias:  May++; return MayAlias;
-      case MustAlias: Must++; return MustAlias;
-      }
-    }
-    ModRefResult count(ModRefResult R) {
-      switch (R) {
-      default:       assert(0 && "Unknown mod/ref type!");
-      case NoModRef: NoMR++;     return NoModRef;
-      case Ref:      JustRef++;  return Ref;
-      case Mod:      JustMod++;  return Mod;
-      case ModRef:   MR++;       return ModRef;
-      }
     }
 
     // FIXME: We could count these too...
@@ -110,12 +101,9 @@ namespace {
     // Forwarding functions: just delegate to a real AA implementation, counting
     // the number of responses...
     AliasResult alias(const Value *V1, unsigned V1Size,
-                      const Value *V2, unsigned V2Size) {
-      return count(getAnalysis<AliasAnalysis>().alias(V1, V1Size, V2, V2Size));
-    }
-    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size) {
-      return count(getAnalysis<AliasAnalysis>().getModRefInfo(CS, P, Size));
-    }
+                      const Value *V2, unsigned V2Size);
+
+    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
     ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
     }
@@ -128,4 +116,50 @@ namespace {
 
 ModulePass *llvm::createAliasAnalysisCounterPass() {
   return new AliasAnalysisCounter();
+}
+
+AliasAnalysis::AliasResult 
+AliasAnalysisCounter::alias(const Value *V1, unsigned V1Size,
+                            const Value *V2, unsigned V2Size) {
+  AliasResult R = getAnalysis<AliasAnalysis>().alias(V1, V1Size, V2, V2Size);
+  
+  const char *AliasString;
+  switch (R) {
+  default: assert(0 && "Unknown alias type!");
+  case NoAlias:   No++;   AliasString = "No alias"; break;
+  case MayAlias:  May++;  AliasString = "May alias"; break;
+  case MustAlias: Must++; AliasString = "Must alias"; break;
+  }
+
+  if (PrintAll || (PrintAllFailures && R == MayAlias)) {
+    std::cerr << AliasString << ":\t";
+    std::cerr << "[" << V1Size << "B] ";
+    WriteAsOperand(std::cerr, V1, true, true, M) << ", ";
+    std::cerr << "[" << V2Size << "B] ";
+    WriteAsOperand(std::cerr, V2, true, true, M) << "\n";
+  }
+
+  return R;
+}
+
+AliasAnalysis::ModRefResult 
+AliasAnalysisCounter::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+  ModRefResult R = getAnalysis<AliasAnalysis>().getModRefInfo(CS, P, Size);
+
+  const char *MRString;
+  switch (R) {
+  default:       assert(0 && "Unknown mod/ref type!");
+  case NoModRef: NoMR++;     MRString = "NoModRef"; break;
+  case Ref:      JustRef++;  MRString = "JustRef"; break;
+  case Mod:      JustMod++;  MRString = "JustMod"; break;
+  case ModRef:   MR++;       MRString = "ModRef"; break;
+  }
+
+  if (PrintAll || (PrintAllFailures && R == ModRef)) {
+    std::cerr << MRString << ":  Ptr: ";
+    std::cerr << "[" << Size << "B] ";
+    WriteAsOperand(std::cerr, P, true, true, M);
+    std::cerr << "\t<->" << *CS.getInstruction();
+  }
+  return R;
 }
