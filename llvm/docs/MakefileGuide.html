@@ -246,7 +246,7 @@
   <p>In some situations, it is desireable to build a single bytecode module from
   a variety of sources, instead of an archive, shared library, or bytecode 
   library. Bytecode modules can be specified in addition to any of the other
-  types of libraries by defining the <a href="MODULE_NAME">MODULE_NAME</a>
+  types of libraries by defining the <a href="#MODULE_NAME">MODULE_NAME</a>
   variable. For example:</p>
   <pre><tt>
       LIBRARYNAME = mylib
@@ -414,10 +414,10 @@
 <div class="doc_subsection"><a name="check">check</a></div>
 <div class="doc_text">
   <p>This target can be invoked from anywhere within a project's directories
-  but always invokes the <a href="check-local"><tt>check-local</tt></a> target 
+  but always invokes the <a href="#check-local"><tt>check-local</tt></a> target 
   in the project's <tt>test</tt> directory, if it exists and has a 
   <tt>Makefile</tt>. A warning is produced otherwise.  If 
-  <a href="TESTSUITE"><tt>TESTSUITE</tt></a> is defined on the <tt>make</tt>
+  <a href="#TESTSUITE"><tt>TESTSUITE</tt></a> is defined on the <tt>make</tt>
   command line, it will be passed down to the invocation of 
   <tt>make check-local</tt> in the <tt>test</tt> directory. The intended usage 
   for this is to assist in running specific suites of tests. If
@@ -608,7 +608,7 @@
     files that are not automatically distributed.</dd>
     <dt><a name="FAKE_SOURCES"><tt>FAKE_SOURCES</tt><small>(optional)</small>
     </a></dt>
-    <dd>This variable is like <a href="SOURCES"><tt>SOURCES</tt></a> except that
+    <dd>This variable is like <a href="#SOURCES"><tt>SOURCES</tt></a> except that
     the source files don't need to exist. The makefiles only use
     <tt>FAKE_SOURCES</tt> to create the names of derived objects that should be
     included in the directory's result. It is assumed that the project's
@@ -658,6 +658,8 @@
     <dd>Specifies the name of the LLVM code generation target that the
     current directory builds. Setting this variable enables additional rules to
     build <tt>.inc</tt> files from <tt>.td</tt> files. </dd>
+    <dt><a name="TESTSUITE"><tt>TESTSUITE</tt></a></dt>
+    <dd>Specifies the directory of tests to run in <tt>llvm/test</tt>.</dd>
     <dt><a name="TOOLNAME"><tt>TOOLNAME</tt></a></dt>
     <dd>Specifies the name of the tool that the current directory should
     build.</dd>
