@@ -21,6 +21,12 @@ bool AllocDSNode::isEquivalentTo(DSNode *Node) const {
   return false;
 }
 
+void AllocDSNode::mergeInto(DSNode *Node) const {
+  // Make sure the merged node is variable size if this node is var size
+  AllocDSNode *N = cast<AllocDSNode>(Node);
+  N->isVarSize |= isVarSize;
+}
+
 bool GlobalDSNode::isEquivalentTo(DSNode *Node) const {
   if (GlobalDSNode *G = dyn_cast<GlobalDSNode>(Node)) {
     if (G->Val != Val) return false;
@@ -217,8 +223,12 @@ void DSNode::mapNode(map<const DSNode*, DSNode*> &NodeMap, const DSNode *Old) {
                     (ShadowDSNode*)NodeMap[Old->SynthNodes[i].second]));
 }
 
-AllocDSNode::AllocDSNode(AllocationInst *V)
+AllocDSNode::AllocDSNode(AllocationInst *V, bool isvarsize)
   : DSNode(NewNode, V->getType()->getElementType()), Allocation(V) {
+
+  // Is variable size if incoming flag says so, or if allocation is var size
+  // already.
+  isVarSize = isvarsize || !isa<Constant>(V->getArraySize());
 }
 
 bool AllocDSNode::isAllocaNode() const {
@@ -232,7 +242,7 @@ string AllocDSNode::getCaption() const {
 
   WriteTypeSymbolic(OS, getType(),
                     Allocation->getParent()->getParent()->getParent());
-  if (Allocation->isArrayAllocation())
+  if (isVarSize)
     OS << "[ ]";
   return OS.str();
 }

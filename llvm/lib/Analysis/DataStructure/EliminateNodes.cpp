@@ -53,6 +53,7 @@ static void DestroyFirstNodeOfPair(DSNode *N1, DSNode *N2) {
     assert(RanOnce && "Node on user set but cannot find the use!");
   }
 
+  N1->mergeInto(N2);
   N1->removeAllIncomingEdges();
   delete N1;
 }
