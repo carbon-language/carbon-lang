@@ -5,6 +5,10 @@
 // specified below, and is used to make all of the information relevant to an
 // instruction be in one place.
 //
+// Note that X86 Instructions always have the destination register listed as
+// operand 0, unless it does not produce a value (in which case the TSFlags will
+// include X86II::Void).
+//
 //===----------------------------------------------------------------------===//
 
 // NOTE: No include guards desired
