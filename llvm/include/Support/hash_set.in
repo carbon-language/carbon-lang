@@ -26,18 +26,16 @@
 //  3.1      __gnu_cxx   ext/hash_set
 //
 
-#include "Config/config.h"
-
 // GCC versions 3.1 and later put hash_set in <ext/hash_set> and in
 // the __gnu_cxx namespace.
-#if defined(HAVE_GNU_EXT_HASH_SET)
+#if @HAVE_GNU_EXT_HASH_SET@
 # include <ext/hash_set>
 # ifndef HASH_NAMESPACE
 #  define HASH_NAMESPACE __gnu_cxx
 # endif
 
 // GCC 3.0.x puts hash_set in <ext/hash_set> and in the std namespace.
-#elif defined(HAVE_STD_EXT_HASH_SET)
+#elif @HAVE_STD_EXT_HASH_SET@
 # include <ext/hash_set>
 # ifndef HASH_NAMESPACE
 #  define HASH_NAMESPACE std
@@ -45,7 +43,7 @@
 
 // Older compilers such as GCC before version 3.0 do not keep
 // extensions in the `ext' directory, and ignore the `std' namespace.
-#elif defined(HAVE_GLOBAL_HASH_SET)
+#elif @HAVE_GLOBAL_HASH_SET@
 # include <hash_set>
 # ifndef HASH_NAMESPACE
 #  define HASH_NAMESPACE std
