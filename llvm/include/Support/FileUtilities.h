@@ -87,6 +87,12 @@ bool MakeFileReadable(const std::string &Filename);
 long long getFileSize(const std::string &Filename);
 
 
+/// getFileTimestamp - Get the last modified time for the specified file in an
+/// unspecified format.  This is useful to allow checking to see if a file was
+/// updated since that last time the timestampt was aquired.  If the file does
+/// not exist or there is an error getting the time-stamp, zero is returned.
+unsigned long long getFileTimestamp(const std::string &Filename);
+
 
 /// FDHandle - Simple handle class to make sure a file descriptor gets closed
 /// when the object is destroyed.  This handle acts similarly to an
