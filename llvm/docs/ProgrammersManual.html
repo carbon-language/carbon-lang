@@ -620,7 +620,7 @@ will create an <tt>AllocaInst</tt> instance that represents the
 allocation of one integer in the current stack frame, at runtime.
 Each <tt>Instruction</tt> subclass is likely to have varying default
 parameters which change the semantics of the instruction, so refer to
-the <a href="/doxygen/classInstruction.h">doxygen documentation for
+the <a href="/doxygen/classInstruction.html">doxygen documentation for
 the subclass of Instruction</a> that you're interested in
 instantiating.</p>
 
@@ -701,7 +701,23 @@ instructions and adding them to <tt>BasicBlock</tt>s.
 
 <!--_______________________________________________________________________-->
 </ul><h4><a name="schanges_deleting"><hr size=0>Deleting
-    <tt>Instruction</tt>s</h4><ul>
+<tt>Instruction</tt>s</h4><ul>
+
+Deleting an instruction from an existing sequence of instructions that form a <a
+href="#BasicBlock"><tt>BasicBlock</tt></a> is very straightforward. First, you
+must have a pointer to the instruction that you wish to delete.  Second, you
+need to obtain the pointer to that instruction's basic block. You use the
+pointer to the basic block to get its list of instructions and then use the
+erase function to remove your instruction.<p>
+
+For example:<p>
+
+<pre>
+  <a href="#Instruction">Instruction</a> *I = .. ;
+  <a href="#BasicBlock">BasicBlock</a> *BB = I->getParent();
+  BB->getInstList().erase(I);
+</pre><p>
+
 
 <!--_______________________________________________________________________-->
 </ul><h4><a name="schanges_replacing"><hr size=0>Replacing an
@@ -1559,6 +1575,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Thu Sep 12 12:18:04 CDT 2002
+Last modified: Thu Sep 12 14:06:40 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
