@@ -46,6 +46,60 @@ ExecutionEngine::~ExecutionEngine() {
   delete MP;
 }
 
+
+// CreateArgv - Turn a vector of strings into a nice argv style array of
+// pointers to null terminated strings.
+//
+static void *CreateArgv(ExecutionEngine *EE,
+                        const std::vector<std::string> &InputArgv) {
+  unsigned PtrSize = EE->getTargetData().getPointerSize();
+  char *Result = new char[(InputArgv.size()+1)*PtrSize];
+
+  DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
+  const Type *SBytePtr = PointerType::get(Type::SByteTy);
+
+  for (unsigned i = 0; i != InputArgv.size(); ++i) {
+    unsigned Size = InputArgv[i].size()+1;
+    char *Dest = new char[Size];
+    DEBUG(std::cerr << "ARGV[" << i << "] = " << (void*)Dest << "\n");
+      
+    std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
+    Dest[Size-1] = 0;
+      
+    // Endian safe: Result[i] = (PointerTy)Dest;
+    EE->StoreValueToMemory(PTOGV(Dest), (GenericValue*)(Result+i*PtrSize),
+                           SBytePtr);
+  }
+
+  // Null terminate it
+  EE->StoreValueToMemory(PTOGV(0),
+                         (GenericValue*)(Result+InputArgv.size()*PtrSize),
+                         SBytePtr);
+  return Result;
+}
+
+/// runFunctionAsMain - This is a helper function which wraps runFunction to
+/// handle the common task of starting up main with the specified argc, argv,
+/// and envp parameters.
+int ExecutionEngine::runFunctionAsMain(Function *Fn,
+                                       const std::vector<std::string> &argv,
+                                       const char * const * envp) {
+  std::vector<GenericValue> GVArgs;
+  GenericValue GVArgc;
+  GVArgc.IntVal = argv.size();
+  GVArgs.push_back(GVArgc); // Arg #0 = argc.
+  GVArgs.push_back(PTOGV(CreateArgv(this, argv))); // Arg #1 = argv.
+  assert(((char **)GVTOP(GVArgs[1]))[0] && "argv[0] was null after CreateArgv");
+
+  std::vector<std::string> EnvVars;
+  for (unsigned i = 0; envp[i]; ++i)
+    EnvVars.push_back(envp[i]);
+  GVArgs.push_back(PTOGV(CreateArgv(this, EnvVars))); // Arg #2 = envp.
+  return runFunction(Fn, GVArgs).IntVal;
+}
+
+
+
 /// If possible, create a JIT, unless the caller specifically requests an
 /// Interpreter or there's an error. If even an Interpreter cannot be created,
 /// NULL is returned. 
