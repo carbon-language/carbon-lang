@@ -180,7 +180,7 @@ void InsertPhiElimInst(BasicBlock *BB, MachineInstr *CpMI) {
 
 }
 
-
+#if 0
 //-------------------------------------------------------------------------
 // This method inserts phi elimination code for all BBs in a method
 //-------------------------------------------------------------------------
@@ -224,6 +224,69 @@ void InsertCode4AllPhisInMeth(Method *method, TargetMachine &target) {
   } // for all BBs in method
 
 }
+#endif
+
+
+//-------------------------------------------------------------------------
+// This method inserts phi elimination code for all BBs in a method
+//-------------------------------------------------------------------------
+void InsertCode4AllPhisInMeth(Method *method, TargetMachine &target) {
+
+
+  // for all basic blocks in method
+  //
+  for (Method::iterator BI = method->begin(); BI != method->end(); ++BI) {
+
+    BasicBlock *BB = *BI;
+    const BasicBlock::InstListType &InstList = BB->getInstList();
+    BasicBlock::InstListType::const_iterator  IIt = InstList.begin();
+
+    // for all instructions in the basic block
+    //
+    for( ; IIt != InstList.end(); ++IIt ) {
+
+      if( (*IIt)->getOpcode() == Instruction::PHINode ) {
+
+	PHINode *PN = (PHINode *) (*IIt);
+
+	Value *PhiCpRes = 
+	  new Value(PN->getType(), PN->getValueType() );
+
+	// for each incoming value of the phi, insert phi elimination
+	//
+        for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
+
+	  // insert the copy instruction to the predecessor BB
+
+	  MachineInstr *CpMI =
+	    target.getRegInfo().cpValue2Value(PN->getIncomingValue(i),
+					      PhiCpRes);
+
+	  InsertPhiElimInst(PN->getIncomingBlock(i), CpMI);
+
+	}
+
+	
+	MachineInstr *CpMI2 =
+	  target.getRegInfo().cpValue2Value(PhiCpRes, PN);
+
+	// get an iterator to machine instructions in the BB
+	MachineCodeForBasicBlock& bbMvec = BB->getMachineInstrVec();
+
+	bbMvec.insert( bbMvec.begin(),  CpMI2);
+	
+
+      }
+      else break;   // since PHI nodes can only be at the top
+      
+    }  // for each Phi Instr in BB
+
+  } // for all BBs in method
+
+}
+
+
+
 
 
 
