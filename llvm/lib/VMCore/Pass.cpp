@@ -122,13 +122,20 @@ void TimeRecord::passEnd(const TimeRecord &T) {
   MaxRSS      = std::max(MaxRSS, RSSTemp);
 }
 
+static void printVal(double Val, double Total) {
+  if (Total < 1e-7)   // Avoid dividing by zero...
+    fprintf(stderr, "        -----    ");
+  else
+    fprintf(stderr, "  %7.4f (%5.1f%%)", Val, Val*100/Total);
+}
+
 void TimeRecord::print(const char *PassName, const TimeRecord &Total) const {
-  fprintf(stderr, 
-          "  %7.4f (%5.1f%%)  %7.4f (%5.1f%%)  %7.4f (%5.1f%%)  %7.4f (%5.1f%%)  ",
-          UserTime  , UserTime  *100/Total.UserTime,
-          SystemTime, SystemTime*100/Total.SystemTime,
-          UserTime+SystemTime, (UserTime+SystemTime)*100/(Total.UserTime+Total.SystemTime),
-          Elapsed   , Elapsed   *100/Total.Elapsed);
+  printVal(UserTime, Total.UserTime);
+  printVal(SystemTime, Total.SystemTime);
+  printVal(UserTime+SystemTime, Total.UserTime+Total.SystemTime);
+  printVal(Elapsed, Total.Elapsed);
+  
+  fprintf(stderr, "  ");
 
   if (Total.MaxRSS)
     std::cerr << MaxRSS << "\t";
