@@ -281,8 +281,8 @@ foreach $File (@CVSHistory) {
   my ($Type, $Date, $UID, $Rev, $Filename);
   if ($File =~ /([AMRUGC]) ($DateRE) ([^ ]+) +([^ ]+) +([^ ]+) +([^ ]+)/) {
     ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, $4, "$6/$5");
-  } elsif ($File =~ /([W]) ($DateRE) ([^ ]+) +([^ ]+)/) {
-    ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, "", "$5/$4");
+  } elsif ($File =~ /([W]) ($DateRE) ([^ ]+)/) {
+    ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, "", "");
   } elsif ($File =~ /([O]) ($DateRE) ([^ ]+) +([^ ]+)/) {
     ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, "", "$4/");
   } else {
