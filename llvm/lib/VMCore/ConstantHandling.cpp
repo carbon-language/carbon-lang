@@ -56,6 +56,14 @@ class TemplateRules : public ConstRules {
                         const Constant *V2) const { 
     return SubClassName::Rem((const ArgType *)V1, (const ArgType *)V2);  
   }
+  virtual Constant *shl(const Constant *V1, 
+                        const Constant *V2) const { 
+    return SubClassName::Shl((const ArgType *)V1, (const ArgType *)V2);  
+  }
+  virtual Constant *shr(const Constant *V1, 
+                        const Constant *V2) const { 
+    return SubClassName::Shr((const ArgType *)V1, (const ArgType *)V2);  
+  }
 
   virtual ConstantBool *lessthan(const Constant *V1, 
                                  const Constant *V2) const { 
@@ -120,6 +128,12 @@ class TemplateRules : public ConstRules {
     return 0;
   }
   inline static Constant *Rem(const ArgType *V1, const ArgType *V2) {
+    return 0;
+  }
+  inline static Constant *Shl(const ArgType *V1, const ArgType *V2) {
+    return 0;
+  }
+  inline static Constant *Shr(const ArgType *V1, const ArgType *V2) {
     return 0;
   }
   inline static ConstantBool *LessThan(const ArgType *V1, const ArgType *V2) {
@@ -334,6 +348,20 @@ struct DirectIntRules
                               const ConstantClass *V2) {
     if (V2->isNullValue()) return 0;
     BuiltinType Result = (BuiltinType)V1->getValue() %
+                         (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, Result);
+  }
+
+  inline static Constant *Shl(const ConstantClass *V1,
+                              const ConstantClass *V2) {
+    BuiltinType Result = (BuiltinType)V1->getValue() <<
+                         (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, Result);
+  }
+
+  inline static Constant *Shr(const ConstantClass *V1,
+                              const ConstantClass *V2) {
+    BuiltinType Result = (BuiltinType)V1->getValue() >>
                          (BuiltinType)V2->getValue();
     return ConstantClass::get(*Ty, Result);
   }
