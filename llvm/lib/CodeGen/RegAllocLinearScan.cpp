@@ -115,7 +115,7 @@ namespace {
                 std::cerr << "\t" << **i << " -> ";
                 unsigned reg = (*i)->reg;
                 if (MRegisterInfo::isVirtualRegister(reg)) {
-                    reg = vrm_->getPhys4Virt(reg);
+                    reg = vrm_->getPhys(reg);
                 }
                 std::cerr << mri_->getName(reg) << '\n';
             }
@@ -218,7 +218,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         unsigned reg = (*i)->reg;
         DEBUG(std::cerr << "\tinterval " << **i << " expired\n");
         if (MRegisterInfo::isVirtualRegister(reg))
-            reg = vrm_->getPhys4Virt(reg);
+            reg = vrm_->getPhys(reg);
         prt_->delRegUse(reg);
     }
 
@@ -253,7 +253,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                 if (op.isRegister() &&
                     MRegisterInfo::isVirtualRegister(op.getReg())) {
                     unsigned virtReg = op.getReg();
-                    unsigned physReg = vrm_->getPhys4Virt(virtReg);
+                    unsigned physReg = vrm_->getPhys(virtReg);
                     DEBUG(std::cerr << "\t[reg" << virtReg
                           << " -> " << mri_->getName(physReg) << ']');
                     mii->SetMachineOperandReg(i, physReg);
@@ -306,7 +306,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
         if ((*i)->expiredAt(cur->start())) {
             DEBUG(std::cerr << "\t\tinterval " << **i << " expired\n");
             if (MRegisterInfo::isVirtualRegister(reg))
-                reg = vrm_->getPhys4Virt(reg);
+                reg = vrm_->getPhys(reg);
             prt_->delRegUse(reg);
             // remove from active
             i = active_.erase(i);
@@ -315,7 +315,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
         else if (!(*i)->liveAt(cur->start())) {
             DEBUG(std::cerr << "\t\tinterval " << **i << " inactive\n");
             if (MRegisterInfo::isVirtualRegister(reg))
-                reg = vrm_->getPhys4Virt(reg);
+                reg = vrm_->getPhys(reg);
             prt_->delRegUse(reg);
             // add to inactive
             inactive_.push_back(*i);
@@ -344,7 +344,7 @@ void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
         else if ((*i)->liveAt(cur->start())) {
             DEBUG(std::cerr << "\t\tinterval " << **i << " active\n");
             if (MRegisterInfo::isVirtualRegister(reg))
-                reg = vrm_->getPhys4Virt(reg);
+                reg = vrm_->getPhys(reg);
             prt_->addRegUse(reg);
             // add to active
             active_.push_back(*i);
@@ -377,7 +377,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
          i != e; ++i) {
         unsigned reg = (*i)->reg;
         if (MRegisterInfo::isVirtualRegister(reg))
-            reg = vrm_->getPhys4Virt(reg);
+            reg = vrm_->getPhys(reg);
         updateSpillWeights(reg, (*i)->weight);
     }
 
@@ -388,7 +388,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
         if (cur->overlaps(**i)) {
             unsigned reg = (*i)->reg;
             if (MRegisterInfo::isVirtualRegister(reg))
-                reg = vrm_->getPhys4Virt(reg);
+                reg = vrm_->getPhys(reg);
             prt_->addRegUse(reg);
             updateSpillWeights(reg, (*i)->weight);
         }
@@ -478,7 +478,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
         unsigned reg = (*i)->reg;
         if (MRegisterInfo::isVirtualRegister(reg) &&
-            toSpill[vrm_->getPhys4Virt(reg)] &&
+            toSpill[vrm_->getPhys(reg)] &&
             cur->overlaps(**i)) {
             DEBUG(std::cerr << "\t\t\tspilling(a): " << **i << '\n');
             earliestStart = std::min(earliestStart, (*i)->start());
@@ -491,7 +491,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
          i != inactive_.end(); ++i) {
         unsigned reg = (*i)->reg;
         if (MRegisterInfo::isVirtualRegister(reg) &&
-            toSpill[vrm_->getPhys4Virt(reg)] &&
+            toSpill[vrm_->getPhys(reg)] &&
             cur->overlaps(**i)) {
             DEBUG(std::cerr << "\t\t\tspilling(i): " << **i << '\n');
             earliestStart = std::min(earliestStart, (*i)->start());
@@ -519,7 +519,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
                 prt_->delRegUse(i->reg);
             }
             else {
-                prt_->delRegUse(vrm_->getPhys4Virt(i->reg));
+                prt_->delRegUse(vrm_->getPhys(i->reg));
                 vrm_->clearVirtReg(i->reg);
                 if (i->spilled()) {
                     if (!i->empty()) {
@@ -575,7 +575,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             if (MRegisterInfo::isPhysicalRegister((*i)->reg))
                 prt_->addRegUse((*i)->reg);
             else
-                prt_->addRegUse(vrm_->getPhys4Virt((*i)->reg));
+                prt_->addRegUse(vrm_->getPhys((*i)->reg));
         }
     }
 }

@@ -28,7 +28,7 @@ namespace llvm {
     public:
         typedef std::vector<unsigned> Virt2PhysMap;
         typedef std::vector<int> Virt2StackSlotMap;
- 
+
         enum {
             NO_PHYS_REG   = 0,
             NO_STACK_SLOT = INT_MAX
@@ -57,7 +57,7 @@ namespace llvm {
               v2ssMap_(mf.getSSARegMap()->getNumVirtualRegs(), NO_STACK_SLOT) {
         }
 
-        unsigned getPhys4Virt(unsigned virtReg) const {
+        unsigned getPhys(unsigned virtReg) const {
             assert(MRegisterInfo::isVirtualRegister(virtReg));
             return v2pMap_[toIndex(virtReg)];
         }
@@ -78,7 +78,7 @@ namespace llvm {
             v2pMap_[toIndex(virtReg)] = NO_PHYS_REG;
         }
 
-        int getStackSlot4Virt(unsigned virtReg) const {
+        int getStackSlot(unsigned virtReg) const {
             assert(MRegisterInfo::isVirtualRegister(virtReg));
             return v2ssMap_[toIndex(virtReg)];
         }
