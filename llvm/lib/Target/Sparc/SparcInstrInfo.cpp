@@ -266,7 +266,7 @@ CreateIntSetInstruction(const TargetMachine& target,
 // Entry == 0 ==> no immediate constant field exists at all.
 // Entry >  0 ==> abs(immediate constant) <= Entry
 // 
-vector<unsigned int> MaxConstantsTable(Instruction::NumOtherOps);
+vector<int> MaxConstantsTable(Instruction::NumOtherOps);
 
 static int
 MaxConstantForInstr(unsigned llvmOpCode)
@@ -343,13 +343,14 @@ UltraSparcInstrInfo::ConstantMayNotFitInImmedField(const Constant* CV,
     return false;
 
   if (const ConstantUInt* U = dyn_cast<ConstantUInt>(CV))
-    return (U->getValue() > MaxConstantsTable[I->getOpcode()]);
+    /* Large unsigned longs may really just be small negative signed longs */
+    return (labs((int64_t) U->getValue()) > MaxConstantsTable[I->getOpcode()]);
 
   if (const ConstantSInt* S = dyn_cast<ConstantSInt>(CV))
-    return (labs(S->getValue()) > (int) MaxConstantsTable[I->getOpcode()]);
+    return (labs(S->getValue()) > MaxConstantsTable[I->getOpcode()]);
 
   if (isa<ConstantBool>(CV))
-    return (1U > MaxConstantsTable[I->getOpcode()]);
+    return (1 > MaxConstantsTable[I->getOpcode()]);
 
   return true;
 }
@@ -380,6 +381,11 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
   // 
   const Type* valType = val->getType();
   
+  // Unfortunate special case: a ConstantPointerRef is just a
+  // reference to GlobalValue.
+  if (isa<ConstantPointerRef>(val))
+    val = cast<ConstantPointerRef>(val)->getValue();
+
   if (isa<GlobalValue>(val))
     {
       TmpInstruction* tmpReg =
