@@ -89,7 +89,8 @@ the C front-end.
 <ol>
 <li>The LLVM <a href="LangRef.html#i_select"><tt>select</tt></a> instruction is
 now fully implemented and supported by all targets.</li>
-<li>Bugpoint can now narrow down code-generation bugs to a loop nest, where before it could only narrow them down to a function being miscompiled.</li>
+<li>Bugpoint can now narrow down code-generation bugs to a loop nest, where
+before it could only narrow them down to a function being miscompiled.</li>
 </ol>
 
 
@@ -99,17 +100,20 @@ In this release, the following missing features were implemented:
 </div>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR82">LLVM cannot handle structures with more than 256 elements</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR82">LLVM cannot handle structures with
+more than 256 elements</a></li>
 </ol>
 
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
-<a name="qualityofimp">In this release, the following Quality of Implementation issues were fixed:</a>
+<a name="qualityofimp">In this release, the following Quality of Implementation
+issues were fixed:</a>
 </div>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR305">LLVM tools will happily spew bytecode onto your terminal</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR305">LLVM tools will happily spew
+bytecode onto your terminal</a></li>
 </ol>
 
 <!--=========================================================================-->
@@ -123,7 +127,8 @@ In this release, the following build problems were fixed:
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
-<a name="codequality">In this release, the following Code Quality issues were fixed:</a>
+<a name="codequality">In this release, the following Code Quality issues were
+fixed:</a>
 </div>
 
 <ol>
@@ -158,15 +163,19 @@ exception handlers.</li>
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
-<a name="bugfix">In this release, the following bugs in the previous release were fixed:</a>
+<a name="bugfix">In this release, the following bugs in the previous release
+were fixed:</a>
 </div>
 
 <p>Bugs in the LLVM Core:</p>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR306">[loopsimplify] Loop simplify incorrectly updates dominator information</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR310">[tailduplicate] DemoteRegToStack breaks SSA form</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR313">[X86] JIT miscompiles unsigned short to floating point cast</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR306">[loopsimplify] Loop simplify
+incorrectly updates dominator information</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR310">[tailduplicate] DemoteRegToStack
+breaks SSA form</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR313">[X86] JIT miscompiles unsigned short
+to floating point cast</a></li>
 </ol>
 
 
@@ -188,14 +197,13 @@ exception handlers.</li>
 <div class="doc_text">
 
 <p>LLVM has been extensively tested on Intel and AMD machines running Red
-Hat Linux and FreeBSD.  It has also been tested on Sun UltraSPARC workstations running Solaris 8.
-Additionally, 
-LLVM works on Mac OS X 10.3 and above, but only with the C backend or 
-interpreter (no native backend for the PowerPC is available yet).
-The core LLVM infrastructure uses "autoconf" for portability, so hopefully we
-work on more platforms than that.  However, it is likely that we
-missed something and that minor porting is required to get LLVM to work on 
-new platforms.  We welcome portability patches and error messages.</p>
+Hat Linux and FreeBSD.  It has also been tested on Sun UltraSPARC workstations
+running Solaris 8.  Additionally, LLVM works on Mac OS X 10.3 and above, but
+only with the C backend or interpreter (no native backend for the PowerPC is
+available yet).  The core LLVM infrastructure uses "autoconf" for portability,
+so hopefully we work on more platforms than that.  However, it is likely that we
+missed something and that minor porting is required to get LLVM to work on new
+platforms.  We welcome portability patches and error messages.</p>
 
 </div>
 
@@ -263,7 +271,8 @@ corrupted.</li>
 <li>Linking in static archive files (.a files) is very slow (there is no symbol
 table in the archive).</li>
 
-<li>The gccld program <a href="http://llvm.cs.uiuc.edu/PR139">does not link objects/archives in the order specified on the command line.</a></li>
+<li>The gccld program <a href="http://llvm.cs.uiuc.edu/PR139">does not link
+objects/archives in the order specified on the command line.</a></li>
 
 <li><a href="http://llvm.cs.uiuc.edu/PR240">The lower-invoke pass does not mark
 values live across a setjmp as volatile</a>.  This missing feature only affects
@@ -297,7 +306,8 @@ Initialization of global union variables can only be done
 union member</a>.
 </li>
 
-<li><a href="http://llvm.cs.uiuc.edu/PR244">[llvm-gcc] Error when an implicitly external function is re-declared as static</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR244">[llvm-gcc] Error when an implicitly
+external function is re-declared as static</a></li>
 
 </ul>
 </div>
