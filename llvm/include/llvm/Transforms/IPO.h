@@ -62,6 +62,12 @@ Pass *createFunctionResolvingPass();
 Pass *createFunctionInliningPass();
 
 //===----------------------------------------------------------------------===//
+// createPruneEHPass - Return a new pass object which transforms invoke
+// instructions into calls, if the callee can _not_ unwind the stack.
+//
+Pass *createPruneEHPass();
+
+//===----------------------------------------------------------------------===//
 // createInternalizePass - This pass loops over all of the functions in the
 // input module, looking for a main function.  If a main function is found, all
 // other functions are marked as internal.
