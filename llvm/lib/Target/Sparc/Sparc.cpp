@@ -151,7 +151,7 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   if (!DisablePreSelect)
     {
       PM.add(createPreSelectionPass(*this));
-      /* PM.add(createReassociatePass()); */
+      PM.add(createReassociatePass());
       PM.add(createLICMPass());
       PM.add(createGCSEPass());
     }
