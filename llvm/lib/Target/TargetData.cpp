@@ -169,8 +169,8 @@ static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
     return;
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
-    unsigned AlignedSize = (Size + Alignment - 1)/Alignment*Alignment;
     getTypeInfo(ATy->getElementType(), TD, Size, Alignment);
+    unsigned AlignedSize = (Size + Alignment - 1)/Alignment*Alignment;
     Size = AlignedSize*ATy->getNumElements();
     return;
   }
