@@ -43,6 +43,26 @@ namespace sys {
   /// @since 1.4
   /// @brief An abstraction for operating system paths.
   class Path {
+    /// @name Types
+    /// @{
+    public:
+      typedef std::vector<Path> Vector;
+
+      /// This structure provides basic file system information about a file.
+      /// The structure is filled in by the getStatusInfo method.
+      /// @brief File status structure
+      struct StatusInfo {
+        StatusInfo() : modTime(0,0) { fileSize=0; mode=0; user=0; group=0; }
+        size_t      fileSize;   ///< Size of the file in bytes
+        TimeValue   modTime;    ///< Time of file's modification
+        uint32_t    mode;       ///< Mode of the file, if applicable
+        uint32_t    user;       ///< User ID of owner, if applicable
+        uint32_t    group;      ///< Group ID of owner, if applicable
+        bool        isDir;      ///< True if this is a directory.
+      };
+
+
+    /// @}
     /// @name Constructors
     /// @{
     public:
@@ -125,7 +145,7 @@ namespace sys {
       static std::string GetDLLSuffix();
 
       /// This is one of the very few ways in which a path can be constructed
-      /// with a syntactically invalid name. The only *legal* invalid name is an 
+      /// with a syntactically invalid name. The only *legal* invalid name is an
       /// empty one. Other invalid names are not permitted. Empty paths are
       /// provided so that they can be used to indicate null or error results in
       /// other lib/System functionality.
@@ -235,6 +255,14 @@ namespace sys {
       /// @brief Determine if file has a specific magic number
       bool hasMagicNumber(const std::string& magic) const;
 
+      /// This function retrieves the first \p len bytes of the file associated
+      /// with \p this. These bytes are returned as the "magic number" in the
+      /// \p Magic parameter.
+      /// @returns true if the Path is a file and the magic number is retrieved,
+      /// false otherwise.
+      /// @brief Get the file's magic number.
+      bool getMagicNumber(std::string& Magic, unsigned len) const;
+
       /// This function determines if the path name in the object references an
       /// archive file by looking at its magic number.
       /// @returns true if the file starts with the magic number for an archive
@@ -307,25 +335,15 @@ namespace sys {
       /// @brief Get the base name of the path
       std::string getBasename() const;
 
-      /// This structure provides basic file system information about a file.
-      /// The structure is filled in by the getStatusInfo method.
-      /// @brief File status structure
-      struct StatusInfo {
-        StatusInfo() : modTime(0,0) { fileSize=0; mode=0; user=0; group=0; }
-        size_t      fileSize;   ///< Size of the file in bytes
-        TimeValue   modTime;    ///< Time of file's modification
-        uint64_t    mode;       ///< Mode of the file, if applicable
-        uint64_t    user;       ///< User ID of owner, if applicable
-        uint64_t    group;      ///< Group ID of owner, if applicable
-      };
+      /// This function builds a list of paths that are the names of the
+      /// files and directories in a directory.
+      /// @returns false if \p this is not a directory, true otherwise
+      /// @throws std::string if the directory cannot be searched
+      /// @brief Build a list of directory's contents.
+      bool getDirectoryContents(Vector& paths) const;
 
-      /// This function returns status information about the file. 
-      /// @returns nothing
-      /// @throws std::string if an error occurs.
-      /// @brief Get file status.
-      void getStatusInfo(StatusInfo& stat) const;
-
-      /// @returns a c string containing the path name.
+      /// Obtain a 'C' string for the path name.
+      /// @returns a 'C' string containing the path name.
       /// @brief Returns the path as a C string.
       const char* const c_str() const { return path.c_str(); }
 
@@ -338,6 +356,14 @@ namespace sys {
       /// so that path objects can be used to indicate the lack of a 
       /// valid path being found.
       void clear() { path.clear(); }
+
+      /// This function returns status information about the file. The type of
+      /// path (file or directory) is updated to reflect the actual contents 
+      /// of the file system.
+      /// @returns nothing
+      /// @throws std::string if an error occurs.
+      /// @brief Get file status.
+      void getStatusInfo(StatusInfo& stat);
 
       /// This method attempts to set the Path object to \p unverified_path
       /// and interpret the name as a directory name.  The \p unverified_path 
@@ -476,6 +502,20 @@ namespace sys {
       /// @brief Destroy the file this Path refers to.
       bool destroyFile(); 
 
+      /// This method renames the file referenced by \p this as \p newName. Both
+      /// files must exist before making this call.
+      /// @returns false if the Path does not refer to a file, true otherwise.
+      /// @throws std::string if there is an file system error.
+      /// @brief Rename one file as another.
+      bool renameFile(const Path& newName);
+
+      /// This method sets the access time, modification time, and permission
+      /// mode of the file associated with \p this as given by \p si.  
+      /// @returns false if the Path does not refer to a file, true otherwise.
+      /// @throws std::string if the file could not be modified
+      /// @brief Set file times and mode.
+      bool setStatusInfo(const StatusInfo& si ) const ;
+
     /// @}
     /// @name Data
     /// @{
@@ -484,7 +524,20 @@ namespace sys {
 
     /// @}
   };
+
+  /// This enumeration delineates the kinds of files that LLVM knows about.
+  enum LLVMFileType {
+    UnknownFileType = 0,            ///< Unrecognized file
+    BytecodeFileType = 1,           ///< Uncompressed bytecode file
+    CompressedBytecodeFileType = 2, ///< Compressed bytecode file
+    ArchiveFileType = 3,            ///< ar style archive file
+  };
+
+  /// This utility function allows any memory block to be examined in order
+  /// to determine its file type.
+  LLVMFileType IdentifyFileType(const char*magic, unsigned length);
 }
+
 }
 
 // vim: sw=2
