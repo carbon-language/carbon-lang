@@ -59,33 +59,6 @@ void TDDataStructures::releaseMyMemory() {
   GlobalsGraph = 0;
 }
 
-#if 0
-/// ResolveCallSite - This method is used to link the actual arguments together
-/// with the formal arguments for a function call in the top-down closure.  This
-/// method assumes that the call site arguments have been mapped into nodes
-/// local to the specified graph.
-///
-void TDDataStructures::ResolveCallSite(DSGraph &Graph,
-                                       const DSCallSite &CallSite) {
-  // Resolve all of the function formal arguments...
-  Function &F = Graph.getFunction();
-  Function::aiterator AI = F.abegin();
-
-  for (unsigned i = 0, e = CallSite.getNumPtrArgs(); i != e; ++i, ++AI) {
-    // Advance the argument iterator to the first pointer argument...
-    while (!DS::isPointerType(AI->getType())) ++AI;
-    
-    // TD ...Merge the formal arg scalar with the actual arg node
-    DSNodeHandle &NodeForFormal = Graph.getNodeForValue(AI);
-    assert(NodeForFormal.getNode() && "Pointer argument has no dest node!");
-    NodeForFormal.mergeWith(CallSite.getPtrArg(i));
-  }
-  
-  // Merge returned node in the caller with the "return" node in callee
-  if (CallSite.getRetVal().getNode() && Graph.getRetNode().getNode())
-    Graph.getRetNode().mergeWith(CallSite.getRetVal());
-}
-#endif
 
 DSGraph &TDDataStructures::getOrCreateDSGraph(Function &F) {
   DSGraph *&G = DSInfo[&F];
