@@ -11,7 +11,7 @@
 // code from the body of a loop as possible.  It does this by either hoisting
 // code into the preheader block, or by sinking code to the exit blocks if it is
 // safe.  This pass also promotes must-aliased memory locations in the loop to
-// live in registers.
+// live in registers, thus hoisting and sinking "invariant" loads and stores.
 //
 // This pass uses alias analysis for two purposes:
 //
@@ -91,6 +91,14 @@ namespace {
     /// visitLoop - Hoist expressions out of the specified loop...    
     ///
     void visitLoop(Loop *L, AliasSetTracker &AST);
+
+    /// SinkRegion - Walk the specified region of the CFG (defined by all blocks
+    /// dominated by the specified block, and that are in the current loop) in
+    /// reverse depth first order w.r.t the DominatorTree.  This allows us to
+    /// visit uses before definitions, allowing us to sink a loop body in one
+    /// pass without iteration.
+    ///
+    void SinkRegion(DominatorTree::Node *N);
 
     /// HoistRegion - Walk the specified region of the CFG (defined by all
     /// blocks dominated by the specified block, and that are in the current
@@ -258,8 +266,10 @@ void LICM::visitLoop(Loop *L, AliasSetTracker &AST) {
   //
   // Traverse the body of the loop in depth first order on the dominator tree so
   // that we are guaranteed to see definitions before we see uses.  This allows
-  // us to perform the LICM transformation in one pass, without iteration.
+  // us to sink instructions in one pass, without iteration.  AFter sinking
+  // instructions, we perform another pass to hoist them out of the loop.
   //
+  SinkRegion(DT->getNode(L->getHeader()));
   HoistRegion(DT->getNode(L->getHeader()));
 
   // Now that all loop invariants have been removed from the loop, promote any
@@ -271,6 +281,42 @@ void LICM::visitLoop(Loop *L, AliasSetTracker &AST) {
   CurLoop = 0;
   Preheader = 0;
 }
+
+/// SinkRegion - Walk the specified region of the CFG (defined by all blocks
+/// dominated by the specified block, and that are in the current loop) in
+/// reverse depth first order w.r.t the DominatorTree.  This allows us to visit
+/// uses before definitions, allowing us to sink a loop body in one pass without
+/// iteration.
+///
+void LICM::SinkRegion(DominatorTree::Node *N) {
+  assert(N != 0 && "Null dominator tree node?");
+  BasicBlock *BB = N->getBlock();
+
+  // If this subregion is not in the top level loop at all, exit.
+  if (!CurLoop->contains(BB)) return;
+
+  // We are processing blocks in reverse dfo, so process children first...
+  const std::vector<DominatorTree::Node*> &Children = N->getChildren();
+  for (unsigned i = 0, e = Children.size(); i != e; ++i)
+    SinkRegion(Children[i]);
+
+  // Only need to process the contents of this block if it is not part of a
+  // subloop (which would already have been processed).
+  if (inSubLoop(BB)) return;
+
+  for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; ) {
+    Instruction &I = *II++;
+    
+    // Check to see if we can sink this instruction to the exit blocks
+    // of the loop.  We can do this if the all users of the instruction are
+    // outside of the loop.  In this case, it doesn't even matter if the
+    // operands of the instruction are loop invariant.
+    //
+    if (canSinkOrHoistInst(I) && isNotUsedInLoop(I))
+      sink(I);
+  }
+}
+
 
 /// HoistRegion - Walk the specified region of the CFG (defined by all blocks
 /// dominated by the specified block, and that are in the current loop) in depth
@@ -289,26 +335,15 @@ void LICM::HoistRegion(DominatorTree::Node *N) {
   if (!inSubLoop(BB))
     for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; ) {
       Instruction &I = *II++;
-
-      // We can only handle simple expressions and loads with this code.
-      if (canSinkOrHoistInst(I)) {
-        // First check to see if we can sink this instruction to the exit blocks
-        // of the loop.  We can do this if the only users of the instruction are
-        // outside of the loop.  In this case, it doesn't even matter if the
-        // operands of the instruction are loop invariant.
-        //
-        if (isNotUsedInLoop(I))
-          sink(I);
-        
-        // If we can't sink the instruction, try hoisting it out to the
-        // preheader.  We can only do this if all of the operands of the
-        // instruction are loop invariant and if it is safe to hoist the
-        // instruction.
-        //
-        else if (isLoopInvariantInst(I) && isSafeToExecuteUnconditionally(I))
+      
+      // Try hoisting the instruction out to the preheader.  We can only do this
+      // if all of the operands of the instruction are loop invariant and if it
+      // is safe to hoist the instruction.
+      //
+      if (isLoopInvariantInst(I) && canSinkOrHoistInst(I) && 
+          isSafeToExecuteUnconditionally(I))
           hoist(I);
       }
-    }
 
   const std::vector<DominatorTree::Node*> &Children = N->getChildren();
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
