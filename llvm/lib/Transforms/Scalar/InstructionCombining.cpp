@@ -1453,38 +1453,42 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       if (LHSI->hasOneUse())
         switch (LHSI->getOpcode()) {
         case Instruction::And:
-          if (isa<ConstantInt>(LHSI->getOperand(1))) {
-          
-
+          if (isa<ConstantInt>(LHSI->getOperand(1)) &&
+              LHSI->getOperand(0)->hasOneUse()) {
             // If this is: (X >> C1) & C2 != C3 (where any shift and any compare
             // could exist), turn it into (X & (C2 << C1)) != (C3 << C1).  This
             // happens a LOT in code produced by the C front-end, for bitfield
             // access.
-            if (LHSI->getOperand(0)->hasOneUse())
-              if (ShiftInst *Shift = dyn_cast<ShiftInst>(LHSI->getOperand(0)))
-                if (ConstantUInt *ShAmt =
-                    dyn_cast<ConstantUInt>(Shift->getOperand(1))) {
-                  ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
+            ShiftInst *Shift = dyn_cast<ShiftInst>(LHSI->getOperand(0));
+            ConstantUInt *ShAmt;
+            ShAmt = Shift ? dyn_cast<ConstantUInt>(Shift->getOperand(1)) : 0;
+            ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
+            const Type *Ty = LHSI->getType();
                   
-                  // We can fold this as long as we can't shift unknown bits
-                  // into the mask.  This can only happen with signed shift
-                  // rights, as they sign-extend.
-                  const Type *Ty = Shift->getType();
-                  if (Shift->getOpcode() != Instruction::Shr ||
-                      Shift->getType()->isUnsigned() ||
-                      // To test for the bad case of the signed shr, see if any
-                      // of the bits shifted in could be tested after the mask.
-                      ConstantExpr::getAnd(ConstantExpr::getShl(ConstantInt::getAllOnesValue(Ty), ConstantUInt::get(Type::UByteTy, Ty->getPrimitiveSize()*8-ShAmt->getValue())), AndCST)->isNullValue()) {
-                    unsigned ShiftOp = Shift->getOpcode() == Instruction::Shl
-                      ? Instruction::Shr : Instruction::Shl;
-                    I.setOperand(1, ConstantExpr::get(ShiftOp, CI, ShAmt));
-                    LHSI->setOperand(1,ConstantExpr::get(ShiftOp,AndCST,ShAmt));
-                    LHSI->setOperand(0, Shift->getOperand(0));
-                    WorkList.push_back(Shift); // Shift is probably dead.
-                    AddUsesToWorkList(I);
-                    return &I;
-                  }
-                }
+            // We can fold this as long as we can't shift unknown bits
+            // into the mask.  This can only happen with signed shift
+            // rights, as they sign-extend.
+            if (ShAmt) {
+              bool CanFold = Shift->getOpcode() != Instruction::Shr ||
+                             Shift->getType()->isUnsigned();
+              if (!CanFold && 
+                // To test for the bad case of the signed shr, see if any
+                // of the bits shifted in could be tested after the mask.
+                ConstantExpr::getAnd(ConstantExpr::getShl(ConstantInt::getAllOnesValue(Ty), ConstantUInt::get(Type::UByteTy, Ty->getPrimitiveSize()*8-ShAmt->getValue())), AndCST)->isNullValue()) {
+                CanFold = true;
+              }
+
+              if (CanFold) {
+                unsigned ShiftOp = Shift->getOpcode() == Instruction::Shl
+                  ? Instruction::Shr : Instruction::Shl;
+                I.setOperand(1, ConstantExpr::get(ShiftOp, CI, ShAmt));
+                LHSI->setOperand(1,ConstantExpr::get(ShiftOp,AndCST,ShAmt));
+                LHSI->setOperand(0, Shift->getOperand(0));
+                WorkList.push_back(Shift); // Shift is dead.
+                AddUsesToWorkList(I);
+                return &I;
+              }
+            }
           }
           break;
         case Instruction::Div:
@@ -1970,7 +1974,7 @@ static inline bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
 
   // It is legal to eliminate the instruction if casting A->B->A if the sizes
   // are identical and the bits don't get reinterpreted (for example 
-  // int->float->int would not be allowed)
+  // int->float->int would not be allowed).
   if (SrcTy == DstTy && SrcTy->isLosslesslyConvertibleTo(MidTy))
     return true;
 
@@ -1994,9 +1998,9 @@ static inline bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
       // First cast is a truncate
       1, 1, 4, 4,         // trunc->extend is not safe to eliminate
       // First cast is a sign ext
-      2, 5, 2, 4,         // signext->trunc always ok, signext->zeroext never ok
+      2, 5, 2, 4,         // signext->zeroext never ok
       // First cast is a zero ext
-      3, 5, 3, 3,         // zeroext->trunc always ok
+      3, 5, 3, 3,
     };
 
     unsigned Result = CastResult[FirstCast*4+SecondCast];
@@ -2012,8 +2016,14 @@ static inline bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
     case 4:
       return false;  // Not possible to eliminate this here.
     case 5:
-      // Sign or zero extend followed by truncate is always ok
-      return true;
+      // Sign or zero extend followed by truncate is always ok if the result
+      // is a truncate or noop.
+      CastType ResultCast = getCastType(SrcTy, DstTy);
+      if (ResultCast == Noop || ResultCast == Truncate)
+        return true;
+      // Otherwise we are still growing the value, we are only safe if the 
+      // result will match the sign/zeroextendness of the result.
+      return ResultCast == FirstCast;
     }
   }
   return false;
