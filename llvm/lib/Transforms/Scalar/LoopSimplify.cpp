@@ -151,7 +151,7 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
                                        const std::vector<BasicBlock*> &Preds) {
   
   // Create new basic block, insert right before the original block...
-  BasicBlock *NewBB = new BasicBlock(BB->getName()+Suffix, BB);
+  BasicBlock *NewBB = new BasicBlock(BB->getName()+Suffix, BB->getParent(), BB);
 
   // The preheader first gets an unconditional branch to the loop header...
   BranchInst *BI = new BranchInst(BB, NewBB);

@@ -290,7 +290,7 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   if (OldEntry == 0) {
     OldEntry = &F->getEntryBlock();
     std::string OldName = OldEntry->getName(); OldEntry->setName("tailrecurse");
-    BasicBlock *NewEntry = new BasicBlock(OldName, OldEntry);
+    BasicBlock *NewEntry = new BasicBlock(OldName, F, OldEntry);
     new BranchInst(OldEntry, NewEntry);
     
     // Now that we have created a new block, which jumps to the entry
