@@ -683,7 +683,7 @@ UltraSparcRegInfo::InitializeOutgoingArg(MachineInstr* CallMI,
     else {
       // Copy UniLRReg to the stack to pass the arg on stack.
       const MachineFrameInfo& frameInfo = target.getFrameInfo();
-      int argOffset = frameInfo.getOutgoingArgOffset(PRA.mcInfo, argNo);
+      int argOffset = frameInfo.getOutgoingArgOffset(PRA.MF, argNo);
       cpReg2MemMI(CallAI->InstrnsBefore,
                   UniLRReg, getStackPointer(), argOffset, regType);
     }
@@ -705,10 +705,10 @@ UltraSparcRegInfo::InitializeOutgoingArg(MachineInstr* CallMI,
       // Use TmpOff to save TReg, since that may have a live value.
       // 
       int TReg = PRA.getUniRegNotUsedByThisInst( LR->getRegClass(), CallMI );
-      int TmpOff = PRA.mcInfo.pushTempValue(target,  
-                                            getSpilledRegSize(getRegType(LR)));
+      int TmpOff = PRA.MF.pushTempValue(target,  
+                                        getSpilledRegSize(getRegType(LR)));
       const MachineFrameInfo& frameInfo = target.getFrameInfo();
-      int argOffset = frameInfo.getOutgoingArgOffset(PRA.mcInfo, argNo);
+      int argOffset = frameInfo.getOutgoingArgOffset(PRA.MF, argNo);
       
       MachineInstr *Ad1, *Ad2, *Ad3, *Ad4;
         
@@ -1413,8 +1413,8 @@ UltraSparcRegInfo::insertCallerSavingCode(vector<MachineInstr*>& instrnsBefore,
 	    // and add them to InstrnsBefore and InstrnsAfter of the
 	    // call instruction
             // 
-	    int StackOff =  PRA.mcInfo.pushTempValue(target,  
-					       getSpilledRegSize(RegType));
+	    int StackOff =  PRA.MF.pushTempValue(target,  
+                                                 getSpilledRegSize(RegType));
             
 	    vector<MachineInstr*> AdIBef, AdIAft;
             
@@ -1709,12 +1709,12 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
 	  // Now we are processing %ox of 1.
 	  // We have to 
 	      
-	  const int UReg = DefOp.getMachineRegNum();
-	  const int RegType = getRegType(UReg);
+	  int UReg = DefOp.getMachineRegNum();
+	  int RegType = getRegType(UReg);
 	  MachineInstr *AdIBef, *AdIAft;
 	      
-	  const int StackOff =  PRA.mcInfo.pushTempValue(target,
-					 getSpilledRegSize(RegType));
+	  const int StackOff = PRA.MF.pushTempValue(target,
+                                                    getSpilledRegSize(RegType));
 	  
 	  // Save the UReg (%ox) on stack before it's destroyed
           vector<MachineInstr*> mvec;
