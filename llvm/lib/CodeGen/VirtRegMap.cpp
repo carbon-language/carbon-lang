@@ -38,12 +38,12 @@ namespace {
 int VirtRegMap::assignVirt2StackSlot(unsigned virtReg)
 {
     assert(MRegisterInfo::isVirtualRegister(virtReg));
-    assert(v2ssMap_[toIndex(virtReg)] == NO_STACK_SLOT &&
+    assert(v2ssMap_[virtReg] == NO_STACK_SLOT &&
            "attempt to assign stack slot to already spilled register");
     const TargetRegisterClass* rc =
         mf_->getSSARegMap()->getRegClass(virtReg);
     int frameIndex = mf_->getFrameInfo()->CreateStackObject(rc);
-    v2ssMap_[toIndex(virtReg)] = frameIndex;
+    v2ssMap_[virtReg] = frameIndex;
     ++numSpills;
     return frameIndex;
 }
@@ -53,14 +53,16 @@ std::ostream& llvm::operator<<(std::ostream& os, const VirtRegMap& vrm)
     const MRegisterInfo* mri = vrm.mf_->getTarget().getRegisterInfo();
 
     std::cerr << "********** REGISTER MAP **********\n";
-    for (unsigned i = 0, e = vrm.v2pMap_.size(); i != e; ++i) {
+    for (unsigned i = MRegisterInfo::FirstVirtualRegister,
+             e = vrm.mf_->getSSARegMap()->getLastVirtReg(); i <= e; ++i) {
         if (vrm.v2pMap_[i] != VirtRegMap::NO_PHYS_REG)
-            std::cerr << "[reg" << VirtRegMap::fromIndex(i) << " -> "
+            std::cerr << "[reg" << i << " -> "
                       << mri->getName(vrm.v2pMap_[i]) << "]\n";
     }
-    for (unsigned i = 0, e = vrm.v2ssMap_.size(); i != e; ++i) {
+    for (unsigned i = MRegisterInfo::FirstVirtualRegister,
+             e = vrm.mf_->getSSARegMap()->getLastVirtReg(); i <= e; ++i) {
         if (vrm.v2ssMap_[i] != VirtRegMap::NO_STACK_SLOT)
-            std::cerr << "[reg" << VirtRegMap::fromIndex(i) << " -> fi#"
+            std::cerr << "[reg" << i << " -> fi#"
                       << vrm.v2ssMap_[i] << "]\n";
     }
     return std::cerr << '\n';

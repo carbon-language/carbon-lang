@@ -16,8 +16,9 @@
 #ifndef LLVM_TARGET_MREGISTERINFO_H
 #define LLVM_TARGET_MREGISTERINFO_H
 
-#include <cassert>
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include <cassert>
+#include <functional>
 
 namespace llvm {
 
@@ -317,6 +318,13 @@ public:
   virtual void emitPrologue(MachineFunction &MF) const = 0;
   virtual void emitEpilogue(MachineFunction &MF,
                             MachineBasicBlock &MBB) const = 0;
+};
+
+// This is useful when building DenseMap's keyed on virtual registers
+struct VirtReg2IndexFunctor : std::unary_function<unsigned, unsigned> {
+  unsigned operator()(unsigned Reg) const {
+    return Reg - MRegisterInfo::FirstVirtualRegister;
+  }
 };
 
 } // End llvm namespace

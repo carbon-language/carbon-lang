@@ -18,35 +18,34 @@
 #define LLVM_CODEGEN_SSAREGMAP_H
 
 #include "llvm/Target/MRegisterInfo.h"
+#include "Support/DenseMap.h"
 
 namespace llvm {
 
 class TargetRegisterClass;
 
 class SSARegMap {
-  std::vector<const TargetRegisterClass*> RegClassMap;
-
-  unsigned rescale(unsigned Reg) {
-    return Reg - MRegisterInfo::FirstVirtualRegister;
-  }
+  DenseMap<const TargetRegisterClass*, VirtReg2IndexFunctor> RegClassMap;
+  unsigned NextRegNum;
 
  public:
+  SSARegMap() : NextRegNum(MRegisterInfo::FirstVirtualRegister) { }
+
   const TargetRegisterClass* getRegClass(unsigned Reg) {
-    unsigned actualReg = rescale(Reg);
-    assert(actualReg < RegClassMap.size() && "Register out of bounds");
-    return RegClassMap[actualReg];
+    return RegClassMap[Reg];
   }
 
   /// createVirtualRegister - Create and return a new virtual register in the
   /// function with the specified register class.
   ///
   unsigned createVirtualRegister(const TargetRegisterClass *RegClass) {
-    RegClassMap.push_back(RegClass);
-    return RegClassMap.size()+MRegisterInfo::FirstVirtualRegister-1;
+    RegClassMap.grow(NextRegNum);
+    RegClassMap[NextRegNum] = RegClass;
+    return NextRegNum++;
   }
 
-  unsigned getNumVirtualRegs() const {
-    return RegClassMap.size();
+  unsigned getLastVirtReg() const {
+    return NextRegNum - 1;
   }
 };
 

@@ -20,14 +20,15 @@
 
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SSARegMap.h"
+#include "Support/DenseMap.h"
 #include <climits>
 
 namespace llvm {
 
     class VirtRegMap {
     public:
-        typedef std::vector<unsigned> Virt2PhysMap;
-        typedef std::vector<int> Virt2StackSlotMap;
+        typedef DenseMap<unsigned, VirtReg2IndexFunctor> Virt2PhysMap;
+        typedef DenseMap<int, VirtReg2IndexFunctor> Virt2StackSlotMap;
 
     private:
         MachineFunction* mf_;
@@ -38,13 +39,6 @@ namespace llvm {
         VirtRegMap(const VirtRegMap& rhs);
         const VirtRegMap& operator=(const VirtRegMap& rhs);
 
-        static unsigned toIndex(unsigned virtReg) {
-            return virtReg - MRegisterInfo::FirstVirtualRegister;
-        }
-        static unsigned fromIndex(unsigned index) {
-            return index + MRegisterInfo::FirstVirtualRegister;
-        }
-
         enum {
             NO_PHYS_REG   = 0,
             NO_STACK_SLOT = INT_MAX
@@ -53,8 +47,10 @@ namespace llvm {
     public:
         VirtRegMap(MachineFunction& mf)
             : mf_(&mf),
-              v2pMap_(mf.getSSARegMap()->getNumVirtualRegs(), NO_PHYS_REG),
-              v2ssMap_(mf.getSSARegMap()->getNumVirtualRegs(), NO_STACK_SLOT) {
+              v2pMap_(NO_PHYS_REG),
+              v2ssMap_(NO_STACK_SLOT) {
+            v2pMap_.grow(mf.getSSARegMap()->getLastVirtReg());
+            v2ssMap_.grow(mf.getSSARegMap()->getLastVirtReg());
         }
 
         bool hasPhys(unsigned virtReg) const {
@@ -63,23 +59,23 @@ namespace llvm {
 
         unsigned getPhys(unsigned virtReg) const {
             assert(MRegisterInfo::isVirtualRegister(virtReg));
-            return v2pMap_[toIndex(virtReg)];
+            return v2pMap_[virtReg];
         }
 
         void assignVirt2Phys(unsigned virtReg, unsigned physReg) {
             assert(MRegisterInfo::isVirtualRegister(virtReg) &&
                    MRegisterInfo::isPhysicalRegister(physReg));
-            assert(v2pMap_[toIndex(virtReg)] == NO_PHYS_REG &&
+            assert(v2pMap_[virtReg] == NO_PHYS_REG &&
                    "attempt to assign physical register to already mapped "
                    "virtual register");
-            v2pMap_[toIndex(virtReg)] = physReg;
+            v2pMap_[virtReg] = physReg;
         }
 
         void clearVirtReg(unsigned virtReg) {
             assert(MRegisterInfo::isVirtualRegister(virtReg));
-            assert(v2pMap_[toIndex(virtReg)] != NO_PHYS_REG &&
+            assert(v2pMap_[virtReg] != NO_PHYS_REG &&
                    "attempt to clear a not assigned virtual register");
-            v2pMap_[toIndex(virtReg)] = NO_PHYS_REG;
+            v2pMap_[virtReg] = NO_PHYS_REG;
         }
 
         bool hasStackSlot(unsigned virtReg) const {
@@ -88,7 +84,7 @@ namespace llvm {
 
         int getStackSlot(unsigned virtReg) const {
             assert(MRegisterInfo::isVirtualRegister(virtReg));
-            return v2ssMap_[toIndex(virtReg)];
+            return v2ssMap_[virtReg];
         }
 
         int assignVirt2StackSlot(unsigned virtReg);

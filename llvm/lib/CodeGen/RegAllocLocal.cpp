@@ -23,6 +23,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
+#include "Support/DenseMap.h"
 #include "Support/Statistic.h"
 #include <iostream>
 using namespace llvm;
@@ -43,19 +44,11 @@ namespace {
     std::map<unsigned, int> StackSlotForVirtReg;
 
     // Virt2PhysRegMap - This map contains entries for each virtual register
-    // that is currently available in a physical register.  This is "logically"
-    // a map from virtual register numbers to physical register numbers.
-    // Instead of using a map, however, which is slow, we use a vector.  The
-    // index is the VREG number - FirstVirtualRegister.  If the entry is zero,
-    // then it is logically "not in the map".
-    //
-    std::vector<unsigned> Virt2PhysRegMap;
+    // that is currently available in a physical register.
+    DenseMap<unsigned, VirtReg2IndexFunctor> Virt2PhysRegMap;
 
     unsigned &getVirt2PhysRegMapSlot(unsigned VirtReg) {
-      assert(MRegisterInfo::isVirtualRegister(VirtReg) &&"Illegal VREG #");
-      assert(VirtReg-MRegisterInfo::FirstVirtualRegister <Virt2PhysRegMap.size()
-             && "VirtReg not in map!");
-      return Virt2PhysRegMap[VirtReg-MRegisterInfo::FirstVirtualRegister];
+      return Virt2PhysRegMap[VirtReg];
     }
 
     // PhysRegsUsed - This array is effectively a map, containing entries for
@@ -661,7 +654,8 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
 #ifndef NDEBUG
   bool AllOk = true;
-  for (unsigned i = 0, e = Virt2PhysRegMap.size(); i != e; ++i)
+  for (unsigned i = MRegisterInfo::FirstVirtualRegister,
+           e = MF->getSSARegMap()->getLastVirtReg(); i <= e; ++i)
     if (unsigned PR = Virt2PhysRegMap[i]) {
       std::cerr << "Register still mapped: " << i << " -> " << PR << "\n";
       AllOk = false;
@@ -689,7 +683,8 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
 
   // initialize the virtual->physical register map to have a 'null'
   // mapping for all virtual registers
-  Virt2PhysRegMap.assign(MF->getSSARegMap()->getNumVirtualRegs(), 0);
+  Virt2PhysRegMap.clear();
+  Virt2PhysRegMap.grow(MF->getSSARegMap()->getLastVirtReg());
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
