@@ -267,6 +267,7 @@ void FunctionRepBuilder::visitStoreInst(StoreInst *SI) {
   // into data structures...
   //
   if (!isa<PointerType>(SI->getOperand(0)->getType())) return;
+  if (!ValueMap.count(SI->getOperand(0))) return;  // Src scalar has no values!
         
   const PointerValSet &SrcPVS = ValueMap[SI->getOperand(0)];
   const PointerValSet &PtrPVS = ValueMap[SI->getOperand(1)];
