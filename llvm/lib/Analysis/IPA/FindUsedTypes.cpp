@@ -12,7 +12,6 @@
 #include "llvm/Support/InstIterator.h"
 
 AnalysisID FindUsedTypes::ID(AnalysisID::create<FindUsedTypes>());
-AnalysisID FindUsedTypes::IncludeSymbolTableID(AnalysisID::create<FindUsedTypes>());
 
 // IncorporateType - Incorporate one type and all of its subtypes into the
 // collection of used types.
@@ -31,20 +30,11 @@ void FindUsedTypes::IncorporateType(const Type *Ty) {
     IncorporateType(*I);
 }
 
-// IncorporateSymbolTable - Add all types referenced by the specified symtab
-// into the collection of used types.
-//
-void FindUsedTypes::IncorporateSymbolTable(const SymbolTable *ST) {
-  assert(0 && "Unimp");
-}
 
 // run - This incorporates all types used by the specified module
 //
 bool FindUsedTypes::run(Module &m) {
   UsedTypes.clear();  // reset if run multiple times...
-
-  if (IncludeSymbolTables && m.hasSymbolTable())
-    IncorporateSymbolTable(m.getSymbolTable()); // Add symtab first...
 
   // Loop over global variables, incorporating their types
   for (Module::const_giterator I = m.gbegin(), E = m.gend(); I != E; ++I)
@@ -52,8 +42,6 @@ bool FindUsedTypes::run(Module &m) {
 
   for (Module::iterator MI = m.begin(), ME = m.end(); MI != ME; ++MI) {
     const Function &F = *MI;
-    if (IncludeSymbolTables && F.hasSymbolTable())
-      IncorporateSymbolTable(F.getSymbolTable()); // Add symtab first...
   
     // Loop over all of the instructions in the function, adding their return
     // type as well as the types of their operands.
