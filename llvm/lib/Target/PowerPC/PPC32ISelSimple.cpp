@@ -1296,7 +1296,6 @@ void PPC32ISel::emitSelectOperation(MachineBasicBlock *MBB,
     BuildMI(*MBB, IP, PPC::CMPWI, 2, PPC::CR0).addReg(CondReg).addSImm(0);
     Opcode = getPPCOpcodeForSetCCNumber(Instruction::SetNE);
   }
-  unsigned TrueValue = getReg(TrueVal, BB, BB->end());
 
   MachineBasicBlock *thisMBB = BB;
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
@@ -1306,22 +1305,33 @@ void PPC32ISel::emitSelectOperation(MachineBasicBlock *MBB,
   //  thisMBB:
   //  ...
   //   cmpTY cr0, r1, r2
-  //   %TrueValue = ...
-  //   bCC sinkMBB
+  //   bCC copy1MBB
+  //   fallthrough --> copy0MBB
   MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *copy1MBB = new MachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-  BuildMI(BB, Opcode, 2).addReg(PPC::CR0).addMBB(sinkMBB);
+  BuildMI(BB, Opcode, 2).addReg(PPC::CR0).addMBB(copy1MBB);
   F->getBasicBlockList().insert(It, copy0MBB);
+  F->getBasicBlockList().insert(It, copy1MBB);
   F->getBasicBlockList().insert(It, sinkMBB);
   // Update machine-CFG edges
   BB->addSuccessor(copy0MBB);
-  BB->addSuccessor(sinkMBB);
+  BB->addSuccessor(copy1MBB);
 
   //  copy0MBB:
   //   %FalseValue = ...
-  //   fallthrough
+  //   b sinkMBB
   BB = copy0MBB;
   unsigned FalseValue = getReg(FalseVal, BB, BB->begin());
+  BuildMI(BB, PPC::B, 1).addMBB(sinkMBB);
+  // Update machine-CFG edges
+  BB->addSuccessor(sinkMBB);
+
+  //  copy1MBB:
+  //   %TrueValue = ...
+  //   fallthrough
+  BB = copy1MBB;
+  unsigned TrueValue = getReg(TrueVal, BB, BB->begin());
   // Update machine-CFG edges
   BB->addSuccessor(sinkMBB);
 
@@ -1330,7 +1340,7 @@ void PPC32ISel::emitSelectOperation(MachineBasicBlock *MBB,
   //  ...
   BB = sinkMBB;
   BuildMI(BB, PPC::PHI, 4, DestReg).addReg(FalseValue)
-    .addMBB(copy0MBB).addReg(TrueValue).addMBB(thisMBB);
+    .addMBB(copy0MBB).addReg(TrueValue).addMBB(copy1MBB);
     
   // For a register pair representing a long value, define the second reg
   // FIXME: Can this really be correct for selecting longs?
