@@ -20,12 +20,12 @@ all :: $(SAMPLES)
 
 ifdef OPTIMIZE
 % : %.st 
-	@$(ECHO) "Compiling and Optimizing $(<F)"
-	$(VERB)$(LLVMC_EXEC) -O3 $< -o $@
+	$(Echo) "Compiling and Optimizing $(<F)"
+	$(Verb)$(LLVMC_EXEC) -O3 $< -o $@
 else
 % : %.st
-	@$(ECHO) "Compiling $(<F)"
-	$(VERB)$(LLVMC_EXEC) $< -o $@
+	$(Echo) "Compiling $(<F)"
+	$(Verb)$(LLVMC_EXEC) $< -o $@
 endif
 
 SAMPLES_LL = $(SAMPLES:%=%.ll)
@@ -33,7 +33,7 @@ SAMPLES_BC = $(SAMPLES:%=%.bc)
 SAMPLES_S  = $(SAMPLES:%=%.s)
 
 clean ::
-	$(VERB)rm -f gmon.out $(SAMPLES)
+	$(Verb)rm -f gmon.out $(SAMPLES)
 #
 # Include the Master Makefile that knows how to build all.
 #
