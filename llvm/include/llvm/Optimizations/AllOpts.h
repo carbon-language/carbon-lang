@@ -12,6 +12,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Tools/STLExtras.h"
 class Method;
 class CallInst;
 
@@ -20,11 +21,8 @@ class CallInst;
 //
 
 static inline bool ApplyOptToAllMethods(Module *C, bool (*Opt)(Method*)) {
-  bool Modified = false;
-  for (Module::MethodListType::iterator I = C->getMethodList().begin(); 
-       I != C->getMethodList().end(); I++)
-    Modified |= Opt(*I);
-  return Modified;
+  return reduce_apply(C->getMethodList().begin(), C->getMethodList().end(),
+		      bitwise_or<bool>(), false, ptr_fun(Opt));
 }
 
 //===----------------------------------------------------------------------===//
