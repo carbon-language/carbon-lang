@@ -88,9 +88,8 @@ clean :
 %.bc: %.ll
 	$(LAS) -f $<
 
-## There is just one file so omit link step and just clean
 %.linked.bc: %.bc
-	$(LOPT) -cleangcc -raise -constprop -dce $< -o $@
+	$(CP) $< $@
 
 %.clean.bc: %.bc
 	$(LOPT) -cleangcc -raise -constprop -dce $< -o $@
