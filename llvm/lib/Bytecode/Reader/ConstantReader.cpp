@@ -204,7 +204,7 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
       
       // Get the arg value from its slot if it exists, otherwise a placeholder
       Value *Val = getValue(argTy, argValSlot, false);
-      Constant* C;
+      Constant *C;
       if (Val) {
         if (!(C = dyn_cast<Constant>(Val))) return failure(true);
         BCR_TRACE(5, "Constant Found in ValueTable!\n");
@@ -218,7 +218,7 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
     if (isExprNumArgs == 1) {           // All one-operand expressions
       V = ConstantExpr::get(opCode, argVec[0], Ty);
     } else if (opCode == Instruction::GetElementPtr) { // GetElementPtr
-      std::vector<Value*> IdxList(argVec.begin()+1, argVec.end());
+      std::vector<Constant*> IdxList(argVec.begin()+1, argVec.end());
       V = ConstantExpr::get(opCode, argVec[0], IdxList, Ty);
     } else {                            // All other 2-operand expressions
       V = ConstantExpr::get(opCode, argVec[0], argVec[1], Ty);

@@ -969,13 +969,23 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
   };
 
 
+// FIXME: ConstExpr::get never return null!
 ConstExpr: Types CAST ConstVal {
     ConstantExpr* CPE = ConstantExpr::get($2, $3, $1->get());
     if (CPE == 0) ThrowException("constant expression builder returned null!");
     $$ = CPE;
   }
   | Types GETELEMENTPTR '(' ConstVal IndexList ')' {
-    ConstantExpr* CPE = ConstantExpr::get($2, $4, *$5, $1->get());
+    vector<Constant*> IdxVec;
+    for (unsigned i = 0, e = $5->size(); i != e; ++i)
+      if (Constant *C = dyn_cast<Constant>((*$5)[i]))
+        IdxVec.push_back(C);
+      else
+        ThrowException("Arguments to getelementptr must be constants!");
+
+    delete $5;
+
+    ConstantExpr* CPE = ConstantExpr::get($2, $4, IdxVec, $1->get());
     if (CPE == 0) ThrowException("constant expression builder returned null!");
     $$ = CPE;
   }
