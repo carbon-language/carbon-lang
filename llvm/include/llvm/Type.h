@@ -39,12 +39,12 @@ class OpaqueType;
 
 class Type : public Value {
 public:
-  //===--------------------------------------------------------------------===//
-  // Definitions of all of the base types for the Type system.  Based on this
-  // value, you can cast to a "DerivedType" subclass (see DerivedTypes.h)
-  // Note: If you add an element to this, you need to add an element to the 
-  // Type::getPrimitiveType function, or else things will break!
-  //
+  ///===-------------------------------------------------------------------===//
+  /// Definitions of all of the base types for the Type system.  Based on this
+  /// value, you can cast to a "DerivedType" subclass (see DerivedTypes.h)
+  /// Note: If you add an element to this, you need to add an element to the 
+  /// Type::getPrimitiveType function, or else things will break!
+  ///
   enum PrimitiveID {
     VoidTyID = 0  , BoolTyID,           //  0, 1: Basics...
     UByteTyID     , SByteTyID,          //  2, 3: 8 bit types...
@@ -77,106 +77,107 @@ private:
   bool        Recursive; // True if the type is recursive
 
 protected:
-  // ctor is protected, so only subclasses can create Type objects...
+  /// ctor is protected, so only subclasses can create Type objects...
   Type(const std::string &Name, PrimitiveID id);
   virtual ~Type() {}
 
-  // When types are refined, they update their description to be more concrete.
-  //
+  /// When types are refined, they update their description to be more concrete.
+  ///
   inline void setDescription(const std::string &D) { Desc = D; }
   
-  // setName - Associate the name with this type in the symbol table, but don't
-  // set the local name to be equal specified name.
-  //
+  /// setName - Associate the name with this type in the symbol table, but don't
+  /// set the local name to be equal specified name.
+  ///
   virtual void setName(const std::string &Name, SymbolTable *ST = 0);
 
-  // Types can become nonabstract later, if they are refined.
-  //
+  /// Types can become nonabstract later, if they are refined.
+  ///
   inline void setAbstract(bool Val) { Abstract = Val; }
 
-  // Types can become recursive later, if they are refined.
-  //
+  /// Types can become recursive later, if they are refined.
+  ///
   inline void setRecursive(bool Val) { Recursive = Val; }
 
 public:
   virtual void print(std::ostream &O) const;
 
   //===--------------------------------------------------------------------===//
-  // Property accessors for dealing with types...
+  // Property accessors for dealing with types... Some of these virtual methods
+  // are defined in private classes defined in Type.cpp for primitive types.
   //
 
-  // getPrimitiveID - Return the base type of the type.  This will return one
-  // of the PrimitiveID enum elements defined above.
-  //
+  /// getPrimitiveID - Return the base type of the type.  This will return one
+  /// of the PrimitiveID enum elements defined above.
+  ///
   inline PrimitiveID getPrimitiveID() const { return ID; }
 
-  // getUniqueID - Returns the UID of the type.  This can be thought of as a 
-  // small integer version of the pointer to the type class.  Two types that are
-  // structurally different have different UIDs.  This can be used for indexing
-  // types into an array.
-  //
+  /// getUniqueID - Returns the UID of the type.  This can be thought of as a
+  /// small integer version of the pointer to the type class.  Two types that
+  /// are structurally different have different UIDs.  This can be used for
+  /// indexing types into an array.
+  ///
   inline unsigned getUniqueID() const { return UID; }
 
-  // getDescription - Return the string representation of the type...
+  /// getDescription - Return the string representation of the type...
   inline const std::string &getDescription() const { return Desc; }
 
-  // isSigned - Return whether a numeric type is signed.
+  /// isSigned - Return whether a numeric type is signed.
   virtual bool isSigned() const { return 0; }
   
-  // isUnsigned - Return whether a numeric type is unsigned.  This is not 
-  // quite the complement of isSigned... nonnumeric types return false as they
-  // do with isSigned.
-  // 
+  /// isUnsigned - Return whether a numeric type is unsigned.  This is not 
+  /// quite the complement of isSigned... nonnumeric types return false as they
+  /// do with isSigned.
+  /// 
   virtual bool isUnsigned() const { return 0; }
 
-  // isIntegral - Equilivent to isSigned() || isUnsigned, but with only a single
-  // virtual function invocation.
-  //
+  /// isIntegral - Equilivent to isSigned() || isUnsigned, but with only a
+  /// single virtual function invocation.
+  ///
   virtual bool isIntegral() const { return 0; }
 
-  // isFloatingPoint - Return true if this is one of the two floating point
-  // types
+  /// isFloatingPoint - Return true if this is one of the two floating point
+  /// types
   bool isFloatingPoint() const { return ID == FloatTyID || ID == DoubleTyID; }
 
-  // isAbstract - True if the type is either an Opaque type, or is a derived
-  // type that includes an opaque type somewhere in it.  
-  //
+  /// isAbstract - True if the type is either an Opaque type, or is a derived
+  /// type that includes an opaque type somewhere in it.  
+  ///
   inline bool isAbstract() const { return Abstract; }
 
-  // isRecursive - True if the type graph contains a cycle.
-  //
+  /// isRecursive - True if the type graph contains a cycle.
+  ///
   inline bool isRecursive() const { return Recursive; }
 
-  // isLosslesslyConvertableTo - Return true if this type can be converted to
-  // 'Ty' without any reinterpretation of bits.  For example, uint to int.
-  //
+  /// isLosslesslyConvertableTo - Return true if this type can be converted to
+  /// 'Ty' without any reinterpretation of bits.  For example, uint to int.
+  ///
   bool isLosslesslyConvertableTo(const Type *Ty) const;
 
 
-  // Here are some useful little methods to query what type derived types are
-  // Note that all other types can just compare to see if this == Type::xxxTy;
-  //
+  /// Here are some useful little methods to query what type derived types are
+  /// Note that all other types can just compare to see if this == Type::xxxTy;
+  ///
   inline bool isPrimitiveType() const { return ID < FirstDerivedTyID;  }
   inline bool isDerivedType()   const { return ID >= FirstDerivedTyID; }
 
-  // isFirstClassType - Return true if the value is holdable in a register.
+  /// isFirstClassType - Return true if the value is holdable in a register.
   inline bool isFirstClassType() const {
     return isPrimitiveType() || ID == PointerTyID;
   }
 
-  // isSized - Return true if it makes sense to take the size of this type.  To
-  // get the actual size for a particular target, it is reasonable to use the
-  // TargetData subsystem to do this.
-  //
+  /// isSized - Return true if it makes sense to take the size of this type.  To
+  /// get the actual size for a particular target, it is reasonable to use the
+  /// TargetData subsystem to do this.
+  ///
   bool isSized() const {
     return ID != VoidTyID && ID != TypeTyID &&
            ID != FunctionTyID && ID != LabelTyID && ID != OpaqueTyID;
   }
 
-  // getPrimitiveSize - Return the basic size of this type if it is a primative
-  // type.  These are fixed by LLVM and are not target dependant.  This will
-  // return zero if the type does not have a size or is not a primitive type.
-  //
+  /// getPrimitiveSize - Return the basic size of this type if it is a primative
+  /// type.  These are fixed by LLVM and are not target dependant.  This will
+  /// return zero if the type does not have a size or is not a primitive type.
+  ///
   unsigned getPrimitiveSize() const;
 
 
@@ -188,15 +189,15 @@ public:
   inline subtype_iterator subtype_begin() const;   // DEFINED BELOW
   inline subtype_iterator subtype_end() const;     // DEFINED BELOW
 
-  // getContainedType - This method is used to implement the type iterator
-  // (defined a the end of the file).  For derived types, this returns the types
-  // 'contained' in the derived type, returning 0 when 'i' becomes invalid. This
-  // allows the user to iterate over the types in a struct, for example, really
-  // easily.
-  //
+  /// getContainedType - This method is used to implement the type iterator
+  /// (defined a the end of the file).  For derived types, this returns the
+  /// types 'contained' in the derived type, returning 0 when 'i' becomes
+  /// invalid. This allows the user to iterate over the types in a struct, for
+  /// example, really easily.
+  ///
   virtual const Type *getContainedType(unsigned i) const { return 0; }
 
-  // getNumContainedTypes - Return the number of types in the derived type
+  /// getNumContainedTypes - Return the number of types in the derived type
   virtual unsigned getNumContainedTypes() const { return 0; }
 
   //===--------------------------------------------------------------------===//
@@ -204,7 +205,7 @@ public:
   // instances of Type.
   //
 
-  // getPrimitiveType/getUniqueIDType - Return a type based on an identifier.
+  /// getPrimitiveType/getUniqueIDType - Return a type based on an identifier.
   static const Type *getPrimitiveType(PrimitiveID IDNumber);
   static const Type *getUniqueIDType(unsigned UID);
 
@@ -220,7 +221,7 @@ public:
 
   static Type *TypeTy , *LabelTy;
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Type *T) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueType() == Value::TypeVal;

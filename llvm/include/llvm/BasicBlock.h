@@ -1,20 +1,22 @@
 //===-- llvm/BasicBlock.h - Represent a basic block in the VM ----*- C++ -*--=//
-//
-// This file contains the declaration of the BasicBlock class, which represents
-// a single basic block in the VM.
-//
-// Note that basic blocks themselves are Value's, because they are referenced
-// by instructions like branches and can go in switch tables and stuff...
-//
-//===----------------------------------------------------------------------===//
-//
-// Note that well formed basic blocks are formed of a list of instructions 
-// followed by a single TerminatorInst instruction.  TerminatorInst's may not
-// occur in the middle of basic blocks, and must terminate the blocks.
-//
-// This code allows malformed basic blocks to occur, because it may be useful
-// in the intermediate stage of analysis or modification of a program.
-//
+///
+/// \class BasicBlock
+///
+/// This file contains the declaration of the BasicBlock class, which represents
+/// a single basic block in the VM.
+///
+/// Note that basic blocks themselves are Value's, because they are referenced
+/// by instructions like branches and can go in switch tables and stuff...
+///
+///===---------------------------------------------------------------------===//
+///
+/// Note that well formed basic blocks are formed of a list of instructions 
+/// followed by a single TerminatorInst instruction.  TerminatorInst's may not
+/// occur in the middle of basic blocks, and must terminate the blocks.
+///
+/// This code allows malformed basic blocks to occur, because it may be useful
+/// in the intermediate stage modification to a program.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_BASICBLOCK_H
@@ -74,10 +76,10 @@ public:
         BasicBlock *getPrev()       { return Prev; }
   const BasicBlock *getPrev() const { return Prev; }
 
-  // getTerminator() - If this is a well formed basic block, then this returns
-  // a pointer to the terminator instruction.  If it is not, then you get a null
-  // pointer back.
-  //
+  /// getTerminator() - If this is a well formed basic block, then this returns
+  /// a pointer to the terminator instruction.  If it is not, then you get a
+  /// null pointer back.
+  ///
   TerminatorInst *getTerminator();
   const TerminatorInst *const getTerminator() const;
   
@@ -111,57 +113,57 @@ public:
   inline const Instruction       &back()  const { return InstList.back(); }
   inline       Instruction       &back()        { return InstList.back(); }
 
-  // getInstList() - Return the underlying instruction list container.  You need
-  // to access it directly if you want to modify it currently.
-  //
+  /// getInstList() - Return the underlying instruction list container.  You
+  /// need to access it directly if you want to modify it currently.
+  ///
   const InstListType &getInstList() const { return InstList; }
         InstListType &getInstList()       { return InstList; }
 
   virtual void print(std::ostream &OS) const;
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BasicBlock *BB) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueType() == Value::BasicBlockVal;
   }
 
-  // hasConstantReferences() - This predicate is true if there is a 
-  // reference to this basic block in the constant pool for this method.  For
-  // example, if a block is reached through a switch table, that table resides
-  // in the constant pool, and the basic block is reference from it.
-  //
+  /// hasConstantReferences() - This predicate is true if there is a 
+  /// reference to this basic block in the constant pool for this method.  For
+  /// example, if a block is reached through a switch table, that table resides
+  /// in the constant pool, and the basic block is reference from it.
+  ///
   bool hasConstantReferences() const;
 
-  // dropAllReferences() - This function causes all the subinstructions to "let
-  // go" of all references that they are maintaining.  This allows one to
-  // 'delete' a whole class at a time, even though there may be circular
-  // references... first all references are dropped, and all use counts go to
-  // zero.  Then everything is delete'd for real.  Note that no operations are
-  // valid on an object that has "dropped all references", except operator 
-  // delete.
-  //
+  /// dropAllReferences() - This function causes all the subinstructions to "let
+  /// go" of all references that they are maintaining.  This allows one to
+  /// 'delete' a whole class at a time, even though there may be circular
+  /// references... first all references are dropped, and all use counts go to
+  /// zero.  Then everything is delete'd for real.  Note that no operations are
+  /// valid on an object that has "dropped all references", except operator 
+  /// delete.
+  ///
   void dropAllReferences();
 
-  // removePredecessor - This method is used to notify a BasicBlock that the
-  // specified Predecessor of the block is no longer able to reach it.  This is
-  // actually not used to update the Predecessor list, but is actually used to 
-  // update the PHI nodes that reside in the block.  Note that this should be
-  // called while the predecessor still refers to this block.
-  //
+  /// removePredecessor - This method is used to notify a BasicBlock that the
+  /// specified Predecessor of the block is no longer able to reach it.  This is
+  /// actually not used to update the Predecessor list, but is actually used to 
+  /// update the PHI nodes that reside in the block.  Note that this should be
+  /// called while the predecessor still refers to this block.
+  ///
   void removePredecessor(BasicBlock *Pred);
 
-  // splitBasicBlock - This splits a basic block into two at the specified
-  // instruction.  Note that all instructions BEFORE the specified iterator stay
-  // as part of the original basic block, an unconditional branch is added to 
-  // the new BB, and the rest of the instructions in the BB are moved to the new
-  // BB, including the old terminator.  The newly formed BasicBlock is returned.
-  // This function invalidates the specified iterator.
-  //
-  // Note that this only works on well formed basic blocks (must have a 
-  // terminator), and 'I' must not be the end of instruction list (which would
-  // cause a degenerate basic block to be formed, having a terminator inside of
-  // the basic block).
-  //
+  /// splitBasicBlock - This splits a basic block into two at the specified
+  /// instruction.  Note that all instructions BEFORE the specified iterator
+  /// stay as part of the original basic block, an unconditional branch is added
+  /// to the new BB, and the rest of the instructions in the BB are moved to the
+  /// new BB, including the old terminator.  The newly formed BasicBlock is
+  /// returned.  This function invalidates the specified iterator.
+  ///
+  /// Note that this only works on well formed basic blocks (must have a 
+  /// terminator), and 'I' must not be the end of instruction list (which would
+  /// cause a degenerate basic block to be formed, having a terminator inside of
+  /// the basic block).
+  ///
   BasicBlock *splitBasicBlock(iterator I);
 };
 

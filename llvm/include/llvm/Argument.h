@@ -25,7 +25,7 @@ public:
     Parent = 0;
   }
 
-  // Specialize setName to handle symbol table majik...
+  /// setName - Specialize setName to handle symbol table majik...
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
 
   inline const Function *getParent() const { return Parent; }
@@ -39,7 +39,9 @@ public:
 
   virtual void print(std::ostream &OS) const;
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  /// classof - Methods for support type inquiry through isa, cast, and
+  /// dyn_cast:
+  ///
   static inline bool classof(const Argument *) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueType() == ArgumentVal;

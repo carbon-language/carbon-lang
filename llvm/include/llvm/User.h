@@ -59,9 +59,9 @@ public:
     Operands.clear();
   }
 
-  // replaceUsesOfWith - Replaces all references to the "From" definition with
-  // references to the "To" definition.  (defined in Value.cpp)
-  //
+  /// replaceUsesOfWith - Replaces all references to the "From" definition with
+  /// references to the "To" definition.
+  ///
   void replaceUsesOfWith(Value *From, Value *To);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:

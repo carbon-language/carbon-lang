@@ -69,28 +69,28 @@ public:
   Module();
   ~Module();
 
-  // getOrInsertFunction - Look up the specified function in the module symbol
-  // table.  If it does not exist, add a prototype for the function and return
-  // it.
+  /// getOrInsertFunction - Look up the specified function in the module symbol
+  /// table.  If it does not exist, add a prototype for the function and return
+  /// it.
   Function *getOrInsertFunction(const std::string &Name, const FunctionType *T);
 
-  // getFunction - Look up the specified function in the module symbol table.
-  // If it does not exist, return null.
-  //
+  /// getFunction - Look up the specified function in the module symbol table.
+  /// If it does not exist, return null.
+  ///
   Function *getFunction(const std::string &Name, const FunctionType *Ty);
 
-  // addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
-  // there is already an entry for this name, true is returned and the symbol
-  // table is not modified.
-  //
+  /// addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
+  /// there is already an entry for this name, true is returned and the symbol
+  /// table is not modified.
+  ///
   bool addTypeName(const std::string &Name, const Type *Ty);
 
-  // getTypeName - If there is at least one entry in the symbol table for the
-  // specified type, return it.
-  //
+  /// getTypeName - If there is at least one entry in the symbol table for the
+  /// specified type, return it.
+  ///
   std::string getTypeName(const Type *Ty);
 
-  // Get the underlying elements of the Module...
+  /// Get the underlying elements of the Module...
   inline const GlobalListType &getGlobalList() const  { return GlobalList; }
   inline       GlobalListType &getGlobalList()        { return GlobalList; }
   inline const FunctionListType &getFunctionList() const { return FunctionList;}
@@ -100,21 +100,21 @@ public:
   //===--------------------------------------------------------------------===//
   // Symbol table support functions...
   
-  // hasSymbolTable() - Returns true if there is a symbol table allocated to
-  // this object AND if there is at least one name in it!
-  //
+  /// hasSymbolTable() - Returns true if there is a symbol table allocated to
+  /// this object AND if there is at least one name in it!
+  ///
   bool hasSymbolTable() const;
 
-  // CAUTION: The current symbol table may be null if there are no names (ie, 
-  // the symbol table is empty) 
-  //
+  /// getSymbolTable() - CAUTION: The current symbol table may be null if there
+  /// are no names (ie, the symbol table is empty)
+  ///
   inline       SymbolTable *getSymbolTable()       { return SymTab; }
   inline const SymbolTable *getSymbolTable() const { return SymTab; }
-
-  // getSymbolTableSure is guaranteed to not return a null pointer, because if
-  // the method does not already have a symtab, one is created.  Use this if
-  // you intend to put something into the symbol table for the method.
-  //
+  
+  /// getSymbolTableSure is guaranteed to not return a null pointer, because if
+  /// the method does not already have a symtab, one is created.  Use this if
+  /// you intend to put something into the symbol table for the method.
+  ///
   SymbolTable *getSymbolTableSure();
 
 
@@ -160,14 +160,14 @@ public:
   void print(std::ostream &OS) const;
   void dump() const;
 
-  // dropAllReferences() - This function causes all the subinstructions to "let
-  // go" of all references that they are maintaining.  This allows one to
-  // 'delete' a whole class at a time, even though there may be circular
-  // references... first all references are dropped, and all use counts go to
-  // zero.  Then everything is delete'd for real.  Note that no operations are
-  // valid on an object that has "dropped all references", except operator 
-  // delete.
-  //
+  /// dropAllReferences() - This function causes all the subinstructions to "let
+  /// go" of all references that they are maintaining.  This allows one to
+  /// 'delete' a whole class at a time, even though there may be circular
+  /// references... first all references are dropped, and all use counts go to
+  /// zero.  Then everything is delete'd for real.  Note that no operations are
+  /// valid on an object that has "dropped all references", except operator 
+  /// delete.
+  ///
   void dropAllReferences();
 };
 

@@ -31,6 +31,9 @@ class SymbolTable;
 //                                 Value Class
 //===----------------------------------------------------------------------===//
 
+/// Value - The base class of all values computed by a program that may be used
+/// as operands to other values.
+///
 class Value : public Annotable,         // Values are annotable
 	      public AbstractTypeUser { // Values use potentially abstract types
 public:
@@ -58,13 +61,16 @@ public:
   Value(const Type *Ty, ValueTy vty, const std::string &name = "");
   virtual ~Value();
   
-  // Support for debugging 
+  /// dump - Support for debugging, callable in GDB: V->dump()
+  //
   void dump() const;
 
-  // Implement operator<< on Value...
+  /// print - Implement operator<< on Value...
+  ///
   virtual void print(std::ostream &O) const = 0;
   
-  // All values can potentially be typed
+  /// All values are typed, get the type of this value.
+  ///
   inline const Type *getType() const { return Ty; }
   
   // All values can potentially be named...
@@ -75,27 +81,20 @@ public:
     Name = name;
   }
   
-  // Methods for determining the subtype of this Value.  The getValueType()
-  // method returns the type of the value directly.  The cast*() methods are
-  // equivalent to using dynamic_cast<>... if the cast is successful, this is
-  // returned, otherwise you get a null pointer.
-  //
-  // The family of functions Val->cast<type>Asserting() is used in the same
-  // way as the Val->cast<type>() instructions, but they assert the expected
-  // type instead of checking it at runtime.
-  //
+  /// getValueType - Return the immediate subclass of this Value.
+  ///
   inline ValueTy getValueType() const { return VTy; }
   
-  // replaceAllUsesWith - Go through the uses list for this definition and make
-  // each use point to "D" instead of "this".  After this completes, 'this's 
-  // use list should be empty.
-  //
-  void replaceAllUsesWith(Value *D);
+  /// replaceAllUsesWith - Go through the uses list for this definition and make
+  /// each use point to "V" instead of "this".  After this completes, 'this's 
+  /// use list is guaranteed to be empty.
+  ///
+  void replaceAllUsesWith(Value *V);
 
-  // refineAbstractType - This function is implemented because we use
-  // potentially abstract types, and these types may be resolved to more
-  // concrete types after we are constructed.
-  //
+  /// refineAbstractType - This function is implemented because we use
+  /// potentially abstract types, and these types may be resolved to more
+  /// concrete types after we are constructed.
+  ///
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
   
   //----------------------------------------------------------------------

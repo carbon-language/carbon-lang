@@ -34,11 +34,11 @@ public:
   // Specialize setName to handle symbol table majik...
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
   
-  // clone() - Create a copy of 'this' instruction that is identical in all ways
-  // except the following:
-  //   * The instruction has no parent
-  //   * The instruction has no name
-  //
+  /// clone() - Create a copy of 'this' instruction that is identical in all
+  /// ways except the following:
+  ///   * The instruction has no parent
+  ///   * The instruction has no name
+  ///
   virtual Instruction *clone() const = 0;
   
   // Accessor methods...
@@ -56,9 +56,9 @@ public:
   virtual bool hasSideEffects() const { return false; }  // Memory & Call insts
 
   // ---------------------------------------------------------------------------
-  // Subclass classification... getOpcode() returns a member of 
-  // one of the enums that is coming soon (down below)...
-  //
+  /// Subclass classification... getOpcode() returns a member of 
+  /// one of the enums that is coming soon (down below)...
+  ///
   unsigned getOpcode() const { return iType; }
   virtual const char *getOpcodeName() const {
     return getOpcodeName(getOpcode());
@@ -74,7 +74,7 @@ public:
 
   virtual void print(std::ostream &OS) const;
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueType() == Value::InstructionVal;

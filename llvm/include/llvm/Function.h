@@ -77,8 +77,10 @@ public:
   const Type *getReturnType() const;           // Return the type of the ret val
   const FunctionType *getFunctionType() const; // Return the FunctionType for me
 
-  // Is the body of this function unknown? (the basic block list is empty if so)
-  // this is true for external functions, defined as forward "declare"ations
+  /// isExternal - Is the body of this function unknown? (the basic block list
+  /// is empty if so) this is true for external functions, defined as forward
+  /// "declare"ations
+  ///
   bool isExternal() const { return BasicBlocks.empty(); }
 
   // getNext/Prev - Return the next or previous instruction in the list.  The
@@ -88,9 +90,9 @@ public:
         Function *getPrev()       { return Prev; }
   const Function *getPrev() const { return Prev; }
 
-  // Get the underlying elements of the Function... both the argument list and
-  // basic block list are empty for external functions.
-  //
+  /// Get the underlying elements of the Function... both the argument list and
+  /// basic block list are empty for external functions.
+  ///
   const ArgumentListType &getArgumentList() const { return ArgumentList; }
         ArgumentListType &getArgumentList()       { return ArgumentList; }
 
@@ -103,21 +105,21 @@ public:
   //===--------------------------------------------------------------------===//
   // Symbol Table Accessing functions...
 
-  // hasSymbolTable() - Returns true if there is a symbol table allocated to
-  // this object AND if there is at least one name in it!
-  //
+  /// hasSymbolTable() - Returns true if there is a symbol table allocated to
+  /// this object AND if there is at least one name in it!
+  ///
   bool hasSymbolTable() const;
 
-  // CAUTION: The current symbol table may be null if there are no names (ie, 
-  // the symbol table is empty) 
-  //
+  /// getSymbolTable() - CAUTION: The current symbol table may be null if there
+  /// are no names (ie, the symbol table is empty)
+  ///
   inline       SymbolTable *getSymbolTable()       { return SymTab; }
   inline const SymbolTable *getSymbolTable() const { return SymTab; }
 
-  // getSymbolTableSure is guaranteed to not return a null pointer, because if
-  // the function does not already have a symtab, one is created.  Use this if
-  // you intend to put something into the symbol table for the function.
-  //
+  /// getSymbolTableSure is guaranteed to not return a null pointer, because if
+  /// the function does not already have a symtab, one is created.  Use this if
+  /// you intend to put something into the symbol table for the function.
+  ///
   SymbolTable *getSymbolTableSure();  // Implemented in Value.cpp
 
   
@@ -163,20 +165,20 @@ public:
 
   virtual void print(std::ostream &OS) const;
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Function *) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueType() == Value::FunctionVal;
   }
 
-  // dropAllReferences() - This function causes all the subinstructions to "let
-  // go" of all references that they are maintaining.  This allows one to
-  // 'delete' a whole class at a time, even though there may be circular
-  // references... first all references are dropped, and all use counts go to
-  // zero.  Then everything is delete'd for real.  Note that no operations are
-  // valid on an object that has "dropped all references", except operator 
-  // delete.
-  //
+  /// dropAllReferences() - This function causes all the subinstructions to "let
+  /// go" of all references that they are maintaining.  This allows one to
+  /// 'delete' a whole class at a time, even though there may be circular
+  /// references... first all references are dropped, and all use counts go to
+  /// zero.  Then everything is delete'd for real.  Note that no operations are
+  /// valid on an object that has "dropped all references", except operator 
+  /// delete.
+  ///
   void dropAllReferences();
 };
 
