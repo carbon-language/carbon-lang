@@ -161,7 +161,7 @@ public: // accessor functions to query chosen schedule
   }
   
   inline InstrGroup*	getIGroup	(cycles_t c) {
-    if (c >= groups.size())
+    if ((unsigned)c >= groups.size())
       groups.resize(c+1);
     if (groups[c] == NULL)
       groups[c] = new InstrGroup(nslots);
@@ -169,7 +169,7 @@ public: // accessor functions to query chosen schedule
   }
   
   inline const InstrGroup* getIGroup	(cycles_t c) const {
-    assert(c < groups.size());
+    assert((unsigned)c < groups.size());
     return groups[c];
   }
   

@@ -26,7 +26,8 @@
 #include "llvm/Target/MachineSchedInfo.h"
 #include "Support/CommandLine.h"
 #include <list>
-#include <hash_set>
+#include <ext/hash_set>
+#include <ostream>
 class Method;
 class MachineInstr;
 class SchedulingManager;
