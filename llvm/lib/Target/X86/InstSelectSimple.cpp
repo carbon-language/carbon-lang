@@ -90,6 +90,28 @@ namespace {
   };
 }
 
+/// getClass - Turn a primitive type into a "class" number which is based on the
+/// size of the type, and whether or not it is floating point.
+///
+static inline unsigned getClass(const Type *Ty) {
+  switch (Ty->getPrimitiveID()) {
+  case Type::SByteTyID:
+  case Type::UByteTyID:   return 0;          // Byte operands are class #0
+  case Type::ShortTyID:
+  case Type::UShortTyID:  return 1;          // Short operands are class #1
+  case Type::IntTyID:
+  case Type::UIntTyID:
+  case Type::PointerTyID: return 2;          // Int's and pointers are class #2
+
+  case Type::LongTyID:
+  case Type::ULongTyID:   return 3;          // Longs are class #3
+  case Type::FloatTyID:   return 4;          // Float is class #4
+  case Type::DoubleTyID:  return 5;          // Doubles are class #5
+  default:
+    assert(0 && "Invalid type to getClass!");
+    return 0;  // not reached
+  }
+}
 
 /// copyConstantToRegister - Output the instructions required to put the
 /// specified constant into the specified register.
@@ -97,26 +119,23 @@ namespace {
 void ISel::copyConstantToRegister(Constant *C, unsigned R) {
   assert (!isa<ConstantExpr>(C) && "Constant expressions not yet handled!\n");
 
-  switch (C->getType()->getPrimitiveID()) {
-  case Type::SByteTyID:
-    BuildMI(BB, X86::MOVir8, 1, R).addSImm(cast<ConstantSInt>(C)->getValue());
-    break;
-  case Type::UByteTyID:
-    BuildMI(BB, X86::MOVir8, 1, R).addZImm(cast<ConstantUInt>(C)->getValue());
-    break;
-  case Type::ShortTyID:
-    BuildMI(BB, X86::MOVir16, 1, R).addSImm(cast<ConstantSInt>(C)->getValue());
-    break;
-  case Type::UShortTyID:
-    BuildMI(BB, X86::MOVir16, 1, R).addZImm(cast<ConstantUInt>(C)->getValue());
-    break;
-  case Type::IntTyID:
-    BuildMI(BB, X86::MOVir32, 1, R).addSImm(cast<ConstantSInt>(C)->getValue());
-    break;
-  case Type::UIntTyID:
-    BuildMI(BB, X86::MOVir32, 1, R).addZImm(cast<ConstantUInt>(C)->getValue());
-    break;
-  default: assert(0 && "Type not handled yet!");      
+  if (C->getType()->isIntegral()) {
+    unsigned Class = getClass(C->getType());
+    assert(Class != 3 && "Type not handled yet!");
+
+    static const unsigned IntegralOpcodeTab[] = {
+      X86::MOVir8, X86::MOVir16, X86::MOVir32
+    };
+
+    if (C->getType()->isSigned()) {
+      ConstantSInt *CSI = cast<ConstantSInt>(C);
+      BuildMI(BB, IntegralOpcodeTab[Class], 1, R).addSImm(CSI->getValue());
+    } else {
+      ConstantUInt *CUI = cast<ConstantUInt>(C);
+      BuildMI(BB, IntegralOpcodeTab[Class], 1, R).addZImm(CUI->getValue());
+    }
+  } else {
+    assert(0 && "Type not handled yet!");
   }
 }
 
@@ -143,20 +162,6 @@ void ISel::visitReturnInst(ReturnInst &I) {
   BuildMI(BB, X86::RET, 0);
 }
 
-/// SimpleLog2 - Compute and return Log2 of the input, valid only for inputs 1,
-/// 2, 4, & 8.  Used to convert operand size into dense classes.
-///
-static inline unsigned SimpleLog2(unsigned N) {
-  switch (N) {
-  case 1: return 0;
-  case 2: return 1;
-  case 4: return 2;
-  case 8: return 3;
-  default: assert(0 && "Invalid operand to SimpleLog2!");
-  }
-  return 0;  // not reached
-}
-
 /// Shift instructions: 'shl', 'sar', 'shr' - Some special cases here
 /// for constant immediate shift values, and for constant immediate
 /// shift values equal to 1. Even the general case is sort of special,
@@ -169,7 +174,10 @@ ISel::visitShiftInst (ShiftInst & I)
   unsigned DestReg = getReg (I);
   bool isRightShift = (I.getOpcode () == Instruction::Shr);
   bool isOperandUnsigned = I.getType ()->isUnsigned ();
-  unsigned OperandClass = SimpleLog2(I.getType()->getPrimitiveSize());
+  unsigned OperandClass = getClass(I.getType());
+
+  if (OperandClass > 2)
+    visitInstruction(I); // Can't handle longs yet!
 
   if (ConstantUInt *CUI = dyn_cast <ConstantUInt> (I.getOperand (1)))
     {
@@ -177,79 +185,34 @@ ISel::visitShiftInst (ShiftInst & I)
       assert(CUI->getType() == Type::UByteTy && "Shift amount not a ubyte?");
       unsigned char shAmt = CUI->getValue();
 
+      // This is a shift right (SHR).
+      static const unsigned SHRUnsignedConstantOperand[] = {
+        X86::SHRir8, X86::SHRir16, X86::SHRir32
+      };
+
+      // This is a shift right arithmetic (SAR).
+      static const unsigned SHRSignedConstantOperand[] = {
+        X86::SARir8, X86::SARir16, X86::SARir32
+      };
+
+      // This is a shift left (SHL).
+      static const unsigned SHLConstantOperand[] = {
+        X86::SHLir8, X86::SHLir16, X86::SHLir32
+      };
+
+      const unsigned *OpTab = 0;  // Figure out the operand table to use
+      if (isRightShift) {
+        if (isOperandUnsigned)
+          OpTab = SHRUnsignedConstantOperand;
+        else
+          OpTab = SHRSignedConstantOperand;
+      } else {
+        // This is a left shift (SHL).
+        OpTab = SHLConstantOperand;
+      }
+
       // Emit: <insn> reg, shamt  (shift-by-immediate opcode "ir" form.)
-      if (isRightShift)
-	{
-	  if (isOperandUnsigned)
-	    {
-	      // This is a shift right logical (SHR).
-	      switch (OperandClass)
-		{
-		case 0:
-		  BuildMI (BB, X86::SHRir8, 2,
-			   DestReg).addReg (Op0r).addZImm (shAmt);
-		  break;
-		case 1:
-		  BuildMI (BB, X86::SHRir16, 2,
-			   DestReg).addReg (Op0r).addZImm (shAmt);
-		  break;
-		case 2:
-		  BuildMI (BB, X86::SHRir32, 2,
-			   DestReg).addReg (Op0r).addZImm (shAmt);
-		  break;
-		case 3:
-		default:
-		  visitInstruction (I);
-		  break;
-		}
-	    }
-	  else
-	    {
-	      // This is a shift right arithmetic (SAR).
-	      switch (OperandClass)
-		{
-		case 0:
-		  BuildMI (BB, X86::SARir8, 2,
-			   DestReg).addReg (Op0r).addZImm (shAmt);
-		  break;
-		case 1:
-		  BuildMI (BB, X86::SARir16, 2,
-			   DestReg).addReg (Op0r).addZImm (shAmt);
-		  break;
-		case 2:
-		  BuildMI (BB, X86::SARir32, 2,
-			   DestReg).addReg (Op0r).addZImm (shAmt);
-		  break;
-		case 3:
-		default:
-		  visitInstruction (I);
-		  break;
-		}
-	    }
-	}
-      else
-	{
-	  // This is a left shift (SHL).
-	  switch (OperandClass)
-	    {
-	    case 0:
-	      BuildMI (BB, X86::SHLir8, 2,
-		       DestReg).addReg (Op0r).addZImm (shAmt);
-	      break;
-	    case 1:
-	      BuildMI (BB, X86::SHLir16, 2,
-		       DestReg).addReg (Op0r).addZImm (shAmt);
-	      break;
-	    case 2:
-	      BuildMI (BB, X86::SHLir32, 2,
-		       DestReg).addReg (Op0r).addZImm (shAmt);
-	      break;
-	    case 3:
-	    default:
-	      visitInstruction (I);
-	      break;
-	    }
-	}
+      BuildMI(BB, OpTab[OperandClass], 2, DestReg).addReg(Op0r).addZImm(shAmt);
     }
   else
     {
@@ -263,79 +226,37 @@ ISel::visitShiftInst (ShiftInst & I)
       unsigned Op1r = getReg (I.getOperand (1));
       // Emit: move cl, shiftAmount (put the shift amount in CL.)
       BuildMI (BB, X86::MOVrr8, 2, X86::CL).addReg (Op1r);
+
+      // This is a shift right (SHR).
+      static const unsigned SHRUnsignedOperand[] = {
+        X86::SHRrr8, X86::SHRrr16, X86::SHRrr32
+      };
+
+      // This is a shift right arithmetic (SAR).
+      static const unsigned SHRSignedOperand[] = {
+        X86::SARrr8, X86::SARrr16, X86::SARrr32
+      };
+
+      // This is a shift left (SHL).
+      static const unsigned SHLOperand[] = {
+        X86::SHLrr8, X86::SHLrr16, X86::SHLrr32
+      };
+
       // Emit: <insn> reg, cl       (shift-by-CL opcode; "rr" form.)
-      if (isRightShift)
-	{
-	  if (OperandClass)
-	    {
-	      // This is a shift right logical (SHR).
-	      switch (OperandClass)
-		{
-		case 0:
-		  BuildMI (BB, X86::SHRrr8, 2,
-			   DestReg).addReg (Op0r).addReg (X86::CL);
-		  break;
-		case 1:
-		  BuildMI (BB, X86::SHRrr16, 2,
-			   DestReg).addReg (Op0r).addReg (X86::CL);
-		  break;
-		case 2:
-		  BuildMI (BB, X86::SHRrr32, 2,
-			   DestReg).addReg (Op0r).addReg (X86::CL);
-		  break;
-		case 3:
-		default:
-		  visitInstruction (I);
-		  break;
-		}
-	    }
-	  else
-	    {
-	      // This is a shift right arithmetic (SAR).
-	      switch (OperandClass)
-		{
-		case 0:
-		  BuildMI (BB, X86::SARrr8, 2,
-			   DestReg).addReg (Op0r).addReg (X86::CL);
-		  break;
-		case 1:
-		  BuildMI (BB, X86::SARrr16, 2,
-			   DestReg).addReg (Op0r).addReg (X86::CL);
-		  break;
-		case 2:
-		  BuildMI (BB, X86::SARrr32, 2,
-			   DestReg).addReg (Op0r).addReg (X86::CL);
-		  break;
-		case 3:
-		default:
-		  visitInstruction (I);
-		  break;
-		}
-	    }
-	}
-      else
-	{
-	  // This is a left shift (SHL).
-	  switch (OperandClass)
-	    {
-	    case 0:
-	      BuildMI (BB, X86::SHLrr8, 2,
-		       DestReg).addReg (Op0r).addReg (X86::CL);
-	      break;
-	    case 1:
-	      BuildMI (BB, X86::SHLrr16, 2,
-		       DestReg).addReg (Op0r).addReg (X86::CL);
-	      break;
-	    case 2:
-	      BuildMI (BB, X86::SHLrr32, 2,
-		       DestReg).addReg (Op0r).addReg (X86::CL);
-	      break;
-	    case 3:
-	    default:
-	      visitInstruction (I);
-	      break;
-	    }
-	}
+      const unsigned *OpTab = 0;  // Figure out the operand table to use
+      if (isRightShift) {
+        if (isOperandUnsigned)
+          OpTab = SHRUnsignedOperand;
+        else
+          OpTab = SHRSignedOperand;
+      } else {
+        // This is a left shift (SHL).
+        OpTab = SHLOperand;
+      }
+
+
+      BuildMI (BB, X86::SHLrr32, 2,
+               DestReg).addReg (Op0r).addReg (X86::CL);
     }
 }
 
@@ -344,25 +265,19 @@ ISel::visitShiftInst (ShiftInst & I)
 void ISel::visitAdd(BinaryOperator &B) {
   unsigned Op0r = getReg(B.getOperand(0)), Op1r = getReg(B.getOperand(1));
   unsigned DestReg = getReg(B);
+  unsigned Class = getClass(B.getType());
 
-  switch (B.getType()->getPrimitiveSize()) {
-  case 1:   // UByte, SByte
-    BuildMI(BB, X86::ADDrr8, 2, DestReg).addReg(Op0r).addReg(Op1r);
-    break;
-  case 2:   // UShort, Short
-    BuildMI(BB, X86::ADDrr16, 2, DestReg).addReg(Op0r).addReg(Op1r);
-    break;
-  case 4:   // UInt, Int
-    BuildMI(BB, X86::ADDrr32, 2, DestReg).addReg(Op0r).addReg(Op1r);
-    break;
-  case 8:   // ULong, Long
-    // Here we have a pair of operands each occupying a pair of registers.
-    // We need to do an ADDrr32 of the least-significant pair immediately
-    // followed by an ADCrr32 (Add with Carry) of the most-significant pair.
-    // I don't know how we are representing these multi-register arguments.
-  default:
-    visitInstruction(B);  // abort
-  }
+  static const unsigned Opcodes[] = { X86::ADDrr8, X86::ADDrr16, X86::ADDrr32 };
+
+  if (Class >= sizeof(Opcodes)/sizeof(Opcodes[0]))
+    visitInstruction(B);  // Not handled class yet...
+
+  BuildMI(BB, Opcodes[Class], 2, DestReg).addReg(Op0r).addReg(Op1r);
+
+  // For Longs: Here we have a pair of operands each occupying a pair of
+  // registers.  We need to do an ADDrr32 of the least-significant pair
+  // immediately followed by an ADCrr32 (Add with Carry) of the most-significant
+  // pair.  I don't know how we are representing these multi-register arguments.
 }
 
 
