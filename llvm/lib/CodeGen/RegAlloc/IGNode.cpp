@@ -2,6 +2,7 @@
 
 
 IGNode::IGNode(LiveRange *const PLR, unsigned int Ind): Index(Ind),
+							AdjList(),
                                                         ParentLR(PLR)
 {
   OnStack = false;

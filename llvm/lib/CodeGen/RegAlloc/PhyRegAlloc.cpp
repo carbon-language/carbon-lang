@@ -665,11 +665,7 @@ void PhyRegAlloc::printMachineCode()
 	    // else it must be a register value
 	    const int RegNum = Op.getAllocatedRegNum();
 
-	    //if( RegNum != 1000)
-
-	      cout << "\t" << "%" << MRI.getUnifiedRegName( RegNum );
-	    // else cout << "\t<*NoReg*>";
-
+	    cout << "\t" << "%" << MRI.getUnifiedRegName( RegNum );
 	  }
 
 	} 
@@ -740,6 +736,8 @@ void PhyRegAlloc::colorCallRetArgs()
 
 }
 
+
+
 //----------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------
@@ -769,6 +767,52 @@ void PhyRegAlloc::printLabel(const Value *const Val)
   else
     cout << "Label" <<  Val;
 }
+
+
+//----------------------------------------------------------------------------
+// This method calls setSugColorUsable method of each live range. This
+// will determine whether the suggested color of LR is  really usable.
+// A suggested color is not usable when the suggested color is volatile
+// AND when there are call interferences
+//----------------------------------------------------------------------------
+
+void PhyRegAlloc::markUnusableSugColors()
+{
+  if(DEBUG_RA ) cout << "Creating LR lists ..." << endl;
+
+  // hash map iterator
+  LiveRangeMapType::const_iterator HMI = (LRI.getLiveRangeMap())->begin();   
+  LiveRangeMapType::const_iterator HMIEnd = (LRI.getLiveRangeMap())->end();   
+
+    for(  ; HMI != HMIEnd ; ++HMI ) {
+      
+      if( (*HMI).first ) { 
+
+	LiveRange *L = (*HMI).second;      // get the LiveRange
+
+	if(L) { 
+	  if( L->hasSuggestedColor() ) {
+
+	    int RCID = (L->getRegClass())->getID();
+	    if( MRI.isRegVolatile( RCID,  L->getSuggestedColor()) &&
+		L->isCallInterference() )
+	      L->setSuggestedColorUsable( false );
+	    else
+	      L->setSuggestedColorUsable( true );
+	  }
+	} // if L->hasSuggestedColor()
+      }
+    } // for all LR's in hash map
+}
+
+
+
+
+
+
+
+
+
 
 
 //----------------------------------------------------------------------------
@@ -814,7 +858,13 @@ void PhyRegAlloc::allocateRegisters()
       RegClassList[ rc ]->printIG();       
   }
 
-  // color all register classes
+
+  // mark un-usable suggested color before graph coloring algorithm.
+  // When this is done, the graph coloring algo will not reserve
+  // suggested color unnecessarily - they can be used by another LR
+  markUnusableSugColors(); 
+
+  // color all register classes using the graph coloring algo
   for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
     RegClassList[ rc ]->colorAllRegs();    
 
