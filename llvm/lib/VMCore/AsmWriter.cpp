@@ -203,7 +203,8 @@ static SlotMachine *createSlotMachine(const Value *V) {
 // getLLVMName - Turn the specified string into an 'LLVM name', which is either
 // prefixed with % (if the string only contains simple characters) or is
 // surrounded with ""'s (if it has special chars in it).
-static std::string getLLVMName(const std::string &Name) {
+static std::string getLLVMName(const std::string &Name,
+                               bool prefixName = true) {
   assert(!Name.empty() && "Cannot get empty name!");
 
   // First character cannot start with a number...
@@ -220,7 +221,10 @@ static std::string getLLVMName(const std::string &Name) {
   }
   
   // If we get here, then the identifier is legal to use as a "VarID".
-  return "%"+Name;
+  if (prefixName)
+    return "%"+Name;
+  else
+    return Name;
 }
 
 
@@ -953,7 +957,7 @@ void AssemblyWriter::printArgument(const Argument *Arg) {
 ///
 void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
-    Out << "\n" << BB->getName() << ':';
+    Out << "\n" << getLLVMName(BB->getName(), false) << ':';
   } else if (!BB->use_empty()) {      // Don't print block # of no uses...
     Out << "\n; <label>:";
     int Slot = Machine.getSlot(BB);
