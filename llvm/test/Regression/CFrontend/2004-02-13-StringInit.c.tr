@@ -1,0 +1,7 @@
+// RUN: %llvmgcc -xc %s -c -o - | llvm-dis | grep llvm.memset
+
+char test(int X) {
+  char str[10000] = "abc"; // tail should be memset.
+  return str[X];
+} 
+
