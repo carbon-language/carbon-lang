@@ -33,6 +33,7 @@
       <li><a href="#dist-check">dist-check</a></li>
       <li><a href="#dist-clean">dist-clean</a></li>
       <li><a href="#install">install</a></li>
+      <li><a href="#printvars">printvars</a></li>
       <li><a href="#tags">tags</a></li>
       <li><a href="#uninstall">uninstall</a></li>
     </ol>
@@ -49,6 +50,8 @@
 <div class="doc_author">    
   <p>Written by <a href="mailto:reid@x10sys.com">Reid Spencer</a></p>
 </div>
+
+<div class="doc_warning"><p>WARNING: This document is a work in progress!</p></div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section"><a name="introduction">Introduction </a></div>
@@ -174,40 +177,40 @@
 
   <table style="text-align:left">
     <tr><th>Target Name</th><th>Implied Targets</th><th>Target Description</th></tr>
-    <tr><td><a href="#all"><tt>all</tt></td><td></td>
+    <tr><td><a href="#all"><tt>all</tt></a></td><td></td>
       <td>Compile the software recursively. Default target.
     </td></tr>
-    <tr><td><a href="#all-local"><tt>all-local</tt></td><td></td>
+    <tr><td><a href="#all-local"><tt>all-local</tt></a></td><td></td>
       <td>Compile the software in the local directory only.
     </td></tr>
-    <tr><td><a href="#check"><tt>check</tt></td><td>all</td>
+    <tr><td><a href="#check"><tt>check</tt></a></td><td>all</td>
       <td>Test the software recursively.
     </td></tr>
-    <tr><td><a href="#check-local"><tt>check-local</tt></td><td>all-local</td>
+    <tr><td><a href="#check-local"><tt>check-local</tt></a></td><td>all-local</td>
       <td>Test the software in the local directory only.
     </td></tr>
-    <tr><td><a href="#clean"><tt>clean</tt></td><td></td>
+    <tr><td><a href="#clean"><tt>clean</tt></a></td><td></td>
       <td>Remove built objects recursively.
     </td></tr>
-    <tr><td><a href="#clean-local"><tt>clean-local</tt></td><td></td>
+    <tr><td><a href="#clean-local"><tt>clean-local</tt></a></td><td></td>
       <td>Remove built objects from the local directory only.
     </td></tr>
-    <tr><td><a href="#dist"><tt>dist</tt></td><td>all</td>
+    <tr><td><a href="#dist"><tt>dist</tt></a></td><td>all</td>
       <td>Prepare a source distribution tarball.
     </td></tr>
-    <tr><td><a href="#dist-check"><tt>dist-check</tt></td><td>all check</td>
+    <tr><td><a href="#dist-check"><tt>dist-check</tt></a></td><td>all check</td>
       <td>Prepare a source distribution tarball and check that it builds.
     </td></tr>
-    <tr><td><a href="#dist-clean"><tt>dist-clean</tt></td><td>clean</td>
+    <tr><td><a href="#dist-clean"><tt>dist-clean</tt></a></td><td>clean</td>
       <td>Clean source distribution tarball temporary files.
     </td></tr>
-    <tr><td><a href="#install"><tt>install</tt></td><td>all</td>
+    <tr><td><a href="#install"><tt>install</tt></a></td><td>all</td>
       <td>Copy built objects to installation directory.
     </td></tr>
-    <tr><td><a href="#tags"><tt>tags</tt></td><td></td>
+    <tr><td><a href="#tags"><tt>tags</tt></a></td><td></td>
       <td>Make C and C++ tags files for emacs and vi.
     </td></tr>
-    <tr><td><a href="#uninstall"><tt>uninstall</tt></td><td></td>
+    <tr><td><a href="#uninstall"><tt>uninstall</tt></a></td><td></td>
       <td>Remove built objects from installation directory.
     </td></tr>
   </table>
@@ -218,75 +221,121 @@
 <div class="doc_text">
   <p>When you invoke <tt>make</tt> with no arguments, you are implicitly
   instructing it to seek the "all" target (goal). This target is used for
-  building the software and will do different things in different directories.
-  For example, in a <tt>lib</tt> directory, the "all" target will compile source
-  files and generate libraries. But, in a <tt>tools</tt> directory, it will link
-  libraries and generate executables.</p>
+  building the software recursively and will do different things in different 
+  directories.  For example, in a <tt>lib</tt> directory, the "all" target will 
+  compile source files and generate libraries. But, in a <tt>tools</tt> 
+  directory, it will link libraries and generate executables.</p>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="all-local">all-local</a></div>
 <div class="doc_text">
-  <p>TBD</p>
+  <p>This target is the same as <a href="#all">all</a> but it operates only on
+  the current directory instead of recursively.</p>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="check">check</a></div>
 <div class="doc_text">
-  <p>TBD</p>
+  <p>This target is used to perform any functional, unit or sanity tests as the
+  software is being built. The <tt>check</tt> target depends on the 
+  <a href="#all"><tt>all</tt></a> target so the software is built in each
+  directory first and then the "check" is applied.</p>
+  <p>The definition of "check" is pretty general. It depends on the value of the
+  <a href="#TESTS"><tt>TESTS</tt></a> variable. This variable should be set to a 
+  list of executables to run in order to test the software.  If they all return 
+  0 then the check succeeds, otherwise not. The programs run can be anything but
+  they should either be local to the directory or in your path.</p>
 </div>
+<div class="doc_warning"><p>Not implemented yet!</p></div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="check-local">check-local</a></div>
 <div class="doc_text">
-  <p>TBD</p>
+  <p>This target does the same thing as <tt>check</tt> but only for the current
+  (local) directory.</p>
 </div>
+<div class="doc_warning"><p>Not implemented yet!</p></div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="clean">clean</a></div>
 <div class="doc_text">
-  <p>TBD</p>
+  <p>This target cleans the build directory, recursively removing all things
+  that the Makefile builds. Despite once or twice attempting to remove /*, the
+  cleaning rules have been made gaurded so they shouldn't go awry.</p>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="clean-local">clean-local</a></div>
 <div class="doc_text">
-  <p>TBD</p>
+  <p>This target does the same thing as <tt>clean</tt> but only for the current
+  (local) directory.</p>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="dist">dist</a></div>
 <div class="doc_text">
-  <p>TBD</p>
+  <p>This target builds a distribution tarball. It first builds the entire
+  project using the <tt>all</tt> target and then tars up the necessary files and
+  compresses it. The generated tarball is sufficient for a casual source 
+  distribution, but probably not for a release (see <tt>dist-check</tt>).</p>
 </div>
+<div class="doc_warning"><p>Not implemented yet!</p></div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="dist-check">dist-check</a></div>
 <div class="doc_text">
-  <p>TBD</p>
+  <p>This target does the same thing as the <tt>dist</tt> target but also checks
+  the distribution tarball. The check is made by unpacking the tarball to a new
+  directory, configuring it, building it, installing it, and then verifying that
+  the installation results are correct (by comparing to the original build).
+  This target can take a long time to run but should be done before a release
+  goes out to make sure that the distributed tarball can actually be built into
+  a working release.</p>
 </div>
+<div class="doc_warning"><p>Not implemented yet!</p></div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="dist-clean">dist-clean</a></div>
 <div class="doc_text">
-  <p>TBD</p>
+  <p>This is a special form of the <tt>clean</tt> clean target. It performs a
+  normal <tt>clean</tt> but also removes things pertaining to building the
+  distribution.</p>
 </div>
+<div class="doc_warning"><p>Not implemented yet!</p></div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="install">install</a></div>
 <div class="doc_text">
-  <p>TBD</p>
+  <p>This target finalizes shared objects and executables and copies all
+  libraries, headers and executables to the directory given with the 
+  <tt>--prefix</tt> option to <tt>configure</tt>.  When completed, the prefix
+  directory will have everything needed to <b>use</b> LLVM. </p>
 </div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="printvars">printvars</a></div>
+<div class="doc_text">
+  <p>This utility target just causes LLVM to print out some of its variables so
+  that you can double check how things are set. </p>
+</div>
+
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="tags">tags</a></div>
 <div class="doc_text">
-  <p>TBD</p>
+  <p>This target will generate a <tt>TAGS</tt> file in the top-level source
+  directory. It is meant for use with emacs, XEmacs, or ViM. The TAGS file
+  provides an index of symbol definitions so that the editor can jump you to the
+  definition quickly. </p>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="uninstall">uninstall</a></div>
 <div class="doc_text">
-  <p>TBD</p>
+  <p>This target is the opposite of the <tt>install</tt> target. It removes the
+  header, library and executable files from the installation directories. Note
+  that the directories themselves are not removed because it is not gauranteed
+  that LLVM is the only thing installing there (e.g. --prefix=/usr).</p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -332,9 +381,13 @@
     </tr><tr><td><a href="#LLVMLIBS"><tt>LLVMLIBS</tt></a></td>
       <td>Specify the set of libraries from the LLVM $(OBJDIR) that will be
         linked into the tool or library.</td>
+    </tr><tr><td><a href="#EXPERIMENTAL_DIRS"><tt>EXPERIMENTAL_DIRS</tt></a></td>
+      <td>Specify a set of directories that should be built, but if they fail,
+        it should not cause the build to fail. Note that this should only be
+        used temporarily while code is being written.</td> 
     </tr><tr><td><a href="#OPTIONAL_DIRS"><tt>OPTIONAL_DIRS</tt></a></td>
-      <td>Specify a set of directories that may be built, but if they don't
-        build, the recursive make doesn't stop.</td>
+      <td>Specify a set of directories that may be built, if they exist, but its
+        not an error for them not to exist.</td>
     </tr><tr><td><a href="#PARALLEL_DIRS"><tt>PARALLEL_DIRS</tt></a></td>
       <td>Specify a set of directories to build recursively and in parallel if
         the -j option was used with <tt>make</tt>.</td>
@@ -410,6 +463,10 @@
     <tr>
       <td><a href="#BUILD_OBJ_DIR"><tt>BUILD_OBJ_DIR</tt></a></td>
       <td>The project directory that will receive the object files.</td>
+    </tr>
+    <tr>
+      <td><a href="#CONFIGURATION"><tt>CONFIGURATION</tt></a></td>
+      <td>The name of the configuration being built.</td>
     </tr>
     <tr>
       <td><a href="#DESTDIR"><tt>DESTDIR</tt></a></td>
