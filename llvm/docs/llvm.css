@@ -37,6 +37,9 @@
 
 .doc_footer     { text-align: left; padding: 0 0 0 0; font-size 12pt }
 
+.doc_red        { color: red }
+
+
 /* Publications */
 .pub_title  { font-family: "Georgia,Palatino,Times,Roman";
               font-size: 24pt; 
