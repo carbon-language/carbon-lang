@@ -103,7 +103,6 @@ public:
   // GlobalValue, viz., the constant address of a global variable or function.
   // The generated instructions are returned in `mvec'.
   // Any temp. registers (TmpInstruction) created are recorded in mcfi.
-  // Any stack space required is allocated via mcff.
   // 
   virtual void  CreateCodeToLoadConst(const TargetMachine& target,
                                       Function* F,
@@ -117,7 +116,6 @@ public:
   // val must be an integral type.  dest must be a Float or Double.
   // The generated instructions are returned in `mvec'.
   // Any temp. registers (TmpInstruction) created are recorded in mcfi.
-  // Any stack space required is allocated via mcff.
   // 
   virtual void  CreateCodeToCopyIntToFloat(const TargetMachine& target,
                                        Function* F,
@@ -130,7 +128,6 @@ public:
   // `val' to an integer value `dest' by copying to memory and back.
   // The generated instructions are returned in `mvec'.
   // Any temp. registers (TmpInstruction) created are recorded in mcfi.
-  // Any stack space required is allocated via mcff.
   // 
   virtual void  CreateCodeToCopyFloatToInt(const TargetMachine& target,
                                        Function* F,
@@ -142,7 +139,6 @@ public:
   // Create instruction(s) to copy src to dest, for arbitrary types
   // The generated instructions are returned in `mvec'.
   // Any temp. registers (TmpInstruction) created are recorded in mcfi.
-  // Any stack space required is allocated via mcff.
   // 
   virtual void CreateCopyInstructionsByType(const TargetMachine& target,
                                        Function* F,
@@ -155,7 +151,6 @@ public:
   // from an arbitrary sized value (sized in bits, not bytes).
   // The generated instructions are appended to `mvec'.
   // Any temp. registers (TmpInstruction) created are recorded in mcfi.
-  // Any stack space required is allocated via mcff.
   // 
   virtual void CreateSignExtensionInstructions(const TargetMachine& target,
                                        Function* F,
@@ -169,7 +164,6 @@ public:
   // from an arbitrary sized value (sized in bits, not bytes).
   // The generated instructions are appended to `mvec'.
   // Any temp. registers (TmpInstruction) created are recorded in mcfi.
-  // Any stack space required is allocated via mcff.
   // 
   virtual void CreateZeroExtensionInstructions(const TargetMachine& target,
                                        Function* F,
