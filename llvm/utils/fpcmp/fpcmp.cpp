@@ -54,6 +54,10 @@ static bool isNumberChar(char C) {
 }
 
 static char *BackupNumber(char *Pos, char *FirstChar) {
+  // If we didn't stop in the middle of a number, don't backup.
+  if (!isNumberChar(*Pos)) return Pos;
+
+  // Otherwise, return to the start of the number.
   while (Pos > FirstChar && isNumberChar(Pos[-1]))
     --Pos;
   return Pos;
@@ -61,8 +65,16 @@ static char *BackupNumber(char *Pos, char *FirstChar) {
 
 static void CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End) {
   char *F1NumEnd, *F2NumEnd;
-  double V1 = strtod(F1P, &F1NumEnd);
-  double V2 = strtod(F2P, &F2NumEnd);
+  double V1, V2; 
+  // If we stop on numbers, compare their difference.
+  if (isNumberChar(*F1P) && isNumberChar(*F2P)) {
+    V1 = strtod(F1P, &F1NumEnd);
+    V2 = strtod(F2P, &F2NumEnd);
+  } else {
+    // Otherwise, the diff failed.
+    F1NumEnd = F1P;
+    F2NumEnd = F2P;
+  }
 
   if (F1NumEnd == F1P || F2NumEnd == F2P) {
     std::cerr << "Comparison failed, not a numeric difference.\n";
