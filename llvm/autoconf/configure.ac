@@ -485,7 +485,7 @@ AC_DEFINE_UNQUOTED(LLVM_BINDIR, "$LLVM_BINDIR", [Installation directory for bina
 AC_DEFINE_UNQUOTED(LLVM_LIBDIR, "$LLVM_LIBDIR", [Installation directory for libraries])
 AC_DEFINE_UNQUOTED(LLVM_DATADIR, "$LLVM_DATADIR", [Installation directory for data files])
 AC_DEFINE_UNQUOTED(LLVM_DATADIR, "$LLVM_DOCSDIR", [Installation directory for documentation])
-AC_DEFINE_UNQUOTED(LLVM_CONFIGDIR, "$LLVM_ETCDIR", [Installation directory for config files])
+AC_DEFINE_UNQUOTED(LLVM_ETCDIR, "$LLVM_ETCDIR", [Installation directory for config files])
 AC_DEFINE_UNQUOTED(LLVM_INCLUDEDIR, "$LLVM_INCLUDEDIR", [Installation directory for include files])
 AC_DEFINE_UNQUOTED(LLVM_INFODIR, "$LLVM_INFODIR", [Installation directory for .info files])
 AC_DEFINE_UNQUOTED(LLVM_MANDIR, "$LLVM_MANDIR", [Installation directory for man pages])
