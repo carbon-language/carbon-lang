@@ -31,9 +31,11 @@ int yylex();                       // declaration" of xxx warnings.
 int yyparse();
 
 namespace llvm {
+  std::string CurFilename;
+}
+using namespace llvm;
 
 static Module *ParserResult;
-std::string CurFilename;
 
 // DEBUG_UPREFS - Define this symbol if you want to enable debugging output
 // relating to upreferences in the input stream.
@@ -784,7 +786,7 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 //            RunVMAsmParser - Define an interface to this parser
 //===----------------------------------------------------------------------===//
 //
-Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
+Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
   llvmAsmin = F;
   CurFilename = Filename;
   llvmAsmlineno = 1;      // Reset the current line number...
@@ -863,10 +865,6 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 
   return Result;
 }
-
-} // End llvm namespace
-
-using namespace llvm;
 
 %}
 
