@@ -1,4 +1,4 @@
-; RUN: analyze %s -datastructure-gc -dsgc-dspass=td -dsgc-abort-if-incomplete=Ptr
+; RUN: analyze %s -datastructure-gc -dsgc-dspass=td -dsgc-check-flags=Ptr:HR
 
 
 
