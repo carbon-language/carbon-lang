@@ -31,7 +31,7 @@ namespace {
 ///
 SparcV8TargetMachine::SparcV8TargetMachine(const Module &M,
                                            IntrinsicLowering *IL)
-  : TargetMachine("SparcV8", IL, true, 4, 4, 4, 4, 4),
+  : TargetMachine("SparcV8", IL, false, 4, 4, 8, 4, 8),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0), JITInfo(*this) {
 }
 
@@ -74,6 +74,7 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
+  PM.add(createSparcV8FPMoverPass(*this));
   PM.add(createSparcV8DelaySlotFillerPass(*this));
 
   // Print machine instructions after filling delay slots.
@@ -126,6 +127,7 @@ void SparcV8JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
+  PM.add(createSparcV8FPMoverPass(TM));
   PM.add(createSparcV8DelaySlotFillerPass(TM));
 
   // Print machine instructions after filling delay slots.
