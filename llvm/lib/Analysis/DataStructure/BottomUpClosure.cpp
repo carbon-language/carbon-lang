@@ -11,7 +11,6 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Module.h"
 #include "Support/Statistic.h"
-#include "Support/hash_map"
 
 namespace {
   Statistic<> MaxSCC("budatastructure", "Maximum SCC Size in Call Graph");
@@ -205,7 +204,12 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
     DEBUG(std::cerr << "Visiting single node SCC #: " << MyID << " fn: "
                     << F->getName() << "\n");
     Stack.pop_back();
-    DSGraph &G = calculateGraph(*F);
+    DSGraph &G = getDSGraph(*F);
+    DEBUG(std::cerr << "  [BU] Calculating graph for: " << F->getName()<< "\n");
+    calculateGraph(G);
+    DEBUG(std::cerr << "  [BU] Done inlining: " << F->getName() << " ["
+                    << G.getGraphSize() << "+" << G.getAuxFunctionCalls().size()
+                    << "]\n");
 
     if (MaxSCC < 1) MaxSCC = 1;
 
@@ -225,61 +229,49 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
 
     Function *NF;
     std::vector<Function*>::iterator FirstInSCC = Stack.end();
+    DSGraph *SCCGraph = 0;
     do {
       NF = *--FirstInSCC;
       ValMap[NF] = ~0U;
       SCCFunctions.insert(NF);
+
+      // Figure out which graph is the largest one, in order to speed things up
+      // a bit in situations where functions in the SCC have widely different
+      // graph sizes.
+      DSGraph &NFGraph = getDSGraph(*NF);
+      if (!SCCGraph || SCCGraph->getGraphSize() < NFGraph.getGraphSize())
+        SCCGraph = &NFGraph;
     } while (NF != F);
 
-    std::cerr << "Identified SCC #: " << MyID << " of size: "
-              << (Stack.end()-FirstInSCC) << "\n";
+    std::cerr << "Calculating graph for SCC #: " << MyID << " of size: "
+              << SCCFunctions.size() << "\n";
 
     // Compute the Max SCC Size...
-    if (MaxSCC < unsigned(Stack.end()-FirstInSCC))
-      MaxSCC = Stack.end()-FirstInSCC;
+    if (MaxSCC < SCCFunctions.size())
+      MaxSCC = SCCFunctions.size();
 
-    std::vector<Function*>::iterator I = Stack.end();
-    do {
-      --I;
-#ifndef NDEBUG
-      /*DEBUG*/(std::cerr << "  Fn #" << (Stack.end()-I) << "/"
-            << (Stack.end()-FirstInSCC) << " in SCC: "
-            << (*I)->getName());
+    // First thing first, collapse all of the DSGraphs into a single graph for
+    // the entire SCC.  We computed the largest graph, so clone all of the other
+    // (smaller) graphs into it.  Discard all of the old graphs.
+    //
+    for (hash_set<Function*>::iterator I = SCCFunctions.begin(),
+           E = SCCFunctions.end(); I != E; ++I) {
       DSGraph &G = getDSGraph(**I);
-      std::cerr << " [" << G.getGraphSize() << "+"
-                << G.getAuxFunctionCalls().size() << "] ";
-#endif
+      if (&G != SCCGraph) {
+        DSGraph::NodeMapTy NodeMap;
+        SCCGraph->cloneInto(G, SCCGraph->getScalarMap(),
+                            SCCGraph->getReturnNodes(), NodeMap, 0);
+        // Update the DSInfo map and delete the old graph...
+        DSInfo[*I] = SCCGraph;
+        delete &G;
+      }
+    }
 
-      // Eliminate all call sites in the SCC that are not to functions that are
-      // in the SCC.
-      inlineNonSCCGraphs(**I, SCCFunctions);
-
-#ifndef NDEBUG
-      std::cerr << "after Non-SCC's [" << G.getGraphSize() << "+"
-                << G.getAuxFunctionCalls().size() << "]\n";
-#endif
-    } while (I != FirstInSCC);
-
-    I = Stack.end();
-    do {
-      --I;
-#ifndef NDEBUG
-      /*DEBUG*/(std::cerr << "  Fn #" << (Stack.end()-I) << "/"
-            << (Stack.end()-FirstInSCC) << " in SCC: "
-            << (*I)->getName());
-      DSGraph &G = getDSGraph(**I);
-      std::cerr << " [" << G.getGraphSize() << "+"
-                << G.getAuxFunctionCalls().size() << "] ";
-#endif
-      // Inline all graphs into the SCC nodes...
-      calculateSCCGraph(**I, SCCFunctions);
-
-#ifndef NDEBUG
-      std::cerr << "after [" << G.getGraphSize() << "+"
-                << G.getAuxFunctionCalls().size() << "]\n";
-#endif
-    } while (I != FirstInSCC);
-
+    // Now that we have one big happy family, resolve all of the call sites in
+    // the graph...
+    calculateGraph(*SCCGraph);
+    DEBUG(std::cerr << "  [BU] Done inlining SCC  [" << SCCGraph->getGraphSize()
+                    << "+" << SCCGraph->getAuxFunctionCalls().size() << "]\n");
 
     std::cerr << "DONE with SCC #: " << MyID << "\n";
 
@@ -298,9 +290,12 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
 // our memory... here...
 //
 void BUDataStructures::releaseMemory() {
-  for (hash_map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
-         E = DSInfo.end(); I != E; ++I)
-    delete I->second;
+  for (hash_map<Function*, DSGraph*>::iterator I = DSInfo.begin(),
+         E = DSInfo.end(); I != E; ++I) {
+    I->second->getReturnNodes().erase(I->first);
+    if (I->second->getReturnNodes().empty())
+      delete I->second;
+  }
 
   // Empty map so next time memory is released, data structures are not
   // re-deleted.
@@ -309,15 +304,14 @@ void BUDataStructures::releaseMemory() {
   GlobalsGraph = 0;
 }
 
-DSGraph &BUDataStructures::calculateGraph(Function &F) {
-  DSGraph &Graph = getDSGraph(F);
-  DEBUG(std::cerr << "  [BU] Calculating graph for: " << F.getName() << "\n");
-
+void BUDataStructures::calculateGraph(DSGraph &Graph) {
   // Move our call site list into TempFCs so that inline call sites go into the
   // new call site list and doesn't invalidate our iterators!
   std::vector<DSCallSite> TempFCs;
   std::vector<DSCallSite> &AuxCallsList = Graph.getAuxFunctionCalls();
   TempFCs.swap(AuxCallsList);
+
+  DSGraph::ReturnNodesTy &ReturnNodes = Graph.getReturnNodes();
 
   // Loop over all of the resolvable call sites
   unsigned LastCallSiteIdx = ~0U;
@@ -336,13 +330,13 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 
     if (Callee->isExternal()) {
       // Ignore this case, simple varargs functions we cannot stub out!
-    } else if (Callee == &F) {
+    } else if (ReturnNodes.find(Callee) != ReturnNodes.end()) {
       // Self recursion... simply link up the formal arguments with the
       // actual arguments...
-      DEBUG(std::cerr << "    Self Inlining: " << F.getName() << "\n");
+      DEBUG(std::cerr << "    Self Inlining: " << Callee->getName() << "\n");
 
       // Handle self recursion by resolving the arguments and return value
-      Graph.mergeInGraph(CS, F, Graph, 0);
+      Graph.mergeInGraph(CS, *Callee, Graph, 0);
 
     } else {
       // Get the data structure graph for the called function.
@@ -351,13 +345,9 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
       
       DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
             << "[" << GI.getGraphSize() << "+"
-            << GI.getAuxFunctionCalls().size() << "] into: " << F.getName()
-            << "[" << Graph.getGraphSize() << "+"
+            << GI.getAuxFunctionCalls().size() << "] into [" 
+            << Graph.getGraphSize() << "+"
             << Graph.getAuxFunctionCalls().size() << "]\n");
-#if 0
-      Graph.writeGraphToFile(std::cerr, "bu_" + F.getName() + "_before_" +
-                             Callee->getName());
-#endif
       
       // Handle self recursion by resolving the arguments and return value
       Graph.mergeInGraph(CS, *Callee, GI,
@@ -384,186 +374,6 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
   // FIXME: materialize nodes from the globals graph as neccesary...
   Graph.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
-  DEBUG(std::cerr << "  [BU] Done inlining: " << F.getName() << " ["
-        << Graph.getGraphSize() << "+" << Graph.getAuxFunctionCalls().size()
-        << "]\n");
-
   //Graph.writeGraphToFile(std::cerr, "bu_" + F.getName());
-
-  return Graph;
 }
 
-
-// inlineNonSCCGraphs - This method is almost like the other two calculate graph
-// methods.  This one is used to inline function graphs (from functions outside
-// of the SCC) into functions in the SCC.  It is not supposed to touch functions
-// IN the SCC at all.
-//
-DSGraph &BUDataStructures::inlineNonSCCGraphs(Function &F,
-                                             hash_set<Function*> &SCCFunctions){
-  DSGraph &Graph = getDSGraph(F);
-  DEBUG(std::cerr << "  [BU] Inlining Non-SCC graphs for: "
-                  << F.getName() << "\n");
-
-  // Move our call site list into TempFCs so that inline call sites go into the
-  // new call site list and doesn't invalidate our iterators!
-  std::vector<DSCallSite> TempFCs;
-  std::vector<DSCallSite> &AuxCallsList = Graph.getAuxFunctionCalls();
-  TempFCs.swap(AuxCallsList);
-
-  // Loop over all of the resolvable call sites
-  unsigned LastCallSiteIdx = ~0U;
-  for (CallSiteIterator I = CallSiteIterator::begin(TempFCs),
-         E = CallSiteIterator::end(TempFCs); I != E; ++I) {
-    // If we skipped over any call sites, they must be unresolvable, copy them
-    // to the real call site list.
-    LastCallSiteIdx++;
-    for (; LastCallSiteIdx < I.getCallSiteIdx(); ++LastCallSiteIdx)
-      AuxCallsList.push_back(TempFCs[LastCallSiteIdx]);
-    LastCallSiteIdx = I.getCallSiteIdx();
-    
-    // Resolve the current call...
-    Function &Callee = **I;
-    DSCallSite &CS = I.getCallSite();
-
-    if (Callee.isExternal()) {
-      // Ignore this case, simple varargs functions we cannot stub out!
-    } else if (SCCFunctions.count(&Callee)) {
-      // Calling a function in the SCC, ignore it for now!
-      DEBUG(std::cerr << "    SCC CallSite for: " << Callee.getName() << "\n");
-      AuxCallsList.push_back(CS);
-    } else {
-      // Get the data structure graph for the called function.
-      //
-      DSGraph &GI = getDSGraph(Callee);  // Graph to inline
-
-      DEBUG(std::cerr << "    Inlining graph for " << Callee.getName()
-            << "[" << GI.getGraphSize() << "+"
-            << GI.getAuxFunctionCalls().size() << "] into: " << F.getName()
-            << "[" << Graph.getGraphSize() << "+"
-            << Graph.getAuxFunctionCalls().size() << "]\n");
-
-      // Handle self recursion by resolving the arguments and return value
-      Graph.mergeInGraph(CS, Callee, GI,
-                         DSGraph::KeepModRefBits | DSGraph::StripAllocaBit |
-                         DSGraph::DontCloneCallNodes);
-    }
-  }
-
-  // Make sure to catch any leftover unresolvable calls...
-  for (++LastCallSiteIdx; LastCallSiteIdx < TempFCs.size(); ++LastCallSiteIdx)
-    AuxCallsList.push_back(TempFCs[LastCallSiteIdx]);
-
-  TempFCs.clear();
-
-  // Recompute the Incomplete markers.  If there are any function calls left
-  // now that are complete, we must loop!
-  Graph.maskIncompleteMarkers();
-  Graph.markIncompleteNodes(DSGraph::MarkFormalArgs);
-  Graph.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
-
-  DEBUG(std::cerr << "  [BU] Done Non-SCC inlining: " << F.getName() << " ["
-        << Graph.getGraphSize() << "+" << Graph.getAuxFunctionCalls().size()
-        << "]\n");
-  //Graph.writeGraphToFile(std::cerr, "nscc_" + F.getName());
-  return Graph;
-}
-
-
-DSGraph &BUDataStructures::calculateSCCGraph(Function &F,
-                                             hash_set<Function*> &SCCFunctions){
-  DSGraph &Graph = getDSGraph(F);
-  DEBUG(std::cerr << "  [BU] Calculating SCC graph for: " << F.getName()<<"\n");
-
-  std::vector<DSCallSite> UnresolvableCalls;
-  hash_map<Function*, DSCallSite> SCCCallSiteMap;
-  std::vector<DSCallSite> &AuxCallsList = Graph.getAuxFunctionCalls();
-
-  while (1) {  // Loop until we run out of resolvable call sites!
-    // Move our call site list into TempFCs so that inline call sites go into
-    // the new call site list and doesn't invalidate our iterators!
-    std::vector<DSCallSite> TempFCs;
-    TempFCs.swap(AuxCallsList);
-
-    // Loop over all of the resolvable call sites
-    unsigned LastCallSiteIdx = ~0U;
-    CallSiteIterator I = CallSiteIterator::begin(TempFCs),
-      E = CallSiteIterator::end(TempFCs);
-    if (I == E) {
-      TempFCs.swap(AuxCallsList);
-      break;  // Done when no resolvable call sites exist
-    }
-
-    for (; I != E; ++I) {
-      // If we skipped over any call sites, they must be unresolvable, copy them
-      // to the unresolvable site list.
-      LastCallSiteIdx++;
-      for (; LastCallSiteIdx < I.getCallSiteIdx(); ++LastCallSiteIdx)
-        UnresolvableCalls.push_back(TempFCs[LastCallSiteIdx]);
-      LastCallSiteIdx = I.getCallSiteIdx();
-      
-      // Resolve the current call...
-      Function *Callee = *I;
-      DSCallSite &CS = I.getCallSite();
-      
-      if (Callee->isExternal()) {
-        // Ignore this case, simple varargs functions we cannot stub out!
-      } else if (Callee == &F) {
-        // Self recursion... simply link up the formal arguments with the
-        // actual arguments...
-        DEBUG(std::cerr << "    Self Inlining: " << F.getName() << "\n");
-        
-        // Handle self recursion by resolving the arguments and return value
-        Graph.mergeInGraph(CS, *Callee, Graph, 0);
-      } else if (SCCCallSiteMap.count(Callee)) {
-        // We have already seen a call site in the SCC for this function, just
-        // merge the two call sites together and we are done.
-        SCCCallSiteMap.find(Callee)->second.mergeWith(CS);
-      } else {
-        // Get the data structure graph for the called function.
-        //
-        DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
-        DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
-              << "[" << GI.getGraphSize() << "+"
-              << GI.getAuxFunctionCalls().size() << "] into: " << F.getName()
-              << "[" << Graph.getGraphSize() << "+"
-              << Graph.getAuxFunctionCalls().size() << "]\n");
-        
-        // Handle self recursion by resolving the arguments and return value
-        Graph.mergeInGraph(CS, *Callee, GI,
-                           DSGraph::KeepModRefBits | DSGraph::StripAllocaBit |
-                           DSGraph::DontCloneCallNodes);
-
-        if (SCCFunctions.count(Callee))
-          SCCCallSiteMap.insert(std::make_pair(Callee, CS));
-      }
-    }
-    
-    // Make sure to catch any leftover unresolvable calls...
-    for (++LastCallSiteIdx; LastCallSiteIdx < TempFCs.size(); ++LastCallSiteIdx)
-      UnresolvableCalls.push_back(TempFCs[LastCallSiteIdx]);
-  }
-
-  // Reset the SCCCallSiteMap...
-  SCCCallSiteMap.clear();
-
-  AuxCallsList.insert(AuxCallsList.end(), UnresolvableCalls.begin(),
-                      UnresolvableCalls.end());
-  UnresolvableCalls.clear();
-
-
-  // Recompute the Incomplete markers.  If there are any function calls left
-  // now that are complete, we must loop!
-  Graph.maskIncompleteMarkers();
-  Graph.markIncompleteNodes(DSGraph::MarkFormalArgs);
-
-  // FIXME: materialize nodes from the globals graph as neccesary...
-
-  Graph.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
-
-  DEBUG(std::cerr << "  [BU] Done inlining: " << F.getName() << " ["
-        << Graph.getGraphSize() << "+" << Graph.getAuxFunctionCalls().size()
-        << "]\n");
-  //Graph.writeGraphToFile(std::cerr, "bu_" + F.getName());
-  return Graph;
-}
