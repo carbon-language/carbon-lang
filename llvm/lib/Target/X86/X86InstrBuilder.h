@@ -42,12 +42,24 @@ inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
 
 /// addFrameReference - This function is used to add a reference to the base of
 /// an abstract object on the stack frame of the current function.  This
-/// reference has base register <noreg> and a FrameIndex offset until it is
-/// resolved.
+/// reference has base register as the FrameIndex offset until it is resolved.
+/// This allows a constant offset to be specified as well...
 ///
 inline const MachineInstrBuilder &
-addFrameReference(const MachineInstrBuilder &MIB, int FI) {
-  return MIB.addReg(0).addZImm(1).addMReg(0).addFrameIndex(FI);
+addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
+  return MIB.addFrameIndex(FI).addZImm(1).addMReg(0).addSImm(Offset);
+}
+
+/// addConstantPoolReference - This function is used to add a reference to the
+/// base of a constant value spilled to the per-function constant pool.  The
+/// reference has base register ConstantPoolIndex offset which is retained until
+/// either machine code emission or assembly output.  This allows an optional
+/// offset to be added as well.
+///
+inline const MachineInstrBuilder &
+addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI,
+			 int Offset = 0) {
+  return MIB.addConstantPoolIndex(CPI).addZImm(1).addMReg(0).addSImm(Offset);
 }
 
 #endif
