@@ -658,7 +658,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     if (Ty->isSigned() != V->getType()->isSigned()) return false;
     // FALL THROUGH
   case Instruction::Shl:
-    assert(I->getOperand(0) == V);
+    if (I->getOperand(1) == V) return false;  // Cannot change shift amount type
     if (!Ty->isInteger()) return false;
     return ValueConvertableToType(I, Ty, CTMap);
 
