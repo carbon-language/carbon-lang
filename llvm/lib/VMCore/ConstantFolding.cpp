@@ -22,6 +22,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include <cmath>
 using namespace llvm;
@@ -523,6 +524,15 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
                                             const Type *DestTy) {
   if (V->getType() == DestTy) return (Constant*)V;
 
+  // Cast of a global address to boolean is always true.
+  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
+    if (DestTy == Type::BoolTy)
+      // FIXME: When we support 'external weak' references, we have to prevent
+      // this transformation from happening.  In the meantime we avoid folding
+      // any cast of an external symbol.
+      if (!CPR->getValue()->isExternal())
+        return ConstantBool::True;
+
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
     if (CE->getOpcode() == Instruction::Cast) {
       Constant *Op = const_cast<Constant*>(CE->getOperand(0));
@@ -873,6 +883,16 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         if (cast<ConstantIntegral>(V2)->isAllOnesValue())
           return const_cast<Constant*>(V1);                       // X & -1 == X
         if (V2->isNullValue()) return const_cast<Constant*>(V2);  // X & 0 == 0
+        if (CE1->getOpcode() == Instruction::Cast &&
+            isa<ConstantPointerRef>(CE1->getOperand(0))) {
+          ConstantPointerRef *CPR =cast<ConstantPointerRef>(CE1->getOperand(0));
+
+          // Functions are at least 4-byte aligned.  If and'ing the address of a
+          // function with a constant < 4, fold it to zero.
+          if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
+            if (CI->getRawValue() < 4 && isa<Function>(CPR->getValue()))
+              return Constant::getNullValue(CI->getType());
+        }
         break;
       case Instruction::Or:
         if (V2->isNullValue()) return const_cast<Constant*>(V1);  // X | 0 == X
