@@ -17,13 +17,18 @@ class Function;
 class BasicBlock;
 class Value;
 class CallInst;
+class ReturnInst;
 
 // Clone OldFunc into NewFunc, transforming the old arguments into references to
 // ArgMap values.  Note that if NewFunc already has basic blocks, the ones
-// cloned into it will be added to the end of the function.
+// cloned into it will be added to the end of the function.  This function fills
+// in a list of return instructions, and can optionally append the specified
+// suffix to all values cloned.
 //
 void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
-                       const std::vector<Value*> &ArgMap);
+                       const std::vector<Value*> &ArgMap,
+                       std::vector<ReturnInst*> &Returns,
+                       const char *NameSuffix = "");
 
 
 // InlineFunction - This function forcibly inlines the called function into the
