@@ -35,7 +35,7 @@ void ParseCommandLineOptions(int &argc, char **argv,
 // ParseEnvironmentOptions - Environment variable option processing alternate
 //                           entry point.
 //
-void ParseEnvironmentOptions(char *progName, char *envvar,
+void ParseEnvironmentOptions(const char *progName, const char *envvar,
                              const char *Overview = 0);
 
 //===----------------------------------------------------------------------===//
