@@ -2027,25 +2027,41 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   if (TrueVal == FalseVal)
     return ReplaceInstUsesWith(SI, TrueVal);
 
+  if (SI.getType() == Type::BoolTy)
+    if (ConstantBool *C = dyn_cast<ConstantBool>(TrueVal)) {
+      if (C == ConstantBool::True) {
+        // Change: A = select B, true, C --> A = or B, C
+        return BinaryOperator::create(Instruction::Or, CondVal, FalseVal);
+      } else {
+        // Change: A = select B, false, C --> A = and !B, C
+        Value *NotCond =
+          InsertNewInstBefore(BinaryOperator::createNot(CondVal,
+                                             "not."+CondVal->getName()), SI);
+        return BinaryOperator::create(Instruction::And, NotCond, FalseVal);
+      }
+    } else if (ConstantBool *C = dyn_cast<ConstantBool>(FalseVal)) {
+      if (C == ConstantBool::False) {
+        // Change: A = select B, C, false --> A = and B, C
+        return BinaryOperator::create(Instruction::And, CondVal, TrueVal);
+      } else {
+        // Change: A = select B, C, true --> A = or !B, C
+        Value *NotCond =
+          InsertNewInstBefore(BinaryOperator::createNot(CondVal,
+                                             "not."+CondVal->getName()), SI);
+        return BinaryOperator::create(Instruction::Or, NotCond, TrueVal);
+      }
+    }
+
   // Selecting between two constants?
   if (Constant *TrueValC = dyn_cast<Constant>(TrueVal))
     if (Constant *FalseValC = dyn_cast<Constant>(FalseVal)) {
-      if (SI.getType() == Type::BoolTy &&
-          isa<ConstantBool>(TrueValC) && isa<ConstantBool>(FalseValC)) {
-        // select C, true, false -> C
-        if (TrueValC == ConstantBool::True)
-          return ReplaceInstUsesWith(SI, CondVal);
-        // select C, false, true -> !C
-        return BinaryOperator::createNot(CondVal);
-      }
-      
       // If the true constant is a 1 and the false is a zero, turn this into a
       // cast from bool.
       if (FalseValC->isNullValue() && isa<ConstantInt>(TrueValC) &&
           cast<ConstantInt>(TrueValC)->getRawValue() == 1)
         return new CastInst(CondVal, SI.getType());
     }
-
+  
   return 0;
 }
 
@@ -2177,9 +2193,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if ((*AI)->getType() == ParamTy) {
       Args.push_back(*AI);
     } else {
-      Instruction *Cast = new CastInst(*AI, ParamTy, "tmp");
-      InsertNewInstBefore(Cast, *Caller);
-      Args.push_back(Cast);
+      Args.push_back(InsertNewInstBefore(new CastInst(*AI, ParamTy, "tmp"),
+                                         *Caller));
     }
   }
 
