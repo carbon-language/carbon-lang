@@ -87,3 +87,16 @@ Out:
         ret short %B1
 }
 
+uint %linear_div_fold() {   ;; for (i = 4; i != 68; i += 8)  (exit with i/2)
+entry:
+        br label %loop
+loop:
+        %i = phi uint [ 4, %entry ], [ %i.next, %loop ]
+        %i.next = add uint %i, 8
+        %RV = div uint %i, 2
+        %c = setne uint %i, 68
+        br bool %c, label %loop, label %loopexit
+loopexit:
+        ret uint %RV
+}
+
