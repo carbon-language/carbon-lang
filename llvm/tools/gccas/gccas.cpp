@@ -77,6 +77,7 @@ int main(int argc, char **argv) {
   if (!StopAtLevelRaise) {
     Passes.add(createRaisePointerReferencesPass()); // Eliminate casts
     Passes.add(createPromoteMemoryToRegister());    // Promote alloca's to regs
+    Passes.add(createReassociatePass());            // Reassociate expressions
     Passes.add(createInstructionCombiningPass());   // Combine silly seq's
     Passes.add(createDeadInstEliminationPass());    // Kill InstCombine remnants
     Passes.add(createGCSEPass());                   // Remove common subexprs
