@@ -467,12 +467,12 @@ void V8Printer::printMachineInstruction(const MachineInstr *MI) {
   O << Desc.Name << " ";
   
   // Printing memory instructions is a special case.
-  // for loads:  op %base, offset, %dest --> op [%base + offset], %dest
-  // for stores: op %src, %base, offset  --> op %src, [%base + offset]
+  // for loads:  %dest = op %base, offset --> op [%base + offset], %dest
+  // for stores: op %src, %base, offset   --> op %src, [%base + offset]
   if (isLoadInstruction (MI)) {
-    printBaseOffsetPair (MI, 0);
+    printBaseOffsetPair (MI, 1);
     O << ", ";
-    printOperand (MI->getOperand (2));
+    printOperand (MI->getOperand (0));
     O << "\n";
     return;
   } else if (isStoreInstruction (MI)) {
