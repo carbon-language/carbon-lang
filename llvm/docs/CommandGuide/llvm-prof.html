@@ -26,13 +26,19 @@ then runs <tt>llvm-prof</tt> to format a report.  To get more information about
 <h3>OPTIONS</h3>
 
 <ul>
-	<li><tt>-annotated-llvm</tt> or <tt>-A</tt><br>
+	<li><tt>--annotated-llvm</tt> or <tt>-A</tt><br>
 
         In addition to the normal report printed, print out the code for the
         program, annotated we execution frequency information. This can be
         particularly useful when trying to visualize how frequently basic blocks
         are executed.  This is most useful with basic block profiling
         information or better.<p>
+
+	<li><tt>--print-all-code</tt><br>
+
+        Using this option enables the <tt>--annotated-llvm</tt> option, but it
+        prints the entire module, instead of just the most commonly executed
+        functions.<p>
 </ul>
 
 <h3>EXIT STATUS</h3>
