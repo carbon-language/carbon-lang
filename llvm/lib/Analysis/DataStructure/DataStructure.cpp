@@ -1394,7 +1394,7 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
     // eliminate it.
     if (CS.isIndirectCall() && CS.getCalleeNode()->getNumReferrers() == 1 &&
         CS.getCalleeNode()->isComplete() &&
-        CS.getCalleeNode()->getGlobals.empty()) {  // No useful info?
+        CS.getCalleeNode()->getGlobals().empty()) {  // No useful info?
 #ifndef NDEBUG
       std::cerr << "WARNING: Useless call site found.\n";
 #endif
