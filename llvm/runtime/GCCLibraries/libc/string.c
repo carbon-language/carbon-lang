@@ -35,6 +35,12 @@ char *strcpy(char *s1, const char *s2) {
   return dest;
 }
 
+char *strncpy(char *s1, const char *s2, size_t n) {
+  char *dest = s1;
+  while (n-- && (*s1++ = *s2++));
+  return dest;
+}
+
 char *strcat(char *s1, const char *s2) {
   strcpy(s1+strlen(s1), s2);
   return s1;
