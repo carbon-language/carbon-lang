@@ -1347,6 +1347,9 @@ void DSGraph::mergeInGraph(const DSCallSite &CS,
                            const DSGraph &Graph, unsigned CloneFlags) {
   TIME_REGION(X, "mergeInGraph");
 
+  assert((CloneFlags & DontCloneCallNodes) &&
+         "Doesn't support copying of call nodes!");
+
   // If this is not a recursive call, clone the graph into this graph...
   if (&Graph == this) {
     // Merge the return value with the return value of the context.
@@ -1381,13 +1384,6 @@ void DSGraph::mergeInGraph(const DSCallSite &CS,
     RC.merge(CS.getPtrArg(i), Args[i+1]);
   }
     
-  // If requested, copy all of the calls.
-  if (!(CloneFlags & DontCloneCallNodes)) {
-    // Copy the function calls list.
-    for (fc_iterator I = Graph.fc_begin(), E = Graph.fc_end(); I != E; ++I)
-      FunctionCalls.push_back(DSCallSite(*I, RC));
-  }
-
   // If the user has us copying aux calls (the normal case), set up a data
   // structure to keep track of which ones we've copied over.
   std::set<const DSCallSite*> CopiedAuxCall;
@@ -1405,10 +1401,10 @@ void DSGraph::mergeInGraph(const DSCallSite &CS,
 
       // If requested, copy any aux calls that can reach copied nodes.
       for (afc_iterator I = Graph.afc_begin(), E = Graph.afc_end(); I!=E; ++I)
-        if (CopiedAuxCall.insert(&*I).second &&
-            PathExistsToClonedNode(*I, RC)) {
+        if (!CopiedAuxCall.count(&*I) && PathExistsToClonedNode(*I, RC)) {
           AuxFunctionCalls.push_back(DSCallSite(*I, RC));
           MadeChange = true;
+          CopiedAuxCall.insert(&*I);
         }
     }
 }
