@@ -9,6 +9,11 @@
 #include <cstdlib>
 #include <cassert>
 
+// Assert should only be used for debugging the runtime library.  Enabling it in
+// CVS will break some platforms!
+#undef assert
+#define assert(X)
+
 // get_sjlj_exception - Adjust the llvm_exception pointer to be an appropriate
 // llvm_sjlj_exception pointer.
 inline llvm_sjlj_exception *get_sjlj_exception(llvm_exception *E) {

@@ -12,6 +12,11 @@
 #include <typeinfo>
 #include <cassert>
 
+// Assert should only be used for debugging the runtime library.  Enabling it in
+// CVS will break some platforms!
+#undef assert
+#define assert(X)
+
 struct llvm_cxx_exception {
   // TypeInfo - A pointer to the C++ std::type_info object for this exception
   // class.  This is required because the class may not be polymorphic.
