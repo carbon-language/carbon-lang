@@ -592,36 +592,41 @@ static bool TypeContains(const Type *Ty, const Type *E) {
   return find(df_begin(Ty), df_end(Ty), E) != df_end(Ty);
 }
 
-
+// UpRefs - A list of the outstanding upreferences that need to be resolved.
 static std::vector<std::pair<unsigned, OpaqueType *> > UpRefs;
 
+/// HandleUpRefs - Every time we finish a new layer of types, this function is
+/// called.  It loops through the UpRefs vector, which is a list of the
+/// currently active types.  For each type, if the up reference is contained in
+/// the newly completed type, we decrement the level count.  When the level
+/// count reaches zero, the upreferenced type is the type that is passed in:
+/// thus we can complete the cycle.
+///
 static PATypeHolder HandleUpRefs(const Type *ty) {
   PATypeHolder Ty(ty);
-  UR_OUT("Type '" << ty->getDescription() << 
+  UR_OUT("Type '" << Ty->getDescription() << 
          "' newly formed.  Resolving upreferences.\n" <<
          UpRefs.size() << " upreferences active!\n");
-  for (unsigned i = 0; i < UpRefs.size(); ) {
+  for (unsigned i = 0; i != UpRefs.size(); ++i) {
     UR_OUT("  UR#" << i << " - TypeContains(" << Ty->getDescription() << ", " 
 	   << UpRefs[i].second->getDescription() << ") = " 
-	   << (TypeContains(Ty, UpRefs[i].second) ? "true" : "false") << endl);
+	   << (TypeContains(Ty, UpRefs[i].second) ? "true" : "false") << "\n");
     if (TypeContains(Ty, UpRefs[i].second)) {
       unsigned Level = --UpRefs[i].first;   // Decrement level of upreference
-      UR_OUT("  Uplevel Ref Level = " << Level << endl);
+      UR_OUT("  Uplevel Ref Level = " << Level << "\n");
       if (Level == 0) {                     // Upreference should be resolved! 
 	UR_OUT("  * Resolving upreference for "
-               << UpRefs[i].second->getDescription() << endl;
+               << UpRefs[i].second->getDescription() << "\n";
 	       std::string OldName = UpRefs[i].second->getDescription());
 	UpRefs[i].second->refineAbstractTypeTo(Ty);
-	UpRefs.erase(UpRefs.begin()+i);     // Remove from upreference list...
 	UR_OUT("  * Type '" << OldName << "' refined upreference to: "
-	       << (const void*)Ty << ", " << Ty->getDescription() << endl);
-	continue;
+	       << (const void*)Ty << ", " << Ty->getDescription() << "\n");
+	UpRefs.erase(UpRefs.begin()+i);     // Remove from upreference list...
+        --i;                                // Do not skip the next element...
       }
     }
-
-    ++i;                                  // Otherwise, no resolve, move on...
   }
-  // FIXME: TODO: this should return the updated type
+
   return Ty;
 }
 
@@ -893,7 +898,7 @@ TypesV    : Types    | VOID { $$ = new PATypeHolder($1); };
 UpRTypesV : UpRTypes | VOID { $$ = new PATypeHolder($1); };
 
 Types     : UpRTypes {
-    if (UpRefs.size())
+    if (!UpRefs.empty())
       ThrowException("Invalid upreference in type: " + (*$1)->getDescription());
     $$ = $1;
   };
@@ -916,7 +921,7 @@ UpRTypes : SymbolicValueRef {            // Named types are also simple types...
 // Include derived types in the Types production.
 //
 UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
-    if ($2 > (uint64_t)INT64_MAX) ThrowException("Value out of range!");
+    if ($2 > (uint64_t)~0U) ThrowException("Value out of range!");
     OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder
     UpRefs.push_back(std::make_pair((unsigned)$2, OT));  // Add to vector...
     $$ = new PATypeHolder(OT);
@@ -931,7 +936,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
 
     $$ = new PATypeHolder(HandleUpRefs(FunctionType::get(*$1,Params,isVarArg)));
     delete $3;      // Delete the argument list
-    delete $1;      // Delete the old type handle
+    delete $1;      // Delete the return type handle
   }
   | '[' EUINT64VAL 'x' UpRTypes ']' {          // Sized array type?
     $$ = new PATypeHolder(HandleUpRefs(ArrayType::get(*$4, (unsigned)$2)));
