@@ -40,8 +40,8 @@ class LiveRange : public ValueSet {
   int Color;                  // color assigned to this live range
   bool mustSpill;             // whether this LR must be spilt
 
-  /// SuggestedColor - if this LR has a suggested color, can it be
-  /// really alloated?  A suggested color cannot be allocated when the
+  /// SuggestedColor - if this LR has a suggested color, can it
+  /// really be allocated?  A suggested color cannot be allocated when the
   /// suggested color is volatile and when there are call
   /// interferences.
   ///
@@ -60,12 +60,12 @@ class LiveRange : public ValueSet {
   ///
   int SpilledStackOffsetFromFP;
 
-  /// HasSpillOffset 0 Whether this live range has a spill offset
+  /// HasSpillOffset - True iff this live range has a spill offset.
   ///
   bool HasSpillOffset;
 
-  /// The spill cost of this live range. Calculated using loop depth of
-  /// each reference to each Value in the live range
+  /// SpillCost - The spill cost of this live range. Calculated using loop depth
+  /// of each reference to each Value in the live range.
   ///
   unsigned SpillCost;
 
