@@ -17,11 +17,36 @@ BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2,
                                const Type *Ty, const std::string &Name,
                                Instruction *InsertBefore)
   : Instruction(Ty, iType, Name, InsertBefore) {
+
   Operands.reserve(2);
   Operands.push_back(Use(S1, this));
   Operands.push_back(Use(S2, this));
-  assert(Operands[0] && Operands[1] && 
-         Operands[0]->getType() == Operands[1]->getType());
+  assert(S1 && S2 && S1->getType() == S2->getType());
+
+#ifndef NDEBUG
+  switch (iType) {
+  case Add: case Sub:
+  case Mul: case Div:
+  case Rem:
+    assert(Ty == S1->getType() &&
+           "Arithmetic operation should return same type as operands!");
+    assert((Ty->isInteger() || Ty->isFloatingPoint()) && 
+           "Tried to create an arithmetic operation on a non-arithmetic type!");
+    break;
+  case And: case Or:
+  case Xor:
+    assert(Ty == S1->getType() &&
+           "Logical operation should return same type as operands!");
+    assert(Ty->isIntegral() &&
+           "Tried to create an logical operation on a non-integral type!");
+    break;
+  case SetLT: case SetGT: case SetLE:
+  case SetGE: case SetEQ: case SetNE:
+    assert(Ty == Type::BoolTy && "Setcc must return bool!");
+  default:
+    break;
+  }
+#endif
 }
 
 
