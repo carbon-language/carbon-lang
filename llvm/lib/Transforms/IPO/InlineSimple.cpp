@@ -69,7 +69,7 @@ bool InlineMethod(BasicBlock::iterator CIIt) {
   assert((*CIIt)->getParent()->getParent() && "Instruction not in method!");
 
   CallInst *CI = cast<CallInst>(*CIIt);
-  const Method *CalledMeth = CI->getCalledMethod();
+  const Function *CalledMeth = CI->getCalledFunction();
   if (CalledMeth == 0 ||   // Can't inline external method or indirect call!
       CalledMeth->isExternal()) return false;
 
@@ -242,8 +242,8 @@ static inline bool DoMethodInlining(BasicBlock *BB) {
   for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
     if (CallInst *CI = dyn_cast<CallInst>(*I)) {
       // Check to see if we should inline this method
-      Method *M = CI->getCalledMethod();
-      if (M && ShouldInlineMethod(CI, M))
+      Method *F = CI->getCalledFunction();
+      if (F && ShouldInlineMethod(CI, F))
 	return InlineMethod(I);
     }
   }

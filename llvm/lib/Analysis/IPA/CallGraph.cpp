@@ -100,10 +100,10 @@ void CallGraph::addToCallGraph(Function *M) {
       Instruction *I = *II;
 
       if (CallInst *CI = dyn_cast<CallInst>(I)) {
-        if (CI->getCalledMethod() == 0)
+        if (CI->getCalledFunction() == 0)
           Node->addCalledMethod(ExternalNode);
       } else if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
-        if (II->getCalledMethod() == 0)
+        if (II->getCalledFunction() == 0)
           Node->addCalledMethod(ExternalNode);
       }
     }
