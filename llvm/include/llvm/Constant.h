@@ -20,7 +20,7 @@ namespace llvm {
 
 class Constant : public User {
 protected:
-  inline Constant(const Type *Ty, ValueTy vty = Value::ConstantVal, 
+  inline Constant(const Type *Ty, ValueTy vty = Value::SimpleConstantVal, 
 	          const std::string& Name = "" ) 
   : User(Ty, vty, Name) {}
   ~Constant() {}
@@ -40,11 +40,6 @@ public:
 
   virtual void print(std::ostream &O) const;
 
-  /// isConstantExpr - Return true if this is a ConstantExpr
-  ///
-  virtual bool isConstantExpr() const { return false; }
-
-
   /// destroyConstant - Called if some element of this constant is no longer
   /// valid.  At this point only other constants may be on the use_list for this
   /// constant.  Any constants on our Use list must also be destroy'd.  The
@@ -59,7 +54,9 @@ public:
   static inline bool classof(const Constant *) { return true; }
   static inline bool classof(const GlobalValue *) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() == Value::ConstantVal ||
+    return V->getValueType() == Value::SimpleConstantVal ||
+           V->getValueType() == Value::ConstantExprVal ||
+           V->getValueType() == Value::ConstantAggregateZeroVal ||
 	   V->getValueType() == Value::FunctionVal ||
 	   V->getValueType() == Value::GlobalVariableVal;
   }
