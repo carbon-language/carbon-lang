@@ -20,6 +20,7 @@
 #include "llvm/iOther.h"
 #include "llvm/Function.h"
 #include "llvm/Constants.h"
+#include "llvm/ConstantHandling.h"
 #include "Support/MathExtras.h"
 #include <math.h>
 using std::vector;
@@ -664,18 +665,10 @@ CreateCheapestMulConstInstruction(const TargetMachine &target,
 {
   Value* constOp;
   if (isa<Constant>(lval) && isa<Constant>(rval))
-    { // both operands are constant: try both orders!
-      vector<MachineInstr*> mvec1, mvec2;
-      unsigned int lcost = CreateMulConstInstruction(target, F, lval, rval,
-                                                     destVal, mvec1, mcfi);
-      unsigned int rcost = CreateMulConstInstruction(target, F, rval, lval,
-                                                     destVal, mvec2, mcfi);
-      vector<MachineInstr*>& mincostMvec =  (lcost <= rcost)? mvec1 : mvec2;
-      vector<MachineInstr*>& maxcostMvec =  (lcost <= rcost)? mvec2 : mvec1;
-      mvec.insert(mvec.end(), mincostMvec.begin(), mincostMvec.end()); 
-
-      for (unsigned int i=0; i < maxcostMvec.size(); ++i)
-        delete maxcostMvec[i];
+    { // both operands are constant: evaluate and "set" in dest
+      Constant* P = ConstantFoldBinaryInstruction(Instruction::Mul,
+                                  cast<Constant>(lval), cast<Constant>(rval));
+      target.getInstrInfo().CreateCodeToLoadConst(target,F,P,destVal,mvec,mcfi);
     }
   else if (isa<Constant>(rval))         // rval is constant, but not lval
     CreateMulConstInstruction(target, F, lval, rval, destVal, mvec, mcfi);
@@ -841,7 +834,8 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
                                 vector<MachineInstr*>& getMvec)
 {
   MachineInstr* M;
-  
+  MachineCodeForInstruction& mcfi = MachineCodeForInstruction::get(result);
+
   // Create a Value to hold the (constant) element size
   Value* tsizeVal = ConstantSInt::get(Type::IntTy, tsize);
 
@@ -858,14 +852,11 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
 
   // Create a temporary value to hold the result of MUL
   TmpInstruction* tmpProd = new TmpInstruction(numElementsVal, tsizeVal);
-  MachineCodeForInstruction::get(result).addTemp(tmpProd);
+  mcfi.addTemp(tmpProd);
   
   // Instruction 1: mul numElements, typeSize -> tmpProd
-  M = new MachineInstr(MULX);
-  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, numElementsVal);
-  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, tsizeVal);
-  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, tmpProd);
-  getMvec.push_back(M);
+  CreateMulInstruction(target, F, numElementsVal, tsizeVal, tmpProd, getMvec,
+                       mcfi, INVALID_MACHINE_OPCODE);
         
   // Instruction 2: sub %sp, tmpProd -> %sp
   M = new MachineInstr(SUB);
@@ -890,6 +881,7 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
                              unsigned int numElements,
                              vector<MachineInstr*>& getMvec)
 {
+  assert(tsize > 0 && "Illegal (zero) type size for alloca");
   assert(result && result->getParent() &&
          "Result value is not part of a function?");
   Function *F = result->getParent()->getParent();
@@ -1009,13 +1001,11 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
                                        target.DataLayout.getTypeSize(eltType));
 
           // CreateMulInstruction() folds constants intelligently enough.
-          CreateMulInstruction(target,
-                               memInst->getParent()->getParent(),
+          CreateMulInstruction(target, memInst->getParent()->getParent(),
                                idxVal,         /* lval, not likely to be const*/
                                eltSizeVal,     /* rval, likely to be constant */
                                addr,           /* result */
-                               mulVec,
-                               MachineCodeForInstruction::get(memInst),
+                               mulVec, MachineCodeForInstruction::get(memInst),
                                INVALID_MACHINE_OPCODE);
 
           // Insert mulVec[] before *mvecI in mvec[] and update mvecI
@@ -1925,18 +1915,18 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec.push_back(new MachineInstr(ADD));
         SetOperandsForMemInstr(mvec, subtreeRoot, target);
         break;
-        
+
       case 57:	// reg:  Alloca: Implement as 1 instruction:
       {         //	    add %fp, offsetFromFP -> result
         AllocationInst* instr =
           cast<AllocationInst>(subtreeRoot->getInstruction());
         unsigned int tsize =
-          target.findOptimalStorageSize(instr->getAllocatedType());
+          target.DataLayout.getTypeSize(instr->getAllocatedType());
         assert(tsize != 0);
         CreateCodeForFixedSizeAlloca(target, instr, tsize, 1, mvec);
         break;
       }
-      
+
       case 58:	// reg:   Alloca(reg): Implement as 3 instructions:
                 //	mul num, typeSz -> tmp
                 //	sub %sp, tmp    -> %sp
@@ -1946,7 +1936,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         const Type* eltType = instr->getAllocatedType();
         
         // If #elements is constant, use simpler code for fixed-size allocas
-        int tsize = (int) target.findOptimalStorageSize(eltType);
+        int tsize = (int) target.DataLayout.getTypeSize(eltType);
         Value* numElementsVal = NULL;
         bool isArray = instr->isArrayAllocation();
         
@@ -1963,7 +1953,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                           numElementsVal, mvec);
         break;
       }
-      
+
       case 61:	// reg:   Call
       {         // Generate a direct (CALL) or indirect (JMPL) call.
                 // Mark the return-address register, the indirection
@@ -2027,7 +2017,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 
                 // If this arg. is in the first $K$ regs, add a copy
                 // float-to-int instruction to pass the value as an integer.
-                if (i < target.getRegInfo().GetNumOfIntArgRegs())
+                if (i <= target.getRegInfo().GetNumOfIntArgRegs())
                   {
                     MachineCodeForInstruction &destMCFI = 
                       MachineCodeForInstruction::get(callInstr);   
