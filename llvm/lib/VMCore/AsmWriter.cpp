@@ -192,7 +192,7 @@ void AssemblyWriter::processMethod(const Method *M) {
 
 
   // Finish printing arguments...
-  const MethodType *MT = cast<const MethodType>(M->getType());
+  const MethodType *MT = cast<const MethodType>(M->getMethodType());
   if (MT->isVarArg()) {
     if (MT->getParamTypes().size()) Out << ", ";
     Out << "...";  // Output varargs portion of signature!
@@ -300,6 +300,7 @@ void AssemblyWriter::processInstruction(const Instruction *I) {
   } else if (I->getOpcode() == Instruction::Ret && !Operand) {
     Out << " void";
   } else if (I->getOpcode() == Instruction::Call) {
+    // TODO: Should try to print out short form of the Call instruction
     writeOperand(Operand, true);
     Out << "(";
     if (I->getNumOperands() > 1) writeOperand(I->getOperand(1), true);

@@ -26,8 +26,8 @@ template class ValueHolder<MethodArgument, Method, Method>;
 template class ValueHolder<BasicBlock    , Method, Method>;
 
 Method::Method(const MethodType *Ty, const string &name) 
-  : Value(Ty, Value::MethodVal, name), SymTabValue(this), BasicBlocks(this), 
-    ArgumentList(this, this) {
+  : GlobalValue(PointerType::get(Ty), Value::MethodVal, name),
+    SymTabValue(this), BasicBlocks(this), ArgumentList(this, this) {
   assert(::isa<MethodType>(Ty) && "Method signature must be of method type!");
   Parent = 0;
 }
@@ -62,8 +62,12 @@ void Method::setParent(Module *parent) {
   setParentSymTab(Parent ? Parent->getSymbolTableSure() : 0);
 }
 
+const MethodType *Method::getMethodType() const {
+  return cast<MethodType>(cast<PointerType>(getType())->getValueType());
+}
+
 const Type *Method::getReturnType() const { 
-  return ((const MethodType *)getType())->getReturnType(); 
+  return getMethodType()->getReturnType();
 }
 
 // dropAllReferences() - This function causes all the subinstructions to "let
@@ -85,8 +89,8 @@ void Method::dropAllReferences() {
 GlobalVariable::GlobalVariable(const Type *Ty, bool isConstant,
 			       ConstPoolVal *Initializer = 0, 
 			       const string &Name = "")
-  : User(Ty, Value::GlobalVal, Name), Parent(0), Constant(isConstant) {
-  assert(Ty->isPointerType() && "Global Variables must be pointers!");
+  : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal, Name),
+    Parent(0), Constant(isConstant) {
   if (Initializer) Operands.push_back(Use((Value*)Initializer, this));
 
   assert(!isConstant || hasInitializer() &&

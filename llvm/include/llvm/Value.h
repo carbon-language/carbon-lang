@@ -22,6 +22,7 @@ class ConstPoolVal;
 class MethodArgument;
 class Instruction;
 class BasicBlock;
+class GlobalValue;
 class Method;
 class GlobalVariable;
 class Module;
@@ -43,7 +44,7 @@ public:
     InstructionVal,         // This is an instance of Instruction
     BasicBlockVal,          // This is an instance of BasicBlock
     MethodVal,              // This is an instance of Method
-    GlobalVal,              // This is an instance of GlobalVariable
+    GlobalVariableVal,      // This is an instance of GlobalVariable
     ModuleVal,              // This is an instance of Module
   };
 
@@ -256,10 +257,16 @@ template <> inline bool isa<Method, Value*>(Value *Val) {
   return Val->getValueType() == Value::MethodVal;
 }
 template <> inline bool isa<GlobalVariable, const Value*>(const Value *Val) { 
-  return Val->getValueType() == Value::GlobalVal;
+  return Val->getValueType() == Value::GlobalVariableVal;
 }
 template <> inline bool isa<GlobalVariable, Value*>(Value *Val) { 
-  return Val->getValueType() == Value::GlobalVal;
+  return Val->getValueType() == Value::GlobalVariableVal;
+}
+template <> inline bool isa<GlobalValue, const Value*>(const Value *Val) { 
+  return isa<GlobalVariable>(Val) || isa<Method>(Val);
+}
+template <> inline bool isa<GlobalValue, Value*>(Value *Val) { 
+  return isa<GlobalVariable>(Val) || isa<Method>(Val);
 }
 template <> inline bool isa<Module, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::ModuleVal;

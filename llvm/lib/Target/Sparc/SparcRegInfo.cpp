@@ -696,7 +696,7 @@ MachineInstr * UltraSparcRegInfo::cpValue2RegMI(Value * Val,
   switch( Val->getValueType() ) {
 
   case Value::ConstantVal: 
-  case Value::GlobalVal:
+  case Value::GlobalVariableVal:
     MOType = MachineOperand:: MO_UnextendedImmed;  // TODO**** correct???
     break;
 

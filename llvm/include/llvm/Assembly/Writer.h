@@ -97,7 +97,8 @@ inline ostream &operator<<(ostream &o, const Value *I) {
   case Value::InstructionVal:WriteToAssembly(cast<Instruction>(I)   , o); break;
   case Value::BasicBlockVal: WriteToAssembly(cast<BasicBlock>(I)    , o); break;
   case Value::MethodVal:     WriteToAssembly(cast<Method>(I)        , o); break;
-  case Value::GlobalVal:     WriteToAssembly(cast<GlobalVariable>(I), o); break;
+  case Value::GlobalVariableVal:
+                             WriteToAssembly(cast<GlobalVariable>(I), o); break;
   case Value::ModuleVal:     WriteToAssembly(cast<Module>(I)        , o); break;
   default: return o << "<unknown value type: " << I->getValueType() << ">";
   }

@@ -158,7 +158,7 @@ bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
 
   BCR_TRACE(5, "Resulting types:\n");
   for (unsigned i = 0; i < NumEntries; i++) {
-    BCR_TRACE(5, cast<Type>(Tab[i+BaseLevel]) << "\n");
+    BCR_TRACE(5, cast<const Type>(Tab[i+BaseLevel]) << "\n");
   }
   return false;
 }

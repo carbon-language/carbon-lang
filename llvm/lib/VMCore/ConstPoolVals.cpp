@@ -106,7 +106,7 @@ ConstPoolStruct::ConstPoolStruct(const StructType *T,
 
 ConstPoolPointer::ConstPoolPointer(const PointerType *T) : ConstPoolVal(T) {}
 
-ConstPoolPointerReference::ConstPoolPointerReference(GlobalVariable *GV)
+ConstPoolPointerReference::ConstPoolPointerReference(GlobalValue *GV)
   : ConstPoolPointer(GV->getType()) {
   Operands.push_back(Use(GV, this));
 }

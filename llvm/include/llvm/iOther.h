@@ -150,7 +150,7 @@ public:
     return cast<Method>(Operands[0]);
   }
   Method *getCalledMethod() {
-    return  cast<Method>(Operands[0]); 
+    return cast<Method>(Operands[0]); 
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:

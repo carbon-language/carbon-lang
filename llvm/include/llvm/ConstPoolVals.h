@@ -227,26 +227,26 @@ public:
 
 
 // ConstPoolPointerReference - a constant pointer value that is initialized to
-// point to a global value, which is a constant.
+// point to a global value, which lies at a constant, fixed address.
 //
 class ConstPoolPointerReference : public ConstPoolPointer {
   ConstPoolPointerReference(const ConstPoolPointerReference &); // DNI!
 protected:
-  ConstPoolPointerReference(GlobalVariable *GV);
+  ConstPoolPointerReference(GlobalValue *GV);
   ~ConstPoolPointerReference() {}
 public:
-  static ConstPoolPointerReference *get(GlobalVariable *GV) {
+  static ConstPoolPointerReference *get(GlobalValue *GV) {
     // FIXME: These should all be shared!
     return new ConstPoolPointerReference(GV);
   }
 
   virtual string getStrValue() const;
 
-  const GlobalVariable *getValue() const { 
-    return cast<GlobalVariable>(Operands[0].get());
+  const GlobalValue *getValue() const { 
+    return cast<GlobalValue>(Operands[0].get());
   }
-  GlobalVariable *getValue() {
-    return cast<GlobalVariable>(Operands[0].get());
+  GlobalValue *getValue() {
+    return cast<GlobalValue>(Operands[0].get());
   }
 };
 

@@ -224,7 +224,7 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
   case Value::TypeVal:   case Value::BasicBlockVal:
   case Value::MethodVal: case Value::ModuleVal: default:
     assert(0 && "Unexpected expression type to classify!");
-  case Value::GlobalVal:                // Global Variable & Method argument:
+  case Value::GlobalVariableVal:        // Global Variable & Method argument:
   case Value::MethodArgumentVal:        // nothing known, return variable itself
     return Expr;
   case Value::ConstantVal:              // Constant value, just return constant

@@ -13,6 +13,7 @@
 
 #include "llvm/SymTabValue.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/GlobalValue.h"
 
 class Instruction;
 class BasicBlock;
@@ -20,7 +21,7 @@ class MethodArgument;
 class MethodType;
 class Module;
 
-class Method : public Value, public SymTabValue {
+class Method : public GlobalValue, public SymTabValue {
 public:
   typedef ValueHolder<MethodArgument, Method, Method> ArgumentListType;
   typedef ValueHolder<BasicBlock    , Method, Method> BasicBlocksType;
@@ -49,10 +50,8 @@ public:
   // Specialize setName to handle symbol table majik...
   virtual void setName(const string &name, SymbolTable *ST = 0);
 
-  const Type *getReturnType() const;
-  const MethodType *getType() const {
-    return (const MethodType*)Value::getType(); 
-  }
+  const Type *getReturnType() const;        // Return the return type of method
+  const MethodType *getMethodType() const;  // Return the MethodType for me
 
   // Is the body of this method unknown? (the basic block list is empty if so)
   // this is true for external methods, defined as forward "declare"ations

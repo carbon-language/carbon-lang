@@ -295,6 +295,10 @@ static Value *getVal(const Type *Ty, const ValID &D,
   vector<ValueList> *LateResolver =  (CurMeth.CurrentMethod) ? 
     &CurMeth.LateResolveValues : &CurModule.LateResolveValues;
 
+  if (const PointerType *PTy = dyn_cast<PointerType>(Ty))
+    if (const MethodType *MTy = dyn_cast<MethodType>(PTy->getValueType()))
+      Ty = MTy;       // Convert pointer to method to method type
+
   switch (Ty->getPrimitiveID()) {
   case Type::LabelTyID:  d = new   BBPlaceHolder(Ty, D); break;
   case Type::MethodTyID: d = new MethPlaceHolder(Ty, D); 
@@ -938,8 +942,7 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
     if (Initializer == 0)
       ThrowException("Global value initializer is not a constant!");
 	 
-    GlobalVariable *GV = new GlobalVariable(PointerType::get(Ty), $3,
-					    Initializer);
+    GlobalVariable *GV = new GlobalVariable(Ty, $3, Initializer);
     setValueName(GV, $2);
 
     CurModule.CurrentModule->getGlobalList().push_back(GV);
@@ -953,7 +956,7 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
 		     "' is not a sized type!");
     }
 
-    GlobalVariable *GV = new GlobalVariable(PointerType::get(Ty), $4);
+    GlobalVariable *GV = new GlobalVariable(Ty, $4);
     setValueName(GV, $2);
 
     CurModule.CurrentModule->getGlobalList().push_back(GV);
@@ -1031,13 +1034,14 @@ MethodHeaderH : TypesV STRINGCONSTANT '(' ArgList ')' {
     for (list<MethodArgument*>::iterator I = $4->begin(); I != $4->end(); ++I)
       ParamTypeList.push_back((*I)->getType());
 
-  const MethodType *MT = MethodType::get(*$1, ParamTypeList);
+  const MethodType  *MT  = MethodType::get(*$1, ParamTypeList);
+  const PointerType *PMT = PointerType::get(MT);
   delete $1;
 
   Method *M = 0;
   if (SymbolTable *ST = CurModule.CurrentModule->getSymbolTable()) {
-    if (Value *V = ST->lookup(MT, $2)) {  // Method already in symtab?
-      M =  cast<Method>(V);
+    if (Value *V = ST->lookup(PMT, $2)) {  // Method already in symtab?
+      M = cast<Method>(V);
 
       // Yes it is.  If this is the case, either we need to be a forward decl,
       // or it needs to be.
@@ -1274,18 +1278,23 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     delete $2;  // Free the list...
   } 
   | CALL TypesV ValueRef '(' ValueRefListE ')' {
+    const PointerType *PMTy;
     const MethodType *Ty;
 
-    if (!(Ty = dyn_cast<MethodType>($2->get()))) {
+    if (!(PMTy = dyn_cast<PointerType>($2->get())) ||
+        !(Ty = dyn_cast<MethodType>(PMTy->getValueType()))) {
       // Pull out the types of all of the arguments...
       vector<const Type*> ParamTypes;
-      for (list<Value*>::iterator I = $5->begin(), E = $5->end(); I != E; ++I)
-	ParamTypes.push_back((*I)->getType());
-      Ty = MethodType::get(*$2, ParamTypes);
+      if ($5) {
+        for (list<Value*>::iterator I = $5->begin(), E = $5->end(); I != E; ++I)
+          ParamTypes.push_back((*I)->getType());
+      }
+      Ty = MethodType::get($2->get(), ParamTypes);
+      PMTy = PointerType::get(Ty);
     }
     delete $2;
 
-    Value *V = getVal(Ty, $3);   // Get the method we're calling...
+    Value *V = getVal(PMTy, $3);   // Get the method we're calling...
 
     // Create the call node...
     if (!$5) {                                   // Has no arguments?

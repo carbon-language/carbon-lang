@@ -176,7 +176,12 @@ typedef PlaceholderValue<BBPlaceHolderHelper>    BBPlaceHolder;
 typedef PlaceholderValue<MethPlaceHolderHelper>  MethPlaceHolder;
 
 static inline ValID &getValIDFromPlaceHolder(const Value *Val) {
-  switch (Val->getType()->getPrimitiveID()) {
+  const Type *Ty = Val->getType();
+  if (isa<PointerType>(Ty) &&
+      isa<MethodType>(cast<PointerType>(Ty)->getValueType()))
+    Ty = cast<PointerType>(Ty)->getValueType();
+
+  switch (Ty->getPrimitiveID()) {
   case Type::TypeTyID:   return ((TypePlaceHolder*)Val)->getDef();
   case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getDef();
   case Type::MethodTyID: return ((MethPlaceHolder*)Val)->getDef();
@@ -185,7 +190,12 @@ static inline ValID &getValIDFromPlaceHolder(const Value *Val) {
 }
 
 static inline int getLineNumFromPlaceHolder(const Value *Val) {
-  switch (Val->getType()->getPrimitiveID()) {
+  const Type *Ty = Val->getType();
+  if (isa<PointerType>(Ty) &&
+      isa<MethodType>(cast<PointerType>(Ty)->getValueType()))
+    Ty = cast<PointerType>(Ty)->getValueType();
+
+  switch (Ty->getPrimitiveID()) {
   case Type::TypeTyID:   return ((TypePlaceHolder*)Val)->getLineNum();
   case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getLineNum();
   case Type::MethodTyID: return ((MethPlaceHolder*)Val)->getLineNum();

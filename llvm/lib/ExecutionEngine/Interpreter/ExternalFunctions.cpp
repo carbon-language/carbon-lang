@@ -45,7 +45,7 @@ static ExFunc lookupMethod(const Method *M) {
   // Function not found, look it up... start by figuring out what the
   // composite function name should be.
   string ExtName = "lle_";
-  const MethodType *MT = M->getType();
+  const MethodType *MT = M->getMethodType();
   for (unsigned i = 0; const Type *Ty = MT->getContainedType(i); ++i)
     ExtName += getTypeID(Ty);
   ExtName += "_" + M->getName();
@@ -72,7 +72,7 @@ void Interpreter::callExternalMethod(Method *M,
   }
 
   // TODO: FIXME when types are not const!
-  GenericValue Result = Fn(const_cast<MethodType*>(M->getType()), ArgVals);
+  GenericValue Result = Fn(const_cast<MethodType*>(M->getMethodType()),ArgVals);
   
   // Copy the result back into the result variable if we are not returning void.
   if (M->getReturnType() != Type::VoidTy) {

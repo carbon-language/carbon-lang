@@ -223,7 +223,10 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   Values.clear();
   if (MethodSignatureList.empty()) return failure(true);  // Unexpected method!
 
-  const MethodType *MTy = MethodSignatureList.front().first;
+  const PointerType *PMTy = MethodSignatureList.front().first; // PtrMeth
+  const MethodType  *MTy  = dyn_cast<const MethodType>(PMTy->getValueType());
+  if (MTy == 0) return failure(true);  // Not ptr to method!
+
   unsigned MethSlot = MethodSignatureList.front().second;
   MethodSignatureList.pop_front();
   Method *M = new Method(MTy);
@@ -289,13 +292,13 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
     delete M; return failure(true);     // Unresolvable references!
   }
 
-  Value *MethPHolder = getValue(MTy, MethSlot, false);
+  Value *MethPHolder = getValue(PMTy, MethSlot, false);
   assert(MethPHolder && "Something is broken no placeholder found!");
   assert(isa<Method>(MethPHolder) && "Not a method?");
 
   unsigned type;  // Type slot
   assert(!getTypeSlot(MTy, type) && "How can meth type not exist?");
-  getTypeSlot(MTy, type);
+  getTypeSlot(PMTy, type);
 
   C->getMethodList().push_back(M);
 
@@ -330,6 +333,9 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
       return failure(true); 
     }
 
+    const PointerType *PTy = cast<const PointerType>(Ty);
+    Ty = PTy->getValueType();
+
     ConstPoolVal *Initializer = 0;
     if (VarType & 2) { // Does it have an initalizer?
       // Do not improvise... values must have been stored in the constant pool,
@@ -338,8 +344,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
       unsigned InitSlot;
       if (read_vbr(Buf, End, InitSlot)) return failure(true);
       
-      Value *V = getValue(cast<const PointerType>(Ty)->getValueType(),
-			  InitSlot, false);
+      Value *V = getValue(Ty, InitSlot, false);
       if (V == 0) return failure(true);
       Initializer = cast<ConstPoolVal>(V);
     }
@@ -350,7 +355,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     C->getGlobalList().push_back(GV);
 
     if (read_vbr(Buf, End, VarType)) return failure(true);
-    BCR_TRACE(2, "Global Variable of type: " << Ty->getDescription() << endl);
+    BCR_TRACE(2, "Global Variable of type: " << PTy->getDescription() << endl);
   }
 
   // Read the method signatures for all of the methods that are coming, and 
@@ -359,10 +364,14 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
   if (read_vbr(Buf, End, MethSignature)) return failure(true);
   while (MethSignature != Type::VoidTyID) { // List is terminated by Void
     const Type *Ty = getType(MethSignature);
-    if (!Ty || !isa<MethodType>(Ty)) { 
-      cerr << "Method not meth type!  Ty = " << Ty << endl;
+    if (!Ty || !isa<PointerType>(Ty) ||
+        !isa<MethodType>(cast<PointerType>(Ty)->getValueType())) { 
+      cerr << "Method not ptr to meth type!  Ty = " << Ty << endl;
       return failure(true); 
     }
+    
+    // We create methods by passing the underlying MethodType to create...
+    Ty = cast<PointerType>(Ty)->getValueType();
 
     // When the ModuleGlobalInfo section is read, we load the type of each 
     // method and the 'ModuleValues' slot that it lands in.  We then load a 
@@ -370,19 +379,20 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     // placeholder is replaced.
 
     // Insert the placeholder...
-    Value *Def = new MethPHolder(Ty, 0);
-    insertValue(Def, ModuleValues);
+    Value *Val = new MethPHolder(Ty, 0);
+    insertValue(Val, ModuleValues);
 
     // Figure out which entry of its typeslot it went into...
     unsigned TypeSlot;
-    if (getTypeSlot(Def->getType(), TypeSlot)) return failure(true);
+    if (getTypeSlot(Val->getType(), TypeSlot)) return failure(true);
 
     unsigned SlotNo = ModuleValues[TypeSlot].size()-1;
     
     // Keep track of this information in a linked list that is emptied as 
     // methods are loaded...
     //
-    MethodSignatureList.push_back(make_pair(cast<const MethodType>(Ty),SlotNo));
+    MethodSignatureList.push_back(
+           make_pair(cast<const PointerType>(Val->getType()), SlotNo));
     if (read_vbr(Buf, End, MethSignature)) return failure(true);
     BCR_TRACE(2, "Method of type: " << Ty << endl);
   }

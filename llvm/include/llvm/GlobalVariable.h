@@ -13,12 +13,12 @@
 #ifndef LLVM_GLOBAL_VARIABLE_H
 #define LLVM_GLOBAL_VARIABLE_H
 
-#include "llvm/User.h"
+#include "llvm/GlobalValue.h"
 class Module;
 class ConstPoolVal;
 class PointerType;
 
-class GlobalVariable : public User {
+class GlobalVariable : public GlobalValue {
   Module *Parent;                  // The module that contains this method
 
   friend class ValueHolder<GlobalVariable, Module, Module>;
@@ -29,11 +29,6 @@ public:
   GlobalVariable(const Type *Ty, bool isConstant, ConstPoolVal *Initializer = 0,
 		 const string &Name = "");
   ~GlobalVariable() {}
-
-  // getType - Global variables are always pointers
-  inline const PointerType *getType() const {
-    return (const PointerType*)User::getType();
-  }
 
   // Specialize setName to handle symbol table majik...
   virtual void setName(const string &name, SymbolTable *ST = 0);
@@ -63,7 +58,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GlobalVariable *) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() == Value::GlobalVal;
+    return V->getValueType() == Value::GlobalVariableVal;
   }
 };
 

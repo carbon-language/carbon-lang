@@ -15,6 +15,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/iOther.h"
 #include <algorithm>
 
 typedef unsigned char uchar;
@@ -214,10 +215,11 @@ void BytecodeWriter::processInstruction(const Instruction *I) {
     assert(Slots[1] != -1 && "Cast return type unknown?");
     if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
     NumOperands++;
-  } else if (I->getOpcode() == Instruction::Call &&  // Handle VarArg calls
-	     cast<MethodType>(I->getOperand(0)->getType())->isVarArg()) {
-    outputInstrVarArgsCall(I, Table, Type, Out);
-    return;
+  } else if (const CallInst *CI = dyn_cast<CallInst>(I)) {// Handle VarArg calls
+    if (CI->getCalledMethod()->getMethodType()->isVarArg()) {
+      outputInstrVarArgsCall(I, Table, Type, Out);
+      return;
+    }
   }
 
   // Decide which instruction encoding to use.  This is determined primarily by

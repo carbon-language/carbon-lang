@@ -72,7 +72,7 @@ private:          // All of this data is transient across calls to ParseBytecode
   // into its slot to reserve it.  When the method is loaded, this placeholder
   // is replaced.
   //
-  list<pair<const MethodType *, unsigned> > MethodSignatureList;
+  list<pair<const PointerType *, unsigned> > MethodSignatureList;
 
 private:
   bool ParseModule            (const uchar * Buf, const uchar *End, Module *&);
