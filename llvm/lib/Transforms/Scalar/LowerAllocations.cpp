@@ -70,12 +70,6 @@ bool LowerAllocations::doPerMethodWork(Method *M) {
         
         const Type *AllocTy =cast<PointerType>(MI->getType())->getElementType();
 
-        // If the user is allocating an unsized array with a dynamic size arg,
-        // start by getting the size of one element.
-        //
-        if (const ArrayType *ATy = dyn_cast<ArrayType>(AllocTy)) 
-          if (ATy->isUnsized()) AllocTy = ATy->getElementType();
-
         // Get the number of bytes to be allocated for one element of the
         // requested type...
         unsigned Size = DataLayout.getTypeSize(AllocTy);
