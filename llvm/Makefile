@@ -21,7 +21,7 @@ test :: all
 
 distclean:: clean
 	$(VERB) $(RM) -rf $(LEVEL)/Makefile.config \
-	                  $(LEVEL)/include/Config/config.h \
+	                  $(LEVEL)/include/llvm/Config/config.h \
 	                  $(LEVEL)/autoconf/autom4te.cache \
 	                  $(LEVEL)/config.log \
 	                  $(LEVEL)/TAGS
