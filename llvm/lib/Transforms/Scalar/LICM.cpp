@@ -437,7 +437,10 @@ void LICM::PromoteValuesInLoop() {
     for (succ_iterator SI = succ_begin(*I), SE = succ_end(*I); SI != SE; ++SI)
       if (!CurLoop->contains(*SI)) {
         // Copy all of the allocas into their memory locations...
-        Instruction *InsertPos = (*SI)->begin();
+        BasicBlock::iterator BI = (*SI)->begin();
+        while (isa<PHINode>(*BI))
+          ++BI;             // Skip over all of the phi nodes in the block...
+        Instruction *InsertPos = BI;
         for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i) {
           // Load from the alloca...
           LoadInst *LI = new LoadInst(PromotedValues[i].first, "", InsertPos);
