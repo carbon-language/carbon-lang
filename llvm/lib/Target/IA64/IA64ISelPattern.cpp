@@ -319,6 +319,7 @@ LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
                const Type *ArgTy, SelectionDAG &DAG) {
  
   assert(0 && "LowerVAArgNext not done yet!\n");
+  abort();
 }
                
 
@@ -327,6 +328,7 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
                         SelectionDAG &DAG) {
 
   assert(0 && "LowerFrameReturnAddress not done yet\n");
+  abort();
 }
 
 
