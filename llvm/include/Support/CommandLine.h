@@ -34,11 +34,11 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 // Flags permitted to be passed to command line arguments
 //
 
-enum NumOccurrences {           // Flags for the number of occurances allowed...
-  Optional        = 0x01,      // Zero or One occurance
-  ZeroOrMore      = 0x02,      // Zero or more occurances allowed
-  Required        = 0x03,      // One occurance required
-  OneOrMore       = 0x04,      // One or more occurances required
+enum NumOccurrences {           // Flags for the number of occurrences allowed
+  Optional        = 0x01,      // Zero or One occurrence
+  ZeroOrMore      = 0x02,      // Zero or more occurrences allowed
+  Required        = 0x03,      // One occurrence required
+  OneOrMore       = 0x04,      // One or more occurrences required
 
   // ConsumeAfter - Indicates that this option is fed anything that follows the
   // last positional argument required by the application (it is an error if
@@ -182,7 +182,7 @@ protected:
 
 public:
   // addArgument - Tell the system that this Option subclass will handle all
-  // occurances of -ArgStr on the command line.
+  // occurrences of -ArgStr on the command line.
   //
   void addArgument(const char *ArgStr);
   void removeArgument(const char *ArgStr);

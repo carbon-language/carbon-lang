@@ -247,18 +247,18 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
       const char *ArgNameEnd = ArgName;
       while (*ArgNameEnd && *ArgNameEnd != '=')
-	++ArgNameEnd; // Scan till end of argument name...
+        ++ArgNameEnd; // Scan till end of argument name...
 
       Value = ArgNameEnd;
       if (*Value)           // If we have an equals sign...
-	++Value;            // Advance to value...
+        ++Value;            // Advance to value...
 
       if (*ArgName != 0) {
-	std::string RealName(ArgName, ArgNameEnd);
-	// Extract arg name part
+        std::string RealName(ArgName, ArgNameEnd);
+        // Extract arg name part
         std::map<std::string, Option*>::iterator I = Opts.find(RealName);
 
-	if (I == Opts.end() && !*Value && RealName.size() > 1) {
+        if (I == Opts.end() && !*Value && RealName.size() > 1) {
           // Check to see if this "option" is really a prefixed or grouped
           // argument...
           //
@@ -283,13 +283,13 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
               std::string RealArgName(RealName.begin(),RealName.begin()+Length);
               RealName.erase(RealName.begin(), RealName.begin()+Length);
 
-	      // Because ValueRequired is an invalid flag for grouped arguments,
-	      // we don't need to pass argc/argv in...
-	      //
+              // Because ValueRequired is an invalid flag for grouped arguments,
+              // we don't need to pass argc/argv in...
+              //
               assert(PGOpt->getValueExpectedFlag() != cl::ValueRequired &&
                      "Option can not be cl::Grouping AND cl::ValueRequired!");
               int Dummy;
-	      ErrorParsing |= ProvideOption(PGOpt, RealArgName.c_str(), "",
+              ErrorParsing |= ProvideOption(PGOpt, RealArgName.c_str(), "",
                                             0, 0, Dummy);
 
               // Get the next grouping option...
@@ -305,7 +305,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
             //
             I = Opts.end();
           }
-	}
+        }
 
         Handler = I != Opts.end() ? I->second : 0;
       }
@@ -404,12 +404,12 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
   // Loop over args and make sure all required args are specified!
   for (std::map<std::string, Option*>::iterator I = Opts.begin(), 
-	 E = Opts.end(); I != E; ++I) {
+         E = Opts.end(); I != E; ++I) {
     switch (I->second->getNumOccurrencesFlag()) {
     case Required:
     case OneOrMore:
       if (I->second->getNumOccurrences() == 0) {
-	I->second->error(" must be specified at least once!");
+        I->second->error(" must be specified at least once!");
         ErrorParsing = true;
       }
       // Fall through
@@ -457,14 +457,14 @@ bool Option::addOccurrence(const char *ArgName, const std::string &Value) {
   case OneOrMore:
   case ZeroOrMore:
   case ConsumeAfter: break;
-  default: return error(": bad num occurances flag value!");
+  default: return error(": bad num occurrences flag value!");
   }
 
   return handleOccurrence(ArgName, Value);
 }
 
 // addArgument - Tell the system that this Option subclass will handle all
-// occurances of -ArgStr on the command line.
+// occurrences of -ArgStr on the command line.
 //
 void Option::addArgument(const char *ArgStr) {
   if (ArgStr[0])
@@ -715,7 +715,7 @@ public:
     // Eliminate Hidden or ReallyHidden arguments, depending on ShowHidden
     Options.erase(std::remove_if(Options.begin(), Options.end(), 
                          std::ptr_fun(ShowHidden ? isReallyHidden : isHidden)),
-		  Options.end());
+                  Options.end());
 
     // Eliminate duplicate entries in table (from enum flags options, f.e.)
     {  // Give OptionSet a scope
