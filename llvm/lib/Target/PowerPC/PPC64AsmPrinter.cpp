@@ -569,7 +569,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     return;
   }
 
-  O << TII.getName(Opcode) << " ";
+  O << LowercaseString(TII.getName(Opcode)) << " ";
   if (Opcode == PPC::BLR || Opcode == PPC::NOP) {
     O << "\n";
   } else if (ArgCount == 3 && 
