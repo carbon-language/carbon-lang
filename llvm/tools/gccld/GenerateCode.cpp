@@ -153,26 +153,20 @@ int llvm::GenerateBytecode(Module *M, bool Strip, bool Internalize,
   // arguments).  This pass merges the two functions.
   addPass(Passes, createFunctionResolvingPass());
 
-  if (!DisableOptimizations) {
-    if (Internalize) {
-      // Now that composite has been compiled, scan through the module, looking
-      // for a main function.  If main is defined, mark all other functions
-      // internal.
-      addPass(Passes, createInternalizePass());
-    }
+  if (Internalize) {
+    // Now that composite has been compiled, scan through the module, looking
+    // for a main function.  If main is defined, mark all other functions
+    // internal.
+    addPass(Passes, createInternalizePass());
+  }
 
+  if (!DisableOptimizations) {
     // Now that we internalized some globals, see if we can hack on them!
     addPass(Passes, createGlobalOptimizerPass());
 
     // Linking modules together can lead to duplicated global constants, only
     // keep one copy of each constant...
     addPass(Passes, createConstantMergePass());
-
-    // If the -s command line option was specified, strip the symbols out of the
-    // resulting program to make it smaller.  -s is a GCC option that we are
-    // supporting.
-    if (Strip)
-      addPass(Passes, createSymbolStrippingPass());
 
     // Propagate constants at call sites into the functions they call.
     addPass(Passes, createIPConstantPropagationPass());
@@ -213,6 +207,12 @@ int llvm::GenerateBytecode(Module *M, bool Strip, bool Internalize,
     // Now that we have optimized the program, discard unreachable functions...
     addPass(Passes, createGlobalDCEPass());
   }
+
+  // If the -s command line option was specified, strip the symbols out of the
+  // resulting program to make it smaller.  -s is a GCC option that we are
+  // supporting.
+  if (Strip)
+    addPass(Passes, createSymbolStrippingPass());
 
   // Make sure everything is still good.
   Passes.add(createVerifierPass());
