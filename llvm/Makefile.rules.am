@@ -76,37 +76,37 @@ AM_CFLAGS    = $(LLVM_COMMONFLAGS) $(LLVM_CFLAGS)
 # LLVM GMake Function macros
 FIXOBJ       = $(top_builddir)/lib/$(2)/LLVM$(1).o
 FIXLIB       = $(top_builddir)/lib/$(2)/libLLVM$(1).a
-FINDPATH     = $(if $(findstring Support,$(1)),Support,$(strip \
+FINDPATH     = $(if $(findstring Core,$(1)),VMCore,$(strip \
+               $(if $(findstring Support,$(1)),Support,$(strip \
                $(if $(findstring System,$(1)),System,$(strip \
+               $(if $(findstring BCReader,$(1)),Bytecode/Reader,$(strip \
+               $(if $(findstring BCWriter,$(1)),Bytecode/Writer,$(strip \
+               $(if $(findstring AsmParser,$(1)),AsmParser,$(strip \
+               $(if $(findstring Analysis,$(1)),Analysis,$(strip \
+               $(if $(findstring Target,$(1)),Target,$(strip \
+               $(if $(findstring Transforms,$(1)),Transforms,$(strip \
                $(if $(findstring IPA,$(1)),Analysis/IPA,$(strip \
                $(if $(findstring DataStructure,$(1)),Analysis/DataStructure,$(strip \
-               $(if $(findstring Analysis,$(1)),Analysis,$(strip \
-               $(if $(findstring SparcV9RegAlloc,$(1)),Target/SparcV9/RegAlloc,$(strip \
-               $(if $(findstring Target,$(1)),Target,$(strip \
                $(if $(findstring IPO,$(1)),Transforms/IPO,$(strip \
                $(if $(findstring Instrument,$(1)),Transforms/Instrumentation,$(strip \
                $(if $(findstring ScalarOpts,$(1)),Transforms/Scalar,$(strip \
                $(if $(findstring TransformUtils,$(1)),Transforms/Utils,$(strip \
-               $(if $(findstring Transforms,$(1)),Transforms,$(strip \
-               $(if $(findstring Core,$(1)),VMCore,$(strip \
-               $(if $(findstring AsmParser,$(1)),AsmParser,$(strip \
-               $(if $(findstring BCReader,$(1)),Bytecode/Reader,$(strip \
-               $(if $(findstring BCWriter,$(1)),Bytecode/Writer,$(strip \
-               $(if $(findstring InstrSched,$(1)),CodeGen/InstrSched,$(strip \
                $(if $(findstring ModuloScheduling,$(1)),CodeGen/ModuloScheduling,$(strip \
                $(if $(findstring SelectionDAG,$(1)),CodeGen/SelectionDAG,$(strip \
+               $(if $(findstring ProfilePaths,$(1)),Transforms/Instrumentation/ProfilePaths,$(strip \
                $(if $(findstring CodeGen,$(1)),CodeGen,$(strip \
+               $(if $(findstring CWriter,$(1)),Target/CBackend,$(strip \
+               $(if $(findstring PowerPC,$(1)),Target/PowerPC,$(strip \
+               $(if $(findstring Skeleton,$(1)),Target/Skeleton,$(strip \
+               $(if $(findstring SparcV9InstrSched,$(1)),Target/SparcV9/InstrSched,$(strip \
+               $(if $(findstring SparcV9LiveVar,$(1)),Target/SparcV9/LiveVar,$(strip \
+               $(if $(findstring SparcV9RegAlloc,$(1)),Target/SparcV9/RegAlloc,$(strip \
+               $(if $(findstring SparcV9,$(1)),Target/SparcV9,$(strip \
+               $(if $(findstring X86,$(1)),Target/X86,$(strip \
                $(if $(findstring Debugger,$(1)),Debugger,$(strip \
                $(if $(findstring Interpreter,$(1)),ExecutionEngine/Interpreter,$(strip \
                $(if $(findstring JIT,$(1)),ExecutionEngine/JIT,$(strip \
                $(if $(findstring ExecutionEngine,$(1)),ExecutionEngine,$(strip \
-               $(if $(findstring CWriter,$(1)),Target/CBackend,$(strip \
-               $(if $(findstring PowerPC,$(1)),Target/PowerPC,$(strip \
-               $(if $(findstring Skeleton,$(1)),Target/Skeleton,$(strip \
-               $(if $(findstring SparcV9LiveVar,$(1)),Target/SparcV9/LiveVar,$(strip \
-               $(if $(findstring SparcV9,$(1)),Target/SparcV9,$(strip \
-               $(if $(findstring X86,$(1)),Target/X86,$(strip \
-               $(if $(findstring ProfilePaths,$(1)),Transforms/Instrumentation/ProfilePaths,$(strip \
                $(if $(findstring Hello,$(1)),Transforms/Hello,$strip \
                PATH_TO_UNKNOWN_OBJECT)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
 
