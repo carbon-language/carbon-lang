@@ -45,6 +45,9 @@ NumCastOfCast("raise", "Number of cast-of-self removed");
 static Statistic<>
 NumDCEorCP("raise", "Number of insts DCEd or constprop'd");
 
+static Statistic<>
+NumVarargCallChanges("raise", "Number of vararg call peepholes");
+
 
 #define PRINT_PEEPHOLE(ID, NUM, I)            \
   DEBUG(std::cerr << "Inst P/H " << ID << "[" << NUM << "] " << I)
@@ -253,7 +256,8 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       // source type of the cast...
       //
       ConvertedTypes.clear();
-      ConvertedTypes[Src] = Src->getType();  // Make sure the source doesn't change type
+      // Make sure the source doesn't change type
+      ConvertedTypes[Src] = Src->getType();
       if (ValueConvertableToType(CI, Src->getType(), ConvertedTypes)) {
         PRINT_PEEPHOLE3("CAST-DEST-EXPR-CONV:in ", Src, CI, BB->getParent());
 
@@ -454,6 +458,40 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       ++NumGEPInstFormed;
       return true;
     }
+  } else if (CallInst *CI = dyn_cast<CallInst>(I)) {
+    // If we have a call with all varargs arguments, convert the call to use the
+    // actual argument types present...
+    //
+    const PointerType *PTy = cast<PointerType>(CI->getCalledValue()->getType());
+    const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
+
+    // Is the call to a vararg variable with no real parameters?
+    if (FTy->isVarArg() && FTy->getNumParams() == 0) {
+      // If so, insert a new cast instruction, casting it to a function type
+      // that matches the current arguments...
+      //
+      std::vector<const Type *> Params;  // Parameter types...
+      for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
+        Params.push_back(CI->getOperand(i)->getType());
+
+      FunctionType *NewFT = FunctionType::get(FTy->getReturnType(),
+                                              Params, false);
+      PointerType *NewPFunTy = PointerType::get(NewFT);
+
+      // Create a new cast, inserting it right before the function call...
+      CastInst *NewCast = new CastInst(CI->getCalledValue(), NewPFunTy,
+                                       CI->getCalledValue()->getName(), CI);
+
+      // Create a new call instruction...
+      CallInst *NewCall = new CallInst(NewCast,
+                           std::vector<Value*>(CI->op_begin()+1, CI->op_end()));
+      ++BI;
+      ReplaceInstWithInst(CI, NewCall);
+      
+      ++NumVarargCallChanges;
+      return true;
+    }
+
   }
 
   return false;
