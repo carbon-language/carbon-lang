@@ -110,7 +110,7 @@ public:
   //
   iterator erase(iterator I)             { return Insts.erase(I); }
   iterator erase(iterator I, iterator E) { return Insts.erase(I, E); }
-  MachineInstr* remove(iterator &I)      { return Insts.remove(I); }
+  MachineInstr *remove(MachineInstr *I)  { return Insts.remove(I); }
 
   // Debugging methods.
   void dump() const;
