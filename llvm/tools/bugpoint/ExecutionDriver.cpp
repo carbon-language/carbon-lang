@@ -22,11 +22,11 @@ BUGPOINT NOTES:
 */
 
 #include "BugDriver.h"
+#include "llvm/Support/ToolRunner.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/FileUtilities.h"
 #include "Support/SystemUtils.h"
-#include "llvm/Support/ToolRunner.h"
 #include <fstream>
 #include <iostream>
 using namespace llvm;
@@ -42,7 +42,8 @@ namespace {
   cl::opt<OutputType>
   InterpreterSel(cl::desc("Specify how LLVM code should be executed:"),
                  cl::values(clEnumValN(AutoPick, "auto", "Use best guess"),
-                            clEnumValN(RunLLI, "run-int", "Execute with the interpreter"),
+                            clEnumValN(RunLLI, "run-int",
+                                       "Execute with the interpreter"),
                             clEnumValN(RunJIT, "run-jit", "Execute with JIT"),
                             clEnumValN(RunLLC, "run-llc", "Compile with LLC"),
                             clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
