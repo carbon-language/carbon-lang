@@ -356,7 +356,7 @@ Objs := $(addsuffix .lo, $(Srcs))
 ObjectsO := $(addprefix $(BUILD_OBJ_DIR)/Release/,$(Objs))
 ObjectsP := $(addprefix $(BUILD_OBJ_DIR)/Profile/,$(Objs))
 ObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(Objs))
-ObjectsBC := $(addprefix $(BUILD_OBJ_DIR)/Bytecode/,$(addsuffix .bc, $(Srcs)))
+ObjectsBC := $(addprefix $(BUILD_OBJ_DIR)/BytecodeObj/,$(addsuffix .bc, $(Srcs)))
 
 #
 # The real objects underlying the libtool objects
@@ -642,7 +642,7 @@ endif
 
 
 #---------------------------------------------------------
-.PRECIOUS: $(BUILD_OBJ_DIR)/Depend/.dir $(BUILD_OBJ_DIR)/Bytecode/.dir
+.PRECIOUS: $(BUILD_OBJ_DIR)/Depend/.dir $(BUILD_OBJ_DIR)/BytecodeObj/.dir
 .PRECIOUS: $(BUILD_OBJ_DIR)/Debug/.dir $(BUILD_OBJ_DIR)/Release/.dir
 
 # Create .lo files in the ObjectFiles directory from the .cpp and .c files...
@@ -670,15 +670,15 @@ $(BUILD_OBJ_DIR)/Debug/%.lo: %.c $(BUILD_OBJ_DIR)/Debug/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileCG) $< -o $@
 
-$(BUILD_OBJ_DIR)/Bytecode/%.bc: %.cpp $(BUILD_OBJ_DIR)/Bytecode/.dir $(LCC1XX)
+$(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.cpp $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LCC1XX)
 	@echo "Compiling $< to bytecode"
 	$(VERB) $(LLVMGXX) $(CompileWarnings) $(CPPFLAGS) -c $< -o $@
 
-$(BUILD_OBJ_DIR)/Bytecode/%.bc: %.c $(BUILD_OBJ_DIR)/Bytecode/.dir $(LCC1)
+$(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.c $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LCC1)
 	@echo "Compiling $< to bytecode"
 	$(VERB) $(LLVMGCC) $(CompileWarnings) $(CPPFLAGS) -c $< -o $@
 
-$(BUILD_OBJ_DIR)/Bytecode/%.bc: %.ll $(BUILD_OBJ_DIR)/Bytecode/.dir $(LLVMAS)
+$(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.ll $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LLVMAS)
 	@echo "Compiling $< to bytecode"
 	$(VERB) $(LLVMAS) $< -f -o $@
 
@@ -748,7 +748,7 @@ endif
 clean::
 	$(VERB) $(RM) -rf $(BUILD_OBJ_DIR)/Debug $(BUILD_OBJ_DIR)/Release
 	$(VERB) $(RM) -rf $(BUILD_OBJ_DIR)/Profile $(BUILD_OBJ_DIR)/Depend
-	$(VERB) $(RM) -rf $(BUILD_OBJ_DIR)/Bytecode
+	$(VERB) $(RM) -rf $(BUILD_OBJ_DIR)/BytecodeObj
 	$(VERB) $(RM) -f core core.[0-9][0-9]* *.o *.d *.so *~ *.flc
 	$(VERB) $(RM) -f $(LEX_OUTPUT) $(YACC_OUTPUT)
 
