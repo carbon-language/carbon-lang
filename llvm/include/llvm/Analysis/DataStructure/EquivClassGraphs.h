@@ -18,7 +18,7 @@
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/STLExtras.h"
-#include <llvm/ADT/hash_map>
+#include "llvm/ADT/hash_map"
 #include <vector>
 #include <map>
 
