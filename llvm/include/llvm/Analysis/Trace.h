@@ -20,6 +20,7 @@
 
 #include <iosfwd>
 #include <vector>
+#include <cassert>
 
 namespace llvm { 
   class BasicBlock;
@@ -31,27 +32,21 @@ class Trace {
   BasicBlockListType BasicBlocks;
 
 public:
-  /// contains - Returns true if this trace contains the given basic
-  /// block.
-  ///
-  inline bool contains (const BasicBlock *X) {
-    for (unsigned i = 0, e = BasicBlocks.size(); i != e; ++i)
-      if (BasicBlocks[i] == X)
-        return true;
-    return false;
-  }
-
   /// Trace ctor - Make a new trace from a vector of basic blocks,
   /// residing in the function which is the parent of the first
   /// basic block in the vector.
   ///
-  Trace (const std::vector<BasicBlock *> &vBB) : BasicBlocks (vBB) {
-  }
+  Trace(const std::vector<BasicBlock *> &vBB) : BasicBlocks (vBB) {}
 
   /// getEntryBasicBlock - Return the entry basic block (first block)
   /// of the trace.
   ///
   BasicBlock *getEntryBasicBlock () const { return BasicBlocks[0]; }
+
+  /// operator[]/getBlock - Return basic block N in the trace.
+  ///
+  BasicBlock *operator[](unsigned i) const { return BasicBlocks[i]; }
+  BasicBlock *getBlock(unsigned i)   const { return BasicBlocks[i]; }
 
   /// getFunction - Return this trace's parent function.
   ///
@@ -62,14 +57,30 @@ public:
   ///
   Module *getModule () const;
 
-  /// print - Write trace to output stream.
-  ///
-  void print (std::ostream &O) const;
+  /// getBlockIndex - Return the index of the specified basic block in the
+  /// trace, or -1 if it is not in the trace.
+  int getBlockIndex(const BasicBlock *X) const {
+    for (unsigned i = 0, e = BasicBlocks.size(); i != e; ++i)
+      if (BasicBlocks[i] == X)
+        return i;
+    return -1;
+  }
 
-  /// dump - Debugger convenience method; writes trace to standard error
-  /// output stream.
+  /// contains - Returns true if this trace contains the given basic
+  /// block.
   ///
-  void dump () const;
+  bool contains(const BasicBlock *X) const {
+    return getBlockIndex(X) != -1;
+  }
+
+  /// Returns true if B1 occurs before B2 in the trace, or if it is the same
+  /// block as B2..  Both blocks must be in the trace.
+  ///
+  bool dominates(const BasicBlock *B1, const BasicBlock *B2) const {
+    int B1Idx = getBlockIndex(B1), B2Idx = getBlockIndex(B2);
+    assert(B1Idx != -1 && B2Idx != -1 && "Block is not in the trace!");
+    return B1Idx <= B2Idx;
+  }
 
   // BasicBlock iterators...
   typedef BasicBlockListType::iterator iterator;
@@ -90,15 +101,14 @@ public:
   unsigned                 size() const { return BasicBlocks.size(); }
   bool                    empty() const { return BasicBlocks.empty(); }
 
-  BasicBlock *operator[] (unsigned i) const { return BasicBlocks[i]; }
-  BasicBlock *getBlock (unsigned i)   const { return BasicBlocks[i]; }
-
-  /// Returns true if B1 and B2 appear on a path from START to an exit
-  /// block => B1 appears before B2. If START is not provided, defaults
-  /// to 0, which means use getEntryBasicBlock().
+  /// print - Write trace to output stream.
   ///
-  bool dominates (const BasicBlock *B1, const BasicBlock *B2,
-		  const BasicBlock *start = 0);
+  void print (std::ostream &O) const;
+
+  /// dump - Debugger convenience method; writes trace to standard error
+  /// output stream.
+  ///
+  void dump () const;
 };
 
 } // end namespace llvm
