@@ -383,10 +383,8 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
         }
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
         AlphaLowering.restoreGP(BB);
-        if (DestType == MVT::f64) {
-          BuildMI(BB, Alpha::LDT_SYM, 1, Result).addConstantPoolIndex(CP->getIndex());
-        } else {
-          BuildMI(BB, Alpha::LDS_SYM, 1, Result).addConstantPoolIndex(CP->getIndex());
+        Opc = DestType == MVT::f64 ? Alpha::LDT_SYM : Alpha::LDS_SYM;
+        BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
         }
       }
       else
@@ -846,7 +844,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
             BuildMI(BB, Alpha::CMPEQ, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
             //and invert
             BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Alpha::R31).addReg(Tmp3);
-	    //BuildMI(BB,Alpha::ORNOT, 2, Result).addReg(Alpha::R31).addReg(Tmp3);
             return Result;
           }
           }
