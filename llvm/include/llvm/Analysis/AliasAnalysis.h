@@ -34,22 +34,22 @@ struct AliasAnalysis {
   /// other.  This is the interface that must be implemented by specific alias
   /// analysis implementations.
   ///
-  virtual Result alias(const Value *V1, const Value *V2) const = 0;
+  virtual Result alias(const Value *V1, const Value *V2) = 0;
 
   /// canCallModify - Return a Result that indicates whether the specified
   /// function call can modify the memory location pointed to by Ptr.
   ///
-  virtual Result canCallModify(const CallInst &CI, const Value *Ptr) const = 0;
+  virtual Result canCallModify(const CallInst &CI, const Value *Ptr) = 0;
 
   /// canInvokeModify - Return a Result that indicates whether the specified
   /// function invoke can modify the memory location pointed to by Ptr.
   ///
-  virtual Result canInvokeModify(const InvokeInst &I, const Value *Ptr) const=0;
+  virtual Result canInvokeModify(const InvokeInst &I, const Value *Ptr) = 0;
 
   /// canBasicBlockModify - Return true if it is possible for execution of the
   /// specified basic block to modify the value pointed to by Ptr.
   ///
-  bool canBasicBlockModify(const BasicBlock &BB, const Value *Ptr) const;
+  bool canBasicBlockModify(const BasicBlock &BB, const Value *Ptr);
 
   /// canInstructionRangeModify - Return true if it is possible for the
   /// execution of the specified instructions to modify the value pointed to by
@@ -57,7 +57,7 @@ struct AliasAnalysis {
   /// range of [I1,I2] INCLUSIVE.  I1 and I2 must be in the same basic block.
   ///
   bool canInstructionRangeModify(const Instruction &I1, const Instruction &I2,
-                                 const Value *Ptr) const;
+                                 const Value *Ptr);
 
   virtual ~AliasAnalysis();  // We want to be subclassed
 };

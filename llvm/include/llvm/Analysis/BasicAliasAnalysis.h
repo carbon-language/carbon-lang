@@ -16,17 +16,17 @@ struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
 
   // alias - This is the only method here that does anything interesting...
   //
-  Result alias(const Value *V1, const Value *V2) const;
+  Result alias(const Value *V1, const Value *V2);
     
   /// canCallModify - We are not interprocedural, so we do nothing exciting.
   ///
-  Result canCallModify(const CallInst &CI, const Value *Ptr) const {
+  Result canCallModify(const CallInst &CI, const Value *Ptr) {
     return MayAlias;
   }
     
   /// canInvokeModify - We are not interprocedural, so we do nothing exciting.
   ///
-  Result canInvokeModify(const InvokeInst &I, const Value *Ptr) const {
+  Result canInvokeModify(const InvokeInst &I, const Value *Ptr) {
     return MayAlias;  // We are not interprocedural
   }
 };

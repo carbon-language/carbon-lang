@@ -34,10 +34,10 @@ static RegisterAnalysisGroup<AliasAnalysis> X("Alias Analysis");
 //
 namespace {
   struct CanModify : public InstVisitor<CanModify, bool> {
-    const AliasAnalysis &AA;
+    AliasAnalysis &AA;
     const Value *Ptr;
 
-    CanModify(const AliasAnalysis *aa, const Value *ptr)
+    CanModify(AliasAnalysis *aa, const Value *ptr)
       : AA(*aa), Ptr(ptr) {}
 
     bool visitInvokeInst(InvokeInst &II) {
@@ -66,7 +66,7 @@ AliasAnalysis::~AliasAnalysis() {}
 /// specified basic block to modify the value pointed to by Ptr.
 ///
 bool AliasAnalysis::canBasicBlockModify(const BasicBlock &bb,
-                                        const Value *Ptr) const {
+                                        const Value *Ptr) {
   CanModify CM(this, Ptr);
   BasicBlock &BB = const_cast<BasicBlock&>(bb);
 
@@ -84,7 +84,7 @@ bool AliasAnalysis::canBasicBlockModify(const BasicBlock &bb,
 ///
 bool AliasAnalysis::canInstructionRangeModify(const Instruction &I1,
                                               const Instruction &I2,
-                                              const Value *Ptr) const {
+                                              const Value *Ptr) {
   assert(I1.getParent() == I2.getParent() &&
          "Instructions not in same basic block!");
   CanModify CM(this, Ptr);
@@ -144,7 +144,7 @@ static const Value *getUnderlyingObject(const Value *V) {
 // Hopefully we have a smart C++ compiler.  :)
 //
 AliasAnalysis::Result BasicAliasAnalysis::alias(const Value *V1,
-                                                const Value *V2) const {
+                                                const Value *V2) {
   // Strip off constant pointer refs if they exist
   if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V1))
     V1 = CPR->getValue();
