@@ -292,6 +292,7 @@ void RA::processActiveIntervals(unsigned CurPoint)
 void RA::processInactiveIntervals(unsigned CurPoint)
 {
   DEBUG(std::cerr << "\tprocessing inactive intervals:\n");
+
   for (unsigned i = 0, e = inactive_.size(); i != e; ++i) {
     LiveInterval *Interval = inactive_[i].first;
     LiveInterval::iterator IntervalPos = inactive_[i].second;
@@ -363,6 +364,8 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
   spillWeights_.assign(mri_->getNumRegs(), 0.0);
 
+  unsigned StartPosition = cur->beginNumber();
+
   // for each interval in active update spill weights
   for (IntervalPtrs::const_iterator i = active_.begin(), e = active_.end();
        i != e; ++i) {
@@ -387,13 +390,17 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
   // For every interval in fixed we overlap with, mark the register as not free
   // and update spill weights.
-  for (IntervalPtrs::const_iterator i = fixed_.begin(),
-         e = fixed_.end(); i != e; ++i)
-    if (cur->overlapsFrom(*i->first, i->second)) {
-      unsigned reg = i->first->reg;
+  for (unsigned i = 0, e = fixed_.size(); i != e; ++i) {
+    IntervalPtr &IP = fixed_[i];
+    LiveInterval *I = IP.first;
+    LiveInterval::iterator II = I->advanceTo(IP.second, StartPosition);
+    IP.second = II;
+    if (cur->overlapsFrom(*I, II)) {
+      unsigned reg = I->reg;
       prt_->addRegUse(reg);
-      updateSpillWeights(reg, i->first->weight);
+      updateSpillWeights(reg, I->weight);
     }
+  }
 
   unsigned physReg = getFreePhysReg(cur);
   // restore the physical register tracker
