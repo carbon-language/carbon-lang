@@ -38,7 +38,7 @@ namespace {
     }
     
     bool runOnFunction(Function &F) {
-      MachineFunction::construct(&F, Target);
+      MachineFunction::construct(&F, Target).CalculateArgSize();
       return false;
     }
   };
@@ -173,7 +173,6 @@ SizeToAlignment(unsigned int size, const TargetMachine& target)
 }
 
 
-/*ctor*/
 MachineFunction::MachineFunction(const Function *F,
                                  const TargetMachine& target)
   : Annotation(MF_AID),
@@ -183,10 +182,13 @@ MachineFunction::MachineFunction(const Function *F,
     currentTmpValuesSize(0), maxTmpValuesSize(0), compiledAsLeaf(false),
     spillsAreaFrozen(false), automaticVarsAreaFrozen(false)
 {
-  maxOptionalArgsSize = ComputeMaxOptionalArgsSize(target, Fn,
+}
+
+void MachineFunction::CalculateArgSize() {
+  maxOptionalArgsSize = ComputeMaxOptionalArgsSize(Target, Fn,
                                                    maxOptionalNumArgs);
   staticStackSize = maxOptionalArgsSize
-                    + target.getFrameInfo().getMinStackFrameSize();
+    + Target.getFrameInfo().getMinStackFrameSize();
 }
 
 int
