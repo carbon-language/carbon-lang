@@ -1,21 +1,21 @@
 POD = $(wildcard *.pod)
-HTML = $(patsubst %.pod, %.html, $(POD))
-MAN = $(patsubst %.pod, %.1, $(POD))
-PS = $(patsubst %.pod, %.ps, $(POD))
+HTML = $(patsubst %.pod, html/%.html, $(POD))
+MAN = $(patsubst %.pod, man/man1/%.1, $(POD))
+PS = $(patsubst %.pod, ps/%.ps, $(POD))
 
 all: $(HTML) $(MAN) $(PS)
 
 .SUFFIXES:
 .SUFFIXES: .html .pod .1 .ps
 
-%.html: %.pod
-	pod2html --css=http://www.perldoc.com/css/perldoc.css \
-		--podpath=/`pwd` --noindex --infile=$< --outfile=$@
+html/%.html: %.pod
+	pod2html --css=manpage.css --htmlroot=. \
+		--podpath=. --noindex --infile=$< --outfile=$@
 
-%.1: %.pod
+man/man1/%.1: %.pod
 	pod2man --release=1.3 --center="LLVM User's Guide" $< $@
 
-%.ps: %.1
+ps/%.ps: man/man1/%.1
 	groff -Tps -man $< > $@
 
 clean:
