@@ -373,11 +373,15 @@ ChooseRegOrImmed(Value* val,
   else if (CPV->getType()->isSigned())
     intValue = cast<ConstantSInt>(CPV)->getValue();
   else
-    {
-      assert(CPV->getType()->isUnsigned() && "Not pointer, bool, or integer?");
-      uint64_t V = cast<ConstantUInt>(CPV)->getValue();
-      if (V >= INT64_MAX) return MachineOperand::MO_VirtualRegister;
-      intValue = (int64_t) V;
+    { // get the int value and sign-extend if original was less than 64 bits
+      intValue = (int64_t) cast<ConstantUInt>(CPV)->getValue();
+      switch(CPV->getType()->getPrimitiveID())
+        {
+        case Type::UByteTyID:  intValue = (int64_t) (int8_t) intValue; break;
+        case Type::UShortTyID: intValue = (int64_t) (short)  intValue; break;
+        case Type::UIntTyID:   intValue = (int64_t) (int)    intValue; break;
+        default: break;
+        }
     }
 
   return ChooseRegOrImmed(intValue, CPV->getType()->isSigned(),
