@@ -20,22 +20,30 @@
 // chain..
 // FIXME: This should not take a FunctionRepBuilder as an argument!
 //
-ShadowDSNode *ShadowDSNode::synthesizeNode(const Type *Ty,
-                                           FunctionRepBuilder *Rep) {
+ShadowDSNode *DSNode::synthesizeNode(const Type *Ty,
+                                     FunctionRepBuilder *Rep) {
   // If we are a derived shadow node, defer to our parent to synthesize the node
-  if (ShadowParent) return ShadowParent->synthesizeNode(Ty, Rep);
+  if (ShadowDSNode *Th = dyn_cast<ShadowDSNode>(this))
+    if (Th->getShadowParent())
+      return Th->getShadowParent()->synthesizeNode(Ty, Rep);
 
   // See if we have already synthesized a node of this type...
   for (unsigned i = 0, e = SynthNodes.size(); i != e; ++i)
     if (SynthNodes[i].first == Ty) return SynthNodes[i].second;
 
   // No we haven't.  Do so now and add it to our list of saved nodes...
-  ShadowDSNode *SN = new ShadowDSNode(Ty, Mod, this);
+  ShadowDSNode *SN = Rep->makeSynthesizedShadow(Ty, this);
   SynthNodes.push_back(make_pair(Ty, SN));
-  Rep->addShadowNode(SN);
   return SN;
 }
 
+ShadowDSNode *FunctionRepBuilder::makeSynthesizedShadow(const Type *Ty,
+                                                        DSNode *Parent) {
+  ShadowDSNode *Result = new ShadowDSNode(Ty, F->getFunction()->getParent(),
+                                          Parent);
+  ShadowNodes.push_back(Result);
+  return Result;
+}
 
 
 
@@ -195,7 +203,6 @@ PointerVal FunctionRepBuilder::getIndexedPointerDest(const PointerVal &InP,
 
 static PointerValSet &getField(const PointerVal &DestPtr) {
   assert(DestPtr.Node != 0);
-
   return DestPtr.Node->getLink(DestPtr.Index);
 }
 
@@ -232,8 +239,8 @@ void FunctionRepBuilder::visitReturnInst(ReturnInst *RI) {
 
 void FunctionRepBuilder::visitLoadInst(LoadInst *LI) {
   // Only loads that return pointers are interesting...
-  if (!isa<PointerType>(LI->getType())) return;
-  const PointerType *DestTy = cast<PointerType>(LI->getType());
+  const PointerType *DestTy = dyn_cast<PointerType>(LI->getType());
+  if (DestTy == 0) return;
 
   const PointerValSet &SrcPVS = ValueMap[LI->getOperand(0)];        
   PointerValSet &LIPVS = ValueMap[LI];
@@ -245,12 +252,12 @@ void FunctionRepBuilder::visitLoadInst(LoadInst *LI) {
 
     if (Field.size()) {             // Field loaded wasn't null?
       Changed |= LIPVS.add(Field);
-    } else if (ShadowDSNode *Shad = dyn_cast<ShadowDSNode>(Ptr.Node)) {
+    } else {
       // If we are loading a null field out of a shadow node, we need to
       // synthesize a new shadow node and link it in...
       //
       ShadowDSNode *SynthNode =
-        Shad->synthesizeNode(DestTy->getElementType(), this);
+        Ptr.Node->synthesizeNode(DestTy->getElementType(), this);
       Field.add(SynthNode);
 
       Changed |= LIPVS.add(Field);

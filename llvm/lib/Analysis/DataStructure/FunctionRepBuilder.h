@@ -12,7 +12,7 @@
 #include "llvm/Support/InstVisitor.h"
 
 // DEBUG_DATA_STRUCTURE_CONSTRUCTION - Define this to 1 if you want debug output
-#define DEBUG_DATA_STRUCTURE_CONSTRUCTION 0
+//#define DEBUG_DATA_STRUCTURE_CONSTRUCTION 1
 
 class FunctionRepBuilder;
 
@@ -82,7 +82,8 @@ public:
   const std::vector<GlobalDSNode*> &getGlobalNodes() const {return GlobalNodes;}
   const std::vector<CallDSNode*>   &getCallNodes() const { return CallNodes; }
 
-  void addShadowNode(ShadowDSNode *SN) { ShadowNodes.push_back(SN); }
+
+  ShadowDSNode *makeSynthesizedShadow(const Type *Ty, DSNode *Parent);
 
   const PointerValSet &getRetNode() const { return RetNode; }
 
@@ -96,12 +97,12 @@ private:
     // While the worklist still has instructions to process, process them!
     while (!WorkList.empty()) {
       Instruction *I = WorkList.back(); WorkList.pop_back();
-#if DEBUG_DATA_STRUCTURE_CONSTRUCTION
+#ifdef DEBUG_DATA_STRUCTURE_CONSTRUCTION
       cerr << "Processing worklist inst: " << I;
 #endif
     
       visit(I);  // Dispatch to a visitXXX function based on instruction type...
-#if DEBUG_DATA_STRUCTURE_CONSTRUCTION
+#ifdef DEBUG_DATA_STRUCTURE_CONSTRUCTION
       if (I->hasName() && ValueMap.count(I)) {
         cerr << "Inst %" << I->getName() << " value is:\n";
         ValueMap[I].print(cerr);

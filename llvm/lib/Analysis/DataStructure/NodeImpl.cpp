@@ -208,6 +208,13 @@ void DSNode::mapNode(map<const DSNode*, DSNode*> &NodeMap, const DSNode *Old) {
          "Cloned nodes do not have the same number of links!");
   for (unsigned j = 0, je = FieldLinks.size(); j != je; ++j)
     MapPVS(FieldLinks[j], Old->FieldLinks[j], NodeMap);
+
+  // Map our SynthNodes...
+  assert(SynthNodes.empty() && "Synthnodes already mapped?");
+  SynthNodes.reserve(Old->SynthNodes.size());
+  for (unsigned i = 0, e = Old->SynthNodes.size(); i != e; ++i)
+    SynthNodes.push_back(std::make_pair(Old->SynthNodes[i].first,
+                    (ShadowDSNode*)NodeMap[Old->SynthNodes[i].second]));
 }
 
 AllocDSNode::AllocDSNode(AllocationInst *V)
@@ -251,7 +258,7 @@ ShadowDSNode::ShadowDSNode(const Type *Ty, Module *M) : DSNode(ShadowNode, Ty) {
   ShadowParent = 0;
 }
 
-ShadowDSNode::ShadowDSNode(const Type *Ty, Module *M, ShadowDSNode *ShadParent)
+ShadowDSNode::ShadowDSNode(const Type *Ty, Module *M, DSNode *ShadParent)
   : DSNode(ShadowNode, Ty) {
   Mod = M;
   ShadowParent = ShadParent;
@@ -263,20 +270,6 @@ std::string ShadowDSNode::getCaption() const {
   WriteTypeSymbolic(OS, getType(), Mod);
   return OS.str();
 }
-
-void ShadowDSNode::mapNode(map<const DSNode*, DSNode*> &NodeMap,
-                           const DSNode *O) {
-  const ShadowDSNode *Old = (ShadowDSNode*)O;
-  DSNode::mapNode(NodeMap, Old);  // Map base portions first...
-
-  // Map our SynthNodes...
-  assert(SynthNodes.empty() && "Synthnodes already mapped?");
-  SynthNodes.reserve(Old->SynthNodes.size());
-  for (unsigned i = 0, e = Old->SynthNodes.size(); i != e; ++i)
-    SynthNodes.push_back(std::make_pair(Old->SynthNodes[i].first,
-                    (ShadowDSNode*)NodeMap[Old->SynthNodes[i].second]));
-}
-
 
 CallDSNode::CallDSNode(CallInst *ci) : DSNode(CallNode, ci->getType()), CI(ci) {
   unsigned NumPtrs = 0;
