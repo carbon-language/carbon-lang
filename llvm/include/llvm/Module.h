@@ -93,6 +93,11 @@ public:
   inline const Method            *back() const { return MethodList.back(); }
   inline       Method            *back()       { return MethodList.back(); }
 
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const Module *T) { return true; }
+  static inline bool isa(const Value *V) {
+    return V->getValueType() == Value::ModuleVal;
+  }
 
   // dropAllReferences() - This function causes all the subinstructions to "let
   // go" of all references that they are maintaining.  This allows one to

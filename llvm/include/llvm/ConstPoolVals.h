@@ -32,6 +32,12 @@ public:
 
   // Static constructor to get a '0' constant of arbitrary type...
   static ConstPoolVal *getNullConstant(const Type *Ty);
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const ConstPoolVal *) { return true; }
+  static inline bool isa(const Value *V) {
+    return V->getValueType() == Value::ConstantVal;
+  }
 };
 
 

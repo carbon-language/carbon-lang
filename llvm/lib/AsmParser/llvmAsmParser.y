@@ -408,7 +408,13 @@ static void setValueName(Value *V, char *NameStr) {
 	return;
       }
 
-    // Otherwise, we are a simple redefinition of a value, baaad
+    // Otherwise, we are a simple redefinition of a value, check to see if it
+    // is defined the same as the old one...
+    if (const Type *Ty = dyn_cast<const Type>(Existing)) {
+      if (Ty == cast<const Type>(V)) return;  // Yes, it's equal.
+    } else {
+
+    }
     ThrowException("Redefinition of value name '" + Name + "' in the '" +
 		   V->getType()->getDescription() + "' type plane!");
   }
@@ -996,7 +1002,7 @@ MethodHeaderH : TypesV STRINGCONSTANT '(' ArgList ')' {
   Method *M = 0;
   if (SymbolTable *ST = CurModule.CurrentModule->getSymbolTable()) {
     if (Value *V = ST->lookup(MT, $2)) {  // Method already in symtab?
-      M = V->castMethodAsserting();
+      M =  cast<Method>(V);
 
       // Yes it is.  If this is the case, either we need to be a forward decl,
       // or it needs to be.
@@ -1136,16 +1142,16 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     $$ = new ReturnInst();
   }
   | BR LABEL ValueRef {                         // Unconditional Branch...
-    $$ = new BranchInst(getVal(Type::LabelTy, $3)->castBasicBlockAsserting());
+    $$ = new BranchInst(cast<BasicBlock>(getVal(Type::LabelTy, $3)));
   }                                                  // Conditional Branch...
   | BR BOOL ValueRef ',' LABEL ValueRef ',' LABEL ValueRef {  
-    $$ = new BranchInst(getVal(Type::LabelTy, $6)->castBasicBlockAsserting(), 
-			getVal(Type::LabelTy, $9)->castBasicBlockAsserting(),
+    $$ = new BranchInst(cast<BasicBlock>(getVal(Type::LabelTy, $6)), 
+			cast<BasicBlock>(getVal(Type::LabelTy, $9)),
 			getVal(Type::BoolTy, $3));
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' JumpTable ']' {
     SwitchInst *S = new SwitchInst(getVal($2, $3), 
-                          getVal(Type::LabelTy, $6)->castBasicBlockAsserting());
+                                   cast<BasicBlock>(getVal(Type::LabelTy, $6)));
     $$ = S;
 
     list<pair<ConstPoolVal*, BasicBlock*> >::iterator I = $8->begin(), 
@@ -1160,7 +1166,7 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");
 
-    $$->push_back(make_pair(V, getVal($5, $6)->castBasicBlockAsserting()));
+    $$->push_back(make_pair(V, cast<BasicBlock>(getVal($5, $6))));
   }
   | IntType ConstValueRef ',' LABEL ValueRef {
     $$ = new list<pair<ConstPoolVal*, BasicBlock*> >();
@@ -1169,7 +1175,7 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");
 
-    $$->push_back(make_pair(V, getVal($4, $5)->castBasicBlockAsserting()));
+    $$->push_back(make_pair(V, cast<BasicBlock>(getVal($4, $5))));
   }
 
 Inst : OptAssign InstVal {
@@ -1182,13 +1188,13 @@ Inst : OptAssign InstVal {
 PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
     $$ = new list<pair<Value*, BasicBlock*> >();
     $$->push_back(make_pair(getVal(*$1, $3), 
-			 getVal(Type::LabelTy, $5)->castBasicBlockAsserting()));
+                            cast<BasicBlock>(getVal(Type::LabelTy, $5))));
     delete $1;
   }
   | PHIList ',' '[' ValueRef ',' ValueRef ']' {
     $$ = $1;
     $1->push_back(make_pair(getVal($1->front().first->getType(), $4),
-			 getVal(Type::LabelTy, $6)->castBasicBlockAsserting()));
+                            cast<BasicBlock>(getVal(Type::LabelTy, $6))));
   }
 
 
@@ -1238,7 +1244,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
   | CALL TypesV ValueRef '(' ValueRefListE ')' {
     const MethodType *Ty;
 
-    if (!(Ty = (*$2)->dyncastMethodType())) {
+    if (!(Ty = dyn_cast<MethodType>($2->get()))) {
       // Pull out the types of all of the arguments...
       vector<const Type*> ParamTypes;
       for (list<Value*>::iterator I = $5->begin(), E = $5->end(); I != E; ++I)
@@ -1251,7 +1257,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
 
     // Create the call node...
     if (!$5) {                                   // Has no arguments?
-      $$ = new CallInst(V->castMethodAsserting(), vector<Value*>());
+      $$ = new CallInst(cast<Method>(V), vector<Value*>());
     } else {                                     // Has arguments?
       // Loop through MethodType's arguments and ensure they are specified
       // correctly!
@@ -1268,7 +1274,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
 	ThrowException("Invalid number of parameters detected!");
 
-      $$ = new CallInst(V->castMethodAsserting(),
+      $$ = new CallInst(cast<Method>(V),
 			vector<Value*>($5->begin(), $5->end()));
     }
     delete $5;

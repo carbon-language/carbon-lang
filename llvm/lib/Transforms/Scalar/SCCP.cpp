@@ -127,7 +127,7 @@ private:
   //
   inline bool markOverdefined(Value *V) {
     if (ValueState[V].markOverdefined()) {
-      if (Instruction *I = V->castInstruction()) {
+      if (Instruction *I = dyn_cast<Instruction>(V)) {
 	//cerr << "markOverdefined: " << V;
 	InstWorkList.push_back(I);  // Only instructions go on the work list
       }
@@ -497,7 +497,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
 //
 void SCCP::OperandChangedState(User *U) {
   // Only instructions use other variable values!
-  Instruction *I = U->castInstructionAsserting();
+  Instruction *I = cast<Instruction>(U);
   if (!BBExecutable.count(I->getParent())) return;  // Inst not executable yet!
 
   UpdateInstruction(I);

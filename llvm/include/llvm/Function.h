@@ -92,6 +92,11 @@ public:
   inline       BasicBlock        *back()       { return BasicBlocks.back(); }
 
 
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const Method *T) { return true; }
+  static inline bool isa(const Value *V) {
+    return V->getValueType() == Value::MethodVal;
+  }
 
   // dropAllReferences() - This function causes all the subinstructions to "let
   // go" of all references that they are maintaining.  This allows one to

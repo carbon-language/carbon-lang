@@ -77,9 +77,7 @@ public:
   // Methods for determining the subtype of this Value.  The getValueType()
   // method returns the type of the value directly.  The cast*() methods are
   // equivalent to using dynamic_cast<>... if the cast is successful, this is
-  // returned, otherwise you get a null pointer, allowing expressions like:
-  //
-  // if (Instruction *I = Val->castInstruction()) { ... }
+  // returned, otherwise you get a null pointer.
   //
   // This section also defines a family of isType, isConstant,
   // isMethodArgument, etc functions...
@@ -197,6 +195,9 @@ public:
   inline       ValueSubclass *operator->()       { return Val; }
   inline const ValueSubclass *operator->() const { return Val; }
 
+  inline       ValueSubclass *get()       { return Val; }
+  inline const ValueSubclass *get() const { return Val; }
+
   inline UseTy<ValueSubclass> &operator=(const UseTy<ValueSubclass> &user) {
     if (Val) Val->killUse(U);
     Val = user.Val;
@@ -207,6 +208,13 @@ public:
 
 typedef UseTy<Value> Use;    // Provide Use as a common UseTy type
 
+// real_type - Provide a macro to get the real type of a value that might be 
+// a use.  This provides a typedef 'Type' that is the argument type for all
+// non UseTy types, and is the contained pointer type of the use if it is a
+// UseTy.
+//
+template <class X> class real_type { typedef X Type; };
+template <class X> class real_type <class UseTy<X> > { typedef X *Type; };
 
 //===----------------------------------------------------------------------===//
 //                          Type Checking Templates
@@ -218,7 +226,7 @@ typedef UseTy<Value> Use;    // Provide Use as a common UseTy type
 //  if (isa<Type>(myVal)) { ... }
 //
 template <class X, class Y>
-bool isa(Y *Val) { return X::isa(Val); }
+bool isa(Y Val) { return X::isa(Val); }
 
 
 // cast<X> - Return the argument parameter cast to the specified type.  This
@@ -229,9 +237,9 @@ bool isa(Y *Val) { return X::isa(Val); }
 //  cast<const Instruction>(myVal)->getParent()
 //
 template <class X, class Y>
-X *cast(Y *Val) {
+X *cast(Y Val) {
   assert(isa<X>(Val) && "Invalid cast argument type!");
-  return (X*)Val;
+  return (X*)(real_type<Y>::Type)Val;
 }
 
 
@@ -242,9 +250,10 @@ X *cast(Y *Val) {
 //
 //  if (const Instruction *I = dyn_cast<const Instruction>(myVal)) { ... }
 //
+
 template <class X, class Y>
-X *dyn_cast(Y *Val) {
-  return isa<X>(Val) ? (X*)Val : 0;
+X *dyn_cast(Y Val) {
+  return isa<X>(Val) ? cast<X>(Val) : 0;
 }
 
 #endif

@@ -535,7 +535,7 @@ SchedGraph::addSSAEdge(SchedGraphNode* node,
   if (!val->isInstruction()) return;
   
   const Instruction* thisVMInstr = node->getInstr();
-  const Instruction* defVMInstr  = val->castInstructionAsserting();
+  const Instruction* defVMInstr  = cast<const Instruction>(val);
   
   // Phi instructions are the only ones that produce a value but don't get
   // any non-dummy machine instructions.  Return here as an optimization.

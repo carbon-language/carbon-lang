@@ -233,7 +233,7 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
     return Expr;
   }
   
-  Instruction *I = Expr->castInstructionAsserting();
+  Instruction *I = cast<Instruction>(Expr);
   const Type *Ty = I->getType();
 
   switch (I->getOpcode()) {       // Handle each instruction type seperately

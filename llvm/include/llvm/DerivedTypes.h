@@ -121,6 +121,16 @@ public:
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 
   static MethodType *get(const Type *Result, const vector<const Type*> &Params);
+
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const MethodType *T) { return true; }
+  static inline bool isa(const Type *T) {
+    return T->getPrimitiveID() == MethodTyID;
+  }
+  static inline bool isa(const Value *V) {
+    return ::isa<Type>(V) && MethodType::isa(cast<const Type>(V));
+  }
 };
 
 

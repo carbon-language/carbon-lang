@@ -144,7 +144,7 @@ bool Interpreter::callMethod(const string &Name) {
   if (PickedMeth == 0)
     return true;
 
-  Method *M = PickedMeth->castMethodAsserting();
+  Method *M = cast<Method>(PickedMeth);
 
   vector<GenericValue> Args;
   // TODO, get args from user...

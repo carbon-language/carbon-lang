@@ -96,9 +96,9 @@ public:
   // terminator instruction.
   //
   virtual const BasicBlock *getSuccessor(unsigned i) const {
-    return (i == 0) ? Operands[0]->castBasicBlockAsserting() : 
+    return (i == 0) ? cast<const BasicBlock>(Operands[0]) : 
           ((i == 1 && Operands.size() > 1) 
-               ? Operands[1]->castBasicBlockAsserting() : 0);
+               ? cast<const BasicBlock>(Operands[1]) : 0);
   }
   inline BasicBlock *getSuccessor(unsigned idx) {
     return (BasicBlock*)((const BranchInst *)this)->getSuccessor(idx);
@@ -127,10 +127,10 @@ public:
   inline const Value *getCondition() const { return Operands[0]; }
   inline       Value *getCondition()       { return Operands[0]; }
   inline const BasicBlock *getDefaultDest() const {
-    return Operands[1]->castBasicBlockAsserting();
+    return cast<const BasicBlock>(Operands[1]);
   }
   inline       BasicBlock *getDefaultDest()       {
-    return Operands[1]->castBasicBlockAsserting();
+    return cast<BasicBlock>(Operands[1]);
   }
 
   void dest_push_back(ConstPoolVal *OnVal, BasicBlock *Dest);
@@ -143,11 +143,11 @@ public:
   //
   virtual const BasicBlock *getSuccessor(unsigned idx) const {
     if (idx >= Operands.size()/2) return 0;
-    return Operands[idx*2+1]->castBasicBlockAsserting();
+    return cast<const BasicBlock>(Operands[idx*2+1]);
   }
   inline BasicBlock *getSuccessor(unsigned idx) {
     if (idx >= Operands.size()/2) return 0;
-    return Operands[idx*2+1]->castBasicBlockAsserting();
+    return cast<BasicBlock>(Operands[idx*2+1]);
   }
 
   // getSuccessorValue - Return the value associated with the specified

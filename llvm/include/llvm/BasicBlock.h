@@ -109,6 +109,12 @@ public:
   const InstListType &getInstList() const { return InstList; }
         InstListType &getInstList()       { return InstList; }
 
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const BasicBlock *BB) { return true; }
+  static inline bool isa(const Value *V) {
+    return V->getValueType() == Value::BasicBlockVal;
+  }
+
   // hasConstantPoolReferences() - This predicate is true if there is a 
   // reference to this basic block in the constant pool for this method.  For
   // example, if a block is reached through a switch table, that table resides
@@ -163,7 +169,7 @@ public:
       // TODO: This is bad
       // Loop to ignore constant pool references
       while (It != BB->use_end() && 
-             ((!isa<Instruction>(*It)) ||
+             (((*It)->getValueType() != Value::InstructionVal) ||
               !(((Instruction*)(*It))->isTerminator())))
         ++It;
     }

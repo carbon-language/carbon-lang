@@ -80,26 +80,26 @@ public:
     return getValue()->castConstantAsserting();
   }
   inline BasicBlock *getBasicBlock() {
-    return getValue()->castBasicBlockAsserting();
+    return cast<BasicBlock>(getValue());
   }
   inline const BasicBlock *getBasicBlock() const {
-    return getValue()->castBasicBlockAsserting();
+    return cast<const BasicBlock>(getValue());
   }
   inline Instruction *getInstruction() {
     assert(isInstruction() && "getInstruction() on non instruction node!");
-    return getValue()->castInstructionAsserting();
+    return cast<Instruction>(getValue());
   }
   inline const Instruction *getInstruction() const {
     assert(isInstruction() && "getInstruction() on non instruction node!");
-    return getValue()->castInstructionAsserting();
+    return cast<Instruction>(getValue());
   }
   inline Instruction *getTemporary() {
     assert(isTemporary() && "getTemporary() on non temporary node!");
-    return getValue()->castInstructionAsserting();
+    return cast<Instruction>(getValue());
   }
   inline const Instruction *getTemporary() const {
     assert(isTemporary() && "getTemporary() on non temporary node!");
-    return getValue()->castInstructionAsserting();
+    return cast<Instruction>(getValue());
   }
 
 public:
@@ -216,7 +216,7 @@ inline ostream &operator<<(ostream &o, const InstForest<Payload> &IF) {
 template <class Payload>
 bool InstTreeNode<Payload>::CanMergeInstIntoTree(Instruction *I) {
   if (I->use_size() > 1) return false;
-  return I->getParent() == getValue()->castInstructionAsserting()->getParent();
+  return I->getParent() == cast<Instruction>(getValue())->getParent();
 }
 
 
@@ -244,7 +244,7 @@ InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
   }
 
   // Must be an instruction then... see if we can include it in this tree!
-  Instruction *I = V->castInstructionAsserting();
+  Instruction *I = cast<Instruction>(V);
   if (Parent && !Parent->CanMergeInstIntoTree(I)) {
     // Not root node of tree, but mult uses?
     getTreeData().first.second = TemporaryNode;   // Must be a temporary!
@@ -264,10 +264,10 @@ InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
   // 
   for (Instruction::op_iterator OI = I->op_begin(); OI != I->op_end(); ++OI) {
     Value *Operand = *OI;
-    InstTreeNode<Payload> *IN = IF.getInstNode(Operand->castInstruction());
-    if (IN && CanMergeInstIntoTree(Operand->castInstructionAsserting())) {
+    InstTreeNode<Payload> *IN = IF.getInstNode(dyn_cast<Instruction>(Operand));
+    if (IN && CanMergeInstIntoTree(cast<Instruction>(Operand))) {
       Children.push_back(IN);
-      IF.removeInstFromRootList(Operand->castInstructionAsserting());
+      IF.removeInstFromRootList(cast<Instruction>(Operand));
     } else {
       // No node for this child yet... create one now!
       Children.push_back(new InstTreeNode(IF, *OI, this));

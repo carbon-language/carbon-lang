@@ -85,8 +85,8 @@ bool opt::ConstantFoldTerminator(TerminatorInst *T) {
   if (T->getOpcode() == Instruction::Br) {
     BranchInst *BI = (BranchInst*)T;
     if (BI->isUnconditional()) return false;  // Can't optimize uncond branch
-    BasicBlock *Dest1 = BI->getOperand(0)->castBasicBlockAsserting();
-    BasicBlock *Dest2 = BI->getOperand(1)->castBasicBlockAsserting();
+    BasicBlock *Dest1 = cast<BasicBlock>(BI->getOperand(0));
+    BasicBlock *Dest2 = cast<BasicBlock>(BI->getOperand(1));
 
     if (BI->getCondition()->isConstant()) {    // Are we branching on constant?
       // YES.  Change to unconditional branch...

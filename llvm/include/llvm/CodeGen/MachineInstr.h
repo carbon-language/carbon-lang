@@ -402,7 +402,7 @@ public:
   // and inlining it avoids a serious circurality in link order.
   inline void dropAllReferences() {
     for (unsigned i=0, N=tempVec.size(); i < N; i++)
-      if (Instruction *I = tempVec[i]->castInstruction())
+      if (Instruction *I = dyn_cast<Instruction>(tempVec[i]))
         I->dropAllReferences();
   }
 };

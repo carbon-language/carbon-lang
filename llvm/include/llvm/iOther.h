@@ -43,10 +43,10 @@ public:
 
   // getIncomingBlock - Return incoming basic block #x
   inline const BasicBlock *getIncomingBlock(unsigned i) const { 
-    return Operands[i*2+1]->castBasicBlockAsserting();
+    return cast<const BasicBlock>(Operands[i*2+1]);
   }
   inline BasicBlock *getIncomingBlock(unsigned i) { 
-    return Operands[i*2+1]->castBasicBlockAsserting();
+    return cast<BasicBlock>(Operands[i*2+1]);
   }
 
   // addIncoming - Add an incoming value to the end of the PHI list
@@ -103,6 +103,12 @@ public:
 
   inline const Method *getParent() const { return Parent; }
   inline       Method *getParent()       { return Parent; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const MethodArgument *) { return true; }
+  static inline bool isa(const Value *V) {
+    return V->getValueType() == MethodArgumentVal;
+  }
 };
 
 
@@ -122,10 +128,10 @@ public:
 
 
   const Method *getCalledMethod() const {
-    return Operands[0]->castMethodAsserting(); 
+    return cast<Method>(Operands[0]);
   }
   Method *getCalledMethod() {
-    return Operands[0]->castMethodAsserting(); 
+    return  cast<Method>(Operands[0]); 
   }
 };
 

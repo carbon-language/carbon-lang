@@ -152,7 +152,7 @@ bool ADCE::doADCE() {
     // they are known to be alive as well...
     //
     for (unsigned op = 0, End = I->getNumOperands(); op != End; ++op) {
-      if (Instruction *Operand = I->getOperand(op)->castInstruction())
+      if (Instruction *Operand = dyn_cast<Instruction>(I->getOperand(op)))
 	markInstructionLive(Operand);
     }
   }

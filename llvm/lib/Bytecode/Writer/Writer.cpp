@@ -108,7 +108,7 @@ void BytecodeWriter::outputConstants(bool isMethod) {
 	//     << Out.size() << "\n";
 	outputConstant(CPV);
       } else {
-	const Type *Ty = V->castTypeAsserting();
+	const Type *Ty = cast<const Type>(V);
 	outputType(Ty);
       }
     }

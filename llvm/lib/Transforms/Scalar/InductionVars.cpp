@@ -76,7 +76,7 @@ static LIVType isLinearInductionVariableH(cfg::Interval *Int, Value *V,
   if (isLoopInvariant(Int, V)) return isLIC;
 
   // loop variant computations must be instructions!
-  Instruction *I = V->castInstructionAsserting();
+  Instruction *I = cast<Instruction>(V);
   switch (I->getOpcode()) {       // Handle each instruction seperately
   case Instruction::Add:
   case Instruction::Sub: {

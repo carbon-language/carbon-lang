@@ -810,7 +810,7 @@ void Interpreter::printValue(const string &Name) {
   Value *PickedVal = ChooseOneOption(Name, LookupMatchingNames(Name));
   if (!PickedVal) return;
 
-  if (const Method *M = PickedVal->castMethod()) {
+  if (const Method *M = dyn_cast<const Method>(PickedVal)) {
     cout << M;  // Print the method
   } else {      // Otherwise there should be an annotation for the slot#
     printValue(PickedVal->getType(), 

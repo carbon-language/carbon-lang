@@ -35,24 +35,24 @@ ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType,
   if (PrintName && V->hasName()) {
     Out << " %" << V->getName();
   } else {
-    if (const ConstPoolVal *CPV = V->castConstant()) {
+    if (const ConstPoolVal *CPV = dyn_cast<const ConstPoolVal>(V)) {
       Out << " " << CPV->getStrValue();
     } else {
       int Slot;
       if (Table) {
 	Slot = Table->getValSlot(V);
       } else {
-	if (const Type *Ty = V->castType()) {
+	if (const Type *Ty = dyn_cast<const Type>(V)) {
 	  return Out << " " << Ty;
-	} else if (const MethodArgument *MA = V->castMethodArgument()) {
+	} else if (const MethodArgument *MA =dyn_cast<const MethodArgument>(V)){
 	  Table = new SlotCalculator(MA->getParent(), true);
-	} else if (const Instruction *I = V->castInstruction()) {
+	} else if (const Instruction *I = dyn_cast<const Instruction>(V)) {
 	  Table = new SlotCalculator(I->getParent()->getParent(), true);
-	} else if (const BasicBlock *BB = V->castBasicBlock()) {
+	} else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(V)) {
 	  Table = new SlotCalculator(BB->getParent(), true);
-	} else if (const Method *Meth = V->castMethod()) {
+	} else if (const Method *Meth = dyn_cast<const Method>(V)) {
 	  Table = new SlotCalculator(Meth, true);
-	} else if (const Module *Mod  = V->castModule()) {
+	} else if (const Module *Mod  = dyn_cast<const Module>(V)) {
 	  Table = new SlotCalculator(Mod, true);
 	} else {
 	  return Out << "BAD VALUE TYPE!";

@@ -158,8 +158,8 @@ void SparcAsmPrinter::emitMachineInst(const MachineInstr *MI) {
       const Value *Val = Op.getVRegValue();
       if (!Val) {
         Out << "\t<*NULL Value*>";
-      } else if (Val->isBasicBlock()) {
-        Out << getID(Val->castBasicBlockAsserting());
+      } else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(Val)) {
+        Out << getID(BB);
       } else {
         Out << "<unknown value=" << Val << ">";
       }
