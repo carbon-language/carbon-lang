@@ -6,6 +6,7 @@
 
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/Constants.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 #include <iostream>

@@ -22,7 +22,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Type.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 
 using analysis::ExprType;
 

@@ -9,7 +9,7 @@
 
 #include "Graph.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"

@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/InductionVars.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Function.h"

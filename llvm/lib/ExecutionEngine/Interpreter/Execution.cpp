@@ -11,7 +11,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
 #include "llvm/Type.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/GlobalVariable.h"

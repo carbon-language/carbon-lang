@@ -15,7 +15,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Annotation.h"
 #include "llvm/BasicBlock.h"
@@ -307,13 +307,13 @@ SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &op)
         const Value *Val = op.getVRegValue();
         if (!Val)
           toAsm << "\t<*NULL Value*>";
-        else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(Val))
+        else if (const BasicBlock *BB = dyn_cast<BasicBlock>(Val))
           toAsm << getID(BB);
-        else if (const Function *M = dyn_cast<const Function>(Val))
+        else if (const Function *M = dyn_cast<Function>(Val))
           toAsm << getID(M);
-        else if (const GlobalVariable *GV=dyn_cast<const GlobalVariable>(Val))
+        else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Val))
           toAsm << getID(GV);
-        else if (const Constant *CV = dyn_cast<const Constant>(Val))
+        else if (const Constant *CV = dyn_cast<Constant>(Val))
           toAsm << getID(CV);
         else
           toAsm << "<unknown value=" << Val << ">";

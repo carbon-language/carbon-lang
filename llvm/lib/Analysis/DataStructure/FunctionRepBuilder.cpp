@@ -12,7 +12,7 @@
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 

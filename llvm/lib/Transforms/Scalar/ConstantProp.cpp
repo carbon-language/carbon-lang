@@ -30,7 +30,6 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/Pass.h"
-#include "llvm/ConstantVals.h"
 
 inline static bool 
 ConstantFoldUnaryInst(BasicBlock *BB, BasicBlock::iterator &II,

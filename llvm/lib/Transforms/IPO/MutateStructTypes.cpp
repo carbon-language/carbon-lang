@@ -23,6 +23,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Argument.h"
+#include "llvm/Constants.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 using std::map;

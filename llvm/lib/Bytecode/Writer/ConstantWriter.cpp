@@ -10,7 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "WriterInternals.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include <iostream>

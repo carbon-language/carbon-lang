@@ -14,7 +14,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "TransformInternals.h"
 using std::vector;

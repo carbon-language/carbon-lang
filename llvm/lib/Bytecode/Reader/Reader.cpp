@@ -16,7 +16,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/Argument.h"

@@ -17,7 +17,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/Argument.h"
 #include <iostream>
 using std::cerr;

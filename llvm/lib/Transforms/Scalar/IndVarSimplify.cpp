@@ -12,7 +12,7 @@
 #include "llvm/iOther.h"
 #include "llvm/Type.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"

@@ -19,7 +19,7 @@
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineRegInfo.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Type.h"

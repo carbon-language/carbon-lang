@@ -76,7 +76,7 @@ void BasicBlock::dropAllReferences() {
 //
 bool BasicBlock::hasConstantReferences() const {
   for (use_const_iterator I = use_begin(), E = use_end(); I != E; ++I)
-    if (::isa<Constant>(*I))
+    if (::isa<Constant>((Value*)*I))
       return true;
 
   return false;

@@ -18,7 +18,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/Function.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 
 

@@ -1,64 +1,19 @@
-//===-- llvm/ConstantVals.h - Constant Value nodes ---------------*- C++ -*--=//
+//===-- llvm/Constants.h - Constant class subclass definitions ---*- C++ -*--=//
 //
-// This file contains the declarations for the Constant class and all of
-// its subclasses, which represent the different type of constant pool values
+// This file contains the declarations for the subclasses of Constant, which
+// represent the different type of constant pool values
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CONSTANT_VALS_H
-#define LLVM_CONSTANT_VALS_H
+#ifndef LLVM_CONSTANTS_H
+#define LLVM_CONSTANTS_H
 
-#include "llvm/User.h"
+#include "llvm/Constant.h"
 #include "Support/DataTypes.h"
 
 class ArrayType;
 class StructType;
 class PointerType;
-
-//===----------------------------------------------------------------------===//
-//                                Constant Class
-//===----------------------------------------------------------------------===//
-
-class Constant : public User {
-protected:
-  inline Constant(const Type *Ty) : User(Ty, Value::ConstantVal) {}
-  ~Constant() {}
-
-  // destroyConstant - Called if some element of this constant is no longer
-  // valid.  At this point only other constants may be on the use_list for this
-  // constant.  Any constants on our Use list must also be destroy'd.  The
-  // implementation must be sure to remove the constant from the list of
-  // available cached constants.  Implementations should call
-  // destroyConstantImpl as the last thing they do, to destroy all users and
-  // delete this.
-  //
-  virtual void destroyConstant() { assert(0 && "Not reached!"); }
-  void destroyConstantImpl();
-public:
-  // Specialize setName to handle symbol table majik...
-  virtual void setName(const std::string &name, SymbolTable *ST = 0);
-
-  // Static constructor to get a '0' constant of arbitrary type...
-  static Constant *getNullValue(const Type *Ty);
-
-  // isNullValue - Return true if this is the value that would be returned by
-  // getNullValue.
-  virtual bool isNullValue() const = 0;
-
-  virtual void print(std::ostream &O) const;
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const Constant *) { return true; }
-  static inline bool classof(const Value *V) {
-    return V->getValueType() == Value::ConstantVal;
-  }
-};
-
-
-
-//===----------------------------------------------------------------------===//
-//              Classes to represent constant pool variable defs
-//===----------------------------------------------------------------------===//
 
 //===---------------------------------------------------------------------------
 // ConstantBool - Boolean Values

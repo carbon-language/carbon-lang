@@ -10,7 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/DecomposeMultiDimRefs.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"

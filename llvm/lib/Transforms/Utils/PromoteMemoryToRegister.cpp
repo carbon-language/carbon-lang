@@ -25,7 +25,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constant.h"
 
 using std::vector;
 using std::map;
@@ -79,7 +79,7 @@ static inline bool isSafeAlloca(const AllocaInst *AI) {
       if (MAI->hasIndices()) {  // indexed?
         // Allow the access if there is only one index and the index is
         // zero.
-        if (*MAI->idx_begin() != ConstantUInt::get(Type::UIntTy, 0) ||
+        if (*MAI->idx_begin() != Constant::getNullValue(Type::UIntTy) ||
             MAI->idx_begin()+1 != MAI->idx_end())
           return false;
       }

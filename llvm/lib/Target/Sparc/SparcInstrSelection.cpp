@@ -25,7 +25,7 @@
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "Support/MathExtras.h"
 #include <math.h>
 using std::vector;

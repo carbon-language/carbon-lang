@@ -24,7 +24,6 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstantVals.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
@@ -78,8 +77,8 @@ void BytecodeWriter::outputConstants(bool isFunction) {
 
     unsigned NC = ValNo;              // Number of constants
     for (; NC < Plane.size() && 
-	   (isa<Constant>(Plane[NC]) || 
-            isa<Type>(Plane[NC])); NC++) /*empty*/;
+	   (isa<Constant>(Plane[NC]) || isa<Type>(Plane[NC])); NC++)
+      /*empty*/;
     NC -= ValNo;                      // Convert from index into count
     if (NC == 0) continue;            // Skip empty type planes...
 
@@ -125,7 +124,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
     // If we have an initializer, output it now.
     if (GV->hasInitializer()) {
-      Slot = Table.getValSlot(GV->getInitializer());
+      Slot = Table.getValSlot((Value*)GV->getInitializer());
       assert(Slot != -1 && "No slot for global var initializer!");
       output_vbr((unsigned)Slot, Out);
     }

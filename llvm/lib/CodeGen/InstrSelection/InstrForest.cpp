@@ -24,7 +24,7 @@
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constant.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/STLExtras.h"

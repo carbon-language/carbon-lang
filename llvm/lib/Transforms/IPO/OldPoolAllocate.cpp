@@ -21,7 +21,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Argument.h"

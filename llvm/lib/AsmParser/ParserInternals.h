@@ -13,7 +13,7 @@
 
 #include "llvm/InstrTypes.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/iOther.h"
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"

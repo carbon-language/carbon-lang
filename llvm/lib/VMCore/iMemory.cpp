@@ -5,7 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/iMemory.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 
 static inline const Type *checkType(const Type *Ty) {
   assert(Ty && "Invalid indices for type!");

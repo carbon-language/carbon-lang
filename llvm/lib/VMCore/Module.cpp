@@ -9,7 +9,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Type.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
 #include "ValueHolderImpl.h"

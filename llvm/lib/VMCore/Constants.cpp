@@ -1,11 +1,11 @@
-//===-- ConstantVals.cpp - Implement Constant nodes --------------*- C++ -*--=//
+//===-- Constants.cpp - Implement Constant nodes -----------------*- C++ -*--=//
 //
 // This file implements the Constant* classes...
 //
 //===----------------------------------------------------------------------===//
 
 #define __STDC_LIMIT_MACROS           // Get defs for INT64_MAX and friends...
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/GlobalValue.h"

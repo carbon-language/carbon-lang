@@ -11,7 +11,7 @@
 #include "llvm/iOther.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Analysis/Expressions.h"

@@ -11,7 +11,7 @@
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/Transforms/Scalar/DCE.h"

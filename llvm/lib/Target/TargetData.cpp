@@ -12,7 +12,7 @@
 
 #include "llvm/Target/TargetData.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 
 static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
 			       unsigned &Size, unsigned char &Alignment);
