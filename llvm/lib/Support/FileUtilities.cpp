@@ -18,9 +18,10 @@
 #include "Config/sys/stat.h"
 #include "Config/sys/types.h"
 #include "Config/sys/mman.h"
+#include <cerrno>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
-#include <cstdio>
 using namespace llvm;
 
 /// CheckMagic - Returns true IFF the file named FN begins with Magic. FN must
