@@ -38,8 +38,6 @@ private:
   BasicBlocksType  BasicBlocks;    // The basic blocks
   ArgumentListType ArgumentList;   // The formal arguments
 
-  Module *Parent;                  // The module that contains this method
-
   friend class ValueHolder<Method, Module, Module>;
   void setParent(Module *parent);
 
@@ -57,10 +55,6 @@ public:
   // this is true for external methods, defined as forward "declare"ations
   bool isExternal() const { return BasicBlocks.empty(); }
 
-
-  // Get the class structure that this method is contained inside of...
-  inline Module *getParent() { return Parent; }
-  inline const Module *getParent() const { return Parent; }
 
   // Get the underlying elements of the Method...
   inline const ArgumentListType &getArgumentList() const{ return ArgumentList; }

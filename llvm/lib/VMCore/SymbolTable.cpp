@@ -173,3 +173,29 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
 	cast<const DerivedType>(NewType)->addAbstractTypeUser(this);
     }
 }
+
+
+#ifndef NDEBUG
+#include "llvm/Assembly/Writer.h"
+#include <algorithm>
+
+static void DumpVal(const pair<const string, Value *> &V) {
+  cout << "  '%" << V.first << "' = " << V.second << endl;
+}
+
+static void DumpPlane(const pair<const Type *, map<const string, Value *> >&P) {
+  cout << "  Plane: " << P.first << endl;
+  for_each(P.second.begin(), P.second.end(), DumpVal);
+}
+
+void SymbolTable::dump() const {
+  cout << "Symbol table dump:\n";
+  for_each(begin(), end(), DumpPlane);
+
+  if (ParentSymTab) {
+    cout << "Parent ";
+    ParentSymTab->dump();
+  }
+}
+
+#endif

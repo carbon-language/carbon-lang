@@ -103,6 +103,8 @@ public:
     return find(TypeID)->second.end(); 
   }
 
+  void dump() const;  // Debug method, print out symbol table
+
 private:
   // insertEntry - Insert a value into the symbol table with the specified
   // name...

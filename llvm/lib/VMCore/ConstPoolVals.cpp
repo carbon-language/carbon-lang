@@ -343,3 +343,10 @@ ConstPoolPointer *ConstPoolPointer::getNull(const PointerType *Ty) {
   return Result;
 }
 
+//---- ConstPoolPointerReference::get() implementation...
+//
+ConstPoolPointerReference *ConstPoolPointerReference::get(GlobalValue *GV) {
+  assert(GV->getParent());
+  // FIXME: These should all be shared!
+  return new ConstPoolPointerReference(GV);
+}

@@ -19,8 +19,6 @@ class ConstPoolVal;
 class PointerType;
 
 class GlobalVariable : public GlobalValue {
-  Module *Parent;                  // The module that contains this method
-
   friend class ValueHolder<GlobalVariable, Module, Module>;
   void setParent(Module *parent) { Parent = parent; }
 
@@ -32,9 +30,6 @@ public:
 
   // Specialize setName to handle symbol table majik...
   virtual void setName(const string &name, SymbolTable *ST = 0);
-
-  inline       Module *getParent()       { return Parent; }
-  inline const Module *getParent() const { return Parent; }
 
   // The initializer for the global variable/constant is held by Operands[0] if
   // an initializer is specified.

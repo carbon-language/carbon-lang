@@ -29,7 +29,6 @@ Method::Method(const MethodType *Ty, const string &name)
   : GlobalValue(PointerType::get(Ty), Value::MethodVal, name),
     SymTabValue(this), BasicBlocks(this), ArgumentList(this, this) {
   assert(::isa<MethodType>(Ty) && "Method signature must be of method type!");
-  Parent = 0;
 }
 
 Method::~Method() {
@@ -90,7 +89,7 @@ GlobalVariable::GlobalVariable(const Type *Ty, bool isConstant,
 			       ConstPoolVal *Initializer = 0, 
 			       const string &Name = "")
   : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal, Name),
-    Parent(0), Constant(isConstant) {
+    Constant(isConstant) {
   if (Initializer) Operands.push_back(Use((Value*)Initializer, this));
 
   assert(!isConstant || hasInitializer() &&

@@ -232,10 +232,7 @@ protected:
   ConstPoolPointerReference(GlobalValue *GV);
   ~ConstPoolPointerReference() {}
 public:
-  static ConstPoolPointerReference *get(GlobalValue *GV) {
-    // FIXME: These should all be shared!
-    return new ConstPoolPointerReference(GV);
-  }
+  static ConstPoolPointerReference *get(GlobalValue *GV);
 
   virtual string getStrValue() const;
 

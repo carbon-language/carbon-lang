@@ -17,13 +17,20 @@ class GlobalValue : public User {
   GlobalValue(const GlobalValue &);             // do not implement
 protected:
   GlobalValue(const Type *Ty, ValueTy vty, const string &name = "")
-    : User(Ty, vty, name) {}
-public:
+    : User(Ty, vty, name) { Parent = 0; }
 
-  // getType - Global values are always pointers (FIXME, methods should be ptrs too!)
+  Module *Parent;
+public:
+  ~GlobalValue() {}
+
+  // getType - Global values are always pointers.
   inline const PointerType *getType() const {
     return (const PointerType*)User::getType();
   }
+
+  // Get the module that this global value is contained inside of...
+  inline Module *getParent() { return Parent; }
+  inline const Module *getParent() const { return Parent; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GlobalValue *T) { return true; }
