@@ -13,6 +13,12 @@
 #include <sstream>
 using std::string;
 
+// OnlyPrintMain - The DataStructure printer exposes this option to allow
+// printing of only the graph for "main".
+//
+static cl::opt<bool> OnlyPrintMain("only-print-main-ds", cl::ReallyHidden);
+
+
 void DSNode::dump() const { print(std::cerr, 0); }
 
 static string getCaption(const DSNode *N, const DSGraph *G) {
@@ -168,8 +174,6 @@ void DSGraph::writeGraphToFile(std::ostream &O, const string &GraphName) {
   }
 }
 
-static cl::opt<bool> OnlyPrintMain("only-print-main-ds", cl::ReallyHidden);
-
 template <typename Collection>
 static void printCollection(const Collection &C, std::ostream &O,
                             const Module *M, const string &Prefix) {
@@ -189,17 +193,18 @@ void LocalDataStructures::print(std::ostream &O, const Module *M) const {
   printCollection(*this, O, M, "ds.");
 }
 
-#if 0
 void BUDataStructures::print(std::ostream &O, const Module *M) const {
   printCollection(*this, O, M, "bu.");
-
+#if 0
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isExternal()) {
       (*getDSGraph(*I).GlobalsGraph)->writeGraphToFile(O, "gg.program");
       break;
     }
+#endif
 }
 
+#if 0
 void TDDataStructures::print(std::ostream &O, const Module *M) const {
   printCollection(*this, O, M, "td.");
 
