@@ -1,9 +1,8 @@
 //===- InstructionCombining.cpp - Combine multiple instructions -----------===//
 //
 // InstructionCombining - Combine instructions to form fewer, simple
-//   instructions.  This pass does not modify the CFG, and has a tendancy to
-//   make instructions dead, so a subsequent DIE pass is useful.  This pass is
-//   where algebraic simplification happens.
+// instructions.  This pass does not modify the CFG This pass is where algebraic
+// simplification happens.
 //
 // This pass combines things like:
 //    %Y = add int 1, %X
@@ -29,7 +28,9 @@
 #include "Support/StatisticReporter.h"
 #include <algorithm>
 
-static Statistic<> NumCombined("instcombine\t- Number of insts combined");
+static Statistic<> NumCombined ("instcombine\t- Number of insts combined");
+static Statistic<> NumConstProp("instcombine\t- Number of constant folds");
+static Statistic<> NumDeadInst ("instcombine\t- Number of dead inst eliminate");
 
 namespace {
   class InstCombiner : public FunctionPass,
@@ -46,6 +47,8 @@ namespace {
         WorkList.push_back(cast<Instruction>(*UI));
     }
 
+    // removeFromWorkList - remove all instances of I from the worklist.
+    void removeFromWorkList(Instruction *I);
   public:
     virtual bool runOnFunction(Function &F);
 
@@ -697,6 +700,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 }
 
 
+void InstCombiner::removeFromWorkList(Instruction *I) {
+  WorkList.erase(std::remove(WorkList.begin(), WorkList.end(), I),
+                 WorkList.end());
+}
+
 bool InstCombiner::runOnFunction(Function &F) {
   bool Changed = false;
 
@@ -706,6 +714,37 @@ bool InstCombiner::runOnFunction(Function &F) {
     Instruction *I = WorkList.back();  // Get an instruction from the worklist
     WorkList.pop_back();
 
+    // Check to see if we can DCE or ConstantPropogate the instruction...
+    // Check to see if we can DIE the instruction...
+    if (isInstructionTriviallyDead(I)) {
+      // Add operands to the worklist...
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+        if (Instruction *Op = dyn_cast<Instruction>(I->getOperand(i)))
+          WorkList.push_back(Op);
+
+      ++NumDeadInst;
+      BasicBlock::iterator BBI = I;
+      if (dceInstruction(BBI)) {
+        removeFromWorkList(I);
+        continue;
+      }
+    } 
+
+    // Instruction isn't dead, see if we can constant propogate it...
+    if (Constant *C = ConstantFoldInstruction(I)) {
+      // Add operands to the worklist...
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+        if (Instruction *Op = dyn_cast<Instruction>(I->getOperand(i)))
+          WorkList.push_back(Op);
+      I->replaceAllUsesWith(C);
+      ++NumConstProp;
+      BasicBlock::iterator BBI = I;
+      if (dceInstruction(BBI)) {
+        removeFromWorkList(I);
+        continue;
+      }
+    }
+    
     // Now that we have an instruction, try combining it to simplify it...
     if (Instruction *Result = visit(*I)) {
       ++NumCombined;
@@ -713,9 +752,7 @@ bool InstCombiner::runOnFunction(Function &F) {
       if (Result != I) {
         // Instructions can end up on the worklist more than once.  Make sure
         // we do not process an instruction that has been deleted.
-        WorkList.erase(std::remove(WorkList.begin(), WorkList.end(), I),
-                       WorkList.end());
-
+        removeFromWorkList(I);
         ReplaceInstWithInst(I, Result);
       } else {
         BasicBlock::iterator II = I;
@@ -725,8 +762,7 @@ bool InstCombiner::runOnFunction(Function &F) {
         if (dceInstruction(II)) {
           // Instructions may end up in the worklist more than once.  Erase them
           // all.
-          WorkList.erase(std::remove(WorkList.begin(), WorkList.end(), I),
-                         WorkList.end());
+          removeFromWorkList(I);
           Result = 0;
         }
       }
