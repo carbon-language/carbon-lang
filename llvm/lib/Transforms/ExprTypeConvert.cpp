@@ -77,9 +77,11 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
   // have this value converted.  This makes use of the map to avoid infinite
   // recursion.
   //
-  for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I)
-    if (!OperandConvertableToType(*I, V, Ty, CTMap))
-      return false;
+  if (isa<Instruction>(V)) {
+    for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I)
+      if (!OperandConvertableToType(*I, V, Ty, CTMap))
+        return false;
+  }
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) {
@@ -336,6 +338,8 @@ bool RetValConvertableToType(Value *V, const Type *Ty,
   if (I != ConvertedTypes.end()) return I->second == Ty;
   ConvertedTypes[V] = Ty;
 
+  assert(isa<Instruction>(V) && "Can't convert ret val of non instruction");
+
   // It is safe to convert the specified value to the specified type IFF all of
   // the uses of the value can be converted to accept the new typed value.
   //
@@ -389,6 +393,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     }
     // FALLTHROUGH
   case Instruction::Sub: {
+    CTMap[I] = Ty;
     Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
     return RetValConvertableToType(I, Ty, CTMap) &&
            ExpressionConvertableToType(OtherOp, Ty, CTMap);
@@ -403,6 +408,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     // FALL THROUGH
   case Instruction::Shl:
     assert(I->getOperand(0) == V);
+    CTMap[I] = Ty;
     return RetValConvertableToType(I, Ty, CTMap);
 
   case Instruction::Load:
@@ -427,6 +433,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
           if (TD.getTypeSize(Ty) != TD.getTypeSize(LI->getType()))
             return false;
 
+          CTMap[LI] = Ty;
           return RetValConvertableToType(LI, Ty, CTMap);
         }
         return false;
@@ -435,6 +442,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       if (TD.getTypeSize(PVTy) != TD.getTypeSize(LI->getType()))
         return false;
 
+      CTMap[LI] = PVTy;
       return RetValConvertableToType(LI, PVTy, CTMap);
     }
     return false;
@@ -465,6 +473,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
   }
 
   case Instruction::PHINode: {
+    CTMap[I] = Ty;
     PHINode *PN = cast<PHINode>(I);
     for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
       if (!ExpressionConvertableToType(PN->getIncomingValue(i), Ty, CTMap))
