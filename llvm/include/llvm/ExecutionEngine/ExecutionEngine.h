@@ -63,6 +63,13 @@ public:
   virtual GenericValue runFunction(Function *F,
                                 const std::vector<GenericValue> &ArgValues) = 0;
 
+  /// runFunctionAsMain - This is a helper function which wraps runFunction to
+  /// handle the common task of starting up main with the specified argc, argv,
+  /// and envp parameters.
+  int runFunctionAsMain(Function *Fn, const std::vector<std::string> &argv,
+                        const char * const * envp);
+
+
   void addGlobalMapping(const GlobalValue *GV, void *Addr) {
     void *&CurVal = GlobalAddress[GV];
     assert((CurVal == 0 || Addr == 0) && "GlobalMapping already established!");
