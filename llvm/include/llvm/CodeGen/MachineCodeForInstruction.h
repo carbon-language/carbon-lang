@@ -35,10 +35,11 @@ public:
   
   static MachineCodeForInstruction &get(const Instruction *I) {
     assert(I != NULL);
-    return *(MachineCodeForInstruction*)I->getOrCreateAnnotation(MCFI_AID);
+    return *(MachineCodeForInstruction*)
+      ((Annotable*)I)->getOrCreateAnnotation(MCFI_AID);
   }
   static void destroy(const Instruction *I) {
-    I->deleteAnnotation(MCFI_AID);
+    ((Annotable*)I)->deleteAnnotation(MCFI_AID);
   }
 
   // Access to underlying machine instructions...
