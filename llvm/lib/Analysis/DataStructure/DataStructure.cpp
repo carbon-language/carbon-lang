@@ -1489,6 +1489,7 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
         for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
           if (isPointerType(I->getType()))
             markIncompleteNode(getNodeForValue(I).getNode());
+      markIncompleteNode(FI->second.getNode());
     }
 
   // Mark stuff passed into functions calls as being incomplete.
