@@ -59,8 +59,9 @@ class GraphWriter {
   typedef typename GTraits::nodes_iterator    node_iterator;
   typedef typename GTraits::ChildIteratorType child_iterator;
 public:
-  GraphWriter(std::ostream &o, const GraphType &g,
-              const std::string &Name) : O(o), G(g) {
+  GraphWriter(std::ostream &o, const GraphType &g) : O(o), G(g) {}
+
+  void writeHeader(const std::string &Name) {
     if (Name.empty())
       O << "digraph foo {\n";        // Graph name doesn't matter
     else
@@ -71,15 +72,9 @@ public:
       O << "\tlabel=\"" << DOT::EscapeString(GraphName) << "\";\n";
     O << DOTTraits::getGraphProperties(G);
     O << "\n";
-
-    // Emit all of the nodes in the graph...
-    writeNodes();
-
-    // Output any customizations on the graph
-    DOTTraits::addCustomGraphFeatures(G, *this);
   }
 
-  ~GraphWriter() {
+  void writeFooter() {
     // Finish off the graph
     O << "}\n";
   }
@@ -180,7 +175,19 @@ template<typename GraphType>
 std::ostream &WriteGraph(std::ostream &O, const GraphType &G,
                          const std::string &Name = "") {
   // Start the graph emission process...
-  GraphWriter<GraphType> W(O, G, Name);
+  GraphWriter<GraphType> W(O, G);
+
+  // Output the header for the graph...
+  W.writeHeader(Name);
+
+  // Emit all of the nodes in the graph...
+  W.writeNodes();
+
+  // Output any customizations on the graph
+  DOTGraphTraits<GraphType>::addCustomGraphFeatures(G, W);
+
+  // Output the end of the graph
+  W.writeFooter();
   return O;
 }
 
