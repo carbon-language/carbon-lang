@@ -44,7 +44,8 @@ GetFileNameRoot(const std::string &InputFilename)
   std::string IFN = InputFilename;
   std::string outputFilename;
   int Len = IFN.length();
-  if (IFN[Len-3] == '.' && IFN[Len-2] == 'b' && IFN[Len-1] == 'c') {
+  if ((Len > 2) &&
+      IFN[Len-3] == '.' && IFN[Len-2] == 'b' && IFN[Len-1] == 'c') {
     outputFilename = std::string(IFN.begin(), IFN.end()-3); // s/.bc/.s/
   } else {
     outputFilename = IFN;
