@@ -211,8 +211,8 @@ inline typename cast_retty<X, Y*>::ret_type cast_or_null(Y *Val) {
 //
 
 template <class X, class Y>
-inline typename cast_retty<X, Y*>::ret_type dyn_cast(Y *Val) {
-  return isa<X>(Val) ? cast<X, Y*>(Val) : 0;
+inline typename cast_retty<X, Y>::ret_type dyn_cast(Y Val) {
+  return isa<X>(Val) ? cast<X, Y>(Val) : 0;
 }
 
 // dyn_cast_or_null<X> - Functionally identical to dyn_cast, except that a null
