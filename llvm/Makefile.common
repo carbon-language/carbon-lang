@@ -169,6 +169,17 @@ prdirs::
 	echo "LLVM  Source Root: " $(LLVM_SRC_ROOT)
 	echo "LLVM  Object Root: " $(LLVM_OBJ_ROOT)
 
+###########################################################################
+# Suffixes and implicit rules:
+#	Empty out the list of suffixes, generate a list that is only
+#	used by this Makefile, and cancel useless implicit rules.   This
+#	will hopefully speed up compilation a little bit.
+###########################################################################
+.SUFFIXES:
+.SUFFIXES: .c .cpp .h .hpp .y .l
+.SUFFIXES: .lo .o .a .so .bc
+.SUFFIXES: .ps .dot .d
+
 #
 # Mark all of these targets as phony.  This will hopefully speed up builds
 # slightly since GNU Make will not try to find implicit rules for targets
@@ -211,11 +222,6 @@ endif
 ifdef ENABLE_PROFILING
   PROFILE = -pg
 endif
-
-#
-# Suffixes for library compilation rules
-#
-.SUFFIXES: .so
 
 ###########################################################################
 # Library Locations:
@@ -380,9 +386,6 @@ LinkP    := $(Link) -O3 -L$(PROJLIBPROFILESOURCE) -L$(LLVMLIBPROFILESOURCE) $(PR
 
 # Create one .o file from a bunch of .o files...
 Relink := ${LIBTOOL} --mode=link $(CXX)
-ifndef SHARED_LIBRARY
-Relink += -only-static
-endif
 
 #
 # Configure where the item being compiled should go.
