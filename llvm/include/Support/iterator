@@ -1,0 +1,36 @@
+//===-- Support/iterator - "Portable" wrapper around <iterator> -*- C++ -*-===//
+//
+// This file provides a wrapper around the mysterious <iterator> header file.
+// In GCC 2.95.3, the file defines a bidirectional_iterator class (and other
+// friends), instead of the standard iterator class.  In GCC 3.1, the
+// bidirectional_iterator class got moved out and the new, standards compliant,
+// iterator<> class was added.  Because there is nothing that we can do to get
+// correct behavior on both compilers, we have this header with #ifdef's.  Gross
+// huh?
+//
+// By #includ'ing this file, you get the contents of <iterator> plus the
+// following classes in the global namespace:
+//
+//   1. bidirectional_iterator
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef SUPPORT_ITERATOR_H
+#define SUPPORT_ITERATOR_H
+
+#include <iterator>
+
+#if __GNUC__ == 3
+
+// Define stupid wrappers around std::iterator...
+template<class Ty, class PtrDiffTy>
+struct bidirectional_iterator
+  : public std::iterator<std::bidirectional_iterator_tag, Ty, PtrDiffTy> {
+};
+
+#else
+// Just use bidirectional_iterator directly.
+using std::bidirectional_iterator;
+#endif
+
+#endif
