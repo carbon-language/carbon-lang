@@ -27,6 +27,19 @@ std::string getPassesString(const std::vector<const PassInfo*> &Passes) {
   return Result;
 }
 
+// DeleteFunctionBody - "Remove" the function by deleting all of it's basic
+// blocks, making it external.
+//
+void DeleteFunctionBody(Function *F) {
+  // First, break circular use/def chain references...
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+    I->dropAllReferences();
+
+  // Next, delete all of the basic blocks.
+  F->getBasicBlockList().clear();
+
+  assert(F->isExternal() && "This didn't make the function external!");
+}
 
 /// ParseInputFile - Given a bytecode or assembly input filename, parse and
 /// return it, or return null if not possible.
