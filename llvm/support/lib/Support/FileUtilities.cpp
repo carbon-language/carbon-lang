@@ -7,6 +7,8 @@
 
 #include "Support/FileUtilities.h"
 #include "Config/unistd.h"
+#include "Config/sys/stat.h"
+#include "Config/sys/types.h"
 #include <fstream>
 #include <iostream>
 #include <cstdio>
@@ -90,3 +92,51 @@ std::string getUniqueFilename(const std::string &FilenameBase) {
   delete[] FNBuffer;
   return Result;
 }
+
+///
+/// Method: MakeFileExecutable ()
+///
+/// Description:
+///	This method makes the specified filename executable by giving it
+///	execute permission.
+///
+///	For the UNIX version of this method, we turn on all of the read and
+///	execute bits and then turn off anything specified in the umask.  This
+///	should help ensure that access to the file remains at the level that
+///	the user desires.
+///
+bool
+MakeFileExecutable (const std::string & Filename)
+{
+  // Permissions masking value of the user
+  mode_t mask;
+
+  // Permissions currently enabled on the file
+  struct stat fstat;
+
+  //
+  // Grab the umask value from the operating system.  We want to use it when
+  // changing the file's permissions.
+  //
+  // Note:
+  //  Umask() is one of those annoying system calls.  You have to call it
+  //  to get the current value and then set it back.
+  //
+  mask = umask (0x777);
+  umask (mask);
+
+  //
+  // Go fetch the file's current permission bits.  We want to *add* execute
+  // access to the file.
+  //
+  if ((stat (Filename.c_str(), &fstat)) == -1)
+  {
+    return false;
+  }
+
+  // Make the script executable...
+  chmod(Filename.c_str(), (fstat.st_mode | (0111 & ~mask)));
+
+  return true;
+}
+

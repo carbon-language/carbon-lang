@@ -36,4 +36,19 @@ void removeFile(const std::string &Filename);
 ///
 std::string getUniqueFilename(const std::string &FilenameBase);
 
+///
+/// Method: MakeFileExecutable()
+///
+/// Description:
+///	This method turns on whatever access attributes are needed to make the
+///	specified file executable.
+///
+/// Return value:
+///	True  - The operation succeeded.
+///	False - The operation failed.
+///
+/// Notes:
+///	In case of failure, the file's access attributes are unspecified.
+///
+bool MakeFileExecutable (const std::string & Filename);
 #endif
