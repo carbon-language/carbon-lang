@@ -223,7 +223,7 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
   // Otherwise if the span we are removing is at the end of the LiveRange,
   // adjust the other way.
   if (I->end == End) {
-    I->start = Start;
+    I->end = Start;
     return;
   }
 
