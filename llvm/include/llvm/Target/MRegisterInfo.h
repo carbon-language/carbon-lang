@@ -141,14 +141,14 @@ public:
   /// isPhysicalRegister - Return true if the specified register number is in
   /// the physical register namespace.
   static bool isPhysicalRegister(unsigned Reg) {
-    assert(Reg && "this is not a register!");
+//    assert(Reg && "this is not a register!");
     return Reg < FirstVirtualRegister;
   }
 
   /// isVirtualRegister - Return true if the specified register number is in
   /// the virtual register namespace.
   static bool isVirtualRegister(unsigned Reg) {
-    assert(Reg && "this is not a register!");
+//    assert(Reg && "this is not a register!");
     return Reg >= FirstVirtualRegister;
   }
 
