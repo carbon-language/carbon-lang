@@ -31,8 +31,10 @@ namespace {
   class LowerAllocations : public BasicBlockPass {
     Function *MallocFunc;   // Functions in the module we are processing
     Function *FreeFunc;     // Initialized by doInitialization
+    bool LowerMallocArgToInteger;
   public:
-    LowerAllocations() : MallocFunc(0), FreeFunc(0) {}
+    LowerAllocations(bool LowerToInt = false)
+      : MallocFunc(0), FreeFunc(0), LowerMallocArgToInteger(LowerToInt) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
@@ -59,8 +61,8 @@ namespace {
 }
 
 // createLowerAllocationsPass - Interface to this file...
-FunctionPass *llvm::createLowerAllocationsPass() {
-  return new LowerAllocations();
+FunctionPass *llvm::createLowerAllocationsPass(bool LowerMallocArgToInteger) {
+  return new LowerAllocations(LowerMallocArgToInteger);
 }
 
 
@@ -95,7 +97,8 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
 
   BasicBlock::InstListType &BBIL = BB.getInstList();
 
-  const Type *IntPtrTy = getAnalysis<TargetData>().getIntPtrType();
+  const TargetData &TD = getAnalysis<TargetData>();
+  const Type *IntPtrTy = TD.getIntPtrType();
 
   // Loop over all of the instructions, looking for malloc or free instructions
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I) {
@@ -103,8 +106,13 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       const Type *AllocTy = MI->getType()->getElementType();
       
       // malloc(type) becomes sbyte *malloc(size)
-      Value *MallocArg = ConstantExpr::getCast(ConstantExpr::getSizeOf(AllocTy),
-                                               IntPtrTy);
+      Value *MallocArg;
+      if (LowerMallocArgToInteger)
+        MallocArg = ConstantUInt::get(Type::ULongTy, TD.getTypeSize(AllocTy));
+      else
+        MallocArg = ConstantExpr::getSizeOf(AllocTy);
+      MallocArg = ConstantExpr::getCast(cast<Constant>(MallocArg), IntPtrTy);
+
       if (MI->isArrayAllocation()) {
         if (isa<ConstantInt>(MallocArg) &&
             cast<ConstantInt>(MallocArg)->getRawValue() == 1) {
