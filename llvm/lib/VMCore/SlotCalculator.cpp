@@ -21,7 +21,7 @@
 #include <algorithm>
 
 #if 0
-#define SC_DEBUG(X) cerr << X
+#define SC_DEBUG(X) std::cerr << X
 #else
 #define SC_DEBUG(X)
 #endif
@@ -67,25 +67,25 @@ SlotCalculator::SlotCalculator(const Function *M, bool IgnoreNamed) {
 void SlotCalculator::processModule() {
   SC_DEBUG("begin processModule!\n");
 
-  // Add all of the constants that the global variables might refer to first.
+  // Add all of the global variables to the value table...
   //
   for (Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
        I != E; ++I)
-    if (I->hasInitializer())
-      insertValue(I->getInitializer());
-
-  // Add all of the global variables to the value table...
-  //
-  for(Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
-      I != E; ++I)
     insertValue(I);
 
   // Scavenge the types out of the functions, then add the functions themselves
   // to the value table...
   //
-  for(Module::const_iterator I = TheModule->begin(), E = TheModule->end();
-      I != E; ++I)
+  for (Module::const_iterator I = TheModule->begin(), E = TheModule->end();
+       I != E; ++I)
     insertValue(I);
+
+  // Add all of the module level constants used as initializers
+  //
+  for (Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
+       I != E; ++I)
+    if (I->hasInitializer())
+      insertValue(I->getInitializer());
 
   // Insert constants that are named at module level into the slot pool so that
   // the module symbol table can refer to them...
@@ -141,8 +141,7 @@ void SlotCalculator::incorporateFunction(const Function *M) {
     SC_DEBUG("Inserting function constants:\n";
 	     for (constant_iterator I = constant_begin(M), E = constant_end(M);
 		  I != E; ++I) {
-	       cerr << "  " << *I->getType()
-		    << " " << *I << "\n";
+	       std::cerr << "  " << *I->getType() << " " << *I << "\n";
 	     });
 
     // Emit all of the constants that are being used by the instructions in the
@@ -164,8 +163,6 @@ void SlotCalculator::incorporateFunction(const Function *M) {
   // Iterate over basic blocks, adding them to the value table...
   for (Function::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     insertValue(I);
-  /*  for_each(M->begin(), M->end(),
-      bind_obj(this, &SlotCalculator::insertValue));*/
 
   SC_DEBUG("Inserting Instructions:\n");
 
@@ -230,21 +227,21 @@ int SlotCalculator::getValSlot(const Value *D) const {
 }
 
 
-int SlotCalculator::insertValue(const Value *D) {
-  if (isa<Constant>(D) || isa<GlobalVariable>(D)) {
-    const User *U = cast<const User>(D);
-    // This makes sure that if a constant has uses (for example an array
-    // of const ints), that they are inserted also.  Same for global variable
-    // initializers.
-    //
-    for(User::const_op_iterator I = U->op_begin(), E = U->op_end(); I != E; ++I)
-      if (!isa<GlobalValue>(*I))     // Don't chain insert global values
-	insertValue(*I);
-  }
-
-  int SlotNo = getValSlot(D);        // Check to see if it's already in!
+int SlotCalculator::insertValue(const Value *V) {
+  int SlotNo = getValSlot(V);        // Check to see if it's already in!
   if (SlotNo != -1) return SlotNo;
-  return insertVal(D); 
+
+  if (!isa<GlobalValue>(V))
+    if (const Constant *C = dyn_cast<Constant>(V)) {
+      // This makes sure that if a constant has uses (for example an array of
+      // const ints), that they are inserted also.
+      //
+      for (User::const_op_iterator I = C->op_begin(), E = C->op_end();
+           I != E; ++I)
+        insertValue(*I);
+    }
+
+  return insertVal(V);
 }
 
 
@@ -260,7 +257,7 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore) {
     if (D->getType() == Type::VoidTy ||          // Ignore void type nodes
 	(IgnoreNamedNodes &&                     // Ignore named and constants
 	 (D->hasName() || isa<Constant>(D)) && !isa<Type>(D))) {
-      SC_DEBUG("ignored value " << D << "\n");
+      SC_DEBUG("ignored value " << *D << "\n");
       return -1;                  // We do need types unconditionally though
     }
 
@@ -316,20 +313,32 @@ int SlotCalculator::doInsertVal(const Value *D) {
   //  cerr << "Inserting type '" << cast<Type>(D)->getDescription() << "'!\n";
 
   if (Typ->isDerivedType()) {
-    int DefSlot = getValSlot(Typ);
-    if (DefSlot == -1) {                // Have we already entered this type?
+    int ValSlot = getValSlot(Typ);
+    if (ValSlot == -1) {                // Have we already entered this type?
       // Nope, this is the first we have seen the type, process it.
-      DefSlot = insertVal(Typ, true);
-      assert(DefSlot != -1 && "ProcessType returned -1 for a type?");
+      ValSlot = insertVal(Typ, true);
+      assert(ValSlot != -1 && "ProcessType returned -1 for a type?");
     }
-    Ty = (unsigned)DefSlot;
+    Ty = (unsigned)ValSlot;
   } else {
     Ty = Typ->getPrimitiveID();
   }
   
   if (Table.size() <= Ty)    // Make sure we have the type plane allocated...
     Table.resize(Ty+1, TypePlane());
-  
+
+  // If this is the first value to get inserted into the type plane, make sure
+  // to insert the implicit null value...
+  if (Table[Ty].empty() && Ty >= Type::FirstDerivedTyID && !IgnoreNamedNodes) {
+    Value *ZeroInitializer = Constant::getNullValue(Typ);
+
+    // If we are pushing zeroinit, it will be handled below.
+    if (D != ZeroInitializer) {
+      Table[Ty].push_back(ZeroInitializer);
+      NodeMap[ZeroInitializer] = 0;
+    }
+  }
+
   // Insert node into table and NodeMap...
   unsigned DestSlot = NodeMap[D] = Table[Ty].size();
   Table[Ty].push_back(D);
