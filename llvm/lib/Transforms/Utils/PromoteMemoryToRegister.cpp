@@ -269,12 +269,12 @@ void PromoteMem2Reg::run() {
 
       // At this point, the blocks left in the preds list must have dummy
       // entries inserted into every PHI nodes for the block.
-      for (unsigned i = 0, e = PNs.size(); i != e; ++i) {
-        PHINode *PN = PNs[i];
-        Value *NullVal = Constant::getNullValue(PN->getType());
-        for (unsigned pred = 0, e = Preds.size(); pred != e; ++pred)
-          PN->addIncoming(NullVal, Preds[pred]);
-      }
+      for (unsigned i = 0, e = PNs.size(); i != e; ++i)
+        if (PHINode *PN = PNs[i]) {
+          Value *NullVal = Constant::getNullValue(PN->getType());
+          for (unsigned pred = 0, e = Preds.size(); pred != e; ++pred)
+            PN->addIncoming(NullVal, Preds[pred]);
+        }
     }
   }
 }
