@@ -96,7 +96,7 @@ def SETHIi: F2_1<0b100, "sethi">;
 
 // Section B.10 - NOP Instruction, p. 105
 // (It's a special case of SETHI)
-let rd = 0, imm = 0 in
+let rd = 0, imm22 = 0 in
   def NOP : F2_1<0b100, "nop">;
 
 // Section B.11 - Logical Instructions, p. 106
