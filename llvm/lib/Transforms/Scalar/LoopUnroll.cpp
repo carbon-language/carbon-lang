@@ -283,15 +283,26 @@ bool LoopUnroll::visitLoop(Loop *L) {
   // Preheader.
   Preheader->replaceAllUsesWith(LoopExit);
 
+  Function *F = LoopExit->getParent();
+  if (Parent) {
+    // Otherwise, if this is a sub-loop, and the preheader was the loop header
+    // of the parent loop, move the exit block to be the new parent loop header.
+    if (Parent->getHeader() == Preheader) {
+      assert(Parent->contains(LoopExit) &&
+             "Exit block isn't contained in parent?");
+      Parent->moveToHeader(LoopExit);
+    }
+  } else {
+    // If the preheader was the entry block of this function, move the exit
+    // block to be the new entry of the function.
+    if (Preheader == &F->front())
+      F->getBasicBlockList().splice(F->begin(),
+                                    F->getBasicBlockList(), LoopExit);
+  }
+
   // Remove BB and LoopExit from our analyses.
   LI->removeBlock(Preheader);
   LI->removeBlock(BB);
-
-  // If the preheader was the entry block of this function, move the exit block
-  // to be the new entry of the loop.
-  Function *F = LoopExit->getParent();
-  if (Preheader == &F->front())
-    F->getBasicBlockList().splice(F->begin(), F->getBasicBlockList(), LoopExit);
 
   // Actually delete the blocks now.
   F->getBasicBlockList().erase(Preheader);
