@@ -307,10 +307,8 @@ static Value *RemapOperand(const Value *In,
       Result = ConstantStruct::get(cast<StructType>(CPS->getType()), Operands);
     } else if (isa<ConstantPointerNull>(CPV)) {
       Result = const_cast<Constant*>(CPV);
-    } else if (const ConstantPointerRef *CPR =
-                      dyn_cast<ConstantPointerRef>(CPV)) {
-      Value *V = RemapOperand(CPR->getValue(), LocalMap, GlobalMap);
-      Result = ConstantPointerRef::get(cast<GlobalValue>(V));
+    } else if (isa<GlobalValue>(CPV)) {
+      Result = cast<Constant>(RemapOperand(CPV, LocalMap, GlobalMap));
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
         Value *Ptr = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
@@ -834,9 +832,8 @@ static bool LinkAppendingVars(Module *M,
 
       // FIXME: This should rewrite simple/straight-forward uses such as
       // getelementptr instructions to not use the Cast!
-      ConstantPointerRef *NGCP = ConstantPointerRef::get(NG);
-      G1->replaceAllUsesWith(ConstantExpr::getCast(NGCP, G1->getType()));
-      G2->replaceAllUsesWith(ConstantExpr::getCast(NGCP, G2->getType()));
+      G1->replaceAllUsesWith(ConstantExpr::getCast(NG, G1->getType()));
+      G2->replaceAllUsesWith(ConstantExpr::getCast(NG, G2->getType()));
 
       // Remove the two globals from the module now...
       M->getGlobalList().erase(G1);
