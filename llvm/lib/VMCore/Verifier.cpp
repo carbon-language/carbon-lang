@@ -49,6 +49,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+#include <iostream>
 
 namespace {  // Anonymous namespace for class
 
@@ -76,7 +77,7 @@ namespace {  // Anonymous namespace for class
           CheckFailed("Function Declaration has Internal Linkage!", I);
 
       if (Broken) {
-        cerr << "Broken module found, compilation aborted!\n";
+        std::cerr << "Broken module found, compilation aborted!\n";
         abort();
       }
       return false;

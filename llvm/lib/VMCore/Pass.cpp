@@ -105,7 +105,7 @@ TimingInfo::~TimingInfo() {
   // Iterate over all of the data, converting it into the dual of the data map,
   // so that the data is sorted by amount of time taken, instead of pointer.
   //
-  std::vector<pair<double, Pass*> > Data;
+  std::vector<std::pair<double, Pass*> > Data;
   double TotalTime = 0;
   for (std::map<Pass*, double>::iterator I = TimingData.begin(),
          E = TimingData.end(); I != E; ++I)
@@ -116,10 +116,10 @@ TimingInfo::~TimingInfo() {
     }
   
   // Sort the data by time as the primary key, in reverse order...
-  std::sort(Data.begin(), Data.end(), greater<pair<double, Pass*> >());
+  std::sort(Data.begin(), Data.end(), std::greater<std::pair<double, Pass*> >());
 
   // Print out timing header...
-  cerr << std::string(79, '=') << "\n"
+  std::cerr << std::string(79, '=') << "\n"
        << "                      ... Pass execution timing report ...\n"
        << std::string(79, '=') << "\n  Total Execution Time: " << TotalTime
        << " seconds\n\n  % Time: Seconds:\tPass Name:\n";
@@ -129,7 +129,7 @@ TimingInfo::~TimingInfo() {
     fprintf(stderr, "  %6.2f%% %fs\t%s\n", Data[i].first*100 / TotalTime,
             Data[i].first, Data[i].second->getPassName());
   }
-  cerr << "  100.00% " << TotalTime << "s\tTOTAL\n"
+  std::cerr << "  100.00% " << TotalTime << "s\tTOTAL\n"
        << std::string(79, '=') << "\n";
 }
 

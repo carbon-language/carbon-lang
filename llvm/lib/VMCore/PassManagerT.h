@@ -142,7 +142,7 @@ public:
 
 #ifndef NDEBUG
       // All Required analyses should be available to the pass as it runs!
-      for (vector<AnalysisID>::const_iterator
+      for (std::vector<AnalysisID>::const_iterator
              I = AnUsage.getRequiredSet().begin(), 
              E = AnUsage.getRequiredSet().end(); I != E; ++I) {
         assert(getAnalysisOrNullUp(*I) && "Analysis used but not available!");
