@@ -40,6 +40,10 @@ public:
   inline const std::vector<Loop*> &getSubLoops() const { return SubLoops; }
   inline const std::vector<BasicBlock*> &getBlocks() const { return Blocks; }
 
+  // isLoopExit - True if terminator in the block can branch to another block
+  // that is outside of the current loop.
+  bool isLoopExit(BasicBlock *BB) const;
+
   void print(std::ostream &O) const;
 private:
   friend class LoopInfo;
@@ -96,8 +100,6 @@ public:
   }
   // isLoopEnd - True if block jumps to loop entry
   bool isLoopEnd(BasicBlock *BB) const;
-  // isLoopExit - True if block is the loop exit
-  bool isLoopExit(BasicBlock *BB) const;
 #endif
 
   // runOnFunction - Pass framework implementation
