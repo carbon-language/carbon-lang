@@ -429,7 +429,20 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
         unsigned Val = CN->getValue();
         if (Val == 1 || Val == 2 || Val == 3) {
           AM.Scale = 1 << Val;
-          AM.IndexReg = SelectExpr(N.Val->getOperand(0));
+          SDOperand ShVal = N.Val->getOperand(0);
+
+          // Okay, we know that we have a scale by now.  However, if the scaled
+          // value is an add of something and a constant, we can fold the
+          // constant into the disp field here.
+          if (ShVal.Val->getOpcode() == ISD::ADD &&
+              isa<ConstantSDNode>(ShVal.Val->getOperand(1))) {
+            AM.IndexReg = SelectExpr(ShVal.Val->getOperand(0));
+            ConstantSDNode *AddVal =
+              cast<ConstantSDNode>(ShVal.Val->getOperand(1));
+            AM.Disp += AddVal->getValue() << Val;
+          } else {          
+            AM.IndexReg = SelectExpr(ShVal);
+          }
           return false;
         }
       }
