@@ -18,18 +18,18 @@ static Record *CurRec = 0;
 
 typedef std::pair<Record*, std::vector<Init*>*> SubClassRefTy;
 
-struct SetRecord {
+struct LetRecord {
   std::string Name;
   std::vector<unsigned> Bits;
   Init *Value;
   bool HasBits;
-  SetRecord(const std::string &N, std::vector<unsigned> *B, Init *V)
+  LetRecord(const std::string &N, std::vector<unsigned> *B, Init *V)
     : Name(N), Value(V), HasBits(B != 0) {
     if (HasBits) Bits = *B;
   }
 };
 
-static std::vector<std::vector<SetRecord> > SetStack;
+static std::vector<std::vector<LetRecord> > LetStack;
 
 
 extern std::ostream &err();
@@ -168,7 +168,7 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
   std::vector<SubClassRefTy> *SubClassList;
 };
 
-%token INT BIT STRING BITS LIST CODE DAG CLASS DEF FIELD SET IN
+%token INT BIT STRING BITS LIST CODE DAG CLASS DEF FIELD LET IN
 %token <IntVal>      INTVAL
 %token <StrVal>      ID STRVAL CODEFRAGMENT
 
@@ -340,7 +340,7 @@ Declaration : OptPrefix Type ID OptValue {
 
 BodyItem : Declaration ';' {
   delete $1;
-} | SET ID OptBitList '=' Value ';' {
+} | LET ID OptBitList '=' Value ';' {
   setValue(*$2, $3, $5);
   delete $2;
   delete $3;
@@ -399,11 +399,11 @@ ObjectBody : OptID {
            }
 
 	   // Process any variables on the set stack...
-	   for (unsigned i = 0, e = SetStack.size(); i != e; ++i)
-             for (unsigned j = 0, e = SetStack[i].size(); j != e; ++j)
-               setValue(SetStack[i][j].Name,
-                        SetStack[i][j].HasBits ? &SetStack[i][j].Bits : 0,
-                        SetStack[i][j].Value);
+	   for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
+             for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
+               setValue(LetStack[i][j].Name,
+                        LetStack[i][j].HasBits ? &LetStack[i][j].Bits : 0,
+                        LetStack[i][j].Value);
          } Body {
   CurRec->resolveReferences();
 
@@ -446,22 +446,22 @@ DefInst : DEF ObjectBody {
 
 Object : ClassInst | DefInst;
 
-SETItem : ID OptBitList '=' Value {
-  SetStack.back().push_back(SetRecord(*$1, $2, $4));
+LETItem : ID OptBitList '=' Value {
+  LetStack.back().push_back(LetRecord(*$1, $2, $4));
   delete $1; delete $2;
 };
 
-SETList : SETItem | SETList ',' SETItem;
+LETList : LETItem | LETList ',' LETItem;
 
-// SETCommand - A 'SET' statement start...
-SETCommand : SET { SetStack.push_back(std::vector<SetRecord>()); } SETList IN;
+// LETCommand - A 'LET' statement start...
+LETCommand : LET { LetStack.push_back(std::vector<LetRecord>()); } LETList IN;
 
 // Support Set commands wrapping objects... both with and without braces.
-Object : SETCommand '{' ObjectList '}' {
-    SetStack.pop_back();
+Object : LETCommand '{' ObjectList '}' {
+    LetStack.pop_back();
   }
-  | SETCommand Object {
-    SetStack.pop_back();
+  | LETCommand Object {
+    LetStack.pop_back();
   };
 
 ObjectList : Object {} | ObjectList Object {};

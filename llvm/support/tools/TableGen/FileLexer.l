@@ -159,7 +159,8 @@ dag            { return DAG; }
 class          { return CLASS; }
 def            { return DEF; }
 field          { return FIELD; }
-set            { return SET; }
+let            { return LET; }
+set            { return LET; }
 in             { return IN; }
 
 {Identifier}   { Filelval.StrVal = new std::string(yytext, yytext+yyleng);
