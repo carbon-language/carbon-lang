@@ -27,7 +27,7 @@ LLI      = $(TOOLS)/lli
 LLC      = $(TOOLS)/llc
 LAS      = $(TOOLS)/as
 LGCCAS   = $(TOOLS)/gccas
-LGCCLD   = $(TOOLS)/gccld -L/home/vadve/lattner/cvs/gcc_install/lib/gcc-lib/llvm/3.1/
+LGCCLD   = $(TOOLS)/gccld -L/home/vadve/lattner/cvs/gcc_install/lib/gcc-lib/llvm/3.1/ -L/home/vadve/vadve/Research/DynOpt/LLVM/llvm/test/Libraries/Output
 LDIS     = $(TOOLS)/dis 
 LOPT     = $(TOOLS)/opt
 LLINK    = $(TOOLS)/link
@@ -45,24 +45,25 @@ DIS     = /usr/ccs/bin/dis
 CP	= /bin/cp -f
 CFLAGS  += -g -xarch=v9
 
-#LLCLIB   = $(LEVEL)/test/Libraries/runtime.o
-#LIBS    += $(LLCLIB)
-
-
 
 ifeq ($(TRACE), yes)
-    LLCFLAGS += -trace
+    LLCFLAGS += -trace basicblock
+    LLCLIBS := -L$(LEVEL)/test/Libraries/Output -linstr64
+else
+    ifeq ($(TRACEM), yes)
+        LLCFLAGS += -trace function
+	LLCLIBS := -L$(LEVEL)/test/Libraries/Output -linstr64
+    endif
 endif
-ifeq ($(TRACEM), yes)
-    LLCFLAGS += -tracem
-endif
+
+LLCLIBS := $(LLCLIBS) -lm
 
 clean ::
 	$(RM) a.out core
 	$(RM) -rf Output/
 
 # Compile from X.c to Output/X.ll
-Output/%.ll: %.c $(LCC1) Output/.dir
+Output/%.ll: %.c $(LCC1) Output/.dir $(INCLUDES)
 	$(LCC) $(LCCFLAGS) -S $< -o $@
 
 # LLVM Assemble from Output/X.ll to Output/X.bc.  Output/X.ll must have come
@@ -85,12 +86,12 @@ Output/%.llc.s: Output/%.llvm.bc
 # Assemble (and link) an LLVM-linked program using the system assembler...
 #
 Output/%.llc: Output/%.llc.s
-	$(CC) $(CFLAGS) $< $(LIBS) -o $@
+	$(CC) $(CFLAGS) $< $(LLCLIBS) -o $@
 
 #
 # Testing versions of provided utilities...
 #
-Output/%.tll: %.c $(LCC1) Output/.dir
+Output/%.tll: %.c $(LCC1) Output/.dir $(INCLUDES)
 	@echo "======== Compiling $<"
 	$(LCC) $(LCCFLAGS) -S $< -o $@ || \
 	    ( rm -f $@; $(FAILURE) $@ )
