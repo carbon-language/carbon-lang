@@ -582,76 +582,59 @@ static void setValueName(Value *V, char *NameStr) {
   }
 }
 
-// setValueNameMergingDuplicates - Set the specified value to the name given.
-// The name may be null potentially, in which case this is a noop.  The string
-// passed in is assumed to be a malloc'd string buffer, and is free'd by this
-// function.
-//
-// This function returns true if the value has already been defined, but is
-// allowed to be redefined in the specified context.  If the name is a new name
-// for the typeplane, false is returned.
-//
-static bool setValueNameMergingDuplicates(GlobalVariable *V, char *NameStr) {
-  if (NameStr == 0) return false;
-
-  std::string Name(NameStr);      // Copy string
-  free(NameStr);                  // Free old string
-
-  SymbolTable &ST = CurModule.CurrentModule->getSymbolTable();
-
-  Value *Existing = ST.lookup(V->getType(), Name);
-  if (Existing) {    // Inserting a name that is already defined???
-
-    // We are a simple redefinition of a value, check to see if it is defined
-    // the same as the old one...
-    if (GlobalVariable *EGV = dyn_cast<GlobalVariable>(Existing)) {
-      // We are allowed to redefine a global variable in two circumstances:
-      // 1. If at least one of the globals is uninitialized or 
-      // 2. If both initializers have the same value.
-      //
-      if (!EGV->hasInitializer() || !V->hasInitializer() ||
-          EGV->getInitializer() == V->getInitializer()) {
-        
-        // Make sure the existing global version gets the initializer!  Make
-        // sure that it also gets marked const if the new version is.
-        if (V->hasInitializer() && !EGV->hasInitializer())
-          EGV->setInitializer(V->getInitializer());
-        if (V->isConstant())
-          EGV->setConstant(true);
-        EGV->setLinkage(V->getLinkage());
-        
-        delete V;     // Destroy the duplicate!
-        return true;   // They are equivalent!
-      }
-    }
-
-    ThrowException("Redefinition of value named '" + Name + "' in the '" +
-		   V->getType()->getDescription() + "' type plane!");
-  }
-
-  // Set the name.
-  V->setName(Name, &ST);
-  return false;
-}
-
 /// ParseGlobalVariable - Handle parsing of a global.  If Initializer is null,
 /// this is a declaration, otherwise it is a definition.
 static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
                                 bool isConstantGlobal, const Type *Ty,
                                 Constant *Initializer) {
-  // Global declarations appear in Constant Pool
-  GlobalVariable *GV = new GlobalVariable(Ty, isConstantGlobal, Linkage,
-                                          Initializer);
-  if (!setValueNameMergingDuplicates(GV, NameStr)) {   // If not redefining...
-    CurModule.CurrentModule->getGlobalList().push_back(GV);
-    int Slot = InsertValue(GV, CurModule.Values);
-    
-    if (Slot != -1) {
-      CurModule.DeclareNewGlobalValue(GV, ValID::create(Slot));
-    } else {
-      CurModule.DeclareNewGlobalValue(GV,
-                                 ValID::create((char*)GV->getName().c_str()));
+  if (isa<FunctionType>(Ty))
+    ThrowException("Cannot declare global vars of function type!");
+
+  // If this global has a name, check to see if there is already a definition
+  // of this global in the module.  If so, merge as appropriate.  Note that
+  // this is really just a hack around problems in the CFE.  :(
+  std::string Name;
+  if (NameStr) {
+    Name = NameStr;      // Copy string
+    free(NameStr);       // Free old string
+
+    SymbolTable &ST = CurModule.CurrentModule->getSymbolTable();
+    if (Value *Existing = ST.lookup(Ty, Name)) {
+      // We are a simple redefinition of a value, check to see if it is defined
+      // the same as the old one...
+      GlobalVariable *EGV = cast<GlobalVariable>(Existing); 
+
+      // We are allowed to redefine a global variable in two circumstances:
+      // 1. If at least one of the globals is uninitialized or 
+      // 2. If both initializers have the same value.
+      //
+      if (!EGV->hasInitializer() || !Initializer ||
+          EGV->getInitializer() == Initializer) {
+
+        // Make sure the existing global version gets the initializer!  Make
+        // sure that it also gets marked const if the new version is.
+        if (Initializer && !EGV->hasInitializer())
+          EGV->setInitializer(Initializer);
+        if (isConstantGlobal)
+          EGV->setConstant(true);
+        EGV->setLinkage(Linkage);
+        return;
+      }
+
+      ThrowException("Redefinition of value named '" + Name + "' in the '" +
+                     Ty->getDescription() + "' type plane!");
     }
+  }
+
+  GlobalVariable *GV = new GlobalVariable(Ty, isConstantGlobal, Linkage,
+                                          Initializer, Name, 
+                                          CurModule.CurrentModule);
+  int Slot = InsertValue(GV, CurModule.Values);
+  
+  if (Slot != -1) {
+    CurModule.DeclareNewGlobalValue(GV, ValID::create(Slot));
+  } else {
+    CurModule.DeclareNewGlobalValue(GV, ValID::create((char*)Name.c_str()));
   }
 }
 
