@@ -141,7 +141,7 @@ Module *BugDriver::ExtractLoop(Module *M) {
 
   // Check to see if we created any new functions.  If not, no loops were
   // extracted and we should return null.
-  if (M->size() != NewM->size()) {
+  if (M->size() == NewM->size()) {
     delete NewM;
     return 0;
   }
