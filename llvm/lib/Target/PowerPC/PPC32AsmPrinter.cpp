@@ -74,7 +74,7 @@ namespace {
 
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO,
-		 bool elideOffsetKeyword = false);
+    bool elideOffsetKeyword = false);
     void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);    
     bool doInitialization(Module &M);
@@ -283,32 +283,36 @@ void Printer::emitGlobalConstant(const Constant *CV) {
         double FVal;
         uint64_t UVal;
         struct {
-        	uint32_t MSWord;
-        	uint32_t LSWord;
+          uint32_t MSWord;
+          uint32_t LSWord;
         } T;
       } U;
       U.FVal = Val;
       
-      O << ".long\t" << U.T.MSWord << "\t# double most significant word " << Val << "\n";
-      O << ".long\t" << U.T.LSWord << "\t# double least significant word" << Val << "\n";
+      O << ".long\t" << U.T.MSWord << "\t# double most significant word " 
+        << Val << "\n";
+      O << ".long\t" << U.T.LSWord << "\t# double least significant word" 
+        << Val << "\n";
       return;
     }
     }
   } else if (CV->getType()->getPrimitiveSize() == 64) {
     const ConstantInt *CI = dyn_cast<ConstantInt>(CV);
     if(CI) {
-  	union DU {                            // Abide by C TBAA rules
+    union DU {                            // Abide by C TBAA rules
         int64_t UVal;
         struct {
-        	uint32_t MSWord;
-        	uint32_t LSWord;
+          uint32_t MSWord;
+          uint32_t LSWord;
         } T;
       } U;
       U.UVal = CI->getRawValue();
         
-      O << ".long\t" << U.T.MSWord << "\t# Double-word most significant word " << U.UVal << "\n";
-      O << ".long\t" << U.T.LSWord << "\t# Double-word least significant word" << U.UVal << "\n";
-      return;	  
+      O << ".long\t" << U.T.MSWord << "\t# Double-word most significant word " 
+        << U.UVal << "\n";
+      O << ".long\t" << U.T.LSWord << "\t# Double-word least significant word" 
+        << U.UVal << "\n";
+      return;
     }
   }
 
@@ -327,7 +331,7 @@ void Printer::emitGlobalConstant(const Constant *CV) {
     O << ".long";
     break;
   case Type::ULongTyID: case Type::LongTyID:    
-  	assert (0 && "Should have already output double-word constant.");
+    assert (0 && "Should have already output double-word constant.");
   case Type::FloatTyID: case Type::DoubleTyID:
     assert (0 && "Should have already output floating point constant.");
   default:
@@ -396,7 +400,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
     O << "L" << NumberForBB[I->getBasicBlock()] << ":\t# "
       << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
-	 II != E; ++II) {
+      II != E; ++II) {
       // Print the assembly for the instruction.
       O << "\t";
       printMachineInstruction(II);
@@ -410,7 +414,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
 
 
 void Printer::printOp(const MachineOperand &MO,
-		      bool elideOffsetKeyword /* = false */) {
+                      bool elideOffsetKeyword /* = false */) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   int new_symbol;
   
@@ -442,12 +446,12 @@ void Printer::printOp(const MachineOperand &MO,
     return;
   case MachineOperand::MO_GlobalAddress:
     if (!elideOffsetKeyword) {
-		if(isa<Function>(MO.getGlobal())) {
-			Stubs.insert(Mang->getValueName(MO.getGlobal()));
-			O << "L" << Mang->getValueName(MO.getGlobal()) << "$stub";
-		} else {
-			O << Mang->getValueName(MO.getGlobal());
-		}
+      if(isa<Function>(MO.getGlobal())) {
+        Stubs.insert(Mang->getValueName(MO.getGlobal()));
+        O << "L" << Mang->getValueName(MO.getGlobal()) << "$stub";
+      } else {
+        O << Mang->getValueName(MO.getGlobal());
+      }
     }
     return;
   case MachineOperand::MO_ExternalSymbol:
@@ -461,37 +465,37 @@ void Printer::printOp(const MachineOperand &MO,
 #if 0
 static inline
 unsigned int ValidOpcodes(const MachineInstr *MI, unsigned int ArgType[5]) {
-	int i;
-	unsigned int retval = 1;
-	
-	for(i = 0; i<5; i++) {
-		switch(ArgType[i]) {
-			case none:
-				break;
-			case Gpr:
-			case Gpr0:
-				Type::UIntTy
-			case Simm16:
-			case Zimm16:
-			case PCRelimm24:
-			case Imm24:
-			case Imm5:
-			case PCRelimm14:
-			case Imm14:
-			case Imm2:
-			case Crf:
-			case Imm3:
-			case Imm1:
-			case Fpr:
-			case Imm4:
-			case Imm8:
-			case Disimm16:
-			case Spr:
-			case Sgr:
-	};
-		
-		}
-	}
+  int i;
+  unsigned int retval = 1;
+  
+  for(i = 0; i<5; i++) {
+    switch(ArgType[i]) {
+      case none:
+        break;
+      case Gpr:
+      case Gpr0:
+        Type::UIntTy
+      case Simm16:
+      case Zimm16:
+      case PCRelimm24:
+      case Imm24:
+      case Imm5:
+      case PCRelimm14:
+      case Imm14:
+      case Imm2:
+      case Crf:
+      case Imm3:
+      case Imm1:
+      case Fpr:
+      case Imm4:
+      case Imm8:
+      case Disimm16:
+      case Spr:
+      case Sgr:
+  };
+    
+    }
+  }
 }
 #endif
 
@@ -507,19 +511,20 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   unsigned int ArgCount = Desc.TSFlags & PPC32II::ArgCountMask;
   unsigned int ArgType[5];
 
-
   ArgType[0] = (Desc.TSFlags>>PPC32II::Arg0TypeShift) & PPC32II::ArgTypeMask;
   ArgType[1] = (Desc.TSFlags>>PPC32II::Arg1TypeShift) & PPC32II::ArgTypeMask;
   ArgType[2] = (Desc.TSFlags>>PPC32II::Arg2TypeShift) & PPC32II::ArgTypeMask;
   ArgType[3] = (Desc.TSFlags>>PPC32II::Arg3TypeShift) & PPC32II::ArgTypeMask;
   ArgType[4] = (Desc.TSFlags>>PPC32II::Arg4TypeShift) & PPC32II::ArgTypeMask;
   
-  assert ( ((Desc.TSFlags & PPC32II::VMX) == 0) && "Instruction requires VMX support");
-  assert ( ((Desc.TSFlags & PPC32II::PPC64) == 0) && "Instruction requires 64 bit support");
+  assert((Desc.TSFlags & PPC32II::VMX == 0) &&
+         "Instruction requires VMX support");
+  assert((Desc.TSFlags & PPC32II::PPC64 == 0) &&
+         "Instruction requires 64 bit support");
   //assert ( ValidOpcodes(MI, ArgType) && "Instruction has invalid inputs");
   ++EmittedInsts;
 
-  if(Opcode == PPC32::MovePCtoLR) {
+  if (Opcode == PPC32::MovePCtoLR) {
     O << "mflr r0\n";
     O << "bcl 20,31,L" << CurrentFnName << "$pb\n";
     O  << "L" << CurrentFnName << "$pb:\n";
@@ -530,7 +535,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   DEBUG(std::cerr << TII.getName(MI->getOpcode()) << " expects " 
                   << ArgCount << " args\n");
 
-  if(Opcode == PPC32::LOADLoAddr) {
+  if (Opcode == PPC32::LOADLoAddr) {
     printOp(MI->getOperand(0));
     O << ", ";
     printOp(MI->getOperand(1));
@@ -540,7 +545,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     return;
   }
 
-  if(Opcode == PPC32::LOADHiAddr) {
+  if (Opcode == PPC32::LOADHiAddr) {
     printOp(MI->getOperand(0));
     O << ", ";
     printOp(MI->getOperand(1));
@@ -550,30 +555,29 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     return;
   }
   
-  if( (ArgCount == 3) && (ArgType[1] == PPC32II::Disimm16) ) {
+  if (ArgCount == 3 && ArgType[1] == PPC32II::Disimm16) {
     printOp(MI->getOperand(0));
     O << ", ";
     printOp(MI->getOperand(1));
     O << "(";
-    if((ArgType[2] == PPC32II::Gpr0) && (MI->getOperand(2).getReg() == PPC32::R0)) {
-    	O << "0";
-    } else {
-    	printOp(MI->getOperand(2));
-    }
+    if (ArgType[2] == PPC32II::Gpr0 && MI->getOperand(2).getReg() == PPC32::R0)
+      O << "0";
+    else
+      printOp(MI->getOperand(2));
     O << ")\n";
   } else {
     for(i = 0; i< ArgCount; i++) {
-        if( (ArgType[i] == PPC32II::Gpr0) && ((MI->getOperand(i).getReg()) == PPC32::R0)) {
-            O << "0";
-        } else {
-        	//std::cout << "DEBUG " << (*(TM.getRegisterInfo())).get(MI->getOperand(i).getReg()).Name << "\n";
-            printOp(MI->getOperand(i));
-        }
-        if( ArgCount - 1 == i) {
-            O << "\n";
-        } else {
-            O << ", ";
-        }
+      if (ArgType[i] == PPC32II::Gpr0 && 
+          MI->getOperand(i).getReg() == PPC32::R0)
+        O << "0";
+      else {
+        //std::cout << "DEBUG " << (*(TM.getRegisterInfo())).get(MI->getOperand(i).getReg()).Name << "\n";
+        printOp(MI->getOperand(i));
+      }
+      if( ArgCount - 1 == i)
+        O << "\n";
+      else
+        O << ", ";
     }
   }
   
@@ -666,28 +670,28 @@ bool Printer::doFinalization(Module &M) {
       }
     }
         
-    for(std::set<std::string>::iterator i = Stubs.begin(); i != Stubs.end(); ++i) {
-    	O << ".data\n";     
-		O << ".section __TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32\n";
-		O << "\t.align 2\n";
-    	O << "L" << *i << "$stub:\n";
-    	O << "\t.indirect_symbol " << *i << "\n";
-    	O << "\tmflr r0\n";
-    	O << "\tbcl 20,31,L0$" << *i << "\n";
-    	O << "L0$" << *i << ":\n";
-    	O << "\tmflr r11\n";
-    	O << "\taddis r11,r11,ha16(L" << *i << "$lazy_ptr-L0$" << *i << ")\n";
-    	O << "\tmtlr r0\n";
-    	O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
-    	O << "\tmtctr r12\n";
-    	O << "\tbctr\n";
-    	O << ".data\n";
-		O << ".lazy_symbol_pointer\n";
-		O << "L" << *i << "$lazy_ptr:\n";
-        O << ".indirect_symbol " << *i << "\n";
-        O << ".long dyld_stub_binding_helper\n";
-
-   	}
+  for(std::set<std::string>::iterator i = Stubs.begin(); i != Stubs.end(); ++i)
+  {
+    O << ".data\n";     
+    O<<".section __TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32\n";
+    O << "\t.align 2\n";
+    O << "L" << *i << "$stub:\n";
+    O << "\t.indirect_symbol " << *i << "\n";
+    O << "\tmflr r0\n";
+    O << "\tbcl 20,31,L0$" << *i << "\n";
+    O << "L0$" << *i << ":\n";
+    O << "\tmflr r11\n";
+    O << "\taddis r11,r11,ha16(L" << *i << "$lazy_ptr-L0$" << *i << ")\n";
+    O << "\tmtlr r0\n";
+    O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
+    O << "\tmtctr r12\n";
+    O << "\tbctr\n";
+    O << ".data\n";
+    O << ".lazy_symbol_pointer\n";
+    O << "L" << *i << "$lazy_ptr:\n";
+    O << ".indirect_symbol " << *i << "\n";
+    O << ".long dyld_stub_binding_helper\n";
+  }
 
   delete Mang;
   return false; // success
