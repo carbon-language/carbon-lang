@@ -109,7 +109,7 @@ namespace {
         Target(tgt), Insert(ins), Shift(s), MB(b), ME(e) {}
     };
     
-    // External functions used in the Module
+    // External functions we may use in compiling the Module
     Function *fmodfFn, *fmodFn, *__cmpdi2Fn, *__moddi3Fn, *__divdi3Fn, 
       *__umoddi3Fn,  *__udivdi3Fn, *__fixsfdiFn, *__fixdfdiFn, *__fixunssfdiFn,
       *__fixunsdfdiFn, *__floatdisfFn, *__floatdidfFn, *mallocFn, *freeFn;
@@ -182,7 +182,7 @@ namespace {
       mallocFn = M.getOrInsertFunction("malloc", voidPtr, Type::UIntTy, 0);
       // void free(void*)
       freeFn = M.getOrInsertFunction("free", Type::VoidTy, voidPtr, 0);
-      return false;
+      return true;
     }
 
     /// runOnFunction - Top level implementation of instruction selection for
