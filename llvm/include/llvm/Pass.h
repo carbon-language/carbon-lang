@@ -126,7 +126,7 @@ protected:
   /// getAnalysisUsage function.
   ///
   template<typename AnalysisType>
-  AnalysisType &getAnalysis() {
+  AnalysisType &getAnalysis() const {
     assert(Resolver && "Pass has not been inserted into a PassManager object!");
     const PassInfo *PI = getClassPassInfo<AnalysisType>();
     assert(PI && "getAnalysis for unregistered pass!");
@@ -143,10 +143,10 @@ protected:
   }
 
   template<typename AnalysisType>
-  AnalysisType &getAnalysisID(const PassInfo *PI) {
+  AnalysisType &getAnalysisID(const PassInfo *PI) const {
     assert(Resolver && "Pass has not been inserted into a PassManager object!");
     assert(PI && "getAnalysis for unregistered pass!");
-    return *(AnalysisType*)Resolver->getAnalysis(PI);
+    return *dynamic_cast<AnalysisType*>(Resolver->getAnalysis(PI));
   }
 
   /// getAnalysisToUpdate<AnalysisType>() - This function is used by subclasses
@@ -156,11 +156,11 @@ protected:
   /// provide the capability to update an analysis that exists.
   ///
   template<typename AnalysisType>
-  AnalysisType *getAnalysisToUpdate() {
+  AnalysisType *getAnalysisToUpdate() const {
     assert(Resolver && "Pass not resident in a PassManager object!");
     const PassInfo *PI = getClassPassInfo<AnalysisType>();
     if (PI == 0) return 0;
-    return (AnalysisType*)Resolver->getAnalysisToUpdate(PI);
+    return dynamic_cast<AnalysisType*>(Resolver->getAnalysisToUpdate(PI));
   }
 
 

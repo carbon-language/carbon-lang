@@ -86,14 +86,14 @@ public:
 struct AnalysisResolver {
   virtual Pass *getAnalysisOrNullUp(AnalysisID ID) const = 0;
   virtual Pass *getAnalysisOrNullDown(AnalysisID ID) const = 0;
-  Pass *getAnalysis(AnalysisID ID) {
+  Pass *getAnalysis(AnalysisID ID) const {
     Pass *Result = getAnalysisOrNullUp(ID);
     assert(Result && "Pass has an incorrect analysis uses set!");
     return Result;
   }
 
   // getAnalysisToUpdate - Return an analysis result or null if it doesn't exist
-  Pass *getAnalysisToUpdate(AnalysisID ID) {
+  Pass *getAnalysisToUpdate(AnalysisID ID) const {
     return getAnalysisOrNullUp(ID);
   }
 
