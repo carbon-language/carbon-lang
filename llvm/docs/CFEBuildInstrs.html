@@ -94,10 +94,15 @@ invalid code.  Instead, use the system assembler and linker.
 <li><p>Configure and build the LLVM libraries and tools using:</p>
 <pre>
  % cd llvm
- % ./configure [options...]
+ % ./configure --prefix=/some/path/you/can/install/to [options...]
  % gmake tools-only
 </pre>
-    <p>This will build all of the LLVM tools and libraries.</p></li>
+  <p>This will build all of the LLVM tools and libraries. The <tt>--prefix</tt> 
+  option defaults to /usr/local (per configure standards) but unless you are a 
+  system administrator, you probably won't be able to install LLVM there because
+  of permissions. Specify a path into which LLVM can be installed (e.g.
+  <tt>--prefix=/home/user/llvm</tt>).</p>
+</li>
 
 <li><p>Add the directory containing the tools to your PATH.</p>
 <pre>
