@@ -1164,21 +1164,20 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // is a conditional branch, see if we can hoist any code from this block up
   // into our predecessor.
   if (OnlyPred)
-    if (BranchInst *BI = dyn_cast<BranchInst>(OnlyPred->getTerminator())) {
-      // This is guaranteed to be a condbr at this point.
-      assert(BI->isConditional() && "Should have folded bb into pred!");
-      // Get the other block.
-      BasicBlock *OtherBB = BI->getSuccessor(BI->getSuccessor(0) == BB);
-      PI = pred_begin(OtherBB);
-      ++PI;
-      if (PI == pred_end(OtherBB)) {
-        // We have a conditional branch to two blocks that are only reachable
-        // from the condbr.  We know that the condbr dominates the two blocks,
-        // so see if there is any identical code in the "then" and "else"
-        // blocks.  If so, we can hoist it up to the branching block.
-        Changed |= HoistThenElseCodeToIf(BI);
+    if (BranchInst *BI = dyn_cast<BranchInst>(OnlyPred->getTerminator()))
+      if (BI->isConditional()) {
+        // Get the other block.
+        BasicBlock *OtherBB = BI->getSuccessor(BI->getSuccessor(0) == BB);
+        PI = pred_begin(OtherBB);
+        ++PI;
+        if (PI == pred_end(OtherBB)) {
+          // We have a conditional branch to two blocks that are only reachable
+          // from the condbr.  We know that the condbr dominates the two blocks,
+          // so see if there is any identical code in the "then" and "else"
+          // blocks.  If so, we can hoist it up to the branching block.
+          Changed |= HoistThenElseCodeToIf(BI);
+        }
       }
-    }
 
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
     if (BranchInst *BI = dyn_cast<BranchInst>((*PI)->getTerminator()))
