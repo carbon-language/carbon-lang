@@ -17,7 +17,7 @@
 # used in LLVM as it progresses.
 #
 # Usage:
-#  llvmdo [-dirs "DIRNAMES..." PROGRAM ARGS...
+#  llvmdo [-dirs "DIRNAMES..."] PROGRAM ARGS...
 #
 # The -dirs argument allows you to specify the set of directories that are 
 # searched. By default, everything is searched. Note that you must use quotes
