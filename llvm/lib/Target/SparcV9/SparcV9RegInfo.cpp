@@ -106,7 +106,6 @@ const char * const SparcV9FloatRegClass::getRegName(unsigned reg) const {
   return FloatRegNames[reg];
 }
 
-
 static const char * const IntCCRegNames[] = {    
   "xcc",  "icc",  "ccr"
 };
@@ -121,7 +120,7 @@ static const char * const FloatCCRegNames[] = {
 };
 
 const char * const SparcV9FloatCCRegClass::getRegName(unsigned reg) const {
-  assert (reg < 5);
+  assert (reg < 4);
   return FloatCCRegNames[reg];
 }
 
