@@ -290,7 +290,6 @@ ChooseMovpccAfterSub(const InstructionNode* instrNode,
   return opCode;
 }
 
-
 static inline MachineOpCode
 ChooseConvertToFloatInstr(const InstructionNode* instrNode,
                           const Type* opType)
@@ -1277,7 +1276,8 @@ FixConstantOperands(const InstructionNode* vmInstrNode,
 
 // 
 // Substitute operand `operandNum' of the instruction in node `treeNode'
-// in place the use(s) of that instruction in node `parent'.
+// in place of the use(s) of that instruction in node `parent'.
+// Check both explicit and implicit operands!
 // 
 static void
 ForwardOperand(InstructionNode* treeNode,
@@ -1302,7 +1302,8 @@ ForwardOperand(InstructionNode* treeNode,
   for (unsigned i=0, N=mvec.size(); i < N; i++)
     {
       MachineInstr* minstr = mvec[i];
-      for (unsigned i=0, numOps=minstr->getNumOperands(); i < numOps; i++)
+      
+      for (unsigned i=0, numOps=minstr->getNumOperands(); i < numOps; ++i)
         {
           const MachineOperand& mop = minstr->getOperand(i);
           if (mop.getOperandType() == MachineOperand::MO_VirtualRegister &&
@@ -1312,6 +1313,10 @@ ForwardOperand(InstructionNode* treeNode,
                                            fwdOp);
             }
         }
+      
+      for (unsigned i=0, numOps=minstr->getNumImplicitRefs(); i < numOps; ++i)
+        if (minstr->getImplicitRef(i) == unusedOp)
+          minstr->setImplicitRef(i, fwdOp, minstr->implicitRefIsDefined(i));
     }
 }
 
