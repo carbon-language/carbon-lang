@@ -148,7 +148,7 @@ PAPIDIR := @PAPIDIR@
 #ENABLE_PROFILING = 1
 
 #
-# This open tells the Makefiles to produce verbose output.
+# This option tells the Makefiles to produce verbose output.
 # It essentially prints the commands that make is executing
 #
 #VERBOSE = 1
