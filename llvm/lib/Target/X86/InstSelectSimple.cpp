@@ -641,9 +641,20 @@ ISel::visitCastInst (CastInst &CI)
 //the former is that the register allocator could use any register it wants,
 //but for now this obviously doesn't matter.  :)
 
-// if target type is bool
-// Emit Compare
-// Emit Set-if-not-zero
+  Type *targetType = CI.getType ();
+  Value *operand = CI.getOperand (0);
+  unsigned int operandReg = getReg (operand);
+  Type *sourceType = operand->getType ();
+  unsigned int destReg = getReg (CI);
+
+  // cast to bool:
+  if (targetType == Type::BoolTy) {
+    // Emit Compare
+    BuildMI (BB, X86::CMPri8, 2).addReg (operandReg).addZImm (0);
+    // Emit Set-if-not-zero
+    BuildMI (BB, X86::SETNEr, 1, destReg);
+    return;
+  }
 
 // if size of target type == size of source type
 // Emit Mov reg(target) <- reg(source)
