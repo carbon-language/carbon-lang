@@ -25,7 +25,8 @@ enum ProfilingType {
   Function  = 2,   /* Function profiling information  */
   Block     = 3,   /* Block profiling information     */
   Edge      = 4,   /* Edge profiling information      */
-  Path      = 5    /* Path profiling information      */
+  Path      = 5,   /* Path profiling information      */
+  BBTrace   = 6    /* Basic block trace information   */
 };
 
 void write_profiling_data(enum ProfilingType PT, unsigned *Start,
