@@ -180,6 +180,7 @@ install-bytecode:: install-bytecode-local
 # Variables derived from configuration we are building
 #--------------------------------------------------------------------
 
+
 ifdef ENABLE_PROFILING
   BuildMode := Profile
   CXX.Flags := -O3 -DNDEBUG -felide-constructors -finline-functions -pg
@@ -188,9 +189,13 @@ ifdef ENABLE_PROFILING
 else
   ifdef ENABLE_OPTIMIZED
     BuildMode := Release
-    CXX.Flags  := -O3 -DNDEBUG -finline-functions \
-                  -felide-constructors -fomit-frame-pointer
-    C.Flags    := -O3 -DNDEBUG -fomit-frame-pointer
+    # Don't use -fomit-frame-pointer on FreeBSD
+    ifneq ($(OS),FreeBSD)
+      OmitFramePointer := -fomit-frame-pointer
+    endif
+    CXX.Flags  := -O3 -DNDEBUG -finline-functions -felide-constructors \
+                  $(OmitFramePointer)
+    C.Flags    := -O3 -DNDEBUG $(OmitFramePointer)
     LD.Flags   := -O3 -DNDEBUG 
   else
     BuildMode := Debug
