@@ -72,15 +72,17 @@
     <!--=====================================================================-->
 
     Here's the short story for getting up and running quickly with LLVM:
-    <ul>
+    <ol>
     <li>Find the path to the CVS repository containing LLVM (we'll call this <i>CVSROOTDIR</i>).
     <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
     <li><tt>cvs -d <i>CVSROOTDIR</i> checkout llvm</tt>
-    <li>Edit <tt>llvm/Makefile.config</tt> to set local paths if necessary.
     <li><tt>cd llvm</tt>
+    <li>Edit <tt>Makefile.config</tt> to set local paths.  This includes
+        setting the install location of the C frontend, and the various paths
+        to the C and C++ compilers used to build LLVM itself.
     <li><tt>gmake -k |& tee gnumake.out
 	    &nbsp;&nbsp;&nbsp;# this is csh or tcsh syntax</tt>
-    </ul>
+    </ol>
 
     <p>See <a href="#environment">Setting up your environment</a> on tips to
     simplify working with the LLVM front-end and compiled tools.  See the
@@ -356,7 +358,7 @@
         <tt>x.o</tt> file (which is an LLVM bytecode file that can be
         disassembled or manipulated just like any other bytecode file).  The
         command line interface to <tt>gccas</tt> is designed to be as close as
-        possible to the <b>system</b> <tt>as</tt> utility so that the gcc
+        possible to the <b>system</b> '<tt>as</tt>' utility so that the gcc
         frontend itself did not have to be modified to interface to a "wierd"
         assembler.<p>
 
@@ -460,7 +462,7 @@
 
 	    <!-- Created: Mon Jul  1 02:29:02 CDT 2002 -->
 	    <!-- hhmts start -->
-Last modified: Thu Sep 19 14:55:19 CDT 2002
+Last modified: Thu Feb 13 22:20:39 CST 2003
 <!-- hhmts end -->
   </body>
 </html>
