@@ -61,6 +61,18 @@ void DominatorSet::calculateDominatorsFromBlock(BasicBlock *RootBB) {
 	  if (PredSet.size())
 	    set_intersect(WorkingSet, PredSet);
 	}
+      } else if (BB != Root) {
+        // If this isn't the root basic block and it has no predecessors, it
+        // must be an unreachable block.  Fib a bit by saying that the root node
+        // dominates this unreachable node.  This isn't exactly true, because
+        // there is no path from the entry node to this node, but it is sorta
+        // true because any paths to this node would have to go through the
+        // entry node.
+        //
+        // This allows for dominator properties to be built for unreachable code
+        // in a reasonable manner.
+        //
+        WorkingSet = Doms[Root];
       }
 	
       WorkingSet.insert(BB);           // A block always dominates itself
@@ -95,9 +107,8 @@ bool DominatorSet::runOnFunction(Function &F) {
   // unreachable blocks.
   //
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    if (Doms[I].empty()) {
+    if (Doms[I].count(I) == 0)
       calculateDominatorsFromBlock(I);
-    }
 
   return false;
 }
@@ -166,10 +177,14 @@ void ImmediateDominatorsBase::calcIDoms(const DominatorSetBase &DS) {
 }
 
 void ImmediateDominatorsBase::print(std::ostream &o) const {
-  for (const_iterator I = begin(), E = end(); I != E; ++I)
+  for (const_iterator I = begin(), E = end(); I != E; ++I) {
     o << "=============================--------------------------------\n"
-      << "\nImmediate Dominator For Basic Block\n" << *I->first
-      << "is: \n" << *I->second << "\n";
+      << "\nImmediate Dominator For Basic Block:";
+    WriteAsOperand(o, I->first, false);
+    o << " is:";
+    WriteAsOperand(o, I->second, false);
+    o << "\n";
+  }
 }
 
 
