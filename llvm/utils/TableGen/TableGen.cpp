@@ -23,6 +23,7 @@
 #include "RegisterInfoEmitter.h"
 #include "InstrInfoEmitter.h"
 #include "InstrSelectorEmitter.h"
+#include "SimpleInstrSelEmitter.h"
 #include <algorithm>
 #include <cstdio>
 #include <fstream>
@@ -35,7 +36,7 @@ enum ActionType {
   GenRegisterEnums, GenRegister, GenRegisterHeader,
   GenInstrEnums, GenInstrs, GenInstrSelector,
   PrintEnums,
-  Parse,
+  Parse, GenSimpInstrSel, 
 };
 
 namespace {
@@ -57,6 +58,8 @@ namespace {
                                "Generate instruction descriptions"),
                     clEnumValN(GenInstrSelector, "gen-instr-selector",
                                "Generate an instruction selector"),
+		    clEnumValN(GenSimpInstrSel, "gen-simp-instr-sel", 
+			       "Generate a simple instruction selector"),
                     clEnumValN(PrintEnums, "print-enums",
                                "Print enum values for a class"),
                     clEnumValN(Parse, "parse",
@@ -471,6 +474,9 @@ int main(int argc, char **argv) {
       *Out << "\n";
       break;
     }
+    case GenSimpInstrSel:
+      SimpleInstrSelEmitter(Records).run(*Out);
+      break;
     default:
       assert(1 && "Invalid Action");
       return 1;
