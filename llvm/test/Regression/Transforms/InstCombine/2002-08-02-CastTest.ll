@@ -2,9 +2,10 @@
 ; SOME instruction named %c here, even if it's a bitwise and.
 ;
 ; RUN: as < %s | opt -instcombine | grep '%c'
+;
 ulong %test3(ulong %A) {
-        %c1 = cast ulong %A to ubyte            ; <ubyte> [#uses=0]
-        %c2 = cast ulong %A to ulong            ; <ulong> [#uses=0]
+        %c1 = cast ulong %A to ubyte
+        %c2 = cast ubyte %c1 to ulong
         ret ulong %A
 }
 
