@@ -43,11 +43,11 @@ AC_CONFIG_HEADERS(include/llvm/Config/config.h)
 
 dnl Configure other output file
 AC_CONFIG_FILES(Makefile.config
- include/llvm/Support/DataTypes.h
  include/llvm/Support/ThreadSupport.h
  include/llvm/ADT/hash_map
  include/llvm/ADT/hash_set
  include/llvm/ADT/iterator)
+AC_CONFIG_HEADERS([include/llvm/Support/DataTypes.h])
 
 dnl Do special configuration of Makefiles
 AC_CONFIG_MAKEFILE(Makefile)
@@ -270,19 +270,9 @@ AC_CHECK_HEADERS(fcntl.h limits.h sys/time.h unistd.h malloc.h sys/mman.h sys/re
 dnl Check for things that need to be included in public headers, and so
 dnl for which we may not have access to a HAVE_* preprocessor #define.
 dnl (primarily used in DataTypes.h)
-AC_CHECK_HEADER([sys/types.h],
-                [INCLUDE_SYS_TYPES_H='#include <sys/types.h>'],
-                [INCLUDE_SYS_TYPES_H=''])
-AC_SUBST(INCLUDE_SYS_TYPES_H)
-AC_CHECK_HEADER([inttypes.h],
-                [INCLUDE_INTTYPES_H='#include <inttypes.h>'],
-                [INCLUDE_INTTYPES_H=''])
-AC_SUBST(INCLUDE_INTTYPES_H)
-AC_CHECK_HEADER([stdint.h],
-                [INCLUDE_STDINT_H='#include <stdint.h>'],
-                [INCLUDE_STDINT_H=''])
-AC_SUBST(INCLUDE_STDINT_H)
-
+AC_CHECK_HEADER([sys/types.h])
+AC_CHECK_HEADER([inttypes.h])
+AC_CHECK_HEADER([stdint.h])
 
 dnl Check for types
 AC_TYPE_PID_T
