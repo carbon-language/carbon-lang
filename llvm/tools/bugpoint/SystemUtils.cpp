@@ -20,7 +20,7 @@
 /// removeFile - Delete the specified file
 ///
 void removeFile(const std::string &Filename) {
-  unlink(Filename.c_str());
+  std::remove(Filename.c_str());
 }
 
 /// getUniqueFilename - Return a filename with the specified prefix.  If the
