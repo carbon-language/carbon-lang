@@ -1,0 +1,12 @@
+; RUN: as < %s | llc -march=x86
+
+implementation
+
+void %test() {
+entry:   ret void 
+Test:   ; dead block!
+	call void %test()
+	call void %test()
+	ret void
+}
+
