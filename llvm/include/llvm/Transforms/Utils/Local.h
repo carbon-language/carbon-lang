@@ -38,6 +38,13 @@ bool doConstantPropagation(BasicBlock::iterator &I);
 ///
 bool ConstantFoldTerminator(BasicBlock *BB);
 
+/// ConstantFoldInstruction - Attempt to constant fold the specified
+/// instruction.  If successful, the constant result is returned, if not, null
+/// is returned.  Note that this function can only fail when attempting to fold
+/// instructions like loads and stores, which have no constant expression form.
+///
+Constant *ConstantFoldInstruction(Instruction *I);
+
 
 //===----------------------------------------------------------------------===//
 //  Local dead code elimination...
