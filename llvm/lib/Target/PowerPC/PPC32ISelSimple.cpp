@@ -3561,16 +3561,11 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
     // handle { byte, short, int } x { byte, short, int }
     switch (SrcClass) {
     case cByte:
-      if (DestClass == cByte)
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-      else
-        BuildMI(*MBB, IP, PPC::EXTSB, 1, DestReg).addReg(SrcReg);
+      BuildMI(*MBB, IP, PPC::EXTSB, 1, DestReg).addReg(SrcReg);
       break;
     case cShort:
       if (DestClass == cByte)
         BuildMI(*MBB, IP, PPC::EXTSB, 1, DestReg).addReg(SrcReg);
-      else if (DestClass == cShort)
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
       else
         BuildMI(*MBB, IP, PPC::EXTSH, 1, DestReg).addReg(SrcReg);
       break;
@@ -3608,19 +3603,13 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
     // handle u{ byte, short, int } -> { byte, short, int }
     switch (SrcClass) {
     case cByte:
-      if (DestClass == cByte)
-        // uByte 255 -> signed byte == -1
-        BuildMI(*MBB, IP, PPC::EXTSB, 1, DestReg).addReg(SrcReg);
-      else
-        // uByte 255 -> signed short/int == 255
-        BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg).addImm(0)
-          .addImm(24).addImm(31);
+      // uByte 255 -> signed short/int == 255
+      BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg).addImm(0)
+        .addImm(24).addImm(31);
       break;
     case cShort:
       if (DestClass == cByte)
         BuildMI(*MBB, IP, PPC::EXTSB, 1, DestReg).addReg(SrcReg);
-      else if (DestClass == cShort)
-        BuildMI(*MBB, IP, PPC::EXTSH, 1, DestReg).addReg(SrcReg);
       else
         BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg).addImm(0)
           .addImm(16).addImm(31);
@@ -3660,14 +3649,14 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
     unsigned clearBits = (DestClass == cByte) ? 24 : 16;
     switch (SrcClass) {
     case cByte:
+       BuildMI(*MBB, IP, PPC::EXTSB, 1, DestReg).addReg(SrcReg);
+       break;
     case cShort:
-      if (DestClass == cByte || DestClass == cShort)
-        // sbyte -1 -> ubyte 0x000000FF
+      if (DestClass == cByte)
         BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
           .addImm(0).addImm(clearBits).addImm(31);
       else
-        // sbyte -1 -> ubyte 0xFFFFFFFF
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+        BuildMI(*MBB, IP, PPC::EXTSH, 1, DestReg).addReg(SrcReg);
       break;
     case cLong:
       ++SrcReg;
