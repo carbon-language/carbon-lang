@@ -10,10 +10,9 @@
 
 #include "SparcInternals.h"
 #include "llvm/Analysis/SlotCalculator.h"
-#include "llvm/Transforms/Linker.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/GlobalValue.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/BasicBlock.h"
@@ -21,7 +20,6 @@
 #include "llvm/Module.h"
 #include "Support/StringExtras.h"
 #include "Support/HashExtras.h"
-#include <locale.h>
 using std::string;
 
 namespace {
@@ -48,14 +46,11 @@ class SparcAsmPrinter {
 public:
   inline SparcAsmPrinter(std::ostream &o, const Module *M, const UltraSparc &t)
     : toAsm(o), Table(SlotCalculator(M, true)), Target(t), CurSection(Unknown) {
-    emitModule(M);
   }
 
-private :
-  void emitModule(const Module *M);
   void emitMethod(const Method *M);
-  void emitGlobalsAndConstants(const Module* module);
-  //void processMethodArgument(const MethodArgument *MA);
+  void emitGlobalsAndConstants(const Module *M);
+private :
   void emitBasicBlock(const BasicBlock *BB);
   void emitMachineInst(const MachineInstr *MI);
   
@@ -453,11 +448,6 @@ ConstantToSize(const Constant* CV, const TargetMachine& target)
   return target.findOptimalStorageSize(CV->getType());
 }
 
-inline
-unsigned int TypeToSize(const Type* type, const TargetMachine& target)
-{
-  return target.findOptimalStorageSize(type);
-}
 
 
 // Align data larger than one L1 cache line on L1 cache line boundaries.
@@ -606,7 +596,7 @@ SparcAsmPrinter::printGlobalVariable(const GlobalVariable* GV)
           << TypeToAlignment(GV->getType()->getElementType(), Target) << "\n";
     toAsm << "\t.type\t" << getID(GV) << ",#object\n";
     toAsm << "\t.reserve\t" << getID(GV) << ","
-          << TypeToSize(GV->getType()->getElementType(), Target)
+          << Target.findOptimalStorageSize(GV->getType()->getElementType())
           << "\n";
   }
 }
@@ -685,19 +675,20 @@ SparcAsmPrinter::emitGlobalsAndConstants(const Module *M)
   toAsm << "\n";
 }
 
-
-void
-SparcAsmPrinter::emitModule(const Module *M)
-{
-  // TODO: Look for a filename annotation on M to emit a .file directive
-  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-    emitMethod(*I);
-  
-  emitGlobalsAndConstants(M);
-}
-
 }  // End anonymous namespace
 
+
+//
+// emitAssembly - Output assembly language code (a .s file) for global
+// components of the specified module.  This assumes that methods have been
+// previously output.
+//
+void
+UltraSparc::emitAssembly(const Method *M, std::ostream &OutStr) const
+{
+  SparcAsmPrinter Print(OutStr, M->getParent(), *this);
+  Print.emitMethod(M);
+}
 
 //
 // emitAssembly - Output assembly language code (a .s file) for the specified
@@ -705,7 +696,9 @@ SparcAsmPrinter::emitModule(const Module *M)
 // used.
 //
 void
-UltraSparc::emitAssembly(const Module *M, std::ostream &toAsm) const
+UltraSparc::emitAssembly(const Module *M, std::ostream &OutStr) const
 {
-  SparcAsmPrinter Print(toAsm, M, *this);
+  SparcAsmPrinter Print(OutStr, M, *this);
+  Print.emitGlobalsAndConstants(M);
 }
+
