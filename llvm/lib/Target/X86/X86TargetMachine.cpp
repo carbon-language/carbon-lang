@@ -26,8 +26,12 @@
 using namespace llvm;
 
 namespace {
+#if 0  // FIXME: This will be used in the future.
   cl::opt<bool> NoPatternISel("disable-pattern-isel", cl::init(true),
                         cl::desc("Use the 'simple' X86 instruction selector"));
+#else
+  static const bool NoPatternISel = true;
+#endif
   cl::opt<bool> NoSSAPeephole("disable-ssa-peephole", cl::init(true),
                         cl::desc("Disable the ssa-based peephole optimizer "
                                  "(defaults to disabled)"));
