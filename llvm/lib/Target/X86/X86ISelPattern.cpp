@@ -343,7 +343,7 @@ namespace {
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
     virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
 
-    bool isFoldableLoad(SDOperand Op);
+    bool isFoldableLoad(SDOperand Op, SDOperand OtherOp);
     void EmitFoldedLoad(SDOperand Op, X86AddressMode &AM);
 
 
@@ -920,7 +920,7 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS, bool HasOneUse) {
   unsigned Opc;
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(RHS)) {
     Opc = 0;
-    if (HasOneUse && isFoldableLoad(LHS)) {
+    if (HasOneUse && isFoldableLoad(LHS, RHS)) {
       switch (RHS.getValueType()) {
       default: break;
       case MVT::i1:
@@ -959,7 +959,7 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS, bool HasOneUse) {
   }
 
   Opc = 0;
-  if (HasOneUse && isFoldableLoad(LHS)) {
+  if (HasOneUse && isFoldableLoad(LHS, RHS)) {
     switch (RHS.getValueType()) {
     default: break;
     case MVT::i1:
@@ -996,9 +996,30 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS, bool HasOneUse) {
   BuildMI(BB, Opc, 2).addReg(Tmp1).addReg(Tmp2);
 }
 
+/// NodeTransitivelyUsesValue - Return true if N or any of its uses uses Op.
+/// The DAG cannot have cycles in it, by definition, so the visited set is not
+/// needed to prevent infinite loops.  The DAG CAN, however, have unbounded
+/// reuse, so it prevents exponential cases.
+///
+static bool NodeTransitivelyUsesValue(SDOperand N, SDOperand Op,
+                                      std::set<SDNode*> &Visited) {
+  if (N == Op) return true;                        // Found it.
+  SDNode *Node = N.Val;
+  if (Node->getNumOperands() == 0) return false;   // Leaf?
+  if (!Visited.insert(Node).second) return false;  // Already visited?
+
+  // Recurse for the first N-1 operands.
+  for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i)
+    if (NodeTransitivelyUsesValue(Node->getOperand(i), Op, Visited))
+      return true;
+
+  // Tail recurse for the last operand.
+  return NodeTransitivelyUsesValue(Node->getOperand(0), Op, Visited);
+}
+
 /// isFoldableLoad - Return true if this is a load instruction that can safely
 /// be folded into an operation that uses it.
-bool ISel::isFoldableLoad(SDOperand Op) {
+bool ISel::isFoldableLoad(SDOperand Op, SDOperand OtherOp) {
   if (Op.getOpcode() != ISD::LOAD ||
       // FIXME: currently can't fold constant pool indexes.
       isa<ConstantPoolSDNode>(Op.getOperand(1)))
@@ -1011,9 +1032,21 @@ bool ISel::isFoldableLoad(SDOperand Op) {
   assert(!LoweredTokens.count(Op.getValue(1)) &&
          "Token lowered but value not in map?");
 
-  // Finally, there can only be one use of its value.
-  return Op.Val->hasNUsesOfValue(1, 0);
+  // If there is not just one use of its value, we cannot fold.
+  if (!Op.Val->hasNUsesOfValue(1, 0)) return false;
+
+  // Finally, we cannot fold the load into the operation if this would induce a
+  // cycle into the resultant dag.  To check for this, see if OtherOp (the other
+  // operand of the operation we are folding the load into) can possible use the
+  // chain node defined by the load.
+  if (OtherOp.Val && !Op.Val->hasNUsesOfValue(0, 1)) { // Has uses of chain?
+    std::set<SDNode*> Visited;
+    if (NodeTransitivelyUsesValue(OtherOp, Op.getValue(1), Visited))
+      return false;
+  }
+  return true;
 }
+
 
 /// EmitFoldedLoad - Ensure that the arguments of the load are code generated,
 /// and compute the address being loaded into AM.
@@ -1136,7 +1169,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       return Result;
     }
 
-    if (isFoldableLoad(N.getOperand(0))) {
+    if (isFoldableLoad(N.getOperand(0), SDOperand())) {
       static const unsigned Opc[3] = {
         X86::MOVZX32rm8, X86::MOVZX32rm16, X86::MOVZX16rm8
       };
@@ -1163,7 +1196,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     assert(N.getOperand(0).getValueType() != MVT::i1 &&
            "Sign extend from bool not implemented!");
 
-   if (isFoldableLoad(N.getOperand(0))) {
+    if (isFoldableLoad(N.getOperand(0), SDOperand())) {
       static const unsigned Opc[3] = {
         X86::MOVSX32rm8, X86::MOVSX32rm16, X86::MOVSX16rm8
       };
@@ -1183,7 +1216,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   }
   case ISD::TRUNCATE:
     // Fold TRUNCATE (LOAD P) into a smaller load from P.
-    if (isFoldableLoad(N.getOperand(0))) {
+    if (isFoldableLoad(N.getOperand(0), SDOperand())) {
       switch (N.getValueType()) {
       default: assert(0 && "Unknown truncate!");
       case MVT::i1:
@@ -1442,10 +1475,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Op0 = N.getOperand(0);
     Op1 = N.getOperand(1);
 
-    if (isFoldableLoad(Op0))
+    if (isFoldableLoad(Op0, Op1)) {
       std::swap(Op0, Op1);
+      goto FoldAdd;
+    }
 
-    if (isFoldableLoad(Op1)) {
+    if (isFoldableLoad(Op1, Op0)) {
+    FoldAdd:
       switch (N.getValueType()) {
       default: assert(0 && "Cannot add this type!");
       case MVT::i1:
@@ -1622,9 +1658,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
     }
 
-    if (isFoldableLoad(Op0))
+    if (isFoldableLoad(Op0, Op1))
       if (Node->getOpcode() != ISD::SUB) {
         std::swap(Op0, Op1);
+        goto FoldOps;
       } else {
         // Emit 'reverse' subract, with a memory operand.
         switch (N.getValueType()) {
@@ -1641,7 +1678,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
         }
       }
 
-    if (isFoldableLoad(Op1)) {
+    if (isFoldableLoad(Op1, Op0)) {
+    FoldOps:
       switch (N.getValueType()) {
       default: assert(0 && "Cannot operate on this type!");
       case MVT::i1:
@@ -2433,16 +2471,17 @@ void ISel::Select(SDOperand N) {
 
     // Check to see if this is a load/op/store combination.
     if (N.getOperand(1).Val->hasOneUse() &&
-        isFoldableLoad(N.getOperand(0).getValue(0)) &&
-        !MVT::isFloatingPoint(N.getOperand(0).getValue(0).getValueType())) {
+        N.getOperand(1).Val->getNumOperands() == 2 &&
+        !MVT::isFloatingPoint(N.getOperand(0).getValue(0).getValueType()) &&
+        isFoldableLoad(N.getOperand(0).getValue(0),
+                       N.getOperand(0).getValue(1))) {
       SDOperand TheLoad = N.getOperand(0).getValue(0);
       // Check to see if we are loading the same pointer that we're storing to.
       if (TheLoad.getOperand(1) == N.getOperand(2)) {
         // See if the stored value is a simple binary operator that uses the
         // load as one of its operands.
         SDOperand Op = N.getOperand(1);
-        if (Op.Val->getNumOperands() == 2 &&
-            (Op.getOperand(0) == TheLoad || Op.getOperand(1) == TheLoad)) {
+        if ((Op.getOperand(0) == TheLoad || Op.getOperand(1) == TheLoad)) {
           // Finally, check to see if this is one of the ops we can handle!
           static const unsigned ADDTAB[] = {
             X86::ADD8mi, X86::ADD16mi, X86::ADD32mi,
@@ -2480,6 +2519,12 @@ void ISel::Select(SDOperand N) {
           const unsigned *TabPtr = 0;
           switch (Op.getOpcode()) {
           default: std::cerr << "CANNOT [mem] op= val: "; Op.Val->dump(); std::cerr << "\n"; break;
+          case ISD::MUL:
+          case ISD::SDIV:
+          case ISD::UDIV:
+          case ISD::SREM:
+          case ISD::UREM: break;
+
           case ISD::ADD: TabPtr = ADDTAB; break;
           case ISD::SUB: TabPtr = SUBTAB; break;
           case ISD::AND: TabPtr = ANDTAB; break;
