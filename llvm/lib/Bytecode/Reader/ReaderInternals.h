@@ -203,20 +203,12 @@ public:
   unsigned getID() { return ID; }
 };
 
-struct InstPlaceHolderHelper : public Instruction {
-  InstPlaceHolderHelper(const Type *Ty) : Instruction(Ty, UserOp1, "") {}
-  virtual const char *getOpcodeName() const { return "placeholder"; }
-
-  virtual Instruction *clone() const { abort(); return 0; }
-};
-
 struct ConstantPlaceHolderHelper : public Constant {
   ConstantPlaceHolderHelper(const Type *Ty)
     : Constant(Ty) {}
   virtual bool isNullValue() const { return false; }
 };
 
-typedef PlaceholderDef<InstPlaceHolderHelper>  ValPHolder;
 typedef PlaceholderDef<ConstantPlaceHolderHelper>  ConstPHolder;
 
 // Some common errors we find
@@ -224,12 +216,6 @@ static const std::string Error_readvbr   = "read_vbr(): error reading.";
 static const std::string Error_read      = "read(): error reading.";
 static const std::string Error_inputdata = "input_data(): error reading.";
 static const std::string Error_DestSlot  = "No destination slot found.";
-
-static inline unsigned getValueIDNumberFromPlaceHolder(Value *Val) {
-  if (isa<Constant>(Val))
-    return ((ConstPHolder*)Val)->getID();
-  return ((ValPHolder*)Val)->getID();
-}
 
 static inline void readBlock(const unsigned char *&Buf,
                              const unsigned char *EndBuf, 

@@ -134,7 +134,7 @@ Value *BytecodeParser::getValue(unsigned type, unsigned oNum, bool Create) {
   if (I != ForwardReferences.end() && I->first == KeyValue)
     return I->second;   // We have already created this placeholder
 
-  Value *Val = new ValPHolder(getType(type), oNum);
+  Value *Val = new Argument(getType(type));
   ForwardReferences.insert(I, std::make_pair(KeyValue, Val));
   return Val;
 }
