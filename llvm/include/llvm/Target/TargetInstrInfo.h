@@ -53,7 +53,7 @@ const unsigned	M_LOAD_FLAG		= 1 << 10;
 const unsigned	M_PREFETCH_FLAG		= 1 << 11;
 const unsigned	M_STORE_FLAG		= 1 << 12;
 const unsigned	M_DUMMY_PHI_FLAG	= 1 << 13;
-const unsigned  M_PSEUDO_FLAG           = 1 << 14;
+const unsigned  M_PSEUDO_FLAG           = 1 << 14;       // Pseudo instruction
 // 3-addr instructions which really work like 2-addr ones, eg. X86 add/sub
 const unsigned  M_2_ADDR_FLAG           = 1 << 15;
 
