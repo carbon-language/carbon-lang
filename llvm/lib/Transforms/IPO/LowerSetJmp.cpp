@@ -51,6 +51,10 @@ namespace {
                                   "Number of longjmps transformed");
   Statistic<> SetJmpsTransformed("lowersetjmp",
                                  "Number of setjmps transformed");
+  Statistic<> CallsTransformed("lowersetjmp",
+                               "Number of calls invokified");
+  Statistic<> InvokesTransformed("lowersetjmp",
+                                 "Number of invokes modified");
 
   //===--------------------------------------------------------------------===//
   // LowerSetJmp pass implementation. This is subclassed from the "Pass"
@@ -445,6 +449,7 @@ void LowerSetJmp::visitCallInst(CallInst& CI)
 
   // The old terminator is useless now that we have the invoke inst.
   Term->getParent()->getInstList().erase(Term);
+  ++CallsTransformed;
 }
 
 // visitInvokeInst - Converting the "invoke" instruction is fairly
@@ -479,6 +484,7 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
   InstList.push_back(BR);
 
   II.setExceptionalDest(NewExceptBB);
+  ++InvokesTransformed;
 }
 
 // visitReturnInst - We want to destroy the setjmp map upon exit from the
