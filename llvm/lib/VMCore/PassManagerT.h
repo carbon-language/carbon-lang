@@ -150,7 +150,7 @@ public:
     for (std::vector<AnalysisID>::iterator I = Required.begin(),
                                            E = Required.end(); I != E; ++I) {
       if (getAnalysisOrNullDown(*I) == 0)
-        add(I->createPass());
+        add((PassClass*)I->createPass());
     }
 
     // Tell the pass to add itself to this PassManager... the way it does so
@@ -282,14 +282,19 @@ template<> struct PassManagerTraits<BasicBlock> : public BasicBlockPass {
   // ParentClass - The type of the parent PassManager...
   typedef PassManagerT<Method> ParentClass;
 
+  // PMType - The type of the passmanager that subclasses this class
+  typedef PassManagerT<BasicBlock> PMType;
+
   // runPass - Specify how the pass should be run on the UnitType
   static bool runPass(PassClass *P, BasicBlock *M) {
     // todo, init and finalize
     return P->runOnBasicBlock(M);
   }
 
-  // run - Implement the Pass interface...
+  // Implement the BasicBlockPass interface...
+  virtual bool doInitialization(Module *M);
   virtual bool runOnBasicBlock(BasicBlock *BB);
+  virtual bool doFinalization(Module *M);
 };
 
 
@@ -364,8 +369,22 @@ template<> struct PassManagerTraits<Module> : public Pass {
 
 // PassManagerTraits<BasicBlock> Implementations
 //
+inline bool PassManagerTraits<BasicBlock>::doInitialization(Module *M) {
+  bool Changed = false;
+  for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
+    ((PMType*)this)->Passes[i]->doInitialization(M);
+  return Changed;
+}
+
 inline bool PassManagerTraits<BasicBlock>::runOnBasicBlock(BasicBlock *BB) {
-  return ((PassManagerT<BasicBlock>*)this)->runOnUnit(BB);
+  return ((PMType*)this)->runOnUnit(BB);
+}
+
+inline bool PassManagerTraits<BasicBlock>::doFinalization(Module *M) {
+  bool Changed = false;
+  for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
+    ((PMType*)this)->Passes[i]->doFinalization(M);
+  return Changed;
 }
 
 
@@ -382,9 +401,6 @@ inline bool PassManagerTraits<Method>::runOnMethod(Method *M) {
   return ((PMType*)this)->runOnUnit(M);
 }
 
-
-// PassManagerTraits<Module> Implementations
-//
 inline bool PassManagerTraits<Method>::doFinalization(Module *M) {
   bool Changed = false;
   for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
