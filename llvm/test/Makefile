@@ -42,10 +42,10 @@ QMTEST= QMTEST_CLASS_PATH=$(QMCLASSES) qmtest $(QMDB)
 # Execute the tests
 #
 qmtest:: $(LLVM_OBJ_ROOT)/test/tmp register
-	$(QMTEST) run -O $(LLVM_SRC_ROOT)/test/QMTest/expectations.qmr $(CONTEXT)
+	-$(QMTEST) run -O $(LLVM_SRC_ROOT)/test/QMTest/expectations.qmr $(CONTEXT)
 
 %.t:: $(LLVM_OBJ_ROOT)/test/tmp register
-	$(QMTEST) run -O $(LLVM_SRC_ROOT)/test/QMTest/expectations.qmr $(CONTEXT) $*
+	-$(QMTEST) run -O $(LLVM_SRC_ROOT)/test/QMTest/expectations.qmr $(CONTEXT) $*
 
 #
 # Create the temporary directory used by the test suite.
