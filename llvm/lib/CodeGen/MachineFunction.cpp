@@ -29,8 +29,9 @@ static AnnotationID MCFM_AID(
 //                This should not be called before "construct()"
 //                for a given Method.
 // 
-MachineCodeForMethod &MachineCodeForMethod::construct(const Method *M,
-                                                      const TargetMachine &Tar){
+MachineCodeForMethod&
+MachineCodeForMethod::construct(const Method *M, const TargetMachine &Tar)
+{
   assert(M->getAnnotation(MCFM_AID) == 0 &&
          "Object already exists for this method!");
   MachineCodeForMethod* mcInfo = new MachineCodeForMethod(M, Tar);
@@ -38,13 +39,16 @@ MachineCodeForMethod &MachineCodeForMethod::construct(const Method *M,
   return *mcInfo;
 }
 
-void MachineCodeForMethod::destruct(const Method *M) {
+void
+MachineCodeForMethod::destruct(const Method *M)
+{
   bool Deleted = M->deleteAnnotation(MCFM_AID);
   assert(Deleted && "Machine code did not exist for method!");
 }
 
-
-MachineCodeForMethod &MachineCodeForMethod::get(const Method* method) {
+MachineCodeForMethod&
+MachineCodeForMethod::get(const Method* method)
+{
   MachineCodeForMethod* mc = (MachineCodeForMethod*)
     method->getAnnotation(MCFM_AID);
   assert(mc && "Call construct() method first to allocate the object");
@@ -59,34 +63,37 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Method* method)
   unsigned int maxSize = 0;
   
   for (Method::const_iterator MI=method->begin(), ME=method->end();
-       MI != ME; ++MI) {
-    const BasicBlock *BB = *MI;
-    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-      if (CallInst *callInst = dyn_cast<CallInst>(*I)) {
-        unsigned int numOperands = callInst->getNumOperands() - 1;
-        int numExtra = (int) numOperands - frameInfo.getNumFixedOutgoingArgs();
-        if (numExtra <= 0)
-          continue;
-        
-        unsigned int sizeForThisCall;
-        if (frameInfo.argsOnStackHaveFixedSize())
+       MI != ME; ++MI)
+    {
+      const BasicBlock *BB = *MI;
+      for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+        if (CallInst *callInst = dyn_cast<CallInst>(*I))
           {
-            int argSize = frameInfo.getSizeOfEachArgOnStack(); 
-            sizeForThisCall = numExtra * (unsigned) argSize;
+            unsigned int numOperands = callInst->getNumOperands() - 1;
+            int numExtra = (int) numOperands - frameInfo.getNumFixedOutgoingArgs();
+            if (numExtra <= 0)
+              continue;
+            
+            unsigned int sizeForThisCall;
+            if (frameInfo.argsOnStackHaveFixedSize())
+              {
+                int argSize = frameInfo.getSizeOfEachArgOnStack(); 
+                sizeForThisCall = numExtra * (unsigned) argSize;
+              }
+            else
+              {
+                assert(0 && "UNTESTED CODE: Size per stack argument is not fixed on this architecture: use actual arg sizes to compute MaxOptionalArgsSize");
+                sizeForThisCall = 0;
+                for (unsigned i=0; i < numOperands; ++i)
+                  sizeForThisCall += target.findOptimalStorageSize(callInst->
+                                                       getOperand(i)->getType());
+              }
+            
+            if (maxSize < sizeForThisCall)
+              maxSize = sizeForThisCall;
           }
-        else
-          {
-            assert(0 && "UNTESTED CODE: Size per stack argument is not fixed on this architecture: use actual arg sizes to compute MaxOptionalArgsSize");
-            sizeForThisCall = 0;
-            for (unsigned i=0; i < numOperands; ++i)
-              sizeForThisCall += target.findOptimalStorageSize(callInst->
-                                                    getOperand(i)->getType());
-          }
-        
-        if (maxSize < sizeForThisCall)
-          maxSize = sizeForThisCall;
-      }
-  }
+    }
+  
   return maxSize;
 }
 
@@ -120,8 +127,41 @@ MachineCodeForMethod::MachineCodeForMethod(const Method* _M,
     currentTmpValuesSize(0)
 {
   maxOptionalArgsSize = ComputeMaxOptionalArgsSize(target, method);
-  staticStackSize = maxOptionalArgsSize +
-                    target.getFrameInfo().getMinStackFrameSize();
+  staticStackSize = maxOptionalArgsSize
+                    + target.getFrameInfo().getMinStackFrameSize();
+}
+
+int
+MachineCodeForMethod::computeOffsetforLocalVar(const TargetMachine& target,
+                                               const Value* val,
+                                               unsigned int size)
+{
+  bool growUp;
+  int firstOffset =target.getFrameInfo().getFirstAutomaticVarOffset(*this,
+                                                                    growUp);
+  unsigned char align;
+  if (size == 0)
+    {
+      size  = target.findOptimalStorageSize(val->getType());
+      // align = target.DataLayout.getTypeAlignment(val->getType());
+    }
+      
+  align = SizeToAlignment(size, target);
+          
+  int offset = getAutomaticVarsSize();
+  if (! growUp)
+    offset += size; 
+      
+  if (unsigned int mod = offset % align)
+    {
+      offset += align - mod;
+      size   += align - mod;
+    }
+      
+  offset = growUp? firstOffset + offset
+    : firstOffset - offset;
+      
+  return offset;
 }
 
 int
@@ -134,38 +174,13 @@ MachineCodeForMethod::allocateLocalVar(const TargetMachine& target,
   int offset = getOffset(val);
   if (offset == INVALID_FRAME_OFFSET)
     {
-      bool growUp;
-      int firstOffset =target.getFrameInfo().getFirstAutomaticVarOffset(*this,
-                                                                       growUp);
-      unsigned char align;
-      if (size == 0)
-        {
-          size  = target.findOptimalStorageSize(val->getType());
-          // align = target.DataLayout.getTypeAlignment(val->getType());
-        }
-      
-      align = SizeToAlignment(size, target);
-          
-      offset = getAutomaticVarsSize();
-      if (! growUp)
-        offset += size; 
-      
-      if (unsigned int mod = offset % align)
-        {
-          offset += align - mod;
-          size   += align - mod;
-        }
-      
-      offset = growUp? firstOffset + offset
-                     : firstOffset - offset;
-      
+      offset = this->computeOffsetforLocalVar(target, val, size);
       offsets[val] = offset;
-      
       incrementAutomaticVarsSize(size);
     }
   return offset;
 }
-
+  
 int
 MachineCodeForMethod::allocateSpilledValue(const TargetMachine& target,
                                            const Type* type)
