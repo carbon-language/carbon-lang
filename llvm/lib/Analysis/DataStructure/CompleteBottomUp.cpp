@@ -222,5 +222,5 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
 
   // Delete dead nodes.  Treat globals that are unreachable but that can
   // reach live nodes as live.
-  G.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
+  G.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 }
