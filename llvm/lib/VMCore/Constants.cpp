@@ -1244,6 +1244,15 @@ Constant *ConstantExpr::getZeroExtend(Constant *C, const Type *Ty) {
   return ConstantExpr::getCast(C, Ty);
 }
 
+Constant *ConstantExpr::getSizeOf(const Type *Ty) {
+  // sizeof is implemented as: (unsigned) gep (Ty)null, 1
+  return getCast(
+    getGetElementPtr(
+      getNullValue(Ty),
+      std::vector<Constant*>(1, ConstantInt::get(Type::UByteTy, 1))),
+    Type::UIntTy);
+}
+
 Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
                               Constant *C1, Constant *C2) {
   if (Opcode == Instruction::Shl || Opcode == Instruction::Shr)

@@ -557,6 +557,10 @@ public:
     return getSelectTy(V1->getType(), C, V1, V2);
   }
 
+  /// getSizeOf constant expr - computes the size of a type in a
+  /// target independent way
+  ///
+  static Constant *getSizeOf(const Type *Ty);
 
   /// ConstantExpr::get - Return a binary or shift operator constant expression,
   /// folding if possible.
