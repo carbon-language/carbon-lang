@@ -59,16 +59,14 @@ namespace Intrinsic {
     memmove,        // Copy potentially overlapping memory blocks
     memset,         // Fill memory with a byte value
 
-    // Standard libm functions.
+    // libm related functions.
+    isnan,          // Return true if fp argument is a NAN.
 
     // Input/Output intrinsics.
     readport,
     writeport,
     readio,
     writeio,
-
-    // Support for unordered compare intrinsic
-    isunordered,
 
     //===------------------------------------------------------------------===//
     // This section defines intrinsic functions used to represent Alpha

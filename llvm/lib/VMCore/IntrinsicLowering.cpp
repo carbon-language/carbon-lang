@@ -191,10 +191,12 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                     (*(CI->op_begin()+1))->getType(), MemsetFCache);
     break;
   }
-  case Intrinsic::isunordered: {
-    static Function *IsunorderedFCache = 0;
-    ReplaceCallWith("isunordered", CI, CI->op_begin()+1, CI->op_end(),
-                    (*(CI->op_begin()+1))->getType(), IsunorderedFCache);
+  case Intrinsic::isnan: {
+    // FIXME: This should force the argument to be a double.  There may be
+    // multiple isnans for different FP arguments.
+    static Function *isnanFCache = 0;
+    ReplaceCallWith("isnan", CI, CI->op_begin()+1, CI->op_end(),
+                    (*(CI->op_begin()+1))->getType(), isnanFCache);
     break;
   }
   }
