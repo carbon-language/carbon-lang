@@ -32,7 +32,7 @@ ExprType::ExprType(Value *Val) {
 
 ExprType::ExprType(const ConstPoolInt *scale, Value *var, 
 		   const ConstPoolInt *offset) {
-  Scale = scale; Var = var; Offset = offset;
+  Scale = var ? scale : 0; Var = var; Offset = offset;
   ExprTy = Scale ? ScaledLinear : (Var ? Linear : Constant);
   if (Scale && Scale->equalsInt(0)) {  // Simplify 0*Var + const
     Scale = 0; Var = 0;
@@ -140,14 +140,14 @@ inline const ConstPoolInt *operator+(const DefOne &L, const DefOne &R) {
 //      is false, a null return value indicates a value of 0.
 //
 inline const ConstPoolInt *Mul(const ConstPoolInt *Arg1, 
-			       const ConstPoolInt *Arg2, bool DefOne = false) {
+			       const ConstPoolInt *Arg2, bool DefOne) {
   assert(Arg1 && Arg2 && "No null arguments should exist now!");
   assert(Arg1->getType() == Arg2->getType() && "Types must be compatible!");
 
   // Actually perform the computation now!
   ConstPoolVal *Result = *Arg1 * *Arg2;
   assert(Result && Result->getType() == Arg1->getType() && 
-	 "Couldn't perform mult!");
+	 "Couldn't perform multiplication!");
   ConstPoolInt *ResultI = cast<ConstPoolInt>(Result);
 
   // Check to see if the result is one of the special cases that we want to
@@ -165,10 +165,11 @@ inline const ConstPoolInt *operator*(const DefZero &L, const DefZero &R) {
 inline const ConstPoolInt *operator*(const DefOne &L, const DefZero &R) {
   if (R == 0) return getUnsignedConstant(0, L.getType());
   if (L == 0) return R->equalsInt(1) ? 0 : R.getVal();
-  return Mul(L, R, false);
+  return Mul(L, R, true);
 }
 inline const ConstPoolInt *operator*(const DefZero &L, const DefOne &R) {
-  return R*L;
+  if (L == 0 || R == 0) return L.getVal();
+  return Mul(R, L, false);
 }
 
 // handleAddition - Add two expressions together, creating a new expression that
@@ -181,15 +182,15 @@ static ExprType handleAddition(ExprType Left, ExprType Right, Value *V) {
 
   switch (Left.ExprTy) {
   case ExprType::Constant:
-    return ExprType(Right.Scale, Right.Var,
-		    DefZero(Right.Offset, Ty) + DefZero(Left.Offset, Ty));
+        return ExprType(Right.Scale, Right.Var,
+			DefZero(Right.Offset, Ty) + DefZero(Left.Offset, Ty));
   case ExprType::Linear:              // RHS side must be linear or scaled
   case ExprType::ScaledLinear:        // RHS must be scaled
     if (Left.Var != Right.Var)        // Are they the same variables?
-      return ExprType(V);             //   if not, we don't know anything!
+      return V;                       //   if not, we don't know anything!
 
     return ExprType(DefOne(Left.Scale  , Ty) + DefOne(Right.Scale , Ty),
-		    Left.Var,
+		    Right.Var,
 		    DefZero(Left.Offset, Ty) + DefZero(Right.Offset, Ty));
   default:
     assert(0 && "Dont' know how to handle this case!");
@@ -250,7 +251,10 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
   case Instruction::Sub: {
     ExprType Left (ClassifyExpression(I->getOperand(0)));
     ExprType Right(ClassifyExpression(I->getOperand(1)));
-    return handleAddition(Left, negate(Right, I), I);
+    ExprType RightNeg = negate(Right, I);
+    if (RightNeg.Var == I && !RightNeg.Offset && !RightNeg.Scale)
+      return I;   // Could not negate value...
+    return handleAddition(Left, RightNeg, I);
   }  // end case Instruction::Sub
 
   case Instruction::Shl: { 
