@@ -455,8 +455,8 @@ uint64_t Compressor::decompress(char *in, unsigned size,
         bzdata.total_out_lo32;
       BZ2_bzDecompressEnd(&bzdata);
       break;
-    }
 #endif
+    }
 
     case COMP_TYPE_ZLIB: {
 #if !defined(HAVE_ZLIB)
