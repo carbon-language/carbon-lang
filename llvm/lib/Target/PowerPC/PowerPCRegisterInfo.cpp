@@ -110,34 +110,35 @@ static bool hasFP(MachineFunction &MF) {
 void PowerPCRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-	if (hasFP(MF)) {
-		// If we have a frame pointer, turn the adjcallstackdown instruction into a
-		// 'sub r1, r1, <amt>' and the adjcallstackup instruction into 'add r1, r1, <amt>'
-		MachineInstr *Old = I;
-		int Amount = Old->getOperand(0).getImmedValue();
-		if (Amount != 0) {
-			// We need to keep the stack aligned properly.  To do this, we round the
-			// amount of space needed for the outgoing arguments up to the next
-			// alignment boundary.
-			unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
-			Amount = (Amount+Align-1)/Align*Align;
-			
-			MachineInstr *New;
-			if (Old->getOpcode() == PPC32::ADJCALLSTACKDOWN) {
-				New = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1)
-          .addSImm(-Amount);
-			} else {
-				assert(Old->getOpcode() == PPC32::ADJCALLSTACKUP);
-				New = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1)
-          .addSImm(Amount);
-			}
-			
-			// Replace the pseudo instruction with a new instruction...
-			MBB.insert(I, New);
-		}
-	}
-	
-	MBB.erase(I);
+  if (hasFP(MF)) {
+    // If we have a frame pointer, turn the adjcallstackdown instruction into a
+    // 'sub r1, r1, <amt>' and the adjcallstackup instruction into 
+    // 'add r1, r1, <amt>'
+    MachineInstr *Old = I;
+    int Amount = Old->getOperand(0).getImmedValue();
+    if (Amount != 0) {
+      // We need to keep the stack aligned properly.  To do this, we round the
+      // amount of space needed for the outgoing arguments up to the next
+      // alignment boundary.
+      unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
+      Amount = (Amount+Align-1)/Align*Align;
+      
+      MachineInstr *New;
+      if (Old->getOpcode() == PPC32::ADJCALLSTACKDOWN) {
+        New = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1)
+                .addSImm(-Amount);
+      } else {
+        assert(Old->getOpcode() == PPC32::ADJCALLSTACKUP);
+        New = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1)
+                .addSImm(Amount);
+      }
+      
+      // Replace the pseudo instruction with a new instruction...
+      MBB.insert(I, New);
+    }
+  }
+  
+  MBB.erase(I);
 }
 
 void
@@ -185,7 +186,7 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
-	
+
   if (MFI->hasCalls()) {
     // When we have no frame pointer, we reserve argument space for call sites
     // in the function immediately on entry to the current function.  This
@@ -223,7 +224,7 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineInstr *MI;
   assert(MBBI->getOpcode() == PPC32::BLR &&
-       "Can only insert epilog into returning blocks");
+         "Can only insert epilog into returning blocks");
   
   // Get the number of bytes allocated from the FrameInfo...
   unsigned NumBytes = MFI->getStackSize();
@@ -233,7 +234,7 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
     MI =BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1).addSImm(NumBytes);
     MBB.insert(MBBI, MI);
   }
-  
+ 
   // If we have calls, restore the LR value before we branch to it
   if (MFI->hasCalls()) {
     MI = BuildMI(PPC32::LWZ, 2, PPC32::R0).addSImm(8).addReg(PPC32::R1);
