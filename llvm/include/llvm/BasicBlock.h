@@ -23,8 +23,6 @@
 #include "llvm/ValueHolder.h"
 #include "llvm/Value.h"
 
-class Instruction;
-class Method;
 class TerminatorInst;
 class MachineCodeForBasicBlock;
 template <class _Term, class _BB> class SuccIterator;  // Successor Iterator
@@ -32,13 +30,13 @@ template <class _Ptr, class _USE_iterator> class PredIterator;
 
 class BasicBlock : public Value {       // Basic blocks are data objects also
 public:
-  typedef ValueHolder<Instruction, BasicBlock, Method> InstListType;
+  typedef ValueHolder<Instruction, BasicBlock, Function> InstListType;
 private :
   InstListType InstList;
   MachineCodeForBasicBlock* machineInstrVec;
 
-  friend class ValueHolder<BasicBlock,Method,Method>;
-  void setParent(Method *parent);
+  friend class ValueHolder<BasicBlock,Function,Function>;
+  void setParent(Function *parent);
 
 public:
   // Instruction iterators...
@@ -48,15 +46,15 @@ public:
   typedef std::reverse_iterator<iterator>             reverse_iterator;
 
   // Ctor, dtor
-  BasicBlock(const std::string &Name = "", Method *Parent = 0);
+  BasicBlock(const std::string &Name = "", Function *Parent = 0);
   ~BasicBlock();
 
   // Specialize setName to take care of symbol table majik
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
 
   // getParent - Return the enclosing method, or null if none
-  const Method *getParent() const { return InstList.getParent(); }
-        Method *getParent()       { return InstList.getParent(); }
+  const Function *getParent() const { return InstList.getParent(); }
+        Function *getParent()       { return InstList.getParent(); }
 
   // getTerminator() - If this is a well formed basic block, then this returns
   // a pointer to the terminator instruction.  If it is not, then you get a null
