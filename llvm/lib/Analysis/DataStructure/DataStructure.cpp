@@ -1409,7 +1409,7 @@ static bool CallSiteUsesAliveArgs(DSCallSite &CS, hash_set<DSNode*> &Alive,
 // inlining graphs.
 //
 void DSGraph::removeDeadNodes(unsigned Flags) {
-  DEBUG(AssertGraphOK(); GlobalsGraph->AssertGraphOK());
+  DEBUG(AssertGraphOK(); if (GlobalsGraph) GlobalsGraph->AssertGraphOK());
 
   // Reduce the amount of work we have to do... remove dummy nodes left over by
   // merging...
