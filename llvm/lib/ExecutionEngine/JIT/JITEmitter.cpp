@@ -48,14 +48,17 @@ namespace {
     sys::MemoryBlock  MemBlock;  // Virtual memory block allocated RWX
     unsigned char *MemBase;      // Base of block of memory, start of stub mem
     unsigned char *FunctionBase; // Start of the function body area
-    unsigned char *CurStubPtr, *CurFunctionPtr;
+    unsigned char *ConstantPool; // Memory allocated for constant pools
+    unsigned char *CurStubPtr, *CurFunctionPtr, *CurConstantPtr;
   public:
     JITMemoryManager();
     ~JITMemoryManager();
     
     inline unsigned char *allocateStub(unsigned StubSize);
+    inline unsigned char *allocateConstant(unsigned ConstantSize,
+                                           unsigned Alignment);
     inline unsigned char *startFunctionBody();
-    inline void endFunctionBody(unsigned char *FunctionEnd);    
+    inline void endFunctionBody(unsigned char *FunctionEnd);
   };
 }
 
@@ -68,10 +71,14 @@ JITMemoryManager::JITMemoryManager() {
   // Allocate stubs backwards from the function base, allocate functions forward
   // from the function base.
   CurStubPtr = CurFunctionPtr = FunctionBase;
+
+  ConstantPool = new unsigned char [512*1024]; // Use 512k for constant pools
+  CurConstantPtr = ConstantPool + 512*1024;
 }
 
 JITMemoryManager::~JITMemoryManager() {
   sys::Memory::ReleaseRWX(MemBlock);
+  delete[] ConstantPool;
 }
 
 unsigned char *JITMemoryManager::allocateStub(unsigned StubSize) {
@@ -81,6 +88,20 @@ unsigned char *JITMemoryManager::allocateStub(unsigned StubSize) {
     abort();
   }
   return CurStubPtr;
+}
+
+unsigned char *JITMemoryManager::allocateConstant(unsigned ConstantSize,
+                                                  unsigned Alignment) {
+  // Reserve space and align pointer.
+  CurConstantPtr -= ConstantSize;
+  CurConstantPtr =
+    (unsigned char *)((intptr_t)CurConstantPtr & ~((intptr_t)Alignment - 1));
+
+  if (CurConstantPtr < ConstantPool) {
+    std::cerr << "JIT ran out of memory for constant pools!\n";
+    abort();
+  }
+  return CurConstantPtr;
 }
 
 unsigned char *JITMemoryManager::startFunctionBody() {
@@ -352,30 +373,12 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
   const std::vector<Constant*> &Constants = MCP->getConstants();
   if (Constants.empty()) return;
 
-  std::vector<unsigned> ConstantOffset;
-  ConstantOffset.reserve(Constants.size());
-
-  // Calculate how much space we will need for all the constants, and the offset
-  // each one will live in.
-  unsigned TotalSize = 0;
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
     const Type *Ty = Constants[i]->getType();
     unsigned Size      = (unsigned)TheJIT->getTargetData().getTypeSize(Ty);
     unsigned Alignment = TheJIT->getTargetData().getTypeAlignment(Ty);
-    // Make sure to take into account the alignment requirements of the type.
-    TotalSize = (TotalSize + Alignment-1) & ~(Alignment-1);
 
-    // Remember the offset this element lives at.
-    ConstantOffset.push_back(TotalSize);
-    TotalSize += Size;   // Reserve space for the constant.
-  }
-
-  // Now that we know how much memory to allocate, do so.
-  char *Pool = new char[TotalSize];
-
-  // Actually output all of the constants, and remember their addresses.
-  for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
-    void *Addr = Pool + ConstantOffset[i];
+    void *Addr = MemMgr.allocateConstant(Size, Alignment);
     TheJIT->InitializeMemory(Constants[i], Addr);
     ConstantPoolAddresses.push_back(Addr);
   }
