@@ -61,10 +61,10 @@ Init *BitsRecTy::convertValue(BitInit *UI) {
 // appropriate bits...
 //
 Init *BitsRecTy::convertValue(IntInit *II) {
-  int Value = II->getValue();
+  int64_t Value = II->getValue();
   // Make sure this bitfield is large enough to hold the integer value...
   if (Value >= 0) {
-    if (Value & ~((1 << Size)-1))
+    if (Value & ~((1LL << Size)-1))
       return 0;
   } else {
     if ((Value >> Size) != -1 || ((Value & (1 << Size-1)) == 0))
