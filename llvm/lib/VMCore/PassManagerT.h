@@ -106,6 +106,19 @@ public:
   void passEnded(Pass *P);
 };
 
+//===----------------------------------------------------------------------===//
+// Forward declarations of global functions defined in Pass.cpp.  These are
+// defined to be static functions because this header is *ONLY* included by
+// Pass.cpp.
+//
+
+// findAnalysisGroupMember - Return an iterator pointing to one of the elements
+// of Map if there is a pass in Map that is a member of the analysis group for
+// the specified AnalysisGroupID.
+//
+static std::map<const PassInfo*, Pass*>::const_iterator
+findAnalysisGroupMember(const PassInfo *AnalysisGroupID,
+                        const std::map<const PassInfo*, Pass*> &Map);
 
 
 //===----------------------------------------------------------------------===//
@@ -269,24 +282,36 @@ public:
     }
   }
 
-  Pass *getAnalysisOrNullDown(AnalysisID ID) const {
-    std::map<AnalysisID, Pass*>::const_iterator I = CurrentAnalyses.find(ID);
-    if (I == CurrentAnalyses.end()) {
-      if (Batcher)
-        return ((AnalysisResolver*)Batcher)->getAnalysisOrNullDown(ID);
-      return 0;
+  Pass *getAnalysisOrNullDown(const PassInfo *ID) const {
+    std::map<const PassInfo*, Pass*>::const_iterator I;
+
+    if (ID->getPassType() == PassInfo::AnalysisGroup) {
+      I = findAnalysisGroupMember(ID, CurrentAnalyses);
+    } else {
+      I = CurrentAnalyses.find(ID);
     }
-    return I->second;
+
+    if (I != CurrentAnalyses.end())
+      return I->second;  // Found it.
+
+    if (Batcher)
+      return ((AnalysisResolver*)Batcher)->getAnalysisOrNullDown(ID);
+    return 0;
   }
 
-  Pass *getAnalysisOrNullUp(AnalysisID ID) const {
-    std::map<AnalysisID, Pass*>::const_iterator I = CurrentAnalyses.find(ID);
-    if (I == CurrentAnalyses.end()) {
-      if (Parent)
-        return Parent->getAnalysisOrNullUp(ID);
-      return 0;
+  Pass *getAnalysisOrNullUp(const PassInfo *ID) const {
+    std::map<AnalysisID, Pass*>::const_iterator I;
+    if (ID->getPassType() == PassInfo::AnalysisGroup) {
+      I = findAnalysisGroupMember(ID, CurrentAnalyses);
+    } else {
+      I = CurrentAnalyses.find(ID);
     }
-    return I->second;
+    if (I != CurrentAnalyses.end())
+      return I->second;  // Found it.
+
+    if (Parent)          // Try scanning...
+      return Parent->getAnalysisOrNullUp(ID);
+    return 0;
   }
 
   // {start/end}Pass - Called when a pass is started, it just propogates
@@ -308,8 +333,15 @@ public:
   // make sure that analyses are not free'd before we have to use
   // them...
   //
-  void markPassUsed(AnalysisID P, Pass *User) {
-    std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.find(P);
+  void markPassUsed(const PassInfo *P, Pass *User) {
+    std::map<const PassInfo *, Pass*>::const_iterator I;
+
+    if (P->getPassType() == PassInfo::AnalysisGroup) {
+      I = findAnalysisGroupMember(P, CurrentAnalyses);
+    } else {
+      I = CurrentAnalyses.find(P);
+    }
+
     if (I != CurrentAnalyses.end()) {
       LastUseOf[I->second] = User;    // Local pass, extend the lifetime
     } else {
@@ -318,8 +350,7 @@ public:
       // parent that we (the passmanager) are using the analysis so that it
       // frees the analysis AFTER this pass manager runs.
       //
-      assert(Parent != 0 && "Pass available but not found! "
-             "Did your analysis pass 'Provide' itself?");
+      assert(Parent != 0 && "Pass available but not found!");
       Parent->markPassUsed(P, this);
     }
   }
@@ -336,7 +367,7 @@ public:
     return Passes[N];
   }
 
-  // add - Add a pass to the queue of passes to run.  This passes ownership of
+  // add - Add a pass to the queue of passes to run.  This gives ownership of
   // the Pass to the PassManager.  When the PassManager is destroyed, the pass
   // will be destroyed as well, so there is no need to delete the pass.  This
   // implies that all passes MUST be new'd.
