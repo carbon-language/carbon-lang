@@ -267,18 +267,140 @@ static unsigned Log2(uint64_t Val) {
   return Count;
 }
 
+
+/// AssociativeOpt - Perform an optimization on an associative operator.  This
+/// function is designed to check a chain of associative operators for a
+/// potential to apply a certain optimization.  Since the optimization may be
+/// applicable if the expression was reassociated, this checks the chain, then
+/// reassociates the expression as necessary to expose the optimization
+/// opportunity.  This makes use of a special Functor, which must define
+/// 'shouldApply' and 'apply' methods.
+///
+template<typename Functor>
+Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
+  unsigned Opcode = Root.getOpcode();
+  Value *LHS = Root.getOperand(0);
+
+  // Quick check, see if the immediate LHS matches...
+  if (F.shouldApply(LHS))
+    return F.apply(Root);
+
+  // Otherwise, if the LHS is not of the same opcode as the root, return.
+  Instruction *LHSI = dyn_cast<Instruction>(LHS);
+  while (LHSI && LHSI->getOpcode() == Opcode && LHSI->use_size() == 1) {
+    // Should we apply this transform to the RHS?
+    bool ShouldApply = F.shouldApply(LHSI->getOperand(1));
+
+    // If not to the RHS, check to see if we should apply to the LHS...
+    if (!ShouldApply && F.shouldApply(LHSI->getOperand(0))) {
+      cast<BinaryOperator>(LHSI)->swapOperands();   // Make the LHS the RHS
+      ShouldApply = true;
+    }
+
+    // If the functor wants to apply the optimization to the RHS of LHSI,
+    // reassociate the expression from ((? op A) op B) to (? op (A op B))
+    if (ShouldApply) {
+      BasicBlock *BB = Root.getParent();
+      // All of the instructions have a single use and have no side-effects,
+      // because of this, we can pull them all into the current basic block.
+      if (LHSI->getParent() != BB) {
+        // Move all of the instructions from root to LHSI into the current
+        // block.
+        Instruction *TmpLHSI = cast<Instruction>(Root.getOperand(0));
+        Instruction *LastUse = &Root;
+        while (TmpLHSI->getParent() == BB) {
+          LastUse = TmpLHSI;
+          TmpLHSI = cast<Instruction>(TmpLHSI->getOperand(0));
+        }
+        
+        // Loop over all of the instructions in other blocks, moving them into
+        // the current one.
+        Value *TmpLHS = TmpLHSI;
+        do {
+          TmpLHSI = cast<Instruction>(TmpLHS);
+          // Remove from current block...
+          TmpLHSI->getParent()->getInstList().remove(TmpLHSI);
+          // Insert before the last instruction...
+          BB->getInstList().insert(LastUse, TmpLHSI);
+          TmpLHS = TmpLHSI->getOperand(0);
+        } while (TmpLHSI != LHSI);
+      }
+      
+      // Now all of the instructions are in the current basic block, go ahead
+      // and perform the reassociation.
+      Instruction *TmpLHSI = cast<Instruction>(Root.getOperand(0));
+
+      // First move the selected RHS to the LHS of the root...
+      Root.setOperand(0, LHSI->getOperand(1));
+
+      // Make what used to be the LHS of the root be the user of the root...
+      Value *ExtraOperand = TmpLHSI->getOperand(1);
+      Root.replaceAllUsesWith(TmpLHSI);          // Users now use TmpLHSI
+      TmpLHSI->setOperand(1, &Root);             // TmpLHSI now uses the root
+      BB->getInstList().remove(&Root);           // Remove root from the BB
+      BB->getInstList().insert(TmpLHSI, &Root);  // Insert root before TmpLHSI
+
+      // Now propagate the ExtraOperand down the chain of instructions until we
+      // get to LHSI.
+      while (TmpLHSI != LHSI) {
+        Instruction *NextLHSI = cast<Instruction>(TmpLHSI->getOperand(0));
+        Value *NextOp = NextLHSI->getOperand(1);
+        NextLHSI->setOperand(1, ExtraOperand);
+        TmpLHSI = NextLHSI;
+        ExtraOperand = NextOp;
+      }
+      
+      // Now that the instructions are reassociated, have the functor perform
+      // the transformation...
+      return F.apply(Root);
+    }
+    
+    LHSI = dyn_cast<Instruction>(LHSI->getOperand(0));
+  }
+  return 0;
+}
+
+
+// AddRHS - Implements: X + X --> X << 1
+struct AddRHS {
+  Value *RHS;
+  AddRHS(Value *rhs) : RHS(rhs) {}
+  bool shouldApply(Value *LHS) const { return LHS == RHS; }
+  Instruction *apply(BinaryOperator &Add) const {
+    return new ShiftInst(Instruction::Shl, Add.getOperand(0),
+                         ConstantInt::get(Type::UByteTy, 1));
+  }
+};
+
+// AddMaskingAnd - Implements (A & C1)+(B & C2) --> (A & C1)|(B & C2)
+//                 iff C1&C2 == 0
+struct AddMaskingAnd {
+  Constant *C2;
+  AddMaskingAnd(Constant *c) : C2(c) {}
+  bool shouldApply(Value *LHS) const {
+    if (Constant *C1 = dyn_castMaskingAnd(LHS))
+      return ConstantExpr::get(Instruction::And, C1, C2)->isNullValue();
+    return false;
+  }
+  Instruction *apply(BinaryOperator &Add) const {
+    return BinaryOperator::create(Instruction::Or, Add.getOperand(0),
+                                  Add.getOperand(1));
+  }
+};
+
+
+
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
-  // Eliminate 'add int %X, 0'
+  // X + 0 --> X
   if (RHS == Constant::getNullValue(I.getType()))
     return ReplaceInstUsesWith(I, LHS);
 
-  // Convert 'add X, X' to 'shl X, 1'
-  if (LHS == RHS && I.getType()->isInteger())
-    return new ShiftInst(Instruction::Shl, LHS,
-                         ConstantInt::get(Type::UByteTy, 1));
+  // X + X --> X << 1
+  if (I.getType()->isInteger())
+    if (Instruction *Result = AssociativeOpt(I, AddRHS(RHS))) return Result;
 
   // -A + B  -->  B - A
   if (Value *V = dyn_castNegVal(LHS))
@@ -307,11 +429,9 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     return BinaryOperator::create(Instruction::Mul, LHS, CP1);
   }
 
-  // (A & C1)+(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
-  if (Constant *C1 = dyn_castMaskingAnd(LHS))
-    if (Constant *C2 = dyn_castMaskingAnd(RHS))
-      if (ConstantExpr::get(Instruction::And, C1, C2)->isNullValue())
-        return BinaryOperator::create(Instruction::Or, LHS, RHS);
+  // (A & C1)+(B & C2) --> (A & C1)|(B & C2) iff C1&C2 == 0
+  if (Constant *C2 = dyn_castMaskingAnd(RHS))
+    if (Instruction *R = AssociativeOpt(I, AddMaskingAnd(C2))) return R;
 
   return Changed ? &I : 0;
 }
