@@ -112,12 +112,15 @@ bool IA64SharedAsmPrinter::doFinalization(Module &M) {
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchSection(O, CurSection, ".data");
-        if (I->hasInternalLinkage())
-// FIXME          O << "\t.local " << name << "\n";
-        
-        O << "\t.common " << name << "," << TD.getTypeSize(C->getType())
-          << "," << (1 << Align);
-        O << "\t\t// ";
+        if (I->hasInternalLinkage()) {
+	  O << "\t.lcomm " << name << "," << TD.getTypeSize(C->getType())
+	    << "," << (1 << Align);
+	  O << "\t\t// ";
+	} else {
+	  O << "\t.common " << name << "," << TD.getTypeSize(C->getType())
+	    << "," << (1 << Align);
+	  O << "\t\t// ";
+	}
         WriteAsOperand(O, I, true, true, &M);
         O << "\n";
       } else {
@@ -345,7 +348,7 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
     bool Needfptr=false; // if we're computing an address @ltoff(X), do
                          // we need to decorate it so it becomes
 			 // @ltoff(@fptr(X)) ?
-    if(F && !isBRCALLinsn && F->isExternal())
+    if(F && !isBRCALLinsn /*&& F->isExternal()*/)
       Needfptr=true;
    
     // if this is the target of a call instruction, we should define
