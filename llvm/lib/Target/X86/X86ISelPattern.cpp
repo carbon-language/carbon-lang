@@ -1185,11 +1185,11 @@ bool ISel::EmitOrOpOp(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
         } else if (RegSize != 8) {
           unsigned AReg, BReg;
           if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
-            AReg = SelectExpr(ShrVal);
             BReg = SelectExpr(ShlVal);
+            AReg = SelectExpr(ShrVal);
           } else {
-            BReg = SelectExpr(ShlVal);
             AReg = SelectExpr(ShrVal);
+            BReg = SelectExpr(ShlVal);
           }
           unsigned ShAmt = SelectExpr(ShrAmt);
           BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(ShAmt);
@@ -1221,11 +1221,11 @@ bool ISel::EmitOrOpOp(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
         } else if (RegSize != 8) {
           unsigned AReg, BReg;
           if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
-            AReg = SelectExpr(ShrVal);
-            BReg = SelectExpr(ShlVal);
+            AReg = SelectExpr(ShlVal);
+            BReg = SelectExpr(ShrVal);
           } else {
-            BReg = SelectExpr(ShlVal);
-            AReg = SelectExpr(ShrVal);
+            BReg = SelectExpr(ShrVal);
+            AReg = SelectExpr(ShlVal);
           }
           unsigned ShAmt = SelectExpr(ShlAmt);
           BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(ShAmt);
@@ -1250,11 +1250,11 @@ bool ISel::EmitOrOpOp(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
           } else if (RegSize != 8) {
             unsigned AReg, BReg;
             if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
-              AReg = SelectExpr(ShrVal);
               BReg = SelectExpr(ShlVal);
+              AReg = SelectExpr(ShrVal);
             } else {
-              BReg = SelectExpr(ShlVal);
               AReg = SelectExpr(ShrVal);
+              BReg = SelectExpr(ShlVal);
             }
             unsigned Opc = RegSize == 16 ? X86::SHRD16rri8 : X86::SHRD32rri8;
             BuildMI(BB, Opc, 3, DestReg).addReg(AReg).addReg(BReg)
