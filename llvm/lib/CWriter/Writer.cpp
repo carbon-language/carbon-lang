@@ -7,11 +7,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/iMemory.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOther.h"
-#include "llvm/iOperators.h"
+#include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/SlotCalculator.h"
@@ -108,6 +104,7 @@ namespace {
 
     void visitReturnInst(ReturnInst &I);
     void visitBranchInst(BranchInst &I);
+    void visitSwitchInst(SwitchInst &I);
 
     void visitPHINode(PHINode &I) {}
     void visitBinaryOperator(Instruction &I);
@@ -156,8 +153,8 @@ static string makeNameProper(string x) {
 string CWriter::getValueName(const Value *V) {
   if (V->hasName()) {              // Print out the label if it exists...
     if (isa<GlobalValue>(V) &&     // Do not mangle globals...
-        cast<GlobalValue>(V)->hasExternalLinkage())// && // Unless it's internal or
-        //!MangledGlobals.count(V))  // Unless the name would collide if we don't
+        cast<GlobalValue>(V)->hasExternalLinkage()) // Unless it's internal or
+      //!MangledGlobals.count(V))  // Unless the name would collide if we don't
       return makeNameProper(V->getName());
 
     return "l" + utostr(V->getType()->getUniqueID()) + "_" +
@@ -866,6 +863,25 @@ void CWriter::visitReturnInst(ReturnInst &I) {
   }
   Out << ";\n";
 }
+
+void CWriter::visitSwitchInst(SwitchInst &SI) {
+  Out << "  switch (";
+  writeOperand(SI.getOperand(0));
+  Out << ") {\n  default: goto ";
+  writeOperand(SI.getDefaultDest());
+  Out << ";\n";
+  for (unsigned i = 2, e = SI.getNumOperands(); i != e; i += 2) {
+    Out << "  case ";
+    writeOperand(SI.getOperand(i));
+    Out << ":\n";
+    BasicBlock *Succ = cast<BasicBlock>(SI.getOperand(i+1));
+    printBranchToBlock(SI.getParent(), Succ, 2);
+    if (Succ == SI.getParent()->getNext())
+      Out << "    break;\n";
+  }
+  Out << "  }\n";
+}
+
 
 static bool isGotoCodeNeccessary(BasicBlock *From, BasicBlock *To) {
   // If PHI nodes need copies, we need the copy code...
