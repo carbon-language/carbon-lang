@@ -12,45 +12,142 @@
 	<h2><a name="a">Overview</a><hr></h2>
 	<!--===============================================================-->
 
-	In order to set up a new project that uses the LLVM build system,
-	libraries, and header files, follow these steps:
+	The LLVM build system is designed to facilitate the building of third party
+	projects that use LLVM header files, libraries, and tools.  In order to use
+	these facilities, a Makefile from a project must do the following things:
+
+	<ol>
+		<li>Set environment variables.
+		<p>
+		There are several environment variables that a Makefile needs to set to
+		use the LLVM build system:
+		<dl compact>
+			<dt>LLVM_SRC_ROOT
+			<dd>
+			The root of the LLVM source tree.
+			<p>
+
+			<dt>LLVM_OBJ_ROOT
+			<dd>
+			The root of the LLVM object tree.
+			<p>
+
+			<dt>BUILD_SRC_ROOT
+			<dd>
+			The root of the project's source tree.
+			<p>
+
+			<dt>BUILD_OBJ_ROOT
+			<dd>
+			The root of the project's object tree.
+			<p>
+
+			<dt>BUILD_SRC_DIR
+			<dd>
+			The directory containing the current source to be compiled.
+			<p>
+
+			<dt>BUILD_OBJ_DIR
+			<dd>
+			The directory where the current source will place the new object
+			files.  This should always be the current directory.
+			<p>
+
+			<dt>LEVEL
+			<dd>
+			The relative path from the current directory to the root of the
+			object tree.
+			<p>
+		</dl>
+
+		<li>Include the LLVM Makefile.config from $(LLVM_OBJ_ROOT).
+		<p>
+
+		<li>Include the LLVM Makefile.rules from $(LLVM_SRC_ROOT).
+	</ol>
+
+	There are two ways that you can set all of these variables:
+	<ol>
+		<li>
+		You can write your own Makefiles which hard-code these values.
+
+		<li>
+		You can use the pre-made LLVM sample project.  This sample project
+		includes Makefiles, a configure script that can be used to configure
+		the location of LLVM, and the ability to support multiple object
+		directories from a single source directory.
+	</ol>
+
+	This document assumes that you will base your project off of the LLVM
+	sample project found in <tt>llvm/projects/sample</tt>.  If you want to
+	devise your own build system, studying the sample project and LLVM
+	Makefiles will probably provide enough information on how to write your own
+	Makefiles.
+	<p>
+
+	<!--===============================================================-->
+	<h2><a name="a">Create a Project from the Sample Project</a><hr></h2>
+	<!--===============================================================-->
+
+	Follow these simple steps to start your project:
 
 	<ol>
 		<li>
 		Copy the <tt>llvm/projects/sample</tt> directory to any place
-		of your choosing.  You can place it anywhere you like, although
-		someplace underneath your home directory would work best.
+		of your choosing.  You can place it anywhere you like.  Rename the
+		directory to match the name of your project.
 		<p>
 
 		<li>
-		Edit the <tt>Makefile.config</tt> and <tt>Makefile.common</tt>
-		files so that the LLVM_SRC_ROOT variable equals the absolute
-		pathname of the LLVM source tree and LLVM_OBJ_ROOT equals the
-		pathname of where LLVM was built.
-
-		<p>
-
-		For example, if the LLVM source tree is in
-		<tt>/usr/home/joe/src/llvm</tt>, and you built LLVM in
-		/tmp/llvmobj</tt>, then
-		LLVM_SRC_ROOT=<tt>/usr/home/joe/src/llvm</tt> and
-		LLVM_OBJ_ROOT=<tt>/tmp/llvmobj</tt>.
+		Add your source code and Makefiles to your source tree.
 		<p>
 
 		<li>
-		Add your source code to your source tree.
+		If you want your Makefiles to be configured by the
+		<tt>configure</tt> script, or if you want to support multiple
+		object directories, add your Makefiles to the <tt>configure</tt>
+		script by adding them into the <tt>autoconf/configure.ac</tt> file.
+		The macro <tt>AC_CONFIG_MAKEFILE</tt> will copy a file, unmodified,
+		from the source directory to the object directory.
+
+		<p>
+		After updating <tt>autoconf/configure.ac</tt>, regenerate the
+		configure script with these commands:
+		<p>
+		<tt>
+		cd autoconf<br>
+		autoconf -o ../configure
+		</tt>
+
+		<p>
+
+		You must be using Autoconf version 2.57 or higher.
 		<p>
 
 		<li>
-		Modify the various Makefiles to contain the names of the
-		objects that you want to build.
+		Run <tt>configure</tt> in the directory in which you want to place
+		object code.  Use the following options to tell your project where it
+		can find LLVM:
+
+		<dl compact>
+			<dt><tt>--with-llvmsrc=&lt;directory&gt;</tt>
+			<dd>
+			Tell your project where the LLVM source tree is located.
+			<p>
+			<dt><tt>--with-llvmobj=&lt;directory&gt;</tt>
+			<dd>
+			Tell your project where the LLVM object tree is located.
+		</dl>
 	</ol>
+
+	That's it!  Now all you have to do is type <tt>gmake</tt> in the root of
+	your object directory, and your project should build.
 
 	<!--===============================================================-->
 	<h2><a name="Source Tree Layout">Source Tree Layout</a><hr></h2>
 	<!--===============================================================-->
 
-	In order to use the LLVM build system, you will want to lay out your
+	In order to use the LLVM build system, you will want to organize your
 	source code so that it can benefit from the build system's features.
 	Mainly, you want your source tree layout to look similar to the LLVM
 	source tree layout.  The best way to do this is to just copy the
@@ -70,8 +167,8 @@
 
 		<p>
 		Libraries can be object files, archives, or dynamic libraries.
-		The <b>lib</b> directory is just a good place for these as it
-		places them all in a directory from which they can be linked
+		The <b>lib</b> directory is just a convenient place for libraries
+		as it places them all in a directory from which they can be linked
 		later.
 
 		<dt><b>include</b>
@@ -97,10 +194,12 @@
 	followed by your <b>tools</b> directory.
 
 	<!--===============================================================-->
-	<h2><a name="Makefile Variables">Makefile Variables</a><hr></h2>
+	<h2><a name="Makefile Variables">Writing LLVM Style Makefiles</a><hr></h2>
 	<!--===============================================================-->
-	The LLVM build system provides several variables which you may
-	use.
+	The LLVM build system provides a convenient way to build libraries and
+	executables.  Most of your project Makefiles will only need to define a few
+	variables.  Below is a list of the variables one can set and what they can
+	do:
 
 	<h3> Required Variables </h3>
 	<dl compact>
@@ -148,15 +247,14 @@
 		<dt>BUILD_ARCHIVE
 		<dd>
 		By default, a library is a <tt>.o</tt> file that is linked
-		directly into a program.  However, if you set the BUILD_ARCHIVE
-		variable, an archive library (sometimes known as a static
-		library) will be built instead.
+		directly into a program.  To build an archive (also known as
+		a static library), set the BUILD_ARCHIVE variable.
 		<p>
 
 		<dt>SHARED_LIBRARY
 		<dd>
-		If SHARED_LIBRARY is defined in your Makefile, then the
-		Makefiles will generate a shared (or dynamic) library.
+		If SHARED_LIBRARY is defined in your Makefile, a shared
+		(or dynamic) library will be built.
 	</dl>
 
 	<h3> Variables for Building Programs</h3>
@@ -184,7 +282,7 @@
 		<dt>ExtraSource
 		<dd>
 		This variable contains a space separated list of extra source
-		files that needs to be built.  It is useful for including the
+		files that need to be built.  It is useful for including the
 		output of Lex and Yacc programs.
 		<p>
 
@@ -196,11 +294,45 @@
 		that tell the compiler the location of additional directories
 		to search for header files.
 		<p>
-		It is highly suggested that you append to these variable as
+		It is highly suggested that you append to CFLAGS and CPPFLAGS as
 		opposed to overwriting them.  The master Makefiles may already
 		have useful options in them that you may not want to overwrite.
 		<p>
 	</dl>
 
+	<!--===============================================================-->
+	<h2><a name="objcode">Placement of Object Code</a><hr></h2>
+	<!--===============================================================-->
+
+	The final location of built libraries and executables will depend upon
+	whether you do a Debug, Release, or Profile build.
+
+	<dl compact>
+		<dt>Libraries
+		<dd>
+		All libraries (static and dynamic) will be stored in
+		BUILD_OBJ_ROOT/lib/&lt;type&gt;, where type is <tt>Debug</tt>,
+		<tt>Release</tt>, or <tt>Profile</tt> for a debug, optimized, or
+		profiled build, respectively.
+		<p>
+
+		<dt>Executables
+		<dd>
+		All executables will be stored in BUILD_OBJ_ROOT/lib/&lt;type&gt;,
+		where type is <tt>Debug</tt>, <tt>Release</tt>, or <tt>Profile</tt> for
+		a debug, optimized, or profiled build, respectively.
+	</dl>
+
+	<!--===============================================================-->
+	<h2><a name="help">Further Help</a><hr></h2>
+	<!--===============================================================-->
+
+	If you have any questions or need any help creating an LLVM project,
+	the LLVM team would be more than happy to help.  You can always post your
+	questions to the LLVM Developers Mailing List (<a
+	href="mailto:llvmdev.cs.uiuc.edu">llvmdev@cs.uiuc.edu</a>).
+	
+<hr>
+Written by the <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.
 </body>
 </html>
