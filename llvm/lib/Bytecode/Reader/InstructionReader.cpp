@@ -36,9 +36,7 @@ namespace {
 
 RawInst::RawInst(const unsigned char *&Buf, const unsigned char *EndBuf,
                  std::vector<unsigned> &Args) {
-  unsigned Op, Typ;
-  if (read(Buf, EndBuf, Op)) 
-    throw std::string("Error reading from buffer.");
+  unsigned Op = read(Buf, EndBuf);
 
   // bits   Instruction format:        Common to all formats
   // --------------------------
@@ -85,25 +83,19 @@ RawInst::RawInst(const unsigned char *&Buf, const unsigned char *EndBuf,
     break;
   case 0:
     Buf -= 4;  // Hrm, try this again...
-    if (read_vbr(Buf, EndBuf, Opcode))
-      throw std::string("Error reading from buffer.");
+    Opcode = read_vbr_uint(Buf, EndBuf);
     Opcode >>= 2;
-    if (read_vbr(Buf, EndBuf, Type))
-      throw std::string("Error reading from buffer.");
+    Type = read_vbr_uint(Buf, EndBuf);
 
-    unsigned NumOperands;
-    if (read_vbr(Buf, EndBuf, NumOperands))
-      throw std::string("Error reading from buffer.");
+    unsigned NumOperands = read_vbr_uint(Buf, EndBuf);
     Args.resize(NumOperands);
 
     if (NumOperands == 0)
       throw std::string("Zero-argument instruction found; this is invalid.");
 
     for (unsigned i = 0; i != NumOperands; ++i)
-      if (read_vbr(Buf, EndBuf, Args[i])) 
-        throw std::string("Error reading from buffer");
-    if (align32(Buf, EndBuf))
-      throw std::string("Unaligned bytecode buffer.");
+      Args[i] = read_vbr_uint(Buf, EndBuf);
+    align32(Buf, EndBuf);
     break;
   }
 }

@@ -214,23 +214,11 @@ struct ConstantPlaceHolderHelper : public ConstantExpr {
 
 typedef PlaceholderDef<ConstantPlaceHolderHelper>  ConstPHolder;
 
-// Some common errors we find
-static const std::string Error_readvbr   = "read_vbr(): error reading.";
-static const std::string Error_read      = "read(): error reading.";
-static const std::string Error_inputdata = "input_data(): error reading.";
-static const std::string Error_DestSlot  = "No destination slot found.";
-
 static inline void readBlock(const unsigned char *&Buf,
                              const unsigned char *EndBuf, 
                              unsigned &Type, unsigned &Size) {
-#ifdef DEBUG_OUTPUT
-  bool Result = read(Buf, EndBuf, Type) || read(Buf, EndBuf, Size);
-  std::cerr << "StartLoc = " << ((unsigned)Buf & 4095)
-       << " Type = " << Type << " Size = " << Size << "\n";
-  if (Result) throw Error_read;
-#else
-  if (read(Buf, EndBuf, Type) || read(Buf, EndBuf, Size)) throw Error_read;
-#endif
+  Type = read(Buf, EndBuf);
+  Size = read(Buf, EndBuf);
 }
 
 } // End llvm namespace

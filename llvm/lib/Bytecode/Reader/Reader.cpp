@@ -23,12 +23,6 @@
 #include "Support/StringExtras.h"
 using namespace llvm;
 
-static inline void ALIGN32(const unsigned char *&begin,
-                           const unsigned char *end) {
-  if (align32(begin, end))
-    throw std::string("Alignment error in buffer: read past end of block.");
-}
-
 unsigned BytecodeParser::getTypeSlot(const Type *Ty) {
   if (Ty->isPrimitiveType())
     return Ty->getPrimitiveID();
@@ -244,20 +238,16 @@ void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
 
   while (Buf < EndBuf) {
     // Symtab block header: [num entries][type id number]
-    unsigned NumEntries, Typ;
-    if (read_vbr(Buf, EndBuf, NumEntries) ||
-        read_vbr(Buf, EndBuf, Typ)) throw Error_readvbr;
+    unsigned NumEntries = read_vbr_uint(Buf, EndBuf);
+    unsigned Typ = read_vbr_uint(Buf, EndBuf);
     const Type *Ty = getType(Typ);
     BCR_TRACE(3, "Plane Type: '" << *Ty << "' with " << NumEntries <<
                  " entries\n");
 
     for (unsigned i = 0; i != NumEntries; ++i) {
       // Symtab entry: [def slot #][name]
-      unsigned slot;
-      if (read_vbr(Buf, EndBuf, slot)) throw Error_readvbr;
-      std::string Name;
-      if (read(Buf, EndBuf, Name, false))  // Not aligned...
-        throw std::string("Failed reading symbol name.");
+      unsigned slot = read_vbr_uint(Buf, EndBuf);
+      std::string Name = read_str(Buf, EndBuf);
 
       Value *V = 0;
       if (Typ == Type::TypeTyID)
@@ -317,9 +307,7 @@ void BytecodeParser::materializeFunction(Function* F) {
 
   GlobalValue::LinkageTypes Linkage = GlobalValue::ExternalLinkage;
 
-  unsigned LinkageType;
-  if (read_vbr(Buf, EndBuf, LinkageType)) 
-    throw std::string("ParseFunction: Error reading from buffer.");
+  unsigned LinkageType = read_vbr_uint(Buf, EndBuf);
   if ((!hasExtendedLinkageSpecs && LinkageType > 3) ||
       ( hasExtendedLinkageSpecs && LinkageType > 4))
     throw std::string("Invalid linkage type for Function.");
@@ -382,7 +370,7 @@ void BytecodeParser::materializeFunction(Function* F) {
     BCR_TRACE(2, "} end block\n");
 
     // Malformed bc file if read past end of block.
-    ALIGN32(Buf, EndBuf);
+    align32(Buf, EndBuf);
   }
 
   // Make sure there were no references to non-existant basic blocks.
@@ -436,8 +424,7 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     throw std::string("Two ModuleGlobalInfo packets found!");
 
   // Read global variables...
-  unsigned VarType;
-  if (read_vbr(Buf, End, VarType)) throw Error_readvbr;
+  unsigned VarType = read_vbr_uint(Buf, End);
   while (VarType != Type::VoidTyID) { // List is terminated by Void
     unsigned SlotNo;
     GlobalValue::LinkageTypes Linkage;
@@ -476,17 +463,13 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     BCR_TRACE(2, "Global Variable of type: " << *Ty << "\n");
     insertValue(GV, SlotNo, ModuleValues);
 
-    if (VarType & 2) { // Does it have an initializer?
-      unsigned InitSlot;
-      if (read_vbr(Buf, End, InitSlot)) throw Error_readvbr;
-      GlobalInits.push_back(std::make_pair(GV, InitSlot));
-    }
-    if (read_vbr(Buf, End, VarType)) throw Error_readvbr;
+    if (VarType & 2)   // Does it have an initializer?
+      GlobalInits.push_back(std::make_pair(GV, read_vbr_uint(Buf, End)));
+    VarType = read_vbr_uint(Buf, End);
   }
 
   // Read the function objects for all of the functions that are coming
-  unsigned FnSignature;
-  if (read_vbr(Buf, End, FnSignature)) throw Error_readvbr;
+  unsigned FnSignature = read_vbr_uint(Buf, End);
   while (FnSignature != Type::VoidTyID) { // List is terminated by Void
     const Type *Ty = getType(FnSignature);
     if (!isa<PointerType>(Ty) ||
@@ -512,11 +495,11 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     //
     FunctionSignatureList.push_back(Func);
 
-    if (read_vbr(Buf, End, FnSignature)) throw Error_readvbr;
+    FnSignature = read_vbr_uint(Buf, End);
     BCR_TRACE(2, "Function of type: " << Ty << "\n");
   }
 
-  ALIGN32(Buf, End);
+  align32(Buf, End);
 
   // Now that the function signature list is set up, reverse it so that we can 
   // remove elements efficiently from the back of the vector.
@@ -530,8 +513,7 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
 
 void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
                                       const unsigned char *EndBuf) {
-  unsigned Version;
-  if (read_vbr(Buf, EndBuf, Version)) throw Error_readvbr;
+  unsigned Version = read_vbr_uint(Buf, EndBuf);
 
   // Unpack version number: low four bits are for flags, top bits = version
   Module::Endianness  Endianness;
@@ -596,7 +578,7 @@ void BytecodeParser::ParseModule(const unsigned char *Buf,
 
   // Read into instance variables...
   ParseVersionInfo(Buf, EndBuf);
-  ALIGN32(Buf, EndBuf);
+  align32(Buf, EndBuf);
 
   while (Buf < EndBuf) {
     const unsigned char *OldBuf = Buf;
@@ -633,7 +615,7 @@ void BytecodeParser::ParseModule(const unsigned char *Buf,
       break;
     }
     BCR_TRACE(1, "} end block\n");
-    ALIGN32(Buf, EndBuf);
+    align32(Buf, EndBuf);
   }
 
   // After the module constant pool has been read, we can safely initialize
@@ -666,9 +648,8 @@ void BytecodeParser::ParseBytecode(const unsigned char *Buf, unsigned Length,
   unsigned char *EndBuf = (unsigned char*)(Buf + Length);
 
   // Read and check signature...
-  unsigned Sig;
-  if (read(Buf, EndBuf, Sig) ||
-      Sig != ('l' | ('l' << 8) | ('v' << 16) | ('m' << 24)))
+  unsigned Sig = read(Buf, EndBuf);
+  if (Sig != ('l' | ('l' << 8) | ('v' << 16) | ('m' << 24)))
     throw std::string("Invalid bytecode signature!");
 
   TheModule = new Module(ModuleID);
