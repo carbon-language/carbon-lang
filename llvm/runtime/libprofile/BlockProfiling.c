@@ -23,11 +23,12 @@ static unsigned NumElements;
  * data.
  */
 static void BlockProfAtExitHandler() {
-  /* Note that if this were doing something more intellegent with the
-     instrumentation, that we could do some computation here to expand what we
-     collected into simple block profiles.  Since we directly count each block,
-  */
-  write_profiling_data(Block, ArrayStart, NumElements);
+  /* Note that if this were doing something more intelligent with the
+   * instrumentation, we could do some computation here to expand what we
+   * collected into simple block profiles. (Or we could do it in llvm-prof.)
+   * Regardless, we directly count each block, so no expansion is necessary.
+   */
+  write_profiling_data(BlockInfo, ArrayStart, NumElements);
 }
 
 

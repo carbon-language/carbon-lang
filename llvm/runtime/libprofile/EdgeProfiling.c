@@ -23,12 +23,12 @@ static unsigned NumElements;
  * data.
  */
 static void EdgeProfAtExitHandler() {
-  /* Note that if this were doing something more intellegent with the
-     instrumentation, that we could do some computation here to expand what we
-     collected into simple edge profiles.  Since we directly count each edge, we
-     just write out all of the counters directly.
-  */
-  write_profiling_data(Edge, ArrayStart, NumElements);
+  /* Note that if this were doing something more intelligent with the
+   * instrumentation, we could do some computation here to expand what we
+   * collected into simple edge profiles.  Since we directly count each edge, we
+   * just write out all of the counters directly.
+   */
+  write_profiling_data(EdgeInfo, ArrayStart, NumElements);
 }
 
 
