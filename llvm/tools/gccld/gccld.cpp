@@ -176,10 +176,17 @@ int main(int argc, char **argv, char **envp) {
     std::auto_ptr<Module> Composite(0);
 
     if (LinkAsLibrary) {
-      // Link in only the files, we ignore libraries in this case.
+      // Link in only the files.
       Composite.reset( new Module(argv[0]) );
       if (LinkFiles(argv[0], Composite.get(), InputFilenames, Verbose))
         return 1; // Error already printed
+      // The libraries aren't linked in but are noted as "dependent" in the
+      // module.
+      for (cl::list<std::string>::const_iterator I = Libraries.begin(), 
+           E = Libraries.end(); I != E ; ++I) {
+        Composite.get()->addLibrary(*I);
+      }
+
     } else {
       // Build a list of the items from our command line
       LinkItemList Items;
