@@ -717,7 +717,7 @@ SchedGraph::addNonSSAEdgesForValue(const Instruction* instr,
           }
     }
 }
-#endif NEED_SEPARATE_NONSSA_EDGES_CODE
+#endif //NEED_SEPARATE_NONSSA_EDGES_CODE
 
 
 void
@@ -853,7 +853,7 @@ SchedGraph::buildNodesforBB(const TargetMachine& target,
                                   memNodeVec, regToRefVecMap,valueToDefVecMap);
           }
       }
-#endif  REALLY_NEED_TO_SEARCH_SUCCESSOR_PHIS
+#endif  //REALLY_NEED_TO_SEARCH_SUCCESSOR_PHIS
 }
 
 
@@ -939,7 +939,7 @@ SchedGraph::buildGraph(const TargetMachine& target)
   // TODO: This could probably be done much more efficiently.
   for (BasicBlock::const_iterator II = bb->begin(); II != bb->end(); ++II)
     this->addNonSSAEdgesForValue(*II, target);
-#endif NEED_SEPARATE_NONSSA_EDGES_CODE
+#endif //NEED_SEPARATE_NONSSA_EDGES_CODE
   
   // Then add edges for dependences on machine registers
   this->addMachineRegEdges(regToRefVecMap, target);
