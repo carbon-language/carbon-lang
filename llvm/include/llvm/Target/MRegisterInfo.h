@@ -136,6 +136,18 @@ public:
     FirstVirtualRegister = 1024,
   };
 
+  /// isPhysicalRegister - Return true if the specified register number is in
+  /// the physical register namespace.
+  static bool isPhysicalRegister(unsigned Reg) {
+    return Reg < FirstVirtualRegister;
+  }
+
+  /// isVirtualRegister - Return true if the specified register number is in
+  /// the virtual register namespace.
+  static bool isVirtualRegister(unsigned Reg) {
+    return Reg >= FirstVirtualRegister;
+  }
+
   const MRegisterDesc &operator[](unsigned RegNo) const {
     assert(RegNo < NumRegs &&
            "Attempting to access record for invalid register number!");
