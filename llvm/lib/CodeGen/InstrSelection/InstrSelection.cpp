@@ -39,7 +39,7 @@ enum SelectDebugLevel_t {
 };
 
 // Enable Debug Options to be specified on the command line
-cl::Enum<enum SelectDebugLevel_t> SelectDebugLevel("dselect", cl::NoFlags,
+cl::Enum<enum SelectDebugLevel_t> SelectDebugLevel("dselect", cl::Hidden,
    "enable instruction selection debugging information",
    clEnumValN(Select_NoDebugInfo,      "n", "disable debug output"),
    clEnumValN(Select_PrintMachineCode, "y", "print generated machine code"),

@@ -32,7 +32,7 @@ using std::cerr;
 // ***TODO: There are several places we add instructions. Validate the order
 //          of adding these instructions.
 
-cl::Enum<RegAllocDebugLevel_t> DEBUG_RA("dregalloc", cl::NoFlags,
+cl::Enum<RegAllocDebugLevel_t> DEBUG_RA("dregalloc", cl::Hidden,
   "enable register allocation debugging information",
   clEnumValN(RA_DEBUG_None   , "n", "disable debug output"),
   clEnumValN(RA_DEBUG_Normal , "y", "enable debug output"),

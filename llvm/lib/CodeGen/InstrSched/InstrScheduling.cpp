@@ -19,7 +19,7 @@ using std::vector;
 
 //************************* External Data Types *****************************/
 
-cl::Enum<enum SchedDebugLevel_t> SchedDebugLevel("dsched", cl::NoFlags,
+cl::Enum<enum SchedDebugLevel_t> SchedDebugLevel("dsched", cl::Hidden,
   "enable instruction scheduling debugging information",
   clEnumValN(Sched_NoDebugInfo,      "n", "disable debug output"),
   clEnumValN(Sched_Disable,        "off", "disable instruction scheduling"),

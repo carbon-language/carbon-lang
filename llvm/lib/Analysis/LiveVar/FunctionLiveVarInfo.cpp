@@ -15,7 +15,7 @@
 
 AnalysisID FunctionLiveVarInfo::ID(AnalysisID::create<FunctionLiveVarInfo>());
 
-cl::Enum<LiveVarDebugLevel_t> DEBUG_LV("dlivevar", cl::NoFlags,
+cl::Enum<LiveVarDebugLevel_t> DEBUG_LV("dlivevar", cl::Hidden,
   "enable live-variable debugging information",
   clEnumValN(LV_DEBUG_None   , "n", "disable debug output"),
   clEnumValN(LV_DEBUG_Normal , "y", "enable debug output"),
