@@ -13,7 +13,7 @@ Value *MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
   Value *&VMSlot = VM[V];
   if (VMSlot) return VMSlot;      // Does it exist in the map yet?
   
-  if (Constant *C = (Constant*)dyn_cast<Constant>(V)) {
+  if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V))) {
     if (isa<ConstantIntegral>(C) || isa<ConstantFP>(C) ||
         isa<ConstantPointerNull>(C))
       return VMSlot = C;           // Primitive constants map directly
