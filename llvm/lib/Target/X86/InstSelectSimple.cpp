@@ -1664,6 +1664,7 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
           case Intrinsic::memcpy:
           case Intrinsic::memset:
           case Intrinsic::isnan:
+          case Intrinsic::isunordered:
           case Intrinsic::readport:
           case Intrinsic::writeport:
             // We directly implement these intrinsics
@@ -1738,6 +1739,14 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     if (isOnlyUsedByUnorderedComparisons(&CI)) return;
     TmpReg1 = getReg(CI.getOperand(1));
     emitUCOMr(BB, BB->end(), TmpReg1, TmpReg1);
+    TmpReg2 = getReg(CI);
+    BuildMI(BB, X86::SETPr, 0, TmpReg2);
+    return;
+
+  case Intrinsic::isunordered:
+    TmpReg1 = getReg(CI.getOperand(1));
+    TmpReg2 = getReg(CI.getOperand(2));
+    emitUCOMr(BB, BB->end(), TmpReg2, TmpReg1);
     TmpReg2 = getReg(CI);
     BuildMI(BB, X86::SETPr, 0, TmpReg2);
     return;
