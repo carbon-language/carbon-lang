@@ -565,16 +565,29 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
     return UndefValue::get(DestTy);
   }
 
-  // Check to see if we are casting an array of X to a pointer to X.  If so, use
-  // a GEP to get to the first element of the array instead of a cast!
+  // Check to see if we are casting an pointer to an aggregate to a pointer to
+  // the first element.  If so, return the appropriate GEP instruction.
   if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
-    if (const ArrayType *ATy = dyn_cast<ArrayType>(PTy->getElementType()))
-      if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy))
-        if (DPTy->getElementType() == ATy->getElementType()) {
-          std::vector<Constant*> IdxList(2,Constant::getNullValue(Type::IntTy));
-          return ConstantExpr::getGetElementPtr(const_cast<Constant*>(V),
-                                                IdxList);
+    if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy)) {
+      std::vector<Value*> IdxList;
+      IdxList.push_back(Constant::getNullValue(Type::IntTy));
+      const Type *ElTy = PTy->getElementType();
+      while (ElTy != DPTy->getElementType()) {
+        if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
+          ElTy = STy->getElementType(0);
+          IdxList.push_back(Constant::getNullValue(Type::UIntTy));
+        } else if (const SequentialType *STy = dyn_cast<SequentialType>(ElTy)) {
+          if (isa<PointerType>(ElTy)) break;  // Can't index into pointers!
+          ElTy = STy->getElementType();
+          IdxList.push_back(IdxList[0]);
+        } else {
+          break;
         }
+      }
+
+      if (ElTy == DPTy->getElementType())
+        return ConstantExpr::getGetElementPtr(const_cast<Constant*>(V),IdxList);
+    }
 
   ConstRules &Rules = ConstRules::get(V, V);
 
