@@ -5,8 +5,8 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Value.h"
-#include "llvm/Target/MachineInstrInfo.h"  // FIXME: shouldn't need this!
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 using std::cerr;
 
