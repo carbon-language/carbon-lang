@@ -119,7 +119,7 @@ namespace {
 struct BufferContext {
   char* buff;
   unsigned size;
-  BufferContext(unsigned compressedSize ) { 
+  BufferContext(unsigned compressedSize) { 
     // Null to indicate malloc of a new block
     buff = 0; 
 
@@ -128,10 +128,19 @@ struct BufferContext {
     // in the callback for an initial allocation of 4x compressedSize.  This 
     // calculation is based on the typical compression ratio of bzip2 on LLVM 
     // bytecode files which typically ranges in the 50%-75% range.   Since we 
-    // tyipcally get at least 50%, doubling is insufficient. By using a 4x 
+    // typically get at least 50%, doubling is insufficient. By using a 4x 
     // multiplier on the first allocation, we minimize the impact of having to
     // copy the buffer on reallocation.
     size = compressedSize*2; 
+  }
+
+  /// trimTo - Reduce the size of the buffer down to the specified amount.  This
+  /// is useful after have read in the bytecode file to discard extra unused
+  /// memory.
+  ///
+  void trimTo(size_t NewSize) {
+    buff = (char*)::realloc(buff, NewSize);
+    size = NewSize;
   }
 
   /// This function handles allocation of the buffer used for decompression of
@@ -333,6 +342,7 @@ uint64_t
 Compressor::compressToNewBuffer(const char* in, unsigned size, char*&out) {
   BufferContext bc(size);
   uint64_t result = compress(in,size,BufferContext::callback,(void*)&bc);
+  bc.trimTo(result);
   out = bc.buff;
   return result;
 }
