@@ -39,6 +39,7 @@ I(RET         , "ret",   0xCB,    M_RET_FLAG, X86II::RawFrm | X86II::Void)      
 I(JMP         , "jmp",   0xE9, M_BRANCH_FLAG, X86II::Void)                       // jmp foo
 I(JNE         , "jne",   0x85, M_BRANCH_FLAG, X86II::TB | X86II::Void)
 I(JE          , "je",    0x84, M_BRANCH_FLAG, X86II::TB | X86II::Void)
+I(CALLpcrel32 , "call",  0xE8, M_BRANCH_FLAG, X86II::Void)
 
 // Misc instructions
 I(LEAVE       , "leave", 0xC9,             0, X86II::RawFrm)                     // leave
@@ -57,6 +58,8 @@ I(MOVrm8      , "movb",  0x88,             0, X86II::MRMDestMem | X86II::Void)  
 I(MOVrm16     , "movw",  0x89,             0, X86II::MRMDestMem | X86II::Void |  // [mem] = R16  89/r
                                               X86II::OpSize)
 I(MOVrm32     , "movl",  0x89,             0, X86II::MRMDestMem | X86II::Void)   // [mem] = R32  89/r
+
+I(PUSHr32     , "pushl", 0x50,             0, X86II::AddRegFrm | X86II::Void)
 
 // Arithmetic instructions
 I(ADDrr8      , "addb",  0x00,             0, X86II::MRMDestReg)                 // R8  += R8

@@ -363,10 +363,30 @@ ISel::visitBranchInst (BranchInst & BI)
     }
 }
 
-/// visitCallInst - Have to push args and do a procedure call
-/// instruction, if the target address is known.
-void ISel::visitCallInst (CallInst &CI) {
-  visitInstruction (CI);
+/// visitCallInst - Push args on stack and do a procedure call instruction.
+void
+ISel::visitCallInst (CallInst & CI)
+{
+  // Push the arguments on the stack in reverse order, as specified by
+  // the ABI.
+  for (unsigned i = CI.getNumOperands (); i >= 1; --i)
+    {
+      Value *v = CI.getOperand (i);
+      unsigned argReg = getReg (v);
+      switch (getClass (v->getType ()))
+	{
+	case cInt:
+	case cFloat:
+	  BuildMI (BB, X86::PUSHr32, 1).addReg (argReg);
+	  break;
+	default:
+	  // FIXME
+	  visitInstruction (CI);
+	  break;
+	}
+    }
+  // Emit a CALL instruction with PC-relative displacement.
+  BuildMI (BB, X86::CALLpcrel32, 1).addPCDisp (CI.getCalledValue ());
 }
 
 /// visitSimpleBinary - Implement simple binary operators for integral types...
