@@ -1,27 +1,31 @@
-//===-- llvm/CodeGen/MachineCodeForBasicBlock.h -----------------*- C++ -*--=//
+//===-- llvm/CodeGen/MachineBasicBlock.h ------------------------*- C++ -*--=//
 // 
 // Collect the sequence of machine instructions for a basic block.
 //
 //===---------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_MACHINECODEFORBASICBLOCK_H
-#define LLVM_CODEGEN_MACHINECODEFORBASICBLOCK_H
+#ifndef LLVM_CODEGEN_MACHINEBASICBLOCK_H
+#define LLVM_CODEGEN_MACHINEBASICBLOCK_H
 
 #include "llvm/BasicBlock.h"
 class MachineInstr;
 
 extern AnnotationID MCFBB_AID;
 
-class MachineCodeForBasicBlock : public Annotation {
+// FIXME: this should go away soon
+class MachineBasicBlock;
+typedef MachineBasicBlock MachineCodeForBasicBlock;
+
+class MachineBasicBlock: public Annotation {
   std::vector<MachineInstr*> Insts;
 public:
-  MachineCodeForBasicBlock();
-  ~MachineCodeForBasicBlock() {}
+  MachineBasicBlock();
+  ~MachineBasicBlock() {}
   
-  // Static methods to retrieve or destroy the MachineCodeForBasicBlock
+  // Static methods to retrieve or destroy the MachineBasicBlock
   // object for a given basic block.
-  static MachineCodeForBasicBlock& get(const BasicBlock *bb) {
-    return *(MachineCodeForBasicBlock*)bb->getOrCreateAnnotation(MCFBB_AID);
+  static MachineBasicBlock& get(const BasicBlock *bb) {
+    return *(MachineBasicBlock*)bb->getOrCreateAnnotation(MCFBB_AID);
   }
   
   static void destroy(const BasicBlock *bb) {

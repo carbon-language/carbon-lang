@@ -35,7 +35,7 @@
 #include <vector>
 #include <map>
 
-class MachineCodeForMethod;
+class MachineFunction;
 class MachineRegInfo;
 class FunctionLiveVarInfo;
 class MachineInstr;
@@ -71,7 +71,7 @@ class PhyRegAlloc: public NonCopyable {
   std::vector<RegClass *> RegClassList; // vector of register classes
   const TargetMachine &TM;              // target machine
   const Function *Meth;                 // name of the function we work on
-  MachineCodeForMethod &mcInfo;         // descriptor for method's native code
+  MachineFunction &mcInfo;              // descriptor for method's native code
   FunctionLiveVarInfo *const LVI;       // LV information for this method 
                                         // (already computed for BBs) 
   LiveRangeInfo LRI;                    // LR info  (will be computed)

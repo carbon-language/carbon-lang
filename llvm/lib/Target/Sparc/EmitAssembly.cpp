@@ -14,7 +14,7 @@
 #include "SparcInternals.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForBasicBlock.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -865,7 +865,7 @@ void SparcModuleAsmPrinter::FoldConstants(const Module &M,
   for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal()) {
       const hash_set<const Constant*> &pool =
-        MachineCodeForMethod::get(I).getConstantPoolValues();
+        MachineFunction::get(I).getConstantPoolValues();
       MC.insert(pool.begin(), pool.end());
     }
 }

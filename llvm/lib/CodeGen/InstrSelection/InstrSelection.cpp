@@ -12,7 +12,7 @@
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForBasicBlock.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Function.h"
@@ -155,7 +155,7 @@ bool InstructionSelection::runOnFunction(Function &F)
   if (SelectDebugLevel >= Select_PrintMachineCode)
     {
       cerr << "\n*** Machine instructions after INSTRUCTION SELECTION\n";
-      MachineCodeForMethod::get(&F).dump();
+      MachineFunction::get(&F).dump();
     }
   
   return true;

@@ -10,7 +10,7 @@
 #include "Support/NonCopyable.h"
 #include <vector>
 
-class MachineCodeForMethod;
+class MachineFunction;
 class TargetMachine;
 
 struct MachineFrameInfo : public NonCopyableV {
@@ -41,24 +41,24 @@ public:
   // The first few methods have default machine-independent implementations.
   // The rest must be implemented by the machine-specific subclass.
   // 
-  virtual int getIncomingArgOffset              (MachineCodeForMethod& mcInfo,
+  virtual int getIncomingArgOffset              (MachineFunction& mcInfo,
                                                  unsigned argNum) const;
-  virtual int getOutgoingArgOffset              (MachineCodeForMethod& mcInfo,
+  virtual int getOutgoingArgOffset              (MachineFunction& mcInfo,
                                                  unsigned argNum) const;
   
-  virtual int getFirstIncomingArgOffset         (MachineCodeForMethod& mcInfo,
+  virtual int getFirstIncomingArgOffset         (MachineFunction& mcInfo,
                                                  bool& growUp) const=0;
-  virtual int getFirstOutgoingArgOffset         (MachineCodeForMethod& mcInfo,
+  virtual int getFirstOutgoingArgOffset         (MachineFunction& mcInfo,
                                                  bool& growUp) const=0;
-  virtual int getFirstOptionalOutgoingArgOffset (MachineCodeForMethod&,
+  virtual int getFirstOptionalOutgoingArgOffset (MachineFunction&,
                                                  bool& growUp) const=0;
-  virtual int getFirstAutomaticVarOffset        (MachineCodeForMethod& mcInfo,
+  virtual int getFirstAutomaticVarOffset        (MachineFunction& mcInfo,
                                                  bool& growUp) const=0;
-  virtual int getRegSpillAreaOffset             (MachineCodeForMethod& mcInfo,
+  virtual int getRegSpillAreaOffset             (MachineFunction& mcInfo,
                                                  bool& growUp) const=0;
-  virtual int getTmpAreaOffset                  (MachineCodeForMethod& mcInfo,
+  virtual int getTmpAreaOffset                  (MachineFunction& mcInfo,
                                                  bool& growUp) const=0;
-  virtual int getDynamicAreaOffset              (MachineCodeForMethod& mcInfo,
+  virtual int getDynamicAreaOffset              (MachineFunction& mcInfo,
                                                  bool& growUp) const=0;
 
   //

@@ -11,7 +11,7 @@
 
 #include "SparcInternals.h"
 #include "SparcRegClassInfo.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -28,7 +28,7 @@ namespace {
     const char *getPassName() const { return "Sparc Prolog/Epilog Inserter"; }
     
     bool runOnFunction(Function &F) {
-      MachineCodeForMethod &mcodeInfo = MachineCodeForMethod::get(&F);
+      MachineFunction &mcodeInfo = MachineFunction::get(&F);
       if (!mcodeInfo.isCompiledAsLeafMethod()) {
         InsertPrologCode(F);
         InsertEpilogCode(F);
@@ -60,7 +60,7 @@ void InsertPrologEpilogCode::InsertPrologCode(Function &F)
   // immediate field, we have to use a free register to hold the size.
   // See the comments below for the choice of this register.
   // 
-  MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(&F);
+  MachineFunction& mcInfo = MachineFunction::get(&F);
   unsigned int staticStackSize = mcInfo.getStaticStackSize();
   
   if (staticStackSize < (unsigned) frameInfo.getMinStackFrameSize())

@@ -8,7 +8,7 @@
 #include "SparcInternals.h"
 #include "llvm/Target/Sparc.h"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 using std::cerr;
 
 // Build the MachineInstruction Description Array...
@@ -39,7 +39,7 @@ TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }
 //---------------------------------------------------------------------------
 
 int
-UltraSparcFrameInfo::getFirstAutomaticVarOffset(MachineCodeForMethod& ,
+UltraSparcFrameInfo::getFirstAutomaticVarOffset(MachineFunction& ,
                                                 bool& pos) const
 {
   pos = false;                          // static stack area grows downwards
@@ -47,7 +47,7 @@ UltraSparcFrameInfo::getFirstAutomaticVarOffset(MachineCodeForMethod& ,
 }
 
 int
-UltraSparcFrameInfo::getRegSpillAreaOffset(MachineCodeForMethod& mcInfo,
+UltraSparcFrameInfo::getRegSpillAreaOffset(MachineFunction& mcInfo,
                                            bool& pos) const
 {
   mcInfo.freezeAutomaticVarsArea();     // ensure no more auto vars are added
@@ -58,7 +58,7 @@ UltraSparcFrameInfo::getRegSpillAreaOffset(MachineCodeForMethod& mcInfo,
 }
 
 int
-UltraSparcFrameInfo::getTmpAreaOffset(MachineCodeForMethod& mcInfo,
+UltraSparcFrameInfo::getTmpAreaOffset(MachineFunction& mcInfo,
                                       bool& pos) const
 {
   mcInfo.freezeAutomaticVarsArea();     // ensure no more auto vars are added
@@ -72,7 +72,7 @@ UltraSparcFrameInfo::getTmpAreaOffset(MachineCodeForMethod& mcInfo,
 }
 
 int
-UltraSparcFrameInfo::getDynamicAreaOffset(MachineCodeForMethod& mcInfo,
+UltraSparcFrameInfo::getDynamicAreaOffset(MachineFunction& mcInfo,
                                           bool& pos) const
 {
   // Dynamic stack area grows downwards starting at top of opt-args area.

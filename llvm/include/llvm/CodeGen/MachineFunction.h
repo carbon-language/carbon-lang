@@ -1,13 +1,13 @@
-//===-- llvm/CodeGen/MachineCodeForMethod.h ----------------------*- C++ -*--=//
+//===-- llvm/CodeGen/MachineFunction.h ---------------------------*- C++ -*--=//
 // 
-// Purpose:
-//   Collect native machine code information for a method.
-//   This allows target-specific information about the generated code
-//   to be stored with each method.
+// Collect native machine code information for a method.  This allows
+// target-specific information about the generated code to be stored with each
+// method.
+//   
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_MACHINECODEFORMETHOD_H
-#define LLVM_CODEGEN_MACHINECODEFORMETHOD_H
+#ifndef LLVM_CODEGEN_MACHINEFUNCTION_H
+#define LLVM_CODEGEN_MACHINEFUNCTION_H
 
 #include "llvm/Annotation.h"
 #include "Support/NonCopyable.h"
@@ -20,7 +20,7 @@ class Type;
 class TargetMachine;
 
 
-class MachineCodeForMethod : private Annotation {
+class MachineFunction : private Annotation {
   hash_set<const Constant*> constantsForConstPool;
   hash_map<const Value*, int> offsets;
   const         Function* method;
@@ -36,20 +36,20 @@ class MachineCodeForMethod : private Annotation {
   bool          automaticVarsAreaFrozen;
   
 public:
-  /*ctor*/      MachineCodeForMethod(const Function* function,
-                                     const TargetMachine& target);
+  /*ctor*/      MachineFunction(const Function* function,
+                                const TargetMachine& target);
   
   // The next two methods are used to construct and to retrieve
-  // the MachineCodeForMethod object for the given method.
+  // the MachineFunction object for the given method.
   // construct() -- Allocates and initializes for a given method and target
   // get()       -- Returns a handle to the object.
   //                This should not be called before "construct()"
   //                for a given Method.
   // 
-  static MachineCodeForMethod& construct(const Function *method,
+  static MachineFunction& construct(const Function *method,
                                          const TargetMachine &target);
   static void destruct(const Function *F);
-  static MachineCodeForMethod& get(const Function* function);
+  static MachineFunction& get(const Function* function);
   
   //
   // Accessors for global information about generated code for a method.

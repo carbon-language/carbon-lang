@@ -560,32 +560,32 @@ public:
   // particular function.  The frame contents are obtained from the
   // MachineCodeInfoForMethod object for the given function.
   // 
-  int getFirstIncomingArgOffset  (MachineCodeForMethod& mcInfo,
+  int getFirstIncomingArgOffset  (MachineFunction& mcInfo,
                                   bool& growUp) const
   {
     growUp = true;                         // arguments area grows upwards
     return FirstIncomingArgOffsetFromFP;
   }
-  int getFirstOutgoingArgOffset  (MachineCodeForMethod& mcInfo,
+  int getFirstOutgoingArgOffset  (MachineFunction& mcInfo,
                                   bool& growUp) const
   {
     growUp = true;                         // arguments area grows upwards
     return FirstOutgoingArgOffsetFromSP;
   }
-  int getFirstOptionalOutgoingArgOffset(MachineCodeForMethod& mcInfo,
+  int getFirstOptionalOutgoingArgOffset(MachineFunction& mcInfo,
                                         bool& growUp)const
   {
     growUp = true;                         // arguments area grows upwards
     return FirstOptionalOutgoingArgOffsetFromSP;
   }
   
-  int getFirstAutomaticVarOffset (MachineCodeForMethod& mcInfo,
+  int getFirstAutomaticVarOffset (MachineFunction& mcInfo,
                                   bool& growUp) const;
-  int getRegSpillAreaOffset      (MachineCodeForMethod& mcInfo,
+  int getRegSpillAreaOffset      (MachineFunction& mcInfo,
                                   bool& growUp) const;
-  int getTmpAreaOffset           (MachineCodeForMethod& mcInfo,
+  int getTmpAreaOffset           (MachineFunction& mcInfo,
                                   bool& growUp) const;
-  int getDynamicAreaOffset       (MachineCodeForMethod& mcInfo,
+  int getDynamicAreaOffset       (MachineFunction& mcInfo,
                                   bool& growUp) const;
 
   //

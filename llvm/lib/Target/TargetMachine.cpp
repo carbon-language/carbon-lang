@@ -14,7 +14,7 @@
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/RegisterAllocation.h"
 #include "llvm/CodeGen/PeepholeOpts.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/Reoptimizer/Mapping/MappingInfo.h" 
 #include "llvm/Reoptimizer/Mapping/FInfo.h" 
@@ -87,7 +87,7 @@ public:
   }
 
   bool runOnFunction(Function &F) {
-    MachineCodeForMethod::construct(&F, Target);
+    MachineFunction::construct(&F, Target);
     return false;
   }
 };
@@ -117,7 +117,7 @@ struct FreeMachineCodeForFunction : public FunctionPass {
 void
 TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 {
-  // Construct and initialize the MachineCodeForMethod object for this fn.
+  // Construct and initialize the MachineFunction object for this fn.
   PM.add(new ConstructMachineCodeForFunction(*this));
 
   //Insert empty stackslots in the stack frame of each function

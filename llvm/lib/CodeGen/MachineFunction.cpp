@@ -6,7 +6,7 @@
 //   to be stored with each function.
 //===---------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"  // For debug output
 #include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 #include "llvm/Target/TargetMachine.h"
@@ -30,27 +30,27 @@ static AnnotationID MCFM_AID(
 //                This should not be called before "construct()"
 //                for a given Function.
 // 
-MachineCodeForMethod&
-MachineCodeForMethod::construct(const Function *M, const TargetMachine &Tar)
+MachineFunction&
+MachineFunction::construct(const Function *M, const TargetMachine &Tar)
 {
   assert(M->getAnnotation(MCFM_AID) == 0 &&
          "Object already exists for this function!");
-  MachineCodeForMethod* mcInfo = new MachineCodeForMethod(M, Tar);
+  MachineFunction* mcInfo = new MachineFunction(M, Tar);
   M->addAnnotation(mcInfo);
   return *mcInfo;
 }
 
 void
-MachineCodeForMethod::destruct(const Function *M)
+MachineFunction::destruct(const Function *M)
 {
   bool Deleted = M->deleteAnnotation(MCFM_AID);
   assert(Deleted && "Machine code did not exist for function!");
 }
 
-MachineCodeForMethod&
-MachineCodeForMethod::get(const Function *F)
+MachineFunction&
+MachineFunction::get(const Function *F)
 {
-  MachineCodeForMethod *mc = (MachineCodeForMethod*)F->getAnnotation(MCFM_AID);
+  MachineFunction *mc = (MachineFunction*)F->getAnnotation(MCFM_AID);
   assert(mc && "Call construct() method first to allocate the object");
   return *mc;
 }
@@ -122,7 +122,7 @@ SizeToAlignment(unsigned int size, const TargetMachine& target)
 
 
 /*ctor*/
-MachineCodeForMethod::MachineCodeForMethod(const Function *F,
+MachineFunction::MachineFunction(const Function *F,
                                            const TargetMachine& target)
   : Annotation(MCFM_AID),
     method(F), staticStackSize(0),
@@ -138,7 +138,7 @@ MachineCodeForMethod::MachineCodeForMethod(const Function *F,
 }
 
 int
-MachineCodeForMethod::computeOffsetforLocalVar(const TargetMachine& target,
+MachineFunction::computeOffsetforLocalVar(const TargetMachine& target,
                                                const Value* val,
                                                unsigned int& getPaddedSize,
                                                unsigned int  sizeToUse)
@@ -160,7 +160,7 @@ MachineCodeForMethod::computeOffsetforLocalVar(const TargetMachine& target,
 }
 
 int
-MachineCodeForMethod::allocateLocalVar(const TargetMachine& target,
+MachineFunction::allocateLocalVar(const TargetMachine& target,
                                        const Value* val,
                                        unsigned int sizeToUse)
 {
@@ -183,7 +183,7 @@ MachineCodeForMethod::allocateLocalVar(const TargetMachine& target,
 }
 
 int
-MachineCodeForMethod::allocateSpilledValue(const TargetMachine& target,
+MachineFunction::allocateSpilledValue(const TargetMachine& target,
                                            const Type* type)
 {
   assert(! spillsAreaFrozen &&
@@ -208,7 +208,7 @@ MachineCodeForMethod::allocateSpilledValue(const TargetMachine& target,
 }
 
 int
-MachineCodeForMethod::pushTempValue(const TargetMachine& target,
+MachineFunction::pushTempValue(const TargetMachine& target,
                                     unsigned int size)
 {
   unsigned int align = SizeToAlignment(size, target);
@@ -228,20 +228,20 @@ MachineCodeForMethod::pushTempValue(const TargetMachine& target,
 }
 
 void
-MachineCodeForMethod::popAllTempValues(const TargetMachine& target)
+MachineFunction::popAllTempValues(const TargetMachine& target)
 {
   resetTmpAreaSize();            // clear tmp area to reuse
 }
 
 int
-MachineCodeForMethod::getOffset(const Value* val) const
+MachineFunction::getOffset(const Value* val) const
 {
   hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
   return (pair == offsets.end())? INVALID_FRAME_OFFSET : pair->second;
 }
 
 void
-MachineCodeForMethod::dump() const
+MachineFunction::dump() const
 {
   std::cerr << "\n" << method->getReturnType()
             << " \"" << method->getName() << "\"\n";

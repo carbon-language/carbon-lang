@@ -8,7 +8,7 @@
 #include "SparcInternals.h"
 #include "SparcRegClassInfo.h"
 #include "llvm/Target/Sparc.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
@@ -477,7 +477,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
                  regClassIDOfArgReg == IntRegClassID &&
                  "This should only be an Int register for an FP argument");
           
- 	  int TmpOff = MachineCodeForMethod::get(Meth).pushTempValue(target,  
+ 	  int TmpOff = MachineFunction::get(Meth).pushTempValue(target,  
                                                 getSpilledRegSize(regType));
 	  cpReg2MemMI(FirstAI->InstrnsBefore,
                       UniArgReg, getFramePointer(), TmpOff, IntRegType);
@@ -496,7 +496,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
 	//
         const MachineFrameInfo& frameInfo = target.getFrameInfo();
 	int offsetFromFP =
-          frameInfo.getIncomingArgOffset(MachineCodeForMethod::get(Meth),
+          frameInfo.getIncomingArgOffset(MachineFunction::get(Meth),
                                          argNo);
         
 	cpMem2RegMI(FirstAI->InstrnsBefore,
@@ -544,7 +544,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
 
         const MachineFrameInfo& frameInfo = target.getFrameInfo();
 	int offsetFromFP =
-          frameInfo.getIncomingArgOffset(MachineCodeForMethod::get(Meth),
+          frameInfo.getIncomingArgOffset(MachineFunction::get(Meth),
                                          argNo);
         
 	LR->modifySpillOffFromFP( offsetFromFP );

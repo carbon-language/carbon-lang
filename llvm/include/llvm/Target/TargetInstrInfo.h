@@ -275,7 +275,7 @@ public:
   // The generated instructions are returned in `mvec'.
   // Any temp. registers (TmpInstruction) created are recorded in mcfi.
   // Symbolic constants or constants that must be accessed from memory
-  // are added to the constant pool via MachineCodeForMethod::get(F).
+  // are added to the constant pool via MachineFunction::get(F).
   // 
   virtual void  CreateCodeToLoadConst(const TargetMachine& target,
                                       Function* F,

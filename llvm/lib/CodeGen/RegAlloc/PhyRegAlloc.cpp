@@ -10,7 +10,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/MachineCodeForBasicBlock.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -78,7 +78,7 @@ Pass *getRegisterAllocator(TargetMachine &T) {
 PhyRegAlloc::PhyRegAlloc(Function *F, const TargetMachine& tm, 
 			 FunctionLiveVarInfo *Lvi, LoopInfo *LDC) 
                        :  TM(tm), Meth(F),
-                          mcInfo(MachineCodeForMethod::get(F)),
+                          mcInfo(MachineFunction::get(F)),
                           LVI(Lvi), LRI(F, tm, RegClassList), 
 			  MRI(tm.getRegInfo()),
                           NumOfRegClasses(MRI.getNumOfRegClasses()),
@@ -1194,7 +1194,7 @@ void PhyRegAlloc::allocateRegisters()
 
   if (DEBUG_RA) {
     cerr << "\n**** Machine Code After Register Allocation:\n\n";
-    MachineCodeForMethod::get(Meth).dump();
+    MachineFunction::get(Meth).dump();
   }
 }
 

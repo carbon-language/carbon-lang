@@ -9,7 +9,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForBasicBlock.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h" // FIXME: Remove when modularized better
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
@@ -1542,7 +1542,7 @@ bool InstructionSchedulingWithSSA::runOnFunction(Function &F)
   if (SchedDebugLevel >= Sched_PrintMachineCode)
     {
       cerr << "\n*** Machine instructions after INSTRUCTION SCHEDULING\n";
-      MachineCodeForMethod::get(&F).dump();
+      MachineFunction::get(&F).dump();
     }
   
   return false;

@@ -10,7 +10,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineRegInfo.h"

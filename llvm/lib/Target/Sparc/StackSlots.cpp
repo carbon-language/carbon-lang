@@ -13,7 +13,7 @@
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Pass.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 
 class StackSlots : public FunctionPass {
   const TargetMachine &Target;
@@ -32,7 +32,7 @@ public:
     const Type *PtrInt = PointerType::get(Type::IntTy);
     unsigned Size = Target.DataLayout.getTypeSize(PtrInt);
 
-    MachineCodeForMethod &mcInfo = MachineCodeForMethod::get(&F);
+    MachineFunction &mcInfo = MachineFunction::get(&F);
     Value *V = Constant::getNullValue(Type::IntTy);
     mcInfo.allocateLocalVar(Target, V, 2*Size);
     return true;

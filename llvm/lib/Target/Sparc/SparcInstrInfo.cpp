@@ -6,7 +6,7 @@
 #include "SparcInstrSelectionSupport.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/Function.h"
 #include "llvm/Constants.h"
@@ -361,7 +361,7 @@ UltraSparcInstrInfo::ConstantMayNotFitInImmedField(const Constant* CV,
 // GlobalValue, viz., the constant address of a global variable or function.
 // The generated instructions are returned in `mvec'.
 // Any temp. registers (TmpInstruction) created are recorded in mcfi.
-// Any stack space required is allocated via MachineCodeForMethod.
+// Any stack space required is allocated via MachineFunction.
 // 
 void
 UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
@@ -461,7 +461,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
       mvec.push_back(MI);
       
       // Make sure constant is emitted to constant pool in assembly code.
-      MachineCodeForMethod::get(F).addToConstantPool(cast<Constant>(val));
+      MachineFunction::get(F).addToConstantPool(cast<Constant>(val));
     }
 }
 
@@ -471,7 +471,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
 // val must be an integral type.  dest must be a Float or Double.
 // The generated instructions are returned in `mvec'.
 // Any temp. registers (TmpInstruction) created are recorded in mcfi.
-// Any stack space required is allocated via MachineCodeForMethod.
+// Any stack space required is allocated via MachineFunction.
 // 
 void
 UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
@@ -487,7 +487,7 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
          && "Dest type must be float/double");
 
   // Get a stack slot to use for the copy
-  int offset = MachineCodeForMethod::get(F).allocateLocalVar(target, val); 
+  int offset = MachineFunction::get(F).allocateLocalVar(target, val); 
 
   // Get the size of the source value being copied. 
   size_t srcSize = target.DataLayout.getTypeSize(val->getType());
@@ -532,7 +532,7 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
 // `val' to an integer register `dest' by copying to memory and back.
 // The generated instructions are returned in `mvec'.
 // Any temp. registers (TmpInstruction) created are recorded in mcfi.
-// Any stack space required is allocated via MachineCodeForMethod.
+// Any stack space required is allocated via MachineFunction.
 // 
 void
 UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
@@ -549,7 +549,7 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
   assert((destTy->isIntegral() || isa<PointerType>(destTy))
          && "Dest type must be integer, bool or pointer");
 
-  int offset = MachineCodeForMethod::get(F).allocateLocalVar(target, val); 
+  int offset = MachineFunction::get(F).allocateLocalVar(target, val); 
 
   // Store instruction stores `val' to [%fp+offset].
   // The store opCode is based only the source value being copied.
@@ -579,7 +579,7 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
 // Create instruction(s) to copy src to dest, for arbitrary types
 // The generated instructions are returned in `mvec'.
 // Any temp. registers (TmpInstruction) created are recorded in mcfi.
-// Any stack space required is allocated via MachineCodeForMethod.
+// Any stack space required is allocated via MachineFunction.
 // 
 void
 UltraSparcInstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
@@ -675,7 +675,7 @@ CreateBitExtensionInstructions(bool signExtend,
 // from an arbitrary-sized integer value (sized in bits, not bytes).
 // The generated instructions are returned in `mvec'.
 // Any temp. registers (TmpInstruction) created are recorded in mcfi.
-// Any stack space required is allocated via MachineCodeForMethod.
+// Any stack space required is allocated via MachineFunction.
 // 
 void
 UltraSparcInstrInfo::CreateSignExtensionInstructions(
@@ -697,7 +697,7 @@ UltraSparcInstrInfo::CreateSignExtensionInstructions(
 // For SPARC v9, we sign-extend the given operand using SLL; SRL.
 // The generated instructions are returned in `mvec'.
 // Any temp. registers (TmpInstruction) created are recorded in mcfi.
-// Any stack space required is allocated via MachineCodeForMethod.
+// Any stack space required is allocated via MachineFunction.
 // 
 void
 UltraSparcInstrInfo::CreateZeroExtensionInstructions(

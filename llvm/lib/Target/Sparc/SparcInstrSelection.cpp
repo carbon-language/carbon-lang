@@ -12,7 +12,7 @@
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iTerminators.h"
@@ -843,7 +843,7 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
   // and create a temporary Value to hold it.
   assert(result && result->getParent() && "Result value is not part of a fn?");
   Function *F = result->getParent()->getParent();
-  MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(F);
+  MachineFunction& mcInfo = MachineFunction::get(F);
   bool growUp;
   ConstantSInt* dynamicAreaOffset =
     ConstantSInt::get(Type::IntTy,
@@ -885,7 +885,7 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
   assert(result && result->getParent() &&
          "Result value is not part of a function?");
   Function *F = result->getParent()->getParent();
-  MachineCodeForMethod &mcInfo = MachineCodeForMethod::get(F);
+  MachineFunction &mcInfo = MachineFunction::get(F);
 
   // Check if the offset would small enough to use as an immediate in
   // load/stores (check LDX because all load/stores have the same-size immediate

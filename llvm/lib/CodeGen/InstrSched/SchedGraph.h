@@ -31,7 +31,7 @@ class RegToRefVecMap;
 class ValueToDefVecMap;
 class RefVec;
 class MachineInstr;
-class MachineCodeForBasicBlock;
+class MachineBasicBlock;
 
 
 /******************** Exported Data Types and Constants ********************/
@@ -312,7 +312,7 @@ private:
                                      const TargetMachine& target);
   
   void          addCallCCEdges      (const std::vector<SchedGraphNode*>& memNod,
-                                     MachineCodeForBasicBlock& bbMvec,
+                                     MachineBasicBlock& bbMvec,
                                      const TargetMachine& target);
     
   void		addMachineRegEdges	(RegToRefVecMap& regToRefVecMap,

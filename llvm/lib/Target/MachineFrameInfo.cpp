@@ -7,10 +7,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/MachineFrameInfo.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
 
 int
-MachineFrameInfo::getIncomingArgOffset(MachineCodeForMethod& mcInfo,
+MachineFrameInfo::getIncomingArgOffset(MachineFunction& mcInfo,
                                        unsigned argNum) const
 {
   assert(argsOnStackHaveFixedSize()); 
@@ -25,7 +25,7 @@ MachineFrameInfo::getIncomingArgOffset(MachineCodeForMethod& mcInfo,
 
 
 int
-MachineFrameInfo::getOutgoingArgOffset(MachineCodeForMethod& mcInfo,
+MachineFrameInfo::getOutgoingArgOffset(MachineFunction& mcInfo,
                                        unsigned argNum) const
 {
   assert(argsOnStackHaveFixedSize()); 
