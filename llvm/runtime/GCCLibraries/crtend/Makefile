@@ -27,14 +27,14 @@ Source       := $(MainSrc) $(GenericEHSrc) $(SJLJEHSrc) $(CXXEHSrc)
 include $(LEVEL)/Makefile.common
 
 # CRTEND_A - The result of making 'all' - the final archive file.
-CRTEND_A   = $(DESTLIBBYTECODE)/crtend.a
+CRTEND_A   = $(DESTLIBBYTECODE)/libcrtend.a
 all:: $(CRTEND_A)
 
 # Installation simply requires copying the archive to it's new home.
-$(LLVMGCCDIR)/bytecode-libs/crtend.a: $(CRTEND_A)
+$(LLVMGCCDIR)/bytecode-libs/libcrtend.a: $(CRTEND_A)
 	cp $< $@
 
-install:: $(LLVMGCCDIR)/bytecode-libs/crtend.a
+install:: $(LLVMGCCDIR)/bytecode-libs/libcrtend.a
 
 
 # The four components described in the README
@@ -42,9 +42,9 @@ Components := main genericeh sjljeh cxxeh
 ComponentLibs := $(Components:%=$(BUILD_OBJ_DIR)/BytecodeObj/comp_%.bc)
 
 
-# We build crtend.a from the four components described in the README.
+# We build libcrtend.a from the four components described in the README.
 $(CRTEND_A) : $(ComponentLibs)
-	@echo Building final crtend.a file from components
+	@echo Building final libcrtend.a file from components
 	$(VERB) $(AR) $@ $(ComponentLibs)
 
 MainObj      := $(BUILD_OBJ_DIR)/BytecodeObj/crtend.bc \
