@@ -436,7 +436,8 @@ bool LICM::isLoopInvariantInst(Instruction &I) {
 void LICM::sink(Instruction &I) {
   DEBUG(std::cerr << "LICM sinking instruction: " << I);
 
-  const std::vector<BasicBlock*> &ExitBlocks = CurLoop->getExitBlocks();
+  std::vector<BasicBlock*> ExitBlocks;
+  CurLoop->getExitBlocks(ExitBlocks);
 
   if (isa<LoadInst>(I)) ++NumMovedLoads;
   else if (isa<CallInst>(I)) ++NumMovedCalls;
@@ -593,7 +594,8 @@ bool LICM::isSafeToExecuteUnconditionally(Instruction &Inst) {
     return true;
 
   // Get the exit blocks for the current loop.
-  const std::vector<BasicBlock*> &ExitBlocks = CurLoop->getExitBlocks();
+  std::vector<BasicBlock*> ExitBlocks;
+  CurLoop->getExitBlocks(ExitBlocks);
 
   // For each exit block, get the DT node and walk up the DT until the
   // instruction's basic block is found or we exit the loop.
@@ -667,7 +669,8 @@ void LICM::PromoteValuesInLoop() {
   //
   std::set<BasicBlock*> ProcessedBlocks;
 
-  const std::vector<BasicBlock*> &ExitBlocks = CurLoop->getExitBlocks();
+  std::vector<BasicBlock*> ExitBlocks;
+  CurLoop->getExitBlocks(ExitBlocks);
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
     if (ProcessedBlocks.insert(ExitBlocks[i]).second) {
       // Copy all of the allocas into their memory locations...
