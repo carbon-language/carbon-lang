@@ -1,3 +1,10 @@
+//===- ReaderWrappers.cpp - Parse bytecode from file or buffer  -----------===//
+//
+// This file implements loading and parsing a bytecode file and parsing a
+// bytecode module from a given buffer.
+//
+//===----------------------------------------------------------------------===//
+
 #include "ReaderInternals.h"
 #include "Support/StringExtras.h"
 #include "Config/fcntl.h"
