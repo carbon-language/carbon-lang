@@ -163,6 +163,31 @@
 			<File
 				RelativePath="..\..\lib\Analysis\ValueNumbering.cpp">
 			</File>
+			<Filter
+				Name="IPA"
+				Filter="">
+				<File
+					RelativePath="..\..\lib\Analysis\Ipa\Andersens.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Analysis\Ipa\CallGraph.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Analysis\Ipa\CallGraphSCCPass.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Analysis\Ipa\FindUnsafePointerTypes.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Analysis\Ipa\FindUsedTypes.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Analysis\Ipa\GlobalsModRef.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Analysis\Ipa\PrintSCC.cpp">
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -184,22 +209,7 @@
 				RelativePath="..\..\include\llvm\Analysis\ConstantsScanner.h">
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\DataStructure\DataStructure.h">
-			</File>
-			<File
 				RelativePath="..\..\include\llvm\Analysis\Dominators.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Analysis\DataStructure\DSGraph.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Analysis\DataStructure\DSGraphTraits.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Analysis\DataStructure\DSNode.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Analysis\DataStructure\DSSupport.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Analysis\Expressions.h">
@@ -255,6 +265,25 @@
 			<File
 				RelativePath="..\..\include\llvm\Analysis\Verifier.h">
 			</File>
+			<Filter
+				Name="DataStructure"
+				Filter="">
+				<File
+					RelativePath="..\..\include\llvm\Analysis\DataStructure\DataStructure.h">
+				</File>
+				<File
+					RelativePath="..\..\include\llvm\Analysis\DataStructure\DSGraph.h">
+				</File>
+				<File
+					RelativePath="..\..\include\llvm\Analysis\DataStructure\DSGraphTraits.h">
+				</File>
+				<File
+					RelativePath="..\..\include\llvm\Analysis\DataStructure\DSNode.h">
+				</File>
+				<File
+					RelativePath="..\..\include\llvm\Analysis\DataStructure\DSSupport.h">
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>
