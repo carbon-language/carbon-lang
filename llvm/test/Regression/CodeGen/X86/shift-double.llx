@@ -1,0 +1,22 @@
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel -disable-pattern-isel=0 | grep sh[lr]d | wc -l | grep 4
+
+long %test1(long %X, ubyte %C) {
+	%Y = shl long %X, ubyte %C
+	ret long %Y
+}
+long %test2(long %X, ubyte %C) {
+	%Y = shr long %X, ubyte %C
+	ret long %Y
+}
+ulong %test3(ulong %X, ubyte %C) {
+	%Y = shr ulong %X, ubyte %C
+	ret ulong %Y
+}
+
+uint %test4(uint %A, uint %B, ubyte %C) {
+	%X = shl uint %A, ubyte %C
+	%Cv = sub ubyte 32, %C
+	%Y = shr uint %B, ubyte %Cv
+	%Z = or uint %Y, %X
+	ret uint %Z
+}
