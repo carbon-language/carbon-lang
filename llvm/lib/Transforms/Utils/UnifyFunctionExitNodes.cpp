@@ -23,16 +23,15 @@ AnalysisID UnifyMethodExitNodes::ID(AnalysisID::create<UnifyMethodExitNodes>());
 // If there are no return stmts in the Method, a null pointer is returned.
 //
 bool UnifyMethodExitNodes::doit(Method *M, BasicBlock *&ExitNode) {
-  vector<BasicBlock*> ReturningBlocks;
-
   // Loop over all of the blocks in a method, tracking all of the blocks that
   // return.
   //
+  vector<BasicBlock*> ReturningBlocks;
   for(Method::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if ((*I)->getTerminator()->getOpcode() == Instruction::Ret)
+    if (isa<ReturnInst>((*I)->getTerminator()))
       ReturningBlocks.push_back(*I);
 
-  if (ReturningBlocks.size() == 0) {
+  if (ReturningBlocks.empty()) {
     ExitNode = 0;
     return false;                      // No blocks return
   } else if (ReturningBlocks.size() == 1) {
