@@ -104,6 +104,12 @@ Pass *createInternalizePass();
 //
 Pass *createDeadArgEliminationPass(bool DeleteFromExternalFunctions=false);
 
+//===----------------------------------------------------------------------===//
+// createIPConstantPropagationPass - This pass propagates constants from call
+// sites into the bodies of functions.
+//
+Pass *createIPConstantPropagationPass();
+
 
 //===----------------------------------------------------------------------===//
 // These passes are wrappers that can do a few simple structure mutation
