@@ -218,7 +218,17 @@ class XForm_5<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
 
 class XForm_6<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
               dag OL, string asmstr> 
-  : XForm_base_r3xo<opcode, xo, rc, ppc64, vmx, OL, asmstr>;
+  : I<opcode, ppc64, vmx, OL, asmstr> {
+  bits<5> A;
+  bits<5> RST;
+  bits<5> B;
+
+  let Inst{6-10}  = RST;
+  let Inst{11-15} = A;
+  let Inst{16-20} = B;
+  let Inst{21-30} = xo;
+  let Inst{31}    = rc;
+}
 
 class XForm_8<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
               dag OL, string asmstr> 
