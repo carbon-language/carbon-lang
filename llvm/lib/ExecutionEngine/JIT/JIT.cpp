@@ -104,7 +104,7 @@ VM::VM(Module *M, TargetMachine *tm) : ExecutionEngine(M), TM(*tm) {
 int VM::run(const std::string &FnName, const std::vector<std::string> &Args) {
   Function *F = getModule().getNamedFunction(FnName);
   if (F == 0) {
-    std::cerr << "Could not find function '" << FnName <<"' in module!\n";
+    std::cerr << "Could not find function '" << FnName << "' in module!\n";
     return 1;
   }
 
