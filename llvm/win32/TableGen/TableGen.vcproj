@@ -46,8 +46,7 @@
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\TableGen.exe ..\tools"/>
+				Name="VCPostBuildEventTool"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -98,8 +97,7 @@
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\TableGen.exe ..\tools"/>
+				Name="VCPostBuildEventTool"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -140,6 +138,7 @@
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
+						Description="Performing flex"
 						CommandLine="..\tools\flex -t &gt;$(InputDir)$(InputName).cpp $(InputPath)
 "
 						Outputs="$(InputDir)$(InputName).cpp"/>
@@ -148,6 +147,7 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
+						Description="Performing flex"
 						CommandLine="..\tools\flex -t &gt;$(InputDir)$(InputName).cpp $(InputPath)
 "
 						Outputs="$(InputDir)$(InputName).cpp"/>
@@ -159,8 +159,9 @@
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
+						Description="Performing bison"
 						CommandLine="..\tools\bison -pFile -tdo$(InputDir)$(InputName).cpp $(InputPath)
-copy $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
+move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
 "
 						Outputs="$(InputDir)$(InputName).cpp;$(InputDir)$(InputName).h"/>
 				</FileConfiguration>
@@ -168,8 +169,9 @@ copy $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
 					Name="Release|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
+						Description="Performing bison"
 						CommandLine="..\tools\bison -pFile -tdo$(InputDir)$(InputName).cpp $(InputPath)
-copy $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
+move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
 "
 						Outputs="$(InputDir)$(InputName).cpp;$(InputDir)$(InputName).h"/>
 				</FileConfiguration>
