@@ -4,6 +4,7 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Value.h"
+#include "llvm/Target/MachineInstrInfo.h"  // FIXME: shouldn't need this!
 using std::cerr;
 
 

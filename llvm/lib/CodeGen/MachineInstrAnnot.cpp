@@ -8,6 +8,7 @@
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/Annotation.h"
 #include "llvm/iOther.h"
+#include "llvm/Type.h"
 
 AnnotationID CallArgsDescriptor::AID(AnnotationManager::
                                      getID("CodeGen::CallArgsDescriptor"));
