@@ -2636,10 +2636,10 @@ static bool LoadNeedsSignExtend(LoadInst &LI) {
   if (cByte == getClassB(LI.getType()) && LI.getType()->isSigned()) {
     bool AllUsesAreStoresOrSetCC = true;
     for (Value::use_iterator I = LI.use_begin(), E = LI.use_end(); I != E; ++I){
-      if (isa<SetCondInst(*I))
+      if (isa<SetCondInst>(*I))
         continue;
-      if (StoreInst *SI = dyn_cast<StoreInst>(*I) && 
-          cByte == getClassB(SI->getType()))
+      if (StoreInst *SI = dyn_cast<StoreInst>(*I))
+        if (cByte == getClassB(SI->getType()))
         continue;
       AllUsesAreStoresOrSetCC = false;
       break;
