@@ -48,8 +48,7 @@ public:
     // Ignore non-selectable and non-constructible passes!  Ignore
     // non-optimizations.
     return P->getPassArgument() == 0 || *P->getPassArgument() == 0 ||
-          (P->getNormalCtor() == 0 && P->getDataCtor() == 0 &&
-           P->getTargetCtor() == 0) ||
+          (P->getNormalCtor() == 0 && P->getTargetCtor() == 0) ||
           ignorablePassImpl(P);
   }
 
