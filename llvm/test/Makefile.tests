@@ -58,14 +58,31 @@ clean ::
 	$(RM) a.out core
 	$(RM) -rf Output/
 
+# Compile from X.c to Output/X.ll
 Output/%.ll: %.c $(LCC1) Output/.dir
 	$(LCC) $(LCCFLAGS) -S $< -o $@
 
+# LLVM Assemble from Output/X.ll to Output/X.bc.  Output/X.ll must have come
+# from GCC output, so use GCCAS.
+#
 Output/%.bc: Output/%.ll $(LGCCAS)
 	$(LGCCAS) $< -o $@
 
+# LLVM Assemble from X.ll to Output/X.bc.  Because we are coming directly from
+# LLVM source, use the non-transforming assembler.
+#
 Output/%.bc: %.ll $(LAS) Output/.dir
 	$(LAS) -f $< -o $@
+
+# Compile a linked program to machine code for this processor.
+#
+Output/%.llc.s: Output/%.linked.bc
+	$(LLC) $(LLCFLAGS) -f $< -o $@
+
+# Assemble (and link) an LLVM-linked program using the system assembler...
+#
+Output/%.llc: Output/%.llc.s
+	$(CC) $(CFLAGS) $< -o $@
 
 #
 # Testing versions of provided utilities...
@@ -81,26 +98,10 @@ Output/%.tbc: Output/%.tll $(LAS)
             ( rm -f $@; $(FAILURE) $@ )
 
 
-
-#%.s: %.linked.bc
-#	$(LLC) -f $(LLCFLAGS) $< -o $@
-
-#%: %.o $(LIBS)
-#	$(CC) $(LDFLAGS) $< $(LIBS) -o $@
-
-
 ## Cancel built-in implicit rules that override above rules
 %: %.s
 
 %: %.c
 
 %.o: %.c
-
-## The next two rules are for disassembling an executable or an object file
-#%.dis: %
-#	$(DIS) $< > $@
-
-#%.dis: %.o
-#	$(DIS) $< > $@
-
 
