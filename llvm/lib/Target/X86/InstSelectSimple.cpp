@@ -1691,7 +1691,8 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
         BuildMI(BB, X86::IN32, 0);
         break;
       default:
-        assert (0 && "Cannot do input on this data type");
+        std::cerr << "Cannot do input on this data type";
+        exit (1);
     }
     return;
 
@@ -1725,7 +1726,8 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
         BuildMI(BB, X86::OUT32, 0);
         break;
       default:
-        assert (0 && "Cannot do input on this data type");
+        std::cerr << "Cannot do output on this data type";
+        exit (1);
     }
     return;
 
