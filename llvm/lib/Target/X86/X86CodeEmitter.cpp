@@ -385,24 +385,24 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
     DispVal = Op3.getImmedValue();
   }
 
-  if (MI.getOperand(Op).isConstantPoolIndex()) {
-    // Emit a direct address reference [disp32] where the displacement of the
-    // constant pool entry is controlled by the MCE.
-    assert(!GV && "Constant Pool reference cannot be relative to global!");
-    MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
-    unsigned Index = MI.getOperand(Op).getConstantPoolIndex();
-    unsigned Address = MCE.getConstantPoolEntryAddress(Index);
-    MCE.emitWord(Address+DispVal);
-    return;
-  }
-
-  const MachineOperand &BaseReg  = MI.getOperand(Op);
+  const MachineOperand &Base     = MI.getOperand(Op);
   const MachineOperand &Scale    = MI.getOperand(Op+1);
   const MachineOperand &IndexReg = MI.getOperand(Op+2);
 
+  unsigned BaseReg = 0;
+
+  if (Base.isConstantPoolIndex()) {
+    // Emit a direct address reference [disp32] where the displacement of the
+    // constant pool entry is controlled by the MCE.
+    assert(!GV && "Constant Pool reference cannot be relative to global!");
+    DispVal += MCE.getConstantPoolEntryAddress(Base.getConstantPoolIndex());
+  } else {
+    BaseReg = Base.getReg();
+  }
+
   // Is a SIB byte needed?
-  if (IndexReg.getReg() == 0 && BaseReg.getReg() != X86::ESP) {
-    if (BaseReg.getReg() == 0) {  // Just a displacement?
+  if (IndexReg.getReg() == 0 && BaseReg != X86::ESP) {
+    if (BaseReg == 0) {  // Just a displacement?
       // Emit special case [disp32] encoding
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
       if (GV)
@@ -410,7 +410,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
       else
         emitConstant(DispVal, 4);
     } else {
-      unsigned BaseRegNo = getX86RegNum(BaseReg.getReg());
+      unsigned BaseRegNo = getX86RegNum(BaseReg);
       if (GV) {
         // Emit the most general non-SIB encoding: [REG+disp32]
         MCE.emitByte(ModRMByte(2, RegOpcodeField, BaseRegNo));
@@ -434,7 +434,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
 
     bool ForceDisp32 = false;
     bool ForceDisp8  = false;
-    if (BaseReg.getReg() == 0) {
+    if (BaseReg == 0) {
       // If there is no base register, we emit the special case SIB byte with
       // MOD=0, BASE=5, to JUST get the index, scale, and displacement.
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 4));
@@ -443,7 +443,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
       // Emit the normal disp32 encoding...
       MCE.emitByte(ModRMByte(2, RegOpcodeField, 4));
       ForceDisp32 = true;
-    } else if (DispVal == 0 && BaseReg.getReg() != X86::EBP) {
+    } else if (DispVal == 0 && BaseReg != X86::EBP) {
       // Emit no displacement ModR/M byte
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 4));
     } else if (isDisp8(DispVal)) {
@@ -459,13 +459,13 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
     static const unsigned SSTable[] = { ~0, 0, 1, ~0, 2, ~0, ~0, ~0, 3 };
     unsigned SS = SSTable[Scale.getImmedValue()];
 
-    if (BaseReg.getReg() == 0) {
+    if (BaseReg == 0) {
       // Handle the SIB byte for the case where there is no base.  The
       // displacement has already been output.
       assert(IndexReg.getReg() && "Index register must be specified!");
       emitSIBByte(SS, getX86RegNum(IndexReg.getReg()), 5);
     } else {
-      unsigned BaseRegNo = getX86RegNum(BaseReg.getReg());
+      unsigned BaseRegNo = getX86RegNum(BaseReg);
       unsigned IndexRegNo;
       if (IndexReg.getReg())
         IndexRegNo = getX86RegNum(IndexReg.getReg());
