@@ -213,11 +213,11 @@ static void ParseCStringVector (std::vector<char *> &output,
 /// from the caller (as PROGNAME) and its command-line arguments from
 /// an environment variable (whose name is given in ENVVAR).
 ///
-void cl::ParseEnvironmentOptions (const char *progName, const char *envVar,
-				  const char *Overview) {
+void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
+                                 const char *Overview) {
   // Check args.
-  assert (progName && "Program name not specified");
-  assert (envVar && "Environment variable name missing");
+  assert(progName && "Program name not specified");
+  assert(envVar && "Environment variable name missing");
   
   // Get the environment variable they want us to parse options out of.
   const char *envValue = getenv (envVar);
@@ -240,6 +240,29 @@ void cl::ParseEnvironmentOptions (const char *progName, const char *envVar,
        i != e; ++i) {
     free (*i);
   }
+}
+
+/// LookupOption - Lookup the option specified by the specified option on the
+/// command line.  If there is a value specified (after an equal sign) return
+/// that as well.
+static Option *LookupOption(const char *&Arg, const char *&Value) {
+  while (*Arg == '-') ++Arg;  // Eat leading dashes
+  
+  const char *ArgEnd = Arg;
+  while (*ArgEnd && *ArgEnd != '=')
+    ++ArgEnd; // Scan till end of argument name...
+
+  Value = ArgEnd;
+  if (*Value)           // If we have an equals sign...
+    ++Value;            // Advance to value...
+  
+  if (*Arg == 0) return 0;
+
+  // Look up the option.
+  std::map<std::string, Option*> &Opts = getOpts();
+  std::map<std::string, Option*>::iterator I =
+    Opts.find(std::string(Arg, ArgEnd));
+  return (I != Opts.end()) ? I->second : 0;
 }
 
 void cl::ParseCommandLineOptions(int &argc, char **argv,
@@ -335,78 +358,68 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
         // Delay processing positional arguments until the end...
         continue;
       }
-    } else {               // We start with a '-', must be an argument...
+    } else if (argv[i][0] == '-' && argv[i][1] == '-' && argv[i][2] == 0 &&
+               !DashDashFound) {
+      DashDashFound = true;  // This is the mythical "--"?
+      continue;              // Don't try to process it as an argument itself.
+    } else if (ActivePositionalArg &&
+               (ActivePositionalArg->getMiscFlags() & PositionalEatsArgs)) {
+      // If there is a positional argument eating options, check to see if this
+      // option is another positional argument.  If so, treat it as an argument,
+      // otherwise feed it to the eating positional.
       ArgName = argv[i]+1;
-      while (*ArgName == '-') ++ArgName;  // Eat leading dashes
-
-      if (*ArgName == 0 && !DashDashFound) {   // Is this the mythical "--"?
-        DashDashFound = true;  // Yup, take note of that fact...
-        continue;              // Don't try to process it as an argument itself.
+      Handler = LookupOption(ArgName, Value);
+      if (!Handler || Handler->getFormattingFlag() != cl::Positional) {
+        ProvidePositionalOption(ActivePositionalArg, argv[i]);
+        continue;  // We are done!
       }
 
-      const char *ArgNameEnd = ArgName;
-      while (*ArgNameEnd && *ArgNameEnd != '=')
-        ++ArgNameEnd; // Scan till end of argument name...
+    } else {     // We start with a '-', must be an argument...
+      ArgName = argv[i]+1;
+      Handler = LookupOption(ArgName, Value);
 
-      Value = ArgNameEnd;
-      if (*Value)           // If we have an equals sign...
-        ++Value;            // Advance to value...
-
-      if (*ArgName != 0) {
-        std::string RealName(ArgName, ArgNameEnd);
-        // Extract arg name part
-        std::map<std::string, Option*>::iterator I = Opts.find(RealName);
-
-        if (I == Opts.end() && !*Value && RealName.size() > 1) {
-          // Check to see if this "option" is really a prefixed or grouped
-          // argument...
-          //
+      // Check to see if this "option" is really a prefixed or grouped argument.
+      if (Handler == 0 && *Value == 0) {
+        std::string RealName(ArgName);
+        if (RealName.size() > 1) {
           unsigned Length = 0;
           Option *PGOpt = getOptionPred(RealName, Length, isPrefixedOrGrouping);
-
+  
           // If the option is a prefixed option, then the value is simply the
           // rest of the name...  so fall through to later processing, by
           // setting up the argument name flags and value fields.
           //
           if (PGOpt && PGOpt->getFormattingFlag() == cl::Prefix) {
-            ArgNameEnd = ArgName+Length;
-            Value = ArgNameEnd;
-            I = Opts.find(std::string(ArgName, ArgNameEnd));
-            assert(I->second == PGOpt);
+            Value = ArgName+Length;
+            assert(Opts.find(std::string(ArgName, Value)) != Opts.end() &&
+                   Opts.find(std::string(ArgName, Value))->second == PGOpt);
+            Handler = PGOpt;
           } else if (PGOpt) {
-            // This must be a grouped option... handle all of them now...
+            // This must be a grouped option... handle them now.
             assert(isGrouping(PGOpt) && "Broken getOptionPred!");
-
+            
             do {
               // Move current arg name out of RealName into RealArgName...
-              std::string RealArgName(RealName.begin(),RealName.begin()+Length);
-              RealName.erase(RealName.begin(), RealName.begin()+Length);
-
+              std::string RealArgName(RealName.begin(),
+                                      RealName.begin() + Length);
+              RealName.erase(RealName.begin(), RealName.begin() + Length);
+              
               // Because ValueRequired is an invalid flag for grouped arguments,
               // we don't need to pass argc/argv in...
               //
               assert(PGOpt->getValueExpectedFlag() != cl::ValueRequired &&
                      "Option can not be cl::Grouping AND cl::ValueRequired!");
               int Dummy;
-              ErrorParsing |= ProvideOption(PGOpt, RealArgName.c_str(), "",
-                                            0, 0, Dummy);
-
+              ErrorParsing |= ProvideOption(PGOpt, RealArgName.c_str(),
+                                            "", 0, 0, Dummy);
+              
               // Get the next grouping option...
-              if (!RealName.empty())
-                PGOpt = getOptionPred(RealName, Length, isGrouping);
-            } while (!RealName.empty() && PGOpt);
-
-            if (RealName.empty())    // Processed all of the options, move on
-              continue;              // to the next argv[] value...
-
-            // If RealName is not empty, that means we did not match one of the
-            // options!  This is an error.
-            //
-            I = Opts.end();
+              PGOpt = getOptionPred(RealName, Length, isGrouping);
+            } while (PGOpt && Length != RealName.size());
+            
+            Handler = PGOpt; // Ate all of the options.
           }
         }
-
-        Handler = I != Opts.end() ? I->second : 0;
       }
     }
 
