@@ -157,6 +157,15 @@ void DSNode::addGlobal(GlobalValue *GV) {
   }
 }
 
+// removeGlobal - Remove the specified global that is explicitly in the globals
+// list.
+void DSNode::removeGlobal(GlobalValue *GV) {
+  std::vector<GlobalValue*>::iterator I =
+    std::lower_bound(Globals.begin(), Globals.end(), GV);
+  assert(I != Globals.end() && *I == GV && "Global not in node!");
+  Globals.erase(I);
+}
+
 /// foldNodeCompletely - If we determine that this node has some funny
 /// behavior happening to it that we cannot represent, we fold it down to a
 /// single, completely pessimistic, node.  This node is represented as a
