@@ -142,6 +142,7 @@ private:
   /// register result, specified with a (set) in the pattern.
   ///
   Record *Result;
+  std::string ResultName;     // The name of the result value...
 
   /// TheRecord - The actual TableGen record corresponding to this pattern.
   ///
@@ -185,6 +186,7 @@ public:
   TreePatternNode *getTree() const { return Tree; }
   
   Record *getResult() const { return Result; }
+  const std::string &getResultName() const { return ResultName; }
 
   /// getRecord - Return the actual TableGen record corresponding to this
   /// pattern.

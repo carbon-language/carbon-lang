@@ -138,6 +138,7 @@ Pattern::Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
       if (!Tree->getChild(0)->isLeaf())
         error("Arg #0 of set should be a register or register class!");
       Result = Tree->getChild(0)->getValueRecord();
+      ResultName = Tree->getChildName(0);
       Tree = Tree->getChild(1);
     }
   }
@@ -895,6 +896,9 @@ static std::string getArgName(Pattern *P, const std::string &ArgName,
   for (unsigned i = 0, e = P->getNumArgs(); i != e; ++i)
     if (P->getArgName(i) == ArgName)
       return Operands[i].second + "->Val";
+
+  if (ArgName == P->getResultName())
+    return "NewReg";
   P->error("Pattern does not define a value named $" + ArgName + "!");
   return "";
 }
