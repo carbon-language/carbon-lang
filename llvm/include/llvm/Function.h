@@ -21,6 +21,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Argument.h"
+#include "Support/Annotation.h"
 
 namespace llvm {
 
@@ -44,7 +45,7 @@ template<> struct ilist_traits<Argument>
   static iplist<Argument> &getList(Function *F);
 };
 
-class Function : public GlobalValue {
+class Function : public GlobalValue, public Annotable {
 public:
   typedef iplist<Argument> ArgumentListType;
   typedef iplist<BasicBlock> BasicBlockListType;

@@ -19,7 +19,6 @@
 
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Use.h"
-#include "Support/Annotation.h"
 #include "Support/Casting.h"
 #include <iostream>
 
@@ -42,7 +41,7 @@ class SymbolTable;
 /// Value - The base class of all values computed by a program that may be used
 /// as operands to other values.
 ///
-struct Value : public Annotable {         // Values are annotable
+struct Value {
   enum ValueTy {
     TypeVal,                // This is an instance of Type
     ConstantVal,            // This is an instance of Constant
