@@ -74,6 +74,12 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
   // Add an appropriate TargetData instance for this module...
   addPass(Passes, new TargetData("gccld", M));
 
+  // Often if the programmer does not specify proper prototypes for the
+  // functions they are calling, they end up calling a vararg version of the
+  // function that does not get a body filled in (the real function has typed
+  // arguments).  This pass merges the two functions.
+  addPass(Passes, createFunctionResolvingPass());
+
   if (!DisableOptimizations) {
     // Linking modules together can lead to duplicated global constants, only
     // keep one copy of each constant...
@@ -84,12 +90,6 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
     // supporting.
     if (Strip)
       addPass(Passes, createSymbolStrippingPass());
-
-    // Often if the programmer does not specify proper prototypes for the
-    // functions they are calling, they end up calling a vararg version of the
-    // function that does not get a body filled in (the real function has typed
-    // arguments).  This pass merges the two functions.
-    addPass(Passes, createFunctionResolvingPass());
 
     if (Internalize) {
       // Now that composite has been compiled, scan through the module, looking
