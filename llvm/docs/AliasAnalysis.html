@@ -65,7 +65,7 @@ href="#MustNoMay">Must, May, or No</a> alias response, indicating that two
 pointers do point to the same object, might point to the same object, or are
 known not to point to the same object.</p>
 
-<p>The <a href="/doxygen/classAliasAnalysis.html">AliasAnalysis</a> class is the
+<p>The <a href="/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a> class is the
 centerpiece of the LLVM Alias Analysis related infrastructure.  This class is
 the common interface between clients of alias analysis information and the
 implementations providing it.  In addition to simple alias analysis information,
@@ -89,7 +89,7 @@ know</a>.</p>
 
 <div class="doc_text">
 
-<p>The <a href="/doxygen/classAliasAnalysis.html">AliasAnalysis</a> class
+<p>The <a href="/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a> class
 defines the interface that Alias Analysis implementations should support.  This
 class exports two important enums: <tt>AliasResult</tt> and
 <tt>ModRefResult</tt> which represent the result of an alias query or a mod/ref
@@ -277,7 +277,7 @@ a <tt>BasicBlockPass</tt>, or <tt>InitializeAliasAnalysis</tt> for an
 
 <div class="doc_text">
 
-<p>All of the <a href="/doxygen/classAliasAnalysis.html">AliasAnalysis</a>
+<p>All of the <a href="/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>
 virtual methods default to providing conservatively correct information
 (returning "May" Alias and "Mod/Ref" for alias and mod/ref queries
 respectively).  Depending on the capabilities of the analysis you are
@@ -355,7 +355,7 @@ to do anything special to handle load instructions: just use the
 
 <p>Many transformations need information about alias <b>sets</b> that are active
 in some scope, rather than information about pairwise aliasing.  The <tt><a
-href="/doxygen/classAliasSetTracker.html">AliasSetTracker</a></tt> class is used
+href="/doxygen/classllvm_1_1AliasSetTracker.html">AliasSetTracker</a></tt> class is used
 to efficiently build these Alias Sets from the pairwise alias analysis
 information provided by the AliasAnalysis interface.</p>
 
