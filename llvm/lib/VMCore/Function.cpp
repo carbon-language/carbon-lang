@@ -234,9 +234,9 @@ unsigned Function::getIntrinsicID() const {
     if (getName() == "llvm.siglongjmp") return Intrinsic::siglongjmp;
     break;
   case 'v':
-    if (getName() == "llvm.va_copy")  return Intrinsic::va_copy;
-    if (getName() == "llvm.va_end")   return Intrinsic::va_end;
-    if (getName() == "llvm.va_start") return Intrinsic::va_start;
+    if (getName() == "llvm.va_copy")  return Intrinsic::vacopy;
+    if (getName() == "llvm.va_end")   return Intrinsic::vaend;
+    if (getName() == "llvm.va_start") return Intrinsic::vastart;
     break;
   }
   // The "llvm." namespace is reserved!

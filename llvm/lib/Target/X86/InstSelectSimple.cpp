@@ -1242,9 +1242,9 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
         if (Function *F = CI->getCalledFunction())
           switch (F->getIntrinsicID()) {
           case Intrinsic::not_intrinsic:
-          case Intrinsic::va_start:
-          case Intrinsic::va_copy:
-          case Intrinsic::va_end:
+          case Intrinsic::vastart:
+          case Intrinsic::vacopy:
+          case Intrinsic::vaend:
           case Intrinsic::returnaddress:
           case Intrinsic::frameaddress:
           case Intrinsic::memcpy:

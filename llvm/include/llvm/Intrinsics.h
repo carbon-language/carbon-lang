@@ -27,9 +27,9 @@ namespace Intrinsic {
     not_intrinsic = 0,   // Must be zero
 
     // Varargs handling intrinsics...
-    va_start,       // Used to implement the va_start macro in C
-    va_end,         // Used to implement the va_end macro in C
-    va_copy,        // Used to implement the va_copy macro in C
+    vastart,        // Used to implement the va_start macro in C
+    vaend,          // Used to implement the va_end macro in C
+    vacopy,         // Used to implement the va_copy macro in C
 
     // Code generator intrinsics...
     returnaddress,  // Yields the return address of a dynamic call frame

@@ -1398,7 +1398,7 @@ static bool CodeGenIntrinsic(Intrinsic::ID iid, CallInst &callInstr,
   switch (iid) {
   default:
     assert(0 && "Unknown intrinsic function call should have been lowered!");
-  case Intrinsic::va_start: {
+  case Intrinsic::vastart: {
     // Get the address of the first incoming vararg argument on the stack
     bool ignore;
     Function* func = cast<Function>(callInstr.getParent()->getParent());
@@ -1412,10 +1412,10 @@ static bool CodeGenIntrinsic(Intrinsic::ID iid, CallInst &callInstr,
     return true;
   }
 
-  case Intrinsic::va_end:
+  case Intrinsic::vaend:
     return true;                        // no-op on SparcV9
 
-  case Intrinsic::va_copy:
+  case Intrinsic::vacopy:
     // Simple copy of current va_list (arg1) to new va_list (result)
     mvec.push_back(BuildMI(V9::ORr, 3).
                    addMReg(target.getRegInfo().getZeroRegNum()).

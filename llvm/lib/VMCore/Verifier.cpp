@@ -548,14 +548,14 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   // FIXME: this should check the return type of each intrinsic as well, also
   // arguments!
   switch (ID) {
-  case Intrinsic::va_start:
+  case Intrinsic::vastart:
     Assert1(CI.getParent()->getParent()->getFunctionType()->isVarArg(),
             "llvm.va_start intrinsic may only occur in function with variable"
             " args!", &CI);
     NumArgs = 0;
     break;
-  case Intrinsic::va_end:          NumArgs = 1; break;
-  case Intrinsic::va_copy:         NumArgs = 1; break;
+  case Intrinsic::vaend:          NumArgs = 1; break;
+  case Intrinsic::vacopy:         NumArgs = 1; break;
 
   case Intrinsic::returnaddress:
   case Intrinsic::frameaddress:

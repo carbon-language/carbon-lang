@@ -126,13 +126,10 @@ bool InstructionSelection::runOnFunction(Function &F) {
       if (CallInst *CI = dyn_cast<CallInst>(I++))
         if (Function *F = CI->getCalledFunction())
           switch (F->getIntrinsicID()) {
-#undef va_start
-#undef va_copy
-#undef va_end
           case Intrinsic::not_intrinsic:
-          case Intrinsic::va_start:
-          case Intrinsic::va_copy:
-          case Intrinsic::va_end:
+          case Intrinsic::vastart:
+          case Intrinsic::vacopy:
+          case Intrinsic::vaend:
             // We directly implement these intrinsics.  Note that this knowledge
             // is incestuously entangled with the code in
             // SparcInstrSelection.cpp and must be updated when it is updated.

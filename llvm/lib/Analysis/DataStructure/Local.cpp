@@ -494,16 +494,14 @@ void GraphBuilder::visitCallSite(CallSite CS) {
   if (Function *F = dyn_cast<Function>(Callee))
     if (F->isExternal())
       switch (F->getIntrinsicID()) {
-      case Intrinsic::va_start:
+      case Intrinsic::vastart:
         getValueDest(*CS.getInstruction()).getNode()->setAllocaNodeMarker();
         return;
-      case Intrinsic::va_copy:
+      case Intrinsic::vacopy:
         getValueDest(*CS.getInstruction()).
           mergeWith(getValueDest(**(CS.arg_begin())));
         return;
-        // FIXME: the #undef is a quick fix for compilation on Sparc
-#undef va_end
-      case Intrinsic::va_end:
+      case Intrinsic::vaend:
         return;  // noop
       case Intrinsic::memmove:
       case Intrinsic::memcpy: {

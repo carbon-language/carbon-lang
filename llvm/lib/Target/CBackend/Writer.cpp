@@ -1205,9 +1205,9 @@ void CWriter::lowerIntrinsics(Module &M) {
           if (Function *F = CI->getCalledFunction())
             switch (F->getIntrinsicID()) {
             case Intrinsic::not_intrinsic:
-            case Intrinsic::va_start:
-            case Intrinsic::va_copy:
-            case Intrinsic::va_end:
+            case Intrinsic::vastart:
+            case Intrinsic::vacopy:
+            case Intrinsic::vaend:
             case Intrinsic::returnaddress:
             case Intrinsic::frameaddress:
             case Intrinsic::setjmp:
@@ -1234,7 +1234,7 @@ void CWriter::visitCallInst(CallInst &I) {
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID()) {
       switch (ID) {
       default: assert(0 && "Unknown LLVM intrinsic!");
-      case Intrinsic::va_start: 
+      case Intrinsic::vastart: 
         Out << "0; ";
         
         Out << "va_start(*(va_list*)&" << Mang->getValueName(&I) << ", ";
@@ -1248,12 +1248,12 @@ void CWriter::visitCallInst(CallInst &I) {
         writeOperand(&I.getParent()->getParent()->aback());
         Out << ")";
         return;
-      case Intrinsic::va_end:
+      case Intrinsic::vaend:
         Out << "va_end(*(va_list*)&";
         writeOperand(I.getOperand(1));
         Out << ")";
         return;
-      case Intrinsic::va_copy:
+      case Intrinsic::vacopy:
         Out << "0;";
         Out << "va_copy(*(va_list*)&" << Mang->getValueName(&I) << ", ";
         Out << "*(va_list*)&";

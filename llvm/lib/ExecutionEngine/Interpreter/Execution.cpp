@@ -774,16 +774,16 @@ void Interpreter::visitCallSite(CallSite CS) {
     switch (F->getIntrinsicID()) {
     case Intrinsic::not_intrinsic:
       break;
-    case Intrinsic::va_start: { // va_start
+    case Intrinsic::vastart: { // va_start
       GenericValue ArgIndex;
       ArgIndex.UIntPairVal.first = ECStack.size() - 1;
       ArgIndex.UIntPairVal.second = 0;
       SetValue(CS.getInstruction(), ArgIndex, SF);
       return;
     }
-    case Intrinsic::va_end:    // va_end is a noop for the interpreter
+    case Intrinsic::vaend:    // va_end is a noop for the interpreter
       return;
-    case Intrinsic::va_copy:   // va_copy: dest = src
+    case Intrinsic::vacopy:   // va_copy: dest = src
       SetValue(CS.getInstruction(), getOperandValue(*CS.arg_begin(), SF), SF);
       return;
     default:
