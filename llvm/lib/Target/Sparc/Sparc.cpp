@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/Method.h"
+#include "llvm/PassManager.h"
 #include <iostream>
 using std::cerr;
 
@@ -43,71 +44,81 @@ TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }
 // Entry point for register allocation for a module
 //----------------------------------------------------------------------------
 
-void AllocateRegisters(Method *M, TargetMachine &target)
-{
- 
-  if ( (M)->isExternal() )     // don't process prototypes
-    return;
+class RegisterAllocation : public MethodPass {
+  TargetMachine &Target;
+public:
+  inline RegisterAllocation(TargetMachine &T) : Target(T) {}
+  bool runOnMethod(Method *M) {
+    if (DEBUG_RA)
+      cerr << "\n******************** Method "<< M->getName()
+           << " ********************\n";
     
-  if( DEBUG_RA )
-    cerr << "\n******************** Method "<< M->getName()
-         << " ********************\n";
+    MethodLiveVarInfo LVI(M );   // Analyze live varaibles
+    LVI.analyze();
     
-  MethodLiveVarInfo LVI(M );   // Analyze live varaibles
-  LVI.analyze();
-  
-    
-  PhyRegAlloc PRA(M, target, &LVI); // allocate registers
-  PRA.allocateRegisters();
-    
+    PhyRegAlloc PRA(M, Target, &LVI); // allocate registers
+    PRA.allocateRegisters();
 
-  if( DEBUG_RA )  cerr << "\nRegister allocation complete!\n";
+    if (DEBUG_RA) cerr << "\nRegister allocation complete!\n";
+    return false;
+  }
+};
 
-}
-
+static MachineInstr* minstrVec[MAX_INSTR_PER_VMINSTR];
 
 //---------------------------------------------------------------------------
-// Function InsertPrologCode
-// Function InsertEpilogCode
-// Function InsertPrologEpilog
-// 
+// class InsertPrologEpilogCode
+//
+// Insert SAVE/RESTORE instructions for the method
+//
 // Insert prolog code at the unique method entry point.
 // Insert epilog code at each method exit point.
 // InsertPrologEpilog invokes these only if the method is not compiled
 // with the leaf method optimization.
+//
 //---------------------------------------------------------------------------
 
-static MachineInstr* minstrVec[MAX_INSTR_PER_VMINSTR];
+class InsertPrologEpilogCode : public MethodPass {
+  TargetMachine &Target;
+public:
+  inline InsertPrologEpilogCode(TargetMachine &T) : Target(T) {}
+  bool runOnMethod(Method *M) {
+    MachineCodeForMethod &mcodeInfo = MachineCodeForMethod::get(M);
+    if (!mcodeInfo.isCompiledAsLeafMethod()) {
+      InsertPrologCode(M);
+      InsertEpilogCode(M);
+    }
+    return false;
+  }
 
-static void
-InsertPrologCode(Method* method, TargetMachine& target)
+  void InsertPrologCode(Method *M);
+  void InsertEpilogCode(Method *M);
+};
+
+void InsertPrologEpilogCode::InsertPrologCode(Method* method)
 {
   BasicBlock* entryBB = method->getEntryNode();
-  unsigned N = GetInstructionsForProlog(entryBB, target, minstrVec);
+  unsigned N = GetInstructionsForProlog(entryBB, Target, minstrVec);
   assert(N <= MAX_INSTR_PER_VMINSTR);
-  if (N > 0)
-    {
-      MachineCodeForBasicBlock& bbMvec = entryBB->getMachineInstrVec();
-      bbMvec.insert(bbMvec.begin(), minstrVec, minstrVec+N);
-    }
+  MachineCodeForBasicBlock& bbMvec = entryBB->getMachineInstrVec();
+  bbMvec.insert(bbMvec.begin(), minstrVec, minstrVec+N);
 }
 
 
-static void
-InsertEpilogCode(Method* method, TargetMachine& target)
+void InsertPrologEpilogCode::InsertEpilogCode(Method* method)
 {
   for (Method::iterator I=method->begin(), E=method->end(); I != E; ++I)
     if ((*I)->getTerminator()->getOpcode() == Instruction::Ret)
       {
         BasicBlock* exitBB = *I;
-        unsigned N = GetInstructionsForEpilog(exitBB, target, minstrVec);
+        unsigned N = GetInstructionsForEpilog(exitBB, Target, minstrVec);
         
         MachineCodeForBasicBlock& bbMvec = exitBB->getMachineInstrVec();
         MachineCodeForInstruction &termMvec =
           MachineCodeForInstruction::get(exitBB->getTerminator());
         
         // Remove the NOPs in the delay slots of the return instruction
-        const MachineInstrInfo &mii = target.getInstrInfo();
+        const MachineInstrInfo &mii = Target.getInstrInfo();
         unsigned numNOPs = 0;
         while (termMvec.back()->getOpCode() == NOP)
           {
@@ -130,17 +141,7 @@ InsertEpilogCode(Method* method, TargetMachine& target)
 }
 
 
-// Insert SAVE/RESTORE instructions for the method
-static void
-InsertPrologEpilog(Method *method, TargetMachine &target)
-{
-  MachineCodeForMethod& mcodeInfo = MachineCodeForMethod::get(method);
-  if (mcodeInfo.isCompiledAsLeafMethod())
-    return;                             // nothing to do
-  
-  InsertPrologCode(method, target);
-  InsertEpilogCode(method, target);
-}
+
 
 
 //---------------------------------------------------------------------------
@@ -267,63 +268,85 @@ UltraSparc::UltraSparc()
 }
 
 
-void
-ApplyPeepholeOptimizations(Method *method, TargetMachine &target)
-{
-  return;
-  
-  // OptimizeLeafProcedures();
-  // DeleteFallThroughBranches();
-  // RemoveChainedBranches();    // should be folded with previous
-  // RemoveRedundantOps();       // operations with %g0, NOP, etc.
-}
+
+//===---------------------------------------------------------------------===//
+// GenerateCodeForTarget Pass
+// 
+// Native code generation for a specified target.
+//===---------------------------------------------------------------------===//
+
+class ConstructMachineCodeForMethod : public MethodPass {
+  TargetMachine &Target;
+public:
+  inline ConstructMachineCodeForMethod(TargetMachine &T) : Target(T) {}
+  bool runOnMethod(Method *M) {
+    MachineCodeForMethod::construct(M, Target);
+    return false;
+  }
+};
+
+class InstructionSelection : public MethodPass {
+  TargetMachine &Target;
+public:
+  inline InstructionSelection(TargetMachine &T) : Target(T) {}
+  bool runOnMethod(Method *M) {
+    if (SelectInstructionsForMethod(M, Target))
+      cerr << "Instr selection failed for method " << M->getName() << "\n";
+    return false;
+  }
+};
+
+class InstructionScheduling : public MethodPass {
+  TargetMachine &Target;
+public:
+  inline InstructionScheduling(TargetMachine &T) : Target(T) {}
+  bool runOnMethod(Method *M) {
+    if (ScheduleInstructionsWithSSA(M, Target))
+      cerr << "Instr scheduling failed for method " << M->getName() << "\n\n";
+    return false;
+  }
+};
+
+struct FreeMachineCodeForMethod : public MethodPass {
+  static void freeMachineCode(Instruction *I) {
+    MachineCodeForInstruction::destroy(I);
+  }
+
+  bool runOnMethod(Method *M) {
+    for_each(M->inst_begin(), M->inst_end(), freeMachineCode);
+    // Don't destruct MachineCodeForMethod - The global printer needs it
+    //MachineCodeForMethod::destruct(M);
+    return false;
+  }
+};
 
 
-
-bool
-UltraSparc::compileMethod(Method *method)
-{
+void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
   // Construct and initialize the MachineCodeForMethod object for this method.
-  MachineCodeForMethod::construct(method, *this);
-  
-  if (SelectInstructionsForMethod(method, *this))
-    {
-      cerr << "Instruction selection failed for method " << method->getName()
-	   << "\n\n";
-      return true;
-    }
+  PM.add(new ConstructMachineCodeForMethod(*this));
 
-  /*  
-  if (ScheduleInstructionsWithSSA(method, *this))
-    {
-      cerr << "Instruction scheduling before allocation failed for method "
-	   << method->getName() << "\n\n";
-      return true;
-    }
-  */
-  
+  PM.add(new InstructionSelection(*this));
 
-  AllocateRegisters(method, *this);          // allocate registers
-  
-  ApplyPeepholeOptimizations(method, *this); // machine-dependent peephole opts
-  
-  InsertPrologEpilog(method, *this);
-  
-  return false;
-}
+  //PM.add(new InstructionScheduling(*this));
 
-static void freeMachineCode(Instruction *I) {
-  MachineCodeForInstruction::destroy(I);
-}
+  PM.add(new RegisterAllocation(*this));
+  
+  //PM.add(new OptimizeLeafProcedures());
+  //PM.add(new DeleteFallThroughBranches());
+  //PM.add(new RemoveChainedBranches());    // should be folded with previous
+  //PM.add(new RemoveRedundantOps());       // operations with %g0, NOP, etc.
+  
+  PM.add(new InsertPrologEpilogCode(*this));
+  
+  // Output assembly language to the .s file.  Assembly emission is split into
+  // two parts: Method output and Global value output.  This is because method
+  // output is pipelined with all of the rest of code generation stuff,
+  // allowing machine code representations for methods to be free'd after the
+  // method has been emitted.
+  //
+  PM.add(getMethodAsmPrinterPass(PM, Out));
+  PM.add(new FreeMachineCodeForMethod());  // Free stuff no longer needed
 
-//
-// freeCompiledMethod - Release all memory associated with the compiled image
-// for this method.
-//
-void 
-UltraSparc::freeCompiledMethod(Method *M)
-{
-  for_each(M->inst_begin(), M->inst_end(), freeMachineCode);
-  // Don't destruct MachineCodeForMethod - The global printer needs it
-  //MachineCodeForMethod::destruct(M);
+  // Emit Module level assembly after all of the methods have been processed.
+  PM.add(getModuleAsmPrinterPass(PM, Out));
 }
