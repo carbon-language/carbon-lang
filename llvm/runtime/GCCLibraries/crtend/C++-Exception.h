@@ -29,14 +29,14 @@ struct llvm_cxx_exception {
    * unexpected which are a result of an exception throw are supposed to use the
    * value of the handler at the time of the throw, not the currently set value.
    */
-  void *UnexpectedHandler;
+  void (*UnexpectedHandler)();
 
   /* TerminateHandler - This contains a pointer to the "terminate" handler which
    * may be registered by the user program with set_terminate.  Calls to
    * unexpected which are a result of an exception throw are supposed to use the
    * value of the handler at the time of the throw, not the currently set value.
    */
-  void *TerminateHandler;
+  void (*TerminateHandler)();
 
   /* BaseException - The language independent portion of the exception state.
    * This is at the end of the record so that we can add additional members to
@@ -45,23 +45,37 @@ struct llvm_cxx_exception {
   llvm_exception BaseException;
 };
 
-inline llvm_cxx_exception *get_cxx_exception(llvm_exception *E) {
+inline llvm_cxx_exception *get_cxx_exception(llvm_exception *E) throw() {
   assert(E->ExceptionType == CXXException && "Not a C++ exception?");
   return (llvm_cxx_exception*)(E+1)-1;
 }
 
+// Interface to the C++ standard library to get to the terminate and unexpected
+// handler stuff.
+namespace __cxxabiv1 {
+  // Invokes given handler, dying appropriately if the user handler was
+  // so inconsiderate as to return.
+  extern void __terminate(std::terminate_handler) __attribute__((noreturn));
+  extern void __unexpected(std::unexpected_handler) __attribute__((noreturn));
+  
+  // The current installed user handlers.
+  extern std::terminate_handler __terminate_handler;
+  extern std::unexpected_handler __unexpected_handler;
+}
+
 extern "C" {
-  void *__llvm_cxxeh_allocate_exception(unsigned NumBytes);
-  void __llvm_cxxeh_free_exception(void *ObjectPtr);
-  void __llvm_cxxeh_throw(void *ObjectPtr, const std::type_info *TypeInfoPtr,
-                          void (*DtorPtr)(void*));
+  void *__llvm_cxxeh_allocate_exception(unsigned NumBytes) throw();
+  void __llvm_cxxeh_free_exception(void *ObjectPtr) throw();
+  void __llvm_cxxeh_throw(void *ObjectPtr, void *TypeInfoPtr,
+                          void (*DtorPtr)(void*)) throw();
 
-  void * __llvm_cxxeh_current_uncaught_exception_isa(const std::type_info *Ty);
-  void *__llvm_cxxeh_begin_catch(void);
-  void *__llvm_cxxeh_begin_catch_if_isa(const std::type_info *CatchType);
-  void __llvm_cxxeh_end_catch(void);
-
-  void __llvm_cxxeh_rethrow(void);
+  void * __llvm_cxxeh_current_uncaught_exception_isa(void *Ty)
+    throw();
+  void *__llvm_cxxeh_begin_catch() throw();
+  void *__llvm_cxxeh_begin_catch_if_isa(void *CatchType) throw();
+  void __llvm_cxxeh_end_catch() /* might throw */;
+  void __llvm_cxxeh_rethrow() throw();
+  void __llvm_cxxeh_check_eh_spec(void *Info, ...);
 }
 
 #endif
