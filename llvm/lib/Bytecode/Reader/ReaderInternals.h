@@ -163,8 +163,8 @@ private:
                               const unsigned char *End,
                               unsigned BlockNo);
 
-  bool ParseInstruction(const unsigned char *&Buf, const unsigned char *End,
-                        Instruction *&);
+  Instruction *ParseInstruction(const unsigned char *&Buf,
+                                const unsigned char *End);
   std::auto_ptr<RawInst> ParseRawInst(const unsigned char *&Buf,
                                       const unsigned char *End);
 

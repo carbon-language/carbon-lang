@@ -126,50 +126,43 @@ BytecodeParser::ParseRawInst(const unsigned char *&Buf,
 }
 
 
-bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
-                                      const unsigned char *EndBuf,
-				      Instruction *&Res) {
+Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
+                                              const unsigned char *EndBuf) {
   std::auto_ptr<RawInst> Raw = ParseRawInst(Buf, EndBuf);
 
   if (Raw->Opcode >= Instruction::BinaryOpsBegin &&
-      Raw->Opcode <  Instruction::BinaryOpsEnd  && Raw->NumOperands == 2) {
-    Res = BinaryOperator::create((Instruction::BinaryOps)Raw->Opcode,
-				 getValue(Raw->Ty, Raw->Arg1),
-				 getValue(Raw->Ty, Raw->Arg2));
-    return false;
-  }
+      Raw->Opcode <  Instruction::BinaryOpsEnd  && Raw->NumOperands == 2)
+    return BinaryOperator::create((Instruction::BinaryOps)Raw->Opcode,
+                                  getValue(Raw->Ty, Raw->Arg1),
+                                  getValue(Raw->Ty, Raw->Arg2));
 
-  Value *V;
   switch (Raw->Opcode) {
   case Instruction::VarArg:
   case Instruction::Cast: {
-    V = getValue(Raw->Ty, Raw->Arg1);
+    Value *V = getValue(Raw->Ty, Raw->Arg1);
     const Type *Ty = getType(Raw->Arg2);
-    if (V == 0 || Ty == 0) { std::cerr << "Invalid cast!\n"; return true; }
+    if (Ty == 0) throw std::string("Invalid cast!\n");
     if (Raw->Opcode == Instruction::Cast)
-      Res = new CastInst(V, Ty);
+      return new CastInst(V, Ty);
     else
-      Res = new VarArgInst(V, Ty);
-    return false;
+      return new VarArgInst(V, Ty);
   }
   case Instruction::PHINode: {
     PHINode *PN = new PHINode(Raw->Ty);
     switch (Raw->NumOperands) {
     case 0: 
     case 1: 
-    case 3: std::cerr << "Invalid phi node encountered!\n"; 
-            delete PN; 
-	    return true;
-    case 2: PN->addIncoming(getValue(Raw->Ty, Raw->Arg1),
-                            getBasicBlock(Raw->Arg2));
+    case 3:
+      delete PN; 
+      throw std::string("Invalid phi node encountered!\n");
+    case 2:
+      PN->addIncoming(getValue(Raw->Ty, Raw->Arg1), getBasicBlock(Raw->Arg2));
       break;
     default:
-      PN->addIncoming(getValue(Raw->Ty, Raw->Arg1),
-		      getBasicBlock(Raw->Arg2));
+      PN->addIncoming(getValue(Raw->Ty, Raw->Arg1), getBasicBlock(Raw->Arg2));
       if (Raw->VarArgs->size() & 1) {
-	std::cerr << "PHI Node with ODD number of arguments!\n";
 	delete PN;
-	return true;
+	throw std::string("PHI Node with ODD number of arguments!\n");
       } else {
         std::vector<unsigned> &args = *Raw->VarArgs;
         for (unsigned i = 0; i < args.size(); i+=2)
@@ -178,46 +171,39 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       delete Raw->VarArgs; 
       break;
     }
-    Res = PN;
-    return false;
+    return PN;
   }
 
   case Instruction::Shl:
   case Instruction::Shr:
-    Res = new ShiftInst((Instruction::OtherOps)Raw->Opcode,
-			getValue(Raw->Ty, Raw->Arg1),
-			getValue(Type::UByteTyID, Raw->Arg2));
-    return false;
+    return new ShiftInst((Instruction::OtherOps)Raw->Opcode,
+                         getValue(Raw->Ty, Raw->Arg1),
+                         getValue(Type::UByteTyID, Raw->Arg2));
   case Instruction::Ret:
-    if (Raw->NumOperands == 0) {
-      Res = new ReturnInst(); return false; 
-    } else if (Raw->NumOperands == 1) {
-      Res = new ReturnInst(getValue(Raw->Ty, Raw->Arg1)); return false; 
-    }
+    if (Raw->NumOperands == 0)
+      return new ReturnInst();
+    else if (Raw->NumOperands == 1)
+      return new ReturnInst(getValue(Raw->Ty, Raw->Arg1));
     break;
 
   case Instruction::Br:
-    if (Raw->NumOperands == 1) {
-      Res = new BranchInst(getBasicBlock(Raw->Arg1));
-      return false;
-    } else if (Raw->NumOperands == 3) {
-      Res = new BranchInst(getBasicBlock(Raw->Arg1), getBasicBlock(Raw->Arg2),
-                           getValue(Type::BoolTyID , Raw->Arg3));
-      return false;
-    }
-    break;
+    if (Raw->NumOperands == 1)
+      return new BranchInst(getBasicBlock(Raw->Arg1));
+    else if (Raw->NumOperands == 3)
+      return new BranchInst(getBasicBlock(Raw->Arg1), getBasicBlock(Raw->Arg2),
+                            getValue(Type::BoolTyID , Raw->Arg3));
+    throw std::string("Invalid number of operands for a 'br' instruction!");
     
   case Instruction::Switch: {
-    SwitchInst *I = 
-      new SwitchInst(getValue(Raw->Ty, Raw->Arg1), getBasicBlock(Raw->Arg2));
-    Res = I;
-    if (Raw->NumOperands < 3) return false;  // No destinations?  Weird.
+    SwitchInst *I = new SwitchInst(getValue(Raw->Ty, Raw->Arg1),
+                                   getBasicBlock(Raw->Arg2));
+    if (Raw->NumOperands < 3)
+      return I;
 
     if (Raw->NumOperands == 3 || Raw->VarArgs->size() & 1) {
-      std::cerr << "Switch statement with odd number of arguments!\n";
       delete I;
-      return true;
-    }      
+      throw std::string("Switch statement with odd number of arguments!");
+    }
     
     std::vector<unsigned> &args = *Raw->VarArgs;
     for (unsigned i = 0; i < args.size(); i += 2)
@@ -225,18 +211,17 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
                  getBasicBlock(args[i+1]));
 
     delete Raw->VarArgs;
-    return false;
+    return I;
   }
 
   case Instruction::Call: {
     Value *F = getValue(Raw->Ty, Raw->Arg1);
-    if (F == 0) return true;
 
-    // Check to make sure we have a pointer to method type
+    // Check to make sure we have a pointer to function type
     const PointerType *PTy = dyn_cast<PointerType>(F->getType());
-    if (PTy == 0) return true;
+    if (PTy == 0) throw std::string("Call to non function pointer value!");
     const FunctionType *FTy = dyn_cast<FunctionType>(PTy->getElementType());
-    if (FTy == 0) return true;
+    if (FTy == 0) throw std::string("Call to non function pointer value!");
 
     std::vector<Value *> Params;
     const FunctionType::ParamTypes &PL = FTy->getParamTypes();
@@ -245,58 +230,50 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       FunctionType::ParamTypes::const_iterator It = PL.begin();
 
       switch (Raw->NumOperands) {
-      case 0: std::cerr << "Invalid call instruction encountered!\n";
-	return true;
+      case 0: throw std::string("Invalid call instruction encountered!");
       case 1: break;
       case 2: Params.push_back(getValue(*It++, Raw->Arg2)); break;
       case 3: Params.push_back(getValue(*It++, Raw->Arg2)); 
-	if (It == PL.end()) return true;
+	if (It == PL.end()) throw std::string("Invalid call instruction!");
 	Params.push_back(getValue(*It++, Raw->Arg3)); break;
       default:
 	Params.push_back(getValue(*It++, Raw->Arg2));
 	{
 	  std::vector<unsigned> &args = *Raw->VarArgs;
 	  for (unsigned i = 0; i < args.size(); i++) {
-	    if (It == PL.end()) return true;
+	    if (It == PL.end()) throw std::string("Invalid call instruction!");
 	    Params.push_back(getValue(*It++, args[i]));
-            if (Params.back() == 0) return true;
 	  }
 	}
 	delete Raw->VarArgs;
       }
-      if (It != PL.end()) return true;
+      if (It != PL.end()) throw std::string("Invalid call instruction!");
     } else {
       if (Raw->NumOperands > 2) {
 	std::vector<unsigned> &args = *Raw->VarArgs;
-	if (args.size() < 1) return true;
+	if (args.size() < 1) throw std::string("Invalid call instruction!");
 
-	if ((args.size() & 1) != 0)
-	  return true;  // Must be pairs of type/value
+	if ((args.size() & 1) != 0)  // Must be pairs of type/value
+          throw std::string("Invalid call instruction!");
 	for (unsigned i = 0; i < args.size(); i+=2) {
 	  const Type *Ty = getType(args[i]);
-	  if (Ty == 0)
-	    return true;
-	  
-	  Value *V = getValue(Ty, args[i+1]);
-	  if (V == 0) return true;
-	  Params.push_back(V);
+	  if (Ty == 0) throw std::string("Invalid call instruction!");
+	  Params.push_back(getValue(Ty, args[i+1]));
 	}
 	delete Raw->VarArgs;
       }
     }
 
-    Res = new CallInst(F, Params);
-    return false;
+    return new CallInst(F, Params);
   }
   case Instruction::Invoke: {
     Value *F = getValue(Raw->Ty, Raw->Arg1);
-    if (F == 0) return true;
 
-    // Check to make sure we have a pointer to method type
+    // Check to make sure we have a pointer to function type
     const PointerType *PTy = dyn_cast<PointerType>(F->getType());
-    if (PTy == 0) return true;
+    if (PTy == 0) throw std::string("Invoke to non function pointer value!");
     const FunctionType *FTy = dyn_cast<FunctionType>(PTy->getElementType());
-    if (FTy == 0) return true;
+    if (FTy == 0) throw std::string("Invoke to non function pointer value!");
 
     std::vector<Value *> Params;
     const FunctionType::ParamTypes &PL = FTy->getParamTypes();
@@ -305,7 +282,7 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     BasicBlock *Normal, *Except;
 
     if (!FTy->isVarArg()) {
-      if (Raw->NumOperands < 3) return true;
+      if (Raw->NumOperands < 3) throw std::string("Invalid call instruction!");
 
       Normal = getBasicBlock(Raw->Arg2);
       if (Raw->NumOperands == 3)
@@ -315,127 +292,115 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
 
         FunctionType::ParamTypes::const_iterator It = PL.begin();
         for (unsigned i = 1; i < args.size(); i++) {
-          if (It == PL.end()) return true;
+          if (It == PL.end()) throw std::string("Invalid invoke instruction!");
           Params.push_back(getValue(*It++, args[i]));
-          if (Params.back() == 0) return true;
         }
-        if (It != PL.end()) return true;
+        if (It != PL.end()) throw std::string("Invalid invoke instruction!");
       }
     } else {
-      if (args.size() < 4) return true;
+      if (args.size() < 4) throw std::string("Invalid invoke instruction!");
       if (args[0] != Type::LabelTyID || args[2] != Type::LabelTyID)
-        return true;
+        throw std::string("Invalid invoke instruction!");
           
       Normal = getBasicBlock(args[1]);
       Except = getBasicBlock(args[3]);
 
-      if ((args.size() & 1) != 0)
-	return true;  // Must be pairs of type/value
-      for (unsigned i = 4; i < args.size(); i+=2) {
+      if ((args.size() & 1) != 0)   // Must be pairs of type/value
+        throw std::string("Invalid invoke instruction!");
+
+      for (unsigned i = 4; i < args.size(); i += 2)
         Params.push_back(getValue(args[i], args[i+1]));
-        if (Params.back() == 0) return true;
-      }
     }
 
     if (Raw->NumOperands > 3)
       delete Raw->VarArgs;
-    Res = new InvokeInst(F, Normal, Except, Params);
-    return false;
+    return new InvokeInst(F, Normal, Except, Params);
   }
   case Instruction::Malloc:
-    if (Raw->NumOperands > 2) return true;
-    V = Raw->NumOperands ? getValue(Type::UIntTyID, Raw->Arg1) : 0;
-    if (const PointerType *PTy = dyn_cast<PointerType>(Raw->Ty))
-      Res = new MallocInst(PTy->getElementType(), V);
-    else
-      return true;
-    return false;
+    if (Raw->NumOperands > 2) throw std::string("Invalid malloc instruction!");
+    if (!isa<PointerType>(Raw->Ty))
+      throw std::string("Invalid malloc instruction!");
+
+    return new MallocInst(cast<PointerType>(Raw->Ty)->getElementType(),
+                          Raw->NumOperands ? getValue(Type::UIntTyID,
+                                                      Raw->Arg1) : 0);
 
   case Instruction::Alloca:
-    if (Raw->NumOperands > 2) return true;
-    V = Raw->NumOperands ? getValue(Type::UIntTyID, Raw->Arg1) : 0;
-    if (const PointerType *PTy = dyn_cast<PointerType>(Raw->Ty))
-      Res = new AllocaInst(PTy->getElementType(), V);
-    else
-      return true;
-    return false;
+    if (Raw->NumOperands > 2) throw std::string("Invalid alloca instruction!");
+    if (!isa<PointerType>(Raw->Ty))
+      throw std::string("Invalid alloca instruction!");
 
+    return new AllocaInst(cast<PointerType>(Raw->Ty)->getElementType(),
+                          Raw->NumOperands ? getValue(Type::UIntTyID,
+                                                      Raw->Arg1) : 0);
   case Instruction::Free:
-    V = getValue(Raw->Ty, Raw->Arg1);
-    if (!isa<PointerType>(V->getType())) return true;
-    Res = new FreeInst(V);
-    return false;
+    if (!isa<PointerType>(Raw->Ty))
+      throw std::string("Invalid free instruction!");
+    return new FreeInst(getValue(Raw->Ty, Raw->Arg1));
 
   case Instruction::GetElementPtr: {
     std::vector<Value*> Idx;
-    if (!isa<PointerType>(Raw->Ty)) return true;
+    if (!isa<PointerType>(Raw->Ty))
+      throw std::string("Invalid getelementptr instruction!");
     const CompositeType *TopTy = dyn_cast<CompositeType>(Raw->Ty);
 
     switch (Raw->NumOperands) {
-    case 0: std::cerr << "Invalid getelementptr encountered!\n"; return true;
+    case 0: throw std::string("Invalid getelementptr instruction!");
     case 1: break;
     case 2:
-      if (!TopTy) return true;
-      Idx.push_back(V = getValue(TopTy->getIndexType(), Raw->Arg2));
-      if (!V) return true;
+      if (!TopTy) throw std::string("Invalid getelementptr instruction!");
+      Idx.push_back(getValue(TopTy->getIndexType(), Raw->Arg2));
       break;
     case 3: {
-      if (!TopTy) return true;
-      Idx.push_back(V = getValue(TopTy->getIndexType(), Raw->Arg2));
-      if (!V) return true;
+      if (!TopTy) throw std::string("Invalid getelementptr instruction!");
+      Idx.push_back(getValue(TopTy->getIndexType(), Raw->Arg2));
 
       const Type *ETy = GetElementPtrInst::getIndexedType(TopTy, Idx, true);
       const CompositeType *ElTy = dyn_cast_or_null<CompositeType>(ETy);
-      if (!ElTy) return true;
+      if (!ElTy) throw std::string("Invalid getelementptr instruction!");
 
-      Idx.push_back(V = getValue(ElTy->getIndexType(), Raw->Arg3));
-      if (!V) return true;
+      Idx.push_back(getValue(ElTy->getIndexType(), Raw->Arg3));
       break;
     }
     default:
-      if (!TopTy) return true;
-      Idx.push_back(V = getValue(TopTy->getIndexType(), Raw->Arg2));
-      if (!V) return true;
+      if (!TopTy) throw std::string("Invalid getelementptr instruction!");
+      Idx.push_back(getValue(TopTy->getIndexType(), Raw->Arg2));
 
       std::vector<unsigned> &args = *Raw->VarArgs;
       for (unsigned i = 0, E = args.size(); i != E; ++i) {
         const Type *ETy = GetElementPtrInst::getIndexedType(Raw->Ty, Idx, true);
         const CompositeType *ElTy = dyn_cast_or_null<CompositeType>(ETy);
-        if (!ElTy) return true;
-	Idx.push_back(V = getValue(ElTy->getIndexType(), args[i]));
-	if (!V) return true;
+        if (!ElTy) throw std::string("Invalid getelementptr instruction!");
+	Idx.push_back(getValue(ElTy->getIndexType(), args[i]));
       }
       delete Raw->VarArgs; 
       break;
     }
 
-    Res = new GetElementPtrInst(getValue(Raw->Ty, Raw->Arg1), Idx);
-    return false;
+    return new GetElementPtrInst(getValue(Raw->Ty, Raw->Arg1), Idx);
   }
 
   case 62:   // volatile load
   case Instruction::Load:
-    if (Raw->NumOperands != 1) return true;
-    if (!isa<PointerType>(Raw->Ty)) return true;
-    Res = new LoadInst(getValue(Raw->Ty, Raw->Arg1), "", Raw->Opcode == 62);
-    return false;
+    if (Raw->NumOperands != 1 || !isa<PointerType>(Raw->Ty))
+      throw std::string("Invalid load instruction!");
+    return new LoadInst(getValue(Raw->Ty, Raw->Arg1), "", Raw->Opcode == 62);
 
   case 63:   // volatile store 
   case Instruction::Store: {
-    if (!isa<PointerType>(Raw->Ty) || Raw->NumOperands != 2) return true;
+    if (!isa<PointerType>(Raw->Ty) || Raw->NumOperands != 2)
+      throw std::string("Invalid store instruction!");
 
     Value *Ptr = getValue(Raw->Ty, Raw->Arg2);
     const Type *ValTy = cast<PointerType>(Ptr->getType())->getElementType();
-    Res = new StoreInst(getValue(ValTy, Raw->Arg1), Ptr, Raw->Opcode == 63);
-    return false;
+    return new StoreInst(getValue(ValTy, Raw->Arg1), Ptr, Raw->Opcode == 63);
   }
   case Instruction::Unwind:
-    if (Raw->NumOperands != 0) return true;
-    Res = new UnwindInst();
-    return false;
+    if (Raw->NumOperands != 0) throw std::string("Invalid unwind instruction!");
+    return new UnwindInst();
   }  // end switch(Raw->Opcode) 
 
   std::cerr << "Unrecognized instruction! " << Raw->Opcode 
             << " ADDR = 0x" << (void*)Buf << "\n";
-  return true;
+  throw std::string("Unrecognized instruction!");
 }

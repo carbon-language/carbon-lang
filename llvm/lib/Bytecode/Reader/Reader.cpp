@@ -199,10 +199,7 @@ BasicBlock *BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
     BB = ParsedBasicBlocks[BlockNo];
 
   while (Buf < EndBuf) {
-    Instruction *Inst;
-    ParseInstruction(Buf, EndBuf, Inst);
-
-    if (Inst == 0) { throw std::string("Could not parse Instruction."); }
+    Instruction *Inst = ParseInstruction(Buf, EndBuf);
     if (insertValue(Inst, Values) == -1) { 
       throw std::string("Could not insert value.");
     }
