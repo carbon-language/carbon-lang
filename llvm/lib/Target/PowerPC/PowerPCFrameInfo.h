@@ -17,7 +17,6 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MRegisterInfo.h"
-#include <map>
 
 namespace llvm {
 
@@ -26,9 +25,8 @@ class PowerPCFrameInfo: public TargetFrameInfo {
   std::pair<unsigned, int> LR[1];
   
 public:
-
-  PowerPCFrameInfo(const TargetMachine &inTM)
-    : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0), TM(inTM) {
+  PowerPCFrameInfo(const TargetMachine &tm)
+    : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0), TM(tm) {
     LR[0].first = PPC::LR;
     LR[0].second = 8;
   }
