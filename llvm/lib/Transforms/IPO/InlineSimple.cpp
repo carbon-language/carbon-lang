@@ -12,18 +12,25 @@
 //===----------------------------------------------------------------------===//
 
 #include "Inliner.h"
+#include "llvm/Instructions.h"
 #include "llvm/Function.h"
-#include "llvm/iMemory.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/IPO.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   // FunctionInfo - For each function, calculate the size of it in blocks and
   // instructions.
   struct FunctionInfo {
+    // NumInsts, NumBlocks - Keep track of how large each function is, which is
+    // used to estimate the code size cost of inlining it.
     unsigned NumInsts, NumBlocks;
+
+    // ConstantArgumentWeights - Each formal argument of the function is
+    // inspected to see if it is used in any contexts where making it a constant
+    // would reduce the code size.  If so, we add some value to the argument
+    // entry here.
+    std::vector<unsigned> ConstantArgumentWeights;
 
     FunctionInfo() : NumInsts(0), NumBlocks(0) {}
   };
@@ -36,14 +43,57 @@ namespace {
   RegisterOpt<SimpleInliner> X("inline", "Function Integration/Inlining");
 }
 
-Pass *createFunctionInliningPass() { return new SimpleInliner(); }
+Pass *llvm::createFunctionInliningPass() { return new SimpleInliner(); }
+
+// CountCodeReductionForConstant - Figure out an approximation for how many
+// instructions will be constant folded if the specified value is constant.
+//
+static unsigned CountCodeReductionForConstant(Value *V) {
+  unsigned Reduction = 0;
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
+    if (isa<BranchInst>(*UI))
+      Reduction += 40;          // Eliminating a conditional branch is a big win
+    else if (SwitchInst *SI = dyn_cast<SwitchInst>(*UI))
+      // Eliminating a switch is a big win, proportional to the number of edges
+      // deleted.
+      Reduction += (SI->getNumSuccessors()-1) * 40;
+    else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
+      // Turning an indirect call into a direct call is a BIG win
+      Reduction += CI->getCalledValue() == V ? 500 : 0;
+    } else if (InvokeInst *II = dyn_cast<InvokeInst>(*UI)) {
+      // Turning an indirect call into a direct call is a BIG win
+      Reduction += CI->getCalledValue() == V ? 500 : 0;
+    } else {
+      // Figure out if this instruction will be removed due to simple constant
+      // propagation.
+      Instruction &Inst = cast<Instruction>(**UI);
+      bool AllOperandsConstant = true;
+      for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i)
+        if (!isa<Constant>(Inst.getOperand(i)) &&
+            !isa<GlobalValue>(Inst.getOperand(i)) && Inst.getOperand(i) != V) {
+          AllOperandsConstant = false;
+          break;
+        }
+
+      if (AllOperandsConstant) {
+        // We will get to remove this instruction...
+        Reduction += 7;
+        
+        // And any other instructions that use it which become constants
+        // themselves.
+        Reduction += CountCodeReductionForConstant(&Inst);
+      }
+    }
+
+  return Reduction;
+}
 
 // getInlineCost - The heuristic used to determine if we should inline the
 // function call or not.
 //
 int SimpleInliner::getInlineCost(CallSite CS) {
   Instruction *TheCall = CS.getInstruction();
-  const Function *Callee = CS.getCalledFunction();
+  Function *Callee = CS.getCalledFunction();
   const Function *Caller = TheCall->getParent()->getParent();
 
   // Don't inline a directly recursive call.
@@ -61,34 +111,7 @@ int SimpleInliner::getInlineCost(CallSite CS) {
   if (Callee->hasInternalLinkage() && Callee->hasOneUse())
     InlineCost -= 30000;
 
-  // Add to the inline quality for properties that make the call valuable to
-  // inline.  This includes factors that indicate that the result of inlining
-  // the function will be optimizable.  Currently this just looks at arguments
-  // passed into the function.
-  //
-  for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
-       I != E; ++I) {
-    // Each argument passed in has a cost at both the caller and the callee
-    // sides.  This favors functions that take many arguments over functions
-    // that take few arguments.
-    InlineCost -= 20;
-
-    // If this is a function being passed in, it is very likely that we will be
-    // able to turn an indirect function call into a direct function call.
-    if (isa<Function>(I))
-      InlineCost -= 100;
-
-    // If a constant, global variable or alloca is passed in, inlining this
-    // function is likely to allow significant future optimization possibilities
-    // (constant propagation, scalar promotion, and scalarization), so encourage
-    // the inlining of the function.
-    //
-    else if (isa<Constant>(I) || isa<GlobalVariable>(I) || isa<AllocaInst>(I))
-      InlineCost -= 60;
-  }
-
-  // Now that we have considered all of the factors that make the call site more
-  // likely to be inlined, look at factors that make us not want to inline it.
+  // Get information about the callee...
   FunctionInfo &CalleeFI = CachedFunctionInfo[Callee];
 
   // If we haven't calculated this information yet...
@@ -102,9 +125,56 @@ int SimpleInliner::getInlineCost(CallSite CS) {
       NumInsts += BB->size();
       NumBlocks++;
     }
+
     CalleeFI.NumBlocks = NumBlocks;
     CalleeFI.NumInsts  = NumInsts;
+
+    // Check out all of the arguments to the function, figuring out how much
+    // code can be eliminated if one of the arguments is a constant.
+    std::vector<unsigned> &ArgWeights = CalleeFI.ConstantArgumentWeights;
+
+    for (Function::aiterator I = Callee->abegin(), E = Callee->aend();
+         I != E; ++I)
+      ArgWeights.push_back(CountCodeReductionForConstant(I));
   }
+
+
+  // Add to the inline quality for properties that make the call valuable to
+  // inline.  This includes factors that indicate that the result of inlining
+  // the function will be optimizable.  Currently this just looks at arguments
+  // passed into the function.
+  //
+  unsigned ArgNo = 0;
+  for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
+       I != E; ++I, ++ArgNo) {
+    // Each argument passed in has a cost at both the caller and the callee
+    // sides.  This favors functions that take many arguments over functions
+    // that take few arguments.
+    InlineCost -= 20;
+
+    // If this is a function being passed in, it is very likely that we will be
+    // able to turn an indirect function call into a direct function call.
+    if (isa<Function>(I))
+      InlineCost -= 100;
+
+    // If an alloca is passed in, inlining this function is likely to allow
+    // significant future optimization possibilities (like scalar promotion, and
+    // scalarization), so encourage the inlining of the function.
+    //
+    else if (isa<AllocaInst>(I))
+      InlineCost -= 60;
+
+    // If this is a constant being passed into the function, use the argument
+    // weights calculated for the callee to determine how much will be folded
+    // away with this information.
+    else if (isa<Constant>(I) || isa<GlobalVariable>(I)) {
+      if (ArgNo < CalleeFI.ConstantArgumentWeights.size())
+        InlineCost -= CalleeFI.ConstantArgumentWeights[ArgNo];
+    }
+  }
+
+  // Now that we have considered all of the factors that make the call site more
+  // likely to be inlined, look at factors that make us not want to inline it.
 
   // Don't inline into something too big, which would make it bigger.  Here, we
   // count each basic block as a single unit.
@@ -112,9 +182,8 @@ int SimpleInliner::getInlineCost(CallSite CS) {
 
 
   // Look at the size of the callee.  Each basic block counts as 20 units, and
-  // each instruction counts as 10.
-  InlineCost += CalleeFI.NumInsts*10 + CalleeFI.NumBlocks*20;
+  // each instruction counts as 5.
+  InlineCost += CalleeFI.NumInsts*5 + CalleeFI.NumBlocks*20;
   return InlineCost;
 }
 
-} // End llvm namespace
