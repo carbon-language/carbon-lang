@@ -1029,6 +1029,16 @@ void CWriter::visitPHINode(PHINode &I) {
 void CWriter::visitBinaryOperator(Instruction &I) {
   // binary instructions, shift instructions, setCond instructions.
   assert(!isa<PointerType>(I.getType()));
+
+  // We must cast the results of binary operations which might be promoted.
+  bool needsCast = false;
+  if ((I.getType() == Type::UByteTy) || (I.getType() == Type::SByteTy)
+      || (I.getType() == Type::UShortTy) || (I.getType() == Type::ShortTy)) {
+    needsCast = true;
+    Out << "((";
+    printType(Out, I.getType(), "", false, false);
+    Out << ")(";
+  }
       
   writeOperand(I.getOperand(0));
 
@@ -1053,6 +1063,10 @@ void CWriter::visitBinaryOperator(Instruction &I) {
   }
 
   writeOperand(I.getOperand(1));
+
+  if (needsCast) {
+    Out << "))";
+  }
 }
 
 void CWriter::visitCastInst(CastInst &I) {
