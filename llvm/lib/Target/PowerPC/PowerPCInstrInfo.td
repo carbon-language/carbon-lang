@@ -324,8 +324,8 @@ def CROR   : XLForm_1<19, 449, 0, 0, (ops u5imm:$D, u5imm:$A, u5imm:$B),
 
 // XFX-Form instructions.  Instructions that deal with SPRs
 //
-def MFCTR : XFXForm_1_ext<31, 399, 9, 0, 0, (ops GPRC:$rT), "mfctr $rT">;
-def MFLR  : XFXForm_1_ext<31, 399, 8, 0, 0, (ops GPRC:$rT), "mflr $rT">;
+def MFCTR : XFXForm_1_ext<31, 339, 9, 0, 0, (ops GPRC:$rT), "mfctr $rT">;
+def MFLR  : XFXForm_1_ext<31, 339, 8, 0, 0, (ops GPRC:$rT), "mflr $rT">;
 def MTCTR : XFXForm_7_ext<31, 467, 9, 0, 0, (ops GPRC:$rS), "mtctr $rS">;
 def MTLR  : XFXForm_7_ext<31, 467, 8, 0, 0, (ops GPRC:$rS), "mtlr $rS">;
 
