@@ -25,10 +25,11 @@
 #include <algorithm>
 #include <memory>
 
-#define CHECK_ALIGN32(begin,end) \
-  if (align32(begin,end)) \
-    throw std::string("Alignment error: Reader.cpp:" + \
-                      utostr((unsigned)__LINE__));
+static inline void ALIGN32(const unsigned char *&begin,
+                           const unsigned char *end) {
+  if (align32(begin, end))
+    throw std::string("Alignment error in buffer: read past end of block.");
+}
 
 void
 BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {
@@ -202,7 +203,8 @@ void BytecodeParser::postResolveValues(ValueTable &ValTab) {
       Value *NewDef = getValue(D->getType(), IDNumber, false);
       if (NewDef == 0) {
         throw std::string("Unresolvable reference found: <" +
-                          D->getType()->getName() + ">:" +utostr(IDNumber)+".");
+                          D->getType()->getDescription() + ">:" + 
+                          utostr(IDNumber) + ".");
       } else {
         // Fixup all of the uses of this placeholder def...
         D->replaceAllUsesWith(NewDef);
@@ -389,7 +391,7 @@ void BytecodeParser::materializeFunction(Function* F) {
     BCR_TRACE(2, "} end block\n");
 
     // Malformed bc file if read past end of block.
-    CHECK_ALIGN32(Buf, EndBuf);
+    ALIGN32(Buf, EndBuf);
   }
 
   // Check for unresolvable references
@@ -486,7 +488,7 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     BCR_TRACE(2, "Function of type: " << Ty << "\n");
   }
 
-  CHECK_ALIGN32(Buf, End);
+  ALIGN32(Buf, End);
 
   // Now that the function signature list is set up, reverse it so that we can 
   // remove elements efficiently from the back of the vector.
@@ -570,7 +572,7 @@ void BytecodeParser::ParseModule(const unsigned char *Buf,
 
   // Read into instance variables...
   ParseVersionInfo(Buf, EndBuf);
-  CHECK_ALIGN32(Buf, EndBuf);
+  ALIGN32(Buf, EndBuf);
 
   while (Buf < EndBuf) {
     const unsigned char *OldBuf = Buf;
@@ -608,7 +610,7 @@ void BytecodeParser::ParseModule(const unsigned char *Buf,
       break;
     }
     BCR_TRACE(1, "} end block\n");
-    CHECK_ALIGN32(Buf, EndBuf);
+    ALIGN32(Buf, EndBuf);
   }
 
   // After the module constant pool has been read, we can safely initialize
@@ -636,9 +638,11 @@ void BytecodeParser::ParseModule(const unsigned char *Buf,
 void
 BytecodeParser::ParseBytecode(const unsigned char *Buf, unsigned Length,
                               const std::string &ModuleID) {
-  unsigned Sig;
+
   unsigned char *EndBuf = (unsigned char*)(Buf + Length);
+
   // Read and check signature...
+  unsigned Sig;
   if (read(Buf, EndBuf, Sig) ||
       Sig != ('l' | ('l' << 8) | ('v' << 16) | ('m' << 24)))
     throw std::string("Invalid bytecode signature!");
