@@ -29,6 +29,7 @@ enum Color{
 };
 
 namespace{
+  typedef std::map<BasicBlock *, BasicBlock *> BBMap;
   struct InstLoops : public FunctionPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<DominatorSet>();
@@ -38,15 +39,14 @@ namespace{
     void getBackEdgesVisit(BasicBlock *u,
 			   std::map<BasicBlock *, Color > &color,
 			   std::map<BasicBlock *, int > &d, 
-			   int &time, Value *threshold, 
-			   std::map<BasicBlock *, BasicBlock *> &be);
-    void removeRedundant(std::map<BasicBlock *, BasicBlock *> &be);
-    void getBackEdges(Function &F, Value *threshold);
+			   int &time, BBMap &be);
+    void removeRedundant(BBMap &be);
+    void findAndInstrumentBackEdges(Function &F);
   public:
     bool runOnFunction(Function &F);
   };
   
-    RegisterOpt<InstLoops> X("instloops", "Instrument backedges for profiling");
+  RegisterOpt<InstLoops> X("instloops", "Instrument backedges for profiling");
 }
 
 // createInstLoopsPass - Create a new pass to add path profiling
@@ -61,20 +61,17 @@ Pass *createInstLoopsPass() {
 void InstLoops::getBackEdgesVisit(BasicBlock *u,
                        std::map<BasicBlock *, Color > &color,
                        std::map<BasicBlock *, int > &d, 
-                       int &time, Value *threshold, 
-		       std::map<BasicBlock *, BasicBlock *> &be) {
-  
+                       int &time, BBMap &be) {
   color[u]=GREY;
   time++;
   d[u]=time;
 
   for(BasicBlock::succ_iterator vl = succ_begin(u), 
 	ve = succ_end(u); vl != ve; ++vl){
-    
     BasicBlock *BB = *vl;
 
     if(color[BB]!=GREY && color[BB]!=BLACK){
-      getBackEdgesVisit(BB, color, d, time, threshold, be);
+      getBackEdgesVisit(BB, color, d, time, be);
     }
     
     //now checking for d and f vals
@@ -91,26 +88,17 @@ void InstLoops::getBackEdgesVisit(BasicBlock *u,
 
 //look at all BEs, and remove all BEs that are dominated by other BE's in the
 //set
-void InstLoops::removeRedundant(std::map<BasicBlock *, BasicBlock *> &be){
+void InstLoops::removeRedundant(BBMap &be) {
   std::vector<BasicBlock *> toDelete;
   for(std::map<BasicBlock *, BasicBlock *>::iterator MI = be.begin(), 
-	ME = be.end(); MI != ME; ++MI){
-    //std::cerr<<MI->first->getName()<<"\t->\t"<<MI->second->getName()<<"\n";
-    //std::cerr<<MI->first;
-    //std::cerr<<MI->second;
-    for(std::map<BasicBlock *, BasicBlock *>::iterator MMI = be.begin(), 
-	  MME = be.end(); MMI != MME; ++MMI){
-      if(DS->properlyDominates(MI->first, MMI->first)){
+	ME = be.end(); MI != ME; ++MI)
+    for(BBMap::iterator MMI = be.begin(), MME = be.end(); MMI != MME; ++MMI)
+      if(DS->properlyDominates(MI->first, MMI->first))
 	toDelete.push_back(MMI->first);
-	//std::cerr<<MI->first->getName()<<"\t Dominates\t"<<MMI->first->getName();
-      }
-    }
-  }
-
+  // Remove all the back-edges we found from be.
   for(std::vector<BasicBlock *>::iterator VI = toDelete.begin(), 
-	VE = toDelete.end(); VI != VE; ++VI){
+	VE = toDelete.end(); VI != VE; ++VI)
     be.erase(*VI);
-  }
 }
 
 //getting the backedges in a graph
@@ -124,12 +112,12 @@ void InstLoops::removeRedundant(std::map<BasicBlock *, BasicBlock *> &be){
 //have been visited
 //So we have a back edge when we meet a successor of
 //a node with smaller time, and GREY color
-void InstLoops::getBackEdges(Function &F, Value *threshold){
+void InstLoops::findAndInstrumentBackEdges(Function &F){
   std::map<BasicBlock *, Color > color;
   std::map<BasicBlock *, int> d;
-  std::map<BasicBlock *, BasicBlock *> be;
+  BBMap be;
   int time=0;
-  getBackEdgesVisit(F.begin(), color, d, time, threshold, be);
+  getBackEdgesVisit(F.begin(), color, d, time, be);
 
   removeRedundant(be);
 
@@ -159,7 +147,7 @@ void InstLoops::getBackEdges(Function &F, Value *threshold){
         
     assert(inCountMth && "Initial method could not be inserted!");
 
-    Instruction *call = new CallInst(inCountMth, "");
+    Instruction *call = new CallInst(inCountMth);
     lt.push_back(call);
     lt.push_back(new BranchInst(BB));
       
@@ -177,46 +165,22 @@ void InstLoops::getBackEdges(Function &F, Value *threshold){
   }
 }
 
-//Per function pass for inserting counters and call function
+/// Entry point for FunctionPass that inserts calls to trigger function.
+///
 bool InstLoops::runOnFunction(Function &F){
-  
-  static GlobalVariable *threshold = NULL;
-  static bool insertedThreshold = false;
-
   DS  = &getAnalysis<DominatorSet>();
-
   if(F.isExternal()) {
     return false;
   }
-
-  if(!insertedThreshold){
-    threshold = new GlobalVariable(Type::IntTy, false,  
-				   GlobalValue::ExternalLinkage, 0,
-                                   "reopt_threshold");
-    
-    F.getParent()->getGlobalList().push_back(threshold);
-    insertedThreshold = true;
-  }
-
+  // Add a call to reoptimizerInitialize() to beginning of function named main.
   if(F.getName() == "main"){
-    //intialize threshold
-    std::vector<const Type*> initialize_args;
-    initialize_args.push_back(PointerType::get(Type::IntTy));
-    
-    const FunctionType *Fty = FunctionType::get(Type::VoidTy, initialize_args,
-                                                false);
-    Function *initialMeth = F.getParent()->getOrInsertFunction("reoptimizerInitialize", Fty);
+    std::vector<const Type*> argTypes;  // Empty formal parameter list.
+    const FunctionType *Fty = FunctionType::get(Type::VoidTy, argTypes, false);
+    Function *initialMeth =
+      F.getParent()->getOrInsertFunction("reoptimizerInitialize", Fty);
     assert(initialMeth && "Initialize method could not be inserted!");
-    
-    std::vector<Value *> trargs;
-    trargs.push_back(threshold);
-  
-    new CallInst(initialMeth, trargs, "", F.begin()->begin());
+    new CallInst(initialMeth, "", F.begin()->begin());  // Insert it.
   }
-
-  assert(threshold && "GlobalVariable threshold not defined!");
-  
-  getBackEdges(F, threshold);
-  
-  return true;
+  findAndInstrumentBackEdges(F);
+  return true;  // Function was modified.
 }
