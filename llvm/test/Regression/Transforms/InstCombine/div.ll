@@ -8,9 +8,7 @@
 
 implementation
 
-int "test1"(int %A)
-begin
+int %test1(int %A) {
 	%B = div int %A, 1
 	ret int %B
-end
-
+}
