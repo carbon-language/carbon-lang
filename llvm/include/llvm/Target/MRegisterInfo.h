@@ -6,10 +6,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_MREGISTERINFO_H
-#define LLVM_CODEGEN_MREGISTERINFO_H
+#ifndef LLVM_TARGET_MREGISTERINFO_H
+#define LLVM_TARGET_MREGISTERINFO_H
 
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include <assert.h>
+
+class Type;
 
 /// MRegisterDesc - This record contains all of the information known about a
 /// particular register.
@@ -37,6 +40,30 @@ namespace MRF {  // MRF = Machine Register Flags
     FP128            =   1 << 8,   // This is a 128 bit floating point register
   };
 };
+
+class TargetRegisterClass {
+protected:
+  TargetRegisterClass() {}
+
+public:
+
+  typedef unsigned* iterator;
+  typedef unsigned* const_iterator;
+
+  iterator       begin();
+  iterator         end();
+  const_iterator begin() const;
+  const_iterator   end() const;
+
+  virtual unsigned getNumRegs() const { return 0; }
+  virtual unsigned getRegister(unsigned idx) const { return 0; }
+
+  virtual unsigned getDataSize() const { return 0; }
+
+  //const std::vector<unsigned> &getRegsInClass(void) { return Regs; }
+  //void getAliases(void);
+};
+
 
 /// MRegisterInfo base class - We assume that the target defines a static array
 /// of MRegisterDesc objects that represent all of the machine registers that
@@ -79,8 +106,25 @@ public:
   ///
   const MRegisterDesc &get(unsigned RegNo) const { return operator[](RegNo); }
 
-  // This will eventually get some virtual methods...
-  
+
+  virtual void copyReg2PCRel(MachineBasicBlock *MBB,
+                             MachineBasicBlock::iterator &MBBI,
+                             unsigned SrcReg, unsigned ImmOffset,
+                             unsigned dataSize) const = 0;
+
+  virtual void copyPCRel2Reg(MachineBasicBlock *MBB,
+                             MachineBasicBlock::iterator &MBBI,
+                             unsigned ImmOffset, unsigned DestReg,
+                             unsigned dataSize) const = 0;
+
+  /// Register class iterators
+  typedef const TargetRegisterClass* const_iterator;
+
+  virtual const_iterator const_regclass_begin() const = 0;
+  virtual const_iterator const_regclass_end() const = 0;
+
+  virtual unsigned getNumRegClasses() const = 0;
+  virtual const TargetRegisterClass* getRegClassForType(const Type* Ty) const=0;
 };
 
 #endif

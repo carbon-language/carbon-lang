@@ -1,4 +1,4 @@
-//===-- llvm/Target/Machine.h - General Target Information -------*- C++ -*-==//
+//===-- llvm/Target/TargetMachine.h - General Target Information -*- C++ -*-==//
 //
 // This file describes the general parts of a Target machine.
 //
@@ -68,7 +68,7 @@ public:
   virtual const MachineOptInfo&         getOptInfo()   const = 0;
 
   /// getRegisterInfo - If register information is available, return it.  If
-  /// not, return null.  This is kept seperate from RegInfo until RegInfo gets
+  /// not, return null.  This is kept separate from RegInfo until RegInfo gets
   /// straightened out.
   ///
   virtual const MRegisterInfo*          getRegisterInfo() const { return 0; }
