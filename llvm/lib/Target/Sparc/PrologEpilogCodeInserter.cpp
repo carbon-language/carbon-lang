@@ -12,6 +12,7 @@
 #include "SparcInternals.h"
 #include "SparcRegClassInfo.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Pass.h"
@@ -101,7 +102,7 @@ void InsertPrologEpilogCode::InsertPrologCode(Function &F)
       mvec.push_back(M);
     }
 
-  MachineCodeForBasicBlock& bbMvec = F.getEntryNode().getMachineInstrVec();
+  MachineCodeForBasicBlock& bbMvec = MachineCodeForBasicBlock::get(&F.getEntryNode());
   bbMvec.insert(bbMvec.begin(), mvec.begin(), mvec.end());
 }
 
@@ -117,7 +118,7 @@ void InsertPrologEpilogCode::InsertEpilogCode(Function &F)
                                         (int64_t)0);
         Restore->SetMachineOperandReg(2, Target.getRegInfo().getZeroRegNum());
         
-        MachineCodeForBasicBlock& bbMvec = I->getMachineInstrVec();
+        MachineCodeForBasicBlock& bbMvec = MachineCodeForBasicBlock::get(I);
         MachineCodeForInstruction &termMvec =
           MachineCodeForInstruction::get(TermInst);
         
