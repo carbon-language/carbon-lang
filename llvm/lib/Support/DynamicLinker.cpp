@@ -21,6 +21,7 @@
 
 #include "Support/DynamicLinker.h"
 #include "Config/dlfcn.h"
+#include "Config/windows.h"
 #include <cassert>
 using namespace llvm;
 
@@ -31,6 +32,16 @@ bool llvm::LinkDynamicObject (const char *filename, std::string *ErrorMessage) {
     return true;
   }
   return false;
+#elif defined(HAVE_WINDOWS_H)
+  if (LoadLibrary(filename))
+    return false;
+  if (ErrorMessage) {
+    char Buffer[100];
+    // FIXME: This should use FormatMessage
+    sprintf(Buffer, "Windows error code %d\n", GetLastError());
+    *ErrorMessage = Buffer;
+  }
+  return true;
 #else
   assert (0 && "Dynamic object linking not implemented for this platform");
 #endif
@@ -38,18 +49,22 @@ bool llvm::LinkDynamicObject (const char *filename, std::string *ErrorMessage) {
 
 void *llvm::GetAddressOfSymbol (const char *symbolName) {
 #if defined (HAVE_DLOPEN)
-#ifdef RTLD_DEFAULT
-  return dlsym (RTLD_DEFAULT, symbolName);
-#else
-  static void* CurHandle = dlopen(0, RTLD_LAZY);
-  return dlsym(CurHandle, symbolName);
-#endif
+#  ifdef RTLD_DEFAULT
+    return dlsym (RTLD_DEFAULT, symbolName);
+#  else
+    static void* CurHandle = dlopen(0, RTLD_LAZY);
+    return dlsym(CurHandle, symbolName);
+#  endif
+#elif defined(HAVE_WINDOWS_H)
+  static HMODULE ModHandle = NULL;
+  if (ModHandle == 0) ModHandle = GetModuleHandle(NULL);
+  return (void*)GetProcAddress(ModHandle, symbolName);
 #else
   assert (0 && "Dynamic symbol lookup not implemented for this platform");
 #endif
 }
 
 // soft, cushiony C++ interface.
-void *llvm::GetAddressOfSymbol (const std::string &symbolName) {
-  return GetAddressOfSymbol (symbolName.c_str ());
+void *llvm::GetAddressOfSymbol(const std::string &symbolName) {
+  return GetAddressOfSymbol(symbolName.c_str());
 }
