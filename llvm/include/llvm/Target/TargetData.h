@@ -21,9 +21,9 @@
 #define LLVM_TARGET_TARGETDATA_H
 
 #include "llvm/Pass.h"
-#include "Support/Annotation.h"
 #include "Support/DataTypes.h"
 #include <vector>
+#include <string>
 
 namespace llvm {
 
@@ -42,9 +42,6 @@ class TargetData : public ImmutablePass {
   unsigned char DoubleAlignment;       // Defaults to 8 bytes
   unsigned char PointerSize;           // Defaults to 8 bytes
   unsigned char PointerAlignment;      // Defaults to 8 bytes
-  AnnotationID  AID;                   // AID for structure layout annotation
- 
-  static Annotation *TypeAnFactory(AnnotationID, const Annotable *, void *);
 public:
   TargetData(const std::string &TargetName = "",
              bool LittleEndian = false,
@@ -69,7 +66,6 @@ public:
   unsigned char getDoubleAlignment()  const { return  DoubleAlignment; }
   unsigned char getPointerAlignment() const { return PointerAlignment; }
   unsigned char getPointerSize()      const { return      PointerSize; }
-  AnnotationID  getStructLayoutAID()  const { return AID; }
 
   /// getTypeSize - Return the number of bytes necessary to hold the specified
   /// type
@@ -89,23 +85,19 @@ public:
   uint64_t getIndexedOffset(const Type *Ty, 
                             const std::vector<Value*> &Indices) const;
   
-  inline const StructLayout *getStructLayout(const StructType *Ty) const {
-    return (const StructLayout*)
-         ((const Annotable*)Ty)->getOrCreateAnnotation(AID);
-  }
+  const StructLayout *getStructLayout(const StructType *Ty) const;
 };
 
-// This annotation (attached ONLY to StructType classes) is used to lazily
-// calculate structure layout information for a target machine, based on the
-// TargetData structure.
+// This object is used to lazily calculate structure layout information for a
+// target machine, based on the TargetData structure.
 //
-struct StructLayout : public Annotation {
+struct StructLayout {
   std::vector<uint64_t> MemberOffsets;
   uint64_t StructSize;
   unsigned StructAlignment;
 private:
   friend class TargetData;   // Only TargetData can create this class
-  inline StructLayout(const StructType *ST, const TargetData &TD);
+  StructLayout(const StructType *ST, const TargetData &TD);
 };
 
 } // End llvm namespace
