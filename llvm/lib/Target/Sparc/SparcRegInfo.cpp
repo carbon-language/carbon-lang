@@ -707,7 +707,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	// fails, then use the following code. Currently, we cannot call the
 	// above method since we cannot find LVSetBefore without the BB 
 	
-	int TReg = PRA.getRegNotUsedByThisInst( LR->getRegClass(), CallMI );
+	int TReg = PRA.getUniRegNotUsedByThisInst( LR->getRegClass(), CallMI );
 
     /**** NOTE: THIS SHOULD USE THE RIGHT SIZE FOR THE REG BEING PUSHED ****/
 	int TmpOff = PRA.mcInfo.pushTempValue(target, 8);
@@ -1194,7 +1194,7 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 
 	      // get a free INTEGER register
 	      int FreeIntReg = 
-		PRA.getUsableRegAtMI(LR->getRegClass(), IntRegType, MInst, 
+		PRA.getUsableUniRegAtMI(LR->getRegClass(), IntRegType, MInst, 
 				     LVSetBef, AdIBefCC, AdIAftCC);
 
 	      // insert the instructions in reverse order since we are
@@ -1232,7 +1232,7 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 	      
 	      // get a free INT register
 	      int FreeIntReg = 
-		PRA.getUsableRegAtMI(LR->getRegClass(), IntRegType, MInst, 
+		PRA.getUsableUniRegAtMI(LR->getRegClass(), IntRegType, MInst, 
 				     LVSetAft, AdIBefCC, AdIAftCC);
 	      
 	      if(AdIBefCC)
