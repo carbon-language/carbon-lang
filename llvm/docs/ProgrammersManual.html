@@ -676,34 +676,164 @@ doxygen info: <a href="/doxygen/classGlobalVariable.html">GlobalVariable Class</
 Superclasses: <a href="#GlobalValue"><tt>GlobalValue</tt></a>, <a
 href="#User"><tt>User</tt></a>, <a href="#Value"><tt>Value</tt></a><p>
 
-
-A GlobalVariable is a subclass of GlobalValue and defines the interface to
-global variables in the SSA program. It can have a name and an
-initializer. (initial constant Value)
-
-Can be constant.
+Global variables are represented with the (suprise suprise)
+<tt>GlobalVariable</tt> class.  Like functions, <tt>GlobalVariable</tt>s are
+also subclasses of <a href="#GlobalValue"><tt>GlobalValue</tt></a>, and as such
+are always referenced by their address (global values must live in memory, so
+their "name" refers to their address).  Global variables may have an initial
+value (which must be a <a href="#Constant"><tt>Constant</tt></a>), and if they
+have an initializer, they may be marked as "constant" themselves (indicating
+that their contents never change at runtime).<p>
 
 
 <!-- _______________________________________________________________________ -->
-</ul><h4><a name="m_GlobalVariable"><hr size=0>Important Public Members of
-the <tt>GlobalVariable</tt> class</h4><ul>
+</ul><h4><a name="m_GlobalVariable"><hr size=0>Important Public Members of the
+<tt>GlobalVariable</tt> class</h4><ul>
 
 <li><tt>GlobalVariable(const <a href="#Type">Type</a> *Ty, bool isConstant, bool
 isInternal, <a href="#Constant">Constant</a> *Initializer = 0, const std::string
 &amp;Name = "")</tt><p>
+
+Create a new global variable of the specified type.  If <tt>isConstant</tt> is
+true then the global variable will be marked as unchanging for the program, and
+if <tt>isInternal</tt> is true the resultant global variable will have internal
+linkage.  Optionally an initializer and name may be specified for the global variable as well.<p>
+
 
 <li><tt>bool isConstant() const</tt><p>
 
 Returns true if this is a global variable is known not to be modified at
 runtime.<p>
 
+
 <li><tt>bool hasInitializer()</tt><p>
 
 Returns true if this <tt>GlobalVariable</tt> has an intializer.<p>
 
+
 <li><tt><a href="#Constant">Constant</a> *getInitializer()</tt><p>
 
-Returns the intializer<p>
+Returns the intial value for a <tt>GlobalVariable</tt>.  It is not legal to call
+this method if there is no initializer.<p>
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; 
+<font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="Module">The <tt>Module</tt> class</a>
+</b></font></td></tr></table><ul>
+
+<tt>#include "<a
+href="/doxygen/Module_8h-source.html">llvm/Module.h</a>"</tt></b><br>
+doxygen info: <a href="/doxygen/classModule.html">Module Class</a><p>
+
+The <tt>Module</tt> class represents the top level structure present in LLVM
+programs.  An LLVM module is effectively either a translation unit of the
+original program or a combination of several translation units merged by the
+linker.  The <tt>Module</tt> class keeps track of a list of <a
+href="#Function"><tt>Function</tt></a>s, a list of <a
+href="#GlobalVariable"><tt>GlobalVariable</tt></a>s, and a <a
+href="#SymbolTable"><tt>SymbolTable</tt></a>.  Additionally, it contains a few
+helpful member functions that try to make common operations easy.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="m_Module"><hr size=0>Important Public Members of the
+<tt>Module</tt> class</h4><ul>
+
+<li><tt>Module::iterator</tt> - Typedef for function list iterator<br>
+    <tt>Module::const_iterator</tt> - Typedef for const_iterator.<br>
+    <tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,
+    <tt>size()</tt>, <tt>empty()</tt>, <tt>rbegin()</tt>, <tt>rend()</tt><p>
+
+These are forwarding methods that make it easy to access the contents of a
+<tt>Module</tt> object's <a href="#Function"><tt>Function</tt></a>
+list.<p>
+
+<li><tt>Module::FunctionListType &amp;getFunctionList()</tt><p>
+
+Returns the list of <a href="#Function"><tt>Function</tt></a>s.  This is
+neccesary to use when you need to update the list or perform a complex action
+that doesn't have a forwarding method.<p>
+
+<!--  Global Variable -->
+<hr size=0>
+
+<li><tt>Module::giterator</tt> - Typedef for global variable list iterator<br>
+    <tt>Module::const_giterator</tt> - Typedef for const_iterator.<br>
+    <tt>gbegin()</tt>, <tt>gend()</tt>, <tt>gfront()</tt>, <tt>gback()</tt>,
+    <tt>gsize()</tt>, <tt>gempty()</tt>, <tt>grbegin()</tt>, <tt>grend()</tt><p>
+
+These are forwarding methods that make it easy to access the contents of a
+<tt>Module</tt> object's <a href="#GlobalVariable"><tt>GlobalVariable</tt></a>
+list.<p>
+
+<li><tt>Module::GlobalListType &amp;getGlobalList()</tt><p>
+
+Returns the list of <a href="#GlobalVariable"><tt>GlobalVariable</tt></a>s.
+This is neccesary to use when you need to update the list or perform a complex
+action that doesn't have a forwarding method.<p>
+
+
+<!--  Symbol table stuff -->
+<hr size=0>
+
+<li><tt>bool hasSymbolTable() const</tt><p>
+
+Return true if the <tt>Module</tt> has a symbol table allocated to it and if
+there is at least one entry in it.<p>
+
+<li><tt><a href="#SymbolTable">SymbolTable</a> *getSymbolTable()</tt><p>
+
+Return a pointer to the <a href="#SymbolTable"><tt>SymbolTable</tt></a> for this
+<tt>Module</tt> or a null pointer if one has not been allocated (because there
+are no named values in the function).<p>
+
+<li><tt><a href="#SymbolTable">SymbolTable</a> *getSymbolTableSure()</tt><p>
+
+Return a pointer to the <a href="#SymbolTable"><tt>SymbolTable</tt></a> for this
+<tt>Module</tt> or allocate a new <a
+href="#SymbolTable"><tt>SymbolTable</tt></a> if one is not already around.  This
+should only be used when adding elements to the <a
+href="#SymbolTable"><tt>SymbolTable</tt></a>, so that empty symbol tables are
+not left laying around.<p>
+
+
+<!--  Convenience methods -->
+<hr size=0>
+
+<li><tt><a href="#Function">Function</a> *getFunction(const std::string &amp;Name, const <a href="#FunctionType">FunctionType</a> *Ty)</tt><p>
+
+Look up the specified function in the <tt>Module</tt> <a
+href="#SymbolTable"><tt>SymbolTable</tt></a>. If it does not exist, return
+<tt>null</tt>.<p>
+
+
+<li><tt><a href="#Function">Function</a> *getOrInsertFunction(const std::string
+         &amp;Name, const <a href="#FunctionType">FunctionType</a> *T)</tt><p>
+
+Look up the specified function in the <tt>Module</tt> <a
+href="#SymbolTable"><tt>SymbolTable</tt></a>. If it does not exist, add an
+external declaration for the function and return it.<p>
+
+
+<li><tt>std::string getTypeName(const <a href="#Type">Type</a> *Ty)</tt><p>
+
+If there is at least one entry in the <a
+href="#SymbolTable"><tt>SymbolTable</tt></a> for the specified <a
+href="#Type"><tt>Type</tt></a>, return it.  Otherwise return the empty
+string.<p>
+
+
+<li><tt>bool addTypeName(const std::string &Name, const <a href="#Type">Type</a>
+*Ty)</tt><p>
+
+Insert an entry in the <a href="#SymbolTable"><tt>SymbolTable</tt></a> mapping
+<tt>Name</tt> to <tt>Ty</tt>. If there is already an entry for this name, true
+is returned and the <a href="#SymbolTable"><tt>SymbolTable</tt></a> is not
+modified.<p>
+
 
 <!-- ======================================================================= -->
 </ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
@@ -842,6 +972,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Thu Sep  5 21:49:34 CDT 2002
+Last modified: Fri Sep  6 09:47:35 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
