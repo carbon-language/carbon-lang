@@ -50,10 +50,29 @@ def ADJCALLSTACKUP : InstV8 {
 let isReturn = 1, isTerminator = 1, simm13 = 8 in
   def RET : F3_2<2, 0b111000, "ret">;
 let isReturn = 1, isTerminator = 1, simm13 = 8 in
-  def RETL : F3_2<2, 0b111000, "retl">;
+  def RETL: F3_2<2, 0b111000, "retl">;
+
+// Section B.1 - Load Integer Instructions, p. 90
+def LDSBmr: F3_2<3, 0b001001, "ldsb">;
+def LDSHmr: F3_2<3, 0b001010, "ldsh">;
+def LDUBmr: F3_2<3, 0b000001, "ldub">;
+def LDUHmr: F3_2<3, 0b000010, "lduh">;
+def LDmr  : F3_2<3, 0b000000, "ld">;
+def LDDmr : F3_2<3, 0b000011, "ldd">;
+
+// Section B.4 - Store Integer Instructions, p. 95
+def STBrm : F3_2<3, 0b000101, "stb">;
+def STHrm : F3_2<3, 0b000110, "sth">;
+def STrm  : F3_2<3, 0b000100, "st">;
+def STDrm : F3_2<3, 0b000111, "std">;
 
 // Section B.9 - SETHI Instruction, p. 104
 def SETHIi: F2_1<0b100, "sethi">;
+
+// Section B.10 - NOP Instruction, p. 105
+// (It's a special case of SETHI)
+let rd = 0, imm = 0 in
+  def NOP : F2_1<0b100, "nop">;
 
 // Section B.11 - Logical Instructions, p. 106
 def ANDri : F3_2<2, 0b000001, "and">;
@@ -81,7 +100,7 @@ def SAVEri    : F3_2<2, 0b111100, "save">;           // save    r, i, r
 def RESTORErr : F3_1<2, 0b111101, "restore">;        // restore r, r, r
 def RESTOREri : F3_2<2, 0b111101, "restore">;        // restore r, i, r
 
-// Section B.24 - Call and Link, p. 125
+// Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
 def CALL : InstV8 {
   bits<30> disp;
