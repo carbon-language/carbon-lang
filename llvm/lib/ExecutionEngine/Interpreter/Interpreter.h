@@ -37,6 +37,7 @@ union GenericValue {
   double          DoubleVal;
   float           FloatVal;
   PointerTy       PointerVal;
+  unsigned char   Untyped[8];
 };
 
 // AllocaHolder - Object to track all of the blocks of memory allocated by

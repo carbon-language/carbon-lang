@@ -83,7 +83,7 @@ static unsigned getOperandSlot(Value *V) {
 }
 
 #define GET_CONST_VAL(TY, CLASS) \
-  case Type::TY##TyID: Result.TY##Val = cast<CLASS>(CPV)->getValue(); break
+  case Type::TY##TyID: Result.TY##Val = cast<CLASS>(C)->getValue(); break
 
 // Operations used by constant expr implementations...
 static GenericValue executeCastOperation(Value *Src, const Type *DestTy,
@@ -93,6 +93,37 @@ static GenericValue executeGEPOperation(Value *Src, User::op_iterator IdxBegin,
                                         ExecutionContext &SF);
 static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty, ExecutionContext &SF);
+
+static GenericValue getConstantValue(const Constant *C) {
+  GenericValue Result;
+  switch (C->getType()->getPrimitiveID()) {
+    GET_CONST_VAL(Bool   , ConstantBool);
+    GET_CONST_VAL(UByte  , ConstantUInt);
+    GET_CONST_VAL(SByte  , ConstantSInt);
+    GET_CONST_VAL(UShort , ConstantUInt);
+    GET_CONST_VAL(Short  , ConstantSInt);
+    GET_CONST_VAL(UInt   , ConstantUInt);
+    GET_CONST_VAL(Int    , ConstantSInt);
+    GET_CONST_VAL(ULong  , ConstantUInt);
+    GET_CONST_VAL(Long   , ConstantSInt);
+    GET_CONST_VAL(Float  , ConstantFP);
+    GET_CONST_VAL(Double , ConstantFP);
+  case Type::PointerTyID:
+    if (isa<ConstantPointerNull>(C)) {
+      Result.PointerVal = 0;
+    } else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)){
+      GlobalAddress *Address = 
+       (GlobalAddress*)CPR->getValue()->getOrCreateAnnotation(GlobalAddressAID);
+      Result.PointerVal = (PointerTy)Address->Ptr;
+    } else {
+      assert(0 && "Unknown constant pointer type!");
+    }
+    break;
+  default:
+    cout << "ERROR: Constant unimp for type: " << C->getType() << "\n";
+  }
+  return Result;
+}
 
 static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
@@ -112,32 +143,7 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
       { GenericValue V; return V; }
     }
   } else if (Constant *CPV = dyn_cast<Constant>(V)) {
-    GenericValue Result;
-    switch (CPV->getType()->getPrimitiveID()) {
-      GET_CONST_VAL(Bool   , ConstantBool);
-      GET_CONST_VAL(UByte  , ConstantUInt);
-      GET_CONST_VAL(SByte  , ConstantSInt);
-      GET_CONST_VAL(UShort , ConstantUInt);
-      GET_CONST_VAL(Short  , ConstantSInt);
-      GET_CONST_VAL(UInt   , ConstantUInt);
-      GET_CONST_VAL(Int    , ConstantSInt);
-      GET_CONST_VAL(ULong  , ConstantUInt);
-      GET_CONST_VAL(Long   , ConstantSInt);
-      GET_CONST_VAL(Float  , ConstantFP);
-      GET_CONST_VAL(Double , ConstantFP);
-    case Type::PointerTyID:
-      if (isa<ConstantPointerNull>(CPV)) {
-        Result.PointerVal = 0;
-      } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CPV)) {
-        return getOperandValue(CPR->getValue(), SF);
-      } else {
-        assert(0 && "Unknown constant pointer type!");
-      }
-      break;
-    default:
-      cout << "ERROR: Constant unimp for type: " << CPV->getType() << "\n";
-    }
-    return Result;
+    return getConstantValue(CPV);
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     GlobalAddress *Address = 
       (GlobalAddress*)GV->getOrCreateAnnotation(GlobalAddressAID);
@@ -197,30 +203,21 @@ void Interpreter::initializeExecutionEngine() {
   initializeSignalHandlers();
 }
 
+static void StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
+                               const Type *Ty);
+
 // InitializeMemory - Recursive function to apply a Constant value into the
 // specified memory location...
 //
 static void InitializeMemory(const Constant *Init, char *Addr) {
-#define INITIALIZE_MEMORY(TYID, CLASS, TY)  \
-  case Type::TYID##TyID: {                  \
-    TY Tmp = cast<CLASS>(Init)->getValue(); \
-    memcpy(Addr, &Tmp, sizeof(TY));         \
-  } return
+
+  if (Init->getType()->isFirstClassType()) {
+    GenericValue Val = getConstantValue(Init);
+    StoreValueToMemory(Val, (GenericValue*)Addr, Init->getType());
+    return;
+  }
 
   switch (Init->getType()->getPrimitiveID()) {
-    INITIALIZE_MEMORY(Bool   , ConstantBool, bool);
-    INITIALIZE_MEMORY(UByte  , ConstantUInt, unsigned char);
-    INITIALIZE_MEMORY(SByte  , ConstantSInt, signed   char);
-    INITIALIZE_MEMORY(UShort , ConstantUInt, unsigned short);
-    INITIALIZE_MEMORY(Short  , ConstantSInt, signed   short);
-    INITIALIZE_MEMORY(UInt   , ConstantUInt, unsigned int);
-    INITIALIZE_MEMORY(Int    , ConstantSInt, signed   int);
-    INITIALIZE_MEMORY(ULong  , ConstantUInt, uint64_t);
-    INITIALIZE_MEMORY(Long   , ConstantSInt,  int64_t);
-    INITIALIZE_MEMORY(Float  , ConstantFP  , float);
-    INITIALIZE_MEMORY(Double , ConstantFP  , double);
-#undef INITIALIZE_MEMORY
-
   case Type::ArrayTyID: {
     const ConstantArray *CPA = cast<ConstantArray>(Init);
     const vector<Use> &Val = CPA->getValues();
@@ -240,19 +237,6 @@ static void InitializeMemory(const Constant *Init, char *Addr) {
                        Addr+SL->MemberOffsets[i]);
     return;
   }
-
-  case Type::PointerTyID:
-    if (isa<ConstantPointerNull>(Init)) {
-      *(void**)Addr = 0;
-    } else if (const ConstantPointerRef *CPR =
-               dyn_cast<ConstantPointerRef>(Init)) {
-      GlobalAddress *Address = 
-       (GlobalAddress*)CPR->getValue()->getOrCreateAnnotation(GlobalAddressAID);
-      *(void**)Addr = (GenericValue*)Address->Ptr;
-    } else {
-      assert(0 && "Unknown Constant pointer type!");
-    }
-    return;
 
   default:
     CW << "Bad Type: " << Init->getType() << "\n";
@@ -854,47 +838,144 @@ static void executeLoadInst(LoadInst &I, ExecutionContext &SF) {
   GenericValue *Ptr = (GenericValue*)SRC.PointerVal;
   GenericValue Result;
 
-  switch (I.getType()->getPrimitiveID()) {
-  case Type::BoolTyID:
-  case Type::UByteTyID:
-  case Type::SByteTyID:   Result.SByteVal   = Ptr->SByteVal; break;
-  case Type::UShortTyID:
-  case Type::ShortTyID:   Result.ShortVal   = Ptr->ShortVal; break;
-  case Type::UIntTyID:
-  case Type::IntTyID:     Result.IntVal     = Ptr->IntVal; break;
-  case Type::ULongTyID:
-  case Type::LongTyID:    Result.ULongVal   = Ptr->ULongVal; break;
-  case Type::PointerTyID: Result.PointerVal = Ptr->PointerVal; break;
-  case Type::FloatTyID:   Result.FloatVal   = Ptr->FloatVal; break;
-  case Type::DoubleTyID:  Result.DoubleVal  = Ptr->DoubleVal; break;
-  default:
-    cout << "Cannot load value of type " << I.getType() << "!\n";
+  if (TD.isLittleEndian()) {
+    switch (I.getType()->getPrimitiveID()) {
+    case Type::BoolTyID:
+    case Type::UByteTyID:
+    case Type::SByteTyID:   Result.Untyped[0] = Ptr->UByteVal; break;
+    case Type::UShortTyID:
+    case Type::ShortTyID:   Result.Untyped[0] = Ptr->UShortVal & 255;
+                            Result.Untyped[1] = (Ptr->UShortVal >> 8) & 255;
+                            break;
+    case Type::FloatTyID:
+    case Type::UIntTyID:
+    case Type::IntTyID:     Result.Untyped[0] =  Ptr->UIntVal        & 255;
+                            Result.Untyped[1] = (Ptr->UIntVal >>  8) & 255;
+                            Result.Untyped[2] = (Ptr->UIntVal >> 16) & 255;
+                            Result.Untyped[3] = (Ptr->UIntVal >> 24) & 255;
+                            break;
+    case Type::DoubleTyID:
+    case Type::ULongTyID:
+    case Type::LongTyID:    
+    case Type::PointerTyID: Result.Untyped[0] =  Ptr->ULongVal        & 255;
+                            Result.Untyped[1] = (Ptr->ULongVal >>  8) & 255;
+                            Result.Untyped[2] = (Ptr->ULongVal >> 16) & 255;
+                            Result.Untyped[3] = (Ptr->ULongVal >> 24) & 255;
+                            Result.Untyped[4] = (Ptr->ULongVal >> 32) & 255;
+                            Result.Untyped[5] = (Ptr->ULongVal >> 40) & 255;
+                            Result.Untyped[6] = (Ptr->ULongVal >> 48) & 255;
+                            Result.Untyped[7] = (Ptr->ULongVal >> 56) & 255;
+                            break;
+    default:
+      cout << "Cannot load value of type " << I.getType() << "!\n";
+    }
+  } else {
+    switch (I.getType()->getPrimitiveID()) {
+    case Type::BoolTyID:
+    case Type::UByteTyID:
+    case Type::SByteTyID:   Result.Untyped[0] = Ptr->UByteVal; break;
+    case Type::UShortTyID:
+    case Type::ShortTyID:   Result.Untyped[1] = Ptr->UShortVal & 255;
+                            Result.Untyped[0] = (Ptr->UShortVal >> 8) & 255;
+                            break;
+    case Type::FloatTyID:
+    case Type::UIntTyID:
+    case Type::IntTyID:     Result.Untyped[3] =  Ptr->UIntVal        & 255;
+                            Result.Untyped[2] = (Ptr->UIntVal >>  8) & 255;
+                            Result.Untyped[1] = (Ptr->UIntVal >> 16) & 255;
+                            Result.Untyped[0] = (Ptr->UIntVal >> 24) & 255;
+                            break;
+    case Type::DoubleTyID:
+    case Type::ULongTyID:
+    case Type::LongTyID:    
+    case Type::PointerTyID: Result.Untyped[7] =  Ptr->ULongVal        & 255;
+                            Result.Untyped[6] = (Ptr->ULongVal >>  8) & 255;
+                            Result.Untyped[5] = (Ptr->ULongVal >> 16) & 255;
+                            Result.Untyped[4] = (Ptr->ULongVal >> 24) & 255;
+                            Result.Untyped[3] = (Ptr->ULongVal >> 32) & 255;
+                            Result.Untyped[2] = (Ptr->ULongVal >> 40) & 255;
+                            Result.Untyped[1] = (Ptr->ULongVal >> 48) & 255;
+                            Result.Untyped[0] = (Ptr->ULongVal >> 56) & 255;
+                            break;
+    default:
+      cout << "Cannot load value of type " << I.getType() << "!\n";
+    }
   }
 
   SetValue(&I, Result, SF);
 }
 
-static void executeStoreInst(StoreInst &I, ExecutionContext &SF) {
-  GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
-  GenericValue *Ptr = (GenericValue *)SRC.PointerVal;
-  GenericValue Val = getOperandValue(I.getOperand(0), SF);
-
-  switch (I.getOperand(0)->getType()->getPrimitiveID()) {
-  case Type::BoolTyID:
-  case Type::UByteTyID:
-  case Type::SByteTyID:   Ptr->SByteVal = Val.SByteVal; break;
-  case Type::UShortTyID:
-  case Type::ShortTyID:   Ptr->ShortVal = Val.ShortVal; break;
-  case Type::UIntTyID:
-  case Type::IntTyID:     Ptr->IntVal = Val.IntVal; break;
-  case Type::ULongTyID:
-  case Type::LongTyID:    Ptr->LongVal = Val.LongVal; break;
-  case Type::PointerTyID: Ptr->PointerVal = Val.PointerVal; break;
-  case Type::FloatTyID:   Ptr->FloatVal = Val.FloatVal; break;
-  case Type::DoubleTyID:  Ptr->DoubleVal = Val.DoubleVal; break;
-  default:
-    cout << "Cannot store value of type " << I.getType() << "!\n";
+static void StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
+                               const Type *Ty) {
+  if (TD.isLittleEndian()) {
+    switch (Ty->getPrimitiveID()) {
+    case Type::BoolTyID:
+    case Type::UByteTyID:
+    case Type::SByteTyID:   Ptr->Untyped[0] = Val.UByteVal; break;
+    case Type::UShortTyID:
+    case Type::ShortTyID:   Ptr->Untyped[0] = Val.UShortVal & 255;
+                            Ptr->Untyped[1] = (Val.UShortVal >> 8) & 255;
+                            break;
+    case Type::FloatTyID:
+    case Type::UIntTyID:
+    case Type::IntTyID:     Ptr->Untyped[0] =  Val.UIntVal        & 255;
+                            Ptr->Untyped[1] = (Val.UIntVal >>  8) & 255;
+                            Ptr->Untyped[2] = (Val.UIntVal >> 16) & 255;
+                            Ptr->Untyped[3] = (Val.UIntVal >> 24) & 255;
+                            break;
+    case Type::DoubleTyID:
+    case Type::ULongTyID:
+    case Type::LongTyID:    
+    case Type::PointerTyID: Ptr->Untyped[0] =  Val.ULongVal        & 255;
+                            Ptr->Untyped[1] = (Val.ULongVal >>  8) & 255;
+                            Ptr->Untyped[2] = (Val.ULongVal >> 16) & 255;
+                            Ptr->Untyped[3] = (Val.ULongVal >> 24) & 255;
+                            Ptr->Untyped[4] = (Val.ULongVal >> 32) & 255;
+                            Ptr->Untyped[5] = (Val.ULongVal >> 40) & 255;
+                            Ptr->Untyped[6] = (Val.ULongVal >> 48) & 255;
+                            Ptr->Untyped[7] = (Val.ULongVal >> 56) & 255;
+                            break;
+    default:
+      cout << "Cannot load value of type " << Ty << "!\n";
+    }
+  } else {
+    switch (Ty->getPrimitiveID()) {
+    case Type::BoolTyID:
+    case Type::UByteTyID:
+    case Type::SByteTyID:   Ptr->Untyped[0] = Val.UByteVal; break;
+    case Type::UShortTyID:
+    case Type::ShortTyID:   Ptr->Untyped[1] = Val.UShortVal & 255;
+                            Ptr->Untyped[0] = (Val.UShortVal >> 8) & 255;
+                            break;
+    case Type::FloatTyID:
+    case Type::UIntTyID:
+    case Type::IntTyID:     Ptr->Untyped[3] =  Val.UIntVal        & 255;
+                            Ptr->Untyped[2] = (Val.UIntVal >>  8) & 255;
+                            Ptr->Untyped[1] = (Val.UIntVal >> 16) & 255;
+                            Ptr->Untyped[0] = (Val.UIntVal >> 24) & 255;
+                            break;
+    case Type::DoubleTyID:
+    case Type::ULongTyID:
+    case Type::LongTyID:    
+    case Type::PointerTyID: Ptr->Untyped[7] =  Val.ULongVal        & 255;
+                            Ptr->Untyped[6] = (Val.ULongVal >>  8) & 255;
+                            Ptr->Untyped[5] = (Val.ULongVal >> 16) & 255;
+                            Ptr->Untyped[4] = (Val.ULongVal >> 24) & 255;
+                            Ptr->Untyped[3] = (Val.ULongVal >> 32) & 255;
+                            Ptr->Untyped[2] = (Val.ULongVal >> 40) & 255;
+                            Ptr->Untyped[1] = (Val.ULongVal >> 48) & 255;
+                            Ptr->Untyped[0] = (Val.ULongVal >> 56) & 255;
+                            break;
+    default:
+      cout << "Cannot load value of type " << Ty << "!\n";
+    }
   }
+}
+
+static void executeStoreInst(StoreInst &I, ExecutionContext &SF) {
+  GenericValue Val = getOperandValue(I.getOperand(0), SF);
+  GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
+  StoreValueToMemory(Val, (GenericValue *)SRC.PointerVal, I.getType());
 }
 
 
