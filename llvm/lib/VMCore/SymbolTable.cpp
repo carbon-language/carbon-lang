@@ -262,7 +262,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
           delete NewM;
 
         } else {
-          assert(0 && "Two ploanes folded together with overlapping "
+          assert(0 && "Two planes folded together with overlapping "
                  "value names!");
         }
       } else {
