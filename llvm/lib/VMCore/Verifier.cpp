@@ -64,21 +64,21 @@ namespace {  // Anonymous namespace for class
     bool Broken;          // Is this module found to be broken?
     bool RealPass;        // Are we not being run by a PassManager?
     VerifierFailureAction action;
-    			  // What to do if verification fails.
+                          // What to do if verification fails.
     Module *Mod;          // Module we are verifying right now
     DominatorSet *DS;     // Dominator set, caution can be null!
     std::stringstream msgs;  // A stringstream to collect messages
 
     Verifier() 
-	: Broken(false), RealPass(true), action(AbortProcessAction),
+        : Broken(false), RealPass(true), action(AbortProcessAction),
           DS(0), msgs( std::ios_base::app | std::ios_base::out ) {}
     Verifier( VerifierFailureAction ctn )
-	: Broken(false), RealPass(true), action(ctn), DS(0), 
+        : Broken(false), RealPass(true), action(ctn), DS(0), 
           msgs( std::ios_base::app | std::ios_base::out ) {}
     Verifier(bool AB ) 
-	: Broken(false), RealPass(true), 
+        : Broken(false), RealPass(true), 
           action( AB ? AbortProcessAction : PrintMessageAction), DS(0), 
-	  msgs( std::ios_base::app | std::ios_base::out ) {}
+          msgs( std::ios_base::app | std::ios_base::out ) {}
     Verifier(DominatorSet &ds) 
       : Broken(false), RealPass(false), action(PrintMessageAction),
         DS(&ds), msgs( std::ios_base::app | std::ios_base::out ) {}
@@ -184,12 +184,15 @@ namespace {  // Anonymous namespace for class
       if (!V) return;
       if (isa<Instruction>(V)) {
         msgs << *V;
-      } else if (const Type *Ty = dyn_cast<Type>(V)) {
-        WriteTypeSymbolic(msgs, Ty, Mod);
       } else {
         WriteAsOperand (msgs, V, true, true, Mod);
         msgs << "\n";
       }
+    }
+
+    void WriteType(const Type* T ) {
+      if ( !T ) return;
+      WriteTypeSymbolic(msgs, T, Mod );
     }
 
 
@@ -205,6 +208,14 @@ namespace {  // Anonymous namespace for class
       WriteValue(V3);
       WriteValue(V4);
       Broken = true;
+    }
+
+    void CheckFailed( const std::string& Message, const Value* V1, 
+                      const Type* T2, const Value* V3 = 0 ) {
+      msgs << Message << "\n";
+      WriteValue(V1);
+      WriteType(T2);
+      WriteValue(V3);
     }
   };
 
@@ -241,20 +252,20 @@ void Verifier::visitGlobalValue(GlobalValue &GV) {
 // verifySymbolTable - Verify that a function or module symbol table is ok
 //
 void Verifier::verifySymbolTable(SymbolTable &ST) {
-  // Loop over all of the types in the symbol table...
-  for (SymbolTable::iterator TI = ST.begin(), TE = ST.end(); TI != TE; ++TI)
-    for (SymbolTable::type_iterator I = TI->second.begin(),
-           E = TI->second.end(); I != E; ++I) {
-      Value *V = I->second;
 
+  // Loop over all of the values in all type planes in the symbol table.
+  for (SymbolTable::plane_const_iterator PI = ST.plane_begin(), 
+       PE = ST.plane_end(); PI != PE; ++PI)
+    for (SymbolTable::value_const_iterator VI = PI->second.begin(),
+         VE = PI->second.end(); VI != VE; ++VI) {
+      Value *V = VI->second;
       // Check that there are no void typed values in the symbol table.  Values
       // with a void type cannot be put into symbol tables because they cannot
       // have names!
       Assert1(V->getType() != Type::VoidTy,
-              "Values with void type are not allowed to have names!", V);
+        "Values with void type are not allowed to have names!", V);
     }
 }
-
 
 // visitFunction - Verify that a function is ok.
 //
@@ -749,3 +760,5 @@ bool llvm::verifyModule(const Module &M, VerifierFailureAction action) {
   PM.run((Module&)M);
   return V->Broken;
 }
+
+// vim: sw=2
