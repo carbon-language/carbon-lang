@@ -11,16 +11,16 @@
 // 
 //===----------------------------------------------------------------------===//
 
+#include "IGNode.h"
 #include "LiveRangeInfo.h"
 #include "RegAllocCommon.h"
 #include "RegClass.h"
-#include "IGNode.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegInfo.h"
-#include "llvm/Function.h"
 #include "Support/SetOperations.h"
 
 unsigned LiveRange::getRegClassID() const { return getRegClass()->getID(); }
@@ -217,7 +217,6 @@ void LiveRangeInfo::constructLiveRanges() {
 	}
 
     } // for all machine instructions in the BB
-
   } // for all BBs in function
 
   // Now we have to suggest clors for call and return arg live ranges.
@@ -278,8 +277,7 @@ void LiveRangeInfo::suggestRegs4CallRets() {
 // Checks if live range LR interferes with any node assigned or suggested to
 // be assigned the specified color
 // 
-inline bool InterferesWithColor(const LiveRange& LR, unsigned color)
-{
+inline bool InterferesWithColor(const LiveRange& LR, unsigned color) {
   IGNode* lrNode = LR.getUserIGNode();
   for (unsigned n=0, NN = lrNode->getNumOfNeighbors(); n < NN; n++) {
     LiveRange *neighLR = lrNode->getAdjIGNode(n)->getParentLR();
@@ -299,8 +297,7 @@ inline bool InterferesWithColor(const LiveRange& LR, unsigned color)
 // (4) LR2 has color and LR1 interferes with any LR that has the same color
 // 
 inline bool InterfsPreventCoalescing(const LiveRange& LROfDef,
-                                     const LiveRange& LROfUse)
-{
+                                     const LiveRange& LROfUse) {
   // (4) if they have different suggested colors, cannot coalesce
   if (LROfDef.hasSuggestedColor() && LROfUse.hasSuggestedColor())
     return true;

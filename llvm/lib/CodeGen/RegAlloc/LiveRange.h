@@ -18,58 +18,58 @@
 #ifndef LIVERANGE_H
 #define LIVERANGE_H
 
-#include "llvm/CodeGen/ValueSet.h"
 #include "llvm/Value.h"
+#include "llvm/CodeGen/ValueSet.h"
 
 class RegClass;
 class IGNode;
 
 class LiveRange : public ValueSet {
-  RegClass *MyRegClass;       // register classs (e.g., int, FP) for this LR
+  RegClass *MyRegClass;       // register class (e.g., int, FP) for this LR
 
-  // doesSpanAcrossCalls - Does this live range span across calls? 
-  // This information is used by graph
-  // coloring algo to avoid allocating volatile colors to live ranges
-  // that span across calls (since they have to be saved/restored)
-  //
+  /// doesSpanAcrossCalls - Does this live range span across calls? 
+  /// This information is used by graph coloring algo to avoid allocating
+  /// volatile colors to live ranges that span across calls (since they have to
+  /// be saved/restored)
+  ///
   bool doesSpanAcrossCalls;
 
   IGNode *UserIGNode;         // IGNode which uses this LR
   int Color;                  // color assigned to this live range
   bool mustSpill;             // whether this LR must be spilt
 
-  // mustSaveAcrossCalls - whether this LR must be saved accross calls
-  // ***TODO REMOVE this
-  //
+  /// mustSaveAcrossCalls - whether this LR must be saved accross calls
+  /// ***TODO REMOVE this
+  ///
   bool mustSaveAcrossCalls;        
   
-  // SuggestedColor - if this LR has a suggested color, can it be
-  // really alloated?  A suggested color cannot be allocated when the
-  // suggested color is volatile and when there are call
-  // interferences.
-  //
+  /// SuggestedColor - if this LR has a suggested color, can it be
+  /// really alloated?  A suggested color cannot be allocated when the
+  /// suggested color is volatile and when there are call
+  /// interferences.
+  ///
   int SuggestedColor;        // The suggested color for this LR
 
-  // CanUseSuggestedCol - It is possible that a suggested color for
-  // this live range is not available before graph coloring (e.g., it
-  // can be allocated to another live range which interferes with
-  // this)
-  // 
+  /// CanUseSuggestedCol - It is possible that a suggested color for
+  /// this live range is not available before graph coloring (e.g., it
+  /// can be allocated to another live range which interferes with
+  /// this)
+  /// 
   bool CanUseSuggestedCol;
 
-  // SpilledStackOffsetFromFP - If this LR is spilled, its stack
-  // offset from *FP*. The spilled offsets must always be relative to
-  // the FP.
-  //
+  /// SpilledStackOffsetFromFP - If this LR is spilled, its stack
+  /// offset from *FP*. The spilled offsets must always be relative to
+  /// the FP.
+  ///
   int SpilledStackOffsetFromFP;
 
-  // HasSpillOffset 0 Whether this live range has a spill offset
-  //
+  /// HasSpillOffset 0 Whether this live range has a spill offset
+  ///
   bool HasSpillOffset;
 
-  // The spill cost of this live range. Calculated using loop depth of
-  // each reference to each Value in the live range
-  //
+  /// The spill cost of this live range. Calculated using loop depth of
+  /// each reference to each Value in the live range
+  ///
   unsigned SpillCost;
 
 public:

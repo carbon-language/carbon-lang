@@ -87,20 +87,22 @@ public:
 		std::vector<RegClass *> & RCList);
 
 
-  // Destructor to destroy all LiveRanges in the LiveRange Map
+  /// Destructor to destroy all LiveRanges in the LiveRange Map
+  ///
   ~LiveRangeInfo();
 
   // Main entry point for live range construction
   //
   void constructLiveRanges();
   
-  // return the common live range map for this method
-  //
+  /// return the common live range map for this method
+  ///
   inline const LiveRangeMapType *getLiveRangeMap() const 
     { return &LiveRangeMap; }
 
-  // Method used to get the live range containing a Value.
-  // This may return NULL if no live range exists for a Value (eg, some consts)
+  /// Method used to get the live range containing a Value.
+  /// This may return NULL if no live range exists for a Value (eg, some consts)
+  ///
   inline LiveRange *getLiveRangeForValue(const Value *Val) {
     return LiveRangeMap[Val];
   }
@@ -109,13 +111,13 @@ public:
     return I->second;
   }
 
-  // Method for coalescing live ranges. Called only after interference info
-  // is calculated.
-  //
+  /// Method for coalescing live ranges. Called only after interference info
+  /// is calculated.
+  ///
   void coalesceLRs();  
 
-  // debugging method to print the live ranges
-  //
+  /// debugging method to print the live ranges
+  ///
   void printLiveRanges();
 };
 
