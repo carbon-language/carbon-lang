@@ -490,7 +490,7 @@ void ISel::SelectPHINodes() {
     // Loop over all of the PHI nodes in the LLVM basic block...
     unsigned NumPHIs = 0;
     for (BasicBlock::const_iterator I = BB->begin();
-         PHINode *PN = (PHINode*)dyn_cast<PHINode>(I); ++I) {
+         PHINode *PN = const_cast<PHINode*>(dyn_cast<PHINode>(I)); ++I) {
 
       // Create a new machine instr PHI node, and insert it.
       unsigned PHIReg = getReg(*PN);
@@ -521,15 +521,27 @@ void ISel::SelectPHINodes() {
           ValReg = EntryIt->second;
 
         } else {        
-          // Get the incoming value into a virtual register.  If it is not
-          // already available in a virtual register, insert the computation
-          // code into PredMBB
+          // Get the incoming value into a virtual register.
           //
-          MachineBasicBlock::iterator PI = PredMBB->end();
-          while (PI != PredMBB->begin() &&
-                 TII.isTerminatorInstr((*(PI-1))->getOpcode()))
-            --PI;
-          ValReg = getReg(PN->getIncomingValue(i), PredMBB, PI);
+          Value *Val = PN->getIncomingValue(i);
+
+          // If this is a constant or GlobalValue, we may have to insert code
+          // into the basic block to compute it into a virtual register.
+          if (isa<Constant>(Val) || isa<GlobalValue>(Val)) {
+            // Because we don't want to clobber any values which might be in
+            // physical registers with the computation of this constant (which
+            // might be arbitrarily complex if it is a constant expression),
+            // just insert the computation at the top of the basic block.
+            MachineBasicBlock::iterator PI = PredMBB->begin();
+
+            // Skip over any PHI nodes though!
+            while (PI != PredMBB->end() && (*PI)->getOpcode() == X86::PHI)
+              ++PI;
+
+            ValReg = getReg(Val, PredMBB, PI);
+          } else {
+            ValReg = getReg(Val);
+          }
 
           // Remember that we inserted a value for this PHI for this predecessor
           PHIValues.insert(EntryIt, std::make_pair(PredMBB, ValReg));
