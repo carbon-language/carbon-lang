@@ -73,6 +73,8 @@ public:
                         const Constant *V2) const = 0;
   virtual Constant *mul(const Constant *V1, 
                         const Constant *V2) const = 0;
+  virtual Constant *div(const Constant *V1, 
+                        const Constant *V2) const = 0;
 
   virtual ConstantBool *lessthan(const Constant *V1, 
                                  const Constant *V2) const = 0;
@@ -146,6 +148,11 @@ inline Constant *operator*(const Constant &V1, const Constant &V2) {
   return ConstRules::get(V1)->mul(&V1, &V2);
 }
 
+inline Constant *operator/(const Constant &V1, const Constant &V2) {
+  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
+  return ConstRules::get(V1)->div(&V1, &V2);
+}
+
 inline ConstantBool *operator<(const Constant &V1, 
                                const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
@@ -197,6 +204,8 @@ inline Constant *ConstantFoldBinaryInstruction(unsigned Opcode,
   switch (Opcode) {
   case Instruction::Add:     return *V1 + *V2;
   case Instruction::Sub:     return *V1 - *V2;
+  case Instruction::Mul:     return *V1 * *V2;
+  case Instruction::Div:     return *V1 / *V2;
 
   case Instruction::SetEQ:   return *V1 == *V2;
   case Instruction::SetNE:   return *V1 != *V2;

@@ -47,6 +47,10 @@ class TemplateRules : public ConstRules {
                         const Constant *V2) const { 
     return SubClassName::Mul((const ArgType *)V1, (const ArgType *)V2);  
   }
+  virtual Constant *div(const Constant *V1, 
+                        const Constant *V2) const { 
+    return SubClassName::Div((const ArgType *)V1, (const ArgType *)V2);  
+  }
 
   virtual ConstantBool *lessthan(const Constant *V1, 
                                  const Constant *V2) const { 
@@ -105,6 +109,9 @@ class TemplateRules : public ConstRules {
     return 0;
   }
   inline static Constant *Mul(const ArgType *V1, const ArgType *V2) {
+    return 0;
+  }
+  inline static Constant *Div(const ArgType *V1, const ArgType *V2) {
     return 0;
   }
   inline static ConstantBool *LessThan(const ArgType *V1, const ArgType *V2) {
@@ -259,6 +266,13 @@ struct DirectRules
   inline static Constant *Mul(const ConstantClass *V1, 
                               const ConstantClass *V2) {
     BuiltinType Result = (BuiltinType)V1->getValue() *
+                         (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, Result);
+  }
+
+  inline static Constant *Div(const ConstantClass *V1, 
+                              const ConstantClass *V2) {
+    BuiltinType Result = (BuiltinType)V1->getValue() /
                          (BuiltinType)V2->getValue();
     return ConstantClass::get(*Ty, Result);
   }
