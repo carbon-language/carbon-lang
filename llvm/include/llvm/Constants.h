@@ -258,7 +258,8 @@ public:
 ///
 class ConstantFP : public Constant {
   double Val;
-  friend struct ConstantCreator<ConstantFP, Type, double>;
+  friend struct ConstantCreator<ConstantFP, Type, uint64_t>;
+  friend struct ConstantCreator<ConstantFP, Type, uint32_t>;
   ConstantFP(const ConstantFP &);      // DO NOT IMPLEMENT
 protected:
   ConstantFP(const Type *Ty, double V);
@@ -271,8 +272,16 @@ public:
   inline double getValue() const { return Val; }
 
   /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.
-  virtual bool isNullValue() const { return Val == 0; }
+  /// getNullValue.  Don't depend on == for doubles to tell us it's zero, it
+  /// considers -0.0 to be null as well as 0.0.  :(
+  virtual bool isNullValue() const {
+    union {
+      double V;
+      uint64_t I;
+    } T;
+    T.V = Val;
+    return T.I == 0;
+  }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantFP *) { return true; }
