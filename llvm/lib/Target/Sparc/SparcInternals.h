@@ -996,7 +996,7 @@ const InstrRUsageDelta SparcInstrUsageDeltas[] = {
 //{ RETRY,   AllIssueSlots.rid, 2, 9-1 },
 //{ RETRY,   AllIssueSlots.rid,  2, 9-1 },
 
-#endif EXPLICIT_BUBBLES_NEEDED
+#endif  /*EXPLICIT_BUBBLES_NEEDED */
 };
 
 
