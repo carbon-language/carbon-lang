@@ -15,8 +15,7 @@
 struct UnifyFunctionExitNodes : public FunctionPass {
   BasicBlock *ExitNode;
 public:
-  static AnalysisID ID;            // Pass ID
-  UnifyFunctionExitNodes(AnalysisID id = ID) : ExitNode(0) { assert(ID == id); }
+  UnifyFunctionExitNodes() : ExitNode(0) {}
 
   // getExitNode - Return the new single (or nonexistant) exit node of the CFG.
   //

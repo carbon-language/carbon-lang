@@ -26,8 +26,6 @@ struct FindUnsafePointerTypes : public Pass {
   // UnsafeTypes - Set of types that are not safe to transform.
   std::set<PointerType*> UnsafeTypes;
 public:
-  static AnalysisID ID;    // We are an analysis, we must have an ID
-
   // Accessor for underlying type set...
   inline const std::set<PointerType*> &getUnsafeTypes() const {
     return UnsafeTypes;

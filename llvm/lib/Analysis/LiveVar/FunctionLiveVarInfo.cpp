@@ -17,7 +17,6 @@
 
 static RegisterAnalysis<FunctionLiveVarInfo>
 X("livevar", "Live Variable Analysis");
-AnalysisID FunctionLiveVarInfo::ID = X;
 
 LiveVarDebugLevel_t DEBUG_LV;
 

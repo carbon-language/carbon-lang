@@ -97,8 +97,6 @@ public:
 // compute a normal dominator set.
 //
 struct DominatorSet : public DominatorSetBase {
-  static AnalysisID ID;            // Build dominator set
-
   DominatorSet() : DominatorSetBase(false) {}
 
   virtual bool runOnFunction(Function &F);
@@ -115,8 +113,6 @@ struct DominatorSet : public DominatorSetBase {
 // compute the post-dominator set.
 //
 struct PostDominatorSet : public DominatorSetBase {
-  static AnalysisID ID;            // Build post-dominator set
-
   PostDominatorSet() : DominatorSetBase(true) {}
 
   virtual bool runOnFunction(Function &F);
@@ -169,8 +165,6 @@ public:
 // is used to compute a normal immediate dominator set.
 //
 struct ImmediateDominators : public ImmediateDominatorsBase {
-  static AnalysisID ID;         // Build immediate dominators
-
   ImmediateDominators() : ImmediateDominatorsBase(false) {}
 
   virtual bool runOnFunction(Function &F) {
@@ -193,8 +187,6 @@ struct ImmediateDominators : public ImmediateDominatorsBase {
 // that is used to compute the immediate post-dominators.
 //
 struct ImmediatePostDominators : public ImmediateDominatorsBase {
-  static AnalysisID ID;         // Build immediate postdominators
-
   ImmediatePostDominators() : ImmediateDominatorsBase(true) {}
 
   virtual bool runOnFunction(Function &F) {
@@ -273,8 +265,6 @@ public:
 // compute a normal dominator tree.
 //
 struct DominatorTree : public DominatorTreeBase {
-  static AnalysisID ID;         // Build dominator tree
-
   DominatorTree() : DominatorTreeBase(false) {}
 
   virtual bool runOnFunction(Function &F) {
@@ -299,8 +289,6 @@ private:
 // compute the a post-dominator tree.
 //
 struct PostDominatorTree : public DominatorTreeBase {
-  static AnalysisID ID;         // Build immediate postdominators
-
   PostDominatorTree() : DominatorTreeBase(true) {}
 
   virtual bool runOnFunction(Function &F) {
@@ -351,8 +339,6 @@ public:
 // compute a normal dominator tree.
 //
 struct DominanceFrontier : public DominanceFrontierBase {
-  static AnalysisID ID;         // Build dominance frontier
-
   DominanceFrontier() : DominanceFrontierBase(false) {}
 
   virtual bool runOnFunction(Function &) {
@@ -379,8 +365,6 @@ private:
 // used to compute the a post-dominance frontier.
 //
 struct PostDominanceFrontier : public DominanceFrontierBase {
-  static AnalysisID ID;         // Build post dominance frontier
-
   PostDominanceFrontier() : DominanceFrontierBase(true) {}
 
   virtual bool runOnFunction(Function &) {

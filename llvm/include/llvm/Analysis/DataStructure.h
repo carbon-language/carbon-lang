@@ -388,8 +388,6 @@ class LocalDataStructures : public Pass {
   // DSInfo, one graph for each function
   std::map<const Function*, DSGraph*> DSInfo;
 public:
-  static AnalysisID ID;            // DataStructure Analysis ID 
-
   ~LocalDataStructures() { releaseMemory(); }
 
   virtual bool run(Module &M);
@@ -422,8 +420,6 @@ class BUDataStructures : public Pass {
   // DSInfo, one graph for each function
   std::map<const Function*, DSGraph*> DSInfo;
 public:
-  static AnalysisID ID;            // BUDataStructure Analysis ID 
-
   ~BUDataStructures() { releaseMemory(); }
 
   virtual bool run(Module &M);
@@ -459,8 +455,6 @@ class TDDataStructures : public Pass {
   // DSInfo, one graph for each function
   std::map<const Function*, DSGraph*> DSInfo;
 public:
-  static AnalysisID ID;            // TDDataStructure Analysis ID 
-
   ~TDDataStructures() { releaseMemory(); }
 
   virtual bool run(Module &M);

@@ -121,8 +121,6 @@ public:
   //===---------------------------------------------------------------------
   // Pass infrastructure interface glue code...
   //
-  static AnalysisID ID;    // We are an analysis, we must have an ID
-
   CallGraph() : Root(0) {}
   ~CallGraph() { destroy(); }
 

@@ -20,7 +20,6 @@ using std::vector;
 
 static RegisterAnalysis<LocalDataStructures>
 X("datastructure", "Local Data Structure Analysis");
-AnalysisID LocalDataStructures::ID = X;
 
 //===----------------------------------------------------------------------===//
 //  GraphBuilder Class

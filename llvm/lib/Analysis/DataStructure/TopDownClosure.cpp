@@ -15,7 +15,6 @@ using std::map;
 
 static RegisterAnalysis<TDDataStructures>
 Y("tddatastructure", "Top-down Data Structure Analysis Closure");
-AnalysisID TDDataStructures::ID = Y;
 
 // releaseMemory - If the pass pipeline is done with this pass, we can release
 // our memory... here...

@@ -15,11 +15,6 @@ class Type;
 class FindUsedTypes : public Pass {
   std::set<const Type *> UsedTypes;
 public:
-  // FindUsedTypes ctor - This pass can optionally include types that are
-  // referenced only in symbol tables, but the default is not to.
-  //
-  static AnalysisID ID;
-
   // getTypes - After the pass has been run, return the set containing all of
   // the types used in the module.
   //

@@ -36,8 +36,6 @@ class IntervalPartition : public FunctionPass {
   std::vector<Interval*> Intervals;
 
 public:
-  static AnalysisID ID;    // We are an analysis, we must have an ID
-
   IntervalPartition() : RootInterval(0) {}
 
   // run - Calculate the interval partition for this function

@@ -67,8 +67,6 @@ class LoopInfo : public FunctionPass {
   std::map<BasicBlock*, Loop*> BBMap;
   std::vector<Loop*> TopLevelLoops;
 public:
-  static AnalysisID ID;            // LoopInfo Analysis ID 
-
   // LoopInfo ctor - Calculate the natural loop information for a CFG
   ~LoopInfo() { releaseMemory(); }
 
