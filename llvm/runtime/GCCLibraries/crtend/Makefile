@@ -19,7 +19,7 @@ LEVEL = ../../..
 DONT_BUILD_RELINKED = 1
 BYTECODE_LIBRARY = 1
 LIBRARYNAME = crtend
-BYTECODE_DESTINATION = $(cferuntime_libdir)
+BYTECODE_DESTINATION = $(CFERuntimeLibDir)
 
 # Note: We're using FAKE_SOURCES because the comp_*.c don't really exists. 
 # However this makefile builds comp_*.bc and that's what we want in the library.
