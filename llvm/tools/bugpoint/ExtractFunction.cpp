@@ -48,29 +48,30 @@ namespace {
 /// series of cleanup passes (ADCE and SimplifyCFG) to eliminate any code which
 /// depends on the value.  The modified module is then returned.
 ///
-Module *BugDriver::deleteInstructionFromProgram(Instruction *I,
+Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
                                                 unsigned Simplification) const {
   Module *Result = CloneModule(Program);
 
-  BasicBlock *PBB = I->getParent();
-  Function *PF = PBB->getParent();
+  const BasicBlock *PBB = I->getParent();
+  const Function *PF = PBB->getParent();
 
   Module::iterator RFI = Result->begin(); // Get iterator to corresponding fn
-  std::advance(RFI, std::distance(Program->begin(), Module::iterator(PF)));
+  std::advance(RFI, std::distance(PF->getParent()->begin(),
+                                  Module::const_iterator(PF)));
 
   Function::iterator RBI = RFI->begin();  // Get iterator to corresponding BB
-  std::advance(RBI, std::distance(PF->begin(), Function::iterator(PBB)));
+  std::advance(RBI, std::distance(PF->begin(), Function::const_iterator(PBB)));
 
   BasicBlock::iterator RI = RBI->begin(); // Get iterator to corresponding inst
-  std::advance(RI, std::distance(PBB->begin(), BasicBlock::iterator(I)));
-  I = RI;                                 // Got the corresponding instruction!
+  std::advance(RI, std::distance(PBB->begin(), BasicBlock::const_iterator(I)));
+  Instruction *TheInst = RI;              // Got the corresponding instruction!
 
   // If this instruction produces a value, replace any users with null values
-  if (I->getType() != Type::VoidTy)
-    I->replaceAllUsesWith(Constant::getNullValue(I->getType()));
+  if (TheInst->getType() != Type::VoidTy)
+    TheInst->replaceAllUsesWith(Constant::getNullValue(TheInst->getType()));
 
   // Remove the instruction from the program.
-  I->getParent()->getInstList().erase(I);
+  TheInst->getParent()->getInstList().erase(TheInst);
 
   // Spiff up the output a little bit.
   PassManager Passes;

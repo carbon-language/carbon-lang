@@ -152,6 +152,26 @@ public:
   bool diffProgram(const std::string &BytecodeFile = "",
                    const std::string &SharedObj = "",
                    bool RemoveBytecode = false);
+  /// EmitProgressBytecode - This function is used to output the current Program
+  /// to a file named "bugpoint-ID.bc".
+  ///
+  void EmitProgressBytecode(const std::string &ID, bool NoFlyer = false);
+
+  /// deleteInstructionFromProgram - This method clones the current Program and
+  /// deletes the specified instruction from the cloned module.  It then runs a
+  /// series of cleanup passes (ADCE and SimplifyCFG) to eliminate any code
+  /// which depends on the value.  The modified module is then returned.
+  ///
+  Module *deleteInstructionFromProgram(const Instruction *I, unsigned Simp)
+    const;
+
+  /// performFinalCleanups - This method clones the current Program and performs
+  /// a series of cleanups intended to get rid of extra cruft on the module.  If
+  /// the MayModifySemantics argument is true, then the cleanups is allowed to
+  /// modify how the code behaves.
+  ///
+  Module *performFinalCleanups(Module *M, bool MayModifySemantics = false);
+
 private:
   /// ParseInputFile - Given a bytecode or assembly input filename, parse and
   /// return it, or return null if not possible.
@@ -163,12 +183,6 @@ private:
   ///
   bool writeProgramToFile(const std::string &Filename, Module *M = 0) const;
 
-
-  /// EmitProgressBytecode - This function is used to output the current Program
-  /// to a file named "bugpoint-ID.bc".
-  ///
-  void EmitProgressBytecode(const std::string &ID, bool NoFlyer = false);
-  
   /// runPasses - Run the specified passes on Program, outputting a bytecode
   /// file and writting the filename into OutputFile if successful.  If the
   /// optimizations fail for some reason (optimizer crashes), return true,
@@ -194,20 +208,6 @@ private:
   /// PrintFunctionList - prints out list of problematic functions
   ///
   static void PrintFunctionList(const std::vector<Function*> &Funcs);
-
-  /// deleteInstructionFromProgram - This method clones the current Program and
-  /// deletes the specified instruction from the cloned module.  It then runs a
-  /// series of cleanup passes (ADCE and SimplifyCFG) to eliminate any code
-  /// which depends on the value.  The modified module is then returned.
-  ///
-  Module *deleteInstructionFromProgram(Instruction *I, unsigned Simp) const;
-
-  /// performFinalCleanups - This method clones the current Program and performs
-  /// a series of cleanups intended to get rid of extra cruft on the module.  If
-  /// the MayModifySemantics argument is true, then the cleanups is allowed to
-  /// modify how the code behaves.
-  ///
-  Module *performFinalCleanups(Module *M, bool MayModifySemantics = false);
 
   /// initializeExecutionEnvironment - This method is used to set up the
   /// environment for executing LLVM programs.
