@@ -80,6 +80,10 @@ namespace {
       return runOnMachineFunction(MachineFunction::get(&Fn));
     }
 
+    virtual const char *getPassName() const {
+      return "Simple Register Allocator";
+    }
+
   private:
     /// runOnMachineFunction - Register allocate the whole function
     bool runOnMachineFunction(MachineFunction &Fn);
@@ -328,7 +332,7 @@ void RegAllocSimple::EliminatePHINodes(MachineBasicBlock &MBB) {
           saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
         } else {
           // Allocate a physical register and add a move in the BB
-          unsigned opVirtualReg = (unsigned) opVal.getAllocatedRegNum();
+          unsigned opVirtualReg = opVal.getAllocatedRegNum();
           unsigned opPhysReg;
           opI = moveUseToReg(opBlock, opI, opVirtualReg, physReg);
           
