@@ -13,8 +13,10 @@
 #ifndef LLVM_TARGET_TARGETDATA_H
 #define LLVM_TARGET_TARGETDATA_H
 
-#include "llvm/Type.h"
-
+#include "llvm/Annotation.h"
+#include <vector>
+class Value;
+class Type;
 class StructType;
 class StructLayout;
 
@@ -64,7 +66,8 @@ public:
 				 const std::vector<Value*> &Indices) const;
 
   inline const StructLayout *getStructLayout(const StructType *Ty) const {
-    return (const StructLayout*)((const Type*)Ty)->getOrCreateAnnotation(AID);
+    return (const StructLayout*)
+         ((const Annotable*)Ty)->getOrCreateAnnotation(AID);
   }
 };
 
