@@ -578,8 +578,29 @@ void doReplaceOrInsert() {
 
     // Determine if this archive member matches one of the paths we're trying
     // to replace.
-    std::set<sys::Path>::iterator found = 
-      std::find(remaining.begin(),remaining.end(), I->getPath());
+
+    std::set<sys::Path>::iterator found = remaining.end();
+    for (std::set<sys::Path>::iterator RI = remaining.begin(), 
+         RE = remaining.end(); RI != RE; ++RI ) {
+      std::string compare(RI->get());
+      if (TruncateNames && compare.length() > 15) {
+        const char* nm = compare.c_str();
+        unsigned len = compare.length();
+        size_t slashpos = compare.rfind('/');
+        if (slashpos != std::string::npos) {
+          nm += slashpos + 1;
+          len -= slashpos +1;
+        }
+        if (len > 15) 
+          len = 15;
+        compare.assign(nm,len);
+      }
+      if (compare == I->getPath().get()) {
+        found = RI;
+        break;
+      }
+    }
+
     if (found != remaining.end()) {
       sys::Path::StatusInfo si;
       found->getStatusInfo(si);
