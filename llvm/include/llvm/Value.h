@@ -50,6 +50,7 @@ private:
   PATypeHandle<Type> Ty;
   ValueTy VTy;
 
+  void operator=(const Value &);     // Do not implement
   Value(const Value &);              // Do not implement
 protected:
   inline void setType(const Type *ty) { Ty = ty; }

@@ -81,6 +81,9 @@ public:
 //
 class Annotable {
   mutable Annotation *AnnotationList;
+
+  Annotable(const Annotable &);        // Do not implement
+  void operator=(const Annotable &);   // Do not implement
 public:
   Annotable() : AnnotationList(0) {}
   virtual ~Annotable() {   // Virtual because it's designed to be subclassed...
