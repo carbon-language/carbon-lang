@@ -56,6 +56,7 @@ class PPC32I<string name, bits<6> opcode, bit ppc64, bit vmx> : Instruction {
 
   let Name = name;
   let Namespace = "PPC32";
+  let ClassPrefix = "PowerPC";
   let Inst{0-5} = opcode;
 }
 
