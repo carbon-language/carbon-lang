@@ -85,6 +85,7 @@ private:          // All of this data is transient across calls to ParseBytecode
   unsigned char FirstDerivedTyID;   // First variable index to use for type
   bool HasImplicitZeroInitializer;  // Is entry 0 of every slot implicity zeros?
   bool isBigEndian, hasLongPointers;// Information about the target compiled for
+  bool hasInternalMarkerOnly;       // Only types of linkage are intern/external
 
   typedef std::vector<ValueList*> ValueTable;
   ValueTable Values, LateResolveValues;

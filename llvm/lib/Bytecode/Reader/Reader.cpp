@@ -301,14 +301,24 @@ bool BytecodeParser::ParseFunction(const uchar *&Buf, const uchar *EndBuf) {
     return true;  // Unexpected function!
   }
 
-  unsigned isInternal;
-  if (read_vbr(Buf, EndBuf, isInternal)) return true;
+  GlobalValue::LinkageTypes Linkage = GlobalValue::ExternalLinkage;
+
+  if (!hasInternalMarkerOnly) {
+    unsigned LinkageType;
+    if (read_vbr(Buf, EndBuf, LinkageType)) return true;
+    if (LinkageType & 0x3) return true;
+    Linkage = (GlobalValue::LinkageTypes)LinkageType;
+  } else {
+    // We used to only support two linkage models: internal and external
+    unsigned isInternal;
+    if (read_vbr(Buf, EndBuf, isInternal)) return true;
+    if (isInternal) Linkage = GlobalValue::InternalLinkage;
+  }
 
   Function *F = FunctionSignatureList.back().first;
   unsigned FunctionSlot = FunctionSignatureList.back().second;
   FunctionSignatureList.pop_back();
-  F->setLinkage(isInternal ? GlobalValue::InternalLinkage :
-                             GlobalValue::ExternalLinkage);
+  F->setLinkage(Linkage);
 
   const FunctionType::ParamTypes &Params =F->getFunctionType()->getParamTypes();
   Function::aiterator AI = F->abegin();
@@ -390,20 +400,29 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End){
   unsigned VarType;
   if (read_vbr(Buf, End, VarType)) return true;
   while (VarType != Type::VoidTyID) { // List is terminated by Void
-    // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
-    // bit2 = isInternal, bit3+ = slot#
-    const Type *Ty = getType(VarType >> 3);
+    unsigned SlotNo;
+    GlobalValue::LinkageTypes Linkage;
+
+    if (!hasInternalMarkerOnly) {
+      // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
+      // bit2,3 = Linkage, bit4+ = slot#
+      SlotNo = VarType >> 4;
+      Linkage = (GlobalValue::LinkageTypes)((VarType >> 2) & 3);
+    } else {
+      // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
+      // bit2 = isInternal, bit3+ = slot#
+      SlotNo = VarType >> 3;
+      Linkage = (VarType & 4) ? GlobalValue::InternalLinkage :
+        GlobalValue::ExternalLinkage;
+    }
+
+    const Type *Ty = getType(SlotNo);
     if (!Ty || !isa<PointerType>(Ty)) { 
       Error = "Global not pointer type!  Ty = " + Ty->getDescription();
       return true; 
     }
 
     const Type *ElTy = cast<PointerType>(Ty)->getElementType();
-
-
-    GlobalValue::LinkageTypes Linkage = 
-      (VarType & 4) ? GlobalValue::InternalLinkage :
-                      GlobalValue::ExternalLinkage;
 
     // Create the global variable...
     GlobalVariable *GV = new GlobalVariable(ElTy, VarType & 1, Linkage,
@@ -477,7 +496,11 @@ bool BytecodeParser::ParseVersionInfo(const uchar *&Buf, const uchar *EndBuf) {
   isBigEndian     = Version & 1;
   hasLongPointers = Version & 2;
   RevisionNum     = Version >> 4;
+
+  // Default values for the current bytecode version
   HasImplicitZeroInitializer = true;
+  hasInternalMarkerOnly = false;
+  FirstDerivedTyID = 14;
 
   switch (RevisionNum) {
   case 0:                  // Initial revision
@@ -486,13 +509,17 @@ bool BytecodeParser::ParseVersionInfo(const uchar *&Buf, const uchar *EndBuf) {
     // encoding zero initializers for arrays compactly.
     //
     if (Version != 14) return true;  // Unknown revision 0 flags?
-    FirstDerivedTyID = 14;
     HasImplicitZeroInitializer = false;
     isBigEndian = hasLongPointers = true;
+    hasInternalMarkerOnly = true;
     break;
   case 1:
     // Version #1 has two bit fields: isBigEndian and hasLongPointers
-    FirstDerivedTyID = 14;
+    hasInternalMarkerOnly = true;
+    break;
+  case 2:
+    // Version #2 added information about all 4 linkage types instead of just
+    // having internal and external.
     break;
   default:
     Error = "Unknown bytecode version number!";

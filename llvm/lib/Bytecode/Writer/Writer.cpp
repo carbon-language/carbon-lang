@@ -46,8 +46,8 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
   bool isBigEndian = true;
   bool hasLongPointers = true;
 
-  // Output the version identifier... we are currently on bytecode version #1
-  unsigned Version = (1 << 4) | isBigEndian | (hasLongPointers << 1);
+  // Output the version identifier... we are currently on bytecode version #2
+  unsigned Version = (2 << 4) | isBigEndian | (hasLongPointers << 1);
   output_vbr(Version, Out);
   align32(Out);
 
@@ -154,9 +154,9 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     int Slot = Table.getValSlot(I->getType());
     assert(Slot != -1 && "Module global vars is broken!");
 
-    // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2=InternalLinkage,
-    // bit3+ = Slot # for type
-    unsigned oSlot = ((unsigned)Slot << 3) | (I->hasInternalLinkage() << 2) |
+    // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2,3=Linkage,
+    // bit4+ = Slot # for type
+    unsigned oSlot = ((unsigned)Slot << 4) | ((unsigned)I->getLinkage() << 2) |
                      (I->hasInitializer() << 1) | I->isConstant();
     output_vbr(oSlot, Out);
 
@@ -183,7 +183,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
 void BytecodeWriter::outputFunction(const Function *F) {
   BytecodeBlock FunctionBlock(BytecodeFormat::Function, Out);
-  output_vbr((unsigned)F->hasInternalLinkage(), Out);
+  output_vbr((unsigned)F->getLinkage(), Out);
   // Only output the constant pool and other goodies if needed...
   if (!F->isExternal()) {
 
