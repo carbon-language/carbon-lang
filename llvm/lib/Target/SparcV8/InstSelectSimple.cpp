@@ -288,33 +288,53 @@ void V8ISel::visitBinaryOperator (BinaryOperator &I) {
   unsigned Op1Reg = getReg (I.getOperand (1));
 
   unsigned ResultReg = makeAnotherReg (I.getType ());
-  
+  unsigned OpCase = ~0;
+
   // FIXME: support long, ulong, fp.
   switch (I.getOpcode ()) {
-    case Instruction::Add: 
-      BuildMI (BB, V8::ADDrr, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
-      break;
-    case Instruction::Sub: 
-      BuildMI (BB, V8::SUBrr, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
-      break;
-    case Instruction::Mul: {
-      unsigned Opcode = I.getType ()->isSigned () ? V8::SMULrr : V8::UMULrr;
-      BuildMI (BB, Opcode, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
-      break;
+  case Instruction::Add: OpCase = 0; break;
+  case Instruction::Sub: OpCase = 1; break;
+  case Instruction::Mul: OpCase = 2; break;
+  case Instruction::And: OpCase = 3; break;
+  case Instruction::Or:  OpCase = 4; break;
+  case Instruction::Xor: OpCase = 5; break;
+
+  case Instruction::Div:
+  case Instruction::Rem: {
+    unsigned Dest = ResultReg;
+    if (I.getOpcode() == Instruction::Rem)
+      Dest = makeAnotherReg(I.getType());
+
+    // FIXME: this is probably only right for 32 bit operands.
+    if (I.getType ()->isSigned()) {
+      unsigned Tmp = makeAnotherReg (I.getType ());
+      // Sign extend into the Y register
+      BuildMI (BB, V8::SRAri, 2, Tmp).addReg (Op0Reg).addZImm (31);
+      BuildMI (BB, V8::WRrr, 2, V8::Y).addReg (Tmp).addReg (V8::G0);
+      BuildMI (BB, V8::SDIVrr, 2, Dest).addReg (Op0Reg).addReg (Op1Reg);
+    } else {
+      // Zero extend into the Y register, ie, just set it to zero
+      BuildMI (BB, V8::WRrr, 2, V8::Y).addReg (V8::G0).addReg (V8::G0);
+      BuildMI (BB, V8::UDIVrr, 2, Dest).addReg (Op0Reg).addReg (Op1Reg);
     }
-    case Instruction::Div: {
-      unsigned Opcode = I.getType ()->isSigned () ? V8::SDIVrr : V8::UDIVrr;
-      // Clear out the Y register (top half of LHS of divide) 
-      BuildMI (BB, V8::WRYrr, 2, V8::Y).addReg (V8::G0).addReg (V8::G0);
-      BuildMI (BB, V8::NOP, 0); // WR may take up to 4 cycles to finish
-      BuildMI (BB, V8::NOP, 0);
-      BuildMI (BB, V8::NOP, 0);
-      BuildMI (BB, Opcode, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
-      break;
+
+    if (I.getOpcode() == Instruction::Rem) {
+      unsigned Tmp = makeAnotherReg (I.getType ());
+      BuildMI (BB, V8::SMULrr, 2, Tmp).addReg(Dest).addReg(Op1Reg);
+      BuildMI (BB, V8::SUBrr, 2, ResultReg).addReg(Op0Reg).addReg(Tmp);
     }
-    default:
-      visitInstruction (I);
-      return;
+    break;
+  }
+  default:
+    visitInstruction (I);
+    return;
+  }
+
+  if (OpCase != ~0U) {
+    static const unsigned Opcodes[] = {
+      V8::ADDrr, V8::SUBrr, V8::SMULrr, V8::ANDrr, V8::ORrr, V8::XORrr
+    };
+    BuildMI (BB, Opcodes[OpCase], 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
   }
 
   switch (getClass (I.getType ())) {

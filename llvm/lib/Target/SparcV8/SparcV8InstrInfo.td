@@ -75,9 +75,12 @@ let rd = 0, imm = 0 in
   def NOP : F2_1<0b100, "nop">;
 
 // Section B.11 - Logical Instructions, p. 106
+def ANDrr : F3_1<2, 0b000001, "and">;
 def ANDri : F3_2<2, 0b000001, "and">;
 def ORrr  : F3_1<2, 0b000010, "or">;
 def ORri  : F3_2<2, 0b000010, "or">;
+def XORrr : F3_1<2, 0b000011, "xor">;
+def XORri : F3_2<2, 0b000011, "xor">;
 
 // Section B.12 - Shift Instructions, p. 107
 def SLLri : F3_1<2, 0b100101, "sll">;
@@ -95,8 +98,14 @@ def UMULrr : F3_1<2, 0b001010, "umul">;
 def SMULrr : F3_1<2, 0b001011, "smul">;
 
 // Section B.19 - Divide Instructions, p. 115
-def UDIVrr: F3_1<2, 0b001110, "udiv">;
-def SDIVrr: F3_1<2, 0b001111, "sdiv">;
+def UDIVrr   : F3_1<2, 0b001110, "udiv">;
+def UDIVri   : F3_2<2, 0b001110, "udiv">;
+def SDIVrr   : F3_1<2, 0b001111, "sdiv">;
+def SDIVri   : F3_2<2, 0b001111, "sdiv">;
+def UDIVCCrr : F3_1<2, 0b011110, "udivcc">;
+def UDIVCCri : F3_2<2, 0b011110, "udivcc">;
+def SDIVCCrr : F3_1<2, 0b011111, "sdivcc">;
+def SDIVCCri : F3_2<2, 0b011111, "sdivcc">;
 
 // Section B.20 - SAVE and RESTORE, p. 117
 def SAVErr    : F3_1<2, 0b111100, "save">;           // save    r, r, r
@@ -118,7 +127,6 @@ def CALL : InstV8 {
 def JMPLrr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
 def JMPLri : F3_2<2, 0b111000, "jmpl">;              // jmpl [rs1+imm], rd
 
-// Section B.29 - Write State Register Instructions, p. 133
-let rd = 0 in
-  def WRYrr : F3_1<2, 0b110000, "wr">; // Special case of WRASR
-def WRASRrr : F3_1<2, 0b110000, "wr">; // Special reg = reg ^ reg
+// Section B.29 - Write State Register Instructions
+def WRrr : F3_1<2, 0b110000, "wr">;                    // wr rs1, rs2, rd
+def WRri : F3_2<2, 0b110000, "wr">;                    // wr rs1, imm, rd
