@@ -84,7 +84,8 @@ end
 sbyte "PtrRef"(sbyte** %argv, long %I, long %J)
 begin
 bb0:					;[#uses=3]
-	%idx = getelementptr sbyte** %argv, long %I, long %J
-	%reg222 = load sbyte* %idx
-	ret sbyte %reg222;
+	%idx = getelementptr sbyte** %argv, long %I
+	%reg222 = load sbyte** %idx
+	%tmp = load sbyte* %reg222
+	ret sbyte %tmp
 end
