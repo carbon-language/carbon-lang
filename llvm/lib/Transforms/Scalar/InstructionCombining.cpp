@@ -3783,6 +3783,21 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
                 GEP.setOperand(0, X);
                 return &GEP;
               }
+      } else if (GEP.getNumOperands() == 2) {
+        // Transform things like:
+        // %t = getelementptr ubyte* cast ([2 x sbyte]* %str to ubyte*), uint %V
+        // into:  %t1 = getelementptr [2 x sbyte*]* %str, int 0, uint %V; cast
+        Constant *X = CE->getOperand(0);
+        const Type *SrcElTy = cast<PointerType>(X->getType())->getElementType();
+        const Type *ResElTy =cast<PointerType>(CE->getType())->getElementType();
+        if (isa<ArrayType>(SrcElTy) &&
+            TD->getTypeSize(cast<ArrayType>(SrcElTy)->getElementType()) == 
+            TD->getTypeSize(ResElTy)) {
+          Value *V = InsertNewInstBefore(
+                 new GetElementPtrInst(X, Constant::getNullValue(Type::IntTy),
+                                       GEP.getOperand(1), GEP.getName()), GEP);
+          return new CastInst(V, GEP.getType());
+        }
       }
     }
   }
