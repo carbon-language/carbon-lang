@@ -12,12 +12,11 @@ ac_cv_func_mmap_file,
 #include <fcntl.h>
 ]],[[
   int fd;
-  int main () {
   fd = creat ("foo",0777); 
   fd = (int) mmap (0, 1, PROT_READ, MAP_SHARED, fd, 0);
   unlink ("foo"); 
-  return (fd != (int) MAP_FAILED);}]])],
-  [ac_cv_func_mmap_file=yes], [ac_cv_func_mmap_file=no],[])
+  return (fd != (int) MAP_FAILED);]])],
+  [ac_cv_func_mmap_file=yes],[ac_cv_func_mmap_file=no],[ac_cv_func_mmap_file=no])
   AC_LANG_POP([C])
 ])
 if test "$ac_cv_func_mmap_file" = yes; then
