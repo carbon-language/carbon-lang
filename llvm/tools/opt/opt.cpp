@@ -15,6 +15,7 @@
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
+#include "llvm/Transforms/LevelChange.h"
 #include <fstream>
 
 using namespace opt;
@@ -43,7 +44,7 @@ struct {
   { indvars  , new opt::InductionVariableCannonicalize() },
   { sccp     , new opt::SCCPPass() },
   { adce     , new opt::AgressiveDCE() },
-  { raise    , new opt::RaiseRepresentation() },
+  { raise    , new RaisePointerReferences() },
   { trace    , new InsertTraceCode(true, true) },
   { tracem   , new InsertTraceCode(false, true) },
   { print    , new PrintModulePass("Current Method: \n",&cerr) },

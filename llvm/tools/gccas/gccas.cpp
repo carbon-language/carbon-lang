@@ -10,7 +10,7 @@
 #include "llvm/Module.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
-#include "llvm/Optimizations/LevelChange.h"
+#include "llvm/Transforms/LevelChange.h"
 #include "llvm/Optimizations/ConstantProp.h"
 #include "llvm/Optimizations/DCE.h"
 #include "llvm/Transforms/ConstantMerge.h"
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
   //
   vector<Pass*> Passes;
   Passes.push_back(new CleanupGCCOutput());        // Fix gccisms
-  Passes.push_back(new opt::RaiseRepresentation());// Fix general low level code
+  Passes.push_back(new RaisePointerReferences());  // Fix general low level code
   Passes.push_back(new opt::ConstantPropogation());// Trivial const prop
   Passes.push_back(new opt::DeadCodeElimination());// Trivial DCE
   Passes.push_back(new ConstantMerge());           // Merge dup global constants
