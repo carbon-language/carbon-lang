@@ -51,16 +51,16 @@ language.
 	Quiet mode.  With this option, analysis pass names are not printed.
 	<p>
 
-	<li> -load &lt;plugin.so&gt;
+	<li> -load &lt;plugin&gt;
 	<br>
-	Load the specified dynamic object with name plugin.so.  This file
+	Load the specified dynamic object with name <tt>plugin</tt>.  This file
 	should contain additional analysis passes that register themselves with
 	the <tt>analyze</tt> program after being loaded.
 	<p>
 
 	After being loaded, additional command line options are made available
-	for running the passes made available by plugin.so.  Use
-	'<tt><tt>analyze</tt> -load &lt;plugin.so&gt; -help</tt>' to see the new
+	for running the passes made available by <tt>plugin</tt>.  Use
+	'<tt><tt>analyze</tt> -load &lt;plugin&gt; -help</tt>' to see the new
 	list of available analysis passes.
 	<p>
 </ul>

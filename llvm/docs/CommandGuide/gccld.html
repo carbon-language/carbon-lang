@@ -32,24 +32,35 @@ optimizations on the program.
 
 <h4>Search Order</h4>
 
+<p>
 When looking for objects specified on the command line, <tt>gccld</tt> will
 search for the object first in the current directory and then in the directory
 specified by the <tt>LLVM_LIB_SEARCH_PATH</tt> environment variable.  If it
 cannot find the object, it fails.
-<p>
+</p>
 
+<p>
 When looking for a library specified with the -l option, <tt>gccld</tt> first
 attempts to load a file with that name from the current directory.  If that
 fails, it looks for lib&lt;library&gt;.bc, lib&lt;library&gt;.a, or
-lib&lt;library&gt;.so, in that order, in each directory added to the library
-search path with the -L option.  These directories are searched in order they
+lib&lt;library&gt;.&lt;shared library extension&gt;, in that order, in each
+directory added to the library search path with the -L option.  These
+directories are searched in the order they
 were specified.  If the library cannot be located, then <tt>gccld</tt> looks in
 the directory specified by the <tt>LLVM_LIB_SEARCH_PATH</tt> environment
-variable.  If it does not find lib&lt;library&gt;.[bc | a | so] there, it fails.
+variable.  If it does not find a library there, it fails.
+</p>
 
+<p>
+The shared library extension is usually <tt>.so</tt>, but it may differ
+depending upon the system.
+</p>
+
+<p>
 The -L option is global.  It does not matter where it is specified in the list
 of command line arguments; the directory is simply added to the search path and
 is applied to all libraries, preceding or succeeding, in the command line.
+</p>
 
 <h4>Link order</h4>
 
@@ -131,9 +142,9 @@ using the -native option.
 	<br>
 	Specify libraries to include when linking the output file.  When
 	linking, <tt>gccld</tt> will first attempt to load a file with the
-	pathname library.  If that fails, it will then attempt to load
-	lib&lt;library&gt;.bc, lib&lt;library&gt;.a, and lib&lt;library&gt;.so,
-	in that order.
+	pathname <tt>library</tt>.  If that fails, it will then attempt to load
+	lib&lt;library&gt;.bc, lib&lt;library&gt;.a, and
+  lib&lt;library&gt;.&lt;shared library extension&gt;, in that order.
 	<p>
 
 	<li> -link-as-library

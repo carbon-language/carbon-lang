@@ -173,6 +173,11 @@ directory are to be compiled and linked together into a
 <tt>lib/Debug/libhello.so</tt> shared object that can be dynamically loaded by
 the <tt>opt</tt> or <tt>analyze</tt> tools.</p>
 
+<p>
+Note that the suffix of the shared library may differ from the example above if
+your system uses a different suffix by default.
+</p>
+
 <p>Now that we have the build scripts set up, we just need to write the code for
 the pass itself.</p>
 
@@ -282,7 +287,7 @@ them) to be useful.</p>
 
 <div class="doc_text">
 
-<p>Now that you have a brand new shiny <tt>.so</tt> file, we can use the
+<p>Now that you have a brand new shiny shared object file, we can use the
 <tt>opt</tt> command to run an LLVM program through your pass.  Because you
 registered your pass with the <tt>RegisterOpt</tt> template, you will be able to
 use the <tt>opt</tt> tool to access it, once loaded.</p>

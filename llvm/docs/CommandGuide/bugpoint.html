@@ -158,8 +158,8 @@ non-obvious ways.  Here are some hints and tips:<p>
 <h3>OPTIONS</h3>
 
 <ul>
-	<li><tt>-additional-so &lt;library.so&gt;</tt><br>
-    Load <tt>&lt;library.so&gt;</tt> into the test program whenever it is run.
+	<li><tt>-additional-so &lt;library&gt;</tt><br>
+    Load <tt>&lt;library&gt;</tt> into the test program whenever it is run.
     This is useful if you are debugging programs which depend on non-LLVM
     libraries (such as the X or curses libraries) to run.<p>
 
@@ -189,14 +189,14 @@ non-obvious ways.  Here are some hints and tips:<p>
     test program, whenever it runs, to come from that file.
 	<p>
 
-	<a name="opt_load"><li> <tt>-load &lt;plugin.so&gt;</tt><br>
-	Load the dynamic object <tt>&lt;plugin.so&gt;</tt> into <tt>bugpoint</tt>
+	<a name="opt_load"><li> <tt>-load &lt;plugin&gt;</tt><br>
+	Load the dynamic object <tt>&lt;plugin&gt;</tt> into <tt>bugpoint</tt>
     itself.  This object should register new
 	optimization passes.  Once loaded, the object will add new command line
 	options to enable various optimizations.  To see the new complete list
 	of optimizations, use the -help and -load options together:
 	<p>
-	<tt>bugpoint -load &lt;plugin.so&gt; -help</tt>
+	<tt>bugpoint -load &lt;plugin&gt; -help</tt>
 	<p>
 
 	<a name="opt_output"><li><tt>-output &lt;filename&gt;</tt><br>
