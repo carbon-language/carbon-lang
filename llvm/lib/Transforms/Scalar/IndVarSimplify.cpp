@@ -607,9 +607,9 @@ void IndVarSimplify::runOnLoop(Loop *L) {
         // variable.  Doing so will put expensive multiply instructions inside
         // of the loop.  For now just disable indvar subst on anything more
         // complex than a linear addrec.
-        if (!isa<SCEVAddRecExpr>(SCEV) || 
-            cast<SCEVAddRecExpr>(SCEV)->getNumOperands() < 3)
-          IndVars.push_back(std::make_pair(PN, SCEV));
+        if (SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(SCEV))
+          if (AR->getNumOperands() == 2 && isa<SCEVConstant>(AR->getOperand(1)))
+            IndVars.push_back(std::make_pair(PN, SCEV));
     }
 
   // If there are no induction variables in the loop, there is nothing more to
