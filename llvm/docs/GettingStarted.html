@@ -552,22 +552,16 @@ All these paths are absolute:</p>
 <div class="doc_text">
 
 <p>
-In order to compile and use LLVM, you will need to set some environment
-variables.  There are also some shell aliases which you may find useful.
-You can set these on the command line, or better yet, set them in your
-<tt>.cshrc</tt> or <tt>.profile</tt>.
+In order to compile and use LLVM, you may need to set some environment
+variables.
 
 <dl>
   <dt><tt>LLVM_LIB_SEARCH_PATH</tt>=<tt>/path/to/your/bytecode/libs</tt></dt>
-  <dd>This environment variable helps LLVM linking tools find the locations 
-  of your bytecode libraries. It is optional and provided only a convenience 
-  since you can specify the paths using the -L options of the tools.</dd>
-
-  <dt><tt>alias llvmgcc='llvm-gcc'</tt></dt>
-  <dt><tt>alias llvmg++='llvm-g++'</tt></dt>
-  <dd></dt>These aliases allow you to use the LLVM C and C++ front ends 
-  under alternative names. It is assumed that llvm-gcc and llvm-g++ are 
-  in your path. The LLVM makefiles will use llvm-gcc and llvm-g++ directly.</dd>
+  <dd>[Optional] This environment variable helps LLVM linking tools find the
+  locations of your bytecode libraries. It is provided only a
+  convenience since you can specify the paths using the -L options of the
+  tools and the C/C++ front-end will use the bytecode files installed in its
+  <tt>lib</tt> directory.</dd>
 </dl>
 
 </div>
