@@ -113,7 +113,6 @@ void SparcV9IntRegClass::colorIGNode(IGNode * Node,
       //  get the live range corresponding to live var
       // since LR span across calls, must save across calls 
       //
-      LR->markForSaveAcrossCalls();       
       if (DEBUG_RA)
         std::cerr << "\n  Colored after SECOND search with col " << c;
     }
@@ -306,7 +305,6 @@ void SparcV9FloatRegClass::colorIGNode(IGNode * Node,
 
   if (ColorFound >= 0) {
     LR->setColor(ColorFound);         // first color found in preferred order
-    LR->markForSaveAcrossCalls();  
   } else {
     // we are here because no color could be found
     LR->markForSpill();               // no color found - must spill

@@ -40,11 +40,6 @@ class LiveRange : public ValueSet {
   int Color;                  // color assigned to this live range
   bool mustSpill;             // whether this LR must be spilt
 
-  /// mustSaveAcrossCalls - whether this LR must be saved accross calls
-  /// ***TODO REMOVE this
-  ///
-  bool mustSaveAcrossCalls;        
-  
   /// SuggestedColor - if this LR has a suggested color, can it be
   /// really alloated?  A suggested color cannot be allocated when the
   /// suggested color is volatile and when there are call
@@ -77,7 +72,7 @@ class LiveRange : public ValueSet {
 public:
   LiveRange() {
     Color = SuggestedColor = -1;        // not yet colored 
-    mustSpill = mustSaveAcrossCalls = false;
+    mustSpill = false;
     MyRegClass = 0;
     UserIGNode = 0;
     doesSpanAcrossCalls = false;
@@ -133,8 +128,6 @@ public:
     return SpilledStackOffsetFromFP;
   }
 
-  inline void markForSaveAcrossCalls() { mustSaveAcrossCalls = true; }
-  
   inline void setUserIGNode(IGNode *IGN) {
     assert(!UserIGNode); UserIGNode = IGN;
   }
