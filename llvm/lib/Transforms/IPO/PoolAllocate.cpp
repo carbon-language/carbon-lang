@@ -33,7 +33,71 @@ namespace {
 
 void PoolAllocate::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<BUDataStructures>();
+  AU.addRequired<TDDataStructures>();
   AU.addRequired<TargetData>();
+}
+
+// Prints out the functions mapped to the leader of the equivalence class they
+// belong to.
+void PoolAllocate::printFuncECs() {
+  map<Function*, Function*> leaderMap = FuncECs.getLeaderMap();
+  std::cerr << "Indirect Function Map \n";
+  for (map<Function*, Function*>::iterator LI = leaderMap.begin(),
+	 LE = leaderMap.end(); LI != LE; ++LI) {
+    std::cerr << LI->first->getName() << ": leader is "
+	      << LI->second->getName() << "\n";
+  }
+}
+
+void PoolAllocate::buildIndirectFunctionSets(Module &M) {
+  // Iterate over the module looking for indirect calls to functions
+
+  // Get top down DSGraph for the functions
+  TDDS = &getAnalysis<TDDataStructures>();
+  
+  for (Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI) {
+
+    DEBUG(std::cerr << "Processing indirect calls function:" <<  MI->getName() << "\n");
+
+    if (MI->isExternal())
+      continue;
+
+    DSGraph &TDG = TDDS->getDSGraph(*MI);
+
+    std::vector<DSCallSite> callSites = TDG.getFunctionCalls();
+
+    // For each call site in the function
+    // All the functions that can be called at the call site are put in the
+    // same equivalence class.
+    for (vector<DSCallSite>::iterator CSI = callSites.begin(), 
+	   CSE = callSites.end(); CSI != CSE ; ++CSI) {
+      if (CSI->isIndirectCall()) {
+	DSNode *DSN = CSI->getCalleeNode();
+	// assert(DSN->NodeType == DSNode::GlobalNode);
+	std::vector<GlobalValue*> Callees = DSN->getGlobals();
+	if (Callees.size() > 0) {
+	  Function *firstCalledF = dyn_cast<Function>(*Callees.begin());
+	  FuncECs.addElement(firstCalledF);
+	  CallInstTargets[&CSI->getCallInst()].push_back(firstCalledF);
+	  if (Callees.size() > 1) {
+	    for (std::vector<GlobalValue*>::iterator CalleesI = 
+		   ++Callees.begin(), CalleesE = Callees.end(); 
+		 CalleesI != CalleesE; ++CalleesI) {
+	      Function *calledF = dyn_cast<Function>(*CalleesI);
+	      FuncECs.unionElements(firstCalledF, calledF);
+	      CallInstTargets[&CSI->getCallInst()].push_back(calledF);
+	    }
+	  }
+	} else {
+	  std::cerr << "Callee has no targets\n";
+	}
+      }
+    }
+  }
+  
+  // Print the equivalence classes
+  DEBUG(printFuncECs());
+  
 }
 
 bool PoolAllocate::run(Module &M) {
@@ -43,18 +107,32 @@ bool PoolAllocate::run(Module &M) {
   AddPoolPrototypes();
   BU = &getAnalysis<BUDataStructures>();
 
+  buildIndirectFunctionSets(M);
+
   std::map<Function*, Function*> FuncMap;
 
+   // Loop over the functions in the original program finding the pool desc.
+  // arguments necessary for each function that is indirectly callable.
+  // For each equivalence class, make a list of pool arguments and update
+  // the PoolArgFirst and PoolArgLast values for each function.
+  Module::iterator LastOrigFunction = --M.end();
+  for (Module::iterator I = M.begin(); ; ++I) {
+    if (!I->isExternal())
+      FindFunctionPoolArgs(*I);
+    if (I == LastOrigFunction) break;
+  }
+
+  // Now clone a function using the pool arg list obtained in the previous
+  // pass over the modules.
   // Loop over only the function initially in the program, don't traverse newly
   // added ones.  If the function uses memory, make its clone.
-  Module::iterator LastOrigFunction = --M.end();
   for (Module::iterator I = M.begin(); ; ++I) {
     if (!I->isExternal())
       if (Function *R = MakeFunctionClone(*I))
         FuncMap[I] = R;
     if (I == LastOrigFunction) break;
   }
-
+  
   ++LastOrigFunction;
 
   // Now that all call targets are available, rewrite the function bodies of the
@@ -65,7 +143,6 @@ bool PoolAllocate::run(Module &M) {
       ProcessFunctionBody(*I, FI != FuncMap.end() ? *FI->second : *I);
     }
 
-  FunctionInfo.clear();
   return true;
 }
 
@@ -75,7 +152,7 @@ bool PoolAllocate::run(Module &M) {
 //
 void PoolAllocate::AddPoolPrototypes() {
   CurModule->addTypeName("PoolDescriptor", PoolDescType);
-
+  
   // Get poolinit function...
   FunctionType *PoolInitTy =
     FunctionType::get(Type::VoidTy,
@@ -88,42 +165,54 @@ void PoolAllocate::AddPoolPrototypes() {
   FunctionType *PoolDestroyTy =
     FunctionType::get(Type::VoidTy, PDArgs, false);
   PoolDestroy = CurModule->getOrInsertFunction("pooldestroy", PoolDestroyTy);
-
+  
   // Get the poolalloc function...
   FunctionType *PoolAllocTy = FunctionType::get(VoidPtrTy, PDArgs, false);
   PoolAlloc = CurModule->getOrInsertFunction("poolalloc", PoolAllocTy);
-
+  
   // Get the poolfree function...
   PDArgs.push_back(VoidPtrTy);       // Pointer to free
   FunctionType *PoolFreeTy = FunctionType::get(Type::VoidTy, PDArgs, false);
   PoolFree = CurModule->getOrInsertFunction("poolfree", PoolFreeTy);
-
-#if 0
-  Args[0] = Type::UIntTy;            // Number of slots to allocate
-  FunctionType *PoolAllocArrayTy = FunctionType::get(VoidPtrTy, Args, true);
-  PoolAllocArray = CurModule->getOrInsertFunction("poolallocarray",
-                                                  PoolAllocArrayTy);
-#endif
+  
+  // The poolallocarray function
+  FunctionType *PoolAllocArrayTy =
+    FunctionType::get(VoidPtrTy,
+                      make_vector<const Type*>(PoolDescPtr, Type::UIntTy, 0),
+                      false);
+  PoolAllocArray = CurModule->getOrInsertFunction("poolallocarray", 
+						  PoolAllocArrayTy);
+  
 }
 
-
-// MakeFunctionClone - If the specified function needs to be modified for pool
-// allocation support, make a clone of it, adding additional arguments as
-// neccesary, and return it.  If not, just return null.
-//
-Function *PoolAllocate::MakeFunctionClone(Function &F) {
+void PoolAllocate::FindFunctionPoolArgs(Function &F) {
   DSGraph &G = BU->getDSGraph(F);
   std::vector<DSNode*> &Nodes = G.getNodes();
-  if (Nodes.empty()) return 0;  // No memory activity, nothing is required
+  if (Nodes.empty()) return ;  // No memory activity, nothing is required
 
   FuncInfo &FI = FunctionInfo[&F];   // Create a new entry for F
+  
   FI.Clone = 0;
-
+  
+  // Initialize the PoolArgFirst and PoolArgLast for the function depending
+  // on whether there have been other functions in the equivalence class
+  // that have pool arguments so far in the analysis.
+  if (!FuncECs.findClass(&F)) {
+    FI.PoolArgFirst = FI.PoolArgLast = 0;
+  } else {
+    if (EqClass2LastPoolArg.find(FuncECs.findClass(&F)) != 
+	EqClass2LastPoolArg.end())
+      FI.PoolArgFirst = FI.PoolArgLast = 
+	EqClass2LastPoolArg[FuncECs.findClass(&F)] + 1;
+    else
+      FI.PoolArgFirst = FI.PoolArgLast = 0;
+  }
+  
   // Find DataStructure nodes which are allocated in pools non-local to the
   // current function.  This set will contain all of the DSNodes which require
   // pools to be passed in from outside of the function.
   hash_set<DSNode*> &MarkedNodes = FI.MarkedNodes;
-
+  
   // Mark globals and incomplete nodes as live... (this handles arguments)
   if (F.getName() != "main")
     for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
@@ -137,22 +226,86 @@ Function *PoolAllocate::MakeFunctionClone(Function &F) {
       RetNode->markReachableNodes(MarkedNodes);
 
   if (MarkedNodes.empty())   // We don't need to clone the function if there
-    return 0;                // are no incoming arguments to be added.
+    return;                  // are no incoming arguments to be added.
 
+  for (hash_set<DSNode*>::iterator I = MarkedNodes.begin(),
+	 E = MarkedNodes.end(); I != E; ++I)
+    FI.PoolArgLast++;
+
+  if (FuncECs.findClass(&F)) {
+    // Update the equivalence class last pool argument information
+    // only if there actually were pool arguments to the function.
+    // Also, there is no entry for the Eq. class in EqClass2LastPoolArg
+    // if there are no functions in the equivalence class with pool arguments.
+    if (FI.PoolArgLast != FI.PoolArgFirst)
+      EqClass2LastPoolArg[FuncECs.findClass(&F)] = FI.PoolArgLast - 1;
+  }
+  
+}
+
+// MakeFunctionClone - If the specified function needs to be modified for pool
+// allocation support, make a clone of it, adding additional arguments as
+// neccesary, and return it.  If not, just return null.
+//
+Function *PoolAllocate::MakeFunctionClone(Function &F) {
+  
+  DSGraph &G = BU->getDSGraph(F);
+  std::vector<DSNode*> &Nodes = G.getNodes();
+  if (Nodes.empty())
+    return 0;
+    
+  FuncInfo &FI = FunctionInfo[&F];
+  
+  hash_set<DSNode*> &MarkedNodes = FI.MarkedNodes;
+  
+  if (!FuncECs.findClass(&F)) {
+    // Not in any equivalence class
+
+    if (MarkedNodes.empty())
+      return 0;
+  } else {
+    // No need to clone if there are no pool arguments in any function in the
+    // equivalence class
+    if (!EqClass2LastPoolArg.count(FuncECs.findClass(&F)))
+      return 0;
+  }
+      
   // Figure out what the arguments are to be for the new version of the function
   const FunctionType *OldFuncTy = F.getFunctionType();
   std::vector<const Type*> ArgTys;
-  ArgTys.reserve(OldFuncTy->getParamTypes().size() + MarkedNodes.size());
-
-  FI.ArgNodes.reserve(MarkedNodes.size());
-  for (hash_set<DSNode*>::iterator I = MarkedNodes.begin(),
-         E = MarkedNodes.end(); I != E; ++I)
-    if ((*I)->NodeType & DSNode::Incomplete) {
+  if (!FuncECs.findClass(&F)) {
+    ArgTys.reserve(OldFuncTy->getParamTypes().size() + MarkedNodes.size());
+    FI.ArgNodes.reserve(MarkedNodes.size());
+    for (hash_set<DSNode*>::iterator I = MarkedNodes.begin(),
+	   E = MarkedNodes.end(); I != E; ++I) {
       ArgTys.push_back(PoolDescPtr);      // Add the appropriate # of pool descs
       FI.ArgNodes.push_back(*I);
     }
-  if (FI.ArgNodes.empty()) return 0;      // No nodes to be pool allocated!
+    if (FI.ArgNodes.empty()) return 0;      // No nodes to be pool allocated!
 
+  }
+  else {
+    // This function is a member of an equivalence class and needs to be cloned 
+    ArgTys.reserve(OldFuncTy->getParamTypes().size() + 
+		   EqClass2LastPoolArg[FuncECs.findClass(&F)] + 1);
+    FI.ArgNodes.reserve(EqClass2LastPoolArg[FuncECs.findClass(&F)] + 1);
+    
+    for (int i = 0; i <= EqClass2LastPoolArg[FuncECs.findClass(&F)]; ++i) {
+      ArgTys.push_back(PoolDescPtr);      // Add the appropriate # of pool 
+                                          // descs
+    }
+
+    for (hash_set<DSNode*>::iterator I = MarkedNodes.begin(),
+	   E = MarkedNodes.end(); I != E; ++I) {
+      FI.ArgNodes.push_back(*I);
+    }
+
+    assert ((FI.ArgNodes.size() == (unsigned) (FI.PoolArgLast - 
+					       FI.PoolArgFirst)) && 
+	    "Number of ArgNodes equal to the number of pool arguments used by this function");
+  }
+      
+      
   ArgTys.insert(ArgTys.end(), OldFuncTy->getParamTypes().begin(),
                 OldFuncTy->getParamTypes().end());
 
@@ -168,18 +321,45 @@ Function *PoolAllocate::MakeFunctionClone(Function &F) {
   // pool descriptors map
   std::map<DSNode*, Value*> &PoolDescriptors = FI.PoolDescriptors;
   Function::aiterator NI = New->abegin();
-  for (unsigned i = 0, e = FI.ArgNodes.size(); i != e; ++i, ++NI) {
-    NI->setName("PDa");  // Add pd entry
-    PoolDescriptors.insert(std::make_pair(FI.ArgNodes[i], NI));
+  
+  if (FuncECs.findClass(&F)) {
+    for (int i = 0; i <= EqClass2LastPoolArg[FuncECs.findClass(&F)]; ++i, 
+	   ++NI)
+      NI->setName("PDa");
+    
+    NI = New->abegin();
+    if (FI.PoolArgFirst > 0)
+      for (int i = 0; i < FI.PoolArgFirst; ++NI, ++i)
+	;
+
+    if (FI.ArgNodes.size() > 0)
+      for (unsigned i = 0, e = FI.ArgNodes.size(); i != e; ++i, ++NI)
+	PoolDescriptors.insert(std::make_pair(FI.ArgNodes[i], NI));
+
+    NI = New->abegin();
+    if (EqClass2LastPoolArg.count(FuncECs.findClass(&F)))
+      for (int i = 0; i <= EqClass2LastPoolArg[FuncECs.findClass(&F)]; ++i, ++NI)
+	;
+  } else {
+    if (FI.ArgNodes.size())
+      for (unsigned i = 0, e = FI.ArgNodes.size(); i != e; ++i, ++NI) {
+	NI->setName("PDa");  // Add pd entry
+	PoolDescriptors.insert(std::make_pair(FI.ArgNodes[i], NI));
+      }
+    NI = New->abegin();
+    if (FI.ArgNodes.size())
+      for (unsigned i = 0; i < FI.ArgNodes.size(); ++NI, ++i)
+	;
   }
 
   // Map the existing arguments of the old function to the corresponding
   // arguments of the new function.
   std::map<const Value*, Value*> ValueMap;
-  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I, ++NI) {
-    ValueMap[I] = NI;
-    NI->setName(I->getName());
-  }
+  if (NI != New->aend()) 
+    for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I, ++NI) {
+      ValueMap[I] = NI;
+      NI->setName(I->getName());
+    }
 
   // Populate the value map with all of the globals in the program.
   // FIXME: This should be unneccesary!
@@ -208,28 +388,27 @@ void PoolAllocate::ProcessFunctionBody(Function &F, Function &NewF) {
   DSGraph &G = BU->getDSGraph(F);
   std::vector<DSNode*> &Nodes = G.getNodes();
   if (Nodes.empty()) return;     // Quick exit if nothing to do...
-
+  
   FuncInfo &FI = FunctionInfo[&F];   // Get FuncInfo for F
   hash_set<DSNode*> &MarkedNodes = FI.MarkedNodes;
- 
+  
   DEBUG(std::cerr << "[" << F.getName() << "] Pool Allocate: ");
-
+  
   // Loop over all of the nodes which are non-escaping, adding pool-allocatable
   // ones to the NodesToPA vector.
   std::vector<DSNode*> NodesToPA;
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
     if (Nodes[i]->NodeType & DSNode::HeapNode &&   // Pick nodes with heap elems
-        !(Nodes[i]->NodeType & DSNode::Array) &&   // Doesn't handle arrays yet.
         !MarkedNodes.count(Nodes[i]))              // Can't be marked
       NodesToPA.push_back(Nodes[i]);
-
+  
   DEBUG(std::cerr << NodesToPA.size() << " nodes to pool allocate\n");
   if (!NodesToPA.empty()) {
     // Create pool construction/destruction code
     std::map<DSNode*, Value*> &PoolDescriptors = FI.PoolDescriptors;
     CreatePools(NewF, NodesToPA, PoolDescriptors);
   }
-
+  
   // Transform the body of the function now...
   TransformFunctionBody(NewF, G, FI);
 }
@@ -257,23 +436,28 @@ void PoolAllocate::CreatePools(Function &F,
   Instruction *InsertPoint = F.front().begin();
   for (unsigned i = 0, e = NodesToPA.size(); i != e; ++i) {
     DSNode *Node = NodesToPA[i];
-
+    
     // Create a new alloca instruction for the pool...
     Value *AI = new AllocaInst(PoolDescType, 0, "PD", InsertPoint);
-
-    Value *ElSize =
-      ConstantUInt::get(Type::UIntTy, TD.getTypeSize(Node->getType()));
-
+    
+    Value *ElSize;
+    
+    // Void types in DS graph are never used
+    if (Node->getType() != Type::VoidTy)
+      ElSize = ConstantUInt::get(Type::UIntTy, TD.getTypeSize(Node->getType()));
+    else
+      ElSize = ConstantUInt::get(Type::UIntTy, 0);
+	
     // Insert the call to initialize the pool...
     new CallInst(PoolInit, make_vector(AI, ElSize, 0), "", InsertPoint);
-
+      
     // Update the PoolDescriptors map
     PoolDescriptors.insert(std::make_pair(Node, AI));
-
+    
     // Insert a call to pool destroy before each return inst in the function
     for (unsigned r = 0, e = ReturnNodes.size(); r != e; ++r)
       new CallInst(PoolDestroy, make_vector(AI, 0), "",
-                   ReturnNodes[r]->getTerminator());
+		   ReturnNodes[r]->getTerminator());
   }
 }
 
@@ -284,17 +468,41 @@ namespace {
   struct FuncTransform : public InstVisitor<FuncTransform> {
     PoolAllocate &PAInfo;
     DSGraph &G;
+    DSGraph &TDG;
     FuncInfo &FI;
 
-    FuncTransform(PoolAllocate &P, DSGraph &g, FuncInfo &fi)
-      : PAInfo(P), G(g), FI(fi) {}
+    FuncTransform(PoolAllocate &P, DSGraph &g, DSGraph &tdg, FuncInfo &fi)
+      : PAInfo(P), G(g), TDG(tdg), FI(fi) {
+    }
 
     void visitMallocInst(MallocInst &MI);
     void visitFreeInst(FreeInst &FI);
     void visitCallInst(CallInst &CI);
+    
+    // The following instructions are never modified by pool allocation
+    void visitBranchInst(BranchInst &I) { }
+    void visitBinaryOperator(Instruction &I) { }
+    void visitShiftInst (ShiftInst &I) { }
+    void visitSwitchInst (SwitchInst &I) { }
+    void visitCastInst (CastInst &I) { }
+    void visitAllocaInst(AllocaInst &I) { }
+    void visitLoadInst(LoadInst &I) { }
+    void visitGetElementPtrInst (GetElementPtrInst &I) { }
+
+    void visitReturnInst(ReturnInst &I);
+    void visitStoreInst (StoreInst &I);
+    void visitPHINode(PHINode &I);
+
+    void visitInstruction(Instruction &I) {
+      std::cerr << "PoolAllocate does not recognize this instruction\n";
+      abort();
+    }
 
   private:
     DSNode *getDSNodeFor(Value *V) {
+      if (isa<Constant>(V))
+	return 0;
+
       if (!FI.NewToOldValueMap.empty()) {
         // If the NewToOldValueMap is in effect, use it.
         std::map<Value*,const Value*>::iterator I = FI.NewToOldValueMap.find(V);
@@ -310,13 +518,130 @@ namespace {
       std::map<DSNode*, Value*>::iterator I = FI.PoolDescriptors.find(Node);
       return I != FI.PoolDescriptors.end() ? I->second : 0;
     }
+    
+    bool isFuncPtr(Value *V);
+
+    Function* getFuncClass(Value *V);
+
+    Value* retCloneIfNotFP(Value *V);
   };
 }
 
 void PoolAllocate::TransformFunctionBody(Function &F, DSGraph &G, FuncInfo &FI){
-  FuncTransform(*this, G, FI).visit(F);
+  DSGraph &TDG = TDDS->getDSGraph(G.getFunction());
+  FuncTransform(*this, G, TDG, FI).visit(F);
 }
 
+// Returns true if V is a function pointer
+bool FuncTransform::isFuncPtr(Value *V) {
+  if (V->getType()->getPrimitiveID() == Type::PointerTyID) {
+    const PointerType *PTy = dyn_cast<PointerType>(V->getType());
+    
+    if (PTy->getElementType()->getPrimitiveID() == Type::FunctionTyID)
+      return true;
+  }
+
+  return false;
+}
+
+// Given a function pointer, return the function eq. class if one exists
+Function* FuncTransform::getFuncClass(Value *V) {
+  // Look at DSGraph and see if the set of of functions it could point to
+  // are pool allocated.
+
+  if (!isFuncPtr(V))
+    return 0;
+
+  // Two cases: 
+  // if V is a constant
+  if (Function *theFunc = dyn_cast<Function>(V)) {
+    if (!PAInfo.FuncECs.findClass(theFunc))
+      // If this function does not belong to any equivalence class
+      return 0;
+    if (PAInfo.EqClass2LastPoolArg.count(PAInfo.FuncECs.findClass(theFunc)))
+      return PAInfo.FuncECs.findClass(theFunc);
+    else
+      return 0;
+  }
+
+  // if V is not a constant
+  DSNode *DSN = TDG.getNodeForValue(V).getNode();
+  if (!DSN) {
+    return 0;
+  }
+  std::vector<GlobalValue*> Callees = DSN->getGlobals();
+  if (Callees.size() > 0) {
+    Function *calledF = dyn_cast<Function>(*Callees.begin());
+    assert(PAInfo.FuncECs.findClass(calledF) && "should exist in some eq. class");
+    if (PAInfo.EqClass2LastPoolArg.count(PAInfo.FuncECs.findClass(calledF)))
+      return PAInfo.FuncECs.findClass(calledF);
+  }
+
+  return 0;
+}
+
+// Returns the clone if  V is not a function pointer 
+Value* FuncTransform::retCloneIfNotFP(Value *V) {
+  if (isFuncPtr(V))
+    if (isa<Function>(V))
+      if (getFuncClass(V)) {
+	Function *fixedFunc = dyn_cast<Function>(V);
+	return PAInfo.getFuncInfo(*fixedFunc)->Clone;
+      }
+  
+  return 0;
+}
+
+void FuncTransform::visitReturnInst (ReturnInst &I) {
+  if (I.getNumOperands())
+    if (Value *clonedFunc = retCloneIfNotFP(I.getOperand(0))) {
+      // Cast the clone of I.getOperand(0) to the non-pool-allocated type
+      CastInst *CastI = new CastInst(clonedFunc, I.getOperand(0)->getType(), 
+				     "", &I);
+      // Insert return instruction that returns the casted value
+      new ReturnInst(CastI, &I);
+
+      // Remove original return instruction
+      I.setName("");
+      I.getParent()->getInstList().erase(&I);
+    }
+}
+
+void FuncTransform::visitStoreInst (StoreInst &I) {
+  // Check if a constant function is being stored
+  if (Value *clonedFunc = retCloneIfNotFP(I.getOperand(0))) {
+    CastInst *CastI = new CastInst(clonedFunc, I.getOperand(0)->getType(), "", 
+				   &I);
+    new StoreInst(CastI, I.getOperand(1), &I);
+    I.setName("");
+    I.getParent()->getInstList().erase(&I);
+  }
+}
+
+void FuncTransform::visitPHINode(PHINode &I) {
+  // If any of the operands of the PHI node is a constant function pointer
+  // that is cloned, the cast instruction has to be inserted at the end of the
+  // previous basic block
+  
+  if (isFuncPtr(&I)) {
+    PHINode *V = new PHINode(I.getType(), I.getName(), &I);
+    for (unsigned i = 0 ; i < I.getNumIncomingValues(); ++i) {
+      if (Value *clonedFunc = retCloneIfNotFP(I.getIncomingValue(i))) {
+	// Insert CastInst at the end of  I.getIncomingBlock(i)
+	BasicBlock::iterator BBI = --I.getIncomingBlock(i)->end();
+	// BBI now points to the terminator instruction of the basic block.
+	CastInst *CastI = new CastInst(clonedFunc, I.getType(), "", BBI);
+	V->addIncoming(CastI, I.getIncomingBlock(i));
+      } else {
+	V->addIncoming(I.getIncomingValue(i), I.getIncomingBlock(i));
+      }
+      
+    }
+    I.replaceAllUsesWith(V);
+    I.setName("");
+    I.getParent()->getInstList().erase(&I);
+  }
+}
 
 void FuncTransform::visitMallocInst(MallocInst &MI) {
   // Get the pool handle for the node that this contributes to...
@@ -324,8 +649,15 @@ void FuncTransform::visitMallocInst(MallocInst &MI) {
   if (PH == 0) return;
   
   // Insert a call to poolalloc
-  Value *V = new CallInst(PAInfo.PoolAlloc, make_vector(PH, 0),
-                          MI.getName(), &MI);
+  Value *V;
+  if (MI.isArrayAllocation()) 
+    V = new CallInst(PAInfo.PoolAllocArray, 
+		     make_vector(PH, MI.getOperand(0), 0),
+		     MI.getName(), &MI);
+  else
+    V = new CallInst(PAInfo.PoolAlloc, make_vector(PH, 0),
+		     MI.getName(), &MI);
+  
   MI.setName("");  // Nuke MIs name
   
   // Cast to the appropriate type...
@@ -372,7 +704,13 @@ void FuncTransform::visitFreeInst(FreeInst &FI) {
 static void CalcNodeMapping(DSNode *Caller, DSNode *Callee,
                             std::map<DSNode*, DSNode*> &NodeMapping) {
   if (Callee == 0) return;
-  assert(Caller && "Callee has node but caller doesn't??");
+  // assert(Caller && "Callee has node but caller doesn't??");
+
+  // If callee has a node and caller doesn't, then a constant argument was
+  // passed by the caller
+  if (Caller == 0) {
+    NodeMapping.insert(NodeMapping.end(), std::make_pair(Callee, (DSNode*) 0));
+  }
 
   std::map<DSNode*, DSNode*>::iterator I = NodeMapping.find(Callee);
   if (I != NodeMapping.end()) {   // Node already in map...
@@ -381,66 +719,207 @@ static void CalcNodeMapping(DSNode *Caller, DSNode *Callee,
     NodeMapping.insert(I, std::make_pair(Callee, Caller));
     
     // Recursively add pointed to nodes...
-    for (unsigned i = 0, e = Callee->getNumLinks(); i != e; ++i)
-      CalcNodeMapping(Caller->getLink(i << DS::PointerShift).getNode(),
-                      Callee->getLink(i << DS::PointerShift).getNode(),
-                      NodeMapping);
+    unsigned numCallerLinks = Caller->getNumLinks();
+    unsigned numCalleeLinks = Callee->getNumLinks();
+
+    assert (numCallerLinks <= numCalleeLinks || numCalleeLinks == 0);
+    
+    for (unsigned i = 0, e = numCalleeLinks; i != e; ++i)
+      CalcNodeMapping(Caller->getLink((i%numCallerLinks) << DS::PointerShift).getNode(), Callee->getLink(i << DS::PointerShift).getNode(), NodeMapping);
   }
 }
 
 void FuncTransform::visitCallInst(CallInst &CI) {
   Function *CF = CI.getCalledFunction();
-  assert(CF && "FIXME: Pool allocation doesn't handle indirect calls!");
-
-  FuncInfo *CFI = PAInfo.getFuncInfo(*CF);
-  if (CFI == 0 || CFI->Clone == 0) return;  // Nothing to transform...
-
-  DEBUG(std::cerr << "  Handling call: " << CI);
-
-  DSGraph &CG = PAInfo.getBUDataStructures().getDSGraph(*CF);  // Callee graph
-
-  // We need to figure out which local pool descriptors correspond to the pool
-  // descriptor arguments passed into the function call.  Calculate a mapping
-  // from callee DSNodes to caller DSNodes.  We construct a partial isomophism
-  // between the graphs to figure out which pool descriptors need to be passed
-  // in.  The roots of this mapping is found from arguments and return values.
-  //
-  std::map<DSNode*, DSNode*> NodeMapping;
-
-  Function::aiterator AI = CF->abegin(), AE = CF->aend();
-  unsigned OpNum = 1;
-  for (; AI != AE; ++AI, ++OpNum)
-    CalcNodeMapping(getDSNodeFor(CI.getOperand(OpNum)),
-                    CG.getScalarMap()[AI].getNode(), NodeMapping);
-  assert(OpNum == CI.getNumOperands() && "Varargs calls not handled yet!");
   
-  // Map the return value as well...
-  CalcNodeMapping(getDSNodeFor(&CI), CG.getRetNode().getNode(), NodeMapping);
+  // optimization for function pointers that are basically gotten from a cast
+  // with only one use and constant expressions with casts in them
+  if (!CF) {
+    if (CastInst* CastI = dyn_cast<CastInst>(CI.getCalledValue())) {
+      if (isa<Function>(CastI->getOperand(0)) && 
+	  CastI->getOperand(0)->getType() == CastI->getType())
+	CF = dyn_cast<Function>(CastI->getOperand(0));
+    } else if (isa<ConstantExpr>(CI.getOperand(0))) {
+      ConstantExpr *CE = dyn_cast<ConstantExpr>(CI.getOperand(0));
+      if (CE->getOpcode() == Instruction::Cast) {
+	if (isa<ConstantPointerRef>(CE->getOperand(0)))
+	  return;
+	else
+	  assert(0 && "Function pointer cast not handled as called function\n");
+      }
+    }    
 
-
-  // Okay, now that we have established our mapping, we can figure out which
-  // pool descriptors to pass in...
-  std::vector<Value*> Args;
-
-  // Add an argument for each pool which must be passed in...
-  for (unsigned i = 0, e = CFI->ArgNodes.size(); i != e; ++i) {
-    if (NodeMapping.count(CFI->ArgNodes[i])) {
-      assert(NodeMapping.count(CFI->ArgNodes[i]) && "Node not in mapping!");
-      DSNode *LocalNode = NodeMapping.find(CFI->ArgNodes[i])->second;
-      assert(FI.PoolDescriptors.count(LocalNode) && "Node not pool allocated?");
-      Args.push_back(FI.PoolDescriptors.find(LocalNode)->second);
-    } else {
-      Args.push_back(Constant::getNullValue(PoolDescPtr));
-    }
   }
 
-  // Add the rest of the arguments...
-  Args.insert(Args.end(), CI.op_begin()+1, CI.op_end());
+  std::vector<Value*> Args;  
+  if (!CF) {
+    // Indirect call
+    
+    DEBUG(std::cerr << "  Handling call: " << CI);
+    
+    std::map<unsigned, Value*> PoolArgs;
+    Function *FuncClass;
+    
+    for (vector<Function *>::iterator TFI = PAInfo.CallInstTargets[&CI].begin(),
+	   TFE = PAInfo.CallInstTargets[&CI].end(); TFI != TFE; ++TFI) {
+      if (TFI == PAInfo.CallInstTargets[&CI].begin()) {
+	FuncClass = PAInfo.FuncECs.findClass(*TFI);
+	// Nothing to transform if there are no pool arguments in this
+	// equivalence class of functions.
+	if (!PAInfo.EqClass2LastPoolArg.count(FuncClass))
+	  return;
+      }
+      
+      FuncInfo *CFI = PAInfo.getFuncInfo(**TFI);
 
-  std::string Name = CI.getName(); CI.setName("");
-  Value *NewCall = new CallInst(CFI->Clone, Args, Name, &CI);
-  CI.replaceAllUsesWith(NewCall);
+      if (!CFI->ArgNodes.size()) continue;  // Nothing to transform...
+      
+      DSGraph &CG = PAInfo.getBUDataStructures().getDSGraph(**TFI);  
+      std::map<DSNode*, DSNode*> NodeMapping;
+      
+      Function::aiterator AI = (*TFI)->abegin(), AE = (*TFI)->aend();
+      unsigned OpNum = 1;
+      for ( ; AI != AE; ++AI, ++OpNum) {
+	if (!isa<Constant>(CI.getOperand(OpNum)))
+	  CalcNodeMapping(getDSNodeFor(CI.getOperand(OpNum)), 
+			  CG.getScalarMap()[AI].getNode(),
+			  NodeMapping);
+      }
+      assert(OpNum == CI.getNumOperands() && "Varargs calls not handled yet!");
+      
+      if (CI.getType() != Type::VoidTy)
+	CalcNodeMapping(getDSNodeFor(&CI), CG.getRetNode().getNode(), 
+			NodeMapping);
+      
+      unsigned idx = CFI->PoolArgFirst;
 
-  DEBUG(std::cerr << "  Result Call: " << *NewCall);
+      // The following loop determines the pool pointers corresponding to 
+      // CFI.
+      for (unsigned i = 0, e = CFI->ArgNodes.size(); i != e; ++i, ++idx) {
+	if (NodeMapping.count(CFI->ArgNodes[i])) {
+	  assert(NodeMapping.count(CFI->ArgNodes[i]) && "Node not in mapping!");
+	  DSNode *LocalNode = NodeMapping.find(CFI->ArgNodes[i])->second;
+	  if (LocalNode) {
+	    assert(FI.PoolDescriptors.count(LocalNode) && "Node not pool allocated?");
+	    PoolArgs[idx] = FI.PoolDescriptors.find(LocalNode)->second;
+	  }
+	  else
+	    // LocalNode is null when a constant is passed in as a parameter
+	    PoolArgs[idx] = Constant::getNullValue(PoolDescPtr);
+	} else {
+	  PoolArgs[idx] = Constant::getNullValue(PoolDescPtr);
+	}
+      }
+    }
+    
+    // Push the pool arguments into Args.
+    if (PAInfo.EqClass2LastPoolArg.count(FuncClass)) {
+      for (int i = 0; i <= PAInfo.EqClass2LastPoolArg[FuncClass]; ++i) {
+	if (PoolArgs.find(i) != PoolArgs.end())
+	  Args.push_back(PoolArgs[i]);
+	else
+	  Args.push_back(Constant::getNullValue(PoolDescPtr));
+      }
+    
+      assert (Args.size()== (unsigned) PAInfo.EqClass2LastPoolArg[FuncClass] + 1 
+	      && "Call has same number of pool args as the called function");
+    }
+
+    // Add the rest of the arguments (the original arguments of the function)...
+    Args.insert(Args.end(), CI.op_begin()+1, CI.op_end());
+    
+    std::string Name = CI.getName();
+    
+    Value *NewCall;
+    if (Args.size() > CI.getNumOperands() - 1) {
+      CastInst *CastI = 
+	new CastInst(CI.getOperand(0), 
+		     PAInfo.getFuncInfo(*FuncClass)->Clone->getType(), "", &CI);
+      NewCall = new CallInst(CastI, Args, Name, &CI);
+    } else {
+      NewCall = new CallInst(CI.getOperand(0), Args, Name, &CI);
+    }
+
+    CI.setName("");
+    CI.replaceAllUsesWith(NewCall);
+    DEBUG(std::cerr << "  Result Call: " << *NewCall);
+  }
+  else {
+
+    FuncInfo *CFI = PAInfo.getFuncInfo(*CF);
+
+    if (CFI == 0 || CFI->Clone == 0) return;  // Nothing to transform...
+    
+    DEBUG(std::cerr << "  Handling call: " << CI);
+    
+    DSGraph &CG = PAInfo.getBUDataStructures().getDSGraph(*CF);  // Callee graph
+    
+    // We need to figure out which local pool descriptors correspond to the pool
+    // descriptor arguments passed into the function call.  Calculate a mapping
+    // from callee DSNodes to caller DSNodes.  We construct a partial isomophism
+    // between the graphs to figure out which pool descriptors need to be passed
+    // in.  The roots of this mapping is found from arguments and return values.
+    //
+    std::map<DSNode*, DSNode*> NodeMapping;
+    
+    Function::aiterator AI = CF->abegin(), AE = CF->aend();
+    unsigned OpNum = 1;
+    for (; AI != AE; ++AI, ++OpNum) {
+      // Check if the operand of the call is a return of another call
+      // for the operand will be transformed in which case.
+      // Look up the OldToNewRetValMap to see if the operand is a new value.
+      Value *callOp = CI.getOperand(OpNum);
+      if (!isa<Constant>(callOp))
+	CalcNodeMapping(getDSNodeFor(callOp),CG.getScalarMap()[AI].getNode(), 
+			NodeMapping);
+    }
+    assert(OpNum == CI.getNumOperands() && "Varargs calls not handled yet!");
+    
+    // Map the return value as well...
+    if (CI.getType() != Type::VoidTy)
+      CalcNodeMapping(getDSNodeFor(&CI), CG.getRetNode().getNode(), 
+		      NodeMapping);
+
+    // Okay, now that we have established our mapping, we can figure out which
+    // pool descriptors to pass in...
+
+    // Add an argument for each pool which must be passed in...
+    if (CFI->PoolArgFirst != 0) {
+      for (int i = 0; i < CFI->PoolArgFirst; ++i)
+	Args.push_back(Constant::getNullValue(PoolDescPtr));  
+    }
+
+    for (unsigned i = 0, e = CFI->ArgNodes.size(); i != e; ++i) {
+      if (NodeMapping.count(CFI->ArgNodes[i])) {
+	assert(NodeMapping.count(CFI->ArgNodes[i]) && "Node not in mapping!");
+	DSNode *LocalNode = NodeMapping.find(CFI->ArgNodes[i])->second;
+	if (LocalNode) {
+	  assert(FI.PoolDescriptors.count(LocalNode) && "Node not pool allocated?");
+	  Args.push_back(FI.PoolDescriptors.find(LocalNode)->second);
+	}
+	else
+	  Args.push_back(Constant::getNullValue(PoolDescPtr));
+      } else {
+	Args.push_back(Constant::getNullValue(PoolDescPtr));
+      }
+    }
+
+    Function *FuncClass = PAInfo.FuncECs.findClass(CF);
+    
+    if (PAInfo.EqClass2LastPoolArg.count(FuncClass))
+      for (unsigned i = CFI->PoolArgLast; 
+	   i <= PAInfo.EqClass2LastPoolArg.count(FuncClass); ++i)
+	Args.push_back(Constant::getNullValue(PoolDescPtr));
+
+    // Add the rest of the arguments...
+    Args.insert(Args.end(), CI.op_begin()+1, CI.op_end());
+    
+    std::string Name = CI.getName(); CI.setName("");
+    Value *NewCall = new CallInst(CFI->Clone, Args, Name, &CI);
+    CI.replaceAllUsesWith(NewCall);
+    DEBUG(std::cerr << "  Result Call: " << *NewCall);
+
+  }
+  
   CI.getParent()->getInstList().erase(&CI);
 }
