@@ -439,9 +439,9 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
 
   std::vector<Constant*> Values;
-  Values.reserve(getValues().size());  // Build replacement array...
-  for (unsigned i = 0, e = getValues().size(); i != e; ++i) {
-    Constant *Val = cast<Constant>(getValues()[i]);
+  Values.reserve(getNumOperands());  // Build replacement array...
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    Constant *Val = getOperand(i);
     if (Val == From) Val = cast<Constant>(To);
     Values.push_back(Val);
   }
@@ -464,9 +464,9 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
 
   std::vector<Constant*> Values;
-  Values.reserve(getValues().size());
-  for (unsigned i = 0, e = getValues().size(); i != e; ++i) {
-    Constant *Val = cast<Constant>(getValues()[i]);
+  Values.reserve(getNumOperands());  // Build replacement array...
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    Constant *Val = getOperand(i);
     if (Val == From) Val = cast<Constant>(To);
     Values.push_back(Val);
   }
