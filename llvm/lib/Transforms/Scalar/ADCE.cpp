@@ -21,14 +21,16 @@ using std::cerr;
 
 #define DEBUG_ADCE 1
 
+namespace {
+
 //===----------------------------------------------------------------------===//
 // ADCE Class
 //
 // This class does all of the work of Agressive Dead Code Elimination.
 // It's public interface consists of a constructor and a doADCE() method.
 //
-class ADCE {
-  Function *M;                          // The function that we are working on
+class ADCE : public FunctionPass {
+  Function *Func;                       // The function that we are working on
   std::vector<Instruction*> WorkList;   // Instructions that just became live
   std::set<Instruction*>    LiveSet;    // The set of live instructions
   bool MadeChanges;
@@ -37,17 +39,33 @@ class ADCE {
   // The public interface for this class
   //
 public:
-  // ADCE Ctor - Save the function to operate on...
-  inline ADCE(Function *f) : M(f), MadeChanges(false) {}
+  const char *getPassName() const { return "Aggressive Dead Code Elimination"; }
+  
+  // doADCE - Execute the Agressive Dead Code Elimination Algorithm
+  //
+  virtual bool runOnFunction(Function *F) {
+    Func = F; MadeChanges = false;
+    doADCE(getAnalysis<DominanceFrontier>(DominanceFrontier::PostDomID));
+    assert(WorkList.empty());
+    LiveSet.clear();
+    return MadeChanges;
+  }
+  // getAnalysisUsage - We require post dominance frontiers (aka Control
+  // Dependence Graph)
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired(DominanceFrontier::PostDomID);
+  }
 
-  // doADCE() - Run the Agressive Dead Code Elimination algorithm, returning
-  // true if the function was modified.
-  bool doADCE(DominanceFrontier &CDG);
 
   //===--------------------------------------------------------------------===//
   // The implementation of this class
   //
 private:
+  // doADCE() - Run the Agressive Dead Code Elimination algorithm, returning
+  // true if the function was modified.
+  //
+  void doADCE(DominanceFrontier &CDG);
+
   inline void markInstructionLive(Instruction *I) {
     if (LiveSet.count(I)) return;
 #ifdef DEBUG_ADCE
@@ -71,14 +89,19 @@ private:
 		       const std::set<BasicBlock*> &AliveBlocks);
 };
 
+} // End of anonymous namespace
+
+Pass *createAgressiveDCEPass() {
+  return new ADCE();
+}
 
 
 // doADCE() - Run the Agressive Dead Code Elimination algorithm, returning
 // true if the function was modified.
 //
-bool ADCE::doADCE(DominanceFrontier &CDG) {
+void ADCE::doADCE(DominanceFrontier &CDG) {
 #ifdef DEBUG_ADCE
-  cerr << "Function: " << M;
+  cerr << "Function: " << Func;
 #endif
 
   // Iterate over all of the instructions in the function, eliminating trivially
@@ -87,8 +110,7 @@ bool ADCE::doADCE(DominanceFrontier &CDG) {
   // instructions live in basic blocks that are unreachable.  These blocks will
   // be eliminated later, along with the instructions inside.
   //
-  for (df_iterator<Function*> BBI = df_begin(M),
-                              BBE = df_end(M);
+  for (df_iterator<Function*> BBI = df_begin(Func), BBE = df_end(Func);
        BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
     for (BasicBlock::iterator II = BB->begin(), EI = BB->end(); II != EI; ) {
@@ -156,7 +178,7 @@ bool ADCE::doADCE(DominanceFrontier &CDG) {
 
 #ifdef DEBUG_ADCE
   cerr << "Current Function: X = Live\n";
-  for (Function::iterator I = M->begin(), E = M->end(); I != E; ++I)
+  for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
     for (BasicBlock::iterator BI = (*I)->begin(), BE = (*I)->end();
          BI != BE; ++BI) {
       if (LiveSet.count(*BI)) cerr << "X ";
@@ -168,14 +190,14 @@ bool ADCE::doADCE(DominanceFrontier &CDG) {
   // order, patching up references to dead blocks...
   //
   std::set<BasicBlock*> VisitedBlocks;
-  BasicBlock *EntryBlock = fixupCFG(M->front(), VisitedBlocks, AliveBlocks);
-  if (EntryBlock && EntryBlock != M->front()) {
+  BasicBlock *EntryBlock = fixupCFG(Func->front(), VisitedBlocks, AliveBlocks);
+  if (EntryBlock && EntryBlock != Func->front()) {
     if (isa<PHINode>(EntryBlock->front())) {
       // Cannot make the first block be a block with a PHI node in it! Instead,
       // strip the first basic block of the function to contain no instructions,
       // then add a simple branch to the "real" entry node...
       //
-      BasicBlock *E = M->front();
+      BasicBlock *E = Func->front();
       if (!isa<TerminatorInst>(E->front()) || // Check for an actual change...
 	  cast<TerminatorInst>(E->front())->getNumSuccessors() != 1 ||
 	  cast<TerminatorInst>(E->front())->getSuccessor(0) != EntryBlock) {
@@ -191,8 +213,8 @@ bool ADCE::doADCE(DominanceFrontier &CDG) {
 
     } else {
       // We need to move the new entry block to be the first bb of the function
-      Function::iterator EBI = find(M->begin(), M->end(), EntryBlock);
-      std::swap(*EBI, *M->begin());  // Exchange old location with start of fn
+      Function::iterator EBI = find(Func->begin(), Func->end(), EntryBlock);
+      std::swap(*EBI, *Func->begin()); // Exchange old location with start of fn
       MadeChanges = true;
     }
   }
@@ -200,7 +222,7 @@ bool ADCE::doADCE(DominanceFrontier &CDG) {
   // Now go through and tell dead blocks to drop all of their references so they
   // can be safely deleted.
   //
-  for (Function::iterator BI = M->begin(), BE = M->end(); BI != BE; ++BI) {
+  for (Function::iterator BI = Func->begin(), BE = Func->end(); BI != BE; ++BI){
     BasicBlock *BB = *BI;
     if (!AliveBlocks.count(BB)) {
       BB->dropAllReferences();
@@ -211,16 +233,14 @@ bool ADCE::doADCE(DominanceFrontier &CDG) {
   // now because we know that there are no references to dead blocks (because
   // they have dropped all of their references...
   //
-  for (Function::iterator BI = M->begin(); BI != M->end();) {
+  for (Function::iterator BI = Func->begin(); BI != Func->end();) {
     if (!AliveBlocks.count(*BI)) {
-      delete M->getBasicBlocks().remove(BI);
+      delete Func->getBasicBlocks().remove(BI);
       MadeChanges = true;
       continue;                                     // Don't increment iterator
     }
     ++BI;                                           // Increment iterator...
   }
-
-  return MadeChanges;
 }
 
 
@@ -287,24 +307,3 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
   }
 }
 
-namespace {
-  struct AgressiveDCE : public FunctionPass {
-    const char *getPassName() const {return "Aggressive Dead Code Elimination";}
-
-    // doADCE - Execute the Agressive Dead Code Elimination Algorithm
-    //
-    virtual bool runOnFunction(Function *F) {
-      return ADCE(F).doADCE(
-                  getAnalysis<DominanceFrontier>(DominanceFrontier::PostDomID));
-    }
-    // getAnalysisUsage - We require post dominance frontiers (aka Control
-    // Dependence Graph)
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired(DominanceFrontier::PostDomID);
-    }
-  };
-}
-
-Pass *createAgressiveDCEPass() {
-  return new AgressiveDCE();
-}
