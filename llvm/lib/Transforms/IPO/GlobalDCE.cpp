@@ -13,7 +13,8 @@
 #include "Support/DepthFirstIterator.h"
 #include "Support/StatisticReporter.h"
 
-static Statistic<> NumRemoved("globaldce\t- Number of global values removed");
+static Statistic<> NumFunctions("globaldce\t- Number of functions removed");
+static Statistic<> NumVariables("globaldce\t- Number of global variables removed");
 
 static bool RemoveUnreachableFunctions(Module &M, CallGraph &CallGraph) {
   // Calculate which functions are reachable from the external functions in the
@@ -34,7 +35,7 @@ static bool RemoveUnreachableFunctions(Module &M, CallGraph &CallGraph) {
       I->dropAllReferences();
       N->removeAllCalledFunctions();
       FunctionsToDelete.push_back(N);
-      ++NumRemoved;
+      ++NumFunctions;
     }
   }
 
@@ -61,7 +62,7 @@ static bool RemoveUnreachableGlobalVariables(Module &M) {
       ++I;                     // Cannot eliminate global variable
     else {
       I = M.getGlobalList().erase(I);
-      ++NumRemoved;
+      ++NumVariables;
       Changed = true;
     }
   return Changed;
