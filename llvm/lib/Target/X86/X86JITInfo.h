@@ -38,11 +38,19 @@ namespace llvm {
     ///
     virtual void replaceMachineCodeForFunction(void *Old, void *New);
     
-    /// getJITStubForFunction - Create or return a stub for the specified
-    /// function.  This stub acts just like the specified function, except that
-    /// it allows the "address" of the function to be taken without having to
-    /// generate code for it.
-    virtual void *getJITStubForFunction(Function *F, MachineCodeEmitter &MCE);
+    /// emitFunctionStub - Use the specified MachineCodeEmitter object to emit a
+    /// small native function that simply calls the function at the specified
+    /// address.
+    virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE);
+
+    /// getLazyResolverFunction - Expose the lazy resolver to the JIT.
+    virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
+
+    /// relocate - Before the JIT can run a block of code that has been emitted,
+    /// it must rewrite the code to contain the actual addresses of any
+    /// referenced global symbols.
+    virtual void relocate(void *Function, MachineRelocation *MR,
+                          unsigned NumRelocs);
   };
 }
 
