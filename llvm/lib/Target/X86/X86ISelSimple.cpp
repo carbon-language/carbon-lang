@@ -2726,11 +2726,8 @@ void X86ISel::emitDivRemOperation(MachineBasicBlock *BB,
         --Log;
         unsigned Op0Reg = getReg(Op0, BB, IP);
         unsigned TmpReg = makeAnotherReg(Op0->getType());
-        if (Log != 1) 
-          BuildMI(*BB, IP, SAROpcode[Class], 2, TmpReg)
-            .addReg(Op0Reg).addImm(Log-1);
-        else
-          BuildMI(*BB, IP, MovOpcode[Class], 1, TmpReg).addReg(Op0Reg);
+        BuildMI(*BB, IP, SAROpcode[Class], 2, TmpReg)
+          .addReg(Op0Reg).addImm(Log-1);
         unsigned TmpReg2 = makeAnotherReg(Op0->getType());
         BuildMI(*BB, IP, SHROpcode[Class], 2, TmpReg2)
           .addReg(TmpReg).addImm(32-Log);
@@ -2740,7 +2737,7 @@ void X86ISel::emitDivRemOperation(MachineBasicBlock *BB,
 
         unsigned TmpReg4 = isNeg ? makeAnotherReg(Op0->getType()) : ResultReg;
         BuildMI(*BB, IP, SAROpcode[Class], 2, TmpReg4)
-          .addReg(Op0Reg).addImm(Log);
+          .addReg(TmpReg3).addImm(Log);
         if (isNeg)
           BuildMI(*BB, IP, NEGOpcode[Class], 1, ResultReg).addReg(TmpReg4);
         return;
