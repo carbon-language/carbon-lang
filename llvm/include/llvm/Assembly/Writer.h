@@ -37,6 +37,13 @@ void WriteToAssembly(const BasicBlock  *BB, ostream &o);
 void WriteToAssembly(const Instruction *In, ostream &o);
 void WriteToAssembly(const ConstPoolVal *V, ostream &o);
 
+// WriteTypeSymbolic - This attempts to write the specified type as a symbolic
+// type, iff there is an entry in the modules symbol table for the specified
+// type or one of it's component types.  This is slower than a simple x << Type;
+//
+ostream &WriteTypeSymbolic(ostream &o, const Type *Ty, const Module *Module);
+
+
 // WriteAsOperand - Write the name of the specified value out to the specified
 // ostream.  This can be useful when you just want to print int %reg126, not the
 // whole instruction that generated it.
