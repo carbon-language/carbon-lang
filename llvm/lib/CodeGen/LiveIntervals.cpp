@@ -183,6 +183,10 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                                               unsigned reg)
 {
     DEBUG(std::cerr << "\t\t\tregister: ";printRegName(reg); std::cerr << '\n');
+    if (!lv_->getAllocatablePhysicalRegisters()[reg]) {
+        DEBUG(std::cerr << "\t\t\t\tnon allocatable register: ignoring\n");
+        return;
+    }
 
     unsigned start = getInstructionIndex(*mi);
     unsigned end = start;
