@@ -49,7 +49,7 @@ AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        unsigned SrcReg, int FrameIdx) const {
   //std::cerr << "Trying to store " << getPrettyName(SrcReg) << " to " << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
-  BuildMI(MBB, MI, Alpha::STQ, 3).addReg(SrcReg).addFrameIndex(FrameIdx);
+  BuildMI(MBB, MI, Alpha::STQ, 3).addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   //  assert(0 && "TODO");
 }
 
@@ -59,7 +59,7 @@ AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         unsigned DestReg, int FrameIdx) const{
   //std::cerr << "Trying to load " << getPrettyName(DestReg) << " to " << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0, DestReg);
-  BuildMI(MBB, MI, Alpha::LDQ, 2, DestReg).addFrameIndex(FrameIdx);
+  BuildMI(MBB, MI, Alpha::LDQ, 2, DestReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   //  assert(0 && "TODO");
 }
 
@@ -128,53 +128,35 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
 void
 AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
-  assert(0 && "TODO");
-//   unsigned i = 0;
-//   MachineInstr &MI = *II;
-//   MachineBasicBlock &MBB = *MI.getParent();
-//   MachineFunction &MF = *MBB.getParent();
+  unsigned i = 0;
+  MachineInstr &MI = *II;
+  MachineBasicBlock &MBB = *MI.getParent();
+  MachineFunction &MF = *MBB.getParent();
   
-//   while (!MI.getOperand(i).isFrameIndex()) {
-//     ++i;
-//     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
-//   }
+  while (!MI.getOperand(i).isFrameIndex()) {
+    ++i;
+    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
+  }
 
-//   int FrameIndex = MI.getOperand(i).getFrameIndex();
+  int FrameIndex = MI.getOperand(i).getFrameIndex();
 
-//   // Replace the FrameIndex with base register with GPR1 (SP) or GPR31 (FP).
-//   MI.SetMachineOperandReg(i, hasFP(MF) ? PPC::R31 : PPC::R1);
-
-//   // Take into account whether it's an add or mem instruction
-//   unsigned OffIdx = (i == 2) ? 1 : 2;
-
-//   // Now add the frame object offset to the offset from r1.
-//   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-//                MI.getOperand(OffIdx).getImmedValue();
-
-//   // If we're not using a Frame Pointer that has been set to the value of the
-//   // SP before having the stack size subtracted from it, then add the stack size
-//   // to Offset to get the correct offset.
-//   Offset += MF.getFrameInfo()->getStackSize();
+  // Add the base register of R30 (SP) or R15 (FP).
+  MI.SetMachineOperandReg(i + 1, hasFP(MF) ? Alpha::R15 : Alpha::R30);
   
-//   if (Offset > 32767 || Offset < -32768) {
-//     // Insert a set of r0 with the full offset value before the ld, st, or add
-//     MachineBasicBlock *MBB = MI.getParent();
-//     MBB->insert(II, BuildMI(PPC::LIS, 1, PPC::R0).addSImm(Offset >> 16));
-//     MBB->insert(II, BuildMI(PPC::ORI, 2, PPC::R0).addReg(PPC::R0)
-//       .addImm(Offset));
-//     // convert into indexed form of the instruction
-//     // sth 0:rA, 1:imm 2:(rB) ==> sthx 0:rA, 2:rB, 1:r0
-//     // addi 0:rA 1:rB, 2, imm ==> add 0:rA, 1:rB, 2:r0
-//     unsigned NewOpcode = 
-//       const_cast<std::map<unsigned, unsigned>& >(ImmToIdxMap)[MI.getOpcode()];
-//     assert(NewOpcode && "No indexed form of load or store available!");
-//     MI.setOpcode(NewOpcode);
-//     MI.SetMachineOperandReg(1, MI.getOperand(i).getReg());
-//     MI.SetMachineOperandReg(2, PPC::R0);
-//   } else {
-//     MI.SetMachineOperandConst(OffIdx, MachineOperand::MO_SignExtendedImmed,
-//                               Offset);
-//   }
+  // Now add the frame object offset to the offset from r1.
+  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
+
+  // If we're not using a Frame Pointer that has been set to the value of the
+  // SP before having the stack size subtracted from it, then add the stack size
+  // to Offset to get the correct offset.
+  Offset += MF.getFrameInfo()->getStackSize();
+
+   if (Offset > 32767 || Offset < -32768) {
+     std::cerr << "Offset needs to be " << Offset << "\n";
+     assert(0 && "stack too big");
+   } else {
+     MI.SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed, Offset);
+   }
 }
 
 
@@ -190,6 +172,14 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
+
+  if (MFI->hasCalls()) {
+    // We reserve argument space for call sites in the function immediately on 
+    // entry to the current function.  This eliminates the need for add/sub 
+    // brackets around call sites.
+    NumBytes += MFI->getMaxCallFrameSize();
+    std::cerr << "Added " << MFI->getMaxCallFrameSize() << " to the stack due to calls\n";
+  }
 
   // Do we need to allocate space on the stack?
   if (NumBytes == 0) return;

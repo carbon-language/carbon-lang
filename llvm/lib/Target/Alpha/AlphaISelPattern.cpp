@@ -27,6 +27,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
+#include <algorithm>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -138,34 +139,42 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
   for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
     {
       SDOperand newroot, argt;
-      ++count;
-      assert(count <= 6 && "More than 6 args not supported");
-      switch (getValueType(I->getType())) {
-      default: std::cerr << "Unknown Type " << getValueType(I->getType()) << "\n"; abort();
-      case MVT::f64:
-      case MVT::f32:
-        BuildMI(&BB, Alpha::IDEF, 0, args_float[count - 1]);
-        argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(getValueType(I->getType()))));
-        argPreg.push_back(args_float[count - 1]);
-        argOpc.push_back(Alpha::CPYS);
-        newroot = DAG.getCopyFromReg(argVreg[count-1], getValueType(I->getType()), DAG.getRoot());
-        break;
-      case MVT::i1:
-      case MVT::i8:
-      case MVT::i16:
-      case MVT::i32:
-      case MVT::i64:
-        BuildMI(&BB, Alpha::IDEF, 0, args_int[count - 1]);
-        argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64)));
-        argPreg.push_back(args_int[count - 1]);
-        argOpc.push_back(Alpha::BIS);
-        argt = newroot = DAG.getCopyFromReg(argVreg[count-1], MVT::i64, DAG.getRoot());
-        if (getValueType(I->getType()) != MVT::i64)
-          argt = DAG.getNode(ISD::TRUNCATE, getValueType(I->getType()), newroot);
-        break;
+      if (count  < 6) {
+        switch (getValueType(I->getType())) {
+        default: std::cerr << "Unknown Type " << getValueType(I->getType()) << "\n"; abort();
+        case MVT::f64:
+        case MVT::f32:
+          BuildMI(&BB, Alpha::IDEF, 0, args_float[count]);
+          argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(getValueType(I->getType()))));
+          argPreg.push_back(args_float[count]);
+          argOpc.push_back(Alpha::CPYS);
+          newroot = DAG.getCopyFromReg(argVreg[count], getValueType(I->getType()), DAG.getRoot());
+          break;
+        case MVT::i1:
+        case MVT::i8:
+        case MVT::i16:
+        case MVT::i32:
+        case MVT::i64:
+          BuildMI(&BB, Alpha::IDEF, 0, args_int[count]);
+          argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64)));
+          argPreg.push_back(args_int[count]);
+          argOpc.push_back(Alpha::BIS);
+          argt = newroot = DAG.getCopyFromReg(argVreg[count], MVT::i64, DAG.getRoot());
+          if (getValueType(I->getType()) != MVT::i64)
+            argt = DAG.getNode(ISD::TRUNCATE, getValueType(I->getType()), newroot);
+          break;
+        }
+      } else { //more args
+        // Create the frame index object for this incoming parameter...
+        int FI = MFI->CreateFixedObject(8, 8 * (count - 6));
+        
+        // Create the SelectionDAG nodes corresponding to a load from this parameter
+        SDOperand FIN = DAG.getFrameIndex(FI, MVT::i64);
+        argt = newroot = DAG.getLoad(getValueType(I->getType()), DAG.getEntryNode(), FIN);
       }
       DAG.setRoot(newroot.getValue(1));
       ArgValues.push_back(argt);
+      ++count;
     }
 
   BuildMI(&BB, Alpha::IDEF, 0, Alpha::R29);
@@ -181,6 +190,9 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
 				 const Type *RetTy, SDOperand Callee,
 				 ArgListTy &Args, SelectionDAG &DAG) {
   int NumBytes = 0;
+  if (Args.size() > 6)
+    NumBytes = (Args.size() - 6) * 8;
+
   Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
 		      DAG.getConstant(NumBytes, getPointerTy()));
   std::vector<SDOperand> args_to_use;
@@ -404,9 +416,9 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       //STL LDS
       //STQ LDT
       Opc = DestType == MVT::f64 ? Alpha::STQ : Alpha::STL;
-      BuildMI(BB, Opc, 2).addReg(Tmp1).addFrameIndex(FrameIdx);
+      BuildMI(BB, Opc, 2).addReg(Tmp1).addFrameIndex(FrameIdx).addReg(Alpha::F31);
       Opc = DestType == MVT::f64 ? Alpha::LDT : Alpha::LDS;
-      BuildMI(BB, Opc, 1, Result).addFrameIndex(FrameIdx);
+      BuildMI(BB, Opc, 1, Result).addFrameIndex(FrameIdx).addReg(Alpha::F31);
 
       //The easy way: doesn't work
 //       //so these instructions are not supported on ev56
@@ -467,7 +479,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::FrameIndex:
     Tmp1 = cast<FrameIndexSDNode>(N)->getIndex();
-    BuildMI(BB, Alpha::LDA, 2, Result).addFrameIndex(Tmp1);
+    BuildMI(BB, Alpha::LDA, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
     return Result;
   
   case ISD::EXTLOAD:
@@ -576,32 +588,56 @@ unsigned ISel::SelectExpr(SDOperand N) {
       for(int i = 2, e = Node->getNumOperands(); i < e; ++i)
 	  argvregs.push_back(SelectExpr(N.getOperand(i)));
       
-      for(int i = 0, e = argvregs.size(); i < e; ++i)
-	{
-	  unsigned args_int[] = {Alpha::R16, Alpha::R17, Alpha::R18, 
-				 Alpha::R19, Alpha::R20, Alpha::R21};
-	  unsigned args_float[] = {Alpha::F16, Alpha::F17, Alpha::F18, 
-				   Alpha::F19, Alpha::F20, Alpha::F21};
-	  switch(N.getOperand(i+2).getValueType()) {
-	  default: 
-	    Node->dump(); 
-	    N.getOperand(i).Val->dump();
-	    std::cerr << "Type for " << i << " is: " << N.getOperand(i+2).getValueType() << "\n";
-	    assert(0 && "Unknown value type for call");
-	  case MVT::i1:
-	  case MVT::i8:
-	  case MVT::i16:
-	  case MVT::i32:
-	  case MVT::i64:
-	    BuildMI(BB, Alpha::BIS, 2, args_int[i]).addReg(argvregs[i]).addReg(argvregs[i]);
-	    break;
-	  case MVT::f32:
-	  case MVT::f64:
-	    BuildMI(BB, Alpha::CPYS, 2, args_float[i]).addReg(argvregs[i]).addReg(argvregs[i]);
-	    break;
-	  }
-	  
-	}
+      //in reg args
+      for(int i = 0, e = std::min(6, (int)argvregs.size()); i < e; ++i)
+        {
+          unsigned args_int[] = {Alpha::R16, Alpha::R17, Alpha::R18, 
+                                 Alpha::R19, Alpha::R20, Alpha::R21};
+          unsigned args_float[] = {Alpha::F16, Alpha::F17, Alpha::F18, 
+                                   Alpha::F19, Alpha::F20, Alpha::F21};
+          switch(N.getOperand(i+2).getValueType()) {
+          default: 
+            Node->dump(); 
+            N.getOperand(i).Val->dump();
+            std::cerr << "Type for " << i << " is: " << N.getOperand(i+2).getValueType() << "\n";
+            assert(0 && "Unknown value type for call");
+          case MVT::i1:
+          case MVT::i8:
+          case MVT::i16:
+          case MVT::i32:
+          case MVT::i64:
+            BuildMI(BB, Alpha::BIS, 2, args_int[i]).addReg(argvregs[i]).addReg(argvregs[i]);
+            break;
+          case MVT::f32:
+          case MVT::f64:
+            BuildMI(BB, Alpha::CPYS, 2, args_float[i]).addReg(argvregs[i]).addReg(argvregs[i]);
+            break;
+          }
+        }
+      //in mem args
+      for (int i = 6, e = argvregs.size(); i < e; ++i)
+        {
+          switch(N.getOperand(i+2).getValueType()) {
+          default: 
+            Node->dump(); 
+            N.getOperand(i).Val->dump();
+            std::cerr << "Type for " << i << " is: " << N.getOperand(i+2).getValueType() << "\n";
+            assert(0 && "Unknown value type for call");
+          case MVT::i1:
+          case MVT::i8:
+          case MVT::i16:
+          case MVT::i32:
+          case MVT::i64:
+            BuildMI(BB, Alpha::STQ, 3).addReg(argvregs[i]).addImm((i - 6) * 8).addReg(Alpha::R30);
+            break;
+          case MVT::f32:
+            BuildMI(BB, Alpha::STS, 3).addReg(argvregs[i]).addImm((i - 6) * 8).addReg(Alpha::R30);
+            break;
+           case MVT::f64:
+            BuildMI(BB, Alpha::STT, 3).addReg(argvregs[i]).addImm((i - 6) * 8).addReg(Alpha::R30);
+            break;
+           }
+        }
       //build the right kind of call
       if (GlobalAddressSDNode *GASD =
 	  dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) 
