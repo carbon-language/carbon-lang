@@ -565,6 +565,25 @@ Path::destroyFile() {
   return true;
 }
 
+bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
+  if (!isFile())
+    return false;
+  assert(len < 1024 && "Request for magic string too long");
+  char* buf = (char*) alloca(1 + len);
+  std::ofstream ofs(path.c_str(),std::ofstream::in);
+  if (!ofs.is_open())
+    return false;
+  std::ifstream ifs(path.c_str());
+  if (!ifs.is_open())
+    return false;
+  ifs.read(buf, len);
+  ofs.close();
+  ifs.close();
+  buf[len] = '\0';
+  Magic = buf;
+  return true;
+}
+
 }
 }
 
