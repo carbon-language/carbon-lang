@@ -22,7 +22,7 @@ include ${LEVEL}/Makefile.common
 #
 LCC      = /home/vadve/lattner/cvs/gcc_install/bin/gcc
 LCC1     = /home/vadve/lattner/cvs/gcc_install/lib/gcc-lib/llvm/3.1/cc1
-TOOLS    = $(LEVEL)/tools/Debug
+TOOLS    = $(BUILD_ROOT_TOP)/tools/Debug
 LLI      = $(TOOLS)/lli
 LLC      = $(TOOLS)/llc
 LAS      = $(TOOLS)/as
