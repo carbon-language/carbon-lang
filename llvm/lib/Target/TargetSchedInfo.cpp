@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Config/alloca.h"
 #include "llvm/Target/TargetSchedInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include <algorithm>
