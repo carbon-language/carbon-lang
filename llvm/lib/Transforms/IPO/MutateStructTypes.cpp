@@ -250,7 +250,8 @@ bool MutateStructTypes::doPassInitialization(Module *M) {
         cast<MethodType>(ConvertType(Meth->getMethodType()));
       
       // Create a new method to put stuff into...
-      Method *NewMeth = new Method(NewMTy, Meth->getName());
+      Method *NewMeth = new Method(NewMTy, Meth->hasInternalLinkage(),
+				   Meth->getName());
       if (Meth->hasName())
         Meth->setName("OLD."+Meth->getName());
 
