@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Debugger/SourceFile.h"
+#include <cassert>
+
 using namespace llvm;
 
 /// readFile - Load Filename 
