@@ -1021,8 +1021,17 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::Constant:
     {
-      long val = cast<ConstantSDNode>(N)->getValue();
-      BuildMI(BB, Alpha::LOAD_IMM, 1, Result).addImm(val);
+      unsigned long val = cast<ConstantSDNode>(N)->getValue();
+      if (val < 32000 && (long)val > -32000)
+	BuildMI(BB, Alpha::LOAD_IMM, 1, Result).addImm(val);
+      else
+	{
+	  MachineConstantPool *CP = BB->getParent()->getConstantPool();
+	  ConstantUInt *C = ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , val);
+	  unsigned CPI = CP->getConstantPoolIndex(C);
+	  AlphaLowering.restoreGP(BB);
+	  BuildMI(BB, Alpha::LOAD, 1, Result).addConstantPoolIndex(CPI);
+	}
       return Result;
     }
 
