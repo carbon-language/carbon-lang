@@ -1,6 +1,9 @@
 #include "llvm/CodeGen/IGNode.h"
 
 
+//-----------------------------------------------------------------------------
+// Constructor
+//-----------------------------------------------------------------------------
 IGNode::IGNode(LiveRange *const PLR, unsigned int Ind): Index(Ind),
 							AdjList(),
                                                         ParentLR(PLR)
@@ -11,9 +14,11 @@ IGNode::IGNode(LiveRange *const PLR, unsigned int Ind): Index(Ind),
 }
 
 
-
-void IGNode::pushOnStack()            // sets on to stack and 
-{                                     // reduce the degree of neighbors  
+//-----------------------------------------------------------------------------
+// Sets this IGNode on stack and reduce the degree of neighbors  
+//-----------------------------------------------------------------------------
+void IGNode::pushOnStack()             
+{                                     
   OnStack = true; 
   int neighs = AdjList.size();
 
@@ -25,7 +30,10 @@ void IGNode::pushOnStack()            // sets on to stack and
   for(int i=0; i < neighs; i++)  (AdjList[i])->decCurDegree();
 }
  
-
+//-----------------------------------------------------------------------------
+// Deletes an adjacency node. IGNodes are deleted when coalescing merges
+// two IGNodes together.
+//-----------------------------------------------------------------------------
 void IGNode::delAdjIGNode(const IGNode *const Node) {
   vector <IGNode *>::iterator It = AdjList.begin();
     

@@ -1,5 +1,8 @@
 #include "llvm/CodeGen/LiveRangeInfo.h"
 
+//---------------------------------------------------------------------------
+// Constructor
+//---------------------------------------------------------------------------
 LiveRangeInfo::LiveRangeInfo(const Method *const M, 
 			     const TargetMachine& tm,
 			     vector<RegClass *> &RCL) 
@@ -10,22 +13,58 @@ LiveRangeInfo::LiveRangeInfo(const Method *const M,
 { }
 
 
+//---------------------------------------------------------------------------
+// Destructor: Deletes all LiveRanges in the LiveRangeMap
+//---------------------------------------------------------------------------
+LiveRangeInfo::~LiveRangeInfo() {
+
+  LiveRangeMapType::iterator MI =  LiveRangeMap.begin(); 
+
+  for( ; MI != LiveRangeMap.end() ; ++MI) {  
+    if( (*MI).first ) {
+      
+      LiveRange *LR = (*MI).second;
+       
+      if( LR ) {
+
+	// we need to be careful in deleting LiveRanges in LiveRangeMap
+	// since two/more Values in the live range map can point to the same
+	// live range. We have to make the other entries NULL when we delete
+	// a live range.
+
+	LiveRange::iterator LI = LR->begin();
+	
+	for( ; LI != LR->end() ; ++LI) { 
+	  LiveRangeMap[*LI] = NULL;
+	}
+
+	delete LR;
+
+      }
+    }
+  }
+
+}
+
+
+//---------------------------------------------------------------------------
 // union two live ranges into one. The 2nd LR is deleted. Used for coalescing.
 // Note: the caller must make sure that L1 and L2 are distinct and both
 // LRs don't have suggested colors
-
+//---------------------------------------------------------------------------
 void LiveRangeInfo::unionAndUpdateLRs(LiveRange *const L1, LiveRange *L2)
 {
   assert( L1 != L2);
-  L1->setUnion( L2 );             // add elements of L2 to L1
+  L1->setUnion( L2 );                   // add elements of L2 to L1
   ValueSet::iterator L2It;
 
   for( L2It = L2->begin() ; L2It != L2->end(); ++L2It) {
 
     //assert(( L1->getTypeID() == L2->getTypeID()) && "Merge:Different types");
 
-    L1->add( *L2It );            // add the var in L2 to L1
-    LiveRangeMap[ *L2It ] = L1;  // now the elements in L2 should map to L1    
+    L1->add( *L2It );                   // add the var in L2 to L1
+    LiveRangeMap[ *L2It ] = L1;         // now the elements in L2 should map 
+                                        //to L1    
   }
 
 
@@ -40,13 +79,19 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *const L1, LiveRange *L2)
   if( L2->isCallInterference() )
     L1->setCallInterference();
   
+ 
+  L1->addSpillCost( L2->getSpillCost() ); // add the spill costs
 
-  delete ( L2 );                 // delete L2 as it is no longer needed
+  delete ( L2 );                        // delete L2 as it is no longer needed
 }
 
 
 
-                                 
+//---------------------------------------------------------------------------
+// Method for constructing all live ranges in a method. It creates live 
+// ranges for all values defined in the instruction stream. Also, it
+// creates live ranges for all incoming arguments of the method.
+//---------------------------------------------------------------------------
 void LiveRangeInfo::constructLiveRanges()
 {  
 
@@ -216,10 +261,14 @@ void LiveRangeInfo::constructLiveRanges()
 }
 
 
-
-// Suggest colors for call and return args. 
-// Also create new LRs for implicit defs
-
+//---------------------------------------------------------------------------
+// If some live ranges must be colored with specific hardware registers
+// (e.g., for outgoing call args), suggesting of colors for such live
+// ranges is done using target specific method. Those methods are called
+// from this function. The target specific methods must:
+//    1) suggest colors for call and return args. 
+//    2) create new LRs for implicit defs in machine instructions
+//---------------------------------------------------------------------------
 void LiveRangeInfo::suggestRegs4CallRets()
 {
 
@@ -243,10 +292,10 @@ void LiveRangeInfo::suggestRegs4CallRets()
 }
 
 
+//--------------------------------------------------------------------------
+// The following method coalesces live ranges when possible. This method
+// must be called after the interference graph has been constructed.
 
-
-void LiveRangeInfo::coalesceLRs()  
-{
 
 /* Algorithm:
    for each BB in method
@@ -260,6 +309,11 @@ void LiveRangeInfo::coalesceLRs()
 		    merge2IGNodes(def, op) // i.e., merge 2 LRs 
 
 */
+//---------------------------------------------------------------------------
+void LiveRangeInfo::coalesceLRs()  
+{
+
+
 
   if( DEBUG_RA) 
     cout << endl << "Coalscing LRs ..." << endl;

@@ -1,6 +1,10 @@
 #include "llvm/CodeGen/InterferenceGraph.h"
 
-
+//-----------------------------------------------------------------------------
+// Constructor: Records the RegClass and initalizes IGNodeList.
+// The matrix is NOT yet created by the constructor. Call createGraph() 
+// to create it after adding all IGNodes to the IGNodeList.
+//-----------------------------------------------------------------------------
 InterferenceGraph::InterferenceGraph(RegClass *const RC) : RegCl(RC), 
 							   IGNodeList() 
 {   
@@ -11,14 +15,34 @@ InterferenceGraph::InterferenceGraph(RegClass *const RC) : RegCl(RC),
   }
 }
 
-InterferenceGraph:: ~InterferenceGraph() {                // destructor
-    if( IG )
-      delete []IG;
+
+//-----------------------------------------------------------------------------
+// destructor. Deletes the bit matrix and all IGNodes
+//-----------------------------------------------------------------------------
+InterferenceGraph:: ~InterferenceGraph() {             
+
+  // delete the matrix
+  //
+  if( IG )
+    delete []IG;
+
+  // delete all IGNodes in the IGNodeList
+  //
+  vector<IGNode *>::const_iterator IGIt = IGNodeList.begin();
+  for(unsigned i=0; i < IGNodeList.size() ; ++i) {
+
+    const IGNode *const Node = IGNodeList[i];
+    if( Node ) delete Node;
   }
 
+}
 
 
 
+//-----------------------------------------------------------------------------
+// Creates (dynamically allocates) the bit matrix necessary to hold the
+// interference graph.
+//-----------------------------------------------------------------------------
 void InterferenceGraph::createGraph()   
 { 
     Size = IGNodeList.size();
@@ -32,21 +56,24 @@ void InterferenceGraph::createGraph()
 	IG[i][j] = 0;
 }
 
-
-
+//-----------------------------------------------------------------------------
+// creates a new IGNode for the given live range and add to IG
+//-----------------------------------------------------------------------------
 void InterferenceGraph::addLRToIG(LiveRange *const LR)
 {
   IGNode *Node = new IGNode(LR,  IGNodeList.size() );
   IGNodeList.push_back( Node );
-  //Node->setRegClass( RegCl );
+
 }
 
 
+//-----------------------------------------------------------------------------
+// set interference for two live ranges
 // update both the matrix and AdjLists of nodes.
 // If there is already an interference between LR1 and LR2, adj lists
 // are not updated. LR1 and LR2 must be distinct since if not, it suggests
 // that there is some wrong logic in some other method.
-
+//-----------------------------------------------------------------------------
 void InterferenceGraph::setInterference(const LiveRange *const LR1,
 					const LiveRange *const LR2 ) {
   assert(LR1 != LR2);   
@@ -79,7 +106,9 @@ void InterferenceGraph::setInterference(const LiveRange *const LR1,
 }
 
 
-
+//----------------------------------------------------------------------------
+// return whether two live ranges interfere
+//----------------------------------------------------------------------------
 unsigned InterferenceGraph::getInterference(const LiveRange *const LR1,
 					   const LiveRange *const LR2 ) const {
 
@@ -100,11 +129,12 @@ unsigned InterferenceGraph::getInterference(const LiveRange *const LR1,
 }
 
 
-
+//----------------------------------------------------------------------------
 // Merge 2 IGNodes. The neighbors of the SrcNode will be added to the DestNode.
 // Then the IGNode2L  will be deleted. Necessary for coalescing.
 // IMPORTANT: The live ranges are NOT merged by this method. Use 
 //            LiveRangeInfo::unionAndUpdateLRs for that purpose.
+//----------------------------------------------------------------------------
 
 void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *const LR1, 
 					  LiveRange *const LR2 ) {
@@ -147,11 +177,6 @@ void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *const LR1,
       setInterference(LR1, LROfNeigh );  
     }
     
-    //cout<< "  #Neighs - Neigh: ["<< NeighNode->getIndex()<< "] ";
-    //cout << NeighNode->getNumOfNeighbors();
-    //cout << " Dest: [" << DestNode->getIndex() << "] ";
-    //cout << DestNode->getNumOfNeighbors()  << endl;
-
   }
 
   IGNodeList[ SrcInd ] = NULL;
@@ -162,10 +187,10 @@ void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *const LR1,
 }
 
 
-
+//----------------------------------------------------------------------------
 // must be called after modifications to the graph are over but before
 // pushing IGNodes on to the stack for coloring.
-
+//----------------------------------------------------------------------------
 void InterferenceGraph::setCurDegreeOfIGNodes()
 {
   unsigned Size = IGNodeList.size();
@@ -183,7 +208,9 @@ void InterferenceGraph::setCurDegreeOfIGNodes()
 
 //--------------------- debugging (Printing) methods -----------------------
 
-
+//----------------------------------------------------------------------------
+// Print the IGnodes 
+//----------------------------------------------------------------------------
 void InterferenceGraph::printIG() const
 {
 
@@ -203,7 +230,9 @@ void InterferenceGraph::printIG() const
     }
 }
 
-
+//----------------------------------------------------------------------------
+// Print the IGnodes in the IGNode List
+//----------------------------------------------------------------------------
 void InterferenceGraph::printIGNodeList() const
 {
   vector<IGNode *>::const_iterator IGIt = IGNodeList.begin(); // hash map iter

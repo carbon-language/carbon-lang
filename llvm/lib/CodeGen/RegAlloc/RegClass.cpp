@@ -1,35 +1,37 @@
 #include "llvm/CodeGen/RegClass.h"
 
 
-
+//----------------------------------------------------------------------------
+// This constructor inits IG. The actual matrix is created by a call to 
+// createInterferenceGraph() above.
+//----------------------------------------------------------------------------
 RegClass::RegClass(const Method *const M, 
 		   const MachineRegClassInfo *const Mrc, 
 		   const ReservedColorListType *const RCL)
                   :  Meth(M), MRC(Mrc), RegClassID( Mrc->getRegClassID() ),
-                     IG(this), IGNodeStack(), ReservedColorList(RCL)
-{
+                     IG(this), IGNodeStack(), ReservedColorList(RCL) {
   if( DEBUG_RA)
     cout << "Created Reg Class: " << RegClassID << endl;
-
-  // This constructor inits IG. The actual matrix is created by a call to 
-  // createInterferenceGraph() above.
 
   IsColorUsedArr = new bool[ Mrc->getNumOfAllRegs() ];
 }
 
 
 
+//----------------------------------------------------------------------------
+// Main entry point for coloring a register class.
+//----------------------------------------------------------------------------
 void RegClass::colorAllRegs()
 {
   if(DEBUG_RA) cout << "Coloring IG of reg class " << RegClassID << " ...\n";
 
-  //preColorIGNodes();                    // pre-color IGNodes
+                                        // pre-color IGNodes
   pushAllIGNodes();                     // push all IG Nodes
 
   unsigned int StackSize = IGNodeStack.size();    
   IGNode *CurIGNode;
 
-  // for all LRs on stack
+                                        // for all LRs on stack
   for( unsigned int IGN=0; IGN < StackSize; IGN++) {  
   
     CurIGNode = IGNodeStack.top();      // pop the IGNode on top of stack
@@ -37,13 +39,13 @@ void RegClass::colorAllRegs()
     colorIGNode (CurIGNode);            // color it
   }
 
-
-  // InsertSpillCode;  ********* TODO ********
-
 }
 
 
 
+//----------------------------------------------------------------------------
+// The method for pushing all IGNodes on to the stack.
+//----------------------------------------------------------------------------
 void RegClass::pushAllIGNodes()
 {
   bool NeedMoreSpills;          
@@ -51,7 +53,7 @@ void RegClass::pushAllIGNodes()
 
   IG.setCurDegreeOfIGNodes();           // calculate degree of IGNodes
 
-  // push non-constrained IGNodes
+                                        // push non-constrained IGNodes
   bool PushedAll  = pushUnconstrainedIGNodes(); 
 
   if( DEBUG_RA) {
@@ -71,15 +73,19 @@ void RegClass::pushAllIGNodes()
   do{
 
     //get node with min spill cost
+    //
     IGNode *IGNodeSpill =  getIGNodeWithMinSpillCost(); 
    
     //  push that node on to stack
+    //
     IGNodeStack.push( IGNodeSpill ); 
 
     // set its OnStack flag and decrement degree of neighs 
+    //
     IGNodeSpill->pushOnStack(); 
    
     // now push NON-constrined ones, if any
+    //
     NeedMoreSpills = ! pushUnconstrainedIGNodes(); 
 
     cerr << "\nConstrained IG Node found !@!" <<  IGNodeSpill->getIndex();
@@ -137,46 +143,72 @@ bool  RegClass::pushUnconstrainedIGNodes()
 
 
 
-
+//----------------------------------------------------------------------------
+// Get the IGNode withe the minimum spill cost
+//----------------------------------------------------------------------------
 IGNode * RegClass::getIGNodeWithMinSpillCost()
 {
-  IGNode *IGNode=NULL;
-  unsigned int IGNodeListSize = IG.getIGNodeList().size(); 
 
-  // pass over IGNodeList
+  unsigned int IGNodeListSize = IG.getIGNodeList().size(); 
+  long MinSpillCost = -1;
+  IGNode *MinCostIGNode = NULL;
+
+
+  // pass over IGNodeList to find the IGNode with minimum spill cost
+  // among all IGNodes that are not yet pushed on to the stack
+  //
   for( unsigned int i =0; i  < IGNodeListSize; i++) {
-    IGNode = IG.getIGNodeList()[i];
+    IGNode *IGNode = IG.getIGNodeList()[i];
     
     if( ! IGNode )                      // can be null due to merging
       continue;
+
+    if( ! IGNode->isOnStack() ) {
+
+      unsigned SpillCost = IGNode->getParentLR()->getSpillCost();
     
-    // return the first IGNode ########## Change this #######
-    if( ! IGNode->isOnStack() ) return IGNode;   
+      if( MinSpillCost == -1) {         // for the first IG node
+	MinSpillCost = SpillCost;
+	MinCostIGNode = IGNode;
+      }
+
+      else if( MinSpillCost > SpillCost) {
+	MinSpillCost = SpillCost;
+	MinCostIGNode = IGNode;
+      }
+
+    }
   }
   
-  assert(0);
-  return NULL;
+  assert( MinCostIGNode && "No IGNode to spill");
+  return MinCostIGNode;
 }
 
 
 
-
+//----------------------------------------------------------------------------
+// Color the IGNode using the machine specific code.
+//----------------------------------------------------------------------------
 void RegClass::colorIGNode(IGNode *const Node)
 {
 
   if( ! Node->hasColor() )   {          // not colored as an arg etc.
    
 
-    // init all elements to  false;
+    // init all elements of to  IsColorUsedAr  false;
+    //
     for( unsigned  i=0; i < MRC->getNumOfAllRegs(); i++) { 
       IsColorUsedArr[ i ] = false;
     }
     
     // init all reserved_regs to true - we can't use them
+    //
     for( unsigned i=0; i < ReservedColorList->size() ; i++) {  
       IsColorUsedArr[ (*ReservedColorList)[i] ] = true;
     }
 
+    // call the target specific code for coloring
+    //
     MRC->colorIGNode(Node, IsColorUsedArr);
   }
   else {
