@@ -1249,7 +1249,7 @@ Constant *ConstantExpr::getSizeOf(const Type *Ty) {
   return getCast(
     getGetElementPtr(
       getNullValue(PointerType::get(Ty)),
-      std::vector<Constant*>(1, ConstantInt::get(Type::UByteTy, 1))),
+      std::vector<Constant*>(1, ConstantInt::get(Type::UIntTy, 1))),
     Type::UIntTy);
 }
 
