@@ -1002,15 +1002,26 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
+// XorSelf - Implements: X ^ X --> 0
+struct XorSelf {
+  Value *RHS;
+  XorSelf(Value *rhs) : RHS(rhs) {}
+  bool shouldApply(Value *LHS) const { return LHS == RHS; }
+  Instruction *apply(BinaryOperator &Xor) const {
+    return &Xor;
+  }
+};
 
 
 Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  // xor X, X = 0
-  if (Op0 == Op1)
+  // xor X, X = 0, even if X is nested in a sequence of Xor's.
+  if (Instruction *Result = AssociativeOpt(I, XorSelf(Op1))) {
+    assert(Result == &I && "AssociativeOpt didn't work?");
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+  }
 
   if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1)) {
     // xor X, 0 == X
