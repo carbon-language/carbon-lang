@@ -21918,70 +21918,104 @@ echo "$as_me: error: Function mprotect() required but not found" >&2;}
 fi
 
 
+
 # Check whether --enable-purify or --disable-purify was given.
 if test "${enable_purify+set}" = set; then
   enableval="$enable_purify"
-  ENABLE_PURIFY=ENABLE_PURIFY=1
 
 else
-  ENABLE_PURIFY=
-
+  enableval="no"
 fi;
+if test ${enableval} = "no"
+then
+	ENABLE_PURIFY=
+
+else
+	ENABLE_PURIFY=ENABLE_PURIFY=1
+
+fi
+
 # Check whether --enable-optimized or --disable-optimized was given.
 if test "${enable_optimized+set}" = set; then
   enableval="$enable_optimized"
-  ENABLE_OPTIMIZED=ENABLE_OPTIMIZED=1
 
 else
-  ENABLE_OPTIMIZED=
-
+  enableval=no
 fi;
+if test ${enableval} = "no"
+then
+	ENABLE_OPTIMIZED=
+
+else
+	ENABLE_OPTIMIZED=ENABLE_OPTIMIZED=1
+
+fi
+
 # Check whether --enable-spec or --disable-spec was given.
 if test "${enable_spec+set}" = set; then
   enableval="$enable_spec"
-  USE_SPEC=USE_SPEC=1
 
 else
-  USE_SPEC=
-
+  enableval=no
 fi;
+if test ${enableval} = "no"
+then
+	USE_SPEC=
+
+else
+	USE_SPEC=USE_SPEC=1
+
+fi
+
 # Check whether --enable-precompiled_bytecode or --disable-precompiled_bytecode was given.
 if test "${enable_precompiled_bytecode+set}" = set; then
   enableval="$enable_precompiled_bytecode"
-  UPB=USE_PRECOMPILED_BYTECODE=1
 
 else
-  UPB=
-
+  enableval=no
 fi;
+if test ${enableval} = "no"
+then
+	UPB=
 
-DISABLE_LLC_DIFFS=
+else
+	UPB=USE_PRECOMPILED_BYTECODE=1
+
+fi
 
 
 # Check whether --enable-llc_diffs or --disable-llc_diffs was given.
 if test "${enable_llc_diffs+set}" = set; then
   enableval="$enable_llc_diffs"
-  if test ${enableval} = "no"; then DISABLE_LLC_DIFFS=DISABLE_LLC_DIFFS:=1; fi;
 
 else
-  DISABLE_LLC_DIFFS=
-
+  enableval=yes
 fi;
+if test ${enableval} = "no"
+then
+	DISABLE_LLC_DIFFS=DISABLE_LLC_DIFFS:=1
 
-case $build in
-	*i*86*)  # Check whether --enable-jit or --disable-jit was given.
+else
+	DISABLE_LLC_DIFFS=
+
+fi
+
+# Check whether --enable-jit or --disable-jit was given.
 if test "${enable_jit+set}" = set; then
   enableval="$enable_jit"
-  JIT=TARGET_HAS_JIT=1
 
 else
-  JIT=
-
+  enableval=no
 fi;
-	         ;;
-	*)
-	         ;;
-esac
+
+if test ${enableval} = "no"
+then
+	JIT=
+
+else
+	JIT=TARGET_HAS_JIT=1
+
+fi
 
 
 # Check whether --with-spec or --without-spec was given.
