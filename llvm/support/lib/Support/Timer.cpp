@@ -10,7 +10,9 @@
 #include <sys/time.h>
 #include <sys/unistd.h>
 #include <unistd.h>
+#ifndef __FreeBSD__
 #include <malloc.h>
+#endif // __FreeBSD__
 #include <stdio.h>
 #include <iostream>
 #include <algorithm>
@@ -75,12 +77,13 @@ Timer::~Timer() {
 }
 
 static long getMemUsage() {
+#ifndef __FreeBSD__
   if (TrackSpace) {
     struct mallinfo MI = mallinfo();
     return MI.uordblks/*+MI.hblkhd*/;
-  } else {
-    return 0;
   }
+#endif // __FreeBSD__
+  return 0;
 }
 
 struct TimeRecord {
