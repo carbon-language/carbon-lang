@@ -25,9 +25,9 @@ begin
 	%A = add int %i, %j
 	%B = add int %i, %j
 
-	%C = not int %A
-	%D = not int %B
-	%E = not int %j
+	%C = xor int %A, -1
+	%D = xor int %B, -1
+	%E = xor int %j, -1
 
 	ret void
 end
