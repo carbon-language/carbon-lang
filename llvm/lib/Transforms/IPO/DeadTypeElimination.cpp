@@ -150,13 +150,17 @@ static bool PatchUpMethodReferences(SymbolTable *ST) {
       Method *Concrete = 0;
       for (unsigned i = 0; i < Methods.size(); ++i) {
         if (!Methods[i]->isExternal()) {  // Found an implementation
-          assert(Concrete == 0 && "Multiple definitions of the same method. "
-                 "Case not handled yet!");
+          assert(Implementation == 0 && "Multiple definitions of the same"
+                 " method. Case not handled yet!");
           Implementation = Methods[i];
         }
 
-        if (!Methods[i]->getMethodType()->isVarArg()) {
-          assert(Concrete == 0 && "Multiple concrete method types!");
+        if (!Methods[i]->getMethodType()->isVarArg() ||
+            Methods[i]->getMethodType()->getParamTypes().size()) {
+          if (Concrete) {  // Found two different methods types.  Can't choose
+            Concrete = 0;
+            break;
+          }
           Concrete = Methods[i];
         }
       }
@@ -165,44 +169,53 @@ static bool PatchUpMethodReferences(SymbolTable *ST) {
       // probably the implementation.  Change all of the method definitions
       // and uses to use it instead.
       //
-      assert(Concrete && "Multiple varargs defns found?");
-      for (unsigned i = 0; i < Methods.size(); ++i)
-        if (Methods[i] != Concrete) {
-          Method *Old = Methods[i];
-          assert(Old->getReturnType() == Concrete->getReturnType() &&
-                 "Differing return types not handled yet!");
-          assert(Old->getMethodType()->getParamTypes().size() == 0 &&
-                 "Cannot handle varargs fn's with specified element types!");
-          
-          // Attempt to convert all of the uses of the old method to the
-          // concrete form of the method.  If there is a use of the method that
-          // we don't understand here we punt to avoid making a bad
-          // transformation.
-          //
-          // At this point, we know that the return values are the same for our
-          // two functions and that the Old method has no varargs methods
-          // specified.  In otherwords it's just <retty> (...)
-          //
-          for (unsigned i = 0; i < Old->use_size(); ) {
-            User *U = *(Old->use_begin()+i);
-            if (CastInst *CI = dyn_cast<CastInst>(U)) {
-              // Convert casts directly
-              assert(CI->getOperand(0) == Old);
-              CI->setOperand(0, Concrete);
-              Changed = true;
-            } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
-              // Can only fix up calls TO the argument, not args passed in.
-              if (CI->getCalledValue() == Old) {
-                ConvertCallTo(CI, Concrete);
+      if (!Concrete) {
+        cerr << "Warning: Found methods types that are not compatible:\n";
+        for (unsigned i = 0; i < Methods.size(); ++i) {
+          cerr << "\t" << Methods[i]->getType()->getDescription() << " %"
+               << Methods[i]->getName() << endl;
+        }
+        cerr << "  No linkage of methods named '" << Methods[0]->getName()
+             << "' performed!\n";
+      } else {
+        for (unsigned i = 0; i < Methods.size(); ++i)
+          if (Methods[i] != Concrete) {
+            Method *Old = Methods[i];
+            assert(Old->getReturnType() == Concrete->getReturnType() &&
+                   "Differing return types not handled yet!");
+            assert(Old->getMethodType()->getParamTypes().size() == 0 &&
+                   "Cannot handle varargs fn's with specified element types!");
+            
+            // Attempt to convert all of the uses of the old method to the
+            // concrete form of the method.  If there is a use of the method
+            // that we don't understand here we punt to avoid making a bad
+            // transformation.
+            //
+            // At this point, we know that the return values are the same for
+            // our two functions and that the Old method has no varargs methods
+            // specified.  In otherwords it's just <retty> (...)
+            //
+            for (unsigned i = 0; i < Old->use_size(); ) {
+              User *U = *(Old->use_begin()+i);
+              if (CastInst *CI = dyn_cast<CastInst>(U)) {
+                // Convert casts directly
+                assert(CI->getOperand(0) == Old);
+                CI->setOperand(0, Concrete);
                 Changed = true;
+              } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
+                // Can only fix up calls TO the argument, not args passed in.
+                if (CI->getCalledValue() == Old) {
+                  ConvertCallTo(CI, Concrete);
+                  Changed = true;
+                } else {
+                  cerr << "Couldn't cleanup this function call, must be an"
+                       << " argument or something!" << CI;
+                  ++i;
+                }
               } else {
-                cerr << "Couldn't cleanup this function call, must be an"
-                     << " argument or something!" << CI;
+                cerr << "Cannot convert use of method: " << U << endl;
                 ++i;
               }
-            } else {
-              cerr << "Cannot convert use of method: " << U << endl;
-              ++i;
             }
           }
         }
