@@ -385,41 +385,14 @@ public:
 };
 
 //===---------------------------------------------------------------------------
-/// ConstantPointer - Constant Pointer Declarations
-///
-/// The ConstantPointer class represents a null pointer of a specific type. For
-/// a more specific/useful instance, a subclass of ConstantPointer should be
-/// used.
-///
-class ConstantPointer : public Constant {
-  ConstantPointer(const ConstantPointer &);      // DO NOT IMPLEMENT
-protected:
-  inline ConstantPointer(const PointerType *T)
-    : Constant(reinterpret_cast<const Type*>(T)) { }
-public:
-  inline const PointerType *getType() const {
-    return reinterpret_cast<const PointerType*>(Value::getType());
-  }
-
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.
-  virtual bool isNullValue() const { return false; }
-
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstantPointer *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in Constants.cpp
-  static inline bool classof(const Value *V) {
-    return isa<Constant>(V) && classof(cast<Constant>(V));
-  }
-};
-
 /// ConstantPointerNull - a constant pointer value that points to null
 ///
-class ConstantPointerNull : public ConstantPointer {
+class ConstantPointerNull : public Constant {
   friend struct ConstantCreator<ConstantPointerNull, PointerType, char>;
   ConstantPointerNull(const ConstantPointerNull &);      // DO NOT IMPLEMENT
 protected:
-  ConstantPointerNull(const PointerType *T) : ConstantPointer(T) {}
+  ConstantPointerNull(const PointerType *T)
+    : Constant(reinterpret_cast<const Type*>(T)) {}
 
 public:
 
@@ -434,22 +407,18 @@ public:
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPointerNull *) { return true; }
-  static inline bool classof(const ConstantPointer *P) {
-    return (P->getNumOperands() == 0 && P->isNullValue());
-  }
-  static inline bool classof(const Constant *CPV) {
-    return isa<ConstantPointer>(CPV) && classof(cast<ConstantPointer>(CPV));
-  }
+  static bool classof(const Constant *CPV);
   static inline bool classof(const Value *V) {
-    return isa<ConstantPointer>(V) && classof(cast<ConstantPointer>(V));
+    return isa<Constant>(V) && classof(cast<Constant>(V));
   }
 };
 
 
+//===---------------------------------------------------------------------------
 /// ConstantPointerRef - a constant pointer value that is initialized to
 /// point to a global value, which lies at a constant, fixed address.
 ///
-class ConstantPointerRef : public ConstantPointer {
+class ConstantPointerRef : public Constant {
   friend class Module;   // Modules maintain these references
   ConstantPointerRef(const ConstantPointerRef &); // DNI!
 
@@ -467,21 +436,19 @@ public:
     return cast<GlobalValue>(Operands[0].get());
   }
 
+  /// isNullValue - Return true if this is the value that would be returned by
+  /// getNullValue.
+  virtual bool isNullValue() const { return false; }
+
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
                                            bool DisableChecking = false);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPointerRef *) { return true; }
-  static inline bool classof(const ConstantPointer *CPV) {
-    // check for a single operand (the target value)
-    return (CPV->getNumOperands() == 1);
-  }
-  static inline bool classof(const Constant *CPV) {
-    return isa<ConstantPointer>(CPV) && classof(cast<ConstantPointer>(CPV));
-  }
+  static bool classof(const Constant *CPV);
   static inline bool classof(const Value *V) {
-    return isa<ConstantPointer>(V) && classof(cast<ConstantPointer>(V));
+    return isa<Constant>(V) && classof(cast<Constant>(V));
   }
 };
 

@@ -278,7 +278,7 @@ ConstantStruct::ConstantStruct(const StructType *T,
 }
 
 ConstantPointerRef::ConstantPointerRef(GlobalValue *GV)
-  : ConstantPointer(GV->getType()) {
+  : Constant(GV->getType()) {
   Operands.push_back(Use(GV, this));
 }
 
@@ -337,8 +337,15 @@ bool ConstantArray::classof(const Constant *CPV) {
 bool ConstantStruct::classof(const Constant *CPV) {
   return isa<StructType>(CPV->getType()) && !isa<ConstantExpr>(CPV);
 }
-bool ConstantPointer::classof(const Constant *CPV) {
-  return (isa<PointerType>(CPV->getType()) && !isa<ConstantExpr>(CPV));
+
+bool ConstantPointerNull::classof(const Constant *CPV) {
+  return isa<PointerType>(CPV->getType()) && !isa<ConstantExpr>(CPV) &&
+         CPV->getNumOperands() == 0;
+}
+
+bool ConstantPointerRef::classof(const Constant *CPV) {
+  return isa<PointerType>(CPV->getType()) && !isa<ConstantExpr>(CPV) &&
+         CPV->getNumOperands() == 1;
 }
 
 
