@@ -22,28 +22,8 @@ MRegisterInfo::MRegisterInfo(const MRegisterDesc *D, unsigned NR,
   assert(NumRegs < FirstVirtualRegister &&
          "Target has too many physical registers!");
 
-  PhysRegClasses = new const TargetRegisterClass*[NumRegs];
-  for (unsigned i = 0; i != NumRegs; ++i)
-    PhysRegClasses[i] = 0;
-
-  // Fill in the PhysRegClasses map
-  for (MRegisterInfo::regclass_iterator I = regclass_begin(),
-         E = regclass_end(); I != E; ++I) {
-    const TargetRegisterClass *RC = *I;
-    for (unsigned i = 0, e = RC->getNumRegs(); i != e; ++i) {
-      unsigned Reg = RC->getRegister(i);
-      assert(PhysRegClasses[Reg] == 0 && "Register in more than one class?");
-      PhysRegClasses[Reg] = RC;
-    }
-  }
-
   CallFrameSetupOpcode   = CFSO;
   CallFrameDestroyOpcode = CFDO;
-}
-
-
-MRegisterInfo::~MRegisterInfo() {
-  delete[] PhysRegClasses;
 }
 
 std::vector<bool> MRegisterInfo::getAllocatableSet(MachineFunction &MF) const {
