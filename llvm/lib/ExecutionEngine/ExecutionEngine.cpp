@@ -54,13 +54,15 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       if (Op->getType()->getPrimitiveID() == C->getType()->getPrimitiveID())
         return getConstantValue(Op);
 
-      // Handle cast of long to pointer or pointer to long...
-      if ((isa<PointerType>(Op->getType()) && (C->getType() == Type::LongTy ||
-                                               C->getType() == Type::ULongTy))||
-          (isa<PointerType>(C->getType()) && (Op->getType() == Type::LongTy ||
-                                              Op->getType() == Type::ULongTy))){
+      // Handle a cast of pointer to any integral type...
+      if (isa<PointerType>(Op->getType()) &&
+          (C->getType() == Type::LongTy || C->getType() == Type::ULongTy))
         return getConstantValue(Op);
-      }
+        
+      // Handle cast of long to pointer...
+      if (isa<PointerType>(C->getType()) && (Op->getType() == Type::LongTy ||
+                                             Op->getType() == Type::ULongTy))
+        return getConstantValue(Op);
       break;
     }
 
