@@ -499,7 +499,8 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     BCR_TRACE(2, "Function of type: " << Ty << "\n");
   }
 
-  align32(Buf, End);
+  if (hasInconsistentModuleGlobalInfo)
+    align32(Buf, End);
 
   // Now that the function signature list is set up, reverse it so that we can 
   // remove elements efficiently from the back of the vector.
@@ -530,6 +531,7 @@ void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
   hasExtendedLinkageSpecs = true;
   hasOldStyleVarargs = false;
   hasVarArgCallPadding = false;
+  hasInconsistentModuleGlobalInfo = false;
   FirstDerivedTyID = 14;
 
   switch (RevisionNum) {
@@ -539,15 +541,22 @@ void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
     hasExtendedLinkageSpecs = false;
     hasOldStyleVarargs = true;
     hasVarArgCallPadding = true;
+    hasInconsistentModuleGlobalInfo = true;
+
     break;
   case 0:               //  LLVM 1.0, 1.1 release version
     // Compared to rev #2, we added support for weak linkage, a more dense
     // encoding, and better varargs support.
 
     // Base LLVM 1.0 bytecode format.
+    hasInconsistentModuleGlobalInfo = true;
     break;
   case 1:               // LLVM 1.2 release version
     // LLVM 1.2 added explicit support for emitting strings efficiently.
+
+    // Also, it fixed the problem where the size of the ModuleGlobalInfo block
+    // included the size for the alignment at the end, where the rest of the
+    // blocks did not.
     break;
 
   default:

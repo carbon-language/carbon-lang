@@ -97,6 +97,10 @@ private:
 
   bool usesOldStyleVarargs;         // Does this module USE old style varargs?
 
+  // LLVM 1.0 & 1.1 had an explicit alignment of data only for the
+  // ModuleGlobalInfo block.  This was fixed to be like all other blocks in 1.2
+  bool hasInconsistentModuleGlobalInfo;
+
   typedef std::vector<ValueList*> ValueTable;
   ValueTable Values;
   ValueTable ModuleValues;
