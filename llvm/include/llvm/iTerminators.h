@@ -49,6 +49,7 @@ public:
   virtual const BasicBlock *getSuccessor(unsigned idx) const {
     assert(0 && "ReturnInst has no successors!");
     abort();
+    return 0;
   }
   virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(0 && "ReturnInst has no successors!");
