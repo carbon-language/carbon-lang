@@ -306,6 +306,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
               assert(vi.AliveBlocks.empty() && 
                      "Shouldn't be alive across any blocks!");
               interval.addRange(defIndex, killIdx);
+              DEBUG(std::cerr << "\n");
               return;
            }
        }
