@@ -981,7 +981,7 @@ LexOutput := $(strip $(patsubst %.l,%.cpp,$(LexFiles)))
 # this is a hack around it.
 # FIXME.  (f.e. char Buffer[10000] )
 %.cpp: %.l
-	$(Echo) Flexing $<
+	$(Echo) Flexing $*.l
 	$(Verb) $(FLEX) -t $< | \
 	$(SED) 's/void yyunput/inline void yyunput/' | \
 	$(SED) 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' | \
