@@ -38,13 +38,16 @@
   <li><a href="#layout">Program layout</a>
     <ol>
       <li><a href="#cvsdir"><tt>CVS</tt> directories</a>
+      <li><a href="#examples"><tt>llvm/examples</tt></a>
       <li><a href="#include"><tt>llvm/include</tt></a>
       <li><a href="#lib"><tt>llvm/lib</tt></a>
+      <li><a href="#projects"><tt>llvm/projects</tt></a>
       <li><a href="#runtime"><tt>llvm/runtime</tt></a>  
       <li><a href="#test"><tt>llvm/test</tt></a>
       <li><a href="#llvmtest"><tt>llvm-test</tt></a>
       <li><a href="#tools"><tt>llvm/tools</tt></a>  
       <li><a href="#utils"><tt>llvm/utils</tt></a>
+      <li><a href="#win32"><tt>llvm/win32</tt></a>
     </ol></li>
 
   <li><a href="#tutorial">An Example Using the LLVM Tool Chain</a>
@@ -1015,17 +1018,20 @@ The following is a brief introduction to code layout:</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="cvsdir"><tt>CVS</tt> directories</a></div>
-
 <div class="doc_text">
-
 <p>Every directory checked out of CVS will contain a <tt>CVS</tt> directory; for
 the most part these can just be ignored.</p>
+</div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="examples"><tt>llvm/examples</tt></a></div>
+<div class="doc_text">
+  <p>This directory contains some simple examples of how to use the LLVM IR and
+  JIT.</p>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="include"><tt>llvm/include</tt></a></div>
-
 <div class="doc_text">
 
 <p>This directory contains public header files exported from the LLVM
@@ -1054,7 +1060,6 @@ library. The three main subdirectories of this directory are:</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="lib"><tt>llvm/lib</tt></a></div>
-
 <div class="doc_text">
 
 <p>This directory contains most of the source files of the LLVM system. In LLVM,
@@ -1112,6 +1117,16 @@ different <a href="#tools">tools</a>.</p>
   shields LLVM from platform-specific coding.</dd>
 </dl>
 
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="projects"><tt>llvm/projects</tt></a></div>
+<div class="doc_text">
+  <p>This directory contains projects that are not strictly part of LLVM but are
+  shipped with LLVM. This is also the directory where you should create your own
+  LLVM-based projects. See <tt>llvm/projects/sample</tt> for an example of how
+  to set up your own project. See <tt>llvm/projects/Stacker</tt> for a fully 
+  functional example of a compiler front end.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -1331,6 +1346,15 @@ are code generators for parts of LLVM infrastructure.</p>
 
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="win32"><tt>llvm/win32</tt></a></div>
+<div class="doc_text">
+  <p>This directory contains build scripts and project files for use with 
+  Visual C++. This allows developers on Windows to build LLVM without the need
+  for cygwin. The contents of this directory should be considered experimental
+  at this time.
+  </p>
+</div>
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="tutorial">An Example Using the LLVM Tool Chain</a>
