@@ -34,7 +34,8 @@ class StructLayout;
 
 class TargetData : public ImmutablePass {
   bool          LittleEndian;          // Defaults to false
-  unsigned char ByteAlignment;         // Defaults to 1 bytes
+  unsigned char BoolAlignment;         // Defaults to 1 byte
+  unsigned char ByteAlignment;         // Defaults to 1 byte
   unsigned char ShortAlignment;        // Defaults to 2 bytes
   unsigned char IntAlignment;          // Defaults to 4 bytes
   unsigned char LongAlignment;         // Defaults to 8 bytes
@@ -47,23 +48,24 @@ public:
   TargetData(const std::string &TargetName = "",
              bool LittleEndian = false,
              unsigned char PtrSize = 8,
-	     unsigned char PtrAl = 8, unsigned char DoubleAl = 8,
-	     unsigned char FloatAl = 4, unsigned char LongAl = 8, 
-	     unsigned char IntAl = 4, unsigned char ShortAl = 2,
-	     unsigned char ByteAl = 1);
+             unsigned char PtrAl   = 8, unsigned char DoubleAl = 8,
+             unsigned char FloatAl = 4, unsigned char LongAl   = 8, 
+             unsigned char IntAl   = 4, unsigned char ShortAl  = 2,
+             unsigned char ByteAl  = 1, unsigned char BoolAl   = 1);
 
   // Copy constructor
   TargetData (const TargetData &TD) :
-    ImmutablePass (),
-    LittleEndian (TD.isLittleEndian ()),
-    ByteAlignment (TD.getByteAlignment ()),
-    ShortAlignment (TD.getShortAlignment ()),
-    IntAlignment (TD.getIntAlignment ()),
-    LongAlignment (TD.getLongAlignment ()),
-    FloatAlignment (TD.getFloatAlignment ()),
-    DoubleAlignment (TD.getDoubleAlignment ()),
-    PointerSize (TD.getPointerSize ()),
-    PointerAlignment (TD.getPointerAlignment ()) {
+    ImmutablePass(),
+    LittleEndian(TD.isLittleEndian()),
+    BoolAlignment(TD.getBoolAlignment()),
+    ByteAlignment(TD.getByteAlignment()),
+    ShortAlignment(TD.getShortAlignment()),
+    IntAlignment(TD.getIntAlignment()),
+    LongAlignment(TD.getLongAlignment()),
+    FloatAlignment(TD.getFloatAlignment()),
+    DoubleAlignment(TD.getDoubleAlignment()),
+    PointerSize(TD.getPointerSize()),
+    PointerAlignment(TD.getPointerAlignment()) {
   }
     
   TargetData(const std::string &ToolName, const Module *M);
@@ -74,6 +76,7 @@ public:
   bool          isBigEndian()         const { return    !LittleEndian; }
 
   /// Target alignment constraints
+  unsigned char getBoolAlignment()    const { return    BoolAlignment; }
   unsigned char getByteAlignment()    const { return    ByteAlignment; }
   unsigned char getShortAlignment()   const { return   ShortAlignment; }
   unsigned char getIntAlignment()     const { return     IntAlignment; }

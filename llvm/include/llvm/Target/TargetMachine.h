@@ -51,7 +51,8 @@ protected: // Can only create subclasses...
                 unsigned char PtrSize = 8, unsigned char PtrAl = 8,
                 unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
                 unsigned char LongAl = 8, unsigned char IntAl = 4,
-                unsigned char ShortAl = 2, unsigned char ByteAl = 1);
+                unsigned char ShortAl = 2, unsigned char ByteAl = 1,
+                unsigned char BoolAl = 1);
 
   /// This constructor is used for targets that support arbitrary TargetData
   /// layouts, like the C backend.  It initializes the TargetData to match that
