@@ -95,7 +95,7 @@ ColonDef : COLON IDENTIFIER WordList SEMI 	{ $$ = SCI->handle_definition( $2, $3
 
 /* A WordList is just a sequence of words */
 WordList : WordList Word 			{ $$ = SCI->handle_word_list_end( $1, $2 ); } 
-	 | /* empty */				{ $$ = SCI->handle_word_list_start() } ;
+	 | /* empty */				{ $$ = SCI->handle_word_list_start(); } ;
 
 /* A few "words" have a funky syntax */
 /* FIXME: The body of compound words can currently only be function calls */
