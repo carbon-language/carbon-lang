@@ -48,6 +48,9 @@ iplist<Instruction> &ilist_traits<Instruction>::getList(BasicBlock *BB) {
 template SymbolTableListTraits<Instruction, BasicBlock, Function>;
 
 
+// BasicBlock ctor - If the function parameter is specified, the basic block is
+// automatically inserted at the end of the function.
+//
 BasicBlock::BasicBlock(const std::string &name, Function *Parent)
   : Value(Type::LabelTy, Value::BasicBlockVal, name) {
   // Initialize the instlist...
@@ -60,6 +63,10 @@ BasicBlock::BasicBlock(const std::string &name, Function *Parent)
 BasicBlock::~BasicBlock() {
   dropAllReferences();
   InstList.clear();
+}
+
+void BasicBlock::setParent(Function *parent) {
+  InstList.setParent(parent);
 }
 
 // Specialize setName to take care of symbol table majik

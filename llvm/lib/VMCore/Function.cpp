@@ -10,6 +10,10 @@
 #include "llvm/iOther.h"
 #include "SymbolTableListTraitsImpl.h"
 
+BasicBlock *ilist_traits<BasicBlock>::createNode() {
+  return new BasicBlock();
+}
+
 iplist<BasicBlock> &ilist_traits<BasicBlock>::getList(Function *F) {
   return F->getBasicBlockList();
 }
@@ -31,6 +35,14 @@ template SymbolTableListTraits<BasicBlock, Function, Function>;
 // Argument Implementation
 //===----------------------------------------------------------------------===//
 
+Argument::Argument(const Type *Ty, const std::string &Name = "", Function *Par) 
+  : Value(Ty, Value::ArgumentVal, Name) {
+  Parent = 0;
+  if (Par)
+    Par->getArgumentList().push_back(this);
+}
+
+
 // Specialize setName to take care of symbol table majik
 void Argument::setName(const std::string &name, SymbolTable *ST) {
   Function *P;
@@ -41,10 +53,14 @@ void Argument::setName(const std::string &name, SymbolTable *ST) {
   if (P && hasName()) P->getSymbolTable()->insert(this);
 }
 
+void Argument::setParent(Function *parent) {
+  Parent = parent;
+}
+
+
 //===----------------------------------------------------------------------===//
 // Function Implementation
 //===----------------------------------------------------------------------===//
-
 
 Function::Function(const FunctionType *Ty, bool isInternal,
                    const std::string &name, Module *ParentModule)
@@ -136,10 +152,17 @@ void Function::dropAllReferences() {
 
 GlobalVariable::GlobalVariable(const Type *Ty, bool constant, bool isIntern,
 			       Constant *Initializer,
-			       const std::string &Name)
+			       const std::string &Name, Module *ParentModule)
   : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal, isIntern, Name),
     isConstantGlobal(constant) {
   if (Initializer) Operands.push_back(Use((Value*)Initializer, this));
+
+  if (ParentModule)
+    ParentModule->getGlobalList().push_back(this);
+}
+
+void GlobalVariable::setParent(Module *parent) {
+  Parent = parent;
 }
 
 // Specialize setName to take care of symbol table majik

@@ -14,6 +14,10 @@ Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name)
   iType = it;
 }
 
+void Instruction::setParent(BasicBlock *P) {
+  Parent = P;
+}
+
 // Specialize setName to take care of symbol table majik
 void Instruction::setName(const std::string &name, SymbolTable *ST) {
   BasicBlock *P = 0; Function *PP = 0;
