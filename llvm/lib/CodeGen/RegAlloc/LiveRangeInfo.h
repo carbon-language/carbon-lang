@@ -58,13 +58,21 @@ class LiveRangeInfo {
 
   //------------ Private methods (see LiveRangeInfo.cpp for description)-------
 
-  void unionAndUpdateLRs(LiveRange *L1, LiveRange *L2);
+  LiveRange* createNewLiveRange         (const Value* Def,
+                                         bool isCC = false);
 
-  void addInterference(const Instruction *Inst, const ValueSet *LVSet);
+  LiveRange* createOrAddToLiveRange     (const Value* Def,
+                                         bool isCC = false);
+
+  void unionAndUpdateLRs                (LiveRange *L1,
+                                         LiveRange *L2);
+
+  void addInterference                  (const Instruction *Inst,
+                                         const ValueSet *LVSet);
   
-  void suggestRegs4CallRets();
+  void suggestRegs4CallRets             ();
 
-  const Function *getMethod() { return Meth; }
+  const Function *getMethod             () const { return Meth; }
 
 public:
   
@@ -79,15 +87,6 @@ public:
   // Main entry point for live range construction
   //
   void constructLiveRanges();
-
-  // This method is used to add a live range created elsewhere (e.g.,
-  // in machine specific code) to the common live range map
-  //
-  inline void addLRToMap(const Value *Val, LiveRange *LR) {
-    assert(Val && LR && "Val/LR is NULL!\n");
-    assert((!LiveRangeMap[Val]) && "LR already set in map");
-    LiveRangeMap[Val] = LR;
-  }
   
   // return the common live range map for this method
   //
