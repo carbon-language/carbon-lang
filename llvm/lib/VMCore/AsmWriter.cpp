@@ -105,19 +105,16 @@ static void fillTypeNameTable(const Module *M,
                               std::map<const Type *, std::string> &TypeNames) {
   if (!M) return;
   const SymbolTable &ST = M->getSymbolTable();
-  SymbolTable::const_iterator PI = ST.find(Type::TypeTy);
-  if (PI != ST.end()) {
-    SymbolTable::type_const_iterator I = PI->second.begin();
-    for (; I != PI->second.end(); ++I) {
-      // As a heuristic, don't insert pointer to primitive types, because
-      // they are used too often to have a single useful name.
-      //
-      const Type *Ty = cast<Type>(I->second);
-      if (!isa<PointerType>(Ty) ||
-          !cast<PointerType>(Ty)->getElementType()->isPrimitiveType() ||
-          isa<OpaqueType>(cast<PointerType>(Ty)->getElementType()))
-        TypeNames.insert(std::make_pair(Ty, getLLVMName(I->first)));
-    }
+  SymbolTable::type_const_iterator TI = ST.type_begin();
+  for (; TI != ST.type_end(); ++TI ) {
+    // As a heuristic, don't insert pointer to primitive types, because
+    // they are used too often to have a single useful name.
+    //
+    const Type *Ty = cast<Type>(TI->second);
+    if (!isa<PointerType>(Ty) ||
+	!cast<PointerType>(Ty)->getElementType()->isPrimitiveType() ||
+	isa<OpaqueType>(cast<PointerType>(Ty)->getElementType()))
+      TypeNames.insert(std::make_pair(Ty, getLLVMName(TI->first)));
   }
 }
 
@@ -605,26 +602,31 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
 }
 
 
-/// printSymbolTable - Run through symbol table looking for named constants
-/// if a named constant is found, emit it's declaration...
-///
+// printSymbolTable - Run through symbol table looking for constants
+// and types. Emit their declarations.
 void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
-  for (SymbolTable::const_iterator TI = ST.begin(); TI != ST.end(); ++TI) {
-    SymbolTable::type_const_iterator I = ST.type_begin(TI->first);
-    SymbolTable::type_const_iterator End = ST.type_end(TI->first);
+
+  // Print the types.
+  for (SymbolTable::type_const_iterator TI = ST.type_begin();
+       TI != ST.type_end(); ++TI ) {
+    *Out << "\t" << getLLVMName(TI->first) << " = type ";
+
+    // Make sure we print out at least one level of the type structure, so
+    // that we do not get %FILE = type %FILE
+    //
+    printTypeAtLeastOneLevel(TI->second) << "\n";
+  }
     
-    for (; I != End; ++I) {
-      const Value *V = I->second;
+  // Print the constants, in type plane order.
+  for (SymbolTable::plane_const_iterator PI = ST.plane_begin();
+       PI != ST.plane_end(); ++PI ) {
+    SymbolTable::value_const_iterator VI = ST.value_begin(PI->first);
+    SymbolTable::value_const_iterator VE = ST.value_end(PI->first);
+
+    for (; VI != VE; ++VI) {
+      const Value *V = VI->second;
       if (const Constant *CPV = dyn_cast<Constant>(V)) {
 	printConstant(CPV);
-      } else if (const Type *Ty = dyn_cast<Type>(V)) {
-        assert(Ty->getType() == Type::TypeTy && TI->first == Type::TypeTy);
-	*Out << "\t" << getLLVMName(I->first) << " = type ";
-
-        // Make sure we print out at least one level of the type structure, so
-        // that we do not get %FILE = type %FILE
-        //
-        printTypeAtLeastOneLevel(Ty) << "\n";
       }
     }
   }
@@ -1014,6 +1016,7 @@ void Argument::print(std::ostream &o) const {
 }
 
 void Value::dump() const { print(std::cerr); }
+void Type::dump() const { print(std::cerr); }
 
 //===----------------------------------------------------------------------===//
 //  CachedWriter Class Implementation
@@ -1062,3 +1065,5 @@ void CachedWriter::setStream(std::ostream &os) {
   Out = &os;
   if (AW) AW->setStream(os);
 }
+
+// vim: sw=2

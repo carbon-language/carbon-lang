@@ -219,19 +219,18 @@ bool CBackendNameAllUsedStructs::run(Module &M) {
   // already named, and removing names for structure types that are not used.
   //
   SymbolTable &MST = M.getSymbolTable();
-  if (MST.find(Type::TypeTy) != MST.end())
-    for (SymbolTable::type_iterator I = MST.type_begin(Type::TypeTy),
-           E = MST.type_end(Type::TypeTy); I != E; ) {
-      SymbolTable::type_iterator It = I++;
-      if (StructType *STy = dyn_cast<StructType>(It->second)) {
-        // If this is not used, remove it from the symbol table.
-        std::set<const Type *>::iterator UTI = UT.find(STy);
-        if (UTI == UT.end())
-          MST.remove(It->first, It->second);
-        else
-          UT.erase(UTI);
-      }
+  for (SymbolTable::type_iterator TI = MST.type_begin(), TE = MST.type_end();
+       TI != TE; ) {
+    SymbolTable::type_iterator I = TI++;
+    if (StructType *STy = dyn_cast<StructType>(I->second)) {
+      // If this is not used, remove it from the symbol table.
+      std::set<const Type *>::iterator UTI = UT.find(STy);
+      if (UTI == UT.end())
+        MST.remove(I->first, I->second);
+      else
+        UT.erase(UTI);
     }
+  }
 
   // UT now contains types that are not named.  Loop over it, naming
   // structure types.
@@ -291,7 +290,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     }
     if (MTy->isVarArg()) {
       if (MTy->getNumParams()) 
-    	FunctionInnards << ", ...";
+        FunctionInnards << ", ...";
     } else if (!MTy->getNumParams()) {
       FunctionInnards << "void";
     }
@@ -865,12 +864,12 @@ void CWriter::printFloatingPointConstants(Function &F) {
 ///
 void CWriter::printModuleTypes(const SymbolTable &ST) {
   // If there are no type names, exit early.
-  if (ST.find(Type::TypeTy) == ST.end())
+  if ( ! ST.hasTypes() )
     return;
 
   // We are only interested in the type plane of the symbol table...
-  SymbolTable::type_const_iterator I   = ST.type_begin(Type::TypeTy);
-  SymbolTable::type_const_iterator End = ST.type_end(Type::TypeTy);
+  SymbolTable::type_const_iterator I   = ST.type_begin();
+  SymbolTable::type_const_iterator End = ST.type_end();
   
   // Print out forward declarations for structure types before anything else!
   Out << "/* Structure forward decls */\n";
@@ -885,7 +884,7 @@ void CWriter::printModuleTypes(const SymbolTable &ST) {
 
   // Now we can print out typedefs...
   Out << "/* Typedefs */\n";
-  for (I = ST.type_begin(Type::TypeTy); I != End; ++I) {
+  for (I = ST.type_begin(); I != End; ++I) {
     const Type *Ty = cast<Type>(I->second);
     std::string Name = "l_" + Mangler::makeNameProper(I->first);
     Out << "typedef ";
@@ -902,7 +901,7 @@ void CWriter::printModuleTypes(const SymbolTable &ST) {
   // printed in the correct order.
   //
   Out << "/* Structure contents */\n";
-  for (I = ST.type_begin(Type::TypeTy); I != End; ++I)
+  for (I = ST.type_begin(); I != End; ++I)
     if (const StructType *STy = dyn_cast<StructType>(I->second))
       // Only print out used types!
       printContainedStructs(STy, StructPrinted);
@@ -969,7 +968,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   } else {
     // Loop over the arguments, printing them...
     for (FunctionType::param_iterator I = FT->param_begin(),
-	   E = FT->param_end(); I != E; ++I) {
+           E = FT->param_end(); I != E; ++I) {
       if (I != FT->param_begin()) FunctionInnards << ", ";
       printType(FunctionInnards, *I);
     }
@@ -1510,3 +1509,5 @@ TargetMachine *llvm::allocateCTargetMachine(const Module &M,
                                             IntrinsicLowering *IL) {
   return new CTargetMachine(M, IL);
 }
+
+// vim: sw=2

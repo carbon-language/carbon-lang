@@ -33,11 +33,11 @@ Module *llvm::CloneModule(const Module *M) {
 
   // Copy all of the type symbol table entries over...
   const SymbolTable &SymTab = M->getSymbolTable();
-  SymbolTable::const_iterator TypeI = SymTab.find(Type::TypeTy);
-  if (TypeI != SymTab.end())
-    for (SymbolTable::VarMap::const_iterator I = TypeI->second.begin(),
-           E = TypeI->second.end(); I != E; ++I)
-      New->addTypeName(I->first, cast<Type>(I->second));
+  SymbolTable::type_const_iterator TypeI = SymTab.type_begin();
+  SymbolTable::type_const_iterator TypeE = SymTab.type_end();
+  for ( ; TypeI != TypeE; ++TypeI ) {
+    New->addTypeName(TypeI->first, TypeI->second);
+  }
 
   // Create the value map that maps things from the old module over to the new
   // module.
@@ -89,3 +89,5 @@ Module *llvm::CloneModule(const Module *M) {
 
   return New;
 }
+
+// vim: sw=2

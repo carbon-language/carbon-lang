@@ -245,9 +245,9 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
     BBs.clear();
     for (unsigned i = 0, e = BlockInfo.size(); i != e; ++i) {
       SymbolTable &ST = BlockInfo[i].first->getSymbolTable();
-      SymbolTable::iterator I = ST.find(Type::LabelTy);
-      if (I != ST.end() && I->second.count(BlockInfo[i].second))
-        BBs.push_back(cast<BasicBlock>(I->second[BlockInfo[i].second]));
+      SymbolTable::plane_iterator PI = ST.find(Type::LabelTy);
+      if (PI != ST.plane_end() && PI->second.count(BlockInfo[i].second))
+        BBs.push_back(cast<BasicBlock>(PI->second[BlockInfo[i].second]));
     }
     return true;
   }

@@ -248,18 +248,32 @@ void SlotCalculator::processModule() {
 // into the values table...
 //
 void SlotCalculator::processSymbolTable(const SymbolTable *ST) {
-  for (SymbolTable::const_iterator I = ST->begin(), E = ST->end(); I != E; ++I)
-    for (SymbolTable::type_const_iterator TI = I->second.begin(), 
-	   TE = I->second.end(); TI != TE; ++TI)
-      getOrCreateSlot(TI->second);
+  // Do the types first.
+  for (SymbolTable::type_const_iterator TI = ST->type_begin(),
+       TE = ST->type_end(); TI != TE; ++TI )
+    getOrCreateSlot(TI->second);
+
+  // Now do the values.
+  for (SymbolTable::plane_const_iterator PI = ST->plane_begin(), 
+       PE = ST->plane_end(); PI != PE; ++PI)
+    for (SymbolTable::value_const_iterator VI = PI->second.begin(),
+	   VE = PI->second.end(); VI != VE; ++VI)
+      getOrCreateSlot(VI->second);
 }
 
 void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
-  for (SymbolTable::const_iterator I = ST->begin(), E = ST->end(); I != E; ++I)
-    for (SymbolTable::type_const_iterator TI = I->second.begin(), 
-	   TE = I->second.end(); TI != TE; ++TI)
-      if (isa<Constant>(TI->second) || isa<Type>(TI->second))
-	getOrCreateSlot(TI->second);
+  // Do the types first
+  for (SymbolTable::type_const_iterator TI = ST->type_begin(),
+       TE = ST->type_end(); TI != TE; ++TI )
+    getOrCreateSlot(TI->second);
+
+  // Now do the constant values in all planes
+  for (SymbolTable::plane_const_iterator PI = ST->plane_begin(), 
+       PE = ST->plane_end(); PI != PE; ++PI)
+    for (SymbolTable::value_const_iterator VI = PI->second.begin(),
+	   VE = PI->second.end(); VI != VE; ++VI)
+      if (isa<Constant>(VI->second))
+	getOrCreateSlot(VI->second);
 }
 
 
@@ -452,13 +466,19 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
       getOrCreateCompactionTableSlot(VAN->getArgType());
   }
 
+  // Do the types in the symbol table
   const SymbolTable &ST = F->getSymbolTable();
-  for (SymbolTable::const_iterator I = ST.begin(), E = ST.end(); I != E; ++I)
-    for (SymbolTable::type_const_iterator TI = I->second.begin(), 
-	   TE = I->second.end(); TI != TE; ++TI)
-      if (isa<Constant>(TI->second) || isa<Type>(TI->second) ||
-          isa<GlobalValue>(TI->second))
-	getOrCreateCompactionTableSlot(TI->second);
+  for (SymbolTable::type_const_iterator TI = ST.type_begin(),
+       TE = ST.type_end(); TI != TE; ++TI)
+    getOrCreateCompactionTableSlot(TI->second);
+
+  // Now do the constants and global values
+  for (SymbolTable::plane_const_iterator PI = ST.plane_begin(), 
+       PE = ST.plane_end(); PI != PE; ++PI)
+    for (SymbolTable::value_const_iterator VI = PI->second.begin(),
+	   VE = PI->second.end(); VI != VE; ++VI)
+      if (isa<Constant>(VI->second) || isa<GlobalValue>(VI->second))
+	getOrCreateCompactionTableSlot(VI->second);
 
   // Now that we have all of the values in the table, and know what types are
   // referenced, make sure that there is at least the zero initializer in any

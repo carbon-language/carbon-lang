@@ -74,25 +74,24 @@ bool DTE::run(Module &M) {
   // Check the symbol table for superfluous type entries...
   //
   // Grab the 'type' plane of the module symbol...
-  SymbolTable::iterator STI = ST.find(Type::TypeTy);
-  if (STI != ST.end()) {
-    // Loop over all entries in the type plane...
-    SymbolTable::VarMap &Plane = STI->second;
-    for (SymbolTable::VarMap::iterator PI = Plane.begin(); PI != Plane.end();) {
-      // If this entry should be unconditionally removed, or if we detect that
-      // the type is not used, remove it.
-      const Type *RHS = cast<Type>(PI->second);
-      if (ShouldNukeSymtabEntry(RHS) || !UsedTypes.count(RHS)) {
-        Plane.erase(PI++);
-        ++NumKilled;
-        Changed = true;
-      } else {
-        ++PI;
-        // We only need to leave one name for each type.
-        UsedTypes.erase(RHS);
-      }
+  SymbolTable::type_iterator TI = ST.type_begin();
+  while ( TI != ST.type_end() ) {
+    // If this entry should be unconditionally removed, or if we detect that
+    // the type is not used, remove it.
+    const Type *RHS = TI->second;
+    if (ShouldNukeSymtabEntry(RHS) || !UsedTypes.count(RHS)) {
+      SymbolTable::type_iterator ToRemove = TI++;
+      ST.remove(TI->second);
+      ++NumKilled;
+      Changed = true;
+    } else {
+      ++TI;
+      // We only need to leave one name for each type.
+      UsedTypes.erase(RHS);
     }
   }
 
   return Changed;
 }
+
+// vim: sw=2
