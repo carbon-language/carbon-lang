@@ -92,13 +92,13 @@ private:
 
   inline void markInstructionLive(Instruction *I) {
     if (LiveSet.count(I)) return;
-    DEBUG(std::cerr << "Insn Live: " << I);
+    DEBUG(std::cerr << "Insn Live: " << *I);
     LiveSet.insert(I);
     WorkList.push_back(I);
   }
 
   inline void markTerminatorLive(const BasicBlock *BB) {
-    DEBUG(std::cerr << "Terminator Live: " << BB->getTerminator());
+    DEBUG(std::cerr << "Terminator Live: " << *BB->getTerminator());
     markInstructionLive(const_cast<TerminatorInst*>(BB->getTerminator()));
   }
 };

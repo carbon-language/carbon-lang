@@ -127,7 +127,7 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
     std::swap(LHSRank, RHSRank);
     Changed = true;
     ++NumSwapped;
-    DEBUG(std::cerr << "Transposed: " << I
+    DEBUG(std::cerr << "Transposed: " << *I
           /* << " Result BB: " << I->getParent()*/);
   }
   
@@ -156,7 +156,7 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
         I->getParent()->getInstList().insert(I, LHSI);
 
         ++NumChanged;
-        DEBUG(std::cerr << "Reassociated: " << I/* << " Result BB: "
+        DEBUG(std::cerr << "Reassociated: " << *I/* << " Result BB: "
                                                    << I->getParent()*/);
 
         // Since we modified the RHS instruction, make sure that we recheck it.
@@ -235,7 +235,7 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
       New->setOperand(1, NegateValue(New->getOperand(1), BI));
       
       Changed = true;
-      DEBUG(std::cerr << "Negated: " << New /*<< " Result BB: " << BB*/);
+      DEBUG(std::cerr << "Negated: " << *New /*<< " Result BB: " << BB*/);
     }
 
     // If this instruction is a commutative binary operator, and the ranks of
@@ -265,7 +265,7 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
           I = Tmp;
           ++NumLinear;
           Changed = true;
-          DEBUG(std::cerr << "Linearized: " << I/* << " Result BB: " << BB*/);
+          DEBUG(std::cerr << "Linearized: " << *I/* << " Result BB: " << BB*/);
         }
 
         // Make sure that this expression is correctly reassociated with respect

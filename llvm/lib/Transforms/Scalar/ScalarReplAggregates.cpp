@@ -294,7 +294,7 @@ bool SROA::isSafeAllocaToPromote(AllocationInst *AI) {
        I != E; ++I)
     if (!isSafeUseOfAllocation(cast<Instruction>(*I))) {
       DEBUG(std::cerr << "Cannot transform: " << *AI << "  due to user: "
-                      << *I);
+                      << **I);
       return false;
     }
   return true;

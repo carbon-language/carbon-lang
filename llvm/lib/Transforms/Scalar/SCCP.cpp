@@ -289,7 +289,7 @@ bool SCCP::runOnFunction(Function &F) {
       Instruction *I = InstWorkList.back();
       InstWorkList.pop_back();
 
-      DEBUG(std::cerr << "\nPopped off I-WL: " << I);
+      DEBUG(std::cerr << "\nPopped off I-WL: " << *I);
       
       // "I" got into the work list because it either made the transition from
       // bottom to constant, or to Overdefined.
@@ -305,7 +305,7 @@ bool SCCP::runOnFunction(Function &F) {
       BasicBlock *BB = BBWorkList.back();
       BBWorkList.pop_back();
 
-      DEBUG(std::cerr << "\nPopped off BBWL: " << BB);
+      DEBUG(std::cerr << "\nPopped off BBWL: " << *BB);
 
       // Notify all instructions in this basic block that they are newly
       // executable.
@@ -329,7 +329,7 @@ bool SCCP::runOnFunction(Function &F) {
       InstVal &IV = ValueState[&Inst];
       if (IV.isConstant()) {
         Constant *Const = IV.getConstant();
-        DEBUG(std::cerr << "Constant: " << Const << " = " << Inst);
+        DEBUG(std::cerr << "Constant: " << *Const << " = " << Inst);
 
         // Replaces all of the uses of a variable with uses of the constant.
         Inst.replaceAllUsesWith(Const);

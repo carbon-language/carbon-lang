@@ -1011,7 +1011,7 @@ bool CEE::SimplifyBasicBlock(BasicBlock &BB, const RegionInfo &RI) {
       Relation::KnownResult Result = getSetCCResult(SCI, RI);
       if (Result != Relation::Unknown) {
         DEBUG(std::cerr << "Replacing setcc with " << Result
-                        << " constant: " << SCI);
+                        << " constant: " << *SCI);
 
         SCI->replaceAllUsesWith(ConstantBool::get((bool)Result));
         // The instruction is now dead, remove it from the program.
@@ -1038,8 +1038,8 @@ bool CEE::SimplifyInstruction(Instruction *I, const RegionInfo &RI) {
       if (Value *Repl = VI->getReplacement()) {
         // If we know if a replacement with lower rank than Op0, make the
         // replacement now.
-        DEBUG(std::cerr << "In Inst: " << I << "  Replacing operand #" << i
-                        << " with " << Repl << "\n");
+        DEBUG(std::cerr << "In Inst: " << *I << "  Replacing operand #" << i
+                        << " with " << *Repl << "\n");
         I->setOperand(i, Repl);
         Changed = true;
         ++NumOperandsCann;
@@ -1067,7 +1067,7 @@ Relation::KnownResult CEE::getSetCCResult(SetCondInst *SCI,
     if (isa<Constant>(Op1)) {
       if (Constant *Result = ConstantFoldInstruction(SCI)) {
         // Wow, this is easy, directly eliminate the SetCondInst.
-        DEBUG(std::cerr << "Replacing setcc with constant fold: " << SCI);
+        DEBUG(std::cerr << "Replacing setcc with constant fold: " << *SCI);
         return cast<ConstantBool>(Result)->getValue()
           ? Relation::KnownTrue : Relation::KnownFalse;
       }

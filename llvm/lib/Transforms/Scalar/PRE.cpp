@@ -390,7 +390,7 @@ bool PRE::ProcessExpression(Instruction *Expr) {
     return Changed;
   }
 #endif
-  DEBUG(std::cerr << "\n====--- Expression: " << Expr);
+  DEBUG(std::cerr << "\n====--- Expression: " << *Expr);
   const Type *ExprType = Expr->getType();
 
   // AnticipatibleBlocks - Blocks where the current expression is anticipatible.
@@ -425,7 +425,7 @@ bool PRE::ProcessExpression(Instruction *Expr) {
       BasicBlock *BB = Occurrence->getParent();
       Definitions.erase(Definitions.begin());
 
-      DEBUG(std::cerr << "PROCESSING Occurrence: " << Occurrence);
+      DEBUG(std::cerr << "PROCESSING Occurrence: " << *Occurrence);
 
       // Check to see if there is already an incoming value for this block...
       AvailableBlocksTy::iterator LBI = AvailableBlocks.find(BB);
@@ -433,7 +433,7 @@ bool PRE::ProcessExpression(Instruction *Expr) {
         // Yes, there is a dominating definition for this block.  Replace this
         // occurrence with the incoming value.
         if (LBI->second != Occurrence) {
-          DEBUG(std::cerr << "  replacing with: " << LBI->second);
+          DEBUG(std::cerr << "  replacing with: " << *LBI->second);
           Occurrence->replaceAllUsesWith(LBI->second);
           BB->getInstList().erase(Occurrence);   // Delete instruction
           ++NumRedundant;
@@ -489,7 +489,7 @@ bool PRE::ProcessExpression(Instruction *Expr) {
                                           DFBlock->begin());
                 ProcessedExpressions.insert(PN);
 
-                DEBUG(std::cerr << "  INSERTING PHI on frontier: " << PN);
+                DEBUG(std::cerr << "  INSERTING PHI on frontier: " << *PN);
 
                 // Add the incoming blocks for the PHI node
                 for (pred_iterator PI = pred_begin(DFBlock),
@@ -501,7 +501,8 @@ bool PRE::ProcessExpression(Instruction *Expr) {
 
                 Instruction *&BlockOcc = Definitions[DFBlockID];
                 if (BlockOcc) {
-                  DEBUG(std::cerr <<"    PHI superceeds occurrence: "<<BlockOcc);
+                  DEBUG(std::cerr <<"    PHI superceeds occurrence: "<<
+                        *BlockOcc);
                   BlockOcc->replaceAllUsesWith(PN);
                   BlockOcc->getParent()->getInstList().erase(BlockOcc);
                   ++NumRedundant;
@@ -528,7 +529,7 @@ bool PRE::ProcessExpression(Instruction *Expr) {
       //
       PHINode *PN = new PHINode(ExprType, Expr->getName()+".PRE",
                                 AFBlock->begin());
-      DEBUG(std::cerr << "INSERTING PHI for PR: " << PN);
+      DEBUG(std::cerr << "INSERTING PHI for PR: " << *PN);
 
       // If there is a pending occurrence in this block, make sure to replace it
       // with the PHI node...
@@ -538,7 +539,7 @@ bool PRE::ProcessExpression(Instruction *Expr) {
         // There is already an occurrence in this block.  Replace it with PN and
         // remove it.
         Instruction *OldOcc = EDFI->second;
-        DEBUG(std::cerr << "  Replaces occurrence: " << OldOcc);
+        DEBUG(std::cerr << "  Replaces occurrence: " << *OldOcc);
         OldOcc->replaceAllUsesWith(PN);
         AFBlock->getInstList().erase(OldOcc);
         Definitions.erase(EDFI);
@@ -567,7 +568,7 @@ bool PRE::ProcessExpression(Instruction *Expr) {
             New->setName(NonPHIOccurrence->getName() + ".PRE-inserted");
             ProcessedExpressions.insert(New);
 
-            DEBUG(std::cerr << "  INSERTING OCCURRRENCE: " << New);
+            DEBUG(std::cerr << "  INSERTING OCCURRRENCE: " << *New);
 
             // Insert it into the bottom of the predecessor, right before the
             // terminator instruction...
