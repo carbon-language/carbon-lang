@@ -50,6 +50,12 @@ static void OpenFile(const std::string &Filename, unsigned &Len, char* &BufPtr){
     std::cerr << "Error: cannot open file '" << Filename << "'\n";
     exit(2);
   }
+
+  // If mmap decided that the files were empty, it might have returned a
+  // null pointer. If so, make a new, fake pointer -- it shouldn't matter
+  // what it contains, because Len is 0, and it should never be read.
+  if (BufPtr == 0 && Len == 0)
+    BufPtr = new char[1];
 }
 
 static bool isNumberChar(char C) {
