@@ -122,7 +122,7 @@ ifndef LLVM_OBJ_ROOT
 ifdef LLVM_SRC_ROOT
 LLVM_OBJ_ROOT := $(shell cd $(BUILD_OBJ_DIR); cd $(LLVM_SRC_ROOT); pwd)
 else
-LLVM_OBJ_ROOT := $(shell cd $(BUILD_OBJ_DIR); cd $(LEVEL); pwd)
+LLVM_OBJ_ROOT := $(shell cd $(BUILD_OBJ_ROOT); pwd)
 endif
 endif
 
