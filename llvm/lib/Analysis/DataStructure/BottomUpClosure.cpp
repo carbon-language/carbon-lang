@@ -452,7 +452,6 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
   }
 
   // Recompute the Incomplete markers
-  assert(Graph.getInlinedGlobals().empty());
   Graph.maskIncompleteMarkers();
   Graph.markIncompleteNodes(DSGraph::MarkFormalArgs);
 

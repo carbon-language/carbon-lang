@@ -468,7 +468,6 @@ void EquivClassGraphs::processGraph(DSGraph &G) {
   }
 
   // Recompute the Incomplete markers.
-  assert(G.getInlinedGlobals().empty());
   G.maskIncompleteMarkers();
   G.markIncompleteNodes(DSGraph::MarkFormalArgs);
   
