@@ -465,7 +465,7 @@ ac_includes_default="\
 #endif"
 
 ac_unique_file=""Makefile.config.in""
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL DOT ETAGS PYTHON QMTEST ALLOCA MMAP_FILE ENABLE_OPTIMIZED SPEC_ROOT USE_SPEC UPB DISABLE_LLC_DIFFS JIT LLVMCC1 LLVMCC1PLUS BCR PAPIDIR SHLIBEXT LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL DOT ETAGS ETAGSFLAGS PYTHON QMTEST ALLOCA MMAP_FILE ENABLE_OPTIMIZED SPEC_ROOT USE_SPEC UPB DISABLE_LLC_DIFFS JIT LLVMCC1 LLVMCC1PLUS BCR PAPIDIR SHLIBEXT LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -18156,6 +18156,14 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
+etags_version=`$ETAGS --version 2>&1`
+case "$etags_version" in
+	*Eexuberant*) ETAGSFLAGS="--language-force=c++" ;;
+	*GNU\ Emacs*) ETAGSFLAGS="-l c++" ;;
+	*) ETAGSFLAGS="" ;;
+esac
+ETAGSFLAGS=$ETAGSFLAGS
+
 # Extract the first word of "python", so it can be a program name with args.
 set dummy python; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -22410,6 +22418,7 @@ s,@ac_ct_F77@,$ac_ct_F77,;t t
 s,@LIBTOOL@,$LIBTOOL,;t t
 s,@DOT@,$DOT,;t t
 s,@ETAGS@,$ETAGS,;t t
+s,@ETAGSFLAGS@,$ETAGSFLAGS,;t t
 s,@PYTHON@,$PYTHON,;t t
 s,@QMTEST@,$QMTEST,;t t
 s,@ALLOCA@,$ALLOCA,;t t
