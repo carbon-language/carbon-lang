@@ -56,9 +56,6 @@ namespace {
       setOperationAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
 
-      //what is the sign expansion of 1? 1 or -1?
-      setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand); 
-
       setOperationAction(ISD::SREM             , MVT::f32  , Expand);
       setOperationAction(ISD::SREM             , MVT::f64  , Expand);
 
@@ -958,6 +955,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
         break;
       case MVT::i8:
         BuildMI(BB, Alpha::SEXTB, 1, Result).addReg(Tmp1);
+        break;
+      case MVT::i1:
+        Tmp2 = MakeReg(MVT::i64);
+        BuildMI(BB, Alpha::ANDi, 2, Tmp2).addReg(Tmp1).addImm(1);
+        BuildMI(BB, Alpha::SUB, 2, Result).addReg(Alpha::F31).addReg(Tmp2);
         break;
       }
       return Result;
