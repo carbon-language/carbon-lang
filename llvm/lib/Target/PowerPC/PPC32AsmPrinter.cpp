@@ -52,7 +52,7 @@ namespace {
     /// Name-mangler for global names.
     ///
     Mangler *Mang;
-    std::set<std::string> FnStubs, GVStubs;
+    std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
     std::set<std::string> Strings;
 
     Printer(std::ostream &o, TargetMachine &tm) : O(o), TM(tm), labelNumber(0)
@@ -331,7 +331,12 @@ void Printer::emitGlobalConstant(const Constant *CV) {
   case Type::FloatTyID: case Type::DoubleTyID:
     assert (0 && "Should have already output floating point constant.");
   default:
-    assert (0 && "Can't handle printing this type of thing");
+    if (CV == Constant::getNullValue(type)) {  // Zero initializer?
+      O << ".space\t" << TD.getTypeSize(type) << "\n";      
+      return;
+    }
+    std::cerr << "Can't handle printing: " << *CV;
+    abort();
     break;
   }
   O << "\t";
@@ -413,8 +418,11 @@ void Printer::printOp(const MachineOperand &MO,
     return;
 
   case MachineOperand::MO_SignExtendedImmed:
+    O << (short)MO.getImmedValue();
+    return;
+
   case MachineOperand::MO_UnextendedImmed:
-    O << (int)MO.getImmedValue();
+    O << (unsigned short)MO.getImmedValue();
     return;
     
   case MachineOperand::MO_PCRelativeDisp:
@@ -601,9 +609,8 @@ bool Printer::doFinalization(Module &M) {
       unsigned Size = TD.getTypeSize(C->getType());
       unsigned Align = TD.getTypeAlignment(C->getType());
 
-      if (C->isNullValue() && 
-          (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
-           I->hasWeakLinkage() /* FIXME: Verify correct */)) {
+      if (C->isNullValue() && /* FIXME: Verify correct */
+          (I->hasInternalLinkage() || I->hasWeakLinkage())) {
         SwitchSection(O, CurSection, ".data");
         if (I->hasInternalLinkage())
           O << "\t.lcomm " << name << "," << TD.getTypeSize(C->getType())
@@ -616,13 +623,18 @@ bool Printer::doFinalization(Module &M) {
       } else {
         switch (I->getLinkage()) {
         case GlobalValue::LinkOnceLinkage:
+          O << ".section __TEXT,__textcoal_nt,coalesced,no_toc\n"
+            << ".weak_definition " << name << '\n'
+            << ".private_extern " << name << '\n'
+            << ".section __DATA,__datacoal_nt,coalesced,no_toc\n";
+          LinkOnceStubs.insert(name);
+          break;  
         case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
           // Nonnull linkonce -> weak
           O << "\t.weak " << name << "\n";
           SwitchSection(O, CurSection, "");
           O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
           break;
-        
         case GlobalValue::AppendingLinkage:
           // FIXME: appending linkage variables should go into a section of
           // their name or something.  For now, just emit them as external.
@@ -645,6 +657,16 @@ bool Printer::doFinalization(Module &M) {
       }
     }
 
+  // Output stubs for link-once variables
+  if (LinkOnceStubs.begin() != LinkOnceStubs.end())
+    O << ".data\n.align 2\n";
+  for (std::set<std::string>::iterator i = LinkOnceStubs.begin(), 
+         e = LinkOnceStubs.end(); i != e; ++i)
+  {
+    O << *i << "$non_lazy_ptr:\n"
+      << "\t.long\t" << *i << '\n';
+  }
+  
   // Output stubs for dynamically-linked functions
   for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end(); 
        i != e; ++i)
