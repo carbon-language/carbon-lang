@@ -3386,7 +3386,8 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
     if (Instruction *I = dyn_cast<Instruction>(V)) {
       // We know that the instruction dominates the PHI if there are no undef
       // values coming in.
-      if (I->getParent() != &I->getParent()->getParent()->front())
+      if (I->getParent() != &I->getParent()->getParent()->front() ||
+          isa<InvokeInst>(I))
         for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
           if (isa<UndefValue>(PN.getIncomingValue(i))) {
             V = 0;
