@@ -1,0 +1,74 @@
+
+=pod
+
+=head1 NAME
+
+extract - extract a function from an LLVM module
+
+=head1 SYNOPSIS
+
+extract [options] --func function-name [filename]
+
+=head1 DESCRIPTION
+
+The B<extract> command takes the name of a function and extracts it from
+the specified LLVM bytecode file.  It is primarily used as a debugging tool to
+reduce test cases from larger programs that are triggering a bug.
+
+In addition to extracting the bytecode of the specified function,
+B<extract> will also remove unreachable global variables, prototypes, and
+unused types.
+
+The B<extract> command reads its input from standard input if filename is
+omitted or if filename is -.  The output is always written to standard output,
+unless the B<-o> option is specified (see below).
+
+=head1 OPTIONS
+
+=over
+
+=item B<-f>
+
+Force overwrite.  Normally, B<extract> will refuse to overwrite an
+output file that already exists.  With this option, B<extract>
+will overwrite the output file and replace it with new bytecode.
+
+=item B<--func> I<function-name>
+
+Extract the function named I<function-name> from the LLVM bytecode.
+
+=item B<--help>
+
+Print a summary of command line options.
+
+=item B<-o> I<filename>
+
+Specify the output filename.  If filename is "-" (the default), then
+B<extract> sends its output to standard output.
+
+=item B<--stats>
+
+Print statistics.
+
+=item B<--time-passes>
+
+Record the amount of time needed for each pass and print it to standard
+error.
+
+=back
+
+=head1 EXIT STATUS
+
+If B<extract> succeeds, it will exit with 0.  Otherwise, if an error
+occurs, it will exit with a non-zero value.
+
+=head1 SEE ALSO
+
+L<bugpoint>
+
+=head1 AUTHORS
+
+Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
+
+=cut
+
