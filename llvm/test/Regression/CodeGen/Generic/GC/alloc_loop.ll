@@ -4,7 +4,7 @@ declare sbyte* %llvm_gc_allocate(uint)
 declare void %llvm_gc_initialize(uint)
 
 declare void %llvm.gcroot(sbyte**, sbyte*)
-declare void %llvm.gcwrite(sbyte*, sbyte**)
+declare void %llvm.gcwrite(sbyte*, sbyte*, sbyte**)
 
 int %main() {
 entry:
@@ -32,7 +32,7 @@ entry:
 	;; *B = A;
 	%B.1 = load sbyte*** %B
 	%A.1 = load sbyte** %A
-	call void %llvm.gcwrite(sbyte* %A.1, sbyte** %B.1)
+	call void %llvm.gcwrite(sbyte* %A.1, sbyte* %B, sbyte** %B.1)
 	
 	br label %AllocLoop
 
