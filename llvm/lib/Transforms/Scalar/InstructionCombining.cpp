@@ -808,6 +808,8 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(I.getOperand(1))) {
     if (RHS->equalsInt(1))  // X % 1 == 0
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+    if (RHS->isAllOnesValue())  // X % -1 == 0
+      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
     // Check to see if this is an unsigned remainder with an exact power of 2,
     // if so, convert to a bitwise and.
