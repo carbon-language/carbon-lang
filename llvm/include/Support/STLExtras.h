@@ -75,7 +75,9 @@ public:
   typedef typename std::iterator_traits<RootIt>::difference_type
           difference_type;
   typedef typename UnaryFunc::result_type value_type;
-  typedef typename UnaryFunc::result_type *pointer;
+
+  typedef void pointer;
+  //typedef typename UnaryFunc::result_type *pointer;
   typedef void reference;        // Can't modify value returned by fn
 
   typedef RootIt iterator_type;
