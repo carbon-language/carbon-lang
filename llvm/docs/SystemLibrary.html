@@ -94,6 +94,7 @@
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="expose">Don't Expose System Headers</a>
 </div>
+<div class="doc_text">
   <p>The System Library must shield LLVM from <em>all</em> system headers. To 
   obtain system level functionality, LLVM source must 
   <tt>#include "llvm/System/Thing.h"</tt> and nothing else. This means that 
@@ -103,8 +104,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="c_headers">Use Standard C Headers</a>
-</div>
+<div class="doc_subsection"><a name="c_headers">Use Standard C Headers</a></div>
 <div class="doc_text">
   <p>The <em>standard</em> C headers (the ones beginning with "c") are allowed
   to be exposed through the <tt>lib/System</tt> interface. These headers and 
