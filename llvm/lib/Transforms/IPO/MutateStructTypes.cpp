@@ -369,10 +369,15 @@ void MutateStructTypes::transformMethod(Function *m) {
         break;
       case Instruction::Br: {
         const BranchInst *BI = cast<BranchInst>(I);
-        NewI = new BranchInst(
-                           cast<BasicBlock>(ConvertValue(BI->getSuccessor(0))),
-                    cast_or_null<BasicBlock>(ConvertValue(BI->getSuccessor(1))),
-                              ConvertValue(BI->getCondition()));
+        if (BI->isConditional()) {
+          NewI =
+            new BranchInst(cast<BasicBlock>(ConvertValue(BI->getSuccessor(0))),
+                           cast<BasicBlock>(ConvertValue(BI->getSuccessor(1))),
+                           ConvertValue(BI->getCondition()));
+        } else {
+          NewI = 
+            new BranchInst(cast<BasicBlock>(ConvertValue(BI->getSuccessor(0))));
+        }
         break;
       }
       case Instruction::Switch:

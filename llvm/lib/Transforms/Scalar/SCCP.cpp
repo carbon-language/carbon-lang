@@ -397,8 +397,8 @@ void SCCP::visitBranchInst(BranchInst *BI) {
 void SCCP::visitSwitchInst(SwitchInst *SI) {
   InstVal &SCValue = getValueState(SI->getCondition());
   if (SCValue.isOverdefined()) {  // Overdefined condition?  All dests are exe
-    for(unsigned i = 0; BasicBlock *Succ = SI->getSuccessor(i); ++i)
-      markExecutable(Succ);
+    for(unsigned i = 0, E = SI->getNumSuccessors(); i != E; ++i)
+      markExecutable(SI->getSuccessor(i));
   } else if (SCValue.isConstant()) {
     Constant *CPV = SCValue.getConstant();
     // Make sure to skip the "default value" which isn't a value
