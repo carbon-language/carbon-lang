@@ -13,7 +13,7 @@
 #include "Support/DepthFirstIterator.h"
 #include <algorithm>
 
-AnalysisID LoopInfo::ID(AnalysisID::create<LoopInfo>());
+AnalysisID LoopInfo::ID(AnalysisID::create<LoopInfo>(), true);
 
 //===----------------------------------------------------------------------===//
 // Loop implementation

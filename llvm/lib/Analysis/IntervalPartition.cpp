@@ -10,7 +10,7 @@
 
 using std::make_pair;
 
-AnalysisID IntervalPartition::ID(AnalysisID::create<IntervalPartition>());
+AnalysisID IntervalPartition::ID(AnalysisID::create<IntervalPartition>(), true);
 
 //===----------------------------------------------------------------------===//
 // IntervalPartition Implementation

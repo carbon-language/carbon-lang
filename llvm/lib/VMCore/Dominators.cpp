@@ -18,8 +18,8 @@ using std::set;
 //  DominatorSet Implementation
 //===----------------------------------------------------------------------===//
 
-AnalysisID DominatorSet::ID(AnalysisID::create<DominatorSet>());
-AnalysisID DominatorSet::PostDomID(AnalysisID::create<DominatorSet>());
+AnalysisID DominatorSet::ID(AnalysisID::create<DominatorSet>(), true);
+AnalysisID DominatorSet::PostDomID(AnalysisID::create<DominatorSet>(), true);
 
 bool DominatorSet::runOnFunction(Function *F) {
   Doms.clear();   // Reset from the last time we were run...
@@ -146,8 +146,8 @@ void DominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
 //  ImmediateDominators Implementation
 //===----------------------------------------------------------------------===//
 
-AnalysisID ImmediateDominators::ID(AnalysisID::create<ImmediateDominators>());
-AnalysisID ImmediateDominators::PostDomID(AnalysisID::create<ImmediateDominators>());
+AnalysisID ImmediateDominators::ID(AnalysisID::create<ImmediateDominators>(), true);
+AnalysisID ImmediateDominators::PostDomID(AnalysisID::create<ImmediateDominators>(), true);
 
 // calcIDoms - Calculate the immediate dominator mapping, given a set of
 // dominators for every basic block.
@@ -190,8 +190,8 @@ void ImmediateDominators::calcIDoms(const DominatorSet &DS) {
 //  DominatorTree Implementation
 //===----------------------------------------------------------------------===//
 
-AnalysisID DominatorTree::ID(AnalysisID::create<DominatorTree>());
-AnalysisID DominatorTree::PostDomID(AnalysisID::create<DominatorTree>());
+AnalysisID DominatorTree::ID(AnalysisID::create<DominatorTree>(), true);
+AnalysisID DominatorTree::PostDomID(AnalysisID::create<DominatorTree>(), true);
 
 // DominatorTree::reset - Free all of the tree node memory.
 //
@@ -324,8 +324,8 @@ void DominatorTree::calculate(const DominatorSet &DS) {
 //  DominanceFrontier Implementation
 //===----------------------------------------------------------------------===//
 
-AnalysisID DominanceFrontier::ID(AnalysisID::create<DominanceFrontier>());
-AnalysisID DominanceFrontier::PostDomID(AnalysisID::create<DominanceFrontier>());
+AnalysisID DominanceFrontier::ID(AnalysisID::create<DominanceFrontier>(), true);
+AnalysisID DominanceFrontier::PostDomID(AnalysisID::create<DominanceFrontier>(), true);
 
 const DominanceFrontier::DomSetType &
 DominanceFrontier::calcDomFrontier(const DominatorTree &DT, 
