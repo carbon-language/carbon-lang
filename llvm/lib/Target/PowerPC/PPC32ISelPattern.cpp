@@ -462,7 +462,8 @@ public:
     ExprMap.clear();
   }
   
-  unsigned ISel::getGlobalBaseReg();
+  unsigned getGlobalBaseReg();
+  unsigned SelectSetCR0(SDOperand CC);
   unsigned SelectExpr(SDOperand N);
   unsigned SelectExprFP(SDOperand N, unsigned Result);
   void Select(SDOperand N);
@@ -546,7 +547,42 @@ unsigned ISel::getGlobalBaseReg() {
   return GlobalBaseReg;
 }
 
-//Check to see if the load is a constant offset from a base register
+unsigned ISel::SelectSetCR0(SDOperand CC) {
+  unsigned Opc, Tmp1, Tmp2;
+  static const unsigned CompareOpcodes[] = 
+    { PPC::FCMPU, PPC::FCMPU, PPC::CMPW, PPC::CMPLW };
+  
+  // If the first operand to the select is a SETCC node, then we can fold it
+  // into the branch that selects which value to return.
+  SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
+  if (SetCC && CC.getOpcode() == ISD::SETCC) {
+    bool U;
+    Opc = getBCCForSetCC(SetCC->getCondition(), U);
+    Tmp1 = SelectExpr(SetCC->getOperand(0));
+
+    // Pass the optional argument U to canUseAsImmediateForOpcode for SETCC,
+    // so that it knows whether the SETCC immediate range is signed or not.
+    if (1 == canUseAsImmediateForOpcode(SetCC->getOperand(1), ISD::SETCC, 
+                                        Tmp2, U)) {
+      if (U)
+        BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(Tmp2);
+      else
+        BuildMI(BB, PPC::CMPWI, 2, PPC::CR0).addReg(Tmp1).addSImm(Tmp2);
+    } else {
+      bool IsInteger = MVT::isInteger(SetCC->getOperand(0).getValueType());
+      unsigned CompareOpc = CompareOpcodes[2 * IsInteger + U];
+      Tmp2 = SelectExpr(SetCC->getOperand(1));
+      BuildMI(BB, CompareOpc, 2, PPC::CR0).addReg(Tmp1).addReg(Tmp2);
+    }
+  } else {
+    Tmp1 = SelectExpr(CC);
+    BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
+    Opc = PPC::BNE;
+  }
+  return Opc;
+}
+
+/// Check to see if the load is a constant offset from a base register
 void ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
 {
   unsigned imm = 0, opcode = N.getOpcode();
@@ -567,37 +603,8 @@ void ISel::SelectBranchCC(SDOperand N)
   MachineBasicBlock *Dest = 
     cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();
 
-  unsigned Opc, Tmp1, Tmp2;
   Select(N.getOperand(0));  //chain
-
-  // If the first operand to the select is a SETCC node, then we can fold it
-  // into the branch that selects which value to return.
-  SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(N.getOperand(1).Val);
-  if (SetCC && N.getOperand(1).getOpcode() == ISD::SETCC &&
-      MVT::isInteger(SetCC->getOperand(0).getValueType())) {
-    bool U;
-    Opc = getBCCForSetCC(SetCC->getCondition(), U);
-    Tmp1 = SelectExpr(SetCC->getOperand(0));
-
-    // Pass the optional argument U to canUseAsImmediateForOpcode for SETCC,
-    // so that it knows whether the SETCC immediate range is signed or not.
-    if (1 == canUseAsImmediateForOpcode(SetCC->getOperand(1), ISD::SETCC, 
-                                        Tmp2, U)) {
-      if (U)
-        BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(Tmp2);
-      else
-        BuildMI(BB, PPC::CMPWI, 2, PPC::CR0).addReg(Tmp1).addSImm(Tmp2);
-    } else {
-      Tmp2 = SelectExpr(SetCC->getOperand(1));
-      BuildMI(BB, U ? PPC::CMPLW : PPC::CMPW, 2, PPC::CR0).addReg(Tmp1)
-      .addReg(Tmp2);
-    }
-  } else {
-    Tmp1 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
-    Opc = PPC::BNE;
-  }
-
+  unsigned Opc = SelectSetCR0(N.getOperand(1));
   BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(Dest);
   return;
 }
@@ -1201,32 +1208,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
  
   case ISD::SETCC:
     if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node)) {
-      bool U = false;
-      bool IsInteger = MVT::isInteger(SetCC->getOperand(0).getValueType());
-      
-      // FIXME: Is there a situation in which we would ever need to emit fcmpo?
-      static const unsigned CompareOpcodes[] = 
-        { PPC::FCMPU, PPC::FCMPU, PPC::CMPW, PPC::CMPLW };
-
-      // Set the branch opcode to use below
-      Opc = getBCCForSetCC(SetCC->getCondition(), U);
-
-      // Try and use an integer compare with immediate, if applicable.  
-      // Normal setcc uses the sign-extended immediate range, unsigned setcc
-      // uses the zero extended immediate range.
-      if (IsInteger && 
-          1 == canUseAsImmediateForOpcode(N.getOperand(1), opcode, Tmp2, U)) {
-        Tmp1 = SelectExpr(N.getOperand(0));
-        if (U)
-          BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(Tmp2);
-        else
-          BuildMI(BB, PPC::CMPWI, 2, PPC::CR0).addReg(Tmp1).addSImm(Tmp2);
-      } else {
-        Tmp1 = SelectExpr(N.getOperand(0));
-        Tmp2 = SelectExpr(N.getOperand(1));
-        unsigned CompareOpc = CompareOpcodes[2 * IsInteger + U];
-        BuildMI(BB, CompareOpc, 2, PPC::CR0).addReg(Tmp1).addReg(Tmp2);
-      }
+      Opc = SelectSetCR0(N);
       
       // Create an iterator with which to insert the MBB for copying the false 
       // value and the MBB to hold the PHI instruction for this SetCC.
@@ -1273,40 +1255,14 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return 0;
     
   case ISD::SELECT: {
+    Opc = SelectSetCR0(N.getOperand(0));
+
     // Create an iterator with which to insert the MBB for copying the false 
     // value and the MBB to hold the PHI instruction for this SetCC.
     MachineBasicBlock *thisMBB = BB;
     const BasicBlock *LLVM_BB = BB->getBasicBlock();
     ilist<MachineBasicBlock>::iterator It = BB;
     ++It;
-
-    // If the first operand to the select is a SETCC node, then we can fold it
-    // into the branch that selects which value to return.
-    SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(N.getOperand(0).Val);
-    if (SetCC && N.getOperand(0).getOpcode() == ISD::SETCC &&
-        MVT::isInteger(SetCC->getOperand(0).getValueType())) {
-      bool U;
-      Opc = getBCCForSetCC(SetCC->getCondition(), U);
-      Tmp1 = SelectExpr(SetCC->getOperand(0));
-
-      // Pass the optional argument U to canUseAsImmediateForOpcode for SETCC,
-      // so that it knows whether the SETCC immediate range is signed or not.
-      if (1 == canUseAsImmediateForOpcode(SetCC->getOperand(1), ISD::SETCC, 
-                                          Tmp2, U)) {
-        if (U)
-          BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(Tmp2);
-        else
-          BuildMI(BB, PPC::CMPWI, 2, PPC::CR0).addReg(Tmp1).addSImm(Tmp2);
-      } else {
-        Tmp2 = SelectExpr(SetCC->getOperand(1));
-        BuildMI(BB, U ? PPC::CMPLW : PPC::CMPW, 2, PPC::CR0).addReg(Tmp1)
-          .addReg(Tmp2);
-      }
-    } else {
-      Tmp1 = SelectExpr(N.getOperand(0)); //Cond
-      BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
-      Opc = PPC::BNE;
-    }
 
     //  thisMBB:
     //  ...
