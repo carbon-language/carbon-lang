@@ -471,6 +471,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
           (I->hasInternalLinkage() || I->hasWeakLinkage() || 
            I->hasLinkOnceLinkage())) {
         SwitchSection(O, CurSection, ".data");
+        if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
         if (I->hasInternalLinkage())
           O << ".lcomm " << name << "," << Size << "," << Align;
         else 
