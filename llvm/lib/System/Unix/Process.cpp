@@ -50,11 +50,11 @@ static char* som = reinterpret_cast<char*>(::sbrk(0));
 uint64_t 
 Process::GetMallocUsage()
 {
-#ifdef HAVE_MALLINFO
+#if defined(HAVE_MALLINFO)
   struct mallinfo mi;
   mi = ::mallinfo();
   return mi.uordblks;
-#elif HAVE_SBRK
+#elif defined(HAVE_SBRK)
   // Note this is only an approximation and more closely resembles
   // the value returned by mallinfo in the arena field.
   char * eom = sbrk(0);
@@ -71,7 +71,7 @@ Process::GetMallocUsage()
 uint64_t
 Process::GetTotalMemoryUsage()
 {
-#ifdef HAVE_MALLINFO
+#if defined(HAVE_MALLINFO)
   struct mallinfo mi = ::mallinfo();
   return mi.uordblks + mi.hblkhd;
 #else
@@ -85,7 +85,7 @@ Process::GetTimeUsage(TimeValue& elapsed, TimeValue& user_time,
                       TimeValue& sys_time)
 {
   elapsed = TimeValue::now();
-#ifdef HAVE_GETRUSAGE
+#if defined(HAVE_GETRUSAGE)
   struct rusage usage;
   ::getrusage(RUSAGE_SELF, &usage);
   user_time.seconds( usage.ru_utime.tv_sec );
