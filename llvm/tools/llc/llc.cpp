@@ -101,7 +101,6 @@ public:
 //===---------------------------------------------------------------------===//
 
 int main(int argc, char **argv) {
-  int retCode = 0;
   cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
   
   // Allocate a target... in the future this will be controllable on the
@@ -191,7 +190,7 @@ int main(int argc, char **argv) {
   // runAllPasses frees the Pass objects after runAllPasses completes.
   Pass::runAllPassesAndFree(M.get(), Passes);
 
-  return retCode;
+  return 0;
 }
 
 
