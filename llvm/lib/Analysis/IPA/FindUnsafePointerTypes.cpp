@@ -98,7 +98,8 @@ void FindUnsafePointerTypes::print(std::ostream &o, const Module *M) const {
   for (std::set<PointerType*>::const_iterator I = getUnsafeTypes().begin(), 
          E = getUnsafeTypes().end(); I != E; ++I, ++Counter) {
     
-    CW << " #" << Counter << ". " << (Value*)*I << "\n";
+    o << " #" << Counter << ". ";
+    CW << (Value*)*I << "\n";
   }
 }
 
