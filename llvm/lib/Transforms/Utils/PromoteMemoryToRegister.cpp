@@ -247,6 +247,7 @@ void PromoteMem2Reg::run() {
           AST->copyValue(Load, FalseVal);
           AST->copyValue(Load, NewSI);
           AST->deleteValue(Load);
+          AST->deleteValue(SI);
         }
 
         Load->replaceAllUsesWith(NewSI);
