@@ -22,6 +22,47 @@
 #include <algorithm>
 using namespace llvm;
 
+static bool isCommutativeBinOp(unsigned Opcode) {
+  switch (Opcode) {
+  case ISD::ADD:
+  case ISD::MUL:
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR: return true;
+  default: return false; // FIXME: Need commutative info for user ops!
+  }
+}
+
+static bool isAssociativeBinOp(unsigned Opcode) {
+  switch (Opcode) {
+  case ISD::ADD:
+  case ISD::MUL:
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR: return true;
+  default: return false; // FIXME: Need associative info for user ops!
+  }
+}
+
+static unsigned ExactLog2(uint64_t Val) {
+  unsigned Count = 0;
+  while (Val != 1) {
+    Val >>= 1;
+    ++Count;
+  }
+  return Count;
+}
+
+// isInvertibleForFree - Return true if there is no cost to emitting the logical
+// inverse of this node.
+static bool isInvertibleForFree(SDOperand N) {
+  if (isa<ConstantSDNode>(N.Val)) return true;
+  if (isa<SetCCSDNode>(N.Val) && N.Val->hasOneUse())
+    return true;
+  return false;  
+}
+
+
 /// getSetCCSwappedOperands - Return the operation corresponding to (Y op X)
 /// when given the operation for (X op Y).
 ISD::CondCode ISD::getSetCCSwappedOperands(ISD::CondCode Operation) {
@@ -357,6 +398,23 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, SDOperand N1,
     Cond = UOF == 0 ? ISD::SETUO : ISD::SETO;
   }
 
+  // Simplify (X+Y) == (X+Z) -->  Y == Z
+  if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
+      N1.getOpcode() == N2.getOpcode() && MVT::isInteger(N1.getValueType()))
+    if (N1.getOpcode() == ISD::ADD || N1.getOpcode() == ISD::SUB) {
+      if (N1.getOperand(0) == N2.getOperand(0))
+        return getSetCC(Cond, N1.getOperand(1), N2.getOperand(1));
+      if (N1.getOperand(1) == N2.getOperand(1))
+        return getSetCC(Cond, N1.getOperand(0), N2.getOperand(0));
+      if (isCommutativeBinOp(N1.getOpcode())) {
+        // If X op Y == Y op X, try other combinations.
+        if (N1.getOperand(0) == N2.getOperand(1))
+          return getSetCC(Cond, N1.getOperand(1), N2.getOperand(0));
+        if (N1.getOperand(1) == N2.getOperand(0))
+          return getSetCC(Cond, N1.getOperand(1), N2.getOperand(1));
+      }
+    }
+
 
   SetCCSDNode *&N = SetCCs[std::make_pair(std::make_pair(N1, N2), Cond)];
   if (N) return SDOperand(N, 0);
@@ -448,47 +506,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
-
-static bool isCommutativeBinOp(unsigned Opcode) {
-  switch (Opcode) {
-  case ISD::ADD:
-  case ISD::MUL:
-  case ISD::AND:
-  case ISD::OR:
-  case ISD::XOR: return true;
-  default: return false; // FIXME: Need commutative info for user ops!
-  }
-}
-
-static bool isAssociativeBinOp(unsigned Opcode) {
-  switch (Opcode) {
-  case ISD::ADD:
-  case ISD::MUL:
-  case ISD::AND:
-  case ISD::OR:
-  case ISD::XOR: return true;
-  default: return false; // FIXME: Need associative info for user ops!
-  }
-}
-
-static unsigned ExactLog2(uint64_t Val) {
-  unsigned Count = 0;
-  while (Val != 1) {
-    Val >>= 1;
-    ++Count;
-  }
-  return Count;
-}
-
-// isInvertibleForFree - Return true if there is no cost to emitting the logical
-// inverse of this node.
-static bool isInvertibleForFree(SDOperand N) {
-  if (isa<ConstantSDNode>(N.Val)) return true;
-  if (isa<SetCCSDNode>(N.Val) && N.Val->hasOneUse())
-    return true;
-  return false;  
-}
-
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand N1, SDOperand N2) {
