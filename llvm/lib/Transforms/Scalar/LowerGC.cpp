@@ -125,8 +125,9 @@ bool LowerGC::doInitialization(Module &M) {
     if (RootChain == 0) {
       // If the root chain does not exist, insert a new one with linkonce
       // linkage!
-      RootChain = new GlobalVariable(PRLTy, false, GlobalValue::LinkOnceLinkage,
-                                     Constant::getNullValue(RootListTy),
+      RootChain = new GlobalVariable(PRLTy, false, 
+                                     GlobalValue::LinkOnceLinkage,
+                                     Constant::getNullValue(PRLTy),
                                      "llvm_gc_root_chain", &M);
     } else if (RootChain->hasExternalLinkage() && RootChain->isExternal()) {
       RootChain->setInitializer(Constant::getNullValue(PRLTy));
