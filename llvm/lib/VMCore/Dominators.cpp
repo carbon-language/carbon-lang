@@ -19,6 +19,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/SetOperations.h"
+#include <algorithm>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
