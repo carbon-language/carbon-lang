@@ -90,6 +90,12 @@ public:
   void           remove(ValueSubclass *D);     // Defined in ValueHolderImpl.h
   ValueSubclass *pop_back();                   // Defined in ValueHolderImpl.h
 
+  // replaceWith - This removes the element pointed to by 'Where', and inserts
+  // NewValue in it's place.  The old value is returned.  'Where' must be a
+  // valid iterator!
+  //
+  ValueSubclass *replaceWith(iterator &Where, ValueSubclass *NewValue);
+
   // delete_span - Remove the elements from begin to end, deleting them as we
   // go.  This leaves the iterator pointing to the element that used to be end.
   //

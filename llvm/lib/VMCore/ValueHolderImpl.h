@@ -82,7 +82,7 @@ template<class ValueSubclass, class ItemParentType, class SymTabType>
 ValueSubclass *ValueHolder<ValueSubclass,ItemParentType,SymTabType>
 ::remove(const iterator &DI) {
   assert(DI != ValueList.end() && 
-         "Trying to remove the end of the def list!!!");
+         "Trying to remove the end of the value holder list!!!");
   
   ValueSubclass *i = *DI;
   ValueList.erase(DI);
@@ -95,6 +95,32 @@ ValueSubclass *ValueHolder<ValueSubclass,ItemParentType,SymTabType>
   
   return i;
 }
+
+template<class ValueSubclass, class ItemParentType, class SymTabType>
+ValueSubclass *ValueHolder<ValueSubclass,ItemParentType,SymTabType>
+::replaceWith(iterator &DI, ValueSubclass *NewVal) {
+  assert(DI != ValueList.end() && 
+         "Trying to replace the end of the value holder list!!!");
+
+  // Remove the value from the current container...
+  ValueSubclass *Ret = *DI;
+  Ret->setParent(0);  // I don't own you anymore... byebye...
+  
+  // You don't get to be in the symbol table anymore... byebye
+  if (Ret->hasName() && Parent)
+    Parent->getSymbolTable()->remove(Ret);
+
+  // Insert the new value into the container...
+  assert(NewVal->getParent() == 0 && "Value already has parent!");
+  NewVal->setParent(ItemParent);
+ 
+  *DI = NewVal;
+  if (NewVal->hasName() && Parent)
+    Parent->getSymbolTableSure()->insert(NewVal);
+ 
+  return Ret;
+}
+
 
 template<class ValueSubclass, class ItemParentType, class SymTabType>
 void ValueHolder<ValueSubclass,ItemParentType,SymTabType>
