@@ -25,7 +25,7 @@
 using namespace llvm;
 
 // Make sure that anything that uses AliasAnalysis pulls in this file...
-namespace llvm { void BasicAAStub() {} }
+void llvm::BasicAAStub() {}
 
 namespace {
   struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
