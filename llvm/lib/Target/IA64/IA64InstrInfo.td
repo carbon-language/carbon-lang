@@ -36,6 +36,7 @@ let PrintMethod = "printCallOperand" in
   
 def PHI : PseudoInstIA64<(ops), "PHI">;
 def IDEF : PseudoInstIA64<(ops), "// IDEF">;
+def IUSE : PseudoInstIA64<(ops), "// IUSE">;
 def WTF : PseudoInstIA64<(ops), "que??">;
 def ADJUSTCALLSTACKUP : PseudoInstIA64<(ops), "// ADJUSTCALLSTACKUP">;
 def ADJUSTCALLSTACKDOWN : PseudoInstIA64<(ops), "// ADJUSTCALLSTACKDOWN">;
