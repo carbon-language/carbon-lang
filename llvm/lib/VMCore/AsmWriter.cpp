@@ -18,6 +18,9 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
+#include "llvm/Support/STLExtras.h"
+#include "llvm/SymbolTable.h"
+#include <algorithm>
 
 void DebugValue(const Value *V) {
   cerr << V << endl;
@@ -32,7 +35,7 @@ ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType,
   if (PrintType)
     Out << " " << V->getType();
   
-  if (V->hasName() && PrintName) {
+  if (PrintName && V->hasName()) {
     Out << " %" << V->getName();
   } else {
     if (const ConstPoolVal *CPV = V->castConstant()) {
@@ -70,7 +73,7 @@ ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType,
 
 
 
-class AssemblyWriter : public ModuleAnalyzer {
+class AssemblyWriter {
   ostream &Out;
   SlotCalculator &Table;
 public:
@@ -83,58 +86,62 @@ public:
   inline void write(const Instruction *I)    { processInstruction(I); }
   inline void write(const ConstPoolVal *CPV) { processConstant(CPV);  }
 
-protected:
-  virtual bool visitMethod(const Method *M);
-  virtual bool processConstPool(const ConstantPool &CP, bool isMethod);
-  virtual bool processConstant(const ConstPoolVal *CPV);
-  virtual bool processMethod(const Method *M);
-  virtual bool processMethodArgument(const MethodArgument *MA);
-  virtual bool processBasicBlock(const BasicBlock *BB);
-  virtual bool processInstruction(const Instruction *I);
-
 private :
+  void processModule(const Module *M);
+  void processSymbolTable(const SymbolTable &ST);
+  void processConstant(const ConstPoolVal *CPV);
+  void processMethod(const Method *M);
+  void processMethodArgument(const MethodArgument *MA);
+  void processBasicBlock(const BasicBlock *BB);
+  void processInstruction(const Instruction *I);
+
   void writeOperand(const Value *Op, bool PrintType, bool PrintName = true);
 };
 
 
-
-// visitMethod - This member is called after the above two steps, visting each
-// method, because they are effectively values that go into the constant pool.
-//
-bool AssemblyWriter::visitMethod(const Method *M) {
-  return false;
+void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType, 
+				  bool PrintName) {
+  WriteAsOperand(Out, Operand, PrintType, PrintName, &Table);
 }
 
-bool AssemblyWriter::processConstPool(const ConstantPool &CP, bool isMethod) {
-  // Done printing arguments...
-  if (isMethod) {
-    const MethodType *MT = CP.getParentV()->castMethodAsserting()->getType()->
-                                            isMethodType();
-    if (MT->isVarArg()) {
-      if (MT->getParamTypes().size())
-	Out << ", ";
-      Out << "...";  // Output varargs portion of signature!
-    }
-    Out << ")\n";
-  }
 
-  ModuleAnalyzer::processConstPool(CP, isMethod);
-  
-  if (isMethod) {
-    if (!CP.getParentV()->castMethodAsserting()->isExternal())
-      Out << "begin";
-  } else {
-    Out << "implementation\n";
+void AssemblyWriter::processModule(const Module *M) {
+  // Loop over the symbol table, emitting all named constants...
+  if (M->hasSymbolTable())
+    processSymbolTable(*M->getSymbolTable());
+
+  Out << "implementation\n";
+
+  // Output all of the methods...
+  for_each(M->begin(), M->end(), bind_obj(this,&AssemblyWriter::processMethod));
+}
+
+
+// processSymbolTable - Run through symbol table looking for named constants
+// if a named constant is found, emit it's declaration...
+//
+void AssemblyWriter::processSymbolTable(const SymbolTable &ST) {
+  for (SymbolTable::const_iterator TI = ST.begin(); TI != ST.end(); ++TI) {
+    SymbolTable::type_const_iterator I = ST.type_begin(TI->first);
+    SymbolTable::type_const_iterator End = ST.type_end(TI->first);
+    
+    for (; I != End; ++I) {
+      const Value *V = I->second;
+      if (const ConstPoolVal *CPV = V->castConstant()) {
+	processConstant(CPV);
+      } else if (const Type *Ty = V->castType()) {
+	Out << "\t%" << I->first << " = type " << Ty->getDescription() << endl;
+      }
+    }
   }
-  return false;
 }
 
 
 // processConstant - Print out a constant pool entry...
 //
-bool AssemblyWriter::processConstant(const ConstPoolVal *CPV) {
-  if (!CPV->hasName())
-    return false;    // Don't print out unnamed constants, they will be inlined
+void AssemblyWriter::processConstant(const ConstPoolVal *CPV) {
+  // Don't print out unnamed constants, they will be inlined
+  if (!CPV->hasName()) return;
 
   // Print out name...
   Out << "\t%" << CPV->getName() << " = ";
@@ -153,27 +160,50 @@ bool AssemblyWriter::processConstant(const ConstPoolVal *CPV) {
   } 
 
   Out << endl;
-  return false;
 }
 
 // processMethod - Process all aspects of a method.
 //
-bool AssemblyWriter::processMethod(const Method *M) {
+void AssemblyWriter::processMethod(const Method *M) {
   // Print out the return type and name...
   Out << "\n" << (M->isExternal() ? "declare " : "") 
       << M->getReturnType() << " \"" << M->getName() << "\"(";
   Table.incorporateMethod(M);
-  ModuleAnalyzer::processMethod(M);
-  Table.purgeMethod();
-  if (!M->isExternal())
+
+  // Loop over the arguments, processing them...
+  for_each(M->getArgumentList().begin(), M->getArgumentList().end(),
+	   bind_obj(this, &AssemblyWriter::processMethodArgument));
+
+
+  // Finish printing arguments...
+  const MethodType *MT = (const MethodType*)M->getType();
+  if (MT->isVarArg()) {
+    if (MT->getParamTypes().size()) Out << ", ";
+    Out << "...";  // Output varargs portion of signature!
+  }
+  Out << ")\n";
+
+  if (!M->isExternal()) {
+    // Loop over the symbol table, emitting all named constants...
+    if (M->hasSymbolTable())
+      processSymbolTable(*M->getSymbolTable());
+
+    Out << "begin";
+  
+    // Output all of its basic blocks... for the method
+    for_each(M->begin(), M->end(),
+	     bind_obj(this, &AssemblyWriter::processBasicBlock));
+
     Out << "end\n";
-  return false;
+  }
+
+  Table.purgeMethod();
 }
 
 // processMethodArgument - This member is called for every argument that 
 // is passed into the method.  Simply print it out
 //
-bool AssemblyWriter::processMethodArgument(const MethodArgument *Arg) {
+void AssemblyWriter::processMethodArgument(const MethodArgument *Arg) {
   // Insert commas as we go... the first arg doesn't get a comma
   if (Arg != Arg->getParent()->getArgumentList().front()) Out << ", ";
 
@@ -185,13 +215,11 @@ bool AssemblyWriter::processMethodArgument(const MethodArgument *Arg) {
     Out << " %" << Arg->getName();
   else if (Table.getValSlot(Arg) < 0)
     Out << "<badref>";
-  
-  return false;
 }
 
 // processBasicBlock - This member is called for each basic block in a methd.
 //
-bool AssemblyWriter::processBasicBlock(const BasicBlock *BB) {
+void AssemblyWriter::processBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
     Out << "\n" << BB->getName() << ":";
   } else {
@@ -204,13 +232,14 @@ bool AssemblyWriter::processBasicBlock(const BasicBlock *BB) {
   }
   Out << "\t\t\t\t\t;[#uses=" << BB->use_size() << "]\n";  // Output # uses
 
-  ModuleAnalyzer::processBasicBlock(BB);
-  return false;
+  // Output all of the instructions in the basic block...
+  for_each(BB->begin(), BB->end(),
+	   bind_obj(this, &AssemblyWriter::processInstruction));
 }
 
 // processInstruction - This member is called for each Instruction in a methd.
 //
-bool AssemblyWriter::processInstruction(const Instruction *I) {
+void AssemblyWriter::processInstruction(const Instruction *I) {
   Out << "\t";
 
   // Print out name if it exists...
@@ -313,14 +342,6 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
     Out << "\t[#uses=" << I->use_size() << "]";  // Output # uses
   }
   Out << endl;
-
-  return false;
-}
-
-
-void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType, 
-				  bool PrintName) {
-  WriteAsOperand(Out, Operand, PrintType, PrintName, &Table);
 }
 
 
