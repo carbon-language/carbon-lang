@@ -19,11 +19,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/DerivedTypes.h"
 #include <algorithm>
-using std::vector;
-using std::set;
-using std::pair;
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   struct SimpleStructMutation : public MutateStructTypes {
@@ -76,8 +72,9 @@ Pass *createSortElementsPass() { return new SortStructElements(); }
 // PruneTypes - Given a type Ty, make sure that neither it, or one of its
 // subtypes, occur in TypesToModify.
 //
-static void PruneTypes(const Type *Ty, set<const StructType*> &TypesToModify,
-                       set<const Type*> &ProcessedTypes) {
+static void PruneTypes(const Type *Ty,
+                       std::set<const StructType*> &TypesToModify,
+                       std::set<const Type*> &ProcessedTypes) {
   if (ProcessedTypes.count(Ty)) return;  // Already been checked
   ProcessedTypes.insert(Ty);
 
@@ -98,19 +95,19 @@ static void PruneTypes(const Type *Ty, set<const StructType*> &TypesToModify,
   }
 }
 
-static bool FirstLess(const pair<unsigned, unsigned> &LHS,
-                      const pair<unsigned, unsigned> &RHS) {
+static bool FirstLess(const std::pair<unsigned, unsigned> &LHS,
+                      const std::pair<unsigned, unsigned> &RHS) {
   return LHS.second < RHS.second;
 }
 
-static unsigned getIndex(const vector<pair<unsigned, unsigned> > &Vec,
+static unsigned getIndex(const std::vector<std::pair<unsigned, unsigned> > &Vec,
                          unsigned Field) {
   for (unsigned i = 0; ; ++i)
     if (Vec[i].first == Field) return i;
 }
 
 static inline void GetTransformation(const TargetData &TD, const StructType *ST,
-                                     vector<int> &Transform,
+                                     std::vector<int> &Transform,
                                    enum SimpleStructMutation::Transform XForm) {
   unsigned NumElements = ST->getElementTypes().size();
   Transform.reserve(NumElements);
@@ -123,7 +120,7 @@ static inline void GetTransformation(const TargetData &TD, const StructType *ST,
     break;
 
   case SimpleStructMutation::SortElements: {
-    vector<pair<unsigned, unsigned> > ElList;
+    std::vector<std::pair<unsigned, unsigned> > ElList;
 
     // Build mapping from index to size
     for (unsigned i = 0; i < NumElements; ++i)
@@ -148,17 +145,16 @@ SimpleStructMutation::TransformsType
 
   // Get the results out of the analyzers...
   FindUsedTypes          &FUT = getAnalysis<FindUsedTypes>();
-  const set<const Type *> &UsedTypes  = FUT.getTypes();
+  const std::set<const Type *> &UsedTypes  = FUT.getTypes();
 
   FindUnsafePointerTypes &FUPT = getAnalysis<FindUnsafePointerTypes>();
-  const set<PointerType*> &UnsafePTys = FUPT.getUnsafeTypes();
-
+  const std::set<PointerType*> &UnsafePTys = FUPT.getUnsafeTypes();
 
 
   // Combine the two sets, weeding out non structure types.  Closures in C++
   // sure would be nice.
-  set<const StructType*> TypesToModify;
-  for (set<const Type *>::const_iterator I = UsedTypes.begin(), 
+  std::set<const StructType*> TypesToModify;
+  for (std::set<const Type *>::const_iterator I = UsedTypes.begin(), 
          E = UsedTypes.end(); I != E; ++I)
     if (const StructType *ST = dyn_cast<StructType>(*I))
       TypesToModify.insert(ST);
@@ -167,8 +163,8 @@ SimpleStructMutation::TransformsType
   // Go through the Unsafe types and remove all types from TypesToModify that we
   // are not allowed to modify, because that would be unsafe.
   //
-  set<const Type*> ProcessedTypes;
-  for (set<PointerType*>::const_iterator I = UnsafePTys.begin(),
+  std::set<const Type*> ProcessedTypes;
+  for (std::set<PointerType*>::const_iterator I = UnsafePTys.begin(),
          E = UnsafePTys.end(); I != E; ++I) {
     //cerr << "Pruning type: " << *I << "\n";
     PruneTypes(*I, TypesToModify, ProcessedTypes);
@@ -177,18 +173,17 @@ SimpleStructMutation::TransformsType
 
   // Build up a set of structure types that we are going to modify, and
   // information describing how to modify them.
-  std::map<const StructType*, vector<int> > Transforms;
+  std::map<const StructType*, std::vector<int> > Transforms;
   TargetData &TD = getAnalysis<TargetData>();
 
-  for (set<const StructType*>::iterator I = TypesToModify.begin(),
+  for (std::set<const StructType*>::iterator I = TypesToModify.begin(),
          E = TypesToModify.end(); I != E; ++I) {
     const StructType *ST = *I;
 
-    vector<int> &Transform = Transforms[ST];  // Fill in the map directly
+    std::vector<int> &Transform = Transforms[ST];  // Fill in the map directly
     GetTransformation(TD, ST, Transform, XForm);
   }
   
   return Transforms;
 }
 
-} // End llvm namespace
