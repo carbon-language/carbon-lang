@@ -14,17 +14,18 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include <algorithm>
 #include <functional>
 using namespace llvm;
 
-// PropagatePredecessors - This gets "Succ" ready to have the predecessors from
-// "BB".  This is a little tricky because "Succ" has PHI nodes, which need to
-// have extra slots added to them to hold the merge edges from BB's
-// predecessors, and BB itself might have had PHI nodes in it.  This function
-// returns true (failure) if the Succ BB already has a predecessor that is a
-// predecessor of BB and incoming PHI arguments would not be discernible.
+// PropagatePredecessorsForPHIs - This gets "Succ" ready to have the
+// predecessors from "BB".  This is a little tricky because "Succ" has PHI
+// nodes, which need to have extra slots added to them to hold the merge edges
+// from BB's predecessors, and BB itself might have had PHI nodes in it.  This
+// function returns true (failure) if the Succ BB already has a predecessor that
+// is a predecessor of BB and incoming PHI arguments would not be discernible.
 //
 // Assumption: Succ is the single successor for BB.
 //
@@ -198,6 +199,91 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB) {
 
   // Non-instructions all dominate instructions.
   return true;
+}
+
+// GatherConstantSetEQs - Given a potentially 'or'd together collection of seteq
+// instructions that compare a value against a constant, return the value being
+// compared, and stick the constant into the Values vector.
+static Value *GatherConstantSetEQs(Value *V, std::vector<Constant*> &Values) {
+  if (Instruction *Inst = dyn_cast<Instruction>(V))
+    if (Inst->getOpcode() == Instruction::SetEQ) {
+      if (Constant *C = dyn_cast<Constant>(Inst->getOperand(1))) {
+        Values.push_back(C);
+        return Inst->getOperand(0);
+      } else if (Constant *C = dyn_cast<Constant>(Inst->getOperand(0))) {
+        Values.push_back(C);
+        return Inst->getOperand(1);
+      }
+    } else if (Inst->getOpcode() == Instruction::Or) {
+      if (Value *LHS = GatherConstantSetEQs(Inst->getOperand(0), Values))
+        if (Value *RHS = GatherConstantSetEQs(Inst->getOperand(1), Values))
+          if (LHS == RHS)
+            return LHS;
+    }
+  return 0;
+}
+
+// GatherConstantSetNEs - Given a potentially 'and'd together collection of
+// setne instructions that compare a value against a constant, return the value
+// being compared, and stick the constant into the Values vector.
+static Value *GatherConstantSetNEs(Value *V, std::vector<Constant*> &Values) {
+  if (Instruction *Inst = dyn_cast<Instruction>(V))
+    if (Inst->getOpcode() == Instruction::SetNE) {
+      if (Constant *C = dyn_cast<Constant>(Inst->getOperand(1))) {
+        Values.push_back(C);
+        return Inst->getOperand(0);
+      } else if (Constant *C = dyn_cast<Constant>(Inst->getOperand(0))) {
+        Values.push_back(C);
+        return Inst->getOperand(1);
+      }
+    } else if (Inst->getOpcode() == Instruction::Cast) {
+      // Cast of X to bool is really a comparison against zero.
+      assert(Inst->getType() == Type::BoolTy && "Can only handle bool values!");
+      Values.push_back(Constant::getNullValue(Inst->getOperand(0)->getType()));
+      return Inst->getOperand(0);
+    } else if (Inst->getOpcode() == Instruction::And) {
+      if (Value *LHS = GatherConstantSetNEs(Inst->getOperand(0), Values))
+        if (Value *RHS = GatherConstantSetNEs(Inst->getOperand(1), Values))
+          if (LHS == RHS)
+            return LHS;
+    }
+  return 0;
+}
+
+
+
+/// GatherValueComparisons - If the specified Cond is an 'and' or 'or' of a
+/// bunch of comparisons of one value against constants, return the value and
+/// the constants being compared.
+static bool GatherValueComparisons(Instruction *Cond, Value *&CompVal,
+                                   std::vector<Constant*> &Values) {
+  if (Cond->getOpcode() == Instruction::Or) {
+    CompVal = GatherConstantSetEQs(Cond, Values);
+
+    // Return true to indicate that the condition is true if the CompVal is
+    // equal to one of the constants.
+    return true;
+  } else if (Cond->getOpcode() == Instruction::And) {
+    CompVal = GatherConstantSetNEs(Cond, Values);
+        
+    // Return false to indicate that the condition is false if the CompVal is
+    // equal to one of the constants.
+    return false;
+  }
+  return false;
+}
+
+/// ErasePossiblyDeadInstructionTree - If the specified instruction is dead and
+/// has no side effects, nuke it.  If it uses any instructions that become dead
+/// because the instruction is now gone, nuke them too.
+static void ErasePossiblyDeadInstructionTree(Instruction *I) {
+  if (isInstructionTriviallyDead(I)) {
+    std::vector<Value*> Operands(I->op_begin(), I->op_end());
+    I->getParent()->getInstList().erase(I);
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+      if (Instruction *OpI = dyn_cast<Instruction>(Operands[i]))
+        ErasePossiblyDeadInstructionTree(OpI);
+  }
 }
 
 // SimplifyCFG - This function is used to do simplification of a CFG.  For
@@ -389,7 +475,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     }
   }
 
-
   // Merge basic blocks into their predecessor if there is only one distinct
   // pred, and if there is only one distinct successor of the predecessor, and
   // if there are no PHI nodes.
@@ -451,6 +536,54 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       
     return true;
   }
+
+  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+    if (BranchInst *BI = dyn_cast<BranchInst>((*PI)->getTerminator()))
+      // Change br (X == 0 | X == 1), T, F into a switch instruction.
+      if (BI->isConditional() && isa<Instruction>(BI->getCondition())) {
+        Instruction *Cond = cast<Instruction>(BI->getCondition());
+        // If this is a bunch of seteq's or'd together, or if it's a bunch of
+        // 'setne's and'ed together, collect them.
+        Value *CompVal = 0;
+        std::vector<Constant*> Values;
+        bool TrueWhenEqual = GatherValueComparisons(Cond, CompVal, Values);
+        if (CompVal && CompVal->getType()->isInteger()) {
+          // There might be duplicate constants in the list, which the switch
+          // instruction can't handle, remove them now.
+          std::sort(Values.begin(), Values.end());
+          Values.erase(std::unique(Values.begin(), Values.end()), Values.end());
+          
+          // Figure out which block is which destination.
+          BasicBlock *DefaultBB = BI->getSuccessor(1);
+          BasicBlock *EdgeBB    = BI->getSuccessor(0);
+          if (!TrueWhenEqual) std::swap(DefaultBB, EdgeBB);
+          
+          // Create the new switch instruction now.
+          SwitchInst *New = new SwitchInst(CompVal, DefaultBB, BI);
+          
+          // Add all of the 'cases' to the switch instruction.
+          for (unsigned i = 0, e = Values.size(); i != e; ++i)
+            New->addCase(Values[i], EdgeBB);
+          
+          // We added edges from PI to the EdgeBB.  As such, if there were any
+          // PHI nodes in EdgeBB, they need entries to be added corresponding to
+          // the number of edges added.
+          for (BasicBlock::iterator BBI = EdgeBB->begin();
+               PHINode *PN = dyn_cast<PHINode>(BBI); ++BBI) {
+            Value *InVal = PN->getIncomingValueForBlock(*PI);
+            for (unsigned i = 0, e = Values.size()-1; i != e; ++i)
+              PN->addIncoming(InVal, *PI);
+          }
+
+          // Erase the old branch instruction.
+          (*PI)->getInstList().erase(BI);
+
+          // Erase the potentially condition tree that was used to computed the
+          // branch condition.
+          ErasePossiblyDeadInstructionTree(Cond);
+          return true;
+        }
+      }
 
   // If there is a trivial two-entry PHI node in this basic block, and we can
   // eliminate it, do so now.
