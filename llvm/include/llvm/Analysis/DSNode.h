@@ -271,4 +271,19 @@ inline void DSNodeHandle::mergeWith(const DSNodeHandle &Node) {
     *this = Node;
 }
 
+inline void DSNodeHandle::swap(DSNodeHandle &NH) {
+  std::swap(Offset, NH.Offset);
+  if (N != NH.N) {
+    if (N) {
+      N->removeReferrer(this);
+      N->addReferrer(&NH);
+    }
+    if (NH.N) {
+      N->removeReferrer(&NH);
+      N->addReferrer(this);
+    }
+    std::swap(N, NH.N);
+  }
+}
+
 #endif
