@@ -1,0 +1,13 @@
+; RUN: llvm-as < %s | lli -enable-correct-eh-support
+
+int %test() {
+  unwind
+}
+
+int %main() {
+	%X = invoke int %test() to label %cont except label %EH
+cont:
+	ret int 1
+EH:
+	ret int 0
+}
