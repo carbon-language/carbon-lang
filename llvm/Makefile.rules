@@ -32,9 +32,6 @@
 #
 # 6. LLVM_SRC_ROOT - If specified, points to the top of the LLVM source tree.
 #
-# 7. LLVM_OBJ_ROOT - If specified, points to the top directory where LLVM
-#    object files are placed.
-#
 # 8. BUILD_SRC_DIR - The directory which contains the current set of Makefiles
 #    and usually the source code too (unless SourceDir is set).
 #
@@ -46,8 +43,7 @@
 #     placed.
 #
 # For building,
-# 	LLVM, LLVM_SRC_ROOT = BUILD_SRC_ROOT, and
-# 	LLVM_OBJ_ROOT = BUILD_OBJ_ROOT.
+# 	LLVM, LLVM_SRC_ROOT = BUILD_SRC_ROOT
 #
 #===-----------------------------------------------------------------------====
 
@@ -127,7 +123,7 @@ endif
 # Set the LLVM object directory.
 #
 ifndef LLVM_OBJ_ROOT
-LLVM_OBJ_ROOT := $(BUILD_OBJ_ROOT)
+LLVM_OBJ_ROOT := $(shell cd $(BUILD_OBJ_DIR); cd $(LLVM_SRC_ROOT); pwd)
 endif
 
 ###########################################################################
@@ -161,13 +157,13 @@ bytecode::
 
 # Print out the directories used for building
 prdirs::
-	echo "Home Offset      : " $(HOME_OBJ_ROOT)
-	echo "Build Source Root: " $(BUILD_SRC_ROOT)
-	echo "Build Source Dir : " $(BUILD_SRC_DIR)
-	echo "Build Object Root: " $(BUILD_OBJ_ROOT)
-	echo "Build Object Dir : " $(BUILD_OBJ_DIR)
-	echo "LLVM  Source Root: " $(LLVM_SRC_ROOT)
-	echo "LLVM  Object Root: " $(LLVM_OBJ_ROOT)
+	@echo "Home Offset      : " $(HOME_OBJ_ROOT)
+	@echo "Build Source Root: " $(BUILD_SRC_ROOT)
+	@echo "Build Source Dir : " $(BUILD_SRC_DIR)
+	@echo "Build Object Root: " $(BUILD_OBJ_ROOT)
+	@echo "Build Object Dir : " $(BUILD_OBJ_DIR)
+	@echo "LLVM  Source Root: " $(LLVM_SRC_ROOT)
+	@echo "LLVM  Object Root: " $(LLVM_OBJ_ROOT)
 
 ###########################################################################
 # Suffixes and implicit rules:
