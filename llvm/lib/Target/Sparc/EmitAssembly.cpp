@@ -544,7 +544,7 @@ private:
   void printGlobalVariable      (const GlobalVariable *GV);
   void PrintZeroBytesToPad      (int numBytes);
   void printSingleConstantValue (const Constant* CV);
-  void printConstantValueOnly   (const Constant* CV, int numPadBytes = 0);
+  void printConstantValueOnly   (const Constant* CV, int numPadBytesAfter = 0);
   void printConstant            (const Constant* CV, string valID = "");
 
   static void FoldConstants     (const Module &M,
@@ -786,12 +786,9 @@ SparcModuleAsmPrinter::PrintZeroBytesToPad(int numBytes)
 // Uses printSingleConstantValue() to print each individual value.
 void
 SparcModuleAsmPrinter::printConstantValueOnly(const Constant* CV,
-                                              int numPadBytes /* = 0*/)
+                                              int numPadBytesAfter /* = 0*/)
 {
   const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
-
-  if (numPadBytes)
-    PrintZeroBytesToPad(numPadBytes);
 
   if (CVA && isStringCompatible(CVA))
     { // print the string alone and return
@@ -829,6 +826,9 @@ SparcModuleAsmPrinter::printConstantValueOnly(const Constant* CV,
     }
   else
     printSingleConstantValue(CV);
+
+  if (numPadBytesAfter)
+    PrintZeroBytesToPad(numPadBytesAfter);
 }
 
 // Print a constant (which may be an aggregate) prefixed by all the
