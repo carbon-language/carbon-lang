@@ -34,14 +34,6 @@ namespace {
 }
 
 //===----------------------------------------------------------------------===//
-// ExecutionEngine Class Implementation
-//
-
-ExecutionEngine::~ExecutionEngine() {
-  delete &CurMod;
-}
-
-//===----------------------------------------------------------------------===//
 // main Driver function
 //
 int main(int argc, char** argv, const char ** envp) {

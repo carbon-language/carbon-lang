@@ -20,6 +20,10 @@
 
 Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
 
+ExecutionEngine::~ExecutionEngine() {
+  delete &CurMod;
+}
+
 ExecutionEngine *ExecutionEngine::create (Module *M, bool ForceInterpreter,
 					  bool TraceMode) {
   ExecutionEngine *EE = 0;
