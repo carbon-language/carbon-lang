@@ -35,7 +35,6 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="support.lib"
 				OutputFile="$(OutDir)\TableGen.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="C:\Project\llvm\win32\Debug"
