@@ -275,9 +275,8 @@ static bool ExtractLoops(BugDriver &BD,
     for (Module::iterator I = ToOptimizeLoopExtracted->begin(),
            E = ToOptimizeLoopExtracted->end(); I != E; ++I) {
       if (!I->isExternal()) {
-        Function *OldF = I;
-        Function *NewF = 
-          ToNotOptimize->getFunction(OldF->getName(), OldF->getFunctionType());
+        Function *NewF = ToNotOptimize->getFunction(I->getName(),
+                                                    I->getFunctionType());
         assert(NewF && "Function not found??");
         MiscompiledFunctions.push_back(NewF);
       }
