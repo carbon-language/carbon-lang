@@ -12,7 +12,7 @@ all:: $(addprefix Output/, $(TESTS:%.ll=%.out))
 
 Output/%.out: Output/%.bc $(LJELLO)
 	@echo "======== Running $< ==================="
-	$(VERB) jello $< > $@ 2>&1 || \
+	$(VERB) jello -stats $< > $@ 2>&1 || \
                  ( cat $@; rm -f $@; $(FAILURE) $@ )
 
 
