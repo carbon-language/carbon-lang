@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/HashExtras.h"
 #include "Support/GraphTraits.h"
+#include "Support/NonCopyable.h"
 
 class Value;
 class Instruction;
