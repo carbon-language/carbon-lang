@@ -229,8 +229,22 @@ bool V8ISel::runOnFunction(Function &Fn) {
 
 void V8ISel::visitCallInst(CallInst &I) {
   assert (I.getNumOperands () == 1 && "Can't handle call args yet");
+  unsigned DestReg = getReg (I);
   BuildMI (BB, V8::CALL, 1).addPCDisp (I.getOperand (0));
-  BuildMI (BB, V8::NOP, 0); // NOP in delay slot
+  if (I.getType ()->getPrimitiveID () == Type::VoidTyID)
+    return;
+  // Deal w/ return value
+  switch (getClass (I.getType ())) {
+    case cByte:
+    case cShort:
+    case cInt:
+      // Schlep it over into the destination register
+      BuildMI (BB, V8::ORrr, 2, DestReg).addReg(V8::G0).addReg(V8::O0);
+      break;
+    default:
+      visitInstruction (I);
+      return;
+  }
 }
 
 void V8ISel::visitReturnInst(ReturnInst &I) {
