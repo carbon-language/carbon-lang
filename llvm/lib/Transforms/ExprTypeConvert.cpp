@@ -49,6 +49,7 @@ static bool MallocConvertibleToType(MallocInst *MI, const Type *Ty,
 
   // Get information about the base datatype being allocated, before & after
   int ReqTypeSize = TD.getTypeSize(Ty);
+  if (ReqTypeSize == 0) return false;
   unsigned OldTypeSize = TD.getTypeSize(MI->getType()->getElementType());
 
   // Must have a scale or offset to analyze it...

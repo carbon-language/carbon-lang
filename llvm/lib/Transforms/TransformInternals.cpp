@@ -119,6 +119,7 @@ const Type *ConvertibleToGEP(const Type *Ty, Value *OffsetVal,
       if (!ElTy->isSized() || (isa<PointerType>(CompTy) && !Indices.empty()))
         return 0; // Type is unreasonable... escape!
       unsigned ElSize = TD.getTypeSize(ElTy);
+      if (ElSize == 0) return 0;   // Avoid division by zero...
       int64_t ElSizeS = ElSize;
 
       // See if the user is indexing into a different cell of this array...
