@@ -272,6 +272,8 @@ AC_CXX_HAVE_STD_ITERATOR
 AC_CXX_HAVE_BI_ITERATOR
 AC_CXX_HAVE_FWD_ITERATOR
 
+AC_FUNC_ISNAN
+
 dnl Checks for library functions.
 AC_FUNC_ALLOCA
 AC_FUNC_MMAP
@@ -286,7 +288,7 @@ then
 fi
 AC_HEADER_MMAP_ANONYMOUS
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(getcwd gettimeofday strdup strtoq strtoll backtrace isatty mkstemp getrusage isnan)
+AC_CHECK_FUNCS(getcwd gettimeofday strdup strtoq strtoll backtrace isatty mkstemp getrusage)
 AC_CHECK_FUNC(mprotect,,AC_MSG_ERROR([Function mprotect() required but not found]))
 
 dnl Determine if the linker supports the -R option.
