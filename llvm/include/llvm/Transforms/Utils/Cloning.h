@@ -31,6 +31,7 @@ class CallInst;
 class InvokeInst;
 class ReturnInst;
 class CallSite;
+class Trace;
 
 /// CloneModule - Return an exact copy of the specified module
 ///
@@ -94,6 +95,13 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                        std::vector<ReturnInst*> &Returns,
                        const char *NameSuffix = "");
 
+
+/// CloneTraceInto - Clone T into NewFunc. Original<->clone mapping is
+/// saved in ValueMap.
+///
+void CloneTraceInto(Function *NewFunc, Trace &T,
+                    std::map<const Value*, Value*> &ValueMap,
+                    const char *NameSuffix);
 
 /// InlineFunction - This function inlines the called function into the basic
 /// block of the caller.  This returns false if it is not possible to inline
