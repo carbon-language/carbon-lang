@@ -28,8 +28,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/iMemory.h"
 #include "llvm/Target/TargetData.h"
-
-namespace llvm {
+using namespace llvm;
 
 // Register the AliasAnalysis interface, providing a nice name to refer to.
 namespace {
@@ -53,6 +52,25 @@ AliasAnalysis::getModRefInfo(StoreInst *S, Value *P, unsigned Size) {
   // If the pointer is a pointer to constant memory, then it could not have been
   // modified by this store.
   return pointsToConstantMemory(P) ? NoModRef : Mod;
+}
+
+AliasAnalysis::ModRefResult
+AliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+  if (Function *F = CS.getCalledFunction())
+    if (onlyReadsMemory(F)) {
+      if (doesNotAccessMemory(F)) return NoModRef;
+      return Ref;
+    }
+
+  // If P points to a constant memory location, the call definitely could not
+  // modify the memory location.
+  return pointsToConstantMemory(P) ? Ref : ModRef;
+}
+
+AliasAnalysis::ModRefResult
+AliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
+  // FIXME: could probably do better.
+  return ModRef;
 }
 
 
@@ -110,7 +128,7 @@ bool AliasAnalysis::canInstructionRangeModify(const Instruction &I1,
 // the risk of AliasAnalysis being used, but the default implementation not
 // being linked into the tool that uses it.
 //
-extern void BasicAAStub();
+extern void llvm::BasicAAStub();
 static IncludeFile INCLUDE_BASICAA_CPP((void*)&BasicAAStub);
 
 
@@ -132,5 +150,3 @@ namespace {
   // Declare that we implement the AliasAnalysis interface
   RegisterAnalysisGroup<AliasAnalysis, NoAA> Y;
 }  // End of anonymous namespace
-
-} // End llvm namespace
