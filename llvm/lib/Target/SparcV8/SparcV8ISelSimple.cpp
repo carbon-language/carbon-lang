@@ -314,28 +314,27 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
 }
 
 void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
-  unsigned ArgOffset;
   static const unsigned IncomingArgRegs[] = { V8::I0, V8::I1, V8::I2,
     V8::I3, V8::I4, V8::I5 };
+
   // Add IMPLICIT_DEFs of input regs.
-  ArgOffset = 0;
+  unsigned ArgNo = 0;
   for (Function::aiterator I = LF->abegin(), E = LF->aend();
-       I != E && ArgOffset < 6; ++I, ++ArgOffset) {
-    unsigned Reg = getReg(*I);
+       I != E && ArgNo < 6; ++I, ++ArgNo) {
     switch (getClassB(I->getType())) {
     case cByte:
     case cShort:
     case cInt:
     case cFloat:
-      BuildMI(BB, V8::IMPLICIT_DEF, 0, IncomingArgRegs[ArgOffset]);
+      BuildMI(BB, V8::IMPLICIT_DEF, 0, IncomingArgRegs[ArgNo]);
       break;
     case cDouble:
     case cLong:
       // Double and Long use register pairs.
-      BuildMI(BB, V8::IMPLICIT_DEF, 0, IncomingArgRegs[ArgOffset]);
-      ++ArgOffset;
-      if (ArgOffset < 6)
-        BuildMI(BB, V8::IMPLICIT_DEF, 0, IncomingArgRegs[ArgOffset]);
+      BuildMI(BB, V8::IMPLICIT_DEF, 0, IncomingArgRegs[ArgNo]);
+      ++ArgNo;
+      if (ArgNo < 6)
+        BuildMI(BB, V8::IMPLICIT_DEF, 0, IncomingArgRegs[ArgNo]);
       break;
     default:
       assert (0 && "type not handled");
@@ -343,76 +342,88 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
     }
   }
 
-  ArgOffset = 0;
-  for (Function::aiterator I = LF->abegin(), E = LF->aend(); I != E;
-       ++I, ++ArgOffset) {
-    unsigned Reg = getReg(*I);
-    if (ArgOffset < 6) {
-
-      switch (getClassB(I->getType())) {
-      case cByte:
-      case cShort:
-      case cInt:
-        BuildMI(BB, V8::ORrr, 2, Reg).addReg (V8::G0)
-          .addReg (IncomingArgRegs[ArgOffset]);
-        break;
-      case cFloat: {
+  // Copy args out of their incoming hard regs or stack slots into virtual regs.
+  const unsigned *IAREnd = &IncomingArgRegs[6];
+  const unsigned *IAR = &IncomingArgRegs[0];
+  unsigned ArgOffset = 68;
+  for (Function::aiterator I = LF->abegin(), E = LF->aend(); I != E; ++I) {
+    Argument &A = *I;
+    unsigned ArgReg = getReg (A);
+    if (getClassB (A.getType ()) < cLong) {
+      // Get it out of the incoming arg register
+      if (ArgOffset < 92) {
+        assert (IAR != IAREnd
+                && "About to dereference past end of IncomingArgRegs");
+        BuildMI (BB, V8::ORrr, 2, ArgReg).addReg (V8::G0).addReg (*IAR++);
+      } else {
+        int FI = F->getFrameInfo()->CreateFixedObject(4, ArgOffset);
+        BuildMI (BB, V8::LD, 3, ArgReg).addFrameIndex (FI).addSImm (0);
+      }
+      ArgOffset += 4;
+    } else if (getClassB (A.getType ()) == cFloat) {
+      if (ArgOffset < 92) {
         // Single-fp args are passed in integer registers; go through
-        // memory to get them into FP registers. (Bleh!)
+        // memory to get them out of integer registers and back into fp. (Bleh!)
         unsigned FltAlign = TM.getTargetData().getFloatAlignment();
         int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
-        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0)
-          .addReg (IncomingArgRegs[ArgOffset]);
-        BuildMI (BB, V8::LDFri, 2, Reg).addFrameIndex (FI).addSImm (0);
-        break;
+        assert (IAR != IAREnd
+                && "About to dereference past end of IncomingArgRegs");
+        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0).addReg (*IAR++);
+        BuildMI (BB, V8::LDFri, 2, ArgReg).addFrameIndex (FI).addSImm (0);
+      } else {
+        int FI = F->getFrameInfo()->CreateFixedObject(4, ArgOffset);
+        BuildMI (BB, V8::LDFri, 3, ArgReg).addFrameIndex (FI).addSImm (0);
       }
-      case cDouble: {
-        // Double-fp args are passed in pairs of integer registers; go through
-        // memory to get them into FP registers. (Double bleh!)
-        unsigned DblAlign = TM.getTargetData().getDoubleAlignment();
-        int FI = F->getFrameInfo()->CreateStackObject(8, DblAlign);
-        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0)
-          .addReg (IncomingArgRegs[ArgOffset]);
-        ++ArgOffset;
-        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (4)
-          .addReg (IncomingArgRegs[ArgOffset]);
-        BuildMI (BB, V8::LDDFri, 2, Reg).addFrameIndex (FI).addSImm (0);
-        break;
+      ArgOffset += 4;
+    } else if (getClassB (A.getType ()) == cDouble) {
+      // Double-fp args are passed in pairs of integer registers; go through
+      // memory to get them out of integer registers and back into fp. (Bleh!)
+      // We'd like to 'ldd' these right out of the incoming-args area,
+      // but it might not be 8-byte aligned (e.g., call x(int x, double d)).
+      unsigned DblAlign = TM.getTargetData().getDoubleAlignment();
+      int FI = F->getFrameInfo()->CreateStackObject(8, DblAlign);
+      if (ArgOffset < 92 && IAR != IAREnd) {
+        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0).addReg (*IAR++);
+      } else {
+        unsigned TempReg = makeAnotherReg (Type::IntTy);
+        BuildMI (BB, V8::LD, 2, TempReg).addFrameIndex (FI).addSImm (0);
+        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0).addReg (TempReg);
       }
-      default:
-        // FIXME: handle cLong
-        assert (0 && "64-bit int (long/ulong) function args not handled");
-        return;
+      ArgOffset += 4;
+      if (ArgOffset < 92 && IAR != IAREnd) {
+        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (4).addReg (*IAR++);
+      } else {
+        unsigned TempReg = makeAnotherReg (Type::IntTy);
+        BuildMI (BB, V8::LD, 2, TempReg).addFrameIndex (FI).addSImm (4);
+        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (4).addReg (TempReg);
       }
-
+      ArgOffset += 4;
+      BuildMI (BB, V8::LDDFri, 2, ArgReg).addFrameIndex (FI).addSImm (0);
+    } else if (getClassB (A.getType ()) == cLong) {
+      // do the first half...
+      if (ArgOffset < 92) {
+        assert (IAR != IAREnd
+                && "About to dereference past end of IncomingArgRegs");
+        BuildMI (BB, V8::ORrr, 2, ArgReg).addReg (V8::G0).addReg (*IAR++);
+      } else {
+        int FI = F->getFrameInfo()->CreateFixedObject(4, ArgOffset);
+        BuildMI (BB, V8::LD, 2, ArgReg).addFrameIndex (FI).addSImm (0);
+      }
+      ArgOffset += 4;
+      // ...then do the second half
+      if (ArgOffset < 92) {
+        assert (IAR != IAREnd
+                && "About to dereference past end of IncomingArgRegs");
+        BuildMI (BB, V8::ORrr, 2, ArgReg+1).addReg (V8::G0).addReg (*IAR++);
+      } else {
+        int FI = F->getFrameInfo()->CreateFixedObject(4, ArgOffset);
+        BuildMI (BB, V8::LD, 2, ArgReg+1).addFrameIndex (FI).addSImm (0);
+      }
+      ArgOffset += 4;
     } else {
-
-      switch (getClassB(I->getType())) {
-      case cByte:
-      case cShort:
-      case cInt: {
-        int FI = F->getFrameInfo()->CreateFixedObject(4, 68 + (4 * ArgOffset));
-        BuildMI (BB, V8::LD, 2, Reg).addFrameIndex (FI).addSImm(0);
-        break;
-      }
-      case cFloat: {
-        int FI = F->getFrameInfo()->CreateFixedObject(4, 68 + (4 * ArgOffset));
-        BuildMI (BB, V8::LDFri, 2, Reg).addFrameIndex (FI).addSImm(0);
-        break;
-      }
-      case cDouble: {
-        int FI = F->getFrameInfo()->CreateFixedObject(8, 68 + (4 * ArgOffset));
-        BuildMI (BB, V8::LDDFri, 2, Reg).addFrameIndex (FI).addSImm(0);
-        break;
-      }
-      default:
-        // FIXME: handle cLong
-        assert (0 && "64-bit integer (long/ulong) function args not handled");
-        return;
-      }
+      assert (0 && "Unknown class?!");
     }
   }
-
 }
 
 void V8ISel::SelectPHINodes() {
@@ -674,8 +685,17 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
 
     case cLong:
       switch (oldTyClass) {
+      case cByte:
+      case cShort:
+      case cInt:
+        // Just copy it to the bottom half, and put a zero in the top half.
+        BuildMI (*BB, IP, V8::ORrr, 2, DestReg).addReg (V8::G0)
+          .addReg (V8::G0);
+        BuildMI (*BB, IP, V8::ORrr, 2, DestReg+1).addReg (V8::G0)
+          .addReg (SrcReg);
+        break;
       case cLong:
-        // Just copy it
+        // Just copy both halves.
         BuildMI (*BB, IP, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
         BuildMI (*BB, IP, V8::ORrr, 2, DestReg+1).addReg (V8::G0)
           .addReg (SrcReg+1);
