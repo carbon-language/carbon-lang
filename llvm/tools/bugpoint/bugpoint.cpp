@@ -1,5 +1,4 @@
-//===----------------------------------------------------------------------===//
-// LLVM BugPoint Utility 
+//===- bugpoint.cpp - The LLVM BugPoint utility ---------------------------===//
 //
 // This program is an automated compiler debugger tool.  It is used to narrow
 // down miscompilations and crash problems to a specific pass in the compiler,
@@ -23,9 +22,6 @@ PassList(cl::desc("Passes available:"), cl::OneOrMore);
 
 //cl::list<std::string>
 //InputArgv(cl::ConsumeAfter, cl::desc("<program arguments>..."));
-
-//cl::opt<bool>
-//Verbose("v", cl::desc("Enable verbose output"));
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
