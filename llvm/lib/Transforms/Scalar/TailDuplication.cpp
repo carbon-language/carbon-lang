@@ -157,8 +157,13 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
         }
       } else if (PHINode *PN = dyn_cast<PHINode>(cast<Instruction>(*UI))) {
         // If the user of this instruction is a PHI node in the current block,
-        // spill the value.
-        ShouldDemote = true;
+        // which has an entry from another block using the value, spill it.
+        for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+          if (PN->getIncomingValue(i) == I &&
+              PN->getIncomingBlock(i) != DestBlock) {
+            ShouldDemote = true;
+            break;
+          }
       }
 
       if (ShouldDemote) {
