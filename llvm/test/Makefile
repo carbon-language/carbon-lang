@@ -13,7 +13,7 @@ DIRS   =
 #
 # Make Dejagnu the default for testing
 #
-all:: check
+all:: check-local
 
 # Include other test rules
 include Makefile.tests
@@ -120,7 +120,7 @@ ifdef TESTSUITE
 RUNTESTFLAGS := --tool $(TESTSUITE)
 endif
 
-check:: site.exp
+check-local:: site.exp
 	PATH=$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH) \
 	$(RUNTEST) $(RUNTESTFLAGS)
 
