@@ -67,11 +67,12 @@ error.
 Force the output to be written. Normally, B<stkrc> won't overwrite an existing
 bytecode file. This option overrides that behavior. 
 
-=item B<-s=stacksize>
+=item B<-s> F<stacksize>
 
 Specify the stack size for the program. The default stack size, 1024, should be
-sufficient for most programs. For very large, programs, you might want to
-provide a larger value.
+sufficient for most programs. For very large programs, especially those that 
+recurse a lot, you might want to provide a larger value. Each unit of this
+value consumes 8 bytes of memory.
 
 =item B<-help>
 
