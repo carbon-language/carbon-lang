@@ -202,20 +202,20 @@ void llvm::AnalyzeBytecodeBuffer(
 /// @brief Print BytecodeAnalysis structure to an ostream
 void llvm::PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
 {
-  Out << "Bytecode Analysis of " << bca.ModuleId << "\n";
-  Out << "                  File Size:" << bca.byteSize << "\n";
-  Out << "            Number Of Types:" << bca.numTypes << "\n";
-  Out << "        Number Of Constants:" << bca.numConstants << "\n";
-  Out << " Number Of Global Variables:" << bca.numGlobalVars << "\n";
-  Out << "        Number Of Functions:" << bca.numFunctions << "\n";
-  Out << "     Number Of Basic Blocks:" << bca.numBasicBlocks << "\n";
-  Out << "     Number Of Instructions:" << bca.numInstructions << "\n";
-  Out << "         Number Of Operands:" << bca.numOperands << "\n";
-  Out << "Number Of Compaction Tables:" << bca.numCmpctnTables << "\n";
-  Out << "    Number Of Symbol Tables:" << bca.numSymTab << "\n";
-  Out << "   Maximum Type Slot Number:" << bca.maxTypeSlot << "\n";
-  Out << "  Maximum Value Slot Number:" << bca.maxValueSlot << "\n";
-  Out << "           Bytecode Density:" << bca.density << "\n";
+  Out << "       Bytecode Analysis of: " << bca.ModuleId << "\n";
+  Out << "                  File Size: " << bca.byteSize << "\n";
+  Out << "            Number Of Types: " << bca.numTypes << "\n";
+  Out << "        Number Of Constants: " << bca.numConstants << "\n";
+  Out << " Number Of Global Variables: " << bca.numGlobalVars << "\n";
+  Out << "        Number Of Functions: " << bca.numFunctions << "\n";
+  Out << "     Number Of Basic Blocks: " << bca.numBasicBlocks << "\n";
+  Out << "     Number Of Instructions: " << bca.numInstructions << "\n";
+  Out << "         Number Of Operands: " << bca.numOperands << "\n";
+  Out << "Number Of Compaction Tables: " << bca.numCmpctnTables << "\n";
+  Out << "    Number Of Symbol Tables: " << bca.numSymTab << "\n";
+  Out << "   Maximum Type Slot Number: " << bca.maxTypeSlot << "\n";
+  Out << "  Maximum Value Slot Number: " << bca.maxValueSlot << "\n";
+  Out << "           Bytecode Density: " << bca.density << "\n";
 
   if ( bca.detailedResults )
     Out << "Detailed Results Not Implemented Yet.\n";
