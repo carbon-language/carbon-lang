@@ -1303,20 +1303,28 @@ unsigned ISel::SelectExpr(SDOperand N) {
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
   
-  if (N.getOpcode() != ISD::CALL)
+  if (N.getOpcode() != ISD::CALL && N.getOpcode() != ISD::ADD_PARTS &&
+      N.getOpcode() != ISD::SUB_PARTS)
     Reg = Result = (N.getValueType() != MVT::Other) ?
       MakeReg(N.getValueType()) : 1;
   else {
     // If this is a call instruction, make sure to prepare ALL of the result
     // values as well as the chain.
-    if (Node->getNumValues() == 1)
-      Reg = Result = 1;  // Void call, just a chain.
-    else {
+    if (N.getOpcode() == ISD::CALL) {
+      if (Node->getNumValues() == 1)
+        Reg = Result = 1;  // Void call, just a chain.
+      else {
+        Result = MakeReg(Node->getValueType(0));
+        ExprMap[N.getValue(0)] = Result;
+        for (unsigned i = 1, e = N.Val->getNumValues()-1; i != e; ++i)
+          ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
+        ExprMap[SDOperand(Node, Node->getNumValues()-1)] = 1;
+      }
+    } else {
       Result = MakeReg(Node->getValueType(0));
       ExprMap[N.getValue(0)] = Result;
-      for (unsigned i = 1, e = N.Val->getNumValues()-1; i != e; ++i)
+      for (unsigned i = 1, e = N.Val->getNumValues(); i != e; ++i)
         ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
-      ExprMap[SDOperand(Node, Node->getNumValues()-1)] = 1;
     }
   }
   
@@ -1972,6 +1980,24 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
     return Result;
   }
+  case ISD::ADD_PARTS:
+  case ISD::SUB_PARTS: {
+    assert(N.getNumOperands() == 4 && N.getValueType() == MVT::i32 &&
+           "Not an i64 add/sub!");
+    // Emit all of the operands.
+    std::vector<unsigned> InVals;
+    for (unsigned i = 0, e = N.getNumOperands(); i != e; ++i)
+      InVals.push_back(SelectExpr(N.getOperand(i)));
+    if (N.getOpcode() == ISD::ADD_PARTS) {
+      BuildMI(BB, X86::ADD32rr, 2, Result).addReg(InVals[0]).addReg(InVals[2]);
+      BuildMI(BB, X86::ADC32rr,2,Result+1).addReg(InVals[1]).addReg(InVals[3]);
+    } else {
+      BuildMI(BB, X86::SUB32rr, 2, Result).addReg(InVals[0]).addReg(InVals[2]);
+      BuildMI(BB, X86::SBB32rr, 2,Result+1).addReg(InVals[1]).addReg(InVals[3]);
+    }
+    return Result+N.ResNo;
+  }
+
   case ISD::SELECT:
     if (getRegPressure(N.getOperand(1)) > getRegPressure(N.getOperand(2))) {
       Tmp2 = SelectExpr(N.getOperand(1));
