@@ -35,13 +35,15 @@ Path::is_valid() const {
 
 Path
 Path::GetTemporaryDirectory() {
-  char pathname[MAXPATHLEN];
-  strcpy(pathname,"/tmp/llvm_XXXXXX");
-  if (0 == mkdtemp(pathname))
-    ThrowErrno(std::string(pathname) + ": Can't create temporary directory");
+  char* pathname = tempnam(0,"llvm_");
+  if (0 == pathname)
+    ThrowErrno(std::string("Can't create temporary directory name"));
   Path result;
   result.set_directory(pathname);
-  assert(result.is_valid() && "mkdtemp didn't create a valid pathname!");
+  free(pathname);
+  assert(result.is_valid() && "tempnam didn't create a valid pathname!");
+  if (0 != mkdir(result.c_str(), S_IRWXU))
+    ThrowErrno(result.get() + ": Can't create temporary directory");
   return result;
 }
 
