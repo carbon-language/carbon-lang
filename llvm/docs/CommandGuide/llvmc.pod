@@ -116,7 +116,7 @@ file.
 =item B<-E> or B<--preprocess>
 
 This option specifies that no compilation or linking should be 
-performed. Only pre-processing, if applicabe to the language being
+performed. Only pre-processing, if applicable to the language being
 compiled, is performed. For languages that support it, this will
 result in the output containing the raw input to the compiler.
 
@@ -133,7 +133,7 @@ each source language will have different needs.
 
 =item B<-O1> or B<-O0> (default, fast compilation)
 
-Only those optimizations that will hasten the compilation (mostly by reducing 
+Only those optimizations that will hasten the compilation (mostly by reducing
 the output) are applied. In general these are extremely fast and simple 
 optimizations that reduce emitted code size. The goal here is not to make the 
 resulting program fast but to make the compilation fast.  If not specified, 
@@ -142,9 +142,9 @@ this is the default level of optimization.
 =item B<-O2> (basic optimization)
 
 This level of optimization specifies a balance between generating good code 
-that will execute reasonably quickly and not spending too much time optimizing 
+that will execute reasonably quickly and not spending too much time optimizing
 the code to get there. For example, this level of optimization may include 
-things like global common subexpression elimintation, aggressive dead code 
+things like global common subexpression elimination, aggressive dead code 
 elimination, and scalar replication.
 
 =item B<-O3> (aggressive optimization)
@@ -152,35 +152,35 @@ elimination, and scalar replication.
 This level of optimization aggressively optimizes each set of files compiled 
 together. However, no link-time inter-procedural optimization is performed.
 This level implies all the optimizations of the B<-O1> and B<-O2> optimization
-levels, and should also provide loop optimizatiosn and compile time 
+levels, and should also provide loop optimizations and compile time 
 inter-procedural optimizations. Essentially, this level tries to do as much
 as it can with the input it is given but doesn't do any link time IPO.
 
-=item B<-O4> (linktime optimization)
+=item B<-O4> (link time optimization)
 
 In addition to the previous three levels of optimization, this level of 
 optimization aggressively optimizes each program at link time. It employs
 basic analysis and basic link-time inter-procedural optimizations, 
 considering the program as a whole.
 
-=item B<-O5> (aggressive linktime optimization)
+=item B<-O5> (aggressive link time optimization)
 
 This is the same as B<-O4> except it employs aggressive analyses and
 aggressive inter-procedural optimization. 
 
 =item B<-O6> (profile guided optimization: not implemented)
 
-This is the same as B<-O5> except that it employes profile-guided
-reoptimization of the program after it has executed. Note that this implies
-a single level of reoptimization based on runtime profile analysis. Once
+This is the same as B<-O5> except that it employs profile-guided
+re-optimization of the program after it has executed. Note that this implies
+a single level of re-optimization based on runtime profile analysis. Once
 the re-optimization has completed, the profiling instrumentation is
 removed and final optimizations are employed.
 
 =item B<-O7> (lifelong optimization: not implemented)
 
-This is the same as B<-O5> and similar to B<-O6> except that reoptimization
+This is the same as B<-O5> and similar to B<-O6> except that re-optimization
 is performed through the life of the program. That is, each run will update
-the profile by which future reoptimizations are directed.
+the profile by which future re-optimizations are directed.
 
 =back
 
@@ -237,7 +237,7 @@ options.
 
 =over
 
-=item B<-n> or B<--noop>
+=item B<-n> or B<--no-op>
 
 This option tells B<llvmc> to do everything but actually execute the
 resulting tools. In combination with the B<-v> option, this causes B<llvmc>
@@ -283,7 +283,7 @@ Pass an arbitrary option to the linker.
 
 =item B<-Tool,asm>=I<options>
 
-Pass an arbitrary optionsto the code generator.
+Pass an arbitrary option to the code generator.
 
 =back
 
@@ -344,7 +344,7 @@ configuration files.
 
 This option tells B<llvmc> to read configuration data from the I<directory>
 named F<dirname>. Data from such directories will be read in the order
-specified on the command line after all other standard config files have
+specified on the command line after all other standard configuration files have
 been read. This allows users or groups of users to conveniently create 
 their own configuration directories in addition to the standard ones to which 
 they may not have write access.
@@ -403,10 +403,10 @@ options of a sub-tool. It simply uses the details found in the configuration
 files and leaves it to the compiler writer to specify the configuration
 correctly.
 
-Ths approach means that new compiler front ends can be up and working very
+This approach means that new compiler front ends can be up and working very
 quickly. As a first cut, a front end can simply compile its source to raw 
 (unoptimized) bytecode or LLVM assembly and B<llvmc> can be configured to pick 
-up the slack (translate LLVm assembly to bytecode, optimize the bytecode, 
+up the slack (translate LLVM assembly to bytecode, optimize the bytecode, 
 generate native assembly, link, etc.).   In fact, the front end need not use 
 any LLVM libraries, and it could be written in any language (instead of C++).
 The configuration data will allow the full range of optimization, assembly, 
@@ -442,7 +442,7 @@ phases for each of the optimization levels. The specification consists simply of
 prototypical command lines into which B<llvmc> can substitute command line
 arguments and file names. Note that any given phase can be completely blank if
 the source language's compiler combines multiple phases into a single program.
-For example, quite often pre-processng, translation, and optimization are
+For example, quite often pre-processing, translation, and optimization are
 combined into a single program. The specification for such a compiler would have
 blank entries for pre-processing and translation but a full command line for
 optimization. 
@@ -455,8 +455,8 @@ and the language specific configuration file.
 The master configuration file contains the general configuration of B<llvmc> 
 itself.  This includes things like the mapping between file extensions and 
 source languages. This mapping is needed in order to quickly read only the
-applicable language-specific configuration files (avoiding reading every config
-file for every compilation task).
+applicable language-specific configuration files (avoiding reading every 
+configuration file for every compilation task).
 
 Language specific configuration files tell B<llvmc> how to invoke the language's
 compiler for a variety of different tasks and what other tools are needed to
@@ -470,11 +470,11 @@ is the name of the source language.
 
 B<llvmc> will look for configuration files in two standard locations: the
 LLVM installation directory (typically C</usr/local/llvm/etc>) and the user's 
-home directory (typically C</home/user/.llvm>). In these directories a file named
-C<master> provides the master configuration for B<llvmc>. Language specific
-files will have a language specific name (e.g. C++, Stacker, Scheme, FORTRAN).
-When reading the configuration files, the master files are always read first in
-the following order:
+home directory (typically C</home/user/.llvm>). In these directories a file 
+named C<master> provides the master configuration for B<llvmc>. Language 
+specific files will have a language specific name (e.g. C++, Stacker, Scheme, 
+FORTRAN).  When reading the configuration files, the master files are always 
+read first in the following order:
 
 =over
 
