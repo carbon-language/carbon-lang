@@ -228,8 +228,12 @@ public:
 #include "llvm/Type.def"
 
 private:
-  class TypeIterator : public std::bidirectional_iterator<const Type,
-		                                          ptrdiff_t> {
+  class TypeIterator
+#if __GNUC__ == 3
+    : public std::iterator<std::bidirectional_iterator_tag, const Type> {
+#else
+    : public std::bidirectional_iterator<const Type, ptrdiff_t> {
+#endif
     const Type * const Ty;
     unsigned Idx;
 
