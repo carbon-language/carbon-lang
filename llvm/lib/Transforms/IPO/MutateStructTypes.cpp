@@ -25,16 +25,10 @@
 #include "llvm/Argument.h"
 #include "llvm/Constants.h"
 #include "Support/STLExtras.h"
+#include "Support/StatisticReporter.h"
 #include <algorithm>
 using std::map;
 using std::vector;
-
-// To enable debugging, uncomment this...
-//#define DEBUG_MST(x) x
-
-#ifndef DEBUG_MST
-#define DEBUG_MST(x)   // Disable debug code
-#endif
 
 // ValuePlaceHolder - A stupid little marker value.  It appears as an
 // instruction of type Instruction::UserOp1.
@@ -174,7 +168,7 @@ Value *MutateStructTypes::ConvertValue(const Value *V) {
     return LocalValueMap[V] = new BasicBlock(BB->getName());
   }
 
-  DEBUG_MST(cerr << "NPH: " << V << endl);
+  DEBUG(cerr << "NPH: " << V << "\n");
 
   // Otherwise make a constant to represent it
   return LocalValueMap[V] = new ValuePlaceHolder(ConvertType(V->getType()));
@@ -233,7 +227,7 @@ void MutateStructTypes::setTransforms(const TransformsType &XForm) {
     Transforms.insert(std::make_pair(OldTy,
                        std::make_pair(cast<StructType>(NSTy.get()), InVec)));
 
-    DEBUG_MST(cerr << "Mutate " << OldTy << "\nTo " << NSTy << endl);
+    DEBUG(cerr << "Mutate " << OldTy << "\nTo " << NSTy << "\n");
   }
 }
 

@@ -13,11 +13,10 @@
 #include "llvm/ConstantHandling.h"
 #include "llvm/Analysis/Expressions.h"
 #include "Support/STLExtras.h"
+#include "Support/StatisticReporter.h"
 #include <algorithm>
 #include <iostream>
 using std::cerr;
-
-//#define DEBUG_EXPR_CONVERT 1
 
 static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
                                      ValueTypeCache &ConvertedTypes);
@@ -190,7 +189,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     // We can convert the expr if the cast destination type is losslessly
     // convertable to the requested type.
     if (!Ty->isLosslesslyConvertableTo(I->getType())) return false;
-#if 1
+
     // We also do not allow conversion of a cast that casts from a ptr to array
     // of X to a *X.  For example: cast [4 x %List *] * %val to %List * *
     //
@@ -199,7 +198,6 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
         if (ArrayType *AT = dyn_cast<ArrayType>(SPT->getElementType()))
           if (AT->getElementType() == DPT->getElementType())
             return false;
-#endif
     break;
 
   case Instruction::Add:
@@ -242,7 +240,6 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
       return false;
     break;
 
-#if 1
   case Instruction::GetElementPtr: {
     // GetElementPtr's are directly convertable to a pointer type if they have
     // a number of zeros at the end.  Because removing these values does not
@@ -321,7 +318,6 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
 
     return false;   // No match, maybe next time.
   }
-#endif
 
   default:
     return false;
@@ -352,9 +348,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     return VMCI->second;
   }
 
-#ifdef DEBUG_EXPR_CONVERT
-  cerr << "CETT: " << (void*)V << " " << V;
-#endif
+  DEBUG(cerr << "CETT: " << (void*)V << " " << V);
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0)
@@ -544,15 +538,11 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     if (NumUses == OldSize) ++It;
   }
 
-#ifdef DEBUG_EXPR_CONVERT
-  cerr << "ExpIn: " << (void*)I << " " << I
-       << "ExpOut: " << (void*)Res << " " << Res;
-#endif
+  DEBUG(cerr << "ExpIn: " << (void*)I << " " << I
+             << "ExpOut: " << (void*)Res << " " << Res);
 
   if (I->use_empty()) {
-#ifdef DEBUG_EXPR_CONVERT
-    cerr << "EXPR DELETING: " << (void*)I << " " << I;
-#endif
+    DEBUG(cerr << "EXPR DELETING: " << (void*)I << " " << I);
     BIL.remove(I);
     VMC.OperandsMapped.erase(I);
     VMC.ExprMap.erase(I);
@@ -625,7 +615,6 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
         I->getOperand(0)->getType()->isSigned() != Ty->isSigned())
       return false;
 
-#if 1
     // We also do not allow conversion of a cast that casts from a ptr to array
     // of X to a *X.  For example: cast [4 x %List *] * %val to %List * *
     //
@@ -634,7 +623,6 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
         if (ArrayType *AT = dyn_cast<ArrayType>(SPT->getElementType()))
           if (AT->getElementType() == DPT->getElementType())
             return false;
-#endif
     return true;
 
   case Instruction::Add:
@@ -1146,10 +1134,9 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   assert(It != BIL.end() && "Instruction not in own basic block??");
   BIL.insert(It, Res);   // Keep It pointing to old instruction
 
-#ifdef DEBUG_EXPR_CONVERT
-  cerr << "COT CREATED: "  << (void*)Res << " " << Res;
-  cerr << "In: " << (void*)I << " " << I << "Out: " << (void*)Res << " " << Res;
-#endif
+  DEBUG(cerr << "COT CREATED: "  << (void*)Res << " " << Res
+             << "In: " << (void*)I << " " << I << "Out: " << (void*)Res
+             << " " << Res);
 
   // Add the instruction to the expression map
   VMC.ExprMap[I] = Res;
@@ -1170,9 +1157,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       // loops.  Note that we cannot use DCE because DCE won't remove a store
       // instruction, for example.
       //
-#ifdef DEBUG_EXPR_CONVERT
-      cerr << "DELETING: " << (void*)I << " " << I;
-#endif
+      DEBUG(cerr << "DELETING: " << (void*)I << " " << I);
       BIL.remove(I);
       VMC.OperandsMapped.erase(I);
       VMC.ExprMap.erase(I);
@@ -1188,9 +1173,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
 ValueHandle::ValueHandle(ValueMapCache &VMC, Value *V)
   : Instruction(Type::VoidTy, UserOp1, ""), Cache(VMC) {
-#ifdef DEBUG_EXPR_CONVERT
-  //cerr << "VH AQUIRING: " << (void*)V << " " << V;
-#endif
+  //DEBUG(cerr << "VH AQUIRING: " << (void*)V << " " << V);
   Operands.push_back(Use(V, this));
 }
 
@@ -1199,9 +1182,7 @@ static void RecursiveDelete(ValueMapCache &Cache, Instruction *I) {
 
   assert(I->getParent() && "Inst not in basic block!");
 
-#ifdef DEBUG_EXPR_CONVERT
-  //cerr << "VH DELETING: " << (void*)I << " " << I;
-#endif
+  //DEBUG(cerr << "VH DELETING: " << (void*)I << " " << I);
 
   for (User::op_iterator OI = I->op_begin(), OE = I->op_end(); 
        OI != OE; ++OI)
@@ -1228,8 +1209,7 @@ ValueHandle::~ValueHandle() {
     //
     RecursiveDelete(Cache, dyn_cast<Instruction>(V));
   } else {
-#ifdef DEBUG_EXPR_CONVERT
-    //cerr << "VH RELEASING: " << (void*)Operands[0].get() << " " << Operands[0]->use_size() << " " << Operands[0];
-#endif
+    //DEBUG(cerr << "VH RELEASING: " << (void*)Operands[0].get() << " "
+    //           << Operands[0]->use_size() << " " << Operands[0]);
   }
 }

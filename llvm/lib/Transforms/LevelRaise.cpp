@@ -26,14 +26,8 @@ static Statistic<> NumCastOfCast("raise\t\t- Number of cast-of-self removed");
 static Statistic<> NumDCEorCP("raise\t\t- Number of insts DCE'd or constprop'd");
 
 
-//#define DEBUG_PEEPHOLE_INSTS 1
-
-#ifdef DEBUG_PEEPHOLE_INSTS
 #define PRINT_PEEPHOLE(ID, NUM, I)            \
-  std::cerr << "Inst P/H " << ID << "[" << NUM << "] " << I;
-#else
-#define PRINT_PEEPHOLE(ID, NUM, I)
-#endif
+  DEBUG(std::cerr << "Inst P/H " << ID << "[" << NUM << "] " << I)
 
 #define PRINT_PEEPHOLE1(ID, I1) do { PRINT_PEEPHOLE(ID, 0, I1); } while (0)
 #define PRINT_PEEPHOLE2(ID, I1, I2) \
@@ -217,9 +211,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       if (ExpressionConvertableToType(Src, DestTy, ConvertedTypes)) {
         PRINT_PEEPHOLE3("CAST-SRC-EXPR-CONV:in ", Src, CI, BB->getParent());
           
-#ifdef DEBUG_PEEPHOLE_INSTS
-        cerr << "\nCONVERTING SRC EXPR TYPE:\n";
-#endif
+        DEBUG(cerr << "\nCONVERTING SRC EXPR TYPE:\n");
         ValueMapCache ValueMap;
         Value *E = ConvertExpressionToType(Src, DestTy, ValueMap);
         if (Constant *CPV = dyn_cast<Constant>(E))
@@ -227,9 +219,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         PRINT_PEEPHOLE1("CAST-SRC-EXPR-CONV:out", E);
-#ifdef DEBUG_PEEPHOLE_INSTS
-        cerr << "DONE CONVERTING SRC EXPR TYPE: \n" << BB->getParent();
-#endif
+        DEBUG(cerr << "DONE CONVERTING SRC EXPR TYPE: \n" << BB->getParent());
         ++NumExprTreesConv;
         return true;
       }
@@ -241,17 +231,13 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       if (ValueConvertableToType(CI, Src->getType(), ConvertedTypes)) {
         PRINT_PEEPHOLE3("CAST-DEST-EXPR-CONV:in ", Src, CI, BB->getParent());
 
-#ifdef DEBUG_PEEPHOLE_INSTS
-        cerr << "\nCONVERTING EXPR TYPE:\n";
-#endif
+        DEBUG(cerr << "\nCONVERTING EXPR TYPE:\n");
         ValueMapCache ValueMap;
         ConvertValueToNewType(CI, Src, ValueMap);  // This will delete CI!
 
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         PRINT_PEEPHOLE1("CAST-DEST-EXPR-CONV:out", Src);
-#ifdef DEBUG_PEEPHOLE_INSTS
-        cerr << "DONE CONVERTING EXPR TYPE: \n\n" << BB->getParent();
-#endif
+        DEBUG(cerr << "DONE CONVERTING EXPR TYPE: \n\n" << BB->getParent());
         ++NumExprTreesConv;
         return true;
       }
@@ -279,7 +265,6 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     // Into: %t2 = getelementptr {<...>} * %StructPtr, <0, 0, 0, ...>
     //       %t1 = cast <eltype> * %t1 to <ty> *
     //
-#if 1
     if (const CompositeType *CTy = getPointedToComposite(Src->getType()))
       if (const PointerType *DestPTy = dyn_cast<PointerType>(DestTy)) {
 
@@ -354,7 +339,6 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
           }
         }
       }
-#endif
 
   } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
     Value *Val     = SI->getOperand(0);
@@ -458,15 +442,11 @@ static bool DoRaisePass(Function *F) {
     BasicBlock::InstListType &BIL = BB->getInstList();
 
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
-#if DEBUG_PEEPHOLE_INSTS
-      cerr << "Processing: " << *BI;
-#endif
+      DEBUG(cerr << "Processing: " << *BI);
       if (dceInstruction(BIL, BI) || doConstantPropogation(BB, BI)) {
         Changed = true; 
         ++NumDCEorCP;
-#ifdef DEBUG_PEEPHOLE_INSTS
-        cerr << "***\t\t^^-- DeadCode Elinated!\n";
-#endif
+        DEBUG(cerr << "***\t\t^^-- DeadCode Elinated!\n");
       } else if (PeepholeOptimize(BB, BI))
         Changed = true;
       else
@@ -481,9 +461,7 @@ static bool DoRaisePass(Function *F) {
 // level.
 //
 static bool doRPR(Function *F) {
-#ifdef DEBUG_PEEPHOLE_INSTS
-  cerr << "\n\n\nStarting to work on Function '" << F->getName() << "'\n";
-#endif
+  DEBUG(cerr << "\n\n\nStarting to work on Function '" << F->getName()<< "'\n");
 
   // Insert casts for all incoming pointer pointer values that are treated as
   // arrays...
@@ -491,9 +469,7 @@ static bool doRPR(Function *F) {
   bool Changed = false, LocalChange;
   
   do {
-#ifdef DEBUG_PEEPHOLE_INSTS
-    cerr << "Looping: \n" << F;
-#endif
+    DEBUG(cerr << "Looping: \n" << F);
 
     // Iterate over the function, refining it, until it converges on a stable
     // state
