@@ -125,6 +125,7 @@ public:
   void visitCallSite(CallSite CS);
   void visitCallInst(CallInst &I) { visitCallSite (CallSite (&I)); }
   void visitInvokeInst(InvokeInst &I) { visitCallSite (CallSite (&I)); }
+  void visitUnwindInst(UnwindInst &I);
 
   void visitShl(ShiftInst &I);
   void visitShr(ShiftInst &I);

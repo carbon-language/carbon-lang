@@ -475,6 +475,10 @@ void Interpreter::visitReturnInst(ReturnInst &I) {
   popStackAndReturnValueToCaller(RetTy, Result);
 }
 
+void Interpreter::visitUnwindInst(UnwindInst &I) {
+  abort ();
+}
+
 void Interpreter::visitBranchInst(BranchInst &I) {
   ExecutionContext &SF = ECStack.back();
   BasicBlock *Dest;
