@@ -35,7 +35,7 @@ UltraSparcRegInfo::getCallInstRetVal(const MachineInstr *CallMI) const{
 	return  CallMI->getImplicitRef(NumOfImpRefs-2); 
 
   }
-  else if( OpCode == JMPL) {
+  else if( OpCode == JMPLCALL) {
 
     // The last implicit operand is the return value of a JMPL in   
     if( NumOfImpRefs > 0 )
@@ -67,7 +67,7 @@ UltraSparcRegInfo::getCallInstRetAddr(const MachineInstr *CallMI)const {
     return  CallMI->getImplicitRef(NumOfImpRefs-1); 
 
   }
-  else if( OpCode == JMPL ) {
+  else if( OpCode == JMPLCALL ) {
 
     MachineOperand & MO  = ( MachineOperand &) CallMI->getOperand(2);
     return MO.getVRegValue();
@@ -84,7 +84,7 @@ UltraSparcRegInfo::getCallInstRetAddr(const MachineInstr *CallMI)const {
 
 
 //---------------------------------------------------------------------------
-// Finds the # of actaul arguments of the call instruction
+// Finds the # of actual arguments of the call instruction
 //---------------------------------------------------------------------------
 
 const unsigned 
@@ -111,7 +111,7 @@ UltraSparcRegInfo::getCallInstNumArgs(const MachineInstr *CallMI) const {
     }
 
   }
-  else if( OpCode == JMPL ) {
+  else if( OpCode == JMPLCALL ) {
 
     // The last implicit operand is the return value of a JMPL instr
     if( NumOfImpRefs > 0 ) {
@@ -136,19 +136,17 @@ UltraSparcRegInfo::getCallInstNumArgs(const MachineInstr *CallMI) const {
 //---------------------------------------------------------------------------
 // Suggests a register for the ret address in the RET machine instruction
 //---------------------------------------------------------------------------
+
 void UltraSparcRegInfo::suggestReg4RetAddr(const MachineInstr * RetMI, 
 					   LiveRangeInfo& LRI) const {
 
-  assert( (RetMI->getNumOperands() == 2) && "RETURN must have 2 operands");
+  assert( (RetMI->getNumOperands() >= 2)
+          && "JMPL/RETURN must have 3 and 2 operands respectively");
+  
   MachineOperand & MO  = ( MachineOperand &) RetMI->getOperand(0);
 
   MO.setRegForValue( getUnifiedRegNum( IntRegClassID, SparcIntRegOrder::i7) );
-
-  // ***TODO: If the JMPL can be also used as a return instruction, 
-  // change the assertion. The return address register of JMPL will still
-  // be Operand(0)
-
-
+  
   // TODO (Optimize): 
   // Instead of setting the color, we can suggest one. In that case,
   // we have to test later whether it received the suggested color.
