@@ -16,7 +16,6 @@
 
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Analysis/FindUsedTypes.h"
-#include "TransformInternals.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
@@ -25,6 +24,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <algorithm>
 #include <iostream>
 using std::vector;

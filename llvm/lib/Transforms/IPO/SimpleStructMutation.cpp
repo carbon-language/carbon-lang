@@ -5,17 +5,24 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "llvm/Transforms/IPO/SimpleStructMutation.h"
 #include "llvm/Transforms/IPO/MutateStructTypes.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
-#include "../TransformInternals.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/DerivedTypes.h"
 #include <algorithm>
 #include <iostream>
 using std::vector;
 using std::set;
 using std::pair;
+
+// FIXME: TargetData Hack: Eventually we will have annotations given to us by
+// the backend so that we know stuff about type size and alignments.  For now
+// though, just use this, because it happens to match the model that GCC and the
+// Sparc backend use.
+//
+const TargetData TD("SimpleStructMutation Should be GCC though!");
 
 namespace {
   struct SimpleStructMutation : public MutateStructTypes {
@@ -86,7 +93,7 @@ static unsigned getIndex(const vector<pair<unsigned, unsigned> > &Vec,
 
 static inline void GetTransformation(const StructType *ST,
                                      vector<int> &Transform,
-                                enum SimpleStructMutation::Transform XForm) {
+                                   enum SimpleStructMutation::Transform XForm) {
   unsigned NumElements = ST->getElementTypes().size();
   Transform.reserve(NumElements);
 

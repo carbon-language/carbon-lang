@@ -7,14 +7,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/LevelChange.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "TransformInternals.h"
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
 #include "llvm/Pass.h"
 #include "llvm/ConstantHandling.h"
-#include "llvm/Transforms/Scalar/DCE.h"
-#include "llvm/Transforms/Scalar/ConstantProp.h"
 #include "llvm/Analysis/Expressions.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 

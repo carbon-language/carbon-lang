@@ -8,13 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/ChangeAllocations.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
+#include "llvm/Constants.h"
 #include "llvm/Pass.h"
-#include "TransformInternals.h"
+#include "llvm/Target/TargetData.h"
 using std::vector;
 
 namespace {
@@ -102,7 +104,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock *BB) {
     if (MallocInst *MI = dyn_cast<MallocInst>(*(BBIL.begin()+i))) {
       BBIL.remove(BBIL.begin()+i);   // remove the malloc instr...
         
-      const Type *AllocTy =cast<PointerType>(MI->getType())->getElementType();
+      const Type *AllocTy = cast<PointerType>(MI->getType())->getElementType();
       
       // Get the number of bytes to be allocated for one element of the
       // requested type...

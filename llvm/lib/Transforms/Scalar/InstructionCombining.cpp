@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
@@ -24,7 +25,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
-#include "../TransformInternals.h"
 
 
 namespace {
