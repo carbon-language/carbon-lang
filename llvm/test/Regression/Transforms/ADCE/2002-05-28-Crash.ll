@@ -26,7 +26,8 @@ bb1:					;[#uses=2]
 	%reg129 = add int %cast109, -1		; <int> [#uses=1]
 	%reg114-idxcast = cast ulong %reg114 to uint		; <uint> [#uses=1]
 	%reg114-idxcast-offset = add uint %reg114-idxcast, 1073741823		; <uint> [#uses=1]
-	%reg124 = getelementptr uint* %set, uint %reg114-idxcast-offset		; <uint*> [#uses=1]
+	%reg114-idxcast-offset = cast uint %reg114-idxcast-offset to long
+	%reg124 = getelementptr uint* %set, long %reg114-idxcast-offset		; <uint*> [#uses=1]
 	%reg125 = load uint* %reg124		; <uint> [#uses=1]
 	%cond232 = setne uint %reg125, 0		; <bool> [#uses=1]
 	br bool %cond232, label %bb3, label %bb2
@@ -38,7 +39,8 @@ bb2:					;[#uses=3]
 	%add1-indvar = add int %cann-indvar, 1		; <int> [#uses=1]
 	%reg130-idxcast = cast int %reg130 to uint		; <uint> [#uses=1]
 	%reg130-idxcast-offset = add uint %reg130-idxcast, 1073741823		; <uint> [#uses=1]
-	%reg118 = getelementptr uint* %set, uint %reg130-idxcast-offset		; <uint*> [#uses=1]
+	%reg130-idxcast-offset = cast uint %reg130-idxcast-offset to long
+	%reg118 = getelementptr uint* %set, long %reg130-idxcast-offset		; <uint*> [#uses=1]
 	%reg119 = load uint* %reg118		; <uint> [#uses=1]
 	%cond233 = seteq uint %reg119, 0		; <bool> [#uses=1]
 	br bool %cond233, label %bb2, label %bb3
