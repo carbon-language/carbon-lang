@@ -466,7 +466,7 @@ ac_includes_default="\
 #endif"
 
 ac_unique_file=""Makefile.config.in""
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT YACC EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL RPWD SED RM MKDIR DATE MV DOT ETAGS PURIFY PYTHON QMTEST ALLOCA LIBOBJS MMAP_FILE ENABLE_PURIFY ENABLE_OPTIMIZED USE_SPEC UPB DISABLE_LLC_DIFFS JIT SPEC_ROOT BCR PAPIDIR LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT YACC EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL RPWD SED RM MKDIR DATE MV DOT ETAGS PYTHON QMTEST ALLOCA LIBOBJS MMAP_FILE ENABLE_PURIFY ENABLE_OPTIMIZED USE_SPEC UPB DISABLE_LLC_DIFFS JIT SPEC_ROOT BCR PAPIDIR PURIFY LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -18936,47 +18936,6 @@ echo "${ECHO_T}no" >&6
 fi
 
 
-# Extract the first word of "purify", so it can be a program name with args.
-set dummy purify; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_PURIFY+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $PURIFY in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PURIFY="$PURIFY" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PURIFY="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  test -z "$ac_cv_path_PURIFY" && ac_cv_path_PURIFY="false"
-  ;;
-esac
-fi
-PURIFY=$ac_cv_path_PURIFY
-
-if test -n "$PURIFY"; then
-  echo "$as_me:$LINENO: result: $PURIFY" >&5
-echo "${ECHO_T}$PURIFY" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-
 # Extract the first word of "python", so it can be a program name with args.
 set dummy python; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -23913,7 +23872,6 @@ s,@DATE@,$DATE,;t t
 s,@MV@,$MV,;t t
 s,@DOT@,$DOT,;t t
 s,@ETAGS@,$ETAGS,;t t
-s,@PURIFY@,$PURIFY,;t t
 s,@PYTHON@,$PYTHON,;t t
 s,@QMTEST@,$QMTEST,;t t
 s,@ALLOCA@,$ALLOCA,;t t
@@ -23928,6 +23886,7 @@ s,@JIT@,$JIT,;t t
 s,@SPEC_ROOT@,$SPEC_ROOT,;t t
 s,@BCR@,$BCR,;t t
 s,@PAPIDIR@,$PAPIDIR,;t t
+s,@PURIFY@,$PURIFY,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
 

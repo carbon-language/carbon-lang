@@ -367,8 +367,6 @@ AC_PATH_PROG(DOT,[dot],[false])
 
 AC_PATH_PROG(ETAGS,[etags],[false])
 
-AC_PATH_PROG(PURIFY,[purify],[false])
-
 AC_PATH_PROG(PYTHON,[python],[false])
 if test ${PYTHON} = "false"
 then
