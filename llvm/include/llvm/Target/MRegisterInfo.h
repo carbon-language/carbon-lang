@@ -13,6 +13,7 @@
 #include <assert.h>
 
 class Type;
+class MachineFunction;
 
 /// MRegisterDesc - This record contains all of the information known about a
 /// particular register.
@@ -112,36 +113,32 @@ public:
 
 
   virtual MachineBasicBlock::iterator
-  storeReg2RegOffset(MachineBasicBlock *MBB,
+  storeReg2RegOffset(MachineBasicBlock &MBB,
                      MachineBasicBlock::iterator MBBI,
                      unsigned SrcReg, unsigned DestReg,
                      unsigned ImmOffset, unsigned dataSize) const = 0;
 
   virtual MachineBasicBlock::iterator
-  loadRegOffset2Reg(MachineBasicBlock *MBB,
+  loadRegOffset2Reg(MachineBasicBlock &MBB,
                     MachineBasicBlock::iterator MBBI,
                     unsigned DestReg, unsigned SrcReg,
                     unsigned ImmOffset, unsigned dataSize) const = 0;
 
   virtual MachineBasicBlock::iterator
-  moveReg2Reg(MachineBasicBlock *MBB,
+  moveReg2Reg(MachineBasicBlock &MBB,
               MachineBasicBlock::iterator MBBI,
               unsigned DestReg, unsigned SrcReg, unsigned dataSize) const = 0;
 
   virtual MachineBasicBlock::iterator
-  moveImm2Reg(MachineBasicBlock *MBB,
+  moveImm2Reg(MachineBasicBlock &MBB,
               MachineBasicBlock::iterator MBBI,
               unsigned DestReg, unsigned Imm, unsigned dataSize) const = 0;
 
-  virtual MachineBasicBlock::iterator
-  emitPrologue(MachineBasicBlock *MBB,
-               MachineBasicBlock::iterator MBBI,
-               unsigned numBytes) const = 0;
+  virtual void
+  emitPrologue(MachineFunction &MF, unsigned numBytes) const = 0;
 
-  virtual MachineBasicBlock::iterator
-  emitEpilogue(MachineBasicBlock *MBB,
-               MachineBasicBlock::iterator MBBI,
-               unsigned numBytes) const = 0;
+  virtual void
+  emitEpilogue(MachineBasicBlock &MBB, unsigned numBytes) const = 0;
 
   virtual const unsigned* getCalleeSaveRegs() const = 0;
   virtual const unsigned* getCallerSaveRegs() const = 0;

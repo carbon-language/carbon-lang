@@ -199,7 +199,7 @@ RegAllocSimple::moveUseToReg (MachineBasicBlock &MBB,
   PhysReg = getFreeReg(VirtReg);
 
   // Add move instruction(s)
-  return RegInfo->loadRegOffset2Reg(&MBB, I, PhysReg,
+  return RegInfo->loadRegOffset2Reg(MBB, I, PhysReg,
                                     RegInfo->getFramePointer(),
                                     -stackOffset, regClass->getDataSize());
 }
@@ -215,7 +215,7 @@ RegAllocSimple::saveVirtRegToStack (MachineBasicBlock &MBB,
   unsigned stackOffset = allocateStackSpaceFor(VirtReg, regClass);
 
   // Add move instruction(s)
-  return RegInfo->storeReg2RegOffset(&MBB, I, PhysReg,
+  return RegInfo->storeReg2RegOffset(MBB, I, PhysReg,
                                      RegInfo->getFramePointer(),
                                      -stackOffset, regClass->getDataSize());
 }
@@ -231,7 +231,7 @@ RegAllocSimple::savePhysRegToStack (MachineBasicBlock &MBB,
   unsigned offset = allocateStackSpaceFor(PhysReg, regClass);
 
   // Add move instruction(s)
-  return RegInfo->storeReg2RegOffset(&MBB, I, PhysReg,
+  return RegInfo->storeReg2RegOffset(MBB, I, PhysReg,
                                      RegInfo->getFramePointer(),
                                      offset, regClass->getDataSize());
 }
@@ -293,7 +293,7 @@ void RegAllocSimple::EliminatePHINodes(MachineBasicBlock &MBB) {
       // Retrieve the constant value from this op, move it to target
       // register of the phi
       if (opVal.isImmediate()) {
-        opI = RegInfo->moveImm2Reg(&opBlock, opI, physReg,
+        opI = RegInfo->moveImm2Reg(opBlock, opI, physReg,
                                    (unsigned) opVal.getImmedValue(),
                                    dataSize);
         saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
@@ -384,10 +384,7 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
     AllocateBasicBlock(*MBB);
 
   // add prologue we should preserve callee-save registers...
-  MachineFunction::iterator Fi = Fn.begin();
-  MachineBasicBlock *MBB = Fi;
-  MachineBasicBlock::iterator MBBi = MBB->begin();
-  RegInfo->emitPrologue(MBB, MBBi, NumBytesAllocated);
+  RegInfo->emitPrologue(Fn, NumBytesAllocated);
 
   const MachineInstrInfo &MII = TM.getInstrInfo();
 
@@ -400,7 +397,7 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
     MachineInstr *MI = *--I;
     if (MII.isReturn(MI->getOpcode())) {
       // this block has a return instruction, add epilogue
-      RegInfo->emitEpilogue(MBB, I, NumBytesAllocated);
+      RegInfo->emitEpilogue(*MBB, NumBytesAllocated);
     }
   }
 
