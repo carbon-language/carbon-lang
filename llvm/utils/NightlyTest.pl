@@ -398,10 +398,10 @@ if ($TestError) {
     $TestsRemoved = "$TestsRemoved$Test\n" if (!exists $NewTests{$Test});
   }
 
-  print "TESTS ADDED:  \n$TestsAdded\n\n"   if (length $TestsAdded);
-  print "TESTS REMOVED:\n$TestsRemoved\n\n" if (length $TestsRemoved);
-  print "TESTS FIXED:  \n$TestsFixed\n\n"   if (length $TestsFixed);
-  print "TESTS BROKEN: \n$TestsBroken\n\n"  if (length $TestsBroken);
+  print "\nTESTS ADDED:  \n\n$TestsAdded\n\n"   if (length $TestsAdded);
+  print "\nTESTS REMOVED:\n\n$TestsRemoved\n\n" if (length $TestsRemoved);
+  print "\nTESTS FIXED:  \n\n$TestsFixed\n\n"   if (length $TestsFixed);
+  print "\nTESTS BROKEN: \n\n$TestsBroken\n\n"  if (length $TestsBroken);
 
   $TestsAdded   = AddPreTag $TestsAdded;
   $TestsRemoved = AddPreTag $TestsRemoved;
