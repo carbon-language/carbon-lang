@@ -9,8 +9,16 @@
 
 LEVEL := ..
 PARALLEL_DIRS := llvm-as llvm-dis opt gccas llc llvm-link lli gccld llvm-stub \
-                 analyze extract bugpoint llvm-nm llvm-prof llvm-db \
-                 llvm-ar llvm-ranlib llvm-bcanalyzer llvmc llvm-ld 
+                 analyze extract llvm-nm llvm-prof llvm-ar llvm-ranlib \
+		 llvm-bcanalyzer llvmc llvm-ld 
+
+# The bugpoint and llvm-db tools are not portable to Win32 because they depend
+# on fork(2) behavior that Win32 doesn't have. At some point they'll be 
+# rewritten to not depend on fork at which time they should be added back to
+# the list above.
+ifneq($(OS),Win32)
+PARALLEL_DIRS += bugpoint llvm-db 
+endif
 
 EXTRA_DIST := Makefile.JIT
 
