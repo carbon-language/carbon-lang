@@ -1,0 +1,34 @@
+
+Y2K status of bzip2 and libbzip2, versions 0.1, 0.9.0 and 0.9.5
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Informally speaking:
+   bzip2 is a compression program built on top of libbzip2, 
+   a library which does the real work of compression and 
+   decompression.  As far as I am aware, libbzip2 does not have 
+   any date-related code at all.
+
+   bzip2 itself copies dates from source to destination files 
+   when compressing or decompressing, using the 'stat' and 'utime' 
+   UNIX system calls.  It doesn't examine, manipulate or store the 
+   dates in any way.  So as far as I can see, there shouldn't be any 
+   problem with bzip2 providing 'stat' and 'utime' work correctly 
+   on your system.
+
+   On non-unix platforms (those for which BZ_UNIX in bzip2.c is
+   not set to 1), bzip2 doesn't even do the date copying.
+
+   Overall, informally speaking, I don't think bzip2 or libbzip2 
+   have a Y2K problem.
+
+Formally speaking:
+   I am not prepared to offer you any assurance whatsoever 
+   regarding Y2K issues in my software.  You alone assume the 
+   entire risk of using the software.  The disclaimer of liability 
+   in the LICENSE file in the bzip2 source distribution continues 
+   to apply on this issue as with every other issue pertaining 
+   to the software.
+
+Julian Seward
+Cambridge, UK
+25 August 1999
