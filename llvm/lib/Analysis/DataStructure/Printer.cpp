@@ -31,6 +31,8 @@ static string getCaption(const DSNode *N, const DSGraph *G) {
     WriteTypeSymbolic(OS, N->getTypeEntries()[i].Ty, M);
     if (N->getTypeEntries()[i].Offset)
       OS << "@" << N->getTypeEntries()[i].Offset;
+    if (N->getTypeEntries()[i].isArray)
+      Os << " array";
     OS << "\n";
   }
 
