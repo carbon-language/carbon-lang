@@ -307,6 +307,12 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     Node->dump();
     assert(0 && "Node not handled!\n");
 
+  case ISD::FP_EXTEND:
+    assert (DestType == MVT::f64 && N.getOperand(0).getValueType() == MVT::f32 && "only f32 to f64 conversion supported here");
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
+    return Result;
+
   case ISD::CopyFromReg:
     {
       // Make sure we generate both values.
@@ -584,7 +590,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       
       //grab the arguments
       std::vector<unsigned> argvregs;
-      assert(Node->getNumOperands() < 8 && "Only 6 args supported");
+      //assert(Node->getNumOperands() < 8 && "Only 6 args supported");
       for(int i = 2, e = Node->getNumOperands(); i < e; ++i)
 	  argvregs.push_back(SelectExpr(N.getOperand(i)));
       
@@ -640,23 +646,23 @@ unsigned ISel::SelectExpr(SDOperand N) {
         }
       //build the right kind of call
       if (GlobalAddressSDNode *GASD =
-	  dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) 
-	{
-	  AlphaLowering.restoreGP(BB);
-	  BuildMI(BB, Alpha::CALL, 1).addGlobalAddress(GASD->getGlobal(),true);
-	} 
+          dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) 
+        {
+          AlphaLowering.restoreGP(BB);
+          BuildMI(BB, Alpha::CALL, 1).addGlobalAddress(GASD->getGlobal(),true);
+        } 
       else if (ExternalSymbolSDNode *ESSDN =
-	       dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) 
-	{
-	  AlphaLowering.restoreGP(BB);
-	  BuildMI(BB, Alpha::CALL, 0).addExternalSymbol(ESSDN->getSymbol(), true);
-	} 
+               dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) 
+        {
+          AlphaLowering.restoreGP(BB);
+          BuildMI(BB, Alpha::CALL, 0).addExternalSymbol(ESSDN->getSymbol(), true);
+        } 
       else 
-	{
-	  Tmp1 = SelectExpr(N.getOperand(1));
-	  AlphaLowering.restoreGP(BB);
-	  BuildMI(BB, Alpha::CALL, 1).addReg(Tmp1);
-	}
+        {
+          //no need to restore GP as we are doing an indirect call
+          Tmp1 = SelectExpr(N.getOperand(1));
+          BuildMI(BB, Alpha::JSR, 2, Alpha::R26).addReg(Tmp1).addImm(1);
+        }
       
       //push the result into a virtual register
       
