@@ -51,6 +51,7 @@ namespace {
     const TargetMachine* tm_;
     const MRegisterInfo* mri_;
     LiveIntervals* li_;
+    bool *PhysRegsUsed;
     typedef std::vector<LiveInterval*> IntervalPtrs;
     IntervalPtrs unhandled_, fixed_, active_, inactive_, handled_, spilled_;
 
@@ -145,6 +146,11 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
   tm_ = &fn.getTarget();
   mri_ = tm_->getRegisterInfo();
   li_ = &getAnalysis<LiveIntervals>();
+
+  PhysRegsUsed = new bool[mri_->getNumRegs()];
+  std::fill(PhysRegsUsed, PhysRegsUsed+mri_->getNumRegs(), false);
+  fn.setUsedPhysRegs(PhysRegsUsed);
+
   if (!prt_.get()) prt_.reset(new PhysRegTracker(*mri_));
   vrm_.reset(new VirtRegMap(*mf_));
   if (!spiller_.get()) spiller_.reset(createSpiller());
@@ -256,8 +262,10 @@ void RA::initIntervalSets() {
 
   for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i){
     unhandled_.push_back(&i->second);
-    if (MRegisterInfo::isPhysicalRegister(i->second.reg))
+    if (MRegisterInfo::isPhysicalRegister(i->second.reg)) {
+      PhysRegsUsed[i->second.reg] = true;
       fixed_.push_back(&i->second);
+    }
   }
 }
 

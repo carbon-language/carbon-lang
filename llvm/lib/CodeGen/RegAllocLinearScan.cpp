@@ -48,6 +48,7 @@ namespace {
     const TargetMachine* tm_;
     const MRegisterInfo* mri_;
     LiveIntervals* li_;
+    bool *PhysRegsUsed;
 
     /// handled_ - Intervals are added to the handled_ set in the order of their
     /// start value.  This is uses for backtracking.
@@ -139,6 +140,10 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
   mri_ = tm_->getRegisterInfo();
   li_ = &getAnalysis<LiveIntervals>();
 
+  PhysRegsUsed = new bool[mri_->getNumRegs()];
+  std::fill(PhysRegsUsed, PhysRegsUsed+mri_->getNumRegs(), false);
+  fn.setUsedPhysRegs(PhysRegsUsed);
+
   if (!prt_.get()) prt_.reset(new PhysRegTracker(*mri_));
   vrm_.reset(new VirtRegMap(*mf_));
   if (!spiller_.get()) spiller_.reset(createSpiller());
@@ -147,6 +152,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
 
   linearScan();
 
+  // Rewrite spill code and update the PhysRegsUsed set.
   spiller_->runOnMachineFunction(*mf_, *vrm_);
 
   vrm_.reset();  // Free the VirtRegMap
@@ -170,9 +176,10 @@ void RA::initIntervalSets()
          "interval sets should be empty on initialization");
 
   for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i) {
-    if (MRegisterInfo::isPhysicalRegister(i->second.reg))
+    if (MRegisterInfo::isPhysicalRegister(i->second.reg)) {
+      PhysRegsUsed[i->second.reg] = true;
       fixed_.push_back(std::make_pair(&i->second, i->second.begin()));
-    else
+    } else
       unhandled_.push(&i->second);
   }
 }

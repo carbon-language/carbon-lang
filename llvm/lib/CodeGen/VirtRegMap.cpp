@@ -133,13 +133,14 @@ namespace {
   };
 }
 
-bool SimpleSpiller::runOnMachineFunction(MachineFunction& MF,
-                                         const VirtRegMap& VRM) {
+bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF,
+                                         const VirtRegMap &VRM) {
   DEBUG(std::cerr << "********** REWRITE MACHINE CODE **********\n");
   DEBUG(std::cerr << "********** Function: "
                   << MF.getFunction()->getName() << '\n');
-  const TargetMachine& TM = MF.getTarget();
-  const MRegisterInfo& MRI = *TM.getRegisterInfo();
+  const TargetMachine &TM = MF.getTarget();
+  const MRegisterInfo &MRI = *TM.getRegisterInfo();
+  bool *PhysRegsUsed = MF.getUsedPhysregs();
 
   // LoadedRegs - Keep track of which vregs are loaded, so that we only load
   // each vreg once (in the case where a spilled vreg is used by multiple
@@ -177,6 +178,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction& MF,
               ++NumStores;
             }
           }
+          PhysRegsUsed[PhysReg] = true;
           MI.SetMachineOperandReg(i, PhysReg);
         }
       }
@@ -296,6 +298,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
   // same stack slot, the original store is deleted.
   std::map<int, MachineInstr*> MaybeDeadStores;
 
+  bool *PhysRegsUsed = MBB.getParent()->getUsedPhysregs();
+
   for (MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
        MII != E; ) {
     MachineInstr &MI = *MII;
@@ -313,7 +317,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
 
         if (!VRM.hasStackSlot(VirtReg)) {
           // This virtual register was assigned a physreg!
-          MI.SetMachineOperandReg(i, VRM.getPhys(VirtReg));
+          unsigned Phys = VRM.getPhys(VirtReg);
+          PhysRegsUsed[Phys] = true;
+          MI.SetMachineOperandReg(i, Phys);
         } else {
           // Is this virtual register a spilled value?
           if (MO.isUse()) {
@@ -397,7 +403,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
                       }
                   }
             ContinueReload:
-
+              PhysRegsUsed[PhysReg] = true;
               MRI->loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot);
               // This invalidates PhysReg.
               ClobberPhysReg(PhysReg, SpillSlotsAvailable, PhysRegsAvailable);
@@ -429,9 +435,11 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
 
     // Loop over all of the implicit defs, clearing them from our available
     // sets.
-    const TargetInstrDescriptor &InstrDesc = TII->get(MI.getOpcode());
-    for (const unsigned* ImpDef = InstrDesc.ImplicitDefs; *ImpDef; ++ImpDef)
+    for (const unsigned *ImpDef = TII->getImplicitDefs(MI.getOpcode());
+         *ImpDef; ++ImpDef) {
+      PhysRegsUsed[*ImpDef] = true;
       ClobberPhysReg(*ImpDef, SpillSlotsAvailable, PhysRegsAvailable);
+    }
 
     DEBUG(std::cerr << '\t' << MI);
 
@@ -516,6 +524,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
           else
             PhysReg = MO.getReg();
 
+          PhysRegsUsed[PhysReg] = true;
           MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot);
           DEBUG(std::cerr << "Store:\t" << *next(MII));
           MI.SetMachineOperandReg(i, PhysReg);
