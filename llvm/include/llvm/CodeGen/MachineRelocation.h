@@ -66,6 +66,12 @@ public:
     return OffsetTypeExternal & ((1 << 24)-1);
   }
 
+  /// getRelocationType - Return the target-specific relocation ID for this
+  /// relocation.
+  unsigned getRelocationType() const {
+    return OffsetTypeExternal >> 25;
+  }
+
   /// getConstantVal - Get the constant value associated with this relocation.
   /// This is often an offset from the symbol.
   ///
