@@ -69,7 +69,7 @@ namespace {
     void emitGlobalConstant(const Constant *CV);
     void printConstantPool(MachineConstantPool *MCP);
     void printOperand(const MachineInstr *MI, int opNum);
-    void printBaseOffsetPair (const MachineInstr *MI, int i);
+    void printBaseOffsetPair (const MachineInstr *MI, int i, bool brackets=true);
     void printMachineInstruction(const MachineInstr *MI);
     bool runOnMachineFunction(MachineFunction &F);    
     bool doInitialization(Module &M);
@@ -455,17 +455,26 @@ static bool isStoreInstruction (const MachineInstr *MI) {
   }
 }
 
-void V8Printer::printBaseOffsetPair (const MachineInstr *MI, int i) {
-  O << "[";
+/// printBaseOffsetPair - Print two consecutive operands of MI, starting at #i,
+/// which form a base + offset pair (which may have brackets around it, if
+/// brackets is true, or may be in the form base - constant, if offset is a
+/// negative constant).
+///
+void V8Printer::printBaseOffsetPair (const MachineInstr *MI, int i,
+                                     bool brackets) {
+  if (brackets) O << "[";
   printOperand (MI, i);
-  assert (MI->getOperand (i + 1).isImmediate()
-    && "2nd half of base-offset pair must be immediate-value machine operand");
-  int Val = (int) MI->getOperand (i + 1).getImmedValue ();
-  if (Val != 0) {
-    O << ((Val >= 0) ? " + " : " - ");
-    O << ((Val >= 0) ? Val : -Val);
+  if (MI->getOperand (i + 1).isImmediate()) {
+    int Val = (int) MI->getOperand (i + 1).getImmedValue ();
+    if (Val != 0) {
+      O << ((Val >= 0) ? " + " : " - ");
+      O << ((Val >= 0) ? Val : -Val);
+    }
+  } else {
+    O << " + ";
+    printOperand (MI, i + 1);
   }
-  O << "]";
+  if (brackets) O << "]";
 }
 
 /// printMachineInstruction -- Print out a single SparcV8 LLVM instruction
@@ -490,6 +499,12 @@ void V8Printer::printMachineInstruction(const MachineInstr *MI) {
     printOperand (MI, 2);
     O << ", ";
     printBaseOffsetPair (MI, 0);
+    O << "\n";
+    return;
+  } else if (Opcode == V8::JMPLrr) {
+    printBaseOffsetPair (MI, 1, false);
+    O << ", ";
+    printOperand (MI, 0);
     O << "\n";
     return;
   }
