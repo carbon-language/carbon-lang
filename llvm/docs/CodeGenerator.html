@@ -203,12 +203,13 @@ targets with unusual requirements can be supported with custom passes as needed.
 
 <div class="doc_text">
 
-<p>The target description classes require a detailed descriptions of the target
+<p>The target description classes require a detailed description of the target
 architecture.  These target descriptions often have a large amount of common
 information (e.g., an add instruction is almost identical to a sub instruction).
 In order to allow the maximum amount of commonality to be factored out, the LLVM
 code generator uses the <a href="TableGenFundamentals.html">TableGen</a> tool to
-allow 
+describe big chunks of the target machine, which allows the use of domain- and 
+target-specific abstractions to reduce the amount of repetition.
 </p>
 
 </div>
