@@ -192,6 +192,11 @@ public:
     return 0;
   }
 
+  int getMergeMapLabel(unsigned i) {
+    assert(i < MergeMap.size() && "MergeMap index out of range!");
+    return MergeMap[i];
+  }
+
   /// setLink - Set the link at the specified offset to the specified
   /// NodeHandle, replacing what was there.  It is uncommon to use this method,
   /// instead one of the higher level methods should be used, below.
