@@ -510,26 +510,22 @@ public:
 
 
 /// ConstantExpr - a constant value that is initialized with an expression using
-/// other constant values.  This is only used to represent values that cannot be
-/// evaluated at compile-time (e.g., something derived from an address) because
-/// it does not have a mechanism to store the actual value.  Use the appropriate
-/// Constant subclass above for known constants.
+/// other constant values.
 ///
+/// This class uses the standard Instruction opcodes to define the various
+/// constant expressions.  The Opcode field for the ConstantExpr class is
+/// maintained in the Value::SubclassData field.
 class ConstantExpr : public Constant {
-  unsigned iType;      // Operation type (an Instruction opcode)
   friend struct ConstantCreator<ConstantExpr,Type,
                             std::pair<unsigned, std::vector<Constant*> > >;
   friend struct ConvertConstantType<ConstantExpr, Type>;
   
 protected:
   ConstantExpr(const Type *Ty, unsigned Opcode, Use *Ops, unsigned NumOps)
-    : Constant(Ty, ConstantExprVal, Ops, NumOps), iType(Opcode) {}
-
-  // Select instruction creation ctor
-  ConstantExpr(Constant *C, Constant *V1, Constant *V2);
-  // GEP instruction creation ctor
-  ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
-               const Type *DestTy);
+    : Constant(Ty, ConstantExprVal, Ops, NumOps) {
+    // Operation type (an Instruction opcode) is stored as the SubclassData.
+    SubclassData = Opcode; 
+  }
 
   // These private methods are used by the type resolution code to create
   // ConstantExprs in intermediate forms.
@@ -609,7 +605,7 @@ public:
   virtual bool isNullValue() const { return false; }
   
   /// getOpcode - Return the opcode at the root of this constant expression
-  unsigned getOpcode() const { return iType; }
+  unsigned getOpcode() const { return SubclassData; }
 
   /// getOpcodeName - Return a string representation for an opcode.
   const char *getOpcodeName() const;
