@@ -125,17 +125,19 @@ namespace {
 //be passed at 0(SP).
 //7 ... n  	  	  	0(SP) ... (n-7)*8(SP)
 
+// //#define FP    $15
+// //#define RA    $26
+// //#define PV    $27
+// //#define GP    $29
+// //#define SP    $30
+  
 std::vector<SDOperand>
 AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) 
 {
   std::vector<SDOperand> ArgValues;
-  
-  // //#define FP    $15
-  // //#define RA    $26
-  // //#define PV    $27
-  // //#define GP    $29
-  // //#define SP    $30
-  
+  std::vector<SDOperand> LS;
+  SDOperand Chain = DAG.getRoot();
+
   //  assert(0 && "TODO");
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo*MFI = MF.getFrameInfo();
@@ -150,47 +152,59 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 			 Alpha::R19, Alpha::R20, Alpha::R21};
   unsigned args_float[] = {Alpha::F16, Alpha::F17, Alpha::F18, 
 			   Alpha::F19, Alpha::F20, Alpha::F21};
-  unsigned argVreg[6];
-  unsigned argPreg[6];
-  unsigned argOpc[6];
-
   int count = 0;
+
+  //Def incoming registers
+  {
+    Function::arg_iterator I = F.arg_begin();
+    Function::arg_iterator E = F.arg_end();
+    for (int i = 0; i < 6; ++i)
+    {
+      if (F.isVarArg()) {
+        BuildMI(&BB, Alpha::IDEF, 0, args_int[i]);
+        BuildMI(&BB, Alpha::IDEF, 0, args_float[i]);
+      } else if (I != E)
+      {
+        if(MVT::isInteger(getValueType(I->getType())))
+          BuildMI(&BB, Alpha::IDEF, 0, args_int[i]);
+        else
+          BuildMI(&BB, Alpha::IDEF, 0, args_float[i]);
+        ++I;
+      }
+    }
+  }
+
+  BuildMI(&BB, Alpha::IDEF, 0, Alpha::R29);
+  BuildMI(&BB, Alpha::BIS, 2, GP).addReg(Alpha::R29).addReg(Alpha::R29);
 
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
   {
     SDOperand newroot, argt;
     if (count  < 6) {
+      unsigned Vreg;
+      MVT::ValueType VT = getValueType(I->getType());
       switch (getValueType(I->getType())) {
       default: 
-        std::cerr << "Unknown Type " << getValueType(I->getType()) << "\n"; 
+        std::cerr << "Unknown Type " << VT << "\n"; 
         abort();
       case MVT::f64:
       case MVT::f32:
-        BuildMI(&BB, Alpha::IDEF, 0, args_float[count]);
-        argVreg[count] = 
-          MF.getSSARegMap()->createVirtualRegister(
-                            getRegClassFor(getValueType(I->getType())));
-        argPreg[count] = args_float[count];
-        argOpc[count] = Alpha::CPYS;
-        argt = newroot = DAG.getCopyFromReg(argVreg[count], 
+        Vreg = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(VT));
+        BuildMI(&BB, Alpha::CPYS, 2, Vreg).addReg(args_float[count]).addReg(args_float[count]);
+        argt = newroot = DAG.getCopyFromReg(Vreg, 
                                             getValueType(I->getType()), 
-                                            DAG.getRoot());
+                                            Chain);
         break;
       case MVT::i1:
       case MVT::i8:
       case MVT::i16:
       case MVT::i32:
       case MVT::i64:
-        BuildMI(&BB, Alpha::IDEF, 0, args_int[count]);
-        argVreg[count] = 
-          MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
-        argPreg[count] = args_int[count];
-        argOpc[count] = Alpha::BIS;
-        argt = newroot = 
-          DAG.getCopyFromReg(argVreg[count], MVT::i64, DAG.getRoot());
+        Vreg = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
+        BuildMI(&BB, Alpha::BIS, 2, Vreg).addReg(args_int[count]).addReg(args_int[count]);
+        argt = newroot = DAG.getCopyFromReg(Vreg, MVT::i64, Chain);
         if (getValueType(I->getType()) != MVT::i64)
-          argt = 
-            DAG.getNode(ISD::TRUNCATE, getValueType(I->getType()), newroot);
+          argt = DAG.getNode(ISD::TRUNCATE, getValueType(I->getType()), newroot);
         break;
       }
     } else { //more args
@@ -204,17 +218,37 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
                                    DAG.getEntryNode(), FIN);
     }
     ++count;
-    DAG.setRoot(newroot.getValue(1));
+    LS.push_back(newroot.getValue(1));
     ArgValues.push_back(argt);
   }
 
-  BuildMI(&BB, Alpha::IDEF, 0, Alpha::R29);
-  BuildMI(&BB, Alpha::BIS, 2, GP).addReg(Alpha::R29).addReg(Alpha::R29);
-  for (int i = 0; i < count && i < 6; ++i) {
-    BuildMI(&BB, argOpc[i], 2, 
-            argVreg[i]).addReg(argPreg[i]).addReg(argPreg[i]);
-  }
-  
+  // If the functions takes variable number of arguments, copy all regs to stack
+  if (F.isVarArg()) 
+    for (int i = 0; i < 6; ++i)
+    {
+      unsigned Vreg = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
+      BuildMI(&BB, Alpha::BIS, 2, Vreg).addReg(args_int[i]).addReg(args_int[i]);
+      SDOperand argt = DAG.getCopyFromReg(Vreg, MVT::i64, Chain);
+      int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
+      SDOperand SDFI = DAG.getFrameIndex(FI, MVT::i64);
+      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain, argt, SDFI));
+      
+      Vreg = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::f64));
+      BuildMI(&BB, Alpha::CPYS, 2, Vreg).addReg(args_float[i]).addReg(args_float[i]);
+      argt = DAG.getCopyFromReg(Vreg, MVT::f64, Chain);
+      FI = MFI->CreateFixedObject(8, - 8 * (12 - i));
+      SDFI = DAG.getFrameIndex(FI, MVT::i64);
+      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain, argt, SDFI));
+    }
+
+  // If the function takes variable number of arguments, make a frame index for
+  // the start of the first arg value... for expansion of llvm.va_start.
+  //   if (F.isVarArg())
+  //     VarArgsFrameIndex = MFI->CreateFixedObject(4, ArgOffset);
+
+  //Set up a token factor with all the stack traffic
+  DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, LS));
+  //return the arguments
   return ArgValues;
 }
 
