@@ -164,8 +164,8 @@ struct InstVisitor {
   RetTy visitMallocInst(MallocInst &I)              { DELEGATE(AllocationInst);}
   RetTy visitAllocaInst(AllocaInst &I)              { DELEGATE(AllocationInst);}
   RetTy visitFreeInst(FreeInst   &I)                { DELEGATE(Instruction); }
-  RetTy visitLoadInst(LoadInst   &I)                { DELEGATE(MemAccessInst); }
-  RetTy visitStoreInst(StoreInst  &I)               { DELEGATE(MemAccessInst); }
+  RetTy visitLoadInst(LoadInst   &I)                { DELEGATE(Instruction); }
+  RetTy visitStoreInst(StoreInst  &I)               { DELEGATE(Instruction); }
   RetTy visitGetElementPtrInst(GetElementPtrInst &I){ DELEGATE(MemAccessInst); }
   RetTy visitPHINode(PHINode    &I)                 { DELEGATE(Instruction); }
   RetTy visitCastInst(CastInst   &I)                { DELEGATE(Instruction); }
